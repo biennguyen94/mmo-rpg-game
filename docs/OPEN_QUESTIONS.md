@@ -2,6 +2,7 @@
 
 > Cách đọc: mỗi câu có **đề xuất mặc định**. Anh trả lời "OK" cho cả nhóm nghĩa là chấp nhận mọi đề xuất; muốn khác thì chỉ cần nêu mã câu (vd "G3: 6 ô/giây").
 > Theo `CLAUDE.md` §9: câu nào ảnh hưởng gameplay/schema/protocol thì em hỏi; việc nhỏ thuần kỹ thuật em tự quyết và ghi `docs/DECISIONS.md`.
+> **Trạng thái 2026-10-02:** anh trả lời "ok" sau M0 → các mặc định P, G, D được áp dụng (đổi được bất cứ lúc nào). Mục E vẫn mở.
 > Câu hỏi gốc của KB (Q1–Q15, A1–A6, B1–B6) giữ nguyên trong `docs/kb/`; mục **K** cuối file chỉ ghi trạng thái liên quan Phase 1.
 
 ## E. Môi trường cloud — **chặn M1** (chi tiết `docs/CLOUD_CHECK.md`)

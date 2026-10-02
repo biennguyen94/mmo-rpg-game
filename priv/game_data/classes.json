@@ -1,0 +1,17 @@
+{
+  "source": "docs/kb/KB_CONFIG.md §2 (base stats, HP/MP growth); docs/kb/KB_GAME_DESIGN.md §4.1 (derived). Phase 1 chỉ có DK (KB_00_RULES §7).",
+  "classes": [
+    {
+      "id": "DK",
+      "name": "Dark Knight",
+      "strength": 28, "agility": 20, "vitality": 25, "energy": 10,
+      "hpBase": 110, "hpPerLevel": 3, "hpPerVit": 3,
+      "mpBase": 20, "mpPerLevel": 1, "mpPerEne": 1,
+      "statPerLevel": 5,
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §2"
+    }
+  ]
+}

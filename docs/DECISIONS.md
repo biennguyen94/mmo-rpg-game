@@ -10,3 +10,5 @@
 | DEC-4 | 2026-10-02 | Không dùng generator `mix phx.new`; dựng khung bằng cách chép + đổi tên từ repo nền | Repo nền đã là Phoenix 1.7 đúng cấu hình (JSON + Channels); không cần archive `phx_new` |
 | DEC-5 | 2026-10-02 | ULID tự viết (thuần Elixir, ~30 dòng, có test) thay vì gói `ecto_ulid` | Gói `ecto_ulid` lâu không cập nhật; cột `serial CHAR(26)` chỉ cần chuỗi Crockford base32 |
 | DEC-6 | 2026-10-02 | Hash commit repo nền đọc từ `reference/COMMIT` | Prompt nhắc `reference/rpg-game/COMMIT` nhưng file nằm ở `reference/COMMIT`; không sửa `reference/` |
+| DEC-7 | 2026-10-02 | Commit hook SessionStart (`.claude/settings.json`, `scripts/cloud_session_start.sh`) đúng nội dung `PROMPT_PHASE1_CLOUD §A3` | E4: Postgres tắt mỗi lần vào phiên; file nằm trong repo, không đổi cấu hình môi trường |
+| DEC-8 | 2026-10-02 | Thêm `scripts/cloud_env_setup.sh`: bản setup script để anh dán vào môi trường cloud (em không chạy) | Gom E1–E4 thành một script: OTP 25 từ apt + Elixir 1.17.3 từ builds.hex.pm + mật khẩu Postgres |

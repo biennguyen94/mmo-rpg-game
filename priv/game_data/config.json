@@ -1,0 +1,94 @@
+{
+  "sourceType": "CONFIG",
+  "version": null,
+  "verified": false,
+  "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7)",
+  "notes": {
+    "game.maxLevel": "10 theo KB_00_RULES §7 (Phase 1). KB_CONFIG §1 ghi 400 là giá trị dự án dài hạn (OPEN_QUESTIONS D2).",
+    "experience.formula": "Placeholder IMPLEMENTATION, không phải EXP MU (KB_CONFIG §1, Q4)."
+  },
+  "game": { "name": "MU Web", "mode": "classic-inspired", "targetVersion": "0.97d", "maxLevel": 10 },
+
+  "features": {
+    "magicGladiator": false,
+    "wings": false,
+    "harmonyJewel": false,
+    "guardianJewel": false,
+    "chaosMachine": false,
+    "pvp": false,
+    "guild": false,
+    "party": false,
+    "quest": false,
+    "mail": false,
+    "mapPanel": false
+  },
+
+  "server": {
+    "simulationHz": 20,
+    "monsterAiHz": 10,
+    "snapshotHz": 10,
+    "interpolationDelayMs": 100,
+    "maxPlayersPerWorld": 500,
+    "aoiCellSize": 16,
+    "aoiViewCells": 1,
+    "clientVersion": "0.1.0"
+  },
+
+  "auth": {
+    "accessTokenTtlSeconds": 86400,
+    "wsTicketTtlSeconds": 30
+  },
+
+  "combat": {
+    "hardFloor": 1,
+    "minDamageRatio": 0.1,
+    "minHitChance": 0.05,
+    "maxHitChance": 0.95,
+    "baseCooldownMs": 1000,
+    "minCooldownMs": 250,
+    "hitFormula": "attackRate / (attackRate + defenseRate)",
+    "potionCooldownMs": 1000
+  },
+
+  "experience": {
+    "mode": "formula",
+    "formula": "100 * level ^ 1.5",
+    "formulaSemantics": "EXP cần để đi từ level N sang level N+1. level = N.",
+    "multiplier": 1.0,
+    "levelDiffPenaltyStart": 10,
+    "minExpRatio": 0.1,
+    "partyBonusPerMember": 0.1,
+    "deathExpLossPercent": 0
+  },
+
+  "drop": {
+    "zenMultiplier": 1,
+    "dropMultiplier": 1,
+    "itemDropMultiplier": 1,
+    "lootProtectSeconds": 10,
+    "groundItemSeconds": 60
+  },
+
+  "economy": { "sellRatio": 0.5 },
+
+  "items": {
+    "speedScale": 1.0,
+    "requirementScale": 0.35,
+    "iconBuckets": [0, 3, 5, 7, 9, 11, 13, 15],
+    "ancientVariants": false
+  },
+
+  "account": { "maxCharacters": 1 },
+
+  "session": {
+    "reconnectGraceSeconds": 30,
+    "logoutInCombatSeconds": 10,
+    "singleLoginPerAccount": true
+  },
+
+  "security": {
+    "serverAuthoritative": true,
+    "itemSerialRequired": true,
+    "clientDamageTrusted": false
+  }
+}
