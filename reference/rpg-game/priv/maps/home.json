@@ -1,0 +1,46 @@
+{
+  "id": "home",
+  "name": "Nhà của bạn",
+  "zone": null,
+  "floor": "tiles/dirt",
+  "private": true,
+  "tiles": [
+    "###########",
+    "#,,,,,,,,F#",
+    "#,,,,,,,,,#",
+    "#,*,,,,,*,#",
+    "#,,,,,,,,,#",
+    "#,,,,,,,,,#",
+    "#,,,,,,,,,#",
+    "#####D#####"
+  ],
+  "portals": [
+    {
+      "at": [
+        5,
+        7
+      ],
+      "to": "village",
+      "spawn": [
+        12,
+        15
+      ]
+    }
+  ],
+  "spawns": [],
+  "npcs": [
+    {
+      "id": "chest",
+      "name": "Rương Gia Truyền",
+      "sprite": "home_chest",
+      "at": [
+        1,
+        1
+      ],
+      "role": "chest",
+      "lines": [
+        "Rương gỗ cũ của nhà. Mỗi ngày mở ra lại thấy có thứ gì đó."
+      ]
+    }
+  ]
+}
