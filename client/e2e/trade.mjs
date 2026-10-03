@@ -80,6 +80,14 @@ async function menuClick(page, name, sel) {
   }
   return false;
 }
+// bấm `sel` cho tới khi `done` đúng (panel vẽ lại theo mỗi event `trade`: lần bấm rơi đúng lúc vẽ lại thì mất)
+async function clickUntil(page, sel, watch, done, arg) {
+  for (let k = 0; k < 3; k++) {
+    await page.click(sel, { timeout: 3000 }).catch(() => {});
+    if (await until(watch, done, arg, 2000)) return true;
+  }
+  return false;
+}
 const inv = (page) => page.evaluate(() => window.__mu.player().inventory);
 const byTpl = async (page, tid) => (await inv(page)).find((i) => i.templateId === tid);
 const zenOf = (page) => page.evaluate(() => window.__mu.player().zen);
@@ -110,9 +118,15 @@ check("mời lại → đồng ý → cả hai mở panel giao dịch", (await o
 const sword = await byTpl(pa, "sword_t0");
 const bless = await byTpl(pb, "jewel_bless");
 await pa.click(`[data-trade-bag="${sword.id}"]`);
-await pa.fill('[data-test="trade-zen"]', "1200");
-await pa.click('[data-test="trade-zen-set"]');
+// chờ bàn vẽ lại với món vừa đặt rồi mới nhập Zen (panel vẽ lại theo mỗi event `trade`)
+await until(pa, (id) => document.querySelector(`[data-trade-mine="${id}"]`) !== null, sword.id, 3000);
+for (let k = 0; k < 2; k++) {
+  await pa.fill('[data-test="trade-zen"]', "1200");
+  await pa.click('[data-test="trade-zen-set"]');
+  if (await until(pa, () => document.querySelector('[data-test="trade-mine"]')?.textContent.includes("1.200"), null, 2000)) break;
+}
 await pb.click(`[data-trade-bag="${bless.id}"]`);
+await until(pa, (id) => document.querySelector(`[data-trade-theirs="${id}"]`) !== null, bless.id, 3000);
 check("bên kia thấy kiếm + 1 200 Zen trên bàn của A", await until(pb, (id) => document.querySelector(`[data-trade-theirs="${id}"]`) && document.querySelector('[data-test="trade-theirs"]').textContent.includes("1.200"), sword.id, 4000));
 await pa.screenshot({ path: `${shots}/p5-trade-panel.png` });
 
@@ -123,14 +137,14 @@ check("[Đồng ý] tắt khi B chưa khóa", await pa.isDisabled('[data-test="t
 await pb.click(`[data-trade-mine="${bless.id}"]`);
 check("B lấy lại món → khóa của A bỏ", await until(pa, () => !document.querySelector('[data-test="trade-mine"]').classList.contains("locked"), null, 3000));
 await pb.click(`[data-trade-bag="${bless.id}"]`);
+await until(pa, (id) => document.querySelector(`[data-trade-theirs="${id}"]`) !== null, bless.id, 3000);
 
-// ---------- chốt ----------
-await pa.click('[data-test="trade-lock"]');
-await pb.click('[data-test="trade-lock"]');
-await until(pa, () => !document.querySelector('[data-test="trade-confirm"]').disabled, null, 3000);
-await pa.click('[data-test="trade-confirm"]');
-await until(pb, () => !document.querySelector('[data-test="trade-confirm"]').disabled, null, 3000);
-await pb.click('[data-test="trade-confirm"]');
+// ---------- chốt (mỗi bước chờ bên kia thấy rồi mới làm tiếp: thay đổi tới sau khóa sẽ bỏ khóa) ----------
+const theirsLocked = () => document.querySelector('[data-test="trade-theirs"]')?.classList.contains("locked");
+await clickUntil(pa, '[data-test="trade-lock"]', pb, theirsLocked);
+await clickUntil(pb, '[data-test="trade-lock"]', pa, theirsLocked);
+await clickUntil(pa, '[data-test="trade-confirm"]', pb, () => document.querySelector('[data-test="trade-theirs"]')?.textContent.includes("Đã đồng ý"));
+await clickUntil(pb, '[data-test="trade-confirm"]', pa, () => !document.querySelector('[data-panel="trade"]'));
 const closed = await until(pa, () => !document.querySelector('[data-panel="trade"]'), null, 5000);
 const gotSword = await until(pb, (id) => window.__mu.player().inventory.some((i) => i.id === id), sword.id, 5000);
 check("hai bên đồng ý → panel đóng, B nhận kiếm, A nhận Bless", closed && gotSword && (await until(pa, (id) => window.__mu.player().inventory.some((i) => i.id === id), bless.id, 5000)));

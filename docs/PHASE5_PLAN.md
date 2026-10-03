@@ -33,7 +33,7 @@ nói rõ "cho em sửa"):
 | **P5-M2 Upgrade** ✅ | Ép Bless / Soul theo bảng `KB_CONFIG §5`, Jewel of Life (cột `option_level`, +4 / cấp, tối đa 4) — một transaction, audit `UPGRADE` / `JEWEL_USE`; kéo jewel thả lên đồ hoặc [Ép lên…] (mobile); event `upgrade`; SYSTEM cả map khi lên +7 trở lên (DEC-145 … DEC-148). E2E `upgrade.mjs` viết sẵn, **chạy ở P5-M5** (DEC-149) | xong |
 | **P5-M3 Audit Zen + anti-dupe** ✅ | Bảng `zen_audit_log` (+ `BASELINE`), ghi trong cùng transaction mọi đổi Zen (`BUY`, `SELL`, `MAIL`, `MONSTER`, `GUILD_CREATE`, `START`, `ADMIN`); `mix mu.audit` (serial trùng, item không chỗ, chủ lệch audit, Zen lệch log, cung Zen theo ngày, exit 1 khi sai lệch); test bán / ép song song chỉ một lần thành công (DEC-150 … DEC-153) | xong |
 | **P5-M4 Trading** ✅ | `Mu.Trade` + `TradeSettlement` (1 process / giao dịch) theo KB §10: mời / nhận / từ chối (30 s, ≤ 5 ô), bàn tối đa 16 món + Zen, [Khóa] → [Đồng ý], mọi thay đổi bỏ khóa; chốt một transaction khóa theo id, audit `TRADE` đồ + Zen; chốt hỏng giữ giao dịch mở; hủy khi xa > 10 ô / đổi map / chết / mất kết nối / 3 phút; test cố dupe (chốt song song với bán) (DEC-154 … DEC-159). E2E `trade.mjs` viết sẵn, **chạy ở P5-M5** | xong |
-| **P5-M5 Nghiệm thu Phase 5** | Danh sách nghiệm thu (P5-9, em soạn), toàn bộ E2E, soak có trade / upgrade, `mix mu.audit` sạch sau soak, báo cáo | P5-9 |
+| **P5-M5 Nghiệm thu Phase 5** → gộp cuối Phase 6 | Anh chọn (A): kiểm nhanh `upgrade.mjs` 10/10, `trade.mjs` 12/12, `mu.audit` sạch (DEC-160, DEC-161); nghiệm thu đầy đủ (P5-9, toàn bộ E2E, soak, `mu.audit` sau soak) làm **chung với Phase 6** | gộp |
 
 Thứ tự: P5-M1 → P5-M2 → P5-M3 → P5-M4 → P5-M5. Audit Zen làm **trước** Trading để trade ghi audit
 ngay từ đầu.

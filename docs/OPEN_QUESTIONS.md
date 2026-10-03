@@ -417,4 +417,5 @@ MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt.
 | P5M4-2 | Đồ nhận vào túi có gộp vào stack cùng loại không | Không gộp: mỗi món sang ô trống thấp nhất (giữ serial, dễ truy vết); người nhận tự gộp sau |
 | P5M4-3 | Đổi sang panel khác giữa lúc giao dịch | Giao dịch vẫn mở; event `trade` kế tiếp mở lại panel. Đóng panel giao dịch (Esc / ✕) thì **hủy** |
 | P5M4-4 | **KB cần anh bổ sung** (gộp P5-10): §5 act `trade_*`, event `trade`, `trade_invite`; config `trade` | Không đổi schema (giao dịch chỉ trong RAM tới lúc chốt, theo KB §10) |
+| P5M4-5 | Panel giao dịch vẽ lại toàn bộ mỗi khi bên kia thay đổi: lần bấm của mình rơi đúng lúc vẽ lại có thể bị mất (E2E thấy ở [Khóa] / [Đồng ý]) | Hiếm khi người thật gặp (bấm lại là được); muốn triệt để thì chỉ cập nhật phần thay đổi thay vì vẽ lại cả panel — để khi làm lại UI |
 

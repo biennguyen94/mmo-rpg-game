@@ -270,3 +270,6 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .tradeside .tzen { margin-top: 4px; color: #ffd36b; }
 .tradeask { top: 280px; }
 @media (max-width: 600px) { .tradesides { grid-template-columns: 1fr; } }
+/* lưới đồ trong panel giao dịch: ô cố định 44px như túi (không giãn theo khung) */
+[data-panel="trade"] .bag { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px; justify-content: start; padding: 6px 0; }
+[data-panel="trade"] .tradegrid { min-height: 50px; }

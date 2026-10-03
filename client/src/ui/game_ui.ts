@@ -955,6 +955,13 @@ export class GameUI {
     const bag = s.player.inventory.filter((i) => !onTable.has(i.id)).sort((a, b) => a.slot - b.slot);
     const zen = h("input", { type: "number", min: 0, max: s.player.zen, "data-test": "trade-zen", value: this.tradeZenDraft || String(mine.zen) }) as HTMLInputElement;
     zen.addEventListener("input", () => (this.tradeZenDraft = zen.value));
+    // panel có thể vẽ lại giữa lúc gõ và bấm (event của bên kia): đọc bản nháp, không đọc ô cũ
+    const setZen = () => {
+      const n = Math.max(0, Math.floor(Number(this.tradeZenDraft || zen.value) || 0));
+      this.tradeZenDraft = "";
+      this.a.tradeZen(n);
+    };
+    zen.addEventListener("keydown", (ev: KeyboardEvent) => ev.key === "Enter" && setZen());
     const status = (sd: { locked: boolean; confirmed: boolean }) =>
       sd.confirmed ? "✔ Đã đồng ý" : sd.locked ? "🔒 Đã khóa" : "Đang sắp xếp…";
     const side = (title: string, sd: typeof mine, own: boolean) =>
@@ -985,7 +992,7 @@ export class GameUI {
           "div",
           { class: "guildform" },
           zen,
-          h("button", { "data-test": "trade-zen-set", disabled: mine.locked, onclick: () => ((this.tradeZenDraft = ""), this.a.tradeZen(Math.max(0, Math.floor(Number(zen.value) || 0)))) }, "Đặt Zen"),
+          h("button", { "data-test": "trade-zen-set", disabled: mine.locked, onclick: setZen }, "Đặt Zen"),
         ),
         h(
           "div",
