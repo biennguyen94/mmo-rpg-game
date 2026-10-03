@@ -11,6 +11,8 @@ defmodule Mu.Application do
       {Phoenix.PubSub, name: Mu.PubSub},
       Mu.RateLimit,
       Mu.Chat,
+      # nhóm (P3-M4): RAM + ETS, trước Session / MapServer
+      Mu.Party,
       Mu.Accounts.WsTicket,
       Mu.Game.OrphanSweeper,
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)

@@ -227,14 +227,24 @@ defmodule Mu.Game.Engine do
   xuống, tối thiểu 1. Người chơi cao hơn quái quá `levelDiffPenaltyStart` cấp thì giảm
   `levelDiffPenaltyPerLevel` mỗi cấp, không dưới `minExpRatio` (G23).
   """
-  def exp_gain(monster_exp, player_level, monster_level) do
+  def exp_gain(monster_exp, player_level, monster_level),
+    do: party_exp_gain(monster_exp, 1, player_level, monster_level)
+
+  @doc """
+  EXP mỗi người khi `n` thành viên nhóm cùng nhận (§3 "Party EXP", P3-5):
+  `experience / n × (1 + partyBonusPerMember × (n − 1)) × multiplier × levelDiffModifier` của
+  **từng người**, làm tròn xuống, tối thiểu 1. `n = 1` = `exp_gain/3`.
+  """
+  def party_exp_gain(monster_exp, n, player_level, monster_level) when n >= 1 do
     e = Config.get(["experience"])
     over = player_level - monster_level - e["levelDiffPenaltyStart"]
 
     ratio =
       if over > 0, do: max(e["minExpRatio"], 1 - over * e["levelDiffPenaltyPerLevel"]), else: 1.0
 
-    max(1, floor(monster_exp * e["multiplier"] * ratio))
+    share = monster_exp / n * (1 + e["partyBonusPerMember"] * (n - 1))
+    # + 1e-9: tránh 11,999… do số thực (vd 30 / 3 × 1,2)
+    max(1, floor(share * e["multiplier"] * ratio + 1.0e-9))
   end
 
   @doc """

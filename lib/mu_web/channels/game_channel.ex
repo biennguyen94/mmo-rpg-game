@@ -199,7 +199,8 @@ defmodule MuWeb.GameChannel do
       maxLevel: Config.get(["game", "maxLevel"]),
       pickupRange: Config.get(["interaction", "pickupRange"]),
       npcRange: Config.get(["interaction", "npcRange"]),
-      twoHandedWeaponTypes: Config.get(["combat", "twoHandedWeaponTypes"])
+      twoHandedWeaponTypes: Config.get(["combat", "twoHandedWeaponTypes"]),
+      partyInviteSeconds: Config.get(["party", "inviteSeconds"])
     }
   end
 end

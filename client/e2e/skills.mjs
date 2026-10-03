@@ -126,6 +126,8 @@ const walk = async (x, y) => {
     const p = await self(dw);
     if (p.x === x && p.y === y) return;
     await clickAt(dw, Math.max(p.x - 12, Math.min(p.x + 12, x)), Math.max(p.y - 8, Math.min(p.y + 8, y)));
+    // bấm trúng người chơi khác → menu (P3-M4): chọn "Đi tới đây"
+    await (await dw.$('[data-test="player-goto"]'))?.click();
     await dw.waitForTimeout(900);
   }
 };

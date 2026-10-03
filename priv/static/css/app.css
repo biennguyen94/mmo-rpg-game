@@ -173,6 +173,22 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .buffbar { position: absolute; top: 6px; right: 8px; z-index: 44; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; font-size: 12px; }
 .buffbar .buff { background: #1d2a3a; border: 1px solid #3c6a8f; border-radius: 4px; padding: 0 4px; color: #bfe6ff; }
 .aimbar { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 45; background: #23406b; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
+/* Nhóm (P3-M4): khung thành viên góc trên trái vùng game, hộp lời mời giữa trên */
+.partyhost { position: absolute; inset: 0; pointer-events: none; z-index: 44; }
+.partyframe { position: absolute; top: 6px; left: 8px; width: 168px; display: grid; gap: 4px; pointer-events: auto; font-size: 12px; }
+.partyframe .pm { background: rgba(0, 0, 0, 0.55); border: 1px solid #3a3e55; border-radius: 4px; padding: 3px 5px; }
+.partyframe .pm.off { opacity: 0.55; }
+.partyframe .pmhead { display: flex; gap: 4px; align-items: center; }
+.partyframe .pmname { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.partyframe .pmsub { color: #aab; }
+.partyframe .pmkick { padding: 0 4px; min-height: 0; line-height: 1.2; font-size: 11px; }
+.partyframe .bar { height: 5px; margin-top: 2px; }
+.partyframe .pmnote { color: #f0c36a; font-size: 11px; }
+.partyframe .pmbtns { display: flex; gap: 4px; }
+.partyframe .pmbtns button { flex: 1; font-size: 12px; padding: 2px 4px; min-height: 0; }
+.partyask { position: absolute; top: 36px; left: 50%; transform: translateX(-50%); background: #1d2236; border: 1px solid var(--accent); border-radius: 6px; padding: 8px 12px; pointer-events: auto; display: grid; gap: 6px; text-align: center; }
+.partyask .btns { display: flex; gap: 8px; justify-content: center; }
+.chatbox .line.party b { color: #8fd18f; }
 /* Chat (P2-M5): góc dưới trái vùng game, dưới panel (panel full-screen che chat) */
 .chatbox { position: absolute; left: 8px; bottom: 8px; z-index: 4; width: min(420px, calc(100% - 96px)); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
 .chatbox .log { max-height: 132px; overflow-y: auto; font-size: 13px; line-height: 1.35; text-shadow: 0 0 3px #000; pointer-events: auto; scrollbar-width: thin; }

@@ -260,3 +260,11 @@ test("kho (P3-M3): kéo thả túi ↔ kho → move_item; [Gửi]/[Rút] chọn 
   assert.equal(autoSlot(target, 120, item("y", "sword", 7), tpl), 2);
   assert.equal(autoSlot([item("a", "sword", 0)], 1, item("y", "sword", 7), tpl), null);
 });
+
+test("chat nhóm (P3-M4): /p nội dung = PARTY; dòng [Nhóm]", () => {
+  assert.deepEqual(parseChat("/p đi săn thôi"), { channel: "PARTY", text: "đi săn thôi" });
+  assert.deepEqual(parseChat("/P x"), { channel: "PARTY", text: "x" });
+  assert.equal(parseChat("/p"), null);
+  assert.deepEqual(parseChat("/party"), { channel: "NORMAL", text: "/party" });
+  assert.deepEqual(chatLine({ channel: "PARTY", from: "Ann", text: "t", t: 0 }, "Me"), { cls: "party", head: "[Nhóm] Ann: ", text: "t" });
+});

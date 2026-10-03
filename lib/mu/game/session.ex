@@ -29,7 +29,7 @@ defmodule Mu.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
-  alias Mu.Chat
+  alias Mu.{Chat, Party}
   alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
@@ -125,6 +125,13 @@ defmodule Mu.Game.Session do
 
         s = kick_tabs(%{s | character: character}, pid)
         register_name(character.name)
+        # nhóm: vào lại trong hạn reconnect → online (P3-M4)
+        Party.update(character.id, %{
+          online: true,
+          level: character.level,
+          map_id: character.map_id
+        })
+
         s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
 
         {:ok, info} = MapServer.join(character.map_id, map_player(character, s.items), self())
@@ -181,6 +188,7 @@ defmodule Mu.Game.Session do
         # lên cấp: hồi đầy HP/MP (G10), báo MapServer chỉ số mới
         d = Engine.derived(s.character, Inventory.equipped_templates(s.items))
         c = %{s.character | hp_current: d.hp_max, mana_current: d.mp_max}
+        Party.update(c.id, %{level: c.level})
         sync_map(%{s | character: c}, %{hp: d.hp_max, mp: d.mp_max})
       else
         s
@@ -205,6 +213,12 @@ defmodule Mu.Game.Session do
   end
 
   def handle_info({:mail_changed, _}, s), do: {:noreply, s, timeout(s)}
+
+  # Nhóm (P3-M4): `party`, `party_invite`, chat PARTY / thông báo nhóm
+  def handle_info({:party_push, event, payload}, s) do
+    push(s, event, payload)
+    {:noreply, s, timeout(s)}
+  end
 
   # WHISPER từ người khác (P2-M5)
   def handle_info({:chat_whisper, msg}, s) do
@@ -244,7 +258,7 @@ defmodule Mu.Game.Session do
 
   def handle_info(:delayed_leave, s) do
     s = %{s | leave_timer: nil}
-    s = if map_size(s.tabs) == 0, do: leave_map(s), else: s
+    s = if map_size(s.tabs) == 0, do: go_offline(s), else: s
     {:noreply, s, timeout(s)}
   end
 
@@ -488,6 +502,9 @@ defmodule Mu.Game.Session do
 
         "WHISPER" ->
           whisper(s, p["to"], text)
+
+        "PARTY" ->
+          {Party.chat(c.id, Chat.message("PARTY", c.name, text)), s}
       end
     else
       error -> {error, s}
@@ -496,11 +513,31 @@ defmodule Mu.Game.Session do
 
   defp run("chat", _payload, s), do: {{:error, "INVALID_TARGET"}, s}
 
+  # ---------- Nhóm (P3-M4, P3-5) ----------
+
+  defp run("party_invite", %{"to" => to}, s) when is_binary(to),
+    do: {Party.invite(party_me(s), to), s}
+
+  defp run("party_accept", %{"from" => from}, s) when is_binary(from),
+    do: {Party.accept(party_me(s), from), s}
+
+  defp run("party_decline", %{"from" => from}, s) when is_binary(from),
+    do: {Party.decline(party_me(s), from), s}
+
+  defp run("party_leave", _p, s), do: {Party.leave(s.character.id), s}
+
+  defp run("party_kick", %{"name" => name}, s) when is_binary(name),
+    do: {Party.kick(s.character.id, name), s}
+
+  defp run("party_disband", _p, s), do: {Party.disband(s.character.id), s}
+
+  defp run("party_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
 
-  # PARTY / GUILD: tính năng tắt tới Phase 3 / 4; SYSTEM: chỉ server gửi
-  defp chat_channel(ch) when ch in ~w(NORMAL WHISPER), do: :ok
-  defp chat_channel(ch) when ch in ~w(PARTY GUILD SYSTEM), do: {:error, "FORBIDDEN"}
+  # PARTY: từ P3-M4 (không có nhóm → INVALID_TARGET); GUILD: tắt tới Phase 4; SYSTEM: chỉ server
+  defp chat_channel(ch) when ch in ~w(NORMAL WHISPER PARTY), do: :ok
+  defp chat_channel(ch) when ch in ~w(GUILD SYSTEM), do: {:error, "FORBIDDEN"}
   defp chat_channel(_), do: {:error, "INVALID_TARGET"}
 
   # bị cấm chat: FORBIDDEN + một dòng SYSTEM cho chính người đó biết lý do
@@ -520,6 +557,9 @@ defmodule Mu.Game.Session do
         {:error, "FORBIDDEN"}
     end
   end
+
+  defp party_me(%{character: c}),
+    do: %{cid: c.id, name: c.name, class: c.class, level: c.level, map_id: c.map_id}
 
   defp whisper(s, to, text) when is_binary(to) do
     me = s.character.name
@@ -753,7 +793,7 @@ defmodule Mu.Game.Session do
         %{s | leave_timer: Process.send_after(self(), :delayed_leave, stay)}
 
       _ ->
-        leave_map(s)
+        go_offline(s)
     end
   end
 
@@ -761,11 +801,21 @@ defmodule Mu.Game.Session do
   # `reconnectGraceSeconds`, vẫn bị đánh; vào lại trong hạn thì tiếp tục (KB_TECHNICAL §4, P3-M2)
   defp last_tab_closed(%{on_map: true, character: c} = s, _reason) do
     MapServer.halt(c.map_id, c.id)
+    Party.update(c.id, %{online: false})
     grace = Config.get(["session", "reconnectGraceSeconds"]) * 1000
     %{s | leave_timer: Process.send_after(self(), :delayed_leave, grace)}
   end
 
   defp last_tab_closed(s, _reason), do: s
+
+  # Nhân vật rời game hẳn (đăng xuất / hết hạn reconnect): rời map, rời nhóm (P3-5 (6))
+  defp go_offline(%{character: %{id: cid}} = s) do
+    s = leave_map(s)
+    Party.leave(cid)
+    s
+  end
+
+  defp go_offline(s), do: s
 
   defp cancel_leave(%{leave_timer: nil} = s), do: s
 
@@ -820,6 +870,7 @@ defmodule Mu.Game.Session do
     }
 
     for {_, pid} <- s.tabs, do: send(pid, {:map_changed, old, map_id, payload, info.entities})
+    Party.update(c.id, %{map_id: map_id})
     s
   end
 

@@ -169,6 +169,17 @@ defmodule Mu.Game.EngineTest do
       assert Engine.exp_gain(100, 50, 2) == 10
       assert Engine.exp_gain(1, 50, 2) == 1
     end
+
+    test "EXP nhóm (P3-5): chia đều × (1 + 0,1 × (n − 1)), phạt chênh cấp riêng từng người" do
+      assert Engine.party_exp_gain(100, 1, 1, 2) == 100
+      assert Engine.party_exp_gain(100, 2, 1, 2) == 55
+      assert Engine.party_exp_gain(100, 5, 1, 2) == 28
+      # 30 / 3 × 1,2 = 12 (không ra 11 vì số thực)
+      assert Engine.party_exp_gain(30, 3, 1, 2) == 12
+      # người cấp 17 với quái cấp 2: × 0,5
+      assert Engine.party_exp_gain(100, 2, 17, 2) == 27
+      assert Engine.party_exp_gain(1, 5, 1, 2) == 1
+    end
   end
 
   describe "alloc (§1)" do

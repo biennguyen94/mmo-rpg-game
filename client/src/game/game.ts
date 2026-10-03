@@ -20,6 +20,7 @@ import {
   type MapChangePayload,
   type ChatPayload,
   type MailPayload,
+  type PartyPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -88,6 +89,19 @@ export class GameClient {
       sendChat: (line) => void this.sendChat(line),
       claimMail: (id) => void this.send("mail_claim", { mailId: id }).then((ok) => ok && Sound.play("pickup")),
       deleteReadMail: () => void this.send("mail_delete", { read: true }),
+      partyInvite: (name) => void this.send("party_invite", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} vào nhóm.`)),
+      partyAnswer: (from, accept) => {
+        if (this.state) this.state.partyInvite = null;
+        this.render();
+        void this.send(accept ? "party_accept" : "party_decline", { from });
+      },
+      partyLeave: () => void this.send("party_leave"),
+      goTo: (id) => {
+        const e = this.world.entities.get(id);
+        if (e) this.moveTo(e.x, e.y);
+      },
+      partyKick: (name) => void this.send("party_kick", { name }),
+      partyDisband: () => void this.send("party_disband"),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -134,6 +148,9 @@ export class GameClient {
       chat: this.state?.chat ?? [],
       mailUnread: this.state?.mailUnread ?? 0,
       mail: this.state?.mail ?? [],
+      // nhóm sống trên server (RAM): vào lại thì event `party` tới sau
+      party: this.state?.party ?? null,
+      partyInvite: null,
     };
     this.buildView(r.map);
     this.render();
@@ -230,6 +247,15 @@ export class GameClient {
         this.state.shop = this.shop;
         this.state.panel = "shop";
         break;
+      case "party": {
+        const pp = p as PartyPayload;
+        this.state.party = pp.members.length ? pp : null;
+        break;
+      }
+      case "party_invite":
+        this.state.partyInvite = { from: p.from, until: Date.now() + (this.join?.config.partyInviteSeconds ?? 30) * 1000 };
+        Sound.play("click");
+        break;
       case "warehouse":
         // mở Thủ kho hoặc kho đổi sau gửi / rút (P3-M3)
         this.state.warehouse = p as WarehousePayload;
@@ -305,7 +331,7 @@ export class GameClient {
     if (this.aiming) return void this.castAt(this.aiming, e.x, e.y);
     if (e.kind === "player") {
       // menu skill hỗ trợ / teleport (P2-M3); không có gì thì như cũ: đi tới
-      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy) && e.id !== this.selfId) this.moveTo(e.x, e.y);
+      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name) && e.id !== this.selfId) this.moveTo(e.x, e.y);
     } else if (e.kind === "monster" && e.state !== "dead") {
       this.ui.monsterMenu(e.id, sx, sy);
     } else if (e.kind === "npc") {
@@ -369,6 +395,7 @@ export class GameClient {
     const r = await this.conn.cmd("chat", c);
     if (r.ok || !this.state) return;
     if (r.error === "INVALID_TARGET" && c.channel === "WHISPER") this.notices.add("ERROR", `Không có người chơi "${c.to}" đang online.`);
+    else if (r.error === "INVALID_TARGET" && c.channel === "PARTY") this.notices.add("ERROR", "Bạn chưa có nhóm.");
     else if (r.error !== "FORBIDDEN") this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
     this.render();
   }
