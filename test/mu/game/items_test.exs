@@ -215,4 +215,68 @@ defmodule Mu.Game.ItemsTest do
     assert Repo.get(Mu.Game.Item, orphan.id) == nil
     assert audits(orphan.id) == ["ORPHAN_DELETE"]
   end
+
+  describe "P2-M1" do
+    test "move_item: chuyển, hoán đổi (không vướng unique slot), gộp stack", %{c: c} do
+      sword = pick(c, "sword_t0")
+      armor = pick(c, "armor_t0")
+      assert {sword.slot, armor.slot} == {0, 1}
+
+      {:ok, %{items: items}} = Items.move_item(c.id, sword.id, 7)
+      assert Enum.find(items, &(&1.id == sword.id)).slot == 7
+
+      {:ok, %{items: items}} = Items.move_item(c.id, sword.id, 1)
+
+      assert {Enum.find(items, &(&1.id == sword.id)).slot,
+              Enum.find(items, &(&1.id == armor.id)).slot} == {1, 7}
+
+      assert audits(sword.id) == ["PICKUP", "MOVE", "MOVE"]
+
+      {:ok, _} = give_zen(c, 10_000) && Items.buy(c.id, "hp_potion_small", 5, 1, @npc)
+      {:ok, %{items: items}} = Items.split(c.id, potion_id(c), 2, 20)
+      assert [%{quantity: 3, slot: 0}, %{quantity: 2, slot: 20}] = potions(items)
+
+      [a, b] = potions(items)
+      {:ok, %{items: items}} = Items.move_item(c.id, b.id, a.slot)
+      assert [%{id: id, quantity: 5, slot: 0}] = potions(items)
+      assert id == a.id
+      assert audits(b.id) == ["SPLIT", "MERGE"]
+    end
+
+    test "drop: xóa khỏi DB, trả dropped giữ serial/thuộc tính; nhặt lại nhận y nguyên", %{c: c} do
+      sword = pick(c, "sword_t0")
+
+      Repo.update_all(from(i in Mu.Game.Item, where: i.id == ^sword.id),
+        set: [item_level: 3, luck: true]
+      )
+
+      assert {:ok, %{items: [], dropped: d}} = Items.drop(c.id, sword.id, "ground:lorencia")
+
+      assert %{
+               serial: serial,
+               template_id: "sword_t0",
+               quantity: 1,
+               attrs: %{item_level: 3, luck: true}
+             } = d
+
+      assert serial == sword.serial
+      assert audits(sword.id) == ["PICKUP", "DROP"]
+      assert {:error, "NOT_OWNER"} = Items.drop(c.id, sword.id, "ground:lorencia")
+
+      {:ok, %{items: [it]}} = Items.pickup(c.id, d, "ground:lorencia")
+      assert {it.serial, it.item_level, it.luck} == {serial, 3, true}
+    end
+
+    test "drop stack potion rồi nhặt lại đủ số lượng", %{c: c} do
+      {:ok, _} = give_zen(c, 10_000) && Items.buy(c.id, "hp_potion_small", 7, 1, @npc)
+      {:ok, %{dropped: d}} = Items.drop(c.id, potion_id(c), "ground:lorencia")
+      assert d.quantity == 7
+      {:ok, %{items: [%{quantity: 7}]}} = Items.pickup(c.id, d, "ground:lorencia")
+    end
+  end
+
+  defp potions(items),
+    do: items |> Enum.filter(&(&1.template_id == "hp_potion_small")) |> Enum.sort_by(& &1.slot)
+
+  defp potion_id(c), do: hd(potions(Items.load(c.id))).id
 end

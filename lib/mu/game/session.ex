@@ -16,7 +16,7 @@ defmodule Mu.Game.Session do
   - còn lại (EXP, vị trí, HP/MP) mỗi `session.saveIntervalSeconds` nếu có đổi.
 
   Đồ (`Mu.Game.Items`): Session giữ bản đọc lại từ DB sau mỗi thao tác; act item/Zen
-  (pickup, equip, unequip, use_item, buy, sell) idempotent theo `rid`: gửi lại cùng `rid`
+  (pickup, equip, unequip, move_item, split, drop, use_item, buy, sell) idempotent theo `rid`: gửi lại cùng `rid`
   trả kết quả cũ, không làm lại. Trang bị đổi → chỉ số mới gửi MapServer.
 
   Tab: `session.singleLoginPerAccount` — tab mới vào thì tab cũ nhận `{:session_kicked, _}`;
@@ -34,7 +34,7 @@ defmodule Mu.Game.Session do
   @idle_timeout :timer.minutes(1)
 
   # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
-  @item_acts ~w(pickup equip unequip use_item buy sell)
+  @item_acts ~w(pickup equip unequip move_item split drop use_item buy sell)
   # số `rid` gần nhất được nhớ kết quả
   @rid_memory 200
 
@@ -302,6 +302,33 @@ defmodule Mu.Game.Session do
     end
   end
 
+  # Sắp xếp túi (P2-M1): chỉ trong INVENTORY, mỗi item một ô (P2-8)
+  defp run("move_item", %{"itemId" => id, "to" => %{"location" => "INVENTORY", "slot" => to}}, s)
+       when is_binary(id) do
+    item_result(Items.move_item(s.character.id, id, to), s)
+  end
+
+  defp run("move_item", %{"itemId" => id, "to" => %{"location" => _}}, s) when is_binary(id),
+    do: {{:error, "INVALID_SLOT"}, s}
+
+  defp run("split", %{"itemId" => id, "quantity" => q} = p, s) when is_binary(id) do
+    item_result(Items.split(s.character.id, id, q, p["toSlot"]), s)
+  end
+
+  # Vứt cả stack xuống ô đang đứng (P2-9); đã chết thì không vứt được
+  defp run("drop", %{"itemId" => id}, s) when is_binary(id) do
+    c = s.character
+
+    with %{dead?: false} <- MapServer.player_state(c.map_id, c.id) || {:error, "FORBIDDEN"},
+         {:ok, res} <- Items.drop(c.id, id, "ground:" <> c.map_id) do
+      {:ok, _} = MapServer.drop_ground(c.map_id, c.id, res.dropped)
+      {:ok, s |> apply_items(res) |> notify()}
+    else
+      %{dead?: true} -> {{:error, "FORBIDDEN"}, s}
+      error -> {error, s}
+    end
+  end
+
   defp run("npc_open", %{"npcId" => npc}, s) do
     case near_shop(s, npc) do
       {:ok, npc_id, shop} ->
@@ -344,7 +371,7 @@ defmodule Mu.Game.Session do
   defp run(act, _payload, s) when act in @item_acts or act == "npc_open",
     do: {{:error, "INVALID_TARGET"}, s}
 
-  # act khác (move_item, split, drop, chat): ngoài UI Phase 1 — DEC-16
+  # act khác (chat): chưa làm — DEC-16
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
 
   defp valid_quantity(t, q) do

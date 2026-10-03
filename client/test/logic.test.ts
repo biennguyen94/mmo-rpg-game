@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { AllocBatcher, type Timer } from "../src/logic/alloc.js";
 import { AutoAttack, approach } from "../src/logic/autoattack.js";
 import { bucket, iconPath } from "../src/logic/icons.js";
-import { equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
+import { defaultSplit, dragCommand, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
 import { NoticeLog, diffPlayer } from "../src/logic/notices.js";
 import { RidGen, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
 import { InterpBuffer, ServerClock } from "../src/state/interp.js";
@@ -169,4 +169,33 @@ test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo 
   assert.equal(a.tick(2000, { x: 4, y: 2 }, { x: 5, y: 3, alive: false }, 1, 1000), null);
   assert.equal(a.target, null);
   assert.deepEqual(approach({ x: 0, y: 10 }, { x: 5, y: 5 }), { x: 4, y: 6 });
+});
+
+test("dragCommand: kéo thả túi đồ → lệnh (P2-M1)", () => {
+  const sword = item("s", "sword", 0);
+  const pot = item("p", "hp", 1, 5);
+  const ring = item("r", "ring", 8);
+  const p = { inventory: [sword, pot] };
+  const bag = (slot: number) => ({ kind: "bag" as const, slot });
+  const eq = (slot: number) => ({ kind: "equip" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, bag(9), p, templates), {
+    act: "move_item",
+    payload: { itemId: "s", to: { location: "INVENTORY", slot: 9 } },
+  });
+  assert.equal(dragCommand({ kind: "bag", item: sword }, bag(0), p, templates), null);
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, eq(5), p, templates), { act: "equip", payload: { itemId: "s", slot: 5 } });
+  assert.equal(dragCommand({ kind: "bag", item: sword }, eq(6), p, templates), null);
+  assert.equal(dragCommand({ kind: "bag", item: pot }, eq(5), p, templates), null);
+  assert.deepEqual(dragCommand({ kind: "bag", item: item("r2", "ring", 3) }, eq(9), p, templates)?.payload, { itemId: "r2", slot: 9 });
+  assert.deepEqual(dragCommand({ kind: "bag", item: pot }, { kind: "trash" }, p, templates), {
+    act: "drop",
+    payload: { itemId: "p" },
+    confirm: true,
+  });
+  // tháo: ô trống → đúng ô; ô có đồ → ô trống thấp nhất
+  assert.deepEqual(dragCommand({ kind: "equip", item: ring }, bag(7), p, templates), { act: "unequip", payload: { slot: 8, toSlot: 7 } });
+  assert.deepEqual(dragCommand({ kind: "equip", item: ring }, bag(1), p, templates)?.payload, { slot: 8, toSlot: 2 });
+  assert.equal(dragCommand({ kind: "equip", item: ring }, { kind: "trash" }, p, templates), null);
+  assert.equal(defaultSplit(5), 2);
+  assert.equal(defaultSplit(1), 1);
 });
