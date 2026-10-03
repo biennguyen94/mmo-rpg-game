@@ -12,7 +12,7 @@ defmodule Mu.Game.ItemImportTest do
 
   test "items.json sinh từ data/items khớp (mix mu.items.import --check)" do
     assert capture_io(fn -> Mix.Tasks.Mu.Items.Import.run(["--check"]) end) =~
-             "không đổi (50 template)"
+             "không đổi (54 template)"
   end
 
   test "10 template Phase 1 + 12 P2-M2 + 21 P2-M4 + 3 jewel P5-M1 + Chaos / 3 cánh P6-M3/M4, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
@@ -31,7 +31,8 @@ defmodule Mu.Game.ItemImportTest do
           do: "#{set}_#{part}_t1"
         ) ++
         ~w(jewel_bless jewel_soul jewel_life) ++
-        ~w(jewel_chaos wing_elf wing_heaven wing_satan)
+        ~w(jewel_chaos wing_elf wing_heaven wing_satan) ++
+        ~w(wing_spirit wing_soul wing_dragon wing_darkness)
 
     assert Enum.sort(Map.keys(Data.items())) == Enum.sort(ids)
 
@@ -97,9 +98,13 @@ defmodule Mu.Game.ItemImportTest do
     assert Data.item("sword_t0")["sellPrice"] == 500
   end
 
-  test "group 12 (P6-M4, features.wings bật): chỉ Jewel of Chaos + 3 cánh" do
+  test "group 12 (P6-M4 / P7-M3, features.wings bật): chỉ Jewel of Chaos + 3 cánh cấp 1 + 4 cánh cấp 2" do
     g12 = for t <- Map.values(Data.items()), t["iconRef"]["group"] == 12, do: t["templateId"]
-    assert Enum.sort(g12) == ~w(jewel_chaos wing_elf wing_heaven wing_satan)
+
+    assert Enum.sort(g12) ==
+             Enum.sort(
+               ~w(jewel_chaos wing_elf wing_heaven wing_satan wing_spirit wing_soul wing_dragon wing_darkness)
+             )
   end
 
   test "dữ liệu sai bị từ chối" do

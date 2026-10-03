@@ -77,9 +77,18 @@ export const upgradable = (t: ItemTemplate | undefined, bonus: LevelBonus): bool
  * Template ở cấp +N và option Jewel of Life `option` (mỗi cấp + `perOption` vào đòn với vũ khí,
  * thủ với giáp / khiên) để **hiển thị** (server tính thật, `Engine.leveled/3`).
  */
-export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0): ItemTemplate {
+/** Từ cấp `fromLevel` (+10, P7-3) mỗi cấp cộng chỉ số `multiplier` lần. */
+export type HighLevel = { fromLevel: number; multiplier: number } | null;
+
+/** Số cấp tính chỉ số của đồ +`level` (như `Engine.bonus_levels/1` ở server). */
+export function bonusLevels(level: number, high: HighLevel = null): number {
+  return high && level >= high.fromLevel ? level + (level - high.fromLevel + 1) * (high.multiplier - 1) : level;
+}
+
+export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0, high: HighLevel = null): ItemTemplate {
   const b = bonus[t.type];
   if (!b || (level <= 0 && option <= 0)) return t;
+  level = bonusLevels(level, high);
   const opt = option * perOption;
   const atk = (b.attack ?? 0) * level + (b.attack ? opt : 0);
   const def = (b.defense ?? 0) * level + (b.attack ? 0 : opt);
@@ -102,8 +111,8 @@ export function itemName(t: ItemTemplate | undefined, level = 0, fallback = "?")
 }
 
 /** Mô tả ngắn dòng 2 của §19.4 (chỉ số đã cộng theo +N nếu có `bonus`). */
-export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0): string {
-  const t = leveled(base, level, bonus, option, perOption);
+export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0, high: HighLevel = null): string {
+  const t = leveled(base, level, bonus, option, perOption, high);
   const parts: string[] = [];
   if (t.attackMax) parts.push(`Tấn công +${t.attackMin ?? 0}~${t.attackMax}`);
   if (t.defense) parts.push(`Phòng thủ +${t.defense}`);

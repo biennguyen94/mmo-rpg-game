@@ -211,6 +211,7 @@ export class GameClient {
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       levelBonus: r.config.items?.levelBonus ?? {},
       optionBonus: r.config.items?.optionBonus ?? 0,
+      highLevel: r.config.items?.highLevel ?? null,
       // giao dịch bị hủy khi mất kết nối (KB_TECHNICAL §10): vào lại thì không còn
       trade: null,
       tradeAsk: null,

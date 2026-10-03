@@ -259,26 +259,38 @@ const WING_COLOR: Record<string, [string, string]> = {
   wing_elf: ["rgba(120,220,140,0.85)", "#2f7a45"],
   wing_heaven: ["rgba(235,240,255,0.9)", "#7f8fb8"],
   wing_satan: ["rgba(150,30,40,0.9)", "#3a0a10"],
+  // cánh cấp 2 (P7-M3): to hơn, thêm một lớp lông bên trong
+  wing_spirit: ["rgba(90,230,200,0.85)", "#1d6b5c"],
+  wing_soul: ["rgba(150,170,255,0.88)", "#3b3f8f"],
+  wing_dragon: ["rgba(200,150,40,0.9)", "#5a3a08"],
+  wing_darkness: ["rgba(70,40,110,0.92)", "#1a0b2e"],
 };
+const WING_TIER2 = new Set(["wing_spirit", "wing_soul", "wing_dragon", "wing_darkness"]);
 
 /** Đôi cánh sau lưng người chơi: hai nửa đối xứng, đập nhẹ theo thời gian. */
 export function drawWings(g: CanvasRenderingContext2D, wing: string, x: number, y: number, dead: boolean): void {
   const [fill, edge] = WING_COLOR[wing] ?? ["rgba(200,200,200,0.85)", "#555"];
   const flap = Math.sin(performance.now() / 300) * 2;
+  const tier2 = WING_TIER2.has(wing);
   g.save();
   g.globalAlpha = dead ? 0.35 : 1;
-  g.fillStyle = fill;
   g.strokeStyle = edge;
   g.lineWidth = 1.5;
-  for (const side of [-1, 1]) {
-    g.beginPath();
-    g.moveTo(x + side * 3, y - 4);
-    g.quadraticCurveTo(x + side * 20, y - 22 - flap, x + side * 22, y - 6);
-    g.quadraticCurveTo(x + side * 18, y + 2, x + side * 14, y + 6 + flap / 2);
-    g.quadraticCurveTo(x + side * 10, y + 2, x + side * 3, y + 4);
-    g.closePath();
-    g.fill();
-    g.stroke();
+  // cấp 2: lớp ngoài to 1,4 lần + lớp trong nhạt hơn
+  const layers: [number, string][] = tier2 ? [[1.4, fill], [0.85, "rgba(255,255,255,0.35)"]] : [[1, fill]];
+  for (const [k, color] of layers) {
+    g.fillStyle = color;
+    for (const side of [-1, 1]) {
+      const s = side * k;
+      g.beginPath();
+      g.moveTo(x + side * 3, y - 4);
+      g.quadraticCurveTo(x + s * 20, y - (22 + flap) * k, x + s * 22, y - 6 * k);
+      g.quadraticCurveTo(x + s * 18, y + 2, x + s * 14, y + (6 + flap / 2) * k);
+      g.quadraticCurveTo(x + s * 10, y + 2, x + side * 3, y + 4);
+      g.closePath();
+      g.fill();
+      g.stroke();
+    }
   }
   g.restore();
 }

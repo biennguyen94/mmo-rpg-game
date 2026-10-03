@@ -1,5 +1,5 @@
 {
-  "source": "P6-3 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): Phase 6 chỉ một công thức Chaos Machine — tạo cánh cấp 1. Số do dự án đặt (IMPLEMENTATION), không phải số MU.",
+  "source": "P6-3 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): Phase 6 chỉ một công thức Chaos Machine — tạo cánh cấp 1. Số do dự án đặt (IMPLEMENTATION), không phải số MU. P7-M3: thêm công thức tạo cánh cấp 2 (P7-8, DEC-183).",
   "recipes": [
     {
       "id": "wings_1",
@@ -37,6 +37,61 @@
       "version": null,
       "verified": false,
       "note": "1 vũ khí / giáp / khiên +4 trở lên + 1 Jewel of Chaos + 20 000 Zen; tỉ lệ 10 % + 5 % mỗi cấp trên +4, +2 % mỗi cấp option Life, tối đa 60 %; thành công → 1 cánh ngẫu nhiên trong 3; thất bại mất hết đồ đầu vào và Zen."
+    },
+    {
+      "id": "wings_2",
+      "name": "Tạo cánh cấp 2",
+      "zen": 200000,
+      "inputs": [
+        {
+          "types": [
+            "WING"
+          ],
+          "templates": [
+            "wing_elf",
+            "wing_heaven",
+            "wing_satan"
+          ],
+          "minLevel": 5,
+          "count": 1
+        },
+        {
+          "templateId": "jewel_bless",
+          "count": 5
+        },
+        {
+          "templateId": "jewel_soul",
+          "count": 5
+        },
+        {
+          "templateId": "jewel_chaos",
+          "count": 2
+        }
+      ],
+      "rate": {
+        "base": 0.2,
+        "fromLevel": 5,
+        "perLevel": 0.05,
+        "perOption": 0,
+        "max": 0.6
+      },
+      "outputs": [
+        "wing_spirit",
+        "wing_soul",
+        "wing_dragon",
+        "wing_darkness"
+      ],
+      "outputsByClass": {
+        "ELF": "wing_spirit",
+        "DW": "wing_soul",
+        "DK": "wing_dragon",
+        "MG": "wing_darkness"
+      },
+      "onFailure": "LOSE_ALL",
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "note": "P7-8 (duyệt 2026-10-03, DEC-183): cánh cấp 1 +5 trở lên + 5 Bless + 5 Soul + 2 Chaos + 200 000 Zen; tỉ lệ 20 % + 5 % mỗi cấp trên +5, tối đa 60 %; thành công → cánh cấp 2 đúng class người ghép; thất bại mất hết. Không item mới."
     }
   ]
 }

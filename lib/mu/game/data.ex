@@ -89,6 +89,7 @@ defmodule Mu.Game.Data do
     ok? =
       is_integer(r["zen"]) and r["zen"] >= 0 and r["outputs"] != [] and
         Enum.all?(r["outputs"], &Map.has_key?(@items, &1)) and
+        Enum.all?(Map.values(r["outputsByClass"] || %{}), &(&1 in r["outputs"])) and
         Enum.all?(r["inputs"], fn i ->
           is_integer(i["count"]) and i["count"] > 0 and
             ((is_list(i["types"]) and is_integer(i["minLevel"])) or

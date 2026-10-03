@@ -6,11 +6,13 @@ defmodule Mu.Game.Chaos do
   Đầu vào là các món người chơi đặt vào máy (tối đa `chaos.maxItems`), mỗi món
   `%{id, template_id, quantity, item_level, option_level}`. Một công thức khớp khi **mọi** món
   đặt vào được dùng hết bởi các dòng `inputs`, đủ `count` mỗi dòng:
-  - `{types, minLevel, count}`: `count` món (không xếp chồng) có type trong `types`, +`minLevel` trở lên;
+  - `{types, minLevel, count}` (tùy chọn `templates`: chỉ các template này, P7-M3 cánh cấp 1):
+    `count` món (không xếp chồng) có type trong `types`, +`minLevel` trở lên;
   - `{templateId, count}`: `count` cái template đó (lấy từ stack; dư trong stack thì giữ lại).
 
   Tỉ lệ = `base + perLevel × (cấp − fromLevel) + perOption × option` của món đồ chính, tối đa
-  `max`. Thành công → một món ngẫu nhiên trong `outputs`; thất bại → mất hết đầu vào (`LOSE_ALL`).
+  `max`. Thành công → món theo class người ghép nếu công thức có `outputsByClass` (cánh cấp 2,
+  P7-8), không thì một món ngẫu nhiên trong `outputs`; thất bại → mất hết đầu vào (`LOSE_ALL`).
   """
 
   alias Mu.Game.{Config, Data, Rng}
@@ -57,11 +59,15 @@ defmodule Mu.Game.Chaos do
   end
 
   # dòng đồ theo type: đúng `count` món, mỗi món một cái
-  defp take(%{"types" => types, "minLevel" => min, "count" => n}, items) do
+  defp take(%{"types" => types, "minLevel" => min, "count" => n} = input, items) do
+    only = input["templates"]
+
     {ok, rest} =
       Enum.split_with(items, fn it ->
         t = Data.item(it.template_id) || %{}
-        t["type"] in types and it.item_level >= min and it.quantity == 1
+
+        t["type"] in types and it.item_level >= min and it.quantity == 1 and
+          (only == nil or it.template_id in only)
       end)
 
     if length(ok) == n, do: {:ok, Enum.map(ok, &{&1, 1}), rest}, else: :error
@@ -84,15 +90,20 @@ defmodule Mu.Game.Chaos do
     min(Float.round(p, 4), r["max"])
   end
 
-  @doc "Quay kết quả: `{template_id | nil, rng}` (`nil` = thất bại)."
-  def roll(rng, %{recipe: r, rate: rate}) do
+  @doc "Quay kết quả cho người ghép class `class`: `{template_id | nil, rng}` (`nil` = thất bại)."
+  def roll(rng, %{recipe: r, rate: rate}, class \\ nil) do
     {ok?, rng} = Rng.chance(rng, rate)
 
-    if ok? do
-      {i, rng} = Rng.int(rng, 0, length(r["outputs"]) - 1)
-      {Enum.at(r["outputs"], i), rng}
-    else
-      {nil, rng}
+    cond do
+      not ok? ->
+        {nil, rng}
+
+      out = (r["outputsByClass"] || %{})[class] ->
+        {out, rng}
+
+      true ->
+        {i, rng} = Rng.int(rng, 0, length(r["outputs"]) - 1)
+        {Enum.at(r["outputs"], i), rng}
     end
   end
 end

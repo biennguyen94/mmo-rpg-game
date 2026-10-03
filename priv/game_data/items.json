@@ -2189,6 +2189,190 @@
       "type": "WING",
       "verified": false,
       "version": "s5+"
+    },
+    {
+      "absorb": 20,
+      "buyPrice": 200000,
+      "classes": [
+        "ELF"
+      ],
+      "damageIncrease": 20,
+      "defense": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 3
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Spirit",
+      "reference": {
+        "group": 12,
+        "index": 3,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 25,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 100000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_spirit",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 20,
+      "buyPrice": 200000,
+      "classes": [
+        "DW"
+      ],
+      "damageIncrease": 20,
+      "defense": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 4
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Soul",
+      "reference": {
+        "group": 12,
+        "index": 4,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 25,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 100000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_soul",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 20,
+      "buyPrice": 200000,
+      "classes": [
+        "DK"
+      ],
+      "damageIncrease": 20,
+      "defense": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 5
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Dragon",
+      "reference": {
+        "group": 12,
+        "index": 5,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 25,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 100000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_dragon",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 20,
+      "buyPrice": 200000,
+      "classes": [
+        "MG"
+      ],
+      "damageIncrease": 20,
+      "defense": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 6
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Darkness",
+      "reference": {
+        "group": 12,
+        "index": 6,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 25,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 100000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_darkness",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
     }
   ],
   "source": "Sinh bởi `mix mu.items.import` từ data/items/*.json — KHÔNG sửa tay. Xem Mu.Game.ItemImport."

@@ -17,6 +17,7 @@ import {
   shortDesc,
   itemName,
   upgradable,
+  type HighLevel,
   type LevelBonus,
   type DragEnd,
   type DragStart,
@@ -74,6 +75,8 @@ export interface UiState {
   levelBonus: LevelBonus;
   /** Chỉ số option Jewel of Life mỗi cấp (P5-M2). */
   optionBonus: number;
+  /** P7-3: từ +10 chỉ số mỗi cấp nhân `multiplier`. */
+  highLevel: HighLevel;
   /** Giao dịch đang mở (P5-M4) + lời mời giao dịch đang chờ (hạn giờ client). */
   trade: TradePayload | null;
   tradeAsk: { from: string; until: number } | null;
@@ -1180,7 +1183,7 @@ export class GameUI {
           { class: "guildform" },
           h("button", { "data-test": "chaos-combine", disabled: !c?.recipe || (c.zen ?? 0) > s.player.zen, onclick: () => this.a.chaosCombine() }, "⚗ Kết hợp"),
         ),
-        h("div", { class: "hint" }, `Tối đa ${c?.maxItems ?? 8} món. Tạo cánh: 1 vũ khí / giáp / khiên +4 trở lên + 1 Jewel of Chaos. Thất bại mất hết đồ đặt vào.`),
+        h("div", { class: "hint" }, `Tối đa ${c?.maxItems ?? 8} món. Cánh cấp 1: 1 vũ khí / giáp / khiên +4 trở lên + 1 Jewel of Chaos. Cánh cấp 2: cánh cấp 1 +5 trở lên + 5 Bless + 5 Soul + 2 Chaos. Thất bại mất hết đồ đặt vào.`),
         h("div", { class: "head" }, "Túi đồ"),
         h(
           "div",
@@ -1475,7 +1478,7 @@ export class GameUI {
       { class: "tooltip", "data-test": "tooltip" },
       this.icon(item, "big"),
       h("b", { "data-test": "tt-name" }, item.quantity > 1 ? `${itemName(t, item.level)} ×${item.quantity}` : itemName(t, item.level)),
-      h("div", {}, shortDesc(t, item.level, this.state.levelBonus, item.optionLevel ?? 0, this.state.optionBonus)),
+      h("div", {}, shortDesc(t, item.level, this.state.levelBonus, item.optionLevel ?? 0, this.state.optionBonus, this.state.highLevel)),
       (item.optionLevel ?? 0) > 0
         ? h("div", { class: "opt", "data-test": "tt-option" }, `Option Life +${(item.optionLevel ?? 0) * this.state.optionBonus} ${t.type === "WEAPON" ? "đòn" : "thủ"}`)
         : null,

@@ -1,0 +1,174 @@
+{
+  "sourceType": "IMPLEMENTATION",
+  "note": "P7-M3 (P7-8 duyệt 2026-10-03, DEC-183): 4 cánh cấp 2 (Item.txt 12/3 Spirit — ELF, 12/4 Soul — DW, 12/5 Dragon — DK, 12/6 Darkness — MG): cấp 25, thủ 20, +20 % sát thương gây ra, −20 % sát thương nhận; chỉ lấy từ Chaos Machine (cánh cấp 1 +5↑ + 5 Bless + 5 Soul + 2 Chaos + 200 000 Zen), ra đúng class người ghép. buyPrice 200 000 (NPC mua lại 100 000) do dự án đặt. Chỉ số MU thật không dùng.",
+  "items": [
+    {
+      "templateId": "wing_spirit",
+      "name": "Wings of Spirit",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "ELF"
+      ],
+      "requirements": {
+        "level": 25,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 20,
+      "damageIncrease": 20,
+      "absorb": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 3
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 3
+      },
+      "buyPrice": 200000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_soul",
+      "name": "Wings of Soul",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "DW"
+      ],
+      "requirements": {
+        "level": 25,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 20,
+      "damageIncrease": 20,
+      "absorb": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 4
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 4
+      },
+      "buyPrice": 200000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_dragon",
+      "name": "Wings of Dragon",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "DK"
+      ],
+      "requirements": {
+        "level": 25,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 20,
+      "damageIncrease": 20,
+      "absorb": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 5
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 5
+      },
+      "buyPrice": 200000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_darkness",
+      "name": "Wings of Darkness",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "MG"
+      ],
+      "requirements": {
+        "level": 25,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 20,
+      "damageIncrease": 20,
+      "absorb": 20,
+      "durability": 250,
+      "iconRef": {
+        "group": 12,
+        "index": 6
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 6
+      },
+      "buyPrice": 200000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    }
+  ]
+}

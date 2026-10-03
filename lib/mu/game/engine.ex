@@ -70,6 +70,8 @@ defmodule Mu.Game.Engine do
 
       bonus ->
         per_option = Config.get(["upgrade", "life", "perOption"]) * option
+        # P7-3: từ cấp `items.highLevel.fromLevel` (+10) mỗi cấp tính `multiplier` lần
+        level = bonus_levels(level)
         add = fn t, key, n -> Map.update(t, key, n, &(&1 + n)) end
         atk = (bonus["attack"] || 0) * level
         def = (bonus["defense"] || 0) * level
@@ -92,6 +94,17 @@ defmodule Mu.Game.Engine do
   end
 
   def leveled(template, _level, _option), do: template
+
+  @doc "Số cấp tính chỉ số của đồ +`level` (cấp ≥ `items.highLevel.fromLevel` nhân `multiplier`)."
+  def bonus_levels(level) do
+    case Config.get(["items"])["highLevel"] do
+      %{"fromLevel" => from, "multiplier" => m} when level >= from ->
+        level + (level - from + 1) * (m - 1)
+
+      _ ->
+        level
+    end
+  end
 
   @doc "Tầm đánh thường (ô) theo `weaponType` của vũ khí đang cầm (P2-5, `combat.basicAttackRange`)."
   def basic_attack_range(equipment) do

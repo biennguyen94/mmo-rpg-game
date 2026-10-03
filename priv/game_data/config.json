@@ -36,7 +36,8 @@
     "quest": "P6-2 (duyệt 2026-10-03, IMPLEMENTATION): danh sách quest ở quests.json; nhận / trả ở Quest Master (Lorencia, Noria) trong interaction.npcRange; tối đa maxActive quest đang làm; mỗi quest một lần; kill tính cho người ra đòn cuối và người cùng nhóm được chia EXP; collect nộp khi trả; thưởng EXP (không vượt maxLevel), Zen + đồ (audit QUEST) trong một transaction.",
     "chaos": "P6-3 (duyệt 2026-10-03, IMPLEMENTATION): Chaos Machine ở NPC Chaos Goblin (Noria), trong interaction.npcRange; đặt tối đa maxItems món từ túi; công thức trong chaos.json (Phase 6: chỉ tạo cánh cấp 1); một transaction, audit CHAOS_IN / CHAOS_OUT, Zen CHAOS; thất bại mất hết đầu vào + phí.",
     "wings": "P6-4 (duyệt 2026-10-03, IMPLEMENTATION; KB không có công thức): cánh cấp 1 (data/items/phase6.json) cấp 15, thủ 10, damageIncrease 12 % (nhân sát thương gây ra cùng bước buff), absorb 12 % (nhân sát thương nhận sau khi trừ thủ); levelBonus.WING mỗi +N thêm 1 thủ, 2 % / 2 %; không option Life (upgrade.life.excludeTypes). Chỉ lấy từ Chaos Machine.",
-    "events": "P6-5 / P6-6 (duyệt 2026-10-03, IMPLEMENTATION): lịch theo giờ UTC — bắt đầu khi (giờ − offsetHours) chia hết cho everyHours, phút 0; kéo dài durationMinutes; báo SYSTEM toàn server announceMinutes phút trước, lúc bắt đầu, lúc kết thúc. Golden Invasion: 8 Golden Budge Dragon (Lorencia, bãi Budge / Bull Fighter) + 8 Golden Goblin (Noria, bãi Goblin). World boss Bull Fighter Lord: Lorencia (42..47, 46..49) mép nam bãi Spider, cách đường ra cổng đông > aggroRange; bị hạ hoặc hết giờ thì kết thúc. Quái event không hồi sinh. Bật tay: mix mu.event start golden_invasion|world_boss --node <node>."
+    "events": "P6-5 / P6-6 (duyệt 2026-10-03, IMPLEMENTATION): lịch theo giờ UTC — bắt đầu khi (giờ − offsetHours) chia hết cho everyHours, phút 0; kéo dài durationMinutes; báo SYSTEM toàn server announceMinutes phút trước, lúc bắt đầu, lúc kết thúc. Golden Invasion: 8 Golden Budge Dragon (Lorencia, bãi Budge / Bull Fighter) + 8 Golden Goblin (Noria, bãi Goblin). World boss Bull Fighter Lord: Lorencia (42..47, 46..49) mép nam bãi Spider, cách đường ra cổng đông > aggroRange; bị hạ hoặc hết giờ thì kết thúc. Quái event không hồi sinh. Bật tay: mix mu.event start golden_invasion|world_boss --node <node>.",
+    "upgradeHigh": "P7-3 (duyệt 2026-10-03, DEC-183, IMPLEMENTATION; vượt bảng KB_CONFIG §5 — trên +9 là LATER_VERSION, mở ở Phase 7): upgrade.levels thêm +9 → +10 (50 %) và +10 → +11 (45 %) bằng Jewel of Chaos, thất bại mất đồ (DESTROY). items.highLevel: từ cấp fromLevel mỗi cấp cộng levelBonus × multiplier."
   },
   "game": {
     "name": "MU Web",
@@ -346,6 +347,10 @@
       15
     ],
     "ancientVariants": false,
+    "highLevel": {
+      "fromLevel": 10,
+      "multiplier": 2
+    },
     "levelBonus": {
       "WEAPON": {
         "attack": 3
@@ -451,7 +456,9 @@
       { "fromLevel": 5, "toLevel": 6, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
       { "fromLevel": 6, "toLevel": 7, "successRate": 0.7, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
       { "fromLevel": 7, "toLevel": 8, "successRate": 0.6, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
-      { "fromLevel": 8, "toLevel": 9, "successRate": 0.5, "onFailure": "DECREASE", "requires": ["jewel_soul"] }
+      { "fromLevel": 8, "toLevel": 9, "successRate": 0.5, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 9, "toLevel": 10, "successRate": 0.5, "onFailure": "DESTROY", "requires": ["jewel_chaos"] },
+      { "fromLevel": 10, "toLevel": 11, "successRate": 0.45, "onFailure": "DESTROY", "requires": ["jewel_chaos"] }
     ],
     "life": {
       "jewel": "jewel_life",

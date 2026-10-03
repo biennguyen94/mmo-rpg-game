@@ -219,6 +219,8 @@ defmodule MuWeb.GameChannel do
       # P5-M1: chỉ số cộng mỗi cấp +N theo type item (tooltip hiện số đúng; server vẫn tính)
       items: %{
         levelBonus: Config.get(["items", "levelBonus"]),
+        # P7-3: từ +10 chỉ số mỗi cấp nhân multiplier
+        highLevel: Config.get(["items"])["highLevel"],
         # P5-M2: option Jewel of Life cộng mỗi cấp
         optionBonus: Config.get(["upgrade", "life", "perOption"])
       },

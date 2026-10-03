@@ -35,8 +35,8 @@
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
 | **P7-M1 Daily quest** | Bảng `character_dailies` (migration + CHANGE_REASON); 3 nhiệm vụ / ngày chọn từ pool theo cấp, reset 00:00 UTC; nhận / trả ở Quest Master; thưởng một transaction (audit `DAILY`); tab "Hằng ngày" trong panel Nhiệm vụ | ⛔ P7-1, P7-2 |
-| **P7-M2 Upgrade +10 / +11** | Thêm 2 dòng vào `upgrade.levels`: +9 → +10, +10 → +11 bằng **Jewel of Chaos** (kéo thả như +1 → +9), thất bại **mất đồ**; chỉ số +10 / +11 gấp đôi `levelBonus`; SYSTEM khi thành công | ✅ P7-3 đã duyệt |
-| **P7-M3 Wings cấp 2** | 4 cánh cấp 2 (theo class); công thức Chaos Machine: cánh cấp 1 +5↑ + 5 Bless + 5 Soul + 2 Chaos + 200 000 Zen (**không item mới**); vẽ cánh lớn hơn / màu riêng | ✅ P7-8 đã duyệt |
+| **P7-M2 Upgrade +10 / +11** ✅ | Thêm 2 dòng vào `upgrade.levels`: +9 → +10, +10 → +11 bằng **Jewel of Chaos** (kéo thả như +1 → +9), thất bại **mất đồ**; chỉ số +10 / +11 gấp đôi `levelBonus`; SYSTEM khi thành công | ✅ P7-3 đã duyệt |
+| **P7-M3 Wings cấp 2** ✅ | 4 cánh cấp 2 (theo class); công thức Chaos Machine: cánh cấp 1 +5↑ + 5 Bless + 5 Soul + 2 Chaos + 200 000 Zen (**không item mới**); vẽ cánh lớn hơn / màu riêng | ✅ P7-8 đã duyệt |
 | **P7-M4 Khung map event + Devil Square** | Map `devil_square` (JSON + collision, tile có sẵn); `Mu.EventRoom` (cửa sổ vào, giới hạn người, đưa vào / đưa ra, kết thúc); vé Devil's Invitation; đợt quái + điểm + thưởng theo hạng; thanh event / bảng điểm trên client | ⛔ P7-4, P7-5, P7-7 |
 | **P7-M5 Blood Castle** | Map `blood_castle`; dùng lại khung P7-M4; cổng thành + tượng (thực thể có máu, không đánh trả); Archangel's Weapon (đồ nhiệm vụ) mang về NPC; thưởng cả đội + người về đích (Zen + Jewel of Soul); vé Invisibility Cloak | ⛔ P7-6, P7-7 (cần P7-M4) |
 | **P7-M6 Nghiệm thu Phase 7** | Danh sách P7-11, toàn bộ E2E một lần, soak có Devil Square / Blood Castle, `mix mu.audit`, simulator | P7-11 |

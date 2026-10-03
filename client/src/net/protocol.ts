@@ -449,7 +449,7 @@ export interface JoinReply {
     /** Guild (P4-M3): điều kiện tạo, sĩ số, hạn lời mời, mẫu tên (server vẫn kiểm). */
     guild?: GuildConfig;
     /** Chỉ số cộng mỗi cấp +N theo type item (P5-M1), để tooltip hiện số đúng. */
-    items?: { levelBonus: Record<string, { attack?: number; defense?: number; damageIncrease?: number; absorb?: number }>; optionBonus?: number };
+    items?: { levelBonus: Record<string, { attack?: number; defense?: number; damageIncrease?: number; absorb?: number }>; optionBonus?: number; highLevel?: { fromLevel: number; multiplier: number } | null };
     /** P6-M4: slot cánh mở; P6-M3: Chaos Machine. */
     wings?: boolean;
     chaos?: { enabled: boolean; maxItems: number };

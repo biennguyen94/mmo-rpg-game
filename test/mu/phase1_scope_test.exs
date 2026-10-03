@@ -33,7 +33,8 @@ defmodule Mu.Phase1ScopeTest do
           do: "#{set}_#{part}_t1"
         ) ++
         ~w(jewel_bless jewel_soul jewel_life) ++
-        ~w(jewel_chaos wing_elf wing_heaven wing_satan),
+        ~w(jewel_chaos wing_elf wing_heaven wing_satan) ++
+        ~w(wing_spirit wing_soul wing_dragon wing_darkness),
     skills:
       ~w(basic_attack falling_slash twisting_slash death_stab energy_ball fire_ball lightning teleport flame heal triple_shot greater_defense greater_damage)
       |> Enum.sort(),

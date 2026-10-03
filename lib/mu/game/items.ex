@@ -777,7 +777,7 @@ defmodule Mu.Game.Items do
           for {id, n} <- m.consume,
               do: take(find(items, id), n, "CHAOS_IN", "char:" <> cid, src, %{quantity: n})
 
-          {out, _rng} = Mu.Game.Chaos.roll(rng, m)
+          {out, _rng} = Mu.Game.Chaos.roll(rng, m, c.class)
 
           added =
             case out do

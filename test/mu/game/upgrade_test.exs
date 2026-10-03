@@ -28,7 +28,7 @@ defmodule Mu.Game.UpgradeTest do
     assert {:error, "INVALID_TARGET"} = Upgrade.apply(Rng.new(1), @sword, 6, 0, "jewel_bless")
   end
 
-  test "Soul +6/+7/+8: tỉ lệ 70/60/50 %, hỏng giảm 1 cấp; +9 → FORBIDDEN" do
+  test "Soul +6/+7/+8: tỉ lệ 70/60/50 %, hỏng giảm 1 cấp; +9 cần Chaos, +11 → FORBIDDEN" do
     for {l, p} <- [{6, 0.7}, {7, 0.6}, {8, 0.5}] do
       res = try_many(l, 0, "jewel_soul")
       ok = Enum.count(res, & &1.ok)
@@ -36,8 +36,10 @@ defmodule Mu.Game.UpgradeTest do
       assert Enum.all?(res, &(&1.level == if(&1.ok, do: l + 1, else: l - 1)))
     end
 
-    assert {:error, "FORBIDDEN"} = Upgrade.apply(Rng.new(1), @sword, 9, 0, "jewel_soul")
-    assert {:error, "FORBIDDEN"} = Upgrade.apply(Rng.new(1), @sword, 9, 0, "jewel_bless")
+    # P7-M2: +9 → +10 cần Jewel of Chaos (Bless / Soul sai loại); hết bảng ở +11
+    assert {:error, "INVALID_TARGET"} = Upgrade.apply(Rng.new(1), @sword, 9, 0, "jewel_soul")
+    assert {:error, "INVALID_TARGET"} = Upgrade.apply(Rng.new(1), @sword, 9, 0, "jewel_bless")
+    assert {:error, "FORBIDDEN"} = Upgrade.apply(Rng.new(1), @sword, 11, 0, "jewel_soul")
   end
 
   test "Life: option +1 với 50 %, hỏng không đổi, tối đa 4; giữ nguyên +N" do

@@ -187,4 +187,46 @@ defmodule MuWeb.ChaosChannelTest do
     assert {e.stats.damage_increase, e.stats.absorb} == {16, 16}
     assert Enum.any?(got(p, "spawn"), &(&1[:wing] == "wing_satan"))
   end
+
+  test "P7: cánh cấp 2 (RNG seed) ra đúng class DK, trừ 200 000 Zen; ép +10 bằng Chaos hỏng thì mất đồ; audit sạch" do
+    p = player(2_000_000, 25)
+
+    results =
+      for seed <- 1..6 do
+        w = give(p, "wing_satan", lvl: 7)
+
+        ids = [
+          w,
+          give(p, "jewel_bless", q: 5),
+          give(p, "jewel_soul", q: 5),
+          give(p, "jewel_chaos", q: 2)
+        ]
+
+        {:ok, %{chaos: r}} = Items.chaos_combine(p.c.id, ids, Rng.new(seed))
+        refute exists?(w)
+        r
+      end
+
+    assert Enum.all?(results, &(&1.recipe == "wings_2" and &1.rate == 0.3))
+
+    made =
+      for i <- Items.load(p.c.id), String.starts_with?(i.template_id, "wing_"), do: i.template_id
+
+    assert made == List.duplicate("wing_dragon", Enum.count(results, & &1.ok))
+    assert zen(p) == 2_000_000 - 6 * 200_000
+
+    # +9 → +10: thử tới khi có cả thành công lẫn mất đồ
+    outcomes =
+      for seed <- 1..8 do
+        s = give(p, "sword_t0", lvl: 9)
+        j = give(p, "jewel_chaos")
+        {:ok, %{upgrade: u}} = Items.upgrade(p.c.id, s, j, Rng.new(seed))
+        assert exists?(s) == not u.destroyed
+        if u.ok, do: assert(Mu.Repo.get!(Item, s).item_level == 10)
+        u
+      end
+
+    assert Enum.any?(outcomes, & &1.ok) and Enum.any?(outcomes, & &1.destroyed)
+    assert Mu.Audit.run().problems == []
+  end
 end

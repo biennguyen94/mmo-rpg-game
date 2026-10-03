@@ -430,3 +430,12 @@ test("cánh (P6-M4): +N cộng thủ / % sát thương / % hấp thụ; tooltip 
   assert.deepEqual([l.defense, l.damageIncrease, l.absorb], [13, 18, 18]);
   assert.equal(shortDesc(w, 0, bonus), "Phòng thủ +10, Sát thương +12%, Hấp thụ 12%");
 });
+
+test("P7: +10 / +11 cộng chỉ số gấp đôi; tooltip cánh cấp 2", async () => {
+  const { bonusLevels, shortDesc } = await import("../src/logic/items.js");
+  const high = { fromLevel: 10, multiplier: 2 };
+  assert.deepEqual([9, 10, 11].map((l) => bonusLevels(l, high)), [9, 11, 13]);
+  assert.equal(bonusLevels(11, null), 11);
+  const sword = { templateId: "s", name: "S", type: "WEAPON", slot: "WEAPON", stackable: false, attackMin: 3, attackMax: 7, iconRef: { group: 0, index: 0 }, buyPrice: 0, sellPrice: 0 };
+  assert.equal(shortDesc(sword, 10, { WEAPON: { attack: 3 } }, 0, 0, high), "Tấn công +36~40");
+});
