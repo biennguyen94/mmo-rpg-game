@@ -179,6 +179,7 @@ export class GameClient {
       // nhóm sống trên server (RAM): vào lại thì event `party` tới sau
       party: this.state?.party ?? null,
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
+      levelBonus: r.config.items?.levelBonus ?? {},
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,

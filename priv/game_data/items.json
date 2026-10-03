@@ -1915,6 +1915,110 @@
       "type": "POTION",
       "verified": false,
       "version": null
+    },
+    {
+      "buyPrice": 20000,
+      "iconRef": {
+        "group": 14,
+        "index": 13
+      },
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 20,
+      "name": "Jewel of Bless",
+      "reference": {
+        "cells": [
+          1,
+          1
+        ],
+        "group": 14,
+        "index": 13,
+        "source": "Item.txt",
+        "valor": 150,
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 10000,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "jewel_bless",
+      "type": "JEWEL",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 30000,
+      "iconRef": {
+        "group": 14,
+        "index": 14
+      },
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 20,
+      "name": "Jewel of Soul",
+      "reference": {
+        "cells": [
+          1,
+          1
+        ],
+        "group": 14,
+        "index": 14,
+        "source": "Item.txt",
+        "valor": 150,
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 15000,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "jewel_soul",
+      "type": "JEWEL",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 30000,
+      "iconRef": {
+        "group": 14,
+        "index": 16
+      },
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 20,
+      "name": "Jewel of Life",
+      "reference": {
+        "cells": [
+          1,
+          1
+        ],
+        "group": 14,
+        "index": 16,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 15000,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "jewel_life",
+      "type": "JEWEL",
+      "verified": false,
+      "version": "s5+"
     }
   ],
   "source": "Sinh bởi `mix mu.items.import` từ data/items/*.json — KHÔNG sửa tay. Xem Mu.Game.ItemImport."

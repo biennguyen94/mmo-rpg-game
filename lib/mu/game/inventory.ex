@@ -16,7 +16,7 @@ defmodule Mu.Game.Inventory do
     `move_item` theo cùng luật (`plan_transfer/4`).
   """
 
-  alias Mu.Game.{Config, Data}
+  alias Mu.Game.{Config, Data, Engine}
 
   @inventory_slots 64
   # kho tài khoản 15×8 (`KB_CONFIG §6`, CHECK của DB `slot BETWEEN 0 AND 119`)
@@ -268,8 +268,9 @@ defmodule Mu.Game.Inventory do
   def two_handed?(template),
     do: template["weaponType"] in Config.get(["combat", "twoHandedWeaponTypes"])
 
-  @doc "Template của các món đang mặc (để `Engine.derived/2`)."
-  def equipped_templates(items), do: Enum.map(equipment(items), &Data.item(&1.template_id))
+  @doc "Template của các món đang mặc, đã cộng chỉ số theo +N (`Engine.leveled/2`), cho `Engine.derived/2`."
+  def equipped_templates(items),
+    do: Enum.map(equipment(items), &Engine.leveled(Data.item(&1.template_id), &1.item_level))
 
   @doc "Tổng số potion theo `potionType` trong mọi stack của túi (`KB_GAME_DESIGN §19.6`)."
   def potion_counts(items) do

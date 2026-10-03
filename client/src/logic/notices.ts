@@ -77,7 +77,8 @@ export function diffPlayer(prev: Player, next: Player, templates: Templates): { 
   for (const it of next.inventory) {
     const old = before.get(it.id) ?? 0;
     if (it.quantity > old && next.zen >= prev.zen) {
-      const name = templates.get(it.templateId)?.name ?? it.templateId;
+      const t = templates.get(it.templateId);
+      const name = t ? (it.level > 0 ? `${t.name} +${it.level}` : t.name) : it.templateId;
       const n = it.quantity - old;
       out.push({ type: "ITEM_PICKUP", text: `Nhận: ${name}${n > 1 ? ` ×${n}` : ""}` });
     }

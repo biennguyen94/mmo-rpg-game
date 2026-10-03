@@ -35,6 +35,22 @@ defmodule Mu.Game.DropsTest do
     assert Enum.all?(rolls, &(&1.zen in 30..90))
   end
 
+  test "P5-M1: jewel chỉ rơi từ quái cấp ≥ 10, ≈ 0,6 % mỗi lần hạ, Bless 50 / Soul 35 / Life 15" do
+    jewels = ~w(jewel_bless jewel_soul jewel_life)
+
+    for {id, m} <- Mu.Game.Data.monsters() do
+      items = for g <- Mu.Game.Data.drops(id)["groups"], e <- g["entries"], do: e["item"]
+      assert Enum.any?(items, &(&1 in jewels)) == m["level"] >= 10, id
+    end
+
+    {rolls, _} = Enum.map_reduce(1..200_000, Rng.new(5), fn _, r -> Drops.roll(r, "goblin") end)
+    got = rolls |> Enum.flat_map(& &1.items) |> Enum.filter(&(&1 in jewels))
+    assert_in_delta length(got) / 200_000, 0.006, 0.0006
+    f = Enum.frequencies(got)
+    assert_in_delta f["jewel_bless"] / length(got), 0.5, 0.05
+    assert_in_delta f["jewel_soul"] / length(got), 0.35, 0.05
+  end
+
   test "quái không có bảng: không rơi gì" do
     assert {%{zen: 0, items: []}, _} = Drops.roll(Rng.new(1), "khong_co")
   end

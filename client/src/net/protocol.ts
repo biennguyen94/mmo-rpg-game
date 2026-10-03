@@ -340,6 +340,8 @@ export interface JoinReply {
     duelInviteSeconds: number;
     /** Guild (P4-M3): điều kiện tạo, sĩ số, hạn lời mời, mẫu tên (server vẫn kiểm). */
     guild?: GuildConfig;
+    /** Chỉ số cộng mỗi cấp +N theo type item (P5-M1), để tooltip hiện số đúng. */
+    items?: { levelBonus: Record<string, { attack?: number; defense?: number }> };
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

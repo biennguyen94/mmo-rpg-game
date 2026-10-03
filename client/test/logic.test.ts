@@ -352,3 +352,19 @@ test("guild war (P4-M4): tên địch tím, không hỏi PK khi đánh địch, 
   assert.equal(warResultText({ result: "lose", reason: "surrender", enemy: "Rong", score: 1, enemyScore: 2 }), "Guild thua chiến tranh với Rong: 1 – 2 (đầu hàng).");
   assert.equal(warResultText({ result: "draw", reason: "time", enemy: "Rong", score: 2, enemyScore: 2 }), "Chiến tranh với Rong kết thúc hòa: 2 – 2.");
 });
+
+test("đồ +N (P5-M1): chỉ số hiển thị theo levelBonus, tên kèm +N, jewel không đổi", async () => {
+  const { leveled, itemName, shortDesc } = await import("../src/logic/items.js");
+  const bonus = { WEAPON: { attack: 3 }, SHIELD: { defense: 2 }, HELM: { defense: 3 } };
+  const sword = { templateId: "sword_t0", name: "Short Sword", type: "WEAPON", slot: "WEAPON", stackable: false, attackMin: 3, attackMax: 7, iconRef: { group: 0, index: 1 }, buyPrice: 1, sellPrice: 0 };
+  assert.deepEqual([leveled(sword, 2, bonus).attackMin, leveled(sword, 2, bonus).attackMax], [9, 13]);
+  assert.equal(leveled(sword, 0, bonus), sword);
+  assert.equal(itemName(sword, 4), "Short Sword +4");
+  assert.equal(itemName(sword, 0), "Short Sword");
+  assert.equal(itemName(undefined, 1, "x"), "x +1");
+  assert.equal(shortDesc(sword, 1, bonus), "Tấn công +6~10");
+  const helm = { ...sword, templateId: "helm_t0", type: "HELM", slot: "HELM", attackMin: undefined, attackMax: undefined, defense: 5 };
+  assert.equal(shortDesc(helm, 3, bonus), "Phòng thủ +14");
+  const jewel = { ...sword, templateId: "jewel_bless", type: "JEWEL", slot: null, attackMin: undefined, attackMax: undefined };
+  assert.equal(leveled(jewel, 3, bonus), jewel);
+});

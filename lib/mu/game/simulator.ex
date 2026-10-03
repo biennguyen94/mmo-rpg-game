@@ -61,6 +61,9 @@ defmodule Mu.Game.Simulator do
         end,
       zen: avg.(& &1.zen),
       items: avg.(& &1.items),
+      # P5-M1: jewel rơi (Bless / Soul / Life) và số jewel mỗi giờ săn
+      jewels: avg.(& &1.jewels),
+      jewels_per_hour: avg.(&(&1.jewels / max(&1.t, 1) * 3_600_000)),
       damage_taken_per_kill: avg.(&(&1.damage_taken / max(&1.kills, 1))),
       hit_rate: avg.(&(&1.hits / max(&1.swings, 1)))
     }
@@ -84,6 +87,7 @@ defmodule Mu.Game.Simulator do
       deaths: 0,
       zen: 0,
       items: 0,
+      jewels: 0,
       damage_taken: 0,
       hits: 0,
       swings: 0,
@@ -196,7 +200,8 @@ defmodule Mu.Game.Simulator do
         c: c,
         kills: st.kills + 1,
         zen: st.zen + drop.zen,
-        items: st.items + length(drop.items)
+        items: st.items + length(drop.items),
+        jewels: st.jewels + Enum.count(drop.items, &(Data.item(&1)["type"] == "JEWEL"))
     }
 
     # lên cấp hồi đầy (G10)

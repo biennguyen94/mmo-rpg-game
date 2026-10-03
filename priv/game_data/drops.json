@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json.",
+  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json. P5-M1: nhóm `jewels` (0,6 %, Bless 50 / Soul 35 / Life 15) cho quái cấp ≥ 10 (P5-2 duyệt 2026-10-03).",
   "drops": [
     {
       "monsterId": "spider",
@@ -639,6 +639,24 @@
               "weight": 1
             }
           ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
+            }
+          ]
         }
       ],
       "sourceType": "IMPLEMENTATION",
@@ -830,6 +848,24 @@
             {
               "item": "ring_hp_t0",
               "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
             }
           ]
         }
@@ -1025,6 +1061,24 @@
               "weight": 1
             }
           ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
+            }
+          ]
         }
       ],
       "sourceType": "IMPLEMENTATION",
@@ -1216,6 +1270,24 @@
             {
               "item": "ring_hp_t0",
               "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
             }
           ]
         }
@@ -1411,6 +1483,24 @@
               "weight": 1
             }
           ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
+            }
+          ]
         }
       ],
       "sourceType": "IMPLEMENTATION",
@@ -1602,6 +1692,24 @@
             {
               "item": "ring_hp_t0",
               "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
             }
           ]
         }
@@ -1797,6 +1905,24 @@
               "weight": 1
             }
           ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
+            }
+          ]
         }
       ],
       "sourceType": "IMPLEMENTATION",
@@ -1990,6 +2116,24 @@
               "weight": 1
             }
           ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
+            }
+          ]
         }
       ],
       "sourceType": "IMPLEMENTATION",
@@ -2181,6 +2325,24 @@
             {
               "item": "ring_hp_t0",
               "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.006,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 50
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 35
+            },
+            {
+              "item": "jewel_life",
+              "weight": 15
             }
           ]
         }

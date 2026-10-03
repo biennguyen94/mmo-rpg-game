@@ -28,7 +28,8 @@
     "pk": "P4-3 (duyệt 2026-10-03, IMPLEMENTATION; KB_GAME_DESIGN §13 chỉ có NORMAL → WARNING → MURDERER): giết người NORMAL (không phải tự vệ) +1 pk_points; ≥ warningAt = WARNING, ≥ murdererAt = MURDERER; giảm 1 điểm mỗi decayMinutes giờ thực từ last_pk_at. Bị người NORMAL đánh trước được đánh trả selfDefenseSeconds (mỗi đòn làm mới), giết khi tự vệ / giết WARNING-MURDERER không tính PK. MURDERER không dùng NPC; chết vì người chơi rơi 1 món trong túi theo dropChance.",
     "duel": "P4-4 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai bên đồng ý, vùng riêng, không PK'): 'vùng riêng' = khoanh riêng hai người (chỉ hai người đánh được nhau, người ngoài không xen vào), duel ở mọi chỗ ngoài safe zone. Mời trong requestRange ô, hết hạn inviteSeconds; một bên về 0 HP thì giữ 1 HP và thua; hết maxSeconds thì hòa; cách nhau quá maxDistance ô (người xa điểm bắt đầu hơn thua) / rời map / mất kết nối thì thua. Không PK, không rơi đồ, không thưởng.",
     "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật.",
-    "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM."
+    "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM.",
+    "levelBonus": "P5-3 (1) (duyệt 2026-10-03, IMPLEMENTATION; KB chưa có công thức +N): items.levelBonus theo type item — mỗi cấp cường hóa (+N, items.item_level) cộng attack (attackMin và attackMax) cho WEAPON, defense cho SHIELD / giáp. Type không có trong bảng (RING, JEWEL, POTION) không ép được. Yêu cầu của đồ không đổi theo +N."
   },
   "game": {
     "name": "MU Web",
@@ -296,7 +297,30 @@
       13,
       15
     ],
-    "ancientVariants": false
+    "ancientVariants": false,
+    "levelBonus": {
+      "WEAPON": {
+        "attack": 3
+      },
+      "SHIELD": {
+        "defense": 2
+      },
+      "HELM": {
+        "defense": 3
+      },
+      "ARMOR": {
+        "defense": 3
+      },
+      "PANTS": {
+        "defense": 3
+      },
+      "GLOVES": {
+        "defense": 3
+      },
+      "BOOTS": {
+        "defense": 3
+      }
+    }
   },
   "session": {
     "reconnectGraceSeconds": 30,

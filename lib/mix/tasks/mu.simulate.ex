@@ -59,7 +59,7 @@ defmodule Mix.Tasks.Mu.Simulate do
     """
     Mô phỏng #{r.runs} lần — class #{r.opts.class || "mặc định"}, quái #{r.opts.monster}, cộng điểm: #{r.opts.strategy}, đi bộ giữa hai con: #{r.opts.walk_ms} ms, trang bị: #{inspect(r.opts.equipment)}
     #{Enum.join(rows, "\n")}
-      Zen trung bình: #{Float.round(r.zen, 1)}  — số món rơi: #{Float.round(r.items, 1)}
+      Zen trung bình: #{Float.round(r.zen, 1)}  — số món rơi: #{Float.round(r.items, 1)}  — jewel: #{Float.round(r.jewels, 1)} (#{Float.round(r.jewels_per_hour, 2)} / giờ)
       Sát thương nhận / con: #{Float.round(r.damage_taken_per_kill, 2)}  — tỉ lệ trúng: #{Float.round(r.hit_rate * 100, 1)}%
     """
   end
