@@ -21,7 +21,7 @@ defmodule Mu.Game.CommandsTest do
     assert {"combat", 10, 1000} = Commands.category("skill")
     assert {"item", 5, 1000} = Commands.category("buy")
     assert {"alloc", 5, 1000} = Commands.category("alloc")
-    assert {"chat", 5, 10_000} = Commands.category("chat")
+    assert {"chat", 5, 5_000} = Commands.category("chat")
   end
 
   test "chuỗi vi phạm liên tục ≥ kickAfterMs thì kick" do

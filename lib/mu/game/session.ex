@@ -27,6 +27,7 @@ defmodule Mu.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
+  alias Mu.Chat
   alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
@@ -121,6 +122,7 @@ defmodule Mu.Game.Session do
             else: %{s | saved: character, items: Items.load(character.id)}
 
         s = kick_tabs(%{s | character: character}, pid)
+        register_name(character.name)
         s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
 
         {:ok, info} = MapServer.join(character.map_id, map_player(character, s.items), self())
@@ -190,6 +192,12 @@ defmodule Mu.Game.Session do
   def handle_info({:map_buffs, _cid, buffs}, s) do
     s = %{s | buffs: buffs}
     if s.character, do: push_player(s)
+    {:noreply, s, timeout(s)}
+  end
+
+  # WHISPER từ người khác (P2-M5)
+  def handle_info({:chat_whisper, msg}, s) do
+    push(s, "chat", msg)
     {:noreply, s, timeout(s)}
   end
 
@@ -398,8 +406,80 @@ defmodule Mu.Game.Session do
   defp run(act, _payload, s) when act in @item_acts or act == "npc_open",
     do: {{:error, "INVALID_TARGET"}, s}
 
-  # act khác (chat): chưa làm — DEC-16
+  # ---------- Chat (P2-M5) ----------
+
+  defp run("chat", %{"channel" => ch, "text" => text} = p, s) when is_binary(ch) do
+    c = s.character
+
+    with :ok <- chat_channel(ch),
+         {:ok, text} <- Chat.clean(text),
+         :ok <- not_muted(s, c.name) do
+      text = Chat.filter(text)
+
+      case ch do
+        "NORMAL" ->
+          Chat.say(c.map_id, c.name, text)
+          {:ok, s}
+
+        "WHISPER" ->
+          whisper(s, p["to"], text)
+      end
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run("chat", _payload, s), do: {{:error, "INVALID_TARGET"}, s}
+
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
+
+  # PARTY / GUILD: tính năng tắt tới Phase 3 / 4; SYSTEM: chỉ server gửi
+  defp chat_channel(ch) when ch in ~w(NORMAL WHISPER), do: :ok
+  defp chat_channel(ch) when ch in ~w(PARTY GUILD SYSTEM), do: {:error, "FORBIDDEN"}
+  defp chat_channel(_), do: {:error, "INVALID_TARGET"}
+
+  # bị cấm chat: FORBIDDEN + một dòng SYSTEM cho chính người đó biết lý do
+  defp not_muted(s, name) do
+    case Chat.muted_until(name) do
+      nil ->
+        :ok
+
+      until ->
+        text =
+          if until == :infinity,
+            do: "Bạn đang bị cấm chat.",
+            else:
+              "Bạn đang bị cấm chat tới #{DateTime.from_unix!(until) |> Calendar.strftime("%H:%M %d/%m")} (UTC)."
+
+        push(s, "chat", Chat.message("SYSTEM", Config.get(["chat", "systemName"]), text))
+        {:error, "FORBIDDEN"}
+    end
+  end
+
+  defp whisper(s, to, text) when is_binary(to) do
+    me = s.character.name
+
+    case Registry.lookup(Mu.Game.NameRegistry, String.downcase(to)) do
+      [{pid, target}] when pid != self() ->
+        msg = Chat.message("WHISPER", me, text)
+        send(pid, {:chat_whisper, msg})
+        push(s, "chat", Map.put(msg, :to, target))
+        {:ok, s}
+
+      _ ->
+        {{:error, "INVALID_TARGET"}, s}
+    end
+  end
+
+  defp whisper(s, _to, _text), do: {{:error, "INVALID_TARGET"}, s}
+
+  # tên nhân vật → Session này (giá trị: tên đúng hoa thường để hiện ở bản sao người gửi)
+  defp register_name(name) do
+    for key <- Registry.keys(Mu.Game.NameRegistry, self()),
+        do: Registry.unregister(Mu.Game.NameRegistry, key)
+
+    Registry.register(Mu.Game.NameRegistry, String.downcase(name), name)
+  end
 
   defp valid_quantity(t, q) do
     max = if t["stackable"], do: t["maxStack"], else: 1

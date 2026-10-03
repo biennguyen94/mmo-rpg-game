@@ -16,7 +16,9 @@
     "interaction": "G4: khoảng cách Chebyshev; nhặt đồ ≤ pickupRange ô, mở/mua/bán ở NPC ≤ npcRange ô.",
     "combat.basicAttackRange": "P2-5: tầm đánh thường (ô, Chebyshev) theo weaponType của vũ khí đang cầm; tay không / loại không có trong bảng = default. Không dùng mũi tên.",
     "combat.twoHandedWeaponTypes": "P2-5: vũ khí hai tay khóa ô SHIELD (mặc cung khi có khiên hoặc ngược lại → INVALID_SLOT).",
-    "combat.mpRegen": "P2-M3 (mana phương án A, docs/PHASE2_PROPOSAL_M2_M3.md §5.5): hồi MP tự nhiên energy/energyDiv mỗi giây (cộng dồn phần lẻ), cộng mỗi intervalMs; HP vẫn không tự hồi (G9). Không hồi khi đã chết."
+    "combat.mpRegen": "P2-M3 (mana phương án A, docs/PHASE2_PROPOSAL_M2_M3.md §5.5): hồi MP tự nhiên energy/energyDiv mỗi giây (cộng dồn phần lẻ), cộng mỗi intervalMs; HP vẫn không tự hồi (G9). Không hồi khi đã chết.",
+    "chat": "P2-12 (duyệt 2026-10-03): tối đa maxLength ký tự (dài hơn thì cắt, như repo nền), NORMAL = cả map, WHISPER theo tên nhân vật đang online (không có → INVALID_TARGET), PARTY/GUILD tắt tới Phase 3/4 (FORBIDDEN), SYSTEM chỉ server gửi. bannedWords: danh sách từ cấm (anh cung cấp; so khớp không phân biệt hoa thường, thay bằng mask). Mute: trong RAM (mix mu.chat), không lưu DB.",
+    "rateLimit.cmd.chat": "P2-12: ~1 tin/giây, dồn tối đa 5 tin (cửa sổ cố định 5 tin / 5 s)."
   },
   "game": {
     "name": "MU Web",
@@ -163,7 +165,7 @@
             "chat"
           ],
           "limit": 5,
-          "windowMs": 10000
+          "windowMs": 5000
         }
       },
       "kickAfterMs": 5000
@@ -242,5 +244,12 @@
     "serverAuthoritative": true,
     "itemSerialRequired": true,
     "clientDamageTrusted": false
+  },
+  "chat": {
+    "maxLength": 100,
+    "normalScope": "map",
+    "bannedWords": [],
+    "mask": "***",
+    "systemName": "Hệ thống"
   }
 }

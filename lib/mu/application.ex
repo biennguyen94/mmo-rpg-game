@@ -10,10 +10,13 @@ defmodule Mu.Application do
       Mu.Repo,
       {Phoenix.PubSub, name: Mu.PubSub},
       Mu.RateLimit,
+      Mu.Chat,
       Mu.Accounts.WsTicket,
       Mu.Game.OrphanSweeper,
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)
       {Registry, keys: :unique, name: Mu.Game.Registry},
+      # tên nhân vật (chữ thường) → Session đang giữ nhân vật đó, cho WHISPER (P2-M5)
+      {Registry, keys: :unique, name: Mu.Game.NameRegistry},
       {DynamicSupervisor, name: Mu.Game.SessionSupervisor, strategy: :one_for_one},
       # 1 MapServer / map (Phase 1: chỉ Lorencia)
       {Registry, keys: :unique, name: Mu.World.Registry},
