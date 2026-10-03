@@ -18,6 +18,22 @@ jobs:
             echo "::error::Asset MU-derived bị commit:"; echo "$files"; exit 1
           fi
 
+  client:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: Kiểm kiểu TypeScript
+        run: npm run typecheck
+      - name: Test logic client
+        run: npm test
+
   test:
     runs-on: ubuntu-24.04
 

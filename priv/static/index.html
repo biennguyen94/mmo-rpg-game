@@ -2,11 +2,16 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>MU Web</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:,">
+  <!-- Thư viện là ES module gốc: phoenix phục vụ từ dependency Elixir (/vendor/phoenix.mjs) -->
+  <script type="importmap">{ "imports": { "phoenix": "/vendor/phoenix.mjs" } }</script>
+  <script type="module" src="/js/main.js"></script>
 </head>
 <body>
-  <!-- Client Phaser (TypeScript, build bằng esbuild) thay trang này ở M5. -->
-  <p>MU Web — server đang chạy. Client sẽ có ở M5.</p>
+  <div id="app"></div>
+  <noscript>Cần bật JavaScript để chơi.</noscript>
 </body>
 </html>

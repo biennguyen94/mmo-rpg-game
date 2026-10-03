@@ -13,6 +13,15 @@ defmodule MuWeb.Endpoint do
     gzip: false,
     only: MuWeb.static_paths()
 
+  # Client JS của Phoenix Channels (ES module) lấy thẳng từ dependency, không qua npm
+  plug Plug.Static,
+    at: "/vendor",
+    from: {:phoenix, "priv/static"},
+    only: ~w(phoenix.mjs phoenix.mjs.map)
+
+  # Thư viện client chép từ client/node_modules lúc build (phaser), gitignore
+  plug Plug.Static, at: "/vendor", from: {:mu, "priv/static/vendor"}, gzip: false
+
   if code_reloading? do
     plug Phoenix.CodeReloader
     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :mu

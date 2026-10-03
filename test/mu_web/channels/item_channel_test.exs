@@ -80,6 +80,11 @@ defmodule MuWeb.ItemChannelTest do
 
     assert {r.player.inventory, r.player.equipment} == {[], []}
     assert r.player.view.potions == %{"HP" => 0, "MP" => 0}
+    # M5-2: client cần tầm và thông tin skill (server vẫn kiểm)
+    assert {r.config.pickupRange, r.config.npcRange} == {1, 3}
+
+    assert %{name: "Twisting Slash", range: 2, manaCost: 10, requiredLevel: 10} =
+             Enum.find(r.data.skills, &(&1.id == "twisting_slash"))
   end
 
   test "nhặt đồ: trong 1 ô, thành item trong túi (DB), despawn; ngoài tầm/loot protect bị chặn" do

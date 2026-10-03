@@ -49,7 +49,7 @@ defmodule MuWeb.GameChannel do
               entityId: info.entity_id,
               map: Maps.client_data(Maps.get(character.map_id)),
               config: client_config(),
-              data: %{items: client_items()}
+              data: %{items: client_items(), skills: client_skills()}
             }
 
             {:ok, reply, assign(socket, character_id: character.id, limit_streak: nil)}
@@ -133,12 +133,27 @@ defmodule MuWeb.GameChannel do
     for {_, t} <- Mu.Game.Data.items(), do: Map.take(t, @client_item_keys)
   end
 
+  # Skill: tên + tầm + mana để client hiện menu và biết khi nào tiến lại gần (server vẫn kiểm)
+  defp client_skills do
+    for {_, s} <- Mu.Game.Data.skills() do
+      %{
+        id: s["id"],
+        name: s["name"],
+        range: s["range"],
+        manaCost: s["manaCost"],
+        requiredLevel: s["requiredLevel"]
+      }
+    end
+  end
+
   # Phần config client cần (không chứa công thức gameplay: KB_TECH_STACK §6)
   defp client_config do
     %{
       clientVersion: Config.get(["server", "clientVersion"]),
       interpolationDelayMs: Config.get(["server", "interpolationDelayMs"]),
-      maxLevel: Config.get(["game", "maxLevel"])
+      maxLevel: Config.get(["game", "maxLevel"]),
+      pickupRange: Config.get(["interaction", "pickupRange"]),
+      npcRange: Config.get(["interaction", "npcRange"])
     }
   end
 end

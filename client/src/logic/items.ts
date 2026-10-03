@@ -1,0 +1,99 @@
+// Quy tắc client cho túi đồ (chỉ để chọn lệnh gửi / hiển thị; server vẫn kiểm mọi thứ).
+import type { ItemTemplate, ItemView, Player } from "../net/protocol.js";
+
+/** Slot trang bị theo KB_CONFIG §6. */
+export const EQUIP_SLOT: Record<string, number> = {
+  HELM: 0,
+  ARMOR: 1,
+  PANTS: 2,
+  GLOVES: 3,
+  BOOTS: 4,
+  WEAPON: 5,
+  SHIELD: 6,
+  WING: 7,
+  RING1: 8,
+  RING2: 9,
+};
+
+export const SLOT_LABEL: Record<number, string> = {
+  0: "HELM",
+  1: "ARMOR",
+  2: "PANTS",
+  3: "GLOVES",
+  4: "BOOTS",
+  5: "WEAPON",
+  6: "SHIELD",
+  7: "WING",
+  8: "RING1",
+  9: "RING2",
+};
+
+/** Lưới 3×4 của §19.4 (null = ô trống không dùng). */
+export const EQUIP_GRID: (number | null)[][] = [
+  [null, 0, null],
+  [5, 1, 6],
+  [3, 2, 4],
+  [8, 7, 9],
+];
+
+export type Templates = Map<string, ItemTemplate>;
+
+/** Ô trang bị để mặc `template`; nhẫn: RING1 nếu trống, ngược lại RING2 (§19.4). */
+export function equipSlotFor(t: ItemTemplate, equipment: ItemView[]): number | null {
+  if (!t.slot) return null;
+  if (t.slot === "RING1" || t.slot === "RING2") {
+    return equipment.some((e) => e.slot === 8) ? 9 : 8;
+  }
+  return EQUIP_SLOT[t.slot] ?? null;
+}
+
+/** Ô túi trống đầu tiên (cho `unequip.toSlot`), null nếu đầy. */
+export function firstFreeSlot(inventory: ItemView[], size: number): number | null {
+  const used = new Set(inventory.map((i) => i.slot));
+  for (let s = 0; s < size; s++) if (!used.has(s)) return s;
+  return null;
+}
+
+/** Stack potion để dùng: stack đầu tiên (slot thấp nhất) đúng `potionType` (§19.6). */
+export function pickPotion(inventory: ItemView[], templates: Templates, type: "HP" | "MP"): ItemView | null {
+  const stacks = inventory
+    .filter((i) => templates.get(i.templateId)?.potionType === type)
+    .sort((a, b) => a.slot - b.slot);
+  return stacks[0] ?? null;
+}
+
+/** Danh sách trang bị trong túi (§19.4: không gồm potion/tiêu hao), theo slot. */
+export function equipmentInBag(inventory: ItemView[], templates: Templates): ItemView[] {
+  return inventory.filter((i) => templates.get(i.templateId)?.slot).sort((a, b) => a.slot - b.slot);
+}
+
+/** Mô tả ngắn dòng 2 của §19.4. */
+export function shortDesc(t: ItemTemplate): string {
+  const parts: string[] = [];
+  if (t.attackMax) parts.push(`Tấn công +${t.attackMin ?? 0}~${t.attackMax}`);
+  if (t.defense) parts.push(`Phòng thủ +${t.defense}`);
+  if (t.hpBonus) parts.push(`HP +${t.hpBonus}`);
+  if (t.effect?.hp) parts.push(`Hồi ${t.effect.hp} HP`);
+  if (t.effect?.mp) parts.push(`Hồi ${t.effect.mp} MP`);
+  return parts.join(", ");
+}
+
+const REQ_LABEL: Record<string, string> = {
+  level: "Cấp",
+  strength: "STR",
+  agility: "AGI",
+  energy: "ENE",
+  vitality: "VIT",
+};
+
+/** Yêu cầu của item và có đạt không (tooltip: không đạt hiện chữ đỏ, §19.5). */
+export function requirements(t: ItemTemplate, p: Player): { label: string; value: number; ok: boolean }[] {
+  const out: { label: string; value: number; ok: boolean }[] = [];
+  for (const [k, v] of Object.entries(t.requirements ?? {})) {
+    if (!v) continue;
+    const have = (p as unknown as Record<string, number>)[k] ?? 0;
+    out.push({ label: REQ_LABEL[k] ?? k, value: v, ok: have >= v });
+  }
+  if (t.classes && !t.classes.includes(p.class)) out.push({ label: `Class ${t.classes.join("/")}`, value: 0, ok: false });
+  return out;
+}

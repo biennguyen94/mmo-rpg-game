@@ -17,3 +17,8 @@ erl_crash.dump
 assets_src/private/
 priv/static/assets/icons/items/
 priv/static/assets/icon_map.json
+
+# Client build/test (M5): JS sinh từ client/src, thư viện chép từ node_modules
+/priv/static/js/
+/priv/static/vendor/
+/client/.test-build/
