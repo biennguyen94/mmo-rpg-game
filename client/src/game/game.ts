@@ -179,7 +179,8 @@ export class GameClient {
     switch (ev) {
       case "spawn":
         this.world.spawn(p as SpawnPayload, now);
-        if ((p as SpawnPayload).kind === "item") Sound.play("click");
+        // tiếng rơi đồ: chỉ khi rơi gần mình (AOI P3-M1: đồ ở xa đi vào tầm nhìn cũng là `spawn`)
+        if ((p as SpawnPayload).kind === "item" && Math.max(Math.abs(p.x - this.state.player.x), Math.abs(p.y - this.state.player.y)) <= 3) Sound.play("click");
         break;
       case "despawn":
         this.world.despawn(p.id);

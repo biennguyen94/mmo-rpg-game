@@ -252,3 +252,10 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P3-8 | **Reconnect**: trong 30 s chờ, nhân vật đứng yên (dừng tự đánh) và vẫn bị đánh; tab mới của cùng tài khoản vào lại thì tiếp quản | Như cột trái (đúng §4); thông báo "Đã kết nối lại" |
 | P3-9 | Danh sách nghiệm thu Phase 3 | Em soạn ở P3-M6 (như P2-15) |
 | P3-10 | **KB_TECHNICAL §5** cần anh bổ sung act / event party (+ warehouse nếu cần act riêng) sau khi chốt P3-5, P3-6 | Em ghi `CHANGE_REASON` khi làm |
+
+### P3-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M1-1 | **Map hiện tại 64×64 = 4×4 ô AOI**, tầm nhìn 3×3 ô (48×48) phủ 56–100 % map → AOI tiết kiệm ít (soak 20 bot, nửa ở thị trấn: −21 % byte; cả 20 bot săn Spider: −5 %) | Giữ đúng KB (DEC-85). Lợi ích lớn khi map rộng hơn / đông người hơn; nếu anh muốn thấy rõ ngay thì có thể giảm `aoiCellSize` (vd. 12) — đổi số KB, cần anh quyết |
+| P3M1-2 | Lọc ở kênh, MapServer vẫn broadcast trong máy (DEC-84) | Đổi sang gửi riêng từ MapServer khi cần (nhiều node / rất đông) |
