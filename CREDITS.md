@@ -22,7 +22,7 @@ commit `a6ea1655db5c044829d9eea19a232fa6fcac87b0`).
 ## Thư viện
 
 - Phoenix (MIT) — `phoenix.mjs` phục vụ từ dependency Elixir.
-- Phaser 3 (MIT) — khi cài được qua npm (`docs/OPEN_QUESTIONS.md` E7).
+- Game view vẽ bằng Canvas 2D của trình duyệt (không dùng thư viện vẽ). Phaser 3 để phase sau (`docs/BACKLOG.md`).
 
 ## Không có trong repo
 

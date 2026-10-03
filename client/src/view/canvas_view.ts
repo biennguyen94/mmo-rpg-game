@@ -1,5 +1,6 @@
-// Game view TẠM bằng Canvas 2D. Cài đặt interface GameView để logic không phụ thuộc thư viện vẽ;
-// PhaserView (Phaser 3, đã chốt) thay vào khi tải được npm (docs/OPEN_QUESTIONS.md E7).
+// Game view của Phase 1 bằng Canvas 2D (DEC-53: anh chọn phương án b vì registry npm bị chặn).
+// Cài đặt interface GameView nên logic/UI không phụ thuộc thư viện vẽ; PhaserView thay vào ở phase
+// sau mà không đổi phần khác (docs/BACKLOG.md).
 // Ô 32×32 (KB_ASSETS §3). Tile/sprite: DCSS CC0 (CREDITS.md, assets/mapping.json); ảnh nào thiếu
 // hoặc tải lỗi thì vẽ hình học thay thế, không crash (KB_ASSETS §5).
 import type { CombatPayload, MapData } from "../net/protocol.js";

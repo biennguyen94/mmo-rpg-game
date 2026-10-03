@@ -10,8 +10,9 @@ ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 # ---------- Client (TypeScript → ES module, priv/static/js) ----------
 FROM node:22-bookworm-slim AS client
 WORKDIR /app/client
-COPY client/package.json client/tsconfig.json client/build.mjs ./
-# Chưa có package-lock.json (registry npm bị chặn trong môi trường cloud lúc viết: E7)
+COPY client/package.json client/tsconfig.json ./
+# Chưa có package-lock.json (registry npm bị chặn trong môi trường cloud lúc viết: E7);
+# client chỉ cần typescript (devDependency), không có thư viện chạy trên trình duyệt
 RUN npm install --no-audit --no-fund
 COPY client/src src
 RUN npm run build
@@ -36,7 +37,6 @@ RUN mix deps.compile
 # priv/game_data/*.json đọc lúc biên dịch. Asset MU-derived bị .dockerignore chặn (KB_ASSETS §2.2).
 COPY priv priv
 COPY --from=client /app/priv/static/js priv/static/js
-COPY --from=client /app/priv/static/vendor priv/static/vendor
 COPY lib lib
 RUN mix compile
 # icon_map.json (gitignore): image không có icon MU-derived → mọi item dùng placeholder

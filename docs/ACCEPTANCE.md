@@ -23,7 +23,7 @@
 | 11 | mỗi item hiển thị một icon (thật nếu có trong `icon_map.json`, chưa có thì placeholder + cảnh báo build) | ✅ PASS (placeholder) | ExUnit `icon_index_test.exs` (fallback §4.3, input rỗng exit 0); `docs/ICON_REPORT.md` (10/10 placeholder, cảnh báo); E2E [11] (ảnh tải được). **Icon thật: cần anh đặt file local** (Q11) |
 | 12 | mua potion từ NPC OK | ✅ PASS | ExUnit `items_test.exs` mua/thiếu Zen/túi đầy, `item_channel_test.exs` (tầm NPC 3 ô, `rid` lặp không mua 2 lần); E2E [12] (mua −100 Zen, bán +750); ảnh `accept-shop.png`, `desktop-06-shop.png` |
 | 13 | dùng potion OK | ✅ PASS | ExUnit `item_channel_test.exs` (hồi 50, cooldown 1 s, không vượt max); E2E [13] (**trước khi mặc áo**, Q14: HP 100 → 150) |
-| 14 | UI dock + panel Character / Inventory / Thông báo / Shop trên desktop (≥1280px) và mobile (≥360px) | ⚠️ PASS tự động, **cần anh kiểm tra local** | E2E smoke 24/24 (1280×800 và 360×740: panel, dock, submenu, nút mobile, không tràn ngang); 13 ảnh `desktop-*.png`, `mobile-*.png`. Game view hiện là **Canvas 2D tạm** — Phaser chưa cài được (E7) |
+| 14 | UI dock + panel Character / Inventory / Thông báo / Shop trên desktop (≥1280px) và mobile (≥360px) | ⚠️ PASS tự động, **cần anh kiểm tra local** | E2E smoke 24/24 (1280×800 và 360×740: panel, dock, submenu, nút mobile, không tràn ngang); 13 ảnh `desktop-*.png`, `mobile-*.png`. Game view: **Canvas 2D** (chính thức cho Phase 1, DEC-53) với sprite/tile DCSS CC0 |
 | 15 | reload page → character state còn nguyên | ✅ PASS | ExUnit `world_channel_test.exs` / `combat_channel_test.exs` / `item_channel_test.exs` (reload + restart Session đọc lại DB); E2E [15] (cấp, EXP, Zen, stat, đồ giống hệt sau reload) |
 | 16 | 2 player login cùng lúc thấy nhau di chuyển | ✅ PASS | ExUnit `world_channel_test.exs` "2 người chơi…"; E2E [16] (2 trình duyệt, B thấy A đi tới đúng ô); ảnh `accept-two-players.png`; E2E 19/19 cũng qua khi server đang có 20 bot soak |
 
@@ -70,7 +70,7 @@ event `player` nên bot uống potion muộn (nhiều lần chết hơn thực t
 
 | Mục | Trạng thái |
 |---|---|
-| Game view bằng **Phaser 3** | ❌ Chưa làm: `registry.npmjs.org` bị chặn 403 trong phiên này (E7). Anh đã chọn (a) mở registry; thay đổi mạng chưa có hiệu lực ở phiên đang chạy. `PhaserView` thay `CanvasView` qua interface `GameView` (không đổi logic/UI) |
+| Game view bằng **Phaser 3** | ↪️ Chuyển sang phase sau (anh chọn b, DEC-53): `registry.npmjs.org` bị gateway chặn. Phase 1 dùng Canvas 2D; kế hoạch chuyển: `docs/BACKLOG.md` §1 |
 | Sprite DCSS (CC0) | ✅ Đã dùng (E8 xong): Spider, NPC, thân DK, 7 tile Lorencia — đối chiếu license từng file (`CREDITS.md`, `assets/mapping.json`) |
 | Asset §6.1 (DK 6 animation × 4 hướng, effect, BGM) | ❌ DK chỉ có 1 khung tĩnh (DCSS `human_m`, không vẽ trang bị), chưa có animation/effect/BGM; 7 SFX Web Audio (M5-3) |
 | Icon item thật | Chờ anh (Q11/A6); pipeline sẵn, input rỗng → placeholder |

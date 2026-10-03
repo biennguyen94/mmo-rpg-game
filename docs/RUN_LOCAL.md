@@ -1,7 +1,7 @@
 # RUN_LOCAL — Chạy MU Web trên máy anh
 
-> Phase 1 (vertical slice). Client hiện vẽ game view bằng **Canvas 2D tạm** (placeholder hình học);
-> Phaser 3 thay vào khi cài được npm (xem `docs/OPEN_QUESTIONS.md` E7).
+> Phase 1 (vertical slice). Game view vẽ bằng **Canvas 2D** (sprite/tile DCSS CC0); Phaser 3 để phase
+> sau (`docs/BACKLOG.md`, DEC-53).
 
 ## 1. Cần có
 

@@ -1,4 +1,5 @@
-// Ranh giới giữa logic game và phần vẽ. Phần vẽ (Phaser 3) chỉ đọc World/MapData và báo lại
+// Ranh giới giữa logic game và phần vẽ. Phần vẽ (Phase 1: CanvasView; phase sau: PhaserView —
+// docs/BACKLOG.md) chỉ đọc World/MapData và báo lại
 // thao tác của người chơi; không gửi `cmd`, không tính luật.
 import type { CombatPayload, MapData } from "../net/protocol.js";
 import type { Entity, World } from "../state/world.js";
