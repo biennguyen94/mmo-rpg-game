@@ -244,3 +244,25 @@ export function twoHandConflict(
   }
   return false;
 }
+
+/** Dòng thông báo khi giao dịch đóng (P5-M4). */
+export function tradeResultText(result: string | undefined, partner: string, by?: string | null): string {
+  switch (result) {
+    case "done":
+      return `Giao dịch với ${partner} thành công.`;
+    case "declined":
+      return `${partner} từ chối giao dịch.`;
+    case "timeout":
+      return `Giao dịch với ${partner} đã hết thời gian.`;
+    case "far":
+      return `Giao dịch với ${partner} bị hủy: hai bên ở quá xa.`;
+    case "disconnect":
+      return `Giao dịch với ${partner} bị hủy: ${by ?? partner} mất kết nối.`;
+    case "map":
+      return `Giao dịch với ${partner} bị hủy: đổi bản đồ.`;
+    case "dead":
+      return `Giao dịch với ${partner} bị hủy: có người tử trận.`;
+    default:
+      return `Giao dịch với ${partner} đã bị hủy${by ? ` (${by})` : ""}.`;
+  }
+}

@@ -286,6 +286,26 @@ export interface GuildWarPayload {
   reason?: "score" | "time" | "surrender" | "disband";
 }
 
+/** Một bên trong event `trade` (P5-M4): đồ trên bàn (cả stack), Zen, đã khóa / đã đồng ý. */
+export interface TradeSide {
+  items: ItemView[];
+  zen: number;
+  locked: boolean;
+  confirmed: boolean;
+}
+
+/** Event `trade` (P5-M4): đang mở (hai bàn) hoặc đã đóng (`result`). */
+export interface TradePayload {
+  state: "open" | "closed";
+  partner: string;
+  mine?: TradeSide;
+  theirs?: TradeSide;
+  /** Chốt hỏng (vd. `INVENTORY_FULL`): giao dịch vẫn mở. */
+  error?: string | null;
+  result?: "done" | "cancelled" | "declined" | "timeout" | "far" | "disconnect" | "map" | "dead";
+  by?: string | null;
+}
+
 /** Event `upgrade` (P5-M2): kết quả ép jewel lên đồ. */
 export interface UpgradePayload {
   itemId: string;

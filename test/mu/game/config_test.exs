@@ -33,7 +33,9 @@ defmodule Mu.Game.ConfigTest do
         ~w(duel_request duel_accept duel_decline duel_cancel) ++
         ~w(guild_create guild_invite guild_accept guild_decline guild_leave guild_kick) ++
         ~w(guild_promote guild_demote guild_disband) ++
-        ~w(guild_war_declare guild_war_accept guild_war_decline guild_war_surrender)
+        ~w(guild_war_declare guild_war_accept guild_war_decline guild_war_surrender) ++
+        ~w(trade_request trade_accept trade_decline trade_put trade_take trade_zen) ++
+        ~w(trade_lock trade_confirm trade_cancel)
 
     assert Enum.sort(Mu.Game.Commands.acts()) == Enum.sort(acts)
   end

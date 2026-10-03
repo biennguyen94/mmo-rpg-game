@@ -29,7 +29,7 @@ defmodule Mu.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
-  alias Mu.{Chat, Guild, Party}
+  alias Mu.{Chat, Guild, Party, Trade}
   alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp, Rng}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
@@ -232,6 +232,17 @@ defmodule Mu.Game.Session do
     {:noreply, s, timeout(s)}
   end
 
+  # Giao dịch (P5-M4): `trade`, `trade_invite`
+  def handle_info({:trade_push, event, payload}, s) do
+    push(s, event, payload)
+    {:noreply, s, timeout(s)}
+  end
+
+  # giao dịch đã chốt (một transaction ở `Items.trade/3`): đồ + Zen mới
+  def handle_info({:trade_done, res}, %{character: c} = s) when c != nil do
+    {:noreply, s |> apply_items(res) |> notify(), timeout(s)}
+  end
+
   # Guild (P4-M3): `guild`, `guild_invite`, chat GUILD / thông báo guild
   def handle_info({:guild_push, event, payload}, s) do
     push(s, event, payload)
@@ -274,6 +285,8 @@ defmodule Mu.Game.Session do
   def handle_info({:map_portal, _, _}, s), do: {:noreply, s, timeout(s)}
 
   def handle_info({:map_died, _}, s) do
+    # chết: hủy giao dịch đang mở (P5-M4)
+    if s.character, do: Trade.close(s.character.id, "dead")
     s = refresh(s)
     push_player(s)
     {:noreply, s, timeout(s)}
@@ -681,6 +694,58 @@ defmodule Mu.Game.Session do
 
   defp run("guild_disband", _p, s), do: {Guild.disband(s.character.id), s}
 
+  # ---------- Giao dịch (P5-M4, P5-5): trạng thái trong `Mu.Trade.Settlement` ----------
+
+  defp run("trade_request", %{"to" => to}, s) when is_binary(to) do
+    c = s.character
+
+    with {:ok, t} <- MapServer.near_player(c.map_id, c.id, to, Config.get(["trade", "range"])) do
+      {Trade.request(
+         trade_me(s),
+         %{cid: t.character_id, name: t.name, session: t.session},
+         c.map_id
+       ), s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run("trade_accept", %{"from" => from}, s) when is_binary(from) do
+    c = s.character
+
+    with {:ok, _} <- MapServer.near_player(c.map_id, c.id, from, Config.get(["trade", "range"])) do
+      {Trade.accept(trade_me(s), from), s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run("trade_decline", %{"from" => from}, s) when is_binary(from),
+    do: {Trade.decline(s.character.id, from), s}
+
+  # cả stack, đồ trong túi (không đồ đang mặc / trong kho)
+  defp run("trade_put", %{"itemId" => id}, s) when is_binary(id) do
+    case Enum.find(s.items, &(&1.id == id)) do
+      %{location: "INVENTORY"} = it -> {Trade.put(s.character.id, Characters.item_view(it)), s}
+      %{} -> {{:error, "INVALID_SLOT"}, s}
+      nil -> {{:error, "NOT_OWNER"}, s}
+    end
+  end
+
+  defp run("trade_take", %{"itemId" => id}, s) when is_binary(id),
+    do: {Trade.take(s.character.id, id), s}
+
+  defp run("trade_zen", %{"amount" => n}, s) when is_integer(n) and n >= 0 do
+    if n <= s.character.zen,
+      do: {Trade.zen(s.character.id, n), s},
+      else: {{:error, "NOT_ENOUGH_ZEN"}, s}
+  end
+
+  defp run("trade_lock", _p, s), do: {Trade.lock(s.character.id), s}
+  defp run("trade_confirm", _p, s), do: {Trade.confirm(s.character.id), s}
+  defp run("trade_cancel", _p, s), do: {Trade.cancel(s.character.id), s}
+  defp run("trade_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   # Guild war (P4-M4, P4-6): trạng thái trong `Mu.Guild` (RAM)
   defp run("guild_war_declare", %{"guild" => g}, s) when is_binary(g),
     do: {Guild.war(s.character.id, :declare, g), s}
@@ -730,6 +795,8 @@ defmodule Mu.Game.Session do
   end
 
   defp announce_upgrade(_s, _u), do: :ok
+
+  defp trade_me(%{character: c}), do: %{cid: c.id, name: c.name, session: self()}
 
   defp party_me(%{character: c}),
     do: %{cid: c.id, name: c.name, class: c.class, level: c.level, map_id: c.map_id}
@@ -881,6 +948,8 @@ defmodule Mu.Game.Session do
 
   # Đồ đọc lại + Zen/version mới từ transaction; trang bị đổi thì báo MapServer.
   defp apply_items(s, %{items: items, zen: zen, version: version}) do
+    # đồ trên bàn giao dịch không còn trong túi (bán, vứt, mặc, cất kho…) thì gỡ khỏi bàn
+    Trade.sync(s.character.id, items)
     equip_changed? = Inventory.equipment(items) != Inventory.equipment(s.items)
     c = %{s.character | zen: zen, version: version}
     s = %{s | items: items, character: c, saved: %{s.saved | zen: zen, version: version}}
@@ -1003,6 +1072,9 @@ defmodule Mu.Game.Session do
   # `reconnectGraceSeconds`, vẫn bị đánh; vào lại trong hạn thì tiếp tục (KB_TECHNICAL §4, P3-M2)
   defp last_tab_closed(%{on_map: true, character: c} = s, _reason) do
     MapServer.halt(c.map_id, c.id)
+
+    # KB_TECHNICAL §10: mất kết nối → hủy giao dịch ngay, không chờ reconnectGraceSeconds
+    Trade.close(c.id, "disconnect")
     Party.update(c.id, %{online: false})
     grace = Config.get(["session", "reconnectGraceSeconds"]) * 1000
     %{s | leave_timer: Process.send_after(self(), :delayed_leave, grace)}
@@ -1012,6 +1084,7 @@ defmodule Mu.Game.Session do
 
   # Nhân vật rời game hẳn (đăng xuất / hết hạn reconnect): rời map, rời nhóm (P3-5 (6))
   defp go_offline(%{character: %{id: cid}} = s) do
+    Trade.close(cid, "disconnect")
     s = leave_map(s)
     Party.leave(cid)
     Guild.offline(cid)
@@ -1059,6 +1132,7 @@ defmodule Mu.Game.Session do
   # để kênh đổi topic PubSub và đẩy `map_change` (P2-M4). Buff mất khi đổi map.
   defp change_map(s, map_id, {x, y}) do
     old = s.character.map_id
+    Trade.close(s.character.id, "map")
     s = leave_map(s)
     c = %{s.character | map_id: map_id, position_x: x, position_y: y}
     {:ok, info} = MapServer.join(map_id, map_player(c, s.items, s.guild), self())

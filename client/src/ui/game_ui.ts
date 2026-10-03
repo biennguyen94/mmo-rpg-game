@@ -1,6 +1,7 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, GuildConfig, GuildPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import { ERROR_TEXT, type ErrorCode } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
@@ -27,7 +28,7 @@ import { chatLine } from "../logic/chat.js";
 import { ROLE_LABEL, canDemote, canInvite as canGuildInvite, canKick, canPromote, myRole, validGuildName } from "../logic/guild.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade";
 
 export interface UiState {
   player: Player;
@@ -72,6 +73,9 @@ export interface UiState {
   levelBonus: LevelBonus;
   /** Chỉ số option Jewel of Life mỗi cấp (P5-M2). */
   optionBonus: number;
+  /** Giao dịch đang mở (P5-M4) + lời mời giao dịch đang chờ (hạn giờ client). */
+  trade: TradePayload | null;
+  tradeAsk: { from: string; until: number } | null;
 }
 
 export interface UiActions {
@@ -133,6 +137,15 @@ export interface UiActions {
   warDeclare(guild: string): void;
   warAnswer(guild: string, accept: boolean): void;
   warSurrender(): void;
+  /** Giao dịch (P5-M4). */
+  tradeRequest(name: string): void;
+  tradeAnswer(from: string, accept: boolean): void;
+  tradePut(itemId: string): void;
+  tradeTake(itemId: string): void;
+  tradeZen(amount: number): void;
+  tradeLock(): void;
+  tradeConfirm(): void;
+  tradeCancel(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -362,7 +375,9 @@ export class GameUI {
                 ? [s.map.id, s.player.x, s.player.y]
                 : s.panel === "guild"
                   ? [s.guild, this.guildDisbandArmed, s.war && [s.war.enemy, s.war.score, s.war.enemyScore]]
-                  : null;
+                  : s.panel === "trade"
+                    ? s.trade
+                    : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -394,7 +409,9 @@ export class GameUI {
                     ? this.warehousePanel()
                     : s.panel === "guild"
                       ? this.guildPanel()
-                      : this.settingsPanel();
+                      : s.panel === "trade"
+                        ? this.tradePanel()
+                        : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -913,6 +930,81 @@ export class GameUI {
     );
   }
 
+  // ---------- Giao dịch (P5-M4, P5-5): hai bàn + túi; bấm đồ trong túi = đặt lên bàn ----------
+
+  private tradeZenDraft = "";
+
+  private tradeCell(it: ItemView, attrs: Record<string, unknown>): HTMLElement {
+    const t = this.state.templates.get(it.templateId);
+    return h(
+      "div",
+      { class: "cell", title: itemName(t, it.level, it.templateId), ...attrs },
+      this.icon(it),
+      it.quantity > 1 ? h("span", { class: "qty" }, it.quantity) : null,
+      it.level > 0 ? h("span", { class: "lvl" }, `+${it.level}`) : null,
+    );
+  }
+
+  private tradePanel(): HTMLElement {
+    const s = this.state;
+    const tr = s.trade;
+    if (!tr || !tr.mine || !tr.theirs) return h("section", { class: "panel", "data-panel": "trade" }, h("h2", {}, "GIAO DỊCH"));
+    const mine = tr.mine;
+    const theirs = tr.theirs;
+    const onTable = new Set(mine.items.map((i) => i.id));
+    const bag = s.player.inventory.filter((i) => !onTable.has(i.id)).sort((a, b) => a.slot - b.slot);
+    const zen = h("input", { type: "number", min: 0, max: s.player.zen, "data-test": "trade-zen", value: this.tradeZenDraft || String(mine.zen) }) as HTMLInputElement;
+    zen.addEventListener("input", () => (this.tradeZenDraft = zen.value));
+    const status = (sd: { locked: boolean; confirmed: boolean }) =>
+      sd.confirmed ? "✔ Đã đồng ý" : sd.locked ? "🔒 Đã khóa" : "Đang sắp xếp…";
+    const side = (title: string, sd: typeof mine, own: boolean) =>
+      h(
+        "div",
+        { class: `tradeside${sd.locked ? " locked" : ""}`, "data-test": own ? "trade-mine" : "trade-theirs" },
+        h("div", { class: "head" }, title, h("span", { class: "tstatus" }, status(sd))),
+        h(
+          "div",
+          { class: "bag tradegrid", style: "--cols:4" },
+          sd.items.map((it) =>
+            this.tradeCell(it, own ? { "data-trade-mine": it.id, onclick: () => !mine.locked && this.a.tradeTake(it.id) } : { "data-trade-theirs": it.id }),
+          ),
+        ),
+        h("div", { class: "tzen" }, `Zen: ${sd.zen.toLocaleString("vi-VN")}`),
+      );
+    const bothLocked = mine.locked && theirs.locked;
+    return h(
+      "section",
+      { class: "panel", "data-panel": "trade" },
+      h("h2", {}, `GIAO DỊCH · ${tr.partner}`),
+      h(
+        "div",
+        { class: "body scroll" },
+        tr.error ? h("div", { class: "bad", "data-test": "trade-error" }, ERROR_TEXT[tr.error as ErrorCode] ?? `Lỗi: ${tr.error}`) : null,
+        h("div", { class: "tradesides" }, side("Của bạn", mine, true), side(`Của ${tr.partner}`, theirs, false)),
+        h(
+          "div",
+          { class: "guildform" },
+          zen,
+          h("button", { "data-test": "trade-zen-set", disabled: mine.locked, onclick: () => ((this.tradeZenDraft = ""), this.a.tradeZen(Math.max(0, Math.floor(Number(zen.value) || 0)))) }, "Đặt Zen"),
+        ),
+        h(
+          "div",
+          { class: "guildform" },
+          h("button", { "data-test": "trade-lock", disabled: mine.locked, onclick: () => this.a.tradeLock() }, "🔒 Khóa"),
+          h("button", { "data-test": "trade-confirm", disabled: !bothLocked || mine.confirmed, onclick: () => this.a.tradeConfirm() }, "✔ Đồng ý"),
+          h("button", { class: "danger", "data-test": "trade-cancel", onclick: () => this.a.tradeCancel() }, "Hủy"),
+        ),
+        h("div", { class: "hint" }, "Bấm đồ trong túi để đặt lên bàn, bấm đồ trên bàn của bạn để lấy lại. Khóa xong mới đồng ý được; bên nào thay đổi thì cả hai phải khóa lại."),
+        h("div", { class: "head" }, "Túi đồ"),
+        h(
+          "div",
+          { class: "bag", "data-test": "trade-bag", style: `--cols:${BAG_COLUMNS}` },
+          bag.map((it) => this.tradeCell(it, { "data-trade-bag": it.id, onclick: () => !mine.locked && this.a.tradePut(it.id) })),
+        ),
+      ),
+    );
+  }
+
   // ---------- Guild (P4-M3, P4-5) ----------
 
   /** Tên đang gõ (giữ qua lần dựng lại panel). */
@@ -1208,7 +1300,9 @@ export class GameUI {
       this.closeContext();
       this.a.attack(targetId, skill);
     };
-    if (ally.length + point.length === 0 && !canInvite && !canAttack && !canDuel && !canGuild) return false;
+    // giao dịch (P5-M4): người khác, mình chưa có giao dịch nào (server kiểm tầm / duel)
+    const canTrade = !isSelf && name !== undefined && this.state.trade === null;
+    if (ally.length + point.length === 0 && !canInvite && !canAttack && !canDuel && !canGuild && !canTrade) return false;
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "playermenu" },
@@ -1223,6 +1317,7 @@ export class GameUI {
       canDuel ? h("button", { "data-test": "duel-request", onclick: () => (this.closeContext(), this.a.duelRequest(name!)) }, "🤺 Thách đấu") : null,
       canInvite ? h("button", { "data-test": "party-invite", onclick: () => (this.closeContext(), this.a.partyInvite(name!)) }, "👥 Mời vào nhóm") : null,
       canGuild ? h("button", { "data-test": "guild-invite-menu", onclick: () => (this.closeContext(), this.a.guildInvite(name!)) }, "🛡 Mời vào guild") : null,
+      canTrade ? h("button", { "data-test": "trade-request", onclick: () => (this.closeContext(), this.a.tradeRequest(name!)) }, "🤝 Giao dịch") : null,
       // bấm trúng người chơi khác giờ mở menu (P3-M4): giữ thao tác đi bằng một mục riêng
       !isSelf && tile ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(tile.x, tile.y)) }, "🚶 Đi tới đây") : null,
       h("hr", {}),
@@ -1312,6 +1407,7 @@ export class GameUI {
     this.renderDuel();
     this.renderGuildAsk();
     this.renderWar();
+    this.renderTradeAsk();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
@@ -1393,6 +1489,38 @@ export class GameUI {
       ),
     );
     this.view.append(this.guildAskEl);
+  }
+
+  // ---------- Giao dịch (P5-M4): hộp lời mời ----------
+
+  private tradeAskEl: HTMLElement | null = null;
+  private tradeAskKey: string | null = null;
+
+  private renderTradeAsk(): void {
+    const ask = this.state.tradeAsk;
+    const left = ask ? Math.max(0, Math.ceil((ask.until - Date.now()) / 1000)) : 0;
+    const key = JSON.stringify([ask?.from, left]);
+    if (key === this.tradeAskKey && (this.tradeAskEl?.isConnected || !ask)) return;
+    this.tradeAskKey = key;
+    this.tradeAskEl?.remove();
+    this.tradeAskEl = null;
+    if (!ask || left <= 0) return;
+    this.tradeAskEl = h(
+      "div",
+      { class: "partyhost" },
+      h(
+        "div",
+        { class: "partyask tradeask", "data-test": "trade-ask" },
+        h("div", {}, `${ask.from} muốn giao dịch với bạn (${left}s)`),
+        h(
+          "div",
+          { class: "btns" },
+          h("button", { "data-test": "trade-accept", onclick: () => this.a.tradeAnswer(ask.from, true) }, "Đồng ý"),
+          h("button", { "data-test": "trade-decline", onclick: () => this.a.tradeAnswer(ask.from, false) }, "Từ chối"),
+        ),
+      ),
+    );
+    this.view.append(this.tradeAskEl);
   }
 
   // ---------- Guild war (P4-M4): thanh war (điểm, giờ, [Đầu hàng] cho master) + hộp tuyên chiến ----------

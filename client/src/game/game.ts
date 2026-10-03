@@ -26,12 +26,13 @@ import {
   type GuildPayload,
   type GuildWarPayload,
   type UpgradePayload,
+  type TradePayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
 import type { Stat } from "../logic/alloc.js";
 import type { IconMap } from "../logic/icons.js";
-import { BAG_COLUMNS, autoSlot, equipSlotFor, firstFreeSlot, pickPotion, twoHandConflict, type Templates } from "../logic/items.js";
+import { BAG_COLUMNS, autoSlot, equipSlotFor, firstFreeSlot, pickPotion, tradeResultText, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
 import { parseChat, pushChat } from "../logic/chat.js";
 import { ServerClock } from "../state/interp.js";
@@ -69,7 +70,8 @@ export class GameClient {
   ) {
     this.ui = new GameUI(parent, {
       togglePanel: (p) => this.togglePanel(p),
-      closePanel: () => this.setPanel(null),
+      // đóng panel giao dịch = hủy giao dịch (không để giao dịch treo sau màn hình)
+      closePanel: () => (this.state?.panel === "trade" && this.state.trade ? void this.send("trade_cancel") : this.setPanel(null)),
       alloc: (stat, points) => void this.alloc(stat, points),
       equip: (it) => void this.equip(it),
       unequip: (slot) => void this.unequip(slot),
@@ -131,6 +133,18 @@ export class GameClient {
         void this.send(accept ? "guild_war_accept" : "guild_war_decline", { guild });
       },
       warSurrender: () => void this.send("guild_war_surrender"),
+      tradeRequest: (name) => void this.send("trade_request", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} giao dịch.`)),
+      tradeAnswer: (from, accept) => {
+        if (this.state) this.state.tradeAsk = null;
+        this.render();
+        void this.send(accept ? "trade_accept" : "trade_decline", { from });
+      },
+      tradePut: (itemId) => void this.send("trade_put", { itemId }),
+      tradeTake: (itemId) => void this.send("trade_take", { itemId }),
+      tradeZen: (amount) => void this.send("trade_zen", { amount }),
+      tradeLock: () => void this.send("trade_lock"),
+      tradeConfirm: () => void this.send("trade_confirm"),
+      tradeCancel: () => void this.send("trade_cancel"),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -182,6 +196,9 @@ export class GameClient {
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       levelBonus: r.config.items?.levelBonus ?? {},
       optionBonus: r.config.items?.optionBonus ?? 0,
+      // giao dịch bị hủy khi mất kết nối (KB_TECHNICAL §10): vào lại thì không còn
+      trade: null,
+      tradeAsk: null,
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -312,6 +329,25 @@ export class GameClient {
       case "upgrade":
         this.onUpgrade(p as UpgradePayload);
         break;
+      case "trade_invite":
+        this.state.tradeAsk = { from: p.from, until: Date.now() + (p.seconds ?? 30) * 1000 };
+        Sound.play("click");
+        break;
+      case "trade": {
+        const tr = p as TradePayload;
+        if (tr.state === "open") {
+          this.state.trade = tr;
+          this.state.tradeAsk = null;
+          this.state.panel = "trade";
+        } else {
+          this.state.trade = null;
+          if (this.state.panel === "trade") this.state.panel = null;
+          if (this.state.tradeAsk?.from === tr.partner) this.state.tradeAsk = null;
+          this.notices.add(tr.result === "done" ? "SYSTEM" : "ERROR", tradeResultText(tr.result, tr.partner, tr.by));
+          if (tr.result === "done") Sound.play("pickup");
+        }
+        break;
+      }
       case "guild_invite":
         this.state.guildInvite = { from: p.from, guild: p.guild, until: Date.now() + (this.join?.config.guild?.inviteSeconds ?? 30) * 1000 };
         Sound.play("click");

@@ -260,3 +260,13 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 /* Ép jewel (P5-M2) */
 .jewelaim { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: #2a2440; border: 1px solid #ffd36b; border-radius: 6px; padding: 4px 8px; margin: 4px 0; font-size: 13px; }
 .tooltip .opt { color: #7fd3ff; }
+/* Giao dịch (P5-M4) */
+.tradesides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.tradeside { border: 1px solid #3a3e55; border-radius: 6px; padding: 6px; background: rgba(255, 255, 255, 0.03); }
+.tradeside.locked { border-color: #ffd36b; }
+.tradeside .head { display: flex; justify-content: space-between; gap: 6px; }
+.tradeside .tstatus { color: #aab; font-size: 12px; }
+.tradeside .tradegrid { min-height: 76px; }
+.tradeside .tzen { margin-top: 4px; color: #ffd36b; }
+.tradeask { top: 280px; }
+@media (max-width: 600px) { .tradesides { grid-template-columns: 1fr; } }

@@ -109,6 +109,16 @@ defmodule Mu.World.MapServer do
   def duel(server, character_id, act, name \\ nil),
     do: GenServer.call(server(server), {:duel, character_id, act, name})
 
+  @doc """
+  Giao dịch (P5-M4): người chơi tên `name` cùng map, cách `character_id` ≤ `range` ô, cả hai còn
+  sống, không ai đang duel. `{:ok, %{character_id, name, session}}` hoặc `{:error, code}`.
+  """
+  def near_player(server, character_id, name, range),
+    do: GenServer.call(server(server), {:near_player, character_id, name, range})
+
+  @doc "Khoảng cách (ô) giữa hai người chơi trên map, `nil` nếu một người không ở đây hoặc đã chết."
+  def distance(server, a, b), do: GenServer.call(server(server), {:distance, a, b})
+
   @doc "Dừng di chuyển của người chơi (mất kết nối, P3-M2): bỏ đường đi, đứng yên tại chỗ."
   def halt(server, character_id), do: GenServer.call(server(server), {:halt, character_id})
 
@@ -334,6 +344,44 @@ defmodule Mu.World.MapServer do
       {:ok, s} -> {:reply, :ok, s}
       {:error, code} -> {:reply, {:error, code}, s}
     end
+  end
+
+  def handle_call({:near_player, id, name, range}, _from, s) do
+    e = s.players[id]
+    t = player_named(s, name)
+
+    reply =
+      cond do
+        e == nil or t == nil or t.character_id == id ->
+          {:error, "INVALID_TARGET"}
+
+        e.state == "dead" or t.state == "dead" ->
+          {:error, "FORBIDDEN"}
+
+        Duel.in_duel?(s.duels, id) or Duel.in_duel?(s.duels, t.character_id) ->
+          {:error, "FORBIDDEN"}
+
+        Pathfinding.chebyshev({e.x, e.y}, {t.x, t.y}) > range ->
+          {:error, "OUT_OF_RANGE"}
+
+        true ->
+          {:ok, %{character_id: t.character_id, name: t.name, session: t.owner}}
+      end
+
+    {:reply, reply, s}
+  end
+
+  def handle_call({:distance, a, b}, _from, s) do
+    reply =
+      case {s.players[a], s.players[b]} do
+        {%{state: sa} = pa, %{state: sb} = pb} when sa != "dead" and sb != "dead" ->
+          Pathfinding.chebyshev({pa.x, pa.y}, {pb.x, pb.y})
+
+        _ ->
+          nil
+      end
+
+    {:reply, reply, s}
   end
 
   def handle_call({:halt, id}, _from, s) do
