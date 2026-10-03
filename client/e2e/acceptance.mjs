@@ -168,7 +168,11 @@ let drop = null;
 const exp0 = (await player(pa)).experience;
 const lv0 = (await player(pa)).level;
 let firstKill = null;
-for (let round = 0; round < 40 && !drop; round++) {
+// đánh tới khi (a) chính A lên cấp và (b) có đồ rơi để nhặt; người khác (vd. bot soak) có thể
+// ra đòn cuối trước — khi đó A không được EXP (G24), không tính là A giết
+const levelled = async () => (await player(pa)).level > lv0;
+for (let round = 0; round < 60 && (!drop || !(await levelled())); round++) {
+  const expBefore = (await player(pa)).experience + (await player(pa)).level * 100000;
   const target = await pa.evaluate(() => {
     const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
     return window.__mu.entities()
@@ -186,11 +190,13 @@ for (let round = 0; round < 40 && !drop; round++) {
   if (!(await pa.waitForSelector('[data-test="ctxmenu"]', { timeout: 1500 }).catch(() => null))) continue;
   await pa.click("text=Tấn công thường");
   const died = await until(pa, (id) => { const s = window.__mu.entities().find((e) => e.id === id); return !s || s.state === "dead"; }, target.id, 25000);
-  if (died) {
+  await pa.waitForTimeout(300);
+  const mine = (await player(pa)).experience + (await player(pa)).level * 100000 !== expBefore;
+  if (died && mine) {
     kills++;
     firstKill ??= { id: target.id, at: Date.now() };
   }
-  drop = await pa.evaluate(() => window.__mu.entities().find((e) => e.kind === "item") ?? null);
+  drop ??= await pa.evaluate(() => window.__mu.entities().find((e) => e.kind === "item") ?? null);
   void me;
 }
 check(5, "click-to-attack Spider OK", kills > 0, `${kills} con`);

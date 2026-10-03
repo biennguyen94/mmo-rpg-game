@@ -64,8 +64,14 @@ async function bot(i) {
       if (selfId && ents.has(selfId)) me = ents.get(selfId);
     } else if (ev === "player") {
       if (player && p.level > player.level) stats.levelUps++;
+      // hạ quái thật sự (chính bot ra đòn cuối) = EXP tăng (G24)
+      if (player && (p.level > player.level || p.experience > player.experience)) stats.kills++;
       player = p;
-    } else if (ev === "combat" && p.target === selfId && p.hp === 0) stats.deaths++;
+    } else if (ev === "combat" && p.target === selfId) {
+      // HP mới nhất của bot (event player chỉ gửi khi tiến độ đổi)
+      player.hp = p.hp;
+      if (p.hp === 0) stats.deaths++;
+    }
   };
   ws.onclose = () => stats.closes++;
   await new Promise((res) => (ws.onopen = res));
@@ -95,12 +101,11 @@ async function bot(i) {
       const t0 = Date.now();
       while (Date.now() - t0 < 12000 && ents.get(spider.id)?.state !== "dead" && ws.readyState === 1) {
         const s = ents.get(spider.id);
-        if (!s) break;
+        if (!s || player.hp < player.view.hpMax * 0.5) break;
         if (cheb(s, me) > 1) await cmd("move_to", { x: s.x + Math.sign(me.x - s.x), y: s.y + Math.sign(me.y - s.y) });
         else await cmd("attack", { target: spider.id });
         await sleep(player.view.cooldownMs + 20);
       }
-      if (ents.get(spider.id)?.state === "dead") stats.kills++;
     } else {
       // đi lang thang (thiên về phía đông, nơi có Spider)
       for (let k = 0; k < 10; k++) {
@@ -125,7 +130,7 @@ const pct = (xs, p) => {
 const report = (label) => {
   const g = stats.snapGaps;
   console.log(
-    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | giết ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
+    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
   );
 };
 
