@@ -25,6 +25,18 @@ async function hudPos(page) {
 
 // bấm vào ô (dx, dy) tính từ nhân vật (camera luôn giữ nhân vật ở giữa canvas)
 async function clickTile(page, dx, dy) {
+  // DEC-186: camera theo vị trí vẽ (trượt đều) → chờ vị trí vẽ bắt kịp vị trí server trước khi bấm
+  await page
+    .waitForFunction(
+      () => {
+        const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
+        const d = me && window.__mu.drawn(me.id);
+        return !me || !d || (Math.abs(d.x - me.x) < 0.01 && Math.abs(d.y - me.y) < 0.01);
+      },
+      null,
+      { timeout: 3000 }
+    )
+    .catch(() => null);
   const box = await page.locator('[data-test="game-canvas"]').boundingBox();
   await page.mouse.click(box.x + box.width / 2 + dx * 32, box.y + box.height / 2 + dy * 32);
   // bấm trúng người chơi khác (đông người, P3-M4) → menu người chơi: chọn "Đi tới đây"

@@ -439,3 +439,33 @@ test("P7: +10 / +11 cộng chỉ số gấp đôi; tooltip cánh cấp 2", async
   const sword = { templateId: "s", name: "S", type: "WEAPON", slot: "WEAPON", stackable: false, attackMin: 3, attackMax: 7, iconRef: { group: 0, index: 0 }, buyPrice: 0, sellPrice: 0 };
   assert.equal(shortDesc(sword, 10, { WEAPON: { attack: 3 } }, 0, 0, high), "Tấn công +36~40");
 });
+
+test("Glide (DEC-186): chạy đều theo tốc độ, không đứng chờ; tụt xa thì đuổi; nhảy xa thì đặt thẳng", async () => {
+  const { Glide } = await import("../src/state/interp.js");
+  const g = new Glide(5, 3);
+  g.reset(0, 10, 10);
+  assert.deepEqual(g.at(0), { x: 10, y: 10 });
+  // ô mới: chạy 5 ô / giây
+  g.at(990);
+  g.push(1000, 11, 10);
+  g.at(1000);
+  // ~5 ô / giây (100 ms ≈ nửa ô)
+  assert.ok(Math.abs(g.at(1100)!.x - 10.5) < 0.1);
+  // ô kế tới trước khi tới nơi → chạy tiếp, không dừng
+  g.push(1200, 12, 10);
+  const a = g.at(1200)!.x;
+  assert.ok(a > 10.9 && a < 11.5);
+  assert.ok(g.at(1300)!.x > a);
+  // đứng yên khi tới đích
+  g.at(2000);
+  assert.deepEqual(g.at(2100), { x: 12, y: 10 });
+  // tụt 2 ô (mạng giật): đuổi nhanh hơn 5 ô / giây (vẽ mỗi khung hình nên at() gọi liên tục)
+  g.at(2990);
+  g.push(3000, 14, 10);
+  g.at(3000);
+  assert.ok(g.at(3100)!.x - 12 > 0.5);
+  // cùng vị trí: bỏ qua; hồi sinh / qua cổng (> 3 ô): đặt thẳng
+  g.push(3200, 14, 10);
+  g.push(4000, 40, 40);
+  assert.deepEqual(g.at(4000), { x: 40, y: 40 });
+});

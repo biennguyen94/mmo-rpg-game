@@ -247,8 +247,8 @@ export class GameClient {
       onGround: (x, y) => (this.aiming ? void this.castAt(this.aiming, x, y) : this.moveTo(x, y)),
       onEntity: (e, sx, sy, tx, ty) => this.clickEntity(e, sx, sy, tx, ty),
     });
-    const delay = this.join.config.interpolationDelayMs;
-    this.view.setClock(() => this.clock.now(Date.now()) - delay);
+    // DEC-186: vị trí vẽ bằng Glide (trượt về vị trí mới nhất), không cần vẽ trễ `interpolationDelayMs`
+    this.view.setClock(() => this.clock.now(Date.now()));
     this.view.setSelf(this.selfId);
     this.view.setEnemyGuild(this.state?.war?.enemy ?? null);
     // hook chỉ-đọc cho test e2e/debug: chỉ chứa dữ liệu server đã gửi cho client này
@@ -257,6 +257,8 @@ export class GameClient {
       player: () => this.state?.player,
       map: () => this.state?.map.id,
       selfId: this.selfId,
+      // vị trí đang vẽ của entity (đo độ mượt, DEC-186)
+      drawn: (id: string) => this.world.entities.get(id)?.interp.at(this.clock.now(Date.now())) ?? null,
     };
   }
 
