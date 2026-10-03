@@ -1,7 +1,7 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
 import type { ChatPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
-import { PK_LABEL, canShowAttack, needsConfirm } from "../logic/pvp.js";
+import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
@@ -49,6 +49,10 @@ export interface UiState {
   mail: MailView[];
   /** PvP (P4-M1, từ config join). */
   pvp: { enabled: boolean; minLevel: number };
+  /** Duel đang diễn ra (P4-M2): đối thủ + giờ server hết duel. */
+  duel: { opponent: string; opponentId: string; endsAt: number } | null;
+  /** Lời mời duel đang chờ: người mời + hạn (giờ client, ms). */
+  duelAsk: { from: string; until: number } | null;
   /** Nhóm hiện tại (P3-M4), `null` = không có nhóm. */
   party: PartyPayload | null;
   /** Lời mời vào nhóm đang chờ: người mời + hạn (giờ client, ms). */
@@ -97,6 +101,10 @@ export interface UiActions {
   partyLeave(): void;
   partyKick(name: string): void;
   partyDisband(): void;
+  /** Duel (P4-M2). */
+  duelRequest(name: string): void;
+  duelAnswer(from: string, accept: boolean): void;
+  duelCancel(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -971,23 +979,35 @@ export class GameUI {
     // tấn công người chơi (P4-M1): đánh thường + skill đơn mục tiêu đã học
     const pvp = this.state.pvp;
     const me = this.state.player;
-    const canAttack = !isSelf && target !== undefined && canShowAttack(me, target, this.state.map, pvp);
+    const duel = this.state.duel;
+    const canAttack =
+      !isSelf &&
+      target !== undefined &&
+      canAttackPlayer(me, target, this.state.map, pvp, {
+        duelOpponentId: duel?.opponentId ?? null,
+        partyNames: party?.members.map((m) => m.name) ?? [],
+      });
+    const canDuel = !isSelf && target !== undefined && name !== undefined && canChallenge(me, target, pvp, duel !== null);
     const singles = canAttack ? mine.filter((sk) => sk.targetType === "SINGLE" && sk.id !== "basic_attack") : [];
     const attack = (skill: string | null) => () => {
-      if (!this.pvpConfirmed && needsConfirm(target!)) return this.confirmPk(targetId, skill, screenX, screenY);
+      // đối thủ duel: không PK, không hỏi
+      if (!this.pvpConfirmed && targetId !== duel?.opponentId && needsConfirm(target!)) return this.confirmPk(targetId, skill, screenX, screenY);
       this.closeContext();
       this.a.attack(targetId, skill);
     };
-    if (ally.length + point.length === 0 && !canInvite && !canAttack) return false;
+    if (ally.length + point.length === 0 && !canInvite && !canAttack && !canDuel) return false;
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "playermenu" },
+      // tên người được bấm (đông người dễ bấm nhầm, P4-M2)
+      !isSelf && name ? h("div", { class: "menuhead", "data-target-name": name }, name) : null,
       canAttack ? h("button", { "data-test": "pvp-attack", onclick: attack(null) }, "⚔ Tấn công") : null,
       singles.map((sk) => h("button", { "data-pvp-skill": sk.id, onclick: attack(sk.id) }, `⚔ ${sk.name} (${sk.manaCost} MP)`)),
       ally.map((sk) =>
         h("button", { "data-skill": sk.id, onclick: () => (this.closeContext(), this.a.cast(sk.id, isSelf ? null : targetId)) }, `${sk.name} (${sk.manaCost} MP)`),
       ),
       point.map((sk) => h("button", { "data-skill": sk.id, onclick: () => this.a.aim(sk.id) }, `${sk.name}… (${sk.manaCost} MP)`)),
+      canDuel ? h("button", { "data-test": "duel-request", onclick: () => (this.closeContext(), this.a.duelRequest(name!)) }, "🤺 Thách đấu") : null,
       canInvite ? h("button", { "data-test": "party-invite", onclick: () => (this.closeContext(), this.a.partyInvite(name!)) }, "👥 Mời vào nhóm") : null,
       // bấm trúng người chơi khác giờ mở menu (P3-M4): giữ thao tác đi bằng một mục riêng
       !isSelf && tile ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(tile.x, tile.y)) }, "🚶 Đi tới đây") : null,
@@ -1075,6 +1095,7 @@ export class GameUI {
         ),
       );
     this.renderParty();
+    this.renderDuel();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
@@ -1083,6 +1104,48 @@ export class GameUI {
   }
 
   // ---------- Nhóm (P3-M4, P3-5 (5)) ----------
+
+  // ---------- Duel (P4-M2): thanh đối thủ + đếm giờ + [Đầu hàng]; hộp lời mời ----------
+
+  private duelEl: HTMLElement | null = null;
+  private duelKeyShown: string | null = null;
+
+  private renderDuel(): void {
+    const s = this.state;
+    const ask = s.duelAsk;
+    const askLeft = ask ? Math.max(0, Math.ceil((ask.until - Date.now()) / 1000)) : 0;
+    const left = s.duel ? Math.max(0, Math.ceil((s.duel.endsAt - s.serverNow) / 1000)) : 0;
+    const key = JSON.stringify([s.duel?.opponent, left, ask?.from, askLeft]);
+    if (key === this.duelKeyShown && this.duelEl?.isConnected) return;
+    this.duelKeyShown = key;
+    this.duelEl?.remove();
+    this.duelEl = null;
+    const bar = s.duel
+      ? h(
+          "div",
+          { class: "duelbar", "data-test": "duel-bar" },
+          h("span", {}, `🤺 Đấu với ${s.duel.opponent} — ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`),
+          h("button", { "data-test": "duel-surrender", onclick: () => this.a.duelCancel() }, "Đầu hàng"),
+        )
+      : null;
+    const box =
+      ask && askLeft > 0
+        ? h(
+            "div",
+            { class: "partyask duelask", "data-test": "duel-ask" },
+            h("div", {}, `${ask.from} thách đấu tay đôi (${askLeft}s)`),
+            h(
+              "div",
+              { class: "btns" },
+              h("button", { "data-test": "duel-accept", onclick: () => this.a.duelAnswer(ask.from, true) }, "Nhận"),
+              h("button", { "data-test": "duel-decline", onclick: () => this.a.duelAnswer(ask.from, false) }, "Từ chối"),
+            ),
+          )
+        : null;
+    if (!bar && !box) return;
+    this.duelEl = h("div", { class: "partyhost" }, bar, box);
+    this.view.append(this.duelEl);
+  }
 
   private partyEl: HTMLElement | null = null;
   private partyKeyShown: string | null = null;

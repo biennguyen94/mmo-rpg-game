@@ -19,6 +19,46 @@ export function inSafeZone(map: Pick<MapData, "safeZones">, x: number, y: number
   return map.safeZones.some((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
 }
 
+/**
+ * Hiện nút [⚔ Tấn công] không: PvP bật, cả hai đủ cấp, không ai đứng trong safe zone; đang duel
+ * thì chỉ đánh đối thủ, không duel thì không đánh người đang duel; không đánh người cùng nhóm.
+ */
+export function canAttackPlayer(
+  me: { level: number; x: number; y: number },
+  target: { id: string; name: string; level: number | null; x: number; y: number; dueling?: boolean },
+  map: Pick<MapData, "safeZones">,
+  pvp: { enabled: boolean; minLevel: number },
+  ctx: { duelOpponentId: string | null; partyNames: string[] },
+): boolean {
+  if (ctx.partyNames.includes(target.name)) return false;
+  if (ctx.duelOpponentId !== null && target.id !== ctx.duelOpponentId) return false;
+  // người đang duel với người khác: "vùng riêng" (P4-4)
+  if (ctx.duelOpponentId === null && target.dueling) return false;
+  return canShowAttack(me, target, map, pvp);
+}
+
+/** Hiện nút [⚔ Thách đấu] không: PvP bật, cả hai đủ cấp, mình chưa duel. */
+export function canChallenge(me: { level: number }, target: { level: number | null; dueling?: boolean }, pvp: { enabled: boolean; minLevel: number }, inDuel: boolean): boolean {
+  return pvp.enabled && !inDuel && !target.dueling && me.level >= pvp.minLevel && (target.level ?? 0) >= pvp.minLevel;
+}
+
+/** Dòng thông báo khi duel kết thúc. */
+export function duelResultText(result: string | undefined, opponent: string | null): string {
+  const o = opponent ?? "?";
+  switch (result) {
+    case "win":
+      return `Bạn thắng ${o} trong trận đấu tay đôi.`;
+    case "lose":
+      return `Bạn thua ${o} trong trận đấu tay đôi.`;
+    case "draw":
+      return `Hòa với ${o}: hết giờ đấu tay đôi.`;
+    case "declined":
+      return `${o} từ chối đấu tay đôi.`;
+    default:
+      return `${o} đã hủy lời mời đấu tay đôi.`;
+  }
+}
+
 /** Hiện nút [⚔ Tấn công] không: PvP bật, cả hai đủ cấp, không ai đứng trong safe zone. */
 export function canShowAttack(
   me: { level: number; x: number; y: number },

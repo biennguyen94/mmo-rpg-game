@@ -230,3 +230,8 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .charlist .charrow button { width: auto; padding: 6px 12px; }
 .classopt.locked { opacity: 0.5; cursor: not-allowed; }
 .classopt .lockhint { font-size: 11px; color: #f0c36a; }
+/* Duel (P4-M2): thanh đối thủ giữa trên vùng game */
+.duelbar { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); background: #3a1d24; border: 1px solid #c0485c; border-radius: 6px; padding: 4px 10px; display: flex; gap: 10px; align-items: center; pointer-events: auto; font-size: 13px; }
+.duelbar button { padding: 2px 8px; min-height: 0; font-size: 12px; }
+.duelask { top: 44px; }
+.ctxmenu .menuhead { font-weight: 600; padding: 2px 8px 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }

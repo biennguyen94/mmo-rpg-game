@@ -205,7 +205,8 @@ defmodule MuWeb.GameChannel do
       pvp: %{
         enabled: Config.get(["features", "pvp"]) == true,
         minLevel: Config.get(["pvp", "minLevel"])
-      }
+      },
+      duelInviteSeconds: Config.get(["duel", "inviteSeconds"])
     }
   end
 end

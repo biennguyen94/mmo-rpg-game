@@ -95,6 +95,8 @@ export interface SpawnPayload {
   /** Người chơi (P4-M1): trạng thái PK (màu tên), đang là kẻ gây sự (tên nhấp nháy). */
   pkState?: "NORMAL" | "WARNING" | "MURDERER";
   aggressor?: boolean;
+  /** Đang duel (P4-M2): người ngoài không đánh được. */
+  dueling?: boolean;
 }
 
 export interface SnapshotEntity {
@@ -237,6 +239,16 @@ export interface PartyPayload {
   members: PartyMember[];
 }
 
+/** Event `duel` (P4-M2): lời mời / bắt đầu / kết thúc. */
+export interface DuelPayload {
+  state: "request" | "start" | "end";
+  opponent: string | null;
+  opponentId?: string;
+  /** Giờ server (ms) hết duel. */
+  endsAt?: number;
+  result?: "win" | "lose" | "draw" | "declined" | "cancelled";
+}
+
 /** Một thư (event `mail`, P2-M6). */
 export interface MailView {
   id: string;
@@ -279,6 +291,8 @@ export interface JoinReply {
     partyInviteSeconds: number;
     /** PvP (P4-M1): bật không, cấp tối thiểu (để hiện nút; server vẫn kiểm). */
     pvp: { enabled: boolean; minLevel: number };
+    /** Lời mời duel hết hạn sau ngần này giây (P4-M2). */
+    duelInviteSeconds: number;
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

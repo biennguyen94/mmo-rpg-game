@@ -215,6 +215,12 @@ defmodule Mu.Game.Session do
 
   def handle_info({:mail_changed, _}, s), do: {:noreply, s, timeout(s)}
 
+  # MapServer đẩy riêng cho người chơi này (duel, P4-M2)
+  def handle_info({:map_push, event, payload}, s) do
+    push(s, event, payload)
+    {:noreply, s, timeout(s)}
+  end
+
   # Nhóm (P3-M4): `party`, `party_invite`, chat PARTY / thông báo nhóm
   def handle_info({:party_push, event, payload}, s) do
     push(s, event, payload)
@@ -549,6 +555,22 @@ defmodule Mu.Game.Session do
   end
 
   defp run("chat", _payload, s), do: {{:error, "INVALID_TARGET"}, s}
+
+  # ---------- Duel (P4-M2, P4-4): trạng thái ở MapServer (hai người cùng map) ----------
+
+  defp run("duel_request", %{"to" => to}, s) when is_binary(to),
+    do: {MapServer.duel(s.character.map_id, s.character.id, :request, to), s}
+
+  defp run("duel_accept", %{"from" => from}, s) when is_binary(from),
+    do: {MapServer.duel(s.character.map_id, s.character.id, :accept, from), s}
+
+  defp run("duel_decline", %{"from" => from}, s) when is_binary(from),
+    do: {MapServer.duel(s.character.map_id, s.character.id, :decline, from), s}
+
+  defp run("duel_cancel", _p, s),
+    do: {MapServer.duel(s.character.map_id, s.character.id, :cancel), s}
+
+  defp run("duel_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
 
   # ---------- Nhóm (P3-M4, P3-5) ----------
 
