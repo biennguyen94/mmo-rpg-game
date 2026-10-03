@@ -20,8 +20,10 @@ defmodule Mu.Game.Session do
   trả kết quả cũ, không làm lại. Trang bị đổi → chỉ số mới gửi MapServer.
 
   Tab: `session.singleLoginPerAccount` — tab mới vào thì tab cũ nhận `{:session_kicked, _}`;
-  nhân vật vẫn ở trên map. Tab cuối đóng: rời map ngay, hoặc ở lại
-  `session.logoutInCombatSeconds` nếu đang combat (G21). Session đẩy `{:push, "player", view}`
+  nhân vật vẫn ở trên map. Tab cuối **rời kênh có chủ ý** (đăng xuất): rời map ngay, hoặc ở
+  lại `session.logoutInCombatSeconds` nếu đang combat (G21). Tab cuối **mất kết nối** (socket
+  đóng, kênh lỗi): nhân vật đứng yên trên map `session.reconnectGraceSeconds`, vẫn bị đánh; vào
+  lại trong hạn thì giữ nguyên vị trí, HP/MP, buff (P3-M2). Session đẩy `{:push, "player", view}`
   cho các tab khi tiến độ đổi.
   """
   use GenServer, restart: :transient
@@ -136,7 +138,8 @@ defmodule Mu.Game.Session do
         }
 
         s = %{s | character: c, on_map: true} |> schedule_save()
-        reply({:ok, c, Map.put(info, :items, s.items)}, s)
+        # buff còn trên map khi vào lại trong hạn reconnect (P3-M2)
+        reply({:ok, c, Map.merge(info, %{items: s.items, buffs: s.buffs})}, s)
     end
   end
 
@@ -162,9 +165,9 @@ defmodule Mu.Game.Session do
   def handle_call({:command, _act, _payload}, _from, s), do: reply({:error, "FORBIDDEN"}, s)
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, s) do
+  def handle_info({:DOWN, ref, :process, _pid, reason}, s) do
     s = %{s | tabs: Map.delete(s.tabs, ref)}
-    s = if map_size(s.tabs) == 0, do: last_tab_closed(s), else: s
+    s = if map_size(s.tabs) == 0, do: last_tab_closed(s, reason), else: s
     {:noreply, s, timeout(s)}
   end
 
@@ -665,7 +668,9 @@ defmodule Mu.Game.Session do
 
   defp refresh(s), do: s
 
-  defp last_tab_closed(%{on_map: true, character: c} = s) do
+  # Rời có chủ ý (client `leave` kênh khi đăng xuất): ngay, hoặc sau logoutInCombatSeconds nếu
+  # đang combat (G21)
+  defp last_tab_closed(%{on_map: true, character: c} = s, {:shutdown, :left}) do
     case MapServer.player_state(c.map_id, c.id) do
       %{combat_remaining_ms: ms} when ms > 0 ->
         # đang combat: ở lại logoutInCombatSeconds rồi mới rời (G21)
@@ -677,7 +682,15 @@ defmodule Mu.Game.Session do
     end
   end
 
-  defp last_tab_closed(s), do: s
+  # Mất kết nối (socket đóng: mạng rớt, đóng tab, kênh lỗi): nhân vật đứng yên trên map
+  # `reconnectGraceSeconds`, vẫn bị đánh; vào lại trong hạn thì tiếp tục (KB_TECHNICAL §4, P3-M2)
+  defp last_tab_closed(%{on_map: true, character: c} = s, _reason) do
+    MapServer.halt(c.map_id, c.id)
+    grace = Config.get(["session", "reconnectGraceSeconds"]) * 1000
+    %{s | leave_timer: Process.send_after(self(), :delayed_leave, grace)}
+  end
+
+  defp last_tab_closed(s, _reason), do: s
 
   defp cancel_leave(%{leave_timer: nil} = s), do: s
 
@@ -688,7 +701,8 @@ defmodule Mu.Game.Session do
 
   defp leave_map(%{on_map: true, character: c} = s) do
     if s.save_timer, do: Process.cancel_timer(s.save_timer)
-    s = %{s | on_map: false, save_timer: nil}
+    # buff chỉ sống trên map (DEC-66)
+    s = %{s | on_map: false, save_timer: nil, buffs: []}
 
     s =
       case MapServer.leave(c.map_id, c.id) do

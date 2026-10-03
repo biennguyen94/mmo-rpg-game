@@ -83,7 +83,7 @@ defmodule MuWeb.WorldChannelTest do
     assert_reply ref, :error, %{error: "INVALID_TARGET"}
   end
 
-  test "2 người chơi cùng lúc thấy nhau di chuyển (broadcast, chưa AOI)" do
+  test "2 người chơi cùng lúc thấy nhau di chuyển" do
     {a, ca} = create_character()
     {b, cb} = create_character()
     {:ok, ra, sa} = join_game(a, ca)
@@ -108,13 +108,13 @@ defmodule MuWeb.WorldChannelTest do
     assert length(positions) >= 2
     assert List.last(positions) == {tx, ty}
 
-    # B rời game → A nhận despawn
+    # B đăng xuất → A nhận despawn
     Process.unlink(sb.channel_pid)
-    close(sb)
+    leave(sb)
     assert_receive %Message{event: "despawn", join_ref: ^ja, payload: %{id: ^eb}}
   end
 
-  test "reload trang (đóng kênh, vào lại): vị trí còn nguyên, đã ghi DB" do
+  test "đăng xuất rồi vào lại: vị trí còn nguyên, đã ghi DB" do
     {a, c} = create_character()
     {:ok, reply, socket} = join_game(a, c)
     {tx, ty} = {reply.player.x + 4, reply.player.y + 1}
@@ -124,8 +124,8 @@ defmodule MuWeb.WorldChannelTest do
     tick_until(c.id, {tx, ty})
 
     Process.unlink(socket.channel_pid)
-    close(socket)
-    # tab cuối đóng → rời map ngay và lưu (G21)
+    leave(socket)
+    # tab cuối rời kênh (đăng xuất) → rời map ngay và lưu (G21)
     wait_until(fn -> MapServer.position(@map, c.id) == nil end)
     s = stored(c)
     assert {s.position_x, s.position_y} == {tx, ty}

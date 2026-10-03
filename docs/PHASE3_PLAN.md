@@ -27,7 +27,7 @@ Quy tắc 3 vẫn ghi "Chỉ làm Phase 1". Đề xuất (anh duyệt hoặc t�
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
 | **P3-M1 AOI** ✅ | Kênh giữ tầm nhìn từng người (`MuWeb.Aoi`, ô 16×16, nhìn 3×3 ô; DEC-84); `spawn` / `despawn` khi vào / ra tầm nhìn; snapshot / combat lọc theo tầm nhìn; NORMAL chat vẫn cả map (P3-7). Soak 20 bot × 2 phút (nửa ở thị trấn): 6,56 → 5,21 KB/s/bot (−21 %; `combat` −80 %); cả 20 bot cùng vùng: 6,17 → 5,88 (−5 %) (map 64×64 chỉ 4×4 ô, P3M1-1) | xong |
-| **P3-M2 Reconnect giữa phiên** | Mất kết nối: nhân vật ở lại map `reconnectGraceSeconds` (30 s), vẫn bị đánh; vào lại trong hạn thì giữ nguyên trạng thái (vị trí, HP/MP, buff, tự đánh dừng); quá hạn thì rời map + lưu. Client đã có tự kết nối lại | không — làm được ngay |
+| **P3-M2 Reconnect giữa phiên** ✅ | Mất kết nối (socket đóng): nhân vật đứng yên trên map `reconnectGraceSeconds` (30 s), vẫn bị đánh; vào lại trong hạn thì giữ nguyên vị trí, HP/MP, buff (tự đánh dừng, báo "Đã kết nối lại."); quá hạn thì rời map + lưu. Đăng xuất (rời kênh) giữ luật G21 (DEC-88 … DEC-91). E2E `reconnect.mjs` 11/11 | xong |
 | **P3-M3 Warehouse** | Kho 120 ô dùng chung cho mọi nhân vật của tài khoản; NPC giữ kho; panel kho + túi; gửi / rút bằng `move_item` (1 transaction, audit) | ⛔ P3-6 |
 | **P3-M4 Party** | Lập nhóm / mời / nhận / rời / đuổi / giải tán; chia EXP + bonus; loot protect cho cả nhóm; khung thành viên (HP, map); chat PARTY bật | ⛔ P3-5 (protocol + UI + công thức) |
 | **P3-M5 Nhiều nhân vật + MG** | `account.maxCharacters` 4, màn chọn / tạo nhân vật; MG mở theo điều kiện; MG chỉ số 26 / 7 stat, không đội mũ, chỉ số phép | ⛔ P3-2, P3-3, P3-4 |

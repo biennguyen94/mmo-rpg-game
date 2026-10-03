@@ -257,5 +257,12 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 
 | # | Vấn đề | Đã làm / đề xuất |
 |---|---|---|
-| P3M1-1 | **Map hiện tại 64×64 = 4×4 ô AOI**, tầm nhìn 3×3 ô (48×48) phủ 56–100 % map → AOI tiết kiệm ít (soak 20 bot, nửa ở thị trấn: −21 % byte; cả 20 bot săn Spider: −5 %) | Giữ đúng KB (DEC-85). Lợi ích lớn khi map rộng hơn / đông người hơn; nếu anh muốn thấy rõ ngay thì có thể giảm `aoiCellSize` (vd. 12) — đổi số KB, cần anh quyết |
+| P3M1-1 **ĐÃ QUYẾT 2026-10-03: giữ KB** | **Map hiện tại 64×64 = 4×4 ô AOI**, tầm nhìn 3×3 ô (48×48) phủ 56–100 % map → AOI tiết kiệm ít (soak 20 bot, nửa ở thị trấn: −21 % byte; cả 20 bot săn Spider: −5 %) | Giữ đúng KB (DEC-85). Lợi ích lớn khi map rộng hơn / đông người hơn; nếu anh muốn thấy rõ ngay thì có thể giảm `aoiCellSize` (vd. 12) — đổi số KB, cần anh quyết |
 | P3M1-2 | Lọc ở kênh, MapServer vẫn broadcast trong máy (DEC-84) | Đổi sang gửi riêng từ MapServer khi cần (nhiều node / rất đông) |
+
+### P3-M2. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M2-1 | Đóng tab / tải lại trang cũng tính là mất kết nối (nhân vật ở lại 30 s); chỉ nút **Đăng xuất** mới rời ngay (hoặc sau 10 s nếu đang combat) — DEC-88 | Theo KB §4; anh muốn đóng tab = đăng xuất thì báo em |
+| P3M2-2 | Rớt mạng không có gói đóng: server biết sau tối đa 60 s (timeout WebSocket Phoenix) rồi mới đếm 30 s — DEC-89 | Giữ mặc định; có thể giảm timeout (vd. 45 s) nếu cần |
