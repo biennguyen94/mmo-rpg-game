@@ -273,3 +273,7 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 /* lưới đồ trong panel giao dịch: ô cố định 44px như túi (không giãn theo khung) */
 [data-panel="trade"] .bag { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px; justify-content: start; padding: 6px 0; }
 [data-panel="trade"] .tradegrid { min-height: 50px; }
+/* Xếp hạng (P6-M1) */
+table.ranking { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.ranking th, table.ranking td { padding: 4px 6px; border-bottom: 1px solid #2a2e40; text-align: left; }
+table.ranking tr.me td { color: #ffd36b; font-weight: 600; }

@@ -228,6 +228,11 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
           CHROMIUM_PATH: none
         run: node client/e2e/trade.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Ranking
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/ranking.mjs http://localhost:4000 e2e-shots
       - name: Ảnh + log server
         if: always()
         uses: actions/upload-artifact@v4

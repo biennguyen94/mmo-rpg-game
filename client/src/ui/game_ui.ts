@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, GuildConfig, GuildPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
 import { ERROR_TEXT, type ErrorCode } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
@@ -28,7 +28,7 @@ import { chatLine } from "../logic/chat.js";
 import { ROLE_LABEL, canDemote, canInvite as canGuildInvite, canKick, canPromote, myRole, validGuildName } from "../logic/guild.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade" | "ranking";
 
 export interface UiState {
   player: Player;
@@ -76,6 +76,8 @@ export interface UiState {
   /** Giao dịch đang mở (P5-M4) + lời mời giao dịch đang chờ (hạn giờ client). */
   trade: TradePayload | null;
   tradeAsk: { from: string; until: number } | null;
+  /** Bảng xếp hạng đang xem (P6-M1). */
+  ranking: RankingPayload | null;
 }
 
 export interface UiActions {
@@ -146,6 +148,8 @@ export interface UiActions {
   tradeLock(): void;
   tradeConfirm(): void;
   tradeCancel(): void;
+  /** Xin bảng xếp hạng `board` (P6-M1). */
+  ranking(board: string): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -335,6 +339,7 @@ export class GameUI {
       this.state.guildCfg?.enabled
         ? h("button", { "data-test": "guild-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("guild")) }, "🛡 Guild")
         : null,
+      h("button", { "data-test": "ranking-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("ranking")) }, "🏆 Xếp hạng"),
       h("button", { onclick: () => (this.closeMenu(), this.a.togglePanel("settings")) }, "⚙️ Cài đặt"),
       h("button", { "data-test": "switch-character", onclick: () => (this.closeMenu(), this.a.switchCharacter()) }, "👥 Đổi nhân vật"),
       h("button", { onclick: () => (this.closeMenu(), this.a.logout()) }, "🚪 Đăng xuất"),
@@ -377,7 +382,9 @@ export class GameUI {
                   ? [s.guild, this.guildDisbandArmed, s.war && [s.war.enemy, s.war.score, s.war.enemyScore]]
                   : s.panel === "trade"
                     ? s.trade
-                    : null;
+                    : s.panel === "ranking"
+                      ? s.ranking
+                      : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -411,7 +418,9 @@ export class GameUI {
                       ? this.guildPanel()
                       : s.panel === "trade"
                         ? this.tradePanel()
-                        : this.settingsPanel();
+                        : s.panel === "ranking"
+                          ? this.rankingPanel()
+                          : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -926,6 +935,62 @@ export class GameUI {
           ),
         ),
         h("div", { class: "hint", style: "text-align:center;margin-top:8px" }, "Kéo đồ giữa kho và túi, hoặc bấm vào món đồ → [Gửi] / [Rút]. Không cất Zen."),
+      ),
+    );
+  }
+
+  // ---------- Xếp hạng (P6-M1, P6-7) ----------
+
+  private rankingPanel(): HTMLElement {
+    const r = this.state.ranking;
+    const boards: [string, string][] = [
+      ["level", "Tất cả"],
+      ["level_DK", "DK"],
+      ["level_DW", "DW"],
+      ["level_ELF", "ELF"],
+      ["level_MG", "MG"],
+      ["guild", "Guild"],
+    ];
+    const guild = r?.board === "guild";
+    const me = this.state.player.name;
+    const row = (x: RankingPayload["rows"][number]) =>
+      guild
+        ? h("tr", { "data-rank-row": x.name }, h("td", {}, x.rank), h("td", {}, x.name), h("td", {}, x.master ?? ""), h("td", {}, x.members ?? 0), h("td", {}, x.totalLevel ?? 0))
+        : h(
+            "tr",
+            { "data-rank-row": x.name, class: x.name === me ? "me" : "" },
+            h("td", {}, x.rank),
+            h("td", {}, x.name),
+            h("td", {}, x.class ?? ""),
+            h("td", {}, x.level ?? 0),
+            h("td", {}, x.guild ?? ""),
+          );
+    const head = guild ? ["#", "Guild", "Chủ guild", "Người", "Tổng cấp"] : ["#", "Nhân vật", "Class", "Cấp", "Guild"];
+    return h(
+      "section",
+      { class: "panel", "data-panel": "ranking" },
+      h("h2", {}, "XẾP HẠNG"),
+      h(
+        "div",
+        { class: "body scroll" },
+        h(
+          "div",
+          { class: "tabs filters" },
+          boards.map(([b, label]) => h("button", { class: r?.board === b ? "active" : "", "data-board": b, onclick: () => this.a.ranking(b) }, label)),
+        ),
+        r
+          ? h(
+              "div",
+              {},
+              h("table", { class: "ranking", "data-test": "ranking-table" }, h("tr", {}, head.map((x) => h("th", {}, x))), r.rows.map(row)),
+              h(
+                "div",
+                { class: "hint", "data-test": "ranking-me" },
+                r.me ? `Hạng của bạn: #${r.me.rank}${guild ? ` (${r.me.name})` : ""}` : guild ? "Bạn chưa có guild." : "Bạn không có trong bảng này.",
+                ` · cập nhật ${new Date(r.updatedAt).toLocaleTimeString("vi-VN")}`,
+              ),
+            )
+          : h("div", { class: "hint" }, "Đang tải…"),
       ),
     );
   }

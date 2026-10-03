@@ -306,6 +306,14 @@ export interface TradePayload {
   by?: string | null;
 }
 
+/** Event `ranking` (P6-M1): một bảng xếp hạng + hạng của mình. */
+export interface RankingPayload {
+  board: string;
+  rows: { rank: number; name: string; class?: string; level?: number; guild?: string | null; master?: string; totalLevel?: number; members?: number }[];
+  me: { rank: number; name: string; class?: string; level?: number; totalLevel?: number } | null;
+  updatedAt: number;
+}
+
 /** Event `upgrade` (P5-M2): kết quả ép jewel lên đồ. */
 export interface UpgradePayload {
   itemId: string;

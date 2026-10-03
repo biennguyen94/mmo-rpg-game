@@ -18,6 +18,8 @@ defmodule Mu.Application do
       # giao dịch (P5-M4, KB_TECHNICAL §10): 1 TradeSettlement / giao dịch đang mở
       {Registry, keys: :unique, name: Mu.Trade.Registry},
       {DynamicSupervisor, name: Mu.Trade.Supervisor, strategy: :one_for_one},
+      # bảng xếp hạng (P6-M1): cache RAM, đọc DB khi bảng cũ
+      Mu.Leaderboard,
       Mu.Accounts.WsTicket,
       Mu.Game.OrphanSweeper,
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)
