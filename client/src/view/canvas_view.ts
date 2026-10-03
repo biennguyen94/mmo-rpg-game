@@ -1,13 +1,47 @@
-// Game view TẠM bằng Canvas 2D (placeholder hình học, KB_ASSETS: chưa có tileset/sprite thật).
-// Cài đặt interface GameView để logic không phụ thuộc thư viện vẽ; PhaserView (Phaser 3, đã
-// chốt) thay vào khi tải được npm (docs/OPEN_QUESTIONS.md E7). Ô 32×32 (KB_ASSETS §3).
+// Game view TẠM bằng Canvas 2D. Cài đặt interface GameView để logic không phụ thuộc thư viện vẽ;
+// PhaserView (Phaser 3, đã chốt) thay vào khi tải được npm (docs/OPEN_QUESTIONS.md E7).
+// Ô 32×32 (KB_ASSETS §3). Tile/sprite: DCSS CC0 (CREDITS.md, assets/mapping.json); ảnh nào thiếu
+// hoặc tải lỗi thì vẽ hình học thay thế, không crash (KB_ASSETS §5).
 import type { CombatPayload, MapData } from "../net/protocol.js";
 import type { Entity, World } from "../state/world.js";
 import type { GameView, ViewCallbacks } from "./view.js";
 
 const TILE = 32;
 
-// màu theo `legend` của map (placeholder, không phải asset)
+/** Tải ảnh; lỗi thì trả null (dùng hình học thay thế). */
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      console.warn(`Thiếu asset ${src} — dùng placeholder`);
+      resolve(null);
+    };
+    img.src = src;
+  });
+}
+
+const sprites = new Map<string, HTMLImageElement | null>();
+
+/** Sprite theo entity (id asset trùng id trong data: KB_ASSETS §5). */
+function spriteKey(e: Entity): string | null {
+  if (e.kind === "monster") return `/assets/sprites/monsters/${e.templateId}.png`;
+  if (e.kind === "npc") return `/assets/sprites/npcs/${e.templateId}.png`;
+  if (e.kind === "player") return "/assets/sprites/characters/dk/body.png";
+  return null;
+}
+
+function sprite(e: Entity): HTMLImageElement | null {
+  const key = spriteKey(e);
+  if (!key) return null;
+  if (!sprites.has(key)) {
+    sprites.set(key, null);
+    void loadImage(key).then((img) => sprites.set(key, img));
+  }
+  return sprites.get(key) ?? null;
+}
+
+// màu dự phòng theo `legend` khi chưa/không tải được tile
 const COLORS: Record<string, string> = {
   grass: "#2f4f2a",
   road: "#6b5a3e",
@@ -38,28 +72,43 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
   let cam = { x: 0, y: 0 };
   let raf = 0;
 
-  // tô sẵn nền map một lần
+  // tô sẵn nền map: vẽ ngay bằng màu, vẽ lại bằng tile khi tải xong (tiles/{mapId}/{legend}.png)
   const bg = document.createElement("canvas");
   bg.width = map.width * TILE;
   bg.height = map.height * TILE;
   const bgc = bg.getContext("2d")!;
-  map.tiles.forEach((row, y) =>
-    [...row].forEach((ch, x) => {
-      bgc.fillStyle = COLORS[map.legend[ch]] ?? "#000";
-      bgc.fillRect(x * TILE, y * TILE, TILE, TILE);
-      if (map.legend[ch] === "tree") {
-        bgc.fillStyle = "#2d5a27";
-        bgc.beginPath();
-        bgc.arc(x * TILE + 16, y * TILE + 16, 12, 0, Math.PI * 2);
-        bgc.fill();
-      }
-    }),
+  const paint = (tiles: Map<string, HTMLImageElement | null>) => {
+    map.tiles.forEach((row, y) =>
+      [...row].forEach((ch, x) => {
+        const kind = map.legend[ch];
+        const img = tiles.get(kind);
+        // cây có nền trong suốt: vẽ cỏ bên dưới
+        const under = kind === "tree" ? tiles.get("grass") : null;
+        if (under) bgc.drawImage(under, x * TILE, y * TILE);
+        else if (!img) {
+          bgc.fillStyle = COLORS[kind] ?? "#000";
+          bgc.fillRect(x * TILE, y * TILE, TILE, TILE);
+        }
+        if (img) bgc.drawImage(img, x * TILE, y * TILE);
+        else if (kind === "tree") {
+          bgc.fillStyle = "#2d5a27";
+          bgc.beginPath();
+          bgc.arc(x * TILE + 16, y * TILE + 16, 12, 0, Math.PI * 2);
+          bgc.fill();
+        }
+      }),
+    );
+    for (const z of map.safeZones) {
+      bgc.strokeStyle = "rgba(217,180,90,0.45)";
+      bgc.setLineDash([6, 6]);
+      bgc.strokeRect(z.x * TILE + 1, z.y * TILE + 1, z.w * TILE - 2, z.h * TILE - 2);
+    }
+  };
+  paint(new Map());
+  const kinds = [...new Set(Object.values(map.legend))];
+  void Promise.all(kinds.map((k) => loadImage(`/assets/tiles/${map.id}/${k}.png`))).then((imgs) =>
+    paint(new Map(kinds.map((k, i) => [k, imgs[i]]))),
   );
-  for (const z of map.safeZones) {
-    bgc.strokeStyle = "rgba(217,180,90,0.35)";
-    bgc.setLineDash([6, 6]);
-    bgc.strokeRect(z.x * TILE + 1, z.y * TILE + 1, z.w * TILE - 2, z.h * TILE - 2);
-  }
 
   const resize = () => {
     const r = container.getBoundingClientRect();
@@ -172,6 +221,21 @@ function kindOrder(e: Entity): number {
 
 function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, self: boolean): void {
   const dead = e.state === "dead";
+  const img = sprite(e);
+  if (img) {
+    // vòng dưới chân phân biệt mình / người khác / NPC
+    if (e.kind !== "monster") {
+      g.fillStyle = e.kind === "npc" ? "rgba(217,180,90,0.5)" : self ? "rgba(79,163,255,0.6)" : "rgba(92,207,122,0.55)";
+      g.beginPath();
+      g.ellipse(x, y + 12, 12, 5, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.globalAlpha = dead ? 0.35 : 1;
+    g.drawImage(img, x - TILE / 2, y - TILE / 2);
+    g.globalAlpha = 1;
+    label(g, e, x, y, dead);
+    return;
+  }
   if (e.kind === "item") {
     g.fillStyle = "#e8c66a";
     g.beginPath();
@@ -212,14 +276,21 @@ function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number
       g.stroke();
     }
   }
+  label(g, e, x, y, dead);
+}
+
+function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dead: boolean): void {
   g.font = "11px system-ui";
   g.textAlign = "center";
+  g.fillStyle = "#000";
+  const name = e.kind === "npc" ? "Potion Merchant" : e.name;
+  g.fillText(name, x + 1, y - 19);
   g.fillStyle = "#fff";
-  g.fillText(e.kind === "npc" ? "Potion Merchant" : e.name, x, y - 18);
+  g.fillText(name, x, y - 20);
   if (e.hp !== null && e.maxHp && e.kind !== "npc" && !dead) {
     g.fillStyle = "#300";
-    g.fillRect(x - 14, y + 14, 28, 4);
+    g.fillRect(x - 14, y + 16, 28, 4);
     g.fillStyle = "#d33";
-    g.fillRect(x - 14, y + 14, (28 * Math.max(0, e.hp)) / e.maxHp, 4);
+    g.fillRect(x - 14, y + 16, (28 * Math.max(0, e.hp)) / e.maxHp, 4);
   }
 }

@@ -1,0 +1,58 @@
+{
+  "source": "https://github.com/crawl/tiles (Dungeon Crawl Stone Soup tiles)",
+  "commit": "a6ea1655db5c044829d9eea19a232fa6fcac87b0",
+  "license": "CC0 1.0",
+  "checked": "2026-10-03: tên file và đường dẫn gốc không có trong TILES_UNDER_UNKNOWN_LICENSE.md; file trùng từng byte (git blob hash) với bản trong repo crawl/tiles",
+  "assets": {
+    "sprites/monsters/spider.png": {
+      "id": "monster:spider",
+      "original": "releases/Nov-2015/mon/animals/spider.png",
+      "gitBlob": "441894dd0f38123c77b6ac7e6c6d687f0010b800"
+    },
+    "sprites/npcs/lorencia_potion_merchant.png": {
+      "id": "npc:lorencia_potion_merchant",
+      "original": "releases/Nov-2015/mon/human.png",
+      "gitBlob": "d3891a5d7f4d4b6157fa370d94d39e4762eb9446"
+    },
+    "sprites/characters/dk/body.png": {
+      "id": "class:DK body (không có lớp trang bị — KB_ASSETS §2.1, A4)",
+      "original": "releases/Nov-2015/player/base/human_m.png",
+      "gitBlob": "4f24a838732947ac767a08777e0a2f91a79438d1"
+    },
+    "tiles/lorencia/grass.png": {
+      "id": "tile:grass",
+      "original": "releases/Nov-2015/dngn/floor/grass/grass0.png",
+      "gitBlob": "b2fc2e6b180011a4941d69d18bf21fbc6a62d419"
+    },
+    "tiles/lorencia/road.png": {
+      "id": "tile:road",
+      "original": "releases/Nov-2015/dngn/floor/dirt0.png",
+      "gitBlob": "3205b3eeb03a40d40a504770b212f83198e0daaf"
+    },
+    "tiles/lorencia/town_floor.png": {
+      "id": "tile:town_floor",
+      "original": "releases/Nov-2015/dngn/floor/sandstone_floor0.png",
+      "gitBlob": "133dd0c0503027cf51c7e5d4c89155e8d145a950"
+    },
+    "tiles/lorencia/wall.png": {
+      "id": "tile:wall",
+      "original": "releases/Nov-2015/dngn/wall/brick_brown0.png",
+      "gitBlob": "56e3a25afa52e2aeabd1de7492878ff852bfff8f"
+    },
+    "tiles/lorencia/tree.png": {
+      "id": "tile:tree",
+      "original": "releases/Nov-2015/dngn/trees/mangrove1.png",
+      "gitBlob": "5b3628d17ef668d79775445d425deebad71899e2"
+    },
+    "tiles/lorencia/water.png": {
+      "id": "tile:water",
+      "original": "releases/Nov-2015/dngn/water/deep_water.png",
+      "gitBlob": "843fd9a760e4bc551945fc955e67321dc6ac2656"
+    },
+    "tiles/lorencia/rock.png": {
+      "id": "tile:rock",
+      "original": "releases/Nov-2015/dngn/wall/lab-rock0.png",
+      "gitBlob": "b1593e873bfa9db6c6d0d0d2fc3b5909ffa6aeb5"
+    }
+  }
+}

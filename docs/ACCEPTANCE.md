@@ -71,8 +71,8 @@ event `player` nên bot uống potion muộn (nhiều lần chết hơn thực t
 | Mục | Trạng thái |
 |---|---|
 | Game view bằng **Phaser 3** | ❌ Chưa làm: `registry.npmjs.org` bị chặn 403 trong phiên này (E7). Anh đã chọn (a) mở registry; thay đổi mạng chưa có hiệu lực ở phiên đang chạy. `PhaserView` thay `CanvasView` qua interface `GameView` (không đổi logic/UI) |
-| Sprite DCSS (CC0) | ❌ Không dùng: không đối chiếu được license từng file (`raw.githubusercontent.com` bị chặn, E8) → hình học placeholder |
-| Asset §6.1 (DK 6 animation × 4 hướng, tileset, effect, BGM) | ❌ Placeholder; có 7 SFX tổng hợp Web Audio, chưa có BGM (M5-3) |
+| Sprite DCSS (CC0) | ✅ Đã dùng (E8 xong): Spider, NPC, thân DK, 7 tile Lorencia — đối chiếu license từng file (`CREDITS.md`, `assets/mapping.json`) |
+| Asset §6.1 (DK 6 animation × 4 hướng, effect, BGM) | ❌ DK chỉ có 1 khung tĩnh (DCSS `human_m`, không vẽ trang bị), chưa có animation/effect/BGM; 7 SFX Web Audio (M5-3) |
 | Icon item thật | Chờ anh (Q11/A6); pipeline sẵn, input rỗng → placeholder |
 | E6 `items_raw.json` | Chưa có file: 1 test KB_ITEM_REFERENCE §6 đang `@tag :skip` |
 | Soak 1 giờ | Cloud chạy 10 phút (theo yêu cầu); bản 1 giờ: anh chạy local (`docs/RUN_LOCAL.md` §6, lệnh ở §5 dưới) |
