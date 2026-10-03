@@ -6,6 +6,12 @@ export interface ApiError {
   message: string;
 }
 
+/** Class tạo được (server: `newCharacter.classes`); mục đầu là mặc định. */
+export interface ClassOption {
+  id: string;
+  name: string;
+}
+
 export interface CharacterSummary {
   id: string;
   name: string;
@@ -52,7 +58,8 @@ export const api = {
     call<{ token: string; username: string }>("POST", "/login", { username, password }),
   logout: (token: string) => call<{ ok: boolean }>("POST", "/logout", undefined, token),
   wsTicket: (token: string) => call<{ ticket: string }>("POST", "/ws-ticket", undefined, token),
-  characters: (token: string) => call<{ characters: CharacterSummary[] }>("GET", "/characters", undefined, token),
-  createCharacter: (token: string, name: string) =>
-    call<{ character: CharacterSummary }>("POST", "/characters", { name }, token),
+  characters: (token: string) =>
+    call<{ characters: CharacterSummary[]; classes: ClassOption[] }>("GET", "/characters", undefined, token),
+  createCharacter: (token: string, name: string, cls: string) =>
+    call<{ character: CharacterSummary }>("POST", "/characters", { name, class: cls }, token),
 };

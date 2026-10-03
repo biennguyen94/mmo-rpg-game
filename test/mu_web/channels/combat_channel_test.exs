@@ -220,4 +220,37 @@ defmodule MuWeb.CombatChannelTest do
     Process.sleep(50)
     assert MapServer.position(@map, c.id) == nil
   end
+
+  test "P2-5: Elf cầm cung đánh thường từ 5 ô; DK tay không chỉ 1 ô" do
+    {a, c} = create_character(nil, "ELF")
+    {:ok, r, socket} = join_game(a, c)
+    assert r.player.view.attackRange == 5
+
+    MapServer.debug_update(@map, fn st ->
+      m = %{st.monsters["m_1"] | x: 50, y: 36, home: {50, 36}}
+      players = Map.update!(st.players, c.id, &%{&1 | x: 45, y: 36})
+      %{st | monsters: %{"m_1" => m}, players: players}
+    end)
+
+    ref = push(socket, "cmd", %{"act" => "attack", "rid" => "b1", "target" => "m_1"})
+    assert_reply ref, :ok, %{rid: "b1"}
+
+    MapServer.debug_update(@map, fn st ->
+      put_in(st.players[c.id].x, 44) |> put_in([:players, c.id, :cooldowns], %{})
+    end)
+
+    ref = push(socket, "cmd", %{"act" => "attack", "rid" => "b2", "target" => "m_1"})
+    assert_reply ref, :error, %{error: "OUT_OF_RANGE"}
+
+    {a2, c2} = create_character()
+    {:ok, r2, socket2} = join_game(a2, c2)
+    assert r2.player.view.attackRange == 1
+
+    MapServer.debug_update(@map, fn st ->
+      put_in(st.players[c2.id].x, 48) |> put_in([:players, c2.id, :y], 36)
+    end)
+
+    ref = push(socket2, "cmd", %{"act" => "attack", "rid" => "d1", "target" => "m_1"})
+    assert_reply ref, :error, %{error: "OUT_OF_RANGE"}
+  end
 end

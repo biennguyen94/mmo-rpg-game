@@ -279,4 +279,35 @@ defmodule Mu.Game.ItemsTest do
     do: items |> Enum.filter(&(&1.template_id == "hp_potion_small")) |> Enum.sort_by(& &1.slot)
 
   defp potion_id(c), do: hd(potions(Items.load(c.id))).id
+
+  describe "P2-M2" do
+    test "cung hai tay: không mặc cung khi có khiên, không mặc khiên khi cầm cung" do
+      {_, elf} = create_character(nil, "ELF")
+      elf = %{elf | strength: 30}
+      [bow] = Items.load(elf.id)
+      {:ok, _} = Items.unequip(elf.id, 5, nil)
+      shield = pick(elf, "shield_t0")
+      {:ok, _} = Items.equip(elf, shield.id, 6)
+      assert {:error, "INVALID_SLOT"} = Items.equip(elf, bow.id, 5)
+      {:ok, _} = Items.unequip(elf.id, 6, nil)
+      {:ok, _} = Items.equip(elf, bow.id, 5)
+      assert {:error, "INVALID_SLOT"} = Items.equip(elf, shield.id, 6)
+      # kiếm một tay + khiên vẫn được
+      sword = pick(elf, "sword_t0")
+      {:ok, _} = Items.equip(elf, sword.id, 5)
+      assert {:ok, _} = Items.equip(elf, shield.id, 6)
+    end
+
+    test "đồ khởi đầu có audit STARTER; class sai không mặc được đồ class khác", %{c: dk} do
+      {_, dw} = create_character(nil, "DW")
+      [staff] = Items.load(dw.id)
+      assert audits(staff.id) == ["STARTER"]
+      pad = pick(dk, "pad_armor_t0")
+      assert {:error, "REQUIREMENT_NOT_MET"} = Items.equip(dk, pad.id, 1)
+      vine = pick(dw, "vine_armor_t0")
+      assert {:error, "REQUIREMENT_NOT_MET"} = Items.equip(dw, vine.id, 1)
+      pad2 = pick(dw, "pad_armor_t0")
+      assert {:ok, _} = Items.equip(dw, pad2.id, 1)
+    end
+  end
 end

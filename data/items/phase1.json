@@ -123,7 +123,8 @@
    },
    "buyPrice": 1000,
    "implementationFields": [
-    "buyPrice"
+    "buyPrice",
+    "weaponType"
    ],
    "sourceType": "IMPLEMENTATION",
    "requirements": {
@@ -132,7 +133,8 @@
     "agility": 0,
     "energy": 0,
     "vitality": 0
-   }
+   },
+   "weaponType": "sword"
   },
   {
    "templateId": "shield_t0",

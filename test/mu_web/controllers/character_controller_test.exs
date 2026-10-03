@@ -7,7 +7,15 @@ defmodule MuWeb.CharacterControllerTest do
   end
 
   test "tạo DK rồi liệt kê", %{conn: conn} do
-    assert json_response(get(conn, "/characters"), 200) == %{"characters" => []}
+    # danh sách class tạo được (P2-M2), mục đầu là mặc định
+    assert json_response(get(conn, "/characters"), 200) == %{
+             "characters" => [],
+             "classes" => [
+               %{"id" => "DK", "name" => "Dark Knight"},
+               %{"id" => "DW", "name" => "Dark Wizard"},
+               %{"id" => "ELF", "name" => "Fairy Elf"}
+             ]
+           }
 
     res = post(conn, "/characters", %{name: "MyKnight"})
 
@@ -22,7 +30,7 @@ defmodule MuWeb.CharacterControllerTest do
              json_response(post(conn, "/characters", %{name: "x!"}), 422)
 
     assert %{"error" => "INVALID_CLASS"} =
-             json_response(post(conn, "/characters", %{name: "Wizard1", class: "DW"}), 422)
+             json_response(post(conn, "/characters", %{name: "Gladiat1", class: "MG"}), 422)
 
     other = build_conn() |> authed(create_account())
     assert json_response(post(other, "/characters", %{name: "Taken1"}), 201)
@@ -54,6 +62,6 @@ defmodule MuWeb.CharacterControllerTest do
   test "danh sách chỉ có nhân vật của mình", %{conn: conn} do
     other = build_conn() |> authed(create_account())
     post(other, "/characters", %{name: "NotMine1"})
-    assert json_response(get(conn, "/characters"), 200) == %{"characters" => []}
+    assert %{"characters" => []} = json_response(get(conn, "/characters"), 200)
   end
 end

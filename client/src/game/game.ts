@@ -20,7 +20,7 @@ import {
 import { AutoAttack, approach } from "../logic/autoattack.js";
 import type { Stat } from "../logic/alloc.js";
 import type { IconMap } from "../logic/icons.js";
-import { equipSlotFor, firstFreeSlot, pickPotion, type Templates } from "../logic/items.js";
+import { equipSlotFor, firstFreeSlot, pickPotion, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
 import { ServerClock } from "../state/interp.js";
 import { World, type Entity } from "../state/world.js";
@@ -59,7 +59,8 @@ export class GameClient {
       alloc: (stat, points) => void this.alloc(stat, points),
       equip: (it) => void this.equip(it),
       unequip: (slot) => void this.unequip(slot),
-      itemCommand: (c) => void this.send(c.act, c.payload),
+      itemCommand: (c) =>
+        void (c.act === "equip" ? this.equipTo(c.payload.itemId as string, c.payload.slot as number) : this.send(c.act, c.payload)),
       split: (it, n) => void this.split(it, n),
       useItem: (it) => void this.send("use_item", { itemId: it.id }).then((ok) => ok && Sound.play("potion")),
       buy: (tid) => void this.send("buy", { npcId: this.shop?.npcId, templateId: tid, quantity: 1 }),
@@ -292,7 +293,19 @@ export class GameClient {
     if (!this.state) return;
     const t = this.state.templates.get(it.templateId);
     const slot = t ? equipSlotFor(t, this.state.player.equipment) : null;
-    if (slot !== null) await this.send("equip", { itemId: it.id, slot });
+    if (slot !== null) await this.equipTo(it.id, slot);
+  }
+
+  private async equipTo(itemId: string, slot: number): Promise<void> {
+    if (!this.state) return;
+    const p = this.state.player;
+    const t = this.state.templates.get(p.inventory.find((i) => i.id === itemId)?.templateId ?? "");
+    if (t && twoHandConflict(t, slot, p.equipment, this.state.templates, this.join?.config.twoHandedWeaponTypes ?? [])) {
+      this.notices.add("ERROR", "Cung cần hai tay — tháo khiên trước.");
+      this.render();
+      return;
+    }
+    await this.send("equip", { itemId, slot });
   }
 
   private async split(it: ItemView, quantity: number): Promise<void> {
@@ -338,7 +351,9 @@ export class GameClient {
     const me = this.world.entities.get(this.selfId);
     const t = this.world.entities.get(this.auto.target);
     if (!me) return;
-    const range = this.state.skills.get(this.auto.pendingSkill ?? "basic_attack")?.range ?? 1;
+    // đánh thường: tầm theo vũ khí đang cầm (`view.attackRange`, server tính — P2-5)
+    const skill = this.auto.pendingSkill;
+    const range = skill ? (this.state.skills.get(skill)?.range ?? 1) : this.state.player.view.attackRange;
     const action = this.auto.tick(
       Date.now(),
       me,

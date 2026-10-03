@@ -28,7 +28,7 @@ const sprites = new Map<string, HTMLImageElement | null>();
 function spriteKey(e: Entity): string | null {
   if (e.kind === "monster") return `/assets/sprites/monsters/${e.templateId}.png`;
   if (e.kind === "npc") return `/assets/sprites/npcs/${e.templateId}.png`;
-  if (e.kind === "player") return "/assets/sprites/characters/dk/body.png";
+  if (e.kind === "player") return `/assets/sprites/characters/${(e.class ?? "DK").toLowerCase()}/body.png`;
   return null;
 }
 

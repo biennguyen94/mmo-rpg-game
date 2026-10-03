@@ -8,7 +8,11 @@ defmodule MuWeb.CharacterController do
 
   def index(conn, _params) do
     account = conn.assigns.current_account
-    json(conn, %{characters: Enum.map(Characters.list(account.id), &Characters.summary/1)})
+
+    json(conn, %{
+      characters: Enum.map(Characters.list(account.id), &Characters.summary/1),
+      classes: Characters.creatable_classes()
+    })
   end
 
   def create(conn, params) do

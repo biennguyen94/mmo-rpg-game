@@ -159,3 +159,24 @@ export function dragCommand(
 export function defaultSplit(quantity: number): number {
   return Math.max(1, Math.floor(quantity / 2));
 }
+
+/**
+ * Luật vũ khí hai tay (P2-5): mặc `t` vào `slot` có vướng không — cung khi đang có khiên, hoặc
+ * khiên khi đang cầm cung. Chỉ để báo sớm cho người chơi; server vẫn kiểm (`INVALID_SLOT`).
+ */
+export function twoHandConflict(
+  t: ItemTemplate,
+  slot: number,
+  equipment: ItemView[],
+  templates: Templates,
+  twoHanded: string[],
+): boolean {
+  const isTwo = (x: ItemTemplate | undefined) => !!x?.weaponType && twoHanded.includes(x.weaponType);
+  const at = (s: number) => equipment.find((e) => e.slot === s);
+  if (slot === EQUIP_SLOT.WEAPON && isTwo(t)) return at(EQUIP_SLOT.SHIELD) !== undefined;
+  if (slot === EQUIP_SLOT.SHIELD) {
+    const w = at(EQUIP_SLOT.WEAPON);
+    return w !== undefined && isTwo(templates.get(w.templateId));
+  }
+  return false;
+}

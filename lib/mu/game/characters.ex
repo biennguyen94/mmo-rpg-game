@@ -8,7 +8,7 @@ defmodule Mu.Game.Characters do
 
   alias Mu.Repo
   alias Mu.Accounts.Account
-  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Names, Stats}
+  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Items, Names, Stats}
   alias Mu.World.Maps
 
   def list(account_id) do
@@ -25,16 +25,18 @@ defmodule Mu.Game.Characters do
   end
 
   @doc """
-  Tạo nhân vật mới. `attrs`: `%{"name" => ..., "class" => ...}` (class bỏ trống = class mặc
-  định trong config). Mọi chỉ số do server tính từ `classes.json` + `config.json`.
+  Tạo nhân vật mới. `attrs`: `%{"name" => ..., "class" => ...}` (class thuộc
+  `newCharacter.classes`, bỏ trống = `defaultClass`). Mọi chỉ số do server tính từ
+  `classes.json` + `config.json`; đồ `newCharacter.startingEquipment[class]` mặc sẵn (P2-3).
 
   Lỗi: `:invalid_name`, `:banned_name`, `:name_taken`, `:invalid_class`, `:character_limit`.
   """
   def create(%Account{id: account_id}, attrs) do
     start = Config.get(["newCharacter"])
-    class_id = attrs["class"] || start["class"]
+    class_id = attrs["class"] || start["defaultClass"]
 
     with {:ok, name} <- Names.validate(attrs["name"]),
+         true <- class_id in start["classes"] || {:error, :invalid_class},
          %{} = class <- Data.class(class_id) || {:error, :invalid_class} do
       Repo.transaction(fn ->
         # khóa row tài khoản: hai request tạo nhân vật song song không cùng lọt qua giới hạn
@@ -44,9 +46,20 @@ defmodule Mu.Game.Characters do
           Repo.rollback(:character_limit)
         end
 
-        insert(account_id, name, class, start)
+        c = insert(account_id, name, class, start)
+        Items.give_starting_equipment(c.id, Map.get(start["startingEquipment"], c.class, []))
+        c
       end)
     end
+  end
+
+  @doc "Class tạo được (`newCharacter.classes`) cho màn tạo nhân vật; mục đầu là `defaultClass`."
+  def creatable_classes do
+    start = Config.get(["newCharacter"])
+
+    start["classes"]
+    |> Enum.sort_by(&(&1 != start["defaultClass"]))
+    |> Enum.map(&%{id: &1, name: Data.class(&1)["name"]})
   end
 
   defp insert(account_id, name, class, start) do
@@ -156,6 +169,7 @@ defmodule Mu.Game.Characters do
         defenseRate: d.defense_rate,
         attackSpeed: d.attack_speed,
         cooldownMs: d.cooldown_ms,
+        attackRange: d.attack_range,
         expRequired:
           if(c.level >= Engine.max_level(), do: nil, else: Engine.exp_required(c.level)),
         maxLevel: Engine.max_level(),

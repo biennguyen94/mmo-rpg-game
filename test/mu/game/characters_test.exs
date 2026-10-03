@@ -34,17 +34,43 @@ defmodule Mu.Game.CharactersTest do
     assert stored.name == "Knight01"
   end
 
-  test "class bỏ trống = class mặc định; class khác DK bị từ chối (Phase 1)" do
-    assert Config.get(["newCharacter", "class"]) == "DK"
-    assert Map.keys(Data.classes()) == ["DK"]
+  test "class bỏ trống = DK; DW/ELF tạo được (P2-M2); MG và class lạ bị từ chối" do
+    assert Config.get(["newCharacter", "defaultClass"]) == "DK"
+    assert Enum.sort(Map.keys(Data.classes())) == ["DK", "DW", "ELF"]
 
-    assert {:ok, %{class: "DK"}} =
-             Characters.create(create_account(), %{"name" => "Abcd1", "class" => "DK"})
+    assert {:ok, %{class: "DK"}} = Characters.create(create_account(), %{"name" => "Abcd1"})
 
-    for cls <- ["DW", "ELF", "MG", "dk", "XX"] do
+    for cls <- ["MG", "dk", "XX"] do
       assert {:error, :invalid_class} =
                Characters.create(create_account(), %{"name" => "Zzzz1", "class" => cls})
     end
+  end
+
+  test "P2-M2: DW / ELF cấp 1 đúng chỉ số KB_CONFIG §2 + §4.1, mặc sẵn đồ khởi đầu (P2-3)" do
+    {:ok, dw} = Characters.create(create_account(), %{"name" => "Wizard1", "class" => "DW"})
+    {:ok, elf} = Characters.create(create_account(), %{"name" => "Fairy1", "class" => "ELF"})
+    {:ok, dk} = Characters.create(create_account(), %{"name" => "Knight9", "class" => "DK"})
+
+    for {c, tpl} <- [{dw, "staff_t0"}, {elf, "bow_t0"}] do
+      assert [%{template_id: ^tpl, location: "EQUIPMENT", slot: 5}] = Mu.Game.Items.load(c.id)
+    end
+
+    assert Mu.Game.Items.load(dk.id) == []
+
+    dwv = Characters.player_view(dw, Mu.Game.Items.load(dw.id))
+    elfv = Characters.player_view(elf, Mu.Game.Items.load(elf.id))
+
+    # DW: HP 80+15×2, MP 60+30×2; atk ENE/9..ENE/4 + gậy 3–6; def AGI/5; tầm 1 (staff)
+    assert {dw.hp_current, dw.mana_current} == {110, 120}
+
+    assert Map.take(dwv.view, [:hpMax, :mpMax, :attackMin, :attackMax, :defense, :attackRange]) ==
+             %{hpMax: 110, mpMax: 120, attackMin: 6, attackMax: 13, defense: 3, attackRange: 1}
+
+    # ELF: HP 90+20×2, MP floor(40+15×1.5); atk AGI/7+STR/14 .. AGI/4+STR/8 + cung 2–5; tầm 5 (bow)
+    assert {elf.hp_current, elf.mana_current} == {130, 62}
+
+    assert Map.take(elfv.view, [:attackMin, :attackMax, :defense, :defenseRate, :attackRange]) ==
+             %{attackMin: 7, attackMax: 14, defense: 2, defenseRate: 8, attackRange: 5}
   end
 
   test "luật tên §18: 4–10 ký tự ASCII chữ/số" do

@@ -72,7 +72,7 @@ defmodule MuWeb.ItemChannelTest do
 
   test "join: có template item cho client; túi và trang bị rỗng" do
     %{reply: r} = setup_player()
-    assert length(r.data.items) == 10
+    assert length(r.data.items) == map_size(Mu.Game.Data.items())
     sword = Enum.find(r.data.items, &(&1["templateId"] == "sword_t0"))
 
     assert %{"attackMin" => 3, "iconRef" => %{"group" => 0, "index" => 1}, "sellPrice" => 500} =
@@ -211,7 +211,14 @@ defmodule MuWeb.ItemChannelTest do
     assert {:ok, _} =
              cmd(socket, %{"act" => "npc_open", "rid" => "o2", "npcId" => "npc_" <> @npc})
 
-    assert_push "shop", %{npcId: @npc, items: [%{templateId: "hp_potion_small", price: 100}]}
+    # Phase 2 bán thêm MP potion (P2-M2)
+    assert_push "shop", %{
+      npcId: @npc,
+      items: [
+        %{templateId: "hp_potion_small", price: 100},
+        %{templateId: "mp_potion_small", price: 120}
+      ]
+    }
 
     assert {:ok, _} =
              cmd(socket, %{

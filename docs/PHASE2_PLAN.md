@@ -45,7 +45,7 @@ Mỗi milestone: commit riêng trên `ccr-c1e9e89f-eb2dxu`, format/compile/test 
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
 | **P2-M1 Inventory & Equipment** ✅ 2026-10-03 | `move_item` (hoán đổi/merge stack), `split`, `drop`; UI túi đồ mới (lưới hoặc danh sách + kéo thả, theo P2-8); giữ transaction + `item_audit_log` + idempotent `rid`; test thuần `Inventory` | P2-8, P2-9 (có thể làm trước vì ít phụ thuộc số) |
-| **P2-M2 Class DW + Elf** | `classes.json` thêm DW/ELF (KB_CONFIG §2 + §4.1), màn tạo nhân vật chọn class, sprite DCSS cho DW/Elf, basic attack đánh xa cho Elf/DW, item staff/bow nhập từ Item.txt | P2-3, P2-5, P2-6 (E6) |
+| **P2-M2 Class DW + Elf** ✅ 2026-10-03 | `classes.json` thêm DW/ELF (KB_CONFIG §2 + §4.1), màn tạo nhân vật chọn class, sprite DCSS cho DW/Elf, basic attack đánh xa cho Elf/DW, item staff/bow nhập từ Item.txt | P2-3, P2-5, P2-6 (E6) |
 | **P2-M3 Skills theo class** | `skills.json` DW/Elf/DK thêm skill, hệ buff (thời hạn, cộng chỉ số), heal; menu skill client; effect placeholder | P2-4 |
 | **P2-M4 Nội dung: quái, drop, NPC, map** | Quái mới cho Lorencia (+ map 2), drop table, NPC shop vũ khí/giáp, map thứ 2 + portal, chuyển map (MapServer theo map, kênh đổi topic), respawn town gần nhất, `maxLevel` Phase 2 | P2-2, P2-7, P2-10, P2-11 |
 | **P2-M5 Chat** | NORMAL/WHISPER/SYSTEM, PARTY/GUILD → `FORBIDDEN` (feature tắt), rate-limit theo `rateLimit` config, sanitize hiển thị, lọc từ, mute | P2-12 |
@@ -81,3 +81,4 @@ Thứ tự gợi ý: **P2-M1 trước** (ít phụ thuộc dữ liệu mới nh�
 | Milestone | Kết quả |
 |---|---|
 | P2-M1 (2026-10-03) | Server: `move_item` (chuyển / hoán đổi / gộp stack), `split`, `drop` (xuống đất trong RAM, giữ serial + thuộc tính, P2-9), idempotent `rid`, audit `MOVE` / `MERGE` / `SPLIT` / `DROP`. Client: lưới 8×8, kéo thả (chuột) + nút trong tooltip (cảm ứng), thùng rác + xác nhận (DEC-56); panel không còn dựng lại mỗi snapshot (DEC-57). Test: 202 ExUnit, 13 node, smoke 24/24, nghiệm thu 24/24 (thêm 5 mục P2). Ảnh: `docs/screenshots/p2-inventory-drop.png` |
+| P2-M2 (2026-10-03) | DW + ELF trong `classes.json` (KB_CONFIG §2 + §4.1), tạo nhân vật chọn class + đồ khởi đầu (gậy / cung), `maxLevel` 30, `weaponType` + tầm đánh theo vũ khí (cung 5), luật cung hai tay, 12 template t0 (số tạm), MP potion ở shop, sprite DCSS cho DW/Elf, simulator theo class. Test: 208 ExUnit, 14 node, smoke 24/24, nghiệm thu 24/24, `classes.mjs` 6/6. Ảnh: `docs/screenshots/p2-create-class.png`, `p2-elf-ranged.png` |

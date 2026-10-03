@@ -34,9 +34,20 @@ defmodule Mu.Game.Engine do
       defense_rate: value.("defenseRate"),
       attack_speed: attack_speed,
       cooldown_ms: cooldown_ms(attack_speed),
+      attack_range: basic_attack_range(equipment),
       hp_max: Stats.hp_max(c.class, c.level, c.vitality) + item_sum(equipment, "hpBonus"),
       mp_max: Stats.mp_max(c.class, c.level, c.energy)
     }
+  end
+
+  @doc "Tầm đánh thường (ô) theo `weaponType` của vũ khí đang cầm (P2-5, `combat.basicAttackRange`)."
+  def basic_attack_range(equipment) do
+    ranges = Config.get(["combat", "basicAttackRange"])
+
+    case Enum.find(equipment, &(&1["slot"] == "WEAPON")) do
+      nil -> ranges["default"]
+      w -> Map.get(ranges, w["weaponType"], ranges["default"])
+    end
   end
 
   defp eval(%{"terms" => terms} = f, c, equipment) do

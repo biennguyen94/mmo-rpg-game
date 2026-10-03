@@ -37,6 +37,8 @@ export interface PlayerView {
   defenseRate: number;
   attackSpeed: number;
   cooldownMs: number;
+  /** Tầm đánh thường (ô) theo vũ khí đang cầm. */
+  attackRange: number;
   expRequired: number | null;
   maxLevel: number;
   skills: string[];
@@ -80,6 +82,8 @@ export interface SpawnPayload {
   name: string;
   level: number | null;
   templateId?: string;
+  /** Người chơi: class (DK/DW/ELF) để chọn sprite. */
+  class?: string;
 }
 
 export interface SnapshotEntity {
@@ -121,6 +125,7 @@ export interface ItemTemplate {
   name: string;
   type: string;
   slot: string | null;
+  weaponType?: string;
   stackable: boolean;
   maxStack?: number;
   potionType?: "HP" | "MP";
@@ -166,6 +171,7 @@ export interface JoinReply {
     maxLevel: number;
     pickupRange: number;
     npcRange: number;
+    twoHandedWeaponTypes: string[];
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

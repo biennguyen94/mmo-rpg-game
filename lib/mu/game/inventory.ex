@@ -185,6 +185,30 @@ defmodule Mu.Game.Inventory do
     end
   end
 
+  @doc """
+  Luật vũ khí hai tay (P2-5, `combat.twoHandedWeaponTypes`): mặc vũ khí hai tay khi ô SHIELD
+  có đồ, hoặc mặc khiên khi đang cầm vũ khí hai tay → `{:error, "INVALID_SLOT"}`.
+  Đồ đang ở chính ô `slot` sẽ bị thay nên không tính.
+  """
+  def two_hand_ok(items, template, slot) do
+    weapon = in_slot(items, "EQUIPMENT", 5)
+    shield = in_slot(items, "EQUIPMENT", 6)
+
+    cond do
+      slot == 5 and two_handed?(template) and shield != nil ->
+        {:error, "INVALID_SLOT"}
+
+      slot == 6 and weapon != nil and two_handed?(Data.item(weapon.template_id)) ->
+        {:error, "INVALID_SLOT"}
+
+      true ->
+        :ok
+    end
+  end
+
+  def two_handed?(template),
+    do: template["weaponType"] in Config.get(["combat", "twoHandedWeaponTypes"])
+
   @doc "Template của các món đang mặc (để `Engine.derived/2`)."
   def equipped_templates(items), do: Enum.map(equipment(items), &Data.item(&1.template_id))
 

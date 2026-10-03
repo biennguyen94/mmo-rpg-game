@@ -34,11 +34,11 @@ defmodule Mu.DataCase do
   end
 
   @doc "Tạo tài khoản + một DK, trả về `{account, character}`."
-  def create_character(name \\ nil) do
+  def create_character(name \\ nil, class \\ "DK") do
     account = create_account()
     # "Dk" + 2..8 chữ số: luôn 4–10 ký tự (§18)
     name = name || "Dk#{rem(System.unique_integer([:positive]), 10_000_000) + 10}"
-    {:ok, character} = Mu.Game.Characters.create(account, %{"name" => name})
+    {:ok, character} = Mu.Game.Characters.create(account, %{"name" => name, "class" => class})
     {account, character}
   end
 

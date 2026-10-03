@@ -153,11 +153,11 @@ defmodule Mu.Game.EngineTest do
       assert {c.level, c.experience, c.free_stat_points} == {4, 1, 15}
     end
 
-    test "maxLevel 10: EXP dừng ở 0" do
-      {c, 1} = Engine.add_exp(dk(%{level: 9, experience: 2690}), 50)
-      assert {c.level, c.experience} == {10, 0}
+    test "maxLevel 30 (P2-2): EXP dừng ở 0" do
+      {c, 1} = Engine.add_exp(dk(%{level: 29, experience: 15_617 - 10}), 50)
+      assert {c.level, c.experience} == {30, 0}
       {c, 0} = Engine.add_exp(c, 500)
-      assert {c.level, c.experience} == {10, 0}
+      assert {c.level, c.experience} == {30, 0}
     end
 
     test "EXP Spider: không penalty ở Phase 1; penalty giảm tới minExpRatio (G23)" do
