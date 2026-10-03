@@ -694,6 +694,21 @@ defmodule Mu.Game.Session do
 
   defp run("guild_disband", _p, s), do: {Guild.disband(s.character.id), s}
 
+  # ---------- Xếp hạng (P6-M1, P6-7) ----------
+
+  defp run("ranking", %{"board" => board}, s) when is_binary(board) do
+    case Mu.Leaderboard.get(board, s.character.id) do
+      {:ok, view} ->
+        push(s, "ranking", view)
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  defp run("ranking", _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   # ---------- Giao dịch (P5-M4, P5-5): trạng thái trong `Mu.Trade.Settlement` ----------
 
   defp run("trade_request", %{"to" => to}, s) when is_binary(to) do

@@ -27,6 +27,7 @@ import {
   type GuildWarPayload,
   type UpgradePayload,
   type TradePayload,
+  type RankingPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -145,6 +146,7 @@ export class GameClient {
       tradeLock: () => void this.send("trade_lock"),
       tradeConfirm: () => void this.send("trade_confirm"),
       tradeCancel: () => void this.send("trade_cancel"),
+      ranking: (board) => void this.send("ranking", { board }),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -199,6 +201,7 @@ export class GameClient {
       // giao dịch bị hủy khi mất kết nối (KB_TECHNICAL §10): vào lại thì không còn
       trade: null,
       tradeAsk: null,
+      ranking: null,
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -328,6 +331,9 @@ export class GameClient {
         break;
       case "upgrade":
         this.onUpgrade(p as UpgradePayload);
+        break;
+      case "ranking":
+        this.state.ranking = p as RankingPayload;
         break;
       case "trade_invite":
         this.state.tradeAsk = { from: p.from, until: Date.now() + (p.seconds ?? 30) * 1000 };
@@ -628,6 +634,8 @@ export class GameClient {
     if (p === "notices") this.notices.markAllRead();
     // mở Hộp thư: xin danh sách (server đánh dấu đã đọc → badge về 0)
     if (p === "mail") void this.send("mail_list");
+    // mở Xếp hạng: xin bảng đang xem (mặc định "Tất cả")
+    if (p === "ranking") void this.send("ranking", { board: this.state.ranking?.board ?? "level" });
     if (p !== "shop") this.shop = null;
     this.render();
   }
