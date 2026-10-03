@@ -53,6 +53,16 @@
       "id": "tile:rock",
       "original": "releases/Nov-2015/dngn/wall/lab-rock0.png",
       "gitBlob": "b1593e873bfa9db6c6d0d0d2fc3b5909ffa6aeb5"
+    },
+    "sprites/characters/dw/body.png": {
+      "id": "class:DW body (áo choàng pháp sư, không có lớp trang bị — KB_ASSETS §2.1)",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/characters/elf/body.png": {
+      "id": "class:ELF body (cung thủ, không có lớp trang bị — KB_ASSETS §2.1)",
+      "original": "releases/Nov-2015/mon/deep_elf_master_archer.png",
+      "gitBlob": "0a94ec1d4bc8ea424446792e03c0027cc16897dd"
     }
   }
 }

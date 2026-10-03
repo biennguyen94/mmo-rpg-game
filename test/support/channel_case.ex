@@ -6,7 +6,10 @@ defmodule MuWeb.ChannelCase do
     quote do
       import Phoenix.ChannelTest
       import MuWeb.ChannelCase
-      import Mu.DataCase, only: [create_account: 0, create_character: 0, create_character: 1]
+
+      import Mu.DataCase,
+        only: [create_account: 0, create_character: 0, create_character: 1, create_character: 2]
+
       @endpoint MuWeb.Endpoint
     end
   end

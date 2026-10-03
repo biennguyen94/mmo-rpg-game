@@ -32,6 +32,21 @@ rộng `mix mu.simulate` theo class rồi báo số thật trước khi chốt.
 | ELF + cung t0 tầm 5 | 2.8 s | 7.4 | 17.5 |
 | DW / ELF + bộ giáp t0 (def +12 / +10) | 2.8–3.2 s | 1–2 | > 70 |
 
+### 0.3. Simulator thật sau P2-M2 (`mix mu.simulate --runs 20`, tới 5000 con)
+
+| Lệnh | Tới cấp 10 | Potion tới cấp 10 | Máu mất / con |
+|---|---|---|---|
+| `--class DK --gear none` | 1111 con, 130 phút | 149 | 3,1 |
+| `--class DK --gear full` | 75 phút | 2 | 0,53 |
+| `--class DW --gear none --strategy ene` | 95 phút | 265 | 5,3 |
+| `--class DW --gear starter --strategy ene` | 66 phút | 103 | 2,0 |
+| `--class DW --gear full --strategy ene` | 66 phút | 7 | 0,25 |
+| `--class ELF --gear none --strategy agi` | 81 phút | 71 | 0,98 |
+| `--class ELF --gear starter --strategy agi` | 63 phút | 0,6 | 0,08 |
+
+Không ai tới cấp 20 chỉ với Spider (EXP giảm theo chênh cấp) — cần quái P2-M4. Simulator giả định
+đứng yên đánh (không thả diều), DW chưa có skill (P2-M3).
+
 **Kết luận:** DW tay không quá yếu (chết sau ~2 con) → cần vũ khí khởi đầu hoặc skill tầm xa từ cấp 1.
 Có giáp t0 thì Spider gần như vô hại với mọi class (giống Q14 của DK) — chấp nhận cho map đầu.
 

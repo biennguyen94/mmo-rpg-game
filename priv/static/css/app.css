@@ -163,3 +163,9 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
   .inv { height: auto; align-self: flex-start; }
   .inv .list { overflow: visible; }
 }
+/* Tạo nhân vật: chọn class (Phase 2) */
+.classpick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.classopt { position: relative; display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 13px; text-align: center; }
+.classopt:has(input:checked) { border-color: var(--accent); background: #22253a; }
+.classopt input { position: absolute; opacity: 0; pointer-events: none; }
+.classopt img { width: 48px; height: 48px; image-rendering: pixelated; }

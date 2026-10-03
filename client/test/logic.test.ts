@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { AllocBatcher, type Timer } from "../src/logic/alloc.js";
 import { AutoAttack, approach } from "../src/logic/autoattack.js";
 import { bucket, iconPath } from "../src/logic/icons.js";
-import { defaultSplit, dragCommand, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
+import { defaultSplit, dragCommand, twoHandConflict, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
 import { NoticeLog, diffPlayer } from "../src/logic/notices.js";
 import { RidGen, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
 import { InterpBuffer, ServerClock } from "../src/state/interp.js";
@@ -198,4 +198,18 @@ test("dragCommand: kéo thả túi đồ → lệnh (P2-M1)", () => {
   assert.equal(dragCommand({ kind: "equip", item: ring }, { kind: "trash" }, p, templates), null);
   assert.equal(defaultSplit(5), 2);
   assert.equal(defaultSplit(1), 1);
+});
+
+test("twoHandConflict: cung khóa khiên và ngược lại (P2-5)", () => {
+  const tpl = new Map(templates);
+  tpl.set("bow", T({ templateId: "bow", slot: "WEAPON", weaponType: "bow" }));
+  tpl.set("shield", T({ templateId: "shield", slot: "SHIELD" }));
+  const two = ["bow", "crossbow"];
+  const bow = tpl.get("bow")!;
+  const shield = tpl.get("shield")!;
+  assert.equal(twoHandConflict(bow, 5, [item("s", "shield", 6)], tpl, two), true);
+  assert.equal(twoHandConflict(bow, 5, [], tpl, two), false);
+  assert.equal(twoHandConflict(shield, 6, [item("b", "bow", 5)], tpl, two), true);
+  assert.equal(twoHandConflict(shield, 6, [item("w", "sword", 5)], tpl, two), false);
+  assert.equal(twoHandConflict(tpl.get("sword")!, 5, [item("s", "shield", 6)], tpl, two), false);
 });

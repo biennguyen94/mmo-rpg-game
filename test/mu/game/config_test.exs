@@ -3,12 +3,13 @@ defmodule Mu.Game.ConfigTest do
 
   alias Mu.Game.{Config, Data}
 
-  test "config có nguồn gốc (KB_00_RULES §2) và giá trị Phase 1" do
+  test "config có nguồn gốc (KB_00_RULES §2) và giá trị đã chốt" do
     all = Config.all()
     assert all["sourceType"] == "CONFIG"
     assert Map.has_key?(all, "version")
     assert all["verified"] == false
-    assert Config.get(["game", "maxLevel"]) == 10
+    # Phase 1 = 10; Phase 2 = 30 (P2-2)
+    assert Config.get(["game", "maxLevel"]) == 30
     assert Config.get(["server", "simulationHz"]) == 20
     assert Config.get(["auth", "wsTicketTtlSeconds"]) == 30
     assert Config.get(["session", "singleLoginPerAccount"]) == true

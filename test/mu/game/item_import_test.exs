@@ -12,12 +12,18 @@ defmodule Mu.Game.ItemImportTest do
 
   test "items.json sinh từ data/items khớp (mix mu.items.import --check)" do
     assert capture_io(fn -> Mix.Tasks.Mu.Items.Import.run(["--check"]) end) =~
-             "không đổi (10 template)"
+             "không đổi (22 template)"
   end
 
-  test "đủ 10 template Phase 1, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
+  test "đủ 10 template Phase 1 + 12 template P2-M2, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
     ids =
-      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0)
+      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
+        ~w(staff_t0 bow_t0) ++
+        for(
+          set <- ~w(pad vine),
+          part <- ~w(helm armor pants gloves boots),
+          do: "#{set}_#{part}_t0"
+        )
 
     assert Enum.sort(Map.keys(Data.items())) == Enum.sort(ids)
 
@@ -35,6 +41,25 @@ defmodule Mu.Game.ItemImportTest do
     end
 
     assert Data.item("ring_hp_t0")["iconRef"] == %{"custom" => "ring_hp_t0"}
+  end
+
+  test "P2-5: mọi vũ khí có weaponType; cung hai tay, tầm đánh theo loại" do
+    for {_, t} <- Data.items(), t["slot"] == "WEAPON" do
+      assert t["weaponType"] in ~w(sword axe mace spear bow crossbow staff), t["templateId"]
+    end
+
+    assert {Data.item("staff_t0")["weaponType"], Data.item("bow_t0")["weaponType"]} ==
+             {"staff", "bow"}
+
+    assert Mu.Game.Inventory.two_handed?(Data.item("bow_t0"))
+    refute Mu.Game.Inventory.two_handed?(Data.item("sword_t0"))
+
+    assert {:error, [msg]} =
+             Mu.Game.ItemImport.build(%{
+               "items" => [Map.delete(Data.item("sword_t0"), "weaponType")]
+             })
+
+    assert msg =~ "weaponType"
   end
 
   test "requirements = round(requirementsRaw × 0.35), reference.adjusted ⇒ IMPLEMENTATION" do

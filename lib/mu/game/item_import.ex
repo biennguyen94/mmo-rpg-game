@@ -8,7 +8,7 @@ defmodule Mu.Game.ItemImport do
   - bản ghi có `reference.adjusted` phải là `IMPLEMENTATION`;
   - `requirements` = `round_half_up(requirementsRaw × items.requirementScale)` (trừ `level`);
   - không dùng group 12 khi `features.wings = false`; class chỉ trong `DW, DK, ELF, MG`;
-  - `slot` thuộc `KB_CONFIG §6` hoặc `null` (tiêu hao).
+  - `slot` thuộc `KB_CONFIG §6` hoặc `null` (tiêu hao); vũ khí có `weaponType` (P2-5).
 
   Chuẩn hóa: `sellPrice = floor(buyPrice × economy.sellRatio)` (D6); `version`, `verified`,
   `source` lấy từ `reference` (D5; bản ghi tự tạo: `null`, `false`, `null`).
@@ -19,6 +19,8 @@ defmodule Mu.Game.ItemImport do
   @slots ~w(HELM ARMOR PANTS GLOVES BOOTS WEAPON SHIELD WING RING1 RING2)
   @classes ~w(DW DK ELF MG)
   @stats ~w(strength agility energy vitality)
+  # loại vũ khí theo group Item.txt 0–5 (KB_ITEM_REFERENCE §2, P2-5)
+  @weapon_types ~w(sword axe mace spear bow crossbow staff)
 
   @doc "`{:ok, templates}` hoặc `{:error, [lỗi]}`."
   def build(%{"items" => items}) do
@@ -50,6 +52,8 @@ defmodule Mu.Game.ItemImport do
       wings_ok?(t) || "#{id}: group 12 (wing) khi features.wings = false",
       requirements_ok?(t) || "#{id}: requirements khác round(requirementsRaw × requirementScale)",
       is_integer(t["buyPrice"]) || "#{id}: thiếu buyPrice",
+      t["slot"] != "WEAPON" or t["weaponType"] in @weapon_types ||
+        "#{id}: vũ khí thiếu weaponType (#{Enum.join(@weapon_types, ", ")})",
       (t["stackable"] == true and is_integer(t["maxStack"])) or t["stackable"] == false ||
         "#{id}: stackable/maxStack sai"
     ]

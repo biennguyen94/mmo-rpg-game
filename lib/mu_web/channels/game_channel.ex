@@ -124,7 +124,7 @@ defmodule MuWeb.GameChannel do
     {:reply, {:error, %{rid: rid, error: code}}, socket}
   end
 
-  @client_item_keys ~w(templateId name type slot stackable maxStack potionType effect attackMin
+  @client_item_keys ~w(templateId name type slot weaponType stackable maxStack potionType effect attackMin
                        attackMax defense defenseRate speed hpBonus durability classes requirements
                        iconRef iconPlaceholder buyPrice sellPrice)
 
@@ -153,7 +153,8 @@ defmodule MuWeb.GameChannel do
       interpolationDelayMs: Config.get(["server", "interpolationDelayMs"]),
       maxLevel: Config.get(["game", "maxLevel"]),
       pickupRange: Config.get(["interaction", "pickupRange"]),
-      npcRange: Config.get(["interaction", "npcRange"])
+      npcRange: Config.get(["interaction", "npcRange"]),
+      twoHandedWeaponTypes: Config.get(["combat", "twoHandedWeaponTypes"])
     }
   end
 end

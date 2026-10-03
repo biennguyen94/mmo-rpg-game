@@ -132,6 +132,36 @@ defmodule Mu.Game.Items do
     end)
   end
 
+  @doc """
+  Đồ khởi đầu của nhân vật mới (P2-3, `newCharacter.startingEquipment`): mặc sẵn vào ô trang
+  bị đầu tiên của template, audit `STARTER`. Gọi trong transaction tạo nhân vật.
+  """
+  def give_starting_equipment(cid, template_ids) do
+    for tid <- template_ids do
+      t = Data.item(tid)
+      [slot | _] = Inventory.equip_slots(t)
+
+      item =
+        Repo.insert!(%Item{
+          serial: Ulid.generate(),
+          template_id: tid,
+          quantity: 1,
+          durability: t["durability"]
+        })
+
+      Repo.insert!(%ItemLocation{
+        item_id: item.id,
+        location: "EQUIPMENT",
+        character_id: cid,
+        slot: slot
+      })
+
+      audit(item.id, "STARTER", nil, "char:" <> cid, %{slot: slot})
+    end
+
+    :ok
+  end
+
   # ---------- Trang bị ----------
 
   @doc """
@@ -142,7 +172,8 @@ defmodule Mu.Game.Items do
     tx(cid, fn _locked, items ->
       with %{location: "INVENTORY"} = it <- find(items, item_id) || {:error, "NOT_OWNER"},
            :ok <- (is_integer(slot) && :ok) || {:error, "INVALID_SLOT"},
-           :ok <- Inventory.can_equip(c, Data.item(it.template_id), slot) do
+           :ok <- Inventory.can_equip(c, Data.item(it.template_id), slot),
+           :ok <- Inventory.two_hand_ok(items, Data.item(it.template_id), slot) do
         old = Inventory.in_slot(items, "EQUIPMENT", slot)
         if old, do: Repo.delete_all(from(l in ItemLocation, where: l.item_id == ^old.id))
         move(it.id, "EQUIPMENT", slot)

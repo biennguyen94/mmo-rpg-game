@@ -9,19 +9,21 @@ defmodule Mu.Game.Simulator do
   - Không hồi máu tự nhiên (G9). Dùng HP potion (`effect.hp`) khi HP < `potion_below` × max,
     cách nhau `potionCooldownMs`; đếm số potion cần (không giới hạn túi).
   - Chết: tính 1 lần chết, hồi đầy, cộng `playerRespawnSeconds` + `walk_ms`.
-  - Cộng điểm theo `strategy`: `"str"`, `"agi"`, `"vit"` (dồn hết) hoặc `"balanced"`.
+  - Cộng điểm theo `strategy`: `"str"`, `"agi"`, `"vit"`, `"ene"` (dồn hết) hoặc `"balanced"`.
+  - `class`: DK/DW/ELF (mặc định `newCharacter.defaultClass`); đánh xa thì Spider tới chậm hơn.
   - `equipment`: danh sách template (vd. bộ đồ t0 từ `data/items/phase1.json`) để so Q14.
   """
 
   alias Mu.Game.{Config, Data, Drops, Engine, Rng}
 
-  @milestones [2, 5, 10]
+  @milestones [2, 5, 10, 20]
 
   @defaults %{
     strategy: "balanced",
     walk_ms: 2000,
     potion_below: 0.4,
     equipment: [],
+    class: nil,
     max_kills: 5000
   }
 
@@ -61,7 +63,7 @@ defmodule Mu.Game.Simulator do
   @doc "Một lần mô phỏng với `seed`."
   def once(seed, opts) do
     opts = Map.merge(@defaults, opts)
-    c = start_character()
+    c = start_character(opts.class)
     potion = potion_heal()
 
     st = %{
@@ -97,7 +99,11 @@ defmodule Mu.Game.Simulator do
     combat = Config.get(["combat"])
     d = Engine.derived(st.c, opts.equipment)
     st = %{st | t: st.t + opts.walk_ms}
-    duel(st, opts, potion, d, m, spider, spider["hp"], st.t, st.t + combat["baseCooldownMs"], 0)
+
+    # đánh xa (P2-5): Spider phải đi thêm (tầm người chơi − tầm Spider) ô mới đánh được
+    approach_ms = max(d.attack_range - spider["attackRange"], 0) * 1000 / spider["moveSpeed"]
+    m_first = st.t + round(approach_ms) + combat["baseCooldownMs"]
+    duel(st, opts, potion, d, m, spider, spider["hp"], st.t, m_first, 0)
   end
 
   defp duel(st, opts, potion, d, m, spider, mhp, p_next, m_next, potion_ready) do
@@ -200,6 +206,7 @@ defmodule Mu.Game.Simulator do
         "str" -> "strength"
         "agi" -> "agility"
         "vit" -> "vitality"
+        "ene" -> "energy"
         _ -> Enum.at(~w(strength agility vitality), rem(c.free_stat_points, 3))
       end
 
@@ -207,8 +214,8 @@ defmodule Mu.Game.Simulator do
     allocate(c, strategy)
   end
 
-  defp start_character do
-    cls = Data.class(Config.get(["newCharacter", "class"]))
+  defp start_character(class_id) do
+    cls = Data.class(class_id || Config.get(["newCharacter", "defaultClass"]))
 
     %{
       class: cls["id"],
@@ -224,6 +231,41 @@ defmodule Mu.Game.Simulator do
 
   @doc "Template item (`priv/game_data/items.json`)."
   def item_templates, do: Map.values(Data.items())
+
+  @doc """
+  Trang bị cho mô phỏng: `"none"`, `"starter"` (`newCharacter.startingEquipment`) hoặc `"full"`
+  (mỗi ô một template t0 class dùng được; vũ khí hai tay thì bỏ khiên).
+  """
+  def gear(class_id, kind) do
+    class_id = class_id || Config.get(["newCharacter", "defaultClass"])
+
+    case kind do
+      "starter" ->
+        Enum.map(Config.get(["newCharacter", "startingEquipment", class_id]) || [], &Data.item/1)
+
+      "full" ->
+        starter = gear(class_id, "starter")
+
+        picked =
+          item_templates()
+          |> Enum.filter(&(&1["slot"] != nil and class_id in (&1["classes"] || [])))
+          |> Enum.sort_by(& &1["templateId"])
+          |> Enum.reduce(%{}, fn t, acc -> Map.put_new(acc, t["slot"], t) end)
+
+        picked =
+          Enum.reduce(starter, picked, fn t, acc -> Map.put(acc, t["slot"], t) end)
+
+        picked =
+          if Mu.Game.Inventory.two_handed?(picked["WEAPON"] || %{}),
+            do: Map.delete(picked, "SHIELD"),
+            else: picked
+
+        Map.values(picked)
+
+      _ ->
+        []
+    end
+  end
 
   defp potion_heal do
     Enum.find(item_templates(), &(&1["templateId"] == "hp_potion_small"))["effect"]["hp"]

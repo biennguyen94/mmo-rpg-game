@@ -624,8 +624,14 @@ defmodule Mu.World.MapServer do
   defp aim_pos({:monster, _, pos}), do: pos
   defp aim_pos({:point, pos}), do: pos
 
+  # đánh thường: tầm theo vũ khí đang cầm (`stats.attack_range`, P2-5)
   defp in_range(e, aim, skill) do
-    if Pathfinding.chebyshev({e.x, e.y}, aim_pos(aim)) <= skill["range"],
+    range =
+      if skill["id"] == "basic_attack",
+        do: e.stats[:attack_range] || skill["range"],
+        else: skill["range"]
+
+    if Pathfinding.chebyshev({e.x, e.y}, aim_pos(aim)) <= range,
       do: :ok,
       else: {:error, "OUT_OF_RANGE"}
   end
@@ -871,7 +877,9 @@ defmodule Mu.World.MapServer do
       maxHp: e.stats.hp_max,
       state: e.state,
       name: e.name,
-      level: e.level
+      level: e.level,
+      # sprite theo class (Phase 2)
+      class: e.class
     }
   end
 

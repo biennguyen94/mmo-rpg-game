@@ -1,5 +1,6 @@
-// Màn hình trước khi vào game: đăng nhập/đăng ký → chọn/tạo nhân vật (Phase 1: 1 DK).
-import { api, saveToken, type ApiError, type CharacterSummary } from "../net/api.js";
+// Màn hình trước khi vào game: đăng nhập/đăng ký → chọn/tạo nhân vật (1 nhân vật/tài khoản;
+// Phase 2: chọn class DK / DW / ELF).
+import { api, saveToken, type ApiError, type CharacterSummary, type ClassOption } from "../net/api.js";
 import { h, mount } from "./dom.js";
 
 export function loginScreen(root: HTMLElement, onToken: (token: string) => void): void {
@@ -55,8 +56,9 @@ export async function characterScreen(
   onLogout: () => void,
 ): Promise<void> {
   let list: CharacterSummary[];
+  let classes: ClassOption[];
   try {
-    list = (await api.characters(token)).characters;
+    ({ characters: list, classes } = await api.characters(token));
   } catch (e) {
     if ((e as ApiError).status === 401) return onLogout();
     throw e;
@@ -85,9 +87,23 @@ export async function characterScreen(
     return;
   }
 
-  // Phase 1: 1 nhân vật/tài khoản, chỉ DK (KB_00_RULES §7)
+  // 1 nhân vật/tài khoản tới Phase 3 (Q13); class do server liệt kê, mục đầu chọn sẵn
   const name = h("input", { name: "name", placeholder: "Tên nhân vật (4–10 chữ/số)", maxlength: 10 }) as HTMLInputElement;
-  const submit = h("button", { type: "submit" }, "Tạo Dark Knight") as HTMLButtonElement;
+  const submit = h("button", { type: "submit" }, "Tạo nhân vật") as HTMLButtonElement;
+  let chosen = classes[0]?.id ?? "DK";
+  const picker = h(
+    "div",
+    { class: "classpick", role: "radiogroup", "data-test": "class-picker" },
+    classes.map((c, i) =>
+      h(
+        "label",
+        { class: "classopt" },
+        h("input", { type: "radio", name: "class", value: c.id, checked: i === 0, onchange: () => (chosen = c.id) }),
+        h("img", { src: `/assets/sprites/characters/${c.id.toLowerCase()}/body.png`, alt: "", draggable: "false" }),
+        h("span", {}, `${c.name} (${c.id})`),
+      ),
+    ),
+  );
   mount(
     root,
     h(
@@ -101,7 +117,7 @@ export async function characterScreen(
             ev.preventDefault();
             submit.disabled = true;
             try {
-              const r = await api.createCharacter(token, name.value);
+              const r = await api.createCharacter(token, name.value, chosen);
               onEnter(r.character);
             } catch (e) {
               err.textContent = (e as ApiError).message;
@@ -111,7 +127,7 @@ export async function characterScreen(
           },
         },
         h("h1", {}, "Tạo nhân vật"),
-        h("div", { class: "hint", style: "text-align:center" }, "Class: Dark Knight (DK)"),
+        picker,
         name,
         err,
         submit,

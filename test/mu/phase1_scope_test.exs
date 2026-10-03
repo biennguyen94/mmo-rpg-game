@@ -1,19 +1,28 @@
 defmodule Mu.Phase1ScopeTest do
-  @moduledoc "Dữ liệu/config khớp đúng scope Phase 1 (KB_00_RULES §7, JSON scope)."
+  @moduledoc """
+  Dữ liệu/config khớp đúng scope đang mở (KB_00_RULES §7). Phase 1 theo JSON scope; Phase 2
+  thêm dần theo milestone (P2-M2: DW, ELF, item t0 của hai class, maxLevel 30).
+  """
   use ExUnit.Case, async: true
 
   alias Mu.Game.{Config, Data}
   alias Mu.World.Maps
 
   @scope %{
-    classes: ["DK"],
+    classes: ["DK", "DW", "ELF"],
     maps: ["lorencia"],
     monsters: ["spider"],
     npcs: ["lorencia_potion_merchant"],
     items:
-      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0),
+      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
+        ~w(staff_t0 bow_t0) ++
+        for(
+          set <- ~w(pad vine),
+          part <- ~w(helm armor pants gloves boots),
+          do: "#{set}_#{part}_t0"
+        ),
     skills: ["basic_attack", "twisting_slash"],
-    maxLevel: 10
+    maxLevel: 30
   }
 
   test "class, map, quái, NPC, item, skill đúng danh sách scope (không thừa, không thiếu)" do
@@ -26,7 +35,7 @@ defmodule Mu.Phase1ScopeTest do
     assert Config.get(["game", "maxLevel"]) == @scope.maxLevel
   end
 
-  test "mọi feature ngoài Phase 1 tắt (LATER_VERSION / phase sau)" do
+  test "mọi feature ngoài scope đang mở tắt (LATER_VERSION / phase sau / milestone sau)" do
     for {flag, on?} <- Config.get(["features"]) do
       refute on?, "features.#{flag} phải tắt ở Phase 1"
     end
