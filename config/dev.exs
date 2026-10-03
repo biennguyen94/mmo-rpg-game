@@ -16,7 +16,9 @@ config :mu, MuWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "dlv5n0vJ4bJ2m3Qq6yTt0pG7w8d1kq9uE2fL3sV0hC4xR7aB1nM5zY8iO6jW2cKe",
-  watchers: []
+  # client TypeScript: biên dịch lại khi sửa (`tsc --watch` → priv/static/js) qua client/watch.mjs
+  # (dừng tsc khi tắt server); cần `npm install` trong client/ hoặc TypeScript cài global
+  watchers: [node: ["watch.mjs", cd: Path.expand("../client", __DIR__)]]
 
 config :logger, :console, format: "[$level] $message\n"
 config :phoenix, :stacktrace_depth, 20

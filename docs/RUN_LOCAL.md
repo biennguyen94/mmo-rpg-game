@@ -22,7 +22,7 @@ mix phx.server
 
 Mở http://localhost:4000 → **Đăng ký** → tạo nhân vật (4–10 chữ/số) → **Vào game**.
 
-Sửa code client: `cd client && npm run build` rồi tải lại trang (chưa có watcher).
+Sửa code client: `mix phx.server` tự biên dịch lại TypeScript (`client/watch.mjs`), chỉ cần tải lại trang.
 
 ## 3. Icon item thật (tùy chọn, KHÔNG commit)
 
