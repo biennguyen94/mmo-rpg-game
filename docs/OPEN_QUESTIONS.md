@@ -165,7 +165,7 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P2-12 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | **Chat (§16):** độ dài tối đa, rate-limit, phạm vi NORMAL (cả map hay bán kính), WHISPER tìm theo tên nhân vật (offline → mã lỗi nào?), danh sách từ cấm (ai cung cấp?), mute/report: ai mute (admin, cách nào)? Lịch sử chat có lưu DB không? | 100 ký tự, 1 tin/giây (burst 5), NORMAL = cả map, WHISPER offline → `INVALID_TARGET`, lọc từ cấm từ file config (anh cung cấp danh sách), mute bằng mix task admin, không lưu DB |
 | P2-13 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | **Hộp thư:** `§19.10` yêu cầu bổ sung vào `KB_TECHNICAL` bảng `mail` + `mail_list/mail_claim/mail_delete` — em không được sửa `docs/kb/`. Ai gửi mail (mix task admin, mail chào mừng khi tạo nhân vật)? Mail theo nhân vật hay tài khoản? Đề xuất schema để anh chép vào KB: `mail(id, character_id, kind, title, body, zen, item_template_id, item_quantity, read_at, claimed_at, created_at, expires_at)`; action `mail_list {}` → event `mail {items}`, `mail_claim {mailId}`, `mail_delete {mailId}` (chỉ mail đã đọc/đã nhận) | Như cột trái, mail theo nhân vật, nhận quà trong 1 transaction + `item_audit_log` `MAIL_CLAIM`, mail chào mừng khi tạo nhân vật |
 | P2-14 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | Panel Bản đồ §19.12: hiện cả quái/người chơi khác không? Ký hiệu 🏠 lấy từ đâu (vùng safe zone?) | Chỉ bản thân, NPC, portal, vùng safe zone; không hiện quái/người khác |
-| P2-15 | Danh sách nghiệm thu Phase 2 (KB_00 §7 chỉ có cho Phase 1) | Em soạn dựa trên scope Phase 2 ở P2-M7 để anh duyệt |
+| P2-15 **ĐÃ LÀM 2026-10-03: danh sách 21 mục ở `docs/ACCEPTANCE_PHASE2.md §1`** | Danh sách nghiệm thu Phase 2 (KB_00 §7 chỉ có cho Phase 1) | Em soạn dựa trên scope Phase 2 ở P2-M7 để anh duyệt |
 | P2-16 | Durability giảm khi chết/đánh (§11, "CONFIG") — số chưa có; làm ở Phase 2 không? | Để sau (không có số), ghi BACKLOG |
 | P2-17 | Monster AI §9: trạng thái SEARCH và "sleep khi vùng không có người" — vùng = gì khi AOI là Phase 3? | Sleep theo map không có người chơi; SEARCH = IDLE quét aggro (đã có) |
 
@@ -230,3 +230,10 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P2M6-3 | Mở panel = đánh dấu mọi thư đã đọc (badge tắt, §19.10); lọc [Chưa đọc] dùng trạng thái lúc mở | Đã làm |
 | P2M6-4 | Thư hết hạn sau 30 ngày (`mail.expireDays`): không hiện, không nhận được; chưa có job xóa hẳn row hết hạn | Thêm dọn định kỳ khi cần |
 | P2M6-5 | Gửi thư hàng loạt (mọi nhân vật) chưa có; quản trị gửi từng người bằng `mix mu.mail send` | Theo đề xuất |
+
+### P2-M7. Nghiệm thu Phase 2 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE2.md`
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| B-1 | Vùng tân thủ Lorencia không an toàn: Lich / Elite Bull Fighter cách mép nam vùng Spider 2 ô, Bull Fighter cách mép bắc 5 ô (soak: bot cấp 1 chết 185 lần / 10 phút, Phase 1 là 14) | (a) dời vùng (khuyến nghị) / (b) giảm aggroRange / (c) giữ |
+| B-2 | DW thiếu Zen mua potion (simulator) | tăng Zen quái cấp ≥ 10 hoặc tỉ lệ potion |

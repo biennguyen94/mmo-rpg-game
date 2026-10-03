@@ -366,4 +366,23 @@ defmodule Mu.World.CombatTest do
     :ok = MapServer.update_player(s, "a", %{level: 2, stats: stats, hp: 999})
     assert player(s, "a").hp == stats.hp_max
   end
+
+  test "P2-M4: quái đánh xa (Lich, attackRange 4) đứng cách 4 ô đánh, không lại gần", %{s: s} do
+    lich =
+      MapServer.debug_state(s).monsters
+      |> Enum.find(fn {_, m} -> m.template_id == "lich" end)
+      |> elem(0)
+
+    place(s, %{lich => {50, 50}})
+    join(s, "a", {46, 50})
+    flush()
+    MapServer.tick(s, 60)
+    m = monster(s, lich)
+    assert {m.x, m.y} == {50, 50}
+    assert m.state == "attack"
+    assert_received {:map_event, "combat", %{attacker: ^lich, target: "p_a"}}
+    a = player(s, "a")
+    assert a.hp < a.stats.hp_max
+    assert {a.x, a.y} == {46, 50}
+  end
 end
