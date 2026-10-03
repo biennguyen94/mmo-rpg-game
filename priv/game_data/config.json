@@ -29,7 +29,8 @@
     "duel": "P4-4 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai bên đồng ý, vùng riêng, không PK'): 'vùng riêng' = khoanh riêng hai người (chỉ hai người đánh được nhau, người ngoài không xen vào), duel ở mọi chỗ ngoài safe zone. Mời trong requestRange ô, hết hạn inviteSeconds; một bên về 0 HP thì giữ 1 HP và thua; hết maxSeconds thì hòa; cách nhau quá maxDistance ô (người xa điểm bắt đầu hơn thua) / rời map / mất kết nối thì thua. Không PK, không rơi đồ, không thưởng.",
     "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật.",
     "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM.",
-    "levelBonus": "P5-3 (1) (duyệt 2026-10-03, IMPLEMENTATION; KB chưa có công thức +N): items.levelBonus theo type item — mỗi cấp cường hóa (+N, items.item_level) cộng attack (attackMin và attackMax) cho WEAPON, defense cho SHIELD / giáp. Type không có trong bảng (RING, JEWEL, POTION) không ép được. Yêu cầu của đồ không đổi theo +N."
+    "levelBonus": "P5-3 (1) (duyệt 2026-10-03, IMPLEMENTATION; KB chưa có công thức +N): items.levelBonus theo type item — mỗi cấp cường hóa (+N, items.item_level) cộng attack (attackMin và attackMax) cho WEAPON, defense cho SHIELD / giáp. Type không có trong bảng (RING, JEWEL, POTION) không ép được. Yêu cầu của đồ không đổi theo +N.",
+    "upgrade": "KB_CONFIG §5 (levels, nguyên văn) + P5-3 / P5-4 (A) (duyệt 2026-10-03, IMPLEMENTATION): ép jewel lên đồ trong túi, type có trong items.levelBonus; DECREASE = giảm 1 cấp. life: Jewel of Life thêm option_level (tối đa maxOption), mỗi cấp + perOption vào attack (vũ khí) / defense (giáp, khiên), thất bại không đổi. Ép thành công lên ≥ announceFromLevel thì báo SYSTEM cả map."
   },
   "game": {
     "name": "MU Web",
@@ -161,6 +162,7 @@
             "split",
             "drop",
             "use_item",
+            "upgrade",
             "npc_open",
             "buy",
             "sell"
@@ -387,6 +389,27 @@
     "maxAssistants": 2,
     "inviteSeconds": 30,
     "namePattern": "^[A-Za-z0-9]{3,8}$"
+  },
+  "upgrade": {
+    "levels": [
+      { "fromLevel": 0, "toLevel": 1, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 1, "toLevel": 2, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 2, "toLevel": 3, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 3, "toLevel": 4, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 4, "toLevel": 5, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 5, "toLevel": 6, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 6, "toLevel": 7, "successRate": 0.7, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 7, "toLevel": 8, "successRate": 0.6, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 8, "toLevel": 9, "successRate": 0.5, "onFailure": "DECREASE", "requires": ["jewel_soul"] }
+    ],
+    "life": {
+      "jewel": "jewel_life",
+      "successRate": 0.5,
+      "onFailure": "UNCHANGED",
+      "maxOption": 4,
+      "perOption": 4
+    },
+    "announceFromLevel": 7
   },
   "guildWar": {
     "inviteSeconds": 60,

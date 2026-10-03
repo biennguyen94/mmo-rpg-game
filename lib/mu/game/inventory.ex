@@ -270,7 +270,11 @@ defmodule Mu.Game.Inventory do
 
   @doc "Template của các món đang mặc, đã cộng chỉ số theo +N (`Engine.leveled/2`), cho `Engine.derived/2`."
   def equipped_templates(items),
-    do: Enum.map(equipment(items), &Engine.leveled(Data.item(&1.template_id), &1.item_level))
+    do:
+      Enum.map(
+        equipment(items),
+        &Engine.leveled(Data.item(&1.template_id), &1.item_level, Map.get(&1, :option_level, 0))
+      )
 
   @doc "Tổng số potion theo `potionType` trong mọi stack của túi (`KB_GAME_DESIGN §19.6`)."
   def potion_counts(items) do

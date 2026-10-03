@@ -21,6 +21,8 @@ export interface ItemView {
   quantity: number;
   slot: number;
   level: number;
+  /** Cấp option Jewel of Life (P5-M2), 0 … 4. */
+  optionLevel?: number;
   durability: number | null;
   luck: boolean;
   skill: boolean;
@@ -284,6 +286,17 @@ export interface GuildWarPayload {
   reason?: "score" | "time" | "surrender" | "disband";
 }
 
+/** Event `upgrade` (P5-M2): kết quả ép jewel lên đồ. */
+export interface UpgradePayload {
+  itemId: string;
+  templateId: string;
+  jewel: string;
+  ok: boolean;
+  level: number;
+  option: number;
+  destroyed: boolean;
+}
+
 /** Event `duel` (P4-M2): lời mời / bắt đầu / kết thúc. */
 export interface DuelPayload {
   state: "request" | "start" | "end";
@@ -341,7 +354,7 @@ export interface JoinReply {
     /** Guild (P4-M3): điều kiện tạo, sĩ số, hạn lời mời, mẫu tên (server vẫn kiểm). */
     guild?: GuildConfig;
     /** Chỉ số cộng mỗi cấp +N theo type item (P5-M1), để tooltip hiện số đúng. */
-    items?: { levelBonus: Record<string, { attack?: number; defense?: number }> };
+    items?: { levelBonus: Record<string, { attack?: number; defense?: number }>; optionBonus?: number };
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

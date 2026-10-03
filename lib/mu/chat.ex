@@ -63,6 +63,12 @@ defmodule Mu.Chat do
     )
   end
 
+  @doc "Dòng SYSTEM tới mọi người trên `map_id` (vd. ép đồ +7 trở lên, P5-M2)."
+  def system_map(map_id, text) do
+    msg = message("SYSTEM", Config.get(["chat", "systemName"]), text)
+    Phoenix.PubSub.broadcast(Mu.PubSub, MapServer.topic(map_id), {:map_event, "chat", msg})
+  end
+
   @doc "Thông báo hệ thống tới mọi map (quản trị: `mix mu.chat system \"...\"`)."
   def system(text) do
     {:ok, text} = clean(text)

@@ -38,6 +38,7 @@ defmodule Mu.Game.Items do
           template_id: i.template_id,
           quantity: i.quantity,
           item_level: i.item_level,
+          option_level: i.option_level,
           durability: i.durability,
           luck: i.luck,
           skill: i.skill,
@@ -408,6 +409,7 @@ defmodule Mu.Game.Items do
             template_id: it.template_id,
             quantity: quantity,
             item_level: it.item_level,
+            option_level: it.option_level,
             durability: it.durability,
             luck: it.luck,
             skill: it.skill,
@@ -445,7 +447,15 @@ defmodule Mu.Game.Items do
           serial: it.serial,
           template_id: it.template_id,
           quantity: it.quantity,
-          attrs: Map.take(it, [:item_level, :durability, :luck, :skill, :excellent_options])
+          attrs:
+            Map.take(it, [
+              :item_level,
+              :option_level,
+              :durability,
+              :luck,
+              :skill,
+              :excellent_options
+            ])
         }
 
         {:ok, 0, %{dropped: dropped}}
@@ -507,6 +517,65 @@ defmodule Mu.Game.Items do
            :ok <- if(it.quantity >= n, do: :ok, else: {:error, "INVALID_TARGET"}) do
         take(it, n, "USE", "char:" <> cid, "consumed", %{quantity: n})
         {:ok, 0}
+      else
+        %{location: _} -> {:error, "INVALID_SLOT"}
+        error -> error
+      end
+    end)
+  end
+
+  # ---------- Ép jewel (P5-M2) ----------
+
+  @doc """
+  Ép jewel `jewel_id` lên đồ `item_id` (cả hai trong túi) theo `Mu.Game.Upgrade` với `rng`. Một
+  transaction: trừ 1 jewel (audit `JEWEL_USE`), đổi `item_level` / `option_level` (audit
+  `UPGRADE`, kèm cấp trước / sau và thành công hay không) hoặc mất đồ (`UPGRADE_DESTROY`, chưa
+  dùng ở bảng hiện tại). Kết quả thêm `upgrade: %{item_id, template_id, jewel, ok, level, option,
+  destroyed}`.
+  """
+  def upgrade(cid, item_id, jewel_id, rng) do
+    tx(cid, fn _c, items ->
+      with %{location: "INVENTORY"} = it <- find(items, item_id) || {:error, "NOT_OWNER"},
+           %{location: "INVENTORY"} = j <- find(items, jewel_id) || {:error, "NOT_OWNER"},
+           true <-
+             (it.id != j.id and Data.item(j.template_id)["type"] == "JEWEL") ||
+               {:error, "INVALID_TARGET"},
+           {:ok, res, _rng} <-
+             Mu.Game.Upgrade.apply(
+               rng,
+               Data.item(it.template_id),
+               it.item_level,
+               it.option_level,
+               j.template_id
+             ) do
+        owner = "char:" <> cid
+        take(j, 1, "JEWEL_USE", owner, "consumed", %{quantity: 1, target: it.id})
+
+        detail = %{
+          jewel: j.template_id,
+          ok: res.ok,
+          from_level: it.item_level,
+          to_level: res.level,
+          from_option: it.option_level,
+          to_option: res.option,
+          serial: it.serial
+        }
+
+        if res.destroyed do
+          take(it, 1, "UPGRADE_DESTROY", owner, "destroyed", detail)
+        else
+          Repo.update_all(from(i in Item, where: i.id == ^it.id),
+            set: [item_level: res.level, option_level: res.option]
+          )
+
+          audit(it.id, "UPGRADE", owner, owner, detail)
+        end
+
+        {:ok, 0,
+         %{
+           upgrade:
+             Map.merge(res, %{item_id: it.id, template_id: it.template_id, jewel: j.template_id})
+         }}
       else
         %{location: _} -> {:error, "INVALID_SLOT"}
         error -> error

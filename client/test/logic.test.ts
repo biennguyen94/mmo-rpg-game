@@ -368,3 +368,26 @@ test("đồ +N (P5-M1): chỉ số hiển thị theo levelBonus, tên kèm +N, j
   const jewel = { ...sword, templateId: "jewel_bless", type: "JEWEL", slot: null, attackMin: undefined, attackMax: undefined };
   assert.equal(leveled(jewel, 3, bonus), jewel);
 });
+
+test("ép jewel (P5-M2): kéo jewel thả lên đồ ép được → upgrade; lên jewel / potion → move; option hiển thị", async () => {
+  const { leveled, upgradable } = await import("../src/logic/items.js");
+  const tpl = new Map(templates);
+  tpl.set("bless", T({ templateId: "bless", type: "JEWEL", stackable: true }));
+  tpl.set("sword", { ...tpl.get("sword")!, type: "WEAPON" });
+  tpl.set("helm", T({ templateId: "helm", type: "HELM", slot: "HELM", defense: 5 }));
+  const bonus = { WEAPON: { attack: 3 }, HELM: { defense: 3 } };
+  const jewel = item("j", "bless", 3, 4);
+  const p = { inventory: [item("s", "sword", 0), item("p", "hp", 1, 5), item("h", "helm", 2), jewel] };
+  const bag = (slot: number) => ({ kind: "bag" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: jewel }, bag(0), p, tpl, bonus), { act: "upgrade", payload: { itemId: "s", jewelId: "j" } });
+  assert.deepEqual(dragCommand({ kind: "bag", item: jewel }, bag(2), p, tpl, bonus)?.act, "upgrade");
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(1), p, tpl, bonus)?.act, "move_item");
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(9), p, tpl, bonus)?.act, "move_item");
+  // không có levelBonus (server cũ) → như kéo thả thường
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(0), p, tpl)?.act, "move_item");
+  assert.ok(upgradable(tpl.get("sword"), bonus) && !upgradable(tpl.get("bless"), bonus) && !upgradable(undefined, bonus));
+  // option Life: +4 / cấp vào đòn (vũ khí) hoặc thủ (giáp)
+  const s = leveled(tpl.get("sword")!, 1, bonus, 2, 4);
+  assert.deepEqual([s.attackMin, s.attackMax], [3 + 3 + 8, 7 + 3 + 8]);
+  assert.equal(leveled(tpl.get("helm")!, 0, bonus, 1, 4).defense, 9);
+});

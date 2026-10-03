@@ -52,19 +52,27 @@ defmodule Mu.Game.Engine do
   end
 
   @doc """
-  Template đồ ở cấp cường hóa `level` (+N, P5-3 (1)): cộng `items.levelBonus[type]` × `level` —
-  `attack` vào `attackMin` / `attackMax`, `defense` vào `defense`. Type không có trong bảng (nhẫn,
-  jewel, potion) giữ nguyên.
+  Template đồ ở cấp cường hóa `level` (+N, P5-3 (1)) và cấp option Jewel of Life `option`
+  (P5-4): cộng `items.levelBonus[type]` × `level` — `attack` vào `attackMin` / `attackMax`,
+  `defense` vào `defense` — và `upgrade.life.perOption` × `option` vào cùng chỉ số đó. Type không
+  có trong bảng (nhẫn, jewel, potion) giữ nguyên.
   """
-  def leveled(template, level) when is_integer(level) and level > 0 do
+  def leveled(template, level, option \\ 0)
+
+  def leveled(template, level, option) when level > 0 or option > 0 do
     case Config.get(["items", "levelBonus"])[template["type"]] do
       nil ->
         template
 
       bonus ->
-        add = fn t, key, per -> Map.update(t, key, per * level, &(&1 + per * level)) end
-        atk = bonus["attack"] || 0
-        def = bonus["defense"] || 0
+        per_option = Config.get(["upgrade", "life", "perOption"]) * option
+        add = fn t, key, n -> Map.update(t, key, n, &(&1 + n)) end
+        atk = (bonus["attack"] || 0) * level
+        def = (bonus["defense"] || 0) * level
+
+        # option cộng vào đúng loại chỉ số của đồ: vũ khí → đòn, giáp / khiên → thủ
+        {atk, def} =
+          if bonus["attack"], do: {atk + per_option, def}, else: {atk, def + per_option}
 
         template
         |> then(
@@ -74,7 +82,7 @@ defmodule Mu.Game.Engine do
     end
   end
 
-  def leveled(template, _level), do: template
+  def leveled(template, _level, _option), do: template
 
   @doc "Tầm đánh thường (ô) theo `weaponType` của vũ khí đang cầm (P2-5, `combat.basicAttackRange`)."
   def basic_attack_range(equipment) do
