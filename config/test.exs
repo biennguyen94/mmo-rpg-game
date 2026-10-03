@@ -22,3 +22,7 @@ config :argon2_elixir, t_cost: 1, m_cost: 8
 # MapServer không tự tick trong test: test gọi Mu.World.MapServer.tick/2 (kết quả không phụ
 # thuộc thời gian thực). Test đo nhịp tick tự chạy MapServer riêng ở chế độ :auto.
 config :mu, :map_tick, :manual
+
+# Lịch event (P6-M5) không tự chạy trong test: test gọi Mu.WorldEvents.check/1 với đồng hồ giả
+# hoặc start/stop bằng tay.
+config :mu, :world_events_auto, false

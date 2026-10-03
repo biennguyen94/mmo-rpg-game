@@ -297,7 +297,16 @@ function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number
       g.fill();
     }
     g.globalAlpha = dead ? 0.35 : 1;
-    g.drawImage(img, x - TILE / 2, y - TILE / 2);
+    if (e.golden && !dead) {
+      // quái vàng (P6-M5): quầng vàng dưới chân
+      g.fillStyle = "rgba(255,210,60,0.45)";
+      g.beginPath();
+      g.ellipse(x, y + 10, 16, 7, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    // boss (P6-M5): vẽ to gấp rưỡi
+    const size = e.boss ? TILE * 1.5 : TILE;
+    g.drawImage(img, x - size / 2, y - size / 2 - (e.boss ? 8 : 0), size, size);
     g.globalAlpha = 1;
     label(g, e, x, y, dead);
     return;
@@ -358,7 +367,14 @@ function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dea
   const name = e.name;
   g.fillText(name, x + 1, ny + 1);
   // P4-M1: màu tên theo PK; kẻ gây sự nhấp nháy (2 lần / giây)
-  g.fillStyle = e.kind === "player" ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0, enemyGuild !== null && e.guild === enemyGuild) : "#fff";
+  g.fillStyle =
+    e.kind === "player"
+      ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0, enemyGuild !== null && e.guild === enemyGuild)
+      : e.boss
+        ? "#ff6a5a"
+        : e.golden
+          ? "#ffd23c"
+          : "#fff";
   g.fillText(name, x, ny);
   if (guild) {
     g.fillStyle = "#000";
@@ -367,9 +383,11 @@ function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dea
     g.fillText(guild, x, y - 20);
   }
   if (e.hp !== null && e.maxHp && e.kind !== "npc" && !dead) {
+    // boss: thanh máu dài hơn
+    const w = e.boss ? 56 : 28;
     g.fillStyle = "#300";
-    g.fillRect(x - 14, y + 16, 28, 4);
+    g.fillRect(x - w / 2, y + 16, w, 4);
     g.fillStyle = "#d33";
-    g.fillRect(x - 14, y + 16, (28 * Math.max(0, e.hp)) / e.maxHp, 4);
+    g.fillRect(x - w / 2, y + 16, (w * Math.max(0, e.hp)) / e.maxHp, 4);
   }
 }

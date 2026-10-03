@@ -160,6 +160,8 @@ defmodule Mu.Game.Session do
         }
 
         s = %{s | character: c, on_map: true} |> schedule_save()
+        # event thế giới đang diễn ra (P6-M5): người vào giữa chừng cũng thấy
+        for ev <- Mu.WorldEvents.active(), do: push(s, "world_event", ev)
         # buff còn trên map khi vào lại trong hạn reconnect (P3-M2)
         reply({:ok, c, Map.merge(info, %{items: s.items, buffs: s.buffs})}, s)
     end

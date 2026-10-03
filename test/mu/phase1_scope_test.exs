@@ -12,7 +12,8 @@ defmodule Mu.Phase1ScopeTest do
     classes: ["DK", "DW", "ELF", "MG"],
     maps: ["lorencia", "noria"],
     monsters:
-      ~w(spider budge_dragon bull_fighter hound lich elite_bull_fighter goblin chain_scorpion beetle_monster hunter forest_monster agon stone_golem),
+      ~w(spider budge_dragon bull_fighter hound lich elite_bull_fighter goblin chain_scorpion beetle_monster hunter forest_monster agon stone_golem) ++
+        ~w(golden_budge_dragon golden_goblin bull_fighter_lord),
     npcs:
       ~w(lorencia_potion_merchant lorencia_weapon_merchant noria_potion_merchant noria_weapon_merchant) ++
         ~w(lorencia_warehouse noria_warehouse) ++

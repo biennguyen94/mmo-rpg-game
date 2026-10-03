@@ -39,6 +39,8 @@ defmodule Mu.Application do
              [strategy: :one_for_one, name: Mu.World.MapSupervisor]
            ]}
       },
+      # lịch event thế giới (P6-M5): sau MapServer (ra lệnh sinh / thu quái event)
+      Mu.WorldEvents,
       MuWeb.Endpoint
     ]
 

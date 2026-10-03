@@ -30,6 +30,7 @@ import {
   type RankingPayload,
   type QuestsPayload,
   type ChaosPayload,
+  type WorldEventPayload,
   type QuestRewards,
   type MapData,
 } from "../net/protocol.js";
@@ -218,6 +219,8 @@ export class GameClient {
       questNpc: null,
       wings: r.config.wings === true,
       chaos: null,
+      // Session đẩy lại event đang diễn ra ngay sau khi vào
+      worldEvents: {},
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -362,6 +365,12 @@ export class GameClient {
           this.state.questNpc = q.npcId;
           this.state.panel = "quests";
         }
+        break;
+      }
+      case "world_event": {
+        const w = p as WorldEventPayload;
+        if (w.state === "end") delete this.state.worldEvents[w.kind];
+        else this.state.worldEvents[w.kind] = w;
         break;
       }
       case "chaos": {

@@ -139,8 +139,9 @@ jobs:
         # TRUSTED_PROXIES: e2e skill đăng ký mỗi tài khoản từ một X-Forwarded-For riêng (giới hạn đăng ký theo IP)
         env:
           TRUSTED_PROXIES: 127.0.0.1
+        # --sname mu: e2e event (P6-M5) bật / tắt event bằng `mix mu.event … --node mu@host`
         run: |
-          mix phx.server > server.log 2>&1 &
+          elixir --sname mu -S mix phx.server > server.log 2>&1 &
           for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
           cat server.log; exit 1
       - name: E2E smoke (desktop 1280px + mobile 360px)
@@ -243,6 +244,11 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
           CHROMIUM_PATH: none
         run: node client/e2e/chaos.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Event thế giới (boss, Golden Invasion)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/events.mjs http://localhost:4000 e2e-shots
       - name: Ảnh + log server
         if: always()
         uses: actions/upload-artifact@v4

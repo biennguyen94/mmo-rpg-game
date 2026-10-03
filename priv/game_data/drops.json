@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json. P5-M1: nhóm `jewels` (0,6 %, Bless 50 / Soul 35 / Life 15) cho quái cấp ≥ 10 (P5-2 duyệt 2026-10-03). P6-M3: nhóm `jewels` thêm Jewel of Chaos — trọng số Bless 45 / Soul 30 / Life 12 / Chaos 13 (P6-3 (1), tổng tỉ lệ vẫn 0,6 %).",
+  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json. P5-M1: nhóm `jewels` (0,6 %, Bless 50 / Soul 35 / Life 15) cho quái cấp ≥ 10 (P5-2 duyệt 2026-10-03). P6-M3: nhóm `jewels` thêm Jewel of Chaos — trọng số Bless 45 / Soul 30 / Life 12 / Chaos 13 (P6-3 (1), tổng tỉ lệ vẫn 0,6 %). P6-M5: bảng rơi quái vàng (gốc, Zen × 5, jewel 10 %) và Bull Fighter Lord.",
   "drops": [
     {
       "monsterId": "spider",
@@ -2387,6 +2387,487 @@
       "version": null,
       "verified": false,
       "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "golden_budge_dragon",
+      "zen": {
+        "min": 50,
+        "max": 150
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_small",
+              "weight": 80
+            },
+            {
+              "item": "mp_potion_small",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.1,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 45
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 30
+            },
+            {
+              "item": "jewel_life",
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-5 (duyệt 2026-10-03): quái vàng Golden Invasion = quái gốc với HP / EXP / Zen × 5, rơi jewel 10 %; chỉ sinh trong event (không có trong spawns của map)"
+    },
+    {
+      "monsterId": "golden_goblin",
+      "zen": {
+        "min": 150,
+        "max": 450
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.1,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 45
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 30
+            },
+            {
+              "item": "jewel_life",
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-5 (duyệt 2026-10-03): quái vàng Golden Invasion = quái gốc với HP / EXP / Zen × 5, rơi jewel 10 %; chỉ sinh trong event (không có trong spawns của map)"
+    },
+    {
+      "monsterId": "bull_fighter_lord",
+      "zen": {
+        "min": 0,
+        "max": 0
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 1.0,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 1
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 1.0,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            }
+          ]
+        },
+        {
+          "id": "jewels",
+          "chance": 0.5,
+          "entries": [
+            {
+              "item": "jewel_bless",
+              "weight": 45
+            },
+            {
+              "item": "jewel_soul",
+              "weight": 30
+            },
+            {
+              "item": "jewel_life",
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-6 (2): boss rơi đồ dưới đất (loot protect người gây nhiều sát thương nhất): 1 potion vừa, 1 đồ t1, 50 % một jewel; Zen chia theo sát thương (monsters.json reward), không rơi Zen."
     }
   ]
 }
