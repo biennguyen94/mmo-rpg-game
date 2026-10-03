@@ -2,14 +2,17 @@
   "sourceType": "CONFIG",
   "version": null,
   "verified": false,
-  "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7); rateLimit/names/newCharacter: docs/OPEN_QUESTIONS.md (P6, P8, G8, G22); movement: OPEN_QUESTIONS G3",
+  "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7); rateLimit/names/newCharacter: docs/OPEN_QUESTIONS.md (P6, P8, G8, G22); movement: OPEN_QUESTIONS G3; combat.critChance/criticalMultiplier/playerRespawnSeconds: G1, G11; experience.levelDiffPenaltyPerLevel: G23",
   "notes": {
     "game.maxLevel": "10 theo KB_00_RULES §7 (Phase 1). KB_CONFIG §1 ghi 400 là giá trị dự án dài hạn (OPEN_QUESTIONS D2).",
     "experience.formula": "Placeholder IMPLEMENTATION, không phải EXP MU (KB_CONFIG §1, Q4).",
     "newCharacter": "G8: 0 Zen, túi trống, đứng ở playerSpawn (safe zone) của map mapId (priv/maps/<mapId>.json).",
     "rateLimit": "P8. Cửa sổ cố định (Mu.RateLimit). cmd: vượt ngưỡng → bỏ lệnh + RATE_LIMITED; vượt liên tục kickAfterMs → đóng kênh.",
     "movement": "G3: đơn vị ô/giây; bước chéo tốn ×diagonalCostFactor thời gian. maxPathNodes: giới hạn ô A* mở rộng cho move_to của người chơi (map 64×64 = 4096 ô).",
-    "session.saveIntervalSeconds": "KB_TECH_STACK §4: ghi DB debounce 30–60s; ngoài ra ghi ngay khi rời map."
+    "session.saveIntervalSeconds": "KB_TECH_STACK §4: ghi DB debounce 30–60s; ngoài ra ghi ngay khi rời map.",
+    "combat.critChance": "G1: tắt crit ở Phase 1 (0); criticalMultiplier 1.5 chỉ dùng khi bật.",
+    "combat.playerRespawnSeconds": "G11: hồi sinh sau 3 giây ở playerSpawn, HP/MP đầy.",
+    "experience.levelDiffPenaltyPerLevel": "G23 (mới, chờ xác nhận): KB §3 nói giảm tuyến tính tới minExpRatio nhưng không cho độ dốc. Không chạm ở Phase 1 (Spider lv2, maxLevel 10 → chênh tối đa 8 < 10)."
   },
   "game": {
     "name": "MU Web",
@@ -152,7 +155,10 @@
     "baseCooldownMs": 1000,
     "minCooldownMs": 250,
     "hitFormula": "attackRate / (attackRate + defenseRate)",
-    "potionCooldownMs": 1000
+    "potionCooldownMs": 1000,
+    "critChance": 0,
+    "criticalMultiplier": 1.5,
+    "playerRespawnSeconds": 3
   },
   "experience": {
     "mode": "formula",
@@ -162,7 +168,8 @@
     "levelDiffPenaltyStart": 10,
     "minExpRatio": 0.1,
     "partyBonusPerMember": 0.1,
-    "deathExpLossPercent": 0
+    "deathExpLossPercent": 0,
+    "levelDiffPenaltyPerLevel": 0.1
   },
   "drop": {
     "zenMultiplier": 1,

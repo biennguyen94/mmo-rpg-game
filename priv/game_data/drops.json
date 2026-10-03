@@ -1,0 +1,70 @@
+{
+  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17).",
+  "drops": [
+    {
+      "monsterId": "spider",
+      "zen": {
+        "min": 5,
+        "max": 15
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_small",
+              "weight": 80
+            },
+            {
+              "item": "mp_potion_small",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.06,
+          "entries": [
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §4"
+    }
+  ]
+}

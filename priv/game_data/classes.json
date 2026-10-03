@@ -1,17 +1,86 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §2 (base stats, HP/MP growth); docs/kb/KB_GAME_DESIGN.md §4.1 (derived). Phase 1 chỉ có DK (KB_00_RULES §7).",
+  "source": "docs/kb/KB_CONFIG.md §2 (base stats, HP/MP growth); docs/kb/KB_GAME_DESIGN.md §4.1 (derived). Phase 1 chỉ có DK (KB_00_RULES §7). Hệ số derived: mỗi chỉ số = floor(Σ term + Σ trang bị[item]); term {stat, mul} hoặc {stat, div}.",
   "classes": [
     {
       "id": "DK",
       "name": "Dark Knight",
-      "strength": 28, "agility": 20, "vitality": 25, "energy": 10,
-      "hpBase": 110, "hpPerLevel": 3, "hpPerVit": 3,
-      "mpBase": 20, "mpPerLevel": 1, "mpPerEne": 1,
+      "strength": 28,
+      "agility": 20,
+      "vitality": 25,
+      "energy": 10,
+      "hpBase": 110,
+      "hpPerLevel": 3,
+      "hpPerVit": 3,
+      "mpBase": 20,
+      "mpPerLevel": 1,
+      "mpPerEne": 1,
       "statPerLevel": 5,
       "sourceType": "CONFIG",
       "version": null,
       "verified": false,
-      "source": "KB_CONFIG §2"
+      "source": "KB_CONFIG §2",
+      "derived": {
+        "sourceType": "IMPLEMENTATION",
+        "version": null,
+        "verified": false,
+        "source": "KB_GAME_DESIGN §4.1 (DK)",
+        "attackMax": {
+          "terms": [
+            {
+              "stat": "strength",
+              "div": 4
+            }
+          ],
+          "item": "attackMax"
+        },
+        "attackMin": {
+          "terms": [
+            {
+              "stat": "strength",
+              "div": 6
+            }
+          ],
+          "item": "attackMin"
+        },
+        "defense": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 4
+            }
+          ],
+          "item": "defense"
+        },
+        "attackRate": {
+          "terms": [
+            {
+              "stat": "level",
+              "mul": 5
+            },
+            {
+              "stat": "agility",
+              "mul": 1.5
+            }
+          ]
+        },
+        "defenseRate": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 3
+            }
+          ]
+        },
+        "attackSpeed": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 15
+            }
+          ],
+          "item": "speed"
+        }
+      }
     }
   ]
 }

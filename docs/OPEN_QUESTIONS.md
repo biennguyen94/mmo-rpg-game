@@ -101,3 +101,16 @@
 | M2-2 | **Protocol:** `move_to` tới ô tường/nước/NPC/ngoài biên/không có đường, hoặc `x`,`y` sai kiểu: mã lỗi nào? | `INVALID_TARGET` (sai kiểu còn ghi log cảnh báo). Thành công: ack `{rid}`; vị trí chỉ đến qua `snapshot` |
 | M2-3 | **Protocol:** `snapshot.entities[].state` của người chơi | `"idle"` / `"walk"` (M3 thêm `"attack"`, `"dead"`) |
 | M2-4 | **Map:** bố cục Lorencia tự vẽ (thị trấn có tường 2 cổng ở tây, safe zone = trong tường, NPC bán thuốc trong thị trấn, hồ phía bắc, vùng 10 Spider phía đông) | Anh xem `priv/maps/lorencia.json` (hàng `tiles`); M5 sẽ vẽ được để xem bằng mắt |
+
+## M3. Câu hỏi phát sinh ở M3 (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm (đề xuất) |
+|---|---|---|
+| G23 | **Gameplay:** §3 nói EXP "giảm tuyến tính tới `minExpRatio`" khi người chơi cao hơn quái quá `levelDiffPenaltyStart` cấp, nhưng không cho độ dốc | `experience.levelDiffPenaltyPerLevel = 0.1` (mỗi cấp vượt giảm 10%, sàn 0.1). **Không chạm ở Phase 1** (Spider cấp 2, maxLevel 10 → chênh tối đa 8 < 10) |
+| G24 | **Gameplay:** nhiều người cùng đánh một quái: EXP cho ai? (G12 chỉ nói Zen cho "người giết") | EXP + Zen cho người ra đòn cuối; đồ rơi thuộc người gây nhiều sát thương nhất trong 10s (G13). Party chia EXP là Phase 3 |
+| G25 | **Gameplay:** KB_CONFIG ghi 10 / 170 / 1110 Spider tới cấp 2 / 5 / 10; với `expRequired` làm tròn từng cấp (G19) ra **10 / 171 / 1111** | Giữ G19 (lệch ≤ 1 con) |
+| G26 | **Cân bằng — cần anh quyết:** vùng Spider 17×21 ô có 10 con, `aggroRange` 5 → chạy thật trên server, đánh 1 con thì **6 con cùng aggro**: mất ~150/185 HP để hạ 1 Spider (simulator đánh từng con chỉ mất ~7.6 HP/con). DK cấp 1 không có đồ gần như chắc chết khi vào giữa vùng | Chưa đổi số. Đề xuất (chọn một): (a) giảm `aggroRange` 5 → 3; (b) giãn vùng sinh (vd. 30×30) hoặc chia 2–3 vùng nhỏ; (c) giữ nguyên, coi là độ khó (mua potion ở NPC trước) |
+| M3-1 | **Protocol:** trượt đòn thể hiện thế nào? §5 `combat` không có trường `miss` | `dmg: 0` = trượt (đòn trúng luôn ≥ `hardFloor` 1 nên không nhầm) |
+| M3-2 | **Protocol:** `state` của quái: `"idle"`, `"chase"`, `"attack"`, `"return"`, `"dead"`; người chơi: `"idle"`, `"walk"`, `"dead"` | Như bên trái |
+| M3-3 | **Protocol:** báo EXP/Zen/lên cấp | Event `player` (đầy đủ + `view`) mỗi khi đổi; client so chênh lệch để hiện `EXP_GAIN`/`LEVEL_UP` (theo P4, không thêm event) |
+| M3-4 | **Protocol:** `alloc` lỗi | Không đủ điểm → `REQUIREMENT_NOT_MET`; stat/điểm sai kiểu hoặc ≤ 0 → `FORBIDDEN` |

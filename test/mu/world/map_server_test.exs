@@ -9,15 +9,29 @@ defmodule Mu.World.MapServerTest do
 
     pid =
       start_supervised!(
-        {MapServer, map_id: "lorencia", name: nil, tick: :manual, topic: topic},
+        {MapServer,
+         map_id: "lorencia", name: nil, tick: :manual, topic: topic, spawn_monsters: false},
         id: :test_map
       )
 
     %{server: pid, map: Maps.get("lorencia")}
   end
 
+  @dk %{class: "DK", level: 1, strength: 28, agility: 20, vitality: 25, energy: 10}
+
   defp player(id, {x, y}) do
-    %{character_id: id, name: "N#{id}", level: 1, hp: 185, hp_max: 185, x: x, y: y}
+    %{
+      character_id: id,
+      name: "N#{id}",
+      class: "DK",
+      level: 1,
+      hp: 185,
+      mp: 30,
+      x: x,
+      y: y,
+      stats: Mu.Game.Engine.derived(@dk),
+      skills: ["basic_attack"]
+    }
   end
 
   defp join(server, id, pos, owner \\ self()) do
@@ -138,7 +152,7 @@ defmodule Mu.World.MapServerTest do
 
   test "rời map: despawn + removed trong snapshot kế; trả vị trí cuối", %{server: s} do
     join(s, "a", {10, 30})
-    assert {:ok, {10, 30}} = MapServer.leave(s, "a")
+    assert {:ok, %{x: 10, y: 30, hp: 185, mp: 30}} = MapServer.leave(s, "a")
     assert :error = MapServer.leave(s, "a")
     assert_receive {:map_event, "despawn", %{id: "p_a"}}
     MapServer.tick(s, 2)
@@ -157,7 +171,8 @@ defmodule Mu.World.MapServerTest do
   test "chế độ tự tick: ~20 tick/giây, không trôi" do
     pid =
       start_supervised!(
-        {MapServer, map_id: "lorencia", name: nil, tick: :auto, topic: "test_auto"},
+        {MapServer,
+         map_id: "lorencia", name: nil, tick: :auto, topic: "test_auto", spawn_monsters: false},
         id: :auto_map
       )
 

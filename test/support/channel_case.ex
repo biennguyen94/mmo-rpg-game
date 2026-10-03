@@ -16,12 +16,21 @@ defmodule MuWeb.ChannelCase do
     # test Channel không chạy async.
     Mu.DataCase.setup_sandbox(Map.put(tags, :async, false))
     Mu.RateLimit.reset()
+    reset_map("lorencia")
 
     on_exit(fn ->
       for {_, pid, _, _} <- DynamicSupervisor.which_children(Mu.Game.SessionSupervisor),
           do: DynamicSupervisor.terminate_child(Mu.Game.SessionSupervisor, pid)
     end)
 
+    :ok
+  end
+
+  @doc "Khởi động lại MapServer của map (quái mới, không còn người/đồ từ test trước)."
+  def reset_map(map_id) do
+    id = {Mu.World.MapServer, map_id}
+    :ok = Supervisor.terminate_child(Mu.World.MapSupervisor, id)
+    {:ok, _} = Supervisor.restart_child(Mu.World.MapSupervisor, id)
     :ok
   end
 

@@ -13,6 +13,8 @@ defmodule MuWeb.GameChannel do
   - Sau join, kênh đẩy `"spawn"` cho mọi entity trên map rồi chuyển tiếp `spawn` /
     `despawn` / `snapshot` của MapServer (PubSub). Kênh đăng ký topic trước khi vào map nên
     có thể nhận `spawn` của chính mình hai lần: client coi `spawn` là thêm-hoặc-cập-nhật.
+  - `"player"` (trạng thái đầy đủ + `view`) do Session đẩy khi EXP/level/stat/Zen đổi;
+    `"combat"` `{rid, attacker, target, dmg, crit, hp}` cho mọi đòn trên map (trượt: dmg 0).
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
     `"error"` `FORBIDDEN` rồi đóng (`session.singleLoginPerAccount`).
   """
@@ -99,6 +101,12 @@ defmodule MuWeb.GameChannel do
 
   def handle_info({:after_join, entities}, socket) do
     Enum.each(entities, &push(socket, "spawn", &1))
+    {:noreply, socket}
+  end
+
+  # Session đẩy riêng cho tài khoản này (vd. `player` khi EXP/level/stat/Zen đổi)
+  def handle_info({:push, event, payload}, socket) do
+    push(socket, event, payload)
     {:noreply, socket}
   end
 

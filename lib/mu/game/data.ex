@@ -8,29 +8,46 @@ defmodule Mu.Game.Data do
   """
 
   @dir Path.expand("../../../priv/game_data", __DIR__)
-  @classes_path Path.join(@dir, "classes.json")
-  @external_resource @classes_path
-
   @required ~w(sourceType version verified)
 
-  check = fn path, records ->
-    for r <- records, key <- @required, not Map.has_key?(r, key) do
-      raise "#{path}: bản ghi #{inspect(r["id"])} thiếu trường #{key} (KB_00_RULES §2)"
+  load = fn file, key, id_key ->
+    path = Path.join(@dir, file)
+    records = path |> File.read!() |> Jason.decode!() |> Map.fetch!(key)
+
+    for r <- records, k <- @required, not Map.has_key?(r, k) do
+      raise "#{path}: bản ghi #{inspect(r[id_key])} thiếu trường #{k} (KB_00_RULES §2)"
     end
 
-    records
+    {path, Map.new(records, &{&1[id_key], &1})}
   end
 
-  @classes @classes_path
-           |> File.read!()
-           |> Jason.decode!()
-           |> Map.fetch!("classes")
-           |> then(&check.(@classes_path, &1))
-           |> Map.new(&{&1["id"], &1})
+  {p1, classes} = load.("classes.json", "classes", "id")
+  {p2, monsters} = load.("monsters.json", "monsters", "id")
+  {p3, skills} = load.("skills.json", "skills", "id")
+  {p4, drops} = load.("drops.json", "drops", "monsterId")
+  for p <- [p1, p2, p3, p4], do: @external_resource(p)
+
+  @classes classes
+  @monsters monsters
+  @skills skills
+  @drops drops
+
+  for {id, c} <- @classes, d = c["derived"], k <- @required, not Map.has_key?(d, k) do
+    raise "classes.json: derived của #{id} thiếu #{k}"
+  end
 
   @doc "Các class đang có dữ liệu (Phase 1: chỉ DK)."
   def classes, do: @classes
 
   @doc "Class theo id (`\"DK\"`), `nil` nếu không có."
   def class(id), do: Map.get(@classes, id)
+
+  def monsters, do: @monsters
+  def monster(id), do: Map.get(@monsters, id)
+
+  def skills, do: @skills
+  def skill(id), do: Map.get(@skills, id)
+
+  @doc "Bảng rơi đồ của quái (`nil` nếu không có)."
+  def drops(monster_id), do: Map.get(@drops, monster_id)
 end

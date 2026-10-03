@@ -22,7 +22,11 @@ defmodule Mu.Game.CharactersTest do
     assert c.version == 0
 
     view = Characters.player_view(c)
-    assert view.view == %{hpMax: 185, mpMax: 30}
+
+    assert %{hpMax: 185, mpMax: 30, attackMin: 4, attackMax: 7, defense: 5, cooldownMs: 990} =
+             view.view
+
+    assert view.view.skills == ["basic_attack"] and view.view.expRequired == 100
     assert view.hp == 185
 
     stored = Repo.get!(Character, c.id)

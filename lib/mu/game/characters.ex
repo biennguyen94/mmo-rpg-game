@@ -8,7 +8,7 @@ defmodule Mu.Game.Characters do
 
   alias Mu.Repo
   alias Mu.Accounts.Account
-  alias Mu.Game.{Character, Config, Data, Names, Stats}
+  alias Mu.Game.{Character, Config, Data, Engine, Names, Stats}
   alias Mu.World.Maps
 
   def list(account_id) do
@@ -88,18 +88,34 @@ defmodule Mu.Game.Characters do
     Repo.aggregate(from(c in Character, where: c.account_id == ^account_id), :count)
   end
 
-  @doc """
-  Lưu vị trí (optimistic lock theo `version`: Session là nơi ghi duy nhất, lệch version là lỗi).
-  Không đổi gì thì không ghi.
-  """
-  def save_position(%Character{position_x: x, position_y: y} = c, x, y), do: {:ok, c}
+  @progress_fields ~w(level experience strength agility vitality energy free_stat_points
+                      hp_current mana_current zen position_x position_y)a
 
-  def save_position(%Character{} = c, x, y) do
-    c
-    |> Ecto.Changeset.change(position_x: x, position_y: y)
-    |> Ecto.Changeset.optimistic_lock(:version)
-    |> Repo.update()
+  @doc """
+  Lưu trạng thái đang giữ trong bộ nhớ (`current`) so với bản đã lưu (`saved`): chỉ ghi các
+  cột đổi, optimistic lock theo `version` (Session là nơi ghi duy nhất; lệch version là lỗi
+  và raise `Ecto.StaleEntryError`). Không đổi gì thì không ghi. Trả `{:ok, bản_đã_lưu}`.
+  """
+  def save(%Character{} = saved, %Character{} = current) do
+    changes =
+      for f <- @progress_fields,
+          Map.fetch!(saved, f) != Map.fetch!(current, f),
+          into: %{},
+          do: {f, Map.fetch!(current, f)}
+
+    if changes == %{} do
+      {:ok, saved}
+    else
+      saved
+      |> Ecto.Changeset.change(changes)
+      |> Ecto.Changeset.optimistic_lock(:version)
+      |> Repo.update()
+    end
   end
+
+  @doc "Lưu vị trí (dạng rút gọn của `save/2`)."
+  def save_position(%Character{} = c, x, y),
+    do: save(c, %{c | position_x: x, position_y: y})
 
   @doc "Tóm tắt cho danh sách nhân vật (HTTP)."
   def summary(%Character{} = c) do
@@ -107,10 +123,12 @@ defmodule Mu.Game.Characters do
   end
 
   @doc """
-  Trạng thái đầy đủ gửi client (event `player`, `KB_TECHNICAL §5`) kèm `view` tính sẵn.
-  M1: `view` có HP/MP tối đa; chỉ số chiến đấu thêm ở M3.
+  Trạng thái đầy đủ gửi client (event `player`, `KB_TECHNICAL §5`) kèm `view` tính sẵn
+  (`Engine.derived/2`): client chỉ hiển thị, không tính công thức.
   """
-  def player_view(%Character{} = c) do
+  def player_view(%Character{} = c, equipment \\ []) do
+    d = Engine.derived(c, equipment)
+
     %{
       id: c.id,
       name: c.name,
@@ -129,8 +147,19 @@ defmodule Mu.Game.Characters do
       x: c.position_x,
       y: c.position_y,
       view: %{
-        hpMax: Stats.hp_max(c.class, c.level, c.vitality),
-        mpMax: Stats.mp_max(c.class, c.level, c.energy)
+        hpMax: d.hp_max,
+        mpMax: d.mp_max,
+        attackMin: d.attack_min,
+        attackMax: d.attack_max,
+        defense: d.defense,
+        attackRate: d.attack_rate,
+        defenseRate: d.defense_rate,
+        attackSpeed: d.attack_speed,
+        cooldownMs: d.cooldown_ms,
+        expRequired:
+          if(c.level >= Engine.max_level(), do: nil, else: Engine.exp_required(c.level)),
+        maxLevel: Engine.max_level(),
+        skills: Enum.sort(Engine.skills(c))
       }
     }
   end

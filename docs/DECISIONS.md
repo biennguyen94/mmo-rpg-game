@@ -30,3 +30,11 @@
 | DEC-24 | 2026-10-03 | Lệnh `move_to` mới khi đang đi: tính lại đường từ ô hiện tại, tiến độ bước về 0; `move_to` tới ô đang đứng = dừng | Đơn giản, không cho dồn tiến độ để đi nhanh hơn |
 | DEC-25 | 2026-10-03 | Kênh đăng ký topic map trước khi vào map → có thể nhận `spawn` của mình 2 lần; client coi `spawn` là thêm-hoặc-cập-nhật | Không bỏ sót entity vào map giữa lúc join và subscribe |
 | DEC-26 | 2026-10-03 | DEC-17 hết hiệu lực: nhân vật mới đứng ở `playerSpawn` của map (`newCharacter` chỉ còn `class`, `mapId`, `zen`). Vị trí đã lưu không đi được → về `playerSpawn` | Đúng G8; map có thể sửa sau |
+| DEC-27 | 2026-10-03 | Hệ số §4.1 lưu trong `classes.json` (`derived`: `terms` `{stat, mul\|div}` + `item`), `floor` một lần cho mỗi chỉ số; cooldown §6 cũng `floor` (DK cấp 1: 990 ms) | Không hard-code số gameplay (CLAUDE.md §4) |
+| DEC-28 | 2026-10-03 | Thứ tự kiểm tra `attack`/`skill`: còn sống → skill đã học → mục tiêu hợp lệ → không đứng trong safe zone → tầm → cooldown → mana. Đánh thì dừng đi | Lỗi rõ nhất trước; tầm trước cooldown để client biết cần tiến lại gần |
+| DEC-29 | 2026-10-03 | Cooldown tính riêng từng skill (`basic_attack` theo attack speed, `twisting_slash` 800 ms); thời gian mô phỏng = số tick × 50 ms (+ phần đã trôi trong tick khi tự chạy) | Test điều khiển được; production chính xác tới ms |
+| DEC-30 | 2026-10-03 | Quái chết: giữ entity `state: "dead"` (hp 0) tới khi hồi sinh; hồi sinh = `despawn` rồi `spawn` cùng id ở ô ngẫu nhiên trong vùng sinh (chỗ sinh mới). Người chơi hồi sinh cũng vậy | Client không vẽ xác "trượt" từ chỗ cũ sang chỗ mới |
+| DEC-31 | 2026-10-03 | Quái đang RETURN mà A* (32 ô) và bước thẳng đều không ra đường → đặt thẳng về chỗ sinh | Tránh quái kẹt vĩnh viễn |
+| DEC-32 | 2026-10-03 | Đồ rơi: entity `kind: "item"`, id `g_<ULID>` (serial sinh lúc rơi), đặt ở ô quái chết; payload `spawn` dùng chung dạng P3 | KB §9: ground item chỉ trong RAM, serial sinh lúc drop |
+| DEC-33 | 2026-10-03 | ChannelCase khởi động lại MapServer Lorencia mỗi test; MapServer nhận `seed`, `spawn_monsters` (test) | Test độc lập, RNG lặp lại được |
+| DEC-34 | 2026-10-03 | Session ghi DB theo cột đổi so với bản đã lưu (`Characters.save/2`), ngay khi: nhận Zen, lên cấp, cộng điểm, rời map; EXP/vị trí/HP/MP theo chu kỳ 30s | KB_TECH_STACK §4; G12 |
