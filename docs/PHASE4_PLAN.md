@@ -33,7 +33,7 @@ sửa; em không sửa):
 | **P4-M2 Duel** ✅ | Mời / nhận / từ chối / hủy / đầu hàng; "vùng riêng" (chỉ hai người đánh nhau); về 0 HP → 1 HP thua, hết 3 phút hòa, đi xa > 20 ô / rời map / mất kết nối thua; không PK, không rơi đồ; AOE trúng đối thủ; cấm đánh người cùng nhóm (DEC-119 … DEC-124). E2E `duel.mjs` 14/14 | xong |
 | **P4-M3 Guild** ✅ | Bảng `guilds`, `guild_members` (migration + CHANGE_REASON). Tạo (cấp 20 + 10 000 Zen, một transaction), mời (menu người chơi / theo tên) / nhận / từ chối / rời / đuổi / phong / hạ / giải tán (xác nhận), master / assistant (≤ 2) / member, tối đa 20. Chat GUILD (`/g`). Panel Guild. `<Tên guild>` dưới tên nhân vật (DEC-125 … DEC-131). E2E `guild.mjs` 24/24 | xong |
 | **P4-M4 Guild war** ✅ | Master tuyên chiến / nhận / từ chối (60 s) / đầu hàng; thành viên hai guild đánh nhau ngoài safe zone, AOE trúng địch, không PK, không rơi đồ; +1 điểm / kill, 20 điểm hoặc 30 phút (điểm cao thắng, bằng hòa), giải tán = đầu hàng; tên địch tím; thanh war; SYSTEM hai guild (DEC-132 … DEC-137). ExUnit thuần + kênh; E2E `guildwar.mjs` viết sẵn, **chạy ở P4-M5** | xong |
-| **P4-M5 Nghiệm thu Phase 4** | Danh sách nghiệm thu (P4-9, em soạn), **chạy toàn bộ E2E (kể cả `guildwar.mjs` lần đầu)**, soak có PvP, báo cáo | P4-9 |
+| **P4-M5 Nghiệm thu Phase 4** ✅ | Danh sách nghiệm thu P4-9 (12 mục), 15 bộ E2E / 213 mục chạy trong lúc soak 20 bot × 10 phút có guild war, simulator không đổi — `docs/ACCEPTANCE_PHASE4.md` (DEC-138, DEC-139) | xong |
 
 Thứ tự: P4-M1 → P4-M2 → P4-M3 → P4-M4 → P4-M5. Duel và guild war dựng trên tấn công người – người
 của P4-M1.

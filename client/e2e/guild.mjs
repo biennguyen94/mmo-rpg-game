@@ -46,7 +46,11 @@ async function account(tag, level = 1, zen = 0) {
 const browser = await chromium.launch({ executablePath: existsSync(exe) ? exe : undefined });
 const errors = [];
 async function enter(user) {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  // mỗi trình duyệt một IP (server TRUSTED_PROXIES): 15 bộ E2E liền nhau vượt rateLimit.login.perIp nếu cùng 127.0.0.1
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    extraHTTPHeaders: { "x-forwarded-for": `10.99.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` },
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto(base);
@@ -64,14 +68,21 @@ const stand = async (page, x, y) => {
   return until(page, ([x, y]) => window.__mu.player().x === x && window.__mu.player().y === y, [x, y], 6000);
 };
 // bấm người chơi `name` → menu (đúng tên) → nút `sel`
+// đông người (soak): bấm trúng người khác thì đóng menu, thử lại (tối đa 5 lần)
 async function menuClick(page, name, sel) {
-  const t = await page.evaluate((n) => window.__mu.entities().find((e) => e.name === n), name);
-  if (!t) return false;
-  await clickAt(page, t.x, t.y);
-  const ok = await until(page, ([n, s]) => document.querySelector(`[data-target-name="${n}"]`) && document.querySelector(s), [name, sel], 3000);
-  if (ok) await page.click(sel);
-  else await page.keyboard.press("Escape");
-  return ok;
+  for (let k = 0; k < 5; k++) {
+    const t = await page.evaluate((n) => window.__mu.entities().find((e) => e.name === n), name);
+    if (!t) return false;
+    await clickAt(page, t.x, t.y);
+    const ok = await until(page, ([n, s]) => document.querySelector(`[data-target-name="${n}"]`) && document.querySelector(s), [name, sel], 1500);
+    if (ok) {
+      await page.click(sel);
+      return true;
+    }
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+  }
+  return false;
 }
 const openGuild = async (page) => {
   if (await page.$('[data-panel="guild"]')) return true;

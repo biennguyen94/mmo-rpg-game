@@ -316,7 +316,7 @@ level + Zen, master / assistant / member). Mọi số dưới đây là **đề 
 | P4-6 **ĐÃ LÀM (P4-M4)** | **Guild war** | (1) Master guild A gửi `guild_war_declare {guild}`; master guild B có 60 s để `guild_war_accept` / `guild_war_decline`. Mỗi guild chỉ một war một lúc. (2) Trong war, thành viên hai guild đánh nhau được ở mọi chỗ ngoài safe zone; AOE trúng người guild địch. Kill không tính PK, không rơi đồ. (3) Mỗi kill người guild địch +1 điểm. War kết thúc khi một bên đạt `guildWar.scoreToWin` **20** điểm, hoặc hết `guildWar.durationMinutes` **30** phút (điểm cao hơn thắng, bằng thì hòa), hoặc master một bên đầu hàng (`guild_war_surrender`). (4) Không thưởng (Phase 5 mới có kinh tế). Kết quả báo SYSTEM cho hai guild; tên địch hiện màu tím. War chỉ trong RAM: server khởi động lại thì hủy |
 | P4-7 | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `attack {target}` nhận cả id người chơi (`p_…`); `duel_*` (P4-4); `guild_create {name}`, `guild_invite {to}`, `guild_accept {guild}`, `guild_decline {guild}`, `guild_leave {}`, `guild_kick {name}`, `guild_promote {name}`, `guild_demote {name}`, `guild_disband {}`, `guild_war_*` (P4-6); nhóm rate-limit `pvp` 5 / giây. Event: `spawn` / `player` thêm `pkState`, `guild`; `duel`, `guild {…}`, `guild_invite {from, guild}`, `guild_war {…}`. Lỗi dùng mã sẵn có (`FORBIDDEN`, `INVALID_TARGET`, `OUT_OF_RANGE`, `REQUIREMENT_NOT_MET`, `NOT_ENOUGH_ZEN`). Em ghi `CHANGE_REASON`; anh bổ sung KB sau khi chốt |
 | P4-8 **ĐÃ LÀM (P4-M1)** | Chết vì người chơi | Hồi sinh ở thị trấn như chết vì quái (§11). Buff mất như Phase 2. Không mất EXP. Kẻ giết **không nhận EXP / Zen** (tránh nuôi nick) |
-| P4-9 | Danh sách nghiệm thu Phase 4 | Em soạn ở P4-M5 (như P3-9) |
+| P4-9 **ĐÃ LÀM (P4-M5)** | Danh sách nghiệm thu Phase 4 | 12 mục, kết quả ở `docs/ACCEPTANCE_PHASE4.md` |
 | P4-10 | **KB_TECHNICAL §5 / §9** cần anh bổ sung sau khi chốt P4-2 … P4-7 | Em ghi `CHANGE_REASON` khi làm |
 
 ### P4-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
@@ -358,4 +358,9 @@ level + Zen, master / assistant / member). Mọi số dưới đây là **đề 
 | P4M4-3 | Tuyên chiến khi master bên kia offline | Không được (`INVALID_TARGET`); không có lời mời chờ offline |
 | P4M4-4 | Nuôi điểm bằng nick phụ (kill liên tục một người) | Không thưởng nên không chặn; Phase 5 có thưởng thì cần luật (vd. cùng nạn nhân chỉ tính 1 lần / x phút) |
 | P4M4-5 | **KB cần anh bổ sung** (gộp P4-10): act `guild_war_*`, event `guild_war`, config `guildWar` | Đã làm, không đổi schema (war chỉ trong RAM) |
+
+### P4-M5. Nghiệm thu Phase 4 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE4.md`
+
+12/12 mục PASS (mục 11 UI cần anh xem bằng mắt). Việc chờ anh: B-11 (KB bổ sung P4-10), B-12
+(P4M4-1 … 4), B-9 (`CLAUDE.md`), B-7, B-10 — xem `ACCEPTANCE_PHASE4.md §5.2`.
 

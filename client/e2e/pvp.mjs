@@ -58,7 +58,11 @@ async function account(tag, level, hp, pk) {
 const browser = await chromium.launch({ executablePath: existsSync(exe) ? exe : undefined });
 const errors = [];
 async function enter(user) {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  // mỗi trình duyệt một IP (server TRUSTED_PROXIES): 15 bộ E2E liền nhau vượt rateLimit.login.perIp nếu cùng 127.0.0.1
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    extraHTTPHeaders: { "x-forwarded-for": `10.99.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` },
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto(base);
