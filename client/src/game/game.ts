@@ -18,6 +18,7 @@ import {
   type SpawnPayload,
   type MapChangePayload,
   type ChatPayload,
+  type MailPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -82,6 +83,8 @@ export class GameClient {
       aim: (skill) => ((this.aiming = skill), this.ui.closeContext(), this.render()),
       cancelAim: () => ((this.aiming = null), this.render()),
       sendChat: (line) => void this.sendChat(line),
+      claimMail: (id) => void this.send("mail_claim", { mailId: id }).then((ok) => ok && Sound.play("pickup")),
+      deleteReadMail: () => void this.send("mail_delete", { read: true }),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -125,6 +128,8 @@ export class GameClient {
       aiming: null,
       serverNow: Date.now(),
       chat: this.state?.chat ?? [],
+      mailUnread: this.state?.mailUnread ?? 0,
+      mail: this.state?.mail ?? [],
     };
     this.buildView(r.map);
     this.render();
@@ -195,6 +200,12 @@ export class GameClient {
       case "player":
         this.onPlayer(p as Player);
         break;
+      case "mail": {
+        const m = p as MailPayload;
+        this.state.mailUnread = m.unread;
+        if (m.items) this.state.mail = m.items;
+        break;
+      }
       case "chat":
         this.state.chat = pushChat(this.state.chat, p as ChatPayload);
         break;
@@ -415,6 +426,8 @@ export class GameClient {
     if (!this.state) return;
     this.state.panel = p;
     if (p === "notices") this.notices.markAllRead();
+    // mở Hộp thư: xin danh sách (server đánh dấu đã đọc → badge về 0)
+    if (p === "mail") void this.send("mail_list");
     if (p !== "shop") this.shop = null;
     this.render();
   }

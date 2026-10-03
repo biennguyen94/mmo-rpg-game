@@ -114,6 +114,8 @@ defmodule MuWeb.GameChannel do
 
   def handle_info({:after_join, entities}, socket) do
     Enum.each(entities, &push(socket, "spawn", &1))
+    # badge Hộp thư (P2-M6)
+    push(socket, "mail", %{unread: Mu.Mail.unread(socket.assigns.character_id)})
     {:noreply, socket}
   end
 

@@ -48,6 +48,8 @@ defmodule Mu.Game.Characters do
 
         c = insert(account_id, name, class, start)
         Items.give_starting_equipment(c.id, Map.get(start["startingEquipment"], c.class, []))
+        # mail chào mừng (§19.10, P2-13)
+        Mu.Mail.welcome(c.id)
         c
       end)
     end

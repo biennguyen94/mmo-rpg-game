@@ -35,7 +35,7 @@ defmodule Mu.Game.Session do
   @idle_timeout :timer.minutes(1)
 
   # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
-  @item_acts ~w(pickup equip unequip move_item split drop use_item buy sell)
+  @item_acts ~w(pickup equip unequip move_item split drop use_item buy sell mail_claim)
   # số `rid` gần nhất được nhớ kết quả
   @rid_memory 200
 
@@ -194,6 +194,14 @@ defmodule Mu.Game.Session do
     if s.character, do: push_player(s)
     {:noreply, s, timeout(s)}
   end
+
+  # có mail mới (quản trị gửi khi đang online): cập nhật badge (P2-M6)
+  def handle_info({:mail_changed, cid}, %{character: %{id: cid}} = s) do
+    push(s, "mail", %{unread: Mu.Mail.unread(cid)})
+    {:noreply, s, timeout(s)}
+  end
+
+  def handle_info({:mail_changed, _}, s), do: {:noreply, s, timeout(s)}
 
   # WHISPER từ người khác (P2-M5)
   def handle_info({:chat_whisper, msg}, s) do
@@ -400,6 +408,49 @@ defmodule Mu.Game.Session do
       item_result(Items.sell(s.character.id, id, qty, price, npc_id), s)
     else
       error -> {error, s}
+    end
+  end
+
+  # ---------- Hộp thư (P2-M6) ----------
+
+  # mở panel: danh sách + đánh dấu đã đọc (badge về 0)
+  defp run("mail_list", _payload, s) do
+    items = Mu.Mail.list(s.character.id)
+    push(s, "mail", %{unread: 0, items: items})
+    {:ok, s}
+  end
+
+  defp run("mail_claim", %{"mailId" => id}, s) when is_binary(id) do
+    case Items.claim_mail(s.character.id, id) do
+      {:ok, res} ->
+        s = s |> apply_items(res) |> notify()
+
+        push(s, "mail", %{
+          unread: Mu.Mail.unread(s.character.id),
+          items: Mu.Mail.list(s.character.id)
+        })
+
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  defp run("mail_delete", p, s) do
+    target = if p["read"] == true, do: :read, else: p["mailId"]
+
+    case Mu.Mail.delete(s.character.id, target) do
+      {:ok, _} ->
+        push(s, "mail", %{
+          unread: Mu.Mail.unread(s.character.id),
+          items: Mu.Mail.list(s.character.id)
+        })
+
+        {:ok, s}
+
+      error ->
+        {error, s}
     end
   end
 

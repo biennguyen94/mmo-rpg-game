@@ -48,12 +48,11 @@ defmodule Mu.Phase1ScopeTest do
     assert Config.get(["game", "maxLevel"]) == @scope.maxLevel
   end
 
-  test "mọi feature ngoài scope đang mở tắt (LATER_VERSION / phase sau / milestone sau)" do
-    for {flag, on?} <- Config.get(["features"]) do
-      refute on?, "features.#{flag} phải tắt ở Phase 1"
-    end
+  test "chỉ mail + mapPanel bật (Phase 2, P2-M6); mọi feature khác tắt (LATER_VERSION / phase sau)" do
+    on = for {flag, true} <- Config.get(["features"]), do: flag
+    assert Enum.sort(on) == ["mail", "mapPanel"]
 
-    for f <- ~w(party pvp guild quest wings chaosMachine magicGladiator mail mapPanel) do
+    for f <- ~w(party pvp guild quest wings chaosMachine magicGladiator) do
       assert Config.get(["features", f]) == false
     end
   end

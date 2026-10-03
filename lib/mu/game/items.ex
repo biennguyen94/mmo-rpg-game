@@ -336,6 +336,51 @@ defmodule Mu.Game.Items do
     end)
   end
 
+  # ---------- Hộp thư (P2-M6) ----------
+
+  @doc """
+  Nhận quà mail `mail_id` (Zen + item) — một transaction: khóa nhân vật + row mail (`FOR
+  UPDATE`), còn hạn, chưa nhận, có quà; item vào túi theo luật gộp stack (túi đầy →
+  `INVENTORY_FULL`, không nhận gì), audit `MAIL_CLAIM` (`from_owner` `"mail:<id>"`).
+  """
+  def claim_mail(cid, mail_id) do
+    tx(cid, fn _c, items ->
+      with {:ok, uuid} <- Ecto.UUID.cast(mail_id) |> ok_or("INVALID_TARGET"),
+           %Mu.Mail.Message{} = m <- lock_mail(cid, uuid) || {:error, "INVALID_TARGET"},
+           :ok <- if(Mu.Mail.reward?(m), do: :ok, else: {:error, "INVALID_TARGET"}),
+           {:ok, plan} <-
+             if(m.item_template_id,
+               do: Inventory.plan_add(items, m.item_template_id, m.item_quantity),
+               else: {:ok, []}
+             ) do
+        if m.item_template_id,
+          do:
+            apply_add(cid, m.item_template_id, plan, "MAIL_CLAIM", "mail:" <> m.id, [], %{}, nil)
+
+        now = DateTime.utc_now()
+
+        Repo.update_all(from(x in Mu.Mail.Message, where: x.id == ^m.id),
+          set: [claimed_at: now, read_at: m.read_at || now]
+        )
+
+        {:ok, m.zen}
+      end
+    end)
+  end
+
+  defp ok_or({:ok, v}, _), do: {:ok, v}
+  defp ok_or(_, code), do: {:error, code}
+
+  defp lock_mail(cid, id) do
+    Repo.one(
+      from m in Mu.Mail.Message,
+        where:
+          m.id == ^id and m.character_id == ^cid and is_nil(m.claimed_at) and
+            m.expires_at > ^DateTime.utc_now(),
+        lock: "FOR UPDATE"
+    )
+  end
+
   # ---------- Dùng, bán ----------
 
   @doc "Tiêu hao `n` cái từ stack `item_id` trong túi (dùng potion). Hết thì xóa stack."
