@@ -15,7 +15,8 @@
     "experience.levelDiffPenaltyPerLevel": "G23 (mới, chờ xác nhận): KB §3 nói giảm tuyến tính tới minExpRatio nhưng không cho độ dốc. Không chạm ở Phase 1 (Spider lv2, maxLevel 10 → chênh tối đa 8 < 10).",
     "interaction": "G4: khoảng cách Chebyshev; nhặt đồ ≤ pickupRange ô, mở/mua/bán ở NPC ≤ npcRange ô.",
     "combat.basicAttackRange": "P2-5: tầm đánh thường (ô, Chebyshev) theo weaponType của vũ khí đang cầm; tay không / loại không có trong bảng = default. Không dùng mũi tên.",
-    "combat.twoHandedWeaponTypes": "P2-5: vũ khí hai tay khóa ô SHIELD (mặc cung khi có khiên hoặc ngược lại → INVALID_SLOT)."
+    "combat.twoHandedWeaponTypes": "P2-5: vũ khí hai tay khóa ô SHIELD (mặc cung khi có khiên hoặc ngược lại → INVALID_SLOT).",
+    "combat.mpRegen": "P2-M3 (mana phương án A, docs/PHASE2_PROPOSAL_M2_M3.md §5.5): hồi MP tự nhiên energy/energyDiv mỗi giây (cộng dồn phần lẻ), cộng mỗi intervalMs; HP vẫn không tự hồi (G9). Không hồi khi đã chết."
   },
   "game": {
     "name": "MU Web",
@@ -189,7 +190,11 @@
     "twoHandedWeaponTypes": [
       "bow",
       "crossbow"
-    ]
+    ],
+    "mpRegen": {
+      "energyDiv": 40,
+      "intervalMs": 1000
+    }
   },
   "experience": {
     "mode": "formula",

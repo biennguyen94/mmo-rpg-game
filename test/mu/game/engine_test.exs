@@ -201,9 +201,68 @@ defmodule Mu.Game.EngineTest do
 
   test "skill học theo class + level (§7)" do
     assert Engine.skills(dk()) == ["basic_attack"]
-    assert Enum.sort(Engine.skills(dk(%{level: 10}))) == ["basic_attack", "twisting_slash"]
+
+    assert Enum.sort(Engine.skills(dk(%{level: 10}))) ==
+             ["basic_attack", "falling_slash", "twisting_slash"]
+
     assert {:error, "REQUIREMENT_NOT_MET"} = Engine.can_use_skill(dk(), "twisting_slash")
     assert :ok = Engine.can_use_skill(dk(%{level: 10}), "twisting_slash")
     assert {:error, "INVALID_TARGET"} = Engine.can_use_skill(dk(), "fireball")
+  end
+
+  describe "P2-M3: skill theo class, heal, buff, hồi MP" do
+    test "skill học theo class + requiredLevel" do
+      assert Enum.sort(Engine.skills(dk(%{level: 30}))) ==
+               ~w(basic_attack death_stab falling_slash twisting_slash)
+
+      dw = %{dk(%{level: 1}) | class: "DW"}
+      assert Enum.sort(Engine.skills(dw)) == ~w(basic_attack energy_ball)
+
+      assert Enum.sort(Engine.skills(%{dw | level: 18})) ==
+               ~w(basic_attack energy_ball fire_ball flame lightning teleport)
+
+      elf = %{dk(%{level: 12}) | class: "ELF"}
+
+      assert Enum.sort(Engine.skills(elf)) ==
+               ~w(basic_attack greater_damage greater_defense heal triple_shot)
+    end
+
+    test "heal / buff theo energy (đề xuất §5.3)" do
+      assert Engine.effect_value(Data.skill("heal")["effect"], 15) == 13
+      assert Engine.effect_value(Data.skill("greater_defense")["effect"], 15) == 3
+      assert Engine.effect_value(Data.skill("greater_damage")["effect"], 15) == 5
+      assert Engine.effect_value(Data.skill("greater_damage")["effect"], 70) == 13
+    end
+
+    test "buff: cùng loại làm mới thời gian + giữ giá trị lớn hơn; khác loại cộng dồn; hết hạn" do
+      b = Engine.add_buff(%{}, "greater_defense", "defense", 5, 1000)
+      b = Engine.add_buff(b, "greater_defense", "defense", 3, 2000)
+      assert b["greater_defense"] == %{stat: "defense", value: 5, until: 2000}
+      b = Engine.add_buff(b, "greater_damage", "damageBonus", 4, 1500)
+
+      stats = Engine.with_buffs(%{defense: 10, attack_min: 1}, b)
+      assert {stats.defense, stats.damage_bonus} == {15, 4}
+
+      assert {%{"greater_defense" => _} = kept, true} = Engine.expire_buffs(b, 1500)
+      assert map_size(kept) == 1
+      assert {^kept, false} = Engine.expire_buffs(kept, 1999)
+    end
+
+    test "Greater Damage cộng phẳng ở bước 3 của §4" do
+      a = %{attack_min: 10, attack_max: 10, attack_rate: 1000, damage_bonus: 5}
+      d = %{defense: 0, defense_rate: 0}
+
+      hits =
+        for seed <- 1..20,
+            {%{hit: true, dmg: dmg}, _} <- [Engine.roll_attack(Rng.new(seed), a, d, 2.0)],
+            do: dmg
+
+      assert hits != [] and Enum.all?(hits, &(&1 == 25))
+    end
+
+    test "hồi MP energy/40 mỗi giây" do
+      assert Engine.mp_regen(30, 1000) == 0.75
+      assert Engine.mp_regen(10, 2000) == 0.5
+    end
   end
 end

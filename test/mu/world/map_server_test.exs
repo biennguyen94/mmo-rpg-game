@@ -146,7 +146,11 @@ defmodule Mu.World.MapServerTest do
 
     MapServer.tick(s, 30)
     snaps = collect_snapshots()
-    assert List.last(snaps).entities == [%{id: "p_a", x: 12, y: 30, hp: 185, state: "idle"}]
+
+    assert List.last(snaps).entities == [
+             %{id: "p_a", x: 12, y: 30, hp: 185, mp: 30, state: "idle"}
+           ]
+
     refute Enum.any?(snaps, fn sn -> Enum.any?(sn.entities, &(&1.id == "p_b")) end)
   end
 

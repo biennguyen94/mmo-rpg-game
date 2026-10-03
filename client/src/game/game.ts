@@ -39,6 +39,8 @@ export class GameClient {
   private auto = new AutoAttack();
   private notices = new NoticeLog();
   private state: UiState | null = null;
+  /** Skill đang chờ chọn ô (teleport, P2-M3); null = click đất là đi. */
+  private aiming: string | null = null;
   private join: JoinReply | null = null;
   private selfId = "";
   private shop: ShopPayload | null = null;
@@ -72,6 +74,9 @@ export class GameClient {
       noticesSeen: () => (this.notices.markAllRead(), this.render()),
       clearNotices: () => (this.notices.clear(), this.render()),
       attack: (target, skill) => this.startAttack(target, skill),
+      cast: (skill, target) => void this.cast(skill, target),
+      aim: (skill) => ((this.aiming = skill), this.ui.closeContext(), this.render()),
+      cancelAim: () => ((this.aiming = null), this.render()),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -112,10 +117,12 @@ export class GameClient {
       shop: null,
       netStatus: null,
       soundOn: Sound.on,
+      aiming: null,
+      serverNow: Date.now(),
     };
     this.view?.destroy();
     this.view = this.makeView(this.ui.view, r.map, this.world, {
-      onGround: (x, y) => this.moveTo(x, y),
+      onGround: (x, y) => (this.aiming ? void this.castAt(this.aiming, x, y) : this.moveTo(x, y)),
       onEntity: (e, sx, sy) => this.clickEntity(e, sx, sy),
     });
     const delay = r.config.interpolationDelayMs;
@@ -146,7 +153,7 @@ export class GameClient {
         this.clock.observe(s.t, Date.now());
         this.world.snapshot(s);
         const me = this.world.entities.get(this.selfId);
-        if (me) this.state.player = { ...this.state.player, x: me.x, y: me.y, hp: me.hp ?? this.state.player.hp };
+        if (me) this.state.player = { ...this.state.player, x: me.x, y: me.y, hp: me.hp ?? this.state.player.hp, mp: me.mp ?? this.state.player.mp };
         this.arrive();
         this.closeShopIfFar();
         break;
@@ -184,9 +191,9 @@ export class GameClient {
       if (n.type === "LEVEL_UP") Sound.play("levelup");
       if (n.type === "ITEM_PICKUP") Sound.play("pickup");
     }
-    // vị trí lấy từ snapshot (mới hơn), còn lại lấy từ server
+    // vị trí + MP lấy từ snapshot (mới hơn: MapServer giữ MP, Session có thể chưa đọc lại), còn lại từ server
     const me = this.world.entities.get(this.selfId);
-    this.state.player = me ? { ...p, x: me.x, y: me.y } : p;
+    this.state.player = me ? { ...p, x: me.x, y: me.y, mp: me.mp ?? p.mp } : p;
   }
 
   private onStatus(st: string): void {
@@ -226,7 +233,11 @@ export class GameClient {
   private clickEntity(e: Entity, sx: number, sy: number): void {
     const me = this.world.entities.get(this.selfId);
     if (!me || !this.join) return;
-    if (e.kind === "monster" && e.state !== "dead") {
+    if (this.aiming) return void this.castAt(this.aiming, e.x, e.y);
+    if (e.kind === "player") {
+      // menu skill hỗ trợ / teleport (P2-M3); không có gì thì như cũ: đi tới
+      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy) && e.id !== this.selfId) this.moveTo(e.x, e.y);
+    } else if (e.kind === "monster" && e.state !== "dead") {
       this.ui.monsterMenu(e.id, sx, sy);
     } else if (e.kind === "npc") {
       this.reach("npc", e, this.join.config.npcRange);
@@ -280,6 +291,21 @@ export class GameClient {
   private startAttack(target: string, skill: string | null): void {
     this.pending = null;
     this.auto.start(target, skill);
+  }
+
+  /** Skill hỗ trợ (heal/buff) lên người chơi `target` (null = bản thân). */
+  private async cast(skill: string, target: string | null): Promise<void> {
+    this.ui.closeContext();
+    await this.send("skill", target ? { id: skill, target } : { id: skill });
+  }
+
+  /** Skill chọn ô (teleport): gửi `{id, x, y}`, thoát chế độ chọn ô. */
+  private async castAt(skill: string, x: number, y: number): Promise<void> {
+    this.aiming = null;
+    this.auto.stop();
+    this.view?.marker(x, y);
+    this.render();
+    await this.send("skill", { id: skill, x, y });
   }
 
   private async usePotion(type: "HP" | "MP"): Promise<void> {
@@ -352,17 +378,19 @@ export class GameClient {
     const t = this.world.entities.get(this.auto.target);
     if (!me) return;
     // đánh thường: tầm theo vũ khí đang cầm (`view.attackRange`, server tính — P2-5)
-    const skill = this.auto.pendingSkill;
-    const range = skill ? (this.state.skills.get(skill)?.range ?? 1) : this.state.player.view.attackRange;
+    const skill = this.auto.pendingSkill ? this.state.skills.get(this.auto.pendingSkill) : undefined;
+    const range = skill ? skill.range : this.state.player.view.attackRange;
     const action = this.auto.tick(
       Date.now(),
       me,
       t ? { x: t.x, y: t.y, alive: t.state !== "dead" } : null,
       range,
-      this.state.player.view.cooldownMs,
+      skill?.cooldownMs ?? this.state.player.view.cooldownMs,
     );
     if (!action) return;
-    const { act, ...payload } = action;
+    let { act, ...payload } = action as { act: string } & Record<string, unknown>;
+    // skill AOE tại ô (Flame): bắn vào ô của quái đang đánh
+    if (act === "skill" && skill?.center === "point" && t) payload = { id: skill.id, x: t.x, y: t.y };
     void this.conn.cmd(act, payload).then((r) => {
       if (r.ok || !this.state) return;
       if (r.error === "NO_MANA") {
@@ -395,6 +423,6 @@ export class GameClient {
   }
 
   private render(): void {
-    if (this.state) this.ui.update({ ...this.state, soundOn: Sound.on });
+    if (this.state) this.ui.update({ ...this.state, soundOn: Sound.on, aiming: this.aiming, serverNow: this.clock.now(Date.now()) });
   }
 }

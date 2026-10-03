@@ -4,6 +4,8 @@ import { InterpBuffer } from "./interp.js";
 
 export interface Entity extends SpawnPayload {
   interp: InterpBuffer;
+  /** Người chơi: MP từ snapshot (P2-M3). */
+  mp?: number;
 }
 
 export class World {
@@ -29,6 +31,7 @@ export class World {
       e.x = u.x;
       e.y = u.y;
       e.hp = u.hp;
+      if (u.mp !== undefined) e.mp = u.mp;
       e.state = u.state;
       e.interp.push(s.t, u.x, u.y);
     }

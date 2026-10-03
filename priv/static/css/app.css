@@ -169,3 +169,7 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .classopt:has(input:checked) { border-color: var(--accent); background: #22253a; }
 .classopt input { position: absolute; opacity: 0; pointer-events: none; }
 .classopt img { width: 48px; height: 48px; image-rendering: pixelated; }
+/* P2-M3: buff dưới thanh HP/MP, dòng hướng dẫn chọn ô (teleport) */
+.buffbar { position: absolute; top: 6px; right: 8px; z-index: 44; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; font-size: 12px; }
+.buffbar .buff { background: #1d2a3a; border: 1px solid #3c6a8f; border-radius: 4px; padding: 0 4px; color: #bfe6ff; }
+.aimbar { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 45; background: #23406b; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 13px; }

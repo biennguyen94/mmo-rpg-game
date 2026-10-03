@@ -175,18 +175,26 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
     const r = canvas.getBoundingClientRect();
     const wx = (ev.clientX - r.left + cam.x) / TILE;
     const wy = (ev.clientY - r.top + cam.y) / TILE;
-    // entity gần điểm bấm nhất (trong nửa ô), trừ chính mình
+    // entity gần điểm bấm nhất (trong 0,75 ô). Chính mình (menu tự thân, P2-M3) chỉ thắng người
+    // chơi khác khi gần bằng hoặc hơn (nhiều người đứng chung ô hồi sinh → click ô mình là chọn
+    // mình); quái / đồ / NPC trùng ô với mình vẫn được chọn trước
     let best: Entity | null = null;
+    let self: Entity | null = null;
     let bestD = 0.75;
+    let selfD = Infinity;
     for (const e of world.entities.values()) {
-      if (e.id === selfId) continue;
       const p = pos(e);
       const d = Math.hypot(p.x + 0.5 - wx, p.y + 0.5 - wy);
+      if (e.id === selfId) {
+        if (d < 0.75) [self, selfD] = [e, d];
+        continue;
+      }
       if (d < bestD) {
         best = e;
         bestD = d;
       }
     }
+    if (self && (!best || (best.kind === "player" && selfD <= bestD))) best = self;
     if (best) cb.onEntity(best, ev.clientX, ev.clientY);
     else cb.onGround(Math.floor(wx), Math.floor(wy));
   };
@@ -201,8 +209,17 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
       floaters.push({
         x: t.x,
         y: t.y,
-        text: c.dmg > 0 ? String(c.dmg) : "Trượt",
-        color: c.target === selfId ? "#ff6b6b" : c.attacker === selfId ? "#ffe08a" : "#cccccc",
+        text: c.heal !== undefined ? `+${c.heal}` : c.buff !== undefined ? `▲${c.buff}` : c.dmg > 0 ? String(c.dmg) : "Trượt",
+        color:
+          c.heal !== undefined
+            ? "#7dff8a"
+            : c.buff !== undefined
+              ? "#7fd3ff"
+              : c.target === selfId
+                ? "#ff6b6b"
+                : c.attacker === selfId
+                  ? "#ffe08a"
+                  : "#cccccc",
         born: Date.now(),
       });
     },

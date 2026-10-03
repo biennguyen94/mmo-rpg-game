@@ -186,3 +186,13 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P2M2-3 | **Cân bằng (simulator thật, 20 lần):** Elf cầm cung gần như không mất máu với Spider (0,08 máu/con) vì bắn hạ trước khi Spider tới; DW có gậy mất 2 máu/con; DK tay không 3,1 | Chấp nhận cho map đầu; xem lại khi có quái đánh xa / nhanh ở P2-M4 |
 | P2M2-4 | Đồ Pad/Vine/gậy/cung chưa có nguồn nhặt (Spider chưa rơi, shop chưa bán) — chỉ có đồ khởi đầu | Đúng kế hoạch: bảng drop + NPC vũ khí/giáp ở P2-M4. Có cần cho Spider rơi sớm không? |
 | P2M2-5 | Số tạm của 12 template (`data/items/phase2.json`), index bộ Vine | Chờ Item.txt (E6) |
+
+### P2-M3. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M3-1 | **Protocol:** `snapshot` của người chơi thêm `mp`; `combat` thêm `skill` + `heal` / `buff` (skill hỗ trợ); `player.view.buffs`; `data.skills` thêm `class, category, targetType, center, radius, cooldownMs` | Đã thêm (chỉ thêm trường) — DEC-66, DEC-67 |
+| P2M3-2 | Teleport: ô đích chỉ cần đi được + trong tầm 6 (Chebyshev), **không** kiểm tầm nhìn / tường chắn giữa đường; vào / ra thị trấn được | Theo đề xuất §5.2; nếu muốn chặn xuyên tường thì cần luật line-of-sight |
+| P2M3-3 | Triple Shot: mục tiêu + tối đa 2 quái gần nhất trong 1 ô quanh mục tiêu (chưa có hình nón / hướng bắn) | Theo đề xuất §5.3 |
+| P2M3-4 | Buff lên người chơi khác dùng được với mọi người (chưa có party). Buff không cộng vào số Phòng thủ ở panel Nhân vật (panel hiện chỉ số gốc; buff hiện riêng ở góc trên) | Theo §5.4 |
+| P2M3-5 | Flame khi tự đánh: bắn vào ô của quái đang đánh (chưa có chọn ô tự do cho Flame) | DEC-69 |

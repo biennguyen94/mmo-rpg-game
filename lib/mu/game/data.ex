@@ -47,11 +47,32 @@ defmodule Mu.Game.Data do
     raise "drops.json: #{e["item"]} không có trong items.json"
   end
 
+  # skill (P2-M3): targetType hợp lệ, AOE có tâm, ALLY có effect heal/buff
+  for {id, sk} <- @skills do
+    case sk do
+      %{"targetType" => t} when t in ~w(SINGLE POINT) ->
+        :ok
+
+      %{"targetType" => "AOE", "center" => c} when c in ~w(self target point) ->
+        :ok
+
+      %{"targetType" => "ALLY", "effect" => %{"kind" => "heal"}} ->
+        :ok
+
+      %{"targetType" => "ALLY", "effect" => %{"kind" => "buff", "stat" => st, "durationMs" => ms}}
+      when st in ~w(defense damageBonus) and is_integer(ms) ->
+        :ok
+
+      _ ->
+        raise "skills.json: #{id} targetType/center/effect sai"
+    end
+  end
+
   for {id, c} <- @classes, d = c["derived"], k <- @required, not Map.has_key?(d, k) do
     raise "classes.json: derived của #{id} thiếu #{k}"
   end
 
-  @doc "Các class đang có dữ liệu (Phase 1: chỉ DK)."
+  @doc "Các class đang có dữ liệu (Phase 2: DK, DW, ELF)."
   def classes, do: @classes
 
   @doc "Class theo id (`\"DK\"`), `nil` nếu không có."

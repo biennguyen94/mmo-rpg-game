@@ -36,7 +36,9 @@ defmodule Mu.Game.Engine do
       cooldown_ms: cooldown_ms(attack_speed),
       attack_range: basic_attack_range(equipment),
       hp_max: Stats.hp_max(c.class, c.level, c.vitality) + item_sum(equipment, "hpBonus"),
-      mp_max: Stats.mp_max(c.class, c.level, c.energy)
+      mp_max: Stats.mp_max(c.class, c.level, c.energy),
+      # cho heal/buff (công thức theo energy của người dùng, P2-M3) và hồi MP
+      energy: c.energy
     }
   end
 
@@ -123,6 +125,8 @@ defmodule Mu.Game.Engine do
         damage(%{
           raw_attack: raw,
           skill_multiplier: skill_multiplier,
+          # buff Greater Damage (§4 bước 3)
+          damage_bonus: Map.get(attacker, :damage_bonus, 0),
           target_defense: defender.defense,
           critical?: crit?,
           critical_multiplier: combat["criticalMultiplier"]
@@ -133,6 +137,46 @@ defmodule Mu.Game.Engine do
       {%{hit: false, dmg: 0, crit: false}, rng}
     end
   end
+
+  # ---------- Heal, buff, hồi MP (P2-M3, IMPLEMENTATION) ----------
+
+  @doc "Giá trị heal/buff của skill: `floor(base + energy / energyDiv)`."
+  def effect_value(%{"base" => base, "energyDiv" => div}, energy), do: floor(base + energy / div)
+
+  @doc """
+  Thêm buff `id` (`stat`, `value`, hết hạn `until` ms): cùng buff thì làm mới thời gian và giữ
+  giá trị lớn hơn; buff khác cộng dồn. `buffs`: `%{id => %{stat, value, until}}`.
+  """
+  def add_buff(buffs, id, stat, value, until) do
+    Map.update(buffs, id, %{stat: stat, value: value, until: until}, fn b ->
+      %{b | value: max(b.value, value), until: until}
+    end)
+  end
+
+  @doc "Bỏ buff đã hết hạn lúc `now`: `{còn_lại, có_buff_hết_hạn?}`."
+  def expire_buffs(buffs, now) do
+    kept = for {id, b} <- buffs, b.until > now, into: %{}, do: {id, b}
+    {kept, map_size(kept) != map_size(buffs)}
+  end
+
+  @doc "Chỉ số chiến đấu sau buff: `defense` cộng thêm, `damage_bonus` (sát thương phẳng)."
+  def with_buffs(stats, buffs) do
+    sum = fn stat ->
+      buffs
+      |> Map.values()
+      |> Enum.filter(&(&1.stat == stat))
+      |> Enum.map(& &1.value)
+      |> Enum.sum()
+    end
+
+    stats
+    |> Map.update(:defense, 0, &(&1 + sum.("defense")))
+    |> Map.put(:damage_bonus, sum.("damageBonus"))
+  end
+
+  @doc "MP hồi trong `ms` mili-giây (số thực, cộng dồn phần lẻ ở nơi gọi): `energy / energyDiv` mỗi giây."
+  def mp_regen(energy, ms),
+    do: energy / Config.get(["combat", "mpRegen", "energyDiv"]) * ms / 1000
 
   @doc "Chỉ số đánh/thủ của quái theo template (`monsters.json`)."
   def monster_stats(m) do

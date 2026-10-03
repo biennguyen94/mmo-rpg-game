@@ -155,7 +155,7 @@ test("World: spawn = thêm-hoặc-cập-nhật, snapshot, removed", () => {
   assert.equal(w.entities.size, 0);
 });
 
-test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo cooldown; skill một lần; dừng khi quái chết", () => {
+test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo cooldown; skill lặp lại (P2-M3), NO_MANA → đánh thường; dừng khi quái chết", () => {
   const a = new AutoAttack();
   const me = { x: 0, y: 0 };
   assert.equal(a.tick(0, me, { x: 1, y: 0, alive: true }, 1, 1000), null);
@@ -164,9 +164,11 @@ test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo 
   assert.equal(a.tick(10, me, { x: 5, y: 3, alive: true }, 2, 1000), null); // đã gửi, đang đi
   assert.deepEqual(a.tick(20, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 2, 1000), { act: "skill", id: "twisting_slash", target: "m_1" });
   assert.equal(a.tick(500, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), null);
-  assert.deepEqual(a.tick(1020, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), { act: "attack", target: "m_1" });
+  assert.deepEqual(a.tick(1020, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 2, 1000), { act: "skill", id: "twisting_slash", target: "m_1" });
+  a.skillFailed();
+  assert.deepEqual(a.tick(2040, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), { act: "attack", target: "m_1" });
   a.retryAfter(1100, 100);
-  assert.equal(a.tick(2000, { x: 4, y: 2 }, { x: 5, y: 3, alive: false }, 1, 1000), null);
+  assert.equal(a.tick(3000, { x: 4, y: 2 }, { x: 5, y: 3, alive: false }, 1, 1000), null);
   assert.equal(a.target, null);
   assert.deepEqual(approach({ x: 0, y: 10 }, { x: 5, y: 5 }), { x: 4, y: 6 });
 });

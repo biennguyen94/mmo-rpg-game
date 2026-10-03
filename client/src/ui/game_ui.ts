@@ -33,6 +33,10 @@ export interface UiState {
   shop: ShopPayload | null;
   netStatus: string | null;
   soundOn: boolean;
+  /** Skill đang chờ chọn ô (teleport) — hiện dòng hướng dẫn, Esc để hủy. */
+  aiming: string | null;
+  /** Giờ server (ms) để đếm ngược buff. */
+  serverNow: number;
 }
 
 export interface UiActions {
@@ -55,7 +59,14 @@ export interface UiActions {
   clearNotices(): void;
   /** Chọn trong context menu quái: `skill` null = đánh thường. */
   attack(targetId: string, skill: string | null): void;
+  /** Skill hỗ trợ lên người chơi `target` (null = bản thân). */
+  cast(skill: string, target: string | null): void;
+  /** Bắt đầu chọn ô cho skill POINT (teleport). */
+  aim(skill: string): void;
+  cancelAim(): void;
 }
+
+const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
 
 const isMobile = () => window.matchMedia("(max-width: 1023px)").matches;
 
@@ -601,7 +612,11 @@ export class GameUI {
   /** Menu nổi tại vị trí click/tap quái, không che quái (đặt lệch xuống-phải). */
   monsterMenu(targetId: string, screenX: number, screenY: number): void {
     this.closeContext();
-    const learned = this.state.player.view.skills.filter((sk) => sk !== "basic_attack");
+    // skill đánh quái (SINGLE / AOE) đã học; skill hỗ trợ nằm ở menu người chơi
+    const learned = this.state.player.view.skills.filter((sk) => {
+      const info = this.state.skills.get(sk);
+      return sk !== "basic_attack" && (info?.targetType === "SINGLE" || info?.targetType === "AOE");
+    });
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "ctxmenu" },
@@ -614,6 +629,31 @@ export class GameUI {
     );
     this.place(menu, screenX + 24, screenY + 8);
     this.ctx = menu;
+  }
+
+  /**
+   * Menu khi click người chơi (P2-M3): skill hỗ trợ (heal/buff) đã học lên người đó; click chính
+   * mình thì thêm skill chọn ô (teleport). Trả false nếu không có gì để hiện.
+   */
+  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number): boolean {
+    this.closeContext();
+    const mine = this.state.player.view.skills.map((id) => this.state.skills.get(id)).filter((x) => x !== undefined);
+    const ally = mine.filter((sk) => sk.targetType === "ALLY");
+    const point = isSelf ? mine.filter((sk) => sk.targetType === "POINT") : [];
+    if (ally.length + point.length === 0) return false;
+    const menu = h(
+      "div",
+      { class: "ctxmenu", "data-test": "playermenu" },
+      ally.map((sk) =>
+        h("button", { "data-skill": sk.id, onclick: () => (this.closeContext(), this.a.cast(sk.id, isSelf ? null : targetId)) }, `${sk.name} (${sk.manaCost} MP)`),
+      ),
+      point.map((sk) => h("button", { "data-skill": sk.id, onclick: () => this.a.aim(sk.id) }, `${sk.name}… (${sk.manaCost} MP)`)),
+      h("hr", {}),
+      h("button", { onclick: () => this.closeContext() }, "Hủy"),
+    );
+    this.place(menu, screenX + 24, screenY + 8);
+    this.ctx = menu;
+    return true;
   }
 
   closeContext(): void {
@@ -647,7 +687,29 @@ export class GameUI {
 
   private renderNet(): void {
     this.view.querySelector(".netbar")?.remove();
+    this.view.querySelector(".aimbar")?.remove();
+    this.view.querySelector(".buffbar")?.remove();
+    // buff đang có (P2-M3): góc trên phải vùng game, đếm ngược theo giờ server
+    const buffs = this.state.player.view.buffs;
+    if (buffs.length)
+      this.view.append(
+        h(
+          "div",
+          { class: "buffbar", "data-test": "buffs" },
+          buffs.map((b) =>
+            h(
+              "span",
+              { class: "buff", "data-buff": b.id, title: this.state.skills.get(b.id)?.name ?? b.id },
+              `${BUFF_ICON[b.stat] ?? "✦"}+${b.value} ${Math.max(0, Math.ceil((b.expiresAt - this.state.serverNow) / 1000))}s`,
+            ),
+          ),
+        ),
+      );
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
+    if (this.state.aiming) {
+      const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
+      this.view.append(h("div", { class: "aimbar", "data-test": "aimbar" }, `${name}: chọn ô đích (Esc để hủy)`));
+    }
   }
 
   // ---------- Phím tắt (§19.2), click ngoài ----------
@@ -656,7 +718,8 @@ export class GameUI {
     if (!this.state || (ev.target as HTMLElement)?.tagName === "INPUT") return;
     const k = ev.key;
     if (k === "Escape") {
-      if (this.ctx) this.closeContext();
+      if (this.state.aiming) this.a.cancelAim();
+      else if (this.ctx) this.closeContext();
       else if (this.menu) this.closeMenu();
       else if (this.tip) this.hideTooltip();
       else this.a.closePanel();
