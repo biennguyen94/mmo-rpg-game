@@ -52,6 +52,28 @@ defmodule Mu.Game.SimulatorTest do
              "bow_t0"
   end
 
+  test "P2-M4: quái auto theo cấp, đồ t0 → t1, DW dùng skill + mana; lặp lại theo seed" do
+    opts = %{
+      class: "DW",
+      strategy: "ene",
+      monster: "auto",
+      gear_progress: true,
+      use_skills: true,
+      max_kills: 320
+    }
+
+    a = Simulator.once(5, opts)
+    assert a == Simulator.once(5, opts)
+    assert a.c.level >= 10
+    assert a.mp >= 0
+    # có skill thì nhanh hơn đánh thường
+    b = Simulator.once(5, %{opts | use_skills: false})
+    assert a.at[10].ms < b.at[10].ms
+
+    assert Enum.map(Simulator.gear("DK", "t1"), & &1["templateId"])
+           |> Enum.count(&String.ends_with?(&1, "_t1")) == 7
+  end
+
   test "mix mu.simulate in báo cáo" do
     out =
       capture_io(fn ->

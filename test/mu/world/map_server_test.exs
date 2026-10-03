@@ -101,7 +101,7 @@ defmodule Mu.World.MapServerTest do
     map: map
   } do
     join(s, "a", {15, 30})
-    [npc] = map.npcs
+    [npc | _] = map.npcs
 
     for {x, y} <- [{6, 30}, {33, 10}, {npc.x, npc.y}, {-1, 3}, {64, 3}, {1, 1}] do
       assert {:error, "INVALID_TARGET"} = MapServer.move_to(s, "a", x, y), inspect({x, y})

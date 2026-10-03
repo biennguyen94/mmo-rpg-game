@@ -102,7 +102,7 @@ defmodule Mu.Game.Characters do
   end
 
   @progress_fields ~w(level experience strength agility vitality energy free_stat_points
-                      hp_current mana_current zen position_x position_y)a
+                      hp_current mana_current zen map_id position_x position_y)a
 
   @doc """
   Lưu trạng thái đang giữ trong bộ nhớ (`current`) so với bản đã lưu (`saved`): chỉ ghi các

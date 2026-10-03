@@ -393,8 +393,11 @@ defmodule Mu.World.MapServer do
 
     s =
       Enum.reduce(s.players, s, fn
-        {_, %{path: []}}, s -> s
-        {id, e}, s -> put_entity(s, id, advance(e, s.tick_ms, s.step_ms, s.diagonal))
+        {_, %{path: []}}, s ->
+          s
+
+        {id, e}, s ->
+          s |> put_entity(id, advance(e, s.tick_ms, s.step_ms, s.diagonal)) |> portal(id, e)
       end)
 
     s =
@@ -896,6 +899,21 @@ defmodule Mu.World.MapServer do
     end)
   end
 
+  # ---------- Cổng (P2-M4) ----------
+
+  # Vừa bước vào ô cổng (trước đó không đứng trên cổng): dừng lại, báo Session chủ chuyển map
+  defp portal(s, id, before) do
+    e = s.players[id]
+    p = Maps.portal_at(s.map, e.x, e.y)
+
+    if p && {e.x, e.y} != {before.x, before.y} && Maps.portal_at(s.map, before.x, before.y) != p do
+      send(e.owner, {:map_portal, id, p})
+      %{s | players: Map.put(s.players, id, %{e | path: [], progress: 0, state: "idle"})}
+    else
+      s
+    end
+  end
+
   # ---------- Buff hết hạn, hồi MP (P2-M3) ----------
 
   defp expire_buffs(s) do
@@ -1048,7 +1066,8 @@ defmodule Mu.World.MapServer do
           hp: nil,
           maxHp: nil,
           state: "idle",
-          name: n.id,
+          # tên hiển thị = tên cửa hàng (shop.json), P2-M4
+          name: (Data.shop(n.id) || %{})["name"] || n.id,
           level: nil,
           templateId: n.id
         }

@@ -58,6 +58,16 @@ DW / ELF mỏng hơn (đúng vai pháp sư / cung thủ): sống nhờ đánh xa
 của Elf, hồi MP. Lên cấp 1 → 30 đánh quái ngang cấp: ~850 con ≈ 1,5–2 giờ. **Số thật** chạy bằng
 simulator mở rộng (quái theo map, skill DW, potion) ở P2-M4 rồi chỉnh tiếp.
 
+### 1.1b. Simulator thật sau P2-M4 (`mix mu.simulate --runs 10 --monster auto --progress --skills`)
+
+| Class (cộng điểm) | Tới cấp 10 | Tới cấp 20 | Tới cấp 30 | Potion tới cấp 30 | Chết |
+|---|---|---|---|---|---|
+| DK (balanced) | 298 con, 33 phút | 604 con, 71 phút | 907 con, 115 phút | 330 | 0 |
+| DW (ene) | 26 phút | 51 phút | 72 phút | 725 | 0 |
+| ELF (agi) | 27 phút | 52 phút | 76 phút | 260 | 0 |
+
+Giả định: đứng đánh (không thả diều), chỉ potion HP nhỏ, không Heal. Zen tới cấp 30 ≈ 63.000.
+
 ### 1.2. Sprite
 
 DCSS (CC0) như DEC-52: mỗi quái một hình tĩnh, chọn lúc làm, kiểm từng file với
@@ -69,7 +79,7 @@ DCSS (CC0) như DEC-52: mỗi quái một hình tĩnh, chọn lúc làm, kiểm 
 |---|---|
 | Map mới | **Noria** 64×64, em tự dựng (rừng: cỏ, cây, nước, đá — tile DCSS); `levelRequired` 10 (KB_CONFIG §3) |
 | Bố cục Noria | Thị trấn (safe zone) ở giữa-nam, `playerSpawn` trong thị trấn; 7 vùng quái quanh thị trấn, cấp tăng dần theo khoảng cách |
-| Bố cục Lorencia mới | Spider: đông (như cũ); Budge Dragon: tây bắc; Bull Fighter: đông bắc; Hound: tây nam; Lich + Elite Bull Fighter: đông nam |
+| Bố cục Lorencia mới | Spider: đông (như cũ); Budge Dragon: ~~tây bắc~~ đông bắc (DEC-72); Bull Fighter: đông bắc; Hound: tây nam; Lich + Elite Bull Fighter: đông nam |
 | Cổng | Lorencia `(15,8)`–`(16,8)` (đầu đường đất phía bắc) → Noria, đứng ở ô cạnh cổng về Lorencia; Noria cổng nam → Lorencia `(15,9)` |
 | Định dạng | `portals: [{x, y, w, h, to: mapId, toX, toY, levelRequired}]` trong `priv/maps/<id>.json` (đã có trường `portals: []`) |
 | Đi qua cổng | Bước vào ô cổng = chuyển map ngay (server kiểm cấp; thiếu cấp → `REQUIREMENT_NOT_MET`, client báo "Cần cấp 10 để vào Noria", đứng lại) |

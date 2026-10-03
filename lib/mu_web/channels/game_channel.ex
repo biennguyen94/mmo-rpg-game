@@ -101,6 +101,17 @@ defmodule MuWeb.GameChannel do
     {:stop, {:shutdown, :kicked}, socket}
   end
 
+  # Qua cổng (P2-M4): bỏ topic map cũ, xả sự kiện map cũ còn trong hộp thư (id quái hai map có
+  # thể trùng), theo topic map mới, đẩy `map_change` rồi `spawn` mọi entity của map mới
+  def handle_info({:map_changed, old, new, payload, entities}, socket) do
+    Phoenix.PubSub.unsubscribe(Mu.PubSub, MapServer.topic(old))
+    drain_map_events()
+    Phoenix.PubSub.subscribe(Mu.PubSub, MapServer.topic(new))
+    push(socket, "map_change", payload)
+    Enum.each(entities, &push(socket, "spawn", &1))
+    {:noreply, socket}
+  end
+
   def handle_info({:after_join, entities}, socket) do
     Enum.each(entities, &push(socket, "spawn", &1))
     {:noreply, socket}
@@ -118,6 +129,14 @@ defmodule MuWeb.GameChannel do
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
+
+  defp drain_map_events do
+    receive do
+      {:map_event, _, _} -> drain_map_events()
+    after
+      0 -> :ok
+    end
+  end
 
   defp fail(socket, rid, code) do
     push(socket, "error", %{rid: rid, error: code})

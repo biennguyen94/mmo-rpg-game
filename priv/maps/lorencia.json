@@ -7,7 +7,7 @@
   "sourceType": "IMPLEMENTATION",
   "version": null,
   "verified": false,
-  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU.",
+  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU. P2-M4: thêm vùng quái, cổng Noria (15,8)–(16,8), Weapon Merchant (11,37) — docs/PHASE2_PROPOSAL_M4.md §2.",
   "legend": {
     ".": "grass",
     ":": "road",
@@ -15,12 +15,14 @@
     "#": "wall",
     "T": "tree",
     "~": "water",
-    "R": "rock"
+    "R": "rock",
+    "P": "portal"
   },
   "walkable": [
     ".",
     ":",
-    "="
+    "=",
+    "P"
   ],
   "safeZones": [
     {
@@ -46,14 +48,81 @@
         "w": 17,
         "h": 21
       }
+    },
+    {
+      "monster": "budge_dragon",
+      "count": 8,
+      "area": {
+        "x": 40,
+        "y": 2,
+        "w": 22,
+        "h": 8
+      }
+    },
+    {
+      "monster": "bull_fighter",
+      "count": 8,
+      "area": {
+        "x": 40,
+        "y": 11,
+        "w": 22,
+        "h": 9
+      }
+    },
+    {
+      "monster": "hound",
+      "count": 8,
+      "area": {
+        "x": 2,
+        "y": 45,
+        "w": 28,
+        "h": 17
+      }
+    },
+    {
+      "monster": "lich",
+      "count": 5,
+      "area": {
+        "x": 34,
+        "y": 46,
+        "w": 28,
+        "h": 16
+      }
+    },
+    {
+      "monster": "elite_bull_fighter",
+      "count": 4,
+      "area": {
+        "x": 34,
+        "y": 46,
+        "w": 28,
+        "h": 16
+      }
     }
   ],
-  "portals": [],
+  "portals": [
+    {
+      "id": "to_noria",
+      "x": 15,
+      "y": 8,
+      "w": 2,
+      "h": 1,
+      "to": "noria",
+      "toX": 31,
+      "toY": 59,
+      "levelRequired": 10
+    }
+  ],
   "npcs": [
     {
       "id": "lorencia_potion_merchant",
       "x": 11,
       "y": 25
+    },
+    {
+      "id": "lorencia_weapon_merchant",
+      "x": 11,
+      "y": 37
     }
   ],
   "tiles": [
@@ -65,7 +134,7 @@
     "TT......T.....................................................TT",
     "TT..T.................T......................T................TT",
     "TT...T........................................................TT",
-    "TT.............::.............~~~~~~~~........................TT",
+    "TT.............PP.............~~~~~~~~........................TT",
     "TT.............::.......T.....~~~~~~~~..............T.........TT",
     "TT.............::.............~~~~~~~~..T.....................TT",
     "TT.............::.............~~~~~~~~........................TT",

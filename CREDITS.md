@@ -15,6 +15,8 @@ commit `a6ea1655db5c044829d9eea19a232fa6fcac87b0`).
 - Không dùng DCSS cho lớp trang bị nhân vật (KB_ASSETS §2.1): mỗi class một hình cố định — DK
   thân người (`player/base/human_m.png`), DW `mon/necromancer.png`, ELF `mon/deep_elf_master_archer.png`
   (thêm ở P2-M2, cùng commit và cùng cách đối chiếu).
+- P2-M4: 12 quái mới, 3 NPC, tile Noria và ô cổng (Lorencia + Noria) — cùng commit, cùng cách đối
+  chiếu (license + hash từng file); danh sách đầy đủ trong `mapping.json`.
 
 ## Do dự án tự làm
 

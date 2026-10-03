@@ -16,6 +16,8 @@ import {
   type SkillInfo,
   type SnapshotPayload,
   type SpawnPayload,
+  type MapChangePayload,
+  type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
 import type { Stat } from "../logic/alloc.js";
@@ -120,21 +122,46 @@ export class GameClient {
       aiming: null,
       serverNow: Date.now(),
     };
+    this.buildView(r.map);
+    this.render();
+  }
+
+  /** Dựng game view cho `map` (vào game hoặc qua cổng). */
+  private buildView(map: MapData): void {
+    if (!this.join) return;
     this.view?.destroy();
-    this.view = this.makeView(this.ui.view, r.map, this.world, {
+    this.view = this.makeView(this.ui.view, map, this.world, {
       onGround: (x, y) => (this.aiming ? void this.castAt(this.aiming, x, y) : this.moveTo(x, y)),
       onEntity: (e, sx, sy) => this.clickEntity(e, sx, sy),
     });
-    const delay = r.config.interpolationDelayMs;
+    const delay = this.join.config.interpolationDelayMs;
     this.view.setClock(() => this.clock.now(Date.now()) - delay);
-    this.view.setSelf(r.entityId);
+    this.view.setSelf(this.selfId);
     // hook chỉ-đọc cho test e2e/debug: chỉ chứa dữ liệu server đã gửi cho client này
     (window as unknown as { __mu: object }).__mu = {
       entities: () => [...this.world.entities.values()].map(({ interp: _i, ...e }) => e),
       player: () => this.state?.player,
+      map: () => this.state?.map.id,
       selfId: this.selfId,
     };
-    this.render();
+  }
+
+  /** Qua cổng (P2-M4): thế giới mới, view mới; `spawn` của map mới tới ngay sau event này. */
+  private onMapChange(p: MapChangePayload): void {
+    if (!this.state) return;
+    this.auto.stop();
+    this.pending = null;
+    this.aiming = null;
+    this.shop = null;
+    this.ui.closeContext();
+    this.selfId = p.entityId;
+    this.world = new World();
+    this.state.map = p.map;
+    this.state.player = p.player;
+    this.state.shop = null;
+    if (this.state.panel === "shop") this.state.panel = null;
+    this.notices.add("SYSTEM", `Đã vào ${p.map.name}`);
+    this.buildView(p.map);
   }
 
   private onEvent(ev: string, p: any): void {
@@ -163,6 +190,16 @@ export class GameClient {
         break;
       case "player":
         this.onPlayer(p as Player);
+        break;
+      case "map_change":
+        this.onMapChange(p as MapChangePayload);
+        break;
+      case "error":
+        // lỗi không gắn lệnh (rid null): bước vào cổng khi thiếu cấp
+        if (p.rid === null && p.reason === "portal") {
+          const name = String(p.map).charAt(0).toUpperCase() + String(p.map).slice(1);
+          this.notices.add("ERROR", `Cần cấp ${p.levelRequired} để vào ${name}.`);
+        }
         break;
       case "shop":
         this.shop = p as ShopPayload;
