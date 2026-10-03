@@ -101,6 +101,9 @@ defmodule Mu.World.MapServer do
   def use_potion(server, character_id, effect),
     do: GenServer.call(server(server), {:use_potion, character_id, effect})
 
+  @doc "Dừng di chuyển của người chơi (mất kết nối, P3-M2): bỏ đường đi, đứng yên tại chỗ."
+  def halt(server, character_id), do: GenServer.call(server(server), {:halt, character_id})
+
   @doc "Cập nhật chỉ số sau lên cấp/cộng điểm/trang bị: `%{level?, stats?, skills?, hp?, mp?}`."
   def update_player(server, character_id, changes),
     do: GenServer.call(server(server), {:update_player, character_id, changes})
@@ -304,6 +307,20 @@ defmodule Mu.World.MapServer do
       {:reply, :ok, put_entity(s, id, e)}
     else
       {:error, code} -> {:reply, {:error, code}, s}
+    end
+  end
+
+  def handle_call({:halt, id}, _from, s) do
+    case s.players[id] do
+      %{state: "dead"} ->
+        {:reply, :ok, s}
+
+      %{} = e ->
+        e = %{e | path: [], progress: 0, state: "idle"}
+        {:reply, :ok, mark(put_in(s.players[id], e), e)}
+
+      nil ->
+        {:reply, :error, s}
     end
   end
 

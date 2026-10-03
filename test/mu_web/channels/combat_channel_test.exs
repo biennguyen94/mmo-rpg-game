@@ -2,7 +2,7 @@ defmodule MuWeb.CombatChannelTest do
   @moduledoc "M3 qua kênh thật: đánh Spider → EXP/Zen → lên cấp → cộng stat → lưu → reload."
   use MuWeb.ChannelCase
 
-  alias Mu.Game.{Character, Session}
+  alias Mu.Game.{Character, Config, Session}
   alias Mu.World.MapServer
   alias MuWeb.GameChannel
 
@@ -192,7 +192,7 @@ defmodule MuWeb.CombatChannelTest do
     assert MapServer.position(@map, c.id) == Mu.World.Maps.get(@map).player_spawn
   end
 
-  test "đóng tab khi đang combat: ở lại logoutInCombatSeconds rồi mới rời (G21)" do
+  test "đăng xuất (rời kênh) khi đang combat: ở lại logoutInCombatSeconds rồi mới rời (G21)" do
     {a, c} = create_character()
     {:ok, _, socket} = join_game(a, c)
     stage(c)
@@ -200,23 +200,24 @@ defmodule MuWeb.CombatChannelTest do
     assert_reply ref, :ok, _
 
     Process.unlink(socket.channel_pid)
-    close(socket)
+    leave(socket)
     Process.sleep(50)
     # vẫn trên map (có thể bị đánh)
     assert MapServer.position(@map, c.id) != nil
     pid = Session.whereis(a.id)
-    assert :sys.get_state(pid).leave_timer != nil
+    timer = :sys.get_state(pid).leave_timer
+    assert Process.read_timer(timer) <= Config.get(["session", "logoutInCombatSeconds"]) * 1000
 
     send(pid, :delayed_leave)
     Process.sleep(50)
     assert MapServer.position(@map, c.id) == nil
   end
 
-  test "đóng tab khi không combat: rời ngay" do
+  test "đăng xuất (rời kênh) khi không combat: rời ngay" do
     {a, c} = create_character()
     {:ok, _, socket} = join_game(a, c)
     Process.unlink(socket.channel_pid)
-    close(socket)
+    leave(socket)
     Process.sleep(50)
     assert MapServer.position(@map, c.id) == nil
   end

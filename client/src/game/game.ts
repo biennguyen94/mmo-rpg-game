@@ -254,8 +254,11 @@ export class GameClient {
 
   private onStatus(st: string): void {
     if (st === "online") {
+      if (this.state?.netStatus) this.notices.add("SYSTEM", "Đã kết nối lại.");
       if (this.state) this.state.netStatus = null;
     } else if (st === "reconnecting") {
+      // server giữ nhân vật đứng yên (vẫn bị đánh) trong lúc chờ: dừng tự đánh (P3-M2)
+      this.auto.stop();
       if (this.state) this.state.netStatus = "Mất kết nối, đang kết nối lại…";
     } else if (st === "kicked") {
       return this.exit("Tài khoản đã vào game ở nơi khác.");
@@ -477,6 +480,7 @@ export class GameClient {
   }
 
   private async logout(): Promise<void> {
+    await this.conn.leave();
     try {
       await api.logout(this.token);
     } catch {

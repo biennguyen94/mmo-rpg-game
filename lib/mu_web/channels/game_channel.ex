@@ -20,6 +20,8 @@ defmodule MuWeb.GameChannel do
     `"combat"` `{rid, attacker, target, dmg, crit, hp}` cho mọi đòn trên map (trượt: dmg 0).
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
     `"error"` `FORBIDDEN` rồi đóng (`session.singleLoginPerAccount`).
+  - Kênh kết thúc vì client `leave` (đăng xuất) hay vì socket đóng (mất kết nối) quyết định
+    Session cho nhân vật rời map ngay hay giữ `reconnectGraceSeconds` (P3-M2, `Mu.Game.Session`).
   """
   use MuWeb, :channel
 
@@ -48,7 +50,7 @@ defmodule MuWeb.GameChannel do
             send(self(), :after_join)
 
             reply = %{
-              player: Characters.player_view(character, info.items),
+              player: Characters.player_view(character, info.items, info.buffs),
               entityId: info.entity_id,
               map: Maps.client_data(Maps.get(character.map_id)),
               config: client_config(),
