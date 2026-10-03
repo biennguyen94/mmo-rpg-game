@@ -9,7 +9,7 @@ defmodule Mu.Game.Characters do
 
   alias Mu.Repo
   alias Mu.Accounts.Account
-  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Items, Names, Stats}
+  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Items, Names, Stats, ZenAudit}
   alias Mu.World.Maps
 
   def list(account_id) do
@@ -51,6 +51,7 @@ defmodule Mu.Game.Characters do
         if not unlocked?(class_id, account_id), do: Repo.rollback(:class_locked)
 
         c = insert(account_id, name, class, start)
+        ZenAudit.log(c.id, c.zen, c.zen, "START")
         Items.give_starting_equipment(c.id, Map.get(start["startingEquipment"], c.class, []))
         # mail chào mừng (§19.10, P2-13)
         Mu.Mail.welcome(c.id)
@@ -141,14 +142,34 @@ defmodule Mu.Game.Characters do
           into: %{},
           do: {f, Map.fetch!(current, f)}
 
-    if changes == %{} do
-      {:ok, saved}
-    else
-      saved
-      |> Ecto.Changeset.change(changes)
-      |> Ecto.Changeset.optimistic_lock(:version)
-      |> Repo.update()
+    cond do
+      changes == %{} ->
+        {:ok, saved}
+
+      # Zen trong bộ nhớ Session chỉ đổi vì quái rơi (đổi khác đi qua `Items` / `Guilds`, đã ghi
+      # DB và audit): ghi `MONSTER` cùng transaction với lần lưu (P5-M3)
+      Map.has_key?(changes, :zen) ->
+        Repo.transaction(fn ->
+          case write(saved, changes) do
+            {:ok, c} ->
+              ZenAudit.log(c.id, c.zen - saved.zen, c.zen, "MONSTER")
+              c
+
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+        end)
+
+      true ->
+        write(saved, changes)
     end
+  end
+
+  defp write(saved, changes) do
+    saved
+    |> Ecto.Changeset.change(changes)
+    |> Ecto.Changeset.optimistic_lock(:version)
+    |> Repo.update()
   end
 
   @doc "Lưu vị trí (dạng rút gọn của `save/2`)."

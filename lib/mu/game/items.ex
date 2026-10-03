@@ -16,7 +16,7 @@ defmodule Mu.Game.Items do
 
   alias Mu.Repo
   alias Mu.Ulid
-  alias Mu.Game.{Character, Data, Inventory, Item, ItemAudit, ItemLocation}
+  alias Mu.Game.{Character, Data, Inventory, Item, ItemAudit, ItemLocation, ZenAudit}
 
   @doc "Đồ của nhân vật (túi + trang bị) dạng map phẳng."
   def load(character_id), do: load_where(dynamic([loc: l], l.character_id == ^character_id))
@@ -67,27 +67,31 @@ defmodule Mu.Game.Items do
 
   @doc "Mua `quantity` cái `template_id` với giá `price_each`, trừ Zen (NPC `npc_id`)."
   def buy(character_id, template_id, quantity, price_each, npc_id) do
-    tx(character_id, fn c, items ->
-      cost = price_each * quantity
+    tx(
+      character_id,
+      fn c, items ->
+        cost = price_each * quantity
 
-      with :ok <- if(c.zen >= cost, do: :ok, else: {:error, "NOT_ENOUGH_ZEN"}),
-           {:ok, plan} <- Inventory.plan_add(items, template_id, quantity) do
-        apply_add(
-          character_id,
-          template_id,
-          plan,
-          "BUY",
-          "npc:" <> npc_id,
-          [],
-          %{
-            price: price_each
-          },
-          nil
-        )
+        with :ok <- if(c.zen >= cost, do: :ok, else: {:error, "NOT_ENOUGH_ZEN"}),
+             {:ok, plan} <- Inventory.plan_add(items, template_id, quantity) do
+          apply_add(
+            character_id,
+            template_id,
+            plan,
+            "BUY",
+            "npc:" <> npc_id,
+            [],
+            %{
+              price: price_each
+            },
+            nil
+          )
 
-        {:ok, -cost}
-      end
-    end)
+          {:ok, -cost}
+        end
+      end,
+      {"BUY", "npc:" <> npc_id}
+    )
   end
 
   defp apply_add(cid, tid, plan, action, from, serials, detail, attrs) do
@@ -471,28 +475,41 @@ defmodule Mu.Game.Items do
   `INVENTORY_FULL`, không nhận gì), audit `MAIL_CLAIM` (`from_owner` `"mail:<id>"`).
   """
   def claim_mail(cid, mail_id) do
-    tx(cid, fn _c, items ->
-      with {:ok, uuid} <- Ecto.UUID.cast(mail_id) |> ok_or("INVALID_TARGET"),
-           %Mu.Mail.Message{} = m <- lock_mail(cid, uuid) || {:error, "INVALID_TARGET"},
-           :ok <- if(Mu.Mail.reward?(m), do: :ok, else: {:error, "INVALID_TARGET"}),
-           {:ok, plan} <-
-             if(m.item_template_id,
-               do: Inventory.plan_add(items, m.item_template_id, m.item_quantity),
-               else: {:ok, []}
-             ) do
-        if m.item_template_id,
-          do:
-            apply_add(cid, m.item_template_id, plan, "MAIL_CLAIM", "mail:" <> m.id, [], %{}, nil)
+    tx(
+      cid,
+      fn _c, items ->
+        with {:ok, uuid} <- Ecto.UUID.cast(mail_id) |> ok_or("INVALID_TARGET"),
+             %Mu.Mail.Message{} = m <- lock_mail(cid, uuid) || {:error, "INVALID_TARGET"},
+             :ok <- if(Mu.Mail.reward?(m), do: :ok, else: {:error, "INVALID_TARGET"}),
+             {:ok, plan} <-
+               if(m.item_template_id,
+                 do: Inventory.plan_add(items, m.item_template_id, m.item_quantity),
+                 else: {:ok, []}
+               ) do
+          if m.item_template_id,
+            do:
+              apply_add(
+                cid,
+                m.item_template_id,
+                plan,
+                "MAIL_CLAIM",
+                "mail:" <> m.id,
+                [],
+                %{},
+                nil
+              )
 
-        now = DateTime.utc_now()
+          now = DateTime.utc_now()
 
-        Repo.update_all(from(x in Mu.Mail.Message, where: x.id == ^m.id),
-          set: [claimed_at: now, read_at: m.read_at || now]
-        )
+          Repo.update_all(from(x in Mu.Mail.Message, where: x.id == ^m.id),
+            set: [claimed_at: now, read_at: m.read_at || now]
+          )
 
-        {:ok, m.zen}
-      end
-    end)
+          {:ok, m.zen}
+        end
+      end,
+      {"MAIL", "mail:" <> to_string(mail_id)}
+    )
   end
 
   defp ok_or({:ok, v}, _), do: {:ok, v}
@@ -585,18 +602,25 @@ defmodule Mu.Game.Items do
 
   @doc "Bán `quantity` cái (`nil` = cả stack) từ `item_id` trong túi, nhận `price_each` Zen mỗi cái."
   def sell(cid, item_id, quantity, price_each, npc_id) do
-    tx(cid, fn _c, items ->
-      with %{location: "INVENTORY"} = it <- find(items, item_id) || {:error, "NOT_OWNER"},
-           n = quantity || it.quantity,
-           :ok <-
-             if(is_integer(n) and n in 1..it.quantity, do: :ok, else: {:error, "INVALID_TARGET"}) do
-        take(it, n, "SELL", "char:" <> cid, "npc:" <> npc_id, %{quantity: n, price: price_each})
-        {:ok, n * price_each}
-      else
-        %{location: _} -> {:error, "INVALID_SLOT"}
-        error -> error
-      end
-    end)
+    tx(
+      cid,
+      fn _c, items ->
+        with %{location: "INVENTORY"} = it <- find(items, item_id) || {:error, "NOT_OWNER"},
+             n = quantity || it.quantity,
+             :ok <-
+               if(is_integer(n) and n in 1..it.quantity,
+                 do: :ok,
+                 else: {:error, "INVALID_TARGET"}
+               ) do
+          take(it, n, "SELL", "char:" <> cid, "npc:" <> npc_id, %{quantity: n, price: price_each})
+          {:ok, n * price_each}
+        else
+          %{location: _} -> {:error, "INVALID_SLOT"}
+          error -> error
+        end
+      end,
+      {"SELL", "npc:" <> npc_id}
+    )
   end
 
   # bớt n cái; hết thì xóa row (location trước, rồi item)
@@ -646,7 +670,8 @@ defmodule Mu.Game.Items do
 
   # ---------- Nội bộ ----------
 
-  defp tx(cid, fun) do
+  # `zen`: `{reason, ref}` cho `zen_audit_log` khi thao tác đổi Zen (P5-M3)
+  defp tx(cid, fun, zen \\ nil) do
     result =
       Repo.transaction(fn ->
         c = Repo.one!(from(c in Character, where: c.id == ^cid, lock: "FOR UPDATE"))
@@ -659,13 +684,15 @@ defmodule Mu.Game.Items do
             {c.zen, c.version, extra}
 
           {:ok, delta} ->
-            {1, [{zen, version}]} =
+            {1, [{balance, version}]} =
               Repo.update_all(
                 from(ch in Character, where: ch.id == ^cid, select: {ch.zen, ch.version}),
                 inc: [zen: delta, version: 1]
               )
 
-            {zen, version, %{}}
+            {reason, ref} = zen || raise "Items.tx: đổi Zen mà không có lý do audit"
+            ZenAudit.log(cid, delta, balance, reason, ref)
+            {balance, version, %{}}
 
           {:error, code} ->
             Repo.rollback(code)
