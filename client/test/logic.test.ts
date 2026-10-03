@@ -391,3 +391,12 @@ test("ép jewel (P5-M2): kéo jewel thả lên đồ ép được → upgrade; l
   assert.deepEqual([s.attackMin, s.attackMax], [3 + 3 + 8, 7 + 3 + 8]);
   assert.equal(leveled(tpl.get("helm")!, 0, bonus, 1, 4).defense, 9);
 });
+
+test("giao dịch (P5-M4): dòng thông báo theo kết quả", async () => {
+  const { tradeResultText } = await import("../src/logic/items.js");
+  assert.equal(tradeResultText("done", "Ann"), "Giao dịch với Ann thành công.");
+  assert.equal(tradeResultText("declined", "Ann"), "Ann từ chối giao dịch.");
+  assert.equal(tradeResultText("disconnect", "Ann", "Bob"), "Giao dịch với Ann bị hủy: Bob mất kết nối.");
+  assert.equal(tradeResultText("far", "Ann"), "Giao dịch với Ann bị hủy: hai bên ở quá xa.");
+  assert.equal(tradeResultText("cancelled", "Ann", "Ann"), "Giao dịch với Ann đã bị hủy (Ann).");
+});

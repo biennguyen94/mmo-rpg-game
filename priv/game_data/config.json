@@ -30,7 +30,8 @@
     "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật.",
     "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM.",
     "levelBonus": "P5-3 (1) (duyệt 2026-10-03, IMPLEMENTATION; KB chưa có công thức +N): items.levelBonus theo type item — mỗi cấp cường hóa (+N, items.item_level) cộng attack (attackMin và attackMax) cho WEAPON, defense cho SHIELD / giáp. Type không có trong bảng (RING, JEWEL, POTION) không ép được. Yêu cầu của đồ không đổi theo +N.",
-    "upgrade": "KB_CONFIG §5 (levels, nguyên văn) + P5-3 / P5-4 (A) (duyệt 2026-10-03, IMPLEMENTATION): ép jewel lên đồ trong túi, type có trong items.levelBonus; DECREASE = giảm 1 cấp. life: Jewel of Life thêm option_level (tối đa maxOption), mỗi cấp + perOption vào attack (vũ khí) / defense (giáp, khiên), thất bại không đổi. Ép thành công lên ≥ announceFromLevel thì báo SYSTEM cả map."
+    "upgrade": "KB_CONFIG §5 (levels, nguyên văn) + P5-3 / P5-4 (A) (duyệt 2026-10-03, IMPLEMENTATION): ép jewel lên đồ trong túi, type có trong items.levelBonus; DECREASE = giảm 1 cấp. life: Jewel of Life thêm option_level (tối đa maxOption), mỗi cấp + perOption vào attack (vũ khí) / defense (giáp, khiên), thất bại không đổi. Ép thành công lên ≥ announceFromLevel thì báo SYSTEM cả map.",
+    "trade": "P5-5 (duyệt 2026-10-03, IMPLEMENTATION; KB_TECHNICAL §10: TradeSettlement, một transaction khi cả hai đồng ý, hủy ngay khi mất kết nối): mời từ menu người chơi, nhận trong inviteSeconds; hai bên cùng map, cách ≤ range ô, còn sống, không đang duel / trade khác. Mỗi bên tối đa maxItems món từ túi (cả stack) + Zen. [Khóa] rồi [Đồng ý]; mọi thay đổi bỏ khóa cả hai. Hủy khi bấm Hủy, cách nhau > cancelRange ô, đổi map, chết, mất kết nối, đăng xuất, quá timeoutSeconds."
   },
   "game": {
     "name": "MU Web",
@@ -233,6 +234,21 @@
           ],
           "limit": 5,
           "windowMs": 1000
+        },
+        "trade": {
+          "acts": [
+            "trade_request",
+            "trade_accept",
+            "trade_decline",
+            "trade_put",
+            "trade_take",
+            "trade_zen",
+            "trade_lock",
+            "trade_confirm",
+            "trade_cancel"
+          ],
+          "limit": 5,
+          "windowMs": 1000
         }
       },
       "kickAfterMs": 5000
@@ -410,6 +426,13 @@
       "perOption": 4
     },
     "announceFromLevel": 7
+  },
+  "trade": {
+    "inviteSeconds": 30,
+    "range": 5,
+    "cancelRange": 10,
+    "maxItems": 16,
+    "timeoutSeconds": 180
   },
   "guildWar": {
     "inviteSeconds": 60,

@@ -541,6 +541,125 @@ defmodule Mu.Game.Items do
     end)
   end
 
+  # ---------- Giao dịch (P5-M4, KB_TECHNICAL §10) ----------
+
+  @doc """
+  Chốt giao dịch giữa hai nhân vật (`TradeSettlement` gọi khi cả hai đã đồng ý). `a`, `b`:
+  `%{cid, items: [item_id], zen}` — đồ (cả stack, trong túi) và Zen mỗi bên đưa. **Một
+  transaction**: khóa hai nhân vật rồi các `items` / `item_locations` liên quan, **sắp theo id**
+  (tránh deadlock); kiểm lại từng món vẫn trong túi đúng chủ (`NOT_OWNER`), Zen đủ
+  (`NOT_ENOUGH_ZEN`), túi bên nhận đủ ô sau khi bỏ đồ mình đưa (`INVENTORY_FULL`); chuyển đồ vào
+  ô trống thấp nhất (audit `TRADE` `char:A → char:B`), đổi Zen + `version` hai bên (audit Zen
+  `TRADE`, `ref` = bên kia). Sai bất kỳ điểm nào → rollback, không ghi gì.
+
+  `{:ok, %{a_cid => %{items, zen, version}, b_cid => …}}` hoặc `{:error, code}`.
+  """
+  def trade(%{cid: ca} = a, %{cid: cb} = b, ref) do
+    Repo.transaction(fn ->
+      chars =
+        Repo.all(
+          from(c in Character,
+            where: c.id in ^[ca, cb],
+            order_by: c.id,
+            lock: "FOR UPDATE"
+          )
+        )
+        |> Map.new(&{&1.id, &1})
+
+      ids = Enum.sort(a.items ++ b.items)
+      Repo.all(from(i in Item, where: i.id in ^ids, order_by: i.id, lock: "FOR UPDATE"))
+
+      locs =
+        Repo.all(
+          from(l in ItemLocation,
+            where: l.item_id in ^ids,
+            order_by: l.item_id,
+            lock: "FOR UPDATE"
+          )
+        )
+        |> Map.new(&{&1.item_id, &1})
+
+      owned? = fn cid, item_ids ->
+        Enum.all?(item_ids, fn id ->
+          match?(%{location: "INVENTORY", character_id: ^cid}, locs[id])
+        end)
+      end
+
+      cond do
+        map_size(chars) != 2 or length(Enum.uniq(ids)) != length(ids) ->
+          Repo.rollback("INVALID_TARGET")
+
+        not (owned?.(ca, a.items) and owned?.(cb, b.items)) ->
+          Repo.rollback("NOT_OWNER")
+
+        chars[ca].zen < a.zen or chars[cb].zen < b.zen ->
+          Repo.rollback("NOT_ENOUGH_ZEN")
+
+        true ->
+          to_b = free_slots(cb, b.items, length(a.items)) || Repo.rollback("INVENTORY_FULL")
+          to_a = free_slots(ca, a.items, length(b.items)) || Repo.rollback("INVENTORY_FULL")
+
+          # gỡ chỗ cũ trước rồi đặt chỗ mới: hai túi đầy vẫn đổi 1 lấy 1 được
+          Repo.delete_all(from(l in ItemLocation, where: l.item_id in ^ids))
+          place(a.items, to_b, ca, cb, locs, ref)
+          place(b.items, to_a, cb, ca, locs, ref)
+
+          for {cid, delta, other} <- [{ca, b.zen - a.zen, cb}, {cb, a.zen - b.zen, ca}] do
+            {1, [balance]} =
+              Repo.update_all(
+                from(ch in Character, where: ch.id == ^cid, select: ch.zen),
+                inc: [zen: delta, version: 1]
+              )
+
+            ZenAudit.log(cid, delta, balance, "TRADE", "char:" <> other)
+          end
+
+          :ok
+      end
+    end)
+    |> case do
+      {:ok, :ok} ->
+        {:ok,
+         Map.new([ca, cb], fn cid ->
+           c = Repo.get!(Character, cid)
+           {cid, %{items: load(cid), zen: c.zen, version: c.version}}
+         end)}
+
+      {:error, code} ->
+        {:error, code}
+    end
+  end
+
+  # `n` ô túi trống thấp nhất của `cid` khi đã bỏ các món `leaving`; không đủ → nil
+  defp free_slots(cid, leaving, n) do
+    used =
+      for it <- load(cid),
+          it.location == "INVENTORY",
+          it.id not in leaving,
+          into: MapSet.new(),
+          do: it.slot
+
+    free = Enum.reject(0..(Inventory.inventory_slots() - 1), &MapSet.member?(used, &1))
+    if length(free) >= n, do: Enum.take(free, n), else: nil
+  end
+
+  defp place(item_ids, slots, from_cid, to_cid, locs, ref) do
+    for {id, slot} <- Enum.zip(item_ids, slots) do
+      Repo.insert!(%ItemLocation{
+        item_id: id,
+        location: "INVENTORY",
+        character_id: to_cid,
+        slot: slot
+      })
+
+      audit(id, "TRADE", "char:" <> from_cid, "char:" <> to_cid, %{
+        trade: ref,
+        from_slot: locs[id].slot,
+        to: slot
+      })
+    end
+  end
+
   # ---------- Ép jewel (P5-M2) ----------
 
   @doc """
