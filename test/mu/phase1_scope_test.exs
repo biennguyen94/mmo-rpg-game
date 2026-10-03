@@ -16,7 +16,7 @@ defmodule Mu.Phase1ScopeTest do
     npcs:
       ~w(lorencia_potion_merchant lorencia_weapon_merchant noria_potion_merchant noria_weapon_merchant) ++
         ~w(lorencia_warehouse noria_warehouse) ++
-        ~w(lorencia_quest_master noria_quest_master),
+        ~w(lorencia_quest_master noria_quest_master noria_chaos_goblin),
     items:
       ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
         ~w(staff_t0 bow_t0) ++
@@ -31,7 +31,8 @@ defmodule Mu.Phase1ScopeTest do
           part <- ~w(helm armor pants gloves boots),
           do: "#{set}_#{part}_t1"
         ) ++
-        ~w(jewel_bless jewel_soul jewel_life),
+        ~w(jewel_bless jewel_soul jewel_life) ++
+        ~w(jewel_chaos wing_elf wing_heaven wing_satan),
     skills:
       ~w(basic_attack falling_slash twisting_slash death_stab energy_ball fire_ball lightning teleport flame heal triple_shot greater_defense greater_damage)
       |> Enum.sort(),
@@ -51,13 +52,13 @@ defmodule Mu.Phase1ScopeTest do
     assert Config.get(["game", "maxLevel"]) == @scope.maxLevel
   end
 
-  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) + magicGladiator (P3-M5) + pvp (P4-M1) + guild (P4-M3) + quest (P6-M2) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
+  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) + magicGladiator (P3-M5) + pvp (P4-M1) + guild (P4-M3) + quest (P6-M2) + chaosMachine / wings (P6-M3/M4) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
     on = for {flag, true} <- Config.get(["features"]), do: flag
 
     assert Enum.sort(on) ==
-             ["guild", "magicGladiator", "mail", "mapPanel", "party", "pvp", "quest"]
+             ~w(chaosMachine guild magicGladiator mail mapPanel party pvp quest wings)
 
-    for f <- ~w(wings chaosMachine) do
+    for f <- ~w(harmonyJewel guardianJewel) do
       assert Config.get(["features", f]) == false
     end
   end

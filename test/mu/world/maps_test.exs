@@ -85,6 +85,7 @@ defmodule Mu.World.MapsTest do
         case n.role do
           "warehouse" -> assert {Data.shop(n.id), n.name} == {nil, "Warehouse Keeper"}
           "quest" -> assert {Data.shop(n.id), n.name} == {nil, "Quest Master"}
+          "chaos" -> assert {Data.shop(n.id), n.name, @id} == {nil, "Chaos Goblin", "noria"}
           _ -> assert %{"mapId" => @id} = Data.shop(n.id)
         end
       end

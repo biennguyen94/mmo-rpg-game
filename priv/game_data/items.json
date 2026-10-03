@@ -2019,6 +2019,176 @@
       "type": "JEWEL",
       "verified": false,
       "version": "s5+"
+    },
+    {
+      "buyPrice": 20000,
+      "iconRef": {
+        "group": 12,
+        "index": 15
+      },
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 20,
+      "name": "Jewel of Chaos",
+      "reference": {
+        "group": 12,
+        "index": 15,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 10000,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "jewel_chaos",
+      "type": "JEWEL",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 12,
+      "buyPrice": 100000,
+      "classes": [
+        "ELF"
+      ],
+      "damageIncrease": 12,
+      "defense": 10,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 0
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Elf",
+      "reference": {
+        "group": 12,
+        "index": 0,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 15,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 50000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_elf",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 12,
+      "buyPrice": 100000,
+      "classes": [
+        "DW",
+        "MG"
+      ],
+      "damageIncrease": 12,
+      "defense": 10,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 1
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Heaven",
+      "reference": {
+        "group": 12,
+        "index": 1,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 15,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 50000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_heaven",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "absorb": 12,
+      "buyPrice": 100000,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "damageIncrease": 12,
+      "defense": 10,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 2
+      },
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "name": "Wings of Satan",
+      "reference": {
+        "group": 12,
+        "index": 2,
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 15,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 50000,
+      "slot": "WING",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "wing_satan",
+      "type": "WING",
+      "verified": false,
+      "version": "s5+"
     }
   ],
   "source": "Sinh bởi `mix mu.items.import` từ data/items/*.json — KHÔNG sửa tay. Xem Mu.Game.ItemImport."

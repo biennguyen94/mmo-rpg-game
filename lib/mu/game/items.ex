@@ -754,6 +754,66 @@ defmodule Mu.Game.Items do
     audit(it.id, action, from, to, Map.put(detail, :serial, it.serial))
   end
 
+  # ---------- Chaos Machine (P6-M3, P6-3) ----------
+
+  @doc """
+  Kết hợp các món `item_ids` (trong túi) ở Chaos Machine — **một transaction**: đọc lại đồ, khớp
+  công thức (`Mu.Game.Chaos.match/1`), đủ Zen, tiêu đầu vào (audit `CHAOS_IN`,
+  `char:<id> → chaos:<công thức>`), trừ phí (Zen `CHAOS`), quay tỉ lệ bằng `rng`; thành công thì
+  thêm món kết quả (audit `CHAOS_OUT`, `chaos:<công thức> → char:<id>`). Thất bại vẫn mất đầu vào
+  + phí (P6-3).
+
+  `{:ok, %{items, zen, version, chaos: %{recipe, ok, template_id, rate}}}` hoặc `{:error, code}`.
+  """
+  def chaos_combine(cid, item_ids, rng) do
+    tx(
+      cid,
+      fn c, items ->
+        with {:ok, picked} <- pick_inventory(items, item_ids),
+             {:ok, m} <- Mu.Game.Chaos.match(picked),
+             :ok <- if(c.zen >= m.zen, do: :ok, else: {:error, "NOT_ENOUGH_ZEN"}) do
+          src = "chaos:" <> m.recipe["id"]
+
+          for {id, n} <- m.consume,
+              do: take(find(items, id), n, "CHAOS_IN", "char:" <> cid, src, %{quantity: n})
+
+          {out, _rng} = Mu.Game.Chaos.roll(rng, m)
+
+          added =
+            case out do
+              nil ->
+                :ok
+
+              tid ->
+                with {:ok, plan} <- Inventory.plan_add(load(cid), tid, 1) do
+                  apply_add(cid, tid, plan, "CHAOS_OUT", src, [], %{rate: m.rate}, nil)
+                  :ok
+                end
+            end
+
+          with :ok <- added do
+            res = %{recipe: m.recipe["id"], ok: out != nil, template_id: out, rate: m.rate}
+            {:ok, -m.zen, %{chaos: res}}
+          end
+        end
+      end,
+      {"CHAOS", "chaos"}
+    )
+  end
+
+  # các món (cả stack) trong túi theo id: không có → NOT_OWNER, đang mặc / trong kho → INVALID_SLOT
+  defp pick_inventory(items, ids) when is_list(ids) do
+    Enum.reduce_while(ids, {:ok, []}, fn id, {:ok, acc} ->
+      case find(items, id) do
+        %{location: "INVENTORY"} = it -> {:cont, {:ok, acc ++ [it]}}
+        %{} -> {:halt, {:error, "INVALID_SLOT"}}
+        nil -> {:halt, {:error, "NOT_OWNER"}}
+      end
+    end)
+  end
+
+  defp pick_inventory(_items, _ids), do: {:error, "INVALID_TARGET"}
+
   # ---------- Quest (P6-M2, P6-2) ----------
 
   @doc """

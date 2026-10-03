@@ -47,7 +47,8 @@ defmodule Mu.Game.InventoryTest do
     assert {:error, "INVALID_SLOT"} = Inventory.can_equip(@dk, Data.item("hp_potion_small"), 5)
     assert :ok = Inventory.can_equip(@dk, ring, 8)
     assert :ok = Inventory.can_equip(@dk, ring, 9)
-    assert Inventory.equip_slots(%{"slot" => "WING"}) == []
+    # P6-M4: features.wings bật → slot 7 mở
+    assert Inventory.equip_slots(%{"slot" => "WING"}) == [7]
 
     assert {:error, "REQUIREMENT_NOT_MET"} =
              Inventory.can_equip(%{@dk | strength: 27}, Data.item("armor_t0"), 1)

@@ -29,6 +29,7 @@ import {
   type TradePayload,
   type RankingPayload,
   type QuestsPayload,
+  type ChaosPayload,
   type QuestRewards,
   type MapData,
 } from "../net/protocol.js";
@@ -153,6 +154,11 @@ export class GameClient {
       questAccept: (questId) => this.state?.questNpc && void this.send("quest_accept", { questId, npcId: this.state.questNpc }),
       questTurnin: (questId) => this.state?.questNpc && void this.send("quest_turnin", { questId, npcId: this.state.questNpc }),
       questAbandon: (questId) => void this.send("quest_abandon", { questId }),
+      chaosToggle: (itemId) => this.chaosToggle(itemId),
+      chaosCombine: () => {
+        const c = this.state?.chaos;
+        if (c?.recipe) void this.send("chaos_combine", { itemIds: c.itemIds, npcId: c.npcId });
+      },
     });
 
     this.conn = new Connection(token, character.id, {
@@ -210,6 +216,8 @@ export class GameClient {
       ranking: null,
       quests: this.state?.quests ?? null,
       questNpc: null,
+      wings: r.config.wings === true,
+      chaos: null,
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -262,7 +270,8 @@ export class GameClient {
     this.state.player = p.player;
     this.state.shop = null;
     this.state.warehouse = null;
-    if (this.state.panel === "shop" || this.state.panel === "warehouse") this.state.panel = null;
+    if (this.state.panel === "shop" || this.state.panel === "warehouse" || this.state.panel === "chaos") this.state.panel = null;
+    this.state.chaos = null;
     this.notices.add("SYSTEM", `Đã vào ${p.map.name}`);
     this.buildView(p.map);
   }
@@ -355,6 +364,13 @@ export class GameClient {
         }
         break;
       }
+      case "chaos": {
+        const c = p as ChaosPayload;
+        this.state.chaos = { ...this.state.chaos, ...c, maxItems: c.maxItems ?? this.state.chaos?.maxItems };
+        if (c.result) this.onChaosResult(c.result);
+        else if (c.maxItems !== undefined) this.state.panel = "chaos";
+        break;
+      }
       case "quest_done":
         this.onQuestDone(p.name as string, p.rewards as QuestRewards);
         break;
@@ -392,6 +408,31 @@ export class GameClient {
         break;
     }
     this.render();
+  }
+
+  /** Chaos Machine (P6-M3): đặt / lấy món → server tính lại công thức, tỉ lệ, phí. */
+  private chaosToggle(itemId: string): void {
+    const c = this.state?.chaos;
+    if (!c) return;
+    const ids = c.itemIds.includes(itemId) ? c.itemIds.filter((i) => i !== itemId) : [...c.itemIds, itemId];
+    if (ids.length > (c.maxItems ?? 8)) {
+      this.notices.add("ERROR", `Chaos Machine chỉ chứa tối đa ${c.maxItems ?? 8} món.`);
+      return this.render();
+    }
+    // bỏ kết quả lần trước, chờ server báo công thức
+    this.state!.chaos = { ...c, itemIds: ids, result: undefined };
+    if (ids.length) void this.send("chaos_preview", { itemIds: ids, npcId: c.npcId });
+    else this.state!.chaos = { ...c, itemIds: [], recipe: null, result: undefined };
+    this.render();
+  }
+
+  private onChaosResult(r: NonNullable<ChaosPayload["result"]>): void {
+    if (!this.state) return;
+    const name = this.state.templates.get(r.templateId ?? "")?.name ?? r.templateId;
+    if (r.ok) this.notices.add("SYSTEM", `Chaos Machine: tạo thành công ${name}!`);
+    else this.notices.add("ERROR", "Chaos Machine: kết hợp thất bại, đồ đặt vào đã mất.");
+    Sound.play(r.ok ? "levelup" : "miss");
+    if (this.state.chaos) this.state.chaos = { ...this.state.chaos, recipe: null };
   }
 
   /** Trả quest xong (P6-M2): thông báo thưởng. */
@@ -695,7 +736,14 @@ export class GameClient {
   private closeShopIfFar(): void {
     if (!this.state || !this.join) return;
     const quest = this.state.panel === "quests" ? this.state.questNpc : null;
-    const npcId = this.state.panel === "shop" ? this.shop?.npcId : this.state.panel === "warehouse" ? this.state.warehouse?.npcId : quest;
+    const npcId =
+      this.state.panel === "shop"
+        ? this.shop?.npcId
+        : this.state.panel === "warehouse"
+          ? this.state.warehouse?.npcId
+          : this.state.panel === "chaos"
+            ? this.state.chaos?.npcId
+            : quest;
     if (!npcId) return;
     const me = this.world.entities.get(this.selfId);
     const npc = this.world.entities.get(`npc_${npcId}`);

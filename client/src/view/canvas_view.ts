@@ -254,9 +254,40 @@ function kindOrder(e: Entity): number {
   return e.kind === "item" ? 0 : e.kind === "npc" ? 1 : e.kind === "monster" ? 2 : 3;
 }
 
+// màu cánh theo loại (P6-4 (4): vẽ hình học, không asset MU)
+const WING_COLOR: Record<string, [string, string]> = {
+  wing_elf: ["rgba(120,220,140,0.85)", "#2f7a45"],
+  wing_heaven: ["rgba(235,240,255,0.9)", "#7f8fb8"],
+  wing_satan: ["rgba(150,30,40,0.9)", "#3a0a10"],
+};
+
+/** Đôi cánh sau lưng người chơi: hai nửa đối xứng, đập nhẹ theo thời gian. */
+export function drawWings(g: CanvasRenderingContext2D, wing: string, x: number, y: number, dead: boolean): void {
+  const [fill, edge] = WING_COLOR[wing] ?? ["rgba(200,200,200,0.85)", "#555"];
+  const flap = Math.sin(performance.now() / 300) * 2;
+  g.save();
+  g.globalAlpha = dead ? 0.35 : 1;
+  g.fillStyle = fill;
+  g.strokeStyle = edge;
+  g.lineWidth = 1.5;
+  for (const side of [-1, 1]) {
+    g.beginPath();
+    g.moveTo(x + side * 3, y - 4);
+    g.quadraticCurveTo(x + side * 20, y - 22 - flap, x + side * 22, y - 6);
+    g.quadraticCurveTo(x + side * 18, y + 2, x + side * 14, y + 6 + flap / 2);
+    g.quadraticCurveTo(x + side * 10, y + 2, x + side * 3, y + 4);
+    g.closePath();
+    g.fill();
+    g.stroke();
+  }
+  g.restore();
+}
+
 function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, self: boolean): void {
   const dead = e.state === "dead";
   const img = sprite(e);
+  // P6-M4: cánh vẽ trước (nằm sau thân)
+  if (e.kind === "player" && e.wing) drawWings(g, e.wing, x, y, dead);
   if (img) {
     // vòng dưới chân phân biệt mình / người khác / NPC
     if (e.kind !== "monster") {

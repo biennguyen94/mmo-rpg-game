@@ -1,0 +1,42 @@
+{
+  "source": "P6-3 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): Phase 6 chỉ một công thức Chaos Machine — tạo cánh cấp 1. Số do dự án đặt (IMPLEMENTATION), không phải số MU.",
+  "recipes": [
+    {
+      "id": "wings_1",
+      "name": "Tạo cánh cấp 1",
+      "zen": 20000,
+      "inputs": [
+        {
+          "types": [
+            "WEAPON",
+            "ARMOR",
+            "SHIELD"
+          ],
+          "minLevel": 4,
+          "count": 1
+        },
+        {
+          "templateId": "jewel_chaos",
+          "count": 1
+        }
+      ],
+      "rate": {
+        "base": 0.1,
+        "fromLevel": 4,
+        "perLevel": 0.05,
+        "perOption": 0.02,
+        "max": 0.6
+      },
+      "outputs": [
+        "wing_elf",
+        "wing_heaven",
+        "wing_satan"
+      ],
+      "onFailure": "LOSE_ALL",
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "note": "1 vũ khí / giáp / khiên +4 trở lên + 1 Jewel of Chaos + 20 000 Zen; tỉ lệ 10 % + 5 % mỗi cấp trên +4, +2 % mỗi cấp option Life, tối đa 60 %; thành công → 1 cánh ngẫu nhiên trong 3; thất bại mất hết đồ đầu vào và Zen."
+    }
+  ]
+}

@@ -167,7 +167,7 @@ defmodule MuWeb.GameChannel do
 
   @client_item_keys ~w(templateId name type slot weaponType stackable maxStack potionType effect attackMin
                        attackMax defense defenseRate speed hpBonus durability classes requirements
-                       iconRef iconPlaceholder buyPrice sellPrice)
+                       iconRef iconPlaceholder buyPrice sellPrice damageIncrease absorb)
 
   # Template item cho client hiển thị (tên, chỉ số, yêu cầu, iconRef); không có công thức
   defp client_items do
@@ -210,6 +210,12 @@ defmodule MuWeb.GameChannel do
         minLevel: Config.get(["pvp", "minLevel"])
       },
       duelInviteSeconds: Config.get(["duel", "inviteSeconds"]),
+      # P6-M4: slot 7 (cánh) mở; P6-M3: Chaos Machine (số món tối đa đặt vào máy)
+      wings: Config.get(["features", "wings"]) == true,
+      chaos: %{
+        enabled: Config.get(["features", "chaosMachine"]) == true,
+        maxItems: Config.get(["chaos", "maxItems"])
+      },
       # P5-M1: chỉ số cộng mỗi cấp +N theo type item (tooltip hiện số đúng; server vẫn tính)
       items: %{
         levelBonus: Config.get(["items", "levelBonus"]),

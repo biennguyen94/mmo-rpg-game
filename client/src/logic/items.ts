@@ -68,7 +68,7 @@ export function equipmentInBag(inventory: ItemView[], templates: Templates): Ite
 }
 
 /** `items.levelBonus` (P5-3, config join): chỉ số cộng mỗi cấp cường hóa theo `type` item. */
-export type LevelBonus = Record<string, { attack?: number; defense?: number }>;
+export type LevelBonus = Record<string, { attack?: number; defense?: number; damageIncrease?: number; absorb?: number }>;
 
 /** Ép được không (P5-M2): type có trong `levelBonus` (vũ khí, khiên, giáp). */
 export const upgradable = (t: ItemTemplate | undefined, bonus: LevelBonus): boolean => !!t && !!bonus[t.type];
@@ -83,10 +83,15 @@ export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}, opti
   const opt = option * perOption;
   const atk = (b.attack ?? 0) * level + (b.attack ? opt : 0);
   const def = (b.defense ?? 0) * level + (b.attack ? 0 : opt);
+  // cánh (P6-M4): % sát thương / hấp thụ theo +N
+  const inc = (b.damageIncrease ?? 0) * level;
+  const abs = (b.absorb ?? 0) * level;
   return {
     ...t,
     ...(atk ? { attackMin: (t.attackMin ?? 0) + atk, attackMax: (t.attackMax ?? 0) + atk } : {}),
     ...(def ? { defense: (t.defense ?? 0) + def } : {}),
+    ...(inc ? { damageIncrease: (t.damageIncrease ?? 0) + inc } : {}),
+    ...(abs ? { absorb: (t.absorb ?? 0) + abs } : {}),
   };
 }
 
@@ -103,6 +108,8 @@ export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {},
   if (t.attackMax) parts.push(`Tấn công +${t.attackMin ?? 0}~${t.attackMax}`);
   if (t.defense) parts.push(`Phòng thủ +${t.defense}`);
   if (t.hpBonus) parts.push(`HP +${t.hpBonus}`);
+  if (t.damageIncrease) parts.push(`Sát thương +${t.damageIncrease}%`);
+  if (t.absorb) parts.push(`Hấp thụ ${t.absorb}%`);
   if (t.effect?.hp) parts.push(`Hồi ${t.effect.hp} HP`);
   if (t.effect?.mp) parts.push(`Hồi ${t.effect.mp} MP`);
   return parts.join(", ");

@@ -28,7 +28,8 @@ defmodule Mu.Game.Data do
   {p5, items} = load.("items.json", "items", "templateId")
   {p6, shops} = load.("shop.json", "shops", "npcId")
   {p7, quests} = load.("quests.json", "quests", "id")
-  for p <- [p1, p2, p3, p4, p5, p6, p7], do: @external_resource(p)
+  {p8, recipes} = load.("chaos.json", "recipes", "id")
+  for p <- [p1, p2, p3, p4, p5, p6, p7, p8], do: @external_resource(p)
 
   @classes classes
   @monsters monsters
@@ -37,6 +38,7 @@ defmodule Mu.Game.Data do
   @items items
   @shops shops
   @quests quests
+  @recipes recipes
   @quest_order p7
                |> File.read!()
                |> Jason.decode!()
@@ -80,6 +82,20 @@ defmodule Mu.Game.Data do
     (is_integer(exp) and exp >= 0 and is_integer(zen) and zen >= 0 and
        Enum.all?(items, &(Map.has_key?(@items, &1["templateId"]) and &1["quantity"] > 0))) ||
       raise "quests.json: #{id} thưởng sai"
+  end
+
+  # Chaos Machine (P6-M3): đầu vào / kết quả trỏ tới item có thật, tỉ lệ trong 0..1
+  for {id, r} <- @recipes do
+    ok? =
+      is_integer(r["zen"]) and r["zen"] >= 0 and r["outputs"] != [] and
+        Enum.all?(r["outputs"], &Map.has_key?(@items, &1)) and
+        Enum.all?(r["inputs"], fn i ->
+          is_integer(i["count"]) and i["count"] > 0 and
+            ((is_list(i["types"]) and is_integer(i["minLevel"])) or
+               Map.has_key?(@items, i["templateId"]))
+        end) and r["rate"]["max"] <= 1 and r["rate"]["base"] >= 0
+
+    ok? || raise "chaos.json: công thức #{id} sai"
   end
 
   # skill (P2-M3): targetType hợp lệ, AOE có tâm, ALLY có effect heal/buff
@@ -129,6 +145,9 @@ defmodule Mu.Game.Data do
   @doc "Quest (P6-M2, `quests.json`), giữ thứ tự trong file."
   def quests, do: @quest_order |> Enum.map(&Map.fetch!(@quests, &1))
   def quest(id), do: Map.get(@quests, id)
+
+  @doc "Công thức Chaos Machine (P6-M3, `chaos.json`)."
+  def chaos_recipes, do: Map.values(@recipes)
 
   @doc "Bảng rơi đồ của quái (`nil` nếu không có)."
   def drops(monster_id), do: Map.get(@drops, monster_id)

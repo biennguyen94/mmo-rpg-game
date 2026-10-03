@@ -421,3 +421,12 @@ test("quest (P6-M2): chữ mục tiêu, thưởng, dòng theo dõi", async () =>
   assert.equal(trackerLine(q), "Diệt Nhện: Hạ Spider 7/10");
   assert.match(trackerLine({ ...q, complete: true }), /^✔ Diệt Nhện/);
 });
+
+test("cánh (P6-M4): +N cộng thủ / % sát thương / % hấp thụ; tooltip hiện %", async () => {
+  const { leveled, shortDesc } = await import("../src/logic/items.js");
+  const w = { templateId: "wing_satan", name: "Wings of Satan", type: "WING", slot: "WING", stackable: false, defense: 10, damageIncrease: 12, absorb: 12, iconRef: { group: 12, index: 2 }, buyPrice: 0, sellPrice: 0 };
+  const bonus = { WING: { defense: 1, damageIncrease: 2, absorb: 2 } };
+  const l = leveled(w, 3, bonus);
+  assert.deepEqual([l.defense, l.damageIncrease, l.absorb], [13, 18, 18]);
+  assert.equal(shortDesc(w, 0, bonus), "Phòng thủ +10, Sát thương +12%, Hấp thụ 12%");
+});

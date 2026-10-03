@@ -321,7 +321,8 @@ defmodule Mu.Game.Simulator do
 
         picked =
           item_templates()
-          |> Enum.filter(&(&1["slot"] != nil and class_id in (&1["classes"] || [])))
+          # cánh chỉ lấy từ Chaos Machine (P6-4): không tính vào bộ đồ "full"
+          |> Enum.filter(&(&1["slot"] not in [nil, "WING"] and class_id in (&1["classes"] || [])))
           |> Enum.sort_by(& &1["templateId"])
           |> Enum.reduce(%{}, fn t, acc -> Map.put_new(acc, t["slot"], t) end)
 
@@ -334,6 +335,16 @@ defmodule Mu.Game.Simulator do
             else: picked
 
         Map.values(picked)
+
+      # P6-M4: đồ t1 + cánh của class (cánh đầu tiên theo templateId mặc được)
+      "wing" ->
+        wing =
+          item_templates()
+          |> Enum.filter(&(&1["slot"] == "WING" and class_id in (&1["classes"] || [])))
+          |> Enum.sort_by(& &1["templateId"])
+          |> Enum.take(1)
+
+        gear(class_id, "t1") ++ wing
 
       _ ->
         []
