@@ -101,6 +101,8 @@ export interface SpawnPayload {
   dueling?: boolean;
   /** Tên guild (P4-M3), null nếu không có. */
   guild?: string | null;
+  /** Cánh đang mặc (P6-M4): templateId, null nếu không. */
+  wing?: string | null;
 }
 
 export interface SnapshotEntity {
@@ -165,6 +167,9 @@ export interface ItemTemplate {
   defense?: number;
   speed?: number;
   hpBonus?: number;
+  /** Cánh (P6-M4): % sát thương gây ra / % sát thương nhận bớt. */
+  damageIncrease?: number;
+  absorb?: number;
   classes?: string[];
   requirements?: Record<string, number>;
   iconRef: { group: number; index: number } | { custom: string };
@@ -314,6 +319,18 @@ export interface RankingPayload {
   updatedAt: number;
 }
 
+/** Event `chaos` (P6-M3): mở Chaos Goblin / xem trước công thức / kết quả kết hợp. */
+export interface ChaosPayload {
+  npcId: string;
+  itemIds: string[];
+  recipe?: string | null;
+  name?: string | null;
+  rate?: number;
+  zen?: number;
+  maxItems?: number;
+  result?: { ok: boolean; templateId: string | null; rate: number };
+}
+
 /** Mục tiêu quest (P6-M2): `kill` quái / `collect` vật phẩm (nộp khi trả) / `level` đạt cấp. */
 export interface QuestGoal {
   type: "kill" | "collect" | "level";
@@ -420,7 +437,10 @@ export interface JoinReply {
     /** Guild (P4-M3): điều kiện tạo, sĩ số, hạn lời mời, mẫu tên (server vẫn kiểm). */
     guild?: GuildConfig;
     /** Chỉ số cộng mỗi cấp +N theo type item (P5-M1), để tooltip hiện số đúng. */
-    items?: { levelBonus: Record<string, { attack?: number; defense?: number }>; optionBonus?: number };
+    items?: { levelBonus: Record<string, { attack?: number; defense?: number; damageIncrease?: number; absorb?: number }>; optionBonus?: number };
+    /** P6-M4: slot cánh mở; P6-M3: Chaos Machine. */
+    wings?: boolean;
+    chaos?: { enabled: boolean; maxItems: number };
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

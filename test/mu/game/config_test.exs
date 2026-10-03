@@ -36,7 +36,7 @@ defmodule Mu.Game.ConfigTest do
         ~w(guild_war_declare guild_war_accept guild_war_decline guild_war_surrender) ++
         ~w(trade_request trade_accept trade_decline trade_put trade_take trade_zen) ++
         ~w(trade_lock trade_confirm trade_cancel) ++
-        ~w(ranking quest_list quest_accept quest_turnin quest_abandon)
+        ~w(ranking quest_list quest_accept quest_turnin quest_abandon chaos_preview chaos_combine)
 
     assert Enum.sort(Mu.Game.Commands.acts()) == Enum.sort(acts)
   end

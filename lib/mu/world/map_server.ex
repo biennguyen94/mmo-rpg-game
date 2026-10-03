@@ -246,6 +246,8 @@ defmodule Mu.World.MapServer do
             dueling: false,
             # P4-M3: tên guild trên đầu (Session báo khi vào / rời guild)
             guild: Map.get(p, :guild),
+            # P6-M4: cánh đang mặc (templateId, `nil` = không) — client vẽ sau lưng
+            wing: Map.get(p, :wing),
             owner: owner,
             ref: Process.monitor(owner)
           }
@@ -407,17 +409,28 @@ defmodule Mu.World.MapServer do
         {:reply, :error, s}
 
       e ->
-        old = {Pvp.state(e.pk_points), Map.get(e, :guild)}
+        old = {Pvp.state(e.pk_points), Map.get(e, :guild), Map.get(e, :wing)}
 
         e =
           Map.merge(
             e,
-            Map.take(changes, [:level, :stats, :skills, :hp, :mp, :name, :pk_points, :guild])
+            Map.take(changes, [
+              :level,
+              :stats,
+              :skills,
+              :hp,
+              :mp,
+              :name,
+              :pk_points,
+              :guild,
+              :wing
+            ])
           )
 
         e = %{e | hp: min(e.hp, e.stats.hp_max), mp: min(e.mp, e.stats.mp_max)}
-        # trạng thái PK (màu tên, P4-M1) / guild (P4-M3) đổi: người khác thấy ngay
-        if {Pvp.state(e.pk_points), Map.get(e, :guild)} != old,
+
+        # trạng thái PK (màu tên, P4-M1) / guild (P4-M3) / cánh (P6-M4) đổi: người khác thấy ngay
+        if {Pvp.state(e.pk_points), Map.get(e, :guild), Map.get(e, :wing)} != old,
           do: broadcast(s, "spawn", spawn_payload(e))
 
         {:reply, :ok, mark(put_in(s.players[id], e), e)}
@@ -673,7 +686,13 @@ defmodule Mu.World.MapServer do
   defp do_monster_attack(s, m, e) do
     {mid, cid} = {m.id, e.character_id}
     buffed = Engine.with_buffs(e.stats, e.buffs)
-    stats = %{defense: buffed.defense, defense_rate: e.stats.defense_rate}
+
+    stats = %{
+      defense: buffed.defense,
+      defense_rate: e.stats.defense_rate,
+      absorb: Map.get(e.stats, :absorb, 0)
+    }
+
     {res, rng} = Engine.roll_attack(s.rng, Engine.monster_stats(m.tpl), stats)
     hp = max(e.hp - res.dmg, 0)
     e = %{e | hp: hp, last_combat_at: now(s)}
@@ -980,7 +999,11 @@ defmodule Mu.World.MapServer do
       Engine.roll_attack(
         s.rng,
         a.stats |> Engine.for_skill(skill) |> Engine.with_buffs(a.buffs),
-        %{defense: buffed.defense, defense_rate: v.stats.defense_rate},
+        %{
+          defense: buffed.defense,
+          defense_rate: v.stats.defense_rate,
+          absorb: Map.get(v.stats, :absorb, 0)
+        },
         skill["damageMultiplier"]
       )
 
@@ -1531,7 +1554,9 @@ defmodule Mu.World.MapServer do
       aggressor: Map.get(e, :aggressor_until) != nil,
       dueling: Map.get(e, :dueling, false),
       # P4-M3: tên guild (null nếu không có)
-      guild: Map.get(e, :guild)
+      guild: Map.get(e, :guild),
+      # P6-M4: cánh đang mặc (templateId hoặc null)
+      wing: Map.get(e, :wing)
     }
   end
 

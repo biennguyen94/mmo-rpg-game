@@ -37,7 +37,7 @@ defmodule Mu.Game.Session do
   @idle_timeout :timer.minutes(1)
 
   # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
-  @item_acts ~w(pickup equip unequip move_item split drop use_item upgrade buy sell mail_claim quest_turnin)
+  @item_acts ~w(pickup equip unequip move_item split drop use_item upgrade buy sell mail_claim quest_turnin chaos_combine)
   # số `rid` gần nhất được nhớ kết quả
   @rid_memory 200
 
@@ -506,6 +506,7 @@ defmodule Mu.Game.Session do
     case Enum.find(Maps.get(s.character.map_id).npcs, &(&1.id == npc_id)) do
       %{role: "warehouse"} -> open_warehouse(s, npc_id)
       %{role: "quest"} -> open_quests(s, npc_id)
+      %{role: "chaos"} -> open_chaos(s, npc_id)
       _ -> open_shop(s, npc)
     end
   end
@@ -581,7 +582,7 @@ defmodule Mu.Game.Session do
   end
 
   defp run(act, _payload, s)
-       when (act in @item_acts and act != "quest_turnin") or act == "npc_open",
+       when (act in @item_acts and act not in ~w(quest_turnin chaos_combine)) or act == "npc_open",
        do: {{:error, "INVALID_TARGET"}, s}
 
   # ---------- Chat (P2-M5) ----------
@@ -705,6 +706,12 @@ defmodule Mu.Game.Session do
 
   # ---------- Quest (P6-M2, P6-2): luật `Quests`, DB `QuestStore` / `Items.quest_turnin` ----------
 
+  defp run("chaos_" <> _ = act, p, s) do
+    if Config.get(["features", "chaosMachine"]) == true,
+      do: chaos(act, p, s),
+      else: {{:error, "FORBIDDEN"}, s}
+  end
+
   defp run("quest_" <> _ = act, p, s) do
     if quest_enabled?(), do: quest(act, p, s), else: {{:error, "FORBIDDEN"}, s}
   end
@@ -817,6 +824,79 @@ defmodule Mu.Game.Session do
   end
 
   defp quest(_act, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
+  # ---------- Chaos Machine (P6-M3, P6-3): luật `Chaos`, transaction `Items.chaos_combine` ----------
+
+  # xem trước: công thức khớp, tỉ lệ, phí (không đổi gì)
+  defp chaos("chaos_preview", %{"itemIds" => ids, "npcId" => npc}, s)
+       when is_list(ids) and is_binary(npc) do
+    with {:ok, npc_id} <- near_npc(s, npc, "chaos"),
+         {:ok, picked} <- chaos_items(s, ids) do
+      view =
+        case Mu.Game.Chaos.match(picked) do
+          {:ok, m} -> %{recipe: m.recipe["id"], name: m.recipe["name"], rate: m.rate, zen: m.zen}
+          {:error, _} -> %{recipe: nil, name: nil, rate: 0, zen: 0}
+        end
+
+      push(s, "chaos", Map.merge(view, %{npcId: npc_id, itemIds: ids}))
+      {:ok, s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp chaos("chaos_combine", %{"itemIds" => ids, "npcId" => npc}, s)
+       when is_list(ids) and is_binary(npc) do
+    with {:ok, npc_id} <- near_npc(s, npc, "chaos"),
+         {:ok, %{chaos: r} = res} <- Items.chaos_combine(s.character.id, ids, Rng.new()) do
+      s = s |> apply_items(res) |> notify()
+
+      push(s, "chaos", %{
+        npcId: npc_id,
+        itemIds: [],
+        result: %{ok: r.ok, templateId: r.template_id, rate: r.rate}
+      })
+
+      if r.ok do
+        name = Data.item(r.template_id)["name"]
+        Chat.system_map(s.character.map_id, "#{s.character.name} tạo thành công #{name}!")
+      end
+
+      {:ok, s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp chaos(_act, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
+  # món trong túi theo id (bản trong Session; transaction đọc lại DB)
+  defp chaos_items(s, ids) do
+    Enum.reduce_while(ids, {:ok, []}, fn id, {:ok, acc} ->
+      case Enum.find(s.items, &(&1.id == id)) do
+        %{location: "INVENTORY"} = it -> {:cont, {:ok, acc ++ [it]}}
+        %{} -> {:halt, {:error, "INVALID_SLOT"}}
+        nil -> {:halt, {:error, "NOT_OWNER"}}
+      end
+    end)
+  end
+
+  # Mở Chaos Goblin: event `chaos` kèm `npcId` (client mở cửa sổ Chaos Machine)
+  defp open_chaos(s, npc) do
+    with true <- Config.get(["features", "chaosMachine"]) == true || {:error, "FORBIDDEN"},
+         {:ok, npc_id} <- near_npc(s, npc, "chaos") do
+      push(s, "chaos", %{
+        npcId: npc_id,
+        itemIds: [],
+        recipe: nil,
+        maxItems: Config.get(["chaos", "maxItems"])
+      })
+
+      {:ok, s}
+    else
+      error -> {error, s}
+    end
+  end
 
   # PARTY: từ P3-M4 (không có nhóm → INVALID_TARGET); GUILD: từ P4-M3 (không có guild →
   # INVALID_TARGET); SYSTEM: chỉ server
@@ -1144,14 +1224,28 @@ defmodule Mu.Game.Session do
       stats: Engine.derived(c, equipment),
       skills: Engine.skills(c),
       pk_points: c.pk_points,
-      guild: guild && guild.name
+      guild: guild && guild.name,
+      wing: wing_of(items)
     }
+  end
+
+  # cánh đang mặc (slot 7, P6-M4): templateId cho client vẽ
+  defp wing_of(items) do
+    case Inventory.in_slot(items, "EQUIPMENT", 7) do
+      nil -> nil
+      it -> it.template_id
+    end
   end
 
   # Báo MapServer chỉ số mới (sau lên cấp/cộng điểm), kèm `extra` (hp/mp).
   defp sync_map(%{on_map: true, character: c} = s, extra) do
     stats = Engine.derived(c, Inventory.equipped_templates(s.items))
-    changes = Map.merge(%{level: c.level, stats: stats, skills: Engine.skills(c)}, extra)
+
+    changes =
+      Map.merge(
+        %{level: c.level, stats: stats, skills: Engine.skills(c), wing: wing_of(s.items)},
+        extra
+      )
 
     :ok = MapServer.update_player(c.map_id, c.id, changes)
     s

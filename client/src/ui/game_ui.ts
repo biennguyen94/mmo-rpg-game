@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, QuestActive, QuestBrief, QuestsPayload, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ChaosPayload, QuestActive, QuestBrief, QuestsPayload, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
 import { ERROR_TEXT, type ErrorCode } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
@@ -29,7 +29,7 @@ import { goalText, rewardText, trackerLine } from "../logic/quests.js";
 import { ROLE_LABEL, canDemote, canInvite as canGuildInvite, canKick, canPromote, myRole, validGuildName } from "../logic/guild.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade" | "ranking" | "quests";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade" | "ranking" | "quests" | "chaos";
 
 export interface UiState {
   player: Player;
@@ -82,6 +82,9 @@ export interface UiState {
   /** Quest (P6-M2): view mới nhất từ server; `questNpc` = Quest Master đang mở (hiện [Nhận] / [Trả]). */
   quests: QuestsPayload | null;
   questNpc: string | null;
+  /** P6-M4: slot cánh mở (config). P6-M3: Chaos Machine đang mở (đồ đặt vào + công thức khớp). */
+  wings: boolean;
+  chaos: ChaosPayload | null;
 }
 
 export interface UiActions {
@@ -158,6 +161,9 @@ export interface UiActions {
   questAccept(id: string): void;
   questTurnin(id: string): void;
   questAbandon(id: string): void;
+  /** Chaos Machine (P6-M3): đặt / lấy món (server tính lại công thức), kết hợp. */
+  chaosToggle(itemId: string): void;
+  chaosCombine(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -395,7 +401,9 @@ export class GameUI {
                       ? s.ranking
                       : s.panel === "quests"
                         ? [s.quests, s.questNpc, this.abandonArmed]
-                        : null;
+                        : s.panel === "chaos"
+                          ? s.chaos
+                          : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -433,7 +441,9 @@ export class GameUI {
                           ? this.rankingPanel()
                           : s.panel === "quests"
                             ? this.questPanel()
-                            : this.settingsPanel();
+                            : s.panel === "chaos"
+                              ? this.chaosPanel()
+                              : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -522,7 +532,7 @@ export class GameUI {
       EQUIP_GRID.flat().map((slot) => {
         if (slot === null) return h("div", { class: "slot none" });
         const it = bySlot.get(slot);
-        const locked = slot === 7; // features.wings = false (Phase 1)
+        const locked = slot === 7 && !s.wings; // P6-M4: mở khi features.wings bật
         return h(
           "div",
           {
@@ -1093,6 +1103,61 @@ export class GameUI {
       act.map((x) => h("div", { class: x.complete ? "ok" : "" }, trackerLine(x))),
     );
     this.view.append(this.questTrackEl);
+  }
+
+  // ---------- Chaos Machine (P6-M3, P6-3): bấm đồ trong túi = đặt vào máy; server báo công thức ----------
+
+  private chaosPanel(): HTMLElement {
+    const s = this.state;
+    const c = s.chaos;
+    const ids = new Set(c?.itemIds ?? []);
+    const byId = new Map(s.player.inventory.map((i) => [i.id, i]));
+    const inMachine = (c?.itemIds ?? []).map((id) => byId.get(id)).filter((i): i is ItemView => !!i);
+    const bag = s.player.inventory.filter((i) => !ids.has(i.id)).sort((a, b) => a.slot - b.slot);
+    const pct = (r: number) => `${Math.round(r * 1000) / 10}%`;
+    const recipe = c?.recipe
+      ? h(
+          "div",
+          { class: "chaosinfo", "data-test": "chaos-recipe" },
+          h("b", {}, c.name ?? c.recipe),
+          ` · tỉ lệ ${pct(c.rate ?? 0)} · phí ${(c.zen ?? 0).toLocaleString("vi-VN")} Zen`,
+        )
+      : h("div", { class: "hint", "data-test": "chaos-recipe" }, inMachine.length ? "Không khớp công thức nào." : "Đặt đồ vào máy để xem công thức.");
+    const last = c?.result
+      ? h(
+          "div",
+          { class: c.result.ok ? "good" : "bad", "data-test": "chaos-result" },
+          c.result.ok ? `Thành công: ${s.templates.get(c.result.templateId ?? "")?.name ?? c.result.templateId}!` : "Thất bại — đồ đặt vào đã mất.",
+        )
+      : null;
+    return h(
+      "section",
+      { class: "panel", "data-panel": "chaos" },
+      h("h2", {}, "CHAOS MACHINE"),
+      h(
+        "div",
+        { class: "body scroll" },
+        last,
+        h(
+          "div",
+          { class: "bag tradegrid", "data-test": "chaos-machine", style: "--cols:4" },
+          inMachine.map((it) => this.tradeCell(it, { "data-chaos-in": it.id, onclick: () => this.a.chaosToggle(it.id) })),
+        ),
+        recipe,
+        h(
+          "div",
+          { class: "guildform" },
+          h("button", { "data-test": "chaos-combine", disabled: !c?.recipe || (c.zen ?? 0) > s.player.zen, onclick: () => this.a.chaosCombine() }, "⚗ Kết hợp"),
+        ),
+        h("div", { class: "hint" }, `Tối đa ${c?.maxItems ?? 8} món. Tạo cánh: 1 vũ khí / giáp / khiên +4 trở lên + 1 Jewel of Chaos. Thất bại mất hết đồ đặt vào.`),
+        h("div", { class: "head" }, "Túi đồ"),
+        h(
+          "div",
+          { class: "bag", "data-test": "chaos-bag", style: `--cols:${BAG_COLUMNS}` },
+          bag.map((it) => this.tradeCell(it, { "data-chaos-bag": it.id, onclick: () => this.a.chaosToggle(it.id) })),
+        ),
+      ),
+    );
   }
 
   // ---------- Giao dịch (P5-M4, P5-5): hai bàn + túi; bấm đồ trong túi = đặt lên bàn ----------

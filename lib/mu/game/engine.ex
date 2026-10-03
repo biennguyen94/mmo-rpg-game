@@ -46,6 +46,9 @@ defmodule Mu.Game.Engine do
       attack_range: basic_attack_range(equipment),
       hp_max: Stats.hp_max(c.class, c.level, c.vitality) + item_sum(equipment, "hpBonus"),
       mp_max: Stats.mp_max(c.class, c.level, c.energy),
+      # cánh (P6-4): % sát thương gây ra / % sát thương nhận bớt
+      damage_increase: item_sum(equipment, "damageIncrease"),
+      absorb: item_sum(equipment, "absorb"),
       # cho heal/buff (công thức theo energy của người dùng, P2-M3) và hồi MP
       energy: c.energy
     }
@@ -54,8 +57,9 @@ defmodule Mu.Game.Engine do
   @doc """
   Template đồ ở cấp cường hóa `level` (+N, P5-3 (1)) và cấp option Jewel of Life `option`
   (P5-4): cộng `items.levelBonus[type]` × `level` — `attack` vào `attackMin` / `attackMax`,
-  `defense` vào `defense` — và `upgrade.life.perOption` × `option` vào cùng chỉ số đó. Type không
-  có trong bảng (nhẫn, jewel, potion) giữ nguyên.
+  khóa khác (`defense`, cánh P6-4: `damageIncrease`, `absorb`) vào khóa cùng tên — và
+  `upgrade.life.perOption` × `option` vào chỉ số đòn (vũ khí) / thủ (đồ khác). Type không có
+  trong bảng (nhẫn, jewel, potion) giữ nguyên.
   """
   def leveled(template, level, option \\ 0)
 
@@ -74,11 +78,16 @@ defmodule Mu.Game.Engine do
         {atk, def} =
           if bonus["attack"], do: {atk + per_option, def}, else: {atk, def + per_option}
 
+        # khóa khác của bảng (cánh: damageIncrease, absorb) cộng thẳng theo cấp
+        extra =
+          for {k, n} <- bonus, k not in ~w(attack defense), n * level > 0, do: {k, n * level}
+
         template
         |> then(
           &if(atk > 0, do: &1 |> add.("attackMin", atk) |> add.("attackMax", atk), else: &1)
         )
         |> then(&if(def > 0, do: add.(&1, "defense", def), else: &1))
+        |> then(&Enum.reduce(extra, &1, fn {k, n}, t -> add.(t, k, n) end))
     end
   end
 
@@ -151,7 +160,8 @@ defmodule Mu.Game.Engine do
   @doc """
   Pipeline sát thương §4 (giống `calculateDamage` của KB). `ctx`: `raw_attack`,
   `skill_multiplier`, `target_defense` và tùy chọn `skill_bonus`, `damage_bonus`,
-  `critical?`, `critical_multiplier`, `buff_multiplier`.
+  `critical?`, `critical_multiplier`, `buff_multiplier`, cánh (P6-4, %): `damage_increase` của
+  bên đánh (nhân cùng bước buff) và `absorb` của bên nhận (nhân sau khi trừ thủ, trước sàn cứng).
   """
   def damage(ctx) do
     combat = Config.get(["combat"])
@@ -161,10 +171,11 @@ defmodule Mu.Game.Engine do
         Map.get(ctx, :damage_bonus, 0)
 
     d = if Map.get(ctx, :critical?, false), do: d * ctx.critical_multiplier, else: d
-    d = d * Map.get(ctx, :buff_multiplier, 1)
+    d = d * Map.get(ctx, :buff_multiplier, 1) * (1 + Map.get(ctx, :damage_increase, 0) / 100)
     after_def = d - ctx.target_defense
     soft_floor = d * combat["minDamageRatio"]
-    max(combat["hardFloor"], floor(max(after_def, soft_floor)))
+    absorbed = max(after_def, soft_floor) * (1 - min(Map.get(ctx, :absorb, 0), 100) / 100)
+    max(combat["hardFloor"], floor(absorbed))
   end
 
   @doc """
@@ -188,6 +199,8 @@ defmodule Mu.Game.Engine do
           skill_multiplier: skill_multiplier,
           # buff Greater Damage (§4 bước 3)
           damage_bonus: Map.get(attacker, :damage_bonus, 0),
+          damage_increase: Map.get(attacker, :damage_increase, 0),
+          absorb: Map.get(defender, :absorb, 0),
           target_defense: defender.defense,
           critical?: crit?,
           critical_multiplier: combat["criticalMultiplier"]

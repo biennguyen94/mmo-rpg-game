@@ -8,7 +8,7 @@ defmodule Mu.Game.Upgrade do
   - Bless / Soul: dòng bảng có `fromLevel` = cấp hiện tại; jewel phải nằm trong `requires` (sai loại
     → `INVALID_TARGET`); không còn dòng (đã +9) → `FORBIDDEN`. Thành công → `toLevel`; thất bại theo
     `onFailure`: `UNCHANGED` giữ cấp, `DECREASE` giảm 1 cấp, `DESTROY` mất đồ.
-  - Life (`upgrade.life`): `option` + 1 với `successRate`, tối đa `maxOption` (đủ → `FORBIDDEN`),
+  - Life (`upgrade.life`; type trong `excludeTypes` — cánh — thì `INVALID_TARGET`): `option` + 1 với `successRate`, tối đa `maxOption` (đủ → `FORBIDDEN`),
     thất bại `onFailure`.
 
   Kết quả: `{:ok, %{ok: bool, level, option, destroyed: bool}, rng}` hoặc `{:error, code}`.
@@ -21,9 +21,18 @@ defmodule Mu.Game.Upgrade do
     life = Config.get(["upgrade", "life"])
 
     cond do
-      Config.get(["items", "levelBonus"])[template["type"]] == nil -> {:error, "INVALID_TARGET"}
-      jewel_id == life["jewel"] -> life(rng, life, level, option)
-      true -> level(rng, level, option, jewel_id)
+      Config.get(["items", "levelBonus"])[template["type"]] == nil ->
+        {:error, "INVALID_TARGET"}
+
+      # cánh không có option Life (P6-4 (3))
+      jewel_id == life["jewel"] and template["type"] in (life["excludeTypes"] || []) ->
+        {:error, "INVALID_TARGET"}
+
+      jewel_id == life["jewel"] ->
+        life(rng, life, level, option)
+
+      true ->
+        level(rng, level, option, jewel_id)
     end
   end
 

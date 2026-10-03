@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json. P5-M1: nhóm `jewels` (0,6 %, Bless 50 / Soul 35 / Life 15) cho quái cấp ≥ 10 (P5-2 duyệt 2026-10-03).",
+  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json. P5-M1: nhóm `jewels` (0,6 %, Bless 50 / Soul 35 / Life 15) cho quái cấp ≥ 10 (P5-2 duyệt 2026-10-03). P6-M3: nhóm `jewels` thêm Jewel of Chaos — trọng số Bless 45 / Soul 30 / Life 12 / Chaos 13 (P6-3 (1), tổng tỉ lệ vẫn 0,6 %).",
   "drops": [
     {
       "monsterId": "spider",
@@ -646,15 +646,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -857,15 +861,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -1068,15 +1076,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -1279,15 +1291,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -1490,15 +1506,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -1701,15 +1721,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -1912,15 +1936,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -2123,15 +2151,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
@@ -2334,15 +2366,19 @@
           "entries": [
             {
               "item": "jewel_bless",
-              "weight": 50
+              "weight": 45
             },
             {
               "item": "jewel_soul",
-              "weight": 35
+              "weight": 30
             },
             {
               "item": "jewel_life",
-              "weight": 15
+              "weight": 12
+            },
+            {
+              "item": "jewel_chaos",
+              "weight": 13
             }
           ]
         }
