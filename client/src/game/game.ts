@@ -97,10 +97,7 @@ export class GameClient {
         void this.send(accept ? "party_accept" : "party_decline", { from });
       },
       partyLeave: () => void this.send("party_leave"),
-      goTo: (id) => {
-        const e = this.world.entities.get(id);
-        if (e) this.moveTo(e.x, e.y);
-      },
+      goTo: (x, y) => this.moveTo(x, y),
       partyKick: (name) => void this.send("party_kick", { name }),
       partyDisband: () => void this.send("party_disband"),
     });
@@ -163,7 +160,7 @@ export class GameClient {
     this.view?.destroy();
     this.view = this.makeView(this.ui.view, map, this.world, {
       onGround: (x, y) => (this.aiming ? void this.castAt(this.aiming, x, y) : this.moveTo(x, y)),
-      onEntity: (e, sx, sy) => this.clickEntity(e, sx, sy),
+      onEntity: (e, sx, sy, tx, ty) => this.clickEntity(e, sx, sy, tx, ty),
     });
     const delay = this.join.config.interpolationDelayMs;
     this.view.setClock(() => this.clock.now(Date.now()) - delay);
@@ -326,13 +323,13 @@ export class GameClient {
     void this.send("move_to", { x, y });
   }
 
-  private clickEntity(e: Entity, sx: number, sy: number): void {
+  private clickEntity(e: Entity, sx: number, sy: number, tx = e.x, ty = e.y): void {
     const me = this.world.entities.get(this.selfId);
     if (!me || !this.join) return;
     if (this.aiming) return void this.castAt(this.aiming, e.x, e.y);
     if (e.kind === "player") {
       // menu skill hỗ trợ / teleport (P2-M3); không có gì thì như cũ: đi tới
-      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name) && e.id !== this.selfId) this.moveTo(e.x, e.y);
+      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name, { x: tx, y: ty }) && e.id !== this.selfId) this.moveTo(tx, ty);
     } else if (e.kind === "monster" && e.state !== "dead") {
       this.ui.monsterMenu(e.id, sx, sy);
     } else if (e.kind === "npc") {

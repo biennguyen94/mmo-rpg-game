@@ -3,17 +3,20 @@
 //   node client/e2e/soak.mjs [baseUrl] [số_bot] [số_phút] [tỉ_lệ_bot_ở_thị_trấn]
 // Tỉ lệ thị trấn (0..1, mặc định 0): các bot này chỉ đi lại trong thị trấn, không săn — đo AOI
 // khi người chơi phân tán (P3-M1): thị trấn và vùng Spider cách nhau hơn một ô AOI.
+// SOAK_PARTY=k (P3-M6): bot lập nhóm k người (bot i % k == 0 làm trưởng nhóm, mời k − 1 bot kế
+// tiếp; bot được mời tự đồng ý) — đo Mu.Party + chia EXP dưới tải.
 // Server cần TRUSTED_PROXIES=127.0.0.1: mỗi bot gửi X-Forwarded-For riêng (giả lập IP khác nhau,
 // giới hạn đăng ký theo IP vẫn giữ nguyên).
 const base = process.argv[2] ?? "http://localhost:4000";
 const N = Number(process.argv[3] ?? 20);
 const minutes = Number(process.argv[4] ?? 20);
 const townBots = Math.round(N * Number(process.argv[5] ?? 0));
+const partySize = Number(process.env.SOAK_PARTY ?? 0);
 const wsBase = base.replace(/^http/, "ws");
 const stamp = Date.now() % 100000;
 // vùng sinh Spider ở Lorencia (priv/maps/lorencia.json) — bot soak chỉ săn ở đây
 const SPIDER = { x0: 42, x1: 58, y0: 24, y1: 44 };
-const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {}, bytesIn: 0, msgsIn: 0, town: { joins: 0, bytesIn: 0, msgsIn: 0 }, byEvent: {} };
+const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {}, bytesIn: 0, msgsIn: 0, town: { joins: 0, bytesIn: 0, msgsIn: 0 }, byEvent: {}, partyInvites: 0, partyFull: new Set(), partyEvents: 0 };
 
 async function http(method, path, body, token, ip) {
   const r = await fetch(base + path, {
@@ -78,6 +81,12 @@ async function bot(i) {
       for (const e of p.entities) if (ents.has(e.id)) Object.assign(ents.get(e.id), e);
       for (const id of p.removed) ents.delete(id);
       if (selfId && ents.has(selfId)) me = ents.get(selfId);
+    } else if (ev === "party_invite") {
+      stats.partyInvites++;
+      void cmd("party_accept", { from: p.from });
+    } else if (ev === "party") {
+      stats.partyEvents++;
+      if (p.members.length === partySize) stats.partyFull.add(p.leader);
     } else if (ev === "player") {
       if (player && p.level > player.level) stats.levelUps++;
       // hạ quái thật sự (chính bot ra đòn cuối) = EXP tăng (G24)
@@ -104,6 +113,11 @@ async function bot(i) {
   map = join.response.map;
   me = { x: player.x, y: player.y };
   const walkable = (x, y) => map.tiles[y] && [".", ":", "="].includes(map.tiles[y][x]);
+  // trưởng nhóm mời k − 1 bot kế tiếp khi chúng đã vào game (bot vào cách nhau 200 ms)
+  if (partySize > 1 && i % partySize === 0)
+    setTimeout(async () => {
+      for (let j = i + 1; j < Math.min(i + partySize, N); j++) await cmd("party_invite", { to: `S${stamp}x${j}` });
+    }, partySize * 200 + 3000);
 
   const end = Date.now() + minutes * 60_000;
   while (Date.now() < end && ws.readyState === 1) {
@@ -172,8 +186,9 @@ const report = (label) => {
   const split = townBots
     ? ` [thị trấn ${t.joins}: ${rate(t.bytesIn, t.msgsIn, t.joins)}; săn ${stats.joins - t.joins}: ${rate(stats.bytesIn - t.bytesIn, stats.msgsIn - t.msgsIn, stats.joins - t.joins)}]`
     : "";
+  const party = partySize > 1 ? ` | nhóm: mời ${stats.partyInvites}, đủ ${partySize} người ${stats.partyFull.size} nhóm, event party ${stats.partyEvents}` : "";
   console.log(
-    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | nhận ${rate(stats.bytesIn, stats.msgsIn, stats.joins)}${split} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
+    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | nhận ${rate(stats.bytesIn, stats.msgsIn, stats.joins)}${split} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms${party}`,
   );
 };
 

@@ -88,8 +88,8 @@ export interface UiActions {
   deleteReadMail(): void;
   /** Nhóm (P3-M4). */
   partyInvite(name: string): void;
-  /** Đi tới chỗ người chơi `targetId` (mục "Đi tới đây" trong menu người chơi). */
-  goTo(targetId: string): void;
+  /** Đi tới ô đã bấm (mục "Đi tới đây" trong menu người chơi): giữ thao tác click-to-move. */
+  goTo(x: number, y: number): void;
   partyAnswer(from: string, accept: boolean): void;
   partyLeave(): void;
   partyKick(name: string): void;
@@ -943,7 +943,7 @@ export class GameUI {
    * Menu khi click người chơi (P2-M3): skill hỗ trợ (heal/buff) đã học lên người đó; click chính
    * mình thì thêm skill chọn ô (teleport). Trả false nếu không có gì để hiện.
    */
-  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number, name?: string): boolean {
+  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number, name?: string, tile?: { x: number; y: number }): boolean {
     this.closeContext();
     const mine = this.state.player.view.skills.map((id) => this.state.skills.get(id)).filter((x) => x !== undefined);
     const ally = mine.filter((sk) => sk.targetType === "ALLY");
@@ -962,7 +962,7 @@ export class GameUI {
       point.map((sk) => h("button", { "data-skill": sk.id, onclick: () => this.a.aim(sk.id) }, `${sk.name}… (${sk.manaCost} MP)`)),
       canInvite ? h("button", { "data-test": "party-invite", onclick: () => (this.closeContext(), this.a.partyInvite(name!)) }, "👥 Mời vào nhóm") : null,
       // bấm trúng người chơi khác giờ mở menu (P3-M4): giữ thao tác đi bằng một mục riêng
-      !isSelf ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(targetId)) }, "🚶 Đi tới đây") : null,
+      !isSelf && tile ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(tile.x, tile.y)) }, "🚶 Đi tới đây") : null,
       h("hr", {}),
       h("button", { onclick: () => this.closeContext() }, "Hủy"),
     );

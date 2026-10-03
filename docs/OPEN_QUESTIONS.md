@@ -250,7 +250,7 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P3-6 **ĐÃ LÀM (P3-M3)** | **Warehouse**: NPC nào, ở đâu? Có cất Zen (schema §9 không có cột)? Phí? UI (§19 không vẽ) | NPC mới "Warehouse Keeper" ở thị trấn Lorencia + Noria; **không cất Zen, không phí** (schema chưa có); panel full-screen: lưới kho 15×8 + lưới túi 8×8 (mobile xếp dọc), kéo thả / nút [Gửi] / [Rút] trong tooltip; chỉ mở trong tầm `npcRange` |
 | P3-7 | **AOI**: chat NORMAL vẫn cả map hay theo tầm nhìn? Minimap (§19.12) đã chỉ hiện mình / NPC / cổng nên không ảnh hưởng | Giữ chat NORMAL cả map (P2-12); AOI chỉ áp cho `spawn` / `despawn` / `snapshot` / `combat` |
 | P3-8 | **Reconnect**: trong 30 s chờ, nhân vật đứng yên (dừng tự đánh) và vẫn bị đánh; tab mới của cùng tài khoản vào lại thì tiếp quản | Như cột trái (đúng §4); thông báo "Đã kết nối lại" |
-| P3-9 | Danh sách nghiệm thu Phase 3 | Em soạn ở P3-M6 (như P2-15) |
+| P3-9 **ĐÃ LÀM (P3-M6)** | Danh sách nghiệm thu Phase 3 | Em soạn ở P3-M6 (như P2-15) |
 | P3-10 | **KB_TECHNICAL §5** cần anh bổ sung act / event party (+ warehouse nếu cần act riêng) sau khi chốt P3-5, P3-6 | Em ghi `CHANGE_REASON` khi làm |
 
 ### P3-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
@@ -291,3 +291,11 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | P3M5-2 | MG mặc được đồ nào trong 16 món Phase 2 (số tạm, chưa có Item.txt) | Theo mẫu Item.txt ở Phase 1: mọi món DK / DW không phải mũ (DEC-105); đối chiếu khi có Item.txt (E6) |
 | P3M5-3 | **KB cần anh bổ sung**: `GET /characters` có `maxCharacters` + `classes[].locked/unlockLevel`, lỗi `CLASS_LOCKED`; `player.view.attackMaxMagic / attackSpeedMagic / cooldownMsMagic`; `data.skills[].classes / magic` (gộp vào P3-10) | Đã làm, không đổi schema DB (CHECK class đã có MG) |
 | P3M5-4 | Simulator 10 lần (quái auto, đồ theo cấp, skill): MG cộng ENE 69,7 phút tới cấp 30 (574 potion), cộng STR 78,1 phút; DK 78,3; DW 72,0 (725 potion) | Cân bằng gần các class khác; MG / DW tốn potion như B-2 |
+
+### P3-M6. Nghiệm thu Phase 3 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE3.md`
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| B-7 | Event `party` ~1,2 KB/s/bot (≈ 19 % băng thông) khi nhóm 5 người cùng di chuyển | Giữ (§12); hoặc chỉ đẩy khi HP / map / online / ô AOI đổi, hoặc `party.statusIntervalMs` 1 000 |
+| B-8 | KB_TECHNICAL §5 cần bổ sung act / event Phase 3 (P3-10: P3M3-1, P3M4-1, P3M5-3) | Anh bổ sung KB |
+| B-9 | `CLAUDE.md` quy tắc 3 (P3-1) | Anh sửa hoặc cho em sửa |

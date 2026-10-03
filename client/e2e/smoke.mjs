@@ -27,6 +27,8 @@ async function hudPos(page) {
 async function clickTile(page, dx, dy) {
   const box = await page.locator('[data-test="game-canvas"]').boundingBox();
   await page.mouse.click(box.x + box.width / 2 + dx * 32, box.y + box.height / 2 + dy * 32);
+  // bấm trúng người chơi khác (đông người, P3-M4) → menu người chơi: chọn "Đi tới đây"
+  await (await page.$('[data-test="player-goto"]'))?.click();
 }
 
 async function waitPos(page, x, y, ms = 8000) {
@@ -111,35 +113,56 @@ async function waitPos(page, x, y, ms = 8000) {
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${shots}/desktop-08-field.png` });
 
-  // click Spider → context menu → Tấn công thường → tự đánh (client gửi attack theo cooldown)
-  const spider = await page.evaluate(() => {
-    const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
-    return window.__mu
-      .entities()
-      .filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead")
-      .map((e) => ({ id: e.id, x: e.x, y: e.y, d: Math.max(Math.abs(e.x - me.x), Math.abs(e.y - me.y)) }))
-      .sort((a, b) => a.d - b.d)[0];
-  });
-  const me = await hudPos(page);
-  await clickTile(page, spider.x - me.x, spider.y - me.y);
-  const menu = await page.waitForSelector('[data-test="ctxmenu"]', { timeout: 3000 }).catch(() => null);
-  check("click Spider → context menu (Tấn công thường / Hủy)", !!menu && (await menu.textContent()).includes("Tấn công thường"));
-  await page.screenshot({ path: `${shots}/desktop-09-ctxmenu.png` });
-  await page.click("text=Tấn công thường");
-  const hit = await page
-    .waitForFunction((id) => { const s = window.__mu.entities().find((e) => e.id === id); return !s || s.hp < 30; }, spider.id, { timeout: 20000 })
-    .then(() => true)
-    .catch(() => false);
+  // click Spider → context menu → Tấn công thường → tự đánh (client gửi attack theo cooldown).
+  // Đông người (chạy cùng soak) có thể bị người khác ra đòn cuối / hết Spider: tối đa 6 lượt tới khi có EXP
+  const nearestSpider = () =>
+    page.evaluate(() => {
+      const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
+      return window.__mu
+        .entities()
+        .filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead")
+        .map((e) => ({ id: e.id, x: e.x, y: e.y, d: Math.max(Math.abs(e.x - me.x), Math.abs(e.y - me.y)) }))
+        .sort((a, b) => a.d - b.d)[0];
+    });
+  let hit = false;
+  let dead = false;
+  let menuOk = false;
+  const rounds = [];
+  for (let round = 0; round < 6; round++) {
+    const spider = await nearestSpider();
+    // hết Spider sống trong tầm nhìn (bị đánh hết): chờ hồi sinh
+    if (!spider) {
+      await page.waitForTimeout(3000);
+      continue;
+    }
+    const me = await hudPos(page);
+    await clickTile(page, spider.x - me.x, spider.y - me.y);
+    const menu = await page.waitForSelector('[data-test="ctxmenu"]', { timeout: 3000 }).catch(() => null);
+    const ok = !!menu && (await menu.textContent()).includes("Tấn công thường");
+    if (round === 0) {
+      menuOk = ok;
+      await page.screenshot({ path: `${shots}/desktop-09-ctxmenu.png` });
+    }
+    if (!ok) continue;
+    await page.click("text=Tấn công thường");
+    hit ||= await page
+      .waitForFunction((id) => { const s = window.__mu.entities().find((e) => e.id === id); return !s || s.hp < 30; }, spider.id, { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+    if (round === 0) await page.screenshot({ path: `${shots}/desktop-10-fight.png` });
+    dead ||= await page
+      .waitForFunction((id) => { const s = window.__mu.entities().find((e) => e.id === id); return !s || s.state === "dead"; }, spider.id, { timeout: 30000 })
+      .then(() => true)
+      .catch(() => false);
+    await page.waitForTimeout(500);
+    rounds.push(`${spider.id}:${ok ? "menu" : "nomenu"}`);
+    if ((await page.evaluate(() => window.__mu.player().experience)) > 0) break;
+  }
+  check("click Spider → context menu (Tấn công thường / Hủy)", menuOk);
   check("tự đánh: Spider mất máu", hit);
-  await page.screenshot({ path: `${shots}/desktop-10-fight.png` });
-  const dead = await page
-    .waitForFunction((id) => { const s = window.__mu.entities().find((e) => e.id === id); return !s || s.state === "dead"; }, spider.id, { timeout: 30000 })
-    .then(() => true)
-    .catch(() => false);
   check("tự đánh tới khi Spider chết", dead);
-  await page.waitForTimeout(500);
   const p = await page.evaluate(() => window.__mu.player());
-  check("nhận EXP + Zen (player từ server)", p.experience >= 10 && p.zen > 0, `exp=${p.experience} zen=${p.zen} hp=${p.hp}`);
+  check("nhận EXP + Zen (player từ server)", p.experience >= 10 && p.zen > 0, `exp=${p.experience} zen=${p.zen} hp=${p.hp} lượt ${rounds.join(",")}`);
   // bỏ đánh, quay về thị trấn cho an toàn
   await clickTile(page, -8, 0);
 

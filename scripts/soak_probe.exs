@@ -16,11 +16,16 @@ for i <- 1..String.to_integer(n) do
   procs = :rpc.call(node, :erlang, :system_info, [:process_count])
   sessions = :rpc.call(node, DynamicSupervisor, :count_children, [Mu.Game.SessionSupervisor]).active
   {uptime_ms, _} = :rpc.call(node, :erlang, :statistics, [:wall_clock])
+  # nhóm (P3-M4): hàng đợi tiến trình Mu.Party + số nhóm đang có
+  party_pid = :rpc.call(node, Process, :whereis, [Mu.Party])
+  {:message_queue_len, pq} = :rpc.call(node, Process, :info, [party_pid, :message_queue_len])
+  parties = map_size(:rpc.call(node, :sys, :get_state, [Mu.Party]).parties)
 
   IO.puts(
     "#{DateTime.utc_now() |> DateTime.truncate(:second)} | tick #{stats.ticks} " <>
       "(kỳ vọng ~#{div(uptime_ms, 50)} theo uptime VM) | max_drift #{stats.max_drift_ms} ms | " <>
       "người chơi #{stats.players} | session #{sessions} | MapServer queue #{q}, " <>
-      "#{div(map_mem, 1024)} KB | RAM VM #{div(mem, 1_048_576)} MB | process #{procs}"
+      "#{div(map_mem, 1024)} KB | Party queue #{pq}, #{parties} nhóm | " <>
+      "RAM VM #{div(mem, 1_048_576)} MB | process #{procs}"
   )
 end
