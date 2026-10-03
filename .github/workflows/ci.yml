@@ -136,6 +136,9 @@ jobs:
       - name: DB + icon_map (placeholder)
         run: mix ecto.setup && mix mu.icons.index
       - name: Chạy server
+        # TRUSTED_PROXIES: e2e skill đăng ký mỗi tài khoản từ một X-Forwarded-For riêng (giới hạn đăng ký theo IP)
+        env:
+          TRUSTED_PROXIES: 127.0.0.1
         run: |
           mix phx.server > server.log 2>&1 &
           for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
@@ -155,6 +158,11 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
           CHROMIUM_PATH: none
         run: node client/e2e/classes.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — skill theo class (buff, heal, teleport, lặp skill)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/skills.mjs http://localhost:4000 e2e-shots
       - name: Ảnh + log server
         if: always()
         uses: actions/upload-artifact@v4

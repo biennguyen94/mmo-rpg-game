@@ -139,7 +139,7 @@ defmodule Mu.Game.Characters do
   Trạng thái đầy đủ gửi client (event `player`, `KB_TECHNICAL §5`) kèm `view` tính sẵn
   (`Engine.derived/2`): client chỉ hiển thị, không tính công thức.
   """
-  def player_view(%Character{} = c, items \\ []) do
+  def player_view(%Character{} = c, items \\ [], buffs \\ []) do
     d = Engine.derived(c, Inventory.equipped_templates(items))
 
     %{
@@ -176,7 +176,9 @@ defmodule Mu.Game.Characters do
         skills: Enum.sort(Engine.skills(c)),
         potions: Inventory.potion_counts(items),
         inventoryUsed: length(Inventory.inventory(items)),
-        inventorySize: Inventory.inventory_slots()
+        inventorySize: Inventory.inventory_slots(),
+        # [{id, stat, value, expiresAt}] — MapServer giữ, Session chuyển tiếp (P2-M3)
+        buffs: buffs
       },
       inventory: Enum.map(Inventory.inventory(items), &item_view/1),
       equipment: Enum.map(Inventory.equipment(items), &item_view/1)

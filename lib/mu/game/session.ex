@@ -92,6 +92,8 @@ defmodule Mu.Game.Session do
       # rid → kết quả, kèm hàng đợi để bỏ rid cũ
       rids: %{},
       rid_order: :queue.new(),
+      # buff hiện có (MapServer gửi `{:map_buffs, ...}`), đưa vào `player.view.buffs` (P2-M3)
+      buffs: [],
       tabs: %{},
       on_map: false,
       save_timer: nil,
@@ -182,6 +184,12 @@ defmodule Mu.Game.Session do
     # Zen và lên cấp ghi ngay (G12, KB_TECH_STACK §4); EXP thường đi cùng lần ghi này
     s = if zen > 0 or levels > 0, do: persist(s), else: s
     push_player(s)
+    {:noreply, s, timeout(s)}
+  end
+
+  def handle_info({:map_buffs, _cid, buffs}, s) do
+    s = %{s | buffs: buffs}
+    if s.character, do: push_player(s)
     {:noreply, s, timeout(s)}
   end
 
@@ -568,7 +576,7 @@ defmodule Mu.Game.Session do
   end
 
   defp push_player(s) do
-    push(s, "player", Characters.player_view(s.character, s.items))
+    push(s, "player", Characters.player_view(s.character, s.items, s.buffs))
   end
 
   defp schedule_save(%{save_timer: nil} = s) do

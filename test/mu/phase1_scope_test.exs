@@ -1,7 +1,7 @@
 defmodule Mu.Phase1ScopeTest do
   @moduledoc """
   Dữ liệu/config khớp đúng scope đang mở (KB_00_RULES §7). Phase 1 theo JSON scope; Phase 2
-  thêm dần theo milestone (P2-M2: DW, ELF, item t0 của hai class, maxLevel 30).
+  thêm dần theo milestone (P2-M2: DW, ELF, item t0 của hai class, maxLevel 30; P2-M3: skill theo class).
   """
   use ExUnit.Case, async: true
 
@@ -21,7 +21,9 @@ defmodule Mu.Phase1ScopeTest do
           part <- ~w(helm armor pants gloves boots),
           do: "#{set}_#{part}_t0"
         ),
-    skills: ["basic_attack", "twisting_slash"],
+    skills:
+      ~w(basic_attack falling_slash twisting_slash death_stab energy_ball fire_ball lightning teleport flame heal triple_shot greater_defense greater_damage)
+      |> Enum.sort(),
     maxLevel: 30
   }
 

@@ -152,6 +152,7 @@ defmodule Mu.World.MapServer do
       tick_ms: tick_ms,
       snapshot_every: div(sim_hz, server["snapshotHz"]),
       ai_every: div(sim_hz, server["monsterAiHz"]),
+      regen_every: max(1, div(Config.get(["combat", "mpRegen", "intervalMs"]), tick_ms)),
       step_ms: 1000 / Config.get(["movement", "playerTilesPerSecond"]),
       diagonal: Config.get(["movement", "diagonalCostFactor"]),
       max_path_nodes: Config.get(["movement", "maxPathNodes"]),
@@ -209,6 +210,9 @@ defmodule Mu.World.MapServer do
             path: [],
             progress: 0,
             cooldowns: %{},
+            # P2-M3: buff đang có (`Engine.add_buff/5`), phần lẻ MP hồi tự nhiên
+            buffs: %{},
+            mp_acc: 0.0,
             dead_at: nil,
             last_combat_at: nil,
             owner: owner,
@@ -400,7 +404,8 @@ defmodule Mu.World.MapServer do
         {id, m}, s -> put_entity(s, id, advance(m, s.tick_ms, m.step_ms, s.diagonal))
       end)
 
-    s = if rem(s.ticks, s.ai_every) == 0, do: ai(s), else: s
+    s = if rem(s.ticks, s.ai_every) == 0, do: s |> ai() |> expire_buffs(), else: s
+    s = if rem(s.ticks, s.regen_every) == 0, do: regen_mp(s), else: s
     s = s |> respawn_players() |> expire_ground()
     if rem(s.ticks, s.snapshot_every) == 0, do: snapshot(s), else: s
   end
@@ -436,6 +441,10 @@ defmodule Mu.World.MapServer do
     s = put_in(s.monsters[id], m)
     if changed?(old, m), do: mark(s, m), else: s
   end
+
+  # người chơi: MP cũng vào snapshot (P2-M3)
+  defp changed?(%{kind: :player} = a, b),
+    do: {a.x, a.y, a.hp, a.mp, a.state} != {b.x, b.y, b.hp, b.mp, b.state}
 
   defp changed?(a, b), do: {a.x, a.y, a.hp, a.state} != {b.x, b.y, b.hp, b.state}
 
@@ -552,7 +561,8 @@ defmodule Mu.World.MapServer do
 
   defp do_monster_attack(s, m, e) do
     {mid, cid} = {m.id, e.character_id}
-    stats = %{defense: e.stats.defense, defense_rate: e.stats.defense_rate}
+    buffed = Engine.with_buffs(e.stats, e.buffs)
+    stats = %{defense: buffed.defense, defense_rate: e.stats.defense_rate}
     {res, rng} = Engine.roll_attack(s.rng, Engine.monster_stats(m.tpl), stats)
     hp = max(e.hp - res.dmg, 0)
     e = %{e | hp: hp, last_combat_at: now(s)}
@@ -568,8 +578,11 @@ defmodule Mu.World.MapServer do
     })
 
     if hp == 0 do
-      e = %{e | state: "dead", path: [], progress: 0, dead_at: now(s)}
+      # chết: mất mọi buff (P2-M3)
+      had_buffs? = map_size(e.buffs) > 0
+      e = %{e | state: "dead", path: [], progress: 0, dead_at: now(s), buffs: %{}}
       send(e.owner, {:map_died, cid})
+      if had_buffs?, do: notify_buffs(s, e)
       put_entity(s, cid, e)
     else
       put_entity(s, cid, e)
@@ -583,8 +596,8 @@ defmodule Mu.World.MapServer do
          :ok <- if(e.state == "dead", do: {:error, "FORBIDDEN"}, else: :ok),
          %{} = skill <- Data.skill(skill_id) || {:error, "INVALID_TARGET"},
          :ok <- if(skill_id in e.skills, do: :ok, else: {:error, "REQUIREMENT_NOT_MET"}),
-         {:ok, aim} <- aim(s, target),
-         :ok <- if(Maps.safe?(s.map, e.x, e.y), do: {:error, "FORBIDDEN"}, else: :ok),
+         {:ok, aim} <- aim(s, skill, target, e),
+         :ok <- safe_zone_ok(s, e, skill),
          :ok <- in_range(e, aim, skill),
          :ok <- off_cooldown(s, e, skill_id),
          :ok <- if(e.mp >= skill["manaCost"], do: :ok, else: {:error, "NO_MANA"}) do
@@ -594,17 +607,59 @@ defmodule Mu.World.MapServer do
         e
         | mp: e.mp - skill["manaCost"],
           cooldowns: Map.put(e.cooldowns, skill_id, t + Engine.skill_cooldown_ms(skill, e.stats)),
-          last_combat_at: t,
           # đánh tại chỗ: dừng đi
           path: [],
           progress: 0,
           state: "idle"
       }
 
+      # chỉ skill đánh quái mới tính là đang combat (G21)
+      e = if harmful?(skill), do: %{e | last_combat_at: t}, else: e
       s = put_entity(s, id, e)
-      {:ok, Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, id, &1, skill, rid))}
+      {:ok, apply_skill(s, e, aim, skill, rid)}
     end
   end
+
+  defp harmful?(skill), do: skill["targetType"] in ~w(SINGLE AOE)
+
+  # Đánh quái bị cấm trong safe zone; heal/buff/teleport thì được (P2-M3)
+  defp safe_zone_ok(s, e, skill) do
+    if harmful?(skill) and Maps.safe?(s.map, e.x, e.y), do: {:error, "FORBIDDEN"}, else: :ok
+  end
+
+  # Mục tiêu theo `targetType` (P2-M3):
+  # SINGLE / AOE quanh mục tiêu: một quái còn sống; AOE quanh mình / tại ô: quái hoặc ô;
+  # ALLY: người chơi còn sống (`p_<id>`; bỏ trống = bản thân); POINT: ô đi được.
+  defp aim(s, %{"targetType" => "ALLY"}, target, e) do
+    cid =
+      case target do
+        nil -> e.character_id
+        "p_" <> cid -> cid
+        _ -> nil
+      end
+
+    case cid && s.players[cid] do
+      %{state: state} = p when state != "dead" -> {:ok, {:player, cid, {p.x, p.y}}}
+      _ -> {:error, "INVALID_TARGET"}
+    end
+  end
+
+  defp aim(s, %{"targetType" => "POINT"}, {x, y}, _e) when is_integer(x) and is_integer(y) do
+    if Maps.walkable?(s.map, x, y), do: {:ok, {:point, {x, y}}}, else: {:error, "INVALID_TARGET"}
+  end
+
+  defp aim(_s, %{"targetType" => "POINT"}, _, _e), do: {:error, "INVALID_TARGET"}
+
+  defp aim(s, %{"targetType" => "SINGLE"}, target, _e) when is_binary(target), do: aim(s, target)
+  defp aim(_s, %{"targetType" => "SINGLE"}, _target, _e), do: {:error, "INVALID_TARGET"}
+
+  defp aim(s, %{"targetType" => "AOE", "center" => "target"}, target, _e) when is_binary(target),
+    do: aim(s, target)
+
+  defp aim(_s, %{"targetType" => "AOE", "center" => "target"}, _target, _e),
+    do: {:error, "INVALID_TARGET"}
+
+  defp aim(s, _skill, target, _e), do: aim(s, target)
 
   defp aim(s, target) when is_binary(target) do
     case s.monsters[target] do
@@ -621,7 +676,69 @@ defmodule Mu.World.MapServer do
 
   defp aim(_s, _), do: {:error, "INVALID_TARGET"}
 
+  defp apply_skill(s, e, aim, %{"targetType" => t} = skill, rid) when t in ~w(SINGLE AOE),
+    do: Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, e.character_id, &1, skill, rid))
+
+  # Teleport: tới ô đã kiểm (walkable) ngay; client thấy nhảy qua snapshot (Interp reset)
+  defp apply_skill(s, e, {:point, {x, y}}, %{"targetType" => "POINT"}, _rid) do
+    e = %{e | x: x, y: y}
+    put_entity(s, e.character_id, e)
+  end
+
+  defp apply_skill(s, e, {:player, cid, _}, %{"effect" => %{"kind" => "heal"} = eff} = skill, rid) do
+    p = s.players[cid]
+    hp = min(p.hp + Engine.effect_value(eff, e.stats.energy), p.stats.hp_max)
+
+    broadcast(s, "combat", %{
+      rid: rid,
+      attacker: e.id,
+      target: p.id,
+      skill: skill["id"],
+      dmg: 0,
+      crit: false,
+      hp: hp,
+      heal: hp - p.hp
+    })
+
+    put_entity(s, cid, %{p | hp: hp})
+  end
+
+  defp apply_skill(s, e, {:player, cid, _}, %{"effect" => %{"kind" => "buff"} = eff} = skill, rid) do
+    p = s.players[cid]
+    value = Engine.effect_value(eff, e.stats.energy)
+    until = now(s) + eff["durationMs"]
+    p = %{p | buffs: Engine.add_buff(p.buffs, skill["id"], eff["stat"], value, until)}
+
+    broadcast(s, "combat", %{
+      rid: rid,
+      attacker: e.id,
+      target: p.id,
+      skill: skill["id"],
+      dmg: 0,
+      crit: false,
+      hp: p.hp,
+      buff: value
+    })
+
+    notify_buffs(s, p)
+    put_entity(s, cid, p)
+  end
+
+  # Buff hiện có gửi Session chủ (để đưa vào `player.view.buffs`): `expiresAt` = giờ server
+  # (ms epoch) để client đếm ngược bằng ServerClock
+  defp notify_buffs(s, e) do
+    t = now(s)
+    wall = System.os_time(:millisecond)
+
+    list =
+      for {id, b} <- Enum.sort(e.buffs),
+          do: %{id: id, stat: b.stat, value: b.value, expiresAt: wall + b.until - t}
+
+    send(e.owner, {:map_buffs, e.character_id, list})
+  end
+
   defp aim_pos({:monster, _, pos}), do: pos
+  defp aim_pos({:player, _, pos}), do: pos
   defp aim_pos({:point, pos}), do: pos
 
   # đánh thường: tầm theo vũ khí đang cầm (`stats.attack_range`, P2-5)
@@ -640,7 +757,36 @@ defmodule Mu.World.MapServer do
     if now(s) >= Map.get(e.cooldowns, skill_id, 0), do: :ok, else: {:error, "COOLDOWN"}
   end
 
-  # SINGLE: chỉ mục tiêu. AOE: mọi quái còn sống trong `radius` quanh người dùng (G7).
+  # SINGLE: chỉ mục tiêu. AOE quanh mục tiêu (`center` target): mục tiêu + quái gần nhất trong
+  # `radius` quanh nó, tối đa `maxTargets`. AOE tại ô (`center` point): mọi quái trong `radius`
+  # quanh ô/quái đã chọn. AOE quanh mình (`center` self, mặc định): G7.
+  defp victims(
+         s,
+         _e,
+         {:monster, mid, {x, y}},
+         %{"targetType" => "AOE", "center" => "target"} = skill
+       ) do
+    near =
+      for {id, m} <- s.monsters,
+          id != mid,
+          m.state != "dead",
+          d = Pathfinding.chebyshev({x, y}, {m.x, m.y}),
+          d <= skill["radius"],
+          do: {d, id}
+
+    [mid | near |> Enum.sort() |> Enum.map(&elem(&1, 1))]
+    |> Enum.take(skill["maxTargets"] || length(near) + 1)
+  end
+
+  defp victims(s, _e, aim, %{"targetType" => "AOE", "center" => "point"} = skill) do
+    {x, y} = aim_pos(aim)
+
+    for {mid, m} <- s.monsters,
+        m.state != "dead",
+        Pathfinding.chebyshev({x, y}, {m.x, m.y}) <= skill["radius"],
+        do: mid
+  end
+
   defp victims(s, e, aim, %{"targetType" => "AOE"} = skill) do
     around =
       for {mid, m} <- s.monsters,
@@ -662,7 +808,12 @@ defmodule Mu.World.MapServer do
     m = s.monsters[mid]
 
     {res, rng} =
-      Engine.roll_attack(s.rng, e.stats, Engine.monster_stats(m.tpl), skill["damageMultiplier"])
+      Engine.roll_attack(
+        s.rng,
+        Engine.with_buffs(e.stats, e.buffs),
+        Engine.monster_stats(m.tpl),
+        skill["damageMultiplier"]
+      )
 
     hp = max(m.hp - res.dmg, 0)
     m = MonsterAi.hit(%{m | hp: hp}, cid, res.dmg)
@@ -745,6 +896,45 @@ defmodule Mu.World.MapServer do
     end)
   end
 
+  # ---------- Buff hết hạn, hồi MP (P2-M3) ----------
+
+  defp expire_buffs(s) do
+    t = now(s)
+
+    Enum.reduce(s.players, s, fn
+      {id, %{buffs: buffs} = e}, s when map_size(buffs) > 0 ->
+        case Engine.expire_buffs(buffs, t) do
+          {_, false} ->
+            s
+
+          {kept, true} ->
+            e = %{e | buffs: kept}
+            notify_buffs(s, e)
+            %{s | players: Map.put(s.players, id, e)}
+        end
+
+      _, s ->
+        s
+    end)
+  end
+
+  # `energy / energyDiv` MP mỗi giây, cộng dồn phần lẻ; đã chết hoặc đầy thì thôi
+  defp regen_mp(s) do
+    ms = s.regen_every * s.tick_ms
+
+    Enum.reduce(s.players, s, fn
+      {id, %{state: state, mp: mp, stats: %{mp_max: max}} = e}, s
+      when state != "dead" and mp < max ->
+        acc = e.mp_acc + Engine.mp_regen(e.stats.energy, ms)
+        add = trunc(acc)
+        e = %{e | mp: min(mp + add, max), mp_acc: acc - add}
+        if add > 0, do: put_entity(s, id, e), else: %{s | players: Map.put(s.players, id, e)}
+
+      _, s ->
+        s
+    end)
+  end
+
   # ---------- Chết & hồi sinh người chơi (G11) ----------
 
   defp respawn_players(s) do
@@ -807,9 +997,12 @@ defmodule Mu.World.MapServer do
 
   defp send_snapshot(s) do
     entities =
-      for id <- s.dirty,
-          e = entity(s, id),
-          do: %{id: e.id, x: e.x, y: e.y, hp: e.hp, state: e.state}
+      for id <- s.dirty, e = entity(s, id) do
+        base = %{id: e.id, x: e.x, y: e.y, hp: e.hp, state: e.state}
+
+        # người chơi: kèm MP (thanh MP của chính mình đổi khi dùng skill / hồi, P2-M3)
+        if e.kind == :player, do: Map.put(base, :mp, e.mp), else: base
+      end
 
     broadcast(s, "snapshot", %{
       t: System.os_time(:millisecond),

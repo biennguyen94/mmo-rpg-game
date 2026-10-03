@@ -39,6 +39,7 @@ export interface PlayerView {
   cooldownMs: number;
   /** Tầm đánh thường (ô) theo vũ khí đang cầm. */
   attackRange: number;
+  buffs: BuffView[];
   expRequired: number | null;
   maxLevel: number;
   skills: string[];
@@ -91,6 +92,8 @@ export interface SnapshotEntity {
   x: number;
   y: number;
   hp: number;
+  /** Người chơi: MP (P2-M3). */
+  mp?: number;
   state: string;
 }
 
@@ -107,6 +110,10 @@ export interface CombatPayload {
   dmg: number;
   crit: boolean;
   hp: number;
+  /** Skill hỗ trợ (P2-M3): id skill, lượng hồi máu hoặc giá trị buff. */
+  skill?: string;
+  heal?: number;
+  buff?: number;
 }
 
 export interface ShopPayload {
@@ -142,12 +149,31 @@ export interface ItemTemplate {
   sellPrice: number;
 }
 
+export type SkillTarget = "SINGLE" | "AOE" | "ALLY" | "POINT";
+
 export interface SkillInfo {
   id: string;
   name: string;
+  class: string | null;
+  category: string;
+  /** SINGLE/AOE: quái; ALLY: người chơi (heal/buff); POINT: ô (teleport). */
+  targetType: SkillTarget;
+  /** AOE: tâm vùng — quanh mình / quanh mục tiêu / tại ô. */
+  center?: "self" | "target" | "point" | null;
   range: number;
+  radius: number;
   manaCost: number;
+  /** null = theo tốc độ đánh (`view.cooldownMs`). */
+  cooldownMs: number | null;
   requiredLevel: number;
+}
+
+/** Buff đang có (`player.view.buffs`); `expiresAt` theo giờ server (ms). */
+export interface BuffView {
+  id: string;
+  stat: string;
+  value: number;
+  expiresAt: number;
 }
 
 export interface MapData {

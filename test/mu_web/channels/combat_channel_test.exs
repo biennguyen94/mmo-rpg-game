@@ -253,4 +253,40 @@ defmodule MuWeb.CombatChannelTest do
     ref = push(socket2, "cmd", %{"act" => "attack", "rid" => "d1", "target" => "m_1"})
     assert_reply ref, :error, %{error: "OUT_OF_RANGE"}
   end
+
+  test "P2-M3: Elf buff bản thân qua kênh → player.view.buffs; heal người khác → combat.heal" do
+    {a, c} = create_character(nil, "ELF")
+    Mu.Repo.update!(Ecto.Changeset.change(c, level: 12))
+    {:ok, r, socket} = join_game(a, c)
+    assert "greater_defense" in r.player.view.skills
+    assert r.player.view.buffs == []
+
+    ref = push(socket, "cmd", %{"act" => "skill", "rid" => "g1", "id" => "greater_defense"})
+    assert_reply ref, :ok, %{rid: "g1"}
+
+    assert %{view: %{buffs: [%{id: "greater_defense", value: 3, expiresAt: _}]}} =
+             last_player_push()
+
+    {a2, c2} = create_character()
+    {:ok, _, _socket2} = join_game(a2, c2)
+
+    MapServer.debug_update(@map, fn st ->
+      st
+      |> put_in([:players, c2.id, :hp], 50)
+      |> put_in([:players, c2.id, :x], st.players[c.id].x + 1)
+      |> put_in([:players, c2.id, :y], st.players[c.id].y)
+    end)
+
+    ref =
+      push(socket, "cmd", %{
+        "act" => "skill",
+        "rid" => "h1",
+        "id" => "heal",
+        "target" => "p_" <> c2.id
+      })
+
+    assert_reply ref, :ok, _
+    tid = "p_" <> c2.id
+    assert_push "combat", %{rid: "h1", target: ^tid, heal: 13, hp: 63}
+  end
 end

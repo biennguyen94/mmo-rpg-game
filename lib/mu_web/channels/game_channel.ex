@@ -133,14 +133,21 @@ defmodule MuWeb.GameChannel do
     for {_, t} <- Mu.Game.Data.items(), do: Map.take(t, @client_item_keys)
   end
 
-  # Skill: tên + tầm + mana để client hiện menu và biết khi nào tiến lại gần (server vẫn kiểm)
+  # Skill: tên, tầm, mana, cooldown, loại mục tiêu để client hiện menu, tiến lại gần, lặp
+  # skill (server vẫn kiểm mọi thứ); không gửi hệ số / công thức
   defp client_skills do
     for {_, s} <- Mu.Game.Data.skills() do
       %{
         id: s["id"],
         name: s["name"],
+        class: s["class"],
+        category: s["category"],
+        targetType: s["targetType"],
+        center: s["center"],
         range: s["range"],
+        radius: s["radius"],
         manaCost: s["manaCost"],
+        cooldownMs: s["cooldownMs"],
         requiredLevel: s["requiredLevel"]
       }
     end
