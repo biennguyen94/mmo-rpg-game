@@ -97,3 +97,65 @@ export function requirements(t: ItemTemplate, p: Player): { label: string; value
   if (t.classes && !t.classes.includes(p.class)) out.push({ label: `Class ${t.classes.join("/")}`, value: 0, ok: false });
   return out;
 }
+
+/** Kích thước lưới túi đồ Phase 2 (P2-8): 8×8 = 64 ô, mỗi item một ô. */
+export const BAG_COLUMNS = 8;
+
+/** Nơi bắt đầu / kết thúc một lần kéo thả trong panel Túi đồ. */
+export type DragEnd =
+  | { kind: "bag"; slot: number }
+  | { kind: "equip"; slot: number }
+  | { kind: "trash" };
+
+export type DragStart = { kind: "bag"; item: ItemView } | { kind: "equip"; item: ItemView };
+
+/** Lệnh `cmd` (KB_TECHNICAL §5) cần gửi; `confirm` = phải hỏi người chơi trước (vứt đồ). */
+export interface ItemCommand {
+  act: "move_item" | "equip" | "unequip" | "drop";
+  payload: Record<string, unknown>;
+  confirm?: boolean;
+}
+
+/** Ô trang bị nhận được `t` (nhẫn: 8 hoặc 9). */
+export function equipSlotsOf(t: ItemTemplate): number[] {
+  if (!t.slot) return [];
+  if (t.slot === "RING1" || t.slot === "RING2") return [8, 9];
+  const s = EQUIP_SLOT[t.slot];
+  return s === undefined ? [] : [s];
+}
+
+/**
+ * Kéo thả → lệnh gửi server, `null` = không làm gì (thả về chỗ cũ, ô không hợp).
+ * Server vẫn kiểm lại mọi thứ (class, yêu cầu, slot, chủ sở hữu).
+ */
+export function dragCommand(
+  from: DragStart,
+  to: DragEnd,
+  p: Pick<Player, "inventory">,
+  templates: Templates,
+): ItemCommand | null {
+  if (from.kind === "bag") {
+    const it = from.item;
+    if (to.kind === "bag") {
+      if (to.slot === it.slot) return null;
+      return { act: "move_item", payload: { itemId: it.id, to: { location: "INVENTORY", slot: to.slot } } };
+    }
+    if (to.kind === "equip") {
+      const t = templates.get(it.templateId);
+      if (!t || !equipSlotsOf(t).includes(to.slot)) return null;
+      return { act: "equip", payload: { itemId: it.id, slot: to.slot } };
+    }
+    return { act: "drop", payload: { itemId: it.id }, confirm: true };
+  }
+  // từ ô trang bị: chỉ tháo về ô túi (trống: đúng ô đó; có đồ: ô trống thấp nhất)
+  if (to.kind !== "bag") return null;
+  const occupied = p.inventory.some((i) => i.slot === to.slot);
+  const toSlot = occupied ? firstFreeSlot(p.inventory, BAG_COLUMNS * BAG_COLUMNS) : to.slot;
+  if (toSlot === null) return null;
+  return { act: "unequip", payload: { slot: from.item.slot, toSlot } };
+}
+
+/** Số mặc định khi tách stack: một nửa (làm tròn xuống), tối thiểu 1. */
+export function defaultSplit(quantity: number): number {
+  return Math.max(1, Math.floor(quantity / 2));
+}

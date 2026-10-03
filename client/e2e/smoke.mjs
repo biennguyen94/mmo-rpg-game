@@ -78,7 +78,7 @@ async function waitPos(page, x, y, ms = 8000) {
 
   await page.keyboard.press("i");
   check("phím I mở Túi đồ", await page.locator('[data-panel="inventory"]').isVisible());
-  check("túi rỗng có chữ hướng dẫn", (await page.textContent('[data-panel="inventory"]')).includes("Không có trang bị trong túi"));
+  check("túi rỗng: lưới 8×8 + chữ \"Túi trống\"", (await page.locator('[data-bag-slot]').count()) === 64 && (await page.textContent('[data-panel="inventory"]')).includes("Túi trống"));
   await page.screenshot({ path: `${shots}/desktop-04-inventory.png` });
   await page.click('[data-tab="inventory"]');
   check("bấm lại tab đóng panel", (await page.locator(".panel").count()) === 0);

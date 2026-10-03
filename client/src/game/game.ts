@@ -59,6 +59,9 @@ export class GameClient {
       alloc: (stat, points) => void this.alloc(stat, points),
       equip: (it) => void this.equip(it),
       unequip: (slot) => void this.unequip(slot),
+      itemCommand: (c) => void this.send(c.act, c.payload),
+      split: (it, n) => void this.split(it, n),
+      useItem: (it) => void this.send("use_item", { itemId: it.id }).then((ok) => ok && Sound.play("potion")),
       buy: (tid) => void this.send("buy", { npcId: this.shop?.npcId, templateId: tid, quantity: 1 }),
       sell: (it) => void this.send("sell", { npcId: this.shop?.npcId, itemId: it.id }),
       usePotion: (type) => void this.usePotion(type),
@@ -290,6 +293,13 @@ export class GameClient {
     const t = this.state.templates.get(it.templateId);
     const slot = t ? equipSlotFor(t, this.state.player.equipment) : null;
     if (slot !== null) await this.send("equip", { itemId: it.id, slot });
+  }
+
+  private async split(it: ItemView, quantity: number): Promise<void> {
+    if (!this.state) return;
+    const p = this.state.player;
+    const toSlot = firstFreeSlot(p.inventory, p.view.inventorySize);
+    await this.send("split", { itemId: it.id, quantity: Math.floor(quantity), toSlot });
   }
 
   private async unequip(slot: number): Promise<void> {

@@ -83,6 +83,14 @@ defmodule Mu.World.MapServer do
   def take_ground(server, character_id, ground_id),
     do: GenServer.call(server(server), {:take_ground, character_id, ground_id})
 
+  @doc """
+  Đặt món người chơi vừa `drop` (đã xóa khỏi DB, `Mu.Game.Items.drop/3`) xuống ô đang đứng
+  (P2-9): người vứt giữ quyền nhặt trong `lootProtectSeconds`, biến mất sau `groundItemSeconds`.
+  `dropped`: `%{serial, template_id, quantity, attrs}`. Trả `{:ok, ground_id}`.
+  """
+  def drop_ground(server, character_id, dropped),
+    do: GenServer.call(server(server), {:drop_ground, character_id, dropped})
+
   @doc "Trả đồ về mặt đất (ghi DB thất bại, vd. túi đầy) — giữ nguyên chủ và hạn."
   def return_ground(server, ground), do: GenServer.call(server(server), {:return_ground, ground})
 
@@ -260,6 +268,12 @@ defmodule Mu.World.MapServer do
     else
       {:error, code} -> {:reply, {:error, code}, s}
     end
+  end
+
+  def handle_call({:drop_ground, id, dropped}, _from, s) do
+    e = s.players[id]
+    s = drop_item(s, dropped, {e.x, e.y}, id, now(s))
+    {:reply, {:ok, "g_" <> dropped.serial}, s}
   end
 
   def handle_call({:return_ground, g}, _from, s) do
@@ -684,19 +698,23 @@ defmodule Mu.World.MapServer do
     }
 
     s = put_entity(%{s | rng: rng}, mid, m)
-    Enum.reduce(drop.items, s, &drop_item(&2, &1, {m.x, m.y}, owner, t))
+    Enum.reduce(drop.items, s, &drop_item(&2, %{template_id: &1}, {m.x, m.y}, owner, t))
   end
 
   # ---------- Đồ dưới đất (chỉ trong RAM: KB_TECHNICAL §9) ----------
 
-  defp drop_item(s, template_id, {x, y}, owner, t) do
+  # `item`: `%{template_id}` (quái rơi, serial mới) hoặc món người chơi vứt (giữ serial,
+  # `quantity`, `attrs` để người nhặt nhận lại y nguyên)
+  defp drop_item(s, item, {x, y}, owner, t) do
     drop = Config.get(["drop"])
-    serial = Ulid.generate()
+    serial = Map.get_lazy(item, :serial, &Ulid.generate/0)
 
     g = %{
       id: "g_" <> serial,
       serial: serial,
-      template_id: template_id,
+      template_id: item.template_id,
+      quantity: Map.get(item, :quantity, 1),
+      attrs: Map.get(item, :attrs),
       x: x,
       y: y,
       owner: owner,

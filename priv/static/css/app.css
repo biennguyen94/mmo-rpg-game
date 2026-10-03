@@ -143,3 +143,23 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
   .inv { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
   .shop { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
+/* Túi đồ Phase 2 (P2-8): lưới 8×8, mỗi item một ô; kéo thả + nút trong tooltip */
+.inv .list .bag { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 44px)); gap: 3px; justify-content: center; padding: 8px 0; }
+.bag .cell { aspect-ratio: 1; border: 1px solid #3a3e55; border-radius: 4px; background: #191b26; display: grid; place-items: center; position: relative; overflow: hidden; }
+.bag .cell img { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; }
+.bag .cell[draggable="true"] { cursor: grab; }
+.bag .cell .qty { position: absolute; right: 2px; bottom: 0; font-size: 10px; font-weight: 600; text-shadow: 0 0 2px #000; }
+.bag .cell.over, .slot.over { outline: 2px solid var(--accent); }
+.trash { margin: 4px auto 8px; padding: 8px 12px; border: 1px dashed #5a3e3e; border-radius: 6px; color: var(--muted); font-size: 13px; text-align: center; max-width: 360px; }
+.trash.over { border-color: var(--danger); color: var(--danger); }
+.tooltip .btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tooltip .split { display: inline-flex; gap: 2px; }
+.tooltip .split input { width: 48px; }
+.tooltip .danger { color: var(--danger); }
+.inv .list { overflow-y: auto; }
+.inv .list .bag, .inv .list .trash { flex-shrink: 0; }
+@media (max-width: 1023px) {
+  /* mobile: lưới 8×8 cao hơn chỗ trống → cả panel cuộn, thanh dưới nằm sau lưới */
+  .inv { height: auto; align-self: flex-start; }
+  .inv .list { overflow: visible; }
+}

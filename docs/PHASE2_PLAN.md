@@ -44,7 +44,7 @@ Mỗi milestone: commit riêng trên `ccr-c1e9e89f-eb2dxu`, format/compile/test 
 
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
-| **P2-M1 Inventory & Equipment** | `move_item` (hoán đổi/merge stack), `split`, `drop`; UI túi đồ mới (lưới hoặc danh sách + kéo thả, theo P2-8); giữ transaction + `item_audit_log` + idempotent `rid`; test thuần `Inventory` | P2-8, P2-9 (có thể làm trước vì ít phụ thuộc số) |
+| **P2-M1 Inventory & Equipment** ✅ 2026-10-03 | `move_item` (hoán đổi/merge stack), `split`, `drop`; UI túi đồ mới (lưới hoặc danh sách + kéo thả, theo P2-8); giữ transaction + `item_audit_log` + idempotent `rid`; test thuần `Inventory` | P2-8, P2-9 (có thể làm trước vì ít phụ thuộc số) |
 | **P2-M2 Class DW + Elf** | `classes.json` thêm DW/ELF (KB_CONFIG §2 + §4.1), màn tạo nhân vật chọn class, sprite DCSS cho DW/Elf, basic attack đánh xa cho Elf/DW, item staff/bow nhập từ Item.txt | P2-3, P2-5, P2-6 (E6) |
 | **P2-M3 Skills theo class** | `skills.json` DW/Elf/DK thêm skill, hệ buff (thời hạn, cộng chỉ số), heal; menu skill client; effect placeholder | P2-4 |
 | **P2-M4 Nội dung: quái, drop, NPC, map** | Quái mới cho Lorencia (+ map 2), drop table, NPC shop vũ khí/giáp, map thứ 2 + portal, chuyển map (MapServer theo map, kênh đổi topic), respawn town gần nhất, `maxLevel` Phase 2 | P2-2, P2-7, P2-10, P2-11 |
@@ -75,3 +75,9 @@ Thứ tự gợi ý: **P2-M1 trước** (ít phụ thuộc dữ liệu mới nh�
 | Chuyển map + nhiều MapServer | Đổi cách kênh đăng ký topic (hiện đăng ký mọi map rồi bỏ) | Làm ở M4, test chuyển map; AOI vẫn để Phase 3 |
 | Mail cần đổi KB_TECHNICAL | Em không được sửa `docs/kb/` | Em soạn bản đề xuất schema/action trong OPEN_QUESTIONS để anh chép vào KB |
 | Cân bằng 3 class | DW/Elf yếu/mạnh hơn DK | Mở rộng simulator theo class, báo cáo như `ACCEPTANCE.md §3` |
+
+## 5. Trạng thái
+
+| Milestone | Kết quả |
+|---|---|
+| P2-M1 (2026-10-03) | Server: `move_item` (chuyển / hoán đổi / gộp stack), `split`, `drop` (xuống đất trong RAM, giữ serial + thuộc tính, P2-9), idempotent `rid`, audit `MOVE` / `MERGE` / `SPLIT` / `DROP`. Client: lưới 8×8, kéo thả (chuột) + nút trong tooltip (cảm ứng), thùng rác + xác nhận (DEC-56); panel không còn dựng lại mỗi snapshot (DEC-57). Test: 202 ExUnit, 13 node, smoke 24/24, nghiệm thu 24/24 (thêm 5 mục P2). Ảnh: `docs/screenshots/p2-inventory-drop.png` |

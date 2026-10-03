@@ -3,7 +3,20 @@
 import type { ItemView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
-import { EQUIP_GRID, SLOT_LABEL, equipmentInBag, requirements, shortDesc, type Templates } from "../logic/items.js";
+import {
+  BAG_COLUMNS,
+  EQUIP_GRID,
+  SLOT_LABEL,
+  defaultSplit,
+  dragCommand,
+  equipmentInBag,
+  requirements,
+  shortDesc,
+  type DragEnd,
+  type DragStart,
+  type ItemCommand,
+  type Templates,
+} from "../logic/items.js";
 import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
 import { clear, h, mount } from "./dom.js";
 
@@ -28,6 +41,10 @@ export interface UiActions {
   alloc(stat: Stat, points: number): void;
   equip(item: ItemView): void;
   unequip(slot: number): void;
+  /** Lệnh túi đồ từ kéo thả / tooltip (Phase 2: move_item, equip, unequip, drop). */
+  itemCommand(c: ItemCommand): void;
+  split(item: ItemView, quantity: number): void;
+  useItem(item: ItemView): void;
   buy(templateId: string): void;
   sell(item: ItemView): void;
   usePotion(type: "HP" | "MP"): void;
@@ -55,6 +72,7 @@ export class GameUI {
   private ctx: HTMLElement | null = null;
   private tip: HTMLElement | null = null;
   private noticeFilter: "all" | "unread" = "all";
+  private dragging: DragStart | null = null;
   private alloc: AllocBatcher;
   private state!: UiState;
 
@@ -160,8 +178,33 @@ export class GameUI {
 
   // ---------- Panel ----------
 
-  private renderPanel(): void {
+  /**
+   * Khóa nội dung panel: `update` chạy theo mỗi snapshot (10 Hz) nên chỉ dựng lại panel khi dữ
+   * liệu nó hiển thị đổi — dựng lại giữa chừng làm mất thao tác kéo thả / click (P2-M1).
+   * Panel Nhân vật vẫn dựng lại mỗi lần (hiện HP/MP hiện tại + điểm chờ gửi của AllocBatcher).
+   */
+  private panelKey(): string | null {
     const s = this.state;
+    if (!s.panel || s.panel === "character") return null;
+    const { x: _x, y: _y, hp: _hp, mp: _mp, ...p } = s.player;
+    const extra =
+      s.panel === "notices"
+        ? [this.noticeFilter, s.notices.list().map((n) => [n.id, n.read]), Math.floor(Date.now() / 60_000)]
+        : s.panel === "shop"
+          ? s.shop
+          : s.panel === "settings"
+            ? s.soundOn
+            : null;
+    return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
+  }
+
+  private lastPanelKey: string | null = null;
+
+  private renderPanel(force = false): void {
+    const s = this.state;
+    const key = this.panelKey();
+    if (!force && key !== null && key === this.lastPanelKey && this.panelHost.firstChild) return;
+    this.lastPanelKey = key;
     const keep = this.panelHost.querySelector(".scroll") as HTMLElement | null;
     const scroll = keep?.scrollTop ?? 0;
     clear(this.panelHost);
@@ -201,7 +244,7 @@ export class GameUI {
             "data-stat": key,
             disabled: p.freeStatPoints === 0,
             onclick: () => {
-              if (this.alloc.click(key, p.freeStatPoints)) this.renderPanel();
+              if (this.alloc.click(key, p.freeStatPoints)) this.renderPanel(true);
             },
           },
           "+",
@@ -265,7 +308,10 @@ export class GameUI {
           {
             class: `slot${it ? "" : " empty"}${locked ? " locked" : ""}`,
             "data-slot": slot,
+            draggable: it ? "true" : "false",
             onclick: (ev: MouseEvent) => it && this.showTooltip(it, ev, { unequip: slot }),
+            ondragstart: (ev: DragEvent) => it && this.dragStart(ev, { kind: "equip", item: it }),
+            ...this.dropTarget({ kind: "equip", slot }),
           },
           it ? this.icon(it) : null,
           h("span", { class: "lbl" }, SLOT_LABEL[slot]),
@@ -273,24 +319,22 @@ export class GameUI {
       }),
     );
 
-    const bag = equipmentInBag(p.inventory, s.templates);
-    const rows = bag.map((it) => {
-      const t = s.templates.get(it.templateId);
+    const byBagSlot = new Map(p.inventory.map((i) => [i.slot, i]));
+    const cells = Array.from({ length: p.view.inventorySize }, (_, slot) => {
+      const it = byBagSlot.get(slot);
       return h(
         "div",
-        { class: "itemrow", "data-item": it.id, onclick: (ev: MouseEvent) => this.showTooltip(it, ev, {}) },
-        h("div", { class: "iconframe" }, this.icon(it)),
-        h("div", { class: "info" }, h("div", { class: "name" }, t?.name ?? it.templateId), h("div", { class: "desc" }, t ? shortDesc(t) : "")),
-        h(
-          "button",
-          {
-            onclick: (ev: Event) => {
-              ev.stopPropagation();
-              this.a.equip(it);
-            },
-          },
-          "Trang bị",
-        ),
+        {
+          class: `cell${it ? "" : " empty"}`,
+          "data-bag-slot": slot,
+          "data-item": it?.id,
+          draggable: it ? "true" : "false",
+          onclick: (ev: MouseEvent) => it && this.showTooltip(it, ev, { bag: true }),
+          ondragstart: (ev: DragEvent) => it && this.dragStart(ev, { kind: "bag", item: it }),
+          ...this.dropTarget({ kind: "bag", slot }),
+        },
+        it ? this.icon(it) : null,
+        it && it.quantity > 1 ? h("span", { class: "qty" }, it.quantity) : null,
       );
     });
 
@@ -308,19 +352,74 @@ export class GameUI {
           h(
             "div",
             { class: "list" },
-            h("div", { class: "head" }, "Trang bị trong túi"),
+            h("div", { class: "head" }, "Túi đồ"),
+            h("div", { class: "bag", "data-test": "bag", style: `--cols:${BAG_COLUMNS}` }, cells),
+            p.inventory.length ? null : h("div", { class: "emptytext" }, "Túi trống"),
             h(
               "div",
-              { class: "scroll" },
-              h("div", { class: "scrollhint up" }, "▲"),
-              rows.length ? rows : h("div", { class: "emptytext" }, "Không có trang bị trong túi"),
-              h("div", { class: "scrollhint down" }, "▼"),
+              { class: "trash", "data-test": "trash", ...this.dropTarget({ kind: "trash" }) },
+              "🗑 Kéo đồ vào đây để vứt xuống đất",
             ),
           ),
           this.bagBottom(true),
         ),
       ),
     );
+  }
+
+  // ---------- Kéo thả (P2-M1, chuột; cảm ứng dùng nút trong tooltip) ----------
+
+  private dragStart(ev: DragEvent, from: DragStart): void {
+    this.hideTooltip();
+    this.dragging = from;
+    ev.dataTransfer?.setData("text/plain", from.item.id);
+    if (ev.dataTransfer) ev.dataTransfer.effectAllowed = "move";
+  }
+
+  private dropTarget(to: DragEnd): Record<string, (ev: DragEvent) => void> {
+    return {
+      ondragover: (ev: DragEvent) => {
+        if (!this.dragging) return;
+        ev.preventDefault();
+        (ev.currentTarget as HTMLElement).classList.add("over");
+      },
+      ondragleave: (ev: DragEvent) => (ev.currentTarget as HTMLElement).classList.remove("over"),
+      ondrop: (ev: DragEvent) => {
+        ev.preventDefault();
+        (ev.currentTarget as HTMLElement).classList.remove("over");
+        const from = this.dragging;
+        this.dragging = null;
+        if (!from) return;
+        const c = dragCommand(from, to, this.state.player, this.state.templates);
+        if (!c) return;
+        if (c.confirm) this.confirmDrop(from.item, ev.clientX, ev.clientY);
+        else this.a.itemCommand(c);
+      },
+    };
+  }
+
+  /** Hỏi trước khi vứt (P2-8): vứt cả stack xuống ô đang đứng. */
+  private confirmDrop(item: ItemView, x: number, y: number): void {
+    this.hideTooltip();
+    const name = this.state.templates.get(item.templateId)?.name ?? item.templateId;
+    const tip = h(
+      "div",
+      { class: "tooltip", "data-test": "confirm-drop" },
+      h("b", {}, "Vứt xuống đất?"),
+      h("div", {}, item.quantity > 1 ? `${name} ×${item.quantity}` : name),
+      h(
+        "div",
+        { class: "btns" },
+        h(
+          "button",
+          { "data-test": "confirm-drop-yes", onclick: () => (this.hideTooltip(), this.a.itemCommand({ act: "drop", payload: { itemId: item.id } })) },
+          "Vứt",
+        ),
+        h("button", { onclick: () => this.hideTooltip() }, "Hủy"),
+      ),
+    );
+    this.place(tip, x, y);
+    this.tip = tip;
   }
 
   private bagBottom(withHint: boolean): HTMLElement {
@@ -337,7 +436,7 @@ export class GameUI {
   private noticesPanel(): HTMLElement {
     const list = this.state.notices.list(this.noticeFilter === "unread");
     const f = (k: "all" | "unread", label: string) =>
-      h("button", { class: this.noticeFilter === k ? "on" : "", onclick: () => ((this.noticeFilter = k), this.renderPanel()) }, label);
+      h("button", { class: this.noticeFilter === k ? "on" : "", onclick: () => ((this.noticeFilter = k), this.renderPanel(true)) }, label);
     return h(
       "section",
       { class: "panel", "data-panel": "notices" },
@@ -456,19 +555,39 @@ export class GameUI {
 
   // ---------- Tooltip (§19.5), context menu quái (§19.9) ----------
 
-  private showTooltip(item: ItemView, ev: MouseEvent, opts: { unequip?: number }): void {
+  private showTooltip(item: ItemView, ev: MouseEvent, opts: { unequip?: number; bag?: boolean }): void {
     this.hideTooltip();
     const t = this.state.templates.get(item.templateId);
     if (!t) return;
     const reqs = requirements(t, this.state.player);
+    // đồ trong túi: nút thay cho kéo thả (mobile) — Trang bị / Dùng / Tách / Vứt
+    const qty = h("input", { type: "number", min: 1, max: item.quantity - 1, value: defaultSplit(item.quantity), "data-test": "split-qty" }) as HTMLInputElement;
+    const bagBtns = opts.bag
+      ? h(
+          "div",
+          { class: "btns" },
+          t.slot ? h("button", { onclick: () => (this.hideTooltip(), this.a.equip(item)) }, "Trang bị") : null,
+          t.potionType ? h("button", { onclick: () => (this.hideTooltip(), this.a.useItem(item)) }, "Dùng") : null,
+          t.stackable && item.quantity > 1
+            ? h(
+                "span",
+                { class: "split" },
+                qty,
+                h("button", { onclick: () => (this.hideTooltip(), this.a.split(item, Number(qty.value))) }, "Tách"),
+              )
+            : null,
+          h("button", { class: "danger", onclick: (e: MouseEvent) => this.confirmDrop(item, e.clientX, e.clientY) }, "Vứt"),
+        )
+      : null;
     const tip = h(
       "div",
       { class: "tooltip", "data-test": "tooltip" },
       this.icon(item, "big"),
-      h("b", {}, t.name),
+      h("b", {}, item.quantity > 1 ? `${t.name} ×${item.quantity}` : t.name),
       h("div", {}, shortDesc(t)),
       reqs.map((r) => h("div", { class: r.ok ? "" : "bad" }, r.value ? `${r.label} ≥ ${r.value}` : r.label)),
       opts.unequip !== undefined ? h("button", { onclick: () => (this.hideTooltip(), this.a.unequip(opts.unequip!)) }, "Tháo") : null,
+      bagBtns,
     );
     this.place(tip, ev.clientX, ev.clientY);
     this.tip = tip;

@@ -9,6 +9,9 @@ defmodule Mu.Game.Inventory do
     (`maxStack`), thừa thì tạo stack mới ở ô trống thấp nhất.
   - Equip (`KB_GAME_DESIGN §8`): đúng slot (nhẫn vào 8 hoặc 9; WING khóa khi
     `features.wings = false`), đúng class, đủ level/stat (`requirements` đã scale lúc import).
+  - Sắp xếp túi (Phase 2, `KB_TECHNICAL §5` `move_item` / `split`): chỉ trong `INVENTORY`,
+    mỗi item một ô (P2-8). Thả lên ô trống = chuyển, lên món khác = hoán đổi, lên stack cùng
+    template còn chỗ = gộp (thừa ở lại ô cũ).
   """
 
   alias Mu.Game.{Config, Data}
@@ -80,6 +83,76 @@ defmodule Mu.Game.Inventory do
 
   defp chunk(0, _), do: []
   defp chunk(n, per), do: [min(n, per) | chunk(n - min(n, per), per)]
+
+  @doc """
+  Kế hoạch `move_item` món `item_id` (trong túi) sang ô túi `to`:
+  `{:ok, :noop | {:move, id, to} | {:swap, id, to, other_id, from} | {:merge, id, other_id, n}}`
+  (`n` = số chuyển sang stack đích) hoặc `{:error, code}`.
+  """
+  def plan_move(items, item_id, to) do
+    with %{} = it <- find_in_inventory(items, item_id),
+         :ok <- valid_slot(to) do
+      case in_slot(items, "INVENTORY", to) do
+        nil ->
+          {:ok, {:move, it.id, to}}
+
+        %{id: id} when id == it.id ->
+          {:ok, :noop}
+
+        other ->
+          t = Data.item(it.template_id)
+
+          if t["stackable"] == true and other.template_id == it.template_id and
+               other.quantity < t["maxStack"] do
+            {:ok, {:merge, it.id, other.id, min(it.quantity, t["maxStack"] - other.quantity)}}
+          else
+            {:ok, {:swap, it.id, to, other.id, it.slot}}
+          end
+      end
+    end
+  end
+
+  @doc """
+  Kế hoạch `split`: tách `quantity` cái từ stack `item_id` sang ô túi trống `to`
+  (`nil` = ô trống thấp nhất). Chỉ item `stackable`, `1 <= quantity < số đang có`.
+  `{:ok, to}` hoặc `{:error, code}`.
+  """
+  def plan_split(items, item_id, quantity, to) do
+    with %{} = it <- find_in_inventory(items, item_id),
+         :ok <-
+           if(
+             Data.item(it.template_id)["stackable"] == true and is_integer(quantity) and
+               quantity in 1..(it.quantity - 1)//1,
+             do: :ok,
+             else: {:error, "INVALID_TARGET"}
+           ) do
+      case to do
+        nil ->
+          if s = first_free_slot(items), do: {:ok, s}, else: {:error, "INVENTORY_FULL"}
+
+        to ->
+          with :ok <- valid_slot(to) do
+            if in_slot(items, "INVENTORY", to), do: {:error, "INVALID_SLOT"}, else: {:ok, to}
+          end
+      end
+    end
+  end
+
+  @doc "Món `item_id` trong túi (không phải đồ đang mặc) để `drop`: `{:ok, item}` hoặc lỗi."
+  def droppable(items, item_id) do
+    with %{} = it <- find_in_inventory(items, item_id), do: {:ok, it}
+  end
+
+  defp find_in_inventory(items, item_id) do
+    case Enum.find(items, &(&1.id == item_id)) do
+      %{location: "INVENTORY"} = it -> it
+      %{} -> {:error, "INVALID_SLOT"}
+      nil -> {:error, "NOT_OWNER"}
+    end
+  end
+
+  defp valid_slot(s) when is_integer(s) and s >= 0 and s < @inventory_slots, do: :ok
+  defp valid_slot(_), do: {:error, "INVALID_SLOT"}
 
   @doc "Slot trang bị hợp lệ cho template (danh sách số; rỗng = không mặc được)."
   def equip_slots(template) do

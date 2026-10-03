@@ -8,7 +8,7 @@ defmodule Mu.Game.Items do
   và audit. Zen đổi bằng `UPDATE ... SET zen = zen + Δ, version = version + 1` trong cùng
   transaction (CHECK `zen >= 0` của DB là chốt cuối).
 
-  Trả `{:ok, %{items, zen, version}}` (đồ đọc lại sau khi commit, Zen/version mới của nhân
+  Trả `{:ok, %{items, zen, version}}` (`drop` thêm `dropped`) (đồ đọc lại sau khi commit, Zen/version mới của nhân
   vật) hoặc `{:error, code}` (mã `KB_TECHNICAL §5`).
   """
 
@@ -45,13 +45,14 @@ defmodule Mu.Game.Items do
   # ---------- Thêm đồ (nhặt, mua) ----------
 
   @doc """
-  Nhặt đồ dưới đất: `ground` có `serial`, `template_id`; `from` là chủ cũ (vd `"ground:lorencia"`).
+  Nhặt đồ dưới đất: `ground` có `serial`, `template_id`, tùy chọn `quantity` (mặc định 1) và
+  `attrs` (thuộc tính của món người chơi đã `drop`); `from` là chủ cũ (vd `"ground:lorencia"`).
   Gộp vào stack có sẵn thì serial dưới đất biến mất (ghi audit `PICKUP_MERGE`).
   """
-  def pickup(character_id, %{serial: serial, template_id: tid}, from) do
+  def pickup(character_id, %{serial: serial, template_id: tid} = g, from) do
     tx(character_id, fn _c, items ->
-      with {:ok, plan} <- Inventory.plan_add(items, tid, 1) do
-        apply_add(character_id, tid, plan, "PICKUP", from, [serial])
+      with {:ok, plan} <- Inventory.plan_add(items, tid, Map.get(g, :quantity, 1)) do
+        apply_add(character_id, tid, plan, "PICKUP", from, [serial], %{}, Map.get(g, :attrs))
         {:ok, 0}
       end
     end)
@@ -64,16 +65,25 @@ defmodule Mu.Game.Items do
 
       with :ok <- if(c.zen >= cost, do: :ok, else: {:error, "NOT_ENOUGH_ZEN"}),
            {:ok, plan} <- Inventory.plan_add(items, template_id, quantity) do
-        apply_add(character_id, template_id, plan, "BUY", "npc:" <> npc_id, [], %{
-          price: price_each
-        })
+        apply_add(
+          character_id,
+          template_id,
+          plan,
+          "BUY",
+          "npc:" <> npc_id,
+          [],
+          %{
+            price: price_each
+          },
+          nil
+        )
 
         {:ok, -cost}
       end
     end)
   end
 
-  defp apply_add(cid, tid, plan, action, from, serials, detail \\ %{}) do
+  defp apply_add(cid, tid, plan, action, from, serials, detail, attrs) do
     t = Data.item(tid)
     to = "char:" <> cid
 
@@ -92,15 +102,16 @@ defmodule Mu.Game.Items do
         []
 
       {:new, slot, n}, serials ->
-        {serial, rest} =
+        # serial (và thuộc tính) của món dưới đất chỉ dùng cho stack mới đầu tiên
+        {serial, rest, attrs} =
           case serials do
-            [s | rest] -> {s, rest}
-            [] -> {Ulid.generate(), []}
+            [s | rest] -> {s, rest, attrs || %{}}
+            [] -> {Ulid.generate(), [], %{}}
           end
 
         item =
           %Item{serial: serial, template_id: tid, quantity: n, durability: t["durability"]}
-          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.change(attrs)
           |> Ecto.Changeset.unique_constraint(:serial, name: :items_serial_key)
           |> Repo.insert()
           # serial đã có trong DB (đã có người nhặt): không tạo bản thứ hai
@@ -188,6 +199,112 @@ defmodule Mu.Game.Items do
 
   defp target_slot(_, _), do: {:error, "INVALID_SLOT"}
 
+  # ---------- Sắp xếp túi, vứt đồ (Phase 2, P2-M1) ----------
+
+  @doc """
+  `move_item`: chuyển món `item_id` sang ô túi `to` — ô trống thì chuyển, có món khác thì hoán
+  đổi, stack cùng template còn chỗ thì gộp (`Inventory.plan_move/3`).
+  """
+  def move_item(cid, item_id, to) do
+    owner = "char:" <> cid
+
+    tx(cid, fn _c, items ->
+      with {:ok, plan} <- Inventory.plan_move(items, item_id, to) do
+        case plan do
+          :noop ->
+            :ok
+
+          {:move, id, to} ->
+            from_slot = find(items, id).slot
+            move(id, "INVENTORY", to)
+            audit(id, "MOVE", owner, owner, %{from: from_slot, to: to})
+
+          {:swap, id, to, other, from_slot} ->
+            # chỉ mục duy nhất (character_id, location, slot) không hoãn được: gỡ một bên trước
+            Repo.delete_all(from(l in ItemLocation, where: l.item_id == ^other))
+            move(id, "INVENTORY", to)
+
+            Repo.insert!(%ItemLocation{
+              item_id: other,
+              location: "INVENTORY",
+              character_id: cid,
+              slot: from_slot
+            })
+
+            audit(id, "MOVE", owner, owner, %{from: from_slot, to: to})
+            audit(other, "MOVE", owner, owner, %{from: to, to: from_slot})
+
+          {:merge, id, other, n} ->
+            it = find(items, id)
+            Repo.update_all(from(i in Item, where: i.id == ^other), inc: [quantity: n])
+            take(it, n, "MERGE", owner, owner, %{quantity: n, into: other})
+        end
+
+        {:ok, 0}
+      end
+    end)
+  end
+
+  @doc "`split`: tách `quantity` cái từ stack `item_id` sang ô túi trống `to` (`nil` = thấp nhất)."
+  def split(cid, item_id, quantity, to) do
+    owner = "char:" <> cid
+
+    tx(cid, fn _c, items ->
+      with {:ok, to} <- Inventory.plan_split(items, item_id, quantity, to) do
+        it = find(items, item_id)
+        Repo.update_all(from(i in Item, where: i.id == ^it.id), inc: [quantity: -quantity])
+
+        new =
+          Repo.insert!(%Item{
+            serial: Ulid.generate(),
+            template_id: it.template_id,
+            quantity: quantity,
+            item_level: it.item_level,
+            durability: it.durability,
+            luck: it.luck,
+            skill: it.skill,
+            excellent_options: it.excellent_options
+          })
+
+        Repo.insert!(%ItemLocation{
+          item_id: new.id,
+          location: "INVENTORY",
+          character_id: cid,
+          slot: to
+        })
+
+        audit(it.id, "SPLIT", owner, owner, %{quantity: quantity, into: new.id})
+        audit(new.id, "SPLIT", owner, owner, %{quantity: quantity, from: it.id, slot: to})
+        {:ok, 0}
+      end
+    end)
+  end
+
+  @doc """
+  `drop`: vứt cả stack `item_id` (trong túi) xuống đất `to` (vd `"ground:lorencia"`, P2-9).
+  Item bị xóa khỏi DB (đồ dưới đất chỉ ở RAM, `KB_TECHNICAL §9`); `res.dropped` giữ serial,
+  template, số lượng và thuộc tính để MapServer đặt lên mặt đất và người nhặt nhận lại y nguyên.
+  """
+  def drop(cid, item_id, to) do
+    tx(cid, fn _c, items ->
+      with {:ok, it} <- Inventory.droppable(items, item_id) do
+        take(it, it.quantity, "DROP", "char:" <> cid, to, %{
+          quantity: it.quantity,
+          template_id: it.template_id
+        })
+
+        dropped = %{
+          serial: it.serial,
+          template_id: it.template_id,
+          quantity: it.quantity,
+          attrs: Map.take(it, [:item_level, :durability, :luck, :skill, :excellent_options])
+        }
+
+        {:ok, 0, %{dropped: dropped}}
+      end
+    end)
+  end
+
   # ---------- Dùng, bán ----------
 
   @doc "Tiêu hao `n` cái từ stack `item_id` trong túi (dùng potion). Hết thì xóa stack."
@@ -274,16 +391,19 @@ defmodule Mu.Game.Items do
 
         case fun.(c, load(cid)) do
           {:ok, 0} ->
-            {c.zen, c.version}
+            {c.zen, c.version, %{}}
+
+          {:ok, 0, extra} ->
+            {c.zen, c.version, extra}
 
           {:ok, delta} ->
-            {1, [zv]} =
+            {1, [{zen, version}]} =
               Repo.update_all(
                 from(ch in Character, where: ch.id == ^cid, select: {ch.zen, ch.version}),
                 inc: [zen: delta, version: 1]
               )
 
-            zv
+            {zen, version, %{}}
 
           {:error, code} ->
             Repo.rollback(code)
@@ -291,8 +411,11 @@ defmodule Mu.Game.Items do
       end)
 
     case result do
-      {:ok, {zen, version}} -> {:ok, %{items: load(cid), zen: zen, version: version}}
-      {:error, code} -> {:error, code}
+      {:ok, {zen, version, extra}} ->
+        {:ok, Map.merge(extra, %{items: load(cid), zen: zen, version: version})}
+
+      {:error, code} ->
+        {:error, code}
     end
   end
 
