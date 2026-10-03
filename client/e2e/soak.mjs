@@ -1,16 +1,19 @@
 // Soak test: N bot WebSocket chơi liên tục trên server thật (đi lang thang, đánh Spider, uống
 // potion, mua potion ở NPC). In thống kê mỗi phút và tổng kết cuối. Không phải tính năng game.
-//   node client/e2e/soak.mjs [baseUrl] [số_bot] [số_phút]
+//   node client/e2e/soak.mjs [baseUrl] [số_bot] [số_phút] [tỉ_lệ_bot_ở_thị_trấn]
+// Tỉ lệ thị trấn (0..1, mặc định 0): các bot này chỉ đi lại trong thị trấn, không săn — đo AOI
+// khi người chơi phân tán (P3-M1): thị trấn và vùng Spider cách nhau hơn một ô AOI.
 // Server cần TRUSTED_PROXIES=127.0.0.1: mỗi bot gửi X-Forwarded-For riêng (giả lập IP khác nhau,
 // giới hạn đăng ký theo IP vẫn giữ nguyên).
 const base = process.argv[2] ?? "http://localhost:4000";
 const N = Number(process.argv[3] ?? 20);
 const minutes = Number(process.argv[4] ?? 20);
+const townBots = Math.round(N * Number(process.argv[5] ?? 0));
 const wsBase = base.replace(/^http/, "ws");
 const stamp = Date.now() % 100000;
 // vùng sinh Spider ở Lorencia (priv/maps/lorencia.json) — bot soak chỉ săn ở đây
 const SPIDER = { x0: 42, x1: 58, y0: 24, y1: 44 };
-const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {} };
+const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {}, bytesIn: 0, msgsIn: 0, town: { joins: 0, bytesIn: 0, msgsIn: 0 }, byEvent: {} };
 
 async function http(method, path, body, token, ip) {
   const r = await fetch(base + path, {
@@ -50,7 +53,18 @@ async function bot(i) {
     return rep.status === "ok";
   };
 
+  const town = i < townBots;
   ws.onmessage = (m) => {
+    stats.bytesIn += m.data.length;
+    stats.msgsIn++;
+    if (town) {
+      stats.town.bytesIn += m.data.length;
+      stats.town.msgsIn++;
+    }
+    if (process.env.SOAK_EVENTS) {
+      const ev = `${town ? "town" : "hunt"}:${JSON.parse(m.data)[3]}`;
+      stats.byEvent[ev] = (stats.byEvent[ev] ?? 0) + m.data.length;
+    }
     const [, r, , ev, p] = JSON.parse(m.data);
     if (ev === "phx_reply" && waiting.has(r)) {
       waiting.get(r)(p);
@@ -59,7 +73,7 @@ async function bot(i) {
     else if (ev === "despawn") ents.delete(p.id);
     else if (ev === "snapshot") {
       const now = Date.now();
-      if (lastSnap && i === 0) stats.snapGaps.push(now - lastSnap);
+      if (lastSnap && i === N - 1) stats.snapGaps.push(now - lastSnap);
       lastSnap = now;
       for (const e of p.entities) if (ents.has(e.id)) Object.assign(ents.get(e.id), e);
       for (const id of p.removed) ents.delete(id);
@@ -84,6 +98,7 @@ async function bot(i) {
   await new Promise((res) => (ws.onopen = res));
   const join = await push("phx_join", { clientVersion: "0.1.0", characterId: c.id });
   stats.joins++;
+  if (town) stats.town.joins++;
   selfId = join.response.entityId;
   player = join.response.player;
   map = join.response.map;
@@ -95,6 +110,14 @@ async function bot(i) {
     if (player.hp < player.view.hpMax * 0.5 && player.view.potions.HP > 0) {
       const pot = player.inventory.find((it) => it.templateId === "hp_potion_small");
       if (pot && (await cmd("use_item", { itemId: pot.id }))) stats.potions++;
+    }
+    if (town) {
+      // bot thị trấn: đi lại trong thị trấn (x < 26)
+      const x = 13 + Math.floor(Math.random() * 12);
+      const y = 26 + Math.floor(Math.random() * 11);
+      if (walkable(x, y)) await cmd("move_to", { x, y });
+      await sleep(1500 + Math.random() * 1500);
+      continue;
     }
     const spider = [...ents.values()].filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead").sort((a, b) => cheb(a, me) - cheb(b, me))[0];
     const r = Math.random();
@@ -139,10 +162,18 @@ const pct = (xs, p) => {
   const s = [...xs].sort((a, b) => a - b);
   return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))];
 };
+const rate = (bytes, msgs, joins) => {
+  const secs = Math.max(1, (Date.now() - started) / 1000);
+  return `${(bytes / 1024 / Math.max(1, joins) / secs).toFixed(2)} KB/s/bot (${(msgs / Math.max(1, joins) / secs).toFixed(1)} tin/s/bot)`;
+};
 const report = (label) => {
   const g = stats.snapGaps;
+  const t = stats.town;
+  const split = townBots
+    ? ` [thị trấn ${t.joins}: ${rate(t.bytesIn, t.msgsIn, t.joins)}; săn ${stats.joins - t.joins}: ${rate(stats.bytesIn - t.bytesIn, stats.msgsIn - t.msgsIn, stats.joins - t.joins)}]`
+    : "";
   console.log(
-    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
+    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | nhận ${rate(stats.bytesIn, stats.msgsIn, stats.joins)}${split} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
   );
 };
 
@@ -156,4 +187,5 @@ for (let i = 0; i < N; i++) {
 await Promise.all(bots);
 clearInterval(timer);
 report("[TỔNG KẾT]");
+if (process.env.SOAK_EVENTS) console.log("byte theo event:", JSON.stringify(stats.byEvent));
 process.exit(0);

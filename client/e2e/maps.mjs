@@ -81,7 +81,9 @@ const noticeText = await low.textContent('[data-panel="notices"]').catch(() => "
 check("cấp 1 bước vào cổng → báo cần cấp 10, vẫn ở Lorencia", blocked && noticeText.includes("Cần cấp 10") && (await low.evaluate(() => window.__mu.map())) === "lorencia", noticeText.slice(0, 80));
 await low.keyboard.press("Escape");
 
-// Weapon Merchant bán đồ t0 cả 3 class
+// Weapon Merchant bán đồ t0 cả 3 class (AOI, P3-M1: ở cổng (15,9) thì NPC (11,37) ngoài tầm nhìn → về thị trấn trước)
+await walkTo(low, 15, 31);
+await until(low, () => window.__mu.entities().some((e) => e.id === "npc_lorencia_weapon_merchant"), null, 3000);
 const wm = await low.evaluate(() => window.__mu.entities().find((e) => e.id === "npc_lorencia_weapon_merchant"));
 await walkTo(low, wm.x + 1, wm.y);
 await clickAt(low, wm.x, wm.y);

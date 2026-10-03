@@ -10,7 +10,7 @@ defmodule Mu.World.MapServer do
     (chế độ tự tick cộng thêm phần đã trôi trong tick hiện tại để cooldown chính xác).
   - AI quái `server.monsterAiHz` (10 Hz), chỉ chạy khi map có người (quái "ngủ" khi vắng).
   - Snapshot delta mỗi `simulationHz / snapshotHz` tick: entity đổi + `removed`
-    (`KB_TECHNICAL §5`). Phase 1 broadcast cả map (chưa AOI).
+    (`KB_TECHNICAL §5`). Broadcast cả map; mỗi kênh lọc theo tầm nhìn (`MuWeb.Aoi`, P3-M1).
   - Sự kiện: `spawn`, `despawn`, `snapshot`, `combat` qua PubSub `topic/1` dạng
     `{:map_event, event, payload}`. Gửi riêng tiến trình chủ (Session):
     `{:map_reward, %{exp, zen, monster}}`, `{:map_died, character_id}`.

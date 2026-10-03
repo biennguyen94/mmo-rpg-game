@@ -11,9 +11,11 @@ defmodule MuWeb.GameChannel do
     `{:error, %{rid, error}}` **và** đẩy event `"error"` `{rid, error}` (P2).
   - Giới hạn tần suất theo nhóm `act` (P8): vượt → `RATE_LIMITED`; vượt liên tục
     `rateLimit.cmd.kickAfterMs` → đóng kênh.
-  - Sau join, kênh đẩy `"spawn"` cho mọi entity trên map rồi chuyển tiếp `spawn` /
-    `despawn` / `snapshot` của MapServer (PubSub). Kênh đăng ký topic trước khi vào map nên
-    có thể nhận `spawn` của chính mình hai lần: client coi `spawn` là thêm-hoặc-cập-nhật.
+  - Sau join, kênh đẩy `"spawn"` cho mọi entity **trong tầm nhìn** rồi chuyển tiếp `spawn` /
+    `despawn` / `snapshot` / `combat` của MapServer (PubSub) qua bộ lọc AOI `MuWeb.Aoi`
+    (P3-M1, `KB_TECHNICAL §3`): vào / ra tầm nhìn = `spawn` / `despawn`. Kênh đăng ký topic
+    trước khi vào map nên có thể nhận `spawn` hai lần: client coi `spawn` là
+    thêm-hoặc-cập-nhật.
   - `"player"` (trạng thái đầy đủ + `view`) do Session đẩy khi EXP/level/stat/Zen đổi;
     `"combat"` `{rid, attacker, target, dmg, crit, hp}` cho mọi đòn trên map (trượt: dmg 0).
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
@@ -23,6 +25,7 @@ defmodule MuWeb.GameChannel do
 
   alias Mu.Game.{Characters, Commands, Config, Session}
   alias Mu.World.{Maps, MapServer}
+  alias MuWeb.Aoi
 
   @impl true
   def join("game", %{"clientVersion" => version, "characterId" => character_id}, socket) do
@@ -42,7 +45,7 @@ defmodule MuWeb.GameChannel do
                 id != character.map_id,
                 do: Phoenix.PubSub.unsubscribe(Mu.PubSub, MapServer.topic(id))
 
-            send(self(), {:after_join, info.entities})
+            send(self(), :after_join)
 
             reply = %{
               player: Characters.player_view(character, info.items),
@@ -52,7 +55,12 @@ defmodule MuWeb.GameChannel do
               data: %{items: client_items(), skills: client_skills()}
             }
 
-            {:ok, reply, assign(socket, character_id: character.id, limit_streak: nil)}
+            {:ok, reply,
+             assign(socket,
+               character_id: character.id,
+               limit_streak: nil,
+               aoi: Aoi.new(info.entity_id, info.entities)
+             )}
 
           {:error, :not_found} ->
             {:error, %{error: "FORBIDDEN", reason: "character"}}
@@ -108,12 +116,15 @@ defmodule MuWeb.GameChannel do
     drain_map_events()
     Phoenix.PubSub.subscribe(Mu.PubSub, MapServer.topic(new))
     push(socket, "map_change", payload)
-    Enum.each(entities, &push(socket, "spawn", &1))
-    {:noreply, socket}
+    aoi = Aoi.new(socket.assigns.aoi.self, entities)
+    push_all(socket, Aoi.spawns(aoi))
+    {:noreply, assign(socket, :aoi, aoi)}
   end
 
-  def handle_info({:after_join, entities}, socket) do
-    Enum.each(entities, &push(socket, "spawn", &1))
+  # `spawn` cho mọi entity đang trong tầm nhìn, theo trạng thái mới nhất (kể cả sự kiện map
+  # tới trước tin này)
+  def handle_info(:after_join, socket) do
+    push_all(socket, Aoi.spawns(socket.assigns.aoi))
     # badge Hộp thư (P2-M6)
     push(socket, "mail", %{unread: Mu.Mail.unread(socket.assigns.character_id)})
     {:noreply, socket}
@@ -125,12 +136,16 @@ defmodule MuWeb.GameChannel do
     {:noreply, socket}
   end
 
+  # sự kiện map qua bộ lọc tầm nhìn (P3-M1)
   def handle_info({:map_event, event, payload}, socket) do
-    push(socket, event, payload)
-    {:noreply, socket}
+    {aoi, pushes} = Aoi.event(socket.assigns.aoi, event, payload)
+    push_all(socket, pushes)
+    {:noreply, assign(socket, :aoi, aoi)}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
+
+  defp push_all(socket, pushes), do: Enum.each(pushes, fn {ev, p} -> push(socket, ev, p) end)
 
   defp drain_map_events do
     receive do

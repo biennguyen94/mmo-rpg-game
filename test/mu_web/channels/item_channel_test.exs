@@ -38,8 +38,14 @@ defmodule MuWeb.ItemChannelTest do
     %{a: a, c: c, socket: socket, reply: reply}
   end
 
+  # đặt chỗ + đánh dấu đổi rồi chạy tới snapshot: kênh (AOI, P3-M1) biết vị trí mới
   defp place(c, {x, y}) do
-    MapServer.debug_update(@map, fn st -> update_in(st.players[c.id], &%{&1 | x: x, y: y}) end)
+    MapServer.debug_update(@map, fn st ->
+      st = update_in(st.players[c.id], &%{&1 | x: x, y: y})
+      %{st | dirty: MapSet.put(st.dirty, st.players[c.id].id)}
+    end)
+
+    MapServer.tick(@map, MapServer.debug_state(@map).snapshot_every)
   end
 
   defp drop_ground(tid, {x, y}, owner, opts \\ []) do
@@ -57,6 +63,26 @@ defmodule MuWeb.ItemChannelTest do
     }
 
     MapServer.debug_update(@map, fn st -> %{st | ground: Map.put(st.ground, g.id, g)} end)
+
+    # như MapServer khi rơi đồ: `spawn` cho kênh (AOI chỉ chuyển despawn của entity đã thấy)
+    Phoenix.PubSub.broadcast(
+      Mu.PubSub,
+      MapServer.topic(@map),
+      {:map_event, "spawn",
+       %{
+         id: g.id,
+         kind: "item",
+         x: x,
+         y: y,
+         hp: nil,
+         maxHp: nil,
+         state: "idle",
+         name: tid,
+         level: nil,
+         templateId: tid
+       }}
+    )
+
     g
   end
 
