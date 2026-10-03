@@ -37,6 +37,10 @@ export interface PlayerView {
   defenseRate: number;
   attackSpeed: number;
   cooldownMs: number;
+  /** MG (P3-M5): đòn phép tối đa / tốc độ / cooldown phép (§4.1); class khác null. */
+  attackMaxMagic?: number | null;
+  attackSpeedMagic?: number | null;
+  cooldownMsMagic?: number | null;
   /** Tầm đánh thường (ô) theo vũ khí đang cầm. */
   attackRange: number;
   buffs: BuffView[];
@@ -161,7 +165,10 @@ export type SkillTarget = "SINGLE" | "AOE" | "ALLY" | "POINT";
 export interface SkillInfo {
   id: string;
   name: string;
-  class: string | null;
+  /** Class học được (null = mọi class); MG học skill DK + DW (P3-M5). */
+  classes: string[] | null;
+  /** Skill phép: MG dùng chỉ số phép. */
+  magic: boolean;
   category: string;
   /** SINGLE/AOE: quái; ALLY: người chơi (heal/buff); POINT: ô (teleport). */
   targetType: SkillTarget;

@@ -178,7 +178,8 @@ defmodule MuWeb.GameChannel do
       %{
         id: s["id"],
         name: s["name"],
-        class: s["class"],
+        classes: s["classes"],
+        magic: s["magic"] == true,
         category: s["category"],
         targetType: s["targetType"],
         center: s["center"],

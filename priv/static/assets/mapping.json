@@ -193,6 +193,11 @@
       "id": "npc:noria_warehouse",
       "original": "releases/Nov-2015/mon/halfling.png",
       "gitBlob": "6f7fca04568d42ec9acf8ea43cffde561f37c27a"
+    },
+    "sprites/characters/mg/body.png": {
+      "id": "class:MG",
+      "original": "releases/Nov-2015/mon/hell_knight.png",
+      "gitBlob": "63b70729638479337c94ae505326681d44ea2084"
     }
   }
 }

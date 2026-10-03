@@ -193,6 +193,11 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
           CHROMIUM_PATH: none
         run: node client/e2e/party.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 3 — Nhiều nhân vật + MG
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/mg.mjs http://localhost:4000 e2e-shots
       - name: Ảnh + log server
         if: always()
         uses: actions/upload-artifact@v4

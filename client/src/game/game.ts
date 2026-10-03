@@ -79,6 +79,7 @@ export class GameClient {
       usePotion: (type) => void this.usePotion(type),
       pickupNearest: () => this.pickupNearest(),
       logout: () => void this.logout(),
+      switchCharacter: () => void this.conn.leave().then(() => this.exit()),
       setSound: (on) => (Sound.set(on), this.render()),
       noticesSeen: () => (this.notices.markAllRead(), this.render()),
       clearNotices: () => (this.notices.clear(), this.render()),
@@ -511,7 +512,7 @@ export class GameClient {
       me,
       t ? { x: t.x, y: t.y, alive: t.state !== "dead" } : null,
       range,
-      skill?.cooldownMs ?? this.state.player.view.cooldownMs,
+      skill?.cooldownMs ?? ((skill?.magic && this.state.player.view.cooldownMsMagic) || this.state.player.view.cooldownMs),
     );
     if (!action) return;
     let { act, ...payload } = action as { act: string } & Record<string, unknown>;

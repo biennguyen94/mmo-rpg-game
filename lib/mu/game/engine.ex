@@ -25,10 +25,19 @@ defmodule Mu.Game.Engine do
     formulas = Data.class(c.class)["derived"]
     value = fn key -> eval(formulas[key], c, equipment) end
     attack_speed = value.("attackSpeed")
+    attack_max = value.("attackMax")
+
+    # MG (P3-M5): attackPowerMagic / attackSpeedMagic cho skill phép (§4.1); class khác = như thường
+    speed_magic =
+      if formulas["attackSpeedMagic"], do: value.("attackSpeedMagic"), else: attack_speed
 
     %{
       attack_min: value.("attackMin"),
-      attack_max: value.("attackMax"),
+      attack_max: attack_max,
+      attack_max_magic:
+        if(formulas["attackMaxMagic"], do: value.("attackMaxMagic"), else: attack_max),
+      attack_speed_magic: speed_magic,
+      cooldown_ms_magic: cooldown_ms(speed_magic),
       defense: value.("defense"),
       attack_rate: value.("attackRate"),
       defense_rate: value.("defenseRate"),
@@ -72,6 +81,25 @@ defmodule Mu.Game.Engine do
     combat = Config.get(["combat"])
     max(combat["minCooldownMs"], floor(combat["baseCooldownMs"] / (1 + attack_speed / 100)))
   end
+
+  @doc """
+  Chỉ số dùng cho `skill`: skill `magic: true` lấy `attack_max_magic` / `attack_speed_magic` /
+  `cooldown_ms_magic` (MG — §4.1 "Nếu class là MG và skill là magic"; class khác các số này bằng
+  số thường). `attack_min` giữ nguyên (KB không cho công thức phép riêng).
+  """
+  def for_skill(stats, %{"magic" => true}) do
+    # map chỉ số dựng tay (test, simulator) có thể thiếu khóa phép: giữ số thường
+    for {k, magic} <- [
+          attack_max: :attack_max_magic,
+          attack_speed: :attack_speed_magic,
+          cooldown_ms: :cooldown_ms_magic
+        ],
+        Map.has_key?(stats, magic),
+        reduce: stats,
+        do: (acc -> Map.put(acc, k, stats[magic]))
+  end
+
+  def for_skill(stats, _skill), do: stats
 
   @doc "Cooldown của skill: `cooldownMs` của skill, `null` = theo attack speed (G2)."
   def skill_cooldown_ms(%{"cooldownMs" => nil}, derived), do: derived.cooldown_ms
@@ -191,13 +219,18 @@ defmodule Mu.Game.Engine do
 
   # ---------- Skill ----------
 
-  @doc "Skill nhân vật đã học: `basic_attack` + skill của class đủ `requiredLevel` (§7)."
+  @doc """
+  Skill nhân vật đã học: skill có `classes` chứa class của mình (`null` = mọi class, vd
+  `basic_attack`) và đủ `requiredLevel` (§7). MG học skill DK + DW theo `classes` (P3-4).
+  """
   def skills(c) do
     for {id, s} <- Data.skills(),
-        s["class"] in [nil, c.class],
+        class_ok?(s, c),
         c.level >= s["requiredLevel"],
         do: id
   end
+
+  defp class_ok?(s, c), do: s["classes"] == nil or c.class in s["classes"]
 
   @doc "`:ok` hoặc `{:error, \"INVALID_TARGET\" | \"REQUIREMENT_NOT_MET\"}`."
   def can_use_skill(c, skill_id) do
@@ -206,7 +239,7 @@ defmodule Mu.Game.Engine do
         {:error, "INVALID_TARGET"}
 
       s ->
-        if skill_id in skills(c) and s["class"] in [nil, c.class],
+        if skill_id in skills(c) and class_ok?(s, c),
           do: :ok,
           else: {:error, "REQUIREMENT_NOT_MET"}
     end

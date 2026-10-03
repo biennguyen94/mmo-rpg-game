@@ -627,7 +627,12 @@ defmodule Mu.World.MapServer do
       e = %{
         e
         | mp: e.mp - skill["manaCost"],
-          cooldowns: Map.put(e.cooldowns, skill_id, t + Engine.skill_cooldown_ms(skill, e.stats)),
+          cooldowns:
+            Map.put(
+              e.cooldowns,
+              skill_id,
+              t + Engine.skill_cooldown_ms(skill, Engine.for_skill(e.stats, skill))
+            ),
           # đánh tại chỗ: dừng đi
           path: [],
           progress: 0,
@@ -831,7 +836,7 @@ defmodule Mu.World.MapServer do
     {res, rng} =
       Engine.roll_attack(
         s.rng,
-        Engine.with_buffs(e.stats, e.buffs),
+        e.stats |> Engine.for_skill(skill) |> Engine.with_buffs(e.buffs),
         Engine.monster_stats(m.tpl),
         skill["damageMultiplier"]
       )

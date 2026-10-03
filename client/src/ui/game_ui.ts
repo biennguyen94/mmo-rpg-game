@@ -70,6 +70,8 @@ export interface UiActions {
   usePotion(type: "HP" | "MP"): void;
   pickupNearest(): void;
   logout(): void;
+  /** Rời game về màn chọn nhân vật (giữ đăng nhập, P3-M5). */
+  switchCharacter(): void;
   setSound(on: boolean): void;
   noticesSeen(): void;
   clearNotices(): void;
@@ -279,6 +281,7 @@ export class GameUI {
       "div",
       { class: "submenu", "data-test": "submenu" },
       h("button", { onclick: () => (this.closeMenu(), this.a.togglePanel("settings")) }, "⚙️ Cài đặt"),
+      h("button", { "data-test": "switch-character", onclick: () => (this.closeMenu(), this.a.switchCharacter()) }, "👥 Đổi nhân vật"),
       h("button", { onclick: () => (this.closeMenu(), this.a.logout()) }, "🚪 Đăng xuất"),
     );
     this.root.append(this.menu);
@@ -402,8 +405,11 @@ export class GameUI {
           kv("Điểm còn", p.freeStatPoints),
           h("hr", { class: "sep" }),
           kv("Dmg", `${v.attackMin} ~ ${v.attackMax}`),
+          // MG (P3-M5): sức mạnh / tốc độ phép
+          v.attackMaxMagic != null ? kv("Dmg phép", `${v.attackMin} ~ ${v.attackMaxMagic}`) : null,
           kv("Defense", v.defense),
           kv("Atk Speed", v.attackSpeed),
+          v.attackSpeedMagic != null ? kv("Tốc độ phép", v.attackSpeedMagic) : null,
           kv("Atk Rate", v.attackRate),
           kv("HP", `${p.hp} / ${v.hpMax}`),
           kv("MP", `${p.mp} / ${v.mpMax}`),

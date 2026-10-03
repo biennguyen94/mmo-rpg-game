@@ -1,7 +1,8 @@
 defmodule Mu.Game.Characters do
   @moduledoc """
-  Tạo và đọc nhân vật. Phase 1: chỉ DK, `account.maxCharacters` nhân vật/tài khoản
-  (= 1, enforce ở app: Q13). Viết lại so với repo nền (nhân vật ở đó là blob JSON).
+  Tạo và đọc nhân vật. `account.maxCharacters` nhân vật / tài khoản (Phase 3: 4, Q13 / P3-3;
+  enforce ở app, chưa cho xóa). MG chỉ tạo được khi tài khoản đã có nhân vật cấp ≥
+  `mg.unlockLevel` (KB_GAME_DESIGN §2, P3-2). Viết lại so với repo nền (nhân vật ở đó là blob JSON).
   """
 
   import Ecto.Query
@@ -29,7 +30,8 @@ defmodule Mu.Game.Characters do
   `newCharacter.classes`, bỏ trống = `defaultClass`). Mọi chỉ số do server tính từ
   `classes.json` + `config.json`; đồ `newCharacter.startingEquipment[class]` mặc sẵn (P2-3).
 
-  Lỗi: `:invalid_name`, `:banned_name`, `:name_taken`, `:invalid_class`, `:character_limit`.
+  Lỗi: `:invalid_name`, `:banned_name`, `:name_taken`, `:invalid_class`, `:character_limit`,
+  `:class_locked` (MG chưa mở).
   """
   def create(%Account{id: account_id}, attrs) do
     start = Config.get(["newCharacter"])
@@ -46,6 +48,8 @@ defmodule Mu.Game.Characters do
           Repo.rollback(:character_limit)
         end
 
+        if not unlocked?(class_id, account_id), do: Repo.rollback(:class_locked)
+
         c = insert(account_id, name, class, start)
         Items.give_starting_equipment(c.id, Map.get(start["startingEquipment"], c.class, []))
         # mail chào mừng (§19.10, P2-13)
@@ -55,14 +59,32 @@ defmodule Mu.Game.Characters do
     end
   end
 
-  @doc "Class tạo được (`newCharacter.classes`) cho màn tạo nhân vật; mục đầu là `defaultClass`."
-  def creatable_classes do
+  @doc """
+  Class tạo được (`newCharacter.classes`) cho màn tạo nhân vật; mục đầu là `defaultClass`.
+  `locked: true` + `unlockLevel` khi chưa mở (MG, P3-M5).
+  """
+  def creatable_classes(account_id \\ nil) do
     start = Config.get(["newCharacter"])
 
     start["classes"]
     |> Enum.sort_by(&(&1 != start["defaultClass"]))
-    |> Enum.map(&%{id: &1, name: Data.class(&1)["name"]})
+    |> Enum.map(fn id ->
+      base = %{id: id, name: Data.class(id)["name"], locked: not unlocked?(id, account_id)}
+      if id == "MG", do: Map.put(base, :unlockLevel, mg_unlock_level()), else: base
+    end)
   end
+
+  # MG: tài khoản có ≥ 1 nhân vật cấp ≥ mg.unlockLevel và `features.magicGladiator` bật
+  defp unlocked?("MG", account_id) do
+    Config.get(["features", "magicGladiator"]) == true and account_id != nil and
+      Repo.exists?(
+        from(c in Character, where: c.account_id == ^account_id and c.level >= ^mg_unlock_level())
+      )
+  end
+
+  defp unlocked?(_class, _account_id), do: true
+
+  defp mg_unlock_level, do: Config.get(["mg", "unlockLevel"])
 
   defp insert(account_id, name, class, start) do
     {x, y} = Maps.get(start["mapId"]).player_spawn
@@ -171,6 +193,10 @@ defmodule Mu.Game.Characters do
         defenseRate: d.defense_rate,
         attackSpeed: d.attack_speed,
         cooldownMs: d.cooldown_ms,
+        # MG (P3-M5): sức mạnh / tốc độ phép (§4.1); class khác null
+        attackMaxMagic: if(c.class == "MG", do: d.attack_max_magic),
+        attackSpeedMagic: if(c.class == "MG", do: d.attack_speed_magic),
+        cooldownMsMagic: if(c.class == "MG", do: d.cooldown_ms_magic),
         attackRange: d.attack_range,
         expRequired:
           if(c.level >= Engine.max_level(), do: nil, else: Engine.exp_required(c.level)),

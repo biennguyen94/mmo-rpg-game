@@ -10,6 +10,9 @@ export interface ApiError {
 export interface ClassOption {
   id: string;
   name: string;
+  /** Chưa mở (MG: cần nhân vật đạt `unlockLevel`, P3-M5). */
+  locked?: boolean;
+  unlockLevel?: number;
 }
 
 export interface CharacterSummary {
@@ -59,7 +62,7 @@ export const api = {
   logout: (token: string) => call<{ ok: boolean }>("POST", "/logout", undefined, token),
   wsTicket: (token: string) => call<{ ticket: string }>("POST", "/ws-ticket", undefined, token),
   characters: (token: string) =>
-    call<{ characters: CharacterSummary[]; classes: ClassOption[] }>("GET", "/characters", undefined, token),
+    call<{ characters: CharacterSummary[]; classes: ClassOption[]; maxCharacters: number }>("GET", "/characters", undefined, token),
   createCharacter: (token: string, name: string, cls: string) =>
     call<{ character: CharacterSummary }>("POST", "/characters", { name, class: cls }, token),
 };
