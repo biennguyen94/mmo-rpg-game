@@ -20,12 +20,18 @@ for i <- 1..String.to_integer(n) do
   party_pid = :rpc.call(node, Process, :whereis, [Mu.Party])
   {:message_queue_len, pq} = :rpc.call(node, Process, :info, [party_pid, :message_queue_len])
   parties = map_size(:rpc.call(node, :sys, :get_state, [Mu.Party]).parties)
+  # guild (P4-M5): hàng đợi Mu.Guild, số người online đăng ký, số war đang diễn ra
+  guild_pid = :rpc.call(node, Process, :whereis, [Mu.Guild])
+  {:message_queue_len, gq} = :rpc.call(node, Process, :info, [guild_pid, :message_queue_len])
+  gs = :rpc.call(node, :sys, :get_state, [Mu.Guild])
+  wars = div(map_size(gs.war.wars), 2)
 
   IO.puts(
     "#{DateTime.utc_now() |> DateTime.truncate(:second)} | tick #{stats.ticks} " <>
       "(kỳ vọng ~#{div(uptime_ms, 50)} theo uptime VM) | max_drift #{stats.max_drift_ms} ms | " <>
       "người chơi #{stats.players} | session #{sessions} | MapServer queue #{q}, " <>
       "#{div(map_mem, 1024)} KB | Party queue #{pq}, #{parties} nhóm | " <>
+      "Guild queue #{gq}, online #{map_size(gs.online)}, war #{wars} | " <>
       "RAM VM #{div(mem, 1_048_576)} MB | process #{procs}"
   )
 end
