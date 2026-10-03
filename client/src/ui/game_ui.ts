@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, ItemView, MailView, MapData, Player, ShopPayload, SkillInfo, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, WarehousePayload } from "../net/protocol.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
@@ -46,6 +46,10 @@ export interface UiState {
   /** Hộp thư (P2-M6): số chưa đọc (badge) + danh sách lần mở panel gần nhất. */
   mailUnread: number;
   mail: MailView[];
+  /** Nhóm hiện tại (P3-M4), `null` = không có nhóm. */
+  party: PartyPayload | null;
+  /** Lời mời vào nhóm đang chờ: người mời + hạn (giờ client, ms). */
+  partyInvite: { from: string; until: number } | null;
 }
 
 export interface UiActions {
@@ -80,6 +84,14 @@ export interface UiActions {
   sendChat(line: string): void;
   claimMail(id: string): void;
   deleteReadMail(): void;
+  /** Nhóm (P3-M4). */
+  partyInvite(name: string): void;
+  /** Đi tới chỗ người chơi `targetId` (mục "Đi tới đây" trong menu người chơi). */
+  goTo(targetId: string): void;
+  partyAnswer(from: string, accept: boolean): void;
+  partyLeave(): void;
+  partyKick(name: string): void;
+  partyDisband(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -925,12 +937,16 @@ export class GameUI {
    * Menu khi click người chơi (P2-M3): skill hỗ trợ (heal/buff) đã học lên người đó; click chính
    * mình thì thêm skill chọn ô (teleport). Trả false nếu không có gì để hiện.
    */
-  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number): boolean {
+  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number, name?: string): boolean {
     this.closeContext();
     const mine = this.state.player.view.skills.map((id) => this.state.skills.get(id)).filter((x) => x !== undefined);
     const ally = mine.filter((sk) => sk.targetType === "ALLY");
     const point = isSelf ? mine.filter((sk) => sk.targetType === "POINT") : [];
-    if (ally.length + point.length === 0) return false;
+    // mời vào nhóm (P3-M4): người khác, chưa cùng nhóm, mình chưa có nhóm hoặc là trưởng nhóm
+    const party = this.state.party;
+    const canInvite =
+      !isSelf && name !== undefined && !party?.members.some((m) => m.name === name) && (!party || party.leader === this.state.player.name);
+    if (ally.length + point.length === 0 && !canInvite) return false;
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "playermenu" },
@@ -938,6 +954,9 @@ export class GameUI {
         h("button", { "data-skill": sk.id, onclick: () => (this.closeContext(), this.a.cast(sk.id, isSelf ? null : targetId)) }, `${sk.name} (${sk.manaCost} MP)`),
       ),
       point.map((sk) => h("button", { "data-skill": sk.id, onclick: () => this.a.aim(sk.id) }, `${sk.name}… (${sk.manaCost} MP)`)),
+      canInvite ? h("button", { "data-test": "party-invite", onclick: () => (this.closeContext(), this.a.partyInvite(name!)) }, "👥 Mời vào nhóm") : null,
+      // bấm trúng người chơi khác giờ mở menu (P3-M4): giữ thao tác đi bằng một mục riêng
+      !isSelf ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(targetId)) }, "🚶 Đi tới đây") : null,
       h("hr", {}),
       h("button", { onclick: () => this.closeContext() }, "Hủy"),
     );
@@ -996,11 +1015,78 @@ export class GameUI {
           ),
         ),
       );
+    this.renderParty();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
       this.view.append(h("div", { class: "aimbar", "data-test": "aimbar" }, `${name}: chọn ô đích (Esc để hủy)`));
     }
+  }
+
+  // ---------- Nhóm (P3-M4, P3-5 (5)) ----------
+
+  private partyEl: HTMLElement | null = null;
+  private partyKeyShown: string | null = null;
+
+  /** Khung nhóm góc trên trái vùng game + hộp lời mời; chỉ dựng lại khi dữ liệu đổi (giữ click). */
+  private renderParty(): void {
+    const s = this.state;
+    const inv = s.partyInvite;
+    const left = inv ? Math.max(0, Math.ceil((inv.until - Date.now()) / 1000)) : 0;
+    const key = JSON.stringify([s.party, inv?.from, left, s.map.id, s.player.name]);
+    if (key === this.partyKeyShown && this.partyEl?.isConnected) return;
+    this.partyKeyShown = key;
+    this.partyEl?.remove();
+    this.partyEl = null;
+    const me = s.player.name;
+    const party = s.party;
+    const lead = party?.leader === me;
+    const frame = party
+      ? h(
+          "div",
+          { class: "partyframe", "data-test": "party" },
+          party.members.map((m) =>
+            h(
+              "div",
+              { class: `pm${m.online ? "" : " off"}`, "data-member": m.name },
+              h(
+                "div",
+                { class: "pmhead" },
+                h("span", { class: "pmname" }, `${m.name === party.leader ? "★ " : ""}${m.name}`),
+                h("span", { class: "pmsub" }, `${m.class} Lv${m.level}`),
+                lead && m.name !== me
+                  ? h("button", { class: "pmkick", title: "Mời ra khỏi nhóm", "data-kick": m.name, onclick: () => this.a.partyKick(m.name) }, "✕")
+                  : null,
+              ),
+              h("div", { class: "bar hp" }, h("div", { class: "fill", style: `width:${pct(m.hp ?? 0, m.maxHp ?? 1)}%` })),
+              !m.online ? h("div", { class: "pmnote" }, "Mất kết nối") : m.mapId !== s.map.id ? h("div", { class: "pmnote" }, `Khác map (${m.mapId ?? "?"})`) : null,
+            ),
+          ),
+          h(
+            "div",
+            { class: "pmbtns" },
+            h("button", { "data-test": "party-leave", onclick: () => this.a.partyLeave() }, "Rời nhóm"),
+            lead ? h("button", { "data-test": "party-disband", onclick: () => this.a.partyDisband() }, "Giải tán") : null,
+          ),
+        )
+      : null;
+    const ask =
+      inv && left > 0
+        ? h(
+            "div",
+            { class: "partyask", "data-test": "party-ask" },
+            h("div", {}, `${inv.from} mời bạn vào nhóm (${left}s)`),
+            h(
+              "div",
+              { class: "btns" },
+              h("button", { "data-test": "party-accept", onclick: () => this.a.partyAnswer(inv.from, true) }, "Đồng ý"),
+              h("button", { "data-test": "party-decline", onclick: () => this.a.partyAnswer(inv.from, false) }, "Từ chối"),
+            ),
+          )
+        : null;
+    if (!frame && !ask) return;
+    this.partyEl = h("div", { class: "partyhost" }, frame, ask);
+    this.view.append(this.partyEl);
   }
 
   // ---------- Phím tắt (§19.2), click ngoài ----------

@@ -25,10 +25,11 @@ defmodule Mu.Game.ConfigTest do
     end
   end
 
-  test "mọi act của KB_TECHNICAL §5 (+ act hộp thư P2-13) có nhóm rate-limit" do
+  test "mọi act của KB_TECHNICAL §5 (+ act hộp thư P2-13, nhóm P3-5) có nhóm rate-limit" do
     acts =
       ~w(move_to attack skill pickup equip unequip move_item split drop use_item npc_open buy sell alloc chat) ++
-        ~w(mail_list mail_claim mail_delete)
+        ~w(mail_list mail_claim mail_delete) ++
+        ~w(party_invite party_accept party_decline party_leave party_kick party_disband)
 
     assert Enum.sort(Mu.Game.Commands.acts()) == Enum.sort(acts)
   end

@@ -33,6 +33,8 @@ const walkTo = async (page, x, y, ms = 15000) => {
     const dx = Math.max(-12, Math.min(12, x - p.x));
     const dy = Math.max(-8, Math.min(8, y - p.y));
     await clickTile(page, dx, dy);
+    // bấm trúng người chơi khác → menu (P3-M4): chọn "Đi tới đây"
+    await (await page.$('[data-test="player-goto"]'))?.click();
     await page.waitForTimeout(Math.max(Math.abs(dx), Math.abs(dy)) * 210 + 150);
   }
   return false;

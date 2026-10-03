@@ -187,25 +187,28 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
     const r = canvas.getBoundingClientRect();
     const wx = (ev.clientX - r.left + cam.x) / TILE;
     const wy = (ev.clientY - r.top + cam.y) / TILE;
-    // entity gần điểm bấm nhất (trong 0,75 ô). Chính mình (menu tự thân, P2-M3) chỉ thắng người
-    // chơi khác khi gần bằng hoặc hơn (nhiều người đứng chung ô hồi sinh → click ô mình là chọn
-    // mình); quái / đồ / NPC trùng ô với mình vẫn được chọn trước
+    // entity gần điểm bấm nhất (trong 0,75 ô); quái / đồ / NPC thắng người chơi khác (P3-M4: bấm
+    // người chơi mở menu — đứng sát quái đang đánh không được che quái). Chính mình (menu tự
+    // thân, P2-M3) chỉ thắng người chơi khác khi gần bằng hoặc hơn (nhiều người đứng chung ô hồi
+    // sinh → click ô mình là chọn mình)
     let best: Entity | null = null;
+    let player: Entity | null = null;
     let self: Entity | null = null;
     let bestD = 0.75;
+    let playerD = 0.75;
     let selfD = Infinity;
     for (const e of world.entities.values()) {
       const p = pos(e);
       const d = Math.hypot(p.x + 0.5 - wx, p.y + 0.5 - wy);
       if (e.id === selfId) {
         if (d < 0.75) [self, selfD] = [e, d];
-        continue;
-      }
-      if (d < bestD) {
-        best = e;
-        bestD = d;
+      } else if (e.kind === "player") {
+        if (d < playerD) [player, playerD] = [e, d];
+      } else if (d < bestD) {
+        [best, bestD] = [e, d];
       }
     }
+    if (!best && player) [best, bestD] = [player, playerD];
     if (self && (!best || (best.kind === "player" && selfD <= bestD))) best = self;
     if (best) cb.onEntity(best, ev.clientX, ev.clientY);
     else cb.onGround(Math.floor(wx), Math.floor(wy));

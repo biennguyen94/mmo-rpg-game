@@ -7,7 +7,8 @@ defmodule Mu.Chat do
   - `NORMAL`: mọi người trên cùng map (`chat.normalScope` = `"map"`), qua topic PubSub của map.
   - `WHISPER`: tới nhân vật đang online theo tên (không phân biệt hoa thường); người gửi nhận
     bản sao có `to`.
-  - `PARTY` / `GUILD`: tắt tới Phase 3/4 (`FORBIDDEN`). `SYSTEM`: chỉ server gửi (`system/1`).
+  - `PARTY`: từ P3-M4 qua `Mu.Party.chat/2` (không có nhóm → `INVALID_TARGET`). `GUILD`: tắt tới
+    Phase 4 (`FORBIDDEN`). `SYSTEM`: chỉ server gửi (`system/1`).
   - Từ cấm `chat.bannedWords` thay bằng `chat.mask`. Hiển thị ở client bằng text node (chống XSS).
 
   Event `chat`: `{channel, from, text, t}` (+ `to` ở bản sao whisper của người gửi).

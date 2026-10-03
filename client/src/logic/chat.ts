@@ -3,7 +3,7 @@
 import type { ChatPayload } from "../net/protocol.js";
 
 export interface ChatCommand {
-  channel: "NORMAL" | "WHISPER";
+  channel: "NORMAL" | "WHISPER" | "PARTY";
   text: string;
   to?: string;
 }
@@ -12,7 +12,7 @@ export interface ChatCommand {
 export const CHAT_KEEP = 50;
 
 /**
- * Dòng gõ → lệnh: `/w Tên nội dung` (hoặc `/m`) = nhắn riêng, còn lại = NORMAL.
+ * Dòng gõ → lệnh: `/w Tên nội dung` (hoặc `/m`) = nhắn riêng, `/p nội dung` = nhóm (P3-M4), còn lại = NORMAL.
  * `null` nếu trống / thiếu tên hoặc nội dung. Server vẫn làm sạch, cắt độ dài, lọc từ cấm.
  */
 export function parseChat(line: string): ChatCommand | null {
@@ -21,6 +21,9 @@ export function parseChat(line: string): ChatCommand | null {
   const m = /^\/(?:w|m)\s+(\S+)\s+(.+)$/i.exec(s);
   if (m) return { channel: "WHISPER", to: m[1], text: m[2].trim() };
   if (/^\/(?:w|m)\b/i.test(s)) return null;
+  const p = /^\/p\s+(.+)$/i.exec(s);
+  if (p) return { channel: "PARTY", text: p[1].trim() };
+  if (/^\/p\b/i.test(s)) return null;
   return { channel: "NORMAL", text: s };
 }
 
@@ -33,6 +36,8 @@ export function chatLine(c: ChatPayload, me: string): { cls: string; head: strin
       return c.to !== undefined || c.from === me
         ? { cls: "whisper", head: `[Mật → ${c.to ?? "?"}] `, text: c.text }
         : { cls: "whisper", head: `[Mật] ${c.from}: `, text: c.text };
+    case "PARTY":
+      return { cls: "party", head: `[Nhóm] ${c.from}: `, text: c.text };
     default:
       return { cls: c.from === me ? "me" : "normal", head: `${c.from}: `, text: c.text };
   }

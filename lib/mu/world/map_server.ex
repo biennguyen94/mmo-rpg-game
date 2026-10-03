@@ -347,6 +347,7 @@ defmodule Mu.World.MapServer do
             x: e.x,
             y: e.y,
             hp: e.hp,
+            hp_max: e.stats.hp_max,
             mp: e.mp,
             dead?: e.state == "dead",
             combat_remaining_ms: combat_remaining(s, e)
@@ -853,15 +854,28 @@ defmodule Mu.World.MapServer do
   end
 
   # Quái chết: EXP + Zen cho người ra đòn cuối (G12), đồ rơi dưới đất thuộc người gây nhiều
-  # sát thương nhất trong `lootProtectSeconds` (G13).
+  # sát thương nhất trong `lootProtectSeconds` (G13). Nhóm (P3-M4): thành viên cùng map, còn
+  # sống, trong `party.expRange` ô của quái cùng chia EXP (`Engine.party_exp_gain/4`); Zen vẫn
+  # chỉ cho người ra đòn cuối.
   defp kill(s, mid, killer_id) do
     m = s.monsters[mid]
-    killer = s.players[killer_id]
     t = now(s)
     owner = MonsterAi.top_damager(m) || killer_id
     {drop, rng} = Drops.roll(s.rng, m.template_id)
-    exp = Engine.exp_gain(m.tpl["experience"], killer.level, m.tpl["level"])
-    send(killer.owner, {:map_reward, %{exp: exp, zen: drop.zen, monster: mid}})
+    range = Config.get(["party", "expRange"])
+
+    sharers =
+      for cid <- Mu.Party.mates(killer_id),
+          p = s.players[cid],
+          cid == killer_id or
+            (p.state != "dead" and Pathfinding.chebyshev({p.x, p.y}, {m.x, m.y}) <= range),
+          do: p
+
+    for p <- sharers do
+      exp = Engine.party_exp_gain(m.tpl["experience"], length(sharers), p.level, m.tpl["level"])
+      zen = if p.character_id == killer_id, do: drop.zen, else: 0
+      send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid}})
+    end
 
     m = %{
       m
@@ -1014,7 +1028,10 @@ defmodule Mu.World.MapServer do
 
   # trong lootProtectSeconds chỉ chủ (người gây nhiều sát thương nhất) được nhặt (G13)
   defp loot_owner(s, g, id) do
-    if g.owner == id or now(s) >= g.protect_until, do: :ok, else: {:error, "NOT_OWNER"}
+    # loot protect cho chủ và người cùng nhóm với chủ (P3-5)
+    if Mu.Party.same?(g.owner, id) or now(s) >= g.protect_until,
+      do: :ok,
+      else: {:error, "NOT_OWNER"}
   end
 
   defp combat_remaining(s, %{last_combat_at: nil}) when is_map(s), do: 0

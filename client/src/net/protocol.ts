@@ -205,6 +205,25 @@ export interface ChatPayload {
   to?: string;
 }
 
+/** Một thành viên trong event `party` (P3-M4). `hp`/`x`/`y` null khi không đọc được (vd. đang đổi map). */
+export interface PartyMember {
+  name: string;
+  class: string;
+  level: number;
+  mapId: string | null;
+  online: boolean;
+  hp: number | null;
+  maxHp: number | null;
+  x: number | null;
+  y: number | null;
+}
+
+/** Event `party` (P3-M4): `leader` null + `members` rỗng = không còn nhóm. */
+export interface PartyPayload {
+  leader: string | null;
+  members: PartyMember[];
+}
+
 /** Một thư (event `mail`, P2-M6). */
 export interface MailView {
   id: string;
@@ -243,6 +262,8 @@ export interface JoinReply {
     pickupRange: number;
     npcRange: number;
     twoHandedWeaponTypes: string[];
+    /** Lời mời vào nhóm hết hạn sau ngần này giây (P3-M4). */
+    partyInviteSeconds: number;
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }
