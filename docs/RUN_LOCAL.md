@@ -96,6 +96,8 @@ Image không chứa icon MU-derived (mọi item dùng placeholder).
 
 ## 8. Vận hành (Phase 2–6)
 
+> Hướng dẫn quản trị đầy đủ (tra người chơi, tặng quà, sửa nhân vật, audit, sao lưu): `docs/ADMIN_GUIDE.md`.
+
 Bản release (Docker: `docker compose exec app bin/mu rpc '…'`):
 
 | Việc | Lệnh |
