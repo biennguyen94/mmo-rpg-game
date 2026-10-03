@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ChaosPayload, QuestActive, QuestBrief, QuestsPayload, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ChaosPayload, WorldEventPayload, QuestActive, QuestBrief, QuestsPayload, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
 import { ERROR_TEXT, type ErrorCode } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
@@ -85,6 +85,8 @@ export interface UiState {
   /** P6-M4: slot cánh mở (config). P6-M3: Chaos Machine đang mở (đồ đặt vào + công thức khớp). */
   wings: boolean;
   chaos: ChaosPayload | null;
+  /** Event thế giới đang / sắp diễn ra (P6-M5), theo `kind`. */
+  worldEvents: Record<string, WorldEventPayload>;
 }
 
 export interface UiActions {
@@ -1084,6 +1086,35 @@ export class GameUI {
     );
   }
 
+  // thanh event thế giới (P6-M5): giữa trên, đếm ngược theo giờ server
+  private worldEl: HTMLElement | null = null;
+  private worldKey: string | null = null;
+
+  private renderWorldEvents(): void {
+    const evs = Object.values(this.state.worldEvents);
+    const now = this.state.serverNow;
+    const mmss = (ms: number) => {
+      const n = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`;
+    };
+    const maps = (m: string[]) => m.map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(", ");
+    const lines = evs.map((e) =>
+      e.state === "soon" ? `⏳ ${e.name} sau ${mmss(e.at - now)} — ${maps(e.maps)}` : `⚔ ${e.name} — ${maps(e.maps)} · còn ${mmss(e.at - now)}`,
+    );
+    const key = JSON.stringify(lines);
+    if (key === this.worldKey && (this.worldEl?.isConnected || !evs.length)) return;
+    this.worldKey = key;
+    this.worldEl?.remove();
+    this.worldEl = null;
+    if (!evs.length) return;
+    this.worldEl = h(
+      "div",
+      { class: "worldbar", "data-test": "world-event" },
+      lines.map((l, i) => h("div", { "data-kind": evs[i].kind }, l)),
+    );
+    this.view.append(this.worldEl);
+  }
+
   // dòng theo dõi tiến độ góc màn hình (bấm = mở panel)
   private questTrackEl: HTMLElement | null = null;
   private questTrackKey: string | null = null;
@@ -1646,6 +1677,7 @@ export class GameUI {
     this.renderWar();
     this.renderTradeAsk();
     this.renderQuestTracker();
+    this.renderWorldEvents();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;

@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §4 (Phase 1). moveSpeed: ô/giây (G3). Số chỉ là ví dụ cho vertical slice. Phase 2 (P2-M4): 12 quái mới — docs/PHASE2_PROPOSAL_M4.md §1 (P2-7, duyệt 2026-10-03); số của dự án, không phải số MU.",
+  "source": "docs/kb/KB_CONFIG.md §4 (Phase 1). moveSpeed: ô/giây (G3). Số chỉ là ví dụ cho vertical slice. Phase 2 (P2-M4): 12 quái mới — docs/PHASE2_PROPOSAL_M4.md §1 (P2-7, duyệt 2026-10-03); số của dự án, không phải số MU. P6-M5: quái event Golden Budge Dragon / Golden Goblin (P6-5) và world boss Bull Fighter Lord (P6-6) — `event: true` (chỉ sinh khi có event, không hồi sinh).",
   "monsters": [
     {
       "id": "spider",
@@ -312,6 +312,101 @@
       "version": null,
       "verified": false,
       "source": "docs/PHASE2_PROPOSAL_M4.md §1 (P2-7, duyệt 2026-10-03)"
+    },
+    {
+      "id": "golden_budge_dragon",
+      "name": "Golden Budge Dragon",
+      "mapId": "lorencia",
+      "level": 4,
+      "hp": 330,
+      "damageMin": 30,
+      "damageMax": 44,
+      "defense": 1,
+      "attackRate": 20,
+      "defenseRate": 6,
+      "experience": 140,
+      "zenMin": 50,
+      "zenMax": 150,
+      "moveSpeed": 3,
+      "attackRange": 1,
+      "aggroRange": 5,
+      "leashRange": 12,
+      "respawnSeconds": 0,
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-5 (duyệt 2026-10-03): quái vàng Golden Invasion = quái gốc với HP / EXP / Zen × 5, rơi jewel 10 %; chỉ sinh trong event (không có trong spawns của map)",
+      "golden": true,
+      "event": true
+    },
+    {
+      "id": "golden_goblin",
+      "name": "Golden Goblin",
+      "mapId": "noria",
+      "level": 12,
+      "hp": 575,
+      "damageMin": 47,
+      "damageMax": 70,
+      "defense": 3,
+      "attackRate": 60,
+      "defenseRate": 18,
+      "experience": 725,
+      "zenMin": 150,
+      "zenMax": 450,
+      "moveSpeed": 3,
+      "attackRange": 1,
+      "aggroRange": 5,
+      "leashRange": 12,
+      "respawnSeconds": 0,
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-5 (duyệt 2026-10-03): quái vàng Golden Invasion = quái gốc với HP / EXP / Zen × 5, rơi jewel 10 %; chỉ sinh trong event (không có trong spawns của map)",
+      "golden": true,
+      "event": true
+    },
+    {
+      "id": "bull_fighter_lord",
+      "name": "Bull Fighter Lord",
+      "mapId": "lorencia",
+      "level": 32,
+      "hp": 20000,
+      "damageMin": 60,
+      "damageMax": 90,
+      "defense": 40,
+      "attackRate": 160,
+      "defenseRate": 50,
+      "experience": 0,
+      "zenMin": 0,
+      "zenMax": 0,
+      "moveSpeed": 3,
+      "attackRange": 2,
+      "aggroRange": 6,
+      "leashRange": 20,
+      "respawnSeconds": 0,
+      "attackCooldownMs": 3000,
+      "aoe": {
+        "radius": 2,
+        "maxTargets": 6
+      },
+      "boss": true,
+      "event": true,
+      "reward": {
+        "exp": 6000,
+        "zen": 30000,
+        "minShare": 0.01,
+        "topJewels": 3,
+        "jewels": [
+          "jewel_bless",
+          "jewel_soul",
+          "jewel_life",
+          "jewel_chaos"
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-6 (duyệt 2026-10-03): world boss cấp 32, HP 20 000, đòn 60–90, thủ 40, đánh vùng bán kính 2 tối đa 6 người mỗi 3 s; thưởng chia theo sát thương (≥ 1 %): tổng EXP 6 000, Zen 30 000; top 3 thêm 1 jewel. attackRate / defenseRate / tốc độ do dự án tự đặt"
     }
   ]
 }

@@ -213,6 +213,21 @@
       "id": "npc:noria_chaos_goblin",
       "original": "releases/Nov-2015/mon/goblin.png",
       "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
+    },
+    "sprites/monsters/golden_budge_dragon.png": {
+      "id": "monster:golden_budge_dragon",
+      "original": "releases/Nov-2015/mon/dragons/swamp_dragon.png",
+      "gitBlob": "27b13ab4c17bb89f1611d23f5fa8f32371f0c5b2"
+    },
+    "sprites/monsters/golden_goblin.png": {
+      "id": "monster:golden_goblin",
+      "original": "releases/Nov-2015/mon/goblin.png",
+      "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
+    },
+    "sprites/monsters/bull_fighter_lord.png": {
+      "id": "monster:bull_fighter_lord",
+      "original": "releases/Nov-2015/mon/animals/death_yak.png",
+      "gitBlob": "fbadba948ac82fce914b4b3f6bc776f22c002883"
     }
   }
 }

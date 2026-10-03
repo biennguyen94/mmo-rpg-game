@@ -150,6 +150,16 @@ defmodule Mu.World.MapServer do
   @doc "Sửa state trực tiếp (chỉ dùng trong test)."
   def debug_update(server, fun), do: :sys.replace_state(server(server), fun)
 
+  @doc """
+  Sinh `count` quái event `monster_id` (P6-M5) trong `area` (`%{x, y, w, h}`, khóa chuỗi hoặc atom),
+  gắn nhãn `tag`: không hồi sinh, chết thì báo `Mu.WorldEvents.monster_killed/2`. `{:ok, [id]}`.
+  """
+  def spawn_event(server, tag, monster_id, count, area),
+    do: GenServer.call(server(server), {:spawn_event, tag, monster_id, count, area})
+
+  @doc "Thu mọi quái event nhãn `tag` (còn sống hay đã chết). `{:ok, số_con}`."
+  def despawn_event(server, tag), do: GenServer.call(server(server), {:despawn_event, tag})
+
   defp server(map_id) when is_binary(map_id), do: via(map_id)
   defp server(server), do: server
 
@@ -462,6 +472,28 @@ defmodule Mu.World.MapServer do
     {:reply, :ok, Enum.reduce(1..n//1, s, fn _, s -> step(s) end)}
   end
 
+  def handle_call({:spawn_event, tag, monster_id, count, area}, _from, s) do
+    tpl = Data.monster(monster_id) || raise "không có quái #{monster_id}"
+    area = for k <- [:x, :y, :w, :h], into: %{}, do: {k, area[k] || area[Atom.to_string(k)]}
+
+    {s, ids} =
+      Enum.reduce(1..count//1, {s, []}, fn _, {s, ids} ->
+        {{x, y}, rng} = random_cell(s, area, s.rng)
+        id = "ev_#{System.unique_integer([:positive])}"
+        m = %{new_monster(id, monster_id, tpl, area, {x, y}) | event: tag}
+        broadcast(s, "spawn", spawn_payload(m))
+        {%{s | rng: rng, monsters: Map.put(s.monsters, id, m)}, [id | ids]}
+      end)
+
+    {:reply, {:ok, Enum.reverse(ids)}, s}
+  end
+
+  def handle_call({:despawn_event, tag}, _from, s) do
+    {gone, keep} = Enum.split_with(s.monsters, fn {_, m} -> m.event == tag end)
+    for {id, _} <- gone, do: broadcast(s, "despawn", %{id: id})
+    {:reply, {:ok, length(gone)}, %{s | monsters: Map.new(keep)}}
+  end
+
   def handle_call(:stats, _from, s) do
     {:reply, %{ticks: s.ticks, max_drift_ms: s.max_drift, players: map_size(s.players)}, s}
   end
@@ -584,30 +616,34 @@ defmodule Mu.World.MapServer do
       tpl = Data.monster(sp.monster) || raise "không có quái #{sp.monster}"
       {{x, y}, rng} = random_cell(s, sp.area, s.rng)
       id = "m_#{i}"
-
-      m = %{
-        id: id,
-        kind: :monster,
-        template_id: sp.monster,
-        tpl: tpl,
-        area: sp.area,
-        home: {x, y},
-        x: x,
-        y: y,
-        hp: tpl["hp"],
-        hp_max: tpl["hp"],
-        state: "idle",
-        target: nil,
-        path: [],
-        progress: 0,
-        step_ms: 1000 / tpl["moveSpeed"],
-        next_attack_at: 0,
-        respawn_at: nil,
-        damage_by: %{}
-      }
-
+      m = new_monster(id, sp.monster, tpl, sp.area, {x, y})
       %{s | rng: rng, monsters: Map.put(s.monsters, id, m)}
     end)
+  end
+
+  defp new_monster(id, template_id, tpl, area, {x, y}) do
+    %{
+      id: id,
+      kind: :monster,
+      template_id: template_id,
+      tpl: tpl,
+      area: area,
+      home: {x, y},
+      x: x,
+      y: y,
+      hp: tpl["hp"],
+      hp_max: tpl["hp"],
+      state: "idle",
+      target: nil,
+      path: [],
+      progress: 0,
+      step_ms: 1000 / tpl["moveSpeed"],
+      next_attack_at: 0,
+      respawn_at: nil,
+      damage_by: %{},
+      # P6-M5: nhãn event (quái vàng / boss) — `nil` = quái thường của map
+      event: nil
+    }
   end
 
   # ô ngẫu nhiên đi được, ngoài safe zone, trong vùng sinh
@@ -678,9 +714,34 @@ defmodule Mu.World.MapServer do
   # mục tiêu có thể vừa chết vì quái khác trong cùng nhịp AI
   defp monster_attack(s, mid, cid) do
     case s.players[cid] do
-      %{state: state} = e when state != "dead" -> do_monster_attack(s, s.monsters[mid], e)
-      _ -> s
+      %{state: state} = e when state != "dead" ->
+        case s.monsters[mid].tpl["aoe"] do
+          nil -> do_monster_attack(s, s.monsters[mid], e)
+          aoe -> monster_aoe(s, mid, e, aoe)
+        end
+
+      _ ->
+        s
     end
+  end
+
+  # boss (P6-M5): đánh vùng quanh mục tiêu, tối đa `maxTargets` người (gần mục tiêu trước),
+  # bỏ người chết / trong safe zone
+  defp monster_aoe(s, mid, e, %{"radius" => r, "maxTargets" => n}) do
+    s.players
+    |> Map.values()
+    |> Enum.filter(fn p ->
+      p.state != "dead" and not Maps.safe?(s.map, p.x, p.y) and
+        Pathfinding.chebyshev({p.x, p.y}, {e.x, e.y}) <= r
+    end)
+    |> Enum.sort_by(&Pathfinding.chebyshev({&1.x, &1.y}, {e.x, e.y}))
+    |> Enum.take(n)
+    |> Enum.reduce(s, fn p, s ->
+      case s.players[p.character_id] do
+        %{state: st} = pe when st != "dead" -> do_monster_attack(s, s.monsters[mid], pe)
+        _ -> s
+      end
+    end)
   end
 
   defp do_monster_attack(s, m, e) do
@@ -1292,11 +1353,20 @@ defmodule Mu.World.MapServer do
             (p.state != "dead" and Pathfinding.chebyshev({p.x, p.y}, {m.x, m.y}) <= range),
           do: p
 
-    for p <- sharers do
-      exp = Engine.party_exp_gain(m.tpl["experience"], length(sharers), p.level, m.tpl["level"])
-      zen = if p.character_id == killer_id, do: drop.zen, else: 0
-      send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid, template: m.template_id}})
+    reward = m.tpl["reward"]
+
+    if reward do
+      # boss (P6-6 (2)): chia EXP / Zen theo phần sát thương (≥ minShare)
+      share_reward(s, m, reward)
+    else
+      for p <- sharers do
+        exp = Engine.party_exp_gain(m.tpl["experience"], length(sharers), p.level, m.tpl["level"])
+        zen = if p.character_id == killer_id, do: drop.zen, else: 0
+        send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid, template: m.template_id}})
+      end
     end
+
+    damage_by = m.damage_by
 
     m = %{
       m
@@ -1306,11 +1376,64 @@ defmodule Mu.World.MapServer do
         path: [],
         progress: 0,
         damage_by: %{},
-        respawn_at: t + m.tpl["respawnSeconds"] * 1000
+        # quái event không hồi sinh (thu khi event hết)
+        respawn_at: if(m.event, do: nil, else: t + m.tpl["respawnSeconds"] * 1000)
     }
 
     s = put_entity(%{s | rng: rng}, mid, m)
-    Enum.reduce(drop.items, s, &drop_item(&2, %{template_id: &1}, {m.x, m.y}, owner, t))
+    s = Enum.reduce(drop.items, s, &drop_item(&2, %{template_id: &1}, {m.x, m.y}, owner, t))
+    s = if reward, do: top_jewels(s, m, damage_by, reward, t), else: s
+
+    if m.event do
+      top = s.players[owner]
+
+      Mu.WorldEvents.monster_killed(m.event, %{
+        map: s.map.id,
+        monster: m.template_id,
+        name: m.tpl["name"],
+        top: top && top.name
+      })
+    end
+
+    s
+  end
+
+  defp share_reward(s, m, r) do
+    total = m.damage_by |> Map.values() |> Enum.sum()
+
+    for {cid, dmg} <- m.damage_by,
+        total > 0 and dmg / total >= r["minShare"],
+        p = s.players[cid],
+        p != nil do
+      send(
+        p.owner,
+        {:map_reward,
+         %{
+           exp: floor(r["exp"] * dmg / total),
+           zen: floor(r["zen"] * dmg / total),
+           monster: m.id,
+           template: m.template_id
+         }}
+      )
+    end
+
+    :ok
+  end
+
+  # top `topJewels` người gây sát thương (≥ minShare) mỗi người 1 jewel ngẫu nhiên, rơi dưới đất
+  # thuộc riêng người đó (loot protect)
+  defp top_jewels(s, m, damage_by, r, t) do
+    total = damage_by |> Map.values() |> Enum.sum()
+
+    damage_by
+    |> Enum.filter(fn {_, d} -> total > 0 and d / total >= r["minShare"] end)
+    |> Enum.sort_by(fn {_, d} -> -d end)
+    |> Enum.take(r["topJewels"])
+    |> Enum.reduce(s, fn {cid, _}, s ->
+      {i, rng} = Rng.int(s.rng, 0, length(r["jewels"]) - 1)
+      jewel = Enum.at(r["jewels"], i)
+      drop_item(%{s | rng: rng}, %{template_id: jewel}, {m.x, m.y}, cid, t)
+    end)
   end
 
   # ---------- Đồ dưới đất (chỉ trong RAM: KB_TECHNICAL §9) ----------
@@ -1571,7 +1694,10 @@ defmodule Mu.World.MapServer do
       state: m.state,
       name: m.tpl["name"],
       level: m.tpl["level"],
-      templateId: m.template_id
+      templateId: m.template_id,
+      # P6-M5: quái vàng / boss (client tô tên, vẽ to hơn)
+      golden: m.tpl["golden"] == true,
+      boss: m.tpl["boss"] == true
     }
   end
 

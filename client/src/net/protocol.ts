@@ -103,6 +103,18 @@ export interface SpawnPayload {
   guild?: string | null;
   /** Cánh đang mặc (P6-M4): templateId, null nếu không. */
   wing?: string | null;
+  /** Quái event (P6-M5): quái vàng / world boss. */
+  golden?: boolean;
+  boss?: boolean;
+}
+
+/** Event `world_event` (P6-M5): sắp diễn ra (`at` = giờ bắt đầu) / đang diễn ra (`at` = giờ kết thúc) / kết thúc. */
+export interface WorldEventPayload {
+  kind: string;
+  name: string;
+  state: "soon" | "start" | "end";
+  maps: string[];
+  at: number;
 }
 
 export interface SnapshotEntity {
