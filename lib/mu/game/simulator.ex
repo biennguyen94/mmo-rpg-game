@@ -16,7 +16,7 @@ defmodule Mu.Game.Simulator do
 
   alias Mu.Game.{Config, Data, Drops, Engine, Rng}
 
-  @milestones [2, 5, 10, 20]
+  @milestones [2, 5, 10, 20, 30]
 
   @defaults %{
     strategy: "balanced",
@@ -24,6 +24,12 @@ defmodule Mu.Game.Simulator do
     potion_below: 0.4,
     equipment: [],
     class: nil,
+    # P2-M4: "spider" (mặc định) hoặc "auto" = quái cấp cao nhất ≤ cấp nhân vật (quái mọi map)
+    monster: "spider",
+    # P2-M4: true = đồ t0 (full) dưới cấp 10, t1 từ cấp 10 (bỏ qua `equipment`)
+    gear_progress: false,
+    # P2-M4: true = DW dùng skill đánh mạnh nhất đã học còn đủ mana (hồi MP theo combat.mpRegen)
+    use_skills: false,
     max_kills: 5000
   }
 
@@ -71,6 +77,7 @@ defmodule Mu.Game.Simulator do
       rng: Rng.new(seed),
       c: c,
       hp: Engine.derived(c, opts.equipment).hp_max,
+      mp: Engine.derived(c, opts.equipment).mp_max,
       t: 0,
       kills: 0,
       potions: 0,
@@ -92,13 +99,16 @@ defmodule Mu.Game.Simulator do
       else: st |> fight(opts, potion) |> loop(opts, potion)
   end
 
-  # một trận với một Spider, theo thời gian (ms)
+  # một trận với một quái, theo thời gian (ms)
   defp fight(st, opts, potion) do
-    spider = Data.monster("spider")
+    spider = pick_monster(st.c.level, opts.monster)
     m = Engine.monster_stats(spider)
     combat = Config.get(["combat"])
+    opts = if opts.gear_progress, do: %{opts | equipment: progress_gear(st.c)}, else: opts
     d = Engine.derived(st.c, opts.equipment)
-    st = %{st | t: st.t + opts.walk_ms}
+    # đi bộ giữa hai con: MP vẫn hồi (P2-M3)
+    mp = min(d.mp_max, st.mp + Engine.mp_regen(st.c.energy, opts.walk_ms))
+    st = %{st | t: st.t + opts.walk_ms, mp: mp}
 
     # đánh xa (P2-5): Spider phải đi thêm (tầm người chơi − tầm Spider) ô mới đánh được
     approach_ms = max(d.attack_range - spider["attackRange"], 0) * 1000 / spider["moveSpeed"]
@@ -135,8 +145,10 @@ defmodule Mu.Game.Simulator do
         )
 
       p_next <= m_next ->
-        st = %{st | t: p_next}
-        {res, rng} = Engine.roll_attack(st.rng, d, m)
+        {mult, cd, cost} = attack_choice(st, d, opts)
+        mp = min(d.mp_max, st.mp - cost + Engine.mp_regen(st.c.energy, cd))
+        st = %{st | t: p_next, mp: mp}
+        {res, rng} = Engine.roll_attack(st.rng, d, m, mult)
         st = %{st | rng: rng, swings: st.swings + 1, hits: st.hits + if(res.hit, do: 1, else: 0)}
 
         duel(
@@ -147,7 +159,7 @@ defmodule Mu.Game.Simulator do
           m,
           spider,
           mhp - res.dmg,
-          p_next + d.cooldown_ms,
+          p_next + cd,
           m_next,
           potion_ready
         )
@@ -173,7 +185,7 @@ defmodule Mu.Game.Simulator do
   end
 
   defp win(st, spider) do
-    {drop, rng} = Drops.roll(st.rng, "spider")
+    {drop, rng} = Drops.roll(st.rng, spider["id"])
     exp = Engine.exp_gain(spider["experience"], st.c.level, spider["level"])
     {c, levels} = Engine.add_exp(st.c, exp)
     c = allocate(c, st.strategy)
@@ -188,7 +200,10 @@ defmodule Mu.Game.Simulator do
     }
 
     # lên cấp hồi đầy (G10)
-    st = if levels > 0, do: %{st | hp: Engine.derived(c).hp_max}, else: st
+    st =
+      if levels > 0,
+        do: %{st | hp: Engine.derived(c).hp_max, mp: Engine.derived(c).mp_max},
+        else: st
 
     Enum.reduce(@milestones, st, fn lv, st ->
       if c.level >= lv and not Map.has_key?(st.at, lv),
@@ -196,6 +211,38 @@ defmodule Mu.Game.Simulator do
           put_in(st.at[lv], %{kills: st.kills, ms: st.t, potions: st.potions, deaths: st.deaths}),
         else: st
     end)
+  end
+
+  # quái để đánh: Spider, hoặc (auto) quái cấp cao nhất ≤ cấp nhân vật
+  defp pick_monster(_level, "spider"), do: Data.monster("spider")
+
+  defp pick_monster(level, "auto") do
+    Data.monsters()
+    |> Map.values()
+    |> Enum.filter(&(&1["level"] <= max(level, 2)))
+    |> Enum.max_by(& &1["level"])
+  end
+
+  defp pick_monster(_level, id), do: Data.monster(id)
+
+  # {hệ số, cooldown ms, mana}: đánh thường, hoặc skill đánh một mục tiêu mạnh nhất đã học đủ mana
+  defp attack_choice(st, d, %{use_skills: true}) do
+    Engine.skills(st.c)
+    |> Enum.map(&Data.skill/1)
+    |> Enum.filter(
+      &(&1["class"] != nil and &1["targetType"] == "SINGLE" and st.mp >= &1["manaCost"])
+    )
+    |> Enum.max_by(& &1["damageMultiplier"], fn -> nil end)
+    |> case do
+      nil -> {1.0, d.cooldown_ms, 0}
+      sk -> {sk["damageMultiplier"], Engine.skill_cooldown_ms(sk, d), sk["manaCost"]}
+    end
+  end
+
+  defp attack_choice(_st, d, _opts), do: {1.0, d.cooldown_ms, 0}
+
+  defp progress_gear(c) do
+    if c.level >= 10, do: gear(c.class, "t1"), else: gear(c.class, "full")
   end
 
   defp allocate(%{free_stat_points: 0} = c, _strategy), do: c
@@ -242,6 +289,22 @@ defmodule Mu.Game.Simulator do
     case kind do
       "starter" ->
         Enum.map(Config.get(["newCharacter", "startingEquipment", class_id]) || [], &Data.item/1)
+
+      "t1" ->
+        t1 =
+          item_templates()
+          |> Enum.filter(&(&1["slot"] != nil and class_id in (&1["classes"] || [])))
+          |> Enum.filter(&String.ends_with?(&1["templateId"], "_t1"))
+          |> Map.new(&{&1["slot"], &1})
+
+        picked = Map.merge(Map.new(gear(class_id, "full"), &{&1["slot"], &1}), t1)
+
+        picked =
+          if Mu.Game.Inventory.two_handed?(picked["WEAPON"] || %{}),
+            do: Map.delete(picked, "SHIELD"),
+            else: picked
+
+        Map.values(picked)
 
       "full" ->
         starter = gear(class_id, "starter")

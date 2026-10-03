@@ -12,10 +12,10 @@ defmodule Mu.Game.ItemImportTest do
 
   test "items.json sinh từ data/items khớp (mix mu.items.import --check)" do
     assert capture_io(fn -> Mix.Tasks.Mu.Items.Import.run(["--check"]) end) =~
-             "không đổi (22 template)"
+             "không đổi (43 template)"
   end
 
-  test "đủ 10 template Phase 1 + 12 template P2-M2, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
+  test "10 template Phase 1 + 12 P2-M2 + 21 P2-M4, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
     ids =
       ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
         ~w(staff_t0 bow_t0) ++
@@ -23,6 +23,12 @@ defmodule Mu.Game.ItemImportTest do
           set <- ~w(pad vine),
           part <- ~w(helm armor pants gloves boots),
           do: "#{set}_#{part}_t0"
+        ) ++
+        ~w(sword_t1 staff_t1 bow_t1 shield_t1 hp_potion_medium mp_potion_medium) ++
+        for(
+          set <- ~w(bronze bone silk),
+          part <- ~w(helm armor pants gloves boots),
+          do: "#{set}_#{part}_t1"
         )
 
     assert Enum.sort(Map.keys(Data.items())) == Enum.sort(ids)

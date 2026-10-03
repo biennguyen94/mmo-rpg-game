@@ -216,7 +216,7 @@ for (let round = 0; round < 60 && (!drop || !(await levelled())); round++) {
   const target = await pa.evaluate(() => {
     const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
     return window.__mu.entities()
-      .filter((e) => e.kind === "monster" && e.state !== "dead")
+      .filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead")
       .map((e) => ({ id: e.id, x: e.x, y: e.y, d: Math.max(Math.abs(e.x - me.x), Math.abs(e.y - me.y)) }))
       .sort((a, b) => a.d - b.d)[0];
   });

@@ -185,6 +185,15 @@ export interface MapData {
   legend: Record<string, string>;
   safeZones: { id: string; x: number; y: number; w: number; h: number }[];
   npcs: { id: string; x: number; y: number }[];
+  /** Ô cổng sang map khác (P2-M4). */
+  portals: { id: string; x: number; y: number; w: number; h: number; to: string; levelRequired: number }[];
+}
+
+/** Qua cổng (P2-M4): dữ liệu như reply join. */
+export interface MapChangePayload {
+  map: MapData;
+  entityId: string;
+  player: Player;
 }
 
 export interface JoinReply {

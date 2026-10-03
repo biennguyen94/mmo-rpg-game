@@ -51,6 +51,7 @@ const COLORS: Record<string, string> = {
   tree: "#1d3a1a",
   water: "#1e3d66",
   rock: "#55524c",
+  portal: "#5b3f8a",
 };
 
 interface Floater {
@@ -83,8 +84,8 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
       [...row].forEach((ch, x) => {
         const kind = map.legend[ch];
         const img = tiles.get(kind);
-        // cây có nền trong suốt: vẽ cỏ bên dưới
-        const under = kind === "tree" ? tiles.get("grass") : null;
+        // cây / cổng có nền trong suốt: vẽ cỏ / đường bên dưới
+        const under = kind === "tree" ? tiles.get("grass") : kind === "portal" ? tiles.get("road") : null;
         if (under) bgc.drawImage(under, x * TILE, y * TILE);
         else if (!img) {
           bgc.fillStyle = COLORS[kind] ?? "#000";
@@ -99,6 +100,17 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
         }
       }),
     );
+    // cổng (P2-M4): nhãn tên map đích + cấp yêu cầu
+    for (const p of map.portals ?? []) {
+      const label = `→ ${p.to.charAt(0).toUpperCase()}${p.to.slice(1)}${p.levelRequired ? ` (cấp ${p.levelRequired})` : ""}`;
+      bgc.font = "bold 12px system-ui";
+      bgc.textAlign = "center";
+      bgc.fillStyle = "rgba(0,0,0,0.6)";
+      const cx = (p.x + p.w / 2) * TILE;
+      bgc.fillRect(cx - 50, p.y * TILE - 18, 100, 16);
+      bgc.fillStyle = "#e6d7ff";
+      bgc.fillText(label, cx, p.y * TILE - 6);
+    }
     for (const z of map.safeZones) {
       bgc.strokeStyle = "rgba(217,180,90,0.45)";
       bgc.setLineDash([6, 6]);
@@ -301,7 +313,7 @@ function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dea
   g.font = "11px system-ui";
   g.textAlign = "center";
   g.fillStyle = "#000";
-  const name = e.kind === "npc" ? "Potion Merchant" : e.name;
+  const name = e.name;
   g.fillText(name, x + 1, y - 19);
   g.fillStyle = "#fff";
   g.fillText(name, x, y - 20);

@@ -89,7 +89,7 @@ async function bot(i) {
       const pot = player.inventory.find((it) => it.templateId === "hp_potion_small");
       if (pot && (await cmd("use_item", { itemId: pot.id }))) stats.potions++;
     }
-    const spider = [...ents.values()].filter((e) => e.kind === "monster" && e.state !== "dead").sort((a, b) => cheb(a, me) - cheb(b, me))[0];
+    const spider = [...ents.values()].filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead").sort((a, b) => cheb(a, me) - cheb(b, me))[0];
     const r = Math.random();
     if (player.zen >= 100 && player.view.potions.HP < 3 && r < 0.2) {
       // về NPC mua potion

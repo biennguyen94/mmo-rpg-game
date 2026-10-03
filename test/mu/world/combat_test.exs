@@ -81,7 +81,7 @@ defmodule Mu.World.CombatTest do
     end
   end
 
-  test "10 Spider sinh trong vùng, ngoài safe zone, ô đi được (G16)" do
+  test "quái sinh đúng vùng của loại mình, ngoài safe zone, ô đi được (G16; P2-M4: 43 con / 6 loại)" do
     %{monsters: ms} =
       MapServer.debug_state(
         start_supervised!(
@@ -90,15 +90,19 @@ defmodule Mu.World.CombatTest do
         )
       )
 
-    assert map_size(ms) == 10
-    [%{area: a}] = @map.spawns
+    assert map_size(ms) == Enum.sum(Enum.map(@map.spawns, & &1.count))
+
+    for %{monster: mon, count: n} <- @map.spawns do
+      assert Enum.count(ms, fn {_, m} -> m.template_id == mon end) == n
+    end
 
     for {id, m} <- ms do
       assert "m_" <> _ = id
+      a = Enum.find(@map.spawns, &(&1.monster == m.template_id)).area
       assert m.x in a.x..(a.x + a.w - 1) and m.y in a.y..(a.y + a.h - 1)
       assert Maps.walkable?(@map, m.x, m.y)
       refute Maps.safe?(@map, m.x, m.y)
-      assert {m.hp, m.state, m.template_id} == {30, "idle", "spider"}
+      assert {m.hp, m.state} == {Mu.Game.Data.monster(m.template_id)["hp"], "idle"}
     end
   end
 
@@ -191,7 +195,7 @@ defmodule Mu.World.CombatTest do
                     }}
 
     m = monster(s, "m_1")
-    [%{area: a}] = @map.spawns
+    %{area: a} = Enum.find(@map.spawns, &(&1.monster == "spider"))
     assert m.x in a.x..(a.x + a.w - 1) and m.state in ["idle", "chase", "attack"]
   end
 
@@ -219,7 +223,11 @@ defmodule Mu.World.CombatTest do
     assert {drop.x, drop.y} == {50, 36}
     assert drop.owner == "a"
 
-    assert drop.template_id in ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0)
+    assert drop.template_id in for(
+             g <- Mu.Game.Data.drops("spider")["groups"],
+             e <- g["entries"],
+             do: e["item"]
+           )
 
     assert drop.protect_until - drop.expire_at == (10 - 60) * 1000
 

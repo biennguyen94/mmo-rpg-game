@@ -193,6 +193,25 @@ defmodule Mu.Game.Session do
     {:noreply, s, timeout(s)}
   end
 
+  # Bước vào cổng (P2-M4): đủ cấp thì chuyển map, thiếu thì báo lỗi và đứng lại
+  def handle_info({:map_portal, _cid, portal}, %{on_map: true, character: c} = s) do
+    if c.level < portal.level_required do
+      push(s, "error", %{
+        rid: nil,
+        error: "REQUIREMENT_NOT_MET",
+        reason: "portal",
+        map: portal.to,
+        levelRequired: portal.level_required
+      })
+
+      {:noreply, s, timeout(s)}
+    else
+      {:noreply, change_map(s, portal.to, {portal.to_x, portal.to_y}), timeout(s)}
+    end
+  end
+
+  def handle_info({:map_portal, _, _}, s), do: {:noreply, s, timeout(s)}
+
   def handle_info({:map_died, _}, s) do
     s = refresh(s)
     push_player(s)
@@ -562,6 +581,27 @@ defmodule Mu.Game.Session do
   end
 
   defp leave_map(s), do: s
+
+  # Rời map cũ (lưu), vào map mới ở (x, y), lưu ngay `map_id`; các tab nhận `{:map_changed, ...}`
+  # để kênh đổi topic PubSub và đẩy `map_change` (P2-M4). Buff mất khi đổi map.
+  defp change_map(s, map_id, {x, y}) do
+    old = s.character.map_id
+    s = leave_map(s)
+    c = %{s.character | map_id: map_id, position_x: x, position_y: y}
+    {:ok, info} = MapServer.join(map_id, map_player(c, s.items), self())
+
+    c = %{c | position_x: info.x, position_y: info.y, hp_current: info.hp, mana_current: info.mp}
+    s = %{s | character: c, on_map: true, buffs: []} |> persist() |> schedule_save()
+
+    payload = %{
+      map: Maps.client_data(Maps.get(map_id)),
+      entityId: info.entity_id,
+      player: Characters.player_view(s.character, s.items, [])
+    }
+
+    for {_, pid} <- s.tabs, do: send(pid, {:map_changed, old, map_id, payload, info.entities})
+    s
+  end
 
   defp persist(s) do
     case Characters.save(s.saved, s.character) do

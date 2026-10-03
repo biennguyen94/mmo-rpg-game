@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17).",
+  "source": "docs/kb/KB_CONFIG.md §4 (drop table Spider Phase 1). item = templateId trong data/items/phase1.json. Đồ rơi +0, không option (G17). P2-M4: bảng drop 13 quái (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)); item = templateId trong data/items/*.json.",
   "drops": [
     {
       "monsterId": "spider",
@@ -57,6 +57,54 @@
             {
               "item": "ring_hp_t0",
               "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
             }
           ]
         }
@@ -64,7 +112,2083 @@
       "sourceType": "CONFIG",
       "version": null,
       "verified": false,
-      "source": "KB_CONFIG §4"
+      "source": "KB_CONFIG §4; P2-M4: thêm đồ t0 của DW/ELF vào nhóm equipment (docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03))"
+    },
+    {
+      "monsterId": "budge_dragon",
+      "zen": {
+        "min": 10,
+        "max": 30
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_small",
+              "weight": 80
+            },
+            {
+              "item": "mp_potion_small",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "bull_fighter",
+      "zen": {
+        "min": 15,
+        "max": 45
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_small",
+              "weight": 80
+            },
+            {
+              "item": "mp_potion_small",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "hound",
+      "zen": {
+        "min": 23,
+        "max": 68
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_small",
+              "weight": 80
+            },
+            {
+              "item": "mp_potion_small",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "lich",
+      "zen": {
+        "min": 28,
+        "max": 83
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "elite_bull_fighter",
+      "zen": {
+        "min": 33,
+        "max": 98
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "goblin",
+      "zen": {
+        "min": 30,
+        "max": 90
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "chain_scorpion",
+      "zen": {
+        "min": 38,
+        "max": 113
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "beetle_monster",
+      "zen": {
+        "min": 45,
+        "max": 135
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "hunter",
+      "zen": {
+        "min": 50,
+        "max": 150
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "forest_monster",
+      "zen": {
+        "min": 58,
+        "max": 173
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "agon",
+      "zen": {
+        "min": 65,
+        "max": 195
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
+    },
+    {
+      "monsterId": "stone_golem",
+      "zen": {
+        "min": 73,
+        "max": 218
+      },
+      "groups": [
+        {
+          "id": "potions",
+          "chance": 0.15,
+          "entries": [
+            {
+              "item": "hp_potion_medium",
+              "weight": 60
+            },
+            {
+              "item": "mp_potion_medium",
+              "weight": 25
+            },
+            {
+              "item": "hp_potion_small",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "id": "equipment",
+          "chance": 0.04,
+          "entries": [
+            {
+              "item": "sword_t1",
+              "weight": 3
+            },
+            {
+              "item": "staff_t1",
+              "weight": 3
+            },
+            {
+              "item": "bow_t1",
+              "weight": 3
+            },
+            {
+              "item": "shield_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bronze_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "bone_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_helm_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_armor_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_pants_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_gloves_t1",
+              "weight": 3
+            },
+            {
+              "item": "silk_boots_t1",
+              "weight": 3
+            },
+            {
+              "item": "sword_t0",
+              "weight": 1
+            },
+            {
+              "item": "shield_t0",
+              "weight": 1
+            },
+            {
+              "item": "helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "staff_t0",
+              "weight": 1
+            },
+            {
+              "item": "bow_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "pad_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_helm_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_armor_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_pants_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_gloves_t0",
+              "weight": 1
+            },
+            {
+              "item": "vine_boots_t0",
+              "weight": 1
+            },
+            {
+              "item": "ring_hp_t0",
+              "weight": 1
+            }
+          ]
+        }
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "docs/PHASE2_PROPOSAL_M4.md §4 (duyệt 2026-10-03)"
     }
   ]
 }

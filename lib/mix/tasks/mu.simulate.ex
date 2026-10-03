@@ -5,9 +5,11 @@ defmodule Mix.Tasks.Mu.Simulate do
       mix mu.simulate --runs 200 --strategy str
       mix mu.simulate --gear full       # mặc toàn bộ trang bị t0 của class (so Q14)
       mix mu.simulate --class DW --gear starter --strategy ene
+      mix mu.simulate --class DW --strategy ene --monster auto --progress --skills   # P2-M4: tới cấp 30
 
   Tùy chọn: `--runs N`, `--class DK|DW|ELF`, `--strategy balanced|str|agi|vit|ene`,
-  `--walk-ms N`, `--gear none|starter|full`. Xem giả định ở `Mu.Game.Simulator`.
+  `--walk-ms N`, `--gear none|starter|full|t1`, `--monster spider|auto|<id>` (auto = quái cấp cao
+  nhất ≤ cấp nhân vật), `--progress` (đồ t0 → t1 ở cấp 10), `--skills` (dùng skill đánh đã học). Xem giả định ở `Mu.Game.Simulator`.
   """
   use Mix.Task
 
@@ -22,7 +24,10 @@ defmodule Mix.Tasks.Mu.Simulate do
           strategy: :string,
           walk_ms: :integer,
           gear: :string,
-          class: :string
+          class: :string,
+          monster: :string,
+          progress: :boolean,
+          skills: :boolean
         ]
       )
 
@@ -33,7 +38,10 @@ defmodule Mix.Tasks.Mu.Simulate do
       strategy: strategy,
       walk_ms: o[:walk_ms] || 2000,
       equipment: gear,
-      class: o[:class]
+      class: o[:class],
+      monster: o[:monster] || "spider",
+      gear_progress: o[:progress] || false,
+      use_skills: o[:skills] || false
     }
 
     r = Simulator.run(o[:runs] || 50, opts)
@@ -49,7 +57,7 @@ defmodule Mix.Tasks.Mu.Simulate do
       end
 
     """
-    Mô phỏng #{r.runs} lần — class #{r.opts.class || "mặc định"}, cộng điểm: #{r.opts.strategy}, đi bộ giữa hai con: #{r.opts.walk_ms} ms, trang bị: #{inspect(r.opts.equipment)}
+    Mô phỏng #{r.runs} lần — class #{r.opts.class || "mặc định"}, quái #{r.opts.monster}, cộng điểm: #{r.opts.strategy}, đi bộ giữa hai con: #{r.opts.walk_ms} ms, trang bị: #{inspect(r.opts.equipment)}
     #{Enum.join(rows, "\n")}
       Zen trung bình: #{Float.round(r.zen, 1)}  — số món rơi: #{Float.round(r.items, 1)}
       Sát thương nhận / con: #{Float.round(r.damage_taken_per_kill, 2)}  — tỉ lệ trúng: #{Float.round(r.hit_rate * 100, 1)}%
