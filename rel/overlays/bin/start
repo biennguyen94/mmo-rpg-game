@@ -1,0 +1,6 @@
+#!/bin/sh
+# Khởi động trong container: chạy migration còn thiếu rồi bật server.
+set -eu
+cd -P -- "$(dirname -- "$0")"
+./mu eval "Mu.Release.migrate()"
+PHX_SERVER=true exec ./mu start

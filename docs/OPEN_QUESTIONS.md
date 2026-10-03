@@ -2,10 +2,11 @@
 
 > Cách đọc: mỗi câu có **đề xuất mặc định**. Anh trả lời "OK" cho cả nhóm nghĩa là chấp nhận mọi đề xuất; muốn khác thì chỉ cần nêu mã câu (vd "G3: 6 ô/giây").
 > Theo `CLAUDE.md` §9: câu nào ảnh hưởng gameplay/schema/protocol thì em hỏi; việc nhỏ thuần kỹ thuật em tự quyết và ghi `docs/DECISIONS.md`.
-> **Trạng thái 2026-10-02:** anh trả lời "ok" sau M0 → các mặc định P, G, D được áp dụng (đổi được bất cứ lúc nào). Mục E vẫn mở.
+> **Trạng thái 2026-10-02:** anh trả lời "ok" sau M0 → các mặc định P, G, D được áp dụng (đổi được bất cứ lúc nào).
+> **Trạng thái 2026-10-03 (M1):** E1–E4 đã xong (môi trường có Elixir 1.17.3 / OTP 25, Hex tải được, Postgres `postgres/postgres`). E5 xem báo cáo push M1. E6 vẫn mở. Câu mới: mục **M1** cuối file.
 > Câu hỏi gốc của KB (Q1–Q15, A1–A6, B1–B6) giữ nguyên trong `docs/kb/`; mục **K** cuối file chỉ ghi trạng thái liên quan Phase 1.
 
-## E. Môi trường cloud — **chặn M1** (chi tiết `docs/CLOUD_CHECK.md`)
+## E. Môi trường cloud — ~~chặn M1~~ (E1–E4 đã xong 2026-10-03) (chi tiết `docs/CLOUD_CHECK.md`)
 
 | # | Vấn đề | Bằng chứng | Cần anh làm / đề xuất |
 |---|---|---|---|
@@ -83,3 +84,11 @@
 | B2 | Commit mốc repo nền: `5c514b7512183d714afb1d35ad310fa4a62f2a5d` (`reference/COMMIT`) |
 | B3 | Đã đọc source + test các module Phase 1 (xem `docs/PHASE1_PLAN.md §2`) |
 | B4 | Đã đọc `reference/rpg-game/CREDITS.md`: DCSS = CC0 (bản `releases/Nov-2015`, đã đối chiếu danh sách license không rõ), game-icons.net = CC BY 3.0 (Lorc, Delapouite, Willdabeast). Phase 1 không dùng icon game-icons.net |
+
+## M1. Câu hỏi phát sinh ở M1 (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm (đề xuất) |
+|---|---|---|
+| M1-1 | **Schema:** §4 yêu cầu access token lưu hash trong DB, có TTL, thu hồi được, nhưng §9 không có bảng | Thêm bảng `access_tokens (id BIGSERIAL, account_id UUID FK ON DELETE CASCADE, token_hash BYTEA UNIQUE, expires_at TIMESTAMPTZ, created_at)` — migration riêng `20261003000001`, `CHANGE_REASON` trong moduledoc + commit |
+| M1-2 | **Protocol:** lỗi khi join `"game"` không có trong §5 | `{error: "FORBIDDEN", reason}` (DEC-11) |
+| M1-3 | **Protocol:** báo cho tab bị đá (single login) | event `error {rid: null, error: "FORBIDDEN"}` rồi đóng kênh (DEC-14). Nếu anh muốn rõ hơn: thêm event `kicked` (đổi protocol) |

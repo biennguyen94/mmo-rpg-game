@@ -1,0 +1,16 @@
+# TLS proxy cho MU Web (dùng với docker-compose.caddy.yml). Caddy tự xin/gia hạn chứng chỉ
+# Let's Encrypt cho {$PHX_HOST}, tự chuyển http sang https, chuyển tiếp cả WebSocket (/socket).
+{
+	servers {
+		# Có proxy khác đứng trước Caddy (vd. Cloudflare): liệt kê dải IP của nó ở
+		# CADDY_TRUSTED_PROXIES để giữ nguyên X-Forwarded-For. Để trống nếu kết nối thẳng.
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES}
+	}
+}
+
+{$PHX_HOST} {
+	encode gzip
+	# KHÔNG bật access log (`log`) ở đây: URL /socket/websocket?ticket=... chứa WS ticket
+	# (KB_TECHNICAL §4: không log query string). Cần log thì phải lọc bỏ query trước.
+	reverse_proxy app:4000
+}

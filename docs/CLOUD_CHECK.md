@@ -94,3 +94,14 @@ Ghi chú: sprite DCSS (CC0) **đã có sẵn** trong `reference/rpg-game/priv/st
 | `reference/rpg-game/COMMIT` | ❌ không có; hash nằm ở `reference/COMMIT` = `5c514b7512183d714afb1d35ad310fa4a62f2a5d` |
 | `.claude/settings.json`, `scripts/cloud_session_start.sh` | ❌ không có (PROMPT_PHASE1_CLOUD §A3) |
 | `Item.txt` | ❌ không có (chỉ cần nếu chạy lại `scripts/parse_items.py`) |
+
+## 9. Kiểm lại ở M1 (2026-10-03)
+
+| Mục | Kết quả |
+|---|---|
+| `elixir --version` | ✅ Elixir 1.17.3 (OTP 25, erts 13.2.2.5) — `/usr/local/bin/elixir` |
+| Hex | ✅ `mix local.hex --force` (hex 2.5.1), `mix deps.get` tải đủ gói; `argon2_elixir` biên dịch NIF bằng gcc OK |
+| Postgres | ✅ `service postgresql start`, đăng nhập `postgres/postgres` qua TCP OK |
+| Locale | ⚠️ VM chạy `latin1` → Elixir cảnh báo; chạy lệnh với `LANG=C.UTF-8` (hook SessionStart đã export) |
+| Docker | ⚠️ `registry-1.docker.io` bị proxy chặn → không build image trong cloud; đã kiểm `MIX_ENV=prod mix release` + `bin/mu eval "Mu.Release.migrate()"` |
+| Server thật | ✅ `mix phx.server` + curl + client WebSocket Node 22: register → tạo DK → ws-ticket → join → `cmd`; ticket dùng lại bị từ chối; log ghi `"ticket" => "[FILTERED]"` |
