@@ -17,11 +17,14 @@ level = String.to_integer(level)
   Mu.Repo.update_all(from(c in Character, where: like(c.name, ^"#{prefix}%")),
     set: [
       level: level,
-      zen: String.to_integer(zen),
       free_stat_points: Stats.earned_points("DK", level),
       hp_current: 999_999,
       mana_current: 999_999
     ]
   )
+
+# Zen qua zen_audit_log (ADMIN) để `mix mu.audit` vẫn khớp sau soak (P5-M3)
+for id <- Mu.Repo.all(from(c in Character, where: like(c.name, ^"#{prefix}%"), select: c.id)),
+    do: {:ok, _} = Mu.Game.ZenAudit.admin_set(id, String.to_integer(zen), "e2e_soak_seed")
 
 IO.puts("seeded #{n} bot: cấp #{level}, #{zen} Zen")

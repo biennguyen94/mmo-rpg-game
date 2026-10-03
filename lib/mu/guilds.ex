@@ -6,7 +6,8 @@ defmodule Mu.Guilds do
 
   - Tạo: một transaction — khóa row nhân vật (`FOR UPDATE`), kiểm cấp ≥ `guild.createLevel`, đủ
     `guild.createZen`, chưa có guild, tên hợp lệ / chưa ai dùng; ghi guild + master; trừ Zen
-    (`zen = zen − cost, version = version + 1`, CHECK `zen >= 0` là chốt cuối). Trả Zen / version
+    (`zen = zen − cost, version = version + 1`, CHECK `zen >= 0` là chốt cuối; audit Zen
+    `GUILD_CREATE`). Trả Zen / version
     mới cho Session (như `Mu.Game.Items`).
   - Thêm thành viên / đổi vai trò: khóa row guild (`FOR UPDATE`) để đếm sĩ số / số assistant đúng.
   - Lỗi trả mã `KB_TECHNICAL §5`: `INVALID_TARGET` (tên sai), `FORBIDDEN` (tên đã có, đã có guild,
@@ -14,7 +15,6 @@ defmodule Mu.Guilds do
   """
 
   import Ecto.Query
-  require Logger
 
   alias Mu.Repo
   alias Mu.Game.{Character, Config}
@@ -120,10 +120,8 @@ defmodule Mu.Guilds do
               inc: [zen: -cfg["createZen"], version: 1]
             )
 
-          # chưa có bảng audit Zen (KB §9 chỉ audit item): ghi log để truy vết
-          Logger.info(
-            "guild_create #{g.id} #{name} master=#{cid} zen -#{cfg["createZen"]} → #{zen}"
-          )
+          # P5-M3: audit Zen trong cùng transaction (thay cho dòng log của P4M3-1)
+          Mu.Game.ZenAudit.log(cid, -cfg["createZen"], zen, "GUILD_CREATE", g.id)
 
           {%{guild_id: g.id, name: g.name, role: "master"}, %{zen: zen, version: version}}
       end

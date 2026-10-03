@@ -20,7 +20,11 @@ account =
 Logger.configure(level: :warning)
 
 Repo.update_all(from(x in Character, where: x.account_id == ^account.id),
-  set: [level: String.to_integer(level), zen: String.to_integer(zen)]
+  set: [level: String.to_integer(level)]
 )
+
+# Zen qua zen_audit_log (ADMIN) để `mix mu.audit` vẫn khớp (P5-M3)
+for id <- Repo.all(from(x in Character, where: x.account_id == ^account.id, select: x.id)),
+    do: {:ok, _} = Mu.Game.ZenAudit.admin_set(id, String.to_integer(zen), "e2e_guild")
 
 IO.puts("seeded #{username}: cấp #{level}, #{zen} Zen")
