@@ -47,9 +47,13 @@ defmodule Mu.Game.QuestsTest do
       %{template_id: "hp_potion_medium", quantity: 7, location: "INVENTORY", slot: 1}
     ]
 
-    assert [%{type: "kill", have: 15}, %{type: "collect", have: 10, need: 10}] =
+    assert [
+             %{type: "kill", name: "Hunter", have: 15},
+             %{type: "collect", have: 10, need: 10, name: name}
+           ] =
              Quests.objectives(q, %{"0" => 15}, 18, items)
 
+    assert name == Data.item("hp_potion_medium")["name"]
     assert Quests.complete?(q, %{"0" => 15}, 18, items)
     refute Quests.complete?(q, %{"0" => 14}, 18, items)
     refute Quests.complete?(q, %{"0" => 15}, 18, tl(items))
@@ -64,6 +68,7 @@ defmodule Mu.Game.QuestsTest do
     v = Quests.view(st, 5, [])
     assert v.done == ["q_spider"]
     assert [%{id: "q_budge", complete: false, objectives: [%{have: 3, need: 12}]}] = v.active
+    assert [%{name: "Budge Dragon"}] = hd(v.active).goals
     ids = Enum.map(v.available, & &1.id)
     assert "q_bull" in ids and "q_grow" in ids
     refute "q_hound" in ids or "q_spider" in ids

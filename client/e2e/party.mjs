@@ -99,6 +99,8 @@ check("người được mời thấy hộp \"… mời bạn vào nhóm\" có �
 await pb.screenshot({ path: `${shots}/p3-party-invite.png` });
 await pb.click('[data-test="party-accept"]');
 const formed = await until(pa, (n) => [...document.querySelectorAll("[data-member]")].map((m) => m.dataset.member).includes(n), B.name, 4000);
+// khung nhóm của B cập nhật theo event `party` riêng: chờ cả hai bên
+await until(pb, () => document.querySelectorAll("[data-member]").length === 2, null, 4000);
 const frameA = await pa.textContent('[data-test="party"]').catch(() => "");
 check("đồng ý → khung nhóm 2 người, ★ trưởng nhóm, class + cấp", formed && (await members(pb)).length === 2 && frameA.includes(`★ ${A.name}`) && frameA.includes("DK Lv1"), frameA);
 check("thanh HP thành viên", (await pa.locator('[data-test="party"] .bar.hp .fill').count()) === 2);

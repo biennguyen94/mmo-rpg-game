@@ -74,7 +74,7 @@ async function enter(user) {
 // ---------- cấp 1: bị chặn ở cổng ----------
 const low = await enter(await account("Lo", 1));
 const npcs = await low.evaluate(() => window.__mu.entities().filter((e) => e.kind === "npc").map((e) => e.id).sort());
-check("Lorencia có 3 NPC (Potion + Weapon Merchant + Thủ kho P3-M3)", npcs.join() === "npc_lorencia_potion_merchant,npc_lorencia_warehouse,npc_lorencia_weapon_merchant", npcs.join());
+check("Lorencia có 4 NPC (Potion + Weapon Merchant + Thủ kho P3-M3 + Quest Master P6-M2)", npcs.join() === "npc_lorencia_potion_merchant,npc_lorencia_quest_master,npc_lorencia_warehouse,npc_lorencia_weapon_merchant", npcs.join());
 await walkTo(low, 15, 9);
 await clickAt(low, 15, 8);
 const blocked = await until(low, () => document.querySelector('[data-tab="notices"] .badge') !== null, null, 4000);
@@ -102,7 +102,7 @@ const toNoria = await until(hi, () => window.__mu.map() === "noria", null, 8000)
 const where = await hi.textContent('[data-test="where"]');
 await until(hi, () => window.__mu.entities().filter((e) => e.kind === "npc").length === 3, null, 3000);
 const noriaNpcs = await hi.evaluate(() => window.__mu.entities().filter((e) => e.kind === "npc").map((e) => e.id).sort());
-check("cấp 10 bước vào cổng → sang Noria (HUD, NPC Noria), đứng cạnh cổng nam", toNoria && where.startsWith("Noria") && noriaNpcs.join() === "npc_noria_potion_merchant,npc_noria_warehouse,npc_noria_weapon_merchant", `${where} · ${noriaNpcs.join(",")}`);
+check("cấp 10 bước vào cổng → sang Noria (HUD, NPC Noria), đứng cạnh cổng nam", toNoria && where.startsWith("Noria") && noriaNpcs.join() === "npc_noria_chaos_goblin,npc_noria_potion_merchant,npc_noria_quest_master,npc_noria_warehouse,npc_noria_weapon_merchant", `${where} · ${noriaNpcs.join(",")}`);
 await hi.waitForTimeout(500);
 await hi.screenshot({ path: `${shots}/p2-noria-town.png` });
 
@@ -114,7 +114,7 @@ const spritesOk = await hi.evaluate(async (ids) => {
   const ok = await Promise.all(ids.map((id) => new Promise((r) => { const i = new Image(); i.onload = () => r(i.naturalWidth > 0); i.onerror = () => r(false); i.src = `/assets/sprites/monsters/${id}.png`; })));
   return ok.every(Boolean);
 }, mons);
-check("thấy quái Noria, mọi sprite quái tải được", mons.length > 0 && mons.every((m) => ["goblin", "chain_scorpion", "beetle_monster", "hunter", "forest_monster", "agon", "stone_golem"].includes(m)) && spritesOk, mons.join(","));
+check("thấy quái Noria, mọi sprite quái tải được", mons.length > 0 && mons.every((m) => ["goblin", "chain_scorpion", "beetle_monster", "hunter", "forest_monster", "agon", "stone_golem", "golden_goblin"].includes(m)) && spritesOk, mons.join(","));
 await hi.screenshot({ path: `${shots}/p2-noria-field.png` });
 
 // quay về Lorencia qua cổng nam (31,61)

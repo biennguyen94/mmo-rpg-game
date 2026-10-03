@@ -14,17 +14,27 @@ for i <- 1..String.to_integer(n) do
   {:memory, map_mem} = :rpc.call(node, Process, :info, [map_pid, :memory])
   mem = :rpc.call(node, :erlang, :memory, [:total])
   procs = :rpc.call(node, :erlang, :system_info, [:process_count])
-  sessions = :rpc.call(node, DynamicSupervisor, :count_children, [Mu.Game.SessionSupervisor]).active
+
+  sessions =
+    :rpc.call(node, DynamicSupervisor, :count_children, [Mu.Game.SessionSupervisor]).active
+
   {uptime_ms, _} = :rpc.call(node, :erlang, :statistics, [:wall_clock])
   # nhóm (P3-M4): hàng đợi tiến trình Mu.Party + số nhóm đang có
   party_pid = :rpc.call(node, Process, :whereis, [Mu.Party])
   {:message_queue_len, pq} = :rpc.call(node, Process, :info, [party_pid, :message_queue_len])
   parties = map_size(:rpc.call(node, :sys, :get_state, [Mu.Party]).parties)
+
   # guild (P4-M5): hàng đợi Mu.Guild, số người online đăng ký, số war đang diễn ra
   guild_pid = :rpc.call(node, Process, :whereis, [Mu.Guild])
   {:message_queue_len, gq} = :rpc.call(node, Process, :info, [guild_pid, :message_queue_len])
   gs = :rpc.call(node, :sys, :get_state, [Mu.Guild])
   wars = div(map_size(gs.war.wars), 2)
+  # P6-M6: Noria (Golden Invasion), hàng đợi Mu.WorldEvents, số giao dịch đang mở
+  noria = :rpc.call(node, Mu.World.MapServer, :stats, ["noria"])
+  we_pid = :rpc.call(node, Process, :whereis, [Mu.WorldEvents])
+  {:message_queue_len, wq} = :rpc.call(node, Process, :info, [we_pid, :message_queue_len])
+  events = :rpc.call(node, Mu.WorldEvents, :active, []) |> Enum.map(& &1.kind)
+  trades = :rpc.call(node, DynamicSupervisor, :count_children, [Mu.Trade.Supervisor]).active
 
   IO.puts(
     "#{DateTime.utc_now() |> DateTime.truncate(:second)} | tick #{stats.ticks} " <>
@@ -32,6 +42,8 @@ for i <- 1..String.to_integer(n) do
       "người chơi #{stats.players} | session #{sessions} | MapServer queue #{q}, " <>
       "#{div(map_mem, 1024)} KB | Party queue #{pq}, #{parties} nhóm | " <>
       "Guild queue #{gq}, online #{map_size(gs.online)}, war #{wars} | " <>
+      "Noria max_drift #{noria.max_drift_ms} ms | WorldEvents queue #{wq} #{inspect(events)} | " <>
+      "giao dịch mở #{trades} | " <>
       "RAM VM #{div(mem, 1_048_576)} MB | process #{procs}"
   )
 end

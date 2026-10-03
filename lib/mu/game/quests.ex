@@ -71,6 +71,7 @@ defmodule Mu.Game.Quests do
         %{
           type: "kill",
           target: m,
+          name: target_name("kill", m),
           have: min(Map.get(progress, Integer.to_string(i), 0), n),
           need: n
         }
@@ -127,9 +128,12 @@ defmodule Mu.Game.Quests do
       minLevel: q["minLevel"],
       goals:
         Enum.map(q["objectives"], fn o ->
+          target = o["monsterId"] || o["templateId"]
+
           %{
             type: o["type"],
-            target: o["monsterId"] || o["templateId"],
+            target: target,
+            name: target_name(o["type"], target),
             need: o["count"] || o["min"]
           }
         end),

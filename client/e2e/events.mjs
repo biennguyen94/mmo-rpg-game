@@ -70,8 +70,8 @@ event("stop", "golden_invasion");
 
 const A = await account("a");
 const B = await account("b");
-// mép đông thị trấn (vẫn trong safe zone): bãi boss (30..39, 20..29) nằm trong tầm nhìn
-execSync(`mix run scripts/e2e_pos.exs ${A} lorencia 24 26`, { env: { ...process.env, LANG: "C.UTF-8" } });
+// góc đông nam thị trấn (vẫn trong safe zone): bãi boss (42..47, 46..49) nằm trong tầm nhìn
+execSync(`mix run scripts/e2e_pos.exs ${A} lorencia 24 40`, { env: { ...process.env, LANG: "C.UTF-8" } });
 const pa = await enter(A);
 
 check("mix mu.event start world_boss", event("start", "world_boss"));

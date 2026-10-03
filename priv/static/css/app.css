@@ -271,8 +271,10 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .tradeask { top: 280px; }
 @media (max-width: 600px) { .tradesides { grid-template-columns: 1fr; } }
 /* lưới đồ trong panel giao dịch: ô cố định 44px như túi (không giãn theo khung) */
-[data-panel="trade"] .bag { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px; justify-content: start; padding: 6px 0; }
-[data-panel="trade"] .tradegrid { min-height: 50px; }
+[data-panel="trade"] .bag,
+[data-panel="chaos"] .bag { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px; justify-content: start; padding: 6px 0; }
+[data-panel="trade"] .tradegrid,
+[data-panel="chaos"] .tradegrid { min-height: 50px; }
 /* Xếp hạng (P6-M1) */
 table.ranking { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.ranking th, table.ranking td { padding: 4px 6px; border-bottom: 1px solid #2a2e40; text-align: left; }
@@ -295,7 +297,7 @@ table.ranking tr.me td { color: #ffd36b; font-weight: 600; }
 /* Chaos Machine (P6-M3) */
 .panel .chaosinfo { margin: 6px 0; color: #ffd166; }
 .panel .good { color: #8fd18f; font-weight: 600; }
-[data-test="chaos-machine"] { min-height: 52px; border: 1px dashed #6b4fa0; border-radius: 6px; padding: 4px; }
+[data-panel="chaos"] [data-test="chaos-machine"] { min-height: 52px; border: 1px dashed #6b4fa0; border-radius: 6px; padding: 4px; }
 
 /* Event thế giới (P6-M5) */
 .worldbar { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 44; display: grid; gap: 2px; text-align: center; pointer-events: none; }

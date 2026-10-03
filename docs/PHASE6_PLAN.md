@@ -35,7 +35,7 @@ Quy tắc 3 vẫn ghi "Chỉ làm Phase 1" (B-9). Em không tự sửa. Câu đ�
 | **P6-M3 Jewel of Chaos + Chaos Machine** ✅ | `jewel_chaos` + nhóm rơi 45/30/12/13; Chaos Goblin (Noria); cửa sổ CHAOS MACHINE (đặt đồ → server báo công thức, tỉ lệ, phí); `chaos.json`; kết hợp một transaction, audit `CHAOS_IN` / `CHAOS_OUT` / Zen `CHAOS` (DEC-168 … 171). E2E `chaos.mjs` viết sẵn | xong (chung commit với M4) |
 | **P6-M4 Wings** ✅ | `features.wings` bật; 3 cánh cấp 1; slot 7 mở; Engine % sát thương / % hấp thụ; ép +N (không Life); vẽ cánh hình học; spawn có `wing` (DEC-172) | xong |
 | **P6-M5 Bosses + Events** ✅ | `Mu.WorldEvents` (lịch giờ UTC trong config + `mix mu.event`): world boss Bull Fighter Lord (đánh vùng, chia thưởng theo sát thương, top 3 jewel), Golden Invasion (quái vàng × 5, jewel 10 %); SYSTEM + thanh event (DEC-173 … 176). E2E `events.mjs` viết sẵn | xong |
-| **P6-M6 Nghiệm thu Phase 5 + 6** | Danh sách nghiệm thu P5-9 + P6-9, **toàn bộ E2E một lần**, soak có trade / upgrade / quest / boss, `mix mu.audit` sau soak, simulator, báo cáo | P5-9, P6-9 |
+| **P6-M6 Nghiệm thu Phase 5 + 6** ✅ | `docs/ACCEPTANCE_PHASE5_6.md`: 16 mục PASS (1 cần xem bằng mắt), 21 bộ E2E / 261 mục, soak 20 bot × 15 phút có trade / upgrade / quest / boss / Golden Invasion, `mix mu.audit` sạch, simulator như Phase 4 | xong |
 
 Thứ tự: M1 → M2 → M3 → M4 → M5 → M6. Ranking làm trước vì nhỏ và không phụ thuộc gì; Wings sau
 Chaos Machine vì cánh lấy từ Chaos Machine. E2E chỉ chạy ở P6-M6 (như DEC-149 / DEC-160); mỗi

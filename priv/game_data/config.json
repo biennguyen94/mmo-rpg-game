@@ -36,7 +36,7 @@
     "quest": "P6-2 (duyệt 2026-10-03, IMPLEMENTATION): danh sách quest ở quests.json; nhận / trả ở Quest Master (Lorencia, Noria) trong interaction.npcRange; tối đa maxActive quest đang làm; mỗi quest một lần; kill tính cho người ra đòn cuối và người cùng nhóm được chia EXP; collect nộp khi trả; thưởng EXP (không vượt maxLevel), Zen + đồ (audit QUEST) trong một transaction.",
     "chaos": "P6-3 (duyệt 2026-10-03, IMPLEMENTATION): Chaos Machine ở NPC Chaos Goblin (Noria), trong interaction.npcRange; đặt tối đa maxItems món từ túi; công thức trong chaos.json (Phase 6: chỉ tạo cánh cấp 1); một transaction, audit CHAOS_IN / CHAOS_OUT, Zen CHAOS; thất bại mất hết đầu vào + phí.",
     "wings": "P6-4 (duyệt 2026-10-03, IMPLEMENTATION; KB không có công thức): cánh cấp 1 (data/items/phase6.json) cấp 15, thủ 10, damageIncrease 12 % (nhân sát thương gây ra cùng bước buff), absorb 12 % (nhân sát thương nhận sau khi trừ thủ); levelBonus.WING mỗi +N thêm 1 thủ, 2 % / 2 %; không option Life (upgrade.life.excludeTypes). Chỉ lấy từ Chaos Machine.",
-    "events": "P6-5 / P6-6 (duyệt 2026-10-03, IMPLEMENTATION): lịch theo giờ UTC — bắt đầu khi (giờ − offsetHours) chia hết cho everyHours, phút 0; kéo dài durationMinutes; báo SYSTEM toàn server announceMinutes phút trước, lúc bắt đầu, lúc kết thúc. Golden Invasion: 8 Golden Budge Dragon (Lorencia, bãi Budge / Bull Fighter) + 8 Golden Goblin (Noria, bãi Goblin). World boss Bull Fighter Lord: Lorencia (30..39, 20..29) cạnh bãi Spider; bị hạ hoặc hết giờ thì kết thúc. Quái event không hồi sinh. Bật tay: mix mu.event start golden_invasion|world_boss --node <node>."
+    "events": "P6-5 / P6-6 (duyệt 2026-10-03, IMPLEMENTATION): lịch theo giờ UTC — bắt đầu khi (giờ − offsetHours) chia hết cho everyHours, phút 0; kéo dài durationMinutes; báo SYSTEM toàn server announceMinutes phút trước, lúc bắt đầu, lúc kết thúc. Golden Invasion: 8 Golden Budge Dragon (Lorencia, bãi Budge / Bull Fighter) + 8 Golden Goblin (Noria, bãi Goblin). World boss Bull Fighter Lord: Lorencia (42..47, 46..49) mép nam bãi Spider, cách đường ra cổng đông > aggroRange; bị hạ hoặc hết giờ thì kết thúc. Quái event không hồi sinh. Bật tay: mix mu.event start golden_invasion|world_boss --node <node>."
   },
   "game": {
     "name": "MU Web",
@@ -516,10 +516,10 @@
           "monster": "bull_fighter_lord",
           "count": 1,
           "area": {
-            "x": 30,
-            "y": 20,
-            "w": 10,
-            "h": 10
+            "x": 42,
+            "y": 46,
+            "w": 6,
+            "h": 4
           }
         }
       ]
