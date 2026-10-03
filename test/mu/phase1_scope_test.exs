@@ -29,7 +29,8 @@ defmodule Mu.Phase1ScopeTest do
           set <- ~w(bronze bone silk),
           part <- ~w(helm armor pants gloves boots),
           do: "#{set}_#{part}_t1"
-        ),
+        ) ++
+        ~w(jewel_bless jewel_soul jewel_life),
     skills:
       ~w(basic_attack falling_slash twisting_slash death_stab energy_ball fire_ball lightning teleport flame heal triple_shot greater_defense greater_damage)
       |> Enum.sort(),

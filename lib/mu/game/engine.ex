@@ -51,6 +51,31 @@ defmodule Mu.Game.Engine do
     }
   end
 
+  @doc """
+  Template đồ ở cấp cường hóa `level` (+N, P5-3 (1)): cộng `items.levelBonus[type]` × `level` —
+  `attack` vào `attackMin` / `attackMax`, `defense` vào `defense`. Type không có trong bảng (nhẫn,
+  jewel, potion) giữ nguyên.
+  """
+  def leveled(template, level) when is_integer(level) and level > 0 do
+    case Config.get(["items", "levelBonus"])[template["type"]] do
+      nil ->
+        template
+
+      bonus ->
+        add = fn t, key, per -> Map.update(t, key, per * level, &(&1 + per * level)) end
+        atk = bonus["attack"] || 0
+        def = bonus["defense"] || 0
+
+        template
+        |> then(
+          &if(atk > 0, do: &1 |> add.("attackMin", atk) |> add.("attackMax", atk), else: &1)
+        )
+        |> then(&if(def > 0, do: add.(&1, "defense", def), else: &1))
+    end
+  end
+
+  def leveled(template, _level), do: template
+
   @doc "Tầm đánh thường (ô) theo `weaponType` của vũ khí đang cầm (P2-5, `combat.basicAttackRange`)."
   def basic_attack_range(equipment) do
     ranges = Config.get(["combat", "basicAttackRange"])

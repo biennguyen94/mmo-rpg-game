@@ -197,4 +197,21 @@ defmodule Mu.Game.CharactersPositionTest do
     stored = Repo.get!(Mu.Game.Character, c.id)
     assert {stored.position_x, stored.position_y} == {20, 30}
   end
+
+  test "P5-M1: vũ khí khởi đầu +3 → player.view Dmg +9 (items.levelBonus.WEAPON.attack 3)" do
+    # DW mặc sẵn staff_t0 (DK không có đồ khởi đầu, MG khóa với tài khoản mới)
+    {_, c} = create_character(nil, "DW")
+    items = Mu.Game.Items.load(c.id)
+    v0 = Characters.player_view(c, items).view
+    weapon = Enum.find(items, &(&1.template_id == "staff_t0"))
+    import Ecto.Query, only: [from: 2]
+    Mu.Repo.update_all(from(i in Mu.Game.Item, where: i.id == ^weapon.id), set: [item_level: 3])
+    items = Mu.Game.Items.load(c.id)
+    v3 = Characters.player_view(c, items).view
+    per = Mu.Game.Config.get(["items", "levelBonus", "WEAPON", "attack"])
+    assert {v3.attackMin, v3.attackMax} == {v0.attackMin + 3 * per, v0.attackMax + 3 * per}
+
+    assert Enum.find(Characters.player_view(c, items).equipment, &(&1.templateId == "staff_t0")).level ==
+             3
+  end
 end

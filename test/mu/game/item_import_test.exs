@@ -12,10 +12,10 @@ defmodule Mu.Game.ItemImportTest do
 
   test "items.json sinh từ data/items khớp (mix mu.items.import --check)" do
     assert capture_io(fn -> Mix.Tasks.Mu.Items.Import.run(["--check"]) end) =~
-             "không đổi (43 template)"
+             "không đổi (46 template)"
   end
 
-  test "10 template Phase 1 + 12 P2-M2 + 21 P2-M4, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
+  test "10 template Phase 1 + 12 P2-M2 + 21 P2-M4 + 3 jewel P5-M1, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
     ids =
       ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
         ~w(staff_t0 bow_t0) ++
@@ -29,9 +29,21 @@ defmodule Mu.Game.ItemImportTest do
           set <- ~w(bronze bone silk),
           part <- ~w(helm armor pants gloves boots),
           do: "#{set}_#{part}_t1"
-        )
+        ) ++
+        ~w(jewel_bless jewel_soul jewel_life)
 
     assert Enum.sort(Map.keys(Data.items())) == Enum.sort(ids)
+
+    # P5-2: jewel stack 20, không bán ở NPC, NPC mua lại 10 000 / 15 000 / 15 000
+    for {id, sell} <- [{"jewel_bless", 10_000}, {"jewel_soul", 15_000}, {"jewel_life", 15_000}] do
+      j = Data.item(id)
+
+      assert {j["type"], j["stackable"], j["maxStack"], j["sellPrice"]} ==
+               {"JEWEL", true, 20, sell}
+
+      shop = Jason.decode!(File.read!("priv/game_data/shop.json"))["shops"]
+      refute Enum.any?(shop, &(id in &1["items"]))
+    end
 
     for {_, t} <- Data.items(), k <- ~w(sourceType version verified source) do
       assert Map.has_key?(t, k), "#{t["templateId"]} thiếu #{k}"

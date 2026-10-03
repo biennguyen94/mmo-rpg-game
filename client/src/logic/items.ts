@@ -67,8 +67,31 @@ export function equipmentInBag(inventory: ItemView[], templates: Templates): Ite
   return inventory.filter((i) => templates.get(i.templateId)?.slot).sort((a, b) => a.slot - b.slot);
 }
 
-/** Mô tả ngắn dòng 2 của §19.4. */
-export function shortDesc(t: ItemTemplate): string {
+/** `items.levelBonus` (P5-3, config join): chỉ số cộng mỗi cấp cường hóa theo `type` item. */
+export type LevelBonus = Record<string, { attack?: number; defense?: number }>;
+
+/** Template ở cấp +N để **hiển thị** (server tính thật, `Engine.leveled/2`). */
+export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}): ItemTemplate {
+  const b = bonus[t.type];
+  if (!b || level <= 0) return t;
+  const atk = (b.attack ?? 0) * level;
+  const def = (b.defense ?? 0) * level;
+  return {
+    ...t,
+    ...(atk ? { attackMin: (t.attackMin ?? 0) + atk, attackMax: (t.attackMax ?? 0) + atk } : {}),
+    ...(def ? { defense: (t.defense ?? 0) + def } : {}),
+  };
+}
+
+/** Tên đồ kèm cấp cường hóa: "Short Sword +3". */
+export function itemName(t: ItemTemplate | undefined, level = 0, fallback = "?"): string {
+  const name = t?.name ?? fallback;
+  return level > 0 ? `${name} +${level}` : name;
+}
+
+/** Mô tả ngắn dòng 2 của §19.4 (chỉ số đã cộng theo +N nếu có `bonus`). */
+export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {}): string {
+  const t = leveled(base, level, bonus);
   const parts: string[] = [];
   if (t.attackMax) parts.push(`Tấn công +${t.attackMin ?? 0}~${t.attackMax}`);
   if (t.defense) parts.push(`Phòng thủ +${t.defense}`);

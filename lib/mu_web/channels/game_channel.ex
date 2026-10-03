@@ -210,6 +210,8 @@ defmodule MuWeb.GameChannel do
         minLevel: Config.get(["pvp", "minLevel"])
       },
       duelInviteSeconds: Config.get(["duel", "inviteSeconds"]),
+      # P5-M1: chỉ số cộng mỗi cấp +N theo type item (tooltip hiện số đúng; server vẫn tính)
+      items: %{levelBonus: Config.get(["items", "levelBonus"])},
       # guild (P4-M3): để hiện điều kiện tạo / kiểm tên trước khi gửi (server vẫn kiểm)
       guild: %{
         enabled: Config.get(["features", "guild"]) == true,

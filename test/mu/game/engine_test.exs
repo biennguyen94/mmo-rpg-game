@@ -276,4 +276,24 @@ defmodule Mu.Game.EngineTest do
       assert Engine.mp_regen(10, 2000) == 0.5
     end
   end
+
+  test "P5-M1: đồ +N cộng chỉ số theo items.levelBonus (vũ khí +3 đòn, giáp +3 / khiên +2 thủ, nhẫn không)" do
+    sword = Data.item("sword_t0")
+    s3 = Engine.leveled(sword, 3)
+    assert {s3["attackMin"], s3["attackMax"]} == {sword["attackMin"] + 9, sword["attackMax"] + 9}
+    assert Engine.leveled(sword, 0) == sword
+
+    helm = Data.item("helm_t0")
+    assert Engine.leveled(helm, 2)["defense"] == helm["defense"] + 6
+    shield = Data.item("shield_t0")
+    assert Engine.leveled(shield, 4)["defense"] == shield["defense"] + 8
+    ring = Data.item("ring_hp_t0")
+    assert Engine.leveled(ring, 5) == ring
+
+    base = Engine.derived(dk(), [sword, helm])
+    up = Engine.derived(dk(), [s3, Engine.leveled(helm, 2)])
+    assert up.attack_max == base.attack_max + 9
+    assert up.attack_min == base.attack_min + 9
+    assert up.defense == base.defense + 6
+  end
 end

@@ -14,6 +14,8 @@ import {
   equipmentInBag,
   requirements,
   shortDesc,
+  itemName,
+  type LevelBonus,
   type DragEnd,
   type DragStart,
   type ItemCommand,
@@ -65,6 +67,8 @@ export interface UiState {
   /** Guild war (P4-M4): war đang diễn ra (hạn = giờ client, ms); lời tuyên chiến chờ mình nhận. */
   war: { enemy: string; score: number; enemyScore: number; scoreToWin: number; until: number } | null;
   warAsk: { enemy: string; from: string; until: number } | null;
+  /** `items.levelBonus` (P5-M1) — tooltip hiện chỉ số đồ +N. */
+  levelBonus: LevelBonus;
 }
 
 export interface UiActions {
@@ -488,6 +492,7 @@ export class GameUI {
             ...this.dropTarget({ kind: "equip", slot }),
           },
           it ? this.icon(it) : null,
+          it && it.level > 0 ? h("span", { class: "lvl" }, `+${it.level}`) : null,
           h("span", { class: "lbl" }, SLOT_LABEL[slot]),
         );
       }),
@@ -509,6 +514,8 @@ export class GameUI {
         },
         it ? this.icon(it) : null,
         it && it.quantity > 1 ? h("span", { class: "qty" }, it.quantity) : null,
+      it && it.level > 0 ? h("span", { class: "lvl" }, `+${it.level}`) : null,
+        it && it.level > 0 ? h("span", { class: "lvl" }, `+${it.level}`) : null,
       );
     });
 
@@ -575,7 +582,7 @@ export class GameUI {
   /** Hỏi trước khi vứt (P2-8): vứt cả stack xuống ô đang đứng. */
   private confirmDrop(item: ItemView, x: number, y: number): void {
     this.hideTooltip();
-    const name = this.state.templates.get(item.templateId)?.name ?? item.templateId;
+    const name = itemName(this.state.templates.get(item.templateId), item.level, item.templateId);
     const tip = h(
       "div",
       { class: "tooltip", "data-test": "confirm-drop" },
@@ -1072,8 +1079,8 @@ export class GameUI {
       "div",
       { class: "tooltip", "data-test": "tooltip" },
       this.icon(item, "big"),
-      h("b", {}, item.quantity > 1 ? `${t.name} ×${item.quantity}` : t.name),
-      h("div", {}, shortDesc(t)),
+      h("b", { "data-test": "tt-name" }, item.quantity > 1 ? `${itemName(t, item.level)} ×${item.quantity}` : itemName(t, item.level)),
+      h("div", {}, shortDesc(t, item.level, this.state.levelBonus)),
       reqs.map((r) => h("div", { class: r.ok ? "" : "bad" }, r.value ? `${r.label} ≥ ${r.value}` : r.label)),
       opts.unequip !== undefined ? h("button", { onclick: () => (this.hideTooltip(), this.a.unequip(opts.unequip!)) }, "Tháo") : null,
       bagBtns,

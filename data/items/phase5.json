@@ -1,0 +1,98 @@
+{
+  "sourceType": "IMPLEMENTATION",
+  "note": "P5-M1 (P5-2 duyệt 2026-10-03): ba jewel Phase 5 (KB_ITEM_REFERENCE: Bless 14/13, Soul 14/14, Life 14/16; Creation 14/22 = LATER_VERSION). Không bán ở NPC (không có trong shop.json); buyPrice = 2 × giá NPC mua lại (sellPrice = buyPrice × economy.sellRatio 0,5): Bless 10 000, Soul / Life 15 000. Stack 20.",
+  "items": [
+    {
+      "templateId": "jewel_bless",
+      "name": "Jewel of Bless",
+      "type": "JEWEL",
+      "slot": null,
+      "stackable": true,
+      "maxStack": 20,
+      "iconRef": {
+        "group": 14,
+        "index": 13
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 14,
+        "index": 13,
+        "cells": [
+          1,
+          1
+        ],
+        "valor": 150
+      },
+      "buyPrice": 20000,
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "jewel_soul",
+      "name": "Jewel of Soul",
+      "type": "JEWEL",
+      "slot": null,
+      "stackable": true,
+      "maxStack": 20,
+      "iconRef": {
+        "group": 14,
+        "index": 14
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 14,
+        "index": 14,
+        "cells": [
+          1,
+          1
+        ],
+        "valor": 150
+      },
+      "buyPrice": 30000,
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "jewel_life",
+      "name": "Jewel of Life",
+      "type": "JEWEL",
+      "slot": null,
+      "stackable": true,
+      "maxStack": 20,
+      "iconRef": {
+        "group": 14,
+        "index": 16
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 14,
+        "index": 16,
+        "cells": [
+          1,
+          1
+        ]
+      },
+      "buyPrice": 30000,
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    }
+  ]
+}
