@@ -13,6 +13,8 @@ defmodule Mu.Application do
       Mu.Chat,
       # nhóm (P3-M4): RAM + ETS, trước Session / MapServer
       Mu.Party,
+      # guild đang online + lời mời (P4-M3); dữ liệu guild trong DB
+      Mu.Guild,
       Mu.Accounts.WsTicket,
       Mu.Game.OrphanSweeper,
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)

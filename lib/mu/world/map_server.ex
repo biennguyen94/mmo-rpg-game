@@ -234,6 +234,8 @@ defmodule Mu.World.MapServer do
             aggressor_until: nil,
             # P4-M2: đang duel (người khác thấy để không xen vào)
             dueling: false,
+            # P4-M3: tên guild trên đầu (Session báo khi vào / rời guild)
+            guild: Map.get(p, :guild),
             owner: owner,
             ref: Process.monitor(owner)
           }
@@ -357,14 +359,19 @@ defmodule Mu.World.MapServer do
         {:reply, :error, s}
 
       e ->
-        old_pk = Pvp.state(e.pk_points)
+        old = {Pvp.state(e.pk_points), Map.get(e, :guild)}
 
         e =
-          Map.merge(e, Map.take(changes, [:level, :stats, :skills, :hp, :mp, :name, :pk_points]))
+          Map.merge(
+            e,
+            Map.take(changes, [:level, :stats, :skills, :hp, :mp, :name, :pk_points, :guild])
+          )
 
         e = %{e | hp: min(e.hp, e.stats.hp_max), mp: min(e.mp, e.stats.mp_max)}
-        # trạng thái PK đổi: người khác thấy màu tên mới (P4-M1)
-        if Pvp.state(e.pk_points) != old_pk, do: broadcast(s, "spawn", spawn_payload(e))
+        # trạng thái PK (màu tên, P4-M1) / guild (P4-M3) đổi: người khác thấy ngay
+        if {Pvp.state(e.pk_points), Map.get(e, :guild)} != old,
+          do: broadcast(s, "spawn", spawn_payload(e))
+
         {:reply, :ok, mark(put_in(s.players[id], e), e)}
     end
   end
@@ -1460,7 +1467,9 @@ defmodule Mu.World.MapServer do
       # P4-M1: màu tên — NORMAL / WARNING (cam) / MURDERER (đỏ); kẻ gây sự nhấp nháy cam
       pkState: Pvp.state(Map.get(e, :pk_points, 0)),
       aggressor: Map.get(e, :aggressor_until) != nil,
-      dueling: Map.get(e, :dueling, false)
+      dueling: Map.get(e, :dueling, false),
+      # P4-M3: tên guild (null nếu không có)
+      guild: Map.get(e, :guild)
     }
   end
 

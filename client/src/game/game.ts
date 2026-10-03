@@ -23,6 +23,7 @@ import {
   type MailPayload,
   type PartyPayload,
   type DuelPayload,
+  type GuildPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -109,6 +110,18 @@ export class GameClient {
         void this.send(accept ? "duel_accept" : "duel_decline", { from });
       },
       duelCancel: () => void this.send("duel_cancel"),
+      guildCreate: (name) => void this.send("guild_create", { name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã lập guild ${name}.`)),
+      guildInvite: (name) => void this.send("guild_invite", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} vào guild.`)),
+      guildAnswer: (guild, accept) => {
+        if (this.state) this.state.guildInvite = null;
+        this.render();
+        void this.send(accept ? "guild_accept" : "guild_decline", { guild });
+      },
+      guildLeave: () => void this.send("guild_leave"),
+      guildKick: (name) => void this.send("guild_kick", { name }),
+      guildPromote: (name) => void this.send("guild_promote", { name }),
+      guildDemote: (name) => void this.send("guild_demote", { name }),
+      guildDisband: () => void this.send("guild_disband"),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -159,6 +172,10 @@ export class GameClient {
       party: this.state?.party ?? null,
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       partyInvite: null,
+      // guild: event `guild` tới ngay sau join (Session đẩy)
+      guild: this.state?.guild ?? null,
+      guildCfg: r.config.guild ?? null,
+      guildInvite: null,
       duel: null,
       duelAsk: null,
     };
@@ -266,6 +283,15 @@ export class GameClient {
       }
       case "duel":
         this.onDuel(p as DuelPayload);
+        break;
+      case "guild": {
+        const g = p as GuildPayload;
+        this.state.guild = g.id ? g : null;
+        break;
+      }
+      case "guild_invite":
+        this.state.guildInvite = { from: p.from, guild: p.guild, until: Date.now() + (this.join?.config.guild?.inviteSeconds ?? 30) * 1000 };
+        Sound.play("click");
         break;
       case "party_invite":
         this.state.partyInvite = { from: p.from, until: Date.now() + (this.join?.config.partyInviteSeconds ?? 30) * 1000 };
@@ -432,6 +458,7 @@ export class GameClient {
     if (r.ok || !this.state) return;
     if (r.error === "INVALID_TARGET" && c.channel === "WHISPER") this.notices.add("ERROR", `Không có người chơi "${c.to}" đang online.`);
     else if (r.error === "INVALID_TARGET" && c.channel === "PARTY") this.notices.add("ERROR", "Bạn chưa có nhóm.");
+    else if (r.error === "INVALID_TARGET" && c.channel === "GUILD") this.notices.add("ERROR", "Bạn chưa có guild.");
     else if (r.error !== "FORBIDDEN") this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
     this.render();
   }

@@ -29,7 +29,7 @@ defmodule Mu.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
-  alias Mu.{Chat, Party}
+  alias Mu.{Chat, Guild, Party}
   alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
@@ -97,6 +97,8 @@ defmodule Mu.Game.Session do
       rid_order: :queue.new(),
       # buff hiện có (MapServer gửi `{:map_buffs, ...}`), đưa vào `player.view.buffs` (P2-M3)
       buffs: [],
+      # guild (P4-M3): `%{guild_id, name, role}` hoặc `nil` (Mu.Guild báo khi đổi)
+      guild: nil,
       tabs: %{},
       on_map: false,
       save_timer: nil,
@@ -126,6 +128,8 @@ defmodule Mu.Game.Session do
         # PK giảm theo giờ thực khi vắng mặt (P4-3)
         s = kick_tabs(%{s | character: pk_decay(character)}, pid)
         register_name(character.name)
+        # guild (P4-M3): báo online, lấy membership (tên guild trên đầu)
+        s = %{s | guild: Guild.online(%{cid: character.id, name: character.name})}
         # nhóm: vào lại trong hạn reconnect → online (P3-M4)
         Party.update(character.id, %{
           online: true,
@@ -135,7 +139,8 @@ defmodule Mu.Game.Session do
 
         s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
 
-        {:ok, info} = MapServer.join(character.map_id, map_player(s.character, s.items), self())
+        {:ok, info} =
+          MapServer.join(character.map_id, map_player(s.character, s.items, s.guild), self())
 
         c = %{
           s.character
@@ -224,6 +229,22 @@ defmodule Mu.Game.Session do
   # Nhóm (P3-M4): `party`, `party_invite`, chat PARTY / thông báo nhóm
   def handle_info({:party_push, event, payload}, s) do
     push(s, event, payload)
+    {:noreply, s, timeout(s)}
+  end
+
+  # Guild (P4-M3): `guild`, `guild_invite`, chat GUILD / thông báo guild
+  def handle_info({:guild_push, event, payload}, s) do
+    push(s, event, payload)
+    {:noreply, s, timeout(s)}
+  end
+
+  # vào / rời / bị đuổi / giải tán: tên guild trên đầu đổi (MapServer phát lại `spawn`)
+  def handle_info({:guild_changed, m}, s) do
+    s = %{s | guild: m}
+
+    if s.on_map,
+      do: MapServer.update_player(s.character.map_id, s.character.id, %{guild: m && m.name})
+
     {:noreply, s, timeout(s)}
   end
 
@@ -548,6 +569,9 @@ defmodule Mu.Game.Session do
 
         "PARTY" ->
           {Party.chat(c.id, Chat.message("PARTY", c.name, text)), s}
+
+        "GUILD" ->
+          {Guild.chat(c.id, Chat.message("GUILD", c.name, text)), s}
       end
     else
       error -> {error, s}
@@ -592,11 +616,51 @@ defmodule Mu.Game.Session do
 
   defp run("party_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
 
+  # ---------- Guild (P4-M3, P4-5): DB `Mu.Guilds`, luật + lời mời ở `Mu.Guild` ----------
+
+  defp run("guild_create", %{"name" => name}, s) when is_binary(name) do
+    case Guild.create(s.character.id, name) do
+      {:ok, %{zen: zen, version: version}} ->
+        c = %{s.character | zen: zen, version: version}
+        s = %{s | character: c, saved: %{s.saved | zen: zen, version: version}}
+        push_player(s)
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  defp run("guild_invite", %{"to" => to}, s) when is_binary(to),
+    do: {Guild.invite(s.character.id, to), s}
+
+  defp run("guild_accept", %{"guild" => g}, s) when is_binary(g),
+    do: {Guild.accept(s.character.id, g), s}
+
+  defp run("guild_decline", %{"guild" => g}, s) when is_binary(g),
+    do: {Guild.decline(s.character.id, g), s}
+
+  defp run("guild_leave", _p, s), do: {Guild.leave(s.character.id), s}
+
+  defp run("guild_kick", %{"name" => name}, s) when is_binary(name),
+    do: {Guild.kick(s.character.id, name), s}
+
+  defp run("guild_promote", %{"name" => name}, s) when is_binary(name),
+    do: {Guild.promote(s.character.id, name), s}
+
+  defp run("guild_demote", %{"name" => name}, s) when is_binary(name),
+    do: {Guild.demote(s.character.id, name), s}
+
+  defp run("guild_disband", _p, s), do: {Guild.disband(s.character.id), s}
+
+  defp run("guild_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
 
-  # PARTY: từ P3-M4 (không có nhóm → INVALID_TARGET); GUILD: tắt tới Phase 4; SYSTEM: chỉ server
-  defp chat_channel(ch) when ch in ~w(NORMAL WHISPER PARTY), do: :ok
-  defp chat_channel(ch) when ch in ~w(GUILD SYSTEM), do: {:error, "FORBIDDEN"}
+  # PARTY: từ P3-M4 (không có nhóm → INVALID_TARGET); GUILD: từ P4-M3 (không có guild →
+  # INVALID_TARGET); SYSTEM: chỉ server
+  defp chat_channel(ch) when ch in ~w(NORMAL WHISPER PARTY GUILD), do: :ok
+  defp chat_channel("SYSTEM"), do: {:error, "FORBIDDEN"}
   defp chat_channel(_), do: {:error, "INVALID_TARGET"}
 
   # bị cấm chat: FORBIDDEN + một dòng SYSTEM cho chính người đó biết lý do
@@ -819,7 +883,7 @@ defmodule Mu.Game.Session do
     end
   end
 
-  defp map_player(c, items) do
+  defp map_player(c, items, guild) do
     equipment = Inventory.equipped_templates(items)
 
     %{
@@ -833,7 +897,8 @@ defmodule Mu.Game.Session do
       y: c.position_y,
       stats: Engine.derived(c, equipment),
       skills: Engine.skills(c),
-      pk_points: c.pk_points
+      pk_points: c.pk_points,
+      guild: guild && guild.name
     }
   end
 
@@ -899,7 +964,8 @@ defmodule Mu.Game.Session do
   defp go_offline(%{character: %{id: cid}} = s) do
     s = leave_map(s)
     Party.leave(cid)
-    s
+    Guild.offline(cid)
+    %{s | guild: nil}
   end
 
   defp go_offline(s), do: s
@@ -945,7 +1011,7 @@ defmodule Mu.Game.Session do
     old = s.character.map_id
     s = leave_map(s)
     c = %{s.character | map_id: map_id, position_x: x, position_y: y}
-    {:ok, info} = MapServer.join(map_id, map_player(c, s.items), self())
+    {:ok, info} = MapServer.join(map_id, map_player(c, s.items, s.guild), self())
 
     c = %{c | position_x: info.x, position_y: info.y, hp_current: info.hp, mana_current: info.mp}
     s = %{s | character: c, on_map: true, buffs: []} |> persist() |> schedule_save()

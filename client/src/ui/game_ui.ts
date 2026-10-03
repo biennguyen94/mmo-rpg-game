@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
@@ -21,9 +21,10 @@ import {
 } from "../logic/items.js";
 import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
 import { chatLine } from "../logic/chat.js";
+import { ROLE_LABEL, canDemote, canInvite as canGuildInvite, canKick, canPromote, myRole, validGuildName } from "../logic/guild.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild";
 
 export interface UiState {
   player: Player;
@@ -57,6 +58,10 @@ export interface UiState {
   party: PartyPayload | null;
   /** Lời mời vào nhóm đang chờ: người mời + hạn (giờ client, ms). */
   partyInvite: { from: string; until: number } | null;
+  /** Guild (P4-M3): `null` = không có guild; config tạo guild; lời mời đang chờ. */
+  guild: GuildPayload | null;
+  guildCfg: GuildConfig | null;
+  guildInvite: { from: string; guild: string; until: number } | null;
 }
 
 export interface UiActions {
@@ -105,6 +110,15 @@ export interface UiActions {
   duelRequest(name: string): void;
   duelAnswer(from: string, accept: boolean): void;
   duelCancel(): void;
+  /** Guild (P4-M3). */
+  guildCreate(name: string): void;
+  guildInvite(name: string): void;
+  guildAnswer(guild: string, accept: boolean): void;
+  guildLeave(): void;
+  guildKick(name: string): void;
+  guildPromote(name: string): void;
+  guildDemote(name: string): void;
+  guildDisband(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -291,6 +305,9 @@ export class GameUI {
     this.menu = h(
       "div",
       { class: "submenu", "data-test": "submenu" },
+      this.state.guildCfg?.enabled
+        ? h("button", { "data-test": "guild-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("guild")) }, "🛡 Guild")
+        : null,
       h("button", { onclick: () => (this.closeMenu(), this.a.togglePanel("settings")) }, "⚙️ Cài đặt"),
       h("button", { "data-test": "switch-character", onclick: () => (this.closeMenu(), this.a.switchCharacter()) }, "👥 Đổi nhân vật"),
       h("button", { onclick: () => (this.closeMenu(), this.a.logout()) }, "🚪 Đăng xuất"),
@@ -329,7 +346,9 @@ export class GameUI {
               ? [this.mailFilter, s.mail, Math.floor(Date.now() / 60_000)]
               : s.panel === "map"
                 ? [s.map.id, s.player.x, s.player.y]
-                : null;
+                : s.panel === "guild"
+                  ? [s.guild, this.guildDisbandArmed]
+                  : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -359,7 +378,9 @@ export class GameUI {
                   ? this.shopPanel()
                   : s.panel === "warehouse"
                     ? this.warehousePanel()
-                    : this.settingsPanel();
+                    : s.panel === "guild"
+                      ? this.guildPanel()
+                      : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -847,6 +868,118 @@ export class GameUI {
     );
   }
 
+  // ---------- Guild (P4-M3, P4-5) ----------
+
+  /** Tên đang gõ (giữ qua lần dựng lại panel). */
+  private guildDraft = "";
+  private guildInviteDraft = "";
+  /** Bấm [Giải tán] lần một → hiện nút xác nhận. */
+  private guildDisbandArmed = false;
+
+  private guildPanel(): HTMLElement {
+    const s = this.state;
+    const g = s.guild;
+    const cfg = s.guildCfg;
+    const me = s.player.name;
+    const body = g ? this.guildMembers(g, me) : this.guildCreateForm(cfg);
+    return h("section", { class: "panel", "data-panel": "guild" }, h("h2", {}, g ? `GUILD · ${g.name}` : "GUILD"), h("div", { class: "body scroll" }, body));
+  }
+
+  private guildCreateForm(cfg: GuildConfig | null): HTMLElement {
+    const p = this.state.player;
+    const name = h("input", { "data-test": "guild-name", maxlength: 8, placeholder: "Tên guild", value: this.guildDraft }) as HTMLInputElement;
+    name.addEventListener("input", () => (this.guildDraft = name.value));
+    const lackLevel = cfg ? p.level < cfg.createLevel : false;
+    const lackZen = cfg ? p.zen < cfg.createZen : false;
+    const create = () => {
+      const v = name.value.trim();
+      if (cfg && !validGuildName(v, cfg.namePattern)) return this.flashHint(hint, "Tên 3–8 ký tự, chỉ chữ cái không dấu và số.");
+      this.a.guildCreate(v);
+    };
+    const hint = h("div", { class: "hint", "data-test": "guild-hint" }, cfg ? "Tên 3–8 ký tự, chữ cái không dấu và số." : "");
+    return h(
+      "div",
+      { class: "charsheet" },
+      h("div", {}, "Bạn chưa có guild."),
+      cfg
+        ? h(
+            "div",
+            { class: "guildreq", "data-test": "guild-req" },
+            h("div", { class: lackLevel ? "bad" : "" }, `Cần cấp ${cfg.createLevel} (bạn: ${p.level})`),
+            h("div", { class: lackZen ? "bad" : "" }, `Phí ${cfg.createZen.toLocaleString("vi-VN")} Zen (bạn: ${p.zen.toLocaleString("vi-VN")})`),
+          )
+        : null,
+      h("div", { class: "guildform" }, name, h("button", { "data-test": "guild-create", disabled: lackLevel || lackZen, onclick: create }, "Tạo guild")),
+      hint,
+      h("div", { class: "hint" }, "Hoặc nhờ chủ / phó guild mời bạn."),
+    );
+  }
+
+  private flashHint(el: HTMLElement, text: string): void {
+    el.textContent = text;
+    el.classList.add("bad");
+  }
+
+  private guildMembers(g: GuildPayload, me: string): HTMLElement {
+    const role = myRole(g, me);
+    const cfg = this.state.guildCfg;
+    const maxA = cfg?.maxAssistants ?? 0;
+    const online = g.members.filter((m) => m.online).length;
+    const invite = h("input", { "data-test": "guild-invite-name", placeholder: "Tên nhân vật", value: this.guildInviteDraft }) as HTMLInputElement;
+    invite.addEventListener("input", () => (this.guildInviteDraft = invite.value));
+    const sendInvite = () => {
+      const v = invite.value.trim();
+      if (!v) return;
+      this.guildInviteDraft = "";
+      this.a.guildInvite(v);
+    };
+    return h(
+      "div",
+      { class: "charsheet" },
+      h("div", { class: "kv" }, h("span", {}, "Chủ guild"), h("span", {}, g.master ?? "?")),
+      h("div", { class: "kv" }, h("span", {}, "Thành viên"), h("span", { "data-test": "guild-count" }, `${g.members.length}/${cfg?.maxMembers ?? "?"} · ${online} online`)),
+      h("hr", { class: "sep" }),
+      h(
+        "div",
+        { class: "guildlist" },
+        g.members.map((m) =>
+          h(
+            "div",
+            { class: `gm${m.online ? "" : " off"}`, "data-guild-member": m.name, "data-role": m.role },
+            h("span", { class: `dot${m.online ? " on" : ""}`, title: m.online ? "Online" : "Offline" }),
+            h("span", { class: "gmname" }, m.name),
+            h("span", { class: "gmsub" }, `${ROLE_LABEL[m.role]} · ${m.class} Lv${m.level}`),
+            m.name !== me && canPromote(role, m.role, g, maxA)
+              ? h("button", { "data-guild-promote": m.name, title: "Phong phó guild", onclick: () => this.a.guildPromote(m.name) }, "▲")
+              : null,
+            m.name !== me && canDemote(role, m.role)
+              ? h("button", { "data-guild-demote": m.name, title: "Hạ xuống thành viên", onclick: () => this.a.guildDemote(m.name) }, "▼")
+              : null,
+            m.name !== me && canKick(role, m.role)
+              ? h("button", { "data-guild-kick": m.name, title: "Mời ra khỏi guild", onclick: () => this.a.guildKick(m.name) }, "✕")
+              : null,
+          ),
+        ),
+      ),
+      canGuildInvite(role)
+        ? h("div", { class: "guildform" }, invite, h("button", { "data-test": "guild-invite", onclick: sendInvite }, "Mời"))
+        : null,
+      h("hr", { class: "sep" }),
+      role === "master"
+        ? this.guildDisbandArmed
+          ? h(
+              "div",
+              { class: "guildform" },
+              h("span", { class: "bad" }, "Giải tán guild?"),
+              h("button", { "data-test": "guild-disband-confirm", onclick: () => ((this.guildDisbandArmed = false), this.a.guildDisband()) }, "Giải tán"),
+              h("button", { onclick: () => ((this.guildDisbandArmed = false), this.renderPanel(true)) }, "Thôi"),
+            )
+          : h("button", { "data-test": "guild-disband", onclick: () => ((this.guildDisbandArmed = true), this.renderPanel(true)) }, "Giải tán guild")
+        : h("button", { "data-test": "guild-leave", onclick: () => this.a.guildLeave() }, "Rời guild"),
+      h("div", { class: "hint" }, "Chat guild: gõ /g nội dung"),
+    );
+  }
+
   private settingsPanel(): HTMLElement {
     return h(
       "section",
@@ -988,6 +1121,8 @@ export class GameUI {
         partyNames: party?.members.map((m) => m.name) ?? [],
       });
     const canDuel = !isSelf && target !== undefined && name !== undefined && canChallenge(me, target, pvp, duel !== null);
+    // mời vào guild (P4-M3): mình là chủ / phó guild, người kia chưa có guild
+    const canGuild = !isSelf && name !== undefined && target !== undefined && !target.guild && canGuildInvite(myRole(this.state.guild, me.name));
     const singles = canAttack ? mine.filter((sk) => sk.targetType === "SINGLE" && sk.id !== "basic_attack") : [];
     const attack = (skill: string | null) => () => {
       // đối thủ duel: không PK, không hỏi
@@ -995,12 +1130,12 @@ export class GameUI {
       this.closeContext();
       this.a.attack(targetId, skill);
     };
-    if (ally.length + point.length === 0 && !canInvite && !canAttack && !canDuel) return false;
+    if (ally.length + point.length === 0 && !canInvite && !canAttack && !canDuel && !canGuild) return false;
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "playermenu" },
       // tên người được bấm (đông người dễ bấm nhầm, P4-M2)
-      !isSelf && name ? h("div", { class: "menuhead", "data-target-name": name }, name) : null,
+      !isSelf && name ? h("div", { class: "menuhead", "data-target-name": name }, name, target?.guild ? h("span", { class: "gtag" }, ` <${target.guild}>`) : null) : null,
       canAttack ? h("button", { "data-test": "pvp-attack", onclick: attack(null) }, "⚔ Tấn công") : null,
       singles.map((sk) => h("button", { "data-pvp-skill": sk.id, onclick: attack(sk.id) }, `⚔ ${sk.name} (${sk.manaCost} MP)`)),
       ally.map((sk) =>
@@ -1009,6 +1144,7 @@ export class GameUI {
       point.map((sk) => h("button", { "data-skill": sk.id, onclick: () => this.a.aim(sk.id) }, `${sk.name}… (${sk.manaCost} MP)`)),
       canDuel ? h("button", { "data-test": "duel-request", onclick: () => (this.closeContext(), this.a.duelRequest(name!)) }, "🤺 Thách đấu") : null,
       canInvite ? h("button", { "data-test": "party-invite", onclick: () => (this.closeContext(), this.a.partyInvite(name!)) }, "👥 Mời vào nhóm") : null,
+      canGuild ? h("button", { "data-test": "guild-invite-menu", onclick: () => (this.closeContext(), this.a.guildInvite(name!)) }, "🛡 Mời vào guild") : null,
       // bấm trúng người chơi khác giờ mở menu (P3-M4): giữ thao tác đi bằng một mục riêng
       !isSelf && tile ? h("button", { "data-test": "player-goto", onclick: () => (this.closeContext(), this.a.goTo(tile.x, tile.y)) }, "🚶 Đi tới đây") : null,
       h("hr", {}),
@@ -1096,6 +1232,7 @@ export class GameUI {
       );
     this.renderParty();
     this.renderDuel();
+    this.renderGuildAsk();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
@@ -1145,6 +1282,38 @@ export class GameUI {
     if (!bar && !box) return;
     this.duelEl = h("div", { class: "partyhost" }, bar, box);
     this.view.append(this.duelEl);
+  }
+
+  // ---------- Guild (P4-M3): hộp lời mời ----------
+
+  private guildAskEl: HTMLElement | null = null;
+  private guildAskKey: string | null = null;
+
+  private renderGuildAsk(): void {
+    const inv = this.state.guildInvite;
+    const left = inv ? Math.max(0, Math.ceil((inv.until - Date.now()) / 1000)) : 0;
+    const key = JSON.stringify([inv?.guild, inv?.from, left]);
+    if (key === this.guildAskKey && (this.guildAskEl?.isConnected || !inv)) return;
+    this.guildAskKey = key;
+    this.guildAskEl?.remove();
+    this.guildAskEl = null;
+    if (!inv || left <= 0) return;
+    this.guildAskEl = h(
+      "div",
+      { class: "partyhost" },
+      h(
+        "div",
+        { class: "partyask guildask", "data-test": "guild-ask" },
+        h("div", {}, `${inv.from} mời bạn vào guild ${inv.guild} (${left}s)`),
+        h(
+          "div",
+          { class: "btns" },
+          h("button", { "data-test": "guild-accept", onclick: () => this.a.guildAnswer(inv.guild, true) }, "Đồng ý"),
+          h("button", { "data-test": "guild-decline", onclick: () => this.a.guildAnswer(inv.guild, false) }, "Từ chối"),
+        ),
+      ),
+    );
+    this.view.append(this.guildAskEl);
   }
 
   private partyEl: HTMLElement | null = null;

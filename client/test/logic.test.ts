@@ -312,3 +312,31 @@ test("Duel client (P4-M2): đang duel chỉ đánh đối thủ, không đánh n
   assert.equal(duelResultText("draw", "Bee1"), "Hòa với Bee1: hết giờ đấu tay đôi.");
   assert.equal(duelResultText("declined", "Bee1"), "Bee1 từ chối đấu tay đôi.");
 });
+
+test("guild (P4-M3): /g = GUILD, dòng [Guild]; quyền từng vai trò", async () => {
+  assert.deepEqual(parseChat("/g tập trung"), { channel: "GUILD", text: "tập trung" });
+  assert.equal(parseChat("/g"), null);
+  assert.deepEqual(parseChat("/guild"), { channel: "NORMAL", text: "/guild" });
+  assert.deepEqual(chatLine({ channel: "GUILD", from: "Ann", text: "t", t: 0 }, "Me"), { cls: "guild", head: "[Guild] Ann: ", text: "t" });
+
+  const { myRole, canInvite, canKick, canPromote, canDemote, validGuildName } = await import("../src/logic/guild.js");
+  const g = {
+    id: "g",
+    name: "Abc",
+    master: "M",
+    members: [
+      { name: "M", class: "DK", level: 20, role: "master" as const, online: true },
+      { name: "A", class: "DW", level: 5, role: "assistant" as const, online: true },
+      { name: "B", class: "ELF", level: 3, role: "member" as const, online: false },
+    ],
+  };
+  assert.equal(myRole(g, "A"), "assistant");
+  assert.equal(myRole(null, "A"), null);
+  assert.ok(canInvite("master") && canInvite("assistant") && !canInvite("member") && !canInvite(null));
+  assert.ok(canKick("master", "assistant") && canKick("assistant", "member"));
+  assert.ok(!canKick("assistant", "assistant") && !canKick("member", "member") && !canKick("master", "master"));
+  assert.ok(canPromote("master", "member", g, 2) && !canPromote("master", "member", g, 1) && !canPromote("assistant", "member", g, 2));
+  assert.ok(canDemote("master", "assistant") && !canDemote("master", "member"));
+  const pat = "^[A-Za-z0-9]{3,8}$";
+  assert.ok(validGuildName("Rong01", pat) && !validGuildName("ab", pat) && !validGuildName("Rồng", pat));
+});
