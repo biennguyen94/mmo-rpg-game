@@ -92,3 +92,12 @@
 | M1-1 | **Schema:** §4 yêu cầu access token lưu hash trong DB, có TTL, thu hồi được, nhưng §9 không có bảng | Thêm bảng `access_tokens (id BIGSERIAL, account_id UUID FK ON DELETE CASCADE, token_hash BYTEA UNIQUE, expires_at TIMESTAMPTZ, created_at)` — migration riêng `20261003000001`, `CHANGE_REASON` trong moduledoc + commit |
 | M1-2 | **Protocol:** lỗi khi join `"game"` không có trong §5 | `{error: "FORBIDDEN", reason}` (DEC-11) |
 | M1-3 | **Protocol:** báo cho tab bị đá (single login) | event `error {rid: null, error: "FORBIDDEN"}` rồi đóng kênh (DEC-14). Nếu anh muốn rõ hơn: thêm event `kicked` (đổi protocol) |
+
+## M2. Câu hỏi phát sinh ở M2 (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm (đề xuất) |
+|---|---|---|
+| M2-1 | **Protocol:** client cần dữ liệu map để vẽ; §5 không có event map | Reply của join thêm `entityId` (id entity của mình) và `map {id, name, width, height, tiles, legend, safeZones, npcs}` (KB_TECH_STACK §6: dữ liệu tĩnh gửi lúc join). Không có collision/công thức |
+| M2-2 | **Protocol:** `move_to` tới ô tường/nước/NPC/ngoài biên/không có đường, hoặc `x`,`y` sai kiểu: mã lỗi nào? | `INVALID_TARGET` (sai kiểu còn ghi log cảnh báo). Thành công: ack `{rid}`; vị trí chỉ đến qua `snapshot` |
+| M2-3 | **Protocol:** `snapshot.entities[].state` của người chơi | `"idle"` / `"walk"` (M3 thêm `"attack"`, `"dead"`) |
+| M2-4 | **Map:** bố cục Lorencia tự vẽ (thị trấn có tường 2 cổng ở tây, safe zone = trong tường, NPC bán thuốc trong thị trấn, hồ phía bắc, vùng 10 Spider phía đông) | Anh xem `priv/maps/lorencia.json` (hàng `tiles`); M5 sẽ vẽ được để xem bằng mắt |

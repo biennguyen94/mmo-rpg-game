@@ -5,17 +5,21 @@ defmodule MuWeb.GameChannel do
 
   - `join("game", %{"clientVersion", "characterId"})`: `clientVersion` phải bằng
     `server.clientVersion` (P7), nhân vật phải thuộc tài khoản. Sai → `{error: "FORBIDDEN",
-    reason}`. Đúng → `%{player, config}`.
+    reason}`. Đúng → `%{player, entityId, map, config}`.
   - `"cmd"` `{act, rid, ...}`: thành công trả reply `{:ok, %{rid}}`; lỗi trả reply
     `{:error, %{rid, error}}` **và** đẩy event `"error"` `{rid, error}` (P2).
   - Giới hạn tần suất theo nhóm `act` (P8): vượt → `RATE_LIMITED`; vượt liên tục
     `rateLimit.cmd.kickAfterMs` → đóng kênh.
+  - Sau join, kênh đẩy `"spawn"` cho mọi entity trên map rồi chuyển tiếp `spawn` /
+    `despawn` / `snapshot` của MapServer (PubSub). Kênh đăng ký topic trước khi vào map nên
+    có thể nhận `spawn` của chính mình hai lần: client coi `spawn` là thêm-hoặc-cập-nhật.
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
     `"error"` `FORBIDDEN` rồi đóng (`session.singleLoginPerAccount`).
   """
   use MuWeb, :channel
 
   alias Mu.Game.{Characters, Commands, Config, Session}
+  alias Mu.World.{Maps, MapServer}
 
   @impl true
   def join("game", %{"clientVersion" => version, "characterId" => character_id}, socket) do
@@ -26,9 +30,24 @@ defmodule MuWeb.GameChannel do
         {:error, %{error: "FORBIDDEN", reason: "clientVersion"}}
 
       true ->
+        # map của nhân vật chỉ biết sau khi Session nạp; Phase 1 chỉ có các map trong Maps
+        for id <- Maps.ids(), do: Phoenix.PubSub.subscribe(Mu.PubSub, MapServer.topic(id))
+
         case Session.attach(account_id, character_id, self()) do
-          {:ok, character} ->
-            reply = %{player: Characters.player_view(character), config: client_config()}
+          {:ok, character, info} ->
+            for id <- Maps.ids(),
+                id != character.map_id,
+                do: Phoenix.PubSub.unsubscribe(Mu.PubSub, MapServer.topic(id))
+
+            send(self(), {:after_join, info.entities})
+
+            reply = %{
+              player: Characters.player_view(character),
+              entityId: info.entity_id,
+              map: Maps.client_data(Maps.get(character.map_id)),
+              config: client_config()
+            }
+
             {:ok, reply, assign(socket, character_id: character.id, limit_streak: nil)}
 
           {:error, :not_found} ->
@@ -47,8 +66,10 @@ defmodule MuWeb.GameChannel do
           :ok ->
             socket = assign(socket, :limit_streak, nil)
 
-            # M1: chưa có act nào được xử lý (M2: move_to, M3: attack/skill/alloc, M4: item/shop)
-            fail(socket, rid, "FORBIDDEN")
+            case Session.command(socket.assigns.account_id, act, payload) do
+              :ok -> {:reply, {:ok, %{rid: rid}}, socket}
+              {:error, code} -> fail(socket, rid, code)
+            end
 
           {:error, code, window_ms} ->
             now = System.monotonic_time(:millisecond)
@@ -74,6 +95,16 @@ defmodule MuWeb.GameChannel do
   def handle_info({:session_kicked, _reason}, socket) do
     push(socket, "error", %{rid: nil, error: "FORBIDDEN"})
     {:stop, {:shutdown, :kicked}, socket}
+  end
+
+  def handle_info({:after_join, entities}, socket) do
+    Enum.each(entities, &push(socket, "spawn", &1))
+    {:noreply, socket}
+  end
+
+  def handle_info({:map_event, event, payload}, socket) do
+    push(socket, event, payload)
+    {:noreply, socket}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}

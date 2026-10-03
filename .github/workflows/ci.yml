@@ -60,5 +60,7 @@ jobs:
         run: mix format --check-formatted
       - name: Biên dịch (cảnh báo là lỗi)
         run: mix compile --warnings-as-errors
+      - name: Collision map khớp map JSON
+        run: mix mu.maps.build --check
       - name: Chạy test
         run: mix test --warnings-as-errors

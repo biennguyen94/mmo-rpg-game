@@ -24,3 +24,9 @@
 | DEC-18 | 2026-10-03 | Thêm index `characters_account_id` (ngoài §9) | Chỉ là index tra theo tài khoản, không đổi dữ liệu/ràng buộc |
 | DEC-19 | 2026-10-03 | Migration viết bằng SQL thô đúng như §9 | Giữ nguyên từng CHECK, partial index, kiểu cột (`CHAR(26)`, `TIMESTAMPTZ`) |
 | DEC-20 | 2026-10-03 | Session tự tắt sau 1 phút không còn tab | M1 chưa có trạng thái chưa lưu; M2 xem lại cùng `logoutInCombatSeconds` (G21) |
+| DEC-21 | 2026-10-03 | Map Lorencia 64×64 viết tay: `priv/maps/lorencia.json` (hàng ký tự + `legend` + `walkable`) là nguồn; `mix mu.maps.build` sinh `lorencia.collision.bin` (D4, commit vào git, CI chạy `--check`) | KB §8 cần `maps/<id>.json + collision.bin`; pipeline Tiled để sau (PROMPT). File .bin 4 KB, commit để server không cần bước build riêng |
+| DEC-22 | 2026-10-03 | A* chi phí nguyên 10/14, không đi chéo cắt góc tường; người chơi không chặn nhau, NPC chặn ô của mình | Tránh lỗi làm tròn; cắt góc làm nhân vật "xuyên" góc tường |
+| DEC-23 | 2026-10-03 | Tick bước cố định 50 ms, lịch theo đồng hồ monotonic (`next_at += 50`), tụt lại thì chạy bù tối đa 5 tick | Kết quả mô phỏng không phụ thuộc độ trễ thực; test điều khiển tick bằng tay (`config :mu, :map_tick, :manual`) |
+| DEC-24 | 2026-10-03 | Lệnh `move_to` mới khi đang đi: tính lại đường từ ô hiện tại, tiến độ bước về 0; `move_to` tới ô đang đứng = dừng | Đơn giản, không cho dồn tiến độ để đi nhanh hơn |
+| DEC-25 | 2026-10-03 | Kênh đăng ký topic map trước khi vào map → có thể nhận `spawn` của mình 2 lần; client coi `spawn` là thêm-hoặc-cập-nhật | Không bỏ sót entity vào map giữa lúc join và subscribe |
+| DEC-26 | 2026-10-03 | DEC-17 hết hiệu lực: nhân vật mới đứng ở `playerSpawn` của map (`newCharacter` chỉ còn `class`, `mapId`, `zen`). Vị trí đã lưu không đi được → về `playerSpawn` | Đúng G8; map có thể sửa sau |

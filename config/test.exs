@@ -18,3 +18,7 @@ config :phoenix, :plug_init_mode, :runtime
 
 # Argon2 nhanh trong test (production dùng mặc định của thư viện)
 config :argon2_elixir, t_cost: 1, m_cost: 8
+
+# MapServer không tự tick trong test: test gọi Mu.World.MapServer.tick/2 (kết quả không phụ
+# thuộc thời gian thực). Test đo nhịp tick tự chạy MapServer riêng ở chế độ :auto.
+config :mu, :map_tick, :manual

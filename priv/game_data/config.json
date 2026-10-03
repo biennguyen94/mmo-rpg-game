@@ -2,12 +2,14 @@
   "sourceType": "CONFIG",
   "version": null,
   "verified": false,
-  "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7); rateLimit/names/newCharacter: docs/OPEN_QUESTIONS.md (P6, P8, G8, G22)",
+  "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7); rateLimit/names/newCharacter: docs/OPEN_QUESTIONS.md (P6, P8, G8, G22); movement: OPEN_QUESTIONS G3",
   "notes": {
     "game.maxLevel": "10 theo KB_00_RULES §7 (Phase 1). KB_CONFIG §1 ghi 400 là giá trị dự án dài hạn (OPEN_QUESTIONS D2).",
     "experience.formula": "Placeholder IMPLEMENTATION, không phải EXP MU (KB_CONFIG §1, Q4).",
-    "newCharacter": "G8: 0 Zen, túi trống, đứng ở điểm spawn safe zone Lorencia. Toạ độ tạm cho M1; M2 chuyển sang spawn của priv/maps/lorencia.json và test nằm trong safe zone.",
-    "rateLimit": "P8. Cửa sổ cố định (Mu.RateLimit). cmd: vượt ngưỡng → bỏ lệnh + RATE_LIMITED; vượt liên tục kickAfterMs → đóng kênh."
+    "newCharacter": "G8: 0 Zen, túi trống, đứng ở playerSpawn (safe zone) của map mapId (priv/maps/<mapId>.json).",
+    "rateLimit": "P8. Cửa sổ cố định (Mu.RateLimit). cmd: vượt ngưỡng → bỏ lệnh + RATE_LIMITED; vượt liên tục kickAfterMs → đóng kênh.",
+    "movement": "G3: đơn vị ô/giây; bước chéo tốn ×diagonalCostFactor thời gian. maxPathNodes: giới hạn ô A* mở rộng cho move_to của người chơi (map 64×64 = 4096 ô).",
+    "session.saveIntervalSeconds": "KB_TECH_STACK §4: ghi DB debounce 30–60s; ngoài ra ghi ngay khi rời map."
   },
   "game": {
     "name": "MU Web",
@@ -38,6 +40,11 @@
     "aoiViewCells": 1,
     "clientVersion": "0.1.0"
   },
+  "movement": {
+    "playerTilesPerSecond": 5,
+    "diagonalCostFactor": 1.414,
+    "maxPathNodes": 4096
+  },
   "auth": {
     "accessTokenTtlSeconds": 86400,
     "wsTicketTtlSeconds": 30
@@ -55,8 +62,6 @@
   "newCharacter": {
     "class": "DK",
     "mapId": "lorencia",
-    "x": 32,
-    "y": 32,
     "zen": 0
   },
   "rateLimit": {
@@ -187,7 +192,8 @@
   "session": {
     "reconnectGraceSeconds": 30,
     "logoutInCombatSeconds": 10,
-    "singleLoginPerAccount": true
+    "singleLoginPerAccount": true,
+    "saveIntervalSeconds": 30
   },
   "security": {
     "serverAuthoritative": true,

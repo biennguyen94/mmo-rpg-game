@@ -14,6 +14,18 @@ defmodule Mu.Application do
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)
       {Registry, keys: :unique, name: Mu.Game.Registry},
       {DynamicSupervisor, name: Mu.Game.SessionSupervisor, strategy: :one_for_one},
+      # 1 MapServer / map (Phase 1: chỉ Lorencia)
+      {Registry, keys: :unique, name: Mu.World.Registry},
+      %{
+        id: Mu.World.MapSupervisor,
+        type: :supervisor,
+        start:
+          {Supervisor, :start_link,
+           [
+             Enum.map(Mu.World.Maps.ids(), &Mu.World.MapServer.child_spec/1),
+             [strategy: :one_for_one, name: Mu.World.MapSupervisor]
+           ]}
+      },
       MuWeb.Endpoint
     ]
 

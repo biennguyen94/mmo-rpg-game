@@ -9,6 +9,7 @@ defmodule Mu.Game.Characters do
   alias Mu.Repo
   alias Mu.Accounts.Account
   alias Mu.Game.{Character, Config, Data, Names, Stats}
+  alias Mu.World.Maps
 
   def list(account_id) do
     Repo.all(from c in Character, where: c.account_id == ^account_id, order_by: c.created_at)
@@ -49,6 +50,8 @@ defmodule Mu.Game.Characters do
   end
 
   defp insert(account_id, name, class, start) do
+    {x, y} = Maps.get(start["mapId"]).player_spawn
+
     %{
       account_id: account_id,
       name: name,
@@ -64,8 +67,8 @@ defmodule Mu.Game.Characters do
       mana_current: Stats.mp_max(class["id"], 1, class["energy"]),
       zen: start["zen"],
       map_id: start["mapId"],
-      position_x: start["x"],
-      position_y: start["y"]
+      position_x: x,
+      position_y: y
     }
     |> Character.create_changeset()
     |> Repo.insert()
@@ -83,6 +86,19 @@ defmodule Mu.Game.Characters do
 
   defp count(account_id) do
     Repo.aggregate(from(c in Character, where: c.account_id == ^account_id), :count)
+  end
+
+  @doc """
+  Lưu vị trí (optimistic lock theo `version`: Session là nơi ghi duy nhất, lệch version là lỗi).
+  Không đổi gì thì không ghi.
+  """
+  def save_position(%Character{position_x: x, position_y: y} = c, x, y), do: {:ok, c}
+
+  def save_position(%Character{} = c, x, y) do
+    c
+    |> Ecto.Changeset.change(position_x: x, position_y: y)
+    |> Ecto.Changeset.optimistic_lock(:version)
+    |> Repo.update()
   end
 
   @doc "Tóm tắt cho danh sách nhân vật (HTTP)."

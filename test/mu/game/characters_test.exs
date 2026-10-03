@@ -15,6 +15,10 @@ defmodule Mu.Game.CharactersTest do
     assert c.mana_current == 30
     assert c.zen == 0
     assert c.map_id == "lorencia"
+    # đứng ở playerSpawn, trong safe zone (G8)
+    map = Mu.World.Maps.get("lorencia")
+    assert {c.position_x, c.position_y} == map.player_spawn
+    assert Mu.World.Maps.safe?(map, c.position_x, c.position_y)
     assert c.version == 0
 
     view = Characters.player_view(c)
@@ -93,5 +97,22 @@ defmodule Mu.Game.CharactersTest do
     assert Stats.hp_max("DK", 10, 25) == 185 + 9 * 3
     assert Stats.mp_max("DK", 10, 15) == 20 + 9 + 15
     assert Stats.earned_points("DK", 10) == 45
+  end
+end
+
+defmodule Mu.Game.CharactersPositionTest do
+  use Mu.DataCase, async: true
+
+  alias Mu.Game.Characters
+
+  test "save_position tăng version (optimistic lock); bản cũ ghi đè bị chặn" do
+    {_, c} = create_character()
+    assert {:ok, c2} = Characters.save_position(c, 20, 30)
+    assert c2.version == c.version + 1
+    assert {:ok, ^c2} = Characters.save_position(c2, 20, 30)
+
+    assert_raise Ecto.StaleEntryError, fn -> Characters.save_position(c, 21, 30) end
+    stored = Repo.get!(Mu.Game.Character, c.id)
+    assert {stored.position_x, stored.position_y} == {20, 30}
   end
 end

@@ -112,22 +112,23 @@ defmodule MuWeb.GameChannelTest do
       assert_reply ref, :error, %{rid: nil, error: "FORBIDDEN"}
     end
 
-    test "act hợp lệ nhưng chưa làm ở M1 → FORBIDDEN", %{socket: socket} do
-      ref = push(socket, "cmd", %{"act" => "move_to", "rid" => "m1", "x" => 1, "y" => 1})
-      assert_reply ref, :error, %{rid: "m1", error: "FORBIDDEN"}
+    test "act hợp lệ nhưng chưa làm (M3–M4) → FORBIDDEN", %{socket: socket} do
+      ref = push(socket, "cmd", %{"act" => "attack", "rid" => "a1", "target" => "m_1"})
+      assert_reply ref, :error, %{rid: "a1", error: "FORBIDDEN"}
     end
 
     test "gửi quá nhanh → RATE_LIMITED, nhóm khác không bị ảnh hưởng", %{socket: socket} do
       # 25 lệnh trong < 1 giây chạm tối đa 2 cửa sổ 1 giây × 10 lệnh
       replies =
         for i <- 1..25 do
+          # (1, 1) là cây ở viền map: lệnh hợp lệ nhưng bị từ chối INVALID_TARGET
           ref = push(socket, "cmd", %{"act" => "move_to", "rid" => "r#{i}", "x" => 1, "y" => 1})
           assert_reply ref, :error, %{error: code}
           code
         end
 
       assert "RATE_LIMITED" in replies
-      assert Enum.count(replies, &(&1 == "FORBIDDEN")) <= 20
+      assert Enum.count(replies, &(&1 == "INVALID_TARGET")) <= 20
 
       ref = push(socket, "cmd", %{"act" => "alloc", "rid" => "a1"})
       assert_reply ref, :error, %{error: "FORBIDDEN"}
