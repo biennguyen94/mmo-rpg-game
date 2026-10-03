@@ -1,6 +1,7 @@
 // Bộ điều khiển game phía client: nhận event server → cập nhật World/player → vẽ lại UI;
 // thao tác người chơi → `cmd`. Không tính luật: tầm/cooldown phía client chỉ để biết khi nào gửi,
 // server vẫn quyết định (KB_TECHNICAL §5–§6).
+import { duelResultText } from "../logic/pvp.js";
 import { Sound } from "../audio/sound.js";
 import { api, saveToken, type CharacterSummary } from "../net/api.js";
 import { Connection } from "../net/connection.js";
@@ -21,6 +22,7 @@ import {
   type ChatPayload,
   type MailPayload,
   type PartyPayload,
+  type DuelPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -100,6 +102,13 @@ export class GameClient {
       goTo: (x, y) => this.moveTo(x, y),
       partyKick: (name) => void this.send("party_kick", { name }),
       partyDisband: () => void this.send("party_disband"),
+      duelRequest: (name) => void this.send("duel_request", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã thách đấu ${name}.`)),
+      duelAnswer: (from, accept) => {
+        if (this.state) this.state.duelAsk = null;
+        this.render();
+        void this.send(accept ? "duel_accept" : "duel_decline", { from });
+      },
+      duelCancel: () => void this.send("duel_cancel"),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -150,6 +159,8 @@ export class GameClient {
       party: this.state?.party ?? null,
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       partyInvite: null,
+      duel: null,
+      duelAsk: null,
     };
     this.buildView(r.map);
     this.render();
@@ -253,6 +264,9 @@ export class GameClient {
         this.state.party = pp.members.length ? pp : null;
         break;
       }
+      case "duel":
+        this.onDuel(p as DuelPayload);
+        break;
       case "party_invite":
         this.state.partyInvite = { from: p.from, until: Date.now() + (this.join?.config.partyInviteSeconds ?? 30) * 1000 };
         Sound.play("click");
@@ -264,6 +278,25 @@ export class GameClient {
         break;
     }
     this.render();
+  }
+
+  /** Duel (P4-M2): lời mời / bắt đầu / kết thúc. Kết thúc thì dừng tự đánh đối thủ (khỏi thành PK). */
+  private onDuel(d: DuelPayload): void {
+    if (!this.state) return;
+    if (d.state === "request") {
+      this.state.duelAsk = { from: d.opponent ?? "?", until: Date.now() + (this.join?.config.duelInviteSeconds ?? 30) * 1000 };
+      Sound.play("click");
+    } else if (d.state === "start") {
+      this.state.duelAsk = null;
+      this.state.duel = { opponent: d.opponent ?? "?", opponentId: d.opponentId ?? "", endsAt: d.endsAt ?? 0 };
+      this.notices.add("SYSTEM", `Bắt đầu đấu tay đôi với ${d.opponent}.`);
+    } else {
+      const opp = this.state.duel?.opponentId;
+      if (opp && this.auto.target === opp) this.auto.stop();
+      this.state.duel = null;
+      if (this.state.duelAsk?.from === d.opponent) this.state.duelAsk = null;
+      this.notices.add(d.result === "lose" ? "ERROR" : "SYSTEM", duelResultText(d.result, d.opponent));
+    }
   }
 
   private onCombat(c: CombatPayload): void {

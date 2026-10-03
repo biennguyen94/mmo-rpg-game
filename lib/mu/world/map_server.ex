@@ -22,7 +22,7 @@ defmodule Mu.World.MapServer do
   use GenServer
   require Logger
 
-  alias Mu.Game.{Config, Data, Drops, Engine, Pvp, Rng}
+  alias Mu.Game.{Config, Data, Drops, Duel, Engine, Pvp, Rng}
   alias Mu.Ulid
   alias Mu.World.{Maps, MonsterAi, Pathfinding}
 
@@ -101,6 +101,14 @@ defmodule Mu.World.MapServer do
   def use_potion(server, character_id, effect),
     do: GenServer.call(server(server), {:use_potion, character_id, effect})
 
+  @doc """
+  Duel (P4-M2): `act` là `:request` (`name` = người được mời), `:accept` / `:decline` (`name` =
+  người mời), `:cancel` (hủy lời mời đang chờ, hoặc đầu hàng nếu đang duel). `:ok` hoặc
+  `{:error, code}`.
+  """
+  def duel(server, character_id, act, name \\ nil),
+    do: GenServer.call(server(server), {:duel, character_id, act, name})
+
   @doc "Dừng di chuyển của người chơi (mất kết nối, P3-M2): bỏ đường đi, đứng yên tại chỗ."
   def halt(server, character_id), do: GenServer.call(server(server), {:halt, character_id})
 
@@ -151,6 +159,8 @@ defmodule Mu.World.MapServer do
       players: %{},
       monsters: %{},
       ground: %{},
+      # duel đang diễn ra + lời mời (P4-M2, `Mu.Game.Duel`)
+      duels: Duel.new(),
       rng: if(seed = opts[:seed], do: Rng.new(seed), else: Rng.new()),
       tick_ms: tick_ms,
       snapshot_every: div(sim_hz, server["snapshotHz"]),
@@ -222,6 +232,8 @@ defmodule Mu.World.MapServer do
             pk_points: Map.get(p, :pk_points, 0),
             rights: %{},
             aggressor_until: nil,
+            # P4-M2: đang duel (người khác thấy để không xen vào)
+            dueling: false,
             owner: owner,
             ref: Process.monitor(owner)
           }
@@ -315,7 +327,17 @@ defmodule Mu.World.MapServer do
     end
   end
 
+  def handle_call({:duel, id, act, name}, _from, s) do
+    case do_duel(s, s.players[id], act, name) do
+      {:ok, s} -> {:reply, :ok, s}
+      {:error, code} -> {:reply, {:error, code}, s}
+    end
+  end
+
   def handle_call({:halt, id}, _from, s) do
+    # mất kết nối trong lúc duel: thua (P4-4)
+    s = duel_lost(s, id)
+
     case s.players[id] do
       %{state: "dead"} ->
         {:reply, :ok, s}
@@ -436,7 +458,9 @@ defmodule Mu.World.MapServer do
         {id, m}, s -> put_entity(s, id, advance(m, s.tick_ms, m.step_ms, s.diagonal))
       end)
 
-    s = if rem(s.ticks, s.ai_every) == 0, do: s |> ai() |> expire_buffs(), else: s
+    s =
+      if rem(s.ticks, s.ai_every) == 0, do: s |> ai() |> expire_buffs() |> check_duels(), else: s
+
     s = if rem(s.ticks, s.regen_every) == 0, do: regen_mp(s), else: s
     s = s |> respawn_players() |> expire_ground() |> expire_aggressors()
     if rem(s.ticks, s.snapshot_every) == 0, do: snapshot(s), else: s
@@ -615,7 +639,8 @@ defmodule Mu.World.MapServer do
       e = %{e | state: "dead", path: [], progress: 0, dead_at: now(s), buffs: %{}}
       send(e.owner, {:map_died, cid})
       if had_buffs?, do: notify_buffs(s, e)
-      put_entity(s, cid, e)
+      # chết vì quái trong lúc duel: thua (P4-M2)
+      s |> put_entity(cid, e) |> duel_lost(cid)
     else
       put_entity(s, cid, e)
     end
@@ -690,7 +715,7 @@ defmodule Mu.World.MapServer do
   # P4-M1: đánh người chơi (`p_<id>`) — luật ở `Mu.Game.Pvp`
   defp aim(s, %{"targetType" => "SINGLE"}, "p_" <> cid, e) do
     with %{state: state} = p when state != "dead" <- s.players[cid] || {:error, "INVALID_TARGET"},
-         :ok <- Pvp.check_attack(e, p, &Maps.safe?(s.map, &1, &2)) do
+         :ok <- Pvp.check_attack(e, p, &Maps.safe?(s.map, &1, &2), relation(s, e, p)) do
       {:ok, {:pvp, cid, {p.x, p.y}}}
     else
       %{} -> {:error, "INVALID_TARGET"}
@@ -727,8 +752,10 @@ defmodule Mu.World.MapServer do
   defp apply_skill(s, e, {:pvp, vid, _}, %{"targetType" => "SINGLE"} = skill, rid),
     do: strike_player(s, e.character_id, vid, skill, rid)
 
-  defp apply_skill(s, e, aim, %{"targetType" => t} = skill, rid) when t in ~w(SINGLE AOE),
-    do: Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, e.character_id, &1, skill, rid))
+  defp apply_skill(s, e, aim, %{"targetType" => t} = skill, rid) when t in ~w(SINGLE AOE) do
+    s = Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, e.character_id, &1, skill, rid))
+    if t == "AOE", do: aoe_opponent(s, e.character_id, aim, skill, rid), else: s
+  end
 
   # Teleport: tới ô đã kiểm (walkable) ngay; client thấy nhảy qua snapshot (Interp reset)
   defp apply_skill(s, e, {:point, {x, y}}, %{"targetType" => "POINT"}, _rid) do
@@ -902,10 +929,13 @@ defmodule Mu.World.MapServer do
         skill["damageMultiplier"]
       )
 
+    rel = relation(s, a, v)
     dmg = Pvp.damage(res.dmg)
-    hp = max(v.hp - dmg, 0)
+    # duel: không chết, giữ 1 HP và thua (P4-4)
+    hp = if rel == :duel, do: max(v.hp - dmg, 1), else: max(v.hp - dmg, 0)
+    lost? = rel == :duel and v.hp - dmg <= 0
     was_aggressor? = a.aggressor_until != nil
-    {a, v} = Pvp.on_hit(a, %{v | hp: hp, last_combat_at: t}, t)
+    {a, v} = Pvp.on_hit(a, %{v | hp: hp, last_combat_at: t}, t, rel)
     s = %{s | rng: rng}
 
     broadcast(s, "combat", %{
@@ -922,8 +952,202 @@ defmodule Mu.World.MapServer do
     if not was_aggressor? and a.aggressor_until != nil,
       do: broadcast(s, "spawn", spawn_payload(a))
 
-    if hp == 0, do: player_killed(s, aid, vid), else: s
+    cond do
+      lost? -> end_duel(s, vid, aid)
+      hp == 0 -> player_killed(s, aid, vid)
+      true -> s
+    end
   end
+
+  # Quan hệ giữa hai người cho `Mu.Game.Pvp` (P4-M2): đang duel với nhau / cùng nhóm / một bên
+  # đang duel với người khác ("vùng riêng") / không gì
+  defp relation(s, a, b) do
+    cond do
+      Duel.opponent(s.duels, a.character_id) == b.character_id -> :duel
+      Mu.Party.same?(a.character_id, b.character_id) -> :party
+      Duel.in_duel?(s.duels, a.character_id) or Duel.in_duel?(s.duels, b.character_id) -> :blocked
+      true -> :none
+    end
+  end
+
+  # AOE trúng thêm đối thủ duel nếu đứng trong vùng (P4-2 (3))
+  defp aoe_opponent(s, cid, aim, skill, rid) do
+    e = s.players[cid]
+
+    with opp when opp != nil <- Duel.opponent(s.duels, cid),
+         %{state: state} = o when state != "dead" <- s.players[opp] do
+      {cx, cy} = if skill["center"] in ["target", "point"], do: aim_pos(aim), else: {e.x, e.y}
+
+      if Pathfinding.chebyshev({cx, cy}, {o.x, o.y}) <= skill["radius"],
+        do: strike_player(s, cid, opp, skill, rid),
+        else: s
+    else
+      _ -> s
+    end
+  end
+
+  # ---------- Duel (P4-M2, P4-4) ----------
+
+  defp do_duel(_s, nil, _act, _name), do: {:error, "INVALID_TARGET"}
+
+  defp do_duel(s, e, :request, name) do
+    with %{} = t <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         :ok <- duel_ok(s, e, t),
+         :ok <-
+           if(
+             Pathfinding.chebyshev({e.x, e.y}, {t.x, t.y}) <=
+               Config.get(["duel", "requestRange"]),
+             do: :ok,
+             else: {:error, "OUT_OF_RANGE"}
+           ),
+         {:ok, duels} <- Duel.request(s.duels, e.character_id, t.character_id, now(s)) do
+      send(t.owner, {:map_push, "duel", %{state: "request", opponent: e.name}})
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  defp do_duel(s, e, :accept, name) do
+    with %{} = f <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         :ok <- duel_ok(s, e, f),
+         center = {div(e.x + f.x, 2), div(e.y + f.y, 2)},
+         {:ok, duels} <- Duel.accept(s.duels, e.character_id, f.character_id, now(s), center) do
+      s =
+        %{s | duels: duels}
+        |> set_dueling(e.character_id, true)
+        |> set_dueling(f.character_id, true)
+
+      ends = System.os_time(:millisecond) + Config.get(["duel", "maxSeconds"]) * 1000
+
+      for {me, opp} <- [{e, f}, {f, e}],
+          do:
+            send(
+              me.owner,
+              {:map_push, "duel",
+               %{state: "start", opponent: opp.name, opponentId: opp.id, endsAt: ends}}
+            )
+
+      system(s, "#{f.name} và #{e.name} bắt đầu đấu tay đôi.")
+      {:ok, s}
+    end
+  end
+
+  defp do_duel(s, e, :decline, name) do
+    with %{} = f <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         {:ok, duels} <- Duel.decline(s.duels, e.character_id, f.character_id, now(s)) do
+      send(f.owner, {:map_push, "duel", %{state: "end", result: "declined", opponent: e.name}})
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  # đang duel: đầu hàng; không thì hủy lời mời đang chờ
+  defp do_duel(s, e, :cancel, _name) do
+    if Duel.in_duel?(s.duels, e.character_id) do
+      {:ok, duel_lost(s, e.character_id)}
+    else
+      {duels, tos} = Duel.cancel_requests(s.duels, e.character_id)
+
+      for to <- tos,
+          t = s.players[to],
+          do:
+            send(
+              t.owner,
+              {:map_push, "duel", %{state: "end", result: "cancelled", opponent: e.name}}
+            )
+
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  defp do_duel(_s, _e, _act, _name), do: {:error, "INVALID_TARGET"}
+
+  # cả hai còn sống, đủ cấp PvP, không phải chính mình
+  defp duel_ok(_s, e, t) do
+    min = Config.get(["pvp", "minLevel"])
+
+    cond do
+      e.character_id == t.character_id -> {:error, "INVALID_TARGET"}
+      e.state == "dead" or t.state == "dead" -> {:error, "FORBIDDEN"}
+      e.level < min or t.level < min -> {:error, "REQUIREMENT_NOT_MET"}
+      true -> :ok
+    end
+  end
+
+  defp player_named(s, name) when is_binary(name) do
+    key = String.downcase(name)
+    Enum.find_value(s.players, fn {_, p} -> String.downcase(p.name) == key && p end)
+  end
+
+  defp player_named(_s, _), do: nil
+
+  # `loser` thua (đối thủ thắng) nếu đang duel
+  defp duel_lost(s, loser) do
+    case Duel.opponent(s.duels, loser) do
+      nil -> s
+      winner -> end_duel(s, loser, winner)
+    end
+  end
+
+  # kết thúc duel: `winner` nil = hòa. Báo hai người + dòng SYSTEM cho cả map
+  defp end_duel(s, a, winner) do
+    {duels, b} = Duel.finish(s.duels, a)
+    s = %{s | duels: duels} |> set_dueling(a, false) |> set_dueling(b, false)
+    {pa, pb} = {s.players[a], s.players[b]}
+
+    for {me, opp} <- [{pa, pb}, {pb, pa}], me != nil do
+      result =
+        cond do
+          winner == nil -> "draw"
+          me.character_id == winner -> "win"
+          true -> "lose"
+        end
+
+      send(
+        me.owner,
+        {:map_push, "duel", %{state: "end", result: result, opponent: opp && opp.name}}
+      )
+    end
+
+    name = fn p -> (p && p.name) || "?" end
+
+    text =
+      if winner,
+        do:
+          "#{name.(s.players[winner])} thắng #{name.(s.players[if(winner == a, do: b, else: a)])} trong trận đấu tay đôi.",
+        else: "#{name.(pa)} và #{name.(pb)} hòa trận đấu tay đôi."
+
+    system(s, text)
+    s
+  end
+
+  # hết giờ → hòa; cách xa quá `duel.maxDistance` → người xa điểm bắt đầu thua; bỏ lời mời hết hạn
+  defp check_duels(s) do
+    t = now(s)
+    s = Enum.reduce(Duel.expired(s.duels, t), s, fn {a, _}, s -> end_duel(s, a, nil) end)
+
+    pos = fn cid -> (p = s.players[cid]) && {p.x, p.y} end
+
+    s =
+      Enum.reduce(Duel.too_far(s.duels, pos), s, fn {loser, winner}, s ->
+        if Duel.opponent(s.duels, loser) == winner, do: end_duel(s, loser, winner), else: s
+      end)
+
+    %{s | duels: Duel.prune(s.duels, t)}
+  end
+
+  # cờ đang duel trên entity + phát lại `spawn` cho người khác thấy
+  defp set_dueling(s, cid, on?) do
+    case s.players[cid] do
+      nil ->
+        s
+
+      e ->
+        e = %{e | dueling: on?}
+        broadcast(s, "spawn", spawn_payload(e))
+        put_in(s.players[cid], e)
+    end
+  end
+
+  defp system(s, text), do: broadcast(s, "chat", Mu.Chat.message("SYSTEM", "Hệ thống", text))
 
   # Chết vì người chơi: như chết vì quái (mất buff, hồi sinh ở thị trấn); kẻ giết không nhận EXP /
   # Zen (P4-8). PK: Session kẻ giết nhận `{:map_pk, id, điểm}`; rơi đồ: Session nạn nhân nhận
@@ -1174,6 +1398,8 @@ defmodule Mu.World.MapServer do
   defp entity(s, id), do: s.monsters[id]
 
   defp remove_player(s, id) do
+    # rời map trong lúc duel: thua (P4-4)
+    s = duel_lost(s, id)
     e = s.players[id]
     broadcast(s, "despawn", %{id: e.id})
 
@@ -1233,7 +1459,8 @@ defmodule Mu.World.MapServer do
       class: e.class,
       # P4-M1: màu tên — NORMAL / WARNING (cam) / MURDERER (đỏ); kẻ gây sự nhấp nháy cam
       pkState: Pvp.state(Map.get(e, :pk_points, 0)),
-      aggressor: Map.get(e, :aggressor_until) != nil
+      aggressor: Map.get(e, :aggressor_until) != nil,
+      dueling: Map.get(e, :dueling, false)
     }
   end
 

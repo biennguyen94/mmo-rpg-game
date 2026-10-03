@@ -290,3 +290,25 @@ test("PvP client (P4-M1): màu tên, nút Tấn công (cấp, safe zone), hỏi 
   assert.equal(needsConfirm({ pkState: "NORMAL", aggressor: true }), false);
   assert.equal(needsConfirm({ pkState: "MURDERER" }), false);
 });
+
+test("Duel client (P4-M2): đang duel chỉ đánh đối thủ, không đánh người cùng nhóm, nút Thách đấu, câu kết quả", async () => {
+  const { canAttackPlayer, canChallenge, duelResultText } = await import("../src/logic/pvp.js");
+  const map = { safeZones: [{ id: "town", x: 7, y: 21, w: 18, h: 22 }] };
+  const pvp = { enabled: true, minLevel: 6 };
+  const me = { level: 10, x: 40, y: 31 };
+  const b = { id: "p_b", name: "Bee1", level: 10, x: 41, y: 31 };
+  const c = { id: "p_c", name: "Cee1", level: 10, x: 41, y: 32 };
+  const none = { duelOpponentId: null, partyNames: [] as string[] };
+  assert.equal(canAttackPlayer(me, b, map, pvp, none), true);
+  assert.equal(canAttackPlayer(me, b, map, pvp, { ...none, partyNames: ["Bee1"] }), false);
+  assert.equal(canAttackPlayer(me, b, map, pvp, { ...none, duelOpponentId: "p_b" }), true);
+  assert.equal(canAttackPlayer(me, c, map, pvp, { ...none, duelOpponentId: "p_b" }), false);
+  assert.equal(canChallenge(me, b, pvp, false), true);
+  assert.equal(canChallenge(me, b, pvp, true), false);
+  assert.equal(canChallenge(me, { level: 5 }, pvp, false), false);
+  assert.equal(canAttackPlayer(me, { ...b, dueling: true }, map, pvp, none), false);
+  assert.equal(canChallenge(me, { level: 10, dueling: true }, pvp, false), false);
+  assert.equal(duelResultText("win", "Bee1"), "Bạn thắng Bee1 trong trận đấu tay đôi.");
+  assert.equal(duelResultText("draw", "Bee1"), "Hòa với Bee1: hết giờ đấu tay đôi.");
+  assert.equal(duelResultText("declined", "Bee1"), "Bee1 từ chối đấu tay đôi.");
+});

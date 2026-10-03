@@ -12,6 +12,9 @@ defmodule Mu.Game.Pvp do
     `MURDERER`.
   - Đánh được khi `features.pvp`, không đánh chính mình, cả hai cấp ≥ `pvp.minLevel`, không ai
     đứng trong safe zone.
+  - **Quan hệ** (MapServer tính): `:duel` (đang duel với nhau — không tự vệ, không PK, P4-M2),
+    `:party` (cùng nhóm — không đánh được, P4M1-2), `:blocked` (một bên đang duel với người khác
+    — "vùng riêng" của duel, P4-4), `:none`.
   - Tự vệ: A đánh B (B `NORMAL`, A không phải đang đánh trả B) → B được đánh trả A trong
     `pk.selfDefenseSeconds`, A thành kẻ gây sự cùng thời gian; mỗi đòn của A làm mới.
   - PK: giết người `NORMAL` mà không phải đang tự vệ → +1 điểm. Giết `WARNING` / `MURDERER` không
@@ -39,12 +42,13 @@ defmodule Mu.Game.Pvp do
   `attacker` đánh `target` (người chơi) được không: `:ok` hoặc `{:error, code}`. `safe?.(x, y)`
   cho biết ô có trong safe zone không.
   """
-  def check_attack(attacker, target, safe?) do
+  def check_attack(attacker, target, safe?, relation \\ :none) do
     min = Config.get(["pvp", "minLevel"])
 
     cond do
       Config.get(["features", "pvp"]) != true -> {:error, "FORBIDDEN"}
       attacker.character_id == target.character_id -> {:error, "INVALID_TARGET"}
+      relation in [:party, :blocked] -> {:error, "FORBIDDEN"}
       attacker.level < min or target.level < min -> {:error, "REQUIREMENT_NOT_MET"}
       safe?.(attacker.x, attacker.y) or safe?.(target.x, target.y) -> {:error, "FORBIDDEN"}
       true -> :ok
@@ -59,7 +63,10 @@ defmodule Mu.Game.Pvp do
   Sau một đòn `attacker` → `victim` lúc `now`: cập nhật quyền tự vệ của nạn nhân và cờ kẻ gây sự.
   Trả `{attacker, victim}`.
   """
-  def on_hit(attacker, victim, now) do
+  def on_hit(attacker, victim, now, relation \\ :none)
+  def on_hit(attacker, victim, _now, :duel), do: {attacker, victim}
+
+  def on_hit(attacker, victim, now, _relation) do
     if state(victim.pk_points) == "NORMAL" and not retaliating?(attacker, victim, now) do
       until = now + Config.get(["pk", "selfDefenseSeconds"]) * 1000
 
@@ -71,7 +78,10 @@ defmodule Mu.Game.Pvp do
   end
 
   @doc "Điểm PK `killer` nhận khi hạ `victim` lúc `now`: 1 hoặc 0."
-  def pk_gain(killer, victim, now) do
+  def pk_gain(killer, victim, now, relation \\ :none)
+  def pk_gain(_killer, _victim, _now, :duel), do: 0
+
+  def pk_gain(killer, victim, now, _relation) do
     if state(victim.pk_points) == "NORMAL" and not retaliating?(killer, victim, now),
       do: 1,
       else: 0
