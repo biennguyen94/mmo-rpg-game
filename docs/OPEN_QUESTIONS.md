@@ -138,3 +138,11 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | M5-2 | **Protocol:** client cần tầm nhặt/NPC và tên/tầm skill | Reply join thêm `config.pickupRange`, `config.npcRange`, `data.skills [{id, name, range, manaCost, requiredLevel}]` |
 | M5-3 | **Asset (A4, §6.1):** chưa có sprite DK 6 animation × 4 hướng, tileset, effect, BGM | Placeholder hình học + số sát thương bay lên; SFX tổng hợp Web Audio (hit, miss, hurt, potion, pickup, level up, click); **chưa có BGM** — ghi là lệch ở M6 |
 | M5-4 | Mô tả "Atk Speed" trong panel Nhân vật | Hiện `view.attackSpeed` (DK cấp 1 = 1) như §4.1; số trong hình §19.3 chỉ minh họa |
+
+## M6. Trạng thái khi nghiệm thu (2026-10-03)
+
+| # | Mục | Trạng thái |
+|---|---|---|
+| M6-1 | **E7** (npm): anh chọn (a) mở registry, nhưng phiên đang chạy vẫn nhận 403 (cả đi thẳng lẫn qua proxy phiên) — thay đổi mạng có lẽ chỉ áp dụng cho phiên/container mới | `PhaserView` chưa làm; mở phiên mới trên môi trường đã sửa để em làm nốt (interface `GameView` sẵn sàng) |
+| M6-2 | **G26** (bầy Spider) — vẫn chờ anh chọn a/b/c | Giữ nguyên số |
+| M6-3 | Cân bằng: xem `docs/ACCEPTANCE.md §3` (Q14, G26, kinh tế potion, Twisting Slash ở cấp 10) | Chờ anh |

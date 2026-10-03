@@ -53,3 +53,5 @@
 | DEC-47 | 2026-10-03 | Breakpoint mobile < 1024px: HUD xếp tên map trên, HP/MP dưới (cao 64px thay vì 48px); hiện 3 nút nổi | §19.1 mobile xếp HP/MP dọc dưới tên map; 48px không đủ chỗ |
 | DEC-48 | 2026-10-03 | Lỗi `cmd` vào panel Thông báo (§19.8) lấy từ reply; tự đánh bỏ qua `COOLDOWN/OUT_OF_RANGE/RATE_LIMITED` (do lệch nhịp mạng vài ms) | Tránh spam thông báo khi tự đánh |
 | DEC-49 | 2026-10-03 | Client đặt `window.__mu` (chỉ đọc: entity, player, selfId — dữ liệu server đã gửi) cho test e2e/debug | Không lộ gì ngoài thứ client đã có; server vẫn quyết định mọi thứ |
+| DEC-50 | 2026-10-03 | E2E nghiệm thu dùng `scripts/e2e_seed.exs` (chỉ cho test, không trong release): cho nhân vật test cấp 3, Zen, HP thấp và vài món đồ qua `Mu.Game.Items` (có audit `seed:e2e`) | Test UI mặc đồ/potion/shop/cộng stat/lên cấp trong vài giây thay vì farm hàng chục phút; luật vẫn do server kiểm |
+| DEC-51 | 2026-10-03 | Soak: bot dùng `X-Forwarded-For` riêng với server chạy `TRUSTED_PROXIES=127.0.0.1` (giả lập nhiều IP); đo server từ node Erlang khác (`scripts/soak_probe.exs`) | Không đổi ngưỡng rate-limit trong config chỉ để test |
