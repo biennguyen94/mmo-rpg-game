@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, GuildConfig, GuildPayload, RankingPayload, TradePayload, ItemView, MailView, MapData, PartyPayload, Player, QuestActive, QuestBrief, QuestsPayload, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
 import { ERROR_TEXT, type ErrorCode } from "../net/protocol.js";
 import { PK_LABEL, canAttackPlayer, canChallenge, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
@@ -25,10 +25,11 @@ import {
 } from "../logic/items.js";
 import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
 import { chatLine } from "../logic/chat.js";
+import { goalText, rewardText, trackerLine } from "../logic/quests.js";
 import { ROLE_LABEL, canDemote, canInvite as canGuildInvite, canKick, canPromote, myRole, validGuildName } from "../logic/guild.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade" | "ranking";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings" | "guild" | "trade" | "ranking" | "quests";
 
 export interface UiState {
   player: Player;
@@ -78,6 +79,9 @@ export interface UiState {
   tradeAsk: { from: string; until: number } | null;
   /** Bảng xếp hạng đang xem (P6-M1). */
   ranking: RankingPayload | null;
+  /** Quest (P6-M2): view mới nhất từ server; `questNpc` = Quest Master đang mở (hiện [Nhận] / [Trả]). */
+  quests: QuestsPayload | null;
+  questNpc: string | null;
 }
 
 export interface UiActions {
@@ -150,6 +154,10 @@ export interface UiActions {
   tradeCancel(): void;
   /** Xin bảng xếp hạng `board` (P6-M1). */
   ranking(board: string): void;
+  /** Quest (P6-M2): nhận / trả ở Quest Master đang mở; bỏ ở đâu cũng được. */
+  questAccept(id: string): void;
+  questTurnin(id: string): void;
+  questAbandon(id: string): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -339,6 +347,7 @@ export class GameUI {
       this.state.guildCfg?.enabled
         ? h("button", { "data-test": "guild-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("guild")) }, "🛡 Guild")
         : null,
+      h("button", { "data-test": "quest-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("quests")) }, "📜 Nhiệm vụ"),
       h("button", { "data-test": "ranking-menu", onclick: () => (this.closeMenu(), this.a.togglePanel("ranking")) }, "🏆 Xếp hạng"),
       h("button", { onclick: () => (this.closeMenu(), this.a.togglePanel("settings")) }, "⚙️ Cài đặt"),
       h("button", { "data-test": "switch-character", onclick: () => (this.closeMenu(), this.a.switchCharacter()) }, "👥 Đổi nhân vật"),
@@ -384,7 +393,9 @@ export class GameUI {
                     ? s.trade
                     : s.panel === "ranking"
                       ? s.ranking
-                      : null;
+                      : s.panel === "quests"
+                        ? [s.quests, s.questNpc, this.abandonArmed]
+                        : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -420,7 +431,9 @@ export class GameUI {
                         ? this.tradePanel()
                         : s.panel === "ranking"
                           ? this.rankingPanel()
-                          : this.settingsPanel();
+                          : s.panel === "quests"
+                            ? this.questPanel()
+                            : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -995,6 +1008,93 @@ export class GameUI {
     );
   }
 
+  // ---------- Nhiệm vụ (P6-M2, P6-2): đang làm / nhận được / đã xong; Quest Master: [Nhận] [Trả] ----------
+
+  private abandonArmed: string | null = null;
+
+  private questPanel(): HTMLElement {
+    const q = this.state.quests;
+    const npc = this.state.questNpc;
+    const itemName = (t: string) => this.state.templates.get(t)?.name ?? t;
+    const reward = (r: QuestBrief["rewards"]) => h("div", { class: "qreward" }, "Thưởng: ", rewardText(r, itemName));
+    const active = (x: QuestActive) =>
+      h(
+        "div",
+        { class: `quest${x.complete ? " done" : ""}`, "data-quest": x.id },
+        h("div", { class: "qname" }, x.complete ? `✔ ${x.name}` : x.name),
+        h("div", { class: "qdesc" }, x.description),
+        x.objectives.map((o) => h("div", { class: `qgoal${o.have >= o.need ? " ok" : ""}` }, goalText(o, o.have))),
+        reward(x.rewards),
+        h(
+          "div",
+          { class: "btns" },
+          npc && x.complete ? h("button", { "data-test": "quest-turnin", onclick: () => this.a.questTurnin(x.id) }, "Trả nhiệm vụ") : null,
+          this.abandonArmed === x.id
+            ? h(
+                "span",
+                { class: "btns" },
+                h("button", { "data-test": "quest-abandon-confirm", onclick: () => ((this.abandonArmed = null), this.a.questAbandon(x.id)) }, "Bỏ thật?"),
+                h("button", { onclick: () => ((this.abandonArmed = null), this.renderPanel(true)) }, "Thôi"),
+              )
+            : h("button", { "data-test": "quest-abandon", onclick: () => ((this.abandonArmed = x.id), this.renderPanel(true)) }, "Bỏ"),
+        ),
+      );
+    const avail = (x: QuestBrief) =>
+      h(
+        "div",
+        { class: "quest", "data-quest": x.id },
+        h("div", { class: "qname" }, `${x.name} `, h("small", {}, `(cấp ${x.minLevel})`)),
+        h("div", { class: "qdesc" }, x.description),
+        x.goals.map((g) => h("div", { class: "qgoal" }, goalText(g))),
+        reward(x.rewards),
+        npc && (q?.active.length ?? 0) < (q?.maxActive ?? 0)
+          ? h("div", { class: "btns" }, h("button", { "data-test": "quest-accept", onclick: () => this.a.questAccept(x.id) }, "Nhận"))
+          : null,
+      );
+    return h(
+      "section",
+      { class: "panel", "data-panel": "quests" },
+      h("h2", {}, npc ? "QUEST MASTER" : "NHIỆM VỤ"),
+      h(
+        "div",
+        { class: "body scroll" },
+        q
+          ? h(
+              "div",
+              {},
+              h("h3", {}, `Đang làm (${q.active.length}/${q.maxActive})`),
+              h("div", { "data-test": "quest-active" }, q.active.length ? q.active.map(active) : h("div", { class: "hint" }, "Chưa nhận nhiệm vụ nào.")),
+              h("h3", {}, "Nhận được"),
+              npc || !q.available.length ? null : h("div", { class: "hint" }, "Gặp Quest Master ở Lorencia / Noria để nhận."),
+              h("div", { "data-test": "quest-available" }, q.available.length ? q.available.map(avail) : h("div", { class: "hint" }, "Không còn nhiệm vụ hợp cấp.")),
+              h("div", { class: "hint", "data-test": "quest-done" }, `Đã hoàn thành: ${q.done.length}`),
+            )
+          : h("div", { class: "hint" }, "Đang tải…"),
+      ),
+    );
+  }
+
+  // dòng theo dõi tiến độ góc màn hình (bấm = mở panel)
+  private questTrackEl: HTMLElement | null = null;
+  private questTrackKey: string | null = null;
+
+  private renderQuestTracker(): void {
+    const act = this.state.quests?.active ?? [];
+    const key = JSON.stringify(act.map(trackerLine));
+    // dựng lại chỉ khi tiến độ đổi (dựng lại giữa chừng làm mất click)
+    if (key === this.questTrackKey && (this.questTrackEl?.isConnected || !act.length)) return;
+    this.questTrackKey = key;
+    this.questTrackEl?.remove();
+    this.questTrackEl = null;
+    if (!act.length) return;
+    this.questTrackEl = h(
+      "div",
+      { class: "questtrack", "data-test": "quest-tracker", onclick: () => this.a.togglePanel("quests") },
+      act.map((x) => h("div", { class: x.complete ? "ok" : "" }, trackerLine(x))),
+    );
+    this.view.append(this.questTrackEl);
+  }
+
   // ---------- Giao dịch (P5-M4, P5-5): hai bàn + túi; bấm đồ trong túi = đặt lên bàn ----------
 
   private tradeZenDraft = "";
@@ -1480,6 +1580,7 @@ export class GameUI {
     this.renderGuildAsk();
     this.renderWar();
     this.renderTradeAsk();
+    this.renderQuestTracker();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;

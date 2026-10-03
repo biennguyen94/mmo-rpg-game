@@ -754,6 +754,94 @@ defmodule Mu.Game.Items do
     audit(it.id, action, from, to, Map.put(detail, :serial, it.serial))
   end
 
+  # ---------- Quest (P6-M2, P6-2) ----------
+
+  @doc """
+  Trả quest `q` (template `quests.json`) — **một transaction**: khóa nhân vật + row
+  `character_quests` (phải `ACTIVE`, kill đủ theo `progress` trong DB, đủ cấp theo cấp trong DB),
+  nộp vật phẩm `collect` từ túi (audit `QUEST_IN`, `char:<id> → quest:<id>`), thêm đồ thưởng
+  (audit `QUEST`, `quest:<id> → char:<id>`), cộng Zen (audit Zen `QUEST`), đặt `DONE`. Thiếu
+  điều kiện → `REQUIREMENT_NOT_MET`; quest không đang làm → `INVALID_TARGET`; túi không đủ chỗ cho
+  đồ thưởng → `INVENTORY_FULL`. EXP thưởng do Session cộng sau khi transaction xong (EXP nằm ở
+  Session, như EXP hạ quái).
+
+  `{:ok, %{items, zen, version, quest: id}}` hoặc `{:error, code}`.
+  """
+  def quest_turnin(cid, q, complete?) do
+    qid = q["id"]
+    src = "quest:" <> qid
+
+    tx(
+      cid,
+      fn c, items ->
+        row =
+          Repo.one(
+            from(r in Mu.Game.CharacterQuest,
+              where: r.character_id == ^cid and r.quest_id == ^qid,
+              lock: "FOR UPDATE"
+            )
+          )
+
+        with %{state: "ACTIVE", progress: pr} <- row || {:error, "INVALID_TARGET"},
+             true <- complete?.(pr, c.level, items) || {:error, "REQUIREMENT_NOT_MET"},
+             :ok <- take_collect(cid, src, items, Mu.Game.Quests.collect_needs(q)),
+             :ok <- give_rewards(cid, src, q["rewards"]["items"]) do
+          Repo.update_all(
+            from(r in Mu.Game.CharacterQuest,
+              where: r.character_id == ^cid and r.quest_id == ^qid
+            ),
+            set: [state: "DONE", completed_at: DateTime.utc_now()]
+          )
+
+          {:ok, q["rewards"]["zen"], %{quest: qid}}
+        else
+          %{state: _} -> {:error, "INVALID_TARGET"}
+          error -> error
+        end
+      end,
+      {"QUEST", src}
+    )
+  end
+
+  # nộp `n` cái mỗi template: stack nhỏ trước (giữ stack lớn), thiếu → REQUIREMENT_NOT_MET
+  defp take_collect(cid, src, items, needs) do
+    Enum.reduce_while(needs, :ok, fn {tid, n}, :ok ->
+      stacks =
+        Inventory.inventory(items)
+        |> Enum.filter(&(&1.template_id == tid))
+        |> Enum.sort_by(& &1.quantity)
+
+      if stacks |> Enum.map(& &1.quantity) |> Enum.sum() < n do
+        {:halt, {:error, "REQUIREMENT_NOT_MET"}}
+      else
+        Enum.reduce_while(stacks, n, fn
+          _, 0 ->
+            {:halt, 0}
+
+          it, left ->
+            k = min(it.quantity, left)
+            take(it, k, "QUEST_IN", "char:" <> cid, src, %{quantity: k})
+            {:cont, left - k}
+        end)
+
+        {:cont, :ok}
+      end
+    end)
+  end
+
+  defp give_rewards(cid, src, rewards) do
+    Enum.reduce_while(rewards, :ok, fn %{"templateId" => tid, "quantity" => n}, :ok ->
+      case Inventory.plan_add(load(cid), tid, n) do
+        {:ok, plan} ->
+          apply_add(cid, tid, plan, "QUEST", src, [], %{}, nil)
+          {:cont, :ok}
+
+        error ->
+          {:halt, error}
+      end
+    end)
+  end
+
   # ---------- Dọn dẹp ----------
 
   @doc """
@@ -803,15 +891,10 @@ defmodule Mu.Game.Items do
             {c.zen, c.version, extra}
 
           {:ok, delta} ->
-            {1, [{balance, version}]} =
-              Repo.update_all(
-                from(ch in Character, where: ch.id == ^cid, select: {ch.zen, ch.version}),
-                inc: [zen: delta, version: 1]
-              )
+            add_zen(cid, delta, zen, %{})
 
-            {reason, ref} = zen || raise "Items.tx: đổi Zen mà không có lý do audit"
-            ZenAudit.log(cid, delta, balance, reason, ref)
-            {balance, version, %{}}
+          {:ok, delta, extra} ->
+            add_zen(cid, delta, zen, extra)
 
           {:error, code} ->
             Repo.rollback(code)
@@ -825,6 +908,18 @@ defmodule Mu.Game.Items do
       {:error, code} ->
         {:error, code}
     end
+  end
+
+  defp add_zen(cid, delta, zen, extra) do
+    {1, [{balance, version}]} =
+      Repo.update_all(
+        from(ch in Character, where: ch.id == ^cid, select: {ch.zen, ch.version}),
+        inc: [zen: delta, version: 1]
+      )
+
+    {reason, ref} = zen || raise "Items.tx: đổi Zen mà không có lý do audit"
+    ZenAudit.log(cid, delta, balance, reason, ref)
+    {balance, version, extra}
   end
 
   defp find(items, item_id), do: Enum.find(items, &(&1.id == item_id))

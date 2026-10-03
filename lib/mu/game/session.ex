@@ -30,14 +30,14 @@ defmodule Mu.Game.Session do
   require Logger
 
   alias Mu.{Chat, Guild, Party, Trade}
-  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp, Rng}
+  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp, QuestStore, Quests, Rng}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
   # không còn tab nào trong khoảng này thì tự tắt
   @idle_timeout :timer.minutes(1)
 
   # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
-  @item_acts ~w(pickup equip unequip move_item split drop use_item upgrade buy sell mail_claim)
+  @item_acts ~w(pickup equip unequip move_item split drop use_item upgrade buy sell mail_claim quest_turnin)
   # số `rid` gần nhất được nhớ kết quả
   @rid_memory 200
 
@@ -99,6 +99,9 @@ defmodule Mu.Game.Session do
       buffs: [],
       # guild (P4-M3): `%{guild_id, name, role}` hoặc `nil` (Mu.Guild báo khi đổi)
       guild: nil,
+      # quest (P6-M2): `%{quest_id => %{state, progress}}` (bản trong DB) + view đã đẩy gần nhất
+      quests: %{},
+      quest_view: nil,
       tabs: %{},
       on_map: false,
       save_timer: nil,
@@ -123,7 +126,13 @@ defmodule Mu.Game.Session do
         s =
           if s.saved && s.saved.id == character.id,
             do: s,
-            else: %{s | saved: character, items: Items.load(character.id)}
+            else: %{
+              s
+              | saved: character,
+                items: Items.load(character.id),
+                quests: QuestStore.load(character.id),
+                quest_view: nil
+            }
 
         # PK giảm theo giờ thực khi vắng mặt (P4-3)
         s = kick_tabs(%{s | character: pk_decay(character)}, pid)
@@ -184,25 +193,8 @@ defmodule Mu.Game.Session do
     {:noreply, s, timeout(s)}
   end
 
-  def handle_info({:map_reward, %{exp: exp, zen: zen}}, %{character: c} = s) when c != nil do
-    s = refresh(s)
-    {c, levels} = Engine.add_exp(s.character, exp)
-    s = %{s | character: %{c | zen: c.zen + zen}}
-
-    s =
-      if levels > 0 do
-        # lên cấp: hồi đầy HP/MP (G10), báo MapServer chỉ số mới
-        d = Engine.derived(s.character, Inventory.equipped_templates(s.items))
-        c = %{s.character | hp_current: d.hp_max, mana_current: d.mp_max}
-        Party.update(c.id, %{level: c.level})
-        sync_map(%{s | character: c}, %{hp: d.hp_max, mp: d.mp_max})
-      else
-        s
-      end
-
-    # Zen và lên cấp ghi ngay (G12, KB_TECH_STACK §4); EXP thường đi cùng lần ghi này
-    s = if zen > 0 or levels > 0, do: persist(s), else: s
-    push_player(s)
+  def handle_info({:map_reward, %{exp: exp, zen: zen} = r}, %{character: c} = s) when c != nil do
+    s = s |> quest_kill(r[:template]) |> gain(exp, zen)
     {:noreply, s, timeout(s)}
   end
 
@@ -513,6 +505,7 @@ defmodule Mu.Game.Session do
 
     case Enum.find(Maps.get(s.character.map_id).npcs, &(&1.id == npc_id)) do
       %{role: "warehouse"} -> open_warehouse(s, npc_id)
+      %{role: "quest"} -> open_quests(s, npc_id)
       _ -> open_shop(s, npc)
     end
   end
@@ -587,8 +580,9 @@ defmodule Mu.Game.Session do
     end
   end
 
-  defp run(act, _payload, s) when act in @item_acts or act == "npc_open",
-    do: {{:error, "INVALID_TARGET"}, s}
+  defp run(act, _payload, s)
+       when (act in @item_acts and act != "quest_turnin") or act == "npc_open",
+       do: {{:error, "INVALID_TARGET"}, s}
 
   # ---------- Chat (P2-M5) ----------
 
@@ -709,6 +703,12 @@ defmodule Mu.Game.Session do
 
   defp run("ranking", _p, s), do: {{:error, "INVALID_TARGET"}, s}
 
+  # ---------- Quest (P6-M2, P6-2): luật `Quests`, DB `QuestStore` / `Items.quest_turnin` ----------
+
+  defp run("quest_" <> _ = act, p, s) do
+    if quest_enabled?(), do: quest(act, p, s), else: {{:error, "FORBIDDEN"}, s}
+  end
+
   # ---------- Giao dịch (P5-M4, P5-5): trạng thái trong `Mu.Trade.Settlement` ----------
 
   defp run("trade_request", %{"to" => to}, s) when is_binary(to) do
@@ -777,6 +777,47 @@ defmodule Mu.Game.Session do
 
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
 
+  defp quest("quest_list", _p, s), do: {:ok, sync_quests(%{s | quest_view: nil})}
+
+  # nhận / trả: đứng cạnh Quest Master (bất kỳ, Lorencia / Noria) trong `npcRange`
+  defp quest("quest_accept", %{"questId" => qid, "npcId" => npc}, s)
+       when is_binary(qid) and is_binary(npc) do
+    c = s.character
+
+    with {:ok, _} <- near_npc(s, npc, "quest"),
+         :ok <- Quests.can_accept(qid, c.level, s.quests),
+         :ok <- QuestStore.accept(c.id, qid) do
+      s = %{s | quests: Map.put(s.quests, qid, %{state: "ACTIVE", progress: %{}})}
+      {:ok, sync_quests(s)}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp quest("quest_turnin", %{"questId" => qid, "npcId" => npc}, s)
+       when is_binary(qid) and is_binary(npc) do
+    with %{} = q <- Data.quest(qid) || {:error, "INVALID_TARGET"},
+         {:ok, _} <- near_npc(s, npc, "quest"),
+         {:ok, res} <-
+           Items.quest_turnin(s.character.id, q, &Quests.complete?(q, &1, &2, &3)) do
+      s = %{s | quests: Map.put(s.quests, qid, %{state: "DONE", progress: %{}})}
+      s = s |> apply_items(res) |> gain(q["rewards"]["exp"], 0) |> persist()
+      push(s, "quest_done", %{questId: qid, name: q["name"], rewards: q["rewards"]})
+      {:ok, s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp quest("quest_abandon", %{"questId" => qid}, s) when is_binary(qid) do
+    case QuestStore.abandon(s.character.id, qid) do
+      :ok -> {:ok, sync_quests(%{s | quests: Map.delete(s.quests, qid)})}
+      error -> {error, s}
+    end
+  end
+
+  defp quest(_act, _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   # PARTY: từ P3-M4 (không có nhóm → INVALID_TARGET); GUILD: từ P4-M3 (không có guild →
   # INVALID_TARGET); SYSTEM: chỉ server
   defp chat_channel(ch) when ch in ~w(NORMAL WHISPER PARTY GUILD), do: :ok
@@ -810,6 +851,54 @@ defmodule Mu.Game.Session do
   end
 
   defp announce_upgrade(_s, _u), do: :ok
+
+  defp quest_enabled?, do: Config.get(["features", "quest"]) == true
+
+  # Hạ quái `template` (P6-M2): quest đang làm có mục tiêu kill quái này → +1, ghi DB
+  defp quest_kill(s, nil), do: s
+
+  defp quest_kill(s, template) do
+    case Quests.on_kill(s.quests, template) do
+      [] ->
+        s
+
+      changed ->
+        Enum.reduce(changed, s, fn {qid, pr}, s ->
+          :ok = QuestStore.save_progress(s.character.id, qid, pr)
+          put_in(s.quests[qid].progress, pr)
+        end)
+    end
+  end
+
+  # Đẩy event `quests` khi view đổi (tiến độ kill, cấp, đồ trong túi cho collect)
+  defp sync_quests(%{character: c} = s) when c != nil do
+    if quest_enabled?() do
+      view = Quests.view(s.quests, c.level, s.items)
+
+      if view != s.quest_view do
+        push(s, "quests", view)
+        %{s | quest_view: view}
+      else
+        s
+      end
+    else
+      s
+    end
+  end
+
+  defp sync_quests(s), do: s
+
+  # Mở Quest Master: event `quests` kèm `npcId` (client mở hộp thoại nhận / trả)
+  defp open_quests(s, npc) do
+    with true <- quest_enabled?() || {:error, "FORBIDDEN"},
+         {:ok, npc_id} <- near_npc(s, npc, "quest") do
+      view = Quests.view(s.quests, s.character.level, s.items)
+      push(s, "quests", Map.put(view, :npcId, npc_id))
+      {:ok, %{s | quest_view: view}}
+    else
+      error -> {error, s}
+    end
+  end
 
   defp trade_me(%{character: c}), do: %{cid: c.id, name: c.name, session: self()}
 
@@ -973,7 +1062,30 @@ defmodule Mu.Game.Session do
 
   defp notify(s) do
     push_player(s)
-    s
+    sync_quests(s)
+  end
+
+  # EXP + Zen (hạ quái, P6-M2 thưởng quest): lên cấp hồi đầy, ghi ngay khi có Zen / lên cấp
+  defp gain(s, exp, zen) do
+    s = refresh(s)
+    {c, levels} = Engine.add_exp(s.character, exp)
+    s = %{s | character: %{c | zen: c.zen + zen}}
+
+    s =
+      if levels > 0 do
+        # lên cấp: hồi đầy HP/MP (G10), báo MapServer chỉ số mới
+        d = Engine.derived(s.character, Inventory.equipped_templates(s.items))
+        c = %{s.character | hp_current: d.hp_max, mana_current: d.mp_max}
+        Party.update(c.id, %{level: c.level})
+        sync_map(%{s | character: c}, %{hp: d.hp_max, mp: d.mp_max})
+      else
+        s
+      end
+
+    # Zen và lên cấp ghi ngay (G12, KB_TECH_STACK §4); EXP thường đi cùng lần ghi này
+    s = if zen > 0 or levels > 0, do: persist(s), else: s
+    push_player(s)
+    sync_quests(s)
   end
 
   defp remember(s, rid, result) do

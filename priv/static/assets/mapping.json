@@ -198,6 +198,21 @@
       "id": "class:MG",
       "original": "releases/Nov-2015/mon/hell_knight.png",
       "gitBlob": "63b70729638479337c94ae505326681d44ea2084"
+    },
+    "sprites/npcs/lorencia_quest_master.png": {
+      "id": "npc:lorencia_quest_master",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/npcs/noria_quest_master.png": {
+      "id": "npc:noria_quest_master",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/npcs/noria_chaos_goblin.png": {
+      "id": "npc:noria_chaos_goblin",
+      "original": "releases/Nov-2015/mon/goblin.png",
+      "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
     }
   }
 }

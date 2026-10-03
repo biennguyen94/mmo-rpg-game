@@ -13,7 +13,7 @@ defmodule Mu.World.MapServer do
     (`KB_TECHNICAL §5`). Broadcast cả map; mỗi kênh lọc theo tầm nhìn (`MuWeb.Aoi`, P3-M1).
   - Sự kiện: `spawn`, `despawn`, `snapshot`, `combat` qua PubSub `topic/1` dạng
     `{:map_event, event, payload}`. Gửi riêng tiến trình chủ (Session):
-    `{:map_reward, %{exp, zen, monster}}`, `{:map_died, character_id}`.
+    `{:map_reward, %{exp, zen, monster, template}}`, `{:map_died, character_id}`.
   - Tiến độ nhân vật (level, EXP, stat, Zen) do Session giữ; MapServer nhận chỉ số đã tính
     (`stats`, `skills`) qua `join/3` và `update_player/3` (PHASE1_PLAN R5).
 
@@ -1272,7 +1272,7 @@ defmodule Mu.World.MapServer do
     for p <- sharers do
       exp = Engine.party_exp_gain(m.tpl["experience"], length(sharers), p.level, m.tpl["level"])
       zen = if p.character_id == killer_id, do: drop.zen, else: 0
-      send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid}})
+      send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid, template: m.template_id}})
     end
 
     m = %{

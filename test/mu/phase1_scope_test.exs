@@ -15,7 +15,8 @@ defmodule Mu.Phase1ScopeTest do
       ~w(spider budge_dragon bull_fighter hound lich elite_bull_fighter goblin chain_scorpion beetle_monster hunter forest_monster agon stone_golem),
     npcs:
       ~w(lorencia_potion_merchant lorencia_weapon_merchant noria_potion_merchant noria_weapon_merchant) ++
-        ~w(lorencia_warehouse noria_warehouse),
+        ~w(lorencia_warehouse noria_warehouse) ++
+        ~w(lorencia_quest_master noria_quest_master),
     items:
       ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
         ~w(staff_t0 bow_t0) ++
@@ -50,11 +51,13 @@ defmodule Mu.Phase1ScopeTest do
     assert Config.get(["game", "maxLevel"]) == @scope.maxLevel
   end
 
-  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) + magicGladiator (P3-M5) + pvp (P4-M1) + guild (P4-M3) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
+  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) + magicGladiator (P3-M5) + pvp (P4-M1) + guild (P4-M3) + quest (P6-M2) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
     on = for {flag, true} <- Config.get(["features"]), do: flag
-    assert Enum.sort(on) == ["guild", "magicGladiator", "mail", "mapPanel", "party", "pvp"]
 
-    for f <- ~w(quest wings chaosMachine) do
+    assert Enum.sort(on) ==
+             ["guild", "magicGladiator", "mail", "mapPanel", "party", "pvp", "quest"]
+
+    for f <- ~w(wings chaosMachine) do
       assert Config.get(["features", f]) == false
     end
   end

@@ -27,7 +27,8 @@ defmodule Mu.Game.Data do
   {p4, drops} = load.("drops.json", "drops", "monsterId")
   {p5, items} = load.("items.json", "items", "templateId")
   {p6, shops} = load.("shop.json", "shops", "npcId")
-  for p <- [p1, p2, p3, p4, p5, p6], do: @external_resource(p)
+  {p7, quests} = load.("quests.json", "quests", "id")
+  for p <- [p1, p2, p3, p4, p5, p6, p7], do: @external_resource(p)
 
   @classes classes
   @monsters monsters
@@ -35,6 +36,12 @@ defmodule Mu.Game.Data do
   @drops drops
   @items items
   @shops shops
+  @quests quests
+  @quest_order p7
+               |> File.read!()
+               |> Jason.decode!()
+               |> Map.fetch!("quests")
+               |> Enum.map(& &1["id"])
 
   for {npc, shop} <- @shops, t <- shop["items"], not Map.has_key?(@items, t) do
     raise "shop.json: #{npc} bán #{t} không có trong items.json"
@@ -45,6 +52,34 @@ defmodule Mu.Game.Data do
       e <- g["entries"],
       not Map.has_key?(@items, e["item"]) do
     raise "drops.json: #{e["item"]} không có trong items.json"
+  end
+
+  # quest (P6-M2): mục tiêu kill / collect / level trỏ tới quái / item có thật, thưởng hợp lệ
+  for {id, q} <- @quests do
+    for o <- q["objectives"] do
+      ok? =
+        case o do
+          %{"type" => "kill", "monsterId" => m, "count" => n} when is_integer(n) and n > 0 ->
+            Map.has_key?(@monsters, m)
+
+          %{"type" => "collect", "templateId" => t, "count" => n} when is_integer(n) and n > 0 ->
+            Map.has_key?(@items, t)
+
+          %{"type" => "level", "min" => n} when is_integer(n) ->
+            true
+
+          _ ->
+            false
+        end
+
+      ok? || raise "quests.json: #{id} có mục tiêu sai #{inspect(o)}"
+    end
+
+    %{"exp" => exp, "zen" => zen, "items" => items} = q["rewards"]
+
+    (is_integer(exp) and exp >= 0 and is_integer(zen) and zen >= 0 and
+       Enum.all?(items, &(Map.has_key?(@items, &1["templateId"]) and &1["quantity"] > 0))) ||
+      raise "quests.json: #{id} thưởng sai"
   end
 
   # skill (P2-M3): targetType hợp lệ, AOE có tâm, ALLY có effect heal/buff
@@ -90,6 +125,10 @@ defmodule Mu.Game.Data do
 
   @doc "Cửa hàng của NPC (`nil` nếu NPC không bán gì)."
   def shop(npc_id), do: Map.get(@shops, npc_id)
+
+  @doc "Quest (P6-M2, `quests.json`), giữ thứ tự trong file."
+  def quests, do: @quest_order |> Enum.map(&Map.fetch!(@quests, &1))
+  def quest(id), do: Map.get(@quests, id)
 
   @doc "Bảng rơi đồ của quái (`nil` nếu không có)."
   def drops(monster_id), do: Map.get(@drops, monster_id)

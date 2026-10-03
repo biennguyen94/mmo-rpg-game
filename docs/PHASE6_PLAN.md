@@ -31,7 +31,7 @@ Quy tắc 3 vẫn ghi "Chỉ làm Phase 1" (B-9). Em không tự sửa. Câu đ�
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
 | **P6-M1 Ranking** ✅ | `Mu.Leaderboard` (cache RAM, đọc DB khi bảng cũ > 5 phút): cấp (tất cả / DK / DW / ELF / MG), guild (tổng cấp); top 50 + hạng của mình; panel Xếp hạng (DEC-163). E2E `ranking.mjs` viết sẵn | xong |
-| **P6-M2 Quest** | Bảng `character_quests` (migration + CHANGE_REASON), dữ liệu `quests.json`, NPC giao quest ở Lorencia + Noria, mục tiêu giết quái / thu thập / đạt cấp, nhận thưởng trong một transaction (EXP, Zen có audit, đồ có audit). Panel Nhiệm vụ + theo dõi tiến độ | ⛔ P6-2 |
+| **P6-M2 Quest** ✅ | Bảng `character_quests` (migration + CHANGE_REASON), `quests.json` 10 quest, Quest Master ở Lorencia + Noria, mục tiêu kill / collect / level, trả quest một transaction (EXP, Zen + đồ có audit `QUEST`). Panel Nhiệm vụ + hộp NPC + dòng theo dõi (DEC-164 … 167). E2E `quest.mjs` viết sẵn | xong |
 | **P6-M3 Jewel of Chaos + Chaos Machine** | Template `jewel_chaos` + nhóm rơi; NPC Chaos Goblin ở Noria; cửa sổ kết hợp (đặt đồ → server tính công thức, tỉ lệ, phí); công thức đọc từ data; kết hợp một transaction, audit | ⛔ P6-3 |
 | **P6-M4 Wings** | Bật `features.wings`; 3 cánh cấp 1; slot 7 mở; Engine thêm % tăng sát thương / % hấp thụ; công thức Chaos Machine tạo cánh; vẽ cánh trên nhân vật (hình học, không asset MU) | ⛔ P6-4 (cần P6-M3) |
 | **P6-M5 Bosses + Events** | `Mu.WorldEvents` (lịch trong config + lệnh quản trị bật tay): world boss (máu chung, chia thưởng theo sát thương), Golden Invasion (quái vàng rơi jewel); thông báo SYSTEM | ⛔ P6-5, P6-6 |
