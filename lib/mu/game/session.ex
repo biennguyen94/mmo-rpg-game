@@ -16,7 +16,7 @@ defmodule Mu.Game.Session do
   - còn lại (EXP, vị trí, HP/MP) mỗi `session.saveIntervalSeconds` nếu có đổi.
 
   Đồ (`Mu.Game.Items`): Session giữ bản đọc lại từ DB sau mỗi thao tác; act item/Zen
-  (pickup, equip, unequip, move_item, split, drop, use_item, buy, sell) idempotent theo `rid`: gửi lại cùng `rid`
+  (pickup, equip, unequip, move_item, split, drop, use_item, upgrade, buy, sell) idempotent theo `rid`: gửi lại cùng `rid`
   trả kết quả cũ, không làm lại. Trang bị đổi → chỉ số mới gửi MapServer.
 
   Tab: `session.singleLoginPerAccount` — tab mới vào thì tab cũ nhận `{:session_kicked, _}`;
@@ -30,14 +30,14 @@ defmodule Mu.Game.Session do
   require Logger
 
   alias Mu.{Chat, Guild, Party}
-  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp}
+  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp, Rng}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
   # không còn tab nào trong khoảng này thì tự tắt
   @idle_timeout :timer.minutes(1)
 
   # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
-  @item_acts ~w(pickup equip unequip move_item split drop use_item buy sell mail_claim)
+  @item_acts ~w(pickup equip unequip move_item split drop use_item upgrade buy sell mail_claim)
   # số `rid` gần nhất được nhớ kết quả
   @rid_memory 200
 
@@ -426,6 +426,34 @@ defmodule Mu.Game.Session do
     end
   end
 
+  # Ép jewel lên đồ trong túi (P5-M2, P5-3 / P5-4): RNG mới mỗi lần (server quyết định), kết quả
+  # đẩy event `upgrade` + `player`; thành công lên ≥ `upgrade.announceFromLevel` → SYSTEM cả map
+  defp run("upgrade", %{"itemId" => id, "jewelId" => jewel}, s)
+       when is_binary(id) and is_binary(jewel) do
+    case Items.upgrade(s.character.id, id, jewel, Rng.new()) do
+      {:ok, %{upgrade: u} = res} ->
+        s = s |> apply_items(res) |> notify()
+
+        push(s, "upgrade", %{
+          itemId: u.item_id,
+          templateId: u.template_id,
+          jewel: u.jewel,
+          ok: u.ok,
+          level: u.level,
+          option: u.option,
+          destroyed: u.destroyed
+        })
+
+        announce_upgrade(s, u)
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  defp run("upgrade", _p, s), do: {{:error, "INVALID_TARGET"}, s}
+
   # Sắp xếp túi (P2-M1): trong INVENTORY, mỗi item một ô (P2-8). Kho (P3-M3): nguồn hoặc đích
   # là WAREHOUSE → phải đứng cạnh Thủ kho (`npcRange`), `Items.transfer/4`, đẩy `warehouse`
   defp run("move_item", %{"itemId" => id, "to" => %{"location" => loc, "slot" => to}}, s)
@@ -692,6 +720,16 @@ defmodule Mu.Game.Session do
         {:error, "FORBIDDEN"}
     end
   end
+
+  defp announce_upgrade(s, %{ok: true, jewel: jewel, level: level} = u) do
+    if jewel != Config.get(["upgrade", "life", "jewel"]) and
+         level >= Config.get(["upgrade", "announceFromLevel"]) do
+      name = Data.item(u.template_id)["name"]
+      Chat.system_map(s.character.map_id, "#{s.character.name} ép thành công #{name} +#{level}!")
+    end
+  end
+
+  defp announce_upgrade(_s, _u), do: :ok
 
   defp party_me(%{character: c}),
     do: %{cid: c.id, name: c.name, class: c.class, level: c.level, map_id: c.map_id}

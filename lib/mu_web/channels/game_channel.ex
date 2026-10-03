@@ -211,7 +211,11 @@ defmodule MuWeb.GameChannel do
       },
       duelInviteSeconds: Config.get(["duel", "inviteSeconds"]),
       # P5-M1: chỉ số cộng mỗi cấp +N theo type item (tooltip hiện số đúng; server vẫn tính)
-      items: %{levelBonus: Config.get(["items", "levelBonus"])},
+      items: %{
+        levelBonus: Config.get(["items", "levelBonus"]),
+        # P5-M2: option Jewel of Life cộng mỗi cấp
+        optionBonus: Config.get(["upgrade", "life", "perOption"])
+      },
       # guild (P4-M3): để hiện điều kiện tạo / kiểm tên trước khi gửi (server vẫn kiểm)
       guild: %{
         enabled: Config.get(["features", "guild"]) == true,

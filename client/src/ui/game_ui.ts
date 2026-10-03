@@ -15,6 +15,7 @@ import {
   requirements,
   shortDesc,
   itemName,
+  upgradable,
   type LevelBonus,
   type DragEnd,
   type DragStart,
@@ -69,6 +70,8 @@ export interface UiState {
   warAsk: { enemy: string; from: string; until: number } | null;
   /** `items.levelBonus` (P5-M1) — tooltip hiện chỉ số đồ +N. */
   levelBonus: LevelBonus;
+  /** Chỉ số option Jewel of Life mỗi cấp (P5-M2). */
+  optionBonus: number;
 }
 
 export interface UiActions {
@@ -508,7 +511,7 @@ export class GameUI {
           "data-bag-slot": slot,
           "data-item": it?.id,
           draggable: it ? "true" : "false",
-          onclick: (ev: MouseEvent) => it && this.showTooltip(it, ev, { bag: true }),
+          onclick: (ev: MouseEvent) => it && this.bagClick(it, ev),
           ondragstart: (ev: DragEvent) => it && this.dragStart(ev, { kind: "bag", item: it }),
           ...this.dropTarget({ kind: "bag", slot }),
         },
@@ -534,6 +537,7 @@ export class GameUI {
             "div",
             { class: "list" },
             h("div", { class: "head" }, "Túi đồ"),
+            this.jewelAimBar(),
             h("div", { class: "bag", "data-test": "bag", style: `--cols:${BAG_COLUMNS}` }, cells),
             p.inventory.length ? null : h("div", { class: "emptytext" }, "Túi trống"),
             h(
@@ -545,6 +549,33 @@ export class GameUI {
           this.bagBottom(true),
         ),
       ),
+    );
+  }
+
+  // ---------- Ép jewel (P5-M2): [Ép lên…] → bấm đồ trong túi ----------
+
+  /** Jewel đang chờ chọn đồ để ép (`null` = bấm ô túi là xem tooltip như thường). */
+  private jewelAim: ItemView | null = null;
+
+  private bagClick(it: ItemView, ev: MouseEvent): void {
+    const j = this.jewelAim;
+    if (!j || it.id === j.id) return this.showTooltip(it, ev, { bag: true });
+    this.jewelAim = null;
+    if (upgradable(this.state.templates.get(it.templateId), this.state.levelBonus))
+      this.a.itemCommand({ act: "upgrade", payload: { itemId: it.id, jewelId: j.id } });
+    this.renderPanel(true);
+  }
+
+  private jewelAimBar(): HTMLElement | null {
+    const j = this.jewelAim;
+    // jewel đã dùng hết / không còn trong túi
+    if (!j || !this.state.player.inventory.some((i) => i.id === j.id)) return (this.jewelAim = null);
+    const name = this.state.templates.get(j.templateId)?.name ?? j.templateId;
+    return h(
+      "div",
+      { class: "jewelaim", "data-test": "jewel-aim-bar" },
+      h("span", {}, `Chọn đồ để ép ${name} (vũ khí, khiên, giáp)`),
+      h("button", { onclick: () => ((this.jewelAim = null), this.renderPanel(true)) }, "Hủy"),
     );
   }
 
@@ -571,7 +602,7 @@ export class GameUI {
         const from = this.dragging;
         this.dragging = null;
         if (!from) return;
-        const c = dragCommand(from, to, this.state.player, this.state.templates);
+        const c = dragCommand(from, to, this.state.player, this.state.templates, this.state.levelBonus);
         if (!c) return;
         if (c.confirm) this.confirmDrop(from.item, ev.clientX, ev.clientY);
         else this.a.itemCommand(c);
@@ -1064,6 +1095,10 @@ export class GameUI {
           { class: "btns" },
           t.slot ? h("button", { onclick: () => (this.hideTooltip(), this.a.equip(item)) }, "Trang bị") : null,
           t.potionType ? h("button", { onclick: () => (this.hideTooltip(), this.a.useItem(item)) }, "Dùng") : null,
+          // P5-M2: chọn đồ để ép (thay cho kéo thả trên mobile)
+          t.type === "JEWEL"
+            ? h("button", { "data-test": "jewel-aim", onclick: () => (this.hideTooltip(), (this.jewelAim = item), this.renderPanel(true)) }, "Ép lên…")
+            : null,
           t.stackable && item.quantity > 1
             ? h(
                 "span",
@@ -1080,7 +1115,10 @@ export class GameUI {
       { class: "tooltip", "data-test": "tooltip" },
       this.icon(item, "big"),
       h("b", { "data-test": "tt-name" }, item.quantity > 1 ? `${itemName(t, item.level)} ×${item.quantity}` : itemName(t, item.level)),
-      h("div", {}, shortDesc(t, item.level, this.state.levelBonus)),
+      h("div", {}, shortDesc(t, item.level, this.state.levelBonus, item.optionLevel ?? 0, this.state.optionBonus)),
+      (item.optionLevel ?? 0) > 0
+        ? h("div", { class: "opt", "data-test": "tt-option" }, `Option Life +${(item.optionLevel ?? 0) * this.state.optionBonus} ${t.type === "WEAPON" ? "đòn" : "thủ"}`)
+        : null,
       reqs.map((r) => h("div", { class: r.ok ? "" : "bad" }, r.value ? `${r.label} ≥ ${r.value}` : r.label)),
       opts.unequip !== undefined ? h("button", { onclick: () => (this.hideTooltip(), this.a.unequip(opts.unequip!)) }, "Tháo") : null,
       bagBtns,
@@ -1483,7 +1521,8 @@ export class GameUI {
     if (!this.state || (ev.target as HTMLElement)?.tagName === "INPUT") return;
     const k = ev.key;
     if (k === "Escape") {
-      if (this.state.aiming) this.a.cancelAim();
+      if (this.jewelAim) (this.jewelAim = null), this.renderPanel(true);
+      else if (this.state.aiming) this.a.cancelAim();
       else if (this.ctx) this.closeContext();
       else if (this.menu) this.closeMenu();
       else if (this.tip) this.hideTooltip();

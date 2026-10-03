@@ -70,12 +70,19 @@ export function equipmentInBag(inventory: ItemView[], templates: Templates): Ite
 /** `items.levelBonus` (P5-3, config join): chỉ số cộng mỗi cấp cường hóa theo `type` item. */
 export type LevelBonus = Record<string, { attack?: number; defense?: number }>;
 
-/** Template ở cấp +N để **hiển thị** (server tính thật, `Engine.leveled/2`). */
-export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}): ItemTemplate {
+/** Ép được không (P5-M2): type có trong `levelBonus` (vũ khí, khiên, giáp). */
+export const upgradable = (t: ItemTemplate | undefined, bonus: LevelBonus): boolean => !!t && !!bonus[t.type];
+
+/**
+ * Template ở cấp +N và option Jewel of Life `option` (mỗi cấp + `perOption` vào đòn với vũ khí,
+ * thủ với giáp / khiên) để **hiển thị** (server tính thật, `Engine.leveled/3`).
+ */
+export function leveled(t: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0): ItemTemplate {
   const b = bonus[t.type];
-  if (!b || level <= 0) return t;
-  const atk = (b.attack ?? 0) * level;
-  const def = (b.defense ?? 0) * level;
+  if (!b || (level <= 0 && option <= 0)) return t;
+  const opt = option * perOption;
+  const atk = (b.attack ?? 0) * level + (b.attack ? opt : 0);
+  const def = (b.defense ?? 0) * level + (b.attack ? 0 : opt);
   return {
     ...t,
     ...(atk ? { attackMin: (t.attackMin ?? 0) + atk, attackMax: (t.attackMax ?? 0) + atk } : {}),
@@ -90,8 +97,8 @@ export function itemName(t: ItemTemplate | undefined, level = 0, fallback = "?")
 }
 
 /** Mô tả ngắn dòng 2 của §19.4 (chỉ số đã cộng theo +N nếu có `bonus`). */
-export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {}): string {
-  const t = leveled(base, level, bonus);
+export function shortDesc(base: ItemTemplate, level = 0, bonus: LevelBonus = {}, option = 0, perOption = 0): string {
+  const t = leveled(base, level, bonus, option, perOption);
   const parts: string[] = [];
   if (t.attackMax) parts.push(`Tấn công +${t.attackMin ?? 0}~${t.attackMax}`);
   if (t.defense) parts.push(`Phòng thủ +${t.defense}`);
@@ -154,7 +161,7 @@ export function autoSlot(target: ItemView[], size: number, item: ItemView, templ
 
 /** Lệnh `cmd` (KB_TECHNICAL §5) cần gửi; `confirm` = phải hỏi người chơi trước (vứt đồ). */
 export interface ItemCommand {
-  act: "move_item" | "equip" | "unequip" | "drop";
+  act: "move_item" | "equip" | "unequip" | "drop" | "upgrade";
   payload: Record<string, unknown>;
   confirm?: boolean;
 }
@@ -176,6 +183,7 @@ export function dragCommand(
   to: DragEnd,
   p: Pick<Player, "inventory">,
   templates: Templates,
+  bonus: LevelBonus = {},
 ): ItemCommand | null {
   // kho (P3-M3): kho ↔ túi, sắp xếp trong kho — đều là move_item
   if (to.kind === "wh") {
@@ -190,6 +198,10 @@ export function dragCommand(
     const it = from.item;
     if (to.kind === "bag") {
       if (to.slot === it.slot) return null;
+      // jewel thả lên đồ ép được trong túi → ép (P5-M2)
+      const target = p.inventory.find((i) => i.slot === to.slot);
+      if (target && templates.get(it.templateId)?.type === "JEWEL" && upgradable(templates.get(target.templateId), bonus))
+        return { act: "upgrade", payload: { itemId: target.id, jewelId: it.id } };
       return { act: "move_item", payload: { itemId: it.id, to: { location: "INVENTORY", slot: to.slot } } };
     }
     if (to.kind === "equip") {

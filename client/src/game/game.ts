@@ -25,6 +25,7 @@ import {
   type DuelPayload,
   type GuildPayload,
   type GuildWarPayload,
+  type UpgradePayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -180,6 +181,7 @@ export class GameClient {
       party: this.state?.party ?? null,
       pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       levelBonus: r.config.items?.levelBonus ?? {},
+      optionBonus: r.config.items?.optionBonus ?? 0,
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -307,6 +309,9 @@ export class GameClient {
       case "guild_war":
         this.onWar(p as GuildWarPayload);
         break;
+      case "upgrade":
+        this.onUpgrade(p as UpgradePayload);
+        break;
       case "guild_invite":
         this.state.guildInvite = { from: p.from, guild: p.guild, until: Date.now() + (this.join?.config.guild?.inviteSeconds ?? 30) * 1000 };
         Sound.play("click");
@@ -322,6 +327,18 @@ export class GameClient {
         break;
     }
     this.render();
+  }
+
+  /** Kết quả ép jewel (P5-M2): thông báo + âm thanh. */
+  private onUpgrade(u: UpgradePayload): void {
+    if (!this.state) return;
+    const name = this.state.templates.get(u.templateId)?.name ?? u.templateId;
+    const life = u.jewel === "jewel_life";
+    const what = life ? `${name} option +${u.option * this.state.optionBonus}` : `${name} +${u.level}`;
+    if (u.destroyed) this.notices.add("ERROR", `Ép thất bại: ${name} bị hỏng.`);
+    else if (u.ok) this.notices.add("SYSTEM", `Ép thành công: ${what}.`);
+    else this.notices.add("ERROR", `Ép thất bại: ${what}.`);
+    Sound.play(u.ok ? "levelup" : "miss");
   }
 
   /** Guild war (P4-M4): lời tuyên chiến / bắt đầu / điểm / kết thúc. */

@@ -257,3 +257,6 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .warask { top: 200px; border-color: #c77dff; }
 /* Cấp cường hóa +N (P5-M1) */
 .cell .lvl, .slot .lvl { position: absolute; left: 2px; top: 0; font-size: 10px; font-weight: 700; color: #ffd36b; text-shadow: 0 0 2px #000; pointer-events: none; }
+/* Ép jewel (P5-M2) */
+.jewelaim { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: #2a2440; border: 1px solid #ffd36b; border-radius: 6px; padding: 4px 8px; margin: 4px 0; font-size: 13px; }
+.tooltip .opt { color: #7fd3ff; }

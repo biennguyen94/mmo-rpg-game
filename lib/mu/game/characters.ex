@@ -226,6 +226,8 @@ defmodule Mu.Game.Characters do
       quantity: it.quantity,
       slot: it.slot,
       level: it.item_level,
+      # P5-M2: cấp option Jewel of Life
+      optionLevel: Map.get(it, :option_level, 0),
       durability: it.durability,
       luck: it.luck,
       skill: it.skill,
