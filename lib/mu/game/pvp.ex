@@ -14,7 +14,8 @@ defmodule Mu.Game.Pvp do
     đứng trong safe zone.
   - **Quan hệ** (MapServer tính): `:duel` (đang duel với nhau — không tự vệ, không PK, P4-M2),
     `:party` (cùng nhóm — không đánh được, P4M1-2), `:blocked` (một bên đang duel với người khác
-    — "vùng riêng" của duel, P4-4), `:none`.
+    — "vùng riêng" của duel, P4-4), `:guild_war` (hai guild đang war — không tự vệ, không PK,
+    không rơi đồ, P4-6), `:none`.
   - Tự vệ: A đánh B (B `NORMAL`, A không phải đang đánh trả B) → B được đánh trả A trong
     `pk.selfDefenseSeconds`, A thành kẻ gây sự cùng thời gian; mỗi đòn của A làm mới.
   - PK: giết người `NORMAL` mà không phải đang tự vệ → +1 điểm. Giết `WARNING` / `MURDERER` không
@@ -64,7 +65,7 @@ defmodule Mu.Game.Pvp do
   Trả `{attacker, victim}`.
   """
   def on_hit(attacker, victim, now, relation \\ :none)
-  def on_hit(attacker, victim, _now, :duel), do: {attacker, victim}
+  def on_hit(attacker, victim, _now, rel) when rel in [:duel, :guild_war], do: {attacker, victim}
 
   def on_hit(attacker, victim, now, _relation) do
     if state(victim.pk_points) == "NORMAL" and not retaliating?(attacker, victim, now) do
@@ -79,7 +80,7 @@ defmodule Mu.Game.Pvp do
 
   @doc "Điểm PK `killer` nhận khi hạ `victim` lúc `now`: 1 hoặc 0."
   def pk_gain(killer, victim, now, relation \\ :none)
-  def pk_gain(_killer, _victim, _now, :duel), do: 0
+  def pk_gain(_killer, _victim, _now, rel) when rel in [:duel, :guild_war], do: 0
 
   def pk_gain(killer, victim, now, _relation) do
     if state(victim.pk_points) == "NORMAL" and not retaliating?(killer, victim, now),
@@ -87,8 +88,13 @@ defmodule Mu.Game.Pvp do
       else: 0
   end
 
-  @doc "Tỉ lệ rơi 1 món trong túi khi bị người chơi giết, theo trạng thái PK của nạn nhân."
-  def drop_chance(points), do: Config.get(["pk", "dropChance", state(points)]) || 0
+  @doc """
+  Tỉ lệ rơi 1 món trong túi khi bị người chơi giết, theo trạng thái PK của nạn nhân; guild war
+  không rơi đồ (P4-6).
+  """
+  def drop_chance(points, relation \\ :none)
+  def drop_chance(_points, :guild_war), do: 0
+  def drop_chance(points, _), do: Config.get(["pk", "dropChance", state(points)]) || 0
 
   @doc "Sát thương người → người: × `pvp.damageMultiplier`, làm tròn xuống, đòn trúng tối thiểu 1."
   def damage(dmg) when dmg <= 0, do: 0

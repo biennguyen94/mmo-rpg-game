@@ -27,7 +27,8 @@
     "pvp": "P4-2 (duyệt 2026-10-03, IMPLEMENTATION): đánh người khi cả hai cấp ≥ minLevel, không ai đứng trong safe zone; AOE chỉ trúng quái (và người đang duel / chiến guild — P4-M2/M4); sát thương pipeline §4 × damageMultiplier. Kẻ giết không nhận EXP / Zen (P4-8). P4M1-2 (duyệt): không đánh được người cùng nhóm.",
     "pk": "P4-3 (duyệt 2026-10-03, IMPLEMENTATION; KB_GAME_DESIGN §13 chỉ có NORMAL → WARNING → MURDERER): giết người NORMAL (không phải tự vệ) +1 pk_points; ≥ warningAt = WARNING, ≥ murdererAt = MURDERER; giảm 1 điểm mỗi decayMinutes giờ thực từ last_pk_at. Bị người NORMAL đánh trước được đánh trả selfDefenseSeconds (mỗi đòn làm mới), giết khi tự vệ / giết WARNING-MURDERER không tính PK. MURDERER không dùng NPC; chết vì người chơi rơi 1 món trong túi theo dropChance.",
     "duel": "P4-4 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai bên đồng ý, vùng riêng, không PK'): 'vùng riêng' = khoanh riêng hai người (chỉ hai người đánh được nhau, người ngoài không xen vào), duel ở mọi chỗ ngoài safe zone. Mời trong requestRange ô, hết hạn inviteSeconds; một bên về 0 HP thì giữ 1 HP và thua; hết maxSeconds thì hòa; cách nhau quá maxDistance ô (người xa điểm bắt đầu hơn thua) / rời map / mất kết nối thì thua. Không PK, không rơi đồ, không thưởng.",
-    "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật."
+    "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật.",
+    "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM."
   },
   "game": {
     "name": "MU Web",
@@ -221,7 +222,11 @@
             "guild_kick",
             "guild_promote",
             "guild_demote",
-            "guild_disband"
+            "guild_disband",
+            "guild_war_declare",
+            "guild_war_accept",
+            "guild_war_decline",
+            "guild_war_surrender"
           ],
           "limit": 5,
           "windowMs": 1000
@@ -358,5 +363,10 @@
     "maxAssistants": 2,
     "inviteSeconds": 30,
     "namePattern": "^[A-Za-z0-9]{3,8}$"
+  },
+  "guildWar": {
+    "inviteSeconds": 60,
+    "scoreToWin": 20,
+    "durationMinutes": 30
   }
 }

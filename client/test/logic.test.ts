@@ -340,3 +340,15 @@ test("guild (P4-M3): /g = GUILD, dòng [Guild]; quyền từng vai trò", async 
   const pat = "^[A-Za-z0-9]{3,8}$";
   assert.ok(validGuildName("Rong01", pat) && !validGuildName("ab", pat) && !validGuildName("Rồng", pat));
 });
+
+test("guild war (P4-M4): tên địch tím, không hỏi PK khi đánh địch, dòng kết quả", async () => {
+  const { nameColor, needsConfirm, warResultText } = await import("../src/logic/pvp.js");
+  assert.equal(nameColor("MURDERER", false, false, true), "#c77dff");
+  assert.equal(nameColor("MURDERER", false, false), "#ff4d4d");
+  assert.equal(needsConfirm({ pkState: "NORMAL", guild: "Rong" }, "Rong"), false);
+  assert.equal(needsConfirm({ pkState: "NORMAL", guild: "Ho" }, "Rong"), true);
+  assert.equal(needsConfirm({ pkState: "NORMAL" }), true);
+  assert.equal(warResultText({ result: "win", reason: "score", enemy: "Rong", score: 20, enemyScore: 3 }), "Guild thắng chiến tranh với Rong: 20 – 3.");
+  assert.equal(warResultText({ result: "lose", reason: "surrender", enemy: "Rong", score: 1, enemyScore: 2 }), "Guild thua chiến tranh với Rong: 1 – 2 (đầu hàng).");
+  assert.equal(warResultText({ result: "draw", reason: "time", enemy: "Rong", score: 2, enemyScore: 2 }), "Chiến tranh với Rong kết thúc hòa: 2 – 2.");
+});

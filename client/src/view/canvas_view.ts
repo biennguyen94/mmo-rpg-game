@@ -219,6 +219,7 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
   return {
     setClock: (fn) => (clock = fn),
     setSelf: (id) => (selfId = id),
+    setEnemyGuild: (name) => (enemyGuild = name),
     combat: (c: CombatPayload) => {
       const t = world.entities.get(c.target);
       if (!t) return;
@@ -313,6 +314,9 @@ function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number
   label(g, e, x, y, dead);
 }
 
+/** Guild địch đang war (P4-M4): tên vẽ màu tím. Một view sống một lúc nên giữ ở mức module. */
+let enemyGuild: string | null = null;
+
 function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dead: boolean): void {
   g.font = "11px system-ui";
   g.textAlign = "center";
@@ -323,7 +327,7 @@ function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dea
   const name = e.name;
   g.fillText(name, x + 1, ny + 1);
   // P4-M1: màu tên theo PK; kẻ gây sự nhấp nháy (2 lần / giây)
-  g.fillStyle = e.kind === "player" ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0) : "#fff";
+  g.fillStyle = e.kind === "player" ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0, enemyGuild !== null && e.guild === enemyGuild) : "#fff";
   g.fillText(name, x, ny);
   if (guild) {
     g.fillStyle = "#000";

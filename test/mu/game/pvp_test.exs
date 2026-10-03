@@ -82,4 +82,17 @@ defmodule Mu.Game.PvpTest do
     # dữ liệu cũ thiếu mốc: bắt đầu đếm từ bây giờ
     assert Pvp.decay(2, nil, at.(5)) == {2, at.(5)}
   end
+
+  test "guild war (P4-6): đánh được (vẫn cần cấp, ngoài safe zone), không tự vệ, không PK, không rơi đồ" do
+    out = fn _, _ -> false end
+    assert :ok = Pvp.check_attack(pl("a"), pl("b"), out, :guild_war)
+
+    assert {:error, "REQUIREMENT_NOT_MET"} =
+             Pvp.check_attack(pl("a"), pl("b", %{level: 5}), out, :guild_war)
+
+    assert {pl("a"), pl("b")} == Pvp.on_hit(pl("a"), pl("b"), 1_000, :guild_war)
+    assert Pvp.pk_gain(pl("a"), pl("b"), 1_000, :guild_war) == 0
+    assert Pvp.drop_chance(5, :guild_war) == 0
+    assert Pvp.drop_chance(5) == 0.5
+  end
 end

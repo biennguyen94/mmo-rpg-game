@@ -251,3 +251,7 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .guildlist .dot.on { background: #5ccf7a; }
 .chatbox .line.guild b { color: #7fc4ff; }
 .menuhead .gtag { color: #7fc4ff; font-weight: 400; }
+/* Guild war (P4-M4) */
+.warbar { top: 40px; background: #2a1d3a; border-color: #c77dff; }
+.warbar .btns { display: inline-flex; gap: 4px; }
+.warask { top: 200px; border-color: #c77dff; }

@@ -653,6 +653,18 @@ defmodule Mu.Game.Session do
 
   defp run("guild_disband", _p, s), do: {Guild.disband(s.character.id), s}
 
+  # Guild war (P4-M4, P4-6): trạng thái trong `Mu.Guild` (RAM)
+  defp run("guild_war_declare", %{"guild" => g}, s) when is_binary(g),
+    do: {Guild.war(s.character.id, :declare, g), s}
+
+  defp run("guild_war_accept", %{"guild" => g}, s) when is_binary(g),
+    do: {Guild.war(s.character.id, :accept, g), s}
+
+  defp run("guild_war_decline", %{"guild" => g}, s) when is_binary(g),
+    do: {Guild.war(s.character.id, :decline, g), s}
+
+  defp run("guild_war_surrender", _p, s), do: {Guild.war_surrender(s.character.id), s}
+
   defp run("guild_" <> _, _p, s), do: {{:error, "INVALID_TARGET"}, s}
 
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}

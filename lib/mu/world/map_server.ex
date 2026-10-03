@@ -967,30 +967,41 @@ defmodule Mu.World.MapServer do
   end
 
   # Quan hệ giữa hai người cho `Mu.Game.Pvp` (P4-M2): đang duel với nhau / cùng nhóm / một bên
-  # đang duel với người khác ("vùng riêng") / không gì
+  # đang duel với người khác ("vùng riêng") / hai guild đang war (P4-M4, đọc ETS `Mu.Guild`) /
+  # không gì
   defp relation(s, a, b) do
     cond do
       Duel.opponent(s.duels, a.character_id) == b.character_id -> :duel
       Mu.Party.same?(a.character_id, b.character_id) -> :party
       Duel.in_duel?(s.duels, a.character_id) or Duel.in_duel?(s.duels, b.character_id) -> :blocked
+      Mu.Guild.at_war?(Map.get(a, :guild), Map.get(b, :guild)) -> :guild_war
       true -> :none
     end
   end
 
-  # AOE trúng thêm đối thủ duel nếu đứng trong vùng (P4-2 (3))
+  # AOE trúng thêm người chơi trong vùng mà mình đánh được: đối thủ duel (P4-2 (3)), người guild
+  # địch khi đang war (P4-6 (2)); vẫn qua `Pvp.check_attack/4` (safe zone, cấp)
   defp aoe_opponent(s, cid, aim, skill, rid) do
     e = s.players[cid]
+    {cx, cy} = if skill["center"] in ["target", "point"], do: aim_pos(aim), else: {e.x, e.y}
+    safe? = &Maps.safe?(s.map, &1, &2)
 
-    with opp when opp != nil <- Duel.opponent(s.duels, cid),
-         %{state: state} = o when state != "dead" <- s.players[opp] do
-      {cx, cy} = if skill["center"] in ["target", "point"], do: aim_pos(aim), else: {e.x, e.y}
+    targets =
+      for {vid, v} <- s.players,
+          vid != cid,
+          v.state != "dead",
+          Pathfinding.chebyshev({cx, cy}, {v.x, v.y}) <= skill["radius"],
+          rel = relation(s, e, v),
+          rel in [:duel, :guild_war],
+          Pvp.check_attack(e, v, safe?, rel) == :ok,
+          do: vid
 
-      if Pathfinding.chebyshev({cx, cy}, {o.x, o.y}) <= skill["radius"],
-        do: strike_player(s, cid, opp, skill, rid),
+    Enum.reduce(targets, s, fn vid, s ->
+      # người ra đòn có thể vừa chết / đối tượng đã chết giữa chừng
+      if s.players[cid].state != "dead" and s.players[vid].state != "dead",
+        do: strike_player(s, cid, vid, skill, rid),
         else: s
-    else
-      _ -> s
-    end
+    end)
   end
 
   # ---------- Duel (P4-M2, P4-4) ----------
@@ -1158,13 +1169,16 @@ defmodule Mu.World.MapServer do
 
   # Chết vì người chơi: như chết vì quái (mất buff, hồi sinh ở thị trấn); kẻ giết không nhận EXP /
   # Zen (P4-8). PK: Session kẻ giết nhận `{:map_pk, id, điểm}`; rơi đồ: Session nạn nhân nhận
-  # `{:map_pk_drop, id, killer_id}` theo `Pvp.drop_chance/1` (RNG của map)
+  # `{:map_pk_drop, id, killer_id}` theo `Pvp.drop_chance/2` (RNG của map; guild war không rơi)
   defp player_killed(s, kid, vid) do
     k = s.players[kid]
     v = s.players[vid]
     t = now(s)
-    gain = Pvp.pk_gain(k, v, t)
-    {roll, rng} = Rng.chance(s.rng, Pvp.drop_chance(v.pk_points))
+    rel = relation(s, k, v)
+    gain = Pvp.pk_gain(k, v, t, rel)
+    {roll, rng} = Rng.chance(s.rng, Pvp.drop_chance(v.pk_points, rel))
+    # guild war (P4-6): +1 điểm cho guild kẻ giết
+    if rel == :guild_war, do: Mu.Guild.war_kill(kid, vid)
     had_buffs? = map_size(v.buffs) > 0
     v = %{v | state: "dead", path: [], progress: 0, dead_at: t, buffs: %{}, rights: %{}}
     send(v.owner, {:map_died, vid})

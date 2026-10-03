@@ -7,8 +7,9 @@ export type PkState = "NORMAL" | "WARNING" | "MURDERER";
 /** Tên trạng thái PK hiển thị. */
 export const PK_LABEL: Record<PkState, string> = { NORMAL: "Bình thường", WARNING: "Cảnh báo", MURDERER: "Sát nhân" };
 
-/** Màu tên: WARNING cam, MURDERER đỏ; kẻ gây sự nhấp nháy cam (`blink` đổi theo thời gian). */
-export function nameColor(pk: PkState | undefined, aggressor: boolean | undefined, blink: boolean): string {
+/** Màu tên: người guild địch (đang war) tím; WARNING cam, MURDERER đỏ; kẻ gây sự nhấp nháy cam (`blink` đổi theo thời gian). */
+export function nameColor(pk: PkState | undefined, aggressor: boolean | undefined, blink: boolean, enemy = false): string {
+  if (enemy) return "#c77dff";
   if (pk === "MURDERER") return "#ff4d4d";
   if (pk === "WARNING") return "#ffa53a";
   if (aggressor && blink) return "#ffa53a";
@@ -75,7 +76,17 @@ export function canShowAttack(
   );
 }
 
-/** Hỏi xác nhận trước khi đánh: người NORMAL không phải kẻ gây sự (giết sẽ bị tính PK). */
-export function needsConfirm(target: { pkState?: PkState; aggressor?: boolean }): boolean {
+/** Hỏi xác nhận trước khi đánh: người NORMAL không phải kẻ gây sự (giết sẽ bị tính PK); người guild địch (war) không tính PK. */
+export function needsConfirm(target: { pkState?: PkState; aggressor?: boolean; guild?: string | null }, enemyGuild: string | null = null): boolean {
+  if (enemyGuild !== null && target.guild === enemyGuild) return false;
   return (target.pkState ?? "NORMAL") === "NORMAL" && !target.aggressor;
+}
+
+/** Dòng thông báo khi guild war kết thúc (P4-M4). */
+export function warResultText(p: { result?: string; reason?: string; enemy: string; score?: number; enemyScore?: number }): string {
+  const sc = `${p.score ?? 0} – ${p.enemyScore ?? 0}`;
+  const why = p.reason === "surrender" ? " (đầu hàng)" : p.reason === "disband" ? " (giải tán)" : p.reason === "time" ? " (hết giờ)" : "";
+  if (p.result === "win") return `Guild thắng chiến tranh với ${p.enemy}: ${sc}${why}.`;
+  if (p.result === "lose") return `Guild thua chiến tranh với ${p.enemy}: ${sc}${why}.`;
+  return `Chiến tranh với ${p.enemy} kết thúc hòa: ${sc}.`;
 }

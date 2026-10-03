@@ -17,7 +17,7 @@ export interface ConnectionHandlers {
   onStatus(status: "online" | "reconnecting" | "kicked" | "unauthorized" | "version"): void;
 }
 
-const EVENTS = ["snapshot", "spawn", "despawn", "combat", "player", "shop", "error", "map_change", "chat", "mail", "warehouse", "party", "party_invite", "duel", "guild", "guild_invite"];
+const EVENTS = ["snapshot", "spawn", "despawn", "combat", "player", "shop", "error", "map_change", "chat", "mail", "warehouse", "party", "party_invite", "duel", "guild", "guild_invite", "guild_war"];
 
 export class Connection {
   private socket: Socket | null = null;

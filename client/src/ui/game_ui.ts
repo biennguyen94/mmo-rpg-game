@@ -62,6 +62,9 @@ export interface UiState {
   guild: GuildPayload | null;
   guildCfg: GuildConfig | null;
   guildInvite: { from: string; guild: string; until: number } | null;
+  /** Guild war (P4-M4): war đang diễn ra (hạn = giờ client, ms); lời tuyên chiến chờ mình nhận. */
+  war: { enemy: string; score: number; enemyScore: number; scoreToWin: number; until: number } | null;
+  warAsk: { enemy: string; from: string; until: number } | null;
 }
 
 export interface UiActions {
@@ -119,6 +122,10 @@ export interface UiActions {
   guildPromote(name: string): void;
   guildDemote(name: string): void;
   guildDisband(): void;
+  /** Guild war (P4-M4, chỉ master). */
+  warDeclare(guild: string): void;
+  warAnswer(guild: string, accept: boolean): void;
+  warSurrender(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -347,7 +354,7 @@ export class GameUI {
               : s.panel === "map"
                 ? [s.map.id, s.player.x, s.player.y]
                 : s.panel === "guild"
-                  ? [s.guild, this.guildDisbandArmed]
+                  ? [s.guild, this.guildDisbandArmed, s.war && [s.war.enemy, s.war.score, s.war.enemyScore]]
                   : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
@@ -915,6 +922,31 @@ export class GameUI {
     );
   }
 
+  /** Guild war trong panel: đang war → điểm; master chưa war → ô tuyên chiến. */
+  private warDraft = "";
+
+  private warSection(role: string | null): HTMLElement | null {
+    const w = this.state.war;
+    if (w) {
+      return h(
+        "div",
+        { class: "kv", "data-test": "guild-war-info" },
+        h("span", {}, `⚔ Chiến tranh với ${w.enemy}`),
+        h("span", {}, `${w.score} – ${w.enemyScore} (đến ${w.scoreToWin})`),
+      );
+    }
+    if (role !== "master") return null;
+    const name = h("input", { "data-test": "guild-war-name", maxlength: 8, placeholder: "Tên guild địch", value: this.warDraft }) as HTMLInputElement;
+    name.addEventListener("input", () => (this.warDraft = name.value));
+    const declare = () => {
+      const v = name.value.trim();
+      if (!v) return;
+      this.warDraft = "";
+      this.a.warDeclare(v);
+    };
+    return h("div", { class: "guildform" }, name, h("button", { "data-test": "guild-war-declare", onclick: declare }, "⚔ Tuyên chiến"));
+  }
+
   private flashHint(el: HTMLElement, text: string): void {
     el.textContent = text;
     el.classList.add("bad");
@@ -964,6 +996,7 @@ export class GameUI {
       canGuildInvite(role)
         ? h("div", { class: "guildform" }, invite, h("button", { "data-test": "guild-invite", onclick: sendInvite }, "Mời"))
         : null,
+      this.warSection(role),
       h("hr", { class: "sep" }),
       role === "master"
         ? this.guildDisbandArmed
@@ -1126,7 +1159,7 @@ export class GameUI {
     const singles = canAttack ? mine.filter((sk) => sk.targetType === "SINGLE" && sk.id !== "basic_attack") : [];
     const attack = (skill: string | null) => () => {
       // đối thủ duel: không PK, không hỏi
-      if (!this.pvpConfirmed && targetId !== duel?.opponentId && needsConfirm(target!)) return this.confirmPk(targetId, skill, screenX, screenY);
+      if (!this.pvpConfirmed && targetId !== duel?.opponentId && needsConfirm(target!, this.state.war?.enemy ?? null)) return this.confirmPk(targetId, skill, screenX, screenY);
       this.closeContext();
       this.a.attack(targetId, skill);
     };
@@ -1233,6 +1266,7 @@ export class GameUI {
     this.renderParty();
     this.renderDuel();
     this.renderGuildAsk();
+    this.renderWar();
     if (this.state.netStatus) this.view.append(h("div", { class: "netbar" }, this.state.netStatus));
     if (this.state.aiming) {
       const name = this.state.skills.get(this.state.aiming)?.name ?? this.state.aiming;
@@ -1314,6 +1348,62 @@ export class GameUI {
       ),
     );
     this.view.append(this.guildAskEl);
+  }
+
+  // ---------- Guild war (P4-M4): thanh war (điểm, giờ, [Đầu hàng] cho master) + hộp tuyên chiến ----------
+
+  private warEl: HTMLElement | null = null;
+  private warKey: string | null = null;
+  private surrenderArmed = false;
+
+  private renderWar(): void {
+    const s = this.state;
+    const w = s.war;
+    const ask = s.warAsk;
+    const left = w ? Math.max(0, Math.ceil((w.until - Date.now()) / 1000)) : 0;
+    const askLeft = ask ? Math.max(0, Math.ceil((ask.until - Date.now()) / 1000)) : 0;
+    const master = myRole(s.guild, s.player.name) === "master";
+    const key = JSON.stringify([w, left, ask, askLeft, master, this.surrenderArmed]);
+    if (key === this.warKey && (this.warEl?.isConnected || (!w && !ask))) return;
+    this.warKey = key;
+    this.warEl?.remove();
+    this.warEl = null;
+    if (!w) this.surrenderArmed = false;
+    const mmss = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`;
+    const bar = w
+      ? h(
+          "div",
+          { class: "duelbar warbar", "data-test": "war-bar" },
+          h("span", {}, `⚔ ${s.guild?.name ?? ""} ${w.score} – ${w.enemyScore} ${w.enemy} · đến ${w.scoreToWin} · ${mmss(left)}`),
+          master
+            ? this.surrenderArmed
+              ? h(
+                  "span",
+                  { class: "btns" },
+                  h("button", { "data-test": "war-surrender-confirm", onclick: () => ((this.surrenderArmed = false), this.a.warSurrender()) }, "Đầu hàng?"),
+                  h("button", { onclick: () => ((this.surrenderArmed = false), this.renderWar()) }, "Thôi"),
+                )
+              : h("button", { "data-test": "war-surrender", onclick: () => ((this.surrenderArmed = true), this.renderWar()) }, "Đầu hàng")
+            : null,
+        )
+      : null;
+    const box =
+      ask && askLeft > 0
+        ? h(
+            "div",
+            { class: "partyask warask", "data-test": "war-ask" },
+            h("div", {}, `Guild ${ask.enemy} (${ask.from}) tuyên chiến với guild bạn (${askLeft}s)`),
+            h(
+              "div",
+              { class: "btns" },
+              h("button", { "data-test": "war-accept", onclick: () => this.a.warAnswer(ask.enemy, true) }, "Nhận"),
+              h("button", { "data-test": "war-decline", onclick: () => this.a.warAnswer(ask.enemy, false) }, "Từ chối"),
+            ),
+          )
+        : null;
+    if (!bar && !box) return;
+    this.warEl = h("div", { class: "partyhost" }, bar, box);
+    this.view.append(this.warEl);
   }
 
   private partyEl: HTMLElement | null = null;

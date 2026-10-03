@@ -20,6 +20,7 @@ defmodule MuWeb.GameChannel do
     `"combat"` `{rid, attacker, target, dmg, crit, hp}` cho mọi đòn trên map (trượt: dmg 0).
   - Guild (P4-M3): Session đẩy `guild` (`{id, name, master, members}`; không có guild thì
     `id` null, `members` rỗng) và `guild_invite` `{from, guild}`; `spawn` người chơi có `guild`.
+    Guild war (P4-M4): `guild_war` (`Mu.Guild`).
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
     `"error"` `FORBIDDEN` rồi đóng (`session.singleLoginPerAccount`).
   - Kênh kết thúc vì client `leave` (đăng xuất) hay vì socket đóng (mất kết nối) quyết định
