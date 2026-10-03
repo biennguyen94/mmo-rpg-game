@@ -34,16 +34,67 @@ defmodule Mu.Game.CharactersTest do
     assert stored.name == "Knight01"
   end
 
-  test "class bỏ trống = DK; DW/ELF tạo được (P2-M2); MG và class lạ bị từ chối" do
+  test "class bỏ trống = DK; DW/ELF tạo được (P2-M2); class lạ bị từ chối; MG khóa tới khi có nhân vật cấp 20 (P3-M5)" do
     assert Config.get(["newCharacter", "defaultClass"]) == "DK"
-    assert Enum.sort(Map.keys(Data.classes())) == ["DK", "DW", "ELF"]
+    assert Enum.sort(Map.keys(Data.classes())) == ["DK", "DW", "ELF", "MG"]
 
-    assert {:ok, %{class: "DK"}} = Characters.create(create_account(), %{"name" => "Abcd1"})
+    account = create_account()
+    assert {:ok, %{class: "DK"} = dk} = Characters.create(account, %{"name" => "Abcd1"})
 
-    for cls <- ["MG", "dk", "XX"] do
+    for cls <- ["dk", "XX"] do
       assert {:error, :invalid_class} =
                Characters.create(create_account(), %{"name" => "Zzzz1", "class" => cls})
     end
+
+    assert {:error, :class_locked} =
+             Characters.create(account, %{"name" => "Glad01", "class" => "MG"})
+
+    assert %{id: "MG", locked: true, unlockLevel: 20} =
+             Enum.find(Characters.creatable_classes(account.id), &(&1.id == "MG"))
+
+    # cấp 19 chưa đủ, cấp 20 thì mở
+    Repo.update!(Ecto.Changeset.change(dk, level: 19))
+
+    assert {:error, :class_locked} =
+             Characters.create(account, %{"name" => "Glad01", "class" => "MG"})
+
+    Repo.update!(Ecto.Changeset.change(Repo.get!(Character, dk.id), level: 20))
+
+    assert %{locked: false} =
+             Enum.find(Characters.creatable_classes(account.id), &(&1.id == "MG"))
+
+    assert {:ok, %{class: "MG"}} =
+             Characters.create(account, %{"name" => "Glad01", "class" => "MG"})
+  end
+
+  test "P3-M5: MG cấp 1 — 26 mỗi stat, KB_CONFIG §2 (MG), mặc sẵn sword_t0, 7 điểm / cấp, chỉ số phép §4.1" do
+    account = create_account()
+    {:ok, dk} = Characters.create(account, %{"name" => "Lvl20dk"})
+    Repo.update!(Ecto.Changeset.change(dk, level: 20))
+    {:ok, mg} = Characters.create(account, %{"name" => "Glad02", "class" => "MG"})
+
+    assert {mg.strength, mg.agility, mg.vitality, mg.energy, mg.level} == {26, 26, 26, 26, 1}
+    # HP 110 + 26×3, MP 60 + 26×2
+    assert {mg.hp_current, mg.mana_current} == {188, 112}
+
+    assert [%{template_id: "sword_t0", location: "EQUIPMENT", slot: 5}] =
+             Mu.Game.Items.load(mg.id)
+
+    v = Characters.player_view(mg, Mu.Game.Items.load(mg.id)).view
+    sword = Data.item("sword_t0")
+
+    # vật lý STR/6..STR/4 + kiếm; phép ENE/4 + kiếm; tốc độ AGI/15 và AGI/20 + kiếm
+    assert v.attackMin == div(26, 6) + sword["attackMin"]
+    assert v.attackMax == div(26, 4) + sword["attackMax"]
+    assert v.attackMaxMagic == div(26, 4) + sword["attackMax"]
+    assert v.attackSpeed == div(26, 15) + sword["speed"]
+    assert v.attackSpeedMagic == div(26, 20) + sword["speed"]
+    assert v.defense == div(26, 5)
+
+    # 7 điểm mỗi cấp
+    assert Mu.Game.Stats.earned_points("MG", 3) - Mu.Game.Stats.earned_points("MG", 1) == 14
+    # class khác không có chỉ số phép
+    assert Characters.player_view(dk).view.attackMaxMagic == nil
   end
 
   test "P2-M2: DW / ELF cấp 1 đúng chỉ số KB_CONFIG §2 + §4.1, mặc sẵn đồ khởi đầu (P2-3)" do
@@ -91,16 +142,17 @@ defmodule Mu.Game.CharactersTest do
              Characters.create(create_account(), %{"name" => "hERO01"})
   end
 
-  test "mỗi tài khoản 1 nhân vật (account.maxCharacters, Q13)" do
-    assert Config.get(["account", "maxCharacters"]) == 1
+  test "mỗi tài khoản tối đa 4 nhân vật (account.maxCharacters, Q13 / P3-3)" do
+    assert Config.get(["account", "maxCharacters"]) == 4
     account = create_account()
-    assert {:ok, _} = Characters.create(account, %{"name" => "First1"})
-    assert {:error, :character_limit} = Characters.create(account, %{"name" => "Second1"})
-    assert length(Characters.list(account.id)) == 1
+    for i <- 1..4, do: assert({:ok, _} = Characters.create(account, %{"name" => "Many#{i}x"}))
+    assert {:error, :character_limit} = Characters.create(account, %{"name" => "Fifth1"})
+    assert length(Characters.list(account.id)) == 4
   end
 
-  test "hai request tạo song song cho cùng tài khoản: chỉ một thành công" do
+  test "hai request tạo song song cho cùng tài khoản (còn 1 chỗ): chỉ một thành công" do
     account = create_account()
+    for i <- 1..3, do: {:ok, _} = Characters.create(account, %{"name" => "Pre#{i}xx"})
 
     results =
       1..5

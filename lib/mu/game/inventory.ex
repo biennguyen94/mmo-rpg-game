@@ -226,6 +226,10 @@ defmodule Mu.Game.Inventory do
       slot not in equip_slots(template) ->
         {:error, "INVALID_SLOT"}
 
+      # MG không đội mũ (KB_CONFIG §6, `forbiddenSlots` trong classes.json, P3-M5)
+      template["slot"] in (Data.class(c.class)["forbiddenSlots"] || []) ->
+        {:error, "INVALID_SLOT"}
+
       c.class not in (template["classes"] || []) ->
         {:error, "REQUIREMENT_NOT_MET"}
 

@@ -115,8 +115,8 @@ defmodule Mu.Game.Session do
       character ->
         s = cancel_leave(s)
 
-        # nhân vật khác với nhân vật đang trên map (Phase 1 không xảy ra: 1 nhân vật/tài khoản)
-        s = if s.character && s.character.id != character.id, do: leave_map(s), else: s
+        # đổi sang nhân vật khác của tài khoản (P3-M5, 4 nhân vật): nhân vật cũ rời map + nhóm
+        s = if s.character && s.character.id != character.id, do: go_offline(s), else: s
 
         s =
           if s.saved && s.saved.id == character.id,

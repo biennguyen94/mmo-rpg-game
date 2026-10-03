@@ -30,7 +30,7 @@ Quy tắc 3 vẫn ghi "Chỉ làm Phase 1". Đề xuất (anh duyệt hoặc t�
 | **P3-M2 Reconnect giữa phiên** ✅ | Mất kết nối (socket đóng): nhân vật đứng yên trên map `reconnectGraceSeconds` (30 s), vẫn bị đánh; vào lại trong hạn thì giữ nguyên vị trí, HP/MP, buff (tự đánh dừng, báo "Đã kết nối lại."); quá hạn thì rời map + lưu. Đăng xuất (rời kênh) giữ luật G21 (DEC-88 … DEC-91). E2E `reconnect.mjs` 11/11 | xong |
 | **P3-M3 Warehouse** ✅ | Kho 120 ô dùng chung cho mọi nhân vật của tài khoản; NPC Warehouse Keeper (Lorencia, Noria); panel kho 15×8 + túi 8×8; gửi / rút bằng `move_item` (1 transaction, khóa nhân vật + tài khoản, audit) + event `warehouse` (DEC-92 … DEC-95). E2E `warehouse.mjs` 12/12 | xong |
 | **P3-M4 Party** ✅ | Mời / nhận / từ chối / rời / đuổi / giải tán (tối đa 5, lời mời 30 s); chia EXP trong 20 ô + bonus 10 % / người; loot protect cả nhóm; khung thành viên (HP, cấp, map, mất kết nối); chat `/p`; nhóm trong RAM (`Mu.Party`, DEC-96 … DEC-102). E2E `party.mjs` 13/13 | xong |
-| **P3-M5 Nhiều nhân vật + MG** | `account.maxCharacters` 4, màn chọn / tạo nhân vật; MG mở theo điều kiện; MG chỉ số 26 / 7 stat, không đội mũ, chỉ số phép | ⛔ P3-2, P3-3, P3-4 |
+| **P3-M5 Nhiều nhân vật + MG** ✅ | 4 nhân vật / tài khoản, màn chọn + [Đổi nhân vật]; MG mở khi có nhân vật cấp 20; MG 26 mỗi stat, 7 điểm / cấp, không đội mũ, skill DK + DW, skill phép dùng số phép, mặc sẵn `sword_t0` (DEC-103 … DEC-109). E2E `mg.mjs` 12/12; simulator MG ~70 phút tới cấp 30 | xong |
 | **P3-M6 Nghiệm thu Phase 3** | Danh sách nghiệm thu P3 (em soạn), e2e, soak nhiều người (đo AOI), báo cáo | danh sách P3-9 |
 
 Thứ tự gợi ý: **P3-M1 → P3-M2** (kỹ thuật, không chờ dữ liệu) trong khi anh trả lời P3-2 … P3-6.

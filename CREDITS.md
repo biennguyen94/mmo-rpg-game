@@ -18,6 +18,7 @@ commit `a6ea1655db5c044829d9eea19a232fa6fcac87b0`).
 - P2-M4: 12 quái mới, 3 NPC, tile Noria và ô cổng (Lorencia + Noria) — cùng commit, cùng cách đối
   chiếu (license + hash từng file); danh sách đầy đủ trong `mapping.json`.
 - P3-M3: NPC Thủ kho (Lorencia + Noria) dùng `mon/halfling.png` — cùng commit, cùng cách đối chiếu.
+- P3-M5: Magic Gladiator dùng `mon/hell_knight.png` (một hình cố định như các class khác) — cùng commit, cùng cách đối chiếu.
 
 ## Do dự án tự làm
 

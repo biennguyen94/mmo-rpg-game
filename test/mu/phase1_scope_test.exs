@@ -9,7 +9,7 @@ defmodule Mu.Phase1ScopeTest do
   alias Mu.World.Maps
 
   @scope %{
-    classes: ["DK", "DW", "ELF"],
+    classes: ["DK", "DW", "ELF", "MG"],
     maps: ["lorencia", "noria"],
     monsters:
       ~w(spider budge_dragon bull_fighter hound lich elite_bull_fighter goblin chain_scorpion beetle_monster hunter forest_monster agon stone_golem),
@@ -49,11 +49,11 @@ defmodule Mu.Phase1ScopeTest do
     assert Config.get(["game", "maxLevel"]) == @scope.maxLevel
   end
 
-  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
+  test "chỉ mail + mapPanel (P2-M6) + party (P3-M4) + magicGladiator (P3-M5) bật; mọi feature khác tắt (LATER_VERSION / phase sau)" do
     on = for {flag, true} <- Config.get(["features"]), do: flag
-    assert Enum.sort(on) == ["mail", "mapPanel", "party"]
+    assert Enum.sort(on) == ["magicGladiator", "mail", "mapPanel", "party"]
 
-    for f <- ~w(pvp guild quest wings chaosMachine magicGladiator) do
+    for f <- ~w(pvp guild quest wings chaosMachine) do
       assert Config.get(["features", f]) == false
     end
   end

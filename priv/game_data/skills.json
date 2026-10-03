@@ -1,10 +1,10 @@
 {
-  "source": "KB_GAME_DESIGN §7; basic_attack theo OPEN_QUESTIONS G2 (cooldownMs null = công thức §6 theo attackSpeed). range: Chebyshev (G4). Phase 2 (P2-M3): skill theo class — docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03). targetType: SINGLE (một quái), AOE (center self = quanh người dùng G7 | target = quanh quái mục tiêu, tối đa maxTargets | point = quanh ô chọn), ALLY (người chơi: heal/buff), POINT (ô trống: teleport). effect: heal = base + energy/energyDiv HP; buff = cộng stat (defense | damageBonus) base + energy/energyDiv trong durationMs.",
+  "source": "KB_GAME_DESIGN §7; basic_attack theo OPEN_QUESTIONS G2 (cooldownMs null = công thức §6 theo attackSpeed). range: Chebyshev (G4). Phase 2 (P2-M3): skill theo class — docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03). targetType: SINGLE (một quái), AOE (center self = quanh người dùng G7 | target = quanh quái mục tiêu, tối đa maxTargets | point = quanh ô chọn), ALLY (người chơi: heal/buff), POINT (ô trống: teleport). effect: heal = base + energy/energyDiv HP; buff = cộng stat (defense | damageBonus) base + energy/energyDiv trong durationMs. Phase 3 (P3-M5, P3-4): `classes` = class học được (null = mọi class); MG học Falling Slash / Twisting Slash / Death Stab (DK) + Energy Ball / Fire Ball / Lightning (DW); `magic: true` = skill phép (MG dùng attackPowerMagic / attackSpeedMagic, KB_GAME_DESIGN §4.1).",
   "skills": [
     {
       "id": "basic_attack",
       "name": "Tấn công thường",
-      "class": null,
+      "classes": null,
       "manaCost": 0,
       "cooldownMs": null,
       "range": 1,
@@ -21,7 +21,10 @@
     {
       "id": "falling_slash",
       "name": "Falling Slash",
-      "class": "DK",
+      "classes": [
+        "DK",
+        "MG"
+      ],
       "category": "DAMAGE",
       "manaCost": 6,
       "cooldownMs": 900,
@@ -38,7 +41,10 @@
     {
       "id": "twisting_slash",
       "name": "Twisting Slash",
-      "class": "DK",
+      "classes": [
+        "DK",
+        "MG"
+      ],
       "manaCost": 10,
       "cooldownMs": 800,
       "range": 2,
@@ -56,7 +62,10 @@
     {
       "id": "death_stab",
       "name": "Death Stab",
-      "class": "DK",
+      "classes": [
+        "DK",
+        "MG"
+      ],
       "category": "DAMAGE",
       "manaCost": 12,
       "cooldownMs": 1200,
@@ -73,7 +82,10 @@
     {
       "id": "energy_ball",
       "name": "Energy Ball",
-      "class": "DW",
+      "classes": [
+        "DW",
+        "MG"
+      ],
       "category": "DAMAGE",
       "manaCost": 1,
       "cooldownMs": null,
@@ -85,12 +97,16 @@
       "sourceType": "IMPLEMENTATION",
       "version": null,
       "verified": false,
-      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)"
+      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)",
+      "magic": true
     },
     {
       "id": "fire_ball",
       "name": "Fire Ball",
-      "class": "DW",
+      "classes": [
+        "DW",
+        "MG"
+      ],
       "category": "DAMAGE",
       "manaCost": 3,
       "cooldownMs": 1000,
@@ -102,12 +118,16 @@
       "sourceType": "IMPLEMENTATION",
       "version": null,
       "verified": false,
-      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)"
+      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)",
+      "magic": true
     },
     {
       "id": "lightning",
       "name": "Lightning",
-      "class": "DW",
+      "classes": [
+        "DW",
+        "MG"
+      ],
       "category": "DAMAGE",
       "manaCost": 6,
       "cooldownMs": 1200,
@@ -119,12 +139,15 @@
       "sourceType": "IMPLEMENTATION",
       "version": null,
       "verified": false,
-      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)"
+      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)",
+      "magic": true
     },
     {
       "id": "teleport",
       "name": "Teleport",
-      "class": "DW",
+      "classes": [
+        "DW"
+      ],
       "category": "MOVEMENT",
       "manaCost": 20,
       "cooldownMs": 3000,
@@ -141,7 +164,9 @@
     {
       "id": "flame",
       "name": "Flame",
-      "class": "DW",
+      "classes": [
+        "DW"
+      ],
       "category": "AOE",
       "manaCost": 15,
       "cooldownMs": 1500,
@@ -154,12 +179,15 @@
       "sourceType": "IMPLEMENTATION",
       "version": null,
       "verified": false,
-      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)"
+      "source": "docs/PHASE2_PROPOSAL_M2_M3.md §5 (P2-4, duyệt 2026-10-03)",
+      "magic": true
     },
     {
       "id": "heal",
       "name": "Heal",
-      "class": "ELF",
+      "classes": [
+        "ELF"
+      ],
       "category": "HEAL",
       "manaCost": 8,
       "cooldownMs": 1500,
@@ -181,7 +209,9 @@
     {
       "id": "triple_shot",
       "name": "Triple Shot",
-      "class": "ELF",
+      "classes": [
+        "ELF"
+      ],
       "category": "AOE",
       "manaCost": 6,
       "cooldownMs": 1000,
@@ -200,7 +230,9 @@
     {
       "id": "greater_defense",
       "name": "Greater Defense",
-      "class": "ELF",
+      "classes": [
+        "ELF"
+      ],
       "category": "BUFF",
       "manaCost": 15,
       "cooldownMs": 1500,
@@ -224,7 +256,9 @@
     {
       "id": "greater_damage",
       "name": "Greater Damage",
-      "class": "ELF",
+      "classes": [
+        "ELF"
+      ],
       "category": "BUFF",
       "manaCost": 20,
       "cooldownMs": 1500,

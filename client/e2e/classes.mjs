@@ -56,13 +56,14 @@ async function create(cls, name) {
   return { page, ctx, name };
 }
 
-// --- màn tạo nhân vật: 3 class, sprite tải được, DK chọn sẵn ---
+// --- màn tạo nhân vật: 4 class (MG khóa), sprite tải được, DK chọn sẵn ---
 const elf = await create("ELF", `Ef${stamp}`);
 const opts = await elf.page.$$eval('[data-test="class-picker"] label', (ls) =>
-  ls.map((l) => ({ id: l.querySelector("input").value, checked: l.querySelector("input").checked, img: l.querySelector("img") })),
+  ls.map((l) => ({ id: l.querySelector("input").value, checked: l.querySelector("input").checked, disabled: l.querySelector("input").disabled, img: l.querySelector("img") })),
 );
 await elf.page.waitForFunction(() => [...document.querySelectorAll('[data-test="class-picker"] img')].every((i) => i.complete && i.naturalWidth > 0));
-check("màn tạo nhân vật: DK / DW / ELF, DK chọn sẵn, có hình", opts.map((o) => o.id).join() === "DK,DW,ELF" && opts[0].checked);
+// P3-M5: thêm MG, khóa tới khi tài khoản có nhân vật cấp 20 (chi tiết ở mg.mjs)
+check("màn tạo nhân vật: DK / DW / ELF / MG (khóa), DK chọn sẵn, có hình", opts.map((o) => o.id).join() === "DK,DW,ELF,MG" && opts[0].checked && opts[3].disabled);
 await elf.page.screenshot({ path: `${shots}/p2-create-class.png` });
 
 // --- tạo ELF ---

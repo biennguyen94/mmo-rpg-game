@@ -7,13 +7,15 @@ defmodule MuWeb.CharacterControllerTest do
   end
 
   test "tạo DK rồi liệt kê", %{conn: conn} do
-    # danh sách class tạo được (P2-M2), mục đầu là mặc định
+    # danh sách class tạo được (P2-M2), mục đầu là mặc định; MG khóa tới cấp 20 (P3-M5)
     assert json_response(get(conn, "/characters"), 200) == %{
              "characters" => [],
+             "maxCharacters" => 4,
              "classes" => [
-               %{"id" => "DK", "name" => "Dark Knight"},
-               %{"id" => "DW", "name" => "Dark Wizard"},
-               %{"id" => "ELF", "name" => "Fairy Elf"}
+               %{"id" => "DK", "name" => "Dark Knight", "locked" => false},
+               %{"id" => "DW", "name" => "Dark Wizard", "locked" => false},
+               %{"id" => "ELF", "name" => "Fairy Elf", "locked" => false},
+               %{"id" => "MG", "name" => "Magic Gladiator", "locked" => true, "unlockLevel" => 20}
              ]
            }
 
@@ -30,7 +32,12 @@ defmodule MuWeb.CharacterControllerTest do
              json_response(post(conn, "/characters", %{name: "x!"}), 422)
 
     assert %{"error" => "INVALID_CLASS"} =
-             json_response(post(conn, "/characters", %{name: "Gladiat1", class: "MG"}), 422)
+             json_response(post(conn, "/characters", %{name: "Gladiat1", class: "XX"}), 422)
+
+    assert %{"error" => "CLASS_LOCKED", "message" => msg} =
+             json_response(post(conn, "/characters", %{name: "Gladiat1", class: "MG"}), 409)
+
+    assert msg =~ "cấp 20"
 
     other = build_conn() |> authed(create_account())
     assert json_response(post(other, "/characters", %{name: "Taken1"}), 201)
@@ -38,10 +45,11 @@ defmodule MuWeb.CharacterControllerTest do
     assert %{"error" => "NAME_TAKEN"} =
              json_response(post(conn, "/characters", %{name: "TAKEN1"}), 409)
 
-    assert json_response(post(conn, "/characters", %{name: "Mine1"}), 201)
+    # tối đa 4 nhân vật (P3-3)
+    for i <- 1..4, do: assert(json_response(post(conn, "/characters", %{name: "Mine#{i}"}), 201))
 
     assert %{"error" => "CHARACTER_LIMIT"} =
-             json_response(post(conn, "/characters", %{name: "Mine2"}), 409)
+             json_response(post(conn, "/characters", %{name: "Mine5"}), 409)
   end
 
   test "client không đặt được chỉ số (server-authoritative)", %{conn: conn} do

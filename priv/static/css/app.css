@@ -164,7 +164,7 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
   .inv .list { overflow: visible; }
 }
 /* Tạo nhân vật: chọn class (Phase 2) */
-.classpick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.classpick { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 8px; }
 .classopt { position: relative; display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 13px; text-align: center; }
 .classopt:has(input:checked) { border-color: var(--accent); background: #22253a; }
 .classopt input { position: absolute; opacity: 0; pointer-events: none; }
@@ -223,3 +223,10 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 @media (max-width: 1023px) {
   .warehouse { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
 }
+/* Chọn nhân vật (P3-M5): tối đa 4 dòng; class khóa (MG) mờ */
+.charlist .charrow { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.charlist .charrow img { width: 40px; height: 40px; image-rendering: pixelated; }
+.charlist .charrow .info { flex: 1; min-width: 0; }
+.charlist .charrow button { width: auto; padding: 6px 12px; }
+.classopt.locked { opacity: 0.5; cursor: not-allowed; }
+.classopt .lockhint { font-size: 11px; color: #f0c36a; }

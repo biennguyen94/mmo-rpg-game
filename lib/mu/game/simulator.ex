@@ -145,10 +145,10 @@ defmodule Mu.Game.Simulator do
         )
 
       p_next <= m_next ->
-        {mult, cd, cost} = attack_choice(st, d, opts)
+        {mult, cd, cost, ds} = attack_choice(st, d, opts)
         mp = min(d.mp_max, st.mp - cost + Engine.mp_regen(st.c.energy, cd))
         st = %{st | t: p_next, mp: mp}
-        {res, rng} = Engine.roll_attack(st.rng, d, m, mult)
+        {res, rng} = Engine.roll_attack(st.rng, ds, m, mult)
         st = %{st | rng: rng, swings: st.swings + 1, hits: st.hits + if(res.hit, do: 1, else: 0)}
 
         duel(
@@ -225,21 +225,26 @@ defmodule Mu.Game.Simulator do
 
   defp pick_monster(_level, id), do: Data.monster(id)
 
-  # {hệ số, cooldown ms, mana}: đánh thường, hoặc skill đánh một mục tiêu mạnh nhất đã học đủ mana
+  # {hệ số, cooldown ms, mana, chỉ số}: đánh thường, hoặc skill đánh một mục tiêu mạnh nhất (hệ
+  # số × đòn tối đa — MG: skill phép dùng chỉ số phép, P3-M5) đã học, đủ mana
   defp attack_choice(st, d, %{use_skills: true}) do
     Engine.skills(st.c)
     |> Enum.map(&Data.skill/1)
     |> Enum.filter(
-      &(&1["class"] != nil and &1["targetType"] == "SINGLE" and st.mp >= &1["manaCost"])
+      &(&1["classes"] != nil and &1["targetType"] == "SINGLE" and st.mp >= &1["manaCost"])
     )
-    |> Enum.max_by(& &1["damageMultiplier"], fn -> nil end)
+    |> Enum.max_by(&(&1["damageMultiplier"] * Engine.for_skill(d, &1).attack_max), fn -> nil end)
     |> case do
-      nil -> {1.0, d.cooldown_ms, 0}
-      sk -> {sk["damageMultiplier"], Engine.skill_cooldown_ms(sk, d), sk["manaCost"]}
+      nil ->
+        {1.0, d.cooldown_ms, 0, d}
+
+      sk ->
+        ds = Engine.for_skill(d, sk)
+        {sk["damageMultiplier"], Engine.skill_cooldown_ms(sk, ds), sk["manaCost"], ds}
     end
   end
 
-  defp attack_choice(_st, d, _opts), do: {1.0, d.cooldown_ms, 0}
+  defp attack_choice(_st, d, _opts), do: {1.0, d.cooldown_ms, 0, d}
 
   defp progress_gear(c) do
     if c.level >= 10, do: gear(c.class, "t1"), else: gear(c.class, "full")
