@@ -7,7 +7,7 @@
   "sourceType": "IMPLEMENTATION",
   "version": null,
   "verified": false,
-  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU. P2-M4: thêm vùng quái, cổng Noria (15,8)–(16,8), Weapon Merchant (11,37) — docs/PHASE2_PROPOSAL_M4.md §2.",
+  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU. P2-M4: thêm vùng quái, cổng Noria (15,8)–(16,8), Weapon Merchant (11,37) — docs/PHASE2_PROPOSAL_M4.md §2. B-1 (a) (duyệt 2026-10-03): Bull Fighter y ≤ 15, Lich + Elite Bull Fighter y ≥ 51 — cách vùng Spider (y 24–44) ≥ 7 ô.",
   "legend": {
     ".": "grass",
     ":": "road",
@@ -64,9 +64,9 @@
       "count": 8,
       "area": {
         "x": 40,
-        "y": 11,
+        "y": 10,
         "w": 22,
-        "h": 9
+        "h": 6
       }
     },
     {
@@ -84,9 +84,9 @@
       "count": 5,
       "area": {
         "x": 34,
-        "y": 46,
+        "y": 51,
         "w": 28,
-        "h": 16
+        "h": 11
       }
     },
     {
@@ -94,9 +94,9 @@
       "count": 4,
       "area": {
         "x": 34,
-        "y": 46,
+        "y": 51,
         "w": 28,
-        "h": 16
+        "h": 11
       }
     }
   ],
