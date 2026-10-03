@@ -1,7 +1,7 @@
 // Bộ điều khiển game phía client: nhận event server → cập nhật World/player → vẽ lại UI;
 // thao tác người chơi → `cmd`. Không tính luật: tầm/cooldown phía client chỉ để biết khi nào gửi,
 // server vẫn quyết định (KB_TECHNICAL §5–§6).
-import { duelResultText } from "../logic/pvp.js";
+import { duelResultText, warResultText } from "../logic/pvp.js";
 import { Sound } from "../audio/sound.js";
 import { api, saveToken, type CharacterSummary } from "../net/api.js";
 import { Connection } from "../net/connection.js";
@@ -24,6 +24,7 @@ import {
   type PartyPayload,
   type DuelPayload,
   type GuildPayload,
+  type GuildWarPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -122,6 +123,13 @@ export class GameClient {
       guildPromote: (name) => void this.send("guild_promote", { name }),
       guildDemote: (name) => void this.send("guild_demote", { name }),
       guildDisband: () => void this.send("guild_disband"),
+      warDeclare: (guild) => void this.send("guild_war_declare", { guild }).then((ok) => ok && this.notices.add("SYSTEM", `Đã tuyên chiến với guild ${guild}.`)),
+      warAnswer: (guild, accept) => {
+        if (this.state) this.state.warAsk = null;
+        this.render();
+        void this.send(accept ? "guild_war_accept" : "guild_war_decline", { guild });
+      },
+      warSurrender: () => void this.send("guild_war_surrender"),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -176,6 +184,9 @@ export class GameClient {
       guild: this.state?.guild ?? null,
       guildCfg: r.config.guild ?? null,
       guildInvite: null,
+      // war sống trên server (RAM): vào lại thì event `guild_war start` tới sau
+      war: null,
+      warAsk: null,
       duel: null,
       duelAsk: null,
     };
@@ -194,6 +205,7 @@ export class GameClient {
     const delay = this.join.config.interpolationDelayMs;
     this.view.setClock(() => this.clock.now(Date.now()) - delay);
     this.view.setSelf(this.selfId);
+    this.view.setEnemyGuild(this.state?.war?.enemy ?? null);
     // hook chỉ-đọc cho test e2e/debug: chỉ chứa dữ liệu server đã gửi cho client này
     (window as unknown as { __mu: object }).__mu = {
       entities: () => [...this.world.entities.values()].map(({ interp: _i, ...e }) => e),
@@ -287,8 +299,13 @@ export class GameClient {
       case "guild": {
         const g = p as GuildPayload;
         this.state.guild = g.id ? g : null;
+        // rời / bị đuổi / giải tán: hết war
+        if (!g.id) this.setWar(null);
         break;
       }
+      case "guild_war":
+        this.onWar(p as GuildWarPayload);
+        break;
       case "guild_invite":
         this.state.guildInvite = { from: p.from, guild: p.guild, until: Date.now() + (this.join?.config.guild?.inviteSeconds ?? 30) * 1000 };
         Sound.play("click");
@@ -304,6 +321,31 @@ export class GameClient {
         break;
     }
     this.render();
+  }
+
+  /** Guild war (P4-M4): lời tuyên chiến / bắt đầu / điểm / kết thúc. */
+  private onWar(w: GuildWarPayload): void {
+    if (!this.state) return;
+    const until = Date.now() + w.secondsLeft * 1000;
+    if (w.state === "request") {
+      this.state.warAsk = { enemy: w.enemy, from: w.from ?? "?", until };
+      Sound.play("click");
+    } else if (w.state === "end") {
+      this.setWar(null);
+      this.notices.add(w.result === "lose" ? "ERROR" : "SYSTEM", warResultText(w));
+    } else {
+      if (w.state === "start") this.state.warAsk = null;
+      this.setWar({ enemy: w.enemy, score: w.score ?? 0, enemyScore: w.enemyScore ?? 0, scoreToWin: w.scoreToWin ?? 0, until });
+    }
+  }
+
+  private setWar(war: NonNullable<UiState["war"]> | null): void {
+    if (!this.state) return;
+    // hết war: dừng tự đánh người guild địch (khỏi thành PK)
+    const old = this.state.war?.enemy;
+    if (!war && old && this.auto.target && this.world.entities.get(this.auto.target)?.guild === old) this.auto.stop();
+    this.state.war = war;
+    this.view?.setEnemyGuild(war?.enemy ?? null);
   }
 
   /** Duel (P4-M2): lời mời / bắt đầu / kết thúc. Kết thúc thì dừng tự đánh đối thủ (khỏi thành PK). */

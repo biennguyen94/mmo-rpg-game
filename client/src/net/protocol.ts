@@ -269,6 +269,21 @@ export interface GuildConfig {
   namePattern: string;
 }
 
+/** Event `guild_war` (P4-M4): lời tuyên chiến (chỉ master) / bắt đầu / đổi điểm / kết thúc. */
+export interface GuildWarPayload {
+  state: "request" | "start" | "score" | "end";
+  enemy: string;
+  /** `request`: master guild tuyên chiến. */
+  from?: string;
+  score?: number;
+  enemyScore?: number;
+  scoreToWin?: number;
+  /** Giây còn lại (lời mời / war). */
+  secondsLeft: number;
+  result?: "win" | "lose" | "draw";
+  reason?: "score" | "time" | "surrender" | "disband";
+}
+
 /** Event `duel` (P4-M2): lời mời / bắt đầu / kết thúc. */
 export interface DuelPayload {
   state: "request" | "start" | "end";

@@ -32,8 +32,8 @@ sửa; em không sửa):
 | **P4-M1 PvP nền + PK + Self-defense** ✅ | `Mu.Game.Pvp` (bảng quyết định thuần); đánh người (cấp ≥ 6, ngoài safe zone, × 0,5, AOE chỉ quái); tự vệ 30 s + kẻ gây sự; PK +1 khi giết NORMAL, WARNING / MURDERER, giảm 1 điểm / 60 phút; MURDERER bị NPC từ chối; rơi đồ khi bị giết (MURDERER 50 %, WARNING 10 %); màu tên; xác nhận khi đánh người NORMAL (DEC-112 … DEC-118). E2E `pvp.mjs` 14/14 | xong |
 | **P4-M2 Duel** ✅ | Mời / nhận / từ chối / hủy / đầu hàng; "vùng riêng" (chỉ hai người đánh nhau); về 0 HP → 1 HP thua, hết 3 phút hòa, đi xa > 20 ô / rời map / mất kết nối thua; không PK, không rơi đồ; AOE trúng đối thủ; cấm đánh người cùng nhóm (DEC-119 … DEC-124). E2E `duel.mjs` 14/14 | xong |
 | **P4-M3 Guild** ✅ | Bảng `guilds`, `guild_members` (migration + CHANGE_REASON). Tạo (cấp 20 + 10 000 Zen, một transaction), mời (menu người chơi / theo tên) / nhận / từ chối / rời / đuổi / phong / hạ / giải tán (xác nhận), master / assistant (≤ 2) / member, tối đa 20. Chat GUILD (`/g`). Panel Guild. `<Tên guild>` dưới tên nhân vật (DEC-125 … DEC-131). E2E `guild.mjs` 24/24 | xong |
-| **P4-M4 Guild war** | Khai chiến / chấp nhận; thành viên hai guild đánh nhau ngoài safe zone không tính PK, không rơi đồ; tính điểm; kết thúc theo giờ / điểm; thông báo SYSTEM | ⛔ P4-6 (cần P4-M3) |
-| **P4-M5 Nghiệm thu Phase 4** | Danh sách nghiệm thu (P4-9, em soạn), E2E, soak có PvP, báo cáo | P4-9 |
+| **P4-M4 Guild war** ✅ | Master tuyên chiến / nhận / từ chối (60 s) / đầu hàng; thành viên hai guild đánh nhau ngoài safe zone, AOE trúng địch, không PK, không rơi đồ; +1 điểm / kill, 20 điểm hoặc 30 phút (điểm cao thắng, bằng hòa), giải tán = đầu hàng; tên địch tím; thanh war; SYSTEM hai guild (DEC-132 … DEC-137). ExUnit thuần + kênh; E2E `guildwar.mjs` viết sẵn, **chạy ở P4-M5** | xong |
+| **P4-M5 Nghiệm thu Phase 4** | Danh sách nghiệm thu (P4-9, em soạn), **chạy toàn bộ E2E (kể cả `guildwar.mjs` lần đầu)**, soak có PvP, báo cáo | P4-9 |
 
 Thứ tự: P4-M1 → P4-M2 → P4-M3 → P4-M4 → P4-M5. Duel và guild war dựng trên tấn công người – người
 của P4-M1.
