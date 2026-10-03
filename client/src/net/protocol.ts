@@ -116,6 +116,13 @@ export interface CombatPayload {
   buff?: number;
 }
 
+/** Event `warehouse` (P3-M3): kho tài khoản khi mở Thủ kho và sau mỗi lần gửi / rút. */
+export interface WarehousePayload {
+  npcId: string;
+  slots: number;
+  items: ItemView[];
+}
+
 export interface ShopPayload {
   npcId: string;
   name: string;

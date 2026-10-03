@@ -19,12 +19,18 @@ defmodule Mu.Game.Items do
   alias Mu.Game.{Character, Data, Inventory, Item, ItemAudit, ItemLocation}
 
   @doc "Đồ của nhân vật (túi + trang bị) dạng map phẳng."
-  def load(character_id) do
+  def load(character_id), do: load_where(dynamic([loc: l], l.character_id == ^character_id))
+
+  @doc "Đồ trong kho của tài khoản (location `WAREHOUSE`, P3-M3), cùng dạng với `load/1`."
+  def load_warehouse(account_id), do: load_where(dynamic([loc: l], l.account_id == ^account_id))
+
+  defp load_where(cond) do
     Repo.all(
       from i in Item,
         join: l in ItemLocation,
+        as: :loc,
         on: l.item_id == i.id,
-        where: l.character_id == ^character_id,
+        where: ^cond,
         order_by: [l.location, l.slot],
         select: %{
           id: i.id,
@@ -275,6 +281,117 @@ defmodule Mu.Game.Items do
       end
     end)
   end
+
+  # ---------- Kho tài khoản (P3-M3) ----------
+
+  @doc """
+  `move_item` có kho ở nguồn hoặc đích: chuyển món `item_id` (túi của `cid` hoặc kho của
+  `account_id`) tới `{location, slot}` (`Inventory.plan_transfer/4`). Một transaction: khóa
+  row nhân vật và row tài khoản (`FOR UPDATE`), đọc lại túi + kho từ DB. Audit `WAREHOUSE_IN`
+  (túi → kho), `WAREHOUSE_OUT` (kho → túi), `MOVE` (cùng chỗ), `MERGE` khi gộp stack.
+  Kết quả có thêm `warehouse` (đồ trong kho sau commit).
+  """
+  def transfer(cid, account_id, item_id, to) do
+    result =
+      tx(cid, fn _c, items ->
+        Repo.one!(from(a in Mu.Accounts.Account, where: a.id == ^account_id, lock: "FOR UPDATE"))
+        warehouse = load_warehouse(account_id)
+
+        with {:ok, plan} <- Inventory.plan_transfer(items, warehouse, item_id, to) do
+          apply_transfer(plan, items ++ warehouse, cid, account_id)
+          {:ok, 0}
+        end
+      end)
+
+    with {:ok, res} <- result, do: {:ok, Map.put(res, :warehouse, load_warehouse(account_id))}
+  end
+
+  defp apply_transfer(:noop, _all, _cid, _aid), do: :ok
+
+  defp apply_transfer({:move, id, {loc, slot} = to}, all, cid, aid) do
+    it = find(all, id)
+    place(id, to, cid, aid)
+
+    audit(
+      id,
+      transfer_action(it.location, loc),
+      owner(it.location, cid, aid),
+      owner(loc, cid, aid),
+      %{
+        from: it.slot,
+        to: slot
+      }
+    )
+  end
+
+  defp apply_transfer(
+         {:swap, id, {loc, slot} = to, other, {from_loc, from_slot} = from},
+         all,
+         cid,
+         aid
+       ) do
+    it = find(all, id)
+
+    # chỉ mục duy nhất (chủ, location, slot) không hoãn được: gỡ một bên trước
+    Repo.delete_all(from(l in ItemLocation, where: l.item_id == ^other))
+    place(id, to, cid, aid)
+    Repo.insert!(location_row(other, from, cid, aid))
+
+    audit(id, transfer_action(from_loc, loc), owner(from_loc, cid, aid), owner(loc, cid, aid), %{
+      from: it.slot,
+      to: slot
+    })
+
+    audit(
+      other,
+      transfer_action(loc, from_loc),
+      owner(loc, cid, aid),
+      owner(from_loc, cid, aid),
+      %{
+        from: slot,
+        to: from_slot
+      }
+    )
+  end
+
+  defp apply_transfer({:merge, id, other, n}, all, cid, aid) do
+    it = find(all, id)
+    to_loc = find(all, other).location
+    Repo.update_all(from(i in Item, where: i.id == ^other), inc: [quantity: n])
+
+    take(it, n, "MERGE", owner(it.location, cid, aid), owner(to_loc, cid, aid), %{
+      quantity: n,
+      into: other
+    })
+  end
+
+  defp transfer_action(same, same), do: "MOVE"
+  defp transfer_action(_, "WAREHOUSE"), do: "WAREHOUSE_IN"
+  defp transfer_action("WAREHOUSE", _), do: "WAREHOUSE_OUT"
+
+  defp owner("WAREHOUSE", _cid, aid), do: "acc:" <> aid
+  defp owner(_, cid, _aid), do: "char:" <> cid
+
+  # đổi chỗ (cả chủ: túi thuộc nhân vật, kho thuộc tài khoản — CHECK của DB)
+  defp place(item_id, to, cid, aid) do
+    row = location_row(item_id, to, cid, aid)
+
+    {1, _} =
+      Repo.update_all(from(l in ItemLocation, where: l.item_id == ^item_id),
+        set: [
+          location: row.location,
+          slot: row.slot,
+          character_id: row.character_id,
+          account_id: row.account_id
+        ]
+      )
+  end
+
+  defp location_row(item_id, {"WAREHOUSE", slot}, _cid, aid),
+    do: %ItemLocation{item_id: item_id, location: "WAREHOUSE", account_id: aid, slot: slot}
+
+  defp location_row(item_id, {loc, slot}, cid, _aid),
+    do: %ItemLocation{item_id: item_id, location: loc, character_id: cid, slot: slot}
 
   @doc "`split`: tách `quantity` cái từ stack `item_id` sang ô túi trống `to` (`nil` = thấp nhất)."
   def split(cid, item_id, quantity, to) do

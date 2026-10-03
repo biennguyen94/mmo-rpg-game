@@ -72,7 +72,7 @@ async function enter(user) {
 // ---------- cấp 1: bị chặn ở cổng ----------
 const low = await enter(await account("Lo", 1));
 const npcs = await low.evaluate(() => window.__mu.entities().filter((e) => e.kind === "npc").map((e) => e.id).sort());
-check("Lorencia có 2 NPC (Potion + Weapon Merchant)", npcs.join() === "npc_lorencia_potion_merchant,npc_lorencia_weapon_merchant", npcs.join());
+check("Lorencia có 3 NPC (Potion + Weapon Merchant + Thủ kho P3-M3)", npcs.join() === "npc_lorencia_potion_merchant,npc_lorencia_warehouse,npc_lorencia_weapon_merchant", npcs.join());
 await walkTo(low, 15, 9);
 await clickAt(low, 15, 8);
 const blocked = await until(low, () => document.querySelector('[data-tab="notices"] .badge') !== null, null, 4000);
@@ -98,9 +98,9 @@ await walkTo(hi, 15, 9);
 await clickAt(hi, 15, 8);
 const toNoria = await until(hi, () => window.__mu.map() === "noria", null, 8000);
 const where = await hi.textContent('[data-test="where"]');
-await until(hi, () => window.__mu.entities().filter((e) => e.kind === "npc").length === 2, null, 3000);
+await until(hi, () => window.__mu.entities().filter((e) => e.kind === "npc").length === 3, null, 3000);
 const noriaNpcs = await hi.evaluate(() => window.__mu.entities().filter((e) => e.kind === "npc").map((e) => e.id).sort());
-check("cấp 10 bước vào cổng → sang Noria (HUD, NPC Noria), đứng cạnh cổng nam", toNoria && where.startsWith("Noria") && noriaNpcs.join() === "npc_noria_potion_merchant,npc_noria_weapon_merchant", `${where} · ${noriaNpcs.join(",")}`);
+check("cấp 10 bước vào cổng → sang Noria (HUD, NPC Noria), đứng cạnh cổng nam", toNoria && where.startsWith("Noria") && noriaNpcs.join() === "npc_noria_potion_merchant,npc_noria_warehouse,npc_noria_weapon_merchant", `${where} · ${noriaNpcs.join(",")}`);
 await hi.waitForTimeout(500);
 await hi.screenshot({ path: `${shots}/p2-noria-town.png` });
 

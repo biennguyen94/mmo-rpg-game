@@ -12,11 +12,15 @@ defmodule Mu.Game.Inventory do
   - Sắp xếp túi (Phase 2, `KB_TECHNICAL §5` `move_item` / `split`): chỉ trong `INVENTORY`,
     mỗi item một ô (P2-8). Thả lên ô trống = chuyển, lên món khác = hoán đổi, lên stack cùng
     template còn chỗ = gộp (thừa ở lại ô cũ).
+  - Kho (Phase 3, P3-M3): 120 ô dùng chung mọi nhân vật của tài khoản; chuyển túi ↔ kho bằng
+    `move_item` theo cùng luật (`plan_transfer/4`).
   """
 
   alias Mu.Game.{Config, Data}
 
   @inventory_slots 64
+  # kho tài khoản 15×8 (`KB_CONFIG §6`, CHECK của DB `slot BETWEEN 0 AND 119`)
+  @warehouse_slots 120
   @equip_slots %{
     "HELM" => [0],
     "ARMOR" => [1],
@@ -137,6 +141,57 @@ defmodule Mu.Game.Inventory do
       end
     end
   end
+
+  @doc """
+  Kế hoạch chuyển giữa túi và kho (P3-M3; `move_item` có `WAREHOUSE` ở nguồn hoặc đích).
+  `items`: đồ của nhân vật, `warehouse`: đồ trong kho của tài khoản (location `WAREHOUSE`).
+  Nguồn phải ở túi hoặc kho (đồ đang mặc → `INVALID_SLOT`), đích `{location, slot}` với
+  location `INVENTORY` | `WAREHOUSE`. Ô trống = chuyển, cùng ô = không làm gì, stack cùng
+  template còn chỗ = gộp, món khác = hoán đổi (món kia về ô cũ của món chuyển).
+  `{:ok, :noop | {:move, id, to} | {:swap, id, to, other_id, from} | {:merge, id, other_id, n}}`
+  với `to` / `from` = `{location, slot}`, hoặc `{:error, code}`.
+  """
+  def plan_transfer(items, warehouse, item_id, {to_loc, to_slot} = to) do
+    with %{} = it <- find_movable(items ++ warehouse, item_id),
+         :ok <- valid_slot(to_loc, to_slot) do
+      dest = if to_loc == "WAREHOUSE", do: warehouse, else: items
+
+      case in_slot(dest, to_loc, to_slot) do
+        nil ->
+          {:ok, {:move, it.id, to}}
+
+        %{id: id} when id == it.id ->
+          {:ok, :noop}
+
+        other ->
+          t = Data.item(it.template_id)
+
+          if t["stackable"] == true and other.template_id == it.template_id and
+               other.quantity < t["maxStack"] do
+            {:ok, {:merge, it.id, other.id, min(it.quantity, t["maxStack"] - other.quantity)}}
+          else
+            {:ok, {:swap, it.id, to, other.id, {it.location, it.slot}}}
+          end
+      end
+    end
+  end
+
+  def warehouse_slots, do: @warehouse_slots
+
+  defp find_movable(all, item_id) do
+    case Enum.find(all, &(&1.id == item_id)) do
+      %{location: loc} = it when loc in ~w(INVENTORY WAREHOUSE) -> it
+      %{} -> {:error, "INVALID_SLOT"}
+      nil -> {:error, "NOT_OWNER"}
+    end
+  end
+
+  defp valid_slot("INVENTORY", s), do: valid_slot(s)
+
+  defp valid_slot("WAREHOUSE", s) when is_integer(s) and s >= 0 and s < @warehouse_slots,
+    do: :ok
+
+  defp valid_slot(_, _), do: {:error, "INVALID_SLOT"}
 
   @doc "Món `item_id` trong túi (không phải đồ đang mặc) để `drop`: `{:ok, item}` hoặc lỗi."
   def droppable(items, item_id) do

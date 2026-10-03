@@ -73,7 +73,7 @@ defmodule Mu.World.MapsTest do
       assert %{id: "town"} = Maps.safe_zone_at(map, x, y)
     end
 
-    test "#{id}: NPC trong safe zone, chặn ô, có shop đúng map" do
+    test "#{id}: NPC trong safe zone, chặn ô, có shop đúng map (Thủ kho: không shop, P3-M3)" do
       map = Maps.get(@id)
       assert map.npcs != []
 
@@ -81,8 +81,13 @@ defmodule Mu.World.MapsTest do
         assert Collision.walkable?(map.collision, 64, 64, n.x, n.y)
         refute Maps.walkable?(map, n.x, n.y)
         assert Maps.safe?(map, n.x, n.y)
-        assert %{"mapId" => @id} = Data.shop(n.id)
+
+        if n.role == "warehouse",
+          do: assert({Data.shop(n.id), n.name} == {nil, "Warehouse Keeper"}),
+          else: assert(%{"mapId" => @id} = Data.shop(n.id))
       end
+
+      assert Enum.count(map.npcs, &(&1.role == "warehouse")) == 1
     end
 
     test "#{id}: vùng sinh quái trong map, ngoài safe zone, đủ ô, quái đúng map" do

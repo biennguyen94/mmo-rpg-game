@@ -56,7 +56,18 @@ defmodule Mu.World.Maps do
                  m["spawns"],
                  &%{monster: &1["monster"], count: &1["count"], area: rect.(&1["area"])}
                ),
-             npcs: Enum.map(m["npcs"], &%{id: &1["id"], x: &1["x"], y: &1["y"]}),
+             # P3-M3: `role` "shop" (mặc định, theo `shop.json`) | "warehouse"; `name` tùy chọn
+             npcs:
+               Enum.map(
+                 m["npcs"],
+                 &%{
+                   id: &1["id"],
+                   x: &1["x"],
+                   y: &1["y"],
+                   role: &1["role"] || "shop",
+                   name: &1["name"]
+                 }
+               ),
              # P2-M4: ô cổng → map khác (`toX, toY`), cần `levelRequired`
              portals:
                Enum.map(

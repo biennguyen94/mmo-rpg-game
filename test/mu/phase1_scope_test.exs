@@ -14,7 +14,8 @@ defmodule Mu.Phase1ScopeTest do
     monsters:
       ~w(spider budge_dragon bull_fighter hound lich elite_bull_fighter goblin chain_scorpion beetle_monster hunter forest_monster agon stone_golem),
     npcs:
-      ~w(lorencia_potion_merchant lorencia_weapon_merchant noria_potion_merchant noria_weapon_merchant),
+      ~w(lorencia_potion_merchant lorencia_weapon_merchant noria_potion_merchant noria_weapon_merchant) ++
+        ~w(lorencia_warehouse noria_warehouse),
     items:
       ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
         ~w(staff_t0 bow_t0) ++
