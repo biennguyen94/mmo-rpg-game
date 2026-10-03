@@ -8,7 +8,9 @@ const N = Number(process.argv[3] ?? 20);
 const minutes = Number(process.argv[4] ?? 20);
 const wsBase = base.replace(/^http/, "ws");
 const stamp = Date.now() % 100000;
-const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0 };
+// vùng sinh Spider ở Lorencia (priv/maps/lorencia.json) — bot soak chỉ săn ở đây
+const SPIDER = { x0: 42, x1: 58, y0: 24, y1: 44 };
+const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {} };
 
 async function http(method, path, body, token, ip) {
   const r = await fetch(base + path, {
@@ -70,7 +72,12 @@ async function bot(i) {
     } else if (ev === "combat" && p.target === selfId) {
       // HP mới nhất của bot (event player chỉ gửi khi tiến độ đổi)
       player.hp = p.hp;
-      if (p.hp === 0) stats.deaths++;
+      if (p.hp === 0) {
+        stats.deaths++;
+        // loại quái ra đòn kết liễu (đo vùng nguy hiểm cho người mới)
+        const k = ents.get(p.attacker)?.templateId ?? p.attacker;
+        stats.killedBy[k] = (stats.killedBy[k] ?? 0) + 1;
+      }
     }
   };
   ws.onclose = () => stats.closes++;
@@ -107,11 +114,16 @@ async function bot(i) {
         await sleep(player.view.cooldownMs + 20);
       }
     } else {
-      // đi lang thang (thiên về phía đông, nơi có Spider)
+      // đi lang thang thiên về phía đông; ra khỏi thị trấn thì ở trong vùng Spider như người chơi
+      // cấp 1 thật (từ P2-M4 Lorencia có quái mạnh ở vùng khác — B-1)
       for (let k = 0; k < 10; k++) {
         const x = me.x + Math.floor(Math.random() * 17) - 6;
         const y = me.y + Math.floor(Math.random() * 13) - 6;
-        if (walkable(x, y)) {
+        const inSpider = x >= SPIDER.x0 && x <= SPIDER.x1 && y >= SPIDER.y0 && y <= SPIDER.y1;
+        // dải đường từ cổng đông thị trấn (26,30–32) sang vùng Spider
+        const onRoad = x >= 26 && x < SPIDER.x0 && y >= 28 && y <= 35;
+        const outside = x >= 26 && !inSpider && !onRoad;
+        if (walkable(x, y) && !outside) {
           await cmd("move_to", { x, y });
           break;
         }
@@ -130,7 +142,7 @@ const pct = (xs, p) => {
 const report = (label) => {
   const g = stats.snapGaps;
   console.log(
-    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
+    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
   );
 };
 

@@ -235,5 +235,5 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 
 | # | Vấn đề | Đề xuất |
 |---|---|---|
-| B-1 | Vùng tân thủ Lorencia không an toàn: Lich / Elite Bull Fighter cách mép nam vùng Spider 2 ô, Bull Fighter cách mép bắc 5 ô (soak: bot cấp 1 chết 185 lần / 10 phút, Phase 1 là 14) | (a) dời vùng (khuyến nghị) / (b) giảm aggroRange / (c) giữ |
+| B-1 **ĐÃ QUYẾT 2026-10-03: (a), đã làm** | Vùng tân thủ Lorencia không an toàn: Lich / Elite Bull Fighter cách mép nam vùng Spider 2 ô, Bull Fighter cách mép bắc 5 ô (soak: bot cấp 1 chết 185 lần / 10 phút, Phase 1 là 14) | (a) dời vùng (khuyến nghị) / (b) giảm aggroRange / (c) giữ |
 | B-2 | DW thiếu Zen mua potion (simulator) | tăng Zen quái cấp ≥ 10 hoặc tỉ lệ potion |

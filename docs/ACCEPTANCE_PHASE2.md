@@ -73,7 +73,7 @@ Giả định simulator: đứng đánh quái ngang cấp (không thả diều),
 
 | # | Vấn đề | Đề xuất |
 |---|---|---|
-| B-1 | **Vùng tân thủ Lorencia không an toàn** (soak §2): Lich / Elite Bull Fighter sát mép nam vùng Spider (2 ô), Bull Fighter cách mép bắc 5 ô | (a) **khuyến nghị**: dời vùng Lich + EBF xuống y ≥ 51 và Bull Fighter lên y ≤ 15 (cách vùng Spider ≥ 7 ô > aggro 5 + tầm 4 của Lich); (b) giảm `aggroRange` quái Lorencia cấp ≥ 6 xuống 3; (c) giữ |
+| B-1 | ~~Vùng tân thủ Lorencia không an toàn~~ **ĐÃ SỬA 2026-10-03 (phương án a)**: Bull Fighter y 10–15, Lich + Elite Bull Fighter y 51–61 — cách vùng Spider ≥ 7 ô (test `maps_test.exs`). Soak kiểm lại 3 phút × 20 bot săn trong vùng Spider: **8 lần chết, cả 8 do Spider, 0 do quái mạnh** (trước khi sửa: 47 lần / 3 phút, chủ yếu Bull Fighter / Lich). Bot soak nay chỉ đi trong thị trấn → đường → vùng Spider và thống kê loại quái kết liễu | — |
 | B-2 | **DW thiếu Zen mua potion** (P2M4-4): 731 potion ≈ 73 100 Zen > 64 100 Zen kiếm được | Tăng Zen quái cấp ≥ 10 (vd. ×1,3) hoặc tỉ lệ rơi potion; xem lại sau khi chơi thử |
 | B-3 | **Tiến bộ chủ yếu nhờ đồ** (P2M4-1): sát thương người chơi tăng chậm theo stat (KB §4.1) | Chấp nhận Phase 2 hoặc anh tăng hệ số §4.1 trong KB |
 | B-4 | KB cần anh bổ sung: KB_TECHNICAL §5 (`map_change`, act/event hộp thư, trường mới), §9 (bảng `mail`) | P2M4-3, P2M6-1 |

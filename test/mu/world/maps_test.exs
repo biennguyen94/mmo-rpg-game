@@ -134,6 +134,20 @@ defmodule Mu.World.MapsTest do
     assert %{to: "lorencia", level_required: 0} = Maps.portal_at(Maps.get("noria"), 32, 61)
   end
 
+  test "B-1 (a): vùng quái mạnh cách vùng Spider ≥ 7 ô (> aggroRange 5 + tầm đánh xa 4 không chồng)" do
+    map = Maps.get("lorencia")
+    spider = Enum.find(map.spawns, &(&1.monster == "spider")).area
+
+    for %{monster: mon, area: a} <- map.spawns,
+        mon != "spider",
+        Mu.Game.Data.monster(mon)["level"] >= 6 do
+      # khoảng cách Chebyshev giữa hai hình chữ nhật
+      dx = max(0, max(a.x - (spider.x + spider.w - 1), spider.x - (a.x + a.w - 1)))
+      dy = max(0, max(a.y - (spider.y + spider.h - 1), spider.y - (a.y + a.h - 1)))
+      assert max(dx, dy) >= 7, mon
+    end
+  end
+
   test "client_data không có collision/công thức, có cổng" do
     data = Maps.client_data(Maps.get("lorencia"))
     assert data.id == "lorencia"
