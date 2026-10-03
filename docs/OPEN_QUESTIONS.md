@@ -298,7 +298,7 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 |---|---|---|
 | B-7 **ĐÃ QUYẾT 2026-10-03: giữ** | Event `party` ~1,2 KB/s/bot (≈ 19 % băng thông) khi nhóm 5 người cùng di chuyển | Giữ (§12); hoặc chỉ đẩy khi HP / map / online / ô AOI đổi, hoặc `party.statusIntervalMs` 1 000 |
 | B-8 | KB_TECHNICAL §5 cần bổ sung act / event Phase 3 (P3-10: P3M3-1, P3M4-1, P3M5-3) | Anh bổ sung KB |
-| B-9 | `CLAUDE.md` quy tắc 3 (P3-1) | Anh sửa hoặc cho em sửa |
+| B-9 **ĐÃ LÀM** | `CLAUDE.md` quy tắc 3 (P3-1) | Sửa 2026-10-03 (DEC-179) |
 
 ## P4. Câu hỏi Phase 4 "PvP & Social" (kế hoạch: `docs/PHASE4_PLAN.md`) — ⛔ = chặn milestone
 
@@ -443,5 +443,5 @@ quái / NPC / cánh mới đặt theo kiểu MU cho prototype riêng tư; public
 
 | # | Vấn đề | Trạng thái |
 |---|---|---|
-| P6M6-1 | `mix test` lỗi ngẫu nhiên 1 lần / 6 lần chạy (không in được tên test); 5 lần sau đều 376 / 0 | Theo dõi: lần sau gặp thì ghi lại tên test + seed |
-| P6M6-2 | Số em tự đặt cần anh duyệt: giá NPC mua cánh 50 000, attackRate / defenseRate / tốc chạy boss, vị trí boss (42..47, 46..49) và quái vàng, nội dung 10 quest | Chờ anh |
+| P6M6-1 **ANH CHO BỎ QUA** | `mix test` lỗi ngẫu nhiên 1 lần / 6 lần chạy (không in được tên test); 5 lần sau đều 376 / 0 | Theo dõi: lần sau gặp thì ghi lại tên test + seed |
+| P6M6-2 **ĐÃ CHỐT (DEC-180)** | Số em tự đặt cần anh duyệt: giá NPC mua cánh 50 000, attackRate / defenseRate / tốc chạy boss, vị trí boss (42..47, 46..49) và quái vàng, nội dung 10 quest | Giữ nguyên sau khi rà |

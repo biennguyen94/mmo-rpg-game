@@ -105,6 +105,9 @@ Hai version MU có số liệu khác nhau → **không merge**; ghi từng bản
 | 4. PvP & Social | Duel, PK, Self-defense, Guild, Guild war |
 | 5. Economy | Trading, Jewels, Upgrade, serial/anti-dupe audit |
 | 6. Advanced | Quest, Chaos Machine, Wings (`LATER_VERSION`), Events, Bosses, Ranking |
+| 7. Endgame | Blood Castle, Devil Square (map event riêng, vé vào, giới hạn người), Daily quest, Upgrade +10 / +11 (công thức Chaos Machine), Wings cấp 2 (`LATER_VERSION`) |
+
+> Phase 7 bổ sung 2026-10-03 bởi agent theo cho phép của chủ dự án, lấy từ các mục "để sau" đã duyệt ở Phase 6 (`docs/OPEN_QUESTIONS.md` P6-10, P6-5 (2)). **Vẫn ngoài scope** (chưa xếp phase): Chaos Castle, pet, Jewel of Harmony / Guardian / Creation, map mới ngoài event, class DL / SUM.
 
 **Phase 1 — chi tiết scope tối thiểu:**
 
