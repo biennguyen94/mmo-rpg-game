@@ -110,7 +110,7 @@ Event guild / war rất nhẹ: chỉ đẩy khi có thay đổi (vào / ra, onli
 | # | Vấn đề | Đề xuất |
 |---|---|---|
 | B-11 | **KB cần anh bổ sung** (P4-10, em không sửa `docs/kb/`): §5 act `attack p_…`, `duel_*`, `guild_*`, `guild_war_*`; event `duel`, `guild`, `guild_invite`, `guild_war`; `spawn` thêm `pkState` / `aggressor` / `dueling` / `guild`; `player.view.pkPoints / pkState`; join `config.pvp / guild`; §9 bảng `guilds`, `guild_members`; config `pvp`, `pk`, `duel`, `guild`, `guildWar` | Chi tiết ở `OPEN_QUESTIONS` P4M1-4, P4M2-4, P4M3-6, P4M4-5 |
-| B-12 | P4M4-1 … P4M4-4 (cấp tối thiểu trong war, cùng nhóm khác guild, tuyên chiến khi master offline, nuôi điểm bằng nick phụ) | Đang làm theo đề xuất; anh xác nhận hoặc đổi |
+| B-12 | P4M4-1 … P4M4-4 (cấp tối thiểu trong war, cùng nhóm khác guild, tuyên chiến khi master offline, nuôi điểm bằng nick phụ) | **Đã quyết 2026-10-03: theo đề xuất** |
 | B-9 | `CLAUDE.md` quy tắc 3 vẫn ghi "Chỉ làm Phase 1" | Câu đề xuất ở `PHASE4_PLAN.md §0` |
 | B-7 | Event `party` ~1,2 KB/s/bot | Như Phase 3 |
 | B-10 | Còn mở từ trước: B-2, B-3, B-5, B-6, P3M5-1 | — |

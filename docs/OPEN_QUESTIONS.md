@@ -353,14 +353,34 @@ level + Zen, master / assistant / member). Mọi số dưới đây là **đề 
 
 | # | Vấn đề | Đã làm / đề xuất |
 |---|---|---|
-| P4M4-1 | P4-6 nói "đánh nhau được ở mọi chỗ ngoài safe zone" — có bỏ cấp tối thiểu PvP không? | Giữ `pvp.minLevel` 6 (thành viên cấp < 6 không đánh / bị đánh), như mọi PvP khác |
-| P4M4-2 | Hai người cùng nhóm nhưng thuộc hai guild đang war | Nhóm thắng: không đánh được nhau (P4M1-2) |
-| P4M4-3 | Tuyên chiến khi master bên kia offline | Không được (`INVALID_TARGET`); không có lời mời chờ offline |
-| P4M4-4 | Nuôi điểm bằng nick phụ (kill liên tục một người) | Không thưởng nên không chặn; Phase 5 có thưởng thì cần luật (vd. cùng nạn nhân chỉ tính 1 lần / x phút) |
+| P4M4-1 **ĐÃ QUYẾT: theo đề xuất** | P4-6 nói "đánh nhau được ở mọi chỗ ngoài safe zone" — có bỏ cấp tối thiểu PvP không? | Giữ `pvp.minLevel` 6 (thành viên cấp < 6 không đánh / bị đánh), như mọi PvP khác |
+| P4M4-2 **ĐÃ QUYẾT: theo đề xuất** | Hai người cùng nhóm nhưng thuộc hai guild đang war | Nhóm thắng: không đánh được nhau (P4M1-2) |
+| P4M4-3 **ĐÃ QUYẾT: theo đề xuất** | Tuyên chiến khi master bên kia offline | Không được (`INVALID_TARGET`); không có lời mời chờ offline |
+| P4M4-4 **ĐÃ QUYẾT: theo đề xuất** | Nuôi điểm bằng nick phụ (kill liên tục một người) | Không thưởng nên không chặn; Phase 5 có thưởng thì cần luật (vd. cùng nạn nhân chỉ tính 1 lần / x phút) |
 | P4M4-5 | **KB cần anh bổ sung** (gộp P4-10): act `guild_war_*`, event `guild_war`, config `guildWar` | Đã làm, không đổi schema (war chỉ trong RAM) |
 
 ### P4-M5. Nghiệm thu Phase 4 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE4.md`
 
-12/12 mục PASS (mục 11 UI cần anh xem bằng mắt). Việc chờ anh: B-11 (KB bổ sung P4-10), B-12
-(P4M4-1 … 4), B-9 (`CLAUDE.md`), B-7, B-10 — xem `ACCEPTANCE_PHASE4.md §5.2`.
+12/12 mục PASS (mục 11 UI cần anh xem bằng mắt). Việc chờ anh: B-11 (KB bổ sung P4-10), B-9
+(`CLAUDE.md`), B-7, B-10 — xem `ACCEPTANCE_PHASE4.md §5.2`. **B-12 đã quyết (2026-10-03): theo đề
+xuất** (P4M4-1 … 4).
 
+## P5. Câu hỏi Phase 5 "Economy" (kế hoạch: `docs/PHASE5_PLAN.md`) — ⛔ = chặn milestone
+
+KB Phase 5 có: bảng upgrade +0 → +9 (`KB_CONFIG §5`), cách chốt trade (`KB_TECHNICAL §10`), schema
+item / audit (`§9`), danh sách jewel (`KB_ITEM_REFERENCE`). Thiếu: nguồn jewel, chỉ số theo +N, Jewel
+of Life, luật trade, audit Zen. Mọi số dưới đây là **đề xuất IMPLEMENTATION** (tham khảo cảm giác
+MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt.
+
+| # | Câu hỏi | Đề xuất của em |
+|---|---|---|
+| P5-1 | **KB mâu thuẫn:** `KB_00_RULES` S6 ghi Wings / Harmony / Guardian / Creation "bật ở Phase 5"; `§7` (nguồn duy nhất về scope) đặt Wings ở Phase 6, Phase 5 không có Harmony / Guardian / Creation; `KB_CONFIG §5` ghi upgrade trên +9 là `LATER_VERSION` | Theo `§7`: **giữ tắt cả bốn** trong Phase 5 (`features.wings / harmonyJewel / guardianJewel` vẫn `false`, không có template Creation). Anh sửa S6 trong KB nếu đồng ý |
+| P5-2 ⛔M1 | **Jewel** — template, nguồn, giá | (1) Ba template `jewel_bless`, `jewel_soul`, `jewel_life` (group 14 / 13, 14, 16), stack tối đa `20`, icon theo `iconRef` (thiếu thì placeholder + cảnh báo build như item khác). (2) **Chỉ rơi từ quái**: thêm nhóm drop `jewels` cho quái cấp ≥ `10` (Lich trở lên), tỉ lệ mỗi lần hạ `0,6 %` × `dropMultiplier`, trọng số Bless 50 / Soul 35 / Life 15 (≈ 4–5 jewel / giờ săn liên tục; chỉnh bằng simulator). Spider / Budge Dragon / Bull Fighter / Hound không rơi. (3) **Không bán ở NPC**; NPC mua lại: Bless `10 000`, Soul `15 000`, Life `15 000` Zen. (4) Jewel cất kho, trade, vứt như đồ thường |
+| P5-3 ⛔M1/M2 | **Upgrade** — +N cộng gì, thao tác | (1) **Chỉ số theo +N** (config `items.levelBonus`, KB chưa có): vũ khí `attackMin` / `attackMax` **+3 mỗi cấp**; giáp (mũ, áo, quần, găng, giày) `defense` **+3 mỗi cấp**; khiên `defense` **+2 mỗi cấp**; nhẫn **không ép được**. Yêu cầu sức mạnh / cấp của đồ không đổi theo +N. (2) Ép **đồ trong túi** (không ép đồ đang mặc, như MU): kéo jewel thả lên món đồ; trên mobile bấm jewel → [Ép lên…] → chọn đồ. Mỗi lần dùng 1 jewel, **không tốn Zen**. (3) Bless chỉ dùng cho +0 … +5 (lên +1 … +6, 100 %); Soul cho +6 … +8 (70 / 60 / 50 %); dùng sai loại → `INVALID_TARGET`; đã +9 → `FORBIDDEN`. (4) Soul thất bại `DECREASE` = **giảm 1 cấp** (+7 hỏng → +6), mất jewel. (5) `luck` (chưa có roll lúc drop) không cộng tỉ lệ ở Phase 5. (6) Kết quả: thông báo cho người ép + dòng SYSTEM cả map khi lên **+7 trở lên** |
+| P5-4 ⛔M2 | **Jewel of Life** — §9 chưa có cột "option" | **(A, đề xuất)** Thêm cột `items.option_level SMALLINT 0..4` (migration + CHANGE_REASON). Mỗi lần dùng Life trên vũ khí / giáp / khiên: 50 % lên 1 cấp option (tối đa 4), thất bại **không đổi** (mất jewel). Option cộng **+4 mỗi cấp**: vũ khí `attackMin` / `attackMax`, giáp / khiên `defense`. (B) Chỉ làm Bless / Soul, để Life sang Phase 6 (Chaos Machine) |
+| P5-5 ⛔M4 | **Trading** — luật + UI | (1) Mời từ menu người chơi **[🤝 Giao dịch]**, người kia nhận trong `30` s. Hai bên cùng map, cách ≤ `5` ô, còn sống, không đang duel / trade khác. Trong / ngoài thị trấn đều được, MURDERER vẫn trade được. (2) Mỗi bên đặt tối đa `16` món **từ túi** (không đồ đang mặc / trong kho) và một lượng Zen (0 … Zen đang có). (3) Hai bước: **[Khóa]** (chốt danh sách) → khi cả hai đã khóa mới bấm **[Đồng ý]**; bất kỳ thay đổi nào (thêm / bớt món, đổi Zen, món trên bàn bị di chuyển) → cả hai về chưa khóa. (4) Chốt: một transaction theo `KB_TECHNICAL §10`; bên nhận không đủ chỗ → `INVENTORY_FULL`, trade vẫn mở, cả hai về chưa khóa. (5) Hủy khi: bấm [Hủy], cách nhau > `10` ô, đổi map, chết, mất kết nối, đăng xuất, hết `3` phút không chốt. (6) Audit: mỗi món `TRADE` (`char:A → char:B`), Zen ghi `zen_audit_log` hai bên. (7) UI: cửa sổ hai nửa "Của bạn" / "Của <tên>" (icon, +N, số lượng, Zen, trạng thái khóa / đồng ý); kéo đồ từ túi vào hoặc bấm đồ → [Đưa vào giao dịch]; mobile xếp dọc. Nhóm rate-limit `trade` 5 / giây |
+| P5-6 ⛔M3 | **Audit Zen + anti-dupe** | (1) Bảng mới `zen_audit_log (id, character_id, delta, balance, reason, ref, at)` (migration + CHANGE_REASON), ghi **trong cùng transaction** với mọi đổi Zen: mua / bán NPC, nhặt Zen (tức là Zen rơi từ quái — gộp theo lần lưu nhân vật, reason `MONSTER`, để không ghi mỗi con), thư, tạo guild, trade. Khi chạy migration ghi một dòng `BASELINE` = Zen hiện có của mỗi nhân vật. (2) `mix mu.audit` (chỉ quản trị): serial trùng; item không có chỗ (orphan); chỗ hiện tại khác `to_owner` của dòng audit cuối; Zen nhân vật ≠ tổng `zen_audit_log`; tổng cung Zen + nguồn / chỗ tiêu theo ngày. Có sai lệch → in chi tiết, thoát mã ≠ 0. (3) Không tự khóa tài khoản; chạy sau soak / theo lịch quản trị. Bỏ P4M3-1 (log tạo guild) sang bảng này |
+| P5-7 | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `upgrade {itemId, jewelId}` (idempotent theo `rid` như act item); `trade_request {to}`, `trade_accept {from}`, `trade_decline {from}`, `trade_put {itemId, quantity?}`, `trade_take {itemId}`, `trade_zen {amount}`, `trade_lock {}`, `trade_confirm {}`, `trade_cancel {}`. Event: `trade {state, partner, mine: {items, zen, locked, confirmed}, theirs: {…}, result?}`, `trade_invite {from}`; kết quả ép đồ qua `player` + dòng thông báo. Lỗi dùng mã sẵn có. Em ghi `CHANGE_REASON`; anh bổ sung KB sau khi chốt |
+| P5-8 | Ngoài scope Phase 5 | **Repair / độ bền** (§17 nhắc "sink Zen: repair" nhưng §7 không có, hệ độ bền chưa làm), roll **luck / excellent** khi drop, trên +9 (Harmony / Guardian), Chaos Machine (Phase 6) — **không làm** ở Phase 5 |
+| P5-9 | Danh sách nghiệm thu Phase 5 | Em soạn ở P5-M5 (như P4-9) |
+| P5-10 | **KB_TECHNICAL §5 / §9** cần anh bổ sung sau khi chốt P5-2 … P5-7 | Em ghi `CHANGE_REASON` khi làm |
