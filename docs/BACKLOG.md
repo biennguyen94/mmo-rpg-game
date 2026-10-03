@@ -67,7 +67,7 @@ hướng), tilemap Tiled (`.tmj`, KB_TECHNICAL §8), hiệu ứng skill, scale/z
 
 ## 5. Scope các phase sau (nhắc lại từ KB_00_RULES §7, không làm ở Phase 1)
 
-- **Phase 2:** DW, Elf, lưới túi 8×8 + kéo thả (`move_item`, `split`, `drop`), skill theo class,
+- **Phase 2:** (kế hoạch: `docs/PHASE2_PLAN.md`) DW, Elf, túi đồ kéo thả (`move_item`, `split`, `drop`), skill theo class,
   drop table mở rộng, chat, Hộp thư hệ thống (§19.10), panel Bản đồ (§19.12).
 - **Phase 3:** AOI (KB_TECHNICAL §3, đã có `aoiCellSize` trong config), reconnect giữ phiên
   (`reconnectGraceSeconds`), party, warehouse (bảng `item_locations` đã có `WAREHOUSE`), MG
