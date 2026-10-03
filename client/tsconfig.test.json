@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": ".test-build",
+    "rootDir": ".",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "typeRoots": ["/opt/node-tools/node_modules/@types", "node_modules/@types"]
+  },
+  "include": ["src/logic/**/*.ts", "src/state/**/*.ts", "src/net/protocol.ts", "test/**/*.ts"]
+}

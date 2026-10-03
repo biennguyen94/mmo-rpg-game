@@ -1,0 +1,515 @@
+{
+  "items": [
+    {
+      "buyPrice": 100,
+      "effect": {
+        "hp": 50,
+        "mp": 0
+      },
+      "iconRef": {
+        "group": 14,
+        "index": 1
+      },
+      "implementationFields": [
+        "potionType",
+        "effect",
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 99,
+      "name": "Small Healing Potion",
+      "potionType": "HP",
+      "reference": {
+        "cells": [
+          1,
+          1
+        ],
+        "group": 14,
+        "index": 1,
+        "itemLvl": 10,
+        "source": "Item.txt",
+        "valor": 10,
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 50,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "hp_potion_small",
+      "type": "POTION",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 120,
+      "effect": {
+        "hp": 0,
+        "mp": 20
+      },
+      "iconRef": {
+        "group": 14,
+        "index": 4
+      },
+      "implementationFields": [
+        "potionType",
+        "effect",
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "maxStack": 99,
+      "name": "Small Mana Potion",
+      "potionType": "MP",
+      "reference": {
+        "cells": [
+          1,
+          1
+        ],
+        "group": 14,
+        "index": 4,
+        "itemLvl": 10,
+        "source": "Item.txt",
+        "valor": 10,
+        "verified": false,
+        "version": "s5+"
+      },
+      "sellPrice": 60,
+      "slot": null,
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": true,
+      "templateId": "mp_potion_small",
+      "type": "POTION",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "attackMax": 7,
+      "attackMin": 3,
+      "buyPrice": 1000,
+      "classes": [
+        "DW",
+        "DK",
+        "ELF",
+        "MG"
+      ],
+      "durability": 22,
+      "iconRef": {
+        "group": 0,
+        "index": 1
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Short Sword",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          1,
+          3
+        ],
+        "group": 0,
+        "index": 1,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 60,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 21,
+        "vitality": 0
+      },
+      "sellPrice": 500,
+      "slot": "WEAPON",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "speed": 20,
+      "stackable": false,
+      "templateId": "sword_t0",
+      "type": "WEAPON",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 800,
+      "classes": [
+        "DW",
+        "DK",
+        "ELF",
+        "MG"
+      ],
+      "defense": 1,
+      "defenseRate": 3,
+      "durability": 22,
+      "iconRef": {
+        "group": 6,
+        "index": 0
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Small Shield",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          2
+        ],
+        "group": 6,
+        "index": 0,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 70,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 25,
+        "vitality": 0
+      },
+      "sellPrice": 400,
+      "slot": "SHIELD",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "shield_t0",
+      "type": "SHIELD",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 500,
+      "classes": [
+        "DK"
+      ],
+      "defense": 5,
+      "defenseRate": 0,
+      "durability": 30,
+      "iconRef": {
+        "group": 7,
+        "index": 5
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Leather Helm",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          2
+        ],
+        "group": 7,
+        "index": 5,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 80,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 28,
+        "vitality": 0
+      },
+      "sellPrice": 250,
+      "slot": "HELM",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "helm_t0",
+      "type": "HELM",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 1000,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "defense": 10,
+      "defenseRate": 0,
+      "durability": 30,
+      "iconRef": {
+        "group": 8,
+        "index": 5
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Leather Armor",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          3
+        ],
+        "group": 8,
+        "index": 5,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 80,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 28,
+        "vitality": 0
+      },
+      "sellPrice": 500,
+      "slot": "ARMOR",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "armor_t0",
+      "type": "ARMOR",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 700,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "defense": 7,
+      "defenseRate": 0,
+      "durability": 30,
+      "iconRef": {
+        "group": 9,
+        "index": 5
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Leather Pants",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          2
+        ],
+        "group": 9,
+        "index": 5,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 80,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 28,
+        "vitality": 0
+      },
+      "sellPrice": 350,
+      "slot": "PANTS",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "pants_t0",
+      "type": "PANTS",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 400,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "defense": 2,
+      "defenseRate": 8,
+      "durability": 30,
+      "iconRef": {
+        "group": 10,
+        "index": 5
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Leather Gloves",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          2
+        ],
+        "group": 10,
+        "index": 5,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 80,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 28,
+        "vitality": 0
+      },
+      "sellPrice": 200,
+      "slot": "GLOVES",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "gloves_t0",
+      "type": "GLOVES",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 400,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "defense": 2,
+      "defenseRate": 12,
+      "durability": 30,
+      "iconRef": {
+        "group": 11,
+        "index": 5
+      },
+      "implementationFields": [
+        "buyPrice"
+      ],
+      "name": "Leather Boots",
+      "reference": {
+        "adjusted": {
+          "requirements": "scaled x0.35 (items.requirementScale), round half up; level not scaled"
+        },
+        "cells": [
+          2,
+          2
+        ],
+        "group": 11,
+        "index": 5,
+        "requirementsRaw": {
+          "agility": 0,
+          "energy": 0,
+          "level": 0,
+          "strength": 80,
+          "vitality": 0
+        },
+        "source": "Item.txt",
+        "verified": false,
+        "version": "s5+"
+      },
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 0,
+        "strength": 28,
+        "vitality": 0
+      },
+      "sellPrice": 200,
+      "slot": "BOOTS",
+      "source": "Item.txt",
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "boots_t0",
+      "type": "BOOTS",
+      "verified": false,
+      "version": "s5+"
+    },
+    {
+      "buyPrice": 1500,
+      "classes": [
+        "DW",
+        "DK",
+        "ELF",
+        "MG"
+      ],
+      "hpBonus": 20,
+      "iconPlaceholder": true,
+      "iconRef": {
+        "custom": "ring_hp_t0"
+      },
+      "implementationFields": [
+        "*"
+      ],
+      "name": "Ring of HP",
+      "reference": null,
+      "requirements": {
+        "agility": 0,
+        "energy": 0,
+        "level": 1,
+        "strength": 0,
+        "vitality": 0
+      },
+      "sellPrice": 750,
+      "slot": "RING1",
+      "source": null,
+      "sourceType": "IMPLEMENTATION",
+      "stackable": false,
+      "templateId": "ring_hp_t0",
+      "type": "RING",
+      "verified": false,
+      "version": null
+    }
+  ],
+  "source": "Sinh bởi `mix mu.items.import` từ data/items/*.json — KHÔNG sửa tay. Xem Mu.Game.ItemImport."
+}

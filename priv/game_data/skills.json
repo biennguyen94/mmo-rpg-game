@@ -1,0 +1,37 @@
+{
+  "source": "KB_GAME_DESIGN §7; basic_attack theo OPEN_QUESTIONS G2 (cooldownMs null = công thức §6 theo attackSpeed). range: Chebyshev (G4).",
+  "skills": [
+    {
+      "id": "basic_attack",
+      "name": "Tấn công thường",
+      "class": null,
+      "manaCost": 0,
+      "cooldownMs": null,
+      "range": 1,
+      "radius": 0,
+      "damageMultiplier": 1.0,
+      "targetType": "SINGLE",
+      "requiredLevel": 1,
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "OPEN_QUESTIONS G2"
+    },
+    {
+      "id": "twisting_slash",
+      "name": "Twisting Slash",
+      "class": "DK",
+      "manaCost": 10,
+      "cooldownMs": 800,
+      "range": 2,
+      "radius": 2,
+      "damageMultiplier": 1.2,
+      "targetType": "AOE",
+      "requiredLevel": 10,
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_GAME_DESIGN §7; vùng quanh người dùng (G7)"
+    }
+  ]
+}

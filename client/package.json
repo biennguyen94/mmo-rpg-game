@@ -1,0 +1,16 @@
+{
+  "name": "mu-web-client",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Client MU Web (Phase 1): TypeScript → ES module gốc của trình duyệt; game view Canvas 2D (Phaser để phase sau: docs/BACKLOG.md).",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.test.json && node --test \".test-build/test/*.test.js\""
+  },
+  "devDependencies": {
+    "typescript": "6.0.2",
+    "@types/node": "^22.0.0"
+  }
+}

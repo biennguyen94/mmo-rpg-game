@@ -1,0 +1,29 @@
+{
+  "source": "docs/kb/KB_CONFIG.md §4 (Phase 1). moveSpeed: ô/giây (G3). Số chỉ là ví dụ cho vertical slice.",
+  "monsters": [
+    {
+      "id": "spider",
+      "name": "Spider",
+      "mapId": "lorencia",
+      "level": 2,
+      "hp": 30,
+      "damageMin": 8,
+      "damageMax": 14,
+      "defense": 1,
+      "attackRate": 10,
+      "defenseRate": 3,
+      "experience": 10,
+      "zenMin": 5,
+      "zenMax": 15,
+      "moveSpeed": 3,
+      "attackRange": 1,
+      "aggroRange": 5,
+      "leashRange": 12,
+      "respawnSeconds": 8,
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §4"
+    }
+  ]
+}

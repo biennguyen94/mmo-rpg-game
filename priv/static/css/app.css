@@ -1,0 +1,145 @@
+/* MU Web — giao diện Phase 1 (KB_GAME_DESIGN §19). Desktop ≥1280px, mobile ≥360px. */
+:root {
+  --bg: #12131a;
+  --panel: rgba(20, 22, 32, 0.96);
+  --line: #2c2f40;
+  --text: #e8e6df;
+  --muted: #9a9cab;
+  --accent: #d9b45a;
+  --hp: #b8302f;
+  --mp: #2f5fb8;
+  --exp: #d9b45a;
+  --danger: #e05555;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+button { font: inherit; color: inherit; background: #2a2d3e; border: 1px solid #3a3e55; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:hover { background: #34384d; }
+button:disabled { opacity: 0.45; cursor: default; }
+input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid #3a3e55; background: #1b1d29; color: var(--text); width: 100%; }
+
+/* ---------- Màn hình đăng nhập / nhân vật ---------- */
+.screen { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; }
+.card { width: min(380px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; display: grid; gap: 12px; }
+.card h1 { margin: 0 0 4px; font-size: 22px; color: var(--accent); text-align: center; }
+.card .error { color: var(--danger); min-height: 1.2em; font-size: 14px; }
+.card .link { background: none; border: none; color: var(--muted); text-decoration: underline; }
+
+/* ---------- Bố cục game (§19.1) ---------- */
+.game { position: fixed; inset: 0; display: grid; grid-template-rows: 48px 24px 1fr 64px; }
+.hud { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: rgba(0, 0, 0, 0.55); gap: 12px; }
+.hud .where { font-weight: 600; white-space: nowrap; }
+.hud .bars { display: grid; gap: 3px; width: min(320px, 50vw); }
+.bar { position: relative; height: 18px; background: #2a2a2a; border-radius: 4px; overflow: hidden; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; }
+.bar .txt { position: relative; font-size: 12px; line-height: 18px; padding: 0 6px; text-align: right; color: #fff; text-shadow: 0 1px 1px #000; }
+.bar.hp .fill { background: var(--hp); }
+.bar.mp .fill { background: var(--mp); }
+.barrow { display: flex; align-items: center; gap: 6px; }
+.barrow .bar { flex: 1; }
+.barrow .key { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.expbar { position: relative; background: #3a3a3a; }
+.expbar .fill { position: absolute; inset: 0 auto 0 0; background: var(--exp); }
+.expbar .txt { position: absolute; right: 8px; top: 0; font-size: 12px; line-height: 24px; text-shadow: 0 1px 1px #000; }
+.view { position: relative; overflow: hidden; background: #0b0c10; }
+.view canvas { display: block; }
+.view .noview { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 16px; }
+
+/* Dock 4 tab (§19.1) */
+.dock { display: grid; grid-template-columns: repeat(4, 1fr); background: #0e0f15; border-top: 1px solid var(--line); }
+.dock button { border: none; border-radius: 0; background: none; display: grid; place-items: center; gap: 2px; position: relative; padding: 4px; }
+.dock button .icon { font-size: 24px; line-height: 24px; }
+.dock button .label { font-size: 11px; color: var(--muted); }
+.dock button.active { background: #232637; }
+.dock button.active .label { color: var(--text); }
+.badge { position: absolute; top: 4px; left: calc(50% + 8px); background: #d33; color: #fff; border-radius: 9px; font-size: 11px; padding: 0 5px; min-width: 18px; }
+
+/* Panel full-screen trong vùng game view, không có nút X (§19) */
+.panel { position: absolute; inset: 0; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; z-index: 10; }
+.panel h2 { margin: 12px 0; text-align: center; font-size: 20px; letter-spacing: 1px; }
+.panel .body { flex: 1; overflow: auto; padding: 0 16px 16px; }
+.sep { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+
+/* Nhân vật (§19.3) */
+.charsheet { max-width: 420px; margin: 0 auto; }
+.statrow { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; padding: 4px 0; }
+.statrow button { padding: 2px 10px; }
+.kv { display: flex; justify-content: space-between; padding: 2px 0; }
+.pending { color: var(--accent); font-size: 12px; margin-left: 6px; }
+
+/* Túi đồ (§19.4): desktop 2 cột, mobile dọc */
+.inv { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 1fr auto; gap: 0 16px; height: 100%; max-width: 900px; margin: 0 auto; width: 100%; }
+.inv .equip { padding: 8px; }
+.inv .list { display: flex; flex-direction: column; min-height: 0; }
+.inv .list .head { font-weight: 600; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.inv .list .scroll { overflow-y: auto; flex: 1; position: relative; }
+.inv .bottom { grid-column: 1 / -1; border-top: 1px solid var(--line); padding: 8px 4px; font-size: 14px; display: grid; gap: 4px; }
+.inv .bottom .row { display: flex; justify-content: space-between; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 64px); gap: 6px; justify-content: center; }
+.slot { width: 64px; height: 64px; border: 1px solid #3a3e55; border-radius: 6px; display: grid; place-items: center; position: relative; background: #191b26; }
+.slot.empty { opacity: 0.45; }
+.slot.none { visibility: hidden; }
+.slot .lbl { position: absolute; bottom: 1px; font-size: 9px; color: var(--muted); }
+.slot.locked::after { content: "🔒"; position: absolute; top: 2px; right: 4px; font-size: 12px; }
+.icon32 { width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.iconframe { width: 48px; height: 48px; display: grid; place-items: center; flex: none; }
+.itemrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.itemrow .info { flex: 1; min-width: 0; }
+.itemrow .name { font-weight: 600; }
+.itemrow .desc { font-size: 13px; color: var(--muted); }
+.emptytext { color: var(--muted); padding: 16px 0; text-align: center; }
+.scrollhint { position: sticky; text-align: center; font-size: 12px; color: var(--muted); background: var(--panel); }
+.scrollhint.up { top: 0; }
+.scrollhint.down { bottom: 0; }
+
+/* Thông báo (§19.11) */
+.notices { max-width: 520px; margin: 0 auto; }
+.filters { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.filters button.on { background: #3b3f58; border-color: var(--accent); }
+.notice { display: grid; grid-template-columns: 28px 1fr; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.notice .sub, .notice .time { font-size: 13px; color: var(--muted); }
+.notice.unread .text { font-weight: 700; }
+
+/* Shop (§19.7): 2 cột */
+.shop { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; width: 100%; }
+.shop .col h3 { margin: 4px 0; }
+.shop .buy { cursor: pointer; }
+.shop .buy:hover { background: #22253a; }
+.hint { color: var(--muted); font-size: 13px; }
+
+/* Submenu Menu (§19.13) */
+.submenu { position: absolute; right: 8px; bottom: 70px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; z-index: 30; display: grid; min-width: 180px; }
+.submenu button { border: none; background: none; text-align: left; padding: 10px 14px; border-radius: 0; }
+.submenu button:hover { background: #2a2d3e; }
+
+/* Context menu quái (§19.9) */
+.ctxmenu { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; z-index: 25; display: grid; min-width: 170px; }
+.ctxmenu button { border: none; background: none; text-align: left; padding: 9px 14px; border-radius: 0; }
+.ctxmenu button:hover { background: #2a2d3e; }
+.ctxmenu hr { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+/* Tooltip */
+.tooltip { position: absolute; z-index: 40; background: #0d0e14; border: 1px solid var(--accent); border-radius: 8px; padding: 10px; width: 220px; font-size: 13px; display: grid; gap: 4px; }
+.tooltip .big { width: 64px; height: 64px; image-rendering: pixelated; justify-self: center; }
+.tooltip .bad { color: var(--danger); }
+
+/* Nút mobile (§19.16): chỉ mobile, chỉ khi không có panel */
+.mobilebtns { position: absolute; right: 16px; bottom: 16px; display: none; flex-direction: column; gap: 8px; z-index: 5; }
+.mobilebtns button { width: 56px; height: 56px; border-radius: 12px; font-size: 22px; padding: 0; display: grid; place-items: center; line-height: 1; background: rgba(30, 32, 46, 0.85); }
+.mobilebtns button small { font-size: 11px; }
+.mobilebtns button.gray { opacity: 0.4; }
+
+/* Thanh báo mất kết nối */
+.netbar { position: absolute; top: 0; left: 0; right: 0; z-index: 50; background: #7a5b12; color: #fff; text-align: center; font-size: 13px; padding: 4px; }
+
+@media (max-width: 1023px) {
+  .hud { flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; }
+  .game { grid-template-rows: 64px 24px 1fr 64px; }
+  .hud .bars { width: 100%; }
+  .barrow .key { display: none; }
+  .mobilebtns.show { display: flex; }
+  .inv { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .shop { grid-template-columns: 1fr 1fr; gap: 8px; }
+}

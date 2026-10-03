@@ -1,0 +1,21 @@
+.git
+.github
+.claude
+_build
+deps
+test
+docs
+reference
+*.md
+!README.md
+.env
+.env.*
+deploy
+client/node_modules
+
+# Asset MU-derived: không vào image Docker (KB_ASSETS §2.2)
+assets_src/private/
+priv/static/assets/icons/items/
+priv/static/assets/icon_map.json
+client/.test-build
+client/e2e
