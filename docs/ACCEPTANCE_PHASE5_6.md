@@ -6,6 +6,7 @@
 > - Phase 5: Upgrade, Jewel, serial / anti-dupe audit, Trading.
 > - Phase 6: Quest, Chaos Machine, Wings, Events, Bosses, Ranking.
 >
+> **Anh duyệt nghiệm thu ("ok") ngày 2026-10-03** — Phase 5 và Phase 6 đóng.
 > Chạy ngày 2026-10-03, môi trường Claude Code cloud (Elixir 1.17.3 / OTP 25, Postgres 16, Chromium).
 >
 > Bằng chứng gồm 3 lớp như Phase 1–4:

@@ -1,4 +1,4 @@
-# PHASE6_PLAN — Kế hoạch Phase 6 "Advanced" (bước lập kế hoạch, chưa code)
+# PHASE6_PLAN — Kế hoạch Phase 6 "Advanced" — **ĐÃ XONG, anh duyệt nghiệm thu 2026-10-03**
 
 > Scope duy nhất là dòng Phase 6 trong `docs/kb/KB_00_RULES.md §7`:
 > **Quest, Chaos Machine, Wings (`LATER_VERSION`), Events, Bosses, Ranking.**
