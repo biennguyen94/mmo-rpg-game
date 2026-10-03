@@ -25,14 +25,34 @@
 | 13 | dùng potion OK | ✅ PASS | ExUnit `item_channel_test.exs` (hồi 50, cooldown 1 s, không vượt max); E2E [13] (**trước khi mặc áo**, Q14: HP 100 → 150) |
 | 14 | UI dock + panel Character / Inventory / Thông báo / Shop trên desktop (≥1280px) và mobile (≥360px) | ⚠️ PASS tự động, **cần anh kiểm tra local** | E2E smoke 24/24 (1280×800 và 360×740: panel, dock, submenu, nút mobile, không tràn ngang); 13 ảnh `desktop-*.png`, `mobile-*.png`. Game view hiện là **Canvas 2D tạm** — Phaser chưa cài được (E7) |
 | 15 | reload page → character state còn nguyên | ✅ PASS | ExUnit `world_channel_test.exs` / `combat_channel_test.exs` / `item_channel_test.exs` (reload + restart Session đọc lại DB); E2E [15] (cấp, EXP, Zen, stat, đồ giống hệt sau reload) |
-| 16 | 2 player login cùng lúc thấy nhau di chuyển | ✅ PASS | ExUnit `world_channel_test.exs` "2 người chơi…"; E2E [16] (2 trình duyệt, B thấy A đi tới đúng ô); ảnh `accept-two-players.png`; soak 20 bot |
+| 16 | 2 player login cùng lúc thấy nhau di chuyển | ✅ PASS | ExUnit `world_channel_test.exs` "2 người chơi…"; E2E [16] (2 trình duyệt, B thấy A đi tới đúng ô); ảnh `accept-two-players.png`; E2E 19/19 cũng qua khi server đang có 20 bot soak |
 
 Thêm: `test/mu/phase1_scope_test.exs` — dữ liệu khớp đúng JSON scope (1 class, 1 map, 1 quái,
 1 NPC, 10 item, 2 skill, maxLevel 10) và mọi feature flag ngoài Phase 1 tắt.
 
 ## 2. Soak test
 
-SOAK_PLACEHOLDER
+Chạy **10 phút** trong cloud (anh yêu cầu rút từ 20 xuống 10; bản 1 giờ chạy local theo
+`docs/RUN_LOCAL.md`): **20 bot** WebSocket (`client/e2e/soak.mjs`) đi lang thang, đánh Spider, uống
+potion, mua potion ở NPC; cùng lúc chạy lại 2 bộ E2E (thêm 2–3 người chơi). Server đo từ node Erlang
+khác mỗi phút (`scripts/soak_probe.exs`). 01:10:42 → 01:20:02 UTC.
+
+| Chỉ số | Kết quả |
+|---|---|
+| Nhịp mô phỏng | 1 200 tick/phút mọi phút; 01:11:42 → 01:19:42: **9 601 tick / 480 s = 20,0 Hz** |
+| Trễ tick lớn nhất (`max_drift`) | **47 ms** (giữ nguyên từ phút thứ 2, không tăng dần) |
+| Hàng đợi MapServer | **0** ở mọi lần đo |
+| Bộ nhớ VM | 46–49 MB, không tăng dần; state MapServer 140–674 KB; số process ổn định 575 (+ phiên E2E) |
+| Snapshot tới client (bot 0) | p50 **100 ms**, p99 **102 ms**, max 201 ms (snapshot chỉ gửi khi có thay đổi) |
+| Kết nối | 20/20 bot online suốt; **0** WebSocket bị đóng bất thường |
+| Lệnh | 7 777 `cmd`, 96,3 % ok. Lỗi là lỗi luật hợp lệ của bot đơn giản: `INVALID_TARGET` 176 (quái vừa chết/bị người khác hạ), `OUT_OF_RANGE` 69, `FORBIDDEN` 38 (lệnh lúc đang chết), `COOLDOWN` 1, `NOT_ENOUGH_ZEN` 1 |
+| Gameplay | 20 lần lên cấp, 14 lần chết + hồi sinh, 24 lần mua potion, 18 lần dùng potion |
+| Log server | **0** `[error]`, **0** `[warning]` |
+| E2E chạy song song | smoke 24/24, acceptance 19/19 |
+
+Ghi chú đo của lần chạy này (đã sửa trong `soak.mjs` sau đó, thử lại 1 phút × 3 bot):
+cột "giết" trong log cũ đếm trùng khi nhiều bot cùng đánh một con, và HP của bot chỉ cập nhật theo
+event `player` nên bot uống potion muộn (nhiều lần chết hơn thực tế). Không ảnh hưởng số đo server.
 
 ## 3. Cân bằng lệch / cần anh quyết
 
@@ -55,7 +75,7 @@ SOAK_PLACEHOLDER
 | Asset §6.1 (DK 6 animation × 4 hướng, tileset, effect, BGM) | ❌ Placeholder; có 7 SFX tổng hợp Web Audio, chưa có BGM (M5-3) |
 | Icon item thật | Chờ anh (Q11/A6); pipeline sẵn, input rỗng → placeholder |
 | E6 `items_raw.json` | Chưa có file: 1 test KB_ITEM_REFERENCE §6 đang `@tag :skip` |
-| Soak 1 giờ | Cloud chạy 20 phút; bản 1 giờ: anh chạy local (`docs/RUN_LOCAL.md` §6) |
+| Soak 1 giờ | Cloud chạy 10 phút (theo yêu cầu); bản 1 giờ: anh chạy local (`docs/RUN_LOCAL.md` §6, lệnh ở §5 dưới) |
 | Docker image | Chưa build được trong cloud (Docker Hub bị chặn); đã kiểm `mix release` + migrate |
 
 ## 5. Chạy lại
@@ -68,6 +88,6 @@ node client/e2e/smoke.mjs http://localhost:4000 docs/screenshots
 node client/e2e/acceptance.mjs http://localhost:4000 docs/screenshots   # cần `mix run scripts/e2e_seed.exs`
 # soak: server với TRUSTED_PROXIES=127.0.0.1 và tên node để probe
 TRUSTED_PROXIES=127.0.0.1 elixir --sname mu -S mix phx.server &
-node client/e2e/soak.mjs http://localhost:4000 20 20 &
-elixir --sname probe scripts/soak_probe.exs mu@$(hostname -s) 22 60
+node client/e2e/soak.mjs http://localhost:4000 20 60 &      # 20 bot × 60 phút
+elixir --sname probe scripts/soak_probe.exs mu@$(hostname -s) 61 60
 ```

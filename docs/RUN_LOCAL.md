@@ -68,6 +68,18 @@ node client/e2e/smoke.mjs http://localhost:4000 docs/screenshots   # E2E (server
 E2E dùng Playwright + Chromium. Máy anh: `npm i -g playwright && npx playwright install chromium`, rồi
 `PLAYWRIGHT_MODULE=$(npm root -g)/playwright/index.mjs CHROMIUM_PATH= node client/e2e/smoke.mjs`.
 
+Soak 1 giờ (M6 — cloud chỉ chạy 10 phút, xem `docs/ACCEPTANCE.md §2`):
+
+```bash
+epmd -daemon
+TRUSTED_PROXIES=127.0.0.1 elixir --sname mu -S mix phx.server &      # bot giả lập IP khác nhau
+node client/e2e/soak.mjs http://localhost:4000 20 60 > soak_bots.log &   # 20 bot × 60 phút
+elixir --sname probe scripts/soak_probe.exs mu@$(hostname -s) 61 60 > soak_probe.log
+```
+
+Đạt nếu: tick ~1 200/phút, `max_drift` không tăng dần, hàng đợi MapServer ~0, RAM không tăng dần,
+không có `[error]` trong log server, bot không bị đóng WebSocket.
+
 Mô phỏng cân bằng: `mix mu.simulate --runs 100` (thêm `--gear full` để so khi mặc đủ đồ).
 
 ## 7. Docker
