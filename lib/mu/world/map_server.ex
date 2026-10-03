@@ -75,6 +75,24 @@ defmodule Mu.World.MapServer do
   def use_skill(server, character_id, skill_id, target, rid),
     do: GenServer.call(server(server), {:skill, character_id, skill_id, target, rid})
 
+  @doc """
+  Lấy đồ `ground_id` khỏi mặt đất cho người chơi (trước khi Session ghi DB): còn sống, trong
+  `interaction.pickupRange` ô, hết loot protect hoặc là chủ (G13).
+  `{:ok, %{serial, template_id, ...}}` hoặc `{:error, code}`.
+  """
+  def take_ground(server, character_id, ground_id),
+    do: GenServer.call(server(server), {:take_ground, character_id, ground_id})
+
+  @doc "Trả đồ về mặt đất (ghi DB thất bại, vd. túi đầy) — giữ nguyên chủ và hạn."
+  def return_ground(server, ground), do: GenServer.call(server(server), {:return_ground, ground})
+
+  @doc """
+  Dùng potion: còn sống, hết `combat.potionCooldownMs`; hồi `effect` (`%{"hp", "mp"}`), không
+  vượt max. `:ok` hoặc `{:error, code}`.
+  """
+  def use_potion(server, character_id, effect),
+    do: GenServer.call(server(server), {:use_potion, character_id, effect})
+
   @doc "Cập nhật chỉ số sau lên cấp/cộng điểm/trang bị: `%{level?, stats?, skills?, hp?, mp?}`."
   def update_player(server, character_id, changes),
     do: GenServer.call(server(server), {:update_player, character_id, changes})
@@ -227,6 +245,46 @@ defmodule Mu.World.MapServer do
   def handle_call({:skill, id, skill_id, target, rid}, _from, s) do
     case do_skill(s, id, skill_id, target, rid) do
       {:ok, s} -> {:reply, :ok, s}
+      {:error, code} -> {:reply, {:error, code}, s}
+    end
+  end
+
+  def handle_call({:take_ground, id, gid}, _from, s) do
+    with %{} = e <- s.players[id] || {:error, "INVALID_TARGET"},
+         :ok <- if(e.state == "dead", do: {:error, "FORBIDDEN"}, else: :ok),
+         %{} = g <- s.ground[gid] || {:error, "INVALID_TARGET"},
+         :ok <- pickup_range(e, g),
+         :ok <- loot_owner(s, g, id) do
+      broadcast(s, "despawn", %{id: gid})
+      {:reply, {:ok, g}, %{s | ground: Map.delete(s.ground, gid), removed: [gid | s.removed]}}
+    else
+      {:error, code} -> {:reply, {:error, code}, s}
+    end
+  end
+
+  def handle_call({:return_ground, g}, _from, s) do
+    broadcast(s, "spawn", ground_payload(g))
+
+    {:reply, :ok,
+     %{s | ground: Map.put(s.ground, g.id, g), removed: List.delete(s.removed, g.id)}}
+  end
+
+  def handle_call({:use_potion, id, effect}, _from, s) do
+    t = now(s)
+
+    with %{} = e <- s.players[id] || {:error, "INVALID_TARGET"},
+         :ok <- if(e.state == "dead", do: {:error, "FORBIDDEN"}, else: :ok),
+         :ok <- if(t >= Map.get(e.cooldowns, "potion", 0), do: :ok, else: {:error, "COOLDOWN"}) do
+      e = %{
+        e
+        | hp: min(e.stats.hp_max, e.hp + (effect["hp"] || 0)),
+          mp: min(e.stats.mp_max, e.mp + (effect["mp"] || 0)),
+          cooldowns:
+            Map.put(e.cooldowns, "potion", t + Config.get(["combat", "potionCooldownMs"]))
+      }
+
+      {:reply, :ok, put_entity(s, id, e)}
+    else
       {:error, code} -> {:reply, {:error, code}, s}
     end
   end
@@ -696,6 +754,18 @@ defmodule Mu.World.MapServer do
         dead_at: nil,
         last_combat_at: nil
     }
+  end
+
+  defp pickup_range(e, g) do
+    if Pathfinding.chebyshev({e.x, e.y}, {g.x, g.y}) <=
+         Config.get(["interaction", "pickupRange"]),
+       do: :ok,
+       else: {:error, "OUT_OF_RANGE"}
+  end
+
+  # trong lootProtectSeconds chỉ chủ (người gây nhiều sát thương nhất) được nhặt (G13)
+  defp loot_owner(s, g, id) do
+    if g.owner == id or now(s) >= g.protect_until, do: :ok, else: {:error, "NOT_OWNER"}
   end
 
   defp combat_remaining(s, %{last_combat_at: nil}) when is_map(s), do: 0

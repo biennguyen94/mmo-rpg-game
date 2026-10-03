@@ -25,12 +25,27 @@ defmodule Mu.Game.Data do
   {p2, monsters} = load.("monsters.json", "monsters", "id")
   {p3, skills} = load.("skills.json", "skills", "id")
   {p4, drops} = load.("drops.json", "drops", "monsterId")
-  for p <- [p1, p2, p3, p4], do: @external_resource(p)
+  {p5, items} = load.("items.json", "items", "templateId")
+  {p6, shops} = load.("shop.json", "shops", "npcId")
+  for p <- [p1, p2, p3, p4, p5, p6], do: @external_resource(p)
 
   @classes classes
   @monsters monsters
   @skills skills
   @drops drops
+  @items items
+  @shops shops
+
+  for {npc, shop} <- @shops, t <- shop["items"], not Map.has_key?(@items, t) do
+    raise "shop.json: #{npc} bán #{t} không có trong items.json"
+  end
+
+  for {_, d} <- @drops,
+      g <- d["groups"],
+      e <- g["entries"],
+      not Map.has_key?(@items, e["item"]) do
+    raise "drops.json: #{e["item"]} không có trong items.json"
+  end
 
   for {id, c} <- @classes, d = c["derived"], k <- @required, not Map.has_key?(d, k) do
     raise "classes.json: derived của #{id} thiếu #{k}"
@@ -47,6 +62,13 @@ defmodule Mu.Game.Data do
 
   def skills, do: @skills
   def skill(id), do: Map.get(@skills, id)
+
+  @doc "Template item (`priv/game_data/items.json`, sinh bởi `mix mu.items.import`)."
+  def items, do: @items
+  def item(template_id), do: Map.get(@items, template_id)
+
+  @doc "Cửa hàng của NPC (`nil` nếu NPC không bán gì)."
+  def shop(npc_id), do: Map.get(@shops, npc_id)
 
   @doc "Bảng rơi đồ của quái (`nil` nếu không có)."
   def drops(monster_id), do: Map.get(@drops, monster_id)

@@ -1,0 +1,15 @@
+{
+  "source": "docs/kb/KB_CONFIG.md §4 (shop Phase 1: chỉ HP potion; mp_potion_small chỉ có qua drop). Giá = buyPrice của template (items.json), bán lại = sellPrice.",
+  "shops": [
+    {
+      "npcId": "lorencia_potion_merchant",
+      "name": "Potion Merchant",
+      "mapId": "lorencia",
+      "items": ["hp_potion_small"],
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §4"
+    }
+  ]
+}

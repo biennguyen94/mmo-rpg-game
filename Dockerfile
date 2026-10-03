@@ -29,6 +29,8 @@ RUN mix deps.compile
 COPY priv priv
 COPY lib lib
 RUN mix compile
+# icon_map.json (gitignore): image không có icon MU-derived → mọi item dùng placeholder
+RUN mix mu.icons.index
 
 COPY config/runtime.exs config/
 COPY rel rel

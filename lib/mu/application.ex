@@ -11,6 +11,7 @@ defmodule Mu.Application do
       {Phoenix.PubSub, name: Mu.PubSub},
       Mu.RateLimit,
       Mu.Accounts.WsTicket,
+      Mu.Game.OrphanSweeper,
       # 1 Session / tài khoản đang online (KB_TECH_STACK §4)
       {Registry, keys: :unique, name: Mu.Game.Registry},
       {DynamicSupervisor, name: Mu.Game.SessionSupervisor, strategy: :one_for_one},

@@ -222,13 +222,8 @@ defmodule Mu.Game.Simulator do
     }
   end
 
-  @items_path Path.expand("../../../data/items/phase1.json", __DIR__)
-  @external_resource @items_path
-
-  @doc "Template item Phase 1 (nguồn `data/items/phase1.json`; M4 sẽ import vào priv)."
-  def item_templates do
-    @items_path |> File.read!() |> Jason.decode!() |> Map.fetch!("items")
-  end
+  @doc "Template item (`priv/game_data/items.json`)."
+  def item_templates, do: Map.values(Data.items())
 
   defp potion_heal do
     Enum.find(item_templates(), &(&1["templateId"] == "hp_potion_small"))["effect"]["hp"]

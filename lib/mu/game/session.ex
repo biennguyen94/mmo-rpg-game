@@ -15,6 +15,10 @@ defmodule Mu.Game.Session do
   - ngay khi lên cấp, nhận Zen (G12), cộng điểm, rời map;
   - còn lại (EXP, vị trí, HP/MP) mỗi `session.saveIntervalSeconds` nếu có đổi.
 
+  Đồ (`Mu.Game.Items`): Session giữ bản đọc lại từ DB sau mỗi thao tác; act item/Zen
+  (pickup, equip, unequip, use_item, buy, sell) idempotent theo `rid`: gửi lại cùng `rid`
+  trả kết quả cũ, không làm lại. Trang bị đổi → chỉ số mới gửi MapServer.
+
   Tab: `session.singleLoginPerAccount` — tab mới vào thì tab cũ nhận `{:session_kicked, _}`;
   nhân vật vẫn ở trên map. Tab cuối đóng: rời map ngay, hoặc ở lại
   `session.logoutInCombatSeconds` nếu đang combat (G21). Session đẩy `{:push, "player", view}`
@@ -23,15 +27,21 @@ defmodule Mu.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
-  alias Mu.Game.{Characters, Config, Engine}
-  alias Mu.World.MapServer
+  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items}
+  alias Mu.World.{Maps, MapServer, Pathfinding}
 
   # không còn tab nào trong khoảng này thì tự tắt
   @idle_timeout :timer.minutes(1)
 
+  # act tạo/đổi item hoặc Zen: idempotent theo `rid` (KB_TECHNICAL §5)
+  @item_acts ~w(pickup equip unequip use_item buy sell)
+  # số `rid` gần nhất được nhớ kết quả
+  @rid_memory 200
+
   @doc """
   Tab `pid` vào game với nhân vật `character_id`.
-  `{:ok, character, map_info}` (`map_info`: `MapServer.join/3`) hoặc `{:error, :not_found}`.
+  `{:ok, character, info}` (`info`: kết quả `MapServer.join/3` + `items`) hoặc
+  `{:error, :not_found}`.
   """
   def attach(account_id, character_id, pid), do: call(account_id, {:attach, character_id, pid})
 
@@ -78,6 +88,10 @@ defmodule Mu.Game.Session do
       # `character`: trạng thái hiện tại; `saved`: bản đã ghi DB (để biết cột nào đổi)
       character: nil,
       saved: nil,
+      items: [],
+      # rid → kết quả, kèm hàng đợi để bỏ rid cũ
+      rids: %{},
+      rid_order: :queue.new(),
       tabs: %{},
       on_map: false,
       save_timer: nil,
@@ -98,11 +112,16 @@ defmodule Mu.Game.Session do
 
         # nhân vật khác với nhân vật đang trên map (Phase 1 không xảy ra: 1 nhân vật/tài khoản)
         s = if s.character && s.character.id != character.id, do: leave_map(s), else: s
-        s = if s.saved && s.saved.id == character.id, do: s, else: %{s | saved: character}
+
+        s =
+          if s.saved && s.saved.id == character.id,
+            do: s,
+            else: %{s | saved: character, items: Items.load(character.id)}
+
         s = kick_tabs(%{s | character: character}, pid)
         s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
 
-        {:ok, info} = MapServer.join(character.map_id, map_player(character), self())
+        {:ok, info} = MapServer.join(character.map_id, map_player(character, s.items), self())
 
         c = %{
           s.character
@@ -113,11 +132,23 @@ defmodule Mu.Game.Session do
         }
 
         s = %{s | character: c, on_map: true} |> schedule_save()
-        reply({:ok, c, info}, s)
+        reply({:ok, c, Map.put(info, :items, s.items)}, s)
     end
   end
 
   def handle_call(:get, _from, s), do: reply(s.character && refresh(s).character, s)
+
+  def handle_call({:command, act, %{"rid" => rid} = payload}, _from, %{on_map: true} = s)
+      when act in @item_acts do
+    case s.rids do
+      %{^rid => result} ->
+        reply(result, s)
+
+      _ ->
+        {result, s} = run(act, payload, s)
+        reply(result, remember(s, rid, result))
+    end
+  end
 
   def handle_call({:command, act, payload}, _from, %{on_map: true} = s) do
     {result, s} = run(act, payload, s)
@@ -141,7 +172,7 @@ defmodule Mu.Game.Session do
     s =
       if levels > 0 do
         # lên cấp: hồi đầy HP/MP (G10), báo MapServer chỉ số mới
-        d = Engine.derived(s.character)
+        d = Engine.derived(s.character, Inventory.equipped_templates(s.items))
         c = %{s.character | hp_current: d.hp_max, mana_current: d.mp_max}
         sync_map(%{s | character: c}, %{hp: d.hp_max, mp: d.mp_max})
       else
@@ -221,8 +252,158 @@ defmodule Mu.Game.Session do
 
   defp run("alloc", _, s), do: {{:error, "FORBIDDEN"}, s}
 
-  # act khác: M4 (item, shop) — DEC-16
+  # ---------- Đồ & NPC ----------
+
+  defp run("pickup", %{"id" => gid}, s) when is_binary(gid) do
+    c = s.character
+
+    with {:ok, g} <- MapServer.take_ground(c.map_id, c.id, gid) do
+      case Items.pickup(c.id, g, "ground:" <> c.map_id) do
+        {:ok, res} ->
+          {:ok, s |> apply_items(res) |> notify()}
+
+        {:error, code} ->
+          # ghi DB thất bại (vd. túi đầy): đồ về lại mặt đất
+          MapServer.return_ground(c.map_id, g)
+          {{:error, code}, s}
+      end
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run("equip", %{"itemId" => id, "slot" => slot}, s) when is_binary(id) do
+    item_result(Items.equip(refresh(s).character, id, slot), s)
+  end
+
+  defp run("unequip", %{"slot" => slot} = p, s) do
+    item_result(Items.unequip(s.character.id, slot, p["toSlot"]), s)
+  end
+
+  defp run("use_item", %{"itemId" => id}, s) when is_binary(id) do
+    c = s.character
+
+    with %{location: "INVENTORY"} = it <-
+           Enum.find(s.items, &(&1.id == id)) || {:error, "NOT_OWNER"},
+         %{"potionType" => type} = t when type != nil <- Data.item(it.template_id),
+         :ok <- MapServer.use_potion(c.map_id, c.id, t["effect"]) do
+      case Items.consume(c.id, id) do
+        {:ok, res} ->
+          {:ok, s |> apply_items(res) |> refresh() |> notify()}
+
+        {:error, code} ->
+          Logger.error("Đã hồi máu nhưng không trừ được potion #{id}: #{code}")
+          {{:error, code}, s}
+      end
+    else
+      {:error, code} -> {{:error, code}, s}
+      %{location: _} -> {{:error, "INVALID_SLOT"}, s}
+      _ -> {{:error, "INVALID_TARGET"}, s}
+    end
+  end
+
+  defp run("npc_open", %{"npcId" => npc}, s) do
+    case near_shop(s, npc) do
+      {:ok, npc_id, shop} ->
+        items =
+          for tid <- shop["items"], do: %{templateId: tid, price: Data.item(tid)["buyPrice"]}
+
+        push(s, "shop", %{npcId: npc_id, name: shop["name"], items: items})
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  defp run("buy", %{"npcId" => npc, "templateId" => tid} = p, s) do
+    qty = Map.get(p, "quantity", 1)
+
+    with {:ok, npc_id, shop} <- near_shop(s, npc),
+         %{} = t <- (tid in shop["items"] && Data.item(tid)) || {:error, "INVALID_TARGET"},
+         :ok <- valid_quantity(t, qty) do
+      item_result(Items.buy(s.character.id, tid, qty, t["buyPrice"], npc_id), s)
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run("sell", %{"npcId" => npc, "itemId" => id} = p, s) when is_binary(id) do
+    qty = p["quantity"]
+
+    with {:ok, npc_id, _shop} <- near_shop(s, npc),
+         %{} = it <- Enum.find(s.items, &(&1.id == id)) || {:error, "NOT_OWNER"},
+         :ok <- if(is_nil(qty) or is_integer(qty), do: :ok, else: {:error, "INVALID_TARGET"}) do
+      price = Data.item(it.template_id)["sellPrice"]
+      item_result(Items.sell(s.character.id, id, qty, price, npc_id), s)
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp run(act, _payload, s) when act in @item_acts or act == "npc_open",
+    do: {{:error, "INVALID_TARGET"}, s}
+
+  # act khác (move_item, split, drop, chat): ngoài UI Phase 1 — DEC-16
   defp run(_act, _payload, s), do: {{:error, "FORBIDDEN"}, s}
+
+  defp valid_quantity(t, q) do
+    max = if t["stackable"], do: t["maxStack"], else: 1
+    if is_integer(q) and q in 1..max, do: :ok, else: {:error, "INVALID_TARGET"}
+  end
+
+  # NPC có cửa hàng, đứng trên map của mình, trong `interaction.npcRange` ô (G4).
+  # Nhận cả id dữ liệu (`lorencia_potion_merchant`) lẫn id entity (`npc_...`).
+  defp near_shop(s, npc) when is_binary(npc) do
+    npc_id = String.replace_prefix(npc, "npc_", "")
+    map = Maps.get(s.character.map_id)
+
+    with %{} = shop <- Data.shop(npc_id) || {:error, "INVALID_TARGET"},
+         %{} = n <- Enum.find(map.npcs, &(&1.id == npc_id)) || {:error, "INVALID_TARGET"},
+         %{x: x, y: y, dead?: false} <-
+           MapServer.player_state(map.id, s.character.id) || {:error, "FORBIDDEN"} do
+      if Pathfinding.chebyshev({x, y}, {n.x, n.y}) <= Config.get(["interaction", "npcRange"]),
+        do: {:ok, npc_id, shop},
+        else: {:error, "OUT_OF_RANGE"}
+    else
+      %{dead?: true} -> {:error, "FORBIDDEN"}
+      error -> error
+    end
+  end
+
+  defp near_shop(_s, _), do: {:error, "INVALID_TARGET"}
+
+  defp item_result({:ok, res}, s), do: {:ok, s |> apply_items(res) |> notify()}
+  defp item_result({:error, code}, s), do: {{:error, code}, s}
+
+  # Đồ đọc lại + Zen/version mới từ transaction; trang bị đổi thì báo MapServer.
+  defp apply_items(s, %{items: items, zen: zen, version: version}) do
+    equip_changed? = Inventory.equipment(items) != Inventory.equipment(s.items)
+    c = %{s.character | zen: zen, version: version}
+    s = %{s | items: items, character: c, saved: %{s.saved | zen: zen, version: version}}
+    if equip_changed?, do: sync_map(s, %{}), else: s
+  end
+
+  defp notify(s) do
+    push_player(s)
+    s
+  end
+
+  defp remember(s, rid, result) do
+    order = :queue.in(rid, s.rid_order)
+
+    if :queue.len(order) > @rid_memory do
+      {{:value, old}, order} = :queue.out(order)
+      %{s | rids: s.rids |> Map.delete(old) |> Map.put(rid, result), rid_order: order}
+    else
+      %{s | rids: Map.put(s.rids, rid, result), rid_order: order}
+    end
+  end
+
+  defp push(s, event, payload) do
+    for {_, pid} <- s.tabs, do: send(pid, {:push, event, payload})
+    :ok
+  end
 
   defp skill(s, id, target, rid) do
     with :ok <- Engine.can_use_skill(s.character, id) do
@@ -249,7 +430,9 @@ defmodule Mu.Game.Session do
     end
   end
 
-  defp map_player(c) do
+  defp map_player(c, items) do
+    equipment = Inventory.equipped_templates(items)
+
     %{
       character_id: c.id,
       name: c.name,
@@ -259,15 +442,15 @@ defmodule Mu.Game.Session do
       mp: c.mana_current,
       x: c.position_x,
       y: c.position_y,
-      stats: Engine.derived(c),
+      stats: Engine.derived(c, equipment),
       skills: Engine.skills(c)
     }
   end
 
   # Báo MapServer chỉ số mới (sau lên cấp/cộng điểm), kèm `extra` (hp/mp).
   defp sync_map(%{on_map: true, character: c} = s, extra) do
-    changes =
-      Map.merge(%{level: c.level, stats: Engine.derived(c), skills: Engine.skills(c)}, extra)
+    stats = Engine.derived(c, Inventory.equipped_templates(s.items))
+    changes = Map.merge(%{level: c.level, stats: stats, skills: Engine.skills(c)}, extra)
 
     :ok = MapServer.update_player(c.map_id, c.id, changes)
     s
@@ -358,9 +541,7 @@ defmodule Mu.Game.Session do
   end
 
   defp push_player(s) do
-    view = Characters.player_view(s.character)
-    for {_, pid} <- s.tabs, do: send(pid, {:push, "player", view})
-    :ok
+    push(s, "player", Characters.player_view(s.character, s.items))
   end
 
   defp schedule_save(%{save_timer: nil} = s) do

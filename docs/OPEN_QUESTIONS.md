@@ -109,8 +109,21 @@
 | G23 | **Gameplay:** §3 nói EXP "giảm tuyến tính tới `minExpRatio`" khi người chơi cao hơn quái quá `levelDiffPenaltyStart` cấp, nhưng không cho độ dốc | `experience.levelDiffPenaltyPerLevel = 0.1` (mỗi cấp vượt giảm 10%, sàn 0.1). **Không chạm ở Phase 1** (Spider cấp 2, maxLevel 10 → chênh tối đa 8 < 10) |
 | G24 | **Gameplay:** nhiều người cùng đánh một quái: EXP cho ai? (G12 chỉ nói Zen cho "người giết") | EXP + Zen cho người ra đòn cuối; đồ rơi thuộc người gây nhiều sát thương nhất trong 10s (G13). Party chia EXP là Phase 3 |
 | G25 | **Gameplay:** KB_CONFIG ghi 10 / 170 / 1110 Spider tới cấp 2 / 5 / 10; với `expRequired` làm tròn từng cấp (G19) ra **10 / 171 / 1111** | Giữ G19 (lệch ≤ 1 con) |
-| G26 | **Cân bằng — cần anh quyết:** vùng Spider 17×21 ô có 10 con, `aggroRange` 5 → chạy thật trên server, đánh 1 con thì **6 con cùng aggro**: mất ~150/185 HP để hạ 1 Spider (simulator đánh từng con chỉ mất ~7.6 HP/con). DK cấp 1 không có đồ gần như chắc chết khi vào giữa vùng | Chưa đổi số. Đề xuất (chọn một): (a) giảm `aggroRange` 5 → 3; (b) giãn vùng sinh (vd. 30×30) hoặc chia 2–3 vùng nhỏ; (c) giữ nguyên, coi là độ khó (mua potion ở NPC trước) |
+| G26 | **Cân bằng — cần anh quyết (2026-10-03: anh trả lời "ok" chung, chưa chọn → giữ nguyên số, tức (c)):** vùng Spider 17×21 ô có 10 con, `aggroRange` 5 → chạy thật trên server, đánh 1 con thì **6 con cùng aggro**: mất ~150/185 HP để hạ 1 Spider (simulator đánh từng con chỉ mất ~7.6 HP/con). DK cấp 1 không có đồ gần như chắc chết khi vào giữa vùng | Chưa đổi số. Đề xuất (chọn một): (a) giảm `aggroRange` 5 → 3; (b) giãn vùng sinh (vd. 30×30) hoặc chia 2–3 vùng nhỏ; (c) giữ nguyên, coi là độ khó (mua potion ở NPC trước) |
 | M3-1 | **Protocol:** trượt đòn thể hiện thế nào? §5 `combat` không có trường `miss` | `dmg: 0` = trượt (đòn trúng luôn ≥ `hardFloor` 1 nên không nhầm) |
 | M3-2 | **Protocol:** `state` của quái: `"idle"`, `"chase"`, `"attack"`, `"return"`, `"dead"`; người chơi: `"idle"`, `"walk"`, `"dead"` | Như bên trái |
 | M3-3 | **Protocol:** báo EXP/Zen/lên cấp | Event `player` (đầy đủ + `view`) mỗi khi đổi; client so chênh lệch để hiện `EXP_GAIN`/`LEVEL_UP` (theo P4, không thêm event) |
 | M3-4 | **Protocol:** `alloc` lỗi | Không đủ điểm → `REQUIREMENT_NOT_MET`; stat/điểm sai kiểu hoặc ≤ 0 → `FORBIDDEN` |
+
+## M4. Câu hỏi phát sinh ở M4 (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm (đề xuất) |
+|---|---|---|
+| M4-1 | **Protocol:** `equip {itemId, slot}` / `unequip {slot, toSlot}`: `slot` là số hay tên? | Số theo `KB_CONFIG §6` (0 HELM … 5 WEAPON, 6 SHIELD, 8/9 RING). Nhẫn vào 8 hoặc 9. `toSlot` bỏ trống = ô túi trống thấp nhất |
+| M4-2 | **Protocol:** `npc_open` trả `shop {npcId, items: [{templateId, price}]}` (§5) | Thêm `name` (`Potion Merchant`) để client hiện tiêu đề §19.7. `npcId` nhận cả `lorencia_potion_merchant` lẫn `npc_lorencia_potion_merchant` |
+| M4-3 | **Protocol:** dữ liệu túi đồ gửi client | Trong event `player` (DEC-42); không thêm event mới |
+| M4-4 | **Mã lỗi đồ:** | Item không phải của mình/không có → `NOT_OWNER`; đồ đang mặc mà bán/dùng, ô sai → `INVALID_SLOT`; số lượng sai, template không bán ở shop → `INVALID_TARGET`; act `move_item/split/drop/chat` (ngoài UI Phase 1) → `FORBIDDEN` |
+| M4-5 | **Gameplay:** bán potion được không? Bán một phần stack? | Được: bán item bất kỳ trong túi (không bán đồ đang mặc), `quantity` bỏ trống = cả stack (UI §19.7 bán cả stack) |
+| M4-6 | **Gameplay:** mua đồ không stack nhiều cái một lần | Shop Phase 1 chỉ bán potion; đồ không stack giới hạn `quantity = 1` |
+
+Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_raw.json`, test "template khớp dòng gốc" đang `@tag :skip` (`test/mu/game/item_import_test.exs`). Các test bắt buộc còn lại của KB_ITEM_REFERENCE §6 đã có. **Q11/A6 vẫn mở** — chưa có icon thật: `docs/ICON_REPORT.md` ghi 10/10 item dùng placeholder.

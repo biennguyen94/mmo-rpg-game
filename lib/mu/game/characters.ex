@@ -8,7 +8,7 @@ defmodule Mu.Game.Characters do
 
   alias Mu.Repo
   alias Mu.Accounts.Account
-  alias Mu.Game.{Character, Config, Data, Engine, Names, Stats}
+  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Names, Stats}
   alias Mu.World.Maps
 
   def list(account_id) do
@@ -126,8 +126,8 @@ defmodule Mu.Game.Characters do
   Trạng thái đầy đủ gửi client (event `player`, `KB_TECHNICAL §5`) kèm `view` tính sẵn
   (`Engine.derived/2`): client chỉ hiển thị, không tính công thức.
   """
-  def player_view(%Character{} = c, equipment \\ []) do
-    d = Engine.derived(c, equipment)
+  def player_view(%Character{} = c, items \\ []) do
+    d = Engine.derived(c, Inventory.equipped_templates(items))
 
     %{
       id: c.id,
@@ -159,8 +159,29 @@ defmodule Mu.Game.Characters do
         expRequired:
           if(c.level >= Engine.max_level(), do: nil, else: Engine.exp_required(c.level)),
         maxLevel: Engine.max_level(),
-        skills: Enum.sort(Engine.skills(c))
-      }
+        skills: Enum.sort(Engine.skills(c)),
+        potions: Inventory.potion_counts(items),
+        inventoryUsed: length(Inventory.inventory(items)),
+        inventorySize: Inventory.inventory_slots()
+      },
+      inventory: Enum.map(Inventory.inventory(items), &item_view/1),
+      equipment: Enum.map(Inventory.equipment(items), &item_view/1)
+    }
+  end
+
+  @doc "Một item gửi client: client tra template (tên, chỉ số, icon) theo `templateId`."
+  def item_view(it) do
+    %{
+      id: it.id,
+      serial: it.serial,
+      templateId: it.template_id,
+      quantity: it.quantity,
+      slot: it.slot,
+      level: it.item_level,
+      durability: it.durability,
+      luck: it.luck,
+      skill: it.skill,
+      excellentOptions: it.excellent_options
     }
   end
 end

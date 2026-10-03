@@ -62,5 +62,7 @@ jobs:
         run: mix compile --warnings-as-errors
       - name: Collision map khớp map JSON
         run: mix mu.maps.build --check
+      - name: items.json khớp data/items (luật KB_ITEM_REFERENCE §6)
+        run: mix mu.items.import --check
       - name: Chạy test
         run: mix test --warnings-as-errors

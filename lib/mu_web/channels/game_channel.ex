@@ -5,7 +5,8 @@ defmodule MuWeb.GameChannel do
 
   - `join("game", %{"clientVersion", "characterId"})`: `clientVersion` phải bằng
     `server.clientVersion` (P7), nhân vật phải thuộc tài khoản. Sai → `{error: "FORBIDDEN",
-    reason}`. Đúng → `%{player, entityId, map, config}`.
+    reason}`. Đúng → `%{player, entityId, map, config, data: %{items}}` (`data.items`: template
+    item để client hiển thị/tra icon).
   - `"cmd"` `{act, rid, ...}`: thành công trả reply `{:ok, %{rid}}`; lỗi trả reply
     `{:error, %{rid, error}}` **và** đẩy event `"error"` `{rid, error}` (P2).
   - Giới hạn tần suất theo nhóm `act` (P8): vượt → `RATE_LIMITED`; vượt liên tục
@@ -44,10 +45,11 @@ defmodule MuWeb.GameChannel do
             send(self(), {:after_join, info.entities})
 
             reply = %{
-              player: Characters.player_view(character),
+              player: Characters.player_view(character, info.items),
               entityId: info.entity_id,
               map: Maps.client_data(Maps.get(character.map_id)),
-              config: client_config()
+              config: client_config(),
+              data: %{items: client_items()}
             }
 
             {:ok, reply, assign(socket, character_id: character.id, limit_streak: nil)}
@@ -120,6 +122,15 @@ defmodule MuWeb.GameChannel do
   defp fail(socket, rid, code) do
     push(socket, "error", %{rid: rid, error: code})
     {:reply, {:error, %{rid: rid, error: code}}, socket}
+  end
+
+  @client_item_keys ~w(templateId name type slot stackable maxStack potionType effect attackMin
+                       attackMax defense defenseRate speed hpBonus durability classes requirements
+                       iconRef iconPlaceholder buyPrice sellPrice)
+
+  # Template item cho client hiển thị (tên, chỉ số, yêu cầu, iconRef); không có công thức
+  defp client_items do
+    for {_, t} <- Mu.Game.Data.items(), do: Map.take(t, @client_item_keys)
   end
 
   # Phần config client cần (không chứa công thức gameplay: KB_TECH_STACK §6)
