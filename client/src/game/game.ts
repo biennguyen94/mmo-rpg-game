@@ -17,6 +17,7 @@ import {
   type SnapshotPayload,
   type SpawnPayload,
   type MapChangePayload,
+  type ChatPayload,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -24,6 +25,7 @@ import type { Stat } from "../logic/alloc.js";
 import type { IconMap } from "../logic/icons.js";
 import { equipSlotFor, firstFreeSlot, pickPotion, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
+import { parseChat, pushChat } from "../logic/chat.js";
 import { ServerClock } from "../state/interp.js";
 import { World, type Entity } from "../state/world.js";
 import { GameUI, type PanelName, type UiState } from "../ui/game_ui.js";
@@ -79,6 +81,7 @@ export class GameClient {
       cast: (skill, target) => void this.cast(skill, target),
       aim: (skill) => ((this.aiming = skill), this.ui.closeContext(), this.render()),
       cancelAim: () => ((this.aiming = null), this.render()),
+      sendChat: (line) => void this.sendChat(line),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -121,6 +124,7 @@ export class GameClient {
       soundOn: Sound.on,
       aiming: null,
       serverNow: Date.now(),
+      chat: this.state?.chat ?? [],
     };
     this.buildView(r.map);
     this.render();
@@ -190,6 +194,9 @@ export class GameClient {
         break;
       case "player":
         this.onPlayer(p as Player);
+        break;
+      case "chat":
+        this.state.chat = pushChat(this.state.chat, p as ChatPayload);
         break;
       case "map_change":
         this.onMapChange(p as MapChangePayload);
@@ -328,6 +335,17 @@ export class GameClient {
   private startAttack(target: string, skill: string | null): void {
     this.pending = null;
     this.auto.start(target, skill);
+  }
+
+  /** Chat (P2-M5): `/w Tên …` = nhắn riêng; lỗi hiện ở panel Thông báo. */
+  private async sendChat(line: string): Promise<void> {
+    const c = parseChat(line);
+    if (!c) return;
+    const r = await this.conn.cmd("chat", c);
+    if (r.ok || !this.state) return;
+    if (r.error === "INVALID_TARGET" && c.channel === "WHISPER") this.notices.add("ERROR", `Không có người chơi "${c.to}" đang online.`);
+    else if (r.error !== "FORBIDDEN") this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
+    this.render();
   }
 
   /** Skill hỗ trợ (heal/buff) lên người chơi `target` (null = bản thân). */

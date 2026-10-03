@@ -5,7 +5,8 @@ import { AutoAttack, approach } from "../src/logic/autoattack.js";
 import { bucket, iconPath } from "../src/logic/icons.js";
 import { defaultSplit, dragCommand, twoHandConflict, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
 import { NoticeLog, diffPlayer } from "../src/logic/notices.js";
-import { RidGen, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
+import { CHAT_KEEP, chatLine, parseChat, pushChat } from "../src/logic/chat.js";
+import { RidGen, type ChatPayload, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
 import { InterpBuffer, ServerClock } from "../src/state/interp.js";
 import { World } from "../src/state/world.js";
 
@@ -214,4 +215,22 @@ test("twoHandConflict: cung khóa khiên và ngược lại (P2-5)", () => {
   assert.equal(twoHandConflict(shield, 6, [item("b", "bow", 5)], tpl, two), true);
   assert.equal(twoHandConflict(shield, 6, [item("w", "sword", 5)], tpl, two), false);
   assert.equal(twoHandConflict(tpl.get("sword")!, 5, [item("s", "shield", 6)], tpl, two), false);
+});
+
+test("chat: /w Tên nội dung = WHISPER, còn lại NORMAL; định dạng dòng; giữ 50 tin (P2-M5)", () => {
+  assert.deepEqual(parseChat("  chào cả nhà "), { channel: "NORMAL", text: "chào cả nhà" });
+  assert.deepEqual(parseChat("/w Elf01 hello bạn"), { channel: "WHISPER", to: "Elf01", text: "hello bạn" });
+  assert.deepEqual(parseChat("/M Elf01 x"), { channel: "WHISPER", to: "Elf01", text: "x" });
+  assert.equal(parseChat("/w Elf01"), null);
+  assert.equal(parseChat("   "), null);
+  const msg = (channel: "NORMAL" | "WHISPER" | "SYSTEM", from: string, to?: string) => ({ channel, from, text: "t", t: 0, to });
+  assert.deepEqual(chatLine(msg("NORMAL", "Ann"), "Me"), { cls: "normal", head: "Ann: ", text: "t" });
+  assert.equal(chatLine(msg("NORMAL", "Me"), "Me").cls, "me");
+  assert.equal(chatLine(msg("WHISPER", "Ann"), "Me").head, "[Mật] Ann: ");
+  assert.equal(chatLine(msg("WHISPER", "Me", "Ann"), "Me").head, "[Mật → Ann] ");
+  assert.equal(chatLine(msg("SYSTEM", "Hệ thống"), "Me").head, "[Hệ thống] ");
+  let log: ChatPayload[] = [];
+  for (let i = 0; i < 60; i++) log = pushChat(log, { ...msg("NORMAL", "A"), text: String(i) });
+  assert.equal(log.length, CHAT_KEEP);
+  assert.equal(log[0].text, "10");
 });

@@ -89,6 +89,7 @@ node client/e2e/acceptance.mjs http://localhost:4000 docs/screenshots   # cần 
 node client/e2e/classes.mjs http://localhost:4000 docs/screenshots      # Phase 2 (P2-M2): tạo DW/ELF, Elf bắn xa
 node client/e2e/skills.mjs http://localhost:4000 docs/screenshots       # Phase 2 (P2-M3): cần server chạy với TRUSTED_PROXIES=127.0.0.1
 node client/e2e/maps.mjs http://localhost:4000 docs/screenshots         # Phase 2 (P2-M4): cổng Lorencia ↔ Noria (TRUSTED_PROXIES như trên)
+node client/e2e/chat.mjs http://localhost:4000 docs/screenshots         # Phase 2 (P2-M5): chat (TRUSTED_PROXIES như trên)
 # soak: server với TRUSTED_PROXIES=127.0.0.1 và tên node để probe
 TRUSTED_PROXIES=127.0.0.1 elixir --sname mu -S mix phx.server &
 node client/e2e/soak.mjs http://localhost:4000 20 60 &      # 20 bot × 60 phút

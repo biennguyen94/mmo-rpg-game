@@ -189,6 +189,15 @@ export interface MapData {
   portals: { id: string; x: number; y: number; w: number; h: number; to: string; levelRequired: number }[];
 }
 
+/** Event `chat` (§5): `{channel, from, text, t}`; bản sao whisper của người gửi có `to`. */
+export interface ChatPayload {
+  channel: "NORMAL" | "PARTY" | "GUILD" | "WHISPER" | "SYSTEM";
+  from: string;
+  text: string;
+  t: number;
+  to?: string;
+}
+
 /** Qua cổng (P2-M4): dữ liệu như reply join. */
 export interface MapChangePayload {
   map: MapData;

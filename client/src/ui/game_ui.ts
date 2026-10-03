@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ItemView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
+import type { ChatPayload, ItemView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
@@ -18,6 +18,7 @@ import {
   type Templates,
 } from "../logic/items.js";
 import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
+import { chatLine } from "../logic/chat.js";
 import { clear, h, mount } from "./dom.js";
 
 export type PanelName = "character" | "inventory" | "notices" | "shop" | "settings";
@@ -37,6 +38,8 @@ export interface UiState {
   aiming: string | null;
   /** Giờ server (ms) để đếm ngược buff. */
   serverNow: number;
+  /** Tin chat gần nhất (tối đa 50, P2-M5). */
+  chat: ChatPayload[];
 }
 
 export interface UiActions {
@@ -64,6 +67,8 @@ export interface UiActions {
   /** Bắt đầu chọn ô cho skill POINT (teleport). */
   aim(skill: string): void;
   cancelAim(): void;
+  /** Gửi dòng chat người chơi gõ (`/w Tên …` = nhắn riêng). */
+  sendChat(line: string): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
@@ -84,6 +89,16 @@ export class GameUI {
   private tip: HTMLElement | null = null;
   private noticeFilter: "all" | "unread" = "all";
   private dragging: DragStart | null = null;
+  // khung chat (P2-M5): log + ô nhập (ẩn tới khi Enter / nút 💬)
+  private chatLog = h("div", { class: "log", "data-test": "chat-log" });
+  private chatInput = h("input", {
+    class: "chatinput",
+    "data-test": "chat-input",
+    maxlength: 100,
+    placeholder: "Gõ tin · /w Tên … = nhắn riêng",
+  }) as HTMLInputElement;
+  private chatBox = h("div", { class: "chatbox", "data-test": "chat" }, this.chatLog, this.chatInput);
+  private chatShown: ChatPayload | null | undefined = undefined;
   private alloc: AllocBatcher;
   private state!: UiState;
 
@@ -92,7 +107,18 @@ export class GameUI {
     private readonly a: UiActions,
   ) {
     this.alloc = new AllocBatcher((stat, points) => a.alloc(stat, points));
-    this.view = h("div", { class: "view" }, this.panelHost, this.overlay, this.mobile);
+    this.view = h("div", { class: "view" }, this.chatBox, this.panelHost, this.overlay, this.mobile);
+    this.chatInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (this.chatInput.value.trim()) this.a.sendChat(this.chatInput.value);
+        this.chatInput.value = "";
+        this.closeChat();
+      } else if (ev.key === "Escape") {
+        ev.preventDefault();
+        this.closeChat();
+      }
+    });
     this.root = h("div", { class: "game" }, this.hud, this.exp, this.view, this.dock);
     mount(parent, this.root);
     document.addEventListener("keydown", this.onKey);
@@ -112,6 +138,36 @@ export class GameUI {
     this.renderPanel();
     this.renderMobile();
     this.renderNet();
+    this.renderChat();
+  }
+
+  // ---------- Chat (P2-M5) ----------
+
+  /** Dựng lại log chỉ khi có tin mới (giữ vị trí cuộn khi người chơi đang xem tin cũ). */
+  private renderChat(): void {
+    const last = this.state.chat[this.state.chat.length - 1] ?? null;
+    if (last === this.chatShown) return;
+    this.chatShown = last;
+    const atBottom = this.chatLog.scrollTop + this.chatLog.clientHeight >= this.chatLog.scrollHeight - 4;
+    const me = this.state.player.name;
+    mount(
+      this.chatLog,
+      ...this.state.chat.map((c) => {
+        const l = chatLine(c, me);
+        return h("div", { class: `line ${l.cls}` }, h("b", {}, l.head), l.text);
+      }),
+    );
+    if (atBottom) this.chatLog.scrollTop = this.chatLog.scrollHeight;
+  }
+
+  openChat(): void {
+    this.chatBox.classList.add("typing");
+    this.chatInput.focus();
+  }
+
+  private closeChat(): void {
+    this.chatBox.classList.remove("typing");
+    this.chatInput.blur();
   }
 
   // ---------- HUD + EXP (§19.1) ----------
@@ -682,6 +738,7 @@ export class GameUI {
       btn("🧪", v.potions.HP, () => this.a.usePotion("HP"), "hp"),
       btn("💧", v.potions.MP, () => this.a.usePotion("MP"), "mp"),
       btn("✋", null, () => this.a.pickupNearest(), "pickup"),
+      btn("💬", null, () => this.openChat(), "chat"),
     );
   }
 
@@ -730,6 +787,9 @@ export class GameUI {
     else if (k === " ") {
       ev.preventDefault();
       this.a.pickupNearest();
+    } else if (k === "Enter" && !this.state.panel) {
+      ev.preventDefault();
+      this.openChat();
     } else return;
   };
 
@@ -737,6 +797,9 @@ export class GameUI {
     const t = ev.target as Node;
     if (this.menu && !this.menu.contains(t) && !(t as HTMLElement).closest?.('[data-tab="menu"]')) this.closeMenu();
     if (this.ctx && !this.ctx.contains(t)) this.closeContext();
+    // chạm ra ngoài khung chat khi ô nhập trống: đóng
+    if (this.chatBox.classList.contains("typing") && !this.chatBox.contains(t) && !this.chatInput.value && !(t as HTMLElement).closest?.('[data-mobile="chat"]'))
+      this.closeChat();
     if (this.tip && !this.tip.contains(t) && !(t as HTMLElement).closest?.("[data-slot],[data-item]")) this.hideTooltip();
   };
 
