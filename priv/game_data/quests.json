@@ -1,0 +1,274 @@
+{
+  "source": "P6-2 (P6-M2): 10 quest cấp 1 → 28; nhận / trả ở bất kỳ Quest Master nào (Lorencia, Noria). objectives: kill {monsterId, count} | collect {templateId, count} (nộp khi trả) | level {min}. rewards: exp, zen, items.",
+  "quests": [
+    {
+      "id": "q_spider",
+      "name": "Diệt Nhện",
+      "minLevel": 1,
+      "description": "Nhện bò lên tới cổng thành Lorencia. Hạ 10 con.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "spider",
+          "count": 10
+        }
+      ],
+      "rewards": {
+        "exp": 100,
+        "zen": 300,
+        "items": [
+          {
+            "templateId": "hp_potion_small",
+            "quantity": 5
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_budge",
+      "name": "Rồng con Budge",
+      "minLevel": 3,
+      "description": "Budge Dragon phá ruộng phía bắc Lorencia.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "budge_dragon",
+          "count": 12
+        }
+      ],
+      "rewards": {
+        "exp": 300,
+        "zen": 800,
+        "items": [
+          {
+            "templateId": "mp_potion_small",
+            "quantity": 5
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_bull",
+      "name": "Đấu sĩ Bò",
+      "minLevel": 5,
+      "description": "Bull Fighter chặn đường lên phía bắc.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "bull_fighter",
+          "count": 15
+        }
+      ],
+      "rewards": {
+        "exp": 600,
+        "zen": 1500,
+        "items": [
+          {
+            "templateId": "hp_potion_small",
+            "quantity": 10
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_ring",
+      "name": "Chiếc nhẫn thất lạc",
+      "minLevel": 6,
+      "description": "Quái quanh Lorencia nhặt được nhẫn của dân làng. Mang về 1 chiếc (nộp khi trả).",
+      "objectives": [
+        {
+          "type": "collect",
+          "templateId": "ring_hp_t0",
+          "count": 1
+        }
+      ],
+      "rewards": {
+        "exp": 800,
+        "zen": 3000,
+        "items": []
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_hound",
+      "name": "Bầy chó săn",
+      "minLevel": 8,
+      "description": "Chó săn lảng vảng ở tây nam Lorencia.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "hound",
+          "count": 15
+        }
+      ],
+      "rewards": {
+        "exp": 1200,
+        "zen": 2500,
+        "items": [
+          {
+            "templateId": "hp_potion_medium",
+            "quantity": 5
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_grow",
+      "name": "Trưởng thành",
+      "minLevel": 1,
+      "description": "Đạt cấp 10 rồi quay lại.",
+      "objectives": [
+        {
+          "type": "level",
+          "min": 10
+        }
+      ],
+      "rewards": {
+        "exp": 0,
+        "zen": 5000,
+        "items": [
+          {
+            "templateId": "mp_potion_medium",
+            "quantity": 5
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_goblin",
+      "name": "Yêu tinh Noria",
+      "minLevel": 12,
+      "description": "Goblin quấy rối phía tây nam Noria.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "goblin",
+          "count": 20
+        }
+      ],
+      "rewards": {
+        "exp": 3000,
+        "zen": 4000,
+        "items": [
+          {
+            "templateId": "hp_potion_medium",
+            "quantity": 10
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_hunter",
+      "name": "Kẻ săn bị săn",
+      "minLevel": 18,
+      "description": "Hạ 15 Hunter và mang 10 bình máu vừa cho đội tuần tra (nộp khi trả).",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "hunter",
+          "count": 15
+        },
+        {
+          "type": "collect",
+          "templateId": "hp_potion_medium",
+          "count": 10
+        }
+      ],
+      "rewards": {
+        "exp": 5000,
+        "zen": 6000,
+        "items": []
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_forest",
+      "name": "Thợ săn Noria",
+      "minLevel": 22,
+      "description": "Forest Monster lấn rừng phía tây bắc Noria.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "forest_monster",
+          "count": 20
+        }
+      ],
+      "rewards": {
+        "exp": 7000,
+        "zen": 3000,
+        "items": [
+          {
+            "templateId": "jewel_bless",
+            "quantity": 1
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    },
+    {
+      "id": "q_golem",
+      "name": "Người khổng lồ đá",
+      "minLevel": 26,
+      "description": "Stone Golem và Agon giữ lối lên phía bắc Noria.",
+      "objectives": [
+        {
+          "type": "kill",
+          "monsterId": "stone_golem",
+          "count": 15
+        },
+        {
+          "type": "kill",
+          "monsterId": "agon",
+          "count": 10
+        }
+      ],
+      "rewards": {
+        "exp": 12000,
+        "zen": 10000,
+        "items": [
+          {
+            "templateId": "jewel_soul",
+            "quantity": 1
+          }
+        ]
+      },
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "P6-2 (duyệt 2026-10-03, docs/OPEN_QUESTIONS.md): quest tự định nghĩa của dự án (KB_GAME_DESIGN §15 interface Quest; KB_REFERENCE §5 tên quest MU không canonical)"
+    }
+  ]
+}

@@ -400,3 +400,24 @@ test("giao dịch (P5-M4): dòng thông báo theo kết quả", async () => {
   assert.equal(tradeResultText("far", "Ann"), "Giao dịch với Ann bị hủy: hai bên ở quá xa.");
   assert.equal(tradeResultText("cancelled", "Ann", "Ann"), "Giao dịch với Ann đã bị hủy (Ann).");
 });
+
+test("quest (P6-M2): chữ mục tiêu, thưởng, dòng theo dõi", async () => {
+  const { goalText, rewardText, trackerLine } = await import("../src/logic/quests.js");
+  assert.equal(goalText({ type: "kill", target: "spider", name: "Spider", need: 10 }, 7), "Hạ Spider 7/10");
+  assert.equal(goalText({ type: "collect", target: "ring_hp_t0", name: "Ring", need: 1 }), "Nộp Ring 1");
+  assert.equal(goalText({ type: "level", target: null, name: null, need: 10 }, 8), "Đạt cấp 10 (8/10)");
+  const r = rewardText({ exp: 100, zen: 1500, items: [{ templateId: "hp_potion_small", quantity: 5 }] }, () => "HP Potion");
+  assert.equal(r, `+100 EXP · +${(1500).toLocaleString("vi-VN")} Zen · HP Potion ×5`);
+  const q = {
+    id: "q",
+    name: "Diệt Nhện",
+    description: "",
+    minLevel: 1,
+    goals: [],
+    rewards: { exp: 0, zen: 0, items: [] },
+    objectives: [{ type: "kill" as const, target: "spider", name: "Spider", need: 10, have: 7 }],
+    complete: false,
+  };
+  assert.equal(trackerLine(q), "Diệt Nhện: Hạ Spider 7/10");
+  assert.match(trackerLine({ ...q, complete: true }), /^✔ Diệt Nhện/);
+});

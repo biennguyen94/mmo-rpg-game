@@ -82,12 +82,16 @@ defmodule Mu.World.MapsTest do
         refute Maps.walkable?(map, n.x, n.y)
         assert Maps.safe?(map, n.x, n.y)
 
-        if n.role == "warehouse",
-          do: assert({Data.shop(n.id), n.name} == {nil, "Warehouse Keeper"}),
-          else: assert(%{"mapId" => @id} = Data.shop(n.id))
+        case n.role do
+          "warehouse" -> assert {Data.shop(n.id), n.name} == {nil, "Warehouse Keeper"}
+          "quest" -> assert {Data.shop(n.id), n.name} == {nil, "Quest Master"}
+          _ -> assert %{"mapId" => @id} = Data.shop(n.id)
+        end
       end
 
       assert Enum.count(map.npcs, &(&1.role == "warehouse")) == 1
+      # P6-M2: một Quest Master mỗi thị trấn
+      assert Enum.count(map.npcs, &(&1.role == "quest")) == 1
     end
 
     test "#{id}: vùng sinh quái trong map, ngoài safe zone, đủ ô, quái đúng map" do

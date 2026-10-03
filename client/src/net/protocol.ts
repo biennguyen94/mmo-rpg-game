@@ -314,6 +314,44 @@ export interface RankingPayload {
   updatedAt: number;
 }
 
+/** Mục tiêu quest (P6-M2): `kill` quái / `collect` vật phẩm (nộp khi trả) / `level` đạt cấp. */
+export interface QuestGoal {
+  type: "kill" | "collect" | "level";
+  target: string | null;
+  /** Tên quái / item (server gửi; `level` = null). */
+  name: string | null;
+  need: number;
+}
+
+export interface QuestRewards {
+  exp: number;
+  zen: number;
+  items: { templateId: string; quantity: number }[];
+}
+
+export interface QuestBrief {
+  id: string;
+  name: string;
+  description: string;
+  minLevel: number;
+  goals: QuestGoal[];
+  rewards: QuestRewards;
+}
+
+export interface QuestActive extends QuestBrief {
+  objectives: (QuestGoal & { have: number })[];
+  complete: boolean;
+}
+
+/** Event `quests` (P6-M2): quest đang làm / đã xong / nhận được; `npcId` khi mở Quest Master. */
+export interface QuestsPayload {
+  active: QuestActive[];
+  done: string[];
+  available: QuestBrief[];
+  maxActive: number;
+  npcId?: string;
+}
+
 /** Event `upgrade` (P5-M2): kết quả ép jewel lên đồ. */
 export interface UpgradePayload {
   itemId: string;

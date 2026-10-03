@@ -137,7 +137,7 @@
       "levelRequired": 0
     }
   ],
-  "npcs": [{"id": "noria_potion_merchant", "x": 26, "y": 47}, {"id": "noria_weapon_merchant", "x": 37, "y": 47}, {"id": "noria_warehouse", "x": 26, "y": 54, "role": "warehouse", "name": "Warehouse Keeper"}],
+  "npcs": [{"id": "noria_potion_merchant", "x": 26, "y": 47}, {"id": "noria_weapon_merchant", "x": 37, "y": 47}, {"id": "noria_warehouse", "x": 26, "y": 54, "role": "warehouse", "name": "Warehouse Keeper"}, {"id": "noria_quest_master", "x": 37, "y": 54, "role": "quest", "name": "Quest Master"}],
   "tiles": [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",

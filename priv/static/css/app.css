@@ -277,3 +277,17 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 table.ranking { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.ranking th, table.ranking td { padding: 4px 6px; border-bottom: 1px solid #2a2e40; text-align: left; }
 table.ranking tr.me td { color: #ffd36b; font-weight: 600; }
+
+/* Nhiệm vụ (P6-M2): panel + dòng theo dõi góc trên phải (dưới buff) */
+.panel .quest { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; }
+.panel .quest.done { border-color: #5ccf7a; }
+.panel .quest .qname { font-weight: 600; }
+.panel .quest .qname small { color: #aab; font-weight: 400; }
+.panel .quest .qdesc { color: #bbc; font-size: 12px; margin: 2px 0 4px; }
+.panel .quest .qgoal { font-size: 13px; }
+.panel .quest .qgoal.ok { color: #8fd18f; }
+.panel .quest .qreward { color: #ffd166; font-size: 12px; margin-top: 4px; }
+.panel .quest .btns { display: flex; gap: 6px; margin-top: 6px; }
+.panel h3 { font-size: 13px; margin: 10px 0 2px; color: #ccd; }
+.questtrack { position: absolute; top: 30px; right: 8px; z-index: 43; max-width: min(260px, 50%); display: grid; gap: 2px; font-size: 12px; text-align: right; text-shadow: 0 0 3px #000; color: #e8e8e8; cursor: pointer; }
+.questtrack .ok { color: #8fd18f; }

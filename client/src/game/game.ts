@@ -28,6 +28,8 @@ import {
   type UpgradePayload,
   type TradePayload,
   type RankingPayload,
+  type QuestsPayload,
+  type QuestRewards,
   type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
@@ -36,6 +38,7 @@ import type { IconMap } from "../logic/icons.js";
 import { BAG_COLUMNS, autoSlot, equipSlotFor, firstFreeSlot, pickPotion, tradeResultText, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
 import { parseChat, pushChat } from "../logic/chat.js";
+import { rewardText } from "../logic/quests.js";
 import { ServerClock } from "../state/interp.js";
 import { World, type Entity } from "../state/world.js";
 import { GameUI, type PanelName, type UiState } from "../ui/game_ui.js";
@@ -147,6 +150,9 @@ export class GameClient {
       tradeConfirm: () => void this.send("trade_confirm"),
       tradeCancel: () => void this.send("trade_cancel"),
       ranking: (board) => void this.send("ranking", { board }),
+      questAccept: (questId) => this.state?.questNpc && void this.send("quest_accept", { questId, npcId: this.state.questNpc }),
+      questTurnin: (questId) => this.state?.questNpc && void this.send("quest_turnin", { questId, npcId: this.state.questNpc }),
+      questAbandon: (questId) => void this.send("quest_abandon", { questId }),
     });
 
     this.conn = new Connection(token, character.id, {
@@ -202,6 +208,8 @@ export class GameClient {
       trade: null,
       tradeAsk: null,
       ranking: null,
+      quests: this.state?.quests ?? null,
+      questNpc: null,
       partyInvite: null,
       // guild: event `guild` tới ngay sau join (Session đẩy)
       guild: this.state?.guild ?? null,
@@ -215,6 +223,8 @@ export class GameClient {
     };
     this.buildView(r.map);
     this.render();
+    // quest đang làm cho dòng theo dõi (P6-M2)
+    void this.send("quest_list");
   }
 
   /** Dựng game view cho `map` (vào game hoặc qua cổng). */
@@ -335,6 +345,19 @@ export class GameClient {
       case "ranking":
         this.state.ranking = p as RankingPayload;
         break;
+      case "quests": {
+        const q = p as QuestsPayload;
+        this.state.quests = q;
+        // mở Quest Master: panel ở chế độ NPC ([Nhận] / [Trả])
+        if (q.npcId) {
+          this.state.questNpc = q.npcId;
+          this.state.panel = "quests";
+        }
+        break;
+      }
+      case "quest_done":
+        this.onQuestDone(p.name as string, p.rewards as QuestRewards);
+        break;
       case "trade_invite":
         this.state.tradeAsk = { from: p.from, until: Date.now() + (p.seconds ?? 30) * 1000 };
         Sound.play("click");
@@ -369,6 +392,14 @@ export class GameClient {
         break;
     }
     this.render();
+  }
+
+  /** Trả quest xong (P6-M2): thông báo thưởng. */
+  private onQuestDone(name: string, r: QuestRewards): void {
+    if (!this.state) return;
+    const templates = this.state.templates;
+    this.notices.add("SYSTEM", `Hoàn thành nhiệm vụ ${name}: ${rewardText(r, (t) => templates.get(t)?.name ?? t)}.`);
+    Sound.play("levelup");
   }
 
   /** Kết quả ép jewel (P5-M2): thông báo + âm thanh. */
@@ -636,6 +667,11 @@ export class GameClient {
     if (p === "mail") void this.send("mail_list");
     // mở Xếp hạng: xin bảng đang xem (mặc định "Tất cả")
     if (p === "ranking") void this.send("ranking", { board: this.state.ranking?.board ?? "level" });
+    // mở Nhiệm vụ từ menu: chỉ xem (nhận / trả phải đứng ở Quest Master)
+    if (p === "quests") {
+      this.state.questNpc = null;
+      void this.send("quest_list");
+    }
     if (p !== "shop") this.shop = null;
     this.render();
   }
@@ -658,11 +694,16 @@ export class GameClient {
 
   private closeShopIfFar(): void {
     if (!this.state || !this.join) return;
-    const npcId = this.state.panel === "shop" ? this.shop?.npcId : this.state.panel === "warehouse" ? this.state.warehouse?.npcId : null;
+    const quest = this.state.panel === "quests" ? this.state.questNpc : null;
+    const npcId = this.state.panel === "shop" ? this.shop?.npcId : this.state.panel === "warehouse" ? this.state.warehouse?.npcId : quest;
     if (!npcId) return;
     const me = this.world.entities.get(this.selfId);
     const npc = this.world.entities.get(`npc_${npcId}`);
-    if (me && npc && chebyshev(me.x, me.y, npc.x, npc.y) > this.join.config.npcRange) this.state.panel = null;
+    if (me && npc && chebyshev(me.x, me.y, npc.x, npc.y) > this.join.config.npcRange) {
+      // rời Quest Master: panel về chế độ xem (không đóng)
+      if (quest) this.state.questNpc = null;
+      else this.state.panel = null;
+    }
   }
 
   private tick(): void {
