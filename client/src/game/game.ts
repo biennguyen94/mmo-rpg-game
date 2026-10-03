@@ -148,6 +148,7 @@ export class GameClient {
       mail: this.state?.mail ?? [],
       // nhóm sống trên server (RAM): vào lại thì event `party` tới sau
       party: this.state?.party ?? null,
+      pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
       partyInvite: null,
     };
     this.buildView(r.map);
@@ -199,6 +200,8 @@ export class GameClient {
     switch (ev) {
       case "spawn":
         this.world.spawn(p as SpawnPayload, now);
+        // chính mình xuất hiện lại (hồi sinh ở thị trấn, P4-M1 tìm ra): HUD lấy vị trí / HP mới
+        if (p.id === this.selfId) this.state.player = { ...this.state.player, x: p.x, y: p.y, hp: p.hp ?? this.state.player.hp };
         // tiếng rơi đồ: chỉ khi rơi gần mình (AOI P3-M1: đồ ở xa đi vào tầm nhìn cũng là `spawn`)
         if ((p as SpawnPayload).kind === "item" && Math.max(Math.abs(p.x - this.state.player.x), Math.abs(p.y - this.state.player.y)) <= 3) Sound.play("click");
         break;
@@ -309,7 +312,9 @@ export class GameClient {
   private async send(act: string, payload: object = {}, quiet: string[] = []): Promise<boolean> {
     const r = await this.conn.cmd(act, payload);
     if (!r.ok && !quiet.includes(r.error)) {
-      this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
+      // P4-M1: sát nhân bị NPC từ chối
+      const murderer = r.error === "FORBIDDEN" && this.state?.player.view.pkState === "MURDERER" && ["npc_open", "buy", "sell", "move_item"].includes(act);
+      this.notices.add("ERROR", murderer ? "Sát nhân không được dùng dịch vụ NPC." : (ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`));
       this.render();
     }
     return r.ok;
@@ -329,7 +334,7 @@ export class GameClient {
     if (this.aiming) return void this.castAt(this.aiming, e.x, e.y);
     if (e.kind === "player") {
       // menu skill hỗ trợ / teleport (P2-M3); không có gì thì như cũ: đi tới
-      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name, { x: tx, y: ty }) && e.id !== this.selfId) this.moveTo(tx, ty);
+      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name, { x: tx, y: ty }, e) && e.id !== this.selfId) this.moveTo(tx, ty);
     } else if (e.kind === "monster" && e.state !== "dead") {
       this.ui.monsterMenu(e.id, sx, sy);
     } else if (e.kind === "npc") {

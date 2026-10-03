@@ -3,6 +3,7 @@
 // sau mà không đổi phần khác (docs/BACKLOG.md).
 // Ô 32×32 (KB_ASSETS §3). Tile/sprite: DCSS CC0 (CREDITS.md, assets/mapping.json); ảnh nào thiếu
 // hoặc tải lỗi thì vẽ hình học thay thế, không crash (KB_ASSETS §5).
+import { nameColor } from "../logic/pvp.js";
 import type { CombatPayload, MapData } from "../net/protocol.js";
 import type { Entity, World } from "../state/world.js";
 import type { GameView, ViewCallbacks } from "./view.js";
@@ -318,7 +319,8 @@ function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dea
   g.fillStyle = "#000";
   const name = e.name;
   g.fillText(name, x + 1, y - 19);
-  g.fillStyle = "#fff";
+  // P4-M1: màu tên theo PK; kẻ gây sự nhấp nháy (2 lần / giây)
+  g.fillStyle = e.kind === "player" ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0) : "#fff";
   g.fillText(name, x, y - 20);
   if (e.hp !== null && e.maxHp && e.kind !== "npc" && !dead) {
     g.fillStyle = "#300";

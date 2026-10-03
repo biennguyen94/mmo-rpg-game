@@ -37,6 +37,9 @@ export interface PlayerView {
   defenseRate: number;
   attackSpeed: number;
   cooldownMs: number;
+  /** P4-M1: điểm / trạng thái PK. */
+  pkPoints?: number;
+  pkState?: "NORMAL" | "WARNING" | "MURDERER";
   /** MG (P3-M5): đòn phép tối đa / tốc độ / cooldown phép (§4.1); class khác null. */
   attackMaxMagic?: number | null;
   attackSpeedMagic?: number | null;
@@ -89,6 +92,9 @@ export interface SpawnPayload {
   templateId?: string;
   /** Người chơi: class (DK/DW/ELF) để chọn sprite. */
   class?: string;
+  /** Người chơi (P4-M1): trạng thái PK (màu tên), đang là kẻ gây sự (tên nhấp nháy). */
+  pkState?: "NORMAL" | "WARNING" | "MURDERER";
+  aggressor?: boolean;
 }
 
 export interface SnapshotEntity {
@@ -271,6 +277,8 @@ export interface JoinReply {
     twoHandedWeaponTypes: string[];
     /** Lời mời vào nhóm hết hạn sau ngần này giây (P3-M4). */
     partyInviteSeconds: number;
+    /** PvP (P4-M1): bật không, cấp tối thiểu (để hiện nút; server vẫn kiểm). */
+    pvp: { enabled: boolean; minLevel: number };
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

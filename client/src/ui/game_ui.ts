@@ -1,6 +1,7 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, WarehousePayload } from "../net/protocol.js";
+import type { ChatPayload, ItemView, MailView, MapData, PartyPayload, Player, ShopPayload, SkillInfo, SpawnPayload, WarehousePayload } from "../net/protocol.js";
+import { PK_LABEL, canShowAttack, needsConfirm } from "../logic/pvp.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
@@ -46,6 +47,8 @@ export interface UiState {
   /** Hộp thư (P2-M6): số chưa đọc (badge) + danh sách lần mở panel gần nhất. */
   mailUnread: number;
   mail: MailView[];
+  /** PvP (P4-M1, từ config join). */
+  pvp: { enabled: boolean; minLevel: number };
   /** Nhóm hiện tại (P3-M4), `null` = không có nhóm. */
   party: PartyPayload | null;
   /** Lời mời vào nhóm đang chờ: người mời + hạn (giờ client, ms). */
@@ -403,6 +406,8 @@ export class GameUI {
           stat("vitality", "VIT"),
           stat("energy", "ENE"),
           kv("Điểm còn", p.freeStatPoints),
+          // P4-M1: trạng thái PK
+          kv("PK", v.pkState && v.pkState !== "NORMAL" ? `${PK_LABEL[v.pkState]} (${v.pkPoints})` : PK_LABEL.NORMAL),
           h("hr", { class: "sep" }),
           kv("Dmg", `${v.attackMin} ~ ${v.attackMax}`),
           // MG (P3-M5): sức mạnh / tốc độ phép
@@ -943,7 +948,18 @@ export class GameUI {
    * Menu khi click người chơi (P2-M3): skill hỗ trợ (heal/buff) đã học lên người đó; click chính
    * mình thì thêm skill chọn ô (teleport). Trả false nếu không có gì để hiện.
    */
-  playerMenu(targetId: string, isSelf: boolean, screenX: number, screenY: number, name?: string, tile?: { x: number; y: number }): boolean {
+  /** Đã xác nhận "đánh người NORMAL sẽ bị tính PK" trong phiên này (P4-M1, hỏi một lần). */
+  private pvpConfirmed = false;
+
+  playerMenu(
+    targetId: string,
+    isSelf: boolean,
+    screenX: number,
+    screenY: number,
+    name?: string,
+    tile?: { x: number; y: number },
+    target?: SpawnPayload,
+  ): boolean {
     this.closeContext();
     const mine = this.state.player.view.skills.map((id) => this.state.skills.get(id)).filter((x) => x !== undefined);
     const ally = mine.filter((sk) => sk.targetType === "ALLY");
@@ -952,10 +968,22 @@ export class GameUI {
     const party = this.state.party;
     const canInvite =
       !isSelf && name !== undefined && !party?.members.some((m) => m.name === name) && (!party || party.leader === this.state.player.name);
-    if (ally.length + point.length === 0 && !canInvite) return false;
+    // tấn công người chơi (P4-M1): đánh thường + skill đơn mục tiêu đã học
+    const pvp = this.state.pvp;
+    const me = this.state.player;
+    const canAttack = !isSelf && target !== undefined && canShowAttack(me, target, this.state.map, pvp);
+    const singles = canAttack ? mine.filter((sk) => sk.targetType === "SINGLE" && sk.id !== "basic_attack") : [];
+    const attack = (skill: string | null) => () => {
+      if (!this.pvpConfirmed && needsConfirm(target!)) return this.confirmPk(targetId, skill, screenX, screenY);
+      this.closeContext();
+      this.a.attack(targetId, skill);
+    };
+    if (ally.length + point.length === 0 && !canInvite && !canAttack) return false;
     const menu = h(
       "div",
       { class: "ctxmenu", "data-test": "playermenu" },
+      canAttack ? h("button", { "data-test": "pvp-attack", onclick: attack(null) }, "⚔ Tấn công") : null,
+      singles.map((sk) => h("button", { "data-pvp-skill": sk.id, onclick: attack(sk.id) }, `⚔ ${sk.name} (${sk.manaCost} MP)`)),
       ally.map((sk) =>
         h("button", { "data-skill": sk.id, onclick: () => (this.closeContext(), this.a.cast(sk.id, isSelf ? null : targetId)) }, `${sk.name} (${sk.manaCost} MP)`),
       ),
@@ -969,6 +997,31 @@ export class GameUI {
     this.place(menu, screenX + 24, screenY + 8);
     this.ctx = menu;
     return true;
+  }
+
+  /** Hỏi một lần mỗi phiên trước khi đánh người NORMAL (giết sẽ bị tính PK, P4-2). */
+  private confirmPk(targetId: string, skill: string | null, x: number, y: number): void {
+    this.closeContext();
+    const menu = h(
+      "div",
+      { class: "ctxmenu", "data-test": "pvp-confirm" },
+      h("div", { class: "hint", style: "max-width:220px;padding:4px" }, "Người này không có PK. Nếu bạn giết họ, bạn sẽ bị tính điểm PK (Cảnh báo → Sát nhân)."),
+      h(
+        "button",
+        {
+          "data-test": "pvp-confirm-yes",
+          onclick: () => {
+            this.pvpConfirmed = true;
+            this.closeContext();
+            this.a.attack(targetId, skill);
+          },
+        },
+        "⚔ Vẫn tấn công",
+      ),
+      h("button", { onclick: () => this.closeContext() }, "Hủy"),
+    );
+    this.place(menu, x + 24, y + 8);
+    this.ctx = menu;
   }
 
   closeContext(): void {
