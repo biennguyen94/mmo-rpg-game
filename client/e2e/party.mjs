@@ -59,6 +59,8 @@ async function enter(user) {
 // `page` đứng ở (x, y)
 const stand = async (page, x, y) => {
   await clickAt(page, x, y);
+  // ô có người khác đứng (đông người) → menu người chơi: chọn "Đi tới đây"
+  await (await page.$('[data-test="player-goto"]'))?.click();
   return until(page, ([x, y]) => window.__mu.player().x === x && window.__mu.player().y === y, [x, y], 6000);
 };
 // `page` bấm vào người chơi tên `name` → menu → [Mời vào nhóm]

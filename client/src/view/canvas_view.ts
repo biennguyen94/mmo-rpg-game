@@ -210,7 +210,7 @@ export function createCanvasView(container: HTMLElement, map: MapData, world: Wo
     }
     if (!best && player) [best, bestD] = [player, playerD];
     if (self && (!best || (best.kind === "player" && selfD <= bestD))) best = self;
-    if (best) cb.onEntity(best, ev.clientX, ev.clientY);
+    if (best) cb.onEntity(best, ev.clientX, ev.clientY, Math.floor(wx), Math.floor(wy));
     else cb.onGround(Math.floor(wx), Math.floor(wy));
   };
   canvas.addEventListener("pointerdown", onPointer);

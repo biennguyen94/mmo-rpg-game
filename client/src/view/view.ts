@@ -8,7 +8,8 @@ export interface ViewCallbacks {
   /** Click/tap ô đất trống (tọa độ ô) — click-to-move. */
   onGround(x: number, y: number): void;
   /** Click/tap entity (quái, NPC, đồ dưới đất, người chơi khác) tại vị trí màn hình. */
-  onEntity(e: Entity, screenX: number, screenY: number): void;
+  /** `tileX/tileY`: ô vừa bấm (để "Đi tới đây" đi đúng ô đó, P3-M6). */
+  onEntity(e: Entity, screenX: number, screenY: number, tileX: number, tileY: number): void;
 }
 
 export interface GameView {

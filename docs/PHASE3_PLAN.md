@@ -31,7 +31,7 @@ Quy tắc 3 vẫn ghi "Chỉ làm Phase 1". Đề xuất (anh duyệt hoặc t�
 | **P3-M3 Warehouse** ✅ | Kho 120 ô dùng chung cho mọi nhân vật của tài khoản; NPC Warehouse Keeper (Lorencia, Noria); panel kho 15×8 + túi 8×8; gửi / rút bằng `move_item` (1 transaction, khóa nhân vật + tài khoản, audit) + event `warehouse` (DEC-92 … DEC-95). E2E `warehouse.mjs` 12/12 | xong |
 | **P3-M4 Party** ✅ | Mời / nhận / từ chối / rời / đuổi / giải tán (tối đa 5, lời mời 30 s); chia EXP trong 20 ô + bonus 10 % / người; loot protect cả nhóm; khung thành viên (HP, cấp, map, mất kết nối); chat `/p`; nhóm trong RAM (`Mu.Party`, DEC-96 … DEC-102). E2E `party.mjs` 13/13 | xong |
 | **P3-M5 Nhiều nhân vật + MG** ✅ | 4 nhân vật / tài khoản, màn chọn + [Đổi nhân vật]; MG mở khi có nhân vật cấp 20; MG 26 mỗi stat, 7 điểm / cấp, không đội mũ, skill DK + DW, skill phép dùng số phép, mặc sẵn `sword_t0` (DEC-103 … DEC-109). E2E `mg.mjs` 12/12; simulator MG ~70 phút tới cấp 30 | xong |
-| **P3-M6 Nghiệm thu Phase 3** | Danh sách nghiệm thu P3 (em soạn), e2e, soak nhiều người (đo AOI), báo cáo | danh sách P3-9 |
+| **P3-M6 Nghiệm thu Phase 3** ✅ | 12 mục P3-9: 11 PASS + 1 chờ anh xem UI bằng mắt; ExUnit 285, E2E 11 bộ / 134 mục chạy cùng soak 20 bot × 10 phút (có nhóm), simulator 4 class — `docs/ACCEPTANCE_PHASE3.md` | xong |
 
 Thứ tự gợi ý: **P3-M1 → P3-M2** (kỹ thuật, không chờ dữ liệu) trong khi anh trả lời P3-2 … P3-6.
 
