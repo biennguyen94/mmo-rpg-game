@@ -198,6 +198,26 @@ export interface ChatPayload {
   to?: string;
 }
 
+/** Một thư (event `mail`, P2-M6). */
+export interface MailView {
+  id: string;
+  kind: "WELCOME" | "SYSTEM" | "GIFT";
+  title: string;
+  body: string;
+  zen: number;
+  item: { templateId: string; quantity: number } | null;
+  read: boolean;
+  claimed: boolean;
+  createdAt: number;
+  expiresAt: number;
+}
+
+/** Event `mail`: `unread` (badge) + `items` khi vừa mở panel / sau nhận / xóa. */
+export interface MailPayload {
+  unread: number;
+  items?: MailView[];
+}
+
 /** Qua cổng (P2-M4): dữ liệu như reply join. */
 export interface MapChangePayload {
   map: MapData;

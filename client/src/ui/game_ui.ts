@@ -1,6 +1,6 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, ItemView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
+import type { ChatPayload, ItemView, MailView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
@@ -21,7 +21,7 @@ import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
 import { chatLine } from "../logic/chat.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "notices" | "shop" | "settings";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "settings";
 
 export interface UiState {
   player: Player;
@@ -40,6 +40,9 @@ export interface UiState {
   serverNow: number;
   /** Tin chat gần nhất (tối đa 50, P2-M5). */
   chat: ChatPayload[];
+  /** Hộp thư (P2-M6): số chưa đọc (badge) + danh sách lần mở panel gần nhất. */
+  mailUnread: number;
+  mail: MailView[];
 }
 
 export interface UiActions {
@@ -69,9 +72,23 @@ export interface UiActions {
   cancelAim(): void;
   /** Gửi dòng chat người chơi gõ (`/w Tên …` = nhắn riêng). */
   sendChat(line: string): void;
+  claimMail(id: string): void;
+  deleteReadMail(): void;
 }
 
 const BUFF_ICON: Record<string, string> = { defense: "🛡", damageBonus: "⚔" };
+
+// màu minimap (§19.12: nền tối) theo `legend`
+const MINIMAP_COLORS: Record<string, string> = {
+  grass: "#1c2b1a",
+  road: "#4a3f2c",
+  town_floor: "#3a3a44",
+  wall: "#6b6b78",
+  tree: "#0f1a0d",
+  water: "#173052",
+  rock: "#2c2a27",
+  portal: "#7d5cc0",
+};
 
 const isMobile = () => window.matchMedia("(max-width: 1023px)").matches;
 
@@ -88,6 +105,7 @@ export class GameUI {
   private ctx: HTMLElement | null = null;
   private tip: HTMLElement | null = null;
   private noticeFilter: "all" | "unread" = "all";
+  private mailFilter: "all" | "unread" | "gift" = "all";
   private dragging: DragStart | null = null;
   // khung chat (P2-M5): log + ô nhập (ẩn tới khi Enter / nút 💬)
   private chatLog = h("div", { class: "log", "data-test": "chat-log" });
@@ -180,7 +198,18 @@ export class GameUI {
 
     mount(
       this.hud,
-      h("div", { class: "where", "data-test": "where" }, `${this.state.map.name} (${p.x},${p.y})`),
+      h(
+        "div",
+        { class: "hudleft" },
+        h("div", { class: "where", "data-test": "where" }, `${this.state.map.name} (${p.x},${p.y})`),
+        // 📬 Hộp thư (§19.10): badge số chưa đọc, tắt khi mở panel
+        h(
+          "button",
+          { class: `mailbtn${this.state.panel === "mail" ? " active" : ""}`, "data-test": "mailbtn", title: "Hộp thư", onclick: () => this.a.togglePanel("mail") },
+          "📬",
+          this.state.mailUnread > 0 && this.state.panel !== "mail" ? h("span", { class: "badge" }, this.state.mailUnread) : null,
+        ),
+      ),
       h(
         "div",
         { class: "bars" },
@@ -220,6 +249,7 @@ export class GameUI {
       this.dock,
       tab("character", "👤", "Nhân vật"),
       tab("inventory", "🎒", "Túi đồ"),
+      tab("map", "🗺️", "Bản đồ"),
       tab("notices", "🔔", "Thông báo", this.state.panel === "notices" ? 0 : this.state.notices.unread()),
       tab("menu", "☰", "Menu"),
     );
@@ -261,7 +291,11 @@ export class GameUI {
           ? s.shop
           : s.panel === "settings"
             ? s.soundOn
-            : null;
+            : s.panel === "mail"
+              ? [this.mailFilter, s.mail, Math.floor(Date.now() / 60_000)]
+              : s.panel === "map"
+                ? [s.map.id, s.player.x, s.player.y]
+                : null;
     return JSON.stringify([s.panel, p, s.iconMap !== null, extra]);
   }
 
@@ -283,7 +317,11 @@ export class GameUI {
           ? this.inventoryPanel()
           : s.panel === "notices"
             ? this.noticesPanel()
-            : s.panel === "shop"
+            : s.panel === "mail"
+              ? this.mailPanel()
+              : s.panel === "map"
+                ? this.mapPanel()
+                : s.panel === "shop"
               ? this.shopPanel()
               : this.settingsPanel();
     this.panelHost.append(panel);
@@ -497,6 +535,120 @@ export class GameUI {
       h("div", { class: "row" }, h("span", {}, `💰 Zen: ${p.zen}`), h("span", {}, `Túi: ${p.view.inventoryUsed}/${p.view.inventorySize}`)),
       h("div", { class: "row" }, h("span", {}, `Q 🧪 HP Potion ×${p.view.potions.HP}`), h("span", {}, `W 💧 MP Potion ×${p.view.potions.MP}`)),
       withHint ? h("div", { class: "hint" }, "Muốn bán đồ, hãy gặp NPC bán hàng.") : null,
+    );
+  }
+
+  // ---------- Hộp thư (§19.10, P2-M6) ----------
+
+  private mailPanel(): HTMLElement {
+    const s = this.state;
+    const gift = (m: MailView) => m.zen > 0 || m.item !== null;
+    const list = s.mail.filter((m) => (this.mailFilter === "unread" ? !m.read : this.mailFilter === "gift" ? gift(m) : true));
+    const f = (k: "all" | "unread" | "gift", label: string) =>
+      h("button", { class: this.mailFilter === k ? "on" : "", "data-mail-filter": k, onclick: () => ((this.mailFilter = k), this.renderPanel(true)) }, label);
+    const reward = (m: MailView) =>
+      [m.zen > 0 ? `${m.zen} Zen` : null, m.item ? `${s.templates.get(m.item.templateId)?.name ?? m.item.templateId} ×${m.item.quantity}` : null]
+        .filter(Boolean)
+        .join(", ");
+    return h(
+      "section",
+      { class: "panel", "data-panel": "mail" },
+      h("h2", {}, "HỘP THƯ"),
+      h(
+        "div",
+        { class: "body scroll" },
+        h(
+          "div",
+          { class: "notices mails" },
+          h("div", { class: "filters" }, f("all", "Tất cả"), f("unread", "Chưa đọc"), f("gift", "Có quà")),
+          list.length
+            ? list.map((m) =>
+                h(
+                  "div",
+                  { class: `notice mail${m.read ? "" : " unread"}`, "data-mail": m.id },
+                  h("div", {}, gift(m) ? "🎁" : m.kind === "WELCOME" ? "🎉" : "🔧"),
+                  h(
+                    "div",
+                    {},
+                    h("div", { class: "text" }, m.title),
+                    m.body ? h("div", { class: "sub" }, m.body) : null,
+                    gift(m) ? h("div", { class: "sub" }, `Quà: ${reward(m)}`) : null,
+                    h("div", { class: "time" }, ago(m.createdAt)),
+                    gift(m)
+                      ? m.claimed
+                        ? h("div", { class: "claimed" }, "✓ Đã nhận")
+                        : h("button", { "data-claim": m.id, onclick: () => this.a.claimMail(m.id) }, "Nhận")
+                      : null,
+                  ),
+                ),
+              )
+            : h("div", { class: "emptytext" }, "Không có thư"),
+          s.mail.length ? h("div", { style: "text-align:center;margin-top:12px" }, h("button", { "data-test": "mail-delete-read", onclick: () => this.a.deleteReadMail() }, "Xóa đã đọc")) : null,
+        ),
+      ),
+    );
+  }
+
+  // ---------- Bản đồ (§19.12, P2-M6) ----------
+
+  private mapPanel(): HTMLElement {
+    const s = this.state;
+    const m = s.map;
+    const SIZE = 256;
+    const cell = SIZE / Math.max(m.width, m.height);
+    const cv = h("canvas", { width: SIZE, height: SIZE, class: "minimap", "data-test": "minimap" }) as HTMLCanvasElement;
+    const g = cv.getContext("2d");
+    if (g) {
+      g.fillStyle = "#0b0c10";
+      g.fillRect(0, 0, SIZE, SIZE);
+      m.tiles.forEach((row, y) =>
+        [...row].forEach((ch, x) => {
+          const kind = m.legend[ch];
+          g.fillStyle = MINIMAP_COLORS[kind] ?? "#0b0c10";
+          g.fillRect(x * cell, y * cell, cell, cell);
+        }),
+      );
+      // safe zone (🏠): khung vàng mờ
+      g.strokeStyle = "rgba(217,180,90,0.8)";
+      for (const z of m.safeZones) g.strokeRect(z.x * cell + 0.5, z.y * cell + 0.5, z.w * cell - 1, z.h * cell - 1);
+      const dot = (x: number, y: number, color: string, r: number) => {
+        g.fillStyle = color;
+        g.beginPath();
+        g.arc((x + 0.5) * cell, (y + 0.5) * cell, r, 0, Math.PI * 2);
+        g.fill();
+      };
+      for (const n of m.npcs) dot(n.x, n.y, "#ffd23f", 3);
+      for (const p of m.portals ?? []) {
+        const cx = (p.x + p.w / 2) * cell;
+        const cy = (p.y + 0.5) * cell;
+        g.fillStyle = "#c9a7ff";
+        g.beginPath();
+        g.moveTo(cx, cy - 5);
+        g.lineTo(cx - 5, cy + 4);
+        g.lineTo(cx + 5, cy + 4);
+        g.fill();
+      }
+      dot(s.player.x, s.player.y, "#3ddc84", 4);
+    }
+    return h(
+      "section",
+      { class: "panel", "data-panel": "map" },
+      h("h2", {}, "BẢN ĐỒ"),
+      h(
+        "div",
+        { class: "body" },
+        h(
+          "div",
+          { class: "mappanel" },
+          h("div", { class: "mapname" }, m.name.toUpperCase()),
+          cv,
+          h("div", { class: "legend" }, h("span", {}, "🟢 Bạn"), h("span", {}, "🟡 NPC"), h("span", {}, "▲ Cổng"), h("span", {}, "🏠 Thị trấn")),
+          (m.portals ?? []).map((p) =>
+            h("div", { class: "hint" }, `▲ (${p.x},${p.y}) → ${p.to.charAt(0).toUpperCase()}${p.to.slice(1)}${p.levelRequired ? ` (cấp ${p.levelRequired})` : ""}`),
+          ),
+          h("div", { "data-test": "map-pos" }, `Vị trí: (${s.player.x}, ${s.player.y})`),
+        ),
+      ),
     );
   }
 
@@ -782,6 +934,7 @@ export class GameUI {
       else this.a.closePanel();
     } else if (k === "c" || k === "C") this.a.togglePanel("character");
     else if (k === "i" || k === "I") this.a.togglePanel("inventory");
+    else if (k === "m" || k === "M") this.a.togglePanel("map");
     else if (k === "q" || k === "Q") this.a.usePotion("HP");
     else if (k === "w" || k === "W") this.a.usePotion("MP");
     else if (k === " ") {
