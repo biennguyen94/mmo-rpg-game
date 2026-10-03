@@ -95,10 +95,10 @@ defmodule MuWeb.ChatChannelTest do
   end
 
   test "kênh tắt / sai, tin trống", %{s1: s1} do
-    # PARTY bật từ P3-M4: chưa có nhóm → INVALID_TARGET
+    # PARTY bật từ P3-M4, GUILD từ P4-M3: chưa có nhóm / guild → INVALID_TARGET
     for {ch, code} <- [
           {"PARTY", "INVALID_TARGET"},
-          {"GUILD", "FORBIDDEN"},
+          {"GUILD", "INVALID_TARGET"},
           {"SYSTEM", "FORBIDDEN"},
           {"XYZ", "INVALID_TARGET"}
         ] do

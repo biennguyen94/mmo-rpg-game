@@ -235,3 +235,19 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
 .duelbar button { padding: 2px 8px; min-height: 0; font-size: 12px; }
 .duelask { top: 44px; }
 .ctxmenu .menuhead { font-weight: 600; padding: 2px 8px 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+/* Guild (P4-M3) */
+.guildask { top: 120px; }
+.guildreq { display: grid; gap: 2px; color: #ccd; }
+.guildreq .bad, .bad { color: #ff8a7a; }
+.guildform { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+.guildform input { flex: 1; min-width: 0; }
+.guildlist { display: grid; gap: 4px; }
+.guildlist .gm { display: flex; gap: 6px; align-items: center; background: rgba(255, 255, 255, 0.04); border-radius: 4px; padding: 3px 6px; }
+.guildlist .gm.off { opacity: 0.6; }
+.guildlist .gmname { font-weight: 600; }
+.guildlist .gmsub { color: #aab; flex: 1; font-size: 12px; }
+.guildlist .gm button { padding: 0 6px; min-height: 0; font-size: 12px; }
+.guildlist .dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex: none; }
+.guildlist .dot.on { background: #5ccf7a; }
+.chatbox .line.guild b { color: #7fc4ff; }
+.menuhead .gtag { color: #7fc4ff; font-weight: 400; }

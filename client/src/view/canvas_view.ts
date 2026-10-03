@@ -316,12 +316,21 @@ function drawEntity(g: CanvasRenderingContext2D, e: Entity, x: number, y: number
 function label(g: CanvasRenderingContext2D, e: Entity, x: number, y: number, dead: boolean): void {
   g.font = "11px system-ui";
   g.textAlign = "center";
+  // P4-M3 (P4-5): `<Tên guild>` dưới tên nhân vật — có guild thì tên lên cao một dòng
+  const guild = e.kind === "player" && e.guild ? `<${e.guild}>` : null;
+  const ny = guild ? y - 32 : y - 20;
   g.fillStyle = "#000";
   const name = e.name;
-  g.fillText(name, x + 1, y - 19);
+  g.fillText(name, x + 1, ny + 1);
   // P4-M1: màu tên theo PK; kẻ gây sự nhấp nháy (2 lần / giây)
   g.fillStyle = e.kind === "player" ? nameColor(e.pkState, e.aggressor, Math.floor(performance.now() / 250) % 2 === 0) : "#fff";
-  g.fillText(name, x, y - 20);
+  g.fillText(name, x, ny);
+  if (guild) {
+    g.fillStyle = "#000";
+    g.fillText(guild, x + 1, y - 19);
+    g.fillStyle = "#7fc4ff";
+    g.fillText(guild, x, y - 20);
+  }
   if (e.hp !== null && e.maxHp && e.kind !== "npc" && !dead) {
     g.fillStyle = "#300";
     g.fillRect(x - 14, y + 16, 28, 4);

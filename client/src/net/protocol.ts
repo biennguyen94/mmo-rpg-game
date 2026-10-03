@@ -97,6 +97,8 @@ export interface SpawnPayload {
   aggressor?: boolean;
   /** Đang duel (P4-M2): người ngoài không đánh được. */
   dueling?: boolean;
+  /** Tên guild (P4-M3), null nếu không có. */
+  guild?: string | null;
 }
 
 export interface SnapshotEntity {
@@ -239,6 +241,34 @@ export interface PartyPayload {
   members: PartyMember[];
 }
 
+/** Một thành viên trong event `guild` (P4-M3). */
+export interface GuildMember {
+  name: string;
+  class: string;
+  level: number;
+  role: "master" | "assistant" | "member";
+  online: boolean;
+}
+
+/** Event `guild` (P4-M3): `id` null + `members` rỗng = không có guild. */
+export interface GuildPayload {
+  id: string | null;
+  name: string | null;
+  master: string | null;
+  members: GuildMember[];
+}
+
+/** Config guild gửi kèm join (P4-M3). */
+export interface GuildConfig {
+  enabled: boolean;
+  createLevel: number;
+  createZen: number;
+  maxMembers: number;
+  maxAssistants: number;
+  inviteSeconds: number;
+  namePattern: string;
+}
+
 /** Event `duel` (P4-M2): lời mời / bắt đầu / kết thúc. */
 export interface DuelPayload {
   state: "request" | "start" | "end";
@@ -293,6 +323,8 @@ export interface JoinReply {
     pvp: { enabled: boolean; minLevel: number };
     /** Lời mời duel hết hạn sau ngần này giây (P4-M2). */
     duelInviteSeconds: number;
+    /** Guild (P4-M3): điều kiện tạo, sĩ số, hạn lời mời, mẫu tên (server vẫn kiểm). */
+    guild?: GuildConfig;
   };
   data: { items: ItemTemplate[]; skills: SkillInfo[] };
 }

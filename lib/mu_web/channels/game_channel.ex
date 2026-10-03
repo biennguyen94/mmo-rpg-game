@@ -18,6 +18,8 @@ defmodule MuWeb.GameChannel do
     thêm-hoặc-cập-nhật.
   - `"player"` (trạng thái đầy đủ + `view`) do Session đẩy khi EXP/level/stat/Zen đổi;
     `"combat"` `{rid, attacker, target, dmg, crit, hp}` cho mọi đòn trên map (trượt: dmg 0).
+  - Guild (P4-M3): Session đẩy `guild` (`{id, name, master, members}`; không có guild thì
+    `id` null, `members` rỗng) và `guild_invite` `{from, guild}`; `spawn` người chơi có `guild`.
   - Tab khác của cùng tài khoản vào game → kênh này nhận `{:session_kicked, _}`, đẩy
     `"error"` `FORBIDDEN` rồi đóng (`session.singleLoginPerAccount`).
   - Kênh kết thúc vì client `leave` (đăng xuất) hay vì socket đóng (mất kết nối) quyết định
@@ -206,7 +208,17 @@ defmodule MuWeb.GameChannel do
         enabled: Config.get(["features", "pvp"]) == true,
         minLevel: Config.get(["pvp", "minLevel"])
       },
-      duelInviteSeconds: Config.get(["duel", "inviteSeconds"])
+      duelInviteSeconds: Config.get(["duel", "inviteSeconds"]),
+      # guild (P4-M3): để hiện điều kiện tạo / kiểm tên trước khi gửi (server vẫn kiểm)
+      guild: %{
+        enabled: Config.get(["features", "guild"]) == true,
+        createLevel: Config.get(["guild", "createLevel"]),
+        createZen: Config.get(["guild", "createZen"]),
+        maxMembers: Config.get(["guild", "maxMembers"]),
+        maxAssistants: Config.get(["guild", "maxAssistants"]),
+        inviteSeconds: Config.get(["guild", "inviteSeconds"]),
+        namePattern: Config.get(["guild", "namePattern"])
+      }
     }
   end
 end
