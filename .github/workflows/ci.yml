@@ -82,3 +82,79 @@ jobs:
         run: mix mu.items.import --check
       - name: Chạy test
         run: mix test --warnings-as-errors
+
+  # E2E trình duyệt thật trên server thật (client/e2e): smoke 1280/360px + 16 mục nghiệm thu KB_00 §7
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: [test, client]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      MIX_ENV: dev
+      LANG: C.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25"
+          elixir-version: "1.17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache thư viện và bản biên dịch
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-dev-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-dev-${{ runner.os }}-
+
+      - run: mix deps.get
+      - name: Build client
+        working-directory: client
+        run: npm install --no-audit --no-fund && npm run build
+      - name: Cài Playwright + Chromium (chỉ cho test, không lưu vào package.json)
+        working-directory: client
+        run: npm install --no-save --no-audit --no-fund playwright && npx playwright install --with-deps chromium
+      - name: DB + icon_map (placeholder)
+        run: mix ecto.setup && mix mu.icons.index
+      - name: Chạy server
+        run: |
+          mix phx.server > server.log 2>&1 &
+          for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
+          cat server.log; exit 1
+      - name: E2E smoke (desktop 1280px + mobile 360px)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: mkdir -p e2e-shots && node client/e2e/smoke.mjs http://localhost:4000 e2e-shots
+      - name: E2E nghiệm thu (16 mục KB_00 §7, 2 người chơi)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/acceptance.mjs http://localhost:4000 e2e-shots
+      - name: Ảnh + log server
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ github.run_id }}
+          path: |
+            e2e-shots/
+            server.log
