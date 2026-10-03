@@ -268,3 +268,25 @@ test("chat nhóm (P3-M4): /p nội dung = PARTY; dòng [Nhóm]", () => {
   assert.deepEqual(parseChat("/party"), { channel: "NORMAL", text: "/party" });
   assert.deepEqual(chatLine({ channel: "PARTY", from: "Ann", text: "t", t: 0 }, "Me"), { cls: "party", head: "[Nhóm] Ann: ", text: "t" });
 });
+
+test("PvP client (P4-M1): màu tên, nút Tấn công (cấp, safe zone), hỏi xác nhận khi đánh người NORMAL", async () => {
+  const { nameColor, canShowAttack, needsConfirm, inSafeZone } = await import("../src/logic/pvp.js");
+  assert.equal(nameColor("MURDERER", false, false), "#ff4d4d");
+  assert.equal(nameColor("WARNING", false, false), "#ffa53a");
+  assert.equal(nameColor("NORMAL", true, true), "#ffa53a");
+  assert.equal(nameColor("NORMAL", true, false), "#fff");
+  assert.equal(nameColor(undefined, undefined, true), "#fff");
+  const map = { safeZones: [{ id: "town", x: 7, y: 21, w: 18, h: 22 }] };
+  assert.equal(inSafeZone(map, 15, 31), true);
+  assert.equal(inSafeZone(map, 25, 31), false);
+  const pvp = { enabled: true, minLevel: 6 };
+  const out = { level: 10, x: 40, y: 31 };
+  assert.equal(canShowAttack(out, { level: 10, x: 41, y: 31 }, map, pvp), true);
+  assert.equal(canShowAttack(out, { level: 5, x: 41, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack({ ...out, level: 5 }, { level: 10, x: 41, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack(out, { level: 10, x: 15, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack(out, { level: 10, x: 41, y: 31 }, map, { ...pvp, enabled: false }), false);
+  assert.equal(needsConfirm({ pkState: "NORMAL" }), true);
+  assert.equal(needsConfirm({ pkState: "NORMAL", aggressor: true }), false);
+  assert.equal(needsConfirm({ pkState: "MURDERER" }), false);
+});

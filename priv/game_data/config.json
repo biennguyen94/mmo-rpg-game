@@ -20,10 +20,12 @@
     "chat": "P2-12 (duyệt 2026-10-03): tối đa maxLength ký tự (dài hơn thì cắt, như repo nền), NORMAL = cả map, WHISPER theo tên nhân vật đang online (không có → INVALID_TARGET), PARTY bật từ P3-M4 (chỉ khi đang trong nhóm, không thì INVALID_TARGET), GUILD tắt tới Phase 4 (FORBIDDEN), SYSTEM chỉ server gửi. bannedWords: danh sách từ cấm (anh cung cấp; so khớp không phân biệt hoa thường, thay bằng mask). Mute: trong RAM (mix mu.chat), không lưu DB.",
     "rateLimit.cmd.chat": "P2-12: ~1 tin/giây, dồn tối đa 5 tin (cửa sổ cố định 5 tin / 5 s).",
     "mail": "P2-13 (duyệt 2026-10-03): mail hệ thống theo nhân vật; hết hạn sau expireDays ngày (không hiện, không nhận được); mail chào mừng khi tạo nhân vật (không kèm quà — §19.10 không cho số); quà Zen/item do quản trị gửi (mix mu.mail). Nhận trong 1 transaction + item_audit_log MAIL_CLAIM.",
-    "features": "Phase 2 (P2-M6): bật mail + mapPanel. Phase 3: bật party (P3-M4), magicGladiator (P3-M5). Các cờ khác vẫn tắt (phase sau / LATER_VERSION).",
+    "features": "Phase 2 (P2-M6): bật mail + mapPanel. Phase 3: party (P3-M4), magicGladiator (P3-M5). Phase 4: pvp (P4-M1). Các cờ khác vẫn tắt (phase sau / LATER_VERSION).",
     "party": "KB_CONFIG party {maxSize 5, expRange 20}; P3-5 (duyệt 2026-10-03): inviteSeconds 30 (lời mời hết hạn), statusIntervalMs 500 (event party ≤ 2 lần/giây khi HP / vị trí / map đổi) là IMPLEMENTATION. EXP: thành viên cùng map, còn sống, trong expRange ô của quái chia đều exp × (1 + partyBonusPerMember × (n − 1)), phạt chênh cấp riêng từng người; Zen như cũ. Nhóm chỉ trong RAM.",
     "mg": "KB_CONFIG mg {unlockLevel 220, statPerLevel 7, startingStatEach 26}; P3-2 (a) (duyệt 2026-10-03): unlockLevel 20 (IMPLEMENTATION) vì maxLevel 30 — mở tạo MG khi tài khoản có ≥ 1 nhân vật cấp ≥ unlockLevel (KB_GAME_DESIGN §2). statPerLevel / startingStatEach nằm ở classes.json (MG) như các class khác.",
-    "account.maxCharacters": "KB_CONFIG: Phase 1 = 1; 4 khi bật MG (Q13). P3-3 (duyệt 2026-10-03): chưa cho xóa nhân vật; một nhân vật online / tài khoản."
+    "account.maxCharacters": "KB_CONFIG: Phase 1 = 1; 4 khi bật MG (Q13). P3-3 (duyệt 2026-10-03): chưa cho xóa nhân vật; một nhân vật online / tài khoản.",
+    "pvp": "P4-2 (duyệt 2026-10-03, IMPLEMENTATION): đánh người khi cả hai cấp ≥ minLevel, không ai đứng trong safe zone; AOE chỉ trúng quái (và người đang duel / chiến guild — P4-M2/M4); sát thương pipeline §4 × damageMultiplier. Kẻ giết không nhận EXP / Zen (P4-8).",
+    "pk": "P4-3 (duyệt 2026-10-03, IMPLEMENTATION; KB_GAME_DESIGN §13 chỉ có NORMAL → WARNING → MURDERER): giết người NORMAL (không phải tự vệ) +1 pk_points; ≥ warningAt = WARNING, ≥ murdererAt = MURDERER; giảm 1 điểm mỗi decayMinutes giờ thực từ last_pk_at. Bị người NORMAL đánh trước được đánh trả selfDefenseSeconds (mỗi đòn làm mới), giết khi tự vệ / giết WARNING-MURDERER không tính PK. MURDERER không dùng NPC; chết vì người chơi rơi 1 món trong túi theo dropChance."
   },
   "game": {
     "name": "MU Web",
@@ -37,7 +39,7 @@
     "harmonyJewel": false,
     "guardianJewel": false,
     "chaosMachine": false,
-    "pvp": false,
+    "pvp": true,
     "guild": false,
     "party": true,
     "quest": false,
@@ -300,5 +302,20 @@
     "unlockLevel": 20,
     "statPerLevel": 7,
     "startingStatEach": 26
+  },
+  "pvp": {
+    "minLevel": 6,
+    "damageMultiplier": 0.5
+  },
+  "pk": {
+    "warningAt": 1,
+    "murdererAt": 2,
+    "decayMinutes": 60,
+    "selfDefenseSeconds": 30,
+    "dropChance": {
+      "NORMAL": 0,
+      "WARNING": 0.1,
+      "MURDERER": 0.5
+    }
   }
 }

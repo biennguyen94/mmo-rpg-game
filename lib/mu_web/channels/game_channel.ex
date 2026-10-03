@@ -201,7 +201,11 @@ defmodule MuWeb.GameChannel do
       pickupRange: Config.get(["interaction", "pickupRange"]),
       npcRange: Config.get(["interaction", "npcRange"]),
       twoHandedWeaponTypes: Config.get(["combat", "twoHandedWeaponTypes"]),
-      partyInviteSeconds: Config.get(["party", "inviteSeconds"])
+      partyInviteSeconds: Config.get(["party", "inviteSeconds"]),
+      pvp: %{
+        enabled: Config.get(["features", "pvp"]) == true,
+        minLevel: Config.get(["pvp", "minLevel"])
+      }
     }
   end
 end

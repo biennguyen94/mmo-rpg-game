@@ -30,7 +30,7 @@ defmodule Mu.Game.Session do
   require Logger
 
   alias Mu.{Chat, Party}
-  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items}
+  alias Mu.Game.{Characters, Config, Data, Engine, Inventory, Items, Pvp}
   alias Mu.World.{Maps, MapServer, Pathfinding}
 
   # không còn tab nào trong khoảng này thì tự tắt
@@ -123,7 +123,8 @@ defmodule Mu.Game.Session do
             do: s,
             else: %{s | saved: character, items: Items.load(character.id)}
 
-        s = kick_tabs(%{s | character: character}, pid)
+        # PK giảm theo giờ thực khi vắng mặt (P4-3)
+        s = kick_tabs(%{s | character: pk_decay(character)}, pid)
         register_name(character.name)
         # nhóm: vào lại trong hạn reconnect → online (P3-M4)
         Party.update(character.id, %{
@@ -134,7 +135,7 @@ defmodule Mu.Game.Session do
 
         s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
 
-        {:ok, info} = MapServer.join(character.map_id, map_player(character, s.items), self())
+        {:ok, info} = MapServer.join(character.map_id, map_player(s.character, s.items), self())
 
         c = %{
           s.character
@@ -252,8 +253,44 @@ defmodule Mu.Game.Session do
   end
 
   def handle_info(:save, %{on_map: true} = s) do
-    s = %{s | save_timer: nil} |> refresh() |> persist()
+    s = %{s | save_timer: nil} |> refresh() |> decay_online() |> persist()
     {:noreply, schedule_save(s), timeout(s)}
+  end
+
+  # Giết người NORMAL (P4-M1): +điểm PK, ghi DB ngay, báo MapServer (màu tên) và tab
+  def handle_info({:map_pk, _cid, n}, %{on_map: true, character: c} = s) do
+    c = %{c | pk_points: c.pk_points + n, last_pk_at: DateTime.utc_now()}
+    s = %{s | character: c} |> refresh() |> persist()
+    MapServer.update_player(c.map_id, c.id, %{pk_points: c.pk_points})
+    push_player(s)
+    {:noreply, s, timeout(s)}
+  end
+
+  # Bị người chơi giết, trúng tỉ lệ rơi đồ theo trạng thái PK (P4-3): 1 món ngẫu nhiên trong túi
+  # rơi xuống chỗ chết, kẻ giết được loot protect (đường `drop`: một transaction, audit, giữ serial)
+  def handle_info({:map_pk_drop, _cid, killer}, %{on_map: true, character: c} = s) do
+    case Inventory.inventory(s.items) do
+      [] ->
+        {:noreply, s, timeout(s)}
+
+      bag ->
+        it = Enum.random(bag)
+
+        s =
+          case Items.drop(c.id, it.id, "pk:" <> c.map_id) do
+            {:ok, res} ->
+              {:ok, _} = MapServer.drop_ground(c.map_id, c.id, res.dropped, killer)
+              name = (Data.item(it.template_id) || %{})["name"] || it.template_id
+              push(s, "chat", Chat.message("SYSTEM", "Hệ thống", "Bạn bị rơi #{name} khi chết."))
+              s |> apply_items(res) |> notify()
+
+            {:error, code} ->
+              Logger.warning("Không rơi được đồ PK #{it.id}: #{code}")
+              s
+          end
+
+        {:noreply, s, timeout(s)}
+    end
   end
 
   def handle_info(:delayed_leave, s) do
@@ -641,7 +678,8 @@ defmodule Mu.Game.Session do
     npc_id = String.replace_prefix(npc, "npc_", "")
     map = Maps.get(s.character.map_id)
 
-    with %{} = n <-
+    with :ok <- not_murderer(s),
+         %{} = n <-
            Enum.find(map.npcs, &(&1.id == npc_id and &1.role == role)) ||
              {:error, "INVALID_TARGET"},
          %{x: x, y: y, dead?: false} <-
@@ -657,11 +695,37 @@ defmodule Mu.Game.Session do
 
   # NPC có cửa hàng, đứng trên map của mình, trong `interaction.npcRange` ô (G4).
   # Nhận cả id dữ liệu (`lorencia_potion_merchant`) lẫn id entity (`npc_...`).
+  # MURDERER không dùng được NPC (shop, kho) — P4-3
+  defp not_murderer(s) do
+    if Pvp.state(s.character.pk_points) == "MURDERER", do: {:error, "FORBIDDEN"}, else: :ok
+  end
+
+  # Giảm PK theo giờ thực (`Pvp.decay/3`); đổi thì cột PK được ghi ở lần `persist` kế tiếp
+  defp pk_decay(c) do
+    {points, last} = Pvp.decay(c.pk_points, c.last_pk_at, DateTime.utc_now())
+    %{c | pk_points: points, last_pk_at: last}
+  end
+
+  # khi đang online (mỗi lần lưu định kỳ): giảm, đổi thì báo MapServer + tab
+  defp decay_online(%{character: c} = s) do
+    c2 = pk_decay(c)
+
+    if c2.pk_points != c.pk_points do
+      MapServer.update_player(c2.map_id, c2.id, %{pk_points: c2.pk_points})
+      s = %{s | character: c2}
+      push_player(s)
+      s
+    else
+      %{s | character: c2}
+    end
+  end
+
   defp near_shop(s, npc) when is_binary(npc) do
     npc_id = String.replace_prefix(npc, "npc_", "")
     map = Maps.get(s.character.map_id)
 
-    with %{} = shop <- Data.shop(npc_id) || {:error, "INVALID_TARGET"},
+    with :ok <- not_murderer(s),
+         %{} = shop <- Data.shop(npc_id) || {:error, "INVALID_TARGET"},
          %{} = n <- Enum.find(map.npcs, &(&1.id == npc_id)) || {:error, "INVALID_TARGET"},
          %{x: x, y: y, dead?: false} <-
            MapServer.player_state(map.id, s.character.id) || {:error, "FORBIDDEN"} do
@@ -746,7 +810,8 @@ defmodule Mu.Game.Session do
       x: c.position_x,
       y: c.position_y,
       stats: Engine.derived(c, equipment),
-      skills: Engine.skills(c)
+      skills: Engine.skills(c),
+      pk_points: c.pk_points
     }
   end
 

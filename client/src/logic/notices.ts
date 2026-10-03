@@ -65,6 +65,14 @@ export function diffPlayer(prev: Player, next: Player, templates: Templates): { 
     // Zen từ quái (bán đồ thì túi đổi, đã có thông báo riêng của panel Shop)
     out.push({ type: "SYSTEM", text: `+${next.zen - prev.zen} Zen` });
   }
+  // P4-M1: điểm PK đổi
+  const pk0 = prev.view?.pkPoints ?? 0;
+  const pk1 = next.view?.pkPoints ?? 0;
+  if (pk1 > pk0) {
+    out.push({ type: "ERROR", text: `Bạn đã giết người chơi — điểm PK ${pk1}`, sub: next.view?.pkState === "MURDERER" ? "Sát nhân: không dùng được NPC, dễ rơi đồ khi chết" : "Cảnh báo" });
+  } else if (pk1 < pk0) {
+    out.push({ type: "SYSTEM", text: `Điểm PK giảm còn ${pk1}` });
+  }
   const before = new Map(prev.inventory.map((i) => [i.id, i.quantity]));
   for (const it of next.inventory) {
     const old = before.get(it.id) ?? 0;

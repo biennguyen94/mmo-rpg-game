@@ -126,7 +126,8 @@ defmodule Mu.Game.Characters do
   end
 
   @progress_fields ~w(level experience strength agility vitality energy free_stat_points
-                      hp_current mana_current zen map_id position_x position_y)a
+                      hp_current mana_current zen map_id position_x position_y
+                      pk_points last_pk_at)a
 
   @doc """
   Lưu trạng thái đang giữ trong bộ nhớ (`current`) so với bản đã lưu (`saved`): chỉ ghi các
@@ -194,6 +195,9 @@ defmodule Mu.Game.Characters do
         attackSpeed: d.attack_speed,
         cooldownMs: d.cooldown_ms,
         # MG (P3-M5): sức mạnh / tốc độ phép (§4.1); class khác null
+        # P4-M1: điểm / trạng thái PK (NORMAL, WARNING, MURDERER)
+        pkPoints: c.pk_points,
+        pkState: Mu.Game.Pvp.state(c.pk_points),
         attackMaxMagic: if(c.class == "MG", do: d.attack_max_magic),
         attackSpeedMagic: if(c.class == "MG", do: d.attack_speed_magic),
         cooldownMsMagic: if(c.class == "MG", do: d.cooldown_ms_magic),

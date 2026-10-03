@@ -29,7 +29,7 @@ sửa; em không sửa):
 
 | Milestone | Nội dung | Chặn bởi |
 |---|---|---|
-| **P4-M1 PvP nền + PK + Self-defense** | Bật `features.pvp`. Bấm người chơi → [Tấn công] (ngoài safe zone, đủ cấp). Sát thương người – người dùng pipeline §4. Trạng thái PK lưu `pk_points` / `last_pk_at`, giảm theo thời gian. Tự vệ. Phạt (rơi đồ, cấm dịch vụ NPC). Màu tên | ⛔ P4-2, P4-3 |
+| **P4-M1 PvP nền + PK + Self-defense** ✅ | `Mu.Game.Pvp` (bảng quyết định thuần); đánh người (cấp ≥ 6, ngoài safe zone, × 0,5, AOE chỉ quái); tự vệ 30 s + kẻ gây sự; PK +1 khi giết NORMAL, WARNING / MURDERER, giảm 1 điểm / 60 phút; MURDERER bị NPC từ chối; rơi đồ khi bị giết (MURDERER 50 %, WARNING 10 %); màu tên; xác nhận khi đánh người NORMAL (DEC-112 … DEC-118). E2E `pvp.mjs` 14/14 | xong |
 | **P4-M2 Duel** | Mời / nhận / từ chối / hủy duel; chỉ hai người đánh nhau; không PK, không rơi đồ; kết thúc khi một bên hết máu / hết giờ / đi xa / rời map | ⛔ P4-4 |
 | **P4-M3 Guild** | Bảng `guilds`, `guild_members` (migration + CHANGE_REASON). Tạo (cấp + Zen, một transaction), mời / nhận / rời / đuổi / giải tán, vai trò master / assistant / member. Chat GUILD. Panel Guild. Tên guild trên đầu nhân vật | ⛔ P4-5 |
 | **P4-M4 Guild war** | Khai chiến / chấp nhận; thành viên hai guild đánh nhau ngoài safe zone không tính PK, không rơi đồ; tính điểm; kết thúc theo giờ / điểm; thông báo SYSTEM | ⛔ P4-6 (cần P4-M3) |
