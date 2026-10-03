@@ -378,7 +378,8 @@ defmodule MuWeb.ItemChannelTest do
           %{"act" => "split", "rid" => "12", "itemId" => "x"}
         ] do
       assert {:error, %{error: code}} = cmd(socket, p)
-      assert code in ~w(INVALID_TARGET INVALID_SLOT NOT_OWNER), inspect(p)
+      # món không có trong túi = món trong kho (P3-M3): xa Thủ kho → OUT_OF_RANGE
+      assert code in ~w(INVALID_TARGET INVALID_SLOT NOT_OWNER OUT_OF_RANGE), inspect(p)
     end
   end
 

@@ -183,6 +183,16 @@
       "id": "tile:rock",
       "original": "releases/Nov-2015/dngn/wall/lab-rock1.png",
       "gitBlob": "c2cdf4b68379075c1b7dcf25513c6b2ed4f13fa5"
+    },
+    "sprites/npcs/lorencia_warehouse.png": {
+      "id": "npc:lorencia_warehouse",
+      "original": "releases/Nov-2015/mon/halfling.png",
+      "gitBlob": "6f7fca04568d42ec9acf8ea43cffde561f37c27a"
+    },
+    "sprites/npcs/noria_warehouse.png": {
+      "id": "npc:noria_warehouse",
+      "original": "releases/Nov-2015/mon/halfling.png",
+      "gitBlob": "6f7fca04568d42ec9acf8ea43cffde561f37c27a"
     }
   }
 }

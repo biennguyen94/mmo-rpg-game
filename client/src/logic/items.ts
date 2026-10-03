@@ -105,9 +105,29 @@ export const BAG_COLUMNS = 8;
 export type DragEnd =
   | { kind: "bag"; slot: number }
   | { kind: "equip"; slot: number }
-  | { kind: "trash" };
+  | { kind: "trash" }
+  | { kind: "wh"; slot: number };
 
-export type DragStart = { kind: "bag"; item: ItemView } | { kind: "equip"; item: ItemView };
+/** `wh` = ô kho tài khoản (P3-M3). */
+export type DragStart = { kind: "bag"; item: ItemView } | { kind: "equip"; item: ItemView } | { kind: "wh"; item: ItemView };
+
+/** Kho tài khoản (P3-M3): 15 cột × 8 hàng = `warehouse.slots` (120) ô. */
+export const WAREHOUSE_COLUMNS = 15;
+
+/**
+ * Ô đích khi bấm [Gửi] / [Rút]: stack cùng loại còn chỗ (gộp) trước, không có thì ô trống thấp
+ * nhất; `null` = đầy. Server vẫn kiểm.
+ */
+export function autoSlot(target: ItemView[], size: number, item: ItemView, templates: Templates): number | null {
+  const t = templates.get(item.templateId);
+  if (t?.stackable && t.maxStack) {
+    const stack = target
+      .filter((i) => i.templateId === item.templateId && i.quantity < t.maxStack!)
+      .sort((x, y) => x.slot - y.slot)[0];
+    if (stack) return stack.slot;
+  }
+  return firstFreeSlot(target, size);
+}
 
 /** Lệnh `cmd` (KB_TECHNICAL §5) cần gửi; `confirm` = phải hỏi người chơi trước (vứt đồ). */
 export interface ItemCommand {
@@ -134,6 +154,15 @@ export function dragCommand(
   p: Pick<Player, "inventory">,
   templates: Templates,
 ): ItemCommand | null {
+  // kho (P3-M3): kho ↔ túi, sắp xếp trong kho — đều là move_item
+  if (to.kind === "wh") {
+    if (from.kind === "equip" || (from.kind === "wh" && from.item.slot === to.slot)) return null;
+    return { act: "move_item", payload: { itemId: from.item.id, to: { location: "WAREHOUSE", slot: to.slot } } };
+  }
+  if (from.kind === "wh") {
+    if (to.kind !== "bag") return null;
+    return { act: "move_item", payload: { itemId: from.item.id, to: { location: "INVENTORY", slot: to.slot } } };
+  }
   if (from.kind === "bag") {
     const it = from.item;
     if (to.kind === "bag") {

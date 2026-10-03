@@ -13,6 +13,7 @@ import {
   type JoinReply,
   type Player,
   type ShopPayload,
+  type WarehousePayload,
   type SkillInfo,
   type SnapshotPayload,
   type SpawnPayload,
@@ -24,7 +25,7 @@ import {
 import { AutoAttack, approach } from "../logic/autoattack.js";
 import type { Stat } from "../logic/alloc.js";
 import type { IconMap } from "../logic/icons.js";
-import { equipSlotFor, firstFreeSlot, pickPotion, twoHandConflict, type Templates } from "../logic/items.js";
+import { BAG_COLUMNS, autoSlot, equipSlotFor, firstFreeSlot, pickPotion, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
 import { parseChat, pushChat } from "../logic/chat.js";
 import { ServerClock } from "../state/interp.js";
@@ -72,6 +73,8 @@ export class GameClient {
       useItem: (it) => void this.send("use_item", { itemId: it.id }).then((ok) => ok && Sound.play("potion")),
       buy: (tid) => void this.send("buy", { npcId: this.shop?.npcId, templateId: tid, quantity: 1 }),
       sell: (it) => void this.send("sell", { npcId: this.shop?.npcId, itemId: it.id }),
+      deposit: (it) => void this.transfer(it, "WAREHOUSE"),
+      withdraw: (it) => void this.transfer(it, "INVENTORY"),
       usePotion: (type) => void this.usePotion(type),
       pickupNearest: () => this.pickupNearest(),
       logout: () => void this.logout(),
@@ -123,6 +126,7 @@ export class GameClient {
       notices: this.notices,
       panel: null, // không panel nào mở khi vào game (§19.1)
       shop: null,
+      warehouse: null,
       netStatus: null,
       soundOn: Sound.on,
       aiming: null,
@@ -168,7 +172,8 @@ export class GameClient {
     this.state.map = p.map;
     this.state.player = p.player;
     this.state.shop = null;
-    if (this.state.panel === "shop") this.state.panel = null;
+    this.state.warehouse = null;
+    if (this.state.panel === "shop" || this.state.panel === "warehouse") this.state.panel = null;
     this.notices.add("SYSTEM", `Đã vào ${p.map.name}`);
     this.buildView(p.map);
   }
@@ -224,6 +229,11 @@ export class GameClient {
         this.shop = p as ShopPayload;
         this.state.shop = this.shop;
         this.state.panel = "shop";
+        break;
+      case "warehouse":
+        // mở Thủ kho hoặc kho đổi sau gửi / rút (P3-M3)
+        this.state.warehouse = p as WarehousePayload;
+        this.state.panel = "warehouse";
         break;
     }
     this.render();
@@ -436,11 +446,28 @@ export class GameClient {
     this.render();
   }
 
-  /** Shop tự đóng khi rời tầm NPC (§19.7). */
+  /** Shop / kho tự đóng khi rời tầm NPC (§19.7). */
+  /** [Gửi] / [Rút] (P3-M3): ô đích tự chọn (gộp stack cùng loại, không thì ô trống thấp nhất). */
+  private async transfer(it: ItemView, to: "WAREHOUSE" | "INVENTORY"): Promise<void> {
+    const wh = this.state?.warehouse;
+    if (!this.state || !wh) return;
+    const slot =
+      to === "WAREHOUSE"
+        ? autoSlot(wh.items, wh.slots, it, this.state.templates)
+        : autoSlot(this.state.player.inventory, BAG_COLUMNS * BAG_COLUMNS, it, this.state.templates);
+    if (slot === null) {
+      this.notices.add("ERROR", to === "WAREHOUSE" ? "Kho đã đầy." : ERROR_TEXT.INVENTORY_FULL);
+      return this.render();
+    }
+    await this.send("move_item", { itemId: it.id, to: { location: to, slot } });
+  }
+
   private closeShopIfFar(): void {
-    if (!this.state || this.state.panel !== "shop" || !this.shop || !this.join) return;
+    if (!this.state || !this.join) return;
+    const npcId = this.state.panel === "shop" ? this.shop?.npcId : this.state.panel === "warehouse" ? this.state.warehouse?.npcId : null;
+    if (!npcId) return;
     const me = this.world.entities.get(this.selfId);
-    const npc = this.world.entities.get(`npc_${this.shop.npcId}`);
+    const npc = this.world.entities.get(`npc_${npcId}`);
     if (me && npc && chebyshev(me.x, me.y, npc.x, npc.y) > this.join.config.npcRange) this.state.panel = null;
   }
 

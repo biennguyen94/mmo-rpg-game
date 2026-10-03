@@ -1083,8 +1083,8 @@ defmodule Mu.World.MapServer do
           hp: nil,
           maxHp: nil,
           state: "idle",
-          # tên hiển thị = tên cửa hàng (shop.json), P2-M4
-          name: (Data.shop(n.id) || %{})["name"] || n.id,
+          # tên hiển thị = `name` trong map (Thủ kho, P3-M3) hoặc tên cửa hàng (shop.json, P2-M4)
+          name: n.name || (Data.shop(n.id) || %{})["name"] || n.id,
           level: nil,
           templateId: n.id
         }

@@ -348,10 +348,24 @@ defmodule Mu.Game.Session do
     end
   end
 
-  # Sắp xếp túi (P2-M1): chỉ trong INVENTORY, mỗi item một ô (P2-8)
-  defp run("move_item", %{"itemId" => id, "to" => %{"location" => "INVENTORY", "slot" => to}}, s)
-       when is_binary(id) do
-    item_result(Items.move_item(s.character.id, id, to), s)
+  # Sắp xếp túi (P2-M1): trong INVENTORY, mỗi item một ô (P2-8). Kho (P3-M3): nguồn hoặc đích
+  # là WAREHOUSE → phải đứng cạnh Thủ kho (`npcRange`), `Items.transfer/4`, đẩy `warehouse`
+  defp run("move_item", %{"itemId" => id, "to" => %{"location" => loc, "slot" => to}}, s)
+       when is_binary(id) and loc in ~w(INVENTORY WAREHOUSE) do
+    in_bag? = Enum.any?(s.items, &(&1.id == id))
+
+    if loc == "INVENTORY" and in_bag? do
+      item_result(Items.move_item(s.character.id, id, to), s)
+    else
+      with {:ok, npc_id} <- near_warehouse(s),
+           {:ok, res} <- Items.transfer(s.character.id, s.account_id, id, {loc, to}) do
+        s = s |> apply_items(res) |> notify()
+        push_warehouse(s, npc_id, res.warehouse)
+        {:ok, s}
+      else
+        error -> {error, s}
+      end
+    end
   end
 
   defp run("move_item", %{"itemId" => id, "to" => %{"location" => _}}, s) when is_binary(id),
@@ -375,19 +389,16 @@ defmodule Mu.Game.Session do
     end
   end
 
-  defp run("npc_open", %{"npcId" => npc}, s) do
-    case near_shop(s, npc) do
-      {:ok, npc_id, shop} ->
-        items =
-          for tid <- shop["items"], do: %{templateId: tid, price: Data.item(tid)["buyPrice"]}
+  defp run("npc_open", %{"npcId" => npc}, s) when is_binary(npc) do
+    npc_id = String.replace_prefix(npc, "npc_", "")
 
-        push(s, "shop", %{npcId: npc_id, name: shop["name"], items: items})
-        {:ok, s}
-
-      error ->
-        {error, s}
+    case Enum.find(Maps.get(s.character.map_id).npcs, &(&1.id == npc_id)) do
+      %{role: "warehouse"} -> open_warehouse(s, npc_id)
+      _ -> open_shop(s, npc)
     end
   end
+
+  defp run("npc_open", _payload, s), do: {{:error, "INVALID_TARGET"}, s}
 
   defp run("buy", %{"npcId" => npc, "templateId" => tid} = p, s) do
     qty = Map.get(p, "quantity", 1)
@@ -538,6 +549,70 @@ defmodule Mu.Game.Session do
   defp valid_quantity(t, q) do
     max = if t["stackable"], do: t["maxStack"], else: 1
     if is_integer(q) and q in 1..max, do: :ok, else: {:error, "INVALID_TARGET"}
+  end
+
+  # ---------- Cửa hàng / Kho (NPC) ----------
+
+  defp open_shop(s, npc) do
+    case near_shop(s, npc) do
+      {:ok, npc_id, shop} ->
+        items =
+          for tid <- shop["items"], do: %{templateId: tid, price: Data.item(tid)["buyPrice"]}
+
+        push(s, "shop", %{npcId: npc_id, name: shop["name"], items: items})
+        {:ok, s}
+
+      error ->
+        {error, s}
+    end
+  end
+
+  # Mở kho (P3-M3): đứng cạnh Thủ kho → event `warehouse` (đồ trong kho của tài khoản)
+  defp open_warehouse(s, npc) do
+    with {:ok, npc_id} <- near_npc(s, npc, "warehouse") do
+      push_warehouse(s, npc_id, Items.load_warehouse(s.account_id))
+      {:ok, s}
+    else
+      error -> {error, s}
+    end
+  end
+
+  defp push_warehouse(s, npc_id, items) do
+    push(s, "warehouse", %{
+      npcId: npc_id,
+      slots: Inventory.warehouse_slots(),
+      items: Enum.map(items, &Characters.item_view/1)
+    })
+  end
+
+  # Thủ kho gần nhất trong `npcRange` trên map hiện tại
+  defp near_warehouse(s) do
+    map = Maps.get(s.character.map_id)
+
+    case Enum.find(map.npcs, &(&1.role == "warehouse")) do
+      nil -> {:error, "OUT_OF_RANGE"}
+      n -> near_npc(s, n.id, "warehouse")
+    end
+  end
+
+  # NPC `role` trên map của mình, trong `interaction.npcRange` ô (G4); nhận id dữ liệu hoặc id
+  # entity (`npc_...`)
+  defp near_npc(s, npc, role) do
+    npc_id = String.replace_prefix(npc, "npc_", "")
+    map = Maps.get(s.character.map_id)
+
+    with %{} = n <-
+           Enum.find(map.npcs, &(&1.id == npc_id and &1.role == role)) ||
+             {:error, "INVALID_TARGET"},
+         %{x: x, y: y, dead?: false} <-
+           MapServer.player_state(map.id, s.character.id) || {:error, "FORBIDDEN"} do
+      if Pathfinding.chebyshev({x, y}, {n.x, n.y}) <= Config.get(["interaction", "npcRange"]),
+        do: {:ok, npc_id},
+        else: {:error, "OUT_OF_RANGE"}
+    else
+      %{dead?: true} -> {:error, "FORBIDDEN"}
+      error -> error
+    end
   end
 
   # NPC có cửa hàng, đứng trên map của mình, trong `interaction.npcRange` ô (G4).

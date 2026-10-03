@@ -113,18 +113,7 @@
       "levelRequired": 10
     }
   ],
-  "npcs": [
-    {
-      "id": "lorencia_potion_merchant",
-      "x": 11,
-      "y": 25
-    },
-    {
-      "id": "lorencia_weapon_merchant",
-      "x": 11,
-      "y": 37
-    }
-  ],
+  "npcs": [{"id": "lorencia_potion_merchant", "x": 11, "y": 25}, {"id": "lorencia_weapon_merchant", "x": 11, "y": 37}, {"id": "lorencia_warehouse", "x": 11, "y": 31, "role": "warehouse", "name": "Warehouse Keeper"}],
   "tiles": [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",

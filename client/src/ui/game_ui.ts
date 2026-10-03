@@ -1,11 +1,12 @@
 // Giao diện trong game theo KB_GAME_DESIGN §19 (DOM phủ lên game view). Chỉ hiển thị số do
 // server gửi (`player.view`), không tính công thức, không cập nhật lạc quan: UI đổi khi server trả.
-import type { ChatPayload, ItemView, MailView, MapData, Player, ShopPayload, SkillInfo } from "../net/protocol.js";
+import type { ChatPayload, ItemView, MailView, MapData, Player, ShopPayload, SkillInfo, WarehousePayload } from "../net/protocol.js";
 import { AllocBatcher, type Stat } from "../logic/alloc.js";
 import { iconPath, type IconMap } from "../logic/icons.js";
 import {
   BAG_COLUMNS,
   EQUIP_GRID,
+  WAREHOUSE_COLUMNS,
   SLOT_LABEL,
   defaultSplit,
   dragCommand,
@@ -21,7 +22,7 @@ import { NOTICE_ICON, type NoticeLog } from "../logic/notices.js";
 import { chatLine } from "../logic/chat.js";
 import { clear, h, mount } from "./dom.js";
 
-export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "settings";
+export type PanelName = "character" | "inventory" | "map" | "notices" | "mail" | "shop" | "warehouse" | "settings";
 
 export interface UiState {
   player: Player;
@@ -32,6 +33,8 @@ export interface UiState {
   notices: NoticeLog;
   panel: PanelName | null;
   shop: ShopPayload | null;
+  /** Kho tài khoản đang mở ở Thủ kho (P3-M3). */
+  warehouse: WarehousePayload | null;
   netStatus: string | null;
   soundOn: boolean;
   /** Skill đang chờ chọn ô (teleport) — hiện dòng hướng dẫn, Esc để hủy. */
@@ -57,6 +60,9 @@ export interface UiActions {
   useItem(item: ItemView): void;
   buy(templateId: string): void;
   sell(item: ItemView): void;
+  /** Kho (P3-M3): [Gửi] túi → kho, [Rút] kho → túi (ô tự chọn). */
+  deposit(item: ItemView): void;
+  withdraw(item: ItemView): void;
   usePotion(type: "HP" | "MP"): void;
   pickupNearest(): void;
   logout(): void;
@@ -289,7 +295,9 @@ export class GameUI {
         ? [this.noticeFilter, s.notices.list().map((n) => [n.id, n.read]), Math.floor(Date.now() / 60_000)]
         : s.panel === "shop"
           ? s.shop
-          : s.panel === "settings"
+          : s.panel === "warehouse"
+            ? s.warehouse
+            : s.panel === "settings"
             ? s.soundOn
             : s.panel === "mail"
               ? [this.mailFilter, s.mail, Math.floor(Date.now() / 60_000)]
@@ -322,8 +330,10 @@ export class GameUI {
               : s.panel === "map"
                 ? this.mapPanel()
                 : s.panel === "shop"
-              ? this.shopPanel()
-              : this.settingsPanel();
+                  ? this.shopPanel()
+                  : s.panel === "warehouse"
+                    ? this.warehousePanel()
+                    : this.settingsPanel();
     this.panelHost.append(panel);
     const sc = panel.querySelector(".scroll") as HTMLElement | null;
     if (sc) {
@@ -743,6 +753,69 @@ export class GameUI {
     );
   }
 
+  // ---------- Kho tài khoản (P3-M3, P3-6) ----------
+
+  /** Ô lưới (túi hoặc kho): click → tooltip có [Gửi] / [Rút], kéo thả giữa hai lưới. */
+  private gridCell(it: ItemView | undefined, slot: number, kind: "bag" | "wh"): HTMLElement {
+    return h(
+      "div",
+      {
+        class: `cell${it ? "" : " empty"}`,
+        [kind === "wh" ? "data-wh-slot" : "data-bag-slot"]: slot,
+        "data-item": it?.id,
+        draggable: it ? "true" : "false",
+        onclick: (ev: MouseEvent) => it && this.showTooltip(it, ev, kind === "wh" ? { withdraw: true } : { deposit: true }),
+        ondragstart: (ev: DragEvent) => it && this.dragStart(ev, { kind, item: it }),
+        ...this.dropTarget({ kind, slot }),
+      },
+      it ? this.icon(it) : null,
+      it && it.quantity > 1 ? h("span", { class: "qty" }, it.quantity) : null,
+    );
+  }
+
+  private warehousePanel(): HTMLElement {
+    const s = this.state;
+    const wh = s.warehouse;
+    const p = s.player;
+    const whBySlot = new Map((wh?.items ?? []).map((i) => [i.slot, i]));
+    const bagBySlot = new Map(p.inventory.map((i) => [i.slot, i]));
+    const size = wh?.slots ?? 0;
+    return h(
+      "section",
+      { class: "panel", "data-panel": "warehouse" },
+      h("h2", {}, "KHO ĐỒ"),
+      h(
+        "div",
+        { class: "body scroll" },
+        h(
+          "div",
+          { class: "warehouse" },
+          h(
+            "div",
+            { class: "col" },
+            h("div", { class: "head" }, `Kho (dùng chung mọi nhân vật) — ${wh?.items.length ?? 0}/${size}`),
+            h(
+              "div",
+              { class: "bag", "data-test": "warehouse", style: `--cols:${WAREHOUSE_COLUMNS}` },
+              Array.from({ length: size }, (_, slot) => this.gridCell(whBySlot.get(slot), slot, "wh")),
+            ),
+          ),
+          h(
+            "div",
+            { class: "col" },
+            h("div", { class: "head" }, `Túi đồ — ${p.view.inventoryUsed}/${p.view.inventorySize}`),
+            h(
+              "div",
+              { class: "bag", "data-test": "bag", style: `--cols:${BAG_COLUMNS}` },
+              Array.from({ length: p.view.inventorySize }, (_, slot) => this.gridCell(bagBySlot.get(slot), slot, "bag")),
+            ),
+          ),
+        ),
+        h("div", { class: "hint", style: "text-align:center;margin-top:8px" }, "Kéo đồ giữa kho và túi, hoặc bấm vào món đồ → [Gửi] / [Rút]. Không cất Zen."),
+      ),
+    );
+  }
+
   private settingsPanel(): HTMLElement {
     return h(
       "section",
@@ -774,7 +847,7 @@ export class GameUI {
 
   // ---------- Tooltip (§19.5), context menu quái (§19.9) ----------
 
-  private showTooltip(item: ItemView, ev: MouseEvent, opts: { unequip?: number; bag?: boolean }): void {
+  private showTooltip(item: ItemView, ev: MouseEvent, opts: { unequip?: number; bag?: boolean; deposit?: boolean; withdraw?: boolean }): void {
     this.hideTooltip();
     const t = this.state.templates.get(item.templateId);
     if (!t) return;
@@ -807,6 +880,15 @@ export class GameUI {
       reqs.map((r) => h("div", { class: r.ok ? "" : "bad" }, r.value ? `${r.label} ≥ ${r.value}` : r.label)),
       opts.unequip !== undefined ? h("button", { onclick: () => (this.hideTooltip(), this.a.unequip(opts.unequip!)) }, "Tháo") : null,
       bagBtns,
+      opts.deposit || opts.withdraw
+        ? h(
+            "div",
+            { class: "btns" },
+            opts.deposit
+              ? h("button", { "data-test": "deposit", onclick: () => (this.hideTooltip(), this.a.deposit(item)) }, "Gửi")
+              : h("button", { "data-test": "withdraw", onclick: () => (this.hideTooltip(), this.a.withdraw(item)) }, "Rút"),
+          )
+        : null,
     );
     this.place(tip, ev.clientX, ev.clientY);
     this.tip = tip;

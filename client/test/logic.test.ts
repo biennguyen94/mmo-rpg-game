@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { AllocBatcher, type Timer } from "../src/logic/alloc.js";
 import { AutoAttack, approach } from "../src/logic/autoattack.js";
 import { bucket, iconPath } from "../src/logic/icons.js";
-import { defaultSplit, dragCommand, twoHandConflict, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
+import { autoSlot, defaultSplit, dragCommand, twoHandConflict, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
 import { NoticeLog, diffPlayer } from "../src/logic/notices.js";
 import { CHAT_KEEP, chatLine, parseChat, pushChat } from "../src/logic/chat.js";
 import { RidGen, type ChatPayload, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
@@ -233,4 +233,30 @@ test("chat: /w Tên nội dung = WHISPER, còn lại NORMAL; định dạng dòn
   for (let i = 0; i < 60; i++) log = pushChat(log, { ...msg("NORMAL", "A"), text: String(i) });
   assert.equal(log.length, CHAT_KEEP);
   assert.equal(log[0].text, "10");
+});
+
+test("kho (P3-M3): kéo thả túi ↔ kho → move_item; [Gửi]/[Rút] chọn ô (gộp stack trước)", () => {
+  const sword = item("s", "sword", 0);
+  const p = { inventory: [sword] };
+  const wh = (slot: number) => ({ kind: "wh" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, wh(4), p, templates), {
+    act: "move_item",
+    payload: { itemId: "s", to: { location: "WAREHOUSE", slot: 4 } },
+  });
+  const stored = item("w", "ring", 4);
+  assert.deepEqual(dragCommand({ kind: "wh", item: stored }, { kind: "bag", slot: 2 }, p, templates)?.payload, {
+    itemId: "w",
+    to: { location: "INVENTORY", slot: 2 },
+  });
+  assert.deepEqual(dragCommand({ kind: "wh", item: stored }, wh(9), p, templates)?.payload, { itemId: "w", to: { location: "WAREHOUSE", slot: 9 } });
+  assert.equal(dragCommand({ kind: "wh", item: stored }, wh(4), p, templates), null);
+  assert.equal(dragCommand({ kind: "wh", item: stored }, { kind: "equip", slot: 8 }, p, templates), null);
+  assert.equal(dragCommand({ kind: "equip", item: item("r", "ring", 8) }, wh(1), p, templates), null);
+
+  const tpl = new Map(templates);
+  tpl.set("hp", { ...templates.get("hp")!, maxStack: 10 });
+  const target = [item("a", "hp", 0, 10), item("b", "hp", 3, 4), item("c", "sword", 1)];
+  assert.equal(autoSlot(target, 120, item("x", "hp", 7, 2), tpl), 3);
+  assert.equal(autoSlot(target, 120, item("y", "sword", 7), tpl), 2);
+  assert.equal(autoSlot([item("a", "sword", 0)], 1, item("y", "sword", 7), tpl), null);
 });
