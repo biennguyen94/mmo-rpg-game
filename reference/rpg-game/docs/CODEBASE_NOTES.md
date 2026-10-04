@@ -242,7 +242,10 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
     lưới túi 8 cột **tự xếp** (`bagItems`: đồ trang bị → bình → món ăn → nguyên liệu; server không lưu vị trí ô),
     bảng chi tiết món đồ `showTip` / `hideTip` (`#itemtip`, nút Trang bị / Dùng / Ăn / Tháo), kéo thả chuột
     (`onDragStart` / `onDrop`: túi → ô trang bị = `equip`, khiên → túi = `unequip`), thanh tóm tắt `.bag-bottom`.
-  - `viewMisc` (tab **Khác**): thú cưng, kỹ năng, danh hiệu, thành tựu chuyển từ tab Nhân vật — chờ anh quyết giữ / bỏ.
+  - `viewMisc` (tab **Khác**): toàn bộ tab **Hành trình** cũ (`viewTown`: hồi máu, hành trình diệt rồng, bang, đấu trường,
+    sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu; màn chiến thắng nếu đã hạ Hắc Long), rồi thú cưng,
+    kỹ năng, danh hiệu, thành tựu — chờ anh quyết giữ / bỏ. Tab `town` đã bỏ; xếp hạng / đấu trường tải khi mở tab `misc`.
+    Thanh tab còn 5: Bản đồ · Nhân vật · Túi đồ · Nhiệm vụ · Khác (+ Quản trị cho admin).
   - **Phím tắt** (`onKey`, `goTab`, `hotkeyPotion`, `hotkeyEscape`):
     - C Nhân vật, I Túi đồ (bấm lại thì về Bản đồ), M Bản đồ;
     - Q uống bình máu nhỏ nhất (trong trận = nút Uống máu);

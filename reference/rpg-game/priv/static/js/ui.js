@@ -107,14 +107,13 @@
     tabs.hidden = false;
     tabs.innerHTML = [
       ['map', 'walk', 'Bản đồ'],
-      ['town', 'trophy', 'Hành trình'],
       ['hero', 'person', 'Nhân vật'],
       ['bag', 'backpack', 'Túi đồ'],
       ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
       ['misc', 'laurels', 'Khác'],
     ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : P.victory && tab === 'town' ? viewVictory() + viewTown() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), town: viewTown, hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -128,7 +127,7 @@
       const log = $('#chat-log');
       if (log) log.scrollTop = log.scrollHeight;
     }
-    if (tab === 'town') { loadBoard(); loadArena(); }
+    if (tab === 'misc') { loadBoard(); loadArena(); }
     if (tab === 'admin' && adm.reports == null && !adm.loading) loadReports();
   }
 
@@ -544,7 +543,7 @@
   // ---------- Đấu trường ----------
   async function loadArena() {
     try { arena = await Net.arena(); } catch (e) { /* thử lại lần sau */ }
-    if (tab === 'town') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
+    if (tab === 'misc') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
   }
 
   function viewArena() {
@@ -603,7 +602,7 @@
     board.at = Date.now();
     try {
       board.data = await Net.leaderboard();
-      if (tab === 'town') {
+      if (tab === 'misc') {
         const el = $('#board');
         if (el) el.outerHTML = viewBoard();
       }
@@ -1128,11 +1127,16 @@
   }
 
   // ---------- Khác ----------
-  // Các phần không thuộc Nhân vật / Túi đồ (thú cưng, kỹ năng, danh hiệu, thành tựu) gom về đây;
+  // Các phần không thuộc Nhân vật / Túi đồ gom về đây: toàn bộ tab Hành trình cũ (hồi máu, hành trình
+  // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
+  // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
   // anh quyết sau giữ hay bỏ từng phần.
   function viewMisc() {
     const c = CLASSES[P.cls];
     return `
+      ${P.victory ? viewVictory() : ''}
+      ${viewTown()}
+
       ${viewPets()}
 
       <div class="card"><h3>Kỹ năng</h3><div class="list">
@@ -2245,7 +2249,7 @@
       if (!g) chatTo = 'world';
       if (!before && g) toast(`Bạn đã vào bang ${g.name}.`);
       if (before && !g) toast('Bạn không còn ở trong bang.');
-      if (guildUi.open) loadGuild(); else if (tab === 'town') render();
+      if (guildUi.open) loadGuild(); else if (tab === 'misc') render();
     });
     Net.onMail((n) => {
       const more = n > mail.unread;
