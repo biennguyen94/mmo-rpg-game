@@ -1,0 +1,160 @@
+{
+  "sourceType": "IMPLEMENTATION",
+  "note": "P6-M3 / P6-M4 (P6-3, P6-4 duyệt 2026-10-03): Jewel of Chaos (Item.txt 12/15; NPC mua lại 10 000, stack 20, rơi trong nhóm jewels) và 3 cánh cấp 1 (12/0 Elf — ELF, 12/1 Heaven — DW + MG, 12/2 Satan — DK + MG): cấp 15, phòng thủ 10, +12 % sát thương gây ra (damageIncrease), −12 % sát thương nhận (absorb); chỉ lấy từ Chaos Machine (không rơi, không bán ở NPC). buyPrice cánh 100 000 (NPC mua lại 50 000) do dự án tự đặt. Chỉ số MU thật của cánh không dùng (KB không có công thức).",
+  "items": [
+    {
+      "templateId": "jewel_chaos",
+      "name": "Jewel of Chaos",
+      "type": "JEWEL",
+      "slot": null,
+      "stackable": true,
+      "maxStack": 20,
+      "iconRef": {
+        "group": 12,
+        "index": 15
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 15
+      },
+      "buyPrice": 20000,
+      "implementationFields": [
+        "buyPrice",
+        "stackable",
+        "maxStack"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_elf",
+      "name": "Wings of Elf",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "ELF"
+      ],
+      "requirements": {
+        "level": 15,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 10,
+      "damageIncrease": 12,
+      "absorb": 12,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 0
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 0
+      },
+      "buyPrice": 100000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_heaven",
+      "name": "Wings of Heaven",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "DW",
+        "MG"
+      ],
+      "requirements": {
+        "level": 15,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 10,
+      "damageIncrease": 12,
+      "absorb": 12,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 1
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 1
+      },
+      "buyPrice": 100000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    },
+    {
+      "templateId": "wing_satan",
+      "name": "Wings of Satan",
+      "type": "WING",
+      "slot": "WING",
+      "stackable": false,
+      "classes": [
+        "DK",
+        "MG"
+      ],
+      "requirements": {
+        "level": 15,
+        "strength": 0,
+        "agility": 0,
+        "energy": 0,
+        "vitality": 0
+      },
+      "defense": 10,
+      "damageIncrease": 12,
+      "absorb": 12,
+      "durability": 200,
+      "iconRef": {
+        "group": 12,
+        "index": 2
+      },
+      "reference": {
+        "source": "Item.txt",
+        "version": "s5+",
+        "verified": false,
+        "group": 12,
+        "index": 2
+      },
+      "buyPrice": 100000,
+      "implementationFields": [
+        "requirements",
+        "defense",
+        "damageIncrease",
+        "absorb",
+        "durability",
+        "buyPrice"
+      ],
+      "sourceType": "IMPLEMENTATION"
+    }
+  ]
+}

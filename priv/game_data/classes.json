@@ -1,5 +1,5 @@
 {
-  "source": "docs/kb/KB_CONFIG.md §2 (base stats, HP/MP growth); docs/kb/KB_GAME_DESIGN.md §4.1 (derived). Phase 1 chỉ có DK (KB_00_RULES §7). Hệ số derived: mỗi chỉ số = floor(Σ term + Σ trang bị[item]); term {stat, mul} hoặc {stat, div}.",
+  "source": "docs/kb/KB_CONFIG.md §2 (base stats, HP/MP growth); docs/kb/KB_GAME_DESIGN.md §4.1 (derived). Phase 2: DK, DW, ELF; Phase 3 (P3-M5): MG (KB_00_RULES §7). Hệ số derived: mỗi chỉ số = floor(Σ term + Σ trang bị[item]); term {stat, mul} hoặc {stat, div}.",
   "classes": [
     {
       "id": "DK",
@@ -76,6 +76,278 @@
             {
               "stat": "agility",
               "div": 15
+            }
+          ],
+          "item": "speed"
+        }
+      }
+    },
+    {
+      "id": "DW",
+      "name": "Dark Wizard",
+      "strength": 18,
+      "agility": 18,
+      "vitality": 15,
+      "energy": 30,
+      "hpBase": 80,
+      "hpPerLevel": 1,
+      "hpPerVit": 2,
+      "mpBase": 60,
+      "mpPerLevel": 2,
+      "mpPerEne": 2,
+      "statPerLevel": 5,
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §2",
+      "derived": {
+        "sourceType": "IMPLEMENTATION",
+        "version": null,
+        "verified": false,
+        "source": "KB_GAME_DESIGN §4.1 (DW)",
+        "attackMax": {
+          "terms": [
+            {
+              "stat": "energy",
+              "div": 4
+            }
+          ],
+          "item": "attackMax"
+        },
+        "attackMin": {
+          "terms": [
+            {
+              "stat": "energy",
+              "div": 9
+            }
+          ],
+          "item": "attackMin"
+        },
+        "defense": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 5
+            }
+          ],
+          "item": "defense"
+        },
+        "attackRate": {
+          "terms": [
+            {
+              "stat": "level",
+              "mul": 5
+            },
+            {
+              "stat": "agility",
+              "mul": 1.5
+            }
+          ]
+        },
+        "defenseRate": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 4
+            }
+          ]
+        },
+        "attackSpeed": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 10
+            }
+          ],
+          "item": "speed"
+        }
+      }
+    },
+    {
+      "id": "ELF",
+      "name": "Fairy Elf",
+      "strength": 22,
+      "agility": 25,
+      "vitality": 20,
+      "energy": 15,
+      "hpBase": 90,
+      "hpPerLevel": 1,
+      "hpPerVit": 2,
+      "mpBase": 40,
+      "mpPerLevel": 1,
+      "mpPerEne": 1.5,
+      "statPerLevel": 5,
+      "sourceType": "CONFIG",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §2",
+      "derived": {
+        "sourceType": "IMPLEMENTATION",
+        "version": null,
+        "verified": false,
+        "source": "KB_GAME_DESIGN §4.1 (ELF)",
+        "attackMax": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 4
+            },
+            {
+              "stat": "strength",
+              "div": 8
+            }
+          ],
+          "item": "attackMax"
+        },
+        "attackMin": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 7
+            },
+            {
+              "stat": "strength",
+              "div": 14
+            }
+          ],
+          "item": "attackMin"
+        },
+        "defense": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 10
+            }
+          ],
+          "item": "defense"
+        },
+        "attackRate": {
+          "terms": [
+            {
+              "stat": "level",
+              "mul": 5
+            },
+            {
+              "stat": "agility",
+              "mul": 1.5
+            }
+          ]
+        },
+        "defenseRate": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 3
+            }
+          ]
+        },
+        "attackSpeed": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 50
+            }
+          ],
+          "item": "speed"
+        }
+      }
+    },
+    {
+      "id": "MG",
+      "name": "Magic Gladiator",
+      "strength": 26,
+      "agility": 26,
+      "vitality": 26,
+      "energy": 26,
+      "hpBase": 110,
+      "hpPerLevel": 3,
+      "hpPerVit": 3,
+      "mpBase": 60,
+      "mpPerLevel": 2,
+      "mpPerEne": 2,
+      "statPerLevel": 7,
+      "forbiddenSlots": [
+        "HELM"
+      ],
+      "sourceType": "IMPLEMENTATION",
+      "version": null,
+      "verified": false,
+      "source": "KB_CONFIG §2 (MG); không đội mũ: KB_GAME_DESIGN §2, KB_CONFIG §6",
+      "derived": {
+        "sourceType": "IMPLEMENTATION",
+        "version": null,
+        "verified": false,
+        "source": "KB_GAME_DESIGN §4.1 (MG). attackMaxMagic / attackSpeedMagic = attackPowerMagic / attackSpeedMagic, dùng cho skill có magic: true (§4.1 'Nếu class là MG và skill là magic'). attackMin phép = attackMin (KB không cho công thức riêng).",
+        "attackMax": {
+          "terms": [
+            {
+              "stat": "strength",
+              "div": 4
+            }
+          ],
+          "item": "attackMax"
+        },
+        "attackMaxMagic": {
+          "terms": [
+            {
+              "stat": "energy",
+              "div": 4
+            }
+          ],
+          "item": "attackMax"
+        },
+        "attackMin": {
+          "terms": [
+            {
+              "stat": "strength",
+              "div": 6
+            }
+          ],
+          "item": "attackMin"
+        },
+        "defense": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 5
+            }
+          ],
+          "item": "defense"
+        },
+        "attackRate": {
+          "terms": [
+            {
+              "stat": "level",
+              "mul": 5
+            },
+            {
+              "stat": "agility",
+              "mul": 1.5
+            }
+          ]
+        },
+        "defenseRate": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 4
+            }
+          ]
+        },
+        "attackSpeed": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 15
+            }
+          ],
+          "item": "speed"
+        },
+        "attackSpeedMagic": {
+          "terms": [
+            {
+              "stat": "agility",
+              "div": 20
             }
           ],
           "item": "speed"

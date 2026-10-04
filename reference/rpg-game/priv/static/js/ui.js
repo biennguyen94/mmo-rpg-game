@@ -2,7 +2,7 @@
  * Mọi thao tác gửi lên server qua Net (net.js); server tính toán rồi trả trạng thái mới.
  * P.view chứa các chỉ số server tính sẵn (máu tối đa, tấn công, giá nghỉ trọ...). */
 (function () {
-  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE } = window.GAME_DATA;
+  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE, UPGRADE, CHAOS } = window.GAME_DATA;
   const Net = window.Net;
 
   let P = null;          // trạng thái người chơi
@@ -26,7 +26,7 @@
   let board = { kind: 'level', data: null, at: 0 }; // bảng xếp hạng
   let chatMenu = null;   // id tin nhắn đang mở menu Báo cáo/Chặn
   let blocked = [];      // người mình đã chặn: [{ id, name }]
-  let adm = { reports: null, user: null, loading: false }; // tab Quản trị
+  let adm = { reports: null, user: null, loading: false, audit: null, alog: null, glog: null }; // tab Quản trị
   let mail = { unread: 0, list: null, open: false }; // hộp thư
   let guildUi = { open: false, list: null, requested: [], info: null, q: '', confirm: null }; // bang hội
   let chatTo = 'world';  // 'world' | 'guild' | 'party'
@@ -64,7 +64,9 @@
 
   function result(r) {
     if (!r) return;
-    if (!r.ok) toast(r.msg, true); else if (r.msg) toast(r.msg);
+    // ép / ghép thất bại vẫn là lệnh hợp lệ (ok) nhưng hiện như tin xấu
+    const failed = (r.upgrade && r.upgrade.result !== 'success') || (r.chaos && r.chaos.result === 'fail');
+    if (!r.ok) toast(r.msg, true); else if (r.msg) toast(r.msg, failed);
   }
 
   // ---------- Khung ----------
@@ -81,6 +83,7 @@
   }
 
   function render() {
+    hideTip();
     Sound.music(musicMood());
     const hud = $('#hud'), tabs = $('#tabs'), view = $('#view');
     if (loading || !Net.username) {
@@ -106,13 +109,13 @@
     tabs.hidden = false;
     tabs.innerHTML = [
       ['map', 'walk', 'Bản đồ'],
-      ['town', 'trophy', 'Hành trình'],
       ['hero', 'person', 'Nhân vật'],
       ['bag', 'backpack', 'Túi đồ'],
       ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
-    ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
+      ['misc', 'laurels', 'Khác'],
+    ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : P.victory && tab === 'town' ? viewVictory() + viewTown() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), town: viewTown, hero: viewHero, bag: viewBag, quests: viewQuests, admin: viewAdmin }[tab])();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -126,7 +129,7 @@
       const log = $('#chat-log');
       if (log) log.scrollTop = log.scrollHeight;
     }
-    if (tab === 'town') { loadBoard(); loadArena(); }
+    if (tab === 'misc') { loadBoard(); loadArena(); }
     if (tab === 'admin' && adm.reports == null && !adm.loading) loadReports();
   }
 
@@ -161,13 +164,14 @@
           <button class="btn small-btn" data-adm="mute" data-uid="${u.id}" data-minutes="1440">Cấm chat 1 ngày</button>
           <button class="btn small-btn" data-adm="unmute" data-uid="${u.id}">Bỏ cấm chat</button>
         </div>
-        <div class="btn-row">
+        ${isAdminRole() ? `<div class="btn-row">
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}" data-minutes="1440">Khóa 1 ngày</button>
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}">Khóa vĩnh viễn</button>
           <button class="btn small-btn" data-adm="unban" data-uid="${u.id}">Mở khóa</button>
         </div>
-        ${u.character ? giftForm('adm-gift', u.id) : ''}
-      </div>`;
+        ${u.character ? giftForm('adm-gift', u.id) : ''}` : ''}
+      </div>
+      ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card"><h3>Tra cứu người chơi</h3>
@@ -177,8 +181,79 @@
       <div class="card"><h3>Thông báo cho cả server</h3>
         <form id="adm-announce" class="chat-form"><input type="text" id="adm-text" maxlength="200" placeholder="Nội dung thông báo" autocomplete="off"><button class="btn" type="submit">Gửi</button></form>
       </div>
-      <div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
-      <div class="card"><h3>Trùm thế giới</h3><button class="btn" data-adm="world_boss">Gọi Cổ Long xuất hiện ngay</button></div>`;
+      ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
+      <div class="card"><h3>Trùm thế giới</h3><button class="btn" data-adm="world_boss">Gọi Cổ Long xuất hiện ngay</button></div>
+      ${viewAudit()}
+      <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
+  }
+
+  const isAdminRole = () => Net.role === 'admin';
+  const STAT_KEYS = [['str', 'Sức mạnh'], ['vit', 'Thể lực'], ['agi', 'Nhanh nhẹn'], ['def', 'Phòng thủ']];
+  const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
+
+  // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
+  function viewCharEdit(u) {
+    const all = Object.entries(ITEMS);
+    const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield'].includes(it.slot));
+    const up = '<label class="small">+ <input type="number" name="up" min="0" max="5" value="0"></label>';
+    const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
+    const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
+    return `<div class="card"><h3>Chỉnh nhân vật</h3>
+      <p class="small muted">Sửa ngay (người chơi đang online thấy liền), ghi vào nhật ký quản trị và nhật ký vàng/đồ với lý do ADMIN.</p>
+      ${line('give_xp', 'Kinh nghiệm', num('xp', 1000, 'min="1"'), 'Cộng')}
+      ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
+      ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
+      ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
+      ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
+      ${line('give_item', 'Đồ thường', `<select name="id">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
+      ${line('give_gear', 'Đồ hiếm', `<select name="base">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
+        <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
+        <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
+      ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
+      ${adm.alog && adm.alog.uid === u.id ? viewAdminLog(adm.alog.log) : ''}
+    </div>`;
+  }
+
+  function viewGoldLog(log) {
+    if (!log.length) return '<p class="small muted">Chưa có nhật ký vàng.</p>';
+    return `<table class="adm-table"><tr><th>Lúc</th><th>Lý do</th><th>Đổi</th><th>Còn</th></tr>${log.map((l) => `<tr><td>${vnDate(l.at)}</td><td>${esc(l.reason)}${l.ref ? ` <span class="muted">${esc(l.ref)}</span>` : ''}</td><td style="color:var(${l.delta < 0 ? '--bad' : '--good'})">${l.delta > 0 ? '+' : ''}${fmt(l.delta)}</td><td>${fmt(l.balance)}</td></tr>`).join('')}</table>`;
+  }
+
+  function viewAdminLog(log) {
+    if (!log.length) return '<p class="small muted">Chưa có thao tác nào.</p>';
+    return `<table class="adm-table"><tr><th>Lúc</th><th>Ai</th><th>Lệnh</th><th>Kết quả</th></tr>${log.map((l) => `<tr><td>${vnDate(l.at)}</td><td>${esc(l.admin)}</td><td>${esc(l.op)}${l.target_id ? ` <span class="muted">#${l.target_id}</span>` : ''}<div class="small muted">${esc(JSON.stringify(l.params))}</div></td><td>${esc(l.result || '')}</td></tr>`).join('')}</table>`;
+  }
+
+  function viewAudit() {
+    const a = adm.audit;
+    const body = !a ? '' : `${a.problems.length === 0 ? '<p class="small" style="color:var(--good)">Không có lỗi: vàng khớp nhật ký, không có đồ hiếm trùng.</p>'
+      : `<p class="small" style="color:var(--bad)">${a.problems.length} lỗi:</p><ul class="small">${a.problems.map((p) => `<li>[${esc(p.kind)}] ${esc(p.text)}</li>`).join('')}</ul>`}
+      <h4>Vàng ${a.stats.days} ngày qua theo lý do</h4>
+      ${a.stats.by_reason.length ? `<table class="adm-table"><tr><th>Lý do</th><th>Vào</th><th>Ra</th><th>Lần</th></tr>${a.stats.by_reason.map((r) => `<tr><td>${esc(r.reason)}</td><td>+${fmt(r.in)}</td><td>${fmt(r.out)}</td><td>${r.n}</td></tr>`).join('')}</table>` : '<p class="small muted">Không có.</p>'}
+      <h4>Nhận nhiều vàng nhất</h4>
+      ${a.stats.top.length ? `<ol class="small">${a.stats.top.map((t) => `<li>${esc(t.name || '(đã xóa) #' + t.user_id)}: +${fmt(t.gold)}</li>`).join('')}</ol>` : '<p class="small muted">Không có.</p>'}`;
+    return `<div class="card"><div class="row"><h3 class="grow">Kiểm tra vàng</h3>
+      <button class="btn small-btn" data-adm="audit" data-days="1">1 ngày</button><button class="btn small-btn" data-adm="audit" data-days="7">7 ngày</button></div>
+      <p class="small muted">Đối soát vàng của mọi nhân vật với nhật ký, tìm đồ hiếm trùng mã (dấu hiệu nhân đồ). Như lệnh <code>mix hac_long.audit</code>.</p>${body}</div>`;
+  }
+
+  function onCharOp(form) {
+    const f = new FormData(form), op = form.dataset.op, payload = { uid: +form.dataset.uid };
+    const n = (k) => Math.trunc(+f.get(k) || 0);
+    if (op === 'give_xp') payload.xp = n('xp');
+    if (op === 'set_level') payload.level = n('level');
+    if (op === 'add_gold') payload.amount = n('amount');
+    if (op === 'add_points') payload.n = n('n');
+    if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
+    if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
+    if (op === 'give_gear') {
+      Object.assign(payload, { base: f.get('base'), rarity: n('rarity'), up: n('up') });
+      const bonus = {};
+      STAT_KEYS.forEach(([k]) => { if (n(k) > 0) bonus[k] = n(k); });
+      if (Object.keys(bonus).length) payload.bonus = bonus;
+    }
+    Net.admin(op, payload).then((r) => { toast(r.msg || 'Đã xong.'); if (r.user) adm.user = r.user; adm.glog = null; render(); }).catch((err) => toast(err.msg, true));
   }
 
   function giftForm(id, uid) {
@@ -210,9 +285,14 @@
     if (d.uid) payload.uid = +d.uid;
     if (d.action) payload.action = d.action;
     if (d.minutes) payload.minutes = +d.minutes;
+    if (d.days) payload.days = +d.days;
     try {
-      await Net.admin(op, payload);
-      toast('Đã xong.');
+      const r = await Net.admin(op, payload);
+      if (op === 'audit') { adm.audit = r.audit; return render(); }
+      if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
+      if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
+      toast(r.msg || 'Đã xong.');
+      if (r.user) adm.user = r.user;
       if (op === 'resolve') adm.reports = adm.reports.filter((r) => r.id !== payload.id);
       if (adm.user && payload.uid === adm.user.id) adm.user = (await Net.admin('lookup', { name: adm.user.username })).user;
       render();
@@ -247,9 +327,9 @@
     const t = trade, busy = t.status === 'executing';
     const ready = (on) => (on ? '<span class="tag good">✔ Đã xác nhận</span>' : '<span class="tag">Chưa xác nhận</span>');
     const used = new Set(t.mine.gear.map((g) => g.uid));
-    const items = Object.keys(P.inv).filter((id) => P.inv[id] - (t.mine.items[id] || 0) > 0).concat(bagGear().filter((id) => !used.has(id)));
+    const items = Object.keys(P.inv).filter((id) => P.inv[id] - (t.mine.items[id] || 0) > 0).concat(bagGear().filter((id) => !used.has(id) && !itemOf(id).locked));
     const add = t.status === 'open' ? `<form id="trade-add" class="gift-form">
-        ${items.length ? `<select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? ` (${RARITY[it.rarity]})` : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
+        ${items.length ? `<select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
         <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label><button class="btn" type="submit">Bỏ vào</button></div>` : ''}
         <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" max="${P.gold}" value="${t.mine.gold || ''}" placeholder="0"></label><button class="btn" type="submit" name="set" value="gold">Đặt vàng</button></div>
       </form>` : '';
@@ -307,7 +387,7 @@
         <div class="row"><img class="sprite" src="${window.Doll.url(o.look)}" alt=""><div class="grow">
           ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}<h3>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h3>
           <p class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} · Đấu trường ${o.arena.rating} (${o.arena.wins}T/${o.arena.losses}B)</p></div></div>
-        <p class="small">${[o.gear.weapon, o.gear.armor, o.gear.shield].filter(Boolean).map(esc).join(' · ')}</p>
+        <p class="small">${[o.gear.weapon, o.gear.armor, o.gear.shield, o.gear.wing].filter(Boolean).map(esc).join(' · ')}</p>
         <div class="btn-row">
           ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
           <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
@@ -527,9 +607,9 @@
       body = mine.length ? `<div class="list">${mine.map((l) => listingRow(l, `<div class="market-mine"><span class="num" style="color:var(--gold)">${fmt(l.price)} vàng</span><button class="btn small-btn" data-act="market_cancel" data-listing="${l.id}">Rút về</button></div>`)).join('')}</div>`
         : '<p class="small muted">Bạn chưa rao bán gì.</p>';
     } else {
-      const items = Object.keys(P.inv).filter((id) => P.inv[id] > 0).concat(bagGear());
+      const items = Object.keys(P.inv).filter((id) => P.inv[id] > 0).concat(bagGear().filter((id) => !itemOf(id).locked));
       body = items.length ? `<form id="market-sell" class="gift-form">
-          <select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? ` (${RARITY[it.rarity]})` : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
+          <select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
           <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label>
             <label class="small">Giá <input type="number" name="price" min="1" placeholder="vàng" required></label></div>
           <button class="btn primary" type="submit">Rao bán</button>
@@ -542,7 +622,7 @@
   // ---------- Đấu trường ----------
   async function loadArena() {
     try { arena = await Net.arena(); } catch (e) { /* thử lại lần sau */ }
-    if (tab === 'town') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
+    if (tab === 'misc') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
   }
 
   function viewArena() {
@@ -601,7 +681,7 @@
     board.at = Date.now();
     try {
       board.data = await Net.leaderboard();
-      if (tab === 'town') {
+      if (tab === 'misc') {
         const el = $('#board');
         if (el) el.outerHTML = viewBoard();
       }
@@ -1045,70 +1125,107 @@
     def: ['Phòng thủ', 'Giảm sát thương nhận vào'],
   };
 
-  // Tên món đồ kèm cấp nâng cấp (+1…+5) nếu có.
+  // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
   const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
+  // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
+  const effLevel = (l) => l + Math.max(0, l - UPGRADE.double_from + 1);
+  // màu viền theo cấp nâng (+7, +9, +11)
+  const upClass = (l) => (l >= 11 ? ' up11' : l >= 9 ? ' up9' : l >= 7 ? ' up7' : '');
   // Món đồ theo id: đồ thường trong ITEMS, đồ chỉ số ngẫu nhiên (id bắt đầu bằng #) do server gửi.
   const isGear = (id) => typeof id === 'string' && id[0] === '#';
   const itemOf = (id) => (isGear(id) ? P.view.gear[id] : ITEMS[id]);
   const RARITY = { 1: 'Tốt', 2: 'Hiếm', 3: 'Sử Thi' };
+  // nhãn ngắn cho đồ bản riêng trong danh sách chọn: độ hiếm và / hoặc cấp nâng
+  const gearTag = (id) => { const it = itemOf(id), up = upLevel(id); return [it.rarity ? RARITY[it.rarity] : '', up ? `+${up}` : ''].filter(Boolean).map((x) => ` (${x})`).join(''); };
   const itemName = (id) => {
     const it = itemOf(id);
     const name = it.rarity ? `<span class="rar-${it.rarity}">${esc(it.name)}</span>` : it.name;
-    return name + (upLevel(id) ? ` <span class="up-lv">+${upLevel(id)}</span>` : '');
+    return name + (upLevel(id) ? ` <span class="up-lv">+${upLevel(id)}</span>` : '') + (it.locked ? ' <span class="lock-ic" title="Đã khóa">🔒</span>' : '');
   };
   const bonusText = (it) => (it.bonus ? Object.entries(it.bonus).sort((a, b) => b[1] - a[1]).map(([k, v]) => `+${v} ${STAT_INFO[k][0]}`).join(', ') : '');
 
   function itemStat(it, id) {
     const b = id ? P.view.bonus[id] || 0 : 0;
-    const extra = it.bonus ? ` · <span class="rar-${it.rarity}">${RARITY[it.rarity]}: ${bonusText(it)}</span>` : '';
+    const extra = it.rarity ? ` · <span class="rar-${it.rarity}">${RARITY[it.rarity]}: ${bonusText(it)}</span>` : '';
+    if (it.slot === 'wing') {
+      const pct = (v) => Math.round((v + 0.02 * effLevel(upLevel(id))) * 100);
+      return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
+    }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
     if (it.heal) return `Hồi ${it.heal} máu`;
     return '';
   }
 
+  // Bảng nhân vật theo bố cục MU Web (charsheet): tên, lớp · cấp, EXP, 4 chỉ số với nút [+]
+  // (bấm nhiều lần gom thành một lệnh `alloc`), điểm còn, rồi chỉ số chiến đấu do server tính.
   function viewHero() {
     const d = P.view.derived, c = CLASSES[P.cls];
+    const free = P.points - allocPendingTotal();
+    const need = P.view.xpToNext;
+    const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
+    const stat = (k) => {
+      const [n, hint] = STAT_INFO[k], pend = allocPending[k] || 0;
+      return `<div class="statrow" title="${esc(hint)}">
+        <span>${n}</span>
+        <span class="num">${P.stats[k]}${pend ? `<span class="pending">+${pend}</span>` : ''}</span>
+        <button class="btn" data-act="alloc-add" data-stat="${k}" ${free > 0 ? '' : 'disabled'} aria-label="Cộng 1 điểm ${n}">+</button>
+      </div>`;
+    };
     return `
-      <div class="card">
-        <div class="row">
-          ${heroSprite()}
-          <div class="grow">${P.title ? `<span class="title-tag">${esc(achTitle(P.title))}</span>` : ''}<h2 class="display">${esc(P.name)}</h2><div class="small muted">${c.name} · Cấp ${P.level}</div></div>
-        </div>
-        <div class="stat-grid">
-          <div class="stat"><span class="small muted">Tấn công</span><b>${d.atk}</b></div>
-          <div class="stat"><span class="small muted">Phòng thủ</span><b>${d.def}</b></div>
-          <div class="stat"><span class="small muted">Chí mạng</span><b>${Math.round(d.crit * 100)}% <span class="small muted">×${d.critMult.toFixed(2)}</span></b></div>
-          <div class="stat"><span class="small muted">Né đòn</span><b>${Math.round(d.dodge * 100)}%</b></div>
-        </div>
-      </div>
+      <div class="card charsheet" data-panel="character">
+        <h3 class="panel-title">Nhân vật</h3>
+        <div>${P.title ? `<span class="title-tag">${esc(achTitle(P.title))}</span>` : ''}<h2 class="display">${esc(P.name)}</h2>
+          <div class="small muted">${c.name} · ${P.rebirths ? `Chuyển sinh ${P.rebirths} · ` : ''}Cấp ${P.level}</div></div>
+        <hr class="sep">
+        ${kv('EXP', P.level >= RULES.maxLevel ? 'Cấp tối đa' : `${fmt(P.xp)} / ${fmt(need)}`)}
+        <hr class="sep">
+        ${Object.keys(STAT_INFO).map(stat).join('')}
+        ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
+        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm. Điểm đã cộng không gỡ được.</p>
+        <hr class="sep">
+        ${kv('Tấn công', fmt(d.atk))}
+        ${kv('Phòng thủ', fmt(d.def))}
+        ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
+        ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
+        ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
+        ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
+      </div>`;
+  }
 
-      <div class="card">
-        <div class="row"><h3 class="grow">Tiềm năng</h3><span class="tag ${P.points ? 'gold' : ''} num">${P.points} điểm</span></div>
-        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm để cộng vào chỉ số.</p>
-        <div class="list alloc">
-          ${Object.entries(STAT_INFO).map(([k, [n, hint]]) => `
-            <div class="item">
-              <div class="grow"><div class="name">${n} <span class="num">${P.stats[k]}</span></div><div class="small muted">${hint}</div></div>
-              <button class="btn" data-act="alloc" data-stat="${k}" ${P.points ? '' : 'disabled'} aria-label="Cộng 1 điểm ${n}">+1</button>
-              <button class="btn" data-act="alloc5" data-stat="${k}" ${P.points >= 5 ? '' : 'disabled'} aria-label="Cộng 5 điểm ${n}">+5</button>
-            </div>`).join('')}
-        </div>
-      </div>
+  // Cộng điểm gom lệnh (như MU Web `alloc.ts`): mỗi lần bấm [+] cộng 1 điểm chờ, 200 ms sau lần bấm
+  // cuối mới gửi một lệnh `alloc {stat, n}` cho mỗi chỉ số. Không vượt số điểm còn.
+  let allocPending = {};
+  let allocTimer = null;
+  const allocPendingTotal = () => Object.values(allocPending).reduce((a, b) => a + b, 0);
+  function allocAdd(stat) {
+    if (!P || P.points - allocPendingTotal() <= 0) return;
+    allocPending[stat] = (allocPending[stat] || 0) + 1;
+    clearTimeout(allocTimer);
+    allocTimer = setTimeout(allocFlush, 200);
+    render();
+  }
+  async function allocFlush() {
+    const pend = allocPending;
+    allocPending = {};
+    for (const [stat, n] of Object.entries(pend)) {
+      if (n <= 0) continue;
+      while (busy) await new Promise((r) => setTimeout(r, 50)); // đợi lệnh khác xong, không làm mất điểm
+      await sendCommand({ act: 'alloc', stat, n });
+    }
+  }
 
-      <div class="card">
-        <h3>Trang bị</h3>
-        <div class="list">
-          ${[['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']].map(([slot, label]) => {
-            const id = P.equip[slot], it = id ? itemOf(id) : null;
-            return `<div class="item">
-              ${it ? icon(it.icon, 'lg') : `<span class="ic lg"></span>`}
-              <div class="grow"><div class="small muted">${label}</div><div class="name">${it ? itemName(id) : 'Trống'}</div>${it ? `<div class="small muted">${itemStat(it, id)}</div>` : ''}</div>
-              ${slot === 'shield' && it ? `<button class="btn" data-act="unequip" data-slot="shield">Tháo</button>` : ''}
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
+  // ---------- Khác ----------
+  // Các phần không thuộc Nhân vật / Túi đồ gom về đây: toàn bộ tab Hành trình cũ (hồi máu, hành trình
+  // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
+  // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
+  // anh quyết sau giữ hay bỏ từng phần.
+  function viewMisc() {
+    const c = CLASSES[P.cls];
+    return `
+      ${P.victory ? viewVictory() : ''}
+      ${viewTown()}
 
       ${viewPets()}
 
@@ -1226,48 +1343,157 @@
     return diff > 0 ? `<span class="up">▲ ${diff}</span>` : '';
   }
 
+  // Túi đồ theo bố cục MU Web: lưới trang bị 3×4 (10 ô, ô chưa có trong Hắc Long hiện 🔒),
+  // lưới túi 8 cột tự xếp (Hắc Long không lưu vị trí ô), bấm ô xem chi tiết + nút, kéo thả để
+  // mặc / tháo (chuột), thanh tóm tắt dưới cùng.
+  const EQUIP_GRID = [
+    [null, 'helm', null],
+    ['weapon', 'armor', 'shield'],
+    ['gloves', 'pants', 'boots'],
+    ['ring1', 'wing', 'ring2'],
+  ];
+  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn' };
+  const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing'];
+  // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
+  const SLOT_REMOVABLE = ['shield', 'wing'];
+  const BAG_COLUMNS = 8;
+  const BAG_MIN_CELLS = 32;
+
+  // Đồ trong túi theo thứ tự: trang bị (đồ hiếm trước) → bình máu → món ăn → nguyên liệu
+  function bagItems() {
+    const ids = Object.keys(P.inv).filter((id) => P.inv[id] > 0 && ITEMS[id]);
+    const by = (slot) => ids.filter((id) => ITEMS[id].slot === slot);
+    const gear = bagGear().concat(ids.filter((id) => SLOT_OPEN.includes(ITEMS[id].slot)));
+    return gear.concat(by('potion'), by('food'), by('material'));
+  }
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
+
+  function cellIcon(it) {
+    return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
+  }
+
   function viewBag() {
-    const ids = Object.keys(P.inv).filter((id) => P.inv[id] > 0);
-    const gear = ids.filter((id) => !['potion', 'material', 'food'].includes(ITEMS[id].slot)).concat(bagGear());
-    const pots = ids.filter((id) => ITEMS[id].slot === 'potion');
-    const foods = ids.filter((id) => ITEMS[id].slot === 'food');
-    const mats = ids.filter((id) => ITEMS[id].slot === 'material');
-    const d = P.view.derived;
-    const rowFor = (id) => {
+    const items = bagItems();
+    const cells = Math.max(BAG_MIN_CELLS, Math.ceil((items.length + 1) / BAG_COLUMNS) * BAG_COLUMNS);
+    const equip = EQUIP_GRID.flat().map((slot) => {
+      if (!slot) return '<span class="slot none"></span>';
+      const id = SLOT_OPEN.includes(slot) ? P.equip[slot] : null, it = id ? itemOf(id) : null;
+      const locked = !SLOT_OPEN.includes(slot);
+      return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
+          ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
+        ${it ? cellIcon(it) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
+        <span class="lbl">${SLOT_LABEL[slot]}</span>
+      </button>`;
+    }).join('');
+    const bag = Array.from({ length: cells }, (_, i) => {
+      const id = items[i];
+      if (!id) return '<span class="cell empty"></span>';
       const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
-      const low = it.level && P.level < it.level;
-      const main = it.slot === 'potion'
-        ? `<button class="btn" data-act="use" data-id="${id}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
-        : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${id}">Ăn</button>`
-        : it.slot === 'material' ? ''
-        : `<button class="btn primary" data-act="equip" data-id="${id}" ${low ? 'disabled' : ''}>Trang bị</button>`;
-      return `<div class="item">
-        ${itemIcon(it, it.rarity)}
-        <div class="grow">
-          <div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div>
-          <div class="small muted">${['material', 'food'].includes(it.slot) ? it.desc : itemStat(it, id)} ${['potion', 'material', 'food'].includes(it.slot) ? '' : compare(it, id)}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}</div>
-        </div>
-        ${main}
-      </div>`;
-    };
+      const wearable = SLOT_OPEN.includes(it.slot);
+      return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${(it.level && P.level < it.level) || (it.cls && it.cls !== P.cls) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
+          ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
+        ${cellIcon(it)}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
+      </button>`;
+    }).join('');
     return `
-      <div class="card">
-        <h3>Bình máu</h3>
-        ${pots.length ? `<div class="list">${pots.map(rowFor).join('')}</div>` : `<p class="small muted">Chưa có bình máu. Mua ở Bà Lang trong Làng.</p>`}
-      </div>
-      ${foods.length || P.food ? `<div class="card">
-        <h3>Món ăn</h3>${foodNow()}
-        ${foods.length ? `<div class="list">${foods.map(rowFor).join('')}</div>` : ''}
-      </div>` : ''}
-      <div class="card">
-        <h3>Nguyên liệu</h3>
-        ${mats.length ? `<div class="list">${mats.map(rowFor).join('')}</div>` : `<p class="small muted">Bước vào bụi cây để hái Thảo Dược, vào mỏ đá để đào quặng. Mang cho Bà Lang pha thuốc hoặc bán cho Thợ Rèn.</p>`}
-      </div>
-      <div class="card">
-        <div class="row"><h3 class="grow">Trang bị trong túi</h3>${bagGear().length ? `<span class="small muted num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span>` : ''}</div>
-        ${gear.length ? `<div class="list">${gear.map(rowFor).join('')}</div>` : `<p class="small muted">Đồ bạn mua hoặc nhặt được sẽ nằm ở đây. Đồ đang mặc xem ở tab Nhân vật.</p>`}
-      </div>
-      <p class="small muted">Muốn bán đồ thì gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>`;
+      <div class="card inv" data-panel="inventory">
+        <h3 class="panel-title">Túi đồ</h3>
+        <div class="equip">
+          <div class="small muted" style="text-align:center">Trang bị đang mặc</div>
+          <div class="grid3">${equip}</div>
+        </div>
+        <div class="bag-head">Túi đồ</div>
+        <div class="bag" data-drop-bag style="--cols:${BAG_COLUMNS}">${bag}</div>
+        ${items.length ? '' : '<p class="small muted emptytext">Túi trống</p>'}
+        <div class="bag-bottom">
+          <div class="row"><span class="gold">${icon('two-coins')}${fmt(P.gold)}</span><span class="num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span></div>
+          <div class="row"><span>${icon('health-potion')} Bình máu ×<b class="num">${potionCount()}</b></span><span class="num">${items.length} món</span></div>
+          ${foodNow()}
+          <p class="small muted">Muốn bán đồ, hãy gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>
+        </div>
+      </div>`;
+  }
+
+  // ---------- Bảng chi tiết món đồ (tooltip kiểu MU Web) ----------
+  let tipAt = null; // { id?, slot?, x, y }
+  function hideTip() {
+    tipAt = null;
+    const el = document.getElementById('itemtip');
+    if (el) el.remove();
+  }
+  function showTip(at) {
+    hideTip();
+    const id = at.slot ? P.equip[at.slot] : at.id;
+    const it = id && itemOf(id);
+    if (!it) return;
+    tipAt = at;
+    const d = P.view.derived;
+    const low = (it.level && P.level < it.level) || (it.cls && it.cls !== P.cls);
+    const wearable = SLOT_OPEN.includes(it.slot);
+    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id);
+    // khóa đồ: không bán / rao chợ / giao dịch / bỏ vào máy ghép được
+    const lockBtn = wearable ? `<button class="btn" data-act="lock" data-id="${esc(id)}" data-on="${it.locked ? '0' : '1'}">${it.locked ? 'Mở khóa' : '🔒 Khóa'}</button>` : '';
+    const btns = at.slot
+      ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
+      : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${lockBtn}`
+      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
+      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">Ăn</button>` : '';
+    const n = isGear(id) ? 1 : P.inv[id] || 0;
+    const el = document.createElement('div');
+    el.id = 'itemtip';
+    el.className = 'itemtip';
+    el.setAttribute('role', 'dialog');
+    el.innerHTML = `
+      <div class="big">${itemIcon(it, it.rarity)}</div>
+      <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
+      ${desc ? `<div class="small">${desc}</div>` : ''}
+      ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
+      ${it.level ? `<div class="small ${it.level > P.level ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
+      ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, bỏ vào máy ghép được.</div>' : ''}
+      ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
+      <div class="btns">${btns}</div>`;
+    document.body.appendChild(el);
+    // đặt cạnh chỗ bấm, không tràn khỏi màn hình
+    const r = el.getBoundingClientRect(), pad = 8;
+    const left = Math.min(Math.max(pad, at.x + 12), innerWidth - r.width - pad);
+    const top = at.y + 12 + r.height > innerHeight - pad ? Math.max(pad, at.y - r.height - 12) : at.y + 12;
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
+  // Kéo thả bằng chuột: kéo đồ trong túi lên ô trang bị để mặc, kéo khiên đang mặc về túi để tháo.
+  let dragging = null; // { id } | { equip: 'shield' | 'wing' }
+  function onDragStart(e) {
+    const t = e.target.closest('[data-drag-id], [data-drag-equip]');
+    if (!t) return;
+    hideTip();
+    dragging = t.dataset.dragId ? { id: t.dataset.dragId } : { equip: t.dataset.dragEquip };
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', t.dataset.dragId || t.dataset.dragEquip);
+  }
+  function dropTarget(e) {
+    return dragging && e.target.closest(dragging.id ? '[data-drop-slot]' : '[data-drop-bag]');
+  }
+  function onDragOver(e) {
+    const t = dropTarget(e);
+    if (!t) return;
+    e.preventDefault();
+    document.querySelectorAll('.over').forEach((x) => x !== t && x.classList.remove('over'));
+    t.classList.add('over');
+  }
+  function onDrop(e) {
+    const t = dropTarget(e), from = dragging;
+    dragging = null;
+    document.querySelectorAll('.over').forEach((x) => x.classList.remove('over'));
+    if (!t || !P) return;
+    e.preventDefault();
+    if (from.id) {
+      const it = itemOf(from.id);
+      if (!it || it.slot !== t.dataset.dropSlot) { toast(`Món này không mặc vào ô ${SLOT_LABEL[t.dataset.dropSlot]}.`, true); return; }
+      sendCommand({ act: 'equip', id: from.id });
+    } else if (SLOT_REMOVABLE.includes(from.equip)) {
+      sendCommand({ act: 'unequip', slot: from.equip });
+    }
   }
 
   // ---------- NPC ----------
@@ -1300,29 +1526,66 @@
       ${ids.length ? `<div class="list">${ids.map((id) => {
         const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
         return `<div class="item">${itemIcon(it, it.rarity)}<div class="grow"><div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div></div>
-          <button class="btn" data-act="sell" data-id="${id}" aria-label="Bán ${it.name}">Bán ${fmt(it.sell)}</button></div>`;
+          ${it.locked ? '<span class="small muted">Đã khóa</span>' : `<button class="btn" data-act="sell" data-id="${id}" aria-label="Bán ${it.name}">Bán ${fmt(it.sell)}</button>`}</div>`;
       }).join('')}</div>` : '<p class="small muted">Túi trống. Đồ đang mặc không bán được.</p>'}
     </div>`;
   }
 
+  // Thợ Rèn: +1 → +5 bằng quặng (chắc chắn), +6 → +11 bằng ngọc (có tỉ lệ, thất bại tụt cấp hoặc vỡ đồ).
+  const RISK = { down: 'thất bại tụt 1 cấp', destroy: 'thất bại VỠ ĐỒ' };
   function forgeCard() {
-    const rows = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']].map(([slot, label]) => {
+    const rows = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên'], ['wing', 'Cánh']].map(([slot, label]) => {
       const f = P.view.forge[slot];
       if (!f) return '';
       const it = itemOf(f.id), c = f.cost;
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
-      const step = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * 0.08)) : 0;
+      const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * 0.08)) : 0;
+      const step = c ? per * (effLevel(f.level + 1) - effLevel(f.level)) : 0;
+      const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${icon(it.icon, 'lg')}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? ', +2% sát thương / hấp thụ' : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
-        ${c ? `<button class="btn ${ok ? 'primary' : ''}" data-act="upgrade" data-slot="${slot}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
+        ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" data-slot="${slot}" data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
       </div>`;
     }).join('');
+    const table = UPGRADE.steps.map((s) => `+${s.level}: ${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
     return `<div class="card"><h3>Rèn đồ đang mặc</h3>
-      <p class="small muted">Mỗi cấp thêm 8% chỉ số của món đồ, tối đa +5. Đồ dưới cấp 17 dùng Quặng Sắt, đồ cao hơn dùng Mithril. Cấp nâng giữ theo món đồ khi tháo ra.</p>
+      <p class="small muted">Mỗi cấp thêm 8% chỉ số của món đồ; từ +10 mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món.</p>
+      <div class="list">${rows}</div></div>`;
+  }
+
+  // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
+  let chaosPick = {}; // công thức → uid món đồ chọn
+  function chaosRate(r, up) {
+    const extra = r.gear ? (r.per_up || 0) * Math.max(0, up - r.gear.min_up) : 0;
+    return Math.min(r.max_rate || 1, r.rate + extra);
+  }
+  function chaosCard() {
+    const rows = CHAOS.map((r) => {
+      const fits = r.gear ? bagGear().filter((uid) => {
+        const g = itemOf(uid);
+        return r.gear.slots.includes(g.slot) && (!r.gear.tier || g.tier === r.gear.tier) && upLevel(uid) >= r.gear.min_up && !g.locked;
+      }) : [];
+      const pick = r.gear ? (fits.includes(chaosPick[r.id]) ? chaosPick[r.id] : fits[0]) : null;
+      const need = Object.entries(r.items);
+      const ok = (!r.gear || pick) && P.gold >= r.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
+      const rate = chaosRate(r, pick ? upLevel(pick) : 0);
+      const out = ITEMS[r.out.replace('{cls}', P.cls)];
+      return `<div class="item">${itemIcon(out || { icon: 'chaos-machine' })}<div class="grow">
+          <div class="name">${esc(r.name)}${out && out.slot === 'wing' ? ` → ${esc(out.name)}` : ''}</div>
+          <div class="small muted">${esc(r.desc)}</div>
+          ${r.gear ? (fits.length ? `<select data-chaos-pick="${r.id}" aria-label="Món đồ bỏ vào máy">${fits.map((uid) => `<option value="${uid}" ${uid === pick ? 'selected' : ''}>${esc(itemOf(uid).name)} +${upLevel(uid)}</option>`).join('')}</select>`
+            : `<div class="small" style="color:var(--bad)">Không có món phù hợp trong túi (cần +${r.gear.min_up} trở lên, chưa mặc, chưa khóa).</div>`) : ''}
+          <div class="small">${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')} · Tỉ lệ <b>${Math.round(rate * 100)}%</b></div>
+        </div>
+        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
+      </div>`;
+    }).join('');
+    return `<div class="card"><h3>${icon('chaos-machine')} Máy Hỗn Nguyên</h3>
+      <p class="small muted">Thất bại thì <b style="color:var(--bad)">mất hết</b> món đồ, nguyên liệu và vàng. Đồ đã khóa không bỏ vào máy được. Đồ cấp nâng cao hơn thì dễ thành hơn (tối đa 60%).</p>
       <div class="list">${rows}</div></div>`;
   }
 
@@ -1547,6 +1810,7 @@
         }).join('')}</div></div>`);
     }
     if (n.role === 'market') sections.push(viewMarket());
+    if (n.role === 'chaos') sections.push(chaosCard());
     if (n.role === 'chest') {
       sections.push(`<div class="card"><p>“${esc(n.lines[0])}”</p>
         <button class="btn ${P.view.chestReady ? 'primary' : ''} block" data-act="chest_open" ${P.view.chestReady ? '' : 'disabled'}>${P.view.chestReady ? 'Mở rương' : 'Hôm nay đã mở, mai quay lại'}</button></div>`);
@@ -1671,7 +1935,10 @@
       case 'buy': return { act, id: d.id, n: 1 };
       case 'buy5': return { act: 'buy', id: d.id, n: 5 };
       case 'equip': case 'use': case 'sell': return { act, id: d.id };
-      case 'unequip': case 'upgrade': return { act, slot: d.slot };
+      case 'unequip': return { act, slot: d.slot };
+      case 'upgrade': return { act, slot: d.slot, confirm: d.risk === 'destroy' };
+      case 'lock': return { act, id: d.id, on: d.on === '1' };
+      case 'chaos': return { act, id: d.id, gear: d.gear || null };
       case 'reset-yes': return { act: 'reset' };
       case 'teleport': return { act, to: d.to };
       case 'craft': case 'quest_accept': case 'quest_turnin': case 'cook': case 'event_exchange': return { act, id: d.id };
@@ -1691,7 +1958,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos: 'rare', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -1794,9 +2061,49 @@
     if (walk === me) walk = null;
   }
 
+  const TAB_KEY = { hero: 'C', bag: 'I', map: 'M' };
+  // Chuyển tab (nút thanh tab và phím tắt dùng chung)
+  function goTab(id) {
+    tab = id; confirmReset = false; mail.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    stopFishing();
+    if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
+    render(); $('#view').scrollTop = 0;
+  }
+
+  // Phím tắt (như MU Web): C Nhân vật, I Túi đồ, M Bản đồ (bấm lại phím của tab đang mở thì về Bản đồ),
+  // Q uống bình máu (trong trận: nút Uống máu), Enter gõ chat, Esc đóng bảng đang mở / về Bản đồ.
+  // Không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd.
+  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'map' };
+  function hotkeyPotion() {
+    if (P.battle) {
+      const b = document.querySelector('[data-act="potion"]');
+      if (b && !b.disabled) sendCommand({ act: 'potion' }); else toast('Không uống máu được lúc này.', true);
+      return;
+    }
+    if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
+    // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].slot === 'potion' && P.inv[k] > 0);
+    if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
+  }
+  function hotkeyEscape() {
+    if (tipAt) { hideTip(); return true; }
+    if (npc) { npc = null; market.data = null; render(); return true; }
+    if (dialog) { dialog = null; render(); return true; }
+    if (mail.open || guildUi.open || friendsUi.open || visit) { mail.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
+    if (!P.battle && tab !== 'map') { goTab('map'); return true; }
+    return false;
+  }
+
   function onKey(e) {
-    if (!P || P.battle || tab !== 'map' || e.target.closest('input, textarea')) return;
-    if (npc) { if (e.key === 'Escape') { npc = null; render(); } return; }
+    if (!P || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input, textarea, select')) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'Escape') { if (hotkeyEscape()) e.preventDefault(); return; }
+    if (k === 'q') { e.preventDefault(); hotkeyPotion(); return; }
+    if (P.battle) return;
+    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] && k !== 'm' ? 'map' : HOTKEY_TAB[k]); return; }
+    if (k === 'Enter' && tab === 'map' && !npc) { const ci = $('#chat-input'); if (ci) { e.preventDefault(); ci.focus(); } return; }
+    if (tab !== 'map') return;
+    if (npc) return;
     const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' }[e.key];
     if (!dir) return;
     e.preventDefault();
@@ -1815,7 +2122,7 @@
 
   function enter(r) {
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -1833,7 +2140,7 @@
     const t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
-    if (t.dataset.tab) { tab = t.dataset.tab; confirmReset = false; mail.open = false; guildUi.open = false; visit = null; friendsUi.open = false; stopFishing(); if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); } render(); $('#view').scrollTop = 0; return; }
+    if (t.dataset.tab) { goTab(t.dataset.tab); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
@@ -1861,6 +2168,13 @@
     if (act === 'reset-ask' || act === 'reset-cancel') { confirmReset = act === 'reset-ask'; render(); return; }
     if (act === 'rebirth-ask' || act === 'rebirth-cancel') { confirmRebirth = act === 'rebirth-ask'; render(); return; }
     if (act === 'dialog-close') { dialog = null; render(); return; }
+    if (act === 'noop') return;
+    if (act === 'alloc-add') { allocAdd(t.dataset.stat); return; }
+    if (act === 'bag-tip' || act === 'slot-tip') {
+      const same = tipAt && (act === 'bag-tip' ? tipAt.id === t.dataset.id : tipAt.slot === t.dataset.slot);
+      if (same) hideTip(); else showTip(act === 'bag-tip' ? { id: t.dataset.id, x: e.clientX, y: e.clientY } : { slot: t.dataset.slot, x: e.clientX, y: e.clientY });
+      return;
+    }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
     if (act === 'trade-rm') {
       const d = t.dataset;
@@ -1907,6 +2221,9 @@
     if (act === 'chat-to') { const ch = chatChannels(); chatTo = ch[(ch.indexOf(chatTo) + 1) % ch.length]; const f = $('#chat-form'); if (f) f.outerHTML = viewChat().match(/<form id="chat-form"[\s\S]*<\/form>/)[0]; return; }
     if (act === 'fish-reel') { reelIn(); return; }
     if (act === 'boss-yes') { const d = dialog; if (d) step(d.dir, true); return; }
+    // ép bước có thể vỡ đồ / ghép mất đồ: hỏi lại trước
+    if (act === 'upgrade' && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
+    if (act === 'chaos' && t.dataset.gear && !confirm(`Ghép thất bại sẽ mất ${itemOf(t.dataset.gear).name} +${upLevel(t.dataset.gear)} cùng nguyên liệu. Vẫn ghép?`)) return;
     sendCommand(command(act, t));
   }
 
@@ -1949,6 +2266,7 @@
       return;
     }
     if (e.target.id === 'adm-gift' || e.target.id === 'adm-gift-all') { e.preventDefault(); onGift(e.target); return; }
+    if (e.target.classList.contains('adm-char')) { e.preventDefault(); onCharOp(e.target); return; }
     if (e.target.id === 'guild-create') {
       e.preventDefault();
       const f = new FormData(e.target);
@@ -2015,6 +2333,11 @@
     document.addEventListener('click', onClick);
     document.addEventListener('submit', onSubmit);
     document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', (e) => { if (tipAt && !e.target.closest('#itemtip, [data-act="bag-tip"], [data-act="slot-tip"]')) hideTip(); });
+    document.addEventListener('dragstart', onDragStart);
+    document.addEventListener('dragover', onDragOver);
+    document.addEventListener('drop', onDrop);
+    document.addEventListener('dragend', () => { dragging = null; document.querySelectorAll('.over').forEach((x) => x.classList.remove('over')); });
     document.addEventListener('pointerdown', onMapTap);
     window.addEventListener('resize', () => Map_.resize());
     Net.onPlayer((p) => { if (!busy) { P = p; refresh(); } });
@@ -2066,7 +2389,7 @@
       if (!g) chatTo = 'world';
       if (!before && g) toast(`Bạn đã vào bang ${g.name}.`);
       if (before && !g) toast('Bạn không còn ở trong bang.');
-      if (guildUi.open) loadGuild(); else if (tab === 'town') render();
+      if (guildUi.open) loadGuild(); else if (tab === 'misc') render();
     });
     Net.onMail((n) => {
       const more = n > mail.unread;
@@ -2080,11 +2403,13 @@
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
+      if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
     });
-    Net.onStatus((st) => {
+    Net.onStatus((st, msg) => {
       const bar = $('#netbar');
       bar.hidden = st === 'online';
-      bar.textContent = 'Mất kết nối, đang kết nối lại…';
+      // 'version': server vừa cập nhật, giao diện này cũ → trang tự tải lại
+      bar.textContent = st === 'version' ? (msg || 'Đã có bản cập nhật, đang tải lại trang...') : 'Mất kết nối, đang kết nối lại…';
     });
     // vào lại sau khi mất mạng: lấy trạng thái mới nhất từ server
     Net.onRejoin((r) => { P = r.player; walk = null; render(); });

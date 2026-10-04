@@ -7,7 +7,7 @@
   "sourceType": "IMPLEMENTATION",
   "version": null,
   "verified": false,
-  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU.",
+  "source": "Map tự vẽ cho Phase 1 (PROMPT_PHASE1: ~64×64, pipeline Tiled để sau). Không port map MU. P2-M4: thêm vùng quái, cổng Noria (15,8)–(16,8), Weapon Merchant (11,37) — docs/PHASE2_PROPOSAL_M4.md §2. B-1 (a) (duyệt 2026-10-03): Bull Fighter y ≤ 15, Lich + Elite Bull Fighter y ≥ 51 — cách vùng Spider (y 24–44) ≥ 7 ô.",
   "legend": {
     ".": "grass",
     ":": "road",
@@ -15,12 +15,14 @@
     "#": "wall",
     "T": "tree",
     "~": "water",
-    "R": "rock"
+    "R": "rock",
+    "P": "portal"
   },
   "walkable": [
     ".",
     ":",
-    "="
+    "=",
+    "P"
   ],
   "safeZones": [
     {
@@ -46,16 +48,72 @@
         "w": 17,
         "h": 21
       }
-    }
-  ],
-  "portals": [],
-  "npcs": [
+    },
     {
-      "id": "lorencia_potion_merchant",
-      "x": 11,
-      "y": 25
+      "monster": "budge_dragon",
+      "count": 8,
+      "area": {
+        "x": 40,
+        "y": 2,
+        "w": 22,
+        "h": 8
+      }
+    },
+    {
+      "monster": "bull_fighter",
+      "count": 8,
+      "area": {
+        "x": 40,
+        "y": 10,
+        "w": 22,
+        "h": 6
+      }
+    },
+    {
+      "monster": "hound",
+      "count": 8,
+      "area": {
+        "x": 2,
+        "y": 45,
+        "w": 28,
+        "h": 17
+      }
+    },
+    {
+      "monster": "lich",
+      "count": 5,
+      "area": {
+        "x": 34,
+        "y": 51,
+        "w": 28,
+        "h": 11
+      }
+    },
+    {
+      "monster": "elite_bull_fighter",
+      "count": 4,
+      "area": {
+        "x": 34,
+        "y": 51,
+        "w": 28,
+        "h": 11
+      }
     }
   ],
+  "portals": [
+    {
+      "id": "to_noria",
+      "x": 15,
+      "y": 8,
+      "w": 2,
+      "h": 1,
+      "to": "noria",
+      "toX": 31,
+      "toY": 59,
+      "levelRequired": 10
+    }
+  ],
+  "npcs": [{"id": "lorencia_potion_merchant", "x": 11, "y": 25}, {"id": "lorencia_weapon_merchant", "x": 11, "y": 37}, {"id": "lorencia_warehouse", "x": 11, "y": 31, "role": "warehouse", "name": "Warehouse Keeper"}, {"id": "lorencia_quest_master", "x": 19, "y": 25, "role": "quest", "name": "Quest Master"}],
   "tiles": [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -65,7 +123,7 @@
     "TT......T.....................................................TT",
     "TT..T.................T......................T................TT",
     "TT...T........................................................TT",
-    "TT.............::.............~~~~~~~~........................TT",
+    "TT.............PP.............~~~~~~~~........................TT",
     "TT.............::.......T.....~~~~~~~~..............T.........TT",
     "TT.............::.............~~~~~~~~..T.....................TT",
     "TT.............::.............~~~~~~~~........................TT",

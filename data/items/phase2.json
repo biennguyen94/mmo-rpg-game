@@ -1,0 +1,1278 @@
+{
+ "sourceType": "IMPLEMENTATION",
+ "note": "Phase 2 (P2-M2): vũ khí + giáp t0 cho DW/ELF. Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw. P2-M4: đồ t1 (cấp 10) + potion vừa — docs/PHASE2_PROPOSAL_M4.md §3.",
+ "items": [
+  {
+   "templateId": "staff_t0",
+   "name": "Skull Staff",
+   "type": "WEAPON",
+   "slot": "WEAPON",
+   "weaponType": "staff",
+   "stackable": false,
+   "attackMin": 3,
+   "attackMax": 6,
+   "speed": 20,
+   "durability": 20,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "group": 5,
+    "index": 0
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 5,
+    "index": 0,
+    "cells": [
+     1,
+     3
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "5/0 theo đề xuất P2-6; chưa đối chiếu Item.txt"
+    }
+   },
+   "buyPrice": 1000,
+   "implementationFields": [
+    "attackMin",
+    "attackMax",
+    "speed",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "weaponType"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 0,
+    "energy": 20,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "bow_t0",
+   "name": "Short Bow",
+   "type": "WEAPON",
+   "slot": "WEAPON",
+   "weaponType": "bow",
+   "stackable": false,
+   "attackMin": 2,
+   "attackMax": 5,
+   "speed": 20,
+   "durability": 20,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "group": 4,
+    "index": 0
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 4,
+    "index": 0,
+    "cells": [
+     2,
+     3
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "4/0 theo đề xuất P2-6; chưa đối chiếu Item.txt"
+    }
+   },
+   "buyPrice": 1000,
+   "implementationFields": [
+    "attackMin",
+    "attackMax",
+    "speed",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "weaponType"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 20,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "pad_helm_t0",
+   "name": "Pad Helm",
+   "type": "HELM",
+   "slot": "HELM",
+   "stackable": false,
+   "defense": 3,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "DW"
+   ],
+   "iconRef": {
+    "group": 7,
+    "index": 2
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 7,
+    "index": 2,
+    "cells": [
+     2,
+     2
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "KB_ITEM_REFERENCE §5 chỉ xác nhận Pad Helm 7/2; 8–11/2 suy theo cùng bộ, chưa đối chiếu"
+    }
+   },
+   "buyPrice": 500,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 10,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "pad_armor_t0",
+   "name": "Pad Armor",
+   "type": "ARMOR",
+   "slot": "ARMOR",
+   "stackable": false,
+   "defense": 6,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "group": 8,
+    "index": 2
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 8,
+    "index": 2,
+    "cells": [
+     2,
+     3
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "KB_ITEM_REFERENCE §5 chỉ xác nhận Pad Helm 7/2; 8–11/2 suy theo cùng bộ, chưa đối chiếu"
+    }
+   },
+   "buyPrice": 1000,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 10,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "pad_pants_t0",
+   "name": "Pad Pants",
+   "type": "PANTS",
+   "slot": "PANTS",
+   "stackable": false,
+   "defense": 4,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "group": 9,
+    "index": 2
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 9,
+    "index": 2,
+    "cells": [
+     2,
+     2
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "KB_ITEM_REFERENCE §5 chỉ xác nhận Pad Helm 7/2; 8–11/2 suy theo cùng bộ, chưa đối chiếu"
+    }
+   },
+   "buyPrice": 700,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 10,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "pad_gloves_t0",
+   "name": "Pad Gloves",
+   "type": "GLOVES",
+   "slot": "GLOVES",
+   "stackable": false,
+   "defense": 1,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "group": 10,
+    "index": 2
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 10,
+    "index": 2,
+    "cells": [
+     2,
+     2
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "KB_ITEM_REFERENCE §5 chỉ xác nhận Pad Helm 7/2; 8–11/2 suy theo cùng bộ, chưa đối chiếu"
+    }
+   },
+   "buyPrice": 400,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 10,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "pad_boots_t0",
+   "name": "Pad Boots",
+   "type": "BOOTS",
+   "slot": "BOOTS",
+   "stackable": false,
+   "defense": 1,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "group": 11,
+    "index": 2
+   },
+   "reference": {
+    "source": "Item.txt",
+    "version": "s5+",
+    "verified": false,
+    "group": 11,
+    "index": 2,
+    "cells": [
+     2,
+     2
+    ],
+    "adjusted": {
+     "stats": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M2_M3.md §4) cho tới khi có Item.txt (E6); khi import Item.txt thì thay bằng số gốc + requirementsRaw.",
+     "index": "KB_ITEM_REFERENCE §5 chỉ xác nhận Pad Helm 7/2; 8–11/2 suy theo cùng bộ, chưa đối chiếu"
+    }
+   },
+   "buyPrice": 400,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 10,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   }
+  },
+  {
+   "templateId": "vine_helm_t0",
+   "name": "Vine Helm",
+   "type": "HELM",
+   "slot": "HELM",
+   "stackable": false,
+   "defense": 4,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "vine_helm_t0"
+   },
+   "reference": null,
+   "buyPrice": 500,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 15,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Bộ Vine (Elf): index Item.txt chưa biết → iconRef custom (placeholder) tới khi có Item.txt (E6)",
+   "iconPlaceholder": true
+  },
+  {
+   "templateId": "vine_armor_t0",
+   "name": "Vine Armor",
+   "type": "ARMOR",
+   "slot": "ARMOR",
+   "stackable": false,
+   "defense": 8,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "vine_armor_t0"
+   },
+   "reference": null,
+   "buyPrice": 1000,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 15,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Bộ Vine (Elf): index Item.txt chưa biết → iconRef custom (placeholder) tới khi có Item.txt (E6)",
+   "iconPlaceholder": true
+  },
+  {
+   "templateId": "vine_pants_t0",
+   "name": "Vine Pants",
+   "type": "PANTS",
+   "slot": "PANTS",
+   "stackable": false,
+   "defense": 5,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "vine_pants_t0"
+   },
+   "reference": null,
+   "buyPrice": 700,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 15,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Bộ Vine (Elf): index Item.txt chưa biết → iconRef custom (placeholder) tới khi có Item.txt (E6)",
+   "iconPlaceholder": true
+  },
+  {
+   "templateId": "vine_gloves_t0",
+   "name": "Vine Gloves",
+   "type": "GLOVES",
+   "slot": "GLOVES",
+   "stackable": false,
+   "defense": 2,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "vine_gloves_t0"
+   },
+   "reference": null,
+   "buyPrice": 400,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 15,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Bộ Vine (Elf): index Item.txt chưa biết → iconRef custom (placeholder) tới khi có Item.txt (E6)",
+   "iconPlaceholder": true
+  },
+  {
+   "templateId": "vine_boots_t0",
+   "name": "Vine Boots",
+   "type": "BOOTS",
+   "slot": "BOOTS",
+   "stackable": false,
+   "defense": 2,
+   "defenseRate": 0,
+   "durability": 28,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "vine_boots_t0"
+   },
+   "reference": null,
+   "buyPrice": 400,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 0,
+    "strength": 0,
+    "agility": 15,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Bộ Vine (Elf): index Item.txt chưa biết → iconRef custom (placeholder) tới khi có Item.txt (E6)",
+   "iconPlaceholder": true
+  },
+  {
+   "templateId": "sword_t1",
+   "name": "Rapier",
+   "type": "WEAPON",
+   "slot": "WEAPON",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "ELF",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "sword_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "attackMin",
+    "attackMax",
+    "speed",
+    "durability",
+    "weaponType",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "weaponType": "sword",
+   "attackMin": 9,
+   "attackMax": 15,
+   "speed": 20,
+   "durability": 28
+  },
+  {
+   "templateId": "staff_t1",
+   "name": "Angelic Staff",
+   "type": "WEAPON",
+   "slot": "WEAPON",
+   "stackable": false,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "staff_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "attackMin",
+    "attackMax",
+    "speed",
+    "durability",
+    "weaponType",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "weaponType": "staff",
+   "attackMin": 7,
+   "attackMax": 12,
+   "speed": 20,
+   "durability": 26
+  },
+  {
+   "templateId": "bow_t1",
+   "name": "Bow",
+   "type": "WEAPON",
+   "slot": "WEAPON",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "bow_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "attackMin",
+    "attackMax",
+    "speed",
+    "durability",
+    "weaponType",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "weaponType": "bow",
+   "attackMin": 6,
+   "attackMax": 11,
+   "speed": 20,
+   "durability": 26
+  },
+  {
+   "templateId": "shield_t1",
+   "name": "Horn Shield",
+   "type": "SHIELD",
+   "slot": "SHIELD",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "DW",
+    "ELF",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "shield_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 2400,
+   "implementationFields": [
+    "defense",
+    "defenseRate",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 35,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 4,
+   "defenseRate": 0,
+   "durability": 30
+  },
+  {
+   "templateId": "bronze_helm_t1",
+   "name": "Bronze Helm",
+   "type": "HELM",
+   "slot": "HELM",
+   "stackable": false,
+   "classes": [
+    "DK"
+   ],
+   "iconRef": {
+    "custom": "bronze_helm_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1500,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 8,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bronze_armor_t1",
+   "name": "Bronze Armor",
+   "type": "ARMOR",
+   "slot": "ARMOR",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bronze_armor_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 16,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bronze_pants_t1",
+   "name": "Bronze Pants",
+   "type": "PANTS",
+   "slot": "PANTS",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bronze_pants_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 2100,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 12,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bronze_gloves_t1",
+   "name": "Bronze Gloves",
+   "type": "GLOVES",
+   "slot": "GLOVES",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bronze_gloves_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 4,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bronze_boots_t1",
+   "name": "Bronze Boots",
+   "type": "BOOTS",
+   "slot": "BOOTS",
+   "stackable": false,
+   "classes": [
+    "DK",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bronze_boots_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 40,
+    "agility": 0,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 4,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bone_helm_t1",
+   "name": "Bone Helm",
+   "type": "HELM",
+   "slot": "HELM",
+   "stackable": false,
+   "classes": [
+    "DW"
+   ],
+   "iconRef": {
+    "custom": "bone_helm_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1500,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 5,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bone_armor_t1",
+   "name": "Bone Armor",
+   "type": "ARMOR",
+   "slot": "ARMOR",
+   "stackable": false,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bone_armor_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 10,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bone_pants_t1",
+   "name": "Bone Pants",
+   "type": "PANTS",
+   "slot": "PANTS",
+   "stackable": false,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bone_pants_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 2100,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 7,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bone_gloves_t1",
+   "name": "Bone Gloves",
+   "type": "GLOVES",
+   "slot": "GLOVES",
+   "stackable": false,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bone_gloves_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 2,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "bone_boots_t1",
+   "name": "Bone Boots",
+   "type": "BOOTS",
+   "slot": "BOOTS",
+   "stackable": false,
+   "classes": [
+    "DW",
+    "MG"
+   ],
+   "iconRef": {
+    "custom": "bone_boots_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 0,
+    "energy": 40,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 2,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "silk_helm_t1",
+   "name": "Silk Helm",
+   "type": "HELM",
+   "slot": "HELM",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "silk_helm_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1500,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 6,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "silk_armor_t1",
+   "name": "Silk Armor",
+   "type": "ARMOR",
+   "slot": "ARMOR",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "silk_armor_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 3000,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 13,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "silk_pants_t1",
+   "name": "Silk Pants",
+   "type": "PANTS",
+   "slot": "PANTS",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "silk_pants_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 2100,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 9,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "silk_gloves_t1",
+   "name": "Silk Gloves",
+   "type": "GLOVES",
+   "slot": "GLOVES",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "silk_gloves_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 3,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "silk_boots_t1",
+   "name": "Silk Boots",
+   "type": "BOOTS",
+   "slot": "BOOTS",
+   "stackable": false,
+   "classes": [
+    "ELF"
+   ],
+   "iconRef": {
+    "custom": "silk_boots_t1"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 1200,
+   "implementationFields": [
+    "defense",
+    "durability",
+    "requirements",
+    "buyPrice",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "requirements": {
+    "level": 10,
+    "strength": 0,
+    "agility": 40,
+    "energy": 0,
+    "vitality": 0
+   },
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder).",
+   "defense": 3,
+   "defenseRate": 0,
+   "durability": 34
+  },
+  {
+   "templateId": "hp_potion_medium",
+   "name": "Healing Potion",
+   "type": "POTION",
+   "slot": null,
+   "stackable": true,
+   "maxStack": 99,
+   "potionType": "HP",
+   "effect": {
+    "hp": 120,
+    "mp": 0
+   },
+   "iconRef": {
+    "custom": "hp_potion_medium"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 300,
+   "implementationFields": [
+    "potionType",
+    "effect",
+    "buyPrice",
+    "stackable",
+    "maxStack",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder)."
+  },
+  {
+   "templateId": "mp_potion_medium",
+   "name": "Mana Potion",
+   "type": "POTION",
+   "slot": null,
+   "stackable": true,
+   "maxStack": 99,
+   "potionType": "MP",
+   "effect": {
+    "hp": 0,
+    "mp": 60
+   },
+   "iconRef": {
+    "custom": "mp_potion_medium"
+   },
+   "iconPlaceholder": true,
+   "reference": null,
+   "buyPrice": 350,
+   "implementationFields": [
+    "potionType",
+    "effect",
+    "buyPrice",
+    "stackable",
+    "maxStack",
+    "iconRef"
+   ],
+   "sourceType": "IMPLEMENTATION",
+   "note": "Số tạm IMPLEMENTATION (docs/PHASE2_PROPOSAL_M4.md §3, P2-M4) tới khi có Item.txt (E6); index Item.txt chưa đối chiếu → icon custom (placeholder)."
+  }
+ ]
+}

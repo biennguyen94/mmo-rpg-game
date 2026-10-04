@@ -47,7 +47,8 @@ defmodule Mu.Game.InventoryTest do
     assert {:error, "INVALID_SLOT"} = Inventory.can_equip(@dk, Data.item("hp_potion_small"), 5)
     assert :ok = Inventory.can_equip(@dk, ring, 8)
     assert :ok = Inventory.can_equip(@dk, ring, 9)
-    assert Inventory.equip_slots(%{"slot" => "WING"}) == []
+    # P6-M4: features.wings bật → slot 7 mở
+    assert Inventory.equip_slots(%{"slot" => "WING"}) == [7]
 
     assert {:error, "REQUIREMENT_NOT_MET"} =
              Inventory.can_equip(%{@dk | strength: 27}, Data.item("armor_t0"), 1)
@@ -66,5 +67,58 @@ defmodule Mu.Game.InventoryTest do
 
     assert Inventory.potion_counts(items) == %{"HP" => 7, "MP" => 2}
     assert Inventory.potion_counts([]) == %{"HP" => 0, "MP" => 0}
+  end
+
+  describe "P2-M1: move_item / split / drop" do
+    test "plan_move: ô trống = chuyển, món khác = hoán đổi, cùng stack = gộp, cùng ô = noop" do
+      items = [
+        it("s", "sword_t0", 1, 0),
+        it("p", "hp_potion_small", 30, 1),
+        it("q", "hp_potion_small", 90, 2),
+        it("f", "hp_potion_small", 99, 3),
+        it("e", "armor_t0", 1, 1, "EQUIPMENT")
+      ]
+
+      assert {:ok, {:move, "s", 10}} = Inventory.plan_move(items, "s", 10)
+      assert {:ok, {:swap, "s", 1, "p", 0}} = Inventory.plan_move(items, "s", 1)
+      # gộp tối đa maxStack (99): 9 cái sang, 21 ở lại
+      assert {:ok, {:merge, "p", "q", 9}} = Inventory.plan_move(items, "p", 2)
+      # stack đích đầy: hoán đổi
+      assert {:ok, {:swap, "p", 3, "f", 1}} = Inventory.plan_move(items, "p", 3)
+      assert {:ok, :noop} = Inventory.plan_move(items, "s", 0)
+    end
+
+    test "plan_move: lỗi" do
+      items = [it("s", "sword_t0", 1, 0), it("e", "armor_t0", 1, 1, "EQUIPMENT")]
+      assert {:error, "NOT_OWNER"} = Inventory.plan_move(items, "x", 1)
+      assert {:error, "INVALID_SLOT"} = Inventory.plan_move(items, "e", 2)
+      assert {:error, "INVALID_SLOT"} = Inventory.plan_move(items, "s", 64)
+      assert {:error, "INVALID_SLOT"} = Inventory.plan_move(items, "s", -1)
+      assert {:error, "INVALID_SLOT"} = Inventory.plan_move(items, "s", "1")
+    end
+
+    test "plan_split: chỉ stack, 1 <= số < đang có, ô đích trống" do
+      items = [it("p", "hp_potion_small", 10, 0), it("s", "sword_t0", 1, 1)]
+      assert {:ok, 5} = Inventory.plan_split(items, "p", 4, 5)
+      assert {:ok, 2} = Inventory.plan_split(items, "p", 9, nil)
+      assert {:error, "INVALID_TARGET"} = Inventory.plan_split(items, "p", 10, 5)
+      assert {:error, "INVALID_TARGET"} = Inventory.plan_split(items, "p", 0, 5)
+      assert {:error, "INVALID_TARGET"} = Inventory.plan_split(items, "p", "2", 5)
+      assert {:error, "INVALID_TARGET"} = Inventory.plan_split(items, "s", 1, 5)
+      assert {:error, "INVALID_SLOT"} = Inventory.plan_split(items, "p", 2, 1)
+
+      full = [
+        it("p", "hp_potion_small", 10, 0) | for(n <- 1..63, do: it("i#{n}", "sword_t0", 1, n))
+      ]
+
+      assert {:error, "INVENTORY_FULL"} = Inventory.plan_split(full, "p", 2, nil)
+    end
+
+    test "droppable: chỉ đồ trong túi" do
+      items = [it("s", "sword_t0", 1, 0), it("e", "armor_t0", 1, 1, "EQUIPMENT")]
+      assert {:ok, %{id: "s"}} = Inventory.droppable(items, "s")
+      assert {:error, "INVALID_SLOT"} = Inventory.droppable(items, "e")
+      assert {:error, "NOT_OWNER"} = Inventory.droppable(items, "x")
+    end
   end
 end

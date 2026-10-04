@@ -4,35 +4,59 @@
   "verified": false,
   "source": "docs/kb/KB_CONFIG.md §1; Phase 1 scope docs/kb/KB_00_RULES.md §7; mặc định đã duyệt docs/OPEN_QUESTIONS.md (P5, P7); rateLimit/names/newCharacter: docs/OPEN_QUESTIONS.md (P6, P8, G8, G22); movement: OPEN_QUESTIONS G3; combat.critChance/criticalMultiplier/playerRespawnSeconds: G1, G11; experience.levelDiffPenaltyPerLevel: G23; interaction: G4",
   "notes": {
-    "game.maxLevel": "10 theo KB_00_RULES §7 (Phase 1). KB_CONFIG §1 ghi 400 là giá trị dự án dài hạn (OPEN_QUESTIONS D2).",
+    "game.maxLevel": "30 từ Phase 2 (P2-2, docs/PHASE2_PROPOSAL_M2_M3.md §1); Phase 1 là 10. KB_CONFIG §1 ghi 400 là giá trị dự án dài hạn (OPEN_QUESTIONS D2).",
     "experience.formula": "Placeholder IMPLEMENTATION, không phải EXP MU (KB_CONFIG §1, Q4).",
-    "newCharacter": "G8: 0 Zen, túi trống, đứng ở playerSpawn (safe zone) của map mapId (priv/maps/<mapId>.json).",
+    "newCharacter": "G8: 0 Zen, đứng ở playerSpawn (safe zone) của map mapId. Phase 2 (P2-3 phương án A): chọn class trong `classes` (bỏ trống = defaultClass), mọi class bắt đầu Lorencia; startingEquipment = template mặc sẵn lúc tạo (audit STARTER). P3-4 (duyệt 2026-10-03): MG cấp 1, mặc sẵn sword_t0, chỉ tạo được khi đã mở (mg.unlockLevel).",
     "rateLimit": "P8. Cửa sổ cố định (Mu.RateLimit). cmd: vượt ngưỡng → bỏ lệnh + RATE_LIMITED; vượt liên tục kickAfterMs → đóng kênh.",
     "movement": "G3: đơn vị ô/giây; bước chéo tốn ×diagonalCostFactor thời gian. maxPathNodes: giới hạn ô A* mở rộng cho move_to của người chơi (map 64×64 = 4096 ô).",
     "session.saveIntervalSeconds": "KB_TECH_STACK §4: ghi DB debounce 30–60s; ngoài ra ghi ngay khi rời map.",
     "combat.critChance": "G1: tắt crit ở Phase 1 (0); criticalMultiplier 1.5 chỉ dùng khi bật.",
     "combat.playerRespawnSeconds": "G11: hồi sinh sau 3 giây ở playerSpawn, HP/MP đầy.",
     "experience.levelDiffPenaltyPerLevel": "G23 (mới, chờ xác nhận): KB §3 nói giảm tuyến tính tới minExpRatio nhưng không cho độ dốc. Không chạm ở Phase 1 (Spider lv2, maxLevel 10 → chênh tối đa 8 < 10).",
-    "interaction": "G4: khoảng cách Chebyshev; nhặt đồ ≤ pickupRange ô, mở/mua/bán ở NPC ≤ npcRange ô."
+    "interaction": "G4: khoảng cách Chebyshev; nhặt đồ ≤ pickupRange ô, mở/mua/bán ở NPC ≤ npcRange ô.",
+    "combat.basicAttackRange": "P2-5: tầm đánh thường (ô, Chebyshev) theo weaponType của vũ khí đang cầm; tay không / loại không có trong bảng = default. Không dùng mũi tên.",
+    "combat.twoHandedWeaponTypes": "P2-5: vũ khí hai tay khóa ô SHIELD (mặc cung khi có khiên hoặc ngược lại → INVALID_SLOT).",
+    "combat.mpRegen": "P2-M3 (mana phương án A, docs/PHASE2_PROPOSAL_M2_M3.md §5.5): hồi MP tự nhiên energy/energyDiv mỗi giây (cộng dồn phần lẻ), cộng mỗi intervalMs; HP vẫn không tự hồi (G9). Không hồi khi đã chết.",
+    "chat": "P2-12 (duyệt 2026-10-03): tối đa maxLength ký tự (dài hơn thì cắt, như repo nền), NORMAL = cả map, WHISPER theo tên nhân vật đang online (không có → INVALID_TARGET), PARTY bật từ P3-M4 (chỉ khi đang trong nhóm, không thì INVALID_TARGET), GUILD bật từ P4-M3 (chỉ khi có guild, không thì INVALID_TARGET), SYSTEM chỉ server gửi. bannedWords: danh sách từ cấm (anh cung cấp; so khớp không phân biệt hoa thường, thay bằng mask). Mute: trong RAM (mix mu.chat), không lưu DB.",
+    "rateLimit.cmd.chat": "P2-12: ~1 tin/giây, dồn tối đa 5 tin (cửa sổ cố định 5 tin / 5 s).",
+    "mail": "P2-13 (duyệt 2026-10-03): mail hệ thống theo nhân vật; hết hạn sau expireDays ngày (không hiện, không nhận được); mail chào mừng khi tạo nhân vật (không kèm quà — §19.10 không cho số); quà Zen/item do quản trị gửi (mix mu.mail). Nhận trong 1 transaction + item_audit_log MAIL_CLAIM.",
+    "features": "Phase 2 (P2-M6): bật mail + mapPanel. Phase 3: party (P3-M4), magicGladiator (P3-M5). Phase 4: pvp (P4-M1), guild (P4-M3). Phase 6: quest (P6-M2), chaosMachine + wings (P6-M3 / M4). Các cờ khác vẫn tắt (phase sau / LATER_VERSION).",
+    "party": "KB_CONFIG party {maxSize 5, expRange 20}; P3-5 (duyệt 2026-10-03): inviteSeconds 30 (lời mời hết hạn), statusIntervalMs 500 (event party ≤ 2 lần/giây khi HP / vị trí / map đổi) là IMPLEMENTATION. EXP: thành viên cùng map, còn sống, trong expRange ô của quái chia đều exp × (1 + partyBonusPerMember × (n − 1)), phạt chênh cấp riêng từng người; Zen như cũ. Nhóm chỉ trong RAM.",
+    "mg": "KB_CONFIG mg {unlockLevel 220, statPerLevel 7, startingStatEach 26}; P3-2 (a) (duyệt 2026-10-03): unlockLevel 20 (IMPLEMENTATION) vì maxLevel 30 — mở tạo MG khi tài khoản có ≥ 1 nhân vật cấp ≥ unlockLevel (KB_GAME_DESIGN §2). statPerLevel / startingStatEach nằm ở classes.json (MG) như các class khác.",
+    "account.maxCharacters": "KB_CONFIG: Phase 1 = 1; 4 khi bật MG (Q13). P3-3 (duyệt 2026-10-03): chưa cho xóa nhân vật; một nhân vật online / tài khoản.",
+    "pvp": "P4-2 (duyệt 2026-10-03, IMPLEMENTATION): đánh người khi cả hai cấp ≥ minLevel, không ai đứng trong safe zone; AOE chỉ trúng quái (và người đang duel / chiến guild — P4-M2/M4); sát thương pipeline §4 × damageMultiplier. Kẻ giết không nhận EXP / Zen (P4-8). P4M1-2 (duyệt): không đánh được người cùng nhóm.",
+    "pk": "P4-3 (duyệt 2026-10-03, IMPLEMENTATION; KB_GAME_DESIGN §13 chỉ có NORMAL → WARNING → MURDERER): giết người NORMAL (không phải tự vệ) +1 pk_points; ≥ warningAt = WARNING, ≥ murdererAt = MURDERER; giảm 1 điểm mỗi decayMinutes giờ thực từ last_pk_at. Bị người NORMAL đánh trước được đánh trả selfDefenseSeconds (mỗi đòn làm mới), giết khi tự vệ / giết WARNING-MURDERER không tính PK. MURDERER không dùng NPC; chết vì người chơi rơi 1 món trong túi theo dropChance.",
+    "duel": "P4-4 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai bên đồng ý, vùng riêng, không PK'): 'vùng riêng' = khoanh riêng hai người (chỉ hai người đánh được nhau, người ngoài không xen vào), duel ở mọi chỗ ngoài safe zone. Mời trong requestRange ô, hết hạn inviteSeconds; một bên về 0 HP thì giữ 1 HP và thua; hết maxSeconds thì hòa; cách nhau quá maxDistance ô (người xa điểm bắt đầu hơn thua) / rời map / mất kết nối thì thua. Không PK, không rơi đồ, không thưởng.",
+    "guild": "P4-5 (duyệt 2026-10-03, IMPLEMENTATION; KB §14 chỉ 'level + Zen, master / assistant / member'): tạo cần cấp ≥ createLevel + createZen Zen (một transaction), tên namePattern unique không phân biệt hoa thường, một guild / nhân vật, tối đa maxMembers, maxAssistants assistant. Master + assistant mời; master đuổi mọi người, assistant đuổi member; chỉ master phong / hạ / giải tán; master không rời được. Lời mời hết hạn inviteSeconds (RAM). Chat GUILD bật.",
+    "guildWar": "P4-6 (duyệt 2026-10-03, IMPLEMENTATION; KB §13 chỉ 'hai guild khai chiến, kill không tính PK'): master tuyên chiến (guild_war_declare), master bên kia có inviteSeconds để nhận / từ chối; mỗi guild một war một lúc. Trong war thành viên hai guild đánh nhau ngoài safe zone (vẫn cần pvp.minLevel), AOE trúng người guild địch, kill không PK, không rơi đồ, +1 điểm. Kết thúc: đạt scoreToWin, hết durationMinutes (điểm cao thắng, bằng hòa), master đầu hàng / giải tán guild. Không thưởng. Chỉ trong RAM.",
+    "levelBonus": "P5-3 (1) (duyệt 2026-10-03, IMPLEMENTATION; KB chưa có công thức +N): items.levelBonus theo type item — mỗi cấp cường hóa (+N, items.item_level) cộng attack (attackMin và attackMax) cho WEAPON, defense cho SHIELD / giáp. Type không có trong bảng (RING, JEWEL, POTION) không ép được. Yêu cầu của đồ không đổi theo +N.",
+    "upgrade": "KB_CONFIG §5 (levels, nguyên văn) + P5-3 / P5-4 (A) (duyệt 2026-10-03, IMPLEMENTATION): ép jewel lên đồ trong túi, type có trong items.levelBonus; DECREASE = giảm 1 cấp. life: Jewel of Life thêm option_level (tối đa maxOption), mỗi cấp + perOption vào attack (vũ khí) / defense (giáp, khiên), thất bại không đổi. Ép thành công lên ≥ announceFromLevel thì báo SYSTEM cả map.",
+    "trade": "P5-5 (duyệt 2026-10-03, IMPLEMENTATION; KB_TECHNICAL §10: TradeSettlement, một transaction khi cả hai đồng ý, hủy ngay khi mất kết nối): mời từ menu người chơi, nhận trong inviteSeconds; hai bên cùng map, cách ≤ range ô, còn sống, không đang duel / trade khác. Mỗi bên tối đa maxItems món từ túi (cả stack) + Zen. [Khóa] rồi [Đồng ý]; mọi thay đổi bỏ khóa cả hai. Hủy khi bấm Hủy, cách nhau > cancelRange ô, đổi map, chết, mất kết nối, đăng xuất, quá timeoutSeconds.",
+    "ranking": "P6-7 (duyệt 2026-10-03, IMPLEMENTATION): bảng cấp (tất cả + từng class; cùng cấp xếp theo EXP rồi nhân vật tạo trước) và bảng guild (tổng cấp thành viên, rồi số thành viên); top `top`, cache RAM làm mới mỗi refreshSeconds; kèm hạng của chính mình. Không bảng Zen / PK.",
+    "quest": "P6-2 (duyệt 2026-10-03, IMPLEMENTATION): danh sách quest ở quests.json; nhận / trả ở Quest Master (Lorencia, Noria) trong interaction.npcRange; tối đa maxActive quest đang làm; mỗi quest một lần; kill tính cho người ra đòn cuối và người cùng nhóm được chia EXP; collect nộp khi trả; thưởng EXP (không vượt maxLevel), Zen + đồ (audit QUEST) trong một transaction.",
+    "chaos": "P6-3 (duyệt 2026-10-03, IMPLEMENTATION): Chaos Machine ở NPC Chaos Goblin (Noria), trong interaction.npcRange; đặt tối đa maxItems món từ túi; công thức trong chaos.json (Phase 6: chỉ tạo cánh cấp 1); một transaction, audit CHAOS_IN / CHAOS_OUT, Zen CHAOS; thất bại mất hết đầu vào + phí.",
+    "wings": "P6-4 (duyệt 2026-10-03, IMPLEMENTATION; KB không có công thức): cánh cấp 1 (data/items/phase6.json) cấp 15, thủ 10, damageIncrease 12 % (nhân sát thương gây ra cùng bước buff), absorb 12 % (nhân sát thương nhận sau khi trừ thủ); levelBonus.WING mỗi +N thêm 1 thủ, 2 % / 2 %; không option Life (upgrade.life.excludeTypes). Chỉ lấy từ Chaos Machine.",
+    "events": "P6-5 / P6-6 (duyệt 2026-10-03, IMPLEMENTATION): lịch theo giờ UTC — bắt đầu khi (giờ − offsetHours) chia hết cho everyHours, phút 0; kéo dài durationMinutes; báo SYSTEM toàn server announceMinutes phút trước, lúc bắt đầu, lúc kết thúc. Golden Invasion: 8 Golden Budge Dragon (Lorencia, bãi Budge / Bull Fighter) + 8 Golden Goblin (Noria, bãi Goblin). World boss Bull Fighter Lord: Lorencia (42..47, 46..49) mép nam bãi Spider, cách đường ra cổng đông > aggroRange; bị hạ hoặc hết giờ thì kết thúc. Quái event không hồi sinh. Bật tay: mix mu.event start golden_invasion|world_boss --node <node>.",
+    "upgradeHigh": "P7-3 (duyệt 2026-10-03, DEC-183, IMPLEMENTATION; vượt bảng KB_CONFIG §5 — trên +9 là LATER_VERSION, mở ở Phase 7): upgrade.levels thêm +9 → +10 (50 %) và +10 → +11 (45 %) bằng Jewel of Chaos, thất bại mất đồ (DESTROY). items.highLevel: từ cấp fromLevel mỗi cấp cộng levelBonus × multiplier."
   },
   "game": {
     "name": "MU Web",
     "mode": "classic-inspired",
     "targetVersion": "0.97d",
-    "maxLevel": 10
+    "maxLevel": 30
   },
   "features": {
-    "magicGladiator": false,
-    "wings": false,
+    "magicGladiator": true,
+    "wings": true,
     "harmonyJewel": false,
     "guardianJewel": false,
-    "chaosMachine": false,
-    "pvp": false,
-    "guild": false,
-    "party": false,
-    "quest": false,
-    "mail": false,
-    "mapPanel": false
+    "chaosMachine": true,
+    "pvp": true,
+    "guild": true,
+    "party": true,
+    "quest": true,
+    "mail": true,
+    "mapPanel": true
   },
   "server": {
     "simulationHz": 20,
@@ -58,7 +82,7 @@
     "wsTicketTtlSeconds": 30
   },
   "account": {
-    "maxCharacters": 1
+    "maxCharacters": 4
   },
   "names": {
     "characterPattern": "^[A-Za-z0-9]{4,10}$",
@@ -68,9 +92,27 @@
     "bannedWords": []
   },
   "newCharacter": {
-    "class": "DK",
+    "classes": [
+      "DK",
+      "DW",
+      "ELF",
+      "MG"
+    ],
+    "defaultClass": "DK",
     "mapId": "lorencia",
-    "zen": 0
+    "zen": 0,
+    "startingEquipment": {
+      "DK": [],
+      "DW": [
+        "staff_t0"
+      ],
+      "ELF": [
+        "bow_t0"
+      ],
+      "MG": [
+        "sword_t0"
+      ]
+    }
   },
   "rateLimit": {
     "login": {
@@ -127,6 +169,7 @@
             "split",
             "drop",
             "use_item",
+            "upgrade",
             "npc_open",
             "buy",
             "sell"
@@ -146,7 +189,97 @@
             "chat"
           ],
           "limit": 5,
-          "windowMs": 10000
+          "windowMs": 5000
+        },
+        "mail": {
+          "acts": [
+            "mail_list",
+            "mail_claim",
+            "mail_delete"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "party": {
+          "acts": [
+            "party_invite",
+            "party_accept",
+            "party_decline",
+            "party_leave",
+            "party_kick",
+            "party_disband"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "pvp": {
+          "acts": [
+            "duel_request",
+            "duel_accept",
+            "duel_decline",
+            "duel_cancel"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "guild": {
+          "acts": [
+            "guild_create",
+            "guild_invite",
+            "guild_accept",
+            "guild_decline",
+            "guild_leave",
+            "guild_kick",
+            "guild_promote",
+            "guild_demote",
+            "guild_disband",
+            "guild_war_declare",
+            "guild_war_accept",
+            "guild_war_decline",
+            "guild_war_surrender"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "trade": {
+          "acts": [
+            "trade_request",
+            "trade_accept",
+            "trade_decline",
+            "trade_put",
+            "trade_take",
+            "trade_zen",
+            "trade_lock",
+            "trade_confirm",
+            "trade_cancel"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "info": {
+          "acts": [
+            "ranking",
+            "quest_list"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "quest": {
+          "acts": [
+            "quest_accept",
+            "quest_turnin",
+            "quest_abandon"
+          ],
+          "limit": 5,
+          "windowMs": 1000
+        },
+        "chaos": {
+          "acts": [
+            "chaos_preview",
+            "chaos_combine"
+          ],
+          "limit": 5,
+          "windowMs": 1000
         }
       },
       "kickAfterMs": 5000
@@ -163,7 +296,21 @@
     "potionCooldownMs": 1000,
     "critChance": 0,
     "criticalMultiplier": 1.5,
-    "playerRespawnSeconds": 3
+    "playerRespawnSeconds": 3,
+    "basicAttackRange": {
+      "default": 1,
+      "bow": 5,
+      "crossbow": 5,
+      "staff": 1
+    },
+    "twoHandedWeaponTypes": [
+      "bow",
+      "crossbow"
+    ],
+    "mpRegen": {
+      "energyDiv": 40,
+      "intervalMs": 1000
+    }
   },
   "experience": {
     "mode": "formula",
@@ -199,7 +346,39 @@
       13,
       15
     ],
-    "ancientVariants": false
+    "ancientVariants": false,
+    "highLevel": {
+      "fromLevel": 10,
+      "multiplier": 2
+    },
+    "levelBonus": {
+      "WEAPON": {
+        "attack": 3
+      },
+      "SHIELD": {
+        "defense": 2
+      },
+      "HELM": {
+        "defense": 3
+      },
+      "ARMOR": {
+        "defense": 3
+      },
+      "PANTS": {
+        "defense": 3
+      },
+      "GLOVES": {
+        "defense": 3
+      },
+      "BOOTS": {
+        "defense": 3
+      },
+      "WING": {
+        "defense": 1,
+        "damageIncrease": 2,
+        "absorb": 2
+      }
+    }
   },
   "session": {
     "reconnectGraceSeconds": 30,
@@ -211,5 +390,170 @@
     "serverAuthoritative": true,
     "itemSerialRequired": true,
     "clientDamageTrusted": false
+  },
+  "chat": {
+    "maxLength": 100,
+    "normalScope": "map",
+    "bannedWords": [],
+    "mask": "***",
+    "systemName": "Hệ thống"
+  },
+  "mail": {
+    "expireDays": 30,
+    "maxPerCharacter": 100,
+    "welcome": {
+      "title": "Chào mừng bạn đến MU Web",
+      "body": "Chúc bạn chơi game vui vẻ!"
+    }
+  },
+  "party": {
+    "maxSize": 5,
+    "expRange": 20,
+    "inviteSeconds": 30,
+    "statusIntervalMs": 500
+  },
+  "mg": {
+    "unlockLevel": 20,
+    "statPerLevel": 7,
+    "startingStatEach": 26
+  },
+  "pvp": {
+    "minLevel": 6,
+    "damageMultiplier": 0.5
+  },
+  "pk": {
+    "warningAt": 1,
+    "murdererAt": 2,
+    "decayMinutes": 60,
+    "selfDefenseSeconds": 30,
+    "dropChance": {
+      "NORMAL": 0,
+      "WARNING": 0.1,
+      "MURDERER": 0.5
+    }
+  },
+  "duel": {
+    "requestRange": 10,
+    "inviteSeconds": 30,
+    "maxSeconds": 180,
+    "maxDistance": 20
+  },
+  "guild": {
+    "createLevel": 20,
+    "createZen": 10000,
+    "maxMembers": 20,
+    "maxAssistants": 2,
+    "inviteSeconds": 30,
+    "namePattern": "^[A-Za-z0-9]{3,8}$"
+  },
+  "upgrade": {
+    "levels": [
+      { "fromLevel": 0, "toLevel": 1, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 1, "toLevel": 2, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 2, "toLevel": 3, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 3, "toLevel": 4, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 4, "toLevel": 5, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 5, "toLevel": 6, "successRate": 1.0, "onFailure": "UNCHANGED", "requires": ["jewel_bless"] },
+      { "fromLevel": 6, "toLevel": 7, "successRate": 0.7, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 7, "toLevel": 8, "successRate": 0.6, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 8, "toLevel": 9, "successRate": 0.5, "onFailure": "DECREASE", "requires": ["jewel_soul"] },
+      { "fromLevel": 9, "toLevel": 10, "successRate": 0.5, "onFailure": "DESTROY", "requires": ["jewel_chaos"] },
+      { "fromLevel": 10, "toLevel": 11, "successRate": 0.45, "onFailure": "DESTROY", "requires": ["jewel_chaos"] }
+    ],
+    "life": {
+      "jewel": "jewel_life",
+      "successRate": 0.5,
+      "onFailure": "UNCHANGED",
+      "maxOption": 4,
+      "perOption": 4,
+      "excludeTypes": [
+        "WING"
+      ]
+    },
+    "announceFromLevel": 7
+  },
+  "quest": {
+    "maxActive": 5
+  },
+  "chaos": {
+    "maxItems": 8
+  },
+  "events": {
+    "checkSeconds": 1,
+    "goldenInvasion": {
+      "name": "Golden Invasion",
+      "everyHours": 3,
+      "offsetHours": 0,
+      "durationMinutes": 15,
+      "announceMinutes": 5,
+      "spawns": [
+        {
+          "map": "lorencia",
+          "monster": "golden_budge_dragon",
+          "count": 8,
+          "area": {
+            "x": 40,
+            "y": 2,
+            "w": 22,
+            "h": 14
+          }
+        },
+        {
+          "map": "noria",
+          "monster": "golden_goblin",
+          "count": 8,
+          "area": {
+            "x": 3,
+            "y": 40,
+            "w": 17,
+            "h": 21
+          }
+        }
+      ]
+    },
+    "worldBoss": {
+      "name": "Bull Fighter Lord",
+      "everyHours": 2,
+      "offsetHours": 1,
+      "durationMinutes": 20,
+      "announceMinutes": 5,
+      "spawns": [
+        {
+          "map": "lorencia",
+          "monster": "bull_fighter_lord",
+          "count": 1,
+          "area": {
+            "x": 42,
+            "y": 46,
+            "w": 6,
+            "h": 4
+          }
+        }
+      ]
+    }
+  },
+  "ranking": {
+    "refreshSeconds": 300,
+    "top": 50,
+    "boards": [
+      "level",
+      "level_DK",
+      "level_DW",
+      "level_ELF",
+      "level_MG",
+      "guild"
+    ]
+  },
+  "trade": {
+    "inviteSeconds": 30,
+    "range": 5,
+    "cancelRange": 10,
+    "maxItems": 16,
+    "timeoutSeconds": 180
+  },
+  "guildWar": {
+    "inviteSeconds": 60,
+    "scoreToWin": 20,
+    "durationMinutes": 30
   }
 }

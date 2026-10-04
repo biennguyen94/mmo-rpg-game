@@ -22,7 +22,7 @@ mix phx.server
 
 Mở http://localhost:4000 → **Đăng ký** → tạo nhân vật (4–10 chữ/số) → **Vào game**.
 
-Sửa code client: `cd client && npm run build` rồi tải lại trang (chưa có watcher).
+Sửa code client: `mix phx.server` tự biên dịch lại TypeScript (`client/watch.mjs`), chỉ cần tải lại trang.
 
 ## 3. Icon item thật (tùy chọn, KHÔNG commit)
 
@@ -90,3 +90,26 @@ docker compose up -d --build
 ```
 
 Image không chứa icon MU-derived (mọi item dùng placeholder).
+
+`bin/start` trong container tự chạy migration còn thiếu rồi bật server (đã kiểm bản release
+2026-10-03: DB trống → 7 migration → đăng ký → bật / tắt event qua `rpc`, 0 lỗi).
+
+## 8. Vận hành (Phase 2–6)
+
+> Hướng dẫn quản trị đầy đủ (tra người chơi, tặng quà, sửa nhân vật, audit, sao lưu): `docs/ADMIN_GUIDE.md`.
+
+Bản release (Docker: `docker compose exec app bin/mu rpc '…'`):
+
+| Việc | Lệnh |
+|---|---|
+| Bật / tắt event ngay | `bin/mu rpc 'Mu.WorldEvents.start("world_boss")'` (hoặc `"golden_invasion"`), `Mu.WorldEvents.stop/1` |
+| Thông báo hệ thống / cấm chat | `bin/mu rpc 'Mu.Chat.system("Bảo trì lúc 3h")'`, `Mu.Chat.mute("Ten", 30)`, `Mu.Chat.unmute("Ten")` |
+| Kiểm đồ / Zen (dupe) | server đang chạy: `bin/mu rpc 'IO.inspect(Mu.Audit.run().problems)'` (`[]` = sạch) — dev: `mix mu.audit` (exit 1 nếu có sai lệch) |
+
+Lịch event tự chạy theo giờ **UTC** (`priv/game_data/config.json` → `events`): Golden Invasion
+0, 3, 6 … giờ (15 phút), world boss 1, 3, 5 … giờ (20 phút). Server khởi động lại giữa event thì
+event đó mất (không lưu DB).
+
+Dev (`elixir --sname mu -S mix phx.server`): `mix mu.event start|stop golden_invasion|world_boss --node mu@<host>`,
+`mix mu.chat …`. **Không sửa `priv/game_data/*.json` khi server dev đang chạy rồi gọi `mix run`**
+(biên dịch lại cùng `_build`, server dev mất module và tắt — xem `ACCEPTANCE_PHASE5_6.md §3`).

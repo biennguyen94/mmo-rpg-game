@@ -34,6 +34,7 @@ defmodule HacLong.Game.HomePetsTest do
              hair: "hair/knot_red",
              weapon: "hand1/club_slant",
              armor: "body/shirt_vest",
+             wing: nil,
              shield: nil,
              pet: nil
            }

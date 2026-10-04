@@ -1,6 +1,7 @@
 // Bộ điều khiển game phía client: nhận event server → cập nhật World/player → vẽ lại UI;
 // thao tác người chơi → `cmd`. Không tính luật: tầm/cooldown phía client chỉ để biết khi nào gửi,
 // server vẫn quyết định (KB_TECHNICAL §5–§6).
+import { duelResultText, warResultText } from "../logic/pvp.js";
 import { Sound } from "../audio/sound.js";
 import { api, saveToken, type CharacterSummary } from "../net/api.js";
 import { Connection } from "../net/connection.js";
@@ -13,15 +14,33 @@ import {
   type JoinReply,
   type Player,
   type ShopPayload,
+  type WarehousePayload,
   type SkillInfo,
   type SnapshotPayload,
   type SpawnPayload,
+  type MapChangePayload,
+  type ChatPayload,
+  type MailPayload,
+  type PartyPayload,
+  type DuelPayload,
+  type GuildPayload,
+  type GuildWarPayload,
+  type UpgradePayload,
+  type TradePayload,
+  type RankingPayload,
+  type QuestsPayload,
+  type ChaosPayload,
+  type WorldEventPayload,
+  type QuestRewards,
+  type MapData,
 } from "../net/protocol.js";
 import { AutoAttack, approach } from "../logic/autoattack.js";
 import type { Stat } from "../logic/alloc.js";
 import type { IconMap } from "../logic/icons.js";
-import { equipSlotFor, firstFreeSlot, pickPotion, type Templates } from "../logic/items.js";
+import { BAG_COLUMNS, autoSlot, equipSlotFor, firstFreeSlot, pickPotion, tradeResultText, twoHandConflict, type Templates } from "../logic/items.js";
 import { NoticeLog, diffPlayer } from "../logic/notices.js";
+import { parseChat, pushChat } from "../logic/chat.js";
+import { rewardText } from "../logic/quests.js";
 import { ServerClock } from "../state/interp.js";
 import { World, type Entity } from "../state/world.js";
 import { GameUI, type PanelName, type UiState } from "../ui/game_ui.js";
@@ -39,6 +58,8 @@ export class GameClient {
   private auto = new AutoAttack();
   private notices = new NoticeLog();
   private state: UiState | null = null;
+  /** Skill đang chờ chọn ô (teleport, P2-M3); null = click đất là đi. */
+  private aiming: string | null = null;
   private join: JoinReply | null = null;
   private selfId = "";
   private shop: ShopPayload | null = null;
@@ -55,19 +76,90 @@ export class GameClient {
   ) {
     this.ui = new GameUI(parent, {
       togglePanel: (p) => this.togglePanel(p),
-      closePanel: () => this.setPanel(null),
+      // đóng panel giao dịch = hủy giao dịch (không để giao dịch treo sau màn hình)
+      closePanel: () => (this.state?.panel === "trade" && this.state.trade ? void this.send("trade_cancel") : this.setPanel(null)),
       alloc: (stat, points) => void this.alloc(stat, points),
       equip: (it) => void this.equip(it),
       unequip: (slot) => void this.unequip(slot),
+      itemCommand: (c) =>
+        void (c.act === "equip" ? this.equipTo(c.payload.itemId as string, c.payload.slot as number) : this.send(c.act, c.payload)),
+      split: (it, n) => void this.split(it, n),
+      useItem: (it) => void this.send("use_item", { itemId: it.id }).then((ok) => ok && Sound.play("potion")),
       buy: (tid) => void this.send("buy", { npcId: this.shop?.npcId, templateId: tid, quantity: 1 }),
       sell: (it) => void this.send("sell", { npcId: this.shop?.npcId, itemId: it.id }),
+      deposit: (it) => void this.transfer(it, "WAREHOUSE"),
+      withdraw: (it) => void this.transfer(it, "INVENTORY"),
       usePotion: (type) => void this.usePotion(type),
       pickupNearest: () => this.pickupNearest(),
       logout: () => void this.logout(),
+      switchCharacter: () => void this.conn.leave().then(() => this.exit()),
       setSound: (on) => (Sound.set(on), this.render()),
       noticesSeen: () => (this.notices.markAllRead(), this.render()),
       clearNotices: () => (this.notices.clear(), this.render()),
       attack: (target, skill) => this.startAttack(target, skill),
+      cast: (skill, target) => void this.cast(skill, target),
+      aim: (skill) => ((this.aiming = skill), this.ui.closeContext(), this.render()),
+      cancelAim: () => ((this.aiming = null), this.render()),
+      sendChat: (line) => void this.sendChat(line),
+      claimMail: (id) => void this.send("mail_claim", { mailId: id }).then((ok) => ok && Sound.play("pickup")),
+      deleteReadMail: () => void this.send("mail_delete", { read: true }),
+      partyInvite: (name) => void this.send("party_invite", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} vào nhóm.`)),
+      partyAnswer: (from, accept) => {
+        if (this.state) this.state.partyInvite = null;
+        this.render();
+        void this.send(accept ? "party_accept" : "party_decline", { from });
+      },
+      partyLeave: () => void this.send("party_leave"),
+      goTo: (x, y) => this.moveTo(x, y),
+      partyKick: (name) => void this.send("party_kick", { name }),
+      partyDisband: () => void this.send("party_disband"),
+      duelRequest: (name) => void this.send("duel_request", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã thách đấu ${name}.`)),
+      duelAnswer: (from, accept) => {
+        if (this.state) this.state.duelAsk = null;
+        this.render();
+        void this.send(accept ? "duel_accept" : "duel_decline", { from });
+      },
+      duelCancel: () => void this.send("duel_cancel"),
+      guildCreate: (name) => void this.send("guild_create", { name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã lập guild ${name}.`)),
+      guildInvite: (name) => void this.send("guild_invite", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} vào guild.`)),
+      guildAnswer: (guild, accept) => {
+        if (this.state) this.state.guildInvite = null;
+        this.render();
+        void this.send(accept ? "guild_accept" : "guild_decline", { guild });
+      },
+      guildLeave: () => void this.send("guild_leave"),
+      guildKick: (name) => void this.send("guild_kick", { name }),
+      guildPromote: (name) => void this.send("guild_promote", { name }),
+      guildDemote: (name) => void this.send("guild_demote", { name }),
+      guildDisband: () => void this.send("guild_disband"),
+      warDeclare: (guild) => void this.send("guild_war_declare", { guild }).then((ok) => ok && this.notices.add("SYSTEM", `Đã tuyên chiến với guild ${guild}.`)),
+      warAnswer: (guild, accept) => {
+        if (this.state) this.state.warAsk = null;
+        this.render();
+        void this.send(accept ? "guild_war_accept" : "guild_war_decline", { guild });
+      },
+      warSurrender: () => void this.send("guild_war_surrender"),
+      tradeRequest: (name) => void this.send("trade_request", { to: name }).then((ok) => ok && this.notices.add("SYSTEM", `Đã mời ${name} giao dịch.`)),
+      tradeAnswer: (from, accept) => {
+        if (this.state) this.state.tradeAsk = null;
+        this.render();
+        void this.send(accept ? "trade_accept" : "trade_decline", { from });
+      },
+      tradePut: (itemId) => void this.send("trade_put", { itemId }),
+      tradeTake: (itemId) => void this.send("trade_take", { itemId }),
+      tradeZen: (amount) => void this.send("trade_zen", { amount }),
+      tradeLock: () => void this.send("trade_lock"),
+      tradeConfirm: () => void this.send("trade_confirm"),
+      tradeCancel: () => void this.send("trade_cancel"),
+      ranking: (board) => void this.send("ranking", { board }),
+      questAccept: (questId) => this.state?.questNpc && void this.send("quest_accept", { questId, npcId: this.state.questNpc }),
+      questTurnin: (questId) => this.state?.questNpc && void this.send("quest_turnin", { questId, npcId: this.state.questNpc }),
+      questAbandon: (questId) => void this.send("quest_abandon", { questId }),
+      chaosToggle: (itemId) => this.chaosToggle(itemId),
+      chaosCombine: () => {
+        const c = this.state?.chaos;
+        if (c?.recipe) void this.send("chaos_combine", { itemIds: c.itemIds, npcId: c.npcId });
+      },
     });
 
     this.conn = new Connection(token, character.id, {
@@ -106,24 +198,88 @@ export class GameClient {
       notices: this.notices,
       panel: null, // không panel nào mở khi vào game (§19.1)
       shop: null,
+      warehouse: null,
       netStatus: null,
       soundOn: Sound.on,
+      aiming: null,
+      serverNow: Date.now(),
+      chat: this.state?.chat ?? [],
+      mailUnread: this.state?.mailUnread ?? 0,
+      mail: this.state?.mail ?? [],
+      // nhóm sống trên server (RAM): vào lại thì event `party` tới sau
+      party: this.state?.party ?? null,
+      pvp: r.config.pvp ?? { enabled: false, minLevel: 0 },
+      levelBonus: r.config.items?.levelBonus ?? {},
+      optionBonus: r.config.items?.optionBonus ?? 0,
+      highLevel: r.config.items?.highLevel ?? null,
+      // giao dịch bị hủy khi mất kết nối (KB_TECHNICAL §10): vào lại thì không còn
+      trade: null,
+      tradeAsk: null,
+      ranking: null,
+      quests: this.state?.quests ?? null,
+      questNpc: null,
+      wings: r.config.wings === true,
+      chaos: null,
+      // Session đẩy lại event đang diễn ra ngay sau khi vào
+      worldEvents: {},
+      partyInvite: null,
+      // guild: event `guild` tới ngay sau join (Session đẩy)
+      guild: this.state?.guild ?? null,
+      guildCfg: r.config.guild ?? null,
+      guildInvite: null,
+      // war sống trên server (RAM): vào lại thì event `guild_war start` tới sau
+      war: null,
+      warAsk: null,
+      duel: null,
+      duelAsk: null,
     };
+    this.buildView(r.map);
+    this.render();
+    // quest đang làm cho dòng theo dõi (P6-M2)
+    void this.send("quest_list");
+  }
+
+  /** Dựng game view cho `map` (vào game hoặc qua cổng). */
+  private buildView(map: MapData): void {
+    if (!this.join) return;
     this.view?.destroy();
-    this.view = this.makeView(this.ui.view, r.map, this.world, {
-      onGround: (x, y) => this.moveTo(x, y),
-      onEntity: (e, sx, sy) => this.clickEntity(e, sx, sy),
+    this.view = this.makeView(this.ui.view, map, this.world, {
+      onGround: (x, y) => (this.aiming ? void this.castAt(this.aiming, x, y) : this.moveTo(x, y)),
+      onEntity: (e, sx, sy, tx, ty) => this.clickEntity(e, sx, sy, tx, ty),
     });
-    const delay = r.config.interpolationDelayMs;
-    this.view.setClock(() => this.clock.now(Date.now()) - delay);
-    this.view.setSelf(r.entityId);
+    // DEC-186: vị trí vẽ bằng Glide (trượt về vị trí mới nhất), không cần vẽ trễ `interpolationDelayMs`
+    this.view.setClock(() => this.clock.now(Date.now()));
+    this.view.setSelf(this.selfId);
+    this.view.setEnemyGuild(this.state?.war?.enemy ?? null);
     // hook chỉ-đọc cho test e2e/debug: chỉ chứa dữ liệu server đã gửi cho client này
     (window as unknown as { __mu: object }).__mu = {
       entities: () => [...this.world.entities.values()].map(({ interp: _i, ...e }) => e),
       player: () => this.state?.player,
+      map: () => this.state?.map.id,
       selfId: this.selfId,
+      // vị trí đang vẽ của entity (đo độ mượt, DEC-186)
+      drawn: (id: string) => this.world.entities.get(id)?.interp.at(this.clock.now(Date.now())) ?? null,
     };
-    this.render();
+  }
+
+  /** Qua cổng (P2-M4): thế giới mới, view mới; `spawn` của map mới tới ngay sau event này. */
+  private onMapChange(p: MapChangePayload): void {
+    if (!this.state) return;
+    this.auto.stop();
+    this.pending = null;
+    this.aiming = null;
+    this.shop = null;
+    this.ui.closeContext();
+    this.selfId = p.entityId;
+    this.world = new World();
+    this.state.map = p.map;
+    this.state.player = p.player;
+    this.state.shop = null;
+    this.state.warehouse = null;
+    if (this.state.panel === "shop" || this.state.panel === "warehouse" || this.state.panel === "chaos") this.state.panel = null;
+    this.state.chaos = null;
+    this.notices.add("SYSTEM", `Đã vào ${p.map.name}`);
+    this.buildView(p.map);
   }
 
   private onEvent(ev: string, p: any): void {
@@ -132,7 +288,10 @@ export class GameClient {
     switch (ev) {
       case "spawn":
         this.world.spawn(p as SpawnPayload, now);
-        if ((p as SpawnPayload).kind === "item") Sound.play("click");
+        // chính mình xuất hiện lại (hồi sinh ở thị trấn, P4-M1 tìm ra): HUD lấy vị trí / HP mới
+        if (p.id === this.selfId) this.state.player = { ...this.state.player, x: p.x, y: p.y, hp: p.hp ?? this.state.player.hp };
+        // tiếng rơi đồ: chỉ khi rơi gần mình (AOI P3-M1: đồ ở xa đi vào tầm nhìn cũng là `spawn`)
+        if ((p as SpawnPayload).kind === "item" && Math.max(Math.abs(p.x - this.state.player.x), Math.abs(p.y - this.state.player.y)) <= 3) Sound.play("click");
         break;
       case "despawn":
         this.world.despawn(p.id);
@@ -142,7 +301,7 @@ export class GameClient {
         this.clock.observe(s.t, Date.now());
         this.world.snapshot(s);
         const me = this.world.entities.get(this.selfId);
-        if (me) this.state.player = { ...this.state.player, x: me.x, y: me.y, hp: me.hp ?? this.state.player.hp };
+        if (me) this.state.player = { ...this.state.player, x: me.x, y: me.y, hp: me.hp ?? this.state.player.hp, mp: me.mp ?? this.state.player.mp };
         this.arrive();
         this.closeShopIfFar();
         break;
@@ -153,13 +312,203 @@ export class GameClient {
       case "player":
         this.onPlayer(p as Player);
         break;
+      case "mail": {
+        const m = p as MailPayload;
+        this.state.mailUnread = m.unread;
+        if (m.items) this.state.mail = m.items;
+        break;
+      }
+      case "chat":
+        this.state.chat = pushChat(this.state.chat, p as ChatPayload);
+        break;
+      case "map_change":
+        this.onMapChange(p as MapChangePayload);
+        break;
+      case "error":
+        // lỗi không gắn lệnh (rid null): bước vào cổng khi thiếu cấp
+        if (p.rid === null && p.reason === "portal") {
+          const name = String(p.map).charAt(0).toUpperCase() + String(p.map).slice(1);
+          this.notices.add("ERROR", `Cần cấp ${p.levelRequired} để vào ${name}.`);
+        }
+        break;
       case "shop":
         this.shop = p as ShopPayload;
         this.state.shop = this.shop;
         this.state.panel = "shop";
         break;
+      case "party": {
+        const pp = p as PartyPayload;
+        this.state.party = pp.members.length ? pp : null;
+        break;
+      }
+      case "duel":
+        this.onDuel(p as DuelPayload);
+        break;
+      case "guild": {
+        const g = p as GuildPayload;
+        this.state.guild = g.id ? g : null;
+        // rời / bị đuổi / giải tán: hết war
+        if (!g.id) this.setWar(null);
+        break;
+      }
+      case "guild_war":
+        this.onWar(p as GuildWarPayload);
+        break;
+      case "upgrade":
+        this.onUpgrade(p as UpgradePayload);
+        break;
+      case "ranking":
+        this.state.ranking = p as RankingPayload;
+        break;
+      case "quests": {
+        const q = p as QuestsPayload;
+        this.state.quests = q;
+        // mở Quest Master: panel ở chế độ NPC ([Nhận] / [Trả])
+        if (q.npcId) {
+          this.state.questNpc = q.npcId;
+          this.state.panel = "quests";
+        }
+        break;
+      }
+      case "world_event": {
+        const w = p as WorldEventPayload;
+        if (w.state === "end") delete this.state.worldEvents[w.kind];
+        else this.state.worldEvents[w.kind] = w;
+        break;
+      }
+      case "chaos": {
+        const c = p as ChaosPayload;
+        this.state.chaos = { ...this.state.chaos, ...c, maxItems: c.maxItems ?? this.state.chaos?.maxItems };
+        if (c.result) this.onChaosResult(c.result);
+        else if (c.maxItems !== undefined) this.state.panel = "chaos";
+        break;
+      }
+      case "quest_done":
+        this.onQuestDone(p.name as string, p.rewards as QuestRewards);
+        break;
+      case "trade_invite":
+        this.state.tradeAsk = { from: p.from, until: Date.now() + (p.seconds ?? 30) * 1000 };
+        Sound.play("click");
+        break;
+      case "trade": {
+        const tr = p as TradePayload;
+        if (tr.state === "open") {
+          this.state.trade = tr;
+          this.state.tradeAsk = null;
+          this.state.panel = "trade";
+        } else {
+          this.state.trade = null;
+          if (this.state.panel === "trade") this.state.panel = null;
+          if (this.state.tradeAsk?.from === tr.partner) this.state.tradeAsk = null;
+          this.notices.add(tr.result === "done" ? "SYSTEM" : "ERROR", tradeResultText(tr.result, tr.partner, tr.by));
+          if (tr.result === "done") Sound.play("pickup");
+        }
+        break;
+      }
+      case "guild_invite":
+        this.state.guildInvite = { from: p.from, guild: p.guild, until: Date.now() + (this.join?.config.guild?.inviteSeconds ?? 30) * 1000 };
+        Sound.play("click");
+        break;
+      case "party_invite":
+        this.state.partyInvite = { from: p.from, until: Date.now() + (this.join?.config.partyInviteSeconds ?? 30) * 1000 };
+        Sound.play("click");
+        break;
+      case "warehouse":
+        // mở Thủ kho hoặc kho đổi sau gửi / rút (P3-M3)
+        this.state.warehouse = p as WarehousePayload;
+        this.state.panel = "warehouse";
+        break;
     }
     this.render();
+  }
+
+  /** Chaos Machine (P6-M3): đặt / lấy món → server tính lại công thức, tỉ lệ, phí. */
+  private chaosToggle(itemId: string): void {
+    const c = this.state?.chaos;
+    if (!c) return;
+    const ids = c.itemIds.includes(itemId) ? c.itemIds.filter((i) => i !== itemId) : [...c.itemIds, itemId];
+    if (ids.length > (c.maxItems ?? 8)) {
+      this.notices.add("ERROR", `Chaos Machine chỉ chứa tối đa ${c.maxItems ?? 8} món.`);
+      return this.render();
+    }
+    // bỏ kết quả lần trước, chờ server báo công thức
+    this.state!.chaos = { ...c, itemIds: ids, result: undefined };
+    if (ids.length) void this.send("chaos_preview", { itemIds: ids, npcId: c.npcId });
+    else this.state!.chaos = { ...c, itemIds: [], recipe: null, result: undefined };
+    this.render();
+  }
+
+  private onChaosResult(r: NonNullable<ChaosPayload["result"]>): void {
+    if (!this.state) return;
+    const name = this.state.templates.get(r.templateId ?? "")?.name ?? r.templateId;
+    if (r.ok) this.notices.add("SYSTEM", `Chaos Machine: tạo thành công ${name}!`);
+    else this.notices.add("ERROR", "Chaos Machine: kết hợp thất bại, đồ đặt vào đã mất.");
+    Sound.play(r.ok ? "levelup" : "miss");
+    if (this.state.chaos) this.state.chaos = { ...this.state.chaos, recipe: null };
+  }
+
+  /** Trả quest xong (P6-M2): thông báo thưởng. */
+  private onQuestDone(name: string, r: QuestRewards): void {
+    if (!this.state) return;
+    const templates = this.state.templates;
+    this.notices.add("SYSTEM", `Hoàn thành nhiệm vụ ${name}: ${rewardText(r, (t) => templates.get(t)?.name ?? t)}.`);
+    Sound.play("levelup");
+  }
+
+  /** Kết quả ép jewel (P5-M2): thông báo + âm thanh. */
+  private onUpgrade(u: UpgradePayload): void {
+    if (!this.state) return;
+    const name = this.state.templates.get(u.templateId)?.name ?? u.templateId;
+    const life = u.jewel === "jewel_life";
+    const what = life ? `${name} option +${u.option * this.state.optionBonus}` : `${name} +${u.level}`;
+    if (u.destroyed) this.notices.add("ERROR", `Ép thất bại: ${name} bị hỏng.`);
+    else if (u.ok) this.notices.add("SYSTEM", `Ép thành công: ${what}.`);
+    else this.notices.add("ERROR", `Ép thất bại: ${what}.`);
+    Sound.play(u.ok ? "levelup" : "miss");
+  }
+
+  /** Guild war (P4-M4): lời tuyên chiến / bắt đầu / điểm / kết thúc. */
+  private onWar(w: GuildWarPayload): void {
+    if (!this.state) return;
+    const until = Date.now() + w.secondsLeft * 1000;
+    if (w.state === "request") {
+      this.state.warAsk = { enemy: w.enemy, from: w.from ?? "?", until };
+      Sound.play("click");
+    } else if (w.state === "end") {
+      this.setWar(null);
+      this.notices.add(w.result === "lose" ? "ERROR" : "SYSTEM", warResultText(w));
+    } else {
+      if (w.state === "start") this.state.warAsk = null;
+      this.setWar({ enemy: w.enemy, score: w.score ?? 0, enemyScore: w.enemyScore ?? 0, scoreToWin: w.scoreToWin ?? 0, until });
+    }
+  }
+
+  private setWar(war: NonNullable<UiState["war"]> | null): void {
+    if (!this.state) return;
+    // hết war: dừng tự đánh người guild địch (khỏi thành PK)
+    const old = this.state.war?.enemy;
+    if (!war && old && this.auto.target && this.world.entities.get(this.auto.target)?.guild === old) this.auto.stop();
+    this.state.war = war;
+    this.view?.setEnemyGuild(war?.enemy ?? null);
+  }
+
+  /** Duel (P4-M2): lời mời / bắt đầu / kết thúc. Kết thúc thì dừng tự đánh đối thủ (khỏi thành PK). */
+  private onDuel(d: DuelPayload): void {
+    if (!this.state) return;
+    if (d.state === "request") {
+      this.state.duelAsk = { from: d.opponent ?? "?", until: Date.now() + (this.join?.config.duelInviteSeconds ?? 30) * 1000 };
+      Sound.play("click");
+    } else if (d.state === "start") {
+      this.state.duelAsk = null;
+      this.state.duel = { opponent: d.opponent ?? "?", opponentId: d.opponentId ?? "", endsAt: d.endsAt ?? 0 };
+      this.notices.add("SYSTEM", `Bắt đầu đấu tay đôi với ${d.opponent}.`);
+    } else {
+      const opp = this.state.duel?.opponentId;
+      if (opp && this.auto.target === opp) this.auto.stop();
+      this.state.duel = null;
+      if (this.state.duelAsk?.from === d.opponent) this.state.duelAsk = null;
+      this.notices.add(d.result === "lose" ? "ERROR" : "SYSTEM", duelResultText(d.result, d.opponent));
+    }
   }
 
   private onCombat(c: CombatPayload): void {
@@ -180,15 +529,18 @@ export class GameClient {
       if (n.type === "LEVEL_UP") Sound.play("levelup");
       if (n.type === "ITEM_PICKUP") Sound.play("pickup");
     }
-    // vị trí lấy từ snapshot (mới hơn), còn lại lấy từ server
+    // vị trí + MP lấy từ snapshot (mới hơn: MapServer giữ MP, Session có thể chưa đọc lại), còn lại từ server
     const me = this.world.entities.get(this.selfId);
-    this.state.player = me ? { ...p, x: me.x, y: me.y } : p;
+    this.state.player = me ? { ...p, x: me.x, y: me.y, mp: me.mp ?? p.mp } : p;
   }
 
   private onStatus(st: string): void {
     if (st === "online") {
+      if (this.state?.netStatus) this.notices.add("SYSTEM", "Đã kết nối lại.");
       if (this.state) this.state.netStatus = null;
     } else if (st === "reconnecting") {
+      // server giữ nhân vật đứng yên (vẫn bị đánh) trong lúc chờ: dừng tự đánh (P3-M2)
+      this.auto.stop();
       if (this.state) this.state.netStatus = "Mất kết nối, đang kết nối lại…";
     } else if (st === "kicked") {
       return this.exit("Tài khoản đã vào game ở nơi khác.");
@@ -205,7 +557,9 @@ export class GameClient {
   private async send(act: string, payload: object = {}, quiet: string[] = []): Promise<boolean> {
     const r = await this.conn.cmd(act, payload);
     if (!r.ok && !quiet.includes(r.error)) {
-      this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
+      // P4-M1: sát nhân bị NPC từ chối
+      const murderer = r.error === "FORBIDDEN" && this.state?.player.view.pkState === "MURDERER" && ["npc_open", "buy", "sell", "move_item"].includes(act);
+      this.notices.add("ERROR", murderer ? "Sát nhân không được dùng dịch vụ NPC." : (ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`));
       this.render();
     }
     return r.ok;
@@ -219,10 +573,14 @@ export class GameClient {
     void this.send("move_to", { x, y });
   }
 
-  private clickEntity(e: Entity, sx: number, sy: number): void {
+  private clickEntity(e: Entity, sx: number, sy: number, tx = e.x, ty = e.y): void {
     const me = this.world.entities.get(this.selfId);
     if (!me || !this.join) return;
-    if (e.kind === "monster" && e.state !== "dead") {
+    if (this.aiming) return void this.castAt(this.aiming, e.x, e.y);
+    if (e.kind === "player") {
+      // menu skill hỗ trợ / teleport (P2-M3); không có gì thì như cũ: đi tới
+      if (!this.ui.playerMenu(e.id, e.id === this.selfId, sx, sy, e.name, { x: tx, y: ty }, e) && e.id !== this.selfId) this.moveTo(tx, ty);
+    } else if (e.kind === "monster" && e.state !== "dead") {
       this.ui.monsterMenu(e.id, sx, sy);
     } else if (e.kind === "npc") {
       this.reach("npc", e, this.join.config.npcRange);
@@ -278,6 +636,34 @@ export class GameClient {
     this.auto.start(target, skill);
   }
 
+  /** Chat (P2-M5): `/w Tên …` = nhắn riêng; lỗi hiện ở panel Thông báo. */
+  private async sendChat(line: string): Promise<void> {
+    const c = parseChat(line);
+    if (!c) return;
+    const r = await this.conn.cmd("chat", c);
+    if (r.ok || !this.state) return;
+    if (r.error === "INVALID_TARGET" && c.channel === "WHISPER") this.notices.add("ERROR", `Không có người chơi "${c.to}" đang online.`);
+    else if (r.error === "INVALID_TARGET" && c.channel === "PARTY") this.notices.add("ERROR", "Bạn chưa có nhóm.");
+    else if (r.error === "INVALID_TARGET" && c.channel === "GUILD") this.notices.add("ERROR", "Bạn chưa có guild.");
+    else if (r.error !== "FORBIDDEN") this.notices.add("ERROR", ERROR_TEXT[r.error as ErrorCode] ?? `Lỗi: ${r.error}`);
+    this.render();
+  }
+
+  /** Skill hỗ trợ (heal/buff) lên người chơi `target` (null = bản thân). */
+  private async cast(skill: string, target: string | null): Promise<void> {
+    this.ui.closeContext();
+    await this.send("skill", target ? { id: skill, target } : { id: skill });
+  }
+
+  /** Skill chọn ô (teleport): gửi `{id, x, y}`, thoát chế độ chọn ô. */
+  private async castAt(skill: string, x: number, y: number): Promise<void> {
+    this.aiming = null;
+    this.auto.stop();
+    this.view?.marker(x, y);
+    this.render();
+    await this.send("skill", { id: skill, x, y });
+  }
+
   private async usePotion(type: "HP" | "MP"): Promise<void> {
     if (!this.state) return;
     const stack = pickPotion(this.state.player.inventory, this.state.templates, type);
@@ -289,7 +675,26 @@ export class GameClient {
     if (!this.state) return;
     const t = this.state.templates.get(it.templateId);
     const slot = t ? equipSlotFor(t, this.state.player.equipment) : null;
-    if (slot !== null) await this.send("equip", { itemId: it.id, slot });
+    if (slot !== null) await this.equipTo(it.id, slot);
+  }
+
+  private async equipTo(itemId: string, slot: number): Promise<void> {
+    if (!this.state) return;
+    const p = this.state.player;
+    const t = this.state.templates.get(p.inventory.find((i) => i.id === itemId)?.templateId ?? "");
+    if (t && twoHandConflict(t, slot, p.equipment, this.state.templates, this.join?.config.twoHandedWeaponTypes ?? [])) {
+      this.notices.add("ERROR", "Cung cần hai tay — tháo khiên trước.");
+      this.render();
+      return;
+    }
+    await this.send("equip", { itemId, slot });
+  }
+
+  private async split(it: ItemView, quantity: number): Promise<void> {
+    if (!this.state) return;
+    const p = this.state.player;
+    const toSlot = firstFreeSlot(p.inventory, p.view.inventorySize);
+    await this.send("split", { itemId: it.id, quantity: Math.floor(quantity), toSlot });
   }
 
   private async unequip(slot: number): Promise<void> {
@@ -311,16 +716,54 @@ export class GameClient {
     if (!this.state) return;
     this.state.panel = p;
     if (p === "notices") this.notices.markAllRead();
+    // mở Hộp thư: xin danh sách (server đánh dấu đã đọc → badge về 0)
+    if (p === "mail") void this.send("mail_list");
+    // mở Xếp hạng: xin bảng đang xem (mặc định "Tất cả")
+    if (p === "ranking") void this.send("ranking", { board: this.state.ranking?.board ?? "level" });
+    // mở Nhiệm vụ từ menu: chỉ xem (nhận / trả phải đứng ở Quest Master)
+    if (p === "quests") {
+      this.state.questNpc = null;
+      void this.send("quest_list");
+    }
     if (p !== "shop") this.shop = null;
     this.render();
   }
 
-  /** Shop tự đóng khi rời tầm NPC (§19.7). */
+  /** Shop / kho tự đóng khi rời tầm NPC (§19.7). */
+  /** [Gửi] / [Rút] (P3-M3): ô đích tự chọn (gộp stack cùng loại, không thì ô trống thấp nhất). */
+  private async transfer(it: ItemView, to: "WAREHOUSE" | "INVENTORY"): Promise<void> {
+    const wh = this.state?.warehouse;
+    if (!this.state || !wh) return;
+    const slot =
+      to === "WAREHOUSE"
+        ? autoSlot(wh.items, wh.slots, it, this.state.templates)
+        : autoSlot(this.state.player.inventory, BAG_COLUMNS * BAG_COLUMNS, it, this.state.templates);
+    if (slot === null) {
+      this.notices.add("ERROR", to === "WAREHOUSE" ? "Kho đã đầy." : ERROR_TEXT.INVENTORY_FULL);
+      return this.render();
+    }
+    await this.send("move_item", { itemId: it.id, to: { location: to, slot } });
+  }
+
   private closeShopIfFar(): void {
-    if (!this.state || this.state.panel !== "shop" || !this.shop || !this.join) return;
+    if (!this.state || !this.join) return;
+    const quest = this.state.panel === "quests" ? this.state.questNpc : null;
+    const npcId =
+      this.state.panel === "shop"
+        ? this.shop?.npcId
+        : this.state.panel === "warehouse"
+          ? this.state.warehouse?.npcId
+          : this.state.panel === "chaos"
+            ? this.state.chaos?.npcId
+            : quest;
+    if (!npcId) return;
     const me = this.world.entities.get(this.selfId);
-    const npc = this.world.entities.get(`npc_${this.shop.npcId}`);
-    if (me && npc && chebyshev(me.x, me.y, npc.x, npc.y) > this.join.config.npcRange) this.state.panel = null;
+    const npc = this.world.entities.get(`npc_${npcId}`);
+    if (me && npc && chebyshev(me.x, me.y, npc.x, npc.y) > this.join.config.npcRange) {
+      // rời Quest Master: panel về chế độ xem (không đóng)
+      if (quest) this.state.questNpc = null;
+      else this.state.panel = null;
+    }
   }
 
   private tick(): void {
@@ -328,16 +771,20 @@ export class GameClient {
     const me = this.world.entities.get(this.selfId);
     const t = this.world.entities.get(this.auto.target);
     if (!me) return;
-    const range = this.state.skills.get(this.auto.pendingSkill ?? "basic_attack")?.range ?? 1;
+    // đánh thường: tầm theo vũ khí đang cầm (`view.attackRange`, server tính — P2-5)
+    const skill = this.auto.pendingSkill ? this.state.skills.get(this.auto.pendingSkill) : undefined;
+    const range = skill ? skill.range : this.state.player.view.attackRange;
     const action = this.auto.tick(
       Date.now(),
       me,
       t ? { x: t.x, y: t.y, alive: t.state !== "dead" } : null,
       range,
-      this.state.player.view.cooldownMs,
+      skill?.cooldownMs ?? ((skill?.magic && this.state.player.view.cooldownMsMagic) || this.state.player.view.cooldownMs),
     );
     if (!action) return;
-    const { act, ...payload } = action;
+    let { act, ...payload } = action as { act: string } & Record<string, unknown>;
+    // skill AOE tại ô (Flame): bắn vào ô của quái đang đánh
+    if (act === "skill" && skill?.center === "point" && t) payload = { id: skill.id, x: t.x, y: t.y };
     void this.conn.cmd(act, payload).then((r) => {
       if (r.ok || !this.state) return;
       if (r.error === "NO_MANA") {
@@ -355,6 +802,7 @@ export class GameClient {
   }
 
   private async logout(): Promise<void> {
+    await this.conn.leave();
     try {
       await api.logout(this.token);
     } catch {
@@ -370,6 +818,6 @@ export class GameClient {
   }
 
   private render(): void {
-    if (this.state) this.ui.update({ ...this.state, soundOn: Sound.on });
+    if (this.state) this.ui.update({ ...this.state, soundOn: Sound.on, aiming: this.aiming, serverNow: this.clock.now(Date.now()) });
   }
 }

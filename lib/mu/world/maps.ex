@@ -5,7 +5,8 @@ defmodule Mu.World.Maps do
   `walkable?`); định dạng mới: `safeZones`, `spawns`, `npcs`, `playerSpawn`, collision riêng.
 
   Map JSON: `id, name, width, height, collision, legend, walkable, safeZones [{id,x,y,w,h}],
-  pvpZones, playerSpawn {x,y}, spawns [{monster, count, area {x,y,w,h}}], portals,
+  pvpZones, playerSpawn {x,y}, spawns [{monster, count, area {x,y,w,h}}],
+  portals [{id,x,y,w,h,to,toX,toY,levelRequired}] (P2-M4),
   npcs [{id,x,y}], tiles` (+ `sourceType/version/verified`).
 
   NPC đứng yên và chặn ô của mình. Người chơi không chặn nhau.
@@ -55,7 +56,31 @@ defmodule Mu.World.Maps do
                  m["spawns"],
                  &%{monster: &1["monster"], count: &1["count"], area: rect.(&1["area"])}
                ),
-             npcs: Enum.map(m["npcs"], &%{id: &1["id"], x: &1["x"], y: &1["y"]})
+             # P3-M3: `role` "shop" (mặc định, theo `shop.json`) | "warehouse"; `name` tùy chọn
+             npcs:
+               Enum.map(
+                 m["npcs"],
+                 &%{
+                   id: &1["id"],
+                   x: &1["x"],
+                   y: &1["y"],
+                   role: &1["role"] || "shop",
+                   name: &1["name"]
+                 }
+               ),
+             # P2-M4: ô cổng → map khác (`toX, toY`), cần `levelRequired`
+             portals:
+               Enum.map(
+                 m["portals"],
+                 &(rect.(&1)
+                   |> Map.merge(%{
+                     id: &1["id"],
+                     to: &1["to"],
+                     to_x: &1["toX"],
+                     to_y: &1["toY"],
+                     level_required: &1["levelRequired"] || 0
+                   }))
+               )
            }
 
            {map.id, map}
@@ -80,6 +105,13 @@ defmodule Mu.World.Maps do
 
   def safe?(map, x, y), do: safe_zone_at(map, x, y) != nil
 
+  @doc "Cổng ở ô (x, y) (`nil` nếu không)."
+  def portal_at(map, x, y) do
+    Enum.find(map.portals, fn p ->
+      x >= p.x and x < p.x + p.w and y >= p.y and y < p.y + p.h
+    end)
+  end
+
   @doc "Dữ liệu gửi client lúc join để vẽ (không có công thức gameplay)."
   def client_data(map) do
     %{
@@ -90,7 +122,20 @@ defmodule Mu.World.Maps do
       tiles: map.tiles,
       legend: map.legend,
       safeZones: Enum.map(map.safe_zones, &Map.take(&1, [:id, :x, :y, :w, :h])),
-      npcs: map.npcs
+      npcs: map.npcs,
+      portals:
+        Enum.map(
+          map.portals,
+          &%{
+            id: &1.id,
+            x: &1.x,
+            y: &1.y,
+            w: &1.w,
+            h: &1.h,
+            to: &1.to,
+            levelRequired: &1.level_required
+          }
+        )
     }
   end
 end

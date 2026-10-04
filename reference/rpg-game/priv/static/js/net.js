@@ -28,10 +28,15 @@
     return data;
   }
 
+  let closing = false;   // mình chủ động đóng (đăng xuất, đăng nhập lại): không tự nối lại
+  let tries = 0, retryTimer = null;
+
   function close() {
     clearTimeout(checkTimer);
+    clearTimeout(retryTimer);
+    closing = true;
     const s = socket;
-    socket = channel = null; // trước khi ngắt, để onClose biết là mình chủ động đóng
+    socket = channel = null;
     if (s) s.disconnect();
   }
 
@@ -39,7 +44,7 @@
   function scheduleCheck(token) {
     clearTimeout(checkTimer);
     checkTimer = setTimeout(async () => {
-      if (!socket || socket.isConnected()) return;
+      if (closing || channel) return;
       try {
         await api('GET', '/api/me', null, token);
       } catch (e) {
@@ -49,52 +54,121 @@
     }, 4000);
   }
 
-  // Mở WebSocket và vào kênh "game". Trả về { username, user_id, player }.
+  // Mở WebSocket bằng vé dùng một lần (`POST /api/ws-ticket`, token đi trong header, không nằm
+  // trong URL) rồi vào kênh "game" kèm mã phiên bản giao diện. Vé chỉ dùng được một lần nên tự
+  // quản lý việc nối lại (tắt cơ chế nối lại của Phoenix): mất kết nối → lấy vé mới → mở lại →
+  // vào lại kênh (onRejoin). Trả về { username, user_id, player } của lần vào đầu tiên.
   function join(token) {
     close();
+    closing = false;
+    tries = 0;
     return new Promise((resolve, reject) => {
       let joined = false;
-      const s = new window.Phoenix.Socket('/socket', { params: { token } });
-      socket = s;
-      s.onOpen(() => { if (socket === s && cb.status) cb.status('online'); });
-      s.onClose(() => {
-        if (socket !== s) return;
+      const fail = (err) => { if (!joined) { joined = true; close(); reject(err); } };
+
+      const lost = () => {
+        if (closing || !socket) return;
+        const s = socket;
+        socket = channel = null;
+        s.disconnect();
         if (cb.status) cb.status('offline');
         scheduleCheck(token);
-      });
-      s.connect();
-      channel = s.channel('game', {});
-      channel.on('player', (m) => cb.player && cb.player(m.player));
-      channel.on('map', (m) => cb.map && cb.map(m));
-      channel.on('chat', (m) => cb.chat && cb.chat(m));
-      channel.on('chat_history', (m) => cb.history && cb.history(m.messages));
-      channel.on('world_boss', (m) => cb.boss && cb.boss(m));
-      channel.on('notice', (m) => cb.notice && cb.notice(m.msg));
-      channel.on('mail', (m) => cb.mail && cb.mail(m.unread));
-      channel.on('guild', (m) => cb.guild && cb.guild(m.guild));
-      channel.on('party', (m) => cb.party && cb.party(m.party));
-      channel.on('party_invite', (m) => cb.invite && cb.invite(m));
-      channel.on('trade', (m) => cb.trade && cb.trade(m.trade));
-      channel.on('friends', (m) => cb.friends && cb.friends(m.msg));
-      channel.on('dm', (m) => cb.dm && cb.dm(m));
-      channel.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
-      channel.on('shared', (m) => cb.shared && cb.shared(m));
-      channel.join()
-        .receive('ok', (r) => {
-          if (!joined) { joined = true; resolve(r); } else if (cb.rejoin) cb.rejoin(r);
-        })
-        .receive('error', () => { if (!joined) { close(); reject({ msg: 'Không vào được game.' }); } })
-        .receive('timeout', () => { if (!joined) { close(); reject({ msg: 'Máy chủ không phản hồi.' }); } });
+        retry();
+      };
+
+      const retry = () => {
+        clearTimeout(retryTimer);
+        tries += 1;
+        retryTimer = setTimeout(() => { if (!closing) open(); }, Math.min(1000 * 2 ** Math.min(tries - 1, 4), 15000));
+      };
+
+      const open = async () => {
+        let ticket;
+        try {
+          ticket = (await api('POST', '/api/ws-ticket', null, token)).ticket;
+        } catch (e) {
+          if (closing) return;
+          if (e.status === 401) {
+            if (!joined) return fail({ msg: 'Phiên đăng nhập đã hết hạn.' });
+            Net.logout(true); if (cb.expired) cb.expired(); return;
+          }
+          if (!joined && tries >= 2) return fail(e);
+          return retry();
+        }
+        if (closing) return;
+        const s = new window.Phoenix.Socket('/socket', {
+          params: { ticket },
+          reconnectAfterMs: () => 24 * 3600 * 1000,
+          rejoinAfterMs: () => 24 * 3600 * 1000,
+        });
+        socket = s;
+        s.onOpen(() => { if (socket === s && cb.status) cb.status('online'); });
+        s.onError(() => { if (socket === s) lost(); });
+        s.onClose(() => { if (socket === s) lost(); });
+        s.connect();
+        const ch = s.channel('game', { v: window.CLIENT_VERSION });
+        channel = ch;
+        ch.on('player', (m) => cb.player && cb.player(m.player));
+        ch.on('map', (m) => cb.map && cb.map(m));
+        ch.on('chat', (m) => cb.chat && cb.chat(m));
+        ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
+        ch.on('world_boss', (m) => cb.boss && cb.boss(m));
+        ch.on('notice', (m) => cb.notice && cb.notice(m.msg));
+        ch.on('mail', (m) => cb.mail && cb.mail(m.unread));
+        ch.on('guild', (m) => cb.guild && cb.guild(m.guild));
+        ch.on('party', (m) => cb.party && cb.party(m.party));
+        ch.on('party_invite', (m) => cb.invite && cb.invite(m));
+        ch.on('trade', (m) => cb.trade && cb.trade(m.trade));
+        ch.on('friends', (m) => cb.friends && cb.friends(m.msg));
+        ch.on('dm', (m) => cb.dm && cb.dm(m));
+        ch.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
+        ch.on('shared', (m) => cb.shared && cb.shared(m));
+        ch.onError(() => { if (channel === ch) lost(); });
+        ch.join()
+          .receive('ok', (r) => {
+            tries = 0;
+            if (!joined) { joined = true; resolve(r); } else if (cb.rejoin) cb.rejoin(r);
+          })
+          .receive('error', (r) => {
+            if (r && r.reason === 'version') { close(); versionReload(r.msg); return; }
+            if (!joined) fail({ msg: 'Không vào được game.' }); else lost();
+          })
+          .receive('timeout', () => { if (!joined) fail({ msg: 'Máy chủ không phản hồi.' }); else lost(); });
+      };
+
+      open();
     });
   }
 
-  function push(event, payload) {
+  // Server đã cập nhật, giao diện này cũ: tải lại trang (mỗi phiên bản chỉ tự tải một lần,
+  // tránh vòng lặp nếu trang vẫn cũ vì bộ nhớ đệm).
+  function versionReload(msg) {
+    const key = 'hac-long-reloaded';
+    let done = null;
+    try { done = sessionStorage.getItem(key); } catch (e) { /* bỏ qua */ }
+    if (cb.status) cb.status('version', msg);
+    if (done === window.CLIENT_VERSION) return;
+    try { sessionStorage.setItem(key, window.CLIENT_VERSION); } catch (e) { /* bỏ qua */ }
+    setTimeout(() => location.reload(), 1200);
+  }
+
+  // Mã yêu cầu cho lệnh (`rid`): server nhớ kết quả theo mã, gửi lại cùng mã không chạy hai lần.
+  let ridSeq = 0;
+  const ridBase = Math.random().toString(36).slice(2, 10);
+  const nextRid = () => `${ridBase}-${++ridSeq}`;
+
+  // `retry`: hết giờ chờ thì gửi lại đúng payload một lần (chỉ dùng cho lệnh có `rid`, server bỏ qua
+  // nếu lần trước đã chạy).
+  function push(event, payload, retry) {
     return new Promise((resolve, reject) => {
       if (!channel) return reject({ msg: 'Chưa kết nối.' });
       channel.push(event, payload, 10000)
         .receive('ok', resolve)
         .receive('error', (e) => reject({ msg: (e && e.msg) || 'Lỗi máy chủ.' }))
-        .receive('timeout', () => reject({ msg: 'Mất kết nối, thử lại.' }));
+        .receive('timeout', () => {
+          if (retry) push(event, payload, false).then(resolve, reject);
+          else reject({ msg: 'Mất kết nối, thử lại.' });
+        });
     });
   }
 
@@ -146,7 +220,11 @@
     },
 
     // Gửi một lệnh, nhận { ok, msg, result, player }.
-    send(cmd) { return push('cmd', cmd); },
+    // Lệnh đi lại không cần `rid` (gửi liên tục, server tự giới hạn tốc độ).
+    send(cmd) {
+      if (cmd.act === 'move') return push('cmd', cmd);
+      return push('cmd', Object.assign({ rid: nextRid() }, cmd), true);
+    },
 
     // Gửi tin nhắn chat thế giới.
     // `to`: 'guild' để chat trong bang, bỏ trống là chat thế giới.

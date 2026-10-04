@@ -1,14 +1,15 @@
 defmodule Mu.Game.Characters do
   @moduledoc """
-  Tạo và đọc nhân vật. Phase 1: chỉ DK, `account.maxCharacters` nhân vật/tài khoản
-  (= 1, enforce ở app: Q13). Viết lại so với repo nền (nhân vật ở đó là blob JSON).
+  Tạo và đọc nhân vật. `account.maxCharacters` nhân vật / tài khoản (Phase 3: 4, Q13 / P3-3;
+  enforce ở app, chưa cho xóa). MG chỉ tạo được khi tài khoản đã có nhân vật cấp ≥
+  `mg.unlockLevel` (KB_GAME_DESIGN §2, P3-2). Viết lại so với repo nền (nhân vật ở đó là blob JSON).
   """
 
   import Ecto.Query
 
   alias Mu.Repo
   alias Mu.Accounts.Account
-  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Names, Stats}
+  alias Mu.Game.{Character, Config, Data, Engine, Inventory, Items, Names, Stats, ZenAudit}
   alias Mu.World.Maps
 
   def list(account_id) do
@@ -25,16 +26,19 @@ defmodule Mu.Game.Characters do
   end
 
   @doc """
-  Tạo nhân vật mới. `attrs`: `%{"name" => ..., "class" => ...}` (class bỏ trống = class mặc
-  định trong config). Mọi chỉ số do server tính từ `classes.json` + `config.json`.
+  Tạo nhân vật mới. `attrs`: `%{"name" => ..., "class" => ...}` (class thuộc
+  `newCharacter.classes`, bỏ trống = `defaultClass`). Mọi chỉ số do server tính từ
+  `classes.json` + `config.json`; đồ `newCharacter.startingEquipment[class]` mặc sẵn (P2-3).
 
-  Lỗi: `:invalid_name`, `:banned_name`, `:name_taken`, `:invalid_class`, `:character_limit`.
+  Lỗi: `:invalid_name`, `:banned_name`, `:name_taken`, `:invalid_class`, `:character_limit`,
+  `:class_locked` (MG chưa mở).
   """
   def create(%Account{id: account_id}, attrs) do
     start = Config.get(["newCharacter"])
-    class_id = attrs["class"] || start["class"]
+    class_id = attrs["class"] || start["defaultClass"]
 
     with {:ok, name} <- Names.validate(attrs["name"]),
+         true <- class_id in start["classes"] || {:error, :invalid_class},
          %{} = class <- Data.class(class_id) || {:error, :invalid_class} do
       Repo.transaction(fn ->
         # khóa row tài khoản: hai request tạo nhân vật song song không cùng lọt qua giới hạn
@@ -44,10 +48,44 @@ defmodule Mu.Game.Characters do
           Repo.rollback(:character_limit)
         end
 
-        insert(account_id, name, class, start)
+        if not unlocked?(class_id, account_id), do: Repo.rollback(:class_locked)
+
+        c = insert(account_id, name, class, start)
+        ZenAudit.log(c.id, c.zen, c.zen, "START")
+        Items.give_starting_equipment(c.id, Map.get(start["startingEquipment"], c.class, []))
+        # mail chào mừng (§19.10, P2-13)
+        Mu.Mail.welcome(c.id)
+        c
       end)
     end
   end
+
+  @doc """
+  Class tạo được (`newCharacter.classes`) cho màn tạo nhân vật; mục đầu là `defaultClass`.
+  `locked: true` + `unlockLevel` khi chưa mở (MG, P3-M5).
+  """
+  def creatable_classes(account_id \\ nil) do
+    start = Config.get(["newCharacter"])
+
+    start["classes"]
+    |> Enum.sort_by(&(&1 != start["defaultClass"]))
+    |> Enum.map(fn id ->
+      base = %{id: id, name: Data.class(id)["name"], locked: not unlocked?(id, account_id)}
+      if id == "MG", do: Map.put(base, :unlockLevel, mg_unlock_level()), else: base
+    end)
+  end
+
+  # MG: tài khoản có ≥ 1 nhân vật cấp ≥ mg.unlockLevel và `features.magicGladiator` bật
+  defp unlocked?("MG", account_id) do
+    Config.get(["features", "magicGladiator"]) == true and account_id != nil and
+      Repo.exists?(
+        from(c in Character, where: c.account_id == ^account_id and c.level >= ^mg_unlock_level())
+      )
+  end
+
+  defp unlocked?(_class, _account_id), do: true
+
+  defp mg_unlock_level, do: Config.get(["mg", "unlockLevel"])
 
   defp insert(account_id, name, class, start) do
     {x, y} = Maps.get(start["mapId"]).player_spawn
@@ -89,7 +127,8 @@ defmodule Mu.Game.Characters do
   end
 
   @progress_fields ~w(level experience strength agility vitality energy free_stat_points
-                      hp_current mana_current zen position_x position_y)a
+                      hp_current mana_current zen map_id position_x position_y
+                      pk_points last_pk_at)a
 
   @doc """
   Lưu trạng thái đang giữ trong bộ nhớ (`current`) so với bản đã lưu (`saved`): chỉ ghi các
@@ -103,14 +142,34 @@ defmodule Mu.Game.Characters do
           into: %{},
           do: {f, Map.fetch!(current, f)}
 
-    if changes == %{} do
-      {:ok, saved}
-    else
-      saved
-      |> Ecto.Changeset.change(changes)
-      |> Ecto.Changeset.optimistic_lock(:version)
-      |> Repo.update()
+    cond do
+      changes == %{} ->
+        {:ok, saved}
+
+      # Zen trong bộ nhớ Session chỉ đổi vì quái rơi (đổi khác đi qua `Items` / `Guilds`, đã ghi
+      # DB và audit): ghi `MONSTER` cùng transaction với lần lưu (P5-M3)
+      Map.has_key?(changes, :zen) ->
+        Repo.transaction(fn ->
+          case write(saved, changes) do
+            {:ok, c} ->
+              ZenAudit.log(c.id, c.zen - saved.zen, c.zen, "MONSTER")
+              c
+
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+        end)
+
+      true ->
+        write(saved, changes)
     end
+  end
+
+  defp write(saved, changes) do
+    saved
+    |> Ecto.Changeset.change(changes)
+    |> Ecto.Changeset.optimistic_lock(:version)
+    |> Repo.update()
   end
 
   @doc "Lưu vị trí (dạng rút gọn của `save/2`)."
@@ -126,7 +185,7 @@ defmodule Mu.Game.Characters do
   Trạng thái đầy đủ gửi client (event `player`, `KB_TECHNICAL §5`) kèm `view` tính sẵn
   (`Engine.derived/2`): client chỉ hiển thị, không tính công thức.
   """
-  def player_view(%Character{} = c, items \\ []) do
+  def player_view(%Character{} = c, items \\ [], buffs \\ []) do
     d = Engine.derived(c, Inventory.equipped_templates(items))
 
     %{
@@ -156,13 +215,23 @@ defmodule Mu.Game.Characters do
         defenseRate: d.defense_rate,
         attackSpeed: d.attack_speed,
         cooldownMs: d.cooldown_ms,
+        # MG (P3-M5): sức mạnh / tốc độ phép (§4.1); class khác null
+        # P4-M1: điểm / trạng thái PK (NORMAL, WARNING, MURDERER)
+        pkPoints: c.pk_points,
+        pkState: Mu.Game.Pvp.state(c.pk_points),
+        attackMaxMagic: if(c.class == "MG", do: d.attack_max_magic),
+        attackSpeedMagic: if(c.class == "MG", do: d.attack_speed_magic),
+        cooldownMsMagic: if(c.class == "MG", do: d.cooldown_ms_magic),
+        attackRange: d.attack_range,
         expRequired:
           if(c.level >= Engine.max_level(), do: nil, else: Engine.exp_required(c.level)),
         maxLevel: Engine.max_level(),
         skills: Enum.sort(Engine.skills(c)),
         potions: Inventory.potion_counts(items),
         inventoryUsed: length(Inventory.inventory(items)),
-        inventorySize: Inventory.inventory_slots()
+        inventorySize: Inventory.inventory_slots(),
+        # [{id, stat, value, expiresAt}] — MapServer giữ, Session chuyển tiếp (P2-M3)
+        buffs: buffs
       },
       inventory: Enum.map(Inventory.inventory(items), &item_view/1),
       equipment: Enum.map(Inventory.equipment(items), &item_view/1)
@@ -178,6 +247,8 @@ defmodule Mu.Game.Characters do
       quantity: it.quantity,
       slot: it.slot,
       level: it.item_level,
+      # P5-M2: cấp option Jewel of Life
+      optionLevel: Map.get(it, :option_level, 0),
       durability: it.durability,
       luck: it.luck,
       skill: it.skill,

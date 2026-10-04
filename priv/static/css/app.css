@@ -143,3 +143,162 @@ input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid 
   .inv { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
   .shop { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
+/* Túi đồ Phase 2 (P2-8): lưới 8×8, mỗi item một ô; kéo thả + nút trong tooltip */
+.inv .list .bag { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 44px)); gap: 3px; justify-content: center; padding: 8px 0; }
+.bag .cell { aspect-ratio: 1; border: 1px solid #3a3e55; border-radius: 4px; background: #191b26; display: grid; place-items: center; position: relative; overflow: hidden; }
+.bag .cell img { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; }
+.bag .cell[draggable="true"] { cursor: grab; }
+.bag .cell .qty { position: absolute; right: 2px; bottom: 0; font-size: 10px; font-weight: 600; text-shadow: 0 0 2px #000; }
+.bag .cell.over, .slot.over { outline: 2px solid var(--accent); }
+.trash { margin: 4px auto 8px; padding: 8px 12px; border: 1px dashed #5a3e3e; border-radius: 6px; color: var(--muted); font-size: 13px; text-align: center; max-width: 360px; }
+.trash.over { border-color: var(--danger); color: var(--danger); }
+.tooltip .btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tooltip .split { display: inline-flex; gap: 2px; }
+.tooltip .split input { width: 48px; }
+.tooltip .danger { color: var(--danger); }
+.inv .list { overflow-y: auto; }
+.inv .list .bag, .inv .list .trash { flex-shrink: 0; }
+@media (max-width: 1023px) {
+  /* mobile: lưới 8×8 cao hơn chỗ trống → cả panel cuộn, thanh dưới nằm sau lưới */
+  .inv { height: auto; align-self: flex-start; }
+  .inv .list { overflow: visible; }
+}
+/* Tạo nhân vật: chọn class (Phase 2) */
+.classpick { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 8px; }
+.classopt { position: relative; display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 13px; text-align: center; }
+.classopt:has(input:checked) { border-color: var(--accent); background: #22253a; }
+.classopt input { position: absolute; opacity: 0; pointer-events: none; }
+.classopt img { width: 48px; height: 48px; image-rendering: pixelated; }
+/* P2-M3: buff dưới thanh HP/MP, dòng hướng dẫn chọn ô (teleport) */
+.buffbar { position: absolute; top: 6px; right: 8px; z-index: 44; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; font-size: 12px; }
+.buffbar .buff { background: #1d2a3a; border: 1px solid #3c6a8f; border-radius: 4px; padding: 0 4px; color: #bfe6ff; }
+.aimbar { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 45; background: #23406b; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
+/* Nhóm (P3-M4): khung thành viên góc trên trái vùng game, hộp lời mời giữa trên */
+.partyhost { position: absolute; inset: 0; pointer-events: none; z-index: 44; }
+.partyframe { position: absolute; top: 6px; left: 8px; width: 168px; display: grid; gap: 4px; pointer-events: auto; font-size: 12px; }
+.partyframe .pm { background: rgba(0, 0, 0, 0.55); border: 1px solid #3a3e55; border-radius: 4px; padding: 3px 5px; }
+.partyframe .pm.off { opacity: 0.55; }
+.partyframe .pmhead { display: flex; gap: 4px; align-items: center; }
+.partyframe .pmname { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.partyframe .pmsub { color: #aab; }
+.partyframe .pmkick { padding: 0 4px; min-height: 0; line-height: 1.2; font-size: 11px; }
+.partyframe .bar { height: 5px; margin-top: 2px; }
+.partyframe .pmnote { color: #f0c36a; font-size: 11px; }
+.partyframe .pmbtns { display: flex; gap: 4px; }
+.partyframe .pmbtns button { flex: 1; font-size: 12px; padding: 2px 4px; min-height: 0; }
+.partyask { position: absolute; top: 36px; left: 50%; transform: translateX(-50%); background: #1d2236; border: 1px solid var(--accent); border-radius: 6px; padding: 8px 12px; pointer-events: auto; display: grid; gap: 6px; text-align: center; }
+.partyask .btns { display: flex; gap: 8px; justify-content: center; }
+.chatbox .line.party b { color: #8fd18f; }
+/* Chat (P2-M5): góc dưới trái vùng game, dưới panel (panel full-screen che chat) */
+.chatbox { position: absolute; left: 8px; bottom: 8px; z-index: 4; width: min(420px, calc(100% - 96px)); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.chatbox .log { max-height: 132px; overflow-y: auto; font-size: 13px; line-height: 1.35; text-shadow: 0 0 3px #000; pointer-events: auto; scrollbar-width: thin; }
+.chatbox .line { color: #e8e8e8; word-break: break-word; }
+.chatbox .line b { font-weight: 600; }
+.chatbox .line.me b { color: #ffe08a; }
+.chatbox .line.whisper { color: #f6a8ff; }
+.chatbox .line.sys { color: #ffd166; }
+.chatbox .chatinput { display: none; pointer-events: auto; background: rgba(10, 11, 16, 0.9); border: 1px solid var(--accent); color: var(--fg, #eee); padding: 6px 8px; border-radius: 6px; font-size: 14px; }
+.chatbox.typing .chatinput { display: block; }
+.chatbox.typing .log { background: rgba(10, 11, 16, 0.55); border-radius: 6px; padding: 4px 6px; }
+/* P2-M6: 📬 trên HUD, 5 tab dock, Hộp thư, Bản đồ */
+.hudleft { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mailbtn { width: 32px; height: 32px; padding: 0; border: none; background: none; font-size: 22px; position: relative; display: grid; place-items: center; }
+.mailbtn.active { background: #232637; border-radius: 6px; }
+.mailbtn .badge { top: 0; left: auto; right: -6px; }
+.dock { grid-template-columns: repeat(5, 1fr); }
+.mails .claimed { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.mails button[data-claim] { margin-top: 4px; }
+.mappanel { display: grid; justify-items: center; gap: 8px; max-width: 420px; margin: 0 auto; }
+.mappanel .mapname { font-weight: 700; letter-spacing: 1px; }
+.mappanel .minimap { width: 256px; height: 256px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; }
+.mappanel .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 13px; }
+@media (max-width: 1023px) {
+  .hudleft { justify-content: space-between; }
+}
+/* Kho tài khoản (P3-M3): lưới kho 15×8 + túi 8×8 cạnh nhau, mobile xếp dọc */
+.warehouse { display: flex; gap: 16px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.warehouse .col { display: flex; flex-direction: column; min-width: 0; }
+.warehouse .head { font-weight: 600; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.warehouse .bag { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 40px)); gap: 3px; justify-content: center; padding: 8px 0; }
+@media (max-width: 1023px) {
+  .warehouse { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+}
+/* Chọn nhân vật (P3-M5): tối đa 4 dòng; class khóa (MG) mờ */
+.charlist .charrow { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.charlist .charrow img { width: 40px; height: 40px; image-rendering: pixelated; }
+.charlist .charrow .info { flex: 1; min-width: 0; }
+.charlist .charrow button { width: auto; padding: 6px 12px; }
+.classopt.locked { opacity: 0.5; cursor: not-allowed; }
+.classopt .lockhint { font-size: 11px; color: #f0c36a; }
+/* Duel (P4-M2): thanh đối thủ giữa trên vùng game */
+.duelbar { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); background: #3a1d24; border: 1px solid #c0485c; border-radius: 6px; padding: 4px 10px; display: flex; gap: 10px; align-items: center; pointer-events: auto; font-size: 13px; }
+.duelbar button { padding: 2px 8px; min-height: 0; font-size: 12px; }
+.duelask { top: 44px; }
+.ctxmenu .menuhead { font-weight: 600; padding: 2px 8px 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+/* Guild (P4-M3) */
+.guildask { top: 120px; }
+.guildreq { display: grid; gap: 2px; color: #ccd; }
+.guildreq .bad, .bad { color: #ff8a7a; }
+.guildform { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+.guildform input { flex: 1; min-width: 0; }
+.guildlist { display: grid; gap: 4px; }
+.guildlist .gm { display: flex; gap: 6px; align-items: center; background: rgba(255, 255, 255, 0.04); border-radius: 4px; padding: 3px 6px; }
+.guildlist .gm.off { opacity: 0.6; }
+.guildlist .gmname { font-weight: 600; }
+.guildlist .gmsub { color: #aab; flex: 1; font-size: 12px; }
+.guildlist .gm button { padding: 0 6px; min-height: 0; font-size: 12px; }
+.guildlist .dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex: none; }
+.guildlist .dot.on { background: #5ccf7a; }
+.chatbox .line.guild b { color: #7fc4ff; }
+.menuhead .gtag { color: #7fc4ff; font-weight: 400; }
+/* Guild war (P4-M4) */
+.warbar { top: 40px; background: #2a1d3a; border-color: #c77dff; }
+.warbar .btns { display: inline-flex; gap: 4px; }
+.warask { top: 200px; border-color: #c77dff; }
+/* Cấp cường hóa +N (P5-M1) */
+.cell .lvl, .slot .lvl { position: absolute; left: 2px; top: 0; font-size: 10px; font-weight: 700; color: #ffd36b; text-shadow: 0 0 2px #000; pointer-events: none; }
+/* Ép jewel (P5-M2) */
+.jewelaim { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: #2a2440; border: 1px solid #ffd36b; border-radius: 6px; padding: 4px 8px; margin: 4px 0; font-size: 13px; }
+.tooltip .opt { color: #7fd3ff; }
+/* Giao dịch (P5-M4) */
+.tradesides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.tradeside { border: 1px solid #3a3e55; border-radius: 6px; padding: 6px; background: rgba(255, 255, 255, 0.03); }
+.tradeside.locked { border-color: #ffd36b; }
+.tradeside .head { display: flex; justify-content: space-between; gap: 6px; }
+.tradeside .tstatus { color: #aab; font-size: 12px; }
+.tradeside .tradegrid { min-height: 76px; }
+.tradeside .tzen { margin-top: 4px; color: #ffd36b; }
+.tradeask { top: 280px; }
+@media (max-width: 600px) { .tradesides { grid-template-columns: 1fr; } }
+/* lưới đồ trong panel giao dịch: ô cố định 44px như túi (không giãn theo khung) */
+[data-panel="trade"] .bag,
+[data-panel="chaos"] .bag { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 3px; justify-content: start; padding: 6px 0; }
+[data-panel="trade"] .tradegrid,
+[data-panel="chaos"] .tradegrid { min-height: 50px; }
+/* Xếp hạng (P6-M1) */
+table.ranking { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.ranking th, table.ranking td { padding: 4px 6px; border-bottom: 1px solid #2a2e40; text-align: left; }
+table.ranking tr.me td { color: #ffd36b; font-weight: 600; }
+
+/* Nhiệm vụ (P6-M2): panel + dòng theo dõi góc trên phải (dưới buff) */
+.panel .quest { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; }
+.panel .quest.done { border-color: #5ccf7a; }
+.panel .quest .qname { font-weight: 600; }
+.panel .quest .qname small { color: #aab; font-weight: 400; }
+.panel .quest .qdesc { color: #bbc; font-size: 12px; margin: 2px 0 4px; }
+.panel .quest .qgoal { font-size: 13px; }
+.panel .quest .qgoal.ok { color: #8fd18f; }
+.panel .quest .qreward { color: #ffd166; font-size: 12px; margin-top: 4px; }
+.panel .quest .btns { display: flex; gap: 6px; margin-top: 6px; }
+.panel h3 { font-size: 13px; margin: 10px 0 2px; color: #ccd; }
+.questtrack { position: absolute; top: 30px; right: 8px; z-index: 43; max-width: min(260px, 50%); display: grid; gap: 2px; font-size: 12px; text-align: right; text-shadow: 0 0 3px #000; color: #e8e8e8; cursor: pointer; }
+.questtrack .ok { color: #8fd18f; }
+
+/* Chaos Machine (P6-M3) */
+.panel .chaosinfo { margin: 6px 0; color: #ffd166; }
+.panel .good { color: #8fd18f; font-weight: 600; }
+[data-panel="chaos"] [data-test="chaos-machine"] { min-height: 52px; border: 1px dashed #6b4fa0; border-radius: 6px; padding: 4px; }
+
+/* Event thế giới (P6-M5) */
+.worldbar { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 44; display: grid; gap: 2px; text-align: center; pointer-events: none; }
+.worldbar > div { background: rgba(90, 60, 10, 0.85); border: 1px solid #ffd23c; color: #ffe9a8; border-radius: 6px; padding: 2px 10px; font-size: 13px; }

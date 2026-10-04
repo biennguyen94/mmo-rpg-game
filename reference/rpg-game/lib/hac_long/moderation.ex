@@ -165,7 +165,7 @@ defmodule HacLong.Moderation do
     %{
       id: u.id,
       username: u.username,
-      admin: u.admin,
+      role: u.role,
       character: c,
       banned_until: Accounts.banned?(u) && u.banned_until,
       ban_reason: u.ban_reason,
@@ -174,11 +174,20 @@ defmodule HacLong.Moderation do
     }
   end
 
-  @doc "Cấp/thu quyền quản trị."
-  def set_admin(username, admin?) do
-    case Repo.get_by(User, username: String.downcase(username)) do
-      nil -> {:error, "Không có tài khoản #{username}."}
-      u -> u |> Ecto.Changeset.change(admin: admin?) |> Repo.update()
+  @doc "Đổi vai trò tài khoản: `\"player\"`, `\"mod\"` hoặc `\"admin\"`."
+  def set_role(username, role) do
+    cond do
+      role not in User.roles() ->
+        {:error, "Vai trò phải là #{Enum.join(User.roles(), " / ")}."}
+
+      u = Repo.get_by(User, username: String.downcase(username)) ->
+        u |> Ecto.Changeset.change(role: role) |> Repo.update()
+
+      true ->
+        {:error, "Không có tài khoản #{username}."}
     end
   end
+
+  @doc "Cấp (vai trò `admin`) / thu (về `player`) quyền quản trị."
+  def set_admin(username, admin?), do: set_role(username, if(admin?, do: "admin", else: "player"))
 end

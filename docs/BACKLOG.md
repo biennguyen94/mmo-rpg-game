@@ -62,12 +62,12 @@ hướng), tilemap Tiled (`.tmj`, KB_TECHNICAL §8), hiệu ứng skill, scale/z
 | Soak 1 giờ | Cloud chỉ chạy 10 phút; lệnh ở `docs/RUN_LOCAL.md` §6 |
 | Build Docker image | Docker Hub bị chặn trong cloud; đã kiểm `mix release` + migrate |
 | `priv/reference/items_raw.json` (E6) | Bật lại test đối chiếu template (đang `@tag :skip`) |
-| Watcher client | Hiện sửa TS phải `npm run build` lại; thêm `tsc --watch` vào `config/dev.exs` watchers |
-| CI e2e | E2E (Playwright) chỉ chạy tay; có thể thêm job CI với Postgres + Chromium |
+| ~~Watcher client~~ | **Xong** (DEC-54): `mix phx.server` chạy `client/watch.mjs` (`tsc --watch`, dừng cùng server) |
+| ~~CI e2e~~ | **Xong** (DEC-55): job `e2e` trong `.github/workflows/ci.yml` (smoke + nghiệm thu, upload ảnh/log). Chưa chạy trên GitHub — lần đầu sẽ chạy khi có PR |
 
 ## 5. Scope các phase sau (nhắc lại từ KB_00_RULES §7, không làm ở Phase 1)
 
-- **Phase 2:** DW, Elf, lưới túi 8×8 + kéo thả (`move_item`, `split`, `drop`), skill theo class,
+- **Phase 2:** ✅ xong 2026-10-03 (`docs/ACCEPTANCE_PHASE2.md`; kế hoạch: `docs/PHASE2_PLAN.md`) DW, Elf, túi đồ kéo thả (`move_item`, `split`, `drop`), skill theo class,
   drop table mở rộng, chat, Hộp thư hệ thống (§19.10), panel Bản đồ (§19.12).
 - **Phase 3:** AOI (KB_TECHNICAL §3, đã có `aoiCellSize` trong config), reconnect giữ phiên
   (`reconnectGraceSeconds`), party, warehouse (bảng `item_locations` đã có `WAREHOUSE`), MG

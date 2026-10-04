@@ -57,7 +57,7 @@ defmodule Mix.Tasks.HacLong.Simulate do
 
         Mix.shell().info(
           "  #{String.pad_trailing(label, 10)} trận=#{avg.(:fights)} cấp=#{avg.(:level)} " <>
-            "chết=#{avg.(:deaths)} vàng=#{avg.(:gold)} thắng=#{wins}/#{n}#{extra}"
+            "chết=#{avg.(:deaths)} vàng=#{avg.(:gold)} ngọc=#{Float.round(Enum.sum(Enum.map(rs, & &1.jewels)) / n, 1)} thắng=#{wins}/#{n}#{extra}"
         )
 
         Mix.shell().info("    " <> Enum.join(hd(rs).milestones, " → "))

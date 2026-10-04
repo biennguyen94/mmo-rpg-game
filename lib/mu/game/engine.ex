@@ -25,18 +25,95 @@ defmodule Mu.Game.Engine do
     formulas = Data.class(c.class)["derived"]
     value = fn key -> eval(formulas[key], c, equipment) end
     attack_speed = value.("attackSpeed")
+    attack_max = value.("attackMax")
+
+    # MG (P3-M5): attackPowerMagic / attackSpeedMagic cho skill phép (§4.1); class khác = như thường
+    speed_magic =
+      if formulas["attackSpeedMagic"], do: value.("attackSpeedMagic"), else: attack_speed
 
     %{
       attack_min: value.("attackMin"),
-      attack_max: value.("attackMax"),
+      attack_max: attack_max,
+      attack_max_magic:
+        if(formulas["attackMaxMagic"], do: value.("attackMaxMagic"), else: attack_max),
+      attack_speed_magic: speed_magic,
+      cooldown_ms_magic: cooldown_ms(speed_magic),
       defense: value.("defense"),
       attack_rate: value.("attackRate"),
       defense_rate: value.("defenseRate"),
       attack_speed: attack_speed,
       cooldown_ms: cooldown_ms(attack_speed),
+      attack_range: basic_attack_range(equipment),
       hp_max: Stats.hp_max(c.class, c.level, c.vitality) + item_sum(equipment, "hpBonus"),
-      mp_max: Stats.mp_max(c.class, c.level, c.energy)
+      mp_max: Stats.mp_max(c.class, c.level, c.energy),
+      # cánh (P6-4): % sát thương gây ra / % sát thương nhận bớt
+      damage_increase: item_sum(equipment, "damageIncrease"),
+      absorb: item_sum(equipment, "absorb"),
+      # cho heal/buff (công thức theo energy của người dùng, P2-M3) và hồi MP
+      energy: c.energy
     }
+  end
+
+  @doc """
+  Template đồ ở cấp cường hóa `level` (+N, P5-3 (1)) và cấp option Jewel of Life `option`
+  (P5-4): cộng `items.levelBonus[type]` × `level` — `attack` vào `attackMin` / `attackMax`,
+  khóa khác (`defense`, cánh P6-4: `damageIncrease`, `absorb`) vào khóa cùng tên — và
+  `upgrade.life.perOption` × `option` vào chỉ số đòn (vũ khí) / thủ (đồ khác). Type không có
+  trong bảng (nhẫn, jewel, potion) giữ nguyên.
+  """
+  def leveled(template, level, option \\ 0)
+
+  def leveled(template, level, option) when level > 0 or option > 0 do
+    case Config.get(["items", "levelBonus"])[template["type"]] do
+      nil ->
+        template
+
+      bonus ->
+        per_option = Config.get(["upgrade", "life", "perOption"]) * option
+        # P7-3: từ cấp `items.highLevel.fromLevel` (+10) mỗi cấp tính `multiplier` lần
+        level = bonus_levels(level)
+        add = fn t, key, n -> Map.update(t, key, n, &(&1 + n)) end
+        atk = (bonus["attack"] || 0) * level
+        def = (bonus["defense"] || 0) * level
+
+        # option cộng vào đúng loại chỉ số của đồ: vũ khí → đòn, giáp / khiên → thủ
+        {atk, def} =
+          if bonus["attack"], do: {atk + per_option, def}, else: {atk, def + per_option}
+
+        # khóa khác của bảng (cánh: damageIncrease, absorb) cộng thẳng theo cấp
+        extra =
+          for {k, n} <- bonus, k not in ~w(attack defense), n * level > 0, do: {k, n * level}
+
+        template
+        |> then(
+          &if(atk > 0, do: &1 |> add.("attackMin", atk) |> add.("attackMax", atk), else: &1)
+        )
+        |> then(&if(def > 0, do: add.(&1, "defense", def), else: &1))
+        |> then(&Enum.reduce(extra, &1, fn {k, n}, t -> add.(t, k, n) end))
+    end
+  end
+
+  def leveled(template, _level, _option), do: template
+
+  @doc "Số cấp tính chỉ số của đồ +`level` (cấp ≥ `items.highLevel.fromLevel` nhân `multiplier`)."
+  def bonus_levels(level) do
+    case Config.get(["items"])["highLevel"] do
+      %{"fromLevel" => from, "multiplier" => m} when level >= from ->
+        level + (level - from + 1) * (m - 1)
+
+      _ ->
+        level
+    end
+  end
+
+  @doc "Tầm đánh thường (ô) theo `weaponType` của vũ khí đang cầm (P2-5, `combat.basicAttackRange`)."
+  def basic_attack_range(equipment) do
+    ranges = Config.get(["combat", "basicAttackRange"])
+
+    case Enum.find(equipment, &(&1["slot"] == "WEAPON")) do
+      nil -> ranges["default"]
+      w -> Map.get(ranges, w["weaponType"], ranges["default"])
+    end
   end
 
   defp eval(%{"terms" => terms} = f, c, equipment) do
@@ -60,6 +137,25 @@ defmodule Mu.Game.Engine do
     max(combat["minCooldownMs"], floor(combat["baseCooldownMs"] / (1 + attack_speed / 100)))
   end
 
+  @doc """
+  Chỉ số dùng cho `skill`: skill `magic: true` lấy `attack_max_magic` / `attack_speed_magic` /
+  `cooldown_ms_magic` (MG — §4.1 "Nếu class là MG và skill là magic"; class khác các số này bằng
+  số thường). `attack_min` giữ nguyên (KB không cho công thức phép riêng).
+  """
+  def for_skill(stats, %{"magic" => true}) do
+    # map chỉ số dựng tay (test, simulator) có thể thiếu khóa phép: giữ số thường
+    for {k, magic} <- [
+          attack_max: :attack_max_magic,
+          attack_speed: :attack_speed_magic,
+          cooldown_ms: :cooldown_ms_magic
+        ],
+        Map.has_key?(stats, magic),
+        reduce: stats,
+        do: (acc -> Map.put(acc, k, stats[magic]))
+  end
+
+  def for_skill(stats, _skill), do: stats
+
   @doc "Cooldown của skill: `cooldownMs` của skill, `null` = theo attack speed (G2)."
   def skill_cooldown_ms(%{"cooldownMs" => nil}, derived), do: derived.cooldown_ms
   def skill_cooldown_ms(%{"cooldownMs" => ms}, _derived), do: ms
@@ -77,7 +173,8 @@ defmodule Mu.Game.Engine do
   @doc """
   Pipeline sát thương §4 (giống `calculateDamage` của KB). `ctx`: `raw_attack`,
   `skill_multiplier`, `target_defense` và tùy chọn `skill_bonus`, `damage_bonus`,
-  `critical?`, `critical_multiplier`, `buff_multiplier`.
+  `critical?`, `critical_multiplier`, `buff_multiplier`, cánh (P6-4, %): `damage_increase` của
+  bên đánh (nhân cùng bước buff) và `absorb` của bên nhận (nhân sau khi trừ thủ, trước sàn cứng).
   """
   def damage(ctx) do
     combat = Config.get(["combat"])
@@ -87,10 +184,11 @@ defmodule Mu.Game.Engine do
         Map.get(ctx, :damage_bonus, 0)
 
     d = if Map.get(ctx, :critical?, false), do: d * ctx.critical_multiplier, else: d
-    d = d * Map.get(ctx, :buff_multiplier, 1)
+    d = d * Map.get(ctx, :buff_multiplier, 1) * (1 + Map.get(ctx, :damage_increase, 0) / 100)
     after_def = d - ctx.target_defense
     soft_floor = d * combat["minDamageRatio"]
-    max(combat["hardFloor"], floor(max(after_def, soft_floor)))
+    absorbed = max(after_def, soft_floor) * (1 - min(Map.get(ctx, :absorb, 0), 100) / 100)
+    max(combat["hardFloor"], floor(absorbed))
   end
 
   @doc """
@@ -112,6 +210,10 @@ defmodule Mu.Game.Engine do
         damage(%{
           raw_attack: raw,
           skill_multiplier: skill_multiplier,
+          # buff Greater Damage (§4 bước 3)
+          damage_bonus: Map.get(attacker, :damage_bonus, 0),
+          damage_increase: Map.get(attacker, :damage_increase, 0),
+          absorb: Map.get(defender, :absorb, 0),
           target_defense: defender.defense,
           critical?: crit?,
           critical_multiplier: combat["criticalMultiplier"]
@@ -122,6 +224,46 @@ defmodule Mu.Game.Engine do
       {%{hit: false, dmg: 0, crit: false}, rng}
     end
   end
+
+  # ---------- Heal, buff, hồi MP (P2-M3, IMPLEMENTATION) ----------
+
+  @doc "Giá trị heal/buff của skill: `floor(base + energy / energyDiv)`."
+  def effect_value(%{"base" => base, "energyDiv" => div}, energy), do: floor(base + energy / div)
+
+  @doc """
+  Thêm buff `id` (`stat`, `value`, hết hạn `until` ms): cùng buff thì làm mới thời gian và giữ
+  giá trị lớn hơn; buff khác cộng dồn. `buffs`: `%{id => %{stat, value, until}}`.
+  """
+  def add_buff(buffs, id, stat, value, until) do
+    Map.update(buffs, id, %{stat: stat, value: value, until: until}, fn b ->
+      %{b | value: max(b.value, value), until: until}
+    end)
+  end
+
+  @doc "Bỏ buff đã hết hạn lúc `now`: `{còn_lại, có_buff_hết_hạn?}`."
+  def expire_buffs(buffs, now) do
+    kept = for {id, b} <- buffs, b.until > now, into: %{}, do: {id, b}
+    {kept, map_size(kept) != map_size(buffs)}
+  end
+
+  @doc "Chỉ số chiến đấu sau buff: `defense` cộng thêm, `damage_bonus` (sát thương phẳng)."
+  def with_buffs(stats, buffs) do
+    sum = fn stat ->
+      buffs
+      |> Map.values()
+      |> Enum.filter(&(&1.stat == stat))
+      |> Enum.map(& &1.value)
+      |> Enum.sum()
+    end
+
+    stats
+    |> Map.update(:defense, 0, &(&1 + sum.("defense")))
+    |> Map.put(:damage_bonus, sum.("damageBonus"))
+  end
+
+  @doc "MP hồi trong `ms` mili-giây (số thực, cộng dồn phần lẻ ở nơi gọi): `energy / energyDiv` mỗi giây."
+  def mp_regen(energy, ms),
+    do: energy / Config.get(["combat", "mpRegen", "energyDiv"]) * ms / 1000
 
   @doc "Chỉ số đánh/thủ của quái theo template (`monsters.json`)."
   def monster_stats(m) do
@@ -136,13 +278,18 @@ defmodule Mu.Game.Engine do
 
   # ---------- Skill ----------
 
-  @doc "Skill nhân vật đã học: `basic_attack` + skill của class đủ `requiredLevel` (§7)."
+  @doc """
+  Skill nhân vật đã học: skill có `classes` chứa class của mình (`null` = mọi class, vd
+  `basic_attack`) và đủ `requiredLevel` (§7). MG học skill DK + DW theo `classes` (P3-4).
+  """
   def skills(c) do
     for {id, s} <- Data.skills(),
-        s["class"] in [nil, c.class],
+        class_ok?(s, c),
         c.level >= s["requiredLevel"],
         do: id
   end
+
+  defp class_ok?(s, c), do: s["classes"] == nil or c.class in s["classes"]
 
   @doc "`:ok` hoặc `{:error, \"INVALID_TARGET\" | \"REQUIREMENT_NOT_MET\"}`."
   def can_use_skill(c, skill_id) do
@@ -151,7 +298,7 @@ defmodule Mu.Game.Engine do
         {:error, "INVALID_TARGET"}
 
       s ->
-        if skill_id in skills(c) and s["class"] in [nil, c.class],
+        if skill_id in skills(c) and class_ok?(s, c),
           do: :ok,
           else: {:error, "REQUIREMENT_NOT_MET"}
     end
@@ -168,18 +315,40 @@ defmodule Mu.Game.Engine do
   end
 
   @doc """
+  EXP còn thiếu để nhân vật `c` lên đúng cấp `level` (quản trị `set_level`, DEC-187).
+  `{:ok, exp}`, hoặc `{:error, :bad_level}` khi `level` không cao hơn cấp hiện tại / vượt `maxLevel`.
+  """
+  def exp_to_level(c, level) when is_integer(level) do
+    if level > c.level and level <= max_level(),
+      do: {:ok, Enum.sum(for l <- c.level..(level - 1), do: exp_required(l)) - c.experience},
+      else: {:error, :bad_level}
+  end
+
+  def exp_to_level(_, _), do: {:error, :bad_level}
+
+  @doc """
   EXP nhận được khi hạ quái: `experience × multiplier × levelDiffModifier` (§3), làm tròn
   xuống, tối thiểu 1. Người chơi cao hơn quái quá `levelDiffPenaltyStart` cấp thì giảm
   `levelDiffPenaltyPerLevel` mỗi cấp, không dưới `minExpRatio` (G23).
   """
-  def exp_gain(monster_exp, player_level, monster_level) do
+  def exp_gain(monster_exp, player_level, monster_level),
+    do: party_exp_gain(monster_exp, 1, player_level, monster_level)
+
+  @doc """
+  EXP mỗi người khi `n` thành viên nhóm cùng nhận (§3 "Party EXP", P3-5):
+  `experience / n × (1 + partyBonusPerMember × (n − 1)) × multiplier × levelDiffModifier` của
+  **từng người**, làm tròn xuống, tối thiểu 1. `n = 1` = `exp_gain/3`.
+  """
+  def party_exp_gain(monster_exp, n, player_level, monster_level) when n >= 1 do
     e = Config.get(["experience"])
     over = player_level - monster_level - e["levelDiffPenaltyStart"]
 
     ratio =
       if over > 0, do: max(e["minExpRatio"], 1 - over * e["levelDiffPenaltyPerLevel"]), else: 1.0
 
-    max(1, floor(monster_exp * e["multiplier"] * ratio))
+    share = monster_exp / n * (1 + e["partyBonusPerMember"] * (n - 1))
+    # + 1e-9: tránh 11,999… do số thực (vd 30 / 3 × 1,2)
+    max(1, floor(share * e["multiplier"] * ratio + 1.0e-9))
   end
 
   @doc """

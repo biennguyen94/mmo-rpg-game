@@ -53,6 +53,181 @@
       "id": "tile:rock",
       "original": "releases/Nov-2015/dngn/wall/lab-rock0.png",
       "gitBlob": "b1593e873bfa9db6c6d0d0d2fc3b5909ffa6aeb5"
+    },
+    "sprites/characters/dw/body.png": {
+      "id": "class:DW body (áo choàng pháp sư, không có lớp trang bị — KB_ASSETS §2.1)",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/characters/elf/body.png": {
+      "id": "class:ELF body (cung thủ, không có lớp trang bị — KB_ASSETS §2.1)",
+      "original": "releases/Nov-2015/mon/deep_elf_master_archer.png",
+      "gitBlob": "0a94ec1d4bc8ea424446792e03c0027cc16897dd"
+    },
+    "sprites/monsters/budge_dragon.png": {
+      "id": "monster:budge_dragon",
+      "original": "releases/Nov-2015/mon/dragons/swamp_dragon.png",
+      "gitBlob": "27b13ab4c17bb89f1611d23f5fa8f32371f0c5b2"
+    },
+    "sprites/monsters/bull_fighter.png": {
+      "id": "monster:bull_fighter",
+      "original": "releases/Nov-2015/mon/yaktaur-melee.png",
+      "gitBlob": "1ce30aec701116d7237855a97cfbc460dd452516"
+    },
+    "sprites/monsters/hound.png": {
+      "id": "monster:hound",
+      "original": "releases/Nov-2015/mon/animals/hound.png",
+      "gitBlob": "7b6fc65aadecb5e0059366f6e7832be753b8bb82"
+    },
+    "sprites/monsters/lich.png": {
+      "id": "monster:lich",
+      "original": "releases/Nov-2015/mon/undead/lich.png",
+      "gitBlob": "0167b552ea0e92aa5497a52fccd998ece33360f8"
+    },
+    "sprites/monsters/elite_bull_fighter.png": {
+      "id": "monster:elite_bull_fighter",
+      "original": "releases/Nov-2015/mon/animals/death_yak.png",
+      "gitBlob": "fbadba948ac82fce914b4b3f6bc776f22c002883"
+    },
+    "sprites/monsters/goblin.png": {
+      "id": "monster:goblin",
+      "original": "releases/Nov-2015/mon/goblin.png",
+      "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
+    },
+    "sprites/monsters/chain_scorpion.png": {
+      "id": "monster:chain_scorpion",
+      "original": "releases/Nov-2015/mon/animals/scorpion.png",
+      "gitBlob": "6fc05ea224bb0a2856bef820c1d5611f63829ea6"
+    },
+    "sprites/monsters/beetle_monster.png": {
+      "id": "monster:beetle_monster",
+      "original": "releases/Nov-2015/mon/animals/boulder_beetle.png",
+      "gitBlob": "9c74d98423480c606d0a58b1187e442c43507870"
+    },
+    "sprites/monsters/hunter.png": {
+      "id": "monster:hunter",
+      "original": "releases/Nov-2015/mon/deep_elf_fighter.png",
+      "gitBlob": "518a59a75599b57888c1f5ae6bc0e83ef210cb64"
+    },
+    "sprites/monsters/forest_monster.png": {
+      "id": "monster:forest_monster",
+      "original": "releases/Nov-2015/mon/fungi_plants/treant.png",
+      "gitBlob": "4f96d8481906ccb2093ce4485ce34d2a64e4eca1"
+    },
+    "sprites/monsters/agon.png": {
+      "id": "monster:agon",
+      "original": "releases/Nov-2015/mon/ogre.png",
+      "gitBlob": "bacca8a73936d01fa933eda7c1a7cc89600177e8"
+    },
+    "sprites/monsters/stone_golem.png": {
+      "id": "monster:stone_golem",
+      "original": "releases/Nov-2015/mon/nonliving/guardian_golem.png",
+      "gitBlob": "f124b1156e316db9d55791f7c427d69504cbba92"
+    },
+    "sprites/npcs/lorencia_weapon_merchant.png": {
+      "id": "npc:lorencia_weapon_merchant",
+      "original": "releases/Nov-2015/mon/dwarf.png",
+      "gitBlob": "4b8376df63bf7889a6e4ecc64ae77f5498dfe677"
+    },
+    "sprites/npcs/noria_potion_merchant.png": {
+      "id": "npc:noria_potion_merchant",
+      "original": "releases/Nov-2015/mon/elf.png",
+      "gitBlob": "a26e0a4fd748beff360c3a85001703f759fc38e3"
+    },
+    "sprites/npcs/noria_weapon_merchant.png": {
+      "id": "npc:noria_weapon_merchant",
+      "original": "releases/Nov-2015/mon/deep_dwarf.png",
+      "gitBlob": "7e08dad8b11076013ff9cc7e95c56e7b4663a25e"
+    },
+    "tiles/lorencia/portal.png": {
+      "id": "tile:portal",
+      "original": "releases/Nov-2015/dngn/gateways/enter_lair.png",
+      "gitBlob": "85386a729c173efb488c3f5a41d3a8d05f4e9e17"
+    },
+    "tiles/noria/portal.png": {
+      "id": "tile:portal",
+      "original": "releases/Nov-2015/dngn/gateways/enter_lair.png",
+      "gitBlob": "85386a729c173efb488c3f5a41d3a8d05f4e9e17"
+    },
+    "tiles/noria/grass.png": {
+      "id": "tile:grass",
+      "original": "releases/Nov-2015/dngn/floor/grass/grass1.png",
+      "gitBlob": "cd0962151d1757148b9c2a60f2bcde45662f6f0b"
+    },
+    "tiles/noria/road.png": {
+      "id": "tile:road",
+      "original": "releases/Nov-2015/dngn/floor/dirt1.png",
+      "gitBlob": "f9758376a51da8431bf63d8efeb45256e2736b31"
+    },
+    "tiles/noria/town_floor.png": {
+      "id": "tile:town_floor",
+      "original": "releases/Nov-2015/dngn/floor/limestone0.png",
+      "gitBlob": "038c0371d9a25e6668790dcffa724e5de7fb38f9"
+    },
+    "tiles/noria/wall.png": {
+      "id": "tile:wall",
+      "original": "releases/Nov-2015/dngn/wall/stone2_gray0.png",
+      "gitBlob": "7ee3eb745c11cc91341f2f39d831d0ea11dbaba3"
+    },
+    "tiles/noria/tree.png": {
+      "id": "tile:tree",
+      "original": "releases/Nov-2015/dngn/trees/mangrove2.png",
+      "gitBlob": "9615937c84fb6c7898c098715a2ff4c57978388e"
+    },
+    "tiles/noria/water.png": {
+      "id": "tile:water",
+      "original": "releases/Nov-2015/dngn/water/shallow_water.png",
+      "gitBlob": "db6fec35bfa78fcb914f5b154fa4901ccff209c9"
+    },
+    "tiles/noria/rock.png": {
+      "id": "tile:rock",
+      "original": "releases/Nov-2015/dngn/wall/lab-rock1.png",
+      "gitBlob": "c2cdf4b68379075c1b7dcf25513c6b2ed4f13fa5"
+    },
+    "sprites/npcs/lorencia_warehouse.png": {
+      "id": "npc:lorencia_warehouse",
+      "original": "releases/Nov-2015/mon/halfling.png",
+      "gitBlob": "6f7fca04568d42ec9acf8ea43cffde561f37c27a"
+    },
+    "sprites/npcs/noria_warehouse.png": {
+      "id": "npc:noria_warehouse",
+      "original": "releases/Nov-2015/mon/halfling.png",
+      "gitBlob": "6f7fca04568d42ec9acf8ea43cffde561f37c27a"
+    },
+    "sprites/characters/mg/body.png": {
+      "id": "class:MG",
+      "original": "releases/Nov-2015/mon/hell_knight.png",
+      "gitBlob": "63b70729638479337c94ae505326681d44ea2084"
+    },
+    "sprites/npcs/lorencia_quest_master.png": {
+      "id": "npc:lorencia_quest_master",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/npcs/noria_quest_master.png": {
+      "id": "npc:noria_quest_master",
+      "original": "releases/Nov-2015/mon/necromancer.png",
+      "gitBlob": "26394c12e9108d00791d47359c3f269de282533d"
+    },
+    "sprites/npcs/noria_chaos_goblin.png": {
+      "id": "npc:noria_chaos_goblin",
+      "original": "releases/Nov-2015/mon/goblin.png",
+      "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
+    },
+    "sprites/monsters/golden_budge_dragon.png": {
+      "id": "monster:golden_budge_dragon",
+      "original": "releases/Nov-2015/mon/dragons/swamp_dragon.png",
+      "gitBlob": "27b13ab4c17bb89f1611d23f5fa8f32371f0c5b2"
+    },
+    "sprites/monsters/golden_goblin.png": {
+      "id": "monster:golden_goblin",
+      "original": "releases/Nov-2015/mon/goblin.png",
+      "gitBlob": "588b16697b3deb807b07c494e76ab2787b25df0e"
+    },
+    "sprites/monsters/bull_fighter_lord.png": {
+      "id": "monster:bull_fighter_lord",
+      "original": "releases/Nov-2015/mon/animals/death_yak.png",
+      "gitBlob": "fbadba948ac82fce914b4b3f6bc776f22c002883"
     }
   }
 }

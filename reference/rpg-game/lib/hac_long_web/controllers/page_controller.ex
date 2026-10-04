@@ -15,9 +15,16 @@ defmodule HacLongWeb.PageController do
     html =
       Application.app_dir(:hac_long, "priv/static/index.html")
       |> File.read!()
-      |> String.replace("<!--GAME_DATA-->", "<script>window.GAME_DATA = #{data};</script>")
+      |> String.replace(
+        "<!--GAME_DATA-->",
+        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{HacLongWeb.ClientVersion.current()}\";</script>"
+      )
 
-    conn |> put_resp_content_type("text/html") |> send_resp(200, html)
+    # không cache trang chủ: sau khi cập nhật server, tải lại là có ngay mã phiên bản mới
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> put_resp_content_type("text/html")
+    |> send_resp(200, html)
   end
 
   defp client_data do
@@ -32,6 +39,8 @@ defmodule HacLongWeb.PageController do
       PETS: Data.pets(),
       FURNITURE: Data.furniture(),
       ACHIEVEMENTS: Achievements.client_data(),
+      UPGRADE: Data.upgrade(),
+      CHAOS: Data.chaos(),
       RULES: %{
         maxLevel: Engine.max_level(),
         pointsPerLevel: Engine.points_per_level(),

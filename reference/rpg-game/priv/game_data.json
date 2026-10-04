@@ -792,6 +792,105 @@
       "sprite": "items/lucky_apple",
       "price": 1,
       "desc": "Lộc đầu xuân. Mang tới Người Tổ Chức Hội đổi quà."
+    },
+    "jewel_bless": {
+      "name": "Ngọc Phúc Lành",
+      "slot": "material",
+      "icon": "gem-bless",
+      "price": 1000,
+      "desc": "Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương."
+    },
+    "jewel_soul": {
+      "name": "Ngọc Linh Hồn",
+      "slot": "material",
+      "icon": "gem-soul",
+      "price": 1500,
+      "desc": "Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp."
+    },
+    "jewel_chaos": {
+      "name": "Ngọc Hỗn Nguyên",
+      "slot": "material",
+      "icon": "gem-chaos",
+      "price": 1250,
+      "desc": "Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên."
+    },
+    "wing_warrior_1": {
+      "name": "Cánh Chiến Thần",
+      "slot": "wing",
+      "cls": "warrior",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_warrior_2": {
+      "name": "Cánh Huyết Long",
+      "slot": "wing",
+      "cls": "warrior",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_rogue_1": {
+      "name": "Cánh Bóng Đêm",
+      "slot": "wing",
+      "cls": "rogue",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_rogue_2": {
+      "name": "Cánh Hư Không",
+      "slot": "wing",
+      "cls": "rogue",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_knight_1": {
+      "name": "Cánh Thánh Quang",
+      "slot": "wing",
+      "cls": "knight",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_knight_2": {
+      "name": "Cánh Thiên Sứ",
+      "slot": "wing",
+      "cls": "knight",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
     }
   },
   "BOSS_DROPS": {
@@ -1450,6 +1549,122 @@
       "token": "lucky_apple",
       "decor": "statue_elephant",
       "desc": "Xuân về: quái rơi Quả Lộc, kinh nghiệm +10%."
+    }
+  ],
+  "UPGRADE": {
+    "max": 11,
+    "announce_from": 7,
+    "double_from": 10,
+    "steps": [
+      {
+        "level": 6,
+        "jewel": "jewel_bless",
+        "rate": 1.0,
+        "fail": null
+      },
+      {
+        "level": 7,
+        "jewel": "jewel_soul",
+        "rate": 0.7,
+        "fail": "down"
+      },
+      {
+        "level": 8,
+        "jewel": "jewel_soul",
+        "rate": 0.6,
+        "fail": "down"
+      },
+      {
+        "level": 9,
+        "jewel": "jewel_soul",
+        "rate": 0.5,
+        "fail": "down"
+      },
+      {
+        "level": 10,
+        "jewel": "jewel_chaos",
+        "rate": 0.5,
+        "fail": "destroy"
+      },
+      {
+        "level": 11,
+        "jewel": "jewel_chaos",
+        "rate": 0.45,
+        "fail": "destroy"
+      }
+    ]
+  },
+  "JEWELS": {
+    "weights": {
+      "jewel_bless": 50,
+      "jewel_soul": 35,
+      "jewel_chaos": 15
+    },
+    "monster_level": 12,
+    "monster_chance": 0.006,
+    "boss_chance": 0.3,
+    "tower_every": 10,
+    "chest_chance": {
+      "wood": 0.03,
+      "silver": 0.08,
+      "gold": 0.15
+    }
+  },
+  "CHAOS": [
+    {
+      "id": "wing1",
+      "name": "Cánh cấp 1",
+      "desc": "1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 đúng lớp nhân vật.",
+      "gear": {
+        "slots": [
+          "weapon",
+          "armor",
+          "shield"
+        ],
+        "min_up": 5
+      },
+      "items": {
+        "jewel_chaos": 1
+      },
+      "gold": 20000,
+      "rate": 0.1,
+      "per_up": 0.05,
+      "max_rate": 0.6,
+      "out": "wing_{cls}_1"
+    },
+    {
+      "id": "wing2",
+      "name": "Cánh cấp 2",
+      "desc": "1 cánh cấp 1 +5 trở lên + 5 Phúc Lành + 5 Linh Hồn + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp.",
+      "gear": {
+        "slots": [
+          "wing"
+        ],
+        "tier": 1,
+        "min_up": 5
+      },
+      "items": {
+        "jewel_bless": 5,
+        "jewel_soul": 5,
+        "jewel_chaos": 2
+      },
+      "gold": 200000,
+      "rate": 0.2,
+      "per_up": 0.05,
+      "max_rate": 0.6,
+      "out": "wing_{cls}_2"
+    },
+    {
+      "id": "make_chaos",
+      "name": "Ngọc Hỗn Nguyên",
+      "desc": "10 Quặng Mithril + 1 Vảy Cổ Long → 1 Ngọc Hỗn Nguyên.",
+      "items": {
+        "ore_rare": 10,
+        "dragon_scale": 1
+      },
+      "gold": 5000,
+      "rate": 0.7,
+      "out": "jewel_chaos"
     }
   ]
 }

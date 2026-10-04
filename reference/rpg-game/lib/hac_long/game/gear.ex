@@ -7,8 +7,10 @@ defmodule HacLong.Game.Gear do
 
   - `uid`: bắt đầu bằng `#`, dùng thay id đồ ở `equip`, `sell`, `upgrades`...
   - `base`: đồ gốc trong `game_data.json` (quyết định chỗ mặc, tấn công/phòng thủ, cấp cần).
-  - `rarity`: 1 Tốt, 2 Hiếm, 3 Sử Thi, bằng số dòng chỉ số cộng thêm.
+  - `rarity`: 1 Tốt, 2 Hiếm, 3 Sử Thi, bằng số dòng chỉ số cộng thêm. `0`: đồ thường đã tách
+    thành bản riêng (`plain/1`) để có cấp nâng / khóa riêng từng món (đồ đã nâng cấp, đồ đã khóa, cánh).
   - `bonus`: `%{str | vit | agi | def => điểm}` cộng vào chỉ số khi mặc.
+  - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
   """
@@ -62,13 +64,15 @@ defmodule HacLong.Game.Gear do
       name: if(main, do: "#{base.name} #{@suffix[main]}", else: base.name),
       rarity: g.rarity,
       bonus: g.bonus,
+      locked: g[:locked] == true,
       sell: price(g)
     })
   end
 
   @doc "Giá bán: giá đồ gốc tăng theo độ hiếm và số điểm cộng thêm."
   def price(g) do
-    base = Data.item(g.base).price
+    # đồ không bán ở cửa hàng (giá 0) tính như giá 200, như `Engine.sell_price/1`
+    base = with 0 <- Data.item(g.base).price, do: 200
     round(base * 0.4 * (1 + 0.25 * g.rarity) + 5 * Enum.sum(Map.values(g.bonus)))
   end
 
@@ -147,6 +151,28 @@ defmodule HacLong.Game.Gear do
   defp shuffle(list),
     do: list |> Enum.map(&{Rng.uniform(), &1}) |> Enum.sort() |> Enum.map(&elem(&1, 1))
 
+  @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
+  def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
+
+  def stats, do: @stats
+
+  @doc "Bản riêng của một món đồ thường (độ hiếm 0, không chỉ số cộng thêm)."
+  def plain(base), do: new(base, 0, %{})
+
+  def locked?(p, uid), do: match?(%{locked: true}, find(p, uid))
+
+  @doc "Khóa / mở khóa món `uid`."
+  def set_locked(p, uid, on?) do
+    Map.put(
+      p,
+      :gear,
+      Enum.map(list(p), fn
+        %{uid: ^uid} = g -> if on?, do: Map.put(g, :locked, true), else: Map.delete(g, :locked)
+        g -> g
+      end)
+    )
+  end
+
   defp new_uid, do: "#" <> Base.encode32(:crypto.strong_rand_bytes(5), padding: false)
 
   @doc """
@@ -166,12 +192,14 @@ defmodule HacLong.Game.Gear do
   @doc "Đọc từ database (khóa chuỗi) về dạng engine dùng."
   def load(list) when is_list(list) do
     for g <- list, Data.item(g["base"]) do
-      %{
+      m = %{
         uid: g["uid"],
         base: g["base"],
         rarity: g["rarity"],
         bonus: Map.new(g["bonus"], fn {k, v} -> {String.to_existing_atom(k), v} end)
       }
+
+      if g["locked"] == true, do: Map.put(m, :locked, true), else: m
     end
   end
 

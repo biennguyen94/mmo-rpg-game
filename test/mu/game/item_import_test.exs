@@ -12,14 +12,40 @@ defmodule Mu.Game.ItemImportTest do
 
   test "items.json sinh từ data/items khớp (mix mu.items.import --check)" do
     assert capture_io(fn -> Mix.Tasks.Mu.Items.Import.run(["--check"]) end) =~
-             "không đổi (10 template)"
+             "không đổi (54 template)"
   end
 
-  test "đủ 10 template Phase 1, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
+  test "10 template Phase 1 + 12 P2-M2 + 21 P2-M4 + 3 jewel P5-M1 + Chaos / 3 cánh P6-M3/M4, templateId duy nhất, có nguồn gốc (KB_00_RULES §2)" do
     ids =
-      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0)
+      ~w(hp_potion_small mp_potion_small sword_t0 shield_t0 helm_t0 armor_t0 pants_t0 gloves_t0 boots_t0 ring_hp_t0) ++
+        ~w(staff_t0 bow_t0) ++
+        for(
+          set <- ~w(pad vine),
+          part <- ~w(helm armor pants gloves boots),
+          do: "#{set}_#{part}_t0"
+        ) ++
+        ~w(sword_t1 staff_t1 bow_t1 shield_t1 hp_potion_medium mp_potion_medium) ++
+        for(
+          set <- ~w(bronze bone silk),
+          part <- ~w(helm armor pants gloves boots),
+          do: "#{set}_#{part}_t1"
+        ) ++
+        ~w(jewel_bless jewel_soul jewel_life) ++
+        ~w(jewel_chaos wing_elf wing_heaven wing_satan) ++
+        ~w(wing_spirit wing_soul wing_dragon wing_darkness)
 
     assert Enum.sort(Map.keys(Data.items())) == Enum.sort(ids)
+
+    # P5-2: jewel stack 20, không bán ở NPC, NPC mua lại 10 000 / 15 000 / 15 000
+    for {id, sell} <- [{"jewel_bless", 10_000}, {"jewel_soul", 15_000}, {"jewel_life", 15_000}] do
+      j = Data.item(id)
+
+      assert {j["type"], j["stackable"], j["maxStack"], j["sellPrice"]} ==
+               {"JEWEL", true, 20, sell}
+
+      shop = Jason.decode!(File.read!("priv/game_data/shop.json"))["shops"]
+      refute Enum.any?(shop, &(id in &1["items"]))
+    end
 
     for {_, t} <- Data.items(), k <- ~w(sourceType version verified source) do
       assert Map.has_key?(t, k), "#{t["templateId"]} thiếu #{k}"
@@ -35,6 +61,25 @@ defmodule Mu.Game.ItemImportTest do
     end
 
     assert Data.item("ring_hp_t0")["iconRef"] == %{"custom" => "ring_hp_t0"}
+  end
+
+  test "P2-5: mọi vũ khí có weaponType; cung hai tay, tầm đánh theo loại" do
+    for {_, t} <- Data.items(), t["slot"] == "WEAPON" do
+      assert t["weaponType"] in ~w(sword axe mace spear bow crossbow staff), t["templateId"]
+    end
+
+    assert {Data.item("staff_t0")["weaponType"], Data.item("bow_t0")["weaponType"]} ==
+             {"staff", "bow"}
+
+    assert Mu.Game.Inventory.two_handed?(Data.item("bow_t0"))
+    refute Mu.Game.Inventory.two_handed?(Data.item("sword_t0"))
+
+    assert {:error, [msg]} =
+             Mu.Game.ItemImport.build(%{
+               "items" => [Map.delete(Data.item("sword_t0"), "weaponType")]
+             })
+
+    assert msg =~ "weaponType"
   end
 
   test "requirements = round(requirementsRaw × 0.35), reference.adjusted ⇒ IMPLEMENTATION" do
@@ -53,8 +98,13 @@ defmodule Mu.Game.ItemImportTest do
     assert Data.item("sword_t0")["sellPrice"] == 500
   end
 
-  test "không dùng group 12 khi wings tắt" do
-    refute Enum.any?(Map.values(Data.items()), &(get_in(&1, ["iconRef", "group"]) == 12))
+  test "group 12 (P6-M4 / P7-M3, features.wings bật): chỉ Jewel of Chaos + 3 cánh cấp 1 + 4 cánh cấp 2" do
+    g12 = for t <- Map.values(Data.items()), t["iconRef"]["group"] == 12, do: t["templateId"]
+
+    assert Enum.sort(g12) ==
+             Enum.sort(
+               ~w(jewel_chaos wing_elf wing_heaven wing_satan wing_spirit wing_soul wing_dragon wing_darkness)
+             )
   end
 
   test "dữ liệu sai bị từ chối" do
@@ -71,11 +121,6 @@ defmodule Mu.Game.ItemImportTest do
              ItemImport.build(%{"items" => [Map.put(sword, "sourceType", "REFERENCE")]})
 
     assert {:error, _} = ItemImport.build(%{"items" => [Map.put(sword, "slot", "HAT")]})
-
-    assert {:error, _} =
-             ItemImport.build(%{
-               "items" => [Map.put(sword, "iconRef", %{"group" => 12, "index" => 1})]
-             })
 
     assert {:error, _} = ItemImport.build(%{"items" => [Map.put(sword, "iconRef", %{})]})
   end

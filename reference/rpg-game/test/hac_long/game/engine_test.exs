@@ -172,29 +172,41 @@ defmodule HacLong.Game.EngineTest do
     assert Engine.derived(p).atk == atk + 1
     assert p.inv["ore"] == 19 and p.gold == 10_000 - 8
 
+    # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
+    club = p.equip.weapon
+    assert [%{uid: ^club, base: "club", rarity: 0}] = p.gear
     p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
-    assert Engine.upgrade_level(p, "club") == 4
+    assert Engine.upgrade_level(p, club) == 4
     # +5 cần Vảy Cổ Long
     assert {%{ok: false, msg: "Thiếu nguyên liệu: Vảy Cổ Long 0/1."}, _} =
              Engine.upgrade(p, "weapon")
 
     {%{ok: true}, p} = p |> Engine.add_item("dragon_scale") |> Engine.upgrade("weapon")
-    assert {%{ok: false, msg: "Gậy Gỗ đã nâng cấp tối đa."}, _} = Engine.upgrade(p, "weapon")
-    assert Engine.view(p).bonus == %{"club" => 5}
-    assert Engine.view(p).forge.weapon == %{id: "club", level: 5, cost: nil}
+    # +6 trở lên cần ngọc
+    assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Phúc Lành 0/1."}, _} =
+             Engine.upgrade(p, "weapon")
 
-    # đồ cấp cao dùng Mithril; cấp nâng giữ theo món khi tháo ra mặc lại
-    assert Engine.upgrade_cost("waraxe", 0) == %{gold: 600, items: %{"ore_rare" => 1}}
-    p = %{p | level: 10} |> Engine.add_item("broadsword")
+    assert Engine.view(p).bonus == %{club => 5}
+
+    assert %{id: ^club, level: 5, cost: %{items: %{"jewel_bless" => 1}}} =
+             Engine.view(p).forge.weapon
+
+    # đồ cấp cao dùng Mithril; gậy mới mua là món khác, cấp 0
+    assert %{gold: 600, items: %{"ore_rare" => 1}} = Engine.upgrade_cost("waraxe", 0)
+    p = %{p | level: 10} |> Engine.add_item("broadsword") |> Engine.add_item("club")
     {_, p} = Engine.equip(p, "broadsword")
     assert Engine.upgrade_level(p, "broadsword") == 0
     {_, p} = Engine.equip(p, "club")
+    assert Engine.derived(p).atk == Engine.derived(%{p | upgrades: %{}}).atk
+    {_, p} = Engine.equip(p, club)
     assert Engine.derived(p).atk == Engine.derived(%{p | upgrades: %{}}).atk + 5
 
-    # bán món cuối cùng thì mất cấp nâng
+    # bán gậy thường không mất cấp của gậy đã nâng; bán gậy đã nâng thì mất
     {_, p} = Engine.equip(p, "broadsword")
     {_, p} = Engine.sell(p, "club")
-    assert p.upgrades == %{}
+    assert p.upgrades == %{club => 5}
+    {_, p} = Engine.sell(p, club)
+    assert p.upgrades == %{} and p.gear == []
     assert {%{ok: false, msg: "Chưa mặc đồ ở chỗ này."}, _} = Engine.upgrade(p, "shield")
   end
 

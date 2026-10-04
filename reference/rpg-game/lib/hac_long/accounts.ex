@@ -73,6 +73,20 @@ defmodule HacLong.Accounts do
 
   def verify_token(_), do: {:error, :invalid}
 
+  @doc "Vé WebSocket dùng một lần cho `user` (xem `HacLong.Accounts.WsTicket`)."
+  def issue_ws_ticket(%User{id: id}), do: HacLong.Accounts.WsTicket.issue(id)
+
+  @doc "Dùng vé WebSocket: `{:ok, user}` (vé bị xóa) hoặc `:error` (sai / đã dùng / hết hạn / bị khóa)."
+  def consume_ws_ticket(ticket) do
+    with {:ok, id} <- HacLong.Accounts.WsTicket.consume(ticket),
+         %User{} = user <- get_user(id),
+         false <- banned?(user) do
+      {:ok, user}
+    else
+      _ -> :error
+    end
+  end
+
   @doc "Đăng xuất thiết bị đang dùng `token`."
   def revoke_token(token) when is_binary(token) do
     with {:ok, raw} <- Base.url_decode64(token, padding: false) do

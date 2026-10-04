@@ -8,6 +8,7 @@ defmodule HacLongWeb.AuthController do
   @login_per_name {10, :timer.minutes(5)}
   @register_per_ip {5, :timer.hours(1)}
   @password_per_user {5, :timer.minutes(5)}
+  @ws_ticket_per_user {20, :timer.minutes(1)}
 
   def register(conn, params) do
     with :ok <- limit(conn, {:register, ip(conn)}, @register_per_ip) do
@@ -77,6 +78,17 @@ defmodule HacLongWeb.AuthController do
         {:error, cs} ->
           conn |> put_status(:unprocessable_entity) |> json(%{error: first_error(cs)})
       end
+    end
+  end
+
+  @doc """
+  Vé WebSocket dùng một lần (`{ticket}`), sống vài chục giây: client lấy trước mỗi lần mở / mở lại
+  WebSocket, để token đăng nhập không nằm trong URL `/socket`.
+  """
+  def ws_ticket(conn, _params) do
+    with {:ok, user, _token} <- current(conn),
+         :ok <- limit(conn, {:ws_ticket, user.id}, @ws_ticket_per_user) do
+      json(conn, %{ticket: Accounts.issue_ws_ticket(user)})
     end
   end
 

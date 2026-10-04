@@ -1,6 +1,7 @@
 // Kết nối game: lấy WS ticket (dùng một lần) trước MỖI lần mở socket, join kênh "game"
-// với {clientVersion, characterId}. Mất kết nối → tự nối lại với ticket mới và join lại
-// (nạp lại toàn bộ trạng thái; reconnect giữ phiên là Phase 3). Học từ net.js của repo nền.
+// với {clientVersion, characterId}. Mất kết nối → tự nối lại với ticket mới và join lại (nạp
+// lại toàn bộ trạng thái). Server giữ nhân vật `reconnectGraceSeconds` khi mất kết nối (P3-M2);
+// đăng xuất thì `leave()` kênh trước để server biết là rời có chủ ý. Học từ net.js của repo nền.
 import { Channel, Socket } from "phoenix";
 import { api } from "./api.js";
 import { RidGen, type ErrorPayload, type JoinReply } from "./protocol.js";
@@ -16,7 +17,7 @@ export interface ConnectionHandlers {
   onStatus(status: "online" | "reconnecting" | "kicked" | "unauthorized" | "version"): void;
 }
 
-const EVENTS = ["snapshot", "spawn", "despawn", "combat", "player", "shop", "error"];
+const EVENTS = ["snapshot", "spawn", "despawn", "combat", "player", "shop", "error", "map_change", "chat", "mail", "warehouse", "party", "party_invite", "duel", "guild", "guild_invite", "guild_war", "upgrade", "trade", "trade_invite", "ranking", "quests", "quest_done", "chaos", "world_event"];
 
 export class Connection {
   private socket: Socket | null = null;
@@ -81,6 +82,18 @@ export class Connection {
         .receive("error", (r: ErrorPayload) => resolve({ ok: false, error: r?.error ?? "FORBIDDEN" }))
         .receive("timeout", () => resolve({ ok: false, error: "TIMEOUT" }));
     });
+  }
+
+  /** Rời kênh có chủ ý (đăng xuất): server cho nhân vật rời map ngay (hoặc sau logoutInCombatSeconds). */
+  leave(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const ch = this.channel;
+      this.closed = true;
+      if (!ch) return resolve();
+      ch.leave(1000)
+        .receive("ok", () => resolve())
+        .receive("timeout", () => resolve());
+    }).then(() => this.stop());
   }
 
   stop(): void {

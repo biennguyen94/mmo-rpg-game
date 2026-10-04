@@ -147,13 +147,7 @@
     return `
       ${top(P)}
       <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${overlay || ''}</div>
-      <div class="dpad" aria-label="Di chuyển">
-        <button class="btn" data-move="up" aria-label="Lên">▲</button>
-        <button class="btn" data-move="left" aria-label="Trái">◀</button>
-        <button class="btn" data-move="down" aria-label="Xuống">▼</button>
-        <button class="btn" data-move="right" aria-label="Phải">▶</button>
-      </div>
-      <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh. Máy tính: phím mũi tên hoặc WASD.</p>`;
+      <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh.</p>`;
   }
 
   function mount(player) {

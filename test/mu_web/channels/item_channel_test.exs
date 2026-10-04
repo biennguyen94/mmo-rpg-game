@@ -38,8 +38,14 @@ defmodule MuWeb.ItemChannelTest do
     %{a: a, c: c, socket: socket, reply: reply}
   end
 
+  # đặt chỗ + đánh dấu đổi rồi chạy tới snapshot: kênh (AOI, P3-M1) biết vị trí mới
   defp place(c, {x, y}) do
-    MapServer.debug_update(@map, fn st -> update_in(st.players[c.id], &%{&1 | x: x, y: y}) end)
+    MapServer.debug_update(@map, fn st ->
+      st = update_in(st.players[c.id], &%{&1 | x: x, y: y})
+      %{st | dirty: MapSet.put(st.dirty, st.players[c.id].id)}
+    end)
+
+    MapServer.tick(@map, MapServer.debug_state(@map).snapshot_every)
   end
 
   defp drop_ground(tid, {x, y}, owner, opts \\ []) do
@@ -57,6 +63,26 @@ defmodule MuWeb.ItemChannelTest do
     }
 
     MapServer.debug_update(@map, fn st -> %{st | ground: Map.put(st.ground, g.id, g)} end)
+
+    # như MapServer khi rơi đồ: `spawn` cho kênh (AOI chỉ chuyển despawn của entity đã thấy)
+    Phoenix.PubSub.broadcast(
+      Mu.PubSub,
+      MapServer.topic(@map),
+      {:map_event, "spawn",
+       %{
+         id: g.id,
+         kind: "item",
+         x: x,
+         y: y,
+         hp: nil,
+         maxHp: nil,
+         state: "idle",
+         name: tid,
+         level: nil,
+         templateId: tid
+       }}
+    )
+
     g
   end
 
@@ -72,7 +98,7 @@ defmodule MuWeb.ItemChannelTest do
 
   test "join: có template item cho client; túi và trang bị rỗng" do
     %{reply: r} = setup_player()
-    assert length(r.data.items) == 10
+    assert length(r.data.items) == map_size(Mu.Game.Data.items())
     sword = Enum.find(r.data.items, &(&1["templateId"] == "sword_t0"))
 
     assert %{"attackMin" => 3, "iconRef" => %{"group" => 0, "index" => 1}, "sellPrice" => 500} =
@@ -211,7 +237,14 @@ defmodule MuWeb.ItemChannelTest do
     assert {:ok, _} =
              cmd(socket, %{"act" => "npc_open", "rid" => "o2", "npcId" => "npc_" <> @npc})
 
-    assert_push "shop", %{npcId: @npc, items: [%{templateId: "hp_potion_small", price: 100}]}
+    # Phase 2 bán thêm MP potion (P2-M2)
+    assert_push "shop", %{
+      npcId: @npc,
+      items: [
+        %{templateId: "hp_potion_small", price: 100},
+        %{templateId: "mp_potion_small", price: 120}
+      ]
+    }
 
     assert {:ok, _} =
              cmd(socket, %{
@@ -332,7 +365,105 @@ defmodule MuWeb.ItemChannelTest do
       assert code in ~w(INVALID_TARGET INVALID_SLOT NOT_OWNER OUT_OF_RANGE), inspect(p)
     end
 
-    assert {:error, %{error: "FORBIDDEN"}} =
-             cmd(socket, %{"act" => "drop", "rid" => "8", "itemId" => "x"})
+    for p <- [
+          %{"act" => "drop", "rid" => "8", "itemId" => "x"},
+          %{"act" => "drop", "rid" => "9"},
+          %{"act" => "move_item", "rid" => "10", "itemId" => "x", "to" => 3},
+          %{
+            "act" => "move_item",
+            "rid" => "11",
+            "itemId" => "x",
+            "to" => %{"location" => "INVENTORY", "slot" => 1}
+          },
+          %{"act" => "split", "rid" => "12", "itemId" => "x"}
+        ] do
+      assert {:error, %{error: code}} = cmd(socket, p)
+      # món không có trong túi = món trong kho (P3-M3): xa Thủ kho → OUT_OF_RANGE
+      assert code in ~w(INVALID_TARGET INVALID_SLOT NOT_OWNER OUT_OF_RANGE), inspect(p)
+    end
+  end
+
+  test "P2-M1: move_item, split, drop qua kênh; người khác nhặt sau loot protect" do
+    %{a: a, c: c, socket: socket} = setup_player()
+    place(c, {40, 40})
+
+    for {tid, n} <- [{"sword_t0", 1}, {"hp_potion_small", 6}] do
+      Mu.Game.Items.pickup(
+        c.id,
+        %{serial: Mu.Ulid.generate(), template_id: tid, quantity: n},
+        "test"
+      )
+    end
+
+    # Session mới đọc lại đồ từ DB
+    Process.unlink(socket.channel_pid)
+    DynamicSupervisor.terminate_child(Mu.Game.SessionSupervisor, Session.whereis(a.id))
+    {:ok, _, socket} = join_game(a, c)
+    MapServer.debug_update(@map, fn st -> %{st | monsters: %{}} end)
+    place(c, {40, 40})
+    [sword, potion] = Enum.sort_by(items(a), & &1.slot)
+
+    to = fn slot -> %{"location" => "INVENTORY", "slot" => slot} end
+
+    assert {:ok, _} =
+             cmd(socket, %{
+               "act" => "move_item",
+               "rid" => "m1",
+               "itemId" => sword.id,
+               "to" => to.(9)
+             })
+
+    assert {:error, %{error: "INVALID_SLOT"}} =
+             cmd(socket, %{
+               "act" => "move_item",
+               "rid" => "m2",
+               "itemId" => sword.id,
+               "to" => %{"location" => "EQUIPMENT", "slot" => 5}
+             })
+
+    assert {:ok, _} =
+             cmd(socket, %{
+               "act" => "split",
+               "rid" => "s1",
+               "itemId" => potion.id,
+               "quantity" => 2,
+               "toSlot" => 3
+             })
+
+    p = last_player()
+
+    assert [{1, "hp_potion_small", 4}, {3, "hp_potion_small", 2}, {9, "sword_t0", 1}] =
+             Enum.map(p.inventory, &{&1.slot, &1.templateId, &1.quantity})
+
+    # idempotent theo rid: gửi lại split cùng rid không tách thêm
+    assert {:ok, _} =
+             cmd(socket, %{
+               "act" => "split",
+               "rid" => "s1",
+               "itemId" => potion.id,
+               "quantity" => 2,
+               "toSlot" => 4
+             })
+
+    assert length(items(a)) == 3
+
+    assert {:ok, _} = cmd(socket, %{"act" => "drop", "rid" => "d1", "itemId" => sword.id})
+    gid = "g_" <> sword.serial
+    assert_push "spawn", %{id: ^gid, kind: "item", x: 40, y: 40, templateId: "sword_t0"}
+    assert length(items(a)) == 2
+    refute Mu.Repo.get_by(Mu.Game.Item, serial: sword.serial)
+
+    # người khác đứng cạnh: bị loot protect; hết hạn thì nhặt được, đúng serial
+    {a2, c2} = create_character()
+    {:ok, _, socket2} = join_game(a2, c2)
+    place(c2, {40, 41})
+
+    assert {:error, %{error: "NOT_OWNER"}} =
+             cmd(socket2, %{"act" => "pickup", "rid" => "x1", "id" => gid})
+
+    MapServer.debug_update(@map, fn st -> put_in(st.ground[gid].protect_until, 0) end)
+    assert {:ok, _} = cmd(socket2, %{"act" => "pickup", "rid" => "x2", "id" => gid})
+    assert [%{serial: serial}] = items(a2)
+    assert serial == sword.serial
   end
 end

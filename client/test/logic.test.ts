@@ -3,9 +3,10 @@ import assert from "node:assert/strict";
 import { AllocBatcher, type Timer } from "../src/logic/alloc.js";
 import { AutoAttack, approach } from "../src/logic/autoattack.js";
 import { bucket, iconPath } from "../src/logic/icons.js";
-import { equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
+import { autoSlot, defaultSplit, dragCommand, twoHandConflict, equipSlotFor, equipmentInBag, firstFreeSlot, pickPotion, requirements, shortDesc } from "../src/logic/items.js";
 import { NoticeLog, diffPlayer } from "../src/logic/notices.js";
-import { RidGen, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
+import { CHAT_KEEP, chatLine, parseChat, pushChat } from "../src/logic/chat.js";
+import { RidGen, type ChatPayload, type ItemTemplate, type ItemView, type Player } from "../src/net/protocol.js";
 import { InterpBuffer, ServerClock } from "../src/state/interp.js";
 import { World } from "../src/state/world.js";
 
@@ -155,7 +156,7 @@ test("World: spawn = thêm-hoặc-cập-nhật, snapshot, removed", () => {
   assert.equal(w.entities.size, 0);
 });
 
-test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo cooldown; skill một lần; dừng khi quái chết", () => {
+test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo cooldown; skill lặp lại (P2-M3), NO_MANA → đánh thường; dừng khi quái chết", () => {
   const a = new AutoAttack();
   const me = { x: 0, y: 0 };
   assert.equal(a.tick(0, me, { x: 1, y: 0, alive: true }, 1, 1000), null);
@@ -164,9 +165,307 @@ test("AutoAttack: ngoài tầm → move_to ô kề; trong tầm → đánh theo 
   assert.equal(a.tick(10, me, { x: 5, y: 3, alive: true }, 2, 1000), null); // đã gửi, đang đi
   assert.deepEqual(a.tick(20, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 2, 1000), { act: "skill", id: "twisting_slash", target: "m_1" });
   assert.equal(a.tick(500, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), null);
-  assert.deepEqual(a.tick(1020, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), { act: "attack", target: "m_1" });
+  assert.deepEqual(a.tick(1020, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 2, 1000), { act: "skill", id: "twisting_slash", target: "m_1" });
+  a.skillFailed();
+  assert.deepEqual(a.tick(2040, { x: 4, y: 2 }, { x: 5, y: 3, alive: true }, 1, 1000), { act: "attack", target: "m_1" });
   a.retryAfter(1100, 100);
-  assert.equal(a.tick(2000, { x: 4, y: 2 }, { x: 5, y: 3, alive: false }, 1, 1000), null);
+  assert.equal(a.tick(3000, { x: 4, y: 2 }, { x: 5, y: 3, alive: false }, 1, 1000), null);
   assert.equal(a.target, null);
   assert.deepEqual(approach({ x: 0, y: 10 }, { x: 5, y: 5 }), { x: 4, y: 6 });
+});
+
+test("dragCommand: kéo thả túi đồ → lệnh (P2-M1)", () => {
+  const sword = item("s", "sword", 0);
+  const pot = item("p", "hp", 1, 5);
+  const ring = item("r", "ring", 8);
+  const p = { inventory: [sword, pot] };
+  const bag = (slot: number) => ({ kind: "bag" as const, slot });
+  const eq = (slot: number) => ({ kind: "equip" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, bag(9), p, templates), {
+    act: "move_item",
+    payload: { itemId: "s", to: { location: "INVENTORY", slot: 9 } },
+  });
+  assert.equal(dragCommand({ kind: "bag", item: sword }, bag(0), p, templates), null);
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, eq(5), p, templates), { act: "equip", payload: { itemId: "s", slot: 5 } });
+  assert.equal(dragCommand({ kind: "bag", item: sword }, eq(6), p, templates), null);
+  assert.equal(dragCommand({ kind: "bag", item: pot }, eq(5), p, templates), null);
+  assert.deepEqual(dragCommand({ kind: "bag", item: item("r2", "ring", 3) }, eq(9), p, templates)?.payload, { itemId: "r2", slot: 9 });
+  assert.deepEqual(dragCommand({ kind: "bag", item: pot }, { kind: "trash" }, p, templates), {
+    act: "drop",
+    payload: { itemId: "p" },
+    confirm: true,
+  });
+  // tháo: ô trống → đúng ô; ô có đồ → ô trống thấp nhất
+  assert.deepEqual(dragCommand({ kind: "equip", item: ring }, bag(7), p, templates), { act: "unequip", payload: { slot: 8, toSlot: 7 } });
+  assert.deepEqual(dragCommand({ kind: "equip", item: ring }, bag(1), p, templates)?.payload, { slot: 8, toSlot: 2 });
+  assert.equal(dragCommand({ kind: "equip", item: ring }, { kind: "trash" }, p, templates), null);
+  assert.equal(defaultSplit(5), 2);
+  assert.equal(defaultSplit(1), 1);
+});
+
+test("twoHandConflict: cung khóa khiên và ngược lại (P2-5)", () => {
+  const tpl = new Map(templates);
+  tpl.set("bow", T({ templateId: "bow", slot: "WEAPON", weaponType: "bow" }));
+  tpl.set("shield", T({ templateId: "shield", slot: "SHIELD" }));
+  const two = ["bow", "crossbow"];
+  const bow = tpl.get("bow")!;
+  const shield = tpl.get("shield")!;
+  assert.equal(twoHandConflict(bow, 5, [item("s", "shield", 6)], tpl, two), true);
+  assert.equal(twoHandConflict(bow, 5, [], tpl, two), false);
+  assert.equal(twoHandConflict(shield, 6, [item("b", "bow", 5)], tpl, two), true);
+  assert.equal(twoHandConflict(shield, 6, [item("w", "sword", 5)], tpl, two), false);
+  assert.equal(twoHandConflict(tpl.get("sword")!, 5, [item("s", "shield", 6)], tpl, two), false);
+});
+
+test("chat: /w Tên nội dung = WHISPER, còn lại NORMAL; định dạng dòng; giữ 50 tin (P2-M5)", () => {
+  assert.deepEqual(parseChat("  chào cả nhà "), { channel: "NORMAL", text: "chào cả nhà" });
+  assert.deepEqual(parseChat("/w Elf01 hello bạn"), { channel: "WHISPER", to: "Elf01", text: "hello bạn" });
+  assert.deepEqual(parseChat("/M Elf01 x"), { channel: "WHISPER", to: "Elf01", text: "x" });
+  assert.equal(parseChat("/w Elf01"), null);
+  assert.equal(parseChat("   "), null);
+  const msg = (channel: "NORMAL" | "WHISPER" | "SYSTEM", from: string, to?: string) => ({ channel, from, text: "t", t: 0, to });
+  assert.deepEqual(chatLine(msg("NORMAL", "Ann"), "Me"), { cls: "normal", head: "Ann: ", text: "t" });
+  assert.equal(chatLine(msg("NORMAL", "Me"), "Me").cls, "me");
+  assert.equal(chatLine(msg("WHISPER", "Ann"), "Me").head, "[Mật] Ann: ");
+  assert.equal(chatLine(msg("WHISPER", "Me", "Ann"), "Me").head, "[Mật → Ann] ");
+  assert.equal(chatLine(msg("SYSTEM", "Hệ thống"), "Me").head, "[Hệ thống] ");
+  let log: ChatPayload[] = [];
+  for (let i = 0; i < 60; i++) log = pushChat(log, { ...msg("NORMAL", "A"), text: String(i) });
+  assert.equal(log.length, CHAT_KEEP);
+  assert.equal(log[0].text, "10");
+});
+
+test("kho (P3-M3): kéo thả túi ↔ kho → move_item; [Gửi]/[Rút] chọn ô (gộp stack trước)", () => {
+  const sword = item("s", "sword", 0);
+  const p = { inventory: [sword] };
+  const wh = (slot: number) => ({ kind: "wh" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: sword }, wh(4), p, templates), {
+    act: "move_item",
+    payload: { itemId: "s", to: { location: "WAREHOUSE", slot: 4 } },
+  });
+  const stored = item("w", "ring", 4);
+  assert.deepEqual(dragCommand({ kind: "wh", item: stored }, { kind: "bag", slot: 2 }, p, templates)?.payload, {
+    itemId: "w",
+    to: { location: "INVENTORY", slot: 2 },
+  });
+  assert.deepEqual(dragCommand({ kind: "wh", item: stored }, wh(9), p, templates)?.payload, { itemId: "w", to: { location: "WAREHOUSE", slot: 9 } });
+  assert.equal(dragCommand({ kind: "wh", item: stored }, wh(4), p, templates), null);
+  assert.equal(dragCommand({ kind: "wh", item: stored }, { kind: "equip", slot: 8 }, p, templates), null);
+  assert.equal(dragCommand({ kind: "equip", item: item("r", "ring", 8) }, wh(1), p, templates), null);
+
+  const tpl = new Map(templates);
+  tpl.set("hp", { ...templates.get("hp")!, maxStack: 10 });
+  const target = [item("a", "hp", 0, 10), item("b", "hp", 3, 4), item("c", "sword", 1)];
+  assert.equal(autoSlot(target, 120, item("x", "hp", 7, 2), tpl), 3);
+  assert.equal(autoSlot(target, 120, item("y", "sword", 7), tpl), 2);
+  assert.equal(autoSlot([item("a", "sword", 0)], 1, item("y", "sword", 7), tpl), null);
+});
+
+test("chat nhóm (P3-M4): /p nội dung = PARTY; dòng [Nhóm]", () => {
+  assert.deepEqual(parseChat("/p đi săn thôi"), { channel: "PARTY", text: "đi săn thôi" });
+  assert.deepEqual(parseChat("/P x"), { channel: "PARTY", text: "x" });
+  assert.equal(parseChat("/p"), null);
+  assert.deepEqual(parseChat("/party"), { channel: "NORMAL", text: "/party" });
+  assert.deepEqual(chatLine({ channel: "PARTY", from: "Ann", text: "t", t: 0 }, "Me"), { cls: "party", head: "[Nhóm] Ann: ", text: "t" });
+});
+
+test("PvP client (P4-M1): màu tên, nút Tấn công (cấp, safe zone), hỏi xác nhận khi đánh người NORMAL", async () => {
+  const { nameColor, canShowAttack, needsConfirm, inSafeZone } = await import("../src/logic/pvp.js");
+  assert.equal(nameColor("MURDERER", false, false), "#ff4d4d");
+  assert.equal(nameColor("WARNING", false, false), "#ffa53a");
+  assert.equal(nameColor("NORMAL", true, true), "#ffa53a");
+  assert.equal(nameColor("NORMAL", true, false), "#fff");
+  assert.equal(nameColor(undefined, undefined, true), "#fff");
+  const map = { safeZones: [{ id: "town", x: 7, y: 21, w: 18, h: 22 }] };
+  assert.equal(inSafeZone(map, 15, 31), true);
+  assert.equal(inSafeZone(map, 25, 31), false);
+  const pvp = { enabled: true, minLevel: 6 };
+  const out = { level: 10, x: 40, y: 31 };
+  assert.equal(canShowAttack(out, { level: 10, x: 41, y: 31 }, map, pvp), true);
+  assert.equal(canShowAttack(out, { level: 5, x: 41, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack({ ...out, level: 5 }, { level: 10, x: 41, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack(out, { level: 10, x: 15, y: 31 }, map, pvp), false);
+  assert.equal(canShowAttack(out, { level: 10, x: 41, y: 31 }, map, { ...pvp, enabled: false }), false);
+  assert.equal(needsConfirm({ pkState: "NORMAL" }), true);
+  assert.equal(needsConfirm({ pkState: "NORMAL", aggressor: true }), false);
+  assert.equal(needsConfirm({ pkState: "MURDERER" }), false);
+});
+
+test("Duel client (P4-M2): đang duel chỉ đánh đối thủ, không đánh người cùng nhóm, nút Thách đấu, câu kết quả", async () => {
+  const { canAttackPlayer, canChallenge, duelResultText } = await import("../src/logic/pvp.js");
+  const map = { safeZones: [{ id: "town", x: 7, y: 21, w: 18, h: 22 }] };
+  const pvp = { enabled: true, minLevel: 6 };
+  const me = { level: 10, x: 40, y: 31 };
+  const b = { id: "p_b", name: "Bee1", level: 10, x: 41, y: 31 };
+  const c = { id: "p_c", name: "Cee1", level: 10, x: 41, y: 32 };
+  const none = { duelOpponentId: null, partyNames: [] as string[] };
+  assert.equal(canAttackPlayer(me, b, map, pvp, none), true);
+  assert.equal(canAttackPlayer(me, b, map, pvp, { ...none, partyNames: ["Bee1"] }), false);
+  assert.equal(canAttackPlayer(me, b, map, pvp, { ...none, duelOpponentId: "p_b" }), true);
+  assert.equal(canAttackPlayer(me, c, map, pvp, { ...none, duelOpponentId: "p_b" }), false);
+  assert.equal(canChallenge(me, b, pvp, false), true);
+  assert.equal(canChallenge(me, b, pvp, true), false);
+  assert.equal(canChallenge(me, { level: 5 }, pvp, false), false);
+  assert.equal(canAttackPlayer(me, { ...b, dueling: true }, map, pvp, none), false);
+  assert.equal(canChallenge(me, { level: 10, dueling: true }, pvp, false), false);
+  assert.equal(duelResultText("win", "Bee1"), "Bạn thắng Bee1 trong trận đấu tay đôi.");
+  assert.equal(duelResultText("draw", "Bee1"), "Hòa với Bee1: hết giờ đấu tay đôi.");
+  assert.equal(duelResultText("declined", "Bee1"), "Bee1 từ chối đấu tay đôi.");
+});
+
+test("guild (P4-M3): /g = GUILD, dòng [Guild]; quyền từng vai trò", async () => {
+  assert.deepEqual(parseChat("/g tập trung"), { channel: "GUILD", text: "tập trung" });
+  assert.equal(parseChat("/g"), null);
+  assert.deepEqual(parseChat("/guild"), { channel: "NORMAL", text: "/guild" });
+  assert.deepEqual(chatLine({ channel: "GUILD", from: "Ann", text: "t", t: 0 }, "Me"), { cls: "guild", head: "[Guild] Ann: ", text: "t" });
+
+  const { myRole, canInvite, canKick, canPromote, canDemote, validGuildName } = await import("../src/logic/guild.js");
+  const g = {
+    id: "g",
+    name: "Abc",
+    master: "M",
+    members: [
+      { name: "M", class: "DK", level: 20, role: "master" as const, online: true },
+      { name: "A", class: "DW", level: 5, role: "assistant" as const, online: true },
+      { name: "B", class: "ELF", level: 3, role: "member" as const, online: false },
+    ],
+  };
+  assert.equal(myRole(g, "A"), "assistant");
+  assert.equal(myRole(null, "A"), null);
+  assert.ok(canInvite("master") && canInvite("assistant") && !canInvite("member") && !canInvite(null));
+  assert.ok(canKick("master", "assistant") && canKick("assistant", "member"));
+  assert.ok(!canKick("assistant", "assistant") && !canKick("member", "member") && !canKick("master", "master"));
+  assert.ok(canPromote("master", "member", g, 2) && !canPromote("master", "member", g, 1) && !canPromote("assistant", "member", g, 2));
+  assert.ok(canDemote("master", "assistant") && !canDemote("master", "member"));
+  const pat = "^[A-Za-z0-9]{3,8}$";
+  assert.ok(validGuildName("Rong01", pat) && !validGuildName("ab", pat) && !validGuildName("Rồng", pat));
+});
+
+test("guild war (P4-M4): tên địch tím, không hỏi PK khi đánh địch, dòng kết quả", async () => {
+  const { nameColor, needsConfirm, warResultText } = await import("../src/logic/pvp.js");
+  assert.equal(nameColor("MURDERER", false, false, true), "#c77dff");
+  assert.equal(nameColor("MURDERER", false, false), "#ff4d4d");
+  assert.equal(needsConfirm({ pkState: "NORMAL", guild: "Rong" }, "Rong"), false);
+  assert.equal(needsConfirm({ pkState: "NORMAL", guild: "Ho" }, "Rong"), true);
+  assert.equal(needsConfirm({ pkState: "NORMAL" }), true);
+  assert.equal(warResultText({ result: "win", reason: "score", enemy: "Rong", score: 20, enemyScore: 3 }), "Guild thắng chiến tranh với Rong: 20 – 3.");
+  assert.equal(warResultText({ result: "lose", reason: "surrender", enemy: "Rong", score: 1, enemyScore: 2 }), "Guild thua chiến tranh với Rong: 1 – 2 (đầu hàng).");
+  assert.equal(warResultText({ result: "draw", reason: "time", enemy: "Rong", score: 2, enemyScore: 2 }), "Chiến tranh với Rong kết thúc hòa: 2 – 2.");
+});
+
+test("đồ +N (P5-M1): chỉ số hiển thị theo levelBonus, tên kèm +N, jewel không đổi", async () => {
+  const { leveled, itemName, shortDesc } = await import("../src/logic/items.js");
+  const bonus = { WEAPON: { attack: 3 }, SHIELD: { defense: 2 }, HELM: { defense: 3 } };
+  const sword = { templateId: "sword_t0", name: "Short Sword", type: "WEAPON", slot: "WEAPON", stackable: false, attackMin: 3, attackMax: 7, iconRef: { group: 0, index: 1 }, buyPrice: 1, sellPrice: 0 };
+  assert.deepEqual([leveled(sword, 2, bonus).attackMin, leveled(sword, 2, bonus).attackMax], [9, 13]);
+  assert.equal(leveled(sword, 0, bonus), sword);
+  assert.equal(itemName(sword, 4), "Short Sword +4");
+  assert.equal(itemName(sword, 0), "Short Sword");
+  assert.equal(itemName(undefined, 1, "x"), "x +1");
+  assert.equal(shortDesc(sword, 1, bonus), "Tấn công +6~10");
+  const helm = { ...sword, templateId: "helm_t0", type: "HELM", slot: "HELM", attackMin: undefined, attackMax: undefined, defense: 5 };
+  assert.equal(shortDesc(helm, 3, bonus), "Phòng thủ +14");
+  const jewel = { ...sword, templateId: "jewel_bless", type: "JEWEL", slot: null, attackMin: undefined, attackMax: undefined };
+  assert.equal(leveled(jewel, 3, bonus), jewel);
+});
+
+test("ép jewel (P5-M2): kéo jewel thả lên đồ ép được → upgrade; lên jewel / potion → move; option hiển thị", async () => {
+  const { leveled, upgradable } = await import("../src/logic/items.js");
+  const tpl = new Map(templates);
+  tpl.set("bless", T({ templateId: "bless", type: "JEWEL", stackable: true }));
+  tpl.set("sword", { ...tpl.get("sword")!, type: "WEAPON" });
+  tpl.set("helm", T({ templateId: "helm", type: "HELM", slot: "HELM", defense: 5 }));
+  const bonus = { WEAPON: { attack: 3 }, HELM: { defense: 3 } };
+  const jewel = item("j", "bless", 3, 4);
+  const p = { inventory: [item("s", "sword", 0), item("p", "hp", 1, 5), item("h", "helm", 2), jewel] };
+  const bag = (slot: number) => ({ kind: "bag" as const, slot });
+  assert.deepEqual(dragCommand({ kind: "bag", item: jewel }, bag(0), p, tpl, bonus), { act: "upgrade", payload: { itemId: "s", jewelId: "j" } });
+  assert.deepEqual(dragCommand({ kind: "bag", item: jewel }, bag(2), p, tpl, bonus)?.act, "upgrade");
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(1), p, tpl, bonus)?.act, "move_item");
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(9), p, tpl, bonus)?.act, "move_item");
+  // không có levelBonus (server cũ) → như kéo thả thường
+  assert.equal(dragCommand({ kind: "bag", item: jewel }, bag(0), p, tpl)?.act, "move_item");
+  assert.ok(upgradable(tpl.get("sword"), bonus) && !upgradable(tpl.get("bless"), bonus) && !upgradable(undefined, bonus));
+  // option Life: +4 / cấp vào đòn (vũ khí) hoặc thủ (giáp)
+  const s = leveled(tpl.get("sword")!, 1, bonus, 2, 4);
+  assert.deepEqual([s.attackMin, s.attackMax], [3 + 3 + 8, 7 + 3 + 8]);
+  assert.equal(leveled(tpl.get("helm")!, 0, bonus, 1, 4).defense, 9);
+});
+
+test("giao dịch (P5-M4): dòng thông báo theo kết quả", async () => {
+  const { tradeResultText } = await import("../src/logic/items.js");
+  assert.equal(tradeResultText("done", "Ann"), "Giao dịch với Ann thành công.");
+  assert.equal(tradeResultText("declined", "Ann"), "Ann từ chối giao dịch.");
+  assert.equal(tradeResultText("disconnect", "Ann", "Bob"), "Giao dịch với Ann bị hủy: Bob mất kết nối.");
+  assert.equal(tradeResultText("far", "Ann"), "Giao dịch với Ann bị hủy: hai bên ở quá xa.");
+  assert.equal(tradeResultText("cancelled", "Ann", "Ann"), "Giao dịch với Ann đã bị hủy (Ann).");
+});
+
+test("quest (P6-M2): chữ mục tiêu, thưởng, dòng theo dõi", async () => {
+  const { goalText, rewardText, trackerLine } = await import("../src/logic/quests.js");
+  assert.equal(goalText({ type: "kill", target: "spider", name: "Spider", need: 10 }, 7), "Hạ Spider 7/10");
+  assert.equal(goalText({ type: "collect", target: "ring_hp_t0", name: "Ring", need: 1 }), "Nộp Ring 1");
+  assert.equal(goalText({ type: "level", target: null, name: null, need: 10 }, 8), "Đạt cấp 10 (8/10)");
+  const r = rewardText({ exp: 100, zen: 1500, items: [{ templateId: "hp_potion_small", quantity: 5 }] }, () => "HP Potion");
+  assert.equal(r, `+100 EXP · +${(1500).toLocaleString("vi-VN")} Zen · HP Potion ×5`);
+  const q = {
+    id: "q",
+    name: "Diệt Nhện",
+    description: "",
+    minLevel: 1,
+    goals: [],
+    rewards: { exp: 0, zen: 0, items: [] },
+    objectives: [{ type: "kill" as const, target: "spider", name: "Spider", need: 10, have: 7 }],
+    complete: false,
+  };
+  assert.equal(trackerLine(q), "Diệt Nhện: Hạ Spider 7/10");
+  assert.match(trackerLine({ ...q, complete: true }), /^✔ Diệt Nhện/);
+});
+
+test("cánh (P6-M4): +N cộng thủ / % sát thương / % hấp thụ; tooltip hiện %", async () => {
+  const { leveled, shortDesc } = await import("../src/logic/items.js");
+  const w = { templateId: "wing_satan", name: "Wings of Satan", type: "WING", slot: "WING", stackable: false, defense: 10, damageIncrease: 12, absorb: 12, iconRef: { group: 12, index: 2 }, buyPrice: 0, sellPrice: 0 };
+  const bonus = { WING: { defense: 1, damageIncrease: 2, absorb: 2 } };
+  const l = leveled(w, 3, bonus);
+  assert.deepEqual([l.defense, l.damageIncrease, l.absorb], [13, 18, 18]);
+  assert.equal(shortDesc(w, 0, bonus), "Phòng thủ +10, Sát thương +12%, Hấp thụ 12%");
+});
+
+test("P7: +10 / +11 cộng chỉ số gấp đôi; tooltip cánh cấp 2", async () => {
+  const { bonusLevels, shortDesc } = await import("../src/logic/items.js");
+  const high = { fromLevel: 10, multiplier: 2 };
+  assert.deepEqual([9, 10, 11].map((l) => bonusLevels(l, high)), [9, 11, 13]);
+  assert.equal(bonusLevels(11, null), 11);
+  const sword = { templateId: "s", name: "S", type: "WEAPON", slot: "WEAPON", stackable: false, attackMin: 3, attackMax: 7, iconRef: { group: 0, index: 0 }, buyPrice: 0, sellPrice: 0 };
+  assert.equal(shortDesc(sword, 10, { WEAPON: { attack: 3 } }, 0, 0, high), "Tấn công +36~40");
+});
+
+test("Glide (DEC-186): chạy đều theo tốc độ, không đứng chờ; tụt xa thì đuổi; nhảy xa thì đặt thẳng", async () => {
+  const { Glide } = await import("../src/state/interp.js");
+  const g = new Glide(5, 3);
+  g.reset(0, 10, 10);
+  assert.deepEqual(g.at(0), { x: 10, y: 10 });
+  // ô mới: chạy 5 ô / giây
+  g.at(990);
+  g.push(1000, 11, 10);
+  g.at(1000);
+  // ~5 ô / giây (100 ms ≈ nửa ô)
+  assert.ok(Math.abs(g.at(1100)!.x - 10.5) < 0.1);
+  // ô kế tới trước khi tới nơi → chạy tiếp, không dừng
+  g.push(1200, 12, 10);
+  const a = g.at(1200)!.x;
+  assert.ok(a > 10.9 && a < 11.5);
+  assert.ok(g.at(1300)!.x > a);
+  // đứng yên khi tới đích
+  g.at(2000);
+  assert.deepEqual(g.at(2100), { x: 12, y: 10 });
+  // tụt 2 ô (mạng giật): đuổi nhanh hơn 5 ô / giây (vẽ mỗi khung hình nên at() gọi liên tục)
+  g.at(2990);
+  g.push(3000, 14, 10);
+  g.at(3000);
+  assert.ok(g.at(3100)!.x - 12 > 0.5);
+  // cùng vị trí: bỏ qua; hồi sinh / qua cổng (> 3 ô): đặt thẳng
+  g.push(3200, 14, 10);
+  g.push(4000, 40, 40);
+  assert.deepEqual(g.at(4000), { x: 40, y: 40 });
 });

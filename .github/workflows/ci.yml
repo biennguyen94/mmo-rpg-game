@@ -82,3 +82,235 @@ jobs:
         run: mix mu.items.import --check
       - name: Chạy test
         run: mix test --warnings-as-errors
+
+  # E2E trình duyệt thật trên server thật (client/e2e): smoke 1280/360px + 16 mục nghiệm thu KB_00 §7
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: [test, client]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      MIX_ENV: dev
+      LANG: C.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25"
+          elixir-version: "1.17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache thư viện và bản biên dịch
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-dev-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-dev-${{ runner.os }}-
+
+      - run: mix deps.get
+      - name: Build client
+        working-directory: client
+        run: npm install --no-audit --no-fund && npm run build
+      - name: Cài Playwright + Chromium (chỉ cho test, không lưu vào package.json)
+        working-directory: client
+        run: npm install --no-save --no-audit --no-fund playwright && npx playwright install --with-deps chromium
+      - name: DB + icon_map (placeholder)
+        run: mix ecto.setup && mix mu.icons.index
+      - name: Chạy server
+        # TRUSTED_PROXIES: e2e skill đăng ký mỗi tài khoản từ một X-Forwarded-For riêng (giới hạn đăng ký theo IP)
+        env:
+          TRUSTED_PROXIES: 127.0.0.1
+        # --sname mu: e2e event (P6-M5) bật / tắt event bằng `mix mu.event … --node mu@host`
+        run: |
+          elixir --sname mu -S mix phx.server > server.log 2>&1 &
+          for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
+          cat server.log; exit 1
+      - name: E2E smoke (desktop 1280px + mobile 360px)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: mkdir -p e2e-shots && node client/e2e/smoke.mjs http://localhost:4000 e2e-shots
+      - name: E2E nghiệm thu (16 mục KB_00 §7, 2 người chơi)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/acceptance.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — tạo DW/ELF, Elf bắn xa
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/classes.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — skill theo class (buff, heal, teleport, lặp skill)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/skills.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — cổng Lorencia ↔ Noria, NPC, quái mới
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/maps.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — chat (NORMAL, WHISPER, chống XSS, mobile)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/chat.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 2 — Hộp thư + Bản đồ
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/mail_map.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 3 — Mất kết nối / nối lại
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/reconnect.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 3 — Kho
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/warehouse.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 3 — Nhóm
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/party.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 3 — Nhiều nhân vật + MG
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/mg.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 4 — PvP / PK
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/pvp.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 4 — Duel
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/duel.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 4 — Guild
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/guild.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 4 — Guild war
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/guildwar.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 5 — Upgrade
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/upgrade.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 5 — Trade
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/trade.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Ranking
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/ranking.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Quest
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/quest.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Chaos Machine + Wings
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/chaos.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 6 — Event thế giới (boss, Golden Invasion)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/events.mjs http://localhost:4000 e2e-shots
+      - name: E2E Phase 7 — +10 / +11, cánh cấp 2
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/client/node_modules/playwright/index.mjs
+          CHROMIUM_PATH: none
+        run: node client/e2e/phase7.mjs http://localhost:4000 e2e-shots
+      - name: Ảnh + log server
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ github.run_id }}
+          path: |
+            e2e-shots/
+            server.log
+
+  # Hắc Long (reference/rpg-game): project Elixir riêng nằm trong repo này nên workflow của nó
+  # (reference/rpg-game/.github/workflows) không được GitHub chạy — chạy ở đây (FEATURE_CATALOG N4).
+  hac-long:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: reference/rpg-game
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      MIX_ENV: test
+      LANG: C.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25"
+          elixir-version: "1.17"
+
+      - name: Cache thư viện và bản biên dịch
+        uses: actions/cache@v4
+        with:
+          path: |
+            reference/rpg-game/deps
+            reference/rpg-game/_build
+          key: hl-mix-${{ runner.os }}-${{ hashFiles('reference/rpg-game/mix.lock') }}
+          restore-keys: hl-mix-${{ runner.os }}-
+
+      - run: mix deps.get
+      - name: Kiểm tra định dạng code
+        run: mix format --check-formatted
+      - name: Biên dịch (cảnh báo là lỗi)
+        run: mix compile --warnings-as-errors
+      - name: Kiểm cú pháp JS giao diện
+        run: for f in priv/static/js/*.js; do node --check "$f"; done
+      - name: Chạy test
+        run: mix test

@@ -1,6 +1,7 @@
-// Hành vi tấn công (§19.9): chọn "Tấn công thường" → tự đánh liên tục theo nhịp cooldown tới
-// khi quái chết / người chơi click-to-move / mất mục tiêu. Ngoài tầm → move_to tiến lại gần
-// (đi thẳng). Skill dùng MỘT lần rồi quay về đánh thường; NO_MANA → đánh thường.
+// Hành vi tấn công (§19.9): chọn "Tấn công thường" hoặc một skill → tự đánh liên tục theo nhịp
+// cooldown tới khi quái chết / người chơi click-to-move / mất mục tiêu. Ngoài tầm → move_to
+// tiến lại gần (đi thẳng). P2-M3: skill đã chọn được LẶP LẠI (DW đánh bằng Energy Ball);
+// NO_MANA → bỏ skill, đánh thường.
 import { chebyshev } from "../net/protocol.js";
 
 export type Action =
@@ -19,7 +20,7 @@ export interface TargetInfo extends Pos {
 
 export class AutoAttack {
   target: string | null = null;
-  /** Skill sẽ dùng ở lượt đánh tới (null = đánh thường). */
+  /** Skill dùng mỗi lượt (null = đánh thường). */
   pendingSkill: string | null = null;
   private nextAt = 0;
   private lastMove: string | null = null;
@@ -66,11 +67,7 @@ export class AutoAttack {
     this.lastMove = null;
     if (now < this.nextAt) return null;
     this.nextAt = now + cooldownMs;
-    if (this.pendingSkill) {
-      const id = this.pendingSkill;
-      this.pendingSkill = null;
-      return { act: "skill", id, target: this.target };
-    }
+    if (this.pendingSkill) return { act: "skill", id: this.pendingSkill, target: this.target };
     return { act: "attack", target: this.target };
   }
 }

@@ -311,6 +311,20 @@
       "lines": [
         "Mùa nào lễ nấy! Mang quà lễ hội tới đây đổi thưởng nhé."
       ]
+    },
+    {
+      "id": "chaos",
+      "name": "Lão Hỗn Nguyên",
+      "sprite": "chaos",
+      "at": [
+        20,
+        6
+      ],
+      "role": "chaos",
+      "lines": [
+        "Bỏ đồ vào máy, thêm ngọc, cầu trời. Thành thì có cánh, hỏng thì mất sạch.",
+        "Đồ đã khóa thì ta không nhận, kẻo cậu lỡ tay."
+      ]
     }
   ],
   "spawns": []

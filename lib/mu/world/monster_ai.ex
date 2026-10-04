@@ -64,7 +64,10 @@ defmodule Mu.World.MonsterAi do
         m = %{m | state: "attack", path: []}
 
         if ctx.now >= m.next_attack_at,
-          do: {%{m | next_attack_at: ctx.now + ctx.cooldown_ms}, [{:attack, m.target}]},
+          # boss (P6-M5): nhịp đánh riêng `attackCooldownMs`
+          do:
+            {%{m | next_attack_at: ctx.now + (m.tpl["attackCooldownMs"] || ctx.cooldown_ms)},
+             [{:attack, m.target}]},
           else: {m, []}
 
       true ->

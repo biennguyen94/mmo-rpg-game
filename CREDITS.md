@@ -12,7 +12,15 @@ commit `a6ea1655db5c044829d9eea19a232fa6fcac87b0`).
   Bảng đầy đủ (file trong game → file gốc → hash): `priv/static/assets/mapping.json`.
 - Cảm ơn các họa sĩ của Dungeon Crawl Stone Soup và RLTiles:
   https://github.com/crawl/tiles/blob/master/ARTISTS.md
-- Không dùng DCSS cho lớp trang bị nhân vật (KB_ASSETS §2.1): DK chỉ có thân người (`human_m.png`).
+- Không dùng DCSS cho lớp trang bị nhân vật (KB_ASSETS §2.1): mỗi class một hình cố định — DK
+  thân người (`player/base/human_m.png`), DW `mon/necromancer.png`, ELF `mon/deep_elf_master_archer.png`
+  (thêm ở P2-M2, cùng commit và cùng cách đối chiếu).
+- P2-M4: 12 quái mới, 3 NPC, tile Noria và ô cổng (Lorencia + Noria) — cùng commit, cùng cách đối
+  chiếu (license + hash từng file); danh sách đầy đủ trong `mapping.json`.
+- P3-M3: NPC Thủ kho (Lorencia + Noria) dùng `mon/halfling.png` — cùng commit, cùng cách đối chiếu.
+- P3-M5: Magic Gladiator dùng `mon/hell_knight.png` (một hình cố định như các class khác) — cùng commit, cùng cách đối chiếu.
+- P6-M2 / P6-M3: Quest Master (Lorencia + Noria) và Chaos Goblin (Noria) **dùng lại** file đã có
+  trong repo (`mon/necromancer.png`, `mon/goblin.png`), không tải thêm; ghi trong `mapping.json`.
 
 ## Do dự án tự làm
 

@@ -349,7 +349,10 @@ defmodule HacLong.Game.Simulator do
       daily_xp: st.daily_xp,
       daily_done: st.daily_done,
       chests: st.chests,
-      chest_gold: st.chest_gold
+      chest_gold: st.chest_gold,
+      # ngọc ép đồ nhặt được (bot không dùng, không bán)
+      jewels:
+        Data.jewels().weights |> Map.keys() |> Enum.map(&Map.get(p.inv, &1, 0)) |> Enum.sum()
     }
   end
 end

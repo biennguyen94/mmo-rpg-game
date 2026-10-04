@@ -146,3 +146,323 @@ Trạng thái mục cũ: **E6 vẫn mở** — chưa có `priv/reference/items_r
 | M6-1 | **E7 — ĐÓNG (b), DEC-53** (npm): anh chọn (a) mở registry, nhưng phiên đang chạy vẫn nhận 403 (thử lại 2026-10-03 sau khi anh sửa mạng: `raw.githubusercontent.com` và `github.com` đã mở, `registry.npmjs.org` **vẫn 403**) (cả đi thẳng lẫn qua proxy phiên) — thay đổi mạng có lẽ chỉ áp dụng cho phiên/container mới | `PhaserView` chưa làm; mở phiên mới trên môi trường đã sửa để em làm nốt (interface `GameView` sẵn sàng) |
 | M6-2 | **G26** (bầy Spider) — vẫn chờ anh chọn a/b/c | Giữ nguyên số |
 | M6-3 | Cân bằng: xem `docs/ACCEPTANCE.md §3` (Q14, G26, kinh tế potion, Twisting Slash ở cấp 10) | Chờ anh |
+
+## P2. Câu hỏi Phase 2 (kế hoạch: `docs/PHASE2_PLAN.md`) — ⛔ = chặn milestone
+
+| # | Câu hỏi | Đề xuất của em (chỉ làm sau khi anh đồng ý) |
+|---|---|---|
+| P2-1 | `CLAUDE.md` quy tắc 3 "Chỉ làm Phase 1" mâu thuẫn với yêu cầu làm Phase 2 | Đổi thành "Chỉ làm phase đang mở (hiện tại: Phase 2)" — câu đầy đủ ở `PHASE2_PLAN.md §0`; em không tự sửa |
+| P2-2 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M2_M3.md`) | `maxLevel` Phase 2? (Phase 1 = 10; `KB_CONFIG §1` master = 400) | Theo map cao nhất làm ở Phase 2, vd 30 nếu có Lorencia + Noria/Devias; chỉnh bằng simulator |
+| P2-3 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M2_M3.md`) | Tạo nhân vật DW/Elf: map xuất phát, Zen, đồ khởi đầu theo class? (`newCharacter` hiện cố định DK, Lorencia) | Mọi class bắt đầu Lorencia, Zen 0, không đồ (giống DK) cho tới khi có map Noria |
+| P2-4 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M2_M3.md`) | **Số liệu skill** DW (vd Energy Ball, Fire Ball, Lightning, Teleport…) và Elf (vd Triple Shot; support Healing, Greater Defense, Greater Damage — `KB_REFERENCE §1`): `manaCost`, `cooldownMs`, `range`, `radius`, `damageMultiplier`, `targetType`, `requiredLevel`. Buff: thời hạn, công thức cộng (theo energy?), cộng dồn? Heal: công thức? Mục tiêu buff khi chưa có party (Phase 3): chỉ bản thân hay mọi người chơi? Học skill vẫn theo `requiredLevel` (§7) hay qua scroll/NPC? | Anh cho danh sách skill + số; hoặc em đề xuất bảng IMPLEMENTATION để anh duyệt. Học theo `requiredLevel` như Phase 1. Buff Elf: bản thân + người chơi khác được chọn làm target |
+| P2-5 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M2_M3.md`) | Cung/nỏ: chiếm cả slot khiên? cần mũi tên (item tiêu hao)? tầm `basic_attack` theo vũ khí (cung, staff) lấy ở đâu? DW đánh thường bằng staff là cận chiến hay phép? | Cung 2 tay (khóa SHIELD), **không** dùng mũi tên; `basic_attack` có `range` theo loại vũ khí trong config (vd melee 1, bow 5, staff 1) |
+| P2-6 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M2_M3.md`) | **E6 vẫn mở:** cần `priv/reference/items_raw.json` (hoặc Item.txt) để nhập staff/bow/giáp DW-Elf theo `KB_ITEM_REFERENCE §3`. Item nào vào Phase 2 (tier nào, bao nhiêu món)? Staff có "magic power" riêng không (công thức DW §4.1 chỉ dùng `weapon.attackMax`)? | Mỗi class 1–2 tier vũ khí + bộ giáp tier thấp nhất class dùng được; staff dùng cột Dmg như vũ khí khác theo §4.1 |
+| P2-7 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (`docs/PHASE2_PROPOSAL_M4.md`) | **Quái mới:** loại nào, map nào, chỉ số (level, hp, damage, defense, attackRate, defenseRate, exp, aggroRange, speed, respawn), có quái đánh xa không? KB chỉ có Spider (`KB_CONFIG §4`); `KB_ASSETS §7` nói 6–10 quái mỗi map mới | Anh cho bảng; hoặc em đề xuất IMPLEMENTATION theo đường cong EXP hiện có để duyệt |
+| P2-8 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (DEC-56) | **UI túi đồ Phase 2:** `KB_CONFIG §6` ghi Phase 1 là danh sách "không phải lưới 8x8"; Phase 2 có chuyển sang lưới 8×8 không? Item chiếm nhiều ô theo `reference.cells` (X×Y) hay mỗi item 1 ô? Kéo thả cụ thể (kéo lên slot trang bị = equip, kéo ra ngoài = drop có hỏi xác nhận?) — §19 chưa có hình | Lưới 8×8, **mỗi item 1 ô** (đơn giản, khớp 64 slot hiện có), kéo thả + vẫn giữ nút `[Trang bị]` cho mobile; drop hỏi xác nhận |
+| P2-9 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** (DEC-58) | `drop {itemId}`: item ra mặt đất (location `GROUND` là `LATER_VERSION`, `KB_TECHNICAL §9`) hay hủy? | Ra mặt đất **trong bộ nhớ MapServer** như drop của quái (không thêm location DB), xóa khỏi DB trong transaction + `item_audit_log` `DROP`; ai cũng nhặt được sau `lootProtectSeconds`; mất sau `groundItemSeconds` (item mất hẳn) |
+| P2-10 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | **Map Phase 2:** làm map nào ngoài Lorencia (Noria/Devias/Dungeon — level vào `verified:false`)? Kích thước, layout (em tự vẽ hay anh có Tiled)? Portal nối ở đâu? Có cần đổi `KB_TECHNICAL §5` cho chuyển map (event mới hay dùng `player` + `spawn`)? | 1 map thêm (Noria), em tự dựng layout + tile DCSS; portal là ô đặc biệt trong map JSON; chuyển map = server đẩy lại payload như join (cần `CHANGE_REASON`) |
+| P2-11 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | NPC/Shop mới: NPC nào, bán gì, giá? (giá hiện là placeholder IMPLEMENTATION) | 1 NPC vũ khí/giáp ở Lorencia bán đồ tier thấp; giá = `buyPrice` từ template |
+| P2-12 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | **Chat (§16):** độ dài tối đa, rate-limit, phạm vi NORMAL (cả map hay bán kính), WHISPER tìm theo tên nhân vật (offline → mã lỗi nào?), danh sách từ cấm (ai cung cấp?), mute/report: ai mute (admin, cách nào)? Lịch sử chat có lưu DB không? | 100 ký tự, 1 tin/giây (burst 5), NORMAL = cả map, WHISPER offline → `INVALID_TARGET`, lọc từ cấm từ file config (anh cung cấp danh sách), mute bằng mix task admin, không lưu DB |
+| P2-13 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | **Hộp thư:** `§19.10` yêu cầu bổ sung vào `KB_TECHNICAL` bảng `mail` + `mail_list/mail_claim/mail_delete` — em không được sửa `docs/kb/`. Ai gửi mail (mix task admin, mail chào mừng khi tạo nhân vật)? Mail theo nhân vật hay tài khoản? Đề xuất schema để anh chép vào KB: `mail(id, character_id, kind, title, body, zen, item_template_id, item_quantity, read_at, claimed_at, created_at, expires_at)`; action `mail_list {}` → event `mail {items}`, `mail_claim {mailId}`, `mail_delete {mailId}` (chỉ mail đã đọc/đã nhận) | Như cột trái, mail theo nhân vật, nhận quà trong 1 transaction + `item_audit_log` `MAIL_CLAIM`, mail chào mừng khi tạo nhân vật |
+| P2-14 **ĐÃ QUYẾT 2026-10-03: theo đề xuất** | Panel Bản đồ §19.12: hiện cả quái/người chơi khác không? Ký hiệu 🏠 lấy từ đâu (vùng safe zone?) | Chỉ bản thân, NPC, portal, vùng safe zone; không hiện quái/người khác |
+| P2-15 **ĐÃ LÀM 2026-10-03: danh sách 21 mục ở `docs/ACCEPTANCE_PHASE2.md §1`** | Danh sách nghiệm thu Phase 2 (KB_00 §7 chỉ có cho Phase 1) | Em soạn dựa trên scope Phase 2 ở P2-M7 để anh duyệt |
+| P2-16 | Durability giảm khi chết/đánh (§11, "CONFIG") — số chưa có; làm ở Phase 2 không? | Để sau (không có số), ghi BACKLOG |
+| P2-17 | Monster AI §9: trạng thái SEARCH và "sleep khi vùng không có người" — vùng = gì khi AOI là Phase 3? | Sleep theo map không có người chơi; SEARCH = IDLE quét aggro (đã có) |
+
+### P2-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M1-1 | **Protocol:** `move_item.to.location` = `EQUIPMENT` có cần hỗ trợ không? | Không: trả `INVALID_SLOT`; kéo vào ô trang bị → client gửi `equip`, kéo ra → `unequip` (DEC-59) |
+| P2M1-2 | Giới hạn nhóm lệnh đồ 5 lệnh/giây (`rateLimit.cmd.categories.item`) có đủ khi sắp xếp túi nhanh? | Giữ nguyên; vượt thì client báo "gửi quá nhanh". Nếu chơi thử thấy vướng, tăng `limit` trong config |
+| P2M1-3 | Vứt đồ trong safe zone? Người vứt có quyền nhặt trước `lootProtectSeconds`? | Cho vứt ở mọi nơi; người vứt giữ quyền nhặt 10 s như đồ quái rơi (P2-9) |
+
+### P2-M2. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M2-1 | **Protocol:** event `spawn` của người chơi thêm `class` (để vẽ sprite theo class); `player.view` thêm `attackRange`; reply join thêm `config.twoHandedWeaponTypes` và `weaponType` trong `data.items` | Đã thêm (chỉ thêm trường, không đổi trường cũ) |
+| P2M2-2 | **HTTP:** `GET /characters` thêm `classes: [{id, name}]` (danh sách class tạo được, mục đầu mặc định) | Đã thêm; `POST /characters` nhận `class` như KB (thiếu = `defaultClass`, ngoài danh sách → `INVALID_CLASS`) |
+| P2M2-3 | **Cân bằng (simulator thật, 20 lần):** Elf cầm cung gần như không mất máu với Spider (0,08 máu/con) vì bắn hạ trước khi Spider tới; DW có gậy mất 2 máu/con; DK tay không 3,1 | Chấp nhận cho map đầu; xem lại khi có quái đánh xa / nhanh ở P2-M4 |
+| P2M2-4 | Đồ Pad/Vine/gậy/cung chưa có nguồn nhặt (Spider chưa rơi, shop chưa bán) — chỉ có đồ khởi đầu | Đúng kế hoạch: bảng drop + NPC vũ khí/giáp ở P2-M4. Có cần cho Spider rơi sớm không? |
+| P2M2-5 | Số tạm của 12 template (`data/items/phase2.json`), index bộ Vine | Chờ Item.txt (E6) |
+
+### P2-M3. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M3-1 | **Protocol:** `snapshot` của người chơi thêm `mp`; `combat` thêm `skill` + `heal` / `buff` (skill hỗ trợ); `player.view.buffs`; `data.skills` thêm `class, category, targetType, center, radius, cooldownMs` | Đã thêm (chỉ thêm trường) — DEC-66, DEC-67 |
+| P2M3-2 | Teleport: ô đích chỉ cần đi được + trong tầm 6 (Chebyshev), **không** kiểm tầm nhìn / tường chắn giữa đường; vào / ra thị trấn được | Theo đề xuất §5.2; nếu muốn chặn xuyên tường thì cần luật line-of-sight |
+| P2M3-3 | Triple Shot: mục tiêu + tối đa 2 quái gần nhất trong 1 ô quanh mục tiêu (chưa có hình nón / hướng bắn) | Theo đề xuất §5.3 |
+| P2M3-4 | Buff lên người chơi khác dùng được với mọi người (chưa có party). Buff không cộng vào số Phòng thủ ở panel Nhân vật (panel hiện chỉ số gốc; buff hiện riêng ở góc trên) | Theo §5.4 |
+| P2M3-5 | Flame khi tự đánh: bắn vào ô của quái đang đánh (chưa có chọn ô tự do cho Flame) | DEC-69 |
+
+### P2-M4 (chuẩn bị). Phát hiện khi soạn bảng số
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| P2M4-1 | Công thức §4.1 cho sát thương người chơi tăng chậm theo stat → máu quái để "~5 s/con" gần như phẳng theo cấp (66 → 155); tiến bộ chủ yếu nhờ đồ | Chấp nhận cho Phase 2; muốn quái "trâu" hơn ở cấp cao thì anh tăng hệ số §4.1 trong KB |
+| P2M4-2 | **Protocol:** event mới `map_change {map, player, entityId}` khi qua cổng (cần `CHANGE_REASON` ở KB_TECHNICAL §5) | Như `PHASE2_PROPOSAL_M4.md §2` |
+
+### P2-M4. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M4-3 | **KB_TECHNICAL §5 cần anh bổ sung** (em không sửa `docs/kb/`): event `map_change {map, entityId, player}` + `CHANGE_REASON: P2-M4 chuyển map qua cổng`; `error` có thể kèm `reason/map/levelRequired`; `map.portals` trong reply join | Đã làm theo P2M4-2 (anh duyệt "theo đề xuất hết") |
+| P2M4-4 | **Cân bằng (simulator thật, 10 lần, `--monster auto --progress --skills`):** cấp 1 → 30 ≈ 907 con; DK 115 phút / 330 potion; DW 72 phút / **725 potion**; ELF 76 phút / 260 potion; không chết. Zen kiếm được ≈ 63.000 — DW cần ~72.500 Zen potion nhỏ → **thiếu Zen** nếu chỉ mua potion | Đề xuất xem lại khi chơi thử: tăng Zen quái cấp ≥ 10, hoặc tăng tỉ lệ rơi potion, hoặc giảm sát thương quái với DW (simulator chưa tính thả diều / Heal của Elf) |
+| P2M4-5 | Budge Dragon dời sang đông bắc (DEC-72) để đường lên cổng an toàn | Đã làm |
+| P2M4-6 | **G26** (bầy Spider): giữ phương án c (giữ nguyên) như trước | Không đổi |
+
+### P2-M5. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M5-1 | **Danh sách từ cấm** (`chat.bannedWords` trong `priv/game_data/config.json`) đang **rỗng** — anh cung cấp danh sách | Cơ chế lọc đã có + test |
+| P2M5-2 | Chặn người chơi / báo cáo tin nhắn (repo nền có, KB §16 nhắc "mute/report") cần bảng DB ngoài §9 | Chưa làm; nếu cần thì anh bổ sung bảng vào KB_TECHNICAL §9 |
+| P2M5-3 | **Protocol:** bản sao WHISPER của người gửi có thêm `to`; chat không có lịch sử khi vào game (tin chỉ tới người đang online) | Đã làm |
+
+### P2-M6. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Câu hỏi | Đã làm |
+|---|---|---|
+| P2M6-1 | **KB_TECHNICAL cần anh bổ sung** (em không sửa `docs/kb/`): §9 bảng `mail` (migration `20261004000000_create_mail.exs`, CHANGE_REASON); §5 act `mail_list {}`, `mail_claim {mailId}`, `mail_delete {mailId}` hoặc `{read: true}` (xóa mọi thư đã đọc, cho nút [Xóa đã đọc]), event `mail {unread, items?}`; nhóm rate-limit `mail` 5 lệnh / giây | Đã làm theo đề xuất P2-13 |
+| P2M6-2 | Mail chào mừng **không kèm quà** (§19.10 chỉ có lời chào, không có số) | Muốn tặng quà khởi đầu thì anh cho số (Zen / item) |
+| P2M6-3 | Mở panel = đánh dấu mọi thư đã đọc (badge tắt, §19.10); lọc [Chưa đọc] dùng trạng thái lúc mở | Đã làm |
+| P2M6-4 | Thư hết hạn sau 30 ngày (`mail.expireDays`): không hiện, không nhận được; chưa có job xóa hẳn row hết hạn | Thêm dọn định kỳ khi cần |
+| P2M6-5 | Gửi thư hàng loạt (mọi nhân vật) chưa có; quản trị gửi từng người bằng `mix mu.mail send` | Theo đề xuất |
+
+### P2-M7. Nghiệm thu Phase 2 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE2.md`
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| B-1 **ĐÃ QUYẾT 2026-10-03: (a), đã làm** | Vùng tân thủ Lorencia không an toàn: Lich / Elite Bull Fighter cách mép nam vùng Spider 2 ô, Bull Fighter cách mép bắc 5 ô (soak: bot cấp 1 chết 185 lần / 10 phút, Phase 1 là 14) | (a) dời vùng (khuyến nghị) / (b) giảm aggroRange / (c) giữ |
+| B-2 | DW thiếu Zen mua potion (simulator) | tăng Zen quái cấp ≥ 10 hoặc tỉ lệ potion |
+
+## P3. Câu hỏi Phase 3 (kế hoạch: `docs/PHASE3_PLAN.md`) — ⛔ = chặn milestone
+
+| # | Câu hỏi | Đề xuất của em (chỉ làm sau khi anh đồng ý) |
+|---|---|---|
+| P3-1 | `CLAUDE.md` quy tắc 3 vẫn "Chỉ làm Phase 1" | "Chỉ làm phase đang mở (hiện tại: Phase 3)" — câu đầy đủ ở `PHASE3_PLAN.md §0`; em không tự sửa |
+| P3-2 **ĐÃ LÀM (P3-M5, a)** | **MG mở ở cấp 220** (`mg.unlockLevel`) nhưng `maxLevel` hiện 30 → MG không bao giờ mở | (a) **đề xuất**: Phase 3 đặt `mg.unlockLevel` = 20 (IMPLEMENTATION, ghi lý do), giữ maxLevel 30; (b) nâng maxLevel lên ≥ 220 (cần nhiều quái / map mới, ngoài scope); (c) bỏ điều kiện, MG tạo được ngay |
+| P3-3 **ĐÃ LÀM (P3-M5)** | **Nhiều nhân vật**: `maxCharacters` 4 — màn chọn nhân vật (§19 không vẽ); có cho **xóa** nhân vật không? Một tài khoản chỉ một nhân vật online (single login) | Màn chọn: danh sách tối đa 4 (tên, class, cấp, map) + [Vào game] + [Tạo nhân vật] khi còn chỗ; **chưa cho xóa** ở Phase 3; vẫn một nhân vật online / tài khoản |
+| P3-4 **ĐÃ LÀM (P3-M5)** | **MG**: skill nào? Đồ khởi đầu? Cấp khởi đầu? (MU bản sau MG bắt đầu cấp cao; KB không nói) | MG dùng lại skill DK (Falling Slash, Twisting Slash, Death Stab — sức mạnh vật lý) + DW (Energy Ball, Fire Ball, Lightning — dùng `attackPowerMagic` / `attackSpeedMagic` §4.1); **cấp 1**, đồ khởi đầu `sword_t0`; không đội mũ (§6); 7 stat / cấp, 26 mỗi stat (KB) |
+| P3-5 **ĐÃ LÀM (P3-M4)** | **Party — protocol + luật** (§12 chỉ liệt kê thao tác, `KB_TECHNICAL §5` chưa có act): (1) act; (2) chia EXP; (3) loot; (4) đồng bộ HP / vị trí; (5) UI; (6) khác map / offline | (1) act `party_invite {to}` (tự lập nhóm nếu chưa có), `party_accept {from}`, `party_decline {from}`, `party_leave {}`, `party_kick {name}`, `party_disband {}` (chỉ trưởng nhóm); event `party {leader, members: [{name, class, level, hp, maxHp, mapId, online}]}`, `party_invite {from}`. (2) Quái chết: mọi thành viên **cùng map, còn sống, trong `party.expRange` (20) ô** của quái chia đều `exp × (1 + 0,1 × (số người nhận − 1))`, phạt chênh cấp áp riêng từng người; Zen như cũ (người ra đòn cuối). (3) Loot protect: chủ hoặc cùng nhóm với chủ. (4) Event `party` 2 lần / giây khi HP / vị trí đổi. (5) Khung nhóm bên trái dưới HUD (tên, class, thanh HP, "khác map"); mời bằng click người chơi → [Mời vào nhóm]; lời mời hiện hộp [Đồng ý] / [Từ chối] 30 s; chat `PARTY` bật. (6) Nhóm chỉ trong RAM; mất kết nối quá `reconnectGraceSeconds` thì rời nhóm; trưởng nhóm rời → người vào sớm nhất làm trưởng |
+| P3-6 **ĐÃ LÀM (P3-M3)** | **Warehouse**: NPC nào, ở đâu? Có cất Zen (schema §9 không có cột)? Phí? UI (§19 không vẽ) | NPC mới "Warehouse Keeper" ở thị trấn Lorencia + Noria; **không cất Zen, không phí** (schema chưa có); panel full-screen: lưới kho 15×8 + lưới túi 8×8 (mobile xếp dọc), kéo thả / nút [Gửi] / [Rút] trong tooltip; chỉ mở trong tầm `npcRange` |
+| P3-7 | **AOI**: chat NORMAL vẫn cả map hay theo tầm nhìn? Minimap (§19.12) đã chỉ hiện mình / NPC / cổng nên không ảnh hưởng | Giữ chat NORMAL cả map (P2-12); AOI chỉ áp cho `spawn` / `despawn` / `snapshot` / `combat` |
+| P3-8 | **Reconnect**: trong 30 s chờ, nhân vật đứng yên (dừng tự đánh) và vẫn bị đánh; tab mới của cùng tài khoản vào lại thì tiếp quản | Như cột trái (đúng §4); thông báo "Đã kết nối lại" |
+| P3-9 **ĐÃ LÀM (P3-M6)** | Danh sách nghiệm thu Phase 3 | Em soạn ở P3-M6 (như P2-15) |
+| P3-10 | **KB_TECHNICAL §5** cần anh bổ sung act / event party (+ warehouse nếu cần act riêng) sau khi chốt P3-5, P3-6 | Em ghi `CHANGE_REASON` khi làm |
+
+### P3-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M1-1 **ĐÃ QUYẾT 2026-10-03: giữ KB** | **Map hiện tại 64×64 = 4×4 ô AOI**, tầm nhìn 3×3 ô (48×48) phủ 56–100 % map → AOI tiết kiệm ít (soak 20 bot, nửa ở thị trấn: −21 % byte; cả 20 bot săn Spider: −5 %) | Giữ đúng KB (DEC-85). Lợi ích lớn khi map rộng hơn / đông người hơn; nếu anh muốn thấy rõ ngay thì có thể giảm `aoiCellSize` (vd. 12) — đổi số KB, cần anh quyết |
+| P3M1-2 | Lọc ở kênh, MapServer vẫn broadcast trong máy (DEC-84) | Đổi sang gửi riêng từ MapServer khi cần (nhiều node / rất đông) |
+
+### P3-M2. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M2-1 | Đóng tab / tải lại trang cũng tính là mất kết nối (nhân vật ở lại 30 s); chỉ nút **Đăng xuất** mới rời ngay (hoặc sau 10 s nếu đang combat) — DEC-88 | Theo KB §4; anh muốn đóng tab = đăng xuất thì báo em |
+| P3M2-2 | Rớt mạng không có gói đóng: server biết sau tối đa 60 s (timeout WebSocket Phoenix) rồi mới đếm 30 s — DEC-89 | Giữ mặc định; có thể giảm timeout (vd. 45 s) nếu cần |
+
+### P3-M3. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M3-1 | **KB_TECHNICAL §5 cần anh bổ sung** (em không sửa `docs/kb/`): event `warehouse {npcId, slots, items: [ItemView]}`; `move_item.to.location` nhận `WAREHOUSE`; `npc_open` Thủ kho trả `warehouse` thay cho `shop` (gộp vào P3-10) | Đã làm (DEC-93); không đổi schema |
+| P3M3-2 | Vị trí Thủ kho: Lorencia (11,31) giữa hai NPC bán hàng, Noria (26,54) góc tây nam thị trấn | Đổi chỗ thì sửa `priv/maps/*.json` |
+
+### P3-M4. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M4-1 | **KB_TECHNICAL §5 cần anh bổ sung** (gộp vào P3-10): act `party_invite {to}`, `party_accept {from}`, `party_decline {from}`, `party_leave {}`, `party_kick {name}`, `party_disband {}` (nhóm rate-limit `party` 5 / giây); event `party {leader, members: [{name, class, level, hp, maxHp, mapId, x, y, online}]}`, `party_invite {from}`; chat `PARTY` bật | Đã làm theo P3-5 (DEC-96 … DEC-101) |
+| P3M4-2 | Chỉ trưởng nhóm được mời (P3-5 không nói rõ) | DEC-97; muốn ai cũng mời được thì báo em |
+| P3M4-3 | Config mới (IMPLEMENTATION): `party.inviteSeconds` 30, `party.statusIntervalMs` 500; `party.maxSize` 5 / `expRange` 20 lấy từ KB_CONFIG | Đã thêm vào `config.json` |
+| P3M4-4 | Bấm người chơi khác giờ luôn mở menu (có [Đi tới đây]) thay vì đi thẳng tới đó | DEC-101 |
+
+### P3-M5. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P3M5-1 | KB §4.1 MG chỉ cho `attackPowerMagic` (đòn tối đa), không có đòn tối thiểu phép | Skill phép của MG: tối thiểu = `attackMin` thường (STR/6 + vũ khí), tối đa = ENE/4 + vũ khí (DEC-104). Muốn công thức tối thiểu riêng (vd ENE/9 như DW) thì anh cho số |
+| P3M5-2 | MG mặc được đồ nào trong 16 món Phase 2 (số tạm, chưa có Item.txt) | Theo mẫu Item.txt ở Phase 1: mọi món DK / DW không phải mũ (DEC-105); đối chiếu khi có Item.txt (E6) |
+| P3M5-3 | **KB cần anh bổ sung**: `GET /characters` có `maxCharacters` + `classes[].locked/unlockLevel`, lỗi `CLASS_LOCKED`; `player.view.attackMaxMagic / attackSpeedMagic / cooldownMsMagic`; `data.skills[].classes / magic` (gộp vào P3-10) | Đã làm, không đổi schema DB (CHECK class đã có MG) |
+| P3M5-4 | Simulator 10 lần (quái auto, đồ theo cấp, skill): MG cộng ENE 69,7 phút tới cấp 30 (574 potion), cộng STR 78,1 phút; DK 78,3; DW 72,0 (725 potion) | Cân bằng gần các class khác; MG / DW tốn potion như B-2 |
+
+### P3-M6. Nghiệm thu Phase 3 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE3.md`
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| B-7 **ĐÃ QUYẾT 2026-10-03: giữ** | Event `party` ~1,2 KB/s/bot (≈ 19 % băng thông) khi nhóm 5 người cùng di chuyển | Giữ (§12); hoặc chỉ đẩy khi HP / map / online / ô AOI đổi, hoặc `party.statusIntervalMs` 1 000 |
+| B-8 | KB_TECHNICAL §5 cần bổ sung act / event Phase 3 (P3-10: P3M3-1, P3M4-1, P3M5-3) | Anh bổ sung KB |
+| B-9 **ĐÃ LÀM** | `CLAUDE.md` quy tắc 3 (P3-1) | Sửa 2026-10-03 (DEC-179) |
+
+## P4. Câu hỏi Phase 4 "PvP & Social" (kế hoạch: `docs/PHASE4_PLAN.md`) — ⛔ = chặn milestone
+
+KB Phase 4 chỉ có `KB_GAME_DESIGN §13` (bảng mode, `NORMAL → WARNING → MURDERER`) và `§14` (guild:
+level + Zen, master / assistant / member). Mọi số dưới đây là **đề xuất IMPLEMENTATION** của em
+(tham khảo cảm giác MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt.
+
+| # | Câu hỏi | Đề xuất của em |
+|---|---|---|
+| P4-1 | `CLAUDE.md` quy tắc 3 (B-9) | "Chỉ làm phase đang mở (hiện tại: Phase 4)" — câu đầy đủ ở `PHASE4_PLAN.md §0`; em không tự sửa |
+| P4-2 **ĐÃ LÀM (P4-M1)** | **Đánh người chơi** — ai đánh được ai, bấm thế nào, AOE, sát thương | (1) `features.pvp` bật. Cả hai phải đủ `pvp.minLevel` = **6** (người mới cấp 1–5 không bị đánh và không đánh được người). Trong safe zone: không đánh được, không bị đánh. (2) Bấm người chơi → menu thêm **[⚔ Tấn công]**. Nếu đánh người NORMAL (sẽ bị tính PK), hỏi xác nhận lần đầu mỗi phiên. Tự đánh lặp như với quái. Skill đơn mục tiêu dùng được lên người. (3) **AOE chỉ trúng quái**, và trúng người đang duel / đang chiến với mình. Không trúng người trung lập, tránh PK vô ý. (4) Sát thương: pipeline §4 với `defense` / `defenseRate` của nạn nhân, nhân `pvp.damageMultiplier` = **0,5** (người chơi máu ít, đánh nhau quá nhanh nếu để 1,0). (5) Buff / heal lên người vẫn như Phase 2 |
+| P4-3 **ĐÃ LÀM (P4-M1)** | **PK + Self-defense** — ngưỡng, giảm, phạt | (1) Giết người NORMAL ngoài duel / war / tự vệ: `pkPoints` +1, ghi `last_pk_at`. (2) Trạng thái: 0 = NORMAL; 1 = **WARNING** (tên cam); ≥ 2 = **MURDERER** (tên đỏ). Ngưỡng ở config `pk.warningAt` 1, `pk.murdererAt` 2. (3) Giảm 1 điểm mỗi `pk.decayMinutes` = **60 phút** tính theo giờ thực từ `last_pk_at`; tính lại khi vào game và mỗi phút khi online. (4) **Tự vệ:** B bị A đánh trước thì B được đánh A trong `pk.selfDefenseSeconds` = **30 s** (mỗi đòn của A làm mới); giết A khi tự vệ không tính PK. Đánh hoặc giết người WARNING / MURDERER không tính PK. Người đánh trước một người NORMAL thì tên nhấp nháy cam trong 30 s (người khác biết ai gây sự). (5) **Phạt MURDERER:** không dùng được NPC (shop, kho); bị người chơi giết thì rơi **1 món ngẫu nhiên trong túi** (không phải đồ đang mặc), tỉ lệ `pk.dropChance.MURDERER` 0,5 (WARNING 0,1, NORMAL 0). Đồ rơi theo đường `drop` hiện có (giữ serial, audit). Chết vì quái không rơi đồ (§11). Không mất EXP (`expLossPercent` vẫn 0) |
+| P4-4 **ĐÃ LÀM (P4-M2)** | **Duel** — "vùng riêng" là gì, kết thúc thế nào | (1) "Vùng riêng" = **khoanh riêng hai người**: trong duel chỉ hai người đánh được nhau, người ngoài không đánh được họ và họ không đánh được người ngoài. Duel được ở mọi chỗ ngoài safe zone; **không làm map đấu trường riêng** (cần map / asset mới). (2) Act `duel_request {to}` (đứng trong 10 ô, đủ `pvp.minLevel`, không ai đang duel / war), `duel_accept {from}`, `duel_decline {from}`, `duel_cancel {}`; lời mời hết hạn sau 30 s. (3) Kết thúc: một bên về 0 HP thì **không chết**, giữ 1 HP và thua. Hoặc hết `duel.maxSeconds` = 180 s thì hòa. Hoặc một bên đi xa quá 20 ô / rời map / mất kết nối thì người đó thua. Không PK, không rơi đồ, không thưởng. (4) Event `duel {state: "request"/"start"/"end", opponent, winner?, endsAt?}`; kết quả báo cả map bằng dòng SYSTEM |
+| P4-5 **ĐÃ LÀM (P4-M3)** | **Guild** — số, quyền, DB, UI | (1) Tạo: cấp ≥ `guild.createLevel` **20**, tốn `guild.createZen` **10 000** Zen (một transaction + audit Zen). Tên 3–8 chữ / số ASCII, không trùng (không phân biệt hoa thường). Mỗi nhân vật tối đa một guild. (2) Tối đa `guild.maxMembers` **20** người. Vai trò: **master** (1), **assistant** (tối đa `guild.maxAssistants` **2**), member. (3) Quyền: master và assistant mời được; master đuổi được mọi người, assistant đuổi được member; chỉ master phong / hạ assistant và giải tán; master không rời được mà phải giải tán (chưa có chuyển master). Lời mời hết hạn sau 30 s. (4) **DB:** bảng `guilds (id, name, master_id, created_at)` và `guild_members (character_id PK, guild_id, role, joined_at)`, migration mới có **CHANGE_REASON** (KB §9 chưa có). (5) Chat GUILD bật (`/g nội dung`). Tên guild hiện dưới tên nhân vật `<Tên guild>`. (6) UI: Menu → **[🛡 Guild]** mở panel full-screen: chưa có guild thì có form tạo; có guild thì danh sách thành viên (vai trò, cấp, online), nút mời theo tên, đuổi, phong / hạ, rời, giải tán; mời cũng làm được từ menu người chơi. **Không có NPC guild riêng** |
+| P4-6 **ĐÃ LÀM (P4-M4)** | **Guild war** | (1) Master guild A gửi `guild_war_declare {guild}`; master guild B có 60 s để `guild_war_accept` / `guild_war_decline`. Mỗi guild chỉ một war một lúc. (2) Trong war, thành viên hai guild đánh nhau được ở mọi chỗ ngoài safe zone; AOE trúng người guild địch. Kill không tính PK, không rơi đồ. (3) Mỗi kill người guild địch +1 điểm. War kết thúc khi một bên đạt `guildWar.scoreToWin` **20** điểm, hoặc hết `guildWar.durationMinutes` **30** phút (điểm cao hơn thắng, bằng thì hòa), hoặc master một bên đầu hàng (`guild_war_surrender`). (4) Không thưởng (Phase 5 mới có kinh tế). Kết quả báo SYSTEM cho hai guild; tên địch hiện màu tím. War chỉ trong RAM: server khởi động lại thì hủy |
+| P4-7 | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `attack {target}` nhận cả id người chơi (`p_…`); `duel_*` (P4-4); `guild_create {name}`, `guild_invite {to}`, `guild_accept {guild}`, `guild_decline {guild}`, `guild_leave {}`, `guild_kick {name}`, `guild_promote {name}`, `guild_demote {name}`, `guild_disband {}`, `guild_war_*` (P4-6); nhóm rate-limit `pvp` 5 / giây. Event: `spawn` / `player` thêm `pkState`, `guild`; `duel`, `guild {…}`, `guild_invite {from, guild}`, `guild_war {…}`. Lỗi dùng mã sẵn có (`FORBIDDEN`, `INVALID_TARGET`, `OUT_OF_RANGE`, `REQUIREMENT_NOT_MET`, `NOT_ENOUGH_ZEN`). Em ghi `CHANGE_REASON`; anh bổ sung KB sau khi chốt |
+| P4-8 **ĐÃ LÀM (P4-M1)** | Chết vì người chơi | Hồi sinh ở thị trấn như chết vì quái (§11). Buff mất như Phase 2. Không mất EXP. Kẻ giết **không nhận EXP / Zen** (tránh nuôi nick) |
+| P4-9 **ĐÃ LÀM (P4-M5)** | Danh sách nghiệm thu Phase 4 | 12 mục, kết quả ở `docs/ACCEPTANCE_PHASE4.md` |
+| P4-10 | **KB_TECHNICAL §5 / §9** cần anh bổ sung sau khi chốt P4-2 … P4-7 | Em ghi `CHANGE_REASON` khi làm |
+
+### P4-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P4M1-1 **ĐÃ QUYẾT: theo đề xuất** | **Sát thương PvP rất thấp ở cấp thấp:** DK cấp 10 tay không, chưa cộng điểm đánh DK cấp 10 chỉ ~1 / đòn (sau thủ, × 0,5) → giết người 30 HP mất ~30 s | Giữ `pvp.damageMultiplier` 0,5 (người chơi thật có vũ khí + cộng điểm); xem lại khi chơi thử, có thể nâng lên 0,75–1,0 |
+| P4M1-2 **ĐÃ QUYẾT: theo đề xuất** | Thành viên **cùng nhóm** vẫn đánh được nhau (P4-2 không nói) | Đang cho phép (bị tính PK như thường); đề xuất **cấm đánh người cùng nhóm** — anh quyết |
+| P4M1-3 **ĐÃ QUYẾT: theo đề xuất** | Rơi đồ PK: loot protect thuộc **kẻ giết** (DEC-114) | Muốn ai cũng nhặt ngay thì đổi thành không có chủ |
+| P4M1-4 | **KB cần anh bổ sung** (gộp P4-10): `attack.target` nhận `p_<id>`; `spawn` người chơi thêm `pkState`, `aggressor`; `player.view.pkPoints / pkState`; join `config.pvp {enabled, minLevel}`; config `pvp`, `pk` | Đã làm, không đổi schema (cột PK có sẵn) |
+| P4M1-5 | Lỗi HUD sau hồi sinh có từ Phase 2 (DEC-117) | Đã sửa |
+
+### P4-M2. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P4M2-1 | "Một bên đi xa quá 20 ô thì người đó thua" — cần biết ai đi xa | Người **xa trung điểm lúc bắt đầu hơn** thua (DEC-122) |
+| P4M2-2 | Duelist có bị quái đánh không? | Có (chết vì quái thì thua duel); duel chỉ "khoanh" người với người |
+| P4M2-3 | Đang duel có được vào thị trấn? | Được, nhưng trong safe zone không đánh được nhau; đi xa quá 20 ô thì thua |
+| P4M2-4 | **KB cần anh bổ sung** (gộp P4-10): act `duel_request / accept / decline / cancel`, event `duel`, `spawn.dueling`, config `duel`, nhóm rate-limit `pvp` | Đã làm, không đổi schema |
+
+### P4-M3. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P4M3-1 **ĐÃ QUYẾT: theo đề xuất** | P4-5 (1) ghi "audit Zen" nhưng KB §9 **không có bảng audit Zen** (chỉ `item_audit_log`) | Ghi một dòng log server mỗi lần tạo guild (DEC-126). Muốn lưu DB thì cần bảng `zen_audit_log` (đổi schema, CHANGE_REASON) — anh quyết |
+| P4M3-2 **ĐÃ QUYẾT: theo đề xuất** | Giải tán / bị đuổi khi đang **offline** | Không báo riêng; vào game lại thì thấy không còn guild (event `guild` rỗng). Có thể gửi thư hệ thống nếu anh muốn |
+| P4M3-3 **ĐÃ QUYẾT: theo đề xuất** | Xóa nhân vật là master | FK `master_id ON DELETE CASCADE` → guild bị xóa theo (thành viên mất guild). Chưa có chuyển master (P4-5 (3)) |
+| P4M3-4 **ĐÃ QUYẾT: theo đề xuất** | Cấp thành viên trong danh sách | Đọc lại khi có thay đổi thành viên / khi một thành viên vào game, không cập nhật ngay mỗi lần lên cấp (DEC-127) |
+| P4M3-5 **ĐÃ QUYẾT: theo đề xuất** | Tên guild chỉ chữ cái **không dấu** + số (`^[A-Za-z0-9]{3,8}$`, theo P4-5 (1) "ASCII") | Giữ; muốn cho tiếng Việt có dấu thì đổi `guild.namePattern` + cột `VARCHAR`/CHECK |
+| P4M3-6 | **KB cần anh bổ sung** (gộp P4-10): bảng `guilds`, `guild_members` (§9); act `guild_*`, event `guild`, `guild_invite`, `spawn.guild`, join `config.guild`, nhóm rate-limit `guild` (§5); config `guild` | Đã làm (migration có CHANGE_REASON) |
+
+### P4-M4. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P4M4-1 **ĐÃ QUYẾT: theo đề xuất** | P4-6 nói "đánh nhau được ở mọi chỗ ngoài safe zone" — có bỏ cấp tối thiểu PvP không? | Giữ `pvp.minLevel` 6 (thành viên cấp < 6 không đánh / bị đánh), như mọi PvP khác |
+| P4M4-2 **ĐÃ QUYẾT: theo đề xuất** | Hai người cùng nhóm nhưng thuộc hai guild đang war | Nhóm thắng: không đánh được nhau (P4M1-2) |
+| P4M4-3 **ĐÃ QUYẾT: theo đề xuất** | Tuyên chiến khi master bên kia offline | Không được (`INVALID_TARGET`); không có lời mời chờ offline |
+| P4M4-4 **ĐÃ QUYẾT: theo đề xuất** | Nuôi điểm bằng nick phụ (kill liên tục một người) | Không thưởng nên không chặn; Phase 5 có thưởng thì cần luật (vd. cùng nạn nhân chỉ tính 1 lần / x phút) |
+| P4M4-5 | **KB cần anh bổ sung** (gộp P4-10): act `guild_war_*`, event `guild_war`, config `guildWar` | Đã làm, không đổi schema (war chỉ trong RAM) |
+
+### P4-M5. Nghiệm thu Phase 4 (2026-10-03) — chi tiết `docs/ACCEPTANCE_PHASE4.md`
+
+12/12 mục PASS (mục 11 UI cần anh xem bằng mắt). Việc chờ anh: B-11 (KB bổ sung P4-10), B-9
+(`CLAUDE.md`), B-7, B-10 — xem `ACCEPTANCE_PHASE4.md §5.2`. **B-12 đã quyết (2026-10-03): theo đề
+xuất** (P4M4-1 … 4).
+
+## P5. Câu hỏi Phase 5 "Economy" (kế hoạch: `docs/PHASE5_PLAN.md`) — ⛔ = chặn milestone
+
+KB Phase 5 có: bảng upgrade +0 → +9 (`KB_CONFIG §5`), cách chốt trade (`KB_TECHNICAL §10`), schema
+item / audit (`§9`), danh sách jewel (`KB_ITEM_REFERENCE`). Thiếu: nguồn jewel, chỉ số theo +N, Jewel
+of Life, luật trade, audit Zen. Mọi số dưới đây là **đề xuất IMPLEMENTATION** (tham khảo cảm giác
+MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt.
+
+| # | Câu hỏi | Đề xuất của em |
+|---|---|---|
+| P5-1 **ĐÃ QUYẾT: theo đề xuất (giữ tắt)** | **KB mâu thuẫn:** `KB_00_RULES` S6 ghi Wings / Harmony / Guardian / Creation "bật ở Phase 5"; `§7` (nguồn duy nhất về scope) đặt Wings ở Phase 6, Phase 5 không có Harmony / Guardian / Creation; `KB_CONFIG §5` ghi upgrade trên +9 là `LATER_VERSION` | Theo `§7`: **giữ tắt cả bốn** trong Phase 5 (`features.wings / harmonyJewel / guardianJewel` vẫn `false`, không có template Creation). Anh sửa S6 trong KB nếu đồng ý |
+| P5-2 **ĐÃ LÀM (P5-M1)** | **Jewel** — template, nguồn, giá | (1) Ba template `jewel_bless`, `jewel_soul`, `jewel_life` (group 14 / 13, 14, 16), stack tối đa `20`, icon theo `iconRef` (thiếu thì placeholder + cảnh báo build như item khác). (2) **Chỉ rơi từ quái**: thêm nhóm drop `jewels` cho quái cấp ≥ `10` (Lich trở lên), tỉ lệ mỗi lần hạ `0,6 %` × `dropMultiplier`, trọng số Bless 50 / Soul 35 / Life 15 (≈ 4–5 jewel / giờ săn liên tục; chỉnh bằng simulator). Spider / Budge Dragon / Bull Fighter / Hound không rơi. (3) **Không bán ở NPC**; NPC mua lại: Bless `10 000`, Soul `15 000`, Life `15 000` Zen. (4) Jewel cất kho, trade, vứt như đồ thường |
+| P5-3 **ĐÃ LÀM (P5-M1, P5-M2)** | **Upgrade** — +N cộng gì, thao tác | (1) **Chỉ số theo +N** (config `items.levelBonus`, KB chưa có): vũ khí `attackMin` / `attackMax` **+3 mỗi cấp**; giáp (mũ, áo, quần, găng, giày) `defense` **+3 mỗi cấp**; khiên `defense` **+2 mỗi cấp**; nhẫn **không ép được**. Yêu cầu sức mạnh / cấp của đồ không đổi theo +N. (2) Ép **đồ trong túi** (không ép đồ đang mặc, như MU): kéo jewel thả lên món đồ; trên mobile bấm jewel → [Ép lên…] → chọn đồ. Mỗi lần dùng 1 jewel, **không tốn Zen**. (3) Bless chỉ dùng cho +0 … +5 (lên +1 … +6, 100 %); Soul cho +6 … +8 (70 / 60 / 50 %); dùng sai loại → `INVALID_TARGET`; đã +9 → `FORBIDDEN`. (4) Soul thất bại `DECREASE` = **giảm 1 cấp** (+7 hỏng → +6), mất jewel. (5) `luck` (chưa có roll lúc drop) không cộng tỉ lệ ở Phase 5. (6) Kết quả: thông báo cho người ép + dòng SYSTEM cả map khi lên **+7 trở lên** |
+| P5-4 **ĐÃ LÀM (P5-M2): (A)** | **Jewel of Life** — §9 chưa có cột "option" | **(A, đề xuất)** Thêm cột `items.option_level SMALLINT 0..4` (migration + CHANGE_REASON). Mỗi lần dùng Life trên vũ khí / giáp / khiên: 50 % lên 1 cấp option (tối đa 4), thất bại **không đổi** (mất jewel). Option cộng **+4 mỗi cấp**: vũ khí `attackMin` / `attackMax`, giáp / khiên `defense`. (B) Chỉ làm Bless / Soul, để Life sang Phase 6 (Chaos Machine) |
+| P5-5 **ĐÃ LÀM (P5-M4)** | **Trading** — luật + UI | (1) Mời từ menu người chơi **[🤝 Giao dịch]**, người kia nhận trong `30` s. Hai bên cùng map, cách ≤ `5` ô, còn sống, không đang duel / trade khác. Trong / ngoài thị trấn đều được, MURDERER vẫn trade được. (2) Mỗi bên đặt tối đa `16` món **từ túi** (không đồ đang mặc / trong kho) và một lượng Zen (0 … Zen đang có). (3) Hai bước: **[Khóa]** (chốt danh sách) → khi cả hai đã khóa mới bấm **[Đồng ý]**; bất kỳ thay đổi nào (thêm / bớt món, đổi Zen, món trên bàn bị di chuyển) → cả hai về chưa khóa. (4) Chốt: một transaction theo `KB_TECHNICAL §10`; bên nhận không đủ chỗ → `INVENTORY_FULL`, trade vẫn mở, cả hai về chưa khóa. (5) Hủy khi: bấm [Hủy], cách nhau > `10` ô, đổi map, chết, mất kết nối, đăng xuất, hết `3` phút không chốt. (6) Audit: mỗi món `TRADE` (`char:A → char:B`), Zen ghi `zen_audit_log` hai bên. (7) UI: cửa sổ hai nửa "Của bạn" / "Của <tên>" (icon, +N, số lượng, Zen, trạng thái khóa / đồng ý); kéo đồ từ túi vào hoặc bấm đồ → [Đưa vào giao dịch]; mobile xếp dọc. Nhóm rate-limit `trade` 5 / giây |
+| P5-6 **ĐÃ LÀM (P5-M3)** | **Audit Zen + anti-dupe** | (1) Bảng mới `zen_audit_log (id, character_id, delta, balance, reason, ref, at)` (migration + CHANGE_REASON), ghi **trong cùng transaction** với mọi đổi Zen: mua / bán NPC, nhặt Zen (tức là Zen rơi từ quái — gộp theo lần lưu nhân vật, reason `MONSTER`, để không ghi mỗi con), thư, tạo guild, trade. Khi chạy migration ghi một dòng `BASELINE` = Zen hiện có của mỗi nhân vật. (2) `mix mu.audit` (chỉ quản trị): serial trùng; item không có chỗ (orphan); chỗ hiện tại khác `to_owner` của dòng audit cuối; Zen nhân vật ≠ tổng `zen_audit_log`; tổng cung Zen + nguồn / chỗ tiêu theo ngày. Có sai lệch → in chi tiết, thoát mã ≠ 0. (3) Không tự khóa tài khoản; chạy sau soak / theo lịch quản trị. Bỏ P4M3-1 (log tạo guild) sang bảng này |
+| P5-7 **ĐÃ LÀM (P5-M2 … M4)** | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `upgrade {itemId, jewelId}` (idempotent theo `rid` như act item); `trade_request {to}`, `trade_accept {from}`, `trade_decline {from}`, `trade_put {itemId, quantity?}`, `trade_take {itemId}`, `trade_zen {amount}`, `trade_lock {}`, `trade_confirm {}`, `trade_cancel {}`. Event: `trade {state, partner, mine: {items, zen, locked, confirmed}, theirs: {…}, result?}`, `trade_invite {from}`; kết quả ép đồ qua `player` + dòng thông báo. Lỗi dùng mã sẵn có. Em ghi `CHANGE_REASON`; anh bổ sung KB sau khi chốt |
+| P5-8 **ĐÃ DUYỆT** | Ngoài scope Phase 5 | **Repair / độ bền** (§17 nhắc "sink Zen: repair" nhưng §7 không có, hệ độ bền chưa làm), roll **luck / excellent** khi drop, trên +9 (Harmony / Guardian), Chaos Machine (Phase 6) — **không làm** ở Phase 5 |
+| P5-9 **ĐÃ LÀM (P6-M6)** | Danh sách nghiệm thu Phase 5 | Gộp vào `docs/ACCEPTANCE_PHASE5_6.md` |
+| P5-10 | **KB_TECHNICAL §5 / §9** cần anh bổ sung sau khi chốt P5-2 … P5-7 | Em ghi `CHANGE_REASON` khi làm |
+
+### P5-M1. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P5M1-1 **ĐÃ QUYẾT: giữ 0,6 %** | Ước lượng "≈ 4–5 jewel / giờ" của P5-2: simulator ra DW / ELF / MG 5,0–5,3 nhưng **DK 2,6** jewel / giờ (DK giết quái cấp ≥ 10 chậm gần gấp đôi) | Giữ 0,6 % cho mọi quái (DEC-143). Muốn DK theo kịp thì nâng lên ~1 % (class khác thành ~8 / giờ) — anh quyết |
+| P5M1-2 **ĐÃ QUYẾT: theo đề xuất** | Icon jewel (`item_14_13 / 14 / 16`) chưa có trong bộ icon local thì hiện placeholder (cảnh báo build như item khác) | Anh đặt icon tay ở `assets_src/private/item_icons/` như các item MU khác |
+| P5M1-3 | **KB cần anh bổ sung** (gộp P5-10): config `items.levelBonus`, template type `JEWEL`, join `config.items.levelBonus` | Đã làm, không đổi schema (`items.item_level` có sẵn) |
+
+### P5-M2. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P5M2-1 **ĐÃ QUYẾT: theo đề xuất** | P5-7 ghi kết quả ép "qua `player` + thông báo", nhưng Soul hỏng chỉ giảm cấp → client không phân biệt được "thành công lên +7" với "hỏng rơi về +5" chỉ từ `player` | Thêm event riêng `upgrade {…, ok, level, option}` (DEC-147) |
+| P5M2-2 **ĐÃ QUYẾT: theo đề xuất** | `onFailure: DECREASE` trên bảng có thể đưa đồ +6 về +5, rồi Bless dùng lại được (+5 → +6 luôn thành công) | Đúng theo bảng KB; vòng "ép Soul hỏng → Bless lại" tốn 1 Soul + 1 Bless mỗi lần hỏng |
+| P5M2-3 | **KB cần anh bổ sung** (gộp P5-10): §9 cột `items.option_level`; §5 act `upgrade`, event `upgrade`, `item.optionLevel`; config `upgrade` (bảng §5 + `life`, `announceFromLevel`) | Migration có CHANGE_REASON |
+
+### P5-M3. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P5M3-1 **ĐÃ QUYẾT: theo đề xuất** | Zen rơi từ quái được cộng trong bộ nhớ Session rồi lưu ngay (G12) | Ghi một dòng `MONSTER` mỗi lần lưu có Zen đổi (thường mỗi con quái có Zen → ~1 dòng / con). Bảng sẽ lớn nhanh khi đông người; nếu cần thì gộp theo phút hoặc dọn dòng cũ sau N ngày (giữ tổng theo ngày) — anh quyết khi vận hành |
+| P5M3-2 | Database dev / test cũ có nhân vật với Zen đặt tay (script E2E trước P5-M3) | Đã được dòng `BASELINE` lúc migrate phủ; từ nay script dùng `ADMIN` |
+| P5M3-3 | **KB cần anh bổ sung** (gộp P5-10): §9 bảng `zen_audit_log`; công cụ `mix mu.audit` | Migration có CHANGE_REASON |
+
+### P5-M4. Phát sinh khi làm (đã làm theo đề xuất, anh xác nhận hoặc đổi)
+
+| # | Vấn đề | Đã làm / đề xuất |
+|---|---|---|
+| P5M4-1 | P5-7 có `trade_put {itemId, quantity?}` (đặt một phần stack) | Chỉ đặt **cả stack**; muốn đưa một phần thì tách stack trong túi trước (đã có act `split`). Làm số lượng nếu anh muốn |
+| P5M4-2 | Đồ nhận vào túi có gộp vào stack cùng loại không | Không gộp: mỗi món sang ô trống thấp nhất (giữ serial, dễ truy vết); người nhận tự gộp sau |
+| P5M4-3 | Đổi sang panel khác giữa lúc giao dịch | Giao dịch vẫn mở; event `trade` kế tiếp mở lại panel. Đóng panel giao dịch (Esc / ✕) thì **hủy** |
+| P5M4-4 | **KB cần anh bổ sung** (gộp P5-10): §5 act `trade_*`, event `trade`, `trade_invite`; config `trade` | Không đổi schema (giao dịch chỉ trong RAM tới lúc chốt, theo KB §10) |
+| P5M4-5 | Panel giao dịch vẽ lại toàn bộ mỗi khi bên kia thay đổi: lần bấm của mình rơi đúng lúc vẽ lại có thể bị mất (E2E thấy ở [Khóa] / [Đồng ý]) | Hiếm khi người thật gặp (bấm lại là được); muốn triệt để thì chỉ cập nhật phần thay đổi thay vì vẽ lại cả panel — để khi làm lại UI |
+
+## P6. Câu hỏi Phase 6 "Advanced" (kế hoạch: `docs/PHASE6_PLAN.md`) — ⛔ = chặn milestone
+
+KB Phase 6 chỉ có: `interface Quest` (§15), cờ `features.quest / chaosMachine / wings`, slot 7 WING,
+"Chaos Machine cần Upgrade + Jewel", tên Events / Bosses / Ranking. Mọi số dưới đây là **đề xuất
+IMPLEMENTATION** (tham khảo cảm giác MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt. Tên
+quái / NPC / cánh mới đặt theo kiểu MU cho prototype riêng tư; public thì đổi tên (như KB_ASSETS).
+
+| # | Câu hỏi | Đề xuất của em |
+|---|---|---|
+| P6-1 | `CLAUDE.md` quy tắc 3 (B-9) + mâu thuẫn S6 / §7 về Wings (P5-1) | Câu thay ở `PHASE6_PLAN.md §0`; Wings bật ở **Phase 6** theo §7 |
+| P6-2 **ĐÃ LÀM (P6-M2)** | **Quest** — mục tiêu, thưởng, lưu, danh sách | (1) Bảng mới `character_quests (character_id, quest_id, state ACTIVE / DONE, progress JSONB, started_at, completed_at; PK (character_id, quest_id))` — migration + CHANGE_REASON. (2) Mục tiêu: `kill {monsterId, count}` (người ra đòn cuối, hoặc cả nhóm chia EXP cùng được tính), `collect {templateId, count}` (thu khi trả quest), `level {min}`. Thưởng: EXP (không vượt maxLevel), Zen (audit `QUEST`), đồ (audit `QUEST`). (3) NPC mới **Quest Master** ở Lorencia + Noria: nhận / trả trong `npcRange`. Tối đa **5** quest đang làm; mỗi quest làm **một lần** (chưa có daily). (4) **10 quest** theo cấp 1 → 28 (vd. "Diệt Nhện" 10 Spider → 300 Zen + 5 HP potion; …; "Thợ săn Noria" 20 Forest Monster → 1 Jewel of Bless + 3 000 Zen) — bảng đầy đủ em soạn trong `quests.json`, anh xem lại số. (5) UI: panel Nhiệm vụ (đang làm / hoàn thành, tiến độ "7/10"), hộp hội thoại NPC [Nhận] / [Trả], dòng theo dõi tiến độ góc màn hình |
+| P6-3 **ĐÃ LÀM (P6-M3)** | **Jewel of Chaos + Chaos Machine** | (1) `jewel_chaos` (stack 20, NPC mua lại 10 000) thêm vào nhóm rơi `jewels`: trọng số Bless 45 / Soul 30 / Life 12 / **Chaos 13** (tổng tỉ lệ vẫn 0,6 %). (2) NPC **Chaos Goblin** ở Noria; cửa sổ Chaos Machine: đặt tối đa 8 món từ túi → server báo công thức khớp, **tỉ lệ**, **phí Zen** → [Kết hợp]. (3) Phase 6 chỉ **một công thức: tạo cánh cấp 1** = 1 vũ khí / giáp / khiên **+4 trở lên** + 1 Jewel of Chaos + **20 000 Zen**; tỉ lệ **10 % + 5 % mỗi cấp trên +4** (tối đa 60 %; +1 option Life cộng thêm 2 %); thành công → 1 cánh ngẫu nhiên trong 3 cánh; **thất bại mất hết đồ đầu vào** (như MU), phí Zen mất. (4) Công thức +10 / +11 không làm (trên +9 = `LATER_VERSION`). (5) Một transaction, audit `CHAOS_IN` / `CHAOS_OUT`, Zen `CHAOS` |
+| P6-4 **ĐÃ LÀM (P6-M4)** | **Wings** — cánh nào, chỉ số | (1) Bật `features.wings`, mở slot 7. Ba cánh cấp 1: **Wings of Elf** (ELF), **Wings of Heaven** (DW, MG), **Wings of Satan** (DK, MG) — group 12 / 0, 1, 2. (2) Yêu cầu cấp **15**. Chỉ số: **+12 % sát thương gây ra**, **−12 % sát thương nhận** (KB không có công thức; thêm hai hệ số vào pipeline §4), phòng thủ **+10**. (3) Ép được bằng Bless / Soul như đồ khác: mỗi +N thêm **+2 %** sát thương và **+2 %** hấp thụ, +1 thủ. Không có option Life. (4) Hình: vẽ đôi cánh bằng hình học sau lưng nhân vật (màu theo loại cánh), không dùng asset MU. (5) Cánh chỉ lấy từ Chaos Machine (không rơi, không bán) |
+| P6-5 **ĐÃ LÀM (P6-M5)** | **Events** — event nào | (1) **Golden Invasion**: mỗi **3 giờ** (giờ UTC chẵn 3: 0, 3, 6, …), kéo dài **15 phút**: sinh **8 quái vàng** ở Lorencia (Golden Budge Dragon) + **8** ở Noria (Golden Goblin) — HP × 5, EXP × 5, Zen × 5, rơi jewel **10 %** mỗi con; báo SYSTEM toàn server 5 phút trước, lúc bắt đầu, lúc kết thúc. (2) **Blood Castle / Devil Square** (map riêng, vé, giới hạn người): **không làm ở Phase 6** — cần map + vé + luật riêng, đề xuất thành Phase sau. (3) Lệnh quản trị `mix mu.event start golden_invasion --node …` để bật tay / test |
+| P6-6 **ĐÃ LÀM (P6-M5)** | **World boss** | (1) Boss **Bull Fighter Lord** (cấp 32, HP **20 000**, đòn 60–90, thủ 40, đánh vùng bán kính 2 tối đa 6 người mỗi 3 s) xuất hiện mỗi **2 giờ** (giờ UTC lẻ) ở bãi Lorencia (cạnh vùng Spider), sống **20 phút**; báo SYSTEM toàn server. (2) Chia thưởng theo sát thương (repo nền): mọi người gây ≥ **1 %** máu boss nhận EXP + Zen tỉ lệ theo phần sát thương (tổng EXP 6 000, Zen 30 000); **top 3** nhận thêm 1 jewel ngẫu nhiên; đồ rơi dưới đất có loot protect cho người gây nhiều sát thương nhất. (3) Hết 20 phút chưa chết → biến mất, báo SYSTEM |
+| P6-7 **ĐÃ LÀM (P6-M1)** | **Ranking** | (1) Bảng **Cấp** (tất cả + từng class DK / DW / ELF / MG; cùng cấp xếp theo EXP, rồi ai đạt trước), bảng **Guild** (tổng cấp thành viên, rồi số thành viên). (2) Top **50**, làm mới mỗi **5 phút** (cache RAM), mỗi bảng ghi giờ cập nhật; hiện hạng của chính mình nếu ngoài top. (3) Panel Xếp hạng ở Menu (tab theo bảng). Không bảng Zen / PK (tránh lộ tài sản, PK giảm theo giờ) |
+| P6-8 **ĐÃ LÀM (P6-M1 … M5; thêm `npcId` vào act quest / chaos, event `quest_done`: DEC-167, 171, 176)** | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `ranking {board}`; `quest_accept {questId}`, `quest_turnin {questId}`, `quest_abandon {questId}`, `quest_list {}`; `chaos_preview {itemIds}`, `chaos_combine {itemIds}`. Event: `ranking {board, rows, me, updatedAt}`, `quests {active, done, available}`, `chaos {recipe, rate, zen}` / kết quả, `world_event {kind, state, map, endsAt}`. `spawn` người chơi thêm `wing` (templateId) để vẽ cánh; quái thêm `boss` / `golden`. Lỗi dùng mã sẵn có. Em ghi `CHANGE_REASON`; anh bổ sung KB sau khi chốt |
+| P6-9 **ĐÃ LÀM (P6-M6)** | Danh sách nghiệm thu Phase 6 | Gộp với P5-9: `docs/ACCEPTANCE_PHASE5_6.md` (16 mục) |
+| P6-10 **ĐÃ DUYỆT** | Ngoài scope Phase 6 | Blood Castle / Devil Square / Chaos Castle, daily quest, cánh cấp 2, công thức Chaos +10 / +11, pet, Harmony / Guardian / Creation — **không làm** |
+
+### P6-M6 (nghiệm thu)
+
+| # | Vấn đề | Trạng thái |
+|---|---|---|
+| P6M6-1 **ANH CHO BỎ QUA** | `mix test` lỗi ngẫu nhiên 1 lần / 6 lần chạy (không in được tên test); 5 lần sau đều 376 / 0 | Theo dõi: lần sau gặp thì ghi lại tên test + seed |
+| P6M6-2 **ĐÃ CHỐT (DEC-180)** | Số em tự đặt cần anh duyệt: giá NPC mua cánh 50 000, attackRate / defenseRate / tốc chạy boss, vị trí boss (42..47, 46..49) và quái vàng, nội dung 10 quest | Giữ nguyên sau khi rà |
+
+## P7. Câu hỏi Phase 7 "Endgame" (kế hoạch: `docs/PHASE7_PLAN.md`) — ⛔ = chặn milestone
+
+KB Phase 7 chỉ có dòng scope (`KB_00_RULES §7`). Mọi số dưới đây là **đề xuất IMPLEMENTATION**
+(tham khảo cảm giác MU, không coi là số MU gốc), chỉ làm sau khi anh duyệt. Tên map / NPC / item
+đặt theo kiểu MU cho prototype riêng tư; public thì đổi tên (như KB_ASSETS).
+
+| # | Câu hỏi | Đề xuất của em |
+|---|---|---|
+| P7-1 ⛔ | **Cấp tối đa** — endgame cho cấp mấy? | **(A, em chọn)** Giữ `maxLevel` 30: Devil Square từ cấp 15, Blood Castle từ cấp 20, cánh cấp 2 cần cấp 25; không chia "tầng" theo cấp (một phòng / event). **(B)** Nâng 40: cần công thức EXP + quái 30–40 + map mới (map mới đang ngoài scope) → không đề xuất |
+| P7-2 ⛔ | **Daily quest** | (1) Bảng mới `character_dailies (character_id, day DATE, slot 1..3, quest_id, progress JSONB, done_at; PK (character_id, day, slot))` — migration + CHANGE_REASON. (2) Mỗi ngày (reset **00:00 UTC**) mỗi nhân vật có **3 nhiệm vụ** tự giao (không cần nhận), chọn từ pool theo tầng cấp 1–9 / 10–19 / 20–30 (`dailies.json`, ~9 mẫu: hạ N quái hợp tầng, ví dụ 30 Spider / 40 Goblin / 30 Stone Golem; nộp 5 potion vừa); chọn bằng RNG seed = ngày + nhân vật (cùng ngày luôn ra cùng bộ). (3) Trả ở Quest Master (bất kỳ): mỗi nhiệm vụ EXP = 25 % EXP cần để lên cấp hiện tại (không vượt maxLevel), Zen 2 000 / 4 000 / 6 000 theo tầng (audit `DAILY`); xong đủ 3 trong ngày thêm 1 Jewel of Bless. Chưa xong thì hết ngày mất. (4) UI: tab "Hằng ngày" trong panel Nhiệm vụ, dòng theo dõi như quest |
+| P7-3 **ĐÃ LÀM (P7-M2)** | **Upgrade +10 / +11** | **Bản duyệt:** ép thẳng bằng **Jewel of Chaos** (kéo thả như +1 → +9): +9 → +10 tỉ lệ **50 %**, +10 → +11 tỉ lệ **45 %**, thất bại **mất đồ** (jewel cũng mất), không phí Zen; đồ ép được = mọi type trong `items.levelBonus` (gồm cánh); cấp +10 / +11 cộng **gấp đôi** `levelBonus`; thành công báo SYSTEM cả map; đồ giữ serial. ~~Bản cũ: (1) Ở **Chaos Machine** (không ép jewel trực tiếp như ≤ +9). **+10** = đồ +9 + 1 Bless + 1 Soul + 1 Chaos + **50 000 Zen**, tỉ lệ **50 %**; **+11** = đồ +10 + 2 Bless + 2 Soul + 1 Chaos + **100 000 Zen**, tỉ lệ **45 %**; mỗi cấp option Life +2 % (tối đa 60 %). Đồ ép được: mọi type có trong `items.levelBonus` (vũ khí, khiên, giáp, cánh). (2) **Thất bại:** **(A, em chọn — như MU)** mất đồ, mất jewel + Zen; (B) đồ về +0; (C) đồ về +9. (3) Chỉ số: cấp +10 / +11 cộng **gấp đôi** `levelBonus` (vd vũ khí +6 đòn / cấp thay vì +3). (4) Thành công báo SYSTEM cả map (như ≥ +7). Đồ giữ serial~~ |
+| P7-4 ⛔ | **Phòng event** (chung DS / BC) | (1) Map riêng `devil_square` (24×24) và `blood_castle` (16×48), vẽ bằng tile có sẵn, **không có cổng** — chỉ vào qua NPC. (2) Một phòng / loại event, **tối đa 10 người**; vào trong **5 phút** trước giờ bắt đầu, đứng cạnh NPC, đủ cấp, tiêu 1 vé (một transaction, audit `TICKET`). (3) Trong phòng: **không PvP**, không giao dịch, không dùng cổng; nhóm / chat vẫn dùng được. (4) Chết → về thị trấn (DS giữ điểm; BC mất quyền thưởng). Mất kết nối → giữ chỗ `reconnectGraceSeconds` như map thường, quá hạn thì ra. Hết giờ / xong → mọi người về thị trấn (Noria cho DS, Lorencia cho BC). Server khởi động lại giữa chừng → vào lại game ở thị trấn, vé mất (ghi rõ trong thông báo). (5) Bật / tắt tay: `mix mu.event start devil_square|blood_castle` |
+| P7-5 ⛔ | **Devil Square** | (1) Lịch: mỗi **2 giờ, giờ UTC chẵn phút 30** (0:30, 2:30, …), cửa vào mở 5 phút trước; chạy **10 phút**. NPC **Charon** ở Noria. Cấp ≥ 15. (2) **4 đợt × 2,5 phút**: đợt 1 Hunter, 2 Forest Monster, 3 Agon, 4 Stone Golem (dùng template có sẵn, sinh liên tục tới 25 con đứng cùng lúc). (3) Điểm = tổng cấp quái mình ra đòn cuối. (4) Thưởng lúc kết thúc (cả người đã chết ra ngoài): EXP = điểm × 20 (không vượt maxLevel); hạng 1 / 2 / 3: 20 000 / 10 000 / 5 000 Zen + Jewel of Soul / Bless / Bless; audit `EVENT`. Bảng điểm hiện trong lúc chơi |
+| P7-6 ⛔ | **Blood Castle** | (1) Lịch: mỗi **2 giờ, giờ UTC lẻ phút 30** (1:30, 3:30, …), cửa vào 5 phút trước; tối đa **15 phút**. NPC **Messenger of Archangel** ở Lorencia. Cấp ≥ 20. (2) Chặng 1: hạ **40 quái** (Forest Monster / Agon) → **cổng thành** (HP 3 000, thủ 30, không đánh trả) bị phá được → chặng 2: hạ 20 quái → **tượng thánh** (HP 5 000) → rơi **Archangel's Weapon** (đồ nhiệm vụ: không vứt / bán / giao dịch / cất kho, mất khi rời phòng). (3) Người mang vũ khí tới **NPC Archangel** cuối lâu đài thì thắng: người đó **30 000 Zen + 1 Jewel of Soul** (không có Loch's Feather — DEC-183); mọi người còn sống trong phòng (kể cả người thắng) EXP 6 000. Hết giờ chưa ai mang về → không thưởng. (4) Audit `EVENT` |
+| P7-7 ⛔ | **Vé** | **Devil's Invitation** rơi 0,3 % từ quái cấp ≥ 12; **Invisibility Cloak** rơi 0,2 % từ quái cấp ≥ 18; stack 5, NPC mua lại 5 000, không bán ở NPC, giao dịch được. Quái vàng (Golden Invasion) rơi vé 5 %. Không làm công thức ghép vé kiểu MU (Devil's Eye + Key) — để sau |
+| P7-8 **ĐÃ LÀM (P7-M3)** | **Wings cấp 2** | (1) **4 cánh**: Wings of Spirit (ELF), Wings of Soul (DW), Wings of Dragon (DK), Wings of Darkness (MG); group 12 / index 3–6; cấp **25**; **+20 % sát thương gây ra, −20 % sát thương nhận**, thủ 20; +N như cánh 1 (+2 % / +2 % / +1 thủ), lên được +11 theo P7-3. (2) Công thức Chaos Machine (**không item mới**, DEC-183): cánh cấp 1 **+5 trở lên** + **5 Bless + 5 Soul + 2 Chaos** + **200 000 Zen**; tỉ lệ 20 % + 5 % mỗi cấp trên +5 của cánh cấp 1 (tối đa 60 %); thất bại mất hết. (3) Kết quả: cánh đúng **class của người ghép** (MG ra Darkness). (4) Vẽ cánh lớn hơn, hai lớp, màu riêng. Chỉ lấy từ Chaos Machine |
+| P7-9 ⛔ | **Protocol** (`KB_TECHNICAL §5` chưa có) | Act: `daily_turnin {slot, npcId}` (danh sách daily đi chung event `quests`, thêm khóa `daily`); `event_enter {npcId}`, `event_leave {}`. Event: `event_room {kind, state: open \| running \| end, players, maxPlayers, endsAt, stage?, scores?}`, `event_result {kind, rank?, score?, rewards}`. Công thức +10 / +11 / cánh 2 đi qua `chaos_preview` / `chaos_combine` có sẵn. Cổng / tượng là thực thể `monster` có thêm `object: true` (client không hiện menu đánh thường kiểu quái, vẽ khác) |
+| P7-10 | **Asset** | Không tải asset mới (trong cloud bị chặn tải). Map event dùng tile Lorencia có sẵn (sàn thị trấn, tường, đá); NPC Charon / Messenger / Archangel, cổng, tượng dùng lại sprite DCSS đã có trong repo, ghi `mapping.json` + `CREDITS.md` như Phase 6. Icon item mới = placeholder |
+| P7-11 | Danh sách nghiệm thu Phase 7 | Em soạn ở P7-M6 (như P5-9 / P6-9) |
+| P7-12 | Ngoài scope Phase 7 | Chaos Castle, pet, Jewel of Harmony / Guardian / Creation, ghép vé kiểu MU, nhiều phòng event cùng lúc, map mới ngoài map event, class DL / SUM, nâng maxLevel — **không làm** |

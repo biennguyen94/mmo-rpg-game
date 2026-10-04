@@ -8,7 +8,12 @@ defmodule MuWeb.CharacterController do
 
   def index(conn, _params) do
     account = conn.assigns.current_account
-    json(conn, %{characters: Enum.map(Characters.list(account.id), &Characters.summary/1)})
+
+    json(conn, %{
+      characters: Enum.map(Characters.list(account.id), &Characters.summary/1),
+      classes: Characters.creatable_classes(account.id),
+      maxCharacters: Mu.Game.Config.get(["account", "maxCharacters"])
+    })
   end
 
   def create(conn, params) do
@@ -38,6 +43,11 @@ defmodule MuWeb.CharacterController do
 
   defp describe(:invalid_class),
     do: {:unprocessable_entity, "INVALID_CLASS", "Class không hợp lệ."}
+
+  defp describe(:class_locked),
+    do:
+      {:conflict, "CLASS_LOCKED",
+       "Cần một nhân vật đạt cấp #{Mu.Game.Config.get(["mg", "unlockLevel"])} để tạo Magic Gladiator."}
 
   defp describe(:character_limit),
     do: {:conflict, "CHARACTER_LIMIT", "Tài khoản đã đủ số nhân vật."}

@@ -20,6 +20,13 @@ defmodule HacLong.Game.Data do
   - `PETS`: thú cưng bán ở Người Nuôi Thú; `bonus` là phần trăm cộng thêm (`hp`, `atk`, `def`,
     `gold` từ quái, `xp`).
   - `FURNITURE`: đồ trang trí nhà bán ở Thợ Mộc; `comfort` là điểm tiện nghi.
+  - `ITEMS` có `slot: "wing"`: cánh (ô trang bị thứ tư) của lớp `cls`, cấp `tier`; `dmg` / `absorb`
+    là phần sát thương gây thêm / giảm khi nhận.
+  - `UPGRADE`: các bước ép bằng ngọc từ +6 (`steps`: `level`, `jewel`, `rate`, `fail` =
+    nil | `down` (tụt một cấp) | `destroy` (vỡ đồ)); từ `double_from` mỗi cấp tính gấp đôi; ép thành
+    công từ `announce_from` thì báo cả server. +1 → +5 vẫn dùng quặng như cũ (`Engine.upgrade_cost/2`).
+  - `JEWELS`: tỉ lệ rơi ngọc (`weights` theo loại; quái cấp ≥ `monster_level`, trùm, tháp, rương).
+  - `CHAOS`: công thức Máy Hỗn Nguyên (`HacLong.Game.Chaos`).
   - `QUESTS`: nhiệm vụ nhận ở Trưởng Làng. `type`: `kill` (hạ `count` con `target`),
     `collect` (nộp `count` nguyên liệu `target`), `boss` (hạ trùm `target`). Nhận được khi
     vùng `zone` đã mở và đã xong các nhiệm vụ trong `requires`.
@@ -64,6 +71,22 @@ defmodule HacLong.Game.Data do
               end)
             end)
           end)
+
+  strs = fn m -> Map.new(m, fn {k, v} -> {Atom.to_string(k), v} end) end
+
+  @upgrade atomize.(atomize, raw["UPGRADE"])
+  @upgrade_steps Map.new(@upgrade.steps, &{&1.level, &1})
+  @jewels atomize.(atomize, raw["JEWELS"])
+          |> Map.update!(:weights, strs)
+          |> Map.update!(:chest_chance, strs)
+  @chaos atomize.(atomize, raw["CHAOS"]) |> Enum.map(&Map.update!(&1, :items, strs))
+
+  def upgrade, do: @upgrade
+  @doc "Bước ép lên cấp `level` bằng ngọc (nil nếu là bước dùng quặng)."
+  def upgrade_step(level), do: Map.get(@upgrade_steps, level)
+  def jewels, do: @jewels
+  def chaos, do: @chaos
+  def chaos(id), do: Enum.find(@chaos, &(&1.id == id))
 
   def classes, do: @classes
   def class(id), do: Map.get(@classes, id)

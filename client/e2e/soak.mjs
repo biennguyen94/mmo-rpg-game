@@ -1,14 +1,33 @@
 // Soak test: N bot WebSocket chơi liên tục trên server thật (đi lang thang, đánh Spider, uống
 // potion, mua potion ở NPC). In thống kê mỗi phút và tổng kết cuối. Không phải tính năng game.
-//   node client/e2e/soak.mjs [baseUrl] [số_bot] [số_phút]
+//   node client/e2e/soak.mjs [baseUrl] [số_bot] [số_phút] [tỉ_lệ_bot_ở_thị_trấn]
+// Tỉ lệ thị trấn (0..1, mặc định 0): các bot này chỉ đi lại trong thị trấn, không săn — đo AOI
+// khi người chơi phân tán (P3-M1): thị trấn và vùng Spider cách nhau hơn một ô AOI.
+// SOAK_PARTY=k (P3-M6): bot lập nhóm k người (bot i % k == 0 làm trưởng nhóm, mời k − 1 bot kế
+// tiếp; bot được mời tự đồng ý) — đo Mu.Party + chia EXP dưới tải.
+// SOAK_WAR=1 (P4-M5): mọi bot lên cấp 20 + Zen (scripts/e2e_soak_seed.exs, trước khi vào game);
+// bot săn chia hai guild (bot đầu mỗi nửa làm master, mời nửa của mình), guild A tuyên chiến guild
+// B, B nhận; bot săn đánh người guild địch đứng gần (ngoài thị trấn); war kết thúc thì A tuyên
+// chiến lại — đo PvP + Mu.Guild dưới tải.
+// SOAK_P56=1 (P6-M6): bot săn có thêm khiên + jewel (seed `p56`): nhận / trả quest ở Quest Master,
+// ép jewel lên khiên mỗi ~90 s, từng cặp bot giao dịch Zen trong thị trấn ở phút 1,5 / 4,5 / 7,5 …
+// SOAK_BOSS=1 (P6-M6): phút 1 bật world boss + Golden Invasion (`mix mu.event … --node`, server
+// chạy `--sname mu`); bot săn gặp boss trong 8 ô thì đánh.
 // Server cần TRUSTED_PROXIES=127.0.0.1: mỗi bot gửi X-Forwarded-For riêng (giả lập IP khác nhau,
 // giới hạn đăng ký theo IP vẫn giữ nguyên).
 const base = process.argv[2] ?? "http://localhost:4000";
 const N = Number(process.argv[3] ?? 20);
 const minutes = Number(process.argv[4] ?? 20);
+const townBots = Math.round(N * Number(process.argv[5] ?? 0));
+const partySize = Number(process.env.SOAK_PARTY ?? 0);
+const war = !!process.env.SOAK_WAR;
+const p56 = !!process.env.SOAK_P56;
+const bossOn = !!process.env.SOAK_BOSS;
 const wsBase = base.replace(/^http/, "ws");
 const stamp = Date.now() % 100000;
-const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0 };
+// vùng sinh Spider ở Lorencia (priv/maps/lorencia.json) — bot soak chỉ săn ở đây
+const SPIDER = { x0: 42, x1: 58, y0: 24, y1: 44 };
+const stats = { cmds: 0, ok: 0, errors: {}, kills: 0, levelUps: 0, deaths: 0, potions: 0, buys: 0, closes: 0, snapGaps: [], joins: 0, killedBy: {}, bytesIn: 0, msgsIn: 0, town: { joins: 0, bytesIn: 0, msgsIn: 0 }, byEvent: {}, partyInvites: 0, partyFull: new Set(), partyEvents: 0, war: { guilds: 0, members: 0, starts: 0, ends: 0, scores: 0, pvpAttacks: 0, pvpDeaths: 0, results: {} }, p56: { questAccept: 0, questDone: 0, upgrades: 0, upgradeOk: 0, trades: 0, tradeDone: 0, bossHits: 0, worldEvents: 0 } };
 
 async function http(method, path, body, token, ip) {
   const r = await fetch(base + path, {
@@ -19,14 +38,27 @@ async function http(method, path, body, token, ip) {
   return r.json();
 }
 
+// vùng bot săn được ở: dải đường từ cổng đông thị trấn (26,28–35) + vùng Spider
+const huntArea = (x, y) => (x >= SPIDER.x0 && x <= SPIDER.x1 && y >= SPIDER.y0 && y <= SPIDER.y1) || (x >= 26 && x < SPIDER.x0 && y >= 28 && y <= 35);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 
-async function bot(i) {
+async function register(i) {
   const ip = `10.9.${Math.floor(i / 200)}.${(i % 200) + 1}`;
   const user = `soak${stamp}x${i}`;
   const token = (await http("POST", "/register", { username: user, password: "matkhau123" }, null, ip)).token;
   const c = (await http("POST", "/characters", { name: `S${stamp}x${i}` }, token, ip)).character;
+  return { ip, token, c };
+}
+
+// guild war (SOAK_WAR): bot săn [townBots, half) → guild A, [half, N) → guild B
+const half = townBots + Math.ceil((N - townBots) / 2);
+const guildOf = (i) => (!war || i < townBots ? null : i < half ? "a" : "b");
+const gname = (g) => `G${stamp}${g}`;
+const regs = [];
+
+async function bot(i) {
+  const { ip, token, c } = await (regs[i] ?? register(i));
   const ticket = (await http("POST", "/ws-ticket", null, token, ip)).ticket;
 
   const ws = new WebSocket(`${wsBase}/socket/websocket?vsn=2.0.0&ticket=${ticket}`);
@@ -34,6 +66,15 @@ async function bot(i) {
   const waiting = new Map();
   const ents = new Map();
   let me = null, selfId = null, player = null, map = null, lastSnap = 0;
+  // guild war: guild địch đang war (tên) — null khi không war
+  let enemyGuild = null;
+  // tên cùng nhóm: không đánh được nhau kể cả khác guild đang war (P4M4-2)
+  let mates = [];
+  // P6-M6: view quest mới nhất; bot chẵn (trong cặp giao dịch) là người mời
+  let quests = null;
+  const tradeLead = (i - townBots) % 2 === 0;
+  const myGuild = guildOf(i);
+  const master = myGuild && (i === townBots || i === half);
   const push = (event, payload) =>
     new Promise((res) => {
       const r = String(++ref);
@@ -48,7 +89,18 @@ async function bot(i) {
     return rep.status === "ok";
   };
 
+  const town = i < townBots;
   ws.onmessage = (m) => {
+    stats.bytesIn += m.data.length;
+    stats.msgsIn++;
+    if (town) {
+      stats.town.bytesIn += m.data.length;
+      stats.town.msgsIn++;
+    }
+    if (process.env.SOAK_EVENTS) {
+      const ev = `${town ? "town" : "hunt"}:${JSON.parse(m.data)[3]}`;
+      stats.byEvent[ev] = (stats.byEvent[ev] ?? 0) + m.data.length;
+    }
     const [, r, , ev, p] = JSON.parse(m.data);
     if (ev === "phx_reply" && waiting.has(r)) {
       waiting.get(r)(p);
@@ -57,11 +109,54 @@ async function bot(i) {
     else if (ev === "despawn") ents.delete(p.id);
     else if (ev === "snapshot") {
       const now = Date.now();
-      if (lastSnap && i === 0) stats.snapGaps.push(now - lastSnap);
+      if (lastSnap && i === N - 1) stats.snapGaps.push(now - lastSnap);
       lastSnap = now;
       for (const e of p.entities) if (ents.has(e.id)) Object.assign(ents.get(e.id), e);
       for (const id of p.removed) ents.delete(id);
       if (selfId && ents.has(selfId)) me = ents.get(selfId);
+    } else if (ev === "party_invite") {
+      stats.partyInvites++;
+      void cmd("party_accept", { from: p.from });
+    } else if (ev === "guild_invite") {
+      void cmd("guild_accept", { guild: p.guild }).then((ok) => ok && stats.war.members++);
+    } else if (ev === "guild_war") {
+      if (p.state === "request") void cmd("guild_war_accept", { guild: p.enemy });
+      else if (p.state === "start") {
+        if (!enemyGuild && i === townBots) stats.war.starts++;
+        enemyGuild = p.enemy;
+      } else if (p.state === "score") {
+        if (i === townBots) stats.war.scores++;
+      } else if (p.state === "end") {
+        enemyGuild = null;
+        if (i === townBots) {
+          stats.war.ends++;
+          stats.war.results[p.reason] = (stats.war.results[p.reason] ?? 0) + 1;
+          // tuyên chiến lại sau 5 giây
+          setTimeout(() => void cmd("guild_war_declare", { guild: gname("b") }), 5000);
+        }
+      }
+    } else if (ev === "quests") {
+      quests = p;
+    } else if (ev === "quest_done") {
+      stats.p56.questDone++;
+    } else if (ev === "upgrade") {
+      stats.p56.upgrades++;
+      if (p.ok) stats.p56.upgradeOk++;
+    } else if (ev === "world_event") {
+      if (i === N - 1) stats.p56.worldEvents++;
+    } else if (ev === "trade_invite") {
+      void cmd("trade_accept", { from: p.from });
+    } else if (ev === "trade") {
+      if (p.state === "open") {
+        // người mời đặt 10 Zen; khóa khi chưa khóa; cả hai khóa → đồng ý
+        if (tradeLead && p.mine.zen === 0 && !p.mine.locked) void cmd("trade_zen", { amount: 10 });
+        else if (!p.mine.locked) void cmd("trade_lock");
+        else if (p.theirs.locked && !p.mine.confirmed) void cmd("trade_confirm");
+      } else if (p.result === "done" && tradeLead) stats.p56.tradeDone++;
+    } else if (ev === "party") {
+      stats.partyEvents++;
+      mates = p.members.map((m) => m.name);
+      if (p.members.length === partySize) stats.partyFull.add(p.leader);
     } else if (ev === "player") {
       if (player && p.level > player.level) stats.levelUps++;
       // hạ quái thật sự (chính bot ra đòn cuối) = EXP tăng (G24)
@@ -70,18 +165,92 @@ async function bot(i) {
     } else if (ev === "combat" && p.target === selfId) {
       // HP mới nhất của bot (event player chỉ gửi khi tiến độ đổi)
       player.hp = p.hp;
-      if (p.hp === 0) stats.deaths++;
+      if (p.hp === 0) {
+        stats.deaths++;
+        if (p.attacker.startsWith("p_")) stats.war.pvpDeaths++;
+        // loại quái ra đòn kết liễu (đo vùng nguy hiểm cho người mới)
+        const k = ents.get(p.attacker)?.templateId ?? p.attacker;
+        stats.killedBy[k] = (stats.killedBy[k] ?? 0) + 1;
+      }
     }
   };
   ws.onclose = () => stats.closes++;
   await new Promise((res) => (ws.onopen = res));
   const join = await push("phx_join", { clientVersion: "0.1.0", characterId: c.id });
   stats.joins++;
+  if (town) stats.town.joins++;
   selfId = join.response.entityId;
   player = join.response.player;
   map = join.response.map;
   me = { x: player.x, y: player.y };
+  // bot war: cộng hết điểm tự do vào STR (cấp 20 do seed) để đánh người có sát thương
+  if ((war || p56) && player.freeStatPoints > 0) await cmd("alloc", { stat: "strength", points: player.freeStatPoints });
   const walkable = (x, y) => map.tiles[y] && [".", ":", "="].includes(map.tiles[y][x]);
+  // trưởng nhóm mời k − 1 bot kế tiếp khi chúng đã vào game (bot vào cách nhau 200 ms)
+  if (partySize > 1 && i % partySize === 0)
+    setTimeout(async () => {
+      for (let j = i + 1; j < Math.min(i + partySize, N); j++) await cmd("party_invite", { to: `S${stamp}x${j}` });
+    }, partySize * 200 + 3000);
+
+  // master lập guild, mời nửa của mình (bot vào cách nhau 200 ms); master A tuyên chiến khi cả hai
+  // guild đã có người
+  if (master)
+    setTimeout(async () => {
+      if (await cmd("guild_create", { name: gname(myGuild) })) stats.war.guilds++;
+      const [from, to] = myGuild === "a" ? [townBots + 1, half] : [half + 1, N];
+      // nhóm rate-limit `guild` 5 lệnh / giây: mời giãn 250 ms
+      for (let j = from; j < to; j++) {
+        await cmd("guild_invite", { to: `S${stamp}x${j}` });
+        await sleep(250);
+      }
+      if (myGuild === "a") setTimeout(() => void cmd("guild_war_declare", { guild: gname("b") }), 8000);
+    }, N * 200 + 3000 - i * 200);
+
+  // P6-M6: việc Phase 5 + 6 (quest, ép đồ, giao dịch) xen giữa lúc săn
+  let nextQuest = Date.now() + 5000 + Math.random() * 10000;
+  let nextUpgrade = Date.now() + 30000 + Math.random() * 60000;
+  let tradeRound = 0;
+  const QM = { id: "lorencia_quest_master", x: 19, y: 25 };
+  const goTown = async (x, y) => {
+    await cmd("move_to", { x, y });
+    for (let k = 0; k < 30 && cheb(me, { x, y }) > 1 && ws.readyState === 1; k++) await sleep(500);
+  };
+  const p56Step = async () => {
+    if (Date.now() > nextQuest) {
+      nextQuest = Date.now() + 60000 + Math.random() * 30000;
+      const done = quests?.active.find((q) => q.complete);
+      const avail = quests?.available[0];
+      if (done || (avail && (quests?.active.length ?? 0) < 2)) {
+        await goTown(QM.x - 1, QM.y + 1);
+        if (done) await cmd("quest_turnin", { questId: done.id, npcId: QM.id });
+        if (avail && (await cmd("quest_accept", { questId: avail.id, npcId: QM.id }))) stats.p56.questAccept++;
+      }
+      return true;
+    }
+    if (Date.now() > nextUpgrade) {
+      nextUpgrade = Date.now() + 80000 + Math.random() * 20000;
+      const shield = player.inventory.find((it) => it.templateId === "shield_t0");
+      const jewel = shield && player.inventory.find((it) => it.templateId === ((shield.level ?? 0) < 6 ? "jewel_bless" : "jewel_soul"));
+      if (shield && jewel) await cmd("upgrade", { itemId: shield.id, jewelId: jewel.id });
+      return false;
+    }
+    // giao dịch: phút 1,5 + 3k, cặp (lead, lead + 1) gặp nhau ở thị trấn
+    const t = (Date.now() - started) / 60000;
+    if (t > 1.5 + tradeRound * 3) {
+      tradeRound++;
+      const k = Math.floor((i - townBots) / 2);
+      await goTown(14 + (k % 8), 27 + (k % 6));
+      await sleep(3000);
+      if (tradeLead && i + 1 < N) {
+        stats.p56.trades++;
+        await cmd("trade_request", { to: `S${stamp}x${i + 1}` });
+      }
+      await sleep(8000);
+      await cmd("trade_cancel");
+      return true;
+    }
+    return false;
+  };
 
   const end = Date.now() + minutes * 60_000;
   while (Date.now() < end && ws.readyState === 1) {
@@ -89,14 +258,55 @@ async function bot(i) {
       const pot = player.inventory.find((it) => it.templateId === "hp_potion_small");
       if (pot && (await cmd("use_item", { itemId: pot.id }))) stats.potions++;
     }
-    const spider = [...ents.values()].filter((e) => e.kind === "monster" && e.state !== "dead").sort((a, b) => cheb(a, me) - cheb(b, me))[0];
+    if (town) {
+      // bot thị trấn: đi lại trong thị trấn (x < 26)
+      const x = 13 + Math.floor(Math.random() * 12);
+      const y = 26 + Math.floor(Math.random() * 11);
+      if (walkable(x, y)) await cmd("move_to", { x, y });
+      await sleep(1500 + Math.random() * 1500);
+      continue;
+    }
+    // guild war: người guild địch đứng gần, cả hai ngoài thị trấn (x ≥ 26) → đánh tới khi chết / 25 giây
+    const foe =
+      enemyGuild &&
+      me.x >= 26 &&
+      [...ents.values()].filter((e) => e.kind === "player" && e.guild === enemyGuild && !mates.includes(e.name) && e.state !== "dead" && huntArea(e.x, e.y) && cheb(e, me) <= 6).sort((a, b) => cheb(a, me) - cheb(b, me))[0];
+    if (foe && Math.random() < 0.6) {
+      stats.war.pvpAttacks++;
+      const t0 = Date.now();
+      while (Date.now() - t0 < 25000 && enemyGuild && ws.readyState === 1) {
+        const f = ents.get(foe.id);
+        if (!f || f.state === "dead" || !huntArea(f.x, f.y) || player.hp < player.view.hpMax * 0.15) break;
+        if (cheb(f, me) > 1) await cmd("move_to", { x: f.x + Math.sign(me.x - f.x), y: f.y + Math.sign(me.y - f.y) });
+        // lỗi (đã chết, vào thị trấn, …): thôi
+        else if (!(await cmd("attack", { target: foe.id }))) break;
+        await sleep(player.view.cooldownMs + 20);
+      }
+      continue;
+    }
+    if (p56 && (await p56Step())) continue;
+    // world boss (SOAK_BOSS): đánh khi ở gần
+    const boss = bossOn && [...ents.values()].find((e) => e.kind === "monster" && e.boss && e.state !== "dead" && cheb(e, me) <= 8);
+    if (boss && player.hp > player.view.hpMax * 0.4) {
+      const t0 = Date.now();
+      while (Date.now() - t0 < 15000 && ws.readyState === 1) {
+        const b = ents.get(boss.id);
+        if (!b || b.state === "dead" || player.hp < player.view.hpMax * 0.4) break;
+        if (cheb(b, me) > 1) await cmd("move_to", { x: b.x + Math.sign(me.x - b.x), y: b.y + Math.sign(me.y - b.y) });
+        else if (await cmd("attack", { target: boss.id })) stats.p56.bossHits++;
+        await sleep(player.view.cooldownMs + 20);
+      }
+      continue;
+    }
+    const spider = [...ents.values()].filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead").sort((a, b) => cheb(a, me) - cheb(b, me))[0];
     const r = Math.random();
     if (player.zen >= 100 && player.view.potions.HP < 3 && r < 0.2) {
       // về NPC mua potion
       await cmd("move_to", { x: 12, y: 26 });
       await sleep(4000);
       if (await cmd("buy", { npcId: "lorencia_potion_merchant", templateId: "hp_potion_small", quantity: 1 })) stats.buys++;
-    } else if (spider && cheb(spider, me) <= 8 && r < 0.8) {
+    } else if (spider && cheb(spider, me) <= 8 && r < (myGuild ? 0.4 : 0.8)) {
+      // bot war (cấp 20, khó chết) săn ít hơn để còn Spider cho người chơi E2E
       // đánh tới khi quái chết hoặc 12 giây
       const t0 = Date.now();
       while (Date.now() - t0 < 12000 && ents.get(spider.id)?.state !== "dead" && ws.readyState === 1) {
@@ -107,11 +317,16 @@ async function bot(i) {
         await sleep(player.view.cooldownMs + 20);
       }
     } else {
-      // đi lang thang (thiên về phía đông, nơi có Spider)
+      // đi lang thang thiên về phía đông; ra khỏi thị trấn thì ở trong vùng Spider như người chơi
+      // cấp 1 thật (từ P2-M4 Lorencia có quái mạnh ở vùng khác — B-1)
       for (let k = 0; k < 10; k++) {
         const x = me.x + Math.floor(Math.random() * 17) - 6;
         const y = me.y + Math.floor(Math.random() * 13) - 6;
-        if (walkable(x, y)) {
+        const inSpider = x >= SPIDER.x0 && x <= SPIDER.x1 && y >= SPIDER.y0 && y <= SPIDER.y1;
+        // dải đường từ cổng đông thị trấn (26,30–32) sang vùng Spider
+        const onRoad = x >= 26 && x < SPIDER.x0 && y >= 28 && y <= 35;
+        const outside = x >= 26 && !inSpider && !onRoad;
+        if (walkable(x, y) && !outside) {
           await cmd("move_to", { x, y });
           break;
         }
@@ -127,16 +342,50 @@ const pct = (xs, p) => {
   const s = [...xs].sort((a, b) => a - b);
   return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))];
 };
+const rate = (bytes, msgs, joins) => {
+  const secs = Math.max(1, (Date.now() - started) / 1000);
+  return `${(bytes / 1024 / Math.max(1, joins) / secs).toFixed(2)} KB/s/bot (${(msgs / Math.max(1, joins) / secs).toFixed(1)} tin/s/bot)`;
+};
 const report = (label) => {
   const g = stats.snapGaps;
+  const t = stats.town;
+  const split = townBots
+    ? ` [thị trấn ${t.joins}: ${rate(t.bytesIn, t.msgsIn, t.joins)}; săn ${stats.joins - t.joins}: ${rate(stats.bytesIn - t.bytesIn, stats.msgsIn - t.msgsIn, stats.joins - t.joins)}]`
+    : "";
+  const w = stats.war;
+  const warTxt = war ? ` | war: guild ${w.guilds}, vào guild ${w.members}, bắt đầu ${w.starts}, kết thúc ${w.ends} ${JSON.stringify(w.results)}, điểm ${w.scores}, lượt đánh người ${w.pvpAttacks}, chết vì người ${w.pvpDeaths}` : "";
+  const q = stats.p56;
+  const p56Txt = p56 || bossOn ? ` | P5/6: quest nhận ${q.questAccept} xong ${q.questDone}, ép ${q.upgrades} (thành công ${q.upgradeOk}), giao dịch ${q.trades} (xong ${q.tradeDone}), đòn vào boss ${q.bossHits}, world_event ${q.worldEvents}` : "";
+  const party = partySize > 1 ? ` | nhóm: mời ${stats.partyInvites}, đủ ${partySize} người ${stats.partyFull.size} nhóm, event party ${stats.partyEvents}` : "";
   console.log(
-    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms`,
+    `${label} | bot ${stats.joins}/${N} | cmd ${stats.cmds} (ok ${stats.ok}) lỗi ${JSON.stringify(stats.errors)} | hạ (đòn cuối) ${stats.kills} lên cấp ${stats.levelUps} chết ${stats.deaths} ${JSON.stringify(stats.killedBy)} potion ${stats.potions} mua ${stats.buys} | đóng WS ${stats.closes} | nhận ${rate(stats.bytesIn, stats.msgsIn, stats.joins)}${split} | snapshot gap p50 ${pct(g, 50)} p99 ${pct(g, 99)} max ${Math.max(0, ...g)} ms${party}${warTxt}${p56Txt}`,
   );
 };
 
 const started = Date.now();
 const timer = setInterval(() => report(`[${((Date.now() - started) / 60000).toFixed(1)} phút]`), 60_000);
 const bots = [];
+if (war || p56) {
+  // đăng ký hết trước, nâng cấp + Zen một lần rồi mới vào game
+  for (let i = 0; i < N; i++) regs.push(await register(i));
+  const { execSync } = await import("node:child_process");
+  console.log(execSync(`mix run scripts/e2e_soak_seed.exs S${stamp}x 20 20000${p56 ? " p56" : ""}`, { env: { ...process.env, LANG: "C.UTF-8" } }).toString().trim());
+}
+if (bossOn)
+  setTimeout(async () => {
+    // exec bất đồng bộ: execSync chặn vòng lặp sự kiện của soak (làm sai số đo snapshot gap)
+    const { exec } = await import("node:child_process");
+    const { hostname } = await import("node:os");
+    const node = process.env.MU_NODE ?? `mu@${hostname().split(".")[0]}`;
+    for (const k of ["world_boss", "golden_invasion"]) {
+      await new Promise((res) =>
+        exec(`mix mu.event start ${k} --node ${node}`, { env: { ...process.env, LANG: "C.UTF-8" } }, (err, _o, e) => {
+          console.log(err ? `[soak] không bật được ${k}: ${String(e).slice(0, 200)}` : `[soak] bật ${k}`);
+          res();
+        }),
+      );
+    }
+  }, 60_000);
 for (let i = 0; i < N; i++) {
   bots.push(bot(i).catch((e) => console.log(`bot ${i} lỗi: ${e?.message ?? e}`)));
   await sleep(200);
@@ -144,4 +393,5 @@ for (let i = 0; i < N; i++) {
 await Promise.all(bots);
 clearInterval(timer);
 report("[TỔNG KẾT]");
+if (process.env.SOAK_EVENTS) console.log("byte theo event:", JSON.stringify(stats.byEvent));
 process.exit(0);

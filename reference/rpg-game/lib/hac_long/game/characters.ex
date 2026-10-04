@@ -19,8 +19,14 @@ defmodule HacLong.Game.Characters do
     end
   end
 
-  @doc "Ghi đè toàn bộ trạng thái nhân vật (tạo mới nếu chưa có)."
-  def save!(user_id, player) do
+  @doc """
+  Ghi đè toàn bộ trạng thái nhân vật (tạo mới nếu chưa có).
+
+  Cùng transaction đó ghi nhật ký vàng (`gold_log`, khi vàng đổi) và đồ hiếm (`gear_log`, đồ
+  chỉ số ngẫu nhiên vào/ra). `reason`/`ref` cho biết vì sao đổi (vd. `"SELL"`, `"TRADE"`);
+  bỏ trống thì lấy lý do `Session` đặt cho lệnh đang chạy (`put_reason/2`), không có thì `"OTHER"`.
+  """
+  def save!(user_id, player, reason \\ nil, ref \\ nil) do
     attrs =
       player
       |> Map.merge(%{
@@ -33,12 +39,30 @@ defmodule HacLong.Game.Characters do
 
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    Repo.insert!(
-      struct(Character, Map.merge(attrs, %{user_id: user_id, inserted_at: now, updated_at: now})),
-      on_conflict: {:replace, Character.fields() ++ [:updated_at]},
-      conflict_target: :user_id
-    )
+    Repo.transaction(fn ->
+      old = locked_row(user_id)
 
+      Repo.insert!(
+        struct(
+          Character,
+          Map.merge(attrs, %{user_id: user_id, inserted_at: now, updated_at: now})
+        ),
+        on_conflict: {:replace, Character.fields() ++ [:updated_at]},
+        conflict_target: :user_id
+      )
+
+      log!(user_id, old, %{gold: player.gold, gear: player[:gear] || []}, reason, ref)
+    end)
+
+    :ok
+  end
+
+  @doc """
+  Lý do (và mã tham chiếu) cho các lần lưu nhân vật tiếp theo trong tiến trình này, tới khi
+  đặt lại. `Session` gọi trước mỗi lệnh.
+  """
+  def put_reason(reason, ref \\ nil) do
+    Process.put(:hl_save_reason, {reason, ref})
     :ok
   end
 
@@ -48,12 +72,72 @@ defmodule HacLong.Game.Characters do
   end
 
   def delete!(user_id) do
-    Repo.delete_all(from c in Character, where: c.user_id == ^user_id)
+    Repo.transaction(fn ->
+      old = locked_row(user_id)
+      Repo.delete_all(from c in Character, where: c.user_id == ^user_id)
+      if old, do: log!(user_id, old, %{gold: 0, gear: []}, "DELETE", nil)
+    end)
+
     :ok
   end
 
+  # ---------- Nhật ký vàng / đồ hiếm ----------
+
+  defp locked_row(user_id) do
+    Repo.one(
+      from c in Character,
+        where: c.user_id == ^user_id,
+        select: %{gold: c.gold, gear: c.gear},
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp log!(user_id, old, new, reason, ref) do
+    {reason, ref} = reason_ref(reason, ref)
+    old = old || %{gold: 0, gear: []}
+    delta = new.gold - old.gold
+
+    if delta != 0 do
+      Repo.insert_all("gold_log", [
+        %{user_id: user_id, delta: delta, balance: new.gold, reason: reason, ref: ref}
+      ])
+    end
+
+    before = Map.new(old.gear || [], &{&1["uid"], {&1["base"], &1["rarity"]}})
+    now = Map.new(new.gear, &{&1.uid, {&1.base, &1.rarity}})
+
+    rows =
+      for {uid, {base, rarity}} <- Map.drop(now, Map.keys(before)) do
+        %{user_id: user_id, uid: uid, base: base, rarity: rarity, action: "in"}
+      end ++
+        for {uid, {base, rarity}} <- Map.drop(before, Map.keys(now)) do
+          %{user_id: user_id, uid: uid, base: base, rarity: rarity, action: "out"}
+        end
+
+    if rows != [] do
+      Repo.insert_all("gear_log", Enum.map(rows, &Map.merge(&1, %{reason: reason, ref: ref})))
+    end
+
+    :ok
+  end
+
+  defp reason_ref(nil, ref) do
+    case Process.get(:hl_save_reason) do
+      {reason, ref2} -> reason_ref(reason, ref || ref2)
+      nil -> reason_ref("OTHER", ref)
+    end
+  end
+
+  defp reason_ref(reason, ref) do
+    ref = if ref == nil, do: nil, else: ref |> to_string() |> String.slice(0, 64)
+    {String.slice(reason, 0, 32), ref}
+  end
+
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
-  defp to_player(%Character{} = c) do
+  # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
+  defp to_player(%Character{} = c), do: c |> to_map() |> HacLong.Game.Engine.split_upgrades()
+
+  defp to_map(c) do
     %{
       version: @save_version,
       name: c.name,
@@ -64,7 +148,7 @@ defmodule HacLong.Game.Characters do
       hp: c.hp,
       points: c.points,
       stats: Map.new(~w(str vit agi def)a, &{&1, Map.fetch!(c.stats, Atom.to_string(&1))}),
-      equip: Map.new(~w(weapon armor shield)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
+      equip: Map.new(~w(weapon armor shield wing)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
       inv: c.inv,
       bosses: c.bosses,
       kills: c.kills,

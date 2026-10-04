@@ -58,3 +58,70 @@ export class ServerClock {
     return clientNow + (this.offset ?? 0);
   }
 }
+
+/**
+ * Trượt đều về vị trí server mới nhất (DEC-186, ý từ cách vẽ của repo nền Hắc Long): hình chạy
+ * với **tốc độ không đổi** (ô / giây, đo từ nhịp đổi ô của chính entity đó; mặc định
+ * `defaultTps`) thẳng về vị trí mới nhất server gửi. Đi liên tục thì hình luôn đang chạy — không có
+ * nhịp "đứng chờ gói rồi trượt bù" như nội suy giữa hai snapshot. Tụt lại hơn một ô (mạng giật) thì
+ * chạy nhanh hơn cho kịp. Server vẫn quyết định vị trí; nhảy xa (hồi sinh, cổng) thì đặt thẳng.
+ * Cùng giao diện với `InterpBuffer`.
+ */
+export class Glide {
+  private x = 0;
+  private y = 0;
+  private tx = 0;
+  private ty = 0;
+  private tps: number;
+  private lastChange = -Infinity;
+  private lastTime: number | null = null;
+  private started = false;
+
+  constructor(
+    defaultTps = 5,
+    private readonly snapTiles = 3,
+  ) {
+    this.tps = defaultTps;
+  }
+
+  push(t: number, x: number, y: number): void {
+    if (this.started && x === this.tx && y === this.ty) return;
+    const d = Math.hypot(x - this.tx, y - this.ty);
+    if (!this.started || Math.max(Math.abs(x - this.tx), Math.abs(y - this.ty)) > this.snapTiles) return this.reset(t, x, y);
+    const gap = t - this.lastChange;
+    // tốc độ thật của entity (ô Euclid / giây) từ nhịp đổi ô liên tiếp; đứng lâu thì giữ số cũ
+    if (gap > 0 && gap < 1000) this.tps = this.tps * 0.6 + Math.min(Math.max((d * 1000) / gap, 1), 15) * 0.4;
+    this.lastChange = t;
+    this.tx = x;
+    this.ty = y;
+  }
+
+  reset(t: number, x: number, y: number): void {
+    this.x = this.tx = x;
+    this.y = this.ty = y;
+    this.lastChange = t;
+    this.lastTime = null;
+    this.started = true;
+  }
+
+  at(time: number): { x: number; y: number } | null {
+    if (!this.started) return null;
+    const dt = this.lastTime === null ? 0 : Math.max(0, Math.min(time - this.lastTime, 250));
+    this.lastTime = time;
+    const dx = this.tx - this.x;
+    const dy = this.ty - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 0) {
+      // tụt hơn một ô: đuổi nhanh theo khoảng cách
+      const step = (this.tps * Math.max(1, dist) * dt) / 1000;
+      if (step >= dist) {
+        this.x = this.tx;
+        this.y = this.ty;
+      } else {
+        this.x += (dx / dist) * step;
+        this.y += (dy / dist) * step;
+      }
+    }
+    return { x: this.x, y: this.y };
+  }
+}

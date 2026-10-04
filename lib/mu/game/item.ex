@@ -8,6 +8,8 @@ defmodule Mu.Game.Item do
     field :template_id, :string
     field :quantity, :integer, default: 1
     field :item_level, :integer, default: 0
+    # P5-M2: cấp option Jewel of Life (0 … 4), migration 20261006000000
+    field :option_level, :integer, default: 0
     field :durability, :integer
     field :luck, :boolean, default: false
     field :skill, :boolean, default: false

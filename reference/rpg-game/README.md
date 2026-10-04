@@ -87,7 +87,8 @@ trận nếu làm cả nhiệm vụ và việc hằng ngày (theo mô phỏng).
 ```
 Trình duyệt (priv/static: index.html, js/ui.js, js/net.js)
    │  POST /api/register, /api/login  → token
-   │  WebSocket /socket?token=…  → kênh "game"
+   │  POST /api/ws-ticket (token ở header) → vé dùng một lần
+   │  WebSocket /socket?ticket=…  → kênh "game" {v: phiên bản giao diện}
    ▼
 HacLongWeb.GameChannel ── lệnh {"act": "attack"} ──▶ HacLong.Game.Session (1 tiến trình / tài khoản)
         ▲                                               │  HacLong.Game.Commands  (kiểm tra đầu vào)
@@ -157,14 +158,16 @@ lib/hac_long/world/map_server.ex    Tiến trình giữ quái và người chơi
 lib/hac_long/accounts.ex            Đăng ký, đăng nhập, token
 lib/hac_long/chat.ex                Chat thế giới (giữ 50 tin gần nhất)
 lib/hac_long/leaderboard.ex         Bảng xếp hạng
-lib/hac_long/moderation.ex          Chặn, báo cáo, cấm chat, khóa tài khoản, quyền quản trị
+lib/hac_long/moderation.ex          Chặn, báo cáo, cấm chat, khóa tài khoản, vai trò (player/mod/admin)
+lib/hac_long/admin.ex               Lệnh quản trị trên nhân vật (chạy trong Session), nhật ký admin_log
+lib/hac_long/audit.ex               Đối soát vàng / đồ hiếm với gold_log, gear_log; dọn nhật ký cũ
 lib/hac_long/mailbox.ex             Hộp thư: gửi thư kèm quà, mở thư nhận quà
 lib/hac_long/rate_limit.ex          Giới hạn tần suất (đăng nhập, chat...)
 lib/hac_long/world_boss.ex          Trùm thế giới: lịch xuất hiện, máu chung, chia thưởng
 lib/hac_long_web/channels/          UserSocket, GameChannel
 lib/hac_long_web/controllers/       API đăng nhập; trang chủ (chèn dữ liệu game cho client)
 lib/hac_long_web/remote_ip.ex       Lấy IP thật từ X-Forwarded-For khi chạy sau proxy tin cậy
-lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin
+lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, mix hac_long.audit
 .github/workflows/ci.yml            CI: format, biên dịch không cảnh báo, mix test
 ```
 
@@ -199,9 +202,10 @@ lúc hạ từng trùm.
 | | Tài khoản bị khóa: đăng nhập trả 403 kèm lý do và thời hạn; token cũ hết hiệu lực |
 | `POST /api/logout`, `POST /api/logout_all` | (có token) đăng xuất thiết bị này / mọi thiết bị |
 | `POST /api/password` | (có token) `{current, password}` → `{token, username}`; thiết bị khác bị đăng xuất |
+| `POST /api/ws-ticket` | (có token) → `{ticket}`: vé dùng một lần, sống 30 giây, để mở `/socket?ticket=…` (token không nằm trong URL); 20 lần / phút |
 | | Quá giới hạn thì trả 429 kèm `retry-after` |
-| join `"game"` | → `{username, user_id, admin, blocked, mail, player}` (`player` là `null` nếu chưa tạo nhân vật; `blocked` là `[{id, name}]` người đã chặn; `mail` là số thư chưa mở) |
-| push `"cmd"` | `{act, ...}` → `{ok, msg?, result?, player}` |
+| join `"game"` | `{v}` (mã phiên bản giao diện, `window.CLIENT_VERSION`); sai mã → lỗi `{reason: "version"}`, client tự tải lại trang. Thành công → `{username, user_id, admin, role, blocked, mail, player}` (`admin`: thấy tab Quản trị, tức `role` là `mod`/`admin`) (`player` là `null` nếu chưa tạo nhân vật; `blocked` là `[{id, name}]` người đã chặn; `mail` là số thư chưa mở) |
+| push `"cmd"` | `{act, rid?, ...}` → `{ok, msg?, result?, player}`. `rid` (mã yêu cầu, trừ lệnh đi): gửi lại cùng `rid` thì trả kết quả cũ, không chạy hai lần. Đợt 3: `upgrade {slot, confirm?}` (slot gồm `wing`; bước có thể vỡ đồ cần `confirm: true`, kết quả có `upgrade: {result: success/down/destroy, level}`), `unequip {slot: shield/wing}`, `lock {id, on}` (khóa / mở khóa đồ), `chaos {id, gear?}` (Máy Hỗn Nguyên, cạnh Lão Hỗn Nguyên; kết quả có `chaos: {result, out}`) |
 | server push `"player"` | `{player}` khi nhân vật đổi từ tab khác |
 | server push `"map"` | `{map, phase, monsters, nodes, players}` (người chơi kèm `look`, `tag`) (`phase`: dawn/day/dusk/night; quái Bóng Đêm có `rare: true`) của bản đồ đang đứng, mỗi khi có thay đổi |
 | push `"chat"` | `{text}` → ok hoặc `{msg}` lỗi (cả khi bị cấm chat); server đẩy `"chat"` `{id, uid, name, title, tag, map, text, at, guild?}` cho mọi người (trừ người đã chặn `uid`), `"chat_history"` lúc mới vào |
@@ -218,7 +222,7 @@ lúc hạ từng trùm.
 | push `"arena"` | → `{me: {rating, wins, losses, today, per_day}, suggestions, top}` |
 | push `"market"` | `{q?}` → `{listings: [{id, seller, name, item, count, gear, price, mine}], fee, max}` |
 | push `"mail"` | → `{mails: [{id, subject, body, gold, xp, items, claimed, at}], unread}`; server đẩy `"mail"` `{unread}` khi có thư mới hoặc vừa mở thư |
-| push `"admin"` | Chỉ admin. `{op, ...}`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute/ban, minutes}`, `mute`/`ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unmute`/`unban {uid}`, `announce {text}`, `gift {uid | all: true, subject, body?, gold?, xp?, items?}`, `world_boss` |
+| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, subject, body?, gold?, xp?, items?}`, `world_boss`; chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, vit?, agi?, def?}`, `give_item {id, count?, up?}`, `give_gear {base, rarity?, bonus?, up?}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
 | server push `"world_boss"` | `{alive, name, hp, maxHp, endsAt, nextAt, now, fighters, top}` khi trùm thế giới thay đổi |
 | server push `"notice"` | `{msg}`: thông báo riêng (vd. nhận thưởng trùm thế giới) |
 | push `"leaderboard"` | → `{level, kills, dragon, tower, guild, guild_boss, arena, me}` (mỗi bảng 10 người kèm `title`, `me` là hạng theo cấp) |
@@ -286,9 +290,20 @@ export TRUSTED_PROXIES="127.0.0.1,10.0.0.0/8"
 Cấp hoặc thu hồi quyền quản trị (tab Quản trị hiện sau khi tải lại trang):
 
 ```bash
-mix hac_long.admin TÊN_ĐĂNG_NHẬP            # MIX_ENV=prod khi chạy trên server
+mix hac_long.admin TÊN_ĐĂNG_NHẬP            # admin; MIX_ENV=prod khi chạy trên server
+mix hac_long.admin TÊN_ĐĂNG_NHẬP --role mod # chỉ kiểm duyệt chat
 mix hac_long.admin TÊN_ĐĂNG_NHẬP --revoke
 ```
+
+Đối soát vàng / đồ hiếm với nhật ký (thoát mã 1 nếu lệch, dùng cho cron), dọn nhật ký cũ:
+
+```bash
+mix hac_long.audit [--days 7]
+mix hac_long.audit --prune 180
+```
+
+Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):
+[docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md).
 
 ## Hướng phát triển tiếp
 

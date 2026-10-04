@@ -10,10 +10,10 @@ defmodule Mu.World.MapServer do
     (chế độ tự tick cộng thêm phần đã trôi trong tick hiện tại để cooldown chính xác).
   - AI quái `server.monsterAiHz` (10 Hz), chỉ chạy khi map có người (quái "ngủ" khi vắng).
   - Snapshot delta mỗi `simulationHz / snapshotHz` tick: entity đổi + `removed`
-    (`KB_TECHNICAL §5`). Phase 1 broadcast cả map (chưa AOI).
+    (`KB_TECHNICAL §5`). Broadcast cả map; mỗi kênh lọc theo tầm nhìn (`MuWeb.Aoi`, P3-M1).
   - Sự kiện: `spawn`, `despawn`, `snapshot`, `combat` qua PubSub `topic/1` dạng
     `{:map_event, event, payload}`. Gửi riêng tiến trình chủ (Session):
-    `{:map_reward, %{exp, zen, monster}}`, `{:map_died, character_id}`.
+    `{:map_reward, %{exp, zen, monster, template}}`, `{:map_died, character_id}`.
   - Tiến độ nhân vật (level, EXP, stat, Zen) do Session giữ; MapServer nhận chỉ số đã tính
     (`stats`, `skills`) qua `join/3` và `update_player/3` (PHASE1_PLAN R5).
 
@@ -22,7 +22,7 @@ defmodule Mu.World.MapServer do
   use GenServer
   require Logger
 
-  alias Mu.Game.{Config, Data, Drops, Engine, Rng}
+  alias Mu.Game.{Config, Data, Drops, Duel, Engine, Pvp, Rng}
   alias Mu.Ulid
   alias Mu.World.{Maps, MonsterAi, Pathfinding}
 
@@ -83,6 +83,14 @@ defmodule Mu.World.MapServer do
   def take_ground(server, character_id, ground_id),
     do: GenServer.call(server(server), {:take_ground, character_id, ground_id})
 
+  @doc """
+  Đặt món người chơi vừa `drop` (đã xóa khỏi DB, `Mu.Game.Items.drop/3`) xuống ô đang đứng
+  (P2-9): người vứt giữ quyền nhặt trong `lootProtectSeconds`, biến mất sau `groundItemSeconds`.
+  `dropped`: `%{serial, template_id, quantity, attrs}`. Trả `{:ok, ground_id}`.
+  """
+  def drop_ground(server, character_id, dropped, owner \\ nil),
+    do: GenServer.call(server(server), {:drop_ground, character_id, dropped, owner})
+
   @doc "Trả đồ về mặt đất (ghi DB thất bại, vd. túi đầy) — giữ nguyên chủ và hạn."
   def return_ground(server, ground), do: GenServer.call(server(server), {:return_ground, ground})
 
@@ -92,6 +100,27 @@ defmodule Mu.World.MapServer do
   """
   def use_potion(server, character_id, effect),
     do: GenServer.call(server(server), {:use_potion, character_id, effect})
+
+  @doc """
+  Duel (P4-M2): `act` là `:request` (`name` = người được mời), `:accept` / `:decline` (`name` =
+  người mời), `:cancel` (hủy lời mời đang chờ, hoặc đầu hàng nếu đang duel). `:ok` hoặc
+  `{:error, code}`.
+  """
+  def duel(server, character_id, act, name \\ nil),
+    do: GenServer.call(server(server), {:duel, character_id, act, name})
+
+  @doc """
+  Giao dịch (P5-M4): người chơi tên `name` cùng map, cách `character_id` ≤ `range` ô, cả hai còn
+  sống, không ai đang duel. `{:ok, %{character_id, name, session}}` hoặc `{:error, code}`.
+  """
+  def near_player(server, character_id, name, range),
+    do: GenServer.call(server(server), {:near_player, character_id, name, range})
+
+  @doc "Khoảng cách (ô) giữa hai người chơi trên map, `nil` nếu một người không ở đây hoặc đã chết."
+  def distance(server, a, b), do: GenServer.call(server(server), {:distance, a, b})
+
+  @doc "Dừng di chuyển của người chơi (mất kết nối, P3-M2): bỏ đường đi, đứng yên tại chỗ."
+  def halt(server, character_id), do: GenServer.call(server(server), {:halt, character_id})
 
   @doc "Cập nhật chỉ số sau lên cấp/cộng điểm/trang bị: `%{level?, stats?, skills?, hp?, mp?}`."
   def update_player(server, character_id, changes),
@@ -121,6 +150,16 @@ defmodule Mu.World.MapServer do
   @doc "Sửa state trực tiếp (chỉ dùng trong test)."
   def debug_update(server, fun), do: :sys.replace_state(server(server), fun)
 
+  @doc """
+  Sinh `count` quái event `monster_id` (P6-M5) trong `area` (`%{x, y, w, h}`, khóa chuỗi hoặc atom),
+  gắn nhãn `tag`: không hồi sinh, chết thì báo `Mu.WorldEvents.monster_killed/2`. `{:ok, [id]}`.
+  """
+  def spawn_event(server, tag, monster_id, count, area),
+    do: GenServer.call(server(server), {:spawn_event, tag, monster_id, count, area})
+
+  @doc "Thu mọi quái event nhãn `tag` (còn sống hay đã chết). `{:ok, số_con}`."
+  def despawn_event(server, tag), do: GenServer.call(server(server), {:despawn_event, tag})
+
   defp server(map_id) when is_binary(map_id), do: via(map_id)
   defp server(server), do: server
 
@@ -140,10 +179,13 @@ defmodule Mu.World.MapServer do
       players: %{},
       monsters: %{},
       ground: %{},
+      # duel đang diễn ra + lời mời (P4-M2, `Mu.Game.Duel`)
+      duels: Duel.new(),
       rng: if(seed = opts[:seed], do: Rng.new(seed), else: Rng.new()),
       tick_ms: tick_ms,
       snapshot_every: div(sim_hz, server["snapshotHz"]),
       ai_every: div(sim_hz, server["monsterAiHz"]),
+      regen_every: max(1, div(Config.get(["combat", "mpRegen", "intervalMs"]), tick_ms)),
       step_ms: 1000 / Config.get(["movement", "playerTilesPerSecond"]),
       diagonal: Config.get(["movement", "diagonalCostFactor"]),
       max_path_nodes: Config.get(["movement", "maxPathNodes"]),
@@ -201,8 +243,21 @@ defmodule Mu.World.MapServer do
             path: [],
             progress: 0,
             cooldowns: %{},
+            # P2-M3: buff đang có (`Engine.add_buff/5`), phần lẻ MP hồi tự nhiên
+            buffs: %{},
+            mp_acc: 0.0,
             dead_at: nil,
             last_combat_at: nil,
+            # P4-M1: điểm PK (Session giữ, ghi DB), quyền tự vệ, cờ kẻ gây sự (`Mu.Game.Pvp`)
+            pk_points: Map.get(p, :pk_points, 0),
+            rights: %{},
+            aggressor_until: nil,
+            # P4-M2: đang duel (người khác thấy để không xen vào)
+            dueling: false,
+            # P4-M3: tên guild trên đầu (Session báo khi vào / rời guild)
+            guild: Map.get(p, :guild),
+            # P6-M4: cánh đang mặc (templateId, `nil` = không) — client vẽ sau lưng
+            wing: Map.get(p, :wing),
             owner: owner,
             ref: Process.monitor(owner)
           }
@@ -262,6 +317,13 @@ defmodule Mu.World.MapServer do
     end
   end
 
+  # `owner`: chủ loot protect (mặc định người vứt; rơi vì PK: kẻ giết, P4-M1)
+  def handle_call({:drop_ground, id, dropped, owner}, _from, s) do
+    e = s.players[id]
+    s = drop_item(s, dropped, {e.x, e.y}, owner || id, now(s))
+    {:reply, {:ok, "g_" <> dropped.serial}, s}
+  end
+
   def handle_call({:return_ground, g}, _from, s) do
     broadcast(s, "spawn", ground_payload(g))
 
@@ -289,14 +351,98 @@ defmodule Mu.World.MapServer do
     end
   end
 
+  def handle_call({:duel, id, act, name}, _from, s) do
+    case do_duel(s, s.players[id], act, name) do
+      {:ok, s} -> {:reply, :ok, s}
+      {:error, code} -> {:reply, {:error, code}, s}
+    end
+  end
+
+  def handle_call({:near_player, id, name, range}, _from, s) do
+    e = s.players[id]
+    t = player_named(s, name)
+
+    reply =
+      cond do
+        e == nil or t == nil or t.character_id == id ->
+          {:error, "INVALID_TARGET"}
+
+        e.state == "dead" or t.state == "dead" ->
+          {:error, "FORBIDDEN"}
+
+        Duel.in_duel?(s.duels, id) or Duel.in_duel?(s.duels, t.character_id) ->
+          {:error, "FORBIDDEN"}
+
+        Pathfinding.chebyshev({e.x, e.y}, {t.x, t.y}) > range ->
+          {:error, "OUT_OF_RANGE"}
+
+        true ->
+          {:ok, %{character_id: t.character_id, name: t.name, session: t.owner}}
+      end
+
+    {:reply, reply, s}
+  end
+
+  def handle_call({:distance, a, b}, _from, s) do
+    reply =
+      case {s.players[a], s.players[b]} do
+        {%{state: sa} = pa, %{state: sb} = pb} when sa != "dead" and sb != "dead" ->
+          Pathfinding.chebyshev({pa.x, pa.y}, {pb.x, pb.y})
+
+        _ ->
+          nil
+      end
+
+    {:reply, reply, s}
+  end
+
+  def handle_call({:halt, id}, _from, s) do
+    # mất kết nối trong lúc duel: thua (P4-4)
+    s = duel_lost(s, id)
+
+    case s.players[id] do
+      %{state: "dead"} ->
+        {:reply, :ok, s}
+
+      %{} = e ->
+        e = %{e | path: [], progress: 0, state: "idle"}
+        {:reply, :ok, mark(put_in(s.players[id], e), e)}
+
+      nil ->
+        {:reply, :error, s}
+    end
+  end
+
   def handle_call({:update_player, id, changes}, _from, s) do
     case s.players[id] do
       nil ->
         {:reply, :error, s}
 
       e ->
-        e = Map.merge(e, Map.take(changes, [:level, :stats, :skills, :hp, :mp, :name]))
+        old = {Pvp.state(e.pk_points), Map.get(e, :guild), Map.get(e, :wing)}
+
+        e =
+          Map.merge(
+            e,
+            Map.take(changes, [
+              :level,
+              :stats,
+              :skills,
+              :hp,
+              :mp,
+              :name,
+              :pk_points,
+              :guild,
+              :wing
+            ])
+          )
+
         e = %{e | hp: min(e.hp, e.stats.hp_max), mp: min(e.mp, e.stats.mp_max)}
+
+        # trạng thái PK (màu tên, P4-M1) / guild (P4-M3) / cánh (P6-M4) đổi: người khác thấy ngay
+        if {Pvp.state(e.pk_points), Map.get(e, :guild), Map.get(e, :wing)} != old,
+          do: broadcast(s, "spawn", spawn_payload(e))
+
         {:reply, :ok, mark(put_in(s.players[id], e), e)}
     end
   end
@@ -312,6 +458,7 @@ defmodule Mu.World.MapServer do
             x: e.x,
             y: e.y,
             hp: e.hp,
+            hp_max: e.stats.hp_max,
             mp: e.mp,
             dead?: e.state == "dead",
             combat_remaining_ms: combat_remaining(s, e)
@@ -323,6 +470,28 @@ defmodule Mu.World.MapServer do
 
   def handle_call({:tick, n}, _from, s) do
     {:reply, :ok, Enum.reduce(1..n//1, s, fn _, s -> step(s) end)}
+  end
+
+  def handle_call({:spawn_event, tag, monster_id, count, area}, _from, s) do
+    tpl = Data.monster(monster_id) || raise "không có quái #{monster_id}"
+    area = for k <- [:x, :y, :w, :h], into: %{}, do: {k, area[k] || area[Atom.to_string(k)]}
+
+    {s, ids} =
+      Enum.reduce(1..count//1, {s, []}, fn _, {s, ids} ->
+        {{x, y}, rng} = random_cell(s, area, s.rng)
+        id = "ev_#{System.unique_integer([:positive])}"
+        m = %{new_monster(id, monster_id, tpl, area, {x, y}) | event: tag}
+        broadcast(s, "spawn", spawn_payload(m))
+        {%{s | rng: rng, monsters: Map.put(s.monsters, id, m)}, [id | ids]}
+      end)
+
+    {:reply, {:ok, Enum.reverse(ids)}, s}
+  end
+
+  def handle_call({:despawn_event, tag}, _from, s) do
+    {gone, keep} = Enum.split_with(s.monsters, fn {_, m} -> m.event == tag end)
+    for {id, _} <- gone, do: broadcast(s, "despawn", %{id: id})
+    {:reply, {:ok, length(gone)}, %{s | monsters: Map.new(keep)}}
   end
 
   def handle_call(:stats, _from, s) do
@@ -375,8 +544,11 @@ defmodule Mu.World.MapServer do
 
     s =
       Enum.reduce(s.players, s, fn
-        {_, %{path: []}}, s -> s
-        {id, e}, s -> put_entity(s, id, advance(e, s.tick_ms, s.step_ms, s.diagonal))
+        {_, %{path: []}}, s ->
+          s
+
+        {id, e}, s ->
+          s |> put_entity(id, advance(e, s.tick_ms, s.step_ms, s.diagonal)) |> portal(id, e)
       end)
 
     s =
@@ -386,8 +558,11 @@ defmodule Mu.World.MapServer do
         {id, m}, s -> put_entity(s, id, advance(m, s.tick_ms, m.step_ms, s.diagonal))
       end)
 
-    s = if rem(s.ticks, s.ai_every) == 0, do: ai(s), else: s
-    s = s |> respawn_players() |> expire_ground()
+    s =
+      if rem(s.ticks, s.ai_every) == 0, do: s |> ai() |> expire_buffs() |> check_duels(), else: s
+
+    s = if rem(s.ticks, s.regen_every) == 0, do: regen_mp(s), else: s
+    s = s |> respawn_players() |> expire_ground() |> expire_aggressors()
     if rem(s.ticks, s.snapshot_every) == 0, do: snapshot(s), else: s
   end
 
@@ -423,6 +598,10 @@ defmodule Mu.World.MapServer do
     if changed?(old, m), do: mark(s, m), else: s
   end
 
+  # người chơi: MP cũng vào snapshot (P2-M3)
+  defp changed?(%{kind: :player} = a, b),
+    do: {a.x, a.y, a.hp, a.mp, a.state} != {b.x, b.y, b.hp, b.mp, b.state}
+
   defp changed?(a, b), do: {a.x, a.y, a.hp, a.state} != {b.x, b.y, b.hp, b.state}
 
   defp mark(s, e), do: %{s | dirty: MapSet.put(s.dirty, e.id)}
@@ -437,30 +616,34 @@ defmodule Mu.World.MapServer do
       tpl = Data.monster(sp.monster) || raise "không có quái #{sp.monster}"
       {{x, y}, rng} = random_cell(s, sp.area, s.rng)
       id = "m_#{i}"
-
-      m = %{
-        id: id,
-        kind: :monster,
-        template_id: sp.monster,
-        tpl: tpl,
-        area: sp.area,
-        home: {x, y},
-        x: x,
-        y: y,
-        hp: tpl["hp"],
-        hp_max: tpl["hp"],
-        state: "idle",
-        target: nil,
-        path: [],
-        progress: 0,
-        step_ms: 1000 / tpl["moveSpeed"],
-        next_attack_at: 0,
-        respawn_at: nil,
-        damage_by: %{}
-      }
-
+      m = new_monster(id, sp.monster, tpl, sp.area, {x, y})
       %{s | rng: rng, monsters: Map.put(s.monsters, id, m)}
     end)
+  end
+
+  defp new_monster(id, template_id, tpl, area, {x, y}) do
+    %{
+      id: id,
+      kind: :monster,
+      template_id: template_id,
+      tpl: tpl,
+      area: area,
+      home: {x, y},
+      x: x,
+      y: y,
+      hp: tpl["hp"],
+      hp_max: tpl["hp"],
+      state: "idle",
+      target: nil,
+      path: [],
+      progress: 0,
+      step_ms: 1000 / tpl["moveSpeed"],
+      next_attack_at: 0,
+      respawn_at: nil,
+      damage_by: %{},
+      # P6-M5: nhãn event (quái vàng / boss) — `nil` = quái thường của map
+      event: nil
+    }
   end
 
   # ô ngẫu nhiên đi được, ngoài safe zone, trong vùng sinh
@@ -531,14 +714,46 @@ defmodule Mu.World.MapServer do
   # mục tiêu có thể vừa chết vì quái khác trong cùng nhịp AI
   defp monster_attack(s, mid, cid) do
     case s.players[cid] do
-      %{state: state} = e when state != "dead" -> do_monster_attack(s, s.monsters[mid], e)
-      _ -> s
+      %{state: state} = e when state != "dead" ->
+        case s.monsters[mid].tpl["aoe"] do
+          nil -> do_monster_attack(s, s.monsters[mid], e)
+          aoe -> monster_aoe(s, mid, e, aoe)
+        end
+
+      _ ->
+        s
     end
+  end
+
+  # boss (P6-M5): đánh vùng quanh mục tiêu, tối đa `maxTargets` người (gần mục tiêu trước),
+  # bỏ người chết / trong safe zone
+  defp monster_aoe(s, mid, e, %{"radius" => r, "maxTargets" => n}) do
+    s.players
+    |> Map.values()
+    |> Enum.filter(fn p ->
+      p.state != "dead" and not Maps.safe?(s.map, p.x, p.y) and
+        Pathfinding.chebyshev({p.x, p.y}, {e.x, e.y}) <= r
+    end)
+    |> Enum.sort_by(&Pathfinding.chebyshev({&1.x, &1.y}, {e.x, e.y}))
+    |> Enum.take(n)
+    |> Enum.reduce(s, fn p, s ->
+      case s.players[p.character_id] do
+        %{state: st} = pe when st != "dead" -> do_monster_attack(s, s.monsters[mid], pe)
+        _ -> s
+      end
+    end)
   end
 
   defp do_monster_attack(s, m, e) do
     {mid, cid} = {m.id, e.character_id}
-    stats = %{defense: e.stats.defense, defense_rate: e.stats.defense_rate}
+    buffed = Engine.with_buffs(e.stats, e.buffs)
+
+    stats = %{
+      defense: buffed.defense,
+      defense_rate: e.stats.defense_rate,
+      absorb: Map.get(e.stats, :absorb, 0)
+    }
+
     {res, rng} = Engine.roll_attack(s.rng, Engine.monster_stats(m.tpl), stats)
     hp = max(e.hp - res.dmg, 0)
     e = %{e | hp: hp, last_combat_at: now(s)}
@@ -554,9 +769,13 @@ defmodule Mu.World.MapServer do
     })
 
     if hp == 0 do
-      e = %{e | state: "dead", path: [], progress: 0, dead_at: now(s)}
+      # chết: mất mọi buff (P2-M3)
+      had_buffs? = map_size(e.buffs) > 0
+      e = %{e | state: "dead", path: [], progress: 0, dead_at: now(s), buffs: %{}}
       send(e.owner, {:map_died, cid})
-      put_entity(s, cid, e)
+      if had_buffs?, do: notify_buffs(s, e)
+      # chết vì quái trong lúc duel: thua (P4-M2)
+      s |> put_entity(cid, e) |> duel_lost(cid)
     else
       put_entity(s, cid, e)
     end
@@ -569,8 +788,8 @@ defmodule Mu.World.MapServer do
          :ok <- if(e.state == "dead", do: {:error, "FORBIDDEN"}, else: :ok),
          %{} = skill <- Data.skill(skill_id) || {:error, "INVALID_TARGET"},
          :ok <- if(skill_id in e.skills, do: :ok, else: {:error, "REQUIREMENT_NOT_MET"}),
-         {:ok, aim} <- aim(s, target),
-         :ok <- if(Maps.safe?(s.map, e.x, e.y), do: {:error, "FORBIDDEN"}, else: :ok),
+         {:ok, aim} <- aim(s, skill, target, e),
+         :ok <- safe_zone_ok(s, e, skill),
          :ok <- in_range(e, aim, skill),
          :ok <- off_cooldown(s, e, skill_id),
          :ok <- if(e.mp >= skill["manaCost"], do: :ok, else: {:error, "NO_MANA"}) do
@@ -579,18 +798,76 @@ defmodule Mu.World.MapServer do
       e = %{
         e
         | mp: e.mp - skill["manaCost"],
-          cooldowns: Map.put(e.cooldowns, skill_id, t + Engine.skill_cooldown_ms(skill, e.stats)),
-          last_combat_at: t,
+          cooldowns:
+            Map.put(
+              e.cooldowns,
+              skill_id,
+              t + Engine.skill_cooldown_ms(skill, Engine.for_skill(e.stats, skill))
+            ),
           # đánh tại chỗ: dừng đi
           path: [],
           progress: 0,
           state: "idle"
       }
 
+      # chỉ skill đánh quái mới tính là đang combat (G21)
+      e = if harmful?(skill), do: %{e | last_combat_at: t}, else: e
       s = put_entity(s, id, e)
-      {:ok, Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, id, &1, skill, rid))}
+      {:ok, apply_skill(s, e, aim, skill, rid)}
     end
   end
+
+  defp harmful?(skill), do: skill["targetType"] in ~w(SINGLE AOE)
+
+  # Đánh quái bị cấm trong safe zone; heal/buff/teleport thì được (P2-M3)
+  defp safe_zone_ok(s, e, skill) do
+    if harmful?(skill) and Maps.safe?(s.map, e.x, e.y), do: {:error, "FORBIDDEN"}, else: :ok
+  end
+
+  # Mục tiêu theo `targetType` (P2-M3):
+  # SINGLE / AOE quanh mục tiêu: một quái còn sống; AOE quanh mình / tại ô: quái hoặc ô;
+  # ALLY: người chơi còn sống (`p_<id>`; bỏ trống = bản thân); POINT: ô đi được.
+  defp aim(s, %{"targetType" => "ALLY"}, target, e) do
+    cid =
+      case target do
+        nil -> e.character_id
+        "p_" <> cid -> cid
+        _ -> nil
+      end
+
+    case cid && s.players[cid] do
+      %{state: state} = p when state != "dead" -> {:ok, {:player, cid, {p.x, p.y}}}
+      _ -> {:error, "INVALID_TARGET"}
+    end
+  end
+
+  defp aim(s, %{"targetType" => "POINT"}, {x, y}, _e) when is_integer(x) and is_integer(y) do
+    if Maps.walkable?(s.map, x, y), do: {:ok, {:point, {x, y}}}, else: {:error, "INVALID_TARGET"}
+  end
+
+  defp aim(_s, %{"targetType" => "POINT"}, _, _e), do: {:error, "INVALID_TARGET"}
+
+  # P4-M1: đánh người chơi (`p_<id>`) — luật ở `Mu.Game.Pvp`
+  defp aim(s, %{"targetType" => "SINGLE"}, "p_" <> cid, e) do
+    with %{state: state} = p when state != "dead" <- s.players[cid] || {:error, "INVALID_TARGET"},
+         :ok <- Pvp.check_attack(e, p, &Maps.safe?(s.map, &1, &2), relation(s, e, p)) do
+      {:ok, {:pvp, cid, {p.x, p.y}}}
+    else
+      %{} -> {:error, "INVALID_TARGET"}
+      error -> error
+    end
+  end
+
+  defp aim(s, %{"targetType" => "SINGLE"}, target, _e) when is_binary(target), do: aim(s, target)
+  defp aim(_s, %{"targetType" => "SINGLE"}, _target, _e), do: {:error, "INVALID_TARGET"}
+
+  defp aim(s, %{"targetType" => "AOE", "center" => "target"}, target, _e) when is_binary(target),
+    do: aim(s, target)
+
+  defp aim(_s, %{"targetType" => "AOE", "center" => "target"}, _target, _e),
+    do: {:error, "INVALID_TARGET"}
+
+  defp aim(s, _skill, target, _e), do: aim(s, target)
 
   defp aim(s, target) when is_binary(target) do
     case s.monsters[target] do
@@ -607,11 +884,85 @@ defmodule Mu.World.MapServer do
 
   defp aim(_s, _), do: {:error, "INVALID_TARGET"}
 
+  defp apply_skill(s, e, {:pvp, vid, _}, %{"targetType" => "SINGLE"} = skill, rid),
+    do: strike_player(s, e.character_id, vid, skill, rid)
+
+  defp apply_skill(s, e, aim, %{"targetType" => t} = skill, rid) when t in ~w(SINGLE AOE) do
+    s = Enum.reduce(victims(s, e, aim, skill), s, &strike(&2, e.character_id, &1, skill, rid))
+    if t == "AOE", do: aoe_opponent(s, e.character_id, aim, skill, rid), else: s
+  end
+
+  # Teleport: tới ô đã kiểm (walkable) ngay; client thấy nhảy qua snapshot (Interp reset)
+  defp apply_skill(s, e, {:point, {x, y}}, %{"targetType" => "POINT"}, _rid) do
+    e = %{e | x: x, y: y}
+    put_entity(s, e.character_id, e)
+  end
+
+  defp apply_skill(s, e, {:player, cid, _}, %{"effect" => %{"kind" => "heal"} = eff} = skill, rid) do
+    p = s.players[cid]
+    hp = min(p.hp + Engine.effect_value(eff, e.stats.energy), p.stats.hp_max)
+
+    broadcast(s, "combat", %{
+      rid: rid,
+      attacker: e.id,
+      target: p.id,
+      skill: skill["id"],
+      dmg: 0,
+      crit: false,
+      hp: hp,
+      heal: hp - p.hp
+    })
+
+    put_entity(s, cid, %{p | hp: hp})
+  end
+
+  defp apply_skill(s, e, {:player, cid, _}, %{"effect" => %{"kind" => "buff"} = eff} = skill, rid) do
+    p = s.players[cid]
+    value = Engine.effect_value(eff, e.stats.energy)
+    until = now(s) + eff["durationMs"]
+    p = %{p | buffs: Engine.add_buff(p.buffs, skill["id"], eff["stat"], value, until)}
+
+    broadcast(s, "combat", %{
+      rid: rid,
+      attacker: e.id,
+      target: p.id,
+      skill: skill["id"],
+      dmg: 0,
+      crit: false,
+      hp: p.hp,
+      buff: value
+    })
+
+    notify_buffs(s, p)
+    put_entity(s, cid, p)
+  end
+
+  # Buff hiện có gửi Session chủ (để đưa vào `player.view.buffs`): `expiresAt` = giờ server
+  # (ms epoch) để client đếm ngược bằng ServerClock
+  defp notify_buffs(s, e) do
+    t = now(s)
+    wall = System.os_time(:millisecond)
+
+    list =
+      for {id, b} <- Enum.sort(e.buffs),
+          do: %{id: id, stat: b.stat, value: b.value, expiresAt: wall + b.until - t}
+
+    send(e.owner, {:map_buffs, e.character_id, list})
+  end
+
   defp aim_pos({:monster, _, pos}), do: pos
+  defp aim_pos({:player, _, pos}), do: pos
+  defp aim_pos({:pvp, _, pos}), do: pos
   defp aim_pos({:point, pos}), do: pos
 
+  # đánh thường: tầm theo vũ khí đang cầm (`stats.attack_range`, P2-5)
   defp in_range(e, aim, skill) do
-    if Pathfinding.chebyshev({e.x, e.y}, aim_pos(aim)) <= skill["range"],
+    range =
+      if skill["id"] == "basic_attack",
+        do: e.stats[:attack_range] || skill["range"],
+        else: skill["range"]
+
+    if Pathfinding.chebyshev({e.x, e.y}, aim_pos(aim)) <= range,
       do: :ok,
       else: {:error, "OUT_OF_RANGE"}
   end
@@ -620,7 +971,36 @@ defmodule Mu.World.MapServer do
     if now(s) >= Map.get(e.cooldowns, skill_id, 0), do: :ok, else: {:error, "COOLDOWN"}
   end
 
-  # SINGLE: chỉ mục tiêu. AOE: mọi quái còn sống trong `radius` quanh người dùng (G7).
+  # SINGLE: chỉ mục tiêu. AOE quanh mục tiêu (`center` target): mục tiêu + quái gần nhất trong
+  # `radius` quanh nó, tối đa `maxTargets`. AOE tại ô (`center` point): mọi quái trong `radius`
+  # quanh ô/quái đã chọn. AOE quanh mình (`center` self, mặc định): G7.
+  defp victims(
+         s,
+         _e,
+         {:monster, mid, {x, y}},
+         %{"targetType" => "AOE", "center" => "target"} = skill
+       ) do
+    near =
+      for {id, m} <- s.monsters,
+          id != mid,
+          m.state != "dead",
+          d = Pathfinding.chebyshev({x, y}, {m.x, m.y}),
+          d <= skill["radius"],
+          do: {d, id}
+
+    [mid | near |> Enum.sort() |> Enum.map(&elem(&1, 1))]
+    |> Enum.take(skill["maxTargets"] || length(near) + 1)
+  end
+
+  defp victims(s, _e, aim, %{"targetType" => "AOE", "center" => "point"} = skill) do
+    {x, y} = aim_pos(aim)
+
+    for {mid, m} <- s.monsters,
+        m.state != "dead",
+        Pathfinding.chebyshev({x, y}, {m.x, m.y}) <= skill["radius"],
+        do: mid
+  end
+
   defp victims(s, e, aim, %{"targetType" => "AOE"} = skill) do
     around =
       for {mid, m} <- s.monsters,
@@ -642,7 +1022,12 @@ defmodule Mu.World.MapServer do
     m = s.monsters[mid]
 
     {res, rng} =
-      Engine.roll_attack(s.rng, e.stats, Engine.monster_stats(m.tpl), skill["damageMultiplier"])
+      Engine.roll_attack(
+        s.rng,
+        e.stats |> Engine.for_skill(skill) |> Engine.with_buffs(e.buffs),
+        Engine.monster_stats(m.tpl),
+        skill["damageMultiplier"]
+      )
 
     hp = max(m.hp - res.dmg, 0)
     m = MonsterAi.hit(%{m | hp: hp}, cid, res.dmg)
@@ -661,16 +1046,327 @@ defmodule Mu.World.MapServer do
     if hp == 0, do: kill(s, mid, cid), else: s
   end
 
+  # ---------- Người chơi đánh người chơi (P4-M1) ----------
+
+  # Pipeline §4 với thủ của nạn nhân, × `pvp.damageMultiplier`; tự vệ / kẻ gây sự cập nhật theo
+  # `Pvp.on_hit/3`; nạn nhân về 0 HP → chết (`player_killed/3`)
+  defp strike_player(s, aid, vid, skill, rid) do
+    a = s.players[aid]
+    v = s.players[vid]
+    t = now(s)
+    buffed = Engine.with_buffs(v.stats, v.buffs)
+
+    {res, rng} =
+      Engine.roll_attack(
+        s.rng,
+        a.stats |> Engine.for_skill(skill) |> Engine.with_buffs(a.buffs),
+        %{
+          defense: buffed.defense,
+          defense_rate: v.stats.defense_rate,
+          absorb: Map.get(v.stats, :absorb, 0)
+        },
+        skill["damageMultiplier"]
+      )
+
+    rel = relation(s, a, v)
+    dmg = Pvp.damage(res.dmg)
+    # duel: không chết, giữ 1 HP và thua (P4-4)
+    hp = if rel == :duel, do: max(v.hp - dmg, 1), else: max(v.hp - dmg, 0)
+    lost? = rel == :duel and v.hp - dmg <= 0
+    was_aggressor? = a.aggressor_until != nil
+    {a, v} = Pvp.on_hit(a, %{v | hp: hp, last_combat_at: t}, t, rel)
+    s = %{s | rng: rng}
+
+    broadcast(s, "combat", %{
+      rid: rid,
+      attacker: a.id,
+      target: v.id,
+      dmg: dmg,
+      crit: res.crit,
+      hp: hp
+    })
+
+    s = s |> put_entity(aid, a) |> put_entity(vid, v)
+    # vừa thành kẻ gây sự: người khác thấy tên nhấp nháy
+    if not was_aggressor? and a.aggressor_until != nil,
+      do: broadcast(s, "spawn", spawn_payload(a))
+
+    cond do
+      lost? -> end_duel(s, vid, aid)
+      hp == 0 -> player_killed(s, aid, vid)
+      true -> s
+    end
+  end
+
+  # Quan hệ giữa hai người cho `Mu.Game.Pvp` (P4-M2): đang duel với nhau / cùng nhóm / một bên
+  # đang duel với người khác ("vùng riêng") / hai guild đang war (P4-M4, đọc ETS `Mu.Guild`) /
+  # không gì
+  defp relation(s, a, b) do
+    cond do
+      Duel.opponent(s.duels, a.character_id) == b.character_id -> :duel
+      Mu.Party.same?(a.character_id, b.character_id) -> :party
+      Duel.in_duel?(s.duels, a.character_id) or Duel.in_duel?(s.duels, b.character_id) -> :blocked
+      Mu.Guild.at_war?(Map.get(a, :guild), Map.get(b, :guild)) -> :guild_war
+      true -> :none
+    end
+  end
+
+  # AOE trúng thêm người chơi trong vùng mà mình đánh được: đối thủ duel (P4-2 (3)), người guild
+  # địch khi đang war (P4-6 (2)); vẫn qua `Pvp.check_attack/4` (safe zone, cấp)
+  defp aoe_opponent(s, cid, aim, skill, rid) do
+    e = s.players[cid]
+    {cx, cy} = if skill["center"] in ["target", "point"], do: aim_pos(aim), else: {e.x, e.y}
+    safe? = &Maps.safe?(s.map, &1, &2)
+
+    targets =
+      for {vid, v} <- s.players,
+          vid != cid,
+          v.state != "dead",
+          Pathfinding.chebyshev({cx, cy}, {v.x, v.y}) <= skill["radius"],
+          rel = relation(s, e, v),
+          rel in [:duel, :guild_war],
+          Pvp.check_attack(e, v, safe?, rel) == :ok,
+          do: vid
+
+    Enum.reduce(targets, s, fn vid, s ->
+      # người ra đòn có thể vừa chết / đối tượng đã chết giữa chừng
+      if s.players[cid].state != "dead" and s.players[vid].state != "dead",
+        do: strike_player(s, cid, vid, skill, rid),
+        else: s
+    end)
+  end
+
+  # ---------- Duel (P4-M2, P4-4) ----------
+
+  defp do_duel(_s, nil, _act, _name), do: {:error, "INVALID_TARGET"}
+
+  defp do_duel(s, e, :request, name) do
+    with %{} = t <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         :ok <- duel_ok(s, e, t),
+         :ok <-
+           if(
+             Pathfinding.chebyshev({e.x, e.y}, {t.x, t.y}) <=
+               Config.get(["duel", "requestRange"]),
+             do: :ok,
+             else: {:error, "OUT_OF_RANGE"}
+           ),
+         {:ok, duels} <- Duel.request(s.duels, e.character_id, t.character_id, now(s)) do
+      send(t.owner, {:map_push, "duel", %{state: "request", opponent: e.name}})
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  defp do_duel(s, e, :accept, name) do
+    with %{} = f <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         :ok <- duel_ok(s, e, f),
+         center = {div(e.x + f.x, 2), div(e.y + f.y, 2)},
+         {:ok, duels} <- Duel.accept(s.duels, e.character_id, f.character_id, now(s), center) do
+      s =
+        %{s | duels: duels}
+        |> set_dueling(e.character_id, true)
+        |> set_dueling(f.character_id, true)
+
+      ends = System.os_time(:millisecond) + Config.get(["duel", "maxSeconds"]) * 1000
+
+      for {me, opp} <- [{e, f}, {f, e}],
+          do:
+            send(
+              me.owner,
+              {:map_push, "duel",
+               %{state: "start", opponent: opp.name, opponentId: opp.id, endsAt: ends}}
+            )
+
+      system(s, "#{f.name} và #{e.name} bắt đầu đấu tay đôi.")
+      {:ok, s}
+    end
+  end
+
+  defp do_duel(s, e, :decline, name) do
+    with %{} = f <- player_named(s, name) || {:error, "INVALID_TARGET"},
+         {:ok, duels} <- Duel.decline(s.duels, e.character_id, f.character_id, now(s)) do
+      send(f.owner, {:map_push, "duel", %{state: "end", result: "declined", opponent: e.name}})
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  # đang duel: đầu hàng; không thì hủy lời mời đang chờ
+  defp do_duel(s, e, :cancel, _name) do
+    if Duel.in_duel?(s.duels, e.character_id) do
+      {:ok, duel_lost(s, e.character_id)}
+    else
+      {duels, tos} = Duel.cancel_requests(s.duels, e.character_id)
+
+      for to <- tos,
+          t = s.players[to],
+          do:
+            send(
+              t.owner,
+              {:map_push, "duel", %{state: "end", result: "cancelled", opponent: e.name}}
+            )
+
+      {:ok, %{s | duels: duels}}
+    end
+  end
+
+  defp do_duel(_s, _e, _act, _name), do: {:error, "INVALID_TARGET"}
+
+  # cả hai còn sống, đủ cấp PvP, không phải chính mình
+  defp duel_ok(_s, e, t) do
+    min = Config.get(["pvp", "minLevel"])
+
+    cond do
+      e.character_id == t.character_id -> {:error, "INVALID_TARGET"}
+      e.state == "dead" or t.state == "dead" -> {:error, "FORBIDDEN"}
+      e.level < min or t.level < min -> {:error, "REQUIREMENT_NOT_MET"}
+      true -> :ok
+    end
+  end
+
+  defp player_named(s, name) when is_binary(name) do
+    key = String.downcase(name)
+    Enum.find_value(s.players, fn {_, p} -> String.downcase(p.name) == key && p end)
+  end
+
+  defp player_named(_s, _), do: nil
+
+  # `loser` thua (đối thủ thắng) nếu đang duel
+  defp duel_lost(s, loser) do
+    case Duel.opponent(s.duels, loser) do
+      nil -> s
+      winner -> end_duel(s, loser, winner)
+    end
+  end
+
+  # kết thúc duel: `winner` nil = hòa. Báo hai người + dòng SYSTEM cho cả map
+  defp end_duel(s, a, winner) do
+    {duels, b} = Duel.finish(s.duels, a)
+    s = %{s | duels: duels} |> set_dueling(a, false) |> set_dueling(b, false)
+    {pa, pb} = {s.players[a], s.players[b]}
+
+    for {me, opp} <- [{pa, pb}, {pb, pa}], me != nil do
+      result =
+        cond do
+          winner == nil -> "draw"
+          me.character_id == winner -> "win"
+          true -> "lose"
+        end
+
+      send(
+        me.owner,
+        {:map_push, "duel", %{state: "end", result: result, opponent: opp && opp.name}}
+      )
+    end
+
+    name = fn p -> (p && p.name) || "?" end
+
+    text =
+      if winner,
+        do:
+          "#{name.(s.players[winner])} thắng #{name.(s.players[if(winner == a, do: b, else: a)])} trong trận đấu tay đôi.",
+        else: "#{name.(pa)} và #{name.(pb)} hòa trận đấu tay đôi."
+
+    system(s, text)
+    s
+  end
+
+  # hết giờ → hòa; cách xa quá `duel.maxDistance` → người xa điểm bắt đầu thua; bỏ lời mời hết hạn
+  defp check_duels(s) do
+    t = now(s)
+    s = Enum.reduce(Duel.expired(s.duels, t), s, fn {a, _}, s -> end_duel(s, a, nil) end)
+
+    pos = fn cid -> (p = s.players[cid]) && {p.x, p.y} end
+
+    s =
+      Enum.reduce(Duel.too_far(s.duels, pos), s, fn {loser, winner}, s ->
+        if Duel.opponent(s.duels, loser) == winner, do: end_duel(s, loser, winner), else: s
+      end)
+
+    %{s | duels: Duel.prune(s.duels, t)}
+  end
+
+  # cờ đang duel trên entity + phát lại `spawn` cho người khác thấy
+  defp set_dueling(s, cid, on?) do
+    case s.players[cid] do
+      nil ->
+        s
+
+      e ->
+        e = %{e | dueling: on?}
+        broadcast(s, "spawn", spawn_payload(e))
+        put_in(s.players[cid], e)
+    end
+  end
+
+  defp system(s, text), do: broadcast(s, "chat", Mu.Chat.message("SYSTEM", "Hệ thống", text))
+
+  # Chết vì người chơi: như chết vì quái (mất buff, hồi sinh ở thị trấn); kẻ giết không nhận EXP /
+  # Zen (P4-8). PK: Session kẻ giết nhận `{:map_pk, id, điểm}`; rơi đồ: Session nạn nhân nhận
+  # `{:map_pk_drop, id, killer_id}` theo `Pvp.drop_chance/2` (RNG của map; guild war không rơi)
+  defp player_killed(s, kid, vid) do
+    k = s.players[kid]
+    v = s.players[vid]
+    t = now(s)
+    rel = relation(s, k, v)
+    gain = Pvp.pk_gain(k, v, t, rel)
+    {roll, rng} = Rng.chance(s.rng, Pvp.drop_chance(v.pk_points, rel))
+    # guild war (P4-6): +1 điểm cho guild kẻ giết
+    if rel == :guild_war, do: Mu.Guild.war_kill(kid, vid)
+    had_buffs? = map_size(v.buffs) > 0
+    v = %{v | state: "dead", path: [], progress: 0, dead_at: t, buffs: %{}, rights: %{}}
+    send(v.owner, {:map_died, vid})
+    if had_buffs?, do: notify_buffs(s, v)
+    if gain > 0, do: send(k.owner, {:map_pk, kid, gain})
+    if roll, do: send(v.owner, {:map_pk_drop, vid, kid})
+    %{put_entity(s, vid, v) | rng: rng}
+  end
+
+  # hết hạn kẻ gây sự (và quyền tự vệ cũ) → người khác thấy tên hết nhấp nháy
+  defp expire_aggressors(s) do
+    t = now(s)
+
+    Enum.reduce(s.players, s, fn
+      {id, %{aggressor_until: until} = e}, s when is_integer(until) and until <= t ->
+        e = %{e | aggressor_until: nil, rights: Map.filter(e.rights, fn {_, u} -> u > t end)}
+        broadcast(s, "spawn", spawn_payload(e))
+        put_in(s.players[id], e)
+
+      _, s ->
+        s
+    end)
+  end
+
   # Quái chết: EXP + Zen cho người ra đòn cuối (G12), đồ rơi dưới đất thuộc người gây nhiều
-  # sát thương nhất trong `lootProtectSeconds` (G13).
+  # sát thương nhất trong `lootProtectSeconds` (G13). Nhóm (P3-M4): thành viên cùng map, còn
+  # sống, trong `party.expRange` ô của quái cùng chia EXP (`Engine.party_exp_gain/4`); Zen vẫn
+  # chỉ cho người ra đòn cuối.
   defp kill(s, mid, killer_id) do
     m = s.monsters[mid]
-    killer = s.players[killer_id]
     t = now(s)
     owner = MonsterAi.top_damager(m) || killer_id
     {drop, rng} = Drops.roll(s.rng, m.template_id)
-    exp = Engine.exp_gain(m.tpl["experience"], killer.level, m.tpl["level"])
-    send(killer.owner, {:map_reward, %{exp: exp, zen: drop.zen, monster: mid}})
+    range = Config.get(["party", "expRange"])
+
+    sharers =
+      for cid <- Mu.Party.mates(killer_id),
+          p = s.players[cid],
+          cid == killer_id or
+            (p.state != "dead" and Pathfinding.chebyshev({p.x, p.y}, {m.x, m.y}) <= range),
+          do: p
+
+    reward = m.tpl["reward"]
+
+    if reward do
+      # boss (P6-6 (2)): chia EXP / Zen theo phần sát thương (≥ minShare)
+      share_reward(s, m, reward)
+    else
+      for p <- sharers do
+        exp = Engine.party_exp_gain(m.tpl["experience"], length(sharers), p.level, m.tpl["level"])
+        zen = if p.character_id == killer_id, do: drop.zen, else: 0
+        send(p.owner, {:map_reward, %{exp: exp, zen: zen, monster: mid, template: m.template_id}})
+      end
+    end
+
+    damage_by = m.damage_by
 
     m = %{
       m
@@ -680,23 +1376,80 @@ defmodule Mu.World.MapServer do
         path: [],
         progress: 0,
         damage_by: %{},
-        respawn_at: t + m.tpl["respawnSeconds"] * 1000
+        # quái event không hồi sinh (thu khi event hết)
+        respawn_at: if(m.event, do: nil, else: t + m.tpl["respawnSeconds"] * 1000)
     }
 
     s = put_entity(%{s | rng: rng}, mid, m)
-    Enum.reduce(drop.items, s, &drop_item(&2, &1, {m.x, m.y}, owner, t))
+    s = Enum.reduce(drop.items, s, &drop_item(&2, %{template_id: &1}, {m.x, m.y}, owner, t))
+    s = if reward, do: top_jewels(s, m, damage_by, reward, t), else: s
+
+    if m.event do
+      top = s.players[owner]
+
+      Mu.WorldEvents.monster_killed(m.event, %{
+        map: s.map.id,
+        monster: m.template_id,
+        name: m.tpl["name"],
+        top: top && top.name
+      })
+    end
+
+    s
+  end
+
+  defp share_reward(s, m, r) do
+    total = m.damage_by |> Map.values() |> Enum.sum()
+
+    for {cid, dmg} <- m.damage_by,
+        total > 0 and dmg / total >= r["minShare"],
+        p = s.players[cid],
+        p != nil do
+      send(
+        p.owner,
+        {:map_reward,
+         %{
+           exp: floor(r["exp"] * dmg / total),
+           zen: floor(r["zen"] * dmg / total),
+           monster: m.id,
+           template: m.template_id
+         }}
+      )
+    end
+
+    :ok
+  end
+
+  # top `topJewels` người gây sát thương (≥ minShare) mỗi người 1 jewel ngẫu nhiên, rơi dưới đất
+  # thuộc riêng người đó (loot protect)
+  defp top_jewels(s, m, damage_by, r, t) do
+    total = damage_by |> Map.values() |> Enum.sum()
+
+    damage_by
+    |> Enum.filter(fn {_, d} -> total > 0 and d / total >= r["minShare"] end)
+    |> Enum.sort_by(fn {_, d} -> -d end)
+    |> Enum.take(r["topJewels"])
+    |> Enum.reduce(s, fn {cid, _}, s ->
+      {i, rng} = Rng.int(s.rng, 0, length(r["jewels"]) - 1)
+      jewel = Enum.at(r["jewels"], i)
+      drop_item(%{s | rng: rng}, %{template_id: jewel}, {m.x, m.y}, cid, t)
+    end)
   end
 
   # ---------- Đồ dưới đất (chỉ trong RAM: KB_TECHNICAL §9) ----------
 
-  defp drop_item(s, template_id, {x, y}, owner, t) do
+  # `item`: `%{template_id}` (quái rơi, serial mới) hoặc món người chơi vứt (giữ serial,
+  # `quantity`, `attrs` để người nhặt nhận lại y nguyên)
+  defp drop_item(s, item, {x, y}, owner, t) do
     drop = Config.get(["drop"])
-    serial = Ulid.generate()
+    serial = Map.get_lazy(item, :serial, &Ulid.generate/0)
 
     g = %{
       id: "g_" <> serial,
       serial: serial,
-      template_id: template_id,
+      template_id: item.template_id,
+      quantity: Map.get(item, :quantity, 1),
+      attrs: Map.get(item, :attrs),
       x: x,
       y: y,
       owner: owner,
@@ -715,6 +1468,60 @@ defmodule Mu.World.MapServer do
       {gid, %{expire_at: at}}, s when at <= t ->
         broadcast(s, "despawn", %{id: gid})
         %{s | ground: Map.delete(s.ground, gid), removed: [gid | s.removed]}
+
+      _, s ->
+        s
+    end)
+  end
+
+  # ---------- Cổng (P2-M4) ----------
+
+  # Vừa bước vào ô cổng (trước đó không đứng trên cổng): dừng lại, báo Session chủ chuyển map
+  defp portal(s, id, before) do
+    e = s.players[id]
+    p = Maps.portal_at(s.map, e.x, e.y)
+
+    if p && {e.x, e.y} != {before.x, before.y} && Maps.portal_at(s.map, before.x, before.y) != p do
+      send(e.owner, {:map_portal, id, p})
+      %{s | players: Map.put(s.players, id, %{e | path: [], progress: 0, state: "idle"})}
+    else
+      s
+    end
+  end
+
+  # ---------- Buff hết hạn, hồi MP (P2-M3) ----------
+
+  defp expire_buffs(s) do
+    t = now(s)
+
+    Enum.reduce(s.players, s, fn
+      {id, %{buffs: buffs} = e}, s when map_size(buffs) > 0 ->
+        case Engine.expire_buffs(buffs, t) do
+          {_, false} ->
+            s
+
+          {kept, true} ->
+            e = %{e | buffs: kept}
+            notify_buffs(s, e)
+            %{s | players: Map.put(s.players, id, e)}
+        end
+
+      _, s ->
+        s
+    end)
+  end
+
+  # `energy / energyDiv` MP mỗi giây, cộng dồn phần lẻ; đã chết hoặc đầy thì thôi
+  defp regen_mp(s) do
+    ms = s.regen_every * s.tick_ms
+
+    Enum.reduce(s.players, s, fn
+      {id, %{state: state, mp: mp, stats: %{mp_max: max}} = e}, s
+      when state != "dead" and mp < max ->
+        acc = e.mp_acc + Engine.mp_regen(e.stats.energy, ms)
+        add = trunc(acc)
+        e = %{e | mp: min(mp + add, max), mp_acc: acc - add}
+        if add > 0, do: put_entity(s, id, e), else: %{s | players: Map.put(s.players, id, e)}
 
       _, s ->
         s
@@ -765,7 +1572,10 @@ defmodule Mu.World.MapServer do
 
   # trong lootProtectSeconds chỉ chủ (người gây nhiều sát thương nhất) được nhặt (G13)
   defp loot_owner(s, g, id) do
-    if g.owner == id or now(s) >= g.protect_until, do: :ok, else: {:error, "NOT_OWNER"}
+    # loot protect cho chủ và người cùng nhóm với chủ (P3-5)
+    if Mu.Party.same?(g.owner, id) or now(s) >= g.protect_until,
+      do: :ok,
+      else: {:error, "NOT_OWNER"}
   end
 
   defp combat_remaining(s, %{last_combat_at: nil}) when is_map(s), do: 0
@@ -783,9 +1593,12 @@ defmodule Mu.World.MapServer do
 
   defp send_snapshot(s) do
     entities =
-      for id <- s.dirty,
-          e = entity(s, id),
-          do: %{id: e.id, x: e.x, y: e.y, hp: e.hp, state: e.state}
+      for id <- s.dirty, e = entity(s, id) do
+        base = %{id: e.id, x: e.x, y: e.y, hp: e.hp, state: e.state}
+
+        # người chơi: kèm MP (thanh MP của chính mình đổi khi dùng skill / hồi, P2-M3)
+        if e.kind == :player, do: Map.put(base, :mp, e.mp), else: base
+      end
 
     broadcast(s, "snapshot", %{
       t: System.os_time(:millisecond),
@@ -800,6 +1613,8 @@ defmodule Mu.World.MapServer do
   defp entity(s, id), do: s.monsters[id]
 
   defp remove_player(s, id) do
+    # rời map trong lúc duel: thua (P4-4)
+    s = duel_lost(s, id)
     e = s.players[id]
     broadcast(s, "despawn", %{id: e.id})
 
@@ -831,7 +1646,8 @@ defmodule Mu.World.MapServer do
           hp: nil,
           maxHp: nil,
           state: "idle",
-          name: n.id,
+          # tên hiển thị = `name` trong map (Thủ kho, P3-M3) hoặc tên cửa hàng (shop.json, P2-M4)
+          name: n.name || (Data.shop(n.id) || %{})["name"] || n.id,
           level: nil,
           templateId: n.id
         }
@@ -853,7 +1669,17 @@ defmodule Mu.World.MapServer do
       maxHp: e.stats.hp_max,
       state: e.state,
       name: e.name,
-      level: e.level
+      level: e.level,
+      # sprite theo class (Phase 2)
+      class: e.class,
+      # P4-M1: màu tên — NORMAL / WARNING (cam) / MURDERER (đỏ); kẻ gây sự nhấp nháy cam
+      pkState: Pvp.state(Map.get(e, :pk_points, 0)),
+      aggressor: Map.get(e, :aggressor_until) != nil,
+      dueling: Map.get(e, :dueling, false),
+      # P4-M3: tên guild (null nếu không có)
+      guild: Map.get(e, :guild),
+      # P6-M4: cánh đang mặc (templateId hoặc null)
+      wing: Map.get(e, :wing)
     }
   end
 
@@ -868,7 +1694,10 @@ defmodule Mu.World.MapServer do
       state: m.state,
       name: m.tpl["name"],
       level: m.tpl["level"],
-      templateId: m.template_id
+      templateId: m.template_id,
+      # P6-M5: quái vàng / boss (client tô tên, vẽ to hơn)
+      golden: m.tpl["golden"] == true,
+      boss: m.tpl["boss"] == true
     }
   end
 

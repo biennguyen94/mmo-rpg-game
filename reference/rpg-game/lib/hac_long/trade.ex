@@ -7,14 +7,17 @@ defmodule HacLong.Trade do
   3. `offer/2`: đặt những món mình đưa ra (đã kiểm tra bằng `HacLong.Game.TradeOffer.parse/2`).
      Đổi món của bất kỳ bên nào thì cả hai phải xác nhận lại.
   4. `ready/1`: xác nhận. Cả hai cùng xác nhận thì đổi (`execute/1`, chạy ngoài tiến trình
-     này vì phải gọi `Session` của hai người): lấy đồ của A, lấy đồ của B (B không đủ thì trả
-     lại A), rồi trao chéo.
+     này vì phải gọi `Session` của hai người): giữ Session của A rồi B (`Session.hold/1`), tính
+     đồ hai bên, ghi cả hai nhân vật trong một transaction (nhật ký vàng/đồ lý do `TRADE`), rồi
+     nhả (`Session.release/3`). Lỗi ở bất kỳ bước nào thì không ai đổi gì.
 
   Mỗi khi bảng giao dịch đổi, cả hai nhận `{:trade, view | nil}` (xem `view/2`).
   """
   use GenServer
+  require Logger
 
-  alias HacLong.Game.{Session, TradeOffer}
+  alias HacLong.Repo
+  alias HacLong.Game.{Characters, Session, TradeOffer}
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
@@ -178,27 +181,63 @@ defmodule HacLong.Trade do
 
   # ---------- Đổi đồ ----------
 
+  # Giữ Session của hai người (lệnh khác của họ xếp hàng đợi), tính đồ của cả hai bằng hàm
+  # thuần rồi ghi hai nhân vật trong MỘT transaction: hoặc cả hai đổi, hoặc không ai đổi.
   @doc false
   def execute(t) do
-    oa = t.offers[t.a]
-    ob = t.offers[t.b]
+    with {:ok, ra, pa} <- Session.hold(t.a) |> who(t, t.a),
+         {:ok, rb, pb} <- hold_or_release(t, ra) do
+      result =
+        try do
+          settle(t, pa, pb)
+        rescue
+          e ->
+            Logger.error("Giao dịch #{t.id} lỗi: " <> Exception.message(e))
+            {:error, "Lỗi máy chủ, chưa đổi gì."}
+        end
 
-    with {:ok, ga} <- Session.trade_take(t.a, oa, length(ob.gear)) |> who(t, t.a),
-         {:ok, gb} <- take_or_refund(t, ob, length(oa.gear), ga) do
-      Session.trade_give(t.a, gb)
-      Session.trade_give(t.b, ga)
-      :ok
+      case result do
+        {:ok, pa2, pb2} ->
+          Session.release(t.a, ra, pa2)
+          Session.release(t.b, rb, pb2)
+          :ok
+
+        err ->
+          Session.release(t.a, ra, nil)
+          Session.release(t.b, rb, nil)
+          err
+      end
     end
   end
 
-  defp take_or_refund(t, ob, incoming, ga) do
-    case Session.trade_take(t.b, ob, incoming) |> who(t, t.b) do
-      {:ok, gb} ->
-        {:ok, gb}
+  defp hold_or_release(t, ra) do
+    case Session.hold(t.b) |> who(t, t.b) do
+      {:ok, _, _} = ok ->
+        ok
 
       err ->
-        Session.trade_give(t.a, ga)
+        Session.release(t.a, ra, nil)
         err
+    end
+  end
+
+  defp settle(t, pa, pb) do
+    oa = t.offers[t.a]
+    ob = t.offers[t.b]
+
+    with {:ok, pa, ga} <- TradeOffer.take(pa, oa, length(ob.gear)) |> who(t, t.a),
+         {:ok, pb, gb} <- TradeOffer.take(pb, ob, length(oa.gear)) |> who(t, t.b) do
+      pa = TradeOffer.give(pa, gb)
+      pb = TradeOffer.give(pb, ga)
+      ref = "trade:#{t.a}-#{t.b}-#{System.system_time(:millisecond)}"
+
+      {:ok, _} =
+        Repo.transaction(fn ->
+          Characters.save!(t.a, pa, "TRADE", ref)
+          Characters.save!(t.b, pb, "TRADE", ref)
+        end)
+
+      {:ok, pa, pb}
     end
   end
 

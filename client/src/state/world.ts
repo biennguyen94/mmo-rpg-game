@@ -1,9 +1,12 @@
 // Bản sao entity phía client: spawn (thêm-hoặc-cập-nhật, DEC-25), despawn, snapshot delta.
 import type { SnapshotPayload, SpawnPayload } from "../net/protocol.js";
-import { InterpBuffer } from "./interp.js";
+import { Glide } from "./interp.js";
 
 export interface Entity extends SpawnPayload {
-  interp: InterpBuffer;
+  /** Vị trí vẽ: trượt đều về vị trí server mới nhất (DEC-186). */
+  interp: Glide;
+  /** Người chơi: MP từ snapshot (P2-M3). */
+  mp?: number;
 }
 
 export class World {
@@ -11,7 +14,7 @@ export class World {
 
   spawn(p: SpawnPayload, t: number): Entity {
     const old = this.entities.get(p.id);
-    const interp = old?.interp ?? new InterpBuffer();
+    const interp = old?.interp ?? new Glide();
     interp.reset(t, p.x, p.y);
     const e: Entity = { ...(old ?? {}), ...p, interp };
     this.entities.set(p.id, e);
@@ -29,6 +32,7 @@ export class World {
       e.x = u.x;
       e.y = u.y;
       e.hp = u.hp;
+      if (u.mp !== undefined) e.mp = u.mp;
       e.state = u.state;
       e.interp.push(s.t, u.x, u.y);
     }

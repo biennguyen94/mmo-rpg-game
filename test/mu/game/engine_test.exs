@@ -153,11 +153,11 @@ defmodule Mu.Game.EngineTest do
       assert {c.level, c.experience, c.free_stat_points} == {4, 1, 15}
     end
 
-    test "maxLevel 10: EXP dừng ở 0" do
-      {c, 1} = Engine.add_exp(dk(%{level: 9, experience: 2690}), 50)
-      assert {c.level, c.experience} == {10, 0}
+    test "maxLevel 30 (P2-2): EXP dừng ở 0" do
+      {c, 1} = Engine.add_exp(dk(%{level: 29, experience: 15_617 - 10}), 50)
+      assert {c.level, c.experience} == {30, 0}
       {c, 0} = Engine.add_exp(c, 500)
-      assert {c.level, c.experience} == {10, 0}
+      assert {c.level, c.experience} == {30, 0}
     end
 
     test "EXP Spider: không penalty ở Phase 1; penalty giảm tới minExpRatio (G23)" do
@@ -168,6 +168,17 @@ defmodule Mu.Game.EngineTest do
       assert Engine.exp_gain(100, 17, 2) == 50
       assert Engine.exp_gain(100, 50, 2) == 10
       assert Engine.exp_gain(1, 50, 2) == 1
+    end
+
+    test "EXP nhóm (P3-5): chia đều × (1 + 0,1 × (n − 1)), phạt chênh cấp riêng từng người" do
+      assert Engine.party_exp_gain(100, 1, 1, 2) == 100
+      assert Engine.party_exp_gain(100, 2, 1, 2) == 55
+      assert Engine.party_exp_gain(100, 5, 1, 2) == 28
+      # 30 / 3 × 1,2 = 12 (không ra 11 vì số thực)
+      assert Engine.party_exp_gain(30, 3, 1, 2) == 12
+      # người cấp 17 với quái cấp 2: × 0,5
+      assert Engine.party_exp_gain(100, 2, 17, 2) == 27
+      assert Engine.party_exp_gain(1, 5, 1, 2) == 1
     end
   end
 
@@ -201,9 +212,88 @@ defmodule Mu.Game.EngineTest do
 
   test "skill học theo class + level (§7)" do
     assert Engine.skills(dk()) == ["basic_attack"]
-    assert Enum.sort(Engine.skills(dk(%{level: 10}))) == ["basic_attack", "twisting_slash"]
+
+    assert Enum.sort(Engine.skills(dk(%{level: 10}))) ==
+             ["basic_attack", "falling_slash", "twisting_slash"]
+
     assert {:error, "REQUIREMENT_NOT_MET"} = Engine.can_use_skill(dk(), "twisting_slash")
     assert :ok = Engine.can_use_skill(dk(%{level: 10}), "twisting_slash")
     assert {:error, "INVALID_TARGET"} = Engine.can_use_skill(dk(), "fireball")
+  end
+
+  describe "P2-M3: skill theo class, heal, buff, hồi MP" do
+    test "skill học theo class + requiredLevel" do
+      assert Enum.sort(Engine.skills(dk(%{level: 30}))) ==
+               ~w(basic_attack death_stab falling_slash twisting_slash)
+
+      dw = %{dk(%{level: 1}) | class: "DW"}
+      assert Enum.sort(Engine.skills(dw)) == ~w(basic_attack energy_ball)
+
+      assert Enum.sort(Engine.skills(%{dw | level: 18})) ==
+               ~w(basic_attack energy_ball fire_ball flame lightning teleport)
+
+      elf = %{dk(%{level: 12}) | class: "ELF"}
+
+      assert Enum.sort(Engine.skills(elf)) ==
+               ~w(basic_attack greater_damage greater_defense heal triple_shot)
+    end
+
+    test "heal / buff theo energy (đề xuất §5.3)" do
+      assert Engine.effect_value(Data.skill("heal")["effect"], 15) == 13
+      assert Engine.effect_value(Data.skill("greater_defense")["effect"], 15) == 3
+      assert Engine.effect_value(Data.skill("greater_damage")["effect"], 15) == 5
+      assert Engine.effect_value(Data.skill("greater_damage")["effect"], 70) == 13
+    end
+
+    test "buff: cùng loại làm mới thời gian + giữ giá trị lớn hơn; khác loại cộng dồn; hết hạn" do
+      b = Engine.add_buff(%{}, "greater_defense", "defense", 5, 1000)
+      b = Engine.add_buff(b, "greater_defense", "defense", 3, 2000)
+      assert b["greater_defense"] == %{stat: "defense", value: 5, until: 2000}
+      b = Engine.add_buff(b, "greater_damage", "damageBonus", 4, 1500)
+
+      stats = Engine.with_buffs(%{defense: 10, attack_min: 1}, b)
+      assert {stats.defense, stats.damage_bonus} == {15, 4}
+
+      assert {%{"greater_defense" => _} = kept, true} = Engine.expire_buffs(b, 1500)
+      assert map_size(kept) == 1
+      assert {^kept, false} = Engine.expire_buffs(kept, 1999)
+    end
+
+    test "Greater Damage cộng phẳng ở bước 3 của §4" do
+      a = %{attack_min: 10, attack_max: 10, attack_rate: 1000, damage_bonus: 5}
+      d = %{defense: 0, defense_rate: 0}
+
+      hits =
+        for seed <- 1..20,
+            {%{hit: true, dmg: dmg}, _} <- [Engine.roll_attack(Rng.new(seed), a, d, 2.0)],
+            do: dmg
+
+      assert hits != [] and Enum.all?(hits, &(&1 == 25))
+    end
+
+    test "hồi MP energy/40 mỗi giây" do
+      assert Engine.mp_regen(30, 1000) == 0.75
+      assert Engine.mp_regen(10, 2000) == 0.5
+    end
+  end
+
+  test "P5-M1: đồ +N cộng chỉ số theo items.levelBonus (vũ khí +3 đòn, giáp +3 / khiên +2 thủ, nhẫn không)" do
+    sword = Data.item("sword_t0")
+    s3 = Engine.leveled(sword, 3)
+    assert {s3["attackMin"], s3["attackMax"]} == {sword["attackMin"] + 9, sword["attackMax"] + 9}
+    assert Engine.leveled(sword, 0) == sword
+
+    helm = Data.item("helm_t0")
+    assert Engine.leveled(helm, 2)["defense"] == helm["defense"] + 6
+    shield = Data.item("shield_t0")
+    assert Engine.leveled(shield, 4)["defense"] == shield["defense"] + 8
+    ring = Data.item("ring_hp_t0")
+    assert Engine.leveled(ring, 5) == ring
+
+    base = Engine.derived(dk(), [sword, helm])
+    up = Engine.derived(dk(), [s3, Engine.leveled(helm, 2)])
+    assert up.attack_max == base.attack_max + 9
+    assert up.attack_min == base.attack_min + 9
+    assert up.defense == base.defense + 6
   end
 end

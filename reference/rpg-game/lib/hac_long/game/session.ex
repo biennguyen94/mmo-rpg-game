@@ -16,6 +16,7 @@ defmodule HacLong.Game.Session do
     (đánh, mua bán...) cũng vậy (`@act_ms`), nhanh hơn tay người bấm nhiều.
   """
   use GenServer, restart: :transient
+  require Logger
 
   alias HacLong.Game.{
     Achievements,
@@ -26,7 +27,6 @@ defmodule HacLong.Game.Session do
     Names,
     Quests,
     Tower,
-    TradeOffer,
     Tutorial
   }
 
@@ -34,6 +34,9 @@ defmodule HacLong.Game.Session do
 
   @idle_timeout :timer.minutes(10)
   @flush_ms 5_000
+  @rid_memory 64
+  # giao dịch giữ Session tối đa chừng này (rồi tự nhả, coi như giao dịch không thành)
+  @hold_ms 3_000
   # khoảng cách tối thiểu giữa hai bước, cho phép dồn vài bước khi mạng giật
   @step_ms 90
   @step_burst 4
@@ -65,13 +68,32 @@ defmodule HacLong.Game.Session do
   def shared_end(user_id, info), do: call(user_id, {:shared_end, info})
 
   @doc """
-  Giao dịch trực tiếp (gọi từ `HacLong.Trade`): lấy những món trong `offer` ra khỏi nhân vật
-  (biết sẽ nhận về `incoming` món đồ hiếm). Trả về `{:ok, gói_hàng}` hoặc `{:error, lý_do}`.
+  Giữ Session (cho giao dịch trực tiếp ghi cả hai nhân vật trong một transaction): trả về
+  `{:ok, ref, nhân_vật}`; từ lúc đó tới `release/3` (hoặc sau `@hold_ms`) mọi lệnh khác của
+  người này phải xếp hàng đợi, nên nhân vật không đổi dưới tay người giữ.
   """
-  def trade_take(user_id, offer, incoming), do: call(user_id, {:trade_take, offer, incoming})
+  def hold(user_id) do
+    ref = make_ref()
 
-  @doc "Giao dịch trực tiếp: nhận gói hàng (từ `trade_take/3` của người kia)."
-  def trade_give(user_id, goods), do: call(user_id, {:trade_give, goods})
+    case call(user_id, {:hold, ref}) do
+      {:ok, p} -> {:ok, ref, p}
+      err -> err
+    end
+  end
+
+  @doc """
+  Nhả Session đã `hold/1`. `player`: nhân vật mới (người giữ đã lưu database) hoặc `nil` nếu
+  không đổi gì.
+  """
+  def release(user_id, ref, player), do: call(user_id, {:release, ref, player})
+
+  @doc """
+  Thao tác quản trị trên nhân vật (`HacLong.Admin`): `fun.(nhân_vật)` trả về
+  `{:ok, nhân_vật_mới, thông_báo}` hoặc `{:error, lý_do}`. Chạy trong Session nên không đè
+  lên lệnh người chơi đang gửi; lưu với lý do `"ADMIN"`, `ref` là mã dòng `admin_log`.
+  """
+  def admin(user_id, fun, ref \\ nil) when is_function(fun, 1),
+    do: call(user_id, {:admin, fun, ref})
 
   @doc "Bang của người chơi vừa đổi: Session đang chạy thì nạp lại (không chạy thì thôi)."
   def refresh_guild(user_id) do
@@ -112,7 +134,14 @@ defmodule HacLong.Game.Session do
       dirty: false,
       flush_timer: nil,
       steps: {@step_burst, now()},
-      acts: {@act_burst, now()}
+      acts: {@act_burst, now()},
+      # lệnh đã chạy theo `rid` (mã yêu cầu của client): gửi lại cùng `rid` thì trả kết quả cũ,
+      # không chạy lần hai (bấm đúp, mạng chập chờn gửi lại). Giữ `@rid_memory` mã gần nhất.
+      rids: %{},
+      rid_order: :queue.new(),
+      # `{ref, timer}` khi giao dịch đang giữ Session (`hold/1`); `queue`: lệnh đợi tới lúc nhả
+      held: nil,
+      queue: []
     }
 
     {:ok, s, @idle_timeout}
@@ -123,7 +152,67 @@ defmodule HacLong.Game.Session do
   defp with_guild(p, uid), do: Map.put(p, :guild, Guilds.brief(uid))
 
   @impl true
-  def handle_call(msg, from, s), do: handle(msg, from, fresh(s))
+  def handle_call({:release, ref, player}, _from, %{held: {ref, timer}} = s) do
+    Process.cancel_timer(timer)
+    s = %{s | held: nil}
+
+    s =
+      if player do
+        Characters.put_reason("TRADE")
+        s = cancel_flush(%{s | player: player, dirty: false})
+        broadcast(s, player, nil)
+        s
+      else
+        if s.dirty, do: mark_dirty(s), else: s
+      end
+
+    s = replay(s)
+    reply(:ok, s)
+  end
+
+  # nhả muộn (đã tự nhả vì quá giờ) hoặc nhả hai lần: bỏ qua
+  def handle_call({:release, _ref, _player}, _from, %{held: nil} = s), do: reply(:ok, s)
+
+  # đang bị giữ: lệnh xếp hàng, trả lời sau khi nhả
+  def handle_call(msg, from, %{held: {_, _}} = s),
+    do: {:noreply, %{s | queue: [{msg, from} | s.queue]}}
+
+  def handle_call(msg, from, s) do
+    {reason, ref} = save_reason(msg)
+    Characters.put_reason(reason, ref)
+    handle(msg, from, fresh(s))
+  end
+
+  # Chạy lại các lệnh đã xếp hàng trong lúc bị giữ, theo đúng thứ tự đến.
+  defp replay(%{queue: []} = s), do: s
+
+  defp replay(s) do
+    queue = Enum.reverse(s.queue)
+
+    Enum.reduce(queue, %{s | queue: []}, fn {msg, from}, s ->
+      case handle_call(msg, from, s) do
+        {:reply, value, s, _timeout} ->
+          GenServer.reply(from, value)
+          s
+
+        # lại bị giữ (lệnh vừa chạy là `hold`): những lệnh sau tiếp tục xếp hàng
+        {:noreply, s} ->
+          s
+      end
+    end)
+  end
+
+  # Lý do ghi vào nhật ký vàng / đồ hiếm cho lần lưu nhân vật của lệnh này.
+  defp save_reason({:command, %{"act" => act} = cmd, _origin}) when is_binary(act) do
+    reason = if act =~ ~r/^[a-z_]{1,32}$/, do: String.upcase(act), else: "CMD"
+    ref = Enum.find([cmd["listing"], cmd["id"], cmd["uid"]], &(is_binary(&1) or is_integer(&1)))
+    {reason, ref}
+  end
+
+  defp save_reason({:world_boss_end, _}), do: {"WORLD_BOSS", nil}
+  defp save_reason({:shared_end, _}), do: {"PARTY", nil}
+  defp save_reason({:admin, _fun, ref}), do: {"ADMIN", ref}
+  defp save_reason(_), do: {"OTHER", nil}
 
   @impl true
   def handle_cast(:refresh_guild, %{player: nil} = s), do: {:noreply, s, timeout(s)}
@@ -180,6 +269,23 @@ defmodule HacLong.Game.Session do
     end
   end
 
+  defp handle({:command, %{"rid" => rid} = cmd, origin}, from, s)
+       when is_binary(rid) and byte_size(rid) in 1..64 do
+    case s.rids do
+      %{^rid => result} ->
+        reply({result, s.player}, s)
+
+      _ ->
+        case handle({:command, Map.delete(cmd, "rid"), origin}, from, s) do
+          {:reply, {result, _player} = value, s, t} ->
+            {:reply, value, remember_rid(s, rid, result), t}
+
+          other ->
+            other
+        end
+    end
+  end
+
   defp handle({:command, cmd, origin}, _from, s) do
     case take(s, :acts, @act_ms, @act_burst) do
       {:ok, s} -> run_command(s, cmd, origin)
@@ -206,26 +312,33 @@ defmodule HacLong.Game.Session do
 
   defp handle({:shared_end, _info}, _from, s), do: reply(:ok, s)
 
-  defp handle({:trade_take, _offer, _incoming}, _from, %{player: nil} = s),
+  defp handle({:hold, _ref}, _from, %{player: nil} = s),
     do: reply({:error, "Chưa có nhân vật."}, s)
 
-  defp handle({:trade_take, offer, incoming}, _from, s) do
-    case TradeOffer.take(s.player, offer, incoming) do
-      {:ok, p, goods} ->
-        s = save(s, p)
-        broadcast(s, p, nil)
-        reply({:ok, goods}, s)
-
-      err ->
-        reply(err, s)
-    end
+  defp handle({:hold, ref}, _from, s) do
+    timer = Process.send_after(self(), {:hold_expired, ref}, @hold_ms)
+    reply({:ok, s.player}, %{s | held: {ref, timer}})
   end
 
-  defp handle({:trade_give, goods}, _from, %{player: p} = s) when p != nil do
-    p = TradeOffer.give(p, goods)
-    s = save(s, p)
-    broadcast(s, p, nil)
-    reply(:ok, s)
+  defp handle({:admin, _fun, _ref}, _from, %{player: nil} = s),
+    do: reply({:error, "Người này chưa có nhân vật."}, s)
+
+  defp handle({:admin, fun, _ref}, _from, s) do
+    old = s.player
+
+    case fun.(old) do
+      {:ok, p, msg} ->
+        s = save(s, p)
+        broadcast(s, p, nil)
+
+        if map_size(s.tabs) > 0 && World.info(p) != World.info(old),
+          do: World.refresh(p, s.user_id)
+
+        reply({:ok, msg}, s)
+
+      {:error, _} = err ->
+        reply(err, s)
+    end
   end
 
   defp handle({:world_boss_end, _info}, _from, %{player: nil} = s), do: reply(:ok, s)
@@ -280,7 +393,7 @@ defmodule HacLong.Game.Session do
           {levels, p} = Engine.gain_xp(p, xp)
 
           text =
-            "Thưởng trùm thế giới (#{r.share}% sát thương): +#{r.gold} vàng, +#{xp} kinh nghiệm#{if r.items != %{}, do: ", Vảy Cổ Long", else: ""}."
+            "Thưởng trùm thế giới (#{r.share}% sát thương): +#{r.gold} vàng, +#{xp} kinh nghiệm#{Enum.map_join(r.items, fn {id, _} -> ", " <> HacLong.Game.Data.item(id).name end)}."
 
           p =
             if World.world_battle?(p) do
@@ -417,6 +530,11 @@ defmodule HacLong.Game.Session do
 
     Enum.each(notes, &notify(s, &1))
     track_guild(old, player, result)
+
+    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
+    {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
+    if announce, do: HacLong.Chat.system(announce)
+
     reply({result, player}, s)
   end
 
@@ -578,24 +696,57 @@ defmodule HacLong.Game.Session do
 
     if map_size(s.tabs) == 0 do
       World.leave(s.player, s.user_id)
+      Characters.put_reason("MOVE")
       {:noreply, flush(s), @idle_timeout}
     else
       {:noreply, s}
     end
   end
 
-  def handle_info(:flush, s), do: {:noreply, flush(%{s | flush_timer: nil}), timeout(s)}
+  def handle_info(:flush, s) do
+    Characters.put_reason("MOVE")
+    {:noreply, flush(%{s | flush_timer: nil}), timeout(s)}
+  end
 
-  def handle_info(:timeout, s) do
+  # giao dịch giữ quá lâu (tiến trình giao dịch chết giữa chừng): tự nhả, không đổi gì
+  def handle_info({:hold_expired, ref}, %{held: {ref, _}} = s) do
+    Logger.warning("Session #{s.user_id}: giao dịch giữ quá #{@hold_ms} ms, tự nhả")
+    s = %{s | held: nil}
+    s = if s.dirty, do: mark_dirty(s), else: s
+    {:noreply, replay(s), timeout(s)}
+  end
+
+  def handle_info({:hold_expired, _ref}, s), do: {:noreply, s, timeout(s)}
+
+  def handle_info(:timeout, %{held: nil} = s) do
     if map_size(s.tabs) == 0, do: {:stop, :normal, flush(s)}, else: {:noreply, s}
   end
+
+  def handle_info(:timeout, s), do: {:noreply, s}
 
   def handle_info({:EXIT, _pid, _reason}, s), do: {:noreply, s, timeout(s)}
 
   @impl true
-  def terminate(_reason, s), do: flush(s)
+  def terminate(_reason, s) do
+    Characters.put_reason("MOVE")
+    flush(s)
+  end
 
   # ---------- Nội bộ ----------
+
+  # "Thao tác quá nhanh" không ghi nhớ: gửi lại cùng mã sau đó vẫn chạy được.
+  defp remember_rid(s, _rid, %{ok: false, msg: "Thao tác quá nhanh."}), do: s
+
+  defp remember_rid(s, rid, result) do
+    order = :queue.in(rid, s.rid_order)
+
+    if :queue.len(order) > @rid_memory do
+      {{:value, old}, order} = :queue.out(order)
+      %{s | rids: s.rids |> Map.delete(old) |> Map.put(rid, result), rid_order: order}
+    else
+      %{s | rids: Map.put(s.rids, rid, result), rid_order: order}
+    end
+  end
 
   defp reply(value, s), do: {:reply, value, s, timeout(s)}
 
@@ -742,6 +893,8 @@ defmodule HacLong.Game.Session do
     %{s | flush_timer: nil}
   end
 
+  # đang bị giao dịch giữ: không ghi (giao dịch sẽ ghi nhân vật mới), để sau khi nhả
+  defp flush(%{held: {_, _}} = s), do: s
   defp flush(%{dirty: true, player: p} = s) when p != nil, do: save(s, p)
   defp flush(s), do: s
 end

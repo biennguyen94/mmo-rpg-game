@@ -52,6 +52,8 @@ const walkTo = async (page, x, y, ms = 15000) => {
     const dx = Math.max(-12, Math.min(12, x - p.x));
     const dy = Math.max(-8, Math.min(8, y - p.y));
     await clickTile(page, dx, dy);
+    // bấm trúng người chơi khác → menu (P3-M4): chọn "Đi tới đây"
+    await (await page.$('[data-test="player-goto"]'))?.click();
     await page.waitForTimeout(Math.max(Math.abs(dx), Math.abs(dy)) * 210 + 150);
   }
   return false;
@@ -88,7 +90,7 @@ const healed = await until(pa, () => window.__mu.player().hp === 150);
 p = await player(pa);
 check(13, "dùng potion OK (trước khi mặc áo, Q14)", healed && p.view.potions.HP === potBefore - 1, `hp=${p.hp} potion ${potBefore}→${p.view.potions.HP}`);
 
-// 11 + icon: Túi đồ → [Trang bị] kiếm, giáp, nhẫn
+// 11 + icon: Túi đồ → kiếm, nhẫn qua tooltip [Trang bị]; giáp kéo thả vào ô ARMOR (P2-M1)
 await pa.keyboard.press("i");
 const imgs = await pa.$$eval('[data-panel="inventory"] img', (xs) =>
   Promise.all(xs.map((i) => (i.complete ? null : new Promise((r) => (i.onload = i.onerror = r))))).then(() =>
@@ -98,7 +100,11 @@ const imgs = await pa.$$eval('[data-panel="inventory"] img', (xs) =>
 check(11, "mỗi item hiển thị một icon (chưa có icon thật → placeholder, cảnh báo ở ICON_REPORT)", imgs.length >= 3 && imgs.every((i) => i.w > 0 && i.src.endsWith("placeholder.png")), `${imgs.length} icon`);
 for (const tid of ["sword_t0", "armor_t0", "ring_hp_t0"]) {
   const it = (await player(pa)).inventory.find((i) => i.templateId === tid);
-  await pa.click(`[data-item="${it.id}"] button`);
+  if (tid === "armor_t0") await pa.dragAndDrop(`[data-item="${it.id}"]`, '[data-slot="1"]');
+  else {
+    await pa.click(`[data-item="${it.id}"]`);
+    await pa.click('[data-test="tooltip"] >> text=Trang bị');
+  }
   await until(pa, (id) => window.__mu.player().equipment.some((e) => e.id === id), it.id);
 }
 p = await player(pa);
@@ -133,6 +139,42 @@ const sold = await until(pa, (z) => window.__mu.player().zen === z - 100 + 750, 
 check(12, "bán đồ ở NPC (+750 Zen)", sold);
 await pa.screenshot({ path: `${shots}/accept-shop.png` });
 await pa.keyboard.press("Escape");
+
+// P2-M1: túi đồ lưới 8×8 — tách stack, kéo gộp, kéo vào thùng rác → xác nhận → vứt, nhặt lại
+{
+  await pa.keyboard.press("i");
+  const pot = () => window.__mu.player().inventory.filter((i) => i.templateId === "hp_potion_small");
+  let stacks = await pa.evaluate(pot);
+  const total = stacks.reduce((n, i) => n + i.quantity, 0);
+  await pa.click(`[data-item="${stacks[0].id}"]`);
+  await pa.fill('[data-test="split-qty"]', "1");
+  await pa.click('[data-test="tooltip"] >> text=Tách');
+  const split = await until(pa, (n) => window.__mu.player().inventory.filter((i) => i.templateId === "hp_potion_small").length === n + 1, stacks.length);
+  check("P2", "tách stack potion qua tooltip [Tách]", split && total >= 2, `${total} potion`);
+  stacks = await pa.evaluate(pot);
+  const [a, b] = stacks.sort((x, y) => x.slot - y.slot);
+  await pa.dragAndDrop(`[data-item="${b.id}"]`, `[data-bag-slot="${a.slot}"]`);
+  const merged = await until(pa, () => window.__mu.player().inventory.filter((i) => i.templateId === "hp_potion_small").length === 1);
+  check("P2", "kéo stack lên stack cùng loại → gộp (move_item)", merged);
+  // nhịp người thật: nhóm lệnh đồ giới hạn rateLimit.cmd.categories.item (5 lệnh / giây)
+  await pa.waitForTimeout(1100);
+  const one = (await pa.evaluate(pot))[0];
+  await pa.dragAndDrop(`[data-item="${one.id}"]`, `[data-bag-slot="40"]`);
+  const moved = await until(pa, () => window.__mu.player().inventory.some((i) => i.templateId === "hp_potion_small" && i.slot === 40));
+  check("P2", "kéo sang ô trống → chuyển ô (move_item)", moved);
+  await pa.dragAndDrop(`[data-item="${one.id}"]`, '[data-test="trash"]');
+  const asked = await pa.locator('[data-test="confirm-drop"]').isVisible();
+  await pa.screenshot({ path: `${shots}/p2-inventory-drop.png` });
+  await pa.click('[data-test="confirm-drop-yes"]');
+  const dropped = await until(pa, () => !window.__mu.player().inventory.some((i) => i.templateId === "hp_potion_small"));
+  check("P2", "kéo vào thùng rác → hỏi xác nhận → vứt xuống đất", asked && dropped);
+  await pa.keyboard.press("Escape");
+  // spawn của món vừa vứt tới sau reply của lệnh drop
+  const onGround = await until(pa, () => window.__mu.entities().some((e) => e.kind === "item" && e.templateId === "hp_potion_small"));
+  await pa.keyboard.press(" ");
+  const back = await until(pa, (n) => window.__mu.player().inventory.some((i) => i.templateId === "hp_potion_small" && i.quantity === n), total);
+  check("P2", "món vứt hiện dưới đất, nhặt lại đúng số lượng", onGround && back, `${total} potion`);
+}
 
 // 2. tạo DK qua UI (người B), 16. hai người thấy nhau
 const ctxB = await browser.newContext({ viewport: { width: 1280, height: 800 } });
@@ -176,7 +218,7 @@ for (let round = 0; round < 60 && (!drop || !(await levelled())); round++) {
   const target = await pa.evaluate(() => {
     const me = window.__mu.entities().find((e) => e.id === window.__mu.selfId);
     return window.__mu.entities()
-      .filter((e) => e.kind === "monster" && e.state !== "dead")
+      .filter((e) => e.kind === "monster" && e.templateId === "spider" && e.state !== "dead")
       .map((e) => ({ id: e.id, x: e.x, y: e.y, d: Math.max(Math.abs(e.x - me.x), Math.abs(e.y - me.y)) }))
       .sort((a, b) => a.d - b.d)[0];
   });

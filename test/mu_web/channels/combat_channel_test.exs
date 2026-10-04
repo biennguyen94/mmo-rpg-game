@@ -2,7 +2,7 @@ defmodule MuWeb.CombatChannelTest do
   @moduledoc "M3 qua kênh thật: đánh Spider → EXP/Zen → lên cấp → cộng stat → lưu → reload."
   use MuWeb.ChannelCase
 
-  alias Mu.Game.{Character, Session}
+  alias Mu.Game.{Character, Config, Session}
   alias Mu.World.MapServer
   alias MuWeb.GameChannel
 
@@ -192,7 +192,7 @@ defmodule MuWeb.CombatChannelTest do
     assert MapServer.position(@map, c.id) == Mu.World.Maps.get(@map).player_spawn
   end
 
-  test "đóng tab khi đang combat: ở lại logoutInCombatSeconds rồi mới rời (G21)" do
+  test "đăng xuất (rời kênh) khi đang combat: ở lại logoutInCombatSeconds rồi mới rời (G21)" do
     {a, c} = create_character()
     {:ok, _, socket} = join_game(a, c)
     stage(c)
@@ -200,24 +200,94 @@ defmodule MuWeb.CombatChannelTest do
     assert_reply ref, :ok, _
 
     Process.unlink(socket.channel_pid)
-    close(socket)
+    leave(socket)
     Process.sleep(50)
     # vẫn trên map (có thể bị đánh)
     assert MapServer.position(@map, c.id) != nil
     pid = Session.whereis(a.id)
-    assert :sys.get_state(pid).leave_timer != nil
+    timer = :sys.get_state(pid).leave_timer
+    assert Process.read_timer(timer) <= Config.get(["session", "logoutInCombatSeconds"]) * 1000
 
     send(pid, :delayed_leave)
     Process.sleep(50)
     assert MapServer.position(@map, c.id) == nil
   end
 
-  test "đóng tab khi không combat: rời ngay" do
+  test "đăng xuất (rời kênh) khi không combat: rời ngay" do
     {a, c} = create_character()
     {:ok, _, socket} = join_game(a, c)
     Process.unlink(socket.channel_pid)
-    close(socket)
+    leave(socket)
     Process.sleep(50)
     assert MapServer.position(@map, c.id) == nil
+  end
+
+  test "P2-5: Elf cầm cung đánh thường từ 5 ô; DK tay không chỉ 1 ô" do
+    {a, c} = create_character(nil, "ELF")
+    {:ok, r, socket} = join_game(a, c)
+    assert r.player.view.attackRange == 5
+
+    MapServer.debug_update(@map, fn st ->
+      m = %{st.monsters["m_1"] | x: 50, y: 36, home: {50, 36}}
+      players = Map.update!(st.players, c.id, &%{&1 | x: 45, y: 36})
+      %{st | monsters: %{"m_1" => m}, players: players}
+    end)
+
+    ref = push(socket, "cmd", %{"act" => "attack", "rid" => "b1", "target" => "m_1"})
+    assert_reply ref, :ok, %{rid: "b1"}
+
+    MapServer.debug_update(@map, fn st ->
+      put_in(st.players[c.id].x, 44) |> put_in([:players, c.id, :cooldowns], %{})
+    end)
+
+    ref = push(socket, "cmd", %{"act" => "attack", "rid" => "b2", "target" => "m_1"})
+    assert_reply ref, :error, %{error: "OUT_OF_RANGE"}
+
+    {a2, c2} = create_character()
+    {:ok, r2, socket2} = join_game(a2, c2)
+    assert r2.player.view.attackRange == 1
+
+    MapServer.debug_update(@map, fn st ->
+      put_in(st.players[c2.id].x, 48) |> put_in([:players, c2.id, :y], 36)
+    end)
+
+    ref = push(socket2, "cmd", %{"act" => "attack", "rid" => "d1", "target" => "m_1"})
+    assert_reply ref, :error, %{error: "OUT_OF_RANGE"}
+  end
+
+  test "P2-M3: Elf buff bản thân qua kênh → player.view.buffs; heal người khác → combat.heal" do
+    {a, c} = create_character(nil, "ELF")
+    Mu.Repo.update!(Ecto.Changeset.change(c, level: 12))
+    {:ok, r, socket} = join_game(a, c)
+    assert "greater_defense" in r.player.view.skills
+    assert r.player.view.buffs == []
+
+    ref = push(socket, "cmd", %{"act" => "skill", "rid" => "g1", "id" => "greater_defense"})
+    assert_reply ref, :ok, %{rid: "g1"}
+
+    assert %{view: %{buffs: [%{id: "greater_defense", value: 3, expiresAt: _}]}} =
+             last_player_push()
+
+    {a2, c2} = create_character()
+    {:ok, _, _socket2} = join_game(a2, c2)
+
+    MapServer.debug_update(@map, fn st ->
+      st
+      |> put_in([:players, c2.id, :hp], 50)
+      |> put_in([:players, c2.id, :x], st.players[c.id].x + 1)
+      |> put_in([:players, c2.id, :y], st.players[c.id].y)
+    end)
+
+    ref =
+      push(socket, "cmd", %{
+        "act" => "skill",
+        "rid" => "h1",
+        "id" => "heal",
+        "target" => "p_" <> c2.id
+      })
+
+    assert_reply ref, :ok, _
+    tid = "p_" <> c2.id
+    assert_push "combat", %{rid: "h1", target: ^tid, heal: 13, hp: 63}
   end
 end

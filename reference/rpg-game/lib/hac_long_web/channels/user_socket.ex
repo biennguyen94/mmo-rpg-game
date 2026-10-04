@@ -4,10 +4,11 @@ defmodule HacLongWeb.UserSocket do
   channel "game", HacLongWeb.GameChannel
 
   @impl true
-  def connect(%{"token" => token}, socket, _connect_info) do
-    case HacLong.Accounts.verify_token(token) do
+  # Mở bằng vé dùng một lần (`POST /api/ws-ticket`), không nhận token đăng nhập trong URL nữa.
+  def connect(%{"ticket" => ticket}, socket, _connect_info) do
+    case HacLong.Accounts.consume_ws_ticket(ticket) do
       {:ok, user} ->
-        {:ok, assign(socket, user_id: user.id, username: user.username, admin: user.admin)}
+        {:ok, assign(socket, user_id: user.id, username: user.username, role: user.role)}
 
       _ ->
         :error
