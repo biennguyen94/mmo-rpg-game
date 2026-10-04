@@ -39,5 +39,11 @@ if (await engage(page)) {
   await act(page, 'leave');
 } else R.check('vào được trận đánh', false);
 
+// Phase 8: bảng Thông báo (🔔) — tin lên cấp / thắng trận vừa rồi được giữ lại
+await act(page, 'notes-open');
+const nu = await page.evaluate(() => window.__hl.ui());
+R.check('mở bảng Thông báo, không tràn ngang', nu.notes === true && !(await overflowX(page)));
+await shot(page, 'mobile-notes.png');
+await act(page, 'notes-close');
 R.check('không lỗi JS', errors.length === 0, errors.join(' | '));
 await R.done(browser);

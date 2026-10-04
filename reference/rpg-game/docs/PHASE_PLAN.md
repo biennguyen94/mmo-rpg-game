@@ -227,13 +227,17 @@ chuyền). Thêm:
 
 ---
 
-## Phase 8 — Giao diện, hướng dẫn người chơi
+## Phase 8 — Giao diện, hướng dẫn người chơi ✅ (xong 2026-10-04, làm trước Phase 6 / 7 theo ý anh)
 
 | Mục | Việc |
 |---|---|
 | **L2** | Panel Thông báo: lưu tin (ép +7, ghép cánh, thư, mời…), chưa đọc / đã đọc, xóa. |
 | **M11** | Hiệu ứng nhỏ bằng CSS / canvas: lóe sáng khi trúng, chữ "LÊN CẤP", hồi máu / MP, ép thành công / vỡ. |
 | **O1** | `docs/USER_GUIDE.md` cho Hắc Long: 4 lớp, chỉ số, kỹ năng, ép, máy ghép, cánh, chợ, giao dịch, bang… kèm ảnh từ e2e. |
+
+**Kết quả:** nút 🔔 Thông báo trên HUD (tin lên cấp, ép / ghép, thư, lời mời, cược, tin hệ thống; lưu ở trình duyệt, tối đa
+50 tin); hiệu ứng chữ lớn "LÊN CẤP", ép thành công / vỡ đồ, ghép, Ngọc Sinh Mệnh, hồi máu / MP (tôn trọng giảm chuyển động);
+`docs/USER_GUIDE.md`. e2e mobile thêm bước mở Thông báo, không tràn ngang.
 
 **Xong khi:** e2e mobile không tràn ngang; hướng dẫn đủ mọi tính năng đang có.
 

@@ -215,7 +215,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | L1 | **Hình nhân vật kèm ô trang bị** (bố cục "búp bê": ô quanh hình nhân vật) | Khác: 3 dòng danh sách | ✅ | S–M | Đẹp hơn ngay cả với 3–4 ô; cần nếu làm C1 / C2 / D6 | [x] 🔶 Q |
-| L2 | **Panel Thông báo** (lưu lại, chưa đọc / đã đọc, xóa) | Khác: toast rồi mất | ✅ | S | Người chơi không lỡ tin quan trọng | [x] |
+| L2 | **Panel Thông báo** (lưu lại, chưa đọc / đã đọc, xóa) | Khác: toast rồi mất | ✅ | S | Người chơi không lỡ tin quan trọng | [x] ✅ P8 |
 | L3 | **Phím tắt máy tính** (C / I / M nhân vật / túi / bản đồ, Q / W bình, Enter chat, Esc đóng) | Kiểm (có `keydown`) | ✅ | S | | [x] ✅ Q |
 | L4 | **Bản đồ nhỏ** (mình, NPC, cổng, vùng an toàn) | Kiểm | 🟡 | S | | [ ] |
 | L5 | **Thanh sự kiện đếm ngược** giữa trên màn hình | Khác: banner trùm thế giới | 🟡 | S | Đi cùng F2 | [ ] |
@@ -258,7 +258,7 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] |
+| O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] ✅ P8 |
 | O2 | **`ADMIN_GUIDE`** (lệnh quản trị, sao lưu, xử lý tình huống) | Khác: `DEPLOY.md` | ✅ | S | Đi cùng K1 | [x] ✅ Đ2 |
 | O3 | **`DECISIONS` / `OPEN_QUESTIONS`** (ghi quyết định, câu hỏi chờ duyệt) | Không | 🟡 | S | Theo dõi vì sao số / luật được chọn | [x] ✅ P1 |
 | O4 | **Ảnh chụp màn hình trong tài liệu** (do e2e chụp) | Kiểm | 🟡 | S | Đi cùng N1 | [x] ✅ P2 |
@@ -418,7 +418,7 @@
 |---|---|---|---|---|---|---|
 | M9 | **Viền / màu đồ theo cấp +N** (khác nhau ở +7, +9, +11) | – | ✅ | S | Đi cùng D1: nhìn là biết đồ "khủng" | [x] ✅ Đ3 |
 | M10 | **Ảnh đồ không kéo giãn, chỉ phóng số nguyên** | Kiểm | 🟡 | S | | [x] |
-| M11 | **Hoạt ảnh nhân vật nhiều khung, hiệu ứng kỹ năng / lên cấp / hồi máu** — MU chưa làm | Kiểm | 🟡 | M | Hiệu ứng nhỏ bằng CSS / canvas (lóe sáng khi trúng, chữ "LÊN CẤP") | [x] |
+| M11 | **Hoạt ảnh nhân vật nhiều khung, hiệu ứng kỹ năng / lên cấp / hồi máu** — MU chưa làm | Kiểm | 🟡 | M | Hiệu ứng nhỏ bằng CSS / canvas (lóe sáng khi trúng, chữ "LÊN CẤP") | [x] ✅ P8 |
 | M12 | **Tối ưu tải ảnh** (tải trước theo bản đồ, nén, cache header, ghép atlas) — MU chưa làm | Kiểm | 🟡 | S | Đỡ tốn mạng điện thoại | [ ] |
 | M13 | **Tách lớp vẽ (`GameView`)**, **Phaser** | – | ❌ | – | | [ ] |
 

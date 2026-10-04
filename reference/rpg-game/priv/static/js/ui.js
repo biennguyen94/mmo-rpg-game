@@ -61,6 +61,61 @@
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
 
+  // ---------- Thông báo (Phase 8, L2) ----------
+  // Tin đáng nhớ (ép +N, ghép, thư, lời mời, kết quả cược, tin hệ thống…) giữ lại để xem sau. Chỉ ở trình duyệt
+  // này (localStorage theo tài khoản, tối đa 50 tin); mất thì thôi, server không cần biết.
+  let notes = { list: [], open: false };
+  const notesKey = () => `hl-notes-${Net.userId}`;
+  function loadNotes() {
+    try { notes.list = JSON.parse(localStorage.getItem(notesKey()) || '[]'); } catch (e) { notes.list = []; }
+  }
+  function saveNotes() {
+    try { localStorage.setItem(notesKey(), JSON.stringify(notes.list)); } catch (e) { /* bộ nhớ trình duyệt bị chặn: chỉ giữ trong phiên */ }
+  }
+  function note(text, kind) {
+    if (!text) return;
+    notes.list = [{ text, kind: kind || 'info', at: Date.now(), read: notes.open }].concat(notes.list).slice(0, 50);
+    saveNotes();
+    refreshHud();
+  }
+  const notesUnread = () => notes.list.filter((n) => !n.read).length;
+  function viewNotes() {
+    const icons = { good: '✨', bad: '💥', mail: '✉', invite: '🤝', info: '🔔' };
+    return `<div class="row"><h2 class="display grow">Thông báo</h2>${notes.list.length ? '<button class="btn" data-act="notes-clear">Xóa hết</button>' : ''}<button class="btn" data-act="notes-close">Đóng</button></div>
+      ${notes.list.length ? `<div class="list" id="notes-list">${notes.list.map((n) => `<div class="item note ${n.read ? 'read' : ''}"><span>${icons[n.kind] || '🔔'}</span><div class="grow"><div>${esc(n.text)}</div><div class="small muted">${new Date(n.at).toLocaleString('vi-VN')}</div></div></div>`).join('')}</div>`
+        : '<div class="card"><p class="small muted">Chưa có thông báo nào. Ép đồ thành công, thư mới, lời mời, kết quả cược… sẽ hiện ở đây.</p></div>'}`;
+  }
+
+  // ---------- Hiệu ứng lớn giữa màn hình (Phase 8, M11) ----------
+  // "LÊN CẤP", ép thành công / vỡ đồ, ghép cánh, hồi máu: chữ to bay lên rồi tắt; tôn trọng "giảm chuyển động".
+  function bigFx(text, kind) {
+    if (!text) return;
+    const el = document.createElement('div');
+    el.className = `bigfx ${kind || ''}`;
+    el.setAttribute('aria-hidden', 'true');
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+  // hiệu ứng theo kết quả một lệnh
+  function resultFx(cmd, r, old) {
+    if (!r || !r.ok || !P) return;
+    if (old && P.level > old.level) { bigFx(`LÊN CẤP ${P.level}!`, 'level'); note(`Lên cấp ${P.level}.`, 'good'); }
+    const up = r.upgrade, ch = r.chaos, life = r.life;
+    if (up) {
+      if (up.result === 'success') bigFx(`✨ +${up.level || ''}`.trim(), 'good');
+      else if (up.result === 'destroyed' || up.result === 'destroy') bigFx('💥 VỠ ĐỒ', 'bad');
+      else bigFx('THẤT BẠI', 'bad');
+      if (up.result !== 'success' || (up.level || 0) >= 7) note(r.msg, up.result === 'success' ? 'good' : 'bad');
+    }
+    if (ch) { bigFx(ch.result === 'fail' ? '💥 THẤT BẠI' : '✨ THÀNH CÔNG', ch.result === 'fail' ? 'bad' : 'good'); note(r.msg, ch.result === 'fail' ? 'bad' : 'good'); }
+    if (life) bigFx(life.result === 'success' ? '💚 +1 dòng' : '💔 THẤT BẠI', life.result === 'success' ? 'good' : 'bad');
+    if (old && ['use', 'rest', 'potion'].includes(cmd.act)) {
+      const hp = P.hp - old.hp, mp = (P.mp || 0) - (old.mp || 0);
+      if (hp > 0 || mp > 0) bigFx([hp > 0 ? `+${fmt(hp)} máu` : '', mp > 0 ? `+${fmt(mp)} MP` : ''].filter(Boolean).join('  '), 'heal');
+    }
+  }
+
   let toastTimer;
   function toast(msg, err) {
     if (!msg) return;
@@ -124,7 +179,7 @@
       ['misc', 'laurels', 'Khác'],
     ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -322,13 +377,20 @@
   }
 
   // ---------- Giao dịch trực tiếp ----------
+  function pkNote(v) {
+    const foe = v.a.uid === Net.userId ? v.b.name : v.a.name;
+    if (v.winner == null) note(`Cược đấu với ${foe}: hòa.`, 'info');
+    else if (v.winner === Net.userId) note(`Cược đấu thắng ${foe}: +${fmt(v.wager)} vàng.`, 'good');
+    else note(`Cược đấu thua ${foe}: −${fmt(v.wager)} vàng.`, 'bad');
+  }
+
   async function pkOp(op, payload) {
     try {
       const r = await Net.pk(op, payload);
       pk = r;
       if (op === 'invite') toast(`Đã mời cược ${fmt(payload.wager)} vàng. Chờ người kia nhận…`);
       if (dialog && dialog.type === 'pk') dialog = null;
-      if (r.result) { dialog = { type: 'pkResult', view: r.result }; Sound.play('rare'); }
+      if (r.result) { dialog = { type: 'pkResult', view: r.result }; Sound.play('rare'); pkNote(r.result); }
       else if (op !== 'invite' && dialog && dialog.type === 'player') dialog = null;
     } catch (e) {
       toast(e.msg, true);
@@ -810,6 +872,7 @@
         </div>
         <div class="gold">${icon('two-coins')}${fmt(P.gold)}</div>
         <button class="hud-btn" data-act="friends-open" aria-label="Bạn bè${friendsBadge() ? `, ${friendsBadge()} tin mới` : ''}">👥${friendsBadge() ? `<span class="points-dot">${friendsBadge()}</span>` : ''}</button>
+        <button class="hud-btn" data-act="notes-open" aria-label="Thông báo${notesUnread() ? `, ${notesUnread()} tin mới` : ''}">🔔${notesUnread() ? `<span class="points-dot">${notesUnread()}</span>` : ''}</button>
         <button class="hud-btn" data-act="mail-open" aria-label="Hộp thư${mail.unread ? `, ${mail.unread} thư mới` : ''}">${icon('envelope')}${mail.unread ? `<span class="points-dot">${mail.unread}</span>` : ''}</button>
       </div>
       <div class="bars">
@@ -2125,6 +2188,7 @@
       result(r);
       if (r.ok && before) battleFx(before, cmd.act);
       commandSound(cmd, r, old);
+      resultFx(cmd, r, old);
       if (r.ok) {
         if (cmd.act === 'leave' || cmd.act === 'create') tab = 'map';
         if (cmd.act === 'reset') tab = 'map';
@@ -2203,7 +2267,7 @@
   const TAB_KEY = { hero: 'C', bag: 'I', map: 'M' };
   // Chuyển tab (nút thanh tab và phím tắt dùng chung)
   function goTab(id) {
-    tab = id; confirmReset = false; mail.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    tab = id; confirmReset = false; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
     stopFishing();
     if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
     render(); $('#view').scrollTop = 0;
@@ -2228,7 +2292,7 @@
     if (tipAt) { hideTip(); return true; }
     if (npc) { npc = null; market.data = null; render(); return true; }
     if (dialog) { dialog = null; render(); return true; }
-    if (mail.open || guildUi.open || friendsUi.open || visit) { mail.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
+    if (mail.open || notes.open || guildUi.open || friendsUi.open || visit) { mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
     if (!P.battle && tab !== 'map') { goTab('map'); return true; }
     return false;
   }
@@ -2261,7 +2325,7 @@
 
   function enter(r) {
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -2352,6 +2416,9 @@
     if (act === 'friend-ask') { friendsUi.confirm = +t.dataset.uid; render(); return; }
     if (act === 'dm-open') { openChat(+t.dataset.uid); return; }
     if (act === 'dm-back') { friendsUi.chat = null; loadFriends(); return; }
+    if (act === 'notes-open') { notes.open = !notes.open; mail.open = false; walk = null; if (notes.open) { notes.list.forEach((n) => { n.read = true; }); saveNotes(); } render(); $('#view').scrollTop = 0; return; }
+    if (act === 'notes-close') { notes.open = false; render(); return; }
+    if (act === 'notes-clear') { notes.list = []; saveNotes(); render(); return; }
     if (act === 'mail-open') { mail.open = !mail.open; walk = null; render(); $('#view').scrollTop = 0; if (mail.open) loadMail(); return; }
     if (act === 'mail-close') { mail.open = false; render(); return; }
     if (act === 'fish-cast') { walk = null; castLine(); return; }
@@ -2520,7 +2587,7 @@
     Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); });
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
-    Net.onNotice((msg) => { toast(msg); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
+    Net.onNotice((msg) => { toast(msg); note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good'); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
     window.Doll.onReady(() => { if (P) refresh(); });
     Net.onParty((pt) => {
       const had = !!party;
@@ -2532,6 +2599,7 @@
     Net.onPartyInvite((m) => {
       if (!m.from) { if (dialog && dialog.type === 'invite') { dialog = null; toast('Lời mời tổ đội đã hết hạn.'); if (P && !P.battle) render(); } return; }
       toast(`${m.name || 'Một người chơi'} mời bạn vào tổ đội.`);
+      note(`${m.name || 'Một người chơi'} mời bạn vào tổ đội.`, 'invite');
       Sound.play('mail');
       dialog = { type: 'invite', from: m.from, name: m.name };
       if (P && !P.battle) { if (tab !== 'map') tab = 'map'; render(); }
@@ -2550,6 +2618,7 @@
     Net.onPkInvite((inv) => {
       if (inv && inv.to === Net.userId) {
         toast(`${inv.name} mời bạn cược đấu ${fmt(inv.wager)} vàng.`);
+        note(`${inv.name} mời bạn cược đấu ${fmt(inv.wager)} vàng.`, 'invite');
         Sound.play('mail');
         dialog = { type: 'pk', inv };
         if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; }
@@ -2558,12 +2627,14 @@
     });
     Net.onPkResult((view) => {
       dialog = { type: 'pkResult', view };
+      pkNote(view);
       Sound.play('rare');
       pk = null;
       if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; render(); }
     });
     Net.onTradeRequest((m) => {
       toast(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`);
+      note(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`, 'invite');
       Sound.play('mail');
       dialog = { type: 'trade', from: m.from, name: m.name };
       if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; render(); }
@@ -2586,7 +2657,7 @@
     Net.onMail((n) => {
       const more = n > mail.unread;
       mail.unread = n;
-      if (more) { toast('Bạn có thư mới.'); Sound.play('mail'); if (mail.open) loadMail(); }
+      if (more) { toast('Bạn có thư mới.'); note('Bạn có thư mới trong Hộp thư.', 'mail'); Sound.play('mail'); if (mail.open) loadMail(); }
       if (P && !P.battle) $('#hud').innerHTML = viewHud();
     });
     setInterval(() => { const el = $('#wb-left'); if (el && wb.alive) el.textContent = clock(wb.endsAt - wb.skew - Date.now()); }, 1000);
@@ -2628,7 +2699,7 @@
         loading, busy, tab, logged: !!Net.username,
         npc: npc && npc.id, dialog: dialog && dialog.type,
         trade: trade && trade.status, party: copy(party),
-        mail: mail.open, friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
+        mail: mail.open, notes: notes.open, unreadNotes: notesUnread(), friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
       }),
       world: () => copy(Map_.world()),
       npcs: (map) => copy(WORLD.maps[map || (P && P.pos.map)].npcs),

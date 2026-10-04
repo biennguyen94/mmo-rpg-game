@@ -21,6 +21,7 @@ const DOC_SHOTS = {
   'smoke-shop.png': 'e2e-shop.png',
   'social-trade.png': 'e2e-trade.png',
   'pk-result.png': 'e2e-pk.png',
+  'progress-wardrobe.png': 'e2e-wardrobe.png',
   'progress-forge.png': 'e2e-forge.png',
   'admin-user.png': 'e2e-admin.png',
   'mobile-map.png': 'e2e-mobile-map.png',

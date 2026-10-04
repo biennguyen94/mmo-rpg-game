@@ -526,6 +526,12 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
 - **Hộp thư:** `Mailbox.claim_all/3`, `delete_read/1`, `cleanup/2` (hết hạn trừ thư còn quà).
 - Client: `HLLogic.nameColor` / `parseChat` (logic.js), `Map_.setRelations`, `pkOp`, `viewGuildWar`, lọc hộp thư.
 
+## 9j. Thông báo, hiệu ứng (Phase 8, 2026-10-04)
+
+- `ui.js`: `notes` + `note(text, kind)` (localStorage `hl-notes-<uid>`, `loadNotes` khi vào game), `viewNotes`, nút 🔔 trên HUD;
+  `bigFx(text, kind)` + `resultFx(cmd, r, old)` gọi sau mỗi lệnh trong `sendCommand`. CSS `.bigfx` cuối `style.css`.
+- Hướng dẫn người chơi: `docs/USER_GUIDE.md`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.
