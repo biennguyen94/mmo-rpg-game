@@ -75,9 +75,9 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Đặt cấp | `set_level` | `level` 1..50 | xp về 0; điểm tiềm năng ± 3 × số cấp đổi (không dưới 0); hồi đầy máu |
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
-| Chỉ số | `add_stats` | `str`, `vit`, `agi`, `def` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
+| Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
 | Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11 | **mọi** món trong `game_data.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ hiếm | `give_gear` | `base`, `rarity` 1..3, `bonus` `{str, vit, agi, def}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đồ hiếm | `give_gear` | `base`, `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
@@ -187,14 +187,14 @@ await A('set_level', { level: 50 });
 // vàng, điểm tiềm năng, chỉ số
 await A('add_gold', { amount: 100000000 });
 await A('add_points', { n: 300 });
-await A('add_stats', { str: 200, vit: 200, agi: 100, def: 150 });
+await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI / VIT / ENE như MU
 
 // đồ hiếm Sử Thi tự chọn chỉ số, nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
 await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 11 });       // Thánh Kiếm Diệt Long
-await A('give_gear', { base: 'breastplate', rarity: 3, bonus: { vit: 30, def: 30, str: 10 }, up: 11 }); // Giáp Ngực Thép
-await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { def: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
+await A('give_gear', { base: 'breastplate', rarity: 3, bonus: { vit: 30, agi: 30, str: 10 }, up: 11 }); // Giáp Ngực Thép
+await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { ene: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
 
-// cánh cấp 2 đúng lớp, +11 (warrior / rogue / knight); cấp mặc 35
+// cánh cấp 2 đúng lớp, +11 (dk / dw / elf / mg); cấp mặc 35
 const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;
 await A('give_item', { id: `wing_${cls}_2`, count: 1, up: 11 });
 

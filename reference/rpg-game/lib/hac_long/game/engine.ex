@@ -11,11 +11,13 @@ defmodule HacLong.Game.Engine do
   alias HacLong.Game.{Bestiary, Crafting, Data, Events, Gear, Home, Pets, Rng}
 
   @save_version 1
-  @points_per_level 3
   @max_level 50
   @log_limit 60
   @potions ~w(potion_s potion_m potion_l)
-  @stats ~w(str vit agi def)a
+  # Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (như MU)
+  @stats ~w(str agi vit ene)a
+  # mỗi lượt của người chơi hồi chừng này phần MP tối đa
+  @mp_regen 0.05
   @max_batch 99
   # vũ khí, giáp, khiên, cánh
   @equip_slots ~w(weapon armor shield wing)
@@ -23,7 +25,10 @@ defmodule HacLong.Game.Engine do
   @rebirth_points 15
 
   def equip_slots, do: @equip_slots
-  def points_per_level, do: @points_per_level
+  @doc "Điểm tiềm năng mỗi lần lên cấp của lớp `cls` (Đấu Sĩ 7, lớp khác 5)."
+  def points_per_level(cls), do: Data.class(cls).points
+
+  def stats, do: @stats
   def max_level, do: @max_level
 
   # ---------- Ngẫu nhiên ----------
@@ -56,6 +61,7 @@ defmodule HacLong.Game.Engine do
           xp: 0,
           gold: 30,
           stats: c.base,
+          mp: 0,
           points: 0,
           equip: %{weapon: "club", armor: "vest", shield: nil, wing: nil},
           inv: %{"potion_s" => 3},
@@ -85,13 +91,20 @@ defmodule HacLong.Game.Engine do
           hp: 0
         }
 
-        {:ok, %{p | hp: derived(p).maxHp}}
+        d = derived(p)
+        {:ok, %{p | hp: d.maxHp, mp: d.maxMp}}
     end
   end
 
+  @doc """
+  Chỉ số dẫn xuất. Công thức theo lớp ở `CLASSES[lớp].derived` (`game_data.json`): mỗi chỉ số là
+  tổng `hệ_số × giá_trị` với giá trị là một chỉ số gốc (`str`, `agi`, `vit`, `ene`), `level` hoặc
+  `base` (= 1). Chí mạng và né theo Nhanh nhẹn, như nhau cho mọi lớp.
+  """
   def derived(p) do
     # chỉ số cộng thêm của đồ ngẫu nhiên đang mặc
     s = Map.merge(p.stats, Gear.bonus_stats(p), fn _, a, b -> a + b end)
+    f = Data.class(p.cls).derived
     w = Gear.item(p, p.equip.weapon)
     a = Gear.item(p, p.equip.armor)
     sh = Gear.item(p, p.equip.shield)
@@ -99,29 +112,33 @@ defmodule HacLong.Game.Engine do
 
     up = fn id -> if id, do: upgrade_bonus(p, id), else: 0 end
 
-    # thú cưng đang dắt theo cộng phần trăm
+    lin = fn terms ->
+      Enum.reduce(terms, 0, fn
+        {:level, k}, acc -> acc + k * p.level
+        {:base, k}, acc -> acc + k
+        {stat, k}, acc -> acc + k * Map.get(s, stat, 0)
+      end)
+    end
+
     # thú cưng đang dắt theo và món đang ăn cộng phần trăm
     pet = fn key -> 1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) end
 
     %{
-      maxHp: round((40 + s.vit * 12 + p.level * 10) * pet.(:hp)),
-      atk:
-        round(
-          (s.str * 2.2 + s.agi * 0.9 + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) + p.level) *
-            pet.(:atk)
-        ),
+      maxHp: round(lin.(f.hp) * pet.(:hp)),
+      maxMp: round(lin.(f.mp)),
+      atk: round((lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon)) * pet.(:atk)),
       def:
         round(
-          (s.def * 1.6 + if(a, do: a.def, else: 0) + if(sh, do: sh.def, else: 0) +
+          (lin.(f.def) + if(a, do: a.def, else: 0) + if(sh, do: sh.def, else: 0) +
              if(wg, do: wg.def, else: 0) + up.(p.equip.armor) + up.(p.equip.shield) +
-             up.(p.equip[:wing]) + p.level * 0.5) * pet.(:def)
+             up.(p.equip[:wing])) * pet.(:def)
         ),
+      crit: clamp(0.04 + s.agi * 0.0035, 0, 0.6),
+      critMult: min(2.5, 1.6 + s.agi * 0.004),
+      dodge: clamp(0.02 + s.agi * 0.0025, 0, 0.4),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
-      wingAbsorb: wing_pct(p, wg, :absorb),
-      crit: clamp(0.04 + s.agi * 0.008, 0, 0.6),
-      critMult: min(2.5, 1.6 + s.agi * 0.006),
-      dodge: clamp(0.02 + s.agi * 0.005, 0, 0.4)
+      wingAbsorb: wing_pct(p, wg, :absorb)
     }
   end
 
@@ -385,7 +402,14 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  defp next_turn(p), do: update_in(p.battle.turn, &(&1 + 1))
+  # Sang lượt mới của người chơi: hồi một phần MP.
+  defp next_turn(p) do
+    max_mp = derived(p).maxMp
+    p = %{p | mp: min(max_mp, mp(p) + max(1, round(max_mp * @mp_regen)))}
+    update_in(p.battle.turn, &(&1 + 1))
+  end
+
+  defp mp(p), do: Map.get(p, :mp) || 0
 
   defp act_flee(p, d) do
     p = next_turn(p)
@@ -438,6 +462,9 @@ defmodule HacLong.Game.Engine do
 
       skill && cooldown(p, skill.id) > 0 ->
         {err("#{skill.name} hồi sau #{cooldown(p, skill.id)} lượt."), p}
+
+      skill && mp(p) < (skill[:mp] || 0) ->
+        {err("Không đủ MP cho #{skill.name} (cần #{skill.mp})."), p}
 
       true ->
         p = next_turn(p)
@@ -534,12 +561,17 @@ defmodule HacLong.Game.Engine do
   defp strike_with(p, skill, d, atk, dfn, crit) do
     # +1 vì cuối lượt sẽ trừ 1
     p = set_cd(p, skill.id, skill.cooldown + 1)
+    p = %{p | mp: mp(p) - (skill[:mp] || 0)}
     m = p.battle.monster
     none = fn p, _ -> p end
 
-    case skill.id do
+    # tác dụng theo `effect` (kỹ năng các lớp dùng chung vài kiểu tác dụng)
+    case skill[:effect] || skill.id do
       "cleave" ->
         {p, atk, dfn, crit, 2.2, skill.name, none}
+
+      "fire_ball" ->
+        {p, atk, round(dfn * 0.7), crit, 2.0, skill.name, none}
 
       "backstab" ->
         {p, atk, round(dfn * 0.5), true, 1, skill.name, none}
@@ -847,7 +879,7 @@ defmodule HacLong.Game.Engine do
         do:
           log(
             p,
-            "⭐ Lên cấp #{p.level}! Nhận #{levels * @points_per_level} điểm tiềm năng.",
+            "⭐ Lên cấp #{p.level}! Nhận #{levels * points_per_level(p.cls)} điểm tiềm năng.",
             "win"
           ),
         else: p
@@ -960,20 +992,21 @@ defmodule HacLong.Game.Engine do
 
   defp level_up(p, levels) do
     if p.level < @max_level and p.xp >= xp_to_next(p.level) do
-      g = Data.class(p.cls).growth
-      stats = Map.new(p.stats, fn {k, v} -> {k, v + Map.get(g, k, 0)} end)
-
       %{
         p
         | xp: p.xp - xp_to_next(p.level),
           level: p.level + 1,
-          stats: stats,
-          points: p.points + @points_per_level
+          points: p.points + points_per_level(p.cls)
       }
       |> level_up(levels + 1)
     else
       p = if p.level >= @max_level, do: %{p | xp: 0}, else: p
-      p = if levels > 0, do: %{p | hp: derived(p).maxHp}, else: p
+      # lên cấp hồi đầy máu và MP
+      p =
+        if levels > 0,
+          do: Map.merge(p, %{hp: derived(p).maxHp, mp: derived(p).maxMp}),
+          else: p
+
       {levels, p}
     end
   end
@@ -1393,26 +1426,31 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  def rest_cost(p), do: if(p.hp >= derived(p).maxHp, do: 0, else: max(0, p.level * 4 - 4))
+  defp full?(p), do: (d = derived(p)) && p.hp >= d.maxHp and mp(p) >= d.maxMp
 
+  def rest_cost(p), do: if(full?(p), do: 0, else: max(0, p.level * 4 - 4))
+
+  # nghỉ trọ hồi đầy cả máu và MP
   def rest(p) do
     c = rest_cost(p)
+    d = derived(p)
 
     cond do
       p.battle ->
         {err("Đang trong trận."), p}
 
-      p.hp >= derived(p).maxHp ->
-        {err("Máu đang đầy."), p}
+      full?(p) ->
+        {err("Máu và MP đang đầy."), p}
 
       p.gold < c ->
         {err("Cần #{c} vàng."), p}
 
       c > 0 ->
-        {ok("Nghỉ trọ hết #{c} vàng. Máu đã đầy."), %{p | gold: p.gold - c, hp: derived(p).maxHp}}
+        {ok("Nghỉ trọ hết #{c} vàng. Máu và MP đã đầy."),
+         Map.merge(p, %{gold: p.gold - c, hp: d.maxHp, mp: d.maxMp})}
 
       true ->
-        {ok("Nghỉ ngơi miễn phí. Máu đã đầy."), %{p | hp: derived(p).maxHp}}
+        {ok("Nghỉ ngơi miễn phí. Máu và MP đã đầy."), Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
     end
   end
 
@@ -1443,9 +1481,10 @@ defmodule HacLong.Game.Engine do
         n = n + 1
         p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: n * @rebirth_points}
         p = Map.put(p, :rebirths, n)
+        d = derived(p)
 
         {ok("🔄 Chuyển sinh lần #{n}! Trở về cấp 1 với #{p.points} điểm tiềm năng cộng thêm."),
-         %{p | hp: derived(p).maxHp}}
+         Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
     end
   end
 
@@ -1463,10 +1502,16 @@ defmodule HacLong.Game.Engine do
         {err("Hết điểm tiềm năng."), p}
 
       true ->
-        before = derived(p).maxHp
+        before = derived(p)
         p = %{p | stats: Map.update!(p.stats, stat, &(&1 + n)), points: p.points - n}
-        # tăng thể lực thì cộng luôn máu
-        {ok(), %{p | hp: p.hp + derived(p).maxHp - before}}
+        # tăng thể lực / năng lượng thì cộng luôn máu / MP
+        after_ = derived(p)
+
+        {ok(),
+         Map.merge(p, %{
+           hp: p.hp + after_.maxHp - before.maxHp,
+           mp: mp(p) + after_.maxMp - before.maxMp
+         })}
     end
   end
 end

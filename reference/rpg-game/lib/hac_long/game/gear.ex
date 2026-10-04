@@ -9,7 +9,7 @@ defmodule HacLong.Game.Gear do
   - `base`: đồ gốc trong `game_data.json` (quyết định chỗ mặc, tấn công/phòng thủ, cấp cần).
   - `rarity`: 1 Tốt, 2 Hiếm, 3 Sử Thi, bằng số dòng chỉ số cộng thêm. `0`: đồ thường đã tách
     thành bản riêng (`plain/1`) để có cấp nâng / khóa riêng từng món (đồ đã nâng cấp, đồ đã khóa, cánh).
-  - `bonus`: `%{str | vit | agi | def => điểm}` cộng vào chỉ số khi mặc.
+  - `bonus`: `%{str | agi | vit | ene => điểm}` cộng vào chỉ số khi mặc.
   - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
@@ -18,9 +18,9 @@ defmodule HacLong.Game.Gear do
   alias HacLong.Game.{Data, Rng}
 
   @max_bag 20
-  @stats ~w(str vit agi def)a
+  @stats ~w(str agi vit ene)a
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
-  @suffix %{str: "Sức Mạnh", vit: "Bền Bỉ", agi: "Nhanh Nhẹn", def: "Kiên Cố"}
+  @suffix %{str: "Sức Mạnh", agi: "Nhanh Nhẹn", vit: "Bền Bỉ", ene: "Linh Lực"}
 
   def max_bag, do: @max_bag
   def rarity_names, do: @rarity_names

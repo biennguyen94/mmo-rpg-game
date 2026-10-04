@@ -6,7 +6,7 @@ defmodule HacLong.LeaderboardTest do
 
   defp hero(name, attrs) do
     {:ok, user} = Accounts.register(%{"username" => name, "password" => "matkhau1"})
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "rogue"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "elf"})
     Characters.save!(user.id, Map.merge(p, attrs))
     user
   end

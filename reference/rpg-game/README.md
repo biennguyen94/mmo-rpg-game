@@ -20,8 +20,8 @@ mix test           # chạy test (cần PostgreSQL)
 
 ## Nội dung
 
-- 3 lớp nhân vật: **Chiến Binh**, **Thích Khách**, **Hiệp Sĩ**, mỗi lớp 3 kỹ năng (mở ở cấp 1,
-  10, 25)
+- 4 lớp nhân vật như MU: **Kiếm Sĩ**, **Phù Thủy**, **Tiên Nữ**, **Đấu Sĩ** (mỗi tài khoản một nhân vật),
+  mỗi lớp 3 kỹ năng tốn MP (mở ở cấp 1, 10, 25)
 - Bản đồ ô vuông: Nhà riêng, Làng và 6 vùng đất; mỗi vùng có 2 bản đồ quái và một phòng trùm,
   nối với nhau bằng cổng. Quái dùng chung giữa mọi người, đi lang thang và hồi lại sau khi bị hạ;
   thấy người chơi khác trên cùng bản đồ. Nhân vật và quái di chuyển mượt
@@ -53,7 +53,8 @@ mix test           # chạy test (cần PostgreSQL)
   từ quặng; nghề lên cấp theo số lần làm
 - Lễ hội theo mùa (Trung Thu, Bí Ngô, Giáng Sinh, Tết): quái rơi quà lễ hội, thêm kinh
   nghiệm, đổi đồ trang trí chỉ có trong mùa ở Người Tổ Chức Hội
-- Lên cấp nhận 3 điểm tiềm năng để cộng vào Sức mạnh, Thể lực, Nhanh nhẹn, Phòng thủ
+- Lên cấp nhận 5 điểm tiềm năng (Đấu Sĩ 7) để cộng vào Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (STR / AGI /
+  VIT / ENE như MU); chỉ số nào tăng tấn công tùy lớp. Lên cấp, nghỉ trọ, uống nước giếng hồi đầy máu và MP
 - NPC trong Làng: Trưởng Làng giao nhiệm vụ, Thợ Rèn bán vũ khí/giáp/khiên, Bà Lang bán và pha
   thuốc, Chủ Quán Trọ cho nghỉ; mua bán phải đến gặp họ. 2 món đồ hiếm chỉ rơi từ trùm
 - Hái Thảo Dược/Linh Chi, đào Quặng Sắt/Mithril trên bản đồ (dùng chung, mọc lại); mang đi pha
@@ -300,6 +301,13 @@ mix hac_long.admin TÊN_ĐĂNG_NHẬP --revoke
 ```bash
 mix hac_long.audit [--days 7]
 mix hac_long.audit --prune 180
+```
+
+Đồ từ `Item.txt` của anh và bộ hình đổi theo cấp +N (xem `assets_src/items/README.md`):
+
+```bash
+mix hac_long.icons              # quét assets_src/items/icons → priv/static/assets/item_icons.json
+mix hac_long.items.import       # Item.txt → priv/items_raw.json + priv/items_from_txt.json (nháp)
 ```
 
 Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):

@@ -5,7 +5,7 @@ defmodule HacLong.Game.HomePetsTest do
   alias HacLong.World.Maps
 
   defp player(gold \\ 100_000) do
-    {:ok, p} = Engine.new_player("Thử", "warrior")
+    {:ok, p} = Engine.new_player("Thử", "dk")
     %{p | gold: gold} |> Map.put(:pos, Maps.home_spawn())
   end
 

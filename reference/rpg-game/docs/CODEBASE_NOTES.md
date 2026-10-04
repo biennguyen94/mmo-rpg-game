@@ -235,15 +235,21 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   - 7 nút: Cấp cao / Săn nhiều / Tháp / Diệt rồng / Bang / Bang diệt Cổ Long / Đấu trường;
   - tự làm mới tối đa 30 giây một lần (`599`).
 
-**Lớp nhân vật** (`CLASSES`):
+**Lớp nhân vật** (`CLASSES`, từ 2026-10-04 là 4 lớp MU; nhân vật cũ đã xóa ở migration `20261028000000`):
 
-| id | Tên | Gốc str / vit / agi / def | Tăng mỗi cấp | Kỹ năng |
+| id | Tên | Gốc STR / AGI / VIT / ENE | Điểm / cấp | Kỹ năng (`effect` dùng chung) |
 |---|---|---|---|---|
-| `warrior` | Chiến Binh | 8 / 7 / 4 / 5 | str +3, vit +1 | cleave, stun_bash, war_cry |
-| `rogue` | Thích Khách | 6 / 6 / 9 / 4 | str +1, agi +3 | backstab, venom, shadow_step |
-| `knight` | Hiệp Sĩ | 6 / 8 / 3 / 7 | str +2, vit +1, def +1 | holy, guard, judgement |
+| `dk` | Kiếm Sĩ | 28 / 20 / 25 / 10 | 5 | twisting_slash (cleave), falling_slash (stun_bash), greater_fortitude (war_cry) |
+| `dw` | Phù Thủy | 18 / 18 / 15 / 30 | 5 | fire_ball (fire_ball), lightning (stun_bash), soul_barrier (guard) |
+| `elf` | Tiên Nữ | 22 / 25 / 20 / 15 | 5 | triple_shot (backstab), heal (holy), greater_damage (shadow_step) |
+| `mg` | Đấu Sĩ | 26 / 26 / 26 / 26 | 7 | power_slash (fire_ball), flame_strike (venom), gigantic_storm (judgement) |
 
-Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là `cls`.
+- Không còn tăng chỉ số tự động theo cấp (`growth`); chỉ có điểm tiềm năng (`points`).
+- `derived` theo lớp: `atk`, `def`, `hp`, `mp` là tổng `hệ_số × (str | agi | vit | ene | level | base)` (`Engine.derived/1`);
+  chí mạng / né / hệ số chí mạng theo AGI, như nhau mọi lớp. Đã chỉnh bằng simulator cho bằng sức mạnh 3 lớp cũ.
+- Kỹ năng có `mp` (tốn MP) và `effect` (tác dụng trong `Engine.strike_with/6`; mới: `fire_ball` = ×2.0, xuyên 30 % giáp).
+  MP hồi 5 % tối đa mỗi lượt của người chơi (`next_turn`), đầy khi lên cấp / nghỉ trọ / uống giếng. Cột `characters.mp`.
+- Mỗi lớp có thêm `hair`, `icon`, `desc`, `mu` (tên tiếng Anh). Cột lớp trong `characters` là `cls`.
 
 ## 6. Vẽ nhân vật và giao diện trang bị
 
@@ -419,6 +425,20 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
   hỏi lại khi có thể vỡ), `chaosCard`, `gearTag`. Đồ khóa bị loại khỏi danh sách bán / chợ / giao dịch.
 - Simulator in thêm `ngọc=` (số ngọc nhặt được trung bình). Bot vẫn chỉ nâng tới +4 như cũ.
 - Test: `test/hac_long/game/forge_test.exs`.
+
+## 9e. Lớp MU, dữ liệu đồ Item.txt, hình theo cấp (2026-10-04)
+
+- Lớp nhân vật: mục 5. Đổi lớp đụng: `game_data.json` (`CLASSES`, cánh `wing_<lớp>_<1|2>`), `Engine` (`derived`,
+  `level_up`, `allocate`, `rest`, kỹ năng), `Gear` (`@stats`), `Characters` (`stats`, `mp`), `Admin` (`add_stats`, `give_gear`),
+  `Simulator` (`@alloc`), `World.drink_fountain`, `ui.js` (`STAT_INFO`, thanh MP, màn tạo nhân vật), `doll.js` (màu cánh).
+- **`HacLong.Game.ItemTxt`**: đọc Item.txt (tách theo khoảng trắng, chú thích `//`, cảnh báo dòng hỏng), `to_item/1` ra nháp
+  đồ Hắc Long (`id item_g_i`, `ref "g/i"`, `atkMin/atkMax/atk`, `def`, `level`, `req` gốc, `classes` cờ == 1, `cells`).
+  `mix hac_long.items.import` ghi `priv/items_raw.json`, `priv/items_from_txt.json`. **Chưa thay đồ trong game** (INTEGRATION_PLAN §10).
+- **`HacLong.Game.ItemIcons`**: tên file → bảng tra `{"g/i" | "custom/{id}" => {"cấp" => đường dẫn}}`; `pick/3` lấy mức lớn
+  nhất ≤ cấp. `mix hac_long.icons [--src]` (mặc định `assets_src/items/icons`, hoặc `HL_ITEM_ICONS_DIR`) chép hình sang
+  `priv/static/assets/items/`, ghi `priv/static/assets/item_icons.json`. `PageController` đọc file này mỗi lần tải trang
+  (`GAME_DATA.ITEM_ICONS`); `ITEMS` gửi kèm `id`. Client: `ownIcon(it, cấp)` trong `itemIcon` / `cellIcon`, thiếu thì icon cũ.
+- Test: `test/hac_long/game/item_data_test.exs` (file mẫu tự viết `test/fixtures/Item.sample.txt`).
 
 ## 10. Bẫy cần biết
 

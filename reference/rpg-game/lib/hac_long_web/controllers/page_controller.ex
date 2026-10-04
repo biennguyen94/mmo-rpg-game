@@ -27,12 +27,26 @@ defmodule HacLongWeb.PageController do
     |> send_resp(200, html)
   end
 
+  defp item_icons do
+    path = Application.app_dir(:hac_long, "priv/static/assets/item_icons.json")
+
+    with {:ok, bin} <- File.read(path), {:ok, map} <- Jason.decode(bin) do
+      map
+    else
+      _ -> %{}
+    end
+  end
+
   defp client_data do
     %{
       CLASSES: Data.classes(),
       ZONES: Data.zones(),
       ITEMS:
-        Map.new(Data.items(), fn {id, it} -> {id, Map.put(it, :sell, Engine.sell_price(id))} end),
+        Map.new(Data.items(), fn {id, it} ->
+          {id, Map.merge(it, %{id: id, sell: Engine.sell_price(id)})}
+        end),
+      # bộ hình đồ đổi theo cấp +N (`mix hac_long.icons`), đọc mỗi lần tải trang nên không cần build lại
+      ITEM_ICONS: item_icons(),
       SHOP: Data.shop(),
       RECIPES: Data.recipes(),
       QUESTS: Data.quests(),
@@ -43,7 +57,6 @@ defmodule HacLongWeb.PageController do
       CHAOS: Data.chaos(),
       RULES: %{
         maxLevel: Engine.max_level(),
-        pointsPerLevel: Engine.points_per_level(),
         gearBag: HacLong.Game.Gear.max_bag(),
         rebirthPoints: Engine.rebirth_points(),
         maxRebirths: Engine.max_rebirths(),

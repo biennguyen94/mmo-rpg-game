@@ -89,9 +89,10 @@ p { margin: 0; }
 .bar > i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; transition: width 0.35s ease; }
 .bar.hp > i { background: linear-gradient(#e0583f, var(--blood)); }
 .bar.xp > i { background: linear-gradient(#78c0d3, var(--xp)); }
+.bar.mp > i { background: linear-gradient(#5b8de0, #2e4fa8); }
 .bar.boss > i { background: linear-gradient(#b86be0, #7b3aa5); }
 .bar > span { position: relative; display: block; text-align: center; font-size: 0.7rem; font-weight: 600; line-height: 14px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 1px #000; }
-.bars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
 /* ---------- Tabs ---------- */
 #tabs {
@@ -470,6 +471,8 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 @media (prefers-reduced-motion: reduce) { .up11 { animation: none; } }
 .cell .lockb, .slot .lockb { position: absolute; right: 2px; bottom: 0; font-size: 0.6rem; pointer-events: none; }
 .lock-ic { font-size: 0.75em; }
+/* hình đồ riêng: giữ tỉ lệ, không kéo giãn (M10) */
+img.own { object-fit: contain; image-rendering: auto; }
 .bag .cell.over, .slot.over, .bag.over { outline: 2px solid var(--gold); outline-offset: 1px; }
 .bag [draggable="true"], .slot[draggable="true"] { cursor: grab; }
 .emptytext { text-align: center; }

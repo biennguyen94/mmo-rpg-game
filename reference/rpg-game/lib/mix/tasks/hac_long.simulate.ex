@@ -32,7 +32,7 @@ defmodule Mix.Tasks.HacLong.Simulate do
     Mix.Task.run("compile")
     n = with [s | _] <- args, {v, ""} <- Integer.parse(s), do: v, else: (_ -> 5)
 
-    for cls <- ~w(warrior rogue knight) do
+    for cls <- ~w(dk dw elf mg) do
       Mix.shell().info(cls)
 
       for {label, opts} <- @modes do

@@ -7,7 +7,7 @@
 
   let P = null;          // trạng thái người chơi
   let tab = 'map';       // tab đang mở
-  let pickCls = 'warrior';
+  let pickCls = 'dk';
   let confirmReset = false;
   let confirmRebirth = false;
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
@@ -47,7 +47,16 @@
   const asset = (path) => 'assets/' + path;
   const icon = (name, cls) => `<img class="ic ${cls || ''}" src="${asset('icons/' + name + '.svg')}" alt="">`;
   // Hình vật phẩm: nguyên liệu dùng ảnh PNG (`sprite`), còn lại dùng icon SVG.
-  const itemIcon = (it, rarity) => (it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')));
+  // Hình riêng của đồ theo cấp nâng (bộ hình của anh, `mix hac_long.icons`): khóa `ref` ("nhóm/số"
+  // trong Item.txt) hoặc "custom/{id}"; lấy mức lớn nhất ≤ cấp. Không có thì dùng icon / sprite cũ.
+  const ITEM_ICONS = window.GAME_DATA.ITEM_ICONS || {};
+  function ownIcon(it, level) {
+    const m = ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)];
+    if (!m) return null;
+    const lv = Object.keys(m).filter((k) => /^\d+$/.test(k) && +k <= (level || 0)).map(Number).sort((a, b) => b - a)[0];
+    return lv === undefined ? null : asset(m[lv]);
+  }
+  const itemIcon = (it, rarity, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')); };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
@@ -188,7 +197,7 @@
   }
 
   const isAdminRole = () => Net.role === 'admin';
-  const STAT_KEYS = [['str', 'Sức mạnh'], ['vit', 'Thể lực'], ['agi', 'Nhanh nhẹn'], ['def', 'Phòng thủ']];
+  const STAT_KEYS = [['str', 'Sức mạnh'], ['agi', 'Nhanh nhẹn'], ['vit', 'Thể lực'], ['ene', 'Năng lượng']];
   const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
 
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
@@ -319,7 +328,7 @@
   function tradeLines(o, mine) {
     const rm = (kind, id) => (mine && trade.status === 'open' ? `<button class="btn small-btn" data-act="trade-rm" data-kind="${kind}" data-id="${id}" aria-label="Bỏ ra">✕</button>` : '');
     const rows = Object.entries(o.items).map(([id, n]) => { const it = ITEMS[id]; return `<div class="item">${itemIcon(it)}<div class="grow"><div class="name">${esc(it.name)} <span class="muted num">×${n}</span></div></div>${rm('item', id)}</div>`; })
-      .concat(o.gear.map((g) => `<div class="item">${itemIcon(ITEMS[g.base] || { icon: 'sword' }, g.rarity)}<div class="grow"><div class="name"><span class="rar-${g.rarity}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</div><div class="small muted">${RARITY[g.rarity] || ''}</div></div>${rm('gear', g.uid)}</div>`));
+      .concat(o.gear.map((g) => `<div class="item">${itemIcon(ITEMS[g.base] || { icon: 'sword' }, g.rarity, g.up)}<div class="grow"><div class="name"><span class="rar-${g.rarity}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</div><div class="small muted">${RARITY[g.rarity] || ''}</div></div>${rm('gear', g.uid)}</div>`));
     if (o.gold) rows.push(`<div class="item">${icon('two-coins', 'lg')}<div class="grow"><div class="name num" style="color:var(--gold)">${fmt(o.gold)} vàng</div></div>${rm('gold', '')}</div>`);
     return rows.length ? `<div class="list">${rows.join('')}</div>` : '<p class="small muted">Chưa bỏ gì vào.</p>';
   }
@@ -590,7 +599,7 @@
     const it = l.gear || ITEMS[l.item];
     const name = l.gear ? `<span class="rar-${l.gear.rarity}">${esc(l.name)}</span>${l.gear.up ? ` <span class="up-lv">+${l.gear.up}</span>` : ''}` : esc(l.name);
     const detail = l.gear ? itemStat(l.gear) : it.slot === 'material' ? it.desc : itemStat(it);
-    return `<div class="item">${itemIcon(it, l.gear && l.gear.rarity)}<div class="grow">
+    return `<div class="item">${itemIcon(it, l.gear && l.gear.rarity, l.gear && l.gear.up)}<div class="grow">
       <div class="name">${name}${l.count > 1 ? ` <span class="muted num">×${l.count}</span>` : ''}</div>
       <div class="small muted">${detail}${showSeller ? ` · người bán ${esc(l.seller)}` : ''}</div></div>${right}</div>`;
   }
@@ -741,6 +750,7 @@
       </div>
       <div class="bars">
         ${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `EXP ${Math.floor((P.xp / need) * 100)}%`)}
       </div>`;
   }
@@ -875,7 +885,7 @@
                 <span class="grow" style="display:grid;gap:2px;min-width:0">
                   <b>${c.name}</b>
                   <span class="small muted">${c.desc}</span>
-                  <span class="stats">Sức mạnh ${c.base.str} · Thể lực ${c.base.vit} · Nhanh nhẹn ${c.base.agi} · Phòng thủ ${c.base.def}</span>
+                  <span class="stats">STR ${c.base.str} · AGI ${c.base.agi} · VIT ${c.base.vit} · ENE ${c.base.ene} · ${c.points} điểm / cấp</span>
                   <span class="small" style="color:var(--gold)">Kỹ năng: ${c.skills[0].name}. ${c.skills[0].desc}</span>
                 </span>
               </button>`).join('')}
@@ -918,12 +928,12 @@
   }
 
   function viewTown() {
-    const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp;
+    const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp;
     const ni = nextBossIndex();
     const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     return `
       <div class="card">
-        <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
+        <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu và MP đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
       </div>
 
       <div class="card">
@@ -1118,11 +1128,12 @@
   }
 
   // ---------- Nhân vật ----------
+  // 4 chỉ số như MU; chỉ số nào tăng tấn công / phòng thủ tùy lớp (CLASSES[lớp].derived)
   const STAT_INFO = {
-    str: ['Sức mạnh', 'Tăng tấn công'],
-    vit: ['Thể lực', 'Tăng máu tối đa'],
-    agi: ['Nhanh nhẹn', 'Tăng chí mạng, né, một ít tấn công'],
-    def: ['Phòng thủ', 'Giảm sát thương nhận vào'],
+    str: ['Sức mạnh', 'Tấn công (Kiếm Sĩ, Đấu Sĩ, một phần Tiên Nữ)'],
+    agi: ['Nhanh nhẹn', 'Chí mạng, né, phòng thủ; tấn công của Tiên Nữ'],
+    vit: ['Thể lực', 'Máu tối đa'],
+    ene: ['Năng lượng', 'MP tối đa; tấn công của Phù Thủy, Đấu Sĩ'],
   };
 
   // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
@@ -1182,7 +1193,7 @@
         <hr class="sep">
         ${Object.keys(STAT_INFO).map(stat).join('')}
         ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
-        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm. Điểm đã cộng không gỡ được.</p>
+        <p class="small muted">Mỗi lần lên cấp nhận ${c.points} điểm. Điểm đã cộng không gỡ được.</p>
         <hr class="sep">
         ${kv('Tấn công', fmt(d.atk))}
         ${kv('Phòng thủ', fmt(d.def))}
@@ -1190,6 +1201,7 @@
         ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
         ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${kv('MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
       </div>`;
   }
@@ -1232,7 +1244,7 @@
       <div class="card"><h3>Kỹ năng</h3><div class="list">
         ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
           <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
-          <div class="small muted">${k.desc} Hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
+          <div class="small muted">${k.desc} Tốn ${k.mp} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
       </div></div>
 
       ${viewAchievements()}`;
@@ -1368,7 +1380,9 @@
   }
   const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
 
-  function cellIcon(it) {
+  function cellIcon(it, level) {
+    const own = ownIcon(it, level);
+    if (own) return `<img src="${own}" alt="" draggable="false" class="own">`;
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 
@@ -1381,7 +1395,7 @@
       const locked = !SLOT_OPEN.includes(slot);
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
-        ${it ? cellIcon(it) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
+        ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
         <span class="lbl">${SLOT_LABEL[slot]}</span>
       </button>`;
     }).join('');
@@ -1392,7 +1406,7 @@
       const wearable = SLOT_OPEN.includes(it.slot);
       return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${(it.level && P.level < it.level) || (it.cls && it.cls !== P.cls) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
           ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
-        ${cellIcon(it)}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
+        ${cellIcon(it, upLevel(id))}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
       </button>`;
     }).join('');
     return `
@@ -1444,7 +1458,7 @@
     el.className = 'itemtip';
     el.setAttribute('role', 'dialog');
     el.innerHTML = `
-      <div class="big">${itemIcon(it, it.rarity)}</div>
+      <div class="big">${itemIcon(it, it.rarity, upLevel(id))}</div>
       <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
       ${desc ? `<div class="small">${desc}</div>` : ''}
       ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
@@ -1525,7 +1539,7 @@
     return `<div class="card"><h3>Bán đồ</h3>
       ${ids.length ? `<div class="list">${ids.map((id) => {
         const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
-        return `<div class="item">${itemIcon(it, it.rarity)}<div class="grow"><div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div></div>
+        return `<div class="item">${itemIcon(it, it.rarity, upLevel(id))}<div class="grow"><div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div></div>
           ${it.locked ? '<span class="small muted">Đã khóa</span>' : `<button class="btn" data-act="sell" data-id="${id}" aria-label="Bán ${it.name}">Bán ${fmt(it.sell)}</button>`}</div>`;
       }).join('')}</div>` : '<p class="small muted">Túi trống. Đồ đang mặc không bán được.</p>'}
     </div>`;
@@ -1758,8 +1772,8 @@
       sections.push(sellCard());
     }
     if (n.role === 'inn') {
-      const full = P.hp >= d.maxHp, cost = P.view.restCost;
-      sections.push(`<div class="card"><button class="btn ${full ? '' : 'primary'} block" data-act="rest" ${full ? 'disabled' : ''}>${full ? 'Máu đang đầy' : cost ? `Nghỉ một đêm · ${fmt(cost)} vàng` : 'Nghỉ một đêm · miễn phí'}</button></div>`);
+      const full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp, cost = P.view.restCost;
+      sections.push(`<div class="card"><button class="btn ${full ? '' : 'primary'} block" data-act="rest" ${full ? 'disabled' : ''}>${full ? 'Máu và MP đang đầy' : cost ? `Nghỉ một đêm · ${fmt(cost)} vàng` : 'Nghỉ một đêm · miễn phí'}</button></div>`);
     }
     if (n.role === 'tower') {
       const best = P.tower_best || 0;
@@ -1871,7 +1885,7 @@
       bottom = `
         <div class="actions">
           <button class="btn primary" data-act="attack">${icon('broadsword')} Tấn công</button>
-          ${skills.map((k) => `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) ? 'disabled' : ''}>${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ''}</button>`).join('')}
+          ${skills.map((k) => { const noMp = (P.mp || 0) < k.mp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.mp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${k.mp} MP</span>`}</button>`; }).join('')}
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'}>${icon('health-potion')} Uống máu (${pots})</button>
           <button class="btn" data-act="flee">${icon('walk')} Bỏ chạy</button>
         </div>`;
@@ -1902,7 +1916,7 @@
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;

@@ -9,7 +9,7 @@ defmodule HacLong.WorldTest do
   setup do
     for id <- ~w(village forest_1 forest_2 forest_boss camp_1), do: MapServer.clear_monsters(id)
     uid = System.unique_integer([:positive])
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Đi Bộ", "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Đi Bộ", "cls" => "dk"})
 
     on_exit(fn ->
       for id <- ~w(village forest_1 forest_2 forest_boss camp_1), do: MapServer.leave(id, uid)

@@ -17,7 +17,7 @@ defmodule HacLongWeb.Batch3Test do
 
   defp player(user, attrs) do
     name = "Ba #{System.unique_integer([:positive]) |> rem(100_000)}"
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "dk"})
     p = p |> Map.put(:tutorial, nil) |> Map.merge(attrs)
     {p, _} = HacLong.Game.Achievements.check(p)
     Characters.save!(user.id, p, "TEST")

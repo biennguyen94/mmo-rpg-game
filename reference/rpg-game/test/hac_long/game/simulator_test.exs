@@ -4,13 +4,13 @@ defmodule HacLong.Game.SimulatorTest do
   alias HacLong.Game.{Data, Simulator}
 
   test "bot chỉ đánh quái vẫn hạ được Hắc Long" do
-    r = Simulator.run("warrior")
+    r = Simulator.run("dk")
     assert r.victory
     assert r.quests_done == 0 and r.daily_done == 0
   end
 
   test "bot làm nhiệm vụ và việc hằng ngày: xong gần hết nhiệm vụ, nhận thưởng hằng ngày" do
-    r = Simulator.run("knight", quests: true, daily: true)
+    r = Simulator.run("mg", quests: true, daily: true)
     assert r.victory
 
     # vài nhiệm vụ vùng cuối (thu thập, hạ quái hiếm) có thể chưa xong lúc hạ Hắc Long

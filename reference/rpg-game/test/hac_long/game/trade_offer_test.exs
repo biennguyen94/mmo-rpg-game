@@ -4,7 +4,7 @@ defmodule HacLong.Game.TradeOfferTest do
   alias HacLong.Game.{Engine, Gear, TradeOffer}
 
   defp player do
-    {:ok, p} = Engine.new_player("Buôn", "warrior")
+    {:ok, p} = Engine.new_player("Buôn", "dk")
     g = %{uid: "#G1", base: "club", rarity: 1, bonus: %{str: 1}}
     %{p | gold: 1000, inv: %{"potion_s" => 3}} |> Map.put(:gear, [g])
   end

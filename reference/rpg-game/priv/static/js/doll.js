@@ -19,14 +19,15 @@
 
   // Màu cánh theo lớp nhân vật: [viền, thân, sáng]
   const WING_COLORS = {
-    warrior: ['#5a0f12', '#c0392b', '#ff8a6b'],
-    rogue: ['#2a0f45', '#7d3cc8', '#c9a2ff'],
-    knight: ['#5a4310', '#e0b437', '#fff1b0'],
+    dk: ['#5a0f12', '#c0392b', '#ff8a6b'],
+    dw: ['#0f2a5a', '#3c6fc8', '#a2c4ff'],
+    elf: ['#5a4310', '#e0b437', '#fff1b0'],
+    mg: ['#2a0f45', '#7d3cc8', '#c9a2ff'],
   };
 
   // Hai cánh sau vai (khung 32×32, nhân vật đứng giữa). Cánh cấp 2 to hơn và có thêm lớp lông.
   function drawWing(g, wing) {
-    const [edge, body, light] = WING_COLORS[wing.cls] || WING_COLORS.knight;
+    const [edge, body, light] = WING_COLORS[wing.cls] || WING_COLORS.dk;
     const big = wing.tier >= 2;
     const half = (dir) => {
       const cx = 16, top = big ? 4 : 7, tip = big ? 1 : 3, bottom = big ? 24 : 21;

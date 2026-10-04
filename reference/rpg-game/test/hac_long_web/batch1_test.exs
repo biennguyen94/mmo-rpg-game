@@ -20,7 +20,7 @@ defmodule HacLongWeb.Batch1Test do
 
   defp with_character(user, attrs \\ %{}) do
     name = "Dot #{System.unique_integer([:positive]) |> rem(100_000)}"
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "dk"})
     p = p |> Map.put(:tutorial, nil) |> Map.merge(attrs)
     Characters.save!(user.id, p)
     p

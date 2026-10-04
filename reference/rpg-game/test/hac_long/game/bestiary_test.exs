@@ -8,7 +8,7 @@ defmodule HacLong.Game.BestiaryTest do
   end
 
   test "đếm số con mỗi loài; chạm mốc thì thưởng vàng và đánh mạnh hơn" do
-    {:ok, p} = Engine.new_player("Thử", "warrior")
+    {:ok, p} = Engine.new_player("Thử", "dk")
     bat = %{id: "bat", level: 1}
     assert Bestiary.mastery(p, "bat") == 0
 
@@ -26,7 +26,7 @@ defmodule HacLong.Game.BestiaryTest do
 
   test "thắng trận thì ghi vào sổ; mốc hiện trong nhật ký trận" do
     Rng.put_sequence([0.99])
-    {:ok, p} = Engine.new_player("Thử", "warrior")
+    {:ok, p} = Engine.new_player("Thử", "dk")
     p = %{p | stats: %{p.stats | str: 200}, bestiary: %{"bat" => 24}}
     {_, p} = Engine.start_battle(p, 0, false)
     id = p.battle.monster.id

@@ -16,10 +16,12 @@ defmodule HacLong.Game.Simulator do
 
   alias HacLong.Game.{Chests, Daily, Data, Engine, Gear, Quests}
 
+  # cách cộng điểm của bot theo lớp (lặp vòng)
   @alloc %{
-    "warrior" => ~w(str str vit),
-    "rogue" => ~w(agi str vit),
-    "knight" => ~w(vit def str)
+    "dk" => ~w(str str str vit vit),
+    "dw" => ~w(ene ene ene vit vit),
+    "elf" => ~w(agi agi agi str vit),
+    "mg" => ~w(str str str ene ene vit vit)
   }
   @max_fights 5000
 
@@ -197,7 +199,11 @@ defmodule HacLong.Game.Simulator do
     d = Engine.derived(p)
 
     # kỹ năng mạnh nhất (mở muộn nhất) đang sẵn sàng
-    skill = p |> Engine.skills() |> Enum.reverse() |> Enum.find(&(Engine.cooldown(p, &1.id) == 0))
+    skill =
+      p
+      |> Engine.skills()
+      |> Enum.reverse()
+      |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and (p[:mp] || 0) >= (&1[:mp] || 0)))
 
     action =
       cond do
@@ -213,7 +219,8 @@ defmodule HacLong.Game.Simulator do
   defp allocate_all(%{points: 0} = p), do: p
 
   defp allocate_all(p) do
-    stat = Enum.at(@alloc[p.cls], rem(p.points, 3))
+    order = @alloc[p.cls]
+    stat = Enum.at(order, rem(p.points, length(order)))
     {_, p} = Engine.allocate(p, stat, 1)
     allocate_all(p)
   end

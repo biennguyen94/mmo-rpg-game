@@ -176,12 +176,15 @@ defmodule HacLong.World do
 
   defp put_pos(p, map, x, y), do: %{p | pos: %{map: map, x: x, y: y}}
 
+  # giếng ở Nhà hồi đầy máu và MP
   defp drink_fountain(p) do
-    max_hp = Engine.derived(p).maxHp
+    d = Engine.derived(p)
 
-    if p.hp >= max_hp,
-      do: {%{ok: false, msg: "Nước giếng mát lạnh. Máu đang đầy."}, p},
-      else: {%{ok: true, msg: "Uống nước giếng, máu đã đầy."}, %{p | hp: max_hp}}
+    if p.hp >= d.maxHp and (p[:mp] || 0) >= d.maxMp,
+      do: {%{ok: false, msg: "Nước giếng mát lạnh. Máu và MP đang đầy."}, p},
+      else:
+        {%{ok: true, msg: "Uống nước giếng, máu và MP đã đầy."},
+         Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
   end
 
   defp use_portal(p, uid, portal) do
