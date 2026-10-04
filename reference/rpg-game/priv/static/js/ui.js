@@ -112,7 +112,7 @@
       ['bag', 'backpack', 'Túi đồ'],
       ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
       ['misc', 'laurels', 'Khác'],
-    ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
+    ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
     view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : P.victory && tab === 'town' ? viewVictory() + viewTown() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), town: viewTown, hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
@@ -1921,9 +1921,49 @@
     if (walk === me) walk = null;
   }
 
+  const TAB_KEY = { hero: 'C', bag: 'I', map: 'M' };
+  // Chuyển tab (nút thanh tab và phím tắt dùng chung)
+  function goTab(id) {
+    tab = id; confirmReset = false; mail.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    stopFishing();
+    if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
+    render(); $('#view').scrollTop = 0;
+  }
+
+  // Phím tắt (như MU Web): C Nhân vật, I Túi đồ, M Bản đồ (bấm lại phím của tab đang mở thì về Bản đồ),
+  // Q uống bình máu (trong trận: nút Uống máu), Enter gõ chat, Esc đóng bảng đang mở / về Bản đồ.
+  // Không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd.
+  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'map' };
+  function hotkeyPotion() {
+    if (P.battle) {
+      const b = document.querySelector('[data-act="potion"]');
+      if (b && !b.disabled) sendCommand({ act: 'potion' }); else toast('Không uống máu được lúc này.', true);
+      return;
+    }
+    if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
+    // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].slot === 'potion' && P.inv[k] > 0);
+    if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
+  }
+  function hotkeyEscape() {
+    if (tipAt) { hideTip(); return true; }
+    if (npc) { npc = null; market.data = null; render(); return true; }
+    if (dialog) { dialog = null; render(); return true; }
+    if (mail.open || guildUi.open || friendsUi.open || visit) { mail.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
+    if (!P.battle && tab !== 'map') { goTab('map'); return true; }
+    return false;
+  }
+
   function onKey(e) {
-    if (!P || P.battle || tab !== 'map' || e.target.closest('input, textarea')) return;
-    if (npc) { if (e.key === 'Escape') { npc = null; render(); } return; }
+    if (!P || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input, textarea, select')) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'Escape') { if (hotkeyEscape()) e.preventDefault(); return; }
+    if (k === 'q') { e.preventDefault(); hotkeyPotion(); return; }
+    if (P.battle) return;
+    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] && k !== 'm' ? 'map' : HOTKEY_TAB[k]); return; }
+    if (k === 'Enter' && tab === 'map' && !npc) { const ci = $('#chat-input'); if (ci) { e.preventDefault(); ci.focus(); } return; }
+    if (tab !== 'map') return;
+    if (npc) return;
     const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' }[e.key];
     if (!dir) return;
     e.preventDefault();
@@ -1960,7 +2000,7 @@
     const t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
-    if (t.dataset.tab) { tab = t.dataset.tab; confirmReset = false; mail.open = false; guildUi.open = false; visit = null; friendsUi.open = false; stopFishing(); if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); } render(); $('#view').scrollTop = 0; return; }
+    if (t.dataset.tab) { goTab(t.dataset.tab); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
@@ -2149,7 +2189,6 @@
     document.addEventListener('click', onClick);
     document.addEventListener('submit', onSubmit);
     document.addEventListener('keydown', onKey);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && tipAt) hideTip(); });
     document.addEventListener('pointerdown', (e) => { if (tipAt && !e.target.closest('#itemtip, [data-act="bag-tip"], [data-act="slot-tip"]')) hideTip(); });
     document.addEventListener('dragstart', onDragStart);
     document.addEventListener('dragover', onDragOver);

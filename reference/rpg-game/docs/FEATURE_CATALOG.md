@@ -479,8 +479,8 @@ Anh chốt:
 - **lưới tự xếp**;
 - các phần không liên quan chuyển sang tab **Khác**.
 
-Đã làm: Q1 (bố cục 10 ô), Q2, Q3 (cộng điểm gom lệnh), Q4 (tab Khác), Q5 (chuyển ra tab Khác), Q6 (lưới), Q7 (tooltip), Q8, Q9 (kéo thả).
-Chưa làm: Q10, Q11. Chi tiết code: `CODEBASE_NOTES.md §6`.
+Đã làm: Q1 (bố cục 10 ô), Q2, Q3 (cộng điểm gom lệnh), Q4 (tab Khác), Q5 (chuyển ra tab Khác), Q6 (lưới), Q7 (tooltip), Q8, Q9 (kéo thả), Q11 (phím tắt C / I / M / Q / Enter / Esc).
+Chưa làm: Q10. Chi tiết code: `CODEBASE_NOTES.md §6`.
 
 ### Q.2 Đề xuất
 

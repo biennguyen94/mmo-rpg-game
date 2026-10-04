@@ -243,6 +243,12 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
     bảng chi tiết món đồ `showTip` / `hideTip` (`#itemtip`, nút Trang bị / Dùng / Ăn / Tháo), kéo thả chuột
     (`onDragStart` / `onDrop`: túi → ô trang bị = `equip`, khiên → túi = `unequip`), thanh tóm tắt `.bag-bottom`.
   - `viewMisc` (tab **Khác**): thú cưng, kỹ năng, danh hiệu, thành tựu chuyển từ tab Nhân vật — chờ anh quyết giữ / bỏ.
+  - **Phím tắt** (`onKey`, `goTab`, `hotkeyPotion`, `hotkeyEscape`):
+    - C Nhân vật, I Túi đồ (bấm lại thì về Bản đồ), M Bản đồ;
+    - Q uống bình máu nhỏ nhất (trong trận = nút Uống máu);
+    - Enter gõ chat; Esc đóng bảng chi tiết → NPC → hộp thoại / thư / bang / bạn bè → về Bản đồ;
+    - WASD / mũi tên vẫn đi trên bản đồ; không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd;
+    - nút tab có gợi ý phím (`title`).
   - CSS: cuối `style.css` (`.charsheet`, `.statrow`, `.grid3`, `.slot`, `.bag`, `.cell`, `.itemtip`…).
   - Ảnh trước / sau: `docs/screenshots/ui-*.png`.
 - **Ô trang bị ở chỗ khác** (vẫn 3 ô Vũ khí / Giáp / Khiên):
