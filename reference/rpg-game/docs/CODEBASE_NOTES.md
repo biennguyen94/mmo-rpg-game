@@ -247,7 +247,7 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
     - C Nhân vật, I Túi đồ (bấm lại thì về Bản đồ), M Bản đồ;
     - Q uống bình máu nhỏ nhất (trong trận = nút Uống máu);
     - Enter gõ chat; Esc đóng bảng chi tiết → NPC → hộp thoại / thư / bang / bạn bè → về Bản đồ;
-    - WASD / mũi tên vẫn đi trên bản đồ; không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd;
+    - WASD / mũi tên vẫn đi trên bản đồ, nhưng **không hiện trên giao diện** (đã bỏ 4 nút mũi tên `.dpad` và dòng gợi ý WASD ở `map.js` `html/2`; điện thoại đi bằng cách chạm ô); không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd;
     - nút tab có gợi ý phím (`title`).
   - CSS: cuối `style.css` (`.charsheet`, `.statrow`, `.grid3`, `.slot`, `.bag`, `.cell`, `.itemtip`…).
   - Ảnh trước / sau: `docs/screenshots/ui-*.png`.
