@@ -99,3 +99,11 @@
 | P9-2 | Nút 🗺 trên dock tạm hiện thông báo "sắp có"; bảng chọn bản đồ làm ở Phase 10 cùng 20 bản đồ mới. Phím M giữ "về bản đồ" tới Phase 10. | Đúng thứ tự anh chốt (9-E). |
 | P9-3 | Nút 💬 hiện cả trên máy tính (cùng chỗ góc dưới phải); máy tính có thêm Enter / Esc. Trong trận đánh không hiện khung chat (màn trận đánh riêng). | Một cách dùng cho mọi máy; trận đánh cần chỗ cho nút hành động. |
 | P9-4 | Hộp thoại trên bản đồ (thông tin người chơi, lời mời…) nằm trên khung chat. | e2e phát hiện khung chat đang mở che nút trong hộp thoại. |
+
+## Phase 10 — Hai ngôn ngữ (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
+| P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
+| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |

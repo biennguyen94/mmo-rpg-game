@@ -976,6 +976,20 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
   mua / bán, ép, nhiệm vụ, lỗi thường gặp), tin còn lại vẫn tiếng Việt cho tới khi chuyển xong.
 - Chat người chơi không dịch.
 
+**Đã làm (2026-10-04, anh chọn làm luôn A + B + C):** cách làm khác đề xuất ban đầu để tiết kiệm — **không sửa từng câu trong
+code / dữ liệu / server**, mà dịch ngay trên trình duyệt:
+- `priv/static/js/i18n.js`: `tr(câu)` chuẩn hóa câu thành mẫu (TÊN trong `names` và SỐ → `{0}`, `{1}`… theo thứ tự), tra
+  `priv/static/i18n/en.json`, điền lại (tên cũng dịch); không khớp thì thử mẫu "lỏng" ({n} nhận chữ bất kỳ — tên người chơi,
+  bang); vẫn không có thì giữ tiếng Việt, chỉ đổi những tên đã biết. MutationObserver dịch mọi chữ chèn vào trang (giao diện,
+  tin server, nhật ký trận, toast, hộp hỏi lại); `map.js` dịch chữ vẽ trên bản đồ. Không dịch chat của người chơi, ô nhập.
+- Từ điển: `scripts/i18n_extract.py` trích mọi câu tiếng Việt trong `priv/static/js`, `lib/**/*.ex` (bỏ docstring, chú thích)
+  và `priv/game_data`, `priv/maps` thành `priv/static/i18n/source.json`; bản dịch trong `en.json` (`names`, `t`). Thêm câu
+  mới: chạy lại script, dịch các khóa còn thiếu vào `en.json`. Test `test/js/i18n.test.mjs` kiểm mọi bản dịch giữ đúng {n}.
+- Chọn ngôn ngữ: nút ở trang đăng nhập + Menu → Cài đặt; lưu ở trình duyệt (`localStorage`), đổi thì tải lại trang. **Không
+  thêm cột `users.lang`** (đổi so với đề xuất: không đụng schema / server).
+- Giới hạn: câu ghép từ nhiều mảnh khó đoán có thể còn sót tiếng Việt; e2e `lang.mjs` đo tỉ lệ chữ tiếng Việt còn sót ở các màn
+  chính (≤ 5 %).
+
 ### 15.3 U2 — 20 bản đồ mới + chọn bản đồ (phím M, nút trên dock, tốn vàng)
 
 - **Hiện trạng:** 6 vùng (cấp 1–36), mỗi vùng 2 bản đồ + 1 bản đồ trùm; cấp tối đa 50 nhưng sau Hắc Long (36) **không còn vùng

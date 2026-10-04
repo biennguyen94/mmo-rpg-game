@@ -271,7 +271,7 @@ theo khung còn lại). e2e 6/6 xanh (mobile 18 bước: không cuộn ở bản
 | Mục | Việc |
 |---|---|
 | **U2** | 20 bản đồ phụ cấp 1–50 rải đều, cổng vào từ các bản đồ hiện có (không gắn Hắc Long); bảng chọn bản đồ (phím M, nút 🗺) theo thứ tự yếu → mạnh, dịch chuyển tốn vàng `20 + 4 × cấp` |
-| **U1** | Tiếng Việt / English trong Cài đặt (mặc định Việt): giao diện, dữ liệu game, tin server hay gặp |
+| **U1** | Tiếng Việt / English trong Cài đặt (mặc định Việt): giao diện, dữ liệu game, tin server hay gặp — **✅ xong 2026-10-04** (A + B + C, xem `INTEGRATION_PLAN §15.2`) |
 
 **Đã chốt** 9-A … 9-E (`INTEGRATION_PLAN.md §15.8`; 9-B: bản đồ phụ, không gắn Hắc Long). Thứ tự: B1, B2 → Phase 9 → Phase 10 → Phase 6.
 

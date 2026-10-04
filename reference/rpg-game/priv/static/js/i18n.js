@@ -12,15 +12,23 @@
   let lang = 'vi';
   try { lang = localStorage.getItem(KEY) || 'vi'; } catch (e) { /* bộ nhớ trình duyệt bị chặn: tiếng Việt */ }
   const VI = /[À-ỹĐđ]/;
-  let dict = { names: {}, t: {} }, tokRe = null, nameOnly = null;
+  let dict = { names: {}, t: {} }, tokRe = null, nameOnly = null, loose = {};
   const cache = new Map();
   const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   function load(d) {
     dict = { names: d.names || {}, t: d.t || {} };
     const names = Object.keys(dict.names).sort((a, b) => b.length - a.length).map(reEsc);
-    tokRe = new RegExp('(' + names.concat(['\\d[\\d.,]*']).join('|') + ')', 'g');
+    tokRe = new RegExp('(' + names.concat(['\\d+(?:[.,]\\d+)*']).join('|') + ')', 'g');
     nameOnly = names.length ? new RegExp('(' + names.join('|') + ')', 'g') : null;
+    // mẫu dự phòng: {n} nhận chữ bất kỳ (tên người chơi, bang…), xếp theo từ đầu tiên để tra nhanh
+    loose = {};
+    for (const [k, v] of Object.entries(dict.t)) {
+      if (!/\{\d+\}/.test(k)) continue;
+      const first = k.split(/[\s{]/)[0] || '';
+      const re = new RegExp('^' + k.split(/\{(\d+)\}/).map((p, i) => (i % 2 ? '(?<p' + p + '>.+?)' : reEsc(p))).join('') + '$');
+      (loose[first] = loose[first] || []).push([re, v]);
+    }
   }
 
   // dịch phần lõi (đã bỏ khoảng trắng / dấu ngăn ở hai đầu)
@@ -32,6 +40,11 @@
     const key = norm.replace(tokRe, (x) => { vals.push(x); return '{' + (vals.length - 1) + '}'; });
     const tpl = dict.t[key];
     if (tpl) return tpl.replace(/\{(\d+)\}/g, (m, i) => (vals[i] == null ? m : dict.names[vals[i]] || vals[i]));
+    const first = norm.split(/[\s{]/)[0] || '';
+    for (const [re, v] of (loose[first] || []).concat(first ? loose[''] || [] : [])) {
+      const m = norm.match(re);
+      if (m) return v.replace(/\{(\d+)\}/g, (x, i) => { const g = m.groups['p' + i]; return g == null ? x : tr(g); });
+    }
     // chưa có mẫu: ít nhất đổi các tên đã biết
     return nameOnly ? norm.replace(nameOnly, (x) => dict.names[x] || x) : norm;
   }

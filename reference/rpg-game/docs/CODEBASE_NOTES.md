@@ -546,6 +546,12 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
   là tin riêng bạn bè). Form vẫn `#chat-form` / `#chat-input`, chỉ có khi khung đang mở.
 - `#view.fit` (bản đồ, trận đánh): không cuộn; `map.js resize()` lấy chiều cao theo `.map-wrap`.
 
+## 9m. Hai ngôn ngữ (Phase 10, 2026-10-04)
+
+- `priv/static/js/i18n.js` (`window.I18N`: `lang`, `tr`, `set`), nạp trước `logic.js`; từ điển `priv/static/i18n/en.json`
+  (`static_paths` thêm `i18n`). Trích câu: `python3 scripts/i18n_extract.py` → `source.json`. Câu có số phải để số đứng riêng
+  (bộ dịch thay số bằng {n}); đừng ghép câu từ nhiều mảnh nếu tránh được. Phần tử nào không muốn dịch: thêm `data-notr`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.

@@ -24,6 +24,7 @@
 
 ## 1. Bắt đầu
 
+- **Ngôn ngữ / Language:** nút English / Tiếng Việt ở trang đăng nhập và trong Menu → Cài đặt.
 - Đăng ký tài khoản (tên đăng nhập + mật khẩu), đặt tên nhân vật (2–16 ký tự) và chọn lớp.
 - Bạn bắt đầu ở **Nhà của bạn**. Đi qua cổng để ra **Làng**. Lần đầu chơi có **hướng dẫn tân thủ** (khung vàng phía trên bản
   đồ) dẫn từng bước và tặng quà khi xong; bấm "Bỏ qua" nếu không cần.

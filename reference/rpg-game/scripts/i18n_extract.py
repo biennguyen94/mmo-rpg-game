@@ -35,25 +35,26 @@ for f in glob.glob(ROOT + '/priv/game_data/*.json') + glob.glob(ROOT + '/priv/ma
     walk_data(d); walk_texts(d)
 
 INTERP = '\u0001'
-# JS: chuỗi '…' / "…" / `…` ; ${…} → chỗ nội suy ; bỏ thẻ HTML
+# JS: không ghép dấu nháy (template lồng nhau làm lệch); thay vào đó gom dần các nhóm {…} trong cùng ra ngoài:
+# `${…}` → dấu nội suy, nhóm khác → chỗ ngắt; mỗi lần gom thì nhặt các đoạn chữ tiếng Việt nằm giữa các dấu phân cách.
+SEP = '\u0003'
+DELIM = re.compile(r"[`'\"<>\n" + SEP + r"]|\\n")
+def harvest(s, out):
+    for part in DELIM.split(s):
+        if VI.search(part): out.append(part)
 def js_strings(src):
     out = []
-    for m in re.finditer(r"`((?:[^`\\]|\\.)*)`|'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"", src):
-        s = m.group(1) if m.group(1) is not None else (m.group(2) if m.group(2) is not None else m.group(3))
-        if not VI.search(s): continue
-        # bỏ ${…} lồng nhau thô: thay bằng dấu nội suy
-        depth = 0; buf = ''; i = 0
-        while i < len(s):
-            if s.startswith('${', i) and depth == 0:
-                depth = 1; i += 2; buf += INTERP; continue
-            if depth:
-                if s[i] == '{': depth += 1
-                elif s[i] == '}': depth -= 1
-                i += 1; continue
-            buf += s[i]; i += 1
-        for part in re.split(r'<[^>]*>|' + INTERP + r'(?=\s*<)', buf):
-            out.append(part)
-    return out
+    inner = re.compile(r'(\$?)\{([^{}]*)\}')
+    while True:
+        m = inner.search(src)
+        if not m: break
+        def sub(m):
+            harvest(m.group(2), out)
+            return INTERP if m.group(1) else SEP
+        src = inner.sub(sub, src)
+    harvest(src, out)
+    # bỏ thẻ HTML còn sót trong đoạn
+    return [re.sub(r'<[^>]*>', SEP, p) for p in out]
 
 def ex_strings(src):
     out = []
@@ -80,7 +81,7 @@ for f in glob.glob(ROOT + '/lib/**/*.ex', recursive=True):
 
 name_list = sorted(names, key=len, reverse=True)
 name_re = '|'.join(re.escape(n) for n in name_list)
-TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d[\d.,]*|' + INTERP + ')')
+TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|' + INTERP + ')')
 
 def key(s):
     s = re.sub(r'\s+', ' ', s.replace('\\n', ' ')).strip()
@@ -92,7 +93,7 @@ def key(s):
 
 keys = set()
 for t in texts:
-    for line in re.split(r'\n', t):
+    for line in re.split(r'\n|' + SEP, t):
         k = key(line)
         k = k.strip(' ·,:;')
         if VI.search(k) and len(k) <= 400 and not re.search(r'`|%\{|\)\.join|=>|\$\{', k):
