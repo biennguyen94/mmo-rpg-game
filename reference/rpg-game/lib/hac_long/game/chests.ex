@@ -13,11 +13,10 @@ defmodule HacLong.Game.Chests do
 
   alias HacLong.Game.{Data, Engine, Gear, Rng}
 
-  @tiers [
-    %{id: "wood", name: "Rương Gỗ", times: 2, weights: [{3, 2}, {2, 18}, {1, 80}]},
-    %{id: "silver", name: "Rương Bạc", times: 4, weights: [{3, 10}, {2, 50}, {1, 40}]},
-    %{id: "gold", name: "Rương Vàng", times: 8, weights: [{3, 30}, {2, 70}]}
-  ]
+  # số ở `RULES.chests` (`priv/game_data/rules.json`); tỉ lệ độ hiếm `[{độ_hiếm, tỉ_lệ}]`
+  @rules Data.rules().chests
+  @tiers Enum.map(@rules.tiers, fn t -> %{t | weights: Enum.map(t.weights, &List.to_tuple/1)} end)
+  @daily %{@rules.daily | gear_weights: Enum.map(@rules.daily.gear_weights, &List.to_tuple/1)}
 
   def tiers, do: @tiers
   def tier(id), do: Enum.find(@tiers, &(&1.id == id))
@@ -27,16 +26,17 @@ defmodule HacLong.Game.Chests do
     best =
       Data.items()
       |> Enum.filter(fn {_, it} ->
-        it.slot == "weapon" and it.price > 0 and !it[:drop] and it.level <= max(level, 3)
+        it.slot == "weapon" and it.price > 0 and !it[:drop] and
+          it.level <= max(level, @rules.min_level)
       end)
       |> Enum.map(fn {_, it} -> it.price end)
       |> Enum.max()
 
-    round(best * 0.4 * k)
+    round(best * @rules.price_ratio * k)
   end
 
   # đồ trong rương hợp cấp người chơi (ít nhất cấp 3 để có đồ gốc)
-  defp roll(p, weights), do: Gear.roll(max(p.level, 3), weights)
+  defp roll(p, weights), do: Gear.roll(max(p.level, @rules.min_level), weights)
 
   def buy(p, id) do
     t = tier(id)
@@ -79,28 +79,31 @@ defmodule HacLong.Game.Chests do
     if Map.get(p, :chest_day) == today do
       {%{ok: false, msg: "Hôm nay đã mở rồi. Mai quay lại nhé."}, p}
     else
-      gold = 20 + p.level * 8
-
-      pot =
-        cond do
-          p.level >= 20 -> "potion_l"
-          p.level >= 9 -> "potion_m"
-          true -> "potion_s"
-        end
+      gold = @daily.gold_base + p.level * @daily.gold_per_level
+      pot = Data.potion_for(p.level)
 
       mat =
         Enum.at(
           ~w(herb ore herb_rare ore_rare),
-          floor(Rng.uniform() * 2) + if(p.level >= 18, do: 2, else: 0)
+          floor(Rng.uniform() * 2) + if(p.level >= @daily.rare_material_level, do: 2, else: 0)
         )
 
-      p = %{p | gold: p.gold + gold} |> Engine.add_item(pot, 2) |> Engine.add_item(mat, 2)
+      p =
+        %{p | gold: p.gold + gold}
+        |> Engine.add_item(pot, @daily.potions)
+        |> Engine.add_item(mat, @daily.materials)
+
       p = Map.put(p, :chest_day, today)
-      parts = ["#{gold} vàng", "#{Data.item(pot).name} ×2", "#{Data.item(mat).name} ×2"]
+
+      parts = [
+        "#{gold} vàng",
+        "#{Data.item(pot).name} ×#{@daily.potions}",
+        "#{Data.item(mat).name} ×#{@daily.materials}"
+      ]
 
       {p, parts} =
-        with true <- Rng.uniform() < 0.2,
-             %{} = g <- roll(p, [{3, 2}, {2, 18}, {1, 80}]),
+        with true <- Rng.uniform() < @daily.gear_chance,
+             %{} = g <- roll(p, @daily.gear_weights),
              {p, :kept} <- Gear.add(p, g) do
           {p, parts ++ [Gear.resolve(g).name]}
         else

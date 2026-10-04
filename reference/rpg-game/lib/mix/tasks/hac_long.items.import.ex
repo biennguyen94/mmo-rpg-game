@@ -10,7 +10,7 @@ defmodule Mix.Tasks.HacLong.Items.Import do
 
   - `priv/items_raw.json`: mọi dòng đọc được, giữ nguyên số trong file;
   - `priv/items_from_txt.json`: nháp đồ Hắc Long (vũ khí, khiên, giáp, mũ, quần, găng, giày, cánh)
-    với `ref`, `classes`, `req` gốc. **Chưa thay đồ trong game**: bước ghép vào `game_data.json`
+    với `ref`, `classes`, `req` gốc. **Chưa thay đồ trong game**: bước ghép vào `priv/game_data/items.json`
     (chọn món cho từng vùng / cửa hàng, giá, hệ số yêu cầu chỉ số) xem `docs/INTEGRATION_PLAN.md §10`.
 
   Không có file thì báo và thoát 0.

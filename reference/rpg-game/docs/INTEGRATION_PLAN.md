@@ -40,10 +40,10 @@
   (vd Thành tựu ra khỏi Nhân vật). Chi tiết: `docs/FEATURE_CATALOG.md` mục Q.
   - Ô cánh (mục 4): đặt trong bố cục mới của tab Nhân vật (Q1), hình cánh vẽ thêm vào `doll.js` như đã thiết kế.
 - **Viết theo kiểu Hắc Long**, không chép nguyên file MU:
-  - module `HacLong.*`, dữ liệu trong `priv/game_data.json`;
+  - module `HacLong.*`, dữ liệu trong `priv/game_data/*.json` (trước Phase 1 là một file `priv/game_data.json`);
   - logic thuần ở `HacLong.Game.*`, lệnh đi qua `Commands` → `Session` (mỗi tài khoản một tiến trình);
   - lưu nguyên dòng bằng `Characters.save!/2`.
-- **Số gameplay mới đặt trong `priv/game_data.json`** (khóa mới), không đặt cứng trong module.
+- **Số gameplay mới đặt trong `priv/game_data/`** (số luật chơi vào `rules.json` → `RULES`), không đặt cứng trong module.
   Lưu ý: file này được nạp lúc biên dịch (`data.ex:31-59`), đổi số phải khởi động lại server.
 - **Chất lượng:** mỗi bước giữ `mix format --check-formatted`, `mix compile --warnings-as-errors`, `mix test` xanh.
   - Đổi cân bằng (mục 3, 4) thì chạy thêm `mix hac_long.simulate`.
@@ -253,7 +253,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 | MU Web | Hắc Long |
 |---|---|
-| `upgrade.levels` (bảng từng bước: ngọc, tỉ lệ, thất bại) | khóa mới `UPGRADE` trong `game_data.json` |
+| `upgrade.levels` (bảng từng bước: ngọc, tỉ lệ, thất bại) | khóa mới `UPGRADE` (nay ở `priv/game_data/upgrade.json`) |
 | `Mu.Game.Upgrade.apply/5` (hàm thuần, RNG truyền vào) | `HacLong.Game.Upgrade` |
 | Ngọc rơi hiếm từ quái cấp cao | thêm vào `Engine.win` |
 | Thông báo toàn server khi ép thành công từ +7 | `Chat.system` |
@@ -372,7 +372,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 **NPC mới "Lão Hỗn Nguyên"** ở Làng (thêm vào `priv/maps/village.json`), mở panel **Máy Hỗn Nguyên**.
 
-**Công thức** (khóa mới `CHAOS` trong `game_data.json`):
+**Công thức** (khóa mới `CHAOS`, nay ở `priv/game_data/chaos.json`):
 
 | Công thức | Đầu vào | Phí | Tỉ lệ | Kết quả |
 |---|---|---|---|---|
@@ -581,7 +581,7 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
   - `{id}_{N}.png` cho đồ Hắc Long hiện có, vd `broadsword_0.png`, `broadsword_5.png`, `broadsword_10.png`.
 - Chạy `mix hac_long.icons` → chép sang `priv/static/assets/items/`, ghi `priv/static/assets/item_icons.json`.
 - Game chọn mức lớn nhất ≤ cấp nâng; thiếu hình thì dùng icon cũ (không lỗi). Tải lại trang là thấy, không cần build lại.
-- Gắn đồ Hắc Long với một dòng Item.txt: thêm `"ref": "nhóm/số"` vào món đó trong `game_data.json` thì dùng hình `item_…`.
+- Gắn đồ Hắc Long với một dòng Item.txt: thêm `"ref": "nhóm/số"` vào món đó trong `priv/game_data/items.json` thì dùng hình `item_…`.
 
 ### 10.2 Thông số đồ từ Item.txt (bước tiếp theo)
 
@@ -598,6 +598,6 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 - **10-A** Yêu cầu chỉ số: dùng nguyên số trong file hay nhân hệ số (MU Web dùng 0,35 để nhân vật cấp thấp mặc được, xem KB §3.2)?
 - **10-B** Lấy những món nào: toàn bộ (vũ khí 124 món; mũ 47, giáp / quần / găng / giày 54 món mỗi loại) hay chọn một bộ cho 6 vùng của Hắc Long (đề xuất:
   mỗi lớp 6–7 bậc đồ theo cấp vùng, phần còn lại để sau)?
-- **10-C** Giá mua / bán: Item.txt không có giá → đề xuất theo cấp đồ (công thức trong `game_data.json`).
+- **10-C** Giá mua / bán: Item.txt không có giá → đề xuất theo cấp đồ (công thức trong `priv/game_data/rules.json`).
 - **10-D** Bình MP (MU 14/4–6) và các ngọc, nhẫn, dây chuyền nhóm 13–14: thêm luôn hay để sau?
 

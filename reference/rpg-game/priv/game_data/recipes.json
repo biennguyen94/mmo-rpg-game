@@ -1,0 +1,92 @@
+{
+  "RECIPES": [
+    {
+      "id": "brew_s",
+      "out": "potion_s",
+      "needs": {
+        "herb": 2
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "brew_m",
+      "out": "potion_m",
+      "needs": {
+        "herb": 5
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "brew_l",
+      "out": "potion_l",
+      "needs": {
+        "herb_rare": 2
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "cook_small",
+      "out": "potion_s",
+      "needs": {
+        "fish_small": 2
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "cook_carp",
+      "out": "potion_m",
+      "needs": {
+        "fish_carp": 2
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "cook_eel",
+      "out": "potion_l",
+      "needs": {
+        "fish_eel": 2
+      },
+      "npc": "herbalist"
+    },
+    {
+      "id": "cook_cha_ca",
+      "out": "cha_ca",
+      "needs": {
+        "fish_small": 2,
+        "herb": 1
+      },
+      "npc": "cook",
+      "level": 1
+    },
+    {
+      "id": "cook_banh_mi_ca",
+      "out": "banh_mi_ca",
+      "needs": {
+        "fish_carp": 1,
+        "herb": 2
+      },
+      "npc": "cook",
+      "level": 1
+    },
+    {
+      "id": "cook_banh_xeo_luon",
+      "out": "banh_xeo_luon",
+      "needs": {
+        "fish_eel": 1,
+        "herb_rare": 1
+      },
+      "npc": "cook",
+      "level": 3
+    },
+    {
+      "id": "cook_mam_co",
+      "out": "mam_co",
+      "needs": {
+        "fish_gold": 1,
+        "herb_rare": 2
+      },
+      "npc": "cook",
+      "level": 5
+    }
+  ]
+}

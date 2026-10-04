@@ -24,7 +24,7 @@
 | **Đánh giá** | ✅ **Nên làm**: hợp kiến trúc Hắc Long, có ích rõ · 🟡 **Cân nhắc**: hợp nhưng đổi cảm giác chơi / cân bằng, hoặc tốn công · ❌ **Không nên**: không hợp (Hắc Long đánh theo lượt, 1 tài khoản 1 nhân vật), hoặc Hắc Long đã có tương đương / tốt hơn |
 | **Công** | **S** nhỏ (vài giờ) · **M** vừa (1–2 ngày) · **L** lớn (nhiều ngày, đụng nhiều phần) |
 | **Hắc Long** | "Có", "Không", "Khác" (có nhưng cách khác), "Kiểm" (chưa xác minh hết, kiểm lại khi làm). Cột này ghi hiện trạng **lúc lập danh mục**; trạng thái mới nhất xem cột Chọn |
-| **Chọn** | `[x]` anh chọn làm · `✅ Đ1` … `Đ4` đã làm ở đợt 1 … 4 · `✅ Q` đã làm khi sắp xếp lại giao diện (mục Q) · `🔶` làm một phần (xem ghi chú ở "Tổng hợp") |
+| **Chọn** | `[x]` anh chọn làm · `✅ Đ1` … `Đ4` đã làm ở đợt 1 … 4 · `✅ P1` … đã làm ở Phase 1 … (`docs/PHASE_PLAN.md`) · `✅ Q` đã làm khi sắp xếp lại giao diện (mục Q) · `🔶` làm một phần (xem ghi chú ở "Tổng hợp") |
 
 ## Mục lục
 
@@ -55,7 +55,7 @@
 |---|---|---|---|---|---|---|
 | A1 | **Sát thương nhiều bước:** đòn ngẫu nhiên **min~max** × hệ số kỹ năng + cộng phẳng → chí mạng → × buff × (1 + % cánh) → **trừ thủ** → **sàn mềm** (không dưới x % đòn gốc) → × (1 − % hấp thụ) → **sàn cứng** | Khác: một số `atk²/(atk+def) × rand(0,9–1,1)` | 🟡 | M | Công thức Hắc Long đã mượt (thủ cao vẫn ăn đòn). Đáng lấy: **khoảng đòn min~max** (vũ khí có đòn thấp / cao, hiện rõ trên đồ) và chỗ cắm **% cánh / % hấp thụ** (D6). Đổi cân bằng → simulator | [x] |
 | A2 | **Tỉ lệ trúng** = attackRate / (attackRate + defenseRate), chặn 5–95 %; attackRate = cấp × 5 + AGI × 1,5 | Khác: có né theo agi | 🟡 | S | Thêm cảm giác "Trượt!". Đụng cân bằng lớp Thích Khách | [x] |
-| A3 | **Tham số chiến đấu trong config** (minHitChance, maxHitChance, minDamageRatio, hardFloor, critChance, critMultiplier) | Không: hằng số trong `engine.ex` | ✅ | S | Đưa hằng số chiến đấu vào `game_data.json`, chỉnh không cần sửa code (xem J1) | [x] |
+| A3 | **Tham số chiến đấu trong config** (minHitChance, maxHitChance, minDamageRatio, hardFloor, critChance, critMultiplier) | Không: hằng số trong `engine.ex` | ✅ | S | Đưa hằng số chiến đấu vào `RULES.combat` (`priv/game_data/rules.json`), chỉnh không cần sửa code (xem J1) | [x] ✅ P1 |
 | A4 | **Phạt EXP chênh cấp:** cao hơn quái > 10 cấp thì −10 % / cấp, tối thiểu 10 % | Kiểm | ✅ | S | Chống đánh quái yếu lấy EXP, ép người chơi lên vùng mới | [x] |
 | A5 | **PvP × 0,5 sát thương** (giảm hệ số khi người đánh người) | Khác: đấu trường đánh bản sao chỉ số | 🟡 | S | Chỉ cần nếu thấy đấu trường kết thúc quá nhanh | [ ] |
 | A6 | **Kỹ năng tốn MP**, MP hồi theo ENE / giây | Khác: hồi chiêu theo lượt | ❌ | L | Hệ khác, không đáng đổi | [ ] |
@@ -71,14 +71,14 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | B1 | **Lên cấp hồi đầy HP / MP** | Kiểm | ✅ | S | Rất nhỏ, cảm giác thưởng | [x] ✅ Đ4 |
-| B2 | **EXP cần lên cấp theo công thức trong config** (`100 × L^1.5`) | Kiểm (trong code) | ✅ | S | Gộp vào J1 | [x] |
+| B2 | **EXP cần lên cấp theo công thức trong config** (`100 × L^1.5`) | Kiểm (trong code) | ✅ | S | Gộp vào J1 | [x] ✅ P1 |
 | B3 | **Điểm / cấp khác nhau theo lớp** (MG 7, lớp khác 5) | Khác: 3 điểm / cấp cho mọi lớp | 🟡 | S | Chỉ có ích nếu thêm lớp đặc biệt (B5) | [x] ✅ Đ4 |
 | B4 | **Đồ khởi đầu theo lớp** (DW có gậy, ELF có cung…) | Khác: mọi lớp `club` + `vest` | ✅ | S | Chiến Binh rìu, Thích Khách dao găm, Hiệp Sĩ chùy + khiên. Tăng bản sắc lớp ngay từ đầu | [x] |
 | B5 | **Lớp mở khóa** (MG: tài khoản có nhân vật cấp 20) | Không (1 nhân vật / tài khoản) | 🟡 | L | Biến thể hợp Hắc Long: **lớp ẩn mở sau chuyển sinh** lần 1. Cần thiết kế lớp mới + hình nhân vật | [ ] |
 | B6 | **Cộng điểm gom lệnh** (bấm + nhiều lần, gửi 1 lệnh sau 200 ms, hiện "+n" đang chờ) | Khác: +1 / +5 mỗi bấm gửi một lệnh | ✅ | S | Đỡ spam lệnh, mượt hơn trên mạng chậm | ✅ Q |
 | B7 | **Chỉ số dẫn xuất theo lớp trong data** (công thức đòn / thủ / HP mỗi lớp khác nhau) | Khác: một công thức chung | 🟡 | M | Lớp khác biệt rõ hơn (Thích Khách ăn agi, Chiến Binh ăn str). Đổi cân bằng | [x] ✅ Đ4 |
 | B8 | **Bảng chỉ số chi tiết** (đòn min~max, thủ, tỉ lệ trúng, tốc độ, HP / MP tối đa) | Có công / thủ / chí mạng / né | ✅ | S | Thêm HP tối đa, % thú / món ăn đang cộng, % cánh (nếu làm D6) | [x] 🔶 Q |
-| B9 | **Tên nhân vật: lọc từ cấm** (`names.bannedWords`) | Kiểm | ✅ | S | Đi cùng H10 | [x] |
+| B9 | **Tên nhân vật: lọc từ cấm** (`names.bannedWords`) | Kiểm | ✅ | S | Đi cùng H10 | [x] ✅ P1 |
 
 ## C. Đồ, trang bị, túi
 
@@ -120,7 +120,7 @@
 | E4 | **Giao dịch một transaction**, khóa hai nhân vật theo thứ tự id (tránh deadlock), kiểm lại đồ / vàng / chỗ trống | Khác: 2 pha qua Session, không transaction | ✅ | M | `INTEGRATION_PLAN 1-B`. Lỗ hổng tiềm ẩn duy nhất về nhân bản đồ / vàng em thấy | [x] ✅ Đ2 |
 | E5 | **Giao dịch tự hủy** khi: đi xa, đổi map, chết, mất kết nối, đăng xuất, quá 180 s; **đổi gì cũng mở khóa hai bên** | Kiểm | 🟡 | S | Kiểm luồng hiện có, thêm điều kiện thiếu | [x] |
 | E6 | **Sửa `Market.commit/4` bỏ qua kết quả transaction** | Lỗi đang có | ✅ | S | Sửa ngay dù không làm gì khác | [x] ✅ Đ1 |
-| E7 | **Giá bán lại = tỉ lệ trong config** (MU 50 %) | Khác: 40 % trong code | ✅ | S | Gộp J1 | [x] |
+| E7 | **Giá bán lại = tỉ lệ trong config** (MU 50 %) | Khác: 40 % trong code | ✅ | S | Gộp J1 | [x] ✅ P1 |
 | E8 | **Cửa hàng theo NPC trong data** (`shop.json`) | Có (`stock` trong map JSON) | ❌ | – | Đã có | [ ] |
 | E9 | **Mọi thao tác đồ / vàng trong một transaction** (mua, bán, ép, ghép, nhận thư, giao dịch) | Khác: hàm thuần + lưu cả dòng (một Session nên an toàn trong RAM) | 🟡 | M | Rủi ro thấp vì Session tuần tự; chỉ cần ở chỗ đụng 2 người (E4, chợ) | [ ] |
 | E10 | **Trần vàng gửi qua thư / giao dịch** | Có trần giao dịch 10 triệu; thư không trần | 🟡 | S | Thêm trần cho thư quản trị (tránh gõ nhầm số) | [x] |
@@ -191,9 +191,9 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| J1 | **Không đặt cứng số gameplay:** mọi số trong data / config | Khác: nhiều số trong module (rương, rèn, bang, chợ, giao dịch, nâng cấp, chiến đấu, giá bán) | ✅ | M | Gom vào khóa `RULES` / `CONFIG` của `game_data.json`. Cân bằng không cần sửa code. Nền cho A3, B2, E7 | [x] |
-| J2 | **Kiểm dữ liệu lúc biên dịch** (tham chiếu sai → báo lỗi ngay: đồ trong cửa hàng không tồn tại, công thức thiếu nguyên liệu…) | Kiểm (có test bản đồ) | ✅ | S | Bắt lỗi gõ nhầm id khi thêm nội dung | [x] |
-| J3 | **Tách file data theo loại** (`items.json`, `monsters.json`, `skills.json`, `chaos.json`…) | Khác: một `game_data.json` | 🟡 | S | Dễ đọc hơn khi data lớn lên | [x] |
+| J1 | **Không đặt cứng số gameplay:** mọi số trong data / config | Khác: nhiều số trong module (rương, rèn, bang, chợ, giao dịch, nâng cấp, chiến đấu, giá bán) | ✅ | M | Gom vào khóa `RULES` (`priv/game_data/rules.json`). Cân bằng không cần sửa code. Nền cho A3, B2, E7 | [x] ✅ P1 |
+| J2 | **Kiểm dữ liệu lúc biên dịch** (tham chiếu sai → báo lỗi ngay: đồ trong cửa hàng không tồn tại, công thức thiếu nguyên liệu…) | Kiểm (có test bản đồ) | ✅ | S | Bắt lỗi gõ nhầm id khi thêm nội dung | [x] ✅ P1 |
+| J3 | **Tách file data theo loại** (`items.json`, `monsters.json`, `skills.json`, `chaos.json`…) | Khác: một `game_data.json` | 🟡 | S | Dễ đọc hơn khi data lớn lên | [x] ✅ P1 |
 | J4 | **Siêu dữ liệu mỗi bản ghi** (`sourceType`, `version`, `verified`) | – | ❌ | – | Quy trình riêng của MU | [ ] |
 | J5 | **Công cụ nhập data** (`mix mu.items.import`: kiểm + chuẩn hóa) | – | ❌ | – | Chưa cần | [ ] |
 
@@ -260,7 +260,7 @@
 |---|---|---|---|---|---|---|
 | O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] |
 | O2 | **`ADMIN_GUIDE`** (lệnh quản trị, sao lưu, xử lý tình huống) | Khác: `DEPLOY.md` | ✅ | S | Đi cùng K1 | [x] ✅ Đ2 |
-| O3 | **`DECISIONS` / `OPEN_QUESTIONS`** (ghi quyết định, câu hỏi chờ duyệt) | Không | 🟡 | S | Theo dõi vì sao số / luật được chọn | [x] |
+| O3 | **`DECISIONS` / `OPEN_QUESTIONS`** (ghi quyết định, câu hỏi chờ duyệt) | Không | 🟡 | S | Theo dõi vì sao số / luật được chọn | [x] ✅ P1 |
 | O4 | **Ảnh chụp màn hình trong tài liệu** (do e2e chụp) | Kiểm | 🟡 | S | Đi cùng N1 | [x] |
 
 ---
@@ -290,7 +290,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | B10 | **Không gỡ được điểm**; MU để ngỏ **vật phẩm Reset điểm** | Kiểm (có chuyển sinh) | 🟡 | M | "Thuốc Tẩy Tủy" bán đắt: cho làm lại điểm + rút vàng khỏi kinh tế | [ ] |
-| B11 | **Vị trí lưu không đi được → đưa về điểm sinh** khi vào game | Kiểm | ✅ | S | Chống kẹt sau khi sửa bản đồ | [x] |
+| B11 | **Vị trí lưu không đi được → đưa về điểm sinh** khi vào game | Kiểm | ✅ | S | Chống kẹt sau khi sửa bản đồ | [x] ✅ P1 |
 | B12 | **Xóa / đổi tên nhân vật** (MU chưa làm) | Kiểm | 🟡 | S | Đổi tên có phí = chỗ tiêu vàng; giữ tên cũ trong log | [ ] |
 | B13 | **Chỉ số phép tách riêng cho lớp lai** (đòn phép, tốc phép) | – | ❌ | – | Chỉ cần nếu làm B5 | [ ] |
 
@@ -544,6 +544,11 @@ M1, M9. Câu 3-A, 3-B, 3-D, 4-A, 4-B, 4-C, 4-D chốt theo đề xuất; 3-C (Ng
 **Đợt 4 đã làm (2026-10-04): đổi sang 4 lớp MU** (Kiếm Sĩ, Phù Thủy, Tiên Nữ, Đấu Sĩ; STR / AGI / VIT / ENE + MP; xóa nhân vật
 cũ; mỗi tài khoản một nhân vật): B1, B3, B7; công cụ Item.txt + hình đổi theo cấp +N (M7 một phần). Chi tiết:
 `INTEGRATION_PLAN.md §9, §10`, `CODEBASE_NOTES.md §5, §9e`.
+
+**Phase 1 đã làm (2026-10-04): nền dữ liệu và cấu hình** — J1, J2, J3, A3, B2, E7, B9, B11, O3. Dữ liệu tách thành
+`priv/game_data/*.json` (12 file), số luật chơi vào `rules.json` (`RULES`), kiểm tham chiếu lúc biên dịch, lọc từ cấm khi
+đặt tên nhân vật / bang, vị trí lưu hỏng → điểm vào bản đồ. Không đổi cân bằng (simulator cùng seed giống hệt). Chi tiết:
+`PHASE_PLAN.md` (Phase 1), `CODEBASE_NOTES.md §9f`, `DECISIONS.md`.
 
 **Làm một phần (🔶):**
 - **B8** (Q2): có HP, công, thủ, chí mạng, né, % cánh; chưa có đòn min~max, tỉ lệ trúng, tốc độ.

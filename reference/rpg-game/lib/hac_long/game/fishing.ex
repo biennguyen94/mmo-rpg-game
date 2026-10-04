@@ -22,21 +22,13 @@ defmodule HacLong.Game.Fishing do
 
   def window, do: @window
 
-  # {tỉ lệ, món}
-  @pools %{
-    default: [{8, "old_boot"}, {60, "fish_small"}, {31, "fish_carp"}, {1, "fish_gold"}],
-    deep: [
-      {6, "old_boot"},
-      {30, "fish_small"},
-      {35, "fish_carp"},
-      {27, "fish_eel"},
-      {2, "fish_gold"}
-    ]
-  }
+  # {tỉ lệ, món}, ở `RULES.fishing` (`priv/game_data/rules.json`)
+  @rules Data.rules().fishing
+  @pools Map.new(@rules.pools, fn {k, l} -> {k, Enum.map(l, &List.to_tuple/1)} end)
 
   def pool(map_id) do
     case Maps.get(map_id) do
-      %{zone: z} when is_integer(z) and z >= 4 -> @pools.deep
+      %{zone: z} when is_integer(z) and z >= @rules.deep_zone -> @pools.deep
       _ -> @pools.default
     end
   end

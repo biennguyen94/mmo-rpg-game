@@ -120,10 +120,12 @@ HacLongWeb.GameChannel ── lệnh {"act": "attack"} ──▶ HacLong.Game.Se
 ## Cấu trúc
 
 ```
-priv/game_data.json                 Dữ liệu game: lớp nhân vật, vùng đất, quái, vật phẩm, công thức, nhiệm vụ
+priv/game_data/*.json               Dữ liệu game, mỗi loại một file: classes, zones, items, shop, recipes, quests,
+                                    pets, furniture, events, upgrade, chaos, rules (số luật chơi)
 priv/maps/*.json                    Bản đồ (vẽ bằng ký tự), cổng, NPC, chỗ sinh quái và điểm thu thập
 priv/static/                        Giao diện: index.html, css/, js/ (ui, map, net, sound, doll), assets/
-lib/hac_long/game/data.ex           Đọc game_data.json (giải thích các trường)
+lib/hac_long/game/data.ex           Đọc và ghép priv/game_data/ (giải thích các trường)
+lib/hac_long/game/data_check.ex     Kiểm dữ liệu lúc biên dịch (id sai → lỗi biên dịch)
 lib/hac_long/game/engine.ex         Luật chơi (hàm thuần)
 lib/hac_long/game/commands.ex       Lệnh từ client → hàm engine
 lib/hac_long/game/session.ex        Tiến trình giữ nhân vật đang online
@@ -174,14 +176,18 @@ lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, m
 
 ## Chỉnh sửa game
 
-- **Thêm quái / vùng / đồ**: sửa `priv/game_data.json`, khởi động lại server. Chỉ số quái được
+- **Thêm quái / vùng / đồ**: sửa `priv/game_data/zones.json` / `items.json`, khởi động lại server
+  (dữ liệu nạp lúc biên dịch; gõ nhầm id món đồ / quái thì biên dịch báo lỗi kèm tên file + id). Chỉ số quái được
   tính tự động từ cấp độ (`make_monster` trong `engine.ex`), dùng `mult` để làm một con mạnh
   hoặc yếu hơn. Client nhận dữ liệu này từ server nên không phải sửa gì thêm.
-- **Thêm nhiệm vụ / công thức**: thêm vào `QUESTS` / `RECIPES` trong `priv/game_data.json`
+- **Thêm nhiệm vụ / công thức**: thêm vào `priv/game_data/quests.json` / `recipes.json`
   (giải thích các trường ở `lib/hac_long/game/data.ex`). Hàng NPC bán nằm ở `stock` của NPC
   trong `priv/maps/village.json`.
 - **Sửa bản đồ**: sửa `priv/maps/<id>.json` (ý nghĩa các ký tự xem `lib/hac_long/world/maps.ex`),
   rồi chạy `mix test`: test kiểm tra cổng nối hai chiều và chỗ đứng hợp lệ.
+- **Chỉnh số cân bằng** (chí mạng, né, EXP lên cấp, chỉ số quái, tỉ lệ rơi, giá bán lại, rương, rèn, tháp, thú cưng,
+  bang, chợ, câu cá, từ cấm khi đặt tên…): sửa `priv/game_data/rules.json` (`RULES`), không phải sửa code.
+  Chạy `mix hac_long.simulate 20 --seed 1` trước / sau để so.
 - **Đổi công thức chiến đấu**: `derived`, `make_monster`, `damage` trong `lib/hac_long/game/engine.ex`.
 - Sau khi đổi số, chạy mô phỏng để xem game có quá dễ hay quá khó:
 

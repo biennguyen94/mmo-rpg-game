@@ -1,0 +1,274 @@
+{
+  "CLASSES": {
+    "dk": {
+      "name": "Kiếm Sĩ",
+      "mu": "Dark Knight",
+      "desc": "Cận chiến, máu trâu, sát thương lớn. Dễ chơi nhất.",
+      "icon": "crossed-swords",
+      "hair": "hair/knot_red",
+      "base": {
+        "str": 28,
+        "agi": 20,
+        "vit": 25,
+        "ene": 10
+      },
+      "points": 5,
+      "derived": {
+        "atk": {
+          "str": 2.8,
+          "agi": 0.5,
+          "level": 1
+        },
+        "def": {
+          "agi": 0.4,
+          "level": 0.5
+        },
+        "hp": {
+          "base": 40,
+          "level": 10,
+          "vit": 10
+        },
+        "mp": {
+          "base": 20,
+          "level": 1,
+          "ene": 1
+        }
+      },
+      "skills": [
+        {
+          "id": "twisting_slash",
+          "name": "Chém Xoáy",
+          "desc": "Gây 220% sát thương.",
+          "icon": "sword-spin",
+          "cooldown": 3,
+          "level": 1,
+          "mp": 8,
+          "effect": "cleave"
+        },
+        {
+          "id": "falling_slash",
+          "name": "Trảm Choáng",
+          "desc": "Gây 120% sát thương, làm quái choáng mất lượt (trùm có 50% kháng).",
+          "icon": "hammer-drop",
+          "cooldown": 4,
+          "level": 10,
+          "mp": 14,
+          "effect": "stun_bash"
+        },
+        {
+          "id": "greater_fortitude",
+          "name": "Nộ Chiến",
+          "desc": "Đánh thường và nổi cuồng nộ: tấn công +40% trong 3 lượt tiếp theo.",
+          "icon": "shouting",
+          "cooldown": 6,
+          "level": 25,
+          "mp": 20,
+          "effect": "war_cry"
+        }
+      ]
+    },
+    "dw": {
+      "name": "Phù Thủy",
+      "mu": "Dark Wizard",
+      "desc": "Phép thuật, sát thương theo Năng lượng, máu mỏng, nhiều MP.",
+      "icon": "dragon-breath",
+      "hair": "hair/brown1",
+      "base": {
+        "str": 18,
+        "agi": 18,
+        "vit": 15,
+        "ene": 30
+      },
+      "points": 5,
+      "derived": {
+        "atk": {
+          "ene": 3.0,
+          "agi": 0.3,
+          "level": 1
+        },
+        "def": {
+          "agi": 0.3,
+          "ene": 0.1,
+          "level": 0.5
+        },
+        "hp": {
+          "base": 40,
+          "level": 9,
+          "vit": 10
+        },
+        "mp": {
+          "base": 60,
+          "level": 2,
+          "ene": 2
+        }
+      },
+      "skills": [
+        {
+          "id": "fire_ball",
+          "name": "Cầu Lửa",
+          "desc": "Gây 200% sát thương, xuyên 30% giáp.",
+          "icon": "dragon-breath",
+          "cooldown": 3,
+          "level": 1,
+          "mp": 10,
+          "effect": "fire_ball"
+        },
+        {
+          "id": "lightning",
+          "name": "Tia Sét",
+          "desc": "Gây 120% sát thương, làm quái choáng mất lượt (trùm có 50% kháng).",
+          "icon": "star-cycle",
+          "cooldown": 4,
+          "level": 10,
+          "mp": 16,
+          "effect": "stun_bash"
+        },
+        {
+          "id": "soul_barrier",
+          "name": "Khiên Linh Hồn",
+          "desc": "Gây 100% sát thương, giảm 50% sát thương nhận vào trong 2 lượt.",
+          "icon": "shield-reflect",
+          "cooldown": 5,
+          "level": 25,
+          "mp": 24,
+          "effect": "guard"
+        }
+      ]
+    },
+    "elf": {
+      "name": "Tiên Nữ",
+      "mu": "Fairy Elf",
+      "desc": "Cung thủ nhanh nhẹn, hay chí mạng và né đòn, biết hồi máu.",
+      "icon": "laurels",
+      "hair": "hair/elf_black",
+      "base": {
+        "str": 22,
+        "agi": 25,
+        "vit": 20,
+        "ene": 15
+      },
+      "points": 5,
+      "derived": {
+        "atk": {
+          "agi": 2.0,
+          "str": 1.0,
+          "level": 1
+        },
+        "def": {
+          "agi": 0.25,
+          "level": 0.5
+        },
+        "hp": {
+          "base": 40,
+          "level": 10,
+          "vit": 10
+        },
+        "mp": {
+          "base": 40,
+          "level": 1,
+          "ene": 1.5
+        }
+      },
+      "skills": [
+        {
+          "id": "triple_shot",
+          "name": "Tam Tiễn",
+          "desc": "Chắc chắn chí mạng, xuyên 50% giáp.",
+          "icon": "backstab",
+          "cooldown": 3,
+          "level": 1,
+          "mp": 8,
+          "effect": "backstab"
+        },
+        {
+          "id": "heal",
+          "name": "Hồi Sinh Lực",
+          "desc": "Gây 130% sát thương và hồi 25% máu.",
+          "icon": "health-potion",
+          "cooldown": 4,
+          "level": 10,
+          "mp": 14,
+          "effect": "holy"
+        },
+        {
+          "id": "greater_damage",
+          "name": "Tăng Sức Mạnh",
+          "desc": "Gây 130% sát thương, né thêm 60% trong 2 lượt.",
+          "icon": "sprint",
+          "cooldown": 5,
+          "level": 25,
+          "mp": 20,
+          "effect": "shadow_step"
+        }
+      ]
+    },
+    "mg": {
+      "name": "Đấu Sĩ",
+      "mu": "Magic Gladiator",
+      "desc": "Vừa kiếm vừa phép, mỗi cấp nhận 7 điểm thay vì 5.",
+      "icon": "winged-sword",
+      "hair": "hair/knot_red",
+      "base": {
+        "str": 26,
+        "agi": 26,
+        "vit": 26,
+        "ene": 26
+      },
+      "points": 7,
+      "derived": {
+        "atk": {
+          "str": 1.6,
+          "ene": 1.4,
+          "agi": 0.3,
+          "level": 1
+        },
+        "def": {
+          "agi": 0.3,
+          "level": 0.5
+        },
+        "hp": {
+          "base": 40,
+          "level": 10,
+          "vit": 9
+        },
+        "mp": {
+          "base": 60,
+          "level": 2,
+          "ene": 1.5
+        }
+      },
+      "skills": [
+        {
+          "id": "power_slash",
+          "name": "Kiếm Lửa",
+          "desc": "Gây 200% sát thương, xuyên 30% giáp.",
+          "icon": "relic-blade",
+          "cooldown": 3,
+          "level": 1,
+          "mp": 10,
+          "effect": "fire_ball"
+        },
+        {
+          "id": "flame_strike",
+          "name": "Kiếm Độc Hỏa",
+          "desc": "Gây 100% sát thương và đốt: quái mất máu mỗi lượt trong 3 lượt.",
+          "icon": "dripping-knife",
+          "cooldown": 4,
+          "level": 10,
+          "mp": 14,
+          "effect": "venom"
+        },
+        {
+          "id": "gigantic_storm",
+          "name": "Phán Quyết",
+          "desc": "Gây 180% sát thương, làm quái suy yếu: tấn công -30% trong 3 lượt.",
+          "icon": "winged-sword",
+          "cooldown": 5,
+          "level": 25,
+          "mp": 22,
+          "effect": "judgement"
+        }
+      ]
+    }
+  }
+}

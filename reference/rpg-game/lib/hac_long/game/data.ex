@@ -1,11 +1,29 @@
 defmodule HacLong.Game.Data do
   @moduledoc """
-  Dữ liệu game, đọc lúc biên dịch từ `priv/game_data.json` (sửa file đó để thêm
-  quái, vùng đất, vật phẩm; biên dịch lại là có hiệu lực). Client nhận cùng dữ liệu
-  này qua `window.GAME_DATA` (xem `HacLongWeb.PageController`).
+  Dữ liệu game, đọc lúc biên dịch từ mọi file `priv/game_data/*.json` (sửa file để thêm
+  quái, vùng đất, vật phẩm, đổi số luật chơi; biên dịch lại là có hiệu lực). Mỗi file là một
+  object gồm một vài khóa lớn bên dưới; các file được ghép lại, hai file trùng khóa là lỗi biên
+  dịch. Tham chiếu sai (id món đồ, quái, lớp...) cũng là lỗi biên dịch (`HacLong.Game.DataCheck`).
+  Client nhận cùng dữ liệu này qua `window.GAME_DATA` (xem `HacLongWeb.PageController`).
 
-  - `CLASSES`: lớp nhân vật với chỉ số gốc (`base`), tăng mỗi cấp (`growth`) và các kỹ năng
-    (`skills`, mở ở cấp `level`; tác dụng viết trong `Engine`).
+  | File | Khóa |
+  |---|---|
+  | `classes.json` | `CLASSES` |
+  | `zones.json` | `ZONES`, `BOSS_DROPS` |
+  | `items.json` | `ITEMS` |
+  | `shop.json` | `SHOP` |
+  | `recipes.json` | `RECIPES` |
+  | `quests.json` | `QUESTS` |
+  | `pets.json` | `PETS` |
+  | `furniture.json` | `FURNITURE` |
+  | `events.json` | `EVENTS` |
+  | `upgrade.json` | `UPGRADE`, `JEWELS` |
+  | `chaos.json` | `CHAOS` |
+  | `rules.json` | `RULES` (số luật chơi: chiến đấu, EXP, rơi đồ, giá, rương, rèn, tháp, thú, bang, chợ, từ cấm...) |
+
+  - `CLASSES`: lớp nhân vật với chỉ số gốc (`base`), điểm mỗi cấp (`points`), công thức chỉ số
+    (`derived`) và các kỹ năng (`skills`, mở ở cấp `level`; `effect` là kiểu tác dụng, số của nó ở
+    `RULES.skill_effects`).
   - `ZONES`: vùng đất theo thứ tự mở khóa; mỗi vùng có quái thường và một trùm.
     Quái chỉ khai báo `level`, `mult` (hệ số sức mạnh, mặc định 1) và `special`
     (đòn đặc biệt của trùm, dùng mỗi `every` lượt với sát thương ×`mult`, có thể kèm hiệu ứng
@@ -35,8 +53,14 @@ defmodule HacLong.Game.Data do
   vì chúng đến từ client và được lưu trong database.
   """
 
-  @path Path.expand("../../../priv/game_data.json", __DIR__)
-  @external_resource @path
+  @dir Path.expand("../../../priv/game_data", __DIR__)
+  @files @dir |> Path.join("*.json") |> Path.wildcard() |> Enum.sort()
+  for f <- @files, do: @external_resource(f)
+
+  @doc false
+  # thêm / bớt file trong thư mục cũng biên dịch lại (`@external_resource` chỉ theo dõi file đã có)
+  def __mix_recompile__?,
+    do: @dir |> Path.join("*.json") |> Path.wildcard() |> Enum.sort() != @files
 
   atomize = fn atomize, v ->
     cond do
@@ -46,7 +70,21 @@ defmodule HacLong.Game.Data do
     end
   end
 
-  raw = @path |> File.read!() |> Jason.decode!()
+  # mỗi file là một object các khóa lớn (`CLASSES`, `ZONES`...); hai file cùng khóa là lỗi
+  raw =
+    Enum.reduce(@files, %{}, fn f, acc ->
+      part = f |> File.read!() |> Jason.decode!()
+
+      case Enum.filter(Map.keys(part), &Map.has_key?(acc, &1)) do
+        [] ->
+          Map.merge(acc, part)
+
+        dup ->
+          raise CompileError,
+            description: "#{Path.basename(f)}: khóa #{inspect(dup)} đã có ở file khác"
+      end
+    end)
+
   by_id = fn m -> Map.new(m, fn {id, x} -> {id, atomize.(atomize, x)} end) end
 
   @classes by_id.(raw["CLASSES"])
@@ -80,6 +118,52 @@ defmodule HacLong.Game.Data do
           |> Map.update!(:weights, strs)
           |> Map.update!(:chest_chance, strs)
   @chaos atomize.(atomize, raw["CHAOS"]) |> Enum.map(&Map.update!(&1, :items, strs))
+
+  # RULES: số luật chơi (chiến đấu, kinh tế, rơi đồ...). Khóa thành atom; danh sách id món đồ
+  # (`start_items`, `smith_costs`) giữ khóa chuỗi như `inv`.
+  @rules atomize.(atomize, raw["RULES"])
+         |> update_in([:character, :start_items], strs)
+         |> update_in([:tutorial, :reward, :items], strs)
+         |> update_in(
+           [:crafting, :smith_costs],
+           &Map.new(&1, fn {k, v} -> {Atom.to_string(k), strs.(v)} end)
+         )
+  @raw_rules raw["RULES"]
+
+  @check %{
+    classes: @classes,
+    zones: @zones,
+    items: @items,
+    boss_drops: @boss_drops,
+    shop: @shop,
+    recipes: @recipes,
+    quests: @quests,
+    pets: @pets,
+    furniture: @furniture,
+    events: @events,
+    upgrade: @upgrade,
+    jewels: @jewels,
+    chaos: @chaos,
+    rules: @rules
+  }
+  HacLong.Game.DataCheck.run!(@check)
+
+  @doc false
+  # cho `HacLong.World.Maps` kiểm bản đồ lúc biên dịch
+  def check_input, do: @check
+
+  @doc """
+  Số luật chơi (`RULES` trong `priv/game_data/rules.json`). Các module đọc lúc biên dịch
+  (`@x Data.rules().nhóm.khóa`), nên sửa số xong phải biên dịch lại như mọi dữ liệu khác.
+  """
+  def rules, do: @rules
+  @doc "`RULES` nguyên dạng JSON (khóa chuỗi), gửi cho client."
+  def raw_rules, do: @raw_rules
+
+  @doc "Bình máu hợp cấp `level` (`RULES.loot.potions`: mốc cấp cao nhất không quá `level`)."
+  def potion_for(level),
+    do:
+      (Enum.find(@rules.loot.potions, &(level >= &1.level)) || List.last(@rules.loot.potions)).id
 
   def upgrade, do: @upgrade
   @doc "Bước ép lên cấp `level` bằng ngọc (nil nếu là bước dùng quặng)."

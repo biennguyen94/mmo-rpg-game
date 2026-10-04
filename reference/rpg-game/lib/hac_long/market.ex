@@ -20,9 +20,11 @@ defmodule HacLong.Market do
   alias HacLong.Accounts.User
   alias HacLong.Game.{Character, Data, Engine, Gear}
 
-  @fee_pct 5
-  @max_active 10
-  @max_price 10_000_000
+  # số ở `RULES.market` (`priv/game_data/rules.json`)
+  @rules Data.rules().market
+  @fee_pct @rules.fee_pct
+  @max_active @rules.max_active
+  @max_price @rules.max_price
 
   def fee_pct, do: @fee_pct
   def max_active, do: @max_active

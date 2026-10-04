@@ -17,7 +17,7 @@
 6. [Vẽ nhân vật và giao diện trang bị](#6-vẽ-nhân-vật-và-giao-diện-trang-bị)
 7. [Chiến đấu](#7-chiến-đấu)
 8. [Dữ liệu game](#8-dữ-liệu-game)
-9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2, 9d Đợt 3)
+9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2, 9d Đợt 3, 9e lớp MU, 9f Phase 1)
 10. [Bẫy cần biết](#10-bẫy-cần-biết)
 
 ---
@@ -319,15 +319,21 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 
 ## 8. Dữ liệu game
 
-- `priv/game_data.json`, **nạp lúc biên dịch** (`HacLong.Game.Data`, `data.ex:31-59`, `@external_resource`): sửa phải biên dịch / khởi động lại.
-  Truy cập qua `data.ex:68-91`.
+- `priv/game_data/*.json` (mỗi loại một file, `Data` ghép lại; trùng khóa là lỗi), **nạp lúc biên dịch** (`HacLong.Game.Data`,
+  `@external_resource` từng file, `__mix_recompile__?` khi thêm / bớt file): sửa phải biên dịch / khởi động lại.
+  `HacLong.Game.DataCheck` kiểm tham chiếu (id đồ trong cửa hàng / công thức / rơi trùm / nhiệm vụ / máy ghép / ép, `effect`
+  kỹ năng, `cls` của cánh, `role` + `stock` NPC, quái và cổng trên bản đồ): sai → lỗi biên dịch có tên file + id.
+- `RULES` (`rules.json`): mọi số luật chơi (Phase 1). Module đọc lúc biên dịch: `@rules Data.rules().nhóm` rồi dùng
+  `@rules.khóa`. Còn trong code: hằng số kỹ thuật (thời gian, giới hạn tần suất, kích thước bản đồ / tháp, độ dài tên / chat,
+  số dòng nhật ký) và nội dung có cấu trúc riêng (danh sách thành tựu, các bước hướng dẫn, trùm thế giới) — xem `docs/DECISIONS.md`.
+  Truy cập qua các hàm `Data.classes/0`, `item/1`, `rules/0`… cuối `data.ex`.
 - Khóa cấp cao:
 
 | Khóa | Kiểu | Số lượng | Ghi chú |
 |---|---|---|---|
-| `CLASSES` | dict | 3 | |
+| `CLASSES` | dict | 4 | `dk`, `dw`, `elf`, `mg` (mục 5) |
 | `ZONES` | list | 6 | Rừng Mê, Trại Goblin, Nghĩa Địa Cổ, Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long; trường `id, name, desc, icon, levels, monsters, boss` |
-| `ITEMS` | dict | 39 | xem dưới |
+| `ITEMS` | dict | 50 | xem dưới |
 | `BOSS_DROPS` | dict | 2 | `hill_giant → dragonshield`, `golden_dragon → relic` |
 | `SHOP` | list | 17 | |
 | `RECIPES` | list | 10 | |
@@ -335,17 +341,20 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 | `PETS` | list | 6 | |
 | `FURNITURE` | list | 17 | |
 | `EVENTS` | list | 4 | |
+| `UPGRADE`, `JEWELS` | dict | | ép +6 → +11 (mục 9d) |
+| `CHAOS` | list | | Máy Hỗn Nguyên (mục 9d) |
+| `RULES` | dict | | số luật chơi (mục 9f) |
 
 - **`ITEMS`:**
   - trường: `name, slot, price` (mọi món), `icon, level, doll, sprite, desc, def, atk, food, heal, drop`;
-  - theo `slot`: material 14, weapon 8, armor 6, shield 4, food 4, potion 3.
+  - theo `slot`: material 17 (có 3 ngọc `jewel_*`), weapon 8, wing 8, armor 6, shield 4, food 4, potion 3.
   - Vũ khí (atk / giá / cấp): `club` 3 / 0 / 1, `dagger` 7 / 60 / 3, `broadsword` 13 / 220 / 7, `mace` 21 / 650 / 12,
     `battleaxe` 31 / 1600 / 17, `greatsword` 44 / 3600 / 22, `waraxe` 60 / 7500 / 27, `relic` 82 / chỉ rơi / 30.
   - Giáp: `vest, leather, chain, scale, lamellar, breastplate` (thủ 2 → 34).
   - Khiên: `round, checked, spiked, dragonshield` (chỉ rơi, cấp 24).
   - Nguyên liệu: `ore` (25), `ore_rare` (125), `dragon_scale` (1000), `herb`, `herb_rare`, `fish_*`, `old_boot`, vật phẩm lễ hội.
-- **Số đặt cứng trong module** (không có trong JSON): rương `chests.ex:15-19`, rèn `crafting.ex:22-24`, bang `guilds.ex:23-26`,
-  chợ `market.ex:23-25`, giao dịch `trade_offer.ex:13`, nâng cấp `engine.ex:20`.
+- **Số đặt cứng trong module:** từ Phase 1 các số luật chơi đã ở `RULES`. Còn lại là giới hạn kỹ thuật / chống lạm dụng
+  (giao dịch `trade_offer.ex` 8 dòng / 10 triệu vàng, bạn bè, hộp thư, chat, quản trị) — xem `DECISIONS.md`.
 
 ## 9. Test, CI, simulator
 
@@ -359,7 +368,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 - **CI:** job **`hac-long`** trong `.github/workflows/ci.yml` của repo ngoài (`working-directory: reference/rpg-game`; Postgres 16,
   OTP 25 / Elixir 1.17: format, compile `--warnings-as-errors`, `node --check` các file JS, `mix test`).
   File `reference/rpg-game/.github/workflows/ci.yml` vẫn còn nhưng GitHub **không chạy** (thư mục con của repo `mmo-rpg-game`).
-- **Simulator:** `mix hac_long.simulate [N]` (mặc định 5).
+- **Simulator:** `mix hac_long.simulate [N] [--seed S]` (mặc định 5; `--seed` cho kết quả lặp lại được để so trước / sau).
   - Chạy 3 lớp × 5 cách chơi: `[]`, `quests`, `+daily`, `+upgrade`, `+chests` (`lib/mix/tasks/hac_long.simulate.ex:22-28`) → `Simulator.run(cls, opts)`.
   - Đổi cân bằng thì chạy trước / sau để so.
 
@@ -409,7 +418,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 - **Khóa đồ (C18):** `gear[].locked = true` (lưu trong jsonb, `Gear.load` đọc lại). Chặn ở `Engine.sell/2`, `Market` (`list_gear`),
   `TradeOffer.check/2`, `Chaos.gear_input/3`. Không chặn ép (người chơi tự quyết).
 - **Ép +6 → +11 (D1, D2, D3, D9):** `Engine.upgrade/3` (`confirm` cho bước `destroy`), `upgrade_cost/2` trả thêm `rate`, `fail`;
-  bảng `UPGRADE` trong `game_data.json` (`Data.upgrade/0`, `Data.upgrade_step/1`). `effective_level/1`: từ +10 mỗi cấp
+  bảng `UPGRADE` trong `priv/game_data/upgrade.json` (`Data.upgrade/0`, `Data.upgrade_step/1`). `effective_level/1`: từ +10 mỗi cấp
   gấp đôi. Vỡ đồ: `destroy_equipped` (vũ khí → `club`, giáp → `vest`). Kết quả có `upgrade` và `announce` (từ +7).
 - **Thông báo toàn server:** lệnh trả `announce` → `Session.run_command_` bỏ khỏi kết quả và gọi `Chat.system/1`.
 - **Ngọc (D7):** `jewel_bless`, `jewel_soul`, `jewel_chaos` (slot `material`); rơi ở `Engine.jewel_drop/3` (bảng `JEWELS`),
@@ -429,7 +438,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 
 ## 9e. Lớp MU, dữ liệu đồ Item.txt, hình theo cấp (2026-10-04)
 
-- Lớp nhân vật: mục 5. Đổi lớp đụng: `game_data.json` (`CLASSES`, cánh `wing_<lớp>_<1|2>`), `Engine` (`derived`,
+- Lớp nhân vật: mục 5. Đổi lớp đụng: `priv/game_data/classes.json` (`CLASSES`), `items.json` (cánh `wing_<lớp>_<1|2>`), `Engine` (`derived`,
   `level_up`, `allocate`, `rest`, kỹ năng), `Gear` (`@stats`), `Characters` (`stats`, `mp`), `Admin` (`add_stats`, `give_gear`),
   `Simulator` (`@alloc`), `World.drink_fountain`, `ui.js` (`STAT_INFO`, thanh MP, màn tạo nhân vật), `doll.js` (màu cánh).
 - **`HacLong.Game.ItemTxt`**: đọc Item.txt (tách theo khoảng trắng, chú thích `//`, cảnh báo dòng hỏng), `to_item/1` ra nháp
@@ -441,6 +450,29 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   (`GAME_DATA.ITEM_ICONS`); `ITEMS` gửi kèm `id`. Client: `ownIcon(it, cấp)` trong `itemIcon` / `cellIcon`, thiếu thì icon cũ.
 - Test: `test/hac_long/game/item_data_test.exs` (file mẫu tự viết `test/fixtures/Item.sample.txt`).
 
+## 9f. Nền dữ liệu và cấu hình (Phase 1, 2026-10-04)
+
+- **J3** `priv/game_data/*.json`: 12 file (bảng file → khóa trong moduledoc `HacLong.Game.Data`). `Data` đọc mọi file theo tên,
+  ghép; hai file cùng khóa → `CompileError`. Client vẫn nhận `GAME_DATA` như cũ.
+- **J1 / A3 / B2 / E7** `RULES` (`rules.json`), đọc lúc biên dịch qua `Data.rules/0`:
+  - `character` (cấp tối đa, vàng / đồ lúc tạo, chuyển sinh, giá nghỉ trọ, phạt chết), `xp` (`coef × L^exp + base`),
+    `combat` (chí mạng / hệ số chí mạng / né theo AGI, dao động sát thương, % hồi MP, bỏ chạy, chí mạng quái, % cánh mỗi cấp),
+    `skill_effects` (hệ số, lượt, sức mạnh của 10 kiểu `effect`), `monster` (công thức chỉ số quái, hệ số trùm),
+    `loot` (bình máu theo cấp `Data.potion_for/1`, tỉ lệ rơi đồ hiếm, trọng số độ hiếm, vật phẩm lễ hội),
+    `shop` (giá bán lại 40 %), `upgrade` (+N bằng quặng), `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`,
+    `daily`, `fishing`, `tutorial`, `guild`, `market`, `arena`, `party`, `world`, `names`.
+  - Module dùng `@rules Data.rules().nhóm` (compile-time), giữ đúng thứ tự phép tính cũ → simulator cùng seed giống hệt.
+  - `Engine.base_xp/1`, `base_gold/1`: kinh nghiệm / vàng gốc theo cấp quái, dùng chung cho tháp, việc hằng ngày, sổ quái.
+  - Client: `RULES` trong `PageController` thêm `upgradeBonusPct`, `wingPerLevel`, `smithEpicPerLevel`, `smithRare`, `tameBonus`,
+    `petXpCoef` (trước viết cứng trong `ui.js`).
+- **J2** `HacLong.Game.DataCheck`: `run!/1` (gọi trong `Data`), `run_maps!/2` (gọi trong `Maps`). Trả lỗi dạng
+  `"shop.json: SHOP có món \"x\" không có trong ITEMS"`. Thêm `role` NPC mới → thêm vào `@npc_roles`; kỹ năng thú mới → `@pet_skills`.
+- **B9** `Names.banned?/1`: bỏ dấu + chữ thường; `banned_words` khớp nguyên từ, `banned_parts` khớp một phần (có đổi số `4dm1n`).
+  Áp dụng `Names.validate/1` (tên nhân vật) và `Guilds` (tên + ký hiệu bang). Tên đã có trước không bị đổi.
+- **B11** `World.valid_pos/1`: ô không đi được hoặc bị bít bốn phía → `Maps.entry/1` (cạnh đá dịch chuyển, không có thì chỗ đứng
+  khi qua cổng vào), bản đồ không còn → Nhà.
+- Test: `test/hac_long/game/data_rules_test.exs`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.
@@ -451,7 +483,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 5. **Ô trang bị cố định** (từ Đợt 3 là 4 ô: thêm `wing`) ở nhiều chỗ (mục 3, 6). Thêm ô mới phải sửa: `characters.ex:67`, `engine.ex:940-950, 1109, 1128-1134`,
    `doll.js`, `ui.js` (`310, 1099-1110, 1308-1327, 1373`), `market.ex`, `trade_offer.ex`.
 6. **Quyền admin gán lúc kết nối:** đổi quyền thì người đó phải tải lại trang.
-7. **`game_data.json` nạp lúc biên dịch:** sửa xong phải biên dịch lại (server dev tự làm; bản release phải build lại).
+7. **`priv/game_data/` nạp lúc biên dịch (kể cả `RULES`):** sửa xong phải biên dịch lại (server dev tự làm; bản release phải build lại).
 8. ~~Không có log vàng / đồ~~: **đã có** (Đợt 2). Nhưng nhật ký chỉ đúng khi mọi lần ghi nhân vật đi qua `Characters.save!`;
    sửa vàng thẳng bằng SQL sẽ bị `mix hac_long.audit` báo `gold_mismatch`.
 9. **Session bị giữ khi giao dịch:** thêm `handle_call` mới vào Session thì nó tự xếp hàng khi bị giữ (mệnh đề chung). Thêm

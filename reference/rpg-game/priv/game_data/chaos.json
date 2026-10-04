@@ -1,0 +1,59 @@
+{
+  "CHAOS": [
+    {
+      "id": "wing1",
+      "name": "Cánh cấp 1",
+      "desc": "1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 đúng lớp nhân vật.",
+      "gear": {
+        "slots": [
+          "weapon",
+          "armor",
+          "shield"
+        ],
+        "min_up": 5
+      },
+      "items": {
+        "jewel_chaos": 1
+      },
+      "gold": 20000,
+      "rate": 0.1,
+      "per_up": 0.05,
+      "max_rate": 0.6,
+      "out": "wing_{cls}_1"
+    },
+    {
+      "id": "wing2",
+      "name": "Cánh cấp 2",
+      "desc": "1 cánh cấp 1 +5 trở lên + 5 Phúc Lành + 5 Linh Hồn + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp.",
+      "gear": {
+        "slots": [
+          "wing"
+        ],
+        "tier": 1,
+        "min_up": 5
+      },
+      "items": {
+        "jewel_bless": 5,
+        "jewel_soul": 5,
+        "jewel_chaos": 2
+      },
+      "gold": 200000,
+      "rate": 0.2,
+      "per_up": 0.05,
+      "max_rate": 0.6,
+      "out": "wing_{cls}_2"
+    },
+    {
+      "id": "make_chaos",
+      "name": "Ngọc Hỗn Nguyên",
+      "desc": "10 Quặng Mithril + 1 Vảy Cổ Long → 1 Ngọc Hỗn Nguyên.",
+      "items": {
+        "ore_rare": 10,
+        "dragon_scale": 1
+      },
+      "gold": 5000,
+      "rate": 0.7,
+      "out": "jewel_chaos"
+    }
+  ]
+}

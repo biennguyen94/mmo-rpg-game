@@ -1,0 +1,61 @@
+{
+  "UPGRADE": {
+    "max": 11,
+    "announce_from": 7,
+    "double_from": 10,
+    "steps": [
+      {
+        "level": 6,
+        "jewel": "jewel_bless",
+        "rate": 1.0,
+        "fail": null
+      },
+      {
+        "level": 7,
+        "jewel": "jewel_soul",
+        "rate": 0.7,
+        "fail": "down"
+      },
+      {
+        "level": 8,
+        "jewel": "jewel_soul",
+        "rate": 0.6,
+        "fail": "down"
+      },
+      {
+        "level": 9,
+        "jewel": "jewel_soul",
+        "rate": 0.5,
+        "fail": "down"
+      },
+      {
+        "level": 10,
+        "jewel": "jewel_chaos",
+        "rate": 0.5,
+        "fail": "destroy"
+      },
+      {
+        "level": 11,
+        "jewel": "jewel_chaos",
+        "rate": 0.45,
+        "fail": "destroy"
+      }
+    ]
+  },
+  "JEWELS": {
+    "weights": {
+      "jewel_bless": 50,
+      "jewel_soul": 35,
+      "jewel_chaos": 15
+    },
+    "monster_level": 12,
+    "monster_chance": 0.006,
+    "boss_chance": 0.3,
+    "tower_every": 10,
+    "chest_chance": {
+      "wood": 0.03,
+      "silver": 0.08,
+      "gold": 0.15
+    }
+  }
+}

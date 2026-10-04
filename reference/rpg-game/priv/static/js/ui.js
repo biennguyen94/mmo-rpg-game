@@ -1159,7 +1159,7 @@
     const b = id ? P.view.bonus[id] || 0 : 0;
     const extra = it.rarity ? ` · <span class="rar-${it.rarity}">${RARITY[it.rarity]}: ${bonusText(it)}</span>` : '';
     if (it.slot === 'wing') {
-      const pct = (v) => Math.round((v + 0.02 * effLevel(upLevel(id))) * 100);
+      const pct = (v) => Math.round((v + RULES.wingPerLevel * effLevel(upLevel(id))) * 100);
       return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
@@ -1264,7 +1264,7 @@
     return pt && { ...pt, sprite: 'pets/' + pt.id };
   }
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
-  const petXpFor = (lv) => 5 * lv * (lv - 1);
+  const petXpFor = (lv) => RULES.petXpCoef * lv * (lv - 1);
   function petLevel(id) {
     const xp = (P.pet_xp && P.pet_xp[id]) || 0;
     let lv = 1;
@@ -1554,12 +1554,12 @@
       const it = itemOf(f.id), c = f.cost;
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
-      const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * 0.08)) : 0;
+      const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
       const step = c ? per * (effLevel(f.level + 1) - effLevel(f.level)) : 0;
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${icon(it.icon, 'lg')}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? ', +2% sát thương / hấp thụ' : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" data-slot="${slot}" data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
@@ -1646,10 +1646,10 @@
 
   function smithCard() {
     const lv = P.view.crafting.smith, gold = P.view.crafting.smithGold;
-    const epic = 6 * lv, full = bagGear().length >= RULES.gearBag;
+    const epic = RULES.smithEpicPerLevel * lv, full = bagGear().length >= RULES.gearBag;
     const slots = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']];
     return `<div class="card"><h3>Rèn đồ</h3>${craftLevel('smith', 'Rèn đồ')}
-      <p class="small muted">Rèn một món đồ chỉ số ngẫu nhiên hợp cấp bạn: Sử Thi ${epic}%, Hiếm 50%. Nghề càng cao càng dễ ra Sử Thi.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
+      <p class="small muted">Rèn một món đồ chỉ số ngẫu nhiên hợp cấp bạn: Sử Thi ${epic}%, Hiếm ${RULES.smithRare}%. Nghề càng cao càng dễ ra Sử Thi.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
       <div class="list">${slots.map(([slot, label]) => {
         const cost = Object.entries(RULES.smithCosts[slot]);
         const ok = !full && P.gold >= gold && cost.every(([id, n]) => (P.inv[id] || 0) >= n);
@@ -1806,7 +1806,7 @@
       const ready = wild.filter((m) => count(m.id) >= RULES.tameKills);
       const near = wild.filter((m) => count(m.id) < RULES.tameKills && count(m.id) > 0)
         .sort((a, b) => count(b.id) - count(a.id)).slice(0, 3);
-      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường thì mang về thuần được. Thú thuần: tấn công +3%.</p>
+      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường thì mang về thuần được. Thú thuần: tấn công +${Math.round(RULES.tameBonus * 100)}%.</p>
         <div class="list">${ready.map((m) => {
           const price = tamePrice(m), poor = P.gold < price;
           return `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Đã hạ ${fmt(count(m.id))} con</div></div>

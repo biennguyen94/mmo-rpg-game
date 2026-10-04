@@ -18,6 +18,7 @@ nhật ký vàng / đồ hiếm / quản trị, và công thức dựng nhân v�
 8. [Xử lý sự cố](#8-xử-lý-sự-cố)
 9. [Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)](#9-ép-đồ-máy-hỗn-nguyên-khóa-đồ-đợt-3)
 10. [Hình đồ theo cấp và Item.txt](#10-hình-đồ-theo-cấp-và-itemtxt)
+11. [Chỉnh số luật chơi, từ cấm khi đặt tên](#11-chỉnh-số-luật-chơi-từ-cấm-khi-đặt-tên)
 
 ---
 
@@ -77,7 +78,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
-| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11 | **mọi** món trong `game_data.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
+| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11 | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
 | Đồ hiếm | `give_gear` | `base`, `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
@@ -245,7 +246,7 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 
 ## 9. Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)
 
-Số liệu ở `priv/game_data.json` (`UPGRADE`, `JEWELS`, `CHAOS`, các món `jewel_*`, `wing_*`); sửa xong phải build lại.
+Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json` (`CHAOS`), `items.json` (các món `jewel_*`, `wing_*`), `rules.json` (`RULES.upgrade`: giá, % cộng mỗi cấp); sửa xong phải build lại.
 
 - **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Phúc Lành (100 %); +7 / +8 / +9 bằng Ngọc Linh Hồn
   (70 / 60 / 50 %, thất bại tụt 1 cấp); +10 / +11 bằng Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**: vũ khí về Gậy Gỗ,
@@ -279,7 +280,7 @@ assets_src/items/
    | `{id}.png` | đồ Hắc Long, mọi cấp |
    | `item_{nhóm}_{số}_{N}.png`, `item_{nhóm}_{số}.png` | đồ có `"ref": "nhóm/số"` (dòng trong Item.txt) |
 
-   `id` là khóa món đồ trong `priv/game_data.json` (`club`, `broadsword`, `relic`, `wing_dk_1`, `jewel_bless`…).
+   `id` là khóa món đồ trong `priv/game_data/items.json` (`club`, `broadsword`, `relic`, `wing_dk_1`, `jewel_bless`…).
 2. Chạy `mix hac_long.icons` (trong `reference/rpg-game`). Lệnh in số hình đã nhận, file bị bỏ qua (sai tên) và danh sách
    đồ chưa có hình riêng.
 3. Tải lại trang. Game chọn hình có mốc **lớn nhất ≤ cấp nâng** của món: có `_0`, `_5`, `_10` thì +0…+4 dùng `_0`,
@@ -301,3 +302,33 @@ mix hac_long.items.import đường/dẫn/Item.txt
 - In số món theo nhóm và cảnh báo dòng hỏng (thiếu cột, chữ ở chỗ số…).
 - Đưa đồ này vào game (cửa hàng, rơi theo vùng, đồ theo lớp, đủ 10 ô trang bị) là **Phase 6** trong `docs/PHASE_PLAN.md`.
 
+## 11. Chỉnh số luật chơi, từ cấm khi đặt tên
+
+Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi loại một file), số luật chơi ở
+`priv/game_data/rules.json` (khóa `RULES`). Sửa xong phải **build lại** (`mix compile` / deploy lại), như sửa đồ hay quái.
+
+| Muốn chỉnh | Chỗ sửa trong `rules.json` |
+|---|---|
+| Cấp tối đa, vàng / bình máu lúc tạo nhân vật, chuyển sinh, giá nghỉ trọ, phạt khi chết | `character` |
+| EXP cần lên cấp (`coef × cấp^exp + base`) | `xp` |
+| Chí mạng, hệ số chí mạng, né theo Nhanh nhẹn; % hồi MP mỗi lượt; tỉ lệ bỏ chạy | `combat` |
+| Sức mạnh kỹ năng (hệ số đòn, số lượt, % hiệu ứng) | `skill_effects` (theo kiểu tác dụng, xem `effect` của kỹ năng trong `classes.json`) |
+| Chỉ số quái theo cấp, hệ số trùm | `monster` |
+| Tỉ lệ rơi bình máu / đồ hiếm, độ hiếm | `loot` |
+| Giá bán lại (40 %) | `shop.sell_ratio` |
+| Rương, rèn, tháp, thú cưng, sổ quái, nhà, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`, `daily`, `fishing` |
+| Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |
+| Từ cấm khi đặt tên nhân vật / bang | `names` |
+
+- **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
+  danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.
+- Đổi số cân bằng thì chạy `mix hac_long.simulate 20 --seed 1` trước và sau để so (cùng seed → cùng kết quả nếu số không đổi).
+
+**Từ cấm** (`names`):
+
+- `banned_words`: khớp **nguyên từ**, không phân biệt hoa thường và dấu (`"quan tri"` chặn "Quản Trị", "QUAN TRI"; số và
+  ký hiệu là chỗ ngắt từ nên `"gm"` chặn "GM01" nhưng `"lon"` không chặn "Thiên Long"). Viết không dấu, chữ thường; cụm
+  nhiều từ được.
+- `banned_parts`: khớp **một phần** tên viết liền (bỏ khoảng trắng, đổi số kiểu `4dm1n` → `admin`). Chỉ để từ dài, rõ
+  nghĩa, nếu không sẽ chặn nhầm tên thường.
+- Áp dụng khi tạo nhân vật mới, lập bang mới (tên và ký hiệu). Tên đã có không bị đổi.

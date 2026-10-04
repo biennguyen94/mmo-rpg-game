@@ -20,10 +20,12 @@ defmodule HacLong.Guilds do
   alias HacLong.Accounts.User
   alias HacLong.Game.{Character, Names}
 
-  @create_cost 5000
+  # số ở `RULES.guild` (`priv/game_data/rules.json`)
+  @rules HacLong.Game.Data.rules().guild
+  @create_cost @rules.create_cost
   # quỹ cần để đạt cấp 1..5
-  @levels [0, 10_000, 30_000, 70_000, 150_000]
-  @min_donate 100
+  @levels @rules.levels
+  @min_donate @rules.min_donate
 
   def create_cost, do: @create_cost
   def levels, do: @levels
@@ -200,6 +202,9 @@ defmodule HacLong.Guilds do
       not Regex.match?(~r/^[\p{L}\p{M}\p{N} _\-]+$/u, name) ->
         {:error, "Tên bang chỉ gồm chữ, số, khoảng trắng, - và _."}
 
+      Names.banned?(name) ->
+        {:error, Names.banned_msg()}
+
       true ->
         {:ok, name}
     end
@@ -208,9 +213,16 @@ defmodule HacLong.Guilds do
   defp validate_tag(tag) do
     tag = tag |> to_string() |> String.trim() |> String.upcase()
 
-    if Regex.match?(~r/^[A-Z0-9]{2,4}$/, tag),
-      do: {:ok, tag},
-      else: {:error, "Ký hiệu bang gồm 2–4 chữ cái không dấu hoặc số."}
+    cond do
+      not Regex.match?(~r/^[A-Z0-9]{2,4}$/, tag) ->
+        {:error, "Ký hiệu bang gồm 2–4 chữ cái không dấu hoặc số."}
+
+      Names.banned?(tag) ->
+        {:error, Names.banned_msg()}
+
+      true ->
+        {:ok, tag}
+    end
   end
 
   @doc """

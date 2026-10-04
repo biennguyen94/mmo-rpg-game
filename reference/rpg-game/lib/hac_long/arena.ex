@@ -14,8 +14,9 @@ defmodule HacLong.Arena do
   alias HacLong.Repo
   alias HacLong.Game.{Character, Characters, Daily, Data, Engine}
 
-  @per_day 15
-  @k 32
+  # số ở `RULES.arena` (`priv/game_data/rules.json`)
+  @per_day Data.rules().arena.per_day
+  @k Data.rules().arena.elo_k
 
   def per_day, do: @per_day
 

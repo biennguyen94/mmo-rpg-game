@@ -1,7 +1,7 @@
 defmodule HacLong.Game.Pets do
   @moduledoc """
   Thú cưng: mua ở Người Nuôi Thú trong Làng, đi theo sau nhân vật trên bản đồ (người khác
-  cũng thấy) và cộng một ít chỉ số (`bonus` trong `PETS` của `game_data.json`).
+  cũng thấy) và cộng một ít chỉ số (`bonus` trong `PETS` trong `priv/game_data/pets.json`).
   Hàm thuần, như `Engine`.
 
   Thú đi theo cũng thỉnh thoảng cắn thêm một đòn trong trận (`bite/2`).
@@ -19,13 +19,15 @@ defmodule HacLong.Game.Pets do
 
   alias HacLong.Game.{Bestiary, Data}
 
-  @tame_kills 100
-  @tame_bonus 0.03
-  @bite_chance 0.35
-  @bite_power 0.25
+  # số ở `RULES.pets` (`priv/game_data/rules.json`)
+  @rules Data.rules().pets
+  @tame_kills @rules.tame_kills
+  @tame_bonus @rules.tame_bonus
+  @bite_chance @rules.bite_chance
+  @bite_power @rules.bite_power
 
-  @max_level 10
-  @skill_level 5
+  @max_level @rules.max_level
+  @skill_level @rules.skill_level
   @tame_skill %{id: "rend", name: "Cắn Xé", desc: "Cú cắn gây gấp đôi sát thương."}
 
   def tame_kills, do: @tame_kills
@@ -35,7 +37,7 @@ defmodule HacLong.Game.Pets do
   # ---------- Cấp của thú ----------
 
   @doc "Số trận thắng cần để thú lên cấp `level`: 5 × cấp × (cấp - 1)."
-  def xp_for(level), do: 5 * level * (level - 1)
+  def xp_for(level), do: @rules.xp_coef * level * (level - 1)
 
   def xp(p, id), do: Map.get(Map.get(p, :pet_xp) || %{}, id, 0)
 
@@ -68,7 +70,14 @@ defmodule HacLong.Game.Pets do
         id = p.pet
         before = level(p, id)
         all = Map.get(p, :pet_xp) || %{}
-        p = Map.put(p, :pet_xp, Map.put(all, id, xp(p, id) + if(boss?, do: 5, else: 1)))
+
+        p =
+          Map.put(
+            p,
+            :pet_xp,
+            Map.put(all, id, xp(p, id) + if(boss?, do: @rules.boss_wins, else: 1))
+          )
+
         now = level(p, id)
         {p, if(now > before, do: now)}
     end
@@ -99,7 +108,7 @@ defmodule HacLong.Game.Pets do
     Enum.find_value(Data.zones(), fn z -> Enum.find(z.monsters, &(&1.id == mid)) end)
   end
 
-  defp tame_price(m), do: 1000 + m.level * 100
+  defp tame_price(m), do: @rules.tame_price + m.level * @rules.tame_price_per_level
 
   @doc "Những loài quái thường có thể thuần phục (đã hạ đủ số con, chưa thuần)."
   def tameable(p) do
@@ -145,8 +154,8 @@ defmodule HacLong.Game.Pets do
     if Map.get(p, :pet) && data(p.pet) do
       lv = active_level(p) - 1
 
-      if roll < @bite_chance + lv * 0.02,
-        do: max(1, round(base * (@bite_power + lv * 0.02))),
+      if roll < @bite_chance + lv * @rules.bite_per_level,
+        do: max(1, round(base * (@bite_power + lv * @rules.bite_per_level))),
         else: 0
     else
       0
@@ -166,7 +175,7 @@ defmodule HacLong.Game.Pets do
   """
   def bonus(p, key) do
     case Map.get(p, :pet) && data(p.pet) do
-      %{bonus: b} -> Map.get(b, key, 0) * (1 + (active_level(p) - 1) * 0.1)
+      %{bonus: b} -> Map.get(b, key, 0) * (1 + (active_level(p) - 1) * @rules.bonus_per_level)
       _ -> 0
     end
   end

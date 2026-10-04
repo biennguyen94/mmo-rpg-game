@@ -6,7 +6,7 @@ defmodule HacLong.Game.Gear do
   `gear: [%{uid, base, rarity, bonus}]` của nhân vật:
 
   - `uid`: bắt đầu bằng `#`, dùng thay id đồ ở `equip`, `sell`, `upgrades`...
-  - `base`: đồ gốc trong `game_data.json` (quyết định chỗ mặc, tấn công/phòng thủ, cấp cần).
+  - `base`: đồ gốc trong `ITEMS` (`priv/game_data/items.json`) (quyết định chỗ mặc, tấn công/phòng thủ, cấp cần).
   - `rarity`: 1 Tốt, 2 Hiếm, 3 Sử Thi, bằng số dòng chỉ số cộng thêm. `0`: đồ thường đã tách
     thành bản riêng (`plain/1`) để có cấp nâng / khóa riêng từng món (đồ đã nâng cấp, đồ đã khóa, cánh).
   - `bonus`: `%{str | agi | vit | ene => điểm}` cộng vào chỉ số khi mặc.
@@ -18,6 +18,11 @@ defmodule HacLong.Game.Gear do
   alias HacLong.Game.{Data, Rng}
 
   @max_bag 20
+  # số ở `RULES.loot`, `RULES.shop` (`priv/game_data/rules.json`)
+  @loot Data.rules().loot
+  @shop Data.rules().shop
+  @weights Enum.map(@loot.gear_weights, &List.to_tuple/1)
+  @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)
   @stats ~w(str agi vit ene)a
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
   @suffix %{str: "Sức Mạnh", agi: "Nhanh Nhẹn", vit: "Bền Bỉ", ene: "Linh Lực"}
@@ -72,8 +77,12 @@ defmodule HacLong.Game.Gear do
   @doc "Giá bán: giá đồ gốc tăng theo độ hiếm và số điểm cộng thêm."
   def price(g) do
     # đồ không bán ở cửa hàng (giá 0) tính như giá 200, như `Engine.sell_price/1`
-    base = with 0 <- Data.item(g.base).price, do: 200
-    round(base * 0.4 * (1 + 0.25 * g.rarity) + 5 * Enum.sum(Map.values(g.bonus)))
+    base = with 0 <- Data.item(g.base).price, do: @shop.unpriced_value
+
+    round(
+      base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
+        @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))
+    )
   end
 
   @doc "Tổng điểm chỉ số cộng thêm từ các món đang mặc."
@@ -92,10 +101,10 @@ defmodule HacLong.Game.Gear do
   def drop_chance(m) do
     cond do
       m[:world] || m[:pvp] -> 0
-      m[:elite] -> 0.5
-      m[:night] -> 0.25
-      m.boss -> 0.35
-      true -> 0.04
+      m[:elite] -> @loot.gear_chance.elite
+      m[:night] -> @loot.gear_chance.night
+      m.boss -> @loot.gear_chance.boss
+      true -> @loot.gear_chance.normal
     end
   end
 
@@ -104,17 +113,14 @@ defmodule HacLong.Game.Gear do
   `slot` chọn loại đồ (mặc định ngẫu nhiên).
   `weights`: tỉ lệ các độ hiếm `[{độ_hiếm, tỉ_lệ}]` (mặc định 5% Sử Thi, 25% Hiếm, 70% Tốt).
   """
-  def roll(level, weights \\ [{3, 5}, {2, 25}, {1, 70}], slot \\ nil) do
+  def roll(level, weights \\ @weights, slot \\ nil) do
     slot =
       slot ||
         (
           r = Rng.uniform()
 
-          cond do
-            r < 0.45 -> "weapon"
-            r < 0.8 -> "armor"
-            true -> "shield"
-          end
+          Enum.find_value(@slots, fn {t, s} -> if r < t, do: s end) ||
+            @slots |> List.last() |> elem(1)
         )
 
     bases =
@@ -134,7 +140,12 @@ defmodule HacLong.Game.Gear do
         rarity = pick_weighted(weights)
 
         stats = shuffle(@stats) |> Enum.take(rarity)
-        bonus = Map.new(stats, &{&1, 1 + floor(Rng.uniform() * (1 + level / 6))})
+
+        bonus =
+          Map.new(
+            stats,
+            &{&1, 1 + floor(Rng.uniform() * (1 + level / @loot.gear_bonus_per_level))}
+          )
 
         %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
     end

@@ -18,7 +18,7 @@
 
 | Phase | Tên | Mục (FEATURE_CATALOG) | Đổi cân bằng | Công | Phụ thuộc |
 |---|---|---|---|---|---|
-| 1 | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 | Không | M | – |
+| 1 ✅ | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 | Không | M | – |
 | 2 | Lưới an toàn test | N1, N2, N3, N5, M8, O4 | Không | M | – |
 | 3 | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
 | 4 | Ngọc, ép, kho | D4, D8, C6, C7, E10 | Nhẹ | M | 1 |
@@ -38,14 +38,14 @@
 
 ---
 
-## Phase 1 — Nền dữ liệu và cấu hình
+## Phase 1 — Nền dữ liệu và cấu hình ✅ (xong 2026-10-04)
 
 **Mục tiêu:** mọi số gameplay nằm trong file dữ liệu; dữ liệu sai thì biên dịch báo lỗi; không đổi cảm giác chơi.
 
 | Mục | Việc |
 |---|---|
 | **J1** | Gom số đang viết cứng trong code (~46 hằng số: rương, rèn, bang, chợ, giao dịch, nâng cấp, chiến đấu, giá bán, thư, thú cưng, tháp…) vào khóa `RULES` / `CONFIG`. Module đọc qua `Data`. |
-| **J3** | Tách `priv/game_data.json` (≈ 1 800 dòng) thành `priv/game_data/{classes,zones,items,shop,recipes,quests,pets,furniture,events,upgrade,chaos,rules}.json`; `Data` ghép lại lúc biên dịch, client nhận như cũ. |
+| **J3** | Tách `priv/game_data.json` cũ (≈ 1 800 dòng) thành `priv/game_data/{classes,zones,items,shop,recipes,quests,pets,furniture,events,upgrade,chaos,rules}.json`; `Data` ghép lại lúc biên dịch, client nhận như cũ. |
 | **J2** | Kiểm lúc biên dịch: đồ trong cửa hàng / công thức / rơi trùm / nhiệm vụ phải tồn tại; kỹ năng có `effect` hợp lệ; cánh có `cls` hợp lệ; NPC trên bản đồ có `role` đã biết. Sai → lỗi biên dịch có tên file + id. |
 | **A3** | Tham số chiến đấu (chí mạng, né, hệ số chí mạng, sàn sát thương, % hồi MP mỗi lượt) vào `RULES.combat`. |
 | **B2** | Công thức EXP lên cấp vào data (hiện `25 × L^1.75 + 15`; giữ nguyên số, chỉ chuyển chỗ). |
@@ -54,13 +54,24 @@
 | **B11** | Vào game mà vị trí lưu không đi được (sửa bản đồ) → về điểm sinh của bản đồ đó, hoặc Làng. |
 | **O3** | Tạo `docs/DECISIONS.md` (quyết định nhỏ đã tự chốt + lý do) và `docs/OPEN_QUESTIONS.md` (câu hỏi đang chờ anh). |
 
-**⛔ Câu hỏi:**
+**Câu hỏi (đã chốt 2026-10-04):**
 
-- 1-A Danh sách từ cấm: anh gửi danh sách, hay em lập danh sách cơ bản (chửi thề, tên quản trị giả mạo như "admin", "GM")?
-- 1-B Tách file data có làm đổi đường dẫn anh hay sửa không (`priv/game_data.json` → thư mục `priv/game_data/`)?
+- 1-A Danh sách từ cấm: ~~anh gửi hay em lập?~~ → **em lập danh sách cơ bản** (`RULES.names`, anh sửa thêm được).
+- 1-B Tách file data (`priv/game_data.json` → thư mục `priv/game_data/`)? → **đồng ý**.
 
 **Xong khi:** simulator trước / sau giống hệt (cùng seed); `grep` không còn số gameplay trong `lib/hac_long/game/*.ex` (trừ
 hằng số kỹ thuật); test cố ý sửa sai một id trong data → biên dịch báo lỗi.
+
+**Kết quả:**
+
+- `priv/game_data/` 12 file; `RULES` (`rules.json`) gom số luật chơi của `engine`, `gear`, `chests`, `crafting`, `tower`,
+  `pets`, `bestiary`, `home`, `events`, `daily`, `fishing`, `tutorial`, `guilds`, `guild_quests`, `market`, `arena`,
+  `party`, `map_server`. Còn trong code: hằng số kỹ thuật và vài nội dung có cấu trúc riêng (`DECISIONS.md` P1-7, P1-8).
+- `MIX_ENV=test mix hac_long.simulate 5 --seed 42` trước / sau: **giống hệt từng dòng** (4 lớp × 5 cách chơi).
+- Sửa `"dagger"` thành `"daggerr"` trong `shop.json` → `mix compile` dừng:
+  `shop.json: SHOP có món "daggerr" không có trong ITEMS`.
+- Test mới `test/hac_long/game/data_rules_test.exs` (15 test); tổng 189 test xanh.
+- `docs/DECISIONS.md`, `docs/OPEN_QUESTIONS.md` (O3).
 
 ---
 

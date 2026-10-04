@@ -26,7 +26,8 @@ defmodule HacLong.World.MapServer do
   @dirs [{0, -1}, {0, 1}, {-1, 0}, {1, 0}]
   # quái không sinh ra quá gần cổng để người vừa vào không bị đánh ngay
   @safe_radius 3
-  @rare_chance 0.12
+  # `RULES.world.night_rare_chance` (`priv/game_data/rules.json`)
+  @rare_chance Data.rules().world.night_rare_chance
 
   def topic(map_id), do: "map:#{map_id}"
 

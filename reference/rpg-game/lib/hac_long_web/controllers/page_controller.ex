@@ -7,7 +7,7 @@ defmodule HacLongWeb.PageController do
   @doc """
   Trả về `priv/static/index.html` kèm dữ liệu game (`window.GAME_DATA`) để giao diện
   vẽ danh sách vùng đất, cửa hàng, lớp nhân vật... Dữ liệu chỉ có một nguồn là
-  `priv/game_data.json` trên server.
+  thư mục `priv/game_data/` trên server (`HacLong.Game.Data`).
   """
   def index(conn, _params) do
     data = Jason.encode!(client_data(), escape: :html_safe)
@@ -71,7 +71,13 @@ defmodule HacLongWeb.PageController do
         petSkillLevel: HacLong.Game.Pets.skill_level(),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
-        friendsMax: HacLong.Friends.max()
+        friendsMax: HacLong.Friends.max(),
+        upgradeBonusPct: Data.rules().upgrade.bonus_pct,
+        wingPerLevel: Data.rules().combat.wing_per_level,
+        smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
+        smithRare: Data.rules().crafting.smith_rare,
+        tameBonus: Data.rules().pets.tame_bonus,
+        petXpCoef: Data.rules().pets.xp_coef
       },
       WORLD: Maps.client_data()
     }

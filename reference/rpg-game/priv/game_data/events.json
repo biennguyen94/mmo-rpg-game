@@ -1,0 +1,44 @@
+{
+  "EVENTS": [
+    {
+      "id": "mid_autumn",
+      "name": "Tết Trung Thu",
+      "icon": "🏮",
+      "from": "09-15",
+      "to": "10-10",
+      "token": "moon_cake",
+      "decor": "lamp_festival",
+      "desc": "Đêm hội trăng rằm: quái rơi Bánh Trung Thu, kinh nghiệm +10%."
+    },
+    {
+      "id": "pumpkin",
+      "name": "Lễ Hội Bí Ngô",
+      "icon": "🎃",
+      "from": "10-25",
+      "to": "11-07",
+      "token": "pumpkin_candy",
+      "decor": "statue_snail",
+      "desc": "Ma quỷ đi chơi: quái rơi Kẹo Bí Ngô, kinh nghiệm +10%."
+    },
+    {
+      "id": "christmas",
+      "name": "Giáng Sinh",
+      "icon": "🎄",
+      "from": "12-15",
+      "to": "01-02",
+      "token": "gift_box",
+      "decor": "fountain_sparkle",
+      "desc": "Mùa đông an lành: quái rơi Hộp Quà, kinh nghiệm +10%."
+    },
+    {
+      "id": "tet",
+      "name": "Tết Nguyên Đán",
+      "icon": "🧧",
+      "from": "01-20",
+      "to": "02-20",
+      "token": "lucky_apple",
+      "decor": "statue_elephant",
+      "desc": "Xuân về: quái rơi Quả Lộc, kinh nghiệm +10%."
+    }
+  ]
+}

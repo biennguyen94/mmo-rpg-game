@@ -4,7 +4,7 @@ defmodule HacLong.World.Maps do
 
   Mỗi bản đồ vẽ bằng ký tự trong `tiles` (xem `legend/0`), cộng thêm:
 
-  - `zone`: chỉ số vùng trong `game_data.json` (quái và trùm lấy từ đó), `null` với Nhà và Làng.
+  - `zone`: chỉ số vùng trong `ZONES` (`priv/game_data/zones.json`) (quái và trùm lấy từ đó), `null` với Nhà và Làng.
   - `floor`: hình nền cho ô `.` (đường dẫn trong `priv/static/assets`, không có đuôi).
   - `portals`: `{at: [x, y], to: id_bản_đồ, spawn: [x, y]}`. Bước vào ô cổng thì sang
     bản đồ `to`, đứng ở `spawn`. Cổng vào vùng chưa mở (chưa hạ trùm vùng trước) bị khóa.
@@ -105,6 +105,8 @@ defmodule HacLong.World.Maps do
            {map.id, map}
          end)
 
+  HacLong.Game.DataCheck.run_maps!(@maps, HacLong.Game.Data.check_input())
+
   @home "home"
 
   def get(id), do: Map.get(@maps, id)
@@ -126,6 +128,23 @@ defmodule HacLong.World.Maps do
       do: g |> elem(y) |> elem(x)
 
   def tile(_, _, _), do: nil
+
+  @doc """
+  Điểm vào bản đồ `id` (dùng khi vị trí lưu không còn đi được): chỗ đứng cạnh đá dịch chuyển, nếu
+  không có thì chỗ đứng khi đi qua cổng từ bản đồ khác vào. nil nếu không tìm được ô đi được.
+  """
+  def entry(id) do
+    map = get(id)
+
+    spots =
+      if(map.waystone, do: [map.waystone.spawn], else: []) ++
+        for({_, m} <- Enum.sort(@maps), p <- m.portals, p.to == id, do: p.spawn)
+
+    case Enum.find(spots, fn {x, y} -> walkable?(map, x, y) end) do
+      {x, y} -> %{map: id, x: x, y: y}
+      nil -> nil
+    end
+  end
 
   def walkable?(map, x, y), do: tile(map, x, y) in @walkable and npc_at(map, x, y) == nil
 

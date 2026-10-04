@@ -1,7 +1,7 @@
 defmodule HacLong.Game.Chaos do
   @moduledoc """
   Máy Hỗn Nguyên (Lão Hỗn Nguyên ở Làng): ghép đồ may rủi theo công thức `CHAOS` trong
-  `game_data.json`. Hàm thuần như `Engine`, số ngẫu nhiên qua `HacLong.Game.Rng`.
+  `priv/game_data/chaos.json`. Hàm thuần như `Engine`, số ngẫu nhiên qua `HacLong.Game.Rng`.
 
   Công thức: `items` (nguyên liệu trong túi), `gold` (phí), `rate` (tỉ lệ cơ bản), `out` (kết quả;
   `{cls}` thay bằng lớp nhân vật). Công thức có `gear` cần thêm đúng một món đồ trong túi

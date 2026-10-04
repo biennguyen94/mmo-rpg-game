@@ -40,7 +40,7 @@ defmodule HacLong.Game.Simulator do
         Map.new(opts)
       )
 
-    {:ok, p} = Engine.new_player("Bot#{System.unique_integer([:positive])}", cls)
+    {:ok, p} = Engine.new_player("Bot#{:rand.uniform(1_000_000)}", cls)
     p = Map.put(p, :quests, Quests.empty())
 
     loop(p, %{

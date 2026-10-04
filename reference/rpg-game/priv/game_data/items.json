@@ -1,0 +1,466 @@
+{
+  "ITEMS": {
+    "club": {
+      "name": "Gậy Gỗ",
+      "slot": "weapon",
+      "icon": "wood-club",
+      "atk": 3,
+      "price": 0,
+      "level": 1,
+      "doll": "hand1/club_slant"
+    },
+    "dagger": {
+      "name": "Dao Găm",
+      "slot": "weapon",
+      "icon": "broad-dagger",
+      "atk": 7,
+      "price": 60,
+      "level": 3,
+      "doll": "hand1/dagger"
+    },
+    "broadsword": {
+      "name": "Kiếm Sắt",
+      "slot": "weapon",
+      "icon": "broadsword",
+      "atk": 13,
+      "price": 220,
+      "level": 7,
+      "doll": "hand1/broadsword"
+    },
+    "mace": {
+      "name": "Chùy Gai",
+      "slot": "weapon",
+      "icon": "spiked-mace",
+      "atk": 21,
+      "price": 650,
+      "level": 12,
+      "doll": "hand1/morningstar"
+    },
+    "battleaxe": {
+      "name": "Rìu Chiến",
+      "slot": "weapon",
+      "icon": "battle-axe",
+      "atk": 31,
+      "price": 1600,
+      "level": 17,
+      "doll": "hand1/battleaxe"
+    },
+    "greatsword": {
+      "name": "Đại Kiếm",
+      "slot": "weapon",
+      "icon": "two-handed-sword",
+      "atk": 44,
+      "price": 3600,
+      "level": 22,
+      "doll": "hand1/great_sword_slant"
+    },
+    "waraxe": {
+      "name": "Rìu Song Nhận",
+      "slot": "weapon",
+      "icon": "war-axe",
+      "atk": 60,
+      "price": 7500,
+      "level": 27,
+      "doll": "hand1/axe_double"
+    },
+    "relic": {
+      "name": "Thánh Kiếm Diệt Long",
+      "slot": "weapon",
+      "icon": "relic-blade",
+      "atk": 82,
+      "price": 0,
+      "level": 30,
+      "drop": true,
+      "doll": "hand1/heavy_sword"
+    },
+    "vest": {
+      "name": "Áo Da Mỏng",
+      "slot": "armor",
+      "icon": "leather-vest",
+      "def": 2,
+      "price": 0,
+      "level": 1,
+      "doll": "body/shirt_vest"
+    },
+    "leather": {
+      "name": "Giáp Da",
+      "slot": "armor",
+      "icon": "leather-armor",
+      "def": 5,
+      "price": 70,
+      "level": 3,
+      "doll": "body/leather_jacket"
+    },
+    "chain": {
+      "name": "Giáp Xích",
+      "slot": "armor",
+      "icon": "chain-mail",
+      "def": 10,
+      "price": 260,
+      "level": 7,
+      "doll": "body/leather_metal"
+    },
+    "scale": {
+      "name": "Giáp Vảy",
+      "slot": "armor",
+      "icon": "scale-mail",
+      "def": 16,
+      "price": 700,
+      "level": 12,
+      "doll": "body/dragonsc_brown"
+    },
+    "lamellar": {
+      "name": "Giáp Lá",
+      "slot": "armor",
+      "icon": "lamellar",
+      "def": 24,
+      "price": 1700,
+      "level": 17,
+      "doll": "body/half_plate"
+    },
+    "breastplate": {
+      "name": "Giáp Ngực Thép",
+      "slot": "armor",
+      "icon": "breastplate",
+      "def": 34,
+      "price": 3800,
+      "level": 22,
+      "doll": "body/bplate_metal1"
+    },
+    "round": {
+      "name": "Khiên Tròn",
+      "slot": "shield",
+      "icon": "round-shield",
+      "def": 3,
+      "price": 90,
+      "level": 4,
+      "doll": "hand2/buckler_round"
+    },
+    "checked": {
+      "name": "Khiên Hiệp Sĩ",
+      "slot": "shield",
+      "icon": "checked-shield",
+      "def": 7,
+      "price": 450,
+      "level": 10,
+      "doll": "hand2/shield_knight_rw"
+    },
+    "spiked": {
+      "name": "Khiên Gai",
+      "slot": "shield",
+      "icon": "spiked-shield",
+      "def": 12,
+      "price": 1500,
+      "level": 17,
+      "doll": "hand2/shield_kite2"
+    },
+    "dragonshield": {
+      "name": "Khiên Vảy Rồng",
+      "slot": "shield",
+      "icon": "dragon-shield",
+      "def": 20,
+      "price": 0,
+      "level": 24,
+      "drop": true,
+      "doll": "hand2/lshield_gold"
+    },
+    "potion_s": {
+      "name": "Bình Máu Nhỏ",
+      "slot": "potion",
+      "icon": "health-potion",
+      "heal": 60,
+      "price": 15
+    },
+    "potion_m": {
+      "name": "Bình Máu Vừa",
+      "slot": "potion",
+      "icon": "health-potion",
+      "heal": 220,
+      "price": 55
+    },
+    "potion_l": {
+      "name": "Bình Máu Lớn",
+      "slot": "potion",
+      "icon": "magic-potion",
+      "heal": 650,
+      "price": 150
+    },
+    "herb": {
+      "name": "Thảo Dược",
+      "slot": "material",
+      "sprite": "nodes/herb",
+      "price": 15,
+      "desc": "Mọc ở Rừng Mê, Trại Goblin, Nghĩa Địa Cổ."
+    },
+    "herb_rare": {
+      "name": "Linh Chi",
+      "slot": "material",
+      "sprite": "nodes/herb_rare",
+      "price": 75,
+      "desc": "Mọc ở Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long."
+    },
+    "ore": {
+      "name": "Quặng Sắt",
+      "slot": "material",
+      "sprite": "nodes/ore",
+      "price": 25,
+      "desc": "Đào ở Rừng Mê, Trại Goblin, Nghĩa Địa Cổ."
+    },
+    "ore_rare": {
+      "name": "Quặng Mithril",
+      "slot": "material",
+      "sprite": "nodes/ore_rare",
+      "price": 125,
+      "desc": "Đào ở Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long."
+    },
+    "fish_small": {
+      "name": "Cá Diếc",
+      "slot": "material",
+      "sprite": "items/fish_small",
+      "price": 10,
+      "desc": "Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Nhỏ."
+    },
+    "fish_carp": {
+      "name": "Cá Chép",
+      "slot": "material",
+      "sprite": "items/fish_carp",
+      "price": 25,
+      "desc": "Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Vừa."
+    },
+    "fish_eel": {
+      "name": "Lươn Điện",
+      "slot": "material",
+      "sprite": "items/fish_eel",
+      "price": 60,
+      "desc": "Chỉ có ở Đầm Lầy và Hang Rồng. Bà Lang nấu 2 con thành Bình Máu Lớn."
+    },
+    "fish_gold": {
+      "name": "Cá Chép Vàng",
+      "slot": "material",
+      "sprite": "items/fish_gold",
+      "price": 500,
+      "desc": "Hiếm lắm mới câu được. Bán được giá cao."
+    },
+    "old_boot": {
+      "name": "Chiếc Ủng Cũ",
+      "slot": "material",
+      "sprite": "items/old_boot",
+      "price": 2,
+      "desc": "Ai vứt xuống hồ thế này..."
+    },
+    "dragon_scale": {
+      "name": "Vảy Cổ Long",
+      "slot": "material",
+      "sprite": "nodes/dragon_scale",
+      "price": 1000,
+      "desc": "Chiến lợi phẩm từ trùm thế giới. Bán được giá cao."
+    },
+    "cha_ca": {
+      "name": "Chả Cá",
+      "slot": "food",
+      "sprite": "food/cha_ca",
+      "price": 20,
+      "food": {
+        "buff": {
+          "atk": 0.1
+        },
+        "battles": 5
+      },
+      "desc": "Tấn công +10% trong 5 trận."
+    },
+    "banh_mi_ca": {
+      "name": "Bánh Mì Cá",
+      "slot": "food",
+      "sprite": "food/banh_mi_ca",
+      "price": 40,
+      "food": {
+        "buff": {
+          "def": 0.12
+        },
+        "battles": 5
+      },
+      "desc": "Phòng thủ +12% trong 5 trận."
+    },
+    "banh_xeo_luon": {
+      "name": "Bánh Xèo Lươn",
+      "slot": "food",
+      "sprite": "food/banh_xeo_luon",
+      "price": 120,
+      "food": {
+        "buff": {
+          "hp": 0.12,
+          "atk": 0.08
+        },
+        "battles": 8
+      },
+      "desc": "Máu tối đa +12%, tấn công +8% trong 8 trận."
+    },
+    "mam_co": {
+      "name": "Mâm Cỗ Cá Vàng",
+      "slot": "food",
+      "sprite": "food/mam_co",
+      "price": 600,
+      "food": {
+        "buff": {
+          "xp": 0.2,
+          "gold": 0.1
+        },
+        "battles": 10
+      },
+      "desc": "Kinh nghiệm +20%, vàng +10% trong 10 trận."
+    },
+    "moon_cake": {
+      "name": "Bánh Trung Thu",
+      "slot": "material",
+      "sprite": "items/moon_cake",
+      "price": 1,
+      "desc": "Quà Tết Trung Thu. Mang tới Người Tổ Chức Hội đổi quà."
+    },
+    "pumpkin_candy": {
+      "name": "Kẹo Bí Ngô",
+      "slot": "material",
+      "sprite": "items/pumpkin_candy",
+      "price": 1,
+      "desc": "Quà lễ hội Bí Ngô. Mang tới Người Tổ Chức Hội đổi quà."
+    },
+    "gift_box": {
+      "name": "Hộp Quà Giáng Sinh",
+      "slot": "material",
+      "sprite": "items/gift_box",
+      "price": 1,
+      "desc": "Quà Giáng Sinh. Mang tới Người Tổ Chức Hội đổi quà."
+    },
+    "lucky_apple": {
+      "name": "Quả Lộc",
+      "slot": "material",
+      "sprite": "items/lucky_apple",
+      "price": 1,
+      "desc": "Lộc đầu xuân. Mang tới Người Tổ Chức Hội đổi quà."
+    },
+    "jewel_bless": {
+      "name": "Ngọc Phúc Lành",
+      "slot": "material",
+      "icon": "gem-bless",
+      "price": 1000,
+      "desc": "Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương."
+    },
+    "jewel_soul": {
+      "name": "Ngọc Linh Hồn",
+      "slot": "material",
+      "icon": "gem-soul",
+      "price": 1500,
+      "desc": "Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp."
+    },
+    "jewel_chaos": {
+      "name": "Ngọc Hỗn Nguyên",
+      "slot": "material",
+      "icon": "gem-chaos",
+      "price": 1250,
+      "desc": "Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên."
+    },
+    "wing_dk_1": {
+      "name": "Cánh Ác Quỷ",
+      "slot": "wing",
+      "cls": "dk",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_dk_2": {
+      "name": "Cánh Rồng",
+      "slot": "wing",
+      "cls": "dk",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_dw_1": {
+      "name": "Cánh Thiên Đường",
+      "slot": "wing",
+      "cls": "dw",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_dw_2": {
+      "name": "Cánh Linh Hồn",
+      "slot": "wing",
+      "cls": "dw",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_elf_1": {
+      "name": "Cánh Tiên",
+      "slot": "wing",
+      "cls": "elf",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_elf_2": {
+      "name": "Cánh Tinh Linh",
+      "slot": "wing",
+      "cls": "elf",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_mg_1": {
+      "name": "Cánh Bóng Tối",
+      "slot": "wing",
+      "cls": "mg",
+      "tier": 1,
+      "icon": "feathered-wing",
+      "def": 6,
+      "dmg": 0.1,
+      "absorb": 0.1,
+      "price": 0,
+      "level": 20,
+      "desc": "Ghép ở Máy Hỗn Nguyên. Tăng sát thương gây ra và giảm sát thương nhận vào."
+    },
+    "wing_mg_2": {
+      "name": "Cánh Hủy Diệt",
+      "slot": "wing",
+      "cls": "mg",
+      "tier": 2,
+      "icon": "feathered-wing",
+      "def": 12,
+      "dmg": 0.18,
+      "absorb": 0.18,
+      "price": 0,
+      "level": 35,
+      "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    }
+  }
+}
