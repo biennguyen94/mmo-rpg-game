@@ -1073,7 +1073,9 @@
 
   function viewLogin() {
     const reg = authMode === 'register';
+    const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
+      <p class="small" style="text-align:right;margin:0" data-notr><button class="btn small-btn" data-act="lang" data-lang="${lg === 'vi' ? 'en' : 'vi'}">${lg === 'vi' ? 'English' : 'Tiếng Việt'}</button></p>
       <div class="intro">
         ${sprite('shadow_dragon', '', 'Hắc Long')}
         <h1>Hắc Long</h1>
@@ -1136,7 +1138,11 @@
   }
 
   function viewSettings() {
+    const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
+      <div class="card" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
+        <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
+        <button class="btn ${lg === 'en' ? 'primary' : ''}" data-act="lang" data-lang="en" aria-pressed="${lg === 'en'}">English</button></div></div></div>
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -2415,6 +2421,7 @@
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
     const act = t.dataset.act;
+    if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
     if (t.dataset.adm) { onAdmin(t); return; }

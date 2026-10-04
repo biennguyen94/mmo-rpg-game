@@ -186,6 +186,7 @@
   }
 
   function label(text, cx, y, color) {
+    if (window.I18N) text = window.I18N.tr(text);
     ctx.font = '600 10px "Be Vietnam Pro", system-ui, sans-serif';
     const w = ctx.measureText(text).width + 6;
     ctx.fillStyle = 'rgba(12, 9, 16, 0.78)';
