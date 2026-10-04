@@ -68,6 +68,10 @@ defmodule HacLongWeb.Batch1Test do
       html = build_conn() |> get("/") |> html_response(200)
       assert html =~ ~s(window.CLIENT_VERSION = "#{version()}")
 
+      # file giao diện kèm mã phiên bản: deploy bản mới thì trình duyệt không dùng file cũ trong cache
+      assert html =~ ~s(src="js/ui.js?v=#{version()}")
+      assert html =~ ~s(href="css/style.css?v=#{version()}")
+
       user = create_user()
 
       for params <- [%{"v" => "cu"}, %{}] do

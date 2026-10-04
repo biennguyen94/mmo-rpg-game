@@ -369,7 +369,8 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   dùng một lần; `UserSocket.connect` chỉ nhận `%{"ticket" => …}` (không nhận token nữa). `net.js` **tự quản lý nối lại**
   (tắt nối lại của Phoenix): mất kết nối → lấy vé mới → mở socket → vào lại kênh (`onRejoin`), lùi dần 1 → 15 s.
 - **Phiên bản giao diện** (`HacLongWeb.ClientVersion`): băm `priv/static/js/*.js` + `css/*.css` lúc biên dịch; trang chủ chèn
-  `window.CLIENT_VERSION` (trang không cache: `no-store`); join `"game"` phải gửi `{v}` đúng, sai → `{reason: "version"}`,
+  `window.CLIENT_VERSION` (trang không cache: `no-store`) và gắn `?v=<mã>` vào `js/…`, `css/…` (deploy bản mới thì trình duyệt
+  không dùng file cũ trong cache); join `"game"` phải gửi `{v}` đúng, sai → `{reason: "version"}`,
   client tự tải lại (mỗi phiên bản một lần, chặn vòng lặp bằng `sessionStorage`).
 - **`rid`** (`Session`): lệnh `cmd` có `rid` (chuỗi ≤ 64) thì nhớ kết quả (64 mã gần nhất); gửi lại cùng mã trả kết quả cũ.
   "Thao tác quá nhanh" không ghi nhớ. Client gắn `rid` cho mọi lệnh trừ `move`; hết giờ chờ thì gửi lại một lần cùng `rid`.

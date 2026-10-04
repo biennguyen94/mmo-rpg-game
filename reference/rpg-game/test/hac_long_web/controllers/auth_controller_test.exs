@@ -148,7 +148,7 @@ defmodule HacLongWeb.AuthControllerTest do
 
   test "trang chủ trả về giao diện kèm dữ liệu game", %{conn: conn} do
     html = conn |> get("/") |> html_response(200)
-    assert html =~ ~s(<script src="js/net.js"></script>)
+    assert html =~ ~r{<script src="js/net.js\?v=[0-9a-f]+"></script>}
     assert html =~ "/vendor/phoenix.js"
     assert html =~ "window.GAME_DATA = "
     assert html =~ ~s("maxLevel":50)

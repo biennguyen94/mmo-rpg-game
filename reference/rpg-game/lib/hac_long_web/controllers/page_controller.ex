@@ -11,14 +11,18 @@ defmodule HacLongWeb.PageController do
   """
   def index(conn, _params) do
     data = Jason.encode!(client_data(), escape: :html_safe)
+    version = HacLongWeb.ClientVersion.current()
 
     html =
       Application.app_dir(:hac_long, "priv/static/index.html")
       |> File.read!()
       |> String.replace(
         "<!--GAME_DATA-->",
-        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{HacLongWeb.ClientVersion.current()}\";</script>"
+        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{version}\";</script>"
       )
+      # js/…, css/… kèm `?v=phiên_bản`: deploy bản mới thì trình duyệt tải file mới, không dùng bản
+      # cũ còn trong cache (Plug.Static không đặt max-age nên trình duyệt có thể tự giữ file khá lâu)
+      |> String.replace(~r/(src|href)="((?:js|css)\/[^"?]+)"/, "\\1=\"\\2?v=#{version}\"")
 
     # không cache trang chủ: sau khi cập nhật server, tải lại là có ngay mã phiên bản mới
     conn
