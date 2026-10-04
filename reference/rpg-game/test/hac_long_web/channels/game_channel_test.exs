@@ -7,8 +7,11 @@ defmodule HacLongWeb.GameChannelTest do
   alias HacLongWeb.UserSocket
 
   defp join_game(user) do
-    {:ok, socket} = connect(UserSocket, %{"token" => Accounts.sign_token(user)})
-    {:ok, reply, socket} = subscribe_and_join(socket, "game", %{})
+    {:ok, socket} = connect(UserSocket, %{"ticket" => Accounts.issue_ws_ticket(user)})
+
+    {:ok, reply, socket} =
+      subscribe_and_join(socket, "game", %{"v" => HacLongWeb.ClientVersion.current()})
+
     {reply, socket}
   end
 
@@ -25,8 +28,9 @@ defmodule HacLongWeb.GameChannelTest do
     end
   end
 
-  test "từ chối kết nối khi token sai" do
-    assert :error = connect(UserSocket, %{"token" => "sai"})
+  test "từ chối kết nối khi vé sai / dùng token đăng nhập" do
+    assert :error = connect(UserSocket, %{"ticket" => "sai"})
+    assert :error = connect(UserSocket, %{"token" => Accounts.sign_token(create_user())})
     assert :error = connect(UserSocket, %{})
   end
 
@@ -1267,8 +1271,10 @@ defmodule HacLongWeb.GameChannelTest do
   test "tab khác nhận trạng thái mới, tab gửi lệnh thì không nhận trùng" do
     user = create_user()
     {_, s1} = join_game(user)
-    {:ok, sock2} = connect(UserSocket, %{"token" => Accounts.sign_token(user)})
-    {:ok, _, _s2} = subscribe_and_join(sock2, "game", %{})
+    {:ok, sock2} = connect(UserSocket, %{"ticket" => Accounts.issue_ws_ticket(user)})
+
+    {:ok, _, _s2} =
+      subscribe_and_join(sock2, "game", %{"v" => HacLongWeb.ClientVersion.current()})
 
     cmd(s1, %{"act" => "create", "name" => "Hai Tab", "cls" => "warrior"})
     assert_push "player", %{player: %{name: "Hai Tab"}}

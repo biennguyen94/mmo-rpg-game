@@ -169,13 +169,18 @@ defmodule HacLong.Market do
     end
   end
 
+  # Đăng bán: ghi tin rao + lưu nhân vật (đã bớt món) trong một transaction. Chỉ báo thành công khi
+  # transaction thật sự commit (trước đây kết quả bị bỏ qua, `{:error, _}` vẫn trả `{:ok, ...}`).
   defp commit(p, save, row, msg) do
     Repo.transaction(fn ->
       Repo.insert_all("market_listings", [row])
       save.(p)
+      :ok
     end)
-
-    {:ok, msg, p}
+    |> case do
+      {:ok, :ok} -> {:ok, msg, p}
+      {:error, _} -> {:error, "Không rao bán được, hãy thử lại."}
+    end
   end
 
   # ---------- Mua ----------

@@ -34,6 +34,7 @@ defmodule HacLong.Game.Session do
 
   @idle_timeout :timer.minutes(10)
   @flush_ms 5_000
+  @rid_memory 64
   # khoảng cách tối thiểu giữa hai bước, cho phép dồn vài bước khi mạng giật
   @step_ms 90
   @step_burst 4
@@ -112,7 +113,11 @@ defmodule HacLong.Game.Session do
       dirty: false,
       flush_timer: nil,
       steps: {@step_burst, now()},
-      acts: {@act_burst, now()}
+      acts: {@act_burst, now()},
+      # lệnh đã chạy theo `rid` (mã yêu cầu của client): gửi lại cùng `rid` thì trả kết quả cũ,
+      # không chạy lần hai (bấm đúp, mạng chập chờn gửi lại). Giữ `@rid_memory` mã gần nhất.
+      rids: %{},
+      rid_order: :queue.new()
     }
 
     {:ok, s, @idle_timeout}
@@ -177,6 +182,23 @@ defmodule HacLong.Game.Session do
 
       :too_fast ->
         reply({%{ok: false}, s.player}, s)
+    end
+  end
+
+  defp handle({:command, %{"rid" => rid} = cmd, origin}, from, s)
+       when is_binary(rid) and byte_size(rid) in 1..64 do
+    case s.rids do
+      %{^rid => result} ->
+        reply({result, s.player}, s)
+
+      _ ->
+        case handle({:command, Map.delete(cmd, "rid"), origin}, from, s) do
+          {:reply, {result, _player} = value, s, t} ->
+            {:reply, value, remember_rid(s, rid, result), t}
+
+          other ->
+            other
+        end
     end
   end
 
@@ -596,6 +618,20 @@ defmodule HacLong.Game.Session do
   def terminate(_reason, s), do: flush(s)
 
   # ---------- Nội bộ ----------
+
+  # "Thao tác quá nhanh" không ghi nhớ: gửi lại cùng mã sau đó vẫn chạy được.
+  defp remember_rid(s, _rid, %{ok: false, msg: "Thao tác quá nhanh."}), do: s
+
+  defp remember_rid(s, rid, result) do
+    order = :queue.in(rid, s.rid_order)
+
+    if :queue.len(order) > @rid_memory do
+      {{:value, old}, order} = :queue.out(order)
+      %{s | rids: s.rids |> Map.delete(old) |> Map.put(rid, result), rid_order: order}
+    else
+      %{s | rids: Map.put(s.rids, rid, result), rid_order: order}
+    end
+  end
 
   defp reply(value, s), do: {:reply, value, s, timeout(s)}
 

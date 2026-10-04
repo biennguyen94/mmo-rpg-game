@@ -13,6 +13,7 @@ defmodule HacLong.Application do
       {DNSCluster, query: Application.get_env(:hac_long, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: HacLong.PubSub},
       HacLong.RateLimit,
+      HacLong.Accounts.WsTicket,
       HacLong.Chat,
       HacLong.WorldBoss,
       HacLong.Party,

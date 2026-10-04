@@ -531,6 +531,8 @@ Chưa làm: Q10. Chi tiết code: `CODEBASE_NOTES.md §6`.
 | Vận hành | **J6** (cờ tính năng) + **N12**, **K9** (sổ tay vận hành), **N16** (môi trường cloud) |
 | Chơi / giao diện | **B11** (vị trí kẹt → điểm sinh), **E17** (nhận thư tất cả hoặc không), **E18** (x2 EXP theo sự kiện), **L17** (chỉ vẽ lại phần đổi), **L21**, **L22** (thẻ thông tin quái) |
 
+**Đợt 1 đã làm (2026-10-04):** E6, I17, E14, I2, I3, I1, N4. Chi tiết: `CODEBASE_NOTES.md §9b`.
+
 **Nên làm, công vừa:**
 - **C10:** cấp nâng theo từng món; cần trước D1.
 - **E4:** giao dịch một transaction.

@@ -87,7 +87,8 @@ trận nếu làm cả nhiệm vụ và việc hằng ngày (theo mô phỏng).
 ```
 Trình duyệt (priv/static: index.html, js/ui.js, js/net.js)
    │  POST /api/register, /api/login  → token
-   │  WebSocket /socket?token=…  → kênh "game"
+   │  POST /api/ws-ticket (token ở header) → vé dùng một lần
+   │  WebSocket /socket?ticket=…  → kênh "game" {v: phiên bản giao diện}
    ▼
 HacLongWeb.GameChannel ── lệnh {"act": "attack"} ──▶ HacLong.Game.Session (1 tiến trình / tài khoản)
         ▲                                               │  HacLong.Game.Commands  (kiểm tra đầu vào)
@@ -199,9 +200,10 @@ lúc hạ từng trùm.
 | | Tài khoản bị khóa: đăng nhập trả 403 kèm lý do và thời hạn; token cũ hết hiệu lực |
 | `POST /api/logout`, `POST /api/logout_all` | (có token) đăng xuất thiết bị này / mọi thiết bị |
 | `POST /api/password` | (có token) `{current, password}` → `{token, username}`; thiết bị khác bị đăng xuất |
+| `POST /api/ws-ticket` | (có token) → `{ticket}`: vé dùng một lần, sống 30 giây, để mở `/socket?ticket=…` (token không nằm trong URL); 20 lần / phút |
 | | Quá giới hạn thì trả 429 kèm `retry-after` |
-| join `"game"` | → `{username, user_id, admin, blocked, mail, player}` (`player` là `null` nếu chưa tạo nhân vật; `blocked` là `[{id, name}]` người đã chặn; `mail` là số thư chưa mở) |
-| push `"cmd"` | `{act, ...}` → `{ok, msg?, result?, player}` |
+| join `"game"` | `{v}` (mã phiên bản giao diện, `window.CLIENT_VERSION`); sai mã → lỗi `{reason: "version"}`, client tự tải lại trang. Thành công → `{username, user_id, admin, blocked, mail, player}` (`player` là `null` nếu chưa tạo nhân vật; `blocked` là `[{id, name}]` người đã chặn; `mail` là số thư chưa mở) |
+| push `"cmd"` | `{act, rid?, ...}` → `{ok, msg?, result?, player}`. `rid` (mã yêu cầu, trừ lệnh đi): gửi lại cùng `rid` thì trả kết quả cũ, không chạy hai lần |
 | server push `"player"` | `{player}` khi nhân vật đổi từ tab khác |
 | server push `"map"` | `{map, phase, monsters, nodes, players}` (người chơi kèm `look`, `tag`) (`phase`: dawn/day/dusk/night; quái Bóng Đêm có `rare: true`) của bản đồ đang đứng, mỗi khi có thay đổi |
 | push `"chat"` | `{text}` → ok hoặc `{msg}` lỗi (cả khi bị cấm chat); server đẩy `"chat"` `{id, uid, name, title, tag, map, text, at, guild?}` cho mọi người (trừ người đã chặn `uid`), `"chat_history"` lúc mới vào |

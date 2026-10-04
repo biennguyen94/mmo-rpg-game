@@ -332,18 +332,33 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
   - `test/support/`: `channel_case`, `conn_case`, `data_case`.
 - **Alias `mix test`** = `ecto.create --quiet` + `ecto.migrate --quiet` + `test` (`mix.exs:54-61`). Cần PostgreSQL.
 - **Không có** test JS, test giao diện, `package.json`.
-- **CI:** `reference/rpg-game/.github/workflows/ci.yml` (Postgres 16, OTP 25 / Elixir 1.17: format, compile `--warnings-as-errors`, test).
-  ⚠ **Không chạy**, vì thư mục này nằm trong repo `mmo-rpg-game` (`git rev-parse --show-toplevel` = `/home/user/mmo-rpg-game`);
-  GitHub chỉ đọc `.github/workflows` ở gốc repo.
+- **CI:** job **`hac-long`** trong `.github/workflows/ci.yml` của repo ngoài (`working-directory: reference/rpg-game`; Postgres 16,
+  OTP 25 / Elixir 1.17: format, compile `--warnings-as-errors`, `node --check` các file JS, `mix test`).
+  File `reference/rpg-game/.github/workflows/ci.yml` vẫn còn nhưng GitHub **không chạy** (thư mục con của repo `mmo-rpg-game`).
 - **Simulator:** `mix hac_long.simulate [N]` (mặc định 5).
   - Chạy 3 lớp × 5 cách chơi: `[]`, `quests`, `+daily`, `+upgrade`, `+chests` (`lib/mix/tasks/hac_long.simulate.ex:22-28`) → `Simulator.run(cls, opts)`.
   - Đổi cân bằng thì chạy trước / sau để so.
+
+## 9b. Kết nối, bảo mật (Đợt 1, 2026-10-04)
+
+- **Vé WebSocket** (`HacLong.Accounts.WsTicket`, ETS): `POST /api/ws-ticket` (token ở header) → vé ngẫu nhiên sống 30 s,
+  dùng một lần; `UserSocket.connect` chỉ nhận `%{"ticket" => …}` (không nhận token nữa). `net.js` **tự quản lý nối lại**
+  (tắt nối lại của Phoenix): mất kết nối → lấy vé mới → mở socket → vào lại kênh (`onRejoin`), lùi dần 1 → 15 s.
+- **Phiên bản giao diện** (`HacLongWeb.ClientVersion`): băm `priv/static/js/*.js` + `css/*.css` lúc biên dịch; trang chủ chèn
+  `window.CLIENT_VERSION` (trang không cache: `no-store`); join `"game"` phải gửi `{v}` đúng, sai → `{reason: "version"}`,
+  client tự tải lại (mỗi phiên bản một lần, chặn vòng lặp bằng `sessionStorage`).
+- **`rid`** (`Session`): lệnh `cmd` có `rid` (chuỗi ≤ 64) thì nhớ kết quả (64 mã gần nhất); gửi lại cùng mã trả kết quả cũ.
+  "Thao tác quá nhanh" không ghi nhớ. Client gắn `rid` cho mọi lệnh trừ `move`; hết giờ chờ thì gửi lại một lần cùng `rid`.
+- **Log:** `config :phoenix, :filter_parameters` lọc `password`, `current`, `token`, `ticket` (log HTTP và tham số socket).
+- **Vàng:** `characters.gold`, `mails.gold` là `bigint` + CHECK `>= 0` (migration `20261026000000`); vàng âm → `save!` ném
+  `Ecto.ConstraintError`.
+- Test: `test/hac_long_web/batch1_test.exs`.
 
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.
    Sửa DB trực tiếp khi người chơi đang online sẽ bị Session **ghi đè** ở lần lưu sau.
-2. **`Market.commit/4` bỏ qua kết quả transaction** (`market.ex:172-179`): rollback vẫn báo thành công.
+2. ~~`Market.commit/4` bỏ qua kết quả transaction~~: **đã sửa** (Đợt 1), giờ chỉ báo thành công khi transaction commit.
 3. **Giao dịch hai pha không transaction** (`trade.ex:182-200`): tiến trình chết giữa chừng có thể lệch đồ / vàng.
 4. **Cấp nâng theo loại đồ thường** (`upgrades` khóa theo id): hai cái `broadsword` dùng chung một cấp; bán cái cuối thì mất cấp.
 5. **3 ô trang bị cố định** ở nhiều chỗ (mục 3, 6). Thêm ô mới phải sửa: `characters.ex:67`, `engine.ex:940-950, 1109, 1128-1134`,

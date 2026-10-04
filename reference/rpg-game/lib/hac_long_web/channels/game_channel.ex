@@ -75,7 +75,14 @@ defmodule HacLongWeb.GameChannel do
   alias HacLong.World.{Maps, MapServer}
 
   @impl true
-  def join("game", _params, socket) do
+  # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
+  def join("game", params, socket) do
+    if params["v"] == HacLongWeb.ClientVersion.current(),
+      do: join_game(socket),
+      else: {:error, %{reason: "version", msg: "Đã có bản cập nhật, đang tải lại trang..."}}
+  end
+
+  defp join_game(socket) do
     uid = socket.assigns.user_id
     Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(uid))
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())

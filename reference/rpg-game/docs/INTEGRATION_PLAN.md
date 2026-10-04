@@ -44,8 +44,7 @@
   Lưu ý: file này được nạp lúc biên dịch (`data.ex:31-59`), đổi số phải khởi động lại server.
 - **Chất lượng:** mỗi bước giữ `mix format --check-formatted`, `mix compile --warnings-as-errors`, `mix test` xanh.
   - Đổi cân bằng (mục 3, 4) thì chạy thêm `mix hac_long.simulate`.
-- **CI:** `reference/rpg-game/.github/workflows/ci.yml` **không chạy** vì thư mục này nằm trong repo `mmo-rpg-game`.
-  Sẽ thêm một job vào `.github/workflows/ci.yml` của repo ngoài, với `working-directory: reference/rpg-game` (làm ở mục 5).
+- **CI:** đã thêm job `hac-long` vào `.github/workflows/ci.yml` của repo ngoài (Đợt 1, N4); file workflow trong thư mục này GitHub không chạy.
 
 ---
 

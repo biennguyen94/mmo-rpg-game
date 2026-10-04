@@ -2264,10 +2264,11 @@
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
     });
-    Net.onStatus((st) => {
+    Net.onStatus((st, msg) => {
       const bar = $('#netbar');
       bar.hidden = st === 'online';
-      bar.textContent = 'Mất kết nối, đang kết nối lại…';
+      // 'version': server vừa cập nhật, giao diện này cũ → trang tự tải lại
+      bar.textContent = st === 'version' ? (msg || 'Đã có bản cập nhật, đang tải lại trang...') : 'Mất kết nối, đang kết nối lại…';
     });
     // vào lại sau khi mất mạng: lấy trạng thái mới nhất từ server
     Net.onRejoin((r) => { P = r.player; walk = null; render(); });
