@@ -29,7 +29,8 @@ for (let i = 0; i < 25 && (await player(page)).quests.active.forest_kill < 5; i+
 }
 p = await player(page);
 R.check('hạ đủ 5 Dơi Hang', p.quests.active.forest_kill >= 5, JSON.stringify(p.quests.active));
-await page.click('#tabs [data-tab="quests"]');
+await page.click('#tabs [data-tab="menu"]');
+await page.click('[data-menu="quests"]');
 await shot(page, 'progress-quests.png');
 await page.click('#tabs [data-tab="map"]');
 await travel(page, 'village');

@@ -90,3 +90,12 @@
 | P7-3 | Hết giờ: quái vàng chưa ai đánh biến mất, trận đang đánh thì đánh nốt (vẫn nhận thưởng). | Không cắt ngang trận của người chơi. |
 | P7-4 | Bản đồ nào hết chỗ trống để thả quái thì coi như xong; mọi bản đồ xong (đã hạ trùm vàng) thì kết thúc sớm. | Không kẹt sự kiện. |
 | P7-5 | Trạng thái sự kiện không lưu database; server khởi động lại thì đợt đang chạy mất, đợi lịch tiếp theo. | Sự kiện ngắn (15 phút); không thêm bảng. |
+
+## Phase 9 — Menu, chat trong bản đồ, màn vừa khít (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P9-1 | Menu tách tab Khác thành: Nhiệm vụ, Hành trình (hồi máu, hành trình trùm, trùm thế giới sắp tới), Đấu trường, Xếp hạng, Bang hội, Thành tựu, Thú cưng, Kỹ năng, Sổ quái, Cài đặt (+ Quản trị cho admin). Dùng lại đúng nội dung cũ. | Không mất tính năng nào, ít rủi ro. |
+| P9-2 | Nút 🗺 trên dock tạm hiện thông báo "sắp có"; bảng chọn bản đồ làm ở Phase 10 cùng 20 bản đồ mới. Phím M giữ "về bản đồ" tới Phase 10. | Đúng thứ tự anh chốt (9-E). |
+| P9-3 | Nút 💬 hiện cả trên máy tính (cùng chỗ góc dưới phải); máy tính có thêm Enter / Esc. Trong trận đánh không hiện khung chat (màn trận đánh riêng). | Một cách dùng cho mọi máy; trận đánh cần chỗ cho nút hành động. |
+| P9-4 | Hộp thoại trên bản đồ (thông tin người chơi, lời mời…) nằm trên khung chat. | e2e phát hiện khung chat đang mở che nút trong hộp thoại. |

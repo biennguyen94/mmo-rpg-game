@@ -251,7 +251,7 @@ e2e `admin.mjs` +4 bước.
 
 ---
 
-## Phase 9 — Sửa lỗi, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại (yêu cầu thêm 2026-10-04)
+## Phase 9 — Sửa lỗi, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -260,6 +260,11 @@ e2e `admin.mjs` +4 bước.
 | **U3** | Dock 5 nút (Bản đồ, Nhân vật, Túi đồ, 🗺, ☰ Menu); Menu kiểu MU Web gom các tab dock còn lại (Nhiệm vụ, Khác, Quản trị); Cài đặt gồm ngôn ngữ, âm thanh, đăng xuất. Bạn bè / Hộp thư / Thông báo giữ trên HUD |
 | **U4** | Chat kiểu MU Web đè lên góc bản đồ, bỏ thẻ chat dưới bản đồ |
 | **U5** | Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn |
+
+**Kết quả:** dock 5 nút (nút 🗺 tạm báo "sắp có", làm ở Phase 10); Menu 10 mục + Quản trị; Cài đặt = âm thanh, nhạc, đăng
+xuất, đổi mật khẩu, xóa nhân vật; phím Tab mở / đóng Menu. Chat đè góc dưới trái bản đồ (tin mờ sau 15 s, ▴ xem lịch sử),
+nút 💬 36 px góc dưới phải, chấm đỏ khi có tin mới; Enter mở, Esc đóng. Bản đồ / trận đánh vừa khít (`#view.fit`, canvas cao
+theo khung còn lại). e2e 6/6 xanh (mobile 18 bước: không cuộn ở bản đồ và trận đánh, vị trí / cỡ nút 💬, gửi chat, Cài đặt).
 
 ## Phase 10 — 20 bản đồ mới, chọn bản đồ, hai ngôn ngữ
 

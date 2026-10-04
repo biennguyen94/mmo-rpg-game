@@ -36,6 +36,7 @@ const h = await A.page.evaluate((uid) => window.Net.dm('history', { uid }), uidB
 R.check('A nhận tin riêng của B', JSON.stringify(h).includes('chào bạn'));
 
 // ---------- Chat thế giới: gõ trên ô chat ----------
+await A.page.click('.chat-btn');
 await A.page.fill('#chat-input', 'xin chào cả làng');
 await A.page.press('#chat-input', 'Enter');
 await B.page.waitForFunction(() => document.querySelector('#chat-log') && document.querySelector('#chat-log').textContent.includes('xin chào cả làng'), null, { timeout: 5000 }).catch(() => null);

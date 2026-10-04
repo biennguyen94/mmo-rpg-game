@@ -538,6 +538,14 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
   đánh lưu vào database: khóa mới của quái phải thêm vào `@battle_keys` trong `Characters` (`golden`, `jewel_chance`), nếu
   không nạp lại nhân vật sẽ lỗi `KeyError`.
 
+## 9l. Menu, chat trong bản đồ, màn vừa khít (Phase 9, 2026-10-04)
+
+- Dock: `map`, `hero`, `bag`, `travel` (tạm toast), `menu`. `goTab('quests' | 'misc' | 'admin')` vẫn chạy (chuyển thành mục Menu).
+  `MENU` / `MENU_VIEW` / `menuSec` / `onMenu(sec)` trong `ui.js`; hook test `__hl.menu(sec)`, `ui().menu`.
+- Chat: `viewChat()` giờ là khung đè trên bản đồ (truyền vào `Map_.html` làm overlay), `toggleChat(on)` (**khác** `openChat(uid)`
+  là tin riêng bạn bè). Form vẫn `#chat-form` / `#chat-input`, chỉ có khi khung đang mở.
+- `#view.fit` (bản đồ, trận đánh): không cuộn; `map.js resize()` lấy chiều cao theo `.map-wrap`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.

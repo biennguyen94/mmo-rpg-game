@@ -82,7 +82,7 @@ if (p.points >= 2) {
 }
 
 R.check(`tab chính mở được (${name})`, await (async () => {
-  for (const t of ['hero', 'bag', 'quests', 'misc', 'map']) { await page.click(`#tabs [data-tab="${t}"]`); if ((await ui(page)).tab !== t) return false; }
+  for (const t of ['hero', 'bag', 'menu', 'map']) { await page.click(`#tabs [data-tab="${t}"]`); if ((await ui(page)).tab !== t) return false; }
   return true;
 })());
 R.check('không lỗi JS', errors.length === 0, errors.join(' | '));

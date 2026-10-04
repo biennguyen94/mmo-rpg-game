@@ -29,7 +29,8 @@
   đồ) dẫn từng bước và tặng quà khi xong; bấm "Bỏ qua" nếu không cần.
 - Chạm (hoặc bấm) vào một ô trên bản đồ để đi tới; bước vào quái để đánh; bước vào NPC để nói chuyện.
 - Thanh trên cùng (HUD): tên, cấp, vàng, máu (đỏ), MP (xanh), kinh nghiệm; nút 👥 bạn bè, 🔔 thông báo, ✉ hộp thư.
-- Các tab dưới cùng: **Bản đồ**, **Nhân vật**, **Túi đồ**, **Nhiệm vụ**, **Khác** (đấu trường, xếp hạng, bang, thành tựu…).
+- Thanh dưới cùng (dock): **Bản đồ**, **Nhân vật**, **Túi đồ**, **Chọn map** (sắp có), **Menu** (Nhiệm vụ, Hành trình, Đấu trường,
+  Xếp hạng, Bang hội, Thành tựu, Thú cưng, Kỹ năng, Sổ quái, **Cài đặt**: âm thanh, nhạc, đăng xuất, đổi mật khẩu…). Phím **Tab** mở Menu.
 
 ## 2. Bốn lớp nhân vật
 
@@ -141,7 +142,8 @@ Kỹ năng tốn MP; MP hồi dần mỗi lượt và khi nghỉ trọ. Kỹ nă
 - **Giao dịch trực tiếp**: hai người đứng gần nhau (cùng bản đồ, cách ≤ 8 ô); mỗi bên đặt vàng / đồ, cả hai bấm Xác nhận thì đổi.
   Ai đổi món thì cả hai phải xác nhận lại. Tự hủy khi: lời mời quá 30 giây, mở quá 180 giây, một bên đổi bản đồ / vào trận /
   thoát game.
-- **Chat**: ô chat dưới bản đồ. Nút đổi kênh Tất cả / Bang / Đội, hoặc gõ lệnh:
+- **Chat**: khung chat ở góc dưới trái bản đồ (tin cũ mờ dần). Bấm nút **💬** (góc dưới phải) hoặc **Enter** để gõ, **Esc** để đóng,
+  ▴ để xem lại lịch sử. Nút đổi kênh Tất cả / Bang / Đội, hoặc gõ lệnh:
 
   | Lệnh | Gửi tới |
   |---|---|

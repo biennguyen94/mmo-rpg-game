@@ -164,7 +164,9 @@
   function resize() {
     if (!canvas) return;
     const w = canvas.parentElement.clientWidth;
-    const h = Math.min(Math.round(window.innerHeight * 0.52), 13 * TILE);
+    // màn bản đồ vừa khít (U5): cao theo khung còn lại giữa HUD và dock
+    const fit = canvas.closest('.fit');
+    const h = fit ? Math.max(160, canvas.parentElement.clientHeight) : Math.min(Math.round(window.innerHeight * 0.52), 13 * TILE);
     const dpr = window.devicePixelRatio || 1;
     canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr);

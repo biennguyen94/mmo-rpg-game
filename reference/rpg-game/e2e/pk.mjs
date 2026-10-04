@@ -54,11 +54,14 @@ R.check('cược quá số vàng đang có: không gửi', (await B.page.evaluat
 await act(A.page, '[data-act="dialog-close"]').catch(() => null);
 
 // ---------- Lịch sử trận ở tab Khác ----------
-await A.page.click('#tabs [data-tab="misc"]');
+await A.page.click('#tabs [data-tab="menu"]');
+await A.page.click('[data-menu="arena"]');
 await A.page.waitForSelector('#pk-history .item', { timeout: 8000 }).catch(() => null);
 R.check('tab Khác hiện lịch sử trận cược', (await A.page.$$('#pk-history .item')).length === 1);
 
 // ---------- Bảng xếp hạng theo lớp ----------
+await A.page.click('[data-act="menu-back"]');
+await A.page.click('[data-menu="board"]');
 await A.page.waitForSelector('#board-cls', { timeout: 8000 }).catch(() => null);
 await act(A.page, '[data-board-cls="dk"]');
 // bảng giữ trong cache 60 giây nên người vừa tạo có thể chưa có tên; hạng của mình thì luôn mới
@@ -73,6 +76,7 @@ await A.page.evaluate((name) => window.Net.friends('request', { name }), B.name)
 await B.page.evaluate((uid) => window.Net.friends('accept', { uid }), uidA);
 // A nạp lại danh sách bạn (khi B nhận lời, giao diện A tự nạp)
 await A.page.waitForTimeout(500);
+await A.page.click('.chat-btn');
 await A.page.waitForSelector('#chat-input');
 await A.page.fill('#chat-input', `/w ${B.name} hẹn đấu tối nay`);
 await A.page.press('#chat-input', 'Enter');
@@ -86,7 +90,8 @@ await B.page.waitForFunction(() => window.__hl.ui().dialog !== 'pk', null, { tim
 R.check('lời mời hết hạn sau 30 giây: hộp mời tự đóng', (await ui(B.page)).dialog !== 'pk');
 
 // ---------- Quản trị: người đang online ----------
-await adm.page.click('#tabs [data-tab="admin"]');
+await adm.page.click('#tabs [data-tab="menu"]');
+await adm.page.click('[data-menu="admin"]');
 await act(adm.page, '[data-adm="online"]');
 await adm.page.waitForSelector('#adm-online .item', { timeout: 5000 }).catch(() => null);
 const onl = await adm.page.textContent('#adm-online');

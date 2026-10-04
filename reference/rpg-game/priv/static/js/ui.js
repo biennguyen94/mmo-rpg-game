@@ -164,6 +164,7 @@
     hud.innerHTML = viewHud();
     if (P.battle) {
       tabs.hidden = true;
+      view.classList.add('fit');
       view.innerHTML = viewBattle();
       const log = view.querySelector('.log');
       if (log) log.scrollTop = log.scrollHeight;
@@ -171,15 +172,18 @@
       return;
     }
     tabs.hidden = false;
+    // dock (Phase 9, U3): Bản đồ, Nhân vật, Túi đồ, Chọn bản đồ, Menu
     tabs.innerHTML = [
       ['map', 'walk', 'Bản đồ'],
       ['hero', 'person', 'Nhân vật'],
       ['bag', 'backpack', 'Túi đồ'],
-      ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
-      ['misc', 'laurels', 'Khác'],
-    ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
+      ['travel', 'dungeon-gate', 'Chọn map'],
+      ['menu', 'open-book', 'Menu'],
+    ].map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewInvasionBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
+    // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
+    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewInvasionBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -198,8 +202,9 @@
       const log = $('#chat-log');
       if (log) log.scrollTop = log.scrollHeight;
     }
-    if (tab === 'misc') { loadBoard(); loadArena(); }
-    if (tab === 'admin' && adm.reports == null && !adm.loading) loadReports();
+    if (onMenu('arena')) loadArena();
+    if (onMenu('board')) loadBoard();
+    if (onMenu('admin') && adm.reports == null && !adm.loading) loadReports();
   }
 
   // ---------- Quản trị ----------
@@ -209,7 +214,7 @@
     adm.loading = true;
     try { adm.reports = (await Net.admin('reports')).reports; } catch (e) { toast(e.msg, true); }
     adm.loading = false;
-    if (tab === 'admin') render();
+    if (onMenu('admin')) render();
   }
 
   function viewAdmin() {
@@ -759,7 +764,7 @@
   // ---------- Đấu trường ----------
   async function loadArena() {
     try { arena = await Net.arena(); pk = await Net.pk('info'); } catch (e) { /* thử lại lần sau */ }
-    if (tab === 'misc') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
+    if (onMenu('arena')) { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
   }
 
   function viewArena() {
@@ -782,15 +787,26 @@
     </div>`;
   }
 
+  // Chat kiểu MU Web (Phase 9, U4): đè lên góc dưới trái bản đồ, tin cũ mờ dần; ô nhập ẩn tới khi bấm Enter / 💬
+  // (nút 💬 ở góc dưới phải, chấm đỏ khi có tin mới lúc ô nhập đang đóng).
+  let chatOpen = false, chatUnread = false, chatWide = false;
+  const chatBtn = () => `<button class="chat-btn" data-act="chat-open" aria-label="${chatOpen ? 'Đóng chat' : 'Mở chat'}">💬${chatUnread && !chatOpen ? '<span class="chat-dot"></span>' : ''}</button>`;
   function viewChat() {
-    return `<div class="card chat">
-      <div class="chat-log" id="chat-log" aria-live="polite">${chats.length ? chats.map(chatLine).join('') : '<p class="small muted">Chưa có ai nói gì. Chào mọi người đi!</p>'}</div>
-      <form id="chat-form" class="chat-form" autocomplete="off">
+    return `<div class="chat-ov ${chatOpen || chatWide ? 'open' : ''}" id="chat-ov">
+      ${chatOpen ? `<button class="chat-wide" data-act="chat-wide" aria-label="Xem lịch sử chat">${chatWide ? '▾' : '▴'}</button>` : ''}
+      <div class="chat-log" id="chat-log" aria-live="polite">${chats.map(chatLine).join('')}</div>
+      ${chatOpen ? `<form id="chat-form" class="chat-form" autocomplete="off">
         ${chatChannels().length > 1 ? `<button type="button" class="btn chat-to ${chatTo !== 'world' ? 'on' : ''}" data-act="chat-to" aria-label="Đổi kênh chat">${{ world: 'Tất cả', guild: 'Bang', party: 'Đội' }[chatTo]}</button>` : ''}
         <input type="text" id="chat-input" maxlength="120" placeholder="${{ world: 'Nói với mọi người…', guild: 'Nói trong bang…', party: 'Nói trong tổ đội…' }[chatTo]}" value="${esc(chatDraft)}" aria-label="Tin nhắn">
         <button class="btn" type="submit">Gửi</button>
-      </form>
-    </div>`;
+      </form>` : ''}
+    </div>${chatBtn()}`;
+  }
+  function toggleChat(on) {
+    chatOpen = on; if (on) chatUnread = false; else chatWide = false;
+    const ov = $('#chat-ov');
+    if (ov) { const b = $('.chat-btn'); if (b) b.remove(); ov.outerHTML = viewChat(); const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; }
+    if (on) { const ci = $('#chat-input'); if (ci) ci.focus(); }
   }
 
   function onChatMessage(m) {
@@ -798,6 +814,7 @@
     if (chats.length > 50) chats.shift();
     // người nói đang ở cùng bản đồ thì hiện bong bóng trên đầu
     if (P && m.map === P.pos.map) Map_.say(m.uid, m.text);
+    if (!chatOpen && m.uid !== Net.userId && !chatUnread) { chatUnread = true; const b = $('.chat-btn'); if (b) b.outerHTML = chatBtn(); }
     const log = $('#chat-log');
     if (log) {
       const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
@@ -829,7 +846,7 @@
     board.at = Date.now();
     try {
       board.data = await Net.leaderboard();
-      if (tab === 'misc') {
+      if (onMenu('board')) {
         const el = $('#board');
         if (el) el.outerHTML = viewBoard();
       }
@@ -1080,11 +1097,13 @@
     return ZONES.findIndex((z) => !P.bosses.includes(z.boss.id));
   }
 
-  function viewTown() {
+  // Menu (Phase 9, U3): các mục trước đây gom trong tab Khác, mỗi mục một màn
+  function viewJourney() {
     const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp;
     const ni = nextBossIndex();
     const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     return `
+      ${P.victory ? viewVictory() : ''}
       <div class="card">
         <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu và MP đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
       </div>
@@ -1095,20 +1114,16 @@
           ${ZONES.map((z, i) => `<div class="step ${P.bosses.includes(z.boss.id) ? 'done' : i === ni ? 'next' : ''}">${sprite(z.boss.id, '', z.boss.name)}<span>${z.boss.name}</span></div>`).join('')}
         </div>
         ${ni >= 0 ? `<p class="small muted">Mục tiêu kế tiếp: hạ <b style="color:var(--parch)">${ZONES[ni].boss.name}</b> (cấp ${ZONES[ni].boss.level}) ở ${ZONES[ni].name}.</p>` : '<p class="small" style="color:var(--gold)">Bạn đã hạ tất cả trùm. Vùng đất đã bình yên.</p>'}
-        <button class="btn block" data-tab="map">${icon('walk')} Ra bản đồ</button>
       </div>
-
-      ${viewGuildCard()}
-
-      ${viewArena()}
-
-      ${viewBestiary()}
 
       ${pots === 0 ? `<div class="card"><div class="row">${icon('health-potion', 'lg')}<div class="grow"><h3>Hết bình máu</h3><p class="small muted">Mua ở Bà Lang trong Làng, hoặc hái Thảo Dược nhờ bà pha.</p></div></div></div>` : ''}
 
       ${wb.alive ? '' : wb.nextAt ? `<div class="card"><div class="row">${sprite('ancient_dragon', '', '')}<div class="grow"><h3>Trùm thế giới</h3><p class="small muted">${esc(wb.name)} sẽ xuất hiện ở Tế Đàn sau khoảng ${Math.max(1, Math.round((wb.nextAt - wb.skew - Date.now()) / 60000))} phút. Cả server cùng đánh, chia thưởng theo sát thương.</p></div></div></div>` : ''}
-      ${viewBoard()}
+`;
+  }
 
+  function viewStats() {
+    return `
       <div class="card">
         <h3>Thành tích</h3>
         <div class="stat-grid">
@@ -1117,6 +1132,11 @@
         </div>
       </div>
 
+      ${viewAchievements()}`;
+  }
+
+  function viewSettings() {
+    return `
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -1406,21 +1426,39 @@
   // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
   // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
   // anh quyết sau giữ hay bỏ từng phần.
-  function viewMisc() {
+  function viewSkills() {
     const c = CLASSES[P.cls];
     return `
-      ${P.victory ? viewVictory() : ''}
-      ${viewTown()}
-
-      ${viewPets()}
-
       <div class="card"><h3>Kỹ năng</h3><div class="list">
         ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
           <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
           <div class="small muted">${k.desc} Tốn ${k.mp} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
-      </div></div>
+      </div></div>`;
+  }
 
-      ${viewAchievements()}`;
+  // ---------- Menu ----------
+  const MENU = [
+    ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
+    ['journey', 'campfire', 'Hành trình'],
+    ['arena', 'crossed-swords', 'Đấu trường'],
+    ['board', 'laurels', 'Xếp hạng'],
+    ['guild', 'hill-fort', 'Bang hội'],
+    ['stats', 'trophy', 'Thành tựu'],
+    ['pets', 'forest', 'Thú cưng'],
+    ['skills', 'sword-spin', 'Kỹ năng'],
+    ['bestiary', 'skull-crossed-bones', 'Sổ quái'],
+    ['settings', 'speaker', 'Cài đặt'],
+  ];
+  let menuSec = null; // mục Menu đang mở (null: lưới biểu tượng)
+  const onMenu = (sec) => tab === 'menu' && menuSec === sec;
+  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), settings: () => viewSettings(), admin: () => viewAdmin() };
+  function viewMenu() {
+    const items = MENU.concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []);
+    if (menuSec && MENU_VIEW[menuSec]) {
+      const it = items.find((x) => x[0] === menuSec);
+      return `<div class="row menu-head"><button class="btn" data-act="menu-back">‹ Menu</button><h2 class="display grow">${it ? it[2] : ''}</h2></div>${MENU_VIEW[menuSec]()}`;
+    }
+    return `<h2 class="display">Menu</h2><div class="menu-grid">${items.map(([id, ic, label]) => `<button class="menu-item" data-menu="${id}">${icon(ic, 'lg')}<span>${label}</span></button>`).join('')}</div>`;
   }
 
   // ---------- Thú cưng ----------
@@ -2288,6 +2326,10 @@
   const TAB_KEY = { hero: 'C', bag: 'I', map: 'M' };
   // Chuyển tab (nút thanh tab và phím tắt dùng chung)
   function goTab(id) {
+    // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
+    const sec = { quests: 'quests', misc: null, admin: 'admin' };
+    if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
+    if (id === 'travel') { toast('Bảng chọn bản đồ sẽ có ở bản cập nhật tới. Tạm dùng đá dịch chuyển.'); return; }
     tab = id; confirmReset = false; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
     stopFishing();
     if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
@@ -2310,6 +2352,7 @@
     if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
   }
   function hotkeyEscape() {
+    if (chatOpen) { toggleChat(false); return true; }
     if (tipAt) { hideTip(); return true; }
     if (npc) { npc = null; market.data = null; render(); return true; }
     if (dialog) { dialog = null; render(); return true; }
@@ -2324,8 +2367,9 @@
     if (k === 'Escape') { if (hotkeyEscape()) e.preventDefault(); return; }
     if (k === 'q') { e.preventDefault(); hotkeyPotion(); return; }
     if (P.battle) return;
+    if (e.key === 'Tab' && !P.battle) { e.preventDefault(); goTab(tab === 'menu' ? 'map' : 'menu'); return; }
     if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] && k !== 'm' ? 'map' : HOTKEY_TAB[k]); return; }
-    if (k === 'Enter' && tab === 'map' && !npc) { const ci = $('#chat-input'); if (ci) { e.preventDefault(); ci.focus(); } return; }
+    if (k === 'Enter' && tab === 'map' && !npc) { e.preventDefault(); toggleChat(true); return; }
     if (tab !== 'map') return;
     if (npc) return;
     const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' }[e.key];
@@ -2365,6 +2409,7 @@
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
     if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+    if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
@@ -2437,6 +2482,9 @@
     if (act === 'friend-ask') { friendsUi.confirm = +t.dataset.uid; render(); return; }
     if (act === 'dm-open') { openChat(+t.dataset.uid); return; }
     if (act === 'dm-back') { friendsUi.chat = null; loadFriends(); return; }
+    if (act === 'chat-open') { toggleChat(!chatOpen); return; }
+    if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
+    if (act === 'menu-back') { menuSec = null; render(); return; }
     if (act === 'notes-open') { notes.open = !notes.open; mail.open = false; walk = null; if (notes.open) { notes.list.forEach((n) => { n.read = true; }); saveNotes(); } render(); $('#view').scrollTop = 0; return; }
     if (act === 'notes-close') { notes.open = false; render(); return; }
     if (act === 'notes-clear') { notes.list = []; saveNotes(); render(); return; }
@@ -2675,7 +2723,7 @@
       if (!g) chatTo = 'world';
       if (!before && g) toast(`Bạn đã vào bang ${g.name}.`);
       if (before && !g) toast('Bạn không còn ở trong bang.');
-      if (guildUi.open) loadGuild(); else if (tab === 'misc') render();
+      if (guildUi.open) loadGuild(); else if (onMenu('guild')) render();
     });
     Net.onMail((n) => {
       const more = n > mail.unread;
@@ -2720,7 +2768,7 @@
       userId: () => Net.userId,
       ui: () => ({
         loading, busy, tab, logged: !!Net.username,
-        npc: npc && npc.id, dialog: dialog && dialog.type,
+        npc: npc && npc.id, dialog: dialog && dialog.type, menu: tab === 'menu' ? menuSec || 'grid' : null,
         trade: trade && trade.status, party: copy(party),
         mail: mail.open, notes: notes.open, unreadNotes: notesUnread(), friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
       }),
@@ -2731,6 +2779,7 @@
       step: (dir) => step(dir),
       send: async (cmd) => { await sendCommand(cmd); return copy(P); },
       tab: (id) => goTab(id),
+      menu: (sec) => { goTab('menu'); menuSec = sec || null; render(); },
       closeNpc: () => { npc = null; render(); },
       inspect: (uid) => openPlayer({ id: uid }),
     };

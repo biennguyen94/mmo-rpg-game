@@ -10,7 +10,8 @@ const { page, admin } = await adminSession(browser);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
-await page.click('#tabs [data-tab="admin"]');
+await page.click('#tabs [data-tab="menu"]');
+await page.click('[data-menu="admin"]');
 R.check('tab Quản trị mở', (await page.textContent('#view')).includes('Tra cứu người chơi'));
 // nhân vật mới chỉ vào database ở lần lưu định kỳ của Session (vài giây): tìm lại tới khi thấy
 for (let i = 0; i < 20 && !(await page.$('[data-adm="mute"]')); i++) {
