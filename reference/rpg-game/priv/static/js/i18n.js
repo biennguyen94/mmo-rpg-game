@@ -11,7 +11,7 @@
   const KEY = 'hl-lang';
   let lang = 'vi';
   try { lang = localStorage.getItem(KEY) || 'vi'; } catch (e) { /* bộ nhớ trình duyệt bị chặn: tiếng Việt */ }
-  const VI = /[À-ỹĐđ]/;
+  const VI = /[À-ÖØ-öø-ỹĐđ]/;
   let dict = { names: {}, t: {} }, tokRe = null, nameOnly = null, loose = {};
   const cache = new Map();
   const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -24,7 +24,8 @@
     // mẫu dự phòng: {n} nhận chữ bất kỳ (tên người chơi, bang…), xếp theo từ đầu tiên để tra nhanh
     loose = {};
     for (const [k, v] of Object.entries(dict.t)) {
-      if (!/\{\d+\}/.test(k)) continue;
+      // chỉ mẫu có đủ chữ cố định (tránh mẫu ngắn như "{0} ở {1}" nuốt cả câu)
+      if (!/\{\d+\}/.test(k) || k.replace(/\{\d+\}|[^\p{L}]/gu, '').length < 6) continue;
       const first = k.split(/[\s{]/)[0] || '';
       const re = new RegExp('^' + k.split(/\{(\d+)\}/).map((p, i) => (i % 2 ? '(?<p' + p + '>.+?)' : reEsc(p))).join('') + '$');
       (loose[first] = loose[first] || []).push([re, v]);
@@ -40,11 +41,19 @@
     const key = norm.replace(tokRe, (x) => { vals.push(x); return '{' + (vals.length - 1) + '}'; });
     const tpl = dict.t[key];
     if (tpl) return tpl.replace(/\{(\d+)\}/g, (m, i) => (vals[i] == null ? m : dict.names[vals[i]] || vals[i]));
+    // nhiều câu ghép trong một khối chữ: dịch từng câu
+    const parts = norm.split(/(?<=[.!?…])\s+(?=\S)/);
+    if (parts.length > 1) return parts.map((p) => core(p)).join(' ');
+    const bits = norm.split(/\s+·\s+/);
+    if (bits.length > 1) return bits.map((p) => core(p)).join(' · ');
     const first = norm.split(/[\s{]/)[0] || '';
     for (const [re, v] of (loose[first] || []).concat(first ? loose[''] || [] : [])) {
       const m = norm.match(re);
       if (m) return v.replace(/\{(\d+)\}/g, (x, i) => { const g = m.groups['p' + i]; return g == null ? x : tr(g); });
     }
+    // "Tên: giá trị" — dịch hai vế riêng
+    const kv = norm.match(/^([^:]{1,40}):\s(.+)$/);
+    if (kv) return core(kv[1]) + ': ' + core(kv[2]);
     // chưa có mẫu: ít nhất đổi các tên đã biết
     return nameOnly ? norm.replace(nameOnly, (x) => dict.names[x] || x) : norm;
   }

@@ -7,7 +7,7 @@ Chạy lại sau khi thêm chữ mới; bản dịch ở priv/static/i18n/en.jso
 """
 import glob, json, re, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VI = re.compile(r'[À-ỹĐđ]')
+VI = re.compile(r'[À-ÖØ-öø-ỹĐđ]')
 names = set()
 
 def walk_data(o, key=None):
