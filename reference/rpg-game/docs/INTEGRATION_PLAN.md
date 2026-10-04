@@ -796,3 +796,103 @@ Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~
 - **Test:** `test/hac_long/game/forge_storage_test.exs` (6), `test/hac_long_web/phase4_test.exs` (2: lưu / nạp tủ + vứt đồ
   qua Session + database, `gear_log`, audit sạch; trần thư quản trị). e2e `progress.mjs` thêm 12 bước (Ngọc Sinh Mệnh lên đồ
   đang mặc và đồ trong túi chọn qua tooltip, vứt đồ, Tủ Đồ cất / lấy / mở rộng).
+
+---
+
+## 13. Xã hội, xếp hạng, PK cược vàng (Phase 5: H7+H8, H14, H1, H2–H4, H5, H6, H9, H12, E5, M2, K10)
+
+> Viết 2026-10-04, **chờ anh chốt các câu ⛔ ở 13.9 rồi mới code**. Chỉ H1 (EXP tổ đội) đụng cân bằng → simulator trước / sau.
+
+### 13.1 Hiện trạng (khảo sát code)
+
+| Mục | Có | Thiếu / khác |
+|---|---|---|
+| Đấu trường (`arena.ex`) | Thách đấu **bản sao** người khác (không cần online), Elo (K 32), 15 trận / ngày, thắng +30 + 5 × chênh điểm vàng, thua không mất gì | Không cược, không mời người online, không lịch sử trận, không giới hạn chênh cấp |
+| Xếp hạng (`leaderboard.ex`) | 7 bảng, top 10, hạng của mình (chỉ bảng cấp) | Không theo lớp, không cache (truy vấn mỗi lần) |
+| Tổ đội (`party.ex`) | Tối đa 3; trận chung chia **vàng và EXP × 1,2 / n**; người thua / bỏ chạy không nhận; trưởng nhóm rời → người kế trong danh sách | Lời mời không hết hạn |
+| Bang (`guilds.ex`) | Chủ / phó / thành viên, đơn xin vào (bang đóng), quỹ, nhiệm vụ tuần, ký hiệu trên đầu | Phó **không giới hạn số**; không chiến bang |
+| Màu tên trên bản đồ | Một màu cho mọi người khác (`map.js:328`) | Không theo quan hệ |
+| Chat | Thế giới / Bang / Đội chọn bằng nút; tin riêng chỉ với bạn bè | Không có lệnh `/w` `/p` `/g` |
+| Hộp thư (`mailbox.ex`) | Giữ 50, mở là nhận quà (transaction) | Không hết hạn, không lọc, không xóa |
+| Giao dịch (`trade.ex`) | Một transaction, đổi món thì mở khóa hai bên, hủy khi đóng tab | Lời mời không hết hạn; không tự hủy khi đổi bản đồ / đi xa / quá giờ |
+| Quản trị | Tra theo tên | Không có số / danh sách người online |
+
+### 13.2 H7 + H8 — PK cược vàng
+
+- **Mời:** bấm "⚔ Cược đấu" trong bảng thông tin người chơi (cả hai online), nhập số vàng. Người kia thấy hộp mời
+  (tên, cấp, lớp, điểm đấu trường, số cược), **Nhận / Từ chối**, hết hạn **30 s**. Mỗi người chỉ một lời mời đang chờ.
+- **Đánh:** đề xuất **tự đánh** (câu **5-G**): server dựng bản sao chỉ số **của cả hai** (như `Arena.opponent/2`) và cho hai
+  bản sao đánh nhau theo cùng một luật (đòn thường, kỹ năng mỗi 3 lượt, tối đa 30 lượt, hết lượt thì bên còn % máu cao hơn
+  thắng), RNG có seed → test được. Kết quả xong **ngay lúc nhận**, cả hai xem lại nhật ký trận (xem lại từng lượt, như trận
+  thường). Lý do: công bằng (không ai được uống bình / chọn kỹ năng trong khi bên kia là máy), không phải giữ vàng chờ.
+- **Vàng:** lúc nhận, trong **một transaction**: kiểm cả hai đủ vàng → người thua −cược, người thắng +cược × (1 − phí).
+  Phí là vàng "đốt" khỏi game (chống lạm phát). Ghi `gold_log` lý do `PK_BET`. Hai Session bị giữ (`Session.hold`) như giao
+  dịch trực tiếp, nên không nhân vàng được.
+- **Giới hạn** (câu **5-C**, **5-D**): cược tối thiểu / tối đa, phí, số trận cược mỗi ngày, chênh cấp tối đa. Không cược khi
+  đang trong trận / đang giao dịch / máu 0.
+- **Lịch sử:** bảng mới `pk_matches` (người mời, người nhận, cược, phí, người thắng, số lượt, thời điểm). Tab đấu trường thêm
+  "Trận cược gần đây" (20 trận của mình). Không đổi điểm Elo (Elo chỉ cho đấu trường thường).
+
+### 13.3 H14 — xếp hạng theo lớp + cache
+
+Như §6.3: thêm `level_dk` / `level_dw` / `level_elf` / `level_mg`; `HacLong.Leaderboard` thành GenServer giữ mọi bảng trong
+ETS, làm mới mỗi **60 s**; "hạng của bạn" có cả hạng trong lớp; client thêm hàng chọn lớp dưới "Cấp cao". Số người mỗi bảng:
+câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10). Không làm bảng "Giàu nhất".
+
+### 13.4 H1 — EXP tổ đội
+
+- Hiện: mỗi người nhận vàng **và** EXP × 1,2 / n (2 người: 60 % mỗi người, 3 người: 40 %).
+- MU: EXP cả đội × (1 + 0,1 × (n − 1)) rồi chia đều → 2 người: 55 %, 3 người: 40 %.
+- Đề xuất (câu **5-F**): **giữ như hiện tại** (đã hợp với trận chung của Hắc Long, ai đánh trận mới nhận); chỉ đưa hệ số
+  vào `RULES.party` (`share_bonus`). Nếu anh muốn theo MU thì EXP theo công thức MU, vàng giữ × 1,2 / n.
+
+### 13.5 Kiểm lại luật (H2, H3, H4, E5, H12, H9, M2, H6, K10)
+
+- **H2 hết hạn lời mời 30 s:** tổ đội, giao dịch, PK cược. Đơn xin vào bang không phải lời mời → giữ, nhưng tự xóa sau 7 ngày.
+- **H3:** trưởng nhóm rời → người **vào sớm nhất** còn lại lên thay (danh sách giữ thứ tự vào — kiểm bằng test); còn 1 người
+  thì tan. Thêm: mất kết nối quá 60 s thì tự rời đội.
+- **H4:** tối đa **2 phó bang** (`RULES.guild.max_officers`); phó duyệt đơn, chỉ đuổi thành viên thường (đã có).
+- **E5 giao dịch tự hủy:** đổi bản đồ, vào trận, mất kết nối (kể cả rớt mạng, không chỉ đóng tab), quá **180 s** từ lúc mở;
+  "đi xa": khi mời và khi chốt phải cùng bản đồ, cách nhau ≤ 8 ô.
+- **H12 hộp thư:** giữ tối đa 100; thư **hết hạn 30 ngày** (câu **5-I**: thư còn quà chưa nhận thì **không** hết hạn — tiền bán
+  chợ nằm trong thư); lọc **Tất cả / Chưa đọc / Có quà**; nút **Xóa thư đã đọc** (chỉ thư đã nhận quà / không quà);
+  **Nhận tất cả**.
+- **H9 lệnh chat:** `/w Tên nội dung` (tin riêng), `/p` (đội), `/g` (bang), `/a` hoặc không lệnh (thế giới). Tin riêng tới
+  người không phải bạn bè: câu **5-H**.
+- **M2 + H6 màu tên:** đồng đội xanh lá, cùng bang xanh dương, bang đang chiến (H5) đỏ, còn lại như cũ; ký hiệu bang trên đầu
+  đã có.
+- **K10:** tab Quản trị thêm "Đang online: N" và danh sách (tên, cấp, bản đồ, nút Tra), đọc từ `Registry` Session có tab mở.
+
+### 13.6 H5 — chiến bang trên đấu trường
+
+- Bang chủ / phó tuyên chiến một bang khác; bang kia (chủ / phó) nhận trong **60 s** (online) — nếu không ai online thì không
+  tuyên được. Mỗi bang một trận chiến cùng lúc; hai bang đó không chiến lại trong 24 giờ.
+- Kéo dài **1 giờ**. Trong giờ chiến, mỗi trận **đấu trường thường** (bản sao) thắng thành viên bang địch → +1 điểm cho bang
+  mình (không tính quá 3 lần cùng một đối thủ, chống cày). Đầu hàng được.
+- Hết giờ: bang nhiều điểm hơn thắng, báo cả server; thưởng câu **5-E**. Lưu bảng `guild_wars`.
+
+### 13.7 Lưu trữ / giao thức
+
+- Migration: `pk_matches`, `guild_wars`; `mail.expires_at`? (không cần: tính từ `inserted_at`); index xếp hạng theo lớp.
+- Sự kiện kênh mới: `pk_invite` / `pk_answer` / `pk_result`, `war_*`, `admin("online")`; lệnh chat nhận `to: "whisper", name`.
+- Mọi số ở `RULES.pk`, `RULES.guild_war`, `RULES.party`, `RULES.mail`, `RULES.trade`.
+
+### 13.8 Test
+
+- Hàm thuần: trận tự đánh (seed cố định → người thắng / số lượt), tính phí, chênh cấp, giới hạn ngày; điểm chiến bang.
+- Kênh + database: cược thắng / thua / từ chối / hết hạn / không đủ vàng / gửi trùng song song (audit sạch, tổng vàng = trước
+  − phí); giao dịch tự hủy; thư hết hạn / lọc / xóa; phó bang tối đa 2; chuyển trưởng nhóm.
+- e2e `pk.mjs` 2 trình duyệt (thắng / thua / từ chối / hết hạn), lệnh chat, xếp hạng theo lớp, online trong tab Quản trị.
+
+### 13.9 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **5-C** | Cược tối thiểu / tối đa, phí, số trận cược / ngày? | 100 – 1 000 000 vàng, phí **5 %** (đốt), **10** trận cược / ngày / người |
+| **5-D** | Giới hạn chênh cấp khi mời cược? | **±10 cấp** (chuyển sinh tính như +cấp tối đa) |
+| **5-E** | Thưởng chiến bang? | Bang thắng: quỹ bang +5 000 (vàng mới), mỗi thành viên có ≥ 1 điểm nhận 500 vàng qua thư; không danh hiệu |
+| **5-F** | Công thức chia thưởng tổ đội? | **Giữ × 1,2 / n** cho cả vàng và EXP (đưa vào `RULES.party`) |
+| **5-G** | Trận cược đánh thế nào? | **Tự đánh** giữa hai bản sao, xong ngay, cả hai xem lại nhật ký |
+| **5-H** | `/w` gửi được cho người không phải bạn bè? | **Chỉ bạn bè** (như tin riêng hiện tại, ít bị quấy rối) |
+| **5-I** | Thư hết hạn 30 ngày có xóa cả thư còn quà? | **Không**: thư còn quà giữ tới khi nhận |
+| **6-A** | Bảng theo lớp top mấy, làm mới bao lâu? | **Top 50**, làm mới **60 s** |

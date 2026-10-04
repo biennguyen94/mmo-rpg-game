@@ -177,6 +177,10 @@ vàng / 1 triệu EXP; 4-D cánh được; 4-E không làm tách chồng; 4-F tr
 - 5-C Cược tối thiểu / tối đa, phí sàn (đề xuất 100 – 1 000 000 vàng, phí 5 %)? Mỗi ngày tối đa bao nhiêu trận cược?
 - 5-D Có giới hạn chênh cấp khi mời PK không (đề xuất ±10 cấp)?
 - 5-E Chiến bang (H5) có thưởng gì (quỹ bang, danh hiệu)?
+- 5-F Công thức chia thưởng tổ đội; 5-G trận cược đánh thế nào; 5-H `/w` cho người lạ; 5-I thư còn quà có hết hạn; 6-A top
+  mấy / làm mới bao lâu.
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §13`.
 
 **Xong khi:** e2e 2 trình duyệt cho PK cược (thắng / thua / từ chối / hết hạn), audit sạch; test từng luật kiểm lại.
 
