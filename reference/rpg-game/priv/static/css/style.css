@@ -393,6 +393,16 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .item.member .btn-row { margin-top: 6px; flex-wrap: wrap; }
 .item.member .btn-row .btn { flex: none; }
 .gift-form label input[type="checkbox"] { width: auto; }
+/* Quản trị: chỉnh nhân vật, nhật ký */
+.adm-char .btn-row { flex-wrap: wrap; align-items: center; }
+.adm-char .btn-row > span.grow { min-width: 120px; }
+.adm-char select { flex: 1 1 140px; min-width: 120px; }
+@media (max-width: 600px) { .adm-char .btn-row > span.grow { flex-basis: 100%; } }
+.adm-char label input[type="number"] { width: 64px; }
+.adm-char .btn-row > input[type="number"] { width: 90px; flex: none; }
+.adm-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.adm-table th, .adm-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line, #3a3020); vertical-align: top; word-break: break-word; }
+.adm-table th { color: var(--muted, #a89a7a); font-weight: normal; }
 
 /* Trang trí nhà */
 .decor-panel .chip { display: inline-flex; align-items: center; gap: 4px; }

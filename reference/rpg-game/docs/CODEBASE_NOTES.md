@@ -17,7 +17,7 @@
 6. [Vẽ nhân vật và giao diện trang bị](#6-vẽ-nhân-vật-và-giao-diện-trang-bị)
 7. [Chiến đấu](#7-chiến-đấu)
 8. [Dữ liệu game](#8-dữ-liệu-game)
-9. [Test, CI, simulator](#9-test-ci-simulator)
+9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2)
 10. [Bẫy cần biết](#10-bẫy-cần-biết)
 
 ---
@@ -30,10 +30,13 @@ Client (priv/static/js) ──"act"──▶ HacLongWeb.GameChannel ──▶ Ha
                                                                │   Commands.run → hàm thuần Engine / module tính năng
                                                                │   player đổi → save(s, player) (session.ex:723-726)
                                                                ▼
-                                                   HacLong.Game.Characters.save!/2 (characters.ex:23-43)
+                                                   HacLong.Game.Characters.save!/4 (transaction: lưu + gold_log + gear_log)
 ```
 
 - **Session tuần tự hóa** mọi lệnh của một tài khoản, kể cả nhiều tab (moduledoc `session.ex:1-17`).
+- **Từ Đợt 2:** `save!(uid, player, reason \\ nil, ref \\ nil)` chạy trong transaction: `SELECT gold, gear … FOR UPDATE`,
+  upsert, rồi ghi `gold_log` (vàng đổi) và `gear_log` (đồ hiếm vào / ra). `reason` bỏ trống thì lấy từ
+  `Characters.put_reason/2` mà `Session.handle_call` đặt cho lệnh đang chạy (xem mục 9c). `delete!/1` cũng ghi (`DELETE`).
 - **Lưu cả dòng:** `Repo.insert!(…, on_conflict: {:replace, Character.fields() ++ [:updated_at]}, conflict_target: :user_id)`.
   - Không có cột version, không có khóa lạc quan.
   - `@save_version 1` (`characters.ex:13`) chỉ là trường trong map, không phải khóa.
@@ -45,10 +48,12 @@ Client (priv/static/js) ──"act"──▶ HacLongWeb.GameChannel ──▶ Ha
 
 ## 2. Vàng: mọi chỗ thay đổi
 
-**Không có bảng log vàng / log đồ.** Thao tác quản trị chỉ ghi Logger (`game_channel.ex:375`).
+**Từ Đợt 2 có `gold_log` / `gear_log` / `admin_log`** (mục 9c). Mọi chỗ dưới đây đổi vàng đều đi qua
+`Characters.save!`, nên được ghi nhật ký mà không phải sửa từng chỗ. **Thêm chỗ ghi nhân vật mới thì phải đi qua
+`Characters.save!`** (hoặc Session), nếu không đối soát sẽ báo `gold_mismatch`.
 
 Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `user_blocks`, `mails`, `guilds`,
-`guild_members`, `guild_requests`, `pvp`, `market_listings`, `home_likes`, `friends`.
+`guild_members`, `guild_requests`, `pvp`, `market_listings`, `home_likes`, `friends`, `gold_log`, `gear_log`, `admin_log`.
 
 ### (a) Hàm thuần, đi qua Session rồi `Characters.save!` (không transaction)
 
@@ -166,34 +171,47 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 
 ## 4. Quản trị
 
-- **Quyền:** cột `users.admin` boolean (`accounts/user.ex:9`).
-  - Gán vào socket lúc kết nối (`user_socket.ex:10`), **không đọc lại**: đổi quyền thì người đó phải kết nối lại.
-  - Cấp / thu: `mix hac_long.admin USER [--revoke]` → `Moderation.set_admin/2` (`moderation.ex:178-183`).
-    Bản release: `bin/hac_long eval 'HacLong.Moderation.set_admin("ten", true)'`.
-- **Kênh:** `handle_in("admin", %{"op" => op}, %{assigns: %{admin: true}})` (`game_channel.ex:374-382`); không phải admin → "Không có quyền." (`384`).
-- **Các `op`** (`admin/3`, `game_channel.ex:555-619`):
+- **Vai trò:** cột `users.role` `player | mod | admin` (CHECK; migration `20261027000000` thay cột `admin` boolean cũ).
+  - `User.admin?/1`, `User.staff?/1` (`accounts/user.ex`).
+  - Gán vào socket lúc kết nối (`user_socket.ex`, `assigns.role`), **không đọc lại**: đổi quyền thì người đó phải kết nối lại.
+  - Cấp / thu: `mix hac_long.admin USER [--role mod|admin] [--revoke]` → `Moderation.set_role/2` (`set_admin/2` vẫn còn,
+    gọi `set_role`). Bản release: `HacLong.Release.admin/2`, `HacLong.Release.role/2`.
+- **Kênh:** `handle_in("admin", %{"op" => op}, %{assigns: %{role: mod|admin}})` (`game_channel.ex`); `player` → "Không có quyền.".
+  - `@mod_ops ~w(reports lookup resolve mute unmute announce)`: mod chỉ được những lệnh này (và `resolve` không được `ban`)
+    → còn lại "Cần quyền quản trị viên.".
+  - `@read_ops ~w(reports lookup audit gold_log admin_log)`: không ghi `admin_log`. Lệnh sửa nhân vật (`HacLong.Admin.char_ops/0`)
+    tự ghi qua `HacLong.Admin.run/4`. Lệnh còn lại: `Admin.log!` trước, `Admin.set_result` sau.
+- **Các `op`** (`admin/3`, `admin_char/3`):
 
 | op | Làm gì |
 |---|---|
 | `reports` | `Moderation.open_reports` |
-| `lookup {name}` | tìm người: id, username, admin, nhân vật (tên, cấp, vàng, số quái), cấm / khóa, số báo cáo |
+| `lookup {name}` | tìm người: id, username, `role`, nhân vật (tên, cấp, vàng, số quái), cấm / khóa, số báo cáo |
 | `resolve {id, action: dismiss\|mute\|ban, minutes}` | xử lý báo cáo |
 | `mute` / `unmute` / `ban` / `unban` `{uid, minutes, reason}` | `nil` phút = vĩnh viễn (`~U[9999-12-31]`); `ban` thu hồi mọi token |
 | `announce {text}` | `Chat.system("📢 …")`, tối đa 200 ký tự |
 | `gift {subject, body, gold, xp, items, uid \| all: true}` | `Mailbox.send` / `send_all` |
 | `world_boss` | `WorldBoss.spawn_now()` |
+| `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `give_item`, `give_gear`, `heal` `{uid, …}` | `HacLong.Admin.run/4` → `Session.admin/3` (chạy trong Session người đó, lưu với lý do `ADMIN`, `ref = admin:<id>`) → `{msg, user}` |
+| `audit {days}` | `HacLong.Audit.run/1` |
+| `gold_log {uid}` / `admin_log {uid?}` | `Audit.gold_history/2` / `Admin.recent/2` |
 
-- **`HacLong.Moderation`** (`moderation.ex`): `block`, `unblock`, `blocked`, `report`, `open_reports`, `resolve`, `mute`, `unmute`, `ban`, `unban`, `find_user`, `info`, `set_admin`.
+- **`HacLong.Admin`** (`admin.ex`): `build(op, params)` trả hàm thuần `fn player -> {:ok, p, msg} | {:error, msg}`;
+  `run/4`, `console/3` (dòng lệnh, `admin_name = "console"`), `log!/5`, `set_result/2`, `recent/2`.
+  `give_item` nhận mọi id trong `Data.items` (cả `relic`, `dragonshield`); `give_gear` dùng `Gear.new/3`.
+- **`HacLong.Moderation`** (`moderation.ex`): `block`, `unblock`, `blocked`, `report`, `open_reports`, `resolve`, `mute`, `unmute`, `ban`, `unban`, `find_user`, `info`, `set_role`, `set_admin`.
 - **Thư** (bảng `mails`: `user_id, subject, body, gold, xp, items map, claimed_at`; migration `20261011000000`):
   - kiểm ở `Mailbox.row` (`mailbox.ex:44-73`): tiêu đề không rỗng; gold / xp nguyên ≥ 0; `items` = `%{id => n>0}` với id hợp lệ;
   - **chỉ chứa đồ thường**, không gửi được đồ ngẫu nhiên; **không có trần vàng**;
   - giữ 50 thư / người (`@keep`).
-- **Tab Quản trị** (client): hiện khi `Net.isAdmin` (`ui.js:113`, lấy từ `r.admin` lúc vào kênh `ui.js:1818`); `viewAdmin` (`ui.js:142-180`):
-  - danh sách báo cáo (bỏ qua / cấm chat 1 giờ / khóa 1 ngày);
-  - tra người: cấm chat 1 giờ / 1 ngày, bỏ cấm, khóa 1 ngày / vĩnh viễn, mở khóa, tặng quà cho người đó;
-  - thông báo server, tặng quà cho tất cả, gọi trùm thế giới;
-  - form quà `giftForm` (`182-193`): một món + vàng / xp; gửi đi ở `onGift` (`196-203`).
-- **Chưa có:** chỉnh nhân vật trực tiếp (xp, cấp, vàng, chỉ số), tặng đồ ngẫu nhiên / đồ đã nâng cấp, log thao tác admin.
+- **Tab Quản trị** (client): hiện khi `Net.isAdmin` (`r.admin` lúc vào kênh, tức mod hoặc admin); `Net.role` quyết định khối nào hiện
+  (`isAdminRole()`). `viewAdmin` trong `ui.js`:
+  - danh sách báo cáo; tra người: cấm chat, (admin) khóa / mở khóa, tặng quà;
+  - (admin) **Chỉnh nhân vật** `viewCharEdit`: mỗi dòng một `<form class="adm-char" data-op>` → `onCharOp`; nút Hồi máu,
+    Nhật ký vàng (`viewGoldLog`), Nhật ký quản trị (`viewAdminLog`);
+  - thông báo server; (admin) quà cho tất cả, gọi trùm, **Kiểm tra vàng** (`viewAudit`), Nhật ký quản trị;
+  - kết quả xem lưu ở `adm.audit`, `adm.glog`, `adm.alog`; `onAdmin` xử lý `data-adm`.
+- Hướng dẫn cho người vận hành: `docs/ADMIN_GUIDE.md`.
 
 ## 5. Bảng xếp hạng, lớp nhân vật
 
@@ -325,7 +343,7 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
 
 ## 9. Test, CI, simulator
 
-- **Test:** 22 file `*_test.exs`.
+- **Test:** 24 file `*_test.exs` (thêm `batch1_test.exs`, `batch2_test.exs` ở `test/hac_long_web/`).
   - `test/hac_long/`: accounts, guild_quests, leaderboard, world.
   - `test/hac_long/game/`: achievements, bestiary, chests, commands, crafting_events, daily, engine, fishing, gear, home_pets, simulator, tower, trade_offer, tutorial.
   - `test/hac_long_web/`: `channels/game_channel_test.exs` (1 294 dòng), auth_controller, error_json, remote_ip.
@@ -354,15 +372,39 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
   `Ecto.ConstraintError`.
 - Test: `test/hac_long_web/batch1_test.exs`.
 
+## 9c. Nhật ký, giao dịch một transaction, quản trị (Đợt 2, 2026-10-04)
+
+- **Migration `20261027000000`:** bảng `gold_log` (`user_id, delta, balance, reason, ref, inserted_at`), `gear_log`
+  (`user_id, uid, base, rarity, action in|out, reason, ref`), `admin_log` (`admin_id, admin_name, op, target_id, params, result`),
+  `users.role`; dòng `BASELINE` cho vàng / đồ hiếm sẵn có. Không khóa ngoại (xóa nhân vật vẫn giữ lịch sử).
+- **Lý do ghi nhật ký:** `Session.handle_call` gọi `Characters.put_reason(reason, ref)` (process dictionary `:hl_save_reason`)
+  trước mỗi tin nhắn: lệnh `cmd` → `act` viết hoa (`ATTACK`, `SELL`, `MARKET_BUY`…; `act` lạ → `CMD`), `ref` = `listing`/`id`/`uid`;
+  `world_boss_end` → `WORLD_BOSS`; `shared_end` → `PARTY`; `admin` → `ADMIN`; ghi dồn vị trí / tắt → `MOVE`; giao dịch → `TRADE`.
+  Gọi `Characters.save!` với `reason` rõ thì không dùng giá trị này.
+- **Đối soát** `HacLong.Audit.run/1`: `gold_mismatch` (vàng ≠ tổng `delta`), `gear_duplicate` (cùng `uid` ở hai nhân vật / chợ),
+  `gear_unlogged`; thống kê theo lý do + top người nhận. `prune/1` gộp vàng cũ thành dòng `CARRY`, giữ dòng `gear_log` cuối
+  của mỗi `uid`. `mix hac_long.audit [--days N] [--prune N]` (thoát 1 khi có lỗi); release: `HacLong.Release.audit/1`, `prune_logs/1`.
+- **Giao dịch trực tiếp** (`Trade.execute/1`): `Session.hold(A)`, `Session.hold(B)` → `TradeOffer.take/give` trên bản giữ →
+  `Repo.transaction` lưu cả hai (`TRADE`, cùng `ref`) → `Session.release(uid, ref, player | nil)`.
+  - Session đang bị giữ (`s.held = {ref, timer}`): `handle_call` xếp tin nhắn vào `s.queue`, trả lời sau khi nhả (`replay/1`);
+    `flush/1` không ghi (để giao dịch ghi); `:timeout` không tự tắt; quá `@hold_ms` (3 s) tự nhả (`{:hold_expired, ref}`).
+  - `Session.trade_take/3`, `trade_give/2` đã bỏ.
+  - Không deadlock: Session không gọi đồng bộ sang Session khác; `WorldBoss` / `Party` gọi Session từ `Task`.
+- **Chỉnh nhân vật:** `Session.admin(uid, fun, ref)` chạy `fun.(player)` trong Session, lưu, đẩy trạng thái, `World.refresh` nếu đổi ngoại hình.
+- Test: `test/hac_long_web/batch2_test.exs`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.
    Sửa DB trực tiếp khi người chơi đang online sẽ bị Session **ghi đè** ở lần lưu sau.
 2. ~~`Market.commit/4` bỏ qua kết quả transaction~~: **đã sửa** (Đợt 1), giờ chỉ báo thành công khi transaction commit.
-3. **Giao dịch hai pha không transaction** (`trade.ex:182-200`): tiến trình chết giữa chừng có thể lệch đồ / vàng.
+3. ~~Giao dịch hai pha không transaction~~: **đã sửa** (Đợt 2), giờ ghi cả hai nhân vật trong một transaction (mục 9c).
 4. **Cấp nâng theo loại đồ thường** (`upgrades` khóa theo id): hai cái `broadsword` dùng chung một cấp; bán cái cuối thì mất cấp.
 5. **3 ô trang bị cố định** ở nhiều chỗ (mục 3, 6). Thêm ô mới phải sửa: `characters.ex:67`, `engine.ex:940-950, 1109, 1128-1134`,
    `doll.js`, `ui.js` (`310, 1099-1110, 1308-1327, 1373`), `market.ex`, `trade_offer.ex`.
 6. **Quyền admin gán lúc kết nối:** đổi quyền thì người đó phải tải lại trang.
 7. **`game_data.json` nạp lúc biên dịch:** sửa xong phải biên dịch lại (server dev tự làm; bản release phải build lại).
-8. **Không có log vàng / đồ:** khi nghi gian lận chưa có gì để đối soát (xem `docs/INTEGRATION_PLAN.md` mục 1).
+8. ~~Không có log vàng / đồ~~: **đã có** (Đợt 2). Nhưng nhật ký chỉ đúng khi mọi lần ghi nhân vật đi qua `Characters.save!`;
+   sửa vàng thẳng bằng SQL sẽ bị `mix hac_long.audit` báo `gold_mismatch`.
+9. **Session bị giữ khi giao dịch:** thêm `handle_call` mới vào Session thì nó tự xếp hàng khi bị giữ (mệnh đề chung). Thêm
+   `handle_info` mới mà ghi nhân vật thì phải kiểm `s.held` (như `flush/1`), nếu không sẽ ghi đè kết quả giao dịch.

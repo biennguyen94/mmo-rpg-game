@@ -6,12 +6,22 @@ defmodule HacLong.Accounts.User do
     field :username, :string
     field :password, :string, virtual: true, redact: true
     field :password_hash, :string, redact: true
-    field :admin, :boolean, default: false
+    # "player" | "mod" (xử lý báo cáo, cấm chat) | "admin" (mọi lệnh quản trị)
+    field :role, :string, default: "player"
     field :banned_until, :utc_datetime
     field :ban_reason, :string
     field :muted_until, :utc_datetime
     timestamps(type: :utc_datetime)
   end
+
+  @roles ~w(player mod admin)
+  def roles, do: @roles
+
+  @doc "Quản trị viên (mọi lệnh)."
+  def admin?(%{role: role}), do: role == "admin"
+
+  @doc "Người kiểm duyệt hoặc quản trị viên (thấy tab Quản trị)."
+  def staff?(%{role: role}), do: role in ~w(mod admin)
 
   def registration_changeset(user, attrs) do
     user

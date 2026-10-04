@@ -43,7 +43,7 @@ Các file liên quan:
 | `deploy/nginx.conf` | Mẫu cấu hình nginx (cách 3) |
 | `.env.example` | Mẫu file cấu hình `.env` |
 | `rel/overlays/bin/start` | Chạy migration rồi bật server trong container |
-| `lib/hac_long/release.ex` | Migration và cấp quyền quản trị khi không có `mix` |
+| `lib/hac_long/release.ex` | Migration, cấp quyền quản trị, đối soát / dọn nhật ký khi không có `mix` |
 
 ## Chuẩn bị VPS
 
@@ -311,7 +311,17 @@ docker compose up -d --build
 ```bash
 docker compose exec app bin/hac_long eval 'HacLong.Release.admin("ten_dang_nhap")'
 docker compose exec app bin/hac_long eval 'HacLong.Release.admin("ten_dang_nhap", false)'  # thu hồi
+docker compose exec app bin/hac_long eval 'HacLong.Release.role("ten_dang_nhap", "mod")'    # chỉ kiểm duyệt chat
 ```
+
+**Đối soát vàng / đồ hiếm** (nên chạy hằng ngày bằng cron; có lỗi thì thoát mã 1) và dọn nhật ký cũ:
+
+```bash
+docker compose exec -T app bin/hac_long eval 'HacLong.Release.audit(1)'
+docker compose exec -T app bin/hac_long eval 'HacLong.Release.prune_logs(180)'
+```
+
+Chi tiết: [ADMIN_GUIDE.md](ADMIN_GUIDE.md).
 
 **Sao lưu database**. Nên chạy hằng ngày bằng cron và chép file ra ngoài VPS:
 

@@ -74,6 +74,11 @@ defmodule HacLongWeb.GameChannel do
 
   alias HacLong.World.{Maps, MapServer}
 
+  # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
+  @mod_ops ~w(reports lookup resolve mute unmute announce)
+  # chỉ đọc: không ghi admin_log
+  @read_ops ~w(reports lookup audit gold_log admin_log)
+
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
   def join("game", params, socket) do
@@ -96,7 +101,9 @@ defmodule HacLongWeb.GameChannel do
     reply = %{
       username: socket.assigns.username,
       user_id: uid,
-      admin: socket.assigns[:admin] == true,
+      # thấy tab Quản trị (mod hoặc admin); `role` cho biết được dùng lệnh nào
+      admin: socket.assigns[:role] in ~w(mod admin),
+      role: socket.assigns[:role] || "player",
       blocked: blocked,
       mail: Mailbox.unread(uid),
       party: party_view(uid),
@@ -378,10 +385,30 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
-  def handle_in("admin", %{"op" => op} = p, %{assigns: %{admin: true}} = socket) do
+  def handle_in("admin", %{"op" => op} = p, %{assigns: %{role: role}} = socket)
+      when role in ~w(mod admin) and is_binary(op) do
     Logger.info("quản trị #{socket.assigns.username}: #{op} #{inspect(Map.delete(p, "op"))}")
 
-    case admin(op, p, socket) do
+    result =
+      cond do
+        role == "mod" and (op not in @mod_ops or p["action"] == "ban") ->
+          {:error, "Cần quyền quản trị viên."}
+
+        # sửa nhân vật: HacLong.Admin tự ghi admin_log (kèm mã dòng vào nhật ký vàng/đồ)
+        op in HacLong.Admin.char_ops() ->
+          admin_char(op, p, socket)
+
+        op in @read_ops ->
+          admin(op, p, socket)
+
+        true ->
+          id = HacLong.Admin.log!(admin_of(socket), op, target(p), p, nil)
+          result = admin(op, p, socket)
+          HacLong.Admin.set_result(id, result)
+          result
+      end
+
+    case result do
       {:ok, data} -> {:reply, {:ok, data}, socket}
       :ok -> {:reply, {:ok, %{}}, socket}
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
@@ -558,6 +585,33 @@ defmodule HacLongWeb.GameChannel do
   end
 
   # ---------- Quản trị ----------
+
+  defp admin_of(socket), do: %{id: socket.assigns.user_id, username: socket.assigns.username}
+
+  defp target(%{"uid" => id}) when is_integer(id), do: id
+  defp target(_), do: nil
+
+  defp admin_char(op, %{"uid" => id} = p, socket) when is_integer(id) do
+    with {:ok, msg} <- HacLong.Admin.run(admin_of(socket), op, id, p) do
+      user = HacLong.Accounts.get_user(id)
+      {:ok, %{msg: msg, user: user && Moderation.info(user)}}
+    end
+  end
+
+  defp admin_char(_op, _p, _socket), do: {:error, "Chọn người chơi (tra cứu trước)."}
+
+  defp admin("audit", p, _s) do
+    days = if is_integer(p["days"]) and p["days"] in 1..90, do: p["days"], else: 1
+    {:ok, %{audit: HacLong.Audit.run(days: days)}}
+  end
+
+  defp admin("gold_log", %{"uid" => id}, _s) when is_integer(id),
+    do: {:ok, %{log: HacLong.Audit.gold_history(id)}}
+
+  defp admin("admin_log", p, _s) do
+    uid = if is_integer(p["uid"]), do: p["uid"]
+    {:ok, %{log: HacLong.Admin.recent(50, uid)}}
+  end
 
   defp admin("reports", _p, _s), do: {:ok, %{reports: Moderation.open_reports()}}
 

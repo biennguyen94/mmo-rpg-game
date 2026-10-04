@@ -147,6 +147,11 @@ defmodule HacLong.Game.Gear do
   defp shuffle(list),
     do: list |> Enum.map(&{Rng.uniform(), &1}) |> Enum.sort() |> Enum.map(&elem(&1, 1))
 
+  @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
+  def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
+
+  def stats, do: @stats
+
   defp new_uid, do: "#" <> Base.encode32(:crypto.strong_rand_bytes(5), padding: false)
 
   @doc """

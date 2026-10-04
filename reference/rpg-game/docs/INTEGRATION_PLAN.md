@@ -50,6 +50,15 @@
 
 ## 1. Nhật ký vàng + kiểm tra gian lận
 
+> **Đã làm (Đợt 2, 2026-10-04).** Khác thiết kế dưới đây:
+>
+> - Bảng `gold_log` khóa theo `user_id` (không khóa ngoại; xóa nhân vật vẫn giữ lịch sử), thêm `gear_log` cho đồ hiếm (1-C).
+> - Ghi ở **một chỗ**: `Characters.save!/4` (trong transaction, `SELECT … FOR UPDATE` dòng cũ rồi so). Mọi nhóm (a), (b), (c) đều đi qua đó.
+>   Lý do = tên lệnh viết hoa (đặt trong `Session.handle_call`), không dùng bảng ánh xạ.
+> - Giao dịch viết lại thành **một transaction** luôn (1-B), không chờ bước sau.
+> - Dọn nhật ký (1-A) gộp thành dòng `CARRY`. Kiểm `market_orphan`, `mail_gold_unclaimed` chưa làm; thêm `gear_duplicate`, `gear_unlogged`.
+> - Chi tiết code: `CODEBASE_NOTES.md §9c`; vận hành: `docs/ADMIN_GUIDE.md`.
+
 ### 1.1 Hiện trạng
 
 - **Không có bảng log nào.** Thao tác quản trị chỉ ghi Logger (`game_channel.ex:375`).
@@ -147,6 +156,14 @@ INSERT INTO gold_log (character_id, delta, balance, reason) SELECT id, gold, gol
 ---
 
 ## 2. Lệnh quản trị bổ sung
+
+> **Đã làm (Đợt 2, 2026-10-04).** Khác thiết kế dưới đây:
+>
+> - Tên `op`: `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `give_item`, `give_gear`, `heal`; xem `audit`, `gold_log`, `admin_log`.
+> - `set_level` cho cả hạ cấp (điểm tiềm năng trừ tương ứng, không dưới 0). Chưa làm `rebirth`.
+> - `admin_log`: `admin_id, admin_name, op, target_id, params, result` (không có cột `reason` riêng).
+> - Vai trò `users.role` (2-B), admin tặng được đồ không rơi (2-A). Dòng lệnh: `HacLong.Admin.console/3`.
+> - Hướng dẫn: `docs/ADMIN_GUIDE.md` (có công thức nhân vật admin tối đa).
 
 ### 2.1 Hiện trạng
 
@@ -478,11 +495,11 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 
 | Mã | Câu hỏi | Đề xuất của em |
 |---|---|---|
-| 1-A | Giữ log vàng bao lâu | giữ hết, có lệnh dọn > 180 ngày |
-| 1-B | Viết lại giao dịch thành một transaction | có, nhưng sau bước 1 |
-| 1-C | Log đồ | chỉ đồ ngẫu nhiên (`gear`) |
-| 2-A | Admin tặng đồ không rơi được | có |
-| 2-B | Phân quyền mod / admin | có (`users.role`) |
+| 1-A | Giữ log vàng bao lâu | ✅ chốt: giữ hết, có lệnh dọn > 180 ngày |
+| 1-B | Viết lại giao dịch thành một transaction | ✅ chốt: có (đã làm ở Đợt 2) |
+| 1-C | Log đồ | ✅ chốt: chỉ đồ ngẫu nhiên (`gear`) |
+| 2-A | Admin tặng đồ không rơi được | ✅ chốt: có |
+| 2-B | Phân quyền mod / admin | ✅ chốt: có (`users.role`) |
 | 3-A | Tỉ lệ / thất bại +6 → +11 | theo bảng 3.3 (mất đồ ở +10 / +11) |
 | 3-B | Tỉ lệ / chỗ rơi ngọc | theo 3.3 |
 | 3-C | Ngọc Sinh Mệnh (dòng tùy chọn) | để sau |

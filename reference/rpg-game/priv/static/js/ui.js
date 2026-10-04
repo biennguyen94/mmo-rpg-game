@@ -26,7 +26,7 @@
   let board = { kind: 'level', data: null, at: 0 }; // bảng xếp hạng
   let chatMenu = null;   // id tin nhắn đang mở menu Báo cáo/Chặn
   let blocked = [];      // người mình đã chặn: [{ id, name }]
-  let adm = { reports: null, user: null, loading: false }; // tab Quản trị
+  let adm = { reports: null, user: null, loading: false, audit: null, alog: null, glog: null }; // tab Quản trị
   let mail = { unread: 0, list: null, open: false }; // hộp thư
   let guildUi = { open: false, list: null, requested: [], info: null, q: '', confirm: null }; // bang hội
   let chatTo = 'world';  // 'world' | 'guild' | 'party'
@@ -162,13 +162,14 @@
           <button class="btn small-btn" data-adm="mute" data-uid="${u.id}" data-minutes="1440">Cấm chat 1 ngày</button>
           <button class="btn small-btn" data-adm="unmute" data-uid="${u.id}">Bỏ cấm chat</button>
         </div>
-        <div class="btn-row">
+        ${isAdminRole() ? `<div class="btn-row">
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}" data-minutes="1440">Khóa 1 ngày</button>
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}">Khóa vĩnh viễn</button>
           <button class="btn small-btn" data-adm="unban" data-uid="${u.id}">Mở khóa</button>
         </div>
-        ${u.character ? giftForm('adm-gift', u.id) : ''}
-      </div>`;
+        ${u.character ? giftForm('adm-gift', u.id) : ''}` : ''}
+      </div>
+      ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card"><h3>Tra cứu người chơi</h3>
@@ -178,8 +179,79 @@
       <div class="card"><h3>Thông báo cho cả server</h3>
         <form id="adm-announce" class="chat-form"><input type="text" id="adm-text" maxlength="200" placeholder="Nội dung thông báo" autocomplete="off"><button class="btn" type="submit">Gửi</button></form>
       </div>
-      <div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
-      <div class="card"><h3>Trùm thế giới</h3><button class="btn" data-adm="world_boss">Gọi Cổ Long xuất hiện ngay</button></div>`;
+      ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
+      <div class="card"><h3>Trùm thế giới</h3><button class="btn" data-adm="world_boss">Gọi Cổ Long xuất hiện ngay</button></div>
+      ${viewAudit()}
+      <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
+  }
+
+  const isAdminRole = () => Net.role === 'admin';
+  const STAT_KEYS = [['str', 'Sức mạnh'], ['vit', 'Thể lực'], ['agi', 'Nhanh nhẹn'], ['def', 'Phòng thủ']];
+  const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
+
+  // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
+  function viewCharEdit(u) {
+    const all = Object.entries(ITEMS);
+    const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield'].includes(it.slot));
+    const up = '<label class="small">+ <input type="number" name="up" min="0" max="5" value="0"></label>';
+    const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
+    const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
+    return `<div class="card"><h3>Chỉnh nhân vật</h3>
+      <p class="small muted">Sửa ngay (người chơi đang online thấy liền), ghi vào nhật ký quản trị và nhật ký vàng/đồ với lý do ADMIN.</p>
+      ${line('give_xp', 'Kinh nghiệm', num('xp', 1000, 'min="1"'), 'Cộng')}
+      ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
+      ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
+      ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
+      ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
+      ${line('give_item', 'Đồ thường', `<select name="id">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
+      ${line('give_gear', 'Đồ hiếm', `<select name="base">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
+        <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
+        <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
+      ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
+      ${adm.alog && adm.alog.uid === u.id ? viewAdminLog(adm.alog.log) : ''}
+    </div>`;
+  }
+
+  function viewGoldLog(log) {
+    if (!log.length) return '<p class="small muted">Chưa có nhật ký vàng.</p>';
+    return `<table class="adm-table"><tr><th>Lúc</th><th>Lý do</th><th>Đổi</th><th>Còn</th></tr>${log.map((l) => `<tr><td>${vnDate(l.at)}</td><td>${esc(l.reason)}${l.ref ? ` <span class="muted">${esc(l.ref)}</span>` : ''}</td><td style="color:var(${l.delta < 0 ? '--bad' : '--good'})">${l.delta > 0 ? '+' : ''}${fmt(l.delta)}</td><td>${fmt(l.balance)}</td></tr>`).join('')}</table>`;
+  }
+
+  function viewAdminLog(log) {
+    if (!log.length) return '<p class="small muted">Chưa có thao tác nào.</p>';
+    return `<table class="adm-table"><tr><th>Lúc</th><th>Ai</th><th>Lệnh</th><th>Kết quả</th></tr>${log.map((l) => `<tr><td>${vnDate(l.at)}</td><td>${esc(l.admin)}</td><td>${esc(l.op)}${l.target_id ? ` <span class="muted">#${l.target_id}</span>` : ''}<div class="small muted">${esc(JSON.stringify(l.params))}</div></td><td>${esc(l.result || '')}</td></tr>`).join('')}</table>`;
+  }
+
+  function viewAudit() {
+    const a = adm.audit;
+    const body = !a ? '' : `${a.problems.length === 0 ? '<p class="small" style="color:var(--good)">Không có lỗi: vàng khớp nhật ký, không có đồ hiếm trùng.</p>'
+      : `<p class="small" style="color:var(--bad)">${a.problems.length} lỗi:</p><ul class="small">${a.problems.map((p) => `<li>[${esc(p.kind)}] ${esc(p.text)}</li>`).join('')}</ul>`}
+      <h4>Vàng ${a.stats.days} ngày qua theo lý do</h4>
+      ${a.stats.by_reason.length ? `<table class="adm-table"><tr><th>Lý do</th><th>Vào</th><th>Ra</th><th>Lần</th></tr>${a.stats.by_reason.map((r) => `<tr><td>${esc(r.reason)}</td><td>+${fmt(r.in)}</td><td>${fmt(r.out)}</td><td>${r.n}</td></tr>`).join('')}</table>` : '<p class="small muted">Không có.</p>'}
+      <h4>Nhận nhiều vàng nhất</h4>
+      ${a.stats.top.length ? `<ol class="small">${a.stats.top.map((t) => `<li>${esc(t.name || '(đã xóa) #' + t.user_id)}: +${fmt(t.gold)}</li>`).join('')}</ol>` : '<p class="small muted">Không có.</p>'}`;
+    return `<div class="card"><div class="row"><h3 class="grow">Kiểm tra vàng</h3>
+      <button class="btn small-btn" data-adm="audit" data-days="1">1 ngày</button><button class="btn small-btn" data-adm="audit" data-days="7">7 ngày</button></div>
+      <p class="small muted">Đối soát vàng của mọi nhân vật với nhật ký, tìm đồ hiếm trùng mã (dấu hiệu nhân đồ). Như lệnh <code>mix hac_long.audit</code>.</p>${body}</div>`;
+  }
+
+  function onCharOp(form) {
+    const f = new FormData(form), op = form.dataset.op, payload = { uid: +form.dataset.uid };
+    const n = (k) => Math.trunc(+f.get(k) || 0);
+    if (op === 'give_xp') payload.xp = n('xp');
+    if (op === 'set_level') payload.level = n('level');
+    if (op === 'add_gold') payload.amount = n('amount');
+    if (op === 'add_points') payload.n = n('n');
+    if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
+    if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
+    if (op === 'give_gear') {
+      Object.assign(payload, { base: f.get('base'), rarity: n('rarity'), up: n('up') });
+      const bonus = {};
+      STAT_KEYS.forEach(([k]) => { if (n(k) > 0) bonus[k] = n(k); });
+      if (Object.keys(bonus).length) payload.bonus = bonus;
+    }
+    Net.admin(op, payload).then((r) => { toast(r.msg || 'Đã xong.'); if (r.user) adm.user = r.user; adm.glog = null; render(); }).catch((err) => toast(err.msg, true));
   }
 
   function giftForm(id, uid) {
@@ -211,9 +283,14 @@
     if (d.uid) payload.uid = +d.uid;
     if (d.action) payload.action = d.action;
     if (d.minutes) payload.minutes = +d.minutes;
+    if (d.days) payload.days = +d.days;
     try {
-      await Net.admin(op, payload);
-      toast('Đã xong.');
+      const r = await Net.admin(op, payload);
+      if (op === 'audit') { adm.audit = r.audit; return render(); }
+      if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
+      if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
+      toast(r.msg || 'Đã xong.');
+      if (r.user) adm.user = r.user;
       if (op === 'resolve') adm.reports = adm.reports.filter((r) => r.id !== payload.id);
       if (adm.user && payload.uid === adm.user.id) adm.user = (await Net.admin('lookup', { name: adm.user.username })).user;
       render();
@@ -1986,7 +2063,7 @@
 
   function enter(r) {
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -2127,6 +2204,7 @@
       return;
     }
     if (e.target.id === 'adm-gift' || e.target.id === 'adm-gift-all') { e.preventDefault(); onGift(e.target); return; }
+    if (e.target.classList.contains('adm-char')) { e.preventDefault(); onCharOp(e.target); return; }
     if (e.target.id === 'guild-create') {
       e.preventDefault();
       const f = new FormData(e.target);
