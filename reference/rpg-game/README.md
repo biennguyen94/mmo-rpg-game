@@ -315,8 +315,8 @@ Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật,
 
 ## Hướng phát triển tiếp
 
-Xem [docs/ROADMAP.md](docs/ROADMAP.md): giới hạn tần suất, bảng xếp hạng, nhiệm vụ hằng ngày,
-chat, trùm thế giới, bản đồ ô vuông để đi lại và đánh quái...
+Kế hoạch hiện tại: [docs/PHASE_PLAN.md](docs/PHASE_PLAN.md) (các phase tiếp theo, lấy từ các mục đã chọn trong
+[docs/FEATURE_CATALOG.md](docs/FEATURE_CATALOG.md)). Lịch sử: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Bản quyền hình ảnh
 

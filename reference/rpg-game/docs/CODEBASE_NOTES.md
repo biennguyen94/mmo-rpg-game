@@ -5,7 +5,7 @@
 > **Sửa code ở chỗ nào được nhắc trong file này thì cập nhật luôn file này.**
 >
 > - Tổng quan cho người chơi / cách chạy: `README.md`.
-> - Kế hoạch tích hợp tính năng từ MU Web: `docs/INTEGRATION_PLAN.md`.
+> - Kế hoạch tích hợp tính năng từ MU Web: `docs/INTEGRATION_PLAN.md`; các phase tiếp theo: `docs/PHASE_PLAN.md`.
 
 ## Mục lục
 

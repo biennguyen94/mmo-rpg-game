@@ -104,11 +104,11 @@
 | D1 ★ | **Ép +6 → +11 bằng ngọc**, có rủi ro (tụt cấp / mất đồ), bảng bước trong config | Khác: Thợ Rèn +5, chắc chắn | ✅ | M | `INTEGRATION_PLAN §3`. Nên làm C10 trước | [x] ✅ Đ3 |
 | D2 | **+10 / +11 cộng gấp đôi** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
 | D3 | **Thông báo toàn server khi ép thành công từ +7** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | `INTEGRATION_PLAN 3-C` | [x] |
+| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | Đã chọn (câu 3-C chuyển từ "để sau" sang làm). `PHASE_PLAN.md` Phase 4 | [x] |
 | D5 ★ | **Máy ghép** (công thức: đầu vào theo loại / cấp / số lượng, phí, tỉ lệ cơ bản + theo cấp đồ, trần 60 %; xem trước tỉ lệ; thất bại mất hết) | Khác: công thức nấu / rèn chắc chắn | ✅ | M | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D6 ★ | **Cánh** (ô riêng, % sát thương / % hấp thụ, ép +N mỗi cấp +2 %, cấp 2 theo lớp, vẽ bằng code) | Không | ✅ | L | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D7 | **Ngọc rơi theo nhóm có trọng số** từ quái cấp cao, trùm, top 3 trùm thế giới | Khác: nguyên liệu chỉ từ điểm thu thập | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | Giữ Thợ Rèn (hợp không khí làng) + thêm nút "Ép ngọc" trong tooltip đồ | [x] |
+| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | **Chốt:** giữ Thợ Rèn + nút "Ép ngọc" trong bảng chi tiết món đồ, cho **cả đồ trong túi lẫn đồ đang mặc** (thay C15) | [x] |
 
 ## E. Kinh tế, cửa hàng, giao dịch, chống gian lận
 
@@ -160,8 +160,8 @@
 | H4 | **Vai trò bang:** chủ / phó (tối đa 2) / thành viên; phó mời được, chỉ đuổi thành viên thường | Kiểm | 🟡 | S | | [x] |
 | H5 | **Chiến bang** (tuyên chiến, 60 s nhận, 20 điểm hoặc 30 phút, đầu hàng) | Không | 🟡 | M | Biến thể: **chiến bang trên đấu trường** (điểm theo trận đấu trường giữa hai bang trong 1 giờ) | [x] |
 | H6 | **Tên bang trên đầu nhân vật** | Kiểm | ✅ | S | | [x] |
-| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ❌ | – | | [x] |
-| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ❌ | – | Đã có tương đương | [x] |
+| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ✅ (chốt lại 2026-10-04) | M | **Chốt:** làm thành **PK = trận đấu trường có cược vàng** (không đánh nhau tự do trên bản đồ). `PHASE_PLAN.md` Phase 5 | [x] |
+| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ✅ (chốt lại 2026-10-04) | S | **Chốt:** thách đấu trực tiếp = mời một người cụ thể vào trận đấu trường cược vàng (gộp với H7) | [x] |
 | H9 | **Chat bằng lệnh:** `/w Tên`, `/m`, `/p`, `/g` | Khác: chọn kênh bằng nút | ✅ | S | Gõ nhanh trên máy tính | [x] |
 | H10 | **Lọc từ cấm trong chat** (thay bằng `***`, danh sách trong config) | Không thấy | ✅ | S | | [ ] |
 | H11 | **Giới hạn chat theo nhóm lệnh** (5 tin / 5 s) | Có giới hạn | ❌ | – | Đã có | [ ] |
@@ -300,7 +300,7 @@
 |---|---|---|---|---|---|---|
 | C13 | **Luật gộp stack** (gộp vào stack ô thấp nhất, tràn ra stack mới, có log) | Khác (`inv` là số đếm) | ❌ | – | | [ ] |
 | C14 | **Nhặt đồ nguyên tử** (bản đồ trao cho đúng 1 người, ghi DB lỗi thì đồ về đất) | Khác | ❌ | – | | [ ] |
-| C15 | **Ép chỉ đồ trong túi** (không ép đồ đang mặc) | Ngược lại: chỉ ép đồ đang mặc | ❌ | – | Giữ kiểu Hắc Long | [x] |
+| C15 | **Ép chỉ đồ trong túi** (không ép đồ đang mặc) | Ngược lại: chỉ ép đồ đang mặc | ❌ (bỏ, 2026-10-04) | – | **Bỏ**: giữ Thợ Rèn ép đồ đang mặc, thêm **D8** ép cho cả đồ trong túi lẫn đồ đang mặc | bỏ |
 | C16 | **Ô khóa theo cờ tính năng** (🔒 ô cánh khi chưa bật), **ô cấm theo lớp** | – | 🟡 | S | Đi cùng D6 / C1 / J6 | [ ] |
 | C17 | **Kích thước ô của đồ** (kiếm 1×3, giáp 2×2) cho túi lưới | – | 🟡 | S | Chỉ khi làm C5 | [x] |
 | C18 | **Khóa đồ** (chống bán / ghép / giao dịch nhầm) — MU chưa làm | Không | ✅ | S | Rất nên có khi thêm Máy ghép (D5): lỡ bỏ đồ +9 vào máy là mất | [x] ✅ Đ3 |
@@ -554,36 +554,32 @@ cũ; mỗi tài khoản một nhân vật): B1, B3, B7; công cụ Item.txt + h�
 - **K3**: `HacLong.Admin.console/3`, `Release.audit` / `prune_logs`; chưa có lệnh dòng lệnh cho thông báo / thư / sự kiện.
 - **M7**: có công cụ (`mix hac_long.icons`, hình theo cấp, thiếu thì dùng icon cũ); chờ bộ hình của anh.
 
-### Kiểm tra lựa chọn của anh (2026-10-04)
+### Kiểm tra lựa chọn của anh (2026-10-04) — đã chốt
 
-Chỗ cần anh xem lại (em chưa đổi lựa chọn, chỉ ghi chú):
+Anh đồng ý tất cả (2026-10-04):
 
-1. **H7 (PK mở) và H8 (thách đấu trực tiếp)** đánh giá ❌: Hắc Long đánh theo lượt, người chơi không đứng chung một trận
-   thời gian thực; H8 đã có Đấu trường thay thế. Nếu vẫn chọn thì cần thiết kế lại (đề xuất: PK = thách đấu đấu trường có
-   cược vàng).
-2. **C15 (chỉ ép đồ trong túi)** ngược với cách hiện tại (Thợ Rèn ép đồ đang mặc) và với **D8** (kéo ngọc lên đồ). Đề xuất:
-   làm D8 cho cả đồ trong túi lẫn đồ đang mặc, bỏ C15.
-3. **D4 (Ngọc Sinh Mệnh)**: câu 3-C trước đó chốt "để sau", nay đã chọn → đưa vào đợt làm đồ (bên dưới).
-4. **M7 (icon item thật)** đánh giá ❌ lúc lập danh mục vì Hắc Long đã có icon; nay hợp với yêu cầu thay hình item theo
-   cấp +N bằng bộ hình riêng → đổi thành ✅ (xem `INTEGRATION_PLAN §10`).
-5. **C1, C2, C3, C4, B4, A9, J3, C17** liên quan trực tiếp tới dữ liệu đồ từ `Item.txt` → làm chung một đợt khi có file
-   (`INTEGRATION_PLAN §10`). B3, B7 đã xong cùng việc đổi 4 lớp MU (§9).
-6. **D10** trong bản anh có `[ X]` (thừa dấu cách) → đã sửa.
-7. **H1–H6, H9, H12** phần lớn Hắc Long đã có dạng khác ("Kiểm") → làm bằng cách kiểm lại từng luật, sửa chỗ thiếu.
-8. **M8** đổi tên hook thành `window.__hl` (Hắc Long), không dùng `__mu`.
+1. **H7 (PK mở), H8 (thách đấu trực tiếp)** → làm thành **trận đấu trường có cược vàng**, mời một người cụ thể; không có
+   đánh nhau tự do trên bản đồ (Hắc Long đánh theo lượt).
+2. **C15** bỏ; **D8** làm cho cả đồ trong túi lẫn đồ đang mặc.
+3. **D4 (Ngọc Sinh Mệnh)** đưa vào phase ngọc.
+4. **M7** đổi ✅ (đã có công cụ hình riêng `mix hac_long.icons`).
+5. Các mục đồ (C1–C4, B4, A9, J3, C17) làm chung một phase khi có `Item.txt`.
+6. `[ X]` ở D10 đã sửa; H1–H6, H9, H12 làm bằng cách kiểm lại luật đang có; hook test đặt tên `window.__hl`.
 
-### Đã chọn, chưa làm → đợt gợi ý
+### Đã chọn, chưa làm → kế hoạch các phase
 
-| Đợt | Mục | Ghi chú |
+Chi tiết từng phase (mục tiêu, việc, câu hỏi, tiêu chí xong): **`docs/PHASE_PLAN.md`**.
+
+| Phase | Tên | Mục |
 |---|---|---|
-| **5. Đồ từ Item.txt** (đổi lớp đã xong ở đợt 4) | B4, C1, C2, C3, C4, A9, (B8, L1 phần còn lại), J3, C17, C21 | `INTEGRATION_PLAN §10`, chờ Item.txt |
-| **6. Công thức chiến đấu + data** | A1, A2, A3, A4, B2, E7, J1, J2 | Đổi cân bằng → simulator trước / sau |
-| **7. Ngọc, ép, kho** | D4, D8, C6, C7, E10 | Bỏ C15 (mục 2 ở trên) |
-| **8. Xã hội** | H1–H6, H9, H12, E5, K10 | Chủ yếu kiểm lại luật đang có |
-| **9. Sự kiện** | F1, F4, M3 | Golden Invasion |
-| **10. Giao diện + test** | L2, M2, M8, M10, M11, N1, N2, N3, N5, B9, B11 | |
-| **11. Tài liệu** | O1, O3, O4 | |
-| Chờ anh xác nhận | H7, H8, C15 | Mục 1, 2 ở trên |
+| 1 | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 |
+| 2 | Lưới an toàn test | N1, N2, N3, N5, M8, O4 |
+| 3 | Công thức chiến đấu | A1, A2, A4 |
+| 4 | Ngọc, ép, kho | D4, D8, C6, C7, E10 |
+| 5 | Xã hội, xếp hạng, PK cược vàng | H1–H9, H12, H14, E5, K10, M2 |
+| 6 | Đồ từ Item.txt (chờ file) | C1, C2, C3, C4, B4, A9, C17, C21, M10, phần còn lại của B8, L1 |
+| 7 | Sự kiện Golden Invasion | F1, F4, M3 |
+| 8 | Giao diện, hướng dẫn người chơi | L2, M11, O1 |
 
 **Nên làm, công vừa:**
 - ~~**C10:** cấp nâng theo từng món; cần trước D1.~~ (Đợt 3)

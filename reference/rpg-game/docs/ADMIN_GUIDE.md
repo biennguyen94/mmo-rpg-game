@@ -17,6 +17,7 @@ nhật ký vàng / đồ hiếm / quản trị, và công thức dựng nhân v�
 7. [Giao dịch trực tiếp an toàn (cho người vận hành)](#7-giao-dịch-trực-tiếp-an-toàn-cho-người-vận-hành)
 8. [Xử lý sự cố](#8-xử-lý-sự-cố)
 9. [Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)](#9-ép-đồ-máy-hỗn-nguyên-khóa-đồ-đợt-3)
+10. [Hình đồ theo cấp và Item.txt](#10-hình-đồ-theo-cấp-và-itemtxt)
 
 ---
 
@@ -257,3 +258,46 @@ Số liệu ở `priv/game_data.json` (`UPGRADE`, `JEWELS`, `CHAOS`, các món `
 - **Khóa đồ:** người chơi khóa / mở khóa trong bảng chi tiết món đồ. Đồ khóa không bán, rao chợ, giao dịch, bỏ vào máy được.
 - Người chơi mất đồ do ép / ghép thất bại: đó là luật chơi. Muốn đền thì tra `gear_log` theo `uid` (lý do `UPGRADE` /
   `CHAOS`, hành động `out`) rồi tặng lại bằng `give_gear` / `give_item` kèm `up`.
+
+## 10. Hình đồ theo cấp và Item.txt
+
+Dữ liệu của anh đặt ở `reference/rpg-game/assets_src/items/` (đưa vào git bình thường):
+
+```
+assets_src/items/
+  Item.txt          ← bảng đồ
+  icons/            ← hình đồ (PNG / WebP)
+```
+
+### 10.1 Thay hình đồ (dùng được ngay)
+
+1. Đặt hình vào `assets_src/items/icons/`, tên theo mẫu:
+
+   | Tên file | Dùng cho |
+   |---|---|
+   | `{id}_{N}.png` | đồ Hắc Long hiện có, từ cấp **+N** trở lên (vd `broadsword_0.png`, `broadsword_5.png`, `broadsword_10.png`) |
+   | `{id}.png` | đồ Hắc Long, mọi cấp |
+   | `item_{nhóm}_{số}_{N}.png`, `item_{nhóm}_{số}.png` | đồ có `"ref": "nhóm/số"` (dòng trong Item.txt) |
+
+   `id` là khóa món đồ trong `priv/game_data.json` (`club`, `broadsword`, `relic`, `wing_dk_1`, `jewel_bless`…).
+2. Chạy `mix hac_long.icons` (trong `reference/rpg-game`). Lệnh in số hình đã nhận, file bị bỏ qua (sai tên) và danh sách
+   đồ chưa có hình riêng.
+3. Tải lại trang. Game chọn hình có mốc **lớn nhất ≤ cấp nâng** của món: có `_0`, `_5`, `_10` thì +0…+4 dùng `_0`,
+   +5…+9 dùng `_5`, +10, +11 dùng `_10`. Mốc tùy anh. Thiếu hình thì dùng icon cũ, không lỗi.
+4. Deploy: commit `assets_src/items`, `priv/static/assets/items`, `priv/static/assets/item_icons.json` rồi làm như
+   `docs/DEPLOY.md` (bản Docker không chạy được `mix`).
+
+Thư mục khác: `mix hac_long.icons --src ~/hinh-do` hoặc biến `HL_ITEM_ICONS_DIR`.
+
+### 10.2 Đọc Item.txt (nháp, chưa thay đồ trong game)
+
+```bash
+mix hac_long.items.import                 # mặc định assets_src/items/Item.txt
+mix hac_long.items.import đường/dẫn/Item.txt
+```
+
+- Ghi `priv/items_raw.json` (nguyên số trong file) và `priv/items_from_txt.json` (đồ dạng Hắc Long: `id item_{nhóm}_{số}`,
+  `ref`, ô, đòn thấp / cao, phòng thủ, cấp, yêu cầu STR / AGI / VIT / ENE, lớp mặc được).
+- In số món theo nhóm và cảnh báo dòng hỏng (thiếu cột, chữ ở chỗ số…).
+- Đưa đồ này vào game (cửa hàng, rơi theo vùng, đồ theo lớp, đủ 10 ô trang bị) là **Phase 6** trong `docs/PHASE_PLAN.md`.
+
