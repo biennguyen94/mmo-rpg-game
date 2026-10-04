@@ -1007,7 +1007,9 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 
 - Bỏ thẻ chat dưới bản đồ. Khung chat **đè lên góc dưới trái của bản đồ**: nền mờ, 6–8 dòng gần nhất, tin cũ mờ dần sau ~15 giây
   (bấm vào khung thì hiện lại lịch sử, cuộn được).
-- Ô nhập ẩn; **Enter** (máy tính) hoặc nút 💬 trên khung (điện thoại) thì hiện ô nhập; Enter gửi, Esc đóng.
+- Ô nhập ẩn; **Enter** (máy tính) hoặc nút 💬 (điện thoại) thì hiện ô nhập; Enter gửi, Esc đóng.
+- **Nút 💬 trên điện thoại (anh chốt 2026-10-04):** đặt ở **góc dưới phải của bản đồ** (ngay trên dock), kích thước vừa phải
+  (~36 px, nền mờ, không che nhân vật / nút trận đánh); có chấm đỏ khi có tin mới lúc khung chat đang thu gọn.
 - Chọn kênh bằng nút nhỏ cạnh ô nhập (Tất cả / Đội / Bang) hoặc lệnh `/w /p /g /a` như hiện có; màu theo kênh (thế giới trắng,
   đội xanh lá, bang xanh dương, riêng tím, hệ thống vàng). Bong bóng chat trên đầu nhân vật giữ nguyên.
 - Trong trận đánh khung chat thu nhỏ còn 2 dòng.
