@@ -461,6 +461,9 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 - **5-A** Số bot và thời gian soak mục tiêu (đề xuất 30 bot / 10 phút; tối đa 100 bot chạy tay)?
 - **5-B** Chạy e2e trên **mọi push** hay chỉ khi sửa `reference/rpg-game/**`? Đề xuất: **chỉ khi sửa thư mục đó** (`paths:` filter).
 
+**Đã chốt (2026-10-04, Phase 2):** 5-A và 5-B theo đề xuất. Đã làm: `e2e/` (xem `e2e/README.md`), CI
+`.github/workflows/hac-long-e2e.yml`.
+
 ---
 
 ## 6. Bảng xếp hạng theo lớp

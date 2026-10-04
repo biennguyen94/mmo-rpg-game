@@ -8,7 +8,6 @@
   const PORTAL = new Set(['D', 'A', 'O']);
   // loại ô → hình (assets/tiles/*.png); nền "." dùng hình `floor` của từng bản đồ
   const GROUND = { grass: 1, dirt: 1, flowers: 1 };
-  const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
   // cấp của từng loại quái, để tô màu độ khó
   const LEVEL = {};
@@ -392,33 +391,14 @@
   // Không đi xuyên quái hay cổng; riêng ô đích thì cho phép (đánh quái, qua cổng, uống nước giếng).
   function nextStep(P, tx, ty) {
     const m = cur(P);
-    const sx = P.pos.x, sy = P.pos.y;
-    if (sx === tx && sy === ty) return null;
-    const key = (x, y) => y * 1000 + x;
-    const prev = new Map([[key(sx, sy), null]]);
-    const queue = [[sx, sy]];
-    while (queue.length) {
-      const [x, y] = queue.shift();
-      for (const [dir, [dx, dy]] of Object.entries(DIRS)) {
-        const nx = x + dx, ny = y + dy, k = key(nx, ny);
-        if (prev.has(k)) continue;
-        const goal = nx === tx && ny === ty;
-        const c = tileAt(m, nx, ny);
-        if (c == null) continue;
-        const bossHere = boss.alive && m.worldBoss && m.worldBoss[0] === nx && m.worldBoss[1] === ny;
-        // không đi ngang qua cầu thang (lên/xuống tầng ngoài ý muốn); ô đích thì được
-        if (!goal && (!WALK.has(c) || PORTAL.has(c) || c === '<' || c === '>' || monsterAt(nx, ny) || nodeAt(nx, ny) || npcAt(m, nx, ny) || bossHere || decorAt(P, nx, ny))) continue;
-        prev.set(k, [x, y, dir]);
-        if (goal) {
-          // lần ngược về ô xuất phát để lấy bước đầu
-          let cur = [nx, ny], step = dir;
-          for (let p = prev.get(key(...cur)); p; p = prev.get(key(p[0], p[1]))) { step = p[2]; cur = p; }
-          return step;
-        }
-        queue.push([nx, ny]);
-      }
-    }
-    return null;
+    return window.HLLogic.firstStep(P.pos.x, P.pos.y, tx, ty, (nx, ny, goal) => {
+      const c = tileAt(m, nx, ny);
+      if (c == null) return false;
+      if (goal) return true;
+      const bossHere = boss.alive && m.worldBoss && m.worldBoss[0] === nx && m.worldBoss[1] === ny;
+      // không đi ngang qua cầu thang (lên/xuống tầng ngoài ý muốn); ô đích thì được
+      return !(!WALK.has(c) || PORTAL.has(c) || c === '<' || c === '>' || monsterAt(nx, ny) || nodeAt(nx, ny) || npcAt(m, nx, ny) || bossHere || decorAt(P, nx, ny));
+    });
   }
 
   // Nhà của người khác (chỉ xem): vẽ cả căn nhà vừa khung, đồ trang trí của họ, chủ nhà

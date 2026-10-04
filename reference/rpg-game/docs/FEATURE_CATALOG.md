@@ -240,17 +240,17 @@
 | M5 | **Di chuyển trượt mượt (Glide), camera theo vị trí vẽ** | Đã mượt | ❌ | – | | [ ] |
 | M6 | **Client TypeScript**, kiểu cho protocol | Khác: JS thuần (`ui.js` 2 100 dòng) | 🟡 | L | Lớn. Thay thế nhẹ: tách dần logic thuần (giá, công thức hiển thị, chat) ra module riêng có test (N2) | [ ] |
 | M7 | **Icon item thật + ảnh thay thế khi thiếu** (build không lỗi) | Có icon | ✅ (đổi từ ❌, 2026-10-04) | S | Bộ hình riêng của anh, đổi theo cấp +N; `INTEGRATION_PLAN §10` | [x] 🔶 Đ4 |
-| M8 | **Hook test** (`window.__mu`: trạng thái, vị trí vẽ) | Không | ✅ | S | Đi cùng N1 | [x] |
+| M8 | **Hook test** (`window.__mu`: trạng thái, vị trí vẽ; Hắc Long: `window.__hl` khi `?test=1`) | Không | ✅ | S | Đi cùng N1 | [x] ✅ P2 |
 
 ## N. Test, CI, công cụ
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| N1 ★ | **E2E Playwright** (smoke, xã hội, tiến trình, quản trị, điện thoại) | Không | ✅ | M | `INTEGRATION_PLAN §5` | [x] |
-| N2 | **Unit test logic client** (`node --test`) | Không | ✅ | S | Đi cùng M6 (bản nhẹ) | [x] |
-| N3 ★ | **Soak test** (N bot, đo trễ p50 / p95, lỗi, bộ nhớ) + audit sau soak | Không | ✅ | M | `INTEGRATION_PLAN §5` | [x] |
+| N1 ★ | **E2E Playwright** (smoke, xã hội, tiến trình, quản trị, điện thoại) | Không | ✅ | M | `INTEGRATION_PLAN §5` | [x] ✅ P2 |
+| N2 | **Unit test logic client** (`node --test`) | Không | ✅ | S | Đi cùng M6 (bản nhẹ) | [x] ✅ P2 |
+| N3 ★ | **Soak test** (N bot, đo trễ p50 / p95, lỗi, bộ nhớ) + audit sau soak | Không | ✅ | M | `INTEGRATION_PLAN §5` | [x] ✅ P2 |
 | N4 | **CI chạy được** (job ở repo ngoài, `working-directory`) | Không chạy (thư mục con) | ✅ | S | `INTEGRATION_PLAN §0` | ✅ Đ1 |
-| N5 | **Test chống nhân bản song song** (bắn nhiều lệnh cùng lúc, kiểm không ra đồ / vàng thừa) | Không | ✅ | S | Đi cùng E1 / E4 | [x] |
+| N5 | **Test chống nhân bản song song** (bắn nhiều lệnh cùng lúc, kiểm không ra đồ / vàng thừa) | Không | ✅ | S | Đi cùng E1 / E4 | [x] ✅ P2 |
 | N6 | **Simulator theo cách chơi** | Có | ❌ | – | Chỉ thêm mode mới khi làm D1 / D6 | [ ] |
 | N7 | **Kiểm tài sản riêng không vào git** (CI kiểm `git ls-files`) | – | ❌ | – | Hắc Long không có tài sản riêng | [ ] |
 
@@ -261,7 +261,7 @@
 | O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] |
 | O2 | **`ADMIN_GUIDE`** (lệnh quản trị, sao lưu, xử lý tình huống) | Khác: `DEPLOY.md` | ✅ | S | Đi cùng K1 | [x] ✅ Đ2 |
 | O3 | **`DECISIONS` / `OPEN_QUESTIONS`** (ghi quyết định, câu hỏi chờ duyệt) | Không | 🟡 | S | Theo dõi vì sao số / luật được chọn | [x] ✅ P1 |
-| O4 | **Ảnh chụp màn hình trong tài liệu** (do e2e chụp) | Kiểm | 🟡 | S | Đi cùng N1 | [x] |
+| O4 | **Ảnh chụp màn hình trong tài liệu** (do e2e chụp) | Kiểm | 🟡 | S | Đi cùng N1 | [x] ✅ P2 |
 
 ---
 
@@ -549,6 +549,11 @@ cũ; mỗi tài khoản một nhân vật): B1, B3, B7; công cụ Item.txt + h�
 `priv/game_data/*.json` (12 file), số luật chơi vào `rules.json` (`RULES`), kiểm tham chiếu lúc biên dịch, lọc từ cấm khi
 đặt tên nhân vật / bang, vị trí lưu hỏng → điểm vào bản đồ. Không đổi cân bằng (simulator cùng seed giống hệt). Chi tiết:
 `PHASE_PLAN.md` (Phase 1), `CODEBASE_NOTES.md §9f`, `DECISIONS.md`.
+
+**Phase 2 đã làm (2026-10-04): lưới an toàn test** — N1, N2, N3, N5, M8, O4. E2E Playwright 5 kịch bản (`e2e/`), hook
+`window.__hl`, hàm thuần client tách ra `logic.js` + `node --test`, test chống nhân bản song song, soak bot WebSocket, ảnh
+tài liệu chụp từ e2e, workflow CI `hac-long-e2e.yml`. Chi tiết: `PHASE_PLAN.md` (Phase 2), `CODEBASE_NOTES.md §9g`,
+`e2e/README.md`.
 
 **Làm một phần (🔶):**
 - **B8** (Q2): có HP, công, thủ, chí mạng, né, % cánh; chưa có đòn min~max, tỉ lệ trúng, tốc độ.

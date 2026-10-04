@@ -16,6 +16,8 @@ sửa trong `config/dev.exs`).
 mix setup          # tải thư viện, tạo database, chạy migration
 mix phx.server     # mở http://localhost:4000
 mix test           # chạy test (cần PostgreSQL)
+node --test test/js/*.test.mjs   # test hàm thuần của giao diện
+node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 ```
 
 ## Nội dung
@@ -171,6 +173,8 @@ lib/hac_long_web/channels/          UserSocket, GameChannel
 lib/hac_long_web/controllers/       API đăng nhập; trang chủ (chèn dữ liệu game cho client)
 lib/hac_long_web/remote_ip.ex       Lấy IP thật từ X-Forwarded-For khi chạy sau proxy tin cậy
 lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, mix hac_long.audit
+priv/static/js/logic.js             Hàm thuần của giao diện (tìm đường, hình theo cấp…), test bằng node --test
+e2e/                                E2E Playwright + soak test (xem e2e/README.md)
 .github/workflows/ci.yml            CI: format, biên dịch không cảnh báo, mix test
 ```
 

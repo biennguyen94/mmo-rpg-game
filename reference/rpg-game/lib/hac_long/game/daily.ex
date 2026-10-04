@@ -2,7 +2,7 @@ defmodule HacLong.Game.Daily do
   @moduledoc """
   Việc hằng ngày ở Bảng Tin trong Làng. Hàm thuần, như `Engine`.
 
-  Mỗi ngày (theo giờ Việt Nam) mỗi nhân vật có 3 việc, chọn ngẫu nhiên nhưng cố định trong
+  Mỗi ngày (theo giờ Việt Nam) mỗi nhân vật có 4 việc, chọn ngẫu nhiên nhưng cố định trong
   ngày (theo tên nhân vật và ngày), lấy từ hai vùng cao nhất đã mở:
 
   - `kill`: hạ N con một loại quái;

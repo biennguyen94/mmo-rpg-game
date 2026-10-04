@@ -4,6 +4,7 @@
 (function () {
   const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE, UPGRADE, CHAOS } = window.GAME_DATA;
   const Net = window.Net;
+  const L = window.HLLogic; // hàm thuần (logic.js), có test node --test
 
   let P = null;          // trạng thái người chơi
   let tab = 'map';       // tab đang mở
@@ -51,10 +52,8 @@
   // trong Item.txt) hoặc "custom/{id}"; lấy mức lớn nhất ≤ cấp. Không có thì dùng icon / sprite cũ.
   const ITEM_ICONS = window.GAME_DATA.ITEM_ICONS || {};
   function ownIcon(it, level) {
-    const m = ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)];
-    if (!m) return null;
-    const lv = Object.keys(m).filter((k) => /^\d+$/.test(k) && +k <= (level || 0)).map(Number).sort((a, b) => b - a)[0];
-    return lv === undefined ? null : asset(m[lv]);
+    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level);
+    return path ? asset(path) : null;
   }
   const itemIcon = (it, rarity, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')); };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
@@ -1139,9 +1138,9 @@
   // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
   const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
-  const effLevel = (l) => l + Math.max(0, l - UPGRADE.double_from + 1);
+  const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
   // màu viền theo cấp nâng (+7, +9, +11)
-  const upClass = (l) => (l >= 11 ? ' up11' : l >= 9 ? ' up9' : l >= 7 ? ' up7' : '');
+  const upClass = L.upClass;
   // Món đồ theo id: đồ thường trong ITEMS, đồ chỉ số ngẫu nhiên (id bắt đầu bằng #) do server gửi.
   const isGear = (id) => typeof id === 'string' && id[0] === '#';
   const itemOf = (id) => (isGear(id) ? P.view.gear[id] : ITEMS[id]);
@@ -1212,8 +1211,9 @@
   let allocTimer = null;
   const allocPendingTotal = () => Object.values(allocPending).reduce((a, b) => a + b, 0);
   function allocAdd(stat) {
-    if (!P || P.points - allocPendingTotal() <= 0) return;
-    allocPending[stat] = (allocPending[stat] || 0) + 1;
+    const next = P && L.allocAdd(allocPending, stat, P.points);
+    if (!next) return;
+    allocPending = next;
     clearTimeout(allocTimer);
     allocTimer = setTimeout(allocFlush, 200);
     render();
@@ -1221,10 +1221,9 @@
   async function allocFlush() {
     const pend = allocPending;
     allocPending = {};
-    for (const [stat, n] of Object.entries(pend)) {
-      if (n <= 0) continue;
+    for (const cmd of L.allocBatches(pend)) {
       while (busy) await new Promise((r) => setTimeout(r, 50)); // đợi lệnh khác xong, không làm mất điểm
-      await sendCommand({ act: 'alloc', stat, n });
+      await sendCommand(cmd);
     }
   }
 
@@ -1254,23 +1253,17 @@
   // Thú bán ở cửa hàng hoặc quái đã thuần phục ("tame:<id quái>")
   const MONSTER_BY_ID = {};
   ZONES.forEach((z) => z.monsters.forEach((m) => { MONSTER_BY_ID[m.id] = m; }));
-  function tamePrice(m) { return 1000 + m.level * 100; }
+  const tamePrice = (m) => L.tamePrice(m, RULES.tamePrice, RULES.tamePricePerLevel);
   function petInfo(id) {
     if (id && id.startsWith('tame:')) {
       const m = MONSTER_BY_ID[id.slice(5)];
-      return m && { id, name: m.name + ' (thuần)', desc: 'Tấn công +3%.', sprite: 'monsters/' + m.id };
+      return m && { id, name: m.name + ' (thuần)', desc: `Tấn công +${Math.round(RULES.tameBonus * 100)}%.`, sprite: 'monsters/' + m.id };
     }
     const pt = PETS.find((x) => x.id === id);
     return pt && { ...pt, sprite: 'pets/' + pt.id };
   }
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
-  const petXpFor = (lv) => RULES.petXpCoef * lv * (lv - 1);
-  function petLevel(id) {
-    const xp = (P.pet_xp && P.pet_xp[id]) || 0;
-    let lv = 1;
-    while (lv < RULES.petMaxLevel && petXpFor(lv + 1) <= xp) lv++;
-    return { lv, xp, next: lv < RULES.petMaxLevel ? petXpFor(lv + 1) : null, from: petXpFor(lv) };
-  }
+  const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
   const TAME_SKILL = { id: 'rend', name: 'Cắn Xé', desc: 'Cú cắn gây gấp đôi sát thương.' };
   function petSkill(id) {
     if (id.startsWith('tame:')) return TAME_SKILL;
@@ -1567,16 +1560,13 @@
     }).join('');
     const table = UPGRADE.steps.map((s) => `+${s.level}: ${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
     return `<div class="card"><h3>Rèn đồ đang mặc</h3>
-      <p class="small muted">Mỗi cấp thêm 8% chỉ số của món đồ; từ +10 mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món.</p>
+      <p class="small muted">Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số của món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món.</p>
       <div class="list">${rows}</div></div>`;
   }
 
   // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
   let chaosPick = {}; // công thức → uid món đồ chọn
-  function chaosRate(r, up) {
-    const extra = r.gear ? (r.per_up || 0) * Math.max(0, up - r.gear.min_up) : 0;
-    return Math.min(r.max_rate || 1, r.rate + extra);
-  }
+  const chaosRate = L.chaosRate;
   function chaosCard() {
     const rows = CHAOS.map((r) => {
       const fits = r.gear ? bagGear().filter((uid) => {
@@ -2435,6 +2425,32 @@
     });
     render();
     Net.resume().then(enter).catch((e) => { toast(e.msg, true); enter(null); });
+    if (new URLSearchParams(location.search).get('test') === '1') testHook();
+  }
+
+  // Hook cho test tự động (e2e/, chỉ bật khi mở trang với `?test=1`): đọc trạng thái thay vì đoán chữ
+  // trên màn hình, và gọi thẳng vài thao tác (đi tới ô, gửi lệnh) như người chơi bấm (FEATURE_CATALOG M8).
+  // Chỉ dùng được những gì người chơi vẫn làm được; server vẫn kiểm mọi lệnh.
+  function testHook() {
+    const copy = (x) => (x == null ? null : JSON.parse(JSON.stringify(x)));
+    window.__hl = {
+      player: () => copy(P),
+      userId: () => Net.userId,
+      ui: () => ({
+        loading, busy, tab, logged: !!Net.username,
+        npc: npc && npc.id, dialog: dialog && dialog.type,
+        trade: trade && trade.status, party: copy(party),
+        mail: mail.open, friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
+      }),
+      world: () => copy(Map_.world()),
+      npcs: (map) => copy(WORLD.maps[map || (P && P.pos.map)].npcs),
+      // đi tới ô (x, y) bằng đúng đường đi của người chơi khi chạm vào bản đồ; xong thì trả vị trí
+      walkTo: async (x, y) => { await walkTo(x, y); return P && copy(P.pos); },
+      step: (dir) => step(dir),
+      send: async (cmd) => { await sendCommand(cmd); return copy(P); },
+      tab: (id) => goTab(id),
+      closeNpc: () => { npc = null; render(); },
+    };
   }
 
   start();

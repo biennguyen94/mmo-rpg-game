@@ -19,7 +19,7 @@
 | Phase | Tên | Mục (FEATURE_CATALOG) | Đổi cân bằng | Công | Phụ thuộc |
 |---|---|---|---|---|---|
 | 1 ✅ | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 | Không | M | – |
-| 2 | Lưới an toàn test | N1, N2, N3, N5, M8, O4 | Không | M | – |
+| 2 ✅ | Lưới an toàn test | N1, N2, N3, N5, M8, O4 | Không | M | – |
 | 3 | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
 | 4 | Ngọc, ép, kho | D4, D8, C6, C7, E10 | Nhẹ | M | 1 |
 | 5 | Xã hội, xếp hạng, PK cược vàng | H1–H9, H12, H14, E5, K10, M2 | Nhẹ | M–L | 2 |
@@ -75,7 +75,7 @@ hằng số kỹ thuật); test cố ý sửa sai một id trong data → biên 
 
 ---
 
-## Phase 2 — Lưới an toàn test
+## Phase 2 — Lưới an toàn test ✅ (xong 2026-10-04)
 
 **Mục tiêu:** có test giao diện tự động + test tải + test chống nhân bản, chạy trên CI.
 
@@ -88,10 +88,19 @@ hằng số kỹ thuật); test cố ý sửa sai một id trong data → biên 
 | **N3** | Soak: N bot (WebSocket) chơi song song X phút, đo trễ p50 / p95, lỗi, bộ nhớ; chạy `mix hac_long.audit` sau soak. |
 | **O4** | Ảnh chụp màn hình trong tài liệu lấy từ e2e (cập nhật tự động khi chạy). |
 
-**⛔ Câu hỏi:** 5-A (số bot / thời gian soak: đề xuất 30 bot / 10 phút) và 5-B (e2e chạy trên CI chỉ khi sửa
-`reference/rpg-game/**`) trong `INTEGRATION_PLAN §5.4` — vẫn chờ anh chốt.
+**Câu hỏi (chốt 2026-10-04 theo đề xuất):** 5-A soak 30 bot / 10 phút (chạy tay; CI tự chạy 10 bot / 2 phút), 5-B e2e trên
+CI chỉ khi sửa `reference/rpg-game/**`.
 
 **Xong khi:** CI chạy e2e xanh; soak 30 bot không lỗi, audit sạch.
+
+**Kết quả:**
+
+- `e2e/` 5 kịch bản trên server thật, tất cả PASS: `smoke` 19, `social` 16, `progress` 12, `admin` 10, `mobile` 12 bước
+  (kèm "không lỗi JS" ở mọi kịch bản). Hook `window.__hl` (`?test=1`).
+- `node --test test/js/*.test.mjs`: 7 test hàm thuần (`priv/static/js/logic.js`).
+- `test/hac_long_web/dupe_test.exs`: 3 kịch bản × 4 vòng bắn lệnh song song, chạy nhiều seed: không sinh vàng / đồ, audit sạch.
+- Soak 30 bot × 10 phút: SOAK_RESULT
+- CI: `.github/workflows/hac-long-e2e.yml` (lần chạy đầu tiên trên GitHub sẽ có khi nhánh vào `main` hoặc mở PR).
 
 ---
 

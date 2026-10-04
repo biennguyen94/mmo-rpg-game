@@ -311,6 +311,8 @@ jobs:
       - name: Biên dịch (cảnh báo là lỗi)
         run: mix compile --warnings-as-errors
       - name: Kiểm cú pháp JS giao diện
-        run: for f in priv/static/js/*.js; do node --check "$f"; done
+        run: for f in priv/static/js/*.js e2e/*.mjs; do node --check "$f"; done
+      - name: Test logic giao diện (node --test)
+        run: node --test test/js/*.test.mjs
       - name: Chạy test
         run: mix test

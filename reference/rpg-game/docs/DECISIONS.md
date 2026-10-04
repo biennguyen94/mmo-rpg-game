@@ -22,3 +22,17 @@
 | P1-11 | Từ cấm áp dụng cho tên nhân vật **mới**, tên và ký hiệu bang **mới**; tên đã có không bị đổi. | Đổi tên người đang chơi là việc của quản trị (chưa có công cụ đổi tên). |
 | P1-12 | Vị trí lưu hỏng (B11): coi là hỏng khi bản đồ không còn, ô không đi được, **hoặc** bị bít cả bốn phía. Về **điểm vào của chính bản đồ đó** (cạnh đá dịch chuyển; không có thì chỗ đứng khi qua cổng vào), không được thì về Nhà. | Sau khi sửa bản đồ, người chơi vẫn ở vùng của mình thay vì bị đá về Nhà. |
 | P1-13 | `mix hac_long.simulate` thêm `--seed`; tên bot lấy từ số ngẫu nhiên có seed (trước dùng `System.unique_integer`, làm việc hằng ngày đổi theo lần chạy). | Cần kết quả lặp lại được để so trước / sau khi đổi số. |
+
+## Phase 2 — Lưới an toàn test (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P2-1 | Hook test `window.__hl` chỉ bật khi mở trang với `?test=1`; chỉ đọc trạng thái và gọi đúng các thao tác người chơi vẫn làm (đi tới ô, gửi lệnh). | Không mở quyền mới; server vẫn kiểm mọi lệnh. Người chơi thường không thấy gì khác. |
+| P2-2 | E2E dùng tài khoản quản trị `e2e_admin` (do `scripts/e2e_seed.exs` tạo) để tặng vàng / đồ / cấp cho nhân vật test qua lệnh quản trị thật, thay vì sửa database. | Đi đúng đường người vận hành dùng (có nhật ký ADMIN), kịch bản ngắn mà vẫn qua server thật. |
+| P2-3 | Mỗi người chơi test gửi `X-Forwarded-For` ngẫu nhiên; server e2e chạy với `TRUSTED_PROXIES=127.0.0.1`. | Không phải nới giới hạn đăng ký 5 tài khoản / giờ / IP trong code. |
+| P2-4 | Soak viết bằng WebSocket thô (giao thức Phoenix v2) trong Node, không cần trình duyệt hay thư viện ngoài; tìm đường dùng chung `logic.js` với client. | Chạy được 30–100 bot trên một máy, không phụ thuộc gói npm. |
+| P2-5 | Ngưỡng soak đạt: không lỗi giao thức / quá giờ / mất kết nối, p95 < 150 ms (`SOAK_P95_MS`), có trận đánh; sau đó `mix hac_long.audit` sạch. | Theo `INTEGRATION_PLAN §5.3`. |
+| P2-6 | CI: workflow riêng `hac-long-e2e.yml`, chỉ chạy khi sửa `reference/rpg-game/**`; tự chạy soak ngắn 10 bot / 2 phút, soak 30 bot / 10 phút chạy tay (Run workflow). | Câu 5-A / 5-B; giữ CI nhanh. |
+| P2-7 | Hàm thuần của client (tìm đường, hình theo cấp, tỉ lệ máy ghép, cấp thú, gom lệnh cộng điểm) chuyển sang `priv/static/js/logic.js` (`window.HLLogic`), `ui.js` / `map.js` gọi lại; test `node --test test/js/*.test.mjs`. | Test được không cần trình duyệt; giữ JS thuần như cũ (không thêm bước build). |
+| P2-8 | Ảnh trong tài liệu: `HL_SHOTS_DOCS=1 node e2e/run.mjs` chép 7 ảnh chọn lọc sang `docs/screenshots/e2e-*.png`. Ảnh cũ chụp tay giữ nguyên. | Ảnh luôn đúng giao diện hiện tại khi chạy lại e2e. |
+| P2-9 | Giá thuần phục thú (`RULES.pets.tame_price*`) gửi cho client; mô tả việc hằng ngày sửa thành 4 việc (code tạo 4 việc từ trước, moduledoc ghi nhầm 3). | e2e bắt được chỗ lệch. |

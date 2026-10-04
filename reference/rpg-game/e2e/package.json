@@ -1,0 +1,18 @@
+{
+  "name": "hac-long-e2e",
+  "private": true,
+  "type": "module",
+  "description": "E2E Hắc Long: Playwright trên server thật, soak test WebSocket. Xem e2e/README.md.",
+  "scripts": {
+    "all": "node run.mjs",
+    "smoke": "node smoke.mjs",
+    "social": "node social.mjs",
+    "progress": "node progress.mjs",
+    "admin": "node admin.mjs",
+    "mobile": "node mobile.mjs",
+    "soak": "node soak.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

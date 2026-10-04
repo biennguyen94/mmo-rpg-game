@@ -1,0 +1,99 @@
+name: Hắc Long E2E
+
+# E2E trình duyệt thật + soak ngắn cho Hắc Long (reference/rpg-game, FEATURE_CATALOG N1 / N3).
+# Chỉ chạy khi sửa thư mục Hắc Long (câu 5-B); soak dài (30 bot / 10 phút) chạy tay: Actions → Run workflow.
+on:
+  push:
+    branches: [main]
+    paths: ["reference/rpg-game/**", ".github/workflows/hac-long-e2e.yml"]
+  pull_request:
+    paths: ["reference/rpg-game/**", ".github/workflows/hac-long-e2e.yml"]
+  workflow_dispatch:
+    inputs:
+      soak_bots:
+        description: "Số bot soak"
+        default: "30"
+      soak_minutes:
+        description: "Số phút soak"
+        default: "10"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: reference/rpg-game
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      MIX_ENV: dev
+      LANG: C.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25"
+          elixir-version: "1.17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache thư viện và bản biên dịch
+        uses: actions/cache@v4
+        with:
+          path: |
+            reference/rpg-game/deps
+            reference/rpg-game/_build
+          key: hl-mix-dev-${{ runner.os }}-${{ hashFiles('reference/rpg-game/mix.lock') }}
+          restore-keys: hl-mix-dev-${{ runner.os }}-
+
+      - run: mix deps.get
+      - name: Test logic giao diện (node --test)
+        run: node --test test/js/*.test.mjs
+      - name: Database + tài khoản quản trị e2e
+        run: mix ecto.setup && mix run scripts/e2e_seed.exs
+      - name: Cài Playwright + Chromium
+        working-directory: reference/rpg-game/e2e
+        run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Chạy server
+        env:
+          TRUSTED_PROXIES: 127.0.0.1
+        run: |
+          mix phx.server > server.log 2>&1 &
+          for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
+          cat server.log; exit 1
+      - name: E2E (smoke, social, progress, admin, mobile)
+        env:
+          CHROMIUM_PATH: none
+        run: node e2e/run.mjs http://localhost:4000 e2e-shots
+      - name: "Soak (khi đẩy code 10 bot × 2 phút, chạy tay theo tham số)"
+        env:
+          SOAK_BOTS: ${{ github.event.inputs.soak_bots || '10' }}
+          SOAK_MINUTES: ${{ github.event.inputs.soak_minutes || '2' }}
+        run: node e2e/soak.mjs http://localhost:4000
+      - name: Đối soát vàng / đồ hiếm sau e2e + soak
+        run: mix hac_long.audit
+      - name: Ảnh + log server
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hac-long-e2e-${{ github.run_id }}
+          path: |
+            reference/rpg-game/e2e-shots/
+            reference/rpg-game/server.log

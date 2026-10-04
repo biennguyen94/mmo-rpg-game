@@ -8,16 +8,16 @@
 
 | # | Phase | Câu hỏi | Đề xuất của em |
 |---|---|---|---|
-| 5-A | 2 | Soak test: bao nhiêu bot, chạy bao lâu? | 30 bot / 10 phút |
-| 5-B | 2 | e2e chạy trên CI khi nào? | Chỉ khi sửa `reference/rpg-game/**` |
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
-| P1-Q1 | – | Danh sách từ cấm cơ bản (`RULES.names` trong `priv/game_data/rules.json`) em tự lập: tên quản trị giả mạo (admin, GM, mod, quản trị, hệ thống…) và chửi thề phổ biến (tiếng Việt không dấu + tiếng Anh). Anh xem có cần thêm / bớt từ nào không? | Dùng tạm danh sách hiện tại; anh sửa trực tiếp file, build lại là có hiệu lực |
-| P1-Q2 | – | Có cần công cụ quản trị **đổi tên** nhân vật / bang (cho tên đặt trước khi có lọc từ cấm)? | Làm cùng Phase 5 (xã hội) nếu anh cần |
 
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| P1-Q1 | 2026-10-04 | Danh sách từ cấm cơ bản em lập có cần thêm / bớt? | OK, giữ nguyên |
+| P1-Q2 | 2026-10-04 | Công cụ quản trị đổi tên nhân vật / bang? | Không cần |
+| 5-A | 2026-10-04 | Soak: bao nhiêu bot, bao lâu? | Theo đề xuất (anh bảo làm hết Phase 2): 30 bot / 10 phút chạy tay; CI tự chạy 10 bot / 2 phút |
+| 5-B | 2026-10-04 | e2e chạy trên CI khi nào? | Theo đề xuất: chỉ khi sửa `reference/rpg-game/**` (workflow riêng `hac-long-e2e.yml`) |
 | 1-A | 2026-10-04 | Danh sách từ cấm: anh gửi hay em lập? | Em lập danh sách cơ bản |
 | 1-B | 2026-10-04 | Tách `priv/game_data.json` thành thư mục `priv/game_data/`? | Đồng ý |
 | H7/H8, C15, D4, M7 | 2026-10-04 | Xem `FEATURE_CATALOG.md` mục "Kiểm tra lựa chọn của anh" | Đồng ý tất cả |

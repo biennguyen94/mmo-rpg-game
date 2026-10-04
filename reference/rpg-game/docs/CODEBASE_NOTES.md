@@ -17,7 +17,7 @@
 6. [Vẽ nhân vật và giao diện trang bị](#6-vẽ-nhân-vật-và-giao-diện-trang-bị)
 7. [Chiến đấu](#7-chiến-đấu)
 8. [Dữ liệu game](#8-dữ-liệu-game)
-9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2, 9d Đợt 3, 9e lớp MU, 9f Phase 1)
+9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2, 9d Đợt 3, 9e lớp MU, 9f Phase 1, 9g Phase 2)
 10. [Bẫy cần biết](#10-bẫy-cần-biết)
 
 ---
@@ -364,7 +364,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   - `test/hac_long_web/`: `channels/game_channel_test.exs` (1 294 dòng), auth_controller, error_json, remote_ip.
   - `test/support/`: `channel_case`, `conn_case`, `data_case`.
 - **Alias `mix test`** = `ecto.create --quiet` + `ecto.migrate --quiet` + `test` (`mix.exs:54-61`). Cần PostgreSQL.
-- **Không có** test JS, test giao diện, `package.json`.
+- Test JS: `node --test test/js/*.test.mjs` (hàm thuần `priv/static/js/logic.js`). E2E + soak: `e2e/` (mục 9g).
 - **CI:** job **`hac-long`** trong `.github/workflows/ci.yml` của repo ngoài (`working-directory: reference/rpg-game`; Postgres 16,
   OTP 25 / Elixir 1.17: format, compile `--warnings-as-errors`, `node --check` các file JS, `mix test`).
   File `reference/rpg-game/.github/workflows/ci.yml` vẫn còn nhưng GitHub **không chạy** (thư mục con của repo `mmo-rpg-game`).
@@ -472,6 +472,23 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 - **B11** `World.valid_pos/1`: ô không đi được hoặc bị bít bốn phía → `Maps.entry/1` (cạnh đá dịch chuyển, không có thì chỗ đứng
   khi qua cổng vào), bản đồ không còn → Nhà.
 - Test: `test/hac_long/game/data_rules_test.exs`.
+
+## 9g. Lưới an toàn test (Phase 2, 2026-10-04)
+
+- **`priv/static/js/logic.js`** (`window.HLLogic`, nạp trước `net.js`): hàm thuần dùng chung — `firstStep` (tìm đường BFS,
+  `map.js` `nextStep` gọi), `iconForLevel`, `effLevel`, `upClass`, `chaosRate`, `petLevel`, `tamePrice`, `allocAdd` /
+  `allocBatches` (gom lệnh cộng điểm). Test: `test/js/logic.test.mjs` (`node --test`, CI job `hac-long`).
+- **Hook `window.__hl`** (`ui.js` `testHook`, chỉ khi `?test=1`): `player()`, `ui()`, `world()`, `npcs()`, `walkTo()`,
+  `step()`, `send()`, `tab()`. Không thêm quyền gì.
+- **`e2e/`** (xem `e2e/README.md`): `lib.mjs` (đăng ký + tạo nhân vật với `X-Forwarded-For` riêng, `adminSession` dùng
+  `e2e_admin` từ `scripts/e2e_seed.exs`, `travel` / `meetNpc` / `engage` / `fight`), 5 kịch bản `smoke`, `social`,
+  `progress`, `admin`, `mobile`; `run.mjs` chạy hết (`HL_SHOTS_DOCS=1` chép ảnh sang `docs/screenshots/e2e-*.png`);
+  `soak.mjs` bot WebSocket thô (giao thức Phoenix v2), đo p50 / p95 / max, lỗi, mất kết nối, bộ nhớ BEAM.
+- **`test/hac_long_web/dupe_test.exs`** (N5): bắn song song giao dịch đang chốt + rao chợ + nhận thư (vòng lẻ tranh đúng món,
+  vòng chẵn chỉ đụng vàng, giao dịch phải xong); nhiều người mua cùng một món chợ + người bán rút về; bán cho cửa hàng + giao
+  dịch cùng món hiếm. Kiểm tổng vàng (cộng thư chưa nhận), số đồ thường (túi + chợ), đồ hiếm đúng một chỗ, `Audit` sạch.
+- **CI:** `.github/workflows/hac-long-e2e.yml` (chỉ khi sửa `reference/rpg-game/**`): dev server + Postgres, e2e, soak
+  10 bot / 2 phút (chạy tay chỉnh được), `mix hac_long.audit`, tải ảnh + log server.
 
 ## 10. Bẫy cần biết
 

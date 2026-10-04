@@ -77,6 +77,8 @@ defmodule HacLongWeb.PageController do
         smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
         smithRare: Data.rules().crafting.smith_rare,
         tameBonus: Data.rules().pets.tame_bonus,
+        tamePrice: Data.rules().pets.tame_price,
+        tamePricePerLevel: Data.rules().pets.tame_price_per_level,
         petXpCoef: Data.rules().pets.xp_coef
       },
       WORLD: Maps.client_data()
