@@ -557,6 +557,7 @@ Còn **145 điểm tự do** (29 cấp × 5): cộng tiếp trong panel Nhân v�
 | Cánh | Wings of Soul (cánh cấp 2 của DW) **+11** |
 | Nhẫn | 2 × Ring of HP |
 | Túi | 20 Bless, 20 Soul, 20 Life, 20 Chaos, 99 Healing Potion, 99 Mana Potion |
+| Tuyệt chiêu | **đủ cả 6** của DW (tự học theo cấp, không cần lệnh): Tấn công thường, Energy Ball, Fire Ball, Lightning, Teleport, Flame |
 
 Sau khi mặc đủ (đo trên bản release): **HP 1 179, MP 2 178, sát thương phép 176–324, phòng thủ 443, attack rate 627**.
 Quái mạnh nhất (Stone Golem) có 155 HP; boss Bull Fighter Lord 20 000 HP.
