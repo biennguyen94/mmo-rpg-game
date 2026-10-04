@@ -997,8 +997,9 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 - Dock dưới cùng còn 5 nút: **Bản đồ**, **Nhân vật**, **Túi đồ**, **🗺 Chọn bản đồ**, **☰ Menu** (quản trị viên thêm nút Quản trị
   trong Menu).
 - **Menu** mở lưới biểu tượng, mỗi mục là một màn riêng (nút Đóng / Esc quay lại bản đồ): Nhiệm vụ, Việc hằng ngày, Đấu trường
-  (cả PK cược), Xếp hạng, Bang hội, Bạn bè, Hộp thư, Thông báo, Thành tựu & danh hiệu, Thú cưng, Sổ quái, Nhà & trang trí,
-  Hướng dẫn, **Cài đặt**.
+  (cả PK cược), Xếp hạng, Bang hội, Thành tựu & danh hiệu, Thú cưng, Sổ quái, Nhà & trang trí, Hướng dẫn, Quản trị (admin),
+  **Cài đặt**. Chỉ gom các nút / tab đang ở **dock** (tab Nhiệm vụ, tab Khác, tab Quản trị).
+- **Anh chốt (2026-10-04): Bạn bè, Hộp thư, Thông báo giữ nguyên trên HUD**, không đưa vào Menu.
 - **Cài đặt**: Ngôn ngữ (U1), Âm thanh, Nhạc nền, Đổi mật khẩu, Xóa nhân vật, **Đăng xuất** (đưa hết vào đây, bỏ khỏi chỗ cũ).
 - Phím tắt giữ: C Nhân vật, I Túi đồ, M Chọn bản đồ, Q uống máu, Enter chat, Esc đóng; thêm phím mở Menu (câu 9-D).
 

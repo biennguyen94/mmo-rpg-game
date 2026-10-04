@@ -257,7 +257,7 @@ e2e `admin.mjs` +4 bước.
 |---|---|
 | **B1** | Sửa tràn ngang trên điện thoại (HUD nhiều nút) |
 | **B2** | Tháp: lên tầng xong nhân vật đứng đúng ô vào, không tự chạy tiếp |
-| **U3** | Dock 5 nút (Bản đồ, Nhân vật, Túi đồ, 🗺, ☰ Menu); Menu kiểu MU Web thay tab Khác; Cài đặt gồm ngôn ngữ, âm thanh, đăng xuất |
+| **U3** | Dock 5 nút (Bản đồ, Nhân vật, Túi đồ, 🗺, ☰ Menu); Menu kiểu MU Web gom các tab dock còn lại (Nhiệm vụ, Khác, Quản trị); Cài đặt gồm ngôn ngữ, âm thanh, đăng xuất. Bạn bè / Hộp thư / Thông báo giữ trên HUD |
 | **U4** | Chat kiểu MU Web đè lên góc bản đồ, bỏ thẻ chat dưới bản đồ |
 | **U5** | Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn |
 
