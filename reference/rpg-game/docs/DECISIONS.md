@@ -80,3 +80,13 @@
 | P8-2 | Tin giữ lại: lên cấp, ép thất bại hoặc thành công từ +7, ghép (máy Hỗn Nguyên), thư mới, lời mời (tổ đội, giao dịch, cược), kết quả cược, tin hệ thống gửi riêng. Tin vặt ("Đã gửi lời mời") không lưu. | Bảng gọn, chỉ những gì người chơi muốn xem lại. |
 | P8-3 | Hiệu ứng lớn (M11) chỉ bằng CSS (không canvas, không ảnh mới); "giảm chuyển động" thì chỉ hiện rồi mờ đi. | Nhẹ, không cần asset. |
 | P8-4 | `USER_GUIDE.md` dùng ảnh e2e có sẵn (thêm `e2e-pk.png`, `e2e-wardrobe.png`; `run.mjs` chép lại khi `HL_SHOTS_DOCS=1`). | Ảnh luôn khớp giao diện hiện tại. |
+
+## Phase 7 — Golden Invasion (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P7-1 | Quái vàng ở bản đồ đầu mỗi vùng (6 bản đồ × 4 con), loài ngẫu nhiên của vùng; số trong `RULES.invasion.maps`. | Ai cũng có chỗ đánh hợp cấp; anh đổi bản đồ / số lượng trong data. |
+| P7-2 | Quái vàng mạnh ×1,5 (như quái Bóng Đêm), trùm vàng giữ sức trùm vùng; thưởng ×5 không đổi sức mạnh. | Thưởng lớn thì phải khó hơn một chút, nhưng người cùng cấp vẫn đánh được. |
+| P7-3 | Hết giờ: quái vàng chưa ai đánh biến mất, trận đang đánh thì đánh nốt (vẫn nhận thưởng). | Không cắt ngang trận của người chơi. |
+| P7-4 | Bản đồ nào hết chỗ trống để thả quái thì coi như xong; mọi bản đồ xong (đã hạ trùm vàng) thì kết thúc sớm. | Không kẹt sự kiện. |
+| P7-5 | Trạng thái sự kiện không lưu database; server khởi động lại thì đợt đang chạy mất, đợi lịch tiếp theo. | Sự kiện ngắn (15 phút); không thêm bảng. |

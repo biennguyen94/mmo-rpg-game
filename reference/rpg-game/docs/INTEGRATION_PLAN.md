@@ -925,3 +925,19 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 - **Simulator:** giống hệt Phase 4 ở cả 20 dòng (chia thưởng tổ đội giữ nguyên, bot không cược / không chiến bang).
 - **Test:** `pk_bet_test` (5), `guild_war_test` (4), `phase5_social_test` (5), `party_rules_test` (3), `leaderboard_test` (+2),
   `logic.test.mjs` (+2: màu tên, lệnh chat); e2e mới `pk.mjs` (11 bước, hai trình duyệt).
+
+---
+
+## 14. Golden Invasion (Phase 7: F1, F4, M3) — xong 2026-10-04
+
+- **Chốt:** 7-A mỗi 2 giờ, 15 phút (giờ Việt Nam); 7-B có trùm vàng.
+- **Server:** `HacLong.Invasion` (GenServer; `next_start/2` thuần; `config :hac_long, :invasion, auto: false` trong test),
+  `MapServer.invade/2`, `invade_boss/1`, `end_invasion/1` (quái `origin: :gold`, cờ `gold`, không hồi sinh; hạ con cuối thì
+  `Invasion.cleared/2`). `World.spec_of` → `golden_variant` (tên "… Vàng", `mult` ×`strength_mult`, `reward_mult`,
+  `jewel_chance`); `Engine.make_monster` nhân thưởng `reward_mult`, `jewel_drop` dùng `jewel_chance` của quái.
+  Trạng thái phát `{:invasion, status}` trên topic trùm thế giới; kênh đẩy `"invasion"`. Quản trị: `admin("invasion")`.
+- **Client:** dải "✨ Golden Invasion" (giờ còn lại, tình trạng từng bản đồ), quầng vàng nhấp nháy + nhãn "Vàng" / "Trùm
+  Vàng" trên bản đồ, trùm vàng vẽ 1,5 lần, trận với quái vàng có nền ánh vàng và thanh máu vàng dày hơn.
+- **Test:** `test/hac_long/invasion_test.exs` (lịch với thời điểm cho trước, quái vàng → trùm vàng → kết thúc sớm, hết giờ
+  dọn quái, thưởng ×5); e2e `admin.mjs`: quản trị bắt đầu → người chơi thấy dải, gặp quái vàng ở Rừng Mê, thắng, nhận thưởng.
+- Simulator không chạy lại: bot không gặp quái vàng; `make_monster` chỉ thêm phép nhân với 1 cho quái thường.

@@ -229,6 +229,8 @@ defmodule HacLong.Game.Engine do
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
+    # thưởng nhân thêm (quái vàng Golden Invasion), không đổi sức mạnh
+    rw = Map.get(spec, :reward_mult, 1)
 
     %{
       id: spec.id,
@@ -239,13 +241,16 @@ defmodule HacLong.Game.Engine do
       special: Map.get(spec, :special),
       on_hit: Map.get(spec, :on_hit),
       night: Map.get(spec, :night, false),
+      golden: Map.get(spec, :golden, false),
+      jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + l * @mon.hp.level + l * l * @mon.hp.level_sq) * m * bm),
       atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
       def: round((@mon.def.base + l * @mon.def.level) * m),
       crit: @mon.crit,
       dodge: @mon.dodge.base + l * @mon.dodge.level,
-      xp: round(base_xp(l) * m * if(boss?, do: @mon.boss.xp, else: 1)),
-      gold: round(base_gold(l) * m * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
+      xp: round(base_xp(l) * m * rw * if(boss?, do: @mon.boss.xp, else: 1)),
+      gold:
+        round(base_gold(l) * m * rw * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
     }
   end
 
@@ -993,6 +998,7 @@ defmodule HacLong.Game.Engine do
     c =
       cond do
         m[:world] || m[:pvp] -> 0
+        m[:jewel_chance] -> m.jewel_chance
         m.boss and not tower? -> j.boss_chance
         m.level >= j.monster_level -> j.monster_chance
         true -> 0

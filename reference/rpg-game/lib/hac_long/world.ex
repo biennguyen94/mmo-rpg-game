@@ -250,7 +250,25 @@ defmodule HacLong.World do
   defp spec_of(map, m) do
     zone = Data.zone(map.zone)
     spec = if m.boss, do: zone.boss, else: Enum.find(zone.monsters, &(&1.id == m.kind))
-    if m[:rare], do: night_variant(spec), else: spec
+
+    cond do
+      m[:gold] -> golden_variant(spec, m.boss)
+      m[:rare] -> night_variant(spec)
+      true -> spec
+    end
+  end
+
+  # Quái vàng Golden Invasion (`RULES.invasion`, Phase 7): mạnh hơn (`strength_mult`, trùm vàng giữ sức
+  # như trùm vùng), thưởng × `reward_mult`, rơi ngọc theo `jewel_chance` / `boss_jewel_chance`.
+  @inv Data.rules().invasion
+  defp golden_variant(spec, boss?) do
+    Map.merge(spec, %{
+      name: "#{spec.name} Vàng",
+      mult: Map.get(spec, :mult, 1) * if(boss?, do: 1, else: @inv.strength_mult),
+      reward_mult: @inv.reward_mult,
+      golden: true,
+      jewel_chance: if(boss?, do: @inv.boss_jewel_chance, else: @inv.jewel_chance)
+    })
   end
 
   def fight_key(map_id, mid), do: "#{map_id}:#{mid}"

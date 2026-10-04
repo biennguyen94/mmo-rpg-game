@@ -532,6 +532,12 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
   `bigFx(text, kind)` + `resultFx(cmd, r, old)` gọi sau mỗi lệnh trong `sendCommand`. CSS `.bigfx` cuối `style.css`.
 - Hướng dẫn người chơi: `docs/USER_GUIDE.md`.
 
+## 9k. Golden Invasion (Phase 7, 2026-10-04)
+
+- `HacLong.Invasion` (lịch, trạng thái), `MapServer.invade/invade_boss/end_invasion`, `World.golden_variant`. Trận đang
+  đánh lưu vào database: khóa mới của quái phải thêm vào `@battle_keys` trong `Characters` (`golden`, `jewel_chance`), nếu
+  không nạp lại nhân vật sẽ lỗi `KeyError`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.

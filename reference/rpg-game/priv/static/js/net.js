@@ -113,6 +113,7 @@
         ch.on('chat', (m) => cb.chat && cb.chat(m));
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
+        ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
         ch.on('notice', (m) => cb.notice && cb.notice(m.msg));
         ch.on('mail', (m) => cb.mail && cb.mail(m.unread));
         ch.on('guild', (m) => cb.guild && cb.guild(m.guild));
@@ -282,6 +283,7 @@
     onChatHistory(f) { cb.history = f; },
     // Trạng thái trùm thế giới; thông báo riêng (vd. nhận thưởng).
     onWorldBoss(f) { cb.boss = f; },
+    onInvasion(f) { cb.invasion = f; },
     onNotice(f) { cb.notice = f; },
     // Số thư chưa mở thay đổi (có thư mới, vừa mở thư).
     onMail(f) { cb.mail = f; },

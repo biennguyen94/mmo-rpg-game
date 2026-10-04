@@ -760,6 +760,9 @@ defmodule HacLongWeb.GameChannel do
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
+  # Golden Invasion ngay (Phase 7)
+  defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
+
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
 
   # `minutes`: số phút, hoặc nil/0 là vĩnh viễn
@@ -814,7 +817,13 @@ defmodule HacLongWeb.GameChannel do
     })
 
     push(socket, "world_boss", WorldBoss.status())
+    push(socket, "invasion", HacLong.Invasion.status())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
+  end
+
+  def handle_info({:invasion, status}, socket) do
+    push(socket, "invasion", status)
+    {:noreply, socket}
   end
 
   def handle_info({:world_boss, status}, socket) do

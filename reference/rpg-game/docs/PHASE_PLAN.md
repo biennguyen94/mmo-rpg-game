@@ -213,7 +213,7 @@ chuyền). Thêm:
 
 ---
 
-## Phase 7 — Sự kiện Golden Invasion
+## Phase 7 — Sự kiện Golden Invasion ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -222,6 +222,14 @@ chuyền). Thêm:
 | **M3** | Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài. |
 
 **⛔ Câu hỏi:** 7-A lịch (đề xuất mỗi 2 giờ, 15 phút / lần, giờ Việt Nam); 7-B có trùm vàng cuối đợt không?
+
+**Đã chốt:** 7-A mỗi 2 giờ (mốc giờ chẵn giờ Việt Nam), 15 phút; 7-B **có** trùm vàng (hạ hết quái vàng một bản đồ thì
+trùm vàng của vùng xuất hiện ở đó).
+
+**Kết quả:** `HacLong.Invasion` (lịch, bắt đầu / kết thúc, trùm vàng, kết thúc sớm), quái vàng ở 6 bản đồ đầu vùng (4 con mỗi
+bản đồ, `RULES.invasion`), mạnh ×1,5, thưởng ×5, ngọc 10 % (trùm vàng 100 %), không hồi sinh; quầng vàng, trùm vàng to 1,5 lần,
+thanh máu vàng dài hơn; dải "Golden Invasion" trên bản đồ có giờ còn lại; quản trị "Bắt đầu ngay". Test `invasion_test` (4),
+e2e `admin.mjs` +4 bước.
 
 **Xong khi:** test lịch với đồng hồ giả; e2e thấy quái vàng và nhận thưởng.
 

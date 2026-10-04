@@ -247,16 +247,25 @@
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy);
       if (px < -TILE || py < -TILE || px > canvas.clientWidth || py > canvas.clientHeight) continue;
       ctx.globalAlpha = q.busy ? 0.45 : 1;
-      if (q.boss) {
+      if (q.boss && !q.gold) {
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
         ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
       }
       const im = image('monsters/' + q.kind);
       if (q.rare) { ctx.shadowColor = '#b36bff'; ctx.shadowBlur = 12; }
-      if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+      // quái vàng Golden Invasion: quầng vàng nhấp nháy; trùm vàng vẽ to 1,5 lần (Phase 7, M3)
+      if (q.gold) {
+        const pulse = 0.5 + 0.5 * Math.sin(now / 250);
+        ctx.fillStyle = `rgba(255, 210, 90, ${0.18 + 0.17 * pulse})`;
+        ctx.beginPath(); ctx.arc(px + TILE / 2, py + TILE / 2, TILE * (q.boss ? 0.95 : 0.62), 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = '#ffd24a'; ctx.shadowBlur = 10 + 8 * pulse;
+      }
+      const sz = q.gold && q.boss ? TILE * 1.5 : TILE, off = (sz - TILE) / 2;
+      if (im.complete) ctx.drawImage(im, px - off, py - off, sz, sz);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       if (q.rare) labels.push(['Bóng Đêm', px + TILE / 2, py - 12, '#d59cff']);
+      if (q.gold) labels.push([q.boss ? 'Trùm Vàng' : 'Vàng', px + TILE / 2, py - 12 - off, '#ffd24a']);
       const lv = q.level || LEVEL[q.kind] || 1;
       ctx.font = '700 9px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(12,9,16,0.85)';

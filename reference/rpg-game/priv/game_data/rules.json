@@ -561,6 +561,23 @@
       "special_every": 3,
       "special_mult": 1.8
     },
+    "invasion": {
+      "every_hours": 2,
+      "minutes": 15,
+      "maps": {
+        "forest_1": 4,
+        "camp_1": 4,
+        "graveyard_1": 4,
+        "mountain_1": 4,
+        "swamp_1": 4,
+        "lair_1": 4
+      },
+      "strength_mult": 1.5,
+      "reward_mult": 5,
+      "jewel_chance": 0.1,
+      "boss": true,
+      "boss_jewel_chance": 1.0
+    },
     "leaderboard": {
       "top": 10,
       "class_top": 50,

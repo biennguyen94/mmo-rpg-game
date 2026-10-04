@@ -1,12 +1,12 @@
 // Quản trị qua tab Quản trị (tài khoản admin do scripts/e2e_seed.exs tạo): tra người chơi, cấm / bỏ cấm
 // chat, gửi quà qua hộp thư, cộng vàng (Chỉnh nhân vật), kiểm tra vàng, nhật ký quản trị.
 // Chạy: node e2e/admin.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, adminSession, player, send, shot } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, player, send, shot, travel, walkTo, fight, act } from './lib.mjs';
 
 const R = reporter('admin');
 const browser = await launch();
 const X = await newPlayer(browser, { cls: 'dw' });
-const { page } = await adminSession(browser);
+const { page, admin } = await adminSession(browser);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
@@ -58,6 +58,33 @@ await page.click('[data-adm="audit"][data-days="1"]');
 await page.waitForFunction(() => /Vàng 1 ngày qua/.test(document.querySelector('#view').textContent), null, { timeout: 10000 }).catch(() => null);
 R.check('kiểm tra vàng chạy và hiện kết quả', /Vàng 1 ngày qua/.test(await page.textContent('#view')));
 await shot(page, 'admin-audit.png');
+
+// ---------- Golden Invasion (Phase 7): quản trị bắt đầu ngay, người chơi đánh quái vàng ----------
+await admin('set_level', X.name, { level: 12 });
+await admin('heal', X.name);
+await X.page.waitForFunction(() => window.__hl.player().level === 12);
+await page.click('[data-adm="invasion"]');
+await X.page.waitForSelector('#inv', { timeout: 8000 }).catch(() => null);
+R.check('người chơi thấy dải Golden Invasion', !!(await X.page.$('#inv')));
+await travel(X.page, 'village');
+await travel(X.page, 'forest_1');
+const gold = await X.page.evaluate(() => (window.__hl.world().monsters || []).find((m) => m.gold && !m.boss && !m.busy));
+R.check('có quái vàng trên Rừng Mê', !!gold);
+await shot(X.page, 'admin-invasion.png');
+if (gold) {
+  const xp0 = (await player(X.page)).xp, lv0 = (await player(X.page)).level;
+  // quái đi lang thang: tìm lại vị trí rồi đi tới, vài lần
+  for (let i = 0; i < 6 && !(await player(X.page)).battle; i++) {
+    const g = await X.page.evaluate(() => (window.__hl.world().monsters || []).find((m) => m.gold && !m.boss && !m.busy));
+    if (g) await walkTo(X.page, g.x, g.y);
+  }
+  const p = await player(X.page);
+  R.check('đánh quái vàng: tên có "Vàng"', !!p.battle && p.battle.monster.name.includes('Vàng') && p.battle.monster.golden, p.battle && p.battle.monster.name);
+  const res = await fight(X.page);
+  const p2 = await player(X.page);
+  R.check('thắng quái vàng, nhận thưởng lớn', res === 'win' && (p2.level > lv0 || p2.xp - xp0 >= p.battle.monster.xp * 0.5), `res=${res} xp ${xp0}→${p2.xp} reward ${p.battle && p.battle.monster.xp}`);
+  await act(X.page, 'leave');
+}
 
 R.check('không lỗi JS', errors.length === 0 && X.errors.length === 0, [...errors, ...X.errors].join(' | '));
 await R.done(browser);

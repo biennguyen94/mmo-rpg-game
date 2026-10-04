@@ -129,10 +129,10 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| F1 | **Golden Invasion:** quái vàng theo lịch ở các vùng, thưởng ×5, rơi ngọc 10 %, hạ hết thì kết thúc sớm | Không | ✅ | M | Hoạt động đông người định kỳ, rẻ (dùng lại MapServer) | [x] |
+| F1 | **Golden Invasion:** quái vàng theo lịch ở các vùng, thưởng ×5, rơi ngọc 10 %, hạ hết thì kết thúc sớm | Không | ✅ | M | Hoạt động đông người định kỳ, rẻ (dùng lại MapServer) | [x] ✅ P7 |
 | F2 | **Lịch sự kiện chung** (`WorldEvents`): giờ UTC trong config, báo trước 5 phút, báo bắt đầu / kết thúc, bật / tắt tay, người vào giữa chừng vẫn thấy | Khác: trùm thế giới có lịch riêng; lễ hội theo mùa | 🟡 | M | Gom trùm thế giới + lễ hội + Golden vào một lịch, một thanh đếm ngược | [ ] |
 | F3 | **Trùm thế giới: top 3 sát thương nhận ngọc** | Khác: chia vàng theo sát thương | ✅ | S | Đi cùng D7 | [x] ✅ Đ3 |
-| F4 | **Quái sự kiện không hồi sinh**, vùng sinh trong config | – | ✅ | S | Đi cùng F1 | [x] |
+| F4 | **Quái sự kiện không hồi sinh**, vùng sinh trong config | – | ✅ | S | Đi cùng F1 | [x] ✅ P7 |
 | F5 | **Quái tự đi / đuổi / kéo về, đánh xa, AI 10 Hz** | Khác | ❌ | – | | [ ] |
 | F6 | **Tick bản đồ 20 Hz, snapshot 10 Hz, chỉ gửi thay đổi, AOI theo ô** | Khác | ❌ | – | Không cần cho turn-based | [ ] |
 | F7 | **Giới hạn người / world** (`maxPlayersPerWorld`) | Không | 🟡 | S | Bảo vệ server khi đông bất thường | [ ] |
@@ -235,7 +235,7 @@
 |---|---|---|---|---|---|---|
 | M1 | **Vẽ cánh bằng code** (2 lớp, cấp 2 to hơn, màu theo lớp) | – | ✅ | S | Đi cùng D6 | [x] ✅ Đ3 |
 | M2 | **Tên màu theo trạng thái** (bang địch, PK…), tên bang trên đầu | Kiểm | 🟡 | S | Đi cùng H6 | [x] ✅ P5 |
-| M3 | **Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài** | Kiểm | ✅ | S | Đi cùng F1 | [x] |
+| M3 | **Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài** | Kiểm | ✅ | S | Đi cùng F1 | [x] ✅ P7 |
 | M4 | **Số sát thương bay, hiệu ứng trúng / trượt** | Kiểm (màn trận theo lượt) | 🟡 | S | Đi cùng A2 | [ ] |
 | M5 | **Di chuyển trượt mượt (Glide), camera theo vị trí vẽ** | Đã mượt | ❌ | – | | [ ] |
 | M6 | **Client TypeScript**, kiểu cho protocol | Khác: JS thuần (`ui.js` 2 100 dòng) | 🟡 | L | Lớn. Thay thế nhẹ: tách dần logic thuần (giá, công thức hiển thị, chat) ra module riêng có test (N2) | [ ] |

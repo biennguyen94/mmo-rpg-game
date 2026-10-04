@@ -67,6 +67,9 @@ Kỹ năng tốn MP; MP hồi dần mỗi lượt và khi nghỉ trọ. Kỹ nă
 - Hạ trùm vùng thì mở vùng tiếp theo. Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).
+- **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
+  mỗi vùng: mạnh hơn một chút, thưởng **×5**, dễ rơi ngọc, không hồi sinh. Hạ hết quái vàng một bản đồ thì **trùm vàng** xuất
+  hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
 - **Tháp Vô Tận** (Người Gác Tháp ở Làng): mỗi tầng hạ hết quái để lên; cứ 5 tầng có trùm; máu không tự hồi trong tháp.
 
 ![Trận đánh](screenshots/e2e-battle.png)

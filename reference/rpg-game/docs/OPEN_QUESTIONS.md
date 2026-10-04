@@ -14,6 +14,8 @@
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 7-A | 2026-10-04 | Lịch Golden Invasion? | Mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam), 15 phút |
+| 7-B | 2026-10-04 | Trùm vàng cuối đợt? | Có: hạ hết quái vàng một bản đồ thì trùm vàng vùng đó xuất hiện |
 | 5-C, 5-D | 2026-10-04 | Giới hạn PK cược vàng? | Cược 100 – 1 000 000, **không phí**, **không giới hạn chênh cấp**, 10 trận cược / ngày |
 | 5-G | 2026-10-04 | Trận cược đánh thế nào? | Tự đánh giữa hai bản sao, xong ngay |
 | 5-E | 2026-10-04 | Thưởng chiến bang? | Quỹ bang thắng +5 000; thành viên có ≥ 1 điểm nhận 500 vàng qua thư |

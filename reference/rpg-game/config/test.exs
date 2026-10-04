@@ -44,3 +44,6 @@ config :hac_long, :event, "none"
 
 # Bảng xếp hạng không cache trong test (mỗi test một database sạch)
 config :hac_long, :leaderboard_cache, false
+
+# Golden Invasion không tự chạy theo lịch trong test (dùng HacLong.Invasion.start_now/1)
+config :hac_long, :invasion, auto: false

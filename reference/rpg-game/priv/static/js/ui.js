@@ -179,7 +179,7 @@
       ['misc', 'laurels', 'Khác'],
     ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewInvasionBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -255,6 +255,7 @@
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
       <div class="card"><h3>Trùm thế giới</h3><button class="btn" data-adm="world_boss">Gọi Cổ Long xuất hiện ngay</button></div>
+      <div class="card"><h3>Golden Invasion</h3><button class="btn" data-adm="invasion">Bắt đầu ngay</button></div>
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
   }
@@ -615,6 +616,22 @@
 
   // ---------- Trùm thế giới ----------
   const clock = (ms) => { const t = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+
+  // ---------- Golden Invasion (Phase 7) ----------
+  let invasion = null; // { active, ends_at, maps: { id: 'run' | 'boss' | 'done' } }
+  function onInvasion(st) {
+    const was = invasion && invasion.active;
+    invasion = st;
+    if (st.active && !was) { toast('✨ Golden Invasion! Quái vàng xuất hiện.'); note('Golden Invasion bắt đầu: quái vàng thưởng ×5.', 'good'); Sound.play('rare'); }
+    if (P && !P.battle && tab === 'map' && !npc) { const el = $('#inv'); if (el || st.active) render(); }
+  }
+  function viewInvasionBanner() {
+    if (!invasion || !invasion.active) return '';
+    const W = WORLD.maps, st = { run: 'quái vàng', boss: '👑 trùm vàng', done: '✔ xong' };
+    const here = invasion.maps[P.pos.map];
+    return `<div class="card inv" id="inv"><div class="row"><b class="grow">✨ Golden Invasion</b><span class="small">còn <span id="inv-left" class="num">${clock(invasion.ends_at * 1000 - Date.now())}</span></span></div>
+      <p class="small muted">${here && here !== 'done' ? 'Quái vàng ngay trên bản đồ này!' : 'Quái vàng thưởng ×5, dễ rơi ngọc.'} ${Object.entries(invasion.maps).map(([id, v]) => `${esc((W[id] || {}).name || id)}: ${st[v]}`).join(' · ')}</p></div>`;
+  }
 
   function viewBossBanner() {
     if (!wb.alive) return '';
@@ -2089,13 +2106,13 @@
         </div>`;
     }
     return `
-      <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
+      <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
         <span class="eyebrow">${m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${m.name}</h2>
         <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
-        ${bar(m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
+        ${bar(m.golden ? 'gold' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
         ${effectTags(fxs.monster)}
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
@@ -2587,6 +2604,8 @@
     Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); });
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
+    Net.onInvasion(onInvasion);
+    setInterval(() => { const el = $('#inv-left'); if (el && invasion && invasion.active) el.textContent = clock(invasion.ends_at * 1000 - Date.now()); }, 1000);
     Net.onNotice((msg) => { toast(msg); note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good'); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
     window.Doll.onReady(() => { if (P) refresh(); });
     Net.onParty((pt) => {

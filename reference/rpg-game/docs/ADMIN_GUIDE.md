@@ -270,6 +270,12 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 - **Thư quản trị** (`gift`, cả "gửi mọi người"): mỗi thư tối đa `RULES.mail.max_gold` vàng và `max_xp` EXP (1 000 000).
   Vượt thì báo "Mỗi thư tối đa … vàng." và không gửi. Thư hệ thống (bán chợ, quà bang) không bị giới hạn.
 
+### Golden Invasion (Phase 7)
+
+- Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → "Golden Invasion" → **Bắt đầu ngay** để chạy thử / bù.
+- Chỉnh ở `rules.json` → `RULES.invasion`: `every_hours`, `minutes`, `maps` (bản đồ → số quái vàng), `strength_mult`,
+  `reward_mult`, `jewel_chance`, `boss`, `boss_jewel_chance`. Build lại sau khi sửa.
+
 ### Xã hội, PK cược vàng, chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
