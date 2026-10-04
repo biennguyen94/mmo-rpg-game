@@ -183,7 +183,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewInvasionBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -628,14 +628,6 @@
     const was = invasion && invasion.active;
     invasion = st;
     if (st.active && !was) { toast('✨ Golden Invasion! Quái vàng xuất hiện.'); note('Golden Invasion bắt đầu: quái vàng thưởng ×5.', 'good'); Sound.play('rare'); }
-    if (P && !P.battle && tab === 'map' && !npc) { const el = $('#inv'); if (el || st.active) render(); }
-  }
-  function viewInvasionBanner() {
-    if (!invasion || !invasion.active) return '';
-    const W = WORLD.maps, st = { run: 'quái vàng', boss: '👑 trùm vàng', done: '✔ xong' };
-    const here = invasion.maps[P.pos.map];
-    return `<div class="card inv" id="inv"><div class="row"><b class="grow">✨ Golden Invasion</b><span class="small">còn <span id="inv-left" class="num">${clock(invasion.ends_at * 1000 - Date.now())}</span></span></div>
-      <p class="small muted">${here && here !== 'done' ? 'Quái vàng ngay trên bản đồ này!' : 'Quái vàng thưởng ×5, dễ rơi ngọc.'} ${Object.entries(invasion.maps).map(([id, v]) => `${esc((W[id] || {}).name || id)}: ${st[v]}`).join(' · ')}</p></div>`;
   }
 
   function viewBossBanner() {
@@ -2664,7 +2656,6 @@
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
     Net.onInvasion(onInvasion);
-    setInterval(() => { const el = $('#inv-left'); if (el && invasion && invasion.active) el.textContent = clock(invasion.ends_at * 1000 - Date.now()); }, 1000);
     Net.onNotice((msg) => { toast(msg); note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good'); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
     window.Doll.onReady(() => { if (P) refresh(); });
     Net.onParty((pt) => {
