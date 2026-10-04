@@ -81,6 +81,7 @@
   }
 
   function render() {
+    hideTip();
     Sound.music(musicMood());
     const hud = $('#hud'), tabs = $('#tabs'), view = $('#view');
     if (loading || !Net.username) {
@@ -110,9 +111,10 @@
       ['hero', 'person', 'Nhân vật'],
       ['bag', 'backpack', 'Túi đồ'],
       ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
+      ['misc', 'laurels', 'Khác'],
     ].concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []).map(([id, ic, label]) => `<button data-tab="${id}" ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : P.victory && tab === 'town' ? viewVictory() + viewTown() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), town: viewTown, hero: viewHero, bag: viewBag, quests: viewQuests, admin: viewAdmin }[tab])();
+    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : mail.open ? viewMail() : guildUi.open ? viewGuild() : P.victory && tab === 'town' ? viewVictory() + viewTown() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewBossBanner() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton()) + viewParty() + viewChat()), town: viewTown, hero: viewHero, bag: viewBag, quests: viewQuests, misc: viewMisc, admin: viewAdmin }[tab])();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -1067,49 +1069,70 @@
     return '';
   }
 
+  // Bảng nhân vật theo bố cục MU Web (charsheet): tên, lớp · cấp, EXP, 4 chỉ số với nút [+]
+  // (bấm nhiều lần gom thành một lệnh `alloc`), điểm còn, rồi chỉ số chiến đấu do server tính.
   function viewHero() {
     const d = P.view.derived, c = CLASSES[P.cls];
+    const free = P.points - allocPendingTotal();
+    const need = P.view.xpToNext;
+    const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
+    const stat = (k) => {
+      const [n, hint] = STAT_INFO[k], pend = allocPending[k] || 0;
+      return `<div class="statrow" title="${esc(hint)}">
+        <span>${n}</span>
+        <span class="num">${P.stats[k]}${pend ? `<span class="pending">+${pend}</span>` : ''}</span>
+        <button class="btn" data-act="alloc-add" data-stat="${k}" ${free > 0 ? '' : 'disabled'} aria-label="Cộng 1 điểm ${n}">+</button>
+      </div>`;
+    };
     return `
-      <div class="card">
-        <div class="row">
-          ${heroSprite()}
-          <div class="grow">${P.title ? `<span class="title-tag">${esc(achTitle(P.title))}</span>` : ''}<h2 class="display">${esc(P.name)}</h2><div class="small muted">${c.name} · Cấp ${P.level}</div></div>
-        </div>
-        <div class="stat-grid">
-          <div class="stat"><span class="small muted">Tấn công</span><b>${d.atk}</b></div>
-          <div class="stat"><span class="small muted">Phòng thủ</span><b>${d.def}</b></div>
-          <div class="stat"><span class="small muted">Chí mạng</span><b>${Math.round(d.crit * 100)}% <span class="small muted">×${d.critMult.toFixed(2)}</span></b></div>
-          <div class="stat"><span class="small muted">Né đòn</span><b>${Math.round(d.dodge * 100)}%</b></div>
-        </div>
-      </div>
+      <div class="card charsheet" data-panel="character">
+        <h3 class="panel-title">Nhân vật</h3>
+        <div>${P.title ? `<span class="title-tag">${esc(achTitle(P.title))}</span>` : ''}<h2 class="display">${esc(P.name)}</h2>
+          <div class="small muted">${c.name} · ${P.rebirths ? `Chuyển sinh ${P.rebirths} · ` : ''}Cấp ${P.level}</div></div>
+        <hr class="sep">
+        ${kv('EXP', P.level >= RULES.maxLevel ? 'Cấp tối đa' : `${fmt(P.xp)} / ${fmt(need)}`)}
+        <hr class="sep">
+        ${Object.keys(STAT_INFO).map(stat).join('')}
+        ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
+        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm. Điểm đã cộng không gỡ được.</p>
+        <hr class="sep">
+        ${kv('Tấn công', fmt(d.atk))}
+        ${kv('Phòng thủ', fmt(d.def))}
+        ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
+        ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
+        ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
+      </div>`;
+  }
 
-      <div class="card">
-        <div class="row"><h3 class="grow">Tiềm năng</h3><span class="tag ${P.points ? 'gold' : ''} num">${P.points} điểm</span></div>
-        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm để cộng vào chỉ số.</p>
-        <div class="list alloc">
-          ${Object.entries(STAT_INFO).map(([k, [n, hint]]) => `
-            <div class="item">
-              <div class="grow"><div class="name">${n} <span class="num">${P.stats[k]}</span></div><div class="small muted">${hint}</div></div>
-              <button class="btn" data-act="alloc" data-stat="${k}" ${P.points ? '' : 'disabled'} aria-label="Cộng 1 điểm ${n}">+1</button>
-              <button class="btn" data-act="alloc5" data-stat="${k}" ${P.points >= 5 ? '' : 'disabled'} aria-label="Cộng 5 điểm ${n}">+5</button>
-            </div>`).join('')}
-        </div>
-      </div>
+  // Cộng điểm gom lệnh (như MU Web `alloc.ts`): mỗi lần bấm [+] cộng 1 điểm chờ, 200 ms sau lần bấm
+  // cuối mới gửi một lệnh `alloc {stat, n}` cho mỗi chỉ số. Không vượt số điểm còn.
+  let allocPending = {};
+  let allocTimer = null;
+  const allocPendingTotal = () => Object.values(allocPending).reduce((a, b) => a + b, 0);
+  function allocAdd(stat) {
+    if (!P || P.points - allocPendingTotal() <= 0) return;
+    allocPending[stat] = (allocPending[stat] || 0) + 1;
+    clearTimeout(allocTimer);
+    allocTimer = setTimeout(allocFlush, 200);
+    render();
+  }
+  async function allocFlush() {
+    const pend = allocPending;
+    allocPending = {};
+    for (const [stat, n] of Object.entries(pend)) {
+      if (n <= 0) continue;
+      while (busy) await new Promise((r) => setTimeout(r, 50)); // đợi lệnh khác xong, không làm mất điểm
+      await sendCommand({ act: 'alloc', stat, n });
+    }
+  }
 
-      <div class="card">
-        <h3>Trang bị</h3>
-        <div class="list">
-          ${[['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']].map(([slot, label]) => {
-            const id = P.equip[slot], it = id ? itemOf(id) : null;
-            return `<div class="item">
-              ${it ? icon(it.icon, 'lg') : `<span class="ic lg"></span>`}
-              <div class="grow"><div class="small muted">${label}</div><div class="name">${it ? itemName(id) : 'Trống'}</div>${it ? `<div class="small muted">${itemStat(it, id)}</div>` : ''}</div>
-              ${slot === 'shield' && it ? `<button class="btn" data-act="unequip" data-slot="shield">Tháo</button>` : ''}
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-
+  // ---------- Khác ----------
+  // Các phần không thuộc Nhân vật / Túi đồ (thú cưng, kỹ năng, danh hiệu, thành tựu) gom về đây;
+  // anh quyết sau giữ hay bỏ từng phần.
+  function viewMisc() {
+    const c = CLASSES[P.cls];
+    return `
       ${viewPets()}
 
       <div class="card"><h3>Kỹ năng</h3><div class="list">
@@ -1226,48 +1249,152 @@
     return diff > 0 ? `<span class="up">▲ ${diff}</span>` : '';
   }
 
+  // Túi đồ theo bố cục MU Web: lưới trang bị 3×4 (10 ô, ô chưa có trong Hắc Long hiện 🔒),
+  // lưới túi 8 cột tự xếp (Hắc Long không lưu vị trí ô), bấm ô xem chi tiết + nút, kéo thả để
+  // mặc / tháo (chuột), thanh tóm tắt dưới cùng.
+  const EQUIP_GRID = [
+    [null, 'helm', null],
+    ['weapon', 'armor', 'shield'],
+    ['gloves', 'pants', 'boots'],
+    ['ring1', 'wing', 'ring2'],
+  ];
+  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn' };
+  const SLOT_OPEN = ['weapon', 'armor', 'shield'];
+  const BAG_COLUMNS = 8;
+  const BAG_MIN_CELLS = 32;
+
+  // Đồ trong túi theo thứ tự: trang bị (đồ hiếm trước) → bình máu → món ăn → nguyên liệu
+  function bagItems() {
+    const ids = Object.keys(P.inv).filter((id) => P.inv[id] > 0 && ITEMS[id]);
+    const by = (slot) => ids.filter((id) => ITEMS[id].slot === slot);
+    const gear = bagGear().concat(ids.filter((id) => SLOT_OPEN.includes(ITEMS[id].slot)));
+    return gear.concat(by('potion'), by('food'), by('material'));
+  }
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
+
+  function cellIcon(it) {
+    return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
+  }
+
   function viewBag() {
-    const ids = Object.keys(P.inv).filter((id) => P.inv[id] > 0);
-    const gear = ids.filter((id) => !['potion', 'material', 'food'].includes(ITEMS[id].slot)).concat(bagGear());
-    const pots = ids.filter((id) => ITEMS[id].slot === 'potion');
-    const foods = ids.filter((id) => ITEMS[id].slot === 'food');
-    const mats = ids.filter((id) => ITEMS[id].slot === 'material');
-    const d = P.view.derived;
-    const rowFor = (id) => {
+    const items = bagItems();
+    const cells = Math.max(BAG_MIN_CELLS, Math.ceil((items.length + 1) / BAG_COLUMNS) * BAG_COLUMNS);
+    const equip = EQUIP_GRID.flat().map((slot) => {
+      if (!slot) return '<span class="slot none"></span>';
+      const id = SLOT_OPEN.includes(slot) ? P.equip[slot] : null, it = id ? itemOf(id) : null;
+      const locked = !SLOT_OPEN.includes(slot);
+      return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
+          ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && slot === 'shield' ? `draggable="true" data-drag-equip="${slot}"` : ''}>
+        ${it ? cellIcon(it) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}
+        <span class="lbl">${SLOT_LABEL[slot]}</span>
+      </button>`;
+    }).join('');
+    const bag = Array.from({ length: cells }, (_, i) => {
+      const id = items[i];
+      if (!id) return '<span class="cell empty"></span>';
       const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
-      const low = it.level && P.level < it.level;
-      const main = it.slot === 'potion'
-        ? `<button class="btn" data-act="use" data-id="${id}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
-        : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${id}">Ăn</button>`
-        : it.slot === 'material' ? ''
-        : `<button class="btn primary" data-act="equip" data-id="${id}" ${low ? 'disabled' : ''}>Trang bị</button>`;
-      return `<div class="item">
-        ${itemIcon(it, it.rarity)}
-        <div class="grow">
-          <div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div>
-          <div class="small muted">${['material', 'food'].includes(it.slot) ? it.desc : itemStat(it, id)} ${['potion', 'material', 'food'].includes(it.slot) ? '' : compare(it, id)}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}</div>
-        </div>
-        ${main}
-      </div>`;
-    };
+      const wearable = SLOT_OPEN.includes(it.slot);
+      return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${it.level && P.level < it.level ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
+          ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
+        ${cellIcon(it)}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}
+      </button>`;
+    }).join('');
     return `
-      <div class="card">
-        <h3>Bình máu</h3>
-        ${pots.length ? `<div class="list">${pots.map(rowFor).join('')}</div>` : `<p class="small muted">Chưa có bình máu. Mua ở Bà Lang trong Làng.</p>`}
-      </div>
-      ${foods.length || P.food ? `<div class="card">
-        <h3>Món ăn</h3>${foodNow()}
-        ${foods.length ? `<div class="list">${foods.map(rowFor).join('')}</div>` : ''}
-      </div>` : ''}
-      <div class="card">
-        <h3>Nguyên liệu</h3>
-        ${mats.length ? `<div class="list">${mats.map(rowFor).join('')}</div>` : `<p class="small muted">Bước vào bụi cây để hái Thảo Dược, vào mỏ đá để đào quặng. Mang cho Bà Lang pha thuốc hoặc bán cho Thợ Rèn.</p>`}
-      </div>
-      <div class="card">
-        <div class="row"><h3 class="grow">Trang bị trong túi</h3>${bagGear().length ? `<span class="small muted num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span>` : ''}</div>
-        ${gear.length ? `<div class="list">${gear.map(rowFor).join('')}</div>` : `<p class="small muted">Đồ bạn mua hoặc nhặt được sẽ nằm ở đây. Đồ đang mặc xem ở tab Nhân vật.</p>`}
-      </div>
-      <p class="small muted">Muốn bán đồ thì gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>`;
+      <div class="card inv" data-panel="inventory">
+        <h3 class="panel-title">Túi đồ</h3>
+        <div class="equip">
+          <div class="small muted" style="text-align:center">Trang bị đang mặc</div>
+          <div class="grid3">${equip}</div>
+        </div>
+        <div class="bag-head">Túi đồ</div>
+        <div class="bag" data-drop-bag style="--cols:${BAG_COLUMNS}">${bag}</div>
+        ${items.length ? '' : '<p class="small muted emptytext">Túi trống</p>'}
+        <div class="bag-bottom">
+          <div class="row"><span class="gold">${icon('two-coins')}${fmt(P.gold)}</span><span class="num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span></div>
+          <div class="row"><span>${icon('health-potion')} Bình máu ×<b class="num">${potionCount()}</b></span><span class="num">${items.length} món</span></div>
+          ${foodNow()}
+          <p class="small muted">Muốn bán đồ, hãy gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>
+        </div>
+      </div>`;
+  }
+
+  // ---------- Bảng chi tiết món đồ (tooltip kiểu MU Web) ----------
+  let tipAt = null; // { id?, slot?, x, y }
+  function hideTip() {
+    tipAt = null;
+    const el = document.getElementById('itemtip');
+    if (el) el.remove();
+  }
+  function showTip(at) {
+    hideTip();
+    const id = at.slot ? P.equip[at.slot] : at.id;
+    const it = id && itemOf(id);
+    if (!it) return;
+    tipAt = at;
+    const d = P.view.derived;
+    const low = it.level && P.level < it.level;
+    const wearable = SLOT_OPEN.includes(it.slot);
+    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id);
+    const btns = at.slot
+      ? (at.slot === 'shield' ? `<button class="btn" data-act="unequip" data-slot="shield">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>')
+      : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>`
+      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
+      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">Ăn</button>` : '';
+    const n = isGear(id) ? 1 : P.inv[id] || 0;
+    const el = document.createElement('div');
+    el.id = 'itemtip';
+    el.className = 'itemtip';
+    el.setAttribute('role', 'dialog');
+    el.innerHTML = `
+      <div class="big">${itemIcon(it, it.rarity)}</div>
+      <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
+      ${desc ? `<div class="small">${desc}</div>` : ''}
+      ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
+      ${it.level ? `<div class="small ${low ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
+      ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
+      <div class="btns">${btns}</div>`;
+    document.body.appendChild(el);
+    // đặt cạnh chỗ bấm, không tràn khỏi màn hình
+    const r = el.getBoundingClientRect(), pad = 8;
+    const left = Math.min(Math.max(pad, at.x + 12), innerWidth - r.width - pad);
+    const top = at.y + 12 + r.height > innerHeight - pad ? Math.max(pad, at.y - r.height - 12) : at.y + 12;
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
+  // Kéo thả bằng chuột: kéo đồ trong túi lên ô trang bị để mặc, kéo khiên đang mặc về túi để tháo.
+  let dragging = null; // { id } | { equip: 'shield' }
+  function onDragStart(e) {
+    const t = e.target.closest('[data-drag-id], [data-drag-equip]');
+    if (!t) return;
+    hideTip();
+    dragging = t.dataset.dragId ? { id: t.dataset.dragId } : { equip: t.dataset.dragEquip };
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', t.dataset.dragId || t.dataset.dragEquip);
+  }
+  function dropTarget(e) {
+    return dragging && e.target.closest(dragging.id ? '[data-drop-slot]' : '[data-drop-bag]');
+  }
+  function onDragOver(e) {
+    const t = dropTarget(e);
+    if (!t) return;
+    e.preventDefault();
+    document.querySelectorAll('.over').forEach((x) => x !== t && x.classList.remove('over'));
+    t.classList.add('over');
+  }
+  function onDrop(e) {
+    const t = dropTarget(e), from = dragging;
+    dragging = null;
+    document.querySelectorAll('.over').forEach((x) => x.classList.remove('over'));
+    if (!t || !P) return;
+    e.preventDefault();
+    if (from.id) {
+      const it = itemOf(from.id);
+      if (!it || it.slot !== t.dataset.dropSlot) { toast(`Món này không mặc vào ô ${SLOT_LABEL[t.dataset.dropSlot]}.`, true); return; }
+      sendCommand({ act: 'equip', id: from.id });
+    } else if (from.equip === 'shield') {
+      sendCommand({ act: 'unequip', slot: 'shield' });
+    }
   }
 
   // ---------- NPC ----------
@@ -1861,6 +1988,13 @@
     if (act === 'reset-ask' || act === 'reset-cancel') { confirmReset = act === 'reset-ask'; render(); return; }
     if (act === 'rebirth-ask' || act === 'rebirth-cancel') { confirmRebirth = act === 'rebirth-ask'; render(); return; }
     if (act === 'dialog-close') { dialog = null; render(); return; }
+    if (act === 'noop') return;
+    if (act === 'alloc-add') { allocAdd(t.dataset.stat); return; }
+    if (act === 'bag-tip' || act === 'slot-tip') {
+      const same = tipAt && (act === 'bag-tip' ? tipAt.id === t.dataset.id : tipAt.slot === t.dataset.slot);
+      if (same) hideTip(); else showTip(act === 'bag-tip' ? { id: t.dataset.id, x: e.clientX, y: e.clientY } : { slot: t.dataset.slot, x: e.clientX, y: e.clientY });
+      return;
+    }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
     if (act === 'trade-rm') {
       const d = t.dataset;
@@ -2015,6 +2149,12 @@
     document.addEventListener('click', onClick);
     document.addEventListener('submit', onSubmit);
     document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && tipAt) hideTip(); });
+    document.addEventListener('pointerdown', (e) => { if (tipAt && !e.target.closest('#itemtip, [data-act="bag-tip"], [data-act="slot-tip"]')) hideTip(); });
+    document.addEventListener('dragstart', onDragStart);
+    document.addEventListener('dragover', onDragOver);
+    document.addEventListener('drop', onDrop);
+    document.addEventListener('dragend', () => { dragging = null; document.querySelectorAll('.over').forEach((x) => x.classList.remove('over')); });
     document.addEventListener('pointerdown', onMapTap);
     window.addEventListener('resize', () => Map_.resize());
     Net.onPlayer((p) => { if (!busy) { P = p; refresh(); } });

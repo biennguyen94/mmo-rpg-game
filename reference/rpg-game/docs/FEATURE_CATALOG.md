@@ -471,6 +471,17 @@ Chaos Castle, Jewel of Harmony / Guardian / Creation, lớp DL / SUM, nhiều ph
 - Tab **Hành trình** gom quá nhiều thứ khác loại (xếp hạng, bang, đấu trường, cài đặt).
 - Tab **Túi đồ** dạng danh sách, khó nhìn khi nhiều đồ.
 
+### Q.0 Đã làm (2026-10-04)
+
+Anh chốt:
+- tab **Nhân vật** và **Túi đồ** làm **giống hệt MU Web** (cấu trúc + tính năng), giữ font / màu vàng-đen của Hắc Long;
+- **bố cục 10 ô với 7 ô khóa**;
+- **lưới tự xếp**;
+- các phần không liên quan chuyển sang tab **Khác**.
+
+Đã làm: Q1 (bố cục 10 ô), Q2, Q3 (cộng điểm gom lệnh), Q4 (tab Khác), Q5 (chuyển ra tab Khác), Q6 (lưới), Q7 (tooltip), Q8, Q9 (kéo thả).
+Chưa làm: Q10, Q11. Chi tiết code: `CODEBASE_NOTES.md §6`.
+
 ### Q.2 Đề xuất
 
 | # | Thay đổi | Chi tiết | Lấy từ MU | Công | Chọn |

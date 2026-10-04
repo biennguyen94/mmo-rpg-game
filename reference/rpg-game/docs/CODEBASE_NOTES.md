@@ -235,8 +235,17 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
     Mỗi giá trị là trường `doll` của món đồ (đồ ngẫu nhiên lấy theo `base`).
   - API: `Doll.canvas` (cache theo khóa lớp), `Doll.url` (data URL; lỗi thì dùng `assets/monsters/hero.png`), `Doll.onReady`.
   - Dùng ở `map.js:332, 345, 459`, `ui.js:52` (`heroSprite`), `307`, `1632`.
-- **Ô trang bị trong giao diện** (đều 3 ô Vũ khí / Giáp / Khiên):
-  - thẻ "Trang bị" ở tab Nhân vật (`ui.js:1099-1110`), chỉ khiên có nút tháo;
+- **Tab Nhân vật / Túi đồ / Khác (sửa 2026-10-04, theo bố cục MU Web, giữ màu / font Hắc Long):**
+  - `viewHero`: bảng nhân vật kiểu MU (tên, lớp · cấp, EXP, 4 chỉ số với nút [+] **gom lệnh** — `allocAdd` / `allocFlush`,
+    200 ms sau lần bấm cuối gửi một `alloc {stat, n}` mỗi chỉ số — điểm còn, chỉ số chiến đấu).
+  - `viewBag`: lưới trang bị 3×4 `EQUIP_GRID` (10 ô; chỉ `SLOT_OPEN` = vũ khí / giáp / khiên hoạt động, 7 ô 🔒 chờ tính năng),
+    lưới túi 8 cột **tự xếp** (`bagItems`: đồ trang bị → bình → món ăn → nguyên liệu; server không lưu vị trí ô),
+    bảng chi tiết món đồ `showTip` / `hideTip` (`#itemtip`, nút Trang bị / Dùng / Ăn / Tháo), kéo thả chuột
+    (`onDragStart` / `onDrop`: túi → ô trang bị = `equip`, khiên → túi = `unequip`), thanh tóm tắt `.bag-bottom`.
+  - `viewMisc` (tab **Khác**): thú cưng, kỹ năng, danh hiệu, thành tựu chuyển từ tab Nhân vật — chờ anh quyết giữ / bỏ.
+  - CSS: cuối `style.css` (`.charsheet`, `.statrow`, `.grid3`, `.slot`, `.bag`, `.cell`, `.itemtip`…).
+  - Ảnh trước / sau: `docs/screenshots/ui-*.png`.
+- **Ô trang bị ở chỗ khác** (vẫn 3 ô Vũ khí / Giáp / Khiên):
   - `forgeCard` (`1308-1327`), `smithCard` (`1373`);
   - xem đồ người khác (`310`).
 - **Dữ liệu game cho client:** `window.GAME_DATA`, server chèn ở `page_controller.ex:12-50`
