@@ -205,7 +205,7 @@ lúc hạ từng trùm.
 | `POST /api/ws-ticket` | (có token) → `{ticket}`: vé dùng một lần, sống 30 giây, để mở `/socket?ticket=…` (token không nằm trong URL); 20 lần / phút |
 | | Quá giới hạn thì trả 429 kèm `retry-after` |
 | join `"game"` | `{v}` (mã phiên bản giao diện, `window.CLIENT_VERSION`); sai mã → lỗi `{reason: "version"}`, client tự tải lại trang. Thành công → `{username, user_id, admin, role, blocked, mail, player}` (`admin`: thấy tab Quản trị, tức `role` là `mod`/`admin`) (`player` là `null` nếu chưa tạo nhân vật; `blocked` là `[{id, name}]` người đã chặn; `mail` là số thư chưa mở) |
-| push `"cmd"` | `{act, rid?, ...}` → `{ok, msg?, result?, player}`. `rid` (mã yêu cầu, trừ lệnh đi): gửi lại cùng `rid` thì trả kết quả cũ, không chạy hai lần |
+| push `"cmd"` | `{act, rid?, ...}` → `{ok, msg?, result?, player}`. `rid` (mã yêu cầu, trừ lệnh đi): gửi lại cùng `rid` thì trả kết quả cũ, không chạy hai lần. Đợt 3: `upgrade {slot, confirm?}` (slot gồm `wing`; bước có thể vỡ đồ cần `confirm: true`, kết quả có `upgrade: {result: success/down/destroy, level}`), `unequip {slot: shield/wing}`, `lock {id, on}` (khóa / mở khóa đồ), `chaos {id, gear?}` (Máy Hỗn Nguyên, cạnh Lão Hỗn Nguyên; kết quả có `chaos: {result, out}`) |
 | server push `"player"` | `{player}` khi nhân vật đổi từ tab khác |
 | server push `"map"` | `{map, phase, monsters, nodes, players}` (người chơi kèm `look`, `tag`) (`phase`: dawn/day/dusk/night; quái Bóng Đêm có `rare: true`) của bản đồ đang đứng, mỗi khi có thay đổi |
 | push `"chat"` | `{text}` → ok hoặc `{msg}` lỗi (cả khi bị cấm chat); server đẩy `"chat"` `{id, uid, name, title, tag, map, text, at, guild?}` cho mọi người (trừ người đã chặn `uid`), `"chat_history"` lúc mới vào |

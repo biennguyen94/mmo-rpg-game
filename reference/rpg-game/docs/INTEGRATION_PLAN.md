@@ -227,6 +227,15 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 ## 3. Ép đồ bằng ngọc +6 → +11
 
+> **Đã làm (Đợt 3, 2026-10-04)** theo bảng 3.3. Khác thiết kế:
+>
+> - Làm trước C10 (cấp nâng theo từng món): "mất đồ" xóa đúng món đang mặc, không ảnh hưởng món cùng loại khác.
+> - Bước có thể vỡ đồ: server đòi `confirm: true` (client hỏi lại), không chỉ client.
+> - Tháp chỉ cho ngọc lần đầu lên tới tầng (tránh leo lại để cày); trùm trong tháp tính như quái thường. Rương Báu 3 / 8 / 15 %.
+> - Simulator: bot vẫn không qua +5 (cần Vảy Cổ Long), nên chỉ báo số ngọc nhặt được (~3–4 / ván); số trận hạ Hắc Long
+>   trước / sau lệch ≤ 1 %.
+> - Chi tiết code: `CODEBASE_NOTES.md §9d`.
+
 ### 3.1 Hiện trạng
 
 - Thợ Rèn nâng đồ **đang mặc** (vũ khí / giáp / khiên) tới **+5** (`@max_upgrade 5`, `engine.ex:20, 986-1027`).
@@ -303,6 +312,13 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 ---
 
 ## 4. Máy Hỗn Nguyên + Cánh
+
+> **Đã làm (Đợt 3, 2026-10-04)** theo 4.3. Khác thiết kế:
+>
+> - Cánh và đồ ra từ máy là bản riêng (`Gear.plain`), nằm trong túi đồ hiếm. Tên cánh cấp 2: Cánh Huyết Long (Chiến Binh),
+>   Cánh Hư Không (Thích Khách), Cánh Thiên Sứ (Hiệp Sĩ).
+> - Đấu trường: % cánh của đối thủ gộp vào tấn công (× (1 + dmg)) và máu (÷ (1 − absorb)), vì quái không có ô cánh.
+> - NPC Lão Hỗn Nguyên đứng ở Làng [20, 6], hình tự vẽ (`npcs/chaos.png`).
 
 ### 4.1 Hiện trạng
 
@@ -500,14 +516,14 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 | 1-C | Log đồ | ✅ chốt: chỉ đồ ngẫu nhiên (`gear`) |
 | 2-A | Admin tặng đồ không rơi được | ✅ chốt: có |
 | 2-B | Phân quyền mod / admin | ✅ chốt: có (`users.role`) |
-| 3-A | Tỉ lệ / thất bại +6 → +11 | theo bảng 3.3 (mất đồ ở +10 / +11) |
-| 3-B | Tỉ lệ / chỗ rơi ngọc | theo 3.3 |
-| 3-C | Ngọc Sinh Mệnh (dòng tùy chọn) | để sau |
-| 3-D | Tên ngọc | Phúc Lành / Linh Hồn / Hỗn Nguyên |
-| 4-A | Cấp / chỉ số cánh | 20 / 35; 10 % / 18 % |
-| 4-B | Cánh qua chợ / giao dịch | được |
-| 4-C | Công thức ra Ngọc Hỗn Nguyên | có |
-| 4-D | Tên NPC / cánh | như 4.3 |
+| 3-A | Tỉ lệ / thất bại +6 → +11 | ✅ chốt: theo bảng 3.3 (mất đồ ở +10 / +11) |
+| 3-B | Tỉ lệ / chỗ rơi ngọc | ✅ chốt: theo 3.3 |
+| 3-C | Ngọc Sinh Mệnh (dòng tùy chọn) | ✅ chốt: để sau (chưa làm) |
+| 3-D | Tên ngọc | ✅ chốt: Phúc Lành / Linh Hồn / Hỗn Nguyên |
+| 4-A | Cấp / chỉ số cánh | ✅ chốt: 20 / 35; 10 % / 18 % |
+| 4-B | Cánh qua chợ / giao dịch | ✅ chốt: được |
+| 4-C | Công thức ra Ngọc Hỗn Nguyên | ✅ chốt: có |
+| 4-D | Tên NPC / cánh | ✅ chốt: như 4.3 |
 | 5-A | Quy mô soak | 30 bot / 10 phút |
 | 5-B | Khi nào chạy e2e trên CI | chỉ khi sửa `reference/rpg-game/**` |
 | 6-A | Top N, chu kỳ cache | top 10, 60 giây |

@@ -134,7 +134,10 @@ defmodule HacLong.Game.Characters do
   end
 
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
-  defp to_player(%Character{} = c) do
+  # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
+  defp to_player(%Character{} = c), do: c |> to_map() |> HacLong.Game.Engine.split_upgrades()
+
+  defp to_map(c) do
     %{
       version: @save_version,
       name: c.name,
@@ -145,7 +148,7 @@ defmodule HacLong.Game.Characters do
       hp: c.hp,
       points: c.points,
       stats: Map.new(~w(str vit agi def)a, &{&1, Map.fetch!(c.stats, Atom.to_string(&1))}),
-      equip: Map.new(~w(weapon armor shield)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
+      equip: Map.new(~w(weapon armor shield wing)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
       inv: c.inv,
       bosses: c.bosses,
       kills: c.kills,

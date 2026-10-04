@@ -393,7 +393,7 @@ defmodule HacLong.Game.Session do
           {levels, p} = Engine.gain_xp(p, xp)
 
           text =
-            "Thưởng trùm thế giới (#{r.share}% sát thương): +#{r.gold} vàng, +#{xp} kinh nghiệm#{if r.items != %{}, do: ", Vảy Cổ Long", else: ""}."
+            "Thưởng trùm thế giới (#{r.share}% sát thương): +#{r.gold} vàng, +#{xp} kinh nghiệm#{Enum.map_join(r.items, fn {id, _} -> ", " <> HacLong.Game.Data.item(id).name end)}."
 
           p =
             if World.world_battle?(p) do
@@ -530,6 +530,11 @@ defmodule HacLong.Game.Session do
 
     Enum.each(notes, &notify(s, &1))
     track_guild(old, player, result)
+
+    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
+    {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
+    if announce, do: HacLong.Chat.system(announce)
+
     reply({result, player}, s)
   end
 

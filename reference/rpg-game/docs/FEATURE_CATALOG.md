@@ -537,8 +537,11 @@ Chưa làm: Q10. Chi tiết code: `CODEBASE_NOTES.md §6`.
 `HacLong.Release.audit` / `prune_logs`), O2 (`docs/ADMIN_GUIDE.md`), vai trò `player / mod / admin` (câu 2-B).
 Câu 1-A, 1-B, 1-C, 2-A, 2-B chốt theo đề xuất. Chi tiết: `CODEBASE_NOTES.md §9c`.
 
+**Đợt 3 đã làm (2026-10-04):** C10, C18, D1, D2, D3, D5, D6, D7, D9, D11, D12 (một phần: chọn đúng một món, không đặt thừa),
+D13, M9. Câu 3-A, 3-B, 3-D, 4-A, 4-B, 4-C, 4-D chốt theo đề xuất; 3-C (Ngọc Sinh Mệnh) để sau. Chi tiết: `CODEBASE_NOTES.md §9d`.
+
 **Nên làm, công vừa:**
-- **C10:** cấp nâng theo từng món; cần trước D1.
+- ~~**C10:** cấp nâng theo từng món; cần trước D1.~~ (Đợt 3)
 - ~~**E4:** giao dịch một transaction.~~ (Đợt 2)
 - ~~**E2:** log đồ ngẫu nhiên.~~ (Đợt 2)
 - **F1:** Golden Invasion.

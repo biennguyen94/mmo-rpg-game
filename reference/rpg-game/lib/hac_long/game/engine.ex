@@ -17,10 +17,12 @@ defmodule HacLong.Game.Engine do
   @potions ~w(potion_s potion_m potion_l)
   @stats ~w(str vit agi def)a
   @max_batch 99
-  @max_upgrade 5
+  # vũ khí, giáp, khiên, cánh
+  @equip_slots ~w(weapon armor shield wing)
   @max_rebirths 10
   @rebirth_points 15
 
+  def equip_slots, do: @equip_slots
   def points_per_level, do: @points_per_level
   def max_level, do: @max_level
 
@@ -55,7 +57,7 @@ defmodule HacLong.Game.Engine do
           gold: 30,
           stats: c.base,
           points: 0,
-          equip: %{weapon: "club", armor: "vest", shield: nil},
+          equip: %{weapon: "club", armor: "vest", shield: nil, wing: nil},
           inv: %{"potion_s" => 3},
           upgrades: %{},
           gear: [],
@@ -93,6 +95,7 @@ defmodule HacLong.Game.Engine do
     w = Gear.item(p, p.equip.weapon)
     a = Gear.item(p, p.equip.armor)
     sh = Gear.item(p, p.equip.shield)
+    wg = Gear.item(p, p.equip[:wing])
 
     up = fn id -> if id, do: upgrade_bonus(p, id), else: 0 end
 
@@ -110,13 +113,22 @@ defmodule HacLong.Game.Engine do
       def:
         round(
           (s.def * 1.6 + if(a, do: a.def, else: 0) + if(sh, do: sh.def, else: 0) +
-             up.(p.equip.armor) + up.(p.equip.shield) + p.level * 0.5) * pet.(:def)
+             if(wg, do: wg.def, else: 0) + up.(p.equip.armor) + up.(p.equip.shield) +
+             up.(p.equip[:wing]) + p.level * 0.5) * pet.(:def)
         ),
+      # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
+      wingDmg: wing_pct(p, wg, :dmg),
+      wingAbsorb: wing_pct(p, wg, :absorb),
       crit: clamp(0.04 + s.agi * 0.008, 0, 0.6),
       critMult: min(2.5, 1.6 + s.agi * 0.006),
       dodge: clamp(0.02 + s.agi * 0.005, 0, 0.4)
     }
   end
+
+  defp wing_pct(_p, nil, _key), do: 0
+
+  defp wing_pct(p, wg, key),
+    do: Float.round(wg[key] + 0.02 * effective_level(upgrade_level(p, wg.uid)), 3)
 
   @doc """
   Các chỉ số tính ra từ trạng thái, gửi kèm cho client để hiển thị
@@ -441,7 +453,7 @@ defmodule HacLong.Game.Engine do
             log(p, "#{m.name} né được đòn #{name}.", "info")
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
-            mult = mult * (1 + Bestiary.mastery(p, m.id))
+            mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
             dmg = round(damage(atk, dfn) * mult * if(crit, do: d.critMult, else: 1))
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
@@ -611,7 +623,8 @@ defmodule HacLong.Game.Engine do
 
           dmg =
             round(
-              damage(m_atk, d.def) * if(mc, do: 1.5, else: 1) * (1 - power(p, :player, "guard"))
+              damage(m_atk, d.def) * if(mc, do: 1.5, else: 1) * (1 - power(p, :player, "guard")) *
+                (1 - d.wingAbsorb)
             )
 
           p = %{p | hp: max(0, p.hp - dmg)}
@@ -785,6 +798,7 @@ defmodule HacLong.Game.Engine do
         {p, reward}
       end
 
+    {p, reward} = jewel_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -840,6 +854,39 @@ defmodule HacLong.Game.Engine do
 
     p = put_in(p.battle.reward, %{reward | levels: levels})
     finish(p, "win")
+  end
+
+  # Ngọc ép đồ (bảng `JEWELS`): quái cấp cao hiếm khi rơi, trùm vùng hay rơi. Trùm trong tháp tính
+  # như quái thường (leo lại tháp được nên không cho cày ngọc ở đó).
+  defp jewel_drop(p, m, reward) do
+    j = Data.jewels()
+    tower? = p.battle[:encounter][:tower] != nil
+
+    c =
+      cond do
+        m[:world] || m[:pvp] -> 0
+        m.boss and not tower? -> j.boss_chance
+        m.level >= j.monster_level -> j.monster_chance
+        true -> 0
+      end
+
+    if c > 0 and chance(c) do
+      id = pick_jewel()
+      p = p |> add_item(id) |> log("💎 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  @doc "Một viên ngọc ngẫu nhiên theo trọng số `JEWELS.weights`."
+  def pick_jewel do
+    w = Enum.sort(Data.jewels().weights)
+    r = Rng.uniform() * (w |> Enum.map(&elem(&1, 1)) |> Enum.sum())
+
+    Enum.reduce_while(w, 0, fn {id, n}, acc ->
+      if r < acc + n, do: {:halt, id}, else: {:cont, acc + n}
+    end)
   end
 
   # Đồ có chỉ số ngẫu nhiên (xem `Gear`).
@@ -945,14 +992,28 @@ defmodule HacLong.Game.Engine do
       weapon: doll.(p.equip.weapon),
       armor: doll.(p.equip.armor),
       shield: doll.(p.equip.shield),
+      wing: wing_look(p),
       pet: Map.get(p, :pet)
     }
   end
 
-  # ---------- Nâng cấp đồ (Thợ Rèn) ----------
-  # Cấp nâng cấp lưu theo loại đồ (`upgrades: %{id => cấp}`), giữ nguyên khi tháo ra mặc lại.
+  # cánh vẽ bằng code ở client (doll.js): chỉ cần lớp và cấp cánh
+  defp wing_look(p) do
+    case Gear.item(p, p.equip[:wing]) do
+      %{cls: cls, tier: tier} -> %{cls: cls, tier: tier}
+      _ -> nil
+    end
+  end
 
-  def max_upgrade, do: @max_upgrade
+  # ---------- Nâng cấp đồ (Thợ Rèn) ----------
+  # Cấp nâng lưu theo từng món (`upgrades: %{uid => cấp}`): đồ thường được tách thành bản riêng
+  # (`Gear.plain/1`) lúc nâng cấp lần đầu hoặc lúc khóa, nên hai thanh kiếm cùng loại có cấp riêng.
+  # +1 → +5 dùng quặng (luôn thành công); +6 → +11 dùng ngọc theo bảng `UPGRADE` (có rủi ro).
+
+  def max_upgrade, do: Data.upgrade().max
+
+  @doc "Cấp tính chỉ số: từ `double_from` (+10) mỗi cấp tính gấp đôi (+11 tương đương 13 cấp)."
+  def effective_level(l), do: l + max(0, l - Data.upgrade().double_from + 1)
 
   defp upgrades(p), do: Map.get(p, :upgrades) || %{}
 
@@ -963,28 +1024,47 @@ defmodule HacLong.Game.Engine do
     case {upgrade_level(p, id), Gear.item(p, id)} do
       {0, _} -> 0
       {_, nil} -> 0
-      {l, it} -> l * max(1, round((it[:atk] || it[:def] || 0) * 0.08))
+      {l, it} -> effective_level(l) * max(1, round((it[:atk] || it[:def] || 0) * 0.08))
     end
   end
 
   @doc """
   Giá nâng món đồ (id đồ thường hoặc thông tin món đồ) từ cấp `level` lên cấp tiếp theo:
-  `%{gold, items}` hoặc `nil` nếu đã tối đa. Đồ dưới cấp 17 dùng Quặng Sắt, từ cấp 17 dùng
-  Mithril; cấp cuối cần thêm Vảy Cổ Long.
+  `%{gold, items, rate, fail}` hoặc `nil` nếu đã tối đa.
+
+  - +1 → +5: quặng (đồ dưới cấp 17 dùng Quặng Sắt, từ cấp 17 dùng Mithril), +5 cần thêm Vảy Cổ
+    Long; luôn thành công.
+  - +6 → +11: một viên ngọc theo bảng `UPGRADE`, tỉ lệ `rate`; thất bại (`fail`) tụt một cấp
+    (`"down"`) hoặc vỡ đồ (`"destroy"`). Ngọc và vàng mất cả khi thất bại.
   """
-  def upgrade_cost(_item, level) when level >= @max_upgrade, do: nil
   def upgrade_cost(id, level) when is_binary(id), do: upgrade_cost(Data.item(id), level)
 
   def upgrade_cost(it, level) do
     n = level + 1
-    ore = if (it[:level] || 1) >= 17, do: "ore_rare", else: "ore"
-    items = %{ore => n}
-    items = if n == @max_upgrade, do: Map.put(items, "dragon_scale", 1), else: items
-    %{gold: round(max(it.price, 100) * 0.08 * n), items: items}
+    gold = round(max(it.price, 100) * 0.08 * n)
+
+    cond do
+      level >= max_upgrade() ->
+        nil
+
+      step = Data.upgrade_step(n) ->
+        %{gold: gold, items: %{step.jewel => 1}, rate: step.rate, fail: step.fail}
+
+      true ->
+        ore = if (it[:level] || 1) >= 17, do: "ore_rare", else: "ore"
+        items = %{ore => n}
+        items = if n == 5, do: Map.put(items, "dragon_scale", 1), else: items
+        %{gold: gold, items: items, rate: 1.0, fail: nil}
+    end
   end
 
-  def upgrade(p, slot) do
-    id = slot in ~w(weapon armor shield) && p.equip[String.to_existing_atom(slot)]
+  @doc """
+  Ép món đang mặc ở ô `slot`. Bước có thể vỡ đồ thì phải gửi `confirm` (client hỏi lại trước).
+  Kết quả có `upgrade: %{result: "success" | "down" | "destroy" | "fail", level}`; ép thành công
+  từ `announce_from` thì kèm `announce` (Session đưa lên kênh chat hệ thống).
+  """
+  def upgrade(p, slot, confirm \\ false) do
+    id = slot in @equip_slots && p.equip[String.to_existing_atom(slot)]
     level = if id, do: upgrade_level(p, id), else: 0
     it = id && Gear.item(p, id)
     cost = it && upgrade_cost(it, level)
@@ -1012,19 +1092,163 @@ defmodule HacLong.Game.Engine do
 
         {err("Thiếu nguyên liệu: #{missing}."), p}
 
+      cost.fail == "destroy" and not confirm ->
+        {Map.put(
+           err("Ép lên +#{level + 1} thất bại sẽ VỠ #{it.name}. Xác nhận lại để ép."),
+           :confirm,
+           true
+         ), p}
+
       true ->
         hp_ratio = p.hp / derived(p).maxHp
+        {p, uid} = ensure_instance(p, String.to_existing_atom(slot))
 
         p =
           Enum.reduce(cost.items, %{p | gold: p.gold - cost.gold}, fn {m, n}, p ->
             take_item(p, m, n)
           end)
 
-        p = Map.put(p, :upgrades, Map.put(upgrades(p), id, level + 1))
-        p = %{p | hp: round(hp_ratio * derived(p).maxHp)}
-        {ok("Đã nâng #{it.name} lên +#{level + 1}."), p}
+        {result, p} = roll_upgrade(p, String.to_existing_atom(slot), uid, it, level, cost)
+        {result, %{p | hp: min(round(hp_ratio * derived(p).maxHp), derived(p).maxHp)}}
     end
   end
+
+  defp roll_upgrade(p, slot, uid, it, level, cost) do
+    n = level + 1
+
+    cond do
+      cost.rate >= 1 or chance(cost.rate) ->
+        p = put_upgrade(p, uid, n)
+
+        text =
+          if Data.upgrade_step(n),
+            do: "✨ Ép thành công #{it.name} lên +#{n}!",
+            else: "Đã nâng #{it.name} lên +#{n}."
+
+        r = ok(text) |> Map.put(:upgrade, %{result: "success", level: n})
+
+        r =
+          if n >= Data.upgrade().announce_from,
+            do: Map.put(r, :announce, "📢 #{p.name} vừa ép thành công #{it.name} +#{n}!"),
+            else: r
+
+        {r, p}
+
+      cost.fail == "down" ->
+        p = put_upgrade(p, uid, level - 1)
+
+        {ok("💥 Ép thất bại, #{it.name} tụt về +#{level - 1}.")
+         |> Map.put(:upgrade, %{result: "down", level: level - 1}), p}
+
+      cost.fail == "destroy" ->
+        p = destroy_equipped(p, slot, uid)
+
+        {ok("💔 Ép thất bại, #{it.name} +#{level} đã vỡ!")
+         |> Map.put(:upgrade, %{result: "destroy", level: 0}), p}
+
+      true ->
+        {ok("Ép thất bại, #{it.name} giữ nguyên +#{level}.")
+         |> Map.put(:upgrade, %{result: "fail", level: level}), p}
+    end
+  end
+
+  defp put_upgrade(p, uid, 0), do: Map.put(p, :upgrades, Map.delete(upgrades(p), uid))
+  defp put_upgrade(p, uid, n), do: Map.put(p, :upgrades, Map.put(upgrades(p), uid, n))
+
+  # Món đang mặc vỡ: bỏ khỏi nhân vật; vũ khí / giáp về đồ khởi đầu (như lúc mới tạo).
+  defp destroy_equipped(p, slot, uid) do
+    p = p |> Gear.remove(uid) |> put_upgrade(uid, 0)
+    fallback = %{weapon: "club", armor: "vest"}
+    %{p | equip: Map.put(p.equip, slot, fallback[slot])}
+  end
+
+  @doc """
+  Món đang mặc ở `slot` là đồ thường thì tách thành bản riêng (giữ cấp nâng cũ theo loại nếu có).
+  Trả về `{nhân_vật, uid}`.
+  """
+  def ensure_instance(p, slot) do
+    id = p.equip[slot]
+
+    if Gear.instance?(id) do
+      {p, id}
+    else
+      g = Gear.plain(id)
+      level = upgrade_level(p, id)
+
+      p = %{
+        Map.put(p, :gear, (Map.get(p, :gear) || []) ++ [g])
+        | equip: Map.put(p.equip, slot, g.uid)
+      }
+
+      p = p |> put_upgrade(id, 0) |> put_upgrade(g.uid, level)
+      {p, g.uid}
+    end
+  end
+
+  @doc """
+  Dữ liệu cũ (cấp nâng theo loại đồ thường, `upgrades[id]`): tách mỗi món cùng loại (đang mặc và
+  trong túi) thành bản riêng giữ nguyên cấp. Chạy lúc nạp nhân vật.
+  """
+  def split_upgrades(p) do
+    Enum.reduce(upgrades(p), p, fn {id, level}, p ->
+      it = not Gear.instance?(id) && Data.item(id)
+
+      if it && it.slot in @equip_slots && level > 0 do
+        p =
+          Enum.reduce(p.equip, p, fn
+            {slot, ^id}, p -> p |> put_upgrade(id, level) |> ensure_instance(slot) |> elem(0)
+            _, p -> p
+          end)
+
+        copies = for _ <- 1..Map.get(p.inv, id, 0)//1, do: Gear.plain(id)
+        p = %{Map.put(p, :gear, (Map.get(p, :gear) || []) ++ copies) | inv: Map.delete(p.inv, id)}
+        p = Enum.reduce(copies, p, &put_upgrade(&2, &1.uid, level))
+        put_upgrade(p, id, 0)
+      else
+        p
+      end
+    end)
+  end
+
+  # ---------- Khóa đồ ----------
+
+  @doc """
+  Khóa (`on? = true`) / mở khóa món `id`. Đồ khóa không bán, rao chợ, giao dịch, bỏ vào máy ghép
+  được. Đồ thường (vũ khí / giáp / khiên / cánh) được tách thành bản riêng để khóa từng món.
+  """
+  def lock(p, id, on?) when is_binary(id) do
+    slot = Enum.find(@equip_slots, &(p.equip[String.to_existing_atom(&1)] == id))
+    it = Gear.item(p, id)
+
+    cond do
+      it == nil or it.slot not in @equip_slots ->
+        {err("Chỉ khóa được vũ khí, giáp, khiên, cánh."), p}
+
+      Gear.instance?(id) ->
+        {ok(if on?, do: "🔒 Đã khóa #{it.name}.", else: "Đã mở khóa #{it.name}."),
+         Gear.set_locked(p, id, on?)}
+
+      not on? ->
+        {err("Món này chưa khóa."), p}
+
+      slot ->
+        {p, uid} = ensure_instance(p, String.to_existing_atom(slot))
+        {ok("🔒 Đã khóa #{it.name}."), Gear.set_locked(p, uid, true)}
+
+      Map.get(p.inv, id, 0) <= 0 ->
+        {err("Không có món này."), p}
+
+      length(Gear.bag(p)) >= Gear.max_bag() ->
+        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món), không tách món này ra để khóa được."), p}
+
+      true ->
+        g = Gear.plain(id) |> Map.put(:locked, true)
+        p = take_item(p, id)
+        {ok("🔒 Đã khóa #{it.name}."), Map.put(p, :gear, (Map.get(p, :gear) || []) ++ [g])}
+    end
+  end
+
+  def lock(p, _id, _on?), do: {err("Không có món này."), p}
 
   # ---------- Đồ đạc ----------
   def add_item(p, id, n \\ 1), do: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
@@ -1075,13 +1299,18 @@ defmodule HacLong.Game.Engine do
         {err("Không có món này."), p}
 
       g ->
-        if Gear.equipped?(p, uid) do
-          {err("Đang mặc món này."), p}
-        else
-          it = Gear.resolve(g)
-          p = %{Gear.remove(p, uid) | gold: p.gold + it.sell}
-          p = Map.put(p, :upgrades, Map.delete(upgrades(p), uid))
-          {ok("Đã bán #{it.name} được #{it.sell} vàng."), p}
+        cond do
+          Gear.equipped?(p, uid) ->
+            {err("Đang mặc món này."), p}
+
+          g[:locked] ->
+            {err("#{Gear.resolve(g).name} đang khóa. Mở khóa trước khi bán."), p}
+
+          true ->
+            it = Gear.resolve(g)
+            p = %{Gear.remove(p, uid) | gold: p.gold + it.sell}
+            p = Map.put(p, :upgrades, Map.delete(upgrades(p), uid))
+            {ok("Đã bán #{it.name} được #{it.sell} vàng."), p}
         end
     end
   end
@@ -1106,11 +1335,14 @@ defmodule HacLong.Game.Engine do
     owned = if gear?, do: it != nil and not Gear.equipped?(p, id), else: Map.get(p.inv, id, 0) > 0
 
     cond do
-      it == nil or not owned or it.slot not in ~w(weapon armor shield) ->
+      it == nil or not owned or it.slot not in @equip_slots ->
         {err("Không trang bị được."), p}
 
       it[:level] && p.level < it.level ->
         {err("Cần cấp #{it.level}."), p}
+
+      it[:cls] && it.cls != p.cls ->
+        {err("#{it.name} dành cho #{Data.class(it.cls).name}."), p}
 
       true ->
         slot = String.to_existing_atom(it.slot)
@@ -1125,10 +1357,19 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  def unequip(p, "shield") when p.equip.shield != nil do
-    old = p.equip.shield
-    p = if Gear.instance?(old), do: p, else: add_item(p, old)
-    {ok("Đã tháo khiên."), %{p | equip: %{p.equip | shield: nil}}}
+  def unequip(p, slot) when slot in ~w(shield wing) do
+    key = String.to_existing_atom(slot)
+
+    case p.equip[key] do
+      nil ->
+        {err("Không tháo được."), p}
+
+      old ->
+        p = if Gear.instance?(old), do: p, else: add_item(p, old)
+
+        {ok(if(key == :wing, do: "Đã tháo cánh.", else: "Đã tháo khiên.")),
+         %{p | equip: Map.put(p.equip, key, nil)}}
+    end
   end
 
   def unequip(p, _slot), do: {err("Không tháo được."), p}

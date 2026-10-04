@@ -149,22 +149,27 @@ defmodule HacLong.Market do
         {:error, "Không có món này."}
 
       g ->
-        if Gear.equipped?(p, uid_gear) do
-          {:error, "Tháo món này ra trước khi bán."}
-        else
-          up = Engine.upgrade_level(p, uid_gear)
-          p = Gear.remove(p, uid_gear)
-          p = Map.put(p, :upgrades, Map.delete(Map.get(p, :upgrades) || %{}, uid_gear))
+        cond do
+          Gear.equipped?(p, uid_gear) ->
+            {:error, "Tháo món này ra trước khi bán."}
 
-          row = %{
-            seller_id: uid,
-            gear: %{uid: g.uid, base: g.base, rarity: g.rarity, bonus: g.bonus, up: up},
-            count: 1,
-            price: price,
-            inserted_at: now()
-          }
+          g[:locked] ->
+            {:error, "#{Gear.resolve(g).name} đang khóa. Mở khóa trước khi bán."}
 
-          commit(p, save, row, "Đã rao bán #{Gear.resolve(g).name} giá #{price} vàng.")
+          true ->
+            up = Engine.upgrade_level(p, uid_gear)
+            p = Gear.remove(p, uid_gear)
+            p = Map.put(p, :upgrades, Map.delete(Map.get(p, :upgrades) || %{}, uid_gear))
+
+            row = %{
+              seller_id: uid,
+              gear: %{uid: g.uid, base: g.base, rarity: g.rarity, bonus: g.bonus, up: up},
+              count: 1,
+              price: price,
+              inserted_at: now()
+            }
+
+            commit(p, save, row, "Đã rao bán #{Gear.resolve(g).name} giá #{price} vàng.")
         end
     end
   end

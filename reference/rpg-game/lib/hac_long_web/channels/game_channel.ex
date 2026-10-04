@@ -308,7 +308,8 @@ defmodule HacLongWeb.GameChannel do
           gear: %{
             weapon: name.(p.equip.weapon),
             armor: name.(p.equip.armor),
-            shield: name.(p.equip.shield)
+            shield: name.(p.equip.shield),
+            wing: name.(p.equip[:wing])
           },
           arena: Arena.stats(target),
           blocked: target in socket.assigns.blocked,

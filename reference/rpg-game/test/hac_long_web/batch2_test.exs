@@ -275,9 +275,14 @@ defmodule HacLongWeb.Batch2Test do
 
       assert gmsg =~ "Đã tặng"
       t = Session.get(target.id)
-      assert t.inv["relic"] == 1 and t.upgrades["relic"] == 5
-      assert [%{base: "dragonshield", rarity: 3, bonus: %{str: 9}, uid: guid}] = t.gear
-      assert t.upgrades[guid] == 5
+      # đồ +N là món riêng (Đợt 3, cấp nâng theo từng món)
+      assert [
+               %{base: "relic", rarity: 0, uid: ruid},
+               %{base: "dragonshield", rarity: 3, bonus: %{str: 9}, uid: guid}
+             ] =
+               t.gear
+
+      assert t.upgrades[ruid] == 5 and t.upgrades[guid] == 5
 
       assert {:ok, _} = adm(sa, "add_stats", %{"uid" => target.id, "str" => 100})
       assert Session.get(target.id).stats.str == tp.stats.str + 100

@@ -13,7 +13,7 @@ defmodule HacLong.Admin do
   | `give_xp` | `xp` (1..1e9) | cộng kinh nghiệm, lên cấp như đánh quái |
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
-  | `give_item` | `id`, `count` (1..9999), `up` (0..5) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`) |
+  | `give_item` | `id`, `count` (1..9999), `up` (0..11) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
   | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, vit, agi, def}`), `up` | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `vit`, `agi`, `def` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
@@ -113,15 +113,28 @@ defmodule HacLong.Admin do
       not (is_integer(up) and up in 0..Engine.max_upgrade()) ->
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
-      up > 0 and it.slot not in ~w(weapon armor shield) ->
+      (up > 0 or it.slot == "wing") and it.slot not in Engine.equip_slots() ->
         {:error, "#{it.name} không nâng cấp được."}
+
+      # đồ đã nâng cấp và cánh là từng món riêng (`Gear.plain/1`), nằm trong túi đồ hiếm
+      up > 0 or it.slot == "wing" ->
+        {:ok,
+         fn p ->
+           if length(Gear.bag(p)) + count > Gear.max_bag() do
+             {:error, "Túi đồ hiếm không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
+           else
+             gs = for _ <- 1..count, do: Gear.plain(id)
+             p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ gs)
+             p = Enum.reduce(gs, p, &put_upgrade(&2, &1.uid, up))
+             {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}
+           end
+         end}
 
       true ->
         {:ok,
          fn p ->
            p = Engine.add_item(p, id, count)
-           p = if up > 0, do: put_upgrade(p, id, max(up, Engine.upgrade_level(p, id))), else: p
-           {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}
+           {:ok, p, "Đã tặng #{it.name} ×#{count}."}
          end}
     end
   end
@@ -134,7 +147,7 @@ defmodule HacLong.Admin do
 
     cond do
       !it or it.slot not in ~w(weapon armor shield) ->
-        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên."}
+        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên (cánh: dùng give_item)."}
 
       rarity not in 1..3 ->
         {:error, "Độ hiếm phải là 1, 2 hoặc 3."}
@@ -191,6 +204,8 @@ defmodule HacLong.Admin do
     do: {:ok, fn p -> {:ok, %{p | hp: Engine.derived(p).maxHp}, "Đã hồi đầy máu."} end}
 
   def build(_op, _a), do: {:error, "Tham số không hợp lệ."}
+
+  defp put_upgrade(p, _id, 0), do: p
 
   defp put_upgrade(p, id, up),
     do: Map.put(p, :upgrades, Map.put(Map.get(p, :upgrades) || %{}, id, up))

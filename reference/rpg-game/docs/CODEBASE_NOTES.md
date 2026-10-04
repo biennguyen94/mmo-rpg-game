@@ -17,7 +17,7 @@
 6. [Vẽ nhân vật và giao diện trang bị](#6-vẽ-nhân-vật-và-giao-diện-trang-bị)
 7. [Chiến đấu](#7-chiến-đấu)
 8. [Dữ liệu game](#8-dữ-liệu-game)
-9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2)
+9. [Test, CI, simulator](#9-test-ci-simulator) (9b Đợt 1, 9c Đợt 2, 9d Đợt 3)
 10. [Bẫy cần biết](#10-bẫy-cần-biết)
 
 ---
@@ -393,14 +393,41 @@ Mỗi lớp có thêm `hair`, `icon`, `desc`. Cột lớp trong `characters` là
 - **Chỉnh nhân vật:** `Session.admin(uid, fun, ref)` chạy `fun.(player)` trong Session, lưu, đẩy trạng thái, `World.refresh` nếu đổi ngoại hình.
 - Test: `test/hac_long_web/batch2_test.exs`.
 
+## 9d. Ép ngọc, Máy Hỗn Nguyên, cánh, khóa đồ (Đợt 3, 2026-10-04)
+
+- **Cấp nâng theo từng món (C10):** `upgrades` chỉ còn khóa theo `uid`. Đồ thường được tách thành bản riêng
+  `Gear.plain/1` (độ hiếm 0, `bonus: %{}`) khi: nâng cấp lần đầu (`Engine.ensure_instance/2`), khóa (`Engine.lock/3`),
+  admin tặng kèm `up` hoặc tặng cánh, ra cánh từ máy ghép. Dữ liệu cũ (`upgrades[id]` đồ thường) tách lúc nạp
+  (`Characters.to_player` → `Engine.split_upgrades/1`: món đang mặc + mọi món cùng loại trong túi, giữ cấp; không tính giới hạn túi).
+- **Khóa đồ (C18):** `gear[].locked = true` (lưu trong jsonb, `Gear.load` đọc lại). Chặn ở `Engine.sell/2`, `Market` (`list_gear`),
+  `TradeOffer.check/2`, `Chaos.gear_input/3`. Không chặn ép (người chơi tự quyết).
+- **Ép +6 → +11 (D1, D2, D3, D9):** `Engine.upgrade/3` (`confirm` cho bước `destroy`), `upgrade_cost/2` trả thêm `rate`, `fail`;
+  bảng `UPGRADE` trong `game_data.json` (`Data.upgrade/0`, `Data.upgrade_step/1`). `effective_level/1`: từ +10 mỗi cấp
+  gấp đôi. Vỡ đồ: `destroy_equipped` (vũ khí → `club`, giáp → `vest`). Kết quả có `upgrade` và `announce` (từ +7).
+- **Thông báo toàn server:** lệnh trả `announce` → `Session.run_command_` bỏ khỏi kết quả và gọi `Chat.system/1`.
+- **Ngọc (D7):** `jewel_bless`, `jewel_soul`, `jewel_chaos` (slot `material`); rơi ở `Engine.jewel_drop/3` (bảng `JEWELS`),
+  `Tower.climb/1` (mỗi 10 tầng, chỉ lần đầu vượt `tower_best`), `Chests.buy/2`, `WorldBoss.reward/4` (top 3).
+  `Engine.pick_jewel/0` chọn theo trọng số.
+- **Cánh (D6):** ô `equip.wing` (mặc định nil; `@equip_slots` trong `Engine`); món `wing_<lớp>_<1|2>` có `cls`, `tier`, `dmg`,
+  `absorb`. `derived` trả `wingDmg`, `wingAbsorb` (+2 % mỗi cấp nâng tính theo `effective_level`); áp vào đòn người chơi
+  (`mult`) và đòn quái (sau `guard`). Đấu trường (`Arena.opponent/2`): % sát thương của cánh gộp vào `atk`, % hấp thụ gộp vào máu (`maxHp / (1 − absorb)`).
+  `Engine.look` có `wing: %{cls, tier}`; `doll.js` vẽ cánh bằng canvas dưới lớp thân.
+- **Máy Hỗn Nguyên (D5):** `HacLong.Game.Chaos` (`combine/3`, `rate/2`, `output/2`), công thức `CHAOS` (`Data.chaos/0,1`); NPC
+  `chaos` ở `priv/maps/village.json` [20, 6] (role `chaos`), lệnh `chaos {id, gear}` (Commands, `at_npc`). Client: `chaosCard`.
+- **Client:** `GAME_DATA.UPGRADE`, `GAME_DATA.CHAOS` (PageController). `ui.js`: `SLOT_OPEN` có `wing`, `SLOT_REMOVABLE`
+  (`shield`, `wing`), `effLevel`, `upClass` (viền `.up7/.up9/.up11`), nút khóa trong `showTip`, `forgeCard` (tỉ lệ, rủi ro,
+  hỏi lại khi có thể vỡ), `chaosCard`, `gearTag`. Đồ khóa bị loại khỏi danh sách bán / chợ / giao dịch.
+- Simulator in thêm `ngọc=` (số ngọc nhặt được trung bình). Bot vẫn chỉ nâng tới +4 như cũ.
+- Test: `test/hac_long/game/forge_test.exs`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.
    Sửa DB trực tiếp khi người chơi đang online sẽ bị Session **ghi đè** ở lần lưu sau.
 2. ~~`Market.commit/4` bỏ qua kết quả transaction~~: **đã sửa** (Đợt 1), giờ chỉ báo thành công khi transaction commit.
 3. ~~Giao dịch hai pha không transaction~~: **đã sửa** (Đợt 2), giờ ghi cả hai nhân vật trong một transaction (mục 9c).
-4. **Cấp nâng theo loại đồ thường** (`upgrades` khóa theo id): hai cái `broadsword` dùng chung một cấp; bán cái cuối thì mất cấp.
-5. **3 ô trang bị cố định** ở nhiều chỗ (mục 3, 6). Thêm ô mới phải sửa: `characters.ex:67`, `engine.ex:940-950, 1109, 1128-1134`,
+4. ~~Cấp nâng theo loại đồ thường~~: **đã sửa** (Đợt 3), cấp nâng theo từng món (mục 9d).
+5. **Ô trang bị cố định** (từ Đợt 3 là 4 ô: thêm `wing`) ở nhiều chỗ (mục 3, 6). Thêm ô mới phải sửa: `characters.ex:67`, `engine.ex:940-950, 1109, 1128-1134`,
    `doll.js`, `ui.js` (`310, 1099-1110, 1308-1327, 1373`), `market.ex`, `trade_offer.ex`.
 6. **Quyền admin gán lúc kết nối:** đổi quyền thì người đó phải tải lại trang.
 7. **`game_data.json` nạp lúc biên dịch:** sửa xong phải biên dịch lại (server dev tự làm; bản release phải build lại).

@@ -84,9 +84,10 @@ defmodule HacLong.Arena do
       final: false,
       special: %{name: skill.name, every: 3, mult: 1.8},
       on_hit: nil,
-      maxHp: d.maxHp,
-      hp: d.maxHp,
-      atk: d.atk,
+      # cánh: % sát thương gộp vào tấn công, % giảm sát thương nhận gộp vào máu
+      maxHp: round(d.maxHp / (1 - d.wingAbsorb)),
+      hp: round(d.maxHp / (1 - d.wingAbsorb)),
+      atk: round(d.atk * (1 + d.wingDmg)),
       def: d.def,
       crit: d.crit,
       dodge: d.dodge,

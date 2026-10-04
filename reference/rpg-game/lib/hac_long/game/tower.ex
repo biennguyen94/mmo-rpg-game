@@ -231,11 +231,25 @@ defmodule HacLong.Game.Tower do
       {%{ok: false, msg: "Hạ hết quái để mở cầu thang (còn #{left})."}, p}
     else
       r = floor_reward(t.floor)
+
+      # mỗi 10 tầng một viên ngọc, chỉ lần đầu lên tới tầng đó (leo lại không nhận nữa)
+      jewel? =
+        rem(t.floor, Data.jewels().tower_every) == 0 and t.floor > Map.get(p, :tower_best, 0)
+
+      r =
+        if jewel?,
+          do: %{r | items: Map.update(r.items, Engine.pick_jewel(), 1, &(&1 + 1))},
+          else: r
+
       p = %{p | gold: p.gold + r.gold}
       p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
       {_levels, p} = Engine.gain_xp(p, r.xp)
       p = Map.put(p, :tower_best, max(Map.get(p, :tower_best, 0), t.floor))
-      extra = if r.items == %{}, do: "", else: ", bình máu"
+
+      extra =
+        r.items
+        |> Enum.map(fn {id, n} -> ", #{Data.item(id).name}#{if n > 1, do: " ×#{n}", else: ""}" end)
+        |> Enum.join()
 
       {%{ok: true, msg: "Vượt tầng #{t.floor}! +#{r.gold} vàng, +#{r.xp} kinh nghiệm#{extra}."},
        go_floor(p, t.floor + 1)}

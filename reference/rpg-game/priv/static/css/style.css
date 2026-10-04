@@ -462,6 +462,14 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .rar-b-1 { border-color: #3f7a3f !important; box-shadow: inset 0 0 6px #2f5f2f; }
 .rar-b-2 { border-color: #3f6fb8 !important; box-shadow: inset 0 0 6px #2b4f88; }
 .rar-b-3 { border-color: #8a4fc0 !important; box-shadow: inset 0 0 8px #6a3a98; }
+/* Đợt 3: viền theo cấp nâng (+7, +9, +11), dấu khóa */
+.up7 { box-shadow: inset 0 0 6px #3f8fd0, 0 0 4px #3f8fd0; }
+.up9 { box-shadow: inset 0 0 8px #e9c46a, 0 0 6px #e9c46a; }
+.up11 { box-shadow: inset 0 0 10px #ff6b3d, 0 0 8px #ff6b3d; animation: up11 1.6s ease-in-out infinite alternate; }
+@keyframes up11 { from { box-shadow: inset 0 0 6px #ff6b3d, 0 0 4px #ff6b3d; } to { box-shadow: inset 0 0 12px #ffb03d, 0 0 10px #ffb03d; } }
+@media (prefers-reduced-motion: reduce) { .up11 { animation: none; } }
+.cell .lockb, .slot .lockb { position: absolute; right: 2px; bottom: 0; font-size: 0.6rem; pointer-events: none; }
+.lock-ic { font-size: 0.75em; }
 .bag .cell.over, .slot.over, .bag.over { outline: 2px solid var(--gold); outline-offset: 1px; }
 .bag [draggable="true"], .slot[draggable="true"] { cursor: grab; }
 .emptytext { text-align: center; }

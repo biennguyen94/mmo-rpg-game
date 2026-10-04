@@ -16,6 +16,7 @@ nhật ký vàng / đồ hiếm / quản trị, và công thức dựng nhân v�
 6. [Công thức: nhân vật admin tối đa](#6-công-thức-nhân-vật-admin-tối-đa)
 7. [Giao dịch trực tiếp an toàn (cho người vận hành)](#7-giao-dịch-trực-tiếp-an-toàn-cho-người-vận-hành)
 8. [Xử lý sự cố](#8-xử-lý-sự-cố)
+9. [Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)](#9-ép-đồ-máy-hỗn-nguyên-khóa-đồ-đợt-3)
 
 ---
 
@@ -75,13 +76,14 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `vit`, `agi`, `def` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
-| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..5 | **mọi** món trong `game_data.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`); `up` là cấp nâng (chỉ vũ khí / giáp / khiên) |
+| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11 | **mọi** món trong `game_data.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
 | Đồ hiếm | `give_gear` | `base`, `rarity` 1..3, `bonus` `{str, vit, agi, def}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
 - Mỗi lệnh ghi một dòng `admin_log` (cả khi lỗi) và ghi nhật ký vàng / đồ hiếm với lý do `ADMIN`, `ref = admin:<mã dòng admin_log>`.
-- Đồ thường nâng cấp: cấp nâng lưu theo **loại đồ** (`upgrades[id]`), nên tặng `relic +5` thì mọi Thánh Kiếm của người đó đều +5.
+- Từ Đợt 3, cấp nâng lưu theo **từng món** (`upgrades[uid]`): đồ thường được tách thành bản riêng (độ hiếm 0) khi
+  nâng cấp, khóa, hoặc khi admin tặng kèm `up`. Dữ liệu cũ (cấp theo loại) tự tách lúc người chơi vào game.
 
 ## 4. Nhật ký và kiểm tra vàng
 
@@ -187,15 +189,19 @@ await A('add_gold', { amount: 100000000 });
 await A('add_points', { n: 300 });
 await A('add_stats', { str: 200, vit: 200, agi: 100, def: 150 });
 
-// vũ khí / giáp / khiên tốt nhất, nâng tối đa (+5)
-await A('give_item', { id: 'relic', count: 1, up: 5 });        // Thánh Kiếm Diệt Long (chỉ rơi từ trùm)
-await A('give_item', { id: 'breastplate', count: 1, up: 5 });  // Giáp Ngực Thép
-await A('give_item', { id: 'dragonshield', count: 1, up: 5 }); // Khiên Vảy Rồng (chỉ rơi từ trùm)
+// đồ hiếm Sử Thi tự chọn chỉ số, nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
+await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 11 });       // Thánh Kiếm Diệt Long
+await A('give_gear', { base: 'breastplate', rarity: 3, bonus: { vit: 30, def: 30, str: 10 }, up: 11 }); // Giáp Ngực Thép
+await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { def: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
 
-// đồ hiếm Sử Thi tự chọn chỉ số (mặc thay đồ thường nếu muốn)
-await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 5 });
-await A('give_gear', { base: 'breastplate', rarity: 3, bonus: { vit: 30, def: 30, str: 10 }, up: 5 });
-await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { def: 30, vit: 30, agi: 10 }, up: 5 });
+// cánh cấp 2 đúng lớp, +11 (warrior / rogue / knight); cấp mặc 35
+const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;
+await A('give_item', { id: `wing_${cls}_2`, count: 1, up: 11 });
+
+// ngọc để tự ép / ghép thêm
+await A('give_item', { id: 'jewel_bless', count: 20 });
+await A('give_item', { id: 'jewel_soul', count: 20 });
+await A('give_item', { id: 'jewel_chaos', count: 20 });
 
 // bình máu, nguyên liệu nâng cấp / nấu ăn
 await A('give_item', { id: 'potion_l', count: 200 });
@@ -206,7 +212,8 @@ await A('give_item', { id: 'mam_co', count: 20 });
 await A('heal');
 ```
 
-Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên vào ô trang bị. Kiểm lại: tab Quản trị →
+Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / cánh vào ô trang bị (hoặc bấm món → **Trang bị**).
+Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →
 tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm tra vàng** vẫn "Không có lỗi".
 
 Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): chuyển sinh, thú cưng, kỹ năng (kỹ năng mở theo cấp,
@@ -234,3 +241,19 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 | "Túi đồ hiếm đã đầy (20 món)." | `give_gear` khi túi đủ 20 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
 | `gold_mismatch` sau khi sửa SQL tay | sửa vàng thẳng database không có dòng nhật ký | đừng sửa tay; dùng `add_gold`. Đã lỡ thì thêm một dòng `gold_log` (`reason = 'MANUAL'`, `delta` = phần chênh) |
 | Kiểm tra vàng chậm | bảng nhật ký lớn | dọn `--prune 180` |
+
+## 9. Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)
+
+Số liệu ở `priv/game_data.json` (`UPGRADE`, `JEWELS`, `CHAOS`, các món `jewel_*`, `wing_*`); sửa xong phải build lại.
+
+- **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Phúc Lành (100 %); +7 / +8 / +9 bằng Ngọc Linh Hồn
+  (70 / 60 / 50 %, thất bại tụt 1 cấp); +10 / +11 bằng Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**: vũ khí về Gậy Gỗ,
+  giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +7 thì báo cả server.
+- **Ngọc rơi:** quái cấp ≥ 12 (0,6 %), trùm vùng (30 %; trùm trong tháp tính như quái thường), top 3 trùm thế giới
+  (1 viên), Tháp Vô Tận mỗi 10 tầng (chỉ lần đầu lên tới tầng đó), Rương Báu (3 / 8 / 15 %).
+- **Máy Hỗn Nguyên** (Lão Hỗn Nguyên, Làng): cánh cấp 1 (đồ +5↑ + 1 Hỗn Nguyên + 20 000 vàng, 10 % + 5 % mỗi cấp trên +5,
+  tối đa 60 %), cánh cấp 2 (cánh cấp 1 +5↑ + 5/5/2 ngọc + 200 000 vàng, 20 % + …), Ngọc Hỗn Nguyên (10 Mithril + 1 Vảy
+  Cổ Long + 5 000 vàng, 70 %). Thất bại mất hết. Ghép cánh thành công thì báo cả server.
+- **Khóa đồ:** người chơi khóa / mở khóa trong bảng chi tiết món đồ. Đồ khóa không bán, rao chợ, giao dịch, bỏ vào máy được.
+- Người chơi mất đồ do ép / ghép thất bại: đó là luật chơi. Muốn đền thì tra `gear_log` theo `uid` (lý do `UPGRADE` /
+  `CHAOS`, hành động `out`) rồi tặng lại bằng `give_gear` / `give_item` kèm `up`.

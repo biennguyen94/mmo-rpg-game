@@ -39,6 +39,8 @@ defmodule HacLongWeb.PageController do
       PETS: Data.pets(),
       FURNITURE: Data.furniture(),
       ACHIEVEMENTS: Achievements.client_data(),
+      UPGRADE: Data.upgrade(),
+      CHAOS: Data.chaos(),
       RULES: %{
         maxLevel: Engine.max_level(),
         pointsPerLevel: Engine.points_per_level(),

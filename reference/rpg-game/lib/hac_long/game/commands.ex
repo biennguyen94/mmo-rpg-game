@@ -8,6 +8,7 @@ defmodule HacLong.Game.Commands do
 
   alias HacLong.Game.{
     Achievements,
+    Chaos,
     Chests,
     Crafting,
     Daily,
@@ -67,6 +68,14 @@ defmodule HacLong.Game.Commands do
 
       "unequip" ->
         Engine.unequip(p, c["slot"])
+
+      "lock" ->
+        Engine.lock(p, c["id"], c["on"] != false)
+
+      "chaos" ->
+        at_npc(p, ["chaos"], "Lão Hỗn Nguyên ở Làng", fn _ ->
+          Chaos.combine(p, c["id"], c["gear"])
+        end)
 
       "use" ->
         case Data.item(c["id"]) do
@@ -128,7 +137,9 @@ defmodule HacLong.Game.Commands do
         end)
 
       "upgrade" ->
-        at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ -> Engine.upgrade(p, c["slot"]) end)
+        at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ ->
+          Engine.upgrade(p, c["slot"], c["confirm"] == true)
+        end)
 
       "quest_accept" ->
         at_npc(p, ["quests"], "Trưởng Làng", fn _ -> Quests.accept(p, c["id"]) end)

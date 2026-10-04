@@ -57,9 +57,18 @@ defmodule HacLong.Game.Chests do
         {p, :kept} = Gear.add(%{p | gold: p.gold - cost}, g)
         it = Gear.resolve(g)
 
+        # thêm một viên ngọc ép đồ (rương đắt hơn thì dễ ra hơn)
+        {p, jewel} =
+          if Rng.uniform() < Data.jewels().chest_chance[t.id] do
+            id = Engine.pick_jewel()
+            {Engine.add_item(p, id), ", kèm #{Data.item(id).name}"}
+          else
+            {p, ""}
+          end
+
         {%{
            ok: true,
-           msg: "Mở #{t.name}: #{it.name} (#{Gear.rarity_names()[g.rarity]})!",
+           msg: "Mở #{t.name}: #{it.name} (#{Gear.rarity_names()[g.rarity]})#{jewel}!",
            gear: g.uid
          }, p}
     end
