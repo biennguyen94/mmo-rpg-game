@@ -7,6 +7,16 @@
 > - Bản đồ code Hắc Long: `docs/CODEBASE_NOTES.md`.
 > - Mục có ★ đã có thiết kế trong `INTEGRATION_PLAN.md`.
 
+## Nguyên tắc giao diện (anh chốt 2026-10-04)
+
+- **Giữ nguyên giao diện Hắc Long hiện tại:** trang chính, bản đồ, màn trận, HUD, thanh tab, phong cách thẻ (card) và màu sắc.
+- **Chỉ làm đẹp lại một số màn theo kiểu MU Web**, hiện là:
+  - **túi đồ** (lưới ô, tooltip, thanh tóm tắt);
+  - **phần nhân vật** (hình nhân vật kèm ô trang bị, bảng chỉ số, cộng điểm).
+- **Được gộp / tách / chuyển chỗ các phần có sẵn**, vd chuyển **Thành tựu** ra khỏi tab Nhân vật.
+- Mục nào đổi bố cục ngoài những màn trên thì đánh giá ❌, trừ khi anh chọn riêng.
+- Đề xuất sắp xếp cụ thể ở **mục Q**.
+
 ## Cách đọc
 
 | Cột | Ý nghĩa |
@@ -33,6 +43,7 @@
 - N. [Test, CI, công cụ](#n-test-ci-công-cụ)
 - O. [Tài liệu](#o-tài-liệu)
 - P. [Bổ sung sau khi rà toàn bộ `docs/` của MU Web](#p-bổ-sung-sau-khi-rà-toàn-bộ-docs-của-mu-web)
+- Q. [Sắp xếp lại giao diện Hắc Long](#q-sắp-xếp-lại-giao-diện-hắc-long)
 - [Tổng hợp đề xuất của Claude](#tổng-hợp-đề-xuất-của-claude)
 
 ---
@@ -65,7 +76,7 @@
 | B5 | **Lớp mở khóa** (MG: tài khoản có nhân vật cấp 20) | Không (1 nhân vật / tài khoản) | 🟡 | L | Biến thể hợp Hắc Long: **lớp ẩn mở sau chuyển sinh** lần 1. Cần thiết kế lớp mới + hình nhân vật | [ ] |
 | B6 | **Cộng điểm gom lệnh** (bấm + nhiều lần, gửi 1 lệnh sau 200 ms, hiện "+n" đang chờ) | Khác: +1 / +5 mỗi bấm gửi một lệnh | ✅ | S | Đỡ spam lệnh, mượt hơn trên mạng chậm | [ ] |
 | B7 | **Chỉ số dẫn xuất theo lớp trong data** (công thức đòn / thủ / HP mỗi lớp khác nhau) | Khác: một công thức chung | 🟡 | M | Lớp khác biệt rõ hơn (Thích Khách ăn agi, Chiến Binh ăn str). Đổi cân bằng | [ ] |
-| B8 | **Bảng chỉ số chi tiết** (đòn min~max, thủ, tỉ lệ trúng, tốc độ, HP / MP tối đa) | Có công / thủ / chí mạng / né | 🟡 | S | Thêm HP tối đa, % thú / món ăn đang cộng, % cánh (nếu làm D6) | [ ] |
+| B8 | **Bảng chỉ số chi tiết** (đòn min~max, thủ, tỉ lệ trúng, tốc độ, HP / MP tối đa) | Có công / thủ / chí mạng / né | ✅ | S | Thêm HP tối đa, % thú / món ăn đang cộng, % cánh (nếu làm D6) | [ ] |
 | B9 | **Tên nhân vật: lọc từ cấm** (`names.bannedWords`) | Kiểm | ✅ | S | Đi cùng H10 | [ ] |
 
 ## C. Đồ, trang bị, túi
@@ -76,7 +87,7 @@
 | C2 | **Nhẫn** (+HP, không ép được) | Không | ✅ | M | Ô dễ thêm nhất: không vẽ trên người. Nhẫn rơi từ trùm / nhiệm vụ | [ ] |
 | C3 | **Yêu cầu chỉ số để mặc** (STR / AGI / ENE tối thiểu), hiện đỏ khi thiếu | Khác: chỉ yêu cầu cấp | 🟡 | S | Cho điểm tiềm năng thêm ý nghĩa. Đổi cân bằng | [ ] |
 | C4 | **Đồ theo lớp** (danh sách lớp được mặc; MG không đội mũ) | Kiểm (có vẻ mọi lớp mặc được hết) | 🟡 | S | Đi cùng B4 / B7 | [ ] |
-| C5 | **Túi dạng lưới 8×8, kéo thả** xếp / mặc / tháo | Khác: danh sách theo nhóm | 🟡 | M | Đẹp trên máy tính, **kém hơn danh sách trên điện thoại** (Hắc Long ưu tiên điện thoại). Đề xuất: lưới cho màn ≥ 1024 px, giữ danh sách cho màn hẹp | [ ] |
+| C5 | **Túi dạng lưới 8×8, kéo thả** xếp / mặc / tháo | Khác: danh sách theo nhóm | ✅ | M | Đẹp trên máy tính, **kém hơn danh sách trên điện thoại** (Hắc Long ưu tiên điện thoại). Đề xuất: lưới cho màn ≥ 1024 px, giữ danh sách cho màn hẹp | [ ] |
 | C6 | **Tách stack, vứt đồ có xác nhận** | Không thấy | 🟡 | S | Vứt đồ ít cần (bán được). Tách stack chỉ có ích nếu chợ bán theo số lượng | [ ] |
 | C7 | **Kho đồ** (MU: 15×8, chung tài khoản) | Không | 🟡 | M | Hắc Long 1 nhân vật nên đổi thành **"Rương ở Nhà"**: chỗ cất đồ ngoài túi (`gear` tối đa 20 món) | [ ] |
 | C8 | **Đồ rơi dưới đất, giữ riêng 10 s, 60 s biến mất, nhặt bằng phím** | Khác: vào thẳng túi | ❌ | – | Không hợp turn-based | [ ] |
@@ -437,6 +448,54 @@
 ### Ngoài phạm vi (MU cũng không làm)
 
 Chaos Castle, Jewel of Harmony / Guardian / Creation, lớp DL / SUM, nhiều phòng sự kiện cùng lúc, chế vé sự kiện, sửa đồ / độ bền.
+
+---
+
+## Q. Sắp xếp lại giao diện Hắc Long
+
+> Theo nguyên tắc ở đầu file. **Không đụng:** tab Bản đồ (bản đồ, NPC, trận đánh, chat, tổ đội), HUD, thanh tab, màn đăng nhập / tạo nhân vật, phong cách thẻ.
+
+### Q.1 Hiện trạng (`priv/static/js/ui.js`)
+
+| Tab | Đang chứa | Hàm |
+|---|---|---|
+| **Bản đồ** | bản đồ, hướng dẫn, banner trùm, nội thất, hội thoại, câu cá, tổ đội, chat; NPC mở đè lên | `ui.js:115` |
+| **Hành trình** | hồi máu, hành trình diệt rồng, thẻ bang, đấu trường, sổ tay quái, trùm thế giới, bảng xếp hạng (7 bảng), "Thành tích" (số quái / số lần gục), âm thanh, dữ liệu | `viewTown` `ui.js:840` |
+| **Nhân vật** | hình + công / thủ / chí mạng / né; tiềm năng (+1 / +5); trang bị (3 dòng); thú cưng; kỹ năng; **thành tựu + danh hiệu** | `viewHero` `ui.js:1070` |
+| **Túi đồ** | thẻ Bình máu / Món ăn / Đồ (trang bị + đồ ngẫu nhiên) / Nguyên liệu, mỗi món một dòng có nút | `viewBag` `ui.js:1229` |
+| **Nhiệm vụ** | nhiệm vụ Trưởng Làng, việc hằng ngày, nhiệm vụ bang | `viewQuests` `ui.js:1567` |
+| Quản trị | (chỉ admin) | `viewAdmin` `ui.js:143` |
+
+**Nhận xét:**
+- Tab **Nhân vật** dài: 6 thẻ, thành tựu chiếm nhiều chỗ nhất.
+- Tab **Hành trình** gom quá nhiều thứ khác loại (xếp hạng, bang, đấu trường, cài đặt).
+- Tab **Túi đồ** dạng danh sách, khó nhìn khi nhiều đồ.
+
+### Q.2 Đề xuất
+
+| # | Thay đổi | Chi tiết | Lấy từ MU | Công | Chọn |
+|---|---|---|---|---|---|
+| Q1 | **Tab Nhân vật kiểu "búp bê"** | Trên cùng: hình nhân vật to (`Doll`, phóng ×3–4) ở giữa, **ô trang bị bao quanh** (vũ khí trái, giáp giữa-dưới, khiên phải; chừa sẵn ô nhẫn / cánh nếu làm C2 / D6, hiện 🔒 khi chưa mở). Ô trống có hình mờ. Bấm ô → tooltip (chỉ số, +N, so sánh, [Tháo]) | L1, C21, C11 | M | [ ] |
+| Q2 | **Bảng chỉ số chi tiết 2 cột** | HP tối đa, công, thủ, chí mạng (% × hệ số), né, % thú / món ăn đang cộng, % cánh (nếu có); số hiện từ `view` server | B8 | S | [ ] |
+| Q3 | **Cộng điểm kiểu MU** | 4 dòng Sức mạnh / Thể lực / Nhanh nhẹn / Phòng thủ, mỗi dòng: giá trị, mô tả ngắn, nút **[+]** (bấm nhiều lần, gom 1 lệnh, hiện "+n" đang chờ) và giữ **[+5]**; "Điểm còn: n" nổi bật | B6 | S | [ ] |
+| Q4 | **Chuyển Thành tựu + danh hiệu ra khỏi Nhân vật** | Lựa chọn: **(a)** sang tab Hành trình, cạnh Sổ tay quái (đề xuất); **(b)** thành tab con "Thành tựu" trong Nhân vật; **(c)** nút "🏅 Thành tựu" mở panel riêng. Chọn danh hiệu vẫn làm được ở chỗ mới | – | S | [ ] |
+| Q5 | **Thú cưng và Kỹ năng thu gọn** | Kỹ năng: 3 icon một hàng, bấm xem mô tả. Thú cưng: một thẻ nhỏ (icon, cấp, nút đổi); danh sách đầy đủ mở khi bấm | – | S | [ ] |
+| Q6 | **Túi đồ dạng lưới ô** | Ô vuông 48–56 px: icon, số lượng góc dưới, **viền màu theo độ hiếm** (Tốt / Hiếm / Sử Thi) và **+N** góc trên. Lọc phía trên: Tất cả / Trang bị / Bình / Món ăn / Nguyên liệu (thay cho 4 thẻ). Điện thoại 5–6 cột, máy tính 8 cột. Không cần kéo thả trên điện thoại | C5, M9 | M | [ ] |
+| Q7 | **Tooltip đồ** khi bấm ô | Tên (màu độ hiếm), chỉ số, dòng cộng, +N, cấp yêu cầu (đỏ khi thiếu), **so sánh với đồ đang mặc** (giữ của Hắc Long), giá bán; nút [Trang bị] / [Dùng] / [Ăn] / [Khóa]; trên máy tính hiện khi rê chuột | C11, C18 | S | [ ] |
+| Q8 | **Thanh tóm tắt cuối túi** | Vàng · đồ ngẫu nhiên n/20 · bình máu (tổng) · gợi ý "Bán đồ ở Thợ Rèn" | L18 | S | [ ] |
+| Q9 | **Kéo thả trên máy tính** (tùy chọn) | Kéo đồ từ túi lên ô trang bị để mặc, kéo ra để tháo | C5 | S | [ ] |
+| Q10 | **Chia tab Hành trình thành tab con** (tùy chọn) | Hành trình (diệt rồng, sổ tay, thành tựu nếu chọn Q4a) · Xếp hạng · Bang & Đấu trường · Cài đặt (âm thanh, dữ liệu) | – | S | [ ] |
+| Q11 | **Phím tắt máy tính** | C Nhân vật, I Túi, M Bản đồ, Q bình máu, Esc đóng | L3 | S | [ ] |
+
+**Không đổi:**
+- tab Bản đồ / NPC / trận đánh / chat / tổ đội, HUD, thanh tab dưới (vẫn 5 tab + Quản trị);
+- màn đăng nhập / tạo nhân vật;
+- phong cách thẻ và màu.
+
+**Thứ tự gợi ý:** Q4 → Q1 + Q2 + Q3 + Q5 (tab Nhân vật) → Q6 + Q7 + Q8 (túi) → Q11 → Q9 / Q10 nếu muốn.
+
+- Mỗi bước có ảnh chụp trước / sau (máy tính + điện thoại 360 px) để anh duyệt.
+- Có e2e kiểm không tràn ngang.
 
 ---
 

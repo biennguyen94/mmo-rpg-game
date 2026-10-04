@@ -32,6 +32,10 @@
 - **Làm thẳng trong `reference/rpg-game`**, không đụng repo gốc Hắc Long.
   - Ghi thêm vào `reference/COMMIT` một dòng: "đã sửa sau commit gốc, xem `docs/INTEGRATION_PLAN.md`".
     Như vậy `KB_BASE_REPO` / `REUSE_LOG` của MU vẫn biết bản gốc là commit nào.
+- **Giao diện (anh chốt 2026-10-04):** giữ nguyên giao diện Hắc Long (trang chính, bản đồ, trận, HUD, thanh tab, phong cách).
+  Chỉ làm lại **túi đồ** và **phần nhân vật** (ô trang bị, chỉ số, cộng điểm) cho đẹp hơn kiểu MU. Được gộp / tách / chuyển các phần có sẵn
+  (vd Thành tựu ra khỏi Nhân vật). Chi tiết: `docs/FEATURE_CATALOG.md` mục Q.
+  - Ô cánh (mục 4): đặt trong bố cục mới của tab Nhân vật (Q1), hình cánh vẽ thêm vào `doll.js` như đã thiết kế.
 - **Viết theo kiểu Hắc Long**, không chép nguyên file MU:
   - module `HacLong.*`, dữ liệu trong `priv/game_data.json`;
   - logic thuần ở `HacLong.Game.*`, lệnh đi qua `Commands` → `Session` (mỗi tài khoản một tiến trình);
