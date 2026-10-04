@@ -21,6 +21,7 @@
 11. [Sao lưu và phục hồi DB](#11-sao-lưu-và-phục-hồi-db)
 12. [Xử lý tình huống thường gặp](#12-xử-lý-tình-huống-thường-gặp)
 13. [Bảng lệnh nhanh](#13-bảng-lệnh-nhanh)
+14. [Dựng nhân vật admin DW (tối đa mọi thứ)](#14-dựng-nhân-vật-admin-dw-tối-đa-mọi-thứ)
 
 ---
 
@@ -30,10 +31,11 @@
 |---|---|
 | Thông báo hệ thống toàn server | Khóa (ban) tài khoản, kick người đang online |
 | Cấm / bỏ cấm chat | Quyền admin / GM trong game, lệnh `/` cho GM |
-| Gửi thư, tặng Zen / item qua thư | Trang web quản trị |
+| Gửi thư, tặng Zen / item qua thư | Trang web quản trị, lệnh tự mặc đồ |
 | Bật / tắt Golden Invasion, World Boss | Xóa nhân vật, đổi tên |
 | Kiểm tra dupe đồ / lệch Zen, thống kê Zen | Trả lại đồ bị mất (chỉ tặng đồ mới qua thư) |
 | **Tặng EXP / nâng cấp** (online lẫn offline, có log) | |
+| **Tặng đồ +N / option, cộng Zen, cộng chỉ số** (online lẫn offline, có log) | |
 | Đặt Zen có ghi audit, reset PK, đưa nhân vật về thị trấn (offline) | |
 
 - **Không có quyền admin trong game:** mọi thao tác đều làm **trên máy chủ**, ai vào được máy chủ là có toàn quyền.
@@ -313,13 +315,49 @@ bin/mu rpc 'IO.inspect(Mu.Admin.log("TenNhanVat"))'     # lịch sử tặng (m�
 
 > ⚠ EXP / cấp tặng thêm làm lệch **bảng xếp hạng**; dùng cho đền bù, sự kiện.
 
+### 9.0b Tặng đồ, Zen, chỉ số (online hoặc offline)
+
+```bash
+# Đồ vào túi: level = +N, option = dòng Life, quantity = số lượng (stack)
+bin/mu rpc 'IO.inspect(Mu.Admin.give_item("Ten", "staff_t1", level: 11, option: 4, reason: "lý do"))'
+bin/mu rpc 'IO.inspect(Mu.Admin.give_item("Ten", "jewel_bless", quantity: 20))'
+
+# Zen: cộng (số âm = trừ, không trừ quá số đang có)
+bin/mu rpc 'IO.inspect(Mu.Admin.add_zen("Ten", 1_000_000, "lý do"))'
+# → {:ok, %{zen: 1000000}}   (số dư mới)
+
+# Chỉ số: cộng thẳng (strength / agility / vitality / energy / free_stat_points)
+bin/mu rpc 'IO.inspect(Mu.Admin.add_stats("Ten", %{energy: 500, vitality: 200}, "lý do"))'
+# → {:ok, %{agility: 18, energy: 530, free_stat_points: 0, strength: 18, vitality: 215}}
+```
+
+| Lệnh | Quy tắc |
+|---|---|
+| `give_item` | +N / option **không vượt mức ép được** của món đó: vũ khí / khiên / giáp / cánh tối đa **+11**; option tối đa **4**, **cánh không có option**; nhẫn, jewel, bình **không có +N**. Đồ có +N / option thì `quantity` phải là 1. Đồ vào **túi** (người chơi tự mặc) |
+| `add_zen` | có ghi log Zen `ADMIN` (audit không báo lệch) |
+| `add_stats` | cộng thêm vào chỉ số hiện có, **không trừ được**; HP / MP hồi đầy theo chỉ số mới |
+
+| Lỗi | Nghĩa |
+|---|---|
+| `{:error, :unknown_item}` | sai mã item (cách tra: mục 6) |
+| `{:error, :bad_level}` / `:bad_option` | +N / option vượt mức của món đó |
+| `{:error, :bad_quantity}` | số lượng sai, hoặc đồ có +N / option mà số lượng > 1 |
+| `{:error, "INVENTORY_FULL"}` | túi đầy (64 ô) |
+| `{:error, "NOT_ENOUGH_ZEN"}` | trừ Zen quá số đang có |
+| `{:error, :bad_stats}` | sai tên chỉ số / số âm |
+
+- Mọi lệnh ở 9.0 và 9.0b đều ghi `admin_log` (xem bằng `Mu.Admin.log("Ten")`). Đồ tặng có audit `ADMIN`,
+  nên `audit` (mục 10) vẫn sạch.
+
 > ⚠ **Các mục 9.1 – 9.3 dưới đây chỉ làm khi nhân vật OFFLINE.** Kiểm bằng lệnh online ở mục 8.
 > Nhân vật đang online thì server giữ bản trong RAM và **ghi đè** thay đổi của bạn khi lưu.
 > Với Zen còn làm lệch audit.
 >
 > ⚠ **Không sửa trực tiếp bảng item / Zen bằng SQL.** Làm vậy `audit` sẽ báo lỗi (mục 10). Tặng đồ / Zen → dùng thư (mục 6).
 
-### 9.1 Đặt Zen (có ghi audit `ADMIN`)
+### 9.1 Đặt Zen về đúng một số (có ghi audit `ADMIN`)
+
+> Thường dùng `Mu.Admin.add_zen` (9.0b) là đủ: chạy cả khi online.
 
 ```bash
 bin/mu rpc 'import Ecto.Query; c = Mu.Repo.one!(from c in Mu.Game.Character, where: fragment("lower(?)", c.name) == "tester1"); IO.inspect(Mu.Game.ZenAudit.admin_set(c.id, 5000, "boi thuong ticket 12"))'
@@ -447,6 +485,11 @@ bin/mu rpc 'IO.inspect(Mu.WorldEvents.stop("world_boss"))'
 bin/mu rpc 'IO.inspect(Mu.Admin.give_exp("Ten", 5000, "lý do"))'
 bin/mu rpc 'IO.inspect(Mu.Admin.set_level("Ten", 20, "lý do"))'
 
+# Tặng đồ / Zen / chỉ số
+bin/mu rpc 'IO.inspect(Mu.Admin.give_item("Ten", "staff_t1", level: 11, option: 4))'
+bin/mu rpc 'IO.inspect(Mu.Admin.add_zen("Ten", 1_000_000, "lý do"))'
+bin/mu rpc 'IO.inspect(Mu.Admin.add_stats("Ten", %{energy: 500}, "lý do"))'
+
 # Online
 bin/mu rpc 'IO.inspect(Registry.count(Mu.Game.Registry))'
 
@@ -459,3 +502,73 @@ Docker: thêm `docker compose exec app` phía trước mỗi lệnh.
 
 Bản dev (không phải release) có lệnh `mix` tương đương: `mix mu.chat`, `mix mu.mail`, `mix mu.event` (kèm `--node mu@host`),
 và `mix mu.audit`. Xem `docs/RUN_LOCAL.md §8`.
+
+---
+
+## 14. Dựng nhân vật admin DW (tối đa mọi thứ)
+
+Đã chạy thử nguyên khối trên bản release ngày 2026-10-04: mọi dòng `{:ok, …}`, mặc đủ 10 món, audit sạch.
+
+### Bước 1: tạo nhân vật trong game
+
+Đăng ký tài khoản admin, tạo nhân vật **Dark Wizard**, ví dụ tên **`AdminDW`**.
+Đang online hay đã thoát đều được.
+
+### Bước 2: copy nguyên khối lệnh này
+
+Đổi `n = "AdminDW"` thành tên của anh nếu khác. Docker: thêm `docker compose exec app` trước `bin/mu`.
+
+```bash
+bin/mu rpc '
+n = "AdminDW"
+r = "admin character"
+IO.inspect(Mu.Admin.set_level(n, 30, r), label: "cấp")
+IO.inspect(Mu.Admin.add_stats(n, %{strength: 100, agility: 300, vitality: 500, energy: 1000}, r), label: "chỉ số")
+IO.inspect(Mu.Admin.add_zen(n, 100_000_000, r), label: "zen")
+for t <- ~w(staff_t1 shield_t1 bone_helm_t1 bone_armor_t1 bone_pants_t1 bone_gloves_t1 bone_boots_t1),
+    do: IO.inspect(Mu.Admin.give_item(n, t, level: 11, option: 4, reason: r), label: t)
+IO.inspect(Mu.Admin.give_item(n, "wing_soul", level: 11, reason: r), label: "wing_soul")
+for _ <- 1..2, do: IO.inspect(Mu.Admin.give_item(n, "ring_hp_t0", reason: r), label: "ring_hp_t0")
+for t <- ~w(jewel_bless jewel_soul jewel_life jewel_chaos),
+    do: IO.inspect(Mu.Admin.give_item(n, t, quantity: 20, reason: r), label: t)
+for t <- ~w(hp_potion_medium mp_potion_medium),
+    do: IO.inspect(Mu.Admin.give_item(n, t, quantity: 99, reason: r), label: t)
+'
+```
+
+> ⚠ Chỉ chạy **một lần**. Chạy lại thì `set_level` báo `:bad_level` (đã cấp 30), nhưng chỉ số, Zen, đồ **cộng thêm lần nữa**.
+
+### Bước 3: mặc đồ trong game
+
+Mở **🎒 Túi đồ (I)** → bấm từng món → **[Trang bị]**: gậy, khiên, 5 món Bone, cánh, 2 nhẫn.
+
+Còn **145 điểm tự do** (29 cấp × 5): cộng tiếp trong panel Nhân vật (phím C) tùy ý.
+
+### Kết quả
+
+| Mục | Giá trị |
+|---|---|
+| Cấp | **30** (tối đa) |
+| Chỉ số | STR 118 · AGI 318 · VIT 515 · ENE 1 030 (+ 145 điểm tự do chưa cộng) |
+| Zen | 100 000 000 |
+| Vũ khí | Angelic Staff **+11**, option 4 |
+| Khiên | Horn Shield **+11**, option 4 |
+| Giáp | Bộ Bone (mũ, áo, quần, găng, giày) **+11**, option 4 |
+| Cánh | Wings of Soul (cánh cấp 2 của DW) **+11** |
+| Nhẫn | 2 × Ring of HP |
+| Túi | 20 Bless, 20 Soul, 20 Life, 20 Chaos, 99 Healing Potion, 99 Mana Potion |
+
+Sau khi mặc đủ (đo trên bản release): **HP 1 179, MP 2 178, sát thương phép 176–324, phòng thủ 443, attack rate 627**.
+Quái mạnh nhất (Stone Golem) có 155 HP; boss Bull Fighter Lord 20 000 HP.
+
+- Đây là đồ tốt nhất game hiện có cho DW (đồ t1 là cấp cao nhất; nhẫn không ép được).
+- Muốn mạnh hơn nữa: tăng số trong `add_stats` (không giới hạn), hoặc chạy thêm `add_stats` sau.
+- Đồ / Zen / chỉ số của admin **vẫn vào bảng xếp hạng** và đi giao dịch được như người thường.
+  Đừng giao dịch đồ admin cho người chơi nếu không muốn lệch kinh tế.
+
+### Kiểm tra lại
+
+```bash
+bin/mu rpc 'IO.inspect(Mu.Admin.log("AdminDW"), limit: :infinity)'
+bin/mu rpc 'IO.inspect(Mu.Audit.run().problems)'      # [] = sạch
+```

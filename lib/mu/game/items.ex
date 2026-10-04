@@ -512,6 +512,32 @@ defmodule Mu.Game.Items do
     )
   end
 
+  # ---------- Quản trị (DEC-188) ----------
+
+  @doc """
+  Quản trị tặng `quantity` món `tid` vào túi (stack theo luật gộp; món mới mang `item_level` /
+  `option_level` = `attrs`), audit `ADMIN` (`from_owner` `"admin"`). Túi đầy → `INVENTORY_FULL`.
+  """
+  def admin_grant(cid, tid, quantity, attrs, ref) do
+    tx(cid, fn _c, items ->
+      with {:ok, plan} <- Inventory.plan_add(items, tid, quantity) do
+        apply_add(cid, tid, plan, "ADMIN", "admin", [Ulid.generate()], %{ref: ref}, attrs)
+        {:ok, 0}
+      end
+    end)
+  end
+
+  @doc "Quản trị cộng (âm = trừ) Zen, audit Zen `ADMIN`. Không đủ để trừ → `NOT_ENOUGH_ZEN`."
+  def admin_zen(cid, delta, ref) do
+    tx(
+      cid,
+      fn c, _items ->
+        if c.zen + delta >= 0, do: {:ok, delta}, else: {:error, "NOT_ENOUGH_ZEN"}
+      end,
+      {"ADMIN", ref}
+    )
+  end
+
   defp ok_or({:ok, v}, _), do: {:ok, v}
   defp ok_or(_, code), do: {:error, code}
 

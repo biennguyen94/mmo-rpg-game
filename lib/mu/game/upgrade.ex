@@ -16,6 +16,23 @@ defmodule Mu.Game.Upgrade do
 
   alias Mu.Game.{Config, Rng}
 
+  @doc """
+  Cấp + và option tối đa đồ `template` có thể đạt (theo `upgrade.levels` / `upgrade.life`):
+  `{max_level, max_option}` — `{0, 0}` nếu không ép được (nhẫn, jewel, potion). Quản trị tặng đồ
+  (`Mu.Admin.give_item/3`, DEC-188) dùng để chặn.
+  """
+  def limits(template) do
+    life = Config.get(["upgrade", "life"])
+
+    if Config.get(["items", "levelBonus"])[template["type"]] == nil do
+      {0, 0}
+    else
+      max_level = Config.get(["upgrade", "levels"]) |> Enum.map(& &1["toLevel"]) |> Enum.max()
+      no_option? = template["type"] in (life["excludeTypes"] || [])
+      {max_level, if(no_option?, do: 0, else: life["maxOption"])}
+    end
+  end
+
   @doc "Đồ `template` (đang +`level`, option `option`) có ép được bằng jewel `jewel_id` không."
   def apply(rng, template, level, option, jewel_id) do
     life = Config.get(["upgrade", "life"])

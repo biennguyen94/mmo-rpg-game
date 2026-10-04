@@ -62,6 +62,18 @@ defmodule Mu.Game.Session do
   """
   def admin_exp(account_id, cid, amount), do: call(account_id, {:admin_exp, cid, amount})
 
+  @doc """
+  Quản trị (DEC-188): `fun.()` là một giao dịch `Items` trên nhân vật `cid` (`{:ok, res}` /
+  `{:error, code}`). Chạy trong Session; đang giữ nhân vật thì cập nhật túi / Zen + báo client.
+  """
+  def admin_items(account_id, cid, fun), do: call(account_id, {:admin_items, cid, fun})
+
+  @doc """
+  Quản trị (DEC-188): `fun.(character)` → `{:ok, character}` đổi cột tiến trình (chỉ số, điểm…).
+  Đang giữ nhân vật thì sửa bản trong RAM (báo MapServer + client) rồi ghi; không thì ghi DB.
+  """
+  def admin_character(account_id, cid, fun), do: call(account_id, {:admin_character, cid, fun})
+
   @doc "Pid của Session nếu đang chạy."
   def whereis(account_id) do
     case Registry.lookup(Mu.Game.Registry, account_id) do
@@ -206,6 +218,45 @@ defmodule Mu.Game.Session do
         {:ok, c} -> reply({:ok, admin_result(before, c, exp, false)}, s)
         {:error, reason} -> reply({:error, reason}, s)
       end
+    else
+      nil -> reply({:error, :no_character}, s)
+      err -> reply(err, s)
+    end
+  end
+
+  def handle_call({:admin_items, cid, fun}, _from, s) do
+    case fun.() do
+      {:ok, res} ->
+        s = if s.character && s.character.id == cid, do: apply_items(s, res), else: s
+        if s.character && s.character.id == cid, do: push_player(s)
+        reply({:ok, Map.take(res, [:zen])}, s)
+
+      err ->
+        reply(err, s)
+    end
+  end
+
+  def handle_call({:admin_character, cid, fun}, _from, %{character: %{id: cid}} = s) do
+    s = refresh(s)
+
+    case fun.(s.character) do
+      {:ok, c} ->
+        d = Engine.derived(c, Inventory.equipped_templates(s.items))
+        c = %{c | hp_current: d.hp_max, mana_current: d.mp_max}
+        s = %{s | character: c} |> sync_map(%{hp: d.hp_max, mp: d.mp_max}) |> persist()
+        push_player(s)
+        reply({:ok, s.character}, s)
+
+      err ->
+        reply(err, s)
+    end
+  end
+
+  def handle_call({:admin_character, cid, fun}, _from, s) do
+    with %Mu.Game.Character{} = before <- Mu.Repo.get(Mu.Game.Character, cid),
+         {:ok, c} <- fun.(before) do
+      d = Engine.derived(c, Inventory.equipped_templates(Items.load(cid)))
+      reply(Characters.save(before, %{c | hp_current: d.hp_max, mana_current: d.mp_max}), s)
     else
       nil -> reply({:error, :no_character}, s)
       err -> reply(err, s)

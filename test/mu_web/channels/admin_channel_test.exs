@@ -58,4 +58,47 @@ defmodule MuWeb.AdminChannelTest do
     assert {:ok, %{level: 5, experience: 0}} = Admin.set_level(c.name, 5)
     assert_push "player", %{level: 5, experience: 0}
   end
+
+  test "DEC-188: tặng đồ +N / option, Zen, chỉ số — offline và online, audit sạch" do
+    {a, c} = create_character()
+    name = c.name
+
+    assert {:ok, _} = Admin.give_item(name, "staff_t1", level: 11, option: 4, reason: "admin")
+    assert {:ok, _} = Admin.give_item(name, "wing_soul", level: 11)
+    assert {:ok, _} = Admin.give_item(name, "jewel_bless", quantity: 20)
+    assert {:error, :bad_option} = Admin.give_item(name, "wing_soul", option: 1)
+    assert {:error, :bad_level} = Admin.give_item(name, "ring_hp_t0", level: 1)
+    assert {:error, :bad_level} = Admin.give_item(name, "staff_t1", level: 12)
+    assert {:error, :bad_quantity} = Admin.give_item(name, "staff_t1", level: 1, quantity: 2)
+    assert {:error, :unknown_item} = Admin.give_item(name, "abc")
+
+    items = Mu.Game.Items.load(c.id)
+    assert %{item_level: 11, option_level: 4} = Enum.find(items, &(&1.template_id == "staff_t1"))
+    assert %{item_level: 11, option_level: 0} = Enum.find(items, &(&1.template_id == "wing_soul"))
+    assert %{quantity: 20} = Enum.find(items, &(&1.template_id == "jewel_bless"))
+
+    assert {:ok, %{zen: 1_000_000}} = Admin.add_zen(name, 1_000_000, "admin")
+    assert {:ok, %{zen: 999_000}} = Admin.add_zen(name, -1000)
+    assert {:error, "NOT_ENOUGH_ZEN"} = Admin.add_zen(name, -10_000_000)
+
+    assert {:ok, %{energy: 510, free_stat_points: 5}} =
+             Admin.add_stats(name, %{energy: 500, free_stat_points: 5})
+
+    assert {:error, :bad_stats} = Admin.add_stats(name, %{zen: 1})
+    db = Repo.get!(Character, c.id)
+    assert db.hp_current == Engine.derived(db, []).hp_max
+
+    # online: túi / Zen / chỉ số đẩy ngay
+    {:ok, _, _socket} = join_game(a, c)
+    assert {:ok, _} = Admin.give_item(name, "hp_potion_small", quantity: 5)
+    assert_push "player", %{inventory: inv}
+    assert Enum.any?(inv, &(&1.templateId == "hp_potion_small"))
+    assert {:ok, %{zen: 1_000_000}} = Admin.add_zen(name, 1000)
+    assert_push "player", %{zen: 1_000_000}
+    assert {:ok, %{vitality: 125}} = Admin.add_stats(name, %{vitality: 100})
+    assert_push "player", %{vitality: 125}
+
+    assert Mu.Audit.run().problems == []
+    assert length(Admin.log(name)) == 9
+  end
 end
