@@ -7,7 +7,7 @@ import path from 'node:path';
 
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const args = process.argv.slice(2);
-const names = ['smoke', 'social', 'progress', 'admin', 'mobile', 'pk'];
+const names = ['smoke', 'social', 'progress', 'admin', 'mobile', 'pk', 'lang'];
 const failed = [];
 for (const n of names) {
   console.log(`\n===== ${n} =====`);
