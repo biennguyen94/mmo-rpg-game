@@ -16,7 +16,7 @@
 6. [Gửi thư / tặng quà](#6-gửi-thư--tặng-quà)
 7. [Bật / tắt sự kiện](#7-bật--tắt-sự-kiện)
 8. [Tra cứu người chơi](#8-tra-cứu-người-chơi)
-9. [Sửa nhân vật (chỉ khi offline)](#9-sửa-nhân-vật-chỉ-khi-offline)
+9. [Sửa nhân vật](#9-sửa-nhân-vật)
 10. [Kiểm tra gian lận (audit)](#10-kiểm-tra-gian-lận-audit)
 11. [Sao lưu và phục hồi DB](#11-sao-lưu-và-phục-hồi-db)
 12. [Xử lý tình huống thường gặp](#12-xử-lý-tình-huống-thường-gặp)
@@ -33,6 +33,7 @@
 | Gửi thư, tặng Zen / item qua thư | Trang web quản trị |
 | Bật / tắt Golden Invasion, World Boss | Xóa nhân vật, đổi tên |
 | Kiểm tra dupe đồ / lệch Zen, thống kê Zen | Trả lại đồ bị mất (chỉ tặng đồ mới qua thư) |
+| **Tặng EXP / nâng cấp** (online lẫn offline, có log) | |
 | Đặt Zen có ghi audit, reset PK, đưa nhân vật về thị trấn (offline) | |
 
 - **Không có quyền admin trong game:** mọi thao tác đều làm **trên máy chủ**, ai vào được máy chủ là có toàn quyền.
@@ -284,9 +285,35 @@ Kết quả mẫu:
 
 ---
 
-## 9. Sửa nhân vật (chỉ khi offline)
+## 9. Sửa nhân vật
 
-> ⚠ **Chỉ sửa khi nhân vật OFFLINE.** Kiểm bằng lệnh online ở mục 8.
+### 9.0 Tặng EXP / nâng cấp (online hoặc offline)
+
+```bash
+bin/mu rpc 'IO.inspect(Mu.Admin.give_exp("TenNhanVat", 5000, "đền bù bảo trì"))'
+# → {:ok, %{exp: 5000, experience: 709, level: 7, level_before: 1, online: false}}
+
+bin/mu rpc 'IO.inspect(Mu.Admin.set_level("TenNhanVat", 20, "ticket 12"))'
+# → {:ok, %{exp: 62135, experience: 0, level: 20, level_before: 7, online: false}}
+
+bin/mu rpc 'IO.inspect(Mu.Admin.log("TenNhanVat"))'     # lịch sử tặng (mới trước); Mu.Admin.log() = mọi người
+```
+
+- Tính **đúng như hạ quái**: lên cấp liên tiếp, mỗi cấp +5 điểm tự do (MG +7), hồi đầy HP / MP, không vượt cấp 30
+  (ở cấp 30 EXP về 0, phần dư bỏ).
+- **Online hay offline đều được.** Đang online thì người chơi thấy ngay (`online: true`), offline thì ghi DB.
+- `set_level` chỉ **nâng** cấp (EXP trong cấp mới = 0). **Không hạ cấp được**, vì điểm đã cộng không gỡ được.
+- Tham số thứ 3 (lý do) không bắt buộc nhưng nên ghi. Mỗi lần thành công lưu một dòng bảng `admin_log`.
+
+| Lỗi | Nghĩa |
+|---|---|
+| `{:error, :no_character}` | sai tên nhân vật |
+| `{:error, :bad_amount}` | EXP phải là số nguyên > 0 |
+| `{:error, :bad_level}` | cấp không cao hơn cấp hiện tại, hoặc quá 30 |
+
+> ⚠ EXP / cấp tặng thêm làm lệch **bảng xếp hạng**; dùng cho đền bù, sự kiện.
+
+> ⚠ **Các mục 9.1 – 9.3 dưới đây chỉ làm khi nhân vật OFFLINE.** Kiểm bằng lệnh online ở mục 8.
 > Nhân vật đang online thì server giữ bản trong RAM và **ghi đè** thay đổi của bạn khi lưu.
 > Với Zen còn làm lệch audit.
 >
@@ -386,6 +413,7 @@ docker compose start app
 |---|---|
 | Người chơi spam / chửi bới | `Mu.Chat.mute("Ten", 60)` (mục 5) |
 | Người chơi kẹt trong tường / chỗ lạ | chờ họ thoát → đưa về thị trấn (mục 9.3) |
+| Đền bù EXP (bảo trì, lỗi làm chết) | `Mu.Admin.give_exp(...)` (mục 9.0) |
 | Mất đồ do lỗi game | xác minh, rồi tặng lại món tương tự qua thư (mục 6). **Không** tạo đồ bằng SQL. Đồ +N / option không tặng lại được |
 | Bị PK oan do lỗi | chờ offline → xóa PK (mục 9.2) |
 | Bảo trì | `Mu.Chat.system(...)` báo trước 5–10 phút → sao lưu → cập nhật → khởi động lại |
@@ -414,6 +442,10 @@ bin/mu rpc 'IO.inspect(Mu.Mail.deliver_to_name("Ten", %{kind: "GIFT", title: "Qu
 # Sự kiện
 bin/mu rpc 'IO.inspect(Mu.WorldEvents.start("golden_invasion"))'
 bin/mu rpc 'IO.inspect(Mu.WorldEvents.stop("world_boss"))'
+
+# Tặng EXP / nâng cấp
+bin/mu rpc 'IO.inspect(Mu.Admin.give_exp("Ten", 5000, "lý do"))'
+bin/mu rpc 'IO.inspect(Mu.Admin.set_level("Ten", 20, "lý do"))'
 
 # Online
 bin/mu rpc 'IO.inspect(Registry.count(Mu.Game.Registry))'

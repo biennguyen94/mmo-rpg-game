@@ -315,6 +315,18 @@ defmodule Mu.Game.Engine do
   end
 
   @doc """
+  EXP còn thiếu để nhân vật `c` lên đúng cấp `level` (quản trị `set_level`, DEC-187).
+  `{:ok, exp}`, hoặc `{:error, :bad_level}` khi `level` không cao hơn cấp hiện tại / vượt `maxLevel`.
+  """
+  def exp_to_level(c, level) when is_integer(level) do
+    if level > c.level and level <= max_level(),
+      do: {:ok, Enum.sum(for l <- c.level..(level - 1), do: exp_required(l)) - c.experience},
+      else: {:error, :bad_level}
+  end
+
+  def exp_to_level(_, _), do: {:error, :bad_level}
+
+  @doc """
   EXP nhận được khi hạ quái: `experience × multiplier × levelDiffModifier` (§3), làm tròn
   xuống, tối thiểu 1. Người chơi cao hơn quái quá `levelDiffPenaltyStart` cấp thì giảm
   `levelDiffPenaltyPerLevel` mỗi cấp, không dưới `minExpRatio` (G23).

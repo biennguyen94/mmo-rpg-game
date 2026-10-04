@@ -54,6 +54,14 @@ defmodule Mu.Game.Session do
   @doc "Lệnh `act` đã qua kiểm tra phong bì/rate-limit: `:ok` hoặc `{:error, code}`."
   def command(account_id, act, payload), do: call(account_id, {:command, act, payload})
 
+  @doc """
+  Quản trị (`Mu.Admin`, DEC-187): cộng EXP cho nhân vật `cid` của tài khoản — `amount` là số EXP
+  hoặc `{:level, n}` (đủ EXP để lên đúng cấp `n`). Chạy trong Session để không đụng bản nhân vật
+  đang giữ trong RAM: đang giữ thì cộng như hạ quái (lên cấp hồi đầy, báo client), không thì ghi DB.
+  `{:ok, %{level_before, level, experience, exp, online}}` hoặc `{:error, lý_do}`.
+  """
+  def admin_exp(account_id, cid, amount), do: call(account_id, {:admin_exp, cid, amount})
+
   @doc "Pid của Session nếu đang chạy."
   def whereis(account_id) do
     case Registry.lookup(Mu.Game.Registry, account_id) do
@@ -164,6 +172,43 @@ defmodule Mu.Game.Session do
         for ev <- Mu.WorldEvents.active(), do: push(s, "world_event", ev)
         # buff còn trên map khi vào lại trong hạn reconnect (P3-M2)
         reply({:ok, c, Map.merge(info, %{items: s.items, buffs: s.buffs})}, s)
+    end
+  end
+
+  def handle_call({:admin_exp, cid, amount}, _from, %{character: %{id: cid}} = s) do
+    s = refresh(s)
+    before = s.character
+
+    case admin_amount(before, amount) do
+      {:ok, exp} ->
+        s = s |> gain(exp, 0) |> persist()
+        reply({:ok, admin_result(before, s.character, exp, s.on_map)}, s)
+
+      err ->
+        reply(err, s)
+    end
+  end
+
+  def handle_call({:admin_exp, cid, amount}, _from, s) do
+    with %Mu.Game.Character{} = before <- Mu.Repo.get(Mu.Game.Character, cid),
+         {:ok, exp} <- admin_amount(before, amount) do
+      {c, levels} = Engine.add_exp(before, exp)
+
+      c =
+        if levels > 0 do
+          d = Engine.derived(c, Inventory.equipped_templates(Items.load(cid)))
+          %{c | hp_current: d.hp_max, mana_current: d.mp_max}
+        else
+          c
+        end
+
+      case Characters.save(before, c) do
+        {:ok, c} -> reply({:ok, admin_result(before, c, exp, false)}, s)
+        {:error, reason} -> reply({:error, reason}, s)
+      end
+    else
+      nil -> reply({:error, :no_character}, s)
+      err -> reply(err, s)
     end
   end
 
@@ -1168,6 +1213,20 @@ defmodule Mu.Game.Session do
     s = if zen > 0 or levels > 0, do: persist(s), else: s
     push_player(s)
     sync_quests(s)
+  end
+
+  defp admin_amount(c, {:level, n}), do: Engine.exp_to_level(c, n)
+  defp admin_amount(_c, n) when is_integer(n) and n > 0, do: {:ok, n}
+  defp admin_amount(_c, _), do: {:error, :bad_amount}
+
+  defp admin_result(before, c, exp, online) do
+    %{
+      level_before: before.level,
+      level: c.level,
+      experience: c.experience,
+      exp: exp,
+      online: online
+    }
   end
 
   defp remember(s, rid, result) do
