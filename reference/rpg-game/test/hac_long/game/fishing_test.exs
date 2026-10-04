@@ -9,7 +9,7 @@ defmodule HacLong.Game.FishingTest do
 
   # Làng: hồ nước ở giữa, ô (10, 5) nằm ngay trên ô nước (10, 6)
   defp angler(pos \\ %{map: "village", x: 10, y: 5}) do
-    {:ok, p} = Engine.new_player("Cần Thủ", "rogue")
+    {:ok, p} = Engine.new_player("Cần Thủ", "elf")
     Map.put(p, :pos, pos)
   end
 

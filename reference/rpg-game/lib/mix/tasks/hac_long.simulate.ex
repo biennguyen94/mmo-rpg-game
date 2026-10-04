@@ -14,6 +14,7 @@ defmodule Mix.Tasks.HacLong.Simulate do
 
       mix hac_long.simulate      # 5 lần mỗi lớp mỗi cách chơi
       mix hac_long.simulate 20
+      mix hac_long.simulate 20 --seed 42   # cố định số ngẫu nhiên: chạy lại ra đúng kết quả cũ
   """
   use Mix.Task
 
@@ -30,9 +31,11 @@ defmodule Mix.Tasks.HacLong.Simulate do
   @impl true
   def run(args) do
     Mix.Task.run("compile")
+    {opts, args, _} = OptionParser.parse(args, strict: [seed: :integer])
     n = with [s | _] <- args, {v, ""} <- Integer.parse(s), do: v, else: (_ -> 5)
+    if seed = opts[:seed], do: :rand.seed(:exsss, {seed, seed, seed})
 
-    for cls <- ~w(warrior rogue knight) do
+    for cls <- ~w(dk dw elf mg) do
       Mix.shell().info(cls)
 
       for {label, opts} <- @modes do

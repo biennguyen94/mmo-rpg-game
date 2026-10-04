@@ -14,9 +14,9 @@ defmodule HacLong.Admin do
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
   | `give_item` | `id`, `count` (1..9999), `up` (0..11) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
-  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, vit, agi, def}`), `up` | tặng đồ chỉ số ngẫu nhiên |
+  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up` | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
-  | `add_stats` | `str`, `vit`, `agi`, `def` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
+  | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
   """
 
@@ -81,7 +81,7 @@ defmodule HacLong.Admin do
     if lv in 1..Engine.max_level() do
       {:ok,
        fn p ->
-         points = max(0, p.points + (lv - p.level) * Engine.points_per_level())
+         points = max(0, p.points + (lv - p.level) * Engine.points_per_level(p.cls))
          p = %{p | level: lv, xp: 0, points: points}
          {:ok, %{p | hp: Engine.derived(p).maxHp}, "Đã đặt cấp #{lv}."}
        end}
@@ -156,7 +156,7 @@ defmodule HacLong.Admin do
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
       bonus != nil and not valid_stats?(bonus, 0) ->
-        {:error, "Chỉ số cộng thêm không hợp lệ (str, vit, agi, def: 0..#{@max_stat})."}
+        {:error, "Chỉ số cộng thêm không hợp lệ (str, agi, vit, ene: 0..#{@max_stat})."}
 
       true ->
         {:ok,
@@ -182,7 +182,7 @@ defmodule HacLong.Admin do
   end
 
   def build("add_stats", a) when is_map(a) do
-    deltas = Map.take(a, ~w(str vit agi def))
+    deltas = Map.take(a, ~w(str agi vit ene))
 
     if deltas != %{} and Enum.all?(deltas, fn {_, v} -> is_integer(v) and abs(v) <= @max_stat end) do
       {:ok,
@@ -196,12 +196,17 @@ defmodule HacLong.Admin do
          {:ok, %{p | stats: stats}, "Chỉ số: #{text}."}
        end}
     else
-      {:error, "Cần ít nhất một trong str, vit, agi, def (số nguyên)."}
+      {:error, "Cần ít nhất một trong str, agi, vit, ene (số nguyên)."}
     end
   end
 
   def build("heal", _a),
-    do: {:ok, fn p -> {:ok, %{p | hp: Engine.derived(p).maxHp}, "Đã hồi đầy máu."} end}
+    do:
+      {:ok,
+       fn p ->
+         {:ok, Map.merge(p, %{hp: Engine.derived(p).maxHp, mp: Engine.derived(p).maxMp}),
+          "Đã hồi đầy máu và MP."}
+       end}
 
   def build(_op, _a), do: {:error, "Tham số không hợp lệ."}
 
@@ -212,13 +217,13 @@ defmodule HacLong.Admin do
 
   defp valid_stats?(m, min) when is_map(m) and map_size(m) > 0 do
     Enum.all?(m, fn {k, v} ->
-      k in ~w(str vit agi def) and is_integer(v) and v in min..@max_stat
+      k in ~w(str agi vit ene) and is_integer(v) and v in min..@max_stat
     end)
   end
 
   defp valid_stats?(_, _), do: false
 
-  # Không cho sẵn chỉ số: lấy `rarity` dòng đầu (str, vit, agi, def) với mức cao nhất mà đồ rơi ở
+  # Không cho sẵn chỉ số: lấy `rarity` dòng đầu (str, agi, vit, ene) với mức cao nhất mà đồ rơi ở
   # cấp đó có thể có (như `Gear.roll/3`).
   defp gear_bonus(nil, rarity, level) do
     top = 1 + floor(level / 6)

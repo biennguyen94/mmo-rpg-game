@@ -13,7 +13,9 @@ defmodule HacLong.Game.Home do
   alias HacLong.Game.Data
   alias HacLong.World.Maps
 
-  @max_decor 20
+  # số ở `RULES.home` (`priv/game_data/rules.json`)
+  @rules Data.rules().home
+  @max_decor @rules.max_decor
 
   def max_decor, do: @max_decor
 
@@ -27,7 +29,8 @@ defmodule HacLong.Game.Home do
     |> Enum.sum()
   end
 
-  def xp_bonus(p), do: min(0.05, div(comfort(p), 10) * 0.01)
+  def xp_bonus(p),
+    do: min(@rules.max_xp_bonus, div(comfort(p), @rules.comfort_step) * @rules.xp_per_step)
 
   def at(p, x, y), do: Enum.find(decor(p), &(&1.x == x and &1.y == y))
 

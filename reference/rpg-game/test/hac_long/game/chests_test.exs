@@ -8,7 +8,7 @@ defmodule HacLong.Game.ChestsTest do
   end
 
   defp player(level, gold) do
-    {:ok, p} = Engine.new_player("Thử", "warrior")
+    {:ok, p} = Engine.new_player("Thử", "dk")
     %{p | level: level, gold: gold}
   end
 

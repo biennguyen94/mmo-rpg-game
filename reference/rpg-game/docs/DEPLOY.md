@@ -306,6 +306,23 @@ git pull
 docker compose up -d --build
 ```
 
+- Deploy từ nhánh nào thì có code nhánh đó: tính năng mới nằm trên nhánh phát triển chỉ có trên server sau khi merge vào
+  nhánh anh deploy (thường là `main`).
+- Trình duyệt tự tải giao diện mới: trang chủ gắn mã phiên bản vào `js/…?v=`, `css/…?v=`; tab đang mở thì tự tải lại khi
+  nối lại. Bản deploy trước 2026-10-04 chưa có `?v=`: lần đầu sau khi cập nhật, bảo người chơi tải lại trang không cache
+  (Ctrl + Shift + R).
+- Một số bản có migration xóa dữ liệu (vd. `20261028000000` đổi sang 4 lớp MU xóa toàn bộ nhân vật): **sao lưu database
+  trước** (mục sao lưu bên dưới).
+
+**Hình đồ và `Item.txt` của anh** (`assets_src/items/`, xem `docs/ADMIN_GUIDE.md §10`): chạy trên máy dev, commit kết quả,
+rồi deploy như trên (bản Docker không có `mix`):
+
+```bash
+cd reference/rpg-game
+mix hac_long.icons              # → priv/static/assets/items/ + priv/static/assets/item_icons.json
+git add assets_src/items priv/static/assets/items priv/static/assets/item_icons.json && git commit -m "Hình đồ"
+```
+
 **Cấp quyền quản trị** (tab Quản trị hiện sau khi người đó tải lại trang):
 
 ```bash
@@ -355,6 +372,7 @@ docker compose start app
 | Cloudflare báo lỗi 521/522 | Cổng 443 trên VPS chưa mở, hoặc Caddy chưa chạy | `docker compose ps`, mở cổng 443 |
 | Cloudflare: trang chuyển hướng vô tận | Chế độ SSL "Flexible" | Đổi sang "Full (strict)" |
 | Build bị dừng giữa chừng, `Killed` | Hết RAM lúc biên dịch | Thêm swap (mục Chuẩn bị VPS) |
+| Deploy xong nhưng giao diện vẫn như cũ (thiếu nút / thẻ mới) | Deploy từ nhánh chưa có tính năng đó, hoặc trình duyệt còn giữ `ui.js` cũ (bản trước 2026-10-04) | `git log -1` trên VPS xem đúng commit chưa; tải lại trang không cache (Ctrl + Shift + R) |
 | Trang mở được bằng IP:4000 dù đã có Caddy | Chưa dùng `docker-compose.caddy.yml` | Đặt `COMPOSE_FILE` trong `.env` như cách 2, chạy lại `docker compose up -d` |
 
 ## Kiểm tra sau khi triển khai

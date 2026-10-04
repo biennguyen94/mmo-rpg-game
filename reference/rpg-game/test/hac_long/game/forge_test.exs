@@ -12,7 +12,7 @@ defmodule HacLong.Game.ForgeTest do
     :ok
   end
 
-  defp player(cls \\ "warrior") do
+  defp player(cls \\ "dk") do
     {:ok, p} = Engine.new_player("Thử", cls)
     %{p | gold: 10_000_000, level: 40}
   end
@@ -117,18 +117,18 @@ defmodule HacLong.Game.ForgeTest do
   describe "D6 cánh" do
     test "đúng lớp, đủ cấp mới mặc; tăng sát thương, giảm sát thương nhận; tháo được" do
       p = player()
-      w = Gear.plain("wing_warrior_1")
-      wk = Gear.plain("wing_knight_1")
+      w = Gear.plain("wing_dk_1")
+      wk = Gear.plain("wing_mg_1")
       p = %{p | gear: [w, wk]}
       assert {%{ok: false, msg: "Cần cấp 20."}, _} = Engine.equip(%{p | level: 10}, w.uid)
       assert {%{ok: false, msg: msg}, _} = Engine.equip(p, wk.uid)
-      assert msg =~ "Hiệp Sĩ"
+      assert msg =~ "Đấu Sĩ"
 
       base = Engine.derived(p)
       {%{ok: true}, q} = Engine.equip(p, w.uid)
       d = Engine.derived(q)
       assert d.wingDmg == 0.1 and d.wingAbsorb == 0.1 and d.def == base.def + 6
-      assert Engine.look(q).wing == %{cls: "warrior", tier: 1}
+      assert Engine.look(q).wing == %{cls: "dk", tier: 1}
 
       # mỗi cấp nâng +2 %
       d5 = Engine.derived(Map.put(q, :upgrades, %{w.uid => 5}))
@@ -155,12 +155,12 @@ defmodule HacLong.Game.ForgeTest do
     end
 
     test "thành công: ra cánh đúng lớp, báo cả server; thất bại mất hết" do
-      {p, uid} = wing_input(player("rogue"), 7)
+      {p, uid} = wing_input(player("elf"), 7)
       Rng.put_sequence([0.0])
       {r, q} = Chaos.combine(p, "wing1", uid)
-      assert r.chaos == %{result: "success", out: "wing_rogue_1"}
-      assert r.announce =~ "Cánh Bóng Đêm"
-      assert [%{base: "wing_rogue_1", rarity: 0}] = q.gear
+      assert r.chaos == %{result: "success", out: "wing_elf_1"}
+      assert r.announce =~ "Cánh Tiên"
+      assert [%{base: "wing_elf_1", rarity: 0}] = q.gear
       assert q.gold == p.gold - 20_000 and q.inv["jewel_chaos"] == 4
 
       Rng.put_sequence([0.99])

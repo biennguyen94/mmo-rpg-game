@@ -38,7 +38,7 @@ defmodule HacLongWeb.GameChannelTest do
   defp player_at(user, pos, attrs \\ %{}) do
     # tên nhân vật không được trùng nên thêm số riêng cho mỗi người
     name = "Hiệp #{System.unique_integer([:positive]) |> rem(100_000)}"
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "knight"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "mg"})
 
     # các test ở đây không nói về hướng dẫn người mới: tắt để không có thông báo lẫn vào
     p = p |> Map.put(:tutorial, nil) |> Map.merge(attrs) |> Map.put(:pos, pos)
@@ -53,7 +53,7 @@ defmodule HacLongWeb.GameChannelTest do
     a = create_user()
     {_, sa} = join_game(a)
 
-    assert cmd(sa, %{"act" => "create", "name" => "  Rồng   Đen ", "cls" => "rogue"}).player.name ==
+    assert cmd(sa, %{"act" => "create", "name" => "  Rồng   Đen ", "cls" => "elf"}).player.name ==
              "Rồng Đen"
 
     b = create_user()
@@ -61,17 +61,17 @@ defmodule HacLongWeb.GameChannelTest do
 
     for bad <- ["rồng đen", "RỒNG  ĐEN"] do
       assert %{ok: false, msg: "Tên này đã có người dùng.", player: nil} =
-               cmd(sb, %{"act" => "create", "name" => bad, "cls" => "rogue"})
+               cmd(sb, %{"act" => "create", "name" => bad, "cls" => "elf"})
     end
 
     assert %{ok: false, msg: "Tên nhân vật phải dài 2–16 ký tự."} =
-             cmd(sb, %{"act" => "create", "name" => "x", "cls" => "rogue"})
+             cmd(sb, %{"act" => "create", "name" => "x", "cls" => "elf"})
 
     assert %{ok: false, msg: "Tên chỉ gồm chữ, số, khoảng trắng, - và _."} =
-             cmd(sb, %{"act" => "create", "name" => "<b>hi</b>", "cls" => "rogue"})
+             cmd(sb, %{"act" => "create", "name" => "<b>hi</b>", "cls" => "elf"})
 
     # tên khác dấu là tên khác
-    assert %{ok: true} = cmd(sb, %{"act" => "create", "name" => "Rồng Đèn", "cls" => "rogue"})
+    assert %{ok: true} = cmd(sb, %{"act" => "create", "name" => "Rồng Đèn", "cls" => "elf"})
   end
 
   test "tạo nhân vật rồi ra khỏi nhà" do
@@ -80,8 +80,8 @@ defmodule HacLongWeb.GameChannelTest do
     assert reply.player == nil
     assert reply.username == user.username and reply.user_id == user.id
 
-    r = cmd(socket, %{"act" => "create", "name" => "Hiệp", "cls" => "knight"})
-    assert r.ok and r.player.cls == "knight"
+    r = cmd(socket, %{"act" => "create", "name" => "Hiệp", "cls" => "mg"})
+    assert r.ok and r.player.cls == "mg"
     assert r.player.pos == %{map: "home", x: 5, y: 6}
     assert_push "map", %{map: "home", monsters: []}
     assert [_, _, _, _] = r.player.daily.tasks
@@ -228,7 +228,7 @@ defmodule HacLongWeb.GameChannelTest do
       player_at(user, %{map: "lair_boss", x: 7, y: 4}, %{
         level: 50,
         bosses: bosses,
-        stats: %{str: 400, vit: 200, agi: 0, def: 200},
+        stats: %{str: 400, agi: 0, vit: 200, ene: 200},
         hp: 5000
       })
 
@@ -281,15 +281,15 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "chưa xuất hiện thì ô của trùm là ô trống" do
-      {_user, _p, socket} = champion(%{str: 10, vit: 10, agi: 0, def: 10})
+      {_user, _p, socket} = champion(%{str: 10, agi: 0, vit: 10, ene: 10})
       r = cmd(socket, %{"act" => "move", "dir" => "up"})
       assert r.ok and r.player.battle == nil
     end
 
     test "cả server đánh chung một thanh máu, chia thưởng theo sát thương" do
       HacLong.WorldBoss.spawn_now(hp: 3000)
-      {ua, pa, sa} = champion(%{str: 300, vit: 200, agi: 0, def: 300})
-      {ub, pb, sb} = champion(%{str: 40, vit: 200, agi: 0, def: 300})
+      {ua, pa, sa} = champion(%{str: 300, agi: 0, vit: 200, ene: 300})
+      {ub, pb, sb} = champion(%{str: 40, agi: 0, vit: 200, ene: 300})
 
       fight(sb)
       # trùm có thể né vài đòn, đánh tới khi trúng
@@ -330,7 +330,7 @@ defmodule HacLongWeb.GameChannelTest do
 
     test "hết giờ thì trùm bay đi, trận đang đánh kết thúc, không ai được thưởng" do
       HacLong.WorldBoss.spawn_now(hp: 100_000)
-      {ua, pa, sa} = champion(%{str: 20, vit: 200, agi: 0, def: 300})
+      {ua, pa, sa} = champion(%{str: 20, agi: 0, vit: 200, ene: 300})
       fight(sa)
       cmd(sa, %{"act" => "attack"})
       HacLong.WorldBoss.despawn()
@@ -505,7 +505,7 @@ defmodule HacLongWeb.GameChannelTest do
 
     test "mời vào tổ đội, đánh chung một con quái, cùng thắng và chia thưởng" do
       ua = create_user()
-      stats = %{str: 12, vit: 60, agi: 0, def: 30}
+      stats = %{str: 12, agi: 0, vit: 60, ene: 30}
       pa = player_at(ua, %{map: "forest_1", x: 12, y: 15}, %{level: 5, stats: stats})
       {_, sa} = join_game(ua)
       ub = create_user()
@@ -817,8 +817,8 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "thách đấu bản sao người chơi khác: thắng thì lên điểm, thua không mất gì" do
-      strong = %{str: 200, vit: 150, agi: 0, def: 100}
-      weak = %{str: 5, vit: 30, agi: 0, def: 5}
+      strong = %{str: 200, agi: 0, vit: 150, ene: 100}
+      weak = %{str: 5, agi: 0, vit: 30, ene: 5}
       ua = create_user()
       pa = player_at(ua, %{map: "village", x: 12, y: 14}, %{level: 30, stats: strong, gold: 1000})
       {_, sa} = join_game(ua)
@@ -862,7 +862,7 @@ defmodule HacLongWeb.GameChannelTest do
 
       player_at(uc, %{map: "village", x: 14, y: 14}, %{
         level: 50,
-        stats: %{str: 900, vit: 900, agi: 0, def: 900}
+        stats: %{str: 900, agi: 0, vit: 900, ene: 900}
       })
 
       before = Session.get(ua.id)
@@ -977,7 +977,7 @@ defmodule HacLongWeb.GameChannelTest do
       player_at(u, %{map: "forest_1", x: 13, y: 16}, %{
         gold: 20_000,
         level: 30,
-        stats: %{str: 200, vit: 150, agi: 0, def: 100}
+        stats: %{str: 200, agi: 0, vit: 150, ene: 100}
       })
 
       {_, s} = join_game(u)
@@ -1259,7 +1259,7 @@ defmodule HacLongWeb.GameChannelTest do
   test "trạng thái sống sót khi tiến trình session tắt và nạp lại từ database" do
     user = create_user()
     {_, socket} = join_game(user)
-    cmd(socket, %{"act" => "create", "name" => "Bền", "cls" => "rogue"})
+    cmd(socket, %{"act" => "create", "name" => "Bền", "cls" => "elf"})
     r = cmd(socket, %{"act" => "move", "dir" => "left"})
 
     [{pid, _}] = Registry.lookup(HacLong.Game.Registry, user.id)
@@ -1276,7 +1276,7 @@ defmodule HacLongWeb.GameChannelTest do
     {:ok, _, _s2} =
       subscribe_and_join(sock2, "game", %{"v" => HacLongWeb.ClientVersion.current()})
 
-    cmd(s1, %{"act" => "create", "name" => "Hai Tab", "cls" => "warrior"})
+    cmd(s1, %{"act" => "create", "name" => "Hai Tab", "cls" => "dk"})
     assert_push "player", %{player: %{name: "Hai Tab"}}
     refute_push "player", _
   end
@@ -1284,7 +1284,7 @@ defmodule HacLongWeb.GameChannelTest do
   test "xóa nhân vật" do
     user = create_user()
     {_, socket} = join_game(user)
-    cmd(socket, %{"act" => "create", "name" => "Xóa", "cls" => "warrior"})
+    cmd(socket, %{"act" => "create", "name" => "Xóa", "cls" => "dk"})
     r = cmd(socket, %{"act" => "reset"})
     assert r.player == nil
     assert Characters.load(user.id) == nil

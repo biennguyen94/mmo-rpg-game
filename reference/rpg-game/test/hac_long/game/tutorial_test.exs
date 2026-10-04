@@ -4,7 +4,7 @@ defmodule HacLong.Game.TutorialTest do
   alias HacLong.Game.{Commands, Quests, Tutorial}
 
   defp player do
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Tân Binh", "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Tân Binh", "cls" => "dk"})
     p
   end
 

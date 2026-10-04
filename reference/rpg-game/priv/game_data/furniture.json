@@ -1,0 +1,110 @@
+{
+  "FURNITURE": [
+    {
+      "id": "plant",
+      "name": "Chậu Cây",
+      "price": 300,
+      "comfort": 1
+    },
+    {
+      "id": "lantern",
+      "name": "Đèn Lồng",
+      "price": 500,
+      "comfort": 1
+    },
+    {
+      "id": "crystal",
+      "name": "Quả Cầu Pha Lê",
+      "price": 1200,
+      "comfort": 2
+    },
+    {
+      "id": "tree_gold",
+      "name": "Cây Thu Vàng",
+      "price": 1500,
+      "comfort": 2
+    },
+    {
+      "id": "tree_red",
+      "name": "Cây Phong Đỏ",
+      "price": 1500,
+      "comfort": 2
+    },
+    {
+      "id": "statue_sword",
+      "name": "Bia Kiếm",
+      "price": 2000,
+      "comfort": 3
+    },
+    {
+      "id": "statue_cat",
+      "name": "Tượng Mèo",
+      "price": 2500,
+      "comfort": 3
+    },
+    {
+      "id": "statue_angel",
+      "name": "Tượng Thiên Thần",
+      "price": 4000,
+      "comfort": 4
+    },
+    {
+      "id": "statue_princess",
+      "name": "Tượng Công Chúa",
+      "price": 4000,
+      "comfort": 4
+    },
+    {
+      "id": "statue_dragon",
+      "name": "Tượng Rồng",
+      "price": 6000,
+      "comfort": 5
+    },
+    {
+      "id": "fountain",
+      "name": "Đài Phun Nước",
+      "price": 8000,
+      "comfort": 6
+    },
+    {
+      "id": "disco",
+      "name": "Quả Cầu Nhảy Múa",
+      "price": 10000,
+      "comfort": 6
+    },
+    {
+      "id": "golden_statue",
+      "name": "Tượng Vàng",
+      "price": 15000,
+      "comfort": 8
+    },
+    {
+      "id": "lamp_festival",
+      "name": "Đèn Kéo Quân",
+      "price": 0,
+      "comfort": 6,
+      "event": "mid_autumn"
+    },
+    {
+      "id": "statue_snail",
+      "name": "Tượng Ốc Ma",
+      "price": 0,
+      "comfort": 6,
+      "event": "pumpkin"
+    },
+    {
+      "id": "fountain_sparkle",
+      "name": "Đài Phun Lấp Lánh",
+      "price": 0,
+      "comfort": 8,
+      "event": "christmas"
+    },
+    {
+      "id": "statue_elephant",
+      "name": "Tượng Voi Chúc Phúc",
+      "price": 0,
+      "comfort": 8,
+      "event": "tet"
+    }
+  ]
+}

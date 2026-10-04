@@ -8,7 +8,7 @@ defmodule HacLong.Game.GearTest do
   end
 
   defp player do
-    {:ok, p} = Engine.new_player("Thử", "warrior")
+    {:ok, p} = Engine.new_player("Thử", "dk")
     %{p | level: 25}
   end
 
@@ -38,8 +38,9 @@ defmodule HacLong.Game.GearTest do
     {%{ok: true, msg: "Đã trang bị Đại Kiếm Sức Mạnh."}, p} = Engine.equip(p, "#KIEM")
     d = Engine.derived(p)
 
-    # Đại Kiếm 44 tấn công thay Gậy Gỗ 3; +5 sức mạnh (×2.2) và +2 nhanh nhẹn (×0.9)
-    assert d.atk == base.atk + 41 + round(5 * 2.2 + 2 * 0.9)
+    # Kiếm Sĩ: Đại Kiếm 44 tấn công thay Gậy Gỗ 3; +5 sức mạnh (×2.8) và +2 nhanh nhẹn (×0.5)
+    # (làm tròn một lần trên tổng nên lệch tối đa 1)
+    assert abs(d.atk - (base.atk + 41 + 5 * 2.8 + 2 * 0.5)) <= 1
     assert Gear.bag(p) == []
     # gậy cũ về túi đồ thường
     assert p.inv["club"] == 1
@@ -79,7 +80,7 @@ defmodule HacLong.Game.GearTest do
         "password" => "matkhau1"
       })
 
-    {:ok, p} = Engine.new_player("Lưu Đồ #{System.unique_integer([:positive])}", "rogue")
+    {:ok, p} = Engine.new_player("Lưu Đồ #{System.unique_integer([:positive])}", "elf")
     {p, _} = Gear.add(%{p | level: 25}, sword())
     {_, p} = Engine.equip(p, "#KIEM")
     p = p |> Map.merge(%{pos: %{map: "village", x: 12, y: 14}, upgrades: %{"#KIEM" => 2}})
@@ -98,7 +99,7 @@ defmodule HacLong.Game.GearTest do
       })
 
     Rng.put_sequence([0.99])
-    {:ok, p} = Engine.new_player("Trận #{System.unique_integer([:positive])}", "rogue")
+    {:ok, p} = Engine.new_player("Trận #{System.unique_integer([:positive])}", "elf")
     p = %{p | level: 10} |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
     {_, p} = Engine.start_battle(p, 0, false)
     p = put_in(p.battle.monster.hp, 10_000)

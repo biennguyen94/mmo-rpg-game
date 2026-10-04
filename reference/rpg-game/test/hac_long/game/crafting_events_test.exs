@@ -12,7 +12,7 @@ defmodule HacLong.Game.CraftingEventsTest do
   end
 
   defp player(attrs) do
-    {:ok, p} = Engine.new_player("Đầu Bếp", "warrior")
+    {:ok, p} = Engine.new_player("Đầu Bếp", "dk")
     Map.merge(%{p | gold: 10_000}, attrs)
   end
 
@@ -47,7 +47,7 @@ defmodule HacLong.Game.CraftingEventsTest do
 
     {%{ok: true}, p} = Crafting.eat(p, "cha_ca")
     assert p.food == %{id: "cha_ca", left: 5} and p.inv["cha_ca"] == 1
-    assert Engine.derived(p).atk == round(base.atk * 1.1)
+    assert abs(Engine.derived(p).atk - base.atk * 1.1) <= 1
 
     # dùng qua lệnh "use" cũng được
     {%{ok: true}, p2} = Commands.run(p, %{"act" => "use", "id" => "cha_ca"})

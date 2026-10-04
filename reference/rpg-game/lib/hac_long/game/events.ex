@@ -1,6 +1,6 @@
 defmodule HacLong.Game.Events do
   @moduledoc """
-  Sự kiện theo mùa (`EVENTS` trong `game_data.json`): mỗi sự kiện có khoảng ngày trong năm
+  Sự kiện theo mùa (`EVENTS` trong `priv/game_data/events.json`): mỗi sự kiện có khoảng ngày trong năm
   (`from`, `to` dạng "MM-DD", giờ Việt Nam; qua năm mới được, vd. 12-15 tới 01-02).
 
   Trong thời gian sự kiện:
@@ -15,8 +15,11 @@ defmodule HacLong.Game.Events do
 
   alias HacLong.Game.{Daily, Data, Engine, Gear}
 
-  @drop_chance 0.2
-  @xp_bonus 0.1
+  # số ở `RULES.events` và `RULES.loot.event_token_chance` (`priv/game_data/rules.json`)
+  @rules Data.rules().events
+  @drop_chance Data.rules().loot.event_token_chance
+  @xp_bonus @rules.xp_bonus
+  @gear_weights Enum.map(@rules.gear_weights, &List.to_tuple/1)
 
   def drop_chance, do: @drop_chance
   def xp_bonus(nil), do: 0
@@ -65,21 +68,31 @@ defmodule HacLong.Game.Events do
       %{
         id: "decor",
         name: decor.name,
-        cost: 30,
+        cost: @rules.shop.decor,
         desc: "Đồ trang trí chỉ có trong mùa này (tiện nghi #{decor.comfort})."
       },
       %{
         id: "gear",
         name: "Túi Quà Lễ Hội",
-        cost: 12,
+        cost: @rules.shop.gear,
         desc: "Một món đồ chỉ số ngẫu nhiên (dễ ra Hiếm)."
       },
-      %{id: "potions", name: "3 Bình Máu Lớn", cost: 6, desc: "Hồi 650 máu mỗi bình."},
-      %{id: "gold", name: "#{gold(p)} vàng", cost: 3, desc: "Vàng tăng theo cấp nhân vật."}
+      %{
+        id: "potions",
+        name: "#{@rules.potions} #{Data.item("potion_l").name}",
+        cost: @rules.shop.potions,
+        desc: "Hồi #{Data.item("potion_l").heal} máu mỗi bình."
+      },
+      %{
+        id: "gold",
+        name: "#{gold(p)} vàng",
+        cost: @rules.shop.gold,
+        desc: "Vàng tăng theo cấp nhân vật."
+      }
     ]
   end
 
-  defp gold(p), do: 60 + p.level * 12
+  defp gold(p), do: @rules.gold_base + p.level * @rules.gold_per_level
 
   @doc "Đổi vật phẩm lễ hội lấy quà `id` (đứng cạnh Người Tổ Chức Hội)."
   def exchange(p, id) do
@@ -115,13 +128,16 @@ defmodule HacLong.Game.Events do
   end
 
   defp give(p, _e, "gear") do
-    g = Gear.roll(max(p.level, 3), [{3, 15}, {2, 60}, {1, 25}])
+    g = Gear.roll(max(p.level, Data.rules().chests.min_level), @gear_weights)
     {p, :kept} = Gear.add(p, g)
     it = Gear.resolve(g)
     {p, "Túi Quà Lễ Hội: #{it.name} (#{Gear.rarity_names()[g.rarity]})!"}
   end
 
-  defp give(p, _e, "potions"), do: {Engine.add_item(p, "potion_l", 3), "Nhận 3 Bình Máu Lớn."}
+  defp give(p, _e, "potions"),
+    do:
+      {Engine.add_item(p, "potion_l", @rules.potions),
+       "Nhận #{@rules.potions} #{Data.item("potion_l").name}."}
 
   defp give(p, _e, "gold") do
     g = gold(p)

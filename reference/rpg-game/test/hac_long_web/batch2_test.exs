@@ -9,7 +9,7 @@ defmodule HacLongWeb.Batch2Test do
   import Ecto.Query
 
   alias HacLong.{Accounts, Audit, Moderation, Repo, Trade}
-  alias HacLong.Game.{Characters, Commands, Session}
+  alias HacLong.Game.{Characters, Commands, Engine, Session}
   alias HacLongWeb.{ClientVersion, UserSocket}
 
   @smith %{map: "village", x: 8, y: 11}
@@ -22,7 +22,7 @@ defmodule HacLongWeb.Batch2Test do
 
   defp player(user, attrs \\ %{}) do
     name = "Hai #{System.unique_integer([:positive]) |> rem(100_000)}"
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "knight"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "mg"})
     p = p |> Map.put(:tutorial, nil) |> Map.put(:pos, %{map: "village", x: 12, y: 14})
     p = Map.merge(p, attrs)
     {p, _} = HacLong.Game.Achievements.check(p)
@@ -247,7 +247,7 @@ defmodule HacLongWeb.Batch2Test do
       assert {:ok, %{msg: msg}} = adm(sa, "set_level", %{"uid" => target.id, "level" => 50})
       assert msg =~ "cấp 50"
       t = Session.get(target.id)
-      assert t.level == 50 and t.points == tp.points + 49 * 3
+      assert t.level == 50 and t.points == tp.points + 49 * Engine.points_per_level(tp.cls)
 
       assert {:ok, _} = adm(sa, "add_gold", %{"uid" => target.id, "amount" => 1_000_000})
       assert {:ok, _} = adm(sa, "add_gold", %{"uid" => target.id, "amount" => -5_000_000})
@@ -269,7 +269,7 @@ defmodule HacLongWeb.Batch2Test do
                  "uid" => target.id,
                  "base" => "dragonshield",
                  "rarity" => 3,
-                 "bonus" => %{"str" => 9, "vit" => 9, "def" => 9},
+                 "bonus" => %{"str" => 9, "vit" => 9, "ene" => 9},
                  "up" => 5
                })
 
@@ -307,7 +307,7 @@ defmodule HacLongWeb.Batch2Test do
       assert {:ok, %{log: [%{op: "announce", result: "ok"} | _]}} = adm(sa, "admin_log")
 
       # từ dòng lệnh server (bin/hac_long rpc)
-      assert {:ok, "Đã hồi đầy máu."} = HacLong.Admin.console(tp.name, "heal")
+      assert {:ok, "Đã hồi đầy máu và MP."} = HacLong.Admin.console(tp.name, "heal")
       assert {:error, _} = HacLong.Admin.console("khong-co-ai", "heal")
       assert [%{admin: "console", op: "heal"} | _] = HacLong.Admin.recent(1)
     end

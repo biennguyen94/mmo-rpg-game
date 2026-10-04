@@ -10,7 +10,8 @@ defmodule HacLong.Game.Bestiary do
   alias HacLong.Game.Data
 
   # {số con, sát thương cộng thêm lên loài đó, thưởng vàng = số lần vàng rơi của loài}
-  @marks [{25, 0.05, 5}, {100, 0.10, 20}]
+  # mốc `{số_con, sát_thương_cộng_thêm, số_lần_vàng}`, ở `RULES.bestiary.marks`
+  @marks Enum.map(Data.rules().bestiary.marks, &{&1.kills, &1.bonus, &1.gold})
 
   def marks, do: @marks
 
@@ -45,5 +46,5 @@ defmodule HacLong.Game.Bestiary do
   end
 
   # vàng rơi trung bình của loài ở cấp gốc (không tính may rủi)
-  defp base_gold(m), do: round(3 + m.level * 2.2)
+  defp base_gold(m), do: round(HacLong.Game.Engine.base_gold(m.level))
 end

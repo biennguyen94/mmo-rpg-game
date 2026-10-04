@@ -178,7 +178,7 @@ Chi tiết kỹ thuật của từng phần nằm trong `README.md` và tài li�
 
 ## H. Mùa, nghề, bạn bè
 
-- [x] **Lễ hội theo mùa** (`HacLong.Game.Events`, `EVENTS` trong `game_data.json`): Tết Trung Thu
+- [x] **Lễ hội theo mùa** (`HacLong.Game.Events`, `EVENTS` trong `priv/game_data/events.json`): Tết Trung Thu
   (15/9–10/10), Lễ Hội Bí Ngô (25/10–7/11), Giáng Sinh (15/12–2/1), Tết Nguyên Đán (20/1–20/2,
   gần đúng vì Tết âm lịch đổi ngày). Trong mùa: quái thường 20% rơi quà lễ hội, trùm rơi 3,
   kinh nghiệm +10%, tên lễ hội trên bản đồ. Người Tổ Chức Hội đổi quà: đồ trang trí chỉ có trong

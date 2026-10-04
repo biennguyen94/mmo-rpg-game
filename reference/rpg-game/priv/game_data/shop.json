@@ -1,0 +1,21 @@
+{
+  "SHOP": [
+    "potion_s",
+    "potion_m",
+    "potion_l",
+    "dagger",
+    "broadsword",
+    "mace",
+    "battleaxe",
+    "greatsword",
+    "waraxe",
+    "leather",
+    "chain",
+    "scale",
+    "lamellar",
+    "breastplate",
+    "round",
+    "checked",
+    "spiked"
+  ]
+}

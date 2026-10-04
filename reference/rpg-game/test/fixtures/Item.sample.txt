@@ -1,0 +1,16 @@
+//Mẫu tự viết để test, không phải dữ liệu thật
+0
+//Index	Slot	Skill	X	Y	Serial	Opt	Drop	Name
+0	0	0	1	2	1	1	1	"Kiem Thu"			3	4	9	20	22	0	0	0	60	0	0	0	0	1	1	1	1	1	1	0
+1	0	0	1	3	1	1	1	"Kiem Hai"	10	12	18	25	28	0	0	0	80	20	0	0	0	1	0	1	0	2	0	0
+2	0	0	1	3	1	1	1	"Hong"	abc
+end
+7
+5	2	0	2	2	1	1	1	"Mu Da Thu"	5	5	0	30	0	80	0	0	0	0	0	0	1	1	0	1	0
+end
+12
+0	7	0	3	2	1	1	1	"Canh Thu"  100 10 200 180 0 0 0 0 0 //chu thich
+end
+14
+1	-1	0	1	1	0	0	1	"Binh Nho"	10	10
+end

@@ -16,12 +16,14 @@ sửa trong `config/dev.exs`).
 mix setup          # tải thư viện, tạo database, chạy migration
 mix phx.server     # mở http://localhost:4000
 mix test           # chạy test (cần PostgreSQL)
+node --test test/js/*.test.mjs   # test hàm thuần của giao diện
+node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 ```
 
 ## Nội dung
 
-- 3 lớp nhân vật: **Chiến Binh**, **Thích Khách**, **Hiệp Sĩ**, mỗi lớp 3 kỹ năng (mở ở cấp 1,
-  10, 25)
+- 4 lớp nhân vật như MU: **Kiếm Sĩ**, **Phù Thủy**, **Tiên Nữ**, **Đấu Sĩ** (mỗi tài khoản một nhân vật),
+  mỗi lớp 3 kỹ năng tốn MP (mở ở cấp 1, 10, 25)
 - Bản đồ ô vuông: Nhà riêng, Làng và 6 vùng đất; mỗi vùng có 2 bản đồ quái và một phòng trùm,
   nối với nhau bằng cổng. Quái dùng chung giữa mọi người, đi lang thang và hồi lại sau khi bị hạ;
   thấy người chơi khác trên cùng bản đồ. Nhân vật và quái di chuyển mượt
@@ -53,7 +55,8 @@ mix test           # chạy test (cần PostgreSQL)
   từ quặng; nghề lên cấp theo số lần làm
 - Lễ hội theo mùa (Trung Thu, Bí Ngô, Giáng Sinh, Tết): quái rơi quà lễ hội, thêm kinh
   nghiệm, đổi đồ trang trí chỉ có trong mùa ở Người Tổ Chức Hội
-- Lên cấp nhận 3 điểm tiềm năng để cộng vào Sức mạnh, Thể lực, Nhanh nhẹn, Phòng thủ
+- Lên cấp nhận 5 điểm tiềm năng (Đấu Sĩ 7) để cộng vào Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (STR / AGI /
+  VIT / ENE như MU); chỉ số nào tăng tấn công tùy lớp. Lên cấp, nghỉ trọ, uống nước giếng hồi đầy máu và MP
 - NPC trong Làng: Trưởng Làng giao nhiệm vụ, Thợ Rèn bán vũ khí/giáp/khiên, Bà Lang bán và pha
   thuốc, Chủ Quán Trọ cho nghỉ; mua bán phải đến gặp họ. 2 món đồ hiếm chỉ rơi từ trùm
 - Hái Thảo Dược/Linh Chi, đào Quặng Sắt/Mithril trên bản đồ (dùng chung, mọc lại); mang đi pha
@@ -119,10 +122,12 @@ HacLongWeb.GameChannel ── lệnh {"act": "attack"} ──▶ HacLong.Game.Se
 ## Cấu trúc
 
 ```
-priv/game_data.json                 Dữ liệu game: lớp nhân vật, vùng đất, quái, vật phẩm, công thức, nhiệm vụ
+priv/game_data/*.json               Dữ liệu game, mỗi loại một file: classes, zones, items, shop, recipes, quests,
+                                    pets, furniture, events, upgrade, chaos, rules (số luật chơi)
 priv/maps/*.json                    Bản đồ (vẽ bằng ký tự), cổng, NPC, chỗ sinh quái và điểm thu thập
 priv/static/                        Giao diện: index.html, css/, js/ (ui, map, net, sound, doll), assets/
-lib/hac_long/game/data.ex           Đọc game_data.json (giải thích các trường)
+lib/hac_long/game/data.ex           Đọc và ghép priv/game_data/ (giải thích các trường)
+lib/hac_long/game/data_check.ex     Kiểm dữ liệu lúc biên dịch (id sai → lỗi biên dịch)
 lib/hac_long/game/engine.ex         Luật chơi (hàm thuần)
 lib/hac_long/game/commands.ex       Lệnh từ client → hàm engine
 lib/hac_long/game/session.ex        Tiến trình giữ nhân vật đang online
@@ -168,19 +173,25 @@ lib/hac_long_web/channels/          UserSocket, GameChannel
 lib/hac_long_web/controllers/       API đăng nhập; trang chủ (chèn dữ liệu game cho client)
 lib/hac_long_web/remote_ip.ex       Lấy IP thật từ X-Forwarded-For khi chạy sau proxy tin cậy
 lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, mix hac_long.audit
+priv/static/js/logic.js             Hàm thuần của giao diện (tìm đường, hình theo cấp…), test bằng node --test
+e2e/                                E2E Playwright + soak test (xem e2e/README.md)
 .github/workflows/ci.yml            CI: format, biên dịch không cảnh báo, mix test
 ```
 
 ## Chỉnh sửa game
 
-- **Thêm quái / vùng / đồ**: sửa `priv/game_data.json`, khởi động lại server. Chỉ số quái được
+- **Thêm quái / vùng / đồ**: sửa `priv/game_data/zones.json` / `items.json`, khởi động lại server
+  (dữ liệu nạp lúc biên dịch; gõ nhầm id món đồ / quái thì biên dịch báo lỗi kèm tên file + id). Chỉ số quái được
   tính tự động từ cấp độ (`make_monster` trong `engine.ex`), dùng `mult` để làm một con mạnh
   hoặc yếu hơn. Client nhận dữ liệu này từ server nên không phải sửa gì thêm.
-- **Thêm nhiệm vụ / công thức**: thêm vào `QUESTS` / `RECIPES` trong `priv/game_data.json`
+- **Thêm nhiệm vụ / công thức**: thêm vào `priv/game_data/quests.json` / `recipes.json`
   (giải thích các trường ở `lib/hac_long/game/data.ex`). Hàng NPC bán nằm ở `stock` của NPC
   trong `priv/maps/village.json`.
 - **Sửa bản đồ**: sửa `priv/maps/<id>.json` (ý nghĩa các ký tự xem `lib/hac_long/world/maps.ex`),
   rồi chạy `mix test`: test kiểm tra cổng nối hai chiều và chỗ đứng hợp lệ.
+- **Chỉnh số cân bằng** (chí mạng, né, EXP lên cấp, chỉ số quái, tỉ lệ rơi, giá bán lại, rương, rèn, tháp, thú cưng,
+  bang, chợ, câu cá, từ cấm khi đặt tên…): sửa `priv/game_data/rules.json` (`RULES`), không phải sửa code.
+  Chạy `mix hac_long.simulate 20 --seed 1` trước / sau để so.
 - **Đổi công thức chiến đấu**: `derived`, `make_monster`, `damage` trong `lib/hac_long/game/engine.ex`.
 - Sau khi đổi số, chạy mô phỏng để xem game có quá dễ hay quá khó:
 
@@ -302,13 +313,20 @@ mix hac_long.audit [--days 7]
 mix hac_long.audit --prune 180
 ```
 
+Đồ từ `Item.txt` của anh và bộ hình đổi theo cấp +N (xem `assets_src/items/README.md`):
+
+```bash
+mix hac_long.icons              # quét assets_src/items/icons → priv/static/assets/item_icons.json
+mix hac_long.items.import       # Item.txt → priv/items_raw.json + priv/items_from_txt.json (nháp)
+```
+
 Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):
 [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md).
 
 ## Hướng phát triển tiếp
 
-Xem [docs/ROADMAP.md](docs/ROADMAP.md): giới hạn tần suất, bảng xếp hạng, nhiệm vụ hằng ngày,
-chat, trùm thế giới, bản đồ ô vuông để đi lại và đánh quái...
+Kế hoạch hiện tại: [docs/PHASE_PLAN.md](docs/PHASE_PLAN.md) (các phase tiếp theo, lấy từ các mục đã chọn trong
+[docs/FEATURE_CATALOG.md](docs/FEATURE_CATALOG.md)). Lịch sử: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Bản quyền hình ảnh
 

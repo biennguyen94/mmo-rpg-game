@@ -5,7 +5,7 @@ defmodule HacLong.Game.CommandsTest do
 
   defp player do
     {_, p} =
-      Commands.run(nil, %{"act" => "create", "name" => "  Lãng Khách  ", "cls" => "warrior"})
+      Commands.run(nil, %{"act" => "create", "name" => "  Lãng Khách  ", "cls" => "dk"})
 
     p
   end
@@ -21,7 +21,7 @@ defmodule HacLong.Game.CommandsTest do
     assert {%{ok: false}, nil} = Commands.run(nil, %{"act" => "rest"})
 
     assert {%{ok: false}, ^p} =
-             Commands.run(p, %{"act" => "create", "name" => "x", "cls" => "rogue"})
+             Commands.run(p, %{"act" => "create", "name" => "x", "cls" => "elf"})
   end
 
   test "từ chối dữ liệu gian lận hoặc sai kiểu" do

@@ -16,7 +16,8 @@ defmodule HacLong.Game.Tutorial do
 
   @quest "forest_kill"
   @forest ~w(forest_1 forest_2 forest_boss)
-  @reward %{gold: 50, items: %{"potion_s" => 3}}
+  # quà ở `RULES.tutorial` (`priv/game_data/rules.json`)
+  @reward Data.rules().tutorial.reward
 
   @steps [
     %{text: "Ra khỏi nhà", hint: "Đi xuống cửa nhà ở phía dưới."},

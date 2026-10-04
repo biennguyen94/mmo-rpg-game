@@ -1,6 +1,6 @@
 defmodule HacLong.Game.Quests do
   @moduledoc """
-  Nhiệm vụ (dữ liệu ở `QUESTS` trong `priv/game_data.json`). Hàm thuần, như `Engine`.
+  Nhiệm vụ (dữ liệu ở `QUESTS` trong `priv/game_data/quests.json`). Hàm thuần, như `Engine`.
 
   Trạng thái trong nhân vật: `quests: %{active: %{id => số_đã_hạ}, done: [id]}`.
 

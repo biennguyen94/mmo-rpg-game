@@ -15,26 +15,27 @@ defmodule HacLong.Game.Crafting do
 
   alias HacLong.Game.{Data, Engine, Gear}
 
-  @levels [0, 5, 15, 30, 50]
+  # số ở `RULES.crafting` (`priv/game_data/rules.json`)
+  @rules Data.rules().crafting
+  @levels @rules.levels
   @names %{cook: "Nấu ăn", smith: "Rèn đồ"}
   # nguyên liệu mỗi lần rèn theo loại đồ; vàng = cấp nhân vật × 15
-  @smith_costs %{
-    "weapon" => %{"ore" => 6, "ore_rare" => 1},
-    "armor" => %{"ore" => 5, "ore_rare" => 1},
-    "shield" => %{"ore" => 4, "ore_rare" => 1}
-  }
+  @smith_costs @rules.smith_costs
 
   def levels, do: @levels
   def max_level, do: length(@levels)
   def smith_costs, do: @smith_costs
-  def smith_gold(p), do: p.level * 15
+  def smith_gold(p), do: p.level * @rules.smith_gold_per_level
 
   def xp(p, skill), do: Map.get(Map.get(p, :crafting) || %{}, skill, 0)
   def level(xp) when is_integer(xp), do: Enum.count(@levels, &(xp >= &1))
   def level(p, skill), do: level(xp(p, skill))
 
   @doc "Tỉ lệ độ hiếm khi rèn ở cấp nghề `lv`: Sử Thi 6% + 6% mỗi cấp, Hiếm 50%, còn lại Tốt."
-  def smith_weights(lv), do: [{3, 6 * lv}, {2, 50}, {1, 50 - 6 * lv}]
+  def smith_weights(lv) do
+    epic = @rules.smith_epic_per_level * lv
+    [{3, epic}, {2, @rules.smith_rare}, {1, 100 - @rules.smith_rare - epic}]
+  end
 
   defp gain(p, skill) do
     before = level(p, skill)
@@ -144,7 +145,13 @@ defmodule HacLong.Game.Crafting do
         {%{ok: false, msg: "Túi đồ hiếm đầy (#{Gear.max_bag()} món). Bán bớt đã."}, p}
 
       true ->
-        g = Gear.roll(max(p.level, 3), smith_weights(level(p, :smith)), slot)
+        g =
+          Gear.roll(
+            max(p.level, Data.rules().chests.min_level),
+            smith_weights(level(p, :smith)),
+            slot
+          )
+
         p = %{take_all(p, cost) | gold: p.gold - gold}
         {p, :kept} = Gear.add(p, g)
         {p, note} = gain(p, :smith)

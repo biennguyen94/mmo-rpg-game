@@ -20,7 +20,7 @@ defmodule HacLongWeb.Batch1Test do
 
   defp with_character(user, attrs \\ %{}) do
     name = "Dot #{System.unique_integer([:positive]) |> rem(100_000)}"
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "dk"})
     p = p |> Map.put(:tutorial, nil) |> Map.merge(attrs)
     Characters.save!(user.id, p)
     p
@@ -67,6 +67,10 @@ defmodule HacLongWeb.Batch1Test do
     test "trang chủ có mã phiên bản; vào kênh sai / thiếu mã thì bị từ chối" do
       html = build_conn() |> get("/") |> html_response(200)
       assert html =~ ~s(window.CLIENT_VERSION = "#{version()}")
+
+      # file giao diện kèm mã phiên bản: deploy bản mới thì trình duyệt không dùng file cũ trong cache
+      assert html =~ ~s(src="js/ui.js?v=#{version()}")
+      assert html =~ ~s(href="css/style.css?v=#{version()}")
 
       user = create_user()
 

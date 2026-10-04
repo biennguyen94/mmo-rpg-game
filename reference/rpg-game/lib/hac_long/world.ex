@@ -17,11 +17,21 @@ defmodule HacLong.World do
 
   def dirs, do: Map.keys(@dirs)
 
-  @doc "Vị trí hợp lệ (bản đồ tồn tại, ô đi được), nếu không thì về Nhà."
+  @doc """
+  Vị trí hợp lệ khi vào game: bản đồ còn tồn tại, ô đi được và không bị bít kín bốn phía. Nếu
+  không (bản đồ đã sửa) thì về điểm vào của chính bản đồ đó (`Maps.entry/1`), không có thì về Nhà.
+  """
   def valid_pos(%{map: id, x: x, y: y} = pos) do
     case Maps.get(id) do
-      nil -> Maps.home_spawn()
-      map -> if Maps.walkable?(map, x, y), do: pos, else: Maps.home_spawn()
+      nil ->
+        Maps.home_spawn()
+
+      map ->
+        free? = fn {dx, dy} -> Maps.walkable?(map, x + dx, y + dy) end
+
+        if Maps.walkable?(map, x, y) and Enum.any?(Map.values(@dirs), free?),
+          do: pos,
+          else: Maps.entry(id) || Maps.home_spawn()
     end
   end
 
@@ -176,12 +186,15 @@ defmodule HacLong.World do
 
   defp put_pos(p, map, x, y), do: %{p | pos: %{map: map, x: x, y: y}}
 
+  # giếng ở Nhà hồi đầy máu và MP
   defp drink_fountain(p) do
-    max_hp = Engine.derived(p).maxHp
+    d = Engine.derived(p)
 
-    if p.hp >= max_hp,
-      do: {%{ok: false, msg: "Nước giếng mát lạnh. Máu đang đầy."}, p},
-      else: {%{ok: true, msg: "Uống nước giếng, máu đã đầy."}, %{p | hp: max_hp}}
+    if p.hp >= d.maxHp and (p[:mp] || 0) >= d.maxMp,
+      do: {%{ok: false, msg: "Nước giếng mát lạnh. Máu và MP đang đầy."}, p},
+      else:
+        {%{ok: true, msg: "Uống nước giếng, máu và MP đã đầy."},
+         Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
   end
 
   defp use_portal(p, uid, portal) do

@@ -1,0 +1,581 @@
+{
+  "RULES": {
+    "character": {
+      "max_level": 50,
+      "start_gold": 30,
+      "start_items": {
+        "potion_s": 3
+      },
+      "max_rebirths": 10,
+      "rebirth_points": 15,
+      "rest_per_level": 4,
+      "death_gold_loss": 0.1,
+      "death_hp": 0.5
+    },
+    "xp": {
+      "coef": 25,
+      "exp": 1.75,
+      "base": 15
+    },
+    "combat": {
+      "crit": {
+        "base": 0.04,
+        "per_agi": 0.0035,
+        "max": 0.6
+      },
+      "crit_mult": {
+        "base": 1.6,
+        "per_agi": 0.004,
+        "max": 2.5
+      },
+      "dodge": {
+        "base": 0.02,
+        "per_agi": 0.0025,
+        "max": 0.4
+      },
+      "damage_spread": [
+        0.9,
+        1.1
+      ],
+      "mp_regen": 0.05,
+      "flee_chance": 0.7,
+      "flee_chance_boss": 0.35,
+      "monster_crit_mult": 1.5,
+      "wing_per_level": 0.02
+    },
+    "skill_effects": {
+      "cleave": {
+        "mult": 2.2
+      },
+      "fire_ball": {
+        "mult": 2.0,
+        "def_mult": 0.7
+      },
+      "backstab": {
+        "mult": 1,
+        "def_mult": 0.5,
+        "always_crit": true
+      },
+      "holy": {
+        "mult": 1.3,
+        "heal": 0.25
+      },
+      "stun_bash": {
+        "mult": 1.2,
+        "boss_resist": 0.5
+      },
+      "war_cry": {
+        "mult": 1,
+        "turns": 4,
+        "power": 0.4
+      },
+      "venom": {
+        "mult": 1,
+        "turns": 3,
+        "power": 0.5
+      },
+      "shadow_step": {
+        "mult": 1.3,
+        "turns": 2,
+        "power": 0.6
+      },
+      "guard": {
+        "mult": 1,
+        "turns": 2,
+        "power": 0.5
+      },
+      "judgement": {
+        "mult": 1.8,
+        "turns": 3,
+        "power": 0.3
+      }
+    },
+    "monster": {
+      "hp": {
+        "base": 20,
+        "level": 26,
+        "level_sq": 0.6
+      },
+      "atk": {
+        "base": 10,
+        "level": 6.4
+      },
+      "def": {
+        "base": 1,
+        "level": 2.0
+      },
+      "crit": 0.05,
+      "dodge": {
+        "base": 0.03,
+        "level": 0.001
+      },
+      "xp": {
+        "base": 8,
+        "level": 6,
+        "level_sq": 0.5
+      },
+      "gold": {
+        "base": 3,
+        "level": 2.2
+      },
+      "gold_spread": [
+        0.8,
+        1.2
+      ],
+      "boss": {
+        "hp": 2.4,
+        "xp": 5,
+        "gold": 6
+      }
+    },
+    "loot": {
+      "potion_chance": 0.12,
+      "potions": [
+        {
+          "level": 20,
+          "id": "potion_l"
+        },
+        {
+          "level": 9,
+          "id": "potion_m"
+        },
+        {
+          "level": 0,
+          "id": "potion_s"
+        }
+      ],
+      "gear_chance": {
+        "elite": 0.5,
+        "night": 0.25,
+        "boss": 0.35,
+        "normal": 0.04
+      },
+      "gear_weights": [
+        [
+          3,
+          5
+        ],
+        [
+          2,
+          25
+        ],
+        [
+          1,
+          70
+        ]
+      ],
+      "gear_slots": [
+        [
+          0.45,
+          "weapon"
+        ],
+        [
+          0.8,
+          "armor"
+        ],
+        [
+          1,
+          "shield"
+        ]
+      ],
+      "gear_bonus_per_level": 6,
+      "event_token_chance": 0.2,
+      "event_token_boss": 3
+    },
+    "shop": {
+      "sell_ratio": 0.4,
+      "unpriced_value": 200,
+      "gear_rarity_value": 0.25,
+      "gear_bonus_value": 5
+    },
+    "upgrade": {
+      "bonus_pct": 0.08,
+      "cost_pct": 0.08,
+      "cost_min_price": 100,
+      "rare_ore_level": 17,
+      "scale_step": 5
+    },
+    "chests": {
+      "tiers": [
+        {
+          "id": "wood",
+          "name": "Rương Gỗ",
+          "times": 2,
+          "weights": [
+            [
+              3,
+              2
+            ],
+            [
+              2,
+              18
+            ],
+            [
+              1,
+              80
+            ]
+          ]
+        },
+        {
+          "id": "silver",
+          "name": "Rương Bạc",
+          "times": 4,
+          "weights": [
+            [
+              3,
+              10
+            ],
+            [
+              2,
+              50
+            ],
+            [
+              1,
+              40
+            ]
+          ]
+        },
+        {
+          "id": "gold",
+          "name": "Rương Vàng",
+          "times": 8,
+          "weights": [
+            [
+              3,
+              30
+            ],
+            [
+              2,
+              70
+            ]
+          ]
+        }
+      ],
+      "price_ratio": 0.4,
+      "min_level": 3,
+      "daily": {
+        "gold_base": 20,
+        "gold_per_level": 8,
+        "potions": 2,
+        "materials": 2,
+        "rare_material_level": 18,
+        "gear_chance": 0.2,
+        "gear_weights": [
+          [
+            3,
+            2
+          ],
+          [
+            2,
+            18
+          ],
+          [
+            1,
+            80
+          ]
+        ]
+      }
+    },
+    "crafting": {
+      "levels": [
+        0,
+        5,
+        15,
+        30,
+        50
+      ],
+      "smith_costs": {
+        "weapon": {
+          "ore": 6,
+          "ore_rare": 1
+        },
+        "armor": {
+          "ore": 5,
+          "ore_rare": 1
+        },
+        "shield": {
+          "ore": 4,
+          "ore_rare": 1
+        }
+      },
+      "smith_gold_per_level": 15,
+      "smith_epic_per_level": 6,
+      "smith_rare": 50
+    },
+    "tower": {
+      "harder_from": 36,
+      "harder_per_floor": 0.04,
+      "boss_every": 5,
+      "monsters": 3,
+      "monsters_per_10": 1,
+      "max_monsters": 6,
+      "boss_monsters": 2,
+      "level_offset": 2,
+      "elite_mult": 1.3,
+      "elite_hp": 2,
+      "elite_xp": 3,
+      "elite_gold": 3,
+      "reward_gold": 3,
+      "reward_boss": 3,
+      "boss_potions": 2
+    },
+    "pets": {
+      "tame_kills": 100,
+      "tame_bonus": 0.03,
+      "tame_price": 1000,
+      "tame_price_per_level": 100,
+      "bite_chance": 0.35,
+      "bite_power": 0.25,
+      "bite_per_level": 0.02,
+      "bonus_per_level": 0.1,
+      "max_level": 10,
+      "skill_level": 5,
+      "xp_coef": 5,
+      "boss_wins": 5,
+      "skills": {
+        "heal": 0.05,
+        "bash_turns": 2,
+        "bash_power": 0.15,
+        "pickpocket_per_level": 3,
+        "venom_turns": 3,
+        "venom_power": 0.5,
+        "rend_mult": 2
+      }
+    },
+    "bestiary": {
+      "marks": [
+        {
+          "kills": 25,
+          "bonus": 0.05,
+          "gold": 5
+        },
+        {
+          "kills": 100,
+          "bonus": 0.1,
+          "gold": 20
+        }
+      ]
+    },
+    "home": {
+      "max_decor": 20,
+      "comfort_step": 10,
+      "xp_per_step": 0.01,
+      "max_xp_bonus": 0.05
+    },
+    "events": {
+      "xp_bonus": 0.1,
+      "shop": {
+        "decor": 30,
+        "gear": 12,
+        "potions": 6,
+        "gold": 3
+      },
+      "gold_base": 60,
+      "gold_per_level": 12,
+      "potions": 3,
+      "gear_weights": [
+        [
+          3,
+          15
+        ],
+        [
+          2,
+          60
+        ],
+        [
+          1,
+          25
+        ]
+      ]
+    },
+    "daily": {
+      "kill": [
+        6,
+        10
+      ],
+      "zone": [
+        12,
+        16
+      ],
+      "gather": [
+        4,
+        6
+      ],
+      "fish": [
+        3,
+        5
+      ],
+      "rare_gather_zone": 3,
+      "reward": {
+        "fish": {
+          "gold": 1.5,
+          "xp_div": 2
+        },
+        "gather": {
+          "price": 0.6,
+          "gold_kills": 3,
+          "xp_div": 3
+        },
+        "kill": {
+          "gold": 1.2,
+          "xp": 0.6
+        }
+      }
+    },
+    "fishing": {
+      "deep_zone": 4,
+      "pools": {
+        "default": [
+          [
+            8,
+            "old_boot"
+          ],
+          [
+            60,
+            "fish_small"
+          ],
+          [
+            31,
+            "fish_carp"
+          ],
+          [
+            1,
+            "fish_gold"
+          ]
+        ],
+        "deep": [
+          [
+            6,
+            "old_boot"
+          ],
+          [
+            30,
+            "fish_small"
+          ],
+          [
+            35,
+            "fish_carp"
+          ],
+          [
+            27,
+            "fish_eel"
+          ],
+          [
+            2,
+            "fish_gold"
+          ]
+        ]
+      }
+    },
+    "tutorial": {
+      "reward": {
+        "gold": 50,
+        "items": {
+          "potion_s": 3
+        }
+      }
+    },
+    "guild": {
+      "create_cost": 5000,
+      "levels": [
+        0,
+        10000,
+        30000,
+        70000,
+        150000
+      ],
+      "min_donate": 100,
+      "quest_fund": 3000,
+      "quest_gold": 800,
+      "quest_xp": 1500
+    },
+    "market": {
+      "fee_pct": 5,
+      "max_active": 10,
+      "max_price": 10000000
+    },
+    "arena": {
+      "per_day": 15,
+      "elo_k": 32
+    },
+    "party": {
+      "max": 3
+    },
+    "world": {
+      "night_rare_chance": 0.12
+    },
+    "names": {
+      "banned_words": [
+        "admin",
+        "administrator",
+        "gm",
+        "gamemaster",
+        "game master",
+        "mod",
+        "moderator",
+        "quan tri",
+        "quantri",
+        "dieu hanh",
+        "ban quan tri",
+        "bqt",
+        "system",
+        "he thong",
+        "server",
+        "support",
+        "ho tro",
+        "official",
+        "chinh thuc",
+        "webzen",
+        "dit",
+        "djt",
+        "du ma",
+        "dume",
+        "dmm",
+        "dcm",
+        "dm",
+        "dkm",
+        "clm",
+        "cmm",
+        "cc",
+        "lon",
+        "buoi",
+        "cak",
+        "deo",
+        "vcl",
+        "vkl",
+        "vl",
+        "occho",
+        "oc cho",
+        "suc vat",
+        "fuck",
+        "shit",
+        "bitch",
+        "dick",
+        "pussy",
+        "cunt",
+        "nigger",
+        "nigga",
+        "hitler",
+        "nazi"
+      ],
+      "banned_parts": [
+        "admin",
+        "gamemaster",
+        "moderator",
+        "quantri",
+        "banquantri",
+        "dieuhanh",
+        "webzen",
+        "fuck",
+        "bitch",
+        "nigger",
+        "hitler",
+        "dume",
+        "ditme",
+        "ditmen",
+        "occho",
+        "sucvat"
+      ]
+    }
+  }
+}

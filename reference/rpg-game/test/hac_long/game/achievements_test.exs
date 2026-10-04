@@ -4,7 +4,7 @@ defmodule HacLong.Game.AchievementsTest do
   alias HacLong.Game.{Achievements, Engine}
 
   defp player do
-    {:ok, p} = Engine.new_player("Thử", "knight")
+    {:ok, p} = Engine.new_player("Thử", "mg")
     p
   end
 

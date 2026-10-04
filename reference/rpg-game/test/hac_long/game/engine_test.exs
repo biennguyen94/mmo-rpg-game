@@ -7,19 +7,24 @@ defmodule HacLong.Game.EngineTest do
     on_exit(&Rng.clear/0)
   end
 
-  defp player(cls \\ "warrior") do
+  defp player(cls \\ "dk") do
     {:ok, p} = Engine.new_player("Thử", cls)
     p
   end
 
   test "chỉ số nhân vật mới" do
     p = player()
-    assert p.stats == %{str: 8, vit: 7, agi: 4, def: 5}
+    # Kiếm Sĩ: chỉ số gốc như MU
+    assert p.stats == %{str: 28, agi: 20, vit: 25, ene: 10}
     d = Engine.derived(p)
-    # 40 + 7*12 + 1*10
-    assert d.maxHp == 134 and p.hp == 134
-    # 8*2.2 + 4*0.9 + gậy 3 + cấp 1
-    assert d.atk == 25
+    # 40 + 1*10 + 25*10
+    assert d.maxHp == 300 and p.hp == 300
+    # 20 + 1*1 + 10*1
+    assert d.maxMp == 31 and p.mp == 31
+    # 28*2.8 + 20*0.5 + cấp 1 + gậy 3
+    assert d.atk == 92
+    assert Engine.points_per_level("dk") == 5 and Engine.points_per_level("mg") == 7
+    assert Engine.xp_to_next(1) == 40
     assert Engine.xp_to_next(1) == 40
   end
 
@@ -59,38 +64,52 @@ defmodule HacLong.Game.EngineTest do
 
   test "kỹ năng có hồi chiêu" do
     Rng.put_sequence([0.5])
-    p = %{player("knight") | hp: 50}
+    p = %{player("elf") | hp: 50, level: 10}
     {_, p} = Engine.start_battle(p, 0, true)
-    {%{ok: true}, p} = Engine.act(p, "skill")
-    assert Engine.cooldown(p, "holy") == 4
+    mp = p.mp
+    {%{ok: true}, p} = Engine.act(p, "skill", "heal")
+    assert Engine.cooldown(p, "heal") == 4
+    # tốn 14 MP, hồi 5 % MP tối đa đầu lượt
+    max_mp = Engine.derived(p).maxMp
+    assert p.mp == min(max_mp, mp + round(max_mp * 0.05)) - 14
     assert Enum.any?(p.battle.log, &(&1.text =~ "Khiên Thánh hồi"))
-    assert {%{ok: false, msg: "Khiên Thánh hồi sau 4 lượt."}, ^p} = Engine.act(p, "skill")
+
+    assert {%{ok: false, msg: "Hồi Sinh Lực hồi sau 4 lượt."}, ^p} =
+             Engine.act(p, "skill", "heal")
+
+    # hết MP thì không dùng được
+    {_, q} = Engine.start_battle(%{player("elf") | mp: 0}, 0, false)
+    assert {%{ok: false, msg: "Không đủ MP cho Tam Tiễn (cần 8)."}, _} = Engine.act(q, "skill")
   end
 
   test "kỹ năng mở theo cấp" do
     ids = fn p -> Enum.map(Engine.skills(p), & &1.id) end
-    assert ids.(player()) == ["cleave"]
-    assert ids.(%{player() | level: 10}) == ["cleave", "stun_bash"]
-    assert ids.(%{player("rogue") | level: 25}) == ["backstab", "venom", "shadow_step"]
+    assert ids.(player()) == ["twisting_slash"]
+    assert ids.(%{player() | level: 10}) == ["twisting_slash", "falling_slash"]
+    assert ids.(%{player("elf") | level: 25}) == ["triple_shot", "heal", "greater_damage"]
+    assert ids.(%{player("dw") | level: 25}) == ["fire_ball", "lightning", "soul_barrier"]
+    assert ids.(%{player("mg") | level: 25}) == ["power_slash", "flame_strike", "gigantic_storm"]
 
     Rng.put_sequence([0.5])
     {_, p} = Engine.start_battle(player(), 0, false)
-    assert {%{ok: false, msg: "Chưa học kỹ năng này."}, _} = Engine.act(p, "skill", "stun_bash")
+
+    assert {%{ok: false, msg: "Chưa học kỹ năng này."}, _} =
+             Engine.act(p, "skill", "falling_slash")
   end
 
   # quái thường, không né, không chí mạng: dãy 0.99 cho mọi lần ngẫu nhiên
   defp fight(cls, level, zone \\ 0) do
     Rng.put_sequence([0.99])
-    p = %{player(cls) | level: level, stats: %{str: 5, vit: 200, agi: 0, def: 5}}
+    p = %{player(cls) | level: level, stats: %{str: 5, agi: 0, vit: 200, ene: 5}}
     p = %{p | hp: Engine.derived(p).maxHp}
     {_, p} = Engine.start_battle(p, zone, false)
     put_in(p.battle.monster.hp, 100_000) |> put_in([:battle, :monster, :maxHp], 100_000)
   end
 
   test "choáng làm quái mất lượt" do
-    p = fight("warrior", 10)
+    p = fight("dk", 10)
     hp = p.hp
-    {%{ok: true}, p} = Engine.act(p, "skill", "stun_bash")
+    {%{ok: true}, p} = Engine.act(p, "skill", "falling_slash")
     assert Enum.any?(p.battle.log, &(&1.text =~ "bị choáng, không đánh được"))
     assert p.hp == hp
     # choáng chỉ một lượt
@@ -99,8 +118,8 @@ defmodule HacLong.Game.EngineTest do
   end
 
   test "tẩm độc: quái mất máu cuối mỗi lượt trong 3 lượt" do
-    p = fight("rogue", 10)
-    {_, p} = Engine.act(p, "skill", "venom")
+    p = fight("mg", 10)
+    {_, p} = Engine.act(p, "skill", "flame_strike")
     assert [%{id: "poison", turns: 2, power: per}] = p.battle.effects.monster
     hp = p.battle.monster.hp
     {_, p} = Engine.act(p, "attack")
@@ -113,7 +132,7 @@ defmodule HacLong.Game.EngineTest do
 
   test "trùm gây bỏng; bình máu giải bỏng" do
     Rng.put_sequence([0.99])
-    p = %{player() | level: 20, stats: %{str: 5, vit: 300, agi: 0, def: 5}}
+    p = %{player() | level: 20, stats: %{str: 5, agi: 0, vit: 300, ene: 5}}
 
     p = %{
       p
@@ -154,9 +173,13 @@ defmodule HacLong.Game.EngineTest do
   test "lên cấp nhận điểm tiềm năng và hồi đầy máu" do
     p = %{player() | hp: 1}
     {levels, p} = Engine.gain_xp(p, 40 + Engine.xp_to_next(2))
-    assert levels == 2 and p.level == 3 and p.points == 6
-    assert p.stats.str == 8 + 2 * 3
-    assert p.hp == Engine.derived(p).maxHp
+
+    # Kiếm Sĩ 5 điểm / cấp, không tự tăng chỉ số; lên cấp hồi đầy máu và MP
+    assert levels == 2 and p.level == 3 and p.points == 10
+    assert p.stats.str == 28
+    assert p.hp == Engine.derived(p).maxHp and p.mp == Engine.derived(p).maxMp
+    {_, mg} = Engine.gain_xp(player("mg"), 40)
+    assert mg.points == 7
   end
 
   test "Thợ Rèn nâng cấp đồ đang mặc bằng quặng và vàng" do
@@ -214,11 +237,11 @@ defmodule HacLong.Game.EngineTest do
     p = %{player() | gold: 5000, bosses: ["wolf"]}
     assert {%{ok: false, msg: "Cần đạt cấp 50 mới chuyển sinh được."}, _} = Engine.rebirth(p)
 
-    p = %{p | level: 50, stats: %{str: 150, vit: 60, agi: 4, def: 5}, points: 2}
+    p = %{p | level: 50, stats: %{str: 150, agi: 4, vit: 60, ene: 5}, points: 2}
     {%{ok: true, msg: msg}, q} = Engine.rebirth(p)
     assert msg =~ "Chuyển sinh lần 1"
     assert q.level == 1 and q.xp == 0 and q.rebirths == 1
-    assert q.stats == %{str: 8, vit: 7, agi: 4, def: 5}
+    assert q.stats == %{str: 28, agi: 20, vit: 25, ene: 10}
     assert q.points == Engine.rebirth_points()
     assert q.gold == 5000 and q.bosses == ["wolf"] and q.equip == p.equip
     assert q.hp == Engine.derived(q).maxHp
@@ -229,7 +252,7 @@ defmodule HacLong.Game.EngineTest do
   end
 
   test "bot chơi hết game với mỗi lớp nhân vật" do
-    for cls <- ~w(warrior rogue knight) do
+    for cls <- ~w(dk dw elf mg) do
       r = Simulator.run(cls)
       assert r.victory, "#{cls} không thắng: #{inspect(r)}"
       assert r.fights in 300..700

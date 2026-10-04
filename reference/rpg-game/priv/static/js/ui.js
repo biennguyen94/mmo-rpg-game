@@ -4,10 +4,11 @@
 (function () {
   const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE, UPGRADE, CHAOS } = window.GAME_DATA;
   const Net = window.Net;
+  const L = window.HLLogic; // hàm thuần (logic.js), có test node --test
 
   let P = null;          // trạng thái người chơi
   let tab = 'map';       // tab đang mở
-  let pickCls = 'warrior';
+  let pickCls = 'dk';
   let confirmReset = false;
   let confirmRebirth = false;
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
@@ -47,7 +48,14 @@
   const asset = (path) => 'assets/' + path;
   const icon = (name, cls) => `<img class="ic ${cls || ''}" src="${asset('icons/' + name + '.svg')}" alt="">`;
   // Hình vật phẩm: nguyên liệu dùng ảnh PNG (`sprite`), còn lại dùng icon SVG.
-  const itemIcon = (it, rarity) => (it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')));
+  // Hình riêng của đồ theo cấp nâng (bộ hình của anh, `mix hac_long.icons`): khóa `ref` ("nhóm/số"
+  // trong Item.txt) hoặc "custom/{id}"; lấy mức lớn nhất ≤ cấp. Không có thì dùng icon / sprite cũ.
+  const ITEM_ICONS = window.GAME_DATA.ITEM_ICONS || {};
+  function ownIcon(it, level) {
+    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level);
+    return path ? asset(path) : null;
+  }
+  const itemIcon = (it, rarity, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')); };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
@@ -188,7 +196,7 @@
   }
 
   const isAdminRole = () => Net.role === 'admin';
-  const STAT_KEYS = [['str', 'Sức mạnh'], ['vit', 'Thể lực'], ['agi', 'Nhanh nhẹn'], ['def', 'Phòng thủ']];
+  const STAT_KEYS = [['str', 'Sức mạnh'], ['agi', 'Nhanh nhẹn'], ['vit', 'Thể lực'], ['ene', 'Năng lượng']];
   const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
 
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
@@ -319,7 +327,7 @@
   function tradeLines(o, mine) {
     const rm = (kind, id) => (mine && trade.status === 'open' ? `<button class="btn small-btn" data-act="trade-rm" data-kind="${kind}" data-id="${id}" aria-label="Bỏ ra">✕</button>` : '');
     const rows = Object.entries(o.items).map(([id, n]) => { const it = ITEMS[id]; return `<div class="item">${itemIcon(it)}<div class="grow"><div class="name">${esc(it.name)} <span class="muted num">×${n}</span></div></div>${rm('item', id)}</div>`; })
-      .concat(o.gear.map((g) => `<div class="item">${itemIcon(ITEMS[g.base] || { icon: 'sword' }, g.rarity)}<div class="grow"><div class="name"><span class="rar-${g.rarity}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</div><div class="small muted">${RARITY[g.rarity] || ''}</div></div>${rm('gear', g.uid)}</div>`));
+      .concat(o.gear.map((g) => `<div class="item">${itemIcon(ITEMS[g.base] || { icon: 'sword' }, g.rarity, g.up)}<div class="grow"><div class="name"><span class="rar-${g.rarity}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</div><div class="small muted">${RARITY[g.rarity] || ''}</div></div>${rm('gear', g.uid)}</div>`));
     if (o.gold) rows.push(`<div class="item">${icon('two-coins', 'lg')}<div class="grow"><div class="name num" style="color:var(--gold)">${fmt(o.gold)} vàng</div></div>${rm('gold', '')}</div>`);
     return rows.length ? `<div class="list">${rows.join('')}</div>` : '<p class="small muted">Chưa bỏ gì vào.</p>';
   }
@@ -590,7 +598,7 @@
     const it = l.gear || ITEMS[l.item];
     const name = l.gear ? `<span class="rar-${l.gear.rarity}">${esc(l.name)}</span>${l.gear.up ? ` <span class="up-lv">+${l.gear.up}</span>` : ''}` : esc(l.name);
     const detail = l.gear ? itemStat(l.gear) : it.slot === 'material' ? it.desc : itemStat(it);
-    return `<div class="item">${itemIcon(it, l.gear && l.gear.rarity)}<div class="grow">
+    return `<div class="item">${itemIcon(it, l.gear && l.gear.rarity, l.gear && l.gear.up)}<div class="grow">
       <div class="name">${name}${l.count > 1 ? ` <span class="muted num">×${l.count}</span>` : ''}</div>
       <div class="small muted">${detail}${showSeller ? ` · người bán ${esc(l.seller)}` : ''}</div></div>${right}</div>`;
   }
@@ -741,6 +749,7 @@
       </div>
       <div class="bars">
         ${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `EXP ${Math.floor((P.xp / need) * 100)}%`)}
       </div>`;
   }
@@ -875,7 +884,7 @@
                 <span class="grow" style="display:grid;gap:2px;min-width:0">
                   <b>${c.name}</b>
                   <span class="small muted">${c.desc}</span>
-                  <span class="stats">Sức mạnh ${c.base.str} · Thể lực ${c.base.vit} · Nhanh nhẹn ${c.base.agi} · Phòng thủ ${c.base.def}</span>
+                  <span class="stats">STR ${c.base.str} · AGI ${c.base.agi} · VIT ${c.base.vit} · ENE ${c.base.ene} · ${c.points} điểm / cấp</span>
                   <span class="small" style="color:var(--gold)">Kỹ năng: ${c.skills[0].name}. ${c.skills[0].desc}</span>
                 </span>
               </button>`).join('')}
@@ -918,12 +927,12 @@
   }
 
   function viewTown() {
-    const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp;
+    const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp;
     const ni = nextBossIndex();
     const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     return `
       <div class="card">
-        <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
+        <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu và MP đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
       </div>
 
       <div class="card">
@@ -1118,19 +1127,20 @@
   }
 
   // ---------- Nhân vật ----------
+  // 4 chỉ số như MU; chỉ số nào tăng tấn công / phòng thủ tùy lớp (CLASSES[lớp].derived)
   const STAT_INFO = {
-    str: ['Sức mạnh', 'Tăng tấn công'],
-    vit: ['Thể lực', 'Tăng máu tối đa'],
-    agi: ['Nhanh nhẹn', 'Tăng chí mạng, né, một ít tấn công'],
-    def: ['Phòng thủ', 'Giảm sát thương nhận vào'],
+    str: ['Sức mạnh', 'Tấn công (Kiếm Sĩ, Đấu Sĩ, một phần Tiên Nữ)'],
+    agi: ['Nhanh nhẹn', 'Chí mạng, né, phòng thủ; tấn công của Tiên Nữ'],
+    vit: ['Thể lực', 'Máu tối đa'],
+    ene: ['Năng lượng', 'MP tối đa; tấn công của Phù Thủy, Đấu Sĩ'],
   };
 
   // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
   const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
-  const effLevel = (l) => l + Math.max(0, l - UPGRADE.double_from + 1);
+  const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
   // màu viền theo cấp nâng (+7, +9, +11)
-  const upClass = (l) => (l >= 11 ? ' up11' : l >= 9 ? ' up9' : l >= 7 ? ' up7' : '');
+  const upClass = L.upClass;
   // Món đồ theo id: đồ thường trong ITEMS, đồ chỉ số ngẫu nhiên (id bắt đầu bằng #) do server gửi.
   const isGear = (id) => typeof id === 'string' && id[0] === '#';
   const itemOf = (id) => (isGear(id) ? P.view.gear[id] : ITEMS[id]);
@@ -1148,7 +1158,7 @@
     const b = id ? P.view.bonus[id] || 0 : 0;
     const extra = it.rarity ? ` · <span class="rar-${it.rarity}">${RARITY[it.rarity]}: ${bonusText(it)}</span>` : '';
     if (it.slot === 'wing') {
-      const pct = (v) => Math.round((v + 0.02 * effLevel(upLevel(id))) * 100);
+      const pct = (v) => Math.round((v + RULES.wingPerLevel * effLevel(upLevel(id))) * 100);
       return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
@@ -1182,7 +1192,7 @@
         <hr class="sep">
         ${Object.keys(STAT_INFO).map(stat).join('')}
         ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
-        <p class="small muted">Mỗi lần lên cấp nhận ${RULES.pointsPerLevel} điểm. Điểm đã cộng không gỡ được.</p>
+        <p class="small muted">Mỗi lần lên cấp nhận ${c.points} điểm. Điểm đã cộng không gỡ được.</p>
         <hr class="sep">
         ${kv('Tấn công', fmt(d.atk))}
         ${kv('Phòng thủ', fmt(d.def))}
@@ -1190,6 +1200,7 @@
         ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
         ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${kv('MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
       </div>`;
   }
@@ -1200,8 +1211,9 @@
   let allocTimer = null;
   const allocPendingTotal = () => Object.values(allocPending).reduce((a, b) => a + b, 0);
   function allocAdd(stat) {
-    if (!P || P.points - allocPendingTotal() <= 0) return;
-    allocPending[stat] = (allocPending[stat] || 0) + 1;
+    const next = P && L.allocAdd(allocPending, stat, P.points);
+    if (!next) return;
+    allocPending = next;
     clearTimeout(allocTimer);
     allocTimer = setTimeout(allocFlush, 200);
     render();
@@ -1209,10 +1221,9 @@
   async function allocFlush() {
     const pend = allocPending;
     allocPending = {};
-    for (const [stat, n] of Object.entries(pend)) {
-      if (n <= 0) continue;
+    for (const cmd of L.allocBatches(pend)) {
       while (busy) await new Promise((r) => setTimeout(r, 50)); // đợi lệnh khác xong, không làm mất điểm
-      await sendCommand({ act: 'alloc', stat, n });
+      await sendCommand(cmd);
     }
   }
 
@@ -1232,7 +1243,7 @@
       <div class="card"><h3>Kỹ năng</h3><div class="list">
         ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
           <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
-          <div class="small muted">${k.desc} Hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
+          <div class="small muted">${k.desc} Tốn ${k.mp} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
       </div></div>
 
       ${viewAchievements()}`;
@@ -1242,23 +1253,17 @@
   // Thú bán ở cửa hàng hoặc quái đã thuần phục ("tame:<id quái>")
   const MONSTER_BY_ID = {};
   ZONES.forEach((z) => z.monsters.forEach((m) => { MONSTER_BY_ID[m.id] = m; }));
-  function tamePrice(m) { return 1000 + m.level * 100; }
+  const tamePrice = (m) => L.tamePrice(m, RULES.tamePrice, RULES.tamePricePerLevel);
   function petInfo(id) {
     if (id && id.startsWith('tame:')) {
       const m = MONSTER_BY_ID[id.slice(5)];
-      return m && { id, name: m.name + ' (thuần)', desc: 'Tấn công +3%.', sprite: 'monsters/' + m.id };
+      return m && { id, name: m.name + ' (thuần)', desc: `Tấn công +${Math.round(RULES.tameBonus * 100)}%.`, sprite: 'monsters/' + m.id };
     }
     const pt = PETS.find((x) => x.id === id);
     return pt && { ...pt, sprite: 'pets/' + pt.id };
   }
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
-  const petXpFor = (lv) => 5 * lv * (lv - 1);
-  function petLevel(id) {
-    const xp = (P.pet_xp && P.pet_xp[id]) || 0;
-    let lv = 1;
-    while (lv < RULES.petMaxLevel && petXpFor(lv + 1) <= xp) lv++;
-    return { lv, xp, next: lv < RULES.petMaxLevel ? petXpFor(lv + 1) : null, from: petXpFor(lv) };
-  }
+  const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
   const TAME_SKILL = { id: 'rend', name: 'Cắn Xé', desc: 'Cú cắn gây gấp đôi sát thương.' };
   function petSkill(id) {
     if (id.startsWith('tame:')) return TAME_SKILL;
@@ -1368,7 +1373,9 @@
   }
   const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
 
-  function cellIcon(it) {
+  function cellIcon(it, level) {
+    const own = ownIcon(it, level);
+    if (own) return `<img src="${own}" alt="" draggable="false" class="own">`;
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 
@@ -1381,7 +1388,7 @@
       const locked = !SLOT_OPEN.includes(slot);
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
-        ${it ? cellIcon(it) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
+        ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
         <span class="lbl">${SLOT_LABEL[slot]}</span>
       </button>`;
     }).join('');
@@ -1392,7 +1399,7 @@
       const wearable = SLOT_OPEN.includes(it.slot);
       return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${(it.level && P.level < it.level) || (it.cls && it.cls !== P.cls) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
           ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
-        ${cellIcon(it)}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
+        ${cellIcon(it, upLevel(id))}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
       </button>`;
     }).join('');
     return `
@@ -1444,7 +1451,7 @@
     el.className = 'itemtip';
     el.setAttribute('role', 'dialog');
     el.innerHTML = `
-      <div class="big">${itemIcon(it, it.rarity)}</div>
+      <div class="big">${itemIcon(it, it.rarity, upLevel(id))}</div>
       <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
       ${desc ? `<div class="small">${desc}</div>` : ''}
       ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
@@ -1525,7 +1532,7 @@
     return `<div class="card"><h3>Bán đồ</h3>
       ${ids.length ? `<div class="list">${ids.map((id) => {
         const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
-        return `<div class="item">${itemIcon(it, it.rarity)}<div class="grow"><div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div></div>
+        return `<div class="item">${itemIcon(it, it.rarity, upLevel(id))}<div class="grow"><div class="name">${itemName(id)}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div></div>
           ${it.locked ? '<span class="small muted">Đã khóa</span>' : `<button class="btn" data-act="sell" data-id="${id}" aria-label="Bán ${it.name}">Bán ${fmt(it.sell)}</button>`}</div>`;
       }).join('')}</div>` : '<p class="small muted">Túi trống. Đồ đang mặc không bán được.</p>'}
     </div>`;
@@ -1540,12 +1547,12 @@
       const it = itemOf(f.id), c = f.cost;
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
-      const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * 0.08)) : 0;
+      const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
       const step = c ? per * (effLevel(f.level + 1) - effLevel(f.level)) : 0;
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${icon(it.icon, 'lg')}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? ', +2% sát thương / hấp thụ' : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" data-slot="${slot}" data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
@@ -1553,16 +1560,13 @@
     }).join('');
     const table = UPGRADE.steps.map((s) => `+${s.level}: ${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
     return `<div class="card"><h3>Rèn đồ đang mặc</h3>
-      <p class="small muted">Mỗi cấp thêm 8% chỉ số của món đồ; từ +10 mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món.</p>
+      <p class="small muted">Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số của món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món.</p>
       <div class="list">${rows}</div></div>`;
   }
 
   // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
   let chaosPick = {}; // công thức → uid món đồ chọn
-  function chaosRate(r, up) {
-    const extra = r.gear ? (r.per_up || 0) * Math.max(0, up - r.gear.min_up) : 0;
-    return Math.min(r.max_rate || 1, r.rate + extra);
-  }
+  const chaosRate = L.chaosRate;
   function chaosCard() {
     const rows = CHAOS.map((r) => {
       const fits = r.gear ? bagGear().filter((uid) => {
@@ -1632,10 +1636,10 @@
 
   function smithCard() {
     const lv = P.view.crafting.smith, gold = P.view.crafting.smithGold;
-    const epic = 6 * lv, full = bagGear().length >= RULES.gearBag;
+    const epic = RULES.smithEpicPerLevel * lv, full = bagGear().length >= RULES.gearBag;
     const slots = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']];
     return `<div class="card"><h3>Rèn đồ</h3>${craftLevel('smith', 'Rèn đồ')}
-      <p class="small muted">Rèn một món đồ chỉ số ngẫu nhiên hợp cấp bạn: Sử Thi ${epic}%, Hiếm 50%. Nghề càng cao càng dễ ra Sử Thi.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
+      <p class="small muted">Rèn một món đồ chỉ số ngẫu nhiên hợp cấp bạn: Sử Thi ${epic}%, Hiếm ${RULES.smithRare}%. Nghề càng cao càng dễ ra Sử Thi.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
       <div class="list">${slots.map(([slot, label]) => {
         const cost = Object.entries(RULES.smithCosts[slot]);
         const ok = !full && P.gold >= gold && cost.every(([id, n]) => (P.inv[id] || 0) >= n);
@@ -1758,8 +1762,8 @@
       sections.push(sellCard());
     }
     if (n.role === 'inn') {
-      const full = P.hp >= d.maxHp, cost = P.view.restCost;
-      sections.push(`<div class="card"><button class="btn ${full ? '' : 'primary'} block" data-act="rest" ${full ? 'disabled' : ''}>${full ? 'Máu đang đầy' : cost ? `Nghỉ một đêm · ${fmt(cost)} vàng` : 'Nghỉ một đêm · miễn phí'}</button></div>`);
+      const full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp, cost = P.view.restCost;
+      sections.push(`<div class="card"><button class="btn ${full ? '' : 'primary'} block" data-act="rest" ${full ? 'disabled' : ''}>${full ? 'Máu và MP đang đầy' : cost ? `Nghỉ một đêm · ${fmt(cost)} vàng` : 'Nghỉ một đêm · miễn phí'}</button></div>`);
     }
     if (n.role === 'tower') {
       const best = P.tower_best || 0;
@@ -1792,7 +1796,7 @@
       const ready = wild.filter((m) => count(m.id) >= RULES.tameKills);
       const near = wild.filter((m) => count(m.id) < RULES.tameKills && count(m.id) > 0)
         .sort((a, b) => count(b.id) - count(a.id)).slice(0, 3);
-      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường thì mang về thuần được. Thú thuần: tấn công +3%.</p>
+      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường thì mang về thuần được. Thú thuần: tấn công +${Math.round(RULES.tameBonus * 100)}%.</p>
         <div class="list">${ready.map((m) => {
           const price = tamePrice(m), poor = P.gold < price;
           return `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Đã hạ ${fmt(count(m.id))} con</div></div>
@@ -1871,7 +1875,7 @@
       bottom = `
         <div class="actions">
           <button class="btn primary" data-act="attack">${icon('broadsword')} Tấn công</button>
-          ${skills.map((k) => `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) ? 'disabled' : ''}>${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ''}</button>`).join('')}
+          ${skills.map((k) => { const noMp = (P.mp || 0) < k.mp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.mp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${k.mp} MP</span>`}</button>`; }).join('')}
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'}>${icon('health-potion')} Uống máu (${pots})</button>
           <button class="btn" data-act="flee">${icon('walk')} Bỏ chạy</button>
         </div>`;
@@ -1902,7 +1906,7 @@
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;
@@ -2421,6 +2425,32 @@
     });
     render();
     Net.resume().then(enter).catch((e) => { toast(e.msg, true); enter(null); });
+    if (new URLSearchParams(location.search).get('test') === '1') testHook();
+  }
+
+  // Hook cho test tự động (e2e/, chỉ bật khi mở trang với `?test=1`): đọc trạng thái thay vì đoán chữ
+  // trên màn hình, và gọi thẳng vài thao tác (đi tới ô, gửi lệnh) như người chơi bấm (FEATURE_CATALOG M8).
+  // Chỉ dùng được những gì người chơi vẫn làm được; server vẫn kiểm mọi lệnh.
+  function testHook() {
+    const copy = (x) => (x == null ? null : JSON.parse(JSON.stringify(x)));
+    window.__hl = {
+      player: () => copy(P),
+      userId: () => Net.userId,
+      ui: () => ({
+        loading, busy, tab, logged: !!Net.username,
+        npc: npc && npc.id, dialog: dialog && dialog.type,
+        trade: trade && trade.status, party: copy(party),
+        mail: mail.open, friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
+      }),
+      world: () => copy(Map_.world()),
+      npcs: (map) => copy(WORLD.maps[map || (P && P.pos.map)].npcs),
+      // đi tới ô (x, y) bằng đúng đường đi của người chơi khi chạm vào bản đồ; xong thì trả vị trí
+      walkTo: async (x, y) => { await walkTo(x, y); return P && copy(P.pos); },
+      step: (dir) => step(dir),
+      send: async (cmd) => { await sendCommand(cmd); return copy(P); },
+      tab: (id) => goTab(id),
+      closeNpc: () => { npc = null; render(); },
+    };
   }
 
   start();

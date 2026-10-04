@@ -2,7 +2,7 @@ defmodule HacLong.Game.Daily do
   @moduledoc """
   Việc hằng ngày ở Bảng Tin trong Làng. Hàm thuần, như `Engine`.
 
-  Mỗi ngày (theo giờ Việt Nam) mỗi nhân vật có 3 việc, chọn ngẫu nhiên nhưng cố định trong
+  Mỗi ngày (theo giờ Việt Nam) mỗi nhân vật có 4 việc, chọn ngẫu nhiên nhưng cố định trong
   ngày (theo tên nhân vật và ngày), lấy từ hai vùng cao nhất đã mở:
 
   - `kill`: hạ N con một loại quái;
@@ -18,6 +18,8 @@ defmodule HacLong.Game.Daily do
 
   # giờ Việt Nam: việc mới lúc 0 giờ
   @utc_offset 7 * 3600
+  # số ở `RULES.daily` (`priv/game_data/rules.json`): khoảng số lượng `[ít, nhiều]`, hệ số thưởng
+  @rules Data.rules().daily
 
   def today(now \\ DateTime.utc_now()),
     do: now |> DateTime.add(@utc_offset, :second) |> DateTime.to_date() |> Date.to_iso8601()
@@ -42,13 +44,16 @@ defmodule HacLong.Game.Daily do
 
     {zk, rng} = pick(zones, rng)
     {monster, rng} = pick(Data.zone(zk).monsters, rng)
-    {nk, rng} = range(6, 10, rng)
+    {nk, rng} = range(@rules.kill, rng)
     {zz, rng} = pick(zones, rng)
-    {nz, rng} = range(12, 16, rng)
+    {nz, rng} = range(@rules.zone, rng)
     {zg, rng} = pick(zones, rng)
-    {item, rng} = pick(if(zg < 3, do: ~w(herb ore), else: ~w(herb_rare ore_rare)), rng)
-    {ng, rng} = range(4, 6, rng)
-    {nf, _rng} = range(3, 5, rng)
+
+    {item, rng} =
+      pick(if(zg < @rules.rare_gather_zone, do: ~w(herb ore), else: ~w(herb_rare ore_rare)), rng)
+
+    {ng, rng} = range(@rules.gather, rng)
+    {nf, _rng} = range(@rules.fish, rng)
 
     [
       task("kill", monster.id, zk, nk, "Hạ #{nk} #{monster.name}"),
@@ -69,7 +74,7 @@ defmodule HacLong.Game.Daily do
     {Enum.at(list, i - 1), rng}
   end
 
-  defp range(lo, hi, rng) do
+  defp range([lo, hi], rng) do
     {i, rng} = :rand.uniform_s(hi - lo + 1, rng)
     {lo + i - 1, rng}
   end
@@ -82,22 +87,29 @@ defmodule HacLong.Game.Daily do
       |> Enum.map(& &1.level)
       |> then(&(Enum.sum(&1) / length(&1)))
 
-    gold_each = 3 + lv * 2.2
-    xp_each = 8 + lv * 6 + lv * lv * 0.5
+    gold_each = Engine.base_gold(lv)
+    xp_each = Engine.base_xp(lv)
+    r = @rules.reward
 
     reward =
       case kind do
         "fish" ->
-          %{gold: round(gold_each * count * 1.5), xp: round(xp_each * count / 2)}
+          %{
+            gold: round(gold_each * count * r.fish.gold),
+            xp: round(xp_each * count / r.fish.xp_div)
+          }
 
         "gather" ->
           %{
-            gold: round(Data.item(target).price * 0.6 * count + gold_each * 3),
-            xp: round(xp_each * count / 3)
+            gold:
+              round(
+                Data.item(target).price * r.gather.price * count + gold_each * r.gather.gold_kills
+              ),
+            xp: round(xp_each * count / r.gather.xp_div)
           }
 
         _ ->
-          %{gold: round(gold_each * count * 1.2), xp: round(xp_each * count * 0.6)}
+          %{gold: round(gold_each * count * r.kill.gold), xp: round(xp_each * count * r.kill.xp)}
       end
 
     %{

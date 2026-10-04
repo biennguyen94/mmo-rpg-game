@@ -21,6 +21,8 @@ defmodule HacLong.Game.Tower do
   @w 13
   @h 11
   @map "tower"
+  # số ở `RULES.tower` (`priv/game_data/rules.json`)
+  @rules Data.rules().tower
 
   def map_id, do: @map
 
@@ -105,8 +107,12 @@ defmodule HacLong.Game.Tower do
 
   defp monsters(floor, tiles, avoid, rng) do
     zone = Data.zone(tier(floor))
-    boss? = rem(floor, 5) == 0
-    count = if boss?, do: 2, else: min(6, 3 + div(floor, 10))
+    boss? = rem(floor, @rules.boss_every) == 0
+
+    count =
+      if boss?,
+        do: @rules.boss_monsters,
+        else: min(@rules.max_monsters, @rules.monsters + div(floor, 10) * @rules.monsters_per_10)
 
     free =
       for {row, y} <- Enum.with_index(tiles),
@@ -133,7 +139,7 @@ defmodule HacLong.Game.Tower do
             id: 0,
             kind: zone.boss.id,
             name: zone.boss.name,
-            level: floor + 2,
+            level: floor + @rules.level_offset,
             x: x,
             y: y,
             elite: true
@@ -168,20 +174,30 @@ defmodule HacLong.Game.Tower do
 
   @doc "Quái dùng trong trận với con `m` trên tầng."
   def battle_monster(m) do
-    mult = 1 + max(0, m.level - 36) * 0.04
+    mult = 1 + max(0, m.level - @rules.harder_from) * @rules.harder_per_floor
     base = if m.elite, do: Enum.find(Data.zones(), &(&1.boss.id == m.kind)).boss, else: %{}
 
     spec = %{
       id: m.kind,
       name: m.name,
       level: m.level,
-      mult: if(m.elite, do: mult * 1.3, else: mult),
+      mult: if(m.elite, do: mult * @rules.elite_mult, else: mult),
       special: base[:special],
       on_hit: if(m.elite, do: nil, else: Data.monster(m.kind)[:on_hit])
     }
 
     q = Engine.make_monster(spec, false)
-    q = if m.elite, do: %{q | maxHp: q.maxHp * 2, xp: q.xp * 3, gold: q.gold * 3}, else: q
+
+    q =
+      if m.elite,
+        do: %{
+          q
+          | maxHp: q.maxHp * @rules.elite_hp,
+            xp: q.xp * @rules.elite_xp,
+            gold: q.gold * @rules.elite_gold
+        },
+        else: q
+
     Map.merge(q, %{hp: q.maxHp, tower: true, elite: m.elite})
   end
 
@@ -206,20 +222,14 @@ defmodule HacLong.Game.Tower do
 
   @doc "Thưởng khi vượt qua tầng `floor`."
   def floor_reward(floor) do
-    boss? = rem(floor, 5) == 0
-    k = if boss?, do: 3, else: 1
-
-    pot =
-      cond do
-        floor >= 20 -> "potion_l"
-        floor >= 9 -> "potion_m"
-        true -> "potion_s"
-      end
+    boss? = rem(floor, @rules.boss_every) == 0
+    k = if boss?, do: @rules.reward_boss, else: 1
+    pot = Data.potion_for(floor)
 
     %{
-      gold: round((3 + floor * 2.2) * 3 * k),
-      xp: round((8 + floor * 6 + floor * floor * 0.5) * k),
-      items: if(boss?, do: %{pot => 2}, else: %{})
+      gold: round(Engine.base_gold(floor) * @rules.reward_gold * k),
+      xp: round(Engine.base_xp(floor) * k),
+      items: if(boss?, do: %{pot => @rules.boss_potions}, else: %{})
     }
   end
 

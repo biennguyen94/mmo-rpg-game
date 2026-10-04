@@ -4,7 +4,7 @@ defmodule HacLong.Game.DailyTest do
   alias HacLong.Game.{Commands, Daily, Data}
 
   defp player(attrs \\ %{}) do
-    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Chăm Chỉ", "cls" => "warrior"})
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Chăm Chỉ", "cls" => "dk"})
     Map.merge(p, attrs)
   end
 

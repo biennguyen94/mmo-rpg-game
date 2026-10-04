@@ -10,6 +10,7 @@
 >
 > Bản đồ code chi tiết (vàng, đồ, quản trị, xếp hạng, vẽ, test): `docs/CODEBASE_NOTES.md`.
 > Danh mục đầy đủ mọi tính năng MU Web có thể mang sang (để chọn thêm): `docs/FEATURE_CATALOG.md`.
+> Kế hoạch các phase tiếp theo (từ các mục đã chọn): `docs/PHASE_PLAN.md`.
 >
 > Số dòng code dẫn theo bản hiện tại của `reference/rpg-game` (gốc commit `5c514b7`, xem `reference/COMMIT`).
 
@@ -24,6 +25,8 @@
 6. [Bảng xếp hạng theo lớp](#6-bảng-xếp-hạng-theo-lớp) (số 7)
 7. [Thứ tự làm và khối lượng](#7-thứ-tự-làm-và-khối-lượng)
 8. [Tổng hợp câu hỏi cần chốt](#8-tổng-hợp-câu-hỏi-cần-chốt)
+9. [Bốn lớp nhân vật MU](#9-bốn-lớp-nhân-vật-mu) (đã làm 2026-10-04)
+10. [Đồ từ Item.txt + hình đổi theo cấp](#10-đồ-từ-itemtxt--hình-đổi-theo-cấp) (công cụ đã có, chờ file)
 
 ---
 
@@ -37,10 +40,10 @@
   (vd Thành tựu ra khỏi Nhân vật). Chi tiết: `docs/FEATURE_CATALOG.md` mục Q.
   - Ô cánh (mục 4): đặt trong bố cục mới của tab Nhân vật (Q1), hình cánh vẽ thêm vào `doll.js` như đã thiết kế.
 - **Viết theo kiểu Hắc Long**, không chép nguyên file MU:
-  - module `HacLong.*`, dữ liệu trong `priv/game_data.json`;
+  - module `HacLong.*`, dữ liệu trong `priv/game_data/*.json` (trước Phase 1 là một file `priv/game_data.json`);
   - logic thuần ở `HacLong.Game.*`, lệnh đi qua `Commands` → `Session` (mỗi tài khoản một tiến trình);
   - lưu nguyên dòng bằng `Characters.save!/2`.
-- **Số gameplay mới đặt trong `priv/game_data.json`** (khóa mới), không đặt cứng trong module.
+- **Số gameplay mới đặt trong `priv/game_data/`** (số luật chơi vào `rules.json` → `RULES`), không đặt cứng trong module.
   Lưu ý: file này được nạp lúc biên dịch (`data.ex:31-59`), đổi số phải khởi động lại server.
 - **Chất lượng:** mỗi bước giữ `mix format --check-formatted`, `mix compile --warnings-as-errors`, `mix test` xanh.
   - Đổi cân bằng (mục 3, 4) thì chạy thêm `mix hac_long.simulate`.
@@ -250,7 +253,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 | MU Web | Hắc Long |
 |---|---|
-| `upgrade.levels` (bảng từng bước: ngọc, tỉ lệ, thất bại) | khóa mới `UPGRADE` trong `game_data.json` |
+| `upgrade.levels` (bảng từng bước: ngọc, tỉ lệ, thất bại) | khóa mới `UPGRADE` (nay ở `priv/game_data/upgrade.json`) |
 | `Mu.Game.Upgrade.apply/5` (hàm thuần, RNG truyền vào) | `HacLong.Game.Upgrade` |
 | Ngọc rơi hiếm từ quái cấp cao | thêm vào `Engine.win` |
 | Thông báo toàn server khi ép thành công từ +7 | `Chat.system` |
@@ -315,8 +318,10 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 > **Đã làm (Đợt 3, 2026-10-04)** theo 4.3. Khác thiết kế:
 >
-> - Cánh và đồ ra từ máy là bản riêng (`Gear.plain`), nằm trong túi đồ hiếm. Tên cánh cấp 2: Cánh Huyết Long (Chiến Binh),
->   Cánh Hư Không (Thích Khách), Cánh Thiên Sứ (Hiệp Sĩ).
+> - Cánh và đồ ra từ máy là bản riêng (`Gear.plain`), nằm trong túi đồ hiếm.
+> - **Từ §9 (đổi lớp MU):** 8 cánh `wing_{dk,dw,elf,mg}_{1,2}`: Cánh Ác Quỷ / Cánh Rồng (Kiếm Sĩ), Cánh Thiên Đường /
+>   Cánh Linh Hồn (Phù Thủy), Cánh Tiên / Cánh Tinh Linh (Tiên Nữ), Cánh Bóng Tối / Cánh Hủy Diệt (Đấu Sĩ). Bảng 4.3 bên dưới
+>   là thiết kế cũ (3 lớp).
 > - Đấu trường: % cánh của đối thủ gộp vào tấn công (× (1 + dmg)) và máu (÷ (1 − absorb)), vì quái không có ô cánh.
 > - NPC Lão Hỗn Nguyên đứng ở Làng [20, 6], hình tự vẽ (`npcs/chaos.png`).
 
@@ -367,7 +372,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 **NPC mới "Lão Hỗn Nguyên"** ở Làng (thêm vào `priv/maps/village.json`), mở panel **Máy Hỗn Nguyên**.
 
-**Công thức** (khóa mới `CHAOS` trong `game_data.json`):
+**Công thức** (khóa mới `CHAOS`, nay ở `priv/game_data/chaos.json`):
 
 | Công thức | Đầu vào | Phí | Tỉ lệ | Kết quả |
 |---|---|---|---|---|
@@ -456,6 +461,9 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 - **5-A** Số bot và thời gian soak mục tiêu (đề xuất 30 bot / 10 phút; tối đa 100 bot chạy tay)?
 - **5-B** Chạy e2e trên **mọi push** hay chỉ khi sửa `reference/rpg-game/**`? Đề xuất: **chỉ khi sửa thư mục đó** (`paths:` filter).
 
+**Đã chốt (2026-10-04, Phase 2):** 5-A và 5-B theo đề xuất. Đã làm: `e2e/` (xem `e2e/README.md`), CI
+`.github/workflows/hac-long-e2e.yml`.
+
 ---
 
 ## 6. Bảng xếp hạng theo lớp
@@ -472,12 +480,12 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 
 ### 6.3 Thiết kế
 
-- Thêm loại `level_warrior`, `level_rogue`, `level_knight` (lọc `cls`, cùng thứ tự: chuyển sinh → cấp → xp).
+- Thêm loại `level_dk`, `level_dw`, `level_elf`, `level_mg` (sửa theo §9) (lọc `cls`, cùng thứ tự: chuyển sinh → cấp → xp).
 - **Cache:** `HacLong.Leaderboard` thành GenServer giữ kết quả mọi bảng trong ETS, làm mới mỗi 60 giây.
   Kênh đọc từ ETS, không truy vấn DB mỗi lần. Server đông người thì đây là phần có lợi nhất.
 - Hạng của mình: thêm hạng trong lớp (`level_rank` có lọc `cls`).
 - Index mới: `(cls, rebirths DESC, level DESC, xp DESC)`.
-- Client: dưới nút "Cấp cao" thêm hàng chọn **Tất cả / Chiến Binh / Thích Khách / Hiệp Sĩ** (dùng `icon` của lớp).
+- Client: dưới nút "Cấp cao" thêm hàng chọn **Tất cả / Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ** (dùng `icon` của lớp).
   Hiện "Hạng của bạn trong lớp: #n".
 - Tùy chọn: bảng "Giàu nhất" (vàng). Đề xuất **không**, vì lộ thông tin cho kẻ lừa đảo trên chợ.
 
@@ -527,3 +535,72 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 | 5-A | Quy mô soak | 30 bot / 10 phút |
 | 5-B | Khi nào chạy e2e trên CI | chỉ khi sửa `reference/rpg-game/**` |
 | 6-A | Top N, chu kỳ cache | top 10, 60 giây |
+
+---
+
+## 9. Bốn lớp nhân vật MU
+
+> **Đã làm (2026-10-04).** Anh chốt: chỉ số theo MU (STR / AGI / VIT / ENE + MP), **xóa nhân vật cũ**, Đấu Sĩ tạo tự do,
+> mỗi tài khoản một nhân vật. Mục FEATURE_CATALOG: B3 (điểm / cấp theo lớp), B7 (công thức theo lớp trong data), B1 (lên cấp
+> hồi đầy máu + MP), một phần B8 (MP trong bảng chỉ số).
+
+### 9.1 Lớp
+
+| id | Tên (MU) | STR / AGI / VIT / ENE gốc | Điểm / cấp | Tấn công theo | Kỹ năng cấp 1 / 10 / 25 (MP) |
+|---|---|---|---|---|---|
+| `dk` | Kiếm Sĩ (Dark Knight) | 28 / 20 / 25 / 10 | 5 | STR | Chém Xoáy (8), Trảm Choáng (14), Nộ Chiến (20) |
+| `dw` | Phù Thủy (Dark Wizard) | 18 / 18 / 15 / 30 | 5 | ENE | Cầu Lửa (10), Tia Sét (16), Khiên Linh Hồn (24) |
+| `elf` | Tiên Nữ (Fairy Elf) | 22 / 25 / 20 / 15 | 5 | AGI + STR | Tam Tiễn (8), Hồi Sinh Lực (14), Tăng Sức Mạnh (20) |
+| `mg` | Đấu Sĩ (Magic Gladiator) | 26 / 26 / 26 / 26 | 7 | STR + ENE | Kiếm Lửa (10), Kiếm Độc Hỏa (14), Phán Quyết (22) |
+
+- Chỉ số gốc, điểm / cấp lấy từ MU Web (`priv/game_data/classes.json`). Hệ số công / thủ / máu / MP là của Hắc Long
+  (`CLASSES[lớp].derived`), chỉnh bằng simulator để 4 lớp mạnh ngang 3 lớp cũ.
+- Kỹ năng giữ kiểu đánh theo lượt của Hắc Long (hồi chiêu theo lượt) + tốn MP; tác dụng dùng lại các kiểu sẵn có
+  (`effect`), thêm `fire_ball` (×2.0, xuyên 30 % giáp).
+- MP: hồi 5 % tối đa mỗi lượt của người chơi; đầy khi lên cấp, nghỉ trọ, uống nước giếng. Chưa có bình MP (thêm cùng §10).
+
+### 9.2 Simulator (20 ván / lớp trước, 5 ván / lớp sau)
+
+| | Chỉ đánh (trận / chết) | +nâng cấp (trận / chết) |
+|---|---|---|
+| Trước: Chiến Binh / Thích Khách / Hiệp Sĩ | 440 / 0 · 440 / 1 · 436 / 0 | 340 / 0 · 342 / 1 · 341 / 0 |
+| Sau: Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ | 440 / 1 · 441 / 0 · 439 / 0 · 432 / 0 | 341 / 0 · 341 / 0 · 345 / 0 · 336 / 0 |
+
+### 9.3 Chưa làm (đi cùng §10)
+
+- **B4** đồ khởi đầu theo lớp (gậy / cung cho Phù Thủy / Tiên Nữ): Hắc Long chưa có gậy phép, cung → làm khi có đồ từ Item.txt.
+- **C4** đồ theo lớp (Đấu Sĩ không đội mũ), **C3** yêu cầu chỉ số, **C1** đủ 10 ô: cần dữ liệu `classes` / `req` từ Item.txt.
+- Tóc: chỉ có 3 kiểu (Kiếm Sĩ, Đấu Sĩ dùng chung). Thêm tile tóc khi có.
+
+## 10. Đồ từ Item.txt + hình đổi theo cấp
+
+> **Công cụ đã có (2026-10-04)**, chờ anh đặt `Item.txt` và bộ hình vào `assets_src/items/` (xem README trong đó).
+> `Item.txt` và icon `item_{group}_{index}` là dữ liệu của anh. Định dạng file: `docs/kb/KB_ITEM_REFERENCE.md §1` (repo ngoài).
+
+### 10.1 Hình đổi theo cấp +N (dùng được ngay)
+
+- Đặt hình vào `assets_src/items/icons/`:
+  - `item_{nhóm}_{số}_{N}.png` cho đồ Item.txt;
+  - `{id}_{N}.png` cho đồ Hắc Long hiện có, vd `broadsword_0.png`, `broadsword_5.png`, `broadsword_10.png`.
+- Chạy `mix hac_long.icons` → chép sang `priv/static/assets/items/`, ghi `priv/static/assets/item_icons.json`.
+- Game chọn mức lớn nhất ≤ cấp nâng; thiếu hình thì dùng icon cũ (không lỗi). Tải lại trang là thấy, không cần build lại.
+- Gắn đồ Hắc Long với một dòng Item.txt: thêm `"ref": "nhóm/số"` vào món đó trong `priv/game_data/items.json` thì dùng hình `item_…`.
+
+### 10.2 Thông số đồ từ Item.txt (bước tiếp theo)
+
+- `mix hac_long.items.import` đọc `Item.txt` → `priv/items_raw.json` (nguyên số) và `priv/items_from_txt.json` (nháp đồ Hắc Long:
+  `id item_g_i`, `ref`, `slot`, `atkMin` / `atkMax`, `def`, `level`, `req` STR/AGI/VIT/ENE gốc, `classes`, `cells`).
+- **Chưa thay đồ trong game.** Bước ghép (đợt 4 trong FEATURE_CATALOG) sẽ:
+  1. thay 18 vũ khí / giáp / khiên hiện có bằng đồ Item.txt theo từng lớp (cửa hàng Thợ Rèn, đồ rơi theo vùng, đồ trùm);
+  2. mở các ô mũ / quần / găng / giày / nhẫn (C1, C2) và luật đồ theo lớp (C4), yêu cầu chỉ số (C3), đồ khởi đầu theo lớp (B4);
+  3. đòn min~max (A1) nếu anh muốn, vì Item.txt có sẵn `DmgMin` / `DmgMax`;
+  4. chạy simulator trước / sau.
+
+### 10.3 ⛔ Câu hỏi (khi anh gửi Item.txt)
+
+- **10-A** Yêu cầu chỉ số: dùng nguyên số trong file hay nhân hệ số (MU Web dùng 0,35 để nhân vật cấp thấp mặc được, xem KB §3.2)?
+- **10-B** Lấy những món nào: toàn bộ (vũ khí 124 món; mũ 47, giáp / quần / găng / giày 54 món mỗi loại) hay chọn một bộ cho 6 vùng của Hắc Long (đề xuất:
+  mỗi lớp 6–7 bậc đồ theo cấp vùng, phần còn lại để sau)?
+- **10-C** Giá mua / bán: Item.txt không có giá → đề xuất theo cấp đồ (công thức trong `priv/game_data/rules.json`).
+- **10-D** Bình MP (MU 14/4–6) và các ngọc, nhẫn, dây chuyền nhóm 13–14: thêm luôn hay để sau?
+

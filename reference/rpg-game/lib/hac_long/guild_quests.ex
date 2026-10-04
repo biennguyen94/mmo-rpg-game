@@ -24,9 +24,11 @@ defmodule HacLong.GuildQuests do
     %{kind: "boss", per: 1, name: "Hạ trùm canh giữ vùng", unit: "lần hạ trùm"}
   ]
 
-  @fund_reward 3000
-  @gold_reward 800
-  @xp_reward 1500
+  # thưởng ở `RULES.guild` (`priv/game_data/rules.json`)
+  @rules HacLong.Game.Data.rules().guild
+  @fund_reward @rules.quest_fund
+  @gold_reward @rules.quest_gold
+  @xp_reward @rules.quest_xp
 
   def kinds, do: @kinds
   def rewards, do: %{fund: @fund_reward, gold: @gold_reward, xp: @xp_reward}

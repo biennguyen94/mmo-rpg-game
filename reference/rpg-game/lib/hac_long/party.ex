@@ -19,7 +19,8 @@ defmodule HacLong.Party do
 
   alias HacLong.Game.Session
 
-  @max 3
+  # `RULES.party.max` (`priv/game_data/rules.json`)
+  @max HacLong.Game.Data.rules().party.max
 
   def max, do: @max
   def topic(id), do: "party:#{id}"
