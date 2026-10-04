@@ -9,6 +9,7 @@
 > - **câu hỏi cần anh chốt** (đánh dấu ⛔).
 >
 > Bản đồ code chi tiết (vàng, đồ, quản trị, xếp hạng, vẽ, test): `docs/CODEBASE_NOTES.md`.
+> Danh mục đầy đủ mọi tính năng MU Web có thể mang sang (để chọn thêm): `docs/FEATURE_CATALOG.md`.
 >
 > Số dòng code dẫn theo bản hiện tại của `reference/rpg-game` (gốc commit `5c514b7`, xem `reference/COMMIT`).
 
