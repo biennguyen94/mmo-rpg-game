@@ -7,6 +7,8 @@ defmodule HacLong.Application do
 
   @impl true
   def start(_type, _args) do
+    HacLong.Leaderboard.init_cache()
+
     children = [
       HacLongWeb.Telemetry,
       HacLong.Repo,
@@ -18,6 +20,8 @@ defmodule HacLong.Application do
       HacLong.WorldBoss,
       HacLong.Party,
       HacLong.Trade,
+      HacLong.PkBet,
+      HacLong.GuildWars,
       {Registry, keys: :unique, name: HacLong.Game.Registry},
       {DynamicSupervisor, name: HacLong.Game.SessionSupervisor, strategy: :one_for_one},
       # mỗi bản đồ dùng chung (Làng, các vùng) một tiến trình

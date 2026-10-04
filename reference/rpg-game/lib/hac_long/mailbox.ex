@@ -8,14 +8,17 @@ defmodule HacLong.Mailbox do
     công một lần (`claimed_at IS NULL`), nên bấm hai lần hay hai tab cùng bấm cũng không
     nhận đôi.
   - Gửi thư thì báo số thư chưa mở qua PubSub (`{:mail, số}` trên kênh của người chơi).
-  - Giữ tối đa `@keep` thư mới nhất mỗi người; thư cũ đã mở bị xóa.
+  - Giữ tối đa `RULES.mail.keep` thư mới nhất mỗi người; thư cũ đã mở bị xóa. Thư quá
+    `RULES.mail.expire_days` ngày bị xóa, **trừ thư còn quà chưa nhận** (Phase 5, H12, câu 5-I).
+  - `claim_all/3` nhận quà mọi thư chưa mở trong một transaction; `delete_read/1` xóa thư đã mở.
   """
   import Ecto.Query
 
   alias HacLong.Repo
   alias HacLong.Game.{Character, Data, Engine}
 
-  @keep 50
+  @rules Data.rules().mail
+  @keep @rules.keep
 
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:second)
 
@@ -102,8 +105,23 @@ defmodule HacLong.Mailbox do
     )
   end
 
-  # thư đã mở nằm ngoài @keep thư mới nhất thì xóa
-  defp cleanup(user_id) do
+  # thư hết hạn (trừ thư còn quà chưa nhận); thư đã mở nằm ngoài @keep thư mới nhất thì xóa
+  @doc false
+  def cleanup(user_id, now \\ DateTime.utc_now()) do
+    cutoff = DateTime.add(now, -@rules.expire_days * 86_400, :second)
+
+    Repo.delete_all(
+      from m in "mails",
+        where:
+          m.user_id == ^user_id and m.inserted_at < ^cutoff and
+            (not is_nil(m.claimed_at) or
+               (m.gold == 0 and m.xp == 0 and m.items == ^%{}))
+    )
+
+    keep_newest(user_id)
+  end
+
+  defp keep_newest(user_id) do
     case Repo.one(
            from m in "mails",
              where: m.user_id == ^user_id,
@@ -156,6 +174,53 @@ defmodule HacLong.Mailbox do
   end
 
   def claim(_user_id, _id, _p, _save), do: {:error, "Thư không hợp lệ."}
+
+  @doc "Nhận quà mọi thư chưa mở (một transaction, như `claim/4`)."
+  def claim_all(user_id, p, save) do
+    Repo.transaction(fn ->
+      {n, rows} =
+        Repo.update_all(
+          from(m in "mails",
+            where: m.user_id == ^user_id and is_nil(m.claimed_at),
+            select: %{subject: m.subject, gold: m.gold, xp: m.xp, items: m.items}
+          ),
+          set: [claimed_at: now()]
+        )
+
+      if n == 0, do: Repo.rollback("Không còn thư chưa mở.")
+
+      total =
+        Enum.reduce(rows, %{gold: 0, xp: 0, items: %{}}, fn m, acc ->
+          %{
+            gold: acc.gold + m.gold,
+            xp: acc.xp + m.xp,
+            items: Map.merge(acc.items, m.items, fn _, a, b -> a + b end)
+          }
+        end)
+
+      p = give(p, total)
+      save.(p)
+      {"Mở #{n} thư. " <> describe(total), p}
+    end)
+    |> case do
+      {:ok, {msg, p}} ->
+        notify(user_id)
+        {:ok, msg, p}
+
+      {:error, msg} ->
+        {:error, msg}
+    end
+  end
+
+  @doc "Xóa mọi thư đã mở. Trả về số thư đã xóa."
+  def delete_read(user_id) do
+    {n, _} =
+      Repo.delete_all(
+        from m in "mails", where: m.user_id == ^user_id and not is_nil(m.claimed_at)
+      )
+
+    n
+  end
 
   defp give(p, mail) do
     p = %{p | gold: p.gold + mail.gold}

@@ -122,6 +122,8 @@
         ch.on('friends', (m) => cb.friends && cb.friends(m.msg));
         ch.on('dm', (m) => cb.dm && cb.dm(m));
         ch.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
+        ch.on('pk_invite', (m) => cb.pkInvite && cb.pkInvite(m.invite));
+        ch.on('pk_result', (m) => cb.pkResult && cb.pkResult(m));
         ch.on('shared', (m) => cb.shared && cb.shared(m));
         ch.onError(() => { if (channel === ch) lost(); });
         ch.join()
@@ -234,6 +236,8 @@
     party(op, payload) { return push('party', Object.assign({ op }, payload || {})); },
     // Giao dịch: trade('request', { uid }), trade('accept'), trade('offer', { offer }), trade('ready')...
     trade(op, payload) { return push('trade', Object.assign({ op }, payload || {})); },
+    // PK cược vàng: pk('invite', { uid, wager }), pk('accept'), pk('decline'), pk('cancel'), pk('info').
+    pk(op, payload) { return push('pk', Object.assign({ op }, payload || {})); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).
@@ -259,7 +263,7 @@
     report(id) { return push('report', { id }); },
 
     // Hộp thư: { mails, unread }. Mở thư/nhận quà là lệnh { act: 'mail_claim', id }.
-    mail() { return push('mail', {}); },
+    mail(op) { return push('mail', op ? { op } : {}); },
 
     // Lệnh quản trị (chỉ tài khoản quản trị).
     admin(op, payload) { return push('admin', Object.assign({ op }, payload || {})); },
@@ -290,6 +294,8 @@
     // Bảng giao dịch đổi (hoặc null khi xong/hủy) / có người mời giao dịch.
     onTrade(f) { cb.trade = f; },
     onTradeRequest(f) { cb.tradeRequest = f; },
+    onPkInvite(f) { cb.pkInvite = f; },
+    onPkResult(f) { cb.pkResult = f; },
     // Danh sách bạn đổi (msg: thông báo hoặc null) / có tin riêng mới (của mình hoặc gửi cho mình).
     onFriends(f) { cb.friends = f; },
     onDm(f) { cb.dm = f; },

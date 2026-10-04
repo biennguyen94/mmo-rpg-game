@@ -12,12 +12,27 @@ defmodule HacLong.Trade do
      nhả (`Session.release/3`). Lỗi ở bất kỳ bước nào thì không ai đổi gì.
 
   Mỗi khi bảng giao dịch đổi, cả hai nhận `{:trade, view | nil}` (xem `view/2`).
+
+  Tự hủy (Phase 5, E5; số ở `RULES.trade`): lời mời quá `invite_s` giây, giao dịch mở quá `max_s` giây,
+  một bên đổi bản đồ / vào trận (`left/2`, Session gọi), rớt mạng (Session gọi `cancel/1`); lúc mời và
+  lúc chốt hai người phải cùng bản đồ, cách nhau ≤ `range` ô (`near?/2`).
   """
   use GenServer
   require Logger
 
   alias HacLong.Repo
   alias HacLong.Game.{Characters, Session, TradeOffer}
+
+  @rules HacLong.Game.Data.rules().trade
+
+  @doc "Hai nhân vật đứng đủ gần để giao dịch: cùng bản đồ, cách nhau ≤ `RULES.trade.range` ô."
+  def near?(%{pos: a}, %{pos: b}),
+    do: a.map == b.map and max(abs(a.x - b.x), abs(a.y - b.y)) <= @rules.range
+
+  def near?(_, _), do: false
+
+  @doc "`uid` rời đi (đổi bản đồ / vào trận): hủy giao dịch đang có (trừ khi đang đổi đồ)."
+  def left(uid, why), do: GenServer.call(__MODULE__, {:cancel, uid, why})
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
@@ -71,6 +86,7 @@ defmodule HacLong.Trade do
             next: id + 1
         }
 
+        Process.send_after(self(), {:expire, id, :pending}, @rules.invite_s * 1000)
         send_to(to, {:trade_request, %{from: from, name: name}})
         push(t, [from])
         {:reply, :ok, s}
@@ -81,6 +97,7 @@ defmodule HacLong.Trade do
     case trade(s, uid) do
       %{status: :pending, b: ^uid} = t ->
         t = %{t | status: :open, names: Map.put(t.names, uid, name)}
+        Process.send_after(self(), {:expire, t.id, :open}, @rules.max_s * 1000)
         push(t)
         {:reply, :ok, put(s, t)}
 
@@ -151,6 +168,24 @@ defmodule HacLong.Trade do
   def handle_call(:reset, _from, _s), do: {:reply, :ok, elem(init(:ok), 1)}
 
   @impl true
+  def handle_info({:expire, id, phase}, s) do
+    case s.trades[id] do
+      # lời mời chưa nhận / giao dịch mở quá lâu; đang đổi đồ thì để xong
+      %{status: st} = t
+      when (phase == :pending and st == :pending) or (phase == :open and st == :open) ->
+        msg =
+          if phase == :pending,
+            do: "Lời mời giao dịch đã hết hạn.",
+            else: "Giao dịch quá #{@rules.max_s} giây nên tự hủy."
+
+        for uid <- [t.a, t.b], do: send_to(uid, {:notice, msg})
+        {:noreply, drop(s, t)}
+
+      _ ->
+        {:noreply, s}
+    end
+  end
+
   def handle_info({:executed, id, result}, s) do
     case s.trades[id] do
       nil ->
@@ -225,7 +260,11 @@ defmodule HacLong.Trade do
     oa = t.offers[t.a]
     ob = t.offers[t.b]
 
-    with {:ok, pa, ga} <- TradeOffer.take(pa, oa, length(ob.gear)) |> who(t, t.a),
+    with true <-
+           near?(pa, pb) ||
+             {:error, "Hai người phải đứng gần nhau (cùng bản đồ, cách ≤ #{@rules.range} ô)."},
+         nil <- (pa.battle || pb.battle) && {:error, "Có người đang trong trận."},
+         {:ok, pa, ga} <- TradeOffer.take(pa, oa, length(ob.gear)) |> who(t, t.a),
          {:ok, pb, gb} <- TradeOffer.take(pb, ob, length(oa.gear)) |> who(t, t.b) do
       pa = TradeOffer.give(pa, gb)
       pb = TradeOffer.give(pb, ga)

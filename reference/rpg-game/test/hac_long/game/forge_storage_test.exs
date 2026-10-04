@@ -11,7 +11,7 @@ defmodule HacLong.Game.ForgeStorageTest do
     on_exit(&Rng.clear/0)
   end
 
-  defp player(attrs \\ %{}) do
+  defp player(attrs) do
     {:ok, p} = Engine.new_player("Thử", "dk")
     Map.merge(Map.merge(p, %{pos: @smith, gold: 100_000, tutorial: nil, level: 30}), attrs)
   end

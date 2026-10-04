@@ -69,7 +69,39 @@
   }
   const allocBatches = (pending) => Object.entries(pending).filter(([, n]) => n > 0).map(([stat, n]) => ({ act: 'alloc', stat, n }));
 
-  const Logic = { DIRS, firstStep, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
+  // Màu tên người chơi khác trên bản đồ theo quan hệ (Phase 5, M2): bang địch đang chiến đỏ, đồng đội
+  // xanh lá, cùng bang xanh dương, còn lại như cũ. `rel`: { party: [id], tag, enemy } (ký hiệu bang mình / địch).
+  const NAME_COLORS = { enemy: '#ff8a7a', party: '#9fe0a8', guild: '#6fb6ff', other: '#b9d7ff' };
+  function nameRelation(o, rel) {
+    if (rel.enemy && o.tag && o.tag === rel.enemy) return 'enemy';
+    if ((rel.party || []).includes(o.id)) return 'party';
+    if (rel.tag && o.tag === rel.tag) return 'guild';
+    return 'other';
+  }
+  const nameColor = (o, rel) => NAME_COLORS[nameRelation(o, rel || {})];
+
+  // Lệnh chat (Phase 5, H9): `/w Tên nội dung` (tin riêng, chỉ bạn bè — tên có thể có dấu cách: khớp tên
+  // bạn dài nhất), `/p` tổ đội, `/g` bang, `/a` thế giới; không lệnh thì gửi kênh đang chọn (`current`).
+  // Trả { to: 'world' | 'party' | 'guild', text } | { to: 'whisper', uid, name, text } | { error }.
+  function parseChat(raw, current, friends) {
+    const text = String(raw || '').trim();
+    const m = text.match(/^\/(\w+)\s*([\s\S]*)$/);
+    if (!m) return { to: current || 'world', text };
+    const cmd = m[1].toLowerCase(), rest = m[2].trim();
+    const chan = { a: 'world', p: 'party', g: 'guild' }[cmd];
+    if (chan) return rest ? { to: chan, text: rest } : { error: 'Chưa có nội dung.' };
+    if (cmd === 'w' || cmd === 'm') {
+      const low = rest.toLowerCase();
+      const f = (friends || []).filter((x) => low.startsWith(x.name.toLowerCase() + ' ') || low === x.name.toLowerCase())
+        .sort((a, b) => b.name.length - a.name.length)[0];
+      if (!f) return { error: '/w chỉ gửi cho bạn bè: gõ /w Tên-bạn nội dung.' };
+      const body = rest.slice(f.name.length).trim();
+      return body ? { to: 'whisper', uid: f.id, name: f.name, text: body } : { error: 'Chưa có nội dung.' };
+    }
+    return { error: `Không có lệnh /${cmd}. Dùng /w, /p, /g, /a.` };
+  }
+
+  const Logic = { DIRS, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
   root.HLLogic = Logic;
 })(typeof window !== 'undefined' ? window : globalThis);

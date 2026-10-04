@@ -513,6 +513,19 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
 - **Trần thư quản trị:** `game_channel.ex` `admin("gift")` theo `RULES.mail`.
 - Client: `forgePick` (món chọn từ tooltip), `lifeLine`, `wardrobeCard` trong `ui.js`; `RULES.life` gửi từ `page_controller`.
 
+## 9i. Xã hội, xếp hạng, PK cược vàng (Phase 5, 2026-10-04)
+
+- **PK cược:** `HacLong.Game.PkFight` (thuần), `HacLong.PkBet` (GenServer lời mời; `execute/1` chạy ở tiến trình kênh của
+  người nhận, giữ hai Session như `HacLong.Trade`). Bảng `pk_matches`. Kênh `"pk"`.
+- **Chiến bang:** `HacLong.GuildWars` (GenServer giữ lời tuyên chiến; trận ở bảng `guild_wars`). `Guilds.brief/1` kèm `war`,
+  `war_pending` — **GuildWars không được gọi `Guilds.brief/1`** (vòng gọi lại chính nó), dùng `Guilds.member_of/1`.
+  Điểm: `Session.battle_over` (trận đấu trường) gọi `GuildWars.record/2`.
+- **Xếp hạng:** `Leaderboard.boards/0` (ETS, `init_cache/0` lúc khởi động; `config :hac_long, :leaderboard_cache, false` trong test).
+- **Session:** `Party.away/back` khi hết / có tab; đóng hết tab thì hủy giao dịch + lời mời cược; đổi bản đồ / vào trận thì
+  `Trade.left/2` (`left_trade/3`); `Session.online/1` cho quản trị.
+- **Hộp thư:** `Mailbox.claim_all/3`, `delete_read/1`, `cleanup/2` (hết hạn trừ thư còn quà).
+- Client: `HLLogic.nameColor` / `parseChat` (logic.js), `Map_.setRelations`, `pkOp`, `viewGuildWar`, lọc hộp thư.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.

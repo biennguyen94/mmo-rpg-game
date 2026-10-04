@@ -35,9 +35,10 @@ không vào git).
 |---|---|
 | `smoke.mjs` | tạo 4 lớp (chỉ số gốc, máu / MP), ra Làng → Rừng Mê, đánh quái, mua / bán ở Bà Lang, nghỉ trọ, cộng điểm (gom lệnh), các tab |
 | `social.mjs` | 2 người: tổ đội (bấm Vào tổ đội), bạn bè + tin riêng, chat thế giới, giao dịch (bấm trên bảng giao dịch: vàng + đồ), chợ (rao, mua, nhận tiền qua thư) |
-| `progress.mjs` | nhiệm vụ Trưởng Làng (nhận → hạ 5 Dơi Hang → trả), Bảng Tin, ép đồ +1, mua rương, Máy Hỗn Nguyên |
+| `progress.mjs` | nhiệm vụ Trưởng Làng (nhận → hạ 5 Dơi Hang → trả), Bảng Tin, ép đồ +1, Ngọc Sinh Mệnh (đồ đang mặc + đồ trong túi chọn từ tooltip), mua rương, vứt đồ, Máy Hỗn Nguyên, Tủ Đồ ở Nhà |
 | `admin.mjs` | tab Quản trị: tra cứu, cấm / bỏ cấm chat, gửi quà qua thư, cộng vàng, nhật ký vàng, kiểm tra vàng |
 | `mobile.mjs` | 360 × 740: các tab, NPC, trận đánh không tràn ngang; nút đủ lớn để chạm |
+| `pk.mjs` | Phase 5, hai trình duyệt: PK cược vàng (nhận / từ chối / quá số vàng / hết hạn 30 s), lịch sử trận, xếp hạng theo lớp, lệnh chat `/w`, danh sách online của quản trị |
 | `soak.mjs` | N bot WebSocket (không cần trình duyệt): đi, đánh, chat, xem chợ; đo p50 / p95 / max, lỗi, mất kết nối, bộ nhớ |
 
 Mọi kịch bản Playwright còn kiểm **không có lỗi JS** trên trang.

@@ -42,6 +42,7 @@ defmodule HacLong.Game.Session do
   @step_burst 4
   @act_ms 80
   @act_burst 10
+  @share_bonus HacLong.Game.Data.rules().party.share_bonus
 
   def topic(user_id), do: "player:#{user_id}"
 
@@ -94,6 +95,26 @@ defmodule HacLong.Game.Session do
   """
   def admin(user_id, fun, ref \\ nil) when is_function(fun, 1),
     do: call(user_id, {:admin, fun, ref})
+
+  @doc """
+  Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, cls, map}]}`
+  (tối đa `limit` người, theo tên). Không khởi động Session nào; Session đang bận quá 1 giây thì bỏ qua.
+  """
+  def online(limit \\ 200) do
+    players =
+      HacLong.Game.Registry
+      |> Registry.select([{{:_, :"$1", :_}, [], [:"$1"]}])
+      |> Enum.map(fn pid ->
+        try do
+          GenServer.call(pid, :online_info, 1000)
+        catch
+          :exit, _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    %{count: length(players), players: players |> Enum.sort_by(& &1.name) |> Enum.take(limit)}
+  end
 
   @doc "Bang của người chơi vừa đổi: Session đang chạy thì nạp lại (không chạy thì thôi)."
   def refresh_guild(user_id) do
@@ -231,8 +252,14 @@ defmodule HacLong.Game.Session do
 
   defp handle(:get, _from, s), do: reply(s.player, s)
 
+  defp handle(:online_info, _from, %{player: p} = s) when p != nil and map_size(s.tabs) > 0,
+    do: reply(%{id: s.user_id, name: p.name, level: p.level, cls: p.cls, map: p.pos.map}, s)
+
+  defp handle(:online_info, _from, s), do: reply(nil, s)
+
   defp handle({:attach, pid}, _from, s) do
     if map_size(s.tabs) == 0, do: World.enter(s.player, s.user_id)
+    HacLong.Party.back(s.user_id)
     s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
     reply(s.player, s)
   end
@@ -261,6 +288,7 @@ defmodule HacLong.Game.Session do
           end
 
         if player != old, do: broadcast(s, player, origin)
+        left_trade(s.user_id, old, player)
         Enum.each(notes, &notify(s, &1))
         reply({result, player}, s)
 
@@ -436,9 +464,16 @@ defmodule HacLong.Game.Session do
   end
 
   # Mở thư: đánh dấu thư đã nhận và ghi nhân vật trong cùng một transaction.
-  defp run_command(%{player: p} = s, %{"act" => "mail_claim", "id" => id}, origin)
-       when p != nil do
-    case Mailbox.claim(s.user_id, id, p, &Characters.save!(s.user_id, &1)) do
+  defp run_command(%{player: p} = s, %{"act" => act} = cmd, origin)
+       when p != nil and act in ["mail_claim", "mail_claim_all"] do
+    save = &Characters.save!(s.user_id, &1)
+
+    result =
+      if act == "mail_claim",
+        do: Mailbox.claim(s.user_id, cmd["id"], p, save),
+        else: Mailbox.claim_all(s.user_id, p, save)
+
+    case result do
       {:ok, msg, player} ->
         s = cancel_flush(%{s | player: player, dirty: false})
         broadcast(s, player, origin)
@@ -515,6 +550,8 @@ defmodule HacLong.Game.Session do
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player = if player && old == nil, do: with_guild(player, s.user_id), else: player
     {player, notes} = checks(player)
+
+    left_trade(s.user_id, old, player)
 
     s =
       if player != old do
@@ -670,9 +707,9 @@ defmodule HacLong.Game.Session do
     {Map.put(r, :result, "win"), p}
   end
 
-  # thưởng mỗi người = thưởng gốc × 1,2 / số người (một người thì giữ nguyên)
+  # thưởng mỗi người = thưởng gốc × `RULES.party.share_bonus` / số người (một người thì giữ nguyên)
   defp shared_reward(p, %{n: n, xp: xp, gold: gold}) when n > 1 do
-    k = 1.2 / n
+    k = @share_bonus / n
 
     p
     |> put_in([:battle, :monster, :xp], round(xp * k))
@@ -696,6 +733,12 @@ defmodule HacLong.Game.Session do
 
     if map_size(s.tabs) == 0 do
       World.leave(s.player, s.user_id)
+
+      # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch và lời mời cược đang dính
+      HacLong.Party.away(s.user_id)
+      uid = s.user_id
+      Task.start(fn -> HacLong.Trade.cancel(uid) end)
+      Task.start(fn -> HacLong.PkBet.disconnect(uid) end)
       Characters.put_reason("MOVE")
       {:noreply, flush(s), @idle_timeout}
     else
@@ -789,6 +832,8 @@ defmodule HacLong.Game.Session do
   # Trận đấu trường xong: đổi điểm; thua thì không mất gì (máu, vàng như trước trận).
   defp battle_over(s, _old, %{battle: %{encounter: %{pvp: target} = enc} = b} = player) do
     r = Arena.finish(s.user_id, target, b.result)
+    # chiến bang: thắng thành viên bang địch thì ghi điểm cho bang
+    war = r.won && HacLong.GuildWars.record(s.user_id, target)
 
     player =
       if r.won,
@@ -799,7 +844,9 @@ defmodule HacLong.Game.Session do
 
     text =
       if r.won,
-        do: "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng.",
+        do:
+          "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <>
+            if(war, do: " ⚔ Chiến bang: bang bạn +1 điểm.", else: ""),
         else: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
 
     reward = %{xp: 0, gold: r.gold, items: [], levels: 0}
@@ -870,6 +917,16 @@ defmodule HacLong.Game.Session do
   defp broadcast(s, player, origin) do
     Phoenix.PubSub.broadcast(HacLong.PubSub, topic(s.user_id), {:player, player, origin})
   end
+
+  # giao dịch trực tiếp tự hủy khi đổi bản đồ hoặc vào trận (Phase 5, E5); chạy riêng vì Trade
+  # có thể đang giữ Session này
+  defp left_trade(uid, %{pos: %{map: m}} = old, %{pos: %{map: m2}} = new)
+       when m != m2 or (old.battle == nil and new.battle != nil) do
+    why = if m != m2, do: "đã rời bản đồ", else: "đã vào trận đánh"
+    Task.start(fn -> HacLong.Trade.left(uid, why) end)
+  end
+
+  defp left_trade(_uid, _old, _new), do: :ok
 
   defp save(s, player) do
     Characters.save!(s.user_id, player)

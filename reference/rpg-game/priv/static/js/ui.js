@@ -24,15 +24,16 @@
   let pwForm = false;    // đang mở form đổi mật khẩu
   let chats = [];        // tin chat gần nhất
   let chatDraft = '';    // chữ đang gõ dở (giữ lại khi vẽ lại trang)
-  let board = { kind: 'level', data: null, at: 0 }; // bảng xếp hạng
+  let board = { kind: 'level', cls: null, data: null, at: 0 }; // bảng xếp hạng (cls: lọc theo lớp ở bảng Cấp cao)
   let chatMenu = null;   // id tin nhắn đang mở menu Báo cáo/Chặn
   let blocked = [];      // người mình đã chặn: [{ id, name }]
-  let adm = { reports: null, user: null, loading: false, audit: null, alog: null, glog: null }; // tab Quản trị
-  let mail = { unread: 0, list: null, open: false }; // hộp thư
+  let adm = { reports: null, user: null, loading: false, audit: null, alog: null, glog: null, online: null }; // tab Quản trị
+  let mail = { unread: 0, list: null, open: false, filter: 'all' }; // hộp thư (filter: all | unread | gift)
   let guildUi = { open: false, list: null, requested: [], info: null, q: '', confirm: null }; // bang hội
   let chatTo = 'world';  // 'world' | 'guild' | 'party'
   let party = null;      // tổ đội: { id, leader, members: [{ id, name, level, hp, maxHp, map }], max }
   let arena = null;
+  let pk = null; // { invite, history, today, rules } (PK cược vàng)
   let market = { tab: 'buy', data: null, q: '', loading: false }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
@@ -134,6 +135,11 @@
       if (log) log.scrollTop = log.scrollHeight;
     } else if (tab === 'map' && !npc && !mail.open && !guildUi.open) {
       Map_.mount(() => P);
+      Map_.setRelations(() => ({
+        party: party ? party.members.map((m) => m.id) : [],
+        tag: P && P.guild && P.guild.tag,
+        enemy: P && P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag,
+      }));
       const log = $('#chat-log');
       if (log) log.scrollTop = log.scrollHeight;
     }
@@ -182,6 +188,9 @@
       ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
+      <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
+        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></div><button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
+      </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
         <form id="adm-lookup" class="chat-form"><input type="text" id="adm-name" placeholder="Tên nhân vật hoặc tên đăng nhập" autocomplete="off"><button class="btn" type="submit">Tìm</button></form>
       </div>
@@ -288,6 +297,10 @@
   async function onAdmin(t) {
     const d = t.dataset, op = d.adm;
     if (op === 'reload') { adm.reports = null; render(); return loadReports(); }
+    if (op === 'online-lookup') {
+      try { adm.user = (await Net.admin('lookup', { name: d.name })).user; render(); } catch (e) { toast(e.msg, true); }
+      return;
+    }
     const payload = {};
     if (d.id) payload.id = +d.id;
     if (d.uid) payload.uid = +d.uid;
@@ -297,6 +310,7 @@
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
+      if (op === 'online') { adm.online = r.online; return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       toast(r.msg || 'Đã xong.');
@@ -308,6 +322,21 @@
   }
 
   // ---------- Giao dịch trực tiếp ----------
+  async function pkOp(op, payload) {
+    try {
+      const r = await Net.pk(op, payload);
+      pk = r;
+      if (op === 'invite') toast(`Đã mời cược ${fmt(payload.wager)} vàng. Chờ người kia nhận…`);
+      if (dialog && dialog.type === 'pk') dialog = null;
+      if (r.result) { dialog = { type: 'pkResult', view: r.result }; Sound.play('rare'); }
+      else if (op !== 'invite' && dialog && dialog.type === 'player') dialog = null;
+    } catch (e) {
+      toast(e.msg, true);
+      if (dialog && dialog.type === 'pk') dialog = null;
+    }
+    render();
+  }
+
   async function tradeOp(op, payload) {
     try {
       const r = await Net.trade(op, payload);
@@ -380,6 +409,25 @@
         <div class="btn-row"><button class="btn" data-act="party-decline">Từ chối</button><button class="btn primary" data-act="party-accept">Vào tổ đội</button></div>
       </div>`;
     }
+    if (dialog.type === 'pk') {
+      const v = dialog.inv;
+      return `<div class="map-dialog card">
+        <h3>⚔ Lời mời cược đấu</h3>
+        <p class="small"><b>${esc(v.name)}</b> (${CLASSES[v.cls] ? CLASSES[v.cls].name : ''} · cấp ${v.level}) mời bạn cược <b style="color:var(--gold)">${fmt(v.wager)} vàng</b>.</p>
+        <p class="small muted">Bản sao chỉ số của hai người tự đánh nhau ngay. Thắng nhận ${fmt(v.wager)} vàng của đối thủ, thua mất ${fmt(v.wager)} vàng, hòa không ai mất gì. Lời mời hết hạn sau ${RULES.pkInvite} giây.</p>
+        <div class="btn-row"><button class="btn" data-act="pk-op" data-op="decline">Từ chối</button><button class="btn primary" data-act="pk-op" data-op="accept">${icon('crossed-swords')} Nhận cược</button></div>
+      </div>`;
+    }
+    if (dialog.type === 'pkResult') {
+      const v = dialog.view, me = Net.userId;
+      const out = v.winner == null ? 'Hòa' : v.winner === me ? `Thắng +${fmt(v.wager)} vàng` : `Thua −${fmt(v.wager)} vàng`;
+      return `<div class="map-dialog card" id="pk-result">
+        <h3>⚔ ${esc(v.a.name)} đấu ${esc(v.b.name)}</h3>
+        <p><b style="color:var(${v.winner == null ? '--parch' : v.winner === me ? '--good' : '--bad'})">${out}</b> <span class="small muted">· ${v.rounds} lượt · cược ${fmt(v.wager)}</span></p>
+        <div class="log" style="height:220px">${v.log.map((l) => `<div class="${l.kind === 'hurt' ? 'bad' : l.kind}">${esc(l.text)}</div>`).join('')}</div>
+        <div class="btn-row"><button class="btn primary" data-act="dialog-close">Đóng</button></div>
+      </div>`;
+    }
     if (dialog.type === 'trade') {
       return `<div class="map-dialog card">
         <h3>Lời mời giao dịch</h3><p class="small">${esc(dialog.name || 'Một người chơi')} muốn đổi đồ với bạn.</p>
@@ -403,6 +451,8 @@
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
         </div>
+        <div class="btn-row"><input type="number" id="pk-wager" class="grow" min="${RULES.pkMin}" max="${RULES.pkMax}" step="100" value="${Math.min(1000, Math.max(RULES.pkMin, P.gold))}" aria-label="Số vàng cược">
+          <button class="btn" data-act="pk-ask" data-uid="${o.id}">⚔ Cược đấu</button></div>
         <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button><button class="btn small-btn" data-act="dialog-close">Đóng</button></div>
       </div>`;
     }
@@ -629,7 +679,7 @@
 
   // ---------- Đấu trường ----------
   async function loadArena() {
-    try { arena = await Net.arena(); } catch (e) { /* thử lại lần sau */ }
+    try { arena = await Net.arena(); pk = await Net.pk('info'); } catch (e) { /* thử lại lần sau */ }
     if (tab === 'misc') { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
   }
 
@@ -644,6 +694,12 @@
       <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
         <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
         <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
+      ${pk ? `<h3>⚔ Cược đấu</h3><p class="small muted">Chạm vào người chơi đang online trên bản đồ, nhập số vàng rồi bấm Cược đấu. Hai bản sao tự đánh; thắng ăn cả cược. Hôm nay ${pk.today}/${pk.rules.per_day} trận.</p>
+        <div class="list" id="pk-history">${pk.history.map((h) => {
+          const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
+          const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
+          return `<div class="item"><div class="grow"><div class="name">${esc(foe)}</div><div class="small muted">${h.rounds} lượt · ${new Date(h.at).toLocaleString('vi-VN')}</div></div>${res}</div>`;
+        }).join('') || '<p class="small muted">Chưa có trận cược nào.</p>'}</div>` : ''}
     </div>`;
   }
 
@@ -675,8 +731,13 @@
     const input = $('#chat-input');
     const text = input.value.trim();
     if (!text) return;
+    const c = L.parseChat(text, chatTo, friendsUi.data && friendsUi.data.friends);
+    if (c.error) { toast(c.error, true); return; }
     try {
-      await Net.chat(text, chatTo === 'world' ? null : chatTo);
+      if (c.to === 'whisper') {
+        await Net.dm('send', { uid: c.uid, text: c.text });
+        toast(`Đã gửi tin riêng cho ${c.name}.`);
+      } else await Net.chat(c.text, c.to === 'world' ? null : c.to);
       input.value = ''; chatDraft = '';
     } catch (err) {
       toast(err.msg, true);
@@ -698,11 +759,15 @@
 
   function viewBoard() {
     const kinds = [['level', 'Cấp cao'], ['kills', 'Săn nhiều'], ['tower', 'Tháp'], ['dragon', 'Diệt rồng'], ['guild', 'Bang'], ['guild_boss', 'Bang diệt Cổ Long'], ['arena', 'Đấu trường']];
-    const rows = board.data ? board.data[board.kind] : null;
+    const byClass = board.kind === 'level' && board.cls;
+    const rows = board.data ? (byClass ? (board.data.class || {})[board.cls] || [] : board.data[board.kind]) : null;
+    const mr = board.data && board.data.me_rank;
+    const meTag = mr ? (byClass ? (mr.cls === board.cls ? `Bạn hạng ${mr.class} trong lớp` : '') : `Bạn hạng ${mr.level}`) : board.data && board.data.me ? `Bạn hạng ${board.data.me}` : '';
     const value = (r) => (board.kind === 'level' ? `${r.rebirths ? `CS${r.rebirths} · ` : ''}Cấp ${r.level}` : board.kind === 'kills' ? `${fmt(r.kills)} quái` : board.kind === 'tower' ? `Tầng ${r.tower_best}` : new Date(r.victory_at).toLocaleDateString('vi-VN'));
     return `<div class="card" id="board">
-      <div class="row"><h3 class="grow">Bảng xếp hạng</h3>${board.data && board.data.me ? `<span class="tag gold num">Bạn hạng ${board.data.me}</span>` : ''}</div>
+      <div class="row"><h3 class="grow">Bảng xếp hạng</h3>${meTag ? `<span class="tag gold num">${meTag}</span>` : ''}</div>
       <div class="seg">${kinds.map(([k, label]) => `<button class="btn ${board.kind === k ? 'primary' : ''}" data-board="${k}">${label}</button>`).join('')}</div>
+      ${board.kind === 'level' ? `<div class="seg" id="board-cls"><button class="btn small-btn ${board.cls ? '' : 'primary'}" data-board-cls="">Tất cả</button>${Object.keys(CLASSES).map((c) => `<button class="btn small-btn ${board.cls === c ? 'primary' : ''}" data-board-cls="${c}">${CLASSES[c].name}</button>`).join('')}</div>` : ''}
       ${rows == null ? '<p class="small muted">Đang tải…</p>'
         : rows.length === 0 ? `<p class="small muted">${board.kind === 'arena' ? 'Chưa ai đấu. Chạm vào người khác trên bản đồ để thách đấu.' : board.kind === 'guild' ? 'Chưa có bang nào. Lập bang ở thẻ Bang hội.' : board.kind === 'guild_boss' ? 'Chưa bang nào đánh trùm thế giới. Cổ Long xuất hiện ở Tế Đàn.' : board.kind === 'dragon' ? 'Chưa ai hạ được Hắc Long. Bạn sẽ là người đầu tiên?' : board.kind === 'tower' ? 'Chưa ai leo Tháp Vô Tận. Gặp Người Gác Tháp ở Làng.' : 'Chưa có ai.'}</p>`
         : board.kind === 'arena' ? `<ol class="board">${rows.map((r) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><span class="num rank">${r.rank}</span><span class="grow">${esc(r.name)} <span class="small muted">${r.wins}T/${r.losses}B</span></span><span class="num">${r.rating}</span></li>`).join('')}</ol>`
@@ -755,9 +820,10 @@
   }
 
   // ---------- Hộp thư ----------
-  async function loadMail() {
+  async function loadMail(op) {
     try {
-      const r = await Net.mail();
+      const r = await Net.mail(op);
+      if (op === 'delete_read') toast('Đã xóa thư đã đọc.');
       mail.list = r.mails; mail.unread = r.unread;
     } catch (e) { toast(e.msg, true); mail.list = mail.list || []; }
     if (mail.open) render();
@@ -848,9 +914,17 @@
   }
 
   function viewMail() {
-    const list = mail.list;
+    const all = mail.list;
+    const hasGift = (m) => !m.claimed && !!mailGifts(m);
+    const list = all && all.filter((m) => mail.filter === 'unread' ? !m.claimed : mail.filter === 'gift' ? hasGift(m) : true);
+    const filters = [['all', 'Tất cả'], ['unread', 'Chưa đọc'], ['gift', 'Có quà']];
     return `<div class="row"><h2 class="display grow">Hộp thư</h2><button class="btn" data-act="mail-close">Đóng</button></div>
+      ${all ? `<div class="row" id="mail-tools"><div class="seg grow">${filters.map(([k, label]) => `<button class="btn small-btn ${mail.filter === k ? 'primary' : ''}" data-act="mail-filter" data-f="${k}">${label}</button>`).join('')}</div>
+        ${all.some((m) => !m.claimed) ? '<button class="btn small-btn primary" data-act="mail_claim_all">Nhận tất cả</button>' : ''}
+        ${all.some((m) => m.claimed) ? '<button class="btn small-btn" data-act="mail-delete-read">Xóa thư đã đọc</button>' : ''}</div>
+        <p class="small muted">Thư quá 30 ngày tự xóa, trừ thư còn quà chưa nhận.</p>` : ''}
       ${list == null ? '<p class="small muted">Đang tải…</p>'
+        : list.length === 0 && all.length ? '<div class="card"><p class="small muted">Không có thư nào ở mục này.</p></div>'
         : list.length === 0 ? '<div class="card"><p class="small muted">Chưa có thư nào. Quà nhận lúc vắng mặt (trùm thế giới) và quà của Ban Quản Trị sẽ gửi vào đây.</p></div>'
         : `<div class="list">${list.map((m) => {
           const gifts = mailGifts(m);
@@ -1075,6 +1149,7 @@
         ${g.boss_damage ? `<p class="small muted">🐉 Cả bang đã gây ${fmt(g.boss_damage)} sát thương lên trùm thế giới.</p>` : ''}
       </div>
       ${viewGuildQuest(g.quest)}
+      ${viewGuildWar(g, staff)}
       ${staff ? `<div class="card"><h3>Quản lý</h3>
         <form id="guild-settings" class="gift-form">
           <input type="text" name="notice" maxlength="120" placeholder="Thông báo cho cả bang" value="${esc(g.notice || '')}">
@@ -1092,6 +1167,24 @@
           : `<button class="btn block" data-act="guild-ask" data-op="${leader && g.members.length === 1 ? 'disband' : 'leave'}">${leader && g.members.length === 1 ? 'Giải tán bang' : 'Rời bang'}</button>`}
         ${leader && g.members.length > 1 ? '<p class="small muted">Bang chủ muốn rời thì nhường bang chủ cho người khác trước.</p>' : ''}
       </div>`;
+  }
+
+  // Chiến bang (H5): trận đang chiến, lời tuyên chiến đang chờ, tuyên chiến theo ký hiệu bang, lịch sử.
+  function viewGuildWar(g, staff) {
+    const w = g.war, pend = g.war_pending, hist = g.war_history || [];
+    const left = w ? Math.max(0, Math.ceil((w.ends_at * 1000 - Date.now()) / 60000)) : 0;
+    const out = { win: ['Thắng', 'good'], lose: ['Thua', 'bad'], draw: ['Hòa', ''] };
+    return `<div class="card" id="guild-war"><h3>⚔ Chiến bang</h3>
+      ${w ? `<p>Đang chiến với <span class="guild-tag">[${esc(w.enemy.tag)}]</span> ${esc(w.enemy.name)}: <b class="num">${w.mine} – ${w.theirs}</b> <span class="small muted">· còn ${left} phút</span></p>
+          <p class="small muted">Thắng thành viên bang địch ở đấu trường để ghi điểm (mỗi đối thủ tối đa vài lần). Tên người bang địch trên bản đồ màu đỏ.</p>
+          ${staff ? '<button class="btn danger" data-act="guild-war-surrender">Đầu hàng</button>' : ''}`
+        : pend && staff ? `<p>Bang <span class="guild-tag">[${esc(pend.tag)}]</span> ${esc(pend.name)} tuyên chiến bang bạn!</p>
+          <div class="btn-row"><button class="btn" data-act="guild-op" data-op="war_decline">Từ chối</button><button class="btn primary" data-act="guild-op" data-op="war_accept">Nhận chiến</button></div>`
+        : staff ? `<form id="guild-war-form" class="chat-form"><input type="text" id="war-tag" maxlength="4" placeholder="Ký hiệu bang địch" autocapitalize="characters"><button class="btn primary" type="submit">Tuyên chiến</button></form>
+          <p class="small muted">Bang kia cần có bang chủ / phó bang online để nhận. Trận kéo dài ${RULES.warMinutes} phút; bang thắng được quỹ +${fmt(RULES.warFund)}, ai ghi điểm nhận ${fmt(RULES.warGold)} vàng.</p>`
+        : '<p class="small muted">Bang chưa chiến với ai. Bang chủ / phó bang tuyên chiến.</p>'}
+      ${hist.length ? `<div class="list">${hist.map((h) => `<div class="item"><div class="grow"><span class="guild-tag">[${esc(h.enemy ? h.enemy.tag : '?')}]</span> ${esc(h.enemy ? h.enemy.name : 'Bang đã giải tán')}</div><span class="num">${h.mine} – ${h.theirs}</span> <span class="tag ${out[h.result][1]}">${out[h.result][0]}</span></div>`).join('')}</div>` : ''}
+    </div>`;
   }
 
   // ---------- Sổ tay quái vật ----------
@@ -2002,7 +2095,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -2039,6 +2132,7 @@
         if (cmd.act.startsWith('market_')) market.data = null;
         if (cmd.act === 'rebirth' || cmd.act === 'guild_create' || cmd.act === 'guild_donate') board.at = 0;
         if ((cmd.act === 'upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;
+        if (cmd.act === 'mail_claim_all' && mail.list) mail.list.forEach((m) => { m.claimed = true; });
         if (cmd.act === 'mail_claim' && mail.list) { const m = mail.list.find((x) => x.id === cmd.id); if (m) m.claimed = true; }
         confirmReset = false;
         confirmRebirth = false;
@@ -2167,7 +2261,7 @@
 
   function enter(r) {
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -2187,6 +2281,7 @@
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
     if (t.dataset.tab) { goTab(t.dataset.tab); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
+    if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
     const act = t.dataset.act;
@@ -2221,6 +2316,13 @@
       return;
     }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
+    if (act === 'pk-op') { pkOp(t.dataset.op); return; }
+    if (act === 'pk-ask') {
+      const w = Math.floor(+(($('#pk-wager') || {}).value || 0));
+      if (!(w >= RULES.pkMin && w <= RULES.pkMax)) { toast(`Cược từ ${fmt(RULES.pkMin)} đến ${fmt(RULES.pkMax)} vàng.`, true); return; }
+      pkOp('invite', { uid: +t.dataset.uid, wager: w });
+      return;
+    }
     if (act === 'trade-rm') {
       const d = t.dataset;
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });
@@ -2262,6 +2364,9 @@
     if (act === 'guild-close') { guildUi.open = false; guildUi.confirm = null; render(); return; }
     if (act === 'guild-ask') { guildUi.confirm = { op: t.dataset.op, uid: t.dataset.uid ? +t.dataset.uid : null, label: t.dataset.label }; render(); return; }
     if (act === 'guild-confirm-no') { guildUi.confirm = null; render(); return; }
+    if (act === 'mail-filter') { mail.filter = t.dataset.f; render(); return; }
+    if (act === 'mail-delete-read') { if (confirm('Xóa mọi thư đã đọc?')) loadMail('delete_read'); return; }
+    if (act === 'guild-war-surrender') { if (confirm('Đầu hàng? Bang địch thắng trận chiến này.')) guildOp('war_surrender'); return; }
     if (act === 'guild-op') { const d = t.dataset; guildOp(d.op, Object.assign({}, d.id ? { id: +d.id } : {}, d.uid ? { uid: +d.uid } : {})); return; }
     if (act === 'chat-to') { const ch = chatChannels(); chatTo = ch[(ch.indexOf(chatTo) + 1) % ch.length]; const f = $('#chat-form'); if (f) f.outerHTML = viewChat().match(/<form id="chat-form"[\s\S]*<\/form>/)[0]; return; }
     if (act === 'fish-reel') { reelIn(); return; }
@@ -2336,6 +2441,12 @@
       e.preventDefault();
       const f = new FormData(e.target);
       sendCommand({ act: 'guild_create', name: f.get('name'), tag: f.get('tag') }).then(() => { if (P && P.guild) loadGuild(); });
+      return;
+    }
+    if (e.target.id === 'guild-war-form') {
+      e.preventDefault();
+      const tag = ($('#war-tag').value || '').trim().toUpperCase();
+      if (tag) guildOp('war_declare', { tag });
       return;
     }
     if (e.target.id === 'guild-donate') {
@@ -2419,6 +2530,7 @@
       if (P && !P.battle && tab === 'map' && !npc) { const el = $('#party-card'); if (el) el.outerHTML = viewParty(); }
     });
     Net.onPartyInvite((m) => {
+      if (!m.from) { if (dialog && dialog.type === 'invite') { dialog = null; toast('Lời mời tổ đội đã hết hạn.'); if (P && !P.battle) render(); } return; }
       toast(`${m.name || 'Một người chơi'} mời bạn vào tổ đội.`);
       Sound.play('mail');
       dialog = { type: 'invite', from: m.from, name: m.name };
@@ -2434,6 +2546,21 @@
       trade = t;
       if (was && !t && dialog && dialog.type === 'trade') dialog = null;
       if (P && !P.battle) render();
+    });
+    Net.onPkInvite((inv) => {
+      if (inv && inv.to === Net.userId) {
+        toast(`${inv.name} mời bạn cược đấu ${fmt(inv.wager)} vàng.`);
+        Sound.play('mail');
+        dialog = { type: 'pk', inv };
+        if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; }
+      } else if (!inv && dialog && dialog.type === 'pk') dialog = null;
+      if (P && !P.battle) render();
+    });
+    Net.onPkResult((view) => {
+      dialog = { type: 'pkResult', view };
+      Sound.play('rare');
+      pk = null;
+      if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; render(); }
     });
     Net.onTradeRequest((m) => {
       toast(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`);
@@ -2511,6 +2638,7 @@
       send: async (cmd) => { await sendCommand(cmd); return copy(P); },
       tab: (id) => goTab(id),
       closeNpc: () => { npc = null; render(); },
+      inspect: (uid) => openPlayer({ id: uid }),
     };
   }
 

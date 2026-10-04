@@ -118,7 +118,7 @@
 | E2 | **Log đồ** (mỗi lần đồ đổi chủ: chợ, giao dịch, thư, bán, ép, ghép) | Không | ✅ | M | Bắt đầu với đồ ngẫu nhiên (`uid`); đầy đủ cần C9 | 🔶 Đ2 |
 | E3 | **Audit đồ:** serial trùng, đồ không chủ, chủ hiện tại ≠ log | Không | 🟡 | L | Cần C9 | [ ] |
 | E4 | **Giao dịch một transaction**, khóa hai nhân vật theo thứ tự id (tránh deadlock), kiểm lại đồ / vàng / chỗ trống | Khác: 2 pha qua Session, không transaction | ✅ | M | `INTEGRATION_PLAN 1-B`. Lỗ hổng tiềm ẩn duy nhất về nhân bản đồ / vàng em thấy | [x] ✅ Đ2 |
-| E5 | **Giao dịch tự hủy** khi: đi xa, đổi map, chết, mất kết nối, đăng xuất, quá 180 s; **đổi gì cũng mở khóa hai bên** | Kiểm | 🟡 | S | Kiểm luồng hiện có, thêm điều kiện thiếu | [x] |
+| E5 | **Giao dịch tự hủy** khi: đi xa, đổi map, chết, mất kết nối, đăng xuất, quá 180 s; **đổi gì cũng mở khóa hai bên** | Kiểm | 🟡 | S | Kiểm luồng hiện có, thêm điều kiện thiếu | [x] ✅ P5 |
 | E6 | **Sửa `Market.commit/4` bỏ qua kết quả transaction** | Lỗi đang có | ✅ | S | Sửa ngay dù không làm gì khác | [x] ✅ Đ1 |
 | E7 | **Giá bán lại = tỉ lệ trong config** (MU 50 %) | Khác: 40 % trong code | ✅ | S | Gộp J1 | [x] ✅ P1 |
 | E8 | **Cửa hàng theo NPC trong data** (`shop.json`) | Có (`stock` trong map JSON) | ❌ | – | Đã có | [ ] |
@@ -154,20 +154,20 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| H1 | **EXP tổ đội có thưởng** ×(1 + 0,1 × (n−1)), người ở xa / đã chết không nhận | Khác: chia vàng ×1,2/n | 🟡 | S | So lại công thức EXP của Hắc Long | [x] |
-| H2 | **Lời mời hết hạn 30 s** (tổ đội / bang / giao dịch) | Kiểm | 🟡 | S | | [x] |
-| H3 | **Trưởng nhóm rời → người vào sớm nhất lên thay; còn 1 người thì tan** | Kiểm | 🟡 | S | | [x] |
-| H4 | **Vai trò bang:** chủ / phó (tối đa 2) / thành viên; phó mời được, chỉ đuổi thành viên thường | Kiểm | 🟡 | S | | [x] |
-| H5 | **Chiến bang** (tuyên chiến, 60 s nhận, 20 điểm hoặc 30 phút, đầu hàng) | Không | 🟡 | M | Biến thể: **chiến bang trên đấu trường** (điểm theo trận đấu trường giữa hai bang trong 1 giờ) | [x] |
-| H6 | **Tên bang trên đầu nhân vật** | Kiểm | ✅ | S | | [x] |
-| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ✅ (chốt lại 2026-10-04) | M | **Chốt:** làm thành **PK = trận đấu trường có cược vàng** (không đánh nhau tự do trên bản đồ). `PHASE_PLAN.md` Phase 5 | [x] |
-| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ✅ (chốt lại 2026-10-04) | S | **Chốt:** thách đấu trực tiếp = mời một người cụ thể vào trận đấu trường cược vàng (gộp với H7) | [x] |
-| H9 | **Chat bằng lệnh:** `/w Tên`, `/m`, `/p`, `/g` | Khác: chọn kênh bằng nút | ✅ | S | Gõ nhanh trên máy tính | [x] |
+| H1 | **EXP tổ đội có thưởng** ×(1 + 0,1 × (n−1)), người ở xa / đã chết không nhận | Khác: chia vàng ×1,2/n | 🟡 | S | So lại công thức EXP của Hắc Long | [x] ✅ P5 |
+| H2 | **Lời mời hết hạn 30 s** (tổ đội / bang / giao dịch) | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H3 | **Trưởng nhóm rời → người vào sớm nhất lên thay; còn 1 người thì tan** | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H4 | **Vai trò bang:** chủ / phó (tối đa 2) / thành viên; phó mời được, chỉ đuổi thành viên thường | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H5 | **Chiến bang** (tuyên chiến, 60 s nhận, 20 điểm hoặc 30 phút, đầu hàng) | Không | 🟡 | M | Biến thể: **chiến bang trên đấu trường** (điểm theo trận đấu trường giữa hai bang trong 1 giờ) | [x] ✅ P5 |
+| H6 | **Tên bang trên đầu nhân vật** | Kiểm | ✅ | S | | [x] ✅ P5 |
+| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ✅ (chốt lại 2026-10-04) | M | **Chốt:** làm thành **PK = trận đấu trường có cược vàng** (không đánh nhau tự do trên bản đồ). `PHASE_PLAN.md` Phase 5 | [x] ✅ P5 |
+| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ✅ (chốt lại 2026-10-04) | S | **Chốt:** thách đấu trực tiếp = mời một người cụ thể vào trận đấu trường cược vàng (gộp với H7) | [x] ✅ P5 |
+| H9 | **Chat bằng lệnh:** `/w Tên`, `/m`, `/p`, `/g` | Khác: chọn kênh bằng nút | ✅ | S | Gõ nhanh trên máy tính | [x] ✅ P5 |
 | H10 | **Lọc từ cấm trong chat** (thay bằng `***`, danh sách trong config) | Không thấy | ✅ | S | | [ ] |
 | H11 | **Giới hạn chat theo nhóm lệnh** (5 tin / 5 s) | Có giới hạn | ❌ | – | Đã có | [ ] |
-| H12 | **Thư hết hạn 30 ngày; lọc Tất cả / Chưa đọc / Có quà; xóa đã đọc; tối đa 100** | Khác: giữ 50 | 🟡 | S | | [x] |
+| H12 | **Thư hết hạn 30 ngày; lọc Tất cả / Chưa đọc / Có quà; xóa đã đọc; tối đa 100** | Khác: giữ 50 | 🟡 | S | | [x] ✅ P5 |
 | H13 | **Thư chào mừng khi tạo nhân vật** | Khác: quà tân thủ qua hướng dẫn | ❌ | – | Đã có tương đương | [ ] |
-| H14 ★ | **Xếp hạng theo lớp + cache + hạng của mình** | Có 7 bảng, không cache, top 10 | ✅ | S | `INTEGRATION_PLAN §6` | [x] |
+| H14 ★ | **Xếp hạng theo lớp + cache + hạng của mình** | Có 7 bảng, không cache, top 10 | ✅ | S | `INTEGRATION_PLAN §6` | [x] ✅ P5 |
 | H15 | **Xếp hạng bang theo tổng cấp thành viên** | Khác: theo quỹ, theo sát thương trùm | ❌ | – | Đã có | [ ] |
 
 ## I. Server: phiên, đồng bộ, bảo mật, độ bền dữ liệu
@@ -234,7 +234,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | M1 | **Vẽ cánh bằng code** (2 lớp, cấp 2 to hơn, màu theo lớp) | – | ✅ | S | Đi cùng D6 | [x] ✅ Đ3 |
-| M2 | **Tên màu theo trạng thái** (bang địch, PK…), tên bang trên đầu | Kiểm | 🟡 | S | Đi cùng H6 | [x] |
+| M2 | **Tên màu theo trạng thái** (bang địch, PK…), tên bang trên đầu | Kiểm | 🟡 | S | Đi cùng H6 | [x] ✅ P5 |
 | M3 | **Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài** | Kiểm | ✅ | S | Đi cùng F1 | [x] |
 | M4 | **Số sát thương bay, hiệu ứng trúng / trượt** | Kiểm (màn trận theo lượt) | 🟡 | S | Đi cùng A2 | [ ] |
 | M5 | **Di chuyển trượt mượt (Glide), camera theo vị trí vẽ** | Đã mượt | ❌ | – | | [ ] |
@@ -394,7 +394,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | K9 | **Sổ tay vận hành**: quy trình bảo trì, bảng xử lý sự cố, sao lưu / phục hồi DB (`pg_dump` theo lịch, thử phục hồi) | Có `DEPLOY.md` | ✅ | S | Đi cùng O2 | [ ] |
-| K10 | **Tra người online** (số người, danh sách tên) | Có tra theo tên | 🟡 | S | Thêm số online + danh sách trong tab Quản trị | [x] |
+| K10 | **Tra người online** (số người, danh sách tên) | Có tra theo tên | 🟡 | S | Thêm số online + danh sách trong tab Quản trị | [x] ✅ P5 |
 | K11 | **Quy tắc "chỉ sửa khi offline", "không sửa đồ / vàng bằng SQL"** | – | ✅ | S | Ghi trong `ADMIN_GUIDE`; đi cùng I5 | [ ] |
 
 ### P-L. Giao diện

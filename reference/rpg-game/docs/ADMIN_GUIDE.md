@@ -270,6 +270,18 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 - **Thư quản trị** (`gift`, cả "gửi mọi người"): mỗi thư tối đa `RULES.mail.max_gold` vàng và `max_xp` EXP (1 000 000).
   Vượt thì báo "Mỗi thư tối đa … vàng." và không gửi. Thư hệ thống (bán chợ, quà bang) không bị giới hạn.
 
+### Xã hội, PK cược vàng, chiến bang (Phase 5)
+
+- **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
+- **PK cược vàng:** cược 100 – 1 000 000 vàng (`RULES.pk`), không phí, 10 trận / ngày. Mỗi trận một dòng ở bảng `pk_matches`
+  (người mời, người nhận, cược, người thắng; `winner_id` trống = hòa); nhật ký vàng lý do `PK_BET`, ref `pk:<id>`. Không phí và
+  không giới hạn cấp nên cược cũng là một đường chuyển vàng giữa hai tài khoản (như giao dịch): tra `gold_log` theo `PK_BET`
+  nếu nghi chuyển vàng cho nick phụ.
+- **Chiến bang:** bảng `guild_wars` (`result` trống = đang chiến; `a` / `b` / `draw`). Thưởng (`RULES.guild_war`): quỹ bang thắng
+  +5 000, người có điểm nhận 500 vàng qua thư "Thưởng chiến bang".
+- **Hộp thư:** giữ 100 thư, thư quá 30 ngày tự xóa trừ thư còn quà chưa nhận (`RULES.mail.keep`, `expire_days`).
+- **Giao dịch:** lời mời 30 s, mở tối đa 180 s, hai người cách ≤ 8 ô cùng bản đồ (`RULES.trade`).
+
 ## 10. Hình đồ theo cấp và Item.txt
 
 Dữ liệu của anh đặt ở `reference/rpg-game/assets_src/items/` (đưa vào git bình thường):
@@ -330,6 +342,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |
 | Từ cấm khi đặt tên nhân vật / bang | `names` |
 | Ngọc Sinh Mệnh; sức chứa Tủ Đồ và giá mở rộng; trần vàng / EXP mỗi thư quản trị | `upgrade.life`, `storage`, `mail` |
+| PK cược vàng, chiến bang, tổ đội (chia thưởng, hạn mời), giao dịch tự hủy, hộp thư (giữ / hết hạn), xếp hạng (top, cache), phó bang tối đa, hạn đơn xin vào | `pk`, `guild_war`, `party`, `trade`, `mail`, `leaderboard`, `guild.max_officers`, `guild.request_days` |
 
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.

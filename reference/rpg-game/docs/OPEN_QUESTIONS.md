@@ -14,6 +14,10 @@
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 5-C, 5-D | 2026-10-04 | Giới hạn PK cược vàng? | Cược 100 – 1 000 000, **không phí**, **không giới hạn chênh cấp**, 10 trận cược / ngày |
+| 5-G | 2026-10-04 | Trận cược đánh thế nào? | Tự đánh giữa hai bản sao, xong ngay |
+| 5-E | 2026-10-04 | Thưởng chiến bang? | Quỹ bang thắng +5 000; thành viên có ≥ 1 điểm nhận 500 vàng qua thư |
+| 5-F, 5-H, 5-I, 6-A | 2026-10-04 | Tổ đội, `/w`, thư hết hạn, bảng theo lớp | Giữ × 1,2 / n; `/w` chỉ bạn bè; thư còn quà không hết hạn; top 50, 60 s |
 | 4-A | 2026-10-04 | Ép ngọc ở đâu? | Vẫn cạnh Thợ Rèn (nút Ép trong tooltip chọn món) |
 | 4-B | 2026-10-04 | Tủ Đồ ở Nhà chứa bao nhiêu? | 40 loại đồ thường + 20 đồ hiếm; mở rộng +10 đồ hiếm × 3 lần (5 000 / 15 000 / 40 000 vàng) |
 | 4-C | 2026-10-04 | Trần mỗi thư quản trị? | 1 000 000 vàng, 1 000 000 EXP |

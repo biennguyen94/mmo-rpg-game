@@ -801,7 +801,7 @@ Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~
 
 ## 13. Xã hội, xếp hạng, PK cược vàng (Phase 5: H7+H8, H14, H1, H2–H4, H5, H6, H9, H12, E5, M2, K10)
 
-> Viết 2026-10-04, **chờ anh chốt các câu ⛔ ở 13.9 rồi mới code**. Chỉ H1 (EXP tổ đội) đụng cân bằng → simulator trước / sau.
+> Viết 2026-10-04; anh đã chốt các câu ở 13.9, **đã làm xong** (kết quả 13.10). Chỉ H1 (EXP tổ đội) đụng cân bằng → simulator trước / sau.
 
 ### 13.1 Hiện trạng (khảo sát code)
 
@@ -896,3 +896,32 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 | **5-H** | `/w` gửi được cho người không phải bạn bè? | **Chỉ bạn bè** (như tin riêng hiện tại, ít bị quấy rối) |
 | **5-I** | Thư hết hạn 30 ngày có xóa cả thư còn quà? | **Không**: thư còn quà giữ tới khi nhận |
 | **6-A** | Bảng theo lớp top mấy, làm mới bao lâu? | **Top 50**, làm mới **60 s** |
+
+**Đã chốt (2026-10-04):** 5-C / 5-D **không phí, không giới hạn chênh cấp** (cược 100 – 1 000 000, 10 trận cược / ngày);
+5-G tự đánh hai bản sao; 5-E, 5-F, 5-H, 5-I, 6-A theo đề xuất.
+
+### 13.10 Kết quả (2026-10-04)
+
+- **PK cược vàng:** `HacLong.Game.PkFight` (trận thuần giữa hai bản sao `Arena.opponent/2`, người mời đánh trước, kỹ năng
+  mỗi 3 lượt ×1,8, tối đa 30 lượt rồi so % máu), `HacLong.PkBet` (lời mời 30 s trong bộ nhớ; nhận thì giữ hai Session, kiểm
+  vàng / trận / 10 trận mỗi ngày, ghi `pk_matches` + hai nhân vật trong một transaction, nhật ký vàng `PK_BET`, ref `pk:<id>`).
+  Kênh `"pk"` (`invite` / `accept` / `decline` / `cancel` / `info`), đẩy `pk_invite`, `pk_result`. Giao diện: ô số vàng +
+  nút "⚔ Cược đấu" trong bảng thông tin người chơi, hộp mời, bảng kết quả kèm nhật ký trận, lịch sử ở thẻ Đấu trường.
+- **Xếp hạng:** `Leaderboard.boards/0` giữ mọi bảng trong ETS 60 s (tắt trong test), bảng theo lớp top 50,
+  `Leaderboard.me/1` (hạng chung + hạng trong lớp, không cache). Client: hàng chọn lớp dưới "Cấp cao".
+- **Tổ đội:** `RULES.party.share_bonus` (giữ 1,2), lời mời hết hạn 30 s (tổ đội một người tự tan), đóng hết tab quá 60 s thì
+  rời đội (`Party.away/back`, Session gọi), trưởng nhóm rời → người vào sớm nhất.
+- **Bang:** tối đa 2 phó bang (nhường bang chủ khi đã đủ phó thì bang chủ cũ làm thành viên), đơn xin vào quá 7 ngày tự bỏ.
+  **Chiến bang** `HacLong.GuildWars` (bảng `guild_wars`): tuyên chiến theo ký hiệu bang, nhận / từ chối 60 s, 1 giờ, điểm khi
+  người thách đấu thắng thành viên bang địch ở đấu trường (tối đa 3 lần một cặp), đầu hàng, thưởng quỹ +5 000 và 500 vàng qua
+  thư cho người có điểm, không chiến lại trong 24 giờ; hẹn giờ kết thúc được nạp lại khi server khởi động.
+- **Màu tên:** bang địch đỏ, đồng đội xanh lá, cùng bang xanh dương (`HLLogic.nameColor`).
+- **Chat:** `/w Tên` (chỉ bạn bè), `/p`, `/g`, `/a` (`HLLogic.parseChat`).
+- **Hộp thư:** giữ 100, hết hạn 30 ngày (thư còn quà không hết hạn), lọc Tất cả / Chưa đọc / Có quà, "Nhận tất cả" (một
+  transaction), "Xóa thư đã đọc".
+- **Giao dịch:** lời mời 30 s, mở tối đa 180 s, hủy khi đổi bản đồ / vào trận / đóng hết tab; mời và chốt phải cùng bản đồ,
+  cách ≤ 8 ô. Lời mời cược cũng hủy khi đóng hết tab.
+- **Quản trị:** "Đang online: N" + danh sách (tên, lớp, cấp, bản đồ, nút Tra) — `Session.online/1`.
+- **Simulator:** giống hệt Phase 4 ở cả 20 dòng (chia thưởng tổ đội giữ nguyên, bot không cược / không chiến bang).
+- **Test:** `pk_bet_test` (5), `guild_war_test` (4), `phase5_social_test` (5), `party_rules_test` (3), `leaderboard_test` (+2),
+  `logic.test.mjs` (+2: màu tên, lệnh chat); e2e mới `pk.mjs` (11 bước, hai trình duyệt).

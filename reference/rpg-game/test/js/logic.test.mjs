@@ -65,3 +65,28 @@ test('gom lệnh cộng điểm: không vượt số điểm, mỗi chỉ số m
     { act: 'alloc', stat: 'agi', n: 1 },
   ]);
 });
+
+test('màu tên theo quan hệ: bang địch > đồng đội > cùng bang > người lạ', () => {
+  const rel = { party: [7], tag: 'RONG', enemy: 'HO' };
+  assert.equal(L.nameRelation({ id: 9, tag: 'HO' }, rel), 'enemy');
+  assert.equal(L.nameRelation({ id: 7, tag: 'HO' }, rel), 'enemy');
+  assert.equal(L.nameRelation({ id: 7, tag: null }, rel), 'party');
+  assert.equal(L.nameRelation({ id: 8, tag: 'RONG' }, rel), 'guild');
+  assert.equal(L.nameRelation({ id: 8, tag: 'KHAC' }, rel), 'other');
+  assert.equal(L.nameRelation({ id: 8 }, {}), 'other');
+  assert.equal(L.nameColor({ id: 8 }), L.nameColor({ id: 8, tag: 'X' }, {}));
+});
+
+test('lệnh chat /w /p /g /a', () => {
+  const fr = [{ id: 1, name: 'An' }, { id: 2, name: 'An Khang' }];
+  assert.deepEqual(L.parseChat('xin chào', 'guild', fr), { to: 'guild', text: 'xin chào' });
+  assert.deepEqual(L.parseChat('/p đánh trùm', 'world', fr), { to: 'party', text: 'đánh trùm' });
+  assert.deepEqual(L.parseChat('/G họp bang', 'world', fr), { to: 'guild', text: 'họp bang' });
+  assert.deepEqual(L.parseChat('/a chào cả làng', 'party', fr), { to: 'world', text: 'chào cả làng' });
+  assert.deepEqual(L.parseChat('/w an khang mai đi săn', 'world', fr), { to: 'whisper', uid: 2, name: 'An Khang', text: 'mai đi săn' });
+  assert.deepEqual(L.parseChat('/w An ơi', 'world', fr), { to: 'whisper', uid: 1, name: 'An', text: 'ơi' });
+  assert.ok(L.parseChat('/w Lạ ơi', 'world', fr).error);
+  assert.ok(L.parseChat('/w An', 'world', fr).error);
+  assert.ok(L.parseChat('/p', 'world', fr).error);
+  assert.ok(L.parseChat('/x hi', 'world', fr).error);
+});

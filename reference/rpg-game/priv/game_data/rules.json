@@ -524,7 +524,17 @@
       "min_donate": 100,
       "quest_fund": 3000,
       "quest_gold": 800,
-      "quest_xp": 1500
+      "quest_xp": 1500,
+      "max_officers": 2,
+      "request_days": 7
+    },
+    "guild_war": {
+      "minutes": 60,
+      "answer_s": 60,
+      "same_target_max": 3,
+      "rematch_hours": 24,
+      "win_fund": 5000,
+      "win_gold": 500
     },
     "market": {
       "fee_pct": 5,
@@ -533,14 +543,38 @@
     },
     "mail": {
       "max_gold": 1000000,
-      "max_xp": 1000000
+      "max_xp": 1000000,
+      "keep": 100,
+      "expire_days": 30
+    },
+    "trade": {
+      "invite_s": 30,
+      "max_s": 180,
+      "range": 8
+    },
+    "pk": {
+      "min": 100,
+      "max": 1000000,
+      "per_day": 10,
+      "invite_s": 30,
+      "rounds": 30,
+      "special_every": 3,
+      "special_mult": 1.8
+    },
+    "leaderboard": {
+      "top": 10,
+      "class_top": 50,
+      "refresh_s": 60
     },
     "arena": {
       "per_day": 15,
       "elo_k": 32
     },
     "party": {
-      "max": 3
+      "max": 3,
+      "share_bonus": 1.2,
+      "invite_s": 30,
+      "leave_after_s": 60
     },
     "world": {
       "night_rare_chance": 0.12

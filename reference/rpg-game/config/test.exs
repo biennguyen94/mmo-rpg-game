@@ -41,3 +41,6 @@ config :hac_long, :world_boss,
 
 # sự kiện theo mùa tắt trong test (test sự kiện tự bật)
 config :hac_long, :event, "none"
+
+# Bảng xếp hạng không cache trong test (mỗi test một database sạch)
+config :hac_long, :leaderboard_cache, false

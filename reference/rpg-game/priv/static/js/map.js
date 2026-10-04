@@ -17,6 +17,8 @@
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
   let world = { map: null, monsters: [], players: [] };
   let userId = null;
+  // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
+  let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   const Doll = window.Doll;
@@ -325,7 +327,7 @@
       const doll = Doll.canvas(o.look);
       if (doll) ctx.drawImage(doll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
       ctx.globalAlpha = 1;
-      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, '#b9d7ff']);
+      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, window.HLLogic.nameColor(o, relations())]);
       const said = bubbleOf(o.id, now);
       if (said) talk.push([said, px + TILE / 2, py]);
     }
@@ -435,6 +437,7 @@
 
   window.MapView = {
     drawHome,
+    setRelations(f) { relations = f; },
     stopVisit() { visiting = null; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
     // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng

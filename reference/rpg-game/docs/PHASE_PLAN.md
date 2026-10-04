@@ -161,7 +161,7 @@ vàng / 1 triệu EXP; 4-D cánh được; 4-E không làm tách chồng; 4-F tr
 
 ---
 
-## Phase 5 — Xã hội, xếp hạng, PK cược vàng
+## Phase 5 — Xã hội, xếp hạng, PK cược vàng ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -180,7 +180,10 @@ vàng / 1 triệu EXP; 4-D cánh được; 4-E không làm tách chồng; 4-F tr
 - 5-F Công thức chia thưởng tổ đội; 5-G trận cược đánh thế nào; 5-H `/w` cho người lạ; 5-I thư còn quà có hết hạn; 6-A top
   mấy / làm mới bao lâu.
 
-Thiết kế chi tiết: `INTEGRATION_PLAN.md §13`.
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §13`. **Đã chốt:** 5-C / 5-D không phí, không giới hạn chênh cấp (cược 100 – 1 000 000,
+10 trận / ngày); 5-G tự đánh hai bản sao; 5-E, 5-F, 5-H, 5-I, 6-A theo đề xuất.
+
+**Kết quả:** đủ các mục trên, simulator không đổi; `mix test` + e2e (thêm `pk.mjs`) xanh (`INTEGRATION_PLAN.md §13.10`).
 
 **Xong khi:** e2e 2 trình duyệt cho PK cược (thắng / thua / từ chối / hết hạn), audit sạch; test từng luật kiểm lại.
 
