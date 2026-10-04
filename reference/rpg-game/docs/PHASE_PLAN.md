@@ -251,6 +251,27 @@ e2e `admin.mjs` +4 bước.
 
 ---
 
+## Phase 9 — Sửa lỗi, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại (yêu cầu thêm 2026-10-04)
+
+| Mục | Việc |
+|---|---|
+| **B1** | Sửa tràn ngang trên điện thoại (HUD nhiều nút) |
+| **B2** | Tháp: lên tầng xong nhân vật đứng đúng ô vào, không tự chạy tiếp |
+| **U3** | Dock 5 nút (Bản đồ, Nhân vật, Túi đồ, 🗺, ☰ Menu); Menu kiểu MU Web thay tab Khác; Cài đặt gồm ngôn ngữ, âm thanh, đăng xuất |
+| **U4** | Chat kiểu MU Web đè lên góc bản đồ, bỏ thẻ chat dưới bản đồ |
+| **U5** | Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn |
+
+## Phase 10 — 20 bản đồ mới, chọn bản đồ, hai ngôn ngữ
+
+| Mục | Việc |
+|---|---|
+| **U2** | 4 vùng mới cấp 36–50 (20 bản đồ), bảng chọn bản đồ (phím M, nút 🗺) theo thứ tự yếu → mạnh, dịch chuyển tốn vàng |
+| **U1** | Tiếng Việt / English trong Cài đặt (mặc định Việt): giao diện, dữ liệu game, tin server hay gặp |
+
+**⛔ Câu hỏi (cả hai phase):** 9-A … 9-E, thiết kế chi tiết `INTEGRATION_PLAN.md §15`. Phase 6 (Item.txt) để sau theo ý anh.
+
+---
+
 ## Gợi ý lịch (mỗi phase dừng chờ anh duyệt)
 
 | Thứ tự | Phase | Ghi chú |

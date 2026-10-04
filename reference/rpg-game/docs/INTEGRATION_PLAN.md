@@ -941,3 +941,92 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 - **Test:** `test/hac_long/invasion_test.exs` (lịch với thời điểm cho trước, quái vàng → trùm vàng → kết thúc sớm, hết giờ
   dọn quái, thưởng ×5); e2e `admin.mjs`: quản trị bắt đầu → người chơi thấy dải, gặp quái vàng ở Rừng Mê, thắng, nhận thưởng.
 - Simulator không chạy lại: bot không gặp quái vàng; `make_monster` chỉ thêm phép nhân với 1 cho quái thường.
+
+---
+
+## 15. Yêu cầu thêm 2026-10-04 (trước Phase 6): 2 ngôn ngữ, 20 bản đồ mới, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại, 2 lỗi
+
+> Viết 2026-10-04 theo yêu cầu của anh, **chỉ đề xuất — chưa code**. Chờ anh chốt các câu ⛔ ở 15.8. Đề xuất chia làm
+> **Phase 9** (sửa lỗi + giao diện) và **Phase 10** (bản đồ mới + 2 ngôn ngữ), xem `PHASE_PLAN.md`.
+
+### 15.1 Lỗi (sửa trước, không cần chốt gì)
+
+| # | Lỗi | Nguyên nhân (đã xem code) | Cách sửa |
+|---|---|---|---|
+| **B1** | Điện thoại tràn ngang sau khi thêm nút 🔔 trên HUD | HUD giờ có 3 nút (👥 🔔 ✉) + vàng + tên trên một hàng, 360 px không đủ | Gom 👥 / 🔔 / ✉ vào **Menu** (U3); HUD chỉ còn tên, cấp, vàng, thanh máu / MP / EXP và **một** nút chuông có số tin chưa đọc. e2e `mobile` kiểm thêm sau khi có thông báo |
+| **B2** | Tháp: bấm "Lên tầng" thì sang tầng mới nhân vật vẫn tự chạy tới sát cầu thang lên của tầng mới | Client đang "đi tới ô" (`walkTo`) cầu thang; lên tầng vẫn là bản đồ `tower` nên vòng đi không dừng, tiếp tục đi tới **cùng toạ độ** ở tầng mới (cầu thang lên luôn ở hàng trên cùng) | Dừng đường đi khi số tầng đổi (`P.tower.floor`), như khi đổi bản đồ; thêm test e2e: lên tầng xong đứng đúng ô vào của tầng mới |
+
+### 15.2 U1 — Hai ngôn ngữ (Việt / Anh)
+
+- **Cài đặt → Ngôn ngữ**: Tiếng Việt (mặc định) / English. Lưu theo tài khoản (cột `users.lang`) để đổi máy vẫn giữ; chưa đăng
+  nhập thì theo trình duyệt (`localStorage`), mặc định Việt.
+- **Giao diện client**: mọi chữ trong `ui.js` / `map.js` chuyển sang bảng chữ `priv/static/i18n/vi.json` + `en.json`, gọi
+  `t('key', {params})`. Thiếu bản dịch thì hiện tiếng Việt (không lỗi).
+- **Dữ liệu game** (tên đồ, quái, kỹ năng, NPC, bản đồ, nhiệm vụ, mô tả): thêm trường `name_en` / `desc_en` / `lines_en` trong
+  `priv/game_data/*.json`, `priv/maps/*.json`; `DataCheck` cảnh báo (không chặn build) khi thiếu bản Anh.
+- **Tin từ server** (câu trả lời lệnh, thông báo, chat hệ thống): hiện là chuỗi tiếng Việt viết thẳng trong code (vài trăm chỗ).
+  Đề xuất (câu **9-A**): server gửi thêm `key` + `params` cho tin, client dịch; làm dần — đợt đầu các tin hay gặp (trận đánh,
+  mua / bán, ép, nhiệm vụ, lỗi thường gặp), tin còn lại vẫn tiếng Việt cho tới khi chuyển xong.
+- Chat người chơi không dịch.
+
+### 15.3 U2 — 20 bản đồ mới + chọn bản đồ (phím M, nút trên dock, tốn vàng)
+
+- **Hiện trạng:** 6 vùng (cấp 1–36), mỗi vùng 2 bản đồ + 1 bản đồ trùm; cấp tối đa 50 nhưng sau Hắc Long (36) **không còn vùng
+  nào** để luyện 36–50.
+- **Đề xuất (câu 9-B):** thêm **4 vùng mới cho cấp 36–50**, mỗi vùng 5 bản đồ (4 bản đồ thường + 1 bản đồ trùm) = **20 bản
+  đồ**, quái trải đều theo cấp (mỗi bản đồ ~1 cấp, chỉ số theo công thức `RULES.monster` như vùng cũ nên damage / máu tăng
+  đều). Ví dụ: Sa Mạc Lửa (36–39), Băng Nguyên (40–43), Thành Cổ Bóng Tối (44–47), Vực Hỗn Mang (48–50, trùm cuối mới).
+  Hình quái / nền: tự vẽ placeholder như các vùng hiện có (không tải asset MU), ghi `CREDITS.md`.
+  Mỗi vùng mới mở khi hạ trùm vùng trước (Hắc Long mở vùng 7). Simulator mở rộng tới cấp 50.
+- **Chọn bản đồ:** phím **M** (hiện là "về tab Bản đồ" — chuyển sang mở bảng chọn bản đồ; bấm M lần nữa đóng) và nút 🗺 trên
+  dock. Bảng liệt kê **mọi bản đồ theo thứ tự yếu → mạnh** (cấp quái thấp nhất), mỗi dòng: tên, cấp quái, đã mở / khoá, giá.
+  Bấm "Đi" thì trừ vàng và dịch chuyển (server kiểm: không trong trận, đã mở vùng, đủ vàng; nhật ký vàng `TRAVEL`).
+- **Giá (câu 9-C):** đề xuất `20 + 4 × cấp quái thấp nhất của bản đồ` (Rừng Mê 24 vàng … vùng 48 ≈ 210 vàng); Làng và Nhà
+  **miễn phí**; đá dịch chuyển giữ nguyên (miễn phí, chỉ tới nơi đã ghi nhớ). Số ở `RULES.travel`.
+
+### 15.4 U3 — Menu kiểu MU Web (bỏ tab Khác)
+
+- Dock dưới cùng còn 5 nút: **Bản đồ**, **Nhân vật**, **Túi đồ**, **🗺 Chọn bản đồ**, **☰ Menu** (quản trị viên thêm nút Quản trị
+  trong Menu).
+- **Menu** mở lưới biểu tượng, mỗi mục là một màn riêng (nút Đóng / Esc quay lại bản đồ): Nhiệm vụ, Việc hằng ngày, Đấu trường
+  (cả PK cược), Xếp hạng, Bang hội, Bạn bè, Hộp thư, Thông báo, Thành tựu & danh hiệu, Thú cưng, Sổ quái, Nhà & trang trí,
+  Hướng dẫn, **Cài đặt**.
+- **Cài đặt**: Ngôn ngữ (U1), Âm thanh, Nhạc nền, Đổi mật khẩu, Xóa nhân vật, **Đăng xuất** (đưa hết vào đây, bỏ khỏi chỗ cũ).
+- Phím tắt giữ: C Nhân vật, I Túi đồ, M Chọn bản đồ, Q uống máu, Enter chat, Esc đóng; thêm phím mở Menu (câu 9-D).
+
+### 15.5 U4 — Chat kiểu MU Web, nằm trong bản đồ
+
+- Bỏ thẻ chat dưới bản đồ. Khung chat **đè lên góc dưới trái của bản đồ**: nền mờ, 6–8 dòng gần nhất, tin cũ mờ dần sau ~15 giây
+  (bấm vào khung thì hiện lại lịch sử, cuộn được).
+- Ô nhập ẩn; **Enter** (máy tính) hoặc nút 💬 trên khung (điện thoại) thì hiện ô nhập; Enter gửi, Esc đóng.
+- Chọn kênh bằng nút nhỏ cạnh ô nhập (Tất cả / Đội / Bang) hoặc lệnh `/w /p /g /a` như hiện có; màu theo kênh (thế giới trắng,
+  đội xanh lá, bang xanh dương, riêng tím, hệ thống vàng). Bong bóng chat trên đầu nhân vật giữ nguyên.
+- Trong trận đánh khung chat thu nhỏ còn 2 dòng.
+
+### 15.6 U5 — Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn
+
+- Màn **Bản đồ** và **Trận đánh** dùng bố cục cố định chiều cao `100dvh − HUD − dock`: canvas bản đồ tự co / giãn cho vừa (giữ tỉ lệ
+  ô, camera theo nhân vật), các dải (hướng dẫn, trùm thế giới, Golden Invasion, tổ đội) thu thành một hàng chip nhỏ trên bản đồ,
+  chạm để mở.
+- Trận đánh: quái + thanh máu + nhật ký (4 dòng, cuộn trong khung) + nút hành động trong một màn, không cuộn trang.
+- Các màn danh sách (Túi đồ, Menu, NPC…) vẫn cuộn bình thường.
+- e2e `mobile`: kiểm `document.scrollingElement.scrollHeight <= innerHeight` ở bản đồ và trận đánh (360 × 740 và 390 × 844).
+
+### 15.7 Ảnh hưởng, kiểm tra
+
+- **Giao thức:** thêm lệnh `travel` (`to`), trường `lang` khi đăng nhập / cài đặt, tin server có thêm `key` / `params` (giữ `msg`
+  cũ nên client cũ không hỏng). **Schema:** `users.lang`; không đổi bảng nhân vật. Ghi `CHANGE_REASON` trong DECISIONS.
+- **Cân bằng:** vùng mới chỉ thêm nội dung sau cấp 36; simulator thêm chạy tới cấp 50 (số trận để lên 50 cho từng lớp).
+- **Test:** hàm thuần giá dịch chuyển, thứ tự bản đồ, `DataCheck` cho 20 bản đồ mới; client `node --test` cho `t()` (thiếu key
+  → tiếng Việt), parse chat; e2e: đổi ngôn ngữ, chọn bản đồ (trừ vàng), Menu, chat trong bản đồ, mobile không cuộn / không tràn,
+  tháp lên tầng.
+
+### 15.8 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **9-A** | Dịch tin từ server làm tới đâu? | Đợt đầu: giao diện + dữ liệu game + tin hay gặp; tin hiếm làm dần (tạm hiện tiếng Việt) |
+| **9-B** | 20 bản đồ mới đặt ở đâu? | **4 vùng mới cấp 36–50** (mỗi vùng 4 bản đồ + 1 trùm), mở sau Hắc Long |
+| **9-C** | Giá dịch chuyển bằng bảng chọn bản đồ? | `20 + 4 × cấp quái thấp nhất`; Làng, Nhà miễn phí; chỉ tới vùng đã mở; đá dịch chuyển vẫn miễn phí |
+| **9-D** | Phím mở Menu? | **Tab** (máy tính); dock có nút ☰ |
+| **9-E** | Thứ tự làm? | Phase 9 (B1, B2, U3 Menu, U4 chat, U5 điện thoại) trước; Phase 10 (U2 bản đồ, U1 ngôn ngữ) sau; Phase 6 sau cùng |
