@@ -12,9 +12,12 @@ page.on('pageerror', (e) => errors.push(e.message));
 
 await page.click('#tabs [data-tab="admin"]');
 R.check('tab Quản trị mở', (await page.textContent('#view')).includes('Tra cứu người chơi'));
-await page.fill('#adm-name', X.name);
-await page.press('#adm-name', 'Enter');
-await page.waitForFunction((n) => document.querySelector('#view').textContent.includes(n) && document.querySelector('[data-adm="mute"]'), X.name, { timeout: 5000 }).catch(() => null);
+// nhân vật mới chỉ vào database ở lần lưu định kỳ của Session (vài giây): tìm lại tới khi thấy
+for (let i = 0; i < 20 && !(await page.$('[data-adm="mute"]')); i++) {
+  await page.fill('#adm-name', X.name);
+  await page.press('#adm-name', 'Enter');
+  await page.waitForSelector('[data-adm="mute"]', { timeout: 1000 }).catch(() => null);
+}
 R.check('tra cứu thấy nhân vật', !!(await page.$('[data-adm="mute"]')));
 
 // cấm chat 1 giờ → người chơi không chat được; bỏ cấm → chat lại được

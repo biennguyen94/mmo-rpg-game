@@ -99,8 +99,10 @@ CI chỉ khi sửa `reference/rpg-game/**`.
   (kèm "không lỗi JS" ở mọi kịch bản). Hook `window.__hl` (`?test=1`).
 - `node --test test/js/*.test.mjs`: 7 test hàm thuần (`priv/static/js/logic.js`).
 - `test/hac_long_web/dupe_test.exs`: 3 kịch bản × 4 vòng bắn lệnh song song, chạy nhiều seed: không sinh vàng / đồ, audit sạch.
-- Soak 30 bot × 10 phút: SOAK_RESULT
-- CI: `.github/workflows/hac-long-e2e.yml` (lần chạy đầu tiên trên GitHub sẽ có khi nhánh vào `main` hoặc mở PR).
+- Soak 30 bot × 10 phút (máy dev): 88 688 lệnh (148 / s), 368 trận, 924 tin chat; độ trễ p50 1,2 ms · p95 2,4 ms ·
+  max 174,6 ms; 0 lỗi, 0 quá giờ, 0 mất kết nối; bộ nhớ server 115 → 163 MB. `mix hac_long.audit` sau soak: **không có lỗi**.
+- CI: `.github/workflows/hac-long-e2e.yml` chạy trên PR #3. Lần đầu kịch bản `admin` trượt vì tra cứu nhân vật vừa tạo trước khi
+  Session lưu xuống database (lưu định kỳ 5 giây); đã sửa kịch bản để tra lại tới khi thấy.
 
 ---
 

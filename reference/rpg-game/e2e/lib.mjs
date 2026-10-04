@@ -98,11 +98,13 @@ export async function adminSession(browser) {
   }
   const uids = new Map();
   // lệnh quản trị lên nhân vật tên `who` (tra uid một lần): admin('add_gold', 'Tên', { amount: 100 })
+  // nhân vật mới chỉ vào database ở lần lưu định kỳ của Session (vài giây): tra lại tới khi thấy
   async function lookup(who) {
-    if (!uids.has(who)) {
-      const r = await page.evaluate((n) => window.Net.admin('lookup', { name: n }), who);
-      uids.set(who, r.user.id);
+    for (let i = 0; i < 40 && !uids.has(who); i++) {
+      const r = await page.evaluate((n) => window.Net.admin('lookup', { name: n }).catch(() => null), who);
+      if (r && r.user) uids.set(who, r.user.id); else await page.waitForTimeout(500);
     }
+    if (!uids.has(who)) throw new Error(`Quản trị không tìm thấy ${who}`);
     return uids.get(who);
   }
   async function admin(op, who, payload = {}) {
