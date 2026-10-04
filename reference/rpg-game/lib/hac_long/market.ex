@@ -155,6 +155,9 @@ defmodule HacLong.Market do
           Gear.equipped?(p, uid_gear) ->
             {:error, "Tháo món này ra trước khi bán."}
 
+          g[:stored] ->
+            {:error, "Món này đang cất trong tủ."}
+
           g[:locked] ->
             {:error, "#{Gear.resolve(g).name} đang khóa. Mở khóa trước khi bán."}
 

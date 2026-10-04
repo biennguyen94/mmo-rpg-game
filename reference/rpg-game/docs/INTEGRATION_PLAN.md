@@ -718,3 +718,81 @@ Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~
 | mg | +rương | 340 → 336 | -1.2% | 0 → 0 |
 
 - Test: `test/hac_long/game/combat_formula_test.exs` (7 test); e2e 5 kịch bản PASS.
+
+---
+
+## 12. Ngọc Sinh Mệnh, ép đồ trong túi, vứt đồ, Rương ở Nhà, trần vàng thư (Phase 4: D4, D8, C6, C7, E10)
+
+> Viết 2026-10-04; anh đã chốt các câu ở 12.6, **đã làm xong** (kết quả 12.7). Không đổi công thức chiến đấu; chỉ thêm một
+> nguồn sức mạnh nhỏ (Ngọc Sinh Mệnh) nên chạy simulator trước / sau.
+
+### 12.1 D4 — Ngọc Sinh Mệnh (`jewel_life`)
+
+- Món mới `jewel_life` "Ngọc Sinh Mệnh" (nguyên liệu, giá bán như ngọc khác).
+- Ép ở Thợ Rèn lên một món vũ khí / giáp / khiên (và cánh, câu **4-D**): thêm **một dòng tùy chọn**:
+  vũ khí +4 tấn công, giáp / khiên +4 phòng thủ, tối đa **4 dòng (+16)**. Tỉ lệ **50 %**; thất bại **mất dòng cuối** (0 dòng
+  thì không mất gì ngoài ngọc). Số trong `RULES.upgrade.life` (`per_line`, `max_lines`, `rate`).
+- Lưu trên bản riêng của món đồ (như cấp ép): `opt` = số dòng (0–4). Đồ thường được tách bản riêng khi ép lần đầu
+  (`Engine.ensure_instance`, như ép +N). Tooltip: "Dòng tùy chọn: +8 tấn công (2/4)".
+- Rơi: thêm vào bảng `JEWELS.weights` (đề xuất **10**, cạnh Phúc Lành 50 / Linh Hồn 35 / Hỗn Nguyên 15 → ~9 % số ngọc rơi).
+
+### 12.2 D8 — "Ép ngọc" từ bảng chi tiết món đồ (túi lẫn đang mặc)
+
+- Đã chốt (FEATURE_CATALOG D8): **vẫn đứng cạnh Thợ Rèn**; nút **"Ép"** trong tooltip món đồ (túi đồ + ô trang bị) mở thẻ
+  ép đúng món đó (+N bằng quặng / ngọc, Ngọc Sinh Mệnh). Không đứng cạnh Thợ Rèn thì nút báo "Hãy đến gặp Thợ Rèn".
+- Server: lệnh `upgrade` nhận `id` (uid đồ hiếm hoặc id đồ thường trong túi) ngoài `slot` như cũ; lệnh mới `life` cho
+  Ngọc Sinh Mệnh. Đồ khóa vẫn ép được (khóa chỉ chặn bán / vứt / giao dịch).
+
+### 12.3 C6 — vứt đồ
+
+- Nút **"Vứt"** trong tooltip, hỏi lại "Vứt x món, không lấy lại được?". Đồ thường chọn số lượng; đồ hiếm / đã ép vứt cả món.
+  Không vứt được: đồ đang mặc, đồ khóa, đồ đang cất. Đồ hiếm vứt đi ghi nhật ký đồ (`gear_log`, `out`, lý do `DISCARD`).
+- Tách chồng: đề xuất **không làm** (**4-E**) — túi Hắc Long đếm theo số lượng, chợ / giao dịch / bán đã chọn được số lượng.
+
+### 12.4 C7 — Rương ở Nhà
+
+- Đứng cạnh rương trong Nhà (NPC `chest` hiện là Rương Gia Truyền mở quà mỗi ngày → thêm **Tủ Đồ** riêng ở góc Nhà) mới gửi /
+  rút. Bảng: hai cột "Trong túi" / "Trong tủ", chạm món → Gửi / Rút (đồ thường chọn số lượng).
+- Sức chứa (**4-B**): đề xuất **40 loại đồ thường** (mỗi loại không giới hạn số lượng) **+ 20 đồ hiếm**; mở rộng thêm 10 ô đồ
+  hiếm bằng vàng (5 000 / 15 000 / 40 000) hay không.
+- Lưu: cột mới `storage` (map) trong `characters` (migration, mặc định rỗng) cho đồ thường; đồ hiếm vẫn nằm trong danh sách
+  `gear` của nhân vật với cờ `stored: true` → nhật ký đồ hiếm và kiểm tra trùng `uid` (`HacLong.Audit`) không phải đổi; túi
+  (`Gear.bag`) và giới hạn 20 món chỉ tính đồ chưa cất. Không mặc / bán / giao dịch / rao chợ đồ đang cất.
+- Mất kết nối / tải lại: tủ lưu cùng nhân vật (một `Characters.save!`), không thể nhân đồ giữa túi và tủ.
+
+### 12.5 E10 — trần vàng thư
+
+- Thư quản trị (`gift`) và "Quà cho mọi người": mỗi thư tối đa **`RULES.mail.max_gold`** vàng (**4-C**, đề xuất 1 000 000) và
+  `max_xp` (đề xuất 1 000 000). Vượt thì báo lỗi, không gửi. Thư hệ thống (tiền bán chợ, quà bang) không bị giới hạn.
+
+### 12.6 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **4-A** | Ép ngọc ở đâu? | **Đã chốt:** vẫn cạnh Thợ Rèn |
+| **4-B** | Tủ Đồ ở Nhà chứa bao nhiêu, có mở rộng bằng vàng không? | **40 loại đồ thường + 20 đồ hiếm**, mở rộng +10 ô đồ hiếm × 3 lần (5 000 / 15 000 / 40 000 vàng) |
+| **4-C** | Trần vàng mỗi thư quản trị? | **1 000 000 vàng**, EXP 1 000 000 |
+| **4-D** | Ngọc Sinh Mệnh ép được lên cánh không (MU có)? | **Có**: cánh +4 phòng thủ mỗi dòng |
+| **4-E** | Có làm tách chồng không? | **Không** (túi đếm theo số lượng, đã chọn số khi bán / rao / giao dịch) |
+| **4-F** | Tỉ lệ rơi Ngọc Sinh Mệnh? | Trọng số **10** trong bảng ngọc (~9 % số ngọc rơi) |
+
+**Đã chốt (2026-10-04):** 4-B theo đề xuất (40 loại + 20 đồ hiếm, mở rộng bằng vàng); 4-C 1 000 000 vàng / 1 000 000 EXP;
+4-D cánh **được**; 4-E **không làm**; 4-F trọng số **10**.
+
+### 12.7 Kết quả (2026-10-04)
+
+- **Dữ liệu:** `items.json` `jewel_life`; `upgrade.json` `JEWELS.weights.jewel_life = 10`; `rules.json` `upgrade.life`
+  (`jewel`, `per_line` 4, `max_lines` 4, `rate` 0,5), `storage` (`items` 40, `gear` 20, `expand` 3 lần × 10 ô:
+  5 000 / 15 000 / 40 000), `mail` (`max_gold`, `max_xp` 1 000 000). NPC `wardrobe` "Tủ Đồ" ở Nhà ô (7, 1).
+- **Server:** `Engine.upgrade/3` và `Engine.life/2` nhận ô / uid / id đồ thường trong túi (đồ thường tách bản riêng, cần một
+  chỗ trong túi đồ hiếm); kết quả trả `uid` của món vừa ép. `Engine.discard/3`. Module mới `HacLong.Game.Storage`
+  (`store` / `take` / `expand` / `view`). Migration `characters.storage`. Đồ cất: `stored: true` trong `gear`, chặn mặc /
+  bán / giao dịch / rao chợ / máy ghép. `view` thêm `forgeBag`, `storage`; `bonus` cộng cả dòng Ngọc Sinh Mệnh.
+- **Client:** tooltip món trong túi có **Ép** (chọn món cho thẻ "Ép đồ" ở Thợ Rèn; ở xa thì nhắc mang tới Thợ Rèn) và **Vứt**
+  (một món: xác nhận; nhiều: hỏi số lượng); tooltip hiện dòng Ngọc Sinh Mệnh. Thẻ "Ép đồ" có nút 💚 cho từng món. Bảng Tủ Đồ
+  (Trong tủ / Túi đồ, Cất / Cất hết / Lấy, mở rộng). Túi, chợ, giao dịch, bán không tính đồ đang cất.
+- **Simulator** (`mix hac_long.simulate 20 --seed 1`): số trận hạ Hắc Long **giống hệt** sau Phase 3 ở cả 20 dòng (bot không
+  dùng Ngọc Sinh Mệnh; trọng số mới chỉ đổi loại ngọc rơi, không đổi số lần rơi).
+- **Test:** `test/hac_long/game/forge_storage_test.exs` (6), `test/hac_long_web/phase4_test.exs` (2: lưu / nạp tủ + vứt đồ
+  qua Session + database, `gear_log`, audit sạch; trần thư quản trị). e2e `progress.mjs` thêm 12 bước (Ngọc Sinh Mệnh lên đồ
+  đang mặc và đồ trong túi chọn qua tooltip, vứt đồ, Tủ Đồ cất / lấy / mở rộng).

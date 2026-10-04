@@ -134,7 +134,7 @@ e2e smoke xanh.
 
 ---
 
-## Phase 4 — Ngọc, ép, kho
+## Phase 4 — Ngọc, ép, kho ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -149,6 +149,13 @@ e2e smoke xanh.
 - 4-A Ép ngọc ở bất kỳ đâu, hay vẫn phải đứng cạnh Thợ Rèn?
 - 4-B Rương ở Nhà chứa bao nhiêu (đề xuất 40 ô đồ thường + 20 đồ hiếm), có nâng cấp chỗ bằng vàng không?
 - 4-C Trần vàng thư: 1 triệu / thư?
+- 4-D Ngọc Sinh Mệnh ép lên cánh? 4-E Làm tách chồng? 4-F Tỉ lệ rơi Ngọc Sinh Mệnh? (4-A đã chốt: giữ Thợ Rèn.)
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §12`. **Đã chốt:** 4-B 40 loại + 20 đồ hiếm, mở rộng +10 × 3 bằng vàng; 4-C 1 triệu
+vàng / 1 triệu EXP; 4-D cánh được; 4-E không làm tách chồng; 4-F trọng số 10.
+
+**Kết quả:** Ngọc Sinh Mệnh, nút Ép / Vứt trong tooltip, Tủ Đồ ở Nhà, trần thư quản trị; simulator không đổi; `mix test`
++ e2e xanh (`INTEGRATION_PLAN.md §12.7`).
 
 **Xong khi:** test hàm thuần (ngọc, vứt, rương), audit sạch sau gửi / rút, e2e ép ngọc từ tooltip.
 

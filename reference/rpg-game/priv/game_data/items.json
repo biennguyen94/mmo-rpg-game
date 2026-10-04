@@ -358,6 +358,13 @@
       "price": 1250,
       "desc": "Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên."
     },
+    "jewel_life": {
+      "name": "Ngọc Sinh Mệnh",
+      "slot": "material",
+      "icon": "gem-life",
+      "price": 1250,
+      "desc": "Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối."
+    },
     "wing_dk_1": {
       "name": "Cánh Ác Quỷ",
       "slot": "wing",

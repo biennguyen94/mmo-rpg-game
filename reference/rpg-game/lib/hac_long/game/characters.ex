@@ -191,7 +191,8 @@ defmodule HacLong.Game.Characters do
       decor:
         for d <- c.decor || [], HacLong.Game.Data.furniture(d["id"]) do
           %{id: d["id"], x: d["x"], y: d["y"]}
-        end
+        end,
+      storage: HacLong.Game.Storage.load(c.storage)
     }
   end
 

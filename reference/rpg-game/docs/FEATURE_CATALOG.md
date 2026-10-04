@@ -89,8 +89,8 @@
 | C3 | **Yêu cầu chỉ số để mặc** (STR / AGI / ENE tối thiểu), hiện đỏ khi thiếu | Khác: chỉ yêu cầu cấp | 🟡 | S | Cho điểm tiềm năng thêm ý nghĩa. Đổi cân bằng | [x] |
 | C4 | **Đồ theo lớp** (danh sách lớp được mặc; MG không đội mũ) | Kiểm (có vẻ mọi lớp mặc được hết) | 🟡 | S | Đi cùng B4 / B7 | [x] |
 | C5 | **Túi dạng lưới 8×8, kéo thả** xếp / mặc / tháo | Khác: danh sách theo nhóm | ✅ | M | Đẹp trên máy tính, **kém hơn danh sách trên điện thoại** (Hắc Long ưu tiên điện thoại). Đề xuất: lưới cho màn ≥ 1024 px, giữ danh sách cho màn hẹp | [x] ✅ Q |
-| C6 | **Tách stack, vứt đồ có xác nhận** | Không thấy | 🟡 | S | Vứt đồ ít cần (bán được). Tách stack chỉ có ích nếu chợ bán theo số lượng | [x] |
-| C7 | **Kho đồ** (MU: 15×8, chung tài khoản) | Không | 🟡 | M | Hắc Long 1 nhân vật nên đổi thành **"Rương ở Nhà"**: chỗ cất đồ ngoài túi (`gear` tối đa 20 món) | [x] |
+| C6 | **Tách stack, vứt đồ có xác nhận** (P4: chỉ vứt đồ, không tách chồng — câu 4-E) | Không thấy | 🟡 | S | Vứt đồ ít cần (bán được). Tách stack chỉ có ích nếu chợ bán theo số lượng | [x] ✅ P4 |
+| C7 | **Kho đồ** (MU: 15×8, chung tài khoản) | Không | 🟡 | M | Hắc Long 1 nhân vật nên đổi thành **"Rương ở Nhà"**: chỗ cất đồ ngoài túi (`gear` tối đa 20 món) | [x] ✅ P4 |
 | C8 | **Đồ rơi dưới đất, giữ riêng 10 s, 60 s biến mất, nhặt bằng phím** | Khác: vào thẳng túi | ❌ | – | Không hợp turn-based | [ ] |
 | C9 | **Mỗi món đồ có serial riêng** (bảng `items` + `item_locations`) | Khác: số đếm trong `inv`; đồ ngẫu nhiên có `uid` | 🟡 | L | Nền cho chống nhân bản đồ (E3). Đổi cách lưu đồ, migration lớn | [ ] |
 | C10 | **Cấp nâng theo từng món** (không theo loại) | Khác: theo loại đồ thường (hai `broadsword` chung cấp) | ✅ | M | Sửa "bẫy" ở `CODEBASE_NOTES §10.4`. Cần trước khi làm D1 (mất đồ +10 thì mất đúng món) | [x] ✅ Đ3 |
@@ -104,11 +104,11 @@
 | D1 ★ | **Ép +6 → +11 bằng ngọc**, có rủi ro (tụt cấp / mất đồ), bảng bước trong config | Khác: Thợ Rèn +5, chắc chắn | ✅ | M | `INTEGRATION_PLAN §3`. Nên làm C10 trước | [x] ✅ Đ3 |
 | D2 | **+10 / +11 cộng gấp đôi** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
 | D3 | **Thông báo toàn server khi ép thành công từ +7** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | Đã chọn (câu 3-C chuyển từ "để sau" sang làm). `PHASE_PLAN.md` Phase 4 | [x] |
+| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | Đã chọn (câu 3-C chuyển từ "để sau" sang làm). `PHASE_PLAN.md` Phase 4 | [x] ✅ P4 |
 | D5 ★ | **Máy ghép** (công thức: đầu vào theo loại / cấp / số lượng, phí, tỉ lệ cơ bản + theo cấp đồ, trần 60 %; xem trước tỉ lệ; thất bại mất hết) | Khác: công thức nấu / rèn chắc chắn | ✅ | M | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D6 ★ | **Cánh** (ô riêng, % sát thương / % hấp thụ, ép +N mỗi cấp +2 %, cấp 2 theo lớp, vẽ bằng code) | Không | ✅ | L | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D7 | **Ngọc rơi theo nhóm có trọng số** từ quái cấp cao, trùm, top 3 trùm thế giới | Khác: nguyên liệu chỉ từ điểm thu thập | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | **Chốt:** giữ Thợ Rèn + nút "Ép ngọc" trong bảng chi tiết món đồ, cho **cả đồ trong túi lẫn đồ đang mặc** (thay C15) | [x] |
+| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | **Chốt:** giữ Thợ Rèn + nút "Ép ngọc" trong bảng chi tiết món đồ, cho **cả đồ trong túi lẫn đồ đang mặc** (thay C15) | [x] ✅ P4 |
 
 ## E. Kinh tế, cửa hàng, giao dịch, chống gian lận
 
@@ -123,7 +123,7 @@
 | E7 | **Giá bán lại = tỉ lệ trong config** (MU 50 %) | Khác: 40 % trong code | ✅ | S | Gộp J1 | [x] ✅ P1 |
 | E8 | **Cửa hàng theo NPC trong data** (`shop.json`) | Có (`stock` trong map JSON) | ❌ | – | Đã có | [ ] |
 | E9 | **Mọi thao tác đồ / vàng trong một transaction** (mua, bán, ép, ghép, nhận thư, giao dịch) | Khác: hàm thuần + lưu cả dòng (một Session nên an toàn trong RAM) | 🟡 | M | Rủi ro thấp vì Session tuần tự; chỉ cần ở chỗ đụng 2 người (E4, chợ) | [ ] |
-| E10 | **Trần vàng gửi qua thư / giao dịch** | Có trần giao dịch 10 triệu; thư không trần | 🟡 | S | Thêm trần cho thư quản trị (tránh gõ nhầm số) | [x] |
+| E10 | **Trần vàng gửi qua thư / giao dịch** | Có trần giao dịch 10 triệu; thư không trần | 🟡 | S | Thêm trần cho thư quản trị (tránh gõ nhầm số) | [x] ✅ P4 |
 
 ## F. Thế giới, quái, sự kiện
 

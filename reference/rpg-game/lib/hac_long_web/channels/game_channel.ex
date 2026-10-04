@@ -664,7 +664,16 @@ defmodule HacLongWeb.GameChannel do
       items: p["items"] || %{}
     }
 
+    # trần mỗi thư quản trị (`RULES.mail`), tránh gõ nhầm số; thư hệ thống (bán chợ, quà bang) không giới hạn
+    cap = HacLong.Game.Data.rules().mail
+
     case p do
+      _ when is_integer(mail.gold) and mail.gold > cap.max_gold ->
+        {:error, "Mỗi thư tối đa #{cap.max_gold} vàng."}
+
+      _ when is_integer(mail.xp) and mail.xp > cap.max_xp ->
+        {:error, "Mỗi thư tối đa #{cap.max_xp} kinh nghiệm."}
+
       %{"all" => true} ->
         with {:ok, n} <- Mailbox.send_all(mail), do: {:ok, %{sent: n}}
 

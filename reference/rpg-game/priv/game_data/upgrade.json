@@ -46,7 +46,8 @@
     "weights": {
       "jewel_bless": 50,
       "jewel_soul": 35,
-      "jewel_chaos": 15
+      "jewel_chaos": 15,
+      "jewel_life": 10
     },
     "monster_level": 12,
     "monster_chance": 0.006,

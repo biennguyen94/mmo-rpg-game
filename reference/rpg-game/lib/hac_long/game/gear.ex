@@ -11,6 +11,8 @@ defmodule HacLong.Game.Gear do
     thành bản riêng (`plain/1`) để có cấp nâng / khóa riêng từng món (đồ đã nâng cấp, đồ đã khóa, cánh).
   - `bonus`: `%{str | agi | vit | ene => điểm}` cộng vào chỉ số khi mặc.
   - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
+  - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
+  - `opt`: số dòng Ngọc Sinh Mệnh (0–4, `Engine.life/2`).
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
   """
@@ -32,14 +34,14 @@ defmodule HacLong.Game.Gear do
 
   def instance?(id), do: is_binary(id) and String.starts_with?(id, "#")
 
-  defp list(p), do: Map.get(p, :gear) || []
+  def list(p), do: Map.get(p, :gear) || []
 
   def find(p, uid), do: Enum.find(list(p), &(&1.uid == uid))
 
   def equipped?(p, uid), do: uid in Map.values(p.equip)
 
-  @doc "Món trong túi (không đang mặc)."
-  def bag(p), do: Enum.reject(list(p), &equipped?(p, &1.uid))
+  @doc "Món trong túi (không đang mặc, không cất trong Tủ Đồ)."
+  def bag(p), do: Enum.reject(list(p), &(equipped?(p, &1.uid) or &1[:stored]))
 
   @doc """
   Thông tin món đồ `id` như `Data.item/1`: đồ thường lấy thẳng; đồ ngẫu nhiên thì lấy đồ
@@ -70,6 +72,8 @@ defmodule HacLong.Game.Gear do
       rarity: g.rarity,
       bonus: g.bonus,
       locked: g[:locked] == true,
+      stored: g[:stored] == true,
+      opt: g[:opt] || 0,
       sell: price(g)
     })
   end
@@ -172,6 +176,24 @@ defmodule HacLong.Game.Gear do
 
   def locked?(p, uid), do: match?(%{locked: true}, find(p, uid))
 
+  @doc "Món `uid` đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`): không mặc / bán / đổi được."
+  def stored?(p, uid), do: match?(%{stored: true}, find(p, uid))
+
+  @doc "Đặt một trường của món `uid` (`nil` là bỏ trường đó)."
+  def put(p, uid, key, value) do
+    Map.put(
+      p,
+      :gear,
+      Enum.map(list(p), fn
+        %{uid: ^uid} = g ->
+          if value in [nil, false, 0], do: Map.delete(g, key), else: Map.put(g, key, value)
+
+        g ->
+          g
+      end)
+    )
+  end
+
   @doc "Khóa / mở khóa món `uid`."
   def set_locked(p, uid, on?) do
     Map.put(
@@ -210,7 +232,10 @@ defmodule HacLong.Game.Gear do
         bonus: Map.new(g["bonus"], fn {k, v} -> {String.to_existing_atom(k), v} end)
       }
 
-      if g["locked"] == true, do: Map.put(m, :locked, true), else: m
+      m = if g["locked"] == true, do: Map.put(m, :locked, true), else: m
+      m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
+      opt = g["opt"]
+      if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
     end
   end
 

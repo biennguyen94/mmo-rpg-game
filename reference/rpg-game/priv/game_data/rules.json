@@ -206,7 +206,13 @@
       "cost_pct": 0.08,
       "cost_min_price": 100,
       "rare_ore_level": 17,
-      "scale_step": 5
+      "scale_step": 5,
+      "life": {
+        "jewel": "jewel_life",
+        "per_line": 4,
+        "max_lines": 4,
+        "rate": 0.5
+      }
     },
     "chests": {
       "tiers": [
@@ -375,6 +381,24 @@
       "xp_per_step": 0.01,
       "max_xp_bonus": 0.05
     },
+    "storage": {
+      "items": 40,
+      "gear": 20,
+      "expand": [
+        {
+          "gear": 10,
+          "gold": 5000
+        },
+        {
+          "gear": 10,
+          "gold": 15000
+        },
+        {
+          "gear": 10,
+          "gold": 40000
+        }
+      ]
+    },
     "events": {
       "xp_bonus": 0.1,
       "shop": {
@@ -506,6 +530,10 @@
       "fee_pct": 5,
       "max_active": 10,
       "max_price": 10000000
+    },
+    "mail": {
+      "max_gold": 1000000,
+      "max_xp": 1000000
     },
     "arena": {
       "per_day": 15,

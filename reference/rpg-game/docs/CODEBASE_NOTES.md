@@ -501,6 +501,18 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
 - **CI:** `.github/workflows/hac-long-e2e.yml` (chỉ khi sửa `reference/rpg-game/**`): dev server + Postgres, e2e, soak
   10 bot / 2 phút (chạy tay chỉnh được), `mix hac_long.audit`, tải ảnh + log server.
 
+## 9h. Ngọc, ép, kho (Phase 4, 2026-10-04)
+
+- **`HacLong.Game.Storage`** (Tủ Đồ, NPC `role: "wardrobe"` ở Nhà): đồ thường ở `p.storage.inv` (cột `characters.storage`,
+  `%{inv, extra}`), đồ hiếm gắn `stored: true` trong `gear` (`Gear.put/4`, `Gear.stored?/2`). `Gear.bag/1` bỏ đồ đang cất;
+  mặc / bán / giao dịch / chợ / máy ghép từ chối đồ đang cất. Số ở `RULES.storage`.
+- **Ép theo món:** `Engine.upgrade/3`, `Engine.life/2` nhận ô (`"weapon"`…), uid, hoặc id đồ thường trong túi
+  (`forge_target/2` → `forge_instance/3`). Dòng Ngọc Sinh Mệnh lưu `opt` trên bản riêng; `life_bonus/2` cộng vào `derived`
+  cùng `upgrade_bonus`. `view.forgeBag` = giá ép từng món trong túi.
+- **`Engine.discard/3`**: vứt đồ thường (số lượng) / đồ hiếm (cả món); `gear_log` `out` lý do `DISCARD`.
+- **Trần thư quản trị:** `game_channel.ex` `admin("gift")` theo `RULES.mail`.
+- Client: `forgePick` (món chọn từ tooltip), `lifeLine`, `wardrobeCard` trong `ui.js`; `RULES.life` gửi từ `page_controller`.
+
 ## 10. Bẫy cần biết
 
 1. **Lưu cả dòng, không khóa lạc quan:** mọi thay đổi nhân vật phải đi qua `Session` của tài khoản đó.

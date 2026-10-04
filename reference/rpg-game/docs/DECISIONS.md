@@ -45,3 +45,15 @@
 | P3-2 | Hệ số DR của quái `monster_dr = 0,8` × cấp (không chỉnh thêm). | Trúng quái cùng cấp 91–95 %, simulator lệch ≤ 2,7 % nên không cần bù. |
 | P3-3 | Trượt quyết định bằng `Rng.uniform() < 1 − tỉ lệ trúng` (số ngẫu nhiên lớn = trúng). | Giữ cách test cũ: dãy số 0,99 là "đòn tốt". |
 | P3-4 | `dodge` của quái giữ trong dữ liệu quái nhưng chỉ còn dùng ở đấu trường (né của bản sao người chơi). | Người đánh quái giờ theo tỉ lệ trúng (3-A). |
+
+## Phase 4 — Ngọc, ép, kho (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P4-1 | Đồ hiếm cất tủ vẫn nằm trong `gear` của nhân vật với cờ `stored`; đồ thường cất ở cột mới `characters.storage`. | Nhật ký đồ hiếm, đối soát trùng `uid` không phải đổi; cất / lấy không phải "ra / vào" nhân vật. |
+| P4-2 | Ép (+N, Ngọc Sinh Mệnh) đồ thường **trong túi** tách một món ra thành bản riêng, nên cần một chỗ trống trong túi đồ hiếm (20). | Cấp ép / dòng tùy chọn lưu theo bản riêng như đồ đang mặc (Đợt 3, C10). |
+| P4-3 | Ngọc Sinh Mệnh thất bại khi món chưa có dòng nào: chỉ mất ngọc. Ép được cả đồ đang khóa. | Đúng đề xuất §12.1; khóa chỉ chặn bán / vứt / giao dịch / máy ghép. |
+| P4-4 | Nút "Ép" trong tooltip chỉ **chọn món** cho thẻ "Ép đồ" (không ép ngay); ở xa Thợ Rèn thì báo mang tới, món đã chọn giữ đến khi tới. | Ép có thể vỡ đồ: luôn thấy giá, tỉ lệ, rủi ro trước khi bấm. |
+| P4-5 | Vứt một món: hộp xác nhận; nhiều món: hỏi số lượng (mặc định cả chồng). Đồ đang cất không vứt được (lấy ra trước). | Không có tách chồng (4-E) nên chọn số ngay khi vứt. |
+| P4-6 | Bot simulator không dùng Ngọc Sinh Mệnh. | Giữ so sánh trước / sau; ngọc chỉ +4 / dòng, ít ảnh hưởng. |
+| P4-7 | Kết quả lệnh `upgrade` / `life` kèm `uid` món vừa ép. | Client giữ món đang chọn khi đồ thường vừa được tách thành bản riêng. |

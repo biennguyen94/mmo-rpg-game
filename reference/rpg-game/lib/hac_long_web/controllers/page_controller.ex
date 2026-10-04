@@ -73,6 +73,7 @@ defmodule HacLongWeb.PageController do
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),
         upgradeBonusPct: Data.rules().upgrade.bonus_pct,
+        life: Data.rules().upgrade.life,
         wingPerLevel: Data.rules().combat.wing_per_level,
         smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
         smithRare: Data.rules().crafting.smith_rare,

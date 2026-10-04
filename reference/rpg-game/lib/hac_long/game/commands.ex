@@ -19,6 +19,7 @@ defmodule HacLong.Game.Commands do
     Home,
     Pets,
     Quests,
+    Storage,
     Tower,
     Tutorial
   }
@@ -138,8 +139,23 @@ defmodule HacLong.Game.Commands do
 
       "upgrade" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ ->
-          Engine.upgrade(p, c["slot"], c["confirm"] == true)
+          Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true)
         end)
+
+      "life" ->
+        at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ -> Engine.life(p, c["id"] || c["slot"]) end)
+
+      "discard" ->
+        Engine.discard(p, c["id"], c["n"] || 1)
+
+      "store" ->
+        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.store(p, c["id"], c["n"] || 1) end)
+
+      "unstore" ->
+        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.take(p, c["id"], c["n"] || 1) end)
+
+      "storage_expand" ->
+        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.expand(p) end)
 
       "quest_accept" ->
         at_npc(p, ["quests"], "Trưởng Làng", fn _ -> Quests.accept(p, c["id"]) end)

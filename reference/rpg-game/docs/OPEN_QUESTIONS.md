@@ -14,6 +14,11 @@
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 4-A | 2026-10-04 | Ép ngọc ở đâu? | Vẫn cạnh Thợ Rèn (nút Ép trong tooltip chọn món) |
+| 4-B | 2026-10-04 | Tủ Đồ ở Nhà chứa bao nhiêu? | 40 loại đồ thường + 20 đồ hiếm; mở rộng +10 đồ hiếm × 3 lần (5 000 / 15 000 / 40 000 vàng) |
+| 4-C | 2026-10-04 | Trần mỗi thư quản trị? | 1 000 000 vàng, 1 000 000 EXP |
+| 4-D, 4-F | 2026-10-04 | Ngọc Sinh Mệnh lên cánh? Tỉ lệ rơi? | Cánh **được**; trọng số **10** trong bảng ngọc |
+| 4-E | 2026-10-04 | Tách chồng? | **Không làm** |
 | 3-A … 3-D | 2026-10-04 | Công thức chiến đấu (`INTEGRATION_PLAN §11.5`) | Theo đề xuất: trúng chỉ khi người đánh quái, sàn mềm 20 %, phạt EXP chỉ quái thường, công ±10 % |
 | 3-E | 2026-10-04 | Kỹ năng có thể trượt không? | **Không**: kỹ năng luôn trúng |
 | P1-Q1 | 2026-10-04 | Danh sách từ cấm cơ bản em lập có cần thêm / bớt? | OK, giữ nguyên |

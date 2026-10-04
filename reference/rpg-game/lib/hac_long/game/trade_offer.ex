@@ -87,6 +87,9 @@ defmodule HacLong.Game.TradeOffer do
       Enum.any?(offer.gear, &Gear.equipped?(p, &1.uid)) ->
         {:error, "Tháo đồ đang mặc ra trước khi đổi."}
 
+      Enum.any?(offer.gear, &Gear.stored?(p, &1.uid)) ->
+        {:error, "Có món đang cất trong tủ. Lấy ra trước khi đổi."}
+
       Enum.any?(offer.gear, &Gear.locked?(p, &1.uid)) ->
         {:error, "Có món đang khóa. Mở khóa trước khi đổi."}
 
