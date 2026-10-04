@@ -39,6 +39,14 @@ if (await engage(page)) {
   await act(page, 'leave');
 } else R.check('vào được trận đánh', false);
 
+// B1: HUD trường hợp xấu nhất (vàng 8 chữ số, số đỏ trên cả 3 nút) không làm tràn ngang
+await page.evaluate(() => {
+  document.querySelector('#hud .gold').lastChild.textContent = '12.345.678';
+  document.querySelectorAll('#hud .hud-btn').forEach((b) => { if (!b.querySelector('.points-dot')) b.insertAdjacentHTML('beforeend', '<span class="points-dot">99</span>'); });
+});
+R.check('HUD nhiều chữ số + số đỏ: không tràn ngang', !(await overflowX(page)));
+await page.evaluate(() => window.__hl.tab('map'));
+
 // Phase 8: bảng Thông báo (🔔) — tin lên cấp / thắng trận vừa rồi được giữ lại
 await act(page, 'notes-open');
 const nu = await page.evaluate(() => window.__hl.ui());

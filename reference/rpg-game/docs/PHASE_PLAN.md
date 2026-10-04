@@ -265,10 +265,10 @@ e2e `admin.mjs` +4 bước.
 
 | Mục | Việc |
 |---|---|
-| **U2** | 4 vùng mới cấp 36–50 (20 bản đồ), bảng chọn bản đồ (phím M, nút 🗺) theo thứ tự yếu → mạnh, dịch chuyển tốn vàng |
+| **U2** | 20 bản đồ phụ cấp 1–50 rải đều, cổng vào từ các bản đồ hiện có (không gắn Hắc Long); bảng chọn bản đồ (phím M, nút 🗺) theo thứ tự yếu → mạnh, dịch chuyển tốn vàng `20 + 4 × cấp` |
 | **U1** | Tiếng Việt / English trong Cài đặt (mặc định Việt): giao diện, dữ liệu game, tin server hay gặp |
 
-**⛔ Câu hỏi (cả hai phase):** 9-A … 9-E, thiết kế chi tiết `INTEGRATION_PLAN.md §15`. Phase 6 (Item.txt) để sau theo ý anh.
+**Đã chốt** 9-A … 9-E (`INTEGRATION_PLAN.md §15.8`; 9-B: bản đồ phụ, không gắn Hắc Long). Thứ tự: B1, B2 → Phase 9 → Phase 10 → Phase 6.
 
 ---
 

@@ -522,3 +522,17 @@ img.own { object-fit: contain; image-rendering: auto; }
 .stage.golden .sprite { filter: drop-shadow(0 0 8px #ffd24a); }
 .bar.gold { height: 18px; }
 .bar.gold i { background: linear-gradient(90deg, #b8862a, #ffd24a); }
+
+/* B1: HUD trên điện thoại — tên co lại, nút nhỏ hơn, số đỏ không lòi ra ngoài màn hình */
+#hud { grid-template-columns: minmax(0, 1fr); }
+.bars > * { min-width: 0; }
+.hud-top > * { min-width: 0; }
+.hud-top .gold { white-space: nowrap; flex: none; }
+.hud-who .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) {
+  .hud-top { gap: 6px; }
+  .hud-top .sprite { width: 34px; height: 34px; }
+  .hud-top .gold { font-size: 0.85rem; gap: 3px; }
+  .hud-btn { min-width: 32px; min-height: 32px; padding: 3px; flex: none; }
+  .hud-btn .points-dot { top: -5px; right: -3px; }
+}

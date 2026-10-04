@@ -946,7 +946,7 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 
 ## 15. Yêu cầu thêm 2026-10-04 (trước Phase 6): 2 ngôn ngữ, 20 bản đồ mới, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại, 2 lỗi
 
-> Viết 2026-10-04 theo yêu cầu của anh, **chỉ đề xuất — chưa code**. Chờ anh chốt các câu ⛔ ở 15.8. Đề xuất chia làm
+> Viết 2026-10-04 theo yêu cầu của anh; anh đã chốt các câu ở 15.8. Đề xuất chia làm
 > **Phase 9** (sửa lỗi + giao diện) và **Phase 10** (bản đồ mới + 2 ngôn ngữ), xem `PHASE_PLAN.md`.
 
 ### 15.1 Lỗi (sửa trước, không cần chốt gì)
@@ -955,6 +955,13 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 |---|---|---|---|
 | **B1** | Điện thoại tràn ngang sau khi thêm nút 🔔 trên HUD | HUD giờ có 3 nút (👥 🔔 ✉) + vàng + tên trên một hàng, 360 px không đủ | Gom 👥 / 🔔 / ✉ vào **Menu** (U3); HUD chỉ còn tên, cấp, vàng, thanh máu / MP / EXP và **một** nút chuông có số tin chưa đọc. e2e `mobile` kiểm thêm sau khi có thông báo |
 | **B2** | Tháp: bấm "Lên tầng" thì sang tầng mới nhân vật vẫn tự chạy tới sát cầu thang lên của tầng mới | Client đang "đi tới ô" (`walkTo`) cầu thang; lên tầng vẫn là bản đồ `tower` nên vòng đi không dừng, tiếp tục đi tới **cùng toạ độ** ở tầng mới (cầu thang lên luôn ở hàng trên cùng) | Dừng đường đi khi số tầng đổi (`P.tower.floor`), như khi đổi bản đồ; thêm test e2e: lên tầng xong đứng đúng ô vào của tầng mới |
+
+**Đã sửa (2026-10-04):**
+- **B1:** nguyên nhân thật là `#hud` dạng lưới với cột tự co theo nội dung tối thiểu (hàng trên không thu hẹp được: 502 px trên
+  màn 360 px). Sửa: `grid-template-columns: minmax(0, 1fr)`, phần tử hàng trên được co (tên / dòng lớp cắt "…"), màn ≤ 480 px nút
+  HUD nhỏ hơn và số đỏ không lòi ra mép. Đo lại 360 / 320 px: không tràn. e2e `mobile` thêm bước "vàng 8 chữ số + số đỏ trên cả
+  3 nút" không tràn ngang. (Gom nút vào Menu vẫn làm ở U3.)
+- **B2:** `step()` và `walkTo()` coi đổi tầng tháp như đổi bản đồ: dừng đường đi, vẽ lại; nhân vật đứng ở ô vào của tầng mới.
 
 ### 15.2 U1 — Hai ngôn ngữ (Việt / Anh)
 
@@ -973,11 +980,12 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 
 - **Hiện trạng:** 6 vùng (cấp 1–36), mỗi vùng 2 bản đồ + 1 bản đồ trùm; cấp tối đa 50 nhưng sau Hắc Long (36) **không còn vùng
   nào** để luyện 36–50.
-- **Đề xuất (câu 9-B):** thêm **4 vùng mới cho cấp 36–50**, mỗi vùng 5 bản đồ (4 bản đồ thường + 1 bản đồ trùm) = **20 bản
-  đồ**, quái trải đều theo cấp (mỗi bản đồ ~1 cấp, chỉ số theo công thức `RULES.monster` như vùng cũ nên damage / máu tăng
-  đều). Ví dụ: Sa Mạc Lửa (36–39), Băng Nguyên (40–43), Thành Cổ Bóng Tối (44–47), Vực Hỗn Mang (48–50, trùm cuối mới).
-  Hình quái / nền: tự vẽ placeholder như các vùng hiện có (không tải asset MU), ghi `CREDITS.md`.
-  Mỗi vùng mới mở khi hạ trùm vùng trước (Hắc Long mở vùng 7). Simulator mở rộng tới cấp 50.
+- **Đã chốt (câu 9-B, 2026-10-04):** **không gắn với Hắc Long / tiến trình trùm**. Thêm **20 bản đồ phụ** độc lập, mỗi bản
+  đồ có **cổng vào từ một bản đồ hiện có**, rải đều: cấp quái trải đều **1 → 50** (mỗi bản đồ phụ một dải ~2–3 cấp, nối với
+  bản đồ hiện có gần cấp nhất; bản đồ cấp 37–50 nối từ các bản đồ của Hang Hắc Long / Đầm Lầy Rồng). Chỉ số quái theo công thức
+  `RULES.monster` như vùng cũ nên máu / damage tăng đều theo cấp. Bản đồ phụ không có trùm vùng, không khoá: đi bộ qua cổng là
+  vào (bảng chọn bản đồ thì tới được khi đã đi qua cổng đó ít nhất một lần). Quái dùng lại loài sẵn có hoặc loài mới tự vẽ
+  placeholder (không tải asset MU), ghi `CREDITS.md`. Simulator mở rộng tới cấp 50.
 - **Chọn bản đồ:** phím **M** (hiện là "về tab Bản đồ" — chuyển sang mở bảng chọn bản đồ; bấm M lần nữa đóng) và nút 🗺 trên
   dock. Bảng liệt kê **mọi bản đồ theo thứ tự yếu → mạnh** (cấp quái thấp nhất), mỗi dòng: tên, cấp quái, đã mở / khoá, giá.
   Bấm "Đi" thì trừ vàng và dịch chuyển (server kiểm: không trong trận, đã mở vùng, đủ vàng; nhật ký vàng `TRAVEL`).
@@ -1026,7 +1034,9 @@ câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10
 | # | Câu hỏi | Đề xuất |
 |---|---|---|
 | **9-A** | Dịch tin từ server làm tới đâu? | Đợt đầu: giao diện + dữ liệu game + tin hay gặp; tin hiếm làm dần (tạm hiện tiếng Việt) |
-| **9-B** | 20 bản đồ mới đặt ở đâu? | **4 vùng mới cấp 36–50** (mỗi vùng 4 bản đồ + 1 trùm), mở sau Hắc Long |
+| **9-B** | 20 bản đồ mới đặt ở đâu? | **Đã chốt:** 20 bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, không liên quan Hắc Long |
 | **9-C** | Giá dịch chuyển bằng bảng chọn bản đồ? | `20 + 4 × cấp quái thấp nhất`; Làng, Nhà miễn phí; chỉ tới vùng đã mở; đá dịch chuyển vẫn miễn phí |
 | **9-D** | Phím mở Menu? | **Tab** (máy tính); dock có nút ☰ |
 | **9-E** | Thứ tự làm? | Phase 9 (B1, B2, U3 Menu, U4 chat, U5 điện thoại) trước; Phase 10 (U2 bản đồ, U1 ngôn ngữ) sau; Phase 6 sau cùng |
+
+**Đã chốt (2026-10-04):** 9-A, 9-C, 9-D, 9-E theo đề xuất; 9-B như trên. Sửa B1, B2 trước.

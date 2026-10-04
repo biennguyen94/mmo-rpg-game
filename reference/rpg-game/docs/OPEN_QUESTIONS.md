@@ -10,20 +10,14 @@
 |---|---|---|---|
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 
-## Đang chờ (yêu cầu thêm 2026-10-04, `INTEGRATION_PLAN §15.8`)
-
-| # | Phase | Câu hỏi | Đề xuất |
-|---|---|---|---|
-| 9-A | 10 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước |
-| 9-B | 10 | 20 bản đồ mới đặt ở đâu? | 4 vùng mới cấp 36–50 |
-| 9-C | 10 | Giá dịch chuyển? | 20 + 4 × cấp quái thấp nhất; Làng / Nhà miễn phí |
-| 9-D | 9 | Phím mở Menu? | Tab |
-| 9-E | 9, 10 | Thứ tự làm? | Phase 9 → Phase 10 → Phase 6 |
-
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |
+| 9-B | 2026-10-04 | 20 bản đồ mới đặt ở đâu? | Bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, **không liên quan Hắc Long** |
+| 9-C | 2026-10-04 | Giá dịch chuyển? | 20 + 4 × cấp quái thấp nhất; Làng / Nhà miễn phí; đá dịch chuyển vẫn miễn phí |
+| 9-D, 9-E | 2026-10-04 | Phím Menu; thứ tự làm | Tab; sửa B1, B2 → Phase 9 → Phase 10 → Phase 6 |
 | 7-A | 2026-10-04 | Lịch Golden Invasion? | Mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam), 15 phút |
 | 7-B | 2026-10-04 | Trùm vàng cuối đợt? | Có: hạ hết quái vàng một bản đồ thì trùm vàng vùng đó xuất hiện |
 | 5-C, 5-D | 2026-10-04 | Giới hạn PK cược vàng? | Cược 100 – 1 000 000, **không phí**, **không giới hạn chênh cấp**, 10 trận cược / ngày |

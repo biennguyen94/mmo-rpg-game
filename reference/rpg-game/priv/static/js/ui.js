@@ -2234,7 +2234,7 @@
     if (busy || !P || P.battle) return false;
     if (fishing) { stopFishing(); toast('Bạn đã thu cần.'); }
     busy = true;
-    const mapBefore = P.pos.map, hadDialog = !!dialog;
+    const mapBefore = P.pos.map, hadDialog = !!dialog, floorBefore = P.tower ? P.tower.floor : null;
     dialog = null;
     let ok = false;
     try {
@@ -2251,12 +2251,14 @@
         const n = WORLD.maps[P.pos.map].npcs.find((x) => x.id === r.npc);
         npc = { map: P.pos.map, id: r.npc, line: n.lines[Math.floor(Math.random() * n.lines.length)] || '' };
       }
-      ok = r.ok && !P.battle && P.pos.map === mapBefore && !dialog && !npc;
+      // lên tầng tháp cũng như sang bản đồ mới: dừng đường đi đang chạy (B2)
+      ok = r.ok && !P.battle && P.pos.map === mapBefore && (P.tower ? P.tower.floor : null) === floorBefore && !dialog && !npc;
     } catch (e) {
       toast(e.msg, true);
     }
     busy = false;
-    if (!P || P.battle || P.pos.map !== mapBefore || dialog || hadDialog || npc) { walk = null; render(); if (npc) $('#view').scrollTop = 0; } else refresh();
+    const newFloor = P && (P.tower ? P.tower.floor : null) !== floorBefore;
+    if (!P || P.battle || P.pos.map !== mapBefore || newFloor || dialog || hadDialog || npc) { walk = null; render(); if (npc) $('#view').scrollTop = 0; } else refresh();
     return ok;
   }
 
@@ -2265,7 +2267,9 @@
     const target = Map_.monsterAt(x, y);
     const me = { x, y, monster: target ? target.id : null, id: Symbol('walk') };
     walk = me;
-    for (let i = 0; i < 200 && walk === me && P && !P.battle; i++) {
+    // B2: trong tháp, lên tầng vẫn là bản đồ `tower`; tầng đổi thì dừng (không đi tiếp tới cùng toạ độ ở tầng mới)
+    const floor0 = P && P.tower ? P.tower.floor : null;
+    for (let i = 0; i < 200 && walk === me && P && !P.battle && (P.tower ? P.tower.floor : null) === floor0; i++) {
       if (me.monster != null) {
         const q = Map_.monsterById(me.monster);
         if (!q) break;
