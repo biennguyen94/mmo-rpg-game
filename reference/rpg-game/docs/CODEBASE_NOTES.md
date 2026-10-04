@@ -294,21 +294,32 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   - `maxHp = (40 + vit*12 + level*10) * pet(:hp)`
   - `atk = (str*2.2 + agi*0.9 + weapon.atk + up(weapon) + level) * pet(:atk)`
   - `def = (def*1.6 + armor.def + shield.def + up(armor) + up(shield) + level*0.5) * pet(:def)`
-  - chí mạng, hệ số chí mạng, né tránh theo `agi`.
+  - (từ Đợt 4 công thức theo lớp ở `CLASSES[lớp].derived`, mục 5); chí mạng, hệ số chí mạng, né tránh theo `agi`;
+  - Phase 3 thêm `ar` (attack rate = cấp × 5 + AGI × 1,5), `atkMin` / `atkMax` (công × `damage_spread`), `hitRate`
+    (trúng quái cùng cấp).
 
-**Sát thương:** `damage(atk, dfn) = max(1, round(atk*atk/(atk+dfn)*rand(0.9,1.1)))` (`engine.ex:185`).
+**Sát thương (Phase 3, `Engine.damage/4`):** đòn gốc `công × rand(damage_spread)` → × hệ số (kỹ năng, chí mạng, sổ quái,
+% cánh) → trừ thủ `đòn²/(đòn + thủ)` → sàn mềm `soft_floor` (20 %) × đòn → × `taken` (thủ thế, hấp thụ cánh) → sàn cứng 1,
+chỉ làm tròn ở cuối. Số ở `RULES.combat`.
+
+**Trúng / trượt (Phase 3):** đòn thường của người đánh quái trúng với `Engine.hit_chance(ar, cấp_quái)` =
+`AR / (AR + cấp × monster_dr)`, chặn 5–95 %; kỹ năng luôn trúng; đấu trường vẫn theo `dodge` của đối thủ. Quái đánh người:
+người né theo AGI như cũ (`d.dodge + evade`).
+
+**Phạt EXP (Phase 3):** `Engine.xp_factor/2` (`RULES.xp.penalty`), chỉ quái thường ngoài bản đồ (không trùm, tháp, trùm thế
+giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n cấp)".
 
 **Đòn người chơi** `act_strike` (`engine.ex:419-461`):
 - `atk = d.atk*(1+power(:player,"rage"))*(1-power(:player,"weaken"))` (`433-434`);
 - hệ số kỹ năng: `strike_with` (`519-590`);
 - `mult *= 1 + Bestiary.mastery(p, m.id)` (+5 % ở 25 con, +10 % ở 100 con; `bestiary.ex:13, 25`);
-- **`dmg = round(damage*mult*(crit ? critMult : 1))` (`444-445`)**: chỗ cắm thêm % sát thương;
+- `dmg = damage(atk, thủ_quái, mult * (crit ? critMult : 1))`: chỗ cắm thêm % sát thương là `mult`;
 - thú cưng cắn thêm (`464-484`).
 
 **Đòn quái** `monster_turn` (`engine.ex:592-640`):
 - `m_atk *= (1 - weaken)`;
-- **`dmg = damage(m_atk, d.def) * (chí_mạng ? 1.5 : 1) * (1 - power(:player,"guard"))` (`612-615`)**:
-  chỗ cắm thêm % giảm sát thương nhận ("guard" = −50 %);
+- `dmg = damage(m_atk, d.def, chí_mạng ? 1.5 : 1, (1 - guard) * (1 - wingAbsorb))`:
+  chỗ cắm thêm % giảm sát thương nhận là tham số `taken`;
 - né = `d.dodge + evade`.
 
 **Các hệ số % đang có:** hiệu ứng `rage / weaken / guard / evade` (lưu ở `battle.effects`), Bestiary, thú cưng / món ăn (hp / atk / def / gold / xp),

@@ -53,10 +53,10 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| A1 | **Sát thương nhiều bước:** đòn ngẫu nhiên **min~max** × hệ số kỹ năng + cộng phẳng → chí mạng → × buff × (1 + % cánh) → **trừ thủ** → **sàn mềm** (không dưới x % đòn gốc) → × (1 − % hấp thụ) → **sàn cứng** | Khác: một số `atk²/(atk+def) × rand(0,9–1,1)` | 🟡 | M | Công thức Hắc Long đã mượt (thủ cao vẫn ăn đòn). Đáng lấy: **khoảng đòn min~max** (vũ khí có đòn thấp / cao, hiện rõ trên đồ) và chỗ cắm **% cánh / % hấp thụ** (D6). Đổi cân bằng → simulator | [x] |
-| A2 | **Tỉ lệ trúng** = attackRate / (attackRate + defenseRate), chặn 5–95 %; attackRate = cấp × 5 + AGI × 1,5 | Khác: có né theo agi | 🟡 | S | Thêm cảm giác "Trượt!". Đụng cân bằng lớp Thích Khách | [x] |
+| A1 | **Sát thương nhiều bước:** đòn ngẫu nhiên **min~max** × hệ số kỹ năng + cộng phẳng → chí mạng → × buff × (1 + % cánh) → **trừ thủ** → **sàn mềm** (không dưới x % đòn gốc) → × (1 − % hấp thụ) → **sàn cứng** | Khác: một số `atk²/(atk+def) × rand(0,9–1,1)` | 🟡 | M | Công thức Hắc Long đã mượt (thủ cao vẫn ăn đòn). Đáng lấy: **khoảng đòn min~max** (vũ khí có đòn thấp / cao, hiện rõ trên đồ) và chỗ cắm **% cánh / % hấp thụ** (D6). Đổi cân bằng → simulator | [x] ✅ P3 |
+| A2 | **Tỉ lệ trúng** = attackRate / (attackRate + defenseRate), chặn 5–95 %; attackRate = cấp × 5 + AGI × 1,5 | Khác: có né theo agi | 🟡 | S | Thêm cảm giác "Trượt!". Đụng cân bằng lớp Thích Khách | [x] ✅ P3 |
 | A3 | **Tham số chiến đấu trong config** (minHitChance, maxHitChance, minDamageRatio, hardFloor, critChance, critMultiplier) | Không: hằng số trong `engine.ex` | ✅ | S | Đưa hằng số chiến đấu vào `RULES.combat` (`priv/game_data/rules.json`), chỉnh không cần sửa code (xem J1) | [x] ✅ P1 |
-| A4 | **Phạt EXP chênh cấp:** cao hơn quái > 10 cấp thì −10 % / cấp, tối thiểu 10 % | Kiểm | ✅ | S | Chống đánh quái yếu lấy EXP, ép người chơi lên vùng mới | [x] |
+| A4 | **Phạt EXP chênh cấp:** cao hơn quái > 10 cấp thì −10 % / cấp, tối thiểu 10 % | Kiểm | ✅ | S | Chống đánh quái yếu lấy EXP, ép người chơi lên vùng mới | [x] ✅ P3 |
 | A5 | **PvP × 0,5 sát thương** (giảm hệ số khi người đánh người) | Khác: đấu trường đánh bản sao chỉ số | 🟡 | S | Chỉ cần nếu thấy đấu trường kết thúc quá nhanh | [ ] |
 | A6 | **Kỹ năng tốn MP**, MP hồi theo ENE / giây | Khác: hồi chiêu theo lượt | ❌ | L | Hệ khác, không đáng đổi | [ ] |
 | A7 | **Kỹ năng hỗ trợ đồng đội:** Heal (10 + ENE/4), Tăng thủ (2 + ENE/8, 60 s), Tăng công (3 + ENE/7, 60 s) | Khác: buff bản thân (rage, guard) | 🟡 | M | Hợp tổ đội 3 người đánh chung một quái. Cần thiết kế lại kỹ năng lớp (vd Hiệp Sĩ có Hồi Máu cho đồng đội) | [ ] |
@@ -278,7 +278,7 @@
 |---|---|---|---|---|---|---|
 | A13 | **Thứ tự kiểm một đòn**: còn sống → đã học kỹ năng → mục tiêu hợp lệ → không ở vùng an toàn → tầm → hồi chiêu → MP; trả đúng mã lỗi | Khác (theo lượt) | ❌ | – | | [ ] |
 | A14 | **Hồi chiêu theo tốc đánh**: `max(250, 1000 / (1 + AS/100))`, AS = AGI/15 + tốc vũ khí | Khác | ❌ | – | Theo lượt không có hồi chiêu theo ms | [ ] |
-| A15 | **Chỉ làm tròn xuống ở bước cuối** công thức sát thương (các bước giữa giữ số thực) | Kiểm | 🟡 | S | Đi cùng A1 | [ ] |
+| A15 | **Chỉ làm tròn xuống ở bước cuối** công thức sát thương (các bước giữa giữ số thực) | Kiểm | 🟡 | S | Đi cùng A1 | ✅ P3 (cùng A1) |
 | A16 | **Luật cộng dồn buff**: dùng lại cùng buff thì làm mới thời gian và giữ giá trị lớn hơn; buff khác nhau cộng dồn; mất khi chết / thoát; hồi máu không vượt HP tối đa | Có hiệu ứng trong trận | 🟡 | S | Chỉ cần nếu làm A7 | [ ] |
 | A17 | **Không thưởng khi hạ người chơi** (chống nuôi tài khoản phụ) | Khác: đấu trường thắng được `30 + 5 × Δ Elo` vàng | 🟡 | S | Chống "bơm" Elo / vàng: thưởng giảm dần khi đánh cùng một người nhiều lần trong ngày | [ ] |
 | A18 | **Vùng an toàn cho phép hồi máu / buff**; chỉ đòn tấn công mới tính "đang chiến đấu" | Khác | ❌ | – | | [ ] |
@@ -554,6 +554,10 @@ cũ; mỗi tài khoản một nhân vật): B1, B3, B7; công cụ Item.txt + h�
 `window.__hl`, hàm thuần client tách ra `logic.js` + `node --test`, test chống nhân bản song song, soak bot WebSocket, ảnh
 tài liệu chụp từ e2e, workflow CI `hac-long-e2e.yml`. Chi tiết: `PHASE_PLAN.md` (Phase 2), `CODEBASE_NOTES.md §9g`,
 `e2e/README.md`.
+
+**Phase 3 đã làm (2026-10-04): công thức chiến đấu** — A1 (sát thương nhiều bước, đòn thấp ~ cao, sàn mềm 20 %), A2 (tỉ lệ
+trúng khi người đánh quái; kỹ năng luôn trúng), A4 (phạt EXP chênh cấp, chỉ quái thường), A15. Cân bằng lệch ≤ 2,7 %.
+Chi tiết: `INTEGRATION_PLAN.md §11`.
 
 **Làm một phần (🔶):**
 - **B8** (Q2): có HP, công, thủ, chí mạng, né, % cánh; chưa có đòn min~max, tỉ lệ trúng, tốc độ.

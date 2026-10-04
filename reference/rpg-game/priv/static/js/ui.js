@@ -1194,7 +1194,8 @@
         ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
         <p class="small muted">Mỗi lần lên cấp nhận ${c.points} điểm. Điểm đã cộng không gỡ được.</p>
         <hr class="sep">
-        ${kv('Tấn công', fmt(d.atk))}
+        ${kv('Tấn công', `${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}`)}
+        ${kv('Trúng quái cùng cấp', `${Math.round(d.hitRate * 100)}%`)}
         ${kv('Phòng thủ', fmt(d.def))}
         ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
         ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}

@@ -8,17 +8,14 @@
 
 | # | Phase | Câu hỏi | Đề xuất của em |
 |---|---|---|---|
-| 3-A | 3 | Tỉ lệ trúng cho cả hai phía, hay chỉ người đánh quái (quái đánh người giữ né theo AGI)? | Chỉ người đánh quái |
-| 3-B | 3 | Sàn mềm sát thương bao nhiêu % đòn gốc? | 20 % |
-| 3-C | 3 | Phạt EXP chênh cấp áp ở đâu? | Chỉ quái thường |
-| 3-D | 3 | Đòn thấp ~ cao cho toàn bộ công hay chỉ phần vũ khí? | Toàn bộ công ±10 % đến Phase 6 |
-| 3-E | 3 | Kỹ năng có thể trượt không? | Có |
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 3-A … 3-D | 2026-10-04 | Công thức chiến đấu (`INTEGRATION_PLAN §11.5`) | Theo đề xuất: trúng chỉ khi người đánh quái, sàn mềm 20 %, phạt EXP chỉ quái thường, công ±10 % |
+| 3-E | 2026-10-04 | Kỹ năng có thể trượt không? | **Không**: kỹ năng luôn trúng |
 | P1-Q1 | 2026-10-04 | Danh sách từ cấm cơ bản em lập có cần thêm / bớt? | OK, giữ nguyên |
 | P1-Q2 | 2026-10-04 | Công cụ quản trị đổi tên nhân vật / bang? | Không cần |
 | 5-A | 2026-10-04 | Soak: bao nhiêu bot, bao lâu? | Theo đề xuất (anh bảo làm hết Phase 2): 30 bot / 10 phút chạy tay; CI tự chạy 10 bot / 2 phút |

@@ -146,11 +146,25 @@ defmodule HacLong.Game.Engine do
       crit: clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max),
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
+      # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
+      ar: p.level * @combat.hit.level + s.agi * @combat.hit.agi,
       dodge: clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb)
     }
+    |> with_ranges(p.level)
+  end
+
+  # đòn thấp ~ cao và tỉ lệ trúng quái cùng cấp, để hiện ở bảng nhân vật
+  defp with_ranges(d, level) do
+    [lo, hi] = @combat.damage_spread
+
+    Map.merge(d, %{
+      atkMin: round(d.atk * lo),
+      atkMax: round(d.atk * hi),
+      hitRate: hit_chance(d.ar, level)
+    })
   end
 
   defp wing_pct(_p, nil, _key), do: 0
@@ -229,9 +243,43 @@ defmodule HacLong.Game.Engine do
   @doc "Vàng rơi gốc của quái cấp `l` (chưa nhân hệ số, chưa may rủi)."
   def base_gold(l), do: @mon.gold.base + l * @mon.gold.level
 
-  def damage(atk, dfn) do
+  @doc """
+  Sát thương một đòn (`RULES.combat`, `INTEGRATION_PLAN §11.2`), chỉ làm tròn ở bước cuối:
+
+  1. đòn gốc ngẫu nhiên trong `công × damage_spread` (đòn thấp ~ cao);
+  2. × `mult` (kỹ năng, chí mạng, sổ quái, % cánh);
+  3. trừ thủ kiểu Hắc Long `đòn² / (đòn + thủ)`;
+  4. sàn mềm: không dưới `soft_floor` × đòn ở bước 2;
+  5. × `taken` (thủ thế, hấp thụ của cánh khi bị đánh);
+  6. sàn cứng 1.
+  """
+  def damage(atk, dfn, mult \\ 1, taken \\ 1) do
     [lo, hi] = @combat.damage_spread
-    max(1, round(atk * atk / (atk + dfn) * rand(lo, hi)))
+    raw = atk * rand(lo, hi) * mult
+
+    hit =
+      if raw > 0,
+        do: max(raw * raw / (raw + max(dfn, 0)), raw * @combat.soft_floor),
+        else: 0
+
+    max(1, round(hit * taken))
+  end
+
+  @doc "Tỉ lệ đòn người chơi (attack rate `ar`) trúng quái cấp `level`: `AR / (AR + DR)`, chặn trong `[min, max]`."
+  def hit_chance(ar, level) do
+    h = @combat.hit
+    dr = level * h.monster_dr
+    clamp(ar / (ar + dr), h.min, h.max)
+  end
+
+  @doc "Phần EXP còn lại khi hạ quái thường thấp hơn mình quá `RULES.xp.penalty.from` cấp (1 = không phạt)."
+  def xp_factor(player_level, monster_level) do
+    pen = @rules.xp.penalty
+    gap = player_level - monster_level
+
+    if gap > pen.from,
+      do: max(pen.min, 1 - pen.per_level * (gap - pen.from)),
+      else: 1
   end
 
   # ---------- Chiến đấu ----------
@@ -496,13 +544,15 @@ defmodule HacLong.Game.Engine do
         {p, atk, dfn, crit, mult, name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(d.crit))
 
+        # kỹ năng luôn trúng; đòn thường: đấu trường theo né của đối thủ, quái theo tỉ lệ trúng
         p =
-          if skill == nil and chance(m.dodge) do
-            log(p, "#{m.name} né được đòn #{name}.", "info")
+          if skill == nil and
+               if(m[:pvp], do: chance(m.dodge), else: chance(1 - hit_chance(d.ar, m.level))) do
+            log(p, "Trượt! #{m.name} tránh được đòn #{name}.", "info")
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
-            dmg = round(damage(atk, dfn) * mult * if(crit, do: d.critMult, else: 1))
+            dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1))
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
             suffix = if crit, do: " (CHÍ MẠNG!)", else: ""
@@ -683,10 +733,11 @@ defmodule HacLong.Game.Engine do
           mc = not special and chance(m.crit)
 
           dmg =
-            round(
-              damage(m_atk, d.def) * if(mc, do: @combat.monster_crit_mult, else: 1) *
-                (1 - power(p, :player, "guard")) *
-                (1 - d.wingAbsorb)
+            damage(
+              m_atk,
+              d.def,
+              if(mc, do: @combat.monster_crit_mult, else: 1),
+              (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb)
             )
 
           p = %{p | hp: max(0, p.hp - dmg)}
@@ -830,9 +881,13 @@ defmodule HacLong.Game.Engine do
     event = if m[:pvp], do: nil, else: Events.current()
     gold = round(m.gold * (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold)))
 
+    # quái thường thấp hơn mình quá nhiều cấp thì bớt EXP (không áp trùm, tháp, trùm thế giới, đấu trường)
+    normal? = not m.boss and !m[:world] and !m[:pvp] and !m[:tower]
+    xf = if normal?, do: xp_factor(p.level, m.level), else: 1
+
     xp =
       round(
-        m.xp *
+        m.xp * xf *
           (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
              Events.xp_bonus(event))
       )
@@ -843,7 +898,12 @@ defmodule HacLong.Game.Engine do
     p =
       if m[:world],
         do: log(p, "🏆 #{m.name} gục ngã dưới đòn của bạn!", "win"),
-        else: log(p, "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm, +#{gold} vàng.", "win")
+        else:
+          log(
+            p,
+            "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm#{if xf < 1, do: " (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp)"}, +#{gold} vàng.",
+            "win"
+          )
 
     {p, reward} =
       if not m.boss and !m[:world] and !m[:pvp] and chance(@loot.potion_chance) do

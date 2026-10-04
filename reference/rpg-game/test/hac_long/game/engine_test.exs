@@ -39,7 +39,7 @@ defmodule HacLong.Game.EngineTest do
   end
 
   test "chí mạng, né, sát thương theo dãy số cố định" do
-    # Thứ tự gọi ngẫu nhiên mỗi lượt đánh: chí mạng?, quái né?, sát thương, rồi tới lượt quái.
+    # Thứ tự gọi ngẫu nhiên mỗi lượt đánh: chí mạng?, trượt?, sát thương, rồi tới lượt quái.
     Rng.put_sequence([0.0])
     p = player()
     {%{ok: true}, p} = Engine.start_battle(p, 0, false)
@@ -55,10 +55,10 @@ defmodule HacLong.Game.EngineTest do
     {_, p3} = Engine.act(p, "attack")
     assert Enum.at(p3.battle.log, 1).kind == "crit"
 
-    # số đầu nhỏ hơn tỉ lệ né của quái (0.031): quái né được
+    # số thứ hai nhỏ hơn tỉ lệ trượt (1 − tỉ lệ trúng): đánh trượt
     Rng.put_sequence([0.99, 0.0, 0.99])
     {_, p4} = Engine.act(p, "attack")
-    assert Enum.at(p4.battle.log, 1).text =~ "né được"
+    assert Enum.at(p4.battle.log, 1).text =~ "Trượt!"
     assert p4.battle.monster.hp == p.battle.monster.hp
   end
 

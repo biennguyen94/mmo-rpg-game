@@ -609,7 +609,7 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 
 ## 11. Công thức chiến đấu (Phase 3: A1, A2, A4)
 
-> Viết 2026-10-04, **chờ anh chốt các câu ⛔ ở 11.5 rồi mới code**. Mục tiêu: đánh có cảm giác MU (đòn thấp ~ cao, "Trượt!",
+> Viết 2026-10-04; anh chốt 2026-10-04 (11.5), **đã làm** (11.7). Mục tiêu: đánh có cảm giác MU (đòn thấp ~ cao, "Trượt!",
 > phạt đánh quái quá yếu) mà độ khó tổng thể giữ như hiện tại: simulator 4 lớp lệch ≤ 10 % số trận hạ Hắc Long, chết không
 > tăng quá 1 lần (`PHASE_PLAN.md`, Phase 3).
 
@@ -683,3 +683,38 @@ Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~
   cố định từng bước; số mới trong `RULES.combat`, `RULES.xp.penalty`.
 - `derived/1` thêm `atkMin`, `atkMax`, `hitRate` (theo quái cùng cấp, để hiện ở bảng nhân vật).
 - Simulator 20 lượt / lớp trước / sau (`--seed 1`), bảng so sánh ghi vào 11.7; e2e smoke + `mix test`.
+
+**Đã chốt (2026-10-04):** 3-A chỉ người đánh quái dùng tỉ lệ trúng · 3-B sàn mềm 20 % · 3-C phạt EXP chỉ quái thường ·
+3-D toàn bộ công ±10 % · **3-E kỹ năng luôn trúng** (khác đề xuất).
+
+### 11.7 Kết quả (2026-10-04)
+
+- `Engine.damage/4` (nhiều bước), `Engine.hit_chance/2`, `Engine.xp_factor/2`; số mới `RULES.combat.soft_floor`,
+  `RULES.combat.hit`, `RULES.xp.penalty`. Bảng nhân vật: "Tấn công 68 ~ 84", "Trúng quái cùng cấp 95%". Đòn trượt: nhật ký
+  "Trượt! … tránh được đòn", số bay "Trượt".
+- Không cần chỉnh bù: simulator lệch ≤ 2,7 % (yêu cầu ≤ 10 %), số lần chết không tăng quá 1:
+
+| Lớp | Cách chơi | Trận hạ Hắc Long (trước → sau) | Lệch | Chết |
+|---|---|---|---|---|
+| dk | chỉ đánh | 440 → 437 | -0.7% | 1 → 0 |
+| dk | +nhiệm vụ | 377 → 373 | -1.1% | 1 → 0 |
+| dk | +hằng ngày | 345 → 348 | +0.9% | 1 → 1 |
+| dk | +nâng cấp | 338 → 341 | +0.9% | 0 → 0 |
+| dk | +rương | 348 → 343 | -1.4% | 0 → 0 |
+| dw | chỉ đánh | 444 → 436 | -1.8% | 1 → 0 |
+| dw | +nhiệm vụ | 368 → 371 | +0.8% | 0 → 0 |
+| dw | +hằng ngày | 352 → 345 | -2.0% | 1 → 0 |
+| dw | +nâng cấp | 343 → 339 | -1.2% | 0 → 0 |
+| dw | +rương | 345 → 340 | -1.4% | 0 → 0 |
+| elf | chỉ đánh | 441 → 440 | -0.2% | 1 → 1 |
+| elf | +nhiệm vụ | 375 → 385 | +2.7% | 1 → 1 |
+| elf | +hằng ngày | 345 → 349 | +1.2% | 1 → 1 |
+| elf | +nâng cấp | 342 → 343 | +0.3% | 0 → 1 |
+| elf | +rương | 346 → 346 | +0.0% | 1 → 0 |
+| mg | chỉ đánh | 433 → 435 | +0.5% | 0 → 0 |
+| mg | +nhiệm vụ | 369 → 370 | +0.3% | 0 → 0 |
+| mg | +hằng ngày | 343 → 337 | -1.7% | 0 → 0 |
+| mg | +nâng cấp | 339 → 338 | -0.3% | 0 → 0 |
+| mg | +rương | 340 → 336 | -1.2% | 0 → 0 |
+
+- Test: `test/hac_long/game/combat_formula_test.exs` (7 test); e2e 5 kịch bản PASS.

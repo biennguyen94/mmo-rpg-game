@@ -310,8 +310,8 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Muốn chỉnh | Chỗ sửa trong `rules.json` |
 |---|---|
 | Cấp tối đa, vàng / bình máu lúc tạo nhân vật, chuyển sinh, giá nghỉ trọ, phạt khi chết | `character` |
-| EXP cần lên cấp (`coef × cấp^exp + base`) | `xp` |
-| Chí mạng, hệ số chí mạng, né theo Nhanh nhẹn; % hồi MP mỗi lượt; tỉ lệ bỏ chạy | `combat` |
+| EXP cần lên cấp (`coef × cấp^exp + base`); phạt EXP khi cao hơn quái thường > 10 cấp | `xp`, `xp.penalty` |
+| Chí mạng, hệ số chí mạng, né theo Nhanh nhẹn; % hồi MP mỗi lượt; tỉ lệ bỏ chạy; đòn thấp ~ cao (`damage_spread`), sàn mềm (`soft_floor`), tỉ lệ trúng quái (`hit`) | `combat` |
 | Sức mạnh kỹ năng (hệ số đòn, số lượt, % hiệu ứng) | `skill_effects` (theo kiểu tác dụng, xem `effect` của kỹ năng trong `classes.json`) |
 | Chỉ số quái theo cấp, hệ số trùm | `monster` |
 | Tỉ lệ rơi bình máu / đồ hiếm, độ hiếm | `loot` |

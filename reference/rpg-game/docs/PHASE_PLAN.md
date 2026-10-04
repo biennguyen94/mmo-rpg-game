@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | 1 ✅ | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 | Không | M | – |
 | 2 ✅ | Lưới an toàn test | N1, N2, N3, N5, M8, O4 | Không | M | – |
-| 3 | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
+| 3 ✅ | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
 | 4 | Ngọc, ép, kho | D4, D8, C6, C7, E10 | Nhẹ | M | 1 |
 | 5 | Xã hội, xếp hạng, PK cược vàng | H1–H9, H12, H14, E5, K10, M2 | Nhẹ | M–L | 2 |
 | 6 | Đồ từ Item.txt | C1, C2, C3, C4, B4, A9, C17, C21, M10, B8, L1 (phần còn lại) | **Có** | L | 1, 3; **chờ Item.txt** |
@@ -106,7 +106,7 @@ CI chỉ khi sửa `reference/rpg-game/**`.
 
 ---
 
-## Phase 3 — Công thức chiến đấu
+## Phase 3 — Công thức chiến đấu ✅ (xong 2026-10-04)
 
 **Mục tiêu:** đánh có cảm giác MU (đòn thấp / cao, trượt, phạt đánh quái yếu) mà độ khó tổng thể giữ như hiện tại.
 
@@ -124,7 +124,10 @@ CI chỉ khi sửa `reference/rpg-game/**`.
 - 3-D Khoảng đòn thấp ~ cao áp cho toàn bộ công hay chỉ phần vũ khí? Đề xuất: toàn bộ công ±10 % cho đến Phase 6.
 - 3-E Kỹ năng có thể trượt không (hiện luôn trúng)? Đề xuất: có.
 
-Thiết kế chi tiết: `INTEGRATION_PLAN.md §11`.
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §11`. **Đã chốt** 3-A, 3-B, 3-C, 3-D theo đề xuất; 3-E: kỹ năng **luôn trúng**.
+
+**Kết quả:** simulator 4 lớp × 5 cách chơi lệch ≤ 2,7 % số trận hạ Hắc Long, số lần chết không tăng quá 1 (bảng ở
+`INTEGRATION_PLAN.md §11.7`); `mix test` + e2e 5 kịch bản xanh.
 
 **Xong khi:** simulator 4 lớp: số trận hạ Hắc Long lệch ≤ 10 % so với hiện tại (≈ 440 / 340), số lần chết không tăng quá 1;
 e2e smoke xanh.

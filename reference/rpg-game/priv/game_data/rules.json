@@ -15,7 +15,12 @@
     "xp": {
       "coef": 25,
       "exp": 1.75,
-      "base": 15
+      "base": 15,
+      "penalty": {
+        "from": 10,
+        "per_level": 0.1,
+        "min": 0.1
+      }
     },
     "combat": {
       "crit": {
@@ -37,6 +42,14 @@
         0.9,
         1.1
       ],
+      "soft_floor": 0.2,
+      "hit": {
+        "level": 5,
+        "agi": 1.5,
+        "monster_dr": 0.8,
+        "min": 0.05,
+        "max": 0.95
+      },
       "mp_regen": 0.05,
       "flee_chance": 0.7,
       "flee_chance_boss": 0.35,

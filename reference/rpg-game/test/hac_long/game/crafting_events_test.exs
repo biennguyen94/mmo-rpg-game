@@ -100,8 +100,9 @@ defmodule HacLong.Game.CraftingEventsTest do
     p = player(%{level: 5})
     {_, p} = Engine.start_battle(p, 0, false)
     m = p.battle.monster
-    p = put_in(p.battle.monster.hp, 1) |> put_in([:battle, :monster, :dodge], 0)
-    Rng.put_sequence([0.0])
+    p = put_in(p.battle.monster.hp, 1)
+    # chí mạng (0.0), không trượt (0.5), rồi mọi lần rơi đồ đều trúng (0.0)
+    Rng.put_sequence([0.0, 0.5 | List.duplicate(0.0, 40)])
     {_, p} = Engine.act(p, "attack")
     assert p.battle.result == "win"
     assert p.inv["moon_cake"] == 1
