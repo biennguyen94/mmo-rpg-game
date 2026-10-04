@@ -8,6 +8,11 @@
 
 | # | Phase | Câu hỏi | Đề xuất của em |
 |---|---|---|---|
+| 3-A | 3 | Tỉ lệ trúng cho cả hai phía, hay chỉ người đánh quái (quái đánh người giữ né theo AGI)? | Chỉ người đánh quái |
+| 3-B | 3 | Sàn mềm sát thương bao nhiêu % đòn gốc? | 20 % |
+| 3-C | 3 | Phạt EXP chênh cấp áp ở đâu? | Chỉ quái thường |
+| 3-D | 3 | Đòn thấp ~ cao cho toàn bộ công hay chỉ phần vũ khí? | Toàn bộ công ±10 % đến Phase 6 |
+| 3-E | 3 | Kỹ năng có thể trượt không? | Có |
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 
 ## Đã chốt

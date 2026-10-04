@@ -121,6 +121,10 @@ CI chỉ khi sửa `reference/rpg-game/**`.
 - 3-A Bỏ hẳn "né" hiện tại, thay bằng tỉ lệ trúng (A2)? Hay giữ cả hai (quái trượt theo tỉ lệ trúng, người chơi vẫn né theo AGI)?
 - 3-B Sàn mềm bao nhiêu (đề xuất 20 % đòn gốc như MU)?
 - 3-C Phạt EXP (A4) áp cả trong tháp và trùm thế giới không? Đề xuất: chỉ quái thường.
+- 3-D Khoảng đòn thấp ~ cao áp cho toàn bộ công hay chỉ phần vũ khí? Đề xuất: toàn bộ công ±10 % cho đến Phase 6.
+- 3-E Kỹ năng có thể trượt không (hiện luôn trúng)? Đề xuất: có.
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §11`.
 
 **Xong khi:** simulator 4 lớp: số trận hạ Hắc Long lệch ≤ 10 % so với hiện tại (≈ 440 / 340), số lần chết không tăng quá 1;
 e2e smoke xanh.

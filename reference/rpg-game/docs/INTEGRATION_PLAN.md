@@ -604,3 +604,82 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 - **10-C** Giá mua / bán: Item.txt không có giá → đề xuất theo cấp đồ (công thức trong `priv/game_data/rules.json`).
 - **10-D** Bình MP (MU 14/4–6) và các ngọc, nhẫn, dây chuyền nhóm 13–14: thêm luôn hay để sau?
 
+
+---
+
+## 11. Công thức chiến đấu (Phase 3: A1, A2, A4)
+
+> Viết 2026-10-04, **chờ anh chốt các câu ⛔ ở 11.5 rồi mới code**. Mục tiêu: đánh có cảm giác MU (đòn thấp ~ cao, "Trượt!",
+> phạt đánh quái quá yếu) mà độ khó tổng thể giữ như hiện tại: simulator 4 lớp lệch ≤ 10 % số trận hạ Hắc Long, chết không
+> tăng quá 1 lần (`PHASE_PLAN.md`, Phase 3).
+
+### 11.1 Hiện trạng (đo 2026-10-04)
+
+- Sát thương người → quái: `round(atk² / (atk + thủ) × ngẫu_nhiên(0,9 ~ 1,1) × hệ_số_kỹ_năng × (1 + sổ quái) × (1 + % cánh) × chí_mạng)`.
+  Đòn thường bị quái **né** 3–7 % (`0,03 + cấp × 0,001`); kỹ năng luôn trúng.
+- Quái → người: `atk² / (atk + thủ)` → chí mạng quái ×1,5 → × (1 − thủ thế) × (1 − % hấp thụ cánh). Người **né** theo AGI
+  (`0,02 + AGI × 0,0025`, tối đa 40 %): Kiếm Sĩ / Đấu Sĩ / Phù Thủy ~7–9 %, Tiên Nữ 15 % (cấp 10) → 37 % (cấp 40).
+- Tấn công người chơi lớn hơn nhiều thủ quái (cấp 20: công 230–290, thủ quái 40–50), nên công thức hiện tại gần như "ăn trọn"
+  công; khoảng ngẫu nhiên chỉ ±10 %.
+- Simulator gốc (`mix hac_long.simulate 20 --seed 1`, file `p3_before`): "chỉ đánh" ≈ 433–444 trận hạ Hắc Long, có nhiệm vụ /
+  hằng ngày / nâng cấp / rương ≈ 330–375 trận, chết 0–1 lần, 20/20 ván thắng ở mọi lớp.
+
+### 11.2 A1 — sát thương nhiều bước, đòn thấp ~ cao
+
+Thứ tự (chỉ làm tròn ở bước cuối, A15):
+
+1. **Đòn gốc** = số ngẫu nhiên trong **[công thấp, công cao]** của nhân vật.
+   - Vũ khí có `atkMin` / `atkMax`. Đồ hiện có chưa có hai số này → **suy từ `atk`**: `atkMin = atk × (1 − s)`,
+     `atkMax = atk × (1 + s)`, `s` trong `RULES.combat.weapon_spread` (Phase 6 lấy thẳng `DmgMin` / `DmgMax` từ Item.txt).
+   - Công của nhân vật = phần chỉ số (STR / ENE / AGI theo lớp) + vũ khí + cấp ép. Đề xuất (**3-D**): khoảng ngẫu nhiên áp cho
+     **toàn bộ công** (`công × (1 ± s)`), `s = 0,1` → trung bình và độ dao động giữ y như hôm nay (±10 %). Khi có đồ Item.txt thì
+     phần vũ khí theo `DmgMin ~ DmgMax` thật, phần chỉ số giữ ±10 %.
+2. × hệ số kỹ năng (`skill_effects.*.mult`) → **chí mạng** (× hệ số chí mạng) → × buff (cuồng nộ, suy yếu) × (1 + sổ quái)
+   × (1 + % cánh).
+3. **Trừ thủ**: giữ công thức mượt của Hắc Long `đòn² / (đòn + thủ)` (thủ cao vẫn ăn đòn, không có ngưỡng "0 sát thương" như MU).
+4. **Sàn mềm**: không dưới `x %` đòn ở bước 2 (**3-B**, đề xuất 20 % như MU). Hiện thủ quái thấp nên sàn này chỉ có tác dụng
+   khi sau này có quái thủ rất cao (Phase 6).
+5. × (1 − thủ thế) × (1 − % hấp thụ cánh) (khi quái đánh người).
+6. **Sàn cứng** 1, làm tròn.
+
+Quái đánh người dùng cùng các bước: công quái ±10 % (bỏ `ngẫu_nhiên(0,9 ~ 1,1)` cũ, kết quả như cũ).
+
+Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~ 253"** thay cho một số; số trong trận không đổi cách hiện.
+
+### 11.3 A2 — tỉ lệ trúng
+
+- **Người đánh quái:** `trúng = AR / (AR + DR)`, chặn **5 % ~ 95 %**.
+  - `AR` (attack rate) người = `cấp × 5 + AGI × 1,5` (như MU).
+  - `DR` (defense rate) quái = `cấp quái × k`, `k` trong `RULES.combat` (đề xuất **0,8**): Kiếm Sĩ cấp 10 đánh quái cấp 10 ≈ 91 %,
+    cấp 20 đánh quái cấp 25 ≈ 87 %; Tiên Nữ (AGI cao) ≈ 93–95 %. Thay cho "quái né 3–7 %" hiện nay.
+  - Trượt hiện **"Trượt!"** (số bay lên như hiện có). Kỹ năng: đề xuất **cũng tính trúng / trượt** như đòn thường (**3-E**).
+- **Quái đánh người:** đề xuất (**3-A**) **giữ né theo AGI hiện tại** (đổi tên thành "né", số không đổi), vì đổi sang
+  `AR / (AR + DR)` cho cả hai phía làm Tiên Nữ mất phần lớn né (37 % → ~15 %) → đổi cân bằng lớp lớn.
+- **Đấu trường (PvP):** người đánh bản sao người khác — dùng né của đối thủ như hiện nay (không đổi).
+- Hệ quả cân bằng: người chơi trúng ít hơn hiện tại ~4–9 % (tùy lớp, chênh cấp) → **chỉnh bù** bằng `k` hoặc hệ số công quái để
+  simulator lệch ≤ 10 %. Số chốt bằng simulator, ghi bảng trước / sau vào đây.
+
+### 11.4 A4 — phạt EXP chênh cấp
+
+- Nhân vật cao hơn quái **hơn 10 cấp**: EXP × `max(10 %, 1 − 10 % × (chênh − 10))` (chênh 11 cấp: 90 %, 15 cấp: 50 %, ≥ 19 cấp: 10 %).
+  Số trong `RULES.xp.penalty` (`from: 10`, `per_level: 0,1`, `min: 0,1`).
+- Đề xuất (**3-C**) chỉ áp **quái thường ngoài bản đồ**; không áp trùm vùng, tháp, trùm thế giới, đấu trường, việc hằng ngày,
+  nhiệm vụ. Nhật ký trận ghi "(EXP −40 % vì chênh cấp)" để người chơi hiểu.
+- Không ảnh hưởng vàng / rơi đồ.
+
+### 11.5 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **3-A** | Bỏ "né" hiện tại, thay bằng tỉ lệ trúng cho **cả hai phía**? Hay chỉ người đánh quái dùng tỉ lệ trúng, quái đánh người vẫn né theo AGI? | **Chỉ người đánh quái** dùng tỉ lệ trúng; quái đánh người giữ né theo AGI (không làm yếu Tiên Nữ) |
+| **3-B** | Sàn mềm bao nhiêu % đòn gốc? | **20 %** (như MU) |
+| **3-C** | Phạt EXP áp ở đâu? | **Chỉ quái thường**; không áp trùm, tháp, trùm thế giới, đấu trường |
+| **3-D** | Khoảng đòn thấp ~ cao áp cho toàn bộ công (±10 % như hôm nay) hay chỉ phần vũ khí (đồ hiện có suy `atk ± 20 %`)? | **Toàn bộ công ±10 %** cho đến Phase 6; có Item.txt thì phần vũ khí theo `DmgMin ~ DmgMax` |
+| **3-E** | Kỹ năng có thể trượt không (hiện luôn trúng)? | **Có**, như đòn thường (công bằng, MU cũng vậy) |
+
+### 11.6 Làm và kiểm
+
+- `Engine.damage/…` thành một hàm thuần nhiều bước (`Engine.hit/…` trả `{trúng?, chí_mạng?, sát_thương}`), test với số ngẫu nhiên
+  cố định từng bước; số mới trong `RULES.combat`, `RULES.xp.penalty`.
+- `derived/1` thêm `atkMin`, `atkMax`, `hitRate` (theo quái cùng cấp, để hiện ở bảng nhân vật).
+- Simulator 20 lượt / lớp trước / sau (`--seed 1`), bảng so sánh ghi vào 11.7; e2e smoke + `mix test`.
