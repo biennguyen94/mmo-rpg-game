@@ -55,6 +55,7 @@ defmodule HacLongWeb.GameChannel do
     Market,
     Moderation,
     Party,
+    PkBet,
     RateLimit,
     Trade,
     WorldBoss
@@ -75,9 +76,9 @@ defmodule HacLongWeb.GameChannel do
   alias HacLong.World.{Maps, MapServer}
 
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
-  @mod_ops ~w(reports lookup resolve mute unmute announce)
+  @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log)
+  @read_ops ~w(reports lookup audit gold_log admin_log online)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -151,15 +152,11 @@ defmodule HacLongWeb.GameChannel do
 
     case RateLimit.hit({:leaderboard, uid}, 20, :timer.minutes(1)) do
       :ok ->
-        boards = Map.new(Leaderboard.kinds(), &{&1, Leaderboard.top(&1)})
+        me = Leaderboard.me(uid)
 
-        boards =
-          boards
-          |> Map.put(:guild, Guilds.top())
-          |> Map.put(:guild_boss, HacLong.GuildQuests.boss_top())
-          |> Map.put(:arena, Arena.top())
-
-        {:reply, {:ok, Map.put(boards, :me, Leaderboard.level_rank(uid))}, socket}
+        # `me` cũ là hạng chung (số), client cũ vẫn đọc được; `me_rank` có thêm hạng trong lớp
+        boards = Leaderboard.boards() |> Map.put(:me, me && me.level) |> Map.put(:me_rank, me)
+        {:reply, {:ok, boards}, socket}
 
       {:error, _} ->
         {:reply, {:error, %{msg: "Thao tác quá nhanh."}}, socket}
@@ -258,6 +255,21 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # PK cược vàng (Phase 5, H7 + H8): mời / nhận / từ chối / hủy / xem
+  def handle_in("pk", %{"op" => op} = p, socket) do
+    uid = socket.assigns.user_id
+
+    with :ok <- limit({:pk, uid}, 30, :timer.minutes(1)) do
+      case pk(op, p, uid) do
+        :ok -> {:reply, {:ok, pk_view(uid)}, socket}
+        {:ok, result} -> {:reply, {:ok, Map.put(pk_view(uid), :result, result)}, socket}
+        {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+      end
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 
@@ -344,10 +356,13 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
-  def handle_in("mail", _payload, socket) do
+  def handle_in("mail", payload, socket) do
     uid = socket.assigns.user_id
 
     with :ok <- limit({:mail, uid}, 30, :timer.minutes(1)) do
+      # xóa thư đã đọc (Phase 5, H12)
+      if payload["op"] == "delete_read", do: Mailbox.delete_read(uid)
+
       {:reply, {:ok, %{mails: Mailbox.list(uid), unread: Mailbox.unread(uid)}}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
@@ -428,13 +443,53 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # ---------- PK cược vàng ----------
+
+  defp pk("invite", %{"uid" => target, "wager" => w}, uid) when is_integer(target) do
+    with :ok <- PkBet.check_wager(w),
+         [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
+         %{} = me <- Session.get(uid) || {:error, "Chưa có nhân vật."},
+         nil <- me.battle && {:error, "Đang trong trận."},
+         true <- me.gold >= w || {:error, "Bạn không đủ #{w} vàng."},
+         true <-
+           PkBet.today_count(uid) < PkBet.rules().per_day ||
+             {:error, "Hôm nay đã cược đủ #{PkBet.rules().per_day} trận."} do
+      PkBet.invite(uid, Map.take(me, [:name, :level, :cls]), target, w)
+    else
+      [] -> {:error, "Người này không online."}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp pk("accept", _p, uid) do
+    with {:ok, inv} <- PkBet.take(uid), do: PkBet.execute(inv)
+  end
+
+  defp pk("decline", _p, uid), do: PkBet.decline(uid)
+  defp pk("cancel", _p, uid), do: PkBet.cancel(uid)
+  defp pk("info", _p, _uid), do: :ok
+  defp pk(_op, _p, _uid), do: {:error, "Thao tác không hợp lệ."}
+
+  defp pk_view(uid) do
+    %{
+      invite: PkBet.of(uid),
+      history: PkBet.history(uid),
+      today: PkBet.today_count(uid),
+      rules: Map.take(PkBet.rules(), [:min, :max, :per_day, :invite_s])
+    }
+  end
+
   # ---------- Giao dịch ----------
 
   defp trade("request", %{"uid" => target}, uid) when is_integer(target) do
     with [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
-         %{name: name} <- Session.get(uid) do
+         %{name: name} = me <- Session.get(uid),
+         true <-
+           Trade.near?(me, Session.get(target)) ||
+             {:error, "Hãy đứng gần người kia (cùng bản đồ) để giao dịch."} do
       Trade.request(uid, name, target)
     else
+      {:error, _} = err -> err
       _ -> {:error, "Người này không online."}
     end
   end
@@ -554,8 +609,19 @@ defmodule HacLongWeb.GameChannel do
 
   defp guild("info", _p, uid) do
     case Guilds.brief(uid) do
-      nil -> {:ok, %{guild: nil}}
-      b -> {:ok, %{guild: Guilds.info(b.id, uid)}}
+      nil ->
+        {:ok, %{guild: nil}}
+
+      b ->
+        info =
+          Guilds.info(b.id, uid)
+          |> Map.merge(%{
+            war: b.war,
+            war_pending: b.war_pending,
+            war_history: HacLong.GuildWars.history(b.id)
+          })
+
+        {:ok, %{guild: info}}
     end
   end
 
@@ -576,6 +642,10 @@ defmodule HacLongWeb.GameChannel do
         "leave" -> Guilds.leave(uid)
         "disband" -> Guilds.disband(uid)
         "settings" -> Guilds.settings(uid, p)
+        "war_declare" -> HacLong.GuildWars.declare(uid, gid || Guilds.id_by_tag(p["tag"]))
+        "war_accept" -> HacLong.GuildWars.answer(uid, true)
+        "war_decline" -> HacLong.GuildWars.answer(uid, false)
+        "war_surrender" -> HacLong.GuildWars.surrender(uid)
         _ -> {:error, "Thao tác không hợp lệ."}
       end
 
@@ -615,6 +685,9 @@ defmodule HacLongWeb.GameChannel do
   end
 
   defp admin("reports", _p, _s), do: {:ok, %{reports: Moderation.open_reports()}}
+
+  # người đang online (Phase 5, K10)
+  defp admin("online", _p, _s), do: {:ok, %{online: Session.online()}}
 
   defp admin("lookup", %{"name" => name}, _s) do
     case Moderation.find_user(name) do
@@ -664,7 +737,16 @@ defmodule HacLongWeb.GameChannel do
       items: p["items"] || %{}
     }
 
+    # trần mỗi thư quản trị (`RULES.mail`), tránh gõ nhầm số; thư hệ thống (bán chợ, quà bang) không giới hạn
+    cap = HacLong.Game.Data.rules().mail
+
     case p do
+      _ when is_integer(mail.gold) and mail.gold > cap.max_gold ->
+        {:error, "Mỗi thư tối đa #{cap.max_gold} vàng."}
+
+      _ when is_integer(mail.xp) and mail.xp > cap.max_xp ->
+        {:error, "Mỗi thư tối đa #{cap.max_xp} kinh nghiệm."}
+
       %{"all" => true} ->
         with {:ok, n} <- Mailbox.send_all(mail), do: {:ok, %{sent: n}}
 
@@ -677,6 +759,9 @@ defmodule HacLongWeb.GameChannel do
   end
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
+
+  # Golden Invasion ngay (Phase 7)
+  defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
 
@@ -732,7 +817,13 @@ defmodule HacLongWeb.GameChannel do
     })
 
     push(socket, "world_boss", WorldBoss.status())
+    push(socket, "invasion", HacLong.Invasion.status())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
+  end
+
+  def handle_info({:invasion, status}, socket) do
+    push(socket, "invasion", status)
+    {:noreply, socket}
   end
 
   def handle_info({:world_boss, status}, socket) do
@@ -764,6 +855,11 @@ defmodule HacLongWeb.GameChannel do
     {:noreply, socket}
   end
 
+  def handle_info({:party_invite, nil}, socket) do
+    push(socket, "party_invite", %{from: nil})
+    {:noreply, socket}
+  end
+
   def handle_info({:party_invite, from}, socket) do
     name = (p = Session.get(from)) && p.name
     push(socket, "party_invite", %{from: from, name: name})
@@ -778,6 +874,16 @@ defmodule HacLongWeb.GameChannel do
   # tin riêng: người đã chặn thì không nhận
   def handle_info({:dm, msg}, socket) do
     unless msg.from in socket.assigns.blocked, do: push(socket, "dm", msg)
+    {:noreply, socket}
+  end
+
+  def handle_info({:pk_invite, inv}, socket) do
+    push(socket, "pk_invite", %{invite: inv})
+    {:noreply, socket}
+  end
+
+  def handle_info({:pk_result, view}, socket) do
+    push(socket, "pk_result", view)
     {:noreply, socket}
   end
 

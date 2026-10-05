@@ -63,6 +63,7 @@ defmodule HacLong.Game.Chaos do
     cond do
       !g -> {:error, "Chọn một món đồ để bỏ vào máy."}
       Gear.equipped?(p, uid) -> {:error, "Tháo #{it.name} ra trước đã."}
+      g[:stored] -> {:error, "#{it.name} đang cất trong tủ."}
       g[:locked] -> {:error, "#{it.name} đang khóa. Mở khóa trước khi bỏ vào máy."}
       it.slot not in need.slots -> {:error, "Công thức này không nhận #{it.name}."}
       need[:tier] && it[:tier] != need.tier -> {:error, "Công thức này không nhận #{it.name}."}

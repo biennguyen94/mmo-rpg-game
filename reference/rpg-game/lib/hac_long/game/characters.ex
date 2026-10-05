@@ -191,7 +191,8 @@ defmodule HacLong.Game.Characters do
       decor:
         for d <- c.decor || [], HacLong.Game.Data.furniture(d["id"]) do
           %{id: d["id"], x: d["x"], y: d["y"]}
-        end
+        end,
+      storage: HacLong.Game.Storage.load(c.storage)
     }
   end
 
@@ -271,7 +272,7 @@ defmodule HacLong.Game.Characters do
                     log over result reward encounter map mid world world_boss tower elite
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
-                    shield pet deaths)a,
+                    shield pet deaths golden jewel_chance)a,
                  &{Atom.to_string(&1), &1}
                )
 

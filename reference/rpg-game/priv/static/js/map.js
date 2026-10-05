@@ -17,6 +17,8 @@
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
   let world = { map: null, monsters: [], players: [] };
   let userId = null;
+  // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
+  let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   const Doll = window.Doll;
@@ -162,7 +164,9 @@
   function resize() {
     if (!canvas) return;
     const w = canvas.parentElement.clientWidth;
-    const h = Math.min(Math.round(window.innerHeight * 0.52), 13 * TILE);
+    // màn bản đồ vừa khít (U5): cao theo khung còn lại giữa HUD và dock
+    const fit = canvas.closest('.fit');
+    const h = fit ? Math.max(160, canvas.parentElement.clientHeight) : Math.min(Math.round(window.innerHeight * 0.52), 13 * TILE);
     const dpr = window.devicePixelRatio || 1;
     canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr);
@@ -182,6 +186,7 @@
   }
 
   function label(text, cx, y, color) {
+    if (window.I18N) text = window.I18N.tr(text);
     ctx.font = '600 10px "Be Vietnam Pro", system-ui, sans-serif';
     const w = ctx.measureText(text).width + 6;
     ctx.fillStyle = 'rgba(12, 9, 16, 0.78)';
@@ -245,16 +250,25 @@
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy);
       if (px < -TILE || py < -TILE || px > canvas.clientWidth || py > canvas.clientHeight) continue;
       ctx.globalAlpha = q.busy ? 0.45 : 1;
-      if (q.boss) {
+      if (q.boss && !q.gold) {
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
         ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
       }
       const im = image('monsters/' + q.kind);
       if (q.rare) { ctx.shadowColor = '#b36bff'; ctx.shadowBlur = 12; }
-      if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+      // quái vàng Golden Invasion: quầng vàng nhấp nháy; trùm vàng vẽ to 1,5 lần (Phase 7, M3)
+      if (q.gold) {
+        const pulse = 0.5 + 0.5 * Math.sin(now / 250);
+        ctx.fillStyle = `rgba(255, 210, 90, ${0.18 + 0.17 * pulse})`;
+        ctx.beginPath(); ctx.arc(px + TILE / 2, py + TILE / 2, TILE * (q.boss ? 0.95 : 0.62), 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = '#ffd24a'; ctx.shadowBlur = 10 + 8 * pulse;
+      }
+      const sz = q.gold && q.boss ? TILE * 1.5 : TILE, off = (sz - TILE) / 2;
+      if (im.complete) ctx.drawImage(im, px - off, py - off, sz, sz);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       if (q.rare) labels.push(['Bóng Đêm', px + TILE / 2, py - 12, '#d59cff']);
+      if (q.gold) labels.push([q.boss ? 'Trùm Vàng' : 'Vàng', px + TILE / 2, py - 12 - off, '#ffd24a']);
       const lv = q.level || LEVEL[q.kind] || 1;
       ctx.font = '700 9px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(12,9,16,0.85)';
@@ -325,7 +339,7 @@
       const doll = Doll.canvas(o.look);
       if (doll) ctx.drawImage(doll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
       ctx.globalAlpha = 1;
-      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, '#b9d7ff']);
+      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, window.HLLogic.nameColor(o, relations())]);
       const said = bubbleOf(o.id, now);
       if (said) talk.push([said, px + TILE / 2, py]);
     }
@@ -435,6 +449,7 @@
 
   window.MapView = {
     drawHome,
+    setRelations(f) { relations = f; },
     stopVisit() { visiting = null; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
     // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng

@@ -9,7 +9,9 @@ defmodule HacLong.Guilds do
     cấp 2 (`xp_bonus/1`).
   - Bang mở (`open`) thì vào ngay; bang đóng thì gửi đơn, bang chủ hoặc phó bang duyệt.
   - Vai trò: `leader` (bang chủ: làm được mọi việc, chuyển quyền, giải tán), `officer` (phó
-    bang: duyệt đơn, đuổi thành viên thường, sửa thông báo), `member`.
+    bang, tối đa `RULES.guild.max_officers`: duyệt đơn, đuổi thành viên thường, sửa thông báo),
+    `member`.
+  - Đơn xin vào quá `RULES.guild.request_days` ngày thì tự bỏ (`purge_requests/0`).
   - Thay đổi thành viên thì báo cho Session của người đó (`HacLong.Game.Session.refresh_guild/1`)
     để cập nhật `guild` trong trạng thái nhân vật (không lưu trong bảng characters) và cho kênh
     game đổi kênh chat bang.
@@ -57,10 +59,59 @@ defmodule HacLong.Guilds do
   @doc "Bang của người chơi, gắn vào trạng thái nhân vật: `%{id, name, tag, level, role}` hoặc nil."
   def brief(uid) do
     case membership(uid) do
-      nil -> nil
-      m -> %{id: m.id, name: m.name, tag: m.tag, level: level(m.fund), role: m.role}
+      nil ->
+        nil
+
+      m ->
+        staff? = m.role in ~w(leader officer)
+
+        %{
+          id: m.id,
+          name: m.name,
+          tag: m.tag,
+          level: level(m.fund),
+          role: m.role,
+          # chiến bang (Phase 5, H5): trận đang chiến, lời tuyên chiến đang chờ (chỉ bang chủ / phó thấy)
+          war: HacLong.GuildWars.brief(m.id),
+          war_pending:
+            staff? &&
+              case HacLong.GuildWars.pending(m.id) do
+                nil -> nil
+                p -> %{name: p.from_name, tag: p.from_tag}
+              end
+        }
     end
   end
+
+  @doc "Bang và vai trò của người chơi (không kèm chiến bang): `%{id, name, tag, role}` hoặc nil."
+  def member_of(uid), do: (m = membership(uid)) && Map.take(m, [:id, :name, :tag, :role])
+
+  @doc "Mã bang theo ký hiệu (không phân biệt hoa thường), nil nếu không có."
+  def id_by_tag(tag) when is_binary(tag),
+    do:
+      Repo.one(from g in "guilds", where: g.tag == ^String.upcase(String.trim(tag)), select: g.id)
+
+  def id_by_tag(_), do: nil
+
+  @doc "Tên, ký hiệu của bang `gid` (nil nếu không có)."
+  def info_brief(gid),
+    do:
+      Repo.one(
+        from g in "guilds", where: g.id == ^gid, select: %{id: g.id, name: g.name, tag: g.tag}
+      )
+
+  @doc "Cộng quỹ bang (thưởng hệ thống, không trừ vàng ai)."
+  def add_fund(gid, n),
+    do: Repo.update_all(from(g in "guilds", where: g.id == ^gid), inc: [fund: n])
+
+  @doc "Bang chủ và phó bang của bang `gid`."
+  def staff_ids(gid),
+    do:
+      Repo.all(
+        from m in "guild_members",
+          where: m.guild_id == ^gid and m.role in ["leader", "officer"],
+          select: m.user_id
+      )
 
   defp guild(gid) do
     Repo.one(
@@ -172,7 +223,24 @@ defmodule HacLong.Guilds do
   defp role_rank("officer"), do: 1
   defp role_rank(_), do: 2
 
+  @doc "Bỏ các đơn xin vào bang quá `RULES.guild.request_days` ngày."
+  def purge_requests(now \\ DateTime.utc_now()) do
+    cutoff = DateTime.add(now, -@rules.request_days * 86_400, :second)
+    Repo.delete_all(from r in "guild_requests", where: r.inserted_at < ^cutoff)
+  end
+
+  def max_officers, do: @rules.max_officers
+
+  defp officers(gid),
+    do:
+      Repo.aggregate(
+        from(m in "guild_members", where: m.guild_id == ^gid and m.role == "officer"),
+        :count
+      )
+
   defp requests(gid) do
+    purge_requests()
+
     Repo.all(
       from r in "guild_requests",
         join: u in User,
@@ -186,8 +254,10 @@ defmodule HacLong.Guilds do
   end
 
   @doc "Các bang người chơi đã gửi đơn xin vào."
-  def my_requests(uid),
-    do: Repo.all(from r in "guild_requests", where: r.user_id == ^uid, select: r.guild_id)
+  def my_requests(uid) do
+    purge_requests()
+    Repo.all(from r in "guild_requests", where: r.user_id == ^uid, select: r.guild_id)
+  end
 
   # ---------- Lập bang, góp quỹ (trừ vàng) ----------
 
@@ -475,13 +545,13 @@ defmodule HacLong.Guilds do
   def set_role(actor, target, role) when role in ~w(officer member) do
     with {:ok, m} <- leader(actor) do
       case role_in(target, m.id) do
-        r when r in ~w(officer member) ->
-          Repo.update_all(from(x in "guild_members", where: x.user_id == ^target),
-            set: [role: role]
-          )
+        "member" when role == "officer" ->
+          if officers(m.id) >= @rules.max_officers,
+            do: {:error, "Bang đã đủ #{@rules.max_officers} phó bang."},
+            else: put_role(target, role)
 
-          notify(target)
-          {:ok, if(role == "officer", do: "Đã phong phó bang.", else: "Đã bỏ chức phó bang.")}
+        r when r in ~w(officer member) ->
+          put_role(target, role)
 
         _ ->
           {:error, "Người này không ở trong bang."}
@@ -491,16 +561,28 @@ defmodule HacLong.Guilds do
 
   def set_role(_, _, _), do: {:error, "Vai trò không hợp lệ."}
 
+  defp put_role(target, role) do
+    Repo.update_all(from(x in "guild_members", where: x.user_id == ^target), set: [role: role])
+    notify(target)
+    {:ok, if(role == "officer", do: "Đã phong phó bang.", else: "Đã bỏ chức phó bang.")}
+  end
+
   def transfer(actor, target) do
     with {:ok, m} <- leader(actor) do
       if target != actor and role_in(target, m.id) do
+        # bang chủ cũ làm phó bang nếu còn chỗ (người nhận là phó thì nhường lại chỗ đó)
+        was_officer = role_in(target, m.id) == "officer"
+
+        old_role =
+          if was_officer or officers(m.id) < @rules.max_officers, do: "officer", else: "member"
+
         Repo.transaction(fn ->
           Repo.update_all(from(x in "guild_members", where: x.user_id == ^target),
             set: [role: "leader"]
           )
 
           Repo.update_all(from(x in "guild_members", where: x.user_id == ^actor),
-            set: [role: "officer"]
+            set: [role: old_role]
           )
 
           Repo.update_all(from(g in "guilds", where: g.id == ^m.id), set: [leader_id: target])

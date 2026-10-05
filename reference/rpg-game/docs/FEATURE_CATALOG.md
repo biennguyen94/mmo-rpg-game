@@ -53,10 +53,10 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| A1 | **Sát thương nhiều bước:** đòn ngẫu nhiên **min~max** × hệ số kỹ năng + cộng phẳng → chí mạng → × buff × (1 + % cánh) → **trừ thủ** → **sàn mềm** (không dưới x % đòn gốc) → × (1 − % hấp thụ) → **sàn cứng** | Khác: một số `atk²/(atk+def) × rand(0,9–1,1)` | 🟡 | M | Công thức Hắc Long đã mượt (thủ cao vẫn ăn đòn). Đáng lấy: **khoảng đòn min~max** (vũ khí có đòn thấp / cao, hiện rõ trên đồ) và chỗ cắm **% cánh / % hấp thụ** (D6). Đổi cân bằng → simulator | [x] |
-| A2 | **Tỉ lệ trúng** = attackRate / (attackRate + defenseRate), chặn 5–95 %; attackRate = cấp × 5 + AGI × 1,5 | Khác: có né theo agi | 🟡 | S | Thêm cảm giác "Trượt!". Đụng cân bằng lớp Thích Khách | [x] |
+| A1 | **Sát thương nhiều bước:** đòn ngẫu nhiên **min~max** × hệ số kỹ năng + cộng phẳng → chí mạng → × buff × (1 + % cánh) → **trừ thủ** → **sàn mềm** (không dưới x % đòn gốc) → × (1 − % hấp thụ) → **sàn cứng** | Khác: một số `atk²/(atk+def) × rand(0,9–1,1)` | 🟡 | M | Công thức Hắc Long đã mượt (thủ cao vẫn ăn đòn). Đáng lấy: **khoảng đòn min~max** (vũ khí có đòn thấp / cao, hiện rõ trên đồ) và chỗ cắm **% cánh / % hấp thụ** (D6). Đổi cân bằng → simulator | [x] ✅ P3 |
+| A2 | **Tỉ lệ trúng** = attackRate / (attackRate + defenseRate), chặn 5–95 %; attackRate = cấp × 5 + AGI × 1,5 | Khác: có né theo agi | 🟡 | S | Thêm cảm giác "Trượt!". Đụng cân bằng lớp Thích Khách | [x] ✅ P3 |
 | A3 | **Tham số chiến đấu trong config** (minHitChance, maxHitChance, minDamageRatio, hardFloor, critChance, critMultiplier) | Không: hằng số trong `engine.ex` | ✅ | S | Đưa hằng số chiến đấu vào `RULES.combat` (`priv/game_data/rules.json`), chỉnh không cần sửa code (xem J1) | [x] ✅ P1 |
-| A4 | **Phạt EXP chênh cấp:** cao hơn quái > 10 cấp thì −10 % / cấp, tối thiểu 10 % | Kiểm | ✅ | S | Chống đánh quái yếu lấy EXP, ép người chơi lên vùng mới | [x] |
+| A4 | **Phạt EXP chênh cấp:** cao hơn quái > 10 cấp thì −10 % / cấp, tối thiểu 10 % | Kiểm | ✅ | S | Chống đánh quái yếu lấy EXP, ép người chơi lên vùng mới | [x] ✅ P3 |
 | A5 | **PvP × 0,5 sát thương** (giảm hệ số khi người đánh người) | Khác: đấu trường đánh bản sao chỉ số | 🟡 | S | Chỉ cần nếu thấy đấu trường kết thúc quá nhanh | [ ] |
 | A6 | **Kỹ năng tốn MP**, MP hồi theo ENE / giây | Khác: hồi chiêu theo lượt | ❌ | L | Hệ khác, không đáng đổi | [ ] |
 | A7 | **Kỹ năng hỗ trợ đồng đội:** Heal (10 + ENE/4), Tăng thủ (2 + ENE/8, 60 s), Tăng công (3 + ENE/7, 60 s) | Khác: buff bản thân (rage, guard) | 🟡 | M | Hợp tổ đội 3 người đánh chung một quái. Cần thiết kế lại kỹ năng lớp (vd Hiệp Sĩ có Hồi Máu cho đồng đội) | [ ] |
@@ -89,8 +89,8 @@
 | C3 | **Yêu cầu chỉ số để mặc** (STR / AGI / ENE tối thiểu), hiện đỏ khi thiếu | Khác: chỉ yêu cầu cấp | 🟡 | S | Cho điểm tiềm năng thêm ý nghĩa. Đổi cân bằng | [x] |
 | C4 | **Đồ theo lớp** (danh sách lớp được mặc; MG không đội mũ) | Kiểm (có vẻ mọi lớp mặc được hết) | 🟡 | S | Đi cùng B4 / B7 | [x] |
 | C5 | **Túi dạng lưới 8×8, kéo thả** xếp / mặc / tháo | Khác: danh sách theo nhóm | ✅ | M | Đẹp trên máy tính, **kém hơn danh sách trên điện thoại** (Hắc Long ưu tiên điện thoại). Đề xuất: lưới cho màn ≥ 1024 px, giữ danh sách cho màn hẹp | [x] ✅ Q |
-| C6 | **Tách stack, vứt đồ có xác nhận** | Không thấy | 🟡 | S | Vứt đồ ít cần (bán được). Tách stack chỉ có ích nếu chợ bán theo số lượng | [x] |
-| C7 | **Kho đồ** (MU: 15×8, chung tài khoản) | Không | 🟡 | M | Hắc Long 1 nhân vật nên đổi thành **"Rương ở Nhà"**: chỗ cất đồ ngoài túi (`gear` tối đa 20 món) | [x] |
+| C6 | **Tách stack, vứt đồ có xác nhận** (P4: chỉ vứt đồ, không tách chồng — câu 4-E) | Không thấy | 🟡 | S | Vứt đồ ít cần (bán được). Tách stack chỉ có ích nếu chợ bán theo số lượng | [x] ✅ P4 |
+| C7 | **Kho đồ** (MU: 15×8, chung tài khoản) | Không | 🟡 | M | Hắc Long 1 nhân vật nên đổi thành **"Rương ở Nhà"**: chỗ cất đồ ngoài túi (`gear` tối đa 20 món) | [x] ✅ P4 |
 | C8 | **Đồ rơi dưới đất, giữ riêng 10 s, 60 s biến mất, nhặt bằng phím** | Khác: vào thẳng túi | ❌ | – | Không hợp turn-based | [ ] |
 | C9 | **Mỗi món đồ có serial riêng** (bảng `items` + `item_locations`) | Khác: số đếm trong `inv`; đồ ngẫu nhiên có `uid` | 🟡 | L | Nền cho chống nhân bản đồ (E3). Đổi cách lưu đồ, migration lớn | [ ] |
 | C10 | **Cấp nâng theo từng món** (không theo loại) | Khác: theo loại đồ thường (hai `broadsword` chung cấp) | ✅ | M | Sửa "bẫy" ở `CODEBASE_NOTES §10.4`. Cần trước khi làm D1 (mất đồ +10 thì mất đúng món) | [x] ✅ Đ3 |
@@ -104,11 +104,11 @@
 | D1 ★ | **Ép +6 → +11 bằng ngọc**, có rủi ro (tụt cấp / mất đồ), bảng bước trong config | Khác: Thợ Rèn +5, chắc chắn | ✅ | M | `INTEGRATION_PLAN §3`. Nên làm C10 trước | [x] ✅ Đ3 |
 | D2 | **+10 / +11 cộng gấp đôi** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
 | D3 | **Thông báo toàn server khi ép thành công từ +7** | Không | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | Đã chọn (câu 3-C chuyển từ "để sau" sang làm). `PHASE_PLAN.md` Phase 4 | [x] |
+| D4 | **Ngọc Sinh Mệnh:** dòng tùy chọn +4 công / thủ, tối đa 4, 50 % | Khác: đồ ngẫu nhiên đã có dòng chỉ số | 🟡 | M | Đã chọn (câu 3-C chuyển từ "để sau" sang làm). `PHASE_PLAN.md` Phase 4 | [x] ✅ P4 |
 | D5 ★ | **Máy ghép** (công thức: đầu vào theo loại / cấp / số lượng, phí, tỉ lệ cơ bản + theo cấp đồ, trần 60 %; xem trước tỉ lệ; thất bại mất hết) | Khác: công thức nấu / rèn chắc chắn | ✅ | M | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D6 ★ | **Cánh** (ô riêng, % sát thương / % hấp thụ, ép +N mỗi cấp +2 %, cấp 2 theo lớp, vẽ bằng code) | Không | ✅ | L | `INTEGRATION_PLAN §4` | [x] ✅ Đ3 |
 | D7 | **Ngọc rơi theo nhóm có trọng số** từ quái cấp cao, trùm, top 3 trùm thế giới | Khác: nguyên liệu chỉ từ điểm thu thập | ✅ | S | Đi cùng D1 | [x] ✅ Đ3 |
-| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | **Chốt:** giữ Thợ Rèn + nút "Ép ngọc" trong bảng chi tiết món đồ, cho **cả đồ trong túi lẫn đồ đang mặc** (thay C15) | [x] |
+| D8 | **Kéo ngọc thả lên đồ** để ép; điện thoại: [Ép lên…] rồi chạm đồ | Khác: nâng ở Thợ Rèn | 🟡 | S | **Chốt:** giữ Thợ Rèn + nút "Ép ngọc" trong bảng chi tiết món đồ, cho **cả đồ trong túi lẫn đồ đang mặc** (thay C15) | [x] ✅ P4 |
 
 ## E. Kinh tế, cửa hàng, giao dịch, chống gian lận
 
@@ -118,21 +118,21 @@
 | E2 | **Log đồ** (mỗi lần đồ đổi chủ: chợ, giao dịch, thư, bán, ép, ghép) | Không | ✅ | M | Bắt đầu với đồ ngẫu nhiên (`uid`); đầy đủ cần C9 | 🔶 Đ2 |
 | E3 | **Audit đồ:** serial trùng, đồ không chủ, chủ hiện tại ≠ log | Không | 🟡 | L | Cần C9 | [ ] |
 | E4 | **Giao dịch một transaction**, khóa hai nhân vật theo thứ tự id (tránh deadlock), kiểm lại đồ / vàng / chỗ trống | Khác: 2 pha qua Session, không transaction | ✅ | M | `INTEGRATION_PLAN 1-B`. Lỗ hổng tiềm ẩn duy nhất về nhân bản đồ / vàng em thấy | [x] ✅ Đ2 |
-| E5 | **Giao dịch tự hủy** khi: đi xa, đổi map, chết, mất kết nối, đăng xuất, quá 180 s; **đổi gì cũng mở khóa hai bên** | Kiểm | 🟡 | S | Kiểm luồng hiện có, thêm điều kiện thiếu | [x] |
+| E5 | **Giao dịch tự hủy** khi: đi xa, đổi map, chết, mất kết nối, đăng xuất, quá 180 s; **đổi gì cũng mở khóa hai bên** | Kiểm | 🟡 | S | Kiểm luồng hiện có, thêm điều kiện thiếu | [x] ✅ P5 |
 | E6 | **Sửa `Market.commit/4` bỏ qua kết quả transaction** | Lỗi đang có | ✅ | S | Sửa ngay dù không làm gì khác | [x] ✅ Đ1 |
 | E7 | **Giá bán lại = tỉ lệ trong config** (MU 50 %) | Khác: 40 % trong code | ✅ | S | Gộp J1 | [x] ✅ P1 |
 | E8 | **Cửa hàng theo NPC trong data** (`shop.json`) | Có (`stock` trong map JSON) | ❌ | – | Đã có | [ ] |
 | E9 | **Mọi thao tác đồ / vàng trong một transaction** (mua, bán, ép, ghép, nhận thư, giao dịch) | Khác: hàm thuần + lưu cả dòng (một Session nên an toàn trong RAM) | 🟡 | M | Rủi ro thấp vì Session tuần tự; chỉ cần ở chỗ đụng 2 người (E4, chợ) | [ ] |
-| E10 | **Trần vàng gửi qua thư / giao dịch** | Có trần giao dịch 10 triệu; thư không trần | 🟡 | S | Thêm trần cho thư quản trị (tránh gõ nhầm số) | [x] |
+| E10 | **Trần vàng gửi qua thư / giao dịch** | Có trần giao dịch 10 triệu; thư không trần | 🟡 | S | Thêm trần cho thư quản trị (tránh gõ nhầm số) | [x] ✅ P4 |
 
 ## F. Thế giới, quái, sự kiện
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| F1 | **Golden Invasion:** quái vàng theo lịch ở các vùng, thưởng ×5, rơi ngọc 10 %, hạ hết thì kết thúc sớm | Không | ✅ | M | Hoạt động đông người định kỳ, rẻ (dùng lại MapServer) | [x] |
+| F1 | **Golden Invasion:** quái vàng theo lịch ở các vùng, thưởng ×5, rơi ngọc 10 %, hạ hết thì kết thúc sớm | Không | ✅ | M | Hoạt động đông người định kỳ, rẻ (dùng lại MapServer) | [x] ✅ P7 |
 | F2 | **Lịch sự kiện chung** (`WorldEvents`): giờ UTC trong config, báo trước 5 phút, báo bắt đầu / kết thúc, bật / tắt tay, người vào giữa chừng vẫn thấy | Khác: trùm thế giới có lịch riêng; lễ hội theo mùa | 🟡 | M | Gom trùm thế giới + lễ hội + Golden vào một lịch, một thanh đếm ngược | [ ] |
 | F3 | **Trùm thế giới: top 3 sát thương nhận ngọc** | Khác: chia vàng theo sát thương | ✅ | S | Đi cùng D7 | [x] ✅ Đ3 |
-| F4 | **Quái sự kiện không hồi sinh**, vùng sinh trong config | – | ✅ | S | Đi cùng F1 | [x] |
+| F4 | **Quái sự kiện không hồi sinh**, vùng sinh trong config | – | ✅ | S | Đi cùng F1 | [x] ✅ P7 |
 | F5 | **Quái tự đi / đuổi / kéo về, đánh xa, AI 10 Hz** | Khác | ❌ | – | | [ ] |
 | F6 | **Tick bản đồ 20 Hz, snapshot 10 Hz, chỉ gửi thay đổi, AOI theo ô** | Khác | ❌ | – | Không cần cho turn-based | [ ] |
 | F7 | **Giới hạn người / world** (`maxPlayersPerWorld`) | Không | 🟡 | S | Bảo vệ server khi đông bất thường | [ ] |
@@ -154,20 +154,20 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| H1 | **EXP tổ đội có thưởng** ×(1 + 0,1 × (n−1)), người ở xa / đã chết không nhận | Khác: chia vàng ×1,2/n | 🟡 | S | So lại công thức EXP của Hắc Long | [x] |
-| H2 | **Lời mời hết hạn 30 s** (tổ đội / bang / giao dịch) | Kiểm | 🟡 | S | | [x] |
-| H3 | **Trưởng nhóm rời → người vào sớm nhất lên thay; còn 1 người thì tan** | Kiểm | 🟡 | S | | [x] |
-| H4 | **Vai trò bang:** chủ / phó (tối đa 2) / thành viên; phó mời được, chỉ đuổi thành viên thường | Kiểm | 🟡 | S | | [x] |
-| H5 | **Chiến bang** (tuyên chiến, 60 s nhận, 20 điểm hoặc 30 phút, đầu hàng) | Không | 🟡 | M | Biến thể: **chiến bang trên đấu trường** (điểm theo trận đấu trường giữa hai bang trong 1 giờ) | [x] |
-| H6 | **Tên bang trên đầu nhân vật** | Kiểm | ✅ | S | | [x] |
-| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ✅ (chốt lại 2026-10-04) | M | **Chốt:** làm thành **PK = trận đấu trường có cược vàng** (không đánh nhau tự do trên bản đồ). `PHASE_PLAN.md` Phase 5 | [x] |
-| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ✅ (chốt lại 2026-10-04) | S | **Chốt:** thách đấu trực tiếp = mời một người cụ thể vào trận đấu trường cược vàng (gộp với H7) | [x] |
-| H9 | **Chat bằng lệnh:** `/w Tên`, `/m`, `/p`, `/g` | Khác: chọn kênh bằng nút | ✅ | S | Gõ nhanh trên máy tính | [x] |
+| H1 | **EXP tổ đội có thưởng** ×(1 + 0,1 × (n−1)), người ở xa / đã chết không nhận | Khác: chia vàng ×1,2/n | 🟡 | S | So lại công thức EXP của Hắc Long | [x] ✅ P5 |
+| H2 | **Lời mời hết hạn 30 s** (tổ đội / bang / giao dịch) | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H3 | **Trưởng nhóm rời → người vào sớm nhất lên thay; còn 1 người thì tan** | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H4 | **Vai trò bang:** chủ / phó (tối đa 2) / thành viên; phó mời được, chỉ đuổi thành viên thường | Kiểm | 🟡 | S | | [x] ✅ P5 |
+| H5 | **Chiến bang** (tuyên chiến, 60 s nhận, 20 điểm hoặc 30 phút, đầu hàng) | Không | 🟡 | M | Biến thể: **chiến bang trên đấu trường** (điểm theo trận đấu trường giữa hai bang trong 1 giờ) | [x] ✅ P5 |
+| H6 | **Tên bang trên đầu nhân vật** | Kiểm | ✅ | S | | [x] ✅ P5 |
+| H7 | **PK mở** (điểm PK, tên cam / đỏ, tự vệ 30 s, rơi đồ khi chết, Sát nhân bị cấm NPC) | Không | ✅ (chốt lại 2026-10-04) | M | **Chốt:** làm thành **PK = trận đấu trường có cược vàng** (không đánh nhau tự do trên bản đồ). `PHASE_PLAN.md` Phase 5 | [x] ✅ P5 |
+| H8 | **Thách đấu trực tiếp** (3 phút, 1 HP thua) | Khác: đấu trường bản sao | ✅ (chốt lại 2026-10-04) | S | **Chốt:** thách đấu trực tiếp = mời một người cụ thể vào trận đấu trường cược vàng (gộp với H7) | [x] ✅ P5 |
+| H9 | **Chat bằng lệnh:** `/w Tên`, `/m`, `/p`, `/g` | Khác: chọn kênh bằng nút | ✅ | S | Gõ nhanh trên máy tính | [x] ✅ P5 |
 | H10 | **Lọc từ cấm trong chat** (thay bằng `***`, danh sách trong config) | Không thấy | ✅ | S | | [ ] |
 | H11 | **Giới hạn chat theo nhóm lệnh** (5 tin / 5 s) | Có giới hạn | ❌ | – | Đã có | [ ] |
-| H12 | **Thư hết hạn 30 ngày; lọc Tất cả / Chưa đọc / Có quà; xóa đã đọc; tối đa 100** | Khác: giữ 50 | 🟡 | S | | [x] |
+| H12 | **Thư hết hạn 30 ngày; lọc Tất cả / Chưa đọc / Có quà; xóa đã đọc; tối đa 100** | Khác: giữ 50 | 🟡 | S | | [x] ✅ P5 |
 | H13 | **Thư chào mừng khi tạo nhân vật** | Khác: quà tân thủ qua hướng dẫn | ❌ | – | Đã có tương đương | [ ] |
-| H14 ★ | **Xếp hạng theo lớp + cache + hạng của mình** | Có 7 bảng, không cache, top 10 | ✅ | S | `INTEGRATION_PLAN §6` | [x] |
+| H14 ★ | **Xếp hạng theo lớp + cache + hạng của mình** | Có 7 bảng, không cache, top 10 | ✅ | S | `INTEGRATION_PLAN §6` | [x] ✅ P5 |
 | H15 | **Xếp hạng bang theo tổng cấp thành viên** | Khác: theo quỹ, theo sát thương trùm | ❌ | – | Đã có | [ ] |
 
 ## I. Server: phiên, đồng bộ, bảo mật, độ bền dữ liệu
@@ -215,7 +215,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | L1 | **Hình nhân vật kèm ô trang bị** (bố cục "búp bê": ô quanh hình nhân vật) | Khác: 3 dòng danh sách | ✅ | S–M | Đẹp hơn ngay cả với 3–4 ô; cần nếu làm C1 / C2 / D6 | [x] 🔶 Q |
-| L2 | **Panel Thông báo** (lưu lại, chưa đọc / đã đọc, xóa) | Khác: toast rồi mất | ✅ | S | Người chơi không lỡ tin quan trọng | [x] |
+| L2 | **Panel Thông báo** (lưu lại, chưa đọc / đã đọc, xóa) | Khác: toast rồi mất | ✅ | S | Người chơi không lỡ tin quan trọng | [x] ✅ P8 |
 | L3 | **Phím tắt máy tính** (C / I / M nhân vật / túi / bản đồ, Q / W bình, Enter chat, Esc đóng) | Kiểm (có `keydown`) | ✅ | S | | [x] ✅ Q |
 | L4 | **Bản đồ nhỏ** (mình, NPC, cổng, vùng an toàn) | Kiểm | 🟡 | S | | [ ] |
 | L5 | **Thanh sự kiện đếm ngược** giữa trên màn hình | Khác: banner trùm thế giới | 🟡 | S | Đi cùng F2 | [ ] |
@@ -234,8 +234,8 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | M1 | **Vẽ cánh bằng code** (2 lớp, cấp 2 to hơn, màu theo lớp) | – | ✅ | S | Đi cùng D6 | [x] ✅ Đ3 |
-| M2 | **Tên màu theo trạng thái** (bang địch, PK…), tên bang trên đầu | Kiểm | 🟡 | S | Đi cùng H6 | [x] |
-| M3 | **Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài** | Kiểm | ✅ | S | Đi cùng F1 | [x] |
+| M2 | **Tên màu theo trạng thái** (bang địch, PK…), tên bang trên đầu | Kiểm | 🟡 | S | Đi cùng H6 | [x] ✅ P5 |
+| M3 | **Quầng vàng cho quái sự kiện, trùm vẽ to 1,5 lần, thanh máu dài** | Kiểm | ✅ | S | Đi cùng F1 | [x] ✅ P7 |
 | M4 | **Số sát thương bay, hiệu ứng trúng / trượt** | Kiểm (màn trận theo lượt) | 🟡 | S | Đi cùng A2 | [ ] |
 | M5 | **Di chuyển trượt mượt (Glide), camera theo vị trí vẽ** | Đã mượt | ❌ | – | | [ ] |
 | M6 | **Client TypeScript**, kiểu cho protocol | Khác: JS thuần (`ui.js` 2 100 dòng) | 🟡 | L | Lớn. Thay thế nhẹ: tách dần logic thuần (giá, công thức hiển thị, chat) ra module riêng có test (N2) | [ ] |
@@ -258,7 +258,7 @@
 
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
-| O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] |
+| O1 | **`USER_GUIDE`** (hướng dẫn người chơi đầy đủ) | Khác: README có phần nội dung | ✅ | S | | [x] ✅ P8 |
 | O2 | **`ADMIN_GUIDE`** (lệnh quản trị, sao lưu, xử lý tình huống) | Khác: `DEPLOY.md` | ✅ | S | Đi cùng K1 | [x] ✅ Đ2 |
 | O3 | **`DECISIONS` / `OPEN_QUESTIONS`** (ghi quyết định, câu hỏi chờ duyệt) | Không | 🟡 | S | Theo dõi vì sao số / luật được chọn | [x] ✅ P1 |
 | O4 | **Ảnh chụp màn hình trong tài liệu** (do e2e chụp) | Kiểm | 🟡 | S | Đi cùng N1 | [x] ✅ P2 |
@@ -278,7 +278,7 @@
 |---|---|---|---|---|---|---|
 | A13 | **Thứ tự kiểm một đòn**: còn sống → đã học kỹ năng → mục tiêu hợp lệ → không ở vùng an toàn → tầm → hồi chiêu → MP; trả đúng mã lỗi | Khác (theo lượt) | ❌ | – | | [ ] |
 | A14 | **Hồi chiêu theo tốc đánh**: `max(250, 1000 / (1 + AS/100))`, AS = AGI/15 + tốc vũ khí | Khác | ❌ | – | Theo lượt không có hồi chiêu theo ms | [ ] |
-| A15 | **Chỉ làm tròn xuống ở bước cuối** công thức sát thương (các bước giữa giữ số thực) | Kiểm | 🟡 | S | Đi cùng A1 | [ ] |
+| A15 | **Chỉ làm tròn xuống ở bước cuối** công thức sát thương (các bước giữa giữ số thực) | Kiểm | 🟡 | S | Đi cùng A1 | ✅ P3 (cùng A1) |
 | A16 | **Luật cộng dồn buff**: dùng lại cùng buff thì làm mới thời gian và giữ giá trị lớn hơn; buff khác nhau cộng dồn; mất khi chết / thoát; hồi máu không vượt HP tối đa | Có hiệu ứng trong trận | 🟡 | S | Chỉ cần nếu làm A7 | [ ] |
 | A17 | **Không thưởng khi hạ người chơi** (chống nuôi tài khoản phụ) | Khác: đấu trường thắng được `30 + 5 × Δ Elo` vàng | 🟡 | S | Chống "bơm" Elo / vàng: thưởng giảm dần khi đánh cùng một người nhiều lần trong ngày | [ ] |
 | A18 | **Vùng an toàn cho phép hồi máu / buff**; chỉ đòn tấn công mới tính "đang chiến đấu" | Khác | ❌ | – | | [ ] |
@@ -394,7 +394,7 @@
 | # | Tính năng MU Web | Hắc Long | Đánh giá | Công | Ghi chú | Chọn |
 |---|---|---|---|---|---|---|
 | K9 | **Sổ tay vận hành**: quy trình bảo trì, bảng xử lý sự cố, sao lưu / phục hồi DB (`pg_dump` theo lịch, thử phục hồi) | Có `DEPLOY.md` | ✅ | S | Đi cùng O2 | [ ] |
-| K10 | **Tra người online** (số người, danh sách tên) | Có tra theo tên | 🟡 | S | Thêm số online + danh sách trong tab Quản trị | [x] |
+| K10 | **Tra người online** (số người, danh sách tên) | Có tra theo tên | 🟡 | S | Thêm số online + danh sách trong tab Quản trị | [x] ✅ P5 |
 | K11 | **Quy tắc "chỉ sửa khi offline", "không sửa đồ / vàng bằng SQL"** | – | ✅ | S | Ghi trong `ADMIN_GUIDE`; đi cùng I5 | [ ] |
 
 ### P-L. Giao diện
@@ -418,7 +418,7 @@
 |---|---|---|---|---|---|---|
 | M9 | **Viền / màu đồ theo cấp +N** (khác nhau ở +7, +9, +11) | – | ✅ | S | Đi cùng D1: nhìn là biết đồ "khủng" | [x] ✅ Đ3 |
 | M10 | **Ảnh đồ không kéo giãn, chỉ phóng số nguyên** | Kiểm | 🟡 | S | | [x] |
-| M11 | **Hoạt ảnh nhân vật nhiều khung, hiệu ứng kỹ năng / lên cấp / hồi máu** — MU chưa làm | Kiểm | 🟡 | M | Hiệu ứng nhỏ bằng CSS / canvas (lóe sáng khi trúng, chữ "LÊN CẤP") | [x] |
+| M11 | **Hoạt ảnh nhân vật nhiều khung, hiệu ứng kỹ năng / lên cấp / hồi máu** — MU chưa làm | Kiểm | 🟡 | M | Hiệu ứng nhỏ bằng CSS / canvas (lóe sáng khi trúng, chữ "LÊN CẤP") | [x] ✅ P8 |
 | M12 | **Tối ưu tải ảnh** (tải trước theo bản đồ, nén, cache header, ghép atlas) — MU chưa làm | Kiểm | 🟡 | S | Đỡ tốn mạng điện thoại | [ ] |
 | M13 | **Tách lớp vẽ (`GameView`)**, **Phaser** | – | ❌ | – | | [ ] |
 
@@ -554,6 +554,10 @@ cũ; mỗi tài khoản một nhân vật): B1, B3, B7; công cụ Item.txt + h�
 `window.__hl`, hàm thuần client tách ra `logic.js` + `node --test`, test chống nhân bản song song, soak bot WebSocket, ảnh
 tài liệu chụp từ e2e, workflow CI `hac-long-e2e.yml`. Chi tiết: `PHASE_PLAN.md` (Phase 2), `CODEBASE_NOTES.md §9g`,
 `e2e/README.md`.
+
+**Phase 3 đã làm (2026-10-04): công thức chiến đấu** — A1 (sát thương nhiều bước, đòn thấp ~ cao, sàn mềm 20 %), A2 (tỉ lệ
+trúng khi người đánh quái; kỹ năng luôn trúng), A4 (phạt EXP chênh cấp, chỉ quái thường), A15. Cân bằng lệch ≤ 2,7 %.
+Chi tiết: `INTEGRATION_PLAN.md §11`.
 
 **Làm một phần (🔶):**
 - **B8** (Q2): có HP, công, thủ, chí mạng, né, % cánh; chưa có đòn min~max, tỉ lệ trúng, tốc độ.

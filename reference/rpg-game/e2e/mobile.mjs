@@ -11,7 +11,7 @@ const small = (scope, min = 36) => page.evaluate(([scope, min]) => [...document.
   .filter((b) => b.offsetParent && !b.classList.contains('small-btn') && b.getBoundingClientRect().height < min)
   .map((b) => (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 20)), [scope, min]);
 
-for (const t of ['map', 'hero', 'bag', 'quests', 'misc']) {
+for (const t of ['map', 'hero', 'bag', 'menu']) {
   await page.click(`#tabs [data-tab="${t}"]`);
   await page.waitForTimeout(250);
   R.check(`tab ${t}: không tràn ngang`, !(await overflowX(page)));
@@ -19,6 +19,24 @@ for (const t of ['map', 'hero', 'bag', 'quests', 'misc']) {
 }
 const tabSmall = await small('#tabs');
 R.check('thanh tab: nút đủ lớn để chạm', tabSmall.length === 0, tabSmall.join(', '));
+await page.click('#tabs [data-tab="map"]');
+// U5: màn bản đồ vừa khít, không cuộn trang (360 × 740)
+const noScroll = () => page.evaluate(() => { const v = document.querySelector('#view'); return v.scrollHeight <= v.clientHeight + 1 && document.documentElement.scrollHeight <= innerHeight + 1; });
+await page.waitForTimeout(200);
+R.check('bản đồ vừa khít giữa HUD và dock, không cuộn', await noScroll());
+// U4: chat trong bản đồ: nút 💬 góc dưới phải, cỡ vừa
+const cb = await page.evaluate(() => { const b = document.querySelector('.chat-btn').getBoundingClientRect(), m = document.querySelector('.map-wrap').getBoundingClientRect(); return { w: b.width, right: m.right - b.right, bottom: m.bottom - b.bottom }; });
+R.check('nút 💬 ở góc dưới phải bản đồ, ~36 px', cb.w <= 40 && cb.right < 20 && cb.bottom < 20, JSON.stringify(cb));
+await page.click('.chat-btn');
+await page.fill('#chat-input', 'chào từ điện thoại');
+await page.press('#chat-input', 'Enter');
+await page.waitForFunction(() => document.querySelector('#chat-log').textContent.includes('chào từ điện thoại'), null, { timeout: 5000 }).catch(() => null);
+R.check('gửi chat từ khung chat trong bản đồ', (await page.textContent('#chat-log')).includes('chào từ điện thoại'));
+await page.click('.chat-btn');
+// U3: Menu có Cài đặt (âm thanh, đăng xuất)
+await page.click('#tabs [data-tab="menu"]');
+await page.click('[data-menu="settings"]');
+R.check('Menu → Cài đặt có âm thanh và đăng xuất', !!(await page.$('[data-act="sound-toggle"]')) && !!(await page.$('[data-act="logout"]')));
 await page.click('#tabs [data-tab="map"]');
 
 await travel(page, 'village');
@@ -35,9 +53,24 @@ if (await engage(page)) {
   const b = await small('.actions');
   R.check('trận đánh: nút đủ lớn để chạm', b.length === 0, b.join(', '));
   await shot(page, 'mobile-battle.png');
+  R.check('trận đánh vừa khít, không cuộn trang', await noScroll());
   await fight(page);
   await act(page, 'leave');
 } else R.check('vào được trận đánh', false);
 
+// B1: HUD trường hợp xấu nhất (vàng 8 chữ số, số đỏ trên cả 3 nút) không làm tràn ngang
+await page.evaluate(() => {
+  document.querySelector('#hud .gold').lastChild.textContent = '12.345.678';
+  document.querySelectorAll('#hud .hud-btn').forEach((b) => { if (!b.querySelector('.points-dot')) b.insertAdjacentHTML('beforeend', '<span class="points-dot">99</span>'); });
+});
+R.check('HUD nhiều chữ số + số đỏ: không tràn ngang', !(await overflowX(page)));
+await page.evaluate(() => window.__hl.tab('map'));
+
+// Phase 8: bảng Thông báo (🔔) — tin lên cấp / thắng trận vừa rồi được giữ lại
+await act(page, 'notes-open');
+const nu = await page.evaluate(() => window.__hl.ui());
+R.check('mở bảng Thông báo, không tràn ngang', nu.notes === true && !(await overflowX(page)));
+await shot(page, 'mobile-notes.png');
+await act(page, 'notes-close');
 R.check('không lỗi JS', errors.length === 0, errors.join(' | '));
 await R.done(browser);

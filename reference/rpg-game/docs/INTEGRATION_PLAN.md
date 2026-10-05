@@ -604,3 +604,456 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 - **10-C** Giá mua / bán: Item.txt không có giá → đề xuất theo cấp đồ (công thức trong `priv/game_data/rules.json`).
 - **10-D** Bình MP (MU 14/4–6) và các ngọc, nhẫn, dây chuyền nhóm 13–14: thêm luôn hay để sau?
 
+
+---
+
+## 11. Công thức chiến đấu (Phase 3: A1, A2, A4)
+
+> Viết 2026-10-04; anh chốt 2026-10-04 (11.5), **đã làm** (11.7). Mục tiêu: đánh có cảm giác MU (đòn thấp ~ cao, "Trượt!",
+> phạt đánh quái quá yếu) mà độ khó tổng thể giữ như hiện tại: simulator 4 lớp lệch ≤ 10 % số trận hạ Hắc Long, chết không
+> tăng quá 1 lần (`PHASE_PLAN.md`, Phase 3).
+
+### 11.1 Hiện trạng (đo 2026-10-04)
+
+- Sát thương người → quái: `round(atk² / (atk + thủ) × ngẫu_nhiên(0,9 ~ 1,1) × hệ_số_kỹ_năng × (1 + sổ quái) × (1 + % cánh) × chí_mạng)`.
+  Đòn thường bị quái **né** 3–7 % (`0,03 + cấp × 0,001`); kỹ năng luôn trúng.
+- Quái → người: `atk² / (atk + thủ)` → chí mạng quái ×1,5 → × (1 − thủ thế) × (1 − % hấp thụ cánh). Người **né** theo AGI
+  (`0,02 + AGI × 0,0025`, tối đa 40 %): Kiếm Sĩ / Đấu Sĩ / Phù Thủy ~7–9 %, Tiên Nữ 15 % (cấp 10) → 37 % (cấp 40).
+- Tấn công người chơi lớn hơn nhiều thủ quái (cấp 20: công 230–290, thủ quái 40–50), nên công thức hiện tại gần như "ăn trọn"
+  công; khoảng ngẫu nhiên chỉ ±10 %.
+- Simulator gốc (`mix hac_long.simulate 20 --seed 1`, file `p3_before`): "chỉ đánh" ≈ 433–444 trận hạ Hắc Long, có nhiệm vụ /
+  hằng ngày / nâng cấp / rương ≈ 330–375 trận, chết 0–1 lần, 20/20 ván thắng ở mọi lớp.
+
+### 11.2 A1 — sát thương nhiều bước, đòn thấp ~ cao
+
+Thứ tự (chỉ làm tròn ở bước cuối, A15):
+
+1. **Đòn gốc** = số ngẫu nhiên trong **[công thấp, công cao]** của nhân vật.
+   - Vũ khí có `atkMin` / `atkMax`. Đồ hiện có chưa có hai số này → **suy từ `atk`**: `atkMin = atk × (1 − s)`,
+     `atkMax = atk × (1 + s)`, `s` trong `RULES.combat.weapon_spread` (Phase 6 lấy thẳng `DmgMin` / `DmgMax` từ Item.txt).
+   - Công của nhân vật = phần chỉ số (STR / ENE / AGI theo lớp) + vũ khí + cấp ép. Đề xuất (**3-D**): khoảng ngẫu nhiên áp cho
+     **toàn bộ công** (`công × (1 ± s)`), `s = 0,1` → trung bình và độ dao động giữ y như hôm nay (±10 %). Khi có đồ Item.txt thì
+     phần vũ khí theo `DmgMin ~ DmgMax` thật, phần chỉ số giữ ±10 %.
+2. × hệ số kỹ năng (`skill_effects.*.mult`) → **chí mạng** (× hệ số chí mạng) → × buff (cuồng nộ, suy yếu) × (1 + sổ quái)
+   × (1 + % cánh).
+3. **Trừ thủ**: giữ công thức mượt của Hắc Long `đòn² / (đòn + thủ)` (thủ cao vẫn ăn đòn, không có ngưỡng "0 sát thương" như MU).
+4. **Sàn mềm**: không dưới `x %` đòn ở bước 2 (**3-B**, đề xuất 20 % như MU). Hiện thủ quái thấp nên sàn này chỉ có tác dụng
+   khi sau này có quái thủ rất cao (Phase 6).
+5. × (1 − thủ thế) × (1 − % hấp thụ cánh) (khi quái đánh người).
+6. **Sàn cứng** 1, làm tròn.
+
+Quái đánh người dùng cùng các bước: công quái ±10 % (bỏ `ngẫu_nhiên(0,9 ~ 1,1)` cũ, kết quả như cũ).
+
+Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~ 253"** thay cho một số; số trong trận không đổi cách hiện.
+
+### 11.3 A2 — tỉ lệ trúng
+
+- **Người đánh quái:** `trúng = AR / (AR + DR)`, chặn **5 % ~ 95 %**.
+  - `AR` (attack rate) người = `cấp × 5 + AGI × 1,5` (như MU).
+  - `DR` (defense rate) quái = `cấp quái × k`, `k` trong `RULES.combat` (đề xuất **0,8**): Kiếm Sĩ cấp 10 đánh quái cấp 10 ≈ 91 %,
+    cấp 20 đánh quái cấp 25 ≈ 87 %; Tiên Nữ (AGI cao) ≈ 93–95 %. Thay cho "quái né 3–7 %" hiện nay.
+  - Trượt hiện **"Trượt!"** (số bay lên như hiện có). Kỹ năng: đề xuất **cũng tính trúng / trượt** như đòn thường (**3-E**).
+- **Quái đánh người:** đề xuất (**3-A**) **giữ né theo AGI hiện tại** (đổi tên thành "né", số không đổi), vì đổi sang
+  `AR / (AR + DR)` cho cả hai phía làm Tiên Nữ mất phần lớn né (37 % → ~15 %) → đổi cân bằng lớp lớn.
+- **Đấu trường (PvP):** người đánh bản sao người khác — dùng né của đối thủ như hiện nay (không đổi).
+- Hệ quả cân bằng: người chơi trúng ít hơn hiện tại ~4–9 % (tùy lớp, chênh cấp) → **chỉnh bù** bằng `k` hoặc hệ số công quái để
+  simulator lệch ≤ 10 %. Số chốt bằng simulator, ghi bảng trước / sau vào đây.
+
+### 11.4 A4 — phạt EXP chênh cấp
+
+- Nhân vật cao hơn quái **hơn 10 cấp**: EXP × `max(10 %, 1 − 10 % × (chênh − 10))` (chênh 11 cấp: 90 %, 15 cấp: 50 %, ≥ 19 cấp: 10 %).
+  Số trong `RULES.xp.penalty` (`from: 10`, `per_level: 0,1`, `min: 0,1`).
+- Đề xuất (**3-C**) chỉ áp **quái thường ngoài bản đồ**; không áp trùm vùng, tháp, trùm thế giới, đấu trường, việc hằng ngày,
+  nhiệm vụ. Nhật ký trận ghi "(EXP −40 % vì chênh cấp)" để người chơi hiểu.
+- Không ảnh hưởng vàng / rơi đồ.
+
+### 11.5 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **3-A** | Bỏ "né" hiện tại, thay bằng tỉ lệ trúng cho **cả hai phía**? Hay chỉ người đánh quái dùng tỉ lệ trúng, quái đánh người vẫn né theo AGI? | **Chỉ người đánh quái** dùng tỉ lệ trúng; quái đánh người giữ né theo AGI (không làm yếu Tiên Nữ) |
+| **3-B** | Sàn mềm bao nhiêu % đòn gốc? | **20 %** (như MU) |
+| **3-C** | Phạt EXP áp ở đâu? | **Chỉ quái thường**; không áp trùm, tháp, trùm thế giới, đấu trường |
+| **3-D** | Khoảng đòn thấp ~ cao áp cho toàn bộ công (±10 % như hôm nay) hay chỉ phần vũ khí (đồ hiện có suy `atk ± 20 %`)? | **Toàn bộ công ±10 %** cho đến Phase 6; có Item.txt thì phần vũ khí theo `DmgMin ~ DmgMax` |
+| **3-E** | Kỹ năng có thể trượt không (hiện luôn trúng)? | **Có**, như đòn thường (công bằng, MU cũng vậy) |
+
+### 11.6 Làm và kiểm
+
+- `Engine.damage/…` thành một hàm thuần nhiều bước (`Engine.hit/…` trả `{trúng?, chí_mạng?, sát_thương}`), test với số ngẫu nhiên
+  cố định từng bước; số mới trong `RULES.combat`, `RULES.xp.penalty`.
+- `derived/1` thêm `atkMin`, `atkMax`, `hitRate` (theo quái cùng cấp, để hiện ở bảng nhân vật).
+- Simulator 20 lượt / lớp trước / sau (`--seed 1`), bảng so sánh ghi vào 11.7; e2e smoke + `mix test`.
+
+**Đã chốt (2026-10-04):** 3-A chỉ người đánh quái dùng tỉ lệ trúng · 3-B sàn mềm 20 % · 3-C phạt EXP chỉ quái thường ·
+3-D toàn bộ công ±10 % · **3-E kỹ năng luôn trúng** (khác đề xuất).
+
+### 11.7 Kết quả (2026-10-04)
+
+- `Engine.damage/4` (nhiều bước), `Engine.hit_chance/2`, `Engine.xp_factor/2`; số mới `RULES.combat.soft_floor`,
+  `RULES.combat.hit`, `RULES.xp.penalty`. Bảng nhân vật: "Tấn công 68 ~ 84", "Trúng quái cùng cấp 95%". Đòn trượt: nhật ký
+  "Trượt! … tránh được đòn", số bay "Trượt".
+- Không cần chỉnh bù: simulator lệch ≤ 2,7 % (yêu cầu ≤ 10 %), số lần chết không tăng quá 1:
+
+| Lớp | Cách chơi | Trận hạ Hắc Long (trước → sau) | Lệch | Chết |
+|---|---|---|---|---|
+| dk | chỉ đánh | 440 → 437 | -0.7% | 1 → 0 |
+| dk | +nhiệm vụ | 377 → 373 | -1.1% | 1 → 0 |
+| dk | +hằng ngày | 345 → 348 | +0.9% | 1 → 1 |
+| dk | +nâng cấp | 338 → 341 | +0.9% | 0 → 0 |
+| dk | +rương | 348 → 343 | -1.4% | 0 → 0 |
+| dw | chỉ đánh | 444 → 436 | -1.8% | 1 → 0 |
+| dw | +nhiệm vụ | 368 → 371 | +0.8% | 0 → 0 |
+| dw | +hằng ngày | 352 → 345 | -2.0% | 1 → 0 |
+| dw | +nâng cấp | 343 → 339 | -1.2% | 0 → 0 |
+| dw | +rương | 345 → 340 | -1.4% | 0 → 0 |
+| elf | chỉ đánh | 441 → 440 | -0.2% | 1 → 1 |
+| elf | +nhiệm vụ | 375 → 385 | +2.7% | 1 → 1 |
+| elf | +hằng ngày | 345 → 349 | +1.2% | 1 → 1 |
+| elf | +nâng cấp | 342 → 343 | +0.3% | 0 → 1 |
+| elf | +rương | 346 → 346 | +0.0% | 1 → 0 |
+| mg | chỉ đánh | 433 → 435 | +0.5% | 0 → 0 |
+| mg | +nhiệm vụ | 369 → 370 | +0.3% | 0 → 0 |
+| mg | +hằng ngày | 343 → 337 | -1.7% | 0 → 0 |
+| mg | +nâng cấp | 339 → 338 | -0.3% | 0 → 0 |
+| mg | +rương | 340 → 336 | -1.2% | 0 → 0 |
+
+- Test: `test/hac_long/game/combat_formula_test.exs` (7 test); e2e 5 kịch bản PASS.
+
+---
+
+## 12. Ngọc Sinh Mệnh, ép đồ trong túi, vứt đồ, Rương ở Nhà, trần vàng thư (Phase 4: D4, D8, C6, C7, E10)
+
+> Viết 2026-10-04; anh đã chốt các câu ở 12.6, **đã làm xong** (kết quả 12.7). Không đổi công thức chiến đấu; chỉ thêm một
+> nguồn sức mạnh nhỏ (Ngọc Sinh Mệnh) nên chạy simulator trước / sau.
+
+### 12.1 D4 — Ngọc Sinh Mệnh (`jewel_life`)
+
+- Món mới `jewel_life` "Ngọc Sinh Mệnh" (nguyên liệu, giá bán như ngọc khác).
+- Ép ở Thợ Rèn lên một món vũ khí / giáp / khiên (và cánh, câu **4-D**): thêm **một dòng tùy chọn**:
+  vũ khí +4 tấn công, giáp / khiên +4 phòng thủ, tối đa **4 dòng (+16)**. Tỉ lệ **50 %**; thất bại **mất dòng cuối** (0 dòng
+  thì không mất gì ngoài ngọc). Số trong `RULES.upgrade.life` (`per_line`, `max_lines`, `rate`).
+- Lưu trên bản riêng của món đồ (như cấp ép): `opt` = số dòng (0–4). Đồ thường được tách bản riêng khi ép lần đầu
+  (`Engine.ensure_instance`, như ép +N). Tooltip: "Dòng tùy chọn: +8 tấn công (2/4)".
+- Rơi: thêm vào bảng `JEWELS.weights` (đề xuất **10**, cạnh Phúc Lành 50 / Linh Hồn 35 / Hỗn Nguyên 15 → ~9 % số ngọc rơi).
+
+### 12.2 D8 — "Ép ngọc" từ bảng chi tiết món đồ (túi lẫn đang mặc)
+
+- Đã chốt (FEATURE_CATALOG D8): **vẫn đứng cạnh Thợ Rèn**; nút **"Ép"** trong tooltip món đồ (túi đồ + ô trang bị) mở thẻ
+  ép đúng món đó (+N bằng quặng / ngọc, Ngọc Sinh Mệnh). Không đứng cạnh Thợ Rèn thì nút báo "Hãy đến gặp Thợ Rèn".
+- Server: lệnh `upgrade` nhận `id` (uid đồ hiếm hoặc id đồ thường trong túi) ngoài `slot` như cũ; lệnh mới `life` cho
+  Ngọc Sinh Mệnh. Đồ khóa vẫn ép được (khóa chỉ chặn bán / vứt / giao dịch).
+
+### 12.3 C6 — vứt đồ
+
+- Nút **"Vứt"** trong tooltip, hỏi lại "Vứt x món, không lấy lại được?". Đồ thường chọn số lượng; đồ hiếm / đã ép vứt cả món.
+  Không vứt được: đồ đang mặc, đồ khóa, đồ đang cất. Đồ hiếm vứt đi ghi nhật ký đồ (`gear_log`, `out`, lý do `DISCARD`).
+- Tách chồng: đề xuất **không làm** (**4-E**) — túi Hắc Long đếm theo số lượng, chợ / giao dịch / bán đã chọn được số lượng.
+
+### 12.4 C7 — Rương ở Nhà
+
+- Đứng cạnh rương trong Nhà (NPC `chest` hiện là Rương Gia Truyền mở quà mỗi ngày → thêm **Tủ Đồ** riêng ở góc Nhà) mới gửi /
+  rút. Bảng: hai cột "Trong túi" / "Trong tủ", chạm món → Gửi / Rút (đồ thường chọn số lượng).
+- Sức chứa (**4-B**): đề xuất **40 loại đồ thường** (mỗi loại không giới hạn số lượng) **+ 20 đồ hiếm**; mở rộng thêm 10 ô đồ
+  hiếm bằng vàng (5 000 / 15 000 / 40 000) hay không.
+- Lưu: cột mới `storage` (map) trong `characters` (migration, mặc định rỗng) cho đồ thường; đồ hiếm vẫn nằm trong danh sách
+  `gear` của nhân vật với cờ `stored: true` → nhật ký đồ hiếm và kiểm tra trùng `uid` (`HacLong.Audit`) không phải đổi; túi
+  (`Gear.bag`) và giới hạn 20 món chỉ tính đồ chưa cất. Không mặc / bán / giao dịch / rao chợ đồ đang cất.
+- Mất kết nối / tải lại: tủ lưu cùng nhân vật (một `Characters.save!`), không thể nhân đồ giữa túi và tủ.
+
+### 12.5 E10 — trần vàng thư
+
+- Thư quản trị (`gift`) và "Quà cho mọi người": mỗi thư tối đa **`RULES.mail.max_gold`** vàng (**4-C**, đề xuất 1 000 000) và
+  `max_xp` (đề xuất 1 000 000). Vượt thì báo lỗi, không gửi. Thư hệ thống (tiền bán chợ, quà bang) không bị giới hạn.
+
+### 12.6 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **4-A** | Ép ngọc ở đâu? | **Đã chốt:** vẫn cạnh Thợ Rèn |
+| **4-B** | Tủ Đồ ở Nhà chứa bao nhiêu, có mở rộng bằng vàng không? | **40 loại đồ thường + 20 đồ hiếm**, mở rộng +10 ô đồ hiếm × 3 lần (5 000 / 15 000 / 40 000 vàng) |
+| **4-C** | Trần vàng mỗi thư quản trị? | **1 000 000 vàng**, EXP 1 000 000 |
+| **4-D** | Ngọc Sinh Mệnh ép được lên cánh không (MU có)? | **Có**: cánh +4 phòng thủ mỗi dòng |
+| **4-E** | Có làm tách chồng không? | **Không** (túi đếm theo số lượng, đã chọn số khi bán / rao / giao dịch) |
+| **4-F** | Tỉ lệ rơi Ngọc Sinh Mệnh? | Trọng số **10** trong bảng ngọc (~9 % số ngọc rơi) |
+
+**Đã chốt (2026-10-04):** 4-B theo đề xuất (40 loại + 20 đồ hiếm, mở rộng bằng vàng); 4-C 1 000 000 vàng / 1 000 000 EXP;
+4-D cánh **được**; 4-E **không làm**; 4-F trọng số **10**.
+
+### 12.7 Kết quả (2026-10-04)
+
+- **Dữ liệu:** `items.json` `jewel_life`; `upgrade.json` `JEWELS.weights.jewel_life = 10`; `rules.json` `upgrade.life`
+  (`jewel`, `per_line` 4, `max_lines` 4, `rate` 0,5), `storage` (`items` 40, `gear` 20, `expand` 3 lần × 10 ô:
+  5 000 / 15 000 / 40 000), `mail` (`max_gold`, `max_xp` 1 000 000). NPC `wardrobe` "Tủ Đồ" ở Nhà ô (7, 1).
+- **Server:** `Engine.upgrade/3` và `Engine.life/2` nhận ô / uid / id đồ thường trong túi (đồ thường tách bản riêng, cần một
+  chỗ trong túi đồ hiếm); kết quả trả `uid` của món vừa ép. `Engine.discard/3`. Module mới `HacLong.Game.Storage`
+  (`store` / `take` / `expand` / `view`). Migration `characters.storage`. Đồ cất: `stored: true` trong `gear`, chặn mặc /
+  bán / giao dịch / rao chợ / máy ghép. `view` thêm `forgeBag`, `storage`; `bonus` cộng cả dòng Ngọc Sinh Mệnh.
+- **Client:** tooltip món trong túi có **Ép** (chọn món cho thẻ "Ép đồ" ở Thợ Rèn; ở xa thì nhắc mang tới Thợ Rèn) và **Vứt**
+  (một món: xác nhận; nhiều: hỏi số lượng); tooltip hiện dòng Ngọc Sinh Mệnh. Thẻ "Ép đồ" có nút 💚 cho từng món. Bảng Tủ Đồ
+  (Trong tủ / Túi đồ, Cất / Cất hết / Lấy, mở rộng). Túi, chợ, giao dịch, bán không tính đồ đang cất.
+- **Simulator** (`mix hac_long.simulate 20 --seed 1`): số trận hạ Hắc Long **giống hệt** sau Phase 3 ở cả 20 dòng (bot không
+  dùng Ngọc Sinh Mệnh; trọng số mới chỉ đổi loại ngọc rơi, không đổi số lần rơi).
+- **Test:** `test/hac_long/game/forge_storage_test.exs` (6), `test/hac_long_web/phase4_test.exs` (2: lưu / nạp tủ + vứt đồ
+  qua Session + database, `gear_log`, audit sạch; trần thư quản trị). e2e `progress.mjs` thêm 12 bước (Ngọc Sinh Mệnh lên đồ
+  đang mặc và đồ trong túi chọn qua tooltip, vứt đồ, Tủ Đồ cất / lấy / mở rộng).
+
+---
+
+## 13. Xã hội, xếp hạng, PK cược vàng (Phase 5: H7+H8, H14, H1, H2–H4, H5, H6, H9, H12, E5, M2, K10)
+
+> Viết 2026-10-04; anh đã chốt các câu ở 13.9, **đã làm xong** (kết quả 13.10). Chỉ H1 (EXP tổ đội) đụng cân bằng → simulator trước / sau.
+
+### 13.1 Hiện trạng (khảo sát code)
+
+| Mục | Có | Thiếu / khác |
+|---|---|---|
+| Đấu trường (`arena.ex`) | Thách đấu **bản sao** người khác (không cần online), Elo (K 32), 15 trận / ngày, thắng +30 + 5 × chênh điểm vàng, thua không mất gì | Không cược, không mời người online, không lịch sử trận, không giới hạn chênh cấp |
+| Xếp hạng (`leaderboard.ex`) | 7 bảng, top 10, hạng của mình (chỉ bảng cấp) | Không theo lớp, không cache (truy vấn mỗi lần) |
+| Tổ đội (`party.ex`) | Tối đa 3; trận chung chia **vàng và EXP × 1,2 / n**; người thua / bỏ chạy không nhận; trưởng nhóm rời → người kế trong danh sách | Lời mời không hết hạn |
+| Bang (`guilds.ex`) | Chủ / phó / thành viên, đơn xin vào (bang đóng), quỹ, nhiệm vụ tuần, ký hiệu trên đầu | Phó **không giới hạn số**; không chiến bang |
+| Màu tên trên bản đồ | Một màu cho mọi người khác (`map.js:328`) | Không theo quan hệ |
+| Chat | Thế giới / Bang / Đội chọn bằng nút; tin riêng chỉ với bạn bè | Không có lệnh `/w` `/p` `/g` |
+| Hộp thư (`mailbox.ex`) | Giữ 50, mở là nhận quà (transaction) | Không hết hạn, không lọc, không xóa |
+| Giao dịch (`trade.ex`) | Một transaction, đổi món thì mở khóa hai bên, hủy khi đóng tab | Lời mời không hết hạn; không tự hủy khi đổi bản đồ / đi xa / quá giờ |
+| Quản trị | Tra theo tên | Không có số / danh sách người online |
+
+### 13.2 H7 + H8 — PK cược vàng
+
+- **Mời:** bấm "⚔ Cược đấu" trong bảng thông tin người chơi (cả hai online), nhập số vàng. Người kia thấy hộp mời
+  (tên, cấp, lớp, điểm đấu trường, số cược), **Nhận / Từ chối**, hết hạn **30 s**. Mỗi người chỉ một lời mời đang chờ.
+- **Đánh:** đề xuất **tự đánh** (câu **5-G**): server dựng bản sao chỉ số **của cả hai** (như `Arena.opponent/2`) và cho hai
+  bản sao đánh nhau theo cùng một luật (đòn thường, kỹ năng mỗi 3 lượt, tối đa 30 lượt, hết lượt thì bên còn % máu cao hơn
+  thắng), RNG có seed → test được. Kết quả xong **ngay lúc nhận**, cả hai xem lại nhật ký trận (xem lại từng lượt, như trận
+  thường). Lý do: công bằng (không ai được uống bình / chọn kỹ năng trong khi bên kia là máy), không phải giữ vàng chờ.
+- **Vàng:** lúc nhận, trong **một transaction**: kiểm cả hai đủ vàng → người thua −cược, người thắng +cược × (1 − phí).
+  Phí là vàng "đốt" khỏi game (chống lạm phát). Ghi `gold_log` lý do `PK_BET`. Hai Session bị giữ (`Session.hold`) như giao
+  dịch trực tiếp, nên không nhân vàng được.
+- **Giới hạn** (câu **5-C**, **5-D**): cược tối thiểu / tối đa, phí, số trận cược mỗi ngày, chênh cấp tối đa. Không cược khi
+  đang trong trận / đang giao dịch / máu 0.
+- **Lịch sử:** bảng mới `pk_matches` (người mời, người nhận, cược, phí, người thắng, số lượt, thời điểm). Tab đấu trường thêm
+  "Trận cược gần đây" (20 trận của mình). Không đổi điểm Elo (Elo chỉ cho đấu trường thường).
+
+### 13.3 H14 — xếp hạng theo lớp + cache
+
+Như §6.3: thêm `level_dk` / `level_dw` / `level_elf` / `level_mg`; `HacLong.Leaderboard` thành GenServer giữ mọi bảng trong
+ETS, làm mới mỗi **60 s**; "hạng của bạn" có cả hạng trong lớp; client thêm hàng chọn lớp dưới "Cấp cao". Số người mỗi bảng:
+câu **6-A** (đề xuất top 50 cho bảng lớp, các bảng cũ giữ top 10). Không làm bảng "Giàu nhất".
+
+### 13.4 H1 — EXP tổ đội
+
+- Hiện: mỗi người nhận vàng **và** EXP × 1,2 / n (2 người: 60 % mỗi người, 3 người: 40 %).
+- MU: EXP cả đội × (1 + 0,1 × (n − 1)) rồi chia đều → 2 người: 55 %, 3 người: 40 %.
+- Đề xuất (câu **5-F**): **giữ như hiện tại** (đã hợp với trận chung của Hắc Long, ai đánh trận mới nhận); chỉ đưa hệ số
+  vào `RULES.party` (`share_bonus`). Nếu anh muốn theo MU thì EXP theo công thức MU, vàng giữ × 1,2 / n.
+
+### 13.5 Kiểm lại luật (H2, H3, H4, E5, H12, H9, M2, H6, K10)
+
+- **H2 hết hạn lời mời 30 s:** tổ đội, giao dịch, PK cược. Đơn xin vào bang không phải lời mời → giữ, nhưng tự xóa sau 7 ngày.
+- **H3:** trưởng nhóm rời → người **vào sớm nhất** còn lại lên thay (danh sách giữ thứ tự vào — kiểm bằng test); còn 1 người
+  thì tan. Thêm: mất kết nối quá 60 s thì tự rời đội.
+- **H4:** tối đa **2 phó bang** (`RULES.guild.max_officers`); phó duyệt đơn, chỉ đuổi thành viên thường (đã có).
+- **E5 giao dịch tự hủy:** đổi bản đồ, vào trận, mất kết nối (kể cả rớt mạng, không chỉ đóng tab), quá **180 s** từ lúc mở;
+  "đi xa": khi mời và khi chốt phải cùng bản đồ, cách nhau ≤ 8 ô.
+- **H12 hộp thư:** giữ tối đa 100; thư **hết hạn 30 ngày** (câu **5-I**: thư còn quà chưa nhận thì **không** hết hạn — tiền bán
+  chợ nằm trong thư); lọc **Tất cả / Chưa đọc / Có quà**; nút **Xóa thư đã đọc** (chỉ thư đã nhận quà / không quà);
+  **Nhận tất cả**.
+- **H9 lệnh chat:** `/w Tên nội dung` (tin riêng), `/p` (đội), `/g` (bang), `/a` hoặc không lệnh (thế giới). Tin riêng tới
+  người không phải bạn bè: câu **5-H**.
+- **M2 + H6 màu tên:** đồng đội xanh lá, cùng bang xanh dương, bang đang chiến (H5) đỏ, còn lại như cũ; ký hiệu bang trên đầu
+  đã có.
+- **K10:** tab Quản trị thêm "Đang online: N" và danh sách (tên, cấp, bản đồ, nút Tra), đọc từ `Registry` Session có tab mở.
+
+### 13.6 H5 — chiến bang trên đấu trường
+
+- Bang chủ / phó tuyên chiến một bang khác; bang kia (chủ / phó) nhận trong **60 s** (online) — nếu không ai online thì không
+  tuyên được. Mỗi bang một trận chiến cùng lúc; hai bang đó không chiến lại trong 24 giờ.
+- Kéo dài **1 giờ**. Trong giờ chiến, mỗi trận **đấu trường thường** (bản sao) thắng thành viên bang địch → +1 điểm cho bang
+  mình (không tính quá 3 lần cùng một đối thủ, chống cày). Đầu hàng được.
+- Hết giờ: bang nhiều điểm hơn thắng, báo cả server; thưởng câu **5-E**. Lưu bảng `guild_wars`.
+
+### 13.7 Lưu trữ / giao thức
+
+- Migration: `pk_matches`, `guild_wars`; `mail.expires_at`? (không cần: tính từ `inserted_at`); index xếp hạng theo lớp.
+- Sự kiện kênh mới: `pk_invite` / `pk_answer` / `pk_result`, `war_*`, `admin("online")`; lệnh chat nhận `to: "whisper", name`.
+- Mọi số ở `RULES.pk`, `RULES.guild_war`, `RULES.party`, `RULES.mail`, `RULES.trade`.
+
+### 13.8 Test
+
+- Hàm thuần: trận tự đánh (seed cố định → người thắng / số lượt), tính phí, chênh cấp, giới hạn ngày; điểm chiến bang.
+- Kênh + database: cược thắng / thua / từ chối / hết hạn / không đủ vàng / gửi trùng song song (audit sạch, tổng vàng = trước
+  − phí); giao dịch tự hủy; thư hết hạn / lọc / xóa; phó bang tối đa 2; chuyển trưởng nhóm.
+- e2e `pk.mjs` 2 trình duyệt (thắng / thua / từ chối / hết hạn), lệnh chat, xếp hạng theo lớp, online trong tab Quản trị.
+
+### 13.9 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **5-C** | Cược tối thiểu / tối đa, phí, số trận cược / ngày? | 100 – 1 000 000 vàng, phí **5 %** (đốt), **10** trận cược / ngày / người |
+| **5-D** | Giới hạn chênh cấp khi mời cược? | **±10 cấp** (chuyển sinh tính như +cấp tối đa) |
+| **5-E** | Thưởng chiến bang? | Bang thắng: quỹ bang +5 000 (vàng mới), mỗi thành viên có ≥ 1 điểm nhận 500 vàng qua thư; không danh hiệu |
+| **5-F** | Công thức chia thưởng tổ đội? | **Giữ × 1,2 / n** cho cả vàng và EXP (đưa vào `RULES.party`) |
+| **5-G** | Trận cược đánh thế nào? | **Tự đánh** giữa hai bản sao, xong ngay, cả hai xem lại nhật ký |
+| **5-H** | `/w` gửi được cho người không phải bạn bè? | **Chỉ bạn bè** (như tin riêng hiện tại, ít bị quấy rối) |
+| **5-I** | Thư hết hạn 30 ngày có xóa cả thư còn quà? | **Không**: thư còn quà giữ tới khi nhận |
+| **6-A** | Bảng theo lớp top mấy, làm mới bao lâu? | **Top 50**, làm mới **60 s** |
+
+**Đã chốt (2026-10-04):** 5-C / 5-D **không phí, không giới hạn chênh cấp** (cược 100 – 1 000 000, 10 trận cược / ngày);
+5-G tự đánh hai bản sao; 5-E, 5-F, 5-H, 5-I, 6-A theo đề xuất.
+
+### 13.10 Kết quả (2026-10-04)
+
+- **PK cược vàng:** `HacLong.Game.PkFight` (trận thuần giữa hai bản sao `Arena.opponent/2`, người mời đánh trước, kỹ năng
+  mỗi 3 lượt ×1,8, tối đa 30 lượt rồi so % máu), `HacLong.PkBet` (lời mời 30 s trong bộ nhớ; nhận thì giữ hai Session, kiểm
+  vàng / trận / 10 trận mỗi ngày, ghi `pk_matches` + hai nhân vật trong một transaction, nhật ký vàng `PK_BET`, ref `pk:<id>`).
+  Kênh `"pk"` (`invite` / `accept` / `decline` / `cancel` / `info`), đẩy `pk_invite`, `pk_result`. Giao diện: ô số vàng +
+  nút "⚔ Cược đấu" trong bảng thông tin người chơi, hộp mời, bảng kết quả kèm nhật ký trận, lịch sử ở thẻ Đấu trường.
+- **Xếp hạng:** `Leaderboard.boards/0` giữ mọi bảng trong ETS 60 s (tắt trong test), bảng theo lớp top 50,
+  `Leaderboard.me/1` (hạng chung + hạng trong lớp, không cache). Client: hàng chọn lớp dưới "Cấp cao".
+- **Tổ đội:** `RULES.party.share_bonus` (giữ 1,2), lời mời hết hạn 30 s (tổ đội một người tự tan), đóng hết tab quá 60 s thì
+  rời đội (`Party.away/back`, Session gọi), trưởng nhóm rời → người vào sớm nhất.
+- **Bang:** tối đa 2 phó bang (nhường bang chủ khi đã đủ phó thì bang chủ cũ làm thành viên), đơn xin vào quá 7 ngày tự bỏ.
+  **Chiến bang** `HacLong.GuildWars` (bảng `guild_wars`): tuyên chiến theo ký hiệu bang, nhận / từ chối 60 s, 1 giờ, điểm khi
+  người thách đấu thắng thành viên bang địch ở đấu trường (tối đa 3 lần một cặp), đầu hàng, thưởng quỹ +5 000 và 500 vàng qua
+  thư cho người có điểm, không chiến lại trong 24 giờ; hẹn giờ kết thúc được nạp lại khi server khởi động.
+- **Màu tên:** bang địch đỏ, đồng đội xanh lá, cùng bang xanh dương (`HLLogic.nameColor`).
+- **Chat:** `/w Tên` (chỉ bạn bè), `/p`, `/g`, `/a` (`HLLogic.parseChat`).
+- **Hộp thư:** giữ 100, hết hạn 30 ngày (thư còn quà không hết hạn), lọc Tất cả / Chưa đọc / Có quà, "Nhận tất cả" (một
+  transaction), "Xóa thư đã đọc".
+- **Giao dịch:** lời mời 30 s, mở tối đa 180 s, hủy khi đổi bản đồ / vào trận / đóng hết tab; mời và chốt phải cùng bản đồ,
+  cách ≤ 8 ô. Lời mời cược cũng hủy khi đóng hết tab.
+- **Quản trị:** "Đang online: N" + danh sách (tên, lớp, cấp, bản đồ, nút Tra) — `Session.online/1`.
+- **Simulator:** giống hệt Phase 4 ở cả 20 dòng (chia thưởng tổ đội giữ nguyên, bot không cược / không chiến bang).
+- **Test:** `pk_bet_test` (5), `guild_war_test` (4), `phase5_social_test` (5), `party_rules_test` (3), `leaderboard_test` (+2),
+  `logic.test.mjs` (+2: màu tên, lệnh chat); e2e mới `pk.mjs` (11 bước, hai trình duyệt).
+
+---
+
+## 14. Golden Invasion (Phase 7: F1, F4, M3) — xong 2026-10-04
+
+- **Chốt:** 7-A mỗi 2 giờ, 15 phút (giờ Việt Nam); 7-B có trùm vàng.
+- **Server:** `HacLong.Invasion` (GenServer; `next_start/2` thuần; `config :hac_long, :invasion, auto: false` trong test),
+  `MapServer.invade/2`, `invade_boss/1`, `end_invasion/1` (quái `origin: :gold`, cờ `gold`, không hồi sinh; hạ con cuối thì
+  `Invasion.cleared/2`). `World.spec_of` → `golden_variant` (tên "… Vàng", `mult` ×`strength_mult`, `reward_mult`,
+  `jewel_chance`); `Engine.make_monster` nhân thưởng `reward_mult`, `jewel_drop` dùng `jewel_chance` của quái.
+  Trạng thái phát `{:invasion, status}` trên topic trùm thế giới; kênh đẩy `"invasion"`. Quản trị: `admin("invasion")`.
+- **Client:** dải "✨ Golden Invasion" (giờ còn lại, tình trạng từng bản đồ), quầng vàng nhấp nháy + nhãn "Vàng" / "Trùm
+  Vàng" trên bản đồ, trùm vàng vẽ 1,5 lần, trận với quái vàng có nền ánh vàng và thanh máu vàng dày hơn.
+- **Test:** `test/hac_long/invasion_test.exs` (lịch với thời điểm cho trước, quái vàng → trùm vàng → kết thúc sớm, hết giờ
+  dọn quái, thưởng ×5); e2e `admin.mjs`: quản trị bắt đầu → người chơi thấy dải, gặp quái vàng ở Rừng Mê, thắng, nhận thưởng.
+- Simulator không chạy lại: bot không gặp quái vàng; `make_monster` chỉ thêm phép nhân với 1 cho quái thường.
+
+---
+
+## 15. Yêu cầu thêm 2026-10-04 (trước Phase 6): 2 ngôn ngữ, 20 bản đồ mới, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại, 2 lỗi
+
+> Viết 2026-10-04 theo yêu cầu của anh; anh đã chốt các câu ở 15.8. Đề xuất chia làm
+> **Phase 9** (sửa lỗi + giao diện) và **Phase 10** (bản đồ mới + 2 ngôn ngữ), xem `PHASE_PLAN.md`.
+
+### 15.1 Lỗi (sửa trước, không cần chốt gì)
+
+| # | Lỗi | Nguyên nhân (đã xem code) | Cách sửa |
+|---|---|---|---|
+| **B1** | Điện thoại tràn ngang sau khi thêm nút 🔔 trên HUD | HUD giờ có 3 nút (👥 🔔 ✉) + vàng + tên trên một hàng, 360 px không đủ | Gom 👥 / 🔔 / ✉ vào **Menu** (U3); HUD chỉ còn tên, cấp, vàng, thanh máu / MP / EXP và **một** nút chuông có số tin chưa đọc. e2e `mobile` kiểm thêm sau khi có thông báo |
+| **B2** | Tháp: bấm "Lên tầng" thì sang tầng mới nhân vật vẫn tự chạy tới sát cầu thang lên của tầng mới | Client đang "đi tới ô" (`walkTo`) cầu thang; lên tầng vẫn là bản đồ `tower` nên vòng đi không dừng, tiếp tục đi tới **cùng toạ độ** ở tầng mới (cầu thang lên luôn ở hàng trên cùng) | Dừng đường đi khi số tầng đổi (`P.tower.floor`), như khi đổi bản đồ; thêm test e2e: lên tầng xong đứng đúng ô vào của tầng mới |
+
+**Đã sửa (2026-10-04):**
+- **B1:** nguyên nhân thật là `#hud` dạng lưới với cột tự co theo nội dung tối thiểu (hàng trên không thu hẹp được: 502 px trên
+  màn 360 px). Sửa: `grid-template-columns: minmax(0, 1fr)`, phần tử hàng trên được co (tên / dòng lớp cắt "…"), màn ≤ 480 px nút
+  HUD nhỏ hơn và số đỏ không lòi ra mép. Đo lại 360 / 320 px: không tràn. e2e `mobile` thêm bước "vàng 8 chữ số + số đỏ trên cả
+  3 nút" không tràn ngang. (Gom nút vào Menu vẫn làm ở U3.)
+- **B2:** `step()` và `walkTo()` coi đổi tầng tháp như đổi bản đồ: dừng đường đi, vẽ lại; nhân vật đứng ở ô vào của tầng mới.
+
+### 15.2 U1 — Hai ngôn ngữ (Việt / Anh)
+
+- **Cài đặt → Ngôn ngữ**: Tiếng Việt (mặc định) / English. Lưu theo tài khoản (cột `users.lang`) để đổi máy vẫn giữ; chưa đăng
+  nhập thì theo trình duyệt (`localStorage`), mặc định Việt.
+- **Giao diện client**: mọi chữ trong `ui.js` / `map.js` chuyển sang bảng chữ `priv/static/i18n/vi.json` + `en.json`, gọi
+  `t('key', {params})`. Thiếu bản dịch thì hiện tiếng Việt (không lỗi).
+- **Dữ liệu game** (tên đồ, quái, kỹ năng, NPC, bản đồ, nhiệm vụ, mô tả): thêm trường `name_en` / `desc_en` / `lines_en` trong
+  `priv/game_data/*.json`, `priv/maps/*.json`; `DataCheck` cảnh báo (không chặn build) khi thiếu bản Anh.
+- **Tin từ server** (câu trả lời lệnh, thông báo, chat hệ thống): hiện là chuỗi tiếng Việt viết thẳng trong code (vài trăm chỗ).
+  Đề xuất (câu **9-A**): server gửi thêm `key` + `params` cho tin, client dịch; làm dần — đợt đầu các tin hay gặp (trận đánh,
+  mua / bán, ép, nhiệm vụ, lỗi thường gặp), tin còn lại vẫn tiếng Việt cho tới khi chuyển xong.
+- Chat người chơi không dịch.
+
+**Đã làm (2026-10-04, anh chọn làm luôn A + B + C):** cách làm khác đề xuất ban đầu để tiết kiệm — **không sửa từng câu trong
+code / dữ liệu / server**, mà dịch ngay trên trình duyệt:
+- `priv/static/js/i18n.js`: `tr(câu)` chuẩn hóa câu thành mẫu (TÊN trong `names` và SỐ → `{0}`, `{1}`… theo thứ tự), tra
+  `priv/static/i18n/en.json`, điền lại (tên cũng dịch); không khớp thì thử mẫu "lỏng" ({n} nhận chữ bất kỳ — tên người chơi,
+  bang); vẫn không có thì giữ tiếng Việt, chỉ đổi những tên đã biết. MutationObserver dịch mọi chữ chèn vào trang (giao diện,
+  tin server, nhật ký trận, toast, hộp hỏi lại); `map.js` dịch chữ vẽ trên bản đồ. Không dịch chat của người chơi, ô nhập.
+- Từ điển: `scripts/i18n_extract.py` trích mọi câu tiếng Việt trong `priv/static/js`, `lib/**/*.ex` (bỏ docstring, chú thích)
+  và `priv/game_data`, `priv/maps` thành `priv/static/i18n/source.json`; bản dịch trong `en.json` (`names`, `t`). Thêm câu
+  mới: chạy lại script, dịch các khóa còn thiếu vào `en.json`. Test `test/js/i18n.test.mjs` kiểm mọi bản dịch giữ đúng {n}.
+- Chọn ngôn ngữ: nút ở trang đăng nhập + Menu → Cài đặt; lưu ở trình duyệt (`localStorage`), đổi thì tải lại trang. **Không
+  thêm cột `users.lang`** (đổi so với đề xuất: không đụng schema / server).
+- Giới hạn: câu ghép từ nhiều mảnh khó đoán có thể còn sót tiếng Việt; e2e `lang.mjs` đo tỉ lệ chữ tiếng Việt còn sót ở các màn
+  chính (≤ 5 %).
+
+### 15.3 U2 — 20 bản đồ mới + chọn bản đồ (phím M, nút trên dock, tốn vàng)
+
+- **Hiện trạng:** 6 vùng (cấp 1–36), mỗi vùng 2 bản đồ + 1 bản đồ trùm; cấp tối đa 50 nhưng sau Hắc Long (36) **không còn vùng
+  nào** để luyện 36–50.
+- **Đã chốt (câu 9-B, 2026-10-04):** **không gắn với Hắc Long / tiến trình trùm**. Thêm **20 bản đồ phụ** độc lập, mỗi bản
+  đồ có **cổng vào từ một bản đồ hiện có**, rải đều: cấp quái trải đều **1 → 50** (mỗi bản đồ phụ một dải ~2–3 cấp, nối với
+  bản đồ hiện có gần cấp nhất; bản đồ cấp 37–50 nối từ các bản đồ của Hang Hắc Long / Đầm Lầy Rồng). Chỉ số quái theo công thức
+  `RULES.monster` như vùng cũ nên máu / damage tăng đều theo cấp. Bản đồ phụ không có trùm vùng, không khoá: đi bộ qua cổng là
+  vào (bảng chọn bản đồ thì tới được khi đã đi qua cổng đó ít nhất một lần). Quái dùng lại loài sẵn có hoặc loài mới tự vẽ
+  placeholder (không tải asset MU), ghi `CREDITS.md`. Simulator mở rộng tới cấp 50.
+- **Chọn bản đồ:** phím **M** (hiện là "về tab Bản đồ" — chuyển sang mở bảng chọn bản đồ; bấm M lần nữa đóng) và nút 🗺 trên
+  dock. Bảng liệt kê **mọi bản đồ theo thứ tự yếu → mạnh** (cấp quái thấp nhất), mỗi dòng: tên, cấp quái, đã mở / khoá, giá.
+  Bấm "Đi" thì trừ vàng và dịch chuyển (server kiểm: không trong trận, đã mở vùng, đủ vàng; nhật ký vàng `TRAVEL`).
+- **Giá (câu 9-C):** đề xuất `20 + 4 × cấp quái thấp nhất của bản đồ` (Rừng Mê 24 vàng … vùng 48 ≈ 210 vàng); Làng và Nhà
+  **miễn phí**; đá dịch chuyển giữ nguyên (miễn phí, chỉ tới nơi đã ghi nhớ). Số ở `RULES.travel`.
+
+### 15.4 U3 — Menu kiểu MU Web (bỏ tab Khác)
+
+- Dock dưới cùng còn 5 nút: **Bản đồ**, **Nhân vật**, **Túi đồ**, **🗺 Chọn bản đồ**, **☰ Menu** (quản trị viên thêm nút Quản trị
+  trong Menu).
+- **Menu** mở lưới biểu tượng, mỗi mục là một màn riêng (nút Đóng / Esc quay lại bản đồ): Nhiệm vụ, Việc hằng ngày, Đấu trường
+  (cả PK cược), Xếp hạng, Bang hội, Thành tựu & danh hiệu, Thú cưng, Sổ quái, Nhà & trang trí, Hướng dẫn, Quản trị (admin),
+  **Cài đặt**. Chỉ gom các nút / tab đang ở **dock** (tab Nhiệm vụ, tab Khác, tab Quản trị).
+- **Anh chốt (2026-10-04): Bạn bè, Hộp thư, Thông báo giữ nguyên trên HUD**, không đưa vào Menu.
+- **Cài đặt**: Ngôn ngữ (U1), Âm thanh, Nhạc nền, Đổi mật khẩu, Xóa nhân vật, **Đăng xuất** (đưa hết vào đây, bỏ khỏi chỗ cũ).
+- Phím tắt giữ: C Nhân vật, I Túi đồ, M Chọn bản đồ, Q uống máu, Enter chat, Esc đóng; thêm phím mở Menu (câu 9-D).
+
+### 15.5 U4 — Chat kiểu MU Web, nằm trong bản đồ
+
+- Bỏ thẻ chat dưới bản đồ. Khung chat **đè lên góc dưới trái của bản đồ**: nền mờ, 6–8 dòng gần nhất, tin cũ mờ dần sau ~15 giây
+  (bấm vào khung thì hiện lại lịch sử, cuộn được).
+- Ô nhập ẩn; **Enter** (máy tính) hoặc nút 💬 (điện thoại) thì hiện ô nhập; Enter gửi, Esc đóng.
+- **Nút 💬 trên điện thoại (anh chốt 2026-10-04):** đặt ở **góc dưới phải của bản đồ** (ngay trên dock), kích thước vừa phải
+  (~36 px, nền mờ, không che nhân vật / nút trận đánh); có chấm đỏ khi có tin mới lúc khung chat đang thu gọn.
+- Chọn kênh bằng nút nhỏ cạnh ô nhập (Tất cả / Đội / Bang) hoặc lệnh `/w /p /g /a` như hiện có; màu theo kênh (thế giới trắng,
+  đội xanh lá, bang xanh dương, riêng tím, hệ thống vàng). Bong bóng chat trên đầu nhân vật giữ nguyên.
+- Trong trận đánh khung chat thu nhỏ còn 2 dòng.
+
+### 15.6 U5 — Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn
+
+- Màn **Bản đồ** và **Trận đánh** dùng bố cục cố định chiều cao `100dvh − HUD − dock`: canvas bản đồ tự co / giãn cho vừa (giữ tỉ lệ
+  ô, camera theo nhân vật), các dải (hướng dẫn, trùm thế giới, Golden Invasion, tổ đội) thu thành một hàng chip nhỏ trên bản đồ,
+  chạm để mở.
+- Trận đánh: quái + thanh máu + nhật ký (4 dòng, cuộn trong khung) + nút hành động trong một màn, không cuộn trang.
+- Các màn danh sách (Túi đồ, Menu, NPC…) vẫn cuộn bình thường.
+- e2e `mobile`: kiểm `document.scrollingElement.scrollHeight <= innerHeight` ở bản đồ và trận đánh (360 × 740 và 390 × 844).
+
+### 15.7 Ảnh hưởng, kiểm tra
+
+- **Giao thức:** thêm lệnh `travel` (`to`), trường `lang` khi đăng nhập / cài đặt, tin server có thêm `key` / `params` (giữ `msg`
+  cũ nên client cũ không hỏng). **Schema:** `users.lang`; không đổi bảng nhân vật. Ghi `CHANGE_REASON` trong DECISIONS.
+- **Cân bằng:** vùng mới chỉ thêm nội dung sau cấp 36; simulator thêm chạy tới cấp 50 (số trận để lên 50 cho từng lớp).
+- **Test:** hàm thuần giá dịch chuyển, thứ tự bản đồ, `DataCheck` cho 20 bản đồ mới; client `node --test` cho `t()` (thiếu key
+  → tiếng Việt), parse chat; e2e: đổi ngôn ngữ, chọn bản đồ (trừ vàng), Menu, chat trong bản đồ, mobile không cuộn / không tràn,
+  tháp lên tầng.
+
+### 15.8 ⛔ Câu hỏi
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **9-A** | Dịch tin từ server làm tới đâu? | Đợt đầu: giao diện + dữ liệu game + tin hay gặp; tin hiếm làm dần (tạm hiện tiếng Việt) |
+| **9-B** | 20 bản đồ mới đặt ở đâu? | **Đã chốt:** 20 bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, không liên quan Hắc Long |
+| **9-C** | Giá dịch chuyển bằng bảng chọn bản đồ? | `20 + 4 × cấp quái thấp nhất`; Làng, Nhà miễn phí; chỉ tới vùng đã mở; đá dịch chuyển vẫn miễn phí |
+| **9-D** | Phím mở Menu? | **Tab** (máy tính); dock có nút ☰ |
+| **9-E** | Thứ tự làm? | Phase 9 (B1, B2, U3 Menu, U4 chat, U5 điện thoại) trước; Phase 10 (U2 bản đồ, U1 ngôn ngữ) sau; Phase 6 sau cùng |
+
+**Đã chốt (2026-10-04):** 9-A, 9-C, 9-D, 9-E theo đề xuất; 9-B như trên. Sửa B1, B2 trước.

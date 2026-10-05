@@ -492,3 +492,78 @@ img.own { object-fit: contain; image-rendering: auto; }
 }
 /* 6–7 tab (thêm tab Khác): chữ nhỏ lại một chút cho vừa màn hẹp */
 @media (max-width: 420px) { #tabs button { font-size: 0.64rem; letter-spacing: -0.01em; } }
+
+/* ---------- Phase 8: thông báo, hiệu ứng lớn ---------- */
+.note.read { opacity: 0.7; }
+.note > span:first-child { font-size: 1.2rem; width: 1.6rem; text-align: center; }
+.bigfx {
+  position: fixed; left: 50%; top: 38%; z-index: 60; pointer-events: none;
+  font-family: var(--display); font-size: clamp(1.6rem, 7vw, 2.6rem); font-weight: 700; letter-spacing: 0.04em;
+  color: var(--gold); text-shadow: 0 0 12px rgba(240, 207, 122, 0.8), 0 2px 0 #000;
+  white-space: nowrap; transform: translate(-50%, 0); animation: bigfx 1.5s ease-out forwards;
+}
+.bigfx.good { color: #ffe08a; }
+.bigfx.bad { color: #ff8a7a; text-shadow: 0 0 12px rgba(255, 90, 60, 0.8), 0 2px 0 #000; }
+.bigfx.heal { color: #9fe0a8; text-shadow: 0 0 10px rgba(80, 220, 120, 0.7), 0 2px 0 #000; font-size: clamp(1.2rem, 5vw, 1.8rem); }
+.bigfx.level { font-size: clamp(2rem, 9vw, 3.2rem); }
+@keyframes bigfx {
+  0% { opacity: 0; transform: translate(-50%, 12px) scale(0.7); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+  30% { transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -40px); }
+}
+@media (prefers-reduced-motion: reduce) { .bigfx { animation: bigfx-fade 1.5s linear forwards; } }
+@keyframes bigfx-fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- Phase 7: Golden Invasion ---------- */
+.card.inv { border-color: #b8933a; background: linear-gradient(90deg, rgba(255, 200, 70, 0.14), transparent); }
+.stage.golden { box-shadow: inset 0 0 40px rgba(255, 205, 80, 0.45); }
+.stage.golden .sprite { filter: drop-shadow(0 0 8px #ffd24a); }
+.bar.gold { height: 18px; }
+.bar.gold i { background: linear-gradient(90deg, #b8862a, #ffd24a); }
+
+/* B1: HUD trên điện thoại — tên co lại, nút nhỏ hơn, số đỏ không lòi ra ngoài màn hình */
+#hud { grid-template-columns: minmax(0, 1fr); }
+.bars > * { min-width: 0; }
+.hud-top > * { min-width: 0; }
+.hud-top .gold { white-space: nowrap; flex: none; }
+.hud-who .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) {
+  .hud-top { gap: 6px; }
+  .hud-top .sprite { width: 34px; height: 34px; }
+  .hud-top .gold { font-size: 0.85rem; gap: 3px; }
+  .hud-btn { min-width: 32px; min-height: 32px; padding: 3px; flex: none; }
+  .hud-btn .points-dot { top: -5px; right: -3px; }
+}
+
+/* ---------- Phase 9: Menu, chat trong bản đồ, màn vừa khít ---------- */
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.menu-item { display: grid; justify-items: center; gap: 6px; padding: 14px 6px; background: #1c1623; border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; font-size: 0.85rem; }
+.menu-item:hover, .menu-item:focus-visible { border-color: var(--gold); }
+.menu-head { gap: 10px; align-items: center; }
+
+.chat-ov { position: absolute; left: 6px; bottom: 6px; width: min(78%, 340px); z-index: 4; display: grid; gap: 4px; pointer-events: none; }
+.chat-ov .chat-log { max-height: 7.6em; overflow: hidden; display: grid; align-content: end; gap: 1px; font-size: 0.78rem; line-height: 1.25; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.chat-ov .chat-line { background: rgba(10, 8, 14, 0.45); border-radius: 4px; padding: 0 4px; }
+.chat-ov:not(.open) .chat-line { animation: chatfade 0.8s ease 15s forwards; }
+.chat-ov.open { pointer-events: auto; }
+.chat-ov.open .chat-log { max-height: 11em; overflow-y: auto; background: rgba(10, 8, 14, 0.7); border-radius: 6px; padding: 4px; align-content: start; }
+.chat-ov .chat-line.party, .chat-ov .party-mark { color: #9fe0a8; }
+.chat-ov .chat-line.guild, .chat-ov .guild-mark { color: #8fc4ff; }
+.chat-ov .chat-line.system { color: var(--gold); }
+.chat-ov .chat-form { display: flex; gap: 4px; }
+.chat-ov .chat-form input { flex: 1; min-width: 0; padding: 6px 8px; }
+.chat-ov .chat-form .btn { padding: 6px 10px; }
+.chat-wide { justify-self: start; background: rgba(10, 8, 14, 0.7); border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; cursor: pointer; }
+@keyframes chatfade { to { opacity: 0; } }
+.chat-btn { position: absolute; right: 8px; bottom: 8px; z-index: 5; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: rgba(10, 8, 14, 0.6); font-size: 1.05rem; line-height: 1; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.chat-dot { position: absolute; top: 2px; right: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+
+/* U5: bản đồ / trận đánh vừa khít giữa HUD và dock */
+#view.fit { overflow: hidden; padding-bottom: 10px; gap: 8px; }
+#view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
+#view.fit .map-hint { display: none; }
+#view.fit .log { flex: 1 1 auto; min-height: 60px; height: auto; }
+#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; }
+.map-wrap .map-dialog { z-index: 6; }

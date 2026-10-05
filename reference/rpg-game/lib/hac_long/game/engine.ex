@@ -90,6 +90,7 @@ defmodule HacLong.Game.Engine do
           festival: 0,
           furniture: %{},
           decor: [],
+          storage: %{inv: %{}, extra: 0},
           fish_caught: 0,
           achievements: [],
           title: nil,
@@ -120,7 +121,7 @@ defmodule HacLong.Game.Engine do
     sh = Gear.item(p, p.equip.shield)
     wg = Gear.item(p, p.equip[:wing])
 
-    up = fn id -> if id, do: upgrade_bonus(p, id), else: 0 end
+    up = fn id -> if id, do: upgrade_bonus(p, id) + life_bonus(p, id), else: 0 end
 
     lin = fn terms ->
       Enum.reduce(terms, 0, fn
@@ -146,11 +147,25 @@ defmodule HacLong.Game.Engine do
       crit: clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max),
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
+      # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
+      ar: p.level * @combat.hit.level + s.agi * @combat.hit.agi,
       dodge: clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb)
     }
+    |> with_ranges(p.level)
+  end
+
+  # đòn thấp ~ cao và tỉ lệ trúng quái cùng cấp, để hiện ở bảng nhân vật
+  defp with_ranges(d, level) do
+    [lo, hi] = @combat.damage_spread
+
+    Map.merge(d, %{
+      atkMin: round(d.atk * lo),
+      atkMax: round(d.atk * hi),
+      hitRate: hit_chance(d.ar, level)
+    })
   end
 
   defp wing_pct(_p, nil, _key), do: 0
@@ -172,7 +187,17 @@ defmodule HacLong.Game.Engine do
       look: look(p),
       comfort: Home.comfort(p),
       # cộng thêm của đồ đã nâng cấp (để client so sánh đồ) và giá nâng cấp đồ đang mặc
-      bonus: upgrades(p) |> Map.keys() |> Map.new(&{&1, upgrade_bonus(p, &1)}),
+      bonus:
+        (Map.keys(upgrades(p)) ++ for(g <- Gear.list(p), g[:opt], do: g.uid))
+        |> Map.new(&{&1, upgrade_bonus(p, &1) + life_bonus(p, &1)}),
+      # giá ép từng món trong túi (đồ hiếm chưa cất, đồ thường mặc được), cho nút "Ép" trong tooltip
+      forgeBag:
+        for id <- Enum.map(Gear.bag(p), & &1.uid) ++ Map.keys(p.inv),
+            (it = Gear.item(p, id)) && it.slot in @equip_slots,
+            into: %{} do
+          {id, %{level: upgrade_level(p, id), cost: upgrade_cost(it, upgrade_level(p, id))}}
+        end,
+      storage: HacLong.Game.Storage.view(p),
       forge:
         for {slot, id} <- p.equip, id != nil, into: %{} do
           {slot,
@@ -204,6 +229,8 @@ defmodule HacLong.Game.Engine do
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
+    # thưởng nhân thêm (quái vàng Golden Invasion), không đổi sức mạnh
+    rw = Map.get(spec, :reward_mult, 1)
 
     %{
       id: spec.id,
@@ -214,13 +241,16 @@ defmodule HacLong.Game.Engine do
       special: Map.get(spec, :special),
       on_hit: Map.get(spec, :on_hit),
       night: Map.get(spec, :night, false),
+      golden: Map.get(spec, :golden, false),
+      jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + l * @mon.hp.level + l * l * @mon.hp.level_sq) * m * bm),
       atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
       def: round((@mon.def.base + l * @mon.def.level) * m),
       crit: @mon.crit,
       dodge: @mon.dodge.base + l * @mon.dodge.level,
-      xp: round(base_xp(l) * m * if(boss?, do: @mon.boss.xp, else: 1)),
-      gold: round(base_gold(l) * m * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
+      xp: round(base_xp(l) * m * rw * if(boss?, do: @mon.boss.xp, else: 1)),
+      gold:
+        round(base_gold(l) * m * rw * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
     }
   end
 
@@ -229,9 +259,43 @@ defmodule HacLong.Game.Engine do
   @doc "Vàng rơi gốc của quái cấp `l` (chưa nhân hệ số, chưa may rủi)."
   def base_gold(l), do: @mon.gold.base + l * @mon.gold.level
 
-  def damage(atk, dfn) do
+  @doc """
+  Sát thương một đòn (`RULES.combat`, `INTEGRATION_PLAN §11.2`), chỉ làm tròn ở bước cuối:
+
+  1. đòn gốc ngẫu nhiên trong `công × damage_spread` (đòn thấp ~ cao);
+  2. × `mult` (kỹ năng, chí mạng, sổ quái, % cánh);
+  3. trừ thủ kiểu Hắc Long `đòn² / (đòn + thủ)`;
+  4. sàn mềm: không dưới `soft_floor` × đòn ở bước 2;
+  5. × `taken` (thủ thế, hấp thụ của cánh khi bị đánh);
+  6. sàn cứng 1.
+  """
+  def damage(atk, dfn, mult \\ 1, taken \\ 1) do
     [lo, hi] = @combat.damage_spread
-    max(1, round(atk * atk / (atk + dfn) * rand(lo, hi)))
+    raw = atk * rand(lo, hi) * mult
+
+    hit =
+      if raw > 0,
+        do: max(raw * raw / (raw + max(dfn, 0)), raw * @combat.soft_floor),
+        else: 0
+
+    max(1, round(hit * taken))
+  end
+
+  @doc "Tỉ lệ đòn người chơi (attack rate `ar`) trúng quái cấp `level`: `AR / (AR + DR)`, chặn trong `[min, max]`."
+  def hit_chance(ar, level) do
+    h = @combat.hit
+    dr = level * h.monster_dr
+    clamp(ar / (ar + dr), h.min, h.max)
+  end
+
+  @doc "Phần EXP còn lại khi hạ quái thường thấp hơn mình quá `RULES.xp.penalty.from` cấp (1 = không phạt)."
+  def xp_factor(player_level, monster_level) do
+    pen = @rules.xp.penalty
+    gap = player_level - monster_level
+
+    if gap > pen.from,
+      do: max(pen.min, 1 - pen.per_level * (gap - pen.from)),
+      else: 1
   end
 
   # ---------- Chiến đấu ----------
@@ -496,13 +560,15 @@ defmodule HacLong.Game.Engine do
         {p, atk, dfn, crit, mult, name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(d.crit))
 
+        # kỹ năng luôn trúng; đòn thường: đấu trường theo né của đối thủ, quái theo tỉ lệ trúng
         p =
-          if skill == nil and chance(m.dodge) do
-            log(p, "#{m.name} né được đòn #{name}.", "info")
+          if skill == nil and
+               if(m[:pvp], do: chance(m.dodge), else: chance(1 - hit_chance(d.ar, m.level))) do
+            log(p, "Trượt! #{m.name} tránh được đòn #{name}.", "info")
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
-            dmg = round(damage(atk, dfn) * mult * if(crit, do: d.critMult, else: 1))
+            dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1))
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
             suffix = if crit, do: " (CHÍ MẠNG!)", else: ""
@@ -683,10 +749,11 @@ defmodule HacLong.Game.Engine do
           mc = not special and chance(m.crit)
 
           dmg =
-            round(
-              damage(m_atk, d.def) * if(mc, do: @combat.monster_crit_mult, else: 1) *
-                (1 - power(p, :player, "guard")) *
-                (1 - d.wingAbsorb)
+            damage(
+              m_atk,
+              d.def,
+              if(mc, do: @combat.monster_crit_mult, else: 1),
+              (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb)
             )
 
           p = %{p | hp: max(0, p.hp - dmg)}
@@ -830,9 +897,13 @@ defmodule HacLong.Game.Engine do
     event = if m[:pvp], do: nil, else: Events.current()
     gold = round(m.gold * (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold)))
 
+    # quái thường thấp hơn mình quá nhiều cấp thì bớt EXP (không áp trùm, tháp, trùm thế giới, đấu trường)
+    normal? = not m.boss and !m[:world] and !m[:pvp] and !m[:tower]
+    xf = if normal?, do: xp_factor(p.level, m.level), else: 1
+
     xp =
       round(
-        m.xp *
+        m.xp * xf *
           (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
              Events.xp_bonus(event))
       )
@@ -843,7 +914,12 @@ defmodule HacLong.Game.Engine do
     p =
       if m[:world],
         do: log(p, "🏆 #{m.name} gục ngã dưới đòn của bạn!", "win"),
-        else: log(p, "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm, +#{gold} vàng.", "win")
+        else:
+          log(
+            p,
+            "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm#{if xf < 1, do: " (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp)"}, +#{gold} vàng.",
+            "win"
+          )
 
     {p, reward} =
       if not m.boss and !m[:world] and !m[:pvp] and chance(@loot.potion_chance) do
@@ -922,6 +998,7 @@ defmodule HacLong.Game.Engine do
     c =
       cond do
         m[:world] || m[:pvp] -> 0
+        m[:jewel_chance] -> m.jewel_chance
         m.boss and not tower? -> j.boss_chance
         m.level >= j.monster_level -> j.monster_chance
         true -> 0
@@ -1121,15 +1198,20 @@ defmodule HacLong.Game.Engine do
   Kết quả có `upgrade: %{result: "success" | "down" | "destroy" | "fail", level}`; ép thành công
   từ `announce_from` thì kèm `announce` (Session đưa lên kênh chat hệ thống).
   """
-  def upgrade(p, slot, confirm \\ false) do
-    id = slot in @equip_slots && p.equip[String.to_existing_atom(slot)]
+  def upgrade(p, target, confirm \\ false) do
+    {id, slot} = forge_target(p, target)
     level = if id, do: upgrade_level(p, id), else: 0
     it = id && Gear.item(p, id)
     cost = it && upgrade_cost(it, level)
 
     cond do
       !id ->
-        {err("Chưa mặc đồ ở chỗ này."), p}
+        {err(
+           if target in @equip_slots, do: "Chưa mặc đồ ở chỗ này.", else: "Không ép được món này."
+         ), p}
+
+      slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
+        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
 
       p.battle ->
         {err("Đang trong trận."), p}
@@ -1159,15 +1241,158 @@ defmodule HacLong.Game.Engine do
 
       true ->
         hp_ratio = p.hp / derived(p).maxHp
-        {p, uid} = ensure_instance(p, String.to_existing_atom(slot))
+        {p, uid} = forge_instance(p, id, slot)
 
         p =
           Enum.reduce(cost.items, %{p | gold: p.gold - cost.gold}, fn {m, n}, p ->
             take_item(p, m, n)
           end)
 
-        {result, p} = roll_upgrade(p, String.to_existing_atom(slot), uid, it, level, cost)
-        {result, %{p | hp: min(round(hp_ratio * derived(p).maxHp), derived(p).maxHp)}}
+        {result, p} = roll_upgrade(p, slot, uid, it, level, cost)
+
+        # uid của món vừa ép (đồ thường được tách thành bản riêng): client theo dõi món đang chọn
+        {Map.put(result, :uid, uid),
+         %{p | hp: min(round(hp_ratio * derived(p).maxHp), derived(p).maxHp)}}
+    end
+  end
+
+  # Món được ép: ô đang mặc (`"weapon"`...), đồ hiếm trong túi (uid) hoặc đồ thường trong túi (id).
+  # Trả về `{id_hoặc_uid, ô_đang_mặc | nil}`; `{nil, nil}` nếu không ép được.
+  defp forge_target(p, target) when target in @equip_slots do
+    slot = String.to_existing_atom(target)
+    {p.equip[slot], slot}
+  end
+
+  defp forge_target(p, "#" <> _ = uid) do
+    g = Gear.find(p, uid)
+
+    cond do
+      g == nil or g[:stored] ->
+        {nil, nil}
+
+      slot = Enum.find(@equip_slots, &(p.equip[String.to_existing_atom(&1)] == uid)) ->
+        {uid, String.to_existing_atom(slot)}
+
+      true ->
+        {uid, nil}
+    end
+  end
+
+  defp forge_target(p, id) when is_binary(id) do
+    it = Data.item(id)
+    if it && it.slot in @equip_slots && Map.get(p.inv, id, 0) > 0, do: {id, nil}, else: {nil, nil}
+  end
+
+  defp forge_target(_p, _), do: {nil, nil}
+
+  # Đồ thường được ép thì tách thành bản riêng (đang mặc: `ensure_instance`; trong túi: lấy một món ra).
+  defp forge_instance(p, _id, slot) when slot != nil, do: ensure_instance(p, slot)
+
+  defp forge_instance(p, "#" <> _ = uid, nil), do: {p, uid}
+
+  defp forge_instance(p, id, nil) do
+    g = Gear.plain(id)
+    {p |> take_item(id) |> Map.put(:gear, Gear.list(p) ++ [g]), g.uid}
+  end
+
+  @doc """
+  Ngọc Sinh Mệnh (`RULES.upgrade.life`): thêm một dòng tùy chọn cho món `target` (như `upgrade/3`):
+  vũ khí +`per_line` tấn công, giáp / khiên / cánh +`per_line` phòng thủ, tối đa `max_lines`. Tỉ lệ `rate`;
+  thất bại mất dòng cuối.
+  """
+  def life(p, target) do
+    l = @up.life
+    {id, slot} = forge_target(p, target)
+    it = id && Gear.item(p, id)
+    lines = if id && Gear.instance?(id), do: Gear.find(p, id)[:opt] || 0, else: 0
+
+    cond do
+      !id ->
+        {err("Không ép được món này."), p}
+
+      p.battle ->
+        {err("Đang trong trận."), p}
+
+      lines >= l.max_lines ->
+        {err("#{it.name} đã đủ #{l.max_lines} dòng tùy chọn."), p}
+
+      Map.get(p.inv, l.jewel, 0) < 1 ->
+        {err("Cần 1 #{Data.item(l.jewel).name}."), p}
+
+      slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
+        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
+
+      true ->
+        hp_ratio = p.hp / derived(p).maxHp
+        {p, uid} = forge_instance(p, id, slot)
+        p = take_item(p, l.jewel)
+        stat = if it.slot == "weapon", do: "tấn công", else: "phòng thủ"
+
+        {r, p} =
+          if chance(l.rate) do
+            {ok("💚 #{it.name}: thêm dòng +#{l.per_line} #{stat} (#{lines + 1}/#{l.max_lines}).")
+             |> Map.put(:life, %{result: "success", lines: lines + 1}),
+             Gear.put(p, uid, :opt, lines + 1)}
+          else
+            n = max(lines - 1, 0)
+
+            text =
+              if lines > 0,
+                do: "mất một dòng (còn #{n}/#{l.max_lines})",
+                else: "không có gì thay đổi"
+
+            {ok("💔 Ép Ngọc Sinh Mệnh thất bại, #{it.name} #{text}.")
+             |> Map.put(:life, %{result: "fail", lines: n}), Gear.put(p, uid, :opt, n)}
+          end
+
+        {Map.put(r, :uid, uid),
+         %{p | hp: min(round(hp_ratio * derived(p).maxHp), derived(p).maxHp)}}
+    end
+  end
+
+  @doc "Tấn công / phòng thủ cộng thêm từ dòng Ngọc Sinh Mệnh của món `id`."
+  def life_bonus(p, id) do
+    if Gear.instance?(id), do: ((Gear.find(p, id) || %{})[:opt] || 0) * @up.life.per_line, else: 0
+  end
+
+  @doc """
+  Vứt đồ: `n` món đồ thường `id`, hoặc món đồ hiếm `id` (uid). Không vứt đồ đang mặc, đang khóa,
+  đang cất trong tủ.
+  """
+  def discard(p, id, n \\ 1)
+
+  def discard(%{battle: b} = p, _id, _n) when b != nil, do: {err("Đang trong trận."), p}
+
+  def discard(p, "#" <> _ = uid, _n) do
+    g = Gear.find(p, uid)
+
+    cond do
+      g == nil or g[:stored] ->
+        {err("Không có món này trong túi."), p}
+
+      Gear.equipped?(p, uid) ->
+        {err("Tháo món này ra trước khi vứt."), p}
+
+      g[:locked] ->
+        {err("#{Gear.resolve(g).name} đang khóa. Mở khóa trước khi vứt."), p}
+
+      true ->
+        {ok("Đã vứt #{Gear.resolve(g).name}."), p |> Gear.remove(uid) |> put_upgrade(uid, 0)}
+    end
+  end
+
+  def discard(p, id, n) do
+    have = Map.get(p.inv, id, 0)
+
+    cond do
+      not (is_binary(id) and is_integer(n) and n >= 1) or have == 0 ->
+        {err("Không có món này trong túi."), p}
+
+      have < n ->
+        {err("Chỉ có #{have} món."), p}
+
+      true ->
+        {ok("Đã vứt #{Data.item(id).name} ×#{n}."), take_item(p, id, n)}
     end
   end
 
@@ -1214,6 +1439,8 @@ defmodule HacLong.Game.Engine do
   defp put_upgrade(p, uid, n), do: Map.put(p, :upgrades, Map.put(upgrades(p), uid, n))
 
   # Món đang mặc vỡ: bỏ khỏi nhân vật; vũ khí / giáp về đồ khởi đầu (như lúc mới tạo).
+  defp destroy_equipped(p, nil, uid), do: p |> Gear.remove(uid) |> put_upgrade(uid, 0)
+
   defp destroy_equipped(p, slot, uid) do
     p = p |> Gear.remove(uid) |> put_upgrade(uid, 0)
     fallback = %{weapon: "club", armor: "vest"}
@@ -1361,6 +1588,9 @@ defmodule HacLong.Game.Engine do
           Gear.equipped?(p, uid) ->
             {err("Đang mặc món này."), p}
 
+          g[:stored] ->
+            {err("Món này đang cất trong tủ."), p}
+
           g[:locked] ->
             {err("#{Gear.resolve(g).name} đang khóa. Mở khóa trước khi bán."), p}
 
@@ -1390,7 +1620,11 @@ defmodule HacLong.Game.Engine do
   def equip(p, id) do
     it = Gear.item(p, id)
     gear? = Gear.instance?(id)
-    owned = if gear?, do: it != nil and not Gear.equipped?(p, id), else: Map.get(p.inv, id, 0) > 0
+
+    owned =
+      if gear?,
+        do: it != nil and not Gear.equipped?(p, id) and not Gear.stored?(p, id),
+        else: Map.get(p.inv, id, 0) > 0
 
     cond do
       it == nil or not owned or it.slot not in @equip_slots ->

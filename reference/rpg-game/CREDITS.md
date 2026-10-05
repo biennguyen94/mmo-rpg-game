@@ -30,6 +30,8 @@ Tác giả:
 - Tự vẽ cho game này (CC0, Đợt 3): gem-bless, gem-soul, gem-chaos, feathered-wing, padlock,
   chaos-machine. NPC Lão Hỗn Nguyên (`npcs/chaos.png`) cũng tự vẽ (CC0). Cánh trên nhân vật vẽ bằng
   code trong `doll.js`, không dùng ảnh.
+- Tự vẽ cho game này (CC0, Phase 4): gem-life (Ngọc Sinh Mệnh). NPC Tủ Đồ (`npcs/wardrobe.png`) cũng
+  tự vẽ (CC0).
 
 ## Nhân vật mặc đồ, thú cưng, đồ trang trí (`priv/static/assets/doll/`, `pets/`, `decor/`)
 

@@ -7,7 +7,7 @@ defmodule HacLong.Game.DataCheck do
   Hàm thuần trên dữ liệu đã đọc (khóa atom như trong `Data`), không gọi `Data`.
   """
 
-  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets)
+  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe)
   @pet_skills ~w(heal bash pickpocket venom rend)
   @fails [nil, "down", "destroy"]
 
@@ -111,6 +111,7 @@ defmodule HacLong.Game.DataCheck do
         Map.keys(d.rules.character.start_items)
       ),
       items.("rules.json", "RULES.loot.potions", Enum.map(d.rules.loot.potions, & &1.id)),
+      items.("rules.json", "RULES.upgrade.life.jewel", [d.rules.upgrade.life.jewel]),
       items.("rules.json", "RULES.tutorial.reward", Map.keys(d.rules.tutorial.reward.items)),
       for {pool, l} <- d.rules.fishing.pools do
         items.("rules.json", "RULES.fishing.pools.#{pool}", Enum.map(l, &List.last/1))

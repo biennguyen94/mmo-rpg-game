@@ -14,6 +14,23 @@
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |
+| 9-B | 2026-10-04 | 20 bản đồ mới đặt ở đâu? | Bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, **không liên quan Hắc Long** |
+| 9-C | 2026-10-04 | Giá dịch chuyển? | 20 + 4 × cấp quái thấp nhất; Làng / Nhà miễn phí; đá dịch chuyển vẫn miễn phí |
+| 9-D, 9-E | 2026-10-04 | Phím Menu; thứ tự làm | Tab; sửa B1, B2 → Phase 9 → Phase 10 → Phase 6 |
+| 7-A | 2026-10-04 | Lịch Golden Invasion? | Mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam), 15 phút |
+| 7-B | 2026-10-04 | Trùm vàng cuối đợt? | Có: hạ hết quái vàng một bản đồ thì trùm vàng vùng đó xuất hiện |
+| 5-C, 5-D | 2026-10-04 | Giới hạn PK cược vàng? | Cược 100 – 1 000 000, **không phí**, **không giới hạn chênh cấp**, 10 trận cược / ngày |
+| 5-G | 2026-10-04 | Trận cược đánh thế nào? | Tự đánh giữa hai bản sao, xong ngay |
+| 5-E | 2026-10-04 | Thưởng chiến bang? | Quỹ bang thắng +5 000; thành viên có ≥ 1 điểm nhận 500 vàng qua thư |
+| 5-F, 5-H, 5-I, 6-A | 2026-10-04 | Tổ đội, `/w`, thư hết hạn, bảng theo lớp | Giữ × 1,2 / n; `/w` chỉ bạn bè; thư còn quà không hết hạn; top 50, 60 s |
+| 4-A | 2026-10-04 | Ép ngọc ở đâu? | Vẫn cạnh Thợ Rèn (nút Ép trong tooltip chọn món) |
+| 4-B | 2026-10-04 | Tủ Đồ ở Nhà chứa bao nhiêu? | 40 loại đồ thường + 20 đồ hiếm; mở rộng +10 đồ hiếm × 3 lần (5 000 / 15 000 / 40 000 vàng) |
+| 4-C | 2026-10-04 | Trần mỗi thư quản trị? | 1 000 000 vàng, 1 000 000 EXP |
+| 4-D, 4-F | 2026-10-04 | Ngọc Sinh Mệnh lên cánh? Tỉ lệ rơi? | Cánh **được**; trọng số **10** trong bảng ngọc |
+| 4-E | 2026-10-04 | Tách chồng? | **Không làm** |
+| 3-A … 3-D | 2026-10-04 | Công thức chiến đấu (`INTEGRATION_PLAN §11.5`) | Theo đề xuất: trúng chỉ khi người đánh quái, sàn mềm 20 %, phạt EXP chỉ quái thường, công ±10 % |
+| 3-E | 2026-10-04 | Kỹ năng có thể trượt không? | **Không**: kỹ năng luôn trúng |
 | P1-Q1 | 2026-10-04 | Danh sách từ cấm cơ bản em lập có cần thêm / bớt? | OK, giữ nguyên |
 | P1-Q2 | 2026-10-04 | Công cụ quản trị đổi tên nhân vật / bang? | Không cần |
 | 5-A | 2026-10-04 | Soak: bao nhiêu bot, bao lâu? | Theo đề xuất (anh bảo làm hết Phase 2): 30 bot / 10 phút chạy tay; CI tự chạy 10 bot / 2 phút |

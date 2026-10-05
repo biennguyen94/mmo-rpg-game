@@ -78,6 +78,15 @@ defmodule HacLong.World.MapServer do
   @doc "Đặt một điểm thu thập vào ô cho trước (dùng trong test)."
   def put_node(map_id, item, {x, y}), do: GenServer.call(via(map_id), {:put_node, item, {x, y}})
 
+  @doc "Golden Invasion: thả `n` quái vàng (không hồi sinh) vào bản đồ."
+  def invade(map_id, n), do: GenServer.call(via(map_id), {:invade, n})
+
+  @doc "Golden Invasion: thả trùm vàng của vùng."
+  def invade_boss(map_id), do: GenServer.call(via(map_id), :invade_boss)
+
+  @doc "Golden Invasion kết thúc: quái vàng chưa ai đánh thì biến mất."
+  def end_invasion(map_id), do: GenServer.call(via(map_id), :end_invasion)
+
   @doc "Xóa hết quái, điểm thu thập và tắt hồi (dùng trong test)."
   def clear_monsters(map_id), do: GenServer.call(via(map_id), :clear_monsters)
 
@@ -137,8 +146,18 @@ defmodule HacLong.World.MapServer do
       %{busy: ^uid} = m ->
         s = %{s | monsters: Map.delete(s.monsters, mid)}
 
-        if s.respawn,
-          do: Process.send_after(self(), {:respawn, m.origin}, respawn_ms(s, m.origin))
+        cond do
+          # quái vàng (Golden Invasion) không hồi sinh; hạ hết thì báo để thả trùm / kết thúc
+          m[:gold] ->
+            if not Enum.any?(s.monsters, fn {_, x} -> x[:gold] end),
+              do: HacLong.Invasion.cleared(s.map.id, m.boss)
+
+          s.respawn ->
+            Process.send_after(self(), {:respawn, m.origin}, respawn_ms(s, m.origin))
+
+          true ->
+            :ok
+        end
 
         {:reply, :ok, changed(s)}
 
@@ -174,6 +193,40 @@ defmodule HacLong.World.MapServer do
   def handle_call({:put_node, item, pos}, _from, s) do
     s = new_node(s, item, pos, :manual)
     {:reply, public_node(s.nodes[s.next_id - 1]), changed(s)}
+  end
+
+  def handle_call({:invade, n}, _from, s) do
+    s =
+      Enum.reduce(1..n//1, s, fn _, s ->
+        case s.zone && free_tile(s) do
+          nil ->
+            s
+
+          pos ->
+            kind = Enum.random(s.zone.monsters).id
+            {m, s} = new_monster(s, kind, pos, false, :gold)
+            put_in(s.monsters[m.id], Map.put(%{m | rare: false}, :gold, true))
+        end
+      end)
+
+    {:reply, Enum.count(s.monsters, fn {_, m} -> m[:gold] end), changed(s)}
+  end
+
+  def handle_call(:invade_boss, _from, s) do
+    case s.zone && free_tile(s) do
+      nil ->
+        {:reply, :error, s}
+
+      pos ->
+        {m, s} = new_monster(s, s.zone.boss.id, pos, true, :gold)
+        s = put_in(s.monsters[m.id], Map.put(m, :gold, true))
+        {:reply, :ok, changed(s)}
+    end
+  end
+
+  def handle_call(:end_invasion, _from, s) do
+    gone = for {id, m} <- s.monsters, m[:gold] && m.busy == nil, do: id
+    {:reply, :ok, changed(%{s | monsters: Map.drop(s.monsters, gone)})}
   end
 
   def handle_call(:clear_monsters, _from, s),
@@ -386,7 +439,17 @@ defmodule HacLong.World.MapServer do
 
   defp public(m) do
     {x, y} = m.pos
-    %{id: m.id, kind: m.kind, x: x, y: y, boss: m.boss, busy: m.busy != nil, rare: m.rare}
+
+    %{
+      id: m.id,
+      kind: m.kind,
+      x: x,
+      y: y,
+      boss: m.boss,
+      busy: m.busy != nil,
+      rare: m.rare,
+      gold: m[:gold] == true
+    }
   end
 
   defp snapshot_of(s) do

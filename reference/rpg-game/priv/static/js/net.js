@@ -113,6 +113,7 @@
         ch.on('chat', (m) => cb.chat && cb.chat(m));
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
+        ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
         ch.on('notice', (m) => cb.notice && cb.notice(m.msg));
         ch.on('mail', (m) => cb.mail && cb.mail(m.unread));
         ch.on('guild', (m) => cb.guild && cb.guild(m.guild));
@@ -122,6 +123,8 @@
         ch.on('friends', (m) => cb.friends && cb.friends(m.msg));
         ch.on('dm', (m) => cb.dm && cb.dm(m));
         ch.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
+        ch.on('pk_invite', (m) => cb.pkInvite && cb.pkInvite(m.invite));
+        ch.on('pk_result', (m) => cb.pkResult && cb.pkResult(m));
         ch.on('shared', (m) => cb.shared && cb.shared(m));
         ch.onError(() => { if (channel === ch) lost(); });
         ch.join()
@@ -234,6 +237,8 @@
     party(op, payload) { return push('party', Object.assign({ op }, payload || {})); },
     // Giao dịch: trade('request', { uid }), trade('accept'), trade('offer', { offer }), trade('ready')...
     trade(op, payload) { return push('trade', Object.assign({ op }, payload || {})); },
+    // PK cược vàng: pk('invite', { uid, wager }), pk('accept'), pk('decline'), pk('cancel'), pk('info').
+    pk(op, payload) { return push('pk', Object.assign({ op }, payload || {})); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).
@@ -259,7 +264,7 @@
     report(id) { return push('report', { id }); },
 
     // Hộp thư: { mails, unread }. Mở thư/nhận quà là lệnh { act: 'mail_claim', id }.
-    mail() { return push('mail', {}); },
+    mail(op) { return push('mail', op ? { op } : {}); },
 
     // Lệnh quản trị (chỉ tài khoản quản trị).
     admin(op, payload) { return push('admin', Object.assign({ op }, payload || {})); },
@@ -278,6 +283,7 @@
     onChatHistory(f) { cb.history = f; },
     // Trạng thái trùm thế giới; thông báo riêng (vd. nhận thưởng).
     onWorldBoss(f) { cb.boss = f; },
+    onInvasion(f) { cb.invasion = f; },
     onNotice(f) { cb.notice = f; },
     // Số thư chưa mở thay đổi (có thư mới, vừa mở thư).
     onMail(f) { cb.mail = f; },
@@ -290,6 +296,8 @@
     // Bảng giao dịch đổi (hoặc null khi xong/hủy) / có người mời giao dịch.
     onTrade(f) { cb.trade = f; },
     onTradeRequest(f) { cb.tradeRequest = f; },
+    onPkInvite(f) { cb.pkInvite = f; },
+    onPkResult(f) { cb.pkResult = f; },
     // Danh sách bạn đổi (msg: thông báo hoặc null) / có tin riêng mới (của mình hoặc gửi cho mình).
     onFriends(f) { cb.friends = f; },
     onDm(f) { cb.dm = f; },

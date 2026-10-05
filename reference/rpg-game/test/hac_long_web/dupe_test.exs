@@ -139,12 +139,6 @@ defmodule HacLongWeb.DupeTest do
       wait_idle(uids)
       unless fight?, do: assert(Trade.of(ua.id) == nil and gear_places([ub.id], s.uid) == 1)
 
-      IO.inspect(
-        {Trade.of(ua.id) && Trade.of(ua.id).status, Session.get(ub.id).inv,
-         Session.get(ua.id).gold, listings(uids) |> length()},
-        label: "DBG"
-      )
-
       assert gold(uids) + unclaimed_gold(uids) == total0
       assert item_count(uids, "herb") == 7
       assert gear_places(uids, s.uid) == 1

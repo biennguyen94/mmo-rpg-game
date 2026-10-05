@@ -36,3 +36,74 @@
 | P2-7 | Hàm thuần của client (tìm đường, hình theo cấp, tỉ lệ máy ghép, cấp thú, gom lệnh cộng điểm) chuyển sang `priv/static/js/logic.js` (`window.HLLogic`), `ui.js` / `map.js` gọi lại; test `node --test test/js/*.test.mjs`. | Test được không cần trình duyệt; giữ JS thuần như cũ (không thêm bước build). |
 | P2-8 | Ảnh trong tài liệu: `HL_SHOTS_DOCS=1 node e2e/run.mjs` chép 7 ảnh chọn lọc sang `docs/screenshots/e2e-*.png`. Ảnh cũ chụp tay giữ nguyên. | Ảnh luôn đúng giao diện hiện tại khi chạy lại e2e. |
 | P2-9 | Giá thuần phục thú (`RULES.pets.tame_price*`) gửi cho client; mô tả việc hằng ngày sửa thành 4 việc (code tạo 4 việc từ trước, moduledoc ghi nhầm 3). | e2e bắt được chỗ lệch. |
+
+## Phase 3 — Công thức chiến đấu (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P3-1 | Hệ số kỹ năng / chí mạng / % cánh nhân **trước** bước trừ thủ (trước đây nhân sau). | Đúng thứ tự A1 của MU; đòn mạnh ít bị thủ "ăn" hơn. Simulator cho thấy không đổi cân bằng (thủ quái thấp). |
+| P3-2 | Hệ số DR của quái `monster_dr = 0,8` × cấp (không chỉnh thêm). | Trúng quái cùng cấp 91–95 %, simulator lệch ≤ 2,7 % nên không cần bù. |
+| P3-3 | Trượt quyết định bằng `Rng.uniform() < 1 − tỉ lệ trúng` (số ngẫu nhiên lớn = trúng). | Giữ cách test cũ: dãy số 0,99 là "đòn tốt". |
+| P3-4 | `dodge` của quái giữ trong dữ liệu quái nhưng chỉ còn dùng ở đấu trường (né của bản sao người chơi). | Người đánh quái giờ theo tỉ lệ trúng (3-A). |
+
+## Phase 4 — Ngọc, ép, kho (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P4-1 | Đồ hiếm cất tủ vẫn nằm trong `gear` của nhân vật với cờ `stored`; đồ thường cất ở cột mới `characters.storage`. | Nhật ký đồ hiếm, đối soát trùng `uid` không phải đổi; cất / lấy không phải "ra / vào" nhân vật. |
+| P4-2 | Ép (+N, Ngọc Sinh Mệnh) đồ thường **trong túi** tách một món ra thành bản riêng, nên cần một chỗ trống trong túi đồ hiếm (20). | Cấp ép / dòng tùy chọn lưu theo bản riêng như đồ đang mặc (Đợt 3, C10). |
+| P4-3 | Ngọc Sinh Mệnh thất bại khi món chưa có dòng nào: chỉ mất ngọc. Ép được cả đồ đang khóa. | Đúng đề xuất §12.1; khóa chỉ chặn bán / vứt / giao dịch / máy ghép. |
+| P4-4 | Nút "Ép" trong tooltip chỉ **chọn món** cho thẻ "Ép đồ" (không ép ngay); ở xa Thợ Rèn thì báo mang tới, món đã chọn giữ đến khi tới. | Ép có thể vỡ đồ: luôn thấy giá, tỉ lệ, rủi ro trước khi bấm. |
+| P4-5 | Vứt một món: hộp xác nhận; nhiều món: hỏi số lượng (mặc định cả chồng). Đồ đang cất không vứt được (lấy ra trước). | Không có tách chồng (4-E) nên chọn số ngay khi vứt. |
+| P4-6 | Bot simulator không dùng Ngọc Sinh Mệnh. | Giữ so sánh trước / sau; ngọc chỉ +4 / dòng, ít ảnh hưởng. |
+| P4-7 | Kết quả lệnh `upgrade` / `life` kèm `uid` món vừa ép. | Client giữ món đang chọn khi đồ thường vừa được tách thành bản riêng. |
+
+## Phase 5 — Xã hội, xếp hạng, PK cược vàng (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P5-1 | Trận cược: người mời đánh trước; hết 30 lượt thì so **% máu còn**, bằng nhau là hòa (không ai mất vàng). Không đổi điểm Elo. | Luật rõ, kết quả lặp lại được khi test; Elo chỉ cho đấu trường thường. |
+| P5-2 | Cược và đấu trường dùng chung bản sao `Arena.opponent/2` (cánh gộp vào máu / công). | Một chỗ tính sức mạnh PvP. |
+| P5-3 | "Online" = Session còn chạy (như tổ đội, giao dịch, bạn bè hiện có); danh sách online của quản trị thì chỉ tính người còn mở tab. | Giữ cách hiện có; quản trị cần biết ai thật sự đang chơi. |
+| P5-4 | Nhường bang chủ khi bang đã đủ 2 phó và người nhận là thành viên thường: bang chủ cũ thành **thành viên**. | Không vượt giới hạn phó bang. |
+| P5-5 | Chiến bang chỉ tính trận **người thách đấu thắng** (không tính khi bản sao thắng). Tuyên chiến bằng ký hiệu bang. | Điểm do người chơi tự đánh; ký hiệu ngắn, dễ gõ. |
+| P5-6 | Bảng xếp hạng: cache 60 s cho mọi bảng (cả bảng cũ), top 10 bảng cũ giữ nguyên; `me` (hạng chung) giữ cho client cũ, thêm `me_rank`. | Lợi nhất khi đông người; không phá client đang mở. |
+| P5-7 | Lời mời tổ đội hết hạn mà tổ đội chỉ có người mời (lập lúc mời) và không còn lời mời nào: tổ đội tan. | Không để tổ đội một người treo mãi. |
+| P5-8 | Giao dịch: "đi xa" kiểm lúc mời và lúc chốt (cùng bản đồ, ≤ 8 ô); không theo dõi từng bước đi. Đổi bản đồ / vào trận thì hủy ngay. | Đủ chặn giao dịch từ xa mà không tốn công theo dõi vị trí. |
+| P5-9 | "Xóa thư đã đọc" chỉ xóa thư đã mở (đã nhận quà); thư chưa mở không xóa được. | Không lỡ tay mất quà. |
+
+## Phase 8 — Giao diện, hướng dẫn người chơi (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P8-1 | Thông báo (L2) chỉ lưu ở **trình duyệt** (`localStorage` theo tài khoản, 50 tin), không thêm bảng database / giao thức. | Không đụng schema / protocol; mất tin cũ khi đổi máy là chấp nhận được (tin quan trọng đã có ở Hộp thư). |
+| P8-2 | Tin giữ lại: lên cấp, ép thất bại hoặc thành công từ +7, ghép (máy Hỗn Nguyên), thư mới, lời mời (tổ đội, giao dịch, cược), kết quả cược, tin hệ thống gửi riêng. Tin vặt ("Đã gửi lời mời") không lưu. | Bảng gọn, chỉ những gì người chơi muốn xem lại. |
+| P8-3 | Hiệu ứng lớn (M11) chỉ bằng CSS (không canvas, không ảnh mới); "giảm chuyển động" thì chỉ hiện rồi mờ đi. | Nhẹ, không cần asset. |
+| P8-4 | `USER_GUIDE.md` dùng ảnh e2e có sẵn (thêm `e2e-pk.png`, `e2e-wardrobe.png`; `run.mjs` chép lại khi `HL_SHOTS_DOCS=1`). | Ảnh luôn khớp giao diện hiện tại. |
+
+## Phase 7 — Golden Invasion (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P7-1 | Quái vàng ở bản đồ đầu mỗi vùng (6 bản đồ × 4 con), loài ngẫu nhiên của vùng; số trong `RULES.invasion.maps`. | Ai cũng có chỗ đánh hợp cấp; anh đổi bản đồ / số lượng trong data. |
+| P7-2 | Quái vàng mạnh ×1,5 (như quái Bóng Đêm), trùm vàng giữ sức trùm vùng; thưởng ×5 không đổi sức mạnh. | Thưởng lớn thì phải khó hơn một chút, nhưng người cùng cấp vẫn đánh được. |
+| P7-3 | Hết giờ: quái vàng chưa ai đánh biến mất, trận đang đánh thì đánh nốt (vẫn nhận thưởng). | Không cắt ngang trận của người chơi. |
+| P7-4 | Bản đồ nào hết chỗ trống để thả quái thì coi như xong; mọi bản đồ xong (đã hạ trùm vàng) thì kết thúc sớm. | Không kẹt sự kiện. |
+| P7-5 | Trạng thái sự kiện không lưu database; server khởi động lại thì đợt đang chạy mất, đợi lịch tiếp theo. | Sự kiện ngắn (15 phút); không thêm bảng. |
+
+## Phase 9 — Menu, chat trong bản đồ, màn vừa khít (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P9-1 | Menu tách tab Khác thành: Nhiệm vụ, Hành trình (hồi máu, hành trình trùm, trùm thế giới sắp tới), Đấu trường, Xếp hạng, Bang hội, Thành tựu, Thú cưng, Kỹ năng, Sổ quái, Cài đặt (+ Quản trị cho admin). Dùng lại đúng nội dung cũ. | Không mất tính năng nào, ít rủi ro. |
+| P9-2 | Nút 🗺 trên dock tạm hiện thông báo "sắp có"; bảng chọn bản đồ làm ở Phase 10 cùng 20 bản đồ mới. Phím M giữ "về bản đồ" tới Phase 10. | Đúng thứ tự anh chốt (9-E). |
+| P9-3 | Nút 💬 hiện cả trên máy tính (cùng chỗ góc dưới phải); máy tính có thêm Enter / Esc. Trong trận đánh không hiện khung chat (màn trận đánh riêng). | Một cách dùng cho mọi máy; trận đánh cần chỗ cho nút hành động. |
+| P9-4 | Hộp thoại trên bản đồ (thông tin người chơi, lời mời…) nằm trên khung chat. | e2e phát hiện khung chat đang mở che nút trong hộp thoại. |
+
+## Phase 10 — Hai ngôn ngữ (2026-10-04)
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
+| P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
+| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |

@@ -15,7 +15,12 @@
     "xp": {
       "coef": 25,
       "exp": 1.75,
-      "base": 15
+      "base": 15,
+      "penalty": {
+        "from": 10,
+        "per_level": 0.1,
+        "min": 0.1
+      }
     },
     "combat": {
       "crit": {
@@ -37,6 +42,14 @@
         0.9,
         1.1
       ],
+      "soft_floor": 0.2,
+      "hit": {
+        "level": 5,
+        "agi": 1.5,
+        "monster_dr": 0.8,
+        "min": 0.05,
+        "max": 0.95
+      },
       "mp_regen": 0.05,
       "flee_chance": 0.7,
       "flee_chance_boss": 0.35,
@@ -193,7 +206,13 @@
       "cost_pct": 0.08,
       "cost_min_price": 100,
       "rare_ore_level": 17,
-      "scale_step": 5
+      "scale_step": 5,
+      "life": {
+        "jewel": "jewel_life",
+        "per_line": 4,
+        "max_lines": 4,
+        "rate": 0.5
+      }
     },
     "chests": {
       "tiers": [
@@ -362,6 +381,24 @@
       "xp_per_step": 0.01,
       "max_xp_bonus": 0.05
     },
+    "storage": {
+      "items": 40,
+      "gear": 20,
+      "expand": [
+        {
+          "gear": 10,
+          "gold": 5000
+        },
+        {
+          "gear": 10,
+          "gold": 15000
+        },
+        {
+          "gear": 10,
+          "gold": 40000
+        }
+      ]
+    },
     "events": {
       "xp_bonus": 0.1,
       "shop": {
@@ -487,19 +524,74 @@
       "min_donate": 100,
       "quest_fund": 3000,
       "quest_gold": 800,
-      "quest_xp": 1500
+      "quest_xp": 1500,
+      "max_officers": 2,
+      "request_days": 7
+    },
+    "guild_war": {
+      "minutes": 60,
+      "answer_s": 60,
+      "same_target_max": 3,
+      "rematch_hours": 24,
+      "win_fund": 5000,
+      "win_gold": 500
     },
     "market": {
       "fee_pct": 5,
       "max_active": 10,
       "max_price": 10000000
     },
+    "mail": {
+      "max_gold": 1000000,
+      "max_xp": 1000000,
+      "keep": 100,
+      "expire_days": 30
+    },
+    "trade": {
+      "invite_s": 30,
+      "max_s": 180,
+      "range": 8
+    },
+    "pk": {
+      "min": 100,
+      "max": 1000000,
+      "per_day": 10,
+      "invite_s": 30,
+      "rounds": 30,
+      "special_every": 3,
+      "special_mult": 1.8
+    },
+    "invasion": {
+      "every_hours": 2,
+      "minutes": 15,
+      "maps": {
+        "forest_1": 4,
+        "camp_1": 4,
+        "graveyard_1": 4,
+        "mountain_1": 4,
+        "swamp_1": 4,
+        "lair_1": 4
+      },
+      "strength_mult": 1.5,
+      "reward_mult": 5,
+      "jewel_chance": 0.1,
+      "boss": true,
+      "boss_jewel_chance": 1.0
+    },
+    "leaderboard": {
+      "top": 10,
+      "class_top": 50,
+      "refresh_s": 60
+    },
     "arena": {
       "per_day": 15,
       "elo_k": 32
     },
     "party": {
-      "max": 3
+      "max": 3,
+      "share_bonus": 1.2,
+      "invite_s": 30,
+      "leave_after_s": 60
     },
     "world": {
       "night_rare_chance": 0.12

@@ -8,8 +8,11 @@ defmodule HacLong.Party do
   - Trận đánh chung: người trong tổ đội chạm quái thì trận được ghi ở đây (`open_fight/2`) với
     máu chung; đồng đội chạm vào con quái đang đánh đó thì vào cùng trận (`join_fight/2`).
     Mỗi đòn trừ vào máu chung (`hit/3`), như trùm thế giới. Quái gục thì mọi người trong trận
-    đều thắng; phần thưởng mỗi người = thưởng gốc × 1,2 / số người (đánh chung nhanh hơn một
-    chút, không nhân đôi nhân ba).
+    đều thắng; phần thưởng mỗi người = thưởng gốc × `RULES.party.share_bonus` (1,2) / số người
+    (đánh chung nhanh hơn một chút, không nhân đôi nhân ba).
+  - Lời mời hết hạn sau `RULES.party.invite_s` giây (Phase 5, H2). Người chơi đóng hết tab / rớt
+    mạng quá `RULES.party.leave_after_s` giây thì tự rời tổ đội (`away/1`, `back/1` do Session gọi);
+    đội trưởng rời thì người vào sớm nhất còn lại lên thay (H3).
   - Thay đổi tổ đội phát `{:party, id | nil}` tới kênh của từng thành viên; máu chung phát
     `{:shared_hp, khóa, máu, số_người}`.
 
@@ -20,7 +23,8 @@ defmodule HacLong.Party do
   alias HacLong.Game.Session
 
   # `RULES.party.max` (`priv/game_data/rules.json`)
-  @max HacLong.Game.Data.rules().party.max
+  @rules HacLong.Game.Data.rules().party
+  @max @rules.max
 
   def max, do: @max
   def topic(id), do: "party:#{id}"
@@ -37,6 +41,12 @@ defmodule HacLong.Party do
   def decline(uid), do: GenServer.call(__MODULE__, {:decline, uid})
   def leave(uid), do: GenServer.call(__MODULE__, {:leave, uid})
   def kick(leader, uid), do: GenServer.call(__MODULE__, {:kick, leader, uid})
+
+  @doc "Người chơi vừa đóng hết tab / rớt mạng: hết `leave_after_s` giây chưa quay lại thì rời tổ đội."
+  def away(uid), do: GenServer.cast(__MODULE__, {:away, uid})
+
+  @doc "Người chơi quay lại (mở tab): hủy hẹn giờ rời tổ đội."
+  def back(uid), do: GenServer.cast(__MODULE__, {:back, uid})
 
   @doc "Lời mời đang chờ của người chơi: `%{party, from}` hoặc nil."
   def invitation(uid), do: GenServer.call(__MODULE__, {:invitation, uid})
@@ -70,7 +80,8 @@ defmodule HacLong.Party do
   # ---------- Tiến trình ----------
 
   @impl true
-  def init(_), do: {:ok, %{parties: %{}, of: %{}, invites: %{}, fights: %{}, next: 1}}
+  def init(_),
+    do: {:ok, %{parties: %{}, of: %{}, invites: %{}, fights: %{}, away: %{}, next: 1}}
 
   @impl true
   def handle_call({:of, uid}, _from, s), do: {:reply, party_of(s, uid), s}
@@ -95,7 +106,9 @@ defmodule HacLong.Party do
 
       true ->
         {s, party} = if mine, do: {s, mine}, else: create(s, from)
-        s = put_in(s.invites[to], %{party: party.id, from: from})
+        ref = make_ref()
+        Process.send_after(self(), {:invite_expired, to, ref}, @rules.invite_s * 1000)
+        s = put_in(s.invites[to], %{party: party.id, from: from, ref: ref})
         Phoenix.PubSub.broadcast(HacLong.PubSub, Session.topic(to), {:party_invite, from})
         {:reply, :ok, s}
     end
@@ -249,6 +262,62 @@ defmodule HacLong.Party do
     s = put_in(s.of[leader], party.id)
     notify(s, party.id)
     {s, party}
+  end
+
+  @impl true
+  def handle_cast({:away, uid}, s) do
+    if s.of[uid] do
+      ref = make_ref()
+      Process.send_after(self(), {:away_expired, uid, ref}, @rules.leave_after_s * 1000)
+      {:noreply, put_in(s.away[uid], ref)}
+    else
+      {:noreply, s}
+    end
+  end
+
+  def handle_cast({:back, uid}, s), do: {:noreply, %{s | away: Map.delete(s.away, uid)}}
+
+  @impl true
+  def handle_info({:invite_expired, to, ref}, s) do
+    case s.invites[to] do
+      %{ref: ^ref, party: pid, from: from} ->
+        s = %{s | invites: Map.delete(s.invites, to)}
+
+        Phoenix.PubSub.broadcast(
+          HacLong.PubSub,
+          Session.topic(from),
+          {:notice, "Lời mời tổ đội đã hết hạn."}
+        )
+
+        Phoenix.PubSub.broadcast(HacLong.PubSub, Session.topic(to), {:party_invite, nil})
+        {:noreply, drop_lonely(s, pid)}
+
+      _ ->
+        {:noreply, s}
+    end
+  end
+
+  def handle_info({:away_expired, uid, ref}, s) do
+    case s.away[uid] do
+      ^ref -> {:noreply, %{s | away: Map.delete(s.away, uid)} |> remove(uid)}
+      _ -> {:noreply, s}
+    end
+  end
+
+  # tổ đội lập lúc mời mà không ai vào, cũng không còn lời mời nào: tan
+  defp drop_lonely(s, pid) do
+    case s.parties[pid] do
+      %{members: [only]} ->
+        if Enum.any?(s.invites, fn {_, i} -> i.party == pid end) do
+          s
+        else
+          tell(only, nil)
+          %{s | parties: Map.delete(s.parties, pid), of: Map.delete(s.of, only)}
+        end
+
+      _ ->
+        s
+    end
   end
 
   defp remove(s, uid) do

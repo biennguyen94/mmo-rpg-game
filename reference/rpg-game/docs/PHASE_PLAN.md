@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | 1 ✅ | Nền dữ liệu và cấu hình | J1, J2, J3, A3, B2, E7, B9, B11, O3 | Không | M | – |
 | 2 ✅ | Lưới an toàn test | N1, N2, N3, N5, M8, O4 | Không | M | – |
-| 3 | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
+| 3 ✅ | Công thức chiến đấu | A1, A2, A4 | **Có** | M | 1, 2 |
 | 4 | Ngọc, ép, kho | D4, D8, C6, C7, E10 | Nhẹ | M | 1 |
 | 5 | Xã hội, xếp hạng, PK cược vàng | H1–H9, H12, H14, E5, K10, M2 | Nhẹ | M–L | 2 |
 | 6 | Đồ từ Item.txt | C1, C2, C3, C4, B4, A9, C17, C21, M10, B8, L1 (phần còn lại) | **Có** | L | 1, 3; **chờ Item.txt** |
@@ -106,7 +106,7 @@ CI chỉ khi sửa `reference/rpg-game/**`.
 
 ---
 
-## Phase 3 — Công thức chiến đấu
+## Phase 3 — Công thức chiến đấu ✅ (xong 2026-10-04)
 
 **Mục tiêu:** đánh có cảm giác MU (đòn thấp / cao, trượt, phạt đánh quái yếu) mà độ khó tổng thể giữ như hiện tại.
 
@@ -121,13 +121,20 @@ CI chỉ khi sửa `reference/rpg-game/**`.
 - 3-A Bỏ hẳn "né" hiện tại, thay bằng tỉ lệ trúng (A2)? Hay giữ cả hai (quái trượt theo tỉ lệ trúng, người chơi vẫn né theo AGI)?
 - 3-B Sàn mềm bao nhiêu (đề xuất 20 % đòn gốc như MU)?
 - 3-C Phạt EXP (A4) áp cả trong tháp và trùm thế giới không? Đề xuất: chỉ quái thường.
+- 3-D Khoảng đòn thấp ~ cao áp cho toàn bộ công hay chỉ phần vũ khí? Đề xuất: toàn bộ công ±10 % cho đến Phase 6.
+- 3-E Kỹ năng có thể trượt không (hiện luôn trúng)? Đề xuất: có.
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §11`. **Đã chốt** 3-A, 3-B, 3-C, 3-D theo đề xuất; 3-E: kỹ năng **luôn trúng**.
+
+**Kết quả:** simulator 4 lớp × 5 cách chơi lệch ≤ 2,7 % số trận hạ Hắc Long, số lần chết không tăng quá 1 (bảng ở
+`INTEGRATION_PLAN.md §11.7`); `mix test` + e2e 5 kịch bản xanh.
 
 **Xong khi:** simulator 4 lớp: số trận hạ Hắc Long lệch ≤ 10 % so với hiện tại (≈ 440 / 340), số lần chết không tăng quá 1;
 e2e smoke xanh.
 
 ---
 
-## Phase 4 — Ngọc, ép, kho
+## Phase 4 — Ngọc, ép, kho ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -142,12 +149,19 @@ e2e smoke xanh.
 - 4-A Ép ngọc ở bất kỳ đâu, hay vẫn phải đứng cạnh Thợ Rèn?
 - 4-B Rương ở Nhà chứa bao nhiêu (đề xuất 40 ô đồ thường + 20 đồ hiếm), có nâng cấp chỗ bằng vàng không?
 - 4-C Trần vàng thư: 1 triệu / thư?
+- 4-D Ngọc Sinh Mệnh ép lên cánh? 4-E Làm tách chồng? 4-F Tỉ lệ rơi Ngọc Sinh Mệnh? (4-A đã chốt: giữ Thợ Rèn.)
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §12`. **Đã chốt:** 4-B 40 loại + 20 đồ hiếm, mở rộng +10 × 3 bằng vàng; 4-C 1 triệu
+vàng / 1 triệu EXP; 4-D cánh được; 4-E không làm tách chồng; 4-F trọng số 10.
+
+**Kết quả:** Ngọc Sinh Mệnh, nút Ép / Vứt trong tooltip, Tủ Đồ ở Nhà, trần thư quản trị; simulator không đổi; `mix test`
++ e2e xanh (`INTEGRATION_PLAN.md §12.7`).
 
 **Xong khi:** test hàm thuần (ngọc, vứt, rương), audit sạch sau gửi / rút, e2e ép ngọc từ tooltip.
 
 ---
 
-## Phase 5 — Xã hội, xếp hạng, PK cược vàng
+## Phase 5 — Xã hội, xếp hạng, PK cược vàng ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -163,6 +177,13 @@ e2e smoke xanh.
 - 5-C Cược tối thiểu / tối đa, phí sàn (đề xuất 100 – 1 000 000 vàng, phí 5 %)? Mỗi ngày tối đa bao nhiêu trận cược?
 - 5-D Có giới hạn chênh cấp khi mời PK không (đề xuất ±10 cấp)?
 - 5-E Chiến bang (H5) có thưởng gì (quỹ bang, danh hiệu)?
+- 5-F Công thức chia thưởng tổ đội; 5-G trận cược đánh thế nào; 5-H `/w` cho người lạ; 5-I thư còn quà có hết hạn; 6-A top
+  mấy / làm mới bao lâu.
+
+Thiết kế chi tiết: `INTEGRATION_PLAN.md §13`. **Đã chốt:** 5-C / 5-D không phí, không giới hạn chênh cấp (cược 100 – 1 000 000,
+10 trận / ngày); 5-G tự đánh hai bản sao; 5-E, 5-F, 5-H, 5-I, 6-A theo đề xuất.
+
+**Kết quả:** đủ các mục trên, simulator không đổi; `mix test` + e2e (thêm `pk.mjs`) xanh (`INTEGRATION_PLAN.md §13.10`).
 
 **Xong khi:** e2e 2 trình duyệt cho PK cược (thắng / thua / từ chối / hết hạn), audit sạch; test từng luật kiểm lại.
 
@@ -192,7 +213,7 @@ chuyền). Thêm:
 
 ---
 
-## Phase 7 — Sự kiện Golden Invasion
+## Phase 7 — Sự kiện Golden Invasion ✅ (xong 2026-10-04)
 
 | Mục | Việc |
 |---|---|
@@ -202,11 +223,19 @@ chuyền). Thêm:
 
 **⛔ Câu hỏi:** 7-A lịch (đề xuất mỗi 2 giờ, 15 phút / lần, giờ Việt Nam); 7-B có trùm vàng cuối đợt không?
 
+**Đã chốt:** 7-A mỗi 2 giờ (mốc giờ chẵn giờ Việt Nam), 15 phút; 7-B **có** trùm vàng (hạ hết quái vàng một bản đồ thì
+trùm vàng của vùng xuất hiện ở đó).
+
+**Kết quả:** `HacLong.Invasion` (lịch, bắt đầu / kết thúc, trùm vàng, kết thúc sớm), quái vàng ở 6 bản đồ đầu vùng (4 con mỗi
+bản đồ, `RULES.invasion`), mạnh ×1,5, thưởng ×5, ngọc 10 % (trùm vàng 100 %), không hồi sinh; quầng vàng, trùm vàng to 1,5 lần,
+thanh máu vàng dài hơn; dải "Golden Invasion" trên bản đồ có giờ còn lại; quản trị "Bắt đầu ngay". Test `invasion_test` (4),
+e2e `admin.mjs` +4 bước.
+
 **Xong khi:** test lịch với đồng hồ giả; e2e thấy quái vàng và nhận thưởng.
 
 ---
 
-## Phase 8 — Giao diện, hướng dẫn người chơi
+## Phase 8 — Giao diện, hướng dẫn người chơi ✅ (xong 2026-10-04, làm trước Phase 6 / 7 theo ý anh)
 
 | Mục | Việc |
 |---|---|
@@ -214,7 +243,37 @@ chuyền). Thêm:
 | **M11** | Hiệu ứng nhỏ bằng CSS / canvas: lóe sáng khi trúng, chữ "LÊN CẤP", hồi máu / MP, ép thành công / vỡ. |
 | **O1** | `docs/USER_GUIDE.md` cho Hắc Long: 4 lớp, chỉ số, kỹ năng, ép, máy ghép, cánh, chợ, giao dịch, bang… kèm ảnh từ e2e. |
 
+**Kết quả:** nút 🔔 Thông báo trên HUD (tin lên cấp, ép / ghép, thư, lời mời, cược, tin hệ thống; lưu ở trình duyệt, tối đa
+50 tin); hiệu ứng chữ lớn "LÊN CẤP", ép thành công / vỡ đồ, ghép, Ngọc Sinh Mệnh, hồi máu / MP (tôn trọng giảm chuyển động);
+`docs/USER_GUIDE.md`. e2e mobile thêm bước mở Thông báo, không tràn ngang.
+
 **Xong khi:** e2e mobile không tràn ngang; hướng dẫn đủ mọi tính năng đang có.
+
+---
+
+## Phase 9 — Sửa lỗi, Menu kiểu MU, chat trong bản đồ, vừa màn hình điện thoại ✅ (xong 2026-10-04)
+
+| Mục | Việc |
+|---|---|
+| **B1** | Sửa tràn ngang trên điện thoại (HUD nhiều nút) |
+| **B2** | Tháp: lên tầng xong nhân vật đứng đúng ô vào, không tự chạy tiếp |
+| **U3** | Dock 5 nút (Bản đồ, Nhân vật, Túi đồ, 🗺, ☰ Menu); Menu kiểu MU Web gom các tab dock còn lại (Nhiệm vụ, Khác, Quản trị); Cài đặt gồm ngôn ngữ, âm thanh, đăng xuất. Bạn bè / Hộp thư / Thông báo giữ trên HUD |
+| **U4** | Chat kiểu MU Web đè lên góc bản đồ, bỏ thẻ chat dưới bản đồ |
+| **U5** | Điện thoại: bản đồ và trận đánh vừa khít giữa HUD và dock, không cuộn |
+
+**Kết quả:** dock 5 nút (nút 🗺 tạm báo "sắp có", làm ở Phase 10); Menu 10 mục + Quản trị; Cài đặt = âm thanh, nhạc, đăng
+xuất, đổi mật khẩu, xóa nhân vật; phím Tab mở / đóng Menu. Chat đè góc dưới trái bản đồ (tin mờ sau 15 s, ▴ xem lịch sử),
+nút 💬 36 px góc dưới phải, chấm đỏ khi có tin mới; Enter mở, Esc đóng. Bản đồ / trận đánh vừa khít (`#view.fit`, canvas cao
+theo khung còn lại). e2e 6/6 xanh (mobile 18 bước: không cuộn ở bản đồ và trận đánh, vị trí / cỡ nút 💬, gửi chat, Cài đặt).
+
+## Phase 10 — 20 bản đồ mới, chọn bản đồ, hai ngôn ngữ
+
+| Mục | Việc |
+|---|---|
+| **U2** | 20 bản đồ phụ cấp 1–50 rải đều, cổng vào từ các bản đồ hiện có (không gắn Hắc Long); bảng chọn bản đồ (phím M, nút 🗺) theo thứ tự yếu → mạnh, dịch chuyển tốn vàng `20 + 4 × cấp` |
+| **U1** | Tiếng Việt / English trong Cài đặt (mặc định Việt): giao diện, dữ liệu game, tin server hay gặp — **✅ xong 2026-10-04** (A + B + C, xem `INTEGRATION_PLAN §15.2`) |
+
+**Đã chốt** 9-A … 9-E (`INTEGRATION_PLAN.md §15.8`; 9-B: bản đồ phụ, không gắn Hắc Long). Thứ tự: B1, B2 → Phase 9 → Phase 10 → Phase 6.
 
 ---
 

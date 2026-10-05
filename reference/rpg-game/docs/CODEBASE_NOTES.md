@@ -294,21 +294,32 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   - `maxHp = (40 + vit*12 + level*10) * pet(:hp)`
   - `atk = (str*2.2 + agi*0.9 + weapon.atk + up(weapon) + level) * pet(:atk)`
   - `def = (def*1.6 + armor.def + shield.def + up(armor) + up(shield) + level*0.5) * pet(:def)`
-  - chí mạng, hệ số chí mạng, né tránh theo `agi`.
+  - (từ Đợt 4 công thức theo lớp ở `CLASSES[lớp].derived`, mục 5); chí mạng, hệ số chí mạng, né tránh theo `agi`;
+  - Phase 3 thêm `ar` (attack rate = cấp × 5 + AGI × 1,5), `atkMin` / `atkMax` (công × `damage_spread`), `hitRate`
+    (trúng quái cùng cấp).
 
-**Sát thương:** `damage(atk, dfn) = max(1, round(atk*atk/(atk+dfn)*rand(0.9,1.1)))` (`engine.ex:185`).
+**Sát thương (Phase 3, `Engine.damage/4`):** đòn gốc `công × rand(damage_spread)` → × hệ số (kỹ năng, chí mạng, sổ quái,
+% cánh) → trừ thủ `đòn²/(đòn + thủ)` → sàn mềm `soft_floor` (20 %) × đòn → × `taken` (thủ thế, hấp thụ cánh) → sàn cứng 1,
+chỉ làm tròn ở cuối. Số ở `RULES.combat`.
+
+**Trúng / trượt (Phase 3):** đòn thường của người đánh quái trúng với `Engine.hit_chance(ar, cấp_quái)` =
+`AR / (AR + cấp × monster_dr)`, chặn 5–95 %; kỹ năng luôn trúng; đấu trường vẫn theo `dodge` của đối thủ. Quái đánh người:
+người né theo AGI như cũ (`d.dodge + evade`).
+
+**Phạt EXP (Phase 3):** `Engine.xp_factor/2` (`RULES.xp.penalty`), chỉ quái thường ngoài bản đồ (không trùm, tháp, trùm thế
+giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n cấp)".
 
 **Đòn người chơi** `act_strike` (`engine.ex:419-461`):
 - `atk = d.atk*(1+power(:player,"rage"))*(1-power(:player,"weaken"))` (`433-434`);
 - hệ số kỹ năng: `strike_with` (`519-590`);
 - `mult *= 1 + Bestiary.mastery(p, m.id)` (+5 % ở 25 con, +10 % ở 100 con; `bestiary.ex:13, 25`);
-- **`dmg = round(damage*mult*(crit ? critMult : 1))` (`444-445`)**: chỗ cắm thêm % sát thương;
+- `dmg = damage(atk, thủ_quái, mult * (crit ? critMult : 1))`: chỗ cắm thêm % sát thương là `mult`;
 - thú cưng cắn thêm (`464-484`).
 
 **Đòn quái** `monster_turn` (`engine.ex:592-640`):
 - `m_atk *= (1 - weaken)`;
-- **`dmg = damage(m_atk, d.def) * (chí_mạng ? 1.5 : 1) * (1 - power(:player,"guard"))` (`612-615`)**:
-  chỗ cắm thêm % giảm sát thương nhận ("guard" = −50 %);
+- `dmg = damage(m_atk, d.def, chí_mạng ? 1.5 : 1, (1 - guard) * (1 - wingAbsorb))`:
+  chỗ cắm thêm % giảm sát thương nhận là tham số `taken`;
 - né = `d.dodge + evade`.
 
 **Các hệ số % đang có:** hiệu ứng `rage / weaken / guard / evade` (lưu ở `battle.effects`), Bestiary, thú cưng / món ăn (hp / atk / def / gold / xp),
@@ -489,6 +500,57 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
   dịch cùng món hiếm. Kiểm tổng vàng (cộng thư chưa nhận), số đồ thường (túi + chợ), đồ hiếm đúng một chỗ, `Audit` sạch.
 - **CI:** `.github/workflows/hac-long-e2e.yml` (chỉ khi sửa `reference/rpg-game/**`): dev server + Postgres, e2e, soak
   10 bot / 2 phút (chạy tay chỉnh được), `mix hac_long.audit`, tải ảnh + log server.
+
+## 9h. Ngọc, ép, kho (Phase 4, 2026-10-04)
+
+- **`HacLong.Game.Storage`** (Tủ Đồ, NPC `role: "wardrobe"` ở Nhà): đồ thường ở `p.storage.inv` (cột `characters.storage`,
+  `%{inv, extra}`), đồ hiếm gắn `stored: true` trong `gear` (`Gear.put/4`, `Gear.stored?/2`). `Gear.bag/1` bỏ đồ đang cất;
+  mặc / bán / giao dịch / chợ / máy ghép từ chối đồ đang cất. Số ở `RULES.storage`.
+- **Ép theo món:** `Engine.upgrade/3`, `Engine.life/2` nhận ô (`"weapon"`…), uid, hoặc id đồ thường trong túi
+  (`forge_target/2` → `forge_instance/3`). Dòng Ngọc Sinh Mệnh lưu `opt` trên bản riêng; `life_bonus/2` cộng vào `derived`
+  cùng `upgrade_bonus`. `view.forgeBag` = giá ép từng món trong túi.
+- **`Engine.discard/3`**: vứt đồ thường (số lượng) / đồ hiếm (cả món); `gear_log` `out` lý do `DISCARD`.
+- **Trần thư quản trị:** `game_channel.ex` `admin("gift")` theo `RULES.mail`.
+- Client: `forgePick` (món chọn từ tooltip), `lifeLine`, `wardrobeCard` trong `ui.js`; `RULES.life` gửi từ `page_controller`.
+
+## 9i. Xã hội, xếp hạng, PK cược vàng (Phase 5, 2026-10-04)
+
+- **PK cược:** `HacLong.Game.PkFight` (thuần), `HacLong.PkBet` (GenServer lời mời; `execute/1` chạy ở tiến trình kênh của
+  người nhận, giữ hai Session như `HacLong.Trade`). Bảng `pk_matches`. Kênh `"pk"`.
+- **Chiến bang:** `HacLong.GuildWars` (GenServer giữ lời tuyên chiến; trận ở bảng `guild_wars`). `Guilds.brief/1` kèm `war`,
+  `war_pending` — **GuildWars không được gọi `Guilds.brief/1`** (vòng gọi lại chính nó), dùng `Guilds.member_of/1`.
+  Điểm: `Session.battle_over` (trận đấu trường) gọi `GuildWars.record/2`.
+- **Xếp hạng:** `Leaderboard.boards/0` (ETS, `init_cache/0` lúc khởi động; `config :hac_long, :leaderboard_cache, false` trong test).
+- **Session:** `Party.away/back` khi hết / có tab; đóng hết tab thì hủy giao dịch + lời mời cược; đổi bản đồ / vào trận thì
+  `Trade.left/2` (`left_trade/3`); `Session.online/1` cho quản trị.
+- **Hộp thư:** `Mailbox.claim_all/3`, `delete_read/1`, `cleanup/2` (hết hạn trừ thư còn quà).
+- Client: `HLLogic.nameColor` / `parseChat` (logic.js), `Map_.setRelations`, `pkOp`, `viewGuildWar`, lọc hộp thư.
+
+## 9j. Thông báo, hiệu ứng (Phase 8, 2026-10-04)
+
+- `ui.js`: `notes` + `note(text, kind)` (localStorage `hl-notes-<uid>`, `loadNotes` khi vào game), `viewNotes`, nút 🔔 trên HUD;
+  `bigFx(text, kind)` + `resultFx(cmd, r, old)` gọi sau mỗi lệnh trong `sendCommand`. CSS `.bigfx` cuối `style.css`.
+- Hướng dẫn người chơi: `docs/USER_GUIDE.md`.
+
+## 9k. Golden Invasion (Phase 7, 2026-10-04)
+
+- `HacLong.Invasion` (lịch, trạng thái), `MapServer.invade/invade_boss/end_invasion`, `World.golden_variant`. Trận đang
+  đánh lưu vào database: khóa mới của quái phải thêm vào `@battle_keys` trong `Characters` (`golden`, `jewel_chance`), nếu
+  không nạp lại nhân vật sẽ lỗi `KeyError`.
+
+## 9l. Menu, chat trong bản đồ, màn vừa khít (Phase 9, 2026-10-04)
+
+- Dock: `map`, `hero`, `bag`, `travel` (tạm toast), `menu`. `goTab('quests' | 'misc' | 'admin')` vẫn chạy (chuyển thành mục Menu).
+  `MENU` / `MENU_VIEW` / `menuSec` / `onMenu(sec)` trong `ui.js`; hook test `__hl.menu(sec)`, `ui().menu`.
+- Chat: `viewChat()` giờ là khung đè trên bản đồ (truyền vào `Map_.html` làm overlay), `toggleChat(on)` (**khác** `openChat(uid)`
+  là tin riêng bạn bè). Form vẫn `#chat-form` / `#chat-input`, chỉ có khi khung đang mở.
+- `#view.fit` (bản đồ, trận đánh): không cuộn; `map.js resize()` lấy chiều cao theo `.map-wrap`.
+
+## 9m. Hai ngôn ngữ (Phase 10, 2026-10-04)
+
+- `priv/static/js/i18n.js` (`window.I18N`: `lang`, `tr`, `set`), nạp trước `logic.js`; từ điển `priv/static/i18n/en.json`
+  (`static_paths` thêm `i18n`). Trích câu: `python3 scripts/i18n_extract.py` → `source.json`. Câu có số phải để số đứng riêng
+  (bộ dịch thay số bằng {n}); đừng ghép câu từ nhiều mảnh nếu tránh được. Phần tử nào không muốn dịch: thêm `data-notr`.
 
 ## 10. Bẫy cần biết
 

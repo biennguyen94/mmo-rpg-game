@@ -41,6 +41,19 @@
       "lines": [
         "Rương gỗ cũ của nhà. Mỗi ngày mở ra lại thấy có thứ gì đó."
       ]
+    },
+    {
+      "id": "wardrobe",
+      "name": "Tủ Đồ",
+      "sprite": "wardrobe",
+      "at": [
+        7,
+        1
+      ],
+      "role": "wardrobe",
+      "lines": [
+        "Tủ gỗ lớn của nhà. Cất đồ chưa dùng tới vào đây cho gọn túi."
+      ]
     }
   ]
 }
