@@ -81,7 +81,7 @@ defmodule HacLong.Game.Events do
         id: "potions",
         name: "#{@rules.potions} #{Data.item("potion_l").name}",
         cost: @rules.shop.potions,
-        desc: "Hồi #{Data.item("potion_l").heal} máu mỗi bình."
+        desc: "Hồi #{round(Data.item("potion_l").heal_pct * 100)}% máu tối đa mỗi bình."
       },
       %{
         id: "gold",

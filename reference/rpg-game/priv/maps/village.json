@@ -179,7 +179,10 @@
       "stock": [
         "potion_s",
         "potion_m",
-        "potion_l"
+        "potion_l",
+        "mana_s",
+        "mana_m",
+        "mana_l"
       ],
       "lines": [
         "Có thảo dược thì ta pha thuốc cho, khỏi tốn tiền mua.",

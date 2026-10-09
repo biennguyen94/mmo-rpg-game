@@ -1154,6 +1154,8 @@
   function pref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
   function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* bị chặn: chỉ đổi lần này */ } }
 
+  const skillMp = (k) => L.skillMp(k, P.level, RULES.skillMpPerLevel);
+
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
@@ -1382,7 +1384,8 @@
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
-    if (it.heal) return `Hồi ${it.heal} máu`;
+    if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
+    if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
     return '';
   }
 
@@ -1458,7 +1461,7 @@
       <div class="card"><h3>Kỹ năng</h3><div class="list">
         ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
           <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
-          <div class="small muted">${k.desc} Tốn ${k.mp} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
+          <div class="small muted">${k.desc} Tốn ${skillMp(k)} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
       </div></div>`;
   }
 
@@ -1609,7 +1612,7 @@
     const gear = bagGear().concat(ids.filter((id) => SLOT_OPEN.includes(ITEMS[id].slot)));
     return gear.concat(by('potion'), by('food'), by('material'));
   }
-  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal_pct).reduce((a, id) => a + P.inv[id], 0);
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
@@ -1756,15 +1759,16 @@
     const low = it.level && P.level < it.level;
     const worn = P.equip[slot] === id;
     const owned = P.inv[id] || 0;
-    const poor = P.gold < it.price;
+    const price = L.shopPrice(it, P.level, RULES.potionPricePerLevel);
+    const poor = P.gold < price;
     return `<div class="item">
       ${itemIcon(it)}
       <div class="grow">
         <div class="name">${it.name}</div>
         <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
       </div>
-      ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < it.price * 5 ? 'disabled' : ''}>×5</button>` : ''}
-      <button class="btn ${!low && !poor ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(it.price)}</button>
+      ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < price * 5 ? 'disabled' : ''}>×5</button>` : ''}
+      <button class="btn ${!low && !poor ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>
     </div>`;
   }
 
@@ -2144,6 +2148,7 @@
     const fxs = (!b.over && b.effects) || { player: [], monster: [] };
     const dotted = fxs.player.some((e) => ['poison', 'burn', 'bleed'].includes(e.id));
     const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
+    const manas = ['mana_s', 'mana_m', 'mana_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     const floatHtml = fx && fx.mDmg != null
       ? `<span class="float ${fx.crit ? 'crit' : ''} ${fx.mDmg === 0 ? 'miss' : ''}">${fx.mDmg === 0 ? 'Trượt' : '-' + fmt(fx.mDmg)}</span>` : '';
     let bottom;
@@ -2151,8 +2156,9 @@
       bottom = `
         <div class="actions">
           <button class="btn primary" data-act="attack">${icon('broadsword')} Tấn công</button>
-          ${skills.map((k) => { const noMp = (P.mp || 0) < k.mp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.mp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${k.mp} MP</span>`}</button>`; }).join('')}
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${kmp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${kmp} MP</span>`}</button>`; }).join('')}
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'}>${icon('health-potion')} Uống máu (${pots})</button>
+          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp ? '' : 'disabled'}>${icon('magic-potion')} Uống mana (${manas})</button>
           <button class="btn" data-act="flee">${icon('walk')} Bỏ chạy</button>
         </div>`;
     } else {
@@ -2246,7 +2252,7 @@
     if (!r.ok) { Sound.play('error'); return; }
     if (fx) {
       if (cmd.act === 'skill') Sound.play('skill');
-      if (cmd.act === 'potion') Sound.play('potion');
+      if (cmd.act === 'potion' || cmd.act === 'mana') Sound.play('potion');
       if (fx.mDmg === 0) Sound.play('miss'); else if (fx.mDmg) Sound.play(fx.crit ? 'crit' : 'hit');
       if (fx.pDmg) setTimeout(() => Sound.play('hurt'), 180);
     } else if (CMD_SOUND[cmd.act]) Sound.play(CMD_SOUND[cmd.act]);
@@ -2260,7 +2266,7 @@
   async function sendCommand(cmd) {
     if (busy) return;
     busy = true;
-    const battle = ['attack', 'skill', 'potion', 'flee'].includes(cmd.act) && P && P.battle;
+    const battle = ['attack', 'skill', 'potion', 'mana', 'flee'].includes(cmd.act) && P && P.battle;
     const before = battle ? snapBattle() : null;
     const scroll = $('#view').scrollTop;
     const old = P;
@@ -2376,7 +2382,7 @@
     }
     if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
     // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
-    const id = Object.keys(ITEMS).find((k) => ITEMS[k].slot === 'potion' && P.inv[k] > 0);
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal_pct && P.inv[k] > 0);
     if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
   }
   function hotkeyEscape() {

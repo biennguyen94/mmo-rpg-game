@@ -81,6 +81,9 @@ defmodule HacLongWeb.PageController do
         pkMax: Data.rules().pk.max,
         pkInvite: Data.rules().pk.invite_s,
         wingPerLevel: Data.rules().combat.wing_per_level,
+        # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
+        skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
+        potionPricePerLevel: Data.rules().shop.potion_price_per_level,
         smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
         smithRare: Data.rules().crafting.smith_rare,
         tameBonus: Data.rules().pets.tame_bonus,

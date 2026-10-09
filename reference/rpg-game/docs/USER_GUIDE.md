@@ -42,7 +42,9 @@
 | **Tiên Nữ** | Cung, hồi máu, tăng sức. Tấn công theo Nhanh nhẹn | Tam Tiễn (1), Hồi Sinh Lực (10), Tăng Sức Mạnh (25) |
 | **Đấu Sĩ** | Lai kiếm và phép (Sức mạnh + Năng lượng) | Kiếm Lửa (1), Kiếm Độc Hỏa (10), Phán Quyết (25) |
 
-Kỹ năng tốn MP; MP hồi dần mỗi lượt và khi nghỉ trọ. Kỹ năng luôn trúng (đòn thường có thể trượt).
+Kỹ năng tốn MP, tốn nhiều hơn khi lên cấp (MP gốc × (1 + 4 % × (cấp − 1))). Mỗi lượt trong trận hồi 3 % MP tối đa + Năng lượng / 10; nghỉ trọ hồi đầy. Kỹ năng luôn trúng (đòn thường có thể trượt).
+
+Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 %, vừa 40 %, lớn 70 % máu / MP tối đa; giá tăng theo cấp nhân vật (+10 % mỗi cấp). Trong trận có nút **Uống máu** và **Uống mana** (mất một lượt).
 
 ## 3. Chỉ số và lên cấp
 

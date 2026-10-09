@@ -168,21 +168,42 @@
       "name": "Bình Máu Nhỏ",
       "slot": "potion",
       "icon": "health-potion",
-      "heal": 60,
-      "price": 15
+      "price": 15,
+      "heal_pct": 0.2
     },
     "potion_m": {
       "name": "Bình Máu Vừa",
       "slot": "potion",
       "icon": "health-potion",
-      "heal": 220,
-      "price": 55
+      "price": 55,
+      "heal_pct": 0.4
     },
     "potion_l": {
       "name": "Bình Máu Lớn",
       "slot": "potion",
       "icon": "magic-potion",
-      "heal": 650,
+      "price": 150,
+      "heal_pct": 0.7
+    },
+    "mana_s": {
+      "name": "Bình Mana Nhỏ",
+      "slot": "potion",
+      "icon": "magic-potion",
+      "mana_pct": 0.2,
+      "price": 15
+    },
+    "mana_m": {
+      "name": "Bình Mana Vừa",
+      "slot": "potion",
+      "icon": "magic-potion",
+      "mana_pct": 0.4,
+      "price": 55
+    },
+    "mana_l": {
+      "name": "Bình Mana Lớn",
+      "slot": "potion",
+      "icon": "magic-potion",
+      "mana_pct": 0.7,
       "price": 150
     },
     "herb": {

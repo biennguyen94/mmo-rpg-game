@@ -114,3 +114,9 @@
 - **P11-3** Gặp trùm: client luôn gửi `move` kèm `confirm: true` nên vào trận ngay; server giữ nguyên giao thức (`confirm: "boss"` vẫn có cho client cũ).
 - **P11-4** Quà cho mọi người kèm trang bị: khóa `items` `"gear:<mẫu>:<độ hiếm>:<+N>"` trong thư (không đổi schema `mails`); độ hiếm 0 = đồ thường, 1..3 = đồ hiếm chỉ số `1 + cấp/6` cho 1..3 chỉ số đầu (như lệnh `give_gear` không nhập chỉ số); mỗi thư tối đa 100 món mỗi loại; túi đồ hiếm không đủ chỗ thì không mở được thư (không tự bán).
 - **P11-5** Bỏ form "Gửi quà" riêng ở thẻ tra cứu người chơi (trùng Chỉnh nhân vật); lệnh `gift` với `uid` trên server vẫn giữ.
+
+## Phase 12 (2026-10-09) — MP
+- **P12-1** MP kỹ năng: `mp` gốc ở `classes.json` (kỹ năng mạnh / mở muộn gốc cao hơn, đã phản ánh sát thương) × (1 + `RULES.combat.skill_mp_per_level` (0.04) × (cấp − 1)). Không thêm cấp kỹ năng (game chưa có).
+- **P12-2** Hồi MP mỗi lượt: `mp_regen` (0.03) × MP tối đa + `mp_regen_ene` (0.1) × Năng lượng (cả đồ cộng), tối thiểu 1 (câu 12-A).
+- **P12-3** Bình máu `heal` → `heal_pct` 0.2 / 0.4 / 0.7; thêm `mana_s/m/l` (`mana_pct` cùng mức), slot `potion`, Bà Lang bán. Giá mua bình × (1 + `RULES.shop.potion_price_per_level` (0.1) × (cấp − 1)); giá bán lại theo giá gốc (không lời khi mua rồi bán).
+- **P12-4** Trong trận thêm lệnh `mana` (như `potion`, mất một lượt, chọn bình nhỏ nhất đủ đầy). Phím Q vẫn chỉ uống bình máu.

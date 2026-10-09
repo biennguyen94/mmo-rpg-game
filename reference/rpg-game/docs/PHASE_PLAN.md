@@ -296,7 +296,7 @@ Thứ tự: 11 → 12 → 13 → 14 → 15 (15a = U2 20 bản đồ, 15b = Phase
 | **V9** | Gặp boss vào thẳng bảng kỹ năng như quái thường (bỏ Đấu / Thôi) |
 | **V10** | Quản trị: bỏ "Gửi quà" (trùng "Chỉnh nhân vật"); "Quà cho mọi người" thêm đồ thường / đồ hiếm + N |
 
-### Phase 12 — Làm lại MP (cần chốt 12-A, 12-B)
+### Phase 12 — Làm lại MP ✅ (xong 2026-10-09, 12-A / 12-B theo đề xuất)
 Chi phí MP kỹ năng theo công thức (kiểu MU: gốc + hệ số × cấp kỹ năng); hồi MP trong trận theo ENE / cấp; shop bán bình MP hồi theo % (nhỏ 20 %, vừa 40 %, lớn 70 %), giá theo cấp.
 
 ### Phase 13 — Người chơi và quái trên bản đồ (cần chốt 13-A, 13-B)

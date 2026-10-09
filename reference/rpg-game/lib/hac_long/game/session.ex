@@ -614,7 +614,7 @@ defmodule HacLong.Game.Session do
 
   # Đánh trùm thế giới: máu trùm là máu chung ở HacLong.WorldBoss. Trước lượt đánh lấy máu
   # mới nhất, sau lượt đánh báo sát thương vừa gây.
-  @strikes ~w(attack skill potion flee)
+  @strikes ~w(attack skill potion mana flee)
 
   defp run(s, %{battle: %{over: false} = b} = p, %{"act" => act} = cmd) when act in @strikes do
     cond do

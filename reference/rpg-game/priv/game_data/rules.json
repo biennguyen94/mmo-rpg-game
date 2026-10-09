@@ -50,11 +50,13 @@
         "min": 0.05,
         "max": 0.95
       },
-      "mp_regen": 0.05,
+      "mp_regen": 0.03,
       "flee_chance": 0.7,
       "flee_chance_boss": 0.35,
       "monster_crit_mult": 1.5,
-      "wing_per_level": 0.02
+      "wing_per_level": 0.02,
+      "mp_regen_ene": 0.1,
+      "skill_mp_per_level": 0.04
     },
     "skill_effects": {
       "cleave": {
@@ -199,7 +201,8 @@
       "sell_ratio": 0.4,
       "unpriced_value": 200,
       "gear_rarity_value": 0.25,
-      "gear_bonus_value": 5
+      "gear_bonus_value": 5,
+      "potion_price_per_level": 0.1
     },
     "upgrade": {
       "bonus_pct": 0.08,

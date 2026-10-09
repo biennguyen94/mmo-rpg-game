@@ -101,7 +101,11 @@
     return { error: `Không có lệnh /${cmd}. Dùng /w, /p, /g, /a.` };
   }
 
-  const Logic = { DIRS, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
+  // Phase 12 (giống Engine.skill_mp/2 và Engine.price/2 trên server)
+  const skillMp = (k, level, perLevel) => Math.round((k.mp || 0) * (1 + perLevel * (level - 1)));
+  const shopPrice = (it, level, perLevel) => (it.slot === 'potion' ? Math.round(it.price * (1 + perLevel * (level - 1))) : it.price);
+
+  const Logic = { DIRS, skillMp, shopPrice, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
   root.HLLogic = Logic;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -47,8 +47,9 @@ R.check('gặp Bà Lang', await meetNpc(page, 'herbalist'));
 const before = await player(page);
 await act(page, '[data-act="buy"][data-id="potion_s"]');
 let after = await player(page);
-const price = await page.evaluate(() => window.GAME_DATA.ITEMS.potion_s.price);
-R.check('mua Bình Máu Nhỏ: trừ đúng giá, thêm 1 bình', after.gold === before.gold - price && after.inv.potion_s === (before.inv.potion_s || 0) + 1, `${before.gold}→${after.gold}`);
+// Phase 12: giá bình tăng theo cấp (RULES.potionPricePerLevel)
+const price = await page.evaluate((lv) => window.HLLogic.shopPrice(window.GAME_DATA.ITEMS.potion_s, lv, window.GAME_DATA.RULES.potionPricePerLevel), before.level);
+R.check('mua Bình Máu Nhỏ: trừ đúng giá theo cấp, thêm 1 bình', after.gold === before.gold - price && after.inv.potion_s === (before.inv.potion_s || 0) + 1, `${before.gold}→${after.gold}`);
 const sell = await page.evaluate(() => window.GAME_DATA.ITEMS.potion_s.sell);
 const r = await send(page, { act: 'sell', id: 'potion_s' });
 R.check('bán lại Bình Máu Nhỏ: cộng đúng giá bán', r.gold === after.gold + sell && r.inv.potion_s === after.inv.potion_s - 1);

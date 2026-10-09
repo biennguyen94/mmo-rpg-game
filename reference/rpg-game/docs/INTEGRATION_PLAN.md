@@ -1077,6 +1077,8 @@ Danh sách việc theo phase: `PHASE_PLAN.md` (mục "Yêu cầu thêm 2026-10-0
 |---|---|---|
 | **12-A** | Hồi MP trong trận mỗi lượt? | 3 % MP tối đa + ENE / 10 |
 | **12-B** | Bình máu có đổi sang hồi theo % như bình MP? | Có, cho đồng bộ |
+
+**Đã chốt (2026-10-09):** 12-A, 12-B theo đề xuất.
 | **13-A** | Ẩn người khác chỉ trên ô hay ẩn hẳn khỏi bản đồ? | Ẩn hẳn, xem qua danh sách 👥 |
 | **13-B** | Profile gồm những mục nào? | Chờ ảnh mẫu của anh |
 | **16-A** | Bot: bao nhiêu, có lên bảng xếp hạng, giao dịch / PK được không, có đánh dấu là bot? | 20 bot, không lên bảng xếp hạng, không giao dịch, PK được, không đánh dấu |

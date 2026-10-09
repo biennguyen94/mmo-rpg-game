@@ -55,7 +55,7 @@ defmodule HacLong.Game.Commands do
       "rest" ->
         rest(p)
 
-      a when a in ~w(attack skill potion flee) ->
+      a when a in ~w(attack skill potion mana flee) ->
         Engine.act(p, a, c["skill"])
 
       "leave" ->

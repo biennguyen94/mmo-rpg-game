@@ -17,7 +17,8 @@ defmodule HacLong.Game.DataRulesTest do
                ~w(BOSS_DROPS CHAOS CLASSES EVENTS FURNITURE ITEMS JEWELS PETS QUESTS RECIPES RULES SHOP UPGRADE ZONES)
 
       assert map_size(Data.classes()) == 4
-      assert Data.item("potion_s").heal > 0
+      assert Data.item("potion_s").heal_pct > 0
+      assert Data.item("mana_s").mana_pct > 0
       assert Data.rules().character.max_level == Engine.max_level()
     end
 
