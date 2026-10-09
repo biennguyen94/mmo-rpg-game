@@ -105,7 +105,11 @@
   const skillMp = (k, level, perLevel) => Math.round((k.mp || 0) * (1 + perLevel * (level - 1)));
   const shopPrice = (it, level, perLevel) => (it.slot === 'potion' ? Math.round(it.price * (1 + perLevel * (level - 1))) : it.price);
 
-  const Logic = { DIRS, skillMp, shopPrice, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
+  // Phase 14: tìm theo tên không cần gõ dấu ("cho rung" khớp "Chó Rừng")
+  const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().trim();
+  const nameMatch = (names, q) => { const k = fold(q); return !k || names.some((n) => fold(n).includes(k)); };
+
+  const Logic = { DIRS, skillMp, shopPrice, fold, nameMatch, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
   root.HLLogic = Logic;
 })(typeof window !== 'undefined' ? window : globalThis);

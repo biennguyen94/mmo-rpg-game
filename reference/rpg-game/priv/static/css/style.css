@@ -601,3 +601,15 @@ img.own { object-fit: contain; image-rendering: auto; }
 .prof-box b { color: var(--gold); }
 .prof-gear { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .prof-item { display: grid; justify-items: center; text-align: center; font-size: 0.78rem; gap: 2px; }
+
+/* Phase 14: Thư viện */
+.lib-q { width: 100%; margin: 10px 0; }
+.lib-row { width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; }
+.lib-detail { padding: 4px 8px 10px 52px; font-size: 0.85rem; display: grid; gap: 4px; }
+.lib-detail { padding-left: 12px; }
+.lib-detail .kv { display: grid; gap: 1px; border: 0; padding: 2px 0; }
+.lib-detail .kv > span:first-child { color: var(--dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.lib-stats { display: flex; flex-wrap: wrap; gap: 6px 12px; font-variant-numeric: tabular-nums; }
+.lib-q { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: inherit; font: inherit; }
+.lib-link { background: none; border: 0; padding: 0; color: var(--gold); cursor: pointer; font: inherit; text-decoration: underline dotted; }
+.sprite.sm, .ic.sm { width: 40px; height: 40px; }

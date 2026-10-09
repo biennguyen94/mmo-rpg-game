@@ -91,7 +91,9 @@ defmodule HacLongWeb.PageController do
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
         petXpCoef: Data.rules().pets.xp_coef
       },
-      WORLD: Maps.client_data()
+      WORLD: Maps.client_data(),
+      # Phase 14: Thư viện (bản đồ, quái, vật phẩm)
+      LIBRARY: HacLong.Library.get()
     }
   end
 end

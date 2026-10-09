@@ -90,3 +90,12 @@ test('lệnh chat /w /p /g /a', () => {
   assert.ok(L.parseChat('/p', 'world', fr).error);
   assert.ok(L.parseChat('/x hi', 'world', fr).error);
 });
+
+test('Thư viện: tìm theo tên không cần dấu', () => {
+  assert.equal(L.fold('Chó Rừng Đen'), 'cho rung den');
+  assert.ok(L.nameMatch(['Chó Rừng'], 'cho rung'));
+  assert.ok(L.nameMatch(['Chó Rừng'], 'RỪNG'));
+  assert.ok(L.nameMatch(['Chó Rừng'], ''));
+  assert.ok(!L.nameMatch(['Chó Rừng'], 'doi'));
+  assert.ok(L.nameMatch(['Dơi Hang', 'Cave Bat'], 'bat'));
+});

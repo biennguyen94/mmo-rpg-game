@@ -302,7 +302,7 @@ Chi phí MP kỹ năng theo công thức (kiểu MU: gốc + hệ số × cấp 
 ### Phase 13 — Người chơi và quái trên bản đồ ✅ (xong 2026-10-09; 13-A theo đề xuất, 13-B theo ảnh mẫu)
 Quái có tên trên đầu, thanh máu dưới, máu do server giữ và phát cho cả bản đồ; không vẽ người khác trên ô, dock thêm 👥 (số người trong bản đồ) → danh sách → Xem profile / Giao dịch / PK / Kết bạn / Nhắn tin; profile mình và người khác; tab Nhân vật hiện % cộng thêm từ đồ / buff.
 
-### Phase 14 — Thư viện
+### Phase 14 — Thư viện ✅ (xong 2026-10-09)
 Menu → 📚 Thư viện: Bản đồ / Quái / Vật phẩm, tìm theo tên, sinh từ dữ liệu game.
 
 ### Phase 15 — Nội dung mới

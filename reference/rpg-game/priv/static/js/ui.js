@@ -1582,11 +1582,12 @@
     ['pets', 'forest', 'Thú cưng'],
     ['skills', 'sword-spin', 'Kỹ năng'],
     ['bestiary', 'skull-crossed-bones', 'Sổ quái'],
+    ['library', 'open-book', 'Thư viện'],
     ['settings', 'speaker', 'Cài đặt'],
   ];
   let menuSec = null; // mục Menu đang mở (null: lưới biểu tượng)
   const onMenu = (sec) => tab === 'menu' && menuSec === sec;
-  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), settings: () => viewSettings(), admin: () => viewAdmin() };
+  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), library: () => viewLibrary(), settings: () => viewSettings(), admin: () => viewAdmin() };
   function viewMenu() {
     const items = MENU.concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []);
     if (menuSec && MENU_VIEW[menuSec]) {
@@ -1595,6 +1596,70 @@
     }
     return `<h2 class="display">Menu</h2><div class="menu-grid">${items.map(([id, ic, label]) => `<button class="menu-item" data-menu="${id}">${icon(ic, 'lg')}<span>${label}</span></button>`).join('')}</div>`;
   }
+
+  // ---------- Thư viện (Phase 14) ----------
+  // Dữ liệu `GAME_DATA.LIBRARY` (server sinh từ dữ liệu game). Gõ tìm chỉ vẽ lại phần kết quả để ô nhập không mất chữ.
+  const LIB = window.GAME_DATA.LIBRARY || { maps: [], monsters: [], items: [] };
+  let libUi = { tab: 'maps', q: '', open: null };
+  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
+  const trn = (t) => (window.I18N ? window.I18N.tr(t) : t);
+  const libMap = (id) => LIB.maps.find((m) => m.id === id);
+  const libMon = (id) => LIB.monsters.find((m) => m.id === id);
+  const go = (tab, name) => `<button class="lib-link" data-act="lib-go" data-tab2="${tab}" data-q="${esc(name)}">${esc(name)}</button>`;
+  function viewLibrary() {
+    const tabs = [['maps', 'Bản đồ', LIB.maps.length], ['monsters', 'Quái', LIB.monsters.length], ['items', 'Vật phẩm', LIB.items.length]];
+    return `<div class="card">
+      <div class="seg" id="lib-tabs">${tabs.map(([k, l, n]) => `<button class="btn ${libUi.tab === k ? 'primary' : ''}" data-act="lib-tab" data-tab2="${k}">${l} <span class="small">${n}</span></button>`).join('')}</div>
+      <input type="search" id="lib-q" class="lib-q" placeholder="Tìm theo tên (không cần dấu)…" value="${esc(libUi.q)}" autocomplete="off" aria-label="Tìm trong thư viện">
+      <div id="lib-results">${libResults()}</div></div>`;
+  }
+  function libResults() {
+    const list = LIB[libUi.tab].filter((x) => L.nameMatch([x.name, trn(x.name)], libUi.q));
+    if (!list.length) return '<p class="small muted">Không tìm thấy.</p>';
+    const row = libUi.tab === 'maps' ? libMapRow : libUi.tab === 'monsters' ? libMonRow : libItemRow;
+    return `<div class="list">${list.slice(0, 120).map(row).join('')}</div>${list.length > 120 ? `<p class="small muted">Còn ${list.length - 120} kết quả, gõ thêm để lọc.</p>` : ''}`;
+  }
+  const libHead = (key, left, title, sub) => `<button class="item lib-row" data-act="lib-open" data-key="${esc(key)}" aria-expanded="${libUi.open === key}">${left}<div class="grow"><div class="name">${title}</div><div class="small muted">${sub}</div></div><span class="small muted">${libUi.open === key ? '▾' : '▸'}</span></button>`;
+  const libLine = (k, v) => (v ? `<div class="kv"><span>${k}</span><span>${v}</span></div>` : '');
+  function libMapRow(m) {
+    const key = 'map:' + m.id;
+    const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
+    const head = libHead(key, icon(m.zone ? 'forest' : 'village', 'lg'), esc(m.name), `${m.zone ? esc(m.zone) + ' · ' : ''}${lv}`);
+    if (libUi.open !== key) return head;
+    const mons = m.monsters.map((id) => libMon(id)).filter(Boolean);
+    const boss = m.boss && libMon(m.boss);
+    return head + `<div class="lib-detail">
+      ${libLine('Quái', mons.map((x) => `${go('monsters', x.name)} <span class="muted">(${x.level})</span>`).join(', '))}
+      ${libLine('Trùm', boss ? `${go('monsters', boss.name)} <span class="muted">(${boss.level})</span>` : '')}
+      ${libLine('Trùm thế giới', m.world_boss ? 'Cổ Long xuất hiện ở đây' : '')}
+      ${libLine('Cổng tới', m.to.map((id) => libMap(id)).filter(Boolean).map((x) => go('maps', x.name)).join(', '))}
+      ${libLine('NPC', m.npcs.map(esc).join(', '))}
+      ${libLine('Thu thập', m.gather.map((id) => ITEMS[id] ? go('items', ITEMS[id].name) : esc(id)).join(', '))}
+    </div>`;
+  }
+  function libMonRow(m) {
+    const key = 'mon:' + m.id;
+    const head = libHead(key, sprite(m.id, 'sm', m.name), `${m.boss ? '👑 ' : ''}${esc(m.name)}`, `Cấp ${m.level} · ${esc(m.zone)}`);
+    if (libUi.open !== key) return head;
+    return head + `<div class="lib-detail">
+      <div class="lib-stats"><span>❤ ${fmt(m.hp)}</span><span>⚔ ${fmt(m.atk)}</span><span>🛡 ${fmt(m.def)}</span><span>⭐ ${fmt(m.xp)}</span><span>${icon('two-coins')} ~${fmt(m.gold)}</span></div>
+      ${libLine('Đòn đặc biệt', m.special ? `${esc(m.special.name)} mỗi ${m.special.every} lượt` : '')}
+      ${libLine('Khi đánh trúng', m.on_hit ? `${Math.round(m.on_hit.chance * 100)}% gây ${esc((EFFECTS[m.on_hit.id] || [0, m.on_hit.id])[1])}` : '')}
+      ${libLine('Xuất hiện ở', m.where.map((n) => go('maps', n)).join(', '))}
+      ${libLine('Có thể rơi', m.drops.map((id) => ITEMS[id] ? go('items', ITEMS[id].name) : esc(id)).join(', '))}
+    </div>`;
+  }
+  function libItemRow(x) {
+    const key = 'item:' + x.id, it = ITEMS[x.id] || x;
+    const head = libHead(key, itemIcon(it), esc(x.name), `${SLOT_NAME[x.slot] || esc(x.slot)}${x.level ? ` · cần cấp ${x.level}` : ''}${x.cls && CLASSES[x.cls] ? ` · ${CLASSES[x.cls].name}` : ''}`);
+    if (libUi.open !== key) return head;
+    return head + `<div class="lib-detail">
+      ${libLine('Chỉ số', itemStat(it))}
+      ${libLine('Giá', x.price ? `${fmt(x.price)} vàng` : '')}
+      ${libLine('Có được từ', x.sources.length ? x.sources.map(esc).join('<br>') : 'Chưa có nguồn (đồ đặc biệt)')}
+    </div>`;
+  }
+  function libRefresh() { const r = $('#lib-results'); if (r) r.innerHTML = libResults(); }
 
   // ---------- Thú cưng ----------
   // Thú bán ở cửa hàng hoặc quái đã thuần phục ("tame:<id quái>")
@@ -2631,6 +2696,9 @@
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
+    if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
+    if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
+    if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
     if (act === 'profile') { openPlayer({ id: +t.dataset.uid }); return; }
     if (act === 'profile-close') { profileUi = { open: false, info: null }; render(); return; }
     // rời hồ sơ khi sang thăm nhà / vào trận
@@ -2882,7 +2950,10 @@
     });
     setInterval(() => { const el = $('#wb-left'); if (el && wb.alive) el.textContent = clock(wb.endsAt - wb.skew - Date.now()); }, 1000);
     Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(ovLine).join(''); log.scrollTop = log.scrollHeight; } });
-    document.addEventListener('input', (e) => { if (e.target.id === 'chat-input') chatDraft = e.target.value; });
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'chat-input') chatDraft = e.target.value;
+      if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
+    });
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);

@@ -126,3 +126,7 @@
 - **P13-2** Không vẽ người khác (cả thú cưng, bong bóng chat của họ) trên bản đồ; `playerAt` luôn null. Dock thêm **👫 Quanh đây** (số đỏ = số người khác cùng bản đồ) → danh sách → hồ sơ.
 - **P13-3** Hồ sơ dùng lại lệnh `inspect` (thêm `me`, `profile`, `HacLong.Profile`): mình và người khác cùng bố cục; người khác có nút hành động (tổ đội, thăm nhà, giao dịch, kết bạn, thách đấu, cược đấu, chặn chat). "Lần cuối online" = lần ghi nhân vật gần nhất (`characters.updated_at`). Vàng người khác hiện như ảnh mẫu.
 - **P13-4** Tab Nhân vật: chỉ số hiện `+N` từ đồ hiếm; tấn công / phòng thủ / máu hiện `+N%` từ thú cưng + món ăn (`view.extra`).
+
+## Phase 14 (2026-10-09) — Thư viện
+- **P14-1** `HacLong.Library` sinh danh sách bản đồ (bỏ Nhà riêng), quái (cả trùm vùng; chỉ số theo `Engine.make_monster/2`, vàng lấy trung bình không may rủi), vật phẩm (nguồn: NPC bán, pha chế / nấu, thưởng nhiệm vụ, trùm rơi, bình quái rơi theo `RULES.loot.potions`, ngọc theo `JEWELS`, thu thập) từ dữ liệu game, giữ trong `:persistent_term`, gửi một lần trong `GAME_DATA.LIBRARY`.
+- **P14-2** Tìm theo tên không cần dấu (`HLLogic.fold`), cả tên đã dịch khi chơi tiếng Anh; gõ chỉ vẽ lại phần kết quả. Tên trong chi tiết là liên kết sang mục tương ứng. Đồ hiếm chỉ số ngẫu nhiên không liệt kê riêng (là biến thể của vũ khí / giáp / khiên).

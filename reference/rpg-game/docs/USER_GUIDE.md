@@ -197,6 +197,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Menu → Cài đặt → Bản đồ**: Sáng / Tối / Tự động (theo giờ trong game).
 - Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, cược đấu. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
+- **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.
 - Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.
 - Chat: tin mới hiện 5 giây ở góc dưới trái rồi ẩn (bấm 💬 xem hết); gõ **/d** để xóa chat trên máy mình.
 
