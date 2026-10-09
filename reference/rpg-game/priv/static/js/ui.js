@@ -2261,11 +2261,13 @@
     if (!b.over) {
       bottom = `
         <div class="actions">
-          <button class="btn primary" data-act="attack">${icon('broadsword')} Tấn công</button>
-          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${kmp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${kmp} MP</span>`}</button>`; }).join('')}
-          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'}>${icon('health-potion')} Uống máu (${pots})</button>
-          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp ? '' : 'disabled'}>${icon('magic-potion')} Uống mana (${manas})</button>
-          <button class="btn" data-act="flee">${icon('walk')} Bỏ chạy</button>
+          <button class="btn primary" data-act="attack">${icon('broadsword')}<span class="lbl">Tấn công</span></button>
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
+        </div>
+        <div class="actions util">
+          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
+          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp ? '' : 'disabled'} title="Uống mana">${icon('magic-potion')}<span class="lbl">Mana</span><span class="sub num">${manas}</span></button>
+          <button class="btn" data-act="flee" title="Bỏ chạy">${icon('walk')}<span class="lbl">Chạy</span></button>
         </div>`;
     } else {
       const r = b.result, rw = b.reward;

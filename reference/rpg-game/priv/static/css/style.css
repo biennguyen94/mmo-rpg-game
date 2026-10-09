@@ -214,7 +214,15 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .log .win { color: var(--gold); font-weight: 600; }
 .log .info { color: var(--dim); }
 .actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-.actions .btn { padding: 13px 8px; font-size: 0.95rem; min-width: 0; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; }
+.actions .btn { display: flex; align-items: center; gap: 6px; padding: 8px 10px; min-height: 46px; font-size: 0.92rem; min-width: 0; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; text-align: left; }
+.actions .btn .lbl { flex: 1 1 auto; min-width: 0; }
+.actions .btn .sub { flex: none; font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
+.actions.primary-row .btn { justify-content: center; }
+/* hàng phụ: uống máu / mana / bỏ chạy — ba nút nhỏ một hàng */
+.actions.util { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.actions.util .btn { min-height: 38px; padding: 6px 8px; font-size: 0.82rem; justify-content: center; gap: 4px; }
+.actions.util .btn .lbl { flex: none; }
+.actions.util .btn .sub { padding: 0 5px; border-radius: 99px; background: rgba(0, 0, 0, 0.35); }
 .result { text-align: center; }
 .result h2 { font-family: var(--display); font-size: 2.2rem; line-height: 1; }
 .result.win h2 { color: var(--gold); }
@@ -566,7 +574,10 @@ img.own { object-fit: contain; image-rendering: auto; }
 #view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
 #view.fit .map-hint { display: none; }
 #view.fit .log { flex: 1 1 60px; min-height: 60px; height: auto; }
-#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px; }
+#view.fit > .stage h2 { font-size: 1.6rem; }
+#view.fit > .stage > .small { font-size: 0.78rem; }
+#view.fit .me .sprite { width: 34px; height: 34px; }
 /* V8: điện thoại thấp — hình quái co lại, tên và thanh máu quái luôn thấy */
 #view.fit > .stage > * { flex: none; }
 #view.fit > .stage .sprite { flex: 0 1 144px; min-height: 48px; height: 144px; width: auto; aspect-ratio: 1; object-fit: contain; }
