@@ -37,6 +37,8 @@ defmodule HacLong.Application do
              [strategy: :one_for_one, name: HacLong.World.MapSupervisor]
            ]}
       },
+      # Phase 16: người chơi AI (sau bản đồ và Session)
+      HacLong.Bots,
       # Start to serve requests, typically the last entry
       HacLongWeb.Endpoint
     ]

@@ -490,7 +490,8 @@ defmodule HacLongWeb.GameChannel do
   # ---------- Giao dịch ----------
 
   defp trade("request", %{"uid" => target}, uid) when is_integer(target) do
-    with [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
+    with false <- HacLong.Bots.bot?(target) && {:error, "Người này không nhận giao dịch."},
+         [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
          %{name: name} = me <- Session.get(uid),
          true <-
            Trade.near?(me, Session.get(target)) ||

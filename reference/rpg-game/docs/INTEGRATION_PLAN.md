@@ -1084,4 +1084,6 @@ Danh sách việc theo phase: `PHASE_PLAN.md` (mục "Yêu cầu thêm 2026-10-0
 
 **Đã chốt (2026-10-09):** 13-A ẩn hẳn người khác, xem qua danh sách; 13-B theo ảnh mẫu (tên, bang, cấp · lớp, hình, đang ở đâu, hạng chung / hạng lớp, đấu trường, máu / MP, chỉ số (gốc) + cộng thêm, sát thương, phòng thủ, vàng, kinh nghiệm, trang bị, thú cưng, chợ, số liệu, lần cuối online, đăng ký).
 | **16-A** | Bot: bao nhiêu, có lên bảng xếp hạng, giao dịch / PK được không, có đánh dấu là bot? | 20 bot, không lên bảng xếp hạng, không giao dịch, PK được, không đánh dấu |
+
+**Đã chốt (2026-10-09):** 16-A theo đề xuất.
 | **17-A** | Tiến Lên: chơi vui hay cược vàng (mức tối đa, giới hạn ngày)? | Cược vàng nhỏ với NPC, tối đa 1 000, 20 ván / ngày |

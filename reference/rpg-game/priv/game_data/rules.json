@@ -679,6 +679,9 @@
         "village",
         "home"
       ]
+    },
+    "bots": {
+      "count": 20
     }
   }
 }

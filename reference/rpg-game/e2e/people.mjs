@@ -42,7 +42,8 @@ R.check('hồ sơ của mình: đang online @ Rừng Mê, không có nút hành 
 await A.page.click('#tabs [data-tab="map"]');
 
 // ---------- Không vẽ người khác; máu quái đồng bộ ----------
-// một đòn có thể hạ luôn quái yếu: thử tối đa 3 con
+// quái Rừng Mê 1 thường chết sau một đòn: sang Rừng Mê 2 (quái trâu hơn) để kịp thấy máu giảm
+for (const X of [A, B]) { await X.page.click('#tabs [data-tab="map"]').catch(() => null); await travel(X.page, 'forest_2'); }
 let synced = null; const why = [];
 for (let i = 0; i < 4 && !synced; i++) {
   if (!(await engage(B.page, null, 30))) { why.push('engage'); continue; }

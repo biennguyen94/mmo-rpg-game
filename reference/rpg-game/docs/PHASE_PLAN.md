@@ -308,7 +308,7 @@ Menu → 📚 Thư viện: Bản đồ / Quái / Vật phẩm, tìm theo tên, s
 ### Phase 15 — Nội dung mới
 15a = U2 — **✅ xong 2026-10-09, làm 50 bản đồ** (theo yêu cầu mới, thay vì 20); 15b = Phase 6 (Item.txt).
 
-### Phase 16 — Người chơi AI (cần chốt 16-A)
+### Phase 16 — Người chơi AI ✅ (xong 2026-10-09, 16-A theo đề xuất)
 Bot chạy trên server như người chơi thật: đi lại, đánh quái, lên cấp, mặc đồ, chat vài câu.
 
 ### Phase 17 — NPC chơi Tiến Lên Miền Nam (cần chốt 17-A)

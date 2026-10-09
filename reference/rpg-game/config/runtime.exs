@@ -22,6 +22,11 @@ end
 
 # Chỉnh trùm thế giới khi chạy (vd. cho xuất hiện sớm để thử):
 #   WORLD_BOSS_FIRST_MINUTES=0.2 WORLD_BOSS_HP=5000 mix phx.server
+# Số người chơi AI (Phase 16), 0 là tắt: HL_BOTS=0 mix phx.server
+if config_env() != :test and System.get_env("HL_BOTS") do
+  config :hac_long, :bots, count: String.to_integer(System.get_env("HL_BOTS"))
+end
+
 if config_env() != :test do
   wb = Application.get_env(:hac_long, :world_boss, [])
 

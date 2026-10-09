@@ -98,27 +98,36 @@ defmodule HacLong.Leaderboard do
 
   defp query(:level),
     do:
-      from(c in Character,
+      from(c in humans(),
         order_by: [desc: c.rebirths, desc: c.level, desc: c.xp, asc: c.id]
       )
 
   defp query({:class, cls}),
     do:
-      from(c in Character,
+      from(c in humans(),
         where: c.cls == ^cls,
         order_by: [desc: c.rebirths, desc: c.level, desc: c.xp, asc: c.id]
       )
 
-  defp query(:kills), do: from(c in Character, order_by: [desc: c.kills, asc: c.id])
+  defp query(:kills), do: from(c in humans(), order_by: [desc: c.kills, asc: c.id])
 
   defp query(:tower),
-    do: from(c in Character, where: c.tower_best > 0, order_by: [desc: c.tower_best, asc: c.id])
+    do: from(c in humans(), where: c.tower_best > 0, order_by: [desc: c.tower_best, asc: c.id])
 
   defp query(:dragon),
     do:
-      from(c in Character,
+      from(c in humans(),
         where: not is_nil(c.victory_at),
         order_by: [asc: c.victory_at, asc: c.id]
+      )
+
+  # Phase 16: người chơi AI không lên bảng xếp hạng
+  defp humans,
+    do:
+      from(c in Character,
+        join: u in HacLong.Accounts.User,
+        on: u.id == c.user_id,
+        where: u.role != "bot"
       )
 
   @doc "Hạng theo cấp của nhân vật thuộc `user_id` (nil nếu chưa có nhân vật); `cls`: chỉ tính trong lớp đó."
@@ -132,7 +141,7 @@ defmodule HacLong.Leaderboard do
         nil
 
       {rb, lv, xp, id} ->
-        base = if cls, do: from(c in Character, where: c.cls == ^cls), else: Character
+        base = if cls, do: from(c in humans(), where: c.cls == ^cls), else: humans()
 
         Repo.one(
           from c in base,

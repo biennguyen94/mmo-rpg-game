@@ -362,3 +362,12 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - `banned_parts`: khớp **một phần** tên viết liền (bỏ khoảng trắng, đổi số kiểu `4dm1n` → `admin`). Chỉ để từ dài, rõ
   nghĩa, nếu không sẽ chặn nhầm tên thường.
 - Áp dụng khi tạo nhân vật mới, lập bang mới (tên và ký hiệu). Tên đã có không bị đổi.
+
+
+## Người chơi AI (Phase 16)
+
+- Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
+  trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
+- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
+- Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
+  rồi xóa tài khoản trong database.

@@ -14,6 +14,7 @@ defmodule HacLong.Accounts.User do
     timestamps(type: :utc_datetime)
   end
 
+  # vai trò quản trị đặt được; tài khoản người chơi AI có `role = "bot"` (Phase 16, `HacLong.Bots`)
   @roles ~w(player mod admin)
   def roles, do: @roles
 

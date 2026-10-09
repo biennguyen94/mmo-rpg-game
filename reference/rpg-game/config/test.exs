@@ -47,3 +47,6 @@ config :hac_long, :leaderboard_cache, false
 
 # Golden Invasion không tự chạy theo lịch trong test (dùng HacLong.Invasion.start_now/1)
 config :hac_long, :invasion, auto: false
+
+# Phase 16: không chạy người chơi AI khi test
+config :hac_long, :bots, count: 0
