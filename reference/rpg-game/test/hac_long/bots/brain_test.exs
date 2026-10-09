@@ -68,4 +68,11 @@ defmodule HacLong.Bots.BrainTest do
     snap = %{monsters: [%{x: 3, y: 8, kind: "quokka", busy: false, boss: false}]}
     assert %{"act" => "move", "dir" => "right"} = Brain.walk(me, map, [{3, 8}], snap)
   end
+
+  test "đủ cấp thì vào phòng trùm vùng chưa hạ" do
+    p = player()
+    assert Brain.boss_room(%{p | level: 3}) == nil
+    assert Brain.boss_room(%{p | level: 7}) == "forest_boss"
+    assert Brain.boss_room(%{p | level: 13, bosses: ["wolf"]}) == "camp_boss"
+  end
 end

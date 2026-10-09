@@ -13,6 +13,7 @@ defmodule HacLong.Bots.Brain do
   5. Máu < 45 %: có bình thì uống, không thì về Nhà (miễn phí) uống nước giếng.
   6. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
   7. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
+  8. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
   """
   alias HacLong.Game.{Data, Engine, Gear}
   alias HacLong.World
@@ -156,7 +157,7 @@ defmodule HacLong.Bots.Brain do
 
   defp roam(p, snap, seed) do
     here = p.pos.map
-    target = target_map(p, seed)
+    target = boss_room(p) || target_map(p, seed)
 
     cond do
       here == "home" and target != "home" ->
@@ -216,6 +217,22 @@ defmodule HacLong.Bots.Brain do
   defp open?(p, %{zone: zi}) when is_integer(zi), do: Engine.zone_unlocked?(p, zi)
   defp open?(_p, _m), do: true
 
+  @doc "Phòng trùm nên vào: trùm của vùng cuối đã mở chưa hạ và cấp mình ≥ cấp trùm + 1 (nil nếu không)."
+  def boss_room(p) do
+    zones = Data.zones()
+
+    zones
+    |> Enum.with_index()
+    |> Enum.find(fn {z, i} -> Engine.zone_unlocked?(p, i) and z.boss.id not in p.bosses end)
+    |> case do
+      {z, _} when p.level >= z.boss.level + 1 ->
+        if(Maps.get(z.id <> "_boss"), do: z.id <> "_boss")
+
+      _ ->
+        nil
+    end
+  end
+
   defp hunt(p, nil), do: wander(p)
 
   defp hunt(p, snap) do
@@ -224,7 +241,7 @@ defmodule HacLong.Bots.Brain do
 
     targets =
       snap.monsters
-      |> Enum.reject(&(&1.busy or &1.boss))
+      |> Enum.reject(&(&1.busy or (&1.boss and map.spawns != [])))
       |> Enum.filter(&(monster_level(map, &1.kind) <= p.level + 1))
       |> Enum.sort_by(&dist(me, {&1.x, &1.y}))
       |> Enum.map(&{&1.x, &1.y})
@@ -269,7 +286,8 @@ defmodule HacLong.Bots.Brain do
 
     case first_step(map, start, goals, blocked) do
       nil -> nil
-      dir -> %{"act" => "move", "dir" => dir}
+      # gặp trùm vào trận luôn (như client, Phase 11)
+      dir -> %{"act" => "move", "dir" => dir, "confirm" => true}
     end
   end
 
