@@ -33,8 +33,8 @@ defmodule HacLong.Game.EngineTest do
     z = Data.zone(0)
     m = Engine.make_monster(hd(z.monsters), false)
     b = Engine.make_monster(z.boss, true)
-    assert m.maxHp == round((20 + 26 + 0.6) * 0.8)
-    assert b.boss and b.maxHp > 10 * m.maxHp
+    assert m.maxHp == round((170 + 26 + 0.6) * 0.8)
+    assert b.boss and b.maxHp > 4 * m.maxHp
     assert b.special.every == 3
   end
 

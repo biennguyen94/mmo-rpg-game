@@ -107,7 +107,7 @@
     },
     "monster": {
       "hp": {
-        "base": 20,
+        "base": 170,
         "level": 26,
         "level_sq": 0.6
       },

@@ -144,3 +144,6 @@
 - **P16-3** Không đánh dấu là bot. Không lên bảng xếp hạng và không chiếm hạng người thật (`Leaderboard` bỏ `role = "bot"`). Giao dịch với bot bị từ chối ("Người này không nhận giao dịch."). Lời mời cược đấu: bot từ chối sau vài giây. Thách đấu (đấu trường, PK với bản sao) đánh được bot như người thường.
 - **P16-5** Đủ cấp (cấp trùm + 1) thì bot vào phòng trùm vùng chưa hạ để mở vùng mới (nên lên tiếp được các nhóm bản đồ phụ có cổng trong vùng sau).
 - **P16-4** Khoảng 4 phút mỗi bot nói một câu ngắn trong kênh thế giới (danh sách câu cố định). Bot không mua đồ ở NPC, không làm nhiệm vụ / việc hằng ngày, không vào tháp (để sau nếu cần).
+
+## Cân bằng đầu game (2026-10-09)
+- **B-1** Máu quái `RULES.monster.hp.base` 20 → **170**: trước đó nhân vật mới (đánh 70–110) hạ quái cấp 1–5 một đòn ở cả 4 lớp. Giờ quái cùng cấp cần ~2–3 đòn ở cấp 1–10 (chưa tính vũ khí), tăng dần ~3–7 đòn ở cấp 30–50 tùy lớp. Trùm vùng cũng trâu hơn tương ứng (Sói Xám 474 → 834 máu). Mô phỏng 4 lớp × 5 lượt: vẫn thắng Hắc Long 5/5, số trận (~390) và số lần chết gần như không đổi. Kinh nghiệm / vàng mỗi quái không đổi.
