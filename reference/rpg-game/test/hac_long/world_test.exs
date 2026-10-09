@@ -265,4 +265,17 @@ defmodule HacLong.WorldTest do
     assert {%{ok: false, msg: "Hãy đứng cạnh đá dịch chuyển."}, _} =
              World.teleport(far, uid, "forest_2")
   end
+
+  # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì về đầy
+  test "máu quái đang đánh hiện cho mọi người cùng bản đồ", %{uid: uid} do
+    {x, y} = open_spot("forest_1")
+    MapServer.put_monster("forest_1", "bat", {x, y})
+    [m] = MapServer.snapshot("forest_1").monsters
+    assert m.hp == 100
+    assert {:engage, _} = MapServer.step("forest_1", uid, {x, y})
+    MapServer.hp("forest_1", m.id, 40)
+    assert [%{hp: 40, busy: true}] = MapServer.snapshot("forest_1").monsters
+    MapServer.release("forest_1", uid, m.id)
+    assert [%{hp: 100, busy: false}] = MapServer.snapshot("forest_1").monsters
+  end
 end

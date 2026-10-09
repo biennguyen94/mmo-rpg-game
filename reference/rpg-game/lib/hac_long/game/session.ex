@@ -31,6 +31,7 @@ defmodule HacLong.Game.Session do
   }
 
   alias HacLong.{Arena, GuildQuests, Guilds, Mailbox, Market, Party, World, WorldBoss}
+  alias HacLong.World.MapServer
 
   @idle_timeout :timer.minutes(10)
   @flush_ms 5_000
@@ -810,6 +811,13 @@ defmodule HacLong.Game.Session do
       # trận vừa kết thúc: cập nhật quái trên bản đồ, gục ngã thì về Nhà
       player && old && old.battle && not old.battle.over && player.battle && player.battle.over ->
         battle_over(s, old, player)
+
+      # Phase 13: máu quái đang đánh trên bản đồ chung, mọi người cùng bản đồ thấy như nhau
+      player && player.battle && match?(%{map: _, mid: _}, player.battle[:encounter]) ->
+        %{map: map_id, mid: mid} = player.battle.encounter
+        m = player.battle.monster
+        MapServer.hp(map_id, mid, round(max(m.hp, 0) * 100 / max(m.maxHp, 1)))
+        player
 
       cmd["act"] == "create" and player && old == nil ->
         if map_size(s.tabs) > 0, do: World.enter(player, s.user_id)

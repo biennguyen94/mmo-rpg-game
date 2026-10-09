@@ -577,3 +577,16 @@ img.own { object-fit: contain; image-rendering: auto; }
 /* V7: nút Vừa màn hình trên bản đồ */
 .zoom-btn { position: absolute; right: 6px; top: 6px; z-index: 4; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: rgba(12, 9, 16, 0.72); color: var(--text, #f1e6cf); font-size: 1.05rem; cursor: pointer; }
 .zoom-btn.on { background: linear-gradient(#f0cf7a, #d9ae4a); color: #2a1d06; border-color: #b58f35; }
+
+/* Phase 13: dock 👫, danh sách quanh đây, hồ sơ */
+#tabs .dock-emoji { font-size: 1.15rem; line-height: 1; display: inline-block; width: 22px; height: 22px; text-align: center; }
+.people-row { width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; }
+.sprite.sm { width: 40px; height: 40px; }
+.prof-head { text-align: center; display: grid; justify-items: center; gap: 2px; }
+.prof-lv { color: var(--gold); font-weight: 700; }
+.prof-doll { width: 72px; height: 72px; image-rendering: pixelated; }
+.prof-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.prof-box { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 8px; text-align: center; font-size: 0.85rem; }
+.prof-box b { color: var(--gold); }
+.prof-gear { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.prof-item { display: grid; justify-items: center; text-align: center; font-size: 0.78rem; gap: 2px; }

@@ -831,8 +831,25 @@ defmodule HacLongWeb.GameChannelTest do
       assert_reply ref, :ok, %{
         level: 10,
         arena: %{rating: 1000},
-        look: %{weapon: "hand1/club_slant"}
+        look: %{weapon: "hand1/club_slant"},
+        me: false,
+        # Phase 13: hồ sơ đầy đủ
+        profile: %{
+          online: false,
+          rank: rank,
+          class_rank: crank,
+          stats: %{str: %{base: 5, gear: 0}},
+          counts: %{kills: _, pk_wins: 0, pk_losses: 0},
+          market: 0,
+          registered: %DateTime{}
+        }
       }
+
+      assert is_integer(rank) and is_integer(crank)
+
+      # hồ sơ của chính mình: đang online, có chỗ đang đứng
+      ref = push(sa, "inspect", %{"uid" => ua.id})
+      assert_reply ref, :ok, %{me: true, profile: %{online: true, where: "Làng", gold: 1000}}
 
       assert %{ok: false, msg: "Không tự thách đấu mình được."} =
                cmd(sa, %{"act" => "pvp_challenge", "uid" => ua.id})

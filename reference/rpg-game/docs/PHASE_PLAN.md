@@ -299,7 +299,7 @@ Thứ tự: 11 → 12 → 13 → 14 → 15 (15a = U2 20 bản đồ, 15b = Phase
 ### Phase 12 — Làm lại MP ✅ (xong 2026-10-09, 12-A / 12-B theo đề xuất)
 Chi phí MP kỹ năng theo công thức (kiểu MU: gốc + hệ số × cấp kỹ năng); hồi MP trong trận theo ENE / cấp; shop bán bình MP hồi theo % (nhỏ 20 %, vừa 40 %, lớn 70 %), giá theo cấp.
 
-### Phase 13 — Người chơi và quái trên bản đồ (cần chốt 13-A, 13-B)
+### Phase 13 — Người chơi và quái trên bản đồ ✅ (xong 2026-10-09; 13-A theo đề xuất, 13-B theo ảnh mẫu)
 Quái có tên trên đầu, thanh máu dưới, máu do server giữ và phát cho cả bản đồ; không vẽ người khác trên ô, dock thêm 👥 (số người trong bản đồ) → danh sách → Xem profile / Giao dịch / PK / Kết bạn / Nhắn tin; profile mình và người khác; tab Nhân vật hiện % cộng thêm từ đồ / buff.
 
 ### Phase 14 — Thư viện

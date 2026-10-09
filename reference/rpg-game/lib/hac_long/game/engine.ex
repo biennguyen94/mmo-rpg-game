@@ -187,6 +187,13 @@ defmodule HacLong.Game.Engine do
       derived: derived(p),
       xpToNext: xp_to_next(p.level),
       restCost: rest_cost(p),
+      # Phase 13: phần cộng thêm cho tab Nhân vật: chỉ số từ đồ hiếm, % từ thú cưng + món ăn
+      extra: %{
+        gear: Gear.bonus_stats(p),
+        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp),
+        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk),
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def)
+      },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       look: look(p),
       comfort: Home.comfort(p),

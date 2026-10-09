@@ -10,8 +10,8 @@
   const GROUND = { grass: 1, dirt: 1, flowers: 1 };
 
   // cấp của từng loại quái, để tô màu độ khó
-  const LEVEL = {};
-  ZONES.forEach((z) => { z.monsters.concat([z.boss]).forEach((m) => { LEVEL[m.id] = m.level; }); });
+  const LEVEL = {}, NAME = {};
+  ZONES.forEach((z) => { z.monsters.concat([z.boss]).forEach((m) => { LEVEL[m.id] = m.level; NAME[m.id] = m.name; }); });
 
   const images = {};
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
@@ -278,8 +278,12 @@
       if (im.complete) ctx.drawImage(im, px - off, py - off, sz, sz);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
-      if (q.rare) labels.push(['Bóng Đêm', px + TILE / 2, py - 12, '#d59cff']);
-      if (q.gold) labels.push([q.boss ? 'Trùm Vàng' : 'Vàng', px + TILE / 2, py - 12 - off, '#ffd24a']);
+      // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
+      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.rare ? 'Bóng Đêm · ' : '') + (NAME[q.kind] || '');
+      labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
+      const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
+      ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
+      ctx.fillStyle = q.gold ? '#e8b923' : q.boss ? '#c0392b' : '#d9483b'; ctx.fillRect(px - off + 4, py - off + sz + 2, Math.max(0, (bw - 2) * hpk), 3);
       const lv = q.level || LEVEL[q.kind] || 1;
       ctx.font = '700 9px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(12,9,16,0.85)';
@@ -287,7 +291,6 @@
       ctx.fillStyle = levelColor(P, lv);
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText(String(lv), px + TILE - 7, py + TILE - 9);
-      if (q.busy) label('⚔', px + TILE / 2, py - 12, '#ef6a5a');
     }
 
     for (const n of here ? world.nodes || [] : []) {
@@ -341,20 +344,8 @@
       const im = image(id.startsWith('tame:') ? 'monsters/' + id.slice(5) : 'pets/' + id);
       if (im.complete) ctx.drawImage(im, Math.round(qx * TILE - cx) + 4, Math.round(qy * TILE - cy) + 6, TILE - 8, TILE - 8);
     };
-    for (const o of here ? world.players : []) {
-      if (o.id === userId) continue;
-      drawPet(o.look && o.look.pet, 'p' + o.id, o.x, o.y);
-      const [ox, oy] = smooth('p' + o.id, o.x, o.y, DUR.player, now);
-      const px = Math.round(ox * TILE - cx), py = Math.round(oy * TILE - cy);
-      ctx.globalAlpha = 0.9;
-      const doll = Doll.canvas(o.look);
-      if (doll) ctx.drawImage(doll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
-      ctx.globalAlpha = 1;
-      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, window.HLLogic.nameColor(o, relations())]);
-      const said = bubbleOf(o.id, now);
-      if (said) talk.push([said, px + TILE / 2, py]);
-    }
-
+    // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
+    // xem danh sách người trong bản đồ ở nút 👫 trên dock.
     const look = P.view && P.view.look;
     if (!m.tower) drawPet(look && look.pet, 'me', P.pos.x, P.pos.y);
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
@@ -464,7 +455,9 @@
     stopVisit() { visiting = null; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
     // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng
-    playerAt: (x, y) => (world.map === (getPlayer() || {}).pos?.map ? world.players.find((o) => o.id !== userId && o.x === x && o.y === y) : null),
+    playerAt: () => null,
+    // người chơi khác đang ở cùng bản đồ (Phase 13)
+    players: () => (world.map === (getPlayer() || {}).pos?.map ? world.players.filter((o) => o.id !== userId) : []),
     mountedMap: () => mounted,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },

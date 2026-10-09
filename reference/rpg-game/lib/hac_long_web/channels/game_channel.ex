@@ -32,7 +32,7 @@ defmodule HacLongWeb.GameChannel do
     `decline {uid}`, `remove {uid}`); server đẩy `"friends"` (`%{msg}`) khi danh sách đổi.
     `"dm"`: tin riêng (`history {uid}`, `send {uid, text}`); server đẩy `"dm"` (một tin, cả
     cho người gửi để các tab khác thấy). Xem `HacLong.Friends`.
-  - `"inspect"` `%{"uid"}`: xem thông tin người chơi khác (chạm vào họ trên bản đồ).
+  - `"inspect"` `%{"uid"}`: xem hồ sơ người chơi (cả của mình; `profile` theo `HacLong.Profile`).
   - `"visit"` `%{"uid"}`: xem nhà đã trang trí của người khác; `"home_like"` `%{"uid"}`: khen nhà
     (mỗi nhà một lần, chủ nhà nhận `"notice"`). Xem `HacLong.Homes`.
   - `"mail"`: danh sách thư; server đẩy `"mail"` `%{unread}` khi có thư mới. Mở thư (nhận quà)
@@ -325,7 +325,15 @@ defmodule HacLongWeb.GameChannel do
           },
           arena: Arena.stats(target),
           blocked: target in socket.assigns.blocked,
-          party: party && target in party.members
+          party: party && target in party.members,
+          me: target == uid,
+          # Phase 13: hồ sơ đầy đủ (xem cả của mình)
+          profile:
+            HacLong.Profile.build(
+              target,
+              p,
+              Registry.lookup(HacLong.Game.Registry, target) != []
+            )
         }}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
