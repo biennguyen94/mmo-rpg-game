@@ -1,0 +1,75 @@
+{
+  "id": "side_22",
+  "name": "Cao Nguyên Tuyết 2",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R..:.R.R..:..~R.....:.:R",
+    "R~:..~:.:..::R.:...R...R",
+    "R:....:....RR~...:...RRR",
+    "R..:....:R...::..:.:...R",
+    "R..........:.R.R..R...:R",
+    "RRR..R.R.:.R.:R.:::::.RR",
+    "R::.:::::::.:::::~~::::R",
+    "O..::...~R:::....~~....O",
+    "R:.~.........R......R:.R",
+    "R.....~..R.......R.RR..R",
+    "R.:R:RR.:~:..:..R.:...RR",
+    "R.~R..::.R.R.:.~..R..:.R",
+    "R....R..~...~R...R....RR",
+    "R~.~::....::.....:R.:..R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_21",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_23",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "wild_yak",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "polar_bear",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "ice_beast",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

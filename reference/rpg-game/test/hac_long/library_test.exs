@@ -10,7 +10,11 @@ defmodule HacLong.LibraryTest do
   end
 
   test "đủ quái của mọi vùng (cả trùm), có chỉ số và nơi xuất hiện", %{lib: lib} do
-    n = Enum.reduce(Data.zones(), 0, fn z, acc -> acc + length(z.monsters) + 1 end)
+    n =
+      Enum.reduce(Data.zones(), length(Data.side_monsters()), fn z, acc ->
+        acc + length(z.monsters) + 1
+      end)
+
     assert length(lib.monsters) == n
     bat = Enum.find(lib.monsters, &(&1.id == "bat"))
     assert bat.hp > 0 and bat.atk > 0 and bat.where != []

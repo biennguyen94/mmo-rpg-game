@@ -95,6 +95,7 @@ defmodule HacLong.Game.Engine do
           furniture: %{},
           decor: [],
           storage: %{inv: %{}, extra: 0},
+          visited: [],
           fish_caught: 0,
           achievements: [],
           title: nil,
@@ -339,6 +340,24 @@ defmodule HacLong.Game.Engine do
       z == nil or not zone_unlocked?(p, zi) -> {err("Khu vực chưa mở."), p}
       p.hp <= 0 -> {err("Bạn cần hồi máu trước."), p}
       true -> :ok
+    end
+  end
+
+  @doc """
+  Trận ở bản đồ phụ (Phase 15a): không thuộc vùng nào nên không cần mở vùng; `place` (tên bản đồ) và
+  `theme` (nền) để client vẽ.
+  """
+  def start_side_encounter(p, spec, place, theme) do
+    cond do
+      p.battle ->
+        {err("Đang trong trận đấu."), p}
+
+      p.hp <= 0 ->
+        {err("Bạn cần hồi máu trước."), p}
+
+      true ->
+        {r, p} = do_start_battle(p, nil, spec, false)
+        {r, update_in(p.battle, &Map.merge(&1, %{place: place, theme: theme}))}
     end
   end
 

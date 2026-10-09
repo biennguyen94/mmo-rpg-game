@@ -671,6 +671,14 @@
         "occho",
         "sucvat"
       ]
+    },
+    "travel": {
+      "base": 20,
+      "per_level": 4,
+      "free": [
+        "village",
+        "home"
+      ]
     }
   }
 }

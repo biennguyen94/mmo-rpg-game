@@ -306,7 +306,7 @@ Quái có tên trên đầu, thanh máu dưới, máu do server giữ và phát 
 Menu → 📚 Thư viện: Bản đồ / Quái / Vật phẩm, tìm theo tên, sinh từ dữ liệu game.
 
 ### Phase 15 — Nội dung mới
-15a = U2 (20 bản đồ, xem Phase 10); 15b = Phase 6 (Item.txt).
+15a = U2 — **✅ xong 2026-10-09, làm 50 bản đồ** (theo yêu cầu mới, thay vì 20); 15b = Phase 6 (Item.txt).
 
 ### Phase 16 — Người chơi AI (cần chốt 16-A)
 Bot chạy trên server như người chơi thật: đi lại, đánh quái, lên cấp, mặc đồ, chat vài câu.

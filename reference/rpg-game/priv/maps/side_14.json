@@ -1,0 +1,75 @@
+{
+  "id": "side_14",
+  "name": "Gò Kiến Đỏ 4",
+  "zone": null,
+  "side": true,
+  "theme": "camp",
+  "floor": "floors/camp",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "RR......R......::::..:RR",
+    "RRR...R:.:.RR.R:...:...R",
+    "R...R.:RR...:..:....:.RR",
+    "R....R..R.......:.:.RR.R",
+    "R..R....R....:.........R",
+    "R....:::::::.::........R",
+    "R.R.::.....::::::::::::R",
+    "O..::::.:RR..R.........O",
+    "R.:...R:..R......:...:RR",
+    "R..R.:.....:......:...:R",
+    "R...R...R..R......:....R",
+    "R...R.R.R.......:....:.R",
+    "R...R....:...:..::..:.RR",
+    "R......::..::.........:R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_13",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_15",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "giant_leech",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "water_moccasin",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "swamp_worm",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

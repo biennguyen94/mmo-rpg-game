@@ -79,8 +79,23 @@ if (p.points >= 2) {
   await page.waitForTimeout(600);
   const q = await player(page);
   R.check('cộng 2 điểm Sức mạnh (gom lệnh)', q.stats.str === p.stats.str + 2 && q.points === p.points - 2);
-  await page.keyboard.press('m');
+  await page.click('#tabs [data-tab="map"]');
 }
+
+// Phase 15a: phím M mở bảng chọn bản đồ (bấm lại về Bản đồ); đi Làng miễn phí
+await page.keyboard.press('m');
+R.check('phím M mở bảng chọn bản đồ', (await ui(page)).tab === 'travel' && !!(await page.$('.travel-row')));
+const goldBefore = (await player(page)).gold;
+const here = (await player(page)).pos.map;
+if (here !== 'village') {
+  await page.click('[data-act="travel"][data-to="village"]');
+  await page.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 8000 }).catch(() => null);
+}
+const pv = await player(page);
+R.check('dịch chuyển về Làng miễn phí', pv.pos.map === 'village' && pv.gold === goldBefore, `${here} → ${pv.pos.map}, ${goldBefore} → ${pv.gold}`);
+if ((await ui(page)).tab !== 'travel') await page.keyboard.press('m');
+await page.keyboard.press('m');
+R.check('bấm M lần nữa về Bản đồ', (await ui(page)).tab === 'map');
 
 R.check(`tab chính mở được (${name})`, await (async () => {
   for (const t of ['hero', 'bag', 'menu', 'map']) { await page.click(`#tabs [data-tab="${t}"]`); if ((await ui(page)).tab !== t) return false; }

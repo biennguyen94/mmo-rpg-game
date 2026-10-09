@@ -266,7 +266,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "teleport"] do
+       when act in ["move", "teleport", "travel"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -799,6 +799,12 @@ defmodule HacLong.Game.Session do
   defp timeout(_), do: @idle_timeout
 
   defp run_move(%{player: nil} = s, _cmd), do: {%{ok: false, msg: "Chưa có nhân vật."}, s.player}
+
+  # Phase 15a: bảng chọn bản đồ (tốn vàng, nhật ký vàng TRAVEL)
+  defp run_move(s, %{"act" => "travel"} = cmd) do
+    Characters.put_reason("TRAVEL", cmd["to"])
+    World.travel(s.player, s.user_id, cmd["to"])
+  end
 
   defp run_move(s, %{"act" => "teleport"} = cmd),
     do: World.teleport(s.player, s.user_id, cmd["to"])

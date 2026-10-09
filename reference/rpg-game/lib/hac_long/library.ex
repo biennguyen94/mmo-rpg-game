@@ -37,13 +37,16 @@ defmodule HacLong.Library do
       zone = m.zone && elem(Enum.at(zones, m.zone), 0)
 
       lv =
-        for(z <- [zone], z, mo <- z.monsters, mo.id in kinds, do: mo.level) ++
-          if(m.boss && zone, do: [zone.boss.level], else: [])
+        if m.side,
+          do: Enum.map(kinds, &Data.side_monster(&1).level),
+          else:
+            for(z <- [zone], z, mo <- z.monsters, mo.id in kinds, do: mo.level) ++
+              if(m.boss && zone, do: [zone.boss.level], else: [])
 
       %{
         id: m.id,
         name: m.name,
-        zone: zone_name(m.zone, zones),
+        zone: if(m.side, do: "Bản đồ phụ", else: zone_name(m.zone, zones)),
         min: Enum.min(lv, fn -> nil end),
         max: Enum.max(lv, fn -> nil end),
         monsters: kinds,
@@ -57,7 +60,33 @@ defmodule HacLong.Library do
     |> Enum.sort_by(&{&1.min || 0, &1.max || 0, &1.name})
   end
 
-  defp monsters(maps, zones) do
+  defp monsters(maps, zones), do: zone_monsters(maps, zones) ++ side_monsters(maps)
+
+  # quái bản đồ phụ (Phase 15a)
+  defp side_monsters(maps) do
+    for spec <- Data.side_monsters() do
+      m = Engine.make_monster(spec, false)
+
+      %{
+        id: spec.id,
+        name: spec.name,
+        level: spec.level,
+        boss: false,
+        zone: "Bản đồ phụ",
+        hp: m.maxHp,
+        atk: m.atk,
+        def: m.def,
+        xp: m.xp,
+        gold: Engine.base_gold(spec.level),
+        special: nil,
+        on_hit: nil,
+        where: for(mp <- maps, Enum.any?(mp.spawns, &(&1.monster == spec.id)), do: mp.name),
+        drops: drops(spec, false)
+      }
+    end
+  end
+
+  defp zone_monsters(maps, zones) do
     for {z, i} <- zones,
         {spec, boss?} <- Enum.map(z.monsters, &{&1, false}) ++ [{z.boss, true}] do
       m = Engine.make_monster(spec, boss?)

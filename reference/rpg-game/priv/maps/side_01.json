@@ -1,0 +1,75 @@
+{
+  "id": "side_01",
+  "name": "Đồng Cỏ Xanh 1",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T.....T.....,..,..T.T..T",
+    "T.*.....**........T...TT",
+    "T*.**,*,T..,.,..T*..:::T",
+    "TT........,,.T.....::.:T",
+    "T...T..,.*...,,*.:::..:T",
+    "T...*......:::::::**..:T",
+    "T*....*..T::..........:T",
+    "O..::T..:::.........,..O",
+    "T...:::::......*...,...T",
+    "T..T,....,..**.T...T..*T",
+    "T............*.....*..,T",
+    "T,,,.T.*...,....T...T..T",
+    "T......,.......*....*..T",
+    "T..*..........**.......T",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "forest_1",
+      "spawn": [
+        24,
+        9
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_02",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "quokka",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "wild_sheep",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "wild_hog",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

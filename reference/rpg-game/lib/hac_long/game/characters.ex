@@ -192,7 +192,8 @@ defmodule HacLong.Game.Characters do
         for d <- c.decor || [], HacLong.Game.Data.furniture(d["id"]) do
           %{id: d["id"], x: d["x"], y: d["y"]}
         end,
-      storage: HacLong.Game.Storage.load(c.storage)
+      storage: HacLong.Game.Storage.load(c.storage),
+      visited: Enum.filter(c.visited || [], &Maps.get/1)
     }
   end
 

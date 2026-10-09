@@ -1,0 +1,69 @@
+{
+  "id": "side_45",
+  "name": "Đỉnh Khổng Lồ 5",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R...:R....R.R..........R",
+    "RR..:Y....R......::....R",
+    "R::...:.....:....::....R",
+    "R.......:..R...R.Y.:..RR",
+    "R.Y...Y...........:...RR",
+    "R..R.R....:Y..Y:.....R.R",
+    "R..::::::..R......RR.::R",
+    "O..:::.::::::::::..::..R",
+    "R:R:.......R:...:::::::R",
+    "R.....::...RRR.:..R...:R",
+    "RY..:R.........R...R.:RR",
+    "RRR.::RR...R......R....R",
+    "R...:.:R...:...R......RR",
+    "R....:..R...::R..R...:.R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_44",
+      "spawn": [
+        22,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "quicksilver_dragon",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "hell_hound",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "red_devil",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    },
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

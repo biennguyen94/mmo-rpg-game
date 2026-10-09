@@ -150,6 +150,8 @@ defmodule HacLong.Game.DataCheck do
   def map_errors(maps, d) do
     item? = &Map.has_key?(d.items, &1)
     monsters = for z <- d.zones, m <- z.monsters, into: MapSet.new(), do: m.id
+    # Phase 15a: quái bản đồ phụ
+    monsters = Enum.reduce(Map.get(d, :side_monsters, []), monsters, &MapSet.put(&2, &1.id))
 
     for {id, m} <- maps do
       file = "maps/#{id}.json"

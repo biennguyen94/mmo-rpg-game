@@ -1,0 +1,75 @@
+{
+  "id": "side_24",
+  "name": "Cao Nguyên Tuyết 4",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "RR.RR..:..:....R.:.:~:.R",
+    "R..:..:.R....:....R:..RR",
+    "R....R.:..........:..:.R",
+    "R:R.....RR:.:R..:.....RR",
+    "R.:..R.:..:..R...~..::RR",
+    "R.:R.....:...:.:.:.....R",
+    "R.:..:::.....:.~:.:....R",
+    "O..:::.:::....R:.......O",
+    "RR......~:::::...::.RR:R",
+    "R:R..::......::::::::::R",
+    "R.~...R:...:........:..R",
+    "R...R....R.:::.:.......R",
+    "R........::.......:...:R",
+    "R...R..~.:..:..R.......R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_23",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_25",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "ice_beast",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "harpy",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "gnoll_sergeant",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

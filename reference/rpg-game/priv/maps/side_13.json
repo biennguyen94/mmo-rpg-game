@@ -1,0 +1,75 @@
+{
+  "id": "side_13",
+  "name": "Gò Kiến Đỏ 3",
+  "zone": null,
+  "side": true,
+  "theme": "camp",
+  "floor": "floors/camp",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R........R......:.:.:.:R",
+    "R..:...........:.......R",
+    "R::.:.R..R......:R....:R",
+    "R...R.:.....::.....:..:R",
+    "RR:...R:..::...R:.R..:.R",
+    "R..:........::::..:....R",
+    "R....::::::::..::::::::R",
+    "O..::::.::.:...:....:..O",
+    "R....:...:..:....:..:..R",
+    "R..:.......:.::..:R.R..R",
+    "R.R.......::...R.......R",
+    "R....R..RR.R:.:....R:..R",
+    "R....R:..:..:......R:..R",
+    "R.........:.:.....:....R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_12",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_14",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "jelly",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "giant_leech",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "water_moccasin",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

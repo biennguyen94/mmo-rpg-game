@@ -1,0 +1,75 @@
+{
+  "id": "side_09",
+  "name": "Rừng Thưa 4",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T.YT,.....,...Y.,T..,.TT",
+    "T....,TT.,,.,TYT.......T",
+    "T....,.T...,,.,.....Y.TT",
+    "T.....,..,TT,.TT..,.,..T",
+    "T,TT.T..,.....T.T,.,T,,T",
+    "TTT...::TTT..,.,.....~,T",
+    "T...::::::.Y..T,Y,.....T",
+    "O..::.,..::.T....T,,...O",
+    "TT,T.~....::..T..T....:T",
+    "T..,...,.T.::::YY.....:T",
+    "T,..,......T..:::::::::T",
+    "T...,..T.,.Y..,...T.,,TT",
+    "T..T..Y,,.....T...T.T.~T",
+    "TY.Y..,........,,TTYT~TT",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_08",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_10",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "iguana",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "soldier_ant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "wild_hound",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

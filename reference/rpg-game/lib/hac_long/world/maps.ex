@@ -61,6 +61,9 @@ defmodule HacLong.World.Maps do
              zone: m["zone"],
              floor: m["floor"],
              private: m["private"] == true,
+             # Phase 15a: bản đồ phụ (quái ở `SIDE_MONSTERS`, không khóa theo vùng), `theme`: nền trận đánh
+             side: m["side"] == true,
+             theme: m["theme"],
              width: String.length(hd(rows)),
              height: length(rows),
              tiles: rows,
@@ -163,6 +166,8 @@ defmodule HacLong.World.Maps do
          %{
            name: m.name,
            zone: m.zone,
+           side: m.side,
+           theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,
            portals: Enum.map(m.portals, &%{at: Tuple.to_list(&1.at), to: &1.to}),

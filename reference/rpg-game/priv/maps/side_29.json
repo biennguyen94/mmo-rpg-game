@@ -1,0 +1,75 @@
+{
+  "id": "side_29",
+  "name": "Thung Lũng U Linh 4",
+  "zone": null,
+  "side": true,
+  "theme": "graveyard",
+  "floor": "floors/graveyard",
+  "tiles": [
+    "KKKKKKKKKKKKKKKKKKKKKKKK",
+    "K.....:.:..K...:.K.....K",
+    "K::..:....K..:......S.SK",
+    "K:....S..K......K..::..K",
+    "K.......K..K.:..S.....:K",
+    "KS..::....::.......K...K",
+    "K..:..K:::.....:..K....K",
+    "K:.::::::::::K..:::::::K",
+    "O..::....K:.:::::......O",
+    "K.....::.S.......S.KS:KK",
+    "K.....:.K.K..K..S..S...K",
+    "K...K.K..:K......K...:SK",
+    "K.K:..:K:.:K...........K",
+    "K...S..::.SK..K....:..KK",
+    "K::........K......:S.KKK",
+    "KKKKKKKKKKKKKKKKKKKKKKKK"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_28",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_30",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "ghost",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "phantom",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "flying_skull",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

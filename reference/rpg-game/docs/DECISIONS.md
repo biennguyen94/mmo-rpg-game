@@ -130,3 +130,10 @@
 ## Phase 14 (2026-10-09) — Thư viện
 - **P14-1** `HacLong.Library` sinh danh sách bản đồ (bỏ Nhà riêng), quái (cả trùm vùng; chỉ số theo `Engine.make_monster/2`, vàng lấy trung bình không may rủi), vật phẩm (nguồn: NPC bán, pha chế / nấu, thưởng nhiệm vụ, trùm rơi, bình quái rơi theo `RULES.loot.potions`, ngọc theo `JEWELS`, thu thập) từ dữ liệu game, giữ trong `:persistent_term`, gửi một lần trong `GAME_DATA.LIBRARY`.
 - **P14-2** Tìm theo tên không cần dấu (`HLLogic.fold`), cả tên đã dịch khi chơi tiếng Anh; gõ chỉ vẽ lại phần kết quả. Tên trong chi tiết là liên kết sang mục tương ứng. Đồ hiếm chỉ số ngẫu nhiên không liệt kê riêng (là biến thể của vũ khí / giáp / khiên).
+
+## Phase 15a (2026-10-09) — 50 bản đồ phụ, chọn bản đồ
+- **P15a-1** Anh yêu cầu **50** bản đồ (thay 20 trong 9-B). 10 nhóm chủ đề × 5 bản đồ (`side_01`…`side_50`), bản đồ i có quái cấp i, i+1, i+2 (52 loài trong `priv/game_data/side.json`, chỉ số theo `RULES.monster` như vùng cũ). Không trùm, không khóa theo vùng, không liên quan Hắc Long.
+- **P15a-2** Cổng: trong nhóm nối tiếp trái ↔ phải; bản đồ đầu nhóm có cổng (ô `O`, mép phải) từ một bản đồ có sẵn gần cấp: Rừng Mê 1, Rừng Mê 2, Trại Goblin 1, 2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1, 2, Đầm Lầy Rồng 2, Hang Hắc Long 1, 2. Bản đồ sinh bằng `scripts/gen_side_maps.py` (hạt giống cố định; ô không tới được từ cổng bị lấp).
+- **P15a-3** Hình 52 loài quái lấy từ Dungeon Crawl Stone Soup tiles (CC0, `github.com/crawl/tiles`, bản Nov-2015) bằng `scripts/side_monsters.py`, ghi `CREDITS.md`. Nền ô / trận dùng lại hình vùng cũ (`theme`).
+- **P15a-4** Chọn bản đồ (phím **M**, nút dock **Chọn map**): mọi bản đồ (trừ Tháp) xếp theo cấp quái thấp nhất; giá `RULES.travel` = 20 + 4 × cấp (Làng, Nhà miễn phí; Tế Đàn không quái = 20). Tới được: Làng, Nhà, bản đồ vùng đã mở, bản đồ phụ đã đi qua cổng (`characters.visited`, migration mới). Nhật ký vàng lý do `TRAVEL`. Đá dịch chuyển giữ nguyên.
+- **P15a-5** Trận ở bản đồ phụ: `battle.zone = nil`, `battle.place` / `battle.theme` cho nền; không tính vào việc hằng ngày "hạ N quái ở vùng X". Golden Invasion không vào bản đồ phụ.

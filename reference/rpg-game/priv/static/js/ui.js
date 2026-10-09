@@ -185,7 +185,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -1597,6 +1597,44 @@
     return `<h2 class="display">Menu</h2><div class="menu-grid">${items.map(([id, ic, label]) => `<button class="menu-item" data-menu="${id}">${icon(ic, 'lg')}<span>${label}</span></button>`).join('')}</div>`;
   }
 
+  // ---------- Chọn bản đồ (Phase 15a, U2) ----------
+  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, Nhà, vùng đã mở, bản đồ phụ đã đi qua cổng.
+  let travelQ = '';
+  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
+  const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
+  function travelOpen(id) {
+    const w = WORLD.maps[id];
+    if (!w) return false;
+    if (TRAVEL.free.includes(id)) return true;
+    if (w.side) return (P.visited || []).includes(id);
+    if (w.zone != null) return !!P.view.unlocked[w.zone];
+    return id !== 'tower';
+  }
+  async function travelTo(id) {
+    await sendCommand({ act: 'travel', to: id });
+    if (P && P.pos.map === id) { Sound.play('portal'); goTab('map'); }
+  }
+  function viewTravel() {
+    const home = { id: 'home', name: WORLD.maps.home ? WORLD.maps.home.name : 'Nhà', min: null, max: null, zone: null };
+    const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
+      <p class="small muted">Dịch chuyển tốn ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Bản đồ phụ: đi qua cổng một lần để mở. Đá dịch chuyển vẫn miễn phí.</p>
+      <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
+      <div id="travel-list">${travelList(all)}</div></div>`;
+  }
+  function travelList(all) {
+    all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    const rows = all.filter((m) => L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
+    return `<div class="list">${rows.map((m) => {
+      const here = P.pos.map === m.id, open = travelOpen(m.id), cost = travelCost(m);
+      const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
+      const btn = here ? '<span class="tag">Đang ở</span>'
+        : !open ? `<span class="tag" title="${WORLD.maps[m.id] && WORLD.maps[m.id].side ? 'Đi qua cổng một lần để mở' : 'Vùng chưa mở'}">🔒</span>`
+        : `<button class="btn small-btn ${P.gold >= cost ? 'primary' : ''}" data-act="travel" data-to="${m.id}" ${P.gold >= cost ? '' : 'disabled'}>${cost ? `${icon('two-coins')}${fmt(cost)}` : 'Miễn phí'}</button>`;
+      return `<div class="item travel-row ${open ? '' : 'locked'}"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${lv}${m.zone ? ` · ${esc(m.zone)}` : ''}</div></div>${btn}</div>`;
+    }).join('')}</div>`;
+  }
+
   // ---------- Thư viện (Phase 14) ----------
   // Dữ liệu `GAME_DATA.LIBRARY` (server sinh từ dữ liệu game). Gõ tìm chỉ vẽ lại phần kết quả để ô nhập không mất chữ.
   const LIB = window.GAME_DATA.LIBRARY || { maps: [], monsters: [], items: [] };
@@ -2313,7 +2351,9 @@
     }).join('')}</div>`;
   }
   function viewBattle() {
-    const b = P.battle, m = b.monster, d = P.view.derived, z = ZONES[b.zone];
+    const b = P.battle, m = b.monster, d = P.view.derived;
+    // bản đồ phụ (Phase 15a) không thuộc vùng: nền theo `theme`, tên theo `place`
+    const z = b.zone != null && ZONES[b.zone] ? ZONES[b.zone] : { id: b.theme || 'forest', name: b.place || '' };
     const skills = mySkills();
     const cd = (id) => { const c = (b.cds || []).find((x) => x.id === id); return c ? c.turns : 0; };
     const fxs = (!b.over && b.effects) || { player: [], monster: [] };
@@ -2536,7 +2576,6 @@
     // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
     const sec = { quests: 'quests', misc: null, admin: 'admin' };
     if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
-    if (id === 'travel') { toast('Bảng chọn bản đồ sẽ có ở bản cập nhật tới. Tạm dùng đá dịch chuyển.'); return; }
     tab = id; confirmReset = false; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
     stopFishing();
     if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
@@ -2546,7 +2585,8 @@
   // Phím tắt (như MU Web): C Nhân vật, I Túi đồ, M Bản đồ (bấm lại phím của tab đang mở thì về Bản đồ),
   // Q uống bình máu (trong trận: nút Uống máu), Enter gõ chat, Esc đóng bảng đang mở / về Bản đồ.
   // Không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd.
-  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'map' };
+  // M: bảng chọn bản đồ (Phase 15a); bấm lại M thì về Bản đồ
+  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'travel' };
   function hotkeyPotion() {
     if (P.battle) {
       const b = document.querySelector('[data-act="potion"]');
@@ -2575,7 +2615,7 @@
     if (k === 'q') { e.preventDefault(); hotkeyPotion(); return; }
     if (P.battle) return;
     if (e.key === 'Tab' && !P.battle) { e.preventDefault(); goTab(tab === 'menu' ? 'map' : 'menu'); return; }
-    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] && k !== 'm' ? 'map' : HOTKEY_TAB[k]); return; }
+    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] ? 'map' : HOTKEY_TAB[k]); return; }
     if (k === 'Enter' && tab === 'map' && !npc) { e.preventDefault(); toggleChat(true); return; }
     if (tab !== 'map') return;
     if (npc) return;
@@ -2696,6 +2736,7 @@
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
+    if (act === 'travel') { travelTo(t.dataset.to); return; }
     if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
     if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
@@ -2952,6 +2993,7 @@
     Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(ovLine).join(''); log.scrollTop = log.scrollHeight; } });
     document.addEventListener('input', (e) => {
       if (e.target.id === 'chat-input') chatDraft = e.target.value;
+      if (e.target.id === 'travel-q') { travelQ = e.target.value; const l = $('#travel-list'); if (l) l.innerHTML = travelList(); }
       if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
     });
     document.addEventListener('change', (e) => {

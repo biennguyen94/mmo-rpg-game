@@ -1,0 +1,64 @@
+{
+  "id": "side_30",
+  "name": "Thung Lũng U Linh 5",
+  "zone": null,
+  "side": true,
+  "theme": "graveyard",
+  "floor": "floors/graveyard",
+  "tiles": [
+    "KKKKKKKKKKKKKKKKKKKKKKKK",
+    "KK.:......:...:....K.K.K",
+    "K..K.K:...K.....:......K",
+    "K.:........K:..K.:K..K.K",
+    "K...KS...:....K.K.K....K",
+    "K:.....K....::S..:K...KK",
+    "K........:....K...:.:..K",
+    "K.S...:..K...K.::.....SK",
+    "O..::...::::::::::.....K",
+    "K...:::::..K::..:::::::K",
+    "K:..K......S..K.::...K.K",
+    "K.K...K.::.....:.......K",
+    "K.....:...:..K.......:.K",
+    "K...:K..:......:.::.:..K",
+    "K...S..:K:.....::...SK.K",
+    "KKKKKKKKKKKKKKKKKKKKKKKK"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_29",
+      "spawn": [
+        22,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "phantom",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "flying_skull",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "necrophage",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

@@ -84,6 +84,12 @@ defmodule HacLongWeb.PageController do
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
         potionPricePerLevel: Data.rules().shop.potion_price_per_level,
+        # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
+        travel: %{
+          base: Data.rules().travel.base,
+          perLevel: Data.rules().travel.per_level,
+          free: Data.rules().travel.free
+        },
         smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
         smithRare: Data.rules().crafting.smith_rare,
         tameBonus: Data.rules().pets.tame_bonus,

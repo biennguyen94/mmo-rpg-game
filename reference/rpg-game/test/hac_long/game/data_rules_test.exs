@@ -14,7 +14,7 @@ defmodule HacLong.Game.DataRulesTest do
         Enum.flat_map(files, fn f -> f |> File.read!() |> Jason.decode!() |> Map.keys() end)
 
       assert Enum.sort(keys) ==
-               ~w(BOSS_DROPS CHAOS CLASSES EVENTS FURNITURE ITEMS JEWELS PETS QUESTS RECIPES RULES SHOP UPGRADE ZONES)
+               ~w(BOSS_DROPS CHAOS CLASSES EVENTS FURNITURE ITEMS JEWELS PETS QUESTS RECIPES RULES SHOP SIDE_MONSTERS UPGRADE ZONES)
 
       assert map_size(Data.classes()) == 4
       assert Data.item("potion_s").heal_pct > 0
