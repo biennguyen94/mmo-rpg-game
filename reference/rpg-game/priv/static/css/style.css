@@ -288,8 +288,8 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .chat-form input { flex: 1; min-width: 0; }
 
 /* Bảng xếp hạng */
-.seg { display: flex; gap: 6px; }
-.seg .btn { flex: 1; padding: 6px 2px; font-size: 0.8rem; min-width: 0; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg .btn { flex: 1 1 auto; padding: 6px 4px; font-size: 0.8rem; min-width: 0; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; }
 ol.board { list-style: none; display: grid; gap: 4px; margin: 0; padding: 0; }
 ol.board li { display: flex; align-items: baseline; gap: 10px; padding: 5px 8px; border-radius: 8px; background: #16121c; }
 ol.board li.me { box-shadow: inset 0 0 0 1px var(--gold); }
