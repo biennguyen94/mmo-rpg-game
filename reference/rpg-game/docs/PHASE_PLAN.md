@@ -281,7 +281,7 @@ theo khung còn lại). e2e 6/6 xanh (mobile 18 bước: không cuộn ở bản
 
 Thứ tự: 11 → 12 → 13 → 14 → 15 (15a = U2 20 bản đồ, 15b = Phase 6 Item.txt) → 16 → 17. Chi tiết, câu hỏi: `INTEGRATION_PLAN §16`.
 
-### Phase 11 — Sửa giao diện nhanh (không đổi luật chơi)
+### Phase 11 — Sửa giao diện nhanh (không đổi luật chơi) ✅ (xong 2026-10-09)
 
 | Mục | Việc |
 |---|---|

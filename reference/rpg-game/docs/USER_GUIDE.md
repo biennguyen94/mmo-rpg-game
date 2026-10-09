@@ -67,6 +67,7 @@ Kỹ năng tốn MP; MP hồi dần mỗi lượt và khi nghỉ trọ. Kỹ nă
 | Hang Hắc Long | 30–35 | **HẮC LONG** (36) |
 
 - Hạ trùm vùng thì mở vùng tiếp theo. Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
+- Gặp trùm là vào trận ngay như quái thường.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).
 - **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
@@ -190,5 +191,9 @@ Kỹ năng tốn MP; MP hồi dần mỗi lượt và khi nghỉ trọ. Kỹ nă
 
 - Máy tính: **C** Nhân vật, **I** Túi đồ, **M** Bản đồ, **Q** uống bình máu, **Enter** gõ chat, **Esc** đóng bảng đang mở.
 - Điện thoại: mọi thao tác bằng chạm; nút đủ lớn, không cần kéo ngang.
+- Nút **⤢** góc trên phải bản đồ: thu cả bản đồ cho vừa khung (bấm lại để tắt).
+- **Menu → Cài đặt → Bản đồ**: Sáng / Tối / Tự động (theo giờ trong game).
+- Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.
+- Chat: tin mới hiện 5 giây ở góc dưới trái rồi ẩn (bấm 💬 xem hết); gõ **/d** để xóa chat trên máy mình.
 
 ![Bản đồ trên điện thoại](screenshots/e2e-mobile-map.png)

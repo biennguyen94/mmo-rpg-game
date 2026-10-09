@@ -107,3 +107,10 @@
 | P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
 | P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
 | P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
+
+## Phase 11 (2026-10-09)
+- **P11-1** Sáng / Tối / Tự động chỉ đổi độ tối khi vẽ bản đồ (lưu `hl-theme` ở trình duyệt); luật ngày đêm (quái hiếm ban đêm) vẫn theo giờ server, biểu tượng giờ trên bản đồ vẫn là giờ thật.
+- **P11-2** Chat ở góc bản đồ: mỗi tin hiện 5 giây kể từ lúc tới; lịch sử nạp lúc vào game không hiện ở góc (bấm 💬 để xem). `/d` chỉ xóa trên máy mình.
+- **P11-3** Gặp trùm: client luôn gửi `move` kèm `confirm: true` nên vào trận ngay; server giữ nguyên giao thức (`confirm: "boss"` vẫn có cho client cũ).
+- **P11-4** Quà cho mọi người kèm trang bị: khóa `items` `"gear:<mẫu>:<độ hiếm>:<+N>"` trong thư (không đổi schema `mails`); độ hiếm 0 = đồ thường, 1..3 = đồ hiếm chỉ số `1 + cấp/6` cho 1..3 chỉ số đầu (như lệnh `give_gear` không nhập chỉ số); mỗi thư tối đa 100 món mỗi loại; túi đồ hiếm không đủ chỗ thì không mở được thư (không tự bán).
+- **P11-5** Bỏ form "Gửi quà" riêng ở thẻ tra cứu người chơi (trùng Chỉnh nhân vật); lệnh `gift` với `uid` trên server vẫn giữ.

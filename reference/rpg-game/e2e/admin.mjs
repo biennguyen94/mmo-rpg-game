@@ -31,17 +31,22 @@ await page.waitForTimeout(500);
 const unmuted = await X.page.evaluate(() => window.Net.chat('đã được chat').then(() => 'ok', (e) => e.msg));
 R.check('bỏ cấm chat thì gửi lại được', unmuted === 'ok', unmuted);
 
-// gửi quà 123 vàng qua hộp thư
-await page.fill('#adm-gift input[name="subject"]', 'Quà thử');
-await page.fill('#adm-gift input[name="gold"]', '123');
-await page.click('#adm-gift button[type="submit"]');
-await X.page.waitForFunction(() => window.Net.mail().then((m) => m.mails.some((x) => x.subject === 'Quà thử')), null, { timeout: 5000 }).catch(() => null);
+// Quà cho mọi người (V10): 123 vàng + một món đồ thường +3 qua hộp thư
+const subj = 'Quà thử ' + Date.now();
+await page.fill('#adm-gift-all input[name="subject"]', subj);
+await page.fill('#adm-gift-all input[name="gold"]', '123');
+await page.selectOption('#adm-gift-all select[name="gbase"]', { index: 1 });
+await page.fill('#adm-gift-all input[name="gup"]', '3');
+await page.click('#adm-gift-all button[type="submit"]');
+await X.page.waitForFunction((s) => window.Net.mail().then((m) => m.mails.some((x) => x.subject === s)), subj, { timeout: 8000 }).catch(() => null);
 const mails = await X.page.evaluate(() => window.Net.mail());
-const gift = mails.mails.find((m) => m.subject === 'Quà thử');
-R.check('người chơi nhận thư quà', !!gift && gift.gold === 123);
-const g0 = (await player(X.page)).gold;
+const gift = mails.mails.find((m) => m.subject === subj);
+R.check('người chơi nhận thư quà (vàng + đồ +3)', !!gift && gift.gold === 123 && Object.keys(gift.items).some((k) => k.startsWith('gear:') && k.endsWith(':3')), JSON.stringify(gift && gift.items));
+const g0 = (await player(X.page)).gold, n0 = Object.keys((await player(X.page)).view.gear || {}).length;
 if (gift) await send(X.page, { act: 'mail_claim', id: gift.id });
-R.check('mở thư nhận 123 vàng', (await player(X.page)).gold === g0 + 123);
+const pc = await player(X.page);
+R.check('mở thư nhận 123 vàng và một món đồ', pc.gold === g0 + 123 && Object.keys(pc.view.gear || {}).length === n0 + 1, `${pc.gold - g0} vàng, ${Object.keys(pc.view.gear || {}).length - n0} đồ`);
+R.check('không còn mục Gửi quà riêng ở người chơi', !(await page.$('#adm-gift')));
 
 // Chỉnh nhân vật: cộng 1000 vàng (người chơi đang online thấy liền)
 const g1 = (await player(X.page)).gold;

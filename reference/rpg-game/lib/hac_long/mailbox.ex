@@ -15,7 +15,7 @@ defmodule HacLong.Mailbox do
   import Ecto.Query
 
   alias HacLong.Repo
-  alias HacLong.Game.{Character, Data, Engine}
+  alias HacLong.Game.{Character, Data, Engine, Gear}
 
   @rules Data.rules().mail
   @keep @rules.keep
@@ -24,6 +24,10 @@ defmodule HacLong.Mailbox do
 
   @doc """
   Gửi thư. `attrs`: `subject` (bắt buộc), `body`, `gold`, `xp`, `items` (`%{id => số}`).
+
+  Đồ riêng từng món (Phase 11, V10) ghi trong `items` với khóa `"gear:<mẫu>:<độ hiếm>:<+N>"`:
+  độ hiếm 0 là đồ thường (`Gear.plain/1`), 1..3 là đồ hiếm chỉ số theo cấp người nhận. Mở thư thì
+  tạo từng món vào túi đồ hiếm; túi không đủ chỗ thì không mở được (giữ thư).
   """
   def send(user_id, attrs) do
     with {:ok, row} <- row(attrs) do
@@ -59,7 +63,7 @@ defmodule HacLong.Mailbox do
         {:error, "Vàng và kinh nghiệm phải là số không âm."}
 
       not (is_map(items) and
-               Enum.all?(items, fn {id, n} -> Data.item(id) && is_integer(n) && n > 0 end)) ->
+               Enum.all?(items, fn {id, n} -> valid_item?(id) && is_integer(n) && n in 1..100 end)) ->
         {:error, "Vật phẩm không hợp lệ."}
 
       true ->
@@ -222,12 +226,61 @@ defmodule HacLong.Mailbox do
     n
   end
 
+  # ---------- Đồ riêng từng món: "gear:<mẫu>:<độ hiếm>:<+N>" ----------
+
+  @doc "Khóa `items` cho một món đồ riêng (dùng khi gửi)."
+  def gear_key(base, rarity, up), do: "gear:#{base}:#{rarity}:#{up}"
+
+  defp parse_gear("gear:" <> rest) do
+    with [base, r, u] <- String.split(rest, ":"),
+         {rarity, ""} <- Integer.parse(r),
+         {up, ""} <- Integer.parse(u),
+         it when not is_nil(it) <- Data.item(base),
+         true <- it.slot in Engine.equip_slots(),
+         true <- rarity in 0..3 and up in 0..Engine.max_upgrade(),
+         true <- rarity == 0 or it.slot in ~w(weapon armor shield) do
+      {base, rarity, up, it}
+    else
+      _ -> nil
+    end
+  end
+
+  defp parse_gear(_), do: nil
+
+  defp valid_item?(id), do: Data.item(id) != nil or parse_gear(id) != nil
+
+  defp make_gear(p, {base, 0, _up, _it}), do: {Gear.plain(base), p}
+
+  defp make_gear(p, {base, rarity, _up, _it}) do
+    top = 1 + floor(p.level / 6)
+    {Gear.new(base, rarity, Gear.stats() |> Enum.take(rarity) |> Map.new(&{&1, top})), p}
+  end
+
   defp give(p, mail) do
     p = %{p | gold: p.gold + mail.gold}
+    {gear, plain} = Enum.split_with(mail.items, fn {id, _} -> parse_gear(id) != nil end)
+    need = Enum.reduce(gear, 0, fn {_, n}, acc -> acc + n end)
+
+    if need > 0 and length(Gear.bag(p)) + need > Gear.max_bag(),
+      do: Repo.rollback("Túi đồ hiếm không đủ chỗ cho #{need} món, dọn bớt rồi mở thư.")
 
     p =
-      Enum.reduce(mail.items, p, fn {id, n}, p ->
+      Enum.reduce(plain, p, fn {id, n}, p ->
         if Data.item(id), do: Engine.add_item(p, id, n), else: p
+      end)
+
+    p =
+      Enum.reduce(gear, p, fn {id, n}, p ->
+        {_, _, up, _} = spec = parse_gear(id)
+
+        Enum.reduce(1..n, p, fn _, p ->
+          {g, p} = make_gear(p, spec)
+          {p, :kept} = Gear.add(p, g)
+
+          if up > 0,
+            do: Map.put(p, :upgrades, Map.put(Map.get(p, :upgrades) || %{}, g.uid, up)),
+            else: p
+        end)
       end)
 
     {_levels, p} = Engine.gain_xp(p, mail.xp)
@@ -242,13 +295,26 @@ defmodule HacLong.Mailbox do
         mail.gold > 0 && "+#{mail.gold} vàng",
         mail.xp > 0 && "+#{mail.xp} kinh nghiệm"
         | Enum.map(mail.items, fn {id, n} ->
-            name = if it = Data.item(id), do: it.name, else: id
+            name = item_name(id)
             if n > 1, do: "#{name} ×#{n}", else: name
           end)
       ]
       |> Enum.filter(& &1)
 
     "Nhận quà: " <> Enum.join(parts, ", ") <> "."
+  end
+
+  @rarity %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
+
+  defp item_name(id) do
+    case parse_gear(id) do
+      {_, r, up, it} ->
+        it.name <>
+          if(r > 0, do: " (#{@rarity[r]})", else: "") <> if(up > 0, do: " +#{up}", else: "")
+
+      nil ->
+        if it = Data.item(id), do: it.name, else: id
+    end
   end
 
   defp notify(user_id) do

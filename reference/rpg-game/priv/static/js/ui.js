@@ -243,7 +243,7 @@
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}">Khóa vĩnh viễn</button>
           <button class="btn small-btn" data-adm="unban" data-uid="${u.id}">Mở khóa</button>
         </div>
-        ${u.character ? giftForm('adm-gift', u.id) : ''}` : ''}
+` : ''}
       </div>
       ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
@@ -343,6 +343,11 @@
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
       <div class="btn-row"><select name="item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
+      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'wing'].includes(it.slot)).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+        <select name="grar" aria-label="Loại đồ"><option value="0">Đồ thường</option><option value="1">Hiếm: Tốt</option><option value="2">Hiếm: Hiếm</option><option value="3">Hiếm: Sử Thi</option></select>
+        <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
+        <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
+      <p class="small muted">Đồ hiếm (chỉ vũ khí, giáp, khiên) có chỉ số theo cấp người nhận.</p>
       <button class="btn primary" type="submit">${icon('envelope')} Gửi quà</button>
     </form>`;
   }
@@ -351,6 +356,7 @@
     const f = new FormData(form);
     const payload = { subject: f.get('subject'), body: f.get('body'), gold: +f.get('gold') || 0, xp: +f.get('xp') || 0, items: {} };
     if (f.get('item')) payload.items[f.get('item')] = Math.max(1, +f.get('n') || 1);
+    if (f.get('gbase')) payload.items[`gear:${f.get('gbase')}:${+f.get('grar') || 0}:${+f.get('gup') || 0}`] = Math.max(1, +f.get('gn') || 1);
     if (form.id === 'adm-gift') payload.uid = +form.dataset.uid; else payload.all = true;
     Net.admin('gift', payload).then((r) => { toast(`Đã gửi ${r.sent} thư.`); form.reset(); }).catch((err) => toast(err.msg, true));
   }
@@ -664,6 +670,12 @@
   // ---------- Chat ----------
   const mapName = (id) => (WORLD.maps[id] ? WORLD.maps[id].name : id);
 
+  // V2: khi khung chat đóng, mỗi tin hiện 5 giây kể từ lúc tới rồi mờ đi (tin cũ / lịch sử không hiện)
+  const CHAT_SHOW_MS = 5000;
+  function ovLine(m) {
+    const d = (m._t || 0) + CHAT_SHOW_MS - Date.now();
+    return chatLine(m).replace('<div class="chat-line', `<div style="--d:${Math.max(0, d)}ms" class="chat-line${d <= 0 ? ' gone' : ''}`);
+  }
   function chatLine(m) {
     if (!m.uid) return `<div class="chat-line system ${m.guild ? 'guild' : ''}">${m.guild ? '[Bang] ' : ''}${esc(m.text)}</div>`;
     const mine = m.uid === Net.userId;
@@ -786,7 +798,7 @@
   function viewChat() {
     return `<div class="chat-ov ${chatOpen || chatWide ? 'open' : ''}" id="chat-ov">
       ${chatOpen ? `<button class="chat-wide" data-act="chat-wide" aria-label="Xem lịch sử chat">${chatWide ? '▾' : '▴'}</button>` : ''}
-      <div class="chat-log" id="chat-log" aria-live="polite">${chats.map(chatLine).join('')}</div>
+      <div class="chat-log" id="chat-log" aria-live="polite">${chats.map(ovLine).join('')}</div>
       ${chatOpen ? `<form id="chat-form" class="chat-form" autocomplete="off">
         ${chatChannels().length > 1 ? `<button type="button" class="btn chat-to ${chatTo !== 'world' ? 'on' : ''}" data-act="chat-to" aria-label="Đổi kênh chat">${{ world: 'Tất cả', guild: 'Bang', party: 'Đội' }[chatTo]}</button>` : ''}
         <input type="text" id="chat-input" maxlength="120" placeholder="${{ world: 'Nói với mọi người…', guild: 'Nói trong bang…', party: 'Nói trong tổ đội…' }[chatTo]}" value="${esc(chatDraft)}" aria-label="Tin nhắn">
@@ -802,6 +814,7 @@
   }
 
   function onChatMessage(m) {
+    m._t = Date.now();
     chats.push(m);
     if (chats.length > 50) chats.shift();
     // người nói đang ở cùng bản đồ thì hiện bong bóng trên đầu
@@ -810,7 +823,7 @@
     const log = $('#chat-log');
     if (log) {
       const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
-      log.innerHTML = chats.map(chatLine).join('');
+      log.innerHTML = chats.map(ovLine).join('');
       if (atBottom || m.uid === Net.userId) log.scrollTop = log.scrollHeight;
     }
   }
@@ -819,6 +832,8 @@
     const input = $('#chat-input');
     const text = input.value.trim();
     if (!text) return;
+    // V3: /d xóa chat trên máy mình
+    if (text === '/d') { chats = []; const log = $('#chat-log'); if (log) log.innerHTML = ''; input.value = ''; chatDraft = ''; toast('Đã xóa chat.'); return; }
     const c = L.parseChat(text, chatTo, friendsUi.data && friendsUi.data.friends);
     if (c.error) { toast(c.error, true); return; }
     try {
@@ -903,8 +918,8 @@
       </div>
       <div class="bars">
         ${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
-        ${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
-        ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `EXP ${Math.floor((P.xp / need) * 100)}%`)}
+        ${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `⭐ ${Math.floor((P.xp / need) * 100)}%`)}
       </div>`;
   }
 
@@ -918,9 +933,15 @@
     if (mail.open) render();
   }
 
+  // đồ riêng từng món trong thư: "gear:<mẫu>:<độ hiếm>:<+N>"
+  function mailItemName(id) {
+    const g = id.startsWith('gear:') && id.split(':');
+    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (${RARITY[g[2]]})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
+    return ITEMS[id] ? ITEMS[id].name : id;
+  }
   function mailGifts(m) {
     return [m.gold ? `${fmt(m.gold)} vàng` : '', m.xp ? `${fmt(m.xp)} kinh nghiệm` : '']
-      .concat(Object.entries(m.items).map(([id, n]) => `${ITEMS[id] ? ITEMS[id].name : id}${n > 1 ? ` ×${n}` : ''}`))
+      .concat(Object.entries(m.items).map(([id, n]) => `${mailItemName(id)}${n > 1 ? ` ×${n}` : ''}`))
       .filter(Boolean).join(' · ');
   }
 
@@ -1129,12 +1150,19 @@
       ${viewAchievements()}`;
   }
 
+  // lựa chọn hiển thị lưu ở trình duyệt (chỉ giao diện)
+  function pref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
+  function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* bị chặn: chỉ đổi lần này */ } }
+
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
       <div class="card" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
         <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
         <button class="btn ${lg === 'en' ? 'primary' : ''}" data-act="lang" data-lang="en" aria-pressed="${lg === 'en'}">English</button></div></div></div>
+      <div class="card"><div class="row"><h3 class="grow">Bản đồ</h3>
+        <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
+        <p class="small muted">Tự động: sáng tối theo giờ trong game.</p></div>
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -2069,7 +2097,8 @@
     if (n.role === 'talk') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
-    return `
+    // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
+    return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
       <div class="card npc-head">
         <div class="row"><img class="sprite" src="${asset('npcs/' + n.sprite + '.png')}" alt="${esc(n.name)}"><div class="grow"><h2 class="display">${esc(n.name)}</h2>
         ${n.role !== 'talk' ? `<p class="small muted">“${esc(npc.line)}”</p>` : ''}</div></div>
@@ -2153,7 +2182,7 @@
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;
@@ -2274,7 +2303,8 @@
     dialog = null;
     let ok = false;
     try {
-      const r = await Net.send(confirm ? { act: 'move', dir, confirm: true } : { act: 'move', dir });
+      // V9: gặp trùm vào trận luôn như quái thường (không hỏi Đấu / Thôi)
+      const r = await Net.send({ act: 'move', dir, confirm: true });
       P = r.player;
       if (r.msg) result(r);
       if (r.gather) Sound.play('gather');
@@ -2406,18 +2436,21 @@
     const t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
-    if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+    // V4: bấm lại icon dock đang mở thì đóng, về Bản đồ
+    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !mail.open && !notes.open && !guildUi.open && !friendsUi.open && !visit; goTab(open ? 'map' : t.dataset.tab); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
     const act = t.dataset.act;
+    if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
+    if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
     if (t.dataset.adm) { onAdmin(t); return; }
-    if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(chatLine).join(''); return; }
+    if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(ovLine).join(''); return; }
     if (act === 'chat-report') { Net.report(+t.dataset.id).then(() => toast('Đã gửi báo cáo. Cảm ơn bạn.')).catch((e) => toast(e.msg, true)); chatMenu = null; return; }
     if (act === 'chat-block' || act === 'unblock') {
       const uid = +t.dataset.uid;
@@ -2730,7 +2763,7 @@
       if (P && !P.battle) $('#hud').innerHTML = viewHud();
     });
     setInterval(() => { const el = $('#wb-left'); if (el && wb.alive) el.textContent = clock(wb.endsAt - wb.skew - Date.now()); }, 1000);
-    Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(chatLine).join(''); log.scrollTop = log.scrollHeight; } });
+    Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(ovLine).join(''); log.scrollTop = log.scrollHeight; } });
     document.addEventListener('input', (e) => { if (e.target.id === 'chat-input') chatDraft = e.target.value; });
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }

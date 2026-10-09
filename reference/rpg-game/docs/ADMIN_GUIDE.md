@@ -56,10 +56,10 @@ Thứ tự các khối trong tab:
 
 1. **Báo cáo chưa xử lý**: tin chat bị báo cáo. Nút *Bỏ qua*, *Cấm chat 1 giờ*, *Khóa 1 ngày* (chỉ admin).
 2. **Tra cứu người chơi**: gõ tên nhân vật hoặc tên đăng nhập. Thẻ kết quả: cấp, vàng, số quái, số lần bị báo cáo,
-   trạng thái khóa / cấm chat, các nút cấm chat / khóa, và **gửi quà qua thư** (admin).
+   trạng thái khóa / cấm chat, các nút cấm chat / khóa. (Bỏ "gửi quà" riêng từ Phase 11: dùng **Chỉnh nhân vật**.)
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
-5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / đồ vào hộp thư mọi nhân vật.
+5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (đồ thường hoặc đồ hiếm Tốt / Hiếm / Sử Thi, +0…+11, ×1…10) vào hộp thư mọi nhân vật. Đồ hiếm có chỉ số theo cấp người nhận; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
 6. **Trùm thế giới** (admin): gọi Cổ Long xuất hiện ngay.
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
