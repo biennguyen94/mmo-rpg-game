@@ -15,7 +15,7 @@
 8. [Làng: NPC và việc hằng ngày](#8-làng-npc-và-việc-hằng-ngày)
 9. [Nhà của bạn, thú cưng, câu cá, nấu ăn](#9-nhà-của-bạn-thú-cưng-câu-cá-nấu-ăn)
 10. [Chơi cùng người khác](#10-chơi-cùng-người-khác)
-11. [Đấu trường và PK cược vàng](#11-đấu-trường-và-pk-cược-vàng)
+11. [Đấu trường và Đồ sát](#11-đấu-trường-và-đồ-sát)
 12. [Bang hội và chiến bang](#12-bang-hội-và-chiến-bang)
 13. [Hộp thư, Thông báo, bảng xếp hạng](#13-hộp-thư-thông-báo-bảng-xếp-hạng)
 14. [Phím tắt, điện thoại](#14-phím-tắt-điện-thoại)
@@ -140,7 +140,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 10. Chơi cùng người khác
 
-- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, thăm nhà, giao dịch, kết bạn, thách đấu, cược đấu,
+- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, thăm nhà, giao dịch, kết bạn, thách đấu, đồ sát,
   chặn chat.
 - **Màu tên trên bản đồ**: xanh lá = đồng đội, xanh dương = cùng bang, đỏ = bang đang chiến với bang bạn.
 - **Tổ đội** (tối đa 3): đánh chung một con quái thì cùng thắng; mỗi người nhận thưởng × 1,2 / số người. Lời mời hết hạn sau
@@ -162,15 +162,15 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ![Giao dịch](screenshots/e2e-trade.png)
 
-## 11. Đấu trường và PK cược vàng
+## 11. Đấu trường và Đồ sát
 
 - **Đấu trường** (tab Khác): đánh với **bản sao chỉ số** của người khác (họ không cần online). Điểm Elo lên / xuống; 15 trận mỗi
-  ngày; thắng có ít vàng, thua không mất gì.
-- **PK cược vàng**: chạm vào người đang online → nhập số vàng (100 – 1 000 000) → **⚔ Cược đấu**. Người kia có 30 giây để nhận.
-  Bản sao của hai người tự đánh nhau ngay; người thắng nhận số cược của người thua, hòa thì không ai mất gì. Xem lại nhật ký trận
-  trong bảng kết quả; lịch sử ở thẻ Đấu trường. Tối đa 10 trận cược mỗi ngày.
+  ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Nhà); bỏ chạy thì không mất gì.
+- **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
+  luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì tự đánh thường. Hết máu hoặc **bỏ chạy** là gục ngã:
+  mất 10% vàng, về Nhà; số vàng đó về tay người thắng. Không đánh được ở Làng, Nhà và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
 
-![PK cược vàng](screenshots/e2e-pk.png)
+![Đồ sát](screenshots/e2e-pk.png)
 
 ## 12. Bang hội và chiến bang
 
@@ -197,7 +197,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Điện thoại: mọi thao tác bằng chạm; nút đủ lớn, không cần kéo ngang.
 - Nút **⤢** góc trên phải bản đồ: thu cả bản đồ cho vừa khung (bấm lại để tắt).
 - **Menu → Cài đặt → Bản đồ**: Sáng / Tối / Tự động (theo giờ trong game).
-- Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, cược đấu. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
+- Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
 - **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.
 - Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.

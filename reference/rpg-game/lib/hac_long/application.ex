@@ -21,6 +21,7 @@ defmodule HacLong.Application do
       HacLong.Party,
       HacLong.Trade,
       HacLong.PkBet,
+      HacLong.Slay,
       HacLong.GuildWars,
       HacLong.Invasion,
       {Registry, keys: :unique, name: HacLong.Game.Registry},

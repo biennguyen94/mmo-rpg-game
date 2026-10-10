@@ -37,7 +37,8 @@ defmodule HacLong.World do
 
   def valid_pos(_), do: Maps.home_spawn()
 
-  defp shared?(%{map: id}), do: not Maps.get(id).private
+  @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
+  def shared?(%{map: id}), do: not Maps.get(id).private
 
   @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, ngoại hình, ký hiệu bang."
   def info(p) do

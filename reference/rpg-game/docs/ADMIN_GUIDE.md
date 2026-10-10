@@ -279,7 +279,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 ### Xã hội, PK cược vàng, chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
-- **PK cược vàng:** cược 100 – 1 000 000 vàng (`RULES.pk`), không phí, 10 trận / ngày. Mỗi trận một dòng ở bảng `pk_matches`
+- **Đồ sát** (thay PK cược vàng từ 2026-10-10, `RULES.slay`, `DECISIONS.md` P18): không cần đồng ý, luân phiên lượt 10 giây, người thua mất `death_gold_loss` vàng cho người thắng (nhật ký vàng lý do `SLAY`). PK cược cũ (`RULES.pk`): mời cược đã tắt. Mỗi trận một dòng ở bảng `pk_matches`
   (người mời, người nhận, cược, người thắng; `winner_id` trống = hòa); nhật ký vàng lý do `PK_BET`, ref `pk:<id>`. Không phí và
   không giới hạn cấp nên cược cũng là một đường chuyển vàng giữa hai tài khoản (như giao dịch): tra `gold_log` theo `PK_BET`
   nếu nghi chuyển vàng cho nick phụ.

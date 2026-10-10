@@ -666,7 +666,13 @@ defmodule HacLong.Game.Engine do
           end
 
         p = pet_bite(p, d)
-        if p.battle.monster.hp <= 0, do: win(p), else: monster_turn(p, d)
+
+        cond do
+          # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó)
+          p.battle[:live] -> {ok(), p}
+          p.battle.monster.hp <= 0 -> win(p)
+          true -> monster_turn(p, d)
+        end
     end
   end
 
@@ -812,6 +818,9 @@ defmodule HacLong.Game.Engine do
     end
   end
 
+  # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
+  defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
+
   defp monster_turn(p, d) do
     b = p.battle
     m = b.monster
@@ -924,28 +933,29 @@ defmodule HacLong.Game.Engine do
           p
         end
 
-      if p.hp <= 0 do
-        lose(p)
-      else
-        tick = fn list ->
-          list
-          |> Enum.map(fn e -> if e.id == "stun", do: e, else: %{e | turns: e.turns - 1} end)
-          |> Enum.filter(&(&1.turns > 0))
-        end
-
-        p =
-          p
-          |> set_effects(:player, tick.(effects(p, :player)))
-          |> set_effects(:monster, tick.(effects(p, :monster)))
-
-        cds =
-          (Map.get(p.battle, :cds) || [])
-          |> Enum.map(&%{&1 | turns: &1.turns - 1})
-          |> Enum.filter(&(&1.turns > 0))
-
-        {ok(), %{p | battle: Map.put(p.battle, :cds, cds)}}
-      end
+      if p.hp <= 0, do: lose(p), else: tick_round(p)
     end
+  end
+
+  # Giảm số lượt hiệu ứng và hồi chiêu.
+  defp tick_round(p) do
+    tick = fn list ->
+      list
+      |> Enum.map(fn e -> if e.id == "stun", do: e, else: %{e | turns: e.turns - 1} end)
+      |> Enum.filter(&(&1.turns > 0))
+    end
+
+    p =
+      p
+      |> set_effects(:player, tick.(effects(p, :player)))
+      |> set_effects(:monster, tick.(effects(p, :monster)))
+
+    cds =
+      (Map.get(p.battle, :cds) || [])
+      |> Enum.map(&%{&1 | turns: &1.turns - 1})
+      |> Enum.filter(&(&1.turns > 0))
+
+    {ok(), %{p | battle: Map.put(p.battle, :cds, cds)}}
   end
 
   # lễ hội: quái thường có thể rơi vật phẩm lễ hội, trùm rơi 3 cái
@@ -974,6 +984,10 @@ defmodule HacLong.Game.Engine do
   end
 
   def finish_win(p), do: {ok(), p}
+
+  @doc "Kết thúc trận đang đánh bằng thua (gục ngã: mất vàng, máu còn một phần, như chết thường)."
+  def finish_lose(%{battle: %{over: false}} = p), do: lose(p)
+  def finish_lose(p), do: {ok(), p}
 
   defp win(p) do
     m = p.battle.monster

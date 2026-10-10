@@ -398,6 +398,22 @@
     else note(`Cược đấu thua ${foe}: −${fmt(v.wager)} vàng.`, 'bad');
   }
 
+  // Đồ sát: không cần đồng ý; server mở trận cho cả hai, client nhận nhân vật mới qua sự kiện "player".
+  function slayRow(o) {
+    const safe = RULES.slay.safe.includes(P.pos.map);
+    const why = safe ? 'Vùng an toàn' : P.level < RULES.slay.minLevel ? `Cần cấp ${RULES.slay.minLevel}` : o.level < RULES.slay.minLevel ? `Dưới cấp ${RULES.slay.minLevel}` : '';
+    return `<div class="btn-row"><button class="btn danger" data-act="slay" data-uid="${o.id}" ${why ? 'disabled' : ''}>🗡 Đồ sát</button>${why ? `<span class="small muted">${why}</span>` : ''}</div>`;
+  }
+
+  async function slay(uid) {
+    try {
+      await Net.slay(uid);
+      profileUi = { open: false, info: null };
+      dialog = null; npc = null; tab = 'map';
+    } catch (e) { toast(e.msg, true); }
+    render();
+  }
+
   async function pkOp(op, payload) {
     try {
       const r = await Net.pk(op, payload);
@@ -527,8 +543,7 @@
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
         </div>
-        <div class="btn-row"><input type="number" id="pk-wager" class="grow" min="${RULES.pkMin}" max="${RULES.pkMax}" step="100" value="${Math.min(1000, Math.max(RULES.pkMin, P.gold))}" aria-label="Số vàng cược">
-          <button class="btn" data-act="pk-ask" data-uid="${o.id}">⚔ Cược đấu</button></div>
+        ${slayRow(o)}
         <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button><button class="btn small-btn" data-act="dialog-close">Đóng</button></div>
       </div>`;
     }
@@ -769,8 +784,7 @@
         <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
         <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
         <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
-      <div class="btn-row"><input type="number" id="pk-wager" class="grow" min="${RULES.pkMin}" max="${RULES.pkMax}" step="100" value="${Math.min(1000, Math.max(RULES.pkMin, P.gold))}" aria-label="Số vàng cược">
-        <button class="btn" data-act="pk-ask" data-uid="${o.id}">⚔ Cược đấu</button></div>
+      ${slayRow(o)}
       <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button></div></div>`;
     return `${head}
       <div class="card prof-head">
@@ -884,12 +898,12 @@
       <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
         <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
         <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
-      ${pk ? `<h3>⚔ Cược đấu</h3><p class="small muted">Chạm vào người chơi đang online trên bản đồ, nhập số vàng rồi bấm Cược đấu. Hai bản sao tự đánh; thắng ăn cả cược. Hôm nay ${pk.today}/${pk.rules.per_day} trận.</p>
+      ${pk ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${pk.history.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
           const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
           return `<div class="item"><div class="grow"><div class="name">${esc(foe)}</div><div class="small muted">${h.rounds} lượt · ${new Date(h.at).toLocaleString('vi-VN')}</div></div>${res}</div>`;
-        }).join('') || '<p class="small muted">Chưa có trận cược nào.</p>'}</div>` : ''}
+        }).join('') || '<p class="small muted">Chưa có trận nào.</p>'}</div>` : ''}
     </div>`;
   }
 
@@ -2362,17 +2376,21 @@
     const manas = ['mana_s', 'mana_m', 'mana_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     const floatHtml = fx && fx.mDmg != null
       ? `<span class="float ${fx.crit ? 'crit' : ''} ${fx.mDmg === 0 ? 'miss' : ''}">${fx.mDmg === 0 ? 'Trượt' : '-' + fmt(fx.mDmg)}</span>` : '';
+    // đồ sát: luân phiên lượt với người thật, chưa tới lượt thì khóa nút
+    const slayEnc = b.live && b.encounter ? b.encounter : null;
+    const wait = slayEnc && !slayEnc.mine ? 'disabled' : '';
     let bottom;
     if (!b.over) {
       bottom = `
+        ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayEnc.until || 0}">${slayLeft(slayEnc.until)}</span>s</p>` : ''}
         <div class="actions">
-          <button class="btn primary" data-act="attack">${icon('broadsword')}<span class="lbl">Tấn công</span></button>
-          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
+          <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
         </div>
         <div class="actions util">
-          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
-          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp ? '' : 'disabled'} title="Uống mana">${icon('magic-potion')}<span class="lbl">Mana</span><span class="sub num">${manas}</span></button>
-          <button class="btn" data-act="flee" title="Bỏ chạy">${icon('walk')}<span class="lbl">Chạy</span></button>
+          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
+          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp && !wait ? '' : 'disabled'} title="Uống mana">${icon('magic-potion')}<span class="lbl">Mana</span><span class="sub num">${manas}</span></button>
+          <button class="btn" data-act="flee" ${wait} title="${slayEnc ? 'Bỏ chạy: tính như gục ngã' : 'Bỏ chạy'}">${icon('walk')}<span class="lbl">Chạy</span>${slayEnc ? '<span class="sub">= chết</span>' : ''}</button>
         </div>`;
     } else {
       const r = b.result, rw = b.reward;
@@ -2391,11 +2409,11 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${m.name}</h2>
-        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
+        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
         ${bar(m.golden ? 'gold' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
         ${effectTags(fxs.monster)}
       </div>
@@ -2406,6 +2424,10 @@
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;
   }
+
+  function slayLeft(until) { return Math.max(0, Math.ceil(((until || 0) - Date.now()) / 1000)); }
+  // đếm ngược lượt đồ sát (không vẽ lại cả màn hình)
+  setInterval(() => { document.querySelectorAll('.slay-turn [data-until]').forEach((el) => { el.textContent = slayLeft(+el.dataset.until); }); }, 500);
 
   // ---------- Xử lý thao tác ----------
   // Ghi lại trạng thái trước một lượt đánh để tính hiệu ứng (số sát thương bay lên, rung).
@@ -2698,12 +2720,7 @@
     }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
     if (act === 'pk-op') { pkOp(t.dataset.op); return; }
-    if (act === 'pk-ask') {
-      const w = Math.floor(+(($('#pk-wager') || {}).value || 0));
-      if (!(w >= RULES.pkMin && w <= RULES.pkMax)) { toast(`Cược từ ${fmt(RULES.pkMin)} đến ${fmt(RULES.pkMax)} vàng.`, true); return; }
-      pkOp('invite', { uid: +t.dataset.uid, wager: w });
-      return;
-    }
+    if (act === 'slay') { slay(+t.dataset.uid); return; }
     if (act === 'trade-rm') {
       const d = t.dataset;
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });

@@ -239,6 +239,8 @@
     trade(op, payload) { return push('trade', Object.assign({ op }, payload || {})); },
     // PK cược vàng: pk('invite', { uid, wager }), pk('accept'), pk('decline'), pk('cancel'), pk('info').
     pk(op, payload) { return push('pk', Object.assign({ op }, payload || {})); },
+    // Đồ sát: đánh ngay người chơi cùng bản đồ (không cần đồng ý).
+    slay(uid) { return push('slay', { uid }); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).

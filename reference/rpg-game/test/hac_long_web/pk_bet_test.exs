@@ -1,10 +1,8 @@
 defmodule HacLongWeb.PkBetTest do
-  @moduledoc "Phase 5 (H7 + H8): PK cược vàng — trận tự đánh thuần, mời / nhận / từ chối / hết hạn qua kênh, vàng + audit."
+  @moduledoc "Phase 5 (H7 + H8): PK cược vàng — trận tự đánh thuần; mời cược qua kênh đã tắt (thay bằng đồ sát)."
   use HacLongWeb.ChannelCase
 
-  import Ecto.Query
-
-  alias HacLong.{Accounts, Arena, Audit, PkBet, Repo}
+  alias HacLong.{Accounts, Arena, PkBet}
   alias HacLong.Game.{Characters, Commands, PkFight, Rng, Session}
   alias HacLongWeb.{ClientVersion, UserSocket}
 
@@ -62,103 +60,22 @@ defmodule HacLongWeb.PkBetTest do
     end
   end
 
-  describe "qua kênh + database" do
-    test "mời → nhận: người thắng +cược, người thua −cược, một dòng pk_matches, nhật ký PK_BET, audit sạch" do
-      ua = create_user()
-      ub = create_user()
-      player(ua, %{gold: 5000, level: 40})
-      player(ub, %{gold: 3000})
-      sa = join(ua)
-      sb = join(ub)
-
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 1000})
-      assert_reply ref, :ok, %{invite: %{wager: 1000, incoming: false}}
-      assert_push "pk_invite", %{invite: %{from: from, wager: 1000}}
-      assert from == ua.id
-
-      ref = push(sb, "pk", %{"op" => "accept"})
-      assert_reply ref, :ok, %{result: %{winner: winner, wager: 1000, log: [_ | _]}, today: 1}
-      assert_push "pk_result", %{id: id}
-
-      ga = Session.get(ua.id).gold
-      gb = Session.get(ub.id).gold
-      assert ga + gb == 8000
-
-      if winner == ua.id, do: assert({ga, gb} == {6000, 2000})
-      if winner == ub.id, do: assert({ga, gb} == {4000, 4000})
-
-      assert [%{winner_id: ^winner}] =
-               Repo.all(
-                 from m in "pk_matches", where: m.id == ^id, select: %{winner_id: m.winner_id}
-               )
-
-      reasons =
-        Repo.all(
-          from l in "gold_log",
-            where: l.user_id in ^[ua.id, ub.id] and l.reason == "PK_BET",
-            select: {l.ref, l.delta}
-        )
-
-      if winner,
-        do: assert(Enum.sort(reasons) == Enum.sort([{"pk:#{id}", 1000}, {"pk:#{id}", -1000}]))
-
-      assert Enum.filter(Audit.run().problems, &(&1[:user_id] in [ua.id, ub.id])) == []
-    end
-
-    test "không đủ vàng, cược ngoài giới hạn, tự mời mình, người không online" do
-      ua = create_user()
-      ub = create_user()
-      uc = create_user()
-      player(ua, %{gold: 500})
-      player(ub, %{gold: 50})
-      player(uc, %{})
-      sa = join(ua)
-      _ = join(ub)
-
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 1000})
-      assert_reply ref, :error, %{msg: msg}
-      assert msg =~ "không đủ"
-
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 10})
-      assert_reply ref, :error, %{msg: "Cược từ" <> _}
-
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => uc.id, "wager" => 100})
-      assert_reply ref, :error, %{msg: "Người này không online."}
-
-      # B chỉ có 50 vàng: lời mời gửi được, nhận thì không ai mất gì
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 100})
-      assert_reply ref, :ok, _
-      {:ok, inv} = PkBet.take(ub.id)
-      assert {:error, msg} = PkBet.execute(inv)
-      assert msg =~ "không đủ"
-      assert Session.get(ua.id).gold == 500 and Session.get(ub.id).gold == 50
-      assert PkBet.today_count(ua.id) == 0
-    end
-
-    test "từ chối và hết hạn: lời mời biến mất, báo người mời" do
+  describe "qua kênh" do
+    test "mời cược đã tắt (thay bằng đồ sát), vẫn xem được lịch sử" do
       ua = create_user()
       ub = create_user()
       player(ua, %{gold: 5000})
-      player(ub, %{gold: 5000})
+      player(ub, %{gold: 3000})
       sa = join(ua)
-      sb = join(ub)
+      _sb = join(ub)
 
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 200})
-      assert_reply ref, :ok, _
-      ref = push(sb, "pk", %{"op" => "decline"})
-      assert_reply ref, :ok, %{invite: nil}
-      assert PkBet.of(ua.id) == nil
+      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 1000})
+      assert_reply ref, :error, %{msg: msg}
+      assert msg =~ "Đồ sát"
 
-      ref = push(sa, "pk", %{"op" => "invite", "uid" => ub.id, "wager" => 200})
-      assert_reply ref, :ok, _
-      # giả lập hết giờ
-      inv = :sys.get_state(PkBet).by_to[ub.id]
-      send(PkBet, {:expire, ub.id, inv.ref})
-      _ = PkBet.of(ua.id)
-      assert PkBet.of(ub.id) == nil
-      assert_push "notice", %{msg: "⚔ Lời mời cược đấu đã hết hạn."}
-      ref = push(sb, "pk", %{"op" => "accept"})
-      assert_reply ref, :error, %{msg: "Lời mời không còn nữa."}
+      ref = push(sa, "pk", %{"op" => "info"})
+      assert_reply ref, :ok, %{invite: nil, history: [], today: 0}
+      assert Session.get(ua.id).gold == 5000
     end
   end
 end

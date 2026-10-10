@@ -682,6 +682,15 @@
     },
     "bots": {
       "count": 20
+    },
+    "slay": {
+      "turn_s": 10,
+      "max_timeouts": 3,
+      "min_level": 10,
+      "safe_maps": [
+        "village",
+        "home"
+      ]
     }
   }
 }

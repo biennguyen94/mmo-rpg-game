@@ -80,6 +80,12 @@ defmodule HacLongWeb.PageController do
         warGold: Data.rules().guild_war.win_gold,
         pkMax: Data.rules().pk.max,
         pkInvite: Data.rules().pk.invite_s,
+        # đồ sát: số giây mỗi lượt, cấp tối thiểu, bản đồ an toàn
+        slay: %{
+          turnS: Data.rules().slay.turn_s,
+          minLevel: Data.rules().slay.min_level,
+          safe: Data.rules().slay.safe_maps
+        },
         wingPerLevel: Data.rules().combat.wing_per_level,
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,

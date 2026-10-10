@@ -613,3 +613,7 @@ img.own { object-fit: contain; image-rendering: auto; }
 .lib-q { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: inherit; font: inherit; }
 .lib-link { background: none; border: 0; padding: 0; color: var(--gold); cursor: pointer; font: inherit; text-decoration: underline dotted; }
 .sprite.sm, .ic.sm { width: 40px; height: 40px; }
+
+/* Đồ sát: chỉ báo lượt */
+.slay-turn { margin: 6px 0; text-align: center; font-weight: 600; color: var(--muted, #b9b0a3); }
+.slay-turn.mine { color: var(--gold, #e8c15a); }

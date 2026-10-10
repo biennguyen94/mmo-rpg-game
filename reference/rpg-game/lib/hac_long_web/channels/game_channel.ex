@@ -270,6 +270,18 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Đồ sát (`HacLong.Slay`): đánh ngay người chơi cùng bản đồ, không cần đồng ý
+  def handle_in("slay", %{"uid" => target}, socket) do
+    uid = socket.assigns.user_id
+
+    with :ok <- limit({:slay, uid}, 20, :timer.minutes(1)),
+         {:ok, _f} <- HacLong.Slay.attack(uid, target) do
+      {:reply, {:ok, %{}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 
@@ -453,21 +465,9 @@ defmodule HacLongWeb.GameChannel do
 
   # ---------- PK cược vàng ----------
 
-  defp pk("invite", %{"uid" => target, "wager" => w}, uid) when is_integer(target) do
-    with :ok <- PkBet.check_wager(w),
-         [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
-         %{} = me <- Session.get(uid) || {:error, "Chưa có nhân vật."},
-         nil <- me.battle && {:error, "Đang trong trận."},
-         true <- me.gold >= w || {:error, "Bạn không đủ #{w} vàng."},
-         true <-
-           PkBet.today_count(uid) < PkBet.rules().per_day ||
-             {:error, "Hôm nay đã cược đủ #{PkBet.rules().per_day} trận."} do
-      PkBet.invite(uid, Map.take(me, [:name, :level, :cls]), target, w)
-    else
-      [] -> {:error, "Người này không online."}
-      {:error, _} = err -> err
-    end
-  end
+  # PK cược vàng đã thay bằng đồ sát (`HacLong.Slay`); còn xem lịch sử, nhận / từ chối lời mời cũ
+  defp pk("invite", _p, _uid),
+    do: {:error, "PK cược đã thay bằng Đồ sát: chạm tên người chơi rồi bấm Đồ sát."}
 
   defp pk("accept", _p, uid) do
     with {:ok, inv} <- PkBet.take(uid), do: PkBet.execute(inv)
