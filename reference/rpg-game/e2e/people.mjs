@@ -1,7 +1,7 @@
 // Phase 13: không vẽ người khác trên bản đồ, nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
 // (mình và người khác), máu quái đang bị đánh hiện cho người cùng bản đồ, % cộng thêm ở tab Nhân vật.
 // Chạy: node e2e/people.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, player, travel, engage, act, shot, overflowX } from './lib.mjs';
+import { launch, reporter, newPlayer, player, travel, engage, act, shot, overflowX, fight } from './lib.mjs';
 
 const R = reporter('people');
 const browser = await launch();
@@ -52,7 +52,10 @@ for (let i = 0; i < 4 && !synced; i++) {
   const over = await B.page.evaluate(() => { const b = window.__hl.player().battle; return !b || b.over; });
   if (over) { why.push('one-hit'); await act(B.page, 'leave').catch(() => null); continue; }
   await A.page.waitForFunction(() => (window.__hl.world().monsters || []).some((m) => m.busy && m.hp < 100), null, { timeout: 8000 }).catch(() => null);
-  synced = await A.page.evaluate(() => (window.__hl.world().monsters || []).filter((m) => m.busy).map((m) => m.hp));
+  const seen = await A.page.evaluate(() => (window.__hl.world().monsters || []).filter((m) => m.busy && m.hp < 100).map((m) => m.hp));
+  // chưa thấy (ảnh bản đồ của A tới chậm): rời trận, thử con khác
+  if (seen.length) synced = seen;
+  else { why.push('no-sync'); await fight(B.page).catch(() => null); await act(B.page, 'leave').catch(() => null); }
 }
 R.check('A thấy máu quái B đang đánh giảm (đồng bộ)', !!synced && synced.some((h) => h < 100), JSON.stringify({ synced, why }));
 await shot(A.page, 'people-map.png');

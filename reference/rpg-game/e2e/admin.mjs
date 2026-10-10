@@ -38,7 +38,8 @@ await page.fill('#adm-gift-all input[name="gold"]', '123');
 await page.selectOption('#adm-gift-all select[name="gbase"]', { index: 1 });
 await page.fill('#adm-gift-all input[name="gup"]', '3');
 await page.click('#adm-gift-all button[type="submit"]');
-await X.page.waitForFunction((s) => window.Net.mail().then((m) => m.mails.some((x) => x.subject === s)), subj, { timeout: 8000 }).catch(() => null);
+// chờ thư tới: hỏi hộp thư mỗi 0,5 giây (không hỏi mỗi khung hình, kẻo đụng giới hạn 30 lần / phút)
+await X.page.waitForFunction((s) => window.Net.mail().then((m) => m.mails.some((x) => x.subject === s), () => false), subj, { timeout: 15000, polling: 500 }).catch(() => null);
 const mails = await X.page.evaluate(() => window.Net.mail());
 const gift = mails.mails.find((m) => m.subject === subj);
 R.check('người chơi nhận thư quà (vàng + đồ +3)', !!gift && gift.gold === 123 && Object.keys(gift.items).some((k) => k.startsWith('gear:') && k.endsWith(':3')), JSON.stringify(gift && gift.items));
