@@ -181,3 +181,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **P17-3** Bàn có bot thì cược = 0 (giữ B1 của repo gốc), nên không cày vàng từ bot. Khác repo gốc: ván có bot **vẫn được lưu** để xem lại (Hắc Long không có bảng xếp hạng Tiến Lên); chỉ người thật có tên trong `player_ids`.
 - **P17-4** Không port: tài khoản, bảng xếp hạng Tiến Lên, nhiệm vụ / mùa giải, bạn bè / mời / chat sảnh / chat riêng (Hắc Long đã có), cửa hàng mặt bài, tướng xấu hổ, sự kiện Tết / Trung thu, trang quản trị riêng. Có thể thêm sau nếu anh muốn.
 - **P17-5** Kênh: thêm sự kiện `tl` vào kênh `game` (`HacLongWeb.TienLenHandler`) thay các LiveView. Kênh là tiến trình được phòng theo dõi: đóng hết tab thì 20 giây sau bị loại khỏi ván (T15).
+
+## Chọn bản đồ (2026-10-10, theo yêu cầu)
+- **P15-T1** Bảng chọn bản đồ: **đủ cấp + đủ vàng** là đi được. Đủ cấp = cấp nhân vật ≥ cấp quái thấp nhất của bản đồ (`World.min_level/1`; bản đồ không có quái thì luôn được). Bỏ điều kiện "vùng đã mở" (bản đồ thường) và "đã đi qua cổng" (bản đồ phụ). Giá giữ nguyên `RULES.travel`. Tháp và bản đồ riêng vẫn không dịch chuyển tới được.

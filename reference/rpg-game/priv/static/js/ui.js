@@ -1619,13 +1619,11 @@
   let travelQ = '';
   const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
   const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
-  function travelOpen(id) {
-    const w = WORLD.maps[id];
-    if (!w) return false;
-    if (TRAVEL.free.includes(id)) return true;
-    if (w.side) return (P.visited || []).includes(id);
-    if (w.zone != null) return !!P.view.unlocked[w.zone];
-    return id !== 'tower';
+  // đủ cấp (≥ cấp quái thấp nhất của bản đồ) là tới được; vàng kiểm riêng (như server: World.can_travel?/2)
+  function travelOpen(m) {
+    if (!WORLD.maps[m.id] || m.id === 'tower') return false;
+    if (TRAVEL.free.includes(m.id)) return true;
+    return P.level >= (m.min || 0);
   }
   async function travelTo(id) {
     await sendCommand({ act: 'travel', to: id });
@@ -1635,7 +1633,7 @@
     const home = { id: 'home', name: WORLD.maps.home ? WORLD.maps.home.name : 'Nhà', min: null, max: null, zone: null };
     const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
-      <p class="small muted">Dịch chuyển tốn ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Bản đồ phụ: đi qua cổng một lần để mở. Đá dịch chuyển vẫn miễn phí.</p>
+      <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Đá dịch chuyển vẫn miễn phí.</p>
       <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
       <div id="travel-list">${travelList(all)}</div></div>`;
   }
@@ -1643,10 +1641,10 @@
     all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
     const rows = all.filter((m) => L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
     return `<div class="list">${rows.map((m) => {
-      const here = P.pos.map === m.id, open = travelOpen(m.id), cost = travelCost(m);
+      const here = P.pos.map === m.id, open = travelOpen(m), cost = travelCost(m);
       const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
       const btn = here ? '<span class="tag">Đang ở</span>'
-        : !open ? `<span class="tag" title="${WORLD.maps[m.id] && WORLD.maps[m.id].side ? 'Đi qua cổng một lần để mở' : 'Vùng chưa mở'}">🔒</span>`
+        : !open ? `<span class="tag" title="Cần đạt cấp ${m.min}">🔒 Cấp ${m.min}</span>`
         : `<button class="btn small-btn ${P.gold >= cost ? 'primary' : ''}" data-act="travel" data-to="${m.id}" ${P.gold >= cost ? '' : 'disabled'}>${cost ? `${icon('two-coins')}${fmt(cost)}` : 'Miễn phí'}</button>`;
       return `<div class="item travel-row ${open ? '' : 'locked'}"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${lv}${m.zone ? ` · ${esc(m.zone)}` : ''}</div></div>${btn}</div>`;
     }).join('')}</div>`;

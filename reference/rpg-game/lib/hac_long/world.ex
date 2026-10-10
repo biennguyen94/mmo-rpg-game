@@ -251,14 +251,16 @@ defmodule HacLong.World do
     end
   end
 
-  @doc "Bản đồ tới được bằng bảng chọn: vùng đã mở (bản đồ thường), đã đi tới (bản đồ phụ), Làng, Nhà."
+  @doc """
+  Bản đồ tới được bằng bảng chọn: Làng, Nhà, và mọi bản đồ chung khi **cấp nhân vật ≥ cấp quái thấp
+  nhất** của bản đồ (`min_level/1`; không có quái thì tới được). Không cần mở vùng hay đi qua cổng trước
+  (theo yêu cầu 2026-10-10). Vàng kiểm ở `travel/3`.
+  """
   def can_travel?(p, map) do
     cond do
       map.id in @travel.free -> true
-      map.side -> map.id in (Map.get(p, :visited) || [])
       map.private or map.id == "tower" -> false
-      is_integer(map.zone) -> Engine.zone_unlocked?(p, map.zone)
-      true -> true
+      true -> p.level >= (min_level(map) || 0)
     end
   end
 
@@ -277,7 +279,7 @@ defmodule HacLong.World do
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       not can_travel?(p, target) ->
-        {%{ok: false, msg: "Chưa mở bản đồ này (đi qua cổng một lần trước)."}, p}
+        {%{ok: false, msg: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."}, p}
 
       p.gold < travel_cost(target) ->
         {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}

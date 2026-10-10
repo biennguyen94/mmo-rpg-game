@@ -323,7 +323,7 @@ defmodule HacLong.WorldTest do
     MapServer.leave("side_30", uid)
   end
 
-  test "chọn bản đồ: giá theo cấp, Làng miễn phí, bản đồ phụ phải tới một lần, đủ vàng", %{
+  test "chọn bản đồ: giá theo cấp, Làng miễn phí, đủ cấp + đủ vàng là đi được", %{
     uid: uid,
     p: p
   } do
@@ -332,10 +332,11 @@ defmodule HacLong.WorldTest do
     assert World.travel_cost(Maps.get("side_10")) == 20 + 4 * 10
     p = %{at(p, "village", 12, 10) | gold: 1000}
 
-    assert {%{ok: false, msg: "Chưa mở" <> _}, _} = World.travel(p, uid, "side_10")
+    # chưa đủ cấp thì chưa đi được; đủ cấp thì không cần mở vùng / đi qua cổng trước
+    assert {%{ok: false, msg: "Cần đạt cấp 10" <> _}, _} = World.travel(p, uid, "side_10")
     {%{ok: true}, q} = World.travel(p, uid, "forest_1")
     assert q.pos.map == "forest_1" and q.gold == 1000 - 24
-    {%{ok: true}, q} = World.travel(%{q | visited: ["side_10"]}, uid, "side_10")
+    {%{ok: true}, q} = World.travel(%{q | level: 10, visited: []}, uid, "side_10")
     assert q.pos.map == "side_10" and Maps.walkable?(Maps.get("side_10"), q.pos.x, q.pos.y)
 
     poor = %{q | gold: 5, pos: %{q.pos | map: "village"}}
