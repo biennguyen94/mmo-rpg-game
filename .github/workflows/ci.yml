@@ -13,7 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Không có file MU-derived trong git
         run: |
-          files=$(git ls-files -- assets_src/private priv/static/assets/icons/items priv/static/assets/icon_map.json)
+          files=$(git ls-files -- assets_src/private priv/static/assets/icons/items priv/static/assets/icon_map.json \
+            reference/rpg-game/assets_src/private reference/rpg-game/priv/static/assets/mu_items \
+            reference/rpg-game/priv/static/assets/item_icons.json)
           if [ -n "$files" ]; then
             echo "::error::Asset MU-derived bị commit:"; echo "$files"; exit 1
           fi

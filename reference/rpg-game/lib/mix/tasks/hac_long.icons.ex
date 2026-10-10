@@ -1,26 +1,29 @@
 defmodule Mix.Tasks.HacLong.Icons do
   @shortdoc "Quét bộ hình đồ (đổi theo cấp +N), chép vào priv/static và sinh bảng tra"
   @moduledoc """
-  Quét thư mục hình đồ của anh, chép sang `priv/static/assets/items/` và ghi bảng tra
+  Quét thư mục hình đồ của anh, chép sang `priv/static/assets/mu_items/` và ghi bảng tra
   `priv/static/assets/item_icons.json` (xem `HacLong.Game.ItemIcons` cho cách đặt tên file):
 
-      mix hac_long.icons                      # thư mục mặc định assets_src/items/icons
+      mix hac_long.icons                      # thư mục mặc định assets_src/private/item_icons
       mix hac_long.icons --src ~/hinh-do      # hoặc HL_ITEM_ICONS_DIR=~/hinh-do
 
   Không có thư mục / không có hình: ghi bảng rỗng, game dùng icon cũ, **không lỗi** (thoát 0).
   Tải lại trang là thấy hình mới (không cần build lại server).
+
+  Hình gốc MU (CLAUDE.md §7): thư mục nguồn, `priv/static/assets/mu_items/` và bảng tra đều bị git / Docker
+  bỏ qua; máy chủ thật chạy lại lệnh này sau khi đặt hình.
   """
   use Mix.Task
 
   alias HacLong.Game.{Data, ItemIcons}
 
-  @out_dir "priv/static/assets/items"
+  @out_dir "priv/static/assets/mu_items"
   @out_map "priv/static/assets/item_icons.json"
 
   @impl true
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [src: :string])
-    src = opts[:src] || System.get_env("HL_ITEM_ICONS_DIR") || "assets_src/items/icons"
+    src = opts[:src] || System.get_env("HL_ITEM_ICONS_DIR") || "assets_src/private/item_icons"
     Mix.Task.run("compile")
 
     files =
@@ -31,7 +34,7 @@ defmodule Mix.Tasks.HacLong.Icons do
 
     if files == [], do: Mix.shell().info("Không có hình trong #{src}: dùng icon có sẵn của game.")
 
-    {map, skipped} = ItemIcons.build(files)
+    {map, skipped} = ItemIcons.build(files, "mu_items")
     File.mkdir_p!(@out_dir)
 
     for f <- files,

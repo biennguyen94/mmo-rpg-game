@@ -9,3 +9,7 @@ docs
 .env
 .env.*
 deploy
+# Dữ liệu / hình gốc MU (CLAUDE.md §7): không vào image; máy chủ tự tải bằng mix hac_long.items.fetch
+assets_src
+priv/static/assets/mu_items
+priv/static/assets/item_icons.json

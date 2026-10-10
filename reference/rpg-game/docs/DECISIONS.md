@@ -195,3 +195,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I-1** Dịch 347 câu mới (Tiến Lên, đồ sát, thưởng trùm, chọn bản đồ) và 50 tên bản đồ phụ vào `priv/static/i18n/en.json`. Tên trò chơi ở bản tiếng Anh viết "Tien Len" (không dấu).
 - **I-2** `scripts/i18n_extract.py` coi `{a}` `{b}` `{n}` (chỗ trống câu bình luận Tiến Lên) là chỗ nội suy, đánh số `{0}`… như tên / số; `i18n.js` thử khớp mẫu dự phòng cho cả khối chữ trước khi tách câu (chỗ trống không được nuốt qua ranh giới câu), nên câu mẫu nhiều câu ("Ối dồi ôi! {0} vừa chặt…") dịch được.
 - **I-3** Thông báo kênh thế giới khi đồ sát đổi thành "🗡 A đã đồ sát B ở X." (rõ nghĩa hơn "đã hạ", và đủ chữ cố định để khớp mẫu dịch).
+
+## Phase 15b — Đồ từ Item.txt, M1 (2026-10-10, anh chốt)
+- **I15b-1** Nguồn `afrokick/muonlinejs` (`tools/Item.txt`, `public/items`); anh bỏ qua license. Vẫn giữ CLAUDE.md §7 phần "không vào git / Docker": file và hình ở `assets_src/private/`, hình chép ra `priv/static/assets/mu_items/` (thư mục `items/` cũ là hình tự vẽ, vẫn trong git); CI `private-assets` kiểm cả đường dẫn Hắc Long.
+- **I15b-2** Chọn theo bậc (114 món: vũ khí 7 bậc × 3 dòng lớp, khiên 3, bộ giáp 5 món × 6 bậc × 3 dòng lớp; Đấu Sĩ dùng chung đồ DK, không mũ). Yêu cầu chỉ số × 0,35; bậc 1 không đòi chỉ số.
+- **I15b-3** Item.txt quyết định món gì (tên, hình, lớp, tỉ lệ), Hắc Long quyết định mạnh cỡ nào (đường cong công / thủ / giá cũ) để giữ cân bằng. Mọi hệ số trong `priv/game_data/item_pick.json`, giải thích từng khóa ở `docs/ITEMS_PHASE15B.md` §3.
+- **I15b-4** Lệnh tải thư mục hình tự động bị chặn trong môi trường cloud (clone repo ngoài) → hình chép tay vào `assets_src/private/item_icons/`.

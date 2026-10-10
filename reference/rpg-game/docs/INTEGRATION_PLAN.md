@@ -574,7 +574,10 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 
 ## 10. Đồ từ Item.txt + hình đổi theo cấp
 
-> **Công cụ đã có (2026-10-04)**, chờ anh đặt `Item.txt` và bộ hình vào `assets_src/items/` (xem README trong đó).
+> **2026-10-10: đang làm (Phase 15b), xem [`ITEMS_PHASE15B.md`](ITEMS_PHASE15B.md)** — nguồn `afrokick/muonlinejs`, file và hình nằm ở
+> `assets_src/private/` (không vào git). Các câu 10-A…10-D dưới đây đã chốt ở đó (10-A 0,35; 10-B theo bậc; 10-C giá theo bậc; 10-D để sau).
+>
+> Ghi chú cũ: công cụ có từ 2026-10-04.
 > `Item.txt` và icon `item_{group}_{index}` là dữ liệu của anh. Định dạng file: `docs/kb/KB_ITEM_REFERENCE.md §1` (repo ngoài).
 
 ### 10.1 Hình đổi theo cấp +N (dùng được ngay)
