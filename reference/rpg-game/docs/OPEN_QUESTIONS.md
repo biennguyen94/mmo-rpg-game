@@ -9,6 +9,7 @@
 | # | Phase | Câu hỏi | Đề xuất của em |
 |---|---|---|---|
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
+| 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Phúc Lành + 1 Linh Hồn), mỗi trái +2 điểm, tối đa 20 trái |
 
 ## Đã chốt
 

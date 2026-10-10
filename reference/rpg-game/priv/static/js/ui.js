@@ -2138,13 +2138,15 @@
     const rows = CHAOS.map((r) => {
       const fits = r.gear ? bagGear().filter((uid) => {
         const g = itemOf(uid);
-        return r.gear.slots.includes(g.slot) && (!r.gear.tier || g.tier === r.gear.tier) && upLevel(uid) >= r.gear.min_up && !g.locked;
+        // Phase 15f: công thức `mode` chỉ nhận món còn thêm được dòng
+        const room = r.mode === 'excellent' ? (g.exc || []).length < 3 : r.mode === 'luck' ? !g.luck : true;
+        return room && r.gear.slots.includes(g.slot) && (!r.gear.tier || g.tier === r.gear.tier) && upLevel(uid) >= r.gear.min_up && !g.locked;
       }) : [];
       const pick = r.gear ? (fits.includes(chaosPick[r.id]) ? chaosPick[r.id] : fits[0]) : null;
       const need = Object.entries(r.items);
       const ok = (!r.gear || pick) && P.gold >= r.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const rate = chaosRate(r, pick ? upLevel(pick) : 0);
-      const out = ITEMS[r.out.replace('{cls}', P.cls)];
+      const out = r.out ? ITEMS[r.out.replace('{cls}', P.cls)] : null;
       return `<div class="item">${itemIcon(out || { icon: 'chaos-machine' })}<div class="grow">
           <div class="name">${esc(r.name)}${out && out.slot === 'wing' ? ` → ${esc(out.name)}` : ''}</div>
           <div class="small muted">${esc(r.desc)}</div>

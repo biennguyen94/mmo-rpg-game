@@ -262,6 +262,20 @@ defmodule HacLong.Game.Gear do
     end
   end
 
+  @doc "Các dòng Excellent có thể có của món loại `slot`."
+  def exc_pool(slot),
+    do: slot |> exc_type() |> then(&Map.keys(@exc.options[&1])) |> Enum.map(&Atom.to_string/1)
+
+  @doc "Thêm một dòng Excellent chưa có (ngẫu nhiên) cho món `g` (Máy Hỗn Nguyên, Phase 15f)."
+  def add_exc_line(g) do
+    have = g[:exc] || []
+
+    case (exc_pool(Data.item(g.base).slot) -- have) |> Enum.sort() do
+      [] -> g
+      free -> Map.put(g, :exc, have ++ [Enum.at(free, floor(Rng.uniform() * length(free)))])
+    end
+  end
+
   defp exc_type(slot) when slot in ~w(weapon pendant), do: :weapon
   defp exc_type(_), do: :armor
 

@@ -233,3 +233,18 @@ Ghép **thành công** cánh cấp 2 hoặc 3 ở Máy Hỗn Nguyên thì bốc 
 
 Cánh cấp 3 dùng từ cấp 45, sau Hắc Long (cấp 35), cho bản đồ phụ cấp 45–50. Simulator (đánh tới Hắc Long) không ghép
 cánh, nên kết quả không đổi.
+
+## 9. Phase 15f (2026-10-10): Máy Hỗn Nguyên pha đồ (mục 4)
+
+Hai công thức mới trong `chaos.json` có `mode` (không có `out`): thành công thì **chính món đồ** bỏ vào được thêm dòng,
+giữ nguyên uid, cấp nâng và các dòng cũ; thất bại mất món, nguyên liệu, vàng (như mọi công thức của máy).
+
+| id | Tên | Nhận | Nguyên liệu | Tỉ lệ | Kết quả |
+|---|---|---|---|---|---|
+| `add_exc` | Pha Excellent | vũ khí, khiên, bộ giáp, nhẫn, dây chuyền **+5** trở lên, chưa đủ 3 dòng | 1 Hỗn Nguyên + 2 Sinh Mệnh + 100 000 vàng | 30 %, +5 %/cấp trên +5, tối đa 60 % | thêm 1 dòng Excellent chưa có (ngẫu nhiên đều) |
+| `add_luck` | Pha May mắn | như trên, **+3** trở lên, chưa có May mắn | 1 Hỗn Nguyên + 3 Phúc Lành + 50 000 vàng | 50 %, +5 %/cấp trên +3, tối đa 75 % | thêm May mắn |
+
+- Đổi số trong `chaos.json` (`items`, `gold`, `rate`, `per_up`, `max_rate`, `gear.slots`, `gear.min_up`).
+- Code: `Chaos.transform/4`, `Gear.add_exc_line/1`, `Gear.exc_pool/1`. Giao diện máy tự lọc món còn thêm được dòng.
+- **Không làm Trái Cây** (cộng điểm vĩnh viễn kiểu MU): cần thêm cột đếm số trái đã ăn vào bảng `characters` (đổi schema)
+  — để anh quyết sau (`docs/OPEN_QUESTIONS.md`).

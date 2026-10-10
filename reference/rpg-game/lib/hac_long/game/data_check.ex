@@ -98,10 +98,18 @@ defmodule HacLong.Game.DataCheck do
         "upgrade.json: JEWELS.chest_chance có rương \"#{k}\" không có trong RULES.chests"
       end,
       for c <- d.chaos do
+        # công thức `mode` (Phase 15f) biến đổi chính món đồ bỏ vào, không có `out`
         outs =
-          if String.contains?(c.out, "{cls}"),
-            do: Enum.map(Map.keys(d.classes), &String.replace(c.out, "{cls}", &1)),
-            else: [c.out]
+          cond do
+            c[:mode] ->
+              []
+
+            String.contains?(c.out, "{cls}") ->
+              Enum.map(Map.keys(d.classes), &String.replace(c.out, "{cls}", &1))
+
+            true ->
+              [c.out]
+          end
 
         items.("chaos.json", "CHAOS[#{c.id}]", Map.keys(c.items) ++ outs)
       end,
