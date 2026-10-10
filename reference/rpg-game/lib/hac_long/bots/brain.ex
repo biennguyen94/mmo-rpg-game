@@ -28,6 +28,8 @@ defmodule HacLong.Bots.Brain do
     do: %{"act" => "create", "name" => opts[:name] || "Lữ Khách", "cls" => opts[:cls] || "dk"}
 
   def decide(%{battle: %{over: true}}, _snap, _opts), do: %{"act" => "leave"}
+  # đồ sát: chưa tới lượt thì chờ (không gửi lệnh)
+  def decide(%{battle: %{live: true, encounter: %{mine: false}}}, _snap, _opts), do: nil
   def decide(%{battle: %{} = b} = p, _snap, _opts), do: fight(p, b)
 
   def decide(p, snap, opts) do

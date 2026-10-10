@@ -27,6 +27,21 @@ defmodule HacLong.Bots.BrainTest do
     assert %{"act" => "leave"} = Brain.decide(put_in(p.battle.over, true), nil)
   end
 
+  test "đồ sát: chưa tới lượt thì chờ, tới lượt thì đánh / uống bình như thường" do
+    Rng.put_sequence([0.5])
+    {_, p} = Engine.start_battle(%{player() | level: 10}, 0, true)
+
+    live = fn p, mine ->
+      %{p | battle: Map.merge(p.battle, %{live: true, encounter: %{mine: mine}})}
+    end
+
+    assert Brain.decide(live.(p, false), nil) == nil
+    assert %{"act" => "skill"} = Brain.decide(live.(p, true), nil)
+
+    assert %{"act" => "potion"} =
+             Brain.decide(live.(%{p | hp: 5, inv: %{"potion_s" => 2}}, true), nil)
+  end
+
   test "còn điểm thì cộng vào chỉ số chính của lớp" do
     assert %{"act" => "alloc", "stat" => "ene", "n" => 7} =
              Brain.decide(%{player("dw") | points: 7}, nil)

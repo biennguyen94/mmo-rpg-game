@@ -101,8 +101,9 @@ defmodule HacLong.Bots.Bot do
 
   defp snapshot(_), do: nil
 
-  defp delay(_p, nil), do: 2000 + :rand.uniform(2000)
+  # trong trận (kể cả đang chờ lượt đồ sát) thì hỏi lại nhanh
   defp delay(%{battle: %{}}, _), do: 700 + :rand.uniform(700)
+  defp delay(_p, nil), do: 2000 + :rand.uniform(2000)
   defp delay(_p, %{"act" => "move"}), do: 280 + :rand.uniform(220)
   defp delay(_p, _), do: 600 + :rand.uniform(600)
 

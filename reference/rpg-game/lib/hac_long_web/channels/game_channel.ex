@@ -995,6 +995,12 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  defp slay_left(%{battle: %{live: true, over: false, encounter: %{until: until}}})
+       when is_integer(until),
+       do: max(0, until - System.system_time(:millisecond))
+
+  defp slay_left(_), do: nil
+
   defp present(nil), do: nil
 
   defp present(player) do
@@ -1010,6 +1016,8 @@ defmodule HacLongWeb.GameChannel do
         questReady: ready,
         dailyReady: Daily.ready?(player),
         dailyLeft: Daily.seconds_left(),
+        # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
+        slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
         achievements: Achievements.view(player),
         chestReady: player[:chest_day] != Daily.today(),

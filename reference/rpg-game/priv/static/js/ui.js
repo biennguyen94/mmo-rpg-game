@@ -2380,11 +2380,13 @@
       ? `<span class="float ${fx.crit ? 'crit' : ''} ${fx.mDmg === 0 ? 'miss' : ''}">${fx.mDmg === 0 ? 'Trượt' : '-' + fmt(fx.mDmg)}</span>` : '';
     // đồ sát: luân phiên lượt với người thật, chưa tới lượt thì khóa nút
     const slayEnc = b.live && b.encounter ? b.encounter : null;
+    // hạn lượt theo đồng hồ máy mình: server gửi số mili giây còn lại lúc gửi (`view.slayLeft`)
+    if (slayEnc && P.view.slayLeft !== slayClock.left) slayClock = { left: P.view.slayLeft, until: Date.now() + (P.view.slayLeft || 0) };
     const wait = slayEnc && !slayEnc.mine ? 'disabled' : '';
     let bottom;
     if (!b.over) {
       bottom = `
-        ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayEnc.until || 0}">${slayLeft(slayEnc.until)}</span>s</p>` : ''}
+        ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayClock.until}">${slayLeft(slayClock.until)}</span>s</p>` : ''}
         <div class="actions">
           <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
           ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
@@ -2427,6 +2429,7 @@
       ${bottom}`;
   }
 
+  let slayClock = { left: null, until: 0 };
   function slayLeft(until) { return Math.max(0, Math.ceil(((until || 0) - Date.now()) / 1000)); }
   // đếm ngược lượt đồ sát (không vẽ lại cả màn hình)
   setInterval(() => { document.querySelectorAll('.slay-turn [data-until]').forEach((el) => { el.textContent = slayLeft(+el.dataset.until); }); }, 500);
