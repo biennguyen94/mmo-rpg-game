@@ -191,6 +191,7 @@ defmodule HacLong.Game.Engine do
 
     sb = set_bonus(p)
     exc = Gear.exc_stats(p)
+    ls = Gear.luck_skill_stats(p)
 
     up = fn id -> if id, do: upgrade_bonus(p, id) + life_bonus(p, id), else: 0 end
 
@@ -224,7 +225,8 @@ defmodule HacLong.Game.Engine do
              )) * pet.(:def) * (1 + sb.def_pct)
         ),
       crit:
-        clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max) + exc.crit,
+        clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max) + exc.crit +
+          ls.crit,
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
@@ -234,7 +236,9 @@ defmodule HacLong.Game.Engine do
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb),
       # Excellent: giảm sát thương nhận (cộng dồn các món, tối đa `excellent.max_dmg_red`)
-      excAbsorb: exc.dmg_red
+      excAbsorb: exc.dmg_red,
+      # Kỹ năng (Phase 15d): sát thương chiêu cộng thêm
+      skillDmg: ls.skill_dmg
     }
     |> with_ranges(p.level)
   end
@@ -792,6 +796,7 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
+            mult = if skill, do: mult * (1 + d.skillDmg), else: mult
             dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1))
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
@@ -1274,7 +1279,8 @@ defmodule HacLong.Game.Engine do
          %{} = g <-
            m.level
            |> Gear.roll(Gear.weights(), nil, if(@loot_own_class, do: p.cls))
-           |> Gear.excellent(Gear.exc_chance(m)) do
+           |> Gear.excellent(Gear.exc_chance(m))
+           |> Gear.luck_skill(m) do
       it = Gear.resolve(g)
       label = "#{it.name} (#{Gear.rarity_names()[g.rarity]})"
 
@@ -1322,7 +1328,10 @@ defmodule HacLong.Game.Engine do
     # vài lần thử: lớp nào cũng có ít nhất vũ khí / giáp hợp lớp
     g =
       Enum.find_value(1..8, fn _ ->
-        m.level |> Gear.roll(@boss_weights, nil, p.cls) |> Gear.excellent(Gear.exc_chance(m))
+        m.level
+        |> Gear.roll(@boss_weights, nil, p.cls)
+        |> Gear.excellent(Gear.exc_chance(m))
+        |> Gear.luck_skill(m)
       end)
 
     case g do
@@ -1473,7 +1482,13 @@ defmodule HacLong.Game.Engine do
         nil
 
       step = Data.upgrade_step(n) ->
-        %{gold: gold, items: %{step.jewel => 1}, rate: step.rate, fail: step.fail}
+        # May mắn (Phase 15d) cộng tỉ lệ ép ngọc
+        %{
+          gold: gold,
+          items: %{step.jewel => 1},
+          rate: Gear.luck_rate(it, step.rate),
+          fail: step.fail
+        }
 
       true ->
         ore = if (it[:level] || 1) >= @up.rare_ore_level, do: "ore_rare", else: "ore"

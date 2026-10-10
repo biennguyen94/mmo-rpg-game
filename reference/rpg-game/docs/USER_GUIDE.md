@@ -105,6 +105,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   Đồ **Excellent** (tên xanh lục) có thêm 1–3 dòng đặc biệt: tăng sát thương, chí mạng, hồi máu / MP khi hạ quái, máu tối đa,
   giảm sát thương nhận, vàng nhặt được. Mặc **đủ bộ giáp** từ bậc 2 trở lên được +10 % phòng thủ, +3 % tấn công và thêm máu
   (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32.
+- **May mắn, Kỹ năng (Phase 15d):** đồ rơi đôi khi có dòng xanh dương **May mắn** (ép ngọc +7..+11 dễ thành công hơn 25 %;
+  nếu là vũ khí thì thêm 5 % chí mạng) và vũ khí có thể có **Kỹ năng** (chiêu gây thêm 10 % sát thương). Đồ có các dòng này bán
+  được giá hơn.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

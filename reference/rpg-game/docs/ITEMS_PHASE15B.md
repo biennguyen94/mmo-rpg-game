@@ -158,3 +158,35 @@ khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ
 
 Cả 4 lớp vẫn hạ Hắc Long 5/5 ở cấp 35; số trận như trước (± 1 %); chết ≤ 1. Simulator chỉ tự mặc dây chuyền rơi được
 (không mặc nhẫn), nên người chơi thật mạnh hơn simulator một chút khi gom đủ nhẫn / Excellent.
+
+## 7. Phase 15d (2026-10-10): dòng phụ May mắn / Kỹ năng
+
+Anh chốt 2026-10-10: Kỹ năng = chiêu +10 % sát thương (phương án a); giáp / trang sức May mắn chỉ giúp ép ngọc, không
+cộng chí mạng (như MU, tránh chí mạng cộng dồn).
+
+### 7.1 Khóa mới (`rules.json` → `luck_skill`, đổi được)
+
+| Khóa | Mặc định | Ý nghĩa |
+|---|---|---|
+| `luck_chance` | thường 10 %, đêm 15 %, tinh anh 20 %, trùm 35 % | tỉ lệ một món **đã rơi** có May mắn (mọi loại trừ cánh) |
+| `skill_chance` | 15 % | tỉ lệ một **vũ khí** đã rơi có Kỹ năng |
+| `luck_crit` | 0,05 | chí mạng cộng thêm khi **vũ khí** đang cầm có May mắn |
+| `luck_upgrade` | 0,25 | tỉ lệ ép ngọc +7..+11 cộng thêm khi món có May mắn (bước +6 vốn 100 %) |
+| `luck_max_rate` | 0,95 | trần tỉ lệ ép ngọc sau khi cộng May mắn |
+| `skill_dmg` | 0,1 | sát thương **chiêu** cộng thêm khi vũ khí có Kỹ năng (đánh thường không cộng) |
+| `price_mult` | 1,25 | giá bán lại nhân thêm cho mỗi dòng (có cả hai: × 1,5625) |
+
+### 7.2 Cách chạy
+
+- Món đồ hiếm có trường `luck: true` / `skill: true`, lưu cùng đồ (giữ khi giao dịch, rao chợ, cất Tủ Đồ).
+- Rơi: `Gear.luck_skill/2` sau `Gear.excellent/2`, cho đồ rơi từ quái và đồ trùm lần đầu (không cho đồ cửa hàng,
+  rèn, rương, sự kiện; đấu trường / trùm thế giới không bốc).
+- Chỉ số: `Gear.luck_skill_stats/1` → `Engine.derived` (`crit` cộng `luck_crit`, trường mới `skillDmg`).
+- Ép ngọc: `Gear.luck_rate/2` trong `Engine.upgrade_cost/2`, nên Thợ Rèn hiện luôn tỉ lệ đã cộng.
+- Tooltip: chữ xanh dương "May mắn (chí mạng +5 %, ép ngọc +25 %)" (vũ khí) / "May mắn (ép ngọc +25 %)" (đồ khác),
+  "Kỹ năng (sát thương chiêu +10 %)"; số lấy từ `RULES.luckSkill` (page_controller).
+- Quản trị: `give_gear` nhận `luck: true`, `skill: true` (Kỹ năng chỉ vũ khí).
+
+### 7.3 Cân bằng
+
+Simulator 5 ván × 4 lớp × 5 cách chơi: cả 4 lớp vẫn hạ Hắc Long 5/5 ở cấp 35, số trận như trước, chết ≤ 1.

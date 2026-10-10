@@ -13,6 +13,8 @@ defmodule HacLong.Game.Gear do
   - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
   - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
   - `opt`: số dòng Ngọc Sinh Mệnh (0–4, `Engine.life/2`).
+  - `exc`: dòng Excellent (Phase 15c); `luck: true` / `skill: true`: dòng May mắn / Kỹ năng (Phase 15d,
+    `RULES.luck_skill`).
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
   """
@@ -29,6 +31,8 @@ defmodule HacLong.Game.Gear do
   @exc Data.rules().excellent
   @exc_lines Enum.map(@exc.lines, &List.to_tuple/1)
   @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
+  # Phase 15d: May mắn / Kỹ năng (`RULES.luck_skill`)
+  @ls Data.rules().luck_skill
   @stats ~w(str agi vit ene)a
   @set_pieces ~w(helm armor pants gloves boots)
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
@@ -85,6 +89,8 @@ defmodule HacLong.Game.Gear do
       excellent: (g[:exc] || []) != [],
       # dòng Excellent kèm giá trị, cho client hiện chữ
       exc_lines: for(e <- g[:exc] || [], do: %{id: e, value: exc_value(base.slot, e)}),
+      luck: g[:luck] == true,
+      skill: g[:skill] == true,
       sell: price(g)
     })
   end
@@ -95,10 +101,11 @@ defmodule HacLong.Game.Gear do
     base = with 0 <- Data.item(g.base).price, do: @shop.unpriced_value
 
     exc = if (g[:exc] || []) != [], do: @exc.price_mult, else: 1
+    ls = Enum.count([g[:luck], g[:skill]], &(&1 == true))
 
     round(
       (base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
-         @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))) * exc
+         @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))) * exc * @ls.price_mult ** ls
     )
   end
 
@@ -278,6 +285,63 @@ defmodule HacLong.Game.Gear do
     |> Map.update!(:dmg_red, &min(&1, @exc.max_dmg_red))
   end
 
+  # ---------- May mắn / Kỹ năng (Phase 15d) ----------
+
+  @doc "Tỉ lệ một món rơi từ quái `m` có May mắn (`RULES.luck_skill.luck_chance`)."
+  def luck_chance(m) do
+    c = @ls.luck_chance
+
+    cond do
+      m[:world] || m[:pvp] -> 0
+      m[:elite] -> c.elite
+      m[:night] -> c.night
+      m[:boss] -> c.boss
+      true -> c.normal
+    end
+  end
+
+  @doc """
+  Thêm dòng May mắn (xác suất `luck_chance`, mọi món trừ cánh) và Kỹ năng (xác suất `skill_chance`, chỉ vũ khí)
+  cho món `g` rơi từ quái `m`. Quái không rơi đồ thường (đấu trường, trùm thế giới) thì không bốc.
+  """
+  def luck_skill(nil, _m), do: nil
+
+  def luck_skill(g, m) do
+    case {Data.item(g.base), luck_chance(m)} do
+      {%{slot: slot}, lc} when slot != "wing" and lc > 0 ->
+        g = if Rng.uniform() < lc, do: Map.put(g, :luck, true), else: g
+
+        if slot == "weapon" and Rng.uniform() < @ls.skill_chance,
+          do: Map.put(g, :skill, true),
+          else: g
+
+      _ ->
+        g
+    end
+  end
+
+  @doc """
+  May mắn / Kỹ năng của vũ khí đang cầm: `%{crit, skill_dmg}` (chí mạng, sát thương chiêu cộng thêm).
+  Giáp / trang sức May mắn chỉ giúp ép ngọc (`luck_rate/2`).
+  """
+  def luck_skill_stats(p) do
+    w = (p.equip[:weapon] && instance?(p.equip.weapon) && find(p, p.equip.weapon)) || %{}
+
+    %{
+      crit: if(w[:luck] == true, do: @ls.luck_crit, else: 0),
+      skill_dmg: if(w[:skill] == true, do: @ls.skill_dmg, else: 0)
+    }
+  end
+
+  @doc "Tỉ lệ ép ngọc `rate` của món `it` (thông tin món, `resolve/1`): May mắn cộng `luck_upgrade`, tối đa `luck_max_rate`."
+  def luck_rate(it, rate) do
+    if is_map(it) and it[:luck] == true and rate < 1,
+      do: max(rate, min(@ls.luck_max_rate, Float.round(rate + @ls.luck_upgrade, 3))),
+      else: rate
+  end
+
+  def luck_skill_rules, do: @ls
+
   @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
   def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
 
@@ -346,6 +410,8 @@ defmodule HacLong.Game.Gear do
 
       m = if g["locked"] == true, do: Map.put(m, :locked, true), else: m
       m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
+      m = if g["luck"] == true, do: Map.put(m, :luck, true), else: m
+      m = if g["skill"] == true, do: Map.put(m, :skill, true), else: m
       opt = g["opt"]
       m = if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
       exc = for e <- g["exc"] || [], e in @exc_ids, do: e

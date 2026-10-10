@@ -14,7 +14,7 @@ defmodule HacLong.Admin do
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
   | `give_item` | `id`, `count` (1..9999), `up` (0..11) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
-  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up` | tặng đồ chỉ số ngẫu nhiên |
+  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí) | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
@@ -146,6 +146,9 @@ defmodule HacLong.Admin do
     bonus = a["bonus"]
     # Phase 15c: dòng Excellent cho sẵn (`exc`: danh sách id dòng hợp loại đồ)
     exc = a["exc"] || []
+    # Phase 15d: May mắn (mọi món) / Kỹ năng (chỉ vũ khí)
+    luck = a["luck"] == true
+    skill = a["skill"] == true
 
     cond do
       !it or it.slot not in Engine.gear_slots() ->
@@ -163,6 +166,9 @@ defmodule HacLong.Admin do
       not (is_list(exc) and Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
         {:error, "Dòng Excellent không hợp lệ cho loại đồ này."}
 
+      skill and it.slot != "weapon" ->
+        {:error, "Chỉ vũ khí mới có dòng Kỹ năng."}
+
       true ->
         {:ok,
          fn p ->
@@ -171,6 +177,8 @@ defmodule HacLong.Admin do
            else
              g = Gear.new(base, rarity, gear_bonus(bonus, rarity, p.level))
              g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))
+             g = if luck, do: Map.put(g, :luck, true), else: g
+             g = if skill, do: Map.put(g, :skill, true), else: g
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}

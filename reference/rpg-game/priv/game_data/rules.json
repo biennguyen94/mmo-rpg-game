@@ -220,6 +220,16 @@
       "max_dmg_red": 0.2,
       "price_mult": 2
     },
+    "luck_skill": {
+      "_doc": "Phase 15d: dòng phụ May mắn / Kỹ năng trên đồ rơi (docs/ITEMS_PHASE15B.md §7). luck_chance: tỉ lệ món rơi có May mắn theo loại quái (cánh không có); skill_chance: tỉ lệ vũ khí rơi có Kỹ năng; luck_crit: tỉ lệ chí mạng cộng thêm khi VŨ KHÍ có May mắn (giáp / trang sức May mắn không cộng); luck_upgrade: tỉ lệ ép ngọc +7..+11 cộng thêm khi món có May mắn, tối đa luck_max_rate; skill_dmg: sát thương chiêu (không tính đánh thường) cộng thêm khi vũ khí có Kỹ năng; price_mult: giá bán nhân thêm cho mỗi dòng.",
+      "luck_chance": { "normal": 0.1, "elite": 0.2, "night": 0.15, "boss": 0.35 },
+      "skill_chance": 0.15,
+      "luck_crit": 0.05,
+      "luck_upgrade": 0.25,
+      "luck_max_rate": 0.95,
+      "skill_dmg": 0.1,
+      "price_mult": 1.25
+    },
     "shop": {
       "sell_ratio": 0.4,
       "unpriced_value": 200,

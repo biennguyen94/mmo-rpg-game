@@ -709,3 +709,5 @@ body.tl-on { overflow: hidden; }
 .dm .btn.small-btn { margin-top: 4px; }
 /* Phase 15c: đồ Excellent (xanh lục kiểu MU) */
 .exc { color: #4fe36a; }
+/* Phase 15d: dòng May mắn / Kỹ năng (xanh dương như MU) */
+.ls { color: #6aa8ff; }

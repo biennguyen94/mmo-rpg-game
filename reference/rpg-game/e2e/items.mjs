@@ -67,7 +67,7 @@ await send(E.page, { act: 'equip', id: 'item_13_8' });
 await send(E.page, { act: 'equip', id: 'item_13_8' });
 const pj = await send(E.page, { act: 'equip', id: 'item_13_12' });
 R.check('hai nhẫn vào ring1 + ring2, dây chuyền vào ô dây chuyền', pj.equip.ring1 === 'item_13_8' && pj.equip.ring2 === 'item_13_8' && pj.equip.pendant === 'item_13_12', JSON.stringify(pj.equip));
-await admin('give_gear', E.name, { base: 'item_4_2', rarity: 1, bonus: { agi: 1 }, exc: ['atk_pct', 'crit'] });
+await admin('give_gear', E.name, { base: 'item_4_2', rarity: 1, bonus: { agi: 1 }, exc: ['atk_pct', 'crit'], luck: true, skill: true });
 await E.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.excellent), null, { timeout: 5000 }).catch(() => null);
 const exc = await E.page.evaluate(() => Object.values(window.__hl.player().view.gear || {}).find((g) => g.excellent));
 await E.page.click('#tabs [data-tab="map"]');
@@ -75,6 +75,7 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click(`[data-act="bag-tip"][data-id="${exc && exc.uid}"]`).catch(() => null);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tipE = (await E.page.textContent('#itemtip').catch(() => '')) || '';
+R.check('Phase 15d: dòng May mắn (chí mạng + ép ngọc) và Kỹ năng trên vũ khí', !!(await E.page.$('#itemtip .ls')) && tipE.includes('May mắn (chí mạng') && tipE.includes('Kỹ năng (sát thương chiêu'), tipE.slice(0, 300));
 R.check('đồ Excellent: tên xanh, dòng "Tăng sát thương" và "Tỉ lệ chí mạng"', !!(await E.page.$('#itemtip b .exc')) && tipE.includes('Excellent') && tipE.includes('Tăng sát thương') && tipE.includes('Tỉ lệ chí mạng'), tipE.slice(0, 200));
 if (icons) {
   const src = await E.page.$eval('#itemtip img.own', (e) => e.getAttribute('src')).catch(() => '');
@@ -84,6 +85,7 @@ await shot(E.page, 'items-excellent.png');
 const pe = await send(E.page, { act: 'equip', id: exc.uid });
 const d0 = (await player(E.page)).view;
 R.check('mặc đồ Excellent: tấn công / chí mạng tính dòng Excellent', pe.equip.weapon === exc.uid && d0.exc.atk_pct > 0 && d0.exc.crit > 0, JSON.stringify(d0.exc));
+R.check('vũ khí Kỹ năng: skillDmg > 0', d0.derived.skillDmg > 0, String(d0.derived.skillDmg));
 
 // đủ bộ Lụa (bậc 2): 5 món → có thưởng
 for (const id of ['item_7_11', 'item_8_11', 'item_9_11', 'item_10_11', 'item_11_11']) await admin('give_item', E.name, { id, count: 1 });

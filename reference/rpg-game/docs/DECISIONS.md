@@ -210,3 +210,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15c-2** Nhẫn / dây chuyền: chỉ số cho tay (Item.txt nhóm 13 không có số dùng được), chỉ rơi, không bán.
 - **I15c-3** Thưởng đủ bộ chỉ tính từ bậc 2 (`min_tier`), để bộ khởi đầu không cho thưởng sẵn.
 - **I15c-4** Excellent chỉ cho đồ rơi từ quái và đồ trùm lần đầu; dòng lấy từ dòng Excellent MU nhưng rút gọn còn 7 dòng game tính được.
+- **I15d-1** Kỹ năng trên vũ khí = chiêu +10 % sát thương (anh chốt, phương án a; không giảm hồi chiêu, không mở chiêu sớm).
+- **I15d-2** May mắn trên giáp / trang sức chỉ cộng tỉ lệ ép ngọc, không cộng chí mạng (anh chốt, như MU).
+- **I15d-3** May mắn / Kỹ năng chỉ có ở đồ rơi từ quái và đồ trùm lần đầu (như Excellent); tỉ lệ ép có May mắn tối đa 95 %.

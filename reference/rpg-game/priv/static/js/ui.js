@@ -1854,6 +1854,19 @@
     gold_pct: (v) => `Vàng nhặt được +${Math.round(v * 100)}%`,
   };
   const excLines = (it) => (it.exc_lines && it.exc_lines.length ? `<div class="small exc">✦ Excellent</div>${it.exc_lines.map((l) => `<div class="small exc">· ${(EXC_TEXT[l.id] || ((v) => l.id))(l.value)}</div>`).join('')}` : '');
+  // Phase 15d: dòng May mắn (chí mạng chỉ khi là vũ khí, ép ngọc mọi món) / Kỹ năng (vũ khí), số ở RULES.luckSkill
+  const lsPct = (v) => Math.round(v * 100);
+  const luckSkillLines = (it) => {
+    const r = RULES.luckSkill || {};
+    let h = '';
+    if (it.luck) {
+      h += it.slot === 'weapon'
+        ? `<div class="small ls">· May mắn (chí mạng +${lsPct(r.luck_crit)}%, ép ngọc +${lsPct(r.luck_upgrade)}%)</div>`
+        : `<div class="small ls">· May mắn (ép ngọc +${lsPct(r.luck_upgrade)}%)</div>`;
+    }
+    if (it.skill) h += `<div class="small ls">· Kỹ năng (sát thương chiêu +${lsPct(r.skill_dmg)}%)</div>`;
+    return h;
+  };
   // thưởng đủ bộ giáp (P.view.setBonus)
   function setLine() {
     const b = P.view.setBonus;
@@ -1968,6 +1981,7 @@
       ${wearable ? wearLines(it) : ''}
       ${it.set ? `<div class="small muted">Thuộc bộ ${esc(it.set)} (bậc ${it.tier})</div>` : ''}
       ${excLines(it)}
+      ${luckSkillLines(it)}
       ${lifeLine(it)}
       ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>' : ''}
       ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
