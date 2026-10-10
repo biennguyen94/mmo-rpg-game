@@ -89,6 +89,9 @@ defmodule HacLong.Game.Data do
 
   @classes by_id.(raw["CLASSES"])
   @zones atomize.(atomize, raw["ZONES"])
+  # Phase 15a: quái của bản đồ phụ (không thuộc vùng nào), `side.json`
+  @side_monsters atomize.(atomize, raw["SIDE_MONSTERS"] || [])
+  @side_by_id Map.new(@side_monsters, &{&1.id, &1})
   @items by_id.(raw["ITEMS"])
   @boss_drops raw["BOSS_DROPS"]
   @pets atomize.(atomize, raw["PETS"])
@@ -133,6 +136,7 @@ defmodule HacLong.Game.Data do
   @check %{
     classes: @classes,
     zones: @zones,
+    side_monsters: @side_monsters,
     items: @items,
     boss_drops: @boss_drops,
     shop: @shop,
@@ -175,6 +179,9 @@ defmodule HacLong.Game.Data do
   def classes, do: @classes
   def class(id), do: Map.get(@classes, id)
   def zones, do: @zones
+  @doc "Quái bản đồ phụ (Phase 15a)."
+  def side_monsters, do: @side_monsters
+  def side_monster(id), do: Map.get(@side_by_id, id)
   def zone(i) when is_integer(i) and i >= 0, do: Enum.at(@zones, i)
   def zone(_), do: nil
   def zone_count, do: length(@zones)

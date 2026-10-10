@@ -37,7 +37,8 @@ defmodule HacLong.World do
 
   def valid_pos(_), do: Maps.home_spawn()
 
-  defp shared?(%{map: id}), do: not Maps.get(id).private
+  @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
+  def shared?(%{map: id}), do: not Maps.get(id).private
 
   @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, ngoại hình, ký hiệu bang."
   def info(p) do
@@ -206,9 +207,90 @@ defmodule HacLong.World do
     else
       leave(p, uid)
       {x, y} = portal.spawn
-      p = put_pos(p, target.id, x, y)
+      p = p |> put_pos(target.id, x, y) |> visit(target)
       enter(p, uid)
       {%{ok: true, msg: "Đến #{target.name}."}, p}
+    end
+  end
+
+  # bản đồ phụ đã tới thì dịch chuyển tới được bằng bảng chọn bản đồ
+  defp visit(p, %{side: true, id: id}) do
+    known = Map.get(p, :visited) || []
+    if id in known, do: p, else: Map.put(p, :visited, known ++ [id])
+  end
+
+  defp visit(p, _), do: p
+
+  # ---------- Chọn bản đồ (Phase 15a, U2) ----------
+
+  @travel Data.rules().travel
+
+  @doc "Cấp quái thấp nhất của bản đồ (nil nếu không có quái): dùng để xếp và tính giá."
+  def min_level(%{side: true} = map),
+    do: map.spawns |> Enum.map(&Data.side_monster(&1.monster).level) |> Enum.min(fn -> nil end)
+
+  def min_level(%{zone: zi} = map) when is_integer(zi) do
+    z = Data.zone(zi)
+    kinds = Enum.map(map.spawns, & &1.monster)
+
+    lv =
+      for(mo <- z.monsters, mo.id in kinds, do: mo.level) ++
+        if(map.boss, do: [z.boss.level], else: [])
+
+    Enum.min(lv, fn -> nil end)
+  end
+
+  def min_level(_), do: nil
+
+  @doc "Giá dịch chuyển tới bản đồ: `base + per_level × cấp quái thấp nhất`; Làng, Nhà miễn phí."
+  def travel_cost(map) do
+    case map.id in @travel.free or min_level(map) do
+      true -> 0
+      nil -> @travel.base
+      lv -> @travel.base + @travel.per_level * lv
+    end
+  end
+
+  @doc "Bản đồ tới được bằng bảng chọn: vùng đã mở (bản đồ thường), đã đi tới (bản đồ phụ), Làng, Nhà."
+  def can_travel?(p, map) do
+    cond do
+      map.id in @travel.free -> true
+      map.side -> map.id in (Map.get(p, :visited) || [])
+      map.private or map.id == "tower" -> false
+      is_integer(map.zone) -> Engine.zone_unlocked?(p, map.zone)
+      true -> true
+    end
+  end
+
+  @doc "Dịch chuyển bằng bảng chọn bản đồ (tốn vàng)."
+  def travel(p, uid, to) do
+    target = is_binary(to) && Maps.get(to)
+
+    cond do
+      p.battle ->
+        {%{ok: false, msg: "Đang trong trận đấu."}, p}
+
+      !target or target.id == "tower" ->
+        {%{ok: false, msg: "Không có bản đồ đó."}, p}
+
+      to == p.pos.map ->
+        {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
+
+      not can_travel?(p, target) ->
+        {%{ok: false, msg: "Chưa mở bản đồ này (đi qua cổng một lần trước)."}, p}
+
+      p.gold < travel_cost(target) ->
+        {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}
+
+      true ->
+        cost = travel_cost(target)
+        leave(p, uid)
+        %{x: x, y: y} = if target.id == "home", do: Maps.home_spawn(), else: Maps.entry(target.id)
+        p = %{put_pos(p, target.id, x, y) | gold: p.gold - cost}
+        enter(p, uid)
+
+        {%{ok: true, msg: "Đến #{target.name}#{if cost > 0, do: " (−#{cost} vàng)", else: ""}."},
+         p}
     end
   end
 
@@ -233,7 +315,7 @@ defmodule HacLong.World do
         join_shared(p, uid, map, m)
 
       {:engage, m} ->
-        case Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss) do
+        case encounter(p, map, m) do
           {%{ok: true} = r, p} ->
             # trong tổ đội: ghi trận để đồng đội vào đánh cùng
             key = fight_key(map.id, m.id)
@@ -247,9 +329,19 @@ defmodule HacLong.World do
     end
   end
 
+  # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
+  defp encounter(p, %{side: true} = map, m),
+    do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+
+  defp encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
+
   defp spec_of(map, m) do
-    zone = Data.zone(map.zone)
-    spec = if m.boss, do: zone.boss, else: Enum.find(zone.monsters, &(&1.id == m.kind))
+    spec =
+      cond do
+        map.side -> Data.side_monster(m.kind)
+        m.boss -> Data.zone(map.zone).boss
+        true -> Enum.find(Data.zone(map.zone).monsters, &(&1.id == m.kind))
+      end
 
     cond do
       m[:gold] -> golden_variant(spec, m.boss)
@@ -278,7 +370,7 @@ defmodule HacLong.World do
     key = fight_key(map.id, m.id)
 
     with {:ok, f} <- Party.join_fight(key, uid),
-         {%{ok: true} = r, p} <- Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss) do
+         {%{ok: true} = r, p} <- encounter(p, map, m) do
       p = put_in(p.battle.monster.hp, f.hp)
       p = put_in(p.battle[:encounter], %{map: map.id, mid: m.id, shared: key, joined: true})
       {Map.put(r, :msg, "Vào đánh cùng đồng đội (#{f.n} người)."), p}

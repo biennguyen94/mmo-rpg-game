@@ -59,7 +59,9 @@
   }
 
   function tr(s) {
-    if (lang === 'vi' || !s || !tokRe || !VI.test(s)) return s;
+    if (lang === 'vi' || !s || !tokRe) return s;
+    // chữ không dấu (vd "Bang") chỉ dịch khi có đúng khóa
+    if (!VI.test(s)) { const k = s.trim(); return dict.t[k] ? s.replace(k, dict.t[k]) : s; }
     if (cache.has(s)) return cache.get(s);
     const m = s.match(/^([\s·,:;]*)([\s\S]*?)([\s·,:;]*)$/);
     const out = m[1] + core(m[2]) + m[3];

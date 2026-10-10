@@ -33,8 +33,8 @@ defmodule HacLong.Game.EngineTest do
     z = Data.zone(0)
     m = Engine.make_monster(hd(z.monsters), false)
     b = Engine.make_monster(z.boss, true)
-    assert m.maxHp == round((20 + 26 + 0.6) * 0.8)
-    assert b.boss and b.maxHp > 10 * m.maxHp
+    assert m.maxHp == round((170 + 26 + 0.6) * 0.8)
+    assert b.boss and b.maxHp > 4 * m.maxHp
     assert b.special.every == 3
   end
 
@@ -69,9 +69,12 @@ defmodule HacLong.Game.EngineTest do
     mp = p.mp
     {%{ok: true}, p} = Engine.act(p, "skill", "heal")
     assert Engine.cooldown(p, "heal") == 4
-    # tốn 14 MP, hồi 5 % MP tối đa đầu lượt
+
+    # tốn MP theo cấp (14 × (1 + 0.04 × 9) = 19), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
     max_mp = Engine.derived(p).maxMp
-    assert p.mp == min(max_mp, mp + round(max_mp * 0.05)) - 14
+    cost = Engine.skill_mp(p, Enum.find(Engine.skills(p), &(&1.id == "heal")))
+    assert cost == 19
+    assert p.mp == min(max_mp, mp + round(max_mp * 0.03 + p.stats.ene * 0.1)) - cost
     assert Enum.any?(p.battle.log, &(&1.text =~ "Khiên Thánh hồi"))
 
     assert {%{ok: false, msg: "Hồi Sinh Lực hồi sau 4 lượt."}, ^p} =

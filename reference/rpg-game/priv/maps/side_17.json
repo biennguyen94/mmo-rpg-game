@@ -1,0 +1,80 @@
+{
+  "id": "side_17",
+  "name": "Đầm Sương 2",
+  "zone": null,
+  "side": true,
+  "theme": "swamp",
+  "floor": "floors/swamp",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T,.~..~~.~..~,.,.....,.T",
+    "T.~~.........,..~....,.T",
+    "T.........~.....K....,.T",
+    "T......,........~,K~,.,T",
+    "T........~.....K..,.,.,T",
+    "T.~..~K.K..,....:::::::T",
+    "T...:::::::::::::::...:T",
+    "O..::.~,...,.K.~.......O",
+    "T......,......~,,.K....T",
+    "T.,.~.....~..,.,..,~K..T",
+    "T..~.........K,........T",
+    "TK~K..........~..~K.~~.T",
+    "T...~.~.......,...K....T",
+    "T......~..,.,....~,.~.,T",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_16",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_18",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "bog_body",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "wandering_mushroom",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vine_stalker",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    },
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

@@ -80,7 +80,23 @@ defmodule HacLongWeb.PageController do
         warGold: Data.rules().guild_war.win_gold,
         pkMax: Data.rules().pk.max,
         pkInvite: Data.rules().pk.invite_s,
+        # đồ sát: số giây mỗi lượt, cấp tối thiểu, bản đồ an toàn
+        slay: %{
+          turnS: Data.rules().slay.turn_s,
+          minLevel: Data.rules().slay.min_level,
+          safe: Data.rules().slay.safe_maps,
+          redMult: Data.rules().slay.red_gold_mult
+        },
         wingPerLevel: Data.rules().combat.wing_per_level,
+        # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
+        skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
+        potionPricePerLevel: Data.rules().shop.potion_price_per_level,
+        # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
+        travel: %{
+          base: Data.rules().travel.base,
+          perLevel: Data.rules().travel.per_level,
+          free: Data.rules().travel.free
+        },
         smithEpicPerLevel: Data.rules().crafting.smith_epic_per_level,
         smithRare: Data.rules().crafting.smith_rare,
         tameBonus: Data.rules().pets.tame_bonus,
@@ -88,7 +104,9 @@ defmodule HacLongWeb.PageController do
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
         petXpCoef: Data.rules().pets.xp_coef
       },
-      WORLD: Maps.client_data()
+      WORLD: Maps.client_data(),
+      # Phase 14: Thư viện (bản đồ, quái, vật phẩm)
+      LIBRARY: HacLong.Library.get()
     }
   end
 end

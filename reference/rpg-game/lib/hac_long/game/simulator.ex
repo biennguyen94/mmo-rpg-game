@@ -203,7 +203,7 @@ defmodule HacLong.Game.Simulator do
       p
       |> Engine.skills()
       |> Enum.reverse()
-      |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and (p[:mp] || 0) >= (&1[:mp] || 0)))
+      |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and (p[:mp] || 0) >= Engine.skill_mp(p, &1)))
 
     action =
       cond do
@@ -330,7 +330,7 @@ defmodule HacLong.Game.Simulator do
   end
 
   defp buy_potions(p, pot) do
-    if Map.get(p.inv, pot, 0) < 5 and p.gold >= Data.item(pot).price + 20 do
+    if Map.get(p.inv, pot, 0) < 5 and p.gold >= Engine.price(p, pot) + 20 do
       {_, p} = Engine.buy(p, pot)
       buy_potions(p, pot)
     else

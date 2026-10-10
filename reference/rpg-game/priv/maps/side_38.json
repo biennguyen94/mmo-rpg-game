@@ -1,0 +1,75 @@
+{
+  "id": "side_38",
+  "name": "Lò Nguyên Tố 3",
+  "zone": null,
+  "side": true,
+  "theme": "lair",
+  "floor": "floors/lair",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R...~~R:.....R.R~.:..:.R",
+    "R....~........::...::~:R",
+    "R......~...R~...::~:...R",
+    "R...~:.:.....:....R:...R",
+    "R.....~...RR......::.~.R",
+    "R..R.~R.....R:.........R",
+    "R...:.::::::~::.......~R",
+    "O..::::~...:::....R.:..O",
+    "R.~.R...:....::::::::::R",
+    "R.......R~R.........:::R",
+    "R..:...R:......~...:R.:R",
+    "R~..:..::.R.:....~RR..~R",
+    "R...R........R...:.:...R",
+    "R~........:..:..:..~...R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_37",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_39",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "iron_golem",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "crystal_guardian",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "ettin",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

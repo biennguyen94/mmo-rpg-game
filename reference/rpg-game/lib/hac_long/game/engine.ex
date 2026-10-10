@@ -23,11 +23,15 @@ defmodule HacLong.Game.Engine do
   @up @rules.upgrade
   @shop @rules.shop
   @log_limit 60
+  # bình máu / bình mana (Phase 12): hồi theo phần trăm máu / MP tối đa (`heal_pct`, `mana_pct`)
   @potions ~w(potion_s potion_m potion_l)
+  @manas ~w(mana_s mana_m mana_l)
   # Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (như MU)
   @stats ~w(str agi vit ene)a
-  # mỗi lượt của người chơi hồi chừng này phần MP tối đa
+  # mỗi lượt của người chơi hồi `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng (Phase 12, 12-A)
   @mp_regen @combat.mp_regen
+  @mp_regen_ene @combat.mp_regen_ene
+  @skill_mp_per_level @combat.skill_mp_per_level
   @max_batch 99
   # vũ khí, giáp, khiên, cánh
   @equip_slots ~w(weapon armor shield wing)
@@ -91,6 +95,7 @@ defmodule HacLong.Game.Engine do
           furniture: %{},
           decor: [],
           storage: %{inv: %{}, extra: 0},
+          visited: [],
           fish_caught: 0,
           achievements: [],
           title: nil,
@@ -183,6 +188,13 @@ defmodule HacLong.Game.Engine do
       derived: derived(p),
       xpToNext: xp_to_next(p.level),
       restCost: rest_cost(p),
+      # Phase 13: phần cộng thêm cho tab Nhân vật: chỉ số từ đồ hiếm, % từ thú cưng + món ăn
+      extra: %{
+        gear: Gear.bonus_stats(p),
+        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp),
+        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk),
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def)
+      },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       look: look(p),
       comfort: Home.comfort(p),
@@ -331,6 +343,24 @@ defmodule HacLong.Game.Engine do
     end
   end
 
+  @doc """
+  Trận ở bản đồ phụ (Phase 15a): không thuộc vùng nào nên không cần mở vùng; `place` (tên bản đồ) và
+  `theme` (nền) để client vẽ.
+  """
+  def start_side_encounter(p, spec, place, theme) do
+    cond do
+      p.battle ->
+        {err("Đang trong trận đấu."), p}
+
+      p.hp <= 0 ->
+        {err("Bạn cần hồi máu trước."), p}
+
+      true ->
+        {r, p} = do_start_battle(p, nil, spec, false)
+        {r, update_in(p.battle, &Map.merge(&1, %{place: place, theme: theme}))}
+    end
+  end
+
   @doc "Trận với một con quái đã dựng sẵn `m` (trùm thế giới). `zi`: vùng lấy hình nền."
   def start_with_monster(p, zi, m) do
     cond do
@@ -374,22 +404,52 @@ defmodule HacLong.Game.Engine do
     put_in(p.battle.log, entries)
   end
 
-  def best_potion(p, missing) do
-    owned = Enum.filter(@potions, &(Map.get(p.inv, &1, 0) > 0))
+  @doc "Lượng hồi của bình `id` cho nhân vật `p` (theo % máu / MP tối đa): `{:hp | :mp, số}`."
+  def potion_amount(p, id) do
+    it = Data.item(id)
+    d = derived(p)
 
-    # Bình nhỏ nhất đủ hồi phần máu đã mất, nếu không có thì bình lớn nhất đang có.
-    case owned do
+    cond do
+      it[:mana_pct] -> {:mp, max(1, round(d.maxMp * it.mana_pct))}
+      it[:heal_pct] -> {:hp, max(1, round(d.maxHp * it.heal_pct))}
+      true -> {:hp, it[:heal] || 0}
+    end
+  end
+
+  @doc "Bình máu nhỏ nhất đủ hồi phần máu đã mất, không có thì bình lớn nhất đang có."
+  def best_potion(p, missing), do: best(p, @potions, missing)
+
+  @doc "Bình mana nhỏ nhất đủ hồi phần MP đã mất, không có thì bình lớn nhất đang có."
+  def best_mana(p, missing), do: best(p, @manas, missing)
+
+  defp best(p, ids, missing) do
+    case Enum.filter(ids, &(Map.get(p.inv, &1, 0) > 0)) do
       [] -> nil
-      _ -> Enum.find(owned, &(Data.item(&1).heal >= missing)) || List.last(owned)
+      owned -> Enum.find(owned, &(elem(potion_amount(p, &1), 1) >= missing)) || List.last(owned)
     end
   end
 
   defp drink(p, id) do
     d = derived(p)
-    before = p.hp
-    p = %{p | hp: min(d.maxHp, p.hp + Data.item(id).heal)} |> take_item(id)
-    {p, p.hp - before}
+
+    case potion_amount(p, id) do
+      {:mp, n} ->
+        before = mp(p)
+        p = %{p | mp: min(d.maxMp, before + n)} |> take_item(id)
+        {p, p.mp - before}
+
+      {:hp, n} ->
+        before = p.hp
+        p = %{p | hp: min(d.maxHp, p.hp + n)} |> take_item(id)
+        {p, p.hp - before}
+    end
   end
+
+  @doc """
+  MP kỹ năng tốn ở cấp hiện tại (Phase 12): `mp` gốc của kỹ năng (kỹ năng mạnh gốc cao hơn) ×
+  (1 + `skill_mp_per_level` × (cấp − 1)), để MP vẫn là giới hạn khi MP tối đa tăng theo cấp.
+  """
+  def skill_mp(p, skill), do: round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)))
 
   # ---------- Kỹ năng ----------
 
@@ -456,7 +516,7 @@ defmodule HacLong.Game.Engine do
   # ---------- Lượt đánh ----------
 
   @doc """
-  action: "attack" | "skill" | "potion" | "flee". Với "skill", `skill_id` chọn kỹ năng
+  action: "attack" | "skill" | "potion" | "mana" | "flee". Với "skill", `skill_id` chọn kỹ năng
   (không có thì dùng kỹ năng đầu tiên).
   """
   def act(p, action, skill_id \\ nil) do
@@ -466,7 +526,7 @@ defmodule HacLong.Game.Engine do
       b == nil or b.over ->
         {err("Không có trận đấu."), p}
 
-      action not in ~w(attack skill potion flee) ->
+      action not in ~w(attack skill potion mana flee) ->
         {err("Thao tác không hợp lệ."), p}
 
       effect(p, :player, "stun") ->
@@ -482,6 +542,9 @@ defmodule HacLong.Game.Engine do
       action == "potion" ->
         act_potion(p, derived(p))
 
+      action == "mana" ->
+        act_mana(p, derived(p))
+
       true ->
         act_flee(p, derived(p))
     end
@@ -489,12 +552,33 @@ defmodule HacLong.Game.Engine do
 
   # Sang lượt mới của người chơi: hồi một phần MP.
   defp next_turn(p) do
-    max_mp = derived(p).maxMp
-    p = %{p | mp: min(max_mp, mp(p) + max(1, round(max_mp * @mp_regen)))}
+    p = %{p | mp: min(derived(p).maxMp, mp(p) + mp_regen(p))}
     update_in(p.battle.turn, &(&1 + 1))
   end
 
   defp mp(p), do: Map.get(p, :mp) || 0
+
+  @doc "MP hồi mỗi lượt trong trận: `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng (cả đồ cộng)."
+  def mp_regen(p) do
+    ene = Map.get(p.stats, :ene, 0) + Map.get(Gear.bonus_stats(p), :ene, 0)
+    max(1, round(derived(p).maxMp * @mp_regen + ene * @mp_regen_ene))
+  end
+
+  defp act_mana(p, d) do
+    id = best_mana(p, d.maxMp - mp(p))
+
+    cond do
+      id == nil ->
+        {err("Hết bình mana."), p}
+
+      mp(p) >= d.maxMp ->
+        {err("MP đang đầy."), p}
+
+      true ->
+        {p, got} = p |> next_turn() |> drink(id)
+        p |> log("Bạn uống #{Data.item(id).name}, hồi #{got} MP.", "good") |> monster_turn(d)
+    end
+  end
 
   defp act_flee(p, d) do
     p = next_turn(p)
@@ -548,8 +632,8 @@ defmodule HacLong.Game.Engine do
       skill && cooldown(p, skill.id) > 0 ->
         {err("#{skill.name} hồi sau #{cooldown(p, skill.id)} lượt."), p}
 
-      skill && mp(p) < (skill[:mp] || 0) ->
-        {err("Không đủ MP cho #{skill.name} (cần #{skill.mp})."), p}
+      skill && mp(p) < skill_mp(p, skill) ->
+        {err("Không đủ MP cho #{skill.name} (cần #{skill_mp(p, skill)})."), p}
 
       true ->
         p = next_turn(p)
@@ -582,7 +666,13 @@ defmodule HacLong.Game.Engine do
           end
 
         p = pet_bite(p, d)
-        if p.battle.monster.hp <= 0, do: win(p), else: monster_turn(p, d)
+
+        cond do
+          # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó)
+          p.battle[:live] -> {ok(), p}
+          p.battle.monster.hp <= 0 -> win(p)
+          true -> monster_turn(p, d)
+        end
     end
   end
 
@@ -653,7 +743,7 @@ defmodule HacLong.Game.Engine do
   defp strike_with(p, skill, d, atk, dfn, crit) do
     # +1 vì cuối lượt sẽ trừ 1
     p = set_cd(p, skill.id, skill.cooldown + 1)
-    p = %{p | mp: mp(p) - (skill[:mp] || 0)}
+    p = %{p | mp: mp(p) - skill_mp(p, skill)}
     m = p.battle.monster
     none = fn p, _ -> p end
 
@@ -727,6 +817,9 @@ defmodule HacLong.Game.Engine do
         {p, atk, dfn, crit, e.mult, skill.name, none}
     end
   end
+
+  # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
+  defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
 
   defp monster_turn(p, d) do
     b = p.battle
@@ -840,28 +933,29 @@ defmodule HacLong.Game.Engine do
           p
         end
 
-      if p.hp <= 0 do
-        lose(p)
-      else
-        tick = fn list ->
-          list
-          |> Enum.map(fn e -> if e.id == "stun", do: e, else: %{e | turns: e.turns - 1} end)
-          |> Enum.filter(&(&1.turns > 0))
-        end
-
-        p =
-          p
-          |> set_effects(:player, tick.(effects(p, :player)))
-          |> set_effects(:monster, tick.(effects(p, :monster)))
-
-        cds =
-          (Map.get(p.battle, :cds) || [])
-          |> Enum.map(&%{&1 | turns: &1.turns - 1})
-          |> Enum.filter(&(&1.turns > 0))
-
-        {ok(), %{p | battle: Map.put(p.battle, :cds, cds)}}
-      end
+      if p.hp <= 0, do: lose(p), else: tick_round(p)
     end
+  end
+
+  # Giảm số lượt hiệu ứng và hồi chiêu.
+  defp tick_round(p) do
+    tick = fn list ->
+      list
+      |> Enum.map(fn e -> if e.id == "stun", do: e, else: %{e | turns: e.turns - 1} end)
+      |> Enum.filter(&(&1.turns > 0))
+    end
+
+    p =
+      p
+      |> set_effects(:player, tick.(effects(p, :player)))
+      |> set_effects(:monster, tick.(effects(p, :monster)))
+
+    cds =
+      (Map.get(p.battle, :cds) || [])
+      |> Enum.map(&%{&1 | turns: &1.turns - 1})
+      |> Enum.filter(&(&1.turns > 0))
+
+    {ok(), %{p | battle: Map.put(p.battle, :cds, cds)}}
   end
 
   # lễ hội: quái thường có thể rơi vật phẩm lễ hội, trùm rơi 3 cái
@@ -890,6 +984,10 @@ defmodule HacLong.Game.Engine do
   end
 
   def finish_win(p), do: {ok(), p}
+
+  @doc "Kết thúc trận đang đánh bằng thua (gục ngã: mất vàng, máu còn một phần, như chết thường)."
+  def finish_lose(%{battle: %{over: false}} = p), do: lose(p)
+  def finish_lose(p), do: {ok(), p}
 
   defp win(p) do
     m = p.battle.monster
@@ -1564,13 +1662,25 @@ defmodule HacLong.Game.Engine do
       it[:level] && p.level < it.level ->
         {err("Cần cấp #{it.level}."), p}
 
-      p.gold < it.price * n ->
+      p.gold < price(p, id) * n ->
         {err("Không đủ vàng."), p}
 
       true ->
         {ok("Đã mua #{if n > 1, do: "#{n} ", else: ""}#{it.name}."),
-         %{p | gold: p.gold - it.price * n} |> add_item(id, n)}
+         %{p | gold: p.gold - price(p, id) * n} |> add_item(id, n)}
     end
+  end
+
+  @doc """
+  Giá mua ở cửa hàng cho nhân vật `p`. Bình máu / mana hồi theo % nên giá tăng theo cấp (Phase 12):
+  `giá × (1 + potion_price_per_level × (cấp − 1))`; giá bán lại vẫn theo giá gốc.
+  """
+  def price(p, id) do
+    it = Data.item(id)
+
+    if it.slot == "potion",
+      do: round(it.price * (1 + @shop.potion_price_per_level * (p.level - 1))),
+      else: it.price
   end
 
   def sell_price(id) do
@@ -1668,20 +1778,24 @@ defmodule HacLong.Game.Engine do
 
   def use_potion(p, id) do
     it = Data.item(id)
+    mana? = it != nil and it[:mana_pct] != nil
 
     cond do
       p.battle ->
-        {err("Dùng nút Uống máu trong trận."), p}
+        {err("Dùng nút Uống máu / Uống mana trong trận."), p}
 
       it == nil or Map.get(p.inv, id, 0) <= 0 or it.slot != "potion" ->
         {err("Không có bình này."), p}
 
-      p.hp >= derived(p).maxHp ->
+      mana? and mp(p) >= derived(p).maxMp ->
+        {err("MP đang đầy."), p}
+
+      not mana? and p.hp >= derived(p).maxHp ->
         {err("Máu đang đầy."), p}
 
       true ->
         {p, h} = drink(p, id)
-        {ok("Hồi #{h} máu."), p}
+        {ok(if(mana?, do: "Hồi #{h} MP.", else: "Hồi #{h} máu.")), p}
     end
   end
 

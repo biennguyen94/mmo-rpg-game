@@ -277,6 +277,45 @@ theo khung còn lại). e2e 6/6 xanh (mobile 18 bước: không cuộn ở bản
 
 ---
 
+## Yêu cầu thêm 2026-10-09 — Phase 11 … 17
+
+Thứ tự: 11 → 12 → 13 → 14 → 15 (15a = U2 20 bản đồ, 15b = Phase 6 Item.txt) → 16 → 17. Chi tiết, câu hỏi: `INTEGRATION_PLAN §16`.
+
+### Phase 11 — Sửa giao diện nhanh (không đổi luật chơi) ✅ (xong 2026-10-09)
+
+| Mục | Việc |
+|---|---|
+| **V1** | Cài đặt: bản đồ Sáng / Tối / Tự động (theo giờ, như cũ) |
+| **V2** | Ô chat góc dưới trái tự ẩn sau 5 giây, có tin mới thì hiện lại |
+| **V3** | Lệnh `/d`: xóa chat trên máy mình (không xóa server) |
+| **V4** | Bấm lại icon dock đang mở thì đóng, về bản đồ |
+| **V5** | Nói chuyện NPC: nút "‹ Bản đồ" sát trái trên cùng (như "‹ Menu") |
+| **V6** | Icon thay chữ MP, EXP |
+| **V7** | Nút "⤢ Vừa màn hình" trên khung bản đồ, bật / tắt, nhớ lựa chọn |
+| **V8** | Trận đánh trên điện thoại: hình quái không bị cắt, luôn thấy máu quái |
+| **V9** | Gặp boss vào thẳng bảng kỹ năng như quái thường (bỏ Đấu / Thôi) |
+| **V10** | Quản trị: bỏ "Gửi quà" (trùng "Chỉnh nhân vật"); "Quà cho mọi người" thêm đồ thường / đồ hiếm + N |
+
+### Phase 12 — Làm lại MP ✅ (xong 2026-10-09, 12-A / 12-B theo đề xuất)
+Chi phí MP kỹ năng theo công thức (kiểu MU: gốc + hệ số × cấp kỹ năng); hồi MP trong trận theo ENE / cấp; shop bán bình MP hồi theo % (nhỏ 20 %, vừa 40 %, lớn 70 %), giá theo cấp.
+
+### Phase 13 — Người chơi và quái trên bản đồ ✅ (xong 2026-10-09; 13-A theo đề xuất, 13-B theo ảnh mẫu)
+Quái có tên trên đầu, thanh máu dưới, máu do server giữ và phát cho cả bản đồ; không vẽ người khác trên ô, dock thêm 👥 (số người trong bản đồ) → danh sách → Xem profile / Giao dịch / PK / Kết bạn / Nhắn tin; profile mình và người khác; tab Nhân vật hiện % cộng thêm từ đồ / buff.
+
+### Phase 14 — Thư viện ✅ (xong 2026-10-09)
+Menu → 📚 Thư viện: Bản đồ / Quái / Vật phẩm, tìm theo tên, sinh từ dữ liệu game.
+
+### Phase 15 — Nội dung mới
+15a = U2 — **✅ xong 2026-10-09, làm 50 bản đồ** (theo yêu cầu mới, thay vì 20); 15b = Phase 6 (Item.txt).
+
+### Phase 16 — Người chơi AI ✅ (xong 2026-10-09, 16-A theo đề xuất)
+Bot chạy trên server như người chơi thật: đi lại, đánh quái, lên cấp, mặc đồ, chat vài câu.
+
+### Phase 17 — NPC chơi Tiến Lên Miền Nam (cần chốt 17-A)
+NPC trong Làng: 1 người + 3 NPC.
+
+---
+
 ## Gợi ý lịch (mỗi phase dừng chờ anh duyệt)
 
 | Thứ tự | Phase | Ghi chú |

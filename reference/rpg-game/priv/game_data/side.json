@@ -1,0 +1,264 @@
+{
+  "SIDE_MONSTERS": [
+    {
+      "id": "quokka",
+      "name": "Chuột Túi Nhỏ",
+      "level": 1
+    },
+    {
+      "id": "wild_sheep",
+      "name": "Cừu Hoang",
+      "level": 2
+    },
+    {
+      "id": "wild_hog",
+      "name": "Heo Rừng",
+      "level": 3
+    },
+    {
+      "id": "giant_newt",
+      "name": "Kỳ Nhông",
+      "level": 4
+    },
+    {
+      "id": "worker_ant",
+      "name": "Kiến Thợ",
+      "level": 5
+    },
+    {
+      "id": "giant_frog",
+      "name": "Ếch Khổng Lồ",
+      "level": 6
+    },
+    {
+      "id": "adder",
+      "name": "Rắn Lục",
+      "level": 7
+    },
+    {
+      "id": "yellow_wasp",
+      "name": "Ong Vàng",
+      "level": 8
+    },
+    {
+      "id": "iguana",
+      "name": "Kỳ Đà",
+      "level": 9
+    },
+    {
+      "id": "soldier_ant",
+      "name": "Kiến Lính",
+      "level": 10
+    },
+    {
+      "id": "wild_hound",
+      "name": "Chó Săn Hoang",
+      "level": 11
+    },
+    {
+      "id": "killer_bee",
+      "name": "Ong Sát Thủ",
+      "level": 12
+    },
+    {
+      "id": "jelly",
+      "name": "Thạch Nhầy",
+      "level": 13
+    },
+    {
+      "id": "giant_leech",
+      "name": "Đỉa Khổng Lồ",
+      "level": 14
+    },
+    {
+      "id": "water_moccasin",
+      "name": "Rắn Nước",
+      "level": 15
+    },
+    {
+      "id": "swamp_worm",
+      "name": "Giun Đầm Lầy",
+      "level": 16
+    },
+    {
+      "id": "bog_body",
+      "name": "Xác Đầm Lầy",
+      "level": 17
+    },
+    {
+      "id": "wandering_mushroom",
+      "name": "Nấm Đi Lạc",
+      "level": 18
+    },
+    {
+      "id": "vine_stalker",
+      "name": "Dây Leo Săn Mồi",
+      "level": 19
+    },
+    {
+      "id": "thorn_hunter",
+      "name": "Thợ Săn Gai",
+      "level": 20
+    },
+    {
+      "id": "scorpion",
+      "name": "Bọ Cạp",
+      "level": 21
+    },
+    {
+      "id": "wild_yak",
+      "name": "Bò Yak",
+      "level": 22
+    },
+    {
+      "id": "polar_bear",
+      "name": "Gấu Trắng",
+      "level": 23
+    },
+    {
+      "id": "ice_beast",
+      "name": "Thú Băng",
+      "level": 24
+    },
+    {
+      "id": "harpy",
+      "name": "Yêu Điểu",
+      "level": 25
+    },
+    {
+      "id": "gnoll_sergeant",
+      "name": "Đội Trưởng Gnoll",
+      "level": 26
+    },
+    {
+      "id": "griffon",
+      "name": "Sư Tử Đầu Ưng",
+      "level": 27
+    },
+    {
+      "id": "satyr",
+      "name": "Thần Rừng Satyr",
+      "level": 28
+    },
+    {
+      "id": "ghost",
+      "name": "Hồn Ma",
+      "level": 29
+    },
+    {
+      "id": "phantom",
+      "name": "Bóng Ma",
+      "level": 30
+    },
+    {
+      "id": "flying_skull",
+      "name": "Sọ Bay",
+      "level": 31
+    },
+    {
+      "id": "necrophage",
+      "name": "Kẻ Ăn Xác",
+      "level": 32
+    },
+    {
+      "id": "revenant",
+      "name": "Kẻ Báo Thù",
+      "level": 33
+    },
+    {
+      "id": "earth_elemental",
+      "name": "Nguyên Tố Đất",
+      "level": 34
+    },
+    {
+      "id": "fire_elemental",
+      "name": "Nguyên Tố Lửa",
+      "level": 35
+    },
+    {
+      "id": "water_elemental",
+      "name": "Nguyên Tố Nước",
+      "level": 36
+    },
+    {
+      "id": "air_elemental",
+      "name": "Nguyên Tố Gió",
+      "level": 37
+    },
+    {
+      "id": "iron_golem",
+      "name": "Người Sắt",
+      "level": 38
+    },
+    {
+      "id": "crystal_guardian",
+      "name": "Vệ Binh Pha Lê",
+      "level": 39
+    },
+    {
+      "id": "ettin",
+      "name": "Khổng Lồ Hai Đầu",
+      "level": 40
+    },
+    {
+      "id": "stone_giant",
+      "name": "Khổng Lồ Đá",
+      "level": 41
+    },
+    {
+      "id": "frost_giant",
+      "name": "Khổng Lồ Băng",
+      "level": 42
+    },
+    {
+      "id": "fire_giant",
+      "name": "Khổng Lồ Lửa",
+      "level": 43
+    },
+    {
+      "id": "swamp_dragon",
+      "name": "Rồng Đầm",
+      "level": 44
+    },
+    {
+      "id": "quicksilver_dragon",
+      "name": "Rồng Thủy Ngân",
+      "level": 45
+    },
+    {
+      "id": "hell_hound",
+      "name": "Chó Địa Ngục",
+      "level": 46
+    },
+    {
+      "id": "red_devil",
+      "name": "Quỷ Đỏ",
+      "level": 47
+    },
+    {
+      "id": "blizzard_demon",
+      "name": "Quỷ Bão Tuyết",
+      "level": 48
+    },
+    {
+      "id": "balrug",
+      "name": "Quỷ Lửa",
+      "level": 49
+    },
+    {
+      "id": "titan",
+      "name": "Titan",
+      "level": 50
+    },
+    {
+      "id": "reaper",
+      "name": "Thần Chết",
+      "level": 51
+    },
+    {
+      "id": "ancient_lich",
+      "name": "Cổ Vu Yêu",
+      "level": 52
+    }
+  ]
+}

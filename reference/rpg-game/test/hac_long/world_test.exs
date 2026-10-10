@@ -171,8 +171,13 @@ defmodule HacLong.WorldTest do
       two = Maps.get("#{z.id}_2")
       room = Maps.get("#{z.id}_boss")
       assert one.zone == zi and two.zone == zi and room.zone == zi
-      assert Enum.map(one.portals, & &1.to) |> Enum.sort() == Enum.sort(["village", two.id])
-      assert Enum.map(two.portals, & &1.to) |> Enum.sort() == Enum.sort([one.id, room.id])
+      # bỏ qua cổng sang bản đồ phụ (Phase 15a)
+      main = fn m ->
+        m.portals |> Enum.map(& &1.to) |> Enum.reject(&Maps.get(&1).side) |> Enum.sort()
+      end
+
+      assert main.(one) == Enum.sort(["village", two.id])
+      assert main.(two) == Enum.sort([one.id, room.id])
       assert two.waystone
       level = fn m -> Enum.find(z.monsters, &(&1.id == m.monster)).level end
       assert Enum.max(Enum.map(two.spawns, level)) >= Enum.max(Enum.map(one.spawns, level))
@@ -264,5 +269,90 @@ defmodule HacLong.WorldTest do
 
     assert {%{ok: false, msg: "Hãy đứng cạnh đá dịch chuyển."}, _} =
              World.teleport(far, uid, "forest_2")
+  end
+
+  # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì về đầy
+  test "máu quái đang đánh hiện cho mọi người cùng bản đồ", %{uid: uid} do
+    {x, y} = open_spot("forest_1")
+    MapServer.put_monster("forest_1", "bat", {x, y})
+    [m] = MapServer.snapshot("forest_1").monsters
+    assert m.hp == 100
+    assert {:engage, _} = MapServer.step("forest_1", uid, {x, y})
+    MapServer.hp("forest_1", m.id, 40)
+    assert [%{hp: 40, busy: true}] = MapServer.snapshot("forest_1").monsters
+    MapServer.release("forest_1", uid, m.id)
+    assert [%{hp: 100, busy: false}] = MapServer.snapshot("forest_1").monsters
+  end
+
+  # ---------- Phase 15a: bản đồ phụ, chọn bản đồ ----------
+
+  test "50 bản đồ phụ: cấp quái 1..50 tăng dần, cổng hai chiều, mọi nhóm nối từ bản đồ có sẵn" do
+    sides = for i <- 1..50, do: Maps.get("side_" <> String.pad_leading("#{i}", 2, "0"))
+    assert Enum.all?(sides, &(&1 && &1.side && &1.zone == nil))
+    assert Enum.map(sides, &World.min_level/1) == Enum.to_list(1..50)
+
+    for m <- sides, pt <- m.portals do
+      back = Maps.get(pt.to)
+      assert Enum.any?(back.portals, &(&1.to == m.id)), "#{m.id} → #{pt.to} không có cổng ngược"
+      {x, y} = pt.spawn
+      assert Maps.walkable?(back, x, y), "#{m.id} → #{pt.to}: ô đứng #{x},#{y} không đi được"
+    end
+
+    entries =
+      for m <- Enum.take_every(sides, 5), pt <- m.portals, not Maps.get(pt.to).side, do: pt.to
+
+    assert length(Enum.uniq(entries)) == 10
+  end
+
+  test "đánh quái bản đồ phụ: không cần mở vùng, nền trận theo chủ đề", %{uid: uid, p: p} do
+    map = Maps.get("side_30")
+    MapServer.clear_monsters("side_30")
+
+    {x, y} =
+      Enum.find(for(yy <- 1..14, xx <- 2..21, do: {xx, yy}), fn {a, b} ->
+        Maps.walkable?(map, a, b) and Maps.walkable?(map, a + 1, b)
+      end)
+
+    kind = hd(map.spawns).monster
+    MapServer.put_monster("side_30", kind, {x + 1, y})
+    p = at(%{p | level: 30}, "side_30", x, y)
+    World.enter(p, uid)
+    {%{ok: true}, f} = World.move(p, uid, "right")
+    assert f.battle.monster.id == kind and f.battle.monster.level == 30
+    assert f.battle.place == "Thung Lũng U Linh 5" and f.battle.theme == "graveyard"
+    MapServer.leave("side_30", uid)
+  end
+
+  test "chọn bản đồ: giá theo cấp, Làng miễn phí, bản đồ phụ phải tới một lần, đủ vàng", %{
+    uid: uid,
+    p: p
+  } do
+    assert World.travel_cost(Maps.get("village")) == 0
+    assert World.travel_cost(Maps.get("forest_1")) == 20 + 4 * 1
+    assert World.travel_cost(Maps.get("side_10")) == 20 + 4 * 10
+    p = %{at(p, "village", 12, 10) | gold: 1000}
+
+    assert {%{ok: false, msg: "Chưa mở" <> _}, _} = World.travel(p, uid, "side_10")
+    {%{ok: true}, q} = World.travel(p, uid, "forest_1")
+    assert q.pos.map == "forest_1" and q.gold == 1000 - 24
+    {%{ok: true}, q} = World.travel(%{q | visited: ["side_10"]}, uid, "side_10")
+    assert q.pos.map == "side_10" and Maps.walkable?(Maps.get("side_10"), q.pos.x, q.pos.y)
+
+    poor = %{q | gold: 5, pos: %{q.pos | map: "village"}}
+    assert {%{ok: false, msg: "Cần 60 vàng."}, _} = World.travel(poor, uid, "side_10")
+    {%{ok: true}, h} = World.travel(%{q | gold: 0}, uid, "village")
+    assert h.gold == 0
+    for id <- ~w(village forest_1 side_10), do: MapServer.leave(id, uid)
+  end
+
+  test "đi qua cổng vào bản đồ phụ thì ghi nhớ để chọn bản đồ", %{uid: uid, p: p} do
+    f1 = Maps.get("forest_1")
+    pt = Enum.find(f1.portals, &(&1.to == "side_01"))
+    {px, py} = pt.at
+    p = at(p, "forest_1", px - 1, py)
+    World.enter(p, uid)
+    {%{ok: true}, q} = World.move(p, uid, "right")
+    assert q.pos.map == "side_01" and "side_01" in q.visited
+    MapServer.leave("side_01", uid)
   end
 end

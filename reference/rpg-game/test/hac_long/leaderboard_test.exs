@@ -80,4 +80,22 @@ defmodule HacLong.LeaderboardTest do
     refresh = HacLong.Game.Data.rules().leaderboard.refresh_s
     assert hd(Leaderboard.boards(1000 + refresh).level).name == "muon"
   end
+
+  # Phase 16: người chơi AI không lên bảng xếp hạng, không chiếm hạng của người thật
+  test "bot không có trên bảng, không tính vào hạng" do
+    human = hero("nguoi", %{level: 10})
+    bot = hero("maymoc", %{level: 40, kills: 999})
+
+    HacLong.Repo.update_all(Ecto.Query.from(u in HacLong.Accounts.User, where: u.id == ^bot.id),
+      set: [role: "bot"]
+    )
+
+    names = Leaderboard.top(:level) |> Enum.map(& &1.name)
+    assert "nguoi" in names
+    refute "maymoc" in names
+    refute "maymoc" in Enum.map(Leaderboard.top(:kills), & &1.name)
+    assert Leaderboard.level_rank(human.id) == 1
+    assert HacLong.Bots.bot?(bot.id)
+    refute HacLong.Bots.bot?(human.id)
+  end
 end

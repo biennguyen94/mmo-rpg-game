@@ -9,6 +9,11 @@ Giấy phép: **CC0 1.0** (public domain). Không bắt buộc ghi tên, nhưng 
 các họa sĩ của Dungeon Crawl Stone Soup và dự án RLTiles.
 Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 
+Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
+`mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng
+`scripts/side_monsters.py`; danh sách trong `priv/game_data/side.json`. Không dùng hình nào trong
+`TILES_UNDER_UNKNOWN_LICENSE.md` của bộ tile.
+
 ## Icon (`priv/static/assets/icons/`)
 
 Lấy từ **game-icons.net** (https://github.com/game-icons/icons), đã đổi màu và bỏ nền đen.

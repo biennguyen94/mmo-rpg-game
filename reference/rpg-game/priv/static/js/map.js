@@ -10,8 +10,10 @@
   const GROUND = { grass: 1, dirt: 1, flowers: 1 };
 
   // cấp của từng loại quái, để tô màu độ khó
-  const LEVEL = {};
-  ZONES.forEach((z) => { z.monsters.concat([z.boss]).forEach((m) => { LEVEL[m.id] = m.level; }); });
+  const LEVEL = {}, NAME = {};
+  ZONES.forEach((z) => { z.monsters.concat([z.boss]).forEach((m) => { LEVEL[m.id] = m.level; NAME[m.id] = m.name; }); });
+  // quái bản đồ phụ chỉ có trong LIBRARY
+  (((window.GAME_DATA || {}).LIBRARY || {}).monsters || []).forEach((m) => { if (!(m.id in LEVEL)) { LEVEL[m.id] = m.level; NAME[m.id] = m.name; } });
 
   const images = {};
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
@@ -132,14 +134,19 @@
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
   const PHASES = { dawn: ['🌅', 0.25], day: ['☀️', 0], dusk: ['🌇', 0.3], night: ['🌙', 0.62] };
   const outdoors = (P) => P.pos.map !== 'home' && P.pos.map !== 'tower';
+  // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
+  const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
+  const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
 
   function top(P) {
     const m = cur(P);
     const z = m.zone != null ? ZONES[m.zone] : null;
+    // bản đồ phụ (Phase 15a): cấp quái lấy từ Thư viện
+    const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
     const ph = PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '';
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'home' ? 'Giếng nước hồi đầy máu' : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'home' ? 'Giếng nước hồi đầy máu' : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -147,7 +154,7 @@
     const m = cur(P);
     return `
       ${top(P)}
-      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${overlay || ''}</div>
+      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas><button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
       <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh.</p>`;
   }
 
@@ -160,6 +167,11 @@
     mounted = getPlayer().pos.map;
     resize();
   }
+
+  // V7: "Vừa màn hình" — thu cả bản đồ cho vừa khung (không phóng to quá 1); lưu ở trình duyệt
+  let zoom = 1;
+  const zoomOn = () => { try { return localStorage.getItem('hl-zoom') === '1'; } catch (e) { return false; } };
+  const VW = () => canvas.clientWidth / zoom, VH = () => canvas.clientHeight / zoom;
 
   function resize() {
     if (!canvas) return;
@@ -179,7 +191,7 @@
   // Góc trên trái của khung nhìn (pixel), đi theo nhân vật (x, y tính theo ô, có thể lẻ),
   // không lố ra ngoài bản đồ.
   function camera(m, x, y) {
-    const vw = canvas.clientWidth, vh = canvas.clientHeight;
+    const vw = VW(), vh = VH();
     const mw = m.tiles[0].length * TILE, mh = m.tiles.length * TILE;
     const axis = (view, size, t) => (size <= view ? (size - view) / 2 : Math.max(0, Math.min(size - view, t * TILE + TILE / 2 - view / 2)));
     return [Math.round(axis(vw, mw, x)), Math.round(axis(vh, mh, y))];
@@ -210,13 +222,16 @@
     const m = cur(P);
     const now = performance.now();
     const [mx, my] = smooth('me', P.pos.x, P.pos.y, DUR.me, now);
+    zoom = zoomOn() ? Math.min(1, canvas.clientWidth / (m.tiles[0].length * TILE), canvas.clientHeight / (m.tiles.length * TILE)) : 1;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
     const [cx, cy] = camera(m, mx, my);
     lastCam = [cx, cy];
     ctx.fillStyle = '#0c0910';
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.fillRect(0, 0, VW(), VH());
     const x0 = Math.max(0, Math.floor(cx / TILE)), y0 = Math.max(0, Math.floor(cy / TILE));
-    const x1 = Math.min(m.tiles[0].length - 1, Math.ceil((cx + canvas.clientWidth) / TILE));
-    const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + canvas.clientHeight) / TILE));
+    const x1 = Math.min(m.tiles[0].length - 1, Math.ceil((cx + VW()) / TILE));
+    const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
 
@@ -248,7 +263,7 @@
     for (const q of mobs(P)) {
       const [qx, qy] = smooth('m' + q.id, q.x, q.y, DUR.monster, now);
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy);
-      if (px < -TILE || py < -TILE || px > canvas.clientWidth || py > canvas.clientHeight) continue;
+      if (px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
       ctx.globalAlpha = q.busy ? 0.45 : 1;
       if (q.boss && !q.gold) {
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
@@ -267,8 +282,12 @@
       if (im.complete) ctx.drawImage(im, px - off, py - off, sz, sz);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
-      if (q.rare) labels.push(['Bóng Đêm', px + TILE / 2, py - 12, '#d59cff']);
-      if (q.gold) labels.push([q.boss ? 'Trùm Vàng' : 'Vàng', px + TILE / 2, py - 12 - off, '#ffd24a']);
+      // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
+      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.rare ? 'Bóng Đêm · ' : '') + (NAME[q.kind] || '');
+      labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
+      const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
+      ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
+      ctx.fillStyle = q.gold ? '#e8b923' : q.boss ? '#c0392b' : '#d9483b'; ctx.fillRect(px - off + 4, py - off + sz + 2, Math.max(0, (bw - 2) * hpk), 3);
       const lv = q.level || LEVEL[q.kind] || 1;
       ctx.font = '700 9px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(12,9,16,0.85)';
@@ -276,7 +295,6 @@
       ctx.fillStyle = levelColor(P, lv);
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText(String(lv), px + TILE - 7, py + TILE - 9);
-      if (q.busy) label('⚔', px + TILE / 2, py - 12, '#ef6a5a');
     }
 
     for (const n of here ? world.nodes || [] : []) {
@@ -330,20 +348,8 @@
       const im = image(id.startsWith('tame:') ? 'monsters/' + id.slice(5) : 'pets/' + id);
       if (im.complete) ctx.drawImage(im, Math.round(qx * TILE - cx) + 4, Math.round(qy * TILE - cy) + 6, TILE - 8, TILE - 8);
     };
-    for (const o of here ? world.players : []) {
-      if (o.id === userId) continue;
-      drawPet(o.look && o.look.pet, 'p' + o.id, o.x, o.y);
-      const [ox, oy] = smooth('p' + o.id, o.x, o.y, DUR.player, now);
-      const px = Math.round(ox * TILE - cx), py = Math.round(oy * TILE - cy);
-      ctx.globalAlpha = 0.9;
-      const doll = Doll.canvas(o.look);
-      if (doll) ctx.drawImage(doll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
-      ctx.globalAlpha = 1;
-      labels.push([`${o.tag ? `[${o.tag}] ` : ''}${o.name} · ${o.level}`, px + TILE / 2, py - 14, window.HLLogic.nameColor(o, relations())]);
-      const said = bubbleOf(o.id, now);
-      if (said) talk.push([said, px + TILE / 2, py]);
-    }
-
+    // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
+    // xem danh sách người trong bản đồ ở nút 👫 trên dock.
     const look = P.view && P.view.look;
     if (!m.tower) drawPet(look && look.pet, 'me', P.pos.x, P.pos.y);
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
@@ -358,7 +364,7 @@
     if (goal && goal.map === P.pos.map) {
       const gx = Math.round(goal.x * TILE - cx) + TILE / 2, gy = Math.round(goal.y * TILE - cy) + TILE / 2;
       const k = (Math.sin(now / 250) + 1) / 2;
-      const vw = canvas.clientWidth, vh = canvas.clientHeight, pad = 18;
+      const vw = VW(), vh = VH(), pad = 18;
       if (gx < 0 || gy < 0 || gx > vw || gy > vh) {
         // ô đích bị khuất: mũi tên ở mép khung nhìn chỉ về phía đó
         const ex = Math.max(pad, Math.min(vw - pad, gx)), ey = Math.max(pad, Math.min(vh - pad, gy));
@@ -377,14 +383,14 @@
       if (!tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
     }
     // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng
-    const dark = PHASES[world.phase] && outdoors(P) ? PHASES[world.phase][1] : 0;
+    const dark = PHASES[shade()] && outdoors(P) ? PHASES[shade()][1] : 0;
     if (dark) {
       const lx = px + TILE / 2, ly = py + TILE / 2;
       const g = ctx.createRadialGradient(lx, ly, TILE * 1.2, lx, ly, TILE * 5);
       g.addColorStop(0, `rgba(8, 10, 32, ${dark * 0.25})`);
       g.addColorStop(1, `rgba(8, 10, 32, ${dark})`);
       ctx.fillStyle = g;
-      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      ctx.fillRect(0, 0, VW(), VH());
     }
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
@@ -398,7 +404,7 @@
   function tileFromEvent(e) {
     const [cx, cy] = lastCam;
     const r = canvas.getBoundingClientRect();
-    return [Math.floor((e.clientX - r.left + cx) / TILE), Math.floor((e.clientY - r.top + cy) / TILE)];
+    return [Math.floor(((e.clientX - r.left) / zoom + cx) / TILE), Math.floor(((e.clientY - r.top) / zoom + cy) / TILE)];
   }
 
   // Hướng của bước đầu tiên trên đường ngắn nhất tới (tx, ty), hoặc null.
@@ -453,7 +459,9 @@
     stopVisit() { visiting = null; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
     // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng
-    playerAt: (x, y) => (world.map === (getPlayer() || {}).pos?.map ? world.players.find((o) => o.id !== userId && o.x === x && o.y === y) : null),
+    playerAt: () => null,
+    // người chơi khác đang ở cùng bản đồ (Phase 13)
+    players: () => (world.map === (getPlayer() || {}).pos?.map ? world.players.filter((o) => o.id !== userId) : []),
     mountedMap: () => mounted,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },

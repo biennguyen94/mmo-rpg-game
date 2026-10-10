@@ -71,6 +71,9 @@ defmodule HacLong.World.MapServer do
 
   def snapshot(map_id), do: GenServer.call(via(map_id), :snapshot)
 
+  @doc "Máu (phần trăm) của quái `mid` đang bị đánh, để mọi người cùng bản đồ thấy (Phase 13)."
+  def hp(map_id, mid, pct), do: GenServer.cast(via(map_id), {:hp, mid, pct})
+
   @doc "Đặt một con quái vào ô cho trước (dùng trong test)."
   def put_monster(map_id, kind, {x, y}, boss? \\ false, rare? \\ false),
     do: GenServer.call(via(map_id), {:put_monster, kind, {x, y}, boss?, rare?})
@@ -175,8 +178,11 @@ defmodule HacLong.World.MapServer do
 
   def handle_call({:release, uid, mid}, _from, s) do
     case s.monsters[mid] do
-      %{busy: ^uid} -> {:reply, :ok, changed(put_in(s.monsters[mid].busy, nil))}
-      _ -> {:reply, :ok, s}
+      %{busy: ^uid} = m ->
+        {:reply, :ok, changed(put_in(s.monsters[mid], Map.merge(m, %{busy: nil, hp: nil})))}
+
+      _ ->
+        {:reply, :ok, s}
     end
   end
 
@@ -231,6 +237,14 @@ defmodule HacLong.World.MapServer do
 
   def handle_call(:clear_monsters, _from, s),
     do: {:reply, :ok, changed(%{s | monsters: %{}, nodes: %{}, respawn: false})}
+
+  @impl true
+  def handle_cast({:hp, mid, pct}, s) do
+    case s.monsters[mid] do
+      %{busy: b} when b != nil -> {:noreply, changed(put_in(s.monsters[mid][:hp], pct))}
+      _ -> {:noreply, s}
+    end
+  end
 
   @impl true
   def handle_info(:wander, s) do
@@ -342,7 +356,7 @@ defmodule HacLong.World.MapServer do
 
         monsters =
           Map.new(s.monsters, fn
-            {id, %{busy: ^uid} = m} -> {id, %{m | busy: nil}}
+            {id, %{busy: ^uid} = m} -> {id, Map.merge(m, %{busy: nil, hp: nil})}
             other -> other
           end)
 
@@ -448,7 +462,9 @@ defmodule HacLong.World.MapServer do
       boss: m.boss,
       busy: m.busy != nil,
       rare: m.rare,
-      gold: m[:gold] == true
+      gold: m[:gold] == true,
+      # phần trăm máu (100 khi chưa ai đánh)
+      hp: m[:hp] || 100
     }
   end
 
@@ -469,6 +485,8 @@ defmodule HacLong.World.MapServer do
             level: p.level,
             look: p[:look],
             tag: p[:tag],
+            # đồ sát: tên đỏ
+            red: HacLong.Slay.red?(uid),
             x: x,
             y: y
           }

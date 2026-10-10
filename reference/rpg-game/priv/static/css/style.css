@@ -213,8 +213,16 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .log .good { color: var(--good); }
 .log .win { color: var(--gold); font-weight: 600; }
 .log .info { color: var(--dim); }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.actions .btn { padding: 13px 8px; font-size: 0.95rem; }
+.actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.actions .btn { display: flex; align-items: center; gap: 6px; padding: 8px 10px; min-height: 46px; font-size: 0.92rem; min-width: 0; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; text-align: left; }
+.actions .btn .lbl { flex: 1 1 auto; min-width: 0; }
+.actions .btn .sub { flex: none; font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
+.actions.primary-row .btn { justify-content: center; }
+/* hàng phụ: uống máu / mana / bỏ chạy — ba nút nhỏ một hàng */
+.actions.util { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.actions.util .btn { min-height: 38px; padding: 6px 8px; font-size: 0.82rem; justify-content: center; gap: 4px; }
+.actions.util .btn .lbl { flex: none; }
+.actions.util .btn .sub { padding: 0 5px; border-radius: 99px; background: rgba(0, 0, 0, 0.35); }
 .result { text-align: center; }
 .result h2 { font-family: var(--display); font-size: 2.2rem; line-height: 1; }
 .result.win h2 { color: var(--gold); }
@@ -288,8 +296,8 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .chat-form input { flex: 1; min-width: 0; }
 
 /* Bảng xếp hạng */
-.seg { display: flex; gap: 6px; }
-.seg .btn { flex: 1; padding: 6px 2px; font-size: 0.8rem; min-width: 0; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg .btn { flex: 1 1 auto; padding: 6px 4px; font-size: 0.8rem; min-width: 0; white-space: normal; line-height: 1.15; overflow-wrap: anywhere; }
 ol.board { list-style: none; display: grid; gap: 4px; margin: 0; padding: 0; }
 ol.board li { display: flex; align-items: baseline; gap: 10px; padding: 5px 8px; border-radius: 8px; background: #16121c; }
 ol.board li.me { box-shadow: inset 0 0 0 1px var(--gold); }
@@ -546,7 +554,8 @@ img.own { object-fit: contain; image-rendering: auto; }
 .chat-ov { position: absolute; left: 6px; bottom: 6px; width: min(78%, 340px); z-index: 4; display: grid; gap: 4px; pointer-events: none; }
 .chat-ov .chat-log { max-height: 7.6em; overflow: hidden; display: grid; align-content: end; gap: 1px; font-size: 0.78rem; line-height: 1.25; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
 .chat-ov .chat-line { background: rgba(10, 8, 14, 0.45); border-radius: 4px; padding: 0 4px; }
-.chat-ov:not(.open) .chat-line { animation: chatfade 0.8s ease 15s forwards; }
+.chat-ov:not(.open) .chat-line { animation: chatfade 0.6s ease var(--d, 5s) forwards; }
+.chat-ov:not(.open) .chat-line.gone { display: none; }
 .chat-ov.open { pointer-events: auto; }
 .chat-ov.open .chat-log { max-height: 11em; overflow-y: auto; background: rgba(10, 8, 14, 0.7); border-radius: 6px; padding: 4px; align-content: start; }
 .chat-ov .chat-line.party, .chat-ov .party-mark { color: #9fe0a8; }
@@ -564,6 +573,47 @@ img.own { object-fit: contain; image-rendering: auto; }
 #view.fit { overflow: hidden; padding-bottom: 10px; gap: 8px; }
 #view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
 #view.fit .map-hint { display: none; }
-#view.fit .log { flex: 1 1 auto; min-height: 60px; height: auto; }
-#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; }
+#view.fit .log { flex: 1 1 60px; min-height: 60px; height: auto; }
+#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px; }
+#view.fit > .stage h2 { font-size: 1.6rem; }
+#view.fit > .stage > .small { font-size: 0.78rem; }
+#view.fit .me .sprite { width: 34px; height: 34px; }
+/* V8: điện thoại thấp — hình quái co lại, tên và thanh máu quái luôn thấy */
+#view.fit > .stage > * { flex: none; }
+#view.fit > .stage .sprite { flex: 0 1 144px; min-height: 48px; height: 144px; width: auto; aspect-ratio: 1; object-fit: contain; }
+#view.fit > .stage.boss .sprite { flex-basis: 176px; height: 176px; }
+#view.fit > .stage.world .sprite { flex-basis: 160px; height: 160px; }
 .map-wrap .map-dialog { z-index: 6; }
+
+/* V7: nút Vừa màn hình trên bản đồ */
+.zoom-btn { position: absolute; right: 6px; top: 6px; z-index: 4; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: rgba(12, 9, 16, 0.72); color: var(--text, #f1e6cf); font-size: 1.05rem; cursor: pointer; }
+.zoom-btn.on { background: linear-gradient(#f0cf7a, #d9ae4a); color: #2a1d06; border-color: #b58f35; }
+
+/* Phase 13: dock 👫, danh sách quanh đây, hồ sơ */
+#tabs .dock-emoji { font-size: 1.15rem; line-height: 1; display: inline-block; width: 22px; height: 22px; text-align: center; }
+.people-row { width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; }
+.sprite.sm { width: 40px; height: 40px; }
+.prof-head { text-align: center; display: grid; justify-items: center; gap: 2px; }
+.prof-lv { color: var(--gold); font-weight: 700; }
+.prof-doll { width: 72px; height: 72px; image-rendering: pixelated; }
+.prof-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.prof-box { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 8px; text-align: center; font-size: 0.85rem; }
+.prof-box b { color: var(--gold); }
+.prof-gear { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.prof-item { display: grid; justify-items: center; text-align: center; font-size: 0.78rem; gap: 2px; }
+
+/* Phase 14: Thư viện */
+.lib-q { width: 100%; margin: 10px 0; }
+.lib-row { width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; }
+.lib-detail { padding: 4px 8px 10px 52px; font-size: 0.85rem; display: grid; gap: 4px; }
+.lib-detail { padding-left: 12px; }
+.lib-detail .kv { display: grid; gap: 1px; border: 0; padding: 2px 0; }
+.lib-detail .kv > span:first-child { color: var(--dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.lib-stats { display: flex; flex-wrap: wrap; gap: 6px 12px; font-variant-numeric: tabular-nums; }
+.lib-q { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: inherit; font: inherit; }
+.lib-link { background: none; border: 0; padding: 0; color: var(--gold); cursor: pointer; font: inherit; text-decoration: underline dotted; }
+.sprite.sm, .ic.sm { width: 40px; height: 40px; }
+
+/* Đồ sát: chỉ báo lượt */
+.slay-turn { margin: 6px 0; text-align: center; font-weight: 600; color: var(--muted, #b9b0a3); }
+.slay-turn.mine { color: var(--gold, #e8c15a); }

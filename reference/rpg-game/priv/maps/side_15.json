@@ -1,0 +1,64 @@
+{
+  "id": "side_15",
+  "name": "Gò Kiến Đỏ 5",
+  "zone": null,
+  "side": true,
+  "theme": "camp",
+  "floor": "floors/camp",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R....R...:.....:.:.:RR.R",
+    "R.....:::.........:...:R",
+    "R:...R::R.:...:..R...R.R",
+    "R.R...:.RRR......:....:R",
+    "R...R...R....R.......R.R",
+    "R..:...:..::R....::..R.R",
+    "R.......:....:..:..:..:R",
+    "O..::::..R..::.:..R....R",
+    "R...::::::::::::::....:R",
+    "R......:::.....R.::::::R",
+    "R.......:.......:..::..R",
+    "R:..:....:..R....R...R.R",
+    "R........R.:...:.....:.R",
+    "R.........:R:...R......R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_14",
+      "spawn": [
+        22,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "water_moccasin",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "swamp_worm",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "bog_body",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

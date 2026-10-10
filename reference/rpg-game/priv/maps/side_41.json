@@ -1,0 +1,80 @@
+{
+  "id": "side_41",
+  "name": "Đỉnh Khổng Lồ 1",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R...R:...:..:..R..:.:.:R",
+    "R.RR.R:...R.R.......::RR",
+    "R::.....:RY......Y.:...R",
+    "RR....:R.:...:..:......R",
+    "R:.........RR.......::.R",
+    "RR..R....Y..::..:.R::.:R",
+    "R.......::::RRR::.:....R",
+    "O..::::::..::::::::....O",
+    "R.....R..R.::::R..:::::R",
+    "R.:..::...:.:..R..:.Y..R",
+    "RRR.R.R.::....:.R......R",
+    "R.......R....Y....:..R:R",
+    "R.R:.R...:.RR.R..:....RR",
+    "R...RR.:..:R........R..R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "lair_1",
+      "spawn": [
+        24,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_42",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "stone_giant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "frost_giant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "fire_giant",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 70
+    },
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

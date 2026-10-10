@@ -1,4 +1,4 @@
-// Phase 5: PK cược vàng (hai trình duyệt: A mời từ bảng thông tin người chơi, B nhận / từ chối / để hết hạn),
+// Đồ sát (hai trình duyệt: A đánh B ngay từ bảng thông tin, luân phiên lượt, người thua về Nhà, vàng chuyển),
 // lệnh chat /w /p, bảng xếp hạng theo lớp, hộp thư (lọc, nhận tất cả), quản trị xem người online.
 // Chạy: node e2e/pk.mjs [url] [thư_mục_ảnh]. Cần scripts/e2e_seed.exs (tài khoản quản trị).
 import { launch, reporter, newPlayer, adminSession, player, ui, act, travel, shot } from './lib.mjs';
@@ -15,49 +15,53 @@ const uidB = await adm.lookup(B.name);
 for (const X of [A, B]) await X.page.waitForFunction(() => window.__hl.player().gold >= 5000);
 for (const X of [A, B]) await travel(X.page, 'village');
 
-// A mở bảng thông tin B, nhập số cược, bấm "Cược đấu"
-async function invite(wager) {
-  await A.page.evaluate((uid) => window.__hl.inspect(uid), uidB);
-  await A.page.waitForSelector('#pk-wager');
-  await A.page.fill('#pk-wager', String(wager));
-  await act(A.page, '[data-act="pk-ask"]');
-  await B.page.waitForFunction(() => window.__hl.ui().dialog === 'pk', null, { timeout: 5000 }).catch(() => null);
-}
-
-// ---------- Nhận cược: tổng vàng hai người không đổi, người thắng +cược ----------
-const a0 = (await player(A.page)).gold, g0 = a0 + (await player(B.page)).gold;
-await invite(1000);
-R.check('B nhận hộp mời cược 1 000 vàng', (await ui(B.page)).dialog === 'pk' && (await B.page.textContent('.map-dialog')).includes('1.000'));
-await shot(B.page, 'pk-invite.png');
-await act(B.page, '[data-act="pk-op"][data-op="accept"]');
-await B.page.waitForFunction(() => window.__hl.ui().dialog === 'pkResult', null, { timeout: 5000 }).catch(() => null);
-await A.page.waitForFunction(() => window.__hl.ui().dialog === 'pkResult', null, { timeout: 5000 }).catch(() => null);
-R.check('cả hai xem bảng kết quả trận', (await ui(A.page)).dialog === 'pkResult' && (await ui(B.page)).dialog === 'pkResult');
-await shot(A.page, 'pk-result.png');
-const pa = await player(A.page), pb = await player(B.page);
-R.check('tổng vàng không đổi, một người +1 000 / một người −1 000 (hoặc hòa)', pa.gold + pb.gold === g0 && [0, 1000].includes(Math.abs(pa.gold - a0)), `A ${pa.gold} B ${pb.gold}`);
-await act(A.page, '[data-act="dialog-close"]');
-await act(B.page, '[data-act="dialog-close"]');
-
-// ---------- Từ chối ----------
-await invite(200);
-await act(B.page, '[data-act="pk-op"][data-op="decline"]');
-const info = await A.page.evaluate(() => window.Net.pk('info'));
-R.check('B từ chối: không còn lời mời, vẫn 1 trận hôm nay', info.invite == null && info.today === 1 && info.history.length === 1, JSON.stringify({ i: info.invite, t: info.today }));
-
-// ---------- Cược quá số vàng: báo lỗi ----------
+// ---------- Đồ sát: A bấm "Đồ sát" trên bảng thông tin B, hai bên vào trận ngay ----------
+await adm.admin('set_level', B.name, { level: 12 });
+for (const X of [A, B]) await travel(X.page, 'forest_1');
+const g0 = (await player(A.page)).gold + (await player(B.page)).gold;
 await A.page.evaluate((uid) => window.__hl.inspect(uid), uidB);
-await A.page.waitForSelector('#pk-wager');
-await A.page.fill('#pk-wager', '999999');
-await act(A.page, '[data-act="pk-ask"]');
-R.check('cược quá số vàng đang có: không gửi', (await B.page.evaluate(() => window.__hl.ui().dialog)) !== 'pk');
-await act(A.page, '[data-act="dialog-close"]').catch(() => null);
+await A.page.waitForSelector('[data-act="slay"]');
+await act(A.page, '[data-act="slay"]');
+await B.page.waitForFunction(() => { const b = window.__hl.player().battle; return b && b.live; }, null, { timeout: 5000 }).catch(() => null);
+R.check('B vào trận ngay, không cần đồng ý', !!(await player(B.page)).battle?.live);
+R.check('A ra đòn trước; nút của B bị khóa', (await A.page.textContent('.slay-turn')).includes('Lượt của bạn') && await B.page.$eval('[data-act="attack"]', (e) => e.disabled));
+await shot(B.page, 'slay-battle.png');
+const secs = +(await B.page.textContent('.slay-turn .num'));
+R.check('đồng hồ lượt đếm theo số giây server gửi (1–10)', secs >= 1 && secs <= 10, String(secs));
+
+// luân phiên bấm Tấn công tới khi trận được chốt
+for (let i = 0; i < 120; i++) {
+  const [pa, pb] = [await player(A.page), await player(B.page)];
+  if (pa.battle?.over && pb.battle?.over) break;
+  const X = pa.battle?.encounter?.mine ? A : pb.battle?.encounter?.mine ? B : null;
+  if (X && !(await X.page.$eval('[data-act="attack"]', (e) => e.disabled).catch(() => true))) await act(X.page, '[data-act="attack"]');
+  else await A.page.waitForTimeout(100);
+}
+const sa = await player(A.page), sb = await player(B.page);
+const loser = sa.battle?.result === 'lose' ? sa : sb;
+R.check('trận kết thúc: một thắng một gục ngã', [sa.battle?.result, sb.battle?.result].sort().join() === 'lose,win', `${sa.battle?.result} / ${sb.battle?.result}`);
+R.check('vàng người thua chuyển cho người thắng (tổng không đổi)', sa.gold + sb.gold === g0, `A ${sa.gold} B ${sb.gold}`);
+R.check('người thua về Nhà', loser.pos.map === 'home', loser.pos.map);
+await shot(A.page, 'slay-result.png');
+for (const X of [A, B]) await act(X.page, '[data-act="leave"]');
+
+// ---------- Sau trận: tên đỏ, bảo vệ, báo kênh thế giới ----------
+const [W, L, uidW, uidL] = sa.battle?.result === 'win' ? [A, B, uidA, uidB] : [B, A, uidB, uidA];
+await L.page.evaluate((uid) => window.__hl.inspect(uid), uidW);
+await L.page.waitForSelector('.prof-head', { timeout: 5000 }).catch(() => null);
+R.check('hồ sơ người thắng hiện 🔴 Tên đỏ', ((await L.page.textContent('.prof-head').catch(() => '')) || '').includes('Tên đỏ'));
+await W.page.evaluate((uid) => window.__hl.inspect(uid), uidL);
+await W.page.waitForSelector('.prof-head', { timeout: 5000 }).catch(() => null);
+R.check('hồ sơ người thua hiện 🛡 được bảo vệ', ((await W.page.textContent('.prof-head').catch(() => '')) || '').includes('bảo vệ'));
+await shot(L.page, 'slay-red.png');
+R.check('kênh thế giới báo "đã hạ"', (await W.page.evaluate(() => document.body.innerHTML)).includes('đã hạ'));
+for (const X of [A, B]) await X.page.click('#tabs [data-tab="map"]').catch(() => null);
 
 // ---------- Lịch sử trận ở tab Khác ----------
 await A.page.click('#tabs [data-tab="menu"]');
 await A.page.click('[data-menu="arena"]');
 await A.page.waitForSelector('#pk-history .item', { timeout: 8000 }).catch(() => null);
-R.check('tab Khác hiện lịch sử trận cược', (await A.page.$$('#pk-history .item')).length === 1);
+R.check('tab Khác hiện lịch sử đồ sát', (await A.page.$$('#pk-history .item')).length === 1);
 
 // ---------- Bảng xếp hạng theo lớp ----------
 await A.page.click('[data-act="menu-back"]');
@@ -83,11 +87,6 @@ await A.page.press('#chat-input', 'Enter');
 await A.page.waitForTimeout(500);
 const h = await B.page.evaluate((uid) => window.Net.dm('history', { uid }), uidA);
 R.check('/w Tên gửi tin riêng cho bạn', JSON.stringify(h).includes('hẹn đấu tối nay'), JSON.stringify(h).slice(0, 200));
-
-// ---------- Lời mời hết hạn (30 giây) ----------
-await invite(100);
-await B.page.waitForFunction(() => window.__hl.ui().dialog !== 'pk', null, { timeout: 40000 }).catch(() => null);
-R.check('lời mời hết hạn sau 30 giây: hộp mời tự đóng', (await ui(B.page)).dialog !== 'pk');
 
 // ---------- Quản trị: người đang online ----------
 await adm.page.click('#tabs [data-tab="menu"]');

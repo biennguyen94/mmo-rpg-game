@@ -73,6 +73,7 @@ test('màu tên theo quan hệ: bang địch > đồng đội > cùng bang > ng�
   assert.equal(L.nameRelation({ id: 7, tag: null }, rel), 'party');
   assert.equal(L.nameRelation({ id: 8, tag: 'RONG' }, rel), 'guild');
   assert.equal(L.nameRelation({ id: 8, tag: 'KHAC' }, rel), 'other');
+  assert.equal(L.nameRelation({ id: 9, tag: 'HO', red: true }, rel), 'red');
   assert.equal(L.nameRelation({ id: 8 }, {}), 'other');
   assert.equal(L.nameColor({ id: 8 }), L.nameColor({ id: 8, tag: 'X' }, {}));
 });
@@ -89,4 +90,13 @@ test('lệnh chat /w /p /g /a', () => {
   assert.ok(L.parseChat('/w An', 'world', fr).error);
   assert.ok(L.parseChat('/p', 'world', fr).error);
   assert.ok(L.parseChat('/x hi', 'world', fr).error);
+});
+
+test('Thư viện: tìm theo tên không cần dấu', () => {
+  assert.equal(L.fold('Chó Rừng Đen'), 'cho rung den');
+  assert.ok(L.nameMatch(['Chó Rừng'], 'cho rung'));
+  assert.ok(L.nameMatch(['Chó Rừng'], 'RỪNG'));
+  assert.ok(L.nameMatch(['Chó Rừng'], ''));
+  assert.ok(!L.nameMatch(['Chó Rừng'], 'doi'));
+  assert.ok(L.nameMatch(['Dơi Hang', 'Cave Bat'], 'bat'));
 });

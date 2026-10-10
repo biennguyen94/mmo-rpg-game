@@ -1,0 +1,75 @@
+{
+  "id": "side_37",
+  "name": "Lò Nguyên Tố 2",
+  "zone": null,
+  "side": true,
+  "theme": "lair",
+  "floor": "floors/lair",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "R~~.............:~..~.~R",
+    "RR:..~.:..::.:......~:~R",
+    "R~....R:..........:....R",
+    "R....~...:..:..~..~.~..R",
+    "R...:.......::....:~..:R",
+    "R....:..:.:::....~.....R",
+    "R...:::::::::::::::::::R",
+    "O..::::..R:~.~~.R..::..O",
+    "R~R....R.~.:.:R.....:..R",
+    "R::~.:.....~R.....R..:.R",
+    "R..:~R~~..::..~..R.....R",
+    "R...~........~....:.~.:R",
+    "R:....:..R.:.~~~....RR.R",
+    "R.R.....:.......R:..R~.R",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_36",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_38",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "air_elemental",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "iron_golem",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "crystal_guardian",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

@@ -1,0 +1,75 @@
+{
+  "id": "side_06",
+  "name": "Rừng Thưa 1",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T~.T..,..T.T.......,.,.T",
+    "TY,.....Y....TYT.,,,.,.T",
+    "T....,T~Y.......T..,..,T",
+    "T..Y..,,..T.~,.T...,...T",
+    "T,...T,...,.T.,.T......T",
+    "TY.....,...,..,....T...T",
+    "TY.:::::...T.......T:::T",
+    "O..:..T::::::::::::::..O",
+    "T....,T...,..Y,...,T.,.T",
+    "T.TT..,.TTT,,...,.....,T",
+    "T,....,....T.T,.T...T.,T",
+    "T.,Y.T..,,..T.T~...,,~,T",
+    "T.YT,.,...,.T,.Y.......T",
+    "T......,YT...T..,.~....T",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "forest_2",
+      "spawn": [
+        24,
+        9
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_07",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "giant_frog",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "adder",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "yellow_wasp",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

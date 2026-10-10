@@ -831,8 +831,25 @@ defmodule HacLongWeb.GameChannelTest do
       assert_reply ref, :ok, %{
         level: 10,
         arena: %{rating: 1000},
-        look: %{weapon: "hand1/club_slant"}
+        look: %{weapon: "hand1/club_slant"},
+        me: false,
+        # Phase 13: hồ sơ đầy đủ
+        profile: %{
+          online: false,
+          rank: rank,
+          class_rank: crank,
+          stats: %{str: %{base: 5, gear: 0}},
+          counts: %{kills: _, pk_wins: 0, pk_losses: 0},
+          market: 0,
+          registered: %DateTime{}
+        }
       }
+
+      assert is_integer(rank) and is_integer(crank)
+
+      # hồ sơ của chính mình: đang online, có chỗ đang đứng
+      ref = push(sa, "inspect", %{"uid" => ua.id})
+      assert_reply ref, :ok, %{me: true, profile: %{online: true, where: "Làng", gold: 1000}}
 
       assert %{ok: false, msg: "Không tự thách đấu mình được."} =
                cmd(sa, %{"act" => "pvp_challenge", "uid" => ua.id})
@@ -856,7 +873,7 @@ defmodule HacLongWeb.GameChannelTest do
       ref = push(sa, "arena", %{})
       assert_reply ref, :ok, %{me: %{wins: 1, today: 1}, top: [_ | _]}
 
-      # thua: không mất vàng, không về Nhà, máu như trước trận
+      # gục ngã: tính như chết thường (mất vàng, về Nhà)
       cmd(sa, %{"act" => "leave"})
       uc = create_user()
 
@@ -870,13 +887,13 @@ defmodule HacLongWeb.GameChannelTest do
 
       r =
         Enum.reduce_while(1..50, nil, fn _, _ ->
-          r = cmd(sa, %{"act" => "flee"})
+          r = cmd(sa, %{"act" => "attack"})
           if r.player.battle.over, do: {:halt, r}, else: {:cont, r}
         end)
 
-      assert r.player.battle.result in ["lose", "fled"]
-      assert r.player.gold == before.gold and r.player.hp == before.hp
-      assert r.player.pos.map == "village"
+      assert r.player.battle.result == "lose"
+      assert r.player.gold < before.gold and r.player.deaths == before.deaths + 1
+      assert r.player.pos == HacLong.World.Maps.home_spawn()
       assert HacLong.Arena.stats(ua.id).losses == 1
     end
   end

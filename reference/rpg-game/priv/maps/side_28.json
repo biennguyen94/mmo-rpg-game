@@ -1,0 +1,75 @@
+{
+  "id": "side_28",
+  "name": "Thung Lũng U Linh 3",
+  "zone": null,
+  "side": true,
+  "theme": "graveyard",
+  "floor": "floors/graveyard",
+  "tiles": [
+    "KKKKKKKKKKKKKKKKKKKKKKKK",
+    "K....:.:....S......:...K",
+    "K.......:........:..K..K",
+    "K::...K.::..:..:KSK....K",
+    "K.....K....K....K...:.KK",
+    "K:KSKK.S........::..:K.K",
+    "K.S.K.:.S:K:..K.S.:..K.K",
+    "K...::::.....K:........K",
+    "O..:..:...K.K.....:.:..O",
+    "K..::S.::.::::.....S:::K",
+    "K.K::::..::.::::::....:K",
+    "KK....::::...:...::::::K",
+    "K..K.......:::K....:..SK",
+    "K...:...K.:....K.:.....K",
+    "K.....K.:...S...:.....SK",
+    "KKKKKKKKKKKKKKKKKKKKKKKK"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_27",
+      "spawn": [
+        22,
+        8
+      ]
+    },
+    {
+      "at": [
+        23,
+        8
+      ],
+      "to": "side_29",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "satyr",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "ghost",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "phantom",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

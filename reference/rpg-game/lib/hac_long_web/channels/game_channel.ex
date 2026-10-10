@@ -32,7 +32,7 @@ defmodule HacLongWeb.GameChannel do
     `decline {uid}`, `remove {uid}`); server đẩy `"friends"` (`%{msg}`) khi danh sách đổi.
     `"dm"`: tin riêng (`history {uid}`, `send {uid, text}`); server đẩy `"dm"` (một tin, cả
     cho người gửi để các tab khác thấy). Xem `HacLong.Friends`.
-  - `"inspect"` `%{"uid"}`: xem thông tin người chơi khác (chạm vào họ trên bản đồ).
+  - `"inspect"` `%{"uid"}`: xem hồ sơ người chơi (cả của mình; `profile` theo `HacLong.Profile`).
   - `"visit"` `%{"uid"}`: xem nhà đã trang trí của người khác; `"home_like"` `%{"uid"}`: khen nhà
     (mỗi nhà một lần, chủ nhà nhận `"notice"`). Xem `HacLong.Homes`.
   - `"mail"`: danh sách thư; server đẩy `"mail"` `%{unread}` khi có thư mới. Mở thư (nhận quà)
@@ -270,6 +270,18 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Đồ sát (`HacLong.Slay`): đánh ngay người chơi cùng bản đồ, không cần đồng ý
+  def handle_in("slay", %{"uid" => target}, socket) do
+    uid = socket.assigns.user_id
+
+    with :ok <- limit({:slay, uid}, 20, :timer.minutes(1)),
+         {:ok, _f} <- HacLong.Slay.attack(uid, target) do
+      {:reply, {:ok, %{}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 
@@ -325,7 +337,15 @@ defmodule HacLongWeb.GameChannel do
           },
           arena: Arena.stats(target),
           blocked: target in socket.assigns.blocked,
-          party: party && target in party.members
+          party: party && target in party.members,
+          me: target == uid,
+          # Phase 13: hồ sơ đầy đủ (xem cả của mình)
+          profile:
+            HacLong.Profile.build(
+              target,
+              p,
+              Registry.lookup(HacLong.Game.Registry, target) != []
+            )
         }}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
@@ -445,21 +465,9 @@ defmodule HacLongWeb.GameChannel do
 
   # ---------- PK cược vàng ----------
 
-  defp pk("invite", %{"uid" => target, "wager" => w}, uid) when is_integer(target) do
-    with :ok <- PkBet.check_wager(w),
-         [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
-         %{} = me <- Session.get(uid) || {:error, "Chưa có nhân vật."},
-         nil <- me.battle && {:error, "Đang trong trận."},
-         true <- me.gold >= w || {:error, "Bạn không đủ #{w} vàng."},
-         true <-
-           PkBet.today_count(uid) < PkBet.rules().per_day ||
-             {:error, "Hôm nay đã cược đủ #{PkBet.rules().per_day} trận."} do
-      PkBet.invite(uid, Map.take(me, [:name, :level, :cls]), target, w)
-    else
-      [] -> {:error, "Người này không online."}
-      {:error, _} = err -> err
-    end
-  end
+  # PK cược vàng đã thay bằng đồ sát (`HacLong.Slay`); còn xem lịch sử, nhận / từ chối lời mời cũ
+  defp pk("invite", _p, _uid),
+    do: {:error, "PK cược đã thay bằng Đồ sát: chạm tên người chơi rồi bấm Đồ sát."}
 
   defp pk("accept", _p, uid) do
     with {:ok, inv} <- PkBet.take(uid), do: PkBet.execute(inv)
@@ -482,7 +490,8 @@ defmodule HacLongWeb.GameChannel do
   # ---------- Giao dịch ----------
 
   defp trade("request", %{"uid" => target}, uid) when is_integer(target) do
-    with [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
+    with false <- HacLong.Bots.bot?(target) && {:error, "Người này không nhận giao dịch."},
+         [_] <- Registry.lookup(HacLong.Game.Registry, target) || [],
          %{name: name} = me <- Session.get(uid),
          true <-
            Trade.near?(me, Session.get(target)) ||
@@ -986,6 +995,12 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  defp slay_left(%{battle: %{live: true, over: false, encounter: %{until: until}}})
+       when is_integer(until),
+       do: max(0, until - System.system_time(:millisecond))
+
+  defp slay_left(_), do: nil
+
   defp present(nil), do: nil
 
   defp present(player) do
@@ -1001,6 +1016,8 @@ defmodule HacLongWeb.GameChannel do
         questReady: ready,
         dailyReady: Daily.ready?(player),
         dailyLeft: Daily.seconds_left(),
+        # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
+        slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
         achievements: Achievements.view(player),
         chestReady: player[:chest_day] != Daily.today(),

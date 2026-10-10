@@ -31,6 +31,8 @@ defmodule HacLong.Game.Session do
   }
 
   alias HacLong.{Arena, GuildQuests, Guilds, Mailbox, Market, Party, World, WorldBoss}
+  alias HacLong.World.{MapServer, Maps}
+  alias HacLong.Slay
 
   @idle_timeout :timer.minutes(10)
   @flush_ms 5_000
@@ -67,6 +69,41 @@ defmodule HacLong.Game.Session do
   `%{key, n, xp, gold, killer}`. Trận của người này (nếu còn đánh) kết thúc bằng chiến thắng.
   """
   def shared_end(user_id, info), do: call(user_id, {:shared_end, info})
+
+  @doc "Đang mở game (Session chạy và có tab). Không khởi động Session."
+  def online?(user_id) do
+    case Registry.lookup(HacLong.Game.Registry, user_id) do
+      [{pid, _}] ->
+        try do
+          GenServer.call(pid, :online_info, 1000) != nil
+        catch
+          :exit, _ -> false
+        end
+
+      [] ->
+        false
+    end
+  end
+
+  @doc """
+  Đồ sát (`HacLong.Slay`): vào trận với bản sao `foe` của đối thủ. `info`: `%{fight, foe}`.
+  Trả `:ok` hoặc `{:error, lý_do}` (đang đánh, đã gục, rời bản đồ...).
+  """
+  def slay_begin(user_id, info), do: call(user_id, {:slay_begin, info})
+
+  @doc "Trận đồ sát `id` không mở được ở bên kia: bỏ trận vừa vào (không ai mất gì)."
+  def slay_cancel(user_id, id), do: call(user_id, {:slay_cancel, id})
+
+  @doc "Hết giờ lượt đồ sát: đánh thường thay người chơi."
+  def slay_auto(user_id), do: call(user_id, :slay_auto)
+
+  @doc "Đối thủ đồ sát vừa ra đòn: `%{id, hp, foe_hp, until, text}`. Không khởi động Session."
+  def slay_sync(user_id, info) do
+    case Registry.lookup(HacLong.Game.Registry, user_id) do
+      [{pid, _}] -> GenServer.cast(pid, {:slay_sync, info})
+      [] -> :ok
+    end
+  end
 
   @doc """
   Giữ Session (cho giao dịch trực tiếp ghi cả hai nhân vật trong một transaction): trả về
@@ -232,11 +269,29 @@ defmodule HacLong.Game.Session do
 
   defp save_reason({:world_boss_end, _}), do: {"WORLD_BOSS", nil}
   defp save_reason({:shared_end, _}), do: {"PARTY", nil}
+  defp save_reason({:slay_begin, _}), do: {"SLAY", nil}
+  defp save_reason(:slay_auto), do: {"SLAY", nil}
   defp save_reason({:admin, _fun, ref}), do: {"ADMIN", ref}
   defp save_reason(_), do: {"OTHER", nil}
 
   @impl true
   def handle_cast(:refresh_guild, %{player: nil} = s), do: {:noreply, s, timeout(s)}
+
+  def handle_cast({:slay_sync, info}, %{player: %{battle: %{over: false} = b} = p} = s) do
+    if b[:encounter][:slay] == info.id do
+      log = Enum.take(b.log ++ [%{text: info.text, kind: "bad"}], -60)
+      enc = %{b.encounter | mine: true, until: info.until}
+      b = %{b | log: log, encounter: enc, monster: %{b.monster | hp: info.foe_hp}}
+      p = %{p | hp: info.hp, battle: b}
+      s = s |> Map.put(:player, p) |> mark_dirty()
+      broadcast(s, p, nil)
+      {:noreply, s, timeout(s)}
+    else
+      {:noreply, s, timeout(s)}
+    end
+  end
+
+  def handle_cast({:slay_sync, _info}, s), do: {:noreply, s, timeout(s)}
 
   def handle_cast(:refresh_guild, s) do
     p = with_guild(s.player, s.user_id)
@@ -265,7 +320,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "teleport"] do
+       when act in ["move", "teleport", "travel"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -339,6 +394,64 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:shared_end, _info}, _from, s), do: reply(:ok, s)
+
+  defp handle({:slay_begin, _info}, _from, %{player: nil} = s),
+    do: reply({:error, "Chưa có nhân vật."}, s)
+
+  defp handle({:slay_begin, %{fight: f, foe: foe}}, _from, s) do
+    p = s.player
+
+    cond do
+      p.battle != nil ->
+        reply({:error, "#{p.name} đang trong trận đấu."}, s)
+
+      p.hp <= 0 ->
+        reply({:error, "#{p.name} đang gục ngã."}, s)
+
+      p.pos.map != f.map ->
+        reply({:error, "#{p.name} đã rời bản đồ."}, s)
+
+      true ->
+        mp = Maps.get(f.map)
+        {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
+        enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
+
+        b =
+          Map.merge(p2.battle, %{
+            zone: mp.zone,
+            encounter: enc,
+            live: true,
+            place: mp.name,
+            theme: mp[:theme]
+          })
+
+        text =
+          if f.mine,
+            do: "🗡 Bạn đồ sát #{foe.name}! Bạn ra đòn trước.",
+            else: "⚠ #{foe.name} đồ sát bạn! Bỏ chạy tính như gục ngã."
+
+        b = %{b | log: [%{text: text, kind: "bad"}]}
+        p2 = %{p2 | battle: b}
+        left_trade(s.user_id, p, p2)
+        s = save(s, p2)
+        broadcast(s, p2, nil)
+        reply(:ok, s)
+    end
+  end
+
+  defp handle({:slay_cancel, id}, _from, %{player: %{battle: %{encounter: %{slay: id}}} = p} = s) do
+    p = %{p | battle: nil}
+    s = save(s, p)
+    broadcast(s, p, nil)
+    reply(:ok, s)
+  end
+
+  defp handle({:slay_cancel, _id}, _from, s), do: reply(:ok, s)
+
+  defp handle(:slay_auto, _from, %{player: %{battle: %{over: false, live: true}}} = s),
+    do: run_command_(s, %{"act" => "attack", "auto" => true}, nil)
+
+  defp handle(:slay_auto, _from, s), do: reply(:ok, s)
 
   defp handle({:hold, _ref}, _from, %{player: nil} = s),
     do: reply({:error, "Chưa có nhân vật."}, s)
@@ -614,10 +727,11 @@ defmodule HacLong.Game.Session do
 
   # Đánh trùm thế giới: máu trùm là máu chung ở HacLong.WorldBoss. Trước lượt đánh lấy máu
   # mới nhất, sau lượt đánh báo sát thương vừa gây.
-  @strikes ~w(attack skill potion flee)
+  @strikes ~w(attack skill potion mana flee)
 
   defp run(s, %{battle: %{over: false} = b} = p, %{"act" => act} = cmd) when act in @strikes do
     cond do
+      b[:live] -> slay_strike(s, p, cmd)
       World.world_battle?(p) -> world_strike(s, p, cmd)
       key = b[:encounter][:shared] -> shared_strike(s, p, cmd, key)
       true -> Commands.run(p, cmd)
@@ -638,6 +752,43 @@ defmodule HacLong.Game.Session do
   end
 
   defp run(_s, p, cmd), do: Commands.run(p, cmd)
+
+  # Đồ sát: chỉ ra đòn ở lượt của mình; máu hai bên lấy từ HacLong.Slay.
+  defp slay_strike(s, p, %{"act" => act} = cmd) do
+    uid = s.user_id
+
+    case Slay.peek(uid) do
+      nil ->
+        b = p.battle
+        log = Enum.take(b.log ++ [%{text: "Trận đồ sát đã kết thúc.", kind: "info"}], -60)
+        {%{ok: true}, %{p | battle: %{b | over: true, result: "fled", log: log}}}
+
+      %{mine: false} ->
+        {%{ok: false, msg: "Chưa tới lượt bạn."}, p}
+
+      _f when act == "flee" ->
+        Slay.flee(uid)
+        {%{ok: true, msg: "Bạn bỏ chạy: tính như gục ngã."}, p}
+
+      f ->
+        p = %{p | hp: f.hp} |> put_in([:battle, :monster, :hp], f.foe_hp)
+
+        case Commands.run(p, Map.delete(cmd, "auto")) do
+          {%{ok: false}, _} = r ->
+            r
+
+          {r, p2} ->
+            case Slay.acted(uid, p2.hp, p2.battle.monster.hp, cmd["auto"] == true) do
+              {:ok, v} ->
+                enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
+                {r, put_in(p2.battle.encounter, enc)}
+
+              {:error, msg} ->
+                {%{ok: false, msg: msg}, p}
+            end
+        end
+    end
+  end
 
   defp world_strike(s, p, cmd) do
     case WorldBoss.hp() do
@@ -799,6 +950,12 @@ defmodule HacLong.Game.Session do
 
   defp run_move(%{player: nil} = s, _cmd), do: {%{ok: false, msg: "Chưa có nhân vật."}, s.player}
 
+  # Phase 15a: bảng chọn bản đồ (tốn vàng, nhật ký vàng TRAVEL)
+  defp run_move(s, %{"act" => "travel"} = cmd) do
+    Characters.put_reason("TRAVEL", cmd["to"])
+    World.travel(s.player, s.user_id, cmd["to"])
+  end
+
   defp run_move(s, %{"act" => "teleport"} = cmd),
     do: World.teleport(s.player, s.user_id, cmd["to"])
 
@@ -810,6 +967,13 @@ defmodule HacLong.Game.Session do
       # trận vừa kết thúc: cập nhật quái trên bản đồ, gục ngã thì về Nhà
       player && old && old.battle && not old.battle.over && player.battle && player.battle.over ->
         battle_over(s, old, player)
+
+      # Phase 13: máu quái đang đánh trên bản đồ chung, mọi người cùng bản đồ thấy như nhau
+      player && player.battle && match?(%{map: _, mid: _}, player.battle[:encounter]) ->
+        %{map: map_id, mid: mid} = player.battle.encounter
+        m = player.battle.monster
+        MapServer.hp(map_id, mid, round(max(m.hp, 0) * 100 / max(m.maxHp, 1)))
+        player
 
       cmd["act"] == "create" and player && old == nil ->
         if map_size(s.tabs) > 0, do: World.enter(player, s.user_id)
@@ -829,16 +993,25 @@ defmodule HacLong.Game.Session do
     end
   end
 
-  # Trận đấu trường xong: đổi điểm; thua thì không mất gì (máu, vàng như trước trận).
+  # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
+  # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.
   defp battle_over(s, _old, %{battle: %{encounter: %{pvp: target} = enc} = b} = player) do
     r = Arena.finish(s.user_id, target, b.result)
     # chiến bang: thắng thành viên bang địch thì ghi điểm cho bang
     war = r.won && HacLong.GuildWars.record(s.user_id, target)
 
     player =
-      if r.won,
-        do: %{player | gold: player.gold + r.gold},
-        else: %{player | hp: max(1, enc.hp), gold: enc.gold, deaths: enc.deaths}
+      cond do
+        r.won ->
+          %{player | gold: player.gold + r.gold}
+
+        b.result == "lose" ->
+          World.leave(player, s.user_id)
+          %{player | pos: HacLong.World.Maps.home_spawn()}
+
+        true ->
+          %{player | hp: max(1, enc.hp), gold: enc.gold, deaths: enc.deaths}
+      end
 
     sign = fn d -> if d >= 0, do: "+#{d}", else: "#{d}" end
 
@@ -847,7 +1020,11 @@ defmodule HacLong.Game.Session do
         do:
           "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <>
             if(war, do: " ⚔ Chiến bang: bang bạn +1 điểm.", else: ""),
-        else: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
+        else:
+          if(b.result == "lose",
+            do: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}).",
+            else: "🏟 Bỏ chạy khỏi đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
+          )
 
     reward = %{xp: 0, gold: r.gold, items: [], levels: 0}
 

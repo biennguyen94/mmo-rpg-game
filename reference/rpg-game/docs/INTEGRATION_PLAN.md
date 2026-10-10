@@ -1057,3 +1057,33 @@ code / dữ liệu / server**, mà dịch ngay trên trình duyệt:
 | **9-E** | Thứ tự làm? | Phase 9 (B1, B2, U3 Menu, U4 chat, U5 điện thoại) trước; Phase 10 (U2 bản đồ, U1 ngôn ngữ) sau; Phase 6 sau cùng |
 
 **Đã chốt (2026-10-04):** 9-A, 9-C, 9-D, 9-E theo đề xuất; 9-B như trên. Sửa B1, B2 trước.
+
+---
+
+## 16. Yêu cầu thêm 2026-10-09: Phase 11 … 17
+
+Danh sách việc theo phase: `PHASE_PLAN.md` (mục "Yêu cầu thêm 2026-10-09"). Phase 11 không cần chốt gì, làm trước.
+
+### 16.1 Ghi chú cách làm Phase 11
+- V1: lưu `hl-theme` (`auto` | `day` | `night`) ở trình duyệt; `auto` giữ cách tính theo giờ hiện tại.
+- V2: ô chat (tin hệ thống + chat) mờ đi sau 5 giây không có tin mới; bấm 💬 vẫn mở khung chat đầy đủ.
+- V3: `/d` chỉ xóa danh sách tin trên máy mình.
+- V7: lưu `hl-fit` ở trình duyệt; bật thì bản đồ thu cho vừa khung (cả chiều ngang).
+- V10: "Quà cho mọi người" gửi thư có đính kèm đồ (chọn mẫu đồ, +N, hiếm / thường) cho mọi nhân vật, ghi `admin_log`.
+
+### 16.2 ⛔ Câu hỏi (chốt trước phase tương ứng)
+
+| # | Câu hỏi | Đề xuất |
+|---|---|---|
+| **12-A** | Hồi MP trong trận mỗi lượt? | 3 % MP tối đa + ENE / 10 |
+| **12-B** | Bình máu có đổi sang hồi theo % như bình MP? | Có, cho đồng bộ |
+
+**Đã chốt (2026-10-09):** 12-A, 12-B theo đề xuất.
+| **13-A** | Ẩn người khác chỉ trên ô hay ẩn hẳn khỏi bản đồ? | Ẩn hẳn, xem qua danh sách 👥 |
+| **13-B** | Profile gồm những mục nào? | Chờ ảnh mẫu của anh |
+
+**Đã chốt (2026-10-09):** 13-A ẩn hẳn người khác, xem qua danh sách; 13-B theo ảnh mẫu (tên, bang, cấp · lớp, hình, đang ở đâu, hạng chung / hạng lớp, đấu trường, máu / MP, chỉ số (gốc) + cộng thêm, sát thương, phòng thủ, vàng, kinh nghiệm, trang bị, thú cưng, chợ, số liệu, lần cuối online, đăng ký).
+| **16-A** | Bot: bao nhiêu, có lên bảng xếp hạng, giao dịch / PK được không, có đánh dấu là bot? | 20 bot, không lên bảng xếp hạng, không giao dịch, PK được, không đánh dấu |
+
+**Đã chốt (2026-10-09):** 16-A theo đề xuất.
+| **17-A** | Tiến Lên: chơi vui hay cược vàng (mức tối đa, giới hạn ngày)? | Cược vàng nhỏ với NPC, tối đa 1 000, 20 ván / ngày |

@@ -37,6 +37,19 @@ await page.click('.chat-btn');
 await page.click('#tabs [data-tab="menu"]');
 await page.click('[data-menu="settings"]');
 R.check('Menu → Cài đặt có âm thanh và đăng xuất', !!(await page.$('[data-act="sound-toggle"]')) && !!(await page.$('[data-act="logout"]')));
+// Phase 14: Thư viện — tìm không dấu, mở chi tiết, bấm liên kết sang mục khác
+await page.click('[data-act="menu-back"]');
+await page.click('[data-menu="library"]');
+await page.click('[data-act="lib-tab"][data-tab2="monsters"]');
+await page.fill('#lib-q', 'cho rung');
+await page.waitForTimeout(150);
+const libRows = await page.$$eval('.lib-row', (r) => r.length);
+await page.click('.lib-row');
+R.check('Thư viện: tìm "cho rung" ra 1 quái, có máu / nơi xuất hiện / đồ rơi', libRows === 1 && /Xuất hiện ở/i.test(await page.textContent('.lib-detail')), String(libRows));
+await page.click('.lib-detail .lib-link >> nth=-1');
+R.check('Thư viện: bấm tên đồ rơi chuyển sang Vật phẩm, có nguồn', (await page.textContent('#lib-tabs .primary')).includes('Vật phẩm') && (await page.textContent('#lib-results')).includes('Có được từ'));
+R.check('Thư viện: không tràn ngang', !(await overflowX(page)));
+await shot(page, 'mobile-library.png');
 await page.click('#tabs [data-tab="map"]');
 
 await travel(page, 'village');

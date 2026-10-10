@@ -56,10 +56,10 @@ Thứ tự các khối trong tab:
 
 1. **Báo cáo chưa xử lý**: tin chat bị báo cáo. Nút *Bỏ qua*, *Cấm chat 1 giờ*, *Khóa 1 ngày* (chỉ admin).
 2. **Tra cứu người chơi**: gõ tên nhân vật hoặc tên đăng nhập. Thẻ kết quả: cấp, vàng, số quái, số lần bị báo cáo,
-   trạng thái khóa / cấm chat, các nút cấm chat / khóa, và **gửi quà qua thư** (admin).
+   trạng thái khóa / cấm chat, các nút cấm chat / khóa. (Bỏ "gửi quà" riêng từ Phase 11: dùng **Chỉnh nhân vật**.)
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
-5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / đồ vào hộp thư mọi nhân vật.
+5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (đồ thường hoặc đồ hiếm Tốt / Hiếm / Sử Thi, +0…+11, ×1…10) vào hộp thư mọi nhân vật. Đồ hiếm có chỉ số theo cấp người nhận; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
 6. **Trùm thế giới** (admin): gọi Cổ Long xuất hiện ngay.
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
@@ -279,7 +279,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 ### Xã hội, PK cược vàng, chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
-- **PK cược vàng:** cược 100 – 1 000 000 vàng (`RULES.pk`), không phí, 10 trận / ngày. Mỗi trận một dòng ở bảng `pk_matches`
+- **Đồ sát** (thay PK cược vàng từ 2026-10-10, `RULES.slay`, `DECISIONS.md` P18): không cần đồng ý, luân phiên lượt 10 giây, người thua mất `death_gold_loss` vàng cho người thắng (nhật ký vàng lý do `SLAY`). PK cược cũ (`RULES.pk`): mời cược đã tắt. Mỗi trận một dòng ở bảng `pk_matches`
   (người mời, người nhận, cược, người thắng; `winner_id` trống = hòa); nhật ký vàng lý do `PK_BET`, ref `pk:<id>`. Không phí và
   không giới hạn cấp nên cược cũng là một đường chuyển vàng giữa hai tài khoản (như giao dịch): tra `gold_log` theo `PK_BET`
   nếu nghi chuyển vàng cho nick phụ.
@@ -362,3 +362,12 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - `banned_parts`: khớp **một phần** tên viết liền (bỏ khoảng trắng, đổi số kiểu `4dm1n` → `admin`). Chỉ để từ dài, rõ
   nghĩa, nếu không sẽ chặn nhầm tên thường.
 - Áp dụng khi tạo nhân vật mới, lập bang mới (tên và ký hiệu). Tên đã có không bị đổi.
+
+
+## Người chơi AI (Phase 16)
+
+- Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
+  trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
+- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
+- Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
+  rồi xóa tài khoản trong database.

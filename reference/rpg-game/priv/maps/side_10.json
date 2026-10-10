@@ -1,0 +1,64 @@
+{
+  "id": "side_10",
+  "name": "Rừng Thưa 5",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T.,........,T...,.,....T",
+    "T.Y...T,...T.,.,...,.Y,T",
+    "T.,.................,TYT",
+    "T.,.,..YTT.Y,..TT,.....T",
+    "T.................,.T..T",
+    "T..T...T....Y,.T.Y....YT",
+    "T,...TYY..,Y.......,...T",
+    "O..:,.,,.T..T..Y....Y..T",
+    "TT.::.::::..T.:::TT..,:T",
+    "TT..:::..::::::,:::::T:T",
+    "TY...T,Y..,T..YY..T.:::T",
+    "T....,T.......T..,...,,T",
+    "T..~T,......,...T,.....T",
+    "TT..,TT.......T.,,,....T",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_09",
+      "spawn": [
+        22,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "soldier_ant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "wild_hound",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "killer_bee",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

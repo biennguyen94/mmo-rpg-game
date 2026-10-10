@@ -104,6 +104,9 @@ Biến thử nghiệm, không cần cho server thật: `EVENT` (bật một lễ
 `WORLD_BOSS_FIRST_MINUTES`, `WORLD_BOSS_EVERY_MINUTES`, `WORLD_BOSS_DURATION_MINUTES`,
 `WORLD_BOSS_HP`. Muốn dùng thì thêm vào mục `environment` của `app` trong `docker-compose.yml`.
 
+`HL_BOTS`: số người chơi AI (mặc định 20, `0` để tắt; xem `ADMIN_GUIDE.md`). Bản cập nhật Phase 15a / 16 có
+migration mới (cột `characters.visited`, vai trò `bot`): migration chạy tự động khi container khởi động như thường lệ.
+
 ### Vì sao `PHX_HOST` phải đúng
 
 Trình duyệt mở kết nối game (WebSocket `/socket`) kèm địa chỉ trang đang mở. Server chỉ nhận

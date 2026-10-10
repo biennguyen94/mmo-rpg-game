@@ -1,0 +1,64 @@
+{
+  "id": "side_05",
+  "name": "Đồng Cỏ Xanh 5",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",
+    "T*T.,.T....,.....,...*.T",
+    "T....*..*...*.......*..T",
+    "T..................**..T",
+    "T.,..**....,...,,..T,..T",
+    "T......T..,:::::::,....T",
+    "T..,...*..::...,,::::::T",
+    "T....T..:::,,.***....*:T",
+    "O..::::::..............T",
+    "T.T....,,.*.*...,......T",
+    "T...,....TT...*..*..**.T",
+    "TT.......*.,..*.....*.,T",
+    "T.*..T*.............*..T",
+    "T.T.............*...,*.T",
+    "T....*.**.*.T..*..*...TT",
+    "TTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "side_04",
+      "spawn": [
+        22,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "worker_ant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "giant_frog",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "adder",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": []
+}

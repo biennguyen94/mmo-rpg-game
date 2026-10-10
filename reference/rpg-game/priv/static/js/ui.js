@@ -18,6 +18,7 @@
   let walk = null;       // đích đang đi tới trên bản đồ: { x, y, monster, id }
   let friendsUi = { open: false, data: null, chat: null, dm: 0 }; // bạn bè; chat: { uid, data }
   let trade = null;      // giao dịch trực tiếp (HacLong.Trade.view): { partner_name, status, incoming, mine, theirs, my_ready, their_ready }
+  let profileUi = { open: false, info: null }; // Phase 13: hồ sơ người chơi (mình hoặc người khác)
   let visit = null;      // đang thăm nhà: { uid, info: null | { id, name, look, decor, comfort, likes, liked } }
   let dialog = null;    // bảng trên bản đồ: { type: 'boss', dir, boss } | { type: 'waystone' }
   let npc = null;        // NPC đang nói chuyện: { map, id, line }
@@ -178,12 +179,13 @@
       ['hero', 'person', 'Nhân vật'],
       ['bag', 'backpack', 'Túi đồ'],
       ['travel', 'dungeon-gate', 'Chọn map'],
+      ['people', '<span class="ic dock-emoji" aria-hidden="true">👫</span>', 'Quanh đây'],
       ['menu', 'open-book', 'Menu'],
-    ].map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
+    ].map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${ic.startsWith('<') ? ic : icon(ic)}<span>${label}${id === 'people' ? peopleDot() : ''}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
-    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, menu: viewMenu }[tab] || viewMenu)();
+    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -243,7 +245,7 @@
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}">Khóa vĩnh viễn</button>
           <button class="btn small-btn" data-adm="unban" data-uid="${u.id}">Mở khóa</button>
         </div>
-        ${u.character ? giftForm('adm-gift', u.id) : ''}` : ''}
+` : ''}
       </div>
       ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
@@ -343,6 +345,11 @@
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
       <div class="btn-row"><select name="item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
+      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'wing'].includes(it.slot)).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+        <select name="grar" aria-label="Loại đồ"><option value="0">Đồ thường</option><option value="1">Hiếm: Tốt</option><option value="2">Hiếm: Hiếm</option><option value="3">Hiếm: Sử Thi</option></select>
+        <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
+        <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
+      <p class="small muted">Đồ hiếm (chỉ vũ khí, giáp, khiên) có chỉ số theo cấp người nhận.</p>
       <button class="btn primary" type="submit">${icon('envelope')} Gửi quà</button>
     </form>`;
   }
@@ -351,6 +358,7 @@
     const f = new FormData(form);
     const payload = { subject: f.get('subject'), body: f.get('body'), gold: +f.get('gold') || 0, xp: +f.get('xp') || 0, items: {} };
     if (f.get('item')) payload.items[f.get('item')] = Math.max(1, +f.get('n') || 1);
+    if (f.get('gbase')) payload.items[`gear:${f.get('gbase')}:${+f.get('grar') || 0}:${+f.get('gup') || 0}`] = Math.max(1, +f.get('gn') || 1);
     if (form.id === 'adm-gift') payload.uid = +form.dataset.uid; else payload.all = true;
     Net.admin('gift', payload).then((r) => { toast(`Đã gửi ${r.sent} thư.`); form.reset(); }).catch((err) => toast(err.msg, true));
   }
@@ -390,11 +398,27 @@
     else note(`Cược đấu thua ${foe}: −${fmt(v.wager)} vàng.`, 'bad');
   }
 
+  // Đồ sát: không cần đồng ý; server mở trận cho cả hai, client nhận nhân vật mới qua sự kiện "player".
+  function slayRow(o) {
+    const safe = RULES.slay.safe.includes(P.pos.map);
+    const why = safe ? 'Vùng an toàn' : P.level < RULES.slay.minLevel ? `Cần cấp ${RULES.slay.minLevel}` : o.level < RULES.slay.minLevel ? `Dưới cấp ${RULES.slay.minLevel}` : '';
+    return `<div class="btn-row"><button class="btn danger" data-act="slay" data-uid="${o.id}" ${why ? 'disabled' : ''}>🗡 Đồ sát</button>${why ? `<span class="small muted">${why}</span>` : ''}</div>`;
+  }
+
+  async function slay(uid) {
+    try {
+      await Net.slay(uid);
+      profileUi = { open: false, info: null };
+      dialog = null; npc = null; tab = 'map';
+    } catch (e) { toast(e.msg, true); }
+    render();
+  }
+
   async function pkOp(op, payload) {
     try {
       const r = await Net.pk(op, payload);
       pk = r;
-      if (op === 'invite') toast(`Đã mời cược ${fmt(payload.wager)} vàng. Chờ người kia nhận…`);
+      if (op === 'invite') { toast(`Đã mời cược ${fmt(payload.wager)} vàng. Chờ người kia nhận…`); profileUi = { open: false, info: null }; tab = 'map'; }
       if (dialog && dialog.type === 'pk') dialog = null;
       if (r.result) { dialog = { type: 'pkResult', view: r.result }; Sound.play('rare'); pkNote(r.result); }
       else if (op !== 'invite' && dialog && dialog.type === 'player') dialog = null;
@@ -519,8 +543,7 @@
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
         </div>
-        <div class="btn-row"><input type="number" id="pk-wager" class="grow" min="${RULES.pkMin}" max="${RULES.pkMax}" step="100" value="${Math.min(1000, Math.max(RULES.pkMin, P.gold))}" aria-label="Số vàng cược">
-          <button class="btn" data-act="pk-ask" data-uid="${o.id}">⚔ Cược đấu</button></div>
+        ${slayRow(o)}
         <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button><button class="btn small-btn" data-act="dialog-close">Đóng</button></div>
       </div>`;
     }
@@ -664,6 +687,12 @@
   // ---------- Chat ----------
   const mapName = (id) => (WORLD.maps[id] ? WORLD.maps[id].name : id);
 
+  // V2: khi khung chat đóng, mỗi tin hiện 5 giây kể từ lúc tới rồi mờ đi (tin cũ / lịch sử không hiện)
+  const CHAT_SHOW_MS = 5000;
+  function ovLine(m) {
+    const d = (m._t || 0) + CHAT_SHOW_MS - Date.now();
+    return chatLine(m).replace('<div class="chat-line', `<div style="--d:${Math.max(0, d)}ms" class="chat-line${d <= 0 ? ' gone' : ''}`);
+  }
   function chatLine(m) {
     if (!m.uid) return `<div class="chat-line system ${m.guild ? 'guild' : ''}">${m.guild ? '[Bang] ' : ''}${esc(m.text)}</div>`;
     const mine = m.uid === Net.userId;
@@ -702,12 +731,113 @@
     render();
   }
 
+  // Phase 13: chạm tên trong danh sách 👫 (hoặc "Hồ sơ" ở tab Nhân vật) mở hồ sơ đầy đủ
   async function openPlayer(o) {
-    dialog = { type: 'player', info: null };
+    profileUi = { open: true, info: null };
     walk = null;
     render();
-    try { dialog = { type: 'player', info: await Net.inspect(o.id) }; } catch (e) { toast(e.msg, true); dialog = null; }
-    render();
+    try { profileUi = { open: true, info: await Net.inspect(o.id) }; } catch (e) { toast(e.msg, true); profileUi = { open: false, info: null }; }
+    render(); const v = $('#view'); if (v) v.scrollTop = 0;
+  }
+
+  // ---------- Người trong bản đồ (Phase 13) ----------
+  const others = () => (P && !P.battle ? Map_.players() : []);
+  function peopleDot() { const n = others().length; return n ? `<span class="points-dot">${n}</span>` : ''; }
+  let peopleCount = -1;
+  function refreshPeopleDot() {
+    const n = others().length;
+    if (n === peopleCount) return;
+    peopleCount = n;
+    const b = $('#tabs [data-tab="people"] span:last-child');
+    if (b) { const d = b.querySelector('.points-dot'); if (d) d.remove(); if (n) b.insertAdjacentHTML('beforeend', `<span class="points-dot">${n}</span>`); }
+    if (tab === 'people' && !profileUi.open && !trade) render();
+  }
+  function viewPeople() {
+    const m = WORLD.maps[P.pos.map] || {};
+    const list = others().slice().sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
+    const inParty = (id) => party && party.members.some((x) => x.id === id);
+    return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
+      ${list.length ? `<div class="list">${list.map((o) => `<button class="item people-row" data-act="profile" data-uid="${o.id}">
+        <img class="sprite sm" src="${window.Doll.url(o.look)}" alt="">
+        <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
+          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
+        <span class="small muted">›</span></button>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
+      <p class="small muted">Người chơi khác không vẽ trên bản đồ; chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu…</p></div>`;
+  }
+
+  // ---------- Hồ sơ (Phase 13, theo mẫu anh gửi) ----------
+  function viewProfile() {
+    const o = profileUi.info;
+    const head = `<div class="row menu-head"><button class="btn" data-act="profile-close">‹ Quay lại</button><span class="grow"></span></div>`;
+    if (!o) return head + '<div class="card"><p class="small muted">Đang tải hồ sơ…</p></div>';
+    const pr = o.profile, c = CLASSES[o.cls] || {};
+    const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
+    const plus = (v) => (v ? ` <span class="up">+${Math.round(v * 100)}%</span>` : '');
+    const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base + s.gear)}</b> <span class="muted">(${fmt(s.base)})</span>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
+    const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
+    const xpPct = pr.xp_need ? Math.floor((pr.xp / pr.xp_need) * 1000) / 10 : 100;
+    const inParty = party && party.members.some((m) => m.id === o.id);
+    const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
+    const actions = o.me ? '' : `<div class="card"><h3>Hành động</h3><div class="btn-row">
+        ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
+        <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
+        <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
+        <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
+        <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
+      ${slayRow(o)}
+      <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button></div></div>`;
+    return `${head}
+      <div class="card prof-head">
+        ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}
+        <h2 class="display" ${pr.red_s ? 'style="color:#ff3b3b"' : ''}>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h2>
+        ${pr.red_s ? `<div class="small" style="color:#ff3b3b">🔴 Tên đỏ (đồ sát) · còn ${Math.ceil(pr.red_s / 60)} phút · gục mất vàng gấp ${RULES.slay.redMult} lần</div>` : ''}
+        ${pr.protect_s ? `<div class="small" style="color:var(--good)">🛡 Được bảo vệ sau khi gục · còn ${pr.protect_s} giây</div>` : ''}
+        ${o.guild ? `<div class="small muted">Bang ${esc(o.guild.name)}</div>` : ''}
+        <div class="prof-lv">${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} ${esc(c.name || '')}</div>
+        <img class="sprite prof-doll" src="${window.Doll.url(o.look)}" alt="">
+        <div class="small muted">${pr.online ? `🟢 Đang online${pr.where ? ` @ ${esc(pr.where)}` : ''}` : `Lần cuối: ${day(pr.last_seen)}`}</div>
+      </div>
+      <div class="prof-boxes">
+        <div class="prof-box">Hạng: <b>#${pr.rank || '—'}</b></div>
+        <div class="prof-box">${esc(c.name || '')}: <b>#${pr.class_rank || '—'}</b></div>
+        <div class="prof-box">Đấu trường <span class="muted">${pr.arena.rating}</span><br>🏆 ${pr.arena.wins}T / ${pr.arena.losses}B</div>
+      </div>
+      <div class="card">${bar('hp', pr.hp, pr.max_hp, `❤ ${fmt(pr.hp)} / ${fmt(pr.max_hp)}`)}${bar('mp', pr.mp, pr.max_mp, `💧 ${fmt(pr.mp)} / ${fmt(pr.max_mp)}`)}</div>
+      <div class="card">
+        ${stat('str', 'Sức mạnh')}${stat('agi', 'Nhanh nhẹn')}${stat('vit', 'Thể lực')}${stat('ene', 'Năng lượng')}
+        <hr class="sep">
+        ${kv('Sát thương', `<b>${fmt(pr.atk_min)} ~ ${fmt(pr.atk_max)}</b>${plus(pr.pct.atk)}`)}
+        ${kv('Phòng thủ', `<b>${fmt(pr.def)}</b>${plus(pr.pct.def)}`)}
+        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
+        ${kv('Chí mạng · Né', `${Math.round(pr.crit * 100)}% · ${Math.round(pr.dodge * 100)}%`)}
+        ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương · −${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
+      </div>
+      <div class="card">
+        ${kv(`${icon('two-coins')} Vàng`, fmt(pr.gold))}
+        ${kv('⭐ Kinh nghiệm', `${fmt(pr.xp)} / ${fmt(pr.xp_need)} (${xpPct}%)`)}
+        ${bar('xp', pr.xp, pr.xp_need, '')}
+      </div>
+      <div class="card"><h3>Trang bị</h3>
+        ${pr.equip.length ? `<div class="prof-gear">${pr.equip.map((g) => `<div class="prof-item">${itemIcon(ITEMS[g.id] || { icon: 'sword' }, g.rarity, g.up)}<span class="rar-${g.rarity}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</div>`).join('')}</div>` : '<p class="small muted">Chưa mặc gì.</p>'}
+      </div>
+      <div class="card">
+        ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
+        ${kv('🏪 Đang bán ở chợ', `${pr.market} món`)}
+      </div>
+      <div class="card">
+        ${kv('Nhiệm vụ đã xong', fmt(pr.counts.quests))}
+        ${kv('Quái đã hạ', fmt(pr.counts.kills))}
+        ${kv('Trùm đã hạ', fmt(pr.counts.bosses))}
+        ${kv('Tháp cao nhất', `Tầng ${pr.counts.tower}`)}
+        ${kv('Đấu trường thắng / thua', `${pr.arena.wins} / ${pr.arena.losses}`)}
+        ${kv('PK cược thắng / thua', `${pr.counts.pk_wins} / ${pr.counts.pk_losses}`)}
+        ${kv('Gục ngã', fmt(pr.counts.deaths))}
+      </div>
+      <div class="card small muted">
+        ${kv('Lần cuối online', pr.online ? 'Đang online' : day(pr.last_seen))}
+        ${kv('Đăng ký', day(pr.registered))}
+      </div>
+      ${actions}`;
   }
 
   // ---------- Chợ ----------
@@ -764,18 +894,18 @@
     const me = arena.me, left = me.per_day - me.today;
     return `<div class="card" id="arena">
       <div class="row">${icon('crossed-swords', 'lg')}<div class="grow"><h3>Đấu trường</h3>
-        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Thua không mất vàng. Chạm vào người khác trên bản đồ để thách đấu.</p></div>
+        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
       <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
         <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
         <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
-      ${pk ? `<h3>⚔ Cược đấu</h3><p class="small muted">Chạm vào người chơi đang online trên bản đồ, nhập số vàng rồi bấm Cược đấu. Hai bản sao tự đánh; thắng ăn cả cược. Hôm nay ${pk.today}/${pk.rules.per_day} trận.</p>
+      ${pk ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${pk.history.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
           const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
           return `<div class="item"><div class="grow"><div class="name">${esc(foe)}</div><div class="small muted">${h.rounds} lượt · ${new Date(h.at).toLocaleString('vi-VN')}</div></div>${res}</div>`;
-        }).join('') || '<p class="small muted">Chưa có trận cược nào.</p>'}</div>` : ''}
+        }).join('') || '<p class="small muted">Chưa có trận nào.</p>'}</div>` : ''}
     </div>`;
   }
 
@@ -786,7 +916,7 @@
   function viewChat() {
     return `<div class="chat-ov ${chatOpen || chatWide ? 'open' : ''}" id="chat-ov">
       ${chatOpen ? `<button class="chat-wide" data-act="chat-wide" aria-label="Xem lịch sử chat">${chatWide ? '▾' : '▴'}</button>` : ''}
-      <div class="chat-log" id="chat-log" aria-live="polite">${chats.map(chatLine).join('')}</div>
+      <div class="chat-log" id="chat-log" aria-live="polite">${chats.map(ovLine).join('')}</div>
       ${chatOpen ? `<form id="chat-form" class="chat-form" autocomplete="off">
         ${chatChannels().length > 1 ? `<button type="button" class="btn chat-to ${chatTo !== 'world' ? 'on' : ''}" data-act="chat-to" aria-label="Đổi kênh chat">${{ world: 'Tất cả', guild: 'Bang', party: 'Đội' }[chatTo]}</button>` : ''}
         <input type="text" id="chat-input" maxlength="120" placeholder="${{ world: 'Nói với mọi người…', guild: 'Nói trong bang…', party: 'Nói trong tổ đội…' }[chatTo]}" value="${esc(chatDraft)}" aria-label="Tin nhắn">
@@ -802,6 +932,7 @@
   }
 
   function onChatMessage(m) {
+    m._t = Date.now();
     chats.push(m);
     if (chats.length > 50) chats.shift();
     // người nói đang ở cùng bản đồ thì hiện bong bóng trên đầu
@@ -810,7 +941,7 @@
     const log = $('#chat-log');
     if (log) {
       const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
-      log.innerHTML = chats.map(chatLine).join('');
+      log.innerHTML = chats.map(ovLine).join('');
       if (atBottom || m.uid === Net.userId) log.scrollTop = log.scrollHeight;
     }
   }
@@ -819,6 +950,8 @@
     const input = $('#chat-input');
     const text = input.value.trim();
     if (!text) return;
+    // V3: /d xóa chat trên máy mình
+    if (text === '/d') { chats = []; const log = $('#chat-log'); if (log) log.innerHTML = ''; input.value = ''; chatDraft = ''; toast('Đã xóa chat.'); return; }
     const c = L.parseChat(text, chatTo, friendsUi.data && friendsUi.data.friends);
     if (c.error) { toast(c.error, true); return; }
     try {
@@ -903,8 +1036,8 @@
       </div>
       <div class="bars">
         ${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
-        ${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
-        ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `EXP ${Math.floor((P.xp / need) * 100)}%`)}
+        ${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        ${P.level >= RULES.maxLevel ? bar('xp', 1, 1, 'Cấp tối đa') : bar('xp', P.xp, need, `⭐ ${Math.floor((P.xp / need) * 100)}%`)}
       </div>`;
   }
 
@@ -918,9 +1051,15 @@
     if (mail.open) render();
   }
 
+  // đồ riêng từng món trong thư: "gear:<mẫu>:<độ hiếm>:<+N>"
+  function mailItemName(id) {
+    const g = id.startsWith('gear:') && id.split(':');
+    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (${RARITY[g[2]]})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
+    return ITEMS[id] ? ITEMS[id].name : id;
+  }
   function mailGifts(m) {
     return [m.gold ? `${fmt(m.gold)} vàng` : '', m.xp ? `${fmt(m.xp)} kinh nghiệm` : '']
-      .concat(Object.entries(m.items).map(([id, n]) => `${ITEMS[id] ? ITEMS[id].name : id}${n > 1 ? ` ×${n}` : ''}`))
+      .concat(Object.entries(m.items).map(([id, n]) => `${mailItemName(id)}${n > 1 ? ` ×${n}` : ''}`))
       .filter(Boolean).join(' · ');
   }
 
@@ -1129,12 +1268,21 @@
       ${viewAchievements()}`;
   }
 
+  // lựa chọn hiển thị lưu ở trình duyệt (chỉ giao diện)
+  function pref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
+  function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* bị chặn: chỉ đổi lần này */ } }
+
+  const skillMp = (k) => L.skillMp(k, P.level, RULES.skillMpPerLevel);
+
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
       <div class="card" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
         <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
         <button class="btn ${lg === 'en' ? 'primary' : ''}" data-act="lang" data-lang="en" aria-pressed="${lg === 'en'}">English</button></div></div></div>
+      <div class="card"><div class="row"><h3 class="grow">Bản đồ</h3>
+        <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
+        <p class="small muted">Tự động: sáng tối theo giờ trong game.</p></div>
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -1354,7 +1502,8 @@
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
-    if (it.heal) return `Hồi ${it.heal} máu`;
+    if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
+    if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
     return '';
   }
 
@@ -1364,12 +1513,15 @@
     const d = P.view.derived, c = CLASSES[P.cls];
     const free = P.points - allocPendingTotal();
     const need = P.view.xpToNext;
+    // Phase 13: phần cộng thêm (đồ hiếm cộng chỉ số; thú cưng + món ăn cộng %)
+    const ex = P.view.extra || {};
+    const pc = (v) => (v ? ` <span class="up" title="Thú cưng + món ăn">+${Math.round(v * 100)}%</span>` : '');
     const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
     const stat = (k) => {
       const [n, hint] = STAT_INFO[k], pend = allocPending[k] || 0;
       return `<div class="statrow" title="${esc(hint)}">
         <span>${n}</span>
-        <span class="num">${P.stats[k]}${pend ? `<span class="pending">+${pend}</span>` : ''}</span>
+        <span class="num">${P.stats[k]}${pend ? `<span class="pending">+${pend}</span>` : ''}${ex.gear && ex.gear[k] ? ` <span class="up" title="Đồ hiếm cộng thêm">+${ex.gear[k]}</span>` : ''}</span>
         <button class="btn" data-act="alloc-add" data-stat="${k}" ${free > 0 ? '' : 'disabled'} aria-label="Cộng 1 điểm ${n}">+</button>
       </div>`;
     };
@@ -1377,7 +1529,8 @@
       <div class="card charsheet" data-panel="character">
         <h3 class="panel-title">Nhân vật</h3>
         <div>${P.title ? `<span class="title-tag">${esc(achTitle(P.title))}</span>` : ''}<h2 class="display">${esc(P.name)}</h2>
-          <div class="small muted">${c.name} · ${P.rebirths ? `Chuyển sinh ${P.rebirths} · ` : ''}Cấp ${P.level}</div></div>
+          <div class="small muted">${c.name} · ${P.rebirths ? `Chuyển sinh ${P.rebirths} · ` : ''}Cấp ${P.level}</div>
+          <button class="btn small-btn" data-act="profile" data-uid="${Net.userId}">📜 Hồ sơ</button></div>
         <hr class="sep">
         ${kv('EXP', P.level >= RULES.maxLevel ? 'Cấp tối đa' : `${fmt(P.xp)} / ${fmt(need)}`)}
         <hr class="sep">
@@ -1385,13 +1538,13 @@
         ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
         <p class="small muted">Mỗi lần lên cấp nhận ${c.points} điểm. Điểm đã cộng không gỡ được.</p>
         <hr class="sep">
-        ${kv('Tấn công', `${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}`)}
+        ${kv('Tấn công', `${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}${pc(ex.atk)}`)}
         ${kv('Trúng quái cùng cấp', `${Math.round(d.hitRate * 100)}%`)}
-        ${kv('Phòng thủ', fmt(d.def))}
+        ${kv('Phòng thủ', `${fmt(d.def)}${pc(ex.def)}`)}
         ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
         ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
-        ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}`)}
+        ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
         ${kv('MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
       </div>`;
@@ -1430,7 +1583,7 @@
       <div class="card"><h3>Kỹ năng</h3><div class="list">
         ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
           <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
-          <div class="small muted">${k.desc} Tốn ${k.mp} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
+          <div class="small muted">${k.desc} Tốn ${skillMp(k)} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
       </div></div>`;
   }
 
@@ -1445,11 +1598,12 @@
     ['pets', 'forest', 'Thú cưng'],
     ['skills', 'sword-spin', 'Kỹ năng'],
     ['bestiary', 'skull-crossed-bones', 'Sổ quái'],
+    ['library', 'open-book', 'Thư viện'],
     ['settings', 'speaker', 'Cài đặt'],
   ];
   let menuSec = null; // mục Menu đang mở (null: lưới biểu tượng)
   const onMenu = (sec) => tab === 'menu' && menuSec === sec;
-  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), settings: () => viewSettings(), admin: () => viewAdmin() };
+  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), library: () => viewLibrary(), settings: () => viewSettings(), admin: () => viewAdmin() };
   function viewMenu() {
     const items = MENU.concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []);
     if (menuSec && MENU_VIEW[menuSec]) {
@@ -1458,6 +1612,108 @@
     }
     return `<h2 class="display">Menu</h2><div class="menu-grid">${items.map(([id, ic, label]) => `<button class="menu-item" data-menu="${id}">${icon(ic, 'lg')}<span>${label}</span></button>`).join('')}</div>`;
   }
+
+  // ---------- Chọn bản đồ (Phase 15a, U2) ----------
+  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, Nhà, vùng đã mở, bản đồ phụ đã đi qua cổng.
+  let travelQ = '';
+  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
+  const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
+  function travelOpen(id) {
+    const w = WORLD.maps[id];
+    if (!w) return false;
+    if (TRAVEL.free.includes(id)) return true;
+    if (w.side) return (P.visited || []).includes(id);
+    if (w.zone != null) return !!P.view.unlocked[w.zone];
+    return id !== 'tower';
+  }
+  async function travelTo(id) {
+    await sendCommand({ act: 'travel', to: id });
+    if (P && P.pos.map === id) { Sound.play('portal'); goTab('map'); }
+  }
+  function viewTravel() {
+    const home = { id: 'home', name: WORLD.maps.home ? WORLD.maps.home.name : 'Nhà', min: null, max: null, zone: null };
+    const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
+      <p class="small muted">Dịch chuyển tốn ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Bản đồ phụ: đi qua cổng một lần để mở. Đá dịch chuyển vẫn miễn phí.</p>
+      <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
+      <div id="travel-list">${travelList(all)}</div></div>`;
+  }
+  function travelList(all) {
+    all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    const rows = all.filter((m) => L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
+    return `<div class="list">${rows.map((m) => {
+      const here = P.pos.map === m.id, open = travelOpen(m.id), cost = travelCost(m);
+      const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
+      const btn = here ? '<span class="tag">Đang ở</span>'
+        : !open ? `<span class="tag" title="${WORLD.maps[m.id] && WORLD.maps[m.id].side ? 'Đi qua cổng một lần để mở' : 'Vùng chưa mở'}">🔒</span>`
+        : `<button class="btn small-btn ${P.gold >= cost ? 'primary' : ''}" data-act="travel" data-to="${m.id}" ${P.gold >= cost ? '' : 'disabled'}>${cost ? `${icon('two-coins')}${fmt(cost)}` : 'Miễn phí'}</button>`;
+      return `<div class="item travel-row ${open ? '' : 'locked'}"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${lv}${m.zone ? ` · ${esc(m.zone)}` : ''}</div></div>${btn}</div>`;
+    }).join('')}</div>`;
+  }
+
+  // ---------- Thư viện (Phase 14) ----------
+  // Dữ liệu `GAME_DATA.LIBRARY` (server sinh từ dữ liệu game). Gõ tìm chỉ vẽ lại phần kết quả để ô nhập không mất chữ.
+  const LIB = window.GAME_DATA.LIBRARY || { maps: [], monsters: [], items: [] };
+  let libUi = { tab: 'maps', q: '', open: null };
+  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
+  const trn = (t) => (window.I18N ? window.I18N.tr(t) : t);
+  const libMap = (id) => LIB.maps.find((m) => m.id === id);
+  const libMon = (id) => LIB.monsters.find((m) => m.id === id);
+  const go = (tab, name) => `<button class="lib-link" data-act="lib-go" data-tab2="${tab}" data-q="${esc(name)}">${esc(name)}</button>`;
+  function viewLibrary() {
+    const tabs = [['maps', 'Bản đồ', LIB.maps.length], ['monsters', 'Quái', LIB.monsters.length], ['items', 'Vật phẩm', LIB.items.length]];
+    return `<div class="card">
+      <div class="seg" id="lib-tabs">${tabs.map(([k, l, n]) => `<button class="btn ${libUi.tab === k ? 'primary' : ''}" data-act="lib-tab" data-tab2="${k}">${l} <span class="small">${n}</span></button>`).join('')}</div>
+      <input type="search" id="lib-q" class="lib-q" placeholder="Tìm theo tên (không cần dấu)…" value="${esc(libUi.q)}" autocomplete="off" aria-label="Tìm trong thư viện">
+      <div id="lib-results">${libResults()}</div></div>`;
+  }
+  function libResults() {
+    const list = LIB[libUi.tab].filter((x) => L.nameMatch([x.name, trn(x.name)], libUi.q));
+    if (!list.length) return '<p class="small muted">Không tìm thấy.</p>';
+    const row = libUi.tab === 'maps' ? libMapRow : libUi.tab === 'monsters' ? libMonRow : libItemRow;
+    return `<div class="list">${list.slice(0, 120).map(row).join('')}</div>${list.length > 120 ? `<p class="small muted">Còn ${list.length - 120} kết quả, gõ thêm để lọc.</p>` : ''}`;
+  }
+  const libHead = (key, left, title, sub) => `<button class="item lib-row" data-act="lib-open" data-key="${esc(key)}" aria-expanded="${libUi.open === key}">${left}<div class="grow"><div class="name">${title}</div><div class="small muted">${sub}</div></div><span class="small muted">${libUi.open === key ? '▾' : '▸'}</span></button>`;
+  const libLine = (k, v) => (v ? `<div class="kv"><span>${k}</span><span>${v}</span></div>` : '');
+  function libMapRow(m) {
+    const key = 'map:' + m.id;
+    const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
+    const head = libHead(key, icon(m.zone ? 'forest' : 'village', 'lg'), esc(m.name), `${m.zone ? esc(m.zone) + ' · ' : ''}${lv}`);
+    if (libUi.open !== key) return head;
+    const mons = m.monsters.map((id) => libMon(id)).filter(Boolean);
+    const boss = m.boss && libMon(m.boss);
+    return head + `<div class="lib-detail">
+      ${libLine('Quái', mons.map((x) => `${go('monsters', x.name)} <span class="muted">(${x.level})</span>`).join(', '))}
+      ${libLine('Trùm', boss ? `${go('monsters', boss.name)} <span class="muted">(${boss.level})</span>` : '')}
+      ${libLine('Trùm thế giới', m.world_boss ? 'Cổ Long xuất hiện ở đây' : '')}
+      ${libLine('Cổng tới', m.to.map((id) => libMap(id)).filter(Boolean).map((x) => go('maps', x.name)).join(', '))}
+      ${libLine('NPC', m.npcs.map(esc).join(', '))}
+      ${libLine('Thu thập', m.gather.map((id) => ITEMS[id] ? go('items', ITEMS[id].name) : esc(id)).join(', '))}
+    </div>`;
+  }
+  function libMonRow(m) {
+    const key = 'mon:' + m.id;
+    const head = libHead(key, sprite(m.id, 'sm', m.name), `${m.boss ? '👑 ' : ''}${esc(m.name)}`, `Cấp ${m.level} · ${esc(m.zone)}`);
+    if (libUi.open !== key) return head;
+    return head + `<div class="lib-detail">
+      <div class="lib-stats"><span>❤ ${fmt(m.hp)}</span><span>⚔ ${fmt(m.atk)}</span><span>🛡 ${fmt(m.def)}</span><span>⭐ ${fmt(m.xp)}</span><span>${icon('two-coins')} ~${fmt(m.gold)}</span></div>
+      ${libLine('Đòn đặc biệt', m.special ? `${esc(m.special.name)} mỗi ${m.special.every} lượt` : '')}
+      ${libLine('Khi đánh trúng', m.on_hit ? `${Math.round(m.on_hit.chance * 100)}% gây ${esc((EFFECTS[m.on_hit.id] || [0, m.on_hit.id])[1])}` : '')}
+      ${libLine('Xuất hiện ở', m.where.map((n) => go('maps', n)).join(', '))}
+      ${libLine('Có thể rơi', m.drops.map((id) => ITEMS[id] ? go('items', ITEMS[id].name) : esc(id)).join(', '))}
+    </div>`;
+  }
+  function libItemRow(x) {
+    const key = 'item:' + x.id, it = ITEMS[x.id] || x;
+    const head = libHead(key, itemIcon(it), esc(x.name), `${SLOT_NAME[x.slot] || esc(x.slot)}${x.level ? ` · cần cấp ${x.level}` : ''}${x.cls && CLASSES[x.cls] ? ` · ${CLASSES[x.cls].name}` : ''}`);
+    if (libUi.open !== key) return head;
+    return head + `<div class="lib-detail">
+      ${libLine('Chỉ số', itemStat(it))}
+      ${libLine('Giá', x.price ? `${fmt(x.price)} vàng` : '')}
+      ${libLine('Có được từ', x.sources.length ? x.sources.map(esc).join('<br>') : 'Chưa có nguồn (đồ đặc biệt)')}
+    </div>`;
+  }
+  function libRefresh() { const r = $('#lib-results'); if (r) r.innerHTML = libResults(); }
 
   // ---------- Thú cưng ----------
   // Thú bán ở cửa hàng hoặc quái đã thuần phục ("tame:<id quái>")
@@ -1581,7 +1837,7 @@
     const gear = bagGear().concat(ids.filter((id) => SLOT_OPEN.includes(ITEMS[id].slot)));
     return gear.concat(by('potion'), by('food'), by('material'));
   }
-  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].slot === 'potion').reduce((a, id) => a + P.inv[id], 0);
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal_pct).reduce((a, id) => a + P.inv[id], 0);
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
@@ -1728,15 +1984,16 @@
     const low = it.level && P.level < it.level;
     const worn = P.equip[slot] === id;
     const owned = P.inv[id] || 0;
-    const poor = P.gold < it.price;
+    const price = L.shopPrice(it, P.level, RULES.potionPricePerLevel);
+    const poor = P.gold < price;
     return `<div class="item">
       ${itemIcon(it)}
       <div class="grow">
         <div class="name">${it.name}</div>
         <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
       </div>
-      ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < it.price * 5 ? 'disabled' : ''}>×5</button>` : ''}
-      <button class="btn ${!low && !poor ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(it.price)}</button>
+      ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < price * 5 ? 'disabled' : ''}>×5</button>` : ''}
+      <button class="btn ${!low && !poor ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>
     </div>`;
   }
 
@@ -2069,7 +2326,8 @@
     if (n.role === 'talk') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
-    return `
+    // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
+    return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
       <div class="card npc-head">
         <div class="row"><img class="sprite" src="${asset('npcs/' + n.sprite + '.png')}" alt="${esc(n.name)}"><div class="grow"><h2 class="display">${esc(n.name)}</h2>
         ${n.role !== 'talk' ? `<p class="small muted">“${esc(npc.line)}”</p>` : ''}</div></div>
@@ -2109,22 +2367,34 @@
     }).join('')}</div>`;
   }
   function viewBattle() {
-    const b = P.battle, m = b.monster, d = P.view.derived, z = ZONES[b.zone];
+    const b = P.battle, m = b.monster, d = P.view.derived;
+    // bản đồ phụ (Phase 15a) không thuộc vùng: nền theo `theme`, tên theo `place`
+    const z = b.zone != null && ZONES[b.zone] ? ZONES[b.zone] : { id: b.theme || 'forest', name: b.place || '' };
     const skills = mySkills();
     const cd = (id) => { const c = (b.cds || []).find((x) => x.id === id); return c ? c.turns : 0; };
     const fxs = (!b.over && b.effects) || { player: [], monster: [] };
     const dotted = fxs.player.some((e) => ['poison', 'burn', 'bleed'].includes(e.id));
     const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
+    const manas = ['mana_s', 'mana_m', 'mana_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
     const floatHtml = fx && fx.mDmg != null
       ? `<span class="float ${fx.crit ? 'crit' : ''} ${fx.mDmg === 0 ? 'miss' : ''}">${fx.mDmg === 0 ? 'Trượt' : '-' + fmt(fx.mDmg)}</span>` : '';
+    // đồ sát: luân phiên lượt với người thật, chưa tới lượt thì khóa nút
+    const slayEnc = b.live && b.encounter ? b.encounter : null;
+    // hạn lượt theo đồng hồ máy mình: server gửi số mili giây còn lại lúc gửi (`view.slayLeft`)
+    if (slayEnc && P.view.slayLeft !== slayClock.left) slayClock = { left: P.view.slayLeft, until: Date.now() + (P.view.slayLeft || 0) };
+    const wait = slayEnc && !slayEnc.mine ? 'disabled' : '';
     let bottom;
     if (!b.over) {
       bottom = `
+        ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayClock.until}">${slayLeft(slayClock.until)}</span>s</p>` : ''}
         <div class="actions">
-          <button class="btn primary" data-act="attack">${icon('broadsword')} Tấn công</button>
-          ${skills.map((k) => { const noMp = (P.mp || 0) < k.mp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp ? 'disabled' : ''} title="${k.mp} MP">${icon(k.icon)} ${k.name}${cd(k.id) ? ` (${cd(k.id)})` : ` <span class="small num">${k.mp} MP</span>`}</button>`; }).join('')}
-          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) ? '' : 'disabled'}>${icon('health-potion')} Uống máu (${pots})</button>
-          <button class="btn" data-act="flee">${icon('walk')} Bỏ chạy</button>
+          <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
+        </div>
+        <div class="actions util">
+          <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
+          <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp && !wait ? '' : 'disabled'} title="Uống mana">${icon('magic-potion')}<span class="lbl">Mana</span><span class="sub num">${manas}</span></button>
+          <button class="btn" data-act="flee" ${wait} title="${slayEnc ? 'Bỏ chạy: tính như gục ngã' : 'Bỏ chạy'}">${icon('walk')}<span class="lbl">Chạy</span>${slayEnc ? '<span class="sub">= chết</span>' : ''}</button>
         </div>`;
     } else {
       const r = b.result, rw = b.reward;
@@ -2143,21 +2413,26 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${m.name}</h2>
-        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
+        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
         ${bar(m.golden ? 'gold' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
         ${effectTags(fxs.monster)}
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `MP ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;
   }
+
+  let slayClock = { left: null, until: 0 };
+  function slayLeft(until) { return Math.max(0, Math.ceil(((until || 0) - Date.now()) / 1000)); }
+  // đếm ngược lượt đồ sát (không vẽ lại cả màn hình)
+  setInterval(() => { document.querySelectorAll('.slay-turn [data-until]').forEach((el) => { el.textContent = slayLeft(+el.dataset.until); }); }, 500);
 
   // ---------- Xử lý thao tác ----------
   // Ghi lại trạng thái trước một lượt đánh để tính hiệu ứng (số sát thương bay lên, rung).
@@ -2217,7 +2492,7 @@
     if (!r.ok) { Sound.play('error'); return; }
     if (fx) {
       if (cmd.act === 'skill') Sound.play('skill');
-      if (cmd.act === 'potion') Sound.play('potion');
+      if (cmd.act === 'potion' || cmd.act === 'mana') Sound.play('potion');
       if (fx.mDmg === 0) Sound.play('miss'); else if (fx.mDmg) Sound.play(fx.crit ? 'crit' : 'hit');
       if (fx.pDmg) setTimeout(() => Sound.play('hurt'), 180);
     } else if (CMD_SOUND[cmd.act]) Sound.play(CMD_SOUND[cmd.act]);
@@ -2231,7 +2506,7 @@
   async function sendCommand(cmd) {
     if (busy) return;
     busy = true;
-    const battle = ['attack', 'skill', 'potion', 'flee'].includes(cmd.act) && P && P.battle;
+    const battle = ['attack', 'skill', 'potion', 'mana', 'flee'].includes(cmd.act) && P && P.battle;
     const before = battle ? snapBattle() : null;
     const scroll = $('#view').scrollTop;
     const old = P;
@@ -2274,7 +2549,8 @@
     dialog = null;
     let ok = false;
     try {
-      const r = await Net.send(confirm ? { act: 'move', dir, confirm: true } : { act: 'move', dir });
+      // V9: gặp trùm vào trận luôn như quái thường (không hỏi Đấu / Thôi)
+      const r = await Net.send({ act: 'move', dir, confirm: true });
       P = r.player;
       if (r.msg) result(r);
       if (r.gather) Sound.play('gather');
@@ -2327,8 +2603,7 @@
     // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
     const sec = { quests: 'quests', misc: null, admin: 'admin' };
     if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
-    if (id === 'travel') { toast('Bảng chọn bản đồ sẽ có ở bản cập nhật tới. Tạm dùng đá dịch chuyển.'); return; }
-    tab = id; confirmReset = false; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    tab = id; confirmReset = false; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
     stopFishing();
     if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
     render(); $('#view').scrollTop = 0;
@@ -2337,7 +2612,8 @@
   // Phím tắt (như MU Web): C Nhân vật, I Túi đồ, M Bản đồ (bấm lại phím của tab đang mở thì về Bản đồ),
   // Q uống bình máu (trong trận: nút Uống máu), Enter gõ chat, Esc đóng bảng đang mở / về Bản đồ.
   // Không chạy khi đang gõ chữ hoặc giữ Ctrl / Alt / Cmd.
-  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'map' };
+  // M: bảng chọn bản đồ (Phase 15a); bấm lại M thì về Bản đồ
+  const HOTKEY_TAB = { c: 'hero', i: 'bag', m: 'travel' };
   function hotkeyPotion() {
     if (P.battle) {
       const b = document.querySelector('[data-act="potion"]');
@@ -2346,7 +2622,7 @@
     }
     if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
     // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
-    const id = Object.keys(ITEMS).find((k) => ITEMS[k].slot === 'potion' && P.inv[k] > 0);
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal_pct && P.inv[k] > 0);
     if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
   }
   function hotkeyEscape() {
@@ -2366,7 +2642,7 @@
     if (k === 'q') { e.preventDefault(); hotkeyPotion(); return; }
     if (P.battle) return;
     if (e.key === 'Tab' && !P.battle) { e.preventDefault(); goTab(tab === 'menu' ? 'map' : 'menu'); return; }
-    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] && k !== 'm' ? 'map' : HOTKEY_TAB[k]); return; }
+    if (HOTKEY_TAB[k]) { e.preventDefault(); goTab(tab === HOTKEY_TAB[k] ? 'map' : HOTKEY_TAB[k]); return; }
     if (k === 'Enter' && tab === 'map' && !npc) { e.preventDefault(); toggleChat(true); return; }
     if (tab !== 'map') return;
     if (npc) return;
@@ -2406,18 +2682,21 @@
     const t = e.target.closest('button');
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
-    if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+    // V4: bấm lại icon dock đang mở thì đóng, về Bản đồ
+    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open && !visit; goTab(open ? 'map' : t.dataset.tab); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
     const act = t.dataset.act;
+    if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
+    if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
     if (t.dataset.adm) { onAdmin(t); return; }
-    if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(chatLine).join(''); return; }
+    if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(ovLine).join(''); return; }
     if (act === 'chat-report') { Net.report(+t.dataset.id).then(() => toast('Đã gửi báo cáo. Cảm ơn bạn.')).catch((e) => toast(e.msg, true)); chatMenu = null; return; }
     if (act === 'chat-block' || act === 'unblock') {
       const uid = +t.dataset.uid;
@@ -2446,12 +2725,7 @@
     }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
     if (act === 'pk-op') { pkOp(t.dataset.op); return; }
-    if (act === 'pk-ask') {
-      const w = Math.floor(+(($('#pk-wager') || {}).value || 0));
-      if (!(w >= RULES.pkMin && w <= RULES.pkMax)) { toast(`Cược từ ${fmt(RULES.pkMin)} đến ${fmt(RULES.pkMax)} vàng.`, true); return; }
-      pkOp('invite', { uid: +t.dataset.uid, wager: w });
-      return;
-    }
+    if (act === 'slay') { slay(+t.dataset.uid); return; }
     if (act === 'trade-rm') {
       const d = t.dataset;
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });
@@ -2484,6 +2758,14 @@
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
+    if (act === 'travel') { travelTo(t.dataset.to); return; }
+    if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
+    if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
+    if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
+    if (act === 'profile') { openPlayer({ id: +t.dataset.uid }); return; }
+    if (act === 'profile-close') { profileUi = { open: false, info: null }; render(); return; }
+    // rời hồ sơ khi sang thăm nhà / vào trận
+    if (profileUi.open && (act === 'home-visit' || act === 'pvp_challenge')) profileUi = { open: false, info: null };
     if (act === 'notes-open') { notes.open = !notes.open; mail.open = false; walk = null; if (notes.open) { notes.list.forEach((n) => { n.read = true; }); saveNotes(); } render(); $('#view').scrollTop = 0; return; }
     if (act === 'notes-close') { notes.open = false; render(); return; }
     if (act === 'notes-clear') { notes.list = []; saveNotes(); render(); return; }
@@ -2652,7 +2934,7 @@
     document.addEventListener('pointerdown', onMapTap);
     window.addEventListener('resize', () => Map_.resize());
     Net.onPlayer((p) => { if (!busy) { P = p; refresh(); } });
-    Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); });
+    Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); refreshPeopleDot(); });
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
     Net.onInvasion(onInvasion);
@@ -2730,8 +3012,12 @@
       if (P && !P.battle) $('#hud').innerHTML = viewHud();
     });
     setInterval(() => { const el = $('#wb-left'); if (el && wb.alive) el.textContent = clock(wb.endsAt - wb.skew - Date.now()); }, 1000);
-    Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(chatLine).join(''); log.scrollTop = log.scrollHeight; } });
-    document.addEventListener('input', (e) => { if (e.target.id === 'chat-input') chatDraft = e.target.value; });
+    Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(ovLine).join(''); log.scrollTop = log.scrollHeight; } });
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'chat-input') chatDraft = e.target.value;
+      if (e.target.id === 'travel-q') { travelQ = e.target.value; const l = $('#travel-list'); if (l) l.innerHTML = travelList(); }
+      if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
+    });
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);

@@ -107,3 +107,60 @@
 | P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
 | P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
 | P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
+
+## Phase 11 (2026-10-09)
+- **P11-1** Sáng / Tối / Tự động chỉ đổi độ tối khi vẽ bản đồ (lưu `hl-theme` ở trình duyệt); luật ngày đêm (quái hiếm ban đêm) vẫn theo giờ server, biểu tượng giờ trên bản đồ vẫn là giờ thật.
+- **P11-2** Chat ở góc bản đồ: mỗi tin hiện 5 giây kể từ lúc tới; lịch sử nạp lúc vào game không hiện ở góc (bấm 💬 để xem). `/d` chỉ xóa trên máy mình.
+- **P11-3** Gặp trùm: client luôn gửi `move` kèm `confirm: true` nên vào trận ngay; server giữ nguyên giao thức (`confirm: "boss"` vẫn có cho client cũ).
+- **P11-4** Quà cho mọi người kèm trang bị: khóa `items` `"gear:<mẫu>:<độ hiếm>:<+N>"` trong thư (không đổi schema `mails`); độ hiếm 0 = đồ thường, 1..3 = đồ hiếm chỉ số `1 + cấp/6` cho 1..3 chỉ số đầu (như lệnh `give_gear` không nhập chỉ số); mỗi thư tối đa 100 món mỗi loại; túi đồ hiếm không đủ chỗ thì không mở được thư (không tự bán).
+- **P11-5** Bỏ form "Gửi quà" riêng ở thẻ tra cứu người chơi (trùng Chỉnh nhân vật); lệnh `gift` với `uid` trên server vẫn giữ.
+
+## Phase 12 (2026-10-09) — MP
+- **P12-1** MP kỹ năng: `mp` gốc ở `classes.json` (kỹ năng mạnh / mở muộn gốc cao hơn, đã phản ánh sát thương) × (1 + `RULES.combat.skill_mp_per_level` (0.04) × (cấp − 1)). Không thêm cấp kỹ năng (game chưa có).
+- **P12-2** Hồi MP mỗi lượt: `mp_regen` (0.03) × MP tối đa + `mp_regen_ene` (0.1) × Năng lượng (cả đồ cộng), tối thiểu 1 (câu 12-A).
+- **P12-3** Bình máu `heal` → `heal_pct` 0.2 / 0.4 / 0.7; thêm `mana_s/m/l` (`mana_pct` cùng mức), slot `potion`, Bà Lang bán. Giá mua bình × (1 + `RULES.shop.potion_price_per_level` (0.1) × (cấp − 1)); giá bán lại theo giá gốc (không lời khi mua rồi bán).
+- **P12-4** Trong trận thêm lệnh `mana` (như `potion`, mất một lượt, chọn bình nhỏ nhất đủ đầy). Phím Q vẫn chỉ uống bình máu.
+
+## Phase 13 (2026-10-09) — người chơi và quái trên bản đồ
+- **P13-1** Máu quái: Session gửi `MapServer.hp/3` (phần trăm) sau mỗi lệnh khi đang đánh quái của bản đồ chung; snapshot có `hp` (100 khi chưa ai đánh), nhả quái thì về 100. Tần suất theo lượt đánh (không thêm luồng riêng), gộp vào lần phát bản đồ ~20 lần/giây sẵn có.
+- **P13-2** Không vẽ người khác (cả thú cưng, bong bóng chat của họ) trên bản đồ; `playerAt` luôn null. Dock thêm **👫 Quanh đây** (số đỏ = số người khác cùng bản đồ) → danh sách → hồ sơ.
+- **P13-3** Hồ sơ dùng lại lệnh `inspect` (thêm `me`, `profile`, `HacLong.Profile`): mình và người khác cùng bố cục; người khác có nút hành động (tổ đội, thăm nhà, giao dịch, kết bạn, thách đấu, cược đấu, chặn chat). "Lần cuối online" = lần ghi nhân vật gần nhất (`characters.updated_at`). Vàng người khác hiện như ảnh mẫu.
+- **P13-4** Tab Nhân vật: chỉ số hiện `+N` từ đồ hiếm; tấn công / phòng thủ / máu hiện `+N%` từ thú cưng + món ăn (`view.extra`).
+
+## Phase 14 (2026-10-09) — Thư viện
+- **P14-1** `HacLong.Library` sinh danh sách bản đồ (bỏ Nhà riêng), quái (cả trùm vùng; chỉ số theo `Engine.make_monster/2`, vàng lấy trung bình không may rủi), vật phẩm (nguồn: NPC bán, pha chế / nấu, thưởng nhiệm vụ, trùm rơi, bình quái rơi theo `RULES.loot.potions`, ngọc theo `JEWELS`, thu thập) từ dữ liệu game, giữ trong `:persistent_term`, gửi một lần trong `GAME_DATA.LIBRARY`.
+- **P14-2** Tìm theo tên không cần dấu (`HLLogic.fold`), cả tên đã dịch khi chơi tiếng Anh; gõ chỉ vẽ lại phần kết quả. Tên trong chi tiết là liên kết sang mục tương ứng. Đồ hiếm chỉ số ngẫu nhiên không liệt kê riêng (là biến thể của vũ khí / giáp / khiên).
+
+## Phase 15a (2026-10-09) — 50 bản đồ phụ, chọn bản đồ
+- **P15a-1** Anh yêu cầu **50** bản đồ (thay 20 trong 9-B). 10 nhóm chủ đề × 5 bản đồ (`side_01`…`side_50`), bản đồ i có quái cấp i, i+1, i+2 (52 loài trong `priv/game_data/side.json`, chỉ số theo `RULES.monster` như vùng cũ). Không trùm, không khóa theo vùng, không liên quan Hắc Long.
+- **P15a-2** Cổng: trong nhóm nối tiếp trái ↔ phải; bản đồ đầu nhóm có cổng (ô `O`, mép phải) từ một bản đồ có sẵn gần cấp: Rừng Mê 1, Rừng Mê 2, Trại Goblin 1, 2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1, 2, Đầm Lầy Rồng 2, Hang Hắc Long 1, 2. Bản đồ sinh bằng `scripts/gen_side_maps.py` (hạt giống cố định; ô không tới được từ cổng bị lấp).
+- **P15a-3** Hình 52 loài quái lấy từ Dungeon Crawl Stone Soup tiles (CC0, `github.com/crawl/tiles`, bản Nov-2015) bằng `scripts/side_monsters.py`, ghi `CREDITS.md`. Nền ô / trận dùng lại hình vùng cũ (`theme`).
+- **P15a-4** Chọn bản đồ (phím **M**, nút dock **Chọn map**): mọi bản đồ (trừ Tháp) xếp theo cấp quái thấp nhất; giá `RULES.travel` = 20 + 4 × cấp (Làng, Nhà miễn phí; Tế Đàn không quái = 20). Tới được: Làng, Nhà, bản đồ vùng đã mở, bản đồ phụ đã đi qua cổng (`characters.visited`, migration mới). Nhật ký vàng lý do `TRAVEL`. Đá dịch chuyển giữ nguyên.
+- **P15a-5** Trận ở bản đồ phụ: `battle.zone = nil`, `battle.place` / `battle.theme` cho nền; không tính vào việc hằng ngày "hạ N quái ở vùng X". Golden Invasion không vào bản đồ phụ.
+
+## Phase 16 (2026-10-09) — người chơi AI
+- **P16-1** 20 bot (`RULES.bots.count`; biến môi trường `HL_BOTS` đổi số, `0` là tắt; test luôn tắt). Mỗi bot là tài khoản thật `bot_01`… với `users.role = "bot"` (migration nới ràng buộc `users_role`), mật khẩu ngẫu nhiên, nhân vật thật trong database. Lớp xoay vòng Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ; tên tiếng Việt (trùng tên người thật thì thêm số).
+- **P16-2** `HacLong.Bots.Bot` gắn vào `Session` như một tab đang mở và gửi lệnh qua `Session.command/2` → cùng luật, cùng giới hạn tốc độ, cùng lưu database / nhật ký vàng như người thật. Quyết định trong `HacLong.Bots.Brain` (hàm thuần, có test): đánh (kỹ năng mạnh nhất, máu < 35 % uống bình, thiếu MP uống mana), cộng điểm vào chỉ số chính, mặc đồ rơi tốt hơn, máu < 45 % uống bình hoặc về Nhà uống giếng, chọn bản đồ hợp cấp (cấp quái cao nhất ≤ cấp + 1; mỗi bot chọn một trong 3 bản đồ tốt nhất để không dồn một chỗ), dịch chuyển nếu đủ gấp đôi giá, không thì đi bộ qua cổng theo đường ngắn nhất (mở dần bản đồ phụ), săn quái gần nhất.
+- **P16-3** Không đánh dấu là bot. Không lên bảng xếp hạng và không chiếm hạng người thật (`Leaderboard` bỏ `role = "bot"`). Giao dịch với bot bị từ chối ("Người này không nhận giao dịch."). Lời mời cược đấu: bot từ chối sau vài giây. Thách đấu (đấu trường, PK với bản sao) đánh được bot như người thường.
+- **P16-5** Đủ cấp (cấp trùm + 1) thì bot vào phòng trùm vùng chưa hạ để mở vùng mới (nên lên tiếp được các nhóm bản đồ phụ có cổng trong vùng sau).
+- **P16-4** Khoảng 4 phút mỗi bot nói một câu ngắn trong kênh thế giới (danh sách câu cố định). Bot không mua đồ ở NPC, không làm nhiệm vụ / việc hằng ngày, không vào tháp (để sau nếu cần).
+
+## Cân bằng đầu game (2026-10-09)
+- **B-1** Máu quái `RULES.monster.hp.base` 20 → **170**: trước đó nhân vật mới (đánh 70–110) hạ quái cấp 1–5 một đòn ở cả 4 lớp. Giờ quái cùng cấp cần ~2–3 đòn ở cấp 1–10 (chưa tính vũ khí), tăng dần ~3–7 đòn ở cấp 30–50 tùy lớp. Trùm vùng cũng trâu hơn tương ứng (Sói Xám 474 → 834 máu). Mô phỏng 4 lớp × 5 lượt: vẫn thắng Hắc Long 5/5, số trận (~390) và số lần chết gần như không đổi. Kinh nghiệm / vàng mỗi quái không đổi.
+- **B-2** (theo yêu cầu) Thách đấu ở đấu trường: **gục ngã tính như chết thường** — mất `death_gold_loss` vàng, tăng số lần chết, máu còn `death_hp`, về Nhà. Bỏ chạy vẫn tính thua điểm Elo nhưng không mất vàng / máu như trước trận.
+- **B-3** Sửa lỗi: quái bản đồ phụ trên bản đồ luôn hiện "cấp 1" vì client chỉ tra cấp quái vùng; giờ tra thêm `LIBRARY.monsters`.
+
+## Đồ sát thay PK cược vàng (2026-10-10, theo yêu cầu)
+- **P18-1** PK kiểu đồ sát: không cần bên kia đồng ý. Bấm **🗡 Đồ sát** trong hồ sơ / bảng người chơi → cả hai vào trận ngay (`HacLong.Slay`, kênh `slay`). Đối thủ hiện như quái là bản sao chỉ số, máu là máu thật (không quy đổi cánh như đấu trường).
+- **P18-2** Luân phiên lượt, người tấn công đi trước, mỗi lượt `RULES.slay.turn_s` = 10 giây; quá giờ server đánh thường thay. Đánh thay thất bại `RULES.slay.max_timeouts` = 3 lần liền (Session không chạy) thì người đó thua. Engine chạy ở chế độ `live` (đối thủ không tự đánh trả; độc / choáng không tác dụng chéo giữa hai người).
+- **P18-3** Điều kiện: cả hai online, cùng bản đồ chung (không phải tháp), ngoài vùng an toàn `RULES.slay.safe_maps` (Làng, Nhà), cả hai từ cấp `RULES.slay.min_level` = 10, không ai đang đánh. Bot bị đánh được như người (đánh thay khi hết giờ).
+- **P18-4** Hết máu hoặc **bỏ chạy** = gục ngã như chết thường (mất `death_gold_loss` vàng, máu còn `death_hp`, về Nhà, +1 lần chết). Số vàng mất chuyển cho người thắng. Chốt trận giữ cả hai Session rồi ghi hai nhân vật + một dòng `pk_matches` (a = người tấn công, `wager` = vàng chuyển) trong một transaction, nhật ký vàng lý do `SLAY`.
+- **P18-5** PK cược vàng cũ: mời cược qua kênh trả lỗi (đã thay); lịch sử `pk_matches` và số thắng/thua trong hồ sơ dùng chung cho đồ sát. Thách đấu đấu trường giữ nguyên.
+
+## Đồ sát: chống lạm dụng (2026-10-10, theo yêu cầu)
+- **P19-1** Người vừa gục trong đồ sát được **bảo vệ** `RULES.slay.protect_s` = 120 giây (không bị đồ sát). Tự đi đồ sát người khác thì mất bảo vệ ngay.
+- **P19-2** Một người đồ sát cùng một người tối đa `RULES.slay.per_target_hour` = 3 lần trong 60 phút gần nhất (tính lúc mở trận, kể cả trận thua / bỏ chạy). Chống "nuôi" vàng bằng nick phụ.
+- **P19-3** **Tên đỏ:** người tấn công thắng một người không tên đỏ thì đỏ tên `RULES.slay.red_s` = 30 phút, cộng dồn mỗi lần. Người tên đỏ gục trong đồ sát mất vàng gấp `RULES.slay.red_gold_mult` = 2 lần (20%), toàn bộ về tay người thắng. Hạ người tên đỏ, hoặc người bị đánh thắng lại, thì không bị đỏ tên. Tên đỏ hiện màu đỏ đậm trong Quanh đây và hồ sơ (kèm số phút còn lại); hồ sơ cũng hiện thời gian bảo vệ.
+- **P19-4** Mỗi trận xong báo kênh thế giới: "X đã hạ Y ở <bản đồ>." hoặc "Y bỏ chạy khỏi X ở <bản đồ>."
+- **P19-5** Bảo vệ / tên đỏ / số lần đánh giữ trong bộ nhớ (`HacLong.Slay`, bảng ETS `:slay_marks`), khởi động lại server thì xóa. Chấp nhận vì thời hạn ngắn (≤ 30 phút); cần bền hơn thì thêm cột vào `characters`.
+- **P19-6** Đồng hồ lượt đồ sát: server gửi số mili giây còn lại (`view.slayLeft`, tính lúc gửi), client cộng vào đồng hồ máy mình nên máy lệch giờ vẫn đếm đúng. Bot đang đồ sát mà chưa tới lượt thì chờ (không gửi lệnh), hỏi lại mỗi ~1 giây; tới lượt thì đánh / uống bình như đánh quái.
