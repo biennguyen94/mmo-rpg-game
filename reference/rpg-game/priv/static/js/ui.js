@@ -35,7 +35,7 @@
   let party = null;      // tổ đội: { id, leader, members: [{ id, name, level, hp, maxHp, map }], max }
   let arena = null;
   let pk = null; // { invite, history, today, rules } (PK cược vàng)
-  let market = { tab: 'buy', data: null, q: '', loading: false }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
+  let market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
   let decor = { on: false, pick: null }; // trang trí nhà: đang bật, món đang chọn để đặt    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
@@ -852,20 +852,30 @@
   // món hàng: đồ thường (item, count) hoặc đồ chỉ số ngẫu nhiên (gear)
   function listingRow(l, right, showSeller) {
     const it = l.gear || ITEMS[l.item];
-    const name = l.gear ? `<span class="rar-${l.gear.rarity}">${esc(l.name)}</span>${l.gear.up ? ` <span class="up-lv">+${l.gear.up}</span>` : ''}` : esc(l.name);
-    const detail = l.gear ? itemStat(l.gear) : it.slot === 'material' ? it.desc : itemStat(it);
-    return `<div class="item">${itemIcon(it, l.gear && l.gear.rarity, l.gear && l.gear.up)}<div class="grow">
+    const g = l.gear;
+    const cls = g ? (g.anc ? 'anc' : g.excellent ? 'exc' : `rar-${g.rarity}`) : '';
+    const name = g ? `<span class="${cls}">${esc(l.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}` : esc(l.name);
+    const detail = g ? itemStat(g) : it.slot === 'material' ? it.desc : itemStat(it);
+    // Phase 15h: hiện đủ dòng của món (Excellent, Thần, May mắn / Kỹ năng, dòng cánh) để người mua thấy
+    const lines = g ? `${ancLine(g)}${excLines(g)}${luckSkillLines(g)}${woptLine(g)}` : '';
+    return `<div class="item">${itemIcon(it, g && g.rarity, g && g.up)}<div class="grow">
       <div class="name">${name}${l.count > 1 ? ` <span class="muted num">×${l.count}</span>` : ''}</div>
-      <div class="small muted">${detail}${showSeller ? ` · người bán ${esc(l.seller)}` : ''}</div></div>${right}</div>`;
+      <div class="small muted">${detail}${showSeller ? ` · người bán ${esc(l.seller)}` : ''}</div>${lines}</div>${right}</div>`;
   }
 
   function viewMarket() {
     if (!market.data) { loadMarket(); return '<div class="card"><p class="small muted">Đang tải chợ…</p></div>'; }
-    const d = market.data, mine = d.listings.filter((l) => l.mine), others = d.listings.filter((l) => !l.mine);
+    const d = market.data, mine = d.listings.filter((l) => l.mine);
+    const others = L.marketFilter(d.listings.filter((l) => !l.mine), market.kind, market.sort);
     const tabs = `<div class="seg">${[['buy', 'Mua'], ['sell', 'Bán'], ['mine', `Hàng của tôi (${mine.length})`]].map(([k, l]) => `<button class="btn ${market.tab === k ? 'primary' : ''}" data-act="market-tab" data-tab2="${k}">${l}</button>`).join('')}</div>`;
     let body = '';
     if (market.tab === 'buy') {
+      const opt = (v, t, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${t}</option>`;
       body = `<form id="market-search" class="chat-form"><input type="text" id="market-q" placeholder="Tìm theo tên" value="${esc(market.q)}"><button class="btn" type="submit">Tìm</button></form>
+        <div class="row market-filter">
+          <select data-market-kind aria-label="Lọc loại hàng">${[['all', 'Tất cả'], ['gear', 'Đồ hiếm'], ['exc', 'Excellent'], ['anc', 'Đồ Thần'], ['luck', 'May mắn / Kỹ năng'], ['wing', 'Cánh'], ['item', 'Đồ thường, ngọc']].map(([v, t]) => opt(v, t, market.kind)).join('')}</select>
+          <select data-market-sort aria-label="Sắp xếp">${[['new', 'Mới nhất'], ['cheap', 'Rẻ nhất'], ['dear', 'Đắt nhất']].map(([v, t]) => opt(v, t, market.sort)).join('')}</select>
+        </div>
         ${others.length ? `<div class="list">${others.map((l) => listingRow(l, `<button class="btn ${P.gold >= l.price ? 'primary' : ''}" data-act="market_buy" data-listing="${l.id}" ${P.gold >= l.price ? '' : 'disabled'}>${icon('two-coins')}${fmt(l.price)}</button>`, true)).join('')}</div>` : '<p class="small muted">Chợ chưa có hàng nào.</p>'}`;
     } else if (market.tab === 'mine') {
       body = mine.length ? `<div class="list">${mine.map((l) => listingRow(l, `<div class="market-mine"><span class="num" style="color:var(--gold)">${fmt(l.price)} vàng</span><button class="btn small-btn" data-act="market_cancel" data-listing="${l.id}">Rút về</button></div>`)).join('')}</div>`
@@ -3113,6 +3123,8 @@
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
+      if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
+      if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
     });
     Net.onStatus((st, msg) => {
       const bar = $('#netbar');

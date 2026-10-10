@@ -265,3 +265,14 @@ Món **bộ giáp** (mũ, giáp, quần, găng, giày) rơi từ quái có xác 
 - Tooltip: "✦ Đồ Thần: phòng thủ +20 % …"; tab Túi đồ có dòng "Bộ Thần Đồng 3/5 +3 % tấn công, +5 % phòng thủ".
 - Quản trị: `give_gear` nhận `anc: true` (chỉ món bộ giáp).
 - Code: `Gear.ancient/2`, `Gear.anc_chance/1`, `Engine.ancient_bonus/1` (vào `derived`: `maxHp`, `atk`, `def`).
+
+## 11. Phase 15h (2026-10-10): chợ giữ đủ dòng đồ, lọc / sắp xếp (mục 7)
+
+- **Sửa lỗi:** trước đây rao đồ hiếm lên chợ chỉ lưu `uid / base / độ hiếm / chỉ số cộng / cấp nâng`, nên khi bán / rút về
+  món đồ **mất** dòng Ngọc Sinh Mệnh, Excellent, May mắn / Kỹ năng, Bộ Thần, dòng cánh. Nay lưu cả món (trừ cờ khóa / cất tủ)
+  và đọc lại qua `Gear.load/1`. Hàng **đã rao trước bản này** vẫn thiếu các dòng đó (không khôi phục được). Giao dịch trực
+  tiếp (`Trade`) vốn giữ đủ, không đổi.
+- Chợ hiện đủ dòng của món (tên màu theo loại: cam đồ Thần, xanh lục Excellent), thêm **lọc** (Tất cả / Đồ hiếm /
+  Excellent / Đồ Thần / May mắn, Kỹ năng / Cánh / Đồ thường, ngọc) và **sắp xếp** (Mới nhất / Rẻ nhất / Đắt nhất) ở tab Mua.
+  Lọc chạy ở client (`logic.js` `marketFilter`, có test), không đổi giao thức.
+- Phí chợ, số món rao tối đa, giá tối đa vẫn ở `RULES.market` như cũ.

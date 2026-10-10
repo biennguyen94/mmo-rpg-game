@@ -713,3 +713,6 @@ body.tl-on { overflow: hidden; }
 .ls { color: #6aa8ff; }
 /* Phase 15g: đồ Bộ Thần (cam như MU) */
 .anc { color: #ff9f40; }
+/* Phase 15h: lọc / sắp xếp ở chợ */
+.market-filter { gap: 8px; margin: 6px 0; }
+.market-filter select { flex: 1; }
