@@ -85,6 +85,24 @@ await shot(B.page, 'tienlen-watch-mobile.png');
 await A.page.waitForFunction(() => (window.TL.state().view.spectators || 0) >= 1, null, { timeout: 4000 }).catch(() => null);
 R.check('chủ bàn thấy 👀 1 người xem', ((await tl(A.page)).view.spectators || 0) >= 1);
 
+// ---------- mời bạn vào bàn (tin riêng có mã phòng, bấm Vào bàn) ----------
+const uidA = await A.page.evaluate(() => window.Net.userId);
+const uidB = await B.page.evaluate(() => window.Net.userId);
+await A.page.evaluate((name) => window.Net.friends('request', { name }), B.name);
+await B.page.evaluate((uid) => window.Net.friends('accept', { uid }), uidA);
+await A.page.click('[data-tl="remove-bot"]');
+await A.page.waitForTimeout(400);
+await A.page.click('[data-tl="invite-open"]');
+await A.page.waitForSelector(`[data-tl="invite"][data-uid="${uidB}"]`, { timeout: 5000 });
+await shot(A.page, 'tienlen-invite.png');
+await A.page.click(`[data-tl="invite"][data-uid="${uidB}"]`);
+await B.page.waitForSelector('#tl-invite-pop [data-pop="join"]', { timeout: 8000 }).catch(() => null);
+R.check('bạn nhận thông báo mời có nút Vào bàn', !!(await B.page.$('#tl-invite-pop [data-pop="join"]')));
+await B.page.click('#tl-invite-pop [data-pop="join"]');
+await B.page.waitForFunction(() => { const s = window.TL.state(); return s.screen === 'table' && s.view && s.view.me != null; }, null, { timeout: 8000 }).catch(() => null);
+await A.page.waitForFunction((n) => window.TL.state().view.players.some((p) => p.name === n), B.name, { timeout: 5000 }).catch(() => null);
+R.check('bấm Vào bàn là ngồi vào bàn của chủ', (await tl(A.page)).view.players.some((p) => p.name === B.name));
+
 // ---------- xem lại ván ----------
 await A.page.click('[data-tl="lobby"]');
 await A.page.click('[data-tl="history"]');

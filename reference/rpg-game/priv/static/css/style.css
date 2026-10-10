@@ -701,3 +701,7 @@ body.tl-on { overflow: hidden; }
 @keyframes tl-pop { from { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes tl-bounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -6px); } }
 @keyframes tl-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.tl-invite-pop { position: fixed; z-index: 120; left: 50%; bottom: 16px; transform: translateX(-50%); max-width: calc(100% - 32px);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--ink-3); border: 1px solid var(--gold); border-radius: var(--r);
+  padding: 10px 12px; box-shadow: 0 6px 20px #000c; }
+.dm .btn.small-btn { margin-top: 4px; }

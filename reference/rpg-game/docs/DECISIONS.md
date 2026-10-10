@@ -189,3 +189,4 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - thành tựu + danh hiệu "Diệt <trùm>" cho 5 trùm vùng (Hắc Long giữ "Kẻ Diệt Rồng");
   - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Phúc Lành, vùng 4–6 +1 Ngọc Linh Hồn (ghi trong `daily.bosses`).
   - Mô phỏng 4 lớp × 5 lượt sau thay đổi: vẫn thắng 5/5, Hắc Long ở cấp ~35, số trận gần như cũ; ngọc thu được ~gấp đôi.
+- **P17-6** Mời bạn vào bàn Tiến Lên: chỉ bạn bè (dùng tin riêng sẵn có), nội dung `🃏 Mời bạn vào bàn Tiến Lên [mã] · …`; client nhận ra `[mã]` để hiện nút Vào bàn (thông báo nổi + trong khung tin riêng). Tối đa 10 lời mời / phút.

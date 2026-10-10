@@ -163,4 +163,45 @@ defmodule HacLong.TienLen.GoldRoomTest do
     assert {:ok, _} = tl.(%{"op" => "leave"})
     assert {:error, %{msg: "Bạn không ở trong phòng" <> _}} = tl.(%{"op" => "view"})
   end
+
+  test "mời bạn vào bàn: chỉ bạn bè, tin riêng có mã phòng, bạn bấm là vào được" do
+    {a, _} = player!(1000)
+    {b, _} = player!(1000)
+    {c, _} = player!(1000)
+
+    join = fn u ->
+      {:ok, socket} = connect(UserSocket, %{"ticket" => Accounts.issue_ws_ticket(u)})
+      {:ok, _, s} = subscribe_and_join(socket, "game", %{"v" => ClientVersion.current()})
+      s
+    end
+
+    sa = join.(a)
+    sb = join.(b)
+
+    tl = fn s, payload ->
+      ref = push(s, "tl", payload)
+      assert_reply ref, status, reply
+      {status, reply}
+    end
+
+    {:ok, _} = HacLong.Friends.request(a.id, b.id)
+    {:ok, _} = HacLong.Friends.accept(b.id, a.id)
+
+    assert {:error, %{msg: "Bạn không ở trong phòng" <> _}} =
+             tl.(sa, %{"op" => "invite", "uid" => b.id})
+
+    {:ok, %{id: room}} = tl.(sa, %{"op" => "create"})
+    assert {:ok, %{friends: [%{id: bid, online: true}]}} = tl.(sa, %{"op" => "friends"})
+    assert bid == b.id
+
+    assert {:ok, _} = tl.(sa, %{"op" => "invite", "uid" => b.id})
+    assert_push "dm", %{text: text, from: from}
+    assert from == a.id and text =~ "🃏" and text =~ "[#{room}]"
+
+    # người không phải bạn thì không mời được
+    assert {:error, %{msg: "Chỉ nhắn riêng" <> _}} = tl.(sa, %{"op" => "invite", "uid" => c.id})
+
+    # bạn bấm Vào bàn: client gửi join với mã trong tin
+    assert {:ok, %{view: %{players: [_, _]}}} = tl.(sb, %{"op" => "join", "id" => room})
+  end
 end

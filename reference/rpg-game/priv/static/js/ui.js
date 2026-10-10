@@ -1101,6 +1101,8 @@
       return;
     }
     if (m.from === me) return;
+    // lời mời vào bàn Tiến Lên: thông báo nổi có nút "Vào bàn" (tienlen.js)
+    if (window.TL && TL.inviteRoom(m.text)) TL.invited(m.name, TL.inviteRoom(m.text));
     friendsUi.dm += 1;
     if (friendsUi.data) { const f = friendsUi.data.friends.find((x) => x.id === other); if (f) f.unread += 1; }
     toast(`💬 ${m.name}: ${m.text}`);
@@ -1118,7 +1120,7 @@
       if (!d) return head;
       return `${head}<div class="card">
         <p class="small muted">${d.with.online ? '<span style="color:var(--good)">● Đang online</span>' : '○ Không online, sẽ thấy tin khi vào game'}</p>
-        <div class="dm-log" id="dm-log">${d.messages.length ? d.messages.map((m) => `<div class="dm ${m.from === Net.userId ? 'me' : ''}"><span>${esc(m.text)}</span><small>${hhmm(m.at)}</small></div>`).join('') : '<p class="small muted">Chưa có tin nào. Chào một câu đi!</p>'}</div>
+        <div class="dm-log" id="dm-log">${d.messages.length ? d.messages.map((m) => `<div class="dm ${m.from === Net.userId ? 'me' : ''}"><span>${esc(m.text)}</span>${window.TL && TL.inviteRoom(m.text) && m.from !== Net.userId ? `<button class="btn small-btn primary" data-act="tl-join" data-id="${esc(TL.inviteRoom(m.text))}">🃏 Vào bàn</button>` : ''}<small>${hhmm(m.at)}</small></div>`).join('') : '<p class="small muted">Chưa có tin nào. Chào một câu đi!</p>'}</div>
         <form id="dm-form" class="chat-form" autocomplete="off"><input type="text" id="dm-input" maxlength="200" placeholder="Nhắn cho ${esc(d.with.name)}…" aria-label="Tin nhắn"><button class="btn primary" type="submit">Gửi</button></form>
       </div>`;
     }
@@ -2756,6 +2758,7 @@
     if (act === 'party-kick') { partyOp('kick', { uid: +t.dataset.uid }); return; }
     if (act === 'npc-close') { npc = null; market.data = null; render(); return; }
     if (act === 'tl-open') { window.TL.open(); return; }
+    if (act === 'tl-join') { friendsUi.open = false; window.TL.join(t.dataset.id); return; }
     if (act === 'friends-open') { friendsUi.open = !friendsUi.open; friendsUi.chat = null; friendsUi.confirm = null; walk = null; render(); $('#view').scrollTop = 0; if (friendsUi.open) loadFriends(); return; }
     if (act === 'friends-close') { friendsUi.open = false; friendsUi.chat = null; render(); return; }
     if (act === 'friend-op') { friendsUi.confirm = null; friendOp(t.dataset.op, { uid: +t.dataset.uid }); return; }

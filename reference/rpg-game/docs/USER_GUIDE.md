@@ -195,6 +195,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   tối đa số đang có.
 - Ném 🍅 1 · 🥚 2 · 🩴 3 · 🌹 5 vàng vào ghế người khác (bấm vào ghế); biểu cảm, chat bàn, câu nhanh; 😮‍💨 thổi bài
   (cho vui, không đổi gì).
+- **Mời bạn**: lúc bàn đang chờ có ghế trống, bấm **👥 Mời bạn** → chọn bạn bè (🟢 đang online). Bạn nhận thông báo
+  **🃏 Vào bàn** (và tin riêng có nút đó, kể cả khi đang offline); bấm là ngồi vào bàn.
 - **Xem trận**: bấm 👀 Xem ở sảnh (không thấy bài ai). **Xem lại ván**: 📜 Ván đã chơi → ▶ Xem lại (thấy hết bài).
 
 ![Tiến Lên](screenshots/e2e-tienlen.png)

@@ -155,7 +155,7 @@ defmodule HacLongWeb.TienLenHandler do
     do: room_call(socket, &RoomServer.remove_bot(&1, uid, int(p["seat"], -1)))
 
   defp op("chat", p, uid, socket) do
-    with id when id != nil <- socket.assigns[:tl_room] || {:error, :not_in_room},
+    with id when is_binary(id) <- socket.assigns[:tl_room] || {:error, :not_in_room},
          :ok <- not_muted(uid),
          {:ok, msg} <- Chat.prepare(uid, name(uid), p["text"]),
          :ok <- RoomServer.chat(id, uid, msg) do
@@ -166,7 +166,7 @@ defmodule HacLongWeb.TienLenHandler do
   end
 
   defp op("chat_history", _p, uid, socket) do
-    with id when id != nil <- socket.assigns[:tl_room] || {:error, :not_in_room},
+    with id when is_binary(id) <- socket.assigns[:tl_room] || {:error, :not_in_room},
          {:ok, msgs} <- RoomServer.chat_history(id, uid) do
       {:ok, %{chat: msgs}, socket}
     else
@@ -216,7 +216,45 @@ defmodule HacLongWeb.TienLenHandler do
     end
   end
 
+  # Mời bạn vào bàn: danh sách bạn bè (ai đang online), gửi tin riêng có mã phòng; người nhận bấm
+  # "Vào bàn" ở thông báo hoặc trong khung tin riêng (`invite_text/2`, client nhận ra `[mã]`).
+  defp op("friends", _p, uid, socket) do
+    friends =
+      uid
+      |> HacLong.Friends.list()
+      |> Map.get(:friends, [])
+      |> Enum.map(&Map.take(&1, [:id, :name, :level, :online]))
+      |> Enum.sort_by(&{!&1.online, &1.name})
+
+    {:ok, %{friends: friends}, socket}
+  end
+
+  defp op("invite", p, uid, socket) do
+    with id when is_binary(id) <- socket.assigns[:tl_room] || {:error, :not_in_room},
+         to when is_integer(to) <- p["uid"] || {:error, :not_found},
+         :ok <- invite_rate(uid),
+         %{} = v <- RoomServer.view(id, uid),
+         {:ok, _msg} <- HacLong.Friends.send_message(uid, to, invite_text(id, v.stake)) do
+      {:ok, %{}, socket}
+    else
+      {:error, reason} -> {:error, reason, socket}
+    end
+  end
+
   defp op(_op, _p, _uid, socket), do: {:error, :unknown_command, socket}
+
+  @doc "Chữ của lời mời (client tìm `[mã phòng]` sau 🃏 để hiện nút Vào bàn)."
+  def invite_text(room_id, stake) do
+    bet = if stake > 0, do: "cược #{stake} vàng", else: "chơi vui"
+    "🃏 Mời bạn vào bàn Tiến Lên [#{room_id}] · #{bet}"
+  end
+
+  defp invite_rate(uid) do
+    case HacLong.RateLimit.hit({:tl_invite, uid}, 10, 60_000) do
+      :ok -> :ok
+      _ -> {:error, "Mời chậm thôi, chờ chút rồi mời tiếp."}
+    end
+  end
 
   # ---------- sự kiện từ phòng / sảnh ----------
 

@@ -17,6 +17,7 @@
     view: null, sel: new Set(), sort: 'rank', checks: null, hintI: 0, deadline: null,
     chat: [], chatOpen: false, ticker: null, reactions: {}, marks: {}, speech: {}, puffs: {}, runaways: {},
     throwMenu: null, msg: null, games: [], replay: null, frame: 0, playing: null, busy: false,
+    inviteOpen: false, friends: null,
   };
   let root = null, checkTimer = null;
 
@@ -33,7 +34,7 @@
   const typeName = (t) => (st.meta && st.meta.types[t]) || t;
   const instName = (t) => (st.meta && st.meta.instants[t]) || t;
   const player = (v, seat) => v && v.players.find((p) => p.seat === seat);
-  const nameOf = (seat) => { const p = player(st.view, seat); return p ? p.name : `Ghế ${seat + 1}`; };
+  const nameOf = (seat) => { const p = player(st.view, seat); return p ? p.name : `Ghế ${seat + 1} (đã rời)`; };
   const sound = (n) => { try { window.Sound && window.Sound.play(n); } catch (e) { /* bỏ qua */ } };
 
   function say(text, bad) { st.msg = { text, bad, until: now() + 3500 }; render(); }
@@ -275,6 +276,8 @@
         render(); break;
       }
       case 'autoplay': toggleAutoplay(); break;
+      case 'invite-open': toggleInvite(); break;
+      case 'invite': call('invite', { uid: +d.uid }).then((r) => { if (r) say(`Đã mời ${d.name}.`); }); break;
       case 'sound': if (window.Sound) window.Sound.toggle(); render(); break;
       default: break;
     }
@@ -292,6 +295,51 @@
       const text = v('text').trim();
       if (text) call('chat', { text }).then((r) => { if (r) { f.elements.text.value = ''; } });
     }
+  }
+
+  async function toggleInvite() {
+    st.inviteOpen = !st.inviteOpen;
+    if (st.inviteOpen) { const r = await call('friends'); st.friends = (r && r.friends) || []; }
+    render();
+  }
+
+  // Mời bạn: chỉ bạn bè (tin riêng); bạn offline vẫn nhận được, lúc vào game bấm Vào bàn trong tin riêng
+  function viewInvite() {
+    if (!st.inviteOpen || st.watching) return '';
+    const fr = st.friends || [];
+    return `<div class="card tl-invite"><div class="row"><h3 class="grow">👥 Mời bạn vào bàn</h3><button class="btn" data-tl="invite-open">✕</button></div>
+      <div class="list">${fr.map((f) => `<div class="item"><div class="grow"><div class="name">${f.online ? '🟢' : '⚪'} ${esc(f.name)}</div><div class="small muted">Cấp ${f.level || '?'}${f.online ? '' : ' · offline'}</div></div>
+        <button class="btn ${f.online ? 'primary' : ''}" data-tl="invite" data-uid="${f.id}" data-name="${esc(f.name)}">Mời</button></div>`).join('') || '<p class="small muted">Chưa có bạn bè. Kết bạn ở hồ sơ người chơi hoặc Menu → Bạn bè.</p>'}</div>
+      <p class="small muted">Lời mời gửi bằng tin riêng kèm mã phòng; bạn bấm 🃏 Vào bàn là vào.</p></div>`;
+  }
+
+  // Lời mời đến (từ ui.js khi có tin riêng chứa mã phòng): thông báo nổi trên mọi màn hình
+  function inviteRoom(text) {
+    const m = /^🃏.*\[([A-Za-z0-9_-]{4,16})\]/.exec(String(text || ''));
+    return m ? m[1] : null;
+  }
+  function invited(name, id) {
+    let el = document.getElementById('tl-invite-pop');
+    if (!el) { el = document.createElement('div'); el.id = 'tl-invite-pop'; document.body.appendChild(el); }
+    el.className = 'tl-invite-pop';
+    el.innerHTML = `<span>🃏 <b>${esc(name)}</b> mời bạn vào bàn Tiến Lên</span>
+      <button class="btn primary" data-pop="join">Vào bàn</button><button class="btn" data-pop="close">✕</button>`;
+    el.onclick = (e) => {
+      const b = e.target.closest('[data-pop]');
+      if (!b) return;
+      el.remove();
+      if (b.dataset.pop === 'join') join(id);
+    };
+    sound('mail');
+    clearTimeout(invited.t);
+    invited.t = setTimeout(() => el && el.remove(), 30000);
+  }
+  async function join(id) {
+    ensureRoot();
+    st.open = true; root.hidden = false; document.body.classList.add('tl-on');
+    const r0 = await call('lobby');
+    if (r0) st.meta = r0;
+    await sit(id);
   }
 
   function toggleAutoplay() {
@@ -445,9 +493,10 @@
         <div class="tl-host-row">
           ${v.stake === 0 && free ? '<button class="btn" data-tl="add-bot" data-level="easy">+ Máy dễ</button><button class="btn" data-tl="add-bot" data-level="normal">+ Máy thường</button>' : ''}
           <button class="btn" data-tl="private">${v.private ? '🔓 Cho hiện ở sảnh' : '🔒 Ẩn khỏi sảnh'}</button>
+          ${free ? '<button class="btn" data-tl="invite-open">👥 Mời bạn</button>' : ''}
         </div>
         ${v.players.some((p) => p.bot) ? '' : `<form data-tl-form="stake" class="tl-form row"><label class="small grow">Mức cược<input type="number" name="stake" min="0" step="10" value="${v.stake}"></label><button class="btn">Đổi</button></form>`}`
-        : '<p class="muted">Chờ chủ phòng chia bài…</p>'}
+        : `<p class="muted">Chờ chủ phòng chia bài…</p>${free ? '<button class="btn" data-tl="invite-open">👥 Mời bạn</button>' : ''}`}
       <p class="small muted">${v.stake ? `Cược ${fmt(v.stake)} vàng · cần ít nhất ${fmt(v.min_balance)} vàng để được chia bài.` : 'Chơi vui, không mất vàng.'} Mã phòng: <span class="tl-code">${esc(v.id)}</span> (gửi cho bạn để vào cùng).</p>
       <button class="btn" data-tl="blow" title="Thổi bài cho hên (không ảnh hưởng gì)">😮‍💨 Thổi bài</button>
     </div>`;
@@ -485,6 +534,7 @@
       ${st.ticker && st.ticker.until > t ? `<p class="tl-ticker" aria-live="polite">${esc(st.ticker.text)}</p>` : ''}
       ${v.status === 'waiting' && g ? viewResults(v) : ''}
       ${v.status === 'waiting' ? viewWaiting(v) : ''}
+      ${v.status === 'waiting' ? viewInvite() : ''}
       ${handHtml}
       ${viewChat()}`;
   }
@@ -565,7 +615,7 @@
   }
 
   window.TL = {
-    open, close, init,
+    open, close, init, join, invited, inviteRoom,
     isOpen: () => st.open,
     // cho e2e: trạng thái hiện tại (không có bài người khác vì server không gửi)
     state: () => JSON.parse(JSON.stringify({ screen: st.screen, roomId: st.roomId, watching: st.watching, view: st.view, sel: [...st.sel], checks: st.checks })),
