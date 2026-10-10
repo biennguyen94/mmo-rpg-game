@@ -379,3 +379,11 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
 - Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
   rồi xóa tài khoản trong database.
+
+## Quảng Trường Quỷ (Phase 18)
+
+- Lịch, vé, thưởng: `RULES.devil_square` (`priv/game_data/rules.json`), giải thích ở `docs/EVENTS_PHASE18.md`.
+- Thử ngoài giờ: khởi động với `HL_DS_OPEN=1` (luôn mở; vẫn mỗi người một lần mỗi đợt).
+- Tặng vé: `give_item` với `id: "ds_ticket"`.
+- Gửi thưởng top 3 một ngày bằng tay (vd. server khởi động lại trước 0h05): trong iex
+  `HacLong.DevilSquareBoard.payout("2026-10-10")`. Bảng xếp hạng ngày giữ trong bộ nhớ, khởi động lại thì mất bảng hôm đó.

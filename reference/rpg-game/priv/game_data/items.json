@@ -541,6 +541,13 @@
       "price": 0,
       "level": 45,
       "desc": "Cánh cấp 3, ghép từ cánh cấp 2 +9 trở lên ở Máy Hỗn Nguyên."
+    },
+    "ds_ticket": {
+      "name": "Vé Quảng Trường",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 30 trở lên."
     }
   }
 }

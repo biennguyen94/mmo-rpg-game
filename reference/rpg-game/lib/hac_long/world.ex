@@ -9,7 +9,7 @@ defmodule HacLong.World do
   Session luôn gọi MapServer, không bao giờ ngược lại, nên không thể bị treo chờ nhau.
   """
 
-  alias HacLong.Game.{Daily, Data, Engine, Home, Tower}
+  alias HacLong.Game.{Daily, Data, DevilSquare, Engine, Home, Tower}
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
 
@@ -127,6 +127,35 @@ defmodule HacLong.World do
   defp tower_move(%{tower: nil} = p, uid, _d),
     do: leave_tower(p, uid, "Lượt leo tháp đã kết thúc.")
 
+  # Quảng Trường Quỷ (Phase 18 M1): cùng bản đồ riêng `tower`, trạng thái `p.tower.ds`
+  defp tower_move(%{tower: %{ds: %{}} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+
+    cond do
+      DevilSquare.expired?(p) ->
+        p |> DevilSquare.finish("hết giờ") |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        case Engine.start_with_monster(p, Data.zone_count() - 1, DevilSquare.battle_monster(m)) do
+          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
+          other -> other
+        end
+
+      tile == ">" ->
+        p |> DevilSquare.climb() |> ds_back(uid)
+
+      tile == "<" ->
+        p |> DevilSquare.finish("tự rời") |> ds_back(uid)
+
+      tile == "." ->
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
   defp tower_move(%{tower: t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
     {tx, ty} = {x + dx, y + dy}
     tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
@@ -155,6 +184,14 @@ defmodule HacLong.World do
         {%{ok: false}, p}
     end
   end
+
+  # lượt Quảng Trường vừa kết thúc (đã về Làng): vào lại bản đồ Làng chung
+  defp ds_back({r, %{tower: nil} = p}, uid) do
+    enter(p, uid)
+    {r, p}
+  end
+
+  defp ds_back(res, _uid), do: res
 
   defp leave_tower(p, uid, msg) do
     p = %{p | pos: @tower_door} |> Map.put(:tower, nil)

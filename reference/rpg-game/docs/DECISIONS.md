@@ -220,3 +220,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15g-1** Bộ Thần (mục 6): không tạo bộ mới mà cho mọi bộ giáp sẵn có một bản Thần (rơi hiếm); thưởng theo số món Thần cùng bộ, cộng dồn với thưởng đủ bộ thường. Vũ khí / khiên / trang sức không có bản Thần.
 - **I15h-1** Chợ (mục 7): chợ và giao dịch trực tiếp đã có từ trước nên mục này là sửa lỗi mất dòng đồ khi rao bán + lọc / sắp xếp ở client; không thêm đấu giá / đặt mua (sẽ đổi schema).
 - **I15i-1** Báo cáo cân bằng (mục 8) tính thẳng từ dữ liệu (không đo trên server thật) + simulator; ghi vào `docs/BALANCE_REPORT.md`, chỉ nêu nhận xét, không tự đổi số gameplay.
+- **E18-1** Quảng Trường Quỷ chạy như một chế độ của Tháp Vô Tận (bản đồ riêng, trạng thái trong cột `tower`) để không đổi schema; một người một lượt (không đánh chung), NPC dùng lại Người Gác Tháp.
+- **E18-2** Mở lệch Golden Invasion 1 giờ (1h, 3h … 23h), 10 phút cho vào, lượt 5 phút; hết giờ được kiểm khi người chơi bước tiếp (không có hẹn giờ riêng mỗi lượt).
+- **E18-3** Thưởng tính một lần lúc kết thúc theo điểm; lượt đủ ≈ giá vé về vàng, lãi là ngọc + món đồ khi qua hết đợt; kinh nghiệm ≈ 1 cấp / lượt đủ.
+- **E18-4** Bảng xếp hạng ngày giữ trong bộ nhớ (không thêm bảng DB); thưởng top 3 gửi thư lúc 0h05.

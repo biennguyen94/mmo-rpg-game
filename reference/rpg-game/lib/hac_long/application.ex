@@ -27,6 +27,8 @@ defmodule HacLong.Application do
       {DynamicSupervisor, name: HacLong.TienLen.RoomSupervisor, strategy: :one_for_one},
       HacLong.GuildWars,
       HacLong.Invasion,
+      # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng ngày + thưởng top 3
+      HacLong.DevilSquareBoard,
       {Registry, keys: :unique, name: HacLong.Game.Registry},
       {DynamicSupervisor, name: HacLong.Game.SessionSupervisor, strategy: :one_for_one},
       # mỗi bản đồ dùng chung (Làng, các vùng) một tiến trình

@@ -366,6 +366,8 @@ defmodule HacLong.Game.Engine do
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
       setBonus: set_bonus(p),
+      # Quảng Trường Quỷ (Phase 18 M1): giờ mở, giá vé, điểm cao nhất hôm nay, đã vào đợt này chưa
+      ds: HacLong.Game.DevilSquare.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
@@ -1223,6 +1225,7 @@ defmodule HacLong.Game.Engine do
       end
 
     {p, reward} = jewel_drop(p, m, reward)
+    {p, reward} = ds_ticket_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1300,6 +1303,19 @@ defmodule HacLong.Game.Engine do
     if c > 0 and chance(c) do
       id = pick_jewel()
       p = p |> add_item(id) |> log("💎 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Vé Quảng Trường Quỷ (Phase 18 M1): quái thường cấp cao thỉnh thoảng rơi
+  defp ds_ticket_drop(p, m, reward) do
+    c = HacLong.Game.DevilSquare.ticket_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.Game.DevilSquare.ticket()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
       {p, reward}

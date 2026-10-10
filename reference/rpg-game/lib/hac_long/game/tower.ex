@@ -267,6 +267,8 @@ defmodule HacLong.Game.Tower do
   end
 
   @doc "Trận trong tháp vừa kết thúc."
+  def after_battle(%{tower: %{ds: %{}}} = p), do: HacLong.Game.DevilSquare.after_battle(p)
+
   def after_battle(
         %{tower: t, battle: %{over: true, result: result, encounter: %{tower: id}}} = p
       )

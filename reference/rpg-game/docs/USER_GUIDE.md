@@ -115,6 +115,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   mắn cho món +3 trở lên). Thất bại thì mất món.
 - **Đồ Bộ Thần (Phase 15g):** món bộ giáp rơi từ quái đôi khi là đồ Thần (tên cam, phòng thủ +20 %). Mặc 2 / 3 / đủ món Thần
   cùng bộ được thêm tấn công, phòng thủ, máu (dòng "Bộ Thần …" ở tab Túi đồ).
+- **Quảng Trường Quỷ (Phase 18):** từ cấp 35, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h, 3h, 5h … 23h), cho vào
+  trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Quảng Trường (mua 20 000 vàng hoặc nhặt từ quái cấp 30+). 5 đợt quái
+  trong 5 phút, đợt cuối có trùm; thưởng vàng, kinh nghiệm, ngọc theo điểm, qua hết đợt có thêm món đồ. Top 3 mỗi ngày
+  nhận quà qua thư.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

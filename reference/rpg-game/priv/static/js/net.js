@@ -256,6 +256,8 @@
     arena() { return push('arena', {}); },
     // Chợ: { listings, fee, max }. Rao bán/mua/rút về là lệnh market_sell/market_buy/market_cancel.
     market(q) { return push('market', { q: q || '' }); },
+    // Quảng Trường Quỷ: { top: [{ name, score }] } (hôm nay)
+    dsTop() { return push('ds_top', {}); },
     inspect(uid) { return push('inspect', { uid }); },
     // Thăm nhà: { id, name, look, decor, comfort, likes, liked }; khen nhà: { likes }.
     visit(uid) { return push('visit', { uid }); },

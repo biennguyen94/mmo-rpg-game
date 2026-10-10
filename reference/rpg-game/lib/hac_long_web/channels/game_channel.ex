@@ -290,6 +290,12 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng hôm nay
+  def handle_in("ds_top", _p, socket) do
+    top = HacLong.DevilSquareBoard.top()
+    {:reply, {:ok, %{top: Enum.map(top, &Map.take(&1, [:name, :score]))}}, socket}
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 

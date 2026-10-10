@@ -74,6 +74,8 @@ jobs:
       - name: Chạy server
         env:
           TRUSTED_PROXIES: 127.0.0.1
+          # Quảng Trường Quỷ luôn mở để e2e ds.mjs chạy được bất kỳ giờ nào (Phase 18)
+          HL_DS_OPEN: "1"
         run: |
           mix phx.server > server.log 2>&1 &
           for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:4000/ && exit 0; sleep 1; done
