@@ -276,3 +276,19 @@ Món **bộ giáp** (mũ, giáp, quần, găng, giày) rơi từ quái có xác 
   Excellent / Đồ Thần / May mắn, Kỹ năng / Cánh / Đồ thường, ngọc) và **sắp xếp** (Mới nhất / Rẻ nhất / Đắt nhất) ở tab Mua.
   Lọc chạy ở client (`logic.js` `marketFilter`, có test), không đổi giao thức.
 - Phí chợ, số món rao tối đa, giá tối đa vẫn ở `RULES.market` như cũ.
+
+## 12. Báo cáo cân bằng (mục 8)
+
+`mix hac_long.balance` (nhanh, chỉ bảng tính) hoặc `mix hac_long.balance --sim 3` (thêm simulator, vài phút) ghi
+`docs/BALANCE_REPORT.md`: tỉ lệ rơi đồ hiếm / Excellent / May mắn / Kỹ năng / Thần theo loại quái (kèm "bao nhiêu con
+thì ra một lần"), tỉ lệ ép ngọc có / không May mắn, mọi công thức Máy Hỗn Nguyên, kết quả simulator 4 lớp × 5 cách chơi.
+Code: `HacLong.Game.Balance` (hàm thuần, có test). Đổi số trong `priv/game_data/` rồi chạy lại là bảng cập nhật.
+
+Nhận xét từ bản 2026-10-10 (để anh cân nhắc chỉnh, em **chưa** đổi số):
+
+- Quái thường hiếm khi ra đồ đặc biệt (Excellent ~1/625 con, Thần ~1/5 800 con); đồ đặc biệt chủ yếu đến từ tinh anh /
+  trùm / quái đêm. Muốn quái thường đáng đánh hơn: tăng `loot.gear_chance.normal` hoặc các `chance.normal`.
+- Vàng cuối khi hạ Hắc Long (cấp 35) chỉ khoảng 2 000–25 000, trong khi cánh cấp 2 cần 200 000 vàng, cánh cấp 3 500 000,
+  Pha Excellent 100 000: các mục này là việc của giai đoạn sau Hắc Long (bản đồ phụ cấp 35–50), hoặc giảm `gold` trong
+  `chaos.json` nếu anh muốn người chơi chạm tới sớm hơn.
+- Tiên Nữ vẫn ít vàng và chết nhiều hơn các lớp khác ở cách chơi "chỉ đánh" (như trước Phase 15).
