@@ -33,7 +33,7 @@ defmodule HacLong.Game.Daily do
   @doc "Đổi sang việc của ngày `date` nếu đang giữ việc của ngày khác."
   def ensure(nil, _date), do: nil
   def ensure(%{daily: %{date: date}} = p, date), do: p
-  def ensure(p, date), do: Map.put(p, :daily, %{date: date, tasks: generate(p, date)})
+  def ensure(p, date), do: Map.put(p, :daily, %{date: date, tasks: generate(p, date), bosses: []})
 
   def generate(p, date) do
     <<a::32, b::32, c::32, _::binary>> = :crypto.hash(:sha256, "#{p.name}|#{date}")

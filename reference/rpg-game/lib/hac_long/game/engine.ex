@@ -13,6 +13,8 @@ defmodule HacLong.Game.Engine do
   @save_version 1
   # số luật chơi: `RULES` trong `priv/game_data/rules.json`
   @rules Data.rules()
+  @boss_rw @rules.boss_rewards
+  @boss_weights Enum.map(@rules.boss_rewards.first_kill_weights, &List.to_tuple/1)
   @char @rules.character
   @combat @rules.combat
   @effects @rules.skill_effects
@@ -226,12 +228,25 @@ defmodule HacLong.Game.Engine do
 
   def xp_to_next(lv), do: round(@rules.xp.coef * :math.pow(lv, @rules.xp.exp) + @rules.xp.base)
 
+  @doc """
+  Vùng `zi` vào được / đánh được chưa: **đủ cấp** (cấp nhân vật ≥ `zone_level/1`, cấp quái thấp nhất
+  của vùng). Không còn khóa bằng trùm vùng trước (2026-10-10, `DECISIONS.md` B-4); trùm là thử thách
+  có thưởng (`first_boss_kill/3`, thưởng mỗi ngày `boss_daily/3`).
+  """
   def zone_unlocked?(_p, 0), do: true
 
   def zone_unlocked?(p, zi) do
-    case Data.zone(zi - 1) do
+    case zone_level(zi) do
       nil -> false
-      z -> z.boss.id in p.bosses
+      lv -> p.level >= lv
+    end
+  end
+
+  @doc "Cấp quái thấp nhất của vùng `zi` (nil nếu không có vùng)."
+  def zone_level(zi) do
+    case Data.zone(zi) do
+      nil -> nil
+      z -> z.monsters |> Enum.map(& &1.level) |> Enum.min()
     end
   end
 
@@ -1035,6 +1050,8 @@ defmodule HacLong.Game.Engine do
     {p, reward} =
       if m.boss and m.id not in p.bosses, do: first_boss_kill(p, m, reward), else: {p, reward}
 
+    {p, reward} = boss_daily(p, m, reward)
+
     {p, reward} = gear_drop(p, m, reward)
 
     {p, reward} =
@@ -1154,22 +1171,64 @@ defmodule HacLong.Game.Engine do
           {p, %{reward | items: reward.items ++ [drop]}}
       end
 
-    next = Data.zone(p.battle.zone + 1)
+    # lần đầu hạ trùm vùng: chắc chắn một món đồ Hiếm / Sử Thi đúng lớp (danh hiệu ở thành tựu)
+    {p, reward} =
+      if is_integer(p.battle.zone),
+        do: boss_gear(p, m, reward),
+        else: {p, reward}
 
     p =
-      cond do
-        m.final ->
-          %{p | victory: true} |> log("Hắc Long đã gục ngã. Vùng đất được giải phóng!", "win")
-
-        next ->
-          log(p, "Đã mở khu vực mới: #{next.name}.", "win")
-
-        true ->
-          p
-      end
+      if m.final,
+        do: %{p | victory: true} |> log("Hắc Long đã gục ngã. Vùng đất được giải phóng!", "win"),
+        else: log(p, "🏆 Lần đầu hạ #{m.name}! Nhận danh hiệu Diệt #{m.name}.", "win")
 
     {p, reward}
   end
+
+  defp boss_gear(p, m, reward) do
+    # vài lần thử: lớp nào cũng có ít nhất vũ khí / giáp hợp lớp
+    g =
+      Enum.find_value(1..8, fn _ ->
+        Gear.roll(m.level, @boss_weights, nil, p.cls)
+      end)
+
+    case g do
+      nil ->
+        {p, reward}
+
+      g ->
+        label = "#{Gear.resolve(g).name} (#{Gear.rarity_names()[g.rarity]})"
+
+        case Gear.add(p, g) do
+          {p, :kept} ->
+            {log(p, "🎁 #{m.name} để lại #{label}!", "win"),
+             Map.update(reward, :gear, [label], &(&1 ++ [label]))}
+
+          {p, {:sold, gold}} ->
+            {log(p, "🎁 #{m.name} để lại #{label}, túi đầy nên bán được #{gold} vàng.", "good"),
+             Map.update(reward, :gear, [label], &(&1 ++ [label]))}
+        end
+    end
+  end
+
+  # Trùm vùng hạ lại được: lần đầu mỗi ngày (giờ Việt Nam) cho ngọc theo `RULES.boss_rewards.daily`.
+  defp boss_daily(%{battle: %{zone: zi}, daily: %{} = d} = p, %{boss: true} = m, reward)
+       when is_integer(zi) do
+    done = Map.get(d, :bosses) || []
+
+    case m.id not in done &&
+           @boss_rw.daily |> Enum.filter(&(&1.from_zone <= zi)) |> List.last() do
+      %{item: item, n: n} ->
+        p = %{p | daily: Map.put(d, :bosses, done ++ [m.id])} |> add_item(item, n)
+        p = log(p, "🎖 Thưởng hạ #{m.name} hôm nay: #{Data.item(item).name} ×#{n}.", "win")
+        {p, %{reward | items: reward.items ++ [item]}}
+
+      _ ->
+        {p, reward}
+    end
+  end
+
+  defp boss_daily(p, _m, reward), do: {p, reward}
 
   defp lose(p) do
     lost = floor(p.gold * @char.death_gold_loss)

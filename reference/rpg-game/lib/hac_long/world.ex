@@ -202,8 +202,11 @@ defmodule HacLong.World do
     target = Maps.get(portal.to)
 
     if target.zone && not Engine.zone_unlocked?(p, target.zone) do
-      prev = Data.zone(target.zone - 1)
-      {%{ok: false, msg: "Hạ #{prev.boss.name} để mở #{Data.zone(target.zone).name}."}, p}
+      {%{
+         ok: false,
+         msg:
+           "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
+       }, p}
     else
       leave(p, uid)
       {x, y} = portal.spawn
@@ -436,7 +439,7 @@ defmodule HacLong.World do
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       target.zone && not Engine.zone_unlocked?(p, target.zone) ->
-        {%{ok: false, msg: "Vùng chưa mở."}, p}
+        {%{ok: false, msg: "Cần đạt cấp #{Engine.zone_level(target.zone)} để tới vùng này."}, p}
 
       true ->
         leave(p, uid)

@@ -216,9 +216,11 @@ defmodule HacLong.Game.Characters do
 
   defp quests(_), do: HacLong.Game.Quests.empty()
 
-  defp daily(%{"date" => date, "tasks" => tasks}) do
+  defp daily(%{"date" => date, "tasks" => tasks} = d) do
     %{
       date: date,
+      # trùm đã nhận thưởng hôm nay (`Engine.boss_daily/3`)
+      bosses: d["bosses"] || [],
       tasks:
         Enum.map(tasks, fn t ->
           %{

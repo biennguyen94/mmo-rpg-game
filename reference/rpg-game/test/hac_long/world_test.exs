@@ -62,14 +62,14 @@ defmodule HacLong.WorldTest do
     assert p.hp == Engine.derived(p).maxHp and p.pos.x == 8
   end
 
-  test "cổng vào vùng chưa mở bị khóa", %{uid: uid, p: p} do
+  test "cổng vào vùng chưa đủ cấp bị khóa (mở theo cấp, không cần hạ trùm)", %{uid: uid, p: p} do
     p = at(p, "village", 18, 1)
     World.enter(p, uid)
 
-    assert {%{ok: false, msg: "Hạ Sói Xám Đầu Đàn để mở Trại Goblin."}, ^p} =
+    assert {%{ok: false, msg: "Cần đạt cấp 6 để vào Trại Goblin."}, ^p} =
              World.move(p, uid, "up")
 
-    {%{ok: true}, p2} = World.move(%{p | bosses: ["wolf"]}, uid, "up")
+    {%{ok: true}, p2} = World.move(%{p | level: 6, bosses: []}, uid, "up")
     assert p2.pos.map == "camp_1"
     snap = MapServer.snapshot("camp_1")
     assert Enum.any?(snap.players, &(&1.id == uid))

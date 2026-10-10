@@ -1,7 +1,7 @@
 defmodule HacLong.Game.EngineTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Data, Engine, Rng, Simulator}
+  alias HacLong.Game.{Daily, Data, Engine, Rng, Simulator}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -155,16 +155,31 @@ defmodule HacLong.Game.EngineTest do
     assert Enum.any?(p.battle.log, &(&1.text == "Hết bị bỏng."))
   end
 
-  test "hạ trùm mở vùng mới, gục ngã mất 10% vàng" do
+  test "vùng mở theo cấp; hạ trùm lần đầu: đồ hiếm đúng lớp + danh hiệu, mỗi ngày thêm ngọc; gục ngã mất 10% vàng" do
     Rng.put_sequence([0.5])
-    p = %{player() | level: 30, gold: 1000}
-    refute Engine.zone_unlocked?(p, 1)
+
+    # B-4: đủ cấp (cấp quái thấp nhất của vùng) là vào được, không cần hạ trùm
+    refute Engine.zone_unlocked?(%{player() | level: 5}, 1)
+    assert Engine.zone_unlocked?(%{player() | level: 6}, 1)
+
+    p = Daily.ensure(%{player() | level: 30, gold: 1000}, "2026-10-10")
     {_, p} = Engine.start_battle(p, 0, true)
     p = put_in(p.battle.monster.hp, 1)
     {%{result: "win"}, won} = Engine.act(p, "attack")
     assert "wolf" in won.bosses
-    assert Engine.zone_unlocked?(won, 1)
-    assert List.last(won.battle.log).text =~ "Đã mở khu vực mới"
+    assert [g] = HacLong.Game.Gear.bag(won)
+    assert g.rarity in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
+    assert won.inv["jewel_bless"] == 1 and won.daily.bosses == ["wolf"]
+    assert Enum.any?(won.battle.log, &(&1.text =~ "Lần đầu hạ"))
+    {won, _} = HacLong.Game.Achievements.check(won)
+    assert "boss_wolf" in won.achievements
+
+    # hạ lại cùng ngày: không thêm ngọc, không thêm đồ chắc chắn
+    {_, again} = Engine.leave_battle(won)
+    {_, again} = Engine.start_battle(again, 0, true)
+    again = put_in(again.battle.monster.hp, 1)
+    {%{result: "win"}, again} = Engine.act(again, "attack")
+    assert again.inv["jewel_bless"] == 1
 
     p = %{p | hp: 1, stats: %{p.stats | agi: 0}}
     p = put_in(p.battle.monster.hp, 10_000)

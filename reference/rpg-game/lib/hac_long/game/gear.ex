@@ -117,7 +117,7 @@ defmodule HacLong.Game.Gear do
   `slot` chọn loại đồ (mặc định ngẫu nhiên).
   `weights`: tỉ lệ các độ hiếm `[{độ_hiếm, tỉ_lệ}]` (mặc định 5% Sử Thi, 25% Hiếm, 70% Tốt).
   """
-  def roll(level, weights \\ @weights, slot \\ nil) do
+  def roll(level, weights \\ @weights, slot \\ nil, cls \\ nil) do
     slot =
       slot ||
         (
@@ -130,7 +130,8 @@ defmodule HacLong.Game.Gear do
     bases =
       Data.items()
       |> Enum.filter(fn {_, it} ->
-        it.slot == slot and it.price > 0 and !it[:drop] and (it[:level] || 1) <= level
+        it.slot == slot and it.price > 0 and !it[:drop] and (it[:level] || 1) <= level and
+          (cls == nil or it[:cls] in [nil, cls])
       end)
       |> Enum.sort_by(fn {_, it} -> it.level end, :desc)
       |> Enum.take(2)

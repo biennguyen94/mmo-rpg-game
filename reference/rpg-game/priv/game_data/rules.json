@@ -696,6 +696,30 @@
       "red_s": 1800,
       "red_gold_mult": 2
     },
+    "boss_rewards": {
+      "first_kill_weights": [
+        [
+          2,
+          75
+        ],
+        [
+          3,
+          25
+        ]
+      ],
+      "daily": [
+        {
+          "from_zone": 0,
+          "item": "jewel_bless",
+          "n": 1
+        },
+        {
+          "from_zone": 3,
+          "item": "jewel_soul",
+          "n": 1
+        }
+      ]
+    },
     "tienlen": {
       "max_rooms": 50,
       "stake_max": 100000
