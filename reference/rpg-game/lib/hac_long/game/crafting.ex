@@ -149,7 +149,9 @@ defmodule HacLong.Game.Crafting do
           Gear.roll(
             max(p.level, Data.rules().chests.min_level),
             smith_weights(level(p, :smith)),
-            slot
+            # Phase 15b: rèn "giáp" ra một món bất kỳ của bộ giáp, đúng lớp người rèn
+            if(slot == "armor", do: "set", else: slot),
+            p.cls
           )
 
         p = %{take_all(p, cost) | gold: p.gold - gold}

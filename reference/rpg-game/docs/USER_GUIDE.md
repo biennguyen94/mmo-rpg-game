@@ -68,10 +68,14 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 | Đầm Lầy Rồng | 24–29 | Kim Long (30) |
 | Hang Hắc Long | 30–35 | **HẮC LONG** (36) |
 
-- Hạ trùm vùng thì mở vùng tiếp theo. Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
+- **Vùng mở theo cấp**: cấp nhân vật ≥ cấp quái thấp nhất của vùng là vào và đánh được, không cần hạ trùm trước.
+- **Trùm vùng là thử thách có thưởng**: hạ lần đầu chắc chắn rơi một món đồ **Hiếm / Sử Thi đúng lớp** và nhận danh hiệu
+  **Diệt <tên trùm>** (chọn ở tab Thành tựu); mỗi ngày lần đầu hạ một trùm được thêm ngọc (vùng 1–3: Ngọc Phúc Lành,
+  vùng 4–6: Ngọc Linh Hồn). Hạ Hắc Long vẫn là đích cuối, lên bảng **Diệt rồng**.
+- Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
 - Gặp trùm là vào trận ngay như quái thường.
 - **50 bản đồ phụ** (cấp quái 1–50, 10 nhóm: Đồng Cỏ Xanh, Rừng Thưa, Gò Kiến Đỏ, Đầm Sương, Cao Nguyên Tuyết, Thung Lũng U Linh, Mộ Cổ Hoang, Lò Nguyên Tố, Đỉnh Khổng Lồ, Vực Quỷ): vào bằng cổng xanh ở mép phải Rừng Mê 1, Rừng Mê 2, Trại Goblin 1–2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1–2, Đầm Lầy Rồng 2, Hang Hắc Long 1–2; mỗi nhóm 5 bản đồ nối tiếp nhau.
-- **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): dịch chuyển tới mọi bản đồ đã mở, tốn 20 + 4 × cấp quái thấp nhất (Làng, Nhà miễn phí). Bản đồ phụ phải đi qua cổng một lần mới mở.
+- **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng, Nhà miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).
 - **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
@@ -93,6 +97,31 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Tab **Túi đồ**: các ô trang bị (vũ khí, giáp, khiên, cánh…) và túi. Chạm một món để xem **bảng chi tiết**: chỉ số, so với đồ
   đang mặc, yêu cầu cấp; các nút **Trang bị / Tháo**, **🔒 Khóa** (đồ khóa không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép),
   **Ép** (chọn món để ép ở Thợ Rèn), **Vứt** (hỏi lại; nhiều món thì hỏi số lượng). Máy tính kéo thả được đồ lên ô trang bị.
+- **Đồ theo lớp (Phase 15b):** 8 ô — vũ khí, khiên, cánh, mũ, giáp, quần, găng, giày (Đấu Sĩ không đội mũ). Mỗi lớp có vũ khí
+  riêng (Kiếm Sĩ / Đấu Sĩ kiếm rìu, Phù Thủy gậy, Tiên Nữ cung nỏ) và bộ giáp riêng 6 bậc; mặc đủ bộ thì phòng thủ bằng tổng các
+  món. Bảng chi tiết ghi **Dùng cho** (lớp) và **Cần** (Sức mạnh / Nhanh nhẹn… — đỏ khi thiếu, cộng điểm ở tab Nhân vật).
+  Thợ Rèn chỉ bày đồ của lớp mình. Đồ cũ (Kiếm Sắt, Giáp Xích…) tự đổi sang món mới cùng bậc, giữ nguyên +N và khóa.
+- **Nhẫn, dây chuyền, đồ Excellent, đủ bộ (Phase 15c):** 2 ô nhẫn (máu / thủ) và 1 ô dây chuyền (tấn công), chỉ rơi từ quái.
+  Đồ **Excellent** (tên xanh lục) có thêm 1–3 dòng đặc biệt: tăng sát thương, chí mạng, hồi máu / MP khi hạ quái, máu tối đa,
+  giảm sát thương nhận, vàng nhặt được. Mặc **đủ bộ giáp** từ bậc 2 trở lên được +10 % phòng thủ, +3 % tấn công và thêm máu
+  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32.
+- **May mắn, Kỹ năng (Phase 15d):** đồ rơi đôi khi có dòng xanh dương **May mắn** (ép ngọc +7..+11 dễ thành công hơn 25 %;
+  nếu là vũ khí thì thêm 5 % chí mạng) và vũ khí có thể có **Kỹ năng** (chiêu gây thêm 10 % sát thương). Đồ có các dòng này bán
+  được giá hơn.
+- **Cánh cấp 3, dòng cánh (Phase 15e):** từ cấp 45 ghép được cánh cấp 3 (cánh cấp 2 +9 trở lên + ngọc ở Máy Hỗn Nguyên),
+  +25 % sát thương và −25 % sát thương nhận. Ghép thành công cánh cấp 2 / 3 còn được thêm một **dòng cánh** ngẫu nhiên: máu tối
+  đa, MP tối đa hoặc bỏ qua một phần phòng thủ của đối thủ.
+- **Máy Hỗn Nguyên pha đồ (Phase 15f):** Pha Excellent (thêm 1 dòng Excellent cho món +5 trở lên) và Pha May mắn (thêm May
+  mắn cho món +3 trở lên). Thất bại thì mất món.
+- **Đồ Bộ Thần (Phase 15g):** món bộ giáp rơi từ quái đôi khi là đồ Thần (tên cam, phòng thủ +20 %). Mặc 2 / 3 / đủ món Thần
+  cùng bộ được thêm tấn công, phòng thủ, máu (dòng "Bộ Thần …" ở tab Túi đồ).
+- **Quảng Trường Quỷ (Phase 18):** từ cấp 35, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h, 3h, 5h … 23h), cho vào
+  trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Quảng Trường (mua 20 000 vàng hoặc nhặt từ quái cấp 30+). 5 đợt quái
+  trong 5 phút, đợt cuối có trùm; thưởng vàng, kinh nghiệm, ngọc theo điểm, qua hết đợt có thêm món đồ. Top 3 mỗi ngày
+  nhận quà qua thư.
+- **Lâu Đài Máu (Phase 18):** từ cấp 40, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (0h30, 2h30 … 22h30), cho vào
+  trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài (mua 30 000 vàng hoặc nhặt từ quái cấp 35+). Trong 8 phút: hạ 8
+  quân canh, phá Cổng Thành, hạ Hiệp Sĩ Máu để nhận Lông Vũ Kền Kền (cần để ghép cánh cấp 3), vàng, kinh nghiệm, 2 ngọc.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.
@@ -174,6 +203,28 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   - Mỗi trận đồ sát được báo trên kênh thế giới.
 
 ![Đồ sát](screenshots/e2e-pk.png)
+
+### Tiến Lên Miền Nam (sòng bài ở Làng)
+
+- Gặp **Bà Chủ Sòng** ở Làng (hoặc Menu → 🃏 Tiến Lên) để vào **sảnh**: danh sách bàn, mở bàn mới (mức cược, bàn
+  riêng), vào bằng mã phòng, 📜 Ván đã chơi.
+- Bàn 2–4 người. Chủ bàn (👑) thêm **máy** (dễ / thường) vào ghế trống, rồi bấm **Chia bài**. Bàn có máy chỉ
+  **chơi vui** (cược 0).
+- Chạm lá để chọn, **Gợi ý** chọn sẵn nước đánh được (bấm tiếp để đổi). Nút **Đánh** ghi lý do khi chưa đánh được
+  (sai bộ, chưa đủ lớn…). **Chặt ngoài lượt!** hiện khi bạn cầm bốn đôi thông chặt được.
+- Luật như bản gốc: 3 → 2, ♠ < ♣ < ♦ < ♥; chặt heo / chặt chồng; tới trắng (tứ quý heo, sáu đôi, sảnh rồng,
+  tứ quý 3 ván đầu); mỗi lượt 20 giây (hết giờ server đánh thay); rời bàn / mất kết nối quá 20 giây giữa ván là
+  bị loại (tính Bét).
+- **Cược S vàng**: cần ít nhất 10×S vàng mới được chia bài. Bét trả Nhất S (4 người: Ba trả Nhì S/2); chặt heo
+  đen 1×S, đỏ 2×S (chặt chồng nhân lên); thối heo khi về chót; tới trắng mỗi người trả 2×S. Thiếu vàng thì trả
+  tối đa số đang có.
+- Ném 🍅 1 · 🥚 2 · 🩴 3 · 🌹 5 vàng vào ghế người khác (bấm vào ghế); biểu cảm, chat bàn, câu nhanh; 😮‍💨 thổi bài
+  (cho vui, không đổi gì).
+- **Mời bạn**: lúc bàn đang chờ có ghế trống, bấm **👥 Mời bạn** → chọn bạn bè (🟢 đang online). Bạn nhận thông báo
+  **🃏 Vào bàn** (và tin riêng có nút đó, kể cả khi đang offline); bấm là ngồi vào bàn.
+- **Xem trận**: bấm 👀 Xem ở sảnh (không thấy bài ai). **Xem lại ván**: 📜 Ván đã chơi → ▶ Xem lại (thấy hết bài).
+
+![Tiến Lên](screenshots/e2e-tienlen.png)
 
 ## 12. Bang hội và chiến bang
 

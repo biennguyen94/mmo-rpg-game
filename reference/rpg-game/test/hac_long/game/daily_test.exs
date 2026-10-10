@@ -32,8 +32,8 @@ defmodule HacLong.Game.DailyTest do
     assert Daily.ensure(p2, "2026-10-02").daily.date == "2026-10-02"
     assert Daily.generate(p, "2026-10-01") == p.daily.tasks
 
-    # đã mở nhiều vùng thì việc ở hai vùng cao nhất
-    strong = player(%{bosses: ~w(wolf orc_warrior lich hill_giant)})
+    # đủ cấp vào nhiều vùng (B-4: mở vùng theo cấp) thì việc ở hai vùng cao nhất
+    strong = player(%{level: 24})
 
     zones =
       strong |> Daily.ensure("2026-10-01") |> get_in([:daily, :tasks]) |> Enum.map(& &1.zone)

@@ -135,7 +135,9 @@ defmodule HacLong.Game.Characters do
 
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
   # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
-  defp to_player(%Character{} = c), do: c |> to_map() |> HacLong.Game.Engine.split_upgrades()
+  defp to_player(%Character{} = c),
+    do:
+      c |> to_map() |> HacLong.Game.Engine.migrate_items() |> HacLong.Game.Engine.split_upgrades()
 
   defp to_map(c) do
     %{
@@ -149,7 +151,8 @@ defmodule HacLong.Game.Characters do
       points: c.points,
       stats: Map.new(~w(str agi vit ene)a, &{&1, Map.fetch!(c.stats, Atom.to_string(&1))}),
       mp: c.mp || 0,
-      equip: Map.new(~w(weapon armor shield wing)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
+      equip:
+        Map.new(HacLong.Game.Engine.equip_slots(), &{String.to_atom(&1), Map.get(c.equip, &1)}),
       inv: c.inv,
       bosses: c.bosses,
       kills: c.kills,
@@ -216,9 +219,11 @@ defmodule HacLong.Game.Characters do
 
   defp quests(_), do: HacLong.Game.Quests.empty()
 
-  defp daily(%{"date" => date, "tasks" => tasks}) do
+  defp daily(%{"date" => date, "tasks" => tasks} = d) do
     %{
       date: date,
+      # trùm đã nhận thưởng hôm nay (`Engine.boss_daily/3`)
+      bosses: d["bosses"] || [],
       tasks:
         Enum.map(tasks, fn t ->
           %{
@@ -233,6 +238,14 @@ defmodule HacLong.Game.Characters do
           }
         end)
     }
+    # Quảng Trường Quỷ (Phase 18 M1): đợt đã vào, điểm cao nhất hôm nay (chỉ có khi đã chơi)
+    |> then(fn m ->
+      Enum.reduce([{"ds_slot", :ds_slot}, {"ds_best", :ds_best}, {"bc_slot", :bc_slot}], m, fn {k,
+                                                                                                a},
+                                                                                               m ->
+        if d[k] == nil, do: m, else: Map.put(m, a, d[k])
+      end)
+    end)
   end
 
   defp daily(_), do: nil
@@ -245,6 +258,10 @@ defmodule HacLong.Game.Characters do
   defp pos(c), do: World.valid_pos(%{map: c.map_id, x: c.x, y: c.y})
 
   defp tower(%{"floor" => floor} = t) do
+    # Quảng Trường Quỷ / Lâu Đài Máu (Phase 18) chạy trên trạng thái tháp, thêm `ds` / `bc`
+    ds = t["ds"]
+    bc = t["bc"]
+
     %{
       floor: floor,
       tiles: t["tiles"],
@@ -259,10 +276,36 @@ defmodule HacLong.Game.Characters do
             level: m["level"],
             x: m["x"],
             y: m["y"],
-            elite: m["elite"]
+            elite: m["elite"],
+            role: m["role"]
           }
+          |> Map.reject(fn {k, v} -> k == :role and v == nil end)
         end)
     }
+    |> then(fn tw ->
+      if is_map(ds),
+        do:
+          Map.put(tw, :ds, %{
+            level: ds["level"],
+            ends_at: ds["ends_at"],
+            score: ds["score"],
+            waves: ds["waves"]
+          }),
+        else: tw
+    end)
+    |> then(fn tw ->
+      if is_map(bc),
+        do:
+          Map.put(tw, :bc, %{
+            level: bc["level"],
+            ends_at: bc["ends_at"],
+            stage: bc["stage"],
+            guards: bc["guards"],
+            killed: bc["killed"],
+            done: bc["done"] == true
+          }),
+        else: tw
+    end)
   end
 
   defp tower(_), do: nil

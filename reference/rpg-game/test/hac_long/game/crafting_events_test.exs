@@ -74,7 +74,12 @@ defmodule HacLong.Game.CraftingEventsTest do
 
     {%{ok: true, gear: uid}, p2} = Crafting.smith(p, "armor")
     g = Gear.find(p2, uid)
-    assert HacLong.Game.Data.item(g.base).slot == "armor" and g.rarity in 1..3
+    # Phase 15b: rèn "giáp" ra một món bất kỳ của bộ giáp đúng lớp
+    it = HacLong.Game.Data.item(g.base)
+
+    assert it.slot in ~w(helm armor pants gloves boots) and "dk" in it.classes and
+             g.rarity in 1..3
+
     assert p2.inv["ore"] == 15 and p2.inv["ore_rare"] == 2 and p2.gold == p.gold - 150
     assert Crafting.xp(p2, :smith) == 1
 

@@ -223,7 +223,7 @@ defmodule HacLongWeb.SlayTest do
     assert Slay.red?(ua.id) and Slay.red_s(ua.id) > 1700
     refute Slay.red?(ub.id)
     assert Slay.protected_s(ub.id) in 100..120
-    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "đã hạ"))
+    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "đã đồ sát"))
 
     # hồ sơ hiện tên đỏ; ảnh chụp bản đồ có cờ đỏ
     ref = push(sb, "inspect", %{"uid" => ua.id})

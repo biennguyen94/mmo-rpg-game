@@ -9,7 +9,7 @@ defmodule HacLong.World do
   Session luôn gọi MapServer, không bao giờ ngược lại, nên không thể bị treo chờ nhau.
   """
 
-  alias HacLong.Game.{Daily, Data, Engine, Home, Tower}
+  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Tower}
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
 
@@ -127,6 +127,62 @@ defmodule HacLong.World do
   defp tower_move(%{tower: nil} = p, uid, _d),
     do: leave_tower(p, uid, "Lượt leo tháp đã kết thúc.")
 
+  # Quảng Trường Quỷ (Phase 18 M1): cùng bản đồ riêng `tower`, trạng thái `p.tower.ds`
+  defp tower_move(%{tower: %{ds: %{}} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+
+    cond do
+      DevilSquare.expired?(p) ->
+        p |> DevilSquare.finish("hết giờ") |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        case Engine.start_with_monster(p, Data.zone_count() - 1, DevilSquare.battle_monster(m)) do
+          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
+          other -> other
+        end
+
+      tile == ">" ->
+        p |> DevilSquare.climb() |> ds_back(uid)
+
+      tile == "<" ->
+        p |> DevilSquare.finish("tự rời") |> ds_back(uid)
+
+      tile == "." ->
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
+  # Lâu Đài Máu (Phase 18 M2): cùng bản đồ riêng `tower`, trạng thái `p.tower.bc`
+  # (phải đứng trước mệnh đề Tháp Vô Tận chung bên dưới, vốn khớp mọi `p.tower`)
+  defp tower_move(%{tower: %{bc: bc} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+
+    cond do
+      bc.done or BloodCastle.expired?(p) ->
+        p |> BloodCastle.leave() |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        case Engine.start_with_monster(p, Data.zone_count() - 1, BloodCastle.battle_monster(m)) do
+          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
+          other -> other
+        end
+
+      tile == "<" ->
+        p |> BloodCastle.leave() |> ds_back(uid)
+
+      tile in [".", ">"] ->
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
   defp tower_move(%{tower: t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
     {tx, ty} = {x + dx, y + dy}
     tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
@@ -155,6 +211,14 @@ defmodule HacLong.World do
         {%{ok: false}, p}
     end
   end
+
+  # lượt Quảng Trường vừa kết thúc (đã về Làng): vào lại bản đồ Làng chung
+  defp ds_back({r, %{tower: nil} = p}, uid) do
+    enter(p, uid)
+    {r, p}
+  end
+
+  defp ds_back(res, _uid), do: res
 
   defp leave_tower(p, uid, msg) do
     p = %{p | pos: @tower_door} |> Map.put(:tower, nil)
@@ -202,8 +266,11 @@ defmodule HacLong.World do
     target = Maps.get(portal.to)
 
     if target.zone && not Engine.zone_unlocked?(p, target.zone) do
-      prev = Data.zone(target.zone - 1)
-      {%{ok: false, msg: "Hạ #{prev.boss.name} để mở #{Data.zone(target.zone).name}."}, p}
+      {%{
+         ok: false,
+         msg:
+           "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
+       }, p}
     else
       leave(p, uid)
       {x, y} = portal.spawn
@@ -251,14 +318,16 @@ defmodule HacLong.World do
     end
   end
 
-  @doc "Bản đồ tới được bằng bảng chọn: vùng đã mở (bản đồ thường), đã đi tới (bản đồ phụ), Làng, Nhà."
+  @doc """
+  Bản đồ tới được bằng bảng chọn: Làng, Nhà, và mọi bản đồ chung khi **cấp nhân vật ≥ cấp quái thấp
+  nhất** của bản đồ (`min_level/1`; không có quái thì tới được). Không cần mở vùng hay đi qua cổng trước
+  (theo yêu cầu 2026-10-10). Vàng kiểm ở `travel/3`.
+  """
   def can_travel?(p, map) do
     cond do
       map.id in @travel.free -> true
-      map.side -> map.id in (Map.get(p, :visited) || [])
       map.private or map.id == "tower" -> false
-      is_integer(map.zone) -> Engine.zone_unlocked?(p, map.zone)
-      true -> true
+      true -> p.level >= (min_level(map) || 0)
     end
   end
 
@@ -277,7 +346,7 @@ defmodule HacLong.World do
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       not can_travel?(p, target) ->
-        {%{ok: false, msg: "Chưa mở bản đồ này (đi qua cổng một lần trước)."}, p}
+        {%{ok: false, msg: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."}, p}
 
       p.gold < travel_cost(target) ->
         {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}
@@ -434,7 +503,7 @@ defmodule HacLong.World do
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       target.zone && not Engine.zone_unlocked?(p, target.zone) ->
-        {%{ok: false, msg: "Vùng chưa mở."}, p}
+        {%{ok: false, msg: "Cần đạt cấp #{Engine.zone_level(target.zone)} để tới vùng này."}, p}
 
       true ->
         leave(p, uid)

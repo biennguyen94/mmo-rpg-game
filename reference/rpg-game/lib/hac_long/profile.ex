@@ -13,7 +13,7 @@ defmodule HacLong.Profile do
   alias HacLong.Game.{Character, Crafting, Engine, Gear, Pets}
   alias HacLong.World.Maps
 
-  @slots ~w(weapon armor shield wing)a
+  @slots Enum.map(Engine.equip_slots(), &String.to_atom/1)
 
   def build(uid, p, online?) do
     d = Engine.derived(p)

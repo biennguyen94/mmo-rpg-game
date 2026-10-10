@@ -13,6 +13,8 @@ defmodule HacLong.Game.Commands do
     Crafting,
     Daily,
     Data,
+    BloodCastle,
+    DevilSquare,
     Engine,
     Events,
     Fishing,
@@ -168,6 +170,20 @@ defmodule HacLong.Game.Commands do
 
       "tutorial_skip" ->
         Tutorial.skip(p)
+
+      # Quảng Trường Quỷ (Phase 18 M1): vào / mua vé ở Người Gác Tháp
+      "ds_enter" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> DevilSquare.enter(p) end)
+
+      "ds_buy" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> DevilSquare.buy_ticket(p) end)
+
+      # Lâu Đài Máu (Phase 18 M2)
+      "bc_enter" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> BloodCastle.enter(p) end)
+
+      "bc_buy" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> BloodCastle.buy_ticket(p) end)
 
       "tower_enter" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->

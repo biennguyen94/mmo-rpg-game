@@ -92,12 +92,55 @@ defmodule HacLong.Game.Data do
   # Phase 15a: quái của bản đồ phụ (không thuộc vùng nào), `side.json`
   @side_monsters atomize.(atomize, raw["SIDE_MONSTERS"] || [])
   @side_by_id Map.new(@side_monsters, &{&1.id, &1})
+  # Phase 15b (`docs/ITEMS_PHASE15B.md`): đồ dựng từ Item.txt (`items_mu.json`, khóa `ITEMS_MU`,
+  # `mix hac_long.items.build`) gộp vào ITEMS. Khi có đồ mới, đồ cũ trong `ITEM_PICK.legacy` mang
+  # `legacy: %{kind, tier}`: thôi bán / rơi, nhân vật nạp lên thì đổi sang đồ mới cùng ô, cùng bậc.
+  @pick raw["ITEM_PICK"] || %{}
+  @mu_items by_id.(raw["ITEMS_MU"] || %{})
+  @legacy if @mu_items == %{},
+            do: %{},
+            else:
+              for(
+                {kind, ids} <- @pick["legacy"] || %{},
+                {id, tier} <- Enum.with_index(ids, 1),
+                into: %{},
+                do: {id, %{kind: kind, tier: tier}}
+              )
+  # `ITEM_PICK.refs`: đồ riêng của Hắc Long (cánh, đồ trùm) mượn hình gốc theo `ref` "nhóm/số"
+  @refs @pick["refs"] || %{}
   @items by_id.(raw["ITEMS"])
+         |> Map.new(fn {id, it} ->
+           it = if(l = @legacy[id], do: Map.put(it, :legacy, l), else: it)
+           {id, if(r = @refs[id], do: Map.put(it, :ref, r), else: it)}
+         end)
+         |> Map.merge(@mu_items)
+  @mu_slots ~w(weapon shield helm armor pants gloves boots ring pendant)
+  # nhẫn / dây chuyền chỉ rơi (không bán, không phải đồ khởi đầu)
+  @jewelry ~w(ring pendant)
+  @mu_sorted @mu_items
+             |> Enum.sort_by(fn {id, it} ->
+               {Enum.find_index(@mu_slots, &(&1 == it.slot)), it.tier, id}
+             end)
+  # đồ cũ → đồ mới theo lớp: `{id_cũ, lớp} => id_mới`
+  @replace for {old, %{kind: kind, tier: tier}} <- @legacy,
+               {id, it} <- @mu_sorted,
+               it.slot == kind and it.tier == tier,
+               cls <- it.classes,
+               into: %{},
+               do: {{old, cls}, id}
+  # đồ khởi đầu theo lớp: bậc 1 mọi ô trừ khiên (`%{ô => id}`)
+  @starters @mu_sorted
+            |> Enum.filter(fn {_, it} -> it.tier == 1 and it.slot not in ["shield" | @jewelry] end)
+            |> Enum.flat_map(fn {id, it} -> for c <- it.classes, do: {c, it.slot, id} end)
+            |> Enum.group_by(&elem(&1, 0), &{String.to_atom(elem(&1, 1)), elem(&1, 2)})
+            |> Map.new(fn {c, l} -> {c, Map.new(l)} end)
   @boss_drops raw["BOSS_DROPS"]
   @pets atomize.(atomize, raw["PETS"])
   @furniture atomize.(atomize, raw["FURNITURE"])
   @events atomize.(atomize, raw["EVENTS"])
-  @shop raw["SHOP"]
+  # cửa hàng: bỏ đồ cũ đã thay, thêm đồ mới có giá (theo ô, bậc)
+  @shop (raw["SHOP"] -- Map.keys(@legacy)) ++
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id)
   @recipes atomize.(atomize, raw["RECIPES"])
            |> Enum.map(
              &Map.update!(&1, :needs, fn n ->
@@ -191,8 +234,40 @@ defmodule HacLong.Game.Data do
   def monster(id), do: Map.get(@monsters, id)
   def items, do: @items
   def item(id), do: Map.get(@items, id)
+
+  @doc "Đồ mới thay đồ cũ `id` cho lớp `cls` (Phase 15b); nil nếu `id` không phải đồ cũ đã thay."
+  def replacement(id, cls), do: Map.get(@replace, {id, cls})
+
+  # số món của mỗi bộ giáp cho từng lớp (Phase 15c, thưởng đủ bộ): `{bộ, lớp} => n`
+  @set_sizes for({_, it} <- @mu_sorted, it[:set], c <- it.classes, do: {it.set, c})
+             |> Enum.frequencies()
+
+  @doc "Số món của bộ giáp `set` mà lớp `cls` mặc được (Đấu Sĩ không mũ: 4); 0 nếu không có."
+  def set_size(set, cls), do: Map.get(@set_sizes, {set, cls}, 0)
+
+  @doc "Đồ cũ đã được thay bằng đồ Item.txt (thôi bán / rơi)."
+  def legacy?(id), do: Map.has_key?(@legacy, id)
+
+  @doc """
+  Đồ khởi đầu của lớp `cls`: `%{weapon: id, armor: id, …}` (bậc 1 trong `items_mu.json`).
+  Chưa có đồ mới thì Gậy Gỗ + Áo Da Mỏng như cũ.
+  """
+  def starters(cls), do: Map.get(@starters, cls, %{weapon: "club", armor: "vest"})
   def boss_drop(boss_id), do: Map.get(@boss_drops, boss_id)
   def shop, do: @shop
+
+  @doc """
+  Hàng của một NPC bán đồ (`stock` trong bản đồ): có đồ cũ đã thay (Phase 15b) thì bỏ đồ cũ, thêm
+  mọi đồ Item.txt có giá (theo ô, bậc); không thì giữ nguyên.
+  """
+  def stock(list) do
+    if Enum.any?(list, &legacy?/1),
+      do:
+        (list -- Map.keys(@legacy)) ++
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id),
+      else: list
+  end
+
   def recipes, do: @recipes
   def recipe(id), do: Enum.find(@recipes, &(&1.id == id))
   def pets, do: @pets

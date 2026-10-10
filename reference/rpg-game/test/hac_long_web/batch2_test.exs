@@ -69,13 +69,13 @@ defmodule HacLongWeb.Batch2Test do
   describe "E1 nhật ký vàng và đồ hiếm" do
     test "mỗi lần lưu ghi đúng lý do; tổng nhật ký khớp vàng; đối soát bắt chỗ lệch" do
       u = create_user()
-      p = player(u, %{gold: 100, inv: %{"dagger" => 1}, pos: @smith})
+      p = player(u, %{gold: 100, inv: %{"item_1_1" => 1}, pos: @smith})
       assert [%{delta: 100, balance: 100, reason: "TEST"}] = gold_log(u.id)
 
-      {%{ok: true}, p2} = Session.command(u.id, %{"act" => "sell", "id" => "dagger"})
+      {%{ok: true}, p2} = Session.command(u.id, %{"act" => "sell", "id" => "item_1_1"})
       assert p2.gold > p.gold
 
-      assert [_, %{reason: "SELL", ref: "dagger", balance: b}] = gold_log(u.id)
+      assert [_, %{reason: "SELL", ref: "item_1_1", balance: b}] = gold_log(u.id)
       assert b == p2.gold
       assert mine(Audit.run().problems, [u.id]) == []
 

@@ -31,6 +31,8 @@ def walk_texts(o):
         texts.add(o)
 
 for f in glob.glob(ROOT + '/priv/game_data/*.json') + glob.glob(ROOT + '/priv/maps/*.json'):
+    # bảng chọn đồ Phase 15b: tên bộ giáp ngắn ("Da", "Rồng"…) không phải tên riêng; tên đầy đủ ở items_mu.json
+    if f.endswith('item_pick.json'): continue
     d = json.load(open(f))
     walk_data(d); walk_texts(d)
 
@@ -81,7 +83,8 @@ for f in glob.glob(ROOT + '/lib/**/*.ex', recursive=True):
 
 name_list = sorted(names, key=len, reverse=True)
 name_re = '|'.join(re.escape(n) for n in name_list)
-TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|' + INTERP + ')')
+# {a} {b} {n}: chỗ trống của câu bình luận Tiến Lên (commentary.ex), đánh số như tên / số
+TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|\{[abn]\}|' + INTERP + ')')
 
 def key(s):
     s = re.sub(r'\s+', ' ', s.replace('\\n', ' ')).strip()

@@ -33,10 +33,14 @@
 
   // Hình riêng theo cấp nâng: `levels` = { "0": "items/a.png", "7": "items/a_7.png", ... };
   // lấy mức lớn nhất ≤ `level`. Không có mức nào hợp thì null (dùng icon cũ).
-  function iconForLevel(levels, level) {
+  // `suffix` "e": hình Excellent (khóa "<cấp>e"); không có thì dùng hình thường
+  function iconForLevel(levels, level, suffix) {
     if (!levels) return null;
-    const lv = Object.keys(levels).filter((k) => /^\d+$/.test(k) && +k <= (level || 0)).map(Number).sort((a, b) => b - a)[0];
-    return lv === undefined ? null : levels[lv];
+    const pick = (re, sfx) => {
+      const lv = Object.keys(levels).filter((k) => re.test(k) && parseInt(k, 10) <= (level || 0)).map((k) => parseInt(k, 10)).sort((a, b) => b - a)[0];
+      return lv === undefined ? null : levels[lv + sfx];
+    };
+    return (suffix && pick(new RegExp(`^\\d+${suffix}$`), suffix)) || pick(/^\d+$/, '');
   }
 
   // Cấp tính chỉ số: từ `doubleFrom` (+10) mỗi cấp tính gấp đôi (như Engine.effective_level).
@@ -111,7 +115,25 @@
   const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().trim();
   const nameMatch = (names, q) => { const k = fold(q); return !k || names.some((n) => fold(n).includes(k)); };
 
-  const Logic = { DIRS, skillMp, shopPrice, fold, nameMatch, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
+  // Phase 15h: lọc / sắp xếp hàng ở chợ. kind: all | gear | exc | anc | luck | wing | item; sort: new | cheap | dear
+  // (hàng từ server đã xếp mới trước). Món hiếm có `gear` (đã resolve: excellent, anc, luck, skill, slot).
+  function marketFilter(list, kind, sort) {
+    const ok = {
+      all: () => true,
+      gear: (l) => !!l.gear,
+      exc: (l) => !!(l.gear && l.gear.excellent),
+      anc: (l) => !!(l.gear && l.gear.anc),
+      luck: (l) => !!(l.gear && (l.gear.luck || l.gear.skill)),
+      wing: (l) => l.slot === 'wing',
+      item: (l) => !l.gear,
+    }[kind] || (() => true);
+    const out = list.filter(ok);
+    if (sort === 'cheap') out.sort((a, b) => a.price - b.price);
+    if (sort === 'dear') out.sort((a, b) => b.price - a.price);
+    return out;
+  }
+
+  const Logic = { DIRS, marketFilter, skillMp, shopPrice, fold, nameMatch, firstStep, nameRelation, nameColor, parseChat, iconForLevel, effLevel, upClass, chaosRate, petXpFor, petLevel, tamePrice, allocAdd, allocBatches };
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
   root.HLLogic = Logic;
 })(typeof window !== 'undefined' ? window : globalThis);

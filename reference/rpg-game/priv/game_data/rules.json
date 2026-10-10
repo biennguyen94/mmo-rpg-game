@@ -181,21 +181,128 @@
       ],
       "gear_slots": [
         [
-          0.45,
+          0.38,
           "weapon"
         ],
         [
-          0.8,
-          "armor"
+          0.81,
+          "set"
+        ],
+        [
+          0.94,
+          "shield"
         ],
         [
           1,
-          "shield"
+          "jewelry"
         ]
       ],
+      "gear_own_class": true,
       "gear_bonus_per_level": 6,
       "event_token_chance": 0.2,
       "event_token_boss": 3
+    },
+    "set_bonus": {
+      "_doc": "Phase 15c: mặc đủ bộ giáp (mọi món của bộ cho lớp mình) từ bậc min_tier trở lên (bộ khởi đầu bậc 1 không tính) thì cộng phòng thủ, tấn công theo %, máu = hp_per_tier × bậc bộ.",
+      "min_tier": 2,
+      "def_pct": 0.1,
+      "atk_pct": 0.03,
+      "hp_per_tier": 15
+    },
+    "excellent": {
+      "_doc": "Phase 15c: đồ Excellent (dòng đặc biệt, hình _e). chance: tỉ lệ một món đồ rơi là Excellent theo loại quái; lines: số dòng [[số, trọng số]]; options: giá trị mỗi dòng (vũ khí / dây chuyền dùng weapon, còn lại armor); max_dmg_red: trần tổng giảm sát thương; price_mult: giá bán nhân thêm.",
+      "chance": { "normal": 0.04, "elite": 0.12, "night": 0.08, "boss": 0.2 },
+      "lines": [[1, 70], [2, 25], [3, 5]],
+      "options": {
+        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1 },
+        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15 }
+      },
+      "max_dmg_red": 0.2,
+      "price_mult": 2
+    },
+    "devil_square": {
+      "_doc": "Phase 18 M1: Quảng Trường Quỷ (docs/EVENTS_PHASE18.md). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_hours, cho vào trong entry_minutes phút; mỗi lượt run_minutes phút. Cần cấp min_level và 1 vé (ticket; mua ở Người Gác Tháp giá ticket_price, hoặc rơi từ quái cấp ≥ ticket_drop.min_level với tỉ lệ ticket_drop.chance). Mỗi đợt mở chỉ vào một lần. tiers: cấp quái theo cấp người chơi. waves: số quái mỗi đợt, cộng thêm cấp (add_level), đợt boss có trùm. score: điểm mỗi quái / trùm. reward: vàng / kinh nghiệm theo điểm (× base_gold / base_xp của cấp quái), mỗi jewel_every điểm một viên ngọc, qua hết các đợt được một món đồ (clear_exc_chance thành Excellent, clear_anc_chance thành đồ Thần nếu là món bộ giáp). top: thưởng hằng ngày (gửi thư lúc 0h) cho 3 người điểm cao nhất hôm trước.",
+      "every_hours": 2,
+      "offset_hours": 1,
+      "entry_minutes": 10,
+      "run_minutes": 5,
+      "min_level": 35,
+      "ticket": "ds_ticket",
+      "ticket_price": 20000,
+      "ticket_drop": { "min_level": 30, "chance": 0.01 },
+      "tiers": [
+        { "from": 35, "level": 36 },
+        { "from": 40, "level": 42 },
+        { "from": 45, "level": 48 }
+      ],
+      "waves": [
+        { "count": 4, "add_level": 0, "boss": false },
+        { "count": 5, "add_level": 1, "boss": false },
+        { "count": 6, "add_level": 2, "boss": false },
+        { "count": 6, "add_level": 3, "boss": false },
+        { "count": 2, "add_level": 4, "boss": true }
+      ],
+      "monster_mult": 1.0,
+      "boss_mult": 1.4,
+      "boss_hp": 3,
+      "score": { "monster": 1, "boss": 10 },
+      "reward": { "gold_per_point": 5, "xp_per_point": 0.15, "jewel_every": 8, "clear_exc_chance": 0.3, "clear_anc_chance": 0.15 },
+      "top": [
+        { "gold": 100000, "items": { "jewel_chaos": 3, "jewel_soul": 3 } },
+        { "gold": 60000, "items": { "jewel_chaos": 2, "jewel_soul": 2 } },
+        { "gold": 30000, "items": { "jewel_chaos": 1, "jewel_soul": 1 } }
+      ]
+    },
+    "blood_castle": {
+      "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
+      "every_hours": 2,
+      "offset_minutes": 30,
+      "entry_minutes": 10,
+      "run_minutes": 8,
+      "min_level": 40,
+      "ticket": "bc_ticket",
+      "ticket_price": 30000,
+      "ticket_drop": { "min_level": 35, "chance": 0.005 },
+      "tiers": [
+        { "from": 40, "level": 44 },
+        { "from": 45, "level": 50 }
+      ],
+      "guards": 8,
+      "guard_mult": 1.1,
+      "gate": { "kind": "iron_golem", "name": "Cổng Thành", "hp_mult": 6 },
+      "boss": { "kind": "death_knight", "name": "Hiệp Sĩ Máu", "mult": 1.6, "hp": 4, "add_level": 3 },
+      "reward": {
+        "success": { "gold_mult": 250, "xp_mult": 8, "items": { "condor_feather": 1 }, "jewels": 2 },
+        "partial": { "gold_per_guard": 6, "xp_per_guard": 0.3 }
+      }
+    },
+    "ancient": {
+      "_doc": "Phase 15g: đồ Bộ Thần (docs/ITEMS_PHASE15B.md §10). chance: tỉ lệ một món BỘ GIÁP (mũ, giáp, quần, găng, giày) đã rơi là đồ Thần, theo loại quái; piece_def_pct: phòng thủ của món Thần tăng thêm; bonus: thưởng theo số món Thần CÙNG BỘ đang mặc (cộng dồn các mức đã đạt; full = đủ bộ, Đấu Sĩ 4 món); price_mult: giá bán nhân thêm.",
+      "chance": { "normal": 0.01, "elite": 0.04, "night": 0.02, "boss": 0.08 },
+      "piece_def_pct": 0.2,
+      "bonus": [
+        { "count": 2, "atk_pct": 0.03, "def_pct": 0, "hp": 0 },
+        { "count": 3, "atk_pct": 0, "def_pct": 0.05, "hp": 0 },
+        { "count": "full", "atk_pct": 0.05, "def_pct": 0.05, "hp": 150 }
+      ],
+      "price_mult": 3
+    },
+    "wing_options": {
+      "_doc": "Phase 15e: dòng phụ của cánh (docs/ITEMS_PHASE15B.md §8). Ghép thành công cánh có bậc trong by_tier ở Máy Hỗn Nguyên thì bốc ngẫu nhiên đều 1 dòng: hp (máu tối đa +), mp (MP tối đa +), ignore_def (bỏ qua phần phòng thủ của đối thủ khi đánh). Đổi số ở by_tier; bỏ một bậc khỏi by_tier là cánh bậc đó không có dòng.",
+      "by_tier": [
+        { "tier": 2, "hp": 60, "mp": 40, "ignore_def": 0.03 },
+        { "tier": 3, "hp": 120, "mp": 80, "ignore_def": 0.05 }
+      ]
+    },
+    "luck_skill": {
+      "_doc": "Phase 15d: dòng phụ May mắn / Kỹ năng trên đồ rơi (docs/ITEMS_PHASE15B.md §7). luck_chance: tỉ lệ món rơi có May mắn theo loại quái (cánh không có); skill_chance: tỉ lệ vũ khí rơi có Kỹ năng; luck_crit: tỉ lệ chí mạng cộng thêm khi VŨ KHÍ có May mắn (giáp / trang sức May mắn không cộng); luck_upgrade: tỉ lệ ép ngọc +7..+11 cộng thêm khi món có May mắn, tối đa luck_max_rate; skill_dmg: sát thương chiêu (không tính đánh thường) cộng thêm khi vũ khí có Kỹ năng; price_mult: giá bán nhân thêm cho mỗi dòng.",
+      "luck_chance": { "normal": 0.1, "elite": 0.2, "night": 0.15, "boss": 0.35 },
+      "skill_chance": 0.15,
+      "luck_crit": 0.05,
+      "luck_upgrade": 0.25,
+      "luck_max_rate": 0.95,
+      "skill_dmg": 0.1,
+      "price_mult": 1.25
     },
     "shop": {
       "sell_ratio": 0.4,
@@ -695,6 +802,34 @@
       "per_target_hour": 3,
       "red_s": 1800,
       "red_gold_mult": 2
+    },
+    "boss_rewards": {
+      "first_kill_weights": [
+        [
+          2,
+          75
+        ],
+        [
+          3,
+          25
+        ]
+      ],
+      "daily": [
+        {
+          "from_zone": 0,
+          "item": "jewel_bless",
+          "n": 1
+        },
+        {
+          "from_zone": 3,
+          "item": "jewel_soul",
+          "n": 1
+        }
+      ]
+    },
+    "tienlen": {
+      "max_rooms": 50,
+      "stake_max": 100000
     }
   }
 }

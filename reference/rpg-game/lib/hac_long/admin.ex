@@ -13,8 +13,8 @@ defmodule HacLong.Admin do
   | `give_xp` | `xp` (1..1e9) | cộng kinh nghiệm, lên cấp như đánh quái |
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
-  | `give_item` | `id`, `count` (1..9999), `up` (0..11) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
-  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up` | tặng đồ chỉ số ngẫu nhiên |
+  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
+  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
@@ -102,10 +102,15 @@ defmodule HacLong.Admin do
     count = a["count"] || 1
     up = a["up"] || 0
     it = is_binary(id) && Data.item(id)
+    # Phase 15e: dòng phụ cho sẵn của cánh (`hp` / `mp` / `ignore_def`)
+    wopt = a["wopt"]
 
     cond do
       !it ->
         {:error, "Không có món đồ \"#{id}\"."}
+
+      wopt != nil and not (it.slot == "wing" and Gear.wopt_value(it[:tier], wopt) > 0) ->
+        {:error, "Dòng cánh không hợp lệ (cánh bậc có dòng: hp, mp, ignore_def)."}
 
       not (is_integer(count) and count in 1..@max_count) ->
         {:error, "Số lượng phải từ 1 tới #{@max_count}."}
@@ -124,6 +129,7 @@ defmodule HacLong.Admin do
              {:error, "Túi đồ hiếm không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
            else
              gs = for _ <- 1..count, do: Gear.plain(id)
+             gs = if wopt, do: Enum.map(gs, &Map.put(&1, :wopt, wopt)), else: gs
              p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ gs)
              p = Enum.reduce(gs, p, &put_upgrade(&2, &1.uid, up))
              {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}
@@ -144,9 +150,16 @@ defmodule HacLong.Admin do
     up = a["up"] || 0
     it = is_binary(base) && Data.item(base)
     bonus = a["bonus"]
+    # Phase 15c: dòng Excellent cho sẵn (`exc`: danh sách id dòng hợp loại đồ)
+    exc = a["exc"] || []
+    # Phase 15d: May mắn (mọi món) / Kỹ năng (chỉ vũ khí)
+    luck = a["luck"] == true
+    skill = a["skill"] == true
+    # Phase 15g: đồ Bộ Thần (chỉ món bộ giáp)
+    anc = a["anc"] == true
 
     cond do
-      !it or it.slot not in ~w(weapon armor shield) ->
+      !it or it.slot not in Engine.gear_slots() ->
         {:error, "\"#{base}\" không phải vũ khí / giáp / khiên (cánh: dùng give_item)."}
 
       rarity not in 1..3 ->
@@ -158,6 +171,15 @@ defmodule HacLong.Admin do
       bonus != nil and not valid_stats?(bonus, 0) ->
         {:error, "Chỉ số cộng thêm không hợp lệ (str, agi, vit, ene: 0..#{@max_stat})."}
 
+      not (is_list(exc) and Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
+        {:error, "Dòng Excellent không hợp lệ cho loại đồ này."}
+
+      skill and it.slot != "weapon" ->
+        {:error, "Chỉ vũ khí mới có dòng Kỹ năng."}
+
+      anc and !it[:set] ->
+        {:error, "Chỉ món bộ giáp mới là đồ Thần."}
+
       true ->
         {:ok,
          fn p ->
@@ -165,6 +187,10 @@ defmodule HacLong.Admin do
              {:error, "Túi đồ hiếm đã đầy (#{Gear.max_bag()} món)."}
            else
              g = Gear.new(base, rarity, gear_bonus(bonus, rarity, p.level))
+             g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))
+             g = if luck, do: Map.put(g, :luck, true), else: g
+             g = if skill, do: Map.put(g, :skill, true), else: g
+             g = if anc, do: Map.put(g, :anc, true), else: g
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}

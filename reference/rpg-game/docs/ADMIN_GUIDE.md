@@ -78,8 +78,8 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
-| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11 | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ hiếm | `give_gear` | `base`, `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
+| Đồ hiếm | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, vd `["atk_pct","crit"]` cho vũ khí / dây chuyền, `["hp_pct","dmg_red","gold_pct"]` cho đồ khác), `base` (mọi loại trừ cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
@@ -193,7 +193,7 @@ await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI
 
 // đồ hiếm Sử Thi tự chọn chỉ số, nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
 await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 11 });       // Thánh Kiếm Diệt Long
-await A('give_gear', { base: 'breastplate', rarity: 3, bonus: { vit: 30, agi: 30, str: 10 }, up: 11 }); // Giáp Ngực Thép
+await A('give_gear', { base: 'item_8_1', rarity: 3, bonus: { vit: 30, agi: 30, str: 10 }, up: 11 }); // Giáp Rồng (Kiếm Sĩ / Đấu Sĩ)
 await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { ene: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
 
 // cánh cấp 2 đúng lớp, +11 (dk / dw / elf / mg); cấp mặc 35
@@ -275,6 +275,14 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 - Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → "Golden Invasion" → **Bắt đầu ngay** để chạy thử / bù.
 - Chỉnh ở `rules.json` → `RULES.invasion`: `every_hours`, `minutes`, `maps` (bản đồ → số quái vàng), `strength_mult`,
   `reward_mult`, `jewel_chance`, `boss`, `boss_jewel_chance`. Build lại sau khi sửa.
+
+### Tiến Lên (Phase 17)
+
+- Mỗi bàn một tiến trình (`HacLong.TienLen.RoomServer`), tối đa `RULES.tienlen.max_rooms` bàn, cược tối đa
+  `RULES.tienlen.stake_max`. Vàng trả qua `HacLong.TienLen.Gold`: nhật ký vàng lý do `TIENLEN` (ref
+  `room:<mã>:game:<n>:end` / `:chain:<k>`), ném đồ `TIENLEN_THROW`. Mỗi lần trả một khóa ở bảng
+  `tienlen_settlements` nên không trả hai lần.
+- Ván đã chơi ở bảng `tienlen_games` (người thật trong `player_ids`, `replay` để xem lại).
 
 ### Xã hội, PK cược vàng, chiến bang (Phase 5)
 
@@ -371,3 +379,16 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
 - Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
   rồi xóa tài khoản trong database.
+
+## Quảng Trường Quỷ (Phase 18)
+
+- Lịch, vé, thưởng: `RULES.devil_square` (`priv/game_data/rules.json`), giải thích ở `docs/EVENTS_PHASE18.md`.
+- Thử ngoài giờ: khởi động với `HL_DS_OPEN=1` (luôn mở; vẫn mỗi người một lần mỗi đợt).
+- Tặng vé: `give_item` với `id: "ds_ticket"`.
+- Gửi thưởng top 3 một ngày bằng tay (vd. server khởi động lại trước 0h05): trong iex
+  `HacLong.DevilSquareBoard.payout("2026-10-10")`. Bảng xếp hạng ngày giữ trong bộ nhớ, khởi động lại thì mất bảng hôm đó.
+
+## Lâu Đài Máu (Phase 18 M2)
+
+- Lịch, vé, thưởng: `RULES.blood_castle`, giải thích ở `docs/EVENTS_PHASE18.md` §M2. `HL_DS_OPEN=1` mở luôn cả Lâu Đài.
+- Tặng vé: `give_item` với `id: "bc_ticket"`; tặng lông vũ (bù lỗi): `id: "condor_feather"`.

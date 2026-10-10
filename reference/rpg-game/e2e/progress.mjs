@@ -22,7 +22,9 @@ let p = await player(page);
 R.check('nhận nhiệm vụ "Lũ dơi hang"', 'forest_kill' in p.quests.active);
 await leaveNpc(page);
 await travel(page, 'forest_1');
-for (let i = 0; i < 25 && (await player(page)).quests.active.forest_kill < 5; i++) {
+// dơi có thể đã bị kịch bản trước / người khác hạ hết (hồi sau 25 giây) hoặc lỡ vào trận với chó rừng đứng cạnh:
+// giới hạn theo thời gian (3 phút) chứ không theo số lượt, dừng ngay khi đủ 5 con
+for (const t0 = Date.now(); Date.now() - t0 < 180000 && (await player(page)).quests.active.forest_kill < 5;) {
   if (!(await engage(page, 'bat'))) continue;
   await fight(page);
   await act(page, 'leave');

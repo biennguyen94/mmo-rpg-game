@@ -25,12 +25,13 @@
     mg: ['#2a0f45', '#7d3cc8', '#c9a2ff'],
   };
 
-  // Hai cánh sau vai (khung 32×32, nhân vật đứng giữa). Cánh cấp 2 to hơn và có thêm lớp lông.
+  // Hai cánh sau vai (khung 32×32, nhân vật đứng giữa). Cánh cấp 2 to hơn và có thêm lớp lông;
+  // cấp 3 (Phase 15e) to nhất, thêm viền sáng ngoài cùng.
   function drawWing(g, wing) {
     const [edge, body, light] = WING_COLORS[wing.cls] || WING_COLORS.dk;
-    const big = wing.tier >= 2;
+    const big = wing.tier >= 2, huge = wing.tier >= 3;
     const half = (dir) => {
-      const cx = 16, top = big ? 4 : 7, tip = big ? 1 : 3, bottom = big ? 24 : 21;
+      const cx = 16, top = huge ? 2 : big ? 4 : 7, tip = huge ? 0 : big ? 1 : 3, bottom = huge ? 27 : big ? 24 : 21;
       const x = (v) => cx + dir * v;
       g.beginPath();
       g.moveTo(x(2), 11);
@@ -56,6 +57,13 @@
         g.moveTo(x(3), 15);
         g.quadraticCurveTo(x(9), 22, x(13), bottom);
         g.strokeStyle = edge;
+        g.stroke();
+      }
+      if (huge) {
+        g.beginPath();
+        g.moveTo(x(2), 11);
+        g.quadraticCurveTo(x(8), top, x(16 - tip), top + 1);
+        g.strokeStyle = light;
         g.stroke();
       }
     };

@@ -905,7 +905,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "rao bán, mua, rút về; người bán nhận tiền qua hộp thư trừ phí" do
-      sword = %{uid: "#CHO1", base: "mace", rarity: 2, bonus: %{str: 3, agi: 1}}
+      sword = %{uid: "#CHO1", base: "item_0_3", rarity: 2, bonus: %{str: 3, agi: 1}}
       ua = create_user()
 
       player_at(ua, %{map: "village", x: 7, y: 14}, %{
@@ -933,7 +933,7 @@ defmodule HacLongWeb.GameChannelTest do
       pot = Enum.find(listings, &(&1.item == "potion_m"))
       gear = Enum.find(listings, &(&1.gear != nil))
       assert pot.count == 3 and pot.seller_id == ua.id and not pot.mine
-      assert gear.gear.up == 2 and gear.name == "Chùy Gai Sức Mạnh"
+      assert gear.gear.up == 2 and gear.name == "Đao Katana Sức Mạnh"
 
       assert %{ok: false, msg: "Đây là hàng của bạn."} =
                cmd(sa, %{"act" => "market_buy", "listing" => pot.id})
@@ -1194,7 +1194,7 @@ defmodule HacLongWeb.GameChannelTest do
     player_at(ua, %{map: "village", x: 12, y: 14}, %{
       gold: 10_000,
       level: 10,
-      inv: %{"broadsword" => 1}
+      inv: %{"item_0_2" => 1}
     })
 
     {_, sa} = join_game(ua)
@@ -1202,7 +1202,7 @@ defmodule HacLongWeb.GameChannelTest do
     player_at(ub, %{map: "village", x: 13, y: 14})
     {_, _sb} = join_game(ub)
 
-    cmd(sa, %{"act" => "equip", "id" => "broadsword"})
+    cmd(sa, %{"act" => "equip", "id" => "item_0_2"})
     look = fn -> Enum.find(MapServer.snapshot("village").players, &(&1.id == ua.id)).look end
     assert look.().weapon == "hand1/broadsword"
 

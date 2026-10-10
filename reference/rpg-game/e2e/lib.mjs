@@ -146,9 +146,19 @@ export async function travel(page, to) {
     return m.portals.find((q) => q.to === to);
   }, [p.pos.map, to]);
   if (!portal) throw new Error(`Không có cổng ${p.pos.map} → ${to}`);
-  await walkTo(page, portal.at[0], portal.at[1]);
-  await page.waitForFunction((to) => window.__hl.player().pos.map === to, to, { timeout: 10000 }).catch(() => null);
-  await idle(page);
+  // đường tới cổng có thể đụng quái (vd quái vàng Golden Invasion đi lang thang): bỏ chạy rồi đi tiếp
+  for (let i = 0; i < 4; i++) {
+    await walkTo(page, portal.at[0], portal.at[1]);
+    await page.waitForFunction((to) => window.__hl.player().pos.map === to || !!window.__hl.player().battle, to, { timeout: 10000 }).catch(() => null);
+    await idle(page);
+    if ((await player(page)).pos.map === to || !(await player(page)).battle) break;
+    for (let k = 0; k < 10; k++) {
+      const b = (await player(page)).battle;
+      if (!b || b.over) break;
+      await act(page, 'flee');
+    }
+    if ((await player(page)).battle) await act(page, 'leave').catch(() => null);
+  }
   return (await player(page)).pos.map === to;
 }
 

@@ -62,7 +62,16 @@ Người Tổ Chức Hội (`mon/unique/eustachio`).
 - `fish_small.png`, `fish_carp.png`, `chest_wood.png`, `chest_silver.png`, `chest_gold.png`
   (và `npcs/home_chest.png`): tự vẽ cho game này (CC0).
 
+## Lá bài Tiến Lên (`priv/static/assets/cards/`, Phase 17)
+
+52 lá và mặt sau (`1B.svg`) của **Adrian Kennard** (https://www.me.uk/cards/), phát hành
+**CC0** (public domain); lấy từ repo `biennguyen94/Tien-Len-Mien-Nam` (cũng dùng bộ này).
+NPC Bà Chủ Sòng (`npcs/dealer.png`) và icon `icons/card-fan.svg`: tự vẽ cho game này (CC0).
+
 ## Âm thanh
 
 Không dùng file âm thanh: mọi hiệu ứng được tổng hợp trong trình duyệt bằng Web Audio
 (`priv/static/js/sound.js`).
+
+Hình nhân vật cầm cung, nỏ, gậy phép (`doll/hand1/bow.png`, `crossbow.png`, `staff.png`, Phase 15c): tự vẽ cho game này
+bằng `scripts/doll_weapons.py` (CC0). Hình đồ gốc MU (`mu_items/`) không nằm trong repo, xem `docs/ITEMS_PHASE15B.md`.

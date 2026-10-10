@@ -1,7 +1,7 @@
 defmodule HacLong.Game.EngineTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Data, Engine, Rng, Simulator}
+  alias HacLong.Game.{Daily, Data, Engine, Rng, Simulator}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -21,8 +21,8 @@ defmodule HacLong.Game.EngineTest do
     assert d.maxHp == 300 and p.hp == 300
     # 20 + 1*1 + 10*1
     assert d.maxMp == 31 and p.mp == 31
-    # 28*2.8 + 20*0.5 + cấp 1 + gậy 3
-    assert d.atk == 92
+    # 28*2.8 + 20*0.5 + cấp 1 + Rìu Nhỏ 4 (đồ khởi đầu Kiếm Sĩ, Phase 15b)
+    assert d.atk == 93
     assert Engine.points_per_level("dk") == 5 and Engine.points_per_level("mg") == 7
     assert Engine.xp_to_next(1) == 40
     assert Engine.xp_to_next(1) == 40
@@ -155,16 +155,31 @@ defmodule HacLong.Game.EngineTest do
     assert Enum.any?(p.battle.log, &(&1.text == "Hết bị bỏng."))
   end
 
-  test "hạ trùm mở vùng mới, gục ngã mất 10% vàng" do
+  test "vùng mở theo cấp; hạ trùm lần đầu: đồ hiếm đúng lớp + danh hiệu, mỗi ngày thêm ngọc; gục ngã mất 10% vàng" do
     Rng.put_sequence([0.5])
-    p = %{player() | level: 30, gold: 1000}
-    refute Engine.zone_unlocked?(p, 1)
+
+    # B-4: đủ cấp (cấp quái thấp nhất của vùng) là vào được, không cần hạ trùm
+    refute Engine.zone_unlocked?(%{player() | level: 5}, 1)
+    assert Engine.zone_unlocked?(%{player() | level: 6}, 1)
+
+    p = Daily.ensure(%{player() | level: 30, gold: 1000}, "2026-10-10")
     {_, p} = Engine.start_battle(p, 0, true)
     p = put_in(p.battle.monster.hp, 1)
     {%{result: "win"}, won} = Engine.act(p, "attack")
     assert "wolf" in won.bosses
-    assert Engine.zone_unlocked?(won, 1)
-    assert List.last(won.battle.log).text =~ "Đã mở khu vực mới"
+    assert [g] = HacLong.Game.Gear.bag(won)
+    assert g.rarity in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
+    assert won.inv["jewel_bless"] == 1 and won.daily.bosses == ["wolf"]
+    assert Enum.any?(won.battle.log, &(&1.text =~ "Lần đầu hạ"))
+    {won, _} = HacLong.Game.Achievements.check(won)
+    assert "boss_wolf" in won.achievements
+
+    # hạ lại cùng ngày: không thêm ngọc, không thêm đồ chắc chắn
+    {_, again} = Engine.leave_battle(won)
+    {_, again} = Engine.start_battle(again, 0, true)
+    again = put_in(again.battle.monster.hp, 1)
+    {%{result: "win"}, again} = Engine.act(again, "attack")
+    assert again.inv["jewel_bless"] == 1
 
     p = %{p | hp: 1, stats: %{p.stats | agi: 0}}
     p = put_in(p.battle.monster.hp, 10_000)
@@ -193,14 +208,14 @@ defmodule HacLong.Game.EngineTest do
              Engine.upgrade(p, "weapon")
 
     p = Engine.add_item(p, "ore", 20)
-    {%{ok: true, msg: "Đã nâng Gậy Gỗ lên +1."}, p} = Engine.upgrade(p, "weapon")
-    # gậy gỗ tấn công 3: mỗi cấp ít nhất +1
+    {%{ok: true, msg: "Đã nâng Rìu Nhỏ lên +1."}, p} = Engine.upgrade(p, "weapon")
+    # Rìu Nhỏ tấn công 4: mỗi cấp ít nhất +1
     assert Engine.derived(p).atk == atk + 1
     assert p.inv["ore"] == 19 and p.gold == 10_000 - 8
 
     # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
     club = p.equip.weapon
-    assert [%{uid: ^club, base: "club", rarity: 0}] = p.gear
+    assert [%{uid: ^club, base: "item_1_0", rarity: 0}] = p.gear
     p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
     assert Engine.upgrade_level(p, club) == 4
     # +5 cần Vảy Cổ Long

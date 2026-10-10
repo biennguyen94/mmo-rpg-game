@@ -328,6 +328,20 @@
         "Bỏ đồ vào máy, thêm ngọc, cầu trời. Thành thì có cánh, hỏng thì mất sạch.",
         "Đồ đã khóa thì ta không nhận, kẻo cậu lỡ tay."
       ]
+    },
+    {
+      "id": "dealer",
+      "name": "Bà Chủ Sòng",
+      "sprite": "dealer",
+      "at": [
+        10,
+        13
+      ],
+      "role": "tienlen",
+      "lines": [
+        "Ghé chơi một ván Tiến Lên không cưng? Thiếu người thì có máy ngồi cùng.",
+        "Bàn có máy thì chơi vui. Muốn ăn vàng thì rủ người thật vào, đặt cược hẳn hoi."
+      ]
     }
   ],
   "spawns": []

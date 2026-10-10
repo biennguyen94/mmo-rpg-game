@@ -324,6 +324,8 @@ defmodule HacLong.Game.Session do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
+        # bước ra / lên cầu thang có thể kết thúc lượt Quảng Trường Quỷ
+        player = ds_record(player, s)
         {player, notes} = checks(player)
         old = s.player
 
@@ -659,7 +661,9 @@ defmodule HacLong.Game.Session do
     old = s.player
     {result, player} = run(s, old, cmd)
     # nhân vật vừa tạo cũng có ngay việc hằng ngày
-    player = s |> after_command(old, player, cmd) |> Daily.ensure(Daily.today())
+    player =
+      s |> after_command(old, player, cmd) |> ds_record(s) |> Daily.ensure(Daily.today())
+
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player = if player && old == nil, do: with_guild(player, s.user_id), else: player
     {player, notes} = checks(player)
@@ -961,6 +965,14 @@ defmodule HacLong.Game.Session do
 
   defp run_move(s, cmd),
     do: World.move(s.player, s.user_id, cmd["dir"], cmd["confirm"] == true)
+
+  # Quảng Trường Quỷ vừa kết thúc (`DevilSquare.finish/3` đặt `ds_result`): ghi bảng xếp hạng ngày
+  defp ds_record(%{ds_result: %{score: score}} = player, s) do
+    HacLong.DevilSquareBoard.record(Daily.today(), s.user_id, player.name, score)
+    Map.delete(player, :ds_result)
+  end
+
+  defp ds_record(player, _s), do: player
 
   defp after_command(s, old, player, cmd) do
     cond do

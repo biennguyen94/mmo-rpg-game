@@ -27,6 +27,11 @@ if config_env() != :test and System.get_env("HL_BOTS") do
   config :hac_long, :bots, count: String.to_integer(System.get_env("HL_BOTS"))
 end
 
+# Quảng Trường Quỷ luôn mở (thử / e2e, Phase 18): HL_DS_OPEN=1 mix phx.server
+if System.get_env("HL_DS_OPEN") == "1" do
+  config :hac_long, :devil_square_always_open, true
+end
+
 if config_env() != :test do
   wb = Application.get_env(:hac_long, :world_boss, [])
 

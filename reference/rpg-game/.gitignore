@@ -8,3 +8,9 @@ erl_crash.dump
 node_modules/
 .DS_Store
 /.env
+
+# Dữ liệu / hình gốc MU (CLAUDE.md §7, KB_ASSETS §2.2): không bao giờ vào git.
+# Lấy lại bằng `mix hac_long.items.fetch` + `mix hac_long.items.import` + `mix hac_long.icons`.
+/assets_src/private/
+/priv/static/assets/mu_items/
+/priv/static/assets/item_icons.json

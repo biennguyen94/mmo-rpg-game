@@ -22,8 +22,13 @@ defmodule HacLong.Application do
       HacLong.Trade,
       HacLong.PkBet,
       HacLong.Slay,
+      # Tiến Lên (Phase 17): mỗi phòng một tiến trình
+      {Registry, keys: :unique, name: HacLong.TienLen.RoomRegistry},
+      {DynamicSupervisor, name: HacLong.TienLen.RoomSupervisor, strategy: :one_for_one},
       HacLong.GuildWars,
       HacLong.Invasion,
+      # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng ngày + thưởng top 3
+      HacLong.DevilSquareBoard,
       {Registry, keys: :unique, name: HacLong.Game.Registry},
       {DynamicSupervisor, name: HacLong.Game.SessionSupervisor, strategy: :one_for_one},
       # mỗi bản đồ dùng chung (Làng, các vùng) một tiến trình

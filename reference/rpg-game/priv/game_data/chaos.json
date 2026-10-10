@@ -44,6 +44,30 @@
       "out": "wing_{cls}_2"
     },
     {
+      "id": "wing3",
+      "name": "Cánh cấp 3",
+      "desc": "1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp.",
+      "gear": {
+        "slots": [
+          "wing"
+        ],
+        "tier": 2,
+        "min_up": 9
+      },
+      "items": {
+        "jewel_bless": 10,
+        "jewel_soul": 10,
+        "jewel_chaos": 3,
+        "jewel_life": 3,
+        "condor_feather": 1
+      },
+      "gold": 500000,
+      "rate": 0.15,
+      "per_up": 0.05,
+      "max_rate": 0.5,
+      "out": "wing_{cls}_3"
+    },
+    {
       "id": "make_chaos",
       "name": "Ngọc Hỗn Nguyên",
       "desc": "10 Quặng Mithril + 1 Vảy Cổ Long → 1 Ngọc Hỗn Nguyên.",
@@ -54,6 +78,62 @@
       "gold": 5000,
       "rate": 0.7,
       "out": "jewel_chaos"
+    },
+    {
+      "id": "add_exc",
+      "name": "Pha Excellent",
+      "mode": "excellent",
+      "desc": "1 vũ khí / giáp / khiên / trang sức +5 trở lên + 1 Hỗn Nguyên + 2 Sinh Mệnh → món đó thêm 1 dòng Excellent (tối đa 3 dòng).",
+      "gear": {
+        "slots": [
+          "weapon",
+          "shield",
+          "helm",
+          "armor",
+          "pants",
+          "gloves",
+          "boots",
+          "ring",
+          "pendant"
+        ],
+        "min_up": 5
+      },
+      "items": {
+        "jewel_chaos": 1,
+        "jewel_life": 2
+      },
+      "gold": 100000,
+      "rate": 0.3,
+      "per_up": 0.05,
+      "max_rate": 0.6
+    },
+    {
+      "id": "add_luck",
+      "name": "Pha May mắn",
+      "mode": "luck",
+      "desc": "1 vũ khí / giáp / khiên / trang sức +3 trở lên (chưa có May mắn) + 1 Hỗn Nguyên + 3 Phúc Lành → món đó có dòng May mắn.",
+      "gear": {
+        "slots": [
+          "weapon",
+          "shield",
+          "helm",
+          "armor",
+          "pants",
+          "gloves",
+          "boots",
+          "ring",
+          "pendant"
+        ],
+        "min_up": 3
+      },
+      "items": {
+        "jewel_chaos": 1,
+        "jewel_bless": 3
+      },
+      "gold": 50000,
+      "rate": 0.5,
+      "per_up": 0.05,
+      "max_rate": 0.75
     }
   ]
 }

@@ -1,0 +1,133 @@
+{
+  "ITEM_PICK": {
+    "sourceType": "MU_ITEM_TXT",
+    "source": "afrokick/muonlinejs tools/Item.txt (mix hac_long.items.fetch)",
+    "version": 1,
+    "verified": false,
+    "_doc": "Phase 15b: chọn đồ từ Item.txt cho Hắc Long. Giải thích từng khóa: docs/ITEMS_PHASE15B.md. Sửa file này rồi chạy mix hac_long.items.build --preview để xem bảng.",
+    "req_mult": 0.35,
+    "no_req_tiers": [1],
+    "levels": {
+      "weapon": [1, 3, 7, 12, 17, 22, 27, 32],
+      "set": [1, 3, 7, 12, 17, 22, 27, 32],
+      "shield": [4, 10, 17]
+    },
+    "stats": {
+      "weapon_mode": "raw",
+      "staff_atk": [3, 7, 13, 21, 31, 44, 60, 78],
+      "set_def": [2, 5, 10, 16, 24, 34, 46, 60],
+      "set_def_mult": 1.0,
+      "shield_def": [3, 7, 12]
+    },
+    "prices": {
+      "weapon": [0, 60, 220, 650, 1600, 3600, 7500, 15000],
+      "set": [0, 70, 260, 700, 1700, 3800, 8000, 16000],
+      "shield": [90, 450, 1500],
+      "piece_weight": "def"
+    },
+    "legacy": {
+      "weapon": ["club", "dagger", "broadsword", "mace", "battleaxe", "greatsword", "waraxe"],
+      "armor": ["vest", "leather", "chain", "scale", "lamellar", "breastplate"],
+      "shield": ["round", "checked", "spiked"]
+    },
+    "mu_name_fix": { "Red Sprit": "Red Spirit", "Dark Soul Hel": "Dark Soul Helm", "Lighting": "Lightning" },
+    "refs": {
+      "wing_elf_1": "12/0", "wing_dw_1": "12/1", "wing_dk_1": "12/2", "wing_mg_1": "12/6",
+      "wing_elf_2": "12/3", "wing_dw_2": "12/4", "wing_dk_2": "12/5", "wing_mg_2": "12/42",
+      "wing_dk_3": "12/36", "wing_dw_3": "12/37", "wing_elf_3": "12/38", "wing_mg_3": "12/39",
+      "relic": "0/19", "dragonshield": "6/13"
+    },
+    "icons": { "helm": "visored-helm", "pants": "lamellar", "gloves": "shield-bash", "boots": "sprint" },
+    "pieces": { "helm": "Mũ", "armor": "Giáp", "pants": "Quần", "gloves": "Găng", "boots": "Giày" },
+    "no_helm": ["mg"],
+    "weapons": {
+      "dk": [
+        { "ref": "1/0", "name": "Rìu Nhỏ" },
+        { "ref": "1/1", "name": "Rìu Tay" },
+        { "ref": "0/2", "name": "Kiếm Mảnh" },
+        { "ref": "0/3", "name": "Đao Katana" },
+        { "ref": "0/7", "name": "Đao Cong" },
+        { "ref": "0/5", "name": "Đại Đao" },
+        { "ref": "0/11", "name": "Kiếm Huyền Thoại" },
+        { "ref": "1/8", "name": "Rìu Lưỡi Liềm" }
+      ],
+      "dw": [
+        { "ref": "5/0", "name": "Gậy Đầu Lâu", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/1", "name": "Gậy Thiên Thần", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/2", "name": "Gậy Rắn", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/3", "name": "Gậy Sấm Sét", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/4", "name": "Gậy Xà Nữ", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/5", "name": "Gậy Huyền Thoại", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/6", "name": "Gậy Hồi Sinh", "mode": "staff", "doll": "hand1/staff" },
+        { "ref": "5/7", "name": "Gậy Sấm Hỗn Nguyên", "mode": "staff", "doll": "hand1/staff" }
+      ],
+      "elf": [
+        { "doll": "hand1/bow", "ref": "4/0", "name": "Cung Ngắn" },
+        { "doll": "hand1/crossbow", "ref": "4/8", "name": "Nỏ" },
+        { "doll": "hand1/bow", "ref": "4/1", "name": "Cung Săn" },
+        { "doll": "hand1/bow", "ref": "4/2", "name": "Cung Tiên" },
+        { "doll": "hand1/bow", "ref": "4/3", "name": "Cung Chiến" },
+        { "doll": "hand1/bow", "ref": "4/4", "name": "Cung Hổ" },
+        { "doll": "hand1/bow", "ref": "4/5", "name": "Cung Bạc" },
+        { "doll": "hand1/crossbow", "ref": "4/13", "name": "Nỏ Cánh Lam" }
+      ],
+      "mg": "dk"
+    },
+    "shields": [
+      { "ref": "6/0", "name": "Khiên Nhỏ" },
+      { "ref": "6/4", "name": "Khiên Tay" },
+      { "ref": "6/6", "name": "Khiên Đầu Lâu" }
+    ],
+    "jewelry": {
+      "_doc": "Nhẫn (2 ô) và dây chuyền: chỉ rơi từ quái / rương (không bán). Chỉ số cho tay: hp (máu tối đa), def, atk. mu_name: tên gốc nhóm 13 Item.txt.",
+      "ring": [
+        { "ref": "13/8", "name": "Nhẫn Băng", "mu_name": "Ring of Ice", "level": 8, "price": 900, "hp": 25 },
+        { "ref": "13/9", "name": "Nhẫn Độc", "mu_name": "Ring of Poison", "level": 14, "price": 2000, "def": 3 },
+        { "ref": "13/21", "name": "Nhẫn Lửa", "mu_name": "Ring of Fire", "level": 20, "price": 4000, "hp": 60 },
+        { "ref": "13/22", "name": "Nhẫn Đất", "mu_name": "Ring of Earth", "level": 25, "price": 6500, "def": 6 },
+        { "ref": "13/23", "name": "Nhẫn Gió", "mu_name": "Ring of Wind", "level": 29, "price": 10000, "hp": 110 },
+        { "ref": "13/24", "name": "Nhẫn Phép", "mu_name": "Ring of Magic", "level": 33, "price": 14000, "def": 10 }
+      ],
+      "pendant": [
+        { "ref": "13/12", "name": "Dây Chuyền Sét", "mu_name": "Pendant of Lightning", "level": 10, "price": 1500, "atk": 3 },
+        { "ref": "13/13", "name": "Dây Chuyền Lửa", "mu_name": "Pendant of Fire", "level": 16, "price": 3000, "atk": 5 },
+        { "ref": "13/25", "name": "Dây Chuyền Băng", "mu_name": "Pendant of Ice", "level": 22, "price": 5500, "atk": 8 },
+        { "ref": "13/26", "name": "Dây Chuyền Gió", "mu_name": "Pendant of Wind", "level": 27, "price": 9000, "atk": 11 },
+        { "ref": "13/27", "name": "Dây Chuyền Nước", "mu_name": "Pendant of Water", "level": 32, "price": 13000, "atk": 14 }
+      ]
+    },
+    "sets": {
+      "dk": [
+        { "index": 5, "name": "Da" },
+        { "index": 0, "name": "Đồng" },
+        { "index": 6, "name": "Vảy" },
+        { "index": 8, "name": "Đồng Thau" },
+        { "index": 9, "name": "Thép Tấm" },
+        { "index": 1, "name": "Rồng" },
+        { "index": 16, "name": "Hắc Long" },
+        { "index": 17, "name": "Phượng Hoàng Đen" }
+      ],
+      "dw": [
+        { "index": 2, "name": "Vải Bông" },
+        { "index": 4, "name": "Xương" },
+        { "index": 7, "name": "Nhân Sư" },
+        { "index": 3, "name": "Huyền Thoại" },
+        { "index": 40, "name": "Cánh Đỏ" },
+        { "index": 41, "name": "Cổ Đại" },
+        { "index": 18, "name": "Đại Linh Hồn" },
+        { "index": 22, "name": "Hồn Bóng Tối" }
+      ],
+      "elf": [
+        { "index": 10, "name": "Dây Leo" },
+        { "index": 11, "name": "Lụa" },
+        { "index": 12, "name": "Gió" },
+        { "index": 13, "name": "Linh Hồn" },
+        { "index": 14, "name": "Hộ Vệ" },
+        { "index": 36, "name": "Diên Vĩ" },
+        { "index": 19, "name": "Thần Thánh" },
+        { "index": 24, "name": "Linh Hồn Đỏ" }
+      ],
+      "mg": "dk"
+    }
+  }
+}

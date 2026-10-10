@@ -62,6 +62,18 @@ defmodule HacLongWeb.PageController do
       RULES: %{
         maxLevel: Engine.max_level(),
         gearBag: HacLong.Game.Gear.max_bag(),
+        # Phase 15c: thưởng đủ bộ giáp (số để hiện chữ)
+        setBonus: Map.take(Data.rules().set_bonus, [:min_tier, :def_pct, :atk_pct, :hp_per_tier]),
+        # Phase 15g: chữ đồ Bộ Thần trong tooltip
+        ancient: Map.take(Data.rules().ancient, [:piece_def_pct]),
+        # Phase 15d: chữ dòng May mắn / Kỹ năng trong tooltip
+        luckSkill:
+          Map.take(Data.rules().luck_skill, [
+            :luck_crit,
+            :luck_upgrade,
+            :luck_max_rate,
+            :skill_dmg
+          ]),
         rebirthPoints: Engine.rebirth_points(),
         maxRebirths: Engine.max_rebirths(),
         guildCost: HacLong.Guilds.create_cost(),

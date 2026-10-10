@@ -38,7 +38,13 @@ await page.fill('#adm-gift-all input[name="gold"]', '123');
 await page.selectOption('#adm-gift-all select[name="gbase"]', { index: 1 });
 await page.fill('#adm-gift-all input[name="gup"]', '3');
 await page.click('#adm-gift-all button[type="submit"]');
-await X.page.waitForFunction((s) => window.Net.mail().then((m) => m.mails.some((x) => x.subject === s)), subj, { timeout: 8000 }).catch(() => null);
+// chờ thư tới: hỏi hộp thư mỗi giây từ phía node (waitForFunction coi Promise là "đúng" nên thoát ngay;
+// cũng không hỏi dồn, kẻo đụng giới hạn 30 lần / phút)
+for (let i = 0; i < 15; i++) {
+  const got = await X.page.evaluate((s) => window.Net.mail().then((m) => m.mails.some((x) => x.subject === s), () => false), subj);
+  if (got) break;
+  await X.page.waitForTimeout(1000);
+}
 const mails = await X.page.evaluate(() => window.Net.mail());
 const gift = mails.mails.find((m) => m.subject === subj);
 R.check('người chơi nhận thư quà (vàng + đồ +3)', !!gift && gift.gold === 123 && Object.keys(gift.items).some((k) => k.startsWith('gear:') && k.endsWith(':3')), JSON.stringify(gift && gift.items));
@@ -83,6 +89,8 @@ if (gold) {
   for (let i = 0; i < 6 && !(await player(X.page)).battle; i++) {
     const g = await X.page.evaluate(() => (window.__hl.world().monsters || []).find((m) => m.gold && !m.boss && !m.busy));
     if (g) await walkTo(X.page, g.x, g.y);
+    // đi tới nơi thì lệnh đánh mới gửi: chờ trận mở một chút trước khi tìm lại
+    await X.page.waitForFunction(() => !!window.__hl.player().battle, null, { timeout: 2000 }).catch(() => null);
   }
   const p = await player(X.page);
   R.check('đánh quái vàng: tên có "Vàng"', !!p.battle && p.battle.monster.name.includes('Vàng') && p.battle.monster.golden, p.battle && p.battle.monster.name);

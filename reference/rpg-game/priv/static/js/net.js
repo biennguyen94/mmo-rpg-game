@@ -126,6 +126,11 @@
         ch.on('pk_invite', (m) => cb.pkInvite && cb.pkInvite(m.invite));
         ch.on('pk_result', (m) => cb.pkResult && cb.pkResult(m));
         ch.on('shared', (m) => cb.shared && cb.shared(m));
+        // Tiến Lên (Phase 17): bàn bài, chat bàn, hiệu ứng, sảnh đổi
+        ch.on('tl', (m) => cb.tl && cb.tl(m));
+        ch.on('tl_chat', (m) => cb.tlChat && cb.tlChat(m));
+        ch.on('tl_fx', (m) => cb.tlFx && cb.tlFx(m));
+        ch.on('tl_lobby', () => cb.tlLobby && cb.tlLobby());
         ch.onError(() => { if (channel === ch) lost(); });
         ch.join()
           .receive('ok', (r) => {
@@ -241,6 +246,8 @@
     pk(op, payload) { return push('pk', Object.assign({ op }, payload || {})); },
     // Đồ sát: đánh ngay người chơi cùng bản đồ (không cần đồng ý).
     slay(uid) { return push('slay', { uid }); },
+    // Tiến Lên: tl('lobby'), tl('create', { stake, private }), tl('join', { id }), tl('play', { cards })…
+    tl(op, payload) { return push('tl', Object.assign({ op }, payload || {})); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).
@@ -249,6 +256,8 @@
     arena() { return push('arena', {}); },
     // Chợ: { listings, fee, max }. Rao bán/mua/rút về là lệnh market_sell/market_buy/market_cancel.
     market(q) { return push('market', { q: q || '' }); },
+    // Quảng Trường Quỷ: { top: [{ name, score }] } (hôm nay)
+    dsTop() { return push('ds_top', {}); },
     inspect(uid) { return push('inspect', { uid }); },
     // Thăm nhà: { id, name, look, decor, comfort, likes, liked }; khen nhà: { likes }.
     visit(uid) { return push('visit', { uid }); },
@@ -300,6 +309,10 @@
     onTradeRequest(f) { cb.tradeRequest = f; },
     onPkInvite(f) { cb.pkInvite = f; },
     onPkResult(f) { cb.pkResult = f; },
+    onTl(f) { cb.tl = f; },
+    onTlChat(f) { cb.tlChat = f; },
+    onTlFx(f) { cb.tlFx = f; },
+    onTlLobby(f) { cb.tlLobby = f; },
     // Danh sách bạn đổi (msg: thông báo hoặc null) / có tin riêng mới (của mình hoặc gửi cho mình).
     onFriends(f) { cb.friends = f; },
     onDm(f) { cb.dm = f; },

@@ -408,7 +408,7 @@ defmodule HacLong.Slay do
 
     if why == :fled,
       do: "🗡 #{f.names[loser]} bỏ chạy khỏi #{f.names[winner]} ở #{where}.",
-      else: "🗡 #{f.names[winner]} đã hạ #{f.names[loser]} ở #{where}."
+      else: "🗡 #{f.names[winner]} đã đồ sát #{f.names[loser]} ở #{where}."
   end
 
   defp in_fight?(p, f),

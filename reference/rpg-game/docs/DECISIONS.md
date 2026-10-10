@@ -164,3 +164,66 @@
 - **P19-4** Mỗi trận xong báo kênh thế giới: "X đã hạ Y ở <bản đồ>." hoặc "Y bỏ chạy khỏi X ở <bản đồ>."
 - **P19-5** Bảo vệ / tên đỏ / số lần đánh giữ trong bộ nhớ (`HacLong.Slay`, bảng ETS `:slay_marks`), khởi động lại server thì xóa. Chấp nhận vì thời hạn ngắn (≤ 30 phút); cần bền hơn thì thêm cột vào `characters`.
 - **P19-6** Đồng hồ lượt đồ sát: server gửi số mili giây còn lại (`view.slayLeft`, tính lúc gửi), client cộng vào đồng hồ máy mình nên máy lệch giờ vẫn đếm đúng. Bot đang đồ sát mà chưa tới lượt thì chờ (không gửi lệnh), hỏi lại mỗi ~1 giây; tới lượt thì đánh / uống bình như đánh quái.
+
+## Phase 17 — Tiến Lên Miền Nam (2026-10-10, theo yêu cầu)
+Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Phoenix). Luật là `docs/RULES.md` T1–T26 của repo đó, giữ nguyên.
+- **P17-1** Port gần nguyên văn, đổi namespace `TienLen` → `HacLong.TienLen` (`lib/hac_long/tien_len/`):
+  - REUSE: `Card`, `Deck`, `Combination`, `Rules`, `InstantWin`, `Payout`, `Bot`, `Hint`, `Lobby`, `Commentary`, `BotTalk`, `Throws`, `Replay` cùng test của chúng.
+  - ADAPT `Game`: `Enum.sum_by` → `map |> sum` (Elixir 1.17).
+  - ADAPT `Room`: cược tối đa `RULES.tienlen.stake_max`; ván có bot vẫn ra kết quả để lưu xem lại.
+  - ADAPT `RoomServer`: số phòng tối đa `RULES.tienlen.max_rooms`; module tiền / ghi ván cắm từ cấu hình `:tienlen_economy`, `:tienlen_recorder`; bỏ lì xì Tết; khớp `HacLong.RateLimit`.
+  - REWRITE `Chat` (biểu cảm, câu nhanh, chuẩn hóa) và `Text` (lấy từ `TienLenWeb.Text`, "coin" → "vàng").
+- **P17-2** Tiền là **vàng Hắc Long** (`HacLong.TienLen.Gold`, thay `TienLen.Economy`):
+  - Cách trả giữ nguyên luật T20–T25: cược S, cần ≥ 10×S vàng để được chia bài; tiền hạng, chặt heo / chặt chồng, thối heo, tới trắng; thiếu vàng thì trả tối đa số đang có, chia theo tỉ lệ.
+  - Mọi lần trả giữ Session của người liên quan (theo thứ tự id) rồi ghi nhân vật + khóa trả (`tienlen_settlements`) trong một transaction, nhật ký vàng lý do `TIENLEN`.
+  - Ném đồ trừ vàng, lý do `TIENLEN_THROW`.
+  - Không có thưởng ngày / cứu trợ / chuyển xu riêng.
+- **P17-3** Bàn có bot thì cược = 0 (giữ B1 của repo gốc), nên không cày vàng từ bot. Khác repo gốc: ván có bot **vẫn được lưu** để xem lại (Hắc Long không có bảng xếp hạng Tiến Lên); chỉ người thật có tên trong `player_ids`.
+- **P17-4** Không port: tài khoản, bảng xếp hạng Tiến Lên, nhiệm vụ / mùa giải, bạn bè / mời / chat sảnh / chat riêng (Hắc Long đã có), cửa hàng mặt bài, tướng xấu hổ, sự kiện Tết / Trung thu, trang quản trị riêng. Có thể thêm sau nếu anh muốn.
+- **P17-5** Kênh: thêm sự kiện `tl` vào kênh `game` (`HacLongWeb.TienLenHandler`) thay các LiveView. Kênh là tiến trình được phòng theo dõi: đóng hết tab thì 20 giây sau bị loại khỏi ván (T15).
+
+## Chọn bản đồ (2026-10-10, theo yêu cầu)
+- **P15-T1** Bảng chọn bản đồ: **đủ cấp + đủ vàng** là đi được. Đủ cấp = cấp nhân vật ≥ cấp quái thấp nhất của bản đồ (`World.min_level/1`; bản đồ không có quái thì luôn được). Bỏ điều kiện "vùng đã mở" (bản đồ thường) và "đã đi qua cổng" (bản đồ phụ). Giá giữ nguyên `RULES.travel`. Tháp và bản đồ riêng vẫn không dịch chuyển tới được.
+- **B-4** (theo yêu cầu, 2026-10-10) **Bỏ khóa vùng bằng trùm.** Vùng `zi` mở khi cấp nhân vật ≥ cấp quái thấp nhất của vùng (`Engine.zone_level/1`): cổng, đá dịch chuyển, chọn bản đồ, đánh quái, việc hằng ngày, nhiệm vụ, bot đều theo đó. Trùm thành thử thách có thưởng (`RULES.boss_rewards`):
+  - hạ lần đầu: chắc chắn một món đồ Hiếm (75%) / Sử Thi (25%) **đúng lớp** cấp ≤ cấp trùm, cộng món rơi riêng cũ (Khiên Rồng, Bảo vật) nếu có;
+  - thành tựu + danh hiệu "Diệt <trùm>" cho 5 trùm vùng (Hắc Long giữ "Kẻ Diệt Rồng");
+  - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Phúc Lành, vùng 4–6 +1 Ngọc Linh Hồn (ghi trong `daily.bosses`).
+  - Mô phỏng 4 lớp × 5 lượt sau thay đổi: vẫn thắng 5/5, Hắc Long ở cấp ~35, số trận gần như cũ; ngọc thu được ~gấp đôi.
+- **P17-6** Mời bạn vào bàn Tiến Lên: chỉ bạn bè (dùng tin riêng sẵn có), nội dung `🃏 Mời bạn vào bàn Tiến Lên [mã] · …`; client nhận ra `[mã]` để hiện nút Vào bàn (thông báo nổi + trong khung tin riêng). Tối đa 10 lời mời / phút.
+
+## Bản tiếng Anh cho các phần mới (2026-10-10)
+- **I-1** Dịch 347 câu mới (Tiến Lên, đồ sát, thưởng trùm, chọn bản đồ) và 50 tên bản đồ phụ vào `priv/static/i18n/en.json`. Tên trò chơi ở bản tiếng Anh viết "Tien Len" (không dấu).
+- **I-2** `scripts/i18n_extract.py` coi `{a}` `{b}` `{n}` (chỗ trống câu bình luận Tiến Lên) là chỗ nội suy, đánh số `{0}`… như tên / số; `i18n.js` thử khớp mẫu dự phòng cho cả khối chữ trước khi tách câu (chỗ trống không được nuốt qua ranh giới câu), nên câu mẫu nhiều câu ("Ối dồi ôi! {0} vừa chặt…") dịch được.
+- **I-3** Thông báo kênh thế giới khi đồ sát đổi thành "🗡 A đã đồ sát B ở X." (rõ nghĩa hơn "đã hạ", và đủ chữ cố định để khớp mẫu dịch).
+
+## Phase 15b — Đồ từ Item.txt, M1 (2026-10-10, anh chốt)
+- **I15b-1** Nguồn `afrokick/muonlinejs` (`tools/Item.txt`, `public/items`); anh bỏ qua license. Vẫn giữ CLAUDE.md §7 phần "không vào git / Docker": file và hình ở `assets_src/private/`, hình chép ra `priv/static/assets/mu_items/` (thư mục `items/` cũ là hình tự vẽ, vẫn trong git); CI `private-assets` kiểm cả đường dẫn Hắc Long.
+- **I15b-2** Chọn theo bậc (114 món: vũ khí 7 bậc × 3 dòng lớp, khiên 3, bộ giáp 5 món × 6 bậc × 3 dòng lớp; Đấu Sĩ dùng chung đồ DK, không mũ). Yêu cầu chỉ số × 0,35; bậc 1 không đòi chỉ số.
+- **I15b-3** Item.txt quyết định món gì (tên, hình, lớp, tỉ lệ), Hắc Long quyết định mạnh cỡ nào (đường cong công / thủ / giá cũ) để giữ cân bằng. Mọi hệ số trong `priv/game_data/item_pick.json`, giải thích từng khóa ở `docs/ITEMS_PHASE15B.md` §3.
+- **I15b-4** Lệnh tải thư mục hình tự động bị chặn trong môi trường cloud (clone repo ngoài) → hình chép tay vào `assets_src/private/item_icons/`.
+- **I15b-5 (M2)** Đồ dựng ra ghi file riêng `items_mu.json` (`ITEMS_MU`), không sửa `items.json` / `shop.json` / bản đồ: `Data` gộp vào `ITEMS`, gắn `legacy` cho đồ cũ trong `ITEM_PICK.legacy`, tự thay đồ cũ trong cửa hàng và hàng Thợ Rèn. Đồ cũ vẫn còn định nghĩa (thư, chợ, Tủ Đồ cũ vẫn mở được) và được đổi khi nạp nhân vật.
+- **I15b-6** Giá món trong bộ giáp chia theo tỉ lệ thủ (`piece_weight: "def"`): đủ bộ = giá giáp cũ cùng bậc, để giữ kinh tế (trọng số tay làm tổng bộ đắt gấp 3,4).
+- **I15b-7** Đồ rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class: true`) để tốc độ có đồ như trước; đổi `false` là kiểu MU (rơi đồ mọi lớp).
+- **I15b-8** Yêu cầu chỉ số so với chỉ số gốc đã cộng điểm (không tính đồ), chỉ kiểm lúc mặc.
+- **I15b-9 (M3)** Hình đồ lấy từ repo riêng của anh `biennguyen94/mmo-rpg-game-items` (`item_ref/items`), chỉ chép hình của đồ đang có trong game, cắt viền trong suốt bằng ImageMagick lúc `mix hac_long.icons`. Cánh, Thánh Kiếm, Khiên Vảy Rồng mượn hình MU qua `ITEM_PICK.refs` (đổi được).
+- **I15c-1** Bậc 7–8: Kiếm Sĩ / Đấu Sĩ Hắc Long, Phượng Hoàng Đen; Phù Thủy Đại Linh Hồn, Hồn Bóng Tối; Tiên Nữ Thần Thánh, Linh Hồn Đỏ (bộ "bậc 2" của MU, dùng tên đẹp; số theo đường cong Hắc Long).
+- **I15c-2** Nhẫn / dây chuyền: chỉ số cho tay (Item.txt nhóm 13 không có số dùng được), chỉ rơi, không bán.
+- **I15c-3** Thưởng đủ bộ chỉ tính từ bậc 2 (`min_tier`), để bộ khởi đầu không cho thưởng sẵn.
+- **I15c-4** Excellent chỉ cho đồ rơi từ quái và đồ trùm lần đầu; dòng lấy từ dòng Excellent MU nhưng rút gọn còn 7 dòng game tính được.
+- **I15d-1** Kỹ năng trên vũ khí = chiêu +10 % sát thương (anh chốt, phương án a; không giảm hồi chiêu, không mở chiêu sớm).
+- **I15d-2** May mắn trên giáp / trang sức chỉ cộng tỉ lệ ép ngọc, không cộng chí mạng (anh chốt, như MU).
+- **I15d-3** May mắn / Kỹ năng chỉ có ở đồ rơi từ quái và đồ trùm lần đầu (như Excellent); tỉ lệ ép có May mắn tối đa 95 %.
+- **I15e-1** Cánh cấp 3 dùng hình gốc 12/36–12/39 theo Item.txt bản afrokick (Đấu Sĩ lấy Wings of Hurricane vì bản này không có Wing of Ruin); số theo đường cong cánh cấp 1 → 2 (10 → 18 → 25 %).
+- **I15e-2** Dòng cánh chỉ bốc khi ghép ở Máy Hỗn Nguyên (cánh tặng không có dòng, trừ khi quản trị ghi `wopt`); cánh cấp 2 cũ giữ nguyên, không bù dòng.
+- **I15e-3** `ignore_def` áp lên phòng thủ đối thủ sau hệ số kỹ năng (`def_mult`), trước công thức sát thương.
+- **I15f-1** Mục 4 (Máy Chaos): thêm Pha Excellent / Pha May mắn (biến đổi chính món đồ) thay vì đồ Chaos mới; thất bại mất món như mọi công thức của máy. Trái Cây hoãn vì cần đổi schema (OPEN_QUESTIONS 15f-A).
+- **I15g-1** Bộ Thần (mục 6): không tạo bộ mới mà cho mọi bộ giáp sẵn có một bản Thần (rơi hiếm); thưởng theo số món Thần cùng bộ, cộng dồn với thưởng đủ bộ thường. Vũ khí / khiên / trang sức không có bản Thần.
+- **I15h-1** Chợ (mục 7): chợ và giao dịch trực tiếp đã có từ trước nên mục này là sửa lỗi mất dòng đồ khi rao bán + lọc / sắp xếp ở client; không thêm đấu giá / đặt mua (sẽ đổi schema).
+- **I15i-1** Báo cáo cân bằng (mục 8) tính thẳng từ dữ liệu (không đo trên server thật) + simulator; ghi vào `docs/BALANCE_REPORT.md`, chỉ nêu nhận xét, không tự đổi số gameplay.
+- **E18-1** Quảng Trường Quỷ chạy như một chế độ của Tháp Vô Tận (bản đồ riêng, trạng thái trong cột `tower`) để không đổi schema; một người một lượt (không đánh chung), NPC dùng lại Người Gác Tháp.
+- **E18-2** Mở lệch Golden Invasion 1 giờ (1h, 3h … 23h), 10 phút cho vào, lượt 5 phút; hết giờ được kiểm khi người chơi bước tiếp (không có hẹn giờ riêng mỗi lượt).
+- **E18-3** Thưởng tính một lần lúc kết thúc theo điểm; lượt đủ ≈ giá vé về vàng, lãi là ngọc + món đồ khi qua hết đợt; kinh nghiệm ≈ 1 cấp / lượt đủ.
+- **E18-4** Bảng xếp hạng ngày giữ trong bộ nhớ (không thêm bảng DB); thưởng top 3 gửi thư lúc 0h05.
+- **E18-5** Lâu Đài Máu là một người một lượt (như Quảng Trường), ba bước quân canh → cổng → trùm; mở lệch 30 phút (0h30, 2h30 …) để không trùng Quảng Trường / Golden Invasion.
+- **E18-6** Lượt thắng ≈ giá vé về vàng; lãi là Lông Vũ Kền Kền + 2 ngọc + kinh nghiệm. Không xong thì thưởng theo quân canh đã hạ, không có lông vũ.
+- **E18-7** Cổng / trùm hiện ở ô trống gần cầu thang lên nhưng không trùng ô người chơi đang đứng (đứng sẵn trên ô quái thì không bước vào đánh được).

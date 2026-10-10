@@ -41,16 +41,20 @@
     const key = norm.replace(tokRe, (x) => { vals.push(x); return '{' + (vals.length - 1) + '}'; });
     const tpl = dict.t[key];
     if (tpl) return tpl.replace(/\{(\d+)\}/g, (m, i) => (vals[i] == null ? m : dict.names[vals[i]] || vals[i]));
+    // mẫu dự phòng khớp cả khối trước (câu mẫu có thể gồm nhiều câu, vd "Ối dồi ôi! {0} vừa chặt…"),
+    // miễn chỗ trống không nuốt qua ranh giới câu
+    const first = norm.split(/[\s{]/)[0] || '';
+    for (const [re, v] of (loose[first] || []).concat(first ? loose[''] || [] : [])) {
+      const m = norm.match(re);
+      if (m && !Object.values(m.groups).some((g) => /[.!?…]\s/.test(g))) {
+        return v.replace(/\{(\d+)\}/g, (x, i) => { const g = m.groups['p' + i]; return g == null ? x : tr(g); });
+      }
+    }
     // nhiều câu ghép trong một khối chữ: dịch từng câu
     const parts = norm.split(/(?<=[.!?…])\s+(?=\S)/);
     if (parts.length > 1) return parts.map((p) => core(p)).join(' ');
     const bits = norm.split(/\s+·\s+/);
     if (bits.length > 1) return bits.map((p) => core(p)).join(' · ');
-    const first = norm.split(/[\s{]/)[0] || '';
-    for (const [re, v] of (loose[first] || []).concat(first ? loose[''] || [] : [])) {
-      const m = norm.match(re);
-      if (m) return v.replace(/\{(\d+)\}/g, (x, i) => { const g = m.groups['p' + i]; return g == null ? x : tr(g); });
-    }
     // "Tên: giá trị" — dịch hai vế riêng
     const kv = norm.match(/^([^:]{1,40}):\s(.+)$/);
     if (kv) return core(kv[1]) + ': ' + core(kv[2]);

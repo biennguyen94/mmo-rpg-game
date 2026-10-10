@@ -100,3 +100,31 @@ test('Thư viện: tìm theo tên không cần dấu', () => {
   assert.ok(!L.nameMatch(['Chó Rừng'], 'doi'));
   assert.ok(L.nameMatch(['Dơi Hang', 'Cave Bat'], 'bat'));
 });
+
+test('iconForLevel: hình Excellent ("<cấp>e") khi có, không có thì hình thường', () => {
+  const lv = { 0: 'a0.png', 5: 'a5.png', '0e': 'a0e.png' };
+  assert.equal(L.iconForLevel(lv, 3, 'e'), 'a0e.png');
+  assert.equal(L.iconForLevel(lv, 7, 'e'), 'a0e.png');
+  assert.equal(L.iconForLevel(lv, 7, ''), 'a5.png');
+  assert.equal(L.iconForLevel({ 0: 'b.png' }, 2, 'e'), 'b.png');
+});
+
+test('marketFilter: lọc theo loại hàng, sắp theo giá (Phase 15h)', () => {
+  const list = [
+    { id: 1, price: 500, slot: 'weapon', gear: { excellent: true } },
+    { id: 2, price: 100, slot: 'material' },
+    { id: 3, price: 900, slot: 'armor', gear: { anc: true } },
+    { id: 4, price: 300, slot: 'wing', gear: {} },
+    { id: 5, price: 200, slot: 'ring', gear: { luck: true } },
+  ];
+  const ids = (xs) => xs.map((l) => l.id);
+  assert.deepEqual(ids(L.marketFilter(list, 'all', 'new')), [1, 2, 3, 4, 5]);
+  assert.deepEqual(ids(L.marketFilter(list, 'exc', 'new')), [1]);
+  assert.deepEqual(ids(L.marketFilter(list, 'anc', 'new')), [3]);
+  assert.deepEqual(ids(L.marketFilter(list, 'luck', 'new')), [5]);
+  assert.deepEqual(ids(L.marketFilter(list, 'wing', 'new')), [4]);
+  assert.deepEqual(ids(L.marketFilter(list, 'item', 'new')), [2]);
+  assert.deepEqual(ids(L.marketFilter(list, 'gear', 'cheap')), [5, 4, 1, 3]);
+  assert.deepEqual(ids(L.marketFilter(list, 'all', 'dear')), [3, 1, 4, 5, 2]);
+  assert.equal(list[0].id, 1); // không đổi mảng gốc
+});

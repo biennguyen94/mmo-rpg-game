@@ -282,6 +282,20 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Tiến Lên (Phase 17): sảnh, bàn bài, xem trận, xem lại ván (`HacLongWeb.TienLenHandler`)
+  def handle_in("tl", p, socket) do
+    case limit({:tl, socket.assigns.user_id}, 300, :timer.minutes(1)) do
+      :ok -> HacLongWeb.TienLenHandler.handle_in(p, socket)
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
+  # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng hôm nay
+  def handle_in("ds_top", _p, socket) do
+    top = HacLong.DevilSquareBoard.top()
+    {:reply, {:ok, %{top: Enum.map(top, &Map.take(&1, [:name, :score]))}}, socket}
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 
@@ -329,12 +343,7 @@ defmodule HacLongWeb.GameChannel do
           look: Engine.look(p),
           title: Achievements.title_name(p[:title]),
           guild: guild && %{name: guild.name, tag: guild.tag},
-          gear: %{
-            weapon: name.(p.equip.weapon),
-            armor: name.(p.equip.armor),
-            shield: name.(p.equip.shield),
-            wing: name.(p.equip[:wing])
-          },
+          gear: Map.new(p.equip, fn {slot, id} -> {slot, name.(id)} end),
           arena: Arena.stats(target),
           blocked: target in socket.assigns.blocked,
           party: party && target in party.members,
@@ -939,6 +948,14 @@ defmodule HacLongWeb.GameChannel do
   def handle_info({:map_state, id, snap}, socket) do
     if id == socket.assigns.map, do: push(socket, "map", snap)
     {:noreply, socket}
+  end
+
+  # Tiến Lên (Phase 17): tin của phòng / sảnh; tin lạ khác thì bỏ qua
+  def handle_info(msg, socket) do
+    case HacLongWeb.TienLenHandler.handle_info(msg, socket) do
+      :skip -> {:noreply, socket}
+      other -> other
+    end
   end
 
   # Nhân vật sang bản đồ khác: đổi kênh PubSub đang nghe và gửi ngay trạng thái bản đồ mới.

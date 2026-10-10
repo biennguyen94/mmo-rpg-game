@@ -16,6 +16,9 @@ defmodule HacLong.Game.Simulator do
 
   alias HacLong.Game.{Chests, Daily, Data, Engine, Gear, Quests}
 
+  # ô bot tự mua / mặc / ép (nhẫn: chỉ mặc khi rơi, xem `chests/2`)
+  @slots ~w(weapon armor shield helm pants gloves boots pendant)
+
   # cách cộng điểm của bot theo lớp (lặp vòng)
   @alloc %{
     "dk" => ~w(str str str vit vit),
@@ -237,7 +240,7 @@ defmodule HacLong.Game.Simulator do
       Enum.reduce(Gear.bag(p), p, fn g, p ->
         it = Gear.resolve(g)
 
-        if worn(p, g.uid) <= worn(p, p.equip[String.to_existing_atom(it.slot)]),
+        if worn(p, g.uid) <= worn(p, p.equip[Engine.equip_slot(p, it)]),
           do: elem(Engine.sell(p, g.uid), 1),
           else: p
       end)
@@ -253,7 +256,7 @@ defmodule HacLong.Game.Simulator do
   defp forge(p, %{opts: %{upgrade: false}}), do: p
 
   defp forge(p, st) do
-    Enum.reduce(~w(weapon armor shield), p, fn slot, p ->
+    Enum.reduce(@slots, p, fn slot, p ->
       id = p.equip[String.to_existing_atom(slot)]
       cost = id && Engine.upgrade_cost(Gear.item(p, id), Engine.upgrade_level(p, id))
 
@@ -284,7 +287,7 @@ defmodule HacLong.Game.Simulator do
 
   defp shop_up(p) do
     p =
-      Enum.reduce(~w(weapon armor shield), p, fn slot, p ->
+      Enum.reduce(@slots, p, fn slot, p ->
         cur = p.equip[String.to_existing_atom(slot)]
 
         # đồ rơi trong túi (cả đồ chỉ số ngẫu nhiên) tốt hơn thì mặc luôn
@@ -292,7 +295,7 @@ defmodule HacLong.Game.Simulator do
           (Map.keys(p.inv) ++ Enum.map(Gear.bag(p), & &1.uid))
           |> Enum.filter(fn id ->
             it = Gear.item(p, id)
-            it.slot == slot and (it[:level] || 1) <= p.level and worn(p, id) > worn(p, cur)
+            it.slot == slot and Engine.can_wear?(p, it) and worn(p, id) > worn(p, cur)
           end)
           |> Enum.max_by(&worn(p, &1), fn -> nil end)
 
@@ -301,7 +304,7 @@ defmodule HacLong.Game.Simulator do
           |> Enum.filter(fn id ->
             it = Data.item(id)
 
-            it.slot == slot and it.level <= p.level and it.price <= p.gold - 40 and
+            it.slot == slot and Engine.can_wear?(p, it) and it.price <= p.gold - 40 and
               value(id) > worn(p, cur)
           end)
           |> Enum.max_by(&value/1, fn -> nil end)

@@ -97,7 +97,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       {%{ok: true, upgrade: %{result: "destroy"}}, p} =
         Commands.run(p, %{"act" => "upgrade", "id" => g.uid, "confirm" => true})
 
-      assert Gear.find(p, g.uid) == nil and p.equip.weapon == "club"
+      assert Gear.find(p, g.uid) == nil and p.equip.weapon == "item_1_0"
     end
   end
 
@@ -116,8 +116,8 @@ defmodule HacLong.Game.ForgeStorageTest do
                Commands.run(p, %{"act" => "discard", "id" => locked.uid})
 
       assert msg =~ "đang khóa"
-      {_, p} = Engine.equip(p, "club")
-      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "discard", "id" => "club"})
+      # vũ khí khởi đầu đang mặc thì không vứt được
+      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "discard", "id" => p.equip.weapon})
     end
   end
 

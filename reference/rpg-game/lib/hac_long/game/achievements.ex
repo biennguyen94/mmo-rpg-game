@@ -284,7 +284,19 @@ defmodule HacLong.Game.Achievements do
     }
   ]
 
-  def all, do: Enum.map(@list, &Map.put(&1, :goal, goal(&1)))
+  # mỗi trùm vùng (trừ Hắc Long, đã có "Diệt Rồng") một thành tựu + danh hiệu "Diệt <trùm>" (B-4)
+  @boss_list (for z <- Data.zones(), !z.boss[:final] do
+                %{
+                  id: "boss_" <> z.boss.id,
+                  name: "Diệt #{z.boss.name}",
+                  desc: "Hạ #{z.boss.name} (#{z.name}).",
+                  stat: {:boss, z.boss.id},
+                  goal: 1,
+                  title: "Diệt #{z.boss.name}"
+                }
+              end)
+
+  def all, do: Enum.map(@list ++ @boss_list, &Map.put(&1, :goal, goal(&1)))
   def get(id), do: Enum.find(all(), &(&1.id == id))
 
   defp goal(%{goal: :max_level}), do: Engine.max_level()
@@ -297,6 +309,7 @@ defmodule HacLong.Game.Achievements do
   defp goal(%{goal: g}), do: g
 
   @doc "Giá trị hiện tại của chỉ số `stat` để so với mục tiêu."
+  def value(p, {:boss, id}), do: if(id in p.bosses, do: 1, else: 0)
   def value(p, :kills), do: p.kills
   def value(p, :bosses), do: length(p.bosses)
   def value(p, :victory), do: if(p.victory, do: 1, else: 0)
