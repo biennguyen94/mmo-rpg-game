@@ -106,9 +106,12 @@ defmodule HacLong.Game.Data do
                 into: %{},
                 do: {id, %{kind: kind, tier: tier}}
               )
+  # `ITEM_PICK.refs`: đồ riêng của Hắc Long (cánh, đồ trùm) mượn hình gốc theo `ref` "nhóm/số"
+  @refs @pick["refs"] || %{}
   @items by_id.(raw["ITEMS"])
          |> Map.new(fn {id, it} ->
-           {id, if(l = @legacy[id], do: Map.put(it, :legacy, l), else: it)}
+           it = if(l = @legacy[id], do: Map.put(it, :legacy, l), else: it)
+           {id, if(r = @refs[id], do: Map.put(it, :ref, r), else: it)}
          end)
          |> Map.merge(@mu_items)
   @mu_slots ~w(weapon shield helm armor pants gloves boots)

@@ -205,3 +205,4 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15b-6** Giá món trong bộ giáp chia theo tỉ lệ thủ (`piece_weight: "def"`): đủ bộ = giá giáp cũ cùng bậc, để giữ kinh tế (trọng số tay làm tổng bộ đắt gấp 3,4).
 - **I15b-7** Đồ rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class: true`) để tốc độ có đồ như trước; đổi `false` là kiểu MU (rơi đồ mọi lớp).
 - **I15b-8** Yêu cầu chỉ số so với chỉ số gốc đã cộng điểm (không tính đồ), chỉ kiểm lúc mặc.
+- **I15b-9 (M3)** Hình đồ lấy từ repo riêng của anh `biennguyen94/mmo-rpg-game-items` (`item_ref/items`), chỉ chép hình của đồ đang có trong game, cắt viền trong suốt bằng ImageMagick lúc `mix hac_long.icons`. Cánh, Thánh Kiếm, Khiên Vảy Rồng mượn hình MU qua `ITEM_PICK.refs` (đổi được).

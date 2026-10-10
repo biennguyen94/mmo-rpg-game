@@ -12,8 +12,10 @@ mix hac_long.items.fetch            # Item.txt → assets_src/private/items/Item
 mix hac_long.items.import           # → assets_src/private/items/items_raw.json, items_from_txt.json
 mix hac_long.items.build --preview  # → docs/ITEMS_PICK.md (xem trước, không đổi game)
 mix hac_long.items.build            # → priv/game_data/items_mu.json (đồ trong game) + tên tiếng Anh + ITEMS_PICK.md
-# hình: đặt PNG vào assets_src/private/item_icons/ (tên item_{nhóm}_{số}.png), rồi:
-mix hac_long.icons                  # → priv/static/assets/mu_items/ + item_icons.json
+# hình: clone repo hình của anh (riêng tư) cạnh repo này rồi chép hình của đồ đang có trong game
+git clone --depth 1 https://github.com/biennguyen94/mmo-rpg-game-items ../../../mmo-rpg-game-items
+mix hac_long.items.fetch --icons-from ../../../mmo-rpg-game-items/item_ref/items   # → assets_src/private/item_icons/
+mix hac_long.icons                  # cắt viền trong suốt (ImageMagick) → priv/static/assets/mu_items/ + item_icons.json
 ```
 
 | Đường dẫn | Nội dung | Git / Docker |
@@ -28,8 +30,16 @@ mix hac_long.icons                  # → priv/static/assets/mu_items/ + item_ic
 CI (`.github/workflows/ci.yml`, job `private-assets`) báo lỗi nếu file trong ba đường dẫn bị bỏ qua lọt vào git.
 Máy chủ không có hình thì client dùng icon cũ, không lỗi.
 
-**Đổi nguồn:** `mix hac_long.items.fetch --url <URL>` hoặc biến `HL_ITEM_TXT_URL`. Hình chép tay (lệnh tải tự
-động thư mục hình bị chặn trong môi trường của em; trên máy anh có thể `git clone --sparse` repo rồi chép `public/items`).
+**Nguồn hình:** repo riêng `biennguyen94/mmo-rpg-game-items`, thư mục `item_ref/items` (8 144 PNG, tên
+`item_{nhóm}_{số}_{+N}.png`, biến thể `_e` Excellent; `item_ref/Item.txt` trùng bản đã tải). `--icons-from` chỉ chép
+hình của đồ đang có trong game (≈ 1 600 hình, 12 MB), bỏ `_e`. Hình gốc để món đồ nhỏ giữa khung trong suốt lớn, nên
+`mix hac_long.icons` cắt viền bằng ImageMagick (`convert -trim`; không có thì chép nguyên, `--no-trim` để tắt).
+
+**Đổi nguồn Item.txt:** `mix hac_long.items.fetch --url <URL>` hoặc biến `HL_ITEM_TXT_URL`.
+
+**Máy chủ / Docker:** hình không nằm trong image. Sau khi triển khai, chạy ba lệnh hình ở trên trong thư mục ứng
+dụng (hoặc gắn sẵn `priv/static/assets/mu_items/` + `item_icons.json` bằng volume); bảng tra đọc lúc mở trang, không
+cần build lại. Thiếu hình thì game dùng icon tạm.
 
 ## 2. Nguyên tắc
 
@@ -102,5 +112,11 @@ khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ
   - Giao diện tối thiểu: mở 4 ô, tooltip có "Dùng cho" và "Cần <chỉ số>" (đỏ khi thiếu), cửa hàng chỉ hiện đồ đúng lớp.
   - Cân bằng (simulator 5 ván × 4 lớp × 5 cách chơi, trước → sau): mọi lớp vẫn hạ Hắc Long 5/5 ở cấp 35; số trận lệch
     ≤ 3 %; chết ≤ 1. Vàng cuối game của Kiếm Sĩ thấp hơn (mua / ép nhiều ô hơn).
-- **M3:** hình gốc theo `ref` (chờ anh cấp quyền tải / đặt hình), icon riêng cho găng / quần / giày, viền sáng
-  +7 / +9 / +11 bằng CSS, hình nhân vật cho cung / gậy, tên gốc trong tooltip, e2e riêng cho đồ theo lớp.
+- **M3 (xong 2026-10-10):**
+  - Hình gốc theo `ref` cho 114 món + cánh, Thánh Kiếm, Khiên Vảy Rồng (`ITEM_PICK.refs`: cánh MU cùng tên — Fairy,
+    Angel, Satan, Spirit, Soul, Dragon, Darkness; Cánh Hủy Diệt = Wing of Despair; Thánh Kiếm = Sword of Archangel;
+    Khiên Vảy Rồng = Dragon Shield). Hình đổi theo +N (mức lớn nhất ≤ cấp nâng); viền sáng +7 / +9 / +11 có từ Đợt 3.
+  - Bảng chi tiết có tên gốc (`mu_name`); Thợ Rèn: "Ép đồ" liệt kê đủ 8 ô với hình gốc, "Rèn đồ" ghi rõ bộ giáp.
+  - e2e `items.mjs` (11 mục, trong `run.mjs`): đồ khởi đầu theo lớp, 4 ô mới, hình tải được (khi có hình), yêu cầu
+    chỉ số (tooltip đỏ, nút khóa, server từ chối), tháo / mặc mũ, Thợ Rèn chỉ bày đồ đúng lớp, mua đồ lớp khác bị từ chối.
+  - Chưa làm: hình trên nhân vật (doll) cho cung / gậy — chưa có sprite, đang mượn sprite kiếm / rìu của bậc cũ.

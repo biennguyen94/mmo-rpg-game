@@ -491,6 +491,8 @@ img.own { object-fit: contain; image-rendering: auto; }
 .itemtip { position: fixed; z-index: 60; width: 240px; max-width: calc(100vw - 16px); background: #0f0c13; border: 1px solid var(--gold); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 4px; box-shadow: 0 8px 24px #000a; font-size: 0.9rem; }
 .itemtip .big { justify-self: center; }
 .itemtip .big .ic.lg { width: 56px; height: 56px; }
+/* hình gốc đồ (Phase 15b): khổ đứng, cho cao hơn */
+.itemtip .big img.own { width: 72px; height: 88px; }
 .itemtip .bad { color: var(--bad); }
 .itemtip .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .itemtip .btns .btn { flex: 1; }

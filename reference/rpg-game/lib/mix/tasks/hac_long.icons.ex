@@ -6,6 +6,10 @@ defmodule Mix.Tasks.HacLong.Icons do
 
       mix hac_long.icons                      # thư mục mặc định assets_src/private/item_icons
       mix hac_long.icons --src ~/hinh-do      # hoặc HL_ITEM_ICONS_DIR=~/hinh-do
+      mix hac_long.icons --no-trim            # chép nguyên, không cắt viền trong suốt
+
+  Máy có ImageMagick (`convert`) thì cắt bỏ viền trong suốt quanh món đồ khi chép (hình gốc MU để
+  món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); không có thì chép nguyên.
 
   Không có thư mục / không có hình: ghi bảng rỗng, game dùng icon cũ, **không lỗi** (thoát 0).
   Tải lại trang là thấy hình mới (không cần build lại server).
@@ -22,7 +26,8 @@ defmodule Mix.Tasks.HacLong.Icons do
 
   @impl true
   def run(args) do
-    {opts, _, _} = OptionParser.parse(args, strict: [src: :string])
+    {opts, _, _} = OptionParser.parse(args, strict: [src: :string, trim: :boolean])
+    convert = opts[:trim] != false && System.find_executable("convert")
     src = opts[:src] || System.get_env("HL_ITEM_ICONS_DIR") || "assets_src/private/item_icons"
     Mix.Task.run("compile")
 
@@ -39,7 +44,7 @@ defmodule Mix.Tasks.HacLong.Icons do
 
     for f <- files,
         Path.basename(f) not in skipped,
-        do: File.cp!(Path.join(src, f), Path.join(@out_dir, f))
+        do: copy(convert, Path.join(src, f), Path.join(@out_dir, f))
 
     File.write!(@out_map, Jason.encode!(map, pretty: true) <> "\n")
 
@@ -54,6 +59,7 @@ defmodule Mix.Tasks.HacLong.Icons do
       for {id, it} <- Data.items(),
           it.slot in ~w(weapon armor shield wing helm pants gloves boots),
           not Map.has_key?(map, it[:ref] || "") and not Map.has_key?(map, "custom/#{id}"),
+          !it[:legacy],
           do: id
 
     if missing != [],
@@ -61,5 +67,14 @@ defmodule Mix.Tasks.HacLong.Icons do
         Mix.shell().info(
           "Chưa có hình riêng (dùng icon cũ): #{Enum.join(Enum.sort(missing), ", ")}"
         )
+  end
+
+  defp copy(nil, from, to), do: File.cp!(from, to)
+
+  defp copy(convert, from, to) do
+    case System.cmd(convert, [from, "-trim", "+repage", to], stderr_to_stdout: true) do
+      {_, 0} -> :ok
+      _ -> File.cp!(from, to)
+    end
   end
 end

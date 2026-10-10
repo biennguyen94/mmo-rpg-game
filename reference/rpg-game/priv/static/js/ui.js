@@ -1940,6 +1940,7 @@
     el.innerHTML = `
       <div class="big">${itemIcon(it, it.rarity, upLevel(id))}</div>
       <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
+      ${it.mu_name ? `<div class="small muted" data-notr>${esc(it.mu_name)}</div>` : ''}
       ${desc ? `<div class="small">${desc}</div>` : ''}
       ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
       ${it.level ? `<div class="small ${it.level > P.level ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
@@ -2034,7 +2035,7 @@
   function forgeCard() {
     if (forgePick && !P.view.forgeBag[forgePick]) forgePick = null;
     const life = RULES.life, jewels = P.inv[life.jewel] || 0;
-    const slots = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên'], ['wing', 'Cánh']]
+    const slots = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh']]
       .map(([slot, label]) => [slot, label, P.view.forge[slot]]);
     if (forgePick) slots.unshift([null, 'Trong túi (đã chọn)', Object.assign({ id: forgePick }, P.view.forgeBag[forgePick])]);
     const rows = slots.map(([slot, label, f]) => {
@@ -2047,7 +2048,7 @@
       const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
       const step = c ? per * (effLevel(f.level + 1) - effLevel(f.level)) : 0;
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
-      return `<div class="item">${icon(it.icon, 'lg')}<div class="grow">
+      return `<div class="item">${itemIcon(it, it.rarity, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
           ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
@@ -2157,7 +2158,8 @@
   function smithCard() {
     const lv = P.view.crafting.smith, gold = P.view.crafting.smithGold;
     const epic = RULES.smithEpicPerLevel * lv, full = bagGear().length >= RULES.gearBag;
-    const slots = [['weapon', 'Vũ khí'], ['armor', 'Giáp'], ['shield', 'Khiên']];
+    // Phase 15b: "giáp" rèn ra một món bất kỳ của bộ giáp (mũ / giáp / quần / găng / giày) đúng lớp
+    const slots = [['weapon', 'Vũ khí'], ['armor', 'Bộ giáp (mũ, giáp, quần, găng hoặc giày)'], ['shield', 'Khiên']];
     return `<div class="card"><h3>Rèn đồ</h3>${craftLevel('smith', 'Rèn đồ')}
       <p class="small muted">Rèn một món đồ chỉ số ngẫu nhiên hợp cấp bạn: Sử Thi ${epic}%, Hiếm ${RULES.smithRare}%. Nghề càng cao càng dễ ra Sử Thi.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
       <div class="list">${slots.map(([slot, label]) => {
