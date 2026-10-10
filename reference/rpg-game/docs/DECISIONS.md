@@ -213,3 +213,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15d-1** Kỹ năng trên vũ khí = chiêu +10 % sát thương (anh chốt, phương án a; không giảm hồi chiêu, không mở chiêu sớm).
 - **I15d-2** May mắn trên giáp / trang sức chỉ cộng tỉ lệ ép ngọc, không cộng chí mạng (anh chốt, như MU).
 - **I15d-3** May mắn / Kỹ năng chỉ có ở đồ rơi từ quái và đồ trùm lần đầu (như Excellent); tỉ lệ ép có May mắn tối đa 95 %.
+- **I15e-1** Cánh cấp 3 dùng hình gốc 12/36–12/39 theo Item.txt bản afrokick (Đấu Sĩ lấy Wings of Hurricane vì bản này không có Wing of Ruin); số theo đường cong cánh cấp 1 → 2 (10 → 18 → 25 %).
+- **I15e-2** Dòng cánh chỉ bốc khi ghép ở Máy Hỗn Nguyên (cánh tặng không có dòng, trừ khi quản trị ghi `wopt`); cánh cấp 2 cũ giữ nguyên, không bù dòng.
+- **I15e-3** `ignore_def` áp lên phòng thủ đối thủ sau hệ số kỹ năng (`def_mult`), trước công thức sát thương.

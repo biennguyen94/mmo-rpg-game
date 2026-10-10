@@ -489,6 +489,58 @@
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_dk_3": {
+      "name": "Cánh Bão Tố",
+      "slot": "wing",
+      "cls": "dk",
+      "tier": 3,
+      "icon": "feathered-wing",
+      "def": 22,
+      "dmg": 0.25,
+      "absorb": 0.25,
+      "price": 0,
+      "level": 45,
+      "desc": "Cánh cấp 3, ghép từ cánh cấp 2 +9 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_dw_3": {
+      "name": "Cánh Không Gian",
+      "slot": "wing",
+      "cls": "dw",
+      "tier": 3,
+      "icon": "feathered-wing",
+      "def": 22,
+      "dmg": 0.25,
+      "absorb": 0.25,
+      "price": 0,
+      "level": 45,
+      "desc": "Cánh cấp 3, ghép từ cánh cấp 2 +9 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_elf_3": {
+      "name": "Cánh Ảo Ảnh",
+      "slot": "wing",
+      "cls": "elf",
+      "tier": 3,
+      "icon": "feathered-wing",
+      "def": 22,
+      "dmg": 0.25,
+      "absorb": 0.25,
+      "price": 0,
+      "level": 45,
+      "desc": "Cánh cấp 3, ghép từ cánh cấp 2 +9 trở lên ở Máy Hỗn Nguyên."
+    },
+    "wing_mg_3": {
+      "name": "Cánh Cuồng Phong",
+      "slot": "wing",
+      "cls": "mg",
+      "tier": 3,
+      "icon": "feathered-wing",
+      "def": 22,
+      "dmg": 0.25,
+      "absorb": 0.25,
+      "price": 0,
+      "level": 45,
+      "desc": "Cánh cấp 3, ghép từ cánh cấp 2 +9 trở lên ở Máy Hỗn Nguyên."
     }
   }
 }

@@ -44,6 +44,29 @@
       "out": "wing_{cls}_2"
     },
     {
+      "id": "wing3",
+      "name": "Cánh cấp 3",
+      "desc": "1 cánh cấp 2 +9 trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp.",
+      "gear": {
+        "slots": [
+          "wing"
+        ],
+        "tier": 2,
+        "min_up": 9
+      },
+      "items": {
+        "jewel_bless": 10,
+        "jewel_soul": 10,
+        "jewel_chaos": 3,
+        "jewel_life": 3
+      },
+      "gold": 500000,
+      "rate": 0.15,
+      "per_up": 0.05,
+      "max_rate": 0.5,
+      "out": "wing_{cls}_3"
+    },
+    {
       "id": "make_chaos",
       "name": "Ngọc Hỗn Nguyên",
       "desc": "10 Quặng Mithril + 1 Vảy Cổ Long → 1 Ngọc Hỗn Nguyên.",

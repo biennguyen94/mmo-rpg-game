@@ -1560,6 +1560,7 @@
         ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
         ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
+        ${d.ignoreDef ? kv('Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
         ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
         ${kv('MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
@@ -1867,6 +1868,13 @@
     if (it.skill) h += `<div class="small ls">· Kỹ năng (sát thương chiêu +${lsPct(r.skill_dmg)}%)</div>`;
     return h;
   };
+  // Phase 15e: dòng phụ của cánh (giá trị server gửi trong `wopt_value`)
+  const woptLine = (it) => {
+    if (!it.wopt) return '';
+    const v = it.wopt_value;
+    const t = it.wopt === 'hp' ? `Máu tối đa +${v}` : it.wopt === 'mp' ? `MP tối đa +${v}` : `Bỏ qua ${lsPct(v)}% phòng thủ đối thủ`;
+    return `<div class="small ls">· Dòng cánh: ${t}</div>`;
+  };
   // thưởng đủ bộ giáp (P.view.setBonus)
   function setLine() {
     const b = P.view.setBonus;
@@ -1982,6 +1990,7 @@
       ${it.set ? `<div class="small muted">Thuộc bộ ${esc(it.set)} (bậc ${it.tier})</div>` : ''}
       ${excLines(it)}
       ${luckSkillLines(it)}
+      ${woptLine(it)}
       ${lifeLine(it)}
       ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>' : ''}
       ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}

@@ -13,7 +13,7 @@ defmodule HacLong.Admin do
   | `give_xp` | `xp` (1..1e9) | cộng kinh nghiệm, lên cấp như đánh quái |
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
-  | `give_item` | `id`, `count` (1..9999), `up` (0..11) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
+  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
   | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí) | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
@@ -102,10 +102,15 @@ defmodule HacLong.Admin do
     count = a["count"] || 1
     up = a["up"] || 0
     it = is_binary(id) && Data.item(id)
+    # Phase 15e: dòng phụ cho sẵn của cánh (`hp` / `mp` / `ignore_def`)
+    wopt = a["wopt"]
 
     cond do
       !it ->
         {:error, "Không có món đồ \"#{id}\"."}
+
+      wopt != nil and not (it.slot == "wing" and Gear.wopt_value(it[:tier], wopt) > 0) ->
+        {:error, "Dòng cánh không hợp lệ (cánh bậc có dòng: hp, mp, ignore_def)."}
 
       not (is_integer(count) and count in 1..@max_count) ->
         {:error, "Số lượng phải từ 1 tới #{@max_count}."}
@@ -124,6 +129,7 @@ defmodule HacLong.Admin do
              {:error, "Túi đồ hiếm không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
            else
              gs = for _ <- 1..count, do: Gear.plain(id)
+             gs = if wopt, do: Enum.map(gs, &Map.put(&1, :wopt, wopt)), else: gs
              p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ gs)
              p = Enum.reduce(gs, p, &put_upgrade(&2, &1.uid, up))
              {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}

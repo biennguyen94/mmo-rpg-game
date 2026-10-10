@@ -220,6 +220,13 @@
       "max_dmg_red": 0.2,
       "price_mult": 2
     },
+    "wing_options": {
+      "_doc": "Phase 15e: dòng phụ của cánh (docs/ITEMS_PHASE15B.md §8). Ghép thành công cánh có bậc trong by_tier ở Máy Hỗn Nguyên thì bốc ngẫu nhiên đều 1 dòng: hp (máu tối đa +), mp (MP tối đa +), ignore_def (bỏ qua phần phòng thủ của đối thủ khi đánh). Đổi số ở by_tier; bỏ một bậc khỏi by_tier là cánh bậc đó không có dòng.",
+      "by_tier": [
+        { "tier": 2, "hp": 60, "mp": 40, "ignore_def": 0.03 },
+        { "tier": 3, "hp": 120, "mp": 80, "ignore_def": 0.05 }
+      ]
+    },
     "luck_skill": {
       "_doc": "Phase 15d: dòng phụ May mắn / Kỹ năng trên đồ rơi (docs/ITEMS_PHASE15B.md §7). luck_chance: tỉ lệ món rơi có May mắn theo loại quái (cánh không có); skill_chance: tỉ lệ vũ khí rơi có Kỹ năng; luck_crit: tỉ lệ chí mạng cộng thêm khi VŨ KHÍ có May mắn (giáp / trang sức May mắn không cộng); luck_upgrade: tỉ lệ ép ngọc +7..+11 cộng thêm khi món có May mắn, tối đa luck_max_rate; skill_dmg: sát thương chiêu (không tính đánh thường) cộng thêm khi vũ khí có Kỹ năng; price_mult: giá bán nhân thêm cho mỗi dòng.",
       "luck_chance": { "normal": 0.1, "elite": 0.2, "night": 0.15, "boss": 0.35 },

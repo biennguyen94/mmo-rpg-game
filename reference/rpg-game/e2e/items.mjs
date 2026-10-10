@@ -87,6 +87,18 @@ const d0 = (await player(E.page)).view;
 R.check('mặc đồ Excellent: tấn công / chí mạng tính dòng Excellent', pe.equip.weapon === exc.uid && d0.exc.atk_pct > 0 && d0.exc.crit > 0, JSON.stringify(d0.exc));
 R.check('vũ khí Kỹ năng: skillDmg > 0', d0.derived.skillDmg > 0, String(d0.derived.skillDmg));
 
+// Phase 15e: cánh cấp 3 có dòng cánh (tặng sẵn), tooltip hiện dòng + hình gốc
+await admin('give_item', E.name, { id: 'wing_elf_3', count: 1, wopt: 'hp' });
+await E.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.base === 'wing_elf_3'), null, { timeout: 5000 }).catch(() => null);
+const w3 = await E.page.evaluate(() => Object.values(window.__hl.player().view.gear || {}).find((g) => g.base === 'wing_elf_3'));
+await E.page.click('#tabs [data-tab="map"]');
+await E.page.click('#tabs [data-tab="bag"]');
+await E.page.click(`[data-act="bag-tip"][data-id="${w3 && w3.uid}"]`).catch(() => null);
+await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
+const tipW = (await E.page.textContent('#itemtip').catch(() => '')) || '';
+R.check('cánh cấp 3: tên, dòng cánh "Máu tối đa +"', !!w3 && w3.wopt === 'hp' && tipW.includes('Cánh Ảo Ảnh') && tipW.includes('Dòng cánh: Máu tối đa +'), tipW.slice(0, 200));
+await shot(E.page, 'items-wing3.png');
+
 // đủ bộ Lụa (bậc 2): 5 món → có thưởng
 for (const id of ['item_7_11', 'item_8_11', 'item_9_11', 'item_10_11', 'item_11_11']) await admin('give_item', E.name, { id, count: 1 });
 await E.page.waitForFunction(() => (window.__hl.player().inv || {}).item_11_11 >= 1, null, { timeout: 5000 }).catch(() => null);

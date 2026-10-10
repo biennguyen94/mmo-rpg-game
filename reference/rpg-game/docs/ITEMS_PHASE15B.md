@@ -190,3 +190,46 @@ cộng chí mạng (như MU, tránh chí mạng cộng dồn).
 ### 7.3 Cân bằng
 
 Simulator 5 ván × 4 lớp × 5 cách chơi: cả 4 lớp vẫn hạ Hắc Long 5/5 ở cấp 35, số trận như trước, chết ≤ 1.
+
+## 8. Phase 15e (2026-10-10): cánh cấp 3 + dòng phụ của cánh
+
+Anh chốt 2026-10-10: làm cả cánh cấp 3 và dòng phụ ngẫu nhiên (phương án c).
+
+### 8.1 Cánh cấp 3 (`items.json`, `chaos.json`, `item_pick.json` → `refs`)
+
+| Lớp | id | Tên | Hình gốc (`ref`) | Tên gốc |
+|---|---|---|---|---|
+| Kiếm Sĩ | `wing_dk_3` | Cánh Bão Tố | `12/36` | Wing of Storm |
+| Phù Thủy | `wing_dw_3` | Cánh Không Gian | `12/37` | Wing of Space Time |
+| Tiên Nữ | `wing_elf_3` | Cánh Ảo Ảnh | `12/38` | Wing of Illusion |
+| Đấu Sĩ | `wing_mg_3` | Cánh Cuồng Phong | `12/39` | Wings of Hurricane |
+
+- Chỉ số (đổi trong `items.json`): cấp 45, phòng thủ 22, sát thương +25 %, nhận sát thương −25 % (cấp 2: 12 / 18 % / 18 %);
+  mỗi cấp nâng vẫn +2 % (`combat.wing_per_level`).
+- Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên +
+  3 Sinh Mệnh + 500 000 vàng; tỉ lệ 15 %, +5 % mỗi cấp trên +9, tối đa 50 %. Thất bại mất hết (như cánh cấp 1, 2).
+- Hình trên nhân vật: vẽ bằng code (`doll.js`), cấp 3 to nhất, có viền sáng.
+- Hình trong túi: hình gốc theo `ref`. Máy chủ chạy lại `scripts/setup_items.sh` (hoặc `mix hac_long.items.fetch
+  --icons-from …` rồi `mix hac_long.icons`) để chép thêm 4 hình này.
+
+### 8.2 Dòng phụ của cánh (`rules.json` → `wing_options`)
+
+Ghép **thành công** cánh cấp 2 hoặc 3 ở Máy Hỗn Nguyên thì bốc đều 1 trong 3 dòng (trường `wopt` của món):
+
+| Dòng | Cấp 2 | Cấp 3 | Tác dụng |
+|---|---|---|---|
+| `hp` | +60 | +120 | máu tối đa |
+| `mp` | +40 | +80 | MP tối đa |
+| `ignore_def` | 3 % | 5 % | bỏ qua phần phòng thủ của đối thủ khi đánh (quái, đấu trường, đồ sát) |
+
+- Đổi số ở `wing_options.by_tier`; bỏ một bậc khỏi `by_tier` thì cánh bậc đó không có dòng.
+- Cánh cấp 2 đã có từ trước (ghép trước Phase 15e) không có dòng; cánh cấp 1 không có dòng.
+- Tooltip: "Dòng cánh: Máu tối đa +120"; bảng Nhân vật có dòng "Bỏ qua phòng thủ" khi có.
+- Quản trị: `give_item` cánh nhận `wopt` (`hp` / `mp` / `ignore_def`).
+- Code: `Gear.wing_option/1` (bốc), `Gear.wing_stats/1` (cộng vào `Engine.derived`: `maxHp`, `maxMp`, `ignoreDef`),
+  `Chaos.success/4`.
+
+### 8.3 Cân bằng
+
+Cánh cấp 3 dùng từ cấp 45, sau Hắc Long (cấp 35), cho bản đồ phụ cấp 45–50. Simulator (đánh tới Hắc Long) không ghép
+cánh, nên kết quả không đổi.

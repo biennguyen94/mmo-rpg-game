@@ -192,6 +192,7 @@ defmodule HacLong.Game.Engine do
     sb = set_bonus(p)
     exc = Gear.exc_stats(p)
     ls = Gear.luck_skill_stats(p)
+    wo = Gear.wing_stats(p)
 
     up = fn id -> if id, do: upgrade_bonus(p, id) + life_bonus(p, id), else: 0 end
 
@@ -207,8 +208,8 @@ defmodule HacLong.Game.Engine do
     pet = fn key -> 1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) end
 
     %{
-      maxHp: round((lin.(f.hp) + gear_hp + sb.hp) * pet.(:hp) * (1 + exc.hp_pct)),
-      maxMp: round(lin.(f.mp)),
+      maxHp: round((lin.(f.hp) + gear_hp + sb.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
+      maxMp: round(lin.(f.mp) + wo.mp),
       atk:
         round(
           (lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
@@ -238,7 +239,9 @@ defmodule HacLong.Game.Engine do
       # Excellent: giảm sát thương nhận (cộng dồn các món, tối đa `excellent.max_dmg_red`)
       excAbsorb: exc.dmg_red,
       # Kỹ năng (Phase 15d): sát thương chiêu cộng thêm
-      skillDmg: ls.skill_dmg
+      skillDmg: ls.skill_dmg,
+      # dòng cánh (Phase 15e): bỏ qua phần phòng thủ của đối thủ
+      ignoreDef: wo.ignore_def
     }
     |> with_ranges(p.level)
   end
@@ -787,6 +790,8 @@ defmodule HacLong.Game.Engine do
 
         {p, atk, dfn, crit, mult, name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(d.crit))
+
+        dfn = round(dfn * (1 - d.ignoreDef))
 
         # kỹ năng luôn trúng; đòn thường: đấu trường theo né của đối thủ, quái theo tỉ lệ trúng
         p =

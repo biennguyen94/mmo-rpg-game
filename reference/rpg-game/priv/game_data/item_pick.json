@@ -34,6 +34,7 @@
     "refs": {
       "wing_elf_1": "12/0", "wing_dw_1": "12/1", "wing_dk_1": "12/2", "wing_mg_1": "12/6",
       "wing_elf_2": "12/3", "wing_dw_2": "12/4", "wing_dk_2": "12/5", "wing_mg_2": "12/42",
+      "wing_dk_3": "12/36", "wing_dw_3": "12/37", "wing_elf_3": "12/38", "wing_mg_3": "12/39",
       "relic": "0/19", "dragonshield": "6/13"
     },
     "icons": { "helm": "visored-helm", "pants": "lamellar", "gloves": "shield-bash", "boots": "sprint" },

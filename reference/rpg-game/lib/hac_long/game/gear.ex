@@ -14,7 +14,7 @@ defmodule HacLong.Game.Gear do
   - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
   - `opt`: số dòng Ngọc Sinh Mệnh (0–4, `Engine.life/2`).
   - `exc`: dòng Excellent (Phase 15c); `luck: true` / `skill: true`: dòng May mắn / Kỹ năng (Phase 15d,
-    `RULES.luck_skill`).
+    `RULES.luck_skill`); `wopt`: dòng phụ của cánh `"hp" | "mp" | "ignore_def"` (Phase 15e, `RULES.wing_options`).
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
   """
@@ -33,6 +33,9 @@ defmodule HacLong.Game.Gear do
   @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
   # Phase 15d: May mắn / Kỹ năng (`RULES.luck_skill`)
   @ls Data.rules().luck_skill
+  # Phase 15e: dòng phụ của cánh (`RULES.wing_options`), theo bậc cánh
+  @wopt Map.new(Data.rules().wing_options.by_tier, &{&1.tier, Map.delete(&1, :tier)})
+  @wopt_ids ~w(hp mp ignore_def)
   @stats ~w(str agi vit ene)a
   @set_pieces ~w(helm armor pants gloves boots)
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
@@ -91,6 +94,8 @@ defmodule HacLong.Game.Gear do
       exc_lines: for(e <- g[:exc] || [], do: %{id: e, value: exc_value(base.slot, e)}),
       luck: g[:luck] == true,
       skill: g[:skill] == true,
+      wopt: g[:wopt],
+      wopt_value: g[:wopt] && wopt_value(base[:tier], g[:wopt]),
       sell: price(g)
     })
   end
@@ -342,6 +347,47 @@ defmodule HacLong.Game.Gear do
 
   def luck_skill_rules, do: @ls
 
+  # ---------- Dòng phụ của cánh (Phase 15e) ----------
+
+  @doc "Giá trị dòng cánh `id` (`hp` / `mp` / `ignore_def`) của cánh bậc `tier` (0 nếu bậc đó không có dòng)."
+  def wopt_value(tier, id) when id in @wopt_ids,
+    do: get_in(@wopt, [tier, String.to_existing_atom(id)]) || 0
+
+  def wopt_value(_tier, _id), do: 0
+
+  @doc "Bậc cánh `tier` có dòng phụ không (`RULES.wing_options.by_tier`)."
+  def wopt_tier?(tier), do: Map.has_key?(@wopt, tier)
+
+  def wopt_ids, do: @wopt_ids
+
+  @doc "Bốc một dòng phụ (đều nhau) cho cánh `g` nếu bậc cánh có dòng; không thì trả nguyên."
+  def wing_option(g) do
+    case Data.item(g.base) do
+      %{slot: "wing", tier: tier} ->
+        if wopt_tier?(tier),
+          do: Map.put(g, :wopt, Enum.at(@wopt_ids, floor(Rng.uniform() * length(@wopt_ids)))),
+          else: g
+
+      _ ->
+        g
+    end
+  end
+
+  @doc "Dòng phụ của cánh đang mặc: `%{hp, mp, ignore_def}`."
+  def wing_stats(p) do
+    zero = %{hp: 0, mp: 0, ignore_def: 0}
+    id = p.equip[:wing]
+    g = id && instance?(id) && find(p, id)
+
+    case g && g[:wopt] do
+      w when w in @wopt_ids ->
+        Map.put(zero, String.to_existing_atom(w), wopt_value(Data.item(g.base)[:tier], w))
+
+      _ ->
+        zero
+    end
+  end
+
   @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
   def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
 
@@ -412,6 +458,7 @@ defmodule HacLong.Game.Gear do
       m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
       m = if g["luck"] == true, do: Map.put(m, :luck, true), else: m
       m = if g["skill"] == true, do: Map.put(m, :skill, true), else: m
+      m = if g["wopt"] in @wopt_ids, do: Map.put(m, :wopt, g["wopt"]), else: m
       opt = g["opt"]
       m = if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
       exc = for e <- g["exc"] || [], e in @exc_ids, do: e

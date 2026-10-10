@@ -110,7 +110,8 @@ defmodule HacLong.Game.Chaos do
 
   defp success(p, _r, out, it) do
     # món đồ vào máy vừa ra khỏi túi nên luôn còn chỗ cho kết quả
-    p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ [Gear.plain(out)])
+    # cánh bậc có dòng phụ (Phase 15e, `RULES.wing_options`) bốc một dòng
+    p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ [Gear.wing_option(Gear.plain(out))])
 
     {%{
        ok: true,
