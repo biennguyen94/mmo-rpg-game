@@ -81,7 +81,8 @@ for f in glob.glob(ROOT + '/lib/**/*.ex', recursive=True):
 
 name_list = sorted(names, key=len, reverse=True)
 name_re = '|'.join(re.escape(n) for n in name_list)
-TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|' + INTERP + ')')
+# {a} {b} {n}: chỗ trống của câu bình luận Tiến Lên (commentary.ex), đánh số như tên / số
+TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|\{[abn]\}|' + INTERP + ')')
 
 def key(s):
     s = re.sub(r'\s+', ' ', s.replace('\\n', ' ')).strip()

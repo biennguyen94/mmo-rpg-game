@@ -54,7 +54,8 @@ await W.page.evaluate((uid) => window.__hl.inspect(uid), uidL);
 await W.page.waitForSelector('.prof-head', { timeout: 5000 }).catch(() => null);
 R.check('hồ sơ người thua hiện 🛡 được bảo vệ', ((await W.page.textContent('.prof-head').catch(() => '')) || '').includes('bảo vệ'));
 await shot(L.page, 'slay-red.png');
-R.check('kênh thế giới báo "đã hạ"', (await W.page.evaluate(() => document.body.innerHTML)).includes('đã hạ'));
+await W.page.waitForFunction(() => window.__hl.chats().some((c) => c.text.includes('đã đồ sát')), null, { timeout: 5000 }).catch(() => null);
+R.check('kênh thế giới báo "đã đồ sát"', await W.page.evaluate(() => window.__hl.chats().some((c) => c.text.includes('đã đồ sát'))));
 for (const X of [A, B]) await X.page.click('#tabs [data-tab="map"]').catch(() => null);
 
 // ---------- Lịch sử trận ở tab Khác ----------

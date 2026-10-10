@@ -55,7 +55,7 @@ for (let i = 0; i < 4 && !synced; i++) {
   const seen = await A.page.evaluate(() => (window.__hl.world().monsters || []).filter((m) => m.busy && m.hp < 100).map((m) => m.hp));
   // chưa thấy (ảnh bản đồ của A tới chậm): rời trận, thử con khác
   if (seen.length) synced = seen;
-  else { why.push('no-sync'); await fight(B.page).catch(() => null); await act(B.page, 'leave').catch(() => null); }
+  else { why.push({ A: await A.page.evaluate(() => { const w = window.__hl.world(); return [w.map, (w.monsters || []).filter((m) => m.busy).map((m) => [m.id, m.hp])]; }), B: await B.page.evaluate(() => { const p = window.__hl.player(); return [p.pos.map, p.battle && p.battle.encounter, p.battle && [p.battle.monster.hp, p.battle.monster.maxHp, p.battle.over]]; }) }); await fight(B.page).catch(() => null); await act(B.page, 'leave').catch(() => null); }
 }
 R.check('A thấy máu quái B đang đánh giảm (đồng bộ)', !!synced && synced.some((h) => h < 100), JSON.stringify({ synced, why }));
 await shot(A.page, 'people-map.png');

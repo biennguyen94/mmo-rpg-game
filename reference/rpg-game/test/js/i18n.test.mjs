@@ -28,3 +28,13 @@ test('en.json: mọi bản dịch giữ đúng các chỗ {n} của câu gốc',
   assert.deepEqual(bad.slice(0, 5), []);
   assert.ok(Object.keys(en.names).length > 100 && Object.keys(en.t).length > 1000);
 });
+
+test('mẫu dự phòng khớp cả câu ghép (bình luận Tiến Lên), không nuốt qua ranh giới câu', () => {
+  I.load({
+    names: { 'Làng': 'Village' },
+    t: { '💥 Ối dồi ôi! {0} vừa chặt heo của {1}, heo khóc thét!': '💥 Oh my! {0} just chopped {1}\'s 2, the piggy squeals!', '{0} hồi {1} máu thật nhiều.': '{0} heals {1} HP a lot.' },
+  });
+  assert.equal(I.tr('💥 Ối dồi ôi! Bà Ba vừa chặt heo của An, heo khóc thét!'), '💥 Oh my! Bà Ba just chopped An\'s 2, the piggy squeals!');
+  // hai câu giống mẫu: dịch từng câu, không để {1} nuốt "5 máu thật nhiều. B hồi 3"
+  assert.equal(I.tr('A hồi 5 máu thật nhiều. B hồi 3 máu thật nhiều.'), 'A heals 5 HP a lot. B heals 3 HP a lot.');
+});

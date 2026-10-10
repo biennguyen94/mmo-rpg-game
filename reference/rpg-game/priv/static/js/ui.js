@@ -3068,6 +3068,7 @@
         mail: mail.open, notes: notes.open, unreadNotes: notesUnread(), friends: friendsUi.open, guild: guildUi.open, walking: !!walk,
       }),
       world: () => copy(Map_.world()),
+      chats: () => copy(chats),
       npcs: (map) => copy(WORLD.maps[map || (P && P.pos.map)].npcs),
       // đi tới ô (x, y) bằng đúng đường đi của người chơi khi chạm vào bản đồ; xong thì trả vị trí
       walkTo: async (x, y) => { await walkTo(x, y); return P && copy(P.pos); },
