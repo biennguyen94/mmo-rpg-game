@@ -238,7 +238,7 @@ defmodule HacLong.Mailbox do
          it when not is_nil(it) <- Data.item(base),
          true <- it.slot in Engine.equip_slots(),
          true <- rarity in 0..3 and up in 0..Engine.max_upgrade(),
-         true <- rarity == 0 or it.slot in ~w(weapon armor shield) do
+         true <- rarity == 0 or it.slot in Engine.gear_slots() do
       {base, rarity, up, it}
     else
       _ -> nil

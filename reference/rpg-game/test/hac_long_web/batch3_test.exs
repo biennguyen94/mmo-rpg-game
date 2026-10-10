@@ -24,11 +24,20 @@ defmodule HacLongWeb.Batch3Test do
     p
   end
 
-  test "nạp nhân vật cũ: cấp nâng theo loại tách thành từng món" do
+  test "nạp nhân vật cũ: đồ cũ đổi sang đồ Item.txt, cấp nâng theo loại tách thành từng món" do
     u = create_user()
-    player(u, %{upgrades: %{"club" => 4}, inv: %{"club" => 1}})
+    # nhân vật lưu trước Phase 15b: Gậy Gỗ +4 đang mặc và một cây trong túi
+    player(u, %{
+      upgrades: %{"club" => 4},
+      inv: %{"club" => 1},
+      equip: %{weapon: "club", armor: "vest"}
+    })
+
     p = Characters.load(u.id)
-    assert [%{base: "club"} = a, %{base: "club"} = b] = p.gear
+
+    # Gậy Gỗ → Rìu Nhỏ (bậc 1 Kiếm Sĩ); Áo Da Mỏng → Giáp Da; ô mới nhận đồ khởi đầu
+    assert [%{base: "item_1_0"} = a, %{base: "item_1_0"} = b] = p.gear
+    assert p.equip.armor == "item_8_5" and p.equip.boots == "item_11_5"
     assert p.upgrades == %{a.uid => 4, b.uid => 4}
     assert p.equip.weapon in [a.uid, b.uid] and p.equip.wing == nil
   end

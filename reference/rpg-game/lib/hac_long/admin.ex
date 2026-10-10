@@ -146,7 +146,7 @@ defmodule HacLong.Admin do
     bonus = a["bonus"]
 
     cond do
-      !it or it.slot not in ~w(weapon armor shield) ->
+      !it or it.slot not in Engine.gear_slots() ->
         {:error, "\"#{base}\" không phải vũ khí / giáp / khiên (cánh: dùng give_item)."}
 
       rarity not in 1..3 ->

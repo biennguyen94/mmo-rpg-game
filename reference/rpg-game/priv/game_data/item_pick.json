@@ -23,8 +23,14 @@
       "weapon": [0, 60, 220, 650, 1600, 3600, 7500],
       "set": [0, 70, 260, 700, 1700, 3800],
       "shield": [90, 450, 1500],
-      "piece_weight": { "armor": 1.0, "helm": 0.6, "pants": 0.8, "gloves": 0.5, "boots": 0.5 }
+      "piece_weight": "def"
     },
+    "legacy": {
+      "weapon": ["club", "dagger", "broadsword", "mace", "battleaxe", "greatsword", "waraxe"],
+      "armor": ["vest", "leather", "chain", "scale", "lamellar", "breastplate"],
+      "shield": ["round", "checked", "spiked"]
+    },
+    "icons": { "helm": "visored-helm", "pants": "lamellar", "gloves": "shield-bash", "boots": "sprint" },
     "pieces": { "helm": "Mũ", "armor": "Giáp", "pants": "Quần", "gloves": "Găng", "boots": "Giày" },
     "no_helm": ["mg"],
     "weapons": {

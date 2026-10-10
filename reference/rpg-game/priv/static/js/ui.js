@@ -274,7 +274,7 @@
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
-    const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield'].includes(it.slot));
+    const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots'].includes(it.slot) && !it.legacy);
     const up = '<label class="small">+ <input type="number" name="up" min="0" max="5" value="0"></label>';
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
@@ -345,7 +345,7 @@
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
       <div class="btn-row"><select name="item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
-      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'wing'].includes(it.slot)).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <select name="grar" aria-label="Loại đồ"><option value="0">Đồ thường</option><option value="1">Hiếm: Tốt</option><option value="2">Hiếm: Hiếm</option><option value="3">Hiếm: Sử Thi</option></select>
         <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
         <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
@@ -1495,6 +1495,19 @@
   };
   const bonusText = (it) => (it.bonus ? Object.entries(it.bonus).sort((a, b) => b[1] - a[1]).map(([k, v]) => `+${v} ${STAT_INFO[k][0]}`).join(', ') : '');
 
+  // Phase 15b: đồ theo lớp (`classes`, cánh dùng `cls`) và yêu cầu chỉ số (`req`, so với chỉ số gốc)
+  const STAT_VI = { str: 'Sức mạnh', agi: 'Nhanh nhẹn', vit: 'Thể lực', ene: 'Năng lượng' };
+  const classOk = (it) => (!it.cls || it.cls === P.cls) && (!it.classes || !it.classes.length || it.classes.includes(P.cls));
+  const reqShort = (it) => Object.entries(it.req || {}).some(([k, v]) => (P.stats[k] || 0) < v);
+  const cantWear = (it) => (it.level && P.level < it.level) || !classOk(it) || reqShort(it);
+  function wearLines(it) {
+    const out = [];
+    if (it.classes && it.classes.length) out.push(`<div class="small ${classOk(it) ? 'muted' : 'bad'}">Dùng cho: ${it.classes.map((c) => CLASSES[c] ? CLASSES[c].name : c).join(', ')}</div>`);
+    const req = Object.entries(it.req || {});
+    if (req.length) out.push(`<div class="small">Cần ${req.map(([k, v]) => `<span class="${(P.stats[k] || 0) < v ? 'bad' : 'muted'}">${STAT_VI[k]} ${v}</span>`).join(' · ')}</div>`);
+    return out.join('');
+  }
+
   function itemStat(it, id) {
     const b = id ? P.view.bonus[id] || 0 : 0;
     const extra = it.rarity ? ` · <span class="rar-${it.rarity}">${RARITY[it.rarity]}: ${bonusText(it)}</span>` : '';
@@ -1656,7 +1669,7 @@
   // Dữ liệu `GAME_DATA.LIBRARY` (server sinh từ dữ liệu game). Gõ tìm chỉ vẽ lại phần kết quả để ô nhập không mất chữ.
   const LIB = window.GAME_DATA.LIBRARY || { maps: [], monsters: [], items: [] };
   let libUi = { tab: 'maps', q: '', open: null };
-  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
+  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', helm: 'Mũ', pants: 'Quần', gloves: 'Găng', boots: 'Giày', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
   const trn = (t) => (window.I18N ? window.I18N.tr(t) : t);
   const libMap = (id) => LIB.maps.find((m) => m.id === id);
   const libMon = (id) => LIB.monsters.find((m) => m.id === id);
@@ -1825,9 +1838,10 @@
     ['ring1', 'wing', 'ring2'],
   ];
   const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn' };
-  const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing'];
+  // Phase 15b: mở mũ / quần / găng / giày (đồ Item.txt); nhẫn chưa có
+  const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots'];
   // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
-  const SLOT_REMOVABLE = ['shield', 'wing'];
+  const SLOT_REMOVABLE = ['shield', 'wing', 'helm', 'pants', 'gloves', 'boots'];
   const BAG_COLUMNS = 8;
   const BAG_MIN_CELLS = 32;
 
@@ -1864,7 +1878,7 @@
       if (!id) return '<span class="cell empty"></span>';
       const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
       const wearable = SLOT_OPEN.includes(it.slot);
-      return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${(it.level && P.level < it.level) || (it.cls && it.cls !== P.cls) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
+      return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${cantWear(it) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
           ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
         ${cellIcon(it, upLevel(id))}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
       </button>`;
@@ -1905,7 +1919,7 @@
     if (!it) return;
     tipAt = at;
     const d = P.view.derived;
-    const low = (it.level && P.level < it.level) || (it.cls && it.cls !== P.cls);
+    const low = cantWear(it);
     const wearable = SLOT_OPEN.includes(it.slot);
     const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id);
     // khóa đồ: không bán / rao chợ / giao dịch / bỏ vào máy ghép được
@@ -1929,6 +1943,7 @@
       ${desc ? `<div class="small">${desc}</div>` : ''}
       ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
       ${it.level ? `<div class="small ${it.level > P.level ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
+      ${wearable ? wearLines(it) : ''}
       ${lifeLine(it)}
       ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>' : ''}
       ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
@@ -1983,6 +1998,7 @@
   function shopRow(id) {
     const it = ITEMS[id], slot = it.slot;
     const low = it.level && P.level < it.level;
+    const short = slot !== 'potion' && (!classOk(it) || reqShort(it));
     const worn = P.equip[slot] === id;
     const owned = P.inv[id] || 0;
     const price = L.shopPrice(it, P.level, RULES.potionPricePerLevel);
@@ -1991,10 +2007,10 @@
       ${itemIcon(it)}
       <div class="grow">
         <div class="name">${it.name}</div>
-        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
+        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${short ? ` · <span style="color:var(--bad)">${!classOk(it) ? 'Lớp khác' : 'Thiếu chỉ số'}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
       </div>
       ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < price * 5 ? 'disabled' : ''}>×5</button>` : ''}
-      <button class="btn ${!low && !poor ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>
+      <button class="btn ${!low && !poor && !short ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>
     </div>`;
   }
 
@@ -2262,7 +2278,8 @@
     if (n.role === 'shop' || n.role === 'herbalist') {
       if (n.role === 'herbalist') sections.push(craftCard());
       if (n.role === 'shop') sections.push(forgeCard(), smithCard(), chestCard());
-      sections.push(`<div class="card"><h3>Mua</h3><div class="list">${n.stock.map(shopRow).join('')}</div></div>`);
+      // đồ theo lớp (Phase 15b): chỉ hiện đồ của lớp mình
+      sections.push(`<div class="card"><h3>Mua</h3><div class="list">${n.stock.filter((id) => ITEMS[id] && classOk(ITEMS[id])).map(shopRow).join('')}</div></div>`);
       sections.push(sellCard());
     }
     if (n.role === 'inn') {

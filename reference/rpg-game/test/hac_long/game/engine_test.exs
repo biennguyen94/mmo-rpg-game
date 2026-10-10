@@ -21,8 +21,8 @@ defmodule HacLong.Game.EngineTest do
     assert d.maxHp == 300 and p.hp == 300
     # 20 + 1*1 + 10*1
     assert d.maxMp == 31 and p.mp == 31
-    # 28*2.8 + 20*0.5 + cấp 1 + gậy 3
-    assert d.atk == 92
+    # 28*2.8 + 20*0.5 + cấp 1 + Rìu Nhỏ 4 (đồ khởi đầu Kiếm Sĩ, Phase 15b)
+    assert d.atk == 93
     assert Engine.points_per_level("dk") == 5 and Engine.points_per_level("mg") == 7
     assert Engine.xp_to_next(1) == 40
     assert Engine.xp_to_next(1) == 40
@@ -208,14 +208,14 @@ defmodule HacLong.Game.EngineTest do
              Engine.upgrade(p, "weapon")
 
     p = Engine.add_item(p, "ore", 20)
-    {%{ok: true, msg: "Đã nâng Gậy Gỗ lên +1."}, p} = Engine.upgrade(p, "weapon")
-    # gậy gỗ tấn công 3: mỗi cấp ít nhất +1
+    {%{ok: true, msg: "Đã nâng Rìu Nhỏ lên +1."}, p} = Engine.upgrade(p, "weapon")
+    # Rìu Nhỏ tấn công 4: mỗi cấp ít nhất +1
     assert Engine.derived(p).atk == atk + 1
     assert p.inv["ore"] == 19 and p.gold == 10_000 - 8
 
     # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
     club = p.equip.weapon
-    assert [%{uid: ^club, base: "club", rarity: 0}] = p.gear
+    assert [%{uid: ^club, base: "item_1_0", rarity: 0}] = p.gear
     p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
     assert Engine.upgrade_level(p, club) == 4
     # +5 cần Vảy Cổ Long

@@ -11,6 +11,7 @@ cd reference/rpg-game
 mix hac_long.items.fetch            # Item.txt → assets_src/private/items/Item.txt
 mix hac_long.items.import           # → assets_src/private/items/items_raw.json, items_from_txt.json
 mix hac_long.items.build --preview  # → docs/ITEMS_PICK.md (xem trước, không đổi game)
+mix hac_long.items.build            # → priv/game_data/items_mu.json (đồ trong game) + tên tiếng Anh + ITEMS_PICK.md
 # hình: đặt PNG vào assets_src/private/item_icons/ (tên item_{nhóm}_{số}.png), rồi:
 mix hac_long.icons                  # → priv/static/assets/mu_items/ + item_icons.json
 ```
@@ -21,6 +22,7 @@ mix hac_long.icons                  # → priv/static/assets/mu_items/ + item_ic
 | `assets_src/private/item_icons/` | hình đồ gốc | **bỏ qua** |
 | `priv/static/assets/mu_items/`, `priv/static/assets/item_icons.json` | hình đã chép + bảng tra cho client | **bỏ qua** |
 | `priv/game_data/item_pick.json` | bảng chọn + hệ số (của mình, không chứa số gốc) | có |
+| `priv/game_data/items_mu.json` | đồ dựng ra (khóa `ITEMS_MU`), game đọc file này | có |
 | `docs/ITEMS_PICK.md` | bảng xem trước sinh tự động | có |
 
 CI (`.github/workflows/ci.yml`, job `private-assets`) báo lỗi nếu file trong ba đường dẫn bị bỏ qua lọt vào git.
@@ -50,7 +52,9 @@ lệch cân bằng đã chỉnh (simulator 4 lớp hạ Hắc Long khoảng cấ
 | `stats.set_def_mult` | `1.0` | Nhân tổng thủ bộ giáp (vì giờ 5 món thay 1) | `1.3` = bộ đủ mạnh hơn giáp cũ 30 % |
 | `stats.shield_def` | `[3,7,12]` | Thủ khiên theo bậc (= khiên cũ) | |
 | `prices.weapon` / `set` / `shield` | giá đồ cũ cùng bậc | Giá mua ở Thợ Rèn; bậc giá 0 = không bán (đồ khởi đầu) | |
-| `prices.piece_weight` | giáp 1, quần 0,8, mũ 0,6, găng / giày 0,5 | Món trong bộ = giá bậc × trọng số | |
+| `prices.piece_weight` | `"def"` | Giá món trong bộ: `"def"` = giá bậc × tỉ lệ thủ của món (mua đủ bộ = giá giáp cũ cùng bậc); hoặc map trọng số từng ô, vd `{"armor": 1, "helm": 0.6, …}` (đủ bộ đắt hơn) | |
+| `legacy.weapon` / `armor` / `shield` | đồ cũ theo bậc | Đồ cũ được thay: thôi bán / rơi, nạp nhân vật thì đổi sang đồ mới cùng ô, cùng bậc (thứ tự trong danh sách = bậc), đúng lớp; mượn icon / hình nhân vật của đồ cũ cùng bậc | bỏ một id = giữ đồ đó như cũ |
+| `icons` | mũ, quần, găng, giày | Icon tạm cho 4 ô mới (tên file trong `priv/static/assets/icons/`) tới khi có hình gốc | |
 | `pieces` | Mũ, Giáp, Quần, Găng, Giày | Chữ đứng trước tên bộ ("Giáp Da") | |
 | `no_helm` | `["mg"]` | Lớp không đội mũ (Đấu Sĩ, như MU) | `[]` |
 | `weapons.<lớp>` | 7 món / lớp | Danh sách theo bậc: `ref` = `nhóm/số` trong Item.txt, `name` = tên tiếng Việt, `mode` tùy chọn. `"mg": "dk"` = dùng chung danh sách DK | đổi `ref` để đổi món |
@@ -58,7 +62,17 @@ lệch cân bằng đã chỉnh (simulator 4 lớp hạ Hắc Long khoảng cấ
 | `sets.<lớp>` | 6 bộ / lớp | `index` = số thứ tự bộ trong nhóm 7–11 (mũ 7, giáp 8, quần 9, găng 10, giày 11 cùng số), `name` = tên bộ | |
 | `sourceType`, `version`, `verified` | `MU_ITEM_TXT`, 1, false | Gắn vào từng món dựng ra (CLAUDE.md §4) | tăng `version` khi đổi bảng |
 
-Tên gốc tiếng Anh của từng món tự vào bản dịch tiếng Anh (bước M3).
+Tên gốc tiếng Anh của từng món (`mu_name`) được `mix hac_long.items.build` ghi làm bản tiếng Anh (`priv/static/i18n/en.json`).
+
+Ngoài file này, `RULES.loot` (`rules.json`) có:
+
+| Khóa | Mặc định | Ý nghĩa |
+|---|---|---|
+| `gear_slots` | vũ khí 40 %, bộ giáp 45 %, khiên 15 % | Loại đồ ngẫu nhiên rơi từ quái; `"set"` = một món bất kỳ của bộ giáp (mũ / giáp / quần / găng / giày) |
+| `gear_own_class` | `true` | Đồ rơi từ quái hợp lớp người hạ (như trước khi có đồ theo lớp). `false` = rơi đồ mọi lớp (kiểu MU, để giao dịch) |
+
+**Quay lại đồ cũ:** xóa `priv/game_data/items_mu.json` rồi biên dịch lại thì đồ cũ bán / rơi lại như trước. Chỉ làm
+khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ mất các món đó (không còn định nghĩa).
 
 ## 4. Các lựa chọn đã cân nhắc (đổi được)
 
@@ -73,7 +87,20 @@ Tên gốc tiếng Anh của từng món tự vào bản dịch tiếng Anh (bư
 ## 5. Các bước
 
 - **M1 (xong 2026-10-10):** chặn git/Docker + CI, `items.fetch`, đường dẫn private, `ItemBuild` + test, `items.build --preview`, tài liệu này.
-- **M2:** mở ô mũ / quần / găng / giày; luật theo lớp (`classes`) và yêu cầu chỉ số khi mặc; ghi đồ dựng ra vào `items.json`;
-  cửa hàng Thợ Rèn (bậc có giá > 0 của đúng lớp), rơi đồ theo cấp vùng, đồ trùm lần đầu; đồ khởi đầu theo lớp;
-  **đổi đồ cũ của nhân vật** sang món mới cùng ô, cùng bậc (giữ +N, khóa, dòng thêm, Ngọc Sinh Mệnh); simulator trước / sau.
-- **M3:** hình theo `ref`, tooltip (tên gốc, yêu cầu chỉ số tô đỏ khi thiếu), viền sáng +7 / +9 / +11 bằng CSS, bản tiếng Anh, test, e2e.
+- **M2 (xong 2026-10-10):**
+  - 8 ô (thêm mũ, quần, găng, giày; tháo được, vũ khí / giáp thì thay); thủ = tổng mọi ô phòng thủ.
+  - `Engine.can_wear/2`: cấp, lớp (`classes`; cánh vẫn theo `cls`), yêu cầu chỉ số so với **chỉ số gốc đã cộng điểm**
+    (không tính điểm cộng từ đồ). Chỉ kiểm lúc mặc: tẩy điểm / chuyển sinh làm thiếu chỉ số thì đồ đang mặc vẫn giữ.
+  - Đồ khởi đầu theo lớp (bậc 1 mọi ô trừ khiên); đồ vỡ khi ép → đồ khởi đầu của lớp.
+  - Cửa hàng (`Data.shop/0`, hàng Thợ Rèn `Data.stock/1`): bỏ đồ cũ, thêm đồ mới có giá; chỉ hiện / bán đồ đúng lớp.
+  - Rơi đồ (`Gear.roll`): bỏ đồ cũ; theo lớp (`gear_own_class`); ô bốc được chưa có đồ hợp cấp thì thử ô khác.
+    Rèn "giáp" ở Thợ Rèn ra một món bất kỳ của bộ giáp đúng lớp. Đồ trùm lần đầu đã theo lớp từ trước.
+  - **Đổi đồ cũ** (`Engine.migrate_items/1`, mỗi lần nạp nhân vật): đang mặc, túi, đồ hiếm (`gear.base`, giữ `uid`, độ
+    hiếm, chỉ số cộng, +N, khóa, Ngọc Sinh Mệnh), cấp nâng đồ thường, Tủ Đồ; ô mới còn trống nhận đồ khởi đầu.
+    Đã thử trên 484 nhân vật của database dev: nạp được hết, không còn đồ cũ.
+  - Bot (`Brain`) và simulator mặc / mua / ép đủ 7 ô, có kiểm lớp và chỉ số.
+  - Giao diện tối thiểu: mở 4 ô, tooltip có "Dùng cho" và "Cần <chỉ số>" (đỏ khi thiếu), cửa hàng chỉ hiện đồ đúng lớp.
+  - Cân bằng (simulator 5 ván × 4 lớp × 5 cách chơi, trước → sau): mọi lớp vẫn hạ Hắc Long 5/5 ở cấp 35; số trận lệch
+    ≤ 3 %; chết ≤ 1. Vàng cuối game của Kiếm Sĩ thấp hơn (mua / ép nhiều ô hơn).
+- **M3:** hình gốc theo `ref` (chờ anh cấp quyền tải / đặt hình), icon riêng cho găng / quần / giày, viền sáng
+  +7 / +9 / +11 bằng CSS, hình nhân vật cho cung / gậy, tên gốc trong tooltip, e2e riêng cho đồ theo lớp.

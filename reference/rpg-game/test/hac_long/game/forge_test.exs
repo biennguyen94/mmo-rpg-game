@@ -29,13 +29,13 @@ defmodule HacLong.Game.ForgeTest do
 
   describe "C10 cấp nâng theo từng món" do
     test "dữ liệu cũ (cấp theo loại) tách thành từng món giữ nguyên cấp" do
-      p = player() |> Map.put(:upgrades, %{"club" => 3, "broadsword" => 2, "potion_s" => 1})
+      p = player() |> Map.put(:upgrades, %{"item_1_0" => 3, "broadsword" => 2, "potion_s" => 1})
       p = p |> Engine.add_item("broadsword", 2)
       q = Engine.split_upgrades(p)
 
       assert q.inv["broadsword"] == nil
 
-      assert [%{base: "broadsword"} = b1, %{base: "broadsword"} = b2, %{base: "club"} = c] =
+      assert [%{base: "broadsword"} = b1, %{base: "broadsword"} = b2, %{base: "item_1_0"} = c] =
                q.gear
 
       assert q.equip.weapon == c.uid
@@ -59,7 +59,7 @@ defmodule HacLong.Game.ForgeTest do
       assert {:error, "Có món đang khóa." <> _} = TradeOffer.parse(p, %{"gear" => [uid]})
 
       # đồ đang mặc khóa tại chỗ
-      {%{ok: true}, p} = Engine.lock(p, "club", true)
+      {%{ok: true}, p} = Engine.lock(p, "item_1_0", true)
       assert Gear.locked?(p, p.equip.weapon)
 
       {%{ok: true}, p} = Engine.lock(p, uid, false)
@@ -92,14 +92,14 @@ defmodule HacLong.Game.ForgeTest do
       assert Engine.upgrade_level(q, q.equip.weapon) == 7
     end
 
-    test "+9 → +10 phải xác nhận; thất bại vỡ đồ, vũ khí về Gậy Gỗ" do
+    test "+9 → +10 phải xác nhận; thất bại vỡ đồ, vũ khí về đồ khởi đầu" do
       p = player() |> armed("greatsword", 9) |> jewels()
       assert {%{ok: false, confirm: true}, ^p} = Engine.upgrade(p, "weapon")
 
       Rng.put_sequence([0.99])
       {r, q} = Engine.upgrade(p, "weapon", true)
       assert r.upgrade.result == "destroy" and r.msg =~ "vỡ"
-      assert q.equip.weapon == "club" and q.gear == [] and q.upgrades == %{}
+      assert q.equip.weapon == "item_1_0" and q.gear == [] and q.upgrades == %{}
     end
 
     test "+10, +11 tính gấp đôi; +11 là tối đa" do

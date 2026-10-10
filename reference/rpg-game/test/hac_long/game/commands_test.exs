@@ -63,22 +63,24 @@ defmodule HacLong.Game.CommandsTest do
       Commands.run(p, %{"act" => "buy", "id" => "potion_s"})
 
     assert {%{ok: false, msg: "Bà Lang không bán món này."}, _} =
-             Commands.run(%{p | gold: 500, level: 3}, %{"act" => "buy", "id" => "dagger"})
+             Commands.run(%{p | gold: 500, level: 3}, %{"act" => "buy", "id" => "item_1_1"})
 
     p = %{p | gold: 500, level: 3, pos: @smith}
-    {%{ok: true}, p} = Commands.run(p, %{"act" => "buy", "id" => "dagger"})
-    {%{ok: true}, p} = Commands.run(p, %{"act" => "equip", "id" => "dagger"})
-    assert p.equip.weapon == "dagger" and p.inv["club"] == 1
-    {%{ok: true}, p} = Commands.run(p, %{"act" => "sell", "id" => "club"})
+
+    # Phase 15b: Rìu Tay (bậc 2 của Kiếm Sĩ); đồ khởi đầu Rìu Nhỏ giá 0 bán như đồ không giá
+    {%{ok: true}, p} = Commands.run(p, %{"act" => "buy", "id" => "item_1_1"})
+    {%{ok: true}, p} = Commands.run(p, %{"act" => "equip", "id" => "item_1_1"})
+    assert p.equip.weapon == "item_1_1" and p.inv["item_1_0"] == 1
+    {%{ok: true}, p} = Commands.run(p, %{"act" => "sell", "id" => "item_1_0"})
     assert p.gold == 500 - 60 + 80
 
     # xa NPC thì không mua bán được
     far = %{p | pos: %{map: "village", x: 12, y: 15}}
 
     assert {%{ok: false, msg: "Hãy đến gặp Thợ Rèn hoặc Bà Lang."}, _} =
-             Commands.run(far, %{"act" => "buy", "id" => "dagger"})
+             Commands.run(far, %{"act" => "buy", "id" => "item_1_1"})
 
-    assert {%{ok: false}, _} = Commands.run(far, %{"act" => "sell", "id" => "dagger"})
+    assert {%{ok: false}, _} = Commands.run(far, %{"act" => "sell", "id" => "item_1_1"})
   end
 
   test "pha thuốc ở Bà Lang" do

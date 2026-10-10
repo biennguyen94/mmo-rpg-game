@@ -97,6 +97,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Tab **Túi đồ**: các ô trang bị (vũ khí, giáp, khiên, cánh…) và túi. Chạm một món để xem **bảng chi tiết**: chỉ số, so với đồ
   đang mặc, yêu cầu cấp; các nút **Trang bị / Tháo**, **🔒 Khóa** (đồ khóa không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép),
   **Ép** (chọn món để ép ở Thợ Rèn), **Vứt** (hỏi lại; nhiều món thì hỏi số lượng). Máy tính kéo thả được đồ lên ô trang bị.
+- **Đồ theo lớp (Phase 15b):** 8 ô — vũ khí, khiên, cánh, mũ, giáp, quần, găng, giày (Đấu Sĩ không đội mũ). Mỗi lớp có vũ khí
+  riêng (Kiếm Sĩ / Đấu Sĩ kiếm rìu, Phù Thủy gậy, Tiên Nữ cung nỏ) và bộ giáp riêng 6 bậc; mặc đủ bộ thì phòng thủ bằng tổng các
+  món. Bảng chi tiết ghi **Dùng cho** (lớp) và **Cần** (Sức mạnh / Nhanh nhẹn… — đỏ khi thiếu, cộng điểm ở tab Nhân vật).
+  Thợ Rèn chỉ bày đồ của lớp mình. Đồ cũ (Kiếm Sắt, Giáp Xích…) tự đổi sang món mới cùng bậc, giữ nguyên +N và khóa.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

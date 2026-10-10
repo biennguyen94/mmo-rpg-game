@@ -337,12 +337,7 @@ defmodule HacLongWeb.GameChannel do
           look: Engine.look(p),
           title: Achievements.title_name(p[:title]),
           guild: guild && %{name: guild.name, tag: guild.tag},
-          gear: %{
-            weapon: name.(p.equip.weapon),
-            armor: name.(p.equip.armor),
-            shield: name.(p.equip.shield),
-            wing: name.(p.equip[:wing])
-          },
+          gear: Map.new(p.equip, fn {slot, id} -> {slot, name.(id)} end),
           arena: Arena.stats(target),
           blocked: target in socket.assigns.blocked,
           party: party && target in party.members,

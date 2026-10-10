@@ -31,6 +31,8 @@ def walk_texts(o):
         texts.add(o)
 
 for f in glob.glob(ROOT + '/priv/game_data/*.json') + glob.glob(ROOT + '/priv/maps/*.json'):
+    # bảng chọn đồ Phase 15b: tên bộ giáp ngắn ("Da", "Rồng"…) không phải tên riêng; tên đầy đủ ở items_mu.json
+    if f.endswith('item_pick.json'): continue
     d = json.load(open(f))
     walk_data(d); walk_texts(d)
 

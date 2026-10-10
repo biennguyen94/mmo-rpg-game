@@ -26,10 +26,13 @@ defmodule HacLong.Game.Gear do
   @weights Enum.map(@loot.gear_weights, &List.to_tuple/1)
   @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)
   @stats ~w(str agi vit ene)a
+  @set_pieces ~w(helm armor pants gloves boots)
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
   @suffix %{str: "Sức Mạnh", agi: "Nhanh Nhẹn", vit: "Bền Bỉ", ene: "Linh Lực"}
 
   def max_bag, do: @max_bag
+  @doc "Tỉ lệ độ hiếm mặc định của đồ rơi (`RULES.loot.gear_weights`)."
+  def weights, do: @weights
   def rarity_names, do: @rarity_names
 
   def instance?(id), do: is_binary(id) and String.starts_with?(id, "#")
@@ -118,23 +121,26 @@ defmodule HacLong.Game.Gear do
   `weights`: tỉ lệ các độ hiếm `[{độ_hiếm, tỉ_lệ}]` (mặc định 5% Sử Thi, 25% Hiếm, 70% Tốt).
   """
   def roll(level, weights \\ @weights, slot \\ nil, cls \\ nil) do
-    slot =
-      slot ||
-        (
+    bases =
+      case slot do
+        nil ->
           r = Rng.uniform()
 
-          Enum.find_value(@slots, fn {t, s} -> if r < t, do: s end) ||
-            @slots |> List.last() |> elem(1)
-        )
+          first =
+            Enum.find_value(@slots, fn {t, s} -> if r < t, do: s end) ||
+              @slots |> List.last() |> elem(1)
 
-    bases =
-      Data.items()
-      |> Enum.filter(fn {_, it} ->
-        it.slot == slot and it.price > 0 and !it[:drop] and (it[:level] || 1) <= level and
-          (cls == nil or it[:cls] in [nil, cls])
-      end)
-      |> Enum.sort_by(fn {_, it} -> it.level end, :desc)
-      |> Enum.take(2)
+          # ô bốc được chưa có đồ hợp cấp / lớp (vd khiên dưới cấp 4): thử các ô còn lại
+          Enum.find_value([first | Enum.map(@slots, &elem(&1, 1))], [], fn s ->
+            case slot_bases(s, level, cls) do
+              [] -> nil
+              b -> b
+            end
+          end)
+
+        s ->
+          slot_bases(s, level, cls)
+      end
 
     case bases do
       [] ->
@@ -154,6 +160,28 @@ defmodule HacLong.Game.Gear do
 
         %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
     end
+  end
+
+  # "set": một món bất kỳ của bộ giáp (mũ, giáp, quần, găng, giày) có đồ hợp cấp / lớp
+  defp slot_bases("set", level, cls) do
+    case @set_pieces |> Enum.map(&bases(&1, level, cls)) |> Enum.reject(&(&1 == [])) do
+      [] -> []
+      groups -> Enum.at(groups, floor(Rng.uniform() * length(groups)))
+    end
+  end
+
+  defp slot_bases(slot, level, cls), do: bases(slot, level, cls)
+
+  # 2 đồ gốc cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ đã
+  # thay (Phase 15b), hợp lớp `cls` (nil: lớp nào cũng được)
+  defp bases(slot, level, cls) do
+    Data.items()
+    |> Enum.filter(fn {id, it} ->
+      it.slot == slot and it.price > 0 and !it[:drop] and !Data.legacy?(id) and
+        (it[:level] || 1) <= level and (cls == nil or HacLong.Game.Engine.class_ok?(it, cls))
+    end)
+    |> Enum.sort_by(fn {_, it} -> it.level end, :desc)
+    |> Enum.take(2)
   end
 
   defp pick_weighted(weights) do

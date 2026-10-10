@@ -24,6 +24,8 @@ defmodule HacLong.Game.Engine do
   @pet_sk @rules.pets.skills
   @up @rules.upgrade
   @shop @rules.shop
+  # Phase 15b: đồ ngẫu nhiên rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class`)
+  @loot_own_class @rules.loot[:gear_own_class] == true
   @log_limit 60
   # bình máu / bình mana (Phase 12): hồi theo phần trăm máu / MP tối đa (`heal_pct`, `mana_pct`)
   @potions ~w(potion_s potion_m potion_l)
@@ -35,12 +37,17 @@ defmodule HacLong.Game.Engine do
   @mp_regen_ene @combat.mp_regen_ene
   @skill_mp_per_level @combat.skill_mp_per_level
   @max_batch 99
-  # vũ khí, giáp, khiên, cánh
-  @equip_slots ~w(weapon armor shield wing)
+  # vũ khí, giáp, khiên, cánh; Phase 15b thêm mũ, quần, găng, giày (đồ Item.txt)
+  @equip_slots ~w(weapon armor shield wing helm pants gloves boots)
+  # ô phòng thủ (cộng `def`) và ô tháo ra được (vũ khí / giáp luôn phải có)
+  @def_slots ~w(armor shield wing helm pants gloves boots)a
+  @removable ~w(shield wing helm pants gloves boots)
   @max_rebirths @char.max_rebirths
   @rebirth_points @char.rebirth_points
 
   def equip_slots, do: @equip_slots
+  @doc "Ô có đồ ngẫu nhiên (chỉ số cộng thêm, rơi từ quái): mọi ô trừ cánh."
+  def gear_slots, do: @equip_slots -- ["wing"]
   @doc "Điểm tiềm năng mỗi lần lên cấp của lớp `cls` (Đấu Sĩ 7, lớp khác 5)."
   def points_per_level(cls), do: Data.class(cls).points
 
@@ -79,7 +86,7 @@ defmodule HacLong.Game.Engine do
           stats: c.base,
           mp: 0,
           points: 0,
-          equip: %{weapon: "club", armor: "vest", shield: nil, wing: nil},
+          equip: Map.merge(empty_equip(), Data.starters(cls)),
           inv: @char.start_items,
           upgrades: %{},
           gear: [],
@@ -114,6 +121,35 @@ defmodule HacLong.Game.Engine do
     end
   end
 
+  @stat_names %{str: "Sức mạnh", agi: "Nhanh nhẹn", vit: "Thể lực", ene: "Năng lượng"}
+
+  @doc "Mọi ô trang bị đều trống (`%{weapon: nil, …}`)."
+  def empty_equip, do: Map.new(@equip_slots, &{String.to_atom(&1), nil})
+
+  @doc """
+  Lớp `cls` dùng được món `it` không: cánh theo `cls` (một lớp), đồ Item.txt theo `classes`
+  (danh sách). Đồ không ghi gì thì lớp nào cũng dùng được.
+  """
+  def class_ok?(it, cls),
+    do: it[:cls] in [nil, cls] and (it[:classes] in [nil, []] or cls in it.classes)
+
+  @doc """
+  Kiểm tra mặc được món `it` (đã `Gear.item/2`): cấp, lớp, yêu cầu chỉ số (`req`, so với chỉ số gốc
+  đã cộng điểm, không tính đồ). `:ok` hoặc `{:error, lời_báo}`.
+  """
+  def can_wear(p, it) do
+    short = Enum.find(it[:req] || %{}, fn {k, v} -> Map.get(p.stats, k, 0) < v end)
+
+    cond do
+      it[:level] && p.level < it.level -> {:error, "Cần cấp #{it.level}."}
+      not class_ok?(it, p.cls) -> {:error, "#{it.name} không dành cho #{Data.class(p.cls).name}."}
+      short -> {:error, "#{it.name} cần #{@stat_names[elem(short, 0)]} #{elem(short, 1)}."}
+      true -> :ok
+    end
+  end
+
+  def can_wear?(p, it), do: can_wear(p, it) == :ok
+
   @doc """
   Chỉ số dẫn xuất. Công thức theo lớp ở `CLASSES[lớp].derived` (`priv/game_data/classes.json`): mỗi chỉ số là
   tổng `hệ_số × giá_trị` với giá trị là một chỉ số gốc (`str`, `agi`, `vit`, `ene`), `level` hoặc
@@ -124,8 +160,6 @@ defmodule HacLong.Game.Engine do
     s = Map.merge(p.stats, Gear.bonus_stats(p), fn _, a, b -> a + b end)
     f = Data.class(p.cls).derived
     w = Gear.item(p, p.equip.weapon)
-    a = Gear.item(p, p.equip.armor)
-    sh = Gear.item(p, p.equip.shield)
     wg = Gear.item(p, p.equip[:wing])
 
     up = fn id -> if id, do: upgrade_bonus(p, id) + life_bonus(p, id), else: 0 end
@@ -147,9 +181,12 @@ defmodule HacLong.Game.Engine do
       atk: round((lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon)) * pet.(:atk)),
       def:
         round(
-          (lin.(f.def) + if(a, do: a.def, else: 0) + if(sh, do: sh.def, else: 0) +
-             if(wg, do: wg.def, else: 0) + up.(p.equip.armor) + up.(p.equip.shield) +
-             up.(p.equip[:wing])) * pet.(:def)
+          (lin.(f.def) +
+             Enum.sum(
+               for slot <- @def_slots, id = p.equip[slot] do
+                 Map.get(Gear.item(p, id) || %{}, :def, 0) + up.(id)
+               end
+             )) * pet.(:def)
         ),
       crit: clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max),
       critMult:
@@ -1141,7 +1178,7 @@ defmodule HacLong.Game.Engine do
   # Đồ có chỉ số ngẫu nhiên (xem `Gear`).
   defp gear_drop(p, m, reward) do
     with true <- chance(Gear.drop_chance(m)),
-         %{} = g <- Gear.roll(m.level) do
+         %{} = g <- Gear.roll(m.level, Gear.weights(), nil, if(@loot_own_class, do: p.cls)) do
       it = Gear.resolve(g)
       label = "#{it.name} (#{Gear.rarity_names()[g.rarity]})"
 
@@ -1600,8 +1637,7 @@ defmodule HacLong.Game.Engine do
 
   defp destroy_equipped(p, slot, uid) do
     p = p |> Gear.remove(uid) |> put_upgrade(uid, 0)
-    fallback = %{weapon: "club", armor: "vest"}
-    %{p | equip: Map.put(p.equip, slot, fallback[slot])}
+    %{p | equip: Map.put(p.equip, slot, Data.starters(p.cls)[slot])}
   end
 
   @doc """
@@ -1624,6 +1660,51 @@ defmodule HacLong.Game.Engine do
 
       p = p |> put_upgrade(id, 0) |> put_upgrade(g.uid, level)
       {p, g.uid}
+    end
+  end
+
+  @doc """
+  Phase 15b: đổi đồ cũ đã thay (`Data.legacy?/1`) sang đồ Item.txt cùng ô, cùng bậc, đúng lớp
+  (`Data.replacement/2`) ở mọi chỗ: đang mặc, túi, đồ hiếm (`gear.base`, giữ `uid`, độ hiếm, chỉ số
+  cộng, cấp nâng +N, khóa, Ngọc Sinh Mệnh), cấp nâng của đồ thường, Tủ Đồ. Có đổi thì các ô mới
+  (mũ / quần / găng / giày) còn trống được phát đồ khởi đầu như nhân vật mới. Không có gì để đổi thì
+  trả nguyên `p`. Chạy mỗi lần nạp nhân vật (`Characters.load/1`).
+  """
+  def migrate_items(p) do
+    swap = fn id -> (is_binary(id) && Data.replacement(id, p.cls)) || id end
+    gear = Map.get(p, :gear) || []
+    storage = Map.get(p, :storage)
+
+    legacy? =
+      Enum.any?(Map.values(p.equip), &(&1 && Data.legacy?(&1))) or
+        Enum.any?(Map.keys(p.inv), &Data.legacy?/1) or
+        Enum.any?(gear, &Data.legacy?(&1.base)) or
+        Enum.any?(Map.keys(upgrades(p)), &Data.legacy?/1) or
+        (is_map(storage) and Enum.any?(Map.keys(storage.inv), &Data.legacy?/1))
+
+    if legacy? do
+      merge = fn m ->
+        Enum.reduce(m, %{}, fn {id, n}, acc -> Map.update(acc, swap.(id), n, &(&1 + n)) end)
+      end
+
+      equip = Map.new(p.equip, fn {slot, id} -> {slot, swap.(id)} end)
+
+      fresh =
+        for {slot, id} <- Data.starters(p.cls), equip[slot] == nil, into: %{}, do: {slot, id}
+
+      p
+      |> Map.put(:equip, Map.merge(equip, fresh))
+      |> Map.put(:inv, merge.(p.inv))
+      |> Map.put(:gear, Enum.map(gear, &%{&1 | base: swap.(&1.base)}))
+      |> Map.put(:upgrades, Map.new(upgrades(p), fn {id, n} -> {swap.(id), n} end))
+      |> then(
+        &if(is_map(storage),
+          do: Map.put(&1, :storage, %{storage | inv: merge.(storage.inv)}),
+          else: &1
+        )
+      )
+    else
+      p
     end
   end
 
@@ -1715,6 +1796,9 @@ defmodule HacLong.Game.Engine do
       it == nil || it[:drop] || id not in Data.shop() ->
         {err("Không bán món này."), p}
 
+      not class_ok?(it, p.cls) ->
+        {err("#{it.name} không dành cho #{Data.class(p.cls).name}."), p}
+
       not count_ok?(n) ->
         {err("Số lượng không hợp lệ."), p}
 
@@ -1799,11 +1883,11 @@ defmodule HacLong.Game.Engine do
       it == nil or not owned or it.slot not in @equip_slots ->
         {err("Không trang bị được."), p}
 
-      it[:level] && p.level < it.level ->
-        {err("Cần cấp #{it.level}."), p}
-
       it[:cls] && it.cls != p.cls ->
         {err("#{it.name} dành cho #{Data.class(it.cls).name}."), p}
+
+      (why = can_wear(p, it)) != :ok ->
+        {err(elem(why, 1)), p}
 
       true ->
         slot = String.to_existing_atom(it.slot)
@@ -1818,7 +1902,7 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  def unequip(p, slot) when slot in ~w(shield wing) do
+  def unequip(p, slot) when slot in @removable do
     key = String.to_existing_atom(slot)
 
     case p.equip[key] do
@@ -1828,8 +1912,7 @@ defmodule HacLong.Game.Engine do
       old ->
         p = if Gear.instance?(old), do: p, else: add_item(p, old)
 
-        {ok(if(key == :wing, do: "Đã tháo cánh.", else: "Đã tháo khiên.")),
-         %{p | equip: Map.put(p.equip, key, nil)}}
+        {ok("Đã tháo #{Gear.item(p, old).name}."), %{p | equip: Map.put(p.equip, key, nil)}}
     end
   end
 

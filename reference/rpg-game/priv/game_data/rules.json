@@ -181,18 +181,19 @@
       ],
       "gear_slots": [
         [
-          0.45,
+          0.4,
           "weapon"
         ],
         [
-          0.8,
-          "armor"
+          0.85,
+          "set"
         ],
         [
           1,
           "shield"
         ]
       ],
+      "gear_own_class": true,
       "gear_bonus_per_level": 6,
       "event_token_chance": 0.2,
       "event_token_boss": 3

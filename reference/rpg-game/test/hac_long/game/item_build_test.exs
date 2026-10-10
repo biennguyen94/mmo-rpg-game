@@ -105,6 +105,15 @@ defmodule HacLong.Game.ItemBuildTest do
     assert by["item_9_5"]["name"] == "pants Da"
   end
 
+  test "piece_weight \"def\": giá món trong bộ chia theo tỉ lệ thủ, đủ bộ bằng giá bậc" do
+    pick = put_in(@pick, ["prices", "piece_weight"], "def")
+    {:ok, items, []} = ItemBuild.build(drafts(), pick)
+    set = Enum.filter(items, &(&1["set"] == "Da"))
+    # làm tròn từng món nên lệch vài vàng
+    assert abs((Enum.map(set, & &1["price"]) |> Enum.sum()) - 200) <= 2
+    assert Enum.find(set, &(&1["slot"] == "armor"))["price"] == round(200 * 10 / 26)
+  end
+
   test "món không có trong Item.txt thành cảnh báo, không làm hỏng cả bảng" do
     pick = put_in(@pick, ["shields"], [%{"ref" => "6/99", "name" => "?"}])
     assert {:ok, items, ["không có 6/99 trong Item.txt"]} = ItemBuild.build(drafts(), pick)

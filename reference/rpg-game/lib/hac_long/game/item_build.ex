@@ -16,7 +16,8 @@ defmodule HacLong.Game.ItemBuild do
   - Khiên: thủ = `stats.shield_def[bậc]`.
   - Yêu cầu chỉ số = số trong file × `req_mult` (làm tròn); vũ khí / bộ giáp bậc trong `no_req_tiers`
     (đồ khởi đầu) không đòi chỉ số.
-  - Giá = `prices.<loại>[bậc]`, món trong bộ nhân `prices.piece_weight`.
+  - Giá = `prices.<loại>[bậc]`; món trong bộ nhân `prices.piece_weight`: `"def"` = theo tỉ lệ thủ (mua
+    đủ bộ bằng giá bậc), hoặc map trọng số từng ô.
   - Lớp: các lớp có món đó trong danh sách chọn (`"mg": "dk"` = dùng chung danh sách của DK);
     lớp trong `no_helm` không có mũ.
   """
@@ -24,14 +25,29 @@ defmodule HacLong.Game.ItemBuild do
   @pieces [{"helm", 7}, {"armor", 8}, {"pants", 9}, {"gloves", 10}, {"boots", 11}]
 
   @doc """
-  `drafts`: `%{"nhóm/số" => nháp}` (khóa chuỗi, như `items_from_txt.json`); `pick`: `ITEM_PICK` (khóa chuỗi).
+  `drafts`: `%{"nhóm/số" => nháp}` (khóa chuỗi, như `items_from_txt.json`); `pick`: `ITEM_PICK` (khóa chuỗi);
+  `legacy_defs`: `ITEMS` cũ (khóa chuỗi) để mượn icon / hình nhân vật.
   Trả `{:ok, đồ, cảnh_báo}`; mỗi món là map khóa chuỗi, sắp theo loại rồi bậc.
   """
-  def build(drafts, pick) do
+  def build(drafts, pick, legacy_defs \\ %{}) do
     {weapons, w1} = weapons(drafts, pick)
     {shields, w2} = shields(drafts, pick)
     {sets, w3} = sets(drafts, pick)
-    {:ok, weapons ++ shields ++ sets, w1 ++ w2 ++ w3}
+    items = Enum.map(weapons ++ shields ++ sets, &look(&1, pick, legacy_defs))
+    {:ok, items, w1 ++ w2 ++ w3}
+  end
+
+  # Icon / hình trên nhân vật tạm (tới khi có hình gốc theo `ref`, `mix hac_long.icons`): vũ khí, giáp,
+  # khiên lấy của món cũ cùng bậc (`legacy`); mũ / quần / găng / giày lấy `icons.<ô>`.
+  defp look(it, pick, legacy_defs) do
+    kind = if it["slot"] in ~w(weapon armor shield), do: it["slot"]
+    old = kind && legacy_defs[Enum.at(get_in(pick, ["legacy", kind]) || [], it["tier"] - 1)]
+
+    cond do
+      old -> Map.merge(it, Map.take(old, ["icon", "doll"]))
+      icon = get_in(pick, ["icons", it["slot"]]) -> Map.put(it, "icon", icon)
+      true -> it
+    end
   end
 
   # ---------- vũ khí ----------
@@ -114,7 +130,14 @@ defmodule HacLong.Game.ItemBuild do
         for {slot, d} <- parts do
           classes = if slot == "helm", do: owners -- no_helm, else: owners
           name = "#{names[slot] || slot} #{e["name"]}"
-          weight = get_in(pick, ["prices", "piece_weight", slot]) || 1.0
+
+          # "def": giá chia theo tỉ lệ thủ (mua đủ bộ = giá bậc); map: trọng số tay từng ô
+          weight =
+            case get_in(pick, ["prices", "piece_weight"]) do
+              "def" -> (d["def"] || 0) / total
+              %{} = w -> w[slot] || 1.0
+              _ -> 1.0
+            end
 
           {:ok,
            base(d, %{"name" => name}, pick, slot, tier, classes)

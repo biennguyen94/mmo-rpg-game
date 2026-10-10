@@ -13,13 +13,13 @@ defmodule HacLong.Game.GearTest do
   end
 
   defp sword(bonus \\ %{str: 5, agi: 2}),
-    do: %{uid: "#KIEM", base: "greatsword", rarity: 2, bonus: bonus}
+    do: %{uid: "#KIEM", base: "item_0_5", rarity: 2, bonus: bonus}
 
   test "tạo món ngẫu nhiên theo cấp quái" do
-    # 0.1: vũ khí; 0.1: đồ gốc mạnh nhất (Chùy Gai, cấp 12); 0.1: Hiếm (2 dòng chỉ số)
+    # 0.1: vũ khí; 0.1: đồ gốc mạnh nhất của Kiếm Sĩ (Đao Katana, cấp 12); 0.1: Hiếm (2 dòng chỉ số)
     Rng.put_sequence([0.1])
-    g = Gear.roll(12)
-    assert g.base == "mace" and g.rarity == 2 and map_size(g.bonus) == 2
+    g = Gear.roll(12, Gear.weights(), nil, "dk")
+    assert g.base == "item_0_3" and g.rarity == 2 and map_size(g.bonus) == 2
     # giá trị mỗi dòng: 1 + phần ngẫu nhiên tới cấp/6
     assert Enum.all?(Map.values(g.bonus), &(&1 in 1..3))
     assert String.starts_with?(g.uid, "#")
@@ -33,20 +33,20 @@ defmodule HacLong.Game.GearTest do
     p = player()
     base = Engine.derived(p)
     {p, _} = Gear.add(p, sword())
-    assert [%{name: "Đại Kiếm Sức Mạnh"}] = Enum.map(Gear.bag(p), &Gear.resolve/1)
+    assert [%{name: "Đại Đao Sức Mạnh"}] = Enum.map(Gear.bag(p), &Gear.resolve/1)
 
-    {%{ok: true, msg: "Đã trang bị Đại Kiếm Sức Mạnh."}, p} = Engine.equip(p, "#KIEM")
+    {%{ok: true, msg: "Đã trang bị Đại Đao Sức Mạnh."}, p} = Engine.equip(p, "#KIEM")
     d = Engine.derived(p)
 
-    # Kiếm Sĩ: Đại Kiếm 44 tấn công thay Gậy Gỗ 3; +5 sức mạnh (×2.8) và +2 nhanh nhẹn (×0.5)
+    # Kiếm Sĩ: Đại Đao 42 tấn công thay Rìu Nhỏ 4; +5 sức mạnh (×2.8) và +2 nhanh nhẹn (×0.5)
     # (làm tròn một lần trên tổng nên lệch tối đa 1)
-    assert abs(d.atk - (base.atk + 41 + 5 * 2.8 + 2 * 0.5)) <= 1
+    assert abs(d.atk - (base.atk + 38 + 5 * 2.8 + 2 * 0.5)) <= 1
     assert Gear.bag(p) == []
-    # gậy cũ về túi đồ thường
-    assert p.inv["club"] == 1
+    # rìu cũ về túi đồ thường
+    assert p.inv["item_1_0"] == 1
     assert {%{ok: false, msg: "Đang mặc món này."}, _} = Engine.sell(p, "#KIEM")
 
-    {_, p} = Engine.equip(p, "club")
+    {_, p} = Engine.equip(p, "item_1_0")
     assert [%{uid: "#KIEM"}] = Gear.bag(p)
     gold = p.gold
     {%{ok: true}, p} = Engine.sell(p, "#KIEM")
@@ -57,7 +57,7 @@ defmodule HacLong.Game.GearTest do
     p = %{player() | gold: 10_000} |> Engine.add_item("ore_rare", 5)
     {p, _} = Gear.add(p, sword())
     {_, p} = Engine.equip(p, "#KIEM")
-    {%{ok: true, msg: "Đã nâng Đại Kiếm Sức Mạnh lên +1."}, p} = Engine.upgrade(p, "weapon")
+    {%{ok: true, msg: "Đã nâng Đại Đao Sức Mạnh lên +1."}, p} = Engine.upgrade(p, "weapon")
     assert Engine.upgrade_level(p, "#KIEM") == 1
   end
 
@@ -80,7 +80,7 @@ defmodule HacLong.Game.GearTest do
         "password" => "matkhau1"
       })
 
-    {:ok, p} = Engine.new_player("Lưu Đồ #{System.unique_integer([:positive])}", "elf")
+    {:ok, p} = Engine.new_player("Lưu Đồ #{System.unique_integer([:positive])}", "dk")
     {p, _} = Gear.add(%{p | level: 25}, sword())
     {_, p} = Engine.equip(p, "#KIEM")
     p = p |> Map.merge(%{pos: %{map: "village", x: 12, y: 14}, upgrades: %{"#KIEM" => 2}})

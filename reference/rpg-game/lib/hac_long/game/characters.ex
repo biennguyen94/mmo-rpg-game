@@ -135,7 +135,9 @@ defmodule HacLong.Game.Characters do
 
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
   # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
-  defp to_player(%Character{} = c), do: c |> to_map() |> HacLong.Game.Engine.split_upgrades()
+  defp to_player(%Character{} = c),
+    do:
+      c |> to_map() |> HacLong.Game.Engine.migrate_items() |> HacLong.Game.Engine.split_upgrades()
 
   defp to_map(c) do
     %{
@@ -149,7 +151,8 @@ defmodule HacLong.Game.Characters do
       points: c.points,
       stats: Map.new(~w(str agi vit ene)a, &{&1, Map.fetch!(c.stats, Atom.to_string(&1))}),
       mp: c.mp || 0,
-      equip: Map.new(~w(weapon armor shield wing)a, &{&1, Map.get(c.equip, Atom.to_string(&1))}),
+      equip:
+        Map.new(HacLong.Game.Engine.equip_slots(), &{String.to_atom(&1), Map.get(c.equip, &1)}),
       inv: c.inv,
       bosses: c.bosses,
       kills: c.kills,

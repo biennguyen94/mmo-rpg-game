@@ -86,7 +86,7 @@ defmodule HacLong.World.Maps do
                    at: List.to_tuple(n["at"]),
                    role: n["role"],
                    lines: n["lines"] || [],
-                   stock: n["stock"] || []
+                   stock: HacLong.Game.Data.stock(n["stock"] || [])
                  }
                end),
              gather:

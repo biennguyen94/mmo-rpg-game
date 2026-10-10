@@ -6,6 +6,12 @@ defmodule Mix.Tasks.HacLong.Items.Build do
       mix hac_long.items.fetch            # tải Item.txt (một lần mỗi máy)
       mix hac_long.items.import           # Item.txt → assets_src/private/items/items_from_txt.json
       mix hac_long.items.build --preview  # ghi docs/ITEMS_PICK.md để duyệt, không đổi game
+      mix hac_long.items.build            # ghi priv/game_data/items_mu.json (đồ trong game) + docs/ITEMS_PICK.md
+
+  Ghi thêm tên gốc (`mu_name`) làm bản tiếng Anh của tên đồ trong `priv/static/i18n/en.json`.
+
+  `items_mu.json` (khóa `ITEMS_MU`) được `HacLong.Game.Data` gộp vào `ITEMS`; đồ cũ trong `ITEM_PICK.legacy`
+  thôi bán / rơi và được đổi sang đồ mới khi nạp nhân vật. Xóa `items_mu.json` là game về đồ cũ.
 
   Đọc bảng chọn và các hệ số ở `priv/game_data/item_pick.json` (`HacLong.Game.ItemBuild`).
   Thiếu nháp Item.txt thì báo và thoát 0.
@@ -17,6 +23,11 @@ defmodule Mix.Tasks.HacLong.Items.Build do
   @drafts "assets_src/private/items/items_from_txt.json"
   @pick "priv/game_data/item_pick.json"
   @preview "docs/ITEMS_PICK.md"
+  @out "priv/game_data/items_mu.json"
+  @items "priv/game_data/items.json"
+  # thứ tự khóa trong items_mu.json (dễ đọc, diff ổn định)
+  @keys ~w(name mu_name slot tier level classes atk atkMin atkMax def req price set ref icon doll
+           sourceType version verified)
 
   @impl true
   def run(args) do
@@ -26,21 +37,41 @@ defmodule Mix.Tasks.HacLong.Items.Build do
          %{"items" => list} <- Jason.decode!(bin) do
       drafts = Map.new(list, &{&1["ref"], &1})
       pick = @pick |> File.read!() |> Jason.decode!() |> Map.fetch!("ITEM_PICK")
-      {:ok, items, warns} = ItemBuild.build(drafts, pick)
+      legacy = @items |> File.read!() |> Jason.decode!() |> Map.fetch!("ITEMS")
+      {:ok, items, warns} = ItemBuild.build(drafts, pick, legacy)
 
       for w <- warns, do: Mix.shell().info("Cảnh báo: #{w}")
 
-      if opts[:preview] do
-        File.write!(@preview, table(items, pick))
-        Mix.shell().info("Đã ghi #{@preview}: #{length(items)} món.")
-      else
-        Mix.shell().info(
-          "#{length(items)} món. Ghép vào items.json làm ở M2; giờ dùng --preview."
-        )
+      File.write!(@preview, table(items, pick))
+      Mix.shell().info("Đã ghi #{@preview}: #{length(items)} món.")
+
+      unless opts[:preview] do
+        File.write!(@out, encode(items))
+        Mix.shell().info("Đã ghi #{@out}. Chạy mix test rồi khởi động lại server.")
+        english(items)
       end
     else
       _ -> Mix.shell().info("Chưa có #{@drafts}: chạy mix hac_long.items.import trước.")
     end
+  end
+
+  # bản tiếng Anh: tên gốc trong Item.txt (`mu_name`) làm bản dịch tên tiếng Việt
+  @en "priv/static/i18n/en.json"
+  defp english(items) do
+    en = @en |> File.read!() |> Jason.decode!()
+    names = Map.merge(en["names"], Map.new(items, &{&1["name"], &1["mu_name"]}))
+    File.write!(@en, Jason.encode!(%{en | "names" => names}))
+    Mix.shell().info("Đã ghi tên tiếng Anh của #{length(items)} món vào #{@en}.")
+  end
+
+  # JSON giữ thứ tự món và thứ tự khóa (Jason.OrderedObject)
+  defp encode(items) do
+    objs =
+      for it <- items do
+        {it["id"], Jason.OrderedObject.new(for k <- @keys, Map.has_key?(it, k), do: {k, it[k]})}
+      end
+
+    Jason.encode!(%{"ITEMS_MU" => Jason.OrderedObject.new(objs)}, pretty: true) <> "\n"
   end
 
   @slot_vi [
