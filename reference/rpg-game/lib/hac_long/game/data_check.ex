@@ -7,7 +7,7 @@ defmodule HacLong.Game.DataCheck do
   Hàm thuần trên dữ liệu đã đọc (khóa atom như trong `Data`), không gọi `Data`.
   """
 
-  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe)
+  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen)
   @pet_skills ~w(heal bash pickpocket venom rend)
   @fails [nil, "down", "destroy"]
 

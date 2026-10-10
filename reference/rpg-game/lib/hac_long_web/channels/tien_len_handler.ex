@@ -105,6 +105,32 @@ defmodule HacLongWeb.TienLenHandler do
     end
   end
 
+  # thử trước (không đổi gì) để nút Đánh / Bỏ lượt / Chặt hiện đúng lý do: luật chỉ ở server (D1)
+  defp op("check", p, uid, socket) do
+    with id when id != nil <- socket.assigns[:tl_room],
+         {:ok, cards} <- parse(p["cards"] || []) |> ok_or_empty(p["cards"]) do
+      res = fn
+        :ok -> "ok"
+        {:error, r} -> Text.reason(r)
+      end
+
+      play =
+        if cards == [],
+          do: Text.reason(:empty),
+          else: res.(RoomServer.check(id, uid, {:play, cards}))
+
+      chop =
+        if length(cards) == 8,
+          do: res.(RoomServer.check(id, uid, {:chop, cards})),
+          else: Text.reason(:not_four_pair)
+
+      {:ok, %{play: play, pass: res.(RoomServer.check(id, uid, :pass)), chop: chop}, socket}
+    else
+      nil -> {:error, :not_in_room, socket}
+      :error -> {:error, :not_your_cards, socket}
+    end
+  end
+
   defp op("hints", _p, uid, socket) do
     case socket.assigns[:tl_room] do
       nil -> {:error, :not_in_room, socket}
@@ -347,6 +373,9 @@ defmodule HacLongWeb.TienLenHandler do
   end
 
   defp parse(_), do: :error
+
+  defp ok_or_empty(_res, []), do: {:ok, []}
+  defp ok_or_empty(res, _), do: res
 
   defp name(uid) do
     case Session.get(uid) do

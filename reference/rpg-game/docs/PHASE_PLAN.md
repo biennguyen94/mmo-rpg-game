@@ -311,8 +311,11 @@ Menu → 📚 Thư viện: Bản đồ / Quái / Vật phẩm, tìm theo tên, s
 ### Phase 16 — Người chơi AI ✅ (xong 2026-10-09, 16-A theo đề xuất)
 Bot chạy trên server như người chơi thật: đi lại, đánh quái, lên cấp, mặc đồ, chat vài câu.
 
-### Phase 17 — NPC chơi Tiến Lên Miền Nam (cần chốt 17-A)
-NPC trong Làng: 1 người + 3 NPC.
+### Phase 17 — Tiến Lên Miền Nam ✅ (2026-10-10)
+Port từ repo `biennguyen94/Tien-Len-Mien-Nam` (luật T1–T26 giữ nguyên), anh chốt: phòng nhiều người + máy,
+cược bằng vàng Hắc Long (bàn có máy chơi vui), phần phụ: chat bàn + bình luận viên + âm thanh, ném đồ,
+xem trận + xem lại ván. 17a lõi luật · 17b phòng chơi + vàng · 17c giao diện + NPC Bà Chủ Sòng ở Làng ·
+17d phần phụ + tài liệu + e2e `tienlen.mjs`. Chi tiết: `DECISIONS.md` P17.
 
 ---
 

@@ -175,6 +175,26 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ![Đồ sát](screenshots/e2e-pk.png)
 
+### Tiến Lên Miền Nam (sòng bài ở Làng)
+
+- Gặp **Bà Chủ Sòng** ở Làng (hoặc Menu → 🃏 Tiến Lên) để vào **sảnh**: danh sách bàn, mở bàn mới (mức cược, bàn
+  riêng), vào bằng mã phòng, 📜 Ván đã chơi.
+- Bàn 2–4 người. Chủ bàn (👑) thêm **máy** (dễ / thường) vào ghế trống, rồi bấm **Chia bài**. Bàn có máy chỉ
+  **chơi vui** (cược 0).
+- Chạm lá để chọn, **Gợi ý** chọn sẵn nước đánh được (bấm tiếp để đổi). Nút **Đánh** ghi lý do khi chưa đánh được
+  (sai bộ, chưa đủ lớn…). **Chặt ngoài lượt!** hiện khi bạn cầm bốn đôi thông chặt được.
+- Luật như bản gốc: 3 → 2, ♠ < ♣ < ♦ < ♥; chặt heo / chặt chồng; tới trắng (tứ quý heo, sáu đôi, sảnh rồng,
+  tứ quý 3 ván đầu); mỗi lượt 20 giây (hết giờ server đánh thay); rời bàn / mất kết nối quá 20 giây giữa ván là
+  bị loại (tính Bét).
+- **Cược S vàng**: cần ít nhất 10×S vàng mới được chia bài. Bét trả Nhất S (4 người: Ba trả Nhì S/2); chặt heo
+  đen 1×S, đỏ 2×S (chặt chồng nhân lên); thối heo khi về chót; tới trắng mỗi người trả 2×S. Thiếu vàng thì trả
+  tối đa số đang có.
+- Ném 🍅 1 · 🥚 2 · 🩴 3 · 🌹 5 vàng vào ghế người khác (bấm vào ghế); biểu cảm, chat bàn, câu nhanh; 😮‍💨 thổi bài
+  (cho vui, không đổi gì).
+- **Xem trận**: bấm 👀 Xem ở sảnh (không thấy bài ai). **Xem lại ván**: 📜 Ván đã chơi → ▶ Xem lại (thấy hết bài).
+
+![Tiến Lên](screenshots/e2e-tienlen.png)
+
 ## 12. Bang hội và chiến bang
 
 - Lập bang (5 000 vàng, tên 3–20 ký tự, ký hiệu 2–4 chữ in hoa) hoặc tìm bang để vào / xin vào. Góp vàng vào quỹ để bang lên cấp

@@ -1599,6 +1599,7 @@
     ['skills', 'sword-spin', 'Kỹ năng'],
     ['bestiary', 'skull-crossed-bones', 'Sổ quái'],
     ['library', 'open-book', 'Thư viện'],
+    ['tienlen', 'card-fan', 'Tiến Lên'],
     ['settings', 'speaker', 'Cài đặt'],
   ];
   let menuSec = null; // mục Menu đang mở (null: lưới biểu tượng)
@@ -2318,6 +2319,10 @@
     }
     if (n.role === 'market') sections.push(viewMarket());
     if (n.role === 'chaos') sections.push(chaosCard());
+    if (n.role === 'tienlen') {
+      sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}
+        <button class="btn primary block" data-act="tl-open">${icon('card-fan')} Vào sòng Tiến Lên</button></div>`);
+    }
     if (n.role === 'chest') {
       sections.push(`<div class="card"><p>“${esc(n.lines[0])}”</p>
         <button class="btn ${P.view.chestReady ? 'primary' : ''} block" data-act="chest_open" ${P.view.chestReady ? '' : 'disabled'}>${P.view.chestReady ? 'Mở rương' : 'Hôm nay đã mở, mai quay lại'}</button></div>`);
@@ -2636,6 +2641,7 @@
   }
 
   function onKey(e) {
+    if (window.TL && window.TL.isOpen()) return;
     if (!P || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input, textarea, select')) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (k === 'Escape') { if (hotkeyEscape()) e.preventDefault(); return; }
@@ -2684,6 +2690,8 @@
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
     // V4: bấm lại icon dock đang mở thì đóng, về Bản đồ
     if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open && !visit; goTab(open ? 'map' : t.dataset.tab); return; }
+    // Tiến Lên (Phase 17) mở lớp phủ riêng (tienlen.js), không phải một mục Menu
+    if (t.dataset.menu === 'tienlen') { window.TL.open(); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
     if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
@@ -2749,6 +2757,7 @@
     if (act === 'party-leave') { partyOp('leave'); return; }
     if (act === 'party-kick') { partyOp('kick', { uid: +t.dataset.uid }); return; }
     if (act === 'npc-close') { npc = null; market.data = null; render(); return; }
+    if (act === 'tl-open') { window.TL.open(); return; }
     if (act === 'friends-open') { friendsUi.open = !friendsUi.open; friendsUi.chat = null; friendsUi.confirm = null; walk = null; render(); $('#view').scrollTop = 0; if (friendsUi.open) loadFriends(); return; }
     if (act === 'friends-close') { friendsUi.open = false; friendsUi.chat = null; render(); return; }
     if (act === 'friend-op') { friendsUi.confirm = null; friendOp(t.dataset.op, { uid: +t.dataset.uid }); return; }
@@ -2976,6 +2985,7 @@
       } else if (!inv && dialog && dialog.type === 'pk') dialog = null;
       if (P && !P.battle) render();
     });
+    if (window.TL) window.TL.init();
     Net.onPkResult((view) => {
       dialog = { type: 'pkResult', view };
       pkNote(view);

@@ -276,6 +276,14 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 - Chỉnh ở `rules.json` → `RULES.invasion`: `every_hours`, `minutes`, `maps` (bản đồ → số quái vàng), `strength_mult`,
   `reward_mult`, `jewel_chance`, `boss`, `boss_jewel_chance`. Build lại sau khi sửa.
 
+### Tiến Lên (Phase 17)
+
+- Mỗi bàn một tiến trình (`HacLong.TienLen.RoomServer`), tối đa `RULES.tienlen.max_rooms` bàn, cược tối đa
+  `RULES.tienlen.stake_max`. Vàng trả qua `HacLong.TienLen.Gold`: nhật ký vàng lý do `TIENLEN` (ref
+  `room:<mã>:game:<n>:end` / `:chain:<k>`), ném đồ `TIENLEN_THROW`. Mỗi lần trả một khóa ở bảng
+  `tienlen_settlements` nên không trả hai lần.
+- Ván đã chơi ở bảng `tienlen_games` (người thật trong `player_ids`, `replay` để xem lại).
+
 ### Xã hội, PK cược vàng, chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
