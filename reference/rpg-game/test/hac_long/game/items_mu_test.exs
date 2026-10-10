@@ -26,8 +26,8 @@ defmodule HacLong.Game.ItemsMuTest do
     mg = player("mg").equip
     assert mg.weapon == "item_1_0" and mg.armor == "item_8_5" and mg.helm == nil
 
-    # đủ 8 ô; thủ = tổng mọi ô phòng thủ (5 món bậc 1, mỗi món 1)
-    assert map_size(player("dk").equip) == 8
+    # 11 ô (thêm 2 nhẫn, dây chuyền ở Phase 15c); thủ = tổng mọi ô phòng thủ (5 món bậc 1, mỗi món 1)
+    assert map_size(player("dk").equip) == 11
     bare = %{player("dk") | equip: Engine.empty_equip() |> Map.put(:weapon, "item_1_0")}
     assert Engine.derived(player("dk")).def - Engine.derived(bare).def == 5
   end

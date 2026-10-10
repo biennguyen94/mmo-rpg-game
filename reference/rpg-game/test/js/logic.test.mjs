@@ -100,3 +100,11 @@ test('Thư viện: tìm theo tên không cần dấu', () => {
   assert.ok(!L.nameMatch(['Chó Rừng'], 'doi'));
   assert.ok(L.nameMatch(['Dơi Hang', 'Cave Bat'], 'bat'));
 });
+
+test('iconForLevel: hình Excellent ("<cấp>e") khi có, không có thì hình thường', () => {
+  const lv = { 0: 'a0.png', 5: 'a5.png', '0e': 'a0e.png' };
+  assert.equal(L.iconForLevel(lv, 3, 'e'), 'a0e.png');
+  assert.equal(L.iconForLevel(lv, 7, 'e'), 'a0e.png');
+  assert.equal(L.iconForLevel(lv, 7, ''), 'a5.png');
+  assert.equal(L.iconForLevel({ 0: 'b.png' }, 2, 'e'), 'b.png');
+});

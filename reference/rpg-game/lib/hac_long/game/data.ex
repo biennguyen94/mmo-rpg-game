@@ -114,7 +114,9 @@ defmodule HacLong.Game.Data do
            {id, if(r = @refs[id], do: Map.put(it, :ref, r), else: it)}
          end)
          |> Map.merge(@mu_items)
-  @mu_slots ~w(weapon shield helm armor pants gloves boots)
+  @mu_slots ~w(weapon shield helm armor pants gloves boots ring pendant)
+  # nhẫn / dây chuyền chỉ rơi (không bán, không phải đồ khởi đầu)
+  @jewelry ~w(ring pendant)
   @mu_sorted @mu_items
              |> Enum.sort_by(fn {id, it} ->
                {Enum.find_index(@mu_slots, &(&1 == it.slot)), it.tier, id}
@@ -128,7 +130,7 @@ defmodule HacLong.Game.Data do
                do: {{old, cls}, id}
   # đồ khởi đầu theo lớp: bậc 1 mọi ô trừ khiên (`%{ô => id}`)
   @starters @mu_sorted
-            |> Enum.filter(fn {_, it} -> it.tier == 1 and it.slot != "shield" end)
+            |> Enum.filter(fn {_, it} -> it.tier == 1 and it.slot not in ["shield" | @jewelry] end)
             |> Enum.flat_map(fn {id, it} -> for c <- it.classes, do: {c, it.slot, id} end)
             |> Enum.group_by(&elem(&1, 0), &{String.to_atom(elem(&1, 1)), elem(&1, 2)})
             |> Map.new(fn {c, l} -> {c, Map.new(l)} end)
@@ -138,7 +140,7 @@ defmodule HacLong.Game.Data do
   @events atomize.(atomize, raw["EVENTS"])
   # cửa hàng: bỏ đồ cũ đã thay, thêm đồ mới có giá (theo ô, bậc)
   @shop (raw["SHOP"] -- Map.keys(@legacy)) ++
-          for({id, it} <- @mu_sorted, it.price > 0, do: id)
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id)
   @recipes atomize.(atomize, raw["RECIPES"])
            |> Enum.map(
              &Map.update!(&1, :needs, fn n ->
@@ -236,6 +238,13 @@ defmodule HacLong.Game.Data do
   @doc "Đồ mới thay đồ cũ `id` cho lớp `cls` (Phase 15b); nil nếu `id` không phải đồ cũ đã thay."
   def replacement(id, cls), do: Map.get(@replace, {id, cls})
 
+  # số món của mỗi bộ giáp cho từng lớp (Phase 15c, thưởng đủ bộ): `{bộ, lớp} => n`
+  @set_sizes for({_, it} <- @mu_sorted, it[:set], c <- it.classes, do: {it.set, c})
+             |> Enum.frequencies()
+
+  @doc "Số món của bộ giáp `set` mà lớp `cls` mặc được (Đấu Sĩ không mũ: 4); 0 nếu không có."
+  def set_size(set, cls), do: Map.get(@set_sizes, {set, cls}, 0)
+
   @doc "Đồ cũ đã được thay bằng đồ Item.txt (thôi bán / rơi)."
   def legacy?(id), do: Map.has_key?(@legacy, id)
 
@@ -253,7 +262,9 @@ defmodule HacLong.Game.Data do
   """
   def stock(list) do
     if Enum.any?(list, &legacy?/1),
-      do: (list -- Map.keys(@legacy)) ++ for({id, it} <- @mu_sorted, it.price > 0, do: id),
+      do:
+        (list -- Map.keys(@legacy)) ++
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id),
       else: list
   end
 

@@ -101,6 +101,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   riêng (Kiếm Sĩ / Đấu Sĩ kiếm rìu, Phù Thủy gậy, Tiên Nữ cung nỏ) và bộ giáp riêng 6 bậc; mặc đủ bộ thì phòng thủ bằng tổng các
   món. Bảng chi tiết ghi **Dùng cho** (lớp) và **Cần** (Sức mạnh / Nhanh nhẹn… — đỏ khi thiếu, cộng điểm ở tab Nhân vật).
   Thợ Rèn chỉ bày đồ của lớp mình. Đồ cũ (Kiếm Sắt, Giáp Xích…) tự đổi sang món mới cùng bậc, giữ nguyên +N và khóa.
+- **Nhẫn, dây chuyền, đồ Excellent, đủ bộ (Phase 15c):** 2 ô nhẫn (máu / thủ) và 1 ô dây chuyền (tấn công), chỉ rơi từ quái.
+  Đồ **Excellent** (tên xanh lục) có thêm 1–3 dòng đặc biệt: tăng sát thương, chí mạng, hồi máu / MP khi hạ quái, máu tối đa,
+  giảm sát thương nhận, vàng nhặt được. Mặc **đủ bộ giáp** từ bậc 2 trở lên được +10 % phòng thủ, +3 % tấn công và thêm máu
+  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

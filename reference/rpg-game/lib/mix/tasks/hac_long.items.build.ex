@@ -26,7 +26,7 @@ defmodule Mix.Tasks.HacLong.Items.Build do
   @out "priv/game_data/items_mu.json"
   @items "priv/game_data/items.json"
   # thứ tự khóa trong items_mu.json (dễ đọc, diff ổn định)
-  @keys ~w(name mu_name slot tier level classes atk atkMin atkMax def req price set ref icon doll
+  @keys ~w(name mu_name slot tier level classes atk atkMin atkMax def hp req price set ref icon doll
            sourceType version verified)
 
   @impl true
@@ -81,7 +81,9 @@ defmodule Mix.Tasks.HacLong.Items.Build do
     {"armor", "Giáp"},
     {"pants", "Quần"},
     {"gloves", "Găng"},
-    {"boots", "Giày"}
+    {"boots", "Giày"},
+    {"ring", "Nhẫn"},
+    {"pendant", "Dây chuyền"}
   ]
 
   defp table(items, pick) do
@@ -100,14 +102,18 @@ defmodule Mix.Tasks.HacLong.Items.Build do
 
     sections =
       for {slot, vi} <- @slot_vi, rows = Enum.filter(items, &(&1["slot"] == slot)), rows != [] do
-        stat = if slot == "weapon", do: "Công (thấp~cao)", else: "Thủ"
+        stat = if slot == "weapon", do: "Công (thấp~cao)", else: "Chỉ số"
 
         lines =
           for it <- rows do
             power =
-              if slot == "weapon",
-                do: "#{it["atk"]} (#{it["atkMin"]}~#{it["atkMax"]})",
-                else: "#{it["def"]}"
+              cond do
+                slot == "weapon" -> "#{it["atk"]} (#{it["atkMin"]}~#{it["atkMax"]})"
+                it["def"] -> "#{it["def"]} thủ"
+                it["hp"] -> "+#{it["hp"]} máu"
+                it["atk"] -> "+#{it["atk"]} công"
+                true -> ""
+              end
 
             req = it["req"] |> Enum.sort() |> Enum.map_join(" ", fn {k, v} -> "#{k} #{v}" end)
             req = if req == "", do: "—", else: req

@@ -707,3 +707,5 @@ body.tl-on { overflow: hidden; }
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--ink-3); border: 1px solid var(--gold); border-radius: var(--r);
   padding: 10px 12px; box-shadow: 0 6px 20px #000c; }
 .dm .btn.small-btn { margin-top: 4px; }
+/* Phase 15c: đồ Excellent (xanh lục kiểu MU) */
+.exc { color: #4fe36a; }

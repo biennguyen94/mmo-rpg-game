@@ -15,8 +15,8 @@ defmodule Mix.Tasks.HacLong.Items.Fetch do
   bị git và Docker bỏ qua (CLAUDE.md §7): mỗi máy (máy dev, máy chủ) tự chạy lệnh này, rồi
   `mix hac_long.items.import` (Item.txt) và `mix hac_long.icons` (hình).
 
-  Hình: chỉ chép hình của đồ đang có trong game (`ref` trong `ITEMS`, mọi mức `_N`, bỏ biến thể `_e`),
-  không chép cả bộ 8 000 hình.
+  Hình: chỉ chép hình của đồ đang có trong game (`ref` trong `ITEMS`, mọi mức `_N`, cả biến thể `_e` cho đồ
+  Excellent; bỏ `_a`), không chép cả bộ 8 000 hình.
 
   Tải dùng `curl` có sẵn trên máy (theo `HTTPS_PROXY` nếu có). Lỗi mạng thì báo và thoát 0, không làm hỏng build.
   """
@@ -67,7 +67,7 @@ defmodule Mix.Tasks.HacLong.Items.Fetch do
         picked =
           for f <- files,
               Path.extname(f) in ~w(.png .webp),
-              not String.ends_with?(Path.rootname(f), "_e"),
+              not String.ends_with?(Path.rootname(f), "_a"),
               Enum.any?(refs, &String.starts_with?(f, &1)) do
             File.cp!(Path.join(src, f), Path.join(@icons, f))
           end

@@ -120,3 +120,41 @@ khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ
   - e2e `items.mjs` (11 mục, trong `run.mjs`): đồ khởi đầu theo lớp, 4 ô mới, hình tải được (khi có hình), yêu cầu
     chỉ số (tooltip đỏ, nút khóa, server từ chối), tháo / mặc mũ, Thợ Rèn chỉ bày đồ đúng lớp, mua đồ lớp khác bị từ chối.
   - Chưa làm: hình trên nhân vật (doll) cho cung / gậy — chưa có sprite, đang mượn sprite kiếm / rìu của bậc cũ.
+
+## 6. Phase 15c (2026-10-10): bậc 7–8, nhẫn / dây chuyền, thưởng đủ bộ, Excellent, hình cung / gậy, script
+
+### 6.1 Khóa mới (đổi được)
+
+| Ở đâu | Khóa | Mặc định | Ý nghĩa |
+|---|---|---|---|
+| `item_pick.json` | `levels.weapon` / `levels.set` thêm phần tử thứ 8 / 7–8 | vũ khí bậc 8 cấp 32; bộ bậc 7 cấp 27, bậc 8 cấp 32 | thêm bậc = thêm phần tử ở mọi mảng theo bậc (`levels`, `stats.staff_atk`, `stats.set_def`, `prices`) và thêm món ở `weapons` / `sets` |
+| `item_pick.json` | `stats.set_def` bậc 7–8 | 46, 60 | tổng thủ bộ |
+| `item_pick.json` | `jewelry.ring` / `jewelry.pendant` | 6 nhẫn, 5 dây chuyền | `ref`, `name`, `mu_name`, `level`, `price` (giá bán lại), chỉ số cho tay: `hp` (máu tối đa), `def`, `atk`. Không bán ở cửa hàng, chỉ rơi |
+| `item_pick.json` | `weapons.*[].doll` | cung / nỏ / gậy | hình trên nhân vật (`priv/static/assets/doll/…`); không ghi thì mượn của đồ cũ cùng bậc |
+| `item_pick.json` | `mu_name_fix` | 3 lỗi chính tả | thay chuỗi con trong tên gốc (bản tiếng Anh) |
+| `item_pick.json` | `refs` | cánh, Thánh Kiếm, Khiên Vảy Rồng | đồ riêng Hắc Long mượn hình gốc theo `ref` |
+| `rules.json` | `loot.gear_slots` | vũ khí 38 %, bộ giáp 43 %, khiên 13 %, `jewelry` 6 % | loại đồ ngẫu nhiên rơi; `jewelry` = nhẫn hoặc dây chuyền |
+| `rules.json` | `set_bonus.min_tier` | 2 | bộ dưới bậc này (bộ khởi đầu) không có thưởng |
+| `rules.json` | `set_bonus.def_pct` / `atk_pct` / `hp_per_tier` | 0,1 / 0,03 / 15 | thưởng khi mặc đủ bộ (Đấu Sĩ: 4 món vì không mũ): +10 % phòng thủ, +3 % tấn công, +15 máu × bậc bộ |
+| `rules.json` | `excellent.chance` | thường 4 %, đêm 8 %, tinh anh 12 %, trùm 20 % | tỉ lệ một món **đã rơi** là Excellent |
+| `rules.json` | `excellent.lines` | 1 dòng 70 %, 2 dòng 25 %, 3 dòng 5 % | số dòng |
+| `rules.json` | `excellent.options.weapon` | sát thương +5 %, chí mạng +4 %, hạ quái hồi 6 % máu, hồi 10 % MP | dòng cho vũ khí, dây chuyền |
+| `rules.json` | `excellent.options.armor` | máu tối đa +4 %, giảm sát thương nhận 3 %, vàng +15 % | dòng cho khiên, bộ giáp, nhẫn |
+| `rules.json` | `excellent.max_dmg_red` | 0,2 | trần tổng giảm sát thương từ Excellent |
+| `rules.json` | `excellent.price_mult` | 2 | đồ Excellent bán lại gấp đôi |
+
+### 6.2 Cách chạy
+
+- **Ô trang bị:** 11 ô, thêm `ring1`, `ring2`, `pendant`. Món nhẫn có loại `ring` và vào ô nhẫn còn trống (đủ hai thì
+  thay `ring1`). Dây chuyền cộng tấn công, nhẫn cộng máu / thủ; ép +N được như đồ khác.
+- **Thưởng đủ bộ** (`Engine.set_bonus/1`): xét bộ có nhiều món đang mặc nhất; hiện ở tab Túi đồ ("Bộ Lụa 5/5 ✓ …").
+- **Excellent** (`Gear.excellent/2`, `Gear.exc_stats/1`): món đồ hiếm có trường `exc: ["atk_pct", …]`, lưu cùng đồ;
+  tên xanh lục, bảng chi tiết liệt kê dòng, hình `_e`. Áp cho đồ rơi từ quái và đồ trùm lần đầu (không áp cho rương,
+  rèn, sự kiện). Quản trị tặng được: `give_gear` với `exc`.
+- **Hình nhân vật:** cung, nỏ, gậy phép tự vẽ (`scripts/doll_weapons.py`, CC0).
+- **Máy chủ:** `sh scripts/setup_items.sh` (clone / cập nhật repo hình, chép Item.txt, import, chép hình, cắt viền).
+
+### 6.3 Cân bằng (simulator 5 ván × 4 lớp × 5 cách chơi)
+
+Cả 4 lớp vẫn hạ Hắc Long 5/5 ở cấp 35; số trận như trước (± 1 %); chết ≤ 1. Simulator chỉ tự mặc dây chuyền rơi được
+(không mặc nhẫn), nên người chơi thật mạnh hơn simulator một chút khi gom đủ nhẫn / Excellent.

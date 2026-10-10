@@ -144,6 +144,8 @@ defmodule HacLong.Admin do
     up = a["up"] || 0
     it = is_binary(base) && Data.item(base)
     bonus = a["bonus"]
+    # Phase 15c: dòng Excellent cho sẵn (`exc`: danh sách id dòng hợp loại đồ)
+    exc = a["exc"] || []
 
     cond do
       !it or it.slot not in Engine.gear_slots() ->
@@ -158,6 +160,9 @@ defmodule HacLong.Admin do
       bonus != nil and not valid_stats?(bonus, 0) ->
         {:error, "Chỉ số cộng thêm không hợp lệ (str, agi, vit, ene: 0..#{@max_stat})."}
 
+      not (is_list(exc) and Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
+        {:error, "Dòng Excellent không hợp lệ cho loại đồ này."}
+
       true ->
         {:ok,
          fn p ->
@@ -165,6 +170,7 @@ defmodule HacLong.Admin do
              {:error, "Túi đồ hiếm đã đầy (#{Gear.max_bag()} món)."}
            else
              g = Gear.new(base, rarity, gear_bonus(bonus, rarity, p.level))
+             g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}

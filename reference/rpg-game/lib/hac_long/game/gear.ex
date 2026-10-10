@@ -25,6 +25,10 @@ defmodule HacLong.Game.Gear do
   @shop Data.rules().shop
   @weights Enum.map(@loot.gear_weights, &List.to_tuple/1)
   @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)
+  # Phase 15c: đồ Excellent (`RULES.excellent`)
+  @exc Data.rules().excellent
+  @exc_lines Enum.map(@exc.lines, &List.to_tuple/1)
+  @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
   @stats ~w(str agi vit ene)a
   @set_pieces ~w(helm armor pants gloves boots)
   @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
@@ -77,6 +81,10 @@ defmodule HacLong.Game.Gear do
       locked: g[:locked] == true,
       stored: g[:stored] == true,
       opt: g[:opt] || 0,
+      exc: g[:exc] || [],
+      excellent: (g[:exc] || []) != [],
+      # dòng Excellent kèm giá trị, cho client hiện chữ
+      exc_lines: for(e <- g[:exc] || [], do: %{id: e, value: exc_value(base.slot, e)}),
       sell: price(g)
     })
   end
@@ -86,9 +94,11 @@ defmodule HacLong.Game.Gear do
     # đồ không bán ở cửa hàng (giá 0) tính như giá 200, như `Engine.sell_price/1`
     base = with 0 <- Data.item(g.base).price, do: @shop.unpriced_value
 
+    exc = if (g[:exc] || []) != [], do: @exc.price_mult, else: 1
+
     round(
-      base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
-        @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))
+      (base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
+         @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))) * exc
     )
   end
 
@@ -170,6 +180,14 @@ defmodule HacLong.Game.Gear do
     end
   end
 
+  # "jewelry": nhẫn hoặc dây chuyền (Phase 15c)
+  defp slot_bases("jewelry", level, cls) do
+    case ~w(ring pendant) |> Enum.map(&bases(&1, level, cls)) |> Enum.reject(&(&1 == [])) do
+      [] -> []
+      groups -> Enum.at(groups, floor(Rng.uniform() * length(groups)))
+    end
+  end
+
   defp slot_bases(slot, level, cls), do: bases(slot, level, cls)
 
   # 2 đồ gốc cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ đã
@@ -194,6 +212,71 @@ defmodule HacLong.Game.Gear do
 
   defp shuffle(list),
     do: list |> Enum.map(&{Rng.uniform(), &1}) |> Enum.sort() |> Enum.map(&elem(&1, 1))
+
+  # ---------- Excellent (Phase 15c) ----------
+  @exc_ids (Map.keys(@exc.options.weapon) ++ Map.keys(@exc.options.armor))
+           |> Enum.map(&Atom.to_string/1)
+
+  @doc "Tỉ lệ một món rơi từ quái `m` là Excellent (`RULES.excellent.chance`)."
+  def exc_chance(m) do
+    c = @exc.chance
+
+    cond do
+      m[:world] || m[:pvp] -> 0
+      m[:elite] -> c.elite
+      m[:night] -> c.night
+      m[:boss] -> c.boss
+      true -> c.normal
+    end
+  end
+
+  @doc """
+  Làm món `g` thành Excellent với xác suất `chance`: số dòng theo `excellent.lines`, dòng chọn ngẫu nhiên (không
+  trùng) trong `options.weapon` (vũ khí, dây chuyền) hoặc `options.armor` (còn lại). Cánh không có Excellent.
+  """
+  def excellent(nil, _chance), do: nil
+
+  def excellent(g, chance) do
+    it = Data.item(g.base)
+
+    if it && it.slot != "wing" && Rng.uniform() < chance do
+      pool =
+        it.slot |> exc_type() |> then(&Map.keys(@exc.options[&1])) |> Enum.map(&Atom.to_string/1)
+
+      n = min(pick_weighted(@exc_lines), length(pool))
+      Map.put(g, :exc, pool |> Enum.sort() |> shuffle() |> Enum.take(n))
+    else
+      g
+    end
+  end
+
+  defp exc_type(slot) when slot in ~w(weapon pendant), do: :weapon
+  defp exc_type(_), do: :armor
+
+  @doc "Giá trị một dòng Excellent `id` của món loại `slot`."
+  def exc_value(slot, id) when is_binary(id) do
+    if id in @exc_ids, do: @exc.options[exc_type(slot)][String.to_existing_atom(id)] || 0, else: 0
+  end
+
+  @doc """
+  Tổng dòng Excellent của các món đang mặc: `%{atk_pct, crit, heal_kill, mp_kill, hp_pct, dmg_red, gold_pct}`
+  (giảm sát thương tối đa `excellent.max_dmg_red`).
+  """
+  def exc_stats(p) do
+    p.equip
+    |> Map.values()
+    |> Enum.filter(&instance?/1)
+    |> Enum.map(&find(p, &1))
+    |> Enum.reject(&(is_nil(&1) or (&1[:exc] || []) == []))
+    |> Enum.reduce(@exc_zero, fn g, acc ->
+      slot = Data.item(g.base).slot
+
+      Enum.reduce(g.exc, acc, fn id, acc ->
+        Map.update!(acc, String.to_existing_atom(id), &(&1 + exc_value(slot, id)))
+      end)
+    end)
+    |> Map.update!(:dmg_red, &min(&1, @exc.max_dmg_red))
+  end
 
   @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
   def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
@@ -264,7 +347,9 @@ defmodule HacLong.Game.Gear do
       m = if g["locked"] == true, do: Map.put(m, :locked, true), else: m
       m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
       opt = g["opt"]
-      if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
+      m = if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
+      exc = for e <- g["exc"] || [], e in @exc_ids, do: e
+      if exc == [], do: m, else: Map.put(m, :exc, exc)
     end
   end
 

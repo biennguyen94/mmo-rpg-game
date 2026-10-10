@@ -72,3 +72,6 @@ NPC Bà Chủ Sòng (`npcs/dealer.png`) và icon `icons/card-fan.svg`: tự vẽ
 
 Không dùng file âm thanh: mọi hiệu ứng được tổng hợp trong trình duyệt bằng Web Audio
 (`priv/static/js/sound.js`).
+
+Hình nhân vật cầm cung, nỏ, gậy phép (`doll/hand1/bow.png`, `crossbow.png`, `staff.png`, Phase 15c): tự vẽ cho game này
+bằng `scripts/doll_weapons.py` (CC0). Hình đồ gốc MU (`mu_items/`) không nằm trong repo, xem `docs/ITEMS_PHASE15B.md`.

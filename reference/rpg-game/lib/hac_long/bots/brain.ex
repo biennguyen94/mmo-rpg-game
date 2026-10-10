@@ -86,7 +86,7 @@ defmodule HacLong.Bots.Brain do
     |> Enum.map(&Gear.resolve/1)
     |> Enum.filter(&(&1.slot in Engine.gear_slots() and Engine.can_wear?(p, &1)))
     |> Enum.find_value(fn it ->
-      slot = String.to_existing_atom(it.slot)
+      slot = Engine.equip_slot(p, it)
       cur = Gear.item(p, p.equip[slot])
       if power(it) > power(cur), do: it.uid
     end)

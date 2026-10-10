@@ -181,22 +181,44 @@
       ],
       "gear_slots": [
         [
-          0.4,
+          0.38,
           "weapon"
         ],
         [
-          0.85,
+          0.81,
           "set"
         ],
         [
-          1,
+          0.94,
           "shield"
+        ],
+        [
+          1,
+          "jewelry"
         ]
       ],
       "gear_own_class": true,
       "gear_bonus_per_level": 6,
       "event_token_chance": 0.2,
       "event_token_boss": 3
+    },
+    "set_bonus": {
+      "_doc": "Phase 15c: mặc đủ bộ giáp (mọi món của bộ cho lớp mình) từ bậc min_tier trở lên (bộ khởi đầu bậc 1 không tính) thì cộng phòng thủ, tấn công theo %, máu = hp_per_tier × bậc bộ.",
+      "min_tier": 2,
+      "def_pct": 0.1,
+      "atk_pct": 0.03,
+      "hp_per_tier": 15
+    },
+    "excellent": {
+      "_doc": "Phase 15c: đồ Excellent (dòng đặc biệt, hình _e). chance: tỉ lệ một món đồ rơi là Excellent theo loại quái; lines: số dòng [[số, trọng số]]; options: giá trị mỗi dòng (vũ khí / dây chuyền dùng weapon, còn lại armor); max_dmg_red: trần tổng giảm sát thương; price_mult: giá bán nhân thêm.",
+      "chance": { "normal": 0.04, "elite": 0.12, "night": 0.08, "boss": 0.2 },
+      "lines": [[1, 70], [2, 25], [3, 5]],
+      "options": {
+        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1 },
+        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15 }
+      },
+      "max_dmg_red": 0.2,
+      "price_mult": 2
     },
     "shop": {
       "sell_ratio": 0.4,

@@ -206,3 +206,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15b-7** Đồ rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class: true`) để tốc độ có đồ như trước; đổi `false` là kiểu MU (rơi đồ mọi lớp).
 - **I15b-8** Yêu cầu chỉ số so với chỉ số gốc đã cộng điểm (không tính đồ), chỉ kiểm lúc mặc.
 - **I15b-9 (M3)** Hình đồ lấy từ repo riêng của anh `biennguyen94/mmo-rpg-game-items` (`item_ref/items`), chỉ chép hình của đồ đang có trong game, cắt viền trong suốt bằng ImageMagick lúc `mix hac_long.icons`. Cánh, Thánh Kiếm, Khiên Vảy Rồng mượn hình MU qua `ITEM_PICK.refs` (đổi được).
+- **I15c-1** Bậc 7–8: Kiếm Sĩ / Đấu Sĩ Hắc Long, Phượng Hoàng Đen; Phù Thủy Đại Linh Hồn, Hồn Bóng Tối; Tiên Nữ Thần Thánh, Linh Hồn Đỏ (bộ "bậc 2" của MU, dùng tên đẹp; số theo đường cong Hắc Long).
+- **I15c-2** Nhẫn / dây chuyền: chỉ số cho tay (Item.txt nhóm 13 không có số dùng được), chỉ rơi, không bán.
+- **I15c-3** Thưởng đủ bộ chỉ tính từ bậc 2 (`min_tier`), để bộ khởi đầu không cho thưởng sẵn.
+- **I15c-4** Excellent chỉ cho đồ rơi từ quái và đồ trùm lần đầu; dòng lấy từ dòng Excellent MU nhưng rút gọn còn 7 dòng game tính được.

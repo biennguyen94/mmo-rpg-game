@@ -33,10 +33,14 @@
 
   // Hình riêng theo cấp nâng: `levels` = { "0": "items/a.png", "7": "items/a_7.png", ... };
   // lấy mức lớn nhất ≤ `level`. Không có mức nào hợp thì null (dùng icon cũ).
-  function iconForLevel(levels, level) {
+  // `suffix` "e": hình Excellent (khóa "<cấp>e"); không có thì dùng hình thường
+  function iconForLevel(levels, level, suffix) {
     if (!levels) return null;
-    const lv = Object.keys(levels).filter((k) => /^\d+$/.test(k) && +k <= (level || 0)).map(Number).sort((a, b) => b - a)[0];
-    return lv === undefined ? null : levels[lv];
+    const pick = (re, sfx) => {
+      const lv = Object.keys(levels).filter((k) => re.test(k) && parseInt(k, 10) <= (level || 0)).map((k) => parseInt(k, 10)).sort((a, b) => b - a)[0];
+      return lv === undefined ? null : levels[lv + sfx];
+    };
+    return (suffix && pick(new RegExp(`^\\d+${suffix}$`), suffix)) || pick(/^\d+$/, '');
   }
 
   // Cấp tính chỉ số: từ `doubleFrom` (+10) mỗi cấp tính gấp đôi (như Engine.effective_level).

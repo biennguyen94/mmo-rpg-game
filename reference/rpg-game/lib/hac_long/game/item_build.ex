@@ -33,7 +33,7 @@ defmodule HacLong.Game.ItemBuild do
     {weapons, w1} = weapons(drafts, pick)
     {shields, w2} = shields(drafts, pick)
     {sets, w3} = sets(drafts, pick)
-    items = Enum.map(weapons ++ shields ++ sets, &look(&1, pick, legacy_defs))
+    items = Enum.map(weapons ++ shields ++ sets, &look(&1, pick, legacy_defs)) ++ jewelry(pick)
     {:ok, items, w1 ++ w2 ++ w3}
   end
 
@@ -44,7 +44,8 @@ defmodule HacLong.Game.ItemBuild do
     old = kind && legacy_defs[Enum.at(get_in(pick, ["legacy", kind]) || [], it["tier"] - 1)]
 
     cond do
-      old -> Map.merge(it, Map.take(old, ["icon", "doll"]))
+      # `doll` ghi riêng ở món (cung, nỏ, gậy) thắng hình mượn của đồ cũ
+      old -> Map.merge(Map.take(old, ["icon", "doll"]), it)
       icon = get_in(pick, ["icons", it["slot"]]) -> Map.put(it, "icon", icon)
       true -> it
     end
@@ -80,6 +81,7 @@ defmodule HacLong.Game.ItemBuild do
 
         base(d, e, pick, "weapon", tier, classes)
         |> Map.merge(%{"atk" => atk, "atkMin" => lo, "atkMax" => hi})
+        |> Map.merge(Map.take(e, ["doll"]))
         |> Map.put("price", at(pick, ["prices", "weapon"], tier))
       end)
     end)
@@ -152,6 +154,36 @@ defmodule HacLong.Game.ItemBuild do
     |> split()
   end
 
+  # ---------- nhẫn, dây chuyền ----------
+  # Chỉ số cho tay trong `jewelry.<ring|pendant>` (Item.txt nhóm 13 không có chỉ số dùng được); mọi lớp dùng
+  # được; không đòi chỉ số; `tier` = thứ tự trong danh sách.
+  defp jewelry(pick) do
+    classes = pick["sets"] |> resolve() |> Map.keys() |> Enum.sort()
+
+    for kind <- ~w(ring pendant),
+        {e, tier} <- Enum.with_index(get_in(pick, ["jewelry", kind]) || [], 1) do
+      [g, i] = String.split(e["ref"], "/")
+
+      %{
+        "id" => "item_#{g}_#{i}",
+        "ref" => e["ref"],
+        "name" => e["name"],
+        "mu_name" => e["mu_name"] || e["name"],
+        "slot" => kind,
+        "tier" => tier,
+        "level" => e["level"] || 1,
+        "classes" => classes,
+        "req" => %{},
+        "price" => e["price"] || 0,
+        "sourceType" => pick["sourceType"],
+        "version" => pick["version"],
+        "verified" => pick["verified"]
+      }
+      |> Map.merge(Map.take(e, ~w(atk def hp)))
+      |> Map.put("icon", get_in(pick, ["icons", kind]) || "gem-life")
+    end
+  end
+
   # ---------- chung ----------
   defp base(d, e, pick, slot, tier, classes) do
     levels = pick["levels"] || %{}
@@ -162,7 +194,7 @@ defmodule HacLong.Game.ItemBuild do
       "id" => d["id"],
       "ref" => d["ref"],
       "name" => e["name"],
-      "mu_name" => d["name"],
+      "mu_name" => fix_name(d["name"], pick),
       "slot" => slot,
       "tier" => tier,
       "level" => Enum.at(levels[key] || [], tier - 1, tier),
@@ -181,6 +213,13 @@ defmodule HacLong.Game.ItemBuild do
       else: Map.new(d["req"] || %{}, fn {k, v} -> {k, round(v * mult)} end)
   end
 
+  # `mu_name_fix`: sửa lỗi chính tả trong tên gốc Item.txt ("Red Sprit" → "Red Spirit"), thay chuỗi con
+  defp fix_name(name, pick) do
+    Enum.reduce(pick["mu_name_fix"] || %{}, name, fn {bad, good}, n ->
+      String.replace(n, bad, good)
+    end)
+  end
+
   defp with_draft(drafts, ref, f) do
     case drafts[ref] do
       nil -> {:error, "không có #{ref} trong Item.txt"}
@@ -197,6 +236,8 @@ defmodule HacLong.Game.ItemBuild do
     do: Map.new(m, fn {cls, v} -> {cls, if(is_binary(v), do: m[v] || [], else: v)} end)
 
   @order %{
+    "ring" => 7,
+    "pendant" => 8,
     "weapon" => 0,
     "shield" => 1,
     "helm" => 2,

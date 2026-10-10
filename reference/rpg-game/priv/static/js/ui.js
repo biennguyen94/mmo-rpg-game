@@ -54,7 +54,7 @@
   // trong Item.txt) hoặc "custom/{id}"; lấy mức lớn nhất ≤ cấp. Không có thì dùng icon / sprite cũ.
   const ITEM_ICONS = window.GAME_DATA.ITEM_ICONS || {};
   function ownIcon(it, level) {
-    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level);
+    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
     return path ? asset(path) : null;
   }
   const itemIcon = (it, rarity, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')); };
@@ -1490,7 +1490,7 @@
   const gearTag = (id) => { const it = itemOf(id), up = upLevel(id); return [it.rarity ? RARITY[it.rarity] : '', up ? `+${up}` : ''].filter(Boolean).map((x) => ` (${x})`).join(''); };
   const itemName = (id) => {
     const it = itemOf(id);
-    const name = it.rarity ? `<span class="rar-${it.rarity}">${esc(it.name)}</span>` : it.name;
+    const name = it.excellent ? `<span class="exc">${esc(it.name)}</span>` : it.rarity ? `<span class="rar-${it.rarity}">${esc(it.name)}</span>` : it.name;
     return name + (upLevel(id) ? ` <span class="up-lv">+${upLevel(id)}</span>` : '') + (it.locked ? ' <span class="lock-ic" title="Đã khóa">🔒</span>' : '');
   };
   const bonusText = (it) => (it.bonus ? Object.entries(it.bonus).sort((a, b) => b[1] - a[1]).map(([k, v]) => `+${v} ${STAT_INFO[k][0]}`).join(', ') : '');
@@ -1516,6 +1516,7 @@
       return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
+    if (it.hp) return `Máu tối đa +${it.hp}${extra}`;
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}${extra}`;
     if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
     if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
@@ -1669,7 +1670,7 @@
   // Dữ liệu `GAME_DATA.LIBRARY` (server sinh từ dữ liệu game). Gõ tìm chỉ vẽ lại phần kết quả để ô nhập không mất chữ.
   const LIB = window.GAME_DATA.LIBRARY || { maps: [], monsters: [], items: [] };
   let libUi = { tab: 'maps', q: '', open: null };
-  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', helm: 'Mũ', pants: 'Quần', gloves: 'Găng', boots: 'Giày', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
+  const SLOT_NAME = { weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', wing: 'Cánh', helm: 'Mũ', pants: 'Quần', gloves: 'Găng', boots: 'Giày', ring: 'Nhẫn', pendant: 'Dây chuyền', potion: 'Bình', material: 'Nguyên liệu', food: 'Món ăn', fish: 'Cá', relic: 'Bảo vật' };
   const trn = (t) => (window.I18N ? window.I18N.tr(t) : t);
   const libMap = (id) => LIB.maps.find((m) => m.id === id);
   const libMon = (id) => LIB.monsters.find((m) => m.id === id);
@@ -1832,16 +1833,35 @@
   // lưới túi 8 cột tự xếp (Hắc Long không lưu vị trí ô), bấm ô xem chi tiết + nút, kéo thả để
   // mặc / tháo (chuột), thanh tóm tắt dưới cùng.
   const EQUIP_GRID = [
-    [null, 'helm', null],
+    ['pendant', 'helm', null],
     ['weapon', 'armor', 'shield'],
     ['gloves', 'pants', 'boots'],
     ['ring1', 'wing', 'ring2'],
   ];
-  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn' };
+  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền' };
   // Phase 15b: mở mũ / quần / găng / giày (đồ Item.txt); nhẫn chưa có
-  const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots'];
+  const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
   // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
-  const SLOT_REMOVABLE = ['shield', 'wing', 'helm', 'pants', 'gloves', 'boots'];
+  const SLOT_REMOVABLE = ['shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
+  // loại đồ của món mặc được vào ô `slot` (hai ô nhẫn chung loại "ring")
+  const slotKind = (slot) => (slot === 'ring1' || slot === 'ring2' ? 'ring' : slot);
+  const WEAR_KINDS = [...new Set(SLOT_OPEN.map(slotKind))];
+  // Phase 15c: chữ cho dòng Excellent (giá trị do server gửi trong `exc_lines`)
+  const EXC_TEXT = {
+    atk_pct: (v) => `Tăng sát thương +${Math.round(v * 100)}%`, crit: (v) => `Tỉ lệ chí mạng +${Math.round(v * 100)}%`,
+    heal_kill: (v) => `Hạ quái hồi ${Math.round(v * 100)}% máu`, mp_kill: (v) => `Hạ quái hồi ${Math.round(v * 100)}% MP`,
+    hp_pct: (v) => `Máu tối đa +${Math.round(v * 100)}%`, dmg_red: (v) => `Giảm sát thương nhận ${Math.round(v * 100)}%`,
+    gold_pct: (v) => `Vàng nhặt được +${Math.round(v * 100)}%`,
+  };
+  const excLines = (it) => (it.exc_lines && it.exc_lines.length ? `<div class="small exc">✦ Excellent</div>${it.exc_lines.map((l) => `<div class="small exc">· ${(EXC_TEXT[l.id] || ((v) => l.id))(l.value)}</div>`).join('')}` : '');
+  // thưởng đủ bộ giáp (P.view.setBonus)
+  function setLine() {
+    const b = P.view.setBonus;
+    if (!b || !b.name) return '';
+    const tip = b.active ? `<span style="color:var(--good)">✓ +${Math.round(RULES.setBonus.def_pct * 100)}% phòng thủ, +${Math.round(RULES.setBonus.atk_pct * 100)}% tấn công, +${b.hp} máu</span>`
+      : b.tier < RULES.setBonus.min_tier ? '<span class="muted">(bộ khởi đầu không có thưởng)</span>' : `<span class="muted">mặc đủ ${b.need} món để có thưởng</span>`;
+    return `<div class="small">Bộ ${esc(b.name)} ${b.have}/${b.need} ${tip}</div>`;
+  }
   const BAG_COLUMNS = 8;
   const BAG_MIN_CELLS = 32;
 
@@ -1877,7 +1897,7 @@
       const id = items[i];
       if (!id) return '<span class="cell empty"></span>';
       const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
-      const wearable = SLOT_OPEN.includes(it.slot);
+      const wearable = WEAR_KINDS.includes(it.slot);
       return `<button class="cell${it.rarity ? ` rar-b-${it.rarity}` : ''}${upClass(upLevel(id))}${cantWear(it) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
           ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
         ${cellIcon(it, upLevel(id))}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
@@ -1897,6 +1917,7 @@
           <div class="row"><span class="gold">${icon('two-coins')}${fmt(P.gold)}</span><span class="num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span></div>
           <div class="row"><span>${icon('health-potion')} Bình máu ×<b class="num">${potionCount()}</b></span><span class="num">${items.length} món</span></div>
           ${foodNow()}
+          ${setLine()}
           <p class="small muted">Muốn bán đồ, hãy gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>
         </div>
       </div>`;
@@ -1920,7 +1941,7 @@
     tipAt = at;
     const d = P.view.derived;
     const low = cantWear(it);
-    const wearable = SLOT_OPEN.includes(it.slot);
+    const wearable = WEAR_KINDS.includes(it.slot);
     const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id);
     // khóa đồ: không bán / rao chợ / giao dịch / bỏ vào máy ghép được
     const lockBtn = wearable ? `<button class="btn" data-act="lock" data-id="${esc(id)}" data-on="${it.locked ? '0' : '1'}">${it.locked ? 'Mở khóa' : '🔒 Khóa'}</button>` : '';
@@ -1945,6 +1966,8 @@
       ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
       ${it.level ? `<div class="small ${it.level > P.level ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
       ${wearable ? wearLines(it) : ''}
+      ${it.set ? `<div class="small muted">Thuộc bộ ${esc(it.set)} (bậc ${it.tier})</div>` : ''}
+      ${excLines(it)}
       ${lifeLine(it)}
       ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>' : ''}
       ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
@@ -1986,7 +2009,7 @@
     e.preventDefault();
     if (from.id) {
       const it = itemOf(from.id);
-      if (!it || it.slot !== t.dataset.dropSlot) { toast(`Món này không mặc vào ô ${SLOT_LABEL[t.dataset.dropSlot]}.`, true); return; }
+      if (!it || it.slot !== slotKind(t.dataset.dropSlot)) { toast(`Món này không mặc vào ô ${SLOT_LABEL[t.dataset.dropSlot]}.`, true); return; }
       sendCommand({ act: 'equip', id: from.id });
     } else if (SLOT_REMOVABLE.includes(from.equip)) {
       sendCommand({ act: 'unequip', slot: from.equip });
