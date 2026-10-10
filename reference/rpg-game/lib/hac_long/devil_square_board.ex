@@ -74,7 +74,8 @@ defmodule HacLong.DevilSquareBoard do
         subject: "Quảng Trường Quỷ: hạng #{i} ngày #{date}",
         body: "Bạn đứng hạng #{i} Quảng Trường Quỷ ngày #{date} với #{w.score} điểm.",
         gold: prize.gold,
-        items: prize.items
+        # khóa đồ trong rules.json bị đọc thành atom: đổi lại thành id chuỗi
+        items: Map.new(prize.items, fn {k, v} -> {to_string(k), v} end)
       })
 
       Map.put(w, :rank, i)

@@ -368,6 +368,8 @@ defmodule HacLong.Game.Engine do
       setBonus: set_bonus(p),
       # Quảng Trường Quỷ (Phase 18 M1): giờ mở, giá vé, điểm cao nhất hôm nay, đã vào đợt này chưa
       ds: HacLong.Game.DevilSquare.view(p),
+      # Lâu Đài Máu (Phase 18 M2)
+      bc: HacLong.Game.BloodCastle.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
@@ -1226,6 +1228,7 @@ defmodule HacLong.Game.Engine do
 
     {p, reward} = jewel_drop(p, m, reward)
     {p, reward} = ds_ticket_drop(p, m, reward)
+    {p, reward} = bc_ticket_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1315,6 +1318,19 @@ defmodule HacLong.Game.Engine do
 
     if c > 0 and chance(c) do
       id = HacLong.Game.DevilSquare.ticket()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Vé Lâu Đài (Phase 18 M2)
+  defp bc_ticket_drop(p, m, reward) do
+    c = HacLong.Game.BloodCastle.ticket_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.Game.BloodCastle.ticket()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else

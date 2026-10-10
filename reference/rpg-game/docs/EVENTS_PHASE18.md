@@ -45,3 +45,48 @@ Kền Kền (M2). Mọi số ở `priv/game_data/rules.json`, đổi được, k
 `HacLong.Game.DevilSquare` (hàm thuần: lịch, vé, đợt, điểm, thưởng), chạy trên trạng thái Tháp (`p.tower.ds`, cột
 `tower` sẵn có — không đổi schema); `HacLong.World` (bước đi trong lượt), `HacLong.Game.Tower.after_battle/1`,
 `HacLong.DevilSquareBoard`, `Session.ds_record/2`; giao diện `ui.js` `dsCard`, `map.js` (tên bản đồ / đợt).
+
+## M2. Lâu Đài Máu (Blood Castle)
+
+### Cách chơi
+
+- **Lịch:** mỗi `every_hours` (2) giờ, giờ Việt Nam, lệch `offset_minutes` (30) phút → mở lúc 0h30, 2h30 … 22h30 (xen
+  giữa Golden Invasion và Quảng Trường Quỷ); cho vào trong `entry_minutes` (10) phút; mỗi lần mở vào **một lần**
+  (`daily.bc_slot`).
+- **Vào:** Người Gác Tháp ở Làng (thẻ "🏰 Lâu Đài Máu"), từ cấp `min_level` (40), tốn 1 **Vé Lâu Đài** (`bc_ticket`): mua
+  giá `ticket_price` (30 000 vàng) hoặc rơi từ quái thường cấp ≥ `ticket_drop.min_level` (35), tỉ lệ 0,5 %.
+- **Ba bước** trong `run_minutes` (8) phút, bản đồ riêng:
+  1. hạ `guards` (8) **quân canh** (quái vùng cuối, máu / đòn × `guard_mult` 1,1);
+  2. phá **Cổng Thành** (`gate`: không đánh trả, máu × 6) — hiện gần cầu thang lên;
+  3. hạ trùm **Hiệp Sĩ Máu** (`boss`: cấp + 3, mạnh × 1,6, máu × 4).
+- **Cấp quái** (`tiers`): cấp 40–44 → 44, 45+ → 50.
+- **Thắng** (hạ trùm): thưởng ngay, gồm **Lông Vũ Kền Kền** (`condor_feather`); bước tiếp theo về Làng.
+- **Không xong** (hết giờ, gục ngã, tự đi cầu thang xuống): thưởng theo số quân canh đã hạ, không có lông vũ.
+
+### Thưởng (`blood_castle.reward`)
+
+| Khóa | Mặc định | Lượt thắng ở quái cấp 44 / 50 |
+|---|---|---|
+| `success.gold_mult` | 250 × `base_gold` | ≈ 25 000 / 28 000 vàng (≈ giá vé) |
+| `success.xp_mult` | 8 × `base_xp` | ≈ 9 900 / 12 500 kinh nghiệm |
+| `success.items` | 1 Lông Vũ Kền Kền | |
+| `success.jewels` | 2 ngọc (theo `JEWELS.weights`) | |
+| `partial.gold_per_guard` / `xp_per_guard` | 6 / 0,3 mỗi quân canh | hạ đủ 8 không qua cổng: ≈ 4 800 vàng, 3 000 KN |
+
+Quái trong lượt không rơi đồ / ngọc / vé riêng (như Tháp).
+
+### Cánh cấp 3
+
+Công thức `wing3` (`chaos.json`) cần thêm **1 Lông Vũ Kền Kền** — mỗi cánh cấp 3 thử ghép cần một lượt Lâu Đài thắng
+(thất bại mất cả lông vũ).
+
+### Thử / e2e
+
+- `HL_DS_OPEN=1` mở luôn cả Lâu Đài Máu (chung cờ với Quảng Trường).
+- e2e `e2e/bc.mjs`; test `test/hac_long/game/blood_castle_test.exs`.
+
+### Code
+
+`HacLong.Game.BloodCastle` (hàm thuần: lịch, vé, bước, quái, thưởng), trạng thái `p.tower.bc` (cột `tower` sẵn có — không
+đổi schema); `HacLong.World` (mệnh đề `tower_move` cho `bc`, đứng trước mệnh đề Tháp chung), `Tower.after_battle/1`;
+giao diện `ui.js` `bcCard`, `map.js` (tên bản đồ theo bước).

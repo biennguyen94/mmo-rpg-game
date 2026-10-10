@@ -82,4 +82,11 @@ defmodule HacLong.Game.Ancient15gTest do
     assert Engine.derived(all).maxHp > Engine.derived(none).maxHp
     assert Engine.derived(all).atk > Engine.derived(none).atk
   end
+
+  test "đồ không có phòng thủ (nhẫn) mặc vào không lỗi: không có khóa def nil" do
+    g = %{Gear.new("item_13_21", 2, %{"vit" => 5}) | uid: "#R1"}
+    refute Map.has_key?(Gear.resolve(g), :def)
+    p = wear_all(%{player("dk") | level: 60}, [g])
+    assert is_integer(Engine.derived(p).def)
+  end
 end

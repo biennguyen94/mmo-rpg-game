@@ -9,7 +9,7 @@ defmodule HacLong.World do
   Session luôn gọi MapServer, không bao giờ ngược lại, nên không thể bị treo chờ nhau.
   """
 
-  alias HacLong.Game.{Daily, Data, DevilSquare, Engine, Home, Tower}
+  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Tower}
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
 
@@ -149,6 +149,33 @@ defmodule HacLong.World do
         p |> DevilSquare.finish("tự rời") |> ds_back(uid)
 
       tile == "." ->
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
+  # Lâu Đài Máu (Phase 18 M2): cùng bản đồ riêng `tower`, trạng thái `p.tower.bc`
+  # (phải đứng trước mệnh đề Tháp Vô Tận chung bên dưới, vốn khớp mọi `p.tower`)
+  defp tower_move(%{tower: %{bc: bc} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+
+    cond do
+      bc.done or BloodCastle.expired?(p) ->
+        p |> BloodCastle.leave() |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        case Engine.start_with_monster(p, Data.zone_count() - 1, BloodCastle.battle_monster(m)) do
+          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
+          other -> other
+        end
+
+      tile == "<" ->
+        p |> BloodCastle.leave() |> ds_back(uid)
+
+      tile in [".", ">"] ->
         {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
 
       true ->

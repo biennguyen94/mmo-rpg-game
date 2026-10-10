@@ -208,6 +208,7 @@ Anh chốt 2026-10-10: làm cả cánh cấp 3 và dòng phụ ngẫu nhiên (ph
   mỗi cấp nâng vẫn +2 % (`combat.wing_per_level`).
 - Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên +
   3 Sinh Mệnh + 500 000 vàng; tỉ lệ 15 %, +5 % mỗi cấp trên +9, tối đa 50 %. Thất bại mất hết (như cánh cấp 1, 2).
+  Từ Phase 18 M2 cần thêm 1 **Lông Vũ Kền Kền** (thưởng thắng Lâu Đài Máu, `docs/EVENTS_PHASE18.md` §M2).
 - Hình trên nhân vật: vẽ bằng code (`doll.js`), cấp 3 to nhất, có viền sáng.
 - Hình trong túi: hình gốc theo `ref`. Máy chủ chạy lại `scripts/setup_items.sh` (hoặc `mix hac_long.items.fetch
   --icons-from …` rồi `mix hac_long.icons`) để chép thêm 4 hình này.

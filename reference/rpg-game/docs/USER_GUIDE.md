@@ -119,6 +119,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Quảng Trường (mua 20 000 vàng hoặc nhặt từ quái cấp 30+). 5 đợt quái
   trong 5 phút, đợt cuối có trùm; thưởng vàng, kinh nghiệm, ngọc theo điểm, qua hết đợt có thêm món đồ. Top 3 mỗi ngày
   nhận quà qua thư.
+- **Lâu Đài Máu (Phase 18):** từ cấp 40, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (0h30, 2h30 … 22h30), cho vào
+  trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài (mua 30 000 vàng hoặc nhặt từ quái cấp 35+). Trong 8 phút: hạ 8
+  quân canh, phá Cổng Thành, hạ Hiệp Sĩ Máu để nhận Lông Vũ Kền Kền (cần để ghép cánh cấp 3), vàng, kinh nghiệm, 2 ngọc.
 - **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

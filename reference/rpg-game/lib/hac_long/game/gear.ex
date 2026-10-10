@@ -98,10 +98,10 @@ defmodule HacLong.Game.Gear do
       skill: g[:skill] == true,
       wopt: g[:wopt],
       anc: g[:anc] == true,
-      def: anc_def(base, g),
       wopt_value: g[:wopt] && wopt_value(base[:tier], g[:wopt]),
       sell: price(g)
     })
+    |> anc_def(base, g)
   end
 
   @doc "Giá bán: giá đồ gốc tăng theo độ hiếm và số điểm cộng thêm."
@@ -368,11 +368,12 @@ defmodule HacLong.Game.Gear do
 
   # ---------- Bộ Thần (Phase 15g) ----------
 
-  # phòng thủ của món Thần tăng `piece_def_pct`
-  defp anc_def(base, g) do
-    if g[:anc] == true and base[:def],
-      do: round(base.def * (1 + @anc.piece_def_pct)),
-      else: base[:def]
+  # phòng thủ của món Thần tăng `piece_def_pct`; đồ không có phòng thủ (nhẫn, dây chuyền…) giữ nguyên, không thêm
+  # khóa `def` (khóa `def: nil` làm `Engine.derived` cộng nil)
+  defp anc_def(r, base, g) do
+    if g[:anc] == true and is_number(base[:def]),
+      do: Map.put(r, :def, round(base.def * (1 + @anc.piece_def_pct))),
+      else: r
   end
 
   @doc "Tỉ lệ một món bộ giáp rơi từ quái `m` là đồ Thần (`RULES.ancient.chance`)."

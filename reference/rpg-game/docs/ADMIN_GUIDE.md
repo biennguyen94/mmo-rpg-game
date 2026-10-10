@@ -387,3 +387,8 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - Tặng vé: `give_item` với `id: "ds_ticket"`.
 - Gửi thưởng top 3 một ngày bằng tay (vd. server khởi động lại trước 0h05): trong iex
   `HacLong.DevilSquareBoard.payout("2026-10-10")`. Bảng xếp hạng ngày giữ trong bộ nhớ, khởi động lại thì mất bảng hôm đó.
+
+## Lâu Đài Máu (Phase 18 M2)
+
+- Lịch, vé, thưởng: `RULES.blood_castle`, giải thích ở `docs/EVENTS_PHASE18.md` §M2. `HL_DS_OPEN=1` mở luôn cả Lâu Đài.
+- Tặng vé: `give_item` với `id: "bc_ticket"`; tặng lông vũ (bù lỗi): `id: "condor_feather"`.

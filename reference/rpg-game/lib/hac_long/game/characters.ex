@@ -240,7 +240,9 @@ defmodule HacLong.Game.Characters do
     }
     # Quảng Trường Quỷ (Phase 18 M1): đợt đã vào, điểm cao nhất hôm nay (chỉ có khi đã chơi)
     |> then(fn m ->
-      Enum.reduce([{"ds_slot", :ds_slot}, {"ds_best", :ds_best}], m, fn {k, a}, m ->
+      Enum.reduce([{"ds_slot", :ds_slot}, {"ds_best", :ds_best}, {"bc_slot", :bc_slot}], m, fn {k,
+                                                                                                a},
+                                                                                               m ->
         if d[k] == nil, do: m, else: Map.put(m, a, d[k])
       end)
     end)
@@ -256,8 +258,9 @@ defmodule HacLong.Game.Characters do
   defp pos(c), do: World.valid_pos(%{map: c.map_id, x: c.x, y: c.y})
 
   defp tower(%{"floor" => floor} = t) do
-    # Quảng Trường Quỷ (Phase 18 M1) chạy trên trạng thái tháp, thêm `ds`
+    # Quảng Trường Quỷ / Lâu Đài Máu (Phase 18) chạy trên trạng thái tháp, thêm `ds` / `bc`
     ds = t["ds"]
+    bc = t["bc"]
 
     %{
       floor: floor,
@@ -273,8 +276,10 @@ defmodule HacLong.Game.Characters do
             level: m["level"],
             x: m["x"],
             y: m["y"],
-            elite: m["elite"]
+            elite: m["elite"],
+            role: m["role"]
           }
+          |> Map.reject(fn {k, v} -> k == :role and v == nil end)
         end)
     }
     |> then(fn tw ->
@@ -285,6 +290,19 @@ defmodule HacLong.Game.Characters do
             ends_at: ds["ends_at"],
             score: ds["score"],
             waves: ds["waves"]
+          }),
+        else: tw
+    end)
+    |> then(fn tw ->
+      if is_map(bc),
+        do:
+          Map.put(tw, :bc, %{
+            level: bc["level"],
+            ends_at: bc["ends_at"],
+            stage: bc["stage"],
+            guards: bc["guards"],
+            killed: bc["killed"],
+            done: bc["done"] == true
           }),
         else: tw
     end)

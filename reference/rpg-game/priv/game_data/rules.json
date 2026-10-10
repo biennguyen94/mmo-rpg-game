@@ -253,6 +253,29 @@
         { "gold": 30000, "items": { "jewel_chaos": 1, "jewel_soul": 1 } }
       ]
     },
+    "blood_castle": {
+      "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
+      "every_hours": 2,
+      "offset_minutes": 30,
+      "entry_minutes": 10,
+      "run_minutes": 8,
+      "min_level": 40,
+      "ticket": "bc_ticket",
+      "ticket_price": 30000,
+      "ticket_drop": { "min_level": 35, "chance": 0.005 },
+      "tiers": [
+        { "from": 40, "level": 44 },
+        { "from": 45, "level": 50 }
+      ],
+      "guards": 8,
+      "guard_mult": 1.1,
+      "gate": { "kind": "iron_golem", "name": "Cổng Thành", "hp_mult": 6 },
+      "boss": { "kind": "death_knight", "name": "Hiệp Sĩ Máu", "mult": 1.6, "hp": 4, "add_level": 3 },
+      "reward": {
+        "success": { "gold_mult": 250, "xp_mult": 8, "items": { "condor_feather": 1 }, "jewels": 2 },
+        "partial": { "gold_per_guard": 6, "xp_per_guard": 0.3 }
+      }
+    },
     "ancient": {
       "_doc": "Phase 15g: đồ Bộ Thần (docs/ITEMS_PHASE15B.md §10). chance: tỉ lệ một món BỘ GIÁP (mũ, giáp, quần, găng, giày) đã rơi là đồ Thần, theo loại quái; piece_def_pct: phòng thủ của món Thần tăng thêm; bonus: thưởng theo số món Thần CÙNG BỘ đang mặc (cộng dồn các mức đã đạt; full = đủ bộ, Đấu Sĩ 4 món); price_mult: giá bán nhân thêm.",
       "chance": { "normal": 0.01, "elite": 0.04, "night": 0.02, "boss": 0.08 },

@@ -2184,6 +2184,26 @@
     </div>`;
   }
 
+  // Lâu Đài Máu (Phase 18 M2): giờ mở, vé, vào (P.view.bc)
+  function bcCard() {
+    const d = P.view.bc;
+    if (!d) return '';
+    const lowLv = P.level < d.min_level;
+    const canEnter = d.open && !d.used && !lowLv && d.tickets > 0 && P.hp > 0;
+    const state = d.open ? (d.used ? '<span class="tag">Đã vào đợt này</span>' : `<span class="tag gold">Đang mở tới ${dsClock(d.closes_at)}</span>`)
+      : `<span class="tag">Mở lúc ${dsClock(d.next_at)}</span>`;
+    return `<div class="card" data-panel="blood-castle">
+      <div class="row"><h3 class="grow">🏰 Lâu Đài Máu</h3>${state}</div>
+      <p class="small muted">Từ cấp ${d.min_level}, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài. Trong ${d.run_minutes} phút: hạ ${d.guards} quân canh, phá Cổng Thành, rồi hạ Hiệp Sĩ Máu để nhận <b>Lông Vũ Kền Kền</b> (nguyên liệu cánh cấp 3) cùng vàng, kinh nghiệm, ngọc. Không xong thì được thưởng theo số quân canh đã hạ.</p>
+      ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
+      <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b></span></div>
+      <div class="btn-row">
+        <button class="btn" data-act="bc_buy" ${P.gold >= d.price ? '' : 'disabled'}>Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
+        <button class="btn ${canEnter ? 'primary' : ''}" data-act="bc_enter" ${canEnter ? '' : 'disabled'}>Vào Lâu Đài</button>
+      </div>
+    </div>`;
+  }
+
   // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
   let chaosPick = {}; // công thức → uid món đồ chọn
   const chaosRate = L.chaosRate;
@@ -2401,6 +2421,7 @@
         ${starts.length === 1 ? '<p class="small muted">Vượt tầng 10 thì lần sau vào thẳng được tầng 11.</p>' : ''}
       </div>`);
       sections.push(dsCard());
+      sections.push(bcCard());
     }
     if (n.role === 'daily') {
       sections.push(`<div class="card"><div class="row"><h3 class="grow">Việc hôm nay</h3><span class="small muted">Việc mới sau ${dailyLeft()}</span></div>${dailyList(true)}</div>`);
@@ -2539,7 +2560,7 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.ds ? `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}` : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : m.ds ? `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}` : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${m.name}</h2>
@@ -2599,7 +2620,7 @@
       case 'smith': return { act, slot: d.slot };
       case 'daily_claim': return { act, i: +d.i };
       case 'tower_enter': return { act, floor: +d.floor };
-      case 'ds_enter': case 'ds_buy': return { act };
+      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': return { act };
       case 'skill': return { act, skill: d.skill };
       case 'mail_claim': return { act, id: +d.id };
       case 'chest_buy': return { act, tier: d.tier };
@@ -2613,7 +2634,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -2647,7 +2668,7 @@
       if (r.ok) {
         if (cmd.act === 'leave' || cmd.act === 'create') tab = 'map';
         if (cmd.act === 'reset') tab = 'map';
-        if (cmd.act === 'tower_enter' || cmd.act === 'ds_enter') { tab = 'map'; npc = null; }
+        if (cmd.act === 'tower_enter' || cmd.act === 'ds_enter' || cmd.act === 'bc_enter') { tab = 'map'; npc = null; }
         if (cmd.act.startsWith('market_')) market.data = null;
         if (cmd.act === 'rebirth' || cmd.act === 'guild_create' || cmd.act === 'guild_donate') board.at = 0;
         if ((cmd.act === 'upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;

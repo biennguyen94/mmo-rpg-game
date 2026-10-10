@@ -548,6 +548,20 @@
       "icon": "scroll-unfurled",
       "price": 0,
       "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 30 trở lên."
+    },
+    "bc_ticket": {
+      "name": "Vé Lâu Đài",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 35 trở lên."
+    },
+    "condor_feather": {
+      "name": "Lông Vũ Kền Kền",
+      "slot": "material",
+      "icon": "feathered-wing",
+      "price": 0,
+      "desc": "Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên."
     }
   }
 }

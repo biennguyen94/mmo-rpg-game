@@ -34,6 +34,8 @@ defmodule HacLong.Game.Wings15eTest do
       |> Engine.add_item("jewel_soul", 10)
       |> Engine.add_item("jewel_chaos", 3)
       |> Engine.add_item("jewel_life", 3)
+      # Phase 18 M2: cánh cấp 3 cần thêm Lông Vũ Kền Kền (Lâu Đài Máu)
+      |> Engine.add_item("condor_feather", 1)
 
     {p, g.uid}
   end

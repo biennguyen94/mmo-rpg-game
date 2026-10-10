@@ -46,7 +46,7 @@
     {
       "id": "wing3",
       "name": "Cánh cấp 3",
-      "desc": "1 cánh cấp 2 +9 trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp.",
+      "desc": "1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp.",
       "gear": {
         "slots": [
           "wing"
@@ -58,7 +58,8 @@
         "jewel_bless": 10,
         "jewel_soul": 10,
         "jewel_chaos": 3,
-        "jewel_life": 3
+        "jewel_life": 3,
+        "condor_feather": 1
       },
       "gold": 500000,
       "rate": 0.15,

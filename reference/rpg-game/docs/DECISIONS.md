@@ -224,3 +224,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **E18-2** Mở lệch Golden Invasion 1 giờ (1h, 3h … 23h), 10 phút cho vào, lượt 5 phút; hết giờ được kiểm khi người chơi bước tiếp (không có hẹn giờ riêng mỗi lượt).
 - **E18-3** Thưởng tính một lần lúc kết thúc theo điểm; lượt đủ ≈ giá vé về vàng, lãi là ngọc + món đồ khi qua hết đợt; kinh nghiệm ≈ 1 cấp / lượt đủ.
 - **E18-4** Bảng xếp hạng ngày giữ trong bộ nhớ (không thêm bảng DB); thưởng top 3 gửi thư lúc 0h05.
+- **E18-5** Lâu Đài Máu là một người một lượt (như Quảng Trường), ba bước quân canh → cổng → trùm; mở lệch 30 phút (0h30, 2h30 …) để không trùng Quảng Trường / Golden Invasion.
+- **E18-6** Lượt thắng ≈ giá vé về vàng; lãi là Lông Vũ Kền Kền + 2 ngọc + kinh nghiệm. Không xong thì thưởng theo quân canh đã hạ, không có lông vũ.
+- **E18-7** Cổng / trùm hiện ở ô trống gần cầu thang lên nhưng không trùng ô người chơi đang đứng (đứng sẵn trên ô quái thì không bước vào đánh được).
