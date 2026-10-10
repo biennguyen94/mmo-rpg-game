@@ -154,6 +154,9 @@ defmodule HacLong.Game.HomePetsTest do
     p = Map.put(p, :pet_xp, %{"hound" => 99})
     {_, p} = Engine.start_battle(p, 0, false)
     p = put_in(p.battle.monster.hp, 1) |> put_in([:battle, :monster, :dodge], 0)
+
+    # đòn thường luôn có ≥ 5 % trượt (`hit_chance`): cố định số ngẫu nhiên để chắc trúng, không phụ thuộc seed
+    HacLong.Game.Rng.put_sequence([0.5])
     {_, p} = Engine.act(p, "attack")
     assert p.battle.result == "win"
     assert Pets.xp(p, "hound") == 100
