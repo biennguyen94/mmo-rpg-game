@@ -878,7 +878,7 @@
     const me = arena.me, left = me.per_day - me.today;
     return `<div class="card" id="arena">
       <div class="row">${icon('crossed-swords', 'lg')}<div class="grow"><h3>Đấu trường</h3>
-        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Thua không mất vàng. Chạm vào người khác trên bản đồ để thách đấu.</p></div>
+        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
       <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>

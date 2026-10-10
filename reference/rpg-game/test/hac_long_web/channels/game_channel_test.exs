@@ -873,7 +873,7 @@ defmodule HacLongWeb.GameChannelTest do
       ref = push(sa, "arena", %{})
       assert_reply ref, :ok, %{me: %{wins: 1, today: 1}, top: [_ | _]}
 
-      # thua: không mất vàng, không về Nhà, máu như trước trận
+      # gục ngã: tính như chết thường (mất vàng, về Nhà)
       cmd(sa, %{"act" => "leave"})
       uc = create_user()
 
@@ -887,13 +887,13 @@ defmodule HacLongWeb.GameChannelTest do
 
       r =
         Enum.reduce_while(1..50, nil, fn _, _ ->
-          r = cmd(sa, %{"act" => "flee"})
+          r = cmd(sa, %{"act" => "attack"})
           if r.player.battle.over, do: {:halt, r}, else: {:cont, r}
         end)
 
-      assert r.player.battle.result in ["lose", "fled"]
-      assert r.player.gold == before.gold and r.player.hp == before.hp
-      assert r.player.pos.map == "village"
+      assert r.player.battle.result == "lose"
+      assert r.player.gold < before.gold and r.player.deaths == before.deaths + 1
+      assert r.player.pos == HacLong.World.Maps.home_spawn()
       assert HacLong.Arena.stats(ua.id).losses == 1
     end
   end

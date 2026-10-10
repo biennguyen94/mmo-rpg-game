@@ -843,16 +843,25 @@ defmodule HacLong.Game.Session do
     end
   end
 
-  # Trận đấu trường xong: đổi điểm; thua thì không mất gì (máu, vàng như trước trận).
+  # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
+  # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.
   defp battle_over(s, _old, %{battle: %{encounter: %{pvp: target} = enc} = b} = player) do
     r = Arena.finish(s.user_id, target, b.result)
     # chiến bang: thắng thành viên bang địch thì ghi điểm cho bang
     war = r.won && HacLong.GuildWars.record(s.user_id, target)
 
     player =
-      if r.won,
-        do: %{player | gold: player.gold + r.gold},
-        else: %{player | hp: max(1, enc.hp), gold: enc.gold, deaths: enc.deaths}
+      cond do
+        r.won ->
+          %{player | gold: player.gold + r.gold}
+
+        b.result == "lose" ->
+          World.leave(player, s.user_id)
+          %{player | pos: HacLong.World.Maps.home_spawn()}
+
+        true ->
+          %{player | hp: max(1, enc.hp), gold: enc.gold, deaths: enc.deaths}
+      end
 
     sign = fn d -> if d >= 0, do: "+#{d}", else: "#{d}" end
 
@@ -861,7 +870,11 @@ defmodule HacLong.Game.Session do
         do:
           "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <>
             if(war, do: " ⚔ Chiến bang: bang bạn +1 điểm.", else: ""),
-        else: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
+        else:
+          if(b.result == "lose",
+            do: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}).",
+            else: "🏟 Bỏ chạy khỏi đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
+          )
 
     reward = %{xp: 0, gold: r.gold, items: [], levels: 0}
 

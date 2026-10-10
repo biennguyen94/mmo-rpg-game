@@ -5,8 +5,9 @@ defmodule HacLong.Arena do
 
   - Bản sao dựng từ nhân vật đã lưu của đối thủ (`opponent/1`): máu, tấn công, phòng thủ, chí
     mạng, né như lúc họ mặc đồ; dùng kỹ năng đầu của lớp như đòn đặc biệt mỗi 3 lượt.
-  - Thắng/thua đổi điểm Elo của cả hai (`finish/3`, K = 32). Thua không mất vàng, không về
-    Nhà, máu trở lại như trước trận. Người thắng (người thách đấu) được một ít vàng.
+  - Thắng/thua đổi điểm Elo của cả hai (`finish/3`, K = 32). Gục ngã tính như chết thường
+    (mất vàng, về Nhà); bỏ chạy thì không mất vàng, máu như trước trận. Người thắng (người
+    thách đấu) được một ít vàng.
   - Mỗi ngày (giờ Việt Nam) đấu tối đa `@per_day` trận.
   """
   import Ecto.Query

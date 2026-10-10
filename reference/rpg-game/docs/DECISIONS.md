@@ -147,3 +147,5 @@
 
 ## Cân bằng đầu game (2026-10-09)
 - **B-1** Máu quái `RULES.monster.hp.base` 20 → **170**: trước đó nhân vật mới (đánh 70–110) hạ quái cấp 1–5 một đòn ở cả 4 lớp. Giờ quái cùng cấp cần ~2–3 đòn ở cấp 1–10 (chưa tính vũ khí), tăng dần ~3–7 đòn ở cấp 30–50 tùy lớp. Trùm vùng cũng trâu hơn tương ứng (Sói Xám 474 → 834 máu). Mô phỏng 4 lớp × 5 lượt: vẫn thắng Hắc Long 5/5, số trận (~390) và số lần chết gần như không đổi. Kinh nghiệm / vàng mỗi quái không đổi.
+- **B-2** (theo yêu cầu) Thách đấu ở đấu trường: **gục ngã tính như chết thường** — mất `death_gold_loss` vàng, tăng số lần chết, máu còn `death_hp`, về Nhà. Bỏ chạy vẫn tính thua điểm Elo nhưng không mất vàng / máu như trước trận.
+- **B-3** Sửa lỗi: quái bản đồ phụ trên bản đồ luôn hiện "cấp 1" vì client chỉ tra cấp quái vùng; giờ tra thêm `LIBRARY.monsters`.

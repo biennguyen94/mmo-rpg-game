@@ -12,6 +12,8 @@
   // cấp của từng loại quái, để tô màu độ khó
   const LEVEL = {}, NAME = {};
   ZONES.forEach((z) => { z.monsters.concat([z.boss]).forEach((m) => { LEVEL[m.id] = m.level; NAME[m.id] = m.name; }); });
+  // quái bản đồ phụ chỉ có trong LIBRARY
+  (((window.GAME_DATA || {}).LIBRARY || {}).monsters || []).forEach((m) => { if (!(m.id in LEVEL)) { LEVEL[m.id] = m.level; NAME[m.id] = m.name; } });
 
   const images = {};
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
