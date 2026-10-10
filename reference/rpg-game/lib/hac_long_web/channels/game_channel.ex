@@ -282,6 +282,14 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Tiến Lên (Phase 17): sảnh, bàn bài, xem trận, xem lại ván (`HacLongWeb.TienLenHandler`)
+  def handle_in("tl", p, socket) do
+    case limit({:tl, socket.assigns.user_id}, 300, :timer.minutes(1)) do
+      :ok -> HacLongWeb.TienLenHandler.handle_in(p, socket)
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("market", p, socket) do
     uid = socket.assigns.user_id
 
@@ -939,6 +947,14 @@ defmodule HacLongWeb.GameChannel do
   def handle_info({:map_state, id, snap}, socket) do
     if id == socket.assigns.map, do: push(socket, "map", snap)
     {:noreply, socket}
+  end
+
+  # Tiến Lên (Phase 17): tin của phòng / sảnh; tin lạ khác thì bỏ qua
+  def handle_info(msg, socket) do
+    case HacLongWeb.TienLenHandler.handle_info(msg, socket) do
+      :skip -> {:noreply, socket}
+      other -> other
+    end
   end
 
   # Nhân vật sang bản đồ khác: đổi kênh PubSub đang nghe và gửi ngay trạng thái bản đồ mới.

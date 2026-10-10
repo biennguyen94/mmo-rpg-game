@@ -50,3 +50,8 @@ config :hac_long, :invasion, auto: false
 
 # Phase 16: không chạy người chơi AI khi test
 config :hac_long, :bots, count: 0
+
+# Tiến Lên (Phase 17): không cược, không ghi ván, bot đánh ngay trong test (như repo gốc)
+config :hac_long, :tienlen_recorder, nil
+config :hac_long, :tienlen_economy, nil
+config :hac_long, :tienlen_bot_delay, 0

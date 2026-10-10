@@ -164,3 +164,20 @@
 - **P19-4** Mỗi trận xong báo kênh thế giới: "X đã hạ Y ở <bản đồ>." hoặc "Y bỏ chạy khỏi X ở <bản đồ>."
 - **P19-5** Bảo vệ / tên đỏ / số lần đánh giữ trong bộ nhớ (`HacLong.Slay`, bảng ETS `:slay_marks`), khởi động lại server thì xóa. Chấp nhận vì thời hạn ngắn (≤ 30 phút); cần bền hơn thì thêm cột vào `characters`.
 - **P19-6** Đồng hồ lượt đồ sát: server gửi số mili giây còn lại (`view.slayLeft`, tính lúc gửi), client cộng vào đồng hồ máy mình nên máy lệch giờ vẫn đếm đúng. Bot đang đồ sát mà chưa tới lượt thì chờ (không gửi lệnh), hỏi lại mỗi ~1 giây; tới lượt thì đánh / uống bình như đánh quái.
+
+## Phase 17 — Tiến Lên Miền Nam (2026-10-10, theo yêu cầu)
+Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Phoenix). Luật là `docs/RULES.md` T1–T26 của repo đó, giữ nguyên.
+- **P17-1** Port gần nguyên văn, đổi namespace `TienLen` → `HacLong.TienLen` (`lib/hac_long/tien_len/`):
+  - REUSE: `Card`, `Deck`, `Combination`, `Rules`, `InstantWin`, `Payout`, `Bot`, `Hint`, `Lobby`, `Commentary`, `BotTalk`, `Throws`, `Replay` cùng test của chúng.
+  - ADAPT `Game`: `Enum.sum_by` → `map |> sum` (Elixir 1.17).
+  - ADAPT `Room`: cược tối đa `RULES.tienlen.stake_max`; ván có bot vẫn ra kết quả để lưu xem lại.
+  - ADAPT `RoomServer`: số phòng tối đa `RULES.tienlen.max_rooms`; module tiền / ghi ván cắm từ cấu hình `:tienlen_economy`, `:tienlen_recorder`; bỏ lì xì Tết; khớp `HacLong.RateLimit`.
+  - REWRITE `Chat` (biểu cảm, câu nhanh, chuẩn hóa) và `Text` (lấy từ `TienLenWeb.Text`, "coin" → "vàng").
+- **P17-2** Tiền là **vàng Hắc Long** (`HacLong.TienLen.Gold`, thay `TienLen.Economy`):
+  - Cách trả giữ nguyên luật T20–T25: cược S, cần ≥ 10×S vàng để được chia bài; tiền hạng, chặt heo / chặt chồng, thối heo, tới trắng; thiếu vàng thì trả tối đa số đang có, chia theo tỉ lệ.
+  - Mọi lần trả giữ Session của người liên quan (theo thứ tự id) rồi ghi nhân vật + khóa trả (`tienlen_settlements`) trong một transaction, nhật ký vàng lý do `TIENLEN`.
+  - Ném đồ trừ vàng, lý do `TIENLEN_THROW`.
+  - Không có thưởng ngày / cứu trợ / chuyển xu riêng.
+- **P17-3** Bàn có bot thì cược = 0 (giữ B1 của repo gốc), nên không cày vàng từ bot. Khác repo gốc: ván có bot **vẫn được lưu** để xem lại (Hắc Long không có bảng xếp hạng Tiến Lên); chỉ người thật có tên trong `player_ids`.
+- **P17-4** Không port: tài khoản, bảng xếp hạng Tiến Lên, nhiệm vụ / mùa giải, bạn bè / mời / chat sảnh / chat riêng (Hắc Long đã có), cửa hàng mặt bài, tướng xấu hổ, sự kiện Tết / Trung thu, trang quản trị riêng. Có thể thêm sau nếu anh muốn.
+- **P17-5** Kênh: thêm sự kiện `tl` vào kênh `game` (`HacLongWeb.TienLenHandler`) thay các LiveView. Kênh là tiến trình được phòng theo dõi: đóng hết tab thì 20 giây sau bị loại khỏi ván (T15).

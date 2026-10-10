@@ -695,6 +695,10 @@
       "per_target_hour": 3,
       "red_s": 1800,
       "red_gold_mult": 2
+    },
+    "tienlen": {
+      "max_rooms": 50,
+      "stake_max": 100000
     }
   }
 }
