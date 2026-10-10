@@ -84,7 +84,8 @@ defmodule HacLongWeb.PageController do
         slay: %{
           turnS: Data.rules().slay.turn_s,
           minLevel: Data.rules().slay.min_level,
-          safe: Data.rules().slay.safe_maps
+          safe: Data.rules().slay.safe_maps,
+          redMult: Data.rules().slay.red_gold_mult
         },
         wingPerLevel: Data.rules().combat.wing_per_level,
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp

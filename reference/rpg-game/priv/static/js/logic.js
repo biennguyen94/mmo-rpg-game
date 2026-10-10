@@ -71,8 +71,10 @@
 
   // Màu tên người chơi khác trên bản đồ theo quan hệ (Phase 5, M2): bang địch đang chiến đỏ, đồng đội
   // xanh lá, cùng bang xanh dương, còn lại như cũ. `rel`: { party: [id], tag, enemy } (ký hiệu bang mình / địch).
-  const NAME_COLORS = { enemy: '#ff8a7a', party: '#9fe0a8', guild: '#6fb6ff', other: '#b9d7ff' };
+  // Người đang tên đỏ vì đồ sát (`o.red`) luôn đỏ đậm.
+  const NAME_COLORS = { red: '#ff3b3b', enemy: '#ff8a7a', party: '#9fe0a8', guild: '#6fb6ff', other: '#b9d7ff' };
   function nameRelation(o, rel) {
+    if (o.red) return 'red';
     if (rel.enemy && o.tag && o.tag === rel.enemy) return 'enemy';
     if ((rel.party || []).includes(o.id)) return 'party';
     if (rel.tag && o.tag === rel.tag) return 'guild';

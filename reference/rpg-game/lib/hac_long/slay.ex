@@ -13,6 +13,18 @@ defmodule HacLong.Slay do
     vàng mất chuyển cho người thắng. `settle/4` giữ hai Session (như giao dịch) và ghi hai nhân vật
     + một dòng `pk_matches` trong **một transaction** (nhật ký vàng lý do `SLAY`).
 
+  Chống lạm dụng (`DECISIONS.md` P19):
+  - Người vừa gục được **bảo vệ** `RULES.slay.protect_s` giây (không bị đồ sát; tự đi đồ sát người khác
+    thì mất bảo vệ).
+  - Mỗi người đồ sát cùng một người tối đa `RULES.slay.per_target_hour` lần trong 60 phút.
+  - Người tấn công thắng một người **không** tên đỏ thì bị **tên đỏ** `RULES.slay.red_s` giây (cộng dồn).
+    Người tên đỏ gục trong đồ sát mất vàng gấp `RULES.slay.red_gold_mult` lần. Hạ người tên đỏ thì không
+    bị đỏ tên.
+  - Mỗi trận xong báo kênh thế giới.
+
+  Bảo vệ / tên đỏ giữ ở bảng ETS `:slay_marks` (đọc nhanh cho bản đồ, hồ sơ), số lần đánh
+  theo cặp giữ trong trạng thái tiến trình; khởi động lại server thì mất (chấp nhận).
+
   Tiến trình này không bao giờ gọi đồng bộ vào Session (Session gọi vào đây), nên không khóa chéo.
   """
   use GenServer
@@ -23,13 +35,39 @@ defmodule HacLong.Slay do
   alias HacLong.World.Maps
 
   @r Data.rules().slay
+  @marks :slay_marks
+  @death_loss Data.rules().character.death_gold_loss
 
   def rules, do: @r
+
+  @doc "Đang tên đỏ không."
+  def red?(uid), do: until(uid, :red) > now()
+
+  @doc "Còn bao nhiêu giây được bảo vệ (0 nếu không)."
+  def protected_s(uid), do: max(0, ceil((until(uid, :safe) - now()) / 1000))
+
+  @doc "Còn bao nhiêu giây tên đỏ (0 nếu không)."
+  def red_s(uid), do: max(0, ceil((until(uid, :red) - now()) / 1000))
+
+  defp until(uid, key) do
+    case :ets.whereis(@marks) != :undefined && :ets.lookup(@marks, {uid, key}) do
+      [{_, t}] -> t
+      _ -> 0
+    end
+  end
+
+  defp mark(uid, key, t), do: :ets.insert(@marks, {{uid, key}, t})
+  defp now, do: System.system_time(:millisecond)
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @impl true
-  def init(:ok), do: {:ok, %{fights: %{}, by_uid: %{}, next: 1}}
+  def init(:ok) do
+    if :ets.whereis(@marks) == :undefined,
+      do: :ets.new(@marks, [:named_table, :public, read_concurrency: true])
+
+    {:ok, %{fights: %{}, by_uid: %{}, next: 1, hits: %{}}}
+  end
 
   # ---------- Bắt đầu ----------
 
@@ -109,7 +147,18 @@ defmodule HacLong.Slay do
 
   @impl true
   def handle_call({:start, a, b, pa, pb}, _from, s) do
+    t = now()
+    hits = Enum.filter(Map.get(s.hits, {a, b}, []), &(&1 > t - 3_600_000))
+
     cond do
+      protected_s(b) > 0 ->
+        {:reply, {:error, "#{pb.name} vừa gục, đang được bảo vệ (còn #{protected_s(b)} giây)."},
+         s}
+
+      length(hits) >= @r.per_target_hour ->
+        {:reply, {:error, "Bạn đã đồ sát #{pb.name} #{@r.per_target_hour} lần trong 1 giờ qua."},
+         s}
+
       Map.has_key?(s.by_uid, a) ->
         {:reply, {:error, "Bạn đang trong một trận đồ sát."}, s}
 
@@ -122,6 +171,7 @@ defmodule HacLong.Slay do
           a: a,
           b: b,
           names: %{a => pa.name, b => pb.name},
+          red: %{a => red?(a), b => red?(b)},
           hp: %{a => pa.hp, b => pb.hp},
           map: pa.pos.map,
           turn: a,
@@ -133,9 +183,13 @@ defmodule HacLong.Slay do
 
         f = arm(f)
 
+        # tự đi đồ sát thì mất bảo vệ
+        :ets.delete(@marks, {a, :safe})
+
         s = %{
           s
-          | fights: Map.put(s.fights, f.id, f),
+          | hits: Map.put(s.hits, {a, b}, [t | hits]),
+            fights: Map.put(s.fights, f.id, f),
             by_uid: s.by_uid |> Map.put(a, f.id) |> Map.put(b, f.id),
             next: s.next + 1
         }
@@ -192,6 +246,7 @@ defmodule HacLong.Slay do
 
   def handle_call(:reset, _from, s) do
     Enum.each(s.fights, fn {_, f} -> cancel(f) end)
+    :ets.delete_all_objects(@marks)
     {:reply, :ok, elem(init(:ok), 1)}
   end
 
@@ -263,6 +318,8 @@ defmodule HacLong.Slay do
             end)
 
             if pl2.pos.map != pl.pos.map, do: World.leave(pl, loser)
+            marks(f, winner, loser)
+            HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
             notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng.")
@@ -298,8 +355,20 @@ defmodule HacLong.Slay do
             do: log(pl, "🏃 Bạn bỏ chạy: tính như gục ngã.", "bad"),
             else: log(pl, "#{f.names[winner]} hạ gục bạn.", "bad")
 
-        {_, pl} = Engine.finish_lose(pl)
-        %{pl | pos: Maps.home_spawn()}
+        {_, pl2} = Engine.finish_lose(pl)
+
+        # tên đỏ gục: mất vàng gấp `red_gold_mult` lần
+        extra =
+          if f.red[foe(f, winner)],
+            do: min(pl2.gold, floor(pl.gold * @death_loss * (@r.red_gold_mult - 1))),
+            else: 0
+
+        pl2 =
+          if extra > 0,
+            do: log(%{pl2 | gold: pl2.gold - extra}, "🔴 Tên đỏ: mất thêm #{extra} vàng.", "bad"),
+            else: pl2
+
+        %{pl2 | pos: Maps.home_spawn()}
       else
         pl
       end
@@ -323,6 +392,23 @@ defmodule HacLong.Slay do
       end
 
     {pw2, pl2, lost}
+  end
+
+  # người thua được bảo vệ; người tấn công hạ người không tên đỏ thì bị tên đỏ (cộng dồn)
+  defp marks(f, winner, loser) do
+    t = now()
+    mark(loser, :safe, t + @r.protect_s * 1000)
+
+    if winner == f.a and not f.red[loser],
+      do: mark(winner, :red, max(until(winner, :red), t) + @r.red_s * 1000)
+  end
+
+  defp announce(f, winner, loser, why) do
+    where = Maps.get(f.map).name
+
+    if why == :fled,
+      do: "🗡 #{f.names[loser]} bỏ chạy khỏi #{f.names[winner]} ở #{where}.",
+      else: "🗡 #{f.names[winner]} đã hạ #{f.names[loser]} ở #{where}."
   end
 
   defp in_fight?(p, f),

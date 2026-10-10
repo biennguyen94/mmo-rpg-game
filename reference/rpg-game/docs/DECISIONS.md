@@ -156,3 +156,10 @@
 - **P18-3** Điều kiện: cả hai online, cùng bản đồ chung (không phải tháp), ngoài vùng an toàn `RULES.slay.safe_maps` (Làng, Nhà), cả hai từ cấp `RULES.slay.min_level` = 10, không ai đang đánh. Bot bị đánh được như người (đánh thay khi hết giờ).
 - **P18-4** Hết máu hoặc **bỏ chạy** = gục ngã như chết thường (mất `death_gold_loss` vàng, máu còn `death_hp`, về Nhà, +1 lần chết). Số vàng mất chuyển cho người thắng. Chốt trận giữ cả hai Session rồi ghi hai nhân vật + một dòng `pk_matches` (a = người tấn công, `wager` = vàng chuyển) trong một transaction, nhật ký vàng lý do `SLAY`.
 - **P18-5** PK cược vàng cũ: mời cược qua kênh trả lỗi (đã thay); lịch sử `pk_matches` và số thắng/thua trong hồ sơ dùng chung cho đồ sát. Thách đấu đấu trường giữ nguyên.
+
+## Đồ sát: chống lạm dụng (2026-10-10, theo yêu cầu)
+- **P19-1** Người vừa gục trong đồ sát được **bảo vệ** `RULES.slay.protect_s` = 120 giây (không bị đồ sát). Tự đi đồ sát người khác thì mất bảo vệ ngay.
+- **P19-2** Một người đồ sát cùng một người tối đa `RULES.slay.per_target_hour` = 3 lần trong 60 phút gần nhất (tính lúc mở trận, kể cả trận thua / bỏ chạy). Chống "nuôi" vàng bằng nick phụ.
+- **P19-3** **Tên đỏ:** người tấn công thắng một người không tên đỏ thì đỏ tên `RULES.slay.red_s` = 30 phút, cộng dồn mỗi lần. Người tên đỏ gục trong đồ sát mất vàng gấp `RULES.slay.red_gold_mult` = 2 lần (20%), toàn bộ về tay người thắng. Hạ người tên đỏ, hoặc người bị đánh thắng lại, thì không bị đỏ tên. Tên đỏ hiện màu đỏ đậm trong Quanh đây và hồ sơ (kèm số phút còn lại); hồ sơ cũng hiện thời gian bảo vệ.
+- **P19-4** Mỗi trận xong báo kênh thế giới: "X đã hạ Y ở <bản đồ>." hoặc "Y bỏ chạy khỏi X ở <bản đồ>."
+- **P19-5** Bảo vệ / tên đỏ / số lần đánh giữ trong bộ nhớ (`HacLong.Slay`, bảng ETS `:slay_marks`), khởi động lại server thì xóa. Chấp nhận vì thời hạn ngắn (≤ 30 phút); cần bền hơn thì thêm cột vào `characters`.

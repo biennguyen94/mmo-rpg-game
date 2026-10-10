@@ -199,4 +199,93 @@ defmodule HacLongWeb.SlayTest do
     assert_reply ref, :error, %{msg: "Người này không online."}
     assert Session.get(ub.id).battle == nil
   end
+
+  test "thắng: người tấn công bị tên đỏ, người thua được bảo vệ, báo kênh thế giới" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.put(strong(), :gold, 5000))
+    player(ub, %{level: 10, gold: 3000})
+    sa = join(ua)
+    sb = join(ub)
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case Slay.peek(ua.id) do
+        nil -> {:halt, :ok}
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+      end
+    end)
+
+    settled(ub.id)
+    assert Slay.red?(ua.id) and Slay.red_s(ua.id) > 1700
+    refute Slay.red?(ub.id)
+    assert Slay.protected_s(ub.id) in 100..120
+    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "đã hạ"))
+
+    # hồ sơ hiện tên đỏ; ảnh chụp bản đồ có cờ đỏ
+    ref = push(sb, "inspect", %{"uid" => ua.id})
+    assert_reply ref, :ok, %{profile: %{red_s: red_s}}
+    assert red_s > 0
+
+    # đang được bảo vệ thì không bị đồ sát
+    assert {:error, msg} = Slay.start(ua.id, ub.id, Session.get(ua.id), Session.get(ub.id))
+    assert msg =~ "đang được bảo vệ"
+  end
+
+  test "mỗi giờ đồ sát cùng một người tối đa 3 lần; tự đi đồ sát thì mất bảo vệ" do
+    pa = %{name: "A", hp: 100, pos: field()}
+    pb = %{name: "B", hp: 100, pos: field()}
+
+    for _ <- 1..3 do
+      {:ok, f} = Slay.start(1, 2, pa, pb)
+      Slay.abort(f.id)
+    end
+
+    assert {:error, "Bạn đã đồ sát B 3 lần" <> _} = Slay.start(1, 2, pa, pb)
+    # người khác vẫn đánh được
+    assert {:ok, f} = Slay.start(3, 2, %{pa | name: "C"}, pb)
+    Slay.abort(f.id)
+
+    :ets.insert(:slay_marks, {{3, :safe}, System.system_time(:millisecond) + 60_000})
+    assert Slay.protected_s(3) > 0
+    assert {:ok, f} = Slay.start(3, 4, %{pa | name: "C"}, %{pb | name: "D"})
+    Slay.abort(f.id)
+    assert Slay.protected_s(3) == 0
+  end
+
+  test "tên đỏ gục: mất vàng gấp đôi, người thắng nhận hết" do
+    {_, a} = Commands.run(nil, %{"act" => "create", "name" => "Thang", "cls" => "dk"})
+    {_, b} = Commands.run(nil, %{"act" => "create", "name" => "Do", "cls" => "dk"})
+
+    f = %{
+      id: 7,
+      a: 1,
+      b: 2,
+      names: %{1 => "Thang", 2 => "Do"},
+      hp: %{1 => 50, 2 => 0},
+      red: %{1 => false, 2 => true},
+      map: "forest_1",
+      turns: 3
+    }
+
+    in_slay = fn p, foe, uid ->
+      {_, p} = HacLong.Game.Engine.start_with_monster(p, 0, Slay.opponent(foe, uid))
+
+      b =
+        Map.merge(p.battle, %{live: true, encounter: %{slay: 7, foe: uid, mine: false, until: 0}})
+
+      %{p | battle: b, pos: field()}
+    end
+
+    pw = in_slay.(%{a | gold: 1000}, b, 2)
+    pl = in_slay.(%{b | gold: 1000}, a, 1)
+    {pw2, pl2, lost} = Slay.outcome(f, pw, pl, 1, :ko)
+
+    assert lost == 200 and pl2.gold == 800 and pw2.gold == 1200
+    assert pl2.battle.result == "lose" and pw2.battle.result == "win"
+    assert Enum.any?(pl2.battle.log, &(&1.text =~ "Tên đỏ"))
+  end
 end

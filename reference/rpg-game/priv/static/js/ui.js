@@ -789,7 +789,9 @@
     return `${head}
       <div class="card prof-head">
         ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}
-        <h2 class="display">${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h2>
+        <h2 class="display" ${pr.red_s ? 'style="color:#ff3b3b"' : ''}>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h2>
+        ${pr.red_s ? `<div class="small" style="color:#ff3b3b">🔴 Tên đỏ (đồ sát) · còn ${Math.ceil(pr.red_s / 60)} phút · gục mất vàng gấp ${RULES.slay.redMult} lần</div>` : ''}
+        ${pr.protect_s ? `<div class="small" style="color:var(--good)">🛡 Được bảo vệ sau khi gục · còn ${pr.protect_s} giây</div>` : ''}
         ${o.guild ? `<div class="small muted">Bang ${esc(o.guild.name)}</div>` : ''}
         <div class="prof-lv">${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} ${esc(c.name || '')}</div>
         <img class="sprite prof-doll" src="${window.Doll.url(o.look)}" alt="">

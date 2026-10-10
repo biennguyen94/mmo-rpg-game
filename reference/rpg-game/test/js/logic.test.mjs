@@ -73,6 +73,7 @@ test('màu tên theo quan hệ: bang địch > đồng đội > cùng bang > ng�
   assert.equal(L.nameRelation({ id: 7, tag: null }, rel), 'party');
   assert.equal(L.nameRelation({ id: 8, tag: 'RONG' }, rel), 'guild');
   assert.equal(L.nameRelation({ id: 8, tag: 'KHAC' }, rel), 'other');
+  assert.equal(L.nameRelation({ id: 9, tag: 'HO', red: true }, rel), 'red');
   assert.equal(L.nameRelation({ id: 8 }, {}), 'other');
   assert.equal(L.nameColor({ id: 8 }), L.nameColor({ id: 8, tag: 'X' }, {}));
 });

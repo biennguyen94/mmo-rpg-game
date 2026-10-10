@@ -690,7 +690,11 @@
       "safe_maps": [
         "village",
         "home"
-      ]
+      ],
+      "protect_s": 120,
+      "per_target_hour": 3,
+      "red_s": 1800,
+      "red_gold_mult": 2
     }
   }
 }

@@ -485,6 +485,8 @@ defmodule HacLong.World.MapServer do
             level: p.level,
             look: p[:look],
             tag: p[:tag],
+            # đồ sát: tên đỏ
+            red: HacLong.Slay.red?(uid),
             x: x,
             y: y
           }

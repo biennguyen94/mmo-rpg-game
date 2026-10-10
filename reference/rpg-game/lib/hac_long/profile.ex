@@ -23,6 +23,9 @@ defmodule HacLong.Profile do
 
     %{
       online: online?,
+      # đồ sát: số giây còn tên đỏ / còn được bảo vệ sau khi gục
+      red_s: HacLong.Slay.red_s(uid),
+      protect_s: HacLong.Slay.protected_s(uid),
       where: if(online? && p[:pos], do: map_name(p.pos.map)),
       last_seen: seen,
       registered: joined,
