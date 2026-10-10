@@ -217,3 +217,4 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **I15e-2** Dòng cánh chỉ bốc khi ghép ở Máy Hỗn Nguyên (cánh tặng không có dòng, trừ khi quản trị ghi `wopt`); cánh cấp 2 cũ giữ nguyên, không bù dòng.
 - **I15e-3** `ignore_def` áp lên phòng thủ đối thủ sau hệ số kỹ năng (`def_mult`), trước công thức sát thương.
 - **I15f-1** Mục 4 (Máy Chaos): thêm Pha Excellent / Pha May mắn (biến đổi chính món đồ) thay vì đồ Chaos mới; thất bại mất món như mọi công thức của máy. Trái Cây hoãn vì cần đổi schema (OPEN_QUESTIONS 15f-A).
+- **I15g-1** Bộ Thần (mục 6): không tạo bộ mới mà cho mọi bộ giáp sẵn có một bản Thần (rơi hiếm); thưởng theo số món Thần cùng bộ, cộng dồn với thưởng đủ bộ thường. Vũ khí / khiên / trang sức không có bản Thần.

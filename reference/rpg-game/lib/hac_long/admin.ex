@@ -14,7 +14,7 @@ defmodule HacLong.Admin do
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
   | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
-  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí) | tặng đồ chỉ số ngẫu nhiên |
+  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng đồ chỉ số ngẫu nhiên |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
@@ -155,6 +155,8 @@ defmodule HacLong.Admin do
     # Phase 15d: May mắn (mọi món) / Kỹ năng (chỉ vũ khí)
     luck = a["luck"] == true
     skill = a["skill"] == true
+    # Phase 15g: đồ Bộ Thần (chỉ món bộ giáp)
+    anc = a["anc"] == true
 
     cond do
       !it or it.slot not in Engine.gear_slots() ->
@@ -175,6 +177,9 @@ defmodule HacLong.Admin do
       skill and it.slot != "weapon" ->
         {:error, "Chỉ vũ khí mới có dòng Kỹ năng."}
 
+      anc and !it[:set] ->
+        {:error, "Chỉ món bộ giáp mới là đồ Thần."}
+
       true ->
         {:ok,
          fn p ->
@@ -185,6 +190,7 @@ defmodule HacLong.Admin do
              g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))
              g = if luck, do: Map.put(g, :luck, true), else: g
              g = if skill, do: Map.put(g, :skill, true), else: g
+             g = if anc, do: Map.put(g, :anc, true), else: g
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}

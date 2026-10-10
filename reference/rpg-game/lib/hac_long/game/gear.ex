@@ -14,7 +14,7 @@ defmodule HacLong.Game.Gear do
   - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
   - `opt`: số dòng Ngọc Sinh Mệnh (0–4, `Engine.life/2`).
   - `exc`: dòng Excellent (Phase 15c); `luck: true` / `skill: true`: dòng May mắn / Kỹ năng (Phase 15d,
-    `RULES.luck_skill`); `wopt`: dòng phụ của cánh `"hp" | "mp" | "ignore_def"` (Phase 15e, `RULES.wing_options`).
+    `RULES.luck_skill`); `anc: true`: đồ Bộ Thần (Phase 15g, `RULES.ancient`); `wopt`: dòng phụ của cánh `"hp" | "mp" | "ignore_def"` (Phase 15e, `RULES.wing_options`).
 
   Đồ đang mặc vẫn nằm trong `gear` (`equip` chỉ trỏ tới `uid`).
   """
@@ -33,6 +33,8 @@ defmodule HacLong.Game.Gear do
   @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
   # Phase 15d: May mắn / Kỹ năng (`RULES.luck_skill`)
   @ls Data.rules().luck_skill
+  # Phase 15g: đồ Bộ Thần (`RULES.ancient`)
+  @anc Data.rules().ancient
   # Phase 15e: dòng phụ của cánh (`RULES.wing_options`), theo bậc cánh
   @wopt Map.new(Data.rules().wing_options.by_tier, &{&1.tier, Map.delete(&1, :tier)})
   @wopt_ids ~w(hp mp ignore_def)
@@ -95,6 +97,8 @@ defmodule HacLong.Game.Gear do
       luck: g[:luck] == true,
       skill: g[:skill] == true,
       wopt: g[:wopt],
+      anc: g[:anc] == true,
+      def: anc_def(base, g),
       wopt_value: g[:wopt] && wopt_value(base[:tier], g[:wopt]),
       sell: price(g)
     })
@@ -107,6 +111,7 @@ defmodule HacLong.Game.Gear do
 
     exc = if (g[:exc] || []) != [], do: @exc.price_mult, else: 1
     ls = Enum.count([g[:luck], g[:skill]], &(&1 == true))
+    exc = if g[:anc] == true, do: exc * @anc.price_mult, else: exc
 
     round(
       (base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
@@ -361,6 +366,44 @@ defmodule HacLong.Game.Gear do
 
   def luck_skill_rules, do: @ls
 
+  # ---------- Bộ Thần (Phase 15g) ----------
+
+  # phòng thủ của món Thần tăng `piece_def_pct`
+  defp anc_def(base, g) do
+    if g[:anc] == true and base[:def],
+      do: round(base.def * (1 + @anc.piece_def_pct)),
+      else: base[:def]
+  end
+
+  @doc "Tỉ lệ một món bộ giáp rơi từ quái `m` là đồ Thần (`RULES.ancient.chance`)."
+  def anc_chance(m) do
+    c = @anc.chance
+
+    cond do
+      m[:world] || m[:pvp] -> 0
+      m[:elite] -> c.elite
+      m[:night] -> c.night
+      m[:boss] -> c.boss
+      true -> c.normal
+    end
+  end
+
+  @doc "Món bộ giáp `g` rơi từ quái `m` thành đồ Thần với xác suất `anc_chance/1` (món khác không bốc)."
+  def ancient(nil, _m), do: nil
+
+  def ancient(g, m) do
+    case Data.item(g.base) do
+      %{set: s, slot: slot} when is_binary(s) and slot in @set_pieces ->
+        c = anc_chance(m)
+        if c > 0 and Rng.uniform() < c, do: Map.put(g, :anc, true), else: g
+
+      _ ->
+        g
+    end
+  end
+
+  def ancient_rules, do: @anc
+
   # ---------- Dòng phụ của cánh (Phase 15e) ----------
 
   @doc "Giá trị dòng cánh `id` (`hp` / `mp` / `ignore_def`) của cánh bậc `tier` (0 nếu bậc đó không có dòng)."
@@ -472,6 +515,7 @@ defmodule HacLong.Game.Gear do
       m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
       m = if g["luck"] == true, do: Map.put(m, :luck, true), else: m
       m = if g["skill"] == true, do: Map.put(m, :skill, true), else: m
+      m = if g["anc"] == true, do: Map.put(m, :anc, true), else: m
       m = if g["wopt"] in @wopt_ids, do: Map.put(m, :wopt, g["wopt"]), else: m
       opt = g["opt"]
       m = if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m

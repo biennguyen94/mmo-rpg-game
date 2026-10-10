@@ -190,6 +190,7 @@ defmodule HacLong.Game.Engine do
       p.equip |> Map.values() |> Enum.map(&((Gear.item(p, &1) || %{})[:hp] || 0)) |> Enum.sum()
 
     sb = set_bonus(p)
+    anc = ancient_bonus(p)
     exc = Gear.exc_stats(p)
     ls = Gear.luck_skill_stats(p)
     wo = Gear.wing_stats(p)
@@ -208,13 +209,14 @@ defmodule HacLong.Game.Engine do
     pet = fn key -> 1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) end
 
     %{
-      maxHp: round((lin.(f.hp) + gear_hp + sb.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
+      maxHp:
+        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
       maxMp: round(lin.(f.mp) + wo.mp),
       atk:
         round(
           (lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
              if(pd, do: pd[:atk] || 0, else: 0) + up.(p.equip[:pendant])) * pet.(:atk) *
-            (1 + exc.atk_pct + sb.atk_pct)
+            (1 + exc.atk_pct + sb.atk_pct + anc.atk_pct)
         ),
       def:
         round(
@@ -223,7 +225,7 @@ defmodule HacLong.Game.Engine do
                for slot <- @def_slots, id = p.equip[slot] do
                  Map.get(Gear.item(p, id) || %{}, :def, 0) + up.(id)
                end
-             )) * pet.(:def) * (1 + sb.def_pct)
+             )) * pet.(:def) * (1 + sb.def_pct + anc.def_pct)
         ),
       crit:
         clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max) + exc.crit +
@@ -291,6 +293,41 @@ defmodule HacLong.Game.Engine do
     end
   end
 
+  @anc Data.rules().ancient
+
+  @doc """
+  Thưởng Bộ Thần (Phase 15g, `RULES.ancient.bonus`): đếm món Thần **cùng bộ** đang mặc (bộ có nhiều món Thần nhất),
+  cộng dồn mọi mức `count` đã đạt (`"full"` = đủ bộ theo `Data.set_size/2`).
+  `%{name, have, need, atk_pct, def_pct, hp}`.
+  """
+  def ancient_bonus(p) do
+    zero = %{name: nil, have: 0, need: 0, atk_pct: 0, def_pct: 0, hp: 0}
+
+    worn =
+      for {_slot, id} <- p.equip, id, it = Gear.item(p, id), it[:anc] && it[:set], do: it.set
+
+    case worn |> Enum.frequencies() |> Enum.max_by(&elem(&1, 1), fn -> nil end) do
+      nil ->
+        zero
+
+      {name, have} ->
+        need = Data.set_size(name, p.cls)
+
+        Enum.reduce(@anc.bonus, %{zero | name: name, have: have, need: need}, fn b, acc ->
+          reached = if b.count == "full", do: need > 0 and have >= need, else: have >= b.count
+
+          if reached,
+            do: %{
+              acc
+              | atk_pct: acc.atk_pct + b.atk_pct,
+                def_pct: acc.def_pct + b.def_pct,
+                hp: acc.hp + b.hp
+            },
+            else: acc
+        end)
+    end
+  end
+
   # Excellent: hồi máu / MP khi hạ quái
   defp exc_on_kill(p, %{heal_kill: 0, mp_kill: 0}), do: p
 
@@ -329,6 +366,7 @@ defmodule HacLong.Game.Engine do
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
       setBonus: set_bonus(p),
+      ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
       comfort: Home.comfort(p),
@@ -1285,7 +1323,8 @@ defmodule HacLong.Game.Engine do
            m.level
            |> Gear.roll(Gear.weights(), nil, if(@loot_own_class, do: p.cls))
            |> Gear.excellent(Gear.exc_chance(m))
-           |> Gear.luck_skill(m) do
+           |> Gear.luck_skill(m)
+           |> Gear.ancient(m) do
       it = Gear.resolve(g)
       label = "#{it.name} (#{Gear.rarity_names()[g.rarity]})"
 
@@ -1337,6 +1376,7 @@ defmodule HacLong.Game.Engine do
         |> Gear.roll(@boss_weights, nil, p.cls)
         |> Gear.excellent(Gear.exc_chance(m))
         |> Gear.luck_skill(m)
+        |> Gear.ancient(m)
       end)
 
     case g do

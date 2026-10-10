@@ -1490,7 +1490,7 @@
   const gearTag = (id) => { const it = itemOf(id), up = upLevel(id); return [it.rarity ? RARITY[it.rarity] : '', up ? `+${up}` : ''].filter(Boolean).map((x) => ` (${x})`).join(''); };
   const itemName = (id) => {
     const it = itemOf(id);
-    const name = it.excellent ? `<span class="exc">${esc(it.name)}</span>` : it.rarity ? `<span class="rar-${it.rarity}">${esc(it.name)}</span>` : it.name;
+    const name = it.anc ? `<span class="anc">${esc(it.name)}</span>` : it.excellent ? `<span class="exc">${esc(it.name)}</span>` : it.rarity ? `<span class="rar-${it.rarity}">${esc(it.name)}</span>` : it.name;
     return name + (upLevel(id) ? ` <span class="up-lv">+${upLevel(id)}</span>` : '') + (it.locked ? ' <span class="lock-ic" title="Đã khóa">🔒</span>' : '');
   };
   const bonusText = (it) => (it.bonus ? Object.entries(it.bonus).sort((a, b) => b[1] - a[1]).map(([k, v]) => `+${v} ${STAT_INFO[k][0]}`).join(', ') : '');
@@ -1875,6 +1875,17 @@
     const t = it.wopt === 'hp' ? `Máu tối đa +${v}` : it.wopt === 'mp' ? `MP tối đa +${v}` : `Bỏ qua ${lsPct(v)}% phòng thủ đối thủ`;
     return `<div class="small ls">· Dòng cánh: ${t}</div>`;
   };
+  // Phase 15g: đồ Bộ Thần (tooltip) và thưởng Bộ Thần đang mặc (P.view.ancient), số ở RULES.ancient
+  const ancLine = (it) => (it.anc ? `<div class="small anc">✦ Đồ Thần: phòng thủ +${lsPct((RULES.ancient || {}).piece_def_pct || 0)}% · mặc nhiều món Thần cùng bộ có thưởng</div>` : '');
+  function ancientLine() {
+    const a = P.view.ancient;
+    if (!a || !a.name) return '';
+    const parts = [];
+    if (a.atk_pct) parts.push(`+${lsPct(a.atk_pct)}% tấn công`);
+    if (a.def_pct) parts.push(`+${lsPct(a.def_pct)}% phòng thủ`);
+    if (a.hp) parts.push(`+${a.hp} máu`);
+    return `<div class="small"><span class="anc">Bộ Thần ${esc(a.name)} ${a.have}/${a.need}</span> ${parts.length ? parts.join(', ') : '<span class="muted">(mặc từ 2 món để có thưởng)</span>'}</div>`;
+  }
   // thưởng đủ bộ giáp (P.view.setBonus)
   function setLine() {
     const b = P.view.setBonus;
@@ -1939,6 +1950,7 @@
           <div class="row"><span>${icon('health-potion')} Bình máu ×<b class="num">${potionCount()}</b></span><span class="num">${items.length} món</span></div>
           ${foodNow()}
           ${setLine()}
+          ${ancientLine()}
           <p class="small muted">Muốn bán đồ, hãy gặp Thợ Rèn hoặc Bà Lang trong Làng.</p>
         </div>
       </div>`;
@@ -1989,6 +2001,7 @@
       ${wearable ? wearLines(it) : ''}
       ${it.set ? `<div class="small muted">Thuộc bộ ${esc(it.set)} (bậc ${it.tier})</div>` : ''}
       ${excLines(it)}
+      ${ancLine(it)}
       ${luckSkillLines(it)}
       ${woptLine(it)}
       ${lifeLine(it)}

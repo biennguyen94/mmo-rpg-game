@@ -248,3 +248,20 @@ giữ nguyên uid, cấp nâng và các dòng cũ; thất bại mất món, nguy
 - Code: `Chaos.transform/4`, `Gear.add_exc_line/1`, `Gear.exc_pool/1`. Giao diện máy tự lọc món còn thêm được dòng.
 - **Không làm Trái Cây** (cộng điểm vĩnh viễn kiểu MU): cần thêm cột đếm số trái đã ăn vào bảng `characters` (đổi schema)
   — để anh quyết sau (`docs/OPEN_QUESTIONS.md`).
+
+## 10. Phase 15g (2026-10-10): đồ Bộ Thần (mục 6)
+
+Món **bộ giáp** (mũ, giáp, quần, găng, giày) rơi từ quái có xác suất thành **đồ Thần** (trường `anc: true`), tên màu cam.
+
+| Khóa `rules.json` → `ancient` | Mặc định | Ý nghĩa |
+|---|---|---|
+| `chance` | thường 1 %, đêm 2 %, tinh anh 4 %, trùm 8 % | tỉ lệ một món bộ giáp **đã rơi** là đồ Thần |
+| `piece_def_pct` | 0,2 | phòng thủ của món Thần +20 % |
+| `bonus` | 2 món: +3 % tấn công; 3 món: +5 % phòng thủ; đủ bộ: +5 % tấn công, +5 % phòng thủ, +150 máu | thưởng theo số món Thần **cùng bộ** đang mặc, cộng dồn các mức đã đạt (`"full"` = đủ bộ, Đấu Sĩ 4 món) |
+| `price_mult` | 3 | giá bán lại nhân thêm |
+
+- Cộng dồn với thưởng đủ bộ thường (`set_bonus`): mặc đủ 5 món Thần bộ Đồng có cả hai.
+- Áp cho đồ rơi từ quái và đồ trùm lần đầu (không cho cửa hàng, rèn, rương, sự kiện).
+- Tooltip: "✦ Đồ Thần: phòng thủ +20 % …"; tab Túi đồ có dòng "Bộ Thần Đồng 3/5 +3 % tấn công, +5 % phòng thủ".
+- Quản trị: `give_gear` nhận `anc: true` (chỉ món bộ giáp).
+- Code: `Gear.ancient/2`, `Gear.anc_chance/1`, `Engine.ancient_bonus/1` (vào `derived`: `maxHp`, `atk`, `def`).
