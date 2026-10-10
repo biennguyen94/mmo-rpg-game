@@ -26,6 +26,8 @@ await B.page.waitForFunction(() => { const b = window.__hl.player().battle; retu
 R.check('B vào trận ngay, không cần đồng ý', !!(await player(B.page)).battle?.live);
 R.check('A ra đòn trước; nút của B bị khóa', (await A.page.textContent('.slay-turn')).includes('Lượt của bạn') && await B.page.$eval('[data-act="attack"]', (e) => e.disabled));
 await shot(B.page, 'slay-battle.png');
+const secs = +(await B.page.textContent('.slay-turn .num'));
+R.check('đồng hồ lượt đếm theo số giây server gửi (1–10)', secs >= 1 && secs <= 10, String(secs));
 
 // luân phiên bấm Tấn công tới khi trận được chốt
 for (let i = 0; i < 120; i++) {
@@ -42,6 +44,18 @@ R.check('vàng người thua chuyển cho người thắng (tổng không đổi
 R.check('người thua về Nhà', loser.pos.map === 'home', loser.pos.map);
 await shot(A.page, 'slay-result.png');
 for (const X of [A, B]) await act(X.page, '[data-act="leave"]');
+
+// ---------- Sau trận: tên đỏ, bảo vệ, báo kênh thế giới ----------
+const [W, L, uidW, uidL] = sa.battle?.result === 'win' ? [A, B, uidA, uidB] : [B, A, uidB, uidA];
+await L.page.evaluate((uid) => window.__hl.inspect(uid), uidW);
+await L.page.waitForSelector('.prof-head', { timeout: 5000 }).catch(() => null);
+R.check('hồ sơ người thắng hiện 🔴 Tên đỏ', ((await L.page.textContent('.prof-head').catch(() => '')) || '').includes('Tên đỏ'));
+await W.page.evaluate((uid) => window.__hl.inspect(uid), uidL);
+await W.page.waitForSelector('.prof-head', { timeout: 5000 }).catch(() => null);
+R.check('hồ sơ người thua hiện 🛡 được bảo vệ', ((await W.page.textContent('.prof-head').catch(() => '')) || '').includes('bảo vệ'));
+await shot(L.page, 'slay-red.png');
+R.check('kênh thế giới báo "đã hạ"', (await W.page.evaluate(() => document.body.innerHTML)).includes('đã hạ'));
+for (const X of [A, B]) await X.page.click('#tabs [data-tab="map"]').catch(() => null);
 
 // ---------- Lịch sử trận ở tab Khác ----------
 await A.page.click('#tabs [data-tab="menu"]');
