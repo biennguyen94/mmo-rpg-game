@@ -1902,8 +1902,8 @@
   const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền', pet: 'Thú nuôi' };
   // Phase 15b: mở mũ / quần / găng / giày (đồ Item.txt); nhẫn chưa có
   const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
-  // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
-  const SLOT_REMOVABLE = ['shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
+  // ô tháo ra được: mọi ô (DECISIONS B-11, vũ khí / giáp cũng tháo được)
+  const SLOT_REMOVABLE = SLOT_OPEN;
   // loại đồ của món mặc được vào ô `slot` (hai ô nhẫn chung loại "ring")
   const slotKind = (slot) => (slot === 'ring1' || slot === 'ring2' ? 'ring' : slot);
   const WEAR_KINDS = [...new Set(SLOT_OPEN.map(slotKind))];

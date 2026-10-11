@@ -272,3 +272,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   nên hai người điểm khác nhau có thể không thấy nhau). Kênh thêm `arena_find {q}` → `{found}` (tối đa 10 người, tên chứa `q`,
   không phân biệt hoa thường, tên khớp đúng lên đầu, không ra chính mình; giới hạn 30 lần / phút). Thách đấu vẫn qua
   `pvp_challenge` như cũ (giới hạn trận / ngày giữ nguyên).
+- **B-11** (anh chốt) **Tháo được vũ khí và giáp** như mọi ô khác (trước: chỉ thay bằng món khác). Tay không thì tấn công chỉ
+  tính theo chỉ số (không cộng vũ khí, ép, dòng phụ của vũ khí); không giáp thì phòng thủ chỉ còn phần chỉ số và các ô khác.
+  Hình nhân vật vẽ tay không / không giáp. Client: nút Tháo và kéo vũ khí / giáp từ ô trang bị về túi.

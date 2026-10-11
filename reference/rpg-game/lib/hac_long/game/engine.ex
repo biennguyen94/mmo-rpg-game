@@ -41,9 +41,10 @@ defmodule HacLong.Game.Engine do
   @equip_slots ~w(weapon armor shield wing helm pants gloves boots ring1 ring2 pendant)
   # loại đồ mặc được (`slot` của món): như ô, nhưng hai ô nhẫn chung một loại "ring"
   @item_slots (@equip_slots -- ~w(ring1 ring2)) ++ ["ring"]
-  # ô phòng thủ (cộng `def`) và ô tháo ra được (vũ khí / giáp luôn phải có)
+  # ô phòng thủ (cộng `def`) và ô tháo ra được: mọi ô (anh chốt, DECISIONS B-11; tay không thì tấn công
+  # chỉ tính theo chỉ số, không giáp thì phòng thủ chỉ tính theo chỉ số)
   @def_slots ~w(armor shield wing helm pants gloves boots ring1 ring2)a
-  @removable ~w(shield wing helm pants gloves boots ring1 ring2 pendant)
+  @removable @equip_slots
   # Phase 15c: thưởng đủ bộ giáp, dòng Excellent (`rules.json`)
   @set_bonus @rules[:set_bonus] || %{min_tier: 99, def_pct: 0, atk_pct: 0, hp_per_tier: 0}
   @max_rebirths @char.max_rebirths
