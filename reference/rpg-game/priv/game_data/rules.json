@@ -242,6 +242,26 @@
         { "gold": 30000, "items": { "jewel_chaos": 1, "jewel_soul": 1 } }
       ]
     },
+    "chaos_castle": {
+      "_doc": "B-19 Hỗn Chiến Thành (kiểu MU Chaos Castle). Giờ Việt Nam: mở cho vào mỗi every_hours giờ, lệch offset_minutes phút (1h30, 3h30 … 23h30), vào trong entry_minutes phút; hết giờ vào thì quái xuất hiện và được đánh nhau run_minutes phút. Vào: ở Người Gác Tháp, từ min_level, tốn 1 vé ticket (mua ticket_price hoặc quái cấp ≥ ticket_drop.min_level rơi). Số quái = max(min_monsters, total - số người); cấp quái quanh cấp trung bình người vào (± level_spread). Gục ngã (quái / người) là bị loại, về Làng, không mất vàng, không tên đỏ. Còn 1 người và hết quái: thắng (reward.winner); hết giờ: người còn trụ nhận reward.survivor. Thưởng gửi qua thư.",
+      "every_hours": 2,
+      "offset_minutes": 90,
+      "entry_minutes": 5,
+      "run_minutes": 10,
+      "min_level": 15,
+      "ticket": "cc_ticket",
+      "ticket_price": 15000,
+      "ticket_drop": { "min_level": 15, "chance": 0.005 },
+      "total": 30,
+      "min_monsters": 10,
+      "level_spread": 2,
+      "map": "chaos_castle",
+      "reward": {
+        "winner": { "gold": 60000, "items": { "jewel_chaos": 1, "jewel_bless": 2, "jewel_soul": 1 } },
+        "survivor": { "gold": 8000, "items": { "jewel_bless": 1 } },
+        "per_player_kill": 2000
+      }
+    },
     "blood_castle": {
       "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
       "every_hours": 2,

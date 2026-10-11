@@ -91,6 +91,19 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   R.check(`quản trị mở ngay ${name}: người chơi thấy đang mở, chat báo`, !!v && v.open === true && said, JSON.stringify(v && { open: v.open }));
 }
 
+// B-19: Hỗn Chiến Thành mở ngay → người chơi thấy pha "entry", chat báo mở cửa
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="open_cc"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view.cc;
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Hỗn Chiến Thành mở cửa'));
+  R.check('quản trị mở ngay Hỗn Chiến Thành: người chơi thấy cho vào, chat báo', !!v && v.phase === 'entry' && said, JSON.stringify(v && { phase: v.phase }));
+}
+
 // danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
 const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
 R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);

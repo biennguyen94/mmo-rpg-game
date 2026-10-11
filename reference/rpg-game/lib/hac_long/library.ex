@@ -22,7 +22,7 @@ defmodule HacLong.Library do
 
   def build do
     zones = Data.zones() |> Enum.with_index()
-    maps = Maps.ids() |> Enum.map(&Maps.get/1) |> Enum.reject(& &1.private)
+    maps = Maps.ids() |> Enum.map(&Maps.get/1) |> Enum.reject(&(&1.private or &1.event != nil))
 
     %{maps: maps(maps, zones), monsters: monsters(maps, zones), items: items(maps, zones)}
   end

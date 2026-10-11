@@ -20,7 +20,7 @@
 13. [Hộp thư, Thông báo, bảng xếp hạng](#13-hộp-thư-thông-báo-bảng-xếp-hạng)
 14. [Phím tắt, điện thoại](#14-phím-tắt-điện-thoại)
 
-> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md).
+> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md).
 
 ---
 
@@ -84,7 +84,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   mỗi vùng: mạnh hơn một chút, thưởng **×5**, dễ rơi ngọc, không hồi sinh. Hạ hết quái vàng một bản đồ thì **trùm vàng** xuất
   hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
 - **Tháp Vô Tận** (Người Gác Tháp ở Làng): mỗi tầng hạ hết quái để lên; cứ 5 tầng có trùm; máu không tự hồi trong tháp.
-- **Quảng Trường Quỷ** (cấp 35+, 1h, 3h … 23h) và **Lâu Đài Máu** (cấp 40+, 0h30, 2h30 … 22h30): vào qua Người Gác Tháp, cần vé. Chi tiết: [`EVENTS.md`](EVENTS.md).
+- **Quảng Trường Quỷ** (cấp 35+, 1h, 3h … 23h) và **Lâu Đài Máu** (cấp 40+, 0h30, 2h30 … 22h30), **Hỗn Chiến Thành** (cấp 15+, 1h30, 3h30 … 23h30): vào qua Người Gác Tháp, cần vé. Chi tiết: [`EVENTS.md`](EVENTS.md).
 
 ![Trận đánh](screenshots/e2e-battle.png)
 
@@ -125,6 +125,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Lâu Đài Máu (Phase 18):** từ cấp 40, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (0h30, 2h30 … 22h30), cho vào
   trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài (mua 30 000 vàng hoặc nhặt từ quái cấp 35+). Trong 8 phút: hạ 8
   quân canh, phá Cổng Thành, hạ Hiệp Sĩ Máu để nhận Lông Vũ Kền Kền (cần để ghép cánh cấp 3), vàng, kinh nghiệm, 2 ngọc.
+- **Hỗn Chiến Thành:** từ cấp 15, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h30, 3h30 … 23h30), cho vào 5 phút,
+  tốn 1 Áo Giáp Vệ Binh (mua 15 000 vàng hoặc nhặt từ quái cấp 15+). Rồi 10 phút hỗn chiến: quái và người đánh lẫn nhau
+  (không mất vàng, không tên đỏ); gục là bị loại. Người trụ cuối cùng khi hết quái thắng 60 000 vàng + ngọc; thưởng gửi thư.
 - **Loại đồ như MU**: đồ thường (có thể kèm May mắn, Kỹ năng, dòng cộng thêm +4 / +8 / +12 tấn công hoặc phòng thủ — tên xanh), đồ hoàn hảo (tên lục), đồ Thần. Ngọc Sinh Mệnh thêm dòng tới +16. Túi giữ tối đa 20 món riêng.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.

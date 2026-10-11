@@ -63,6 +63,9 @@ defmodule HacLong.World.Maps do
              private: m["private"] == true,
              # Phase 15a: bản đồ phụ (quái ở `SIDE_MONSTERS`, không khóa theo vùng), `theme`: nền trận đánh
              side: m["side"] == true,
+             # B-19: bản đồ của một sự kiện (vd "chaos_castle"): chỉ vào qua sự kiện, không chọn map / dịch chuyển tới,
+             # vào lại game đang ở đó thì về Làng
+             event: m["event"],
              theme: m["theme"],
              width: String.length(hd(rows)),
              height: length(rows),
@@ -167,6 +170,7 @@ defmodule HacLong.World.Maps do
            name: m.name,
            zone: m.zone,
            side: m.side,
+           event: m.event,
            theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,

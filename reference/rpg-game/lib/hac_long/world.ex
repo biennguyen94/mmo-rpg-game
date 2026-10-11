@@ -26,6 +26,10 @@ defmodule HacLong.World do
       nil ->
         Maps.home_spawn()
 
+      # bản đồ sự kiện (B-19): sự kiện đã xong hoặc mất kết nối giữa chừng thì về Làng
+      %{event: e} when is_binary(e) ->
+        village_spawn()
+
       map ->
         free? = fn {dx, dy} -> Maps.walkable?(map, x + dx, y + dy) end
 
@@ -36,6 +40,22 @@ defmodule HacLong.World do
   end
 
   def valid_pos(_), do: Maps.home_spawn()
+
+  @doc "Chỗ đứng ở Làng khi bị đưa về (bị loại khỏi sự kiện, sự kiện kết thúc)."
+  def village_spawn do
+    {x, y} = Maps.get("village").waystone.spawn
+    %{map: "village", x: x, y: y}
+  end
+
+  @doc """
+  Đưa nhân vật tới `pos` (bản đồ sự kiện, về Làng…): rời bản đồ cũ, có mặt ở bản đồ mới. Không kiểm tra điều kiện.
+  """
+  def warp(p, uid, %{map: _, x: _, y: _} = pos) do
+    leave(p, uid)
+    p = %{p | pos: pos}
+    enter(p, uid)
+    p
+  end
 
   @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
   def shared?(%{map: id}), do: not Maps.get(id).private
@@ -70,6 +90,8 @@ defmodule HacLong.World do
   @doc "Rời bản đồ hiện tại (đóng game, xóa nhân vật)."
   def leave(%{pos: pos}, uid) do
     if shared?(pos), do: MapServer.leave(pos.map, uid)
+    # rời Hỗn Chiến Thành (gục, đổi bản đồ, thoát game) là bị loại
+    if Maps.get(pos.map)[:event] == "chaos_castle", do: HacLong.ChaosCastle.out(uid)
     :ok
   end
 
@@ -339,7 +361,7 @@ defmodule HacLong.World do
       p.battle ->
         {%{ok: false, msg: "Đang trong trận đấu."}, p}
 
-      !target or target.id == "tower" ->
+      !target or target.id == "tower" or target.event != nil ->
         {%{ok: false, msg: "Không có bản đồ đó."}, p}
 
       to == p.pos.map ->
@@ -402,12 +424,17 @@ defmodule HacLong.World do
   defp encounter(p, %{side: true} = map, m),
     do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
 
+  # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ
+  defp encounter(p, %{event: e} = map, m) when is_binary(e),
+    do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+
   defp encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
 
   defp spec_of(map, m) do
     spec =
       cond do
         map.side -> Data.side_monster(m.kind)
+        map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)
         m.boss -> Data.zone(map.zone).boss
         true -> Enum.find(Data.zone(map.zone).monsters, &(&1.id == m.kind))
       end
@@ -528,6 +555,7 @@ defmodule HacLong.World do
         cond do
           b.result == "win" ->
             MapServer.defeat(map_id, uid, mid)
+            if map_id == HacLong.ChaosCastle.map_id(), do: HacLong.ChaosCastle.kill(uid, :monster)
 
           # mình thua hoặc bỏ chạy nhưng đồng đội còn đánh: chuyển quái cho người khác
           enc[:shared] ->
@@ -546,7 +574,10 @@ defmodule HacLong.World do
 
     if b.result == "lose" do
       leave(p, uid)
-      %{p | pos: Maps.home_spawn()}
+      # gục trong bản đồ sự kiện (Hỗn Chiến Thành): bị loại, về Làng
+      if Maps.get(p.pos.map)[:event],
+        do: %{p | pos: village_spawn()},
+        else: %{p | pos: Maps.home_spawn()}
     else
       p
     end

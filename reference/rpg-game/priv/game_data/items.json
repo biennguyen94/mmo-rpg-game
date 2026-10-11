@@ -563,6 +563,13 @@
       "price": 0,
       "desc": "Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên."
     },
+    "cc_ticket": {
+      "name": "Áo Giáp Vệ Binh",
+      "slot": "material",
+      "icon": "breastplate",
+      "price": 0,
+      "desc": "Vé vào Hỗn Chiến Thành (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 15). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 15 trở lên."
+    },
     "devil_eye": {
       "name": "Mắt Quỷ",
       "slot": "material",

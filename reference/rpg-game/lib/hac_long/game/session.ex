@@ -313,6 +313,7 @@ defmodule HacLong.Game.Session do
   defp handle(:online_info, _from, s), do: reply(nil, s)
 
   defp handle({:attach, pid}, _from, s) do
+    s = cc_back(s)
     if map_size(s.tabs) == 0, do: World.enter(s.player, s.user_id)
     HacLong.Party.back(s.user_id)
     s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
@@ -320,7 +321,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "teleport", "travel"] do
+       when act in ["move", "teleport", "travel", "cc_enter"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -948,6 +949,16 @@ defmodule HacLong.Game.Session do
 
   defp reply(value, s), do: {:reply, value, s, timeout(s)}
 
+  # B-19: mở lại game khi đã bị loại khỏi Hỗn Chiến Thành (đóng tab là bị loại) thì về Làng
+  defp cc_back(%{player: %{pos: %{map: map}, battle: nil} = p, tabs: tabs} = s)
+       when map_size(tabs) == 0 do
+    if map == HacLong.ChaosCastle.map_id() and not HacLong.ChaosCastle.alive?(s.user_id),
+      do: save(s, %{p | pos: World.village_spawn()}),
+      else: s
+  end
+
+  defp cc_back(s), do: s
+
   # Còn tab đang mở thì không tự tắt (nhân vật vẫn đứng trên bản đồ).
   defp timeout(%{tabs: tabs}) when map_size(tabs) > 0, do: :infinity
   defp timeout(_), do: @idle_timeout
@@ -959,6 +970,9 @@ defmodule HacLong.Game.Session do
     Characters.put_reason("TRAVEL", cmd["to"])
     World.travel(s.player, s.user_id, cmd["to"])
   end
+
+  # B-19: vào Hỗn Chiến Thành (đổi bản đồ như dịch chuyển)
+  defp run_move(s, %{"act" => "cc_enter"}), do: HacLong.ChaosCastle.enter(s.player, s.user_id)
 
   defp run_move(s, %{"act" => "teleport"} = cmd),
     do: World.teleport(s.player, s.user_id, cmd["to"])

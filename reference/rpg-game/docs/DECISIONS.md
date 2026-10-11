@@ -328,5 +328,14 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Lãnh Thiên Thần / Xương Máu (cấp ≥ 35, 1 %) — gấp đôi tỉ lệ rơi vé cũ vì cần 2 mảnh. Ghép ở Máy Hỗn Nguyên (`chaos.json`
   `ds_ticket`: 2 mảnh + 1 Hỗn Nguyên + 10.000 vàng, 80 %; `bc_ticket`: 2 mảnh + 1 Hỗn Nguyên + 15.000 vàng, 80 %; hỏng mất cả).
   Vẫn mua vé bằng vàng ở Người Gác Tháp như cũ. Hình gốc theo `refs` 14/17, 14/18, 13/16, 13/17.
+- **B-19** (anh chốt "làm luôn 9, 1, 2, 3, 4", em đề xuất số) **Hỗn Chiến Thành** (kiểu MU Chaos Castle, `RULES.chaos_castle`,
+  `HacLong.ChaosCastle`): mỗi 2 giờ lệch 90 phút (1h30, 3h30 … 23h30), cho vào **5 phút** rồi **10 phút** hỗn chiến. Cấp ≥ 15,
+  tốn 1 **Áo Giáp Vệ Binh** (`cc_ticket`, hình 13/29; mua 15.000 vàng ở Người Gác Tháp hoặc rơi 0,5 % từ quái cấp ≥ 15).
+  Bản đồ chung `chaos_castle` (`event: "chaos_castle"`): không chọn map / dịch chuyển tới, vào lại game khi đã bị loại thì về
+  Làng. Lúc bắt đầu thả `max(10, 30 − số người)` quái cấp trung bình người vào ± 2 (quái vùng + quái phụ, không trùm). Trong
+  thành được đồ sát nhau ngay khi hỗn chiến (trước đó cấm), **không mất vàng, không tên đỏ**; gục (quái hay người), đổi bản
+  đồ, thoát game là bị loại, về Làng. Còn đúng 1 người và hết quái → thắng: 60.000 vàng + 1 Hỗn Nguyên + 2 Ước Nguyện + 1 Tâm
+  Linh; hết giờ → người còn trụ: 8.000 vàng + 1 Ước Nguyện; mỗi người hạ được +2.000 vàng. Thưởng **gửi thư**. Khác MU: không
+  thu hẹp sàn, không chia theo 7 cấp thành (một thành, quái theo cấp người vào), không rơi đồ khi chết.
 
 

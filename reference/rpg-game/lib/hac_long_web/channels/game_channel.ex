@@ -796,6 +796,13 @@ defmodule HacLongWeb.GameChannel do
   defp admin("open_ds", _p, _s), do: open_event(HacLong.Game.DevilSquare, "😈 Quảng Trường Quỷ")
   defp admin("open_bc", _p, _s), do: open_event(HacLong.Game.BloodCastle, "🏰 Lâu Đài Máu")
 
+  # B-19: Hỗn Chiến Thành mở ngay (tự báo kênh chat), hỗn chiến sau `entry_minutes` phút
+  defp admin("open_cc", _p, _s) do
+    {:ok, w} = HacLong.ChaosCastle.open_now()
+    mins = div(w.starts_at - System.os_time(:second) + 59, 60)
+    {:ok, %{msg: "Đã mở ⚔ Hỗn Chiến Thành: vào trong #{mins} phút, rồi hỗn chiến.", window: w}}
+  end
+
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
 
   defp open_event(mod, name) do

@@ -10,6 +10,7 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 2. [Golden Invasion — quái vàng](#2-golden-invasion--quái-vàng)
 3. [Quảng Trường Quỷ (Devil Square)](#3-quảng-trường-quỷ-devil-square)
 4. [Lâu Đài Máu (Blood Castle)](#4-lâu-đài-máu-blood-castle)
+   - [Hỗn Chiến Thành (Chaos Castle)](#hỗn-chiến-thành-chaos-castle)
 5. [Trùm thế giới Cổ Long](#5-trùm-thế-giới-cổ-long)
 6. [Lễ hội theo mùa](#6-lễ-hội-theo-mùa)
 7. [Hoạt động hằng ngày](#7-hoạt-động-hằng-ngày)
@@ -20,13 +21,14 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 
 ## 1. Lịch trong ngày
 
-Ba sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ**:
+Bốn sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ**:
 
 | Giờ (lặp mỗi 2 giờ) | Sự kiện | Cấp | Vé | Thời gian |
 |---|---|---|---|---|
 | 0h00, 2h00, 4h00 … 22h00 | Golden Invasion | mọi cấp | không cần | 15 phút |
 | 0h30, 2h30, 4h30 … 22h30 | Lâu Đài Máu | từ 40 | Vé Lâu Đài | mở cửa 10 phút, mỗi lượt 8 phút |
 | 1h00, 3h00, 5h00 … 23h00 | Quảng Trường Quỷ | từ 35 | Vé Quảng Trường | mở cửa 10 phút, mỗi lượt 5 phút |
+| 1h30, 3h30, 5h30 … 23h30 | Hỗn Chiến Thành | từ 15 | Áo Giáp Vệ Binh | cho vào 5 phút, hỗn chiến 10 phút |
 
 Trùm thế giới Cổ Long xuất hiện khoảng **2 giờ một lần**, mỗi lần 30 phút; lịch tính từ lúc server khởi động (lần đầu sau
 10 phút) nên không cố định theo giờ đồng hồ. Khi trùm xuất hiện, cả server nhận thông báo trong chat.
@@ -90,6 +92,23 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
   **cánh cấp 3** ở Máy Hỗn Nguyên (ghép hỏng mất lông vũ). Bước tiếp theo về Làng.
 - **Không xong** (hết giờ, gục, tự về): thưởng theo số quân canh đã hạ (đủ 8 ≈ 4.800 vàng), không có lông vũ.
 
+### Hỗn Chiến Thành (Chaos Castle)
+
+(`RULES.chaos_castle`, DECISIONS B-19)
+
+- **Khi nào:** 1h30, 3h30, 5h30 … 23h30; cho vào trong **5 phút** đầu, sau đó **10 phút** hỗn chiến.
+- **Điều kiện:** cấp **15** trở lên và 1 **Áo Giáp Vệ Binh** (mua ở Người Gác Tháp **15.000 vàng**, hoặc rơi 0,5 % từ quái
+  thường cấp ≥ 15).
+- **Cách vào:** Làng → **Người Gác Tháp** → thẻ **⚔ Hỗn Chiến Thành** → Vào. Mọi người vào **cùng một thành** (bản đồ chung).
+- **Cách chơi:** hết 5 phút cho vào thì thành thả quái (30 trừ số người vào, ít nhất 10 con, cấp quanh cấp trung bình người
+  vào). Từ lúc đó **quái và người đánh lẫn nhau**: đồ sát người khác trong thành **không mất vàng, không bị tên đỏ**.
+  Gục ngã (quái hay người), rời thành hay thoát game là **bị loại** và về Làng (không mất vàng).
+- **Thưởng** (gửi **qua thư**):
+  - còn **đúng 1 người** và **hết quái** → người đó thắng: **60.000 vàng + 1 Ngọc Hỗn Nguyên + 2 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh**;
+  - **hết giờ** → mỗi người còn trụ: **8.000 vàng + 1 Ngọc Ước Nguyện**;
+  - mỗi người mình hạ được: **+2.000 vàng**.
+- Hết lượt, người còn trong thành được đưa về Làng, quái còn lại biến mất.
+
 ## 5. Trùm thế giới Cổ Long
 
 (`config :hac_long, :world_boss`, `HacLong.WorldBoss`)
@@ -149,11 +168,12 @@ Làm mới lúc 0h mỗi ngày.
 ## 9. Dành cho quản trị viên
 
 - **Mở sự kiện ngay** (tab Quản trị → khung **Sự kiện**): 🐉 Gọi Cổ Long, ✨ Golden Invasion, 😈 Mở Quảng Trường Quỷ,
-  🏰 Mở Lâu Đài Máu. Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
+  🏰 Mở Lâu Đài Máu, ⚔ Mở Hỗn Chiến Thành (cho vào 5 phút rồi hỗn chiến 10 phút). Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
   người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được đợt này.
 - **Đổi lịch trùm thế giới** (biến môi trường, khởi động lại server; xem `config/runtime.exs`):
   `WORLD_BOSS_FIRST_MINUTES` (lần đầu sau khởi động, mặc định 10), `WORLD_BOSS_EVERY_MINUTES` (120),
   `WORLD_BOSS_DURATION_MINUTES` (30), `WORLD_BOSS_HP` (20.000).
 - **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `devil_square`, `blood_castle`,
   `events`, `daily`, `arena`, `pk`…) rồi khởi động lại; lễ hội thêm / sửa ở `priv/game_data/events.json`.
-- **Tặng vé:** tab Quản trị → Đồ thường → `ds_ticket` (Vé Quảng Trường) / `bc_ticket` (Vé Lâu Đài).
+- **Tặng vé:** tab Quản trị → Đồ thường → `ds_ticket` (Vé Quảng Trường) / `bc_ticket` (Vé Lâu Đài) /
+  `cc_ticket` (Áo Giáp Vệ Binh).

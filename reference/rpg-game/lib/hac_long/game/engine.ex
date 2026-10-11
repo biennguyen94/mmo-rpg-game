@@ -373,6 +373,8 @@ defmodule HacLong.Game.Engine do
       ds: HacLong.Game.DevilSquare.view(p),
       # Lâu Đài Máu (Phase 18 M2)
       bc: HacLong.Game.BloodCastle.view(p),
+      # Hỗn Chiến Thành (B-19)
+      cc: HacLong.ChaosCastle.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
@@ -1246,6 +1248,7 @@ defmodule HacLong.Game.Engine do
     {p, reward} = jewel_drop(p, m, reward)
     {p, reward} = ds_ticket_drop(p, m, reward)
     {p, reward} = bc_ticket_drop(p, m, reward)
+    {p, reward} = cc_ticket_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1348,6 +1351,19 @@ defmodule HacLong.Game.Engine do
 
     if c > 0 and chance(c) do
       id = HacLong.Game.BloodCastle.ticket_part()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Vé Hỗn Chiến Thành (B-19): quái thường cấp ≥ `ticket_drop.min_level` thỉnh thoảng rơi
+  defp cc_ticket_drop(p, m, reward) do
+    c = HacLong.ChaosCastle.ticket_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.ChaosCastle.ticket()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
@@ -1466,9 +1482,16 @@ defmodule HacLong.Game.Engine do
   defp boss_daily(p, _m, reward), do: {p, reward}
 
   defp lose(p) do
-    lost = floor(p.gold * @char.death_gold_loss)
+    # Hỗn Chiến Thành (B-19): gục là bị loại, không mất vàng
+    event? = (m = p[:pos] && HacLong.World.Maps.get(p.pos.map)) && m[:event] != nil
+    lost = if event?, do: 0, else: floor(p.gold * @char.death_gold_loss)
     p = %{p | gold: p.gold - lost, deaths: p.deaths + 1}
-    p = log(p, "💀 Bạn đã gục ngã... Mất #{lost} vàng. Dân làng đưa bạn về nhà trọ.", "bad")
+
+    p =
+      if event?,
+        do: log(p, "💀 Bạn đã gục ngã và bị loại khỏi sự kiện. Không mất vàng; về Làng.", "bad"),
+        else: log(p, "💀 Bạn đã gục ngã... Mất #{lost} vàng. Dân làng đưa bạn về nhà trọ.", "bad")
+
     p = %{p | hp: round(derived(p).maxHp * @char.death_hp)}
     finish(p, "lose")
   end
@@ -1989,7 +2012,7 @@ defmodule HacLong.Game.Engine do
   # ---------- Đồ đạc ----------
   def add_item(p, id, n \\ 1), do: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
 
-  defp take_item(p, id, n \\ 1) do
+  def take_item(p, id, n \\ 1) do
     inv =
       case Map.get(p.inv, id, 0) do
         have when have > n -> Map.put(p.inv, id, have - n)

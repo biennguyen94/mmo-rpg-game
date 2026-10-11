@@ -191,6 +191,12 @@ defmodule HacLong.Game.Commands do
       "bc_buy" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> BloodCastle.buy_ticket(p) end)
 
+      # Hỗn Chiến Thành (B-19): mua vé ở Người Gác Tháp (vào thành đi qua Session, act "cc_enter")
+      "cc_buy" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
+          HacLong.ChaosCastle.buy_ticket(p)
+        end)
+
       "tower_enter" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
           Tower.enter(p, int(c["floor"] || 1))
