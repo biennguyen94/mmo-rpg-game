@@ -216,7 +216,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Luật như bản gốc: 3 → 2, ♠ < ♣ < ♦ < ♥; chặt heo / chặt chồng; tới trắng (tứ quý heo, sáu đôi, sảnh rồng,
   tứ quý 3 ván đầu); mỗi lượt 20 giây (hết giờ server đánh thay); rời bàn / mất kết nối quá 20 giây giữa ván là
   bị loại (tính Bét).
-- **Cược S vàng**: cần ít nhất 10×S vàng mới được chia bài. Bét trả Nhất S (4 người: Ba trả Nhì S/2); chặt heo
+- **Cược S vàng**: cần ít nhất 2×S vàng mới được chia bài. Bét trả Nhất S (4 người: Ba trả Nhì S/2); chặt heo
   đen 1×S, đỏ 2×S (chặt chồng nhân lên); thối heo khi về chót; tới trắng mỗi người trả 2×S. Thiếu vàng thì trả
   tối đa số đang có.
 - Ném 🍅 1 · 🥚 2 · 🩴 3 · 🌹 5 vàng vào ghế người khác (bấm vào ghế); biểu cảm, chat bàn, câu nhanh; 😮‍💨 thổi bài

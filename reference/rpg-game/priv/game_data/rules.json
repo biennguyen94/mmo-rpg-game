@@ -816,7 +816,9 @@
     },
     "tienlen": {
       "max_rooms": 50,
-      "stake_max": 100000
+      "stake_max": 100000,
+      "_min_balance_doc": "Cược S: cần ít nhất min_balance_mult × S vàng mới được chia bài (anh chốt 2×, trước 10×).",
+      "min_balance_mult": 2
     }
   }
 }

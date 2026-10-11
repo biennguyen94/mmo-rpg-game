@@ -78,6 +78,9 @@
   const SKIP = 'script,style,textarea,input,select,.chat-line:not(.system),[data-notr]';
   const ATTRS = ['placeholder', 'title', 'aria-label'];
   const skip = (el) => !el || (el.closest && el.closest(SKIP));
+  // chữ gợi ý / chú thích của ô nhập vẫn dịch (SKIP chặn `input` chỉ để không đụng giá trị người gõ)
+  const SKIP_ATTR = 'script,style,.chat-line:not(.system),[data-notr]';
+  const skipAttr = (el) => !el || (el.closest && el.closest(SKIP_ATTR));
   function text(n) {
     const v = n.nodeValue;
     if (!v || n.__hl === v || skip(n.parentElement)) return;
@@ -93,9 +96,10 @@
   }
   function walk(node) {
     if (node.nodeType === 3) return text(node);
-    if (node.nodeType !== 1 || skip(node)) return;
+    if (node.nodeType !== 1) return;
+    if (skip(node)) { if (!skipAttr(node)) attrs(node); return; }
     attrs(node);
-    node.querySelectorAll('[placeholder],[title],[aria-label]').forEach((el) => { if (!skip(el)) attrs(el); });
+    node.querySelectorAll('[placeholder],[title],[aria-label]').forEach((el) => { if (!skipAttr(el)) attrs(el); });
     const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     for (let t = w.nextNode(); t; t = w.nextNode()) text(t);
   }

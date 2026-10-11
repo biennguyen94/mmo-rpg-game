@@ -174,7 +174,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - ADAPT `RoomServer`: số phòng tối đa `RULES.tienlen.max_rooms`; module tiền / ghi ván cắm từ cấu hình `:tienlen_economy`, `:tienlen_recorder`; bỏ lì xì Tết; khớp `HacLong.RateLimit`.
   - REWRITE `Chat` (biểu cảm, câu nhanh, chuẩn hóa) và `Text` (lấy từ `TienLenWeb.Text`, "coin" → "vàng").
 - **P17-2** Tiền là **vàng Hắc Long** (`HacLong.TienLen.Gold`, thay `TienLen.Economy`):
-  - Cách trả giữ nguyên luật T20–T25: cược S, cần ≥ 10×S vàng để được chia bài; tiền hạng, chặt heo / chặt chồng, thối heo, tới trắng; thiếu vàng thì trả tối đa số đang có, chia theo tỉ lệ.
+  - Cách trả giữ nguyên luật T20–T25: cược S, cần ≥ 10×S vàng để được chia bài (từ 2026-10-11: 2×S, `RULES.tienlen.min_balance_mult`); tiền hạng, chặt heo / chặt chồng, thối heo, tới trắng; thiếu vàng thì trả tối đa số đang có, chia theo tỉ lệ.
   - Mọi lần trả giữ Session của người liên quan (theo thứ tự id) rồi ghi nhân vật + khóa trả (`tienlen_settlements`) trong một transaction, nhật ký vàng lý do `TIENLEN`.
   - Ném đồ trừ vàng, lý do `TIENLEN_THROW`.
   - Không có thưởng ngày / cứu trợ / chuyển xu riêng.

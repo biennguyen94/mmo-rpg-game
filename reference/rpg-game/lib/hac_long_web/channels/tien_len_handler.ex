@@ -60,7 +60,8 @@ defmodule HacLongWeb.TienLenHandler do
        throws: Throws.items(),
        types: Text.types(),
        instants: Text.instants(),
-       stake_max: HacLong.Game.Data.rules().tienlen.stake_max
+       stake_max: HacLong.Game.Data.rules().tienlen.stake_max,
+       min_balance_mult: HacLong.Game.Data.rules().tienlen.min_balance_mult
      }, socket}
   end
 
