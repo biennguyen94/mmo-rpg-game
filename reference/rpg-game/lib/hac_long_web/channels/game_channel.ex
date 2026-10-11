@@ -792,7 +792,22 @@ defmodule HacLongWeb.GameChannel do
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
+  # Quảng Trường Quỷ / Lâu Đài Máu mở ngay một đợt ngoài lịch, báo cả server
+  defp admin("open_ds", _p, _s), do: open_event(HacLong.Game.DevilSquare, "😈 Quảng Trường Quỷ")
+  defp admin("open_bc", _p, _s), do: open_event(HacLong.Game.BloodCastle, "🏰 Lâu Đài Máu")
+
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
+
+  defp open_event(mod, name) do
+    w = mod.open_now()
+    mins = div(w.closes_at - w.opens_at, 60)
+
+    HacLong.Chat.system(
+      "#{name} mở ngay (quản trị viên): vào trong #{mins} phút ở Người Gác Tháp, cấp từ #{mod.rules().min_level}, cần vé."
+    )
+
+    {:ok, %{msg: "Đã mở #{name} trong #{mins} phút.", window: w}}
+  end
 
   # `minutes`: số phút, hoặc nil/0 là vĩnh viễn
   defp punish("mute", id, p), do: Moderation.mute(id, minutes(p))

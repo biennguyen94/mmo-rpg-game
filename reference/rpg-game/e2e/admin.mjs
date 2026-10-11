@@ -77,6 +77,20 @@ await page.click(`${gg} button[type="submit"]`);
 await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
 const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
 R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
+// sự kiện mở ngay: Quảng Trường Quỷ / Lâu Đài Máu (người chơi thấy đang mở, chat có thông báo)
+for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['open_bc', 'bc', 'Lâu Đài Máu']]) {
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click(`[data-adm="${op}"]`);
+  await page.waitForTimeout(800);
+  // tải lại trang người chơi để lấy view mới (chat cũng nạp lại lịch sử)
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view[key];
+  const said = await X.page.evaluate((n) => document.body.textContent.includes(n + ' mở ngay'), name);
+  R.check(`quản trị mở ngay ${name}: người chơi thấy đang mở, chat báo`, !!v && v.open === true && said, JSON.stringify(v && { open: v.open }));
+}
+
 // danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
 const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
 R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);

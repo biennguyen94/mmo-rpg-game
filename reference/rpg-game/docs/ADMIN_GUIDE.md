@@ -60,7 +60,7 @@ Thứ tự các khối trong tab:
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
 5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (kèm 0–4 dòng cộng thêm +4 mỗi dòng, +0…+11, ×1…10) vào hộp thư mọi nhân vật; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
-6. **Trùm thế giới** (admin): gọi Cổ Long xuất hiện ngay.
+6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`.
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 

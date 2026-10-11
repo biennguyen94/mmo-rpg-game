@@ -146,7 +146,9 @@ Làm mới lúc 0h mỗi ngày.
 
 ## 9. Dành cho quản trị viên
 
-- **Gọi trùm thế giới ngay:** tab Quản trị → **Trùm thế giới**.
+- **Mở sự kiện ngay** (tab Quản trị → khung **Sự kiện**): 🐉 Gọi Cổ Long, ✨ Golden Invasion, 😈 Mở Quảng Trường Quỷ,
+  🏰 Mở Lâu Đài Máu. Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
+  người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được đợt này.
 - **Đổi lịch trùm thế giới** (biến môi trường, khởi động lại server; xem `config/runtime.exs`):
   `WORLD_BOSS_FIRST_MINUTES` (lần đầu sau khởi động, mặc định 10), `WORLD_BOSS_EVERY_MINUTES` (120),
   `WORLD_BOSS_DURATION_MINUTES` (30), `WORLD_BOSS_HP` (20.000).

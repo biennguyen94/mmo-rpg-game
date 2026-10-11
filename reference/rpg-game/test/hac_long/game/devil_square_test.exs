@@ -134,4 +134,22 @@ defmodule HacLong.Game.DevilSquareTest do
     assert DevilSquare.ticket_chance(%{level: 40, tower: true}) == 0
     assert DevilSquare.ticket_chance(%{level: 40, pvp: true}) == 0
   end
+
+  test "quản trị viên mở ngay ngoài lịch: cho vào entry_minutes phút, đợt riêng (đã vào đợt thường vẫn vào được)" do
+    on_exit(fn -> :persistent_term.erase({DevilSquare, :forced}) end)
+    r = DevilSquare.rules()
+    # giữa hai đợt thường: đang đóng
+    closed = DateTime.add(vn(12, 0), 40 * 60)
+    refute DevilSquare.open?(closed)
+
+    w = DevilSquare.open_now(closed)
+    assert w.slot < 0 and w.closes_at - w.opens_at == r.entry_minutes * 60
+    assert DevilSquare.open?(closed)
+    assert DevilSquare.open?(DateTime.add(closed, r.entry_minutes * 60 - 1))
+    refute DevilSquare.open?(DateTime.add(closed, r.entry_minutes * 60))
+
+    # người đã vào đợt thường hôm nay vẫn vào được đợt mở ngay
+    p = Map.put(player(), :daily, %{ds_slot: 123})
+    assert DevilSquare.view(p, closed).open and not DevilSquare.view(p, closed).used
+  end
 end
