@@ -47,8 +47,11 @@ for (let i = 0; i < 20; i++) {
   if (!p.tower || p.tower.bc.done || !p.tower.monsters.length) break;
   seen.add(p.tower.bc.stage);
   if (p.hp < p.maxHp / 2) await admin('heal', P.name, {});
-  const m = p.tower.monsters[0];
-  await walkTo(page, m.x, m.y);
+  // con gần cửa có thể bị con khác / tường chắn đường: không vào trận được thì thử con khác
+  for (const m of p.tower.monsters) {
+    await walkTo(page, m.x, m.y);
+    if ((await player(page)).battle) break;
+  }
   if ((await player(page)).battle) {
     await fight(page);
     await act(page, 'leave').catch(() => null);
