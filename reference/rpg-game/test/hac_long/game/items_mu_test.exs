@@ -120,4 +120,27 @@ defmodule HacLong.Game.ItemsMuTest do
              boots: "item_11_2"
            }
   end
+
+  test "mọi vũ khí / giáp / khiên đều có hình trên nhân vật (bậc cao mượn hình bậc cao nhất của đồ cũ)" do
+    items = Data.items() |> then(&if(is_map(&1), do: Map.values(&1), else: &1))
+
+    missing =
+      for it <- items,
+          it[:slot] in ~w(weapon armor shield),
+          !it[:legacy],
+          !is_binary(it[:doll]),
+          do: it.name
+
+    assert missing == []
+
+    p = %{elem(Engine.new_player("Thử", "dk"), 1) | level: 50}
+
+    {id, armor} =
+      Enum.find(Data.items(), fn {_, it} ->
+        it[:slot] == "armor" and it[:tier] == 8 and "dk" in (it[:classes] || [])
+      end)
+
+    assert armor[:doll] == "body/bplate_metal1"
+    assert Engine.look(%{p | equip: %{p.equip | armor: id}}).armor == "body/bplate_metal1"
+  end
 end

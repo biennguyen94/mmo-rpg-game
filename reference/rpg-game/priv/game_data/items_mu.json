@@ -514,6 +514,8 @@
       },
       "price": 15000,
       "ref": "1/8",
+      "icon": "war-axe",
+      "doll": "hand1/axe_double",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -536,6 +538,7 @@
       },
       "price": 15000,
       "ref": "5/7",
+      "icon": "war-axe",
       "doll": "hand1/staff",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
@@ -559,6 +562,7 @@
       },
       "price": 15000,
       "ref": "4/13",
+      "icon": "war-axe",
       "doll": "hand1/crossbow",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
@@ -1574,6 +1578,8 @@
       "price": 2341,
       "set": "Hắc Long",
       "ref": "8/16",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1595,6 +1601,8 @@
       "price": 2000,
       "set": "Đại Linh Hồn",
       "ref": "8/18",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1616,6 +1624,8 @@
       "price": 1966,
       "set": "Thần Thánh",
       "ref": "8/19",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1638,6 +1648,8 @@
       "price": 4253,
       "set": "Phượng Hoàng Đen",
       "ref": "8/17",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1659,6 +1671,8 @@
       "price": 3844,
       "set": "Hồn Bóng Tối",
       "ref": "8/22",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1680,6 +1694,8 @@
       "price": 3877,
       "set": "Linh Hồn Đỏ",
       "ref": "8/24",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false

@@ -38,10 +38,12 @@ defmodule HacLong.Game.ItemBuild do
   end
 
   # Icon / hình trên nhân vật tạm (tới khi có hình gốc theo `ref`, `mix hac_long.icons`): vũ khí, giáp,
-  # khiên lấy của món cũ cùng bậc (`legacy`); mũ / quần / găng / giày lấy `icons.<ô>`.
+  # khiên lấy của món cũ cùng bậc (`legacy`); bậc cao hơn danh sách đồ cũ (giáp bậc 7–8, vũ khí bậc 8) mượn
+  # món cũ bậc cao nhất, để nhân vật không hiện trống. Mũ / quần / găng / giày lấy `icons.<ô>`.
   defp look(it, pick, legacy_defs) do
     kind = if it["slot"] in ~w(weapon armor shield), do: it["slot"]
-    old = kind && legacy_defs[Enum.at(get_in(pick, ["legacy", kind]) || [], it["tier"] - 1)]
+    olds = (kind && get_in(pick, ["legacy", kind])) || []
+    old = olds != [] && legacy_defs[Enum.at(olds, min(it["tier"], length(olds)) - 1)]
 
     cond do
       # `doll` ghi riêng ở món (cung, nỏ, gậy) thắng hình mượn của đồ cũ

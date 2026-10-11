@@ -234,3 +234,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   anh chọn) mới đi luyện tiếp. Trước đây bot dịch chuyển về chỗ cũ chỉ sau ~4 giây nên trông như không chết. Người chơi
   thật không đổi gì (đồ sát người chơi đã về Nhà, rời bản đồ đúng). Bot nhận ra mình vừa gục qua số lần chết (`deaths`)
   tăng; khởi động lại server thì không nghỉ (chấp nhận).
+- **B-2** Hình nhân vật: giáp bậc 7–8 và vũ khí bậc 8 (Rìu Lưỡi Liềm) chưa có hình đồ cũ cùng bậc nên trước đây nhân vật hiện
+  không giáp / tay không. `ItemBuild.look/3` cho bậc cao hơn danh sách `ITEM_PICK.legacy` mượn món cũ bậc cao nhất (giáp tấm,
+  rìu đôi). Mũ / quần / găng / giày vẫn chưa vẽ lên nhân vật (cần thêm hình CC0, chưa làm).
