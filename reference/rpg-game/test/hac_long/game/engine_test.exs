@@ -224,7 +224,7 @@ defmodule HacLong.Game.EngineTest do
 
     {%{ok: true}, p} = p |> Engine.add_item("dragon_scale") |> Engine.upgrade("weapon")
     # +6 trở lên cần ngọc
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Phúc Lành 0/1."}, _} =
+    assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Ước Nguyện 0/1."}, _} =
              Engine.upgrade(p, "weapon")
 
     assert Engine.view(p).bonus == %{club => 5}

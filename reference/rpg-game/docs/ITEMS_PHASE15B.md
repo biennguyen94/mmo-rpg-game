@@ -206,7 +206,7 @@ Anh chốt 2026-10-10: làm cả cánh cấp 3 và dòng phụ ngẫu nhiên (ph
 
 - Chỉ số (đổi trong `items.json`): cấp 45, phòng thủ 22, sát thương +25 %, nhận sát thương −25 % (cấp 2: 12 / 18 % / 18 %);
   mỗi cấp nâng vẫn +2 % (`combat.wing_per_level`).
-- Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên +
+- Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên +
   3 Sinh Mệnh + 500 000 vàng; tỉ lệ 15 %, +5 % mỗi cấp trên +9, tối đa 50 %. Thất bại mất hết (như cánh cấp 1, 2).
   Từ Phase 18 M2 cần thêm 1 **Lông Vũ Kền Kền** (thưởng thắng Lâu Đài Máu, `docs/EVENTS_PHASE18.md` §M2).
 - Hình trên nhân vật: vẽ bằng code (`doll.js`), cấp 3 to nhất, có viền sáng.
@@ -243,7 +243,7 @@ giữ nguyên uid, cấp nâng và các dòng cũ; thất bại mất món, nguy
 | id | Tên | Nhận | Nguyên liệu | Tỉ lệ | Kết quả |
 |---|---|---|---|---|---|
 | `add_exc` | Pha Excellent | vũ khí, khiên, bộ giáp, nhẫn, dây chuyền **+5** trở lên, chưa đủ 3 dòng | 1 Hỗn Nguyên + 2 Sinh Mệnh + 100 000 vàng | 30 %, +5 %/cấp trên +5, tối đa 60 % | thêm 1 dòng Excellent chưa có (ngẫu nhiên đều) |
-| `add_luck` | Pha May mắn | như trên, **+3** trở lên, chưa có May mắn | 1 Hỗn Nguyên + 3 Phúc Lành + 50 000 vàng | 50 %, +5 %/cấp trên +3, tối đa 75 % | thêm May mắn |
+| `add_luck` | Pha May mắn | như trên, **+3** trở lên, chưa có May mắn | 1 Hỗn Nguyên + 3 Ước Nguyện + 50 000 vàng | 50 %, +5 %/cấp trên +3, tối đa 75 % | thêm May mắn |
 
 - Đổi số trong `chaos.json` (`items`, `gold`, `rate`, `per_up`, `max_rate`, `gear.slots`, `gear.min_up`).
 - Code: `Chaos.transform/4`, `Gear.add_exc_line/1`, `Gear.exc_pool/1`. Giao diện máy tự lọc món còn thêm được dòng.

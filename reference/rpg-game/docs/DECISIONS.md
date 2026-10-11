@@ -106,7 +106,7 @@
 |---|---|---|
 | P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
 | P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
-| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
+| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Ước Nguyện = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
 
 ## Phase 11 (2026-10-09)
 - **P11-1** Sáng / Tối / Tự động chỉ đổi độ tối khi vẽ bản đồ (lưu `hl-theme` ở trình duyệt); luật ngày đêm (quái hiếm ban đêm) vẫn theo giờ server, biểu tượng giờ trên bản đồ vẫn là giờ thật.
@@ -187,7 +187,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-4** (theo yêu cầu, 2026-10-10) **Bỏ khóa vùng bằng trùm.** Vùng `zi` mở khi cấp nhân vật ≥ cấp quái thấp nhất của vùng (`Engine.zone_level/1`): cổng, đá dịch chuyển, chọn bản đồ, đánh quái, việc hằng ngày, nhiệm vụ, bot đều theo đó. Trùm thành thử thách có thưởng (`RULES.boss_rewards`):
   - hạ lần đầu: chắc chắn một món đồ Hiếm (75%) / Sử Thi (25%) **đúng lớp** cấp ≤ cấp trùm, cộng món rơi riêng cũ (Khiên Rồng, Bảo vật) nếu có;
   - thành tựu + danh hiệu "Diệt <trùm>" cho 5 trùm vùng (Hắc Long giữ "Kẻ Diệt Rồng");
-  - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Phúc Lành, vùng 4–6 +1 Ngọc Linh Hồn (ghi trong `daily.bosses`).
+  - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Ước Nguyện, vùng 4–6 +1 Ngọc Tâm Linh (ghi trong `daily.bosses`).
   - Mô phỏng 4 lớp × 5 lượt sau thay đổi: vẫn thắng 5/5, Hắc Long ở cấp ~35, số trận gần như cũ; ngọc thu được ~gấp đôi.
 - **P17-6** Mời bạn vào bàn Tiến Lên: chỉ bạn bè (dùng tin riêng sẵn có), nội dung `🃏 Mời bạn vào bàn Tiến Lên [mã] · …`; client nhận ra `[mã]` để hiện nút Vào bàn (thông báo nổi + trong khung tin riêng). Tối đa 10 lời mời / phút.
 
@@ -237,7 +237,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-2** Hình nhân vật: giáp bậc 7–8 và vũ khí bậc 8 (Rìu Lưỡi Liềm) chưa có hình đồ cũ cùng bậc nên trước đây nhân vật hiện
   không giáp / tay không. `ItemBuild.look/3` cho bậc cao hơn danh sách `ITEM_PICK.legacy` mượn món cũ bậc cao nhất (giáp tấm,
   rìu đôi). Mũ / quần / găng / giày vẫn chưa vẽ lên nhân vật (cần thêm hình CC0, chưa làm).
-- **B-3** Hình gốc MU cho món dùng hằng ngày (`ITEM_PICK.refs`): bình máu 14/1–3, bình mana 14/4–6, Ngọc Phúc Lành 14/13, Linh Hồn
+- **B-3** Hình gốc MU cho món dùng hằng ngày (`ITEM_PICK.refs`): bình máu 14/1–3, bình mana 14/4–6, Ngọc Ước Nguyện 14/13, Linh Hồn
   14/14, Sinh Mệnh 14/16, Hỗn Nguyên 12/15, Vé Quảng Trường 14/19 (Invitation of Devil Square), Vé Lâu Đài 13/18 (Invisibility
   Cloak — vé Blood Castle của MU), Lông Vũ Kền Kền 13/53 (Condor's Feathers), Quả Lộc 14/0 (Apple). Chỉ đổi hình, không đổi
   gameplay; máy chủ chưa chép hình mới thì vẫn dùng icon cũ.
@@ -250,3 +250,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Excellent `excellent.chance.normal` 4% → 10%, Thần `ancient.chance.normal` 1% → 5%. Quái thường giờ ~1/167 con ra Excellent,
   ~1/775 con ra Thần. Tinh anh / đêm / trùm giữ nguyên số; tỉ lệ trên mỗi món đã rơi của quái thường có chỗ cao hơn, nhưng tính
   trên mỗi con hạ thì tinh anh / đêm / trùm vẫn cao hơn nhiều vì rơi đồ thường xuyên hơn (50% / 25% / 35% so với 6%).
+- **B-6** (anh chốt) Tên ngọc theo bản MU Việt: Jewel of Bless = **Ngọc Ước Nguyện** (trước: Phúc Lành), Jewel of Soul =
+  **Ngọc Tâm Linh** (trước: Linh Hồn). Ngọc Sinh Mệnh (Life) và Ngọc Hỗn Nguyên (Chaos) giữ nguyên. Chỉ đổi tên hiển thị, id
+  (`jewel_bless`, `jewel_soul`) và luật ép không đổi; bộ giáp / cánh / kỹ năng tên "Linh Hồn" giữ nguyên.

@@ -19,10 +19,10 @@ trang sức 6.00 %, bộ giáp 43.00 %, khiên 13.00 %, vũ khí 38.00 %. Trùm 
 
 | Bước | Ngọc | Tỉ lệ | Có May mắn | Thất bại |
 |---|---|---|---|---|
-| +6 | Ngọc Phúc Lành | 100.00 % | 100.00 % | — |
-| +7 | Ngọc Linh Hồn | 70.00 % | 95.00 % | tụt 1 cấp |
-| +8 | Ngọc Linh Hồn | 60.00 % | 85.00 % | tụt 1 cấp |
-| +9 | Ngọc Linh Hồn | 50.00 % | 75.00 % | tụt 1 cấp |
+| +6 | Ngọc Ước Nguyện | 100.00 % | 100.00 % | — |
+| +7 | Ngọc Tâm Linh | 70.00 % | 95.00 % | tụt 1 cấp |
+| +8 | Ngọc Tâm Linh | 60.00 % | 85.00 % | tụt 1 cấp |
+| +9 | Ngọc Tâm Linh | 50.00 % | 75.00 % | tụt 1 cấp |
 | +10 | Ngọc Hỗn Nguyên | 50.00 % | 75.00 % | vỡ đồ |
 | +11 | Ngọc Hỗn Nguyên | 45.00 % | 70.00 % | vỡ đồ |
 
@@ -31,11 +31,11 @@ trang sức 6.00 %, bộ giáp 43.00 %, khiên 13.00 %, vũ khí 38.00 %. Trùm 
 | Công thức | Cần | Tỉ lệ | Cấp cần +2 | Ở +11 | Vàng | Nguyên liệu |
 |---|---|---|---|---|---|---|
 | Cánh cấp 1 (`wing1`) | +5 | 10.00 % | 20.00 % | 40.00 % | 20000 | 1 Ngọc Hỗn Nguyên |
-| Cánh cấp 2 (`wing2`) | +5 | 20.00 % | 30.00 % | 50.00 % | 200000 | 5 Ngọc Phúc Lành, 2 Ngọc Hỗn Nguyên, 5 Ngọc Linh Hồn |
-| Cánh cấp 3 (`wing3`) | +9 | 15.00 % | 25.00 % | 25.00 % | 500000 | 1 Lông Vũ Kền Kền, 10 Ngọc Phúc Lành, 3 Ngọc Hỗn Nguyên, 3 Ngọc Sinh Mệnh, 10 Ngọc Linh Hồn |
+| Cánh cấp 2 (`wing2`) | +5 | 20.00 % | 30.00 % | 50.00 % | 200000 | 5 Ngọc Ước Nguyện, 2 Ngọc Hỗn Nguyên, 5 Ngọc Tâm Linh |
+| Cánh cấp 3 (`wing3`) | +9 | 15.00 % | 25.00 % | 25.00 % | 500000 | 1 Lông Vũ Kền Kền, 10 Ngọc Ước Nguyện, 3 Ngọc Hỗn Nguyên, 3 Ngọc Sinh Mệnh, 10 Ngọc Tâm Linh |
 | Ngọc Hỗn Nguyên (`make_chaos`) | — | 70.00 % | 70.00 % | 70.00 % | 5000 | 1 Vảy Cổ Long, 10 Quặng Mithril |
 | Pha Excellent (`add_exc`) | +5 | 30.00 % | 40.00 % | 60.00 % | 100000 | 1 Ngọc Hỗn Nguyên, 2 Ngọc Sinh Mệnh |
-| Pha May mắn (`add_luck`) | +3 | 50.00 % | 60.00 % | 75.00 % | 50000 | 3 Ngọc Phúc Lành, 1 Ngọc Hỗn Nguyên |
+| Pha May mắn (`add_luck`) | +3 | 50.00 % | 60.00 % | 75.00 % | 50000 | 3 Ngọc Ước Nguyện, 1 Ngọc Hỗn Nguyên |
 
 ## 4. Simulator (chơi từ đầu tới Hắc Long)
 

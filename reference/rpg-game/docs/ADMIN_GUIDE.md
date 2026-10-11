@@ -248,7 +248,7 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 
 Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json` (`CHAOS`), `items.json` (các món `jewel_*`, `wing_*`), `rules.json` (`RULES.upgrade`: giá, % cộng mỗi cấp); sửa xong phải build lại.
 
-- **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Phúc Lành (100 %); +7 / +8 / +9 bằng Ngọc Linh Hồn
+- **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Ước Nguyện (100 %); +7 / +8 / +9 bằng Ngọc Tâm Linh
   (70 / 60 / 50 %, thất bại tụt 1 cấp); +10 / +11 bằng Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**: vũ khí về Gậy Gỗ,
   giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +7 thì báo cả server.
 - **Ngọc rơi:** quái cấp ≥ 12 (0,6 %), trùm vùng (30 %; trùm trong tháp tính như quái thường), top 3 trùm thế giới

@@ -70,8 +70,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 - **Vùng mở theo cấp**: cấp nhân vật ≥ cấp quái thấp nhất của vùng là vào và đánh được, không cần hạ trùm trước.
 - **Trùm vùng là thử thách có thưởng**: hạ lần đầu chắc chắn rơi một món đồ **Hiếm / Sử Thi đúng lớp** và nhận danh hiệu
-  **Diệt <tên trùm>** (chọn ở tab Thành tựu); mỗi ngày lần đầu hạ một trùm được thêm ngọc (vùng 1–3: Ngọc Phúc Lành,
-  vùng 4–6: Ngọc Linh Hồn). Hạ Hắc Long vẫn là đích cuối, lên bảng **Diệt rồng**.
+  **Diệt <tên trùm>** (chọn ở tab Thành tựu); mỗi ngày lần đầu hạ một trùm được thêm ngọc (vùng 1–3: Ngọc Ước Nguyện,
+  vùng 4–6: Ngọc Tâm Linh). Hạ Hắc Long vẫn là đích cuối, lên bảng **Diệt rồng**.
 - Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
 - Gặp trùm là vào trận ngay như quái thường.
 - **50 bản đồ phụ** (cấp quái 1–50, 10 nhóm: Đồng Cỏ Xanh, Rừng Thưa, Gò Kiến Đỏ, Đầm Sương, Cao Nguyên Tuyết, Thung Lũng U Linh, Mộ Cổ Hoang, Lò Nguyên Tố, Đỉnh Khổng Lồ, Vực Quỷ): vào bằng cổng xanh ở mép phải Rừng Mê 1, Rừng Mê 2, Trại Goblin 1–2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1–2, Đầm Lầy Rồng 2, Hang Hắc Long 1–2; mỗi nhóm 5 bản đồ nối tiếp nhau.
@@ -132,7 +132,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 - **Thợ Rèn** (Làng), thẻ "Ép đồ": ép đồ đang mặc, hoặc đồ trong túi đã chọn bằng nút Ép.
   - +1 → +5: quặng (Quặng Sắt cho đồ dưới cấp 17, Mithril cho đồ cao hơn), luôn thành công.
-  - +6: Ngọc Phúc Lành (100 %). +7 / +8 / +9: Ngọc Linh Hồn (70 / 60 / 50 %, thất bại tụt 1 cấp).
+  - +6: Ngọc Ước Nguyện (100 %). +7 / +8 / +9: Ngọc Tâm Linh (70 / 60 / 50 %, thất bại tụt 1 cấp).
     +10 / +11: Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**, game hỏi lại trước khi ép).
   - Ngọc và vàng mất cả khi thất bại. Ép thành công từ +7 được báo cả server.
 - **Ngọc Sinh Mệnh** 💚: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; tỉ lệ 50 %,

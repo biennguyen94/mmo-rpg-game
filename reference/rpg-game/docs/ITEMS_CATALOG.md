@@ -115,8 +115,8 @@ Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm 2% sát thương và h
 | Cấp | Tên theo lớp | Cấp đeo | Thủ | Sát thương | Nhận vào | Dòng phụ | Cách ghép |
 |---|---|---|---|---|---|---|---|
 | 1 | Cánh Ác Quỷ (Kiếm Sĩ), Cánh Thiên Đường (Phù Thủy), Cánh Tiên (Tiên Nữ), Cánh Bóng Tối (Đấu Sĩ) | 20 | 6 | +10% | −10% | — | 1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 đúng lớp nhân vật. 20.000 vàng, 10% |
-| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Phúc Lành + 5 Linh Hồn + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp. 200.000 vàng, 20% |
-| 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp. 500.000 vàng, 15% |
+| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp. 200.000 vàng, 20% |
+| 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp. 500.000 vàng, 15% |
 
 ## Ép +N (Thợ Rèn)
 
@@ -129,10 +129,10 @@ Mỗi cấp cộng 8% chỉ số gốc của món (ít nhất +1). Từ +10 mỗ
 | +3 | vàng + 3 quặng | 100% | — | 3 |
 | +4 | vàng + 4 quặng | 100% | — | 4 |
 | +5 | vàng + 5 quặng + 1 Vảy Cổ Long | 100% | — | 5 |
-| +6 | vàng + 1 Ngọc Phúc Lành | 100% | — | 6 |
-| +7 | vàng + 1 Ngọc Linh Hồn | 70% | tụt 1 cấp | 7 |
-| +8 | vàng + 1 Ngọc Linh Hồn | 60% | tụt 1 cấp | 8 |
-| +9 | vàng + 1 Ngọc Linh Hồn | 50% | tụt 1 cấp | 9 |
+| +6 | vàng + 1 Ngọc Ước Nguyện | 100% | — | 6 |
+| +7 | vàng + 1 Ngọc Tâm Linh | 70% | tụt 1 cấp | 7 |
+| +8 | vàng + 1 Ngọc Tâm Linh | 60% | tụt 1 cấp | 8 |
+| +9 | vàng + 1 Ngọc Tâm Linh | 50% | tụt 1 cấp | 9 |
 | +10 | vàng + 1 Ngọc Hỗn Nguyên | 50% | **vỡ đồ** | 11 |
 | +11 | vàng + 1 Ngọc Hỗn Nguyên | 45% | **vỡ đồ** | 13 |
 
@@ -215,8 +215,8 @@ Quái thường: khoảng 1/167 con ra Excellent, 1/775 con ra đồ Thần. Ng�
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Ngọc Phúc Lành** | Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương. | 1.000 |
-| **Ngọc Linh Hồn** | Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp. | 1.500 |
+| **Ngọc Ước Nguyện** | Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương. | 1.000 |
+| **Ngọc Tâm Linh** | Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp. | 1.500 |
 | **Ngọc Hỗn Nguyên** | Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên. | 1.250 |
 | **Ngọc Sinh Mệnh** | Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối. | 1.250 |
 

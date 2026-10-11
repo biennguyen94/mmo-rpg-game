@@ -359,14 +359,14 @@
       "desc": "Lộc đầu xuân. Mang tới Người Tổ Chức Hội đổi quà."
     },
     "jewel_bless": {
-      "name": "Ngọc Phúc Lành",
+      "name": "Ngọc Ước Nguyện",
       "slot": "material",
       "icon": "gem-bless",
       "price": 1000,
       "desc": "Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương."
     },
     "jewel_soul": {
-      "name": "Ngọc Linh Hồn",
+      "name": "Ngọc Tâm Linh",
       "slot": "material",
       "icon": "gem-soul",
       "price": 1500,
