@@ -273,7 +273,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 ### Golden Invasion (Phase 7)
 
-- Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → "Golden Invasion" → **Bắt đầu ngay** để chạy thử / bù.
+- Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → khung **Sự kiện** → **✨ Golden Invasion** để chạy thử / bù.
 - Chỉnh ở `rules.json` → `RULES.invasion`: `every_hours`, `minutes`, `maps` (bản đồ → số quái vàng), `strength_mult`,
   `reward_mult`, `jewel_chance`, `boss`, `boss_jewel_chance`. Build lại sau khi sửa.
 
