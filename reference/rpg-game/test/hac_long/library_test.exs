@@ -33,12 +33,22 @@ defmodule HacLong.LibraryTest do
   test "đồ theo lớp bán ở Thợ Rèn: nguồn ghi rõ lớp mua được", %{lib: lib} do
     {id, it} =
       Enum.find(Data.items(), fn {_, it} ->
-        it[:classes] not in [nil, []] and it.price > 0 and !it[:alt]
+        it[:classes] not in [nil, []] and it.price > 0 and !it[:alt] and
+          (it[:level] || 1) <= Data.rules().shop.smith_max_level
       end)
 
     x = Enum.find(lib.items, &(&1.id == id))
     names = Enum.map_join(it.classes, ", ", &Data.class(&1).name)
     assert Enum.any?(x.sources, &(&1 =~ "Bán:" and String.ends_with?(&1, "— cho " <> names)))
+  end
+
+  test "B-24: Thợ Rèn chỉ bán đồ cấp ≤ smith_max_level", %{lib: lib} do
+    max = Data.rules().shop.smith_max_level
+
+    for x <- lib.items,
+        x.slot in ~w(weapon shield helm armor pants gloves boots),
+        Enum.any?(x.sources, &String.starts_with?(&1, "Bán:")),
+        do: assert((x[:level] || 1) <= max, x.name)
   end
 
   test "bản đồ: không có Nhà riêng, có cấp quái và cổng", %{lib: lib} do

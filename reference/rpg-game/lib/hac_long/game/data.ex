@@ -269,7 +269,15 @@ defmodule HacLong.Game.Data do
     if Enum.any?(list, &legacy?/1),
       do:
         (list -- Map.keys(@legacy)) ++
-          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, !it[:alt], do: id),
+          for(
+            {id, it} <- @mu_sorted,
+            it.price > 0,
+            it.slot not in @jewelry,
+            !it[:alt],
+            # B-24: chỉ đồ cơ bản (kiểu MU), đồ cao hơn chỉ có từ quái rơi / sự kiện / chợ
+            (it[:level] || 1) <= @rules.shop.smith_max_level,
+            do: id
+          ),
       else: list
   end
 

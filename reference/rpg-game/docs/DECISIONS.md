@@ -371,5 +371,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Cùng đợt (anh chốt "ok"): **ghép vé không cần Ngọc Hỗn Nguyên nữa** (ngọc quá hiếm so với vé mua được bằng vàng):
   `ds_ticket` 2 mảnh + 12.000 vàng, `bc_ticket` 2 mảnh + 18.000 vàng (vẫn 80 %); **Áo Giáp Vệ Binh 15.000 → 5.000 vàng**
   (cấp 15 mỗi quái ≈ 36 vàng, giá cũ ≈ 420 quái).
+- **B-24** (anh chốt "như em đề xuất") **Thợ Rèn chỉ bán đồ cơ bản** (kiểu MU): đồ thường cấp ≤ 17 (`RULES.shop.smith_max_level`,
+  4 bậc đầu, 75 món thay vì 170); đồ cấp 22+ chỉ có từ quái rơi, sự kiện, rương, chợ / giao dịch. Bù lại quái thường rơi đồ
+  6 % → **8 %** (`RULES.loot.gear_chance.normal`; Bóng Đêm, trùm, tinh anh giữ nguyên). Đồ đã mua trước giữ nguyên.
 
 

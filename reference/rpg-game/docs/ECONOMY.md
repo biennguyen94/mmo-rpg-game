@@ -65,12 +65,14 @@ Mua rẻ hơn chờ rơi; bình rơi chỉ là phần thưởng thêm. Hợp lý
 
 ## Trang bị
 
-Thợ Rèn bán **170 món** trang bị thường (vũ khí, khiên, bộ giáp; không bán nhẫn, dây chuyền, cánh, đồ trùm). Đồ rơi:
-mỗi quái thường 6 % ra một món (Bóng Đêm 25 %, trùm 35 %, tinh anh 50 %), chia theo ô (vũ khí 38 %, bộ giáp 43 % chia đều 5
-món, khiên 13 %, trang sức 6 %), rồi chia đều các món hợp cấp quái **và hợp lớp mình**. Thư viện ghi khoảng cấp quái rơi từng
-món. Thêm từ thưởng Quảng Trường Quỷ, Kalima (hạ Kundun), rương.
+Thợ Rèn chỉ bán **đồ cơ bản cấp ≤ 17** (75 món: vũ khí, khiên, bộ giáp 4 bậc đầu; DECISIONS B-24, kiểu MU). Đồ cấp 22+
+chỉ có từ quái rơi, sự kiện, rương, chợ / giao dịch. Đồ rơi: mỗi quái thường 8 % ra một món (Bóng Đêm 25 %, trùm 35 %,
+tinh anh 50 %), chia theo ô (vũ khí 38 %, bộ giáp 43 % chia đều 5 món, khiên 13 %, trang sức 6 %), rồi chia đều các món
+hợp cấp quái **và hợp lớp mình**. Thư viện ghi khoảng cấp quái rơi từng món. Thêm từ thưởng Quảng Trường Quỷ, Kalima
+(hạ Kundun), rương.
 
-Ví dụ (quái ở đúng cấp món; "rơi đúng món" tính trên mọi lớp, nên với một lớp thực tế ít hơn khoảng 2–4 lần):
+Ví dụ trước B-24 (giá Thợ Rèn cũ; quái ở đúng cấp món, rơi 6 %; "rơi đúng món" tính trên mọi lớp, nên với một lớp thực tế
+ít hơn khoảng 2–4 lần). Từ B-24, các món cấp 22+ không còn bán, rơi nhanh hơn ~25 %:
 
 | Món | Cấp | Giá Thợ Rèn | Quái để mua | Quái để rơi đúng món |
 |---|---|---|---|---|
@@ -84,6 +86,5 @@ Ví dụ (quái ở đúng cấp món; "rơi đúng món" tính trên mọi lớ
 | Khiên Diệt Rồng | 27 | 7.500 | ≈ 120 | ≈ 510 |
 | Khiên Nguyên Tố | 46 | 45.000 | ≈ 430 | ≈ 510 |
 
-**Nhận xét:** đồ thường mua rẻ hơn chờ rơi đúng món rất nhiều (bộ giáp tới 20–60 lần), nên đồ rơi có giá trị ở **dòng cộng
-thêm, May mắn / Kỹ năng, Excellent, đồ Thần** (đồ bán ở Thợ Rèn không có những thứ này), không ở bản thân món đồ. Vũ khí /
-khiên cấp cao (40+) mua đắt gần ngang cày (500 quái so với 500–900), là món đáng đi cày nhất.
+**Nhận xét:** đồ cơ bản mua rẻ hơn chờ rơi nhiều, để người mới có đồ nhanh. Từ cấp 22 phải cày / săn sự kiện / mua chợ,
+nên đồ rơi (nhất là có dòng cộng thêm, Excellent, Thần) có giá trị thật và chợ có hàng để bán.

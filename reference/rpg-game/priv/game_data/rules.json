@@ -163,7 +163,7 @@
         "elite": 0.5,
         "night": 0.25,
         "boss": 0.35,
-        "normal": 0.06
+        "normal": 0.08
       },
       "_gear_weights_doc": "B-15 (kiểu MU): [số dòng cộng thêm, trọng số] của đồ rơi; mỗi dòng +RULES.upgrade.life.per_line tấn công / phòng thủ. Rương, rèn, sự kiện, trùm cũng dùng [số dòng, trọng số].",
       "gear_weights": [[0, 50], [1, 35], [2, 12], [3, 3]],
@@ -353,6 +353,8 @@
       "price_mult": 1.25
     },
     "shop": {
+      "smith_max_level": 17,
+      "_smith_doc": "B-24: Thợ Rèn chỉ bán đồ thường cấp ≤ smith_max_level (kiểu MU: cửa hàng chỉ có đồ cơ bản); đồ cao hơn chỉ có từ quái rơi, sự kiện, rương, chợ.",
       "sell_ratio": 0.4,
       "unpriced_value": 200,
       "gear_opt_value": 0.25,
