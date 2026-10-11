@@ -141,7 +141,12 @@ defmodule HacLong.Library do
     for {id, it} <- Data.items() do
       sources =
         [
-          for(mp <- maps, n <- mp.npcs, id in n.stock, do: "Bán: #{n.name} (#{mp.name})"),
+          for(
+            mp <- maps,
+            n <- mp.npcs,
+            id in n.stock,
+            do: "Bán: #{n.name} (#{mp.name})#{for_classes(it)}"
+          ),
           for(r <- Data.recipes(), r.out == id, do: "Pha chế / nấu ở #{npc_name(maps, r.npc)}"),
           for(
             q <- Data.quests(),
@@ -185,6 +190,14 @@ defmodule HacLong.Library do
       )
     end
     |> Enum.sort_by(&{&1.slot, &1[:level] || 0, &1.name})
+  end
+
+  # Thợ Rèn chỉ bán đồ cho lớp được dùng (Engine.class_ok?/2): ghi rõ lớp nào mua được
+  defp for_classes(it) do
+    case List.wrap(it[:cls]) ++ (it[:classes] || []) do
+      [] -> ""
+      cs -> " — cho " <> Enum.map_join(Enum.uniq(cs), ", ", &Data.class(&1).name)
+    end
   end
 
   defp npc_name(maps, role) do

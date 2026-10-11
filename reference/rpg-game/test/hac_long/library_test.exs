@@ -27,6 +27,18 @@ defmodule HacLong.LibraryTest do
     pot = Enum.find(lib.items, &(&1.id == "potion_s"))
     assert Enum.any?(pot.sources, &(&1 =~ "Bán:"))
     assert Enum.any?(pot.sources, &(&1 =~ "rơi"))
+    refute Enum.any?(pot.sources, &(&1 =~ "— cho"))
+  end
+
+  test "đồ theo lớp bán ở Thợ Rèn: nguồn ghi rõ lớp mua được", %{lib: lib} do
+    {id, it} =
+      Enum.find(Data.items(), fn {_, it} ->
+        it[:classes] not in [nil, []] and it.price > 0 and !it[:alt]
+      end)
+
+    x = Enum.find(lib.items, &(&1.id == id))
+    names = Enum.map_join(it.classes, ", ", &Data.class(&1).name)
+    assert Enum.any?(x.sources, &(&1 =~ "Bán:" and String.ends_with?(&1, "— cho " <> names)))
   end
 
   test "bản đồ: không có Nhà riêng, có cấp quái và cổng", %{lib: lib} do

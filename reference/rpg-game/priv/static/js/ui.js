@@ -2449,7 +2449,7 @@
       if (n.role === 'herbalist') sections.push(craftCard());
       if (n.role === 'shop') sections.push(forgeCard(), smithCard(), chestCard());
       // đồ theo lớp (Phase 15b): chỉ hiện đồ của lớp mình
-      sections.push(`<div class="card"><h3>Mua</h3><div class="list">${n.stock.filter((id) => ITEMS[id] && classOk(ITEMS[id])).map(shopRow).join('')}</div></div>`);
+      sections.push(`<div class="card"><h3>Mua</h3>${n.role === 'shop' ? `<p class="small muted">Chỉ hiện đồ lớp ${esc(CLASSES[P.cls] ? CLASSES[P.cls].name : P.cls)} mua được. Đồ lớp khác: rơi từ quái, chợ giao dịch.</p>` : ''}<div class="list">${n.stock.filter((id) => ITEMS[id] && classOk(ITEMS[id])).map(shopRow).join('')}</div></div>`);
       sections.push(sellCard());
     }
     if (n.role === 'inn') {
