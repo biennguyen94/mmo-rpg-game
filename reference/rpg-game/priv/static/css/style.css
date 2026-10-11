@@ -726,3 +726,22 @@ body.tl-on { overflow: hidden; }
 /* Phase 15h: lọc / sắp xếp ở chợ */
 .market-filter { gap: 8px; margin: 6px 0; }
 .market-filter select { flex: 1; }
+
+/* Bảng chi tiết món đồ kiểu MU: chữ giữa, tên màu theo loại, dòng cộng thêm xanh, yêu cầu thiếu đỏ, thông tin bộ */
+.itemtip.mu { text-align: center; background: rgba(6, 6, 10, 0.95); border-color: #4a4a55; width: 270px; gap: 2px; font-size: 0.85rem; }
+.itemtip.mu .btns { text-align: left; }
+.mu-name { font-weight: 700; font-size: 1rem; color: #f4f4f4; }
+.mu-name.hi { color: #ffd24d; }
+.mu-name.exc { color: #4fe36a; }
+.mu-name.anc { color: #7cfc5a; background: #173a72; margin: 0 -12px; padding: 3px 6px; }
+.mu-main { color: #f0f0f0; }
+.mu-req { color: #e6e6e6; }
+.mu-req.bad { color: #ff5a5a; }
+.mu-band { margin: 3px -12px; padding: 2px 6px; }
+.mu-band.ok { background: #1a2f55; color: #cfe0ff; }
+.mu-band.no { background: #8b1a1a; color: #fff; }
+.mu-opt { color: #7fb3ff; }
+.mu-set-h { color: #e6e6e6; margin-top: 6px; }
+.mu-set { color: #7a7a85; }
+.mu-set.on { color: #7fb3ff; }
+

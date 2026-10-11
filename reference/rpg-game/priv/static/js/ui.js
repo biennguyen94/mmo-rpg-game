@@ -2043,6 +2043,65 @@
     const el = document.getElementById('itemtip');
     if (el) el.remove();
   }
+  // Bảng chi tiết kiểu MU: tên màu theo loại đồ (thường / +7 trở lên / hoàn hảo / Thần), yêu cầu (thiếu thì đỏ kèm
+  // số thiếu), dải "Dùng cho …", dòng cộng thêm màu xanh, thông tin bộ (mức đã đạt sáng, chưa đạt xám).
+  const muOpt = (t) => `<div class="mu-opt">${t}</div>`;
+  function muTipBody(it, id, at, n) {
+    const up = upLevel(id), wearable = WEAR_KINDS.includes(it.slot);
+    const kind = it.anc ? 'anc' : it.excellent ? 'exc' : up >= 7 ? 'hi' : it.rarity ? `rar-${it.rarity}` : '';
+    const prefix = it.anc ? 'Đồ Thần ' : it.excellent ? 'Đồ hoàn hảo ' : '';
+    const h = [`<div class="mu-name ${kind}">${prefix}${esc(it.name)}${up ? ` +${up}` : ''}${it.locked ? ' 🔒' : ''}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div>`];
+    if (it.mu_name) h.push(`<div class="small muted" data-notr>${esc(it.mu_name)}</div>`);
+    // độ hiếm hiện thành dòng "Gia tăng …" bên dưới, không lặp ở dòng chỉ số chính
+    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(Object.assign({}, it, { rarity: 0 }), id);
+    if (desc) h.push(`<div class="mu-main">${desc}</div>`);
+    if (it.rarity && !it.anc && !it.excellent) h.push(`<div class="small rar-${it.rarity}">${RARITY[it.rarity]}</div>`);
+    if (wearable) {
+      if (it.level) h.push(`<div class="mu-req ${it.level > P.level ? 'bad' : ''}">Cấp yêu cầu: ${it.level}${it.level > P.level ? ` (thiếu ${it.level - P.level})` : ''}</div>`);
+      for (const [k, v] of Object.entries(it.req || {})) {
+        const have = P.stats[k] || 0;
+        h.push(`<div class="mu-req ${have < v ? 'bad' : ''}">${STAT_VI[k]} yêu cầu: ${v}${have < v ? ` (${STAT_VI[k]}: ${v - have} thiếu)` : ''}</div>`);
+      }
+      const cls = it.classes && it.classes.length ? it.classes : it.cls ? [it.cls] : [];
+      if (cls.length) h.push(`<div class="mu-band ${classOk(it) ? 'ok' : 'no'}">Dùng cho ${cls.map((c) => CLASSES[c] ? CLASSES[c].name : c).join(', ')}</div>`);
+      // độ hiếm (Hắc Long): điểm chỉ số cộng thêm
+      for (const [k, v] of Object.entries(it.bonus || {}).sort((a, b) => b[1] - a[1])) if (v) h.push(muOpt(`Gia tăng ${STAT_VI[k]} +${v}`));
+      if (it.anc) h.push(muOpt(`Gia tăng phòng thủ +${lsPct((RULES.ancient || {}).piece_def_pct || 0)}%`));
+      const r = RULES.luckSkill || {};
+      if (it.skill) h.push(muOpt(`Kỹ năng (sát thương chiêu +${lsPct(r.skill_dmg)}%)`));
+      if (it.luck) {
+        h.push(muOpt(`May mắn (tỉ lệ ép ngọc +${lsPct(r.luck_upgrade)}%)`));
+        if (it.slot === 'weapon') h.push(muOpt(`May mắn (tỉ lệ chí mạng +${lsPct(r.luck_crit)}%)`));
+      }
+      if (it.opt) h.push(muOpt(`Gia tăng ${it.slot === 'weapon' ? 'lực tấn công' : 'phòng thủ'} +${it.opt * RULES.life.per_line}`));
+      for (const l of it.exc_lines || []) h.push(muOpt((EXC_TEXT[l.id] || (() => l.id))(l.value)));
+      if (it.wopt) {
+        const v = it.wopt_value;
+        h.push(muOpt(it.wopt === 'hp' ? `Máu tối đa +${v}` : it.wopt === 'mp' ? `MP tối đa +${v}` : `Bỏ qua ${lsPct(v)}% phòng thủ đối thủ`));
+      }
+      // thông tin bộ: Bộ Thần (mức thưởng theo số món Thần cùng bộ đang mặc) hoặc bộ giáp thường (thưởng đủ bộ)
+      if (it.set) {
+        if (it.anc) {
+          const a = P.view.ancient || {}, have = a.name === it.set ? a.have : 0, need = a.name === it.set ? a.need : 0;
+          const parts = (b) => [b.atk_pct ? `tấn công +${lsPct(b.atk_pct)}%` : '', b.def_pct ? `phòng thủ +${lsPct(b.def_pct)}%` : '', b.hp ? `máu +${b.hp}` : ''].filter(Boolean).join(', ');
+          h.push(`<div class="mu-set-h">Bộ Thần ${esc(it.set)}: thông tin tính năng${have ? ` (${have}/${need})` : ''}</div>`);
+          for (const b of (RULES.ancient || {}).bonus || []) {
+            const on = b.count === 'full' ? need > 0 && have >= need : have >= b.count;
+            h.push(`<div class="mu-set ${on ? 'on' : ''}">${b.count === 'full' ? 'Đủ bộ' : `${b.count} món`}: ${parts(b)}</div>`);
+          }
+        } else {
+          const sb = P.view.setBonus || {}, mine = sb.name === it.set;
+          h.push(`<div class="mu-set-h">Bộ ${esc(it.set)} (bậc ${it.tier})${mine ? ` ${sb.have}/${sb.need}` : ''}</div>`);
+          if (it.tier >= RULES.setBonus.min_tier) h.push(`<div class="mu-set ${mine && sb.active ? 'on' : ''}">Đủ bộ: phòng thủ +${lsPct(RULES.setBonus.def_pct)}%, tấn công +${lsPct(RULES.setBonus.atk_pct)}%, máu +${RULES.setBonus.hp_per_tier * it.tier}</div>`);
+        }
+      }
+      if (!at.slot) h.push(`<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>`);
+    }
+    if (it.locked) h.push('<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>');
+    if (at.slot) h.push('<div class="small" style="color:var(--good)">Đang mặc</div>');
+    return h.join('');
+  }
+
   function showTip(at) {
     hideTip();
     const id = at.slot ? P.equip[at.slot] : at.id;
@@ -2052,7 +2111,6 @@
     const d = P.view.derived;
     const low = cantWear(it);
     const wearable = WEAR_KINDS.includes(it.slot);
-    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id);
     // khóa đồ: không bán / rao chợ / giao dịch / bỏ vào máy ghép được
     const lockBtn = wearable ? `<button class="btn" data-act="lock" data-id="${esc(id)}" data-on="${it.locked ? '0' : '1'}">${it.locked ? 'Mở khóa' : '🔒 Khóa'}</button>` : '';
     const btns = at.slot
@@ -2066,24 +2124,11 @@
     const dropBtn = !at.slot && !it.locked ? `<button class="btn danger" data-act="discard" data-id="${esc(id)}" data-n="${n}" data-name="${esc(itemName(id))}">Vứt</button>` : '';
     const el = document.createElement('div');
     el.id = 'itemtip';
-    el.className = 'itemtip';
+    el.className = 'itemtip mu';
     el.setAttribute('role', 'dialog');
     el.innerHTML = `
       <div class="big">${itemIcon(it, it.rarity, upLevel(id))}</div>
-      <b>${itemName(id)}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</b>
-      ${it.mu_name ? `<div class="small muted" data-notr>${esc(it.mu_name)}</div>` : ''}
-      ${desc ? `<div class="small">${desc}</div>` : ''}
-      ${!at.slot && wearable ? `<div class="small">${compare(it, id) || '<span class="muted">Không mạnh hơn đồ đang mặc</span>'}</div>` : ''}
-      ${it.level ? `<div class="small ${it.level > P.level ? 'bad' : 'muted'}">Cần cấp ${it.level}</div>` : ''}
-      ${wearable ? wearLines(it) : ''}
-      ${it.set ? `<div class="small muted">Thuộc bộ ${esc(it.set)} (bậc ${it.tier})</div>` : ''}
-      ${excLines(it)}
-      ${ancLine(it)}
-      ${luckSkillLines(it)}
-      ${woptLine(it)}
-      ${lifeLine(it)}
-      ${it.locked ? '<div class="small muted">🔒 Đã khóa: không bán, rao chợ, giao dịch, vứt, bỏ vào máy ghép được.</div>' : ''}
-      ${at.slot ? '<div class="small" style="color:var(--good)">Đang mặc</div>' : ''}
+      ${muTipBody(it, id, at, n)}
       <div class="btns">${btns}${forgeBtn}${dropBtn}</div>`;
     document.body.appendChild(el);
     // đặt cạnh chỗ bấm, không tràn khỏi màn hình

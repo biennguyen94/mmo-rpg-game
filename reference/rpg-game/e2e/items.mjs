@@ -32,7 +32,7 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click('[data-act="bag-tip"][data-id="item_4_5"]');
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tip = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('bảng chi tiết: tên gốc, Dùng cho Tiên Nữ, Cần Nhanh nhẹn 35 (đỏ)', tip.includes('Silver Bow') && tip.includes('Dùng cho') && !!(await E.page.$('#itemtip .bad')) && tip.includes('Nhanh nhẹn 35'), tip.slice(0, 160));
+R.check('bảng chi tiết kiểu MU: tên gốc, Dùng cho Tiên Nữ, "Nhanh nhẹn yêu cầu: 35" (đỏ, kèm số thiếu)', tip.includes('Silver Bow') && tip.includes('Dùng cho') && !!(await E.page.$('#itemtip .mu-req.bad')) && tip.includes('Nhanh nhẹn yêu cầu: 35') && tip.includes('thiếu'), tip.slice(0, 160));
 R.check('thiếu chỉ số thì nút Trang bị bị khóa', !!(await E.page.$('#itemtip [data-act="equip"][disabled]')));
 await shot(E.page, 'items-tip.png');
 const r1 = await send(E.page, { act: 'equip', id: 'item_4_5' });
@@ -75,8 +75,8 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click(`[data-act="bag-tip"][data-id="${exc && exc.uid}"]`).catch(() => null);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tipE = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('Phase 15d: dòng May mắn (chí mạng + ép ngọc) và Kỹ năng trên vũ khí', !!(await E.page.$('#itemtip .ls')) && tipE.includes('May mắn (chí mạng') && tipE.includes('Kỹ năng (sát thương chiêu'), tipE.slice(0, 300));
-R.check('đồ Excellent: tên xanh, dòng "Tăng sát thương" và "Tỉ lệ chí mạng"', !!(await E.page.$('#itemtip b .exc')) && tipE.includes('Excellent') && tipE.includes('Tăng sát thương') && tipE.includes('Tỉ lệ chí mạng'), tipE.slice(0, 200));
+R.check('Phase 15d: dòng May mắn (chí mạng + ép ngọc) và Kỹ năng trên vũ khí', !!(await E.page.$('#itemtip .mu-opt')) && tipE.includes('May mắn (tỉ lệ chí mạng') && tipE.includes('Kỹ năng (sát thương chiêu'), tipE.slice(0, 300));
+R.check('đồ Excellent: "Đồ hoàn hảo …" tên xanh, dòng "Tăng sát thương" và "Tỉ lệ chí mạng"', !!(await E.page.$('#itemtip .mu-name.exc')) && tipE.includes('Đồ hoàn hảo') && tipE.includes('Tăng sát thương') && tipE.includes('Tỉ lệ chí mạng'), tipE.slice(0, 200));
 if (icons) {
   const src = await E.page.$eval('#itemtip img.own', (e) => e.getAttribute('src')).catch(() => '');
   R.check('đồ Excellent dùng hình _e', /_e\.png/.test(src), src);
@@ -96,7 +96,7 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click(`[data-act="bag-tip"][data-id="${w3 && w3.uid}"]`).catch(() => null);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tipW = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('cánh cấp 3: tên, dòng cánh "Máu tối đa +"', !!w3 && w3.wopt === 'hp' && tipW.includes('Cánh Ảo Ảnh') && tipW.includes('Dòng cánh: Máu tối đa +'), tipW.slice(0, 200));
+R.check('cánh cấp 3: tên, dòng cánh "Máu tối đa +"', !!w3 && w3.wopt === 'hp' && tipW.includes('Cánh Ảo Ảnh') && tipW.includes('Máu tối đa +'), tipW.slice(0, 200));
 await shot(E.page, 'items-wing3.png');
 
 // đủ bộ Lụa (bậc 2): 5 món → có thưởng

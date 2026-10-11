@@ -284,3 +284,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   mới `chaos_upgrade` ở Lão Hỗn Nguyên): +10 = 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh 50 %, +11 = 1 Hỗn Nguyên + 2 Ước
   Nguyện + 2 Tâm Linh 45 %, thất bại vỡ đồ. Vàng như cũ (8 % giá × cấp lên). Đồ đã ép trước đây giữ nguyên cấp. Bỏ
   `RULES.upgrade.rare_ore_level` / `scale_step` (không còn dùng).
+- **B-14** (anh yêu cầu) **Bảng chi tiết món đồ kiểu MU** (chỉ giao diện): chữ giữa nền tối; tên màu theo loại (thường trắng, +7 trở
+  lên vàng, "Đồ hoàn hảo …" xanh lá cho Excellent, "Đồ Thần …" trên dải xanh cho đồ Thần); "Cấp / Sức mạnh … yêu cầu: N" (thiếu
+  thì đỏ kèm số thiếu); dải "Dùng cho …" (đỏ khi lớp mình không dùng được); các dòng cộng thêm màu xanh ("Gia tăng …", May mắn,
+  Kỹ năng, Ngọc Sinh Mệnh, Excellent, dòng cánh); khung thông tin bộ (Bộ Thần: các mức thưởng, mức đã đạt sáng; bộ giáp
+  thường: thưởng đủ bộ). Độ hiếm Tốt / Hiếm / Sử Thi (của Hắc Long, không có trong MU) hiện thành "Gia tăng <chỉ số> +N".
+  Client nhận thêm `RULES.ancient.bonus` để hiện mức thưởng Bộ Thần.
+
