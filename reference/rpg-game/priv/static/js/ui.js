@@ -1873,12 +1873,12 @@
   // lưới túi 8 cột tự xếp (Hắc Long không lưu vị trí ô), bấm ô xem chi tiết + nút, kéo thả để
   // mặc / tháo (chuột), thanh tóm tắt dưới cùng.
   const EQUIP_GRID = [
-    ['pendant', 'helm', null],
+    ['pendant', 'helm', 'pet'],
     ['weapon', 'armor', 'shield'],
     ['gloves', 'pants', 'boots'],
     ['ring1', 'wing', 'ring2'],
   ];
-  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền' };
+  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền', pet: 'Thú nuôi' };
   // Phase 15b: mở mũ / quần / găng / giày (đồ Item.txt); nhẫn chưa có
   const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
   // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
@@ -1951,11 +1951,23 @@
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 
+  // Ô Thú nuôi: thú đang dắt theo (hình MU nếu thú có `ref`, không thì hình thú); bấm mở Menu → Thú cưng
+  function petSlot() {
+    const pt = P.pet && petInfo(P.pet);
+    const own = pt && pt.ref && ownIcon(pt, 0);
+    const img = !pt ? '' : own ? `<img src="${own}" alt="" draggable="false" class="own">` : `<img src="${asset(pt.sprite + '.png')}" alt="" draggable="false" class="px">`;
+    return `<button class="slot pet${pt ? '' : ' empty'}" data-act="pet-slot" data-slot="pet" title="${esc(pt ? pt.name : 'Chưa dắt thú nào')}">
+        ${img}${pt ? `<span class="lvl">Lv${petLevel(pt.id).lv}</span>` : ''}
+        <span class="lbl">${SLOT_LABEL.pet}</span>
+      </button>`;
+  }
+
   function viewBag() {
     const items = bagItems();
     const cells = Math.max(BAG_MIN_CELLS, Math.ceil((items.length + 1) / BAG_COLUMNS) * BAG_COLUMNS);
     const equip = EQUIP_GRID.flat().map((slot) => {
       if (!slot) return '<span class="slot none"></span>';
+      if (slot === 'pet') return petSlot();
       const id = SLOT_OPEN.includes(slot) ? P.equip[slot] : null, it = id ? itemOf(id) : null;
       const locked = !SLOT_OPEN.includes(slot);
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
@@ -2944,6 +2956,7 @@
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
+    if (act === 'pet-slot') { goTab('menu'); menuSec = 'pets'; render(); return; }
     if (act === 'travel') { travelTo(t.dataset.to); return; }
     if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }

@@ -256,3 +256,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-7** (anh yêu cầu) Máy Hỗn Nguyên ghép cánh (`wing1`, `wing2`, `wing3`): người chơi **chọn lớp** của cánh ra (mặc định lớp
   mình) để ghép cánh lớp khác đem bán ở chợ / tặng. Lệnh `chaos` thêm trường tùy chọn `cls`; lớp không có thì dùng lớp nhân vật.
   Cánh lớp khác vẫn không mặc được (giữ luật lớp). Cánh đầu vào của `wing2` / `wing3` nhận cánh lớp nào cũng được (như cũ).
+- **B-8** (anh yêu cầu) Túi đồ: ô trống cạnh Mũ thành ô **Thú nuôi** — hiện thú đang dắt (hình thú, cấp thú), bấm mở Menu → Thú cưng
+  để chọn / đổi thú. Chỉ là giao diện (thú vẫn chọn bằng `pet_choose`, không kéo thả). Thú trong `pets.json` có thể thêm `ref`
+  ("13/80"…) để dùng hình MU riêng của anh: `mix hac_long.items.fetch --icons-from` chép cả hình của thú có `ref`. Chưa gán `ref`
+  cho thú nào vì hình thú MU (Thiên Thần, Satan, sừng Uniria / Dinorant / Fenrir, Ngựa Đen, Quạ Đen, Daemon, Tinh Linh, Rudolph,
+  Gấu Trúc) không khớp sáu thú hiện có — chờ anh chọn.
