@@ -1496,22 +1496,26 @@
   // ---------- Sổ tay quái vật ----------
   let bestiaryOpen = false;
   function viewBestiary() {
-    const all = ZONES.flatMap((z) => z.monsters.concat([z.boss]));
+    // quái 6 vùng chính (cả trùm) rồi quái bản đồ phụ, như HacLong.Game.Bestiary.species
+    const main = ZONES.flatMap((z) => z.monsters.concat([z.boss]));
+    const side = (window.GAME_DATA.SIDE_MONSTERS || []).filter((m) => !main.some((x) => x.id === m.id));
+    const all = main.concat(side);
     const count = (id) => (P.bestiary && P.bestiary[id]) || 0;
     const seen = all.filter((m) => count(m.id) > 0).length;
-    const cells = all.map((m) => {
+    const cell = (m) => {
       const n = count(m.id), stars = n >= 100 ? '★★' : n >= 25 ? '★' : '';
       return `<div class="beast ${n ? '' : 'unseen'}" title="${n ? esc(m.name) : '???'}">
         ${sprite(m.id, '', n ? m.name : '')}
         <span class="small">${n ? esc(m.name) : '???'}</span>
         <span class="small num">${n ? `${fmt(n)} con` : ''}${stars ? ` <b class="stars">${stars}</b>` : ''}</span>
       </div>`;
-    }).join('');
+    };
+    const group = (title, list) => `<h4 class="small muted">${title} · ${list.filter((m) => count(m.id) > 0).length}/${list.length}</h4><div class="bestiary">${list.map(cell).join('')}</div>`;
     return `<div class="card">
       <div class="row">${icon('open-book', 'lg')}<div class="grow"><h3>Sổ tay quái vật</h3>
         <p class="small muted">Hạ 25 con một loài: +5% sát thương lên loài đó (★), 100 con: +10% (★★), mỗi mốc kèm thưởng vàng.</p></div>
         <span class="tag gold num">${seen}/${all.length}</span></div>
-      ${bestiaryOpen ? `<div class="bestiary">${cells}</div>` : ''}
+      ${bestiaryOpen ? group('Vùng chính', main) + (side.length ? group('Bản đồ phụ', side) : '') : ''}
       <button class="btn block" data-act="bestiary-toggle">${bestiaryOpen ? 'Thu gọn' : 'Xem sổ tay'}</button>
     </div>`;
   }

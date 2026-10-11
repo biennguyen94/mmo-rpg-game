@@ -275,3 +275,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-11** (anh chốt) **Tháo được vũ khí và giáp** như mọi ô khác (trước: chỉ thay bằng món khác). Tay không thì tấn công chỉ
   tính theo chỉ số (không cộng vũ khí, ép, dòng phụ của vũ khí); không giáp thì phòng thủ chỉ còn phần chỉ số và các ô khác.
   Hình nhân vật vẽ tay không / không giáp. Client: nút Tháo và kéo vũ khí / giáp từ ô trang bị về túi.
+- **B-12** (anh yêu cầu) Sổ tay quái vật gồm cả **52 loài quái bản đồ phụ** (`SIDE_MONSTERS`), không chỉ 30 loài của 6 vùng chính
+  (trước đó hạ quái bản đồ phụ vẫn được đếm và cộng % sát thương, chỉ là sổ không hiện). Sổ chia hai nhóm: Vùng chính, Bản đồ phụ.
+  Thành tựu "Nhà Sinh Vật Học" (hạ đủ mỗi loài) giờ cần đủ 82 loài; ai đã nhận rồi vẫn giữ.

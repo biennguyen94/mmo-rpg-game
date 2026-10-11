@@ -38,4 +38,13 @@ defmodule HacLong.Game.BestiaryTest do
     assert Enum.any?(p.battle.log, &(&1.text =~ "📖 Sổ tay: đã hạ 25"))
     assert p.gold > gold + p.battle.monster.gold
   end
+
+  test "sổ tay gồm quái 6 vùng (cả trùm) và quái bản đồ phụ, không trùng" do
+    sp = Bestiary.species()
+    zones = Enum.flat_map(HacLong.Game.Data.zones(), fn z -> z.monsters ++ [z.boss] end)
+    side = HacLong.Game.Data.side_monsters()
+    assert length(sp) == length(Enum.uniq(sp))
+    assert Enum.all?(zones ++ side, &(&1.id in sp))
+    assert length(sp) > length(zones)
+  end
 end
