@@ -1,7 +1,7 @@
 // Phase 13: không vẽ người khác trên bản đồ, nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
 // (mình và người khác), máu quái đang bị đánh hiện cho người cùng bản đồ, % cộng thêm ở tab Nhân vật.
 // Chạy: node e2e/people.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, player, travel, engage, act, shot, overflowX, fight } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, player, send, travel, engage, act, shot, overflowX, fight } from './lib.mjs';
 
 const R = reporter('people');
 const browser = await launch();
@@ -43,12 +43,19 @@ await A.page.click('#tabs [data-tab="map"]');
 
 // ---------- Không vẽ người khác; máu quái đồng bộ ----------
 // quái Rừng Mê 1 thường chết sau một đòn: sang Rừng Mê 2 (quái trâu hơn) để kịp thấy máu giảm
-// đường tới cổng có thể vướng quái / trận: thử lại tới khi cả hai cùng sang (không thì A nhìn sai bản đồ)
+// đường tới cổng có thể vướng quái / trận (CI hay gặp): không tới được thì dịch chuyển bằng bảng Chọn bản đồ
+// (lệnh travel, trả phí: quản trị cộng vàng trước). Không thì A nhìn sai bản đồ.
+const { admin } = await adminSession(browser);
 for (const X of [A, B]) {
   await X.page.click('#tabs [data-tab="map"]').catch(() => null);
-  for (let k = 0; k < 3 && !(await travel(X.page, 'forest_2').catch(() => false)); k++) {
-    if ((await player(X.page)).battle) { await fight(X.page).catch(() => null); await act(X.page, 'leave').catch(() => null); }
-  }
+  if (await travel(X.page, 'forest_2').catch(() => false)) continue;
+  if ((await player(X.page)).battle) { await fight(X.page).catch(() => null); await act(X.page, 'leave').catch(() => null); }
+  // bảng Chọn bản đồ cần đủ cấp quái thấp nhất (Rừng Mê 2: cấp 2) và đủ vàng
+  if ((await player(X.page)).level < 2) await admin('set_level', X.name, { level: 2 });
+  await admin('add_gold', X.name, { amount: 1000 });
+  await X.page.waitForFunction(() => window.__hl.player().gold >= 1000 && window.__hl.player().level >= 2, null, { timeout: 5000 }).catch(() => null);
+  await send(X.page, { act: 'travel', to: 'forest_2' }).catch(() => null);
+  await X.page.waitForFunction(() => window.__hl.player().pos.map === 'forest_2', null, { timeout: 5000 }).catch(() => null);
 }
 R.check('A và B cùng sang Rừng Mê 2', (await player(A.page)).pos.map === 'forest_2' && (await player(B.page)).pos.map === 'forest_2');
 let synced = null; const why = [];
