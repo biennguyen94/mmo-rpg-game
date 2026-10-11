@@ -365,5 +365,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   tượng thủ thành / máy bắn đá, không thu thuế, Chủ Thành chỉ có danh hiệu trên thẻ + phần thưởng. **CHANGE_REASON (schema):**
   thêm bảng `castle_siege` (một dòng: `owner_guild_id`, `owner_since`, `registered`) để Chủ Thành và đăng ký còn sau khi khởi
   động lại server; không đổi bảng cũ.
+- **B-23** (anh chốt "ok sửa") **Tăng tỉ lệ rơi vé / nguyên liệu sự kiện** (đồ không quý, mua vé bằng vàng rẻ hơn cày):
+  Mắt Quỷ / Chìa Khóa Quỷ 2 % → **5 %**, Cuộn Giấy Tổng Lãnh Thiên Thần / Xương Máu 1 % → **4 %**, Áo Giáp Vệ Binh 0,5 % →
+  **2 %**, Dấu Ấn Kundun 1 % → **4 %** (≈ 40 / 50 / 50 / 125 quái cho một vé / Bản Đồ Thất Lạc). Cấp quái bắt đầu rơi giữ nguyên.
 
 
