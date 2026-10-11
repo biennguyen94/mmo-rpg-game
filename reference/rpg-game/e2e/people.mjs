@@ -43,7 +43,14 @@ await A.page.click('#tabs [data-tab="map"]');
 
 // ---------- Không vẽ người khác; máu quái đồng bộ ----------
 // quái Rừng Mê 1 thường chết sau một đòn: sang Rừng Mê 2 (quái trâu hơn) để kịp thấy máu giảm
-for (const X of [A, B]) { await X.page.click('#tabs [data-tab="map"]').catch(() => null); await travel(X.page, 'forest_2'); }
+// đường tới cổng có thể vướng quái / trận: thử lại tới khi cả hai cùng sang (không thì A nhìn sai bản đồ)
+for (const X of [A, B]) {
+  await X.page.click('#tabs [data-tab="map"]').catch(() => null);
+  for (let k = 0; k < 3 && !(await travel(X.page, 'forest_2').catch(() => false)); k++) {
+    if ((await player(X.page)).battle) { await fight(X.page).catch(() => null); await act(X.page, 'leave').catch(() => null); }
+  }
+}
+R.check('A và B cùng sang Rừng Mê 2', (await player(A.page)).pos.map === 'forest_2' && (await player(B.page)).pos.map === 'forest_2');
 let synced = null; const why = [];
 for (let i = 0; i < 4 && !synced; i++) {
   if (!(await engage(B.page, null, 30))) { why.push('engage'); continue; }
