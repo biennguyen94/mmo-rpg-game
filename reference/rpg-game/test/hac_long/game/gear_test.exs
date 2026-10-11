@@ -115,6 +115,21 @@ defmodule HacLong.Game.GearTest do
     assert Engine.derived(q) == Engine.derived(p)
   end
 
+  test "nạp nhân vật: máu / MP cũ vượt mức tối đa thì hạ về tối đa (B-15)" do
+    {:ok, user} =
+      HacLong.Accounts.register(%{
+        "username" => "maucu#{System.unique_integer([:positive])}",
+        "password" => "matkhau1"
+      })
+
+    {:ok, p} = Engine.new_player("Máu Cũ #{System.unique_integer([:positive])}", "dk")
+    d = Engine.derived(p)
+    p = Map.merge(p, %{pos: %{map: "village", x: 12, y: 14}, hp: d.maxHp + 97, mp: d.maxMp + 5})
+    Characters.save!(user.id, p)
+    q = Characters.load(user.id)
+    assert q.hp == d.maxHp and q.mp == d.maxMp
+  end
+
   test "trận đang đánh có hiệu ứng, hồi chiêu, đồ rơi vẫn lưu và nạp lại đúng" do
     {:ok, user} =
       HacLong.Accounts.register(%{

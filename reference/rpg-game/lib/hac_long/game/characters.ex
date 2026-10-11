@@ -135,9 +135,14 @@ defmodule HacLong.Game.Characters do
 
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
   # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
-  defp to_player(%Character{} = c),
-    do:
+  # Máu / MP không vượt mức tối đa (B-15: đồ cũ mất điểm chỉ số cộng thêm nên máu tối đa có thể giảm).
+  defp to_player(%Character{} = c) do
+    p =
       c |> to_map() |> HacLong.Game.Engine.migrate_items() |> HacLong.Game.Engine.split_upgrades()
+
+    d = HacLong.Game.Engine.derived(p)
+    %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)}
+  end
 
   defp to_map(c) do
     %{
