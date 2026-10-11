@@ -122,15 +122,18 @@ defmodule HacLong.Game.Data do
                {Enum.find_index(@mu_slots, &(&1 == it.slot)), it.tier, id}
              end)
   # đồ cũ → đồ mới theo lớp: `{id_cũ, lớp} => id_mới`
+  # món phụ (`alt`, Phase 19) chỉ rơi: không làm đồ thay, đồ khởi đầu, hàng bán
   @replace for {old, %{kind: kind, tier: tier}} <- @legacy,
                {id, it} <- @mu_sorted,
-               it.slot == kind and it.tier == tier,
+               it.slot == kind and it.tier == tier and !it[:alt],
                cls <- it.classes,
                into: %{},
                do: {{old, cls}, id}
   # đồ khởi đầu theo lớp: bậc 1 mọi ô trừ khiên (`%{ô => id}`)
   @starters @mu_sorted
-            |> Enum.filter(fn {_, it} -> it.tier == 1 and it.slot not in ["shield" | @jewelry] end)
+            |> Enum.filter(fn {_, it} ->
+              it.tier == 1 and it.slot not in ["shield" | @jewelry] and !it[:alt]
+            end)
             |> Enum.flat_map(fn {id, it} -> for c <- it.classes, do: {c, it.slot, id} end)
             |> Enum.group_by(&elem(&1, 0), &{String.to_atom(elem(&1, 1)), elem(&1, 2)})
             |> Map.new(fn {c, l} -> {c, Map.new(l)} end)
@@ -140,7 +143,7 @@ defmodule HacLong.Game.Data do
   @events atomize.(atomize, raw["EVENTS"])
   # cửa hàng: bỏ đồ cũ đã thay, thêm đồ mới có giá (theo ô, bậc)
   @shop (raw["SHOP"] -- Map.keys(@legacy)) ++
-          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id)
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, !it[:alt], do: id)
   @recipes atomize.(atomize, raw["RECIPES"])
            |> Enum.map(
              &Map.update!(&1, :needs, fn n ->
@@ -264,7 +267,7 @@ defmodule HacLong.Game.Data do
     if Enum.any?(list, &legacy?/1),
       do:
         (list -- Map.keys(@legacy)) ++
-          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, do: id),
+          for({id, it} <- @mu_sorted, it.price > 0, it.slot not in @jewelry, !it[:alt], do: id),
       else: list
   end
 

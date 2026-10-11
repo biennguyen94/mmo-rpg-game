@@ -10,19 +10,19 @@
     "levels": {
       "weapon": [1, 3, 7, 12, 17, 22, 27, 32],
       "set": [1, 3, 7, 12, 17, 22, 27, 32],
-      "shield": [4, 10, 17]
+      "shield": [4, 10, 17, 22, 27, 32, 37, 42]
     },
     "stats": {
       "weapon_mode": "raw",
       "staff_atk": [3, 7, 13, 21, 31, 44, 60, 78],
       "set_def": [2, 5, 10, 16, 24, 34, 46, 60],
       "set_def_mult": 1.0,
-      "shield_def": [3, 7, 12]
+      "shield_def": [3, 7, 12, 17, 23, 29, 36, 44]
     },
     "prices": {
       "weapon": [0, 60, 220, 650, 1600, 3600, 7500, 15000],
       "set": [0, 70, 260, 700, 1700, 3800, 8000, 16000],
-      "shield": [90, 450, 1500],
+      "shield": [90, 450, 1500, 3600, 7500, 12000, 20000, 32000],
       "piece_weight": "def"
     },
     "legacy": {
@@ -77,10 +77,59 @@
       ],
       "mg": "dk"
     },
+    "weapons_alt": {
+      "_doc": "Phase 19: món phụ mỗi bậc (cùng công / giá với món chính cùng bậc; chỉ rơi, không bán). Mỗi phần tử = danh sách món của bậc đó.",
+      "dk": [
+        [{ "ref": "0/1", "name": "Đoản Kiếm", "doll": "hand1/dagger" }],
+        [{ "ref": "0/0", "name": "Dao Găm Kris", "doll": "hand1/dagger" }, { "ref": "2/0", "name": "Chùy Tròn", "doll": "hand1/morningstar" }],
+        [{ "ref": "0/4", "name": "Kiếm Sát Thủ", "doll": "hand1/broadsword" }, { "ref": "2/1", "name": "Chùy Sao Mai", "doll": "hand1/morningstar" }, { "ref": "1/2", "name": "Rìu Đôi", "doll": "hand1/battleaxe" }, { "ref": "3/5", "name": "Kích Đôi" }, { "ref": "3/2", "name": "Thương Rồng" }],
+        [{ "ref": "1/3", "name": "Rìu Tomahawk", "doll": "hand1/battleaxe" }, { "ref": "0/6", "name": "Kiếm Gladius", "doll": "hand1/broadsword" }, { "ref": "2/2", "name": "Chùy Xích", "doll": "hand1/morningstar" }, { "ref": "3/6", "name": "Kích Halberd" }],
+        [{ "ref": "1/5", "name": "Rìu Chiến Binh", "doll": "hand1/battleaxe" }, { "ref": "0/8", "name": "Kiếm Xà", "doll": "hand1/heavy_sword" }, { "ref": "0/9", "name": "Kiếm Kỳ Nhông Lửa", "doll": "hand1/heavy_sword" }, { "ref": "3/3", "name": "Đinh Ba Khổng Lồ" }, { "ref": "1/6", "name": "Rìu Nikkea", "doll": "hand1/battleaxe" }, { "ref": "3/1", "name": "Giáo Dài" }],
+        [{ "ref": "2/3", "name": "Đại Chùy", "doll": "hand1/club_slant" }, { "ref": "3/7", "name": "Rìu Cán Dài" }, { "ref": "0/10", "name": "Kiếm Ánh Sáng", "doll": "hand1/heavy_sword" }, { "ref": "3/0", "name": "Giáo Ánh Sáng" }],
+        [{ "ref": "1/7", "name": "Rìu Larkan", "doll": "hand1/axe_double" }, { "ref": "3/4", "name": "Giáo Xà" }, { "ref": "0/13", "name": "Song Nhận Kiếm", "doll": "hand1/great_sword_slant" }, { "ref": "0/15", "name": "Cự Kiếm", "doll": "hand1/great_sword_slant" }],
+        [{ "ref": "0/12", "name": "Kiếm Xoắn", "doll": "hand1/great_sword_slant" }, { "ref": "3/8", "name": "Đại Lưỡi Hái" }, { "ref": "0/14", "name": "Kiếm Sấm", "doll": "hand1/great_sword_slant" }, { "ref": "3/9", "name": "Kích Balrog" }]
+      ],
+      "dw": [
+        [],
+        [],
+        [{ "ref": "5/14", "name": "Gậy Bí Ẩn", "doll": "hand1/staff" }],
+        [{ "ref": "5/15", "name": "Gậy Gió Dữ", "doll": "hand1/staff" }],
+        [],
+        [{ "ref": "5/16", "name": "Gậy Cánh Đỏ", "doll": "hand1/staff" }],
+        [],
+        [{ "ref": "5/17", "name": "Gậy Cổ Đại", "doll": "hand1/staff" }, { "ref": "5/8", "name": "Gậy Hủy Diệt", "doll": "hand1/staff" }]
+      ],
+      "elf": [
+        [],
+        [],
+        [{ "ref": "4/9", "name": "Nỏ Vàng", "doll": "hand1/crossbow" }],
+        [{ "ref": "4/10", "name": "Nỏ Arquebus", "doll": "hand1/crossbow" }],
+        [{ "ref": "4/11", "name": "Nỏ Nhẹ", "doll": "hand1/crossbow" }],
+        [{ "ref": "4/12", "name": "Nỏ Xà", "doll": "hand1/crossbow" }],
+        [],
+        [{ "ref": "4/14", "name": "Nỏ Thủy Kim", "doll": "hand1/crossbow" }, { "ref": "4/6", "name": "Cung Thiên Nhiên Hỗn Nguyên", "doll": "hand1/bow" }]
+      ],
+      "mg": "dk"
+    },
     "shields": [
       { "ref": "6/0", "name": "Khiên Nhỏ" },
       { "ref": "6/4", "name": "Khiên Tay" },
-      { "ref": "6/6", "name": "Khiên Đầu Lâu" }
+      { "ref": "6/6", "name": "Khiên Đầu Lâu" },
+      { "ref": "6/9", "name": "Khiên Thép Tấm" },
+      { "ref": "6/5", "name": "Khiên Diệt Rồng" },
+      { "ref": "6/8", "name": "Khiên Tháp" },
+      { "ref": "6/11", "name": "Khiên Xà" },
+      { "ref": "6/12", "name": "Khiên Đồng" }
+    ],
+    "shields_alt": [
+      [{ "ref": "6/1", "name": "Khiên Sừng" }],
+      [{ "ref": "6/2", "name": "Khiên Diều" }],
+      [{ "ref": "6/10", "name": "Khiên Tròn Lớn" }],
+      [{ "ref": "6/3", "name": "Khiên Tiên" }],
+      [{ "ref": "6/7", "name": "Khiên Đinh" }],
+      [{ "ref": "6/14", "name": "Khiên Huyền Thoại" }],
+      [],
+      []
     ],
     "jewelry": {
       "_doc": "Nhẫn (2 ô) và dây chuyền: chỉ rơi từ quái / rương (không bán). Chỉ số cho tay: hp (máu tối đa), def, atk. mu_name: tên gốc nhóm 13 Item.txt.",
@@ -132,6 +181,49 @@
         { "index": 24, "name": "Linh Hồn Đỏ" }
       ],
       "mg": "dk"
+    },
+    "sets_alt": {
+      "_doc": "Phase 19: bộ phụ mỗi bậc (thủ / giá theo bậc như bộ chính; chỉ rơi, không bán). Đấu Sĩ có thêm bộ riêng của MU (không mũ).",
+      "dk": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [{ "index": 25, "name": "Ánh Bạc" }],
+        [{ "index": 34, "name": "Quạ Tro" }, { "index": 26, "name": "Kim Cương" }],
+        [{ "index": 27, "name": "Thép Đen" }, { "index": 45, "name": "Titan" }, { "index": 46, "name": "Dũng Sĩ" }]
+      ],
+      "dw": [
+        [],
+        [],
+        [{ "index": 39, "name": "Bí Ẩn" }],
+        [],
+        [],
+        [{ "index": 35, "name": "Nhật Thực" }],
+        [],
+        [{ "index": 52, "name": "Diêm Vương" }]
+      ],
+      "elf": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [{ "index": 49, "name": "Thiên Sứ" }, { "index": 50, "name": "Đức Tin" }]
+      ],
+      "mg": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [{ "index": 25, "name": "Ánh Bạc" }, { "index": 15, "name": "Quạ Bão" }],
+        [{ "index": 34, "name": "Quạ Tro" }, { "index": 26, "name": "Kim Cương" }, { "index": 37, "name": "Dũng Mãnh" }],
+        [{ "index": 27, "name": "Thép Đen" }, { "index": 45, "name": "Titan" }, { "index": 46, "name": "Dũng Sĩ" }, { "index": 20, "name": "Ưng Sấm" }, { "index": 23, "name": "Cuồng Phong" }]
+      ]
     }
   }
 }

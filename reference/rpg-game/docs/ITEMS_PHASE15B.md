@@ -293,3 +293,14 @@ Nhận xét từ bản 2026-10-10 (để anh cân nhắc chỉnh, em **chưa** �
   Pha Excellent 100 000: các mục này là việc của giai đoạn sau Hắc Long (bản đồ phụ cấp 35–50), hoặc giảm `gold` trong
   `chaos.json` nếu anh muốn người chơi chạm tới sớm hơn.
 - Tiên Nữ vẫn ít vàng và chết nhiều hơn các lớp khác ở cách chơi "chỉ đánh" (như trước Phase 15).
+
+## 13. Phase 19 (2026-10-11): món phụ, khiên 8 bậc, bộ riêng Đấu Sĩ
+
+Dựng bằng `mix hac_long.items.build` từ `ITEM_PICK` (281 món, trong đó 118 món phụ):
+
+- `weapons_alt.<lớp>[bậc]`: danh sách món phụ mỗi bậc (`"mg": "dk"` dùng chung). Công / cấp / giá lấy của món chính cùng bậc
+  cùng lớp; tên, `ref` (hình), `req` lấy theo món phụ trong Item.txt; `doll` tùy chọn (hình cầm trên nhân vật).
+- `shields` 8 bậc (thủ 3, 7, 12, 17, 23, 29, 36, 44; cấp 4 → 42; giá 90 → 32 000) + `shields_alt[bậc]`.
+- `sets_alt.<lớp>[bậc]`: bộ phụ, thủ / giá theo bậc như bộ chính. Bộ chỉ của Đấu Sĩ không có mũ trong Item.txt nên không báo thiếu.
+- Món phụ mang `alt: true`: `Data` bỏ khỏi cửa hàng, đồ khởi đầu, đồ thay; `Gear.roll` vẫn bốc (2 mức cấp cao nhất ≤ cấp quái).
+- Test: `test/hac_long/game/items_alt_test.exs`.

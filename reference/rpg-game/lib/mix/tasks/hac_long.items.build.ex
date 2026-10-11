@@ -26,7 +26,7 @@ defmodule Mix.Tasks.HacLong.Items.Build do
   @out "priv/game_data/items_mu.json"
   @items "priv/game_data/items.json"
   # thứ tự khóa trong items_mu.json (dễ đọc, diff ổn định)
-  @keys ~w(name mu_name slot tier level classes atk atkMin atkMax def hp req price set ref icon doll
+  @keys ~w(name mu_name slot tier level classes atk atkMin atkMax def hp req price set ref icon doll alt
            sourceType version verified)
 
   @impl true

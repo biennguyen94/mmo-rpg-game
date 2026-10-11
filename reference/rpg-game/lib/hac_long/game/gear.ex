@@ -207,16 +207,29 @@ defmodule HacLong.Game.Gear do
 
   defp slot_bases(slot, level, cls), do: bases(slot, level, cls)
 
-  # 2 đồ gốc cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ đã
-  # thay (Phase 15b), hợp lớp `cls` (nil: lớp nào cũng được)
+  # Đồ gốc thuộc 2 mức cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ
+  # đã thay (Phase 15b), hợp lớp `cls` (nil: lớp nào cũng được). Lấy theo mức cấp chứ không theo số món để
+  # món phụ (`alt`, Phase 19) cùng bậc không đẩy bậc dưới ra khỏi danh sách rơi.
   defp bases(slot, level, cls) do
     Data.items()
     |> Enum.filter(fn {id, it} ->
       it.slot == slot and it.price > 0 and !it[:drop] and !Data.legacy?(id) and
         (it[:level] || 1) <= level and (cls == nil or HacLong.Game.Engine.class_ok?(it, cls))
     end)
-    |> Enum.sort_by(fn {_, it} -> it.level end, :desc)
-    |> Enum.take(2)
+    |> top_levels(2)
+  end
+
+  defp top_levels(items, n) do
+    keep =
+      items
+      |> Enum.map(fn {_, it} -> it.level end)
+      |> Enum.uniq()
+      |> Enum.sort(:desc)
+      |> Enum.take(n)
+
+    items
+    |> Enum.filter(fn {_, it} -> it.level in keep end)
+    |> Enum.sort_by(fn {id, it} -> {-it.level, id} end)
   end
 
   defp pick_weighted(weights) do

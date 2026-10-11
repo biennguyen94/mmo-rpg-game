@@ -241,3 +241,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   14/14, Sinh Mệnh 14/16, Hỗn Nguyên 12/15, Vé Quảng Trường 14/19 (Invitation of Devil Square), Vé Lâu Đài 13/18 (Invisibility
   Cloak — vé Blood Castle của MU), Lông Vũ Kền Kền 13/53 (Condor's Feathers), Quả Lộc 14/0 (Apple). Chỉ đổi hình, không đổi
   gameplay; máy chủ chưa chép hình mới thì vẫn dùng icon cũ.
+- **B-4** (anh chốt) Món phụ (`alt`, `ITEM_PICK.weapons_alt / shields_alt / sets_alt`): cùng công / thủ / cấp / giá với món chính
+  cùng bậc, chỉ khác tên, hình, yêu cầu chỉ số (lấy từ Item.txt). Chỉ rơi: không bán, không làm đồ khởi đầu, không làm đồ thay
+  đồ cũ. Đồ rơi lấy mọi món thuộc 2 mức cấp cao nhất (trước: 2 món) để món phụ không đẩy bậc dưới ra. Khiên 3 → 8 bậc. Đấu Sĩ
+  có bộ riêng MU (Quạ Bão, Dũng Mãnh, Ưng Sấm, Cuồng Phong) làm bộ phụ, không mũ. Đổi tên để không trùng đồ cũ: 2/0 Chùy Tròn
+  (đồ cũ có Chùy Gai), 6/7 Khiên Đinh (Khiên Gai), 1/5 Rìu Chiến Binh (Rìu Chiến).

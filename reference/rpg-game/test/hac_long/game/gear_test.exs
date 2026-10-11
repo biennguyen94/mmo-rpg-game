@@ -1,7 +1,7 @@
 defmodule HacLong.Game.GearTest do
   use HacLong.DataCase, async: true
 
-  alias HacLong.Game.{Characters, Engine, Gear, Rng}
+  alias HacLong.Game.{Characters, Data, Engine, Gear, Rng}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -16,10 +16,12 @@ defmodule HacLong.Game.GearTest do
     do: %{uid: "#KIEM", base: "item_0_5", rarity: 2, bonus: bonus}
 
   test "tạo món ngẫu nhiên theo cấp quái" do
-    # 0.1: vũ khí; 0.1: đồ gốc mạnh nhất của Kiếm Sĩ (Đao Katana, cấp 12); 0.1: Hiếm (2 dòng chỉ số)
+    # 0.1: vũ khí; 0.1: đồ gốc thuộc mức cấp cao nhất (cấp 12) của Kiếm Sĩ; 0.1: Hiếm (2 dòng chỉ số)
     Rng.put_sequence([0.1])
     g = Gear.roll(12, Gear.weights(), nil, "dk")
-    assert g.base == "item_0_3" and g.rarity == 2 and map_size(g.bonus) == 2
+    base = Data.items()[g.base]
+    assert base.slot == "weapon" and base.level == 12 and "dk" in base.classes
+    assert g.rarity == 2 and map_size(g.bonus) == 2
     # giá trị mỗi dòng: 1 + phần ngẫu nhiên tới cấp/6
     assert Enum.all?(Map.values(g.bonus), &(&1 in 1..3))
     assert String.starts_with?(g.uid, "#")

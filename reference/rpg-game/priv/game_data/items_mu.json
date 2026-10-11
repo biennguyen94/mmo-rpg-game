@@ -1,5 +1,28 @@
 {
   "ITEMS_MU": {
+    "item_0_1": {
+      "name": "Đoản Kiếm",
+      "mu_name": "Short Sword",
+      "slot": "weapon",
+      "tier": 1,
+      "level": 1,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 4,
+      "atkMin": 1,
+      "atkMax": 6,
+      "req": {},
+      "price": 0,
+      "ref": "0/1",
+      "icon": "wood-club",
+      "doll": "hand1/dagger",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_1_0": {
       "name": "Rìu Nhỏ",
       "mu_name": "Small Axe",
@@ -64,6 +87,32 @@
       "version": 1,
       "verified": false
     },
+    "item_0_0": {
+      "name": "Dao Găm Kris",
+      "mu_name": "Kris",
+      "slot": "weapon",
+      "tier": 2,
+      "level": 3,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 7,
+      "atkMin": 4,
+      "atkMax": 9,
+      "req": {
+        "agi": 14,
+        "str": 14
+      },
+      "price": 60,
+      "ref": "0/0",
+      "icon": "broad-dagger",
+      "doll": "hand1/dagger",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_1_1": {
       "name": "Rìu Tay",
       "mu_name": "Hand Axe",
@@ -84,6 +133,31 @@
       "ref": "1/1",
       "icon": "broad-dagger",
       "doll": "hand1/dagger",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_2_0": {
+      "name": "Chùy Tròn",
+      "mu_name": "Mace",
+      "slot": "weapon",
+      "tier": 2,
+      "level": 3,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 7,
+      "atkMin": 4,
+      "atkMax": 9,
+      "req": {
+        "str": 35
+      },
+      "price": 60,
+      "ref": "2/0",
+      "icon": "broad-dagger",
+      "doll": "hand1/morningstar",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -160,6 +234,159 @@
       "version": 1,
       "verified": false
     },
+    "item_0_4": {
+      "name": "Kiếm Sát Thủ",
+      "mu_name": "Sword of Assassain",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 12,
+      "atkMin": 9,
+      "atkMax": 15,
+      "req": {
+        "agi": 14,
+        "str": 21
+      },
+      "price": 220,
+      "ref": "0/4",
+      "icon": "broadsword",
+      "doll": "hand1/broadsword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_1_2": {
+      "name": "Rìu Đôi",
+      "mu_name": "Double Axe",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 12,
+      "atkMin": 9,
+      "atkMax": 15,
+      "req": {
+        "str": 31
+      },
+      "price": 220,
+      "ref": "1/2",
+      "icon": "broadsword",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_2_1": {
+      "name": "Chùy Sao Mai",
+      "mu_name": "Morning Star",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 12,
+      "atkMin": 9,
+      "atkMax": 15,
+      "req": {
+        "str": 35
+      },
+      "price": 220,
+      "ref": "2/1",
+      "icon": "broadsword",
+      "doll": "hand1/morningstar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_2": {
+      "name": "Thương Rồng",
+      "mu_name": "Dragon Lance",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 12,
+      "atkMin": 9,
+      "atkMax": 15,
+      "req": {
+        "agi": 18,
+        "str": 25
+      },
+      "price": 220,
+      "ref": "3/2",
+      "icon": "broadsword",
+      "doll": "hand1/broadsword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_5": {
+      "name": "Kích Đôi",
+      "mu_name": "Double Poleaxe",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 12,
+      "atkMin": 9,
+      "atkMax": 15,
+      "req": {
+        "agi": 18,
+        "str": 25
+      },
+      "price": 220,
+      "ref": "3/5",
+      "icon": "broadsword",
+      "doll": "hand1/broadsword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_5_14": {
+      "name": "Gậy Bí Ẩn",
+      "mu_name": "Mistery Staff",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "atk": 13,
+      "atkMin": 13,
+      "atkMax": 13,
+      "req": {
+        "agi": 5,
+        "str": 12
+      },
+      "price": 220,
+      "ref": "5/14",
+      "icon": "broadsword",
+      "doll": "hand1/staff",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_5_2": {
       "name": "Gậy Rắn",
       "mu_name": "Serpent Staff",
@@ -207,6 +434,31 @@
       "version": 1,
       "verified": false
     },
+    "item_4_9": {
+      "name": "Nỏ Vàng",
+      "mu_name": "Golden Crossbow",
+      "slot": "weapon",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "elf"
+      ],
+      "atk": 11,
+      "atkMin": 9,
+      "atkMax": 13,
+      "req": {
+        "agi": 31,
+        "str": 11
+      },
+      "price": 220,
+      "ref": "4/9",
+      "icon": "broadsword",
+      "doll": "hand1/crossbow",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_0_3": {
       "name": "Đao Katana",
       "mu_name": "Katana",
@@ -232,6 +484,133 @@
       "version": 1,
       "verified": false
     },
+    "item_0_6": {
+      "name": "Kiếm Gladius",
+      "mu_name": "Gladius",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 21,
+      "atkMin": 16,
+      "atkMax": 26,
+      "req": {
+        "str": 39
+      },
+      "price": 650,
+      "ref": "0/6",
+      "icon": "spiked-mace",
+      "doll": "hand1/broadsword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_1_3": {
+      "name": "Rìu Tomahawk",
+      "mu_name": "Tomahawk",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 21,
+      "atkMin": 16,
+      "atkMax": 26,
+      "req": {
+        "str": 35
+      },
+      "price": 650,
+      "ref": "1/3",
+      "icon": "spiked-mace",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_2_2": {
+      "name": "Chùy Xích",
+      "mu_name": "Flail",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 21,
+      "atkMin": 16,
+      "atkMax": 26,
+      "req": {
+        "agi": 18,
+        "str": 28
+      },
+      "price": 650,
+      "ref": "2/2",
+      "icon": "spiked-mace",
+      "doll": "hand1/morningstar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_6": {
+      "name": "Kích Halberd",
+      "mu_name": "Halberd",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 21,
+      "atkMin": 16,
+      "atkMax": 26,
+      "req": {
+        "agi": 18,
+        "str": 25
+      },
+      "price": 650,
+      "ref": "3/6",
+      "icon": "spiked-mace",
+      "doll": "hand1/morningstar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_5_15": {
+      "name": "Gậy Gió Dữ",
+      "mu_name": "Violent Wind Staff",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "dw"
+      ],
+      "atk": 21,
+      "atkMin": 20,
+      "atkMax": 22,
+      "req": {
+        "agi": 6,
+        "str": 12
+      },
+      "price": 650,
+      "ref": "5/15",
+      "icon": "spiked-mace",
+      "doll": "hand1/staff",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_5_3": {
       "name": "Gậy Sấm Sét",
       "mu_name": "Thunder Staff",
@@ -252,6 +631,31 @@
       "ref": "5/3",
       "icon": "spiked-mace",
       "doll": "hand1/staff",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_4_10": {
+      "name": "Nỏ Arquebus",
+      "mu_name": "Arquebus",
+      "slot": "weapon",
+      "tier": 4,
+      "level": 12,
+      "classes": [
+        "elf"
+      ],
+      "atk": 21,
+      "atkMin": 17,
+      "atkMax": 24,
+      "req": {
+        "agi": 31,
+        "str": 11
+      },
+      "price": 650,
+      "ref": "4/10",
+      "icon": "spiked-mace",
+      "doll": "hand1/crossbow",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -304,6 +708,158 @@
       "version": 1,
       "verified": false
     },
+    "item_0_8": {
+      "name": "Kiếm Xà",
+      "mu_name": "Serpent Sword",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "str": 46
+      },
+      "price": 1600,
+      "ref": "0/8",
+      "icon": "battle-axe",
+      "doll": "hand1/heavy_sword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_0_9": {
+      "name": "Kiếm Kỳ Nhông Lửa",
+      "mu_name": "Sword of Salamander",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "str": 36
+      },
+      "price": 1600,
+      "ref": "0/9",
+      "icon": "battle-axe",
+      "doll": "hand1/heavy_sword",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_1_5": {
+      "name": "Rìu Chiến Binh",
+      "mu_name": "Battle Axe",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "str": 42
+      },
+      "price": 1600,
+      "ref": "1/5",
+      "icon": "battle-axe",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_1_6": {
+      "name": "Rìu Nikkea",
+      "mu_name": "Nikkea Axe",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "str": 46
+      },
+      "price": 1600,
+      "ref": "1/6",
+      "icon": "battle-axe",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_1": {
+      "name": "Giáo Dài",
+      "mu_name": "Spear",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "agi": 18,
+        "str": 25
+      },
+      "price": 1600,
+      "ref": "3/1",
+      "icon": "battle-axe",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_3": {
+      "name": "Đinh Ba Khổng Lồ",
+      "mu_name": "Giant Trident",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 29,
+      "atkMin": 24,
+      "atkMax": 34,
+      "req": {
+        "agi": 11,
+        "str": 31
+      },
+      "price": 1600,
+      "ref": "3/3",
+      "icon": "battle-axe",
+      "doll": "hand1/battleaxe",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_5_4": {
       "name": "Gậy Xà Nữ",
       "mu_name": "Gorgon Staff",
@@ -323,6 +879,31 @@
       "ref": "5/4",
       "icon": "battle-axe",
       "doll": "hand1/staff",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_4_11": {
+      "name": "Nỏ Nhẹ",
+      "mu_name": "Light Crossbow",
+      "slot": "weapon",
+      "tier": 5,
+      "level": 17,
+      "classes": [
+        "elf"
+      ],
+      "atk": 33,
+      "atkMin": 28,
+      "atkMax": 37,
+      "req": {
+        "agi": 31,
+        "str": 11
+      },
+      "price": 1600,
+      "ref": "4/11",
+      "icon": "battle-axe",
+      "doll": "hand1/crossbow",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -347,6 +928,32 @@
       "ref": "4/3",
       "icon": "battle-axe",
       "doll": "hand1/bow",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_0_10": {
+      "name": "Kiếm Ánh Sáng",
+      "mu_name": "Light Saber",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 42,
+      "atkMin": 36,
+      "atkMax": 47,
+      "req": {
+        "agi": 21,
+        "str": 28
+      },
+      "price": 3600,
+      "ref": "0/10",
+      "icon": "two-handed-sword",
+      "doll": "hand1/heavy_sword",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -376,6 +983,108 @@
       "version": 1,
       "verified": false
     },
+    "item_2_3": {
+      "name": "Đại Chùy",
+      "mu_name": "Great Hammer",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 42,
+      "atkMin": 36,
+      "atkMax": 47,
+      "req": {
+        "str": 53
+      },
+      "price": 3600,
+      "ref": "2/3",
+      "icon": "two-handed-sword",
+      "doll": "hand1/club_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_0": {
+      "name": "Giáo Ánh Sáng",
+      "mu_name": "Light Spear",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 42,
+      "atkMin": 36,
+      "atkMax": 47,
+      "req": {
+        "agi": 25,
+        "str": 21
+      },
+      "price": 3600,
+      "ref": "3/0",
+      "icon": "two-handed-sword",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_7": {
+      "name": "Rìu Cán Dài",
+      "mu_name": "Berdysh",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 42,
+      "atkMin": 36,
+      "atkMax": 47,
+      "req": {
+        "agi": 18,
+        "str": 28
+      },
+      "price": 3600,
+      "ref": "3/7",
+      "icon": "two-handed-sword",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_5_16": {
+      "name": "Gậy Cánh Đỏ",
+      "mu_name": "Red Wing Staff",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "atk": 44,
+      "atkMin": 43,
+      "atkMax": 45,
+      "req": {
+        "agi": 5,
+        "str": 13
+      },
+      "price": 3600,
+      "ref": "5/16",
+      "icon": "two-handed-sword",
+      "doll": "hand1/staff",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_5_5": {
       "name": "Gậy Huyền Thoại",
       "mu_name": "Legendary Staff",
@@ -395,6 +1104,31 @@
       "ref": "5/5",
       "icon": "two-handed-sword",
       "doll": "hand1/staff",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_4_12": {
+      "name": "Nỏ Xà",
+      "mu_name": "Serpent Crossbow",
+      "slot": "weapon",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "elf"
+      ],
+      "atk": 47,
+      "atkMin": 42,
+      "atkMax": 52,
+      "req": {
+        "agi": 35,
+        "str": 11
+      },
+      "price": 3600,
+      "ref": "4/12",
+      "icon": "two-handed-sword",
+      "doll": "hand1/crossbow",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -447,6 +1181,108 @@
       "version": 1,
       "verified": false
     },
+    "item_0_13": {
+      "name": "Song Nhận Kiếm",
+      "mu_name": "Double Blade",
+      "slot": "weapon",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 64,
+      "atkMin": 56,
+      "atkMax": 72,
+      "req": {
+        "agi": 25,
+        "str": 25
+      },
+      "price": 7500,
+      "ref": "0/13",
+      "icon": "war-axe",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_0_15": {
+      "name": "Cự Kiếm",
+      "mu_name": "Giant Sword",
+      "slot": "weapon",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 64,
+      "atkMin": 56,
+      "atkMax": 72,
+      "req": {
+        "str": 49
+      },
+      "price": 7500,
+      "ref": "0/15",
+      "icon": "war-axe",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_1_7": {
+      "name": "Rìu Larkan",
+      "mu_name": "Larkan Axe",
+      "slot": "weapon",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 64,
+      "atkMin": 56,
+      "atkMax": 72,
+      "req": {
+        "str": 49
+      },
+      "price": 7500,
+      "ref": "1/7",
+      "icon": "war-axe",
+      "doll": "hand1/axe_double",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_4": {
+      "name": "Giáo Xà",
+      "mu_name": "Serpent Spear",
+      "slot": "weapon",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 64,
+      "atkMin": 56,
+      "atkMax": 72,
+      "req": {
+        "agi": 11,
+        "str": 31
+      },
+      "price": 7500,
+      "ref": "3/4",
+      "icon": "war-axe",
+      "doll": "hand1/axe_double",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_5_6": {
       "name": "Gậy Hồi Sinh",
       "mu_name": "Staff of Resurrection",
@@ -495,6 +1331,57 @@
       "version": 1,
       "verified": false
     },
+    "item_0_12": {
+      "name": "Kiếm Xoắn",
+      "mu_name": "Helical Sword",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 79,
+      "atkMin": 69,
+      "atkMax": 89,
+      "req": {
+        "str": 49
+      },
+      "price": 15000,
+      "ref": "0/12",
+      "icon": "war-axe",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_0_14": {
+      "name": "Kiếm Sấm",
+      "mu_name": "Lightning Sword",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 79,
+      "atkMin": 69,
+      "atkMax": 89,
+      "req": {
+        "agi": 18,
+        "str": 31
+      },
+      "price": 15000,
+      "ref": "0/14",
+      "icon": "war-axe",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_1_8": {
       "name": "Rìu Lưỡi Liềm",
       "mu_name": "Crescent Axe",
@@ -516,6 +1403,83 @@
       "ref": "1/8",
       "icon": "war-axe",
       "doll": "hand1/axe_double",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_8": {
+      "name": "Đại Lưỡi Hái",
+      "mu_name": "Great Scythe",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 79,
+      "atkMin": 69,
+      "atkMax": 89,
+      "req": {
+        "agi": 18,
+        "str": 31
+      },
+      "price": 15000,
+      "ref": "3/8",
+      "icon": "war-axe",
+      "doll": "hand1/axe_double",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_3_9": {
+      "name": "Kích Balrog",
+      "mu_name": "Bill of Balrog",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 79,
+      "atkMin": 69,
+      "atkMax": 89,
+      "req": {
+        "agi": 18,
+        "str": 28
+      },
+      "price": 15000,
+      "ref": "3/9",
+      "icon": "war-axe",
+      "doll": "hand1/axe_double",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_5_17": {
+      "name": "Gậy Cổ Đại",
+      "mu_name": "Ancient Staff",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "atk": 78,
+      "atkMin": 77,
+      "atkMax": 79,
+      "req": {
+        "agi": 7,
+        "str": 18
+      },
+      "price": 15000,
+      "ref": "5/17",
+      "icon": "war-axe",
+      "doll": "hand1/staff",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -544,6 +1508,31 @@
       "version": 1,
       "verified": false
     },
+    "item_5_8": {
+      "name": "Gậy Hủy Diệt",
+      "mu_name": "Staff of Destruction",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "atk": 78,
+      "atkMin": 77,
+      "atkMax": 79,
+      "req": {
+        "agi": 4,
+        "str": 21
+      },
+      "price": 15000,
+      "ref": "5/8",
+      "icon": "war-axe",
+      "doll": "hand1/staff",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_4_13": {
       "name": "Nỏ Cánh Lam",
       "mu_name": "Bluewing Crossbow",
@@ -564,6 +1553,56 @@
       "ref": "4/13",
       "icon": "war-axe",
       "doll": "hand1/crossbow",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_4_14": {
+      "name": "Nỏ Thủy Kim",
+      "mu_name": "Aquagold Crossbow",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "atk": 75,
+      "atkMin": 68,
+      "atkMax": 82,
+      "req": {
+        "agi": 46,
+        "str": 18
+      },
+      "price": 15000,
+      "ref": "4/14",
+      "icon": "war-axe",
+      "doll": "hand1/crossbow",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_4_6": {
+      "name": "Cung Thiên Nhiên Hỗn Nguyên",
+      "mu_name": "Chaos Nature Bow",
+      "slot": "weapon",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "atk": 75,
+      "atkMin": 68,
+      "atkMax": 82,
+      "req": {
+        "agi": 53,
+        "str": 14
+      },
+      "price": 15000,
+      "ref": "4/6",
+      "icon": "war-axe",
+      "doll": "hand1/bow",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -592,6 +1631,56 @@
       "version": 1,
       "verified": false
     },
+    "item_6_1": {
+      "name": "Khiên Sừng",
+      "mu_name": "Horn Shield",
+      "slot": "shield",
+      "tier": 1,
+      "level": 4,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 3,
+      "req": {
+        "str": 35
+      },
+      "price": 90,
+      "ref": "6/1",
+      "icon": "round-shield",
+      "doll": "hand2/buckler_round",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_2": {
+      "name": "Khiên Diều",
+      "mu_name": "Kite Shield",
+      "slot": "shield",
+      "tier": 2,
+      "level": 10,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 7,
+      "req": {
+        "str": 39
+      },
+      "price": 450,
+      "ref": "6/2",
+      "icon": "checked-shield",
+      "doll": "hand2/shield_knight_rw",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_6_4": {
       "name": "Khiên Tay",
       "mu_name": "Buckler",
@@ -616,6 +1705,31 @@
       "version": 1,
       "verified": false
     },
+    "item_6_10": {
+      "name": "Khiên Tròn Lớn",
+      "mu_name": "Large Round Shield",
+      "slot": "shield",
+      "tier": 3,
+      "level": 17,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 12,
+      "req": {
+        "str": 42
+      },
+      "price": 1500,
+      "ref": "6/10",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_6_6": {
       "name": "Khiên Đầu Lâu",
       "mu_name": "Skull Shield",
@@ -634,6 +1748,204 @@
       },
       "price": 1500,
       "ref": "6/6",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_3": {
+      "name": "Khiên Tiên",
+      "mu_name": "Elven Shield",
+      "slot": "shield",
+      "tier": 4,
+      "level": 22,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 17,
+      "req": {
+        "agi": 35,
+        "str": 11
+      },
+      "price": 3600,
+      "ref": "6/3",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_9": {
+      "name": "Khiên Thép Tấm",
+      "mu_name": "Plate Shield",
+      "slot": "shield",
+      "tier": 4,
+      "level": 22,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 17,
+      "req": {
+        "str": 42
+      },
+      "price": 3600,
+      "ref": "6/9",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_5": {
+      "name": "Khiên Diệt Rồng",
+      "mu_name": "Dragon Slayer Shield",
+      "slot": "shield",
+      "tier": 5,
+      "level": 27,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 23,
+      "req": {
+        "agi": 14,
+        "str": 35
+      },
+      "price": 7500,
+      "ref": "6/5",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_7": {
+      "name": "Khiên Đinh",
+      "mu_name": "Spiked Shield",
+      "slot": "shield",
+      "tier": 5,
+      "level": 27,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 23,
+      "req": {
+        "str": 46
+      },
+      "price": 7500,
+      "ref": "6/7",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_14": {
+      "name": "Khiên Huyền Thoại",
+      "mu_name": "Legendary Shield",
+      "slot": "shield",
+      "tier": 6,
+      "level": 32,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 29,
+      "req": {
+        "agi": 9,
+        "str": 31
+      },
+      "price": 12000,
+      "ref": "6/14",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_8": {
+      "name": "Khiên Tháp",
+      "mu_name": "Tower Shield",
+      "slot": "shield",
+      "tier": 6,
+      "level": 32,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 29,
+      "req": {
+        "str": 46
+      },
+      "price": 12000,
+      "ref": "6/8",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_11": {
+      "name": "Khiên Xà",
+      "mu_name": "Serpent Shield",
+      "slot": "shield",
+      "tier": 7,
+      "level": 37,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 36,
+      "req": {
+        "str": 46
+      },
+      "price": 20000,
+      "ref": "6/11",
+      "icon": "spiked-shield",
+      "doll": "hand2/shield_kite2",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_6_12": {
+      "name": "Khiên Đồng",
+      "mu_name": "Bronze Shield",
+      "slot": "shield",
+      "tier": 8,
+      "level": 42,
+      "classes": [
+        "dk",
+        "dw",
+        "elf",
+        "mg"
+      ],
+      "def": 44,
+      "req": {
+        "str": 49
+      },
+      "price": 32000,
+      "ref": "6/12",
       "icon": "spiked-shield",
       "doll": "hand2/shield_kite2",
       "sourceType": "MU_ITEM_TXT",
@@ -779,6 +2091,28 @@
       "set": "Vảy",
       "ref": "7/6",
       "icon": "visored-helm",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_39": {
+      "name": "Mũ Bí Ẩn",
+      "mu_name": "Mistery Helm",
+      "slot": "helm",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "def": 2,
+      "req": {
+        "str": 11
+      },
+      "price": 48,
+      "set": "Bí Ẩn",
+      "ref": "7/39",
+      "icon": "visored-helm",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -978,6 +2312,52 @@
       "version": 1,
       "verified": false
     },
+    "item_7_25": {
+      "name": "Mũ Ánh Bạc",
+      "mu_name": "Light Plate Helm",
+      "slot": "helm",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk"
+      ],
+      "def": 7,
+      "req": {
+        "agi": 7,
+        "str": 25
+      },
+      "price": 835,
+      "set": "Ánh Bạc",
+      "ref": "7/25",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_35": {
+      "name": "Mũ Nhật Thực",
+      "mu_name": "Eclipse Helm",
+      "slot": "helm",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "def": 7,
+      "req": {
+        "agi": 4,
+        "str": 19
+      },
+      "price": 789,
+      "set": "Nhật Thực",
+      "ref": "7/35",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_7_41": {
       "name": "Mũ Cổ Đại",
       "mu_name": "Ancient Helm",
@@ -1040,6 +2420,52 @@
       "set": "Hắc Long",
       "ref": "7/16",
       "icon": "visored-helm",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_26": {
+      "name": "Mũ Kim Cương",
+      "mu_name": "Adamantine Helm",
+      "slot": "helm",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 7,
+        "str": 27
+      },
+      "price": 1548,
+      "set": "Kim Cương",
+      "ref": "7/26",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_34": {
+      "name": "Mũ Quạ Tro",
+      "mu_name": "Ashcrow Helm",
+      "slot": "helm",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 18,
+        "str": 56
+      },
+      "price": 1554,
+      "set": "Quạ Tro",
+      "ref": "7/34",
+      "icon": "visored-helm",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1110,6 +2536,75 @@
       "version": 1,
       "verified": false
     },
+    "item_7_27": {
+      "name": "Mũ Thép Đen",
+      "mu_name": "Dark Steel Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk"
+      ],
+      "def": 11,
+      "req": {
+        "agi": 8,
+        "str": 29
+      },
+      "price": 2849,
+      "set": "Thép Đen",
+      "ref": "7/27",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_45": {
+      "name": "Mũ Titan",
+      "mu_name": "Titan Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk"
+      ],
+      "def": 11,
+      "req": {
+        "agi": 11,
+        "str": 78
+      },
+      "price": 3045,
+      "set": "Titan",
+      "ref": "7/45",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_46": {
+      "name": "Mũ Dũng Sĩ",
+      "mu_name": "Brave Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 57,
+        "str": 26
+      },
+      "price": 3163,
+      "set": "Dũng Sĩ",
+      "ref": "7/46",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_7_22": {
       "name": "Mũ Hồn Bóng Tối",
       "mu_name": "Dark Soul Helm",
@@ -1132,6 +2627,30 @@
       "version": 1,
       "verified": false
     },
+    "item_7_52": {
+      "name": "Mũ Diêm Vương",
+      "mu_name": "Hades Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 5,
+        "ene": 63,
+        "str": 21
+      },
+      "price": 3280,
+      "set": "Diêm Vương",
+      "ref": "7/52",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_7_24": {
       "name": "Mũ Linh Hồn Đỏ",
       "mu_name": "Red Spirit Helm",
@@ -1150,6 +2669,53 @@
       "set": "Linh Hồn Đỏ",
       "ref": "7/24",
       "icon": "visored-helm",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_49": {
+      "name": "Mũ Thiên Sứ",
+      "mu_name": "Seraphim Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 69,
+        "str": 19
+      },
+      "price": 3226,
+      "set": "Thiên Sứ",
+      "ref": "7/49",
+      "icon": "visored-helm",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_7_50": {
+      "name": "Mũ Đức Tin",
+      "mu_name": "Faith Helm",
+      "slot": "helm",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 10,
+        "ene": 48,
+        "str": 11
+      },
+      "price": 3305,
+      "set": "Đức Tin",
+      "ref": "7/50",
+      "icon": "visored-helm",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1303,6 +2869,29 @@
       "ref": "8/6",
       "icon": "chain-mail",
       "doll": "body/leather_metal",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_39": {
+      "name": "Giáp Bí Ẩn",
+      "mu_name": "Mistery Armor",
+      "slot": "armor",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "def": 3,
+      "req": {
+        "str": 14
+      },
+      "price": 81,
+      "set": "Bí Ẩn",
+      "ref": "8/39",
+      "icon": "chain-mail",
+      "doll": "body/leather_metal",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1514,6 +3103,55 @@
       "version": 1,
       "verified": false
     },
+    "item_8_25": {
+      "name": "Giáp Ánh Bạc",
+      "mu_name": "Light Plate Armor",
+      "slot": "armor",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 7,
+        "str": 25
+      },
+      "price": 1044,
+      "set": "Ánh Bạc",
+      "ref": "8/25",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_35": {
+      "name": "Giáp Nhật Thực",
+      "mu_name": "Eclipse Armor",
+      "slot": "armor",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 4,
+        "str": 19
+      },
+      "price": 968,
+      "set": "Nhật Thực",
+      "ref": "8/35",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_8_41": {
       "name": "Giáp Cổ Đại",
       "mu_name": "Ancient Armor",
@@ -1560,6 +3198,30 @@
       "version": 1,
       "verified": false
     },
+    "item_8_15": {
+      "name": "Giáp Quạ Bão",
+      "mu_name": "Storm Crow Armor",
+      "slot": "armor",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "mg"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 1393,
+      "set": "Quạ Bão",
+      "ref": "8/15",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_8_16": {
       "name": "Giáp Hắc Long",
       "mu_name": "Black Dragon Armor",
@@ -1580,6 +3242,56 @@
       "ref": "8/16",
       "icon": "breastplate",
       "doll": "body/bplate_metal1",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_26": {
+      "name": "Giáp Kim Cương",
+      "mu_name": "Adamantine Armor",
+      "slot": "armor",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 7,
+        "str": 27
+      },
+      "price": 2323,
+      "set": "Kim Cương",
+      "ref": "8/26",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_34": {
+      "name": "Giáp Quạ Tro",
+      "mu_name": "Ashcrow Armor",
+      "slot": "armor",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 14,
+      "req": {
+        "agi": 18,
+        "str": 56
+      },
+      "price": 2417,
+      "set": "Quạ Tro",
+      "ref": "8/34",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1630,6 +3342,30 @@
       "version": 1,
       "verified": false
     },
+    "item_8_37": {
+      "name": "Giáp Dũng Mãnh",
+      "mu_name": "Valiant Armor",
+      "slot": "armor",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "mg"
+      ],
+      "def": 16,
+      "req": {
+        "agi": 18,
+        "str": 54
+      },
+      "price": 2792,
+      "set": "Dũng Mãnh",
+      "ref": "8/37",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_8_17": {
       "name": "Giáp Phượng Hoàng Đen",
       "mu_name": "Dark Phoenix Armor",
@@ -1650,6 +3386,81 @@
       "ref": "8/17",
       "icon": "breastplate",
       "doll": "body/bplate_metal1",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_27": {
+      "name": "Giáp Thép Đen",
+      "mu_name": "Dark Steel Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 18,
+      "req": {
+        "agi": 8,
+        "str": 29
+      },
+      "price": 4712,
+      "set": "Thép Đen",
+      "ref": "8/27",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_45": {
+      "name": "Giáp Titan",
+      "mu_name": "Titan Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 15,
+      "req": {
+        "agi": 11,
+        "str": 78
+      },
+      "price": 3915,
+      "set": "Titan",
+      "ref": "8/45",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_46": {
+      "name": "Giáp Dũng Sĩ",
+      "mu_name": "Brave Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 14,
+      "req": {
+        "agi": 57,
+        "str": 26
+      },
+      "price": 3845,
+      "set": "Dũng Sĩ",
+      "ref": "8/46",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1677,6 +3488,31 @@
       "version": 1,
       "verified": false
     },
+    "item_8_52": {
+      "name": "Giáp Diêm Vương",
+      "mu_name": "Hades Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "def": 15,
+      "req": {
+        "agi": 5,
+        "ene": 63,
+        "str": 21
+      },
+      "price": 4000,
+      "set": "Diêm Vương",
+      "ref": "8/52",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_8_24": {
       "name": "Giáp Linh Hồn Đỏ",
       "mu_name": "Red Spirit Armor",
@@ -1696,6 +3532,103 @@
       "ref": "8/24",
       "icon": "breastplate",
       "doll": "body/bplate_metal1",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_49": {
+      "name": "Giáp Thiên Sứ",
+      "mu_name": "Seraphim Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 15,
+      "req": {
+        "agi": 69,
+        "str": 19
+      },
+      "price": 3871,
+      "set": "Thiên Sứ",
+      "ref": "8/49",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_50": {
+      "name": "Giáp Đức Tin",
+      "mu_name": "Faith Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 15,
+      "req": {
+        "agi": 10,
+        "ene": 48,
+        "str": 11
+      },
+      "price": 3906,
+      "set": "Đức Tin",
+      "ref": "8/50",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_20": {
+      "name": "Giáp Ưng Sấm",
+      "mu_name": "Thunder Hawk Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 20,
+      "req": {
+        "agi": 25,
+        "str": 59
+      },
+      "price": 5333,
+      "set": "Ưng Sấm",
+      "ref": "8/20",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_8_23": {
+      "name": "Giáp Cuồng Phong",
+      "mu_name": "Hurricane Armor",
+      "slot": "armor",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 19,
+      "req": {
+        "agi": 23,
+        "str": 57
+      },
+      "price": 5100,
+      "set": "Cuồng Phong",
+      "ref": "8/23",
+      "icon": "breastplate",
+      "doll": "body/bplate_metal1",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1842,6 +3775,28 @@
       "set": "Vảy",
       "ref": "9/6",
       "icon": "lamellar",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_39": {
+      "name": "Quần Bí Ẩn",
+      "mu_name": "Mistery Pants",
+      "slot": "pants",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "def": 2,
+      "req": {
+        "str": 13
+      },
+      "price": 59,
+      "set": "Bí Ẩn",
+      "ref": "9/39",
+      "icon": "lamellar",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2044,6 +3999,53 @@
       "version": 1,
       "verified": false
     },
+    "item_9_25": {
+      "name": "Quần Ánh Bạc",
+      "mu_name": "Light Plate Pants",
+      "slot": "pants",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 8,
+      "req": {
+        "agi": 7,
+        "str": 25
+      },
+      "price": 877,
+      "set": "Ánh Bạc",
+      "ref": "9/25",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_35": {
+      "name": "Quần Nhật Thực",
+      "mu_name": "Eclipse Pants",
+      "slot": "pants",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "def": 8,
+      "req": {
+        "agi": 4,
+        "str": 19
+      },
+      "price": 896,
+      "set": "Nhật Thực",
+      "ref": "9/35",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_9_41": {
       "name": "Quần Cổ Đại",
       "mu_name": "Ancient Pants",
@@ -2088,6 +4090,29 @@
       "version": 1,
       "verified": false
     },
+    "item_9_15": {
+      "name": "Quần Quạ Bão",
+      "mu_name": "Storm Crow Pants",
+      "slot": "pants",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 1077,
+      "set": "Quạ Bão",
+      "ref": "9/15",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_9_16": {
       "name": "Quần Hắc Long",
       "mu_name": "Black Dragon Pants",
@@ -2107,6 +4132,54 @@
       "set": "Hắc Long",
       "ref": "9/16",
       "icon": "lamellar",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_26": {
+      "name": "Quần Kim Cương",
+      "mu_name": "Adamantine Pants",
+      "slot": "pants",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 7,
+        "str": 27
+      },
+      "price": 1677,
+      "set": "Kim Cương",
+      "ref": "9/26",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_34": {
+      "name": "Quần Quạ Tro",
+      "mu_name": "Ashcrow Pants",
+      "slot": "pants",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 11,
+      "req": {
+        "agi": 18,
+        "str": 56
+      },
+      "price": 1899,
+      "set": "Quạ Tro",
+      "ref": "9/34",
+      "icon": "lamellar",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2155,6 +4228,29 @@
       "version": 1,
       "verified": false
     },
+    "item_9_37": {
+      "name": "Quần Dũng Mãnh",
+      "mu_name": "Valiant Pants",
+      "slot": "pants",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 18,
+        "str": 54
+      },
+      "price": 2201,
+      "set": "Dũng Mãnh",
+      "ref": "9/37",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_9_17": {
       "name": "Quần Phượng Hoàng Đen",
       "mu_name": "Dark Phoenix Pants",
@@ -2174,6 +4270,78 @@
       "set": "Phượng Hoàng Đen",
       "ref": "9/17",
       "icon": "lamellar",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_27": {
+      "name": "Quần Thép Đen",
+      "mu_name": "Dark Steel Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 8,
+        "str": 29
+      },
+      "price": 3397,
+      "set": "Thép Đen",
+      "ref": "9/27",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_45": {
+      "name": "Quần Titan",
+      "mu_name": "Titan Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 11,
+        "str": 78
+      },
+      "price": 3577,
+      "set": "Titan",
+      "ref": "9/45",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_46": {
+      "name": "Quần Dũng Sĩ",
+      "mu_name": "Brave Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 57,
+        "str": 26
+      },
+      "price": 3597,
+      "set": "Dũng Sĩ",
+      "ref": "9/46",
+      "icon": "lamellar",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2200,6 +4368,30 @@
       "version": 1,
       "verified": false
     },
+    "item_9_52": {
+      "name": "Quần Diêm Vương",
+      "mu_name": "Hades Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 5,
+        "ene": 63,
+        "str": 21
+      },
+      "price": 3520,
+      "set": "Diêm Vương",
+      "ref": "9/52",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_9_24": {
       "name": "Quần Linh Hồn Đỏ",
       "mu_name": "Red Spirit Pants",
@@ -2218,6 +4410,99 @@
       "set": "Linh Hồn Đỏ",
       "ref": "9/24",
       "icon": "lamellar",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_49": {
+      "name": "Quần Thiên Sứ",
+      "mu_name": "Seraphim Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 69,
+        "str": 19
+      },
+      "price": 3419,
+      "set": "Thiên Sứ",
+      "ref": "9/49",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_50": {
+      "name": "Quần Đức Tin",
+      "mu_name": "Faith Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 10,
+        "ene": 48,
+        "str": 11
+      },
+      "price": 3455,
+      "set": "Đức Tin",
+      "ref": "9/50",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_20": {
+      "name": "Quần Ưng Sấm",
+      "mu_name": "Thunder Hawk Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 16,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 4356,
+      "set": "Ưng Sấm",
+      "ref": "9/20",
+      "icon": "lamellar",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_9_23": {
+      "name": "Quần Cuồng Phong",
+      "mu_name": "Hurricane Pants",
+      "slot": "pants",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 16,
+      "req": {
+        "agi": 23,
+        "str": 57
+      },
+      "price": 4262,
+      "set": "Cuồng Phong",
+      "ref": "9/23",
+      "icon": "lamellar",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2364,6 +4649,28 @@
       "set": "Vảy",
       "ref": "10/6",
       "icon": "shield-bash",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_39": {
+      "name": "Găng Bí Ẩn",
+      "mu_name": "Mistery Gloves",
+      "slot": "gloves",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "def": 1,
+      "req": {
+        "str": 8
+      },
+      "price": 33,
+      "set": "Bí Ẩn",
+      "ref": "10/39",
+      "icon": "shield-bash",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2566,6 +4873,53 @@
       "version": 1,
       "verified": false
     },
+    "item_10_25": {
+      "name": "Găng Ánh Bạc",
+      "mu_name": "Light Plate Gloves",
+      "slot": "gloves",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 4,
+      "req": {
+        "agi": 7,
+        "str": 25
+      },
+      "price": 501,
+      "set": "Ánh Bạc",
+      "ref": "10/25",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_35": {
+      "name": "Găng Nhật Thực",
+      "mu_name": "Eclipse Gloves",
+      "slot": "gloves",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "def": 5,
+      "req": {
+        "agi": 4,
+        "str": 19
+      },
+      "price": 538,
+      "set": "Nhật Thực",
+      "ref": "10/35",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_10_41": {
       "name": "Găng Cổ Đại",
       "mu_name": "Ancient Gloves",
@@ -2610,6 +4964,29 @@
       "version": 1,
       "verified": false
     },
+    "item_10_15": {
+      "name": "Găng Quạ Bão",
+      "mu_name": "Storm Crow Gloves",
+      "slot": "gloves",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "mg"
+      ],
+      "def": 6,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 633,
+      "set": "Quạ Bão",
+      "ref": "10/15",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_10_16": {
       "name": "Găng Hắc Long",
       "mu_name": "Black Dragon Gloves",
@@ -2629,6 +5006,54 @@
       "set": "Hắc Long",
       "ref": "10/16",
       "icon": "shield-bash",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_26": {
+      "name": "Găng Kim Cương",
+      "mu_name": "Adamantine Gloves",
+      "slot": "gloves",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 7,
+      "req": {
+        "agi": 7,
+        "str": 27
+      },
+      "price": 1161,
+      "set": "Kim Cương",
+      "ref": "10/26",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_34": {
+      "name": "Găng Quạ Tro",
+      "mu_name": "Ashcrow Gloves",
+      "slot": "gloves",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 6,
+      "req": {
+        "agi": 18,
+        "str": 56
+      },
+      "price": 1036,
+      "set": "Quạ Tro",
+      "ref": "10/34",
+      "icon": "shield-bash",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2677,6 +5102,29 @@
       "version": 1,
       "verified": false
     },
+    "item_10_37": {
+      "name": "Găng Dũng Mãnh",
+      "mu_name": "Valiant Gloves",
+      "slot": "gloves",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "mg"
+      ],
+      "def": 8,
+      "req": {
+        "agi": 18,
+        "str": 54
+      },
+      "price": 1450,
+      "set": "Dũng Mãnh",
+      "ref": "10/37",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_10_17": {
       "name": "Găng Phượng Hoàng Đen",
       "mu_name": "Dark Phoenix Gloves",
@@ -2696,6 +5144,78 @@
       "set": "Phượng Hoàng Đen",
       "ref": "10/17",
       "icon": "shield-bash",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_27": {
+      "name": "Găng Thép Đen",
+      "mu_name": "Dark Steel Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 8,
+        "str": 29
+      },
+      "price": 2301,
+      "set": "Thép Đen",
+      "ref": "10/27",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_45": {
+      "name": "Găng Titan",
+      "mu_name": "Titan Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 11,
+        "str": 78
+      },
+      "price": 2707,
+      "set": "Titan",
+      "ref": "10/45",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_46": {
+      "name": "Găng Dũng Sĩ",
+      "mu_name": "Brave Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 57,
+        "str": 26
+      },
+      "price": 2605,
+      "set": "Dũng Sĩ",
+      "ref": "10/46",
+      "icon": "shield-bash",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2722,6 +5242,30 @@
       "version": 1,
       "verified": false
     },
+    "item_10_52": {
+      "name": "Găng Diêm Vương",
+      "mu_name": "Hades Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 5,
+        "ene": 63,
+        "str": 21
+      },
+      "price": 2480,
+      "set": "Diêm Vương",
+      "ref": "10/52",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_10_24": {
       "name": "Găng Linh Hồn Đỏ",
       "mu_name": "Red Spirit Gloves",
@@ -2740,6 +5284,99 @@
       "set": "Linh Hồn Đỏ",
       "ref": "10/24",
       "icon": "shield-bash",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_49": {
+      "name": "Găng Thiên Sứ",
+      "mu_name": "Seraphim Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 69,
+        "str": 19
+      },
+      "price": 2774,
+      "set": "Thiên Sứ",
+      "ref": "10/49",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_50": {
+      "name": "Găng Đức Tin",
+      "mu_name": "Faith Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 10,
+        "ene": 48,
+        "str": 11
+      },
+      "price": 2704,
+      "set": "Đức Tin",
+      "ref": "10/50",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_20": {
+      "name": "Găng Ưng Sấm",
+      "mu_name": "Thunder Hawk Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 11,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 3022,
+      "set": "Ưng Sấm",
+      "ref": "10/20",
+      "icon": "shield-bash",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_10_23": {
+      "name": "Găng Cuồng Phong",
+      "mu_name": "Hurricane Gloves",
+      "slot": "gloves",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 23,
+        "str": 57
+      },
+      "price": 3144,
+      "set": "Cuồng Phong",
+      "ref": "10/23",
+      "icon": "shield-bash",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -2886,6 +5523,28 @@
       "set": "Vảy",
       "ref": "11/6",
       "icon": "sprint",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_39": {
+      "name": "Giày Bí Ẩn",
+      "mu_name": "Mistery Boots",
+      "slot": "boots",
+      "tier": 3,
+      "level": 7,
+      "classes": [
+        "dw"
+      ],
+      "def": 2,
+      "req": {
+        "str": 9
+      },
+      "price": 40,
+      "set": "Bí Ẩn",
+      "ref": "11/39",
+      "icon": "sprint",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -3088,6 +5747,53 @@
       "version": 1,
       "verified": false
     },
+    "item_11_25": {
+      "name": "Giày Ánh Bạc",
+      "mu_name": "Light Plate Boots",
+      "slot": "boots",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 5,
+      "req": {
+        "agi": 7,
+        "str": 25
+      },
+      "price": 543,
+      "set": "Ánh Bạc",
+      "ref": "11/25",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_35": {
+      "name": "Giày Nhật Thực",
+      "mu_name": "Eclipse Boots",
+      "slot": "boots",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "dw"
+      ],
+      "def": 5,
+      "req": {
+        "agi": 4,
+        "str": 19
+      },
+      "price": 609,
+      "set": "Nhật Thực",
+      "ref": "11/35",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_11_41": {
       "name": "Giày Cổ Đại",
       "mu_name": "Ancient Boots",
@@ -3132,6 +5838,29 @@
       "version": 1,
       "verified": false
     },
+    "item_11_15": {
+      "name": "Giày Quạ Bão",
+      "mu_name": "Storm Crow Boots",
+      "slot": "boots",
+      "tier": 6,
+      "level": 22,
+      "classes": [
+        "mg"
+      ],
+      "def": 6,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 697,
+      "set": "Quạ Bão",
+      "ref": "11/15",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_11_16": {
       "name": "Giày Hắc Long",
       "mu_name": "Black Dragon Boots",
@@ -3151,6 +5880,54 @@
       "set": "Hắc Long",
       "ref": "11/16",
       "icon": "sprint",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_26": {
+      "name": "Giày Kim Cương",
+      "mu_name": "Adamantine Boots",
+      "slot": "boots",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 7,
+      "req": {
+        "agi": 7,
+        "str": 27
+      },
+      "price": 1290,
+      "set": "Kim Cương",
+      "ref": "11/26",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_34": {
+      "name": "Giày Quạ Tro",
+      "mu_name": "Ashcrow Boots",
+      "slot": "boots",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 6,
+      "req": {
+        "agi": 18,
+        "str": 56
+      },
+      "price": 1094,
+      "set": "Quạ Tro",
+      "ref": "11/34",
+      "icon": "sprint",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -3199,6 +5976,29 @@
       "version": 1,
       "verified": false
     },
+    "item_11_37": {
+      "name": "Giày Dũng Mãnh",
+      "mu_name": "Valiant Boots",
+      "slot": "boots",
+      "tier": 7,
+      "level": 27,
+      "classes": [
+        "mg"
+      ],
+      "def": 9,
+      "req": {
+        "agi": 18,
+        "str": 54
+      },
+      "price": 1557,
+      "set": "Dũng Mãnh",
+      "ref": "11/37",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_11_17": {
       "name": "Giày Phượng Hoàng Đen",
       "mu_name": "Dark Phoenix Boots",
@@ -3218,6 +6018,78 @@
       "set": "Phượng Hoàng Đen",
       "ref": "11/17",
       "icon": "sprint",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_27": {
+      "name": "Giày Thép Đen",
+      "mu_name": "Dark Steel Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 8,
+        "str": 29
+      },
+      "price": 2740,
+      "set": "Thép Đen",
+      "ref": "11/27",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_45": {
+      "name": "Giày Titan",
+      "mu_name": "Titan Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 11,
+        "str": 78
+      },
+      "price": 2755,
+      "set": "Titan",
+      "ref": "11/45",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_46": {
+      "name": "Giày Dũng Sĩ",
+      "mu_name": "Brave Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 57,
+        "str": 26
+      },
+      "price": 2791,
+      "set": "Dũng Sĩ",
+      "ref": "11/46",
+      "icon": "sprint",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -3244,6 +6116,30 @@
       "version": 1,
       "verified": false
     },
+    "item_11_52": {
+      "name": "Giày Diêm Vương",
+      "mu_name": "Hades Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "dw"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 5,
+        "ene": 63,
+        "str": 21
+      },
+      "price": 2720,
+      "set": "Diêm Vương",
+      "ref": "11/52",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_11_24": {
       "name": "Giày Linh Hồn Đỏ",
       "mu_name": "Red Spirit Boots",
@@ -3262,6 +6158,99 @@
       "set": "Linh Hồn Đỏ",
       "ref": "11/24",
       "icon": "sprint",
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_49": {
+      "name": "Giày Thiên Sứ",
+      "mu_name": "Seraphim Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 69,
+        "str": 19
+      },
+      "price": 2710,
+      "set": "Thiên Sứ",
+      "ref": "11/49",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_50": {
+      "name": "Giày Đức Tin",
+      "mu_name": "Faith Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "elf"
+      ],
+      "def": 10,
+      "req": {
+        "agi": 10,
+        "ene": 48,
+        "str": 11
+      },
+      "price": 2629,
+      "set": "Đức Tin",
+      "ref": "11/50",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_20": {
+      "name": "Giày Ưng Sấm",
+      "mu_name": "Thunder Hawk Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 12,
+      "req": {
+        "agi": 25,
+        "str": 53
+      },
+      "price": 3289,
+      "set": "Ưng Sấm",
+      "ref": "11/20",
+      "icon": "sprint",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
+    "item_11_23": {
+      "name": "Giày Cuồng Phong",
+      "mu_name": "Hurricane Boots",
+      "slot": "boots",
+      "tier": 8,
+      "level": 32,
+      "classes": [
+        "mg"
+      ],
+      "def": 13,
+      "req": {
+        "agi": 23,
+        "str": 57
+      },
+      "price": 3493,
+      "set": "Cuồng Phong",
+      "ref": "11/23",
+      "icon": "sprint",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
