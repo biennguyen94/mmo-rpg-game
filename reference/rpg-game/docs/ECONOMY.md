@@ -71,20 +71,27 @@ tinh anh 50 %), chia theo ô (vũ khí 38 %, bộ giáp 43 % chia đều 5 món,
 hợp cấp quái **và hợp lớp mình**. Thư viện ghi khoảng cấp quái rơi từng món. Thêm từ thưởng Quảng Trường Quỷ, Kalima
 (hạ Kundun), rương.
 
-Ví dụ trước B-24 (giá Thợ Rèn cũ; quái ở đúng cấp món, rơi 6 %; "rơi đúng món" tính trên mọi lớp, nên với một lớp thực tế
-ít hơn khoảng 2–4 lần). Từ B-24, các món cấp 22+ không còn bán, rơi nhanh hơn ~25 %:
+Ví dụ (quái thường ở đúng cấp món, rơi 8 %, chỉ tính đồ hợp lớp ghi ở cột Lớp; may rủi lệch nhiều):
 
-| Món | Cấp | Giá Thợ Rèn | Quái để mua | Quái để rơi đúng món |
+| Món | Cấp | Lớp | Giá Thợ Rèn ≈ quái để mua | Quái để rơi đúng món (số món cùng ô, cùng bậc, cùng lớp) |
 |---|---|---|---|---|
-| Mũ / giày / găng bậc thấp | 3–7 | 7–60 | 1–3 | 600–1.400 |
-| Giáp Hộ Vệ | 17 | 456 | ≈ 11 | ≈ 1.200 |
-| Giáp Phượng Hoàng Đen | 32 | 4.253 | ≈ 58 | ≈ 3.700 |
-| Giáp Tia Tiên | 48 | 16.471 | ≈ 150 | ≈ 2.500 |
-| Cung Hổ | 22 | 3.600 | ≈ 70 | ≈ 1.000 |
-| Gậy Sấm Hỗn Nguyên | 32 | 15.000 | ≈ 200 | ≈ 1.200 |
-| Chùy Băng Giá | 42 | 50.000 | ≈ 520 | ≈ 900 |
-| Khiên Diệt Rồng | 27 | 7.500 | ≈ 120 | ≈ 510 |
-| Khiên Nguyên Tố | 46 | 45.000 | ≈ 430 | ≈ 510 |
+| Mũ Lụa | 3 | Tiên Nữ | 15 ≈ 2 | ≈ 145 (1) |
+| Giày Vảy | 7 | Kiếm Sĩ | 35 ≈ 2 | ≈ 290 (2) |
+| Cung Tiên | 12 | Tiên Nữ | 650 ≈ 22 | ≈ 165 (5) |
+| Giáp Hộ Vệ | 17 | Tiên Nữ | 456 ≈ 11 | ≈ 290 (2) |
+| Khiên Đầu Lâu | 17 | Kiếm Sĩ | 1.500 ≈ 37 | ≈ 385 (4) |
+| Cung Hổ | 22 | Tiên Nữ | không bán | ≈ 130 (4) |
+| Giáp Hắc Long | 27 | Kiếm Sĩ | không bán | ≈ 870 (6) |
+| Khiên Diệt Rồng | 27 | Kiếm Sĩ | không bán | ≈ 385 (4) |
+| Giáp Phượng Hoàng Đen | 32 | Kiếm Sĩ | không bán | ≈ 1.160 (8) |
+| Gậy Sấm Hỗn Nguyên | 32 | Phù Thủy | không bán | ≈ 230 (7) |
+| Khiên Xà | 37 | Kiếm Sĩ | không bán | ≈ 290 (3) |
+| Chùy Băng Giá | 42 | Tiên Nữ | không bán | ≈ 165 (5) |
+| Khiên Nguyên Tố | 46 | Kiếm Sĩ | không bán | ≈ 385 (4) |
+| Giáp Tia Tiên | 48 | Tiên Nữ | không bán | ≈ 145 (1) |
+
+Bộ giáp lâu ra đúng món nhất vì 43 % chia cho 5 món và mỗi bậc có nhiều bộ; vũ khí / khiên nhanh hơn. Không cần đúng món:
+mỗi quái thường có 8 % ra một món hợp cấp, hợp lớp (≈ 12 quái / món), nên lên đồ cấp mới vẫn nhanh.
 
 **Nhận xét:** đồ cơ bản mua rẻ hơn chờ rơi nhiều, để người mới có đồ nhanh. Từ cấp 22 phải cày / săn sự kiện / mua chợ,
 nên đồ rơi (nhất là có dòng cộng thêm, Excellent, Thần) có giá trị thật và chợ có hàng để bán.
