@@ -2364,7 +2364,9 @@
       const fits = r.gear ? bagGear().filter((uid) => {
         const g = itemOf(uid);
         // Phase 15f: công thức `mode` chỉ nhận món còn thêm được dòng
-        const room = r.mode === 'excellent' ? (g.exc || []).length < 3 : r.mode === 'luck' ? !g.luck : true;
+        // B-16: tối đa đủ số dòng Excellent của loại đồ (vũ khí / dây chuyền: nhóm weapon, còn lại armor)
+        const excMax = Object.keys((RULES.excOptions || {})[['weapon', 'pendant'].includes(g.slot) ? 'weapon' : 'armor'] || {}).length || 6;
+        const room = r.mode === 'excellent' ? (g.exc || []).length < excMax : r.mode === 'luck' ? !g.luck : true;
         return room && r.gear.slots.includes(g.slot) && (!r.gear.tier || g.tier === r.gear.tier) && upLevel(uid) >= r.gear.min_up && !g.locked;
       }) : [];
       const pick = r.gear ? (fits.includes(chaosPick[r.id]) ? chaosPick[r.id] : fits[0]) : null;

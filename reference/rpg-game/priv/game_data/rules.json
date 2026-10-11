@@ -218,7 +218,7 @@
       "min_level": 35,
       "ticket": "ds_ticket",
       "ticket_price": 20000,
-      "ticket_drop": { "min_level": 30, "chance": 0.01 },
+      "ticket_drop": { "min_level": 30, "chance": 0.02, "parts": ["devil_eye", "devil_key"], "_doc": "Kiểu MU (B-18): quái rơi một mảnh vé (ngẫu nhiên trong parts), ghép ở Máy Hỗn Nguyên (chaos.json ds_ticket)." },
       "tiers": [
         { "from": 35, "level": 36 },
         { "from": 40, "level": 42 },
@@ -251,7 +251,7 @@
       "min_level": 40,
       "ticket": "bc_ticket",
       "ticket_price": 30000,
-      "ticket_drop": { "min_level": 35, "chance": 0.005 },
+      "ticket_drop": { "min_level": 35, "chance": 0.01, "parts": ["archangel_scroll", "blood_bone"], "_doc": "Kiểu MU (B-18): mảnh vé Lâu Đài, ghép ở Máy Hỗn Nguyên (chaos.json bc_ticket)." },
       "tiers": [
         { "from": 40, "level": 44 },
         { "from": 45, "level": 50 }

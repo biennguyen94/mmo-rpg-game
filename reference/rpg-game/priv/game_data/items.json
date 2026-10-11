@@ -547,14 +547,14 @@
       "slot": "material",
       "icon": "scroll-unfurled",
       "price": 0,
-      "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 30 trở lên."
+      "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc ghép Mắt Quỷ + Chìa Khóa Quỷ ở Máy Hỗn Nguyên."
     },
     "bc_ticket": {
       "name": "Vé Lâu Đài",
       "slot": "material",
       "icon": "scroll-unfurled",
       "price": 0,
-      "desc": "Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 35 trở lên."
+      "desc": "Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc ghép Cuộn Giấy Tổng Lãnh Thiên Thần + Xương Máu ở Máy Hỗn Nguyên."
     },
     "condor_feather": {
       "name": "Lông Vũ Kền Kền",
@@ -562,6 +562,34 @@
       "icon": "feathered-wing",
       "price": 0,
       "desc": "Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên."
+    },
+    "devil_eye": {
+      "name": "Mắt Quỷ",
+      "slot": "material",
+      "icon": "crowned-skull",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Chìa Khóa Quỷ + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+    },
+    "devil_key": {
+      "name": "Chìa Khóa Quỷ",
+      "slot": "material",
+      "icon": "padlock",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Mắt Quỷ + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+    },
+    "archangel_scroll": {
+      "name": "Cuộn Giấy Tổng Lãnh Thiên Thần",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Xương Máu + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Lâu Đài."
+    },
+    "blood_bone": {
+      "name": "Xương Máu",
+      "slot": "material",
+      "icon": "skull-crossed-bones",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Cuộn Giấy Tổng Lãnh Thiên Thần + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Lâu Đài."
     }
   }
 }

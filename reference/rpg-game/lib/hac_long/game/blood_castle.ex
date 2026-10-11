@@ -97,6 +97,12 @@ defmodule HacLong.Game.BloodCastle do
          %{p | gold: p.gold - price} |> Engine.add_item(@rules.ticket)}
   end
 
+  @doc "Mảnh vé rơi từ quái (kiểu MU, B-18): một món ngẫu nhiên trong `ticket_drop.parts`, ghép ra vé ở Máy Hỗn Nguyên."
+  def ticket_part do
+    parts = @rules.ticket_drop.parts
+    Enum.at(parts, floor(HacLong.Game.Rng.uniform() * length(parts)))
+  end
+
   def ticket_chance(m) do
     d = @rules.ticket_drop
     if m[:world] || m[:pvp] || m[:tower] || m.level < d.min_level, do: 0, else: d.chance

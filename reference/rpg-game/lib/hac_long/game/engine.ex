@@ -1329,12 +1329,12 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Vé Quảng Trường Quỷ (Phase 18 M1): quái thường cấp cao thỉnh thoảng rơi
+  # Mảnh vé Quảng Trường Quỷ (Phase 18 M1; B-18: rơi mảnh, ghép vé ở Máy Hỗn Nguyên): quái thường cấp cao thỉnh thoảng rơi
   defp ds_ticket_drop(p, m, reward) do
     c = HacLong.Game.DevilSquare.ticket_chance(m)
 
     if c > 0 and chance(c) do
-      id = HacLong.Game.DevilSquare.ticket()
+      id = HacLong.Game.DevilSquare.ticket_part()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
@@ -1342,12 +1342,12 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Vé Lâu Đài (Phase 18 M2)
+  # Mảnh vé Lâu Đài (Phase 18 M2; B-18)
   defp bc_ticket_drop(p, m, reward) do
     c = HacLong.Game.BloodCastle.ticket_chance(m)
 
     if c > 0 and chance(c) do
-      id = HacLong.Game.BloodCastle.ticket()
+      id = HacLong.Game.BloodCastle.ticket_part()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else

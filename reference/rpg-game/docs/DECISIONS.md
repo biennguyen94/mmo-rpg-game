@@ -323,4 +323,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   sách phép (không có sát thương trong file) lấy khoảng ±10 %, danh sách chính được `null`. Chưa thêm (cần hệ thống mới, chờ
   anh chốt): cánh của Chúa Tể / Triệu Hồi Sư (12/40, 12/41, 12/43), ngọc cầu / sách phép học kỹ năng (12/7–48, nhóm 15),
   hạt / giáo hạt socket, thú cưỡi, nhẫn biến hình / nhẫn sự kiện, vật phẩm sự kiện / nhiệm vụ (nhóm 13–14).
+- **B-18** (anh chốt "làm luôn 9, 1, 2, 3, 4", em đề xuất số) **Ghép vé kiểu MU**: quái không rơi thẳng vé nữa mà rơi **mảnh vé**
+  (`RULES.devil_square.ticket_drop` / `blood_castle.ticket_drop`): Mắt Quỷ / Chìa Khóa Quỷ (quái cấp ≥ 30, 2 %), Cuộn Giấy Tổng
+  Lãnh Thiên Thần / Xương Máu (cấp ≥ 35, 1 %) — gấp đôi tỉ lệ rơi vé cũ vì cần 2 mảnh. Ghép ở Máy Hỗn Nguyên (`chaos.json`
+  `ds_ticket`: 2 mảnh + 1 Hỗn Nguyên + 10.000 vàng, 80 %; `bc_ticket`: 2 mảnh + 1 Hỗn Nguyên + 15.000 vàng, 80 %; hỏng mất cả).
+  Vẫn mua vé bằng vàng ở Người Gác Tháp như cũ. Hình gốc theo `refs` 14/17, 14/18, 13/16, 13/17.
+
 

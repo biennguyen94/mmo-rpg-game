@@ -134,6 +134,32 @@
       "rate": 0.5,
       "per_up": 0.05,
       "max_rate": 0.75
+    },
+    {
+      "id": "ds_ticket",
+      "name": "Vé Quảng Trường",
+      "desc": "1 Mắt Quỷ + 1 Chìa Khóa Quỷ + 1 Ngọc Hỗn Nguyên → 1 Vé Quảng Trường (kiểu MU).",
+      "items": {
+        "devil_eye": 1,
+        "devil_key": 1,
+        "jewel_chaos": 1
+      },
+      "gold": 10000,
+      "rate": 0.8,
+      "out": "ds_ticket"
+    },
+    {
+      "id": "bc_ticket",
+      "name": "Vé Lâu Đài",
+      "desc": "1 Cuộn Giấy Tổng Lãnh Thiên Thần + 1 Xương Máu + 1 Ngọc Hỗn Nguyên → 1 Vé Lâu Đài (kiểu MU).",
+      "items": {
+        "archangel_scroll": 1,
+        "blood_bone": 1,
+        "jewel_chaos": 1
+      },
+      "gold": 15000,
+      "rate": 0.8,
+      "out": "bc_ticket"
     }
   ]
 }
