@@ -17,7 +17,6 @@ defmodule HacLong.Profile do
 
   def build(uid, p, online?) do
     d = Engine.derived(p)
-    bonus = Gear.bonus_stats(p)
     {seen, joined} = dates(uid)
     q = Map.get(p, :quests) || %{}
 
@@ -37,7 +36,7 @@ defmodule HacLong.Profile do
       max_mp: d.maxMp,
       stats:
         Map.new(~w(str agi vit ene)a, fn k ->
-          {k, %{base: Map.get(p.stats, k, 0), gear: Map.get(bonus, k, 0)}}
+          {k, %{base: Map.get(p.stats, k, 0)}}
         end),
       atk_min: d.atkMin,
       atk_max: d.atkMax,
@@ -87,7 +86,7 @@ defmodule HacLong.Profile do
 
       it ->
         up = (Map.get(p, :upgrades) || %{})[id] || 0
-        [%{slot: slot, id: it[:base] || id, name: it.name, rarity: it[:rarity] || 0, up: up}]
+        [%{slot: slot, id: it[:base] || id, name: it.name, kind: it[:kind] || "", up: up}]
     end
   end
 

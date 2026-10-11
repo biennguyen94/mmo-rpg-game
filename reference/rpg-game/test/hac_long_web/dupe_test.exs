@@ -41,7 +41,13 @@ defmodule HacLongWeb.DupeTest do
   end
 
   defp sword do
-    %{uid: "#DP#{System.unique_integer([:positive])}", base: "club", rarity: 3, bonus: %{str: 5}}
+    %{
+      uid: "#DP#{System.unique_integer([:positive])}",
+      base: "club",
+      rarity: 0,
+      bonus: %{},
+      opt: 3
+    }
   end
 
   # bắn mọi hàm cùng lúc, chờ hết (kết quả từng lệnh không quan trọng, chỉ trạng thái cuối)

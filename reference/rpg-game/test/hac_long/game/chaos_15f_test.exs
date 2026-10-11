@@ -25,14 +25,14 @@ defmodule HacLong.Game.Chaos15fTest do
   end
 
   test "Pha Excellent: thêm 1 dòng, giữ cấp nâng và uid; tối đa 3 dòng" do
-    g = %{Gear.new("item_0_3", 1, %{str: 2}) | uid: "#S"}
+    g = %{Gear.new("item_0_3", 1) | uid: "#S"}
     p = setup_p(g, 7)
     r = Data.chaos("add_exc")
 
     Rng.put_sequence([0.0, 0.0])
     {res, q} = Chaos.combine(p, "add_exc", "#S")
     assert res.chaos.result == "success"
-    assert [%{uid: "#S", exc: [line], bonus: %{str: 2}}] = q.gear
+    assert [%{uid: "#S", exc: [line], opt: 1}] = q.gear
     assert line in Gear.exc_pool("weapon")
     assert q.upgrades["#S"] == 7
     assert q.gold == p.gold - r.gold and q.inv["jewel_chaos"] == 4 and q.inv["jewel_life"] == 3
@@ -44,7 +44,7 @@ defmodule HacLong.Game.Chaos15fTest do
   end
 
   test "Pha Excellent thất bại: mất món, nguyên liệu, vàng" do
-    g = %{Gear.new("item_8_5", 1, %{}) | uid: "#A"}
+    g = %{Gear.new("item_8_5", 1) | uid: "#A"}
     p = setup_p(g, 5)
     Rng.put_sequence([0.99])
     {res, q} = Chaos.combine(p, "add_exc", "#A")
@@ -53,7 +53,7 @@ defmodule HacLong.Game.Chaos15fTest do
   end
 
   test "Pha May mắn: thêm May mắn; món đã có hoặc chưa đủ +3 thì không nhận; cánh không nhận" do
-    g = %{Gear.new("item_8_5", 1, %{}) | uid: "#A"}
+    g = %{Gear.new("item_8_5", 1) | uid: "#A"}
     Rng.put_sequence([0.0])
     {res, q} = Chaos.combine(setup_p(g, 3), "add_luck", "#A")
     assert res.chaos.result == "success"

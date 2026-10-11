@@ -27,6 +27,7 @@ defmodule HacLong.Bots.Brain do
   @dirs %{"up" => {0, -1}, "down" => {0, 1}, "left" => {-1, 0}, "right" => {1, 0}}
 
   @rest Data.rules().bots.rest_after_death_s
+  @opt_line Data.rules().upgrade.life.per_line
 
   @doc """
   Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
@@ -117,7 +118,7 @@ defmodule HacLong.Bots.Brain do
   defp power(nil), do: 0
 
   defp power(it),
-    do: (it[:atk] || 0) + (it[:def] || 0) + Enum.sum(Map.values(it[:bonus] || %{}))
+    do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * @opt_line
 
   defp heal(p, d) do
     case Engine.best_potion(p, d.maxHp - p.hp) do

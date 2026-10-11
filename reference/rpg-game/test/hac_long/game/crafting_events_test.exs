@@ -78,7 +78,7 @@ defmodule HacLong.Game.CraftingEventsTest do
     it = HacLong.Game.Data.item(g.base)
 
     assert it.slot in ~w(helm armor pants gloves boots) and "dk" in it.classes and
-             g.rarity in 1..3
+             g.opt in 1..3
 
     assert p2.inv["ore"] == 15 and p2.inv["ore_rare"] == 2 and p2.gold == p.gold - 150
     assert Crafting.xp(p2, :smith) == 1

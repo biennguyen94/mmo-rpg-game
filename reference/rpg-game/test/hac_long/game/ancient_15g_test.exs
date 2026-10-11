@@ -29,26 +29,26 @@ defmodule HacLong.Game.Ancient15gTest do
   end
 
   defp piece(base, i, anc?) do
-    g = %{Gear.new(base, 1, %{}) | uid: "#P#{i}"}
+    g = %{Gear.new(base, 1) | uid: "#P#{i}"}
     if anc?, do: Map.put(g, :anc, true), else: g
   end
 
   test "rơi: chỉ món bộ giáp bốc đồ Thần, theo loại quái; vũ khí / đấu trường không" do
-    armor = Gear.new("item_8_0", 1, %{})
+    armor = Gear.new("item_8_0", 1)
     Rng.put_sequence([0.0])
     assert %{anc: true} = Gear.ancient(armor, %{boss: true})
 
     Rng.put_sequence([0.99])
     refute Map.has_key?(Gear.ancient(armor, %{boss: true}), :anc)
 
-    sword = Gear.new("item_0_3", 1, %{})
+    sword = Gear.new("item_0_3", 1)
     assert Gear.ancient(sword, %{boss: true}) == sword
     assert Gear.ancient(armor, %{pvp: true}) == armor
     assert Gear.anc_chance(%{elite: true}) == @anc.chance.elite
   end
 
   test "món Thần: phòng thủ +piece_def_pct, giá × price_mult, lưu / nạp" do
-    g = Gear.new("item_8_0", 1, %{})
+    g = Gear.new("item_8_0", 1)
     a = Map.put(g, :anc, true)
     base_def = Data.item("item_8_0").def
     assert Gear.resolve(a).def == round(base_def * (1 + @anc.piece_def_pct))
@@ -84,7 +84,7 @@ defmodule HacLong.Game.Ancient15gTest do
   end
 
   test "đồ không có phòng thủ (nhẫn) mặc vào không lỗi: không có khóa def nil" do
-    g = %{Gear.new("item_13_21", 2, %{"vit" => 5}) | uid: "#R1"}
+    g = %{Gear.new("item_13_21", 2) | uid: "#R1"}
     refute Map.has_key?(Gear.resolve(g), :def)
     p = wear_all(%{player("dk") | level: 60}, [g])
     assert is_integer(Engine.derived(p).def)

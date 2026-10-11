@@ -67,7 +67,7 @@ await send(E.page, { act: 'equip', id: 'item_13_8' });
 await send(E.page, { act: 'equip', id: 'item_13_8' });
 const pj = await send(E.page, { act: 'equip', id: 'item_13_12' });
 R.check('hai nhẫn vào ring1 + ring2, dây chuyền vào ô dây chuyền', pj.equip.ring1 === 'item_13_8' && pj.equip.ring2 === 'item_13_8' && pj.equip.pendant === 'item_13_12', JSON.stringify(pj.equip));
-await admin('give_gear', E.name, { base: 'item_4_2', rarity: 1, bonus: { agi: 1 }, exc: ['atk_pct', 'crit'], luck: true, skill: true });
+await admin('give_gear', E.name, { base: 'item_4_2', opt: 1, exc: ['atk_pct', 'crit'], luck: true, skill: true });
 await E.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.excellent), null, { timeout: 5000 }).catch(() => null);
 const exc = await E.page.evaluate(() => Object.values(window.__hl.player().view.gear || {}).find((g) => g.excellent));
 await E.page.click('#tabs [data-tab="map"]');

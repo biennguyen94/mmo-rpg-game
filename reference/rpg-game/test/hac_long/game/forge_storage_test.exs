@@ -16,7 +16,7 @@ defmodule HacLong.Game.ForgeStorageTest do
     Map.merge(Map.merge(p, %{pos: @smith, gold: 100_000, tutorial: nil, level: 30}), attrs)
   end
 
-  defp sword(attrs \\ %{}), do: Map.merge(Gear.new("broadsword", 2, %{str: 3}), attrs)
+  defp sword(attrs \\ %{}), do: Map.merge(Gear.new("broadsword"), attrs)
 
   describe "Ngọc Sinh Mệnh (D4)" do
     test "thành công thêm dòng +4 tấn công; thất bại mất dòng cuối; tối đa 4 dòng" do

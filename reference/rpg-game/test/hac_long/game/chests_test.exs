@@ -19,8 +19,8 @@ defmodule HacLong.Game.ChestsTest do
     {%{ok: true, msg: msg, gear: uid}, p} = Chests.buy(p, "gold")
     assert msg =~ "Mở Rương Vàng"
     assert p.gold == 100_000 - 640 * 8
-    # Rương Vàng: ít nhất là Hiếm
-    assert Gear.find(p, uid).rarity >= 2
+    # Rương Vàng: ít nhất 2 dòng cộng thêm (+8)
+    assert Gear.find(p, uid).opt >= 2
 
     assert {%{ok: false, msg: "Cần 2560 vàng."}, _} = Chests.buy(%{p | gold: 10}, "silver")
     assert {%{ok: false}, _} = Chests.buy(p, "kim_cuong")

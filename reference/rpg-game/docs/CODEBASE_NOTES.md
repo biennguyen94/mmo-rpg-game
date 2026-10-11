@@ -134,13 +134,11 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 
 ### Đồ ngẫu nhiên (`HacLong.Game.Gear`, `gear.ex`)
 
-- Dạng: `%{uid, base, rarity, bonus}`.
-  - `base`: id đồ thường làm nền.
-  - `rarity`: 1 Tốt / 2 Hiếm / 3 Sử Thi (`gear.ex:20`), cũng là số dòng chỉ số cộng.
-  - `bonus`: `%{str|vit|agi|def => điểm}`, mỗi dòng `1+floor(rand*(1+level/6))` (`gear.ex:133`).
-- Tên có hậu tố theo chỉ số cao nhất (`gear.ex:21, 54-67`).
-- Giá: `base*0.4*(1+0.25*rarity) + 5*sum(bonus)` (`gear.ex:70-73`).
-- Tỉ lệ độ hiếm `[{3,5},{2,25},{1,70}]`.
+- Dạng: `%{uid, base, rarity: 0, bonus: %{}, opt?, exc?, luck?, skill?, anc?, wopt?}` (B-15: bỏ độ hiếm, `rarity` / `bonus`
+  chỉ còn để không đổi schema; đồ cũ khi `Gear.load/1` thì độ hiếm N → `opt` N).
+  - `base`: id đồ thường làm nền; `opt`: số dòng cộng thêm (+4 mỗi dòng), `Gear.kind/1`: "" / opt / exc / anc.
+- Giá: `base*0.4*(1+0.25*opt)` × Excellent × May mắn / Kỹ năng × Thần.
+- Tỉ lệ số dòng khi rơi `RULES.loot.gear_weights` `[[0,50],[1,35],[2,12],[3,3]]`.
 - Ô đồ: vũ khí 45 % / giáp 35 % / khiên 20 %.
 - Nền: 2 món cửa hàng cấp cao nhất ≤ cấp quái (`gear.ex:103-137`).
 - Tỉ lệ rơi: quái thường 0,04; ban đêm 0,25; trùm 0,35; tinh anh 0,5; trùm thế giới / PvP 0 (`gear.ex:88-96`).

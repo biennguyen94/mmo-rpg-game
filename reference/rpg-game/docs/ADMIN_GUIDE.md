@@ -59,7 +59,7 @@ Thứ tự các khối trong tab:
    trạng thái khóa / cấm chat, các nút cấm chat / khóa. (Bỏ "gửi quà" riêng từ Phase 11: dùng **Chỉnh nhân vật**.)
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
-5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (đồ thường hoặc đồ hiếm Tốt / Hiếm / Sử Thi, +0…+11, ×1…10) vào hộp thư mọi nhân vật. Đồ hiếm có chỉ số theo cấp người nhận; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
+5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (kèm 0–4 dòng cộng thêm +4 mỗi dòng, +0…+11, ×1…10) vào hộp thư mọi nhân vật; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
 6. **Trùm thế giới** (admin): gọi Cổ Long xuất hiện ngay.
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
@@ -79,7 +79,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
 | Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ hiếm | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, vd `["atk_pct","crit"]` cho vũ khí / dây chuyền, `["hp_pct","dmg_red","gold_pct"]` cho đồ khác), `base` (mọi loại trừ cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, vd `["atk_pct","crit"]` cho vũ khí / dây chuyền, `["hp_pct","dmg_red","gold_pct"]` cho đồ khác), `base` (mọi loại trừ cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
@@ -191,10 +191,10 @@ await A('add_gold', { amount: 100000000 });
 await A('add_points', { n: 300 });
 await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI / VIT / ENE như MU
 
-// đồ hiếm Sử Thi tự chọn chỉ số, nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
-await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 11 });       // Thánh Kiếm Diệt Long
-await A('give_gear', { base: 'item_8_1', rarity: 3, bonus: { vit: 30, agi: 30, str: 10 }, up: 11 }); // Giáp Rồng (Kiếm Sĩ / Đấu Sĩ)
-await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { ene: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
+// đồ +16 (4 dòng cộng thêm), nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
+await A('give_gear', { base: 'relic', opt: 4, luck: true, skill: true, up: 11 }); // Thánh Kiếm Diệt Long
+await A('give_gear', { base: 'item_8_1', opt: 4, luck: true, up: 11 });           // Giáp Rồng (Kiếm Sĩ / Đấu Sĩ)
+await A('give_gear', { base: 'dragonshield', opt: 4, up: 11 });                    // Khiên Vảy Rồng
 
 // cánh cấp 2 đúng lớp, +11 (dk / dw / elf / mg); cấp mặc 35
 const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;
@@ -350,7 +350,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Chí mạng, hệ số chí mạng, né theo Nhanh nhẹn; % hồi MP mỗi lượt; tỉ lệ bỏ chạy; đòn thấp ~ cao (`damage_spread`), sàn mềm (`soft_floor`), tỉ lệ trúng quái (`hit`) | `combat` |
 | Sức mạnh kỹ năng (hệ số đòn, số lượt, % hiệu ứng) | `skill_effects` (theo kiểu tác dụng, xem `effect` của kỹ năng trong `classes.json`) |
 | Chỉ số quái theo cấp, hệ số trùm | `monster` |
-| Tỉ lệ rơi bình máu / đồ hiếm, độ hiếm | `loot` |
+| Tỉ lệ rơi bình máu / đồ, số dòng cộng thêm (`gear_weights`) | `loot` |
 | Giá bán lại (40 %) | `shop.sell_ratio` |
 | Rương, rèn, tháp, thú cưng, sổ quái, nhà, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`, `daily`, `fishing` |
 | Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |

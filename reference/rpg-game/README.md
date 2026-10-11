@@ -32,7 +32,7 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
   cổng sang vùng tiếp theo)
 - Chiến đấu theo lượt: tấn công, kỹ năng (có hồi chiêu), uống máu, bỏ chạy; hiệu ứng trạng thái
   (độc, bỏng, choáng, suy yếu, cuồng nộ...)
-- Đồ có chỉ số ngẫu nhiên rơi từ quái (Tốt, Hiếm, Sử Thi)
+- Đồ rơi từ quái kiểu MU: đồ thường (May mắn, Kỹ năng, dòng cộng thêm +4…+16), đồ hoàn hảo, đồ Thần (DECISIONS B-15)
 - Sổ tay quái vật: hạ đủ mốc mỗi loài thì đánh loài đó mạnh hơn
 - Chuyển sinh ở cấp 50: về cấp 1 với điểm tiềm năng cộng thêm
 - Ngày và đêm theo giờ Việt Nam; ban đêm có quái Bóng Đêm
@@ -261,7 +261,7 @@ Trạng thái nhân vật có `pos: {map, x, y}`, `waystones` (các đá đã gh
 `guild` (bang đang ở: `{id, name, tag, level, role}`, không lưu trong bảng characters),
 `chest_day`, `pet`, `pets`, `furniture: {id: số}` (đồ trang trí trong kho), `decor: [{id, x, y}]`
 (đồ đã đặt), `view.look` (`{hair, weapon, armor, shield, pet}`: lớp hình để vẽ nhân vật),
-`view.comfort`, `fish_caught`, `gear: [{uid, base, rarity, bonus}]` (đồ ngẫu nhiên; `view.gear` có tên, chỉ số,
+`view.comfort`, `fish_caught`, `gear: [{uid, base, opt, exc, luck, skill, anc…}]` (đồ riêng từng món; `view.gear` có tên, `kind`, chỉ số,
 giá bán), `bestiary: {id_quái: số}`, `rebirths`, `battle.effects: {player, monster}` (hiệu ứng
 `[{id, turns, power}]`), `battle.cds` (hồi chiêu `[{id, turns}]`), `achievements: [id]`, `title` (id thành tựu làm danh hiệu), `view.achievements`
 (`[{id, done, have}]`), `view.forge` (đồ đang mặc, cấp nâng và giá lên cấp tiếp), `tutorial` (bước

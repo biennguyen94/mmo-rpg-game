@@ -140,13 +140,14 @@ Vàng = 8% giá món × cấp lên (giá tối thiểu 100). Ngọc Sinh Mệnh:
 
 ## Dòng phụ trên đồ rơi
 
-### Độ hiếm
+### Dòng cộng thêm (kiểu MU, DECISIONS B-15)
 
-- **Sử Thi** (5%): 3 dòng STR / AGI / VIT / ENE
-- **Hiếm** (25%): 2 dòng STR / AGI / VIT / ENE
-- **Tốt** (70%): 1 dòng STR / AGI / VIT / ENE
+- Không dòng (50%)
+- +4 (35%)
+- +8 (12%)
+- +12 (3%)
 
-Mỗi dòng +1 đến 1 + cấp quái / 6.
+Mỗi dòng +4 tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh Mệnh thêm dòng tới tối đa 4. Không còn độ hiếm Tốt / Hiếm / Sử Thi.
 
 ### Excellent
 

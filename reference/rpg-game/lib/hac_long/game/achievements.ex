@@ -10,7 +10,7 @@ defmodule HacLong.Game.Achievements do
   Trạng thái trong nhân vật: `achievements: [id]` (theo thứ tự đạt được), `title: id | nil`.
   """
 
-  alias HacLong.Game.{Bestiary, Data, Engine, Pets}
+  alias HacLong.Game.{Bestiary, Data, Engine, Gear, Pets}
   alias HacLong.World.Maps
 
   @list [
@@ -176,7 +176,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "epic",
       name: "Của Hiếm",
-      desc: "Nhặt được một món đồ Sử Thi.",
+      desc: "Có một món đồ hoàn hảo hoặc đồ Thần.",
       stat: :epic,
       goal: 1,
       title: "Kẻ May Mắn"
@@ -337,7 +337,9 @@ defmodule HacLong.Game.Achievements do
   def value(p, :species),
     do: Enum.count(Bestiary.species(), &(Bestiary.count(p, &1) > 0))
 
-  def value(p, :epic), do: min(1, Enum.count(Map.get(p, :gear) || [], &(&1.rarity == 3)))
+  def value(p, :epic),
+    do: min(1, Enum.count(Map.get(p, :gear) || [], &(Gear.kind(&1) in ["exc", "anc"])))
+
   def value(p, :deaths), do: p.deaths
 
   def value(p, :forge),

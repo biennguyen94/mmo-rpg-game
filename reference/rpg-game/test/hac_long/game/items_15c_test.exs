@@ -87,19 +87,19 @@ defmodule HacLong.Game.Items15cTest do
   end
 
   test "Excellent: dòng đúng loại đồ, cộng vào chỉ số, lưu / nạp, bán đắt hơn" do
-    g = Gear.new("item_0_3", 0, %{})
+    g = Gear.new("item_0_3", 0)
     assert Gear.excellent(g, 0) == g
 
     Rng.put_sequence([0.0, 0.99, 0.1, 0.5, 0.9])
     w = Gear.excellent(g, 1.0)
     assert w.exc != [] and Enum.all?(w.exc, &(&1 in ~w(atk_pct crit heal_kill mp_kill)))
 
-    arm = Gear.excellent(Gear.new("item_8_5", 0, %{}), 1.0)
+    arm = Gear.excellent(Gear.new("item_8_5", 0), 1.0)
     assert Enum.all?(arm.exc, &(&1 in ~w(hp_pct dmg_red gold_pct)))
 
     # mặc vũ khí Excellent "atk_pct": tấn công tăng theo %
     p = player("dk", %{level: 20})
-    sword = %{Gear.new("item_0_3", 0, %{}) | uid: "#EXC"} |> Map.put(:exc, ["atk_pct", "crit"])
+    sword = %{Gear.new("item_0_3", 0) | uid: "#EXC"} |> Map.put(:exc, ["atk_pct", "crit"])
     plain = %{sword | uid: "#PLN"} |> Map.delete(:exc)
     {pe, _} = Gear.add(p, sword)
     {%{ok: true}, pe} = Engine.equip(pe, "#EXC")
@@ -128,7 +128,7 @@ defmodule HacLong.Game.Items15cTest do
 
     gs =
       for {base, i} <- Enum.with_index(~w(item_8_5 item_9_5 item_10_5 item_11_5 item_7_5)) do
-        %{Gear.new(base, 0, %{}) | uid: "#A#{i}"} |> Map.put(:exc, ["dmg_red"])
+        %{Gear.new(base, 0) | uid: "#A#{i}"} |> Map.put(:exc, ["dmg_red"])
       end
 
     p =

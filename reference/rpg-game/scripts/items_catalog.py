@@ -186,10 +186,13 @@ exn = {'atk_pct': 'Tấn công +{}', 'crit': 'Chí mạng +{}', 'heal_kill': 'H�
        'mp_kill': 'Hồi {} MP khi hạ quái', 'hp_pct': 'Máu tối đa +{}', 'dmg_red': 'Giảm sát thương nhận {}',
        'gold_pct': 'Vàng nhận +{}'}
 w('## Dòng phụ trên đồ rơi\n')
-w('### Độ hiếm\n')
-for (r, wt), name in zip(lo['gear_weights'], ['Sử Thi', 'Hiếm', 'Tốt']):
-    w(f"- **{name}** ({wt}%): {r} dòng STR / AGI / VIT / ENE")
-w(f"\nMỗi dòng +1 đến 1 + cấp quái / {lo['gear_bonus_per_level']}.\n")
+w('### Dòng cộng thêm (kiểu MU, DECISIONS B-15)\n')
+life = rules['upgrade']['life']
+tot = sum(wt for _, wt in lo['gear_weights'])
+for r, wt in lo['gear_weights']:
+    lab = f"+{r * life['per_line']}" if r else 'Không dòng'
+    w(f"- {lab} ({round(wt * 100 / tot)}%)")
+w(f"\nMỗi dòng +{life['per_line']} tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh Mệnh thêm dòng tới tối đa {life['max_lines']}. Không còn độ hiếm Tốt / Hiếm / Sử Thi.\n")
 w('### Excellent\n')
 w('Số dòng: ' + ', '.join(f"{n} dòng {wt}%" for n, wt in ex['lines']) + f". Giá bán ×{ex['price_mult']}.\n")
 w('- Vũ khí, dây chuyền: ' + '; '.join(exn[k].format(pct(v)) for k, v in ex['options']['weapon'].items()))

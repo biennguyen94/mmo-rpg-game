@@ -165,20 +165,8 @@
         "boss": 0.35,
         "normal": 0.06
       },
-      "gear_weights": [
-        [
-          3,
-          5
-        ],
-        [
-          2,
-          25
-        ],
-        [
-          1,
-          70
-        ]
-      ],
+      "_gear_weights_doc": "B-15 (kiểu MU): [số dòng cộng thêm, trọng số] của đồ rơi; mỗi dòng +RULES.upgrade.life.per_line tấn công / phòng thủ. Rương, rèn, sự kiện, trùm cũng dùng [số dòng, trọng số].",
+      "gear_weights": [[0, 50], [1, 35], [2, 12], [3, 3]],
       "gear_slots": [
         [
           0.38,
@@ -198,7 +186,6 @@
         ]
       ],
       "gear_own_class": true,
-      "gear_bonus_per_level": 6,
       "event_token_chance": 0.2,
       "event_token_boss": 3
     },
@@ -307,8 +294,7 @@
     "shop": {
       "sell_ratio": 0.4,
       "unpriced_value": 200,
-      "gear_rarity_value": 0.25,
-      "gear_bonus_value": 5,
+      "gear_opt_value": 0.25,
       "potion_price_per_level": 0.1
     },
     "upgrade": {

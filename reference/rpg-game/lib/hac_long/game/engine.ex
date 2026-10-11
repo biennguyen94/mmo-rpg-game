@@ -180,8 +180,7 @@ defmodule HacLong.Game.Engine do
   `base` (= 1). Chí mạng và né theo Nhanh nhẹn, như nhau cho mọi lớp.
   """
   def derived(p) do
-    # chỉ số cộng thêm của đồ ngẫu nhiên đang mặc
-    s = Map.merge(p.stats, Gear.bonus_stats(p), fn _, a, b -> a + b end)
+    s = p.stats
     f = Data.class(p.cls).derived
     w = Gear.item(p, p.equip.weapon)
     wg = Gear.item(p, p.equip[:wing])
@@ -357,9 +356,8 @@ defmodule HacLong.Game.Engine do
       derived: derived(p),
       xpToNext: xp_to_next(p.level),
       restCost: rest_cost(p),
-      # Phase 13: phần cộng thêm cho tab Nhân vật: chỉ số từ đồ hiếm, % từ thú cưng + món ăn
+      # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
-        gear: Gear.bonus_stats(p),
         hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp),
         atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk),
         def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def)
@@ -748,9 +746,9 @@ defmodule HacLong.Game.Engine do
 
   defp mp(p), do: Map.get(p, :mp) || 0
 
-  @doc "MP hồi mỗi lượt trong trận: `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng (cả đồ cộng)."
+  @doc "MP hồi mỗi lượt trong trận: `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng."
   def mp_regen(p) do
-    ene = Map.get(p.stats, :ene, 0) + Map.get(Gear.bonus_stats(p), :ene, 0)
+    ene = Map.get(p.stats, :ene, 0)
     max(1, round(derived(p).maxMp * @mp_regen + ene * @mp_regen_ene))
   end
 
@@ -1358,8 +1356,7 @@ defmodule HacLong.Game.Engine do
            |> Gear.excellent(Gear.exc_chance(m))
            |> Gear.luck_skill(m)
            |> Gear.ancient(m) do
-      it = Gear.resolve(g)
-      label = "#{it.name} (#{Gear.rarity_names()[g.rarity]})"
+      label = Gear.label(g)
 
       case Gear.add(p, g) do
         {p, :kept} ->
@@ -1387,7 +1384,7 @@ defmodule HacLong.Game.Engine do
           {p, %{reward | items: reward.items ++ [drop]}}
       end
 
-    # lần đầu hạ trùm vùng: chắc chắn một món đồ Hiếm / Sử Thi đúng lớp (danh hiệu ở thành tựu)
+    # lần đầu hạ trùm vùng: chắc chắn một món đồ có dòng cộng thêm đúng lớp (danh hiệu ở thành tựu)
     {p, reward} =
       if is_integer(p.battle.zone),
         do: boss_gear(p, m, reward),
@@ -1417,7 +1414,7 @@ defmodule HacLong.Game.Engine do
         {p, reward}
 
       g ->
-        label = "#{Gear.resolve(g).name} (#{Gear.rarity_names()[g.rarity]})"
+        label = Gear.label(g)
 
         case Gear.add(p, g) do
           {p, :kept} ->

@@ -12,7 +12,7 @@ defmodule HacLong.MailboxGearTest do
 
   defp base(slot), do: Data.items() |> Enum.find(fn {_, it} -> it.slot == slot end) |> elem(0)
 
-  test "gửi và mở thư có đồ thường +3 và đồ hiếm" do
+  test "gửi và mở thư có đồ thường +3 và đồ có dòng cộng thêm" do
     w = base("weapon")
     user = user("mgift")
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mgift", "cls" => "dk"})
@@ -26,9 +26,10 @@ defmodule HacLong.MailboxGearTest do
     assert msg =~ "+3"
     bag = Gear.bag(p2)
     assert length(bag) == length(Gear.bag(p)) + 3
-    plain = Enum.find(bag, &(&1.rarity == 0))
+    plain = Enum.find(bag, &(&1[:opt] == nil))
     assert p2.upgrades[plain.uid] == 3
-    assert Enum.count(bag, &(&1.rarity == 2)) == 2
+    assert Enum.count(bag, &(&1[:opt] == 2)) == 2
+    assert msg =~ "(+8)"
   end
 
   test "từ chối khóa đồ không hợp lệ" do

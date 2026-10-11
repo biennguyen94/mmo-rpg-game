@@ -585,7 +585,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "mời, bỏ đồ, đổi gì cũng phải xác nhận lại, cả hai xác nhận thì đổi" do
-      sword = %{uid: "#TRADE1", base: "club", rarity: 2, bonus: %{str: 3}}
+      sword = %{uid: "#TRADE1", base: "club", rarity: 0, bonus: %{}, opt: 2}
       ua = create_user()
 
       pa =
@@ -621,7 +621,7 @@ defmodule HacLongWeb.GameChannelTest do
       assert {:ok, %{trade: %{mine: %{gold: 100, gear: [g]}}}} =
                top(sa, "offer", %{"offer" => offer_a})
 
-      assert g.up == 2 and g.rarity == 2
+      assert g.up == 2 and g.kind == "opt"
 
       assert {:ok, _} = top(sb, "offer", %{"offer" => %{"gold" => 300}})
       assert {:ok, %{trade: %{my_ready: true, their_ready: false}}} = top(sa, "ready")
@@ -838,7 +838,7 @@ defmodule HacLongWeb.GameChannelTest do
           online: false,
           rank: rank,
           class_rank: crank,
-          stats: %{str: %{base: 5, gear: 0}},
+          stats: %{str: %{base: 5}},
           crit_mult: cm,
           hit_rate: hr,
           counts: %{kills: _, pk_wins: 0, pk_losses: 0},
@@ -926,7 +926,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "rao bán, mua, rút về; người bán nhận tiền qua hộp thư trừ phí" do
-      sword = %{uid: "#CHO1", base: "item_0_3", rarity: 2, bonus: %{str: 3, agi: 1}}
+      sword = %{uid: "#CHO1", base: "item_0_3", rarity: 0, bonus: %{}, luck: true}
       ua = create_user()
 
       player_at(ua, %{map: "village", x: 7, y: 14}, %{
@@ -954,7 +954,7 @@ defmodule HacLongWeb.GameChannelTest do
       pot = Enum.find(listings, &(&1.item == "potion_m"))
       gear = Enum.find(listings, &(&1.gear != nil))
       assert pot.count == 3 and pot.seller_id == ua.id and not pot.mine
-      assert gear.gear.up == 2 and gear.name == "Đao Katana Sức Mạnh"
+      assert gear.gear.up == 2 and gear.name == "Đao Katana"
 
       assert %{ok: false, msg: "Đây là hàng của bạn."} =
                cmd(sa, %{"act" => "market_buy", "listing" => pot.id})

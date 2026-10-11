@@ -61,7 +61,7 @@ await shot(page, 'progress-forge.png');
 const bag0 = Object.keys(p.view.gear).length;
 await act(page, '[data-act="chest_buy"][data-tier="wood"]');
 p = await player(page);
-R.check('mua Rương Gỗ: thêm một món đồ hiếm', Object.keys(p.view.gear).length === bag0 + 1);
+R.check('mua Rương Gỗ: thêm một món có dòng cộng thêm (B-15)', Object.keys(p.view.gear).length === bag0 + 1 && Object.values(p.view.gear).some((g) => g.kind === 'opt' && g.opt >= 1));
 
 // ---------- Ngọc Sinh Mệnh: đồ đang mặc, đồ trong túi (chọn qua nút "Ép" trong tooltip) ----------
 const j0 = p.inv.jewel_life;
@@ -69,6 +69,7 @@ await act(page, '[data-act="life"][data-slot="weapon"]');
 p = await player(page);
 R.check('ép Ngọc Sinh Mệnh vào vũ khí: tốn 1 ngọc', p.inv.jewel_life === j0 - 1);
 const rare = Object.values(p.view.gear).find((g) => !Object.values(p.equip).includes(g.uid)).uid;
+const opt0 = p.view.gear[rare].opt || 0;
 await page.click('#tabs [data-tab="bag"]');
 await act(page, `[data-act="bag-tip"][data-id="${rare}"]`);
 R.check('tooltip đồ trong túi có nút Ép và Vứt', !!(await page.$('#itemtip [data-act="forge-pick"]')) && !!(await page.$('#itemtip [data-act="discard"]')));
@@ -76,7 +77,7 @@ await act(page, '#itemtip [data-act="forge-pick"]');
 R.check('chọn Ép khi đang ở Thợ Rèn: thẻ rèn hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
 await act(page, `[data-act="life"][data-id="${rare}"]`);
 p = await player(page);
-R.check('ép Ngọc Sinh Mệnh vào đồ trong túi: tốn 1 ngọc, số dòng 0–1', p.inv.jewel_life === j0 - 2 && (p.view.gear[rare].opt || 0) <= 1, `opt=${p.view.gear[rare].opt}`);
+R.check('ép Ngọc Sinh Mệnh vào đồ trong túi: tốn 1 ngọc, thêm / mất một dòng', p.inv.jewel_life === j0 - 2 && Math.abs((p.view.gear[rare].opt || 0) - opt0) === 1, `opt=${p.view.gear[rare].opt} trước ${opt0}`);
 await shot(page, 'progress-life.png');
 await leaveNpc(page);
 

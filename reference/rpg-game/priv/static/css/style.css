@@ -378,12 +378,11 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .item.locked { opacity: 0.55; }
 
 /* Đồ chỉ số ngẫu nhiên: màu theo độ hiếm */
-.rar-1 { color: #8fd18f; }
-.rar-2 { color: #7fb6ff; }
-.rar-3 { color: #d59cff; }
-.ic.rar-ic-1 { filter: drop-shadow(0 0 3px #4f9f4f); }
-.ic.rar-ic-2 { filter: drop-shadow(0 0 3px #3f7fe0); }
-.ic.rar-ic-3 { filter: drop-shadow(0 0 4px #a45ee0); }
+/* B-15: loại món kiểu MU — có dòng (xanh), hoàn hảo (lục), Thần */
+.k-opt { color: #7fb3ff; }
+.ic.k-ic-opt { filter: drop-shadow(0 0 3px #3f7fe0); }
+.ic.k-ic-exc { filter: drop-shadow(0 0 3px #3fbf5a); }
+.ic.k-ic-anc { filter: drop-shadow(0 0 4px #4f7fe0); }
 .gear-drop { color: var(--gold); font-weight: 600; }
 
 /* Sổ tay quái vật */
@@ -476,9 +475,9 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .bag .cell.empty { opacity: 0.5; }
 .cell .qty { position: absolute; right: 3px; bottom: 0; font-size: 0.68rem; font-weight: 700; text-shadow: 0 1px 2px #000; }
 .cell .lvl, .slot .lvl { position: absolute; left: 3px; top: 0; font-size: 0.68rem; font-weight: 700; color: var(--gold); text-shadow: 0 1px 2px #000; pointer-events: none; }
-.rar-b-1 { border-color: #3f7a3f !important; box-shadow: inset 0 0 6px #2f5f2f; }
-.rar-b-2 { border-color: #3f6fb8 !important; box-shadow: inset 0 0 6px #2b4f88; }
-.rar-b-3 { border-color: #8a4fc0 !important; box-shadow: inset 0 0 8px #6a3a98; }
+.b-opt { border-color: #3f6fb8 !important; box-shadow: inset 0 0 6px #2b4f88; }
+.b-exc { border-color: #3f9a4f !important; box-shadow: inset 0 0 6px #2f6f3a; }
+.b-anc { border-color: #4f7fe0 !important; box-shadow: inset 0 0 8px #2f8f3a; }
 /* Đợt 3: viền theo cấp nâng (+7, +9, +11), dấu khóa */
 .up7 { box-shadow: inset 0 0 6px #3f8fd0, 0 0 4px #3f8fd0; }
 .up9 { box-shadow: inset 0 0 8px #e9c46a, 0 0 6px #e9c46a; }
@@ -732,6 +731,7 @@ body.tl-on { overflow: hidden; }
 .itemtip.mu .btns { text-align: left; }
 .mu-name { font-weight: 700; font-size: 1rem; color: #f4f4f4; }
 .mu-name.hi { color: #ffd24d; }
+.mu-name.opt { color: #7fb3ff; }
 .mu-name.exc { color: #4fe36a; }
 .mu-name.anc { color: #7cfc5a; background: #173a72; margin: 0 -12px; padding: 3px 6px; }
 .mu-main { color: #f0f0f0; }

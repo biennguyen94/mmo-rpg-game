@@ -30,8 +30,8 @@ defmodule HacLongWeb.Phase4Test do
 
   test "cất đồ vào tủ, vứt đồ: lưu / nạp lại đúng; nhật ký đồ hiếm đúng; audit sạch" do
     u = create_user()
-    g = Gear.new("dagger", 2, %{str: 2})
-    junk = Gear.new("dagger", 1, %{agi: 1})
+    g = Gear.new("dagger", 2)
+    junk = Gear.new("dagger", 1)
 
     player(u, %{
       gear: [g, junk],

@@ -25,8 +25,8 @@ defmodule HacLong.Mailbox do
   @doc """
   Gửi thư. `attrs`: `subject` (bắt buộc), `body`, `gold`, `xp`, `items` (`%{id => số}`).
 
-  Đồ riêng từng món (Phase 11, V10) ghi trong `items` với khóa `"gear:<mẫu>:<độ hiếm>:<+N>"`:
-  độ hiếm 0 là đồ thường (`Gear.plain/1`), 1..3 là đồ hiếm chỉ số theo cấp người nhận. Mở thư thì
+  Đồ riêng từng món (Phase 11, V10) ghi trong `items` với khóa `"gear:<mẫu>:<số dòng>:<+N>"`:
+  số dòng cộng thêm kiểu MU 0..`Gear.max_opt/0` (B-15; thư cũ ghi độ hiếm 1..3 thành chừng đó dòng). Mở thư thì
   tạo từng món vào túi đồ hiếm; túi không đủ chỗ thì không mở được (giữ thư).
   """
   def send(user_id, attrs) do
@@ -226,20 +226,20 @@ defmodule HacLong.Mailbox do
     n
   end
 
-  # ---------- Đồ riêng từng món: "gear:<mẫu>:<độ hiếm>:<+N>" ----------
+  # ---------- Đồ riêng từng món: "gear:<mẫu>:<số dòng>:<+N>" ----------
 
   @doc "Khóa `items` cho một món đồ riêng (dùng khi gửi)."
-  def gear_key(base, rarity, up), do: "gear:#{base}:#{rarity}:#{up}"
+  def gear_key(base, opt, up), do: "gear:#{base}:#{opt}:#{up}"
 
   defp parse_gear("gear:" <> rest) do
     with [base, r, u] <- String.split(rest, ":"),
-         {rarity, ""} <- Integer.parse(r),
+         {opt, ""} <- Integer.parse(r),
          {up, ""} <- Integer.parse(u),
          it when not is_nil(it) <- Data.item(base),
          true <- it.slot in Engine.equip_slots(),
-         true <- rarity in 0..3 and up in 0..Engine.max_upgrade(),
-         true <- rarity == 0 or it.slot in Engine.gear_slots() do
-      {base, rarity, up, it}
+         true <- opt in 0..Gear.max_opt() and up in 0..Engine.max_upgrade(),
+         true <- opt == 0 or it.slot in Engine.gear_slots() do
+      {base, opt, up, it}
     else
       _ -> nil
     end
@@ -249,12 +249,7 @@ defmodule HacLong.Mailbox do
 
   defp valid_item?(id), do: Data.item(id) != nil or parse_gear(id) != nil
 
-  defp make_gear(p, {base, 0, _up, _it}), do: {Gear.plain(base), p}
-
-  defp make_gear(p, {base, rarity, _up, _it}) do
-    top = 1 + floor(p.level / 6)
-    {Gear.new(base, rarity, Gear.stats() |> Enum.take(rarity) |> Map.new(&{&1, top})), p}
-  end
+  defp make_gear(p, {base, opt, _up, _it}), do: {Gear.new(base, opt), p}
 
   defp give(p, mail) do
     p = %{p | gold: p.gold + mail.gold}
@@ -304,13 +299,10 @@ defmodule HacLong.Mailbox do
     "Nhận quà: " <> Enum.join(parts, ", ") <> "."
   end
 
-  @rarity %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
-
   defp item_name(id) do
     case parse_gear(id) do
-      {_, r, up, it} ->
-        it.name <>
-          if(r > 0, do: " (#{@rarity[r]})", else: "") <> if(up > 0, do: " +#{up}", else: "")
+      {base, opt, up, _it} ->
+        Gear.label(Gear.new(base, opt)) <> if(up > 0, do: " +#{up}", else: "")
 
       nil ->
         if it = Data.item(id), do: it.name, else: id

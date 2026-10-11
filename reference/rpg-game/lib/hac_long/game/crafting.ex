@@ -6,8 +6,8 @@ defmodule HacLong.Game.Crafting do
     (`level`). Món ăn (`slot: "food"`) ăn ngoài trận (`eat/2`) thì có tác dụng trong một số
     trận (`food.battles`): cộng phần trăm máu/tấn công/phòng thủ/kinh nghiệm/vàng
     (`food_bonus/2`). Mỗi lúc chỉ một món; ăn món khác thì thay món cũ.
-  - **Rèn đồ** (`smith/2`): chọn vũ khí, giáp hoặc khiên; tốn quặng và vàng, ra một món đồ chỉ
-    số ngẫu nhiên hợp cấp. Cấp nghề rèn càng cao càng dễ ra đồ Sử Thi.
+  - **Rèn đồ** (`smith/2`): chọn vũ khí, giáp hoặc khiên; tốn quặng và vàng, ra một món đồ
+    ngẫu nhiên hợp cấp. Cấp nghề rèn càng cao càng dễ ra đồ nhiều dòng cộng thêm (+12).
   - Mỗi lần nấu/rèn được 1 kinh nghiệm nghề; cấp nghề 1–5 (`level/1`).
 
   Trạng thái trong nhân vật: `crafting: %{cook: số, smith: số}`, `food: %{id, left} | nil`.
@@ -31,7 +31,7 @@ defmodule HacLong.Game.Crafting do
   def level(xp) when is_integer(xp), do: Enum.count(@levels, &(xp >= &1))
   def level(p, skill), do: level(xp(p, skill))
 
-  @doc "Tỉ lệ độ hiếm khi rèn ở cấp nghề `lv`: Sử Thi 6% + 6% mỗi cấp, Hiếm 50%, còn lại Tốt."
+  @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng 6% mỗi cấp, 2 dòng 50%, còn lại 1 dòng."
   def smith_weights(lv) do
     epic = @rules.smith_epic_per_level * lv
     [{3, epic}, {2, @rules.smith_rare}, {1, 100 - @rules.smith_rare - epic}]
@@ -157,11 +157,10 @@ defmodule HacLong.Game.Crafting do
         p = %{take_all(p, cost) | gold: p.gold - gold}
         {p, :kept} = Gear.add(p, g)
         {p, note} = gain(p, :smith)
-        it = Gear.resolve(g)
 
         {%{
            ok: true,
-           msg: "Rèn được #{it.name} (#{Gear.rarity_names()[g.rarity]})!#{note}",
+           msg: "Rèn được #{Gear.label(g)}!#{note}",
            gear: g.uid
          }, p}
     end

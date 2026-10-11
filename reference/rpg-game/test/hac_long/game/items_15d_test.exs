@@ -24,11 +24,11 @@ defmodule HacLong.Game.Items15dTest do
     p
   end
 
-  defp gear(base, extra), do: Map.merge(Gear.new(base, 1, %{}), extra)
+  defp gear(base, extra), do: Map.merge(Gear.new(base, 1), extra)
 
   test "đồ rơi: May mắn theo loại quái, Kỹ năng chỉ ở vũ khí; đấu trường / trùm thế giới không bốc" do
-    sword = Gear.new("item_0_3", 1, %{})
-    armor = Gear.new("item_8_5", 1, %{})
+    sword = Gear.new("item_0_3", 1)
+    armor = Gear.new("item_8_5", 1)
 
     # bốc 0.0 (< mọi tỉ lệ) thì có cả hai dòng
     Rng.put_sequence([0.0, 0.0])
@@ -86,7 +86,7 @@ defmodule HacLong.Game.Items15dTest do
   end
 
   test "giá bán nhân price_mult mỗi dòng; lưu / nạp giữ dòng" do
-    plain = Gear.new("item_0_3", 1, %{})
+    plain = Gear.new("item_0_3", 1)
     both = Map.merge(plain, %{luck: true, skill: true})
     assert Gear.price(both) == round(Gear.price(plain) * @ls.price_mult * @ls.price_mult)
 

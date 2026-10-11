@@ -275,14 +275,13 @@ defmodule HacLong.Game.Simulator do
     end)
   end
 
-  # giá trị món đồ với bot: tấn công/phòng thủ + nâng cấp + điểm chỉ số cộng thêm (×2)
+  # giá trị món đồ với bot: tấn công/phòng thủ + nâng cấp + dòng cộng thêm
   defp worn(_p, nil), do: 0
 
   defp worn(p, id) do
     it = Gear.item(p, id)
 
-    (it[:atk] || 0) + (it[:def] || 0) + Engine.upgrade_bonus(p, id) +
-      2 * Enum.sum(Map.values(it[:bonus] || %{}))
+    (it[:atk] || 0) + (it[:def] || 0) + Engine.upgrade_bonus(p, id) + Engine.life_bonus(p, id)
   end
 
   defp shop_up(p) do

@@ -168,7 +168,7 @@ defmodule HacLong.Game.EngineTest do
     {%{result: "win"}, won} = Engine.act(p, "attack")
     assert "wolf" in won.bosses
     assert [g] = HacLong.Game.Gear.bag(won)
-    assert g.rarity in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
+    assert g[:opt] in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
     assert won.inv["jewel_bless"] == 1 and won.daily.bosses == ["wolf"]
     assert Enum.any?(won.battle.log, &(&1.text =~ "Lần đầu hạ"))
     {won, _} = HacLong.Game.Achievements.check(won)

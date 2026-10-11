@@ -69,7 +69,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 | Hang Hắc Long | 30–35 | **HẮC LONG** (36) |
 
 - **Vùng mở theo cấp**: cấp nhân vật ≥ cấp quái thấp nhất của vùng là vào và đánh được, không cần hạ trùm trước.
-- **Trùm vùng là thử thách có thưởng**: hạ lần đầu chắc chắn rơi một món đồ **Hiếm / Sử Thi đúng lớp** và nhận danh hiệu
+- **Trùm vùng là thử thách có thưởng**: hạ lần đầu chắc chắn rơi một món đồ **đúng lớp có dòng cộng thêm +8 / +12** và nhận danh hiệu
   **Diệt <tên trùm>** (chọn ở tab Thành tựu); mỗi ngày lần đầu hạ một trùm được thêm ngọc (vùng 1–3: Ngọc Ước Nguyện,
   vùng 4–6: Ngọc Tâm Linh). Hạ Hắc Long vẫn là đích cuối, lên bảng **Diệt rồng**.
 - Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
@@ -122,7 +122,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Lâu Đài Máu (Phase 18):** từ cấp 40, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (0h30, 2h30 … 22h30), cho vào
   trong 10 phút, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài (mua 30 000 vàng hoặc nhặt từ quái cấp 35+). Trong 8 phút: hạ 8
   quân canh, phá Cổng Thành, hạ Hiệp Sĩ Máu để nhận Lông Vũ Kền Kền (cần để ghép cánh cấp 3), vàng, kinh nghiệm, 2 ngọc.
-- **Đồ hiếm** có chỉ số cộng thêm ngẫu nhiên, viền màu theo độ hiếm; túi giữ tối đa 20 món đồ hiếm.
+- **Loại đồ như MU**: đồ thường (có thể kèm May mắn, Kỹ năng, dòng cộng thêm +4 / +8 / +12 tấn công hoặc phòng thủ — tên xanh), đồ hoàn hảo (tên lục), đồ Thần. Ngọc Sinh Mệnh thêm dòng tới +16. Túi giữ tối đa 20 món riêng.
 - **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.
 

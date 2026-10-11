@@ -21,7 +21,7 @@ defmodule HacLongWeb.Market15hTest do
     buyer = create_user()
 
     g =
-      Gear.new("item_0_3", 2, %{str: 3})
+      Gear.new("item_0_3")
       |> Map.merge(%{exc: ["atk_pct"], luck: true, skill: true, opt: 2})
 
     a = with_character(seller, %{gear: [g], upgrades: %{g.uid => 7}})
@@ -35,13 +35,13 @@ defmodule HacLongWeb.Market15hTest do
 
     {:ok, _, b2} = Market.buy(buyer.id, b, l.id, &Characters.save!(buyer.id, &1))
     [got] = b2.gear
-    assert %{exc: ["atk_pct"], luck: true, skill: true, opt: 2, bonus: %{str: 3}} = got
+    assert %{exc: ["atk_pct"], luck: true, skill: true, opt: 2, bonus: %{}} = got
     assert b2.upgrades[got.uid] == 7
   end
 
   test "đồ Thần và cánh có dòng giữ nguyên qua chợ (rút về)" do
     seller = create_user()
-    anc = Map.put(Gear.new("item_8_0", 1, %{}), :anc, true)
+    anc = Map.put(Gear.new("item_8_0", 1), :anc, true)
     wing = Map.put(Gear.plain("wing_dk_2"), :wopt, "hp")
     a = with_character(seller, %{gear: [anc, wing]})
     save = &Characters.save!(seller.id, &1)

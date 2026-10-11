@@ -75,7 +75,7 @@ defmodule HacLong.Game.Events do
         id: "gear",
         name: "Túi Quà Lễ Hội",
         cost: @rules.shop.gear,
-        desc: "Một món đồ chỉ số ngẫu nhiên (dễ ra Hiếm)."
+        desc: "Một món đồ hợp cấp, chắc chắn có dòng cộng thêm."
       },
       %{
         id: "potions",
@@ -130,8 +130,7 @@ defmodule HacLong.Game.Events do
   defp give(p, _e, "gear") do
     g = Gear.roll(max(p.level, Data.rules().chests.min_level), @gear_weights)
     {p, :kept} = Gear.add(p, g)
-    it = Gear.resolve(g)
-    {p, "Túi Quà Lễ Hội: #{it.name} (#{Gear.rarity_names()[g.rarity]})!"}
+    {p, "Túi Quà Lễ Hội: #{Gear.label(g)}!"}
   end
 
   defp give(p, _e, "potions"),

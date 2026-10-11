@@ -13,7 +13,7 @@ defmodule HacLong.Game.Chests do
 
   alias HacLong.Game.{Data, Engine, Gear, Rng}
 
-  # số ở `RULES.chests` (`priv/game_data/rules.json`); tỉ lệ độ hiếm `[{độ_hiếm, tỉ_lệ}]`
+  # số ở `RULES.chests` (`priv/game_data/rules.json`); tỉ lệ số dòng cộng thêm `[{số_dòng, tỉ_lệ}]` (B-15)
   @rules Data.rules().chests
   @tiers Enum.map(@rules.tiers, fn t -> %{t | weights: Enum.map(t.weights, &List.to_tuple/1)} end)
   @daily %{@rules.daily | gear_weights: Enum.map(@rules.daily.gear_weights, &List.to_tuple/1)}
@@ -55,7 +55,6 @@ defmodule HacLong.Game.Chests do
       true ->
         g = roll(p, t.weights)
         {p, :kept} = Gear.add(%{p | gold: p.gold - cost}, g)
-        it = Gear.resolve(g)
 
         # thêm một viên ngọc ép đồ (rương đắt hơn thì dễ ra hơn)
         {p, jewel} =
@@ -68,7 +67,7 @@ defmodule HacLong.Game.Chests do
 
         {%{
            ok: true,
-           msg: "Mở #{t.name}: #{it.name} (#{Gear.rarity_names()[g.rarity]})#{jewel}!",
+           msg: "Mở #{t.name}: #{Gear.label(g)}#{jewel}!",
            gear: g.uid
          }, p}
     end

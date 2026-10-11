@@ -290,4 +290,16 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Kỹ năng, Ngọc Sinh Mệnh, Excellent, dòng cánh); khung thông tin bộ (Bộ Thần: các mức thưởng, mức đã đạt sáng; bộ giáp
   thường: thưởng đủ bộ). Độ hiếm Tốt / Hiếm / Sử Thi (của Hắc Long, không có trong MU) hiện thành "Gia tăng <chỉ số> +N".
   Client nhận thêm `RULES.ancient.bonus` để hiện mức thưởng Bộ Thần.
+- **B-15** (anh chốt "làm đi, cho giống MU") **Bỏ độ hiếm Tốt / Hiếm / Sử Thi, đồ theo kiểu MU**: đồ thường (có thể kèm May mắn,
+  Kỹ năng, **dòng cộng thêm** +4 / +8 / +12 / +16), đồ hoàn hảo (Excellent), đồ Thần — như MU, không còn chỉ số STR / AGI / VIT /
+  ENE cộng ngẫu nhiên và hậu tố tên ("… Sức Mạnh"). Dòng cộng thêm dùng chung trường `opt` với Ngọc Sinh Mệnh (mỗi dòng
+  `RULES.upgrade.life.per_line` = 4 tấn công / phòng thủ, tối đa 4 dòng). Đồ rơi từ quái: `RULES.loot.gear_weights` giờ là
+  `[số dòng, trọng số]` = không dòng 50 %, +4 35 %, +8 12 %, +12 3 % (em đề xuất số). Rương, rèn, Túi Quà Lễ Hội, trùm lần đầu,
+  Quảng Trường Quỷ giữ nguyên bảng trọng số cũ nhưng đọc là số dòng (độ hiếm 1..3 → 1..3 dòng), nên luôn có dòng.
+  **Đồ cũ**: khi nạp, độ hiếm N thành N dòng cộng thêm (lấy số lớn hơn nếu món đã có dòng Ngọc Sinh Mệnh), bỏ điểm chỉ số
+  cộng thêm; thư cũ `gear:<mẫu>:<1..3>:<+N>` mở ra cũng thành chừng đó dòng. Không đổi schema: hai trường `rarity` (luôn 0) /
+  `bonus` (luôn rỗng) giữ trong `gear` và cột `gear_log.rarity`. Giá bán: `giá × 0.4 × (1 + 0.25 × số dòng)` × Excellent ×
+  May mắn / Kỹ năng × Thần (`RULES.shop.gear_opt_value`, bỏ `gear_rarity_value`, `gear_bonus_value`, `loot.gear_bonus_per_level`).
+  Thành tựu "Của Hiếm" đổi thành có một món hoàn hảo hoặc đồ Thần (ai nhận rồi vẫn giữ). Quản trị: `give_gear` nhận `opt` 0..4
+  thay `rarity` / `bonus`. Client: tên / viền / bóng icon theo loại (`kind`: xanh có dòng, lục hoàn hảo, Thần), bỏ nhãn độ hiếm.
 
