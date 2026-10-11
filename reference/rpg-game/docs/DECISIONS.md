@@ -246,3 +246,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   đồ cũ. Đồ rơi lấy mọi món thuộc 2 mức cấp cao nhất (trước: 2 món) để món phụ không đẩy bậc dưới ra. Khiên 3 → 8 bậc. Đấu Sĩ
   có bộ riêng MU (Quạ Bão, Dũng Mãnh, Ưng Sấm, Cuồng Phong) làm bộ phụ, không mũ. Đổi tên để không trùng đồ cũ: 2/0 Chùy Tròn
   (đồ cũ có Chùy Gai), 6/7 Khiên Đinh (Khiên Gai), 1/5 Rìu Chiến Binh (Rìu Chiến).
+- **B-5** (anh chốt phương án B) Đồ đặc biệt từ quái thường (`rules.json`): tỉ lệ rơi đồ `loot.gear_chance.normal` 4% → 6%,
+  Excellent `excellent.chance.normal` 4% → 10%, Thần `ancient.chance.normal` 1% → 5%. Quái thường giờ ~1/167 con ra Excellent,
+  ~1/775 con ra Thần. Tinh anh / đêm / trùm giữ nguyên số; tỉ lệ trên mỗi món đã rơi của quái thường có chỗ cao hơn, nhưng tính
+  trên mỗi con hạ thì tinh anh / đêm / trùm vẫn cao hơn nhiều vì rơi đồ thường xuyên hơn (50% / 25% / 35% so với 6%).

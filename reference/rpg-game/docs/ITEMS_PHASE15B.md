@@ -289,6 +289,7 @@ Nhận xét từ bản 2026-10-10 (để anh cân nhắc chỉnh, em **chưa** �
 
 - Quái thường hiếm khi ra đồ đặc biệt (Excellent ~1/625 con, Thần ~1/5 800 con); đồ đặc biệt chủ yếu đến từ tinh anh /
   trùm / quái đêm. Muốn quái thường đáng đánh hơn: tăng `loot.gear_chance.normal` hoặc các `chance.normal`.
+  → 2026-10-11 anh chốt phương án B (DECISIONS B-5): ~1/167 con ra Excellent, ~1/775 con ra Thần.
 - Vàng cuối khi hạ Hắc Long (cấp 35) chỉ khoảng 2 000–25 000, trong khi cánh cấp 2 cần 200 000 vàng, cánh cấp 3 500 000,
   Pha Excellent 100 000: các mục này là việc của giai đoạn sau Hắc Long (bản đồ phụ cấp 35–50), hoặc giảm `gold` trong
   `chaos.json` nếu anh muốn người chơi chạm tới sớm hơn.
