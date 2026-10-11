@@ -27,6 +27,22 @@ defmodule HacLong.Game.HomePetsTest do
     assert {%{ok: false}, _} = Pets.choose(p, "hippogriff")
   end
 
+  test "thú theo MU (hình riêng `ref`, hình CC0 dự phòng): mua, dắt theo thì cộng chỉ số" do
+    mu = Enum.filter(HacLong.Game.Data.pets(), & &1[:ref])
+    assert Enum.map(mu, & &1.id) == ~w(panda raven angel satan spirit daemon)
+
+    for pt <- mu do
+      assert File.exists?(Path.join(:code.priv_dir(:hac_long), "static/assets/pets/#{pt.id}.png"))
+      assert pt.ref =~ ~r{^13/\d+$} and pt.skill
+    end
+
+    p = player(200_000)
+    base = Engine.derived(p)
+    {%{ok: true}, p} = Pets.buy(p, "satan")
+    assert p.pet == "satan" and p.gold == 200_000 - Pets.data("satan").price
+    assert Engine.derived(p).atk == round(base.atk * (1 + Pets.data("satan").bonus.atk))
+  end
+
   test "ngoại hình theo đồ đang mặc" do
     p = player()
 

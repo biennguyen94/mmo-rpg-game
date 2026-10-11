@@ -173,6 +173,8 @@ Chi tiết kỹ thuật của từng phần nằm trong `README.md` và tài li�
     Cấp 5 học kỹ năng riêng, dùng khi cắn: Liếm Vết Thương (hồi 5% máu), Cắn Xé (gấp đôi cú
     cắn, Chó Săn, Bằng Mã Lửa và thú thuần), Húc Ngã (quái suy yếu), Móc Túi (vàng), Phấn Độc
     (quái trúng độc).
+  - [x] Thêm 6 thú theo hình thú MU (Gấu Trúc, Quạ Đen, Thiên Thần Hộ Mệnh, Quỷ Satan, Tinh Linh Hộ Vệ,
+    Ác Quỷ Daemon; DECISIONS B-9) và ô **Thú nuôi** trong lưới trang bị của Túi đồ (B-8).
   - [x] Hạ đủ 100 con một loài quái thường thì thuần phục ở Người Nuôi Thú (1.000 + cấp × 100
     vàng): thú thuần đi theo như thú cưng, +3% tấn công.
 

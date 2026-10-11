@@ -69,6 +69,7 @@ p { margin: 0; }
 .ic { width: 22px; height: 22px; flex: none; display: inline-block; vertical-align: middle; }
 .ic.lg { width: 34px; height: 34px; }
 .sprite { image-rendering: pixelated; image-rendering: crisp-edges; flex: none; }
+.sprite.own { image-rendering: auto; object-fit: contain; width: 32px; height: 32px; }
 
 /* ---------- HUD ---------- */
 #hud {

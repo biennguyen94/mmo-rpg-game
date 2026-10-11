@@ -261,3 +261,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   ("13/80"…) để dùng hình MU riêng của anh: `mix hac_long.items.fetch --icons-from` chép cả hình của thú có `ref`. Chưa gán `ref`
   cho thú nào vì hình thú MU (Thiên Thần, Satan, sừng Uniria / Dinorant / Fenrir, Ngựa Đen, Quạ Đen, Daemon, Tinh Linh, Rudolph,
   Gấu Trúc) không khớp sáu thú hiện có — chờ anh chọn.
+- **B-9** (anh chọn, em đề xuất số) Thêm 6 thú theo hình thú MU anh cung cấp, bán ở Người Nuôi Thú, dùng lại các loại
+  cộng chỉ số và kỹ năng có sẵn (không đổi Engine): Gấu Trúc 13/80 (12.000 vàng, EXP +6%, vàng +6%, Móc Túi), Quạ Đen 13/5
+  (20.000, tấn công +5%, Phấn Độc), Thiên Thần Hộ Mệnh 13/0 (25.000, phòng thủ +5%, máu +5%, Liếm Vết Thương), Quỷ Satan 13/1
+  (60.000, tấn công +7%, Cắn Xé), Tinh Linh Hộ Vệ 13/65 (80.000, phòng thủ +6%, máu +7%, Liếm Vết Thương), Ác Quỷ Daemon 13/64
+  (120.000, tấn công +8%, EXP +3%, Cắn Xé). Hình: có hình MU (`ref`) thì dùng ở ô Thú nuôi, danh sách thú và cửa hàng; không có
+  (máy chưa chép hình riêng) thì dùng hình CC0 trong `pets/` — trên bản đồ luôn dùng hình CC0 (cỡ ô 32px). Không thêm Rudolph,
+  Ngựa Đen, các "Sừng" (Uniria, Dinorant, Fenrir): không có hình CC0 hợp / hình chỉ là cái sừng. Thành tựu "có đủ thú" giờ cần 12 thú.

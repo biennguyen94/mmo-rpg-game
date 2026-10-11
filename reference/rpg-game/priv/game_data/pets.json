@@ -71,6 +71,62 @@
       }
     },
     {
+      "id": "panda",
+      "name": "Gấu Trúc",
+      "ref": "13/80",
+      "price": 12000,
+      "bonus": {
+        "xp": 0.06,
+        "gold": 0.06
+      },
+      "desc": "Kinh nghiệm +6%, vàng từ quái +6%.",
+      "skill": {
+        "id": "pickpocket",
+        "name": "Móc Túi",
+        "desc": "Khi cắn, móc được vàng bằng cấp quái × 3."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "raven",
+      "name": "Quạ Đen",
+      "ref": "13/5",
+      "price": 20000,
+      "bonus": {
+        "atk": 0.05
+      },
+      "desc": "Tấn công +5%.",
+      "skill": {
+        "id": "venom",
+        "name": "Phấn Độc",
+        "desc": "Khi cắn, quái trúng độc 3 lượt."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "angel",
+      "name": "Thiên Thần Hộ Mệnh",
+      "ref": "13/0",
+      "price": 25000,
+      "bonus": {
+        "def": 0.05,
+        "hp": 0.05
+      },
+      "desc": "Phòng thủ +5%, máu tối đa +5%.",
+      "skill": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 5% máu tối đa."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "hippogriff",
       "name": "Bằng Mã Lửa",
       "price": 40000,
@@ -84,6 +140,62 @@
         "name": "Cắn Xé",
         "desc": "Cú cắn gây gấp đôi sát thương."
       }
+    },
+    {
+      "id": "satan",
+      "name": "Quỷ Satan",
+      "ref": "13/1",
+      "price": 60000,
+      "bonus": {
+        "atk": 0.07
+      },
+      "desc": "Tấn công +7%.",
+      "skill": {
+        "id": "rend",
+        "name": "Cắn Xé",
+        "desc": "Cú cắn gây gấp đôi sát thương."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "spirit",
+      "name": "Tinh Linh Hộ Vệ",
+      "ref": "13/65",
+      "price": 80000,
+      "bonus": {
+        "def": 0.06,
+        "hp": 0.07
+      },
+      "desc": "Phòng thủ +6%, máu tối đa +7%.",
+      "skill": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 5% máu tối đa."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "daemon",
+      "name": "Ác Quỷ Daemon",
+      "ref": "13/64",
+      "price": 120000,
+      "bonus": {
+        "atk": 0.08,
+        "xp": 0.03
+      },
+      "desc": "Tấn công +8%, kinh nghiệm +3%.",
+      "skill": {
+        "id": "rend",
+        "name": "Cắn Xé",
+        "desc": "Cú cắn gây gấp đôi sát thương."
+      },
+      "sourceType": "MU_INSPIRED",
+      "version": 1,
+      "verified": false
     }
   ]
 }
