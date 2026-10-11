@@ -300,7 +300,7 @@
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
     const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots'].includes(it.slot) && !it.legacy);
-    const up = '<label class="small">+ <input type="number" name="up" min="0" max="5" value="0"></label>';
+    const up = `<label class="small">+ <input type="number" name="up" min="0" max="${UPGRADE.max}" value="0"></label>`;
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
     return `<div class="card"><h3>Chỉnh nhân vật</h3>
