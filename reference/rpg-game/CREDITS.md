@@ -43,7 +43,9 @@ Tác giả:
 Cũng từ bộ tile Dungeon Crawl Stone Soup ở trên (CC0): các lớp nhân vật trong `player/` (thân,
 quần, giày, tóc, giáp, vũ khí, khiên), thú (`mon/animals`, `mon/hippogriff`), tượng, đài phun
 nước, cây, đồ vật (`dngn/`, `item/misc`, `mon/fungi_plants`), NPC Thợ Mộc (`deep_dwarf`) và
-Người Nuôi Thú (`halfling`). Đã đối chiếu từng file với danh sách chưa rõ giấy phép
+Người Nuôi Thú (`halfling`). Hình dự phòng cho 6 thú theo MU (`pets/panda`, `raven`, `angel`, `satan`, `spirit`,
+`daemon`): `mon/animals/black_bear`, `mon/animals/caustic_shrike`, `mon/holy/cherub`, `mon/demons/red_devil`,
+`mon/nonliving/insubstantial_wisp`, `mon/demons/crimson_imp` (hình MU thật của anh nằm ở `assets_src/private/`, không vào git). Đã đối chiếu từng file với danh sách chưa rõ giấy phép
 (`TILES_UNDER_UNKNOWN_LICENSE.md`) và chỉ dùng file không có trong danh sách đó.
 
 ## Món ăn, quà lễ hội, NPC mới (`food/`, `items/`, `decor/`, `npcs/`)

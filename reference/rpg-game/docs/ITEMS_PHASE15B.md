@@ -132,7 +132,7 @@ khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ
 | `item_pick.json` | `jewelry.ring` / `jewelry.pendant` | 6 nhẫn, 5 dây chuyền | `ref`, `name`, `mu_name`, `level`, `price` (giá bán lại), chỉ số cho tay: `hp` (máu tối đa), `def`, `atk`. Không bán ở cửa hàng, chỉ rơi |
 | `item_pick.json` | `weapons.*[].doll` | cung / nỏ / gậy | hình trên nhân vật (`priv/static/assets/doll/…`); không ghi thì mượn của đồ cũ cùng bậc |
 | `item_pick.json` | `mu_name_fix` | 3 lỗi chính tả | thay chuỗi con trong tên gốc (bản tiếng Anh) |
-| `item_pick.json` | `refs` | cánh, Thánh Kiếm, Khiên Vảy Rồng | đồ riêng Hắc Long mượn hình gốc theo `ref` |
+| `item_pick.json` | `refs` | cánh, Thánh Kiếm, Khiên Vảy Rồng, bình máu / mana, 4 ngọc, vé Quảng Trường / Lâu Đài, Lông Vũ Kền Kền, Quả Lộc | đồ riêng Hắc Long mượn hình gốc theo `ref` |
 | `rules.json` | `loot.gear_slots` | vũ khí 38 %, bộ giáp 43 %, khiên 13 %, `jewelry` 6 % | loại đồ ngẫu nhiên rơi; `jewelry` = nhẫn hoặc dây chuyền |
 | `rules.json` | `set_bonus.min_tier` | 2 | bộ dưới bậc này (bộ khởi đầu) không có thưởng |
 | `rules.json` | `set_bonus.def_pct` / `atk_pct` / `hp_per_tier` | 0,1 / 0,03 / 15 | thưởng khi mặc đủ bộ (Đấu Sĩ: 4 món vì không mũ): +10 % phòng thủ, +3 % tấn công, +15 máu × bậc bộ |
@@ -206,7 +206,7 @@ Anh chốt 2026-10-10: làm cả cánh cấp 3 và dòng phụ ngẫu nhiên (ph
 
 - Chỉ số (đổi trong `items.json`): cấp 45, phòng thủ 22, sát thương +25 %, nhận sát thương −25 % (cấp 2: 12 / 18 % / 18 %);
   mỗi cấp nâng vẫn +2 % (`combat.wing_per_level`).
-- Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Phúc Lành + 10 Linh Hồn + 3 Hỗn Nguyên +
+- Công thức `wing3` (đổi trong `chaos.json`): 1 cánh cấp 2 **+9** trở lên + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên +
   3 Sinh Mệnh + 500 000 vàng; tỉ lệ 15 %, +5 % mỗi cấp trên +9, tối đa 50 %. Thất bại mất hết (như cánh cấp 1, 2).
   Từ Phase 18 M2 cần thêm 1 **Lông Vũ Kền Kền** (thưởng thắng Lâu Đài Máu, `docs/EVENTS_PHASE18.md` §M2).
 - Hình trên nhân vật: vẽ bằng code (`doll.js`), cấp 3 to nhất, có viền sáng.
@@ -243,7 +243,7 @@ giữ nguyên uid, cấp nâng và các dòng cũ; thất bại mất món, nguy
 | id | Tên | Nhận | Nguyên liệu | Tỉ lệ | Kết quả |
 |---|---|---|---|---|---|
 | `add_exc` | Pha Excellent | vũ khí, khiên, bộ giáp, nhẫn, dây chuyền **+5** trở lên, chưa đủ 3 dòng | 1 Hỗn Nguyên + 2 Sinh Mệnh + 100 000 vàng | 30 %, +5 %/cấp trên +5, tối đa 60 % | thêm 1 dòng Excellent chưa có (ngẫu nhiên đều) |
-| `add_luck` | Pha May mắn | như trên, **+3** trở lên, chưa có May mắn | 1 Hỗn Nguyên + 3 Phúc Lành + 50 000 vàng | 50 %, +5 %/cấp trên +3, tối đa 75 % | thêm May mắn |
+| `add_luck` | Pha May mắn | như trên, **+3** trở lên, chưa có May mắn | 1 Hỗn Nguyên + 3 Ước Nguyện + 50 000 vàng | 50 %, +5 %/cấp trên +3, tối đa 75 % | thêm May mắn |
 
 - Đổi số trong `chaos.json` (`items`, `gold`, `rate`, `per_up`, `max_rate`, `gear.slots`, `gear.min_up`).
 - Code: `Chaos.transform/4`, `Gear.add_exc_line/1`, `Gear.exc_pool/1`. Giao diện máy tự lọc món còn thêm được dòng.
@@ -289,7 +289,20 @@ Nhận xét từ bản 2026-10-10 (để anh cân nhắc chỉnh, em **chưa** �
 
 - Quái thường hiếm khi ra đồ đặc biệt (Excellent ~1/625 con, Thần ~1/5 800 con); đồ đặc biệt chủ yếu đến từ tinh anh /
   trùm / quái đêm. Muốn quái thường đáng đánh hơn: tăng `loot.gear_chance.normal` hoặc các `chance.normal`.
+  → 2026-10-11 anh chốt phương án B (DECISIONS B-5): ~1/167 con ra Excellent, ~1/775 con ra Thần.
 - Vàng cuối khi hạ Hắc Long (cấp 35) chỉ khoảng 2 000–25 000, trong khi cánh cấp 2 cần 200 000 vàng, cánh cấp 3 500 000,
   Pha Excellent 100 000: các mục này là việc của giai đoạn sau Hắc Long (bản đồ phụ cấp 35–50), hoặc giảm `gold` trong
   `chaos.json` nếu anh muốn người chơi chạm tới sớm hơn.
 - Tiên Nữ vẫn ít vàng và chết nhiều hơn các lớp khác ở cách chơi "chỉ đánh" (như trước Phase 15).
+
+## 13. Phase 19 (2026-10-11): món phụ, khiên 8 bậc, bộ riêng Đấu Sĩ
+
+Dựng bằng `mix hac_long.items.build` từ `ITEM_PICK` (281 món, trong đó 118 món phụ):
+
+- `weapons_alt.<lớp>[bậc]`: danh sách món phụ mỗi bậc (`"mg": "dk"` dùng chung). Công / cấp / giá lấy của món chính cùng bậc
+  cùng lớp; tên, `ref` (hình), `req` lấy theo món phụ trong Item.txt; `doll` tùy chọn (hình cầm trên nhân vật).
+- `shields` 8 bậc (thủ 3, 7, 12, 17, 23, 29, 36, 44; cấp 4 → 42; giá 90 → 32 000) + `shields_alt[bậc]`.
+- `sets_alt.<lớp>[bậc]`: bộ phụ, thủ / giá theo bậc như bộ chính. Bộ chỉ của Đấu Sĩ không có mũ trong Item.txt nên không báo thiếu.
+- Món phụ mang `alt: true`: `Data` bỏ khỏi cửa hàng, đồ khởi đầu, đồ thay; `Gear.roll` vẫn bốc (2 mức cấp cao nhất ≤ cấp quái).
+- Test: `test/hac_long/game/items_alt_test.exs`.
+- Danh mục mọi loại đồ (tự sinh): `docs/ITEMS_CATALOG.md`, chạy lại `python3 scripts/items_catalog.py` khi đổi dữ liệu.

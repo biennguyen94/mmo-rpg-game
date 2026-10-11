@@ -52,7 +52,19 @@ defmodule HacLong.Game.ItemsMuTest do
 
     {%{ok: true}, q} = Engine.unequip(player("dk"), "helm")
     assert q.equip.helm == nil and q.inv["item_7_5"] == 1
-    assert {%{ok: false}, _} = Engine.unequip(player("dk"), "armor")
+
+    # B-11: vũ khí, giáp cũng tháo được; tay không / không giáp thì chỉ còn phần theo chỉ số
+    p = player("dk")
+    {%{ok: true}, q} = Engine.unequip(p, "armor")
+    assert q.equip.armor == nil and q.inv[p.equip.armor] == 1
+    assert Engine.derived(q).def < Engine.derived(p).def
+    {%{ok: true}, q} = Engine.unequip(q, "weapon")
+    assert q.equip.weapon == nil and q.inv[p.equip.weapon] == 1
+    assert Engine.derived(q).atk < Engine.derived(p).atk and Engine.derived(q).atk > 0
+    assert %{weapon: nil, armor: nil} = Engine.look(q)
+    assert {%{ok: false}, _} = Engine.unequip(q, "weapon")
+    {%{ok: true}, q} = Engine.equip(q, p.equip.weapon)
+    assert q.equip.weapon == p.equip.weapon
   end
 
   test "cửa hàng: đồ cũ thôi bán, đồ mới có giá theo ô / bậc; mua đồ lớp khác bị từ chối" do
@@ -119,5 +131,28 @@ defmodule HacLong.Game.ItemsMuTest do
              gloves: "item_10_2",
              boots: "item_11_2"
            }
+  end
+
+  test "mọi vũ khí / giáp / khiên đều có hình trên nhân vật (bậc cao mượn hình bậc cao nhất của đồ cũ)" do
+    items = Data.items() |> then(&if(is_map(&1), do: Map.values(&1), else: &1))
+
+    missing =
+      for it <- items,
+          it[:slot] in ~w(weapon armor shield),
+          !it[:legacy],
+          !is_binary(it[:doll]),
+          do: it.name
+
+    assert missing == []
+
+    p = %{elem(Engine.new_player("Thử", "dk"), 1) | level: 50}
+
+    {id, armor} =
+      Enum.find(Data.items(), fn {_, it} ->
+        it[:slot] == "armor" and it[:tier] == 8 and "dk" in (it[:classes] || [])
+      end)
+
+    assert armor[:doll] == "body/bplate_metal1"
+    assert Engine.look(%{p | equip: %{p.equip | armor: id}}).armor == "body/bplate_metal1"
   end
 end

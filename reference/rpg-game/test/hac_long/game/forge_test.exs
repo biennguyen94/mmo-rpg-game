@@ -70,7 +70,7 @@ defmodule HacLong.Game.ForgeTest do
   end
 
   describe "D1 ép +6 → +11 bằng ngọc" do
-    test "+5 → +6 chắc chắn bằng Ngọc Phúc Lành" do
+    test "+5 → +6 chắc chắn bằng Ngọc Ước Nguyện" do
       p = player() |> armed("greatsword", 5) |> jewels()
       {%{ok: true, upgrade: %{result: "success", level: 6}}, q} = Engine.upgrade(p, "weapon")
       assert Engine.upgrade_level(q, q.equip.weapon) == 6

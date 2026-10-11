@@ -34,6 +34,7 @@
   let chatTo = 'world';  // 'world' | 'guild' | 'party'
   let party = null;      // tổ đội: { id, leader, members: [{ id, name, level, hp, maxHp, map }], max }
   let arena = null;
+  let arenaFind = { q: '', found: null }; // ô tìm đối thủ theo tên ở Đấu trường
   let pk = null; // { invite, history, today, rules } (PK cược vàng)
   let market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
@@ -48,6 +49,30 @@
   const fmt = (n) => Math.round(n).toLocaleString('vi-VN');
 
   const asset = (path) => 'assets/' + path;
+
+  // Ô tìm cho danh sách chọn dài (tặng đồ ở Quản trị, rao chợ, giao dịch…): `selSearch(key)` đặt ngay trước
+  // `<select data-sel="key">`; gõ tới đâu lọc tới đó, không cần dấu (L.fold). Chữ đang gõ giữ lại khi vẽ lại trang.
+  const selQ = {}; // key → chữ tìm
+  let selFocus = null; // key của ô tìm đang gõ (vẽ lại trang thì trả con trỏ về)
+  const selSearch = (key) => `<input type="search" class="sel-q" data-sel-q="${key}" placeholder="Tìm…" value="${esc(selQ[key] || '')}" autocomplete="off" aria-label="Tìm trong danh sách">`;
+  const selAll = new WeakMap(); // select → mọi option ban đầu
+  function filterSel(key) {
+    const sel = document.querySelector(`select[data-sel="${key}"]`);
+    if (!sel) return;
+    if (!selAll.has(sel)) selAll.set(sel, [...sel.options].map((o) => o.cloneNode(true)));
+    const q = selQ[key] || '', cur = sel.value;
+    // xóa rồi thêm lại option (ẩn option không chạy trên Safari điện thoại); option rỗng ("không kèm đồ") luôn giữ
+    const keep = selAll.get(sel).filter((o) => o.value === '' || L.nameMatch([o.textContent], q));
+    sel.replaceChildren(...keep.map((o) => o.cloneNode(true)));
+    if (keep.some((o) => o.value === cur)) sel.value = cur;
+    const box = document.querySelector(`[data-sel-q="${key}"]`);
+    if (box) box.title = q ? `${keep.filter((o) => o.value !== '').length} kết quả` : '';
+  }
+  function applySel() {
+    Object.keys(selQ).forEach(filterSel);
+    const box = selFocus && document.querySelector(`[data-sel-q="${selFocus}"]`);
+    if (box && document.activeElement !== box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+  }
   const icon = (name, cls) => `<img class="ic ${cls || ''}" src="${asset('icons/' + name + '.svg')}" alt="">`;
   // Hình vật phẩm: nguyên liệu dùng ảnh PNG (`sprite`), còn lại dùng icon SVG.
   // Hình riêng của đồ theo cấp nâng (bộ hình của anh, `mix hac_long.icons`): khóa `ref` ("nhóm/số"
@@ -58,6 +83,8 @@
     return path ? asset(path) : null;
   }
   const itemIcon = (it, rarity, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (rarity ? ` rar-ic-${rarity}` : '')); };
+  // hình nhỏ cạnh tên ngọc / nguyên liệu (hình gốc MU nếu có); không có hình thì `fallback`
+  const smallIc = (id, fallback = '') => { const it = ITEMS[id], own = it && ownIcon(it, 0); return own ? `<img class="ic jw own" src="${own}" alt="">` : fallback; };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
@@ -148,6 +175,7 @@
   }
 
   function render() {
+    const keepArena = arenaTyping();
     hideTip();
     Sound.music(musicMood());
     const hud = $('#hud'), tabs = $('#tabs'), view = $('#view');
@@ -207,6 +235,8 @@
     if (onMenu('arena')) loadArena();
     if (onMenu('board')) loadBoard();
     if (onMenu('admin') && adm.reports == null && !adm.loading) loadReports();
+    applySel();
+    keepArena();
   }
 
   // ---------- Quản trị ----------
@@ -275,7 +305,7 @@
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
     const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots'].includes(it.slot) && !it.legacy);
-    const up = '<label class="small">+ <input type="number" name="up" min="0" max="5" value="0"></label>';
+    const up = `<label class="small">+ <input type="number" name="up" min="0" max="${UPGRADE.max}" value="0"></label>`;
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
     return `<div class="card"><h3>Chỉnh nhân vật</h3>
@@ -285,8 +315,8 @@
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
-      ${line('give_item', 'Đồ thường', `<select name="id">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
-      ${line('give_gear', 'Đồ hiếm', `<select name="base">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
+      ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
+      ${line('give_gear', 'Đồ hiếm', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
@@ -343,9 +373,9 @@
       <input type="text" name="body" maxlength="300" placeholder="Lời nhắn (không bắt buộc)">
       <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" value="0"></label>
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
-      <div class="btn-row"><select name="item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row">${selSearch(id + '-item')}<select name="item" data-sel="${id}-item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
-      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <select name="grar" aria-label="Loại đồ"><option value="0">Đồ thường</option><option value="1">Hiếm: Tốt</option><option value="2">Hiếm: Hiếm</option><option value="3">Hiếm: Sử Thi</option></select>
         <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
         <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
@@ -458,7 +488,7 @@
     const used = new Set(t.mine.gear.map((g) => g.uid));
     const items = Object.keys(P.inv).filter((id) => P.inv[id] - (t.mine.items[id] || 0) > 0).concat(bagGear().filter((id) => !used.has(id) && !itemOf(id).locked));
     const add = t.status === 'open' ? `<form id="trade-add" class="gift-form">
-        ${items.length ? `<select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
+        ${items.length ? `${selSearch('trade-item')}<select name="item" data-sel="trade-item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
         <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label><button class="btn" type="submit">Bỏ vào</button></div>` : ''}
         <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" max="${P.gold}" value="${t.mine.gold || ''}" placeholder="0"></label><button class="btn" type="submit" name="set" value="gold">Đặt vàng</button></div>
       </form>` : '';
@@ -773,7 +803,8 @@
     const pr = o.profile, c = CLASSES[o.cls] || {};
     const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
     const plus = (v) => (v ? ` <span class="up">+${Math.round(v * 100)}%</span>` : '');
-    const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base + s.gear)}</b> <span class="muted">(${fmt(s.base)})</span>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
+    // cùng cách ghi với tab Nhân vật: điểm gốc, phần đồ cộng thêm màu xanh
+    const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base)}</b>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
     const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
     const xpPct = pr.xp_need ? Math.floor((pr.xp / pr.xp_need) * 1000) / 10 : 100;
     const inParty = party && party.members.some((m) => m.id === o.id);
@@ -806,11 +837,14 @@
       <div class="card">
         ${stat('str', 'Sức mạnh')}${stat('agi', 'Nhanh nhẹn')}${stat('vit', 'Thể lực')}${stat('ene', 'Năng lượng')}
         <hr class="sep">
-        ${kv('Sát thương', `<b>${fmt(pr.atk_min)} ~ ${fmt(pr.atk_max)}</b>${plus(pr.pct.atk)}`)}
+        ${kv('Tấn công', `<b>${fmt(pr.atk_min)} ~ ${fmt(pr.atk_max)}</b>${plus(pr.pct.atk)}`)}
+        ${pr.hit_rate != null ? kv('Trúng quái cùng cấp', `${Math.round(pr.hit_rate * 100)}%`) : ''}
         ${kv('Phòng thủ', `<b>${fmt(pr.def)}</b>${plus(pr.pct.def)}`)}
-        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
-        ${kv('Chí mạng · Né', `${Math.round(pr.crit * 100)}% · ${Math.round(pr.dodge * 100)}%`)}
+        ${kv('Chí mạng', `${Math.round(pr.crit * 100)}%${pr.crit_mult ? ` ×${pr.crit_mult.toFixed(2)}` : ''}`)}
+        ${kv('Né đòn', `${Math.round(pr.dodge * 100)}%`)}
         ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương · −${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
+        ${pr.ignore_def ? kv('Bỏ qua phòng thủ', `${Math.round(pr.ignore_def * 100)}%`) : ''}
+        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
       </div>
       <div class="card">
         ${kv(`${icon('two-coins')} Vàng`, fmt(pr.gold))}
@@ -883,7 +917,7 @@
     } else {
       const items = Object.keys(P.inv).filter((id) => P.inv[id] > 0).concat(bagGear().filter((id) => !itemOf(id).locked));
       body = items.length ? `<form id="market-sell" class="gift-form">
-          <select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
+          ${selSearch('market-sell')}<select name="item" data-sel="market-sell">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
           <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label>
             <label class="small">Giá <input type="number" name="price" min="1" placeholder="vàng" required></label></div>
           <button class="btn primary" type="submit">Rao bán</button>
@@ -896,9 +930,20 @@
   // ---------- Đấu trường ----------
   async function loadArena() {
     try { arena = await Net.arena(); pk = await Net.pk('info'); } catch (e) { /* thử lại lần sau */ }
-    if (onMenu('arena')) { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
+    if (onMenu('arena')) { const el = $('#arena'), keep = arenaTyping(); if (el) el.outerHTML = viewArena(); keep(); }
+  }
+  // Ô tìm đối thủ: vẽ lại bảng (trạng thái đổi, tải lại đấu trường) không mất chữ đang gõ, không mất con trỏ
+  function arenaTyping() {
+    const box = $('#arena-q');
+    if (!box || document.activeElement !== box) return () => {};
+    const v = box.value, at = box.selectionStart;
+    return () => { const b = $('#arena-q'); if (b) { b.value = v; b.focus(); b.setSelectionRange(at, at); } };
   }
 
+  // một dòng đối thủ (gợi ý hoặc kết quả tìm theo tên)
+  const arenaRow = (o, left) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
+        <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
+        <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`;
   function viewArena() {
     if (!arena) return '<div class="card" id="arena"><h3>Đấu trường</h3><p class="small muted">Đang tải…</p></div>';
     const me = arena.me, left = me.per_day - me.today;
@@ -907,9 +952,10 @@
         <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
-      <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
-        <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
-        <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
+      <form id="arena-find" class="row" autocomplete="off"><input type="text" id="arena-q" class="grow" maxlength="24" placeholder="Tìm người chơi theo tên…" value="${esc(arenaFind.q)}" aria-label="Tìm người chơi theo tên"><button class="btn" type="submit">Tìm</button></form>
+      ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
+        <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
+      <div class="list">${arena.suggestions.map((o) => arenaRow(o, left)).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
       ${pk ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${pk.history.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
@@ -988,6 +1034,8 @@
     } catch (err) { /* thử lại lần sau */ }
   }
 
+  // một dòng người chơi: chạm để xem hồ sơ (như danh sách 👫)
+  const prow = (r, inner) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><button class="board-row" data-act="profile" data-uid="${r.user_id}">${inner}</button></li>`;
   function viewBoard() {
     const kinds = [['level', 'Cấp cao'], ['kills', 'Săn nhiều'], ['tower', 'Tháp'], ['dragon', 'Diệt rồng'], ['guild', 'Bang'], ['guild_boss', 'Bang diệt Cổ Long'], ['arena', 'Đấu trường']];
     const byClass = board.kind === 'level' && board.cls;
@@ -1001,10 +1049,10 @@
       ${board.kind === 'level' ? `<div class="seg" id="board-cls"><button class="btn small-btn ${board.cls ? '' : 'primary'}" data-board-cls="">Tất cả</button>${Object.keys(CLASSES).map((c) => `<button class="btn small-btn ${board.cls === c ? 'primary' : ''}" data-board-cls="${c}">${CLASSES[c].name}</button>`).join('')}</div>` : ''}
       ${rows == null ? '<p class="small muted">Đang tải…</p>'
         : rows.length === 0 ? `<p class="small muted">${board.kind === 'arena' ? 'Chưa ai đấu. Chạm vào người khác trên bản đồ để thách đấu.' : board.kind === 'guild' ? 'Chưa có bang nào. Lập bang ở thẻ Bang hội.' : board.kind === 'guild_boss' ? 'Chưa bang nào đánh trùm thế giới. Cổ Long xuất hiện ở Tế Đàn.' : board.kind === 'dragon' ? 'Chưa ai hạ được Hắc Long. Bạn sẽ là người đầu tiên?' : board.kind === 'tower' ? 'Chưa ai leo Tháp Vô Tận. Gặp Người Gác Tháp ở Làng.' : 'Chưa có ai.'}</p>`
-        : board.kind === 'arena' ? `<ol class="board">${rows.map((r) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><span class="num rank">${r.rank}</span><span class="grow">${esc(r.name)} <span class="small muted">${r.wins}T/${r.losses}B</span></span><span class="num">${r.rating}</span></li>`).join('')}</ol>`
+        : board.kind === 'arena' ? `<ol class="board">${rows.map((r) => prow(r, `<span class="num rank">${r.rank}</span><span class="grow">${esc(r.name)} <span class="small muted">${r.wins}T/${r.losses}B</span></span><span class="num">${r.rating}</span>`)).join('')}</ol>`
         : board.kind === 'guild_boss' ? `<ol class="board">${rows.map((g) => `<li class="${P.guild && P.guild.id === g.id ? 'me' : ''}"><span class="num rank">${g.rank}</span><span class="grow"><span class="guild-tag">[${esc(g.tag)}]</span> ${esc(g.name)} <span class="small muted">${g.members} người</span></span><span class="num">${fmt(g.boss_damage)}</span></li>`).join('')}</ol>`
         : board.kind === 'guild' ? `<ol class="board">${rows.map((g) => `<li class="${P.guild && P.guild.id === g.id ? 'me' : ''}"><span class="num rank">${g.rank}</span><span class="grow"><span class="guild-tag">[${esc(g.tag)}]</span> ${esc(g.name)} <span class="small muted">${g.members} người</span></span><span class="num">Cấp ${g.level}</span></li>`).join('')}</ol>`
-        : `<ol class="board">${rows.map((r) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><span class="num rank">${r.rank}</span><span class="grow">${r.title ? `<span class="title-tag">${esc(r.title)}</span> ` : ''}${esc(r.name)} <span class="small muted">${CLASSES[r.cls] ? CLASSES[r.cls].name : ''}</span></span><span class="num">${value(r)}</span></li>`).join('')}</ol>`}
+        : `<ol class="board">${rows.map((r) => prow(r, `<span class="num rank">${r.rank}</span><span class="grow">${r.title ? `<span class="title-tag">${esc(r.title)}</span> ` : ''}${esc(r.name)} <span class="small muted">${CLASSES[r.cls] ? CLASSES[r.cls].name : ''}</span></span><span class="num">${value(r)}</span>`)).join('')}</ol>`}
     </div>`;
   }
 
@@ -1448,22 +1496,26 @@
   // ---------- Sổ tay quái vật ----------
   let bestiaryOpen = false;
   function viewBestiary() {
-    const all = ZONES.flatMap((z) => z.monsters.concat([z.boss]));
+    // quái 6 vùng chính (cả trùm) rồi quái bản đồ phụ, như HacLong.Game.Bestiary.species
+    const main = ZONES.flatMap((z) => z.monsters.concat([z.boss]));
+    const side = (window.GAME_DATA.SIDE_MONSTERS || []).filter((m) => !main.some((x) => x.id === m.id));
+    const all = main.concat(side);
     const count = (id) => (P.bestiary && P.bestiary[id]) || 0;
     const seen = all.filter((m) => count(m.id) > 0).length;
-    const cells = all.map((m) => {
+    const cell = (m) => {
       const n = count(m.id), stars = n >= 100 ? '★★' : n >= 25 ? '★' : '';
       return `<div class="beast ${n ? '' : 'unseen'}" title="${n ? esc(m.name) : '???'}">
         ${sprite(m.id, '', n ? m.name : '')}
         <span class="small">${n ? esc(m.name) : '???'}</span>
         <span class="small num">${n ? `${fmt(n)} con` : ''}${stars ? ` <b class="stars">${stars}</b>` : ''}</span>
       </div>`;
-    }).join('');
+    };
+    const group = (title, list) => `<h4 class="small muted">${title} · ${list.filter((m) => count(m.id) > 0).length}/${list.length}</h4><div class="bestiary">${list.map(cell).join('')}</div>`;
     return `<div class="card">
       <div class="row">${icon('open-book', 'lg')}<div class="grow"><h3>Sổ tay quái vật</h3>
         <p class="small muted">Hạ 25 con một loài: +5% sát thương lên loài đó (★), 100 con: +10% (★★), mỗi mốc kèm thưởng vàng.</p></div>
         <span class="tag gold num">${seen}/${all.length}</span></div>
-      ${bestiaryOpen ? `<div class="bestiary">${cells}</div>` : ''}
+      ${bestiaryOpen ? group('Vùng chính', main) + (side.length ? group('Bản đồ phụ', side) : '') : ''}
       <button class="btn block" data-act="bestiary-toggle">${bestiaryOpen ? 'Thu gọn' : 'Xem sổ tay'}</button>
     </div>`;
   }
@@ -1754,6 +1806,8 @@
     const pt = PETS.find((x) => x.id === id);
     return pt && { ...pt, sprite: 'pets/' + pt.id };
   }
+  // Hình thú: hình MU riêng của anh (thú có `ref`, `mix hac_long.icons`) nếu có, không thì hình thú CC0
+  const petPic = (pt, cls = 'sprite') => { const own = pt.ref && ownIcon(pt, 0); return own ? `<img class="${cls} own" src="${own}" alt="">` : `<img class="${cls}" src="${asset((pt.sprite || 'pets/' + pt.id) + '.png')}" alt="">`; };
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
   const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
   const TAME_SKILL = { id: 'rend', name: 'Cắn Xé', desc: 'Cú cắn gây gấp đôi sát thương.' };
@@ -1768,7 +1822,7 @@
     return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận. Thắng trận khi dắt theo thì thú lên cấp: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} học kỹ năng riêng.</p><div class="list">${owned.map((pt) => {
       const L = petLevel(pt.id), sk = petSkill(pt.id), learned = L.lv >= RULES.petSkillLevel;
       const pct = L.next ? Math.round(((L.xp - L.from) / (L.next - L.from)) * 100) : 100;
-      return `<div class="item"><img class="sprite" src="${asset(pt.sprite + '.png')}" alt=""><div class="grow">
+      return `<div class="item">${petPic(pt)}<div class="grow">
         <div class="name">${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}</span></div>
         <div class="small muted">${esc(pt.desc)}${L.lv > 1 ? ` (×${(1 + (L.lv - 1) * 0.1).toFixed(1)})` : ''}</div>
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
@@ -1844,16 +1898,16 @@
   // lưới túi 8 cột tự xếp (Hắc Long không lưu vị trí ô), bấm ô xem chi tiết + nút, kéo thả để
   // mặc / tháo (chuột), thanh tóm tắt dưới cùng.
   const EQUIP_GRID = [
-    ['pendant', 'helm', null],
+    ['pendant', 'helm', 'pet'],
     ['weapon', 'armor', 'shield'],
     ['gloves', 'pants', 'boots'],
     ['ring1', 'wing', 'ring2'],
   ];
-  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền' };
+  const SLOT_LABEL = { helm: 'Mũ', weapon: 'Vũ khí', armor: 'Giáp', shield: 'Khiên', gloves: 'Găng', pants: 'Quần', boots: 'Giày', ring1: 'Nhẫn', wing: 'Cánh', ring2: 'Nhẫn', pendant: 'Dây chuyền', pet: 'Thú nuôi' };
   // Phase 15b: mở mũ / quần / găng / giày (đồ Item.txt); nhẫn chưa có
   const SLOT_OPEN = ['weapon', 'armor', 'shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
-  // ô tháo ra được (vũ khí, giáp chỉ thay bằng món khác)
-  const SLOT_REMOVABLE = ['shield', 'wing', 'helm', 'pants', 'gloves', 'boots', 'ring1', 'ring2', 'pendant'];
+  // ô tháo ra được: mọi ô (DECISIONS B-11, vũ khí / giáp cũng tháo được)
+  const SLOT_REMOVABLE = SLOT_OPEN;
   // loại đồ của món mặc được vào ô `slot` (hai ô nhẫn chung loại "ring")
   const slotKind = (slot) => (slot === 'ring1' || slot === 'ring2' ? 'ring' : slot);
   const WEAR_KINDS = [...new Set(SLOT_OPEN.map(slotKind))];
@@ -1922,11 +1976,23 @@
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 
+  // Ô Thú nuôi: thú đang dắt theo (hình MU nếu thú có `ref`, không thì hình thú); bấm mở Menu → Thú cưng
+  function petSlot() {
+    const pt = P.pet && petInfo(P.pet);
+    const own = pt && pt.ref && ownIcon(pt, 0);
+    const img = !pt ? '' : own ? `<img src="${own}" alt="" draggable="false" class="own">` : `<img src="${asset(pt.sprite + '.png')}" alt="" draggable="false" class="px">`;
+    return `<button class="slot pet${pt ? '' : ' empty'}" data-act="pet-slot" data-slot="pet" title="${esc(pt ? pt.name : 'Chưa dắt thú nào')}">
+        ${img}${pt ? `<span class="lvl">Lv${petLevel(pt.id).lv}</span>` : ''}
+        <span class="lbl">${SLOT_LABEL.pet}</span>
+      </button>`;
+  }
+
   function viewBag() {
     const items = bagItems();
     const cells = Math.max(BAG_MIN_CELLS, Math.ceil((items.length + 1) / BAG_COLUMNS) * BAG_COLUMNS);
     const equip = EQUIP_GRID.flat().map((slot) => {
       if (!slot) return '<span class="slot none"></span>';
+      if (slot === 'pet') return petSlot();
       const id = SLOT_OPEN.includes(slot) ? P.equip[slot] : null, it = id ? itemOf(id) : null;
       const locked = !SLOT_OPEN.includes(slot);
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.rarity ? ` rar-b-${it.rarity}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
@@ -1970,7 +2036,7 @@
   let tipAt = null; // { id?, slot?, x, y }
   let forgePick = null; // món trong túi chọn để ép ở Thợ Rèn (nút "Ép" trong tooltip)
   // dòng Ngọc Sinh Mệnh của món đồ
-  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">💚 Ngọc Sinh Mệnh: +${it.opt * RULES.life.per_line} ${it.slot === 'weapon' ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
+  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * RULES.life.per_line} ${it.slot === 'weapon' ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
   function hideTip() {
     tipAt = null;
     const el = document.getElementById('itemtip');
@@ -2111,7 +2177,7 @@
       if (!f) return '';
       const it = itemOf(f.id), c = f.cost, opt = it.opt || 0;
       const target = slot ? `data-slot="${slot}"` : `data-id="${esc(f.id)}"`;
-      const lifeBtn = opt < life.max_lines ? `<button class="btn" data-act="life" ${target} ${jewels ? '' : 'disabled'} title="${esc(ITEMS[life.jewel].name)}: ${Math.round(life.rate * 100)}%">💚 ${opt}/${life.max_lines}</button>` : `<span class="small" style="color:var(--good)">💚 ${opt}/${life.max_lines}</span>`;
+      const lifeBtn = opt < life.max_lines ? `<button class="btn" data-act="life" ${target} ${jewels ? '' : 'disabled'} title="${esc(ITEMS[life.jewel].name)}: ${Math.round(life.rate * 100)}%">${smallIc(life.jewel, '💚')} ${opt}/${life.max_lines}</button>` : `<span class="small" style="color:var(--good)">${smallIc(life.jewel, '💚')} ${opt}/${life.max_lines}</span>`;
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
@@ -2119,17 +2185,17 @@
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${itemIcon(it, it.rarity, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
         ${lifeBtn}
       </div>`;
     }).join('');
-    const table = UPGRADE.steps.map((s) => `+${s.level}: ${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
+    const table = UPGRADE.steps.map((s) => `+${s.level}: ${smallIc(s.jewel)}${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
     return `<div class="card"><h3>Ép đồ</h3>
       <p class="small muted">Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số của món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món. Muốn ép đồ trong túi: bấm món đó trong túi rồi chọn Ép.</p>
-      <p class="small muted">💚 ${esc(ITEMS[life.jewel].name)} (có ${jewels}): thêm một dòng +${life.per_line} tấn công (vũ khí) hoặc phòng thủ (giáp, khiên, cánh), tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</p>
+      <p class="small muted">${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)} (có ${jewels}): thêm một dòng +${life.per_line} tấn công (vũ khí) hoặc phòng thủ (giáp, khiên, cánh), tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</p>
       <div class="list">${rows}</div></div>`;
   }
 
@@ -2206,6 +2272,7 @@
 
   // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
   let chaosPick = {}; // công thức → uid món đồ chọn
+  let chaosCls = {}; // công thức ra theo lớp ({cls}) → lớp chọn (mặc định lớp mình)
   const chaosRate = L.chaosRate;
   function chaosCard() {
     const rows = CHAOS.map((r) => {
@@ -2219,15 +2286,18 @@
       const need = Object.entries(r.items);
       const ok = (!r.gear || pick) && P.gold >= r.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const rate = chaosRate(r, pick ? upLevel(pick) : 0);
-      const out = r.out ? ITEMS[r.out.replace('{cls}', P.cls)] : null;
+      const perCls = !!(r.out && r.out.includes('{cls}'));
+      const cls = perCls && CLASSES[chaosCls[r.id]] ? chaosCls[r.id] : P.cls;
+      const out = r.out ? ITEMS[r.out.replace('{cls}', cls)] : null;
       return `<div class="item">${itemIcon(out || { icon: 'chaos-machine' })}<div class="grow">
           <div class="name">${esc(r.name)}${out && out.slot === 'wing' ? ` → ${esc(out.name)}` : ''}</div>
           <div class="small muted">${esc(r.desc)}</div>
+          ${perCls ? `<label class="small">Cánh cho lớp <select data-chaos-cls="${r.id}" aria-label="Lớp của món ra">${Object.keys(CLASSES).map((c) => `<option value="${c}" ${c === cls ? 'selected' : ''}>${CLASSES[c].name}${c === P.cls ? ' (mình)' : ''}</option>`).join('')}</select></label>` : ''}
           ${r.gear ? (fits.length ? `<select data-chaos-pick="${r.id}" aria-label="Món đồ bỏ vào máy">${fits.map((uid) => `<option value="${uid}" ${uid === pick ? 'selected' : ''}>${esc(itemOf(uid).name)} +${upLevel(uid)}</option>`).join('')}</select>`
             : `<div class="small" style="color:var(--bad)">Không có món phù hợp trong túi (cần +${r.gear.min_up} trở lên, chưa mặc, chưa khóa).</div>`) : ''}
-          <div class="small">${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')} · Tỉ lệ <b>${Math.round(rate * 100)}%</b></div>
+          <div class="small">${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')} · Tỉ lệ <b>${Math.round(rate * 100)}%</b></div>
         </div>
-        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
+        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" data-wcls="${perCls ? cls : ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
       </div>`;
     }).join('');
     return `<div class="card"><h3>${icon('chaos-machine')} Máy Hỗn Nguyên</h3>
@@ -2402,7 +2472,7 @@
       if (n.role === 'herbalist') sections.push(craftCard());
       if (n.role === 'shop') sections.push(forgeCard(), smithCard(), chestCard());
       // đồ theo lớp (Phase 15b): chỉ hiện đồ của lớp mình
-      sections.push(`<div class="card"><h3>Mua</h3><div class="list">${n.stock.filter((id) => ITEMS[id] && classOk(ITEMS[id])).map(shopRow).join('')}</div></div>`);
+      sections.push(`<div class="card"><h3>Mua</h3>${n.role === 'shop' ? `<p class="small muted">Chỉ hiện đồ lớp ${esc(CLASSES[P.cls] ? CLASSES[P.cls].name : P.cls)} mua được. Đồ lớp khác: rơi từ quái, chợ giao dịch.</p>` : ''}<div class="list">${n.stock.filter((id) => ITEMS[id] && classOk(ITEMS[id])).map(shopRow).join('')}</div></div>`);
       sections.push(sellCard());
     }
     if (n.role === 'inn') {
@@ -2433,7 +2503,7 @@
       sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          return `<div class="item"><img class="sprite" src="${asset('pets/' + pt.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)}</div></div>
+          return `<div class="item">${petPic(pt)}<div class="grow"><div class="name">${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)}</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
         }).join('')}</div></div>`);
@@ -2613,7 +2683,7 @@
       case 'life': return { act, slot: d.slot, id: d.id };
       case 'discard': case 'store': case 'unstore': return { act, id: d.id, n: +d.n || 1 };
       case 'lock': return { act, id: d.id, on: d.on === '1' };
-      case 'chaos': return { act, id: d.id, gear: d.gear || null };
+      case 'chaos': return { act, id: d.id, gear: d.gear || null, cls: d.wcls || null };
       case 'reset-yes': return { act: 'reset' };
       case 'teleport': return { act, to: d.to };
       case 'craft': case 'quest_accept': case 'quest_turnin': case 'cook': case 'event_exchange': return { act, id: d.id };
@@ -2911,6 +2981,7 @@
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
+    if (act === 'pet-slot') { goTab('menu'); menuSec = 'pets'; render(); return; }
     if (act === 'travel') { travelTo(t.dataset.to); return; }
     if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
@@ -3000,6 +3071,13 @@
     if (e.target.id === 'auth') { e.preventDefault(); onAuth(); return; }
     if (e.target.id === 'pw-form') { e.preventDefault(); onPassword(); return; }
     if (e.target.id === 'chat-form') { e.preventDefault(); onChatSubmit(); return; }
+    if (e.target.id === 'arena-find') {
+      e.preventDefault();
+      const q = $('#arena-q').value.trim();
+      if (!q) { arenaFind = { q: '', found: null }; render(); return; }
+      Net.arenaFind(q).then((r) => { arenaFind = { q, found: r.found }; render(); }).catch((err) => toast(err.msg, true));
+      return;
+    }
     if (e.target.id === 'adm-lookup') {
       e.preventDefault();
       Net.admin('lookup', { name: $('#adm-name').value }).then((r) => { adm.user = r.user; render(); }).catch((err) => toast(err.msg, true));
@@ -3171,11 +3249,15 @@
       if (e.target.id === 'chat-input') chatDraft = e.target.value;
       if (e.target.id === 'travel-q') { travelQ = e.target.value; const l = $('#travel-list'); if (l) l.innerHTML = travelList(); }
       if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
+      if (e.target.dataset.selQ) { selQ[e.target.dataset.selQ] = e.target.value; filterSel(e.target.dataset.selQ); }
     });
+    document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.dataset.selQ) selFocus = e.target.dataset.selQ; });
+    document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.selQ) setTimeout(() => { if (!(document.activeElement && document.activeElement.dataset.selQ)) selFocus = null; }, 0); });
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
+      if (e.target.dataset.chaosCls) { chaosCls[e.target.dataset.chaosCls] = e.target.value; render(); }
       if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
       if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
     });

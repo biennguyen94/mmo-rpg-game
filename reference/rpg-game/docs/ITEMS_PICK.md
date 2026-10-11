@@ -4,44 +4,96 @@
 > (req_mult 0.35, set_def_mult 1.0).
 > **Đừng sửa tay file này**: sửa `item_pick.json` rồi chạy lại. Giải thích: `docs/ITEMS_PHASE15B.md`.
 
-Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, Giày 24, Nhẫn 6, Dây chuyền 5.
+Tổng 281 món: Vũ khí 65, Khiên 14, Mũ 35, Giáp 39, Quần 39, Găng 39, Giày 39, Nhẫn 6, Dây chuyền 5.
 
 ## Vũ khí
 
 | Bậc | Cấp | Tên | Tên gốc | Hình | Lớp | Công (thấp~cao) | Yêu cầu | Giá |
 |---|---|---|---|---|---|---|---|---|
+| 1 | 1 | Đoản Kiếm | Short Sword | `0/1` | dk, mg | 4 (1~6) | — | 0 |
 | 1 | 1 | Rìu Nhỏ | Small Axe | `1/0` | dk, mg | 4 (1~6) | — | 0 |
 | 1 | 1 | Gậy Đầu Lâu | Skull Staff | `5/0` | dw | 3 (3~3) | — | 0 |
 | 1 | 1 | Cung Ngắn | Short Bow | `4/0` | elf | 4 (3~5) | — | 0 |
+| 2 | 3 | Dao Găm Kris | Kris | `0/0` | dk, mg | 7 (4~9) | agi 14 str 14 | 60 |
 | 2 | 3 | Rìu Tay | Hand Axe | `1/1` | dk, mg | 7 (4~9) | str 25 | 60 |
+| 2 | 3 | Chùy Tròn | Mace | `2/0` | dk, mg | 7 (4~9) | str 35 | 60 |
 | 2 | 3 | Gậy Thiên Thần | Angelic Staff | `5/1` | dw | 7 (6~8) | str 18 | 60 |
 | 2 | 3 | Nỏ | Crossbow | `4/8` | elf | 7 (5~8) | agi 31 str 7 | 60 |
 | 3 | 7 | Kiếm Mảnh | Rapier | `0/2` | dk, mg | 12 (9~15) | agi 14 str 18 | 220 |
+| 3 | 7 | Kiếm Sát Thủ | Sword of Assassain | `0/4` | dk, mg | 12 (9~15) | agi 14 str 21 | 220 |
+| 3 | 7 | Rìu Đôi | Double Axe | `1/2` | dk, mg | 12 (9~15) | str 31 | 220 |
+| 3 | 7 | Chùy Sao Mai | Morning Star | `2/1` | dk, mg | 12 (9~15) | str 35 | 220 |
+| 3 | 7 | Thương Rồng | Dragon Lance | `3/2` | dk, mg | 12 (9~15) | agi 18 str 25 | 220 |
+| 3 | 7 | Kích Đôi | Double Poleaxe | `3/5` | dk, mg | 12 (9~15) | agi 18 str 25 | 220 |
+| 3 | 7 | Gậy Bí Ẩn | Mistery Staff | `5/14` | dw | 13 (13~13) | agi 5 str 12 | 220 |
 | 3 | 7 | Gậy Rắn | Serpent Staff | `5/2` | dw | 13 (13~13) | str 18 | 220 |
 | 3 | 7 | Cung Săn | Bow | `4/1` | elf | 11 (9~13) | agi 31 str 11 | 220 |
+| 3 | 7 | Nỏ Vàng | Golden Crossbow | `4/9` | elf | 11 (9~13) | agi 31 str 11 | 220 |
 | 4 | 12 | Đao Katana | Katana | `0/3` | dk, mg | 21 (16~26) | agi 14 str 28 | 650 |
+| 4 | 12 | Kiếm Gladius | Gladius | `0/6` | dk, mg | 21 (16~26) | str 39 | 650 |
+| 4 | 12 | Rìu Tomahawk | Tomahawk | `1/3` | dk, mg | 21 (16~26) | str 35 | 650 |
+| 4 | 12 | Chùy Xích | Flail | `2/2` | dk, mg | 21 (16~26) | agi 18 str 28 | 650 |
+| 4 | 12 | Kích Halberd | Halberd | `3/6` | dk, mg | 21 (16~26) | agi 18 str 25 | 650 |
+| 4 | 12 | Gậy Gió Dữ | Violent Wind Staff | `5/15` | dw | 21 (20~22) | agi 6 str 12 | 650 |
 | 4 | 12 | Gậy Sấm Sét | Thunder Staff | `5/3` | dw | 21 (20~22) | agi 4 str 14 | 650 |
+| 4 | 12 | Nỏ Arquebus | Arquebus | `4/10` | elf | 21 (17~24) | agi 31 str 11 | 650 |
 | 4 | 12 | Cung Tiên | Elven Bow | `4/2` | elf | 21 (17~24) | agi 31 str 11 | 650 |
 | 5 | 17 | Đao Cong | Falchion | `0/7` | dk, mg | 29 (24~34) | str 42 | 1600 |
+| 5 | 17 | Kiếm Xà | Serpent Sword | `0/8` | dk, mg | 29 (24~34) | str 46 | 1600 |
+| 5 | 17 | Kiếm Kỳ Nhông Lửa | Sword of Salamander | `0/9` | dk, mg | 29 (24~34) | str 36 | 1600 |
+| 5 | 17 | Rìu Chiến Binh | Battle Axe | `1/5` | dk, mg | 29 (24~34) | str 42 | 1600 |
+| 5 | 17 | Rìu Nikkea | Nikkea Axe | `1/6` | dk, mg | 29 (24~34) | str 46 | 1600 |
+| 5 | 17 | Giáo Dài | Spear | `3/1` | dk, mg | 29 (24~34) | agi 18 str 25 | 1600 |
+| 5 | 17 | Đinh Ba Khổng Lồ | Giant Trident | `3/3` | dk, mg | 29 (24~34) | agi 11 str 31 | 1600 |
 | 5 | 17 | Gậy Xà Nữ | Gorgon Staff | `5/4` | dw | 31 (29~33) | str 18 | 1600 |
+| 5 | 17 | Nỏ Nhẹ | Light Crossbow | `4/11` | elf | 33 (28~37) | agi 31 str 11 | 1600 |
 | 5 | 17 | Cung Chiến | Battle Bow | `4/3` | elf | 33 (28~37) | agi 31 str 11 | 1600 |
+| 6 | 22 | Kiếm Ánh Sáng | Light Saber | `0/10` | dk, mg | 42 (36~47) | agi 21 str 28 | 3600 |
 | 6 | 22 | Đại Đao | Blade | `0/5` | dk, mg | 42 (36~47) | agi 18 str 28 | 3600 |
+| 6 | 22 | Đại Chùy | Great Hammer | `2/3` | dk, mg | 42 (36~47) | str 53 | 3600 |
+| 6 | 22 | Giáo Ánh Sáng | Light Spear | `3/0` | dk, mg | 42 (36~47) | agi 25 str 21 | 3600 |
+| 6 | 22 | Rìu Cán Dài | Berdysh | `3/7` | dk, mg | 42 (36~47) | agi 18 str 28 | 3600 |
+| 6 | 22 | Gậy Cánh Đỏ | Red Wing Staff | `5/16` | dw | 44 (43~45) | agi 5 str 13 | 3600 |
 | 6 | 22 | Gậy Huyền Thoại | Legendary Staff | `5/5` | dw | 44 (43~45) | str 18 | 3600 |
+| 6 | 22 | Nỏ Xà | Serpent Crossbow | `4/12` | elf | 47 (42~52) | agi 35 str 11 | 3600 |
 | 6 | 22 | Cung Hổ | Tiger Bow | `4/4` | elf | 47 (42~52) | agi 35 str 11 | 3600 |
 | 7 | 27 | Kiếm Huyền Thoại | Legendary Sword | `0/11` | dk, mg | 64 (56~72) | str 42 | 7500 |
+| 7 | 27 | Song Nhận Kiếm | Double Blade | `0/13` | dk, mg | 64 (56~72) | agi 25 str 25 | 7500 |
+| 7 | 27 | Cự Kiếm | Giant Sword | `0/15` | dk, mg | 64 (56~72) | str 49 | 7500 |
+| 7 | 27 | Rìu Larkan | Larkan Axe | `1/7` | dk, mg | 64 (56~72) | str 49 | 7500 |
+| 7 | 27 | Giáo Xà | Serpent Spear | `3/4` | dk, mg | 64 (56~72) | agi 11 str 31 | 7500 |
 | 7 | 27 | Gậy Hồi Sinh | Staff of Resurrection | `5/6` | dw | 60 (57~63) | agi 4 str 21 | 7500 |
 | 7 | 27 | Cung Bạc | Silver Bow | `4/5` | elf | 65 (59~71) | agi 35 str 11 | 7500 |
+| 8 | 32 | Kiếm Xoắn | Helical Sword | `0/12` | dk, mg | 79 (69~89) | str 49 | 15000 |
+| 8 | 32 | Kiếm Sấm | Lightning Sword | `0/14` | dk, mg | 79 (69~89) | agi 18 str 31 | 15000 |
 | 8 | 32 | Rìu Lưỡi Liềm | Crescent Axe | `1/8` | dk, mg | 79 (69~89) | agi 14 str 35 | 15000 |
+| 8 | 32 | Đại Lưỡi Hái | Great Scythe | `3/8` | dk, mg | 79 (69~89) | agi 18 str 31 | 15000 |
+| 8 | 32 | Kích Balrog | Bill of Balrog | `3/9` | dk, mg | 79 (69~89) | agi 18 str 28 | 15000 |
+| 8 | 32 | Gậy Cổ Đại | Ancient Staff | `5/17` | dw | 78 (77~79) | agi 7 str 18 | 15000 |
 | 8 | 32 | Gậy Sấm Hỗn Nguyên | Chaos Lightning Staff | `5/7` | dw | 78 (77~79) | agi 4 str 21 | 15000 |
+| 8 | 32 | Gậy Hủy Diệt | Staff of Destruction | `5/8` | dw | 78 (77~79) | agi 4 str 21 | 15000 |
 | 8 | 32 | Nỏ Cánh Lam | Bluewing Crossbow | `4/13` | elf | 75 (68~82) | agi 39 str 14 | 15000 |
+| 8 | 32 | Nỏ Thủy Kim | Aquagold Crossbow | `4/14` | elf | 75 (68~82) | agi 46 str 18 | 15000 |
+| 8 | 32 | Cung Thiên Nhiên Hỗn Nguyên | Chaos Nature Bow | `4/6` | elf | 75 (68~82) | agi 53 str 14 | 15000 |
 
 ## Khiên
 
 | Bậc | Cấp | Tên | Tên gốc | Hình | Lớp | Chỉ số | Yêu cầu | Giá |
 |---|---|---|---|---|---|---|---|---|
 | 1 | 4 | Khiên Nhỏ | Small Shield | `6/0` | dk, dw, elf, mg | 3 thủ | str 25 | 90 |
+| 1 | 4 | Khiên Sừng | Horn Shield | `6/1` | dk, dw, elf, mg | 3 thủ | str 35 | 90 |
+| 2 | 10 | Khiên Diều | Kite Shield | `6/2` | dk, dw, elf, mg | 7 thủ | str 39 | 450 |
 | 2 | 10 | Khiên Tay | Buckler | `6/4` | dk, dw, elf, mg | 7 thủ | str 28 | 450 |
+| 3 | 17 | Khiên Tròn Lớn | Large Round Shield | `6/10` | dk, dw, elf, mg | 12 thủ | str 42 | 1500 |
 | 3 | 17 | Khiên Đầu Lâu | Skull Shield | `6/6` | dk, dw, elf, mg | 12 thủ | str 39 | 1500 |
+| 4 | 22 | Khiên Tiên | Elven Shield | `6/3` | dk, dw, elf, mg | 17 thủ | agi 35 str 11 | 3600 |
+| 4 | 22 | Khiên Thép Tấm | Plate Shield | `6/9` | dk, dw, elf, mg | 17 thủ | str 42 | 3600 |
+| 5 | 27 | Khiên Diệt Rồng | Dragon Slayer Shield | `6/5` | dk, dw, elf, mg | 23 thủ | agi 14 str 35 | 7500 |
+| 5 | 27 | Khiên Đinh | Spiked Shield | `6/7` | dk, dw, elf, mg | 23 thủ | str 46 | 7500 |
+| 6 | 32 | Khiên Huyền Thoại | Legendary Shield | `6/14` | dk, dw, elf, mg | 29 thủ | agi 9 str 31 | 12000 |
+| 6 | 32 | Khiên Tháp | Tower Shield | `6/8` | dk, dw, elf, mg | 29 thủ | str 46 | 12000 |
+| 7 | 37 | Khiên Xà | Serpent Shield | `6/11` | dk, dw, elf, mg | 36 thủ | str 46 | 20000 |
+| 8 | 42 | Khiên Đồng | Bronze Shield | `6/12` | dk, dw, elf, mg | 44 thủ | str 49 | 32000 |
 
 ## Mũ
 
@@ -54,6 +106,7 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 2 | 3 | Mũ Xương | Bone Helm | `7/4` | dw | 1 thủ | str 11 | 15 |
 | 2 | 3 | Mũ Lụa | Silk Helm | `7/11` | elf | 1 thủ | agi 25 str 11 | 15 |
 | 3 | 7 | Mũ Vảy | Scale Helm | `7/6` | dk | 2 thủ | str 39 | 53 |
+| 3 | 7 | Mũ Bí Ẩn | Mistery Helm | `7/39` | dw | 2 thủ | str 11 | 48 |
 | 3 | 7 | Mũ Nhân Sư | Sphinx Helm | `7/7` | dw | 2 thủ | str 11 | 55 |
 | 3 | 7 | Mũ Gió | Wind Helm | `7/12` | elf | 2 thủ | agi 28 str 11 | 57 |
 | 4 | 12 | Mũ Đồng Thau | Brass Helm | `7/8` | dk | 4 thủ | agi 11 str 35 | 157 |
@@ -63,14 +116,24 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 5 | 17 | Mũ Cánh Đỏ | Red Wing Helm | `7/40` | dw | 5 thủ | agi 1 str 9 | 319 |
 | 5 | 17 | Mũ Hộ Vệ | Guardian Helm | `7/14` | elf | 5 thủ | agi 28 str 14 | 362 |
 | 6 | 22 | Mũ Rồng | Dragon Helm | `7/1` | dk | 7 thủ | agi 11 str 42 | 786 |
+| 6 | 22 | Mũ Ánh Bạc | Light Plate Helm | `7/25` | dk | 7 thủ | agi 7 str 25 | 835 |
+| 6 | 22 | Mũ Nhật Thực | Eclipse Helm | `7/35` | dw | 7 thủ | agi 4 str 19 | 789 |
 | 6 | 22 | Mũ Cổ Đại | Ancient Helm | `7/41` | dw | 6 thủ | agi 6 str 18 | 718 |
 | 6 | 22 | Mũ Diên Vĩ | Iris Helm | `7/36` | elf | 7 thủ | agi 25 str 18 | 797 |
 | 7 | 27 | Mũ Hắc Long | Black Dragon Helm | `7/16` | dk | 8 thủ | agi 21 str 59 | 1463 |
+| 7 | 27 | Mũ Kim Cương | Adamantine Helm | `7/26` | dk | 9 thủ | agi 7 str 27 | 1548 |
+| 7 | 27 | Mũ Quạ Tro | Ashcrow Helm | `7/34` | dk | 9 thủ | agi 18 str 56 | 1554 |
 | 7 | 27 | Mũ Đại Linh Hồn | Grand Soul Helm | `7/18` | dw | 9 thủ | agi 7 str 21 | 1636 |
 | 7 | 27 | Mũ Thần Thánh | Divine Helm | `7/19` | elf | 10 thủ | agi 39 str 18 | 1654 |
 | 8 | 32 | Mũ Phượng Hoàng Đen | Dark Phoenix Helm | `7/17` | dk | 11 thủ | agi 22 str 72 | 2903 |
+| 8 | 32 | Mũ Thép Đen | Dark Steel Helm | `7/27` | dk | 11 thủ | agi 8 str 29 | 2849 |
+| 8 | 32 | Mũ Titan | Titan Helm | `7/45` | dk | 11 thủ | agi 11 str 78 | 3045 |
+| 8 | 32 | Mũ Dũng Sĩ | Brave Helm | `7/46` | dk | 12 thủ | agi 57 str 26 | 3163 |
 | 8 | 32 | Mũ Hồn Bóng Tối | Dark Soul Helm | `7/22` | dw | 12 thủ | agi 6 str 19 | 3218 |
+| 8 | 32 | Mũ Diêm Vương | Hades Helm | `7/52` | dw | 12 thủ | agi 5 ene 63 str 21 | 3280 |
 | 8 | 32 | Mũ Linh Hồn Đỏ | Red Spirit Helm | `7/24` | elf | 12 thủ | agi 40 str 18 | 3242 |
+| 8 | 32 | Mũ Thiên Sứ | Seraphim Helm | `7/49` | elf | 12 thủ | agi 69 str 19 | 3226 |
+| 8 | 32 | Mũ Đức Tin | Faith Helm | `7/50` | elf | 12 thủ | agi 10 ene 48 str 11 | 3305 |
 
 ## Giáp
 
@@ -83,6 +146,7 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 2 | 3 | Giáp Xương | Bone Armor | `8/4` | dw | 2 thủ | str 14 | 21 |
 | 2 | 3 | Giáp Lụa | Silk Armor | `8/11` | elf | 2 thủ | agi 25 str 11 | 22 |
 | 3 | 7 | Giáp Vảy | Scale Armor | `8/6` | dk, mg | 3 thủ | str 39 | 79 |
+| 3 | 7 | Giáp Bí Ẩn | Mistery Armor | `8/39` | dw | 3 thủ | str 14 | 81 |
 | 3 | 7 | Giáp Nhân Sư | Sphinx Armor | `8/7` | dw | 3 thủ | str 14 | 71 |
 | 3 | 7 | Giáp Gió | Wind Armor | `8/12` | elf | 3 thủ | agi 28 str 11 | 76 |
 | 4 | 12 | Giáp Đồng Thau | Brass Armor | `8/8` | dk, mg | 5 thủ | agi 11 str 35 | 203 |
@@ -92,14 +156,28 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 5 | 17 | Giáp Cánh Đỏ | Red Wing Armor | `8/40` | dw | 7 thủ | agi 3 str 12 | 496 |
 | 5 | 17 | Giáp Hộ Vệ | Guardian Armor | `8/14` | elf | 6 thủ | agi 28 str 14 | 456 |
 | 6 | 22 | Giáp Rồng | Dragon Armor | `8/1` | dk, mg | 11 thủ | agi 11 str 42 | 1212 |
+| 6 | 22 | Giáp Ánh Bạc | Light Plate Armor | `8/25` | dk, mg | 9 thủ | agi 7 str 25 | 1044 |
+| 6 | 22 | Giáp Nhật Thực | Eclipse Armor | `8/35` | dw | 9 thủ | agi 4 str 19 | 968 |
 | 6 | 22 | Giáp Cổ Đại | Ancient Armor | `8/41` | dw | 9 thủ | agi 6 str 18 | 1047 |
 | 6 | 22 | Giáp Diên Vĩ | Iris Armor | `8/36` | elf | 9 thủ | agi 25 str 18 | 957 |
+| 6 | 22 | Giáp Quạ Bão | Storm Crow Armor | `8/15` | mg | 12 thủ | agi 25 str 53 | 1393 |
 | 7 | 27 | Giáp Hắc Long | Black Dragon Armor | `8/16` | dk, mg | 13 thủ | agi 21 str 59 | 2341 |
+| 7 | 27 | Giáp Kim Cương | Adamantine Armor | `8/26` | dk, mg | 13 thủ | agi 7 str 27 | 2323 |
+| 7 | 27 | Giáp Quạ Tro | Ashcrow Armor | `8/34` | dk, mg | 14 thủ | agi 18 str 56 | 2417 |
 | 7 | 27 | Giáp Đại Linh Hồn | Grand Soul Armor | `8/18` | dw | 12 thủ | agi 7 str 21 | 2000 |
 | 7 | 27 | Giáp Thần Thánh | Divine Armor | `8/19` | elf | 11 thủ | agi 39 str 18 | 1966 |
+| 7 | 27 | Giáp Dũng Mãnh | Valiant Armor | `8/37` | mg | 16 thủ | agi 18 str 54 | 2792 |
 | 8 | 32 | Giáp Phượng Hoàng Đen | Dark Phoenix Armor | `8/17` | dk, mg | 16 thủ | agi 23 str 75 | 4253 |
+| 8 | 32 | Giáp Thép Đen | Dark Steel Armor | `8/27` | dk, mg | 18 thủ | agi 8 str 29 | 4712 |
+| 8 | 32 | Giáp Titan | Titan Armor | `8/45` | dk, mg | 15 thủ | agi 11 str 78 | 3915 |
+| 8 | 32 | Giáp Dũng Sĩ | Brave Armor | `8/46` | dk, mg | 14 thủ | agi 57 str 26 | 3845 |
 | 8 | 32 | Giáp Hồn Bóng Tối | Dark Soul Armor | `8/22` | dw | 14 thủ | agi 6 str 19 | 3844 |
+| 8 | 32 | Giáp Diêm Vương | Hades Armor | `8/52` | dw | 15 thủ | agi 5 ene 63 str 21 | 4000 |
 | 8 | 32 | Giáp Linh Hồn Đỏ | Red Spirit Armor | `8/24` | elf | 15 thủ | agi 40 str 18 | 3877 |
+| 8 | 32 | Giáp Thiên Sứ | Seraphim Armor | `8/49` | elf | 15 thủ | agi 69 str 19 | 3871 |
+| 8 | 32 | Giáp Đức Tin | Faith Armor | `8/50` | elf | 15 thủ | agi 10 ene 48 str 11 | 3906 |
+| 8 | 32 | Giáp Ưng Sấm | Thunder Hawk Armor | `8/20` | mg | 20 thủ | agi 25 str 59 | 5333 |
+| 8 | 32 | Giáp Cuồng Phong | Hurricane Armor | `8/23` | mg | 19 thủ | agi 23 str 57 | 5100 |
 
 ## Quần
 
@@ -112,6 +190,7 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 2 | 3 | Quần Xương | Bone Pants | `9/4` | dw | 1 thủ | str 14 | 16 |
 | 2 | 3 | Quần Lụa | Silk Pants | `9/11` | elf | 1 thủ | agi 25 str 11 | 18 |
 | 3 | 7 | Quần Vảy | Scale Pants | `9/6` | dk, mg | 2 thủ | str 39 | 62 |
+| 3 | 7 | Quần Bí Ẩn | Mistery Pants | `9/39` | dw | 2 thủ | str 13 | 59 |
 | 3 | 7 | Quần Nhân Sư | Sphinx Pants | `9/7` | dw | 2 thủ | str 14 | 63 |
 | 3 | 7 | Quần Gió | Wind Pants | `9/12` | elf | 3 thủ | agi 28 str 11 | 66 |
 | 4 | 12 | Quần Đồng Thau | Brass Pants | `9/8` | dk, mg | 4 thủ | agi 11 str 35 | 166 |
@@ -121,14 +200,28 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 5 | 17 | Quần Cánh Đỏ | Red Wing Pants | `9/40` | dw | 6 thủ | agi 2 str 12 | 390 |
 | 5 | 17 | Quần Hộ Vệ | Guardian Pants | `9/14` | elf | 6 thủ | agi 28 str 14 | 394 |
 | 6 | 22 | Quần Rồng | Dragon Pants | `9/1` | dk, mg | 8 thủ | agi 11 str 42 | 852 |
+| 6 | 22 | Quần Ánh Bạc | Light Plate Pants | `9/25` | dk, mg | 8 thủ | agi 7 str 25 | 877 |
+| 6 | 22 | Quần Nhật Thực | Eclipse Pants | `9/35` | dw | 8 thủ | agi 4 str 19 | 896 |
 | 6 | 22 | Quần Cổ Đại | Ancient Pants | `9/41` | dw | 7 thủ | agi 6 str 17 | 838 |
 | 6 | 22 | Quần Diên Vĩ | Iris Pants | `9/36` | elf | 8 thủ | agi 25 str 18 | 850 |
+| 6 | 22 | Quần Quạ Bão | Storm Crow Pants | `9/15` | mg | 10 thủ | agi 25 str 53 | 1077 |
 | 7 | 27 | Quần Hắc Long | Black Dragon Pants | `9/16` | dk, mg | 11 thủ | agi 21 str 59 | 1951 |
+| 7 | 27 | Quần Kim Cương | Adamantine Pants | `9/26` | dk, mg | 10 thủ | agi 7 str 27 | 1677 |
+| 7 | 27 | Quần Quạ Tro | Ashcrow Pants | `9/34` | dk, mg | 11 thủ | agi 18 str 56 | 1899 |
 | 7 | 27 | Quần Đại Linh Hồn | Grand Soul Pants | `9/18` | dw | 10 thủ | agi 7 str 21 | 1818 |
 | 7 | 27 | Quần Thần Thánh | Divine Pants | `9/19` | elf | 10 thủ | agi 39 str 18 | 1743 |
+| 7 | 27 | Quần Dũng Mãnh | Valiant Pants | `9/37` | mg | 13 thủ | agi 18 str 54 | 2201 |
 | 8 | 32 | Quần Phượng Hoàng Đen | Dark Phoenix Pants | `9/17` | dk, mg | 14 thủ | agi 22 str 72 | 3646 |
+| 8 | 32 | Quần Thép Đen | Dark Steel Pants | `9/27` | dk, mg | 13 thủ | agi 8 str 29 | 3397 |
+| 8 | 32 | Quần Titan | Titan Pants | `9/45` | dk, mg | 13 thủ | agi 11 str 78 | 3577 |
+| 8 | 32 | Quần Dũng Sĩ | Brave Pants | `9/46` | dk, mg | 13 thủ | agi 57 str 26 | 3597 |
 | 8 | 32 | Quần Hồn Bóng Tối | Dark Soul Pants | `9/22` | dw | 13 thủ | agi 6 str 19 | 3486 |
+| 8 | 32 | Quần Diêm Vương | Hades Pants | `9/52` | dw | 13 thủ | agi 5 ene 63 str 21 | 3520 |
 | 8 | 32 | Quần Linh Hồn Đỏ | Red Spirit Pants | `9/24` | elf | 13 thủ | agi 40 str 18 | 3383 |
+| 8 | 32 | Quần Thiên Sứ | Seraphim Pants | `9/49` | elf | 13 thủ | agi 69 str 19 | 3419 |
+| 8 | 32 | Quần Đức Tin | Faith Pants | `9/50` | elf | 13 thủ | agi 10 ene 48 str 11 | 3455 |
+| 8 | 32 | Quần Ưng Sấm | Thunder Hawk Pants | `9/20` | mg | 16 thủ | agi 25 str 53 | 4356 |
+| 8 | 32 | Quần Cuồng Phong | Hurricane Pants | `9/23` | mg | 16 thủ | agi 23 str 57 | 4262 |
 
 ## Găng
 
@@ -141,6 +234,7 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 2 | 3 | Găng Xương | Bone Gloves | `10/4` | dw | 1 thủ | str 7 | 8 |
 | 2 | 3 | Găng Lụa | Silk Gloves | `10/11` | elf | 1 thủ | agi 25 str 11 | 7 |
 | 3 | 7 | Găng Vảy | Scale Gloves | `10/6` | dk, mg | 1 thủ | str 39 | 31 |
+| 3 | 7 | Găng Bí Ẩn | Mistery Gloves | `10/39` | dw | 1 thủ | str 8 | 33 |
 | 3 | 7 | Găng Nhân Sư | Sphinx Gloves | `10/7` | dw | 1 thủ | str 7 | 34 |
 | 3 | 7 | Găng Gió | Wind Gloves | `10/12` | elf | 1 thủ | agi 28 str 11 | 28 |
 | 4 | 12 | Găng Đồng Thau | Brass Gloves | `10/8` | dk, mg | 2 thủ | agi 11 str 35 | 83 |
@@ -150,14 +244,28 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 5 | 17 | Găng Cánh Đỏ | Red Wing Gloves | `10/40` | dw | 3 thủ | agi 1 str 6 | 230 |
 | 5 | 17 | Găng Hộ Vệ | Guardian Gloves | `10/14` | elf | 3 thủ | agi 28 str 14 | 236 |
 | 6 | 22 | Găng Rồng | Dragon Gloves | `10/1` | dk, mg | 4 thủ | agi 11 str 42 | 459 |
+| 6 | 22 | Găng Ánh Bạc | Light Plate Gloves | `10/25` | dk, mg | 4 thủ | agi 7 str 25 | 501 |
+| 6 | 22 | Găng Nhật Thực | Eclipse Gloves | `10/35` | dw | 5 thủ | agi 4 str 19 | 538 |
 | 6 | 22 | Găng Cổ Đại | Ancient Gloves | `10/41` | dw | 5 thủ | agi 6 str 18 | 569 |
 | 6 | 22 | Găng Diên Vĩ | Iris Gloves | `10/36` | elf | 5 thủ | agi 25 str 18 | 585 |
+| 6 | 22 | Găng Quạ Bão | Storm Crow Gloves | `10/15` | mg | 6 thủ | agi 25 str 53 | 633 |
 | 7 | 27 | Găng Hắc Long | Black Dragon Gloves | `10/16` | dk, mg | 6 thủ | agi 21 str 59 | 1073 |
+| 7 | 27 | Găng Kim Cương | Adamantine Gloves | `10/26` | dk, mg | 7 thủ | agi 7 str 27 | 1161 |
+| 7 | 27 | Găng Quạ Tro | Ashcrow Gloves | `10/34` | dk, mg | 6 thủ | agi 18 str 56 | 1036 |
 | 7 | 27 | Găng Đại Linh Hồn | Grand Soul Gloves | `10/18` | dw | 7 thủ | agi 4 str 17 | 1212 |
 | 7 | 27 | Găng Thần Thánh | Divine Gloves | `10/19` | elf | 7 thủ | agi 39 str 18 | 1296 |
+| 7 | 27 | Găng Dũng Mãnh | Valiant Gloves | `10/37` | mg | 8 thủ | agi 18 str 54 | 1450 |
 | 8 | 32 | Găng Phượng Hoàng Đen | Dark Phoenix Gloves | `10/17` | dk, mg | 9 thủ | agi 22 str 72 | 2498 |
+| 8 | 32 | Găng Thép Đen | Dark Steel Gloves | `10/27` | dk, mg | 9 thủ | agi 8 str 29 | 2301 |
+| 8 | 32 | Găng Titan | Titan Gloves | `10/45` | dk, mg | 10 thủ | agi 11 str 78 | 2707 |
+| 8 | 32 | Găng Dũng Sĩ | Brave Gloves | `10/46` | dk, mg | 10 thủ | agi 57 str 26 | 2605 |
 | 8 | 32 | Găng Hồn Bóng Tối | Dark Soul Gloves | `10/22` | dw | 10 thủ | agi 6 str 19 | 2682 |
+| 8 | 32 | Găng Diêm Vương | Hades Gloves | `10/52` | dw | 9 thủ | agi 5 ene 63 str 21 | 2480 |
 | 8 | 32 | Găng Linh Hồn Đỏ | Red Spirit Gloves | `10/24` | elf | 10 thủ | agi 40 str 18 | 2678 |
+| 8 | 32 | Găng Thiên Sứ | Seraphim Gloves | `10/49` | elf | 10 thủ | agi 69 str 19 | 2774 |
+| 8 | 32 | Găng Đức Tin | Faith Gloves | `10/50` | elf | 10 thủ | agi 10 ene 48 str 11 | 2704 |
+| 8 | 32 | Găng Ưng Sấm | Thunder Hawk Gloves | `10/20` | mg | 11 thủ | agi 25 str 53 | 3022 |
+| 8 | 32 | Găng Cuồng Phong | Hurricane Gloves | `10/23` | mg | 12 thủ | agi 23 str 57 | 3144 |
 
 ## Giày
 
@@ -170,6 +278,7 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 2 | 3 | Giày Xương | Bone Boots | `11/4` | dw | 1 thủ | str 11 | 10 |
 | 2 | 3 | Giày Lụa | Silk Boots | `11/11` | elf | 1 thủ | agi 25 str 11 | 7 |
 | 3 | 7 | Giày Vảy | Scale Boots | `11/6` | dk, mg | 1 thủ | str 39 | 35 |
+| 3 | 7 | Giày Bí Ẩn | Mistery Boots | `11/39` | dw | 2 thủ | str 9 | 40 |
 | 3 | 7 | Giày Nhân Sư | Sphinx Boots | `11/7` | dw | 1 thủ | str 11 | 38 |
 | 3 | 7 | Giày Gió | Wind Boots | `11/12` | elf | 1 thủ | agi 28 str 11 | 33 |
 | 4 | 12 | Giày Đồng Thau | Brass Boots | `11/8` | dk, mg | 2 thủ | agi 11 str 35 | 92 |
@@ -179,14 +288,28 @@ Tổng 158 món: Vũ khí 24, Khiên 3, Mũ 24, Giáp 24, Quần 24, Găng 24, G
 | 5 | 17 | Giày Cánh Đỏ | Red Wing Boots | `11/40` | dw | 4 thủ | agi 1 str 9 | 266 |
 | 5 | 17 | Giày Hộ Vệ | Guardian Boots | `11/14` | elf | 4 thủ | agi 28 str 14 | 252 |
 | 6 | 22 | Giày Rồng | Dragon Boots | `11/1` | dk, mg | 4 thủ | agi 11 str 42 | 491 |
+| 6 | 22 | Giày Ánh Bạc | Light Plate Boots | `11/25` | dk, mg | 5 thủ | agi 7 str 25 | 543 |
+| 6 | 22 | Giày Nhật Thực | Eclipse Boots | `11/35` | dw | 5 thủ | agi 4 str 19 | 609 |
 | 6 | 22 | Giày Cổ Đại | Ancient Boots | `11/41` | dw | 6 thủ | agi 6 str 19 | 628 |
 | 6 | 22 | Giày Diên Vĩ | Iris Boots | `11/36` | elf | 5 thủ | agi 25 str 18 | 611 |
+| 6 | 22 | Giày Quạ Bão | Storm Crow Boots | `11/15` | mg | 6 thủ | agi 25 str 53 | 697 |
 | 7 | 27 | Giày Hắc Long | Black Dragon Boots | `11/16` | dk, mg | 7 thủ | agi 21 str 59 | 1171 |
+| 7 | 27 | Giày Kim Cương | Adamantine Boots | `11/26` | dk, mg | 7 thủ | agi 7 str 27 | 1290 |
+| 7 | 27 | Giày Quạ Tro | Ashcrow Boots | `11/34` | dk, mg | 6 thủ | agi 18 str 56 | 1094 |
 | 7 | 27 | Giày Đại Linh Hồn | Grand Soul Boots | `11/18` | dw | 8 thủ | agi 4 str 21 | 1333 |
 | 7 | 27 | Giày Thần Thánh | Divine Boots | `11/19` | elf | 8 thủ | agi 39 str 18 | 1341 |
+| 7 | 27 | Giày Dũng Mãnh | Valiant Boots | `11/37` | mg | 9 thủ | agi 18 str 54 | 1557 |
 | 8 | 32 | Giày Phượng Hoàng Đen | Dark Phoenix Boots | `11/17` | dk, mg | 10 thủ | agi 21 str 69 | 2700 |
+| 8 | 32 | Giày Thép Đen | Dark Steel Boots | `11/27` | dk, mg | 10 thủ | agi 8 str 29 | 2740 |
+| 8 | 32 | Giày Titan | Titan Boots | `11/45` | dk, mg | 10 thủ | agi 11 str 78 | 2755 |
+| 8 | 32 | Giày Dũng Sĩ | Brave Boots | `11/46` | dk, mg | 10 thủ | agi 57 str 26 | 2791 |
 | 8 | 32 | Giày Hồn Bóng Tối | Dark Soul Boots | `11/22` | dw | 10 thủ | agi 6 str 19 | 2771 |
+| 8 | 32 | Giày Diêm Vương | Hades Boots | `11/52` | dw | 10 thủ | agi 5 ene 63 str 21 | 2720 |
 | 8 | 32 | Giày Linh Hồn Đỏ | Red Spirit Boots | `11/24` | elf | 11 thủ | agi 40 str 18 | 2819 |
+| 8 | 32 | Giày Thiên Sứ | Seraphim Boots | `11/49` | elf | 10 thủ | agi 69 str 19 | 2710 |
+| 8 | 32 | Giày Đức Tin | Faith Boots | `11/50` | elf | 10 thủ | agi 10 ene 48 str 11 | 2629 |
+| 8 | 32 | Giày Ưng Sấm | Thunder Hawk Boots | `11/20` | mg | 12 thủ | agi 25 str 53 | 3289 |
+| 8 | 32 | Giày Cuồng Phong | Hurricane Boots | `11/23` | mg | 13 thủ | agi 23 str 57 | 3493 |
 
 ## Nhẫn
 

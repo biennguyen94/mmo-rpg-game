@@ -8,7 +8,7 @@ defmodule Mix.Tasks.HacLong.Icons do
       mix hac_long.icons --src ~/hinh-do      # hoặc HL_ITEM_ICONS_DIR=~/hinh-do
       mix hac_long.icons --no-trim            # chép nguyên, không cắt viền trong suốt
 
-  Máy có ImageMagick (`convert`) thì cắt bỏ viền trong suốt quanh món đồ khi chép (hình gốc MU để
+  Máy có ImageMagick (`magick` hoặc `convert`) thì cắt bỏ viền trong suốt quanh món đồ khi chép (hình gốc MU để
   món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); không có thì chép nguyên.
 
   Không có thư mục / không có hình: ghi bảng rỗng, game dùng icon cũ, **không lỗi** (thoát 0).
@@ -27,7 +27,11 @@ defmodule Mix.Tasks.HacLong.Icons do
   @impl true
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [src: :string, trim: :boolean])
-    convert = opts[:trim] != false && System.find_executable("convert")
+    # ImageMagick 7 gọi là `magick`, bản 6 là `convert`
+    convert =
+      opts[:trim] != false &&
+        (System.find_executable("magick") || System.find_executable("convert"))
+
     src = opts[:src] || System.get_env("HL_ITEM_ICONS_DIR") || "assets_src/private/item_icons"
     Mix.Task.run("compile")
 
@@ -49,7 +53,12 @@ defmodule Mix.Tasks.HacLong.Icons do
     File.write!(@out_map, Jason.encode!(map, pretty: true) <> "\n")
 
     Mix.shell().info(
-      "Đã ghi #{@out_map}: #{map_size(map)} món, #{length(files) - length(skipped)} hình."
+      "Đã ghi #{@out_map}: #{map_size(map)} món, #{length(files) - length(skipped)} hình " <>
+        cond do
+          convert -> "(đã cắt viền trong suốt bằng #{Path.basename(convert)})."
+          opts[:trim] == false -> "(không cắt viền: --no-trim)."
+          true -> "(KHÔNG cắt viền: chưa cài ImageMagick, `sudo apt install -y imagemagick`)."
+        end
     )
 
     if skipped != [],

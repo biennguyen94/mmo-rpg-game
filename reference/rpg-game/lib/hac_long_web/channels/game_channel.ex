@@ -20,6 +20,7 @@ defmodule HacLongWeb.GameChannel do
   - `"party"` `%{"op" => ...}`: tổ đội (`invite {uid}`, `accept`, `decline`, `leave`,
     `kick {uid}`, `info`); server đẩy `"party"` (tổ đội đổi), `"party_invite"` (có lời mời),
     `"shared"` (máu chung của trận đánh cùng). Chat tổ đội: `"chat"` với `"to" => "party"`.
+  - `"arena_find"` `{q}`: tìm đối thủ đấu trường theo tên (`{found: [...]}`, như gợi ý).
   - `"arena"`: điểm đấu trường của mình, đối thủ gợi ý, bảng xếp hạng; thách đấu là lệnh
     `"cmd"` `%{"act" => "pvp_challenge", "uid" => ...}`.
   - `"market"` `%{"q"}`: hàng đang bán ở chợ và hàng mình đang rao; rao bán, mua, rút về là
@@ -318,6 +319,16 @@ defmodule HacLongWeb.GameChannel do
     with :ok <- limit({:arena, uid}, 30, :timer.minutes(1)) do
       me = Map.put(Arena.stats(uid), :per_day, Arena.per_day())
       {:reply, {:ok, %{me: me, suggestions: Arena.suggestions(uid), top: Arena.top()}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
+  def handle_in("arena_find", %{"q" => q}, socket) when is_binary(q) do
+    uid = socket.assigns.user_id
+
+    with :ok <- limit({:arena_find, uid}, 30, :timer.minutes(1)) do
+      {:reply, {:ok, %{found: Arena.search(uid, String.slice(q, 0, 24))}}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
     end

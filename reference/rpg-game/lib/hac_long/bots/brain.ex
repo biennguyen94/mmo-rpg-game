@@ -14,13 +14,35 @@ defmodule HacLong.Bots.Brain do
   6. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
   7. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
   8. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
+
+  Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
+  khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
+  chưa chết.
   """
-  alias HacLong.Game.{Data, Engine, Gear}
+  alias HacLong.Game.{Data, Engine, Gear, Rng}
   alias HacLong.World
   alias HacLong.World.Maps
 
   @main %{"dk" => "str", "dw" => "ene", "elf" => "agi", "mg" => "str"}
   @dirs %{"up" => {0, -1}, "down" => {0, 1}, "left" => {-1, 0}, "right" => {1, 0}}
+
+  @rest Data.rules().bots.rest_after_death_s
+
+  @doc """
+  Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
+  ngẫu nhiên trong `RULES.bots.rest_after_death_s` giây tính từ `now`; không thì giữ `until`.
+  """
+  def rest_until(until, prev_deaths, p, now) do
+    if is_integer(prev_deaths) and p != nil and (p[:deaths] || 0) > prev_deaths do
+      [lo, hi] = @rest
+      now + round((lo + Rng.uniform() * (hi - lo)) * 1000)
+    else
+      until
+    end
+  end
+
+  @doc "Đang nghỉ sau khi gục: chưa tới mốc và không ở trong trận (trận đã xong thì vẫn rời trận như thường)."
+  def resting?(p, until, now), do: p != nil and p.battle == nil and now < until
 
   def decide(p, snap, opts \\ %{})
 

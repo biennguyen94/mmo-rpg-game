@@ -39,12 +39,19 @@ await shot(page, 'bc-guards.png');
 // hạ mọi quái tới khi xong (quân canh → cổng → trùm)
 const seen = new Set();
 for (let i = 0; i < 20; i++) {
+  // danh sách quái (lúc mới vào, lúc sang bước mới) có thể tới sau trạng thái bc: chờ tới khi có quái hoặc đã xong
+  await page
+    .waitForFunction(() => { const t = window.__hl.player().tower; return !t || t.bc.done || t.monsters.length > 0; }, null, { timeout: 5000 })
+    .catch(() => null);
   p = await player(page);
   if (!p.tower || p.tower.bc.done || !p.tower.monsters.length) break;
   seen.add(p.tower.bc.stage);
   if (p.hp < p.maxHp / 2) await admin('heal', P.name, {});
-  const m = p.tower.monsters[0];
-  await walkTo(page, m.x, m.y);
+  // con gần cửa có thể bị con khác / tường chắn đường: không vào trận được thì thử con khác
+  for (const m of p.tower.monsters) {
+    await walkTo(page, m.x, m.y);
+    if ((await player(page)).battle) break;
+  }
   if ((await player(page)).battle) {
     await fight(page);
     await act(page, 'leave').catch(() => null);

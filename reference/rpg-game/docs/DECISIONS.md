@@ -106,7 +106,7 @@
 |---|---|---|
 | P10-1 | Dịch trên trình duyệt bằng từ điển mẫu câu (`i18n.js` + `en.json`) thay vì gắn khóa vào từng câu trong code / server. | Anh muốn làm cả A + B + C nhưng ít credit: một cơ chế phủ giao diện, dữ liệu game và tin server; không đổi giao thức / schema. |
 | P10-2 | Ngôn ngữ lưu ở trình duyệt, không lưu theo tài khoản. | Không thêm cột database; đổi máy thì chọn lại một lần. |
-| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Phúc Lành = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
+| P10-3 | Bản dịch đầu do máy dịch theo bảng thuật ngữ (Kiếm Sĩ = Dark Knight, Ngọc Ước Nguyện = Jewel of Bless…), kiểm tự động giữ đúng {n}. | Nhanh; anh / người chơi góp ý thì sửa thẳng `en.json`. |
 
 ## Phase 11 (2026-10-09)
 - **P11-1** Sáng / Tối / Tự động chỉ đổi độ tối khi vẽ bản đồ (lưu `hl-theme` ở trình duyệt); luật ngày đêm (quái hiếm ban đêm) vẫn theo giờ server, biểu tượng giờ trên bản đồ vẫn là giờ thật.
@@ -187,7 +187,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-4** (theo yêu cầu, 2026-10-10) **Bỏ khóa vùng bằng trùm.** Vùng `zi` mở khi cấp nhân vật ≥ cấp quái thấp nhất của vùng (`Engine.zone_level/1`): cổng, đá dịch chuyển, chọn bản đồ, đánh quái, việc hằng ngày, nhiệm vụ, bot đều theo đó. Trùm thành thử thách có thưởng (`RULES.boss_rewards`):
   - hạ lần đầu: chắc chắn một món đồ Hiếm (75%) / Sử Thi (25%) **đúng lớp** cấp ≤ cấp trùm, cộng món rơi riêng cũ (Khiên Rồng, Bảo vật) nếu có;
   - thành tựu + danh hiệu "Diệt <trùm>" cho 5 trùm vùng (Hắc Long giữ "Kẻ Diệt Rồng");
-  - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Phúc Lành, vùng 4–6 +1 Ngọc Linh Hồn (ghi trong `daily.bosses`).
+  - lần đầu mỗi ngày hạ một trùm vùng: vùng 1–3 +1 Ngọc Ước Nguyện, vùng 4–6 +1 Ngọc Tâm Linh (ghi trong `daily.bosses`).
   - Mô phỏng 4 lớp × 5 lượt sau thay đổi: vẫn thắng 5/5, Hắc Long ở cấp ~35, số trận gần như cũ; ngọc thu được ~gấp đôi.
 - **P17-6** Mời bạn vào bàn Tiến Lên: chỉ bạn bè (dùng tin riêng sẵn có), nội dung `🃏 Mời bạn vào bàn Tiến Lên [mã] · …`; client nhận ra `[mã]` để hiện nút Vào bàn (thông báo nổi + trong khung tin riêng). Tối đa 10 lời mời / phút.
 
@@ -227,3 +227,54 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **E18-5** Lâu Đài Máu là một người một lượt (như Quảng Trường), ba bước quân canh → cổng → trùm; mở lệch 30 phút (0h30, 2h30 …) để không trùng Quảng Trường / Golden Invasion.
 - **E18-6** Lượt thắng ≈ giá vé về vàng; lãi là Lông Vũ Kền Kền + 2 ngọc + kinh nghiệm. Không xong thì thưởng theo quân canh đã hạ, không có lông vũ.
 - **E18-7** Cổng / trùm hiện ở ô trống gần cầu thang lên nhưng không trùng ô người chơi đang đứng (đứng sẵn trên ô quái thì không bước vào đánh được).
+
+## Bot nghỉ sau khi gục (2026-10-11, anh chốt)
+
+- **B-1** Bot gục (bị đồ sát, thua quái…) về Nhà rồi đứng nghỉ ngẫu nhiên 30–90 giây (`RULES.bots.rest_after_death_s`,
+  anh chọn) mới đi luyện tiếp. Trước đây bot dịch chuyển về chỗ cũ chỉ sau ~4 giây nên trông như không chết. Người chơi
+  thật không đổi gì (đồ sát người chơi đã về Nhà, rời bản đồ đúng). Bot nhận ra mình vừa gục qua số lần chết (`deaths`)
+  tăng; khởi động lại server thì không nghỉ (chấp nhận).
+- **B-2** Hình nhân vật: giáp bậc 7–8 và vũ khí bậc 8 (Rìu Lưỡi Liềm) chưa có hình đồ cũ cùng bậc nên trước đây nhân vật hiện
+  không giáp / tay không. `ItemBuild.look/3` cho bậc cao hơn danh sách `ITEM_PICK.legacy` mượn món cũ bậc cao nhất (giáp tấm,
+  rìu đôi). Mũ / quần / găng / giày vẫn chưa vẽ lên nhân vật (cần thêm hình CC0, chưa làm).
+- **B-3** Hình gốc MU cho món dùng hằng ngày (`ITEM_PICK.refs`): bình máu 14/1–3, bình mana 14/4–6, Ngọc Ước Nguyện 14/13, Linh Hồn
+  14/14, Sinh Mệnh 14/16, Hỗn Nguyên 12/15, Vé Quảng Trường 14/19 (Invitation of Devil Square), Vé Lâu Đài 13/18 (Invisibility
+  Cloak — vé Blood Castle của MU), Lông Vũ Kền Kền 13/53 (Condor's Feathers), Quả Lộc 14/0 (Apple). Chỉ đổi hình, không đổi
+  gameplay; máy chủ chưa chép hình mới thì vẫn dùng icon cũ.
+- **B-4** (anh chốt) Món phụ (`alt`, `ITEM_PICK.weapons_alt / shields_alt / sets_alt`): cùng công / thủ / cấp / giá với món chính
+  cùng bậc, chỉ khác tên, hình, yêu cầu chỉ số (lấy từ Item.txt). Chỉ rơi: không bán, không làm đồ khởi đầu, không làm đồ thay
+  đồ cũ. Đồ rơi lấy mọi món thuộc 2 mức cấp cao nhất (trước: 2 món) để món phụ không đẩy bậc dưới ra. Khiên 3 → 8 bậc. Đấu Sĩ
+  có bộ riêng MU (Quạ Bão, Dũng Mãnh, Ưng Sấm, Cuồng Phong) làm bộ phụ, không mũ. Đổi tên để không trùng đồ cũ: 2/0 Chùy Tròn
+  (đồ cũ có Chùy Gai), 6/7 Khiên Đinh (Khiên Gai), 1/5 Rìu Chiến Binh (Rìu Chiến).
+- **B-5** (anh chốt phương án B) Đồ đặc biệt từ quái thường (`rules.json`): tỉ lệ rơi đồ `loot.gear_chance.normal` 4% → 6%,
+  Excellent `excellent.chance.normal` 4% → 10%, Thần `ancient.chance.normal` 1% → 5%. Quái thường giờ ~1/167 con ra Excellent,
+  ~1/775 con ra Thần. Tinh anh / đêm / trùm giữ nguyên số; tỉ lệ trên mỗi món đã rơi của quái thường có chỗ cao hơn, nhưng tính
+  trên mỗi con hạ thì tinh anh / đêm / trùm vẫn cao hơn nhiều vì rơi đồ thường xuyên hơn (50% / 25% / 35% so với 6%).
+- **B-6** (anh chốt) Tên ngọc theo bản MU Việt: Jewel of Bless = **Ngọc Ước Nguyện** (trước: Phúc Lành), Jewel of Soul =
+  **Ngọc Tâm Linh** (trước: Linh Hồn). Ngọc Sinh Mệnh (Life) và Ngọc Hỗn Nguyên (Chaos) giữ nguyên. Chỉ đổi tên hiển thị, id
+  (`jewel_bless`, `jewel_soul`) và luật ép không đổi; bộ giáp / cánh / kỹ năng tên "Linh Hồn" giữ nguyên.
+- **B-7** (anh yêu cầu) Máy Hỗn Nguyên ghép cánh (`wing1`, `wing2`, `wing3`): người chơi **chọn lớp** của cánh ra (mặc định lớp
+  mình) để ghép cánh lớp khác đem bán ở chợ / tặng. Lệnh `chaos` thêm trường tùy chọn `cls`; lớp không có thì dùng lớp nhân vật.
+  Cánh lớp khác vẫn không mặc được (giữ luật lớp). Cánh đầu vào của `wing2` / `wing3` nhận cánh lớp nào cũng được (như cũ).
+- **B-8** (anh yêu cầu) Túi đồ: ô trống cạnh Mũ thành ô **Thú nuôi** — hiện thú đang dắt (hình thú, cấp thú), bấm mở Menu → Thú cưng
+  để chọn / đổi thú. Chỉ là giao diện (thú vẫn chọn bằng `pet_choose`, không kéo thả). Thú trong `pets.json` có thể thêm `ref`
+  ("13/80"…) để dùng hình MU riêng của anh: `mix hac_long.items.fetch --icons-from` chép cả hình của thú có `ref`. Chưa gán `ref`
+  cho thú nào vì hình thú MU (Thiên Thần, Satan, sừng Uniria / Dinorant / Fenrir, Ngựa Đen, Quạ Đen, Daemon, Tinh Linh, Rudolph,
+  Gấu Trúc) không khớp sáu thú hiện có — chờ anh chọn.
+- **B-9** (anh chọn, em đề xuất số) Thêm 6 thú theo hình thú MU anh cung cấp, bán ở Người Nuôi Thú, dùng lại các loại
+  cộng chỉ số và kỹ năng có sẵn (không đổi Engine): Gấu Trúc 13/80 (12.000 vàng, EXP +6%, vàng +6%, Móc Túi), Quạ Đen 13/5
+  (20.000, tấn công +5%, Phấn Độc), Thiên Thần Hộ Mệnh 13/0 (25.000, phòng thủ +5%, máu +5%, Liếm Vết Thương), Quỷ Satan 13/1
+  (60.000, tấn công +7%, Cắn Xé), Tinh Linh Hộ Vệ 13/65 (80.000, phòng thủ +6%, máu +7%, Liếm Vết Thương), Ác Quỷ Daemon 13/64
+  (120.000, tấn công +8%, EXP +3%, Cắn Xé). Hình: có hình MU (`ref`) thì dùng ở ô Thú nuôi, danh sách thú và cửa hàng; không có
+  (máy chưa chép hình riêng) thì dùng hình CC0 trong `pets/` — trên bản đồ luôn dùng hình CC0 (cỡ ô 32px). Không thêm Rudolph,
+  Ngựa Đen, các "Sừng" (Uniria, Dinorant, Fenrir): không có hình CC0 hợp / hình chỉ là cái sừng. Thành tựu "có đủ thú" giờ cần 12 thú.
+- **B-10** (anh chọn) Đấu trường: thêm ô **tìm người chơi theo tên** để thách đấu bất kỳ ai (trước chỉ có 5 người điểm gần nhất
+  nên hai người điểm khác nhau có thể không thấy nhau). Kênh thêm `arena_find {q}` → `{found}` (tối đa 10 người, tên chứa `q`,
+  không phân biệt hoa thường, tên khớp đúng lên đầu, không ra chính mình; giới hạn 30 lần / phút). Thách đấu vẫn qua
+  `pvp_challenge` như cũ (giới hạn trận / ngày giữ nguyên).
+- **B-11** (anh chốt) **Tháo được vũ khí và giáp** như mọi ô khác (trước: chỉ thay bằng món khác). Tay không thì tấn công chỉ
+  tính theo chỉ số (không cộng vũ khí, ép, dòng phụ của vũ khí); không giáp thì phòng thủ chỉ còn phần chỉ số và các ô khác.
+  Hình nhân vật vẽ tay không / không giáp. Client: nút Tháo và kéo vũ khí / giáp từ ô trang bị về túi.
+- **B-12** (anh yêu cầu) Sổ tay quái vật gồm cả **52 loài quái bản đồ phụ** (`SIDE_MONSTERS`), không chỉ 30 loài của 6 vùng chính
+  (trước đó hạ quái bản đồ phụ vẫn được đếm và cộng % sát thương, chỉ là sổ không hiện). Sổ chia hai nhóm: Vùng chính, Bản đồ phụ.
+  Thành tựu "Nhà Sinh Vật Học" (hạ đủ mỗi loài) giờ cần đủ 82 loài; ai đã nhận rồi vẫn giữ.

@@ -45,6 +45,8 @@ defmodule HacLongWeb.PageController do
     %{
       CLASSES: Data.classes(),
       ZONES: Data.zones(),
+      # quái bản đồ phụ (sổ tay quái vật)
+      SIDE_MONSTERS: Data.side_monsters(),
       ITEMS:
         Map.new(Data.items(), fn {id, it} ->
           {id, Map.merge(it, %{id: id, sell: Engine.sell_price(id)})}

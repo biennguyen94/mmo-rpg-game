@@ -265,18 +265,18 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 
 | id | Tên | Dùng | Giá bán NPC (đề xuất) |
 |---|---|---|---|
-| `jewel_bless` | Ngọc Phúc Lành | +5 → +6 | 400 |
-| `jewel_soul` | Ngọc Linh Hồn | +6 → +9 | 600 |
+| `jewel_bless` | Ngọc Ước Nguyện | +5 → +6 | 400 |
+| `jewel_soul` | Ngọc Tâm Linh | +6 → +9 | 600 |
 | `jewel_chaos` | Ngọc Hỗn Nguyên | +9 → +11, Máy Hỗn Nguyên (mục 4) | 500 |
 
 **Bảng `UPGRADE`** (mới; +1 → +5 giữ nguyên Thợ Rèn hiện tại):
 
 | Bước | Cần | Thành công | Thất bại |
 |---|---|---|---|
-| +5 → +6 | 1 Ngọc Phúc Lành + vàng | 100 % | – |
-| +6 → +7 | 1 Ngọc Linh Hồn + vàng | 70 % | tụt 1 cấp |
-| +7 → +8 | 1 Ngọc Linh Hồn + vàng | 60 % | tụt 1 cấp |
-| +8 → +9 | 1 Ngọc Linh Hồn + vàng | 50 % | tụt 1 cấp |
+| +5 → +6 | 1 Ngọc Ước Nguyện + vàng | 100 % | – |
+| +6 → +7 | 1 Ngọc Tâm Linh + vàng | 70 % | tụt 1 cấp |
+| +7 → +8 | 1 Ngọc Tâm Linh + vàng | 60 % | tụt 1 cấp |
+| +8 → +9 | 1 Ngọc Tâm Linh + vàng | 50 % | tụt 1 cấp |
 | +9 → +10 | 1 Ngọc Hỗn Nguyên + vàng | 50 % | **mất đồ** |
 | +10 → +11 | 1 Ngọc Hỗn Nguyên + vàng | 45 % | **mất đồ** |
 
@@ -287,7 +287,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 - Ép từ **+7** thành công → `Chat.system("📢 X đã ép Đại Đao +8!")`.
 
 **Ngọc rơi ở đâu:**
-- Quái thường cấp ≥ 12: 0,6 %, tỉ lệ trong nhóm ngọc Phúc Lành 50 / Linh Hồn 35 / Hỗn Nguyên 15.
+- Quái thường cấp ≥ 12: 0,6 %, tỉ lệ trong nhóm ngọc Ước Nguyện 50 / Tâm Linh 35 / Hỗn Nguyên 15.
 - Trùm vùng: 30 %. Trùm thế giới: top 3 sát thương mỗi người 1 viên.
 - Tháp Vô Tận: mỗi 10 tầng 1 viên.
 - Rương Báu: thêm vào bảng ra đồ.
@@ -377,7 +377,7 @@ Mọi lệnh quản trị **cũ và mới** đều ghi vào đây (cấm chat, k
 | Công thức | Đầu vào | Phí | Tỉ lệ | Kết quả |
 |---|---|---|---|---|
 | Cánh cấp 1 | 1 vũ khí / giáp / khiên **+5 trở lên** + 1 Ngọc Hỗn Nguyên | 20 000 vàng | 10 % + 5 % mỗi cấp trên +5, tối đa 60 % | cánh cấp 1 **đúng lớp** người ghép |
-| Cánh cấp 2 | cánh cấp 1 **+5↑** + 5 Phúc Lành + 5 Linh Hồn + 2 Hỗn Nguyên | 200 000 vàng | 20 % + 5 % mỗi cấp trên +5, tối đa 60 % | cánh cấp 2 đúng lớp |
+| Cánh cấp 2 | cánh cấp 1 **+5↑** + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên | 200 000 vàng | 20 % + 5 % mỗi cấp trên +5, tối đa 60 % | cánh cấp 2 đúng lớp |
 | Ngọc Hỗn Nguyên | 10 Quặng Hiếm + 1 Vảy Rồng | 5 000 vàng | 70 % | 1 Ngọc Hỗn Nguyên (cho người không gặp may khi nhặt) |
 
 - Thất bại: **mất hết đầu vào và phí** (như MU).
@@ -527,7 +527,7 @@ scripts/e2e_seed.exs  # tạo sẵn nhân vật cấp cao / vàng / đồ để 
 | 3-A | Tỉ lệ / thất bại +6 → +11 | ✅ chốt: theo bảng 3.3 (mất đồ ở +10 / +11) |
 | 3-B | Tỉ lệ / chỗ rơi ngọc | ✅ chốt: theo 3.3 |
 | 3-C | Ngọc Sinh Mệnh (dòng tùy chọn) | ✅ chốt: để sau (chưa làm) |
-| 3-D | Tên ngọc | ✅ chốt: Phúc Lành / Linh Hồn / Hỗn Nguyên |
+| 3-D | Tên ngọc | ✅ chốt: Ước Nguyện / Tâm Linh / Hỗn Nguyên |
 | 4-A | Cấp / chỉ số cánh | ✅ chốt: 20 / 35; 10 % / 18 % |
 | 4-B | Cánh qua chợ / giao dịch | ✅ chốt: được |
 | 4-C | Công thức ra Ngọc Hỗn Nguyên | ✅ chốt: có |
@@ -737,7 +737,7 @@ Giao diện: bảng nhân vật và tooltip vũ khí hiện **"Tấn công 207 ~
   thì không mất gì ngoài ngọc). Số trong `RULES.upgrade.life` (`per_line`, `max_lines`, `rate`).
 - Lưu trên bản riêng của món đồ (như cấp ép): `opt` = số dòng (0–4). Đồ thường được tách bản riêng khi ép lần đầu
   (`Engine.ensure_instance`, như ép +N). Tooltip: "Dòng tùy chọn: +8 tấn công (2/4)".
-- Rơi: thêm vào bảng `JEWELS.weights` (đề xuất **10**, cạnh Phúc Lành 50 / Linh Hồn 35 / Hỗn Nguyên 15 → ~9 % số ngọc rơi).
+- Rơi: thêm vào bảng `JEWELS.weights` (đề xuất **10**, cạnh Ước Nguyện 50 / Tâm Linh 35 / Hỗn Nguyên 15 → ~9 % số ngọc rơi).
 
 ### 12.2 D8 — "Ép ngọc" từ bảng chi tiết món đồ (túi lẫn đang mặc)
 

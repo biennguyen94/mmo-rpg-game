@@ -21,6 +21,12 @@ for (let i = 0; i < 20 && !(await page.$('[data-adm="mute"]')); i++) {
 }
 R.check('tra cứu thấy nhân vật', !!(await page.$('[data-adm="mute"]')));
 
+// ô tìm trước danh sách đồ dài: gõ không dấu, chỉ còn món khớp; vẽ lại trang vẫn giữ chữ
+await page.fill('[data-sel-q="adm-gear"]', 'giap rong');
+const gearOpts = await page.$$eval('select[data-sel="adm-gear"] option', (os) => os.map((o) => o.textContent));
+R.check('tìm đồ hiếm "giap rong" (không dấu): chỉ còn Giáp Rồng', gearOpts.length >= 1 && gearOpts.every((t) => t.includes('Giáp Rồng')), gearOpts.join(', '));
+await page.fill('[data-sel-q="adm-gear"]', '');
+
 // cấm chat 1 giờ → người chơi không chat được; bỏ cấm → chat lại được
 await page.click('[data-adm="mute"][data-minutes="60"]');
 await page.waitForTimeout(500);

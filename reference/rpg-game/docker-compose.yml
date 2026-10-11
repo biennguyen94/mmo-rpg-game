@@ -39,6 +39,13 @@ services:
     ports:
       # APP_BIND=127.0.0.1 khi đã có TLS proxy trên cùng máy (chỉ proxy vào được cổng 4000)
       - "${APP_BIND:-0.0.0.0}:${APP_PORT:-4000}:4000"
+    volumes:
+      # Hình đồ gốc MU (không nằm trong git / image, CLAUDE.md §7): thư mục trên VPS có `mu_items/` và
+      # `item_icons.json` (sinh trên máy dev bằng scripts/setup_items.sh rồi rsync lên). Gắn chỉ đọc vào đúng chỗ game
+      # tìm hình. Thư mục trống / thiếu thì đồ hiện hình thay thế, game vẫn chạy. Xem docs/DEPLOY.md "Hình đồ gốc MU".
+      # Đường dẫn trong container có số phiên bản (mix.exs `version`); đổi phiên bản thì sửa theo.
+      - ${HL_ICONS_DIR:-../../../mmo-rpg-game-items/icons}/mu_items:/app/lib/hac_long-0.1.0/priv/static/assets/mu_items:ro
+      - ${HL_ICONS_DIR:-../../../mmo-rpg-game-items/icons}/item_icons.json:/app/lib/hac_long-0.1.0/priv/static/assets/item_icons.json:ro
 
 volumes:
   db:

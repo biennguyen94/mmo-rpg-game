@@ -4,7 +4,8 @@ defmodule HacLong.Bots.Bot do
   bản đồ, ai cũng thấy trong danh sách Quanh đây, xem được hồ sơ, thách đấu được), rồi cứ mỗi nhịp hỏi
   `HacLong.Bots.Brain` lệnh tiếp theo và gửi qua `Session.command/2` như client.
 
-  Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây.
+  Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây. Vừa gục (bị đồ sát,
+  thua quái…) thì đứng nghỉ ở Nhà `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/4`).
   """
   use GenServer, restart: :transient
   require Logger
@@ -36,7 +37,7 @@ defmodule HacLong.Bots.Bot do
   @impl true
   def init({uid, name, cls}) do
     Process.send_after(self(), :start, 1000 + :rand.uniform(4000))
-    {:ok, %{uid: uid, name: name, cls: cls, tries: 0}}
+    {:ok, %{uid: uid, name: name, cls: cls, tries: 0, deaths: nil, rest_until: 0}}
   end
 
   @impl true
@@ -79,9 +80,16 @@ defmodule HacLong.Bots.Bot do
 
   defp tick(s) do
     p = Session.get(s.uid)
+    now = System.monotonic_time(:millisecond)
+    # vừa gục (về Nhà): nghỉ một lúc rồi mới đi luyện tiếp
+    s = %{s | rest_until: Brain.rest_until(s.rest_until, s.deaths, p, now), deaths: p && p.deaths}
     snap = p && snapshot(p)
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
-    cmd = Brain.decide(p, snap, %{name: name, cls: s.cls, seed: s.uid})
+
+    cmd =
+      if Brain.resting?(p, s.rest_until, now),
+        do: nil,
+        else: Brain.decide(p, snap, %{name: name, cls: s.cls, seed: s.uid})
 
     s =
       case cmd && Session.command(s.uid, cmd) do

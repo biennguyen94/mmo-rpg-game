@@ -55,8 +55,11 @@ defmodule Mix.Tasks.HacLong.Items.Fetch do
   defp icons(src) do
     Mix.Task.run("compile")
 
+    # đồ và thú cưng có `ref` (hình MU cho ô Thú nuôi)
     refs =
-      for {_, it} <- HacLong.Game.Data.items(), ref = it[:ref], into: MapSet.new() do
+      for it <- Map.values(HacLong.Game.Data.items()) ++ HacLong.Game.Data.pets(),
+          ref = it[:ref],
+          into: MapSet.new() do
         "item_" <> String.replace(ref, "/", "_") <> "_"
       end
 

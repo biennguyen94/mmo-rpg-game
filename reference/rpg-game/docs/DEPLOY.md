@@ -317,14 +317,43 @@ docker compose up -d --build
 - Một số bản có migration xóa dữ liệu (vd. `20261028000000` đổi sang 4 lớp MU xóa toàn bộ nhân vật): **sao lưu database
   trước** (mục sao lưu bên dưới).
 
-**Hình đồ và `Item.txt` của anh** (`assets_src/items/`, xem `docs/ADMIN_GUIDE.md §10`): chạy trên máy dev, commit kết quả,
-rồi deploy như trên (bản Docker không có `mix`):
+**Hình đồ tự vẽ cũ** (`assets_src/items/`, trước Phase 15b; xem `docs/ADMIN_GUIDE.md §10`): chạy trên máy dev, commit kết
+quả, rồi deploy như trên (bản Docker không có `mix`). Hình đồ gốc MU hiện nay theo mục "Hình đồ gốc MU" bên dưới:
 
 ```bash
 cd reference/rpg-game
 mix hac_long.icons              # → priv/static/assets/items/ + priv/static/assets/item_icons.json
 git add assets_src/items priv/static/assets/items priv/static/assets/item_icons.json && git commit -m "Hình đồ"
 ```
+
+**Hình đồ gốc MU** (đồ Item.txt, cánh…): không nằm trong git / image (CLAUDE.md §7). Sinh trên máy dev, chép lên
+VPS, `docker-compose.yml` gắn chỉ đọc vào container. VPS không cần repo hình, `mix` hay ImageMagick.
+
+1. Máy dev (repo hình `mmo-rpg-game-items` đặt cạnh repo game; nên cài ImageMagick `sudo apt install -y imagemagick` để
+   cắt viền hình, không có vẫn chạy):
+
+   ```bash
+   cd reference/rpg-game
+   sh scripts/setup_items.sh     # → priv/static/assets/mu_items/ + priv/static/assets/item_icons.json
+   rsync -a --delete priv/static/assets/mu_items priv/static/assets/item_icons.json user@vps:~/mmo-rpg-game-items/icons/
+   ```
+
+2. VPS: thư mục phải có đúng hai thứ `mu_items/` và `item_icons.json`:
+
+   ```bash
+   ls ~/mmo-rpg-game-items/icons      # item_icons.json  mu_items
+   ```
+
+   Mặc định `docker-compose.yml` tìm ở `../../../mmo-rpg-game-items/icons` (tính từ `reference/rpg-game`, tức
+   `~/mmo-rpg-game-items/icons` khi repo game ở `~/mmo-rpg-game`). Để chỗ khác thì đặt `HL_ICONS_DIR=/duong/dan` trong
+   `.env`.
+
+3. Lần đầu (vừa thêm phần gắn thư mục): `docker compose up -d` để tạo lại container. Những lần sau chỉ cần rsync lại rồi
+   tải lại trang, không cần build hay khởi động lại.
+
+Kiểm tra: `docker compose exec app ls /app/lib/hac_long-0.1.0/priv/static/assets/mu_items | head` thấy file `.png`;
+trong game, túi đồ hiện hình gốc thay cho hình thay thế. Thư mục trống / sai chỗ thì game vẫn chạy, chỉ hiện hình thay
+thế. Đường dẫn trong container có số phiên bản (`mix.exs` `version`, hiện `0.1.0`).
 
 **Cấp quyền quản trị** (tab Quản trị hiện sau khi người đó tải lại trang):
 

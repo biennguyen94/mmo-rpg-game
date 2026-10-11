@@ -176,13 +176,26 @@ export async function leaveNpc(page) {
 }
 
 // Chạm vào con quái gần nhất (loại `kind` nếu có) trên bản đồ → vào trận. Trả true nếu đang trong trận.
-export async function engage(page, kind = null, tries = 6) {
-  for (let i = 0; i < tries; i++) {
+// Bản đồ dùng chung (bot, kịch bản trước) có thể đã hạ hết quái / quái đang bận: chờ quái hồi tới `waitMs`
+// (không tính vào số lần thử), như progress.mjs.
+export async function engage(page, kind = null, tries = 6, waitMs = 40000) {
+  const t0 = Date.now();
+  // con đã thử mà không vào trận (đi không tới, bị người khác giành): bỏ qua, thử con khác
+  const tried = new Set();
+  for (let i = 0; i < tries; ) {
     const w = await page.evaluate(() => window.__hl.world());
     const me = (await player(page)).pos;
-    const mons = (w.monsters || []).filter((m) => w.map === me.map && !m.busy && (!kind || m.kind === kind));
-    if (!mons.length) { await page.waitForTimeout(500); continue; }
+    const free = (w.monsters || []).filter((m) => w.map === me.map && !m.busy && (!kind || m.kind === kind));
+    let mons = free.filter((m) => !tried.has(m.id));
+    if (!mons.length && free.length) { tried.clear(); mons = free; }
+    if (!mons.length) {
+      if (Date.now() - t0 > waitMs) break;
+      await page.waitForTimeout(500);
+      continue;
+    }
+    i++;
     mons.sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - (Math.abs(b.x - me.x) + Math.abs(b.y - me.y)));
+    tried.add(mons[0].id);
     await walkTo(page, mons[0].x, mons[0].y);
     if ((await player(page)).battle) return true;
   }

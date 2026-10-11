@@ -26,9 +26,9 @@ Kền Kền (M2). Mọi số ở `priv/game_data/rules.json`, đổi được, k
 | `score.monster` / `score.boss` | 1 / 10 | điểm mỗi quái / trùm (tối đa 41 điểm một lượt) |
 | `reward.gold_per_point` | 5 | vàng = `base_gold(cấp quái)` × hệ số × điểm (lượt đủ ≈ 17 000–22 000 ≈ giá vé) |
 | `reward.xp_per_point` | 0,15 | kinh nghiệm = `base_xp(cấp quái)` × hệ số × điểm (lượt đủ ≈ 1 cấp) |
-| `reward.jewel_every` | 8 | mỗi 8 điểm một viên ngọc (Phúc Lành / Linh Hồn / Hỗn Nguyên / Sinh Mệnh theo `JEWELS.weights`) |
+| `reward.jewel_every` | 8 | mỗi 8 điểm một viên ngọc (Ước Nguyện / Tâm Linh / Hỗn Nguyên / Sinh Mệnh theo `JEWELS.weights`) |
 | `reward.clear_exc_chance` / `clear_anc_chance` | 0,3 / 0,15 | qua hết đợt: thêm 1 món đồ Hiếm / Sử Thi; 30 % Excellent, 15 % là đồ Thần (nếu là món bộ giáp) |
-| `top` | 100k + 3 Hỗn Nguyên + 3 Linh Hồn / 60k + 2 + 2 / 30k + 1 + 1 | thưởng hạng 1 / 2 / 3 mỗi ngày, gửi thư lúc 0h05 |
+| `top` | 100k + 3 Hỗn Nguyên + 3 Tâm Linh / 60k + 2 + 2 / 30k + 1 + 1 | thưởng hạng 1 / 2 / 3 mỗi ngày, gửi thư lúc 0h05 |
 
 - Quái trong lượt **không** rơi đồ / ngọc / vé riêng (như Tháp); thưởng tính một lần lúc kết thúc.
 - Điểm cao nhất hôm nay lưu ở `daily.ds_best`; đợt đã vào ở `daily.ds_slot` (chặn vào lại).

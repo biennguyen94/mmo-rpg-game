@@ -15,9 +15,11 @@ defmodule HacLong.Game.Bestiary do
 
   def marks, do: @marks
 
-  @doc "Mọi loài có trong sổ: quái thường và trùm của các vùng."
+  @doc "Mọi loài có trong sổ: quái thường và trùm của các vùng, quái bản đồ phụ (`SIDE_MONSTERS`)."
   def species do
-    Enum.flat_map(Data.zones(), fn z -> z.monsters ++ [z.boss] end) |> Enum.map(& &1.id)
+    (Enum.flat_map(Data.zones(), fn z -> z.monsters ++ [z.boss] end) ++ Data.side_monsters())
+    |> Enum.map(& &1.id)
+    |> Enum.uniq()
   end
 
   def count(p, id), do: Map.get(Map.get(p, :bestiary) || %{}, id, 0)

@@ -839,6 +839,8 @@ defmodule HacLongWeb.GameChannelTest do
           rank: rank,
           class_rank: crank,
           stats: %{str: %{base: 5, gear: 0}},
+          crit_mult: cm,
+          hit_rate: hr,
           counts: %{kills: _, pk_wins: 0, pk_losses: 0},
           market: 0,
           registered: %DateTime{}
@@ -846,6 +848,7 @@ defmodule HacLongWeb.GameChannelTest do
       }
 
       assert is_integer(rank) and is_integer(crank)
+      assert cm > 1 and hr > 0 and hr <= 1
 
       # hồ sơ của chính mình: đang online, có chỗ đang đứng
       ref = push(sa, "inspect", %{"uid" => ua.id})
@@ -895,6 +898,24 @@ defmodule HacLongWeb.GameChannelTest do
       assert r.player.gold < before.gold and r.player.deaths == before.deaths + 1
       assert r.player.pos == HacLong.World.Maps.home_spawn()
       assert HacLong.Arena.stats(ua.id).losses == 1
+    end
+
+    test "tìm đối thủ theo tên (không phân biệt hoa thường), không ra chính mình" do
+      tag = "Tim#{System.unique_integer([:positive]) |> rem(100_000)}"
+      ua = create_user()
+      player_at(ua, %{map: "village", x: 12, y: 14}, %{name: tag <> "a"})
+      {_, sa} = join_game(ua)
+      ub = create_user()
+      player_at(ub, %{map: "village", x: 13, y: 14}, %{name: tag <> "b"})
+
+      ref = push(sa, "arena_find", %{"q" => String.downcase(tag)})
+      assert_reply ref, :ok, %{found: found}
+      assert Enum.map(found, & &1.user_id) == [ub.id]
+      expected = tag <> "b"
+      assert [%{name: ^expected, rating: 1000}] = found
+
+      ref = push(sa, "arena_find", %{"q" => "%"})
+      assert_reply ref, :ok, %{found: []}
     end
   end
 

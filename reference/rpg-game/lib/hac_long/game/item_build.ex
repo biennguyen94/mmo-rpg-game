@@ -38,10 +38,12 @@ defmodule HacLong.Game.ItemBuild do
   end
 
   # Icon / hình trên nhân vật tạm (tới khi có hình gốc theo `ref`, `mix hac_long.icons`): vũ khí, giáp,
-  # khiên lấy của món cũ cùng bậc (`legacy`); mũ / quần / găng / giày lấy `icons.<ô>`.
+  # khiên lấy của món cũ cùng bậc (`legacy`); bậc cao hơn danh sách đồ cũ (giáp bậc 7–8, vũ khí bậc 8) mượn
+  # món cũ bậc cao nhất, để nhân vật không hiện trống. Mũ / quần / găng / giày lấy `icons.<ô>`.
   defp look(it, pick, legacy_defs) do
     kind = if it["slot"] in ~w(weapon armor shield), do: it["slot"]
-    old = kind && legacy_defs[Enum.at(get_in(pick, ["legacy", kind]) || [], it["tier"] - 1)]
+    olds = (kind && get_in(pick, ["legacy", kind])) || []
+    old = olds != [] && legacy_defs[Enum.at(olds, min(it["tier"], length(olds)) - 1)]
 
     cond do
       # `doll` ghi riêng ở món (cung, nỏ, gậy) thắng hình mượn của đồ cũ
@@ -52,53 +54,82 @@ defmodule HacLong.Game.ItemBuild do
   end
 
   # ---------- vũ khí ----------
+  # Món phụ (`weapons_alt.<lớp>[bậc]`, Phase 19): chép công / giá của món chính cùng lớp, cùng bậc (không lệch
+  # cân bằng), chỉ khác tên, hình, yêu cầu chỉ số; đánh dấu `alt` (không bán, không là đồ khởi đầu).
   defp weapons(drafts, pick) do
     lists = resolve(pick["weapons"])
+    alts = resolve(pick["weapons_alt"])
 
     rows =
-      for {cls, list} <- lists, {entry, tier} <- Enum.with_index(list, 1), do: {entry, tier, cls}
+      for(
+        {cls, list} <- lists,
+        {entry, tier} <- Enum.with_index(list, 1),
+        do: {entry, tier, cls, nil}
+      ) ++
+        for {cls, per_tier} <- alts,
+            {group, tier} <- Enum.with_index(per_tier, 1),
+            main = Enum.at(lists[cls] || [], tier - 1),
+            entry <- group || [],
+            do: {entry, tier, cls, main}
 
     rows
-    |> Enum.group_by(fn {e, tier, _} -> {e["ref"], tier} end)
+    |> Enum.group_by(fn {e, tier, _, _} -> {e["ref"], tier} end)
     |> Enum.map(fn {{ref, tier}, grp} ->
-      {e, _, _} = hd(grp)
+      {e, _, _, main} = hd(grp)
       classes = grp |> Enum.map(&elem(&1, 2)) |> Enum.uniq() |> Enum.sort()
 
       with_draft(drafts, ref, fn d ->
-        {mn, mx} = {d["atkMin"] || 0, d["atkMax"] || 0}
-        mode = e["mode"] || get_in(pick, ["stats", "weapon_mode"]) || "raw"
-
         {atk, lo, hi} =
-          case mode do
-            "staff" ->
-              atk = at(pick, ["stats", "staff_atk"], tier)
-              avg = max((mn + mx) / 2, 1)
-              {atk, max(round(atk * mn / avg), 1), max(round(atk * mx / avg), 1)}
-
-            _ ->
-              {round((mn + mx) / 2), mn, mx}
-          end
+          weapon_atk(if(main, do: drafts[main["ref"]], else: d), main || e, pick, tier)
 
         base(d, e, pick, "weapon", tier, classes)
         |> Map.merge(%{"atk" => atk, "atkMin" => lo, "atkMax" => hi})
         |> Map.merge(Map.take(e, ["doll"]))
         |> Map.put("price", at(pick, ["prices", "weapon"], tier))
+        |> alt(main)
       end)
     end)
     |> split()
   end
 
+  defp weapon_atk(nil, _e, _pick, _tier), do: {1, 1, 1}
+
+  defp weapon_atk(d, e, pick, tier) do
+    {mn, mx} = {d["atkMin"] || 0, d["atkMax"] || 0}
+
+    case e["mode"] || get_in(pick, ["stats", "weapon_mode"]) || "raw" do
+      "staff" ->
+        atk = at(pick, ["stats", "staff_atk"], tier)
+        avg = max((mn + mx) / 2, 1)
+        {atk, max(round(atk * mn / avg), 1), max(round(atk * mx / avg), 1)}
+
+      _ ->
+        {round((mn + mx) / 2), mn, mx}
+    end
+  end
+
+  defp alt(it, nil), do: it
+  defp alt(it, _main), do: Map.put(it, "alt", true)
+
   # ---------- khiên ----------
   defp shields(drafts, pick) do
     classes = pick["sets"] |> resolve() |> Map.keys() |> Enum.sort()
 
-    (pick["shields"] || [])
-    |> Enum.with_index(1)
-    |> Enum.map(fn {e, tier} ->
+    mains = for {e, tier} <- Enum.with_index(pick["shields"] || [], 1), do: {e, tier, nil}
+
+    alts =
+      for {group, tier} <- Enum.with_index(pick["shields_alt"] || [], 1),
+          e <- group || [],
+          do: {e, tier, :alt}
+
+    (mains ++ alts)
+    |> Enum.map(fn {e, tier, a} ->
       with_draft(drafts, e["ref"], fn d ->
         base(d, e, pick, "shield", tier, classes)
         |> Map.put("def", at(pick, ["stats", "shield_def"], tier))
         |> Map.put("price", at(pick, ["prices", "shield"], tier))
+        |> Map.merge(Map.take(e, ["doll"]))
+        |> alt(a)
       end)
     end)
     |> split()
@@ -111,25 +142,36 @@ defmodule HacLong.Game.ItemBuild do
     names = pick["pieces"] || %{}
     mult = get_in(pick, ["stats", "set_def_mult"]) || 1.0
 
+    # bộ phụ (`sets_alt.<lớp>[bậc]`, Phase 19): thủ / giá theo bậc như bộ chính, đánh dấu `alt`
     rows =
-      for {cls, list} <- lists, {entry, tier} <- Enum.with_index(list, 1), do: {entry, tier, cls}
+      for(
+        {cls, list} <- lists,
+        {entry, tier} <- Enum.with_index(list, 1),
+        do: {entry, tier, cls, false}
+      ) ++
+        for {cls, per_tier} <- resolve(pick["sets_alt"]),
+            {group, tier} <- Enum.with_index(per_tier, 1),
+            entry <- group || [],
+            do: {entry, tier, cls, true}
 
     rows
-    |> Enum.group_by(fn {e, tier, _} -> {e["index"], tier} end)
+    |> Enum.group_by(fn {e, tier, _, _} -> {e["index"], tier} end)
     |> Enum.flat_map(fn {{index, tier}, grp} ->
-      {e, _, _} = hd(grp)
+      {e, _, _, alt?} = hd(grp)
       owners = grp |> Enum.map(&elem(&1, 2)) |> Enum.uniq() |> Enum.sort()
       parts = for {slot, g} <- @pieces, d = drafts["#{g}/#{index}"], do: {slot, d}
       total = parts |> Enum.map(fn {_, d} -> d["def"] || 0 end) |> Enum.sum() |> max(1)
       budget = at(pick, ["stats", "set_def"], tier) * mult
 
+      # bộ chỉ dành cho lớp không đội mũ (vd bộ riêng của Đấu Sĩ) không có mũ trong Item.txt: không báo thiếu
       missing =
         for {slot, g} <- @pieces,
             drafts["#{g}/#{index}"] == nil,
+            not (slot == "helm" and owners -- no_helm == []),
             do: {:error, "bộ #{e["name"]}: thiếu #{slot} #{g}/#{index} trong Item.txt"}
 
       made =
-        for {slot, d} <- parts do
+        for {slot, d} <- parts, slot != "helm" or owners -- no_helm != [] do
           classes = if slot == "helm", do: owners -- no_helm, else: owners
           name = "#{names[slot] || slot} #{e["name"]}"
 
@@ -146,7 +188,8 @@ defmodule HacLong.Game.ItemBuild do
            |> Map.put("level", at(pick, ["levels", "set"], tier))
            |> Map.put("set", e["name"])
            |> Map.put("def", max(round(budget * (d["def"] || 0) / total), 1))
-           |> Map.put("price", round(at(pick, ["prices", "set"], tier) * weight))}
+           |> Map.put("price", round(at(pick, ["prices", "set"], tier) * weight))
+           |> alt(if(alt?, do: :alt))}
         end
 
       made ++ missing

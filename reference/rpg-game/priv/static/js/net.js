@@ -254,6 +254,8 @@
     dm(op, payload) { return push('dm', Object.assign({ op }, payload || {})); },
     // Đấu trường: điểm của mình, đối thủ gợi ý, bảng xếp hạng. Xem thông tin người chơi khác.
     arena() { return push('arena', {}); },
+    // Tìm đối thủ đấu trường theo tên: { found: [{ user_id, name, cls, level, rating }] }
+    arenaFind(q) { return push('arena_find', { q: q || '' }); },
     // Chợ: { listings, fee, max }. Rao bán/mua/rút về là lệnh market_sell/market_buy/market_cancel.
     market(q) { return push('market', { q: q || '' }); },
     // Quảng Trường Quỷ: { top: [{ name, score }] } (hôm nay)
