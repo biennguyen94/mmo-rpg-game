@@ -35,7 +35,11 @@
       "wing_elf_1": "12/0", "wing_dw_1": "12/1", "wing_dk_1": "12/2", "wing_mg_1": "12/6",
       "wing_elf_2": "12/3", "wing_dw_2": "12/4", "wing_dk_2": "12/5", "wing_mg_2": "12/42",
       "wing_dk_3": "12/36", "wing_dw_3": "12/37", "wing_elf_3": "12/38", "wing_mg_3": "12/39",
-      "relic": "0/19", "dragonshield": "6/13"
+      "relic": "0/19", "dragonshield": "6/13",
+      "potion_s": "14/1", "potion_m": "14/2", "potion_l": "14/3",
+      "mana_s": "14/4", "mana_m": "14/5", "mana_l": "14/6",
+      "jewel_bless": "14/13", "jewel_soul": "14/14", "jewel_life": "14/16", "jewel_chaos": "12/15",
+      "ds_ticket": "14/19", "bc_ticket": "13/18", "condor_feather": "13/53", "lucky_apple": "14/0"
     },
     "icons": { "helm": "visored-helm", "pants": "lamellar", "gloves": "shield-bash", "boots": "sprint" },
     "pieces": { "helm": "Mũ", "armor": "Giáp", "pants": "Quần", "gloves": "Găng", "boots": "Giày" },

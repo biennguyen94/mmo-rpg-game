@@ -237,3 +237,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-2** Hình nhân vật: giáp bậc 7–8 và vũ khí bậc 8 (Rìu Lưỡi Liềm) chưa có hình đồ cũ cùng bậc nên trước đây nhân vật hiện
   không giáp / tay không. `ItemBuild.look/3` cho bậc cao hơn danh sách `ITEM_PICK.legacy` mượn món cũ bậc cao nhất (giáp tấm,
   rìu đôi). Mũ / quần / găng / giày vẫn chưa vẽ lên nhân vật (cần thêm hình CC0, chưa làm).
+- **B-3** Hình gốc MU cho món dùng hằng ngày (`ITEM_PICK.refs`): bình máu 14/1–3, bình mana 14/4–6, Ngọc Phúc Lành 14/13, Linh Hồn
+  14/14, Sinh Mệnh 14/16, Hỗn Nguyên 12/15, Vé Quảng Trường 14/19 (Invitation of Devil Square), Vé Lâu Đài 13/18 (Invisibility
+  Cloak — vé Blood Castle của MU), Lông Vũ Kền Kền 13/53 (Condor's Feathers), Quả Lộc 14/0 (Apple). Chỉ đổi hình, không đổi
+  gameplay; máy chủ chưa chép hình mới thì vẫn dùng icon cũ.

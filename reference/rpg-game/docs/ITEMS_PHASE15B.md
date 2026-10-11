@@ -132,7 +132,7 @@ khi chưa mở cho người chơi: nhân vật đã đổi sang đồ mới sẽ
 | `item_pick.json` | `jewelry.ring` / `jewelry.pendant` | 6 nhẫn, 5 dây chuyền | `ref`, `name`, `mu_name`, `level`, `price` (giá bán lại), chỉ số cho tay: `hp` (máu tối đa), `def`, `atk`. Không bán ở cửa hàng, chỉ rơi |
 | `item_pick.json` | `weapons.*[].doll` | cung / nỏ / gậy | hình trên nhân vật (`priv/static/assets/doll/…`); không ghi thì mượn của đồ cũ cùng bậc |
 | `item_pick.json` | `mu_name_fix` | 3 lỗi chính tả | thay chuỗi con trong tên gốc (bản tiếng Anh) |
-| `item_pick.json` | `refs` | cánh, Thánh Kiếm, Khiên Vảy Rồng | đồ riêng Hắc Long mượn hình gốc theo `ref` |
+| `item_pick.json` | `refs` | cánh, Thánh Kiếm, Khiên Vảy Rồng, bình máu / mana, 4 ngọc, vé Quảng Trường / Lâu Đài, Lông Vũ Kền Kền, Quả Lộc | đồ riêng Hắc Long mượn hình gốc theo `ref` |
 | `rules.json` | `loot.gear_slots` | vũ khí 38 %, bộ giáp 43 %, khiên 13 %, `jewelry` 6 % | loại đồ ngẫu nhiên rơi; `jewelry` = nhẫn hoặc dây chuyền |
 | `rules.json` | `set_bonus.min_tier` | 2 | bộ dưới bậc này (bộ khởi đầu) không có thưởng |
 | `rules.json` | `set_bonus.def_pct` / `atk_pct` / `hp_per_tier` | 0,1 / 0,03 / 15 | thưởng khi mặc đủ bộ (Đấu Sĩ: 4 món vì không mũ): +10 % phòng thủ, +3 % tấn công, +15 máu × bậc bộ |
