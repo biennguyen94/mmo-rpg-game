@@ -20,7 +20,7 @@
 13. [Hộp thư, Thông báo, bảng xếp hạng](#13-hộp-thư-thông-báo-bảng-xếp-hạng)
 14. [Phím tắt, điện thoại](#14-phím-tắt-điện-thoại)
 
-> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Kalima, Công Thành Chiến, Rồng Đỏ / Phù Thủy Trắng xâm lăng, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md).
+> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Kalima, Công Thành Chiến, Rồng Đỏ / Phù Thủy Trắng xâm lăng, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md). Cày hay mua vật phẩm, xấp xỉ bao nhiêu quái: [`ECONOMY.md`](ECONOMY.md).
 
 ---
 

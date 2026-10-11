@@ -2,7 +2,8 @@
 
 Tài liệu cho người chơi: các sự kiện hiện có, giờ mở, cách tham gia và phần thưởng. Mọi giờ là **giờ Việt Nam**.
 Số liệu lấy từ `priv/game_data/rules.json` (khóa ghi trong ngoặc) và `priv/game_data/events.json`; đổi số ở đó thì sửa
-lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ và Lâu Đài Máu: `docs/EVENTS_PHASE18.md`.
+lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ và Lâu Đài Máu: `docs/EVENTS_PHASE18.md`. Cày hay mua vé / nguyên liệu (xấp xỉ
+bao nhiêu quái): [`ECONOMY.md`](ECONOMY.md).
 
 ## Mục lục
 
