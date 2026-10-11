@@ -462,7 +462,9 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .bag { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 46px)); gap: 4px; justify-content: center; }
 .bag .cell { aspect-ratio: 1; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: #0f0c13; display: grid; place-items: center; position: relative; overflow: hidden; }
 .bag button.cell { cursor: pointer; }
-.bag .cell img { width: 76%; height: 76%; object-fit: contain; }
+/* hình đặt tuyệt đối trong ô: chiều cao ô không cố định (aspect-ratio) nên height: 76% không có tác dụng, hình dài
+   (kiếm, giáo) cao quá ô và bị cắt */
+.bag .cell img { position: absolute; inset: 12%; width: 76%; height: 76%; object-fit: contain; }
 .bag .cell img.px, .slot img.px { image-rendering: pixelated; }
 .bag .cell.low img { opacity: 0.5; }
 .bag .cell.empty { opacity: 0.5; }
