@@ -22,17 +22,19 @@ defmodule HacLong.Game.ItemsAltTest do
   end
 
   test "vũ khí / khiên phụ: công, thủ, cấp, giá như món chính cùng bậc và cùng lớp" do
+    keys = ~w(atk atkMin atkMax def level price)a
+
     for {id, a} <- alts(), a.slot in ~w(weapon shield) do
-      main =
-        Enum.find_value(mains(), fn {_, m} ->
-          if m.slot == a.slot and m.tier == a.tier and Enum.any?(a.classes, &(&1 in m.classes)),
+      cands =
+        for {_, m} <- mains(),
+            m.slot == a.slot and m.tier == a.tier and Enum.any?(a.classes, &(&1 in m.classes)),
             do: m
-        end)
 
-      assert main, "#{id} không có món chính cùng bậc"
+      assert cands != [], "#{id} không có món chính cùng bậc"
 
-      for k <- ~w(atk atkMin atkMax def level price)a,
-          do: assert(a[k] == main[k], "#{id} #{k}: #{inspect(a[k])} ≠ #{inspect(main[k])}")
+      # món dùng chung nhiều lớp (vd gậy Phù Thủy + Đấu Sĩ) chép số của món chính một trong các lớp đó
+      assert Enum.any?(cands, fn m -> Enum.all?(keys, &(a[&1] == m[&1])) end),
+             "#{id} khác mọi món chính cùng bậc"
     end
   end
 
@@ -48,14 +50,14 @@ defmodule HacLong.Game.ItemsAltTest do
         do: refute(Data.replacement(old, cls) in ids)
   end
 
-  test "khiên chính đủ 8 bậc và đều có bán" do
+  test "khiên chính đủ 10 bậc (B-17) và đều có bán" do
     shields = for {id, it} <- mains(), it.slot == "shield", do: {it.tier, id}
-    assert shields |> Enum.map(&elem(&1, 0)) |> Enum.sort() == Enum.to_list(1..8)
+    assert shields |> Enum.map(&elem(&1, 0)) |> Enum.sort() == Enum.to_list(1..10)
     assert Enum.all?(shields, fn {_, id} -> id in Data.shop() end)
   end
 
   test "bộ riêng của Đấu Sĩ không có mũ, đủ bộ 4 món" do
-    for {_, it} <- alts(), it.classes == ["mg"] do
+    for {_, it} <- alts(), it.classes == ["mg"], it[:set] do
       refute it.slot == "helm"
       assert Data.set_size(it.set, "mg") == 4
     end
@@ -72,5 +74,26 @@ defmodule HacLong.Game.ItemsAltTest do
 
     assert Enum.any?(picks, & &1[:alt])
     assert picks |> Enum.map(& &1.tier) |> Enum.uniq() |> length() == 2
+  end
+
+  test "B-17: đủ đồ Item.txt — vũ khí bậc 9–11 và bộ giáp bậc 10 cho mọi lớp, Phù Thủy có gậy và sách" do
+    for cls <- ~w(dk dw elf mg), t <- 9..11 do
+      assert Enum.any?(mains(), fn {_, it} ->
+               it.slot == "weapon" and it.tier == t and cls in it.classes
+             end),
+             "#{cls} thiếu vũ khí bậc #{t}"
+    end
+
+    for cls <- ~w(dk dw elf mg) do
+      assert Enum.any?(mu(), fn {_, it} ->
+               it.slot == "armor" and it.tier == 10 and cls in it.classes
+             end)
+    end
+
+    staffs = for {id, it} <- mu(), String.starts_with?(id, "item_5_"), "dw" in it.classes, do: id
+    assert length(staffs) >= 28
+
+    assert Enum.max(for {_, it} <- mu(), it.slot == "weapon", do: it.level) <=
+             HacLong.Game.Engine.max_level()
   end
 end

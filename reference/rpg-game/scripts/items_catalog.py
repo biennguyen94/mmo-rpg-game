@@ -65,7 +65,11 @@ sets_main = len({i['set'] for i in items if i.get('set') and not i.get('alt')})
 sets_alt = len({i['set'] for i in items if i.get('set') and i.get('alt')})
 w('## Tổng quan\n')
 w(f"- **{len(items)} món trang bị**, trong đó **{alt_n} món phụ** (chỉ rơi, không bán).")
-w(f"- **8 bậc** đồ; ép tối đa **+{up['UPGRADE']['max']}**; **{sets_main} bộ giáp chính + {sets_alt} bộ phụ**.")
+TMAX = max(i['tier'] for i in items if i['slot'] in ('weapon', 'shield', 'armor'))
+# số theo bậc; loại không có bậc đó (vd bộ giáp bậc 11) thì "—"
+def at(arr, t, f=lambda v: v):
+    return f(arr[t - 1]) if t <= len(arr) else '—'
+w(f"- **{TMAX} bậc** đồ (bậc 9+ từ DECISIONS B-17); ép tối đa **+{up['UPGRADE']['max']}**; **{sets_main} bộ giáp chính + {sets_alt} bộ phụ**.")
 w('- Ô trang bị: vũ khí, khiên, mũ, giáp, quần, găng, giày, 2 nhẫn, dây chuyền, cánh. Đấu Sĩ không đội mũ.')
 w('- Món phụ có công, thủ, cấp và giá như món chính cùng bậc; chỉ khác tên, hình và yêu cầu chỉ số.\n')
 
@@ -89,7 +93,7 @@ w('**Đậm**: món chính (bán ở cửa hàng). *Nghiêng*: món phụ (chỉ
 for cls, cname in CLS.items():
     w(f'### {cname}\n')
     rows = []
-    for t in range(1, 9):
+    for t in range(1, TMAX + 1):
         ws = sorted((i for i in items if i['slot'] == 'weapon' and i['tier'] == t and cls in i['classes']),
                     key=lambda i: (bool(i.get('alt')), i['name']))
         w0 = next((i for i in ws if not i.get('alt')), ws[0] if ws else None)
@@ -100,27 +104,28 @@ for cls, cname in CLS.items():
         sets = sorted(sets.items(), key=lambda x: (x[1], x[0]))
         first = sets[0][0] if sets else None
         setdef = sum(i['def'] for i in items
-                     if i.get('set') == first and i['tier'] == t and cls in i['classes'])
+                     if first and i.get('set') == first and i['tier'] == t and cls in i['classes']) or '—'
         sh = sorted((i for i in items if i['slot'] == 'shield' and i['tier'] == t and cls in i['classes']),
                     key=lambda i: (bool(i.get('alt')), i['name']))
         rows.append([
-            t, lv['weapon'][t - 1],
+            t, f"{at(lv['weapon'], t)} / {at(lv['set'], t)}",
             ', '.join(nm(i) for i in ws),
             f"{w0['atk']} ({w0['atkMin']}~{w0['atkMax']})" if w0 else '—',
             ', '.join(f'*{s}*' if a else f'**{s}**' for s, a in sets),
             setdef,
             ', '.join(nm(i) for i in sh) or '—',
         ])
-    w(table(['Bậc', 'Cấp', 'Vũ khí', 'Công', 'Bộ giáp', 'Thủ cả bộ', 'Khiên'], rows) + '\n')
+    w(table(['Bậc', 'Cấp vũ khí / giáp', 'Vũ khí', 'Công', 'Bộ giáp', 'Thủ cả bộ', 'Khiên'], rows) + '\n')
 
 # ---------- bậc / cấp / giá ----------
 sb = rules['set_bonus']
 w('## Bậc, cấp, giá\n')
 w('Mọi lớp dùng chung. Giá bộ giáp là giá đủ bộ, chia cho từng món theo tỉ lệ thủ. Bậc 1 là đồ khởi đầu '
   f"(giá 0). Bán lại cho NPC được {pct(rules['shop']['sell_ratio'])} giá.\n")
-rows = [[t, lv['weapon'][t - 1], num(pr['weapon'][t - 1]), num(pr['set'][t - 1]), st['set_def'][t - 1],
-         lv['shield'][t - 1], num(pr['shield'][t - 1]), st['shield_def'][t - 1]] for t in range(1, 9)]
-w(table(['Bậc', 'Cấp vũ khí / giáp', 'Giá vũ khí', 'Giá bộ giáp', 'Thủ cả bộ', 'Cấp khiên', 'Giá khiên',
+rows = [[t, at(lv['weapon'], t), at(lv['set'], t), at(pr['weapon'], t, num), at(pr['set'], t, num),
+         at(st['set_def'], t), at(lv['shield'], t), at(pr['shield'], t, num), at(st['shield_def'], t)]
+        for t in range(1, TMAX + 1)]
+w(table(['Bậc', 'Cấp vũ khí', 'Cấp giáp', 'Giá vũ khí', 'Giá bộ giáp', 'Thủ cả bộ', 'Cấp khiên', 'Giá khiên',
          'Thủ khiên'], rows) + '\n')
 w(f"Thưởng đủ bộ (từ bậc {sb['min_tier']}): +{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, "
   f"+{sb['hp_per_tier']} máu × bậc bộ.\n")

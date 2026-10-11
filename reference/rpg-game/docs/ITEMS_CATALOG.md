@@ -4,16 +4,16 @@
 
 ## Tổng quan
 
-- **281 món trang bị**, trong đó **118 món phụ** (chỉ rơi, không bán).
-- **8 bậc** đồ; ép tối đa **+11**; **24 bộ giáp chính + 15 bộ phụ**.
+- **416 món trang bị**, trong đó **217 món phụ** (chỉ rơi, không bán).
+- **11 bậc** đồ (bậc 9+ từ DECISIONS B-17); ép tối đa **+11**; **29 bộ giáp chính + 25 bộ phụ**.
 - Ô trang bị: vũ khí, khiên, mũ, giáp, quần, găng, giày, 2 nhẫn, dây chuyền, cánh. Đấu Sĩ không đội mũ.
 - Món phụ có công, thủ, cấp và giá như món chính cùng bậc; chỉ khác tên, hình và yêu cầu chỉ số.
 
 | Loại | Món chính | Món phụ |
 |---|---|---|
-| Vũ khí | 24 | 41 |
-| Khiên | 8 | 6 |
-| Bộ giáp (món) | 120 | 71 |
+| Vũ khí | 33 | 88 |
+| Khiên | 10 | 11 |
+| Bộ giáp (món) | 145 | 118 |
 | Nhẫn | 6 | — |
 | Dây chuyền | 5 | — |
 
@@ -23,70 +23,85 @@
 
 ### Kiếm Sĩ
 
-| Bậc | Cấp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
+| Bậc | Cấp vũ khí / giáp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
 |---|---|---|---|---|---|---|
-| 1 | 1 | **Rìu Nhỏ**, *Đoản Kiếm* | 4 (1~6) | **Da** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
-| 2 | 3 | **Rìu Tay**, *Chùy Tròn*, *Dao Găm Kris* | 7 (4~9) | **Đồng** | 6 | **Khiên Tay**, *Khiên Diều* |
-| 3 | 7 | **Kiếm Mảnh**, *Chùy Sao Mai*, *Kiếm Sát Thủ*, *Kích Đôi*, *Rìu Đôi*, *Thương Rồng* | 12 (9~15) | **Vảy** | 9 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
-| 4 | 12 | **Đao Katana**, *Chùy Xích*, *Kiếm Gladius*, *Kích Halberd*, *Rìu Tomahawk* | 21 (16~26) | **Đồng Thau** | 17 | **Khiên Thép Tấm**, *Khiên Tiên* |
-| 5 | 17 | **Đao Cong**, *Giáo Dài*, *Kiếm Kỳ Nhông Lửa*, *Kiếm Xà*, *Rìu Chiến Binh*, *Rìu Nikkea*, *Đinh Ba Khổng Lồ* | 29 (24~34) | **Thép Tấm** | 25 | **Khiên Diệt Rồng**, *Khiên Đinh* |
-| 6 | 22 | **Đại Đao**, *Giáo Ánh Sáng*, *Kiếm Ánh Sáng*, *Rìu Cán Dài*, *Đại Chùy* | 42 (36~47) | **Rồng**, *Ánh Bạc* | 34 | **Khiên Tháp**, *Khiên Huyền Thoại* |
-| 7 | 27 | **Kiếm Huyền Thoại**, *Cự Kiếm*, *Giáo Xà*, *Rìu Larkan*, *Song Nhận Kiếm* | 64 (56~72) | **Hắc Long**, *Kim Cương*, *Quạ Tro* | 45 | **Khiên Xà** |
-| 8 | 32 | **Rìu Lưỡi Liềm**, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Đại Lưỡi Hái* | 79 (69~89) | **Phượng Hoàng Đen**, *Dũng Sĩ*, *Thép Đen*, *Titan* | 60 | **Khiên Đồng** |
+| 1 | 1 / 1 | **Rìu Nhỏ**, *Đoản Kiếm* | 4 (1~6) | **Da** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
+| 2 | 3 / 3 | **Rìu Tay**, *Chùy Tròn*, *Dao Găm Kris* | 7 (4~9) | **Đồng** | 6 | **Khiên Tay**, *Khiên Diều* |
+| 3 | 7 / 7 | **Kiếm Mảnh**, *Chùy Sao Mai*, *Kiếm Sát Thủ*, *Kích Đôi*, *Rìu Đôi*, *Thương Rồng* | 12 (9~15) | **Vảy** | 9 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
+| 4 | 12 / 12 | **Đao Katana**, *Chùy Xích*, *Kiếm Gladius*, *Kích Halberd*, *Rìu Tomahawk* | 21 (16~26) | **Đồng Thau** | 17 | **Khiên Thép Tấm**, *Khiên Tiên* |
+| 5 | 17 / 17 | **Đao Cong**, *Giáo Dài*, *Kiếm Kỳ Nhông Lửa*, *Kiếm Xà*, *Rìu Chiến Binh*, *Rìu Nikkea*, *Đinh Ba Khổng Lồ* | 29 (24~34) | **Thép Tấm** | 25 | **Khiên Diệt Rồng**, *Khiên Đinh* |
+| 6 | 22 / 22 | **Đại Đao**, *Giáo Ánh Sáng*, *Kiếm Ánh Sáng*, *Quyền Trượng Chiến*, *Rìu Cán Dài*, *Đại Chùy* | 42 (36~47) | **Rồng**, *Ánh Bạc* | 34 | **Khiên Tháp**, *Khiên Huyền Thoại* |
+| 7 | 27 / 27 | **Kiếm Huyền Thoại**, *Chùy Sao Pha Lê*, *Cự Kiếm*, *Giáo Xà*, *Rìu Larkan*, *Song Nhận Kiếm* | 64 (56~72) | **Hắc Long**, *Kim Cương*, *Quạ Tro*, *Vinh Quang* | 45 | **Khiên Xà** |
+| 8 | 32 / 32 | **Rìu Lưỡi Liềm**, *Kiếm Hủy Diệt*, *Kiếm Pha Lê*, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Quyền Trượng Bậc Thầy*, *Rìu Rồng Hỗn Nguyên*, *Đại Lưỡi Hái*, *Đại Quyền Trượng* | 79 (69~89) | **Phượng Hoàng Đen**, *Dũng Sĩ*, *Thép Đen*, *Titan* | 60 | **Khiên Đồng** |
+| 9 | 37 / 40 | **Kiếm Phá Hắc Ám**, *Giáo Rồng*, *Quyền Trượng Chúa Tể*, *Quyền Trượng Ánh Sáng* | 98 (89~107) | **Đại Long**, *Hắc Chủ* | 81 | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
+| 10 | 42 / 48 | **Kiếm Bình Minh** | 120 (109~131) | **Long Kỵ Sĩ**, *Bá Vương*, *Ánh Dương* | 106 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
+| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Kiếm Lửa Lượn*, *Kiếm Phá Giáp*, *Kiếm Xương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
 
 ### Phù Thủy
 
-| Bậc | Cấp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
+| Bậc | Cấp vũ khí / giáp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
 |---|---|---|---|---|---|---|
-| 1 | 1 | **Gậy Đầu Lâu** | 3 (3~3) | **Vải Bông** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
-| 2 | 3 | **Gậy Thiên Thần** | 7 (6~8) | **Xương** | 6 | **Khiên Tay**, *Khiên Diều* |
-| 3 | 7 | **Gậy Rắn**, *Gậy Bí Ẩn* | 13 (13~13) | **Nhân Sư**, *Bí Ẩn* | 9 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
-| 4 | 12 | **Gậy Sấm Sét**, *Gậy Gió Dữ* | 21 (20~22) | **Huyền Thoại** | 15 | **Khiên Thép Tấm**, *Khiên Tiên* |
-| 5 | 17 | **Gậy Xà Nữ** | 31 (29~33) | **Cánh Đỏ** | 25 | **Khiên Diệt Rồng**, *Khiên Đinh* |
-| 6 | 22 | **Gậy Huyền Thoại**, *Gậy Cánh Đỏ* | 44 (43~45) | **Cổ Đại**, *Nhật Thực* | 33 | **Khiên Tháp**, *Khiên Huyền Thoại* |
-| 7 | 27 | **Gậy Hồi Sinh** | 60 (57~63) | **Đại Linh Hồn** | 46 | **Khiên Xà** |
-| 8 | 32 | **Gậy Sấm Hỗn Nguyên**, *Gậy Cổ Đại*, *Gậy Hủy Diệt* | 78 (77~79) | **Hồn Bóng Tối**, *Diêm Vương* | 59 | **Khiên Đồng** |
+| 1 | 1 / 1 | **Gậy Đầu Lâu** | 3 (3~3) | **Vải Bông** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
+| 2 | 3 / 3 | **Gậy Thiên Thần** | 7 (6~8) | **Xương** | 6 | **Khiên Tay**, *Khiên Diều* |
+| 3 | 7 / 7 | **Gậy Rắn**, *Gậy Bí Ẩn*, *Rìu Tiên* | 13 (13~13) | **Nhân Sư**, *Bí Ẩn* | 9 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
+| 4 | 12 / 12 | **Gậy Sấm Sét**, *Gậy Gió Dữ* | 21 (20~22) | **Huyền Thoại** | 15 | **Khiên Thép Tấm**, *Khiên Tiên* |
+| 5 | 17 / 17 | **Gậy Xà Nữ**, *Sách Sahamutt* | 31 (29~33) | **Cánh Đỏ** | 25 | **Khiên Diệt Rồng**, *Khiên Đinh* |
+| 6 | 22 / 22 | **Gậy Huyền Thoại**, *Gậy Cánh Đỏ*, *Sách Neil* | 44 (43~45) | **Cổ Đại**, *Nhật Thực* | 33 | **Khiên Tháp**, *Khiên Huyền Thoại* |
+| 7 | 27 / 27 | **Gậy Hồi Sinh**, *Chùy Sao Pha Lê*, *Sách Bóng Ma* | 60 (57~63) | **Đại Linh Hồn**, *Hồng Đen* | 46 | **Khiên Xà** |
+| 8 | 32 / 32 | **Gậy Sấm Hỗn Nguyên**, *Gậy Cổ Đại*, *Gậy Hủy Diệt*, *Kiếm Pha Lê* | 78 (77~79) | **Hồn Bóng Tối**, *Diêm Vương* | 59 | **Khiên Đồng** |
+| 9 | 37 / 40 | **Gậy Đại Linh Hồn**, *Gậy Bạch Kim*, *Gậy Hào Quang*, *Gậy Hồng Đen*, *Gậy Tổng Lãnh Thiên Thần* | 98 (96~100) | **Huệ Tây** | 80 | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
+| 10 | 42 / 48 | **Gậy Huệ Tây**, *Gậy Merlin* | 120 (118~122) | **Sương Độc**, *Hào Quang*, *Nữ Hoàng* | 105 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
+| 11 | 47 / — | **Gậy Đại Xà**, *Gậy Kundun*, *Gậy Quạ*, *Gậy Sắc Ánh*, *Gậy Đế Vương* | 145 (137~153) |  | — | — |
 
 ### Tiên Nữ
 
-| Bậc | Cấp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
+| Bậc | Cấp vũ khí / giáp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
 |---|---|---|---|---|---|---|
-| 1 | 1 | **Cung Ngắn** | 4 (3~5) | **Dây Leo** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
-| 2 | 3 | **Nỏ** | 7 (5~8) | **Lụa** | 6 | **Khiên Tay**, *Khiên Diều* |
-| 3 | 7 | **Cung Săn**, *Nỏ Vàng* | 11 (9~13) | **Gió** | 10 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
-| 4 | 12 | **Cung Tiên**, *Nỏ Arquebus* | 21 (17~24) | **Linh Hồn** | 16 | **Khiên Thép Tấm**, *Khiên Tiên* |
-| 5 | 17 | **Cung Chiến**, *Nỏ Nhẹ* | 33 (28~37) | **Hộ Vệ** | 24 | **Khiên Diệt Rồng**, *Khiên Đinh* |
-| 6 | 22 | **Cung Hổ**, *Nỏ Xà* | 47 (42~52) | **Diên Vĩ** | 34 | **Khiên Tháp**, *Khiên Huyền Thoại* |
-| 7 | 27 | **Cung Bạc** | 65 (59~71) | **Thần Thánh** | 46 | **Khiên Xà** |
-| 8 | 32 | **Nỏ Cánh Lam**, *Cung Thiên Nhiên Hỗn Nguyên*, *Nỏ Thủy Kim* | 75 (68~82) | **Linh Hồn Đỏ**, *Thiên Sứ*, *Đức Tin* | 61 | **Khiên Đồng** |
+| 1 | 1 / 1 | **Cung Ngắn** | 4 (3~5) | **Dây Leo** | 5 | **Khiên Nhỏ**, *Khiên Sừng* |
+| 2 | 3 / 3 | **Nỏ** | 7 (5~8) | **Lụa** | 6 | **Khiên Tay**, *Khiên Diều* |
+| 3 | 7 / 7 | **Cung Săn**, *Nỏ Vàng*, *Rìu Tiên* | 11 (9~13) | **Gió** | 10 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
+| 4 | 12 / 12 | **Cung Tiên**, *Nỏ Arquebus* | 21 (17~24) | **Linh Hồn** | 16 | **Khiên Thép Tấm**, *Khiên Tiên* |
+| 5 | 17 / 17 | **Cung Chiến**, *Nỏ Nhẹ* | 33 (28~37) | **Hộ Vệ** | 24 | **Khiên Diệt Rồng**, *Khiên Đinh* |
+| 6 | 22 / 22 | **Cung Hổ**, *Nỏ Xà* | 47 (42~52) | **Diên Vĩ** | 34 | **Khiên Tháp**, *Khiên Huyền Thoại* |
+| 7 | 27 / 27 | **Cung Bạc**, *Chùy Sao Pha Lê* | 65 (59~71) | **Thần Thánh** | 46 | **Khiên Xà** |
+| 8 | 32 / 32 | **Nỏ Cánh Lam**, *Chùy Nguyên Tố*, *Cung Thiên Nhiên Hỗn Nguyên*, *Kiếm Pha Lê*, *Nỏ Thánh*, *Nỏ Thủy Kim* | 75 (68~82) | **Linh Hồn Đỏ**, *Thiên Sứ*, *Đức Tin* | 61 | **Khiên Đồng** |
+| 9 | 37 / 40 | **Cung Thiên Giới**, *Cung Hải Âu*, *Nỏ Tổng Lãnh Thiên Thần*, *Nỏ Đại Vương* | 98 (88~108) |  | — | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
+| 10 | 42 / 48 | **Chùy Băng Giá** | 120 (101~139) | **Tia Tiên** | 105 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
+| 11 | 47 / — | **Cung Gió Tiên**, *Cung Air Lyn*, *Cung Ngòi Đen*, *Cung Rắn Lục* | 145 (136~154) |  | — | — |
 
 ### Đấu Sĩ
 
-| Bậc | Cấp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
+| Bậc | Cấp vũ khí / giáp | Vũ khí | Công | Bộ giáp | Thủ cả bộ | Khiên |
 |---|---|---|---|---|---|---|
-| 1 | 1 | **Rìu Nhỏ**, *Đoản Kiếm* | 4 (1~6) | **Da** | 4 | **Khiên Nhỏ**, *Khiên Sừng* |
-| 2 | 3 | **Rìu Tay**, *Chùy Tròn*, *Dao Găm Kris* | 7 (4~9) | **Đồng** | 5 | **Khiên Tay**, *Khiên Diều* |
-| 3 | 7 | **Kiếm Mảnh**, *Chùy Sao Mai*, *Kiếm Sát Thủ*, *Kích Đôi*, *Rìu Đôi*, *Thương Rồng* | 12 (9~15) | **Vảy** | 7 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
-| 4 | 12 | **Đao Katana**, *Chùy Xích*, *Kiếm Gladius*, *Kích Halberd*, *Rìu Tomahawk* | 21 (16~26) | **Đồng Thau** | 13 | **Khiên Thép Tấm**, *Khiên Tiên* |
-| 5 | 17 | **Đao Cong**, *Giáo Dài*, *Kiếm Kỳ Nhông Lửa*, *Kiếm Xà*, *Rìu Chiến Binh*, *Rìu Nikkea*, *Đinh Ba Khổng Lồ* | 29 (24~34) | **Thép Tấm** | 20 | **Khiên Diệt Rồng**, *Khiên Đinh* |
-| 6 | 22 | **Đại Đao**, *Giáo Ánh Sáng*, *Kiếm Ánh Sáng*, *Rìu Cán Dài*, *Đại Chùy* | 42 (36~47) | **Rồng**, *Quạ Bão*, *Ánh Bạc* | 27 | **Khiên Tháp**, *Khiên Huyền Thoại* |
-| 7 | 27 | **Kiếm Huyền Thoại**, *Cự Kiếm*, *Giáo Xà*, *Rìu Larkan*, *Song Nhận Kiếm* | 64 (56~72) | **Hắc Long**, *Dũng Mãnh*, *Kim Cương*, *Quạ Tro* | 37 | **Khiên Xà** |
-| 8 | 32 | **Rìu Lưỡi Liềm**, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Đại Lưỡi Hái* | 79 (69~89) | **Phượng Hoàng Đen**, *Cuồng Phong*, *Dũng Sĩ*, *Thép Đen*, *Titan*, *Ưng Sấm* | 49 | **Khiên Đồng** |
+| 1 | 1 / 1 | **Rìu Nhỏ**, *Đoản Kiếm* | 4 (1~6) | **Da** | 4 | **Khiên Nhỏ**, *Khiên Sừng* |
+| 2 | 3 / 3 | **Rìu Tay**, *Chùy Tròn*, *Dao Găm Kris* | 7 (4~9) | **Đồng** | 5 | **Khiên Tay**, *Khiên Diều* |
+| 3 | 7 / 7 | **Kiếm Mảnh**, *Chùy Sao Mai*, *Kiếm Sát Thủ*, *Kích Đôi*, *Rìu Tiên*, *Rìu Đôi*, *Thương Rồng* | 12 (9~15) | **Vảy** | 7 | **Khiên Đầu Lâu**, *Khiên Tròn Lớn* |
+| 4 | 12 / 12 | **Đao Katana**, *Chùy Xích*, *Kiếm Gladius*, *Kích Halberd*, *Rìu Tomahawk* | 21 (16~26) | **Đồng Thau** | 13 | **Khiên Thép Tấm**, *Khiên Tiên* |
+| 5 | 17 / 17 | **Đao Cong**, *Giáo Dài*, *Kiếm Kỳ Nhông Lửa*, *Kiếm Xà*, *Rìu Chiến Binh*, *Rìu Nikkea*, *Đinh Ba Khổng Lồ* | 29 (24~34) | **Thép Tấm** | 20 | **Khiên Diệt Rồng**, *Khiên Đinh* |
+| 6 | 22 / 22 | **Đại Đao**, *Giáo Ánh Sáng*, *Kiếm Ánh Sáng*, *Quyền Trượng Chiến*, *Rìu Cán Dài*, *Đại Chùy* | 42 (36~47) | **Rồng**, *Quạ Bão*, *Ánh Bạc* | 27 | **Khiên Tháp**, *Khiên Huyền Thoại* |
+| 7 | 27 / 27 | **Kiếm Huyền Thoại**, *Chùy Sao Pha Lê*, *Cự Kiếm*, *Giáo Xà*, *Rìu Larkan*, *Song Nhận Kiếm* | 64 (56~72) | **Hắc Long**, *Dũng Mãnh*, *Kim Cương*, *Quạ Tro*, *Vinh Quang* | 37 | **Khiên Xà** |
+| 8 | 32 / 32 | **Rìu Lưỡi Liềm**, *Kiếm Hủy Diệt*, *Kiếm Pha Lê*, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Quyền Trượng Bậc Thầy*, *Rìu Rồng Hỗn Nguyên*, *Đại Lưỡi Hái*, *Đại Quyền Trượng* | 79 (69~89) | **Phượng Hoàng Đen**, *Cuồng Phong*, *Dũng Sĩ*, *Thép Đen*, *Titan*, *Ưng Sấm* | 49 | **Khiên Đồng** |
+| 9 | 37 / 40 | **Kiếm Phá Hắc Ám**, *Gậy Tổng Lãnh Thiên Thần*, *Kiếm Cổ Tự*, *Kiếm Sấm*, *Quyền Trượng Chúa Tể*, *Quyền Trượng Ánh Sáng* | 98 (89~107) | **Đại Long**, *Hắc Chủ* | 66 | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
+| 10 | 42 / 48 | **Kiếm Bình Minh**, *Kiếm Vũ Công* | 120 (109~131) | **Long Kỵ Sĩ**, *Bá Vương*, *Bóng Ma*, *Hủy Diệt*, *Núi Lửa*, *Ánh Dương* | 86 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
+| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Gậy Kundun*, *Gậy Sắc Ánh*, *Gậy Tử Thần*, *Kiếm Bộc Phá*, *Kiếm Hắc Vương*, *Kiếm Đế Vương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
 
 ## Bậc, cấp, giá
 
 Mọi lớp dùng chung. Giá bộ giáp là giá đủ bộ, chia cho từng món theo tỉ lệ thủ. Bậc 1 là đồ khởi đầu (giá 0). Bán lại cho NPC được 40% giá.
 
-| Bậc | Cấp vũ khí / giáp | Giá vũ khí | Giá bộ giáp | Thủ cả bộ | Cấp khiên | Giá khiên | Thủ khiên |
-|---|---|---|---|---|---|---|---|
-| 1 | 1 | 0 | 0 | 2 | 4 | 90 | 3 |
-| 2 | 3 | 60 | 70 | 5 | 10 | 450 | 7 |
-| 3 | 7 | 220 | 260 | 10 | 17 | 1.500 | 12 |
-| 4 | 12 | 650 | 700 | 16 | 22 | 3.600 | 17 |
-| 5 | 17 | 1.600 | 1.700 | 24 | 27 | 7.500 | 23 |
-| 6 | 22 | 3.600 | 3.800 | 34 | 32 | 12.000 | 29 |
-| 7 | 27 | 7.500 | 8.000 | 46 | 37 | 20.000 | 36 |
-| 8 | 32 | 15.000 | 16.000 | 60 | 42 | 32.000 | 44 |
+| Bậc | Cấp vũ khí | Cấp giáp | Giá vũ khí | Giá bộ giáp | Thủ cả bộ | Cấp khiên | Giá khiên | Thủ khiên |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 1 | 1 | 0 | 0 | 2 | 4 | 90 | 3 |
+| 2 | 3 | 3 | 60 | 70 | 5 | 10 | 450 | 7 |
+| 3 | 7 | 7 | 220 | 260 | 10 | 17 | 1.500 | 12 |
+| 4 | 12 | 12 | 650 | 700 | 16 | 22 | 3.600 | 17 |
+| 5 | 17 | 17 | 1.600 | 1.700 | 24 | 27 | 7.500 | 23 |
+| 6 | 22 | 22 | 3.600 | 3.800 | 34 | 32 | 12.000 | 29 |
+| 7 | 27 | 27 | 7.500 | 8.000 | 46 | 37 | 20.000 | 36 |
+| 8 | 32 | 32 | 15.000 | 16.000 | 60 | 42 | 32.000 | 44 |
+| 9 | 37 | 40 | 28.000 | 32.000 | 80 | 46 | 45.000 | 52 |
+| 10 | 42 | 48 | 50.000 | 70.000 | 105 | 50 | 80.000 | 62 |
+| 11 | 47 | — | 85.000 | — | — | — | — | — |
 
 Thưởng đủ bộ (từ bậc 2): +10% thủ, +3% công, +15 máu × bậc bộ.
 

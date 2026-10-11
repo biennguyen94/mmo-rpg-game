@@ -155,6 +155,8 @@ defmodule HacLong.Game.Items15cTest do
     # phản sát thương: quái đánh trúng thì mất phần trăm sát thương, không chết vì phản đòn
     {_, b} = Engine.start_battle(full, 0, false)
     b = put_in(b.battle.monster.hp, 1_000_000)
+    # quái đánh mạnh để 5 % sát thương không làm tròn về 0
+    b = put_in(b.battle.monster.atk, 3000)
     b = %{b | hp: 100_000}
 
     # 0.99: đòn mình trúng, quái không né / không chí mạng, mình không né đòn quái

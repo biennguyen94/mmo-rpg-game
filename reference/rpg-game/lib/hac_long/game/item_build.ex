@@ -10,7 +10,11 @@ defmodule HacLong.Game.ItemBuild do
 
   - Vũ khí `mode: "raw"` (mặc định `stats.weapon_mode`): công = trung bình `DmgMin ~ DmgMax` của file
     (đã chọn món sao cho khớp đường cong); `mode: "staff"`: công = `stats.staff_atk[bậc]`, khoảng
-    thấp ~ cao theo tỉ lệ của file (gậy MU có sát thương vật lý rất thấp, sức mạnh nằm ở phép).
+    thấp ~ cao theo tỉ lệ của file (gậy MU có sát thương vật lý rất thấp, sức mạnh nằm ở phép);
+    `mode: "curve"` (bậc 9+, B-17): công = `stats.weapon_atk[bậc]`, khoảng theo tỉ lệ của file. Món không có
+    sát thương trong file (sách phép) lấy khoảng ±10 %.
+  - Danh sách chính một lớp được để `null` ở bậc lớp đó không có đồ trong Item.txt (vd Tiên Nữ không có bộ
+    giáp bậc 9): bậc đó lớp ấy không có món chính.
   - Bộ giáp (mũ, giáp, quần, găng, giày cùng số thứ tự trong nhóm 7–11): tổng thủ của bộ =
     `stats.set_def[bậc] × stats.set_def_mult`, chia cho từng món theo tỉ lệ `Def` trong file (tối thiểu 1).
   - Khiên: thủ = `stats.shield_def[bậc]`.
@@ -64,6 +68,7 @@ defmodule HacLong.Game.ItemBuild do
       for(
         {cls, list} <- lists,
         {entry, tier} <- Enum.with_index(list, 1),
+        entry != nil,
         do: {entry, tier, cls, nil}
       ) ++
         for {cls, per_tier} <- alts,
@@ -98,14 +103,21 @@ defmodule HacLong.Game.ItemBuild do
     {mn, mx} = {d["atkMin"] || 0, d["atkMax"] || 0}
 
     case e["mode"] || get_in(pick, ["stats", "weapon_mode"]) || "raw" do
-      "staff" ->
-        atk = at(pick, ["stats", "staff_atk"], tier)
-        avg = max((mn + mx) / 2, 1)
-        {atk, max(round(atk * mn / avg), 1), max(round(atk * mx / avg), 1)}
+      mode when mode in ["staff", "curve"] ->
+        atk = at(pick, ["stats", if(mode == "staff", do: "staff_atk", else: "weapon_atk")], tier)
+        scaled(atk, mn, mx)
 
       _ ->
         {round((mn + mx) / 2), mn, mx}
     end
+  end
+
+  # công `atk` với khoảng thấp ~ cao theo tỉ lệ DmgMin ~ DmgMax của file (file không có sát thương: ±10 %)
+  defp scaled(atk, mn, mx) when mn + mx <= 0, do: {atk, round(atk * 0.9), round(atk * 1.1)}
+
+  defp scaled(atk, mn, mx) do
+    avg = (mn + mx) / 2
+    {atk, max(round(atk * mn / avg), 1), max(round(atk * mx / avg), 1)}
   end
 
   defp alt(it, nil), do: it
@@ -147,6 +159,7 @@ defmodule HacLong.Game.ItemBuild do
       for(
         {cls, list} <- lists,
         {entry, tier} <- Enum.with_index(list, 1),
+        entry != nil,
         do: {entry, tier, cls, false}
       ) ++
         for {cls, per_tier} <- resolve(pick["sets_alt"]),

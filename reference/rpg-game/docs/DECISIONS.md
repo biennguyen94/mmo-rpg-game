@@ -310,4 +310,17 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   1–3 dòng (`excellent.lines` giữ nguyên); Máy Hỗn Nguyên "Pha Excellent" thêm tới đủ 6 dòng (trước tối đa 3). Quản trị: ô tặng
   đồ riêng có thêm ô tick May mắn / Kỹ năng / đồ Thần và từng dòng Excellent (server vẫn kiểm dòng hợp loại đồ); client nhận
   `RULES.excOptions`.
+- **B-17** (anh yêu cầu "tôi muốn có tất cả items trong file Item.txt", em đề xuất số) **Đủ trang bị của Item.txt**:
+  thêm 135 món còn thiếu (tổng 281 → 416): mọi vũ khí nhóm 0–5, khiên nhóm 6, bộ giáp nhóm 7–11. Không thêm: Kiếm Tổng Lãnh
+  Thiên Thần 0/19 và Khiên Rồng 6/13 (đã có dạng đồ trùm `relic`, `dragonshield`), Tên / Mũi Tên Nỏ 4/7, 4/15 (đạn, Hắc Long
+  không có). Lớp: cờ lớp ≥ 1 (cả đồ bậc tiến hóa 2, 3) cho lớp gốc; đồ của **Chúa Tể** (quyền trượng, bộ Hắc Chủ / Vinh Quang /
+  Ánh Dương / Bá Vương) → Kiếm Sĩ + Đấu Sĩ; đồ của **Triệu Hồi Sư** (sách, gậy Hồng Đen / Hào Quang / Huệ Tây, bộ Hồng Đen /
+  Hào Quang / Huệ Tây / Nữ Hoàng) → Phù Thủy. **Bậc mới**: vũ khí bậc 9 / 10 / 11 (cấp 37 / 42 / 47, công 98 / 120 / 145
+  theo `stats.weapon_atk` / `staff_atk`, giá 28k / 50k / 85k), bộ giáp bậc 9 / 10 (cấp 40 / 48, thủ cả bộ 80 / 105, giá
+  32k / 70k), khiên bậc 9 / 10 (cấp 46 / 50, thủ 52 / 62, giá 45k / 80k). Bậc theo cấp rơi MU: vũ khí ≤ 110 / 130 / 150, giáp
+  106–150 / 380, khiên < 380 / 380; món cấp MU thấp vào bậc cũ làm món phụ. Món chính mỗi bậc bán ở cửa hàng, món phụ chỉ
+  rơi (như Phase 19). Tiên Nữ không có bộ giáp bậc 9 trong Item.txt (bậc 8 lên thẳng 10). `ItemBuild`: thêm `mode: "curve"`,
+  sách phép (không có sát thương trong file) lấy khoảng ±10 %, danh sách chính được `null`. Chưa thêm (cần hệ thống mới, chờ
+  anh chốt): cánh của Chúa Tể / Triệu Hồi Sư (12/40, 12/41, 12/43), ngọc cầu / sách phép học kỹ năng (12/7–48, nhóm 15),
+  hạt / giáo hạt socket, thú cưỡi, nhẫn biến hình / nhẫn sự kiện, vật phẩm sự kiện / nhiệm vụ (nhóm 13–14).
 
