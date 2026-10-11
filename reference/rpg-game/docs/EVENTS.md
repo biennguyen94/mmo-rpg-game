@@ -68,8 +68,8 @@ Mẹo: chọn vùng hợp cấp mình (dùng **Chọn map**, phím M, để đi 
 
 - **Khi nào:** 1h, 3h, 5h … 23h; cho vào trong **10 phút** đầu. Mỗi lần mở, mỗi nhân vật vào **một lần**.
 - **Điều kiện:** cấp **35** trở lên và 1 **Vé Quảng Trường**.
-- **Vé:** mua ở Người Gác Tháp giá **20.000 vàng**, hoặc **ghép** ở Máy Hỗn Nguyên: **Mắt Quỷ + Chìa Khóa Quỷ** + 1 Ngọc Hỗn Nguyên
-  + 10.000 vàng (80 %). Mắt / Chìa Khóa rơi từ quái thường cấp ≥ 30 (5 %).
+- **Vé:** mua ở Người Gác Tháp giá **20.000 vàng**, hoặc **ghép** ở Máy Hỗn Nguyên: **Mắt Quỷ + Chìa Khóa Quỷ**
+  + 12.000 vàng (80 %). Mắt / Chìa Khóa rơi từ quái thường cấp ≥ 30 (5 %).
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **😈 Quảng Trường Quỷ** → Vào.
 - **Cách chơi:** bản đồ riêng, **5 phút**, **5 đợt**: 4 / 5 / 6 / 6 quái rồi 2 trùm (các trùm vùng). Hạ hết một đợt thì cầu
   thang "Đợt sau" mở. Quái theo cấp mình: cấp 35–39 → quái cấp 36, 40–44 → 42, 45+ → 48 (mỗi đợt cao hơn một chút).
@@ -96,7 +96,7 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
 - **Khi nào:** 0h30, 2h30, 4h30 … 22h30; cho vào trong **10 phút** đầu; mỗi lần mở vào **một lần**.
 - **Điều kiện:** cấp **40** trở lên và 1 **Vé Lâu Đài**.
 - **Vé:** mua ở Người Gác Tháp giá **30.000 vàng**, hoặc **ghép** ở Máy Hỗn Nguyên: **Cuộn Giấy Tổng Lãnh Thiên Thần + Xương
-  Máu** + 1 Ngọc Hỗn Nguyên + 15.000 vàng (80 %). Hai mảnh rơi từ quái thường cấp ≥ 35 (4 %).
+  Máu** + 18.000 vàng (80 %). Hai mảnh rơi từ quái thường cấp ≥ 35 (4 %).
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **🏰 Lâu Đài Máu** → Vào.
 - **Cách chơi:** bản đồ riêng, **8 phút**, ba bước:
   1. hạ **8 quân canh**;
@@ -113,7 +113,7 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
 (`RULES.chaos_castle`, DECISIONS B-19)
 
 - **Khi nào:** 1h30, 3h30, 5h30 … 23h30; cho vào trong **5 phút** đầu, sau đó **10 phút** hỗn chiến.
-- **Điều kiện:** cấp **15** trở lên và 1 **Áo Giáp Vệ Binh** (mua ở Người Gác Tháp **15.000 vàng**, hoặc rơi 2 % từ quái
+- **Điều kiện:** cấp **15** trở lên và 1 **Áo Giáp Vệ Binh** (mua ở Người Gác Tháp **5.000 vàng**, hoặc rơi 2 % từ quái
   thường cấp ≥ 15).
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **⚔ Hỗn Chiến Thành** → Vào. Mọi người vào **cùng một thành** (bản đồ chung).
 - **Cách chơi:** hết 5 phút cho vào thì thành thả quái (30 trừ số người vào, ít nhất 10 con, cấp quanh cấp trung bình người

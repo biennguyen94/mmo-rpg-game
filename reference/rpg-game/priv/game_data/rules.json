@@ -250,7 +250,7 @@
       "run_minutes": 10,
       "min_level": 15,
       "ticket": "cc_ticket",
-      "ticket_price": 15000,
+      "ticket_price": 5000,
       "ticket_drop": { "min_level": 15, "chance": 0.02 },
       "total": 30,
       "min_monsters": 10,

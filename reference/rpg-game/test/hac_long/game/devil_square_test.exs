@@ -153,7 +153,7 @@ defmodule HacLong.Game.DevilSquareTest do
     assert DevilSquare.view(p, closed).open and not DevilSquare.view(p, closed).used
   end
 
-  test "B-18: quái rơi mảnh vé, ghép Mắt Quỷ + Chìa Khóa Quỷ + Hỗn Nguyên ra vé ở Máy Hỗn Nguyên" do
+  test "B-18: quái rơi mảnh vé, ghép Mắt Quỷ + Chìa Khóa Quỷ ra vé ở Máy Hỗn Nguyên" do
     assert DevilSquare.ticket_part() in @r.ticket_drop.parts
     r = HacLong.Game.Data.chaos("ds_ticket")
     assert r.out == @r.ticket
@@ -162,7 +162,6 @@ defmodule HacLong.Game.DevilSquareTest do
       player(%{gold: 100_000})
       |> Engine.add_item("devil_eye")
       |> Engine.add_item("devil_key")
-      |> Engine.add_item("jewel_chaos")
 
     # thiếu mảnh thì không ghép
     {%{ok: false}, _} =

@@ -589,28 +589,28 @@
       "slot": "material",
       "icon": "crowned-skull",
       "price": 0,
-      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Chìa Khóa Quỷ + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Chìa Khóa Quỷ ở Máy Hỗn Nguyên ra Vé Quảng Trường."
     },
     "devil_key": {
       "name": "Chìa Khóa Quỷ",
       "slot": "material",
       "icon": "padlock",
       "price": 0,
-      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Mắt Quỷ + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Mắt Quỷ ở Máy Hỗn Nguyên ra Vé Quảng Trường."
     },
     "archangel_scroll": {
       "name": "Cuộn Giấy Tổng Lãnh Thiên Thần",
       "slot": "material",
       "icon": "scroll-unfurled",
       "price": 0,
-      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Xương Máu + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Lâu Đài."
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Xương Máu ở Máy Hỗn Nguyên ra Vé Lâu Đài."
     },
     "blood_bone": {
       "name": "Xương Máu",
       "slot": "material",
       "icon": "skull-crossed-bones",
       "price": 0,
-      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Cuộn Giấy Tổng Lãnh Thiên Thần + Ngọc Hỗn Nguyên ở Máy Hỗn Nguyên ra Vé Lâu Đài."
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Cuộn Giấy Tổng Lãnh Thiên Thần ở Máy Hỗn Nguyên ra Vé Lâu Đài."
     }
   }
 }

@@ -368,5 +368,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-23** (anh chốt "ok sửa") **Tăng tỉ lệ rơi vé / nguyên liệu sự kiện** (đồ không quý, mua vé bằng vàng rẻ hơn cày):
   Mắt Quỷ / Chìa Khóa Quỷ 2 % → **5 %**, Cuộn Giấy Tổng Lãnh Thiên Thần / Xương Máu 1 % → **4 %**, Áo Giáp Vệ Binh 0,5 % →
   **2 %**, Dấu Ấn Kundun 1 % → **4 %** (≈ 40 / 50 / 50 / 125 quái cho một vé / Bản Đồ Thất Lạc). Cấp quái bắt đầu rơi giữ nguyên.
+  Cùng đợt (anh chốt "ok"): **ghép vé không cần Ngọc Hỗn Nguyên nữa** (ngọc quá hiếm so với vé mua được bằng vàng):
+  `ds_ticket` 2 mảnh + 12.000 vàng, `bc_ticket` 2 mảnh + 18.000 vàng (vẫn 80 %); **Áo Giáp Vệ Binh 15.000 → 5.000 vàng**
+  (cấp 15 mỗi quái ≈ 36 vàng, giá cũ ≈ 420 quái).
 
 
