@@ -896,6 +896,24 @@ defmodule HacLongWeb.GameChannelTest do
       assert r.player.pos == HacLong.World.Maps.home_spawn()
       assert HacLong.Arena.stats(ua.id).losses == 1
     end
+
+    test "tìm đối thủ theo tên (không phân biệt hoa thường), không ra chính mình" do
+      tag = "Tim#{System.unique_integer([:positive]) |> rem(100_000)}"
+      ua = create_user()
+      player_at(ua, %{map: "village", x: 12, y: 14}, %{name: tag <> "a"})
+      {_, sa} = join_game(ua)
+      ub = create_user()
+      player_at(ub, %{map: "village", x: 13, y: 14}, %{name: tag <> "b"})
+
+      ref = push(sa, "arena_find", %{"q" => String.downcase(tag)})
+      assert_reply ref, :ok, %{found: found}
+      assert Enum.map(found, & &1.user_id) == [ub.id]
+      expected = tag <> "b"
+      assert [%{name: ^expected, rating: 1000}] = found
+
+      ref = push(sa, "arena_find", %{"q" => "%"})
+      assert_reply ref, :ok, %{found: []}
+    end
   end
 
   describe "chợ" do

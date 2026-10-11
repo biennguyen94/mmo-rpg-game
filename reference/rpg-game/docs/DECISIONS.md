@@ -268,3 +268,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   (120.000, tấn công +8%, EXP +3%, Cắn Xé). Hình: có hình MU (`ref`) thì dùng ở ô Thú nuôi, danh sách thú và cửa hàng; không có
   (máy chưa chép hình riêng) thì dùng hình CC0 trong `pets/` — trên bản đồ luôn dùng hình CC0 (cỡ ô 32px). Không thêm Rudolph,
   Ngựa Đen, các "Sừng" (Uniria, Dinorant, Fenrir): không có hình CC0 hợp / hình chỉ là cái sừng. Thành tựu "có đủ thú" giờ cần 12 thú.
+- **B-10** (anh chọn) Đấu trường: thêm ô **tìm người chơi theo tên** để thách đấu bất kỳ ai (trước chỉ có 5 người điểm gần nhất
+  nên hai người điểm khác nhau có thể không thấy nhau). Kênh thêm `arena_find {q}` → `{found}` (tối đa 10 người, tên chứa `q`,
+  không phân biệt hoa thường, tên khớp đúng lên đầu, không ra chính mình; giới hạn 30 lần / phút). Thách đấu vẫn qua
+  `pvp_challenge` như cũ (giới hạn trận / ngày giữ nguyên).

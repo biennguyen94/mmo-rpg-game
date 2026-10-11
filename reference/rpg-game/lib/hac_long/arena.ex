@@ -153,6 +153,34 @@ defmodule HacLong.Arena do
     |> Repo.all()
   end
 
+  @doc """
+  Tìm đối thủ theo tên (chứa `q`, không phân biệt hoa thường), trừ mình; tối đa `n` người,
+  tên khớp đúng lên đầu. Cùng dạng với `suggestions/2`.
+  """
+  def search(uid, q, n \\ 10) do
+    q = q |> to_string() |> String.replace(~r/[%_\\\\]/, "") |> String.trim()
+
+    if q == "" do
+      []
+    else
+      from(c in Character,
+        left_join: r in "pvp",
+        on: r.user_id == c.user_id,
+        where: c.user_id != ^uid and ilike(c.name, ^"%#{q}%"),
+        order_by: [desc: fragment("lower(?) = lower(?)", c.name, ^q), desc: c.level, asc: c.name],
+        limit: ^n,
+        select: %{
+          user_id: c.user_id,
+          name: c.name,
+          cls: c.cls,
+          level: c.level,
+          rating: coalesce(r.rating, 1000)
+        }
+      )
+      |> Repo.all()
+    end
+  end
+
   @doc "Bảng xếp hạng đấu trường."
   def top(n \\ 10) do
     from(r in "pvp",

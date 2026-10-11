@@ -34,6 +34,7 @@
   let chatTo = 'world';  // 'world' | 'guild' | 'party'
   let party = null;      // tổ đội: { id, leader, members: [{ id, name, level, hp, maxHp, map }], max }
   let arena = null;
+  let arenaFind = { q: '', found: null }; // ô tìm đối thủ theo tên ở Đấu trường
   let pk = null; // { invite, history, today, rules } (PK cược vàng)
   let market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
@@ -174,6 +175,7 @@
   }
 
   function render() {
+    const keepArena = arenaTyping();
     hideTip();
     Sound.music(musicMood());
     const hud = $('#hud'), tabs = $('#tabs'), view = $('#view');
@@ -234,6 +236,7 @@
     if (onMenu('board')) loadBoard();
     if (onMenu('admin') && adm.reports == null && !adm.loading) loadReports();
     applySel();
+    keepArena();
   }
 
   // ---------- Quản trị ----------
@@ -923,9 +926,20 @@
   // ---------- Đấu trường ----------
   async function loadArena() {
     try { arena = await Net.arena(); pk = await Net.pk('info'); } catch (e) { /* thử lại lần sau */ }
-    if (onMenu('arena')) { const el = $('#arena'); if (el) el.outerHTML = viewArena(); }
+    if (onMenu('arena')) { const el = $('#arena'), keep = arenaTyping(); if (el) el.outerHTML = viewArena(); keep(); }
+  }
+  // Ô tìm đối thủ: vẽ lại bảng (trạng thái đổi, tải lại đấu trường) không mất chữ đang gõ, không mất con trỏ
+  function arenaTyping() {
+    const box = $('#arena-q');
+    if (!box || document.activeElement !== box) return () => {};
+    const v = box.value, at = box.selectionStart;
+    return () => { const b = $('#arena-q'); if (b) { b.value = v; b.focus(); b.setSelectionRange(at, at); } };
   }
 
+  // một dòng đối thủ (gợi ý hoặc kết quả tìm theo tên)
+  const arenaRow = (o, left) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
+        <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
+        <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`;
   function viewArena() {
     if (!arena) return '<div class="card" id="arena"><h3>Đấu trường</h3><p class="small muted">Đang tải…</p></div>';
     const me = arena.me, left = me.per_day - me.today;
@@ -934,9 +948,10 @@
         <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
-      <div class="list">${arena.suggestions.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
-        <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
-        <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
+      <form id="arena-find" class="row" autocomplete="off"><input type="text" id="arena-q" class="grow" maxlength="24" placeholder="Tìm người chơi theo tên…" value="${esc(arenaFind.q)}" aria-label="Tìm người chơi theo tên"><button class="btn" type="submit">Tìm</button></form>
+      ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
+        <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
+      <div class="list">${arena.suggestions.map((o) => arenaRow(o, left)).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
       ${pk ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${pk.history.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
@@ -3048,6 +3063,13 @@
     if (e.target.id === 'auth') { e.preventDefault(); onAuth(); return; }
     if (e.target.id === 'pw-form') { e.preventDefault(); onPassword(); return; }
     if (e.target.id === 'chat-form') { e.preventDefault(); onChatSubmit(); return; }
+    if (e.target.id === 'arena-find') {
+      e.preventDefault();
+      const q = $('#arena-q').value.trim();
+      if (!q) { arenaFind = { q: '', found: null }; render(); return; }
+      Net.arenaFind(q).then((r) => { arenaFind = { q, found: r.found }; render(); }).catch((err) => toast(err.msg, true));
+      return;
+    }
     if (e.target.id === 'adm-lookup') {
       e.preventDefault();
       Net.admin('lookup', { name: $('#adm-name').value }).then((r) => { adm.user = r.user; render(); }).catch((err) => toast(err.msg, true));
