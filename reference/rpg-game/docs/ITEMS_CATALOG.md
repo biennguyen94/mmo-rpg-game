@@ -114,9 +114,9 @@ Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm 2% sát thương và h
 
 | Cấp | Tên theo lớp | Cấp đeo | Thủ | Sát thương | Nhận vào | Dòng phụ | Cách ghép |
 |---|---|---|---|---|---|---|---|
-| 1 | Cánh Ác Quỷ (Kiếm Sĩ), Cánh Thiên Đường (Phù Thủy), Cánh Tiên (Tiên Nữ), Cánh Bóng Tối (Đấu Sĩ) | 20 | 6 | +10% | −10% | — | 1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 đúng lớp nhân vật. 20.000 vàng, 10% |
-| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp. 200.000 vàng, 20% |
-| 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp. 500.000 vàng, 15% |
+| 1 | Cánh Ác Quỷ (Kiếm Sĩ), Cánh Thiên Đường (Phù Thủy), Cánh Tiên (Tiên Nữ), Cánh Bóng Tối (Đấu Sĩ) | 20 | 6 | +10% | −10% | — | 1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 (chọn lớp: của mình hoặc lớp khác để bán / tặng). 20.000 vàng, 10% |
+| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 (chọn lớp). 200.000 vàng, 20% |
+| 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 (chọn lớp). 500.000 vàng, 15% |
 
 ## Ép +N (Thợ Rèn)
 

@@ -67,6 +67,19 @@ defmodule HacLong.Game.Wings15eTest do
     assert {%{ok: false}, _} = Chaos.combine(p1, "wing3", g1.uid)
   end
 
+  test "Máy Hỗn Nguyên: chọn lớp của cánh ra (để bán / tặng); lớp sai thì ra cánh lớp mình" do
+    {p, uid} = wing3_input(player("dw"), 9)
+    Rng.put_sequence([0.0, 0.0])
+    {r, q} = Chaos.combine(p, "wing3", uid, "elf")
+    assert r.chaos == %{result: "success", out: "wing_elf_3"}
+    assert [%{base: "wing_elf_3"}] = q.gear
+
+    {p, uid} = wing3_input(player("dw"), 9)
+    Rng.put_sequence([0.0, 0.0])
+    {r, _} = Chaos.combine(p, "wing3", uid, "khong-co")
+    assert r.chaos.out == "wing_dw_3"
+  end
+
   test "ghép cánh cấp 2 cũng có dòng; cánh cấp 1 thì không" do
     g = Gear.plain("wing_dk_1")
     p = %{player("dk") | gear: [g]} |> Map.put(:upgrades, %{g.uid => 5})

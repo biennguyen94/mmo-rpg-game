@@ -4,7 +4,7 @@ defmodule HacLong.Game.Chaos do
   `priv/game_data/chaos.json`. Hàm thuần như `Engine`, số ngẫu nhiên qua `HacLong.Game.Rng`.
 
   Công thức: `items` (nguyên liệu trong túi), `gold` (phí), `rate` (tỉ lệ cơ bản), `out` (kết quả;
-  `{cls}` thay bằng lớp nhân vật). Công thức có `gear` cần thêm đúng một món đồ trong túi
+  `{cls}` thay bằng lớp người chơi chọn, mặc định lớp nhân vật — ghép cánh lớp khác để bán / tặng). Công thức có `gear` cần thêm đúng một món đồ trong túi
   (không mặc, không khóa) ở ô `slots`, cấp nâng ≥ `min_up` (và cánh cấp `tier` nếu có); mỗi cấp
   trên `min_up` cộng `per_up` vào tỉ lệ, tối đa `max_rate`.
 
@@ -27,24 +27,27 @@ defmodule HacLong.Game.Chaos do
   def output(r, cls), do: String.replace(r.out, "{cls}", cls)
 
   @doc """
-  Ghép theo công thức `id`, với món đồ `uid` (công thức cần đồ). Trả về `{kết_quả, nhân_vật}`;
+  Ghép theo công thức `id`, với món đồ `uid` (công thức cần đồ). `cls`: lớp của món ra khi `out` có `{cls}`
+  (nil hoặc lớp không có: lớp nhân vật). Trả về `{kết_quả, nhân_vật}`;
   kết quả có `chaos: %{result: "success" | "fail", out}`.
   """
-  def combine(p, id, uid) do
+  def combine(p, id, uid, cls \\ nil) do
     r = is_binary(id) && Data.chaos(id)
 
     with {:ok, r} <- (r && {:ok, r}) || {:error, "Không có công thức này."},
          :ok <- if(p.battle, do: {:error, "Đang trong trận."}, else: :ok),
          {:ok, g, up} <- gear_input(p, r, uid) do
-      if r[:mode], do: transform(p, r, g, up), else: make(p, r, g, up)
+      if r[:mode], do: transform(p, r, g, up), else: make(p, r, g, up, out_class(p, cls))
     else
       {:error, msg} -> {%{ok: false, msg: msg}, p}
     end
   end
 
-  # công thức ra món mới (`out`)
-  defp make(p, r, g, up) do
-    with out = output(r, p.cls),
+  defp out_class(p, cls), do: if(is_binary(cls) and Data.class(cls) != nil, do: cls, else: p.cls)
+
+  # công thức ra món mới (`out`) cho lớp `cls`
+  defp make(p, r, g, up, cls) do
+    with out = output(r, cls),
          %{} = out_item <- Data.item(out) || {:error, "Lớp này chưa có kết quả cho công thức."},
          :ok <- enough(p, r) do
       p = pay(p, r, g)

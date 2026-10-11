@@ -253,3 +253,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-6** (anh chốt) Tên ngọc theo bản MU Việt: Jewel of Bless = **Ngọc Ước Nguyện** (trước: Phúc Lành), Jewel of Soul =
   **Ngọc Tâm Linh** (trước: Linh Hồn). Ngọc Sinh Mệnh (Life) và Ngọc Hỗn Nguyên (Chaos) giữ nguyên. Chỉ đổi tên hiển thị, id
   (`jewel_bless`, `jewel_soul`) và luật ép không đổi; bộ giáp / cánh / kỹ năng tên "Linh Hồn" giữ nguyên.
+- **B-7** (anh yêu cầu) Máy Hỗn Nguyên ghép cánh (`wing1`, `wing2`, `wing3`): người chơi **chọn lớp** của cánh ra (mặc định lớp
+  mình) để ghép cánh lớp khác đem bán ở chợ / tặng. Lệnh `chaos` thêm trường tùy chọn `cls`; lớp không có thì dùng lớp nhân vật.
+  Cánh lớp khác vẫn không mặc được (giữ luật lớp). Cánh đầu vào của `wing2` / `wing3` nhận cánh lớp nào cũng được (như cũ).

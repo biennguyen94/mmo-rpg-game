@@ -3,7 +3,7 @@
     {
       "id": "wing1",
       "name": "Cánh cấp 1",
-      "desc": "1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 đúng lớp nhân vật.",
+      "desc": "1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 (chọn lớp: của mình hoặc lớp khác để bán / tặng).",
       "gear": {
         "slots": [
           "weapon",
@@ -24,7 +24,7 @@
     {
       "id": "wing2",
       "name": "Cánh cấp 2",
-      "desc": "1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 đúng lớp.",
+      "desc": "1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 (chọn lớp).",
       "gear": {
         "slots": [
           "wing"
@@ -46,7 +46,7 @@
     {
       "id": "wing3",
       "name": "Cánh cấp 3",
-      "desc": "1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 đúng lớp.",
+      "desc": "1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 (chọn lớp).",
       "gear": {
         "slots": [
           "wing"

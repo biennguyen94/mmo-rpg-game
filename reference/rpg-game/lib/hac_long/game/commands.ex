@@ -77,7 +77,7 @@ defmodule HacLong.Game.Commands do
 
       "chaos" ->
         at_npc(p, ["chaos"], "Lão Hỗn Nguyên ở Làng", fn _ ->
-          Chaos.combine(p, c["id"], c["gear"])
+          Chaos.combine(p, c["id"], c["gear"], c["cls"])
         end)
 
       "use" ->

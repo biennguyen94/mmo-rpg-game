@@ -2235,6 +2235,7 @@
 
   // Máy Hỗn Nguyên (Lão Hỗn Nguyên): chọn công thức, chọn món đồ (nếu cần), xem tỉ lệ rồi ghép.
   let chaosPick = {}; // công thức → uid món đồ chọn
+  let chaosCls = {}; // công thức ra theo lớp ({cls}) → lớp chọn (mặc định lớp mình)
   const chaosRate = L.chaosRate;
   function chaosCard() {
     const rows = CHAOS.map((r) => {
@@ -2248,15 +2249,18 @@
       const need = Object.entries(r.items);
       const ok = (!r.gear || pick) && P.gold >= r.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const rate = chaosRate(r, pick ? upLevel(pick) : 0);
-      const out = r.out ? ITEMS[r.out.replace('{cls}', P.cls)] : null;
+      const perCls = !!(r.out && r.out.includes('{cls}'));
+      const cls = perCls && CLASSES[chaosCls[r.id]] ? chaosCls[r.id] : P.cls;
+      const out = r.out ? ITEMS[r.out.replace('{cls}', cls)] : null;
       return `<div class="item">${itemIcon(out || { icon: 'chaos-machine' })}<div class="grow">
           <div class="name">${esc(r.name)}${out && out.slot === 'wing' ? ` → ${esc(out.name)}` : ''}</div>
           <div class="small muted">${esc(r.desc)}</div>
+          ${perCls ? `<label class="small">Cánh cho lớp <select data-chaos-cls="${r.id}" aria-label="Lớp của món ra">${Object.keys(CLASSES).map((c) => `<option value="${c}" ${c === cls ? 'selected' : ''}>${CLASSES[c].name}${c === P.cls ? ' (mình)' : ''}</option>`).join('')}</select></label>` : ''}
           ${r.gear ? (fits.length ? `<select data-chaos-pick="${r.id}" aria-label="Món đồ bỏ vào máy">${fits.map((uid) => `<option value="${uid}" ${uid === pick ? 'selected' : ''}>${esc(itemOf(uid).name)} +${upLevel(uid)}</option>`).join('')}</select>`
             : `<div class="small" style="color:var(--bad)">Không có món phù hợp trong túi (cần +${r.gear.min_up} trở lên, chưa mặc, chưa khóa).</div>`) : ''}
           <div class="small">${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')} · Tỉ lệ <b>${Math.round(rate * 100)}%</b></div>
         </div>
-        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
+        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" data-wcls="${perCls ? cls : ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
       </div>`;
     }).join('');
     return `<div class="card"><h3>${icon('chaos-machine')} Máy Hỗn Nguyên</h3>
@@ -2642,7 +2646,7 @@
       case 'life': return { act, slot: d.slot, id: d.id };
       case 'discard': case 'store': case 'unstore': return { act, id: d.id, n: +d.n || 1 };
       case 'lock': return { act, id: d.id, on: d.on === '1' };
-      case 'chaos': return { act, id: d.id, gear: d.gear || null };
+      case 'chaos': return { act, id: d.id, gear: d.gear || null, cls: d.wcls || null };
       case 'reset-yes': return { act: 'reset' };
       case 'teleport': return { act, to: d.to };
       case 'craft': case 'quest_accept': case 'quest_turnin': case 'cook': case 'event_exchange': return { act, id: d.id };
@@ -3208,6 +3212,7 @@
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
+      if (e.target.dataset.chaosCls) { chaosCls[e.target.dataset.chaosCls] = e.target.value; render(); }
       if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
       if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
     });
