@@ -90,4 +90,25 @@ defmodule HacLong.Bots.BrainTest do
     assert Brain.boss_room(%{p | level: 7}) == "forest_boss"
     assert Brain.boss_room(%{p | level: 13, bosses: ["wolf"]}) == "camp_boss"
   end
+
+  test "vừa gục thì nghỉ ngẫu nhiên trong RULES.bots.rest_after_death_s rồi mới đi luyện" do
+    [lo, hi] = HacLong.Game.Data.rules().bots.rest_after_death_s
+    p = %{player() | deaths: 3}
+
+    # lần đầu bot nhìn (chưa biết số lần chết) / số lần chết không đổi: không nghỉ
+    assert Brain.rest_until(0, nil, p, 1_000) == 0
+    assert Brain.rest_until(0, 3, p, 1_000) == 0
+
+    # chết thêm một lần: nghỉ từ lo tới hi giây
+    Rng.put_sequence([0.0])
+    assert Brain.rest_until(0, 2, p, 1_000) == 1_000 + lo * 1000
+    Rng.put_sequence([1.0])
+    assert Brain.rest_until(0, 2, p, 1_000) == 1_000 + hi * 1000
+    Rng.clear()
+
+    assert Brain.resting?(p, 5_000, 4_999)
+    refute Brain.resting?(p, 5_000, 5_000)
+    # trận gục ngã còn mở (bảng kết quả) thì vẫn rời trận như thường
+    refute Brain.resting?(Map.put(p, :battle, %{over: true}), 5_000, 1_000)
+  end
 end

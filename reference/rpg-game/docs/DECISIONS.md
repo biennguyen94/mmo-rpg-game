@@ -227,3 +227,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **E18-5** Lâu Đài Máu là một người một lượt (như Quảng Trường), ba bước quân canh → cổng → trùm; mở lệch 30 phút (0h30, 2h30 …) để không trùng Quảng Trường / Golden Invasion.
 - **E18-6** Lượt thắng ≈ giá vé về vàng; lãi là Lông Vũ Kền Kền + 2 ngọc + kinh nghiệm. Không xong thì thưởng theo quân canh đã hạ, không có lông vũ.
 - **E18-7** Cổng / trùm hiện ở ô trống gần cầu thang lên nhưng không trùng ô người chơi đang đứng (đứng sẵn trên ô quái thì không bước vào đánh được).
+
+## Bot nghỉ sau khi gục (2026-10-11, anh chốt)
+
+- **B-1** Bot gục (bị đồ sát, thua quái…) về Nhà rồi đứng nghỉ ngẫu nhiên 30–90 giây (`RULES.bots.rest_after_death_s`,
+  anh chọn) mới đi luyện tiếp. Trước đây bot dịch chuyển về chỗ cũ chỉ sau ~4 giây nên trông như không chết. Người chơi
+  thật không đổi gì (đồ sát người chơi đã về Nhà, rời bản đồ đúng). Bot nhận ra mình vừa gục qua số lần chết (`deaths`)
+  tăng; khởi động lại server thì không nghỉ (chấp nhận).

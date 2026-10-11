@@ -788,7 +788,8 @@
       ]
     },
     "bots": {
-      "count": 20
+      "count": 20,
+      "rest_after_death_s": [30, 90]
     },
     "slay": {
       "turn_s": 10,
