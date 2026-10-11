@@ -8,6 +8,7 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 
 1. [Lịch trong ngày](#1-lịch-trong-ngày)
 2. [Golden Invasion — quái vàng](#2-golden-invasion--quái-vàng)
+   - [Rồng Đỏ / Phù Thủy Trắng xâm lăng](#rồng-đỏ--phù-thủy-trắng-xâm-lăng)
 3. [Quảng Trường Quỷ (Devil Square)](#3-quảng-trường-quỷ-devil-square)
 4. [Lâu Đài Máu (Blood Castle)](#4-lâu-đài-máu-blood-castle)
    - [Hỗn Chiến Thành (Chaos Castle)](#hỗn-chiến-thành-chaos-castle)
@@ -21,7 +22,7 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 
 ## 1. Lịch trong ngày
 
-Bốn sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ**:
+Bốn sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ** (thêm hai cuộc xâm lăng **mỗi 4 giờ**):
 
 | Giờ (lặp mỗi 2 giờ) | Sự kiện | Cấp | Vé | Thời gian |
 |---|---|---|---|---|
@@ -29,6 +30,8 @@ Bốn sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ
 | 0h30, 2h30, 4h30 … 22h30 | Lâu Đài Máu | từ 40 | Vé Lâu Đài | mở cửa 10 phút, mỗi lượt 8 phút |
 | 1h00, 3h00, 5h00 … 23h00 | Quảng Trường Quỷ | từ 35 | Vé Quảng Trường | mở cửa 10 phút, mỗi lượt 5 phút |
 | 1h30, 3h30, 5h30 … 23h30 | Hỗn Chiến Thành | từ 15 | Áo Giáp Vệ Binh | cho vào 5 phút, hỗn chiến 10 phút |
+| 0h45, 4h45, 8h45 … 20h45 | Phù Thủy Trắng xâm lăng | mọi cấp | không cần | 20 phút |
+| 2h45, 6h45, 10h45 … 22h45 | Rồng Đỏ xâm lăng | mọi cấp | không cần | 20 phút |
 
 Trùm thế giới Cổ Long xuất hiện khoảng **2 giờ một lần**, mỗi lần 30 phút; lịch tính từ lúc server khởi động (lần đầu sau
 10 phút) nên không cố định theo giờ đồng hồ. Khi trùm xuất hiện, cả server nhận thông báo trong chat.
@@ -45,6 +48,16 @@ Trùm thế giới Cổ Long xuất hiện khoảng **2 giờ một lần**, m�
 - **Trùm vàng:** hạ hết quái vàng của một bản đồ thì trùm vàng xuất hiện ở đó, hạ được **chắc chắn rơi ngọc**.
 
 Mẹo: chọn vùng hợp cấp mình (dùng **Chọn map**, phím M, để đi nhanh) và tới ngay đầu giờ chẵn.
+
+### Rồng Đỏ / Phù Thủy Trắng xâm lăng
+
+(`RULES.raids`, DECISIONS B-20) Không cần vé, ai cũng đánh được; cả server nhận thông báo kèm tên bản đồ.
+
+- **Rồng Đỏ** (2h45, 6h45 … 22h45, 20 phút): 3 bản đồ vùng ngẫu nhiên, mỗi bản đồ **2 Rồng Đỏ** (cấp trùm vùng + 4, mạnh,
+  đứng yên). Hạ được: kinh nghiệm, vàng **×4**, **chắc chắn 1 ngọc**, có thể thêm Ngọc Hỗn Nguyên (30 %) / Sinh Mệnh (10 %).
+- **Phù Thủy Trắng** (0h45, 4h45 … 20h45, 20 phút): 2 bản đồ, mỗi bản đồ **1 Phù Thủy Trắng** (cấp trùm vùng + 5) và **6 Lính
+  Orc** đi lang thang. Phù Thủy: ×3, chắc chắn 1 ngọc, có thể thêm Hỗn Nguyên (50 %) / Tâm Linh (30 %); Lính Orc: ×3, ngọc 15 %.
+- Quái xâm lăng không hồi sinh, tên màu cam trên bản đồ. Hạ hết → kết thúc sớm; hết giờ con chưa ai đánh biến mất.
 
 ## 3. Quảng Trường Quỷ (Devil Square)
 
@@ -168,12 +181,13 @@ Làm mới lúc 0h mỗi ngày.
 ## 9. Dành cho quản trị viên
 
 - **Mở sự kiện ngay** (tab Quản trị → khung **Sự kiện**): 🐉 Gọi Cổ Long, ✨ Golden Invasion, 😈 Mở Quảng Trường Quỷ,
-  🏰 Mở Lâu Đài Máu, ⚔ Mở Hỗn Chiến Thành (cho vào 5 phút rồi hỗn chiến 10 phút). Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
+  🏰 Mở Lâu Đài Máu, ⚔ Mở Hỗn Chiến Thành (cho vào 5 phút rồi hỗn chiến 10 phút), 🐲 Rồng Đỏ xâm lăng, 🧙 Phù Thủy Trắng
+  xâm lăng (bắt đầu ngay ở bản đồ ngẫu nhiên). Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
   người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được đợt này.
 - **Đổi lịch trùm thế giới** (biến môi trường, khởi động lại server; xem `config/runtime.exs`):
   `WORLD_BOSS_FIRST_MINUTES` (lần đầu sau khởi động, mặc định 10), `WORLD_BOSS_EVERY_MINUTES` (120),
   `WORLD_BOSS_DURATION_MINUTES` (30), `WORLD_BOSS_HP` (20.000).
-- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `devil_square`, `blood_castle`,
+- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `raids`, `devil_square`, `blood_castle`, `chaos_castle`,
   `events`, `daily`, `arena`, `pk`…) rồi khởi động lại; lễ hội thêm / sửa ở `priv/game_data/events.json`.
 - **Tặng vé:** tab Quản trị → Đồ thường → `ds_ticket` (Vé Quảng Trường) / `bc_ticket` (Vé Lâu Đài) /
   `cc_ticket` (Áo Giáp Vệ Binh).

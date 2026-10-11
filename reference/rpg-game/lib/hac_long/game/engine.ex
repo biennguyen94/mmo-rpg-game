@@ -448,6 +448,7 @@ defmodule HacLong.Game.Engine do
       on_hit: Map.get(spec, :on_hit),
       night: Map.get(spec, :night, false),
       golden: Map.get(spec, :golden, false),
+      raid: Map.get(spec, :raid),
       jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + l * @mon.hp.level + l * l * @mon.hp.level_sq) * m * bm),
       atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
@@ -1249,6 +1250,7 @@ defmodule HacLong.Game.Engine do
     {p, reward} = ds_ticket_drop(p, m, reward)
     {p, reward} = bc_ticket_drop(p, m, reward)
     {p, reward} = cc_ticket_drop(p, m, reward)
+    {p, reward} = raid_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1370,6 +1372,20 @@ defmodule HacLong.Game.Engine do
       {p, reward}
     end
   end
+
+  # Xâm lăng (B-20): con đầu đàn rơi thêm đồ theo `RULES.raids.<loại>.drops`
+  defp raid_drop(p, %{raid: key, boss: true}, reward) when is_binary(key) do
+    Enum.reduce(HacLong.Raids.drops(key), {p, reward}, fn {id, c}, {p, reward} ->
+      if chance(c) do
+        {p |> add_item(id) |> log("💎 Nhặt được #{Data.item(id).name}!", "win"),
+         %{reward | items: reward.items ++ [id]}}
+      else
+        {p, reward}
+      end
+    end)
+  end
+
+  defp raid_drop(p, _m, reward), do: {p, reward}
 
   @doc "Một viên ngọc ngẫu nhiên theo trọng số `JEWELS.weights`."
   def pick_jewel do

@@ -803,6 +803,18 @@ defmodule HacLongWeb.GameChannel do
     {:ok, %{msg: "Đã mở ⚔ Hỗn Chiến Thành: vào trong #{mins} phút, rồi hỗn chiến.", window: w}}
   end
 
+  # B-20: xâm lăng mở ngay (tự báo kênh chat)
+  defp admin("raid_" <> key, _p, _s) when key in ["red_dragon", "white_wizard"] do
+    case HacLong.Raids.start_now(key) do
+      {:ok, st} ->
+        r = HacLong.Raids.rule(key)
+        {:ok, %{msg: "Đã mở #{r.icon} #{r.name} ở #{map_size(st.maps)} bản đồ.", raid: st}}
+
+      err ->
+        err
+    end
+  end
+
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
 
   defp open_event(mod, name) do

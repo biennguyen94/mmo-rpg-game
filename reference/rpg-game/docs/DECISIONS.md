@@ -337,5 +337,13 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   đồ, thoát game là bị loại, về Làng. Còn đúng 1 người và hết quái → thắng: 60.000 vàng + 1 Hỗn Nguyên + 2 Ước Nguyện + 1 Tâm
   Linh; hết giờ → người còn trụ: 8.000 vàng + 1 Ước Nguyện; mỗi người hạ được +2.000 vàng. Thưởng **gửi thư**. Khác MU: không
   thu hẹp sàn, không chia theo 7 cấp thành (một thành, quái theo cấp người vào), không rơi đồ khi chết.
+- **B-20** (anh chốt "làm luôn 9, 1, 2, 3, 4", em đề xuất số) **Rồng Đỏ / Phù Thủy Trắng xâm lăng** (`RULES.raids`,
+  `HacLong.Raids`, tách khỏi Golden Invasion để chạy song song): **Rồng Đỏ** 2h45, 6h45 … 22h45 (4 giờ một lần), 20 phút, 3
+  bản đồ vùng ngẫu nhiên, mỗi bản đồ 2 Rồng Đỏ (cấp trùm vùng + 4, sức ×1,5, tính như trùm, đứng yên); **Phù Thủy Trắng**
+  0h45, 4h45 … 20h45, 20 phút, 2 bản đồ, mỗi bản đồ 1 Phù Thủy Trắng (cấp trùm vùng + 5, sức ×2) + 6 Lính Orc (cấp quái mạnh
+  nhất vùng + 1, sức ×1,2, đi lang thang). Không hồi sinh; thưởng kinh nghiệm/vàng ×4 (Rồng) / ×3 (Phù Thủy); đầu đàn chắc chắn
+  rơi 1 ngọc và có thể rơi thêm (Rồng: Hỗn Nguyên 30 %, Sinh Mệnh 10 %; Phù Thủy: Hỗn Nguyên 50 %, Tâm Linh 30 %); Lính Orc
+  rơi ngọc 15 %. Hạ hết → kết thúc sớm; hết giờ con chưa ai đánh biến mất. Khác MU: không rơi Hộp Kundun (chưa có hộp), quái
+  theo cấp vùng thay vì cấp cố định, hình tô lại màu từ hình CC0 sẵn có.
 
 

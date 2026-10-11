@@ -677,6 +677,39 @@
       "special_every": 3,
       "special_mult": 1.8
     },
+    "raids": {
+      "_doc": "B-20: xâm lăng kiểu MU (HacLong.Raids). Mỗi loại theo lịch giờ VN: mốc every_hours giờ + offset_minutes phút, kéo dài minutes phút, chọn ngẫu nhiên pick bản đồ trong maps. leader/minion: quái thả vào mỗi bản đồ (cấp = trùm vùng / quái mạnh nhất vùng + level_bonus, sức × mult), không hồi sinh. drops: đồ thêm khi hạ con đầu đàn (tỉ lệ).",
+      "red_dragon": {
+        "name": "Rồng Đỏ xâm lăng",
+        "icon": "🐲",
+        "every_hours": 4,
+        "offset_minutes": 165,
+        "minutes": 20,
+        "maps": ["forest_1", "camp_1", "graveyard_1", "mountain_1", "swamp_1", "lair_1"],
+        "pick": 3,
+        "leader": {"kind": "red_dragon", "name": "Rồng Đỏ", "count": 2, "level_bonus": 4, "mult": 1.5},
+        "minion": null,
+        "reward_mult": 4,
+        "jewel_chance": 1.0,
+        "minion_jewel_chance": 0,
+        "drops": {"jewel_chaos": 0.3, "jewel_life": 0.1}
+      },
+      "white_wizard": {
+        "name": "Phù Thủy Trắng xâm lăng",
+        "icon": "🧙",
+        "every_hours": 4,
+        "offset_minutes": 45,
+        "minutes": 20,
+        "maps": ["forest_1", "camp_1", "graveyard_1", "mountain_1", "swamp_1", "lair_1"],
+        "pick": 2,
+        "leader": {"kind": "white_wizard", "name": "Phù Thủy Trắng", "count": 1, "level_bonus": 5, "mult": 2.0},
+        "minion": {"kind": "orc_soldier", "name": "Lính Orc", "count": 6, "level_bonus": 1, "mult": 1.2},
+        "reward_mult": 3,
+        "jewel_chance": 1.0,
+        "minion_jewel_chance": 0.15,
+        "drops": {"jewel_chaos": 0.5, "jewel_soul": 0.3}
+      }
+    },
     "invasion": {
       "every_hours": 2,
       "minutes": 15,

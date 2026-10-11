@@ -9,6 +9,9 @@ Giấy phép: **CC0 1.0** (public domain). Không bắt buộc ghi tên, nhưng 
 các họa sĩ của Dungeon Crawl Stone Soup và dự án RLTiles.
 Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 
+Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint_sprites.mjs` (vẫn CC0): `red_dragon.png` (từ
+`golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`).
+
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng
 `scripts/side_monsters.py`; danh sách trong `priv/game_data/side.json`. Không dùng hình nào trong

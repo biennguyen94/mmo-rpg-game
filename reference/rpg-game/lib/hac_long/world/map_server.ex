@@ -87,6 +87,15 @@ defmodule HacLong.World.MapServer do
   @doc "Golden Invasion: thả trùm vàng của vùng."
   def invade_boss(map_id), do: GenServer.call(via(map_id), :invade_boss)
 
+  @doc """
+  Xâm lăng (B-20, `HacLong.Raids`): thả quái loại `key` vào bản đồ; `units`: `[{kind, số_con, đầu_đàn?}]`. Không hồi
+  sinh, đầu đàn đứng yên. Trả số con có mặt.
+  """
+  def raid(map_id, key, units), do: GenServer.call(via(map_id), {:raid, key, units})
+
+  @doc "Xâm lăng `key` kết thúc: con chưa ai đánh thì biến mất."
+  def end_raid(map_id, key), do: GenServer.call(via(map_id), {:end_raid, key})
+
   @doc "Golden Invasion kết thúc: quái vàng chưa ai đánh thì biến mất."
   def end_invasion(map_id), do: GenServer.call(via(map_id), :end_invasion)
 
@@ -154,6 +163,11 @@ defmodule HacLong.World.MapServer do
           m[:gold] ->
             if not Enum.any?(s.monsters, fn {_, x} -> x[:gold] end),
               do: HacLong.Invasion.cleared(s.map.id, m.boss)
+
+          # quái xâm lăng (B-20) không hồi sinh
+          m[:raid] ->
+            left = Enum.count(s.monsters, fn {_, x} -> x[:raid] == m.raid end)
+            HacLong.Raids.killed(m.raid, s.map.id, m.boss, left)
 
           s.respawn ->
             Process.send_after(self(), {:respawn, m.origin}, respawn_ms(s, m.origin))
@@ -228,6 +242,33 @@ defmodule HacLong.World.MapServer do
         s = put_in(s.monsters[m.id], Map.put(m, :gold, true))
         {:reply, :ok, changed(s)}
     end
+  end
+
+  def handle_call({:raid, key, units}, _from, s) do
+    s =
+      for {kind, n, leader?} <- units, _ <- 1..n//1, reduce: s do
+        s ->
+          case s.zone && free_tile(s) do
+            nil ->
+              s
+
+            pos ->
+              {m, s} = new_monster(s, kind, pos, leader?, {:raid, key})
+              spec = HacLong.Raids.spec(key, kind, s.map.zone)
+
+              put_in(
+                s.monsters[m.id],
+                Map.merge(%{m | rare: false}, %{raid: key, name: spec.name, level: spec.level})
+              )
+          end
+      end
+
+    {:reply, Enum.count(s.monsters, fn {_, m} -> m[:raid] == key end), changed(s)}
+  end
+
+  def handle_call({:end_raid, key}, _from, s) do
+    gone = for {id, m} <- s.monsters, m[:raid] == key && m.busy == nil, do: id
+    {:reply, :ok, changed(%{s | monsters: Map.drop(s.monsters, gone)})}
   end
 
   def handle_call(:end_invasion, _from, s) do
@@ -463,6 +504,10 @@ defmodule HacLong.World.MapServer do
       busy: m.busy != nil,
       rare: m.rare,
       gold: m[:gold] == true,
+      # quái xâm lăng (B-20): tên, cấp riêng (không có trong bảng quái của client)
+      raid: m[:raid],
+      name: m[:name],
+      level: m[:level],
       # phần trăm máu (100 khi chưa ai đánh)
       hp: m[:hp] || 100
     }

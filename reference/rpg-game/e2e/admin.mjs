@@ -104,6 +104,18 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   R.check('quản trị mở ngay Hỗn Chiến Thành: người chơi thấy cho vào, chat báo', !!v && v.phase === 'entry' && said, JSON.stringify(v && { phase: v.phase }));
 }
 
+// B-20: Rồng Đỏ xâm lăng mở ngay → chat báo, có Rồng Đỏ ở bản đồ được chọn
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="raid_red_dragon"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Rồng Đỏ xâm lăng!'));
+  R.check('quản trị mở Rồng Đỏ xâm lăng: chat báo', said);
+}
+
 // danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
 const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
 R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);

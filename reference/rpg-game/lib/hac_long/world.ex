@@ -433,6 +433,7 @@ defmodule HacLong.World do
   defp spec_of(map, m) do
     spec =
       cond do
+        m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map.zone)
         map.side -> Data.side_monster(m.kind)
         map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)
         m.boss -> Data.zone(map.zone).boss

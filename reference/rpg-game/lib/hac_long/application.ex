@@ -27,6 +27,8 @@ defmodule HacLong.Application do
       {DynamicSupervisor, name: HacLong.TienLen.RoomSupervisor, strategy: :one_for_one},
       HacLong.GuildWars,
       HacLong.Invasion,
+      # Rồng Đỏ / Phù Thủy Trắng xâm lăng (B-20)
+      HacLong.Raids,
       # Hỗn Chiến Thành (B-19)
       HacLong.ChaosCastle,
       # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng ngày + thưởng top 3

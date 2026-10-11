@@ -49,6 +49,7 @@ config :hac_long, :leaderboard_cache, false
 config :hac_long, :invasion, auto: false
 config :hac_long, :devil_square_board, auto: false
 config :hac_long, :chaos_castle, auto: false
+config :hac_long, :raids, auto: false
 
 # Phase 16: không chạy người chơi AI khi test
 config :hac_long, :bots, count: 0
