@@ -43,6 +43,10 @@ defmodule HacLong.Profile do
       atk_max: d.atkMax,
       def: d.def,
       crit: d.crit,
+      # như tab Nhân vật: hệ số chí mạng, tỷ lệ trúng quái cùng cấp, bỏ qua phòng thủ
+      crit_mult: d.critMult,
+      hit_rate: d.hitRate,
+      ignore_def: d.ignoreDef,
       dodge: d.dodge,
       # phần trăm cộng thêm (thú cưng đang dắt + món đang ăn, cánh)
       pct: %{

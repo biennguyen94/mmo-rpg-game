@@ -803,7 +803,8 @@
     const pr = o.profile, c = CLASSES[o.cls] || {};
     const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
     const plus = (v) => (v ? ` <span class="up">+${Math.round(v * 100)}%</span>` : '');
-    const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base + s.gear)}</b> <span class="muted">(${fmt(s.base)})</span>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
+    // cùng cách ghi với tab Nhân vật: điểm gốc, phần đồ cộng thêm màu xanh
+    const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base)}</b>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
     const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
     const xpPct = pr.xp_need ? Math.floor((pr.xp / pr.xp_need) * 1000) / 10 : 100;
     const inParty = party && party.members.some((m) => m.id === o.id);
@@ -836,11 +837,14 @@
       <div class="card">
         ${stat('str', 'Sức mạnh')}${stat('agi', 'Nhanh nhẹn')}${stat('vit', 'Thể lực')}${stat('ene', 'Năng lượng')}
         <hr class="sep">
-        ${kv('Sát thương', `<b>${fmt(pr.atk_min)} ~ ${fmt(pr.atk_max)}</b>${plus(pr.pct.atk)}`)}
+        ${kv('Tấn công', `<b>${fmt(pr.atk_min)} ~ ${fmt(pr.atk_max)}</b>${plus(pr.pct.atk)}`)}
+        ${pr.hit_rate != null ? kv('Trúng quái cùng cấp', `${Math.round(pr.hit_rate * 100)}%`) : ''}
         ${kv('Phòng thủ', `<b>${fmt(pr.def)}</b>${plus(pr.pct.def)}`)}
-        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
-        ${kv('Chí mạng · Né', `${Math.round(pr.crit * 100)}% · ${Math.round(pr.dodge * 100)}%`)}
+        ${kv('Chí mạng', `${Math.round(pr.crit * 100)}%${pr.crit_mult ? ` ×${pr.crit_mult.toFixed(2)}` : ''}`)}
+        ${kv('Né đòn', `${Math.round(pr.dodge * 100)}%`)}
         ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương · −${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
+        ${pr.ignore_def ? kv('Bỏ qua phòng thủ', `${Math.round(pr.ignore_def * 100)}%`) : ''}
+        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
       </div>
       <div class="card">
         ${kv(`${icon('two-coins')} Vàng`, fmt(pr.gold))}

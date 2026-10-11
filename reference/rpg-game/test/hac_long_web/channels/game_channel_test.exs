@@ -839,6 +839,8 @@ defmodule HacLongWeb.GameChannelTest do
           rank: rank,
           class_rank: crank,
           stats: %{str: %{base: 5, gear: 0}},
+          crit_mult: cm,
+          hit_rate: hr,
           counts: %{kills: _, pk_wins: 0, pk_losses: 0},
           market: 0,
           registered: %DateTime{}
@@ -846,6 +848,7 @@ defmodule HacLongWeb.GameChannelTest do
       }
 
       assert is_integer(rank) and is_integer(crank)
+      assert cm > 1 and hr > 0 and hr <= 1
 
       # hồ sơ của chính mình: đang online, có chỗ đang đứng
       ref = push(sa, "inspect", %{"uid" => ua.id})
