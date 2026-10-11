@@ -84,6 +84,8 @@
   }
   const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
   // hình nhỏ cạnh tên ngọc / nguyên liệu (hình gốc MU nếu có); không có hình thì `fallback`
+  // hình vé (nút Mua vé ở Người Gác Tháp): hình gốc MU nếu có, không thì biểu tượng của món
+  const ticketIc = (id) => smallIc(id, ITEMS[id] ? icon(ITEMS[id].icon) : '');
   const smallIc = (id, fallback = '') => { const it = ITEMS[id], own = it && ownIcon(it, 0); return own ? `<img class="ic jw own" src="${own}" alt="">` : fallback; };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
@@ -2308,7 +2310,7 @@
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b> · Điểm cao nhất hôm nay: <b class="num">${d.best}</b></span></div>
       <div class="btn-row">
-        <button class="btn" data-act="ds_buy" ${P.gold >= d.price ? '' : 'disabled'}>Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
+        <button class="btn" data-act="ds_buy" ${P.gold >= d.price ? '' : 'disabled'}>${ticketIc('ds_ticket')}Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
         <button class="btn ${canEnter ? 'primary' : ''}" data-act="ds_enter" ${canEnter ? '' : 'disabled'}>Vào Quảng Trường</button>
       </div>
       ${top ? `<div class="small muted" style="margin-top:8px">Bảng hôm nay</div>${top}` : ''}
@@ -2329,7 +2331,7 @@
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b></span></div>
       <div class="btn-row">
-        <button class="btn" data-act="bc_buy" ${P.gold >= d.price ? '' : 'disabled'}>Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
+        <button class="btn" data-act="bc_buy" ${P.gold >= d.price ? '' : 'disabled'}>${ticketIc('bc_ticket')}Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
         <button class="btn ${canEnter ? 'primary' : ''}" data-act="bc_enter" ${canEnter ? '' : 'disabled'}>Vào Lâu Đài</button>
       </div>
     </div>`;
@@ -2350,7 +2352,7 @@
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b>${d.phase !== 'idle' ? ` · Đã vào: <b class="num">${d.players}</b> người` : ''}</span></div>
       <div class="btn-row">
-        <button class="btn" data-act="cc_buy" ${P.gold >= d.price ? '' : 'disabled'}>Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
+        <button class="btn" data-act="cc_buy" ${P.gold >= d.price ? '' : 'disabled'}>${ticketIc('cc_ticket')}Mua vé · ${icon('two-coins')}${fmt(d.price)}</button>
         <button class="btn ${canEnter ? 'primary' : ''}" data-act="cc_enter" ${canEnter ? '' : 'disabled'}>Vào Hỗn Chiến Thành</button>
       </div>
     </div>`;
