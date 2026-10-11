@@ -138,6 +138,9 @@ defmodule HacLong.Library do
     boss_drops =
       for {z, _} <- zones, d = Data.boss_drop(z.boss.id), into: %{}, do: {d, z.boss.name}
 
+    gear_lv = gear_levels(zones)
+    extra = extra_sources()
+
     for {id, it} <- Data.items() do
       sources =
         [
@@ -163,10 +166,24 @@ defmodule HacLong.Library do
             do: ["Quái cấp #{j.monster_level}+, trùm, tháp, rương"],
             else: []
           ),
-          for(mp <- maps, id in mp.gather, do: "Thu thập ở #{mp.name}")
+          gather_source(maps, id),
+          if(Data.legacy?(id),
+            do: ["Đồ bản cũ: không còn rơi / bán, tự đổi sang đồ mới khi vào game"],
+            else: []
+          ),
+          for(
+            {cls, c} <- Enum.sort(Data.classes()),
+            id in Map.values(Data.starters(cls)),
+            do: "Đồ khởi đầu: nhân vật #{c.name} mới tạo mặc sẵn"
+          ),
+          gear_source(gear_lv[id]),
+          chaos_sources(id, it),
+          fish_sources(id),
+          Map.get(extra, id, [])
         ]
         |> List.flatten()
         |> Enum.uniq()
+        |> then(&if(&1 == [], do: ["Chưa có nguồn trong game (chỉ quản trị tặng)"], else: &1))
 
       Map.merge(
         Map.take(it, [
@@ -190,6 +207,143 @@ defmodule HacLong.Library do
       )
     end
     |> Enum.sort_by(&{&1.slot, &1[:level] || 0, &1.name})
+  end
+
+  # ---------- Nguồn rơi / ghép / sự kiện (B-23: Thư viện ghi đủ nguồn và tỉ lệ) ----------
+
+  @slots ~w(weapon shield helm armor pants gloves boots ring pendant)
+
+  # đồ ngẫu nhiên (`Gear.roll`): món thuộc 2 bậc cấp cao nhất ≤ cấp quái → `%{id => {cấp_min, cấp_max}}`
+  defp gear_levels(zones) do
+    top =
+      (Enum.flat_map(zones, fn {z, _} -> [z.boss.level | Enum.map(z.monsters, & &1.level)] end) ++
+         Enum.map(Data.side_monsters(), & &1.level))
+      |> Enum.max()
+
+    for l <- 1..top, s <- @slots, id <- HacLong.Game.Gear.drop_ids(s, l), reduce: %{} do
+      acc -> Map.update(acc, id, {l, l}, fn {a, b} -> {min(a, l), max(b, l)} end)
+    end
+    |> Map.new(fn {id, {a, b}} -> {id, {a, if(b == top, do: nil, else: b)}} end)
+  end
+
+  defp gear_source(nil), do: []
+
+  defp gear_source({a, b}) do
+    c = Data.rules().loot.gear_chance
+    lv = if b, do: "#{a}–#{b}", else: "#{a}+"
+
+    [
+      "Quái cấp #{lv} rơi ngẫu nhiên (mỗi con ra 1 món đồ: thường #{pct(c.normal)}, Bóng Đêm #{pct(c.night)}, trùm #{pct(c.boss)}, tinh anh #{pct(c.elite)}; rồi chia đều các món hợp cấp)",
+      "Thưởng Quảng Trường Quỷ (qua hết đợt), Kalima (hạ Kundun), rương"
+    ]
+  end
+
+  # Máy Hỗn Nguyên: công thức ra món này (`{cls}`: cánh theo lớp)
+  defp chaos_sources(id, it) do
+    for r <- Data.chaos(),
+        out = r[:out],
+        is_binary(out),
+        out == id or (it[:cls] && String.replace(out, "{cls}", to_string(it[:cls])) == id),
+        what = String.trim_trailing(r.desc || r.name, "."),
+        do: "Máy Hỗn Nguyên: #{what} (thành công #{pct(r.rate)})"
+  end
+
+  # gom các bản đồ có điểm thu thập món này vào một dòng
+  defp gather_source(maps, id) do
+    # "Vực Quỷ 1", "Vực Quỷ 2"… → "Vực Quỷ (1–5)"
+    names =
+      for(mp <- maps, Enum.any?(mp.gather, &(&1.item == id)), do: mp.name)
+      |> Enum.uniq()
+      |> Enum.group_by(&String.replace(&1, ~r/ \d+$/, ""), &number_suffix/1)
+      |> Enum.sort()
+      |> Enum.map_join(", ", fn {name, ns} ->
+        case ns |> Enum.reject(&is_nil/1) |> Enum.sort() do
+          [] -> name
+          [n] -> "#{name} #{n}"
+          ns -> "#{name} (#{hd(ns)}–#{List.last(ns)})"
+        end
+      end)
+
+    if names == "", do: [], else: ["Thu thập (bụi / mỏ mọc lại) ở: " <> names]
+  end
+
+  defp number_suffix(name) do
+    case Regex.run(~r/ (\d+)$/, name) do
+      [_, n] -> String.to_integer(n)
+      _ -> nil
+    end
+  end
+
+  defp fish_sources(id) do
+    pools = Data.rules().fishing.pools
+
+    for {pool, list} <- Enum.sort(pools),
+        total = list |> Enum.map(&hd/1) |> Enum.sum(),
+        [w, ^id] <- list,
+        where = if(to_string(pool) == "deep", do: "Câu cá (vùng sâu)", else: "Câu cá"),
+        do: "#{where}: #{pct(w / total)}"
+  end
+
+  # vé / mảnh vé / thưởng các sự kiện, đồ lễ hội, rơi thêm của xâm lăng
+  defp extra_sources do
+    r = Data.rules()
+    tower = "Người Gác Tháp (Làng)"
+    ds = r.devil_square
+    bc = r.blood_castle
+    cc = r.chaos_castle
+    kal = r.kalima
+
+    part = fn d ->
+      "Quái thường cấp #{d.min_level}+ rơi #{pct(d.chance)} (một trong #{length(d.parts)} mảnh)"
+    end
+
+    base = [
+      {ds.ticket, "Mua ở #{tower}: #{num(ds.ticket_price)} vàng"},
+      {bc.ticket, "Mua ở #{tower}: #{num(bc.ticket_price)} vàng"},
+      {cc.ticket, "Mua ở #{tower}: #{num(cc.ticket_price)} vàng"},
+      {cc.ticket,
+       "Quái thường cấp #{cc.ticket_drop.min_level}+ rơi #{pct(cc.ticket_drop.chance)}"},
+      {kal.mark, "Quái thường cấp #{kal.mark_drop.min_level}+ rơi #{pct(kal.mark_drop.chance)}"},
+      {"condor_feather", "Thưởng hạ Hiệp Sĩ Máu (Lâu Đài Máu)"},
+      {"dragon_scale", "Trùm thế giới Cổ Long: top 3 sát thương nhận 1 cái (kèm 1 ngọc)"}
+    ]
+
+    parts =
+      for {d, _} <- [{ds.ticket_drop, :ds}, {bc.ticket_drop, :bc}],
+          id <- d.parts,
+          do: {id, part.(d)}
+
+    events =
+      for e <- Data.events(),
+          do:
+            {e.token,
+             "Lễ hội #{e.name} (#{e.from} → #{e.to}): quái rơi #{pct(r.loot.event_token_chance)}, trùm rơi #{r.loot.event_token_boss} cái"}
+
+    raids =
+      for {_k, rd} <- HacLong.Raids.rules(),
+          {id, c} <- rd.drops,
+          do: {to_string(id), "#{rd.icon} #{rd.leader.name} (#{rd.name}) rơi thêm #{pct(c)}"}
+
+    rewards =
+      for {name, items} <- [
+            {"Hỗn Chiến Thành (người thắng)", cc.reward.winner.items},
+            {"Công Thành Chiến (Chủ Thành)", r.castle_siege.reward.items}
+          ],
+          {id, n} <- items,
+          do: {to_string(id), "Thưởng #{name}: #{n}"}
+
+    (base ++ parts ++ events ++ raids ++ rewards)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+  end
+
+  defp num(n), do: n |> Integer.to_string() |> String.replace(~r/\B(?=(\d{3})+$)/, ".")
+
+  defp pct(x) do
+    v = x * 100
+
+    if v == round(v),
+      do: "#{round(v)} %",
+      else: "#{v |> Float.round(1) |> Float.to_string() |> String.replace(".", ",")} %"
   end
 
   # Thợ Rèn chỉ bán đồ cho lớp được dùng (Engine.class_ok?/2): ghi rõ lớp nào mua được

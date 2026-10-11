@@ -227,6 +227,9 @@ defmodule HacLong.Game.Gear do
 
   defp slot_bases(slot, level, cls), do: bases(slot, level, cls)
 
+  @doc "Id đồ gốc có thể rơi ở ô `slot` từ quái cấp `level` (mọi lớp), cho Thư viện."
+  def drop_ids(slot, level), do: bases(slot, level, nil) |> Enum.map(&elem(&1, 0))
+
   # Đồ gốc thuộc 2 mức cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ
   # đã thay (Phase 15b), hợp lớp `cls` (nil: lớp nào cũng được). Lấy theo mức cấp chứ không theo số món để
   # món phụ (`alt`, Phase 19) cùng bậc không đẩy bậc dưới ra khỏi danh sách rơi.
