@@ -294,7 +294,7 @@
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button>
-          <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button></div></div>
+          <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       <div class="card"><h3>Golden Invasion</h3><button class="btn" data-adm="invasion">Bắt đầu ngay</button></div>
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
@@ -2357,6 +2357,30 @@
     </div>`;
   }
 
+  // Công Thành Chiến (B-22): Chủ Thành, giờ đánh, đăng ký (bang chủ / phó), vào (P.view.cs)
+  const csWhen = (unix) => new Date(unix * 1000).toLocaleString('vi-VN', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+  const gTag = (g) => (g ? `[${esc(g.tag)}] ${esc(g.name)}` : 'chưa có');
+  function csCard() {
+    const d = P.view.cs;
+    if (!d) return '';
+    const fight = d.phase === 'fight';
+    const lowLv = P.level < d.min_level;
+    const canEnter = fight && d.can_enter && !lowLv && P.hp > 0;
+    const canReg = !fight && d.staff && !d.mine_registered && !(d.owner && P.guild && d.owner.id === P.guild.id) && P.gold >= d.register_gold;
+    const state = fight ? `<span class="tag gold">Đang đánh tới ${dsClock(d.ends_at)}</span>` : `<span class="tag">${csWhen(d.next_at)}</span>`;
+    return `<div class="card" data-panel="castle-siege">
+      <div class="row"><h3 class="grow">🏰 Công Thành Chiến</h3>${state}</div>
+      <p class="small muted">Mỗi tuần một trận ${d.run_minutes} phút. Bang chủ / phó bang đăng ký trước (${fmt(d.register_gold)} vàng). Trong trận, thành viên từ cấp ${d.min_level} vào thành, hạ <b>Vương Miện</b> ở giữa thành và giữ nó tới hết giờ; người các bang khác nhau đánh nhau không mất vàng. Bang giữ Vương Miện lúc hết giờ là <b>Chủ Thành</b>, mọi thành viên nhận vàng + ngọc qua thư.</p>
+      <div class="row small"><span class="grow">👑 Chủ Thành: <b>${gTag(d.owner)}</b>${fight ? ` · Đang giữ Vương Miện: <b>${gTag(d.holder)}</b>` : ''} · Bang đã đăng ký: <b class="num">${d.registered_count}</b></span></div>
+      ${!P.guild ? '<p class="small" style="color:var(--bad)">Cần ở trong một bang.</p>' : d.mine_registered ? '<p class="small">Bang bạn đã đăng ký.</p>' : ''}
+      ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level} để vào thành.</p>` : ''}
+      <div class="btn-row">
+        ${d.staff && !fight ? `<button class="btn" data-act="cs_register" ${canReg ? '' : 'disabled'}>Đăng ký · ${icon('two-coins')}${fmt(d.register_gold)}</button>` : ''}
+        <button class="btn ${canEnter ? 'primary' : ''}" data-act="cs_enter" ${canEnter ? '' : 'disabled'}>Vào thành</button>
+      </div>
+    </div>`;
+  }
+
   // Kalima (B-21): đưa Bản Đồ Thất Lạc, cấp Kalima theo cấp nhân vật (P.view.kal)
   function kalCard() {
     const d = P.view.kal;
@@ -2618,6 +2642,7 @@
       sections.push(bcCard());
       sections.push(ccCard());
       sections.push(kalCard());
+      sections.push(csCard());
     }
     if (n.role === 'daily') {
       sections.push(`<div class="card"><div class="row"><h3 class="grow">Việc hôm nay</h3><span class="small muted">Việc mới sau ${dailyLeft()}</span></div>${dailyList(true)}</div>`);
@@ -2816,7 +2841,7 @@
       case 'smith': return { act, slot: d.slot };
       case 'daily_claim': return { act, i: +d.i };
       case 'tower_enter': return { act, floor: +d.floor };
-      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': return { act };
+      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': case 'cs_enter': case 'cs_register': return { act };
       case 'skill': return { act, skill: d.skill };
       case 'mail_claim': return { act, id: +d.id };
       case 'chest_buy': return { act, tier: d.tier };
@@ -2830,7 +2855,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -2864,7 +2889,7 @@
       if (r.ok) {
         if (cmd.act === 'leave' || cmd.act === 'create') tab = 'map';
         if (cmd.act === 'reset') tab = 'map';
-        if (cmd.act === 'tower_enter' || cmd.act === 'ds_enter' || cmd.act === 'bc_enter' || cmd.act === 'cc_enter' || cmd.act === 'kal_enter') { tab = 'map'; npc = null; }
+        if (cmd.act === 'tower_enter' || cmd.act === 'ds_enter' || cmd.act === 'bc_enter' || cmd.act === 'cc_enter' || cmd.act === 'kal_enter' || cmd.act === 'cs_enter') { tab = 'map'; npc = null; }
         if (cmd.act.startsWith('market_')) market.data = null;
         if (cmd.act === 'rebirth' || cmd.act === 'guild_create' || cmd.act === 'guild_donate') board.at = 0;
         if ((cmd.act === 'upgrade' || cmd.act === 'chaos_upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;

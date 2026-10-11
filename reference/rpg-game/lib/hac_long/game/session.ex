@@ -321,7 +321,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "teleport", "travel", "cc_enter"] do
+       when act in ["move", "teleport", "travel", "cc_enter", "cs_enter"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -952,7 +952,11 @@ defmodule HacLong.Game.Session do
   # B-19: mở lại game khi đã bị loại khỏi Hỗn Chiến Thành (đóng tab là bị loại) thì về Làng
   defp cc_back(%{player: %{pos: %{map: map}, battle: nil} = p, tabs: tabs} = s)
        when map_size(tabs) == 0 do
-    if map == HacLong.ChaosCastle.map_id() and not HacLong.ChaosCastle.alive?(s.user_id),
+    out? =
+      (map == HacLong.ChaosCastle.map_id() and not HacLong.ChaosCastle.alive?(s.user_id)) or
+        (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
+
+    if out?,
       do: save(s, %{p | pos: World.village_spawn()}),
       else: s
   end
@@ -973,6 +977,8 @@ defmodule HacLong.Game.Session do
 
   # B-19: vào Hỗn Chiến Thành (đổi bản đồ như dịch chuyển)
   defp run_move(s, %{"act" => "cc_enter"}), do: HacLong.ChaosCastle.enter(s.player, s.user_id)
+  # B-22: vào Công Thành Chiến
+  defp run_move(s, %{"act" => "cs_enter"}), do: HacLong.CastleSiege.enter(s.player, s.user_id)
 
   defp run_move(s, %{"act" => "teleport"} = cmd),
     do: World.teleport(s.player, s.user_id, cmd["to"])

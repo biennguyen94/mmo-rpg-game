@@ -116,6 +116,19 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   R.check('quản trị mở Rồng Đỏ xâm lăng: chat báo', said);
 }
 
+// B-22: Công Thành Chiến mở ngay → chat báo, thẻ ở Người Gác Tháp thấy đang đánh
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="open_cs"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view.cs;
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Công Thành Chiến bắt đầu'));
+  R.check('quản trị mở Công Thành Chiến: đang đánh, chat báo', !!v && v.phase === 'fight' && said, JSON.stringify(v && { phase: v.phase }));
+}
+
 // danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
 const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
 R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);

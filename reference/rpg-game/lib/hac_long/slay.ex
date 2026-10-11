@@ -122,6 +122,13 @@ defmodule HacLong.Slay do
       chaos_castle?(pa) and not HacLong.ChaosCastle.fighting?() ->
         {:error, "Hỗn Chiến Thành chưa bắt đầu, chưa được đánh nhau."}
 
+      # Công Thành Chiến (B-22): chỉ lúc đang đánh, giữa hai bang khác nhau
+      castle?(pa) and not HacLong.CastleSiege.fighting?() ->
+        {:error, "Công Thành Chiến chưa bắt đầu, chưa được đánh nhau."}
+
+      castle?(pa) and (pa[:guild] == nil or pb[:guild] == nil or pa.guild.id == pb.guild.id) ->
+        {:error, "Trong Công Thành Chiến chỉ đánh người bang khác."}
+
       true ->
         :ok
     end
@@ -131,6 +138,10 @@ defmodule HacLong.Slay do
 
   # trong Hỗn Chiến Thành: không mất vàng, không tên đỏ / bảo vệ, thua là bị loại về Làng
   defp chaos_castle?(p), do: p.pos.map == HacLong.ChaosCastle.map_id()
+  defp castle?(p), do: p.pos.map == HacLong.CastleSiege.map_id()
+
+  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến): không tên đỏ / vàng thêm, thua về Làng
+  defp event_map?(p), do: chaos_castle?(p) or castle?(p)
 
   # Session `uid` vào trận với bản sao của `foe`; lỗi thì hủy trận (và trận đã mở của bên kia).
   defp begin(uid, f, foe, foe_p, undo) do
@@ -347,9 +358,11 @@ defmodule HacLong.Slay do
 
             if pl2.pos.map != pl.pos.map, do: World.leave(pl, loser)
 
-            if chaos_castle?(pw),
-              do: HacLong.ChaosCastle.kill(winner, :player),
-              else: marks(f, winner, loser)
+            cond do
+              chaos_castle?(pw) -> HacLong.ChaosCastle.kill(winner, :player)
+              castle?(pw) -> :ok
+              true -> marks(f, winner, loser)
+            end
 
             HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
@@ -389,7 +402,7 @@ defmodule HacLong.Slay do
 
         {_, pl2} = Engine.finish_lose(pl)
 
-        cc? = chaos_castle?(pl)
+        cc? = event_map?(pl)
 
         # tên đỏ gục: mất vàng gấp `red_gold_mult` lần (không áp trong Hỗn Chiến Thành)
         extra =

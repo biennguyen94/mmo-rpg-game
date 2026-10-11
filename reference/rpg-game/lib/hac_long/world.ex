@@ -450,9 +450,14 @@ defmodule HacLong.World do
   defp encounter(p, %{side: true} = map, m),
     do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
 
-  # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ
-  defp encounter(p, %{event: e} = map, m) when is_binary(e),
-    do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+  # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ;
+  # B-22: bang đang giữ Vương Miện không đánh được nó
+  defp encounter(p, %{event: e} = map, m) when is_binary(e) do
+    case e == "castle_siege" && HacLong.CastleSiege.crown_blocked(p, m) do
+      msg when is_binary(msg) -> {%{ok: false, msg: msg}, p}
+      _ -> Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+    end
+  end
 
   defp encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
 
@@ -460,6 +465,7 @@ defmodule HacLong.World do
     spec =
       cond do
         m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map.zone)
+        map.event == "castle_siege" -> HacLong.CastleSiege.crown_spec()
         map.side -> Data.side_monster(m.kind)
         map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)
         m.boss -> Data.zone(map.zone).boss
@@ -583,6 +589,9 @@ defmodule HacLong.World do
           b.result == "win" ->
             MapServer.defeat(map_id, uid, mid)
             if map_id == HacLong.ChaosCastle.map_id(), do: HacLong.ChaosCastle.kill(uid, :monster)
+
+            if map_id == HacLong.CastleSiege.map_id(),
+              do: HacLong.CastleSiege.defeated(uid, mid, p[:guild])
 
           # mình thua hoặc bỏ chạy nhưng đồng đội còn đánh: chuyển quái cho người khác
           enc[:shared] ->

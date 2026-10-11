@@ -354,5 +354,16 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Không xong: thưởng theo số quái đã hạ. Khác MU: chỉ một loại dấu ấn / bản đồ (không chia 7 cấp vật phẩm), Kalima là bản
   đồ riêng một người (không tổ đội, không cổng mở cho người khác). Sửa kèm: trận đang đánh trong Quảng Trường / Lâu Đài
   (quái có cờ `ds` / `bc`) lưu xuống rồi nạp lại bị lỗi vì thiếu khóa trong `Characters @battle_keys` — đã thêm `ds bc kal`.
+- **B-22** (anh chốt "làm luôn 9, 1, 2, 3, 4", em đề xuất số) **Công Thành Chiến** (`RULES.castle_siege`,
+  `HacLong.CastleSiege`, bản đồ chung `castle_siege` "Thành Hắc Long"): **thứ Bảy 20h00, 30 phút** mỗi tuần. Bang chủ / phó
+  bang đăng ký ở Người Gác Tháp trước giờ đánh (**200.000 vàng** của người đăng ký); bang đang giữ thành không cần đăng ký;
+  không ai đăng ký và chưa có Chủ Thành thì tuần đó không đánh. Trong trận, thành viên cấp ≥ 30 của các bang tham gia vào
+  thành (sân phía nam), gục thì về Làng không mất vàng, vào lại được. **Vương Miện** (cấp 50, sức ×2,5, đứng giữa thành): bang
+  hạ được thì giữ Vương Miện, nó hiện lại sau 60 giây, bang đang giữ không đánh được nó. Người hai bang khác nhau đồ sát
+  nhau (không mất vàng, không tên đỏ), cùng bang không đánh nhau. Hết giờ: bang đang giữ Vương Miện là **Chủ Thành** tới trận
+  sau; mọi thành viên nhận qua thư **100.000 vàng + 1 Hỗn Nguyên + 3 Ước Nguyện + 2 Tâm Linh**. Khác MU: không có cổng /
+  tượng thủ thành / máy bắn đá, không thu thuế, Chủ Thành chỉ có danh hiệu trên thẻ + phần thưởng. **CHANGE_REASON (schema):**
+  thêm bảng `castle_siege` (một dòng: `owner_guild_id`, `owner_since`, `registered`) để Chủ Thành và đăng ký còn sau khi khởi
+  động lại server; không đổi bảng cũ.
 
 

@@ -197,6 +197,12 @@ defmodule HacLong.Game.Commands do
           HacLong.ChaosCastle.buy_ticket(p)
         end)
 
+      # Công Thành Chiến (B-22): bang chủ / phó bang đăng ký ở Người Gác Tháp
+      "cs_register" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
+          HacLong.CastleSiege.register(p, nil)
+        end)
+
       # Kalima (B-21): đưa Bản Đồ Thất Lạc cho Người Gác Tháp
       "kal_enter" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> HacLong.Game.Kalima.enter(p) end)

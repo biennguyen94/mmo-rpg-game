@@ -20,7 +20,7 @@
 13. [Hộp thư, Thông báo, bảng xếp hạng](#13-hộp-thư-thông-báo-bảng-xếp-hạng)
 14. [Phím tắt, điện thoại](#14-phím-tắt-điện-thoại)
 
-> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Kalima, Rồng Đỏ / Phù Thủy Trắng xâm lăng, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md).
+> **Lịch sự kiện** (Golden Invasion, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Kalima, Công Thành Chiến, Rồng Đỏ / Phù Thủy Trắng xâm lăng, trùm thế giới, lễ hội, việc hằng ngày) và cách tham gia: xem [`EVENTS.md`](EVENTS.md).
 
 ---
 
@@ -127,6 +127,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   quân canh, phá Cổng Thành, hạ Hiệp Sĩ Máu để nhận Lông Vũ Kền Kền (cần để ghép cánh cấp 3), vàng, kinh nghiệm, 2 ngọc.
 - **Rồng Đỏ / Phù Thủy Trắng xâm lăng:** mỗi 4 giờ (Phù Thủy 0h45, 4h45 …; Rồng 2h45, 6h45 …), 20 phút, ở vài bản đồ vùng
   ngẫu nhiên (chat báo tên bản đồ). Không cần vé. Hạ con đầu đàn chắc chắn rơi ngọc, thưởng ×3–×4.
+- **Công Thành Chiến:** thứ Bảy 20h00, 30 phút. Bang chủ / phó bang đăng ký trước ở Người Gác Tháp (200 000 vàng); thành viên
+  cấp 30+ vào thành, giành Vương Miện và giữ tới hết giờ. Bang giữ được là Chủ Thành, mọi thành viên nhận vàng + ngọc qua thư.
 - **Kalima:** từ cấp 20, lúc nào cũng vào được ở Người Gác Tháp, tốn 1 Bản Đồ Thất Lạc (ghép 5 Dấu Ấn Kundun ở Máy Hỗn
   Nguyên; dấu ấn rơi từ quái cấp 20+). Kalima 1–7 theo cấp; hạ 10 quái rồi hạ Kundun để nhận vàng, ngọc và một món đồ.
 - **Hỗn Chiến Thành:** từ cấp 15, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h30, 3h30 … 23h30), cho vào 5 phút,

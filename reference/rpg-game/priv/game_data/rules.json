@@ -288,6 +288,19 @@
         "partial": {"gold_per_guard": 6, "xp_per_guard": 0.3}
       }
     },
+    "castle_siege": {
+      "_doc": "B-22: Công Thành Chiến (HacLong.CastleSiege). Mỗi tuần vào thứ weekday (1 = thứ Hai … 7 = Chủ Nhật) lúc hour:minute giờ Việt Nam, kéo dài run_minutes phút trên bản đồ map. Bang chủ / phó bang đăng ký ở Người Gác Tháp trước giờ đánh (tốn register_gold vàng của người đăng ký). Thành viên (từ min_level) của bang đã đăng ký và bang đang giữ thành vào được trong lúc đánh, vào lại được sau khi gục. Vương Miện (crown) ở giữa thành: bang hạ được thì giữ Vương Miện, nó hiện lại sau crown.respawn_s giây, bang đang giữ không đánh được. Người các bang khác nhau đồ sát nhau không mất vàng, không tên đỏ. Hết giờ: bang giữ Vương Miện là Chủ Thành tới trận sau, mọi thành viên nhận reward qua thư.",
+      "map": "castle_siege",
+      "weekday": 6,
+      "hour": 20,
+      "minute": 0,
+      "run_minutes": 30,
+      "min_level": 30,
+      "register_gold": 200000,
+      "spawn_rows": [14, 18],
+      "crown": {"kind": "crystal_guardian", "name": "Vương Miện", "at": [12, 5], "level": 50, "mult": 2.5, "respawn_s": 60},
+      "reward": {"gold": 100000, "items": {"jewel_chaos": 1, "jewel_bless": 3, "jewel_soul": 2}}
+    },
     "blood_castle": {
       "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
       "every_hours": 2,

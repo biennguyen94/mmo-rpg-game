@@ -377,6 +377,8 @@ defmodule HacLong.Game.Engine do
       cc: HacLong.ChaosCastle.view(p),
       # Kalima (B-21)
       kal: HacLong.Game.Kalima.view(p),
+      # Công Thành Chiến (B-22)
+      cs: HacLong.CastleSiege.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),

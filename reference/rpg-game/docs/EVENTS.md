@@ -13,6 +13,7 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 4. [Lâu Đài Máu (Blood Castle)](#4-lâu-đài-máu-blood-castle)
    - [Hỗn Chiến Thành (Chaos Castle)](#hỗn-chiến-thành-chaos-castle)
    - [Kalima](#kalima)
+   - [Công Thành Chiến (Castle Siege)](#công-thành-chiến-castle-siege)
 5. [Trùm thế giới Cổ Long](#5-trùm-thế-giới-cổ-long)
 6. [Lễ hội theo mùa](#6-lễ-hội-theo-mùa)
 7. [Hoạt động hằng ngày](#7-hoạt-động-hằng-ngày)
@@ -33,6 +34,7 @@ Bốn sự kiện chạy xen kẽ, mỗi sự kiện lặp lại **mỗi 2 giờ
 | 1h30, 3h30, 5h30 … 23h30 | Hỗn Chiến Thành | từ 15 | Áo Giáp Vệ Binh | cho vào 5 phút, hỗn chiến 10 phút |
 | 0h45, 4h45, 8h45 … 20h45 | Phù Thủy Trắng xâm lăng | mọi cấp | không cần | 20 phút |
 | 2h45, 6h45, 10h45 … 22h45 | Rồng Đỏ xâm lăng | mọi cấp | không cần | 20 phút |
+| Thứ Bảy 20h00 (mỗi tuần) | Công Thành Chiến | từ 30, theo bang | bang đăng ký trước | 30 phút |
 
 Trùm thế giới Cổ Long xuất hiện khoảng **2 giờ một lần**, mỗi lần 30 phút; lịch tính từ lúc server khởi động (lần đầu sau
 10 phút) nên không cố định theo giờ đồng hồ. Khi trùm xuất hiện, cả server nhận thông báo trong chat.
@@ -137,6 +139,21 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
   Bước tiếp theo về Làng.
 - **Không xong** (hết giờ, gục, tự về): thưởng theo số quái đã hạ.
 
+### Công Thành Chiến (Castle Siege)
+
+(`RULES.castle_siege`, DECISIONS B-22)
+
+- **Khi nào:** **thứ Bảy 20h00**, mỗi tuần, đánh **30 phút**.
+- **Đăng ký:** bang chủ / phó bang đến **Người Gác Tháp** → thẻ **🏰 Công Thành Chiến** → Đăng ký (**200.000 vàng**), trước giờ
+  đánh. Bang đang là Chủ Thành tự động tham gia.
+- **Vào:** trong 30 phút đánh, thành viên **cấp 30+** của bang tham gia gặp Người Gác Tháp → Vào thành. Gục ngã thì về Làng
+  (không mất vàng) và vào lại được.
+- **Cách chơi:** giữa thành có **Vương Miện**. Bang nào hạ được nó thì **giữ Vương Miện**; 60 giây sau Vương Miện hiện lại cho
+  các bang khác giành (bang đang giữ không đánh được nó — hãy chặn người bang khác). Người hai bang khác nhau được đồ sát
+  nhau, không mất vàng, không tên đỏ.
+- **Kết quả:** hết giờ, bang đang giữ Vương Miện là **Chủ Thành** tới trận sau (hiện trên thẻ); mọi thành viên nhận qua thư
+  **100.000 vàng + 1 Ngọc Hỗn Nguyên + 3 Ngọc Ước Nguyện + 2 Ngọc Tâm Linh**.
+
 ## 5. Trùm thế giới Cổ Long
 
 (`config :hac_long, :world_boss`, `HacLong.WorldBoss`)
@@ -197,12 +214,12 @@ Làm mới lúc 0h mỗi ngày.
 
 - **Mở sự kiện ngay** (tab Quản trị → khung **Sự kiện**): 🐉 Gọi Cổ Long, ✨ Golden Invasion, 😈 Mở Quảng Trường Quỷ,
   🏰 Mở Lâu Đài Máu, ⚔ Mở Hỗn Chiến Thành (cho vào 5 phút rồi hỗn chiến 10 phút), 🐲 Rồng Đỏ xâm lăng, 🧙 Phù Thủy Trắng
-  xâm lăng (bắt đầu ngay ở bản đồ ngẫu nhiên). Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
+  xâm lăng (bắt đầu ngay ở bản đồ ngẫu nhiên), 🏰 Mở Công Thành Chiến (bắt đầu ngay, mọi bang vào được, kết quả tính thật). Quảng Trường / Lâu Đài mở một đợt riêng ngoài lịch, cho vào trong 10 phút, cả server nhận thông báo;
   người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được đợt này.
 - **Đổi lịch trùm thế giới** (biến môi trường, khởi động lại server; xem `config/runtime.exs`):
   `WORLD_BOSS_FIRST_MINUTES` (lần đầu sau khởi động, mặc định 10), `WORLD_BOSS_EVERY_MINUTES` (120),
   `WORLD_BOSS_DURATION_MINUTES` (30), `WORLD_BOSS_HP` (20.000).
-- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `raids`, `devil_square`, `blood_castle`, `chaos_castle`, `kalima`,
+- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `raids`, `devil_square`, `blood_castle`, `chaos_castle`, `kalima`, `castle_siege`,
   `events`, `daily`, `arena`, `pk`…) rồi khởi động lại; lễ hội thêm / sửa ở `priv/game_data/events.json`.
 - **Tặng vé:** tab Quản trị → Đồ thường → `ds_ticket` (Vé Quảng Trường) / `bc_ticket` (Vé Lâu Đài) /
   `cc_ticket` (Áo Giáp Vệ Binh) / `lost_map` (Bản Đồ Thất Lạc) / `kundun_mark` (Dấu Ấn Kundun).

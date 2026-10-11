@@ -803,6 +803,12 @@ defmodule HacLongWeb.GameChannel do
     {:ok, %{msg: "Đã mở ⚔ Hỗn Chiến Thành: vào trong #{mins} phút, rồi hỗn chiến.", window: w}}
   end
 
+  # B-22: Công Thành Chiến bắt đầu ngay, mọi bang vào được (tự báo kênh chat)
+  defp admin("open_cs", _p, _s) do
+    :ok = HacLong.CastleSiege.start_now(true)
+    {:ok, %{msg: "Đã mở 🏰 Công Thành Chiến (mọi bang vào được)."}}
+  end
+
   # B-20: xâm lăng mở ngay (tự báo kênh chat)
   defp admin("raid_" <> key, _p, _s) when key in ["red_dragon", "white_wizard"] do
     case HacLong.Raids.start_now(key) do

@@ -75,8 +75,8 @@ defmodule HacLong.World.MapServer do
   def hp(map_id, mid, pct), do: GenServer.cast(via(map_id), {:hp, mid, pct})
 
   @doc "Đặt một con quái vào ô cho trước (dùng trong test)."
-  def put_monster(map_id, kind, {x, y}, boss? \\ false, rare? \\ false),
-    do: GenServer.call(via(map_id), {:put_monster, kind, {x, y}, boss?, rare?})
+  def put_monster(map_id, kind, {x, y}, boss? \\ false, rare? \\ false, extra \\ %{}),
+    do: GenServer.call(via(map_id), {:put_monster, kind, {x, y}, boss?, rare?, extra})
 
   @doc "Đặt một điểm thu thập vào ô cho trước (dùng trong test)."
   def put_node(map_id, item, {x, y}), do: GenServer.call(via(map_id), {:put_node, item, {x, y}})
@@ -202,10 +202,11 @@ defmodule HacLong.World.MapServer do
 
   def handle_call(:snapshot, _from, s), do: {:reply, snapshot_of(s), s}
 
-  def handle_call({:put_monster, kind, pos, boss?, rare?}, _from, s) do
+  def handle_call({:put_monster, kind, pos, boss?, rare?, extra}, _from, s) do
     origin = if boss?, do: :boss, else: {:manual, kind}
     {m, s} = new_monster(s, kind, pos, boss?, origin)
-    m = %{m | rare: rare?}
+    # `extra`: tên / cấp riêng hiện trên bản đồ (vd Vương Miện, B-22)
+    m = Map.merge(%{m | rare: rare?}, Map.take(extra, [:name, :level]))
     s = put_in(s.monsters[m.id], m)
     {:reply, public(m), changed(s)}
   end
