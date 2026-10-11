@@ -73,7 +73,13 @@ defmodule HacLong.Admin do
     {:ok,
      fn p ->
        {levels, p} = Engine.gain_xp(p, xp)
-       {:ok, p, "+#{xp} kinh nghiệm#{if levels > 0, do: ", lên cấp #{p.level}", else: ""}."}
+
+       msg =
+         if levels > 0,
+           do: "+#{xp} kinh nghiệm, lên cấp #{p.level}.",
+           else: "+#{xp} kinh nghiệm."
+
+       {:ok, p, msg}
      end}
   end
 
@@ -132,7 +138,13 @@ defmodule HacLong.Admin do
              gs = if wopt, do: Enum.map(gs, &Map.put(&1, :wopt, wopt)), else: gs
              p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ gs)
              p = Enum.reduce(gs, p, &put_upgrade(&2, &1.uid, up))
-             {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}
+
+             msg =
+               if up > 0,
+                 do: "Đã tặng #{it.name} +#{up} ×#{count}.",
+                 else: "Đã tặng #{it.name} ×#{count}."
+
+             {:ok, p, msg}
            end
          end}
 

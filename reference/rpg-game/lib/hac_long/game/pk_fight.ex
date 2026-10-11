@@ -87,7 +87,10 @@ defmodule HacLong.Game.PkFight do
           st
           |> hurt(them, dmg)
           |> say(
-            "#{m.name} đánh #{t.name} #{dmg} máu#{if crit, do: " (chí mạng)", else: ""}.",
+            if(crit,
+              do: "#{m.name} đánh #{t.name} #{dmg} máu (chí mạng).",
+              else: "#{m.name} đánh #{t.name} #{dmg} máu."
+            ),
             kind(me)
           )
       end

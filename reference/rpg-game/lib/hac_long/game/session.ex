@@ -1069,7 +1069,12 @@ defmodule HacLong.Game.Session do
       HacLong.PubSub,
       topic(target),
       {:notice,
-       "🏟 #{player.name} thách đấu bạn ở đấu trường và #{if r.won, do: "thắng", else: "thua"} (điểm của bạn #{sign.(r.their_delta)})."}
+       if(r.won,
+         do:
+           "🏟 #{player.name} thách đấu bạn ở đấu trường và thắng (điểm của bạn #{sign.(r.their_delta)}).",
+         else:
+           "🏟 #{player.name} thách đấu bạn ở đấu trường và thua (điểm của bạn #{sign.(r.their_delta)})."
+       )}
     )
 
     player

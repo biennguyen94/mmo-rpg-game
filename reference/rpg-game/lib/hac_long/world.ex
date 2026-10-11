@@ -406,8 +406,14 @@ defmodule HacLong.World do
         p = %{put_pos(p, target.id, x, y) | gold: p.gold - cost}
         enter(p, uid)
 
-        {%{ok: true, msg: "Đến #{target.name}#{if cost > 0, do: " (−#{cost} vàng)", else: ""}."},
-         p}
+        {%{
+           ok: true,
+           msg:
+             if(cost > 0,
+               do: "Đến #{target.name} (−#{cost} vàng).",
+               else: "Đến #{target.name}."
+             )
+         }, p}
     end
   end
 

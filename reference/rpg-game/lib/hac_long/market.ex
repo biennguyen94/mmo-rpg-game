@@ -139,7 +139,10 @@ defmodule HacLong.Market do
           p,
           save,
           row,
-          "Đã rao bán #{it.name}#{if count > 1, do: " ×#{count}", else: ""} giá #{price} vàng."
+          if(count > 1,
+            do: "Đã rao bán #{it.name} ×#{count} giá #{price} vàng.",
+            else: "Đã rao bán #{it.name} giá #{price} vàng."
+          )
         )
     end
   end
@@ -233,7 +236,10 @@ defmodule HacLong.Market do
       Mailbox.send(row.seller_id, %{
         subject: "Chợ: bán được #{name}",
         body:
-          "Có người mua #{name}#{if row.count > 1, do: " ×#{row.count}", else: ""} giá #{row.price} vàng. Phí chợ #{@fee_pct}%.",
+          if(row.count > 1,
+            do: "Có người mua #{name} ×#{row.count} giá #{row.price} vàng. Phí chợ #{@fee_pct}%.",
+            else: "Có người mua #{name} giá #{row.price} vàng. Phí chợ #{@fee_pct}%."
+          ),
         gold: earned
       })
 

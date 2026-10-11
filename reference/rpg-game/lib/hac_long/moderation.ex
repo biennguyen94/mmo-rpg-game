@@ -178,7 +178,8 @@ defmodule HacLong.Moderation do
   def set_role(username, role) do
     cond do
       role not in User.roles() ->
-        {:error, "Vai trò phải là #{Enum.join(User.roles(), " / ")}."}
+        roles = Enum.join(User.roles(), " / ")
+        {:error, "Vai trò phải là #{roles}."}
 
       u = Repo.get_by(User, username: String.downcase(username)) ->
         u |> Ecto.Changeset.change(role: role) |> Repo.update()

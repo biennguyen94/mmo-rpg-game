@@ -365,11 +365,14 @@ defmodule HacLong.Game.Achievements do
         titles = new |> Enum.map(& &1[:title]) |> Enum.filter(& &1)
 
         msg =
-          "🏅 Thành tựu mới: #{Enum.map_join(new, ", ", & &1.name)}." <>
-            if(titles == [],
-              do: "",
-              else: " Danh hiệu mới: #{Enum.join(titles, ", ")} (chọn ở tab Nhân vật)."
-            )
+          (
+            names = Enum.map_join(new, ", ", & &1.name)
+            tl = Enum.join(titles, ", ")
+
+            if titles == [],
+              do: "🏅 Thành tựu mới: #{names}.",
+              else: "🏅 Thành tựu mới: #{names}. Danh hiệu mới: #{tl} (chọn ở tab Nhân vật)."
+          )
 
         {p, msg}
     end

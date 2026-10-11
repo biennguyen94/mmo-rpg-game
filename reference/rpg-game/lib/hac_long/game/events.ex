@@ -81,7 +81,7 @@ defmodule HacLong.Game.Events do
         id: "potions",
         name: "#{@rules.potions} #{Data.item("potion_l").name}",
         cost: @rules.shop.potions,
-        desc: "Hồi #{round(Data.item("potion_l").heal_pct * 100)}% máu tối đa mỗi bình."
+        desc: "Hồi #{potion_l_pct()}% máu tối đa mỗi bình."
       },
       %{
         id: "gold",
@@ -145,4 +145,6 @@ defmodule HacLong.Game.Events do
 
   @doc "Đồ trang trí chỉ có trong sự kiện thì Thợ Mộc không bán."
   def event_decor?(id), do: Enum.any?(Data.events(), &(&1.decor == id))
+
+  defp potion_l_pct, do: round(Data.item("potion_l").heal_pct * 100)
 end

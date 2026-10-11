@@ -811,7 +811,7 @@ defmodule HacLong.Game.Engine do
             else:
               p
               |> set_effects(:player, Enum.reject(effects(p, :player), &(&1.id in @dots)))
-              |> log("Hết #{Enum.map_join(poisoned, ", ", &@effect_names[&1.id])}.", "good")
+              |> log("Hết #{effect_list(poisoned)}.", "good")
 
         monster_turn(p, d)
     end
@@ -1056,7 +1056,11 @@ defmodule HacLong.Game.Engine do
           text =
             if special,
               do: "🔥 #{m.name} dùng #{m.special.name}! Bạn mất #{dmg} máu.",
-              else: "#{m.name} đánh bạn #{dmg} máu#{if mc, do: " (chí mạng)", else: ""}."
+              else:
+                if(mc,
+                  do: "#{m.name} đánh bạn #{dmg} máu (chí mạng).",
+                  else: "#{m.name} đánh bạn #{dmg} máu."
+                )
 
           p = log(p, text, "bad") |> reflect(dmg, d.excReflect)
 
@@ -1142,7 +1146,7 @@ defmodule HacLong.Game.Engine do
 
           log(
             p,
-            "Bạn mất #{pdot} máu vì #{Enum.map_join(pdots, ", ", &@effect_names[&1.id])}.",
+            "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.",
             "bad"
           )
         else
@@ -1236,7 +1240,11 @@ defmodule HacLong.Game.Engine do
         else:
           log(
             p,
-            "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm#{if xf < 1, do: " (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp)"}, +#{gold} vàng.",
+            if(xf < 1,
+              do:
+                "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp), +#{gold} vàng.",
+              else: "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm, +#{gold} vàng."
+            ),
             "win"
           )
 
@@ -2079,7 +2087,7 @@ defmodule HacLong.Game.Engine do
         {err("Không đủ vàng."), p}
 
       true ->
-        {ok("Đã mua #{if n > 1, do: "#{n} ", else: ""}#{it.name}."),
+        {ok(if(n > 1, do: "Đã mua #{n} #{it.name}.", else: "Đã mua #{it.name}.")),
          %{p | gold: p.gold - price(p, id) * n} |> add_item(id, n)}
     end
   end
@@ -2300,4 +2308,7 @@ defmodule HacLong.Game.Engine do
          })}
     end
   end
+
+  # tên các hiệu ứng, cách nhau dấu phẩy (tính trước để câu nhật ký dịch được theo mẫu)
+  defp effect_list(effs), do: Enum.map_join(effs, ", ", &@effect_names[&1.id])
 end
