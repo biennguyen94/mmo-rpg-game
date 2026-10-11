@@ -184,7 +184,8 @@ w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {u
 ex, an, lo = rules['excellent'], rules['ancient'], rules['loot']
 exn = {'atk_pct': 'Tấn công +{}', 'crit': 'Chí mạng +{}', 'heal_kill': 'Hồi {} máu khi hạ quái',
        'mp_kill': 'Hồi {} MP khi hạ quái', 'hp_pct': 'Máu tối đa +{}', 'dmg_red': 'Giảm sát thương nhận {}',
-       'gold_pct': 'Vàng nhận +{}'}
+       'gold_pct': 'Vàng nhận +{}', 'atk_lvl': 'Tấn công + cấp × {}', 'ar_pct': 'Tỉ lệ trúng +{}',
+       'mp_pct': 'MP tối đa +{}', 'reflect': 'Phản sát thương {}', 'def_rate': 'Tỉ lệ né +{}'}
 w('## Dòng phụ trên đồ rơi\n')
 w('### Dòng cộng thêm (kiểu MU, DECISIONS B-15)\n')
 life = rules['upgrade']['life']
@@ -195,8 +196,8 @@ for r, wt in lo['gear_weights']:
 w(f"\nMỗi dòng +{life['per_line']} tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh Mệnh thêm dòng tới tối đa {life['max_lines']}. Không còn độ hiếm Tốt / Hiếm / Sử Thi.\n")
 w('### Excellent\n')
 w('Số dòng: ' + ', '.join(f"{n} dòng {wt}%" for n, wt in ex['lines']) + f". Giá bán ×{ex['price_mult']}.\n")
-w('- Vũ khí, dây chuyền: ' + '; '.join(exn[k].format(pct(v)) for k, v in ex['options']['weapon'].items()))
-w('- Giáp, khiên, nhẫn: ' + '; '.join(exn[k].format(pct(v)) for k, v in ex['options']['armor'].items()))
+w('- Vũ khí, dây chuyền: ' + '; '.join(exn[k].format(v if k == 'atk_lvl' else pct(v)) for k, v in ex['options']['weapon'].items()))
+w('- Giáp, khiên, nhẫn: ' + '; '.join(exn[k].format(v if k == 'atk_lvl' else pct(v)) for k, v in ex['options']['armor'].items()))
 w(f"\nTổng giảm sát thương tối đa {pct(ex['max_dmg_red'])}. Pha thêm ở Máy Hỗn Nguyên (tối đa 3 dòng).\n")
 w('### Đồ Thần\n')
 w(f"Chỉ món bộ giáp. Thủ món +{pct(an['piece_def_pct'])}, giá bán ×{an['price_mult']}. "

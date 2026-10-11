@@ -9,7 +9,7 @@ defmodule HacLong.Game.Chaos do
   trên `min_up` cộng `per_up` vào tỉ lệ, tối đa `max_rate`.
 
   Công thức có `mode` (Phase 15f, `docs/ITEMS_PHASE15B.md` §9) không có `out`: thành công thì **chính món đồ**
-  bỏ vào được thêm dòng (`"excellent"`: 1 dòng Excellent, tối đa 3; `"luck"`: dòng May mắn), giữ nguyên cấp nâng.
+  bỏ vào được thêm dòng (`"excellent"`: 1 dòng Excellent, tới đủ 6 dòng như MU (B-16); `"luck"`: dòng May mắn), giữ nguyên cấp nâng.
 
   Thất bại: **mất hết** nguyên liệu, món đồ và phí. Thành công ra cánh thì báo cả server.
   """
@@ -105,7 +105,7 @@ defmodule HacLong.Game.Chaos do
   end
 
   defp mode_ok("excellent", g, it) do
-    if length(g[:exc] || []) < min(3, length(Gear.exc_pool(it.slot))),
+    if length(g[:exc] || []) < length(Gear.exc_pool(it.slot)),
       do: :ok,
       else: {:error, "#{it.name} đã đủ dòng Excellent."}
   end

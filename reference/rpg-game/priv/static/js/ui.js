@@ -317,7 +317,9 @@
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
-      ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm +${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}`, 'Tặng')}
+      ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm +${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
+        <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}</div>
+        ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
@@ -359,7 +361,8 @@
     if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
     if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
     if (op === 'give_gear') {
-      Object.assign(payload, { base: f.get('base'), opt: n('opt'), up: n('up') });
+      Object.assign(payload, { base: f.get('base'), opt: n('opt'), up: n('up'), exc: f.getAll('exc') });
+      for (const k of ['luck', 'skill', 'anc']) if (f.get(k)) payload[k] = true;
     }
     Net.admin(op, payload).then((r) => { toast(r.msg || 'Đã xong.'); if (r.user) adm.user = r.user; adm.glog = null; render(); }).catch((err) => toast(err.msg, true));
   }
@@ -1918,6 +1921,10 @@
     heal_kill: (v) => `Hạ quái hồi ${Math.round(v * 100)}% máu`, mp_kill: (v) => `Hạ quái hồi ${Math.round(v * 100)}% MP`,
     hp_pct: (v) => `Máu tối đa +${Math.round(v * 100)}%`, dmg_red: (v) => `Giảm sát thương nhận ${Math.round(v * 100)}%`,
     gold_pct: (v) => `Vàng nhặt được +${Math.round(v * 100)}%`,
+    // B-16: đủ 6 dòng mỗi nhóm như MU
+    atk_lvl: (v) => `Tăng lực tấn công + cấp × ${v}`, ar_pct: (v) => `Tăng tốc độ đánh (tỉ lệ trúng +${Math.round(v * 100)}%)`,
+    mp_pct: (v) => `MP tối đa +${Math.round(v * 100)}%`, reflect: (v) => `Phản sát thương ${Math.round(v * 100)}%`,
+    def_rate: (v) => `Tỉ lệ phòng thủ thành công +${Math.round(v * 100)}%`,
   };
   const excLines = (it) => (it.exc_lines && it.exc_lines.length ? `<div class="small exc">✦ Excellent</div>${it.exc_lines.map((l) => `<div class="small exc">· ${(EXC_TEXT[l.id] || ((v) => l.id))(l.value)}</div>`).join('')}` : '');
   // Phase 15d: dòng May mắn (chí mạng chỉ khi là vũ khí, ép ngọc mọi món) / Kỹ năng (vũ khí), số ở RULES.luckSkill

@@ -745,3 +745,7 @@ body.tl-on { overflow: hidden; }
 .mu-set { color: #7a7a85; }
 .mu-set.on { color: #7fb3ff; }
 
+
+/* B-16: ô chọn dòng khi quản trị tặng đồ */
+.adm-lines { display: flex; flex-wrap: wrap; gap: 4px 10px; width: 100%; margin-top: 4px; }
+.adm-lines label { display: inline-flex; align-items: center; gap: 3px; }

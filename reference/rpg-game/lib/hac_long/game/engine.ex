@@ -211,10 +211,10 @@ defmodule HacLong.Game.Engine do
     %{
       maxHp:
         round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
-      maxMp: round(lin.(f.mp) + wo.mp),
+      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)),
       atk:
         round(
-          (lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
+          (lin.(f.atk) + exc.atk_lvl * p.level + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
              if(pd, do: pd[:atk] || 0, else: 0) + up.(p.equip[:pendant])) * pet.(:atk) *
             (1 + exc.atk_pct + sb.atk_pct + anc.atk_pct)
         ),
@@ -233,13 +233,17 @@ defmodule HacLong.Game.Engine do
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
-      ar: p.level * @combat.hit.level + s.agi * @combat.hit.agi,
-      dodge: clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max),
+      ar: (p.level * @combat.hit.level + s.agi * @combat.hit.agi) * (1 + exc.ar_pct),
+      dodge:
+        clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
+          (1 + exc.def_rate),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb),
       # Excellent: giảm sát thương nhận (cộng dồn các món, tối đa `excellent.max_dmg_red`)
       excAbsorb: exc.dmg_red,
+      # Excellent (B-16): phản lại phần sát thương quái gây ra
+      excReflect: exc.reflect,
       # Kỹ năng (Phase 15d): sát thương chiêu cộng thêm
       skillDmg: ls.skill_dmg,
       # dòng cánh (Phase 15e): bỏ qua phần phòng thủ của đối thủ
@@ -1047,7 +1051,7 @@ defmodule HacLong.Game.Engine do
               do: "🔥 #{m.name} dùng #{m.special.name}! Bạn mất #{dmg} máu.",
               else: "#{m.name} đánh bạn #{dmg} máu#{if mc, do: " (chí mạng)", else: ""}."
 
-          p = log(p, text, "bad")
+          p = log(p, text, "bad") |> reflect(dmg, d.excReflect)
 
           cond do
             special and m.special[:effect] ->
@@ -1063,6 +1067,20 @@ defmodule HacLong.Game.Engine do
 
       if p.hp <= 0, do: lose(p), else: round_end(p)
     end
+  end
+
+  # Excellent "phản sát thương" (B-16): quái mất `pct` phần sát thương vừa gây, không chết vì phản đòn (còn ít nhất 1).
+  defp reflect(p, _dmg, pct) when pct <= 0, do: p
+
+  defp reflect(p, dmg, pct) do
+    m = p.battle.monster
+    back = min(round(dmg * pct), m.hp - 1)
+
+    if back > 0,
+      do:
+        put_in(p.battle.monster.hp, m.hp - back)
+        |> log("↩ Phản lại #{back} sát thương cho #{m.name}.", "good"),
+      else: p
   end
 
   # Quái gây hiệu ứng lên người chơi.

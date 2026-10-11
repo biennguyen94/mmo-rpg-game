@@ -201,9 +201,11 @@
       "chance": { "normal": 0.1, "elite": 0.12, "night": 0.08, "boss": 0.2 },
       "lines": [[1, 70], [2, 25], [3, 5]],
       "options": {
-        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1 },
-        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15 }
+        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1, "atk_lvl": 0.1, "ar_pct": 0.1 },
+        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15, "mp_pct": 0.04, "reflect": 0.05, "def_rate": 0.1 }
       },
+      "_b16_doc": "B-16: đủ 6 dòng mỗi nhóm như MU. atk_lvl: tấn công + cấp × giá trị (MU: cấp/20); ar_pct: tỉ lệ trúng +% (thay tốc độ đánh, trận theo lượt); mp_pct: MP tối đa +%; reflect: phản lại % sát thương quái gây ra (không giết quái, tối đa max_reflect); def_rate: tỉ lệ né +% (nhân). Máy Hỗn Nguyên thêm tới đủ 6 dòng.",
+      "max_reflect": 0.2,
       "max_dmg_red": 0.2,
       "price_mult": 2
     },

@@ -302,4 +302,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   May mắn / Kỹ năng × Thần (`RULES.shop.gear_opt_value`, bỏ `gear_rarity_value`, `gear_bonus_value`, `loot.gear_bonus_per_level`).
   Thành tựu "Của Hiếm" đổi thành có một món hoàn hảo hoặc đồ Thần (ai nhận rồi vẫn giữ). Quản trị: `give_gear` nhận `opt` 0..4
   thay `rarity` / `bonus`. Client: tên / viền / bóng icon theo loại (`kind`: xanh có dòng, lục hoàn hảo, Thần), bỏ nhãn độ hiếm.
+- **B-16** (anh chốt "làm 1 và 2", em đề xuất số) **Excellent đủ 6 dòng mỗi nhóm như MU** (`RULES.excellent.options`):
+  vũ khí / dây chuyền thêm `atk_lvl` (tấn công + cấp × 0.1; MU là cấp/20, nhân đôi cho hợp số tấn công Hắc Long) và `ar_pct`
+  (MU "tăng tốc độ đánh"; trận theo lượt nên đổi thành tỉ lệ trúng +10 %); giáp / khiên / nhẫn thêm `mp_pct` (MP tối đa +4 %),
+  `reflect` (phản 5 % sát thương quái vừa gây, cộng dồn tối đa `max_reflect` 20 %, quái còn ít nhất 1 máu — không giết bằng phản
+  đòn; chỉ trận đánh quái, chưa áp vào PK) và `def_rate` (MU "tỉ lệ phòng thủ thành công +10 %" → tỉ lệ né × 1.1). Đồ rơi vẫn
+  1–3 dòng (`excellent.lines` giữ nguyên); Máy Hỗn Nguyên "Pha Excellent" thêm tới đủ 6 dòng (trước tối đa 3). Quản trị: ô tặng
+  đồ riêng có thêm ô tick May mắn / Kỹ năng / đồ Thần và từng dòng Excellent (server vẫn kiểm dòng hợp loại đồ); client nhận
+  `RULES.excOptions`.
 

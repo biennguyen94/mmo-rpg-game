@@ -228,7 +228,8 @@ defmodule HacLongWeb.GameChannelTest do
       player_at(user, %{map: "lair_boss", x: 7, y: 4}, %{
         level: 50,
         bosses: bosses,
-        stats: %{str: 400, agi: 0, vit: 200, ene: 200},
+        # máu khi nạp không vượt máu tối đa: Thể lực 600 cho tối đa ~6500 để giữ đủ 5000
+        stats: %{str: 400, agi: 0, vit: 600, ene: 200},
         hp: 5000
       })
 

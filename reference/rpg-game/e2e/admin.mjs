@@ -66,6 +66,17 @@ await page.fill('form.adm-char[data-op="add_gold"] input[name="amount"]', '1000'
 await page.click('form.adm-char[data-op="add_gold"] button[type="submit"]');
 await X.page.waitForFunction((g) => window.__hl.player().gold === g, g1 + 1000, { timeout: 5000 }).catch(() => null);
 R.check('cộng 1000 vàng, người chơi thấy ngay', (await player(X.page)).gold === g1 + 1000);
+
+// B-16: tặng đồ riêng có May mắn, Kỹ năng và 2 dòng Excellent bằng ô tick
+const gg = 'form.adm-char[data-op="give_gear"]';
+const ng = Object.keys((await player(X.page)).view.gear || {}).length;
+await page.selectOption(`${gg} select[name="base"]`, 'item_0_3');
+await page.selectOption(`${gg} select[name="opt"]`, '4');
+for (const sel of ['input[name="luck"]', 'input[name="skill"]', 'input[name="exc"][value="atk_pct"]', 'input[name="exc"][value="atk_lvl"]']) await page.check(`${gg} ${sel}`);
+await page.click(`${gg} button[type="submit"]`);
+await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
+const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
+R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
 await shot(page, 'admin-user.png');
 
 // nhật ký vàng của người này có dòng ADMIN; kiểm tra vàng; nhật ký quản trị

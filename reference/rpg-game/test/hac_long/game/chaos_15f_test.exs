@@ -24,7 +24,7 @@ defmodule HacLong.Game.Chaos15fTest do
     p
   end
 
-  test "Pha Excellent: thêm 1 dòng, giữ cấp nâng và uid; tối đa 3 dòng" do
+  test "Pha Excellent: thêm 1 dòng, giữ cấp nâng và uid; tối đa đủ 6 dòng như MU (B-16)" do
     g = %{Gear.new("item_0_3", 1) | uid: "#S"}
     p = setup_p(g, 7)
     r = Data.chaos("add_exc")
@@ -38,7 +38,14 @@ defmodule HacLong.Game.Chaos15fTest do
     assert q.gold == p.gold - r.gold and q.inv["jewel_chaos"] == 4 and q.inv["jewel_life"] == 3
     assert Chaos.rate(r, 7) == Float.round(r.rate + 2 * r.per_up, 3)
 
-    full = setup_p(Map.put(g, :exc, ~w(atk_pct crit heal_kill)), 7)
+    # 3 dòng vẫn thêm được (trước B-16 là trần)
+    three = setup_p(Map.put(g, :exc, ~w(atk_pct crit heal_kill)), 7)
+    Rng.put_sequence([0.0, 0.0])
+    assert {%{ok: true}, q3} = Chaos.combine(three, "add_exc", "#S")
+    assert length(hd(q3.gear).exc) == 4
+
+    full = setup_p(Map.put(g, :exc, Gear.exc_pool("weapon")), 7)
+    assert length(Gear.exc_pool("weapon")) == 6
     assert {%{ok: false, msg: m}, _} = Chaos.combine(full, "add_exc", "#S")
     assert m =~ "đủ dòng Excellent"
   end

@@ -153,8 +153,8 @@ Mỗi dòng +4 tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh 
 
 Số dòng: 1 dòng 70%, 2 dòng 25%, 3 dòng 5%. Giá bán ×2.
 
-- Vũ khí, dây chuyền: Tấn công +5%; Chí mạng +4%; Hồi 6% máu khi hạ quái; Hồi 10% MP khi hạ quái
-- Giáp, khiên, nhẫn: Máu tối đa +4%; Giảm sát thương nhận 3%; Vàng nhận +15%
+- Vũ khí, dây chuyền: Tấn công +5%; Chí mạng +4%; Hồi 6% máu khi hạ quái; Hồi 10% MP khi hạ quái; Tấn công + cấp × 0.1; Tỉ lệ trúng +10%
+- Giáp, khiên, nhẫn: Máu tối đa +4%; Giảm sát thương nhận 3%; Vàng nhận +15%; MP tối đa +4%; Phản sát thương 5%; Tỉ lệ né +10%
 
 Tổng giảm sát thương tối đa 20%. Pha thêm ở Máy Hỗn Nguyên (tối đa 3 dòng).
 

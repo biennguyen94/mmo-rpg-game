@@ -68,6 +68,8 @@ defmodule HacLongWeb.PageController do
         setBonus: Map.take(Data.rules().set_bonus, [:min_tier, :def_pct, :atk_pct, :hp_per_tier]),
         # Phase 15g: chữ đồ Bộ Thần trong tooltip
         ancient: Map.take(Data.rules().ancient, [:piece_def_pct, :bonus]),
+        # B-16: các dòng Excellent (ô chọn dòng khi quản trị tặng đồ)
+        excOptions: Data.rules().excellent.options,
         # Phase 15d: chữ dòng May mắn / Kỹ năng trong tooltip
         luckSkill:
           Map.take(Data.rules().luck_skill, [

@@ -83,7 +83,7 @@
       "id": "add_exc",
       "name": "Pha Excellent",
       "mode": "excellent",
-      "desc": "1 vũ khí / giáp / khiên / trang sức +5 trở lên + 1 Hỗn Nguyên + 2 Sinh Mệnh → món đó thêm 1 dòng Excellent (tối đa 3 dòng).",
+      "desc": "1 vũ khí / giáp / khiên / trang sức +5 trở lên + 1 Hỗn Nguyên + 2 Sinh Mệnh → món đó thêm 1 dòng Excellent (tối đa 6 dòng).",
       "gear": {
         "slots": [
           "weapon",

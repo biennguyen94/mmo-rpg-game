@@ -31,7 +31,20 @@ defmodule HacLong.Game.Gear do
   # Phase 15c: đồ Excellent (`RULES.excellent`)
   @exc Data.rules().excellent
   @exc_lines Enum.map(@exc.lines, &List.to_tuple/1)
-  @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
+  @exc_zero %{
+    atk_pct: 0,
+    crit: 0,
+    heal_kill: 0,
+    mp_kill: 0,
+    atk_lvl: 0,
+    ar_pct: 0,
+    hp_pct: 0,
+    dmg_red: 0,
+    gold_pct: 0,
+    mp_pct: 0,
+    reflect: 0,
+    def_rate: 0
+  }
   # Phase 15d: May mắn / Kỹ năng (`RULES.luck_skill`)
   @ls Data.rules().luck_skill
   # Phase 15g: đồ Bộ Thần (`RULES.ancient`)
@@ -310,8 +323,9 @@ defmodule HacLong.Game.Gear do
   end
 
   @doc """
-  Tổng dòng Excellent của các món đang mặc: `%{atk_pct, crit, heal_kill, mp_kill, hp_pct, dmg_red, gold_pct}`
-  (giảm sát thương tối đa `excellent.max_dmg_red`).
+  Tổng dòng Excellent của các món đang mặc: `%{atk_pct, crit, heal_kill, mp_kill, atk_lvl, ar_pct, hp_pct, dmg_red,
+  gold_pct, mp_pct, reflect, def_rate}` (giảm sát thương tối đa `excellent.max_dmg_red`, phản sát thương tối đa
+  `excellent.max_reflect`).
   """
   def exc_stats(p) do
     p.equip
@@ -327,6 +341,7 @@ defmodule HacLong.Game.Gear do
       end)
     end)
     |> Map.update!(:dmg_red, &min(&1, @exc.max_dmg_red))
+    |> Map.update!(:reflect, &min(&1, @exc.max_reflect))
   end
 
   # ---------- May mắn / Kỹ năng (Phase 15d) ----------
