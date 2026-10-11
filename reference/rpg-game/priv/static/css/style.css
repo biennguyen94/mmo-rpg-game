@@ -331,6 +331,8 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .gift-form label { display: flex; align-items: center; gap: 6px; flex: 1; }
 .gift-form input[type="number"] { width: 100%; min-width: 0; }
 .gift-form select { flex: 1; min-width: 0; }
+/* ô tìm trước danh sách chọn dài (selSearch trong ui.js) */
+.sel-q { flex: 1 1 100%; min-width: 0; max-width: 100%; background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; color: inherit; font: inherit; margin-bottom: 4px; }
 .gift-form .btn-row > input[type="number"] { width: 70px; flex: none; }
 
 /* Rèn đồ */

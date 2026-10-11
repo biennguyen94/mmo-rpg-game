@@ -48,6 +48,30 @@
   const fmt = (n) => Math.round(n).toLocaleString('vi-VN');
 
   const asset = (path) => 'assets/' + path;
+
+  // Ô tìm cho danh sách chọn dài (tặng đồ ở Quản trị, rao chợ, giao dịch…): `selSearch(key)` đặt ngay trước
+  // `<select data-sel="key">`; gõ tới đâu lọc tới đó, không cần dấu (L.fold). Chữ đang gõ giữ lại khi vẽ lại trang.
+  const selQ = {}; // key → chữ tìm
+  let selFocus = null; // key của ô tìm đang gõ (vẽ lại trang thì trả con trỏ về)
+  const selSearch = (key) => `<input type="search" class="sel-q" data-sel-q="${key}" placeholder="Tìm…" value="${esc(selQ[key] || '')}" autocomplete="off" aria-label="Tìm trong danh sách">`;
+  const selAll = new WeakMap(); // select → mọi option ban đầu
+  function filterSel(key) {
+    const sel = document.querySelector(`select[data-sel="${key}"]`);
+    if (!sel) return;
+    if (!selAll.has(sel)) selAll.set(sel, [...sel.options].map((o) => o.cloneNode(true)));
+    const q = selQ[key] || '', cur = sel.value;
+    // xóa rồi thêm lại option (ẩn option không chạy trên Safari điện thoại); option rỗng ("không kèm đồ") luôn giữ
+    const keep = selAll.get(sel).filter((o) => o.value === '' || L.nameMatch([o.textContent], q));
+    sel.replaceChildren(...keep.map((o) => o.cloneNode(true)));
+    if (keep.some((o) => o.value === cur)) sel.value = cur;
+    const box = document.querySelector(`[data-sel-q="${key}"]`);
+    if (box) box.title = q ? `${keep.filter((o) => o.value !== '').length} kết quả` : '';
+  }
+  function applySel() {
+    Object.keys(selQ).forEach(filterSel);
+    const box = selFocus && document.querySelector(`[data-sel-q="${selFocus}"]`);
+    if (box && document.activeElement !== box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+  }
   const icon = (name, cls) => `<img class="ic ${cls || ''}" src="${asset('icons/' + name + '.svg')}" alt="">`;
   // Hình vật phẩm: nguyên liệu dùng ảnh PNG (`sprite`), còn lại dùng icon SVG.
   // Hình riêng của đồ theo cấp nâng (bộ hình của anh, `mix hac_long.icons`): khóa `ref` ("nhóm/số"
@@ -207,6 +231,7 @@
     if (onMenu('arena')) loadArena();
     if (onMenu('board')) loadBoard();
     if (onMenu('admin') && adm.reports == null && !adm.loading) loadReports();
+    applySel();
   }
 
   // ---------- Quản trị ----------
@@ -285,8 +310,8 @@
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
-      ${line('give_item', 'Đồ thường', `<select name="id">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
-      ${line('give_gear', 'Đồ hiếm', `<select name="base">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
+      ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
+      ${line('give_gear', 'Đồ hiếm', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="rarity"><option value="3">Sử Thi</option><option value="2">Hiếm</option><option value="1">Tốt</option></select>${STAT_KEYS.map(([k, l]) => `<label class="small" title="${l} (để 0 cả bốn: tự chọn)">${k} ${num(k, 0, 'min="0"')}</label>`).join('')}${up}`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
@@ -343,9 +368,9 @@
       <input type="text" name="body" maxlength="300" placeholder="Lời nhắn (không bắt buộc)">
       <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" value="0"></label>
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
-      <div class="btn-row"><select name="item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row">${selSearch(id + '-item')}<select name="item" data-sel="${id}-item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
-      <div class="btn-row"><select name="gbase"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <select name="grar" aria-label="Loại đồ"><option value="0">Đồ thường</option><option value="1">Hiếm: Tốt</option><option value="2">Hiếm: Hiếm</option><option value="3">Hiếm: Sử Thi</option></select>
         <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
         <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
@@ -458,7 +483,7 @@
     const used = new Set(t.mine.gear.map((g) => g.uid));
     const items = Object.keys(P.inv).filter((id) => P.inv[id] - (t.mine.items[id] || 0) > 0).concat(bagGear().filter((id) => !used.has(id) && !itemOf(id).locked));
     const add = t.status === 'open' ? `<form id="trade-add" class="gift-form">
-        ${items.length ? `<select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
+        ${items.length ? `${selSearch('trade-item')}<select name="item" data-sel="trade-item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · còn ${P.inv[id] - (t.mine.items[id] || 0)}`}</option>`; }).join('')}</select>
         <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label><button class="btn" type="submit">Bỏ vào</button></div>` : ''}
         <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" max="${P.gold}" value="${t.mine.gold || ''}" placeholder="0"></label><button class="btn" type="submit" name="set" value="gold">Đặt vàng</button></div>
       </form>` : '';
@@ -883,7 +908,7 @@
     } else {
       const items = Object.keys(P.inv).filter((id) => P.inv[id] > 0).concat(bagGear().filter((id) => !itemOf(id).locked));
       body = items.length ? `<form id="market-sell" class="gift-form">
-          <select name="item">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
+          ${selSearch('market-sell')}<select name="item" data-sel="market-sell">${items.map((id) => { const it = itemOf(id); return `<option value="${id}">${esc(it.name)}${isGear(id) ? gearTag(id) : ` · có ${P.inv[id]}`}</option>`; }).join('')}</select>
           <div class="btn-row"><label class="small">Số lượng <input type="number" name="count" min="1" value="1"></label>
             <label class="small">Giá <input type="number" name="price" min="1" placeholder="vàng" required></label></div>
           <button class="btn primary" type="submit">Rao bán</button>
@@ -3171,7 +3196,10 @@
       if (e.target.id === 'chat-input') chatDraft = e.target.value;
       if (e.target.id === 'travel-q') { travelQ = e.target.value; const l = $('#travel-list'); if (l) l.innerHTML = travelList(); }
       if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
+      if (e.target.dataset.selQ) { selQ[e.target.dataset.selQ] = e.target.value; filterSel(e.target.dataset.selQ); }
     });
+    document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.dataset.selQ) selFocus = e.target.dataset.selQ; });
+    document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.selQ) setTimeout(() => { if (!(document.activeElement && document.activeElement.dataset.selQ)) selFocus = null; }, 0); });
     document.addEventListener('change', (e) => {
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
