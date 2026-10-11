@@ -305,3 +305,4 @@ Dựng bằng `mix hac_long.items.build` từ `ITEM_PICK` (281 món, trong đó 
 - `sets_alt.<lớp>[bậc]`: bộ phụ, thủ / giá theo bậc như bộ chính. Bộ chỉ của Đấu Sĩ không có mũ trong Item.txt nên không báo thiếu.
 - Món phụ mang `alt: true`: `Data` bỏ khỏi cửa hàng, đồ khởi đầu, đồ thay; `Gear.roll` vẫn bốc (2 mức cấp cao nhất ≤ cấp quái).
 - Test: `test/hac_long/game/items_alt_test.exs`.
+- Danh mục mọi loại đồ (tự sinh): `docs/ITEMS_CATALOG.md`, chạy lại `python3 scripts/items_catalog.py` khi đổi dữ liệu.
