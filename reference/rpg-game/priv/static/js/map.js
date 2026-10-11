@@ -114,8 +114,9 @@
     // Quảng Trường Quỷ (Phase 18 M1) chạy trên trạng thái tháp (`t.ds`): nền vùng cuối, tên theo đợt
     // Lâu Đài Máu (Phase 18 M2): `t.bc`, tên theo bước
     const BC_STAGE = { guards: 'Hạ quân canh', gate: 'Phá Cổng Thành', boss: 'Hạ Hiệp Sĩ Máu', done: 'Hoàn thành' };
-    const zi = t.ds || t.bc ? ZONES.length - 1 : Math.min(ZONES.length - 1, Math.floor((t.floor - 1) / 10));
-    const name = t.bc ? `Lâu Đài Máu · ${BC_STAGE[t.bc.stage] || ''}` : t.ds ? `Quảng Trường Quỷ · Đợt ${t.floor}/${t.ds.waves}` : `Tháp Vô Tận · Tầng ${t.floor}`;
+    const zi = t.ds || t.bc || t.kal ? ZONES.length - 1 : Math.min(ZONES.length - 1, Math.floor((t.floor - 1) / 10));
+    const KAL_STAGE = { guards: 'Hạ quái Kalima', boss: 'Hạ Kundun', done: 'Hoàn thành' };
+    const name = t.kal ? `Kalima ${t.kal.n} · ${KAL_STAGE[t.kal.stage] || ''}` : t.bc ? `Lâu Đài Máu · ${BC_STAGE[t.bc.stage] || ''}` : t.ds ? `Quảng Trường Quỷ · Đợt ${t.floor}/${t.ds.waves}` : `Tháp Vô Tận · Tầng ${t.floor}`;
     return { name, zone: null, floor: 'floors/' + ZONES[zi].id, tiles: t.tiles, portals: [], npcs: [], tower: t };
   }
 
@@ -160,7 +161,7 @@
     const ph = PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '';
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'home' ? 'Giếng nước hồi đầy máu' : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'home' ? 'Giếng nước hồi đầy máu' : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -260,7 +261,7 @@
         }
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đá dịch chuyển', px + TILE / 2, py - 13, '#b9d7ff']);
-        if (kind === 'stairs_up' && m.tower && m.tower.bc) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
+        if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
         if (kind === 'stairs_down') labels.push(['Về Làng', px + TILE / 2, py + TILE - 13, '#b9d7ff']);
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);
         if (portal) {

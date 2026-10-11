@@ -149,6 +149,17 @@
       "out": "ds_ticket"
     },
     {
+      "id": "lost_map",
+      "name": "Bản Đồ Thất Lạc",
+      "desc": "5 Dấu Ấn Kundun → 1 Bản Đồ Thất Lạc (kiểu MU), luôn thành công.",
+      "items": {
+        "kundun_mark": 5
+      },
+      "gold": 5000,
+      "rate": 1.0,
+      "out": "lost_map"
+    },
+    {
       "id": "bc_ticket",
       "name": "Vé Lâu Đài",
       "desc": "1 Cuộn Giấy Tổng Lãnh Thiên Thần + 1 Xương Máu + 1 Ngọc Hỗn Nguyên → 1 Vé Lâu Đài (kiểu MU).",

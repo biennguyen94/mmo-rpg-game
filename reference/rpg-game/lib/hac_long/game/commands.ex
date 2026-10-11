@@ -197,6 +197,10 @@ defmodule HacLong.Game.Commands do
           HacLong.ChaosCastle.buy_ticket(p)
         end)
 
+      # Kalima (B-21): đưa Bản Đồ Thất Lạc cho Người Gác Tháp
+      "kal_enter" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> HacLong.Game.Kalima.enter(p) end)
+
       "tower_enter" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
           Tower.enter(p, int(c["floor"] || 1))

@@ -266,6 +266,7 @@ defmodule HacLong.Game.Characters do
     # Quảng Trường Quỷ / Lâu Đài Máu (Phase 18) chạy trên trạng thái tháp, thêm `ds` / `bc`
     ds = t["ds"]
     bc = t["bc"]
+    kal = t["kal"]
 
     %{
       floor: floor,
@@ -311,6 +312,21 @@ defmodule HacLong.Game.Characters do
           }),
         else: tw
     end)
+    # Kalima (B-21)
+    |> then(fn tw ->
+      if is_map(kal),
+        do:
+          Map.put(tw, :kal, %{
+            n: kal["n"],
+            level: kal["level"],
+            ends_at: kal["ends_at"],
+            stage: kal["stage"],
+            guards: kal["guards"],
+            killed: kal["killed"],
+            done: kal["done"] == true
+          }),
+        else: tw
+    end)
   end
 
   defp tower(_), do: nil
@@ -321,7 +337,8 @@ defmodule HacLong.Game.Characters do
                     log over result reward encounter map mid world world_boss tower elite
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
-                    shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid)a,
+                    shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
+                    ds bc kal)a,
                  &{Atom.to_string(&1), &1}
                )
 

@@ -262,6 +262,32 @@
         "per_player_kill": 2000
       }
     },
+    "kalima": {
+      "_doc": "B-21: Kalima kiểu MU (HacLong.Game.Kalima). Không theo lịch: đưa 1 Bản Đồ Thất Lạc (ticket) cho Người Gác Tháp, từ min_level. Cấp Kalima (tiers: cấp nhân vật from → Kalima n, quái cấp level). Bản đồ riêng run_minutes phút: hạ guards quái → Kundun (boss) hiện gần cầu thang lên → hạ Kundun thắng: reward.success (vàng, kinh nghiệm theo cấp, jewels ngọc, đồ: gear_chance, Excellent exc_chance, đồ Thần anc_chance). Không xong: reward.partial theo số quái đã hạ. Dấu Ấn Kundun rơi từ quái thường cấp ≥ mark_drop.min_level.",
+      "min_level": 20,
+      "ticket": "lost_map",
+      "run_minutes": 10,
+      "mark": "kundun_mark",
+      "mark_drop": {"min_level": 20, "chance": 0.01},
+      "tiers": [
+        {"from": 20, "n": 1, "level": 22},
+        {"from": 25, "n": 2, "level": 27},
+        {"from": 30, "n": 3, "level": 32},
+        {"from": 35, "n": 4, "level": 37},
+        {"from": 40, "n": 5, "level": 42},
+        {"from": 45, "n": 6, "level": 47},
+        {"from": 50, "n": 7, "level": 52}
+      ],
+      "guards": 10,
+      "guard_mult": 1.15,
+      "guard_kinds": ["lich", "necrophage", "wight", "revenant", "phantom"],
+      "guard_names": ["Pháp Sư Kalima", "Kẻ Ăn Xác", "Âm Hồn", "Hồn Ma Báo Oán", "Bóng Ma"],
+      "boss": {"kind": "ancient_lich", "name": "Kundun", "mult": 1.8, "hp": 5, "add_level": 3},
+      "reward": {
+        "success": {"gold_mult": 300, "xp_mult": 10, "jewels": 3, "gear_chance": 1.0, "exc_chance": 0.5, "anc_chance": 0.3},
+        "partial": {"gold_per_guard": 6, "xp_per_guard": 0.3}
+      }
+    },
     "blood_castle": {
       "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
       "every_hours": 2,

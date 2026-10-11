@@ -12,6 +12,7 @@ lại tài liệu này. Chi tiết kỹ thuật của Quảng Trường Quỷ v�
 3. [Quảng Trường Quỷ (Devil Square)](#3-quảng-trường-quỷ-devil-square)
 4. [Lâu Đài Máu (Blood Castle)](#4-lâu-đài-máu-blood-castle)
    - [Hỗn Chiến Thành (Chaos Castle)](#hỗn-chiến-thành-chaos-castle)
+   - [Kalima](#kalima)
 5. [Trùm thế giới Cổ Long](#5-trùm-thế-giới-cổ-long)
 6. [Lễ hội theo mùa](#6-lễ-hội-theo-mùa)
 7. [Hoạt động hằng ngày](#7-hoạt-động-hằng-ngày)
@@ -122,6 +123,20 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
   - mỗi người mình hạ được: **+2.000 vàng**.
 - Hết lượt, người còn trong thành được đưa về Làng, quái còn lại biến mất.
 
+### Kalima
+
+(`RULES.kalima`, DECISIONS B-21) Không theo lịch — có Bản Đồ Thất Lạc là vào được.
+
+- **Điều kiện:** cấp **20** trở lên và 1 **Bản Đồ Thất Lạc**.
+- **Bản Đồ Thất Lạc:** ghép **5 Dấu Ấn Kundun + 5.000 vàng** ở Máy Hỗn Nguyên (luôn thành công). Dấu ấn rơi 1 % từ quái
+  thường cấp ≥ 20.
+- **Cách vào:** Làng → **Người Gác Tháp** → thẻ **👹 Kalima** → Vào. Cấp Kalima theo cấp nhân vật: 20 → Kalima 1, 25 → 2,
+  30 → 3, 35 → 4, 40 → 5, 45 → 6, 50 → 7 (quái cấp 22, 27 … 52).
+- **Cách chơi:** bản đồ riêng, **10 phút**: hạ **10 quái Kalima**, rồi **Kundun** hiện gần cầu thang lên (rất trâu).
+- **Thắng (hạ Kundun):** vàng, kinh nghiệm lớn, **3 ngọc** và **1 món đồ** (50 % Excellent; bộ giáp thì 30 % là đồ Thần).
+  Bước tiếp theo về Làng.
+- **Không xong** (hết giờ, gục, tự về): thưởng theo số quái đã hạ.
+
 ## 5. Trùm thế giới Cổ Long
 
 (`config :hac_long, :world_boss`, `HacLong.WorldBoss`)
@@ -187,7 +202,7 @@ Làm mới lúc 0h mỗi ngày.
 - **Đổi lịch trùm thế giới** (biến môi trường, khởi động lại server; xem `config/runtime.exs`):
   `WORLD_BOSS_FIRST_MINUTES` (lần đầu sau khởi động, mặc định 10), `WORLD_BOSS_EVERY_MINUTES` (120),
   `WORLD_BOSS_DURATION_MINUTES` (30), `WORLD_BOSS_HP` (20.000).
-- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `raids`, `devil_square`, `blood_castle`, `chaos_castle`,
+- **Đổi giờ / số liệu các sự kiện khác:** sửa `priv/game_data/rules.json` (`invasion`, `raids`, `devil_square`, `blood_castle`, `chaos_castle`, `kalima`,
   `events`, `daily`, `arena`, `pk`…) rồi khởi động lại; lễ hội thêm / sửa ở `priv/game_data/events.json`.
 - **Tặng vé:** tab Quản trị → Đồ thường → `ds_ticket` (Vé Quảng Trường) / `bc_ticket` (Vé Lâu Đài) /
-  `cc_ticket` (Áo Giáp Vệ Binh).
+  `cc_ticket` (Áo Giáp Vệ Binh) / `lost_map` (Bản Đồ Thất Lạc) / `kundun_mark` (Dấu Ấn Kundun).

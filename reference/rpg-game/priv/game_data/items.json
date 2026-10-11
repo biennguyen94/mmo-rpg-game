@@ -570,6 +570,20 @@
       "price": 0,
       "desc": "Vé vào Hỗn Chiến Thành (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 15). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 15 trở lên."
     },
+    "kundun_mark": {
+      "name": "Dấu Ấn Kundun",
+      "slot": "material",
+      "icon": "skull-crossed-bones",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 20 trở lên. Ghép 5 dấu ấn ở Máy Hỗn Nguyên ra Bản Đồ Thất Lạc (vào Kalima)."
+    },
+    "lost_map": {
+      "name": "Bản Đồ Thất Lạc",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Đưa Người Gác Tháp ở Làng để vào Kalima (từ cấp 20, cấp Kalima theo cấp nhân vật), hạ quái rồi hạ Kundun."
+    },
     "devil_eye": {
       "name": "Mắt Quỷ",
       "slot": "material",

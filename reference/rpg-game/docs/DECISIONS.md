@@ -345,5 +345,14 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   rơi 1 ngọc và có thể rơi thêm (Rồng: Hỗn Nguyên 30 %, Sinh Mệnh 10 %; Phù Thủy: Hỗn Nguyên 50 %, Tâm Linh 30 %); Lính Orc
   rơi ngọc 15 %. Hạ hết → kết thúc sớm; hết giờ con chưa ai đánh biến mất. Khác MU: không rơi Hộp Kundun (chưa có hộp), quái
   theo cấp vùng thay vì cấp cố định, hình tô lại màu từ hình CC0 sẵn có.
+- **B-21** (anh chốt "làm luôn 9, 1, 2, 3, 4", em đề xuất số) **Kalima** (`RULES.kalima`, `HacLong.Game.Kalima`, chạy trên
+  trạng thái tháp như Lâu Đài Máu, `p.tower.kal`, không đổi schema): **Dấu Ấn Kundun** (`kundun_mark`, 14/29) rơi 1 % từ quái
+  thường cấp ≥ 20; ghép **5 dấu ấn + 5.000 vàng** ở Máy Hỗn Nguyên ra **Bản Đồ Thất Lạc** (`lost_map`, 14/28, 100 %). Đưa bản
+  đồ cho Người Gác Tháp (không theo lịch, từ cấp 20) → **Kalima 1–7 theo cấp nhân vật** (20/25/30/35/40/45/50 → quái cấp
+  22/27/…/52). 10 phút: hạ 10 quái Kalima (×1,15) → **Kundun** (cấp +3, sức ×1,8, máu ×5) hiện gần cầu thang lên → hạ
+  Kundun: vàng ×300 / kinh nghiệm ×10 theo cấp quái, 3 ngọc, **1 món đồ** (Excellent 50 %, đồ Thần 30 % nếu là bộ giáp).
+  Không xong: thưởng theo số quái đã hạ. Khác MU: chỉ một loại dấu ấn / bản đồ (không chia 7 cấp vật phẩm), Kalima là bản
+  đồ riêng một người (không tổ đội, không cổng mở cho người khác). Sửa kèm: trận đang đánh trong Quảng Trường / Lâu Đài
+  (quái có cờ `ds` / `bc`) lưu xuống rồi nạp lại bị lỗi vì thiếu khóa trong `Characters @battle_keys` — đã thêm `ds bc kal`.
 
 

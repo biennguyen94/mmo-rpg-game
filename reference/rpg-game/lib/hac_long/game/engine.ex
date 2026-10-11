@@ -375,6 +375,8 @@ defmodule HacLong.Game.Engine do
       bc: HacLong.Game.BloodCastle.view(p),
       # Hỗn Chiến Thành (B-19)
       cc: HacLong.ChaosCastle.view(p),
+      # Kalima (B-21)
+      kal: HacLong.Game.Kalima.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
@@ -1251,6 +1253,7 @@ defmodule HacLong.Game.Engine do
     {p, reward} = bc_ticket_drop(p, m, reward)
     {p, reward} = cc_ticket_drop(p, m, reward)
     {p, reward} = raid_drop(p, m, reward)
+    {p, reward} = kundun_mark_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1366,6 +1369,19 @@ defmodule HacLong.Game.Engine do
 
     if c > 0 and chance(c) do
       id = HacLong.ChaosCastle.ticket()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Dấu Ấn Kundun (B-21): quái thường cấp ≥ `kalima.mark_drop.min_level` thỉnh thoảng rơi
+  defp kundun_mark_drop(p, m, reward) do
+    c = HacLong.Game.Kalima.mark_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.Game.Kalima.mark()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
