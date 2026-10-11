@@ -1015,6 +1015,8 @@
     } catch (err) { /* thử lại lần sau */ }
   }
 
+  // một dòng người chơi: chạm để xem hồ sơ (như danh sách 👫)
+  const prow = (r, inner) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><button class="board-row" data-act="profile" data-uid="${r.user_id}">${inner}</button></li>`;
   function viewBoard() {
     const kinds = [['level', 'Cấp cao'], ['kills', 'Săn nhiều'], ['tower', 'Tháp'], ['dragon', 'Diệt rồng'], ['guild', 'Bang'], ['guild_boss', 'Bang diệt Cổ Long'], ['arena', 'Đấu trường']];
     const byClass = board.kind === 'level' && board.cls;
@@ -1028,10 +1030,10 @@
       ${board.kind === 'level' ? `<div class="seg" id="board-cls"><button class="btn small-btn ${board.cls ? '' : 'primary'}" data-board-cls="">Tất cả</button>${Object.keys(CLASSES).map((c) => `<button class="btn small-btn ${board.cls === c ? 'primary' : ''}" data-board-cls="${c}">${CLASSES[c].name}</button>`).join('')}</div>` : ''}
       ${rows == null ? '<p class="small muted">Đang tải…</p>'
         : rows.length === 0 ? `<p class="small muted">${board.kind === 'arena' ? 'Chưa ai đấu. Chạm vào người khác trên bản đồ để thách đấu.' : board.kind === 'guild' ? 'Chưa có bang nào. Lập bang ở thẻ Bang hội.' : board.kind === 'guild_boss' ? 'Chưa bang nào đánh trùm thế giới. Cổ Long xuất hiện ở Tế Đàn.' : board.kind === 'dragon' ? 'Chưa ai hạ được Hắc Long. Bạn sẽ là người đầu tiên?' : board.kind === 'tower' ? 'Chưa ai leo Tháp Vô Tận. Gặp Người Gác Tháp ở Làng.' : 'Chưa có ai.'}</p>`
-        : board.kind === 'arena' ? `<ol class="board">${rows.map((r) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><span class="num rank">${r.rank}</span><span class="grow">${esc(r.name)} <span class="small muted">${r.wins}T/${r.losses}B</span></span><span class="num">${r.rating}</span></li>`).join('')}</ol>`
+        : board.kind === 'arena' ? `<ol class="board">${rows.map((r) => prow(r, `<span class="num rank">${r.rank}</span><span class="grow">${esc(r.name)} <span class="small muted">${r.wins}T/${r.losses}B</span></span><span class="num">${r.rating}</span>`)).join('')}</ol>`
         : board.kind === 'guild_boss' ? `<ol class="board">${rows.map((g) => `<li class="${P.guild && P.guild.id === g.id ? 'me' : ''}"><span class="num rank">${g.rank}</span><span class="grow"><span class="guild-tag">[${esc(g.tag)}]</span> ${esc(g.name)} <span class="small muted">${g.members} người</span></span><span class="num">${fmt(g.boss_damage)}</span></li>`).join('')}</ol>`
         : board.kind === 'guild' ? `<ol class="board">${rows.map((g) => `<li class="${P.guild && P.guild.id === g.id ? 'me' : ''}"><span class="num rank">${g.rank}</span><span class="grow"><span class="guild-tag">[${esc(g.tag)}]</span> ${esc(g.name)} <span class="small muted">${g.members} người</span></span><span class="num">Cấp ${g.level}</span></li>`).join('')}</ol>`
-        : `<ol class="board">${rows.map((r) => `<li class="${r.user_id === Net.userId ? 'me' : ''}"><span class="num rank">${r.rank}</span><span class="grow">${r.title ? `<span class="title-tag">${esc(r.title)}</span> ` : ''}${esc(r.name)} <span class="small muted">${CLASSES[r.cls] ? CLASSES[r.cls].name : ''}</span></span><span class="num">${value(r)}</span></li>`).join('')}</ol>`}
+        : `<ol class="board">${rows.map((r) => prow(r, `<span class="num rank">${r.rank}</span><span class="grow">${r.title ? `<span class="title-tag">${esc(r.title)}</span> ` : ''}${esc(r.name)} <span class="small muted">${CLASSES[r.cls] ? CLASSES[r.cls].name : ''}</span></span><span class="num">${value(r)}</span>`)).join('')}</ol>`}
     </div>`;
   }
 
