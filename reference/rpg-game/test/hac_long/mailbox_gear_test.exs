@@ -44,4 +44,20 @@ defmodule HacLong.MailboxGearTest do
                items: %{Mailbox.gear_key(base("weapon"), 0, 99) => 1}
              })
   end
+
+  test "quà nhẫn / dây chuyền có dòng cộng thêm (nhẫn là loại \"ring\", ô mặc ring1 / ring2)" do
+    user = user("mring")
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mring", "cls" => "dk"})
+
+    items = %{
+      Mailbox.gear_key(base("ring"), 2, 1) => 1,
+      Mailbox.gear_key(base("pendant"), 1, 0) => 1
+    }
+
+    assert :ok = Mailbox.send(user.id, %{subject: "Trang sức", items: items})
+    [m] = Mailbox.list(user.id)
+    assert {:ok, _msg, p2} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)
+    slots = p2 |> Gear.bag() |> Enum.map(&{Data.item(&1.base).slot, &1[:opt]}) |> Enum.sort()
+    assert {"pendant", 1} in slots and {"ring", 2} in slots
+  end
 end

@@ -77,6 +77,14 @@ await page.click(`${gg} button[type="submit"]`);
 await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
 const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
 R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
+// danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
+const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
+R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);
+await page.selectOption(`${gg} select[name="base"]`, 'item_13_8');
+await page.check(`${gg} input[name="exc"][value="reflect"]`);
+await page.click(`${gg} button[type="submit"]`);
+await X.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.base === 'item_13_8'), null, { timeout: 5000 }).catch(() => null);
+R.check('tặng nhẫn Excellent phản sát thương', Object.values((await player(X.page)).view.gear || {}).some((g) => g.base === 'item_13_8' && g.exc.includes('reflect')));
 await shot(page, 'admin-user.png');
 
 // nhật ký vàng của người này có dòng ADMIN; kiểm tra vàng; nhật ký quản trị

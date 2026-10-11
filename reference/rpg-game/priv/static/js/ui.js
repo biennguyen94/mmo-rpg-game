@@ -299,13 +299,17 @@
   }
 
   const isAdminRole = () => Net.role === 'admin';
+  // loại đồ tặng được bằng "Đồ riêng" (như `Engine.gear_slots/0`: mọi trang bị trừ cánh, có nhẫn / dây chuyền)
+  const GEAR_KINDS = ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'ring', 'pendant'];
+  // vũ khí và dây chuyền cộng tấn công (ép, dòng cộng thêm), đồ khác cộng phòng thủ — như `Engine.derived/1`
+  const atkSlot = (it) => it.slot === 'weapon' || it.slot === 'pendant';
   const STAT_KEYS = [['str', 'Sức mạnh'], ['agi', 'Nhanh nhẹn'], ['vit', 'Thể lực'], ['ene', 'Năng lượng']];
   const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
 
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
-    const gearBases = all.filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots'].includes(it.slot) && !it.legacy);
+    const gearBases = all.filter(([, it]) => GEAR_KINDS.includes(it.slot) && !it.legacy);
     const up = `<label class="small">+ <input type="number" name="up" min="0" max="${UPGRADE.max}" value="0"></label>`;
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
@@ -376,7 +380,7 @@
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
       <div class="btn-row">${selSearch(id + '-item')}<select name="item" data-sel="${id}-item"><option value="">(không kèm đồ)</option>${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <input type="number" name="n" min="1" value="1" aria-label="Số lượng"></div>
-      <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'wing'].includes(it.slot) && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+      <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear"><option value="">(không kèm trang bị)</option>${Object.entries(ITEMS).filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
         <select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm +${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>
         <label class="small">+ <input type="number" name="gup" min="0" max="11" value="0"></label>
         <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label></div>
@@ -2044,7 +2048,7 @@
   let tipAt = null; // { id?, slot?, x, y }
   let forgePick = null; // món trong túi chọn để ép ở Thợ Rèn (nút "Ép" trong tooltip)
   // dòng Ngọc Sinh Mệnh của món đồ
-  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * RULES.life.per_line} ${it.slot === 'weapon' ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
+  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * RULES.life.per_line} ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
   function hideTip() {
     tipAt = null;
     const el = document.getElementById('itemtip');
@@ -2076,7 +2080,7 @@
         h.push(muOpt(`May mắn (tỉ lệ ép ngọc +${lsPct(r.luck_upgrade)}%)`));
         if (it.slot === 'weapon') h.push(muOpt(`May mắn (tỉ lệ chí mạng +${lsPct(r.luck_crit)}%)`));
       }
-      if (it.opt) h.push(muOpt(`Gia tăng ${it.slot === 'weapon' ? 'lực tấn công' : 'phòng thủ'} +${it.opt * RULES.life.per_line}`));
+      if (it.opt) h.push(muOpt(`Gia tăng ${atkSlot(it) ? 'lực tấn công' : 'phòng thủ'} +${it.opt * RULES.life.per_line}`));
       for (const l of it.exc_lines || []) h.push(muOpt((EXC_TEXT[l.id] || (() => l.id))(l.value)));
       if (it.wopt) {
         const v = it.wopt_value;
@@ -2218,7 +2222,7 @@
   // Ép kiểu MU (DECISIONS B-13): Thợ Rèn +1 → +6 Ước Nguyện (chắc chắn), +7 → +9 Tâm Linh (thất bại về +0);
   // +10, +11 ở Máy Hỗn Nguyên (thất bại vỡ đồ). `cost.at` do server gửi: "smith" | "chaos".
   const RISK = { down: 'thất bại tụt 1 cấp', reset: 'thất bại về +0', destroy: 'thất bại VỠ ĐỒ' };
-  const FORGE_SLOTS = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh']];
+  const FORGE_SLOTS = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh'], ['ring1', 'Nhẫn 1'], ['ring2', 'Nhẫn 2'], ['pendant', 'Dây chuyền']];
   // món đang chọn để ép: đồ đang mặc theo ô, thêm món trong túi đã chọn (nút Ép trong tooltip)
   function forgeSlots() {
     if (forgePick && !P.view.forgeBag[forgePick]) forgePick = null;
@@ -2246,7 +2250,7 @@
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${itemIcon(it, it.kind, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${it.atk ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}

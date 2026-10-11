@@ -236,7 +236,8 @@ defmodule HacLong.Mailbox do
          {opt, ""} <- Integer.parse(r),
          {up, ""} <- Integer.parse(u),
          it when not is_nil(it) <- Data.item(base),
-         true <- it.slot in Engine.equip_slots(),
+         # "ring" (nhẫn) là loại đồ, ô mặc là ring1 / ring2: so với loại đồ mặc được
+         true <- it.slot in Engine.item_slots(),
          true <- opt in 0..Gear.max_opt() and up in 0..Engine.max_upgrade(),
          true <- opt == 0 or it.slot in Engine.gear_slots() do
       {base, opt, up, it}

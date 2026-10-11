@@ -66,7 +66,7 @@ defmodule Mix.Tasks.HacLong.Icons do
 
     missing =
       for {id, it} <- Data.items(),
-          it.slot in ~w(weapon armor shield wing helm pants gloves boots),
+          it.slot in ~w(weapon armor shield wing helm pants gloves boots ring pendant),
           not Map.has_key?(map, it[:ref] || "") and not Map.has_key?(map, "custom/#{id}"),
           !it[:legacy],
           do: id
