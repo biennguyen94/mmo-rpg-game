@@ -10,7 +10,7 @@ const adm = await adminSession(browser);
 await adm.admin('set_level', name, { level: 8 });
 await adm.admin('heal', name);
 await adm.admin('add_gold', name, { amount: 20000 });
-for (const [id, count] of [['potion_m', 10], ['ore', 10], ['ore_rare', 10], ['dragon_scale', 1], ['jewel_life', 3], ['herb', 3], ['old_boot', 1]]) await adm.admin('give_item', name, { id, count });
+for (const [id, count] of [['potion_m', 10], ['jewel_bless', 2], ['ore_rare', 10], ['dragon_scale', 1], ['jewel_life', 3], ['herb', 3], ['old_boot', 1]]) await adm.admin('give_item', name, { id, count });
 await page.waitForFunction(() => window.__hl.player().level === 8 && (window.__hl.player().inv.old_boot || 0) === 1);
 
 await travel(page, 'village');
@@ -50,13 +50,13 @@ p = await player(page);
 R.check('có việc hằng ngày, hiện trên Bảng Tin', p.daily && p.daily.tasks.length >= 3 && (await page.textContent('#view')).includes(p.daily.tasks[0].name), `${p.daily.tasks.length} việc`);
 await leaveNpc(page);
 
-// ---------- Ép đồ (+1 bằng quặng), rương ----------
+// ---------- Ép đồ kiểu MU (+1 bằng Ngọc Ước Nguyện, B-13), rương ----------
 R.check('gặp Thợ Rèn', await meetNpc(page, 'blacksmith'));
 const before = await player(page);
 await act(page, '[data-act="upgrade"][data-slot="weapon"]');
 p = await player(page);
 const lvl = p.upgrades[p.equip.weapon] || 0;
-R.check('ép vũ khí lên +1: tốn quặng và vàng', lvl === 1 && p.inv.ore === before.inv.ore - 1 && p.gold < before.gold, `lvl=${lvl}`);
+R.check('ép vũ khí lên +1: tốn 1 Ngọc Ước Nguyện và vàng', lvl === 1 && (p.inv.jewel_bless || 0) === before.inv.jewel_bless - 1 && p.gold < before.gold, `lvl=${lvl}`);
 await shot(page, 'progress-forge.png');
 const bag0 = Object.keys(p.view.gear).length;
 await act(page, '[data-act="chest_buy"][data-tier="wood"]');
@@ -91,6 +91,7 @@ await idle(page);
 
 // ---------- Máy Hỗn Nguyên: ghép Ngọc Hỗn Nguyên (may rủi) ----------
 R.check('gặp Lão Hỗn Nguyên', await meetNpc(page, 'chaos'));
+R.check('Lão Hỗn Nguyên có thẻ ép +10, +11', !!(await page.$('[data-panel="chaos-upgrade"]')));
 const c0 = await player(page);
 const rec = await page.evaluate(() => window.GAME_DATA.CHAOS.find((r) => r.id === 'make_chaos'));
 await act(page, '[data-act="chaos"][data-id="make_chaos"]');

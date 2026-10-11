@@ -118,25 +118,25 @@ Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm 2% sát thương và h
 | 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 (chọn lớp). 200.000 vàng, 20% |
 | 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 (chọn lớp). 500.000 vàng, 15% |
 
-## Ép +N (Thợ Rèn)
+## Ép +N (kiểu MU)
 
-Mỗi cấp cộng 8% chỉ số gốc của món (ít nhất +1). Từ +10 mỗi cấp tính gấp đôi. Từ +7 cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ ép +7 đến +11 cộng 25%, tối đa 95%.
+Mỗi cấp cộng 8% chỉ số gốc của món (ít nhất +1). Từ +10 mỗi cấp tính gấp đôi. Từ +7 cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ các bước không chắc chắn cộng 25%, tối đa 95%.
 
-| Lên | Cần | Tỉ lệ | Thất bại | Tính như (cấp) |
-|---|---|---|---|---|
-| +1 | vàng + 1 quặng | 100% | — | 1 |
-| +2 | vàng + 2 quặng | 100% | — | 2 |
-| +3 | vàng + 3 quặng | 100% | — | 3 |
-| +4 | vàng + 4 quặng | 100% | — | 4 |
-| +5 | vàng + 5 quặng + 1 Vảy Cổ Long | 100% | — | 5 |
-| +6 | vàng + 1 Ngọc Ước Nguyện | 100% | — | 6 |
-| +7 | vàng + 1 Ngọc Tâm Linh | 70% | tụt 1 cấp | 7 |
-| +8 | vàng + 1 Ngọc Tâm Linh | 60% | tụt 1 cấp | 8 |
-| +9 | vàng + 1 Ngọc Tâm Linh | 50% | tụt 1 cấp | 9 |
-| +10 | vàng + 1 Ngọc Hỗn Nguyên | 50% | **vỡ đồ** | 11 |
-| +11 | vàng + 1 Ngọc Hỗn Nguyên | 45% | **vỡ đồ** | 13 |
+| Lên | Ở đâu | Cần | Tỉ lệ | Thất bại | Tính như (cấp) |
+|---|---|---|---|---|---|
+| +1 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 1 |
+| +2 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 2 |
+| +3 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 3 |
+| +4 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 4 |
+| +5 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 5 |
+| +6 | Thợ Rèn | vàng + 1 Ngọc Ước Nguyện | 100% | — | 6 |
+| +7 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 7 |
+| +8 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 8 |
+| +9 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 9 |
+| +10 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 1 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh | 50% | **vỡ đồ** | 11 |
+| +11 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 2 Ngọc Ước Nguyện + 2 Ngọc Tâm Linh | 45% | **vỡ đồ** | 13 |
 
-Vàng = 8% giá món × cấp lên (giá tối thiểu 100). Quặng Mithril thay Quặng Sắt với đồ từ cấp 17. Ngọc Sinh Mệnh: +4 mỗi dòng, tối đa 4 dòng, 50%; vũ khí cộng công, giáp / khiên / cánh cộng thủ; thất bại mất dòng cuối.
+Vàng = 8% giá món × cấp lên (giá tối thiểu 100). Ngọc Sinh Mệnh: +4 mỗi dòng, tối đa 4 dòng, 50%; vũ khí cộng công, giáp / khiên / cánh cộng thủ; thất bại mất dòng cuối.
 
 ## Dòng phụ trên đồ rơi
 

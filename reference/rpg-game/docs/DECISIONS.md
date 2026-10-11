@@ -278,3 +278,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-12** (anh yêu cầu) Sổ tay quái vật gồm cả **52 loài quái bản đồ phụ** (`SIDE_MONSTERS`), không chỉ 30 loài của 6 vùng chính
   (trước đó hạ quái bản đồ phụ vẫn được đếm và cộng % sát thương, chỉ là sổ không hiện). Sổ chia hai nhóm: Vùng chính, Bản đồ phụ.
   Thành tựu "Nhà Sinh Vật Học" (hạ đủ mỗi loài) giờ cần đủ 82 loài; ai đã nhận rồi vẫn giữ.
+- **B-13** (anh chốt) **Ép đồ kiểu MU** (`priv/game_data/upgrade.json`, `Engine.upgrade_cost/2`):
+  +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công (bỏ đường ép bằng quặng / Vảy Cổ Long; quặng vẫn dùng rèn đồ và Máy Hỗn
+  Nguyên); +7 → +9 1 Ngọc Tâm Linh, 50 % (May mắn +25 % = 75 %), thất bại **về +0**; +10 / +11 chỉ ép ở Máy Hỗn Nguyên (lệnh
+  mới `chaos_upgrade` ở Lão Hỗn Nguyên): +10 = 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh 50 %, +11 = 1 Hỗn Nguyên + 2 Ước
+  Nguyện + 2 Tâm Linh 45 %, thất bại vỡ đồ. Vàng như cũ (8 % giá × cấp lên). Đồ đã ép trước đây giữ nguyên cấp. Bỏ
+  `RULES.upgrade.rare_ore_level` / `scale_step` (không còn dùng).

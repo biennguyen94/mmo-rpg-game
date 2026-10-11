@@ -1,7 +1,7 @@
 defmodule HacLong.Game.ForgeTest do
   @moduledoc """
   Đợt 3 (docs/INTEGRATION_PLAN.md §3, §4; FEATURE_CATALOG C10, C18, D1, D2, D3, D5, D6, D7):
-  cấp nâng theo từng món, khóa đồ, ép +6 → +11 bằng ngọc, Máy Hỗn Nguyên, cánh, ngọc rơi.
+  cấp nâng theo từng món, khóa đồ, ép kiểu MU (B-13), Máy Hỗn Nguyên, cánh, ngọc rơi.
   """
   use ExUnit.Case, async: true
 
@@ -69,16 +69,29 @@ defmodule HacLong.Game.ForgeTest do
     end
   end
 
-  describe "D1 ép +6 → +11 bằng ngọc" do
-    test "+5 → +6 chắc chắn bằng Ngọc Ước Nguyện" do
-      p = player() |> armed("greatsword", 5) |> jewels()
-      {%{ok: true, upgrade: %{result: "success", level: 6}}, q} = Engine.upgrade(p, "weapon")
+  describe "ép kiểu MU (DECISIONS B-13)" do
+    test "+0 → +6: mỗi lần 1 Ngọc Ước Nguyện, luôn thành công, không tốn quặng" do
+      p = player() |> armed("greatsword", 0) |> jewels(10)
+
+      q =
+        Enum.reduce(1..6, p, fn n, q ->
+          {%{ok: true, upgrade: %{result: "success", level: ^n}}, q} = Engine.upgrade(q, "weapon")
+          q
+        end)
+
       assert Engine.upgrade_level(q, q.equip.weapon) == 6
-      assert q.inv["jewel_bless"] == 4
+      assert q.inv["jewel_bless"] == 4 and q.inv["jewel_soul"] == 10
+      assert Engine.upgrade_cost("greatsword", 0).items == %{"jewel_bless" => 1}
     end
 
-    test "+6 → +7: thành công có thông báo; thất bại tụt một cấp, mất ngọc" do
+    test "+6 → +7 bằng Ngọc Tâm Linh 50% (May mắn 75%): thành công có thông báo; thất bại về +0" do
       p = player() |> armed("greatsword", 6) |> jewels()
+
+      assert %{rate: 0.5, fail: "reset", items: %{"jewel_soul" => 1}} =
+               Engine.upgrade_cost("greatsword", 6)
+
+      assert Engine.upgrade_cost(%{price: 100, luck: true}, 6).rate == 0.75
+
       Rng.put_sequence([0.1])
       {r, q} = Engine.upgrade(p, "weapon")
       assert r.upgrade == %{result: "success", level: 7}
@@ -86,20 +99,39 @@ defmodule HacLong.Game.ForgeTest do
 
       Rng.put_sequence([0.9])
       {r, q2} = Engine.upgrade(p, "weapon")
-      assert r.upgrade == %{result: "down", level: 5} and not Map.has_key?(r, :announce)
-      assert Engine.upgrade_level(q2, q2.equip.weapon) == 5
+      assert r.upgrade == %{result: "reset", level: 0} and not Map.has_key?(r, :announce)
+      assert r.msg =~ "về +0"
+      assert Engine.upgrade_level(q2, q2.equip.weapon) == 0
       assert q2.inv["jewel_soul"] == 4 and q2.gold < p.gold
       assert Engine.upgrade_level(q, q.equip.weapon) == 7
     end
 
-    test "+9 → +10 phải xác nhận; thất bại vỡ đồ, vũ khí về đồ khởi đầu" do
+    test "+10 chỉ ép ở Máy Hỗn Nguyên: Hỗn Nguyên + Ước Nguyện + Tâm Linh, phải xác nhận, thất bại vỡ đồ" do
       p = player() |> armed("greatsword", 9) |> jewels()
-      assert {%{ok: false, confirm: true}, ^p} = Engine.upgrade(p, "weapon")
+      assert {%{ok: false, msg: msg}, ^p} = Engine.upgrade(p, "weapon")
+      assert msg =~ "Lão Hỗn Nguyên"
+
+      assert {%{ok: false, confirm: true}, ^p} = Engine.upgrade(p, "weapon", false, "chaos")
+
+      Rng.put_sequence([0.1])
+      {r, q} = Engine.upgrade(p, "weapon", true, "chaos")
+      assert r.upgrade == %{result: "success", level: 10}
+      assert {q.inv["jewel_chaos"], q.inv["jewel_bless"], q.inv["jewel_soul"]} == {4, 4, 4}
+
+      # +11: 1 Hỗn Nguyên, 2 Ước Nguyện, 2 Tâm Linh, 45 %
+      assert %{rate: 0.45, items: %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2}} =
+               Engine.upgrade_cost("greatsword", 10)
 
       Rng.put_sequence([0.99])
-      {r, q} = Engine.upgrade(p, "weapon", true)
+      {r, q} = Engine.upgrade(p, "weapon", true, "chaos")
       assert r.upgrade.result == "destroy" and r.msg =~ "vỡ"
       assert q.equip.weapon == "item_1_0" and q.gear == [] and q.upgrades == %{}
+
+      # bước của Thợ Rèn không làm ở Máy Hỗn Nguyên
+      p6 = player() |> armed("greatsword", 5) |> jewels()
+
+      assert {%{ok: false, msg: "Ép lên +6 ở Thợ Rèn."}, _} =
+               Engine.upgrade(p6, "weapon", false, "chaos")
     end
 
     test "+10, +11 tính gấp đôi; +11 là tối đa" do

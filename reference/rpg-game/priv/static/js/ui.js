@@ -133,6 +133,7 @@
     if (up) {
       if (up.result === 'success') bigFx(`✨ +${up.level || ''}`.trim(), 'good');
       else if (up.result === 'destroyed' || up.result === 'destroy') bigFx('💥 VỠ ĐỒ', 'bad');
+      else if (up.result === 'reset') bigFx('💥 VỀ +0', 'bad');
       else bigFx('THẤT BẠI', 'bad');
       if (up.result !== 'success' || (up.level || 0) >= 7) note(r.msg, up.result === 'success' ? 'good' : 'bad');
     }
@@ -2165,19 +2166,30 @@
     </div>`;
   }
 
-  // Thợ Rèn: +1 → +5 bằng quặng (chắc chắn), +6 → +11 bằng ngọc (có tỉ lệ, thất bại tụt cấp hoặc vỡ đồ).
-  const RISK = { down: 'thất bại tụt 1 cấp', destroy: 'thất bại VỠ ĐỒ' };
-  function forgeCard() {
+  // Ép kiểu MU (DECISIONS B-13): Thợ Rèn +1 → +6 Ước Nguyện (chắc chắn), +7 → +9 Tâm Linh (thất bại về +0);
+  // +10, +11 ở Máy Hỗn Nguyên (thất bại vỡ đồ). `cost.at` do server gửi: "smith" | "chaos".
+  const RISK = { down: 'thất bại tụt 1 cấp', reset: 'thất bại về +0', destroy: 'thất bại VỠ ĐỒ' };
+  const FORGE_SLOTS = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh']];
+  // món đang chọn để ép: đồ đang mặc theo ô, thêm món trong túi đã chọn (nút Ép trong tooltip)
+  function forgeSlots() {
     if (forgePick && !P.view.forgeBag[forgePick]) forgePick = null;
-    const life = RULES.life, jewels = P.inv[life.jewel] || 0;
-    const slots = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh']]
-      .map(([slot, label]) => [slot, label, P.view.forge[slot]]);
+    const slots = FORGE_SLOTS.map(([slot, label]) => [slot, label, P.view.forge[slot]]);
     if (forgePick) slots.unshift([null, 'Trong túi (đã chọn)', Object.assign({ id: forgePick }, P.view.forgeBag[forgePick])]);
-    const rows = slots.map(([slot, label, f]) => {
+    return slots;
+  }
+  const upTable = () => UPGRADE.steps.map((s) => `+${s.level}: ${Object.entries(s.items).map(([id, n]) => `${smallIc(id)}${n > 1 ? `${n} ` : ''}${ITEMS[id].name}`).join(' + ')}${s.rate < 1 ? ` ${Math.round(s.rate * 100)}%` : ''}${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
+  function forgeCard() {
+    const life = RULES.life, jewels = P.inv[life.jewel] || 0;
+    const rows = forgeSlots().map(([slot, label, f]) => {
       if (!f) return '';
       const it = itemOf(f.id), c = f.cost, opt = it.opt || 0;
       const target = slot ? `data-slot="${slot}"` : `data-id="${esc(f.id)}"`;
       const lifeBtn = opt < life.max_lines ? `<button class="btn" data-act="life" ${target} ${jewels ? '' : 'disabled'} title="${esc(ITEMS[life.jewel].name)}: ${Math.round(life.rate * 100)}%">${smallIc(life.jewel, '💚')} ${opt}/${life.max_lines}</button>` : `<span class="small" style="color:var(--good)">${smallIc(life.jewel, '💚')} ${opt}/${life.max_lines}</span>`;
+      if (c && c.at === 'chaos') {
+        return `<div class="item">${itemIcon(it, it.rarity, f.level)}<div class="grow">
+          <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
+          <div class="small" style="color:var(--gold)">Lên +${f.level + 1}: ép ở Lão Hỗn Nguyên (Máy Hỗn Nguyên).</div></div>${lifeBtn}</div>`;
+      }
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
@@ -2192,9 +2204,8 @@
         ${lifeBtn}
       </div>`;
     }).join('');
-    const table = UPGRADE.steps.map((s) => `+${s.level}: ${smallIc(s.jewel)}${ITEMS[s.jewel].name} ${Math.round(s.rate * 100)}%${s.fail ? ` (${RISK[s.fail]})` : ''}`).join(' · ');
     return `<div class="card"><h3>Ép đồ</h3>
-      <p class="small muted">Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số của món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi. +1 → +5 dùng quặng (đồ dưới cấp 17 dùng Quặng Sắt, cao hơn dùng Mithril), luôn thành công. Từ +6 dùng ngọc: ${table}. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món. Muốn ép đồ trong túi: bấm món đó trong túi rồi chọn Ép.</p>
+      <p class="small muted">Ép kiểu MU. Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số của món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi. ${upTable()}. May mắn cộng tỉ lệ ${Math.round(RULES.luckSkill.luck_upgrade * 100)}%. +10, +11 ép ở Lão Hỗn Nguyên. Ngọc và vàng mất cả khi thất bại. Cấp nâng theo từng món. Muốn ép đồ trong túi: bấm món đó trong túi rồi chọn Ép.</p>
       <p class="small muted">${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)} (có ${jewels}): thêm một dòng +${life.per_line} tấn công (vũ khí) hoặc phòng thủ (giáp, khiên, cánh), tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</p>
       <div class="list">${rows}</div></div>`;
   }
@@ -2274,6 +2285,25 @@
   let chaosPick = {}; // công thức → uid món đồ chọn
   let chaosCls = {}; // công thức ra theo lớp ({cls}) → lớp chọn (mặc định lớp mình)
   const chaosRate = L.chaosRate;
+  // Máy Hỗn Nguyên: ép +10, +11 (bước `at: "chaos"`), thất bại vỡ đồ
+  function chaosUpgradeCard() {
+    const rows = forgeSlots().filter(([, , f]) => f && f.cost && f.cost.at === 'chaos').map(([slot, label, f]) => {
+      const it = itemOf(f.id), c = f.cost;
+      const target = slot ? `data-slot="${slot}"` : `data-id="${esc(f.id)}"`;
+      const need = Object.entries(c.items);
+      const ok = P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
+      return `<div class="item">${itemIcon(it, it.rarity, f.level)}<div class="grow">
+          <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
+          <div class="small muted">Lên +${f.level + 1} · <b>${Math.round(c.rate * 100)}%</b>, <span style="color:var(--bad)">${RISK[c.fail]}</span> · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>
+        </div>
+        <button class="btn ${ok ? 'danger' : ''}" data-act="chaos_upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('chaos-machine')}${fmt(c.gold)}</button>
+      </div>`;
+    }).join('');
+    return `<div class="card" data-panel="chaos-upgrade"><h3>${icon('chaos-machine')} Ép +10, +11</h3>
+      <p class="small muted">Đồ +9 lên +10, +10 lên +11 (đang mặc, hoặc chọn món trong túi bằng nút Ép). May mắn cộng tỉ lệ. Thất bại thì <b style="color:var(--bad)">vỡ đồ</b>, mất ngọc và vàng.</p>
+      ${rows ? `<div class="list">${rows}</div>` : '<p class="small muted">Chưa có món nào +9 hoặc +10. Ép tới +9 ở Thợ Rèn trước.</p>'}</div>`;
+  }
+
   function chaosCard() {
     const rows = CHAOS.map((r) => {
       const fits = r.gear ? bagGear().filter((uid) => {
@@ -2530,7 +2560,7 @@
         }).join('')}</div></div>`);
     }
     if (n.role === 'market') sections.push(viewMarket());
-    if (n.role === 'chaos') sections.push(chaosCard());
+    if (n.role === 'chaos') sections.push(chaosUpgradeCard(), chaosCard());
     if (n.role === 'tienlen') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}
         <button class="btn primary block" data-act="tl-open">${icon('card-fan')} Vào sòng Tiến Lên</button></div>`);
@@ -2679,7 +2709,7 @@
       case 'buy5': return { act: 'buy', id: d.id, n: 5 };
       case 'equip': case 'use': case 'sell': return { act, id: d.id };
       case 'unequip': return { act, slot: d.slot };
-      case 'upgrade': return { act, slot: d.slot, id: d.id, confirm: d.risk === 'destroy' };
+      case 'upgrade': case 'chaos_upgrade': return { act, slot: d.slot, id: d.id, confirm: d.risk === 'destroy' };
       case 'life': return { act, slot: d.slot, id: d.id };
       case 'discard': case 'store': case 'unstore': return { act, id: d.id, n: +d.n || 1 };
       case 'lock': return { act, id: d.id, on: d.on === '1' };
@@ -2704,7 +2734,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -2741,7 +2771,7 @@
         if (cmd.act === 'tower_enter' || cmd.act === 'ds_enter' || cmd.act === 'bc_enter') { tab = 'map'; npc = null; }
         if (cmd.act.startsWith('market_')) market.data = null;
         if (cmd.act === 'rebirth' || cmd.act === 'guild_create' || cmd.act === 'guild_donate') board.at = 0;
-        if ((cmd.act === 'upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;
+        if ((cmd.act === 'upgrade' || cmd.act === 'chaos_upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;
         if (cmd.act === 'mail_claim_all' && mail.list) mail.list.forEach((m) => { m.claimed = true; });
         if (cmd.act === 'mail_claim' && mail.list) { const m = mail.list.find((x) => x.id === cmd.id); if (m) m.claimed = true; }
         confirmReset = false;
@@ -3013,12 +3043,13 @@
     if (act === 'fish-reel') { reelIn(); return; }
     if (act === 'boss-yes') { const d = dialog; if (d) step(d.dir, true); return; }
     // ép bước có thể vỡ đồ / ghép mất đồ: hỏi lại trước
-    if (act === 'upgrade' && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
+    if ((act === 'upgrade' || act === 'chaos_upgrade') && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
     if (act === 'forge-pick') {
       forgePick = t.dataset.id;
       hideTip();
-      if (npc && npcData().role === 'shop') { goTab('map'); return; }
-      toast('Mang món này đến Thợ Rèn ở Làng để ép.');
+      const atChaos = P.view.forgeBag[forgePick] && P.view.forgeBag[forgePick].cost && P.view.forgeBag[forgePick].cost.at === 'chaos';
+      if (npc && npcData().role === (atChaos ? 'chaos' : 'shop')) { goTab('map'); return; }
+      toast(atChaos ? 'Mang món này đến Lão Hỗn Nguyên ở Làng để ép +10, +11.' : 'Mang món này đến Thợ Rèn ở Làng để ép.');
       return;
     }
     if (act === 'discard') {

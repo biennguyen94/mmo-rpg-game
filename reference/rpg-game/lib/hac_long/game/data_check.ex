@@ -9,7 +9,7 @@ defmodule HacLong.Game.DataCheck do
 
   @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen)
   @pet_skills ~w(heal bash pickpocket venom rend)
-  @fails [nil, "down", "destroy"]
+  @fails [nil, "down", "reset", "destroy"]
 
   def npc_roles, do: @npc_roles
 
@@ -86,7 +86,11 @@ defmodule HacLong.Game.DataCheck do
       end,
       for s <- d.upgrade.steps do
         [
-          items.("upgrade.json", "UPGRADE.steps[+#{s.level}]", [s.jewel]),
+          items.("upgrade.json", "UPGRADE.steps[+#{s.level}]", Map.keys(s.items)),
+          if(s.at in ["smith", "chaos"],
+            do: [],
+            else: "upgrade.json: UPGRADE.steps[+#{s.level}] at \"#{s.at}\" không hợp lệ"
+          ),
           if(s.fail in @fails,
             do: [],
             else: "upgrade.json: UPGRADE.steps[+#{s.level}] fail \"#{s.fail}\" không hợp lệ"

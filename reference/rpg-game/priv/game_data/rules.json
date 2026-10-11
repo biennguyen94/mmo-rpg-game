@@ -315,8 +315,6 @@
       "bonus_pct": 0.08,
       "cost_pct": 0.08,
       "cost_min_price": 100,
-      "rare_ore_level": 17,
-      "scale_step": 5,
       "life": {
         "jewel": "jewel_life",
         "per_line": 4,

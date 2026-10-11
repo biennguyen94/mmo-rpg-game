@@ -1520,7 +1520,7 @@ defmodule HacLong.Game.Engine do
   # ---------- Nâng cấp đồ (Thợ Rèn) ----------
   # Cấp nâng lưu theo từng món (`upgrades: %{uid => cấp}`): đồ thường được tách thành bản riêng
   # (`Gear.plain/1`) lúc nâng cấp lần đầu hoặc lúc khóa, nên hai thanh kiếm cùng loại có cấp riêng.
-  # +1 → +5 dùng quặng (luôn thành công); +6 → +11 dùng ngọc theo bảng `UPGRADE` (có rủi ro).
+  # Ép kiểu MU theo bảng `UPGRADE` (DECISIONS B-13): +1..+6 Ước Nguyện, +7..+9 Tâm Linh, +10/+11 Máy Hỗn Nguyên.
 
   def max_upgrade, do: Data.upgrade().max
 
@@ -1542,46 +1542,42 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   Giá nâng món đồ (id đồ thường hoặc thông tin món đồ) từ cấp `level` lên cấp tiếp theo:
-  `%{gold, items, rate, fail}` hoặc `nil` nếu đã tối đa.
+  `%{gold, items, rate, fail, at}` hoặc `nil` nếu đã tối đa. Ép kiểu MU (bảng `UPGRADE`,
+  DECISIONS B-13):
 
-  - +1 → +5: quặng (đồ dưới cấp 17 dùng Quặng Sắt, từ cấp 17 dùng Mithril), +5 cần thêm Vảy Cổ
-    Long; luôn thành công.
-  - +6 → +11: một viên ngọc theo bảng `UPGRADE`, tỉ lệ `rate`; thất bại (`fail`) tụt một cấp
-    (`"down"`) hoặc vỡ đồ (`"destroy"`). Ngọc và vàng mất cả khi thất bại.
+  - +1 → +6: một Ngọc Ước Nguyện, luôn thành công.
+  - +7 → +9: một Ngọc Tâm Linh, tỉ lệ `rate`; thất bại về +0 (`"reset"`).
+  - +10, +11: ở Máy Hỗn Nguyên (`at: "chaos"`), Hỗn Nguyên + Ước Nguyện + Tâm Linh; thất bại vỡ đồ.
+
+  May mắn (Phase 15d) cộng tỉ lệ các bước không chắc chắn. Ngọc và vàng mất cả khi thất bại.
   """
   def upgrade_cost(id, level) when is_binary(id), do: upgrade_cost(Data.item(id), level)
 
   def upgrade_cost(it, level) do
     n = level + 1
-    gold = round(max(it.price, @up.cost_min_price) * @up.cost_pct * n)
 
-    cond do
-      level >= max_upgrade() ->
+    case Data.upgrade_step(n) do
+      nil ->
         nil
 
-      step = Data.upgrade_step(n) ->
-        # May mắn (Phase 15d) cộng tỉ lệ ép ngọc
+      step ->
         %{
-          gold: gold,
-          items: %{step.jewel => 1},
+          gold: round(max(it.price, @up.cost_min_price) * @up.cost_pct * n),
+          items: step.items,
           rate: Gear.luck_rate(it, step.rate),
-          fail: step.fail
+          fail: step.fail,
+          at: step.at
         }
-
-      true ->
-        ore = if (it[:level] || 1) >= @up.rare_ore_level, do: "ore_rare", else: "ore"
-        items = %{ore => n}
-        items = if n == @up.scale_step, do: Map.put(items, "dragon_scale", 1), else: items
-        %{gold: gold, items: items, rate: 1.0, fail: nil}
     end
   end
 
   @doc """
   Ép món đang mặc ở ô `slot`. Bước có thể vỡ đồ thì phải gửi `confirm` (client hỏi lại trước).
-  Kết quả có `upgrade: %{result: "success" | "down" | "destroy" | "fail", level}`; ép thành công
+  `at`: nơi ép (`"smith"` Thợ Rèn, `"chaos"` Máy Hỗn Nguyên), phải đúng `at` của bước. Kết quả có
+  `upgrade: %{result: "success" | "down" | "reset" | "destroy" | "fail", level}`; ép thành công
   từ `announce_from` thì kèm `announce` (Session đưa lên kênh chat hệ thống).
   """
-  def upgrade(p, target, confirm \\ false) do
+  def upgrade(p, target, confirm \\ false, at \\ "smith") do
     {id, slot} = forge_target(p, target)
     level = if id, do: upgrade_level(p, id), else: 0
     it = id && Gear.item(p, id)
@@ -1601,6 +1597,13 @@ defmodule HacLong.Game.Engine do
 
       cost == nil ->
         {err("#{it.name} đã nâng cấp tối đa."), p}
+
+      cost.at != at ->
+        {err(
+           if cost.at == "chaos",
+             do: "Ép lên +#{level + 1} ở Lão Hỗn Nguyên (Máy Hỗn Nguyên).",
+             else: "Ép lên +#{level + 1} ở Thợ Rèn."
+         ), p}
 
       p.gold < cost.gold ->
         {err("Cần #{cost.gold} vàng."), p}
@@ -1799,6 +1802,12 @@ defmodule HacLong.Game.Engine do
             else: r
 
         {r, p}
+
+      cost.fail == "reset" ->
+        p = put_upgrade(p, uid, 0)
+
+        {ok("💥 Ép thất bại, #{it.name} về +0.")
+         |> Map.put(:upgrade, %{result: "reset", level: 0}), p}
 
       cost.fail == "down" ->
         p = put_upgrade(p, uid, level - 1)

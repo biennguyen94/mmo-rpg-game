@@ -56,10 +56,13 @@ defmodule HacLong.Game.GearTest do
   end
 
   test "nâng cấp đồ ngẫu nhiên như đồ thường" do
-    p = %{player() | gold: 10_000} |> Engine.add_item("ore_rare", 5)
+    p = %{player() | gold: 10_000} |> Engine.add_item("jewel_bless", 5)
     {p, _} = Gear.add(p, sword())
     {_, p} = Engine.equip(p, "#KIEM")
-    {%{ok: true, msg: "Đã nâng Đại Đao Sức Mạnh lên +1."}, p} = Engine.upgrade(p, "weapon")
+
+    {%{ok: true, msg: "✨ Ép thành công Đại Đao Sức Mạnh lên +1!"}, p} =
+      Engine.upgrade(p, "weapon")
+
     assert Engine.upgrade_level(p, "#KIEM") == 1
   end
 

@@ -200,40 +200,32 @@ defmodule HacLong.Game.EngineTest do
     assert mg.points == 7
   end
 
-  test "Thợ Rèn nâng cấp đồ đang mặc bằng quặng và vàng" do
+  test "Thợ Rèn nâng cấp đồ đang mặc bằng Ngọc Ước Nguyện và vàng (B-13)" do
     p = %{player() | gold: 10_000}
     atk = Engine.derived(p).atk
 
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Quặng Sắt 0/1."}, _} =
+    assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Ước Nguyện 0/1."}, _} =
              Engine.upgrade(p, "weapon")
 
-    p = Engine.add_item(p, "ore", 20)
-    {%{ok: true, msg: "Đã nâng Rìu Nhỏ lên +1."}, p} = Engine.upgrade(p, "weapon")
+    p = Engine.add_item(p, "jewel_bless", 20)
+    {%{ok: true, msg: "✨ Ép thành công Rìu Nhỏ lên +1!"}, p} = Engine.upgrade(p, "weapon")
     # Rìu Nhỏ tấn công 4: mỗi cấp ít nhất +1
     assert Engine.derived(p).atk == atk + 1
-    assert p.inv["ore"] == 19 and p.gold == 10_000 - 8
+    assert p.inv["jewel_bless"] == 19 and p.gold == 10_000 - 8
 
     # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
     club = p.equip.weapon
     assert [%{uid: ^club, base: "item_1_0", rarity: 0}] = p.gear
-    p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
-    assert Engine.upgrade_level(p, club) == 4
-    # +5 cần Vảy Cổ Long
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Vảy Cổ Long 0/1."}, _} =
-             Engine.upgrade(p, "weapon")
-
-    {%{ok: true}, p} = p |> Engine.add_item("dragon_scale") |> Engine.upgrade("weapon")
-    # +6 trở lên cần ngọc
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Ước Nguyện 0/1."}, _} =
-             Engine.upgrade(p, "weapon")
+    p = Enum.reduce(1..4, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
+    assert Engine.upgrade_level(p, club) == 5
 
     assert Engine.view(p).bonus == %{club => 5}
 
-    assert %{id: ^club, level: 5, cost: %{items: %{"jewel_bless" => 1}}} =
+    assert %{id: ^club, level: 5, cost: %{items: %{"jewel_bless" => 1}, at: "smith"}} =
              Engine.view(p).forge.weapon
 
-    # đồ cấp cao dùng Mithril; gậy mới mua là món khác, cấp 0
-    assert %{gold: 600, items: %{"ore_rare" => 1}} = Engine.upgrade_cost("waraxe", 0)
+    # gậy mới mua là món khác, cấp 0
+    assert %{gold: 600, items: %{"jewel_bless" => 1}} = Engine.upgrade_cost("waraxe", 0)
     p = %{p | level: 10} |> Engine.add_item("broadsword") |> Engine.add_item("club")
     {_, p} = Engine.equip(p, "broadsword")
     assert Engine.upgrade_level(p, "broadsword") == 0

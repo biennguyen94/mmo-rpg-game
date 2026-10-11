@@ -157,27 +157,26 @@ w(table(['Cấp', 'Tên theo lớp', 'Cấp đeo', 'Thủ', 'Sát thương', 'Nh
 # ---------- ép ----------
 U, ur, ls = up['UPGRADE'], rules['upgrade'], rules['luck_skill']
 jn = {k: v['name'] for k, v in leg.items() if k.startswith('jewel')}
-fail = {None: '—', 'down': 'tụt 1 cấp', 'destroy': '**vỡ đồ**'}
+fail = {None: '—', 'down': 'tụt 1 cấp', 'reset': '**về +0**', 'destroy': '**vỡ đồ**'}
+where = {'smith': 'Thợ Rèn', 'chaos': 'Máy Hỗn Nguyên'}
 
 
 def eff(l):
     return l + max(0, l - U['double_from'] + 1)
 
 
-w('## Ép +N (Thợ Rèn)\n')
+w('## Ép +N (kiểu MU)\n')
 w(f"Mỗi cấp cộng {pct(ur['bonus_pct'])} chỉ số gốc của món (ít nhất +1). Từ +{U['double_from']} mỗi cấp tính "
-  f"gấp đôi. Từ +{U['announce_from']} cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ ép +7 đến +11 cộng "
+  f"gấp đôi. Từ +{U['announce_from']} cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ các bước không chắc chắn cộng "
   f"{pct(ls['luck_upgrade'])}, tối đa {pct(ls['luck_max_rate'])}.\n")
 rows = []
-for n in range(1, U['steps'][0]['level']):
-    extra = ' + 1 Vảy Cổ Long' if n == ur['scale_step'] else ''
-    rows.append([f'+{n}', f'vàng + {n} quặng{extra}', '100%', '—', n])
 for s in U['steps']:
-    rows.append([f"+{s['level']}", f"vàng + 1 {jn[s['jewel']]}", pct(s['rate']), fail[s['fail']], eff(s['level'])])
-w(table(['Lên', 'Cần', 'Tỉ lệ', 'Thất bại', 'Tính như (cấp)'], rows) + '\n')
+    need = ' + '.join(f"{n} {jn[k]}" for k, n in s['items'].items())
+    rows.append([f"+{s['level']}", where[s['at']], f"vàng + {need}", pct(s['rate']), fail[s['fail']], eff(s['level'])])
+w(table(['Lên', 'Ở đâu', 'Cần', 'Tỉ lệ', 'Thất bại', 'Tính như (cấp)'], rows) + '\n')
 life = ur['life']
-w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {ur['cost_min_price']}). Quặng Mithril thay "
-  f"Quặng Sắt với đồ từ cấp {ur['rare_ore_level']}. Ngọc Sinh Mệnh: +{life['per_line']} mỗi dòng, tối đa "
+w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {ur['cost_min_price']}). Ngọc Sinh Mệnh: "
+  f"+{life['per_line']} mỗi dòng, tối đa "
   f"{life['max_lines']} dòng, {pct(life['rate'])}; vũ khí cộng công, giáp / khiên / cánh cộng thủ; thất bại mất "
   'dòng cuối.\n')
 

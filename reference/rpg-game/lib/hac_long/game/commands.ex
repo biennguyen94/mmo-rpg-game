@@ -144,6 +144,12 @@ defmodule HacLong.Game.Commands do
           Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true)
         end)
 
+      # Phase 20: ép +10 / +11 kiểu MU ở Máy Hỗn Nguyên (DECISIONS B-13)
+      "chaos_upgrade" ->
+        at_npc(p, ["chaos"], "Lão Hỗn Nguyên ở Làng", fn _ ->
+          Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true, "chaos")
+        end)
+
       "life" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ -> Engine.life(p, c["id"] || c["slot"]) end)
 

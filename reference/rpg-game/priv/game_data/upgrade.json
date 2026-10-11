@@ -1,44 +1,112 @@
 {
   "UPGRADE": {
+    "_doc": "Ép đồ kiểu MU (DECISIONS B-13): +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công; +7 → +9 1 Ngọc Tâm Linh, tỉ lệ rate (May mắn cộng thêm RULES.luck_skill.luck_upgrade), thất bại về +0 (fail reset); +10, +11 ép ở Máy Hỗn Nguyên (at chaos) bằng Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại vỡ đồ (fail destroy). items: ngọc tốn mỗi lần ép; vàng theo RULES.upgrade.cost_pct. fail: null | down (tụt 1 cấp) | reset (về +0) | destroy (vỡ đồ).",
     "max": 11,
     "announce_from": 7,
     "double_from": 10,
     "steps": [
       {
-        "level": 6,
-        "jewel": "jewel_bless",
+        "level": 1,
+        "items": {
+          "jewel_bless": 1
+        },
         "rate": 1.0,
-        "fail": null
+        "fail": null,
+        "at": "smith"
+      },
+      {
+        "level": 2,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith"
+      },
+      {
+        "level": 3,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith"
+      },
+      {
+        "level": 4,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith"
+      },
+      {
+        "level": 5,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith"
+      },
+      {
+        "level": 6,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith"
       },
       {
         "level": 7,
-        "jewel": "jewel_soul",
-        "rate": 0.7,
-        "fail": "down"
+        "items": {
+          "jewel_soul": 1
+        },
+        "rate": 0.5,
+        "fail": "reset",
+        "at": "smith"
       },
       {
         "level": 8,
-        "jewel": "jewel_soul",
-        "rate": 0.6,
-        "fail": "down"
+        "items": {
+          "jewel_soul": 1
+        },
+        "rate": 0.5,
+        "fail": "reset",
+        "at": "smith"
       },
       {
         "level": 9,
-        "jewel": "jewel_soul",
+        "items": {
+          "jewel_soul": 1
+        },
         "rate": 0.5,
-        "fail": "down"
+        "fail": "reset",
+        "at": "smith"
       },
       {
         "level": 10,
-        "jewel": "jewel_chaos",
+        "items": {
+          "jewel_chaos": 1,
+          "jewel_bless": 1,
+          "jewel_soul": 1
+        },
         "rate": 0.5,
-        "fail": "destroy"
+        "fail": "destroy",
+        "at": "chaos"
       },
       {
         "level": 11,
-        "jewel": "jewel_chaos",
+        "items": {
+          "jewel_chaos": 1,
+          "jewel_bless": 2,
+          "jewel_soul": 2
+        },
         "rate": 0.45,
-        "fail": "destroy"
+        "fail": "destroy",
+        "at": "chaos"
       }
     ]
   },
