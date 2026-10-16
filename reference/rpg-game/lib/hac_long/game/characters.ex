@@ -339,7 +339,7 @@ defmodule HacLong.Game.Characters do
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
-                    ds bc kal gear_ids)a,
+                    ds bc kal gear_ids taken ignore_def crit_mult)a,
                  &{Atom.to_string(&1), &1}
                )
 

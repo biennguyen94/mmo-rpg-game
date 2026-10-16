@@ -859,7 +859,9 @@ defmodule HacLong.Game.Engine do
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
             mult = if skill, do: mult * (1 + d.skillDmg), else: mult
-            dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1))
+
+            # đối thủ là người (đấu trường, đồ sát): giảm sát thương nhận của cánh và Excellent bên đó
+            dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1), m[:taken] || 1)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
             suffix = if crit, do: " (CHÍ MẠNG!)", else: ""
@@ -1051,8 +1053,9 @@ defmodule HacLong.Game.Engine do
           dmg =
             damage(
               m_atk,
-              d.def,
-              if(mc, do: @combat.monster_crit_mult, else: 1),
+              # đối thủ là người có dòng cánh "bỏ qua phòng thủ"
+              round(d.def * (1 - (m[:ignore_def] || 0))),
+              if(mc, do: m[:crit_mult] || @combat.monster_crit_mult, else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb)
             )
 

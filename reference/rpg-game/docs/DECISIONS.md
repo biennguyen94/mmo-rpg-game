@@ -397,3 +397,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     (mình và người khác) xem chi tiết; header bỏ lớp và chuyển sinh.
   - Quà cho mọi người: nhiều món một thư, lọc người nhận (cấp, chuyển sinh, online), **không gửi bot**, xem trước số
     người nhận, lịch sử 20 đợt (`gift_count`, `gift_log`, chỉ đọc).
+- **B-27** (Phase 8, rà soát công thức, `docs/FORMULA_AUDIT.md`) sửa 3 lỗi khi đánh người (Đấu trường, Đồ sát, PK cược):
+  phần giảm sát thương của đối thủ (hấp thụ cánh × Excellent "giảm sát thương") giờ áp vào đòn đánh họ (`taken`; trước đây
+  Đồ sát bỏ qua hẳn, Đấu trường chỉ quy cánh vào máu); dòng cánh "bỏ qua phòng thủ" của đối thủ có tác dụng khi họ đánh
+  mình; chí mạng của bản sao đối thủ dùng hệ số thật của người đó thay vì × 1,5 của quái. Đề xuất A–D trong báo cáo chờ anh chốt.

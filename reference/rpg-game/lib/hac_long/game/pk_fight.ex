@@ -74,7 +74,7 @@ defmodule HacLong.Game.PkFight do
           say(st, "#{t.name} né được đòn của #{m.name}.", "info")
 
         special ->
-          dmg = Engine.damage(m.atk, t.def, @pk.special_mult)
+          dmg = Engine.damage(m.atk, def_of(m, t), @pk.special_mult, t[:taken] || 1)
 
           st
           |> hurt(them, dmg)
@@ -82,7 +82,14 @@ defmodule HacLong.Game.PkFight do
 
         true ->
           crit = chance(m.crit)
-          dmg = Engine.damage(m.atk, t.def, if(crit, do: @crit_mult, else: 1))
+
+          dmg =
+            Engine.damage(
+              m.atk,
+              def_of(m, t),
+              if(crit, do: m[:crit_mult] || @crit_mult, else: 1),
+              t[:taken] || 1
+            )
 
           st
           |> hurt(them, dmg)
@@ -96,6 +103,9 @@ defmodule HacLong.Game.PkFight do
       end
     end
   end
+
+  # phòng thủ của `t` sau dòng cánh "bỏ qua phòng thủ" của `m`
+  defp def_of(m, t), do: round(t.def * (1 - (m[:ignore_def] || 0)))
 
   defp kind(:a), do: "hit"
   defp kind(:b), do: "hurt"
