@@ -24,7 +24,7 @@ defmodule HacLong.Game.GearTest do
     assert base.slot == "weapon" and base.level == 12 and "dk" in base.classes
     # kiểu MU (B-15): không còn chỉ số cộng ngẫu nhiên, chỉ dòng cộng thêm
     assert g.opt == 2 and g.rarity == 0 and g.bonus == %{}
-    assert Gear.kind(g) == "opt" and Gear.label(g) == "#{base.name} (+8)"
+    assert Gear.kind(g) == "opt" and Gear.label(g) == "#{base.name} (cộng thêm 8)"
     assert String.starts_with?(g.uid, "#")
 
     # 0.1 ở trọng số: đồ thường không dòng nào
@@ -85,7 +85,7 @@ defmodule HacLong.Game.GearTest do
     assert Engine.upgrade_level(p, "#KIEM") == 1
   end
 
-  test "túi đầy thì món mới bán luôn" do
+  test "túi đầy thì món mới chờ gửi Hộp thư (B-25)" do
     p = player()
 
     p =
@@ -93,8 +93,9 @@ defmodule HacLong.Game.GearTest do
         elem(Gear.add(p, %{sword() | uid: "##{i}"}), 0)
       end)
 
-    assert {p2, {:sold, gold}} = Gear.add(p, sword())
-    assert p2.gold == p.gold + gold and length(p2.gear) == Gear.max_bag()
+    g = sword()
+    assert {p2, :mailed} = Gear.add(p, g)
+    assert p2.gold == p.gold and length(p2.gear) == Gear.max_bag() and p2.mail_out == [g]
   end
 
   test "lưu và nạp lại từ database" do

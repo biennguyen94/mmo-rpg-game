@@ -195,8 +195,8 @@ input[type="text"], input[type="password"], input[type="number"], select {
 }
 .stage::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgba(22,18,28,0.35), rgba(22,18,28,0.92) 70%); }
 .stage > * { position: relative; }
-.stage .sprite { width: 144px; height: 144px; filter: drop-shadow(0 10px 14px rgba(0,0,0,0.8)); }
-.stage.boss .sprite { width: 176px; height: 176px; }
+.stage .sprite { width: 96px; height: 96px; image-rendering: pixelated; filter: drop-shadow(0 10px 14px rgba(0,0,0,0.8)); }
+.stage.boss .sprite { width: 128px; height: 128px; }
 .stage h2 { font-family: var(--display); font-size: 2rem; line-height: 1; color: var(--parch); text-shadow: 0 2px 0 #000; }
 .stage.boss h2 { color: var(--gold); }
 .stage .bar { width: 100%; }
@@ -210,7 +210,7 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .me .sprite { width: 40px; height: 40px; }
 .me.hurt .sprite { animation: hit 0.3s; }
 
-.log { background: #0f0c13; border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; height: 150px; overflow-y: auto; display: grid; align-content: start; gap: 3px; font-size: 0.86rem; }
+.log { background: #0f0c13; border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; height: 220px; overflow-y: auto; display: grid; align-content: start; gap: 3px; font-size: 0.86rem; }
 .log .hit { color: var(--parch); }
 .log .crit { color: var(--gold); font-weight: 600; }
 .log .bad { color: var(--bad); }
@@ -314,7 +314,7 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .card.wb { border-color: #7a3328; background: linear-gradient(#2a1418, var(--ink-2)); margin-bottom: 10px; }
 .card.wb .sprite { width: 48px; height: 48px; }
 .card.wb .bar { margin-top: 4px; }
-.stage.world .sprite { width: 160px; height: 160px; }
+.stage.world .sprite { width: 128px; height: 128px; }
 .chat-line.system { color: #f0b36a; font-weight: 600; }
 .map-top { flex-wrap: wrap; row-gap: 2px; }
 .map-top b { font-size: 1.25rem; }
@@ -543,6 +543,7 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; }
 .stage.golden { box-shadow: inset 0 0 40px rgba(255, 205, 80, 0.45); }
 .stage.golden .sprite { filter: drop-shadow(0 0 8px #ffd24a); }
 .bar.gold { height: 18px; }
+.bar.gold > span { line-height: 16px; }
 .bar.gold i { background: linear-gradient(90deg, #b8862a, #ffd24a); }
 
 /* B1: HUD trên điện thoại — tên co lại, nút nhỏ hơn, số đỏ không lòi ra ngoài màn hình */
@@ -587,16 +588,16 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; }
 #view.fit { overflow: hidden; padding-bottom: 10px; gap: 8px; }
 #view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
 #view.fit .map-hint { display: none; }
-#view.fit .log { flex: 1 1 60px; min-height: 60px; height: auto; }
+#view.fit .log { flex: 2 1 120px; min-height: 120px; height: auto; }
 #view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px; }
 #view.fit > .stage h2 { font-size: 1.6rem; }
 #view.fit > .stage > .small { font-size: 0.78rem; }
 #view.fit .me .sprite { width: 34px; height: 34px; }
 /* V8: điện thoại thấp — hình quái co lại, tên và thanh máu quái luôn thấy */
 #view.fit > .stage > * { flex: none; }
-#view.fit > .stage .sprite { flex: 0 1 144px; min-height: 48px; height: 144px; width: auto; aspect-ratio: 1; object-fit: contain; }
-#view.fit > .stage.boss .sprite { flex-basis: 176px; height: 176px; }
-#view.fit > .stage.world .sprite { flex-basis: 160px; height: 160px; }
+#view.fit > .stage .sprite { flex: 0 1 96px; min-height: 48px; height: 96px; width: auto; aspect-ratio: 1; object-fit: contain; }
+#view.fit > .stage.boss .sprite { flex-basis: 128px; height: 128px; }
+#view.fit > .stage.world .sprite { flex-basis: 128px; height: 128px; }
 .map-wrap .map-dialog { z-index: 6; }
 
 /* V7: nút Vừa màn hình trên bản đồ */

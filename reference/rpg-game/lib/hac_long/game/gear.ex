@@ -76,7 +76,7 @@ defmodule HacLong.Game.Gear do
     end
   end
 
-  @doc "Tên món kèm loại cho tin nhắn: `Kiếm Rồng (Hoàn hảo)`, `Mũ Đồng (+8)`, `Giáp Da`."
+  @doc "Tên món kèm loại cho tin nhắn: `Kiếm Rồng (Hoàn hảo)`, `Mũ Đồng (cộng thêm 8)`, `Giáp Da`."
   def label(g) do
     name = resolve(g).name
 
@@ -84,7 +84,7 @@ defmodule HacLong.Game.Gear do
       case kind(g) do
         "anc" -> "Đồ Thần"
         "exc" -> "Hoàn hảo"
-        _ -> if (g[:opt] || 0) > 0, do: "+#{g.opt * @life.per_line}", else: nil
+        _ -> if (g[:opt] || 0) > 0, do: "cộng thêm #{g.opt * @life.per_line}", else: nil
       end
 
     if tag, do: "#{name} (#{tag})", else: name
@@ -529,12 +529,13 @@ defmodule HacLong.Game.Gear do
   defp new_uid, do: "#" <> Base.encode32(:crypto.strong_rand_bytes(5), padding: false)
 
   @doc """
-  Thêm món `g` vào túi. Túi đầy (#{@max_bag} món chưa mặc) thì bán luôn.
-  Trả về `{nhân_vật, :kept | {:sold, vàng}}`.
+  Thêm món `g` vào túi. Túi đầy (#{@max_bag} món chưa mặc) thì xếp vào hàng gửi Hộp thư (`:mail_out`,
+  `Session` gửi khi lưu nhân vật; hộp thư đầy mới bán, `HacLong.Mailbox.send_overflow/2`).
+  Trả về `{nhân_vật, :kept | :mailed}`.
   """
   def add(p, g) do
     if length(bag(p)) >= @max_bag do
-      {%{p | gold: p.gold + price(g)}, {:sold, price(g)}}
+      {Map.update(p, :mail_out, [g], &(&1 ++ [g])), :mailed}
     else
       {Map.put(p, :gear, list(p) ++ [g]), :kept}
     end

@@ -114,7 +114,7 @@
     // Quảng Trường Quỷ (Phase 18 M1) chạy trên trạng thái tháp (`t.ds`): nền vùng cuối, tên theo đợt
     // Lâu Đài Máu (Phase 18 M2): `t.bc`, tên theo bước
     const BC_STAGE = { guards: 'Hạ quân canh', gate: 'Phá Cổng Thành', boss: 'Hạ Hiệp Sĩ Máu', done: 'Hoàn thành' };
-    const zi = t.ds || t.bc || t.kal ? ZONES.length - 1 : Math.min(ZONES.length - 1, Math.floor((t.floor - 1) / 10));
+    const zi = t.ds || t.bc || t.kal ? ZONES.length - 1 : Math.floor((t.floor - 1) / 10) % ZONES.length;
     const KAL_STAGE = { guards: 'Hạ quái Kalima', boss: 'Hạ Kundun', done: 'Hoàn thành' };
     const name = t.kal ? `Kalima ${t.kal.n} · ${KAL_STAGE[t.kal.stage] || ''}` : t.bc ? `Lâu Đài Máu · ${BC_STAGE[t.bc.stage] || ''}` : t.ds ? `Quảng Trường Quỷ · Đợt ${t.floor}/${t.ds.waves}` : `Tháp Vô Tận · Tầng ${t.floor}`;
     return { name, zone: null, floor: 'floors/' + ZONES[zi].id, tiles: t.tiles, portals: [], npcs: [], tower: t };

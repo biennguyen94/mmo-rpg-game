@@ -440,6 +440,13 @@ defmodule HacLong.World do
       {:engage, m} ->
         case encounter(p, map, m) do
           {%{ok: true} = r, p} ->
+            # quái đang dở máu (người trước bỏ chạy): đánh tiếp từ máu đó
+            p =
+              if is_number(m[:hp]) and m.hp < 100,
+                do:
+                  update_in(p.battle.monster, &%{&1 | hp: max(1, round(&1.maxHp * m.hp / 100))}),
+                else: p
+
             # trong tổ đội: ghi trận để đồng đội vào đánh cùng
             key = fight_key(map.id, m.id)
             Party.open_fight(key, uid, p.battle.monster)

@@ -1142,6 +1142,18 @@ defmodule HacLong.Game.Session do
 
   defp left_trade(_uid, _old, _new), do: :ok
 
+  # đồ rơi lúc túi đồ hiếm đầy (`Gear.add/2`): gửi Hộp thư cùng transaction với lần ghi nhân vật
+  defp save(s, %{mail_out: [_ | _]} = player) do
+    {:ok, player} =
+      HacLong.Repo.transaction(fn ->
+        player = Mailbox.send_overflow(s.user_id, player)
+        Characters.save!(s.user_id, player)
+        player
+      end)
+
+    cancel_flush(%{s | player: player, dirty: false})
+  end
+
   defp save(s, player) do
     Characters.save!(s.user_id, player)
     cancel_flush(%{s | player: player, dirty: false})
@@ -1151,6 +1163,8 @@ defmodule HacLong.Game.Session do
     Characters.delete!(s.user_id)
     cancel_flush(%{s | player: nil, dirty: false})
   end
+
+  defp mark_dirty(%{player: %{mail_out: [_ | _]} = p} = s), do: save(s, p)
 
   defp mark_dirty(%{flush_timer: nil} = s),
     do: %{s | dirty: true, flush_timer: Process.send_after(self(), :flush, @flush_ms)}

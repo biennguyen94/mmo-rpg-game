@@ -29,7 +29,42 @@ defmodule HacLong.MailboxGearTest do
     plain = Enum.find(bag, &(&1[:opt] == nil))
     assert p2.upgrades[plain.uid] == 3
     assert Enum.count(bag, &(&1[:opt] == 2)) == 2
-    assert msg =~ "(+8)"
+    assert msg =~ "(cộng thêm 8)"
+  end
+
+  test "túi đồ hiếm đầy: đồ rơi vào Hộp thư đủ dòng; hộp thư đầy thì bán" do
+    user = user("mfull")
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mfull", "cls" => "dk"})
+    p = Map.merge(p, %{level: 50, gear: for(_ <- 1..Gear.max_bag(), do: Gear.new(base("armor")))})
+
+    g =
+      Gear.new("item_0_26", 2)
+      |> Map.merge(%{luck: true, skill: true, exc: ["crit", "atk_pct"]})
+
+    assert {p, :mailed} = Gear.add(p, g)
+    assert length(Gear.list(p)) == Gear.max_bag() and p.mail_out == [g]
+
+    p = Mailbox.send_overflow(user.id, p)
+    refute Map.has_key?(p, :mail_out)
+    [m] = Mailbox.list(user.id)
+    assert m.subject =~ "Túi đồ hiếm đầy"
+
+    # chưa dọn túi: không mở được; dọn một món rồi mở thì có đủ dòng
+    assert {:error, _} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)
+    p = %{p | gear: tl(p.gear)}
+    assert {:ok, _msg, p2} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)
+    got = List.last(Gear.list(p2))
+
+    assert %{base: "item_0_26", opt: 2, luck: true, skill: true} = got
+    assert Enum.sort(got.exc) == ["atk_pct", "crit"]
+
+    # hộp thư đủ RULES.mail.keep thư chưa mở: bán lấy vàng
+    keep = Data.rules().mail.keep
+    for i <- 1..keep, do: Mailbox.send(user.id, %{subject: "đầy #{i}"})
+    gold = p.gold
+    p3 = Mailbox.send_overflow(user.id, Map.put(p, :mail_out, [g]))
+    assert p3.gold == gold + Gear.price(g)
+    assert Mailbox.unread(user.id) == keep
   end
 
   test "từ chối khóa đồ không hợp lệ" do

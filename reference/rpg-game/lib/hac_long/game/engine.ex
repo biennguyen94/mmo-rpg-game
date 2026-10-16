@@ -1438,8 +1438,8 @@ defmodule HacLong.Game.Engine do
         {p, :kept} ->
           {log(p, "🎁 Nhặt được #{label}!", "win"), Map.put(reward, :gear, [label])}
 
-        {p, {:sold, gold}} ->
-          {log(p, "🎁 Nhặt được #{label}, túi đầy nên bán luôn được #{gold} vàng.", "good"),
+        {p, :mailed} ->
+          {log(p, "🎁 Nhặt được #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
            Map.put(reward, :gear, [label])}
       end
     else
@@ -1497,8 +1497,8 @@ defmodule HacLong.Game.Engine do
             {log(p, "🎁 #{m.name} để lại #{label}!", "win"),
              Map.update(reward, :gear, [label], &(&1 ++ [label]))}
 
-          {p, {:sold, gold}} ->
-            {log(p, "🎁 #{m.name} để lại #{label}, túi đầy nên bán được #{gold} vàng.", "good"),
+          {p, :mailed} ->
+            {log(p, "🎁 #{m.name} để lại #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
              Map.update(reward, :gear, [label], &(&1 ++ [label]))}
         end
     end

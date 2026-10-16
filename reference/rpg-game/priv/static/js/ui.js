@@ -314,7 +314,7 @@
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
-    const gearBases = all.filter(([, it]) => GEAR_KINDS.includes(it.slot) && !it.legacy);
+    const gearBases = all.filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy);
     const up = `<label class="small">+ <input type="number" name="up" min="0" max="${UPGRADE.max}" value="0"></label>`;
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
@@ -327,7 +327,8 @@
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
       ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm +${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
-        <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}</div>
+        <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
+          <select name="wopt" aria-label="Dòng phụ cánh"><option value="">Cánh: không dòng phụ</option><option value="hp">Cánh: máu tối đa</option><option value="mp">Cánh: MP tối đa</option><option value="ignore_def">Cánh: bỏ qua phòng thủ</option></select></div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
@@ -371,6 +372,7 @@
     if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
     if (op === 'give_gear') {
       Object.assign(payload, { base: f.get('base'), opt: n('opt'), up: n('up'), exc: f.getAll('exc') });
+      if (f.get('wopt')) payload.wopt = f.get('wopt');
       for (const k of ['luck', 'skill', 'anc']) if (f.get(k)) payload[k] = true;
     }
     Net.admin(op, payload).then((r) => { toast(r.msg || 'Đã xong.'); if (r.user) adm.user = r.user; adm.glog = null; render(); }).catch((err) => toast(err.msg, true));
@@ -1121,8 +1123,17 @@
 
   // đồ riêng từng món trong thư: "gear:<mẫu>:<số dòng cộng thêm>:<+N>" (B-15)
   function mailItemName(id) {
+    // "gearx:<base64 JSON>": đồ đủ dòng gửi khi túi đồ hiếm đầy
+    if (id.startsWith('gearx:')) {
+      try {
+        const x = JSON.parse(atob(id.slice(6).replace(/-/g, '+').replace(/_/g, '/')));
+        const tags = [x.anc ? 'Đồ Thần' : x.exc && x.exc.length ? 'Hoàn hảo' : '', x.opt ? `cộng thêm ${x.opt * RULES.life.per_line}` : '', x.luck ? 'May mắn' : ''].filter(Boolean);
+        if (ITEMS[x.base]) return `${ITEMS[x.base].name}${tags.length ? ` (${tags.join(', ')})` : ''}`;
+      } catch (e) { /* khóa hỏng: hiện nguyên */ }
+      return id;
+    }
     const g = id.startsWith('gear:') && id.split(':');
-    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (+${g[2] * RULES.life.per_line})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
+    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (cộng thêm ${g[2] * RULES.life.per_line})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
     return ITEMS[id] ? ITEMS[id].name : id;
   }
   function mailGifts(m) {
@@ -1561,8 +1572,8 @@
   // đồ hoàn hảo (lục), đồ Thần
   const KIND_CLS = { opt: 'k-opt', exc: 'exc', anc: 'anc' };
   const KIND_NAME = { exc: 'Hoàn hảo', anc: 'Đồ Thần' };
-  // nhãn ngắn như `Gear.label/1`: Đồ Thần / Hoàn hảo / +N dòng cộng thêm
-  const kindTag = (it) => KIND_NAME[it.kind] || (it.opt ? `+${it.opt * RULES.life.per_line}` : '');
+  // nhãn ngắn như `Gear.label/1`: Đồ Thần / Hoàn hảo / cộng thêm N ("+N" chỉ dành cho cấp ép)
+  const kindTag = (it) => KIND_NAME[it.kind] || (it.opt ? `cộng thêm ${it.opt * RULES.life.per_line}` : '');
   // nhãn ngắn cho đồ bản riêng trong danh sách chọn: loại và / hoặc cấp nâng
   const gearTag = (id) => { const it = itemOf(id), up = upLevel(id); return [kindTag(it), up ? `+${up}` : ''].filter(Boolean).map((x) => ` (${x})`).join(''); };
   const itemName = (id) => {
@@ -1762,7 +1773,7 @@
     const list = LIB[libUi.tab].filter((x) => L.nameMatch([x.name, trn(x.name)], libUi.q));
     if (!list.length) return '<p class="small muted">Không tìm thấy.</p>';
     const row = libUi.tab === 'maps' ? libMapRow : libUi.tab === 'monsters' ? libMonRow : libItemRow;
-    return `<div class="list">${list.slice(0, 120).map(row).join('')}</div>${list.length > 120 ? `<p class="small muted">Còn ${list.length - 120} kết quả, gõ thêm để lọc.</p>` : ''}`;
+    return `<div class="list">${list.map(row).join('')}</div>`;
   }
   const libHead = (key, left, title, sub) => `<button class="item lib-row" data-act="lib-open" data-key="${esc(key)}" aria-expanded="${libUi.open === key}">${left}<div class="grow"><div class="name">${title}</div><div class="small muted">${sub}</div></div><span class="small muted">${libUi.open === key ? '▾' : '▸'}</span></button>`;
   const libLine = (k, v) => (v ? `<div class="kv"><span>${k}</span><span>${v}</span></div>` : '');
@@ -2795,7 +2806,7 @@
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `${esc(P.name)} · ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${bottom}`;

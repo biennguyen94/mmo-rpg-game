@@ -376,3 +376,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   6 % → **8 %** (`RULES.loot.gear_chance.normal`; Bóng Đêm, trùm, tinh anh giữ nguyên). Đồ đã mua trước giữ nguyên.
 
 
+- **B-25** (anh chốt "ok theo đề xuất", Phase 1 đợt sửa lỗi 2026-10-16):
+  - **Túi đồ hiếm đầy (20/20): đồ rơi gửi vào Hộp thư** thay vì tự bán. Mỗi món một thư, giữ đủ dòng (May mắn / Kỹ năng /
+    Excellent / Thần / dòng phụ cánh) qua khóa `items` mới `"gearx:<base64 JSON>"` (không đổi schema `mails`); gửi cùng
+    transaction với lần ghi nhân vật (`Session.save`). Hộp thư đã có `RULES.mail.keep` thư chưa mở thì mới bán lấy vàng.
+  - **"+N" chỉ là cấp ép.** Dòng cộng thêm (Ngọc Sinh Mệnh) ghi chữ: `Kiếm Rồng (cộng thêm 8)` thay cho `(+8)`.
+  - **Tháp Thử Thách tầng 51+**: 5 vùng quái lặp lại theo vòng 50 tầng, tên thêm hậu tố vòng (Cổ Đại, Hắc Ám, Thần Thoại,
+    Hỗn Mang, Vĩnh Hằng) để không trùng tên / hình với tầng 1–50 ở cùng chỗ (chỉ số vẫn tăng theo tầng như cũ).
+  - **Bỏ chạy rồi đánh lại quái trên bản đồ: quái giữ máu** đã mất và hồi 2 % máu tối đa mỗi giây (không về đầy ngay).
+  - Quản trị `give_gear` nhận cả cánh (dòng cộng thêm, May mắn, `wopt`).

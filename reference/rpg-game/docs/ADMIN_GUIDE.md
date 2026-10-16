@@ -79,7 +79,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
 | Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `base` (mọi loại trừ cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
@@ -182,6 +182,7 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 ```js
 const uid = Net.userId;
 const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); } catch (e) { console.warn(op, e.msg); } };
+const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;   // dk / dw / elf / mg
 
 // cấp tối đa (50): +3 điểm tiềm năng mỗi cấp
 await A('set_level', { level: 50 });
@@ -191,29 +192,44 @@ await A('add_gold', { amount: 100000000 });
 await A('add_points', { n: 300 });
 await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI / VIT / ENE như MU
 
-// đồ +16 (4 dòng cộng thêm), nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
-await A('give_gear', { base: 'relic', opt: 4, luck: true, skill: true, up: 11,
-  exc: ['atk_pct', 'crit', 'heal_kill', 'mp_kill', 'atk_lvl', 'ar_pct'] }); // Thánh Kiếm Diệt Long hoàn hảo đủ 6 dòng
-await A('give_gear', { base: 'item_8_1', opt: 4, luck: true, up: 11 });           // Giáp Rồng (Kiếm Sĩ / Đấu Sĩ)
-await A('give_gear', { base: 'dragonshield', opt: 4, up: 11 });                    // Khiên Vảy Rồng
-
-// cánh cấp 2 đúng lớp, +11 (dk / dw / elf / mg); cấp mặc 35
-const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;
-await A('give_item', { id: `wing_${cls}_2`, count: 1, up: 11 });
+// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
+const SET = {
+  dk:  { weapon: 'item_0_26', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Lửa Lượn, bộ Ánh Dương
+  dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
+  elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                       // Cung Air Lyn, bộ Tia Tiên
+  mg:  { weapon: 'item_0_28', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },                                    // Kiếm Đế Vương, bộ Long Kỵ Sĩ
+}[cls];
+const EXC_W = ['atk_pct', 'crit', 'heal_kill', 'mp_kill', 'atk_lvl', 'ar_pct'];   // vũ khí / dây chuyền
+const EXC_A = ['hp_pct', 'dmg_red', 'gold_pct', 'mp_pct', 'reflect', 'def_rate']; // giáp / khiên / nhẫn
+// "+N" là cấp ép (tối đa +11); opt 4 = 4 dòng cộng thêm (+16 tấn công / phòng thủ), luck = May mắn
+await A('give_gear', { base: SET.weapon, opt: 4, luck: true, skill: true, up: 11, exc: EXC_W });
+if (SET.shield) await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });
+for (const base of SET.set) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
+// Đồ Thần thay cho Excellent (chọn một trong hai cho bộ giáp): await A('give_gear', { base, opt: 4, luck: true, up: 11, anc: true });
+await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });   // Nhẫn Phép × 2
+await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });
+await A('give_gear', { base: 'item_13_27', opt: 4, luck: true, up: 11, exc: EXC_W });   // Dây Chuyền Nước
+// cánh cấp 3 đúng lớp (cấp mặc 45): 4 dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh hp / mp / ignore_def
+await A('give_gear', { base: `wing_${cls}_3`, opt: 4, luck: true, up: 11, wopt: 'ignore_def' });
 
 // ngọc để tự ép / ghép thêm
-await A('give_item', { id: 'jewel_bless', count: 20 });
-await A('give_item', { id: 'jewel_soul', count: 20 });
-await A('give_item', { id: 'jewel_chaos', count: 20 });
+await A('give_item', { id: 'jewel_bless', count: 50 });
+await A('give_item', { id: 'jewel_soul', count: 50 });
+await A('give_item', { id: 'jewel_chaos', count: 50 });
+await A('give_item', { id: 'jewel_life', count: 50 });
 
-// bình máu, nguyên liệu nâng cấp / nấu ăn
-await A('give_item', { id: 'potion_l', count: 200 });
+// bình máu / mana, nguyên liệu nâng cấp / nấu ăn, vé sự kiện
+await A('give_item', { id: 'potion_l', count: 500 });
+await A('give_item', { id: 'mana_l', count: 500 });
 await A('give_item', { id: 'ore_rare', count: 100 });
 await A('give_item', { id: 'dragon_scale', count: 20 });
 await A('give_item', { id: 'mam_co', count: 20 });
+for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
 await A('heal');
 ```
+
+Cần 13 chỗ trong túi đồ hiếm (tối đa 20): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc.
 
 Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / cánh vào ô trang bị (hoặc bấm món → **Trang bị**).
 Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →

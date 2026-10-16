@@ -169,9 +169,15 @@ defmodule HacLong.Admin do
     # Phase 15g: đồ Bộ Thần (chỉ món bộ giáp)
     anc = a["anc"] == true
 
+    # cánh: dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh `wopt` (hp / mp / ignore_def)
+    wopt = a["wopt"]
+
     cond do
-      !it or it.slot not in Engine.gear_slots() ->
-        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên (cánh: dùng give_item)."}
+      !it or it.slot not in ["wing" | Engine.gear_slots()] ->
+        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên / trang sức / cánh."}
+
+      wopt not in [nil, ""] and not (it.slot == "wing" and Gear.wopt_value(it[:tier], wopt) > 0) ->
+        {:error, "Dòng cánh không hợp lệ (cánh bậc có dòng: hp, mp, ignore_def)."}
 
       not (is_integer(opt) and opt in 0..Gear.max_opt()) ->
         {:error, "Số dòng cộng thêm phải từ 0 tới #{Gear.max_opt()}."}
@@ -199,6 +205,7 @@ defmodule HacLong.Admin do
              g = if luck, do: Map.put(g, :luck, true), else: g
              g = if skill, do: Map.put(g, :skill, true), else: g
              g = if anc, do: Map.put(g, :anc, true), else: g
+             g = if wopt in [nil, ""], do: g, else: Map.put(g, :wopt, wopt)
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}

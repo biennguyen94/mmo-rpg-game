@@ -271,7 +271,7 @@ defmodule HacLong.WorldTest do
              World.teleport(far, uid, "forest_2")
   end
 
-  # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì về đầy
+  # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì giữ máu, hồi dần (B-25)
   test "máu quái đang đánh hiện cho mọi người cùng bản đồ", %{uid: uid} do
     {x, y} = open_spot("forest_1")
     MapServer.put_monster("forest_1", "bat", {x, y})
@@ -281,7 +281,8 @@ defmodule HacLong.WorldTest do
     MapServer.hp("forest_1", m.id, 40)
     assert [%{hp: 40, busy: true}] = MapServer.snapshot("forest_1").monsters
     MapServer.release("forest_1", uid, m.id)
-    assert [%{hp: 100, busy: false}] = MapServer.snapshot("forest_1").monsters
+    assert [%{hp: hp, busy: false}] = MapServer.snapshot("forest_1").monsters
+    assert hp in 40..50
   end
 
   # ---------- Phase 15a: bản đồ phụ, chọn bản đồ ----------

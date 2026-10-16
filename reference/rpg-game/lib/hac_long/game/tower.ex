@@ -101,7 +101,24 @@ defmodule HacLong.Game.Tower do
     flood(grid, next ++ rest, Enum.reduce(next, seen, &MapSet.put(&2, &1)))
   end
 
-  defp tier(floor), do: min(Data.zone_count() - 1, div(floor - 1, 10))
+  # Mỗi 10 tầng một vùng; hết vùng thì quay vòng lại từ vùng đầu, mỗi vòng thêm tiền tố tên (`cycle_prefix/1`)
+  # để tầng cao không trùng hình + tên với tầng dưới (trước đây từ tầng 61 trở đi đều là quái vùng cuối).
+  defp tier(floor), do: rem(div(floor - 1, 10), Data.zone_count())
+
+  @prefixes ["", "Cổ Đại", "Hắc Ám", "Thần Thoại", "Hỗn Mang", "Vĩnh Hằng"]
+
+  @doc "Tiền tố tên quái theo vòng vùng của tầng `floor` (vòng đầu không có)."
+  def cycle_prefix(floor) do
+    cycle = div(floor - 1, Data.zone_count() * 10)
+    Enum.at(@prefixes, min(cycle, length(@prefixes) - 1))
+  end
+
+  defp named(name, floor) do
+    case cycle_prefix(floor) do
+      "" -> name
+      p -> "#{name} #{p}"
+    end
+  end
 
   def theme(floor), do: "floors/" <> Data.zone(tier(floor)).id
 
@@ -127,7 +144,19 @@ defmodule HacLong.Game.Tower do
       Enum.reduce(1..count, {[], rng}, fn i, {acc, rng} ->
         {m, rng} = pick(zone.monsters, rng)
         {x, y} = Enum.at(spots, i)
-        {[%{id: i, kind: m.id, name: m.name, level: floor, x: x, y: y, elite: false} | acc], rng}
+
+        {[
+           %{
+             id: i,
+             kind: m.id,
+             name: named(m.name, floor),
+             level: floor,
+             x: x,
+             y: y,
+             elite: false
+           }
+           | acc
+         ], rng}
       end)
 
     list =
@@ -138,7 +167,7 @@ defmodule HacLong.Game.Tower do
           %{
             id: 0,
             kind: zone.boss.id,
-            name: zone.boss.name,
+            name: named(zone.boss.name, floor),
             level: floor + @rules.level_offset,
             x: x,
             y: y,

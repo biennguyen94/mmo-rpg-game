@@ -69,7 +69,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 | Bán đồ ngẫu nhiên | `Engine.sell("#"<>uid)` `engine.ex:1082` | `it.sell` |
 | Bán đồ thường | `Engine.sell(id)` `engine.ex:1092`, `sell_price` `1067` | `floor(price*0.4)` (giá 0 thì tính 200) |
 | Nghỉ trọ | `Engine.rest` `engine.ex:1155, 1167-1171` | `level*4-4` |
-| Túi đồ ngẫu nhiên đầy thì tự bán | `Gear.add` `gear.ex:156-158` | |
+| Túi đồ hiếm đầy: đồ rơi vào Hộp thư (đủ dòng, khóa `gearx:`), hộp thư đầy mới bán (B-25) | `Gear.add`, `Mailbox.send_overflow`, `Session.save` | |
 | Rèn đồ ngẫu nhiên | `Crafting.smith` `crafting.ex:30, 128-148` | `level*15` |
 | Mua rương | `Chests.buy` `chests.ex:49, 57` | giá `chests.ex:24-35` |
 | Rương nhà mỗi ngày | `Chests.open_daily` `chests.ex:73, 88` | `20+level*8` |

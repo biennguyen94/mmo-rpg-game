@@ -240,7 +240,21 @@ defmodule HacLong.Mailbox do
          true <- it.slot in Engine.item_slots(),
          true <- opt in 0..Gear.max_opt() and up in 0..Engine.max_upgrade(),
          true <- opt == 0 or it.slot in Engine.gear_slots() do
-      {base, opt, up, it}
+      {base, opt, up, it, %{}}
+    else
+      _ -> nil
+    end
+  end
+
+  # đồ đủ dòng (May mắn / Kỹ năng / Excellent / Thần / dòng phụ cánh): "gearx:<base64 JSON>", server tự tạo
+  # khi túi đồ hiếm đầy (`send_overflow/2`)
+  defp parse_gear("gearx:" <> b64) do
+    with {:ok, json} <- Base.url_decode64(b64, padding: false),
+         {:ok, %{"base" => base} = m} <- Jason.decode(json),
+         {base, 0, 0, it, _} <- parse_gear(gear_key(base, 0, 0)),
+         opt when is_integer(opt) <- m["opt"] || 0,
+         true <- opt in 0..Gear.max_opt() and extras_ok?(it, m) do
+      {base, opt, 0, it, Map.take(m, ~w(luck skill exc anc wopt))}
     else
       _ -> nil
     end
@@ -248,9 +262,58 @@ defmodule HacLong.Mailbox do
 
   defp parse_gear(_), do: nil
 
+  defp extras_ok?(it, m) do
+    m["luck"] in [nil, true] and m["skill"] in [nil, true] and m["anc"] in [nil, true] and
+      (m["wopt"] == nil or Gear.wopt_value(it[:tier], m["wopt"]) > 0) and
+      (m["exc"] == nil or
+         (is_list(m["exc"]) and
+            Enum.all?(m["exc"], &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))))
+  end
+
+  defp gearx_key(g) do
+    spec =
+      g
+      |> Map.take([:base, :opt, :luck, :skill, :exc, :anc, :wopt])
+      |> Map.reject(fn {_, v} -> v in [nil, false, [], 0] end)
+
+    "gearx:" <> Base.url_encode64(Jason.encode!(spec), padding: false)
+  end
+
   defp valid_item?(id), do: Data.item(id) != nil or parse_gear(id) != nil
 
-  defp make_gear(p, {base, opt, _up, _it}), do: {Gear.new(base, opt), p}
+  defp make_gear(p, {base, opt, _up, _it, extras}) do
+    g =
+      Enum.reduce(extras, Gear.new(base, opt), fn
+        {"exc", v}, g -> Map.put(g, :exc, Enum.uniq(v))
+        {k, v}, g -> Map.put(g, String.to_existing_atom(k), v)
+      end)
+
+    {g, p}
+  end
+
+  @doc """
+  Gửi các món chờ trong `p.mail_out` (túi đồ hiếm đầy, `Gear.add/2`) vào Hộp thư, mỗi món một thư, giữ đủ dòng.
+  Hộp thư đã có `RULES.mail.keep` thư chưa mở thì bán món còn lại lấy vàng. Gọi trong transaction lưu nhân vật.
+  Trả về nhân vật đã bỏ `mail_out` (và cộng vàng bán, nếu có).
+  """
+  def send_overflow(user_id, %{mail_out: [_ | _] = list} = p) do
+    room = max(@keep - unread(user_id), 0)
+    {mail, sell} = Enum.split(list, room)
+
+    Enum.each(mail, fn g ->
+      __MODULE__.send(user_id, %{
+        subject: "Túi đồ hiếm đầy: #{Gear.label(g)}",
+        body:
+          "Món này rơi lúc túi đồ hiếm đã đủ #{Gear.max_bag()} món. Dọn túi rồi mở thư để nhận.",
+        items: %{gearx_key(g) => 1}
+      })
+    end)
+
+    gold = sell |> Enum.map(&Gear.price/1) |> Enum.sum()
+    %{Map.delete(p, :mail_out) | gold: p.gold + gold}
+  end
+
+  def send_overflow(_user_id, p), do: Map.delete(p, :mail_out)
 
   defp give(p, mail) do
     p = %{p | gold: p.gold + mail.gold}
@@ -267,7 +330,7 @@ defmodule HacLong.Mailbox do
 
     p =
       Enum.reduce(gear, p, fn {id, n}, p ->
-        {_, _, up, _} = spec = parse_gear(id)
+        {_, _, up, _, _} = spec = parse_gear(id)
 
         Enum.reduce(1..n, p, fn _, p ->
           {g, p} = make_gear(p, spec)
@@ -302,8 +365,9 @@ defmodule HacLong.Mailbox do
 
   defp item_name(id) do
     case parse_gear(id) do
-      {base, opt, up, _it} ->
-        Gear.label(Gear.new(base, opt)) <> if(up > 0, do: " +#{up}", else: "")
+      {_, _, up, _, _} = spec ->
+        {g, _} = make_gear(nil, spec)
+        Gear.label(g) <> if(up > 0, do: " +#{up}", else: "")
 
       nil ->
         if it = Data.item(id), do: it.name, else: id
