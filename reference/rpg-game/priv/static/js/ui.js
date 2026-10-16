@@ -323,6 +323,7 @@
       ${line('give_xp', 'Kinh nghiệm', num('xp', 1000, 'min="1"'), 'Cộng')}
       ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
+      ${line('set_tower', 'Kỷ lục tháp (mở kỹ năng tháp)', num('floor', 100, 'min="0" max="1000"'), 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
@@ -367,6 +368,7 @@
     if (op === 'give_xp') payload.xp = n('xp');
     if (op === 'set_level') payload.level = n('level');
     if (op === 'add_gold') payload.amount = n('amount');
+    if (op === 'set_tower') payload.floor = n('floor');
     if (op === 'add_points') payload.n = n('n');
     if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
     if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
@@ -1751,14 +1753,23 @@
   // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
   // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
   // anh quyết sau giữ hay bỏ từng phần.
+  // Phase 3: kỹ năng lớp (mở theo cấp) + kỹ năng tháp (mở theo kỷ lục tháp), bộ 4 kỹ năng mang vào trận
   function viewSkills() {
+    const open = P.view.skillsOpen || [], set = P.view.skillSet || [];
+    const row = (k) => {
+      const locked = !open.includes(k.id), slot = set.indexOf(k.id);
+      const why = k.floor ? `mở khi kỷ lục tháp đạt tầng ${k.floor} (đang ${P.tower_best || 0})` : `mở ở cấp ${k.level}`;
+      return `<div class="item ${locked ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
+          <div class="name">${elTag(k.element)} ${esc(k.name)}${k.floor ? ` <span class="tag">Tầng ${k.floor}</span>` : ''}${slot >= 0 ? ` <span class="tag gold">Ô ${slot + 1}</span>` : ''}${locked ? ` <span class="small" style="color:var(--bad)">· ${why}</span>` : ''}</div>
+          <div class="small muted">${esc(skillDesc(k))} Tốn ${skillMp(k)} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`;
+    };
     const c = CLASSES[P.cls];
     return `
-      <div class="card"><h3>Kỹ năng</h3><div class="list">
-        ${c.skills.map((k) => `<div class="item ${k.level > P.level ? 'locked' : ''}">${icon(k.icon, 'lg')}<div class="grow">
-          <div class="name">${k.name}${k.level > P.level ? ` <span class="small" style="color:var(--bad)">· mở ở cấp ${k.level}</span>` : ''}</div>
-          <div class="small muted">${k.desc} Tốn ${skillMp(k)} MP, hồi chiêu ${k.cooldown} lượt.</div></div></div>`).join('')}
-      </div></div>`;
+      <div class="card"><div class="row"><h3 class="grow">Kỹ năng</h3><button class="btn small-btn primary" data-act="skill-pick-open">⚙ Chọn bộ kỹ năng</button></div>
+        <p class="small muted">Mang tối đa ${(RULES.towerSkills || {}).loadout || 4} kỹ năng vào trận. Nguyên tố: ${Object.keys(EL.beats || {}).filter((e) => !['light', 'dark'].includes(e)).map((e) => `${elTag(e)} khắc ${(EL.beats[e] || []).map(elTag).join('')}`).join(' · ')} · ${elTag('light')} ↔ ${elTag('dark')}.</p>
+        <h4>Kỹ năng lớp</h4><div class="list">${c.skills.map(row).join('')}</div>
+        <h4>Kỹ năng Tháp Thử Thách</h4><div class="list">${(c.tower_skills || []).map(row).join('')}</div>
+      </div>${viewSkillPick()}`;
   }
 
   // ---------- Menu ----------
@@ -2835,19 +2846,63 @@
   }
 
   // ---------- Trận đấu ----------
-  const mySkills = () => CLASSES[P.cls].skills.filter((k) => k.level <= P.level);
+  // Phase 3 (B-29): kỹ năng lớp + kỹ năng tháp; trận dùng bộ đã chọn (server gửi `view.skillSet`)
+  const allSkills = () => CLASSES[P.cls].skills.concat(CLASSES[P.cls].tower_skills || []);
+  const skillById = (id) => allSkills().find((k) => k.id === id);
+  const mySkills = () => (P.view.skillSet || []).map(skillById).filter(Boolean);
+  const EL = RULES.elements || { names: {}, icons: {}, beats: {}, strong: 0, weak: 0 };
+  const elTag = (el) => (el ? `<span class="el el-${el}" title="${esc(EL.names[el] || el)}">${EL.icons[el] || ''}</span>` : '');
+  // kỹ năng nguyên tố `a` đánh quái nguyên tố `b`: 1 khắc, -1 bị khắc, 0 bình thường
+  const elVs = (a, b) => (a && b && (EL.beats[a] || []).includes(b) ? 1 : a && b && (EL.beats[b] || []).includes(a) ? -1 : 0);
+  // mô tả kỹ năng tháp dựng từ số trong dữ liệu (không chép chữ, đổi số là chữ đổi theo)
+  function skillDesc(k) {
+    if (!k.floor) return k.desc;
+    const pc = (x) => `${Math.round(x * 100)}%`;
+    const fx = { rage: 'tấn công +', guard: 'sát thương nhận −', evade: 'né +', weaken: 'tấn công quái −', sunder: 'phòng thủ quái −' };
+    const parts = [`Gây ${pc(k.mult)} sát thương${k.hits ? ` chia ${k.hits} đòn` : ''}`];
+    if (k.def_mult) parts.push(`xuyên ${pc(1 - k.def_mult)} giáp`);
+    if (k.crit) parts.push('chắc chắn chí mạng');
+    if (k.heal) parts.push(`hồi ${pc(k.heal)} máu`);
+    if (k.drain) parts.push(`hút ${pc(k.drain)} sát thương thành máu`);
+    if (k.stun) parts.push(`${pc(k.stun)} làm quái mất lượt`);
+    const b = k.buff, db = k.debuff;
+    if (b && b.id === 'shield') parts.push(`khiên ${pc(b.power)} máu tối đa trong ${b.turns} lượt`);
+    else if (b && b.id === 'undying') parts.push(`gục trong ${b.turns} lượt thì đứng dậy với ${pc(b.power)} máu`);
+    else if (b) parts.push(`${fx[b.id] || b.id}${pc(b.power)} trong ${b.turns} lượt`);
+    if (db && ['poison', 'burn'].includes(db.id)) parts.push(`${db.id === 'burn' ? 'đốt' : 'độc'} ${pc(db.power)} sát thương mỗi lượt, ${db.turns} lượt`);
+    else if (db) parts.push(`${fx[db.id] || db.id}${pc(db.power)} trong ${db.turns} lượt`);
+    return parts.join(', ') + '.';
+  }
+  let skillPick = null; // đang chọn bộ kỹ năng: mảng id
+  function viewSkillPick() {
+    if (!skillPick) return '';
+    const open = P.view.skillsOpen || [], max = (RULES.towerSkills || {}).loadout || 4;
+    const row = (k) => {
+      const on = skillPick.includes(k.id), locked = !open.includes(k.id);
+      const lock = k.floor ? `🔒 Tháp tầng ${k.floor}` : `🔒 Cấp ${k.level}`;
+      return `<button class="item skill-pick ${on ? 'on' : ''} ${locked ? 'locked' : ''}" data-act="skill-pick" data-id="${k.id}" ${locked ? 'disabled' : ''}>
+        ${icon(k.icon, 'lg')}<div class="grow"><div class="name">${elTag(k.element)} ${esc(k.name)}${k.floor ? ` <span class="tag">Tầng ${k.floor}</span>` : ''}</div>
+        <div class="small muted">${esc(skillDesc(k))} ${skillMp(k)} MP, hồi ${k.cooldown} lượt.</div></div>
+        <span class="small">${locked ? lock : on ? `✔ ${skillPick.indexOf(k.id) + 1}` : ''}</span></button>`;
+    };
+    return `<div class="map-dialog card skill-dialog"><div class="row"><h3 class="grow">⚙ Bộ kỹ năng (${skillPick.length}/${max})</h3><button class="btn small-btn" data-act="skill-pick-close">✕</button></div>
+      <p class="small muted">Chọn tối đa ${max} kỹ năng mang vào trận (đổi được cả khi đang đánh). Kỹ năng tháp mở khi kỷ lục Tháp Thử Thách đạt tầng ghi bên cạnh. Đúng hệ khắc nguyên tố quái: +${Math.round(EL.strong * 100)}% sát thương, bị khắc: −${Math.round(EL.weak * 100)}%.</p>
+      <div class="list">${allSkills().map(row).join('')}</div>
+      <div class="btn-row"><button class="btn primary" data-act="skill-pick-save" ${skillPick.length ? '' : 'disabled'}>Lưu bộ kỹ năng</button></div></div>`;
+  }
 
   // Hiệu ứng trạng thái đang có (độc, choáng, cuồng nộ...).
   const EFFECTS = {
     poison: ['☠', 'Trúng độc', 'bad'], burn: ['🔥', 'Bỏng', 'bad'], bleed: ['🩸', 'Chảy máu', 'bad'],
-    stun: ['💫', 'Choáng', 'bad'], weaken: ['⬇', 'Suy yếu', 'bad'],
+    stun: ['💫', 'Choáng', 'bad'], weaken: ['⬇', 'Suy yếu', 'bad'], sunder: ['🪓', 'Phá giáp', 'bad'],
     rage: ['⬆', 'Cuồng nộ', 'good'], guard: ['🛡', 'Thủ thế', 'good'], evade: ['💨', 'Ảnh bộ', 'good'],
+    shield: ['🔰', 'Khiên', 'good'], undying: ['✨', 'Bất tử', 'good'],
   };
   function effectTags(list) {
     if (!list || !list.length) return '';
     return `<div class="fx-tags">${list.map((e) => {
       const [ic, name, kind] = EFFECTS[e.id] || ['•', e.id, ''];
-      const dot = ['poison', 'burn', 'bleed'].includes(e.id) ? ` -${e.power}` : '';
+      const dot = ['poison', 'burn', 'bleed'].includes(e.id) ? ` -${e.power}` : e.id === 'shield' ? ` ${e.power}` : '';
       return `<span class="fx-tag ${kind}" title="${name}">${ic} ${name}${dot}${e.id === 'stun' ? '' : ` · ${e.turns}`}</span>`;
     }).join('')}</div>`;
   }
@@ -2874,7 +2929,8 @@
         ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayClock.until}">${slayLeft(slayClock.until)}</span>s</p>` : ''}
         <div class="actions">
           <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
-          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp; return `<button class="btn" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${k.name} · ${kmp} MP">${icon(k.icon)}<span class="lbl">${k.name}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element); return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
+          <button class="btn skill-cfg" data-act="skill-pick-open" title="Chọn bộ kỹ năng">⚙</button>
         </div>
         <div class="actions util">
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
@@ -2901,7 +2957,7 @@
         <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : m.ds ? `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}` : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
-        <h2>${m.name}</h2>
+        <h2>${elTag(m.element)} ${m.name}</h2>
         <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
         ${bar(m.golden ? 'gold' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
         ${effectTags(fxs.monster)}
@@ -2911,7 +2967,7 @@
         <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
-      ${bottom}`;
+      ${bottom}${viewSkillPick()}`;
   }
 
   // Đồ nhận được sau trận: bấm xem chi tiết (bảng như trong túi, có nút Vứt); nút 🗑 hủy nhanh. Món đã vứt / bán
@@ -3274,6 +3330,14 @@
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
     if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
     if (act === 'profile') { openPlayer({ id: +t.dataset.uid }); return; }
+    if (act === 'skill-pick-open') { skillPick = (P.view.skillSet || []).slice(); render(); return; }
+    if (act === 'skill-pick-close') { skillPick = null; render(); return; }
+    if (act === 'skill-pick') {
+      const id = t.dataset.id, i = skillPick.indexOf(id), max = (RULES.towerSkills || {}).loadout || 4;
+      if (i >= 0) skillPick.splice(i, 1); else if (skillPick.length < max) skillPick.push(id); else toast(`Tối đa ${max} kỹ năng.`, true);
+      render(); return;
+    }
+    if (act === 'skill-pick-save') { const ids = skillPick; skillPick = null; sendCommand({ act: 'skill_set', ids }); return; }
     if (act === 'gift-add') { giftAdd(t); return; }
     if (act === 'gift-rm') { giftRm(t); return; }
     if (act === 'gift-log') { loadGiftLog(); return; }

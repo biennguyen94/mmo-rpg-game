@@ -404,3 +404,18 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **B-28** (anh chốt "A, B, C, D ok", `docs/FORMULA_AUDIT.md` §2): Excellent `atk_lvl` 0,1 → **0,6** (cấp 50 ≈ +30 công);
   né chặn **`combat.dodge.max_total` 0,6** sau khi nhân Excellent `def_rate`; **ép nhẫn chỉ có máu cộng máu** (8 % máu gốc
   mỗi cấp hiệu dụng) thay vì +1 thủ; bỏ `monster.dodge` khỏi RULES (quái không né, trúng theo AR / DR).
+- **B-29** (anh chốt "làm phase 3", theo đề xuất Phase 3) **Kỹ năng Tháp Thử Thách + nguyên tố + bộ 4 kỹ năng.**
+  - Mỗi lớp 10 kỹ năng tháp (`CLASSES[lớp].tower_skills`), mở khi kỷ lục tháp ≥ tầng 10, 20, … 100, giữ vĩnh viễn.
+    Hệ số 1,45× (tầng 10) → 3,7× (tầng 100), MP 13 → 40 (tăng theo cấp như kỹ năng lớp).
+  - Tác dụng ghi trong dữ liệu (`RULES.tower_skills._doc`): nhiều đòn, xuyên giáp, chắc chí mạng, hồi máu, hút máu, khống chế,
+    cuồng nộ / thủ thế / né, **khiên** (hấp thụ % máu tối đa), **bất tử** (gục thì đứng dậy một lần), **phá giáp**, độc / đốt.
+    Mô tả trên giao diện dựng từ số, không chép chữ.
+  - **Nguyên tố** (`RULES.elements`): Lửa > Băng > Gió > Đất > Sét > Lửa, Ánh Sáng ↔ Bóng Tối.
+    - Kỹ năng khắc nguyên tố quái +30 % sát thương, bị khắc −20 %; đòn thường không nguyên tố.
+    - Quái mang nguyên tố theo cấp (`by_level`), vì vậy tháp, bản đồ phụ, sự kiện đều có nguyên tố.
+    - 12 kỹ năng lớp cũ được gán nguyên tố.
+  - **Bộ kỹ năng:** mang tối đa 4 kỹ năng (kỹ năng lớp + kỹ năng tháp) vào trận, nút ⚙ trong trận và Menu → Kỹ năng.
+    - Đổi được cả khi đang đánh; hồi chiêu giữ nguyên.
+    - Chưa chọn thì mặc định 4 kỹ năng mạnh nhất đã mở.
+    - Cột mới `characters.skill_set` (migration `20261106000000_add_skill_set`).
+    - Quản trị thêm `set_tower {floor}`.

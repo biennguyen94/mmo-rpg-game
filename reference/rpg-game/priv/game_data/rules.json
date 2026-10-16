@@ -450,6 +450,27 @@
         ]
       }
     },
+    "elements": {
+      "_doc": "Phase 3 (B-29): nguyên tố. Kỹ năng có `element`; quái mang nguyên tố theo cấp (`by_level`: [cấp từ, nguyên tố], lấy dòng cuối có cấp ≤ cấp quái) hoặc `element` riêng. `beats`: hệ khắc (vòng Lửa > Băng > Gió > Đất > Sét > Lửa; Ánh Sáng và Bóng Tối khắc nhau). Kỹ năng khắc quái: × (1 + strong); quái khắc kỹ năng: × (1 − weak). Đòn thường không nguyên tố.",
+      "list": ["fire", "ice", "lightning", "earth", "wind", "light", "dark"],
+      "names": {"fire": "Lửa", "ice": "Băng", "lightning": "Sét", "earth": "Đất", "wind": "Gió", "light": "Ánh Sáng", "dark": "Bóng Tối"},
+      "icons": {"fire": "🔥", "ice": "❄️", "lightning": "⚡", "earth": "🪨", "wind": "🌪", "light": "✨", "dark": "🌑"},
+      "beats": {"fire": ["ice"], "ice": ["wind"], "wind": ["earth"], "earth": ["lightning"], "lightning": ["fire"], "light": ["dark"], "dark": ["light"]},
+      "strong": 0.3,
+      "weak": 0.2,
+      "by_level": [[1, "earth"], [6, "fire"], [12, "dark"], [18, "ice"], [24, "lightning"], [30, "fire"], [36, "wind"], [43, "light"]],
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "tower_skills": {
+      "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Thử Thách ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận.",
+      "loadout": 4,
+      "stun_boss_resist": 0.5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "blessing": {
       "_doc": "Phase 2 (B-26): Đài Phúc Lành thay đá dịch chuyển (ô W). Chạm vào: nhận phúc lành của bản đồ trong `battles` trận (như món ăn, không theo giờ) và đài thành điểm hồi sinh khi gục. Mỗi bản đồ một loại theo thứ tự đài trong `kinds` (lặp lại): xp / gold = % kinh nghiệm / vàng; atk / def / hp = % tấn công / phòng thủ / máu tối đa. Làng không có phúc lành, chỉ là điểm hồi sinh.",
       "battles": 30,

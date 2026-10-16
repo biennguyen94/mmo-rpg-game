@@ -43,7 +43,8 @@
           "cooldown": 3,
           "level": 1,
           "mp": 8,
-          "effect": "cleave"
+          "effect": "cleave",
+          "element": "wind"
         },
         {
           "id": "falling_slash",
@@ -53,7 +54,8 @@
           "cooldown": 4,
           "level": 10,
           "mp": 14,
-          "effect": "stun_bash"
+          "effect": "stun_bash",
+          "element": "earth"
         },
         {
           "id": "greater_fortitude",
@@ -63,7 +65,135 @@
           "cooldown": 6,
           "level": 25,
           "mp": 20,
-          "effect": "war_cry"
+          "effect": "war_cry",
+          "element": "fire"
+        }
+      ],
+      "tower_skills": [
+        {
+          "id": "t_phong_tram",
+          "name": "Phong Trảm",
+          "floor": 10,
+          "element": "wind",
+          "icon": "sword-spin",
+          "mult": 1.45,
+          "mp": 13,
+          "cooldown": 4
+        },
+        {
+          "id": "t_dam_xuyen",
+          "name": "Đâm Xuyên Giáp",
+          "floor": 20,
+          "element": "earth",
+          "icon": "broadsword",
+          "mult": 1.7,
+          "mp": 16,
+          "cooldown": 4,
+          "debuff": {
+            "id": "sunder",
+            "turns": 3,
+            "power": 0.3
+          }
+        },
+        {
+          "id": "t_ho_the",
+          "name": "Hộ Thể",
+          "floor": 30,
+          "element": "light",
+          "icon": "shield-reflect",
+          "mult": 1.95,
+          "mp": 19,
+          "cooldown": 6,
+          "buff": {
+            "id": "shield",
+            "turns": 3,
+            "power": 1.0
+          }
+        },
+        {
+          "id": "t_cuong_no_hoa",
+          "name": "Cuồng Nộ Hỏa",
+          "floor": 40,
+          "element": "fire",
+          "icon": "shouting",
+          "mult": 2.2,
+          "mp": 22,
+          "cooldown": 4,
+          "buff": {
+            "id": "rage",
+            "turns": 4,
+            "power": 0.5
+          }
+        },
+        {
+          "id": "t_dia_chan",
+          "name": "Địa Chấn",
+          "floor": 50,
+          "element": "earth",
+          "icon": "hammer-drop",
+          "mult": 2.45,
+          "mp": 25,
+          "cooldown": 5,
+          "stun": 0.35
+        },
+        {
+          "id": "t_song_phong",
+          "name": "Song Phong Kiếm",
+          "floor": 60,
+          "element": "wind",
+          "icon": "crossed-swords",
+          "mult": 2.7,
+          "mp": 28,
+          "cooldown": 5,
+          "hits": 2
+        },
+        {
+          "id": "t_long_huyet",
+          "name": "Long Huyết",
+          "floor": 70,
+          "element": "dark",
+          "icon": "dripping-knife",
+          "mult": 2.95,
+          "mp": 31,
+          "cooldown": 5,
+          "drain": 0.3
+        },
+        {
+          "id": "t_kiem_than",
+          "name": "Kiếm Thần",
+          "floor": 80,
+          "element": "light",
+          "icon": "relic-blade",
+          "mult": 3.2,
+          "mp": 34,
+          "cooldown": 5,
+          "crit": true
+        },
+        {
+          "id": "t_bat_tu",
+          "name": "Bất Tử",
+          "floor": 90,
+          "element": "light",
+          "icon": "laurels",
+          "mult": 3.45,
+          "mp": 37,
+          "cooldown": 8,
+          "buff": {
+            "id": "undying",
+            "turns": 4,
+            "power": 0.3
+          }
+        },
+        {
+          "id": "t_hac_long_tram",
+          "name": "Hắc Long Trảm",
+          "floor": 100,
+          "element": "dark",
+          "icon": "two-handed-sword",
+          "mult": 3.7,
+          "mp": 40,
+          "cooldown": 7,
+          "def_mult": 0.5
         }
       ]
     },
@@ -111,7 +241,8 @@
           "cooldown": 3,
           "level": 1,
           "mp": 10,
-          "effect": "fire_ball"
+          "effect": "fire_ball",
+          "element": "fire"
         },
         {
           "id": "lightning",
@@ -121,7 +252,8 @@
           "cooldown": 4,
           "level": 10,
           "mp": 16,
-          "effect": "stun_bash"
+          "effect": "stun_bash",
+          "element": "lightning"
         },
         {
           "id": "soul_barrier",
@@ -131,7 +263,127 @@
           "cooldown": 5,
           "level": 25,
           "mp": 24,
-          "effect": "guard"
+          "effect": "guard",
+          "element": "dark"
+        }
+      ],
+      "tower_skills": [
+        {
+          "id": "t_hoa_cau_lon",
+          "name": "Hỏa Cầu Lớn",
+          "floor": 10,
+          "element": "fire",
+          "icon": "dragon-breath",
+          "mult": 1.45,
+          "mp": 13,
+          "cooldown": 4
+        },
+        {
+          "id": "t_loi_kich",
+          "name": "Lôi Kích",
+          "floor": 20,
+          "element": "lightning",
+          "icon": "star-cycle",
+          "mult": 1.7,
+          "mp": 16,
+          "cooldown": 4,
+          "stun": 0.25
+        },
+        {
+          "id": "t_bang_phong",
+          "name": "Băng Phong",
+          "floor": 30,
+          "element": "ice",
+          "icon": "star-cycle",
+          "mult": 1.95,
+          "mp": 19,
+          "cooldown": 4,
+          "stun": 0.5
+        },
+        {
+          "id": "t_hut_hon",
+          "name": "Hút Hồn",
+          "floor": 40,
+          "element": "dark",
+          "icon": "gem-chaos",
+          "mult": 2.2,
+          "mp": 22,
+          "cooldown": 4,
+          "drain": 0.3
+        },
+        {
+          "id": "t_thien_thach",
+          "name": "Thiên Thạch",
+          "floor": 50,
+          "element": "fire",
+          "icon": "dragon-breath",
+          "mult": 2.45,
+          "mp": 25,
+          "cooldown": 5,
+          "def_mult": 0.7
+        },
+        {
+          "id": "t_bao_tuyet",
+          "name": "Bão Tuyết",
+          "floor": 60,
+          "element": "ice",
+          "icon": "star-cycle",
+          "mult": 2.7,
+          "mp": 28,
+          "cooldown": 5,
+          "debuff": {
+            "id": "weaken",
+            "turns": 3,
+            "power": 0.3
+          }
+        },
+        {
+          "id": "t_loi_dinh",
+          "name": "Lôi Đình",
+          "floor": 70,
+          "element": "lightning",
+          "icon": "star-cycle",
+          "mult": 2.95,
+          "mp": 31,
+          "cooldown": 5,
+          "hits": 3
+        },
+        {
+          "id": "t_hoa_nguc",
+          "name": "Hỏa Ngục",
+          "floor": 80,
+          "element": "fire",
+          "icon": "dragon-breath",
+          "mult": 3.2,
+          "mp": 34,
+          "cooldown": 5,
+          "debuff": {
+            "id": "burn",
+            "turns": 3,
+            "power": 0.5
+          }
+        },
+        {
+          "id": "t_bang_nguc",
+          "name": "Băng Ngục",
+          "floor": 90,
+          "element": "ice",
+          "icon": "shield-reflect",
+          "mult": 3.45,
+          "mp": 37,
+          "cooldown": 5,
+          "stun": 0.6
+        },
+        {
+          "id": "t_nova",
+          "name": "Nova",
+          "floor": 100,
+          "element": "light",
+          "icon": "gem-bless",
+          "mult": 3.7,
+          "mp": 40,
+          "cooldown": 7,
+          "def_mult": 0.5
         }
       ]
     },
@@ -178,7 +430,8 @@
           "cooldown": 3,
           "level": 1,
           "mp": 8,
-          "effect": "backstab"
+          "effect": "backstab",
+          "element": "wind"
         },
         {
           "id": "heal",
@@ -188,7 +441,8 @@
           "cooldown": 4,
           "level": 10,
           "mp": 14,
-          "effect": "holy"
+          "effect": "holy",
+          "element": "light"
         },
         {
           "id": "greater_damage",
@@ -198,7 +452,140 @@
           "cooldown": 5,
           "level": 25,
           "mp": 20,
-          "effect": "shadow_step"
+          "effect": "shadow_step",
+          "element": "wind"
+        }
+      ],
+      "tower_skills": [
+        {
+          "id": "t_phong_tien",
+          "name": "Phong Tiễn",
+          "floor": 10,
+          "element": "wind",
+          "icon": "backstab",
+          "mult": 1.45,
+          "mp": 13,
+          "cooldown": 4
+        },
+        {
+          "id": "t_hoi_sinh_quang",
+          "name": "Hồi Sinh Quang",
+          "floor": 20,
+          "element": "light",
+          "icon": "health-potion",
+          "mult": 1.7,
+          "mp": 16,
+          "cooldown": 4,
+          "heal": 0.35
+        },
+        {
+          "id": "t_bang_tien",
+          "name": "Băng Tiễn",
+          "floor": 30,
+          "element": "ice",
+          "icon": "backstab",
+          "mult": 1.95,
+          "mp": 19,
+          "cooldown": 4,
+          "debuff": {
+            "id": "weaken",
+            "turns": 3,
+            "power": 0.2
+          }
+        },
+        {
+          "id": "t_than_ho",
+          "name": "Thần Hộ",
+          "floor": 40,
+          "element": "light",
+          "icon": "laurels",
+          "mult": 2.2,
+          "mp": 22,
+          "cooldown": 4,
+          "buff": {
+            "id": "guard",
+            "turns": 3,
+            "power": 0.4
+          }
+        },
+        {
+          "id": "t_tien_doc",
+          "name": "Tiễn Độc",
+          "floor": 50,
+          "element": "earth",
+          "icon": "dripping-knife",
+          "mult": 2.45,
+          "mp": 25,
+          "cooldown": 5,
+          "debuff": {
+            "id": "poison",
+            "turns": 3,
+            "power": 0.5
+          }
+        },
+        {
+          "id": "t_tien_gio",
+          "name": "Tiễn Gió",
+          "floor": 60,
+          "element": "wind",
+          "icon": "backstab",
+          "mult": 2.7,
+          "mp": 28,
+          "cooldown": 5,
+          "hits": 3
+        },
+        {
+          "id": "t_phuc_lanh",
+          "name": "Phúc Lành",
+          "floor": 70,
+          "element": "light",
+          "icon": "health-potion",
+          "mult": 2.95,
+          "mp": 31,
+          "cooldown": 5,
+          "heal": 0.3,
+          "buff": {
+            "id": "shield",
+            "turns": 3,
+            "power": 0.3
+          }
+        },
+        {
+          "id": "t_mui_ten_than",
+          "name": "Mũi Tên Thần",
+          "floor": 80,
+          "element": "light",
+          "icon": "backstab",
+          "mult": 3.2,
+          "mp": 34,
+          "cooldown": 5,
+          "crit": true
+        },
+        {
+          "id": "t_tinh_linh_ho_ve",
+          "name": "Tinh Linh Hộ Vệ",
+          "floor": 90,
+          "element": "wind",
+          "icon": "sprint",
+          "mult": 3.45,
+          "mp": 37,
+          "cooldown": 6,
+          "buff": {
+            "id": "evade",
+            "turns": 2,
+            "power": 1.0
+          }
+        },
+        {
+          "id": "t_thien_tien_vu",
+          "name": "Thiên Tiễn Vũ",
+          "floor": 100,
+          "element": "light",
+          "icon": "backstab",
+          "mult": 3.7,
+          "mp": 40,
+          "cooldown": 7,
+          "hits": 4
         }
       ]
     },
@@ -246,7 +633,8 @@
           "cooldown": 3,
           "level": 1,
           "mp": 10,
-          "effect": "fire_ball"
+          "effect": "fire_ball",
+          "element": "fire"
         },
         {
           "id": "flame_strike",
@@ -256,7 +644,8 @@
           "cooldown": 4,
           "level": 10,
           "mp": 14,
-          "effect": "venom"
+          "effect": "venom",
+          "element": "fire"
         },
         {
           "id": "gigantic_storm",
@@ -266,7 +655,136 @@
           "cooldown": 5,
           "level": 25,
           "mp": 22,
-          "effect": "judgement"
+          "effect": "judgement",
+          "element": "lightning"
+        }
+      ],
+      "tower_skills": [
+        {
+          "id": "t_hoa_kiem",
+          "name": "Hỏa Kiếm",
+          "floor": 10,
+          "element": "fire",
+          "icon": "relic-blade",
+          "mult": 1.45,
+          "mp": 13,
+          "cooldown": 4
+        },
+        {
+          "id": "t_bang_kiem",
+          "name": "Băng Kiếm",
+          "floor": 20,
+          "element": "ice",
+          "icon": "winged-sword",
+          "mult": 1.7,
+          "mp": 16,
+          "cooldown": 4,
+          "debuff": {
+            "id": "weaken",
+            "turns": 3,
+            "power": 0.25
+          }
+        },
+        {
+          "id": "t_loi_kiem",
+          "name": "Lôi Kiếm",
+          "floor": 30,
+          "element": "lightning",
+          "icon": "winged-sword",
+          "mult": 1.95,
+          "mp": 19,
+          "cooldown": 4,
+          "stun": 0.3
+        },
+        {
+          "id": "t_phong_an",
+          "name": "Phong Ấn",
+          "floor": 40,
+          "element": "earth",
+          "icon": "shield-bash",
+          "mult": 2.2,
+          "mp": 22,
+          "cooldown": 4,
+          "buff": {
+            "id": "shield",
+            "turns": 3,
+            "power": 0.5
+          }
+        },
+        {
+          "id": "t_hoa_long_kiem",
+          "name": "Hỏa Long Kiếm",
+          "floor": 50,
+          "element": "fire",
+          "icon": "relic-blade",
+          "mult": 2.45,
+          "mp": 25,
+          "cooldown": 5,
+          "debuff": {
+            "id": "burn",
+            "turns": 3,
+            "power": 0.4
+          }
+        },
+        {
+          "id": "t_kiem_set_doi",
+          "name": "Kiếm Sét Đôi",
+          "floor": 60,
+          "element": "lightning",
+          "icon": "crossed-swords",
+          "mult": 2.7,
+          "mp": 28,
+          "cooldown": 5,
+          "hits": 2
+        },
+        {
+          "id": "t_huyet_kiem",
+          "name": "Huyết Kiếm",
+          "floor": 70,
+          "element": "dark",
+          "icon": "dripping-knife",
+          "mult": 2.95,
+          "mp": 31,
+          "cooldown": 5,
+          "drain": 0.3
+        },
+        {
+          "id": "t_thien_kiem",
+          "name": "Thiên Kiếm",
+          "floor": 80,
+          "element": "wind",
+          "icon": "winged-sword",
+          "mult": 3.2,
+          "mp": 34,
+          "cooldown": 5,
+          "def_mult": 0.6
+        },
+        {
+          "id": "t_nguyen_to_hop_nhat",
+          "name": "Nguyên Tố Hợp Nhất",
+          "floor": 90,
+          "element": "light",
+          "icon": "gem-life",
+          "mult": 3.45,
+          "mp": 37,
+          "cooldown": 5,
+          "crit": true,
+          "debuff": {
+            "id": "sunder",
+            "turns": 3,
+            "power": 0.3
+          }
+        },
+        {
+          "id": "t_hac_long_kiem",
+          "name": "Hắc Long Kiếm",
+          "floor": 100,
+          "element": "dark",
+          "icon": "two-handed-sword",
+          "mult": 3.7,
+          "mp": 40,
+          "cooldown": 7,
+          "def_mult": 0.5
         }
       ]
     }

@@ -24,7 +24,7 @@ defmodule HacLong.Admin do
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal set_tower)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -80,6 +80,14 @@ defmodule HacLong.Admin do
            else: "+#{xp} kinh nghiệm."
 
        {:ok, p, msg}
+     end}
+  end
+
+  # Phase 3: kỷ lục Tháp Thử Thách (mở kỹ năng tháp ở tầng 10, 20, … 100)
+  def build("set_tower", %{"floor" => f}) when is_integer(f) and f in 0..1000 do
+    {:ok,
+     fn p ->
+       {:ok, Map.put(p, :tower_best, f), "Kỷ lục tháp: #{Map.get(p, :tower_best) || 0} → #{f}."}
      end}
   end
 
