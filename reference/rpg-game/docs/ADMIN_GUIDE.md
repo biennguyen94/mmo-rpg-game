@@ -59,7 +59,13 @@ Thứ tự các khối trong tab:
    trạng thái khóa / cấm chat, các nút cấm chat / khóa. (Bỏ "gửi quà" riêng từ Phase 11: dùng **Chỉnh nhân vật**.)
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
-5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (kèm 0–4 dòng cộng thêm +4 mỗi dòng, +0…+11, ×1…10) vào hộp thư mọi nhân vật; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
+5. **Quà cho mọi người** (admin, Phase 2): thư kèm vàng / kinh nghiệm và **nhiều món** (bấm **+ Thêm** cho từng đồ thường
+   hoặc trang bị riêng: 0–4 dòng cộng thêm, +0…+11, ×1…10; **✕** để bỏ khỏi giỏ).
+   - **Người nhận:** bỏ trống là mọi nhân vật (không tính bot); lọc được theo cấp từ / đến, số lần chuyển sinh tối thiểu,
+     chỉ người đang online.
+   - **Xem trước và gửi:** hiện số người khớp bộ lọc và nội dung thư, xác nhận rồi mới gửi.
+   - **Lịch sử gửi:** 20 đợt gần nhất (lúc gửi, người gửi, tiêu đề, quà, bộ lọc, kết quả).
+   - Túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
 6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.

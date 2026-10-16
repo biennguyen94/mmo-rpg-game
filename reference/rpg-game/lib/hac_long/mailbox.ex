@@ -37,14 +37,42 @@ defmodule HacLong.Mailbox do
     end
   end
 
-  @doc "Gửi cho mọi người đã có nhân vật. Trả về số thư đã gửi."
-  def send_all(attrs) do
+  @doc """
+  Gửi cho mọi người đã có nhân vật (trừ bot), lọc theo `filter` (Phase 2): `min_level`, `max_level`,
+  `min_rebirths`, `online` (true: chỉ người đang online). Trả về số thư đã gửi.
+  """
+  def send_all(attrs, filter \\ %{}) do
     with {:ok, row} <- row(attrs) do
-      ids = Repo.all(from c in Character, select: c.user_id)
+      ids = recipients(filter)
       rows = Enum.map(ids, &Map.put(row, :user_id, &1))
       rows |> Enum.chunk_every(1000) |> Enum.each(&Repo.insert_all("mails", &1))
       Enum.each(ids, &notify/1)
       {:ok, length(ids)}
+    end
+  end
+
+  @doc "Những người nhận của `send_all/2` với `filter` (mã tài khoản)."
+  def recipients(filter \\ %{}) do
+    f = Map.new(filter || %{}, fn {k, v} -> {to_string(k), v} end)
+    int = fn k -> if is_integer(f[k]), do: f[k] end
+
+    q =
+      from c in Character,
+        join: u in HacLong.Accounts.User,
+        on: u.id == c.user_id,
+        where: u.role != "bot",
+        select: c.user_id
+
+    q = if v = int.("min_level"), do: where(q, [c], c.level >= ^v), else: q
+    q = if v = int.("max_level"), do: where(q, [c], c.level <= ^v), else: q
+    q = if v = int.("min_rebirths"), do: where(q, [c], c.rebirths >= ^v), else: q
+    ids = Repo.all(q)
+
+    if f["online"] == true do
+      on = MapSet.new(HacLong.Game.Session.online(1_000_000).players, & &1.id)
+      Enum.filter(ids, &MapSet.member?(on, &1))
+    else
+      ids
     end
   end
 

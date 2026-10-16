@@ -452,6 +452,15 @@
         ]
       }
     },
+    "blessing": {
+      "_doc": "Phase 2 (B-26): Đài Phúc Lành thay đá dịch chuyển (ô W). Chạm vào: nhận phúc lành của bản đồ trong `battles` trận (như món ăn, không theo giờ) và đài thành điểm hồi sinh khi gục. Mỗi bản đồ một loại theo thứ tự đài trong `kinds` (lặp lại): xp / gold = % kinh nghiệm / vàng; atk / def / hp = % tấn công / phòng thủ / máu tối đa. Làng không có phúc lành, chỉ là điểm hồi sinh.",
+      "battles": 30,
+      "pct": 0.05,
+      "kinds": ["xp", "def", "atk", "gold", "hp"],
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "crafting": {
       "levels": [
         0,

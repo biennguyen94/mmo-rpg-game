@@ -238,37 +238,38 @@ defmodule HacLong.WorldTest do
     assert Enum.all?(Maps.get("lair_1").gather, &(&1.item in ~w(herb_rare ore_rare)))
   end
 
-  test "đá dịch chuyển: ghi nhớ khi chạm, chỉ dùng được khi đứng cạnh", %{uid: uid, p: p} do
+  test "Đài Phúc Lành (B-26): chạm nhận phúc lành theo bản đồ, gục thì hồi sinh cạnh đài", %{
+    uid: uid,
+    p: p
+  } do
+    alias HacLong.Game.Blessing
     two = Maps.get("forest_2")
     {wx, wy} = two.waystone.at
     {sx, sy} = two.waystone.spawn
     p = at(p, "forest_2", sx, sy)
     World.enter(p, uid)
-    assert World.waystones(p) == ["village"]
 
     dir = if sy > wy, do: "up", else: "down"
     assert sx == wx
-    {%{ok: true, waystone: true, msg: msg}, p} = World.move(p, uid, dir)
-    assert msg =~ "Đã ghi nhớ"
-    assert World.waystones(p) == ["village", "forest_2"]
+    {%{ok: true, blessing: true, msg: msg}, p} = World.move(p, uid, dir)
+    assert msg =~ "Đài Phúc Lành" and msg =~ "hồi sinh"
+    assert p.waystones == ["forest_2"]
+    k = Blessing.kind("forest_2")
+    r = Blessing.rules()
+    assert %{map: "forest_2", kind: ^k, left: left} = p.blessing
+    assert left == r.battles
+    assert Blessing.bonus(p, String.to_atom(k)) == r.pct
 
-    {%{ok: true}, in_village} = World.teleport(p, uid, "village")
-    v = Maps.get("village").waystone
-    assert in_village.pos == %{map: "village", x: elem(v.spawn, 0), y: elem(v.spawn, 1)}
+    # hết một trận bớt một; hết phúc lành vẫn giữ điểm hồi sinh
+    assert Blessing.tick(p).blessing.left == left - 1
+    spent = put_in(p.blessing.left, 0)
+    assert Blessing.bonus(spent, String.to_atom(k)) == 0
+    assert Blessing.respawn(spent) == %{map: "forest_2", x: sx, y: sy}
 
-    # từ Làng quay lại Rừng Mê 2 được vì đã ghi nhớ; nơi chưa tới thì không
-    {%{ok: true}, back} = World.teleport(in_village, uid, "forest_2")
-    assert back.pos.map == "forest_2"
-
-    assert {%{ok: false, msg: "Bạn chưa tới đá dịch chuyển đó."}, _} =
-             World.teleport(in_village, uid, "camp_2")
-
-    assert {%{ok: false}, _} = World.teleport(in_village, uid, "home")
-
-    far = at(in_village, "village", 12, 15)
-
-    assert {%{ok: false, msg: "Hãy đứng cạnh đá dịch chuyển."}, _} =
-             World.teleport(far, uid, "forest_2")
+    # gục ngã: về cạnh đài, không về Nhà
+    lost = %{spent | battle: %{over: true, result: "lose"}}
+    assert World.finish_encounter(lost, uid).pos == %{map: "forest_2", x: sx, y: sy}
+    assert World.finish_encounter(%{lost | blessing: nil}, uid).pos.map == "home"
   end
 
   # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì giữ máu, hồi dần (B-25)

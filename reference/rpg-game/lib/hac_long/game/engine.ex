@@ -8,7 +8,7 @@ defmodule HacLong.Game.Engine do
   để test cố định được kết quả.
   """
 
-  alias HacLong.Game.{Bestiary, Crafting, Data, Events, Gear, Home, Pets, Rng}
+  alias HacLong.Game.{Bestiary, Blessing, Crafting, Data, Events, Gear, Home, Pets, Rng}
 
   @save_version 1
   # số luật chơi: `RULES` trong `priv/game_data/rules.json`
@@ -123,6 +123,7 @@ defmodule HacLong.Game.Engine do
           daily_done: 0,
           boss_top: 0,
           food: nil,
+          blessing: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
           furniture: %{},
@@ -206,7 +207,9 @@ defmodule HacLong.Game.Engine do
     end
 
     # thú cưng đang dắt theo và món đang ăn cộng phần trăm
-    pet = fn key -> 1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) end
+    pet = fn key ->
+      1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) + Blessing.bonus(p, key)
+    end
 
     %{
       maxHp:
@@ -362,9 +365,9 @@ defmodule HacLong.Game.Engine do
       restCost: rest_cost(p),
       # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
-        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp),
-        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk),
-        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def)
+        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp) + Blessing.bonus(p, :hp),
+        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk) + Blessing.bonus(p, :atk),
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def)
       },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
@@ -382,6 +385,8 @@ defmodule HacLong.Game.Engine do
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
+      # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
+      blessing: Blessing.view(p),
       comfort: Home.comfort(p),
       # cộng thêm của đồ đã nâng cấp (để client so sánh đồ) và giá nâng cấp đồ đang mặc
       bonus:
@@ -1216,7 +1221,11 @@ defmodule HacLong.Game.Engine do
     exc = Gear.exc_stats(p)
 
     gold =
-      round(m.gold * (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold) + exc.gold_pct))
+      round(
+        m.gold *
+          (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold) + Blessing.bonus(p, :gold) +
+             exc.gold_pct)
+      )
 
     # quái thường thấp hơn mình quá nhiều cấp thì bớt EXP (không áp trùm, tháp, trùm thế giới, đấu trường)
     normal? = not m.boss and !m[:world] and !m[:pvp] and !m[:tower]
@@ -1226,6 +1235,7 @@ defmodule HacLong.Game.Engine do
       round(
         m.xp * xf *
           (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
+             Blessing.bonus(p, :xp) +
              Events.xp_bonus(event))
       )
 
@@ -1436,7 +1446,9 @@ defmodule HacLong.Game.Engine do
 
       case Gear.add(p, g) do
         {p, :kept} ->
-          {log(p, "🎁 Nhặt được #{label}!", "win"), Map.put(reward, :gear, [label])}
+          # `gear_ids`: món vào túi, client cho bấm xem / hủy ngay trên bảng kết quả
+          {log(p, "🎁 Nhặt được #{label}!", "win"),
+           Map.merge(reward, %{gear: [label], gear_ids: [g.uid]})}
 
         {p, :mailed} ->
           {log(p, "🎁 Nhặt được #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
@@ -1495,7 +1507,9 @@ defmodule HacLong.Game.Engine do
         case Gear.add(p, g) do
           {p, :kept} ->
             {log(p, "🎁 #{m.name} để lại #{label}!", "win"),
-             Map.update(reward, :gear, [label], &(&1 ++ [label]))}
+             reward
+             |> Map.update(:gear, [label], &(&1 ++ [label]))
+             |> Map.update(:gear_ids, [g.uid], &(&1 ++ [g.uid]))}
 
           {p, :mailed} ->
             {log(p, "🎁 #{m.name} để lại #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
@@ -1539,7 +1553,11 @@ defmodule HacLong.Game.Engine do
   end
 
   defp finish(p, result) do
-    p = update_in(p.battle, &%{&1 | over: true, result: result}) |> Crafting.tick()
+    p =
+      update_in(p.battle, &%{&1 | over: true, result: result})
+      |> Crafting.tick()
+      |> Blessing.tick()
+
     {%{ok: true, result: result}, p}
   end
 
@@ -1827,7 +1845,9 @@ defmodule HacLong.Game.Engine do
   """
   def discard(p, id, n \\ 1)
 
-  def discard(%{battle: b} = p, _id, _n) when b != nil, do: {err("Đang trong trận."), p}
+  # trận đã xong (bảng kết quả) thì vứt được: hủy đồ vừa nhặt ngay trên bảng
+  def discard(%{battle: %{over: over}} = p, _id, _n) when over != true,
+    do: {err("Đang trong trận."), p}
 
   def discard(p, "#" <> _ = uid, _n) do
     g = Gear.find(p, uid)

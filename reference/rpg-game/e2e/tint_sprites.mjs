@@ -10,6 +10,8 @@ const JOBS = [
   ['monsters/ancient_lich', 'monsters/white_wizard', 'grayscale(1) invert(0.9) brightness(1.05)'],
   ['monsters/orc_warrior', 'monsters/orc_soldier', 'hue-rotate(160deg) saturate(1.2)'],
   // Quặng Mithril: quặng sắt tô bạc-xanh (hình cũ giống quả cầu pha lê)
+  // Đài Phúc Lành (Phase 2): đá dịch chuyển tô vàng ấm
+  ['tiles/waystone', 'tiles/blessing', 'sepia(1) saturate(3) hue-rotate(-10deg) brightness(1.25)'],
   ['nodes/ore', 'nodes/ore_rare', 'grayscale(0.6) sepia(0.3) hue-rotate(170deg) saturate(2.2) brightness(1.25)'],
 ];
 

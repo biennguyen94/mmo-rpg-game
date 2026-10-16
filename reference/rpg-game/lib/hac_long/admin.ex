@@ -302,6 +302,24 @@ defmodule HacLong.Admin do
     :ok
   end
 
+  @doc "Các dòng `admin_log` mới nhất của lệnh `op` (vd. lịch sử tặng quà)."
+  def recent_op(op, limit) do
+    Repo.all(
+      from l in "admin_log",
+        where: l.op == ^op,
+        order_by: [desc: l.id],
+        limit: ^limit,
+        select: %{
+          id: l.id,
+          admin: l.admin_name,
+          target_id: l.target_id,
+          params: l.params,
+          result: l.result,
+          at: l.inserted_at
+        }
+    )
+  end
+
   @doc "Các dòng `admin_log` mới nhất (lọc theo người bị tác động nếu có `target_id`)."
   def recent(limit \\ 50, target_id \\ nil) do
     q =

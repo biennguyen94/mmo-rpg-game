@@ -88,7 +88,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "traveler",
       name: "Lữ Khách",
-      desc: "Chạm vào mọi đá dịch chuyển.",
+      desc: "Ghé mọi Đài Phúc Lành.",
       stat: :waystones,
       goal: :all_waystones,
       title: "Lữ Khách"

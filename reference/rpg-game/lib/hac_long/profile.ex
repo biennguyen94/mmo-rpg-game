@@ -86,7 +86,20 @@ defmodule HacLong.Profile do
 
       it ->
         up = (Map.get(p, :upgrades) || %{})[id] || 0
-        [%{slot: slot, id: it[:base] || id, name: it.name, kind: it[:kind] || "", up: up}]
+
+        # `item`: đủ thông tin món (dòng cộng thêm, Excellent, May mắn…) để client hiện bảng chi tiết như trong túi
+        item = Map.drop(it, [:uid, :locked, :stored, :sell, :price])
+
+        [
+          %{
+            slot: slot,
+            id: it[:base] || id,
+            name: it.name,
+            kind: it[:kind] || "",
+            up: up,
+            item: item
+          }
+        ]
     end
   end
 

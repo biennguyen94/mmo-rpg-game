@@ -385,3 +385,15 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     Hỗn Mang, Vĩnh Hằng) để không trùng tên / hình với tầng 1–50 ở cùng chỗ (chỉ số vẫn tăng theo tầng như cũ).
   - **Bỏ chạy rồi đánh lại quái trên bản đồ: quái giữ máu** đã mất và hồi 2 % máu tối đa mỗi giây (không về đầy ngay).
   - Quản trị `give_gear` nhận cả cánh (dòng cộng thêm, May mắn, `wopt`).
+- **B-26** (anh chốt "ok làm phase 2", 2026-10-16) **Đài Phúc Lành thay đá dịch chuyển** (ô `W`, việc đi lại đã có bảng
+  chọn bản đồ). Chạm đài: phúc lành của bản đồ (+5 % kinh nghiệm / phòng thủ / tấn công / vàng / máu tối đa, loại theo thứ
+  tự đài, `RULES.blessing`) và đài thành **điểm hồi sinh** khi gục ở bản đồ thường (bản đồ sự kiện vẫn về Làng; chưa chạm
+  đài nào thì về Nhà). Phúc lành tính theo **số trận** (30 trận, như món ăn) thay vì 10 phút như đề xuất, để Engine vẫn là
+  hàm thuần, không phụ thuộc đồng hồ. Bỏ lệnh `teleport` và bảng dịch chuyển. Cột mới `characters.blessing` (map,
+  migration `20261105000000_add_blessing`). Thành tựu "Lữ Khách" giờ là ghé mọi Đài Phúc Lành. Hình đài: tô vàng từ hình
+  đá cũ (`e2e/tint_sprites.mjs`).
+  - Cùng đợt: đồ nhận sau trận bấm xem chi tiết và **🗑 Hủy** ngay trên bảng kết quả (vứt được khi trận đã xong);
+    Thợ Rèn có hai thẻ **Đang mặc / Trong túi**, hướng dẫn ép thành bảng gấp gọn; bấm avatar mở hồ sơ, bấm đồ trong hồ sơ
+    (mình và người khác) xem chi tiết; header bỏ lớp và chuyển sinh.
+  - Quà cho mọi người: nhiều món một thư, lọc người nhận (cấp, chuyển sinh, online), **không gửi bot**, xem trước số
+    người nhận, lịch sử 20 đợt (`gift_count`, `gift_log`, chỉ đọc).

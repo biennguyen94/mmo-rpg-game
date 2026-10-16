@@ -189,6 +189,7 @@ defmodule HacLong.Game.Characters do
       daily_done: c.daily_done || 0,
       boss_top: c.boss_top || 0,
       food: food(c.food),
+      blessing: HacLong.Game.Blessing.load(c.blessing),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,
         smith: (c.crafting || %{})["smith"] || 0
@@ -338,7 +339,7 @@ defmodule HacLong.Game.Characters do
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
-                    ds bc kal)a,
+                    ds bc kal gear_ids)a,
                  &{Atom.to_string(&1), &1}
                )
 

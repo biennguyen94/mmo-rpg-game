@@ -10,7 +10,7 @@ defmodule HacLong.World.Maps do
     bản đồ `to`, đứng ở `spawn`. Cổng vào vùng chưa mở (chưa hạ trùm vùng trước) bị khóa.
   - `spawns`: `{monster, max, respawn}`: loại quái, số con tối đa, số giây hồi lại.
   - `boss`: `{at, respawn}`: chỗ trùm của vùng đứng (trùm không đi lang thang).
-  - `waystone`: `{at, spawn}`: đá dịch chuyển (ô `W`) và chỗ đứng khi dịch chuyển tới đây.
+  - `waystone`: `{at, spawn}`: Đài Phúc Lành (ô `W`, trước là đá dịch chuyển) và chỗ đứng / chỗ hồi sinh cạnh đài.
     Chạm vào đá lần đầu thì ghi nhớ nó; đứng cạnh bất kỳ đá nào đều dịch chuyển được tới
     các đá đã ghi nhớ (Làng luôn có sẵn).
   - `private: true`: bản đồ riêng của mỗi người (Nhà), không có ai khác.

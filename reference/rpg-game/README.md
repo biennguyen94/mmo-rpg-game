@@ -233,14 +233,14 @@ lúc hạ từng trùm.
 | push `"arena"` | → `{me: {rating, wins, losses, today, per_day}, suggestions, top}` |
 | push `"market"` | `{q?}` → `{listings: [{id, seller, name, item, count, gear, price, mine}], fee, max}` |
 | push `"mail"` | → `{mails: [{id, subject, body, gold, xp, items, claimed, at}], unread}`; server đẩy `"mail"` `{unread}` khi có thư mới hoặc vừa mở thư |
-| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, subject, body?, gold?, xp?, items?}`, `world_boss`, `invasion`, `open_ds`, `open_bc` (mở ngay Quảng Trường Quỷ / Lâu Đài Máu); chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, vit?, agi?, def?}`, `give_item {id, count?, up?}`, `give_gear {base, opt?, exc?, luck?, skill?, anc?, up?}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
+| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, filter?: {min_level?, max_level?, min_rebirths?, online?}, subject, body?, gold?, xp?, items?}` (gửi mọi người: trừ bot), `gift_count {filter?}` → `{count}`, `gift_log` → `{log}` (20 đợt gửi gần nhất), `world_boss`, `invasion`, `open_ds`, `open_bc` (mở ngay Quảng Trường Quỷ / Lâu Đài Máu); chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, vit?, agi?, def?}`, `give_item {id, count?, up?}`, `give_gear {base, opt?, exc?, luck?, skill?, anc?, wopt?, up?}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
 | server push `"world_boss"` | `{alive, name, hp, maxHp, endsAt, nextAt, now, fighters, top}` khi trùm thế giới thay đổi |
 | server push `"notice"` | `{msg}`: thông báo riêng (vd. nhận thưởng trùm thế giới) |
 | push `"leaderboard"` | → `{level, kills, dragon, tower, guild, guild_boss, arena, me}` (mỗi bảng 10 người kèm `title`, `me` là hạng theo cấp) |
 
 Các `act`: `create {name, cls}`, `reset`, `move {dir, confirm?}` (`up`/`down`/`left`/`right`;
 bước vào trùm thì nhận `confirm: "boss"`, gửi lại với `confirm: true` để đấu),
-`teleport {to}` (đứng cạnh đá dịch chuyển; bước vào đá thì nhận `waystone: true`),
+(bước vào Đài Phúc Lành, ô `W`, thì nhận `blessing: true`: phúc lành + điểm hồi sinh; lệnh `teleport` cũ đã bỏ, B-26),
 `attack`, `skill {skill?}` (id kỹ năng, không có thì dùng kỹ năng đầu), `potion`, `flee`, `leave`, `alloc {stat, n}`, `equip {id}`,
 `unequip {slot}`, `use {id}` (`equip`, `sell`, `upgrade` nhận cả id đồ ngẫu nhiên `#...`), `rebirth`
 (Trưởng Làng, cấp 50), `mail_claim {id}` (mở thư, nhận quà), `title_set {id}` (`null` để

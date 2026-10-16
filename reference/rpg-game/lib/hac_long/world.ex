@@ -110,8 +110,8 @@ defmodule HacLong.World do
   Đi một bước theo hướng `dir`. Trả về `{kết_quả, nhân_vật}` như các lệnh khác.
 
   Bước vào trùm thì lần đầu chỉ nhận `%{confirm: "boss", boss: ...}`; gửi lại với
-  `confirm: true` mới vào trận. Bước vào đá dịch chuyển thì ghi nhớ đá đó và nhận
-  `%{waystone: true}` để client mở bảng chọn nơi đến. Bước vào NPC thì nhận `%{npc: id}`
+  `confirm: true` mới vào trận. Bước vào Đài Phúc Lành (ô `W`) thì nhận phúc lành của bản đồ và
+  ghi điểm hồi sinh (`%{blessing: true}`). Bước vào NPC thì nhận `%{npc: id}`
   để mở hội thoại. Bước vào điểm thu thập thì nhận nguyên liệu.
   """
   def move(p, uid, dir, confirm? \\ false) do
@@ -532,59 +532,19 @@ defmodule HacLong.World do
     })
   end
 
-  # ---------- Đá dịch chuyển ----------
+  # ---------- Đài Phúc Lành (thay đá dịch chuyển, Phase 2 B-26) ----------
 
+  # chạm đài: phúc lành của bản đồ + điểm hồi sinh; vẫn ghi đài đã ghé (thành tựu ghé đủ đài)
   defp touch_waystone(p, map) do
     known = Map.get(p, :waystones, [])
 
-    if map.id in known or map.id == "village" do
-      {%{ok: true, waystone: true}, p}
-    else
-      {%{ok: true, waystone: true, msg: "Đã ghi nhớ đá dịch chuyển ở #{map.name}."},
-       Map.put(p, :waystones, known ++ [map.id])}
-    end
-  end
+    p =
+      if map.id in known or map.id == "village",
+        do: p,
+        else: Map.put(p, :waystones, known ++ [map.id])
 
-  @doc "Những nơi có thể dịch chuyển tới: Làng và các đá đã ghi nhớ."
-  def waystones(p), do: ["village" | Map.get(p, :waystones, [])]
-
-  defp next_to_waystone?(%{pos: %{map: id, x: x, y: y}}) do
-    case Maps.get(id).waystone do
-      %{at: {wx, wy}} -> abs(wx - x) + abs(wy - y) == 1
-      nil -> false
-    end
-  end
-
-  @doc "Dịch chuyển từ đá đang đứng cạnh tới đá ở bản đồ `to`."
-  def teleport(p, uid, to) do
-    target = is_binary(to) && Maps.get(to)
-
-    cond do
-      p.battle ->
-        {%{ok: false, msg: "Đang trong trận đấu."}, p}
-
-      not next_to_waystone?(p) ->
-        {%{ok: false, msg: "Hãy đứng cạnh đá dịch chuyển."}, p}
-
-      !target or target.waystone == nil ->
-        {%{ok: false, msg: "Không có đá dịch chuyển ở đó."}, p}
-
-      to not in waystones(p) ->
-        {%{ok: false, msg: "Bạn chưa tới đá dịch chuyển đó."}, p}
-
-      to == p.pos.map ->
-        {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
-
-      target.zone && not Engine.zone_unlocked?(p, target.zone) ->
-        {%{ok: false, msg: "Cần đạt cấp #{Engine.zone_level(target.zone)} để tới vùng này."}, p}
-
-      true ->
-        leave(p, uid)
-        {x, y} = target.waystone.spawn
-        p = put_pos(p, target.id, x, y)
-        enter(p, uid)
-        {%{ok: true, msg: "Dịch chuyển tới #{target.name}."}, p}
-    end
+    {msg, p} = HacLong.Game.Blessing.touch(p, map)
+    {%{ok: true, blessing: true, msg: msg}, p}
   end
 
   @doc """
@@ -624,9 +584,12 @@ defmodule HacLong.World do
     if b.result == "lose" do
       leave(p, uid)
       # gục trong bản đồ sự kiện (Hỗn Chiến Thành): bị loại, về Làng
-      if Maps.get(p.pos.map)[:event],
-        do: %{p | pos: village_spawn()},
-        else: %{p | pos: Maps.home_spawn()}
+      # gục ở bản đồ thường: hồi sinh cạnh Đài Phúc Lành đã chạm, chưa chạm đài nào thì về Nhà
+      cond do
+        Maps.get(p.pos.map)[:event] -> %{p | pos: village_spawn()}
+        pos = HacLong.Game.Blessing.respawn(p) -> %{p | pos: pos}
+        true -> %{p | pos: Maps.home_spawn()}
+      end
     else
       p
     end

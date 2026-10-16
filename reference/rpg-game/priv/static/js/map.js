@@ -264,11 +264,12 @@
         const kind = WORLD.legend[m.tiles[y][x]];
         if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE);
         if (kind !== 'floor') {
-          const im = image('tiles/' + kind);
+          // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
+          const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
           if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
         }
         if (GROUND[kind]) continue;
-        if (kind === 'waystone') labels.push(['Đá dịch chuyển', px + TILE / 2, py - 13, '#b9d7ff']);
+        if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
         if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
         if (kind === 'stairs_down') labels.push(['Về Làng', px + TILE / 2, py + TILE - 13, '#b9d7ff']);
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);

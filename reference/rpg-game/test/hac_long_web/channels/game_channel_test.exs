@@ -154,7 +154,7 @@ defmodule HacLongWeb.GameChannelTest do
     assert Characters.load(user.id).battle == nil
   end
 
-  test "chạm đá dịch chuyển rồi dịch chuyển về Làng" do
+  test "chạm Đài Phúc Lành: nhận phúc lành, lưu điểm hồi sinh" do
     two = HacLong.World.Maps.get("forest_2")
     {sx, sy} = two.waystone.spawn
     user = create_user()
@@ -162,13 +162,9 @@ defmodule HacLongWeb.GameChannelTest do
     {_, socket} = join_game(user)
 
     r = cmd(socket, %{"act" => "move", "dir" => "up"})
-    assert r.ok and r.waystone
-    assert Characters.load(user.id).waystones == ["forest_2"]
-
-    r = cmd(socket, %{"act" => "teleport", "to" => "village"})
-    assert r.ok and r.player.pos.map == "village"
-    assert_push "map", %{map: "village"}
-    assert Characters.load(user.id).pos.map == "village"
+    assert r.ok and r.blessing
+    c = Characters.load(user.id)
+    assert c.waystones == ["forest_2"] and c.blessing.map == "forest_2"
   end
 
   test "chat thế giới: mọi người nhận được, chữ được làm sạch, chống spam" do

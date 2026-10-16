@@ -79,7 +79,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -777,7 +777,7 @@ defmodule HacLongWeb.GameChannel do
         {:error, "Mỗi thư tối đa #{cap.max_xp} kinh nghiệm."}
 
       %{"all" => true} ->
-        with {:ok, n} <- Mailbox.send_all(mail), do: {:ok, %{sent: n}}
+        with {:ok, n} <- Mailbox.send_all(mail, p["filter"] || %{}), do: {:ok, %{sent: n}}
 
       %{"uid" => id} when is_integer(id) ->
         with :ok <- Mailbox.send(id, mail), do: {:ok, %{sent: 1}}
@@ -786,6 +786,12 @@ defmodule HacLongWeb.GameChannel do
         {:error, "Chọn người nhận."}
     end
   end
+
+  # Phase 2: xem trước số người nhận quà cho mọi người (theo bộ lọc), lịch sử các đợt gửi
+  defp admin("gift_count", p, _s),
+    do: {:ok, %{count: length(Mailbox.recipients(p["filter"] || %{}))}}
+
+  defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
