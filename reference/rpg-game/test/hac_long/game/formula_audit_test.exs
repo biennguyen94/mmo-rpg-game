@@ -234,4 +234,37 @@ defmodule HacLong.Game.FormulaAuditTest do
     assert Engine.hit_chance(100_000, 1) == h.max
     assert_in_delta Engine.hit_chance(100, 50), 100 / (100 + 50 * h.monster_dr), 1.0e-9
   end
+
+  test "B-28: né chặn max_total sau Excellent; ép nhẫn máu cộng máu; quái không né" do
+    c = @r.combat.dodge
+
+    pieces = %{
+      armor: @armor,
+      helm: "item_7_33",
+      pants: "item_9_33",
+      gloves: "item_10_33",
+      boots: "item_11_33",
+      shield: "item_6_18",
+      ring1: "item_13_24",
+      ring2: "item_13_24"
+    }
+
+    agile = %{hero() | stats: %{str: 400, agi: 400, vit: 200, ene: 300}}
+
+    p =
+      Enum.reduce(pieces, agile, fn {slot, id}, p ->
+        wear(p, slot, Map.put(Gear.new(id), :exc, ["def_rate"]))
+      end)
+
+    assert d(p).dodge == c.max_total
+
+    ring = "item_13_23"
+    hp = Data.item(ring).hp
+    r0 = hero() |> wear(:ring1, Gear.new(ring))
+    r7 = hero() |> wear(:ring1, Gear.new(ring), 7)
+    assert d(r7).maxHp - d(r0).maxHp == 7 * max(1, round(hp * @r.upgrade.bonus_pct))
+    assert d(r7).def == d(r0).def
+
+    assert Engine.make_monster(%{id: "x", name: "x", level: 30}, false).dodge == 0
+  end
 end

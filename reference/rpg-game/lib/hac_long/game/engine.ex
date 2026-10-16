@@ -188,7 +188,13 @@ defmodule HacLong.Game.Engine do
     pd = Gear.item(p, p.equip[:pendant])
     # Phase 15c: máu cộng từ đồ (nhẫn), thưởng đủ bộ, dòng Excellent
     gear_hp =
-      p.equip |> Map.values() |> Enum.map(&((Gear.item(p, &1) || %{})[:hp] || 0)) |> Enum.sum()
+      p.equip
+      |> Map.values()
+      |> Enum.map(fn
+        nil -> 0
+        id -> ((Gear.item(p, id) || %{})[:hp] || 0) + upgrade_hp(p, id)
+      end)
+      |> Enum.sum()
 
     sb = set_bonus(p)
     anc = ancient_bonus(p)
@@ -237,9 +243,13 @@ defmodule HacLong.Game.Engine do
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
       ar: (p.level * @combat.hit.level + s.agi * @combat.hit.agi) * (1 + exc.ar_pct),
+      # B-28: trần `max` theo Nhanh nhẹn, rồi nhân Excellent def_rate, chặn `max_total`
       dodge:
-        clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
-          (1 + exc.def_rate),
+        min(
+          clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
+            (1 + exc.def_rate),
+          @combat.dodge.max_total
+        ),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb),
@@ -392,6 +402,9 @@ defmodule HacLong.Game.Engine do
       bonus:
         (Map.keys(upgrades(p)) ++ for(g <- Gear.list(p), g[:opt], do: g.uid))
         |> Map.new(&{&1, upgrade_bonus(p, &1) + life_bonus(p, &1)}),
+      # B-28: máu cộng thêm khi ép nhẫn máu
+      bonusHp:
+        for(id <- Map.keys(upgrades(p)), (v = upgrade_hp(p, id)) > 0, into: %{}, do: {id, v}),
       # giá ép từng món trong túi (đồ hiếm chưa cất, đồ thường mặc được), cho nút "Ép" trong tooltip
       forgeBag:
         for id <- Enum.map(Gear.bag(p), & &1.uid) ++ Map.keys(p.inv),
@@ -463,7 +476,8 @@ defmodule HacLong.Game.Engine do
       atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
       def: round((@mon.def.base + l * @mon.def.level) * m),
       crit: @mon.crit,
-      dodge: @mon.dodge.base + l * @mon.dodge.level,
+      # B-28: quái không có né (đòn thường trúng theo AR / DR, `hit_chance/2`); né chỉ có ở bản sao người chơi
+      dodge: 0,
       xp: round(base_xp(l) * m * rw * if(boss?, do: @mon.boss.xp, else: 1)),
       gold:
         round(base_gold(l) * m * rw * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
@@ -1635,9 +1649,31 @@ defmodule HacLong.Game.Engine do
   @doc "Tấn công/phòng thủ cộng thêm: mỗi cấp +8% chỉ số gốc của món đồ (ít nhất +1)."
   def upgrade_bonus(p, id) do
     case {upgrade_level(p, id), Gear.item(p, id)} do
-      {0, _} -> 0
-      {_, nil} -> 0
-      {l, it} -> effective_level(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct))
+      {0, _} ->
+        0
+
+      {_, nil} ->
+        0
+
+      # B-28: món chỉ có máu (nhẫn máu): ép cộng máu (`upgrade_hp/2`), không cộng thủ
+      {l, it} ->
+        if hp_only?(it),
+          do: 0,
+          else: effective_level(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct))
+    end
+  end
+
+  defp hp_only?(it),
+    do: is_number(it[:hp]) and not is_number(it[:atk]) and not is_number(it[:def])
+
+  @doc "Máu cộng thêm khi ép món chỉ có máu (nhẫn máu, B-28): mỗi cấp hiệu dụng + bonus_pct máu gốc."
+  def upgrade_hp(p, id) do
+    case {upgrade_level(p, id), Gear.item(p, id)} do
+      {l, %{hp: hp} = it} when l > 0 and is_number(hp) ->
+        if hp_only?(it), do: effective_level(l) * max(1, round(hp * @up.bonus_pct)), else: 0
+
+      _ ->
+        0
     end
   end
 

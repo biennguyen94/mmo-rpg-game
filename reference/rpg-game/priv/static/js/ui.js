@@ -1672,7 +1672,7 @@
       return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
-    if (it.hp) return `Máu tối đa +${it.hp}`;
+    if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? ` · Phòng thủ <span class="up">+${b}</span>` : ''}`; }
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`;
     if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
     if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;

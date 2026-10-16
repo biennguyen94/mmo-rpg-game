@@ -13,12 +13,12 @@ có thật sự được cộng vào chỉ số không, có đúng số trong `p
 | MP tối đa | (hệ số lớp + dòng cánh `mp`) × (1 + Excellent `mp_pct`) |
 | Tấn công | (hệ số lớp + Excellent `atk_lvl` × cấp + công vũ khí + ép vũ khí + dòng cộng thêm vũ khí + công dây chuyền + ép / dòng dây chuyền) × (1 + thú + món ăn + Đài) × (1 + Excellent `atk_pct` + đủ bộ `atk_pct` + đồ Thần `atk_pct`) |
 | Phòng thủ | (hệ số lớp + Σ thủ các ô giáp / khiên / cánh / mũ / quần / găng / giày / nhẫn + ép + dòng cộng thêm từng món) × (1 + thú + món ăn + Đài) × (1 + đủ bộ `def_pct` + đồ Thần `def_pct`) |
-| Ép +N | mỗi cấp hiệu dụng + `bonus_pct` (8 %) chỉ số gốc món (ít nhất +1); cấp hiệu dụng = N, từ +10 mỗi cấp tính 2 |
+| Ép +N | mỗi cấp hiệu dụng + `bonus_pct` (8 %) chỉ số gốc món (công / thủ; nhẫn chỉ có máu thì cộng máu), ít nhất +1; cấp hiệu dụng = N, từ +10 mỗi cấp tính 2 |
 | Chí mạng | min(0,6; 0,04 + AGI × 0,0035) + Excellent `crit` + May mắn vũ khí 5 %; hệ số chí mạng min(2,5; 1,6 + AGI × 0,004) |
-| Né | min(0,4; 0,02 + AGI × 0,0025) × (1 + Excellent `def_rate` cộng dồn) |
+| Né | min(0,6; min(0,4; 0,02 + AGI × 0,0025) × (1 + Excellent `def_rate` cộng dồn)) |
 | Trúng quái | AR / (AR + cấp quái × 0,8), trong [5 %, 95 %]; AR = cấp × 5 + AGI × 1,5, × (1 + Excellent `ar_pct`). Kỹ năng luôn trúng |
 | Sát thương một đòn | đòn = công × ngẫu nhiên [0,9; 1,1] × hệ số (kỹ năng, chí mạng, sổ quái, % cánh, Kỹ năng vũ khí); trừ thủ: đòn² / (đòn + thủ × (1 − bỏ qua thủ)), không dưới 20 % đòn; × phần nhận (thủ thế, hấp thụ cánh, Excellent giảm sát thương ≤ 20 %); ít nhất 1 |
-| Quái cấp L | máu 170 + 26L + 0,6L² (trùm × 2,4); công 10 + 6,4L; thủ 1 + 2L; chí mạng 5 % × 1,5 |
+| Quái cấp L | máu 170 + 26L + 0,6L² (trùm × 2,4); công 10 + 6,4L; thủ 1 + 2L; chí mạng 5 % × 1,5; không né (trúng theo AR / DR) |
 | Cánh | thủ cánh + ép; sát thương / hấp thụ = số cánh + 2 % × cấp ép hiệu dụng; dòng phụ hp / mp / bỏ qua thủ |
 | Đồ Thần | thủ món × 1,2; 2 món +3 % công, 3 món +5 % thủ, đủ bộ +5 % công +5 % thủ +150 máu (cộng dồn) |
 | Đủ bộ giáp (bậc ≥ 2) | +10 % thủ, +3 % công, + 15 × bậc máu |
@@ -46,7 +46,7 @@ có thật sự được cộng vào chỉ số không, có đúng số trong `p
 2. **Dòng cánh "bỏ qua phòng thủ" của đối thủ không có tác dụng khi họ đánh mình** (Đấu trường, Đồ sát, PK cược). Đã áp dụng.
 3. **Chí mạng của bản sao đối thủ luôn × 1,5** (hệ số của quái) thay vì hệ số chí mạng thật của người đó (tới × 2,5). Đã dùng hệ số thật.
 
-**Đề xuất chỉnh (cần anh chốt, chưa đổi):**
+**Đã chỉnh theo anh chốt ("A, B, C, D ok", DECISIONS B-28):**
 
 | # | Điểm | Hiện tại | Đề xuất |
 |---|---|---|---|
