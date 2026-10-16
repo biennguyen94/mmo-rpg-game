@@ -77,6 +77,7 @@ if config_env() == :prod do
   config :hac_long, HacLong.Repo,
     # ssl: true,
     url: database_url,
+    ssl: [cacerts: :public_key.cacerts_get()],  # Bắt buộc cho Neon
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6
 
@@ -105,8 +106,12 @@ if config_env() == :prod do
     end
   end
 
-  host = env.("PHX_HOST") || "example.com"
-  port = String.to_integer(env.("PORT") || "4000")
+  # Render tự động set RENDER_EXTERNAL_HOSTNAME
+  host = System.get_env("RENDER_EXTERNAL_HOSTNAME") || "localhost"
+  port = String.to_integer(System.get_env("PORT") || "4000")
+
+  # host = env.("PHX_HOST") || "example.com"
+  # port = String.to_integer(env.("PORT") || "4000")
   scheme = env.("PHX_SCHEME") || "https"
 
   url_port =
@@ -121,7 +126,8 @@ if config_env() == :prod do
   config :hac_long, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :hac_long, HacLongWeb.Endpoint,
-    url: [host: host, port: url_port, scheme: scheme],
+    # url: [host: host, port: url_port, scheme: scheme],
+    url: [host: host, port: 443, scheme: "https"],
     check_origin: check_origin,
     http: [
       # Nghe trên mọi địa chỉ IPv4. Container Docker thường không có IPv6 (nghe IPv6 thì lỗi
