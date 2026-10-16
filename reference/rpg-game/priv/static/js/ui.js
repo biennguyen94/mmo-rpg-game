@@ -2886,7 +2886,7 @@
         <span class="small">${locked ? lock : on ? `✔ ${skillPick.indexOf(k.id) + 1}` : ''}</span></button>`;
     };
     return `<div class="map-dialog card skill-dialog"><div class="row"><h3 class="grow">⚙ Bộ kỹ năng (${skillPick.length}/${max})</h3><button class="btn small-btn" data-act="skill-pick-close">✕</button></div>
-      <p class="small muted">Chọn tối đa ${max} kỹ năng mang vào trận (đổi được cả khi đang đánh). Kỹ năng tháp mở khi kỷ lục Tháp Thử Thách đạt tầng ghi bên cạnh. Đúng hệ khắc nguyên tố quái: +${Math.round(EL.strong * 100)}% sát thương, bị khắc: −${Math.round(EL.weak * 100)}%.</p>
+      <p class="small muted">Chọn tối đa ${max} kỹ năng mang vào trận. Kỹ năng tháp mở khi kỷ lục Tháp Thử Thách đạt tầng ghi bên cạnh. Đúng hệ khắc nguyên tố quái: +${Math.round(EL.strong * 100)}% sát thương, bị khắc: −${Math.round(EL.weak * 100)}%.</p>
       <div class="list">${allSkills().map(row).join('')}</div>
       <div class="btn-row"><button class="btn primary" data-act="skill-pick-save" ${skillPick.length ? '' : 'disabled'}>Lưu bộ kỹ năng</button></div></div>`;
   }
@@ -2930,7 +2930,6 @@
         <div class="actions">
           <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
           ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element); return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span></button>`; }).join('')}
-          <button class="btn skill-cfg" data-act="skill-pick-open" title="Chọn bộ kỹ năng">⚙</button>
         </div>
         <div class="actions util">
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
@@ -2967,7 +2966,7 @@
         <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
-      ${bottom}${viewSkillPick()}`;
+      ${bottom}`;
   }
 
   // Đồ nhận được sau trận: bấm xem chi tiết (bảng như trong túi, có nút Vứt); nút 🗑 hủy nhanh. Món đã vứt / bán

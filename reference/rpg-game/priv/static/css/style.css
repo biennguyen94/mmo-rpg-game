@@ -787,7 +787,6 @@ body.tl-on { overflow: hidden; }
 .el { font-size: 0.9em; margin-right: 2px; }
 .btn.el-strong { box-shadow: inset 0 0 0 2px rgba(110, 200, 120, 0.7); }
 .btn.el-weak { opacity: 0.85; box-shadow: inset 0 0 0 2px rgba(220, 90, 90, 0.5); }
-.skill-cfg { min-width: 44px; }
 .skill-dialog { max-height: 70vh; overflow-y: auto; z-index: 30; }
 .skill-pick { width: 100%; text-align: left; background: none; border: 1px solid var(--line); border-radius: 8px; color: inherit; font: inherit; cursor: pointer; }
 .skill-pick.on { border-color: var(--gold, #d8a24a); background: rgba(216, 162, 74, 0.12); }

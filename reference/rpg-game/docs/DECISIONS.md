@@ -414,7 +414,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     - Kỹ năng khắc nguyên tố quái +30 % sát thương, bị khắc −20 %; đòn thường không nguyên tố.
     - Quái mang nguyên tố theo cấp (`by_level`), vì vậy tháp, bản đồ phụ, sự kiện đều có nguyên tố.
     - 12 kỹ năng lớp cũ được gán nguyên tố.
-  - **Bộ kỹ năng:** mang tối đa 4 kỹ năng (kỹ năng lớp + kỹ năng tháp) vào trận, nút ⚙ trong trận và Menu → Kỹ năng.
+  - **Bộ kỹ năng:** mang tối đa 4 kỹ năng (kỹ năng lớp + kỹ năng tháp) vào trận, chọn ở Menu → Kỹ năng → ⚙ (bỏ nút ⚙ trong trận cho gọn, theo yêu cầu).
     - Đổi được cả khi đang đánh; hồi chiêu giữ nguyên.
     - Chưa chọn thì mặc định 4 kỹ năng mạnh nhất đã mở.
     - Cột mới `characters.skill_set` (migration `20261106000000_add_skill_set`).
