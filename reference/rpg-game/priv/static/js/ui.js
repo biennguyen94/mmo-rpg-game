@@ -82,7 +82,9 @@
     const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
     return path ? asset(path) : null;
   }
-  const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
+  // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px), giữ đúng kích thước, không phóng to cho khỏi vỡ hình
+  const NAT_SLOTS = ['ring', 'pendant'];
+  const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${NAT_SLOTS.includes(it.slot) ? ' nat' : ''}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
   // hình nhỏ cạnh tên ngọc / nguyên liệu (hình gốc MU nếu có); không có hình thì `fallback`
   // hình vé (nút Mua vé ở Người Gác Tháp): hình gốc MU nếu có, không thì biểu tượng của món
   const ticketIc = (id) => smallIc(id, ITEMS[id] ? icon(ITEMS[id].icon) : '');
@@ -1987,7 +1989,7 @@
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
-    if (own) return `<img src="${own}" alt="" draggable="false" class="own">`;
+    if (own) return `<img src="${own}" alt="" draggable="false" class="own${NAT_SLOTS.includes(it.slot) ? ' nat' : ''}">`;
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 

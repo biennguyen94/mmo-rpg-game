@@ -503,6 +503,8 @@ img.own { object-fit: contain; image-rendering: auto; }
 .itemtip .big .ic.lg { width: 56px; height: 56px; }
 /* hình gốc đồ (Phase 15b): khổ đứng, cho cao hơn */
 .itemtip .big img.own { width: 72px; height: 88px; }
+/* nhẫn, dây chuyền: hình gốc nhỏ, giữ đúng kích thước (to hơn khung thì chỉ thu nhỏ, không phóng to) */
+img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; }
 .itemtip .bad { color: var(--bad); }
 .itemtip .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .itemtip .btns .btn { flex: 1; }
