@@ -1982,7 +1982,8 @@
   function bagItems() {
     const ids = Object.keys(P.inv).filter((id) => P.inv[id] > 0 && ITEMS[id]);
     const by = (slot) => ids.filter((id) => ITEMS[id].slot === slot);
-    const gear = bagGear().concat(ids.filter((id) => SLOT_OPEN.includes(ITEMS[id].slot)));
+    // loại đồ (`ring`), không phải tên ô (`ring1`/`ring2`): trước đây nhẫn thường không hiện trong túi
+    const gear = bagGear().concat(ids.filter((id) => WEAR_KINDS.includes(ITEMS[id].slot)));
     return gear.concat(by('potion'), by('food'), by('material'));
   }
   const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal_pct).reduce((a, id) => a + P.inv[id], 0);
