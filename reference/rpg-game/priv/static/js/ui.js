@@ -2218,11 +2218,12 @@
     const n = isGear(id) ? 1 : P.inv[id] || 0;
     // ép món trong túi (mang tới Thợ Rèn), vứt món trong túi
     const forgeBtn = !at.slot && P.view.forgeBag[id] ? `<button class="btn" data-act="forge-pick" data-id="${esc(id)}">${icon('anvil')}Ép</button>` : '';
-    const dropBtn = !at.slot && !it.locked ? `<button class="btn danger" data-act="discard" data-id="${esc(id)}" data-n="${n}" data-name="${esc(itemName(id))}">Vứt</button>` : '';
+    // mở từ bảng đồ nhận sau trận (`at.loot` = số vừa nhặt): nút Hủy đúng số đó
+    const dropBtn = !at.slot && !it.locked ? `<button class="btn danger" data-act="discard" data-id="${esc(id)}" data-n="${at.loot ? Math.min(at.loot, n) : n}" data-name="${esc(itemName(id))}">${at.loot ? '🗑 Hủy' : 'Vứt'}</button>` : '';
     placeTip(at, `
       <div class="big">${itemIcon(it, it.kind, upLevel(id))}</div>
       ${muTipBody(it, id, at, n)}
-      <div class="btns">${btns}${forgeBtn}${dropBtn}</div>`);
+      <div class="btns">${at.loot ? dropBtn : btns + forgeBtn + dropBtn}</div>`);
   }
   function placeTip(at, html) {
     tipAt = at;
@@ -2924,7 +2925,7 @@
       if (!it) return `<div class="loot-row gone"><span class="small muted">Đã hủy</span></div>`;
       const n = isGear(id) ? 1 : (rw.items || []).filter((x) => x === id).length;
       return `<div class="loot-row ${gone ? 'gone' : ''}">
-        <button class="loot-item" data-act="bag-tip" data-id="${esc(id)}">${itemIcon(it, it.kind, upLevel(id))}<span>${itemName(id)}${n > 1 ? ` ×${n}` : ''}</span></button>
+        <button class="loot-item" data-act="loot-tip" data-id="${esc(id)}" data-n="${n}">${itemIcon(it, it.kind, upLevel(id))}<span>${itemName(id)}${n > 1 ? ` ×${n}` : ''}</span></button>
         ${gone || it.locked ? '' : `<button class="btn small-btn danger" data-act="discard" data-id="${esc(id)}" data-n="${n}" data-name="${esc(it.name)}" title="Hủy món này">🗑 Hủy</button>`}</div>`;
     };
     return `<div class="loot">${ids.map(row).join('')}${extra.map((l) => `<div class="loot-row"><span class="small">📬 ${esc(l)} <span class="muted">(Hộp thư)</span></span></div>`).join('')}</div>`;
@@ -3221,6 +3222,10 @@
     if (act === 'dialog-close') { dialog = null; render(); return; }
     if (act === 'noop') return;
     if (act === 'alloc-add') { allocAdd(t.dataset.stat); return; }
+    if (act === 'loot-tip') {
+      if (tipAt && tipAt.id === t.dataset.id) hideTip(); else showTip({ id: t.dataset.id, loot: +t.dataset.n || 1, x: e.clientX, y: e.clientY });
+      return;
+    }
     if (act === 'bag-tip' || act === 'slot-tip') {
       const same = tipAt && (act === 'bag-tip' ? tipAt.id === t.dataset.id : tipAt.slot === t.dataset.slot);
       if (same) hideTip(); else showTip(act === 'bag-tip' ? { id: t.dataset.id, x: e.clientX, y: e.clientY } : { slot: t.dataset.slot, x: e.clientX, y: e.clientY });
@@ -3450,7 +3455,7 @@
     document.addEventListener('click', onClick);
     document.addEventListener('submit', onSubmit);
     document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', (e) => { if (tipAt && !e.target.closest('#itemtip, [data-act="bag-tip"], [data-act="slot-tip"], [data-act="prof-tip"]')) hideTip(); });
+    document.addEventListener('pointerdown', (e) => { if (tipAt && !e.target.closest('#itemtip, [data-act="bag-tip"], [data-act="slot-tip"], [data-act="prof-tip"], [data-act="loot-tip"]')) hideTip(); });
     document.addEventListener('dragstart', onDragStart);
     document.addEventListener('dragover', onDragOver);
     document.addEventListener('drop', onDrop);
