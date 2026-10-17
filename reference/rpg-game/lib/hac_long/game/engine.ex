@@ -405,6 +405,10 @@ defmodule HacLong.Game.Engine do
       # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
       blessing: Blessing.view(p),
       comfort: Home.comfort(p),
+      # thú cưng đã có (cấp, cắn, kỹ năng, giá cho ăn) và loài thuần được / đang hạ dở
+      pets: Pets.view(p),
+      tameable: Pets.tameable(p),
+      taming: Pets.taming(p),
       # cộng thêm của đồ đã nâng cấp (để client so sánh đồ) và giá nâng cấp đồ đang mặc
       bonus:
         (Map.keys(upgrades(p)) ++ for(g <- Gear.list(p), g[:opt], do: g.uid))
@@ -1005,14 +1009,17 @@ defmodule HacLong.Game.Engine do
         else: 0
 
     if bite > 0 do
-      sk = Pets.active_skill(p)
-      bite = if sk && sk.id == "rend", do: bite * @pet_sk.rend_mult, else: bite
-      what = if sk && sk.id == "rend", do: "#{sk.name}: ", else: ""
+      sks = Pets.active_skills(p)
+      rend = Enum.find(sks, &(&1.id == "rend"))
+      bite = if rend, do: round(bite * @pet_sk.rend_mult), else: bite
+      what = if rend, do: "#{rend.name}: ", else: ""
 
-      p
-      |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
-      |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
-      |> pet_skill(sk, d, bite)
+      p =
+        p
+        |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
+        |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
+
+      Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
     else
       p
     end
@@ -1034,7 +1041,8 @@ defmodule HacLong.Game.Engine do
   end
 
   defp pet_skill(p, %{id: "pickpocket"} = sk, _d, _bite) do
-    gold = max(1, p.battle.monster.level * @pet_sk.pickpocket_per_level)
+    # phần vàng con quái rơi (trước tính theo cấp hiện: quái vùng chuyển sinh cấp 150 cho gấp đôi vàng)
+    gold = max(1, round((p.battle.monster[:gold] || 0) * @pet_sk.pickpocket_gold_pct))
     %{p | gold: p.gold + gold} |> log("🐾 #{sk.name}: móc được #{gold} vàng.", "good")
   end
 

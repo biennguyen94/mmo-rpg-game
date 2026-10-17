@@ -2011,11 +2011,11 @@
   // Thú bán ở cửa hàng hoặc quái đã thuần phục ("tame:<id quái>")
   const MONSTER_BY_ID = {};
   ZONES.forEach((z) => z.monsters.forEach((m) => { MONSTER_BY_ID[m.id] = m; }));
-  const tamePrice = (m) => L.tamePrice(m, RULES.tamePrice, RULES.tamePricePerLevel);
+  (window.GAME_DATA.SIDE_MONSTERS || []).forEach((m) => { MONSTER_BY_ID[m.id] = MONSTER_BY_ID[m.id] || m; });
   function petInfo(id) {
     if (id && id.startsWith('tame:')) {
-      const m = MONSTER_BY_ID[id.slice(5)];
-      return m && { id, name: m.name + ' (thuần)', desc: `Tấn công +${Math.round(RULES.tameBonus * 100)}%.`, sprite: 'monsters/' + m.id };
+      const m = MONSTER_BY_ID[id.slice(5)], v = ((P && P.view.pets) || []).find((x) => x.id === id);
+      return m && { id, name: m.name + ' (thuần)', desc: v ? v.desc : '', sprite: 'monsters/' + m.id };
     }
     const pt = PETS.find((x) => x.id === id);
     return pt && { ...pt, sprite: 'pets/' + pt.id };
@@ -2024,24 +2024,26 @@
   const petPic = (pt, cls = 'sprite') => { const own = pt.ref && ownIcon(pt, 0); return own ? `<img class="${cls} own" src="${own}" alt="">` : `<img class="${cls}" src="${asset((pt.sprite || 'pets/' + pt.id) + '.png')}" alt="">`; };
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
   const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
-  const TAME_SKILL = { id: 'rend', name: 'Cắn Xé', desc: 'Cú cắn gây gấp đôi sát thương.' };
-  function petSkill(id) {
-    if (id.startsWith('tame:')) return TAME_SKILL;
-    const pt = PETS.find((x) => x.id === id);
-    return pt && pt.skill;
+  // tỉ lệ cắn, sức cắn (phần đòn thường), các kỹ năng của thú: server tính sẵn ở P.view.pets (HacLong.Game.Pets.view/1)
+  const petView = (id) => ((P.view && P.view.pets) || []).find((x) => x.id === id);
+  const pc0 = (x) => `${Math.round(x * 100)}%`;
+  function petStats(v) {
+    if (!v) return '';
+    return `<div class="small">🦷 Cắn ${pc0(v.bite_chance)} số lượt, mỗi lần ${pc0(v.bite_power)} đòn thường${v.level > 1 ? ` · chỉ số cộng ×${v.mult.toFixed(2)}` : ''}</div>
+      ${v.skills.map((k) => `<div class="small" style="${k.learned ? 'color:var(--good)' : ''}">${k.learned ? '✨' : '🔒'} ${esc(k.name)}: ${esc(k.desc)}${k.learned ? '' : ` (cấp ${k.at})`}</div>`).join('')}`;
   }
   function viewPets() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);
     if (!owned.length) return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Chưa có thú cưng. Gặp Người Nuôi Thú ở góc dưới bên phải Làng.</p></div>`;
-    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận. Thắng trận khi dắt theo thì thú lên cấp: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} học kỹ năng riêng.</p><div class="list">${owned.map((pt) => {
-      const L = petLevel(pt.id), sk = petSkill(pt.id), learned = L.lv >= RULES.petSkillLevel;
+    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} và ${RULES.petSkill2Level} học kỹ năng.</p><div class="list">${owned.map((pt) => {
+      const L = petLevel(pt.id);
       const pct = L.next ? Math.round(((L.xp - L.from) / (L.next - L.from)) * 100) : 100;
       return `<div class="item">${petPic(pt)}<div class="grow">
         <div class="name">${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}</span></div>
-        <div class="small muted">${esc(pt.desc)}${L.lv > 1 ? ` (×${(1 + (L.lv - 1) * 0.1).toFixed(1)})` : ''}</div>
+        <div class="small muted">${esc(pt.desc)}</div>
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
         <div class="small muted">${L.next ? `${fmt(L.xp)}/${fmt(L.next)} trận thắng` : 'Cấp tối đa'}</div>
-        ${sk ? `<div class="small" style="${learned ? 'color:var(--good)' : ''}">${learned ? '✨' : '🔒'} ${esc(sk.name)}: ${esc(sk.desc)}${learned ? '' : ` (cấp ${RULES.petSkillLevel})`}</div>` : ''}</div>
+        ${petStats(petView(pt.id))}</div>
       ${P.pet === pt.id ? '<button class="btn" data-act="pet_choose" data-id="">Để ở nhà</button>' : `<button class="btn primary" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`}</div>`;
     }).join('')}</div></div>`;
   }
@@ -2890,24 +2892,28 @@
     if (n.role === 'event') sections.push(eventCard());
     if (n.role === 'pets') {
       const owned = P.pets || [];
-      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Đổi con dắt theo ở tab Nhân vật.</p>
+      const cur = P.pet && petView(P.pet);
+      if (cur) {
+        const poor = cur.feed != null && P.gold < cur.feed;
+        sections.push(`<div class="card"><h3>Cho thú ăn</h3><p class="small muted">Mỗi lần cho ăn thú đang dắt được tính ${RULES.petFeedXp} trận thắng; giá tăng theo cấp thú.</p>
+          <div class="item">${petPic(petInfo(P.pet))}<div class="grow"><div class="name">${esc(cur.name)} <span class="small num" style="color:var(--gold)">· Cấp ${cur.level}</span></div></div>
+          ${cur.feed == null ? '<span class="tag good">Cấp tối đa</span>' : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_feed" ${poor ? 'disabled' : ''}>🍖 ${icon('two-coins')}${fmt(cur.feed)}</button>`}</div></div>`);
+      }
+      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Thú đắt cắn mạnh hơn. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          return `<div class="item">${petPic(pt)}<div class="grow"><div class="name">${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)}</div></div>
+          const sk = [pt.skill, pt.skill2].filter(Boolean).map((k) => esc(k.name)).join(', ');
+          return `<div class="item">${petPic(pt)}<div class="grow"><div class="name">${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)} Cắn ${pc0(pt.bite || 0)} đòn thường.${sk ? ` Kỹ năng: ${sk}.` : ''}</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
         }).join('')}</div></div>`);
-      const wild = ZONES.flatMap((z) => z.monsters).filter((m) => !owned.includes('tame:' + m.id));
-      const count = (id) => (P.bestiary && P.bestiary[id]) || 0;
-      const ready = wild.filter((m) => count(m.id) >= RULES.tameKills);
-      const near = wild.filter((m) => count(m.id) < RULES.tameKills && count(m.id) > 0)
-        .sort((a, b) => count(b.id) - count(a.id)).slice(0, 3);
-      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường thì mang về thuần được. Thú thuần: tấn công +${Math.round(RULES.tameBonus * 100)}%.</p>
+      const ready = P.view.tameable || [], near = P.view.taming || [];
+      sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh, trừ chúa tể) thì mang về thuần được. Quái vùng chuyển sinh cho thú thuần mạnh hơn.</p>
         <div class="list">${ready.map((m) => {
-          const price = tamePrice(m), poor = P.gold < price;
-          return `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Đã hạ ${fmt(count(m.id))} con</div></div>
-            <button class="btn ${poor ? '' : 'primary'}" data-act="pet_tame" data-id="${m.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button></div>`;
-        }).join('')}${near.map((m) => `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt="" style="opacity:.5"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Tiến độ ${fmt(count(m.id))}/${RULES.tameKills}</div></div></div>`).join('')}
+          const poor = P.gold < m.price;
+          return `<div class="item">${sprite(m.id, '', m.name)}<div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${esc(m.desc)} Cắn ${pc0(m.bite)} đòn thường. Đã hạ ${fmt(m.kills)} con.</div></div>
+            <button class="btn ${poor ? '' : 'primary'}" data-act="pet_tame" data-id="${m.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(m.price)}</button></div>`;
+        }).join('')}${near.map((m) => `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt="" style="opacity:.5"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Tiến độ ${fmt(m.kills)}/${RULES.tameKills}</div></div></div>`).join('')}
         ${ready.length || near.length ? '' : '<p class="small muted">Chưa có loài nào. Hạ thêm quái đi đã!</p>'}</div></div>`);
     }
     if (n.role === 'carpenter') {
@@ -3154,6 +3160,7 @@
       case 'pvp_challenge': return { act, uid: +d.uid };
       case 'market_buy': case 'market_cancel': return { act, listing: +d.listing };
       case 'pet_buy': case 'pet_tame': case 'decor_buy': return { act, id: d.id };
+      case 'pet_feed': return { act };
       case 'pet_choose': return { act, id: d.id || null };
       case 'title_set': return { act, id: d.id || null };
       default: return { act };
@@ -3161,7 +3168,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }

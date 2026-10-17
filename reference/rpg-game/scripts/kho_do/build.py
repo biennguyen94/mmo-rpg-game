@@ -365,6 +365,19 @@ pk_items = [
     ("Đấu trường", f"đánh bản sao chỉ số người khác, tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']})."),
     ("Chiến bang", f"bang chủ / phó bang tuyên chiến bang khác (bang kia nhận trong {GW['answer_s']} giây), kéo dài {GW['minutes']} phút. Mỗi trận Đấu trường thắng thành viên bang địch +1 điểm (cùng một đối thủ tính tối đa {GW['same_target_max']} lần). Bang nhiều điểm thắng: quỹ +{n(GW['win_fund'])}, thành viên có điểm nhận {n(GW['win_gold'])} vàng qua thư; hai bang chờ {GW['rematch_hours']} giờ mới chiến lại."),
 ]
+# ---------- Thú cưng ----------
+PR = R["pets"]
+pet_rows = "".join(
+    f"<tr><td><b>{E(pt['name'])}</b></td><td class=n>{n(pt['price'])}</td><td>{E(pt['desc'])}</td><td class=n>{pct(pt['bite'])}</td>"
+    f"<td>{E(pt['skill']['name'])}: {E(pt['skill']['desc'])}</td><td>{E(pt['skill2']['name'])}: {E(pt['skill2']['desc'])}</td></tr>"
+    for pt in sorted(D["pets"], key=lambda x: x["price"]))
+pet_rule = (f"Cắn: {pct(PR['bite_chance'])} số lượt (+{pct(PR['bite_chance_per_level'])} mỗi cấp), mỗi lần bằng sức cắn × đòn thường (+{pct(PR['bite_power_per_level'])} mỗi cấp). "
+            f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
+            f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); chỉ số cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)). "
+            f"Cho ăn ở Người Nuôi Thú: {n(PR['feed_gold'])} × cấp² vàng được {PR['feed_xp']} trận.")
+pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; không thuần được trùm, chúa tể) rồi trả "
+            f"({n(PR['tame_price'])} + {PR['tame_price_per_level']} × cấp quái) × (1 + {n(PR['tame_realm_price'])} × k) vàng (k: số vùng chuyển sinh, 0 nếu không phải). "
+            f"Thú thuần: công +{pct(PR['tame_bonus'])} + {pct(PR['tame_realm_bonus'])} × k, sức cắn {pct(PR['tame_bite'])} + {pct(PR['tame_realm_bite'])} × k; kỹ năng Cắn Xé rồi Húc Ngã.")
 pk_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in pk_items)
 
 # ---------- Lỗ hổng dữ liệu (OPEN_QUESTIONS KD-1): bậc thiếu bộ giáp / vũ khí chính theo lớp ----------
@@ -470,7 +483,7 @@ other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình ma
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=pct(ls['luck_upgrade']), LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),

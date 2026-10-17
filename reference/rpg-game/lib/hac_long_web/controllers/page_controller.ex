@@ -87,6 +87,7 @@ defmodule HacLongWeb.PageController do
         tameKills: HacLong.Game.Pets.tame_kills(),
         petMaxLevel: HacLong.Game.Pets.max_level(),
         petSkillLevel: HacLong.Game.Pets.skill_level(),
+        petSkill2Level: HacLong.Game.Pets.skill2_level(),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),
@@ -147,7 +148,8 @@ defmodule HacLongWeb.PageController do
         tameBonus: Data.rules().pets.tame_bonus,
         tamePrice: Data.rules().pets.tame_price,
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
-        petXpCoef: Data.rules().pets.xp_coef
+        petXpCoef: Data.rules().pets.xp_coef,
+        petFeedXp: Data.rules().pets.feed_xp
       },
       WORLD: Maps.client_data(),
       # Phase 14: Thư viện (bản đồ, quái, vật phẩm)

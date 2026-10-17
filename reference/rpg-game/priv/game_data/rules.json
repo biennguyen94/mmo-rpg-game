@@ -546,27 +546,39 @@
       "boss_potions": 2
     },
     "pets": {
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
       "tame_kills": 100,
       "tame_bonus": 0.03,
+      "tame_bite": 0.15,
+      "tame_realm_bonus": 0.005,
+      "tame_realm_bite": 0.01,
+      "tame_realm_price": 1,
       "tame_price": 1000,
       "tame_price_per_level": 100,
-      "bite_chance": 0.35,
-      "bite_power": 0.25,
-      "bite_per_level": 0.02,
-      "bonus_per_level": 0.1,
-      "max_level": 10,
+      "bite_chance": 0.3,
+      "bite_chance_per_level": 0.005,
+      "bite_power": 0.15,
+      "bite_power_per_level": 0.008,
+      "bonus_per_level": 0.05,
+      "max_level": 20,
       "skill_level": 5,
+      "skill2_level": 15,
       "xp_coef": 5,
       "boss_wins": 5,
+      "feed_gold": 500,
+      "feed_xp": 20,
       "skills": {
-        "heal": 0.05,
+        "heal": 0.04,
         "bash_turns": 2,
         "bash_power": 0.15,
-        "pickpocket_per_level": 3,
+        "pickpocket_gold_pct": 0.1,
         "venom_turns": 3,
         "venom_power": 0.5,
-        "rend_mult": 2
-      }
+        "rend_mult": 1.6
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     "bestiary": {
       "marks": [

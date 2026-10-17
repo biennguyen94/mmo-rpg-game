@@ -190,7 +190,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 - **Nhà**: Rương Gia Truyền (quà mỗi ngày), Tủ Đồ, đặt đồ trang trí (mỗi 10 điểm tiện nghi +1 % kinh nghiệm, tối đa +5 %).
   Bạn bè có thể ghé thăm và khen nhà.
-- **Thú cưng**: mua ở Người Nuôi Thú, hoặc hạ đủ số con một loài quái để thuần phục; thú đi theo và giúp một tay trong trận.
+- **Thú cưng**: mua ở Người Nuôi Thú, hoặc hạ đủ 100 con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; trừ trùm,
+  chúa tể) để thuần phục. Thú đi theo, cộng % chỉ số và hay cắn thêm một đòn; thú đắt cắn mạnh hơn, thú thuần từ vùng chuyển sinh
+  càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt);
+  cấp 5 và 15 học hai kỹ năng riêng. Xem tỉ lệ cắn, sức cắn, kỹ năng ở Menu → Thú cưng.
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp (món ăn cho hiệu ứng có hạn).
 
 ## 10. Chơi cùng người khác

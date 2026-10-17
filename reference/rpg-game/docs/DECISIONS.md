@@ -563,3 +563,26 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   | Đấu Sĩ | 6437 → 6916 | 19 → 62 | 3 → 94 | +2 → +9 | không → có |
 
   Chết ở vùng chuyển sinh tăng (Kiếm Sĩ 6 → 64 trên ~740 trận) vì giờ phải đánh ở đó thật; cày sau cấp 50 thua ít hơn (Kiếm Sĩ 137 → 113 / 1000) nhờ đồ ép cao hơn.
+
+## Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh (2026-10-17, anh chốt "làm hết, nhưng thú không quá mạnh")
+- **A. Sức cắn riêng mỗi thú** (`PETS.bite`, 15 % → 30 % đòn thường, thú đắt mạnh hơn) thay cho sức cắn chung 25 %. Tỉ lệ cắn
+  30 % + 0,5 %/cấp (trước 35 % + 2 %/cấp), sức cắn + 0,8 %/cấp (trước + 2 %/cấp), Cắn Xé × 1,6 (trước × 2), Liếm Vết Thương 4 % (trước 5 %).
+- **B. Móc Túi** lấy 10 % số vàng con quái rơi (trước cấp quái × 3: quái vùng chuyển sinh cấp 150 làm vàng gấp đôi).
+- **C. Thuần phục** cả quái bản đồ phụ và vùng chuyển sinh (trừ trùm, chúa tể vùng chuyển sinh). Vùng k: công +3 % + 0,5 %·k,
+  sức cắn 15 % + 1 %·k, giá × (1 + k). Thú thuần có 2 kỹ năng: Cắn Xé (cấp 5), Húc Ngã (cấp 15).
+- **D. Cấp tối đa 10 → 20** (1.900 trận), chỉ số cộng +5 %/cấp (trước +10 %/cấp, nên cấp 20 ≈ cấp 10 cũ); kỹ năng thứ hai (`PETS.skill2`)
+  ở cấp 15. **Cho ăn** ở Người Nuôi Thú (lệnh `pet_feed`, protocol thêm lệnh): 500 × cấp² vàng → +20 trận cho thú đang dắt.
+  Thành tựu "Bậc Thầy Thuần Thú" (cấp tối đa) giờ cần cấp 20.
+- **E.** Menu → Thú cưng và Người Nuôi Thú hiện tỉ lệ cắn, sức cắn, hai kỹ năng (đã học / khóa), giá cho ăn (`Engine.view/1` thêm
+  `pets`, `tameable`, `taming`); Kho Đồ thêm mục Thú cưng.
+- Đo (Kiếm Sĩ cấp 50, đồ +7, 300 trận với quái vùng 7; không thú: 6,1 lượt, mất 40 % máu), trước → sau:
+
+  | Thú | Trước cấp 10 | Sau cấp 10 | Sau cấp 20 |
+  |---|---|---|---|
+  | Ác Quỷ Daemon (120.000) | 4,2 lượt, 23 % máu | 4,8 lượt, 28 % | 4,1 lượt, 23 % |
+  | Chó Săn (3.000) | 4,5 lượt, 25 % | 5,2 lượt, 33 % | 4,9 lượt, 26 % |
+  | Thú thuần quái vùng chính | 4,4 lượt, 25 % | 5,4 lượt, 33 % | 5,2 lượt, 28 % |
+  | Thú thuần quái vùng 10 | — | 4,7 lượt, 27 % | 4,5 lượt, 23 % |
+  | Sóc Túi: vàng mỗi con (970 khi không thú) | 1.980 | 1.244 | 1.334 |
+
+  Thú mạnh nhất ở cấp 20 chỉ ngang cấp 10 cũ; thú đắt giờ hơn thú rẻ rõ rệt.

@@ -127,6 +127,9 @@ defmodule HacLong.Game.Commands do
       "pet_tame" ->
         at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.tame(p, c["id"]) end)
 
+      "pet_feed" ->
+        at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.feed(p) end)
+
       "pet_choose" ->
         Pets.choose(p, c["id"])
 

@@ -11,8 +11,17 @@
       "skill": {
         "id": "heal",
         "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 5% máu tối đa."
-      }
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
+      },
+      "bite": 0.15,
+      "skill2": {
+        "id": "bash",
+        "name": "Húc Ngã",
+        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "hound",
@@ -25,8 +34,17 @@
       "skill": {
         "id": "rend",
         "name": "Cắn Xé",
-        "desc": "Cú cắn gây gấp đôi sát thương."
-      }
+        "desc": "Cú cắn mạnh gấp 1,6 lần."
+      },
+      "bite": 0.18,
+      "skill2": {
+        "id": "bash",
+        "name": "Húc Ngã",
+        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "hog",
@@ -40,7 +58,16 @@
         "id": "bash",
         "name": "Húc Ngã",
         "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      }
+      },
+      "bite": 0.15,
+      "skill2": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "quokka",
@@ -53,8 +80,17 @@
       "skill": {
         "id": "pickpocket",
         "name": "Móc Túi",
-        "desc": "Khi cắn, móc được vàng bằng cấp quái × 3."
-      }
+        "desc": "Khi cắn, móc được 10% số vàng quái rơi."
+      },
+      "bite": 0.15,
+      "skill2": {
+        "id": "venom",
+        "name": "Phấn Độc",
+        "desc": "Khi cắn, quái trúng độc 3 lượt."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "butterfly",
@@ -68,7 +104,16 @@
         "id": "venom",
         "name": "Phấn Độc",
         "desc": "Khi cắn, quái trúng độc 3 lượt."
-      }
+      },
+      "bite": 0.18,
+      "skill2": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "panda",
@@ -83,11 +128,17 @@
       "skill": {
         "id": "pickpocket",
         "name": "Móc Túi",
-        "desc": "Khi cắn, móc được vàng bằng cấp quái × 3."
+        "desc": "Khi cắn, móc được 10% số vàng quái rơi."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.18,
+      "skill2": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
+      }
     },
     {
       "id": "raven",
@@ -104,8 +155,14 @@
         "desc": "Khi cắn, quái trúng độc 3 lượt."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.22,
+      "skill2": {
+        "id": "rend",
+        "name": "Cắn Xé",
+        "desc": "Cú cắn mạnh gấp 1,6 lần."
+      }
     },
     {
       "id": "angel",
@@ -120,11 +177,17 @@
       "skill": {
         "id": "heal",
         "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 5% máu tối đa."
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.2,
+      "skill2": {
+        "id": "bash",
+        "name": "Húc Ngã",
+        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
+      }
     },
     {
       "id": "hippogriff",
@@ -138,8 +201,17 @@
       "skill": {
         "id": "rend",
         "name": "Cắn Xé",
-        "desc": "Cú cắn gây gấp đôi sát thương."
-      }
+        "desc": "Cú cắn mạnh gấp 1,6 lần."
+      },
+      "bite": 0.25,
+      "skill2": {
+        "id": "heal",
+        "name": "Liếm Vết Thương",
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     {
       "id": "satan",
@@ -153,11 +225,17 @@
       "skill": {
         "id": "rend",
         "name": "Cắn Xé",
-        "desc": "Cú cắn gây gấp đôi sát thương."
+        "desc": "Cú cắn mạnh gấp 1,6 lần."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.27,
+      "skill2": {
+        "id": "venom",
+        "name": "Phấn Độc",
+        "desc": "Khi cắn, quái trúng độc 3 lượt."
+      }
     },
     {
       "id": "spirit",
@@ -172,11 +250,17 @@
       "skill": {
         "id": "heal",
         "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 5% máu tối đa."
+        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.22,
+      "skill2": {
+        "id": "bash",
+        "name": "Húc Ngã",
+        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
+      }
     },
     {
       "id": "daemon",
@@ -191,11 +275,17 @@
       "skill": {
         "id": "rend",
         "name": "Cắn Xé",
-        "desc": "Cú cắn gây gấp đôi sát thương."
+        "desc": "Cú cắn mạnh gấp 1,6 lần."
       },
       "sourceType": "MU_INSPIRED",
-      "version": 1,
-      "verified": false
+      "version": 2,
+      "verified": false,
+      "bite": 0.3,
+      "skill2": {
+        "id": "venom",
+        "name": "Phấn Độc",
+        "desc": "Khi cắn, quái trúng độc 3 lượt."
+      }
     }
   ]
 }

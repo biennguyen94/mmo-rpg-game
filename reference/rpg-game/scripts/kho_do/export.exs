@@ -13,6 +13,7 @@ out = %{
   world_boss: Map.new(Config.Reader.read!("config/config.exs", env: :prod)[:hac_long][:world_boss]),
   tower_rows: for(f <- [1, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150], do: Map.put(HacLong.Game.Tower.floor_reward(f), :floor, f)),
   jewels: Data.jewels(),
+  pets: Data.pets(),
   festivals: Data.events(),
   maps: HacLong.World.Maps.ids() |> Enum.map(&HacLong.World.Maps.get/1) |> Enum.filter(&(&1[:realm])) |> Enum.map(&Map.take(&1, [:id, :name, :realm, :min_rebirths, :min_level]))
 }
