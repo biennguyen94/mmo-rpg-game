@@ -619,3 +619,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     (+9 / +10 / +11: cánh 1 14,5 / 17,5 / 22,5 %, cánh 2 21,75 / 26,75 / 33,75 %, cánh 3 34 / 41 / 50 %); cánh 2 hấp thụ gốc 18 % → 15 %;
   - phòng thủ cánh theo bảng eff như đồ.
 - Ảnh hưởng người chơi hiện có: đồ +10 / +11 mạnh lên; cánh đang ép giảm hấp thụ (vd cánh 3 +9 43 % → 34 %, cánh 2 +9 36 % → 21,75 %).
+
+## Tầng Tháp / Quảng Trường / Lâu Đài / Kalima: quái đi lang thang, hiệu ứng bản đồ (2026-10-17, anh báo)
+- Quái trên tầng riêng (`p.tower.monsters`) đi lang thang như bản đồ chung: Session hẹn `:tower_wander` mỗi `:wander_ms` (1,2 s) khi
+  đang ở tầng và có tab mở, không trong trận, không bị giao dịch giữ; `Tower.wander/4`: mỗi con 35 % đi một ô sang ô trống `.`,
+  không đè quái khác, không vào ô người chơi; trùm tầng (`elite`) đứng yên. Vị trí mới đẩy cho client như mọi thay đổi nhân vật.
+- Hiệu ứng bản đồ (lá, tuyết, mưa, tro, sương) bật cả trên tầng, theo nền của tầng; không có ngày đêm (trong nhà).

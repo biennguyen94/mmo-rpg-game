@@ -564,7 +564,8 @@
           ctx.fillRect(fx0 + TILE / 2 + Math.sin(i * 2.1) * 8 * k, fy0 + TILE / 2 - Math.sin(k * Math.PI) * 12, 2, 2);
         }
       }
-      const w = outdoors(P) && weatherOf(m, P.pos.map);
+      // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
+      const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
     }
     // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng

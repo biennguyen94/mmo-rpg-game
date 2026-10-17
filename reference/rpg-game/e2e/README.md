@@ -42,6 +42,7 @@ không vào git).
 | `features.mjs` | đợt 8 phase 2026-10: tự đánh (bật, tự hạ quái, tắt; Làng không bật được), kỷ lục tháp mở kỹ năng tháp + chọn bộ 4 kỹ năng, khóa vùng chuyển sinh theo số lần chuyển sinh, bộ hình đồ Pixel / Biểu tượng, nút hiệu ứng bản đồ |
 | `lose.mjs` | gục ngã ở vùng chuyển sinh 10: thanh máu màn trận hiện 0, bảng kết quả ghi số máu được hồi ở nhà trọ, không lỗi JS (vẽ bản đồ khi khung ẩn) |
 | `pets.mjs` | thú cưng: Người Nuôi Thú hiện sức cắn + kỹ năng, mua Chó Săn, cho ăn (+20 trận, lên cấp, giá theo cấp²), Menu Thú cưng hiện tỉ lệ cắn và hai kỹ năng, chưa đủ sổ quái thì không thuần được quái bản đồ phụ |
+| `tower.mjs` | Tháp Vô Tận: vào tầng 1, quái trên tầng tự đi lang thang (server đẩy vị trí mới), hiệu ứng bản đồ theo nền tầng, không lỗi JS |
 | `soak.mjs` | N bot WebSocket (không cần trình duyệt): đi, đánh, chat, xem chợ; đo p50 / p95 / max, lỗi, mất kết nối, bộ nhớ |
 
 Mọi kịch bản Playwright còn kiểm **không có lỗi JS** trên trang.

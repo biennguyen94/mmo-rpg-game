@@ -201,6 +201,38 @@ defmodule HacLong.Game.Tower do
     {Enum.reverse(list), rng}
   end
 
+  @dirs [{1, 0}, {-1, 0}, {0, 1}, {0, -1}]
+
+  @doc """
+  Quái trên tầng (Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima) đi lang thang như quái bản đồ thường
+  (`HacLong.World.MapServer`): mỗi nhịp mỗi con có `chance` đi một ô sang ô trống `.` kề bên, không đè quái khác,
+  không vào ô người chơi `{px, py}`. Trùm tầng (`elite`) đứng yên. `roll` cho số ngẫu nhiên trong [0, 1).
+  """
+  def wander(
+        %{monsters: ms, tiles: tiles} = t,
+        {px, py},
+        chance \\ 0.35,
+        roll \\ &:rand.uniform/0
+      ) do
+    taken = MapSet.new(ms, &{&1.x, &1.y})
+
+    {list, _} =
+      Enum.map_reduce(ms, taken, fn m, taken ->
+        {dx, dy} = Enum.at(@dirs, trunc(roll.() * 4) |> min(3))
+        to = {m.x + dx, m.y + dy}
+
+        if m.elite or roll.() >= chance or MapSet.member?(taken, to) or to == {px, py} or
+             tiles |> Enum.at(elem(to, 1), "") |> String.at(elem(to, 0)) != "." do
+          {m, taken}
+        else
+          {%{m | x: elem(to, 0), y: elem(to, 1)},
+           taken |> MapSet.delete({m.x, m.y}) |> MapSet.put(to)}
+        end
+      end)
+
+    %{t | monsters: list}
+  end
+
   defp uniform(n, rng), do: :rand.uniform_s(n, rng)
 
   defp pick(list, rng) do

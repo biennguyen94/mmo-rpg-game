@@ -202,7 +202,9 @@ defmodule HacLong.Game.Session do
       held: nil,
       queue: [],
       # Phase 4: hẹn giờ nhịp tự đánh (`:auto_tick`) khi `player.auto` đang bật
-      auto_timer: nil
+      auto_timer: nil,
+      # nhịp quái tầng Tháp / Quảng Trường / Lâu Đài / Kalima đi lang thang (`:tower_wander`)
+      tower_timer: nil
     }
 
     {:ok, s, @idle_timeout}
@@ -935,6 +937,24 @@ defmodule HacLong.Game.Session do
     end
   end
 
+  def handle_info(:tower_wander, s) do
+    s = %{s | tower_timer: nil}
+    p = s.player
+
+    s =
+      with %{pos: %{map: "tower", x: x, y: y}, tower: %{} = t, battle: nil} <- p,
+           nil <- s.held,
+           t2 when t2 != t <- Tower.wander(t, {x, y}) do
+        p = %{p | tower: t2}
+        broadcast(s, p, nil)
+        s |> Map.put(:player, p) |> mark_dirty()
+      else
+        _ -> s
+      end
+
+    {:noreply, arm_tower(s), timeout(s)}
+  end
+
   def handle_info(:flush, s) do
     Characters.put_reason("MOVE")
     {:noreply, flush(%{s | flush_timer: nil}), timeout(s)}
@@ -980,7 +1000,18 @@ defmodule HacLong.Game.Session do
     end
   end
 
-  defp reply(value, s), do: {:reply, value, s, timeout(s)}
+  defp reply(value, s), do: {:reply, value, arm_tower(s), timeout(s)}
+
+  # đang ở tầng riêng (`tower`) và có tab mở: hẹn nhịp cho quái tầng đi lang thang (như `:wander_ms` của bản đồ chung)
+  defp arm_tower(%{tower_timer: nil, player: %{pos: %{map: "tower"}, tower: %{}}} = s)
+       when map_size(s.tabs) > 0 do
+    case Application.get_env(:hac_long, :wander_ms) do
+      ms when is_integer(ms) -> %{s | tower_timer: Process.send_after(self(), :tower_wander, ms)}
+      _ -> s
+    end
+  end
+
+  defp arm_tower(s), do: s
 
   # ---------- Tự đánh (Phase 4) ----------
 
