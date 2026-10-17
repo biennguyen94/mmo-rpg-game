@@ -3059,6 +3059,7 @@
           <div class="btn-row">
             <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về nhà` : `${icon('walk')} Tiếp tục`}</button>
           </div>
+          ${r === 'lose' ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
           ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Nhà uống nước giếng.</p>' : ''}
         </div>`;
     }
@@ -3074,7 +3075,7 @@
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">
         ${heroSprite()}
-        <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
+        <div class="grow" style="flex:1;min-width:0">${bar('hp', battleHp(), d.maxHp, `❤ ${fmt(battleHp())} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
       ${P.auto ? `<div class="auto-bar on"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">🤖 Đang tự đánh · đã hạ <b class="num">${fmt(autoKills())}</b></span><button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>` : ''}
@@ -3106,7 +3107,12 @@
   // ---------- Xử lý thao tác ----------
   // Ghi lại trạng thái trước một lượt đánh để tính hiệu ứng (số sát thương bay lên, rung).
   function snapBattle() {
-    return { mHp: P.battle.monster.hp, pHp: P.hp, logLen: P.battle.log.length };
+    return { mHp: P.battle.monster.hp, pHp: battleHp(), logLen: P.battle.log.length };
+  }
+
+  // Máu hiện ở màn trận: gục ngã thì 0 (server đã hồi một phần máu khi "về nhà trọ", thanh trên đầu trang hiện số đó).
+  function battleHp() {
+    return P.battle && P.battle.over && P.battle.result === 'lose' ? 0 : P.hp;
   }
 
   function battleFx(before, action) {
@@ -3116,7 +3122,7 @@
     const struck = action === 'attack' || action === 'skill';
     fx = {
       mDmg: struck ? before.mHp - P.battle.monster.hp : null,
-      pDmg: before.pHp - P.hp > 0 ? before.pHp - P.hp : 0,
+      pDmg: before.pHp - battleHp() > 0 ? before.pHp - battleHp() : 0,
       crit: newLog.some((l) => l.kind === 'crit'),
     };
   }

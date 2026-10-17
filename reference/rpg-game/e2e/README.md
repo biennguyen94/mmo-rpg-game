@@ -40,6 +40,7 @@ không vào git).
 | `mobile.mjs` | 360 × 740: các tab, NPC, trận đánh không tràn ngang; nút đủ lớn để chạm |
 | `pk.mjs` | Phase 5, hai trình duyệt: PK cược vàng (nhận / từ chối / quá số vàng / hết hạn 30 s), lịch sử trận, xếp hạng theo lớp, lệnh chat `/w`, danh sách online của quản trị |
 | `features.mjs` | đợt 8 phase 2026-10: tự đánh (bật, tự hạ quái, tắt; Làng không bật được), kỷ lục tháp mở kỹ năng tháp + chọn bộ 4 kỹ năng, khóa vùng chuyển sinh theo số lần chuyển sinh, bộ hình đồ Pixel / Biểu tượng, nút hiệu ứng bản đồ |
+| `lose.mjs` | gục ngã ở vùng chuyển sinh 10: thanh máu màn trận hiện 0, bảng kết quả ghi số máu được hồi ở nhà trọ, không lỗi JS (vẽ bản đồ khi khung ẩn) |
 | `soak.mjs` | N bot WebSocket (không cần trình duyệt): đi, đánh, chat, xem chợ; đo p50 / p95 / max, lỗi, mất kết nối, bộ nhớ |
 
 Mọi kịch bản Playwright còn kiểm **không có lỗi JS** trên trang.

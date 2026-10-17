@@ -203,6 +203,8 @@
 
   function weather(kind, t, cx, cy, m, id) {
     const vw = VW(), vh = VH();
+    // khung bản đồ đang ẩn (trong trận): rộng / cao 0 thì wrap chia cho 0 ra NaN
+    if (!(vw > 0 && vh > 0)) return;
     if (kind === 'rain') {
       ctx.strokeStyle = 'rgba(170, 200, 230, 0.5)'; ctx.lineWidth = 1;
       ctx.beginPath();
@@ -255,6 +257,7 @@
   // sau lớp bóng tối: đom đóm ngoài trời và đèn lồng quanh người dân ở Làng
   function nightGlow(t, m, cx, cy, dark) {
     const vw = VW(), vh = VH();
+    if (!(vw > 0 && vh > 0)) return;
     for (const n of m.npcs || []) {
       const x = n.at[0] * TILE - cx + TILE / 2, y = n.at[1] * TILE - cy + TILE / 2;
       if (x < -60 || y < -60 || x > vw + 60 || y > vh + 60) continue;
