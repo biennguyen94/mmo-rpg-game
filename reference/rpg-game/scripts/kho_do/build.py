@@ -479,7 +479,7 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  EXCPRICE=n(ex['price_mult']), DMGRED=pct(ex['max_dmg_red']), REFL=pct(ex['max_reflect']),
                  ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
                  STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']),
-                 RMIN=str(rl['min_level']), RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RBOSS=n(rl['boss_mult']),
+                 RMIN=str(rl['min_level']), RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']),
                  SELL=pct(R['shop']['sell_ratio'])).items():
     page = page.replace("{{" + k + "}}", v)
 assert "{{" not in page, page[page.index("{{"):page.index("{{") + 40]

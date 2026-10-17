@@ -53,6 +53,12 @@ defmodule HacLong.RealmsTest do
     assert m.atk == round(base.atk * spec.atk_mult) and spec.atk_mult < spec.mult
     assert m.element == "light"
 
+    # kinh nghiệm ở cấp 50 × xp_mult (không theo cấp hiện 150)
+    assert m.xp == round(Engine.base_xp(@r.stat_level) * spec.xp_mult)
+    normal = Data.side_monster("r1_fire_elemental")
+    assert normal.xp_mult == 1 + @r.xp_mult_per_realm
+    assert Engine.make_monster(normal, false).xp < 2 * base.xp
+
     plain = %{boss: false}
     rich = %{boss: false, rich: 5}
     assert Gear.drop_chance(rich) > Gear.drop_chance(plain)

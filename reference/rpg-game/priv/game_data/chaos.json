@@ -16,7 +16,7 @@
         "jewel_chaos": 1
       },
       "gold": 20000,
-      "rate": 0.1,
+      "rate": 0.25,
       "per_up": 0.05,
       "max_rate": 0.6,
       "out": "wing_{cls}_1"

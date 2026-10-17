@@ -544,3 +544,22 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - cấp 40 → 50 ở vùng chuyển sinh chỉ mất 3–5 trận (quái vùng cấp 52–150 cho EXP rất lớn);
   - cày ở các vùng cuối sau cấp 50: ~14 % trận thua, phần lớn do chúa tể (thua gần 100 %) và quái vùng 9–10;
   - ghép cánh 1 với món +5 chỉ 10 %: 7 lần thử đều trượt; ngọc Ước Nguyện hiếm nên đồ ép ít khi quá +5.
+
+## Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh (2026-10-17, anh chốt "làm 1 2 3")
+- **1. Kinh nghiệm quái vùng chuyển sinh** tính ở `stat_level` (50) × `xp_mult` = 1 + 0,2k (chúa tể × `boss_mult`)
+  (`RULES.realms.xp_mult_per_realm`, `realms.json` thêm `xp_mult`, `Engine.make_monster/2`). Trước tính theo cấp hiện 52–150 × hệ số máu:
+  quái vùng 10 cho ~54.700 kinh nghiệm (gấp 42 quái cấp 45), cấp 40 → 50 chỉ 4 con. Vàng vẫn theo cấp hiện.
+- **2. Ngọc rơi** quái thường cấp ≥ 12: `JEWELS.monster_chance` 0,006 → 0,015 (~1 viên mỗi 67 con, 1 Ước Nguyện mỗi ~150 con).
+  Ngọc vùng chuyển sinh (2 % + 1 %·k) giữ.
+- **3. Ghép cánh cấp 1**: tỉ lệ gốc 0,10 → 0,25 (món +5 25 %, +7 35 %, trần 60 % giữ). Cánh 2, 3 giữ.
+- Không làm (anh chưa chọn): kinh nghiệm / điểm theo số lần chuyển sinh, sức chúa tể.
+- `scripts/balance/journey.sh --cls all --rebirths 10 --farm 1000 --seed 42`, trước → sau:
+
+  | Lớp | Tổng trận | Trận cấp 40 → 50 mỗi chặng (vùng chuyển sinh) | Ép thành công | Món ép cuối (cao nhất) | Cánh |
+  |---|---|---|---|---|---|
+  | Kiếm Sĩ | 6442 → 7051 | 19 → 74 | 5 → 49 | +2 → +9 | không → không (9 lần trượt) |
+  | Phù Thủy | 6452 → 6954 | 20 → 67 | 39 → 63 | +9 → +9 | có → có |
+  | Tiên Nữ | 6439 → 6888 | 19 → 60 | 19 → 77 | +9 → +9 | có → có |
+  | Đấu Sĩ | 6437 → 6916 | 19 → 62 | 3 → 94 | +2 → +9 | không → có |
+
+  Chết ở vùng chuyển sinh tăng (Kiếm Sĩ 6 → 64 trên ~740 trận) vì giờ phải đánh ở đó thật; cày sau cấp 50 thua ít hơn (Kiếm Sĩ 137 → 113 / 1000) nhờ đồ ép cao hơn.

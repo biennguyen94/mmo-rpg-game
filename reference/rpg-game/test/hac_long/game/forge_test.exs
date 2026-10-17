@@ -180,8 +180,8 @@ defmodule HacLong.Game.ForgeTest do
 
     test "tỉ lệ theo cấp đồ, tối đa 60 %" do
       r = HacLong.Game.Data.chaos("wing1")
-      assert Chaos.rate(r, 5) == 0.1
-      assert Chaos.rate(r, 9) == 0.3
+      assert Chaos.rate(r, 5) == r.rate
+      assert Chaos.rate(r, 9) == Float.round(r.rate + 4 * r.per_up, 3)
       assert Chaos.rate(r, 20) == 0.6
       assert Chaos.rate(HacLong.Game.Data.chaos("make_chaos")) == 0.7
     end

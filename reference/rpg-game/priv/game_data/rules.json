@@ -478,18 +478,19 @@
       "verified": false
     },
     "realms": {
-      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), riêng công × (1 + atk_mult_per_realm × k) (× boss_mult) cho phòng thủ còn ý nghĩa (version 2, DECISIONS \"Cân bằng cuối game\"), cấp hiện trên quái 50+10k−8 … 50+10k (vàng, kinh nghiệm theo cấp hiện). Rơi đồ nhiều hơn: tỉ lệ ra đồ × (1 + loot_per_realm × rich), tối đa loot_max (Excellent / May mắn / đồ Thần trên món đã rơi giữ tỉ lệ gốc, version 2); ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5).",
+      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), riêng công × (1 + atk_mult_per_realm × k) (× boss_mult) cho phòng thủ còn ý nghĩa (version 2, DECISIONS \"Cân bằng cuối game\"), cấp hiện trên quái 50+10k−8 … 50+10k (vàng theo cấp hiện); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult), trước tính theo cấp hiện nên cấp 40 → 50 chỉ vài con (version 3, DECISIONS \"Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh\"). Rơi đồ nhiều hơn: tỉ lệ ra đồ × (1 + loot_per_realm × rich), tối đa loot_max (Excellent / May mắn / đồ Thần trên món đã rơi giữ tỉ lệ gốc, version 2); ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5).",
       "min_level": 40,
       "stat_level": 50,
       "mult_per_realm": 0.4,
       "atk_mult_per_realm": 0.15,
+      "xp_mult_per_realm": 0.2,
       "boss_mult": 1.8,
       "loot_per_realm": 0.1,
       "loot_max": 0.9,
       "jewel_base": 0.02,
       "jewel_per_realm": 0.01,
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     "blessing": {

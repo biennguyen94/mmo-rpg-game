@@ -2,7 +2,7 @@
 
 - Vùng k (1..10) cần chuyển sinh ≥ k và cấp ≥ RULES.realms.min_level; quái hiện cấp 50+10k−8 … 50+10k (chúa tể).
 - Sức mạnh theo phương án (a) anh chốt: giữ cấp tối đa 50, chỉ số quái tính ở cấp `stat_level` 50 × `mult`
-  (1 + mult_per_realm × k; chúa tể × boss_mult); riêng công nhân (1 + atk_mult_per_realm × k) (× boss_mult). Rơi đồ quý hơn theo `rich` = k (RULES.realms.loot_per_realm).
+  (1 + mult_per_realm × k; chúa tể × boss_mult); riêng công nhân (1 + atk_mult_per_realm × k) (× boss_mult); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult). Rơi đồ quý hơn theo `rich` = k (RULES.realms.loot_per_realm).
 - Hình quái: tô lại từ hình CC0 sẵn có (e2e/tint_sprites.mjs đọc danh sách REALM_TINTS trong realms.json).
 - Cổng: vùng k trái → vùng k−1 (vùng 1 → Làng, một chiều), phải → vùng k+1. Mỗi vùng một Đài Phúc Lành.
 Chạy: python3 scripts/gen_realms.py  rồi  node e2e/tint_sprites.mjs realm
@@ -154,14 +154,15 @@ def main():
         mult = round(1 + RULES["mult_per_realm"] * k, 3)
         # công nhân riêng (nhẹ hơn máu) để phòng thủ người chơi còn ý nghĩa ở vùng cao (DECISIONS "Cân bằng cuối game")
         atk = round(1 + RULES["atk_mult_per_realm"] * k, 3)
+        xpm = round(1 + RULES["xp_mult_per_realm"] * k, 3)
         top = 50 + 10 * k
         mons = []
         for j, (base, nm) in enumerate(kinds):
             mons.append({"id": f"r{k}_{base}", "name": nm, "level": top - 8 + 3 * j, "stat_level": RULES["stat_level"],
-                         "mult": mult, "atk_mult": atk, "element": el, "rich": k,
+                         "mult": mult, "atk_mult": atk, "xp_mult": xpm, "element": el, "rich": k,
                          "jewel_chance": round(RULES["jewel_base"] + RULES["jewel_per_realm"] * k, 4)})
         mons.append({"id": f"r{k}_{boss[0]}", "name": boss[1], "level": top, "stat_level": RULES["stat_level"],
-                     "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
+                     "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["boss_mult"], 3), "xp_mult": round(xpm * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
                      "jewel_chance": round((RULES["jewel_base"] + RULES["jewel_per_realm"] * k) * 5, 4)})
         monsters += mons
         tints += [[f"monsters/{b}", f"monsters/{m['id']}", flt] for (b, _), m in zip(kinds + [boss], mons)]

@@ -493,7 +493,12 @@ defmodule HacLong.Game.Engine do
       element: Map.get(spec, :element) || Elements.for_level(l),
       # B-28: quái không có né (đòn thường trúng theo AR / DR, `hit_chance/2`); né chỉ có ở bản sao người chơi
       dodge: 0,
-      xp: round(base_xp(l) * m * rw * if(boss?, do: @mon.boss.xp, else: 1)),
+      # vùng chuyển sinh: kinh nghiệm ở `stat_level` × `xp_mult` (cấp hiện 52–150 cho quá nhiều), không có thì theo cấp hiện × mult
+      xp:
+        round(
+          if(Map.has_key?(spec, :xp_mult), do: base_xp(sl) * spec.xp_mult, else: base_xp(l) * m) *
+            rw * if(boss?, do: @mon.boss.xp, else: 1)
+        ),
       gold:
         round(base_gold(l) * m * rw * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
     }

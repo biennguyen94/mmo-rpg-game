@@ -118,7 +118,8 @@
       "jewel_life": 10
     },
     "monster_level": 12,
-    "monster_chance": 0.006,
+    "monster_chance": 0.015,
+    "_doc_monster_chance": "Quái thường cấp ≥ monster_level rơi 1 viên ngọc (loại theo weights). 0,006 → 0,015 (2026-10-17, DECISIONS \"Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh\"): trước ~370 con mới có 1 Ước Nguyện.",
     "boss_chance": 0.3,
     "tower_every": 10,
     "chest_chance": {
