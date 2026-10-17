@@ -19,6 +19,7 @@ nhật ký vàng / đồ hiếm / quản trị, và công thức dựng nhân v�
 9. [Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)](#9-ép-đồ-máy-hỗn-nguyên-khóa-đồ-đợt-3)
 10. [Hình đồ theo cấp và Item.txt](#10-hình-đồ-theo-cấp-và-itemtxt)
 11. [Chỉnh số luật chơi, từ cấm khi đặt tên](#11-chỉnh-số-luật-chơi-từ-cấm-khi-đặt-tên)
+12. [Đợt 8 phase 2026-10: tự đánh, bot mua bình, bộ hình Pixel, vùng chuyển sinh](#12-đợt-8-phase-2026-10)
 
 ---
 
@@ -270,6 +271,9 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 | "Cần quyền quản trị viên." | tài khoản là `mod` | cấp `admin` nếu cần |
 | "Người này chưa có nhân vật." | tài khoản chưa tạo nhân vật / đã xóa | |
 | "Túi đồ hiếm đã đầy (20 món)." | `give_gear` khi túi đủ 20 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
+| Người chơi báo "đồ rơi biến mất" khi túi đồ hiếm đầy | từ Phase 1 đồ rơi lúc túi đầy được **gửi Hộp thư** (mỗi món một thư, cùng transaction với lần lưu nhân vật) | bảo người chơi mở Hộp thư; tra `gear_log` lý do lưu của trận đó |
+| Bot đứng yên, không đánh quái | (đã sửa ở Phase 5) mốc nghỉ của bot so với đồng hồ đơn điệu có thể âm | cập nhật bản mới; kiểm `characters.updated_at` của tài khoản `bot_*` có đổi sau vài phút |
+| Tự đánh tự tắt | hết bình máu, có người tên đỏ, bị đồ sát, gục / bỏ chạy, rời bản đồ, đóng hết tab | đúng thiết kế (B-31); thông báo lý do hiện ở góc màn hình người chơi |
 | `gold_mismatch` sau khi sửa SQL tay | sửa vàng thẳng database không có dòng nhật ký | đừng sửa tay; dùng `add_gold`. Đã lỡ thì thêm một dòng `gold_log` (`reason = 'MANUAL'`, `delta` = phần chênh) |
 | Kiểm tra vàng chậm | bảng nhật ký lớn | dọn `--prune 180` |
 
@@ -386,6 +390,13 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Từ cấm khi đặt tên nhân vật / bang | `names` |
 | Ngọc Sinh Mệnh; sức chứa Tủ Đồ và giá mở rộng; trần vàng / EXP mỗi thư quản trị | `upgrade.life`, `storage`, `mail` |
 | PK cược vàng, chiến bang, tổ đội (chia thưởng, hạn mời), giao dịch tự hủy, hộp thư (giữ / hết hạn), xếp hạng (top, cache), phó bang tối đa, hạn đơn xin vào | `pk`, `guild_war`, `party`, `trade`, `mail`, `leaderboard`, `guild.max_officers`, `guild.request_days` |
+| Đài Phúc Lành (số trận phúc lành, % cộng thêm) | `blessing` |
+| Nguyên tố (vòng khắc, % mạnh / yếu, nguyên tố quái theo cấp) | `elements` |
+| Kỹ năng Tháp Thử Thách (số kỹ năng mang vào trận, kháng choáng của trùm); số từng kỹ năng ở `classes.json` → `tower_skills` | `tower_skills` |
+| Vùng đất chuyển sinh (cấp vào, hệ số sức mạnh quái, rơi đồ / ngọc thêm); quái từng vùng ở `realms.json` | `realms` |
+| Né tối đa (`combat.dodge.max_total`), dòng Excellent theo cấp (`excellent.options.weapon.atk_lvl`) | `combat`, `excellent` |
+| Tự đánh: nhịp ra lệnh, % uống bình mặc định / giới hạn, số dòng cộng thêm để giữ đồ khi lọc "chỉ đồ quý" | `auto` |
+| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`) | `bots` |
 
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.
@@ -421,3 +432,43 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 - Lịch, vé, thưởng: `RULES.blood_castle`, giải thích ở `docs/EVENTS_PHASE18.md` §M2. `HL_DS_OPEN=1` mở luôn cả Lâu Đài.
 - Tặng vé: `give_item` với `id: "bc_ticket"`; tặng lông vũ (bù lỗi): `id: "condor_feather"`.
+
+## 12. Đợt 8 phase 2026-10
+
+Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng công thức ở `docs/FORMULA_AUDIT.md`.
+
+| Phase | Nội dung | Việc của người vận hành |
+|---|---|---|
+| 1 | Sửa lỗi: tháp quay vòng có tiền tố tên, quái giữ máu sau khi người chơi bỏ chạy, đồ rơi lúc túi đầy gửi Hộp thư, `give_gear` tặng được cánh và dòng phụ cánh | Không |
+| 2 | Giao diện: bấm avatar mở hồ sơ, nút Hủy đồ rơi, Thợ Rèn ép đồ trong túi, Đài Phúc Lành thay Đá dịch chuyển, quà cho mọi người nhiều món + lịch sử | Migration `add_blessing` |
+| 8 | Rà công thức (B-28): Excellent "tấn công theo cấp" 0,6, né tối đa 60 %, ép nhẫn máu cộng máu, quái không né; PvP dùng đúng chỉ số | Không |
+| 3 | 10 kỹ năng Tháp Thử Thách mỗi lớp, nguyên tố, bộ 4 kỹ năng (Menu → Kỹ năng → ⚙) | Migration `add_skill_set`; quản trị `set_tower` |
+| 6 | 10 vùng đất chuyển sinh (cấp quái 52–150), tháp tầng 61–160 | Quản trị `set_rebirths`; sinh lại dữ liệu: `python3 scripts/gen_realms.py` rồi `node e2e/tint_sprites.mjs` |
+| 4 | Tự đánh khi online (thanh 🤖 dưới bản đồ) | Không; chỉnh số ở `RULES.auto` |
+| 5 | Bản đồ động; bot mua bình / nghỉ trọ; sửa lỗi bot đứng yên | Chỉnh số ở `RULES.bots` |
+| 7 | Bộ hình đồ Pixel CC0 (Menu → Cài đặt → Hình đồ) | Không; xem mục 12.3 |
+
+### 12.1 Tự đánh (Phase 4, B-31)
+
+- Chạy **trong Session của người chơi** khi còn ít nhất một tab mở; đóng hết tab là tắt. Không có tự đánh offline, không thêm cột
+  database (cài đặt nằm trong bộ nhớ `player.auto`).
+- Mỗi nhịp server tự chọn lệnh và chạy qua đúng đường lệnh client (cùng luật, giới hạn tốc độ, nhật ký vàng / đồ). Lý do lưu
+  trong `gold_log` / `gear_log` vẫn là tên lệnh (`ATTACK`, `SKILL`, `DISCARD`…).
+- Không bật được ở Làng, Nhà, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
+- Lọc "chỉ đồ quý" hủy đồ thường vừa nhặt; người chơi khiếu nại mất đồ thì tra `gear_log` lý do `DISCARD` quanh giờ đó.
+
+### 12.2 Người chơi AI (Phase 5, B-32)
+
+- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.
+- Kiểm tra bot có chạy: `SELECT c.name, c.map_id, c.gold, c.updated_at FROM characters c JOIN users u ON u.id = c.user_id
+  WHERE u.role = 'bot' ORDER BY c.updated_at DESC;` — `updated_at` phải đổi sau vài phút.
+
+### 12.3 Bộ hình đồ Pixel (Phase 7, B-33)
+
+- Người chơi chọn ở Menu → Cài đặt → **Hình đồ**: MU (chỉ hiện khi máy chủ có hình MU, mục 10.1) / Pixel / Biểu tượng.
+  Mặc định MU nếu có, không thì Pixel.
+- Hình Pixel (CC0, Dungeon Crawl Stone Soup) **có sẵn trong git**: `priv/static/assets/pixel/` và bảng tra
+  `priv/static/assets/pixel_icons.json`. Thêm đồ mới thì chạy lại (xem README → "Chỉnh sửa game"):
+  `python3 scripts/pixel_icons.py <crawl/tiles>/releases/Nov-2015` rồi `node e2e/crop_icons.mjs`. Món chưa có hình Pixel
+  (cánh, đồ ăn) dùng hình cũ.
+- Hình MU vẫn **không bao giờ** vào git / Docker (mục 10.1).

@@ -27,7 +27,7 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 - Bản đồ ô vuông: Nhà riêng, Làng và 6 vùng đất; mỗi vùng có 2 bản đồ quái và một phòng trùm,
   nối với nhau bằng cổng. Quái dùng chung giữa mọi người, đi lang thang và hồi lại sau khi bị hạ;
   thấy người chơi khác trên cùng bản đồ. Nhân vật và quái di chuyển mượt
-- Đá dịch chuyển ở Làng và sâu trong mỗi vùng: chạm để ghi nhớ, rồi dịch chuyển qua lại
+- Đài Phúc Lành ở Làng và sâu trong mỗi vùng: chạm để nhận phúc lành của vùng và đặt điểm hồi sinh; đi xa dùng Chọn bản đồ
 - 24 loại quái thường, 6 trùm trong phòng riêng (hỏi xác nhận trước khi đấu; hạ trùm để mở
   cổng sang vùng tiếp theo)
 - Chiến đấu theo lượt: tấn công, kỹ năng (có hồi chiêu), uống máu, bỏ chạy; hiệu ứng trạng thái
@@ -81,6 +81,16 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 
 - Quản trị viên: xử lý báo cáo, cấm chat, khóa tài khoản, thông báo cả server, tặng quà qua
   hộp thư, gọi trùm thế giới
+
+Thêm từ đợt 8 phase 2026-10 (`docs/PHASE_PLAN.md`):
+
+- 10 kỹ năng Tháp Thử Thách mỗi lớp (mở ở tầng 10 … 100), **nguyên tố** khắc nhau, mang **bộ 4 kỹ năng** vào trận
+- **10 vùng đất chuyển sinh** cấp quái 52–150 (cần chuyển sinh 1…10), rơi đồ quý hơn; Tháp tầng 61–160 dùng quái các vùng này
+- **Tự đánh** khi đang mở game: chọn quái, % uống bình, lọc đồ quý; tự tắt khi hết bình, có người tên đỏ, rời bản đồ
+- **Bản đồ động**: nước gợn, cây lay, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp (tắt được)
+- Người chơi AI biết về Làng mua bình, nghỉ trọ
+- Bộ hình đồ **Pixel** CC0 thay cho hình MU (Menu → Cài đặt → Hình đồ)
+- Đồ rơi lúc túi đồ hiếm đầy gửi vào Hộp thư; hủy đồ ngay trên bảng kết quả trận; ép đồ trong túi ở Thợ Rèn
 
 Một lượt chơi từ đầu đến khi hạ Hắc Long mất khoảng 430 trận nếu chỉ đánh quái, khoảng 340
 trận nếu làm cả nhiệm vụ và việc hằng ngày (theo mô phỏng).
