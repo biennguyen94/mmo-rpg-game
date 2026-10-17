@@ -1499,7 +1499,7 @@
   function pref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
   function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* bị chặn: chỉ đổi lần này */ } }
 
-  const skillMp = (k) => L.skillMp(k, P.level, RULES.skillMpPerLevel);
+  const skillMp = (k) => L.skillMp(k, P.level, RULES.skillMpPerLevel, ((RULES.towerSkills || {}).mp_mult || {})[P.cls] || 1);
 
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';

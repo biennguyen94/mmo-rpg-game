@@ -715,9 +715,18 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   MP kỹ năng tốn ở cấp hiện tại (Phase 12): `mp` gốc của kỹ năng (kỹ năng mạnh gốc cao hơn) ×
-  (1 + `skill_mp_per_level` × (cấp − 1)), để MP vẫn là giới hạn khi MP tối đa tăng theo cấp.
+  (1 + `skill_mp_per_level` × (cấp − 1)), để MP vẫn là giới hạn khi MP tối đa tăng theo cấp. Kỹ năng tháp (có `floor`)
+  nhân thêm `RULES.tower_skills.mp_mult` theo lớp (Kiếm Sĩ, Tiên Nữ ít MP).
   """
-  def skill_mp(p, skill), do: round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)))
+  def skill_mp(p, skill) do
+    cls = if skill[:floor], do: tower_mp_mult(p.cls), else: 1
+    round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)) * cls)
+  end
+
+  defp tower_mp_mult(cls) do
+    m = Map.get(@rules.tower_skills, :mp_mult) || %{}
+    Map.get(m, String.to_atom(cls)) || Map.get(m, cls) || 1
+  end
 
   # ---------- Kỹ năng ----------
 

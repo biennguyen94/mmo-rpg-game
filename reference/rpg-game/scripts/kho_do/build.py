@@ -440,7 +440,7 @@ dq = lambda e: R["skill_effects"][e]
 rule_items = [
     ("Cấp quái khi tính trúng", "cấp hiện trên quái (vùng chuyển sinh 142–150 là dùng số đó), không phải cấp tính chỉ số."),
     ("Ép cánh", f"sát thương +{pct(WU['dmg']['per_level'][0])} mỗi cấp tới +9, lên +10 thêm {pct(WU['dmg']['jump10'][0])}, lên +11 thêm {pct(WU['dmg']['jump11'][0])}; hấp thụ theo bậc cánh (bảng ở mục Cánh), tổng hấp thụ của cánh tối đa {pct(WU['absorb']['max'])}; phòng thủ cánh theo bảng ép như đồ."),
-    ("MP kỹ năng", f"số MP trong bảng là ở cấp 1; tốn = MP × (1 + {n(C['skill_mp_per_level'])} × (cấp − 1)), cộng thẳng, không lũy thừa."),
+    ("MP kỹ năng", f"số MP trong bảng là ở cấp 1; tốn = MP × (1 + {n(C['skill_mp_per_level'])} × (cấp − 1)), cộng thẳng, không lũy thừa. Kỹ năng tháp nhân thêm theo lớp: " + ", ".join(f"{CL[c]['name']} ×{n(v)}" for c, v in R['tower_skills'].get('mp_mult', {}).items()) + " (lớp khác ×1)."),
     ("Cột \"Hồi\" (kỹ năng)", "số lượt phải chờ trước khi dùng lại kỹ năng đó (hồi chiêu)."),
     ("Kỹ năng nhiều đòn", "hệ số là tổng, chia đều cho các đòn; chí mạng tính một lần cho cả chiêu, phòng thủ trừ riêng từng đòn."),
     ("Độc, đốt", f"mỗi lượt quái mất một phần sát thương vừa gây (Kiếm Độc Hỏa {pct(dq('venom')['power'])} trong {dq('venom')['turns']} lượt; kỹ năng Tháp ghi ở cột Tác dụng)."),

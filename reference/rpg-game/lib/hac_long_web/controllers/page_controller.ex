@@ -142,7 +142,7 @@ defmodule HacLongWeb.PageController do
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
         # Phase 3 (B-29): nguyên tố, kỹ năng tháp
         elements: Map.drop(Data.rules().elements, [:_doc, :sourceType, :version, :verified]),
-        towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist]),
+        towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist, :mp_mult]),
         potionPricePerLevel: Data.rules().shop.potion_price_per_level,
         # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
         travel: %{

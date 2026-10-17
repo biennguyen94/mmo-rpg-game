@@ -672,3 +672,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Trọng số loại ngọc (`JEWELS.weights`, upgrade.json): Ước Nguyện 50 → **60**, Tâm Linh 35 → **25** (Hỗn Nguyên 15, Sinh Mệnh 10
   giữ nguyên, tổng không đổi nên số ngọc rơi như cũ). Mỗi viên ngọc rơi: Ước Nguyện 45 % → 55 %, Tâm Linh 32 % → 23 %.
 - Lý do: mô phỏng đầy đủ thừa 33–56 Tâm Linh cuối hành trình, Ước Nguyện cạn nên giáp / trang sức kẹt +0…+4.
+
+## MP kỹ năng tháp theo lớp (2026-10-17, anh chốt phương án B)
+- Kiếm Sĩ / Tiên Nữ cộng Năng lượng chỉ được MP (không thêm công), MP cấp 50 ~80 / ~113, trong khi kỹ năng tháp tầng 100 tốn
+  79 MP ở cấp 50. `RULES.tower_skills.mp_mult` = {dk: 0,5, elf: 0,6} nhân MP **kỹ năng tháp** (có `floor`) của lớp đó; kỹ
+  năng lớp và lớp khác giữ nguyên (`Engine.skill_mp/2`, client `Logic.skillMp` nhận hệ số qua `RULES.towerSkills.mp_mult`).
+  Kiếm Sĩ cấp 50: kỹ năng tầng 100 79 → 40 MP; Tiên Nữ 79 → 47 MP.

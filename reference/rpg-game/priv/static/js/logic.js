@@ -108,7 +108,8 @@
   }
 
   // Phase 12 (giống Engine.skill_mp/2 và Engine.price/2 trên server)
-  const skillMp = (k, level, perLevel) => Math.round((k.mp || 0) * (1 + perLevel * (level - 1)));
+  // kỹ năng tháp (`floor`) nhân thêm hệ số MP theo lớp (`towerMult`, RULES.tower_skills.mp_mult)
+  const skillMp = (k, level, perLevel, towerMult = 1) => Math.round((k.mp || 0) * (1 + perLevel * (level - 1)) * (k.floor ? towerMult : 1));
   const shopPrice = (it, level, perLevel) => (it.slot === 'potion' ? Math.round(it.price * (1 + perLevel * (level - 1))) : it.price);
 
   // Phase 14: tìm theo tên không cần gõ dấu ("cho rung" khớp "Chó Rừng")
