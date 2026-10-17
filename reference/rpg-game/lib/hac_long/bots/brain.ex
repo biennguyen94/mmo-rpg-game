@@ -93,16 +93,17 @@ defmodule HacLong.Bots.Brain do
     d = Engine.derived(p)
     mp = Map.get(p, :mp) || 0
 
-    skill =
-      p
-      |> fight_skills(mode)
-      |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and mp >= Engine.skill_mp(p, &1)))
+    ready = p |> fight_skills(mode) |> Enum.filter(&(Engine.cooldown(p, &1.id) == 0))
+    skill = Enum.find(ready, &(mp >= Engine.skill_mp(p, &1)))
+
+    # hết MP cho kỹ năng đã hồi chiêu (lớp ít MP với kỹ năng tháp tốn nhiều) thì cũng uống bình mana
+    starved? = ready != [] and d.maxMp >= Enum.min(Enum.map(ready, &Engine.skill_mp(p, &1)))
 
     cond do
       p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "potion"}
 
-      skill == nil and mp < d.maxMp * mp_pct and Engine.best_mana(p, d.maxMp - mp) ->
+      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->
         %{"act" => "mana"}
 
       skill ->
@@ -133,6 +134,24 @@ defmodule HacLong.Bots.Brain do
 
   @buff_effects ~w(war_cry guard shadow_step)
   defp buff?(k), do: k[:buff] != nil or k[:effect] in @buff_effects
+
+  @doc """
+  Bộ kỹ năng bot mang vào trận (tối đa `loadout`, chỉ kỹ năng tốn không quá MP tối đa): luôn giữ một kỹ năng hồi máu /
+  hút máu mạnh nhất nếu có, còn lại là các kỹ năng hệ số cao nhất (kỹ năng lớp không có hệ số tính 1).
+  Trả danh sách id xếp yếu → mạnh (`fight/1` dùng từ cuối lên).
+  """
+  def loadout(p, n) do
+    # bỏ kỹ năng tốn hơn MP tối đa (không bao giờ dùng được)
+    max_mp = Engine.derived(p).maxMp
+    avail = Enum.filter(Engine.available_skills(p), &(Engine.skill_mp(p, &1) <= max_mp))
+    sustain = avail |> Enum.filter(&sustain?/1) |> Enum.max_by(&skill_power/1, fn -> nil end)
+    rest = avail |> Enum.reject(&(&1 == sustain)) |> Enum.sort_by(&skill_power/1, :desc)
+    picked = if sustain, do: [sustain | Enum.take(rest, n - 1)], else: Enum.take(rest, n)
+    picked |> Enum.sort_by(&skill_power/1) |> Enum.map(& &1.id)
+  end
+
+  defp sustain?(k), do: k[:effect] == "holy" or (k[:heal] || 0) > 0 or (k[:drain] || 0) > 0
+  defp skill_power(k), do: k[:mult] || 1
 
   # ---------- Đồ đạc, hồi máu ----------
 

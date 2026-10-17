@@ -107,6 +107,7 @@ defmodule HacLong.Game.Journey do
       upgrades: %{tries: 0, ok: 0, reset: 0, destroy: 0},
       lines: %{tries: 0, ok: 0},
       wing_tries: 0,
+      exchanges: 0,
       pet_gold: 0,
       pet_marks: MapSet.new(),
       farm: nil,
@@ -675,6 +676,7 @@ defmodule HacLong.Game.Journey do
       upgrades: st.upgrades,
       lines: st.lines,
       wing_tries: st.wing_tries,
+      exchanges: st.exchanges,
       pet_gold: st.pet_gold,
       tower: Map.put(st.tower, :best, Map.get(p, :tower_best) || 0),
       events: Enum.reverse(st.events),
@@ -704,6 +706,7 @@ defmodule HacLong.Game.Journey do
     {p, st} =
       if key != st.gear_key do
         {p, st} = p |> gear_up(st)
+        {p, st} = exchange(p, st)
         {p, st} = forge(p, st)
         {p, st} = wings(p, st)
         {p, st} = gear_up(p, st)
@@ -713,7 +716,35 @@ defmodule HacLong.Game.Journey do
         {p, st}
       end
 
-    {potions(p), st}
+    {p |> skills() |> potions(), st}
+  end
+
+  # bộ kỹ năng mang vào trận như người chơi tự chọn (`Brain.loadout/2`: giữ kỹ năng hồi máu, còn lại mạnh nhất)
+  defp skills(p) do
+    ids = Brain.loadout(p, Data.rules().tower_skills.loadout)
+
+    if ids != [] and ids != Map.get(p, :skill_set),
+      do: elem(Engine.set_skills(p, ids), 1),
+      else: p
+  end
+
+  # Ngọc Tâm Linh thừa (ngoài phần giữ cho +7..+9 và cánh) đổi lấy Ước Nguyện ở Máy Hỗn Nguyên khi thiếu Ước Nguyện
+  @soul_keep 6
+  @bless_want 6
+  defp exchange(p, st) do
+    r = Data.chaos("soul_to_bless")
+    keep = if st.opts.wings, do: wing_keep(p), else: %{}
+    soul = Map.get(p.inv, "jewel_soul", 0) - Map.get(keep, "jewel_soul", 0) - @soul_keep
+    bless = Map.get(p.inv, "jewel_bless", 0) - Map.get(keep, "jewel_bless", 0)
+
+    with %{} <- r,
+         true <- bless < @bless_want and soul >= r.items["jewel_soul"],
+         true <- p.gold >= r.gold + reserve(p),
+         {%{ok: true}, p} <- Chaos.combine(p, r.id, nil) do
+      exchange(p, %{st | exchanges: st.exchanges + 1})
+    else
+      _ -> {p, st}
+    end
   end
 
   # ---------- Thú cưng ----------

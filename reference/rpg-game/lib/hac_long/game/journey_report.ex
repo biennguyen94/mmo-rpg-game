@@ -15,7 +15,7 @@ defmodule HacLong.Game.JourneyReport do
     |---|---|---|---|---|---|---|---|---|
     | #{r.fights} | #{r.turns} | #{dec(r.turns / max(1, r.fights))} | #{r.deaths} | #{r.rebirths} | #{r.level} | #{r.bosses} | #{r.rest_gold} | #{r.fountain} |
 
-    Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần · vàng cho thú cưng (mua, thuần, cho ăn) #{r.pet_gold}.
+    Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần · đổi Tâm Linh lấy Ước Nguyện #{Map.get(r, :exchanges, 0)} lần · vàng cho thú cưng (mua, thuần, cho ăn) #{r.pet_gold}.
     #{tower(r)}
 
     ## Từng chặng (giữa hai lần chuyển sinh)

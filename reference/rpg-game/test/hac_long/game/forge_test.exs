@@ -236,6 +236,14 @@ defmodule HacLong.Game.ForgeTest do
       assert {%{ok: false, msg: "Thiếu nguyên liệu: " <> _}, _} =
                Chaos.combine(q, "make_chaos", nil)
     end
+
+    test "đổi 2 Ngọc Tâm Linh lấy 1 Ngọc Ước Nguyện, luôn thành công" do
+      p = player() |> Engine.add_item("jewel_soul", 3)
+      Rng.put_sequence([0.99])
+      {%{ok: true, chaos: %{result: "success"}}, q} = Chaos.combine(p, "soul_to_bless", nil)
+      assert q.inv["jewel_bless"] == 1 and q.inv["jewel_soul"] == 1
+      assert {%{ok: false}, _} = Chaos.combine(q, "soul_to_bless", nil)
+    end
   end
 
   describe "D7 ngọc rơi" do
