@@ -534,6 +534,42 @@ defmodule HacLong.Game.Engine do
     }
   end
 
+  @ev_scale @rules.event_scale
+
+  @doc """
+  Quái sự kiện (Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến, quái vàng) mạnh theo số lần
+  chuyển sinh `k` của người đánh (`RULES.event_scale`): máu / thủ × (1 + hp_per_rebirth × k), công
+  × (1 + atk_per_rebirth × k), kinh nghiệm / vàng × (1 + reward_per_rebirth × k). Gọi ngay sau khi vào trận.
+  """
+  def scale_event(%{battle: %{monster: m}} = p) do
+    k = min(Map.get(p, :rebirths) || 0, @char.max_rebirths)
+
+    if k <= 0 do
+      p
+    else
+      fh = 1 + @ev_scale.hp_per_rebirth * k
+      fa = 1 + @ev_scale.atk_per_rebirth * k
+      fr = 1 + @ev_scale.reward_per_rebirth * k
+
+      up = fn m, key, f ->
+        if is_number(m[key]), do: Map.put(m, key, round(m[key] * f)), else: m
+      end
+
+      m =
+        m
+        |> up.(:maxHp, fh)
+        |> up.(:hp, fh)
+        |> up.(:def, fh)
+        |> up.(:atk, fa)
+        |> up.(:xp, fr)
+        |> up.(:gold, fr)
+
+      put_in(p.battle.monster, m)
+    end
+  end
+
+  def scale_event(p), do: p
+
   @doc "Kinh nghiệm gốc của quái cấp `l` (chưa nhân hệ số), dùng chung cho tháp, việc hằng ngày."
   def base_xp(l), do: @mon.xp.base + l * @mon.xp.level + l * l * @mon.xp.level_sq
   @doc "Vàng rơi gốc của quái cấp `l` (chưa nhân hệ số, chưa may rủi)."

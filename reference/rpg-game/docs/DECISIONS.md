@@ -692,3 +692,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - `AutoHunt` thêm `target: "all"` (mọi quái trên bản đồ), **mặc định mới**. `"level"` giữ nguyên cách lọc (cấp ≤ cấp mình + 1,
   không có thì mọi quái) nhưng đổi tên hiển thị "Quái không cao hơn mình (≤ cấp + 1)" — tên cũ "Quái hợp cấp" gây hiểu nhầm vì
   ở cấp cao / vùng chuyển sinh gần như đánh tất cả. Cài đặt đã lưu (`auto_cfg`) giữ lựa chọn cũ của người chơi.
+
+## Quái sự kiện theo chuyển sinh (2026-10-17, anh "theo e đề xuất")
+- Quái sự kiện làm cho cấp 35–50 chưa chuyển sinh (mạnh nhất ~×1,8), người chuyển sinh cao đánh quá dễ. `RULES.event_scale`:
+  với k lần chuyển sinh của **người đánh** (tối đa `max_rebirths`): máu / thủ × (1 + 0,4k), công × (1 + 0,15k) — như vùng
+  chuyển sinh — kinh nghiệm / vàng × (1 + 0,2k). `Engine.scale_event/1` gọi ngay khi vào trận: Quảng Trường Quỷ, Lâu Đài Máu,
+  Kalima (trước `Tower.resume_hp`), bản đồ sự kiện (Hỗn Chiến Thành, Vương Miện) và quái vàng Golden Invasion (`World.encounter/3`).
+- Đề xuất ghi "theo trung bình người trong phòng"; làm theo **người đánh** vì mỗi người đánh bản quái riêng (máu quái trên bản đồ
+  chung lưu theo %), ai chuyển sinh nhiều gặp quái mạnh hơn, người mới vẫn đánh được. Trùm thế giới (máu chung cả server) và tháp
+  (đã mạnh theo tầng) không áp.

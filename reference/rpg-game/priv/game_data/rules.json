@@ -300,6 +300,15 @@
         "partial": {"gold_per_guard": 6, "xp_per_guard": 0.3}
       }
     },
+    "event_scale": {
+      "_doc": "Quái sự kiện mạnh theo số lần chuyển sinh của người đánh (DECISIONS \"Quái sự kiện theo chuyển sinh\"): Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến (Vương Miện), quái vàng Golden Invasion. Với k lần chuyển sinh (tối đa max_rebirths): máu và thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k) — như vùng chuyển sinh; kinh nghiệm và vàng × (1 + reward_per_rebirth × k). Trùm thế giới (máu chung cả server) và tháp (đã mạnh theo tầng) không áp.",
+      "hp_per_rebirth": 0.4,
+      "atk_per_rebirth": 0.15,
+      "reward_per_rebirth": 0.2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "castle_siege": {
       "_doc": "B-22: Công Thành Chiến (HacLong.CastleSiege). Mỗi tuần vào thứ weekday (1 = thứ Hai … 7 = Chủ Nhật) lúc hour:minute giờ Việt Nam, kéo dài run_minutes phút trên bản đồ map. Bang chủ / phó bang đăng ký ở Người Gác Tháp trước giờ đánh (tốn register_gold vàng của người đăng ký). Thành viên (từ min_level) của bang đã đăng ký và bang đang giữ thành vào được trong lúc đánh, vào lại được sau khi gục. Vương Miện (crown) ở giữa thành: bang hạ được thì giữ Vương Miện, nó hiện lại sau crown.respawn_s giây, bang đang giữ không đánh được. Người các bang khác nhau đồ sát nhau không mất vàng, không tên đỏ. Hết giờ: bang giữ Vương Miện là Chủ Thành tới trận sau, mọi thành viên nhận reward qua thư.",
       "map": "castle_siege",

@@ -161,7 +161,11 @@ defmodule HacLong.World do
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, DevilSquare.battle_monster(m)) do
           {%{ok: true} = r, p} ->
-            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
 
           other ->
             other
@@ -194,7 +198,11 @@ defmodule HacLong.World do
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, BloodCastle.battle_monster(m)) do
           {%{ok: true} = r, p} ->
-            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
 
           other ->
             other
@@ -223,7 +231,11 @@ defmodule HacLong.World do
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, Kalima.battle_monster(m)) do
           {%{ok: true} = r, p} ->
-            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
 
           other ->
             other
@@ -489,20 +501,33 @@ defmodule HacLong.World do
     end
   end
 
+  # quái sự kiện (bản đồ sự kiện, quái vàng) mạnh theo số lần chuyển sinh người đánh (`Engine.scale_event/1`)
+  defp encounter(p, map, m) do
+    case do_encounter(p, map, m) do
+      {%{ok: true} = r, p} ->
+        if is_binary(map[:event]) or m[:gold] == true,
+          do: {r, Engine.scale_event(p)},
+          else: {r, p}
+
+      other ->
+        other
+    end
+  end
+
   # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
-  defp encounter(p, %{side: true} = map, m),
+  defp do_encounter(p, %{side: true} = map, m),
     do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
 
   # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ;
   # B-22: bang đang giữ Vương Miện không đánh được nó
-  defp encounter(p, %{event: e} = map, m) when is_binary(e) do
+  defp do_encounter(p, %{event: e} = map, m) when is_binary(e) do
     case e == "castle_siege" && HacLong.CastleSiege.crown_blocked(p, m) do
       msg when is_binary(msg) -> {%{ok: false, msg: msg}, p}
       _ -> Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
     end
   end
 
-  defp encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
+  defp do_encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
 
   defp spec_of(map, m) do
     spec =
