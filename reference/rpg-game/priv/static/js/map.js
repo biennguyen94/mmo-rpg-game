@@ -174,6 +174,9 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) draw(); });
   // số giả ngẫu nhiên cố định theo chỉ số (hạt thời tiết, đom đóm)
   const rnd = (i, k) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+  // hạt gắn với bản đồ (không với màn hình): trừ vị trí camera rồi quấn vòng trong khung nhìn, nên khi nhân vật đi,
+  // hạt đứng yên trong thế giới (tuyết, lá, mưa không "đi theo" nhân vật)
+  const wrap = (v, m) => ((v % m) + m) % m;
   // thời tiết theo nền bản đồ
   function weatherOf(m, id) {
     if (id === 'village') return 'smoke';
@@ -204,26 +207,26 @@
       ctx.strokeStyle = 'rgba(170, 200, 230, 0.5)'; ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 0; i < 70; i++) {
-        const x = ((rnd(i, 1) * vw + t * 0.12) % (vw + 40)) - 20, y = (rnd(i, 2) * vh + t * 0.55) % vh;
+        const x = wrap(rnd(i, 1) * vw + t * 0.12 - cx, vw + 40) - 20, y = wrap(rnd(i, 2) * vh + t * 0.55 - cy, vh);
         ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9);
       }
       ctx.stroke();
     } else if (kind === 'snow') {
       ctx.fillStyle = 'rgba(245, 248, 255, 0.8)';
       for (let i = 0; i < 55; i++) {
-        const x = (rnd(i, 1) * vw + Math.sin(t / 900 + i) * 12 + vw) % vw, y = (rnd(i, 2) * vh + t * (0.025 + rnd(i, 3) * 0.03)) % vh;
+        const x = wrap(rnd(i, 1) * vw + Math.sin(t / 900 + i) * 12 - cx, vw), y = wrap(rnd(i, 2) * vh + t * (0.025 + rnd(i, 3) * 0.03) - cy, vh);
         ctx.fillRect(x, y, 2, 2);
       }
     } else if (kind === 'embers') {
       for (let i = 0; i < 40; i++) {
-        const x = (rnd(i, 1) * vw + Math.sin(t / 700 + i) * 10 + vw) % vw, y = vh - ((rnd(i, 2) * vh + t * (0.02 + rnd(i, 3) * 0.03)) % vh);
+        const x = wrap(rnd(i, 1) * vw + Math.sin(t / 700 + i) * 10 - cx, vw), y = wrap(rnd(i, 2) * vh - t * (0.02 + rnd(i, 3) * 0.03) - cy, vh);
         const a = 0.4 + 0.5 * Math.abs(Math.sin(t / 300 + i));
         ctx.fillStyle = `rgba(255, ${120 + Math.round(rnd(i, 4) * 80)}, 40, ${a})`;
         ctx.fillRect(x, y, 2, 2);
       }
     } else if (kind === 'leaves') {
       for (let i = 0; i < 12; i++) {
-        const x = (rnd(i, 1) * vw + t * 0.03 + Math.sin(t / 800 + i) * 18 + vw) % vw, y = (rnd(i, 2) * vh + t * 0.022) % vh;
+        const x = wrap(rnd(i, 1) * vw + t * 0.03 + Math.sin(t / 800 + i) * 18 - cx, vw), y = wrap(rnd(i, 2) * vh + t * 0.022 - cy, vh);
         ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t / 500 + i) * 0.9);
         ctx.fillStyle = rnd(i, 3) > 0.5 ? 'rgba(196, 140, 52, 0.75)' : 'rgba(120, 160, 60, 0.7)';
         ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
@@ -231,7 +234,7 @@
       }
     } else if (kind === 'fog') {
       for (let i = 0; i < 6; i++) {
-        const x = ((rnd(i, 1) * (vw + 240) + t * 0.012 * (1 + rnd(i, 3))) % (vw + 240)) - 120, y = rnd(i, 2) * vh;
+        const x = wrap(rnd(i, 1) * (vw + 240) + t * 0.012 * (1 + rnd(i, 3)) - cx, vw + 240) - 120, y = wrap(rnd(i, 2) * vh - cy, vh);
         const g = ctx.createRadialGradient(x, y, 4, x, y, 110);
         g.addColorStop(0, 'rgba(200, 205, 220, 0.16)'); g.addColorStop(1, 'rgba(200, 205, 220, 0)');
         ctx.fillStyle = g; ctx.fillRect(x - 110, y - 110, 220, 220);
@@ -261,7 +264,7 @@
       ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.6, y - TILE * 1.6, TILE * 3.2, TILE * 3.2);
     }
     for (let i = 0; i < 16; i++) {
-      const x = (rnd(i, 1) * vw + Math.sin(t / 1300 + i * 2) * 30 + vw) % vw, y = (rnd(i, 2) * vh + Math.cos(t / 1700 + i) * 22 + vh) % vh;
+      const x = wrap(rnd(i, 1) * vw + Math.sin(t / 1300 + i * 2) * 30 - cx, vw), y = wrap(rnd(i, 2) * vh + Math.cos(t / 1700 + i) * 22 - cy, vh);
       const a = Math.max(0, Math.sin(t / 420 + i * 1.7)) * dark;
       if (a < 0.05) continue;
       const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
