@@ -1506,6 +1506,16 @@
 
   const skillMp = (k) => L.skillMp(k, P.level, RULES.skillMpPerLevel, ((RULES.towerSkills || {}).mp_mult || {})[P.cls] || 1);
 
+  // Tự hủy đồ rơi (đánh tay lẫn tự đánh): server lưu theo nhân vật `view.autoCfg.filter` = {on, keep}
+  function lootFilterCard() {
+    const f = (P.view.autoCfg || {}).filter || {}, on = f.on === true, keep = Array.isArray(f.keep) ? f.keep : (AUTO.keep_default || []);
+    const keepLabel = (k) => (k === 'opt' ? `Từ ${AUTO.keep_opt_min || 2} dòng cộng thêm` : AUTO_KEEP[k] || k);
+    return `<div class="card set"><div class="row"><h3 class="grow">Tự hủy đồ rơi</h3>
+        <button class="btn ${on ? 'primary' : ''}" data-act="loot-filter" aria-pressed="${on}">${on ? 'Đang bật' : 'Đang tắt'}</button></div>
+      <p class="small muted">Bật thì món trang bị rơi ra không thuộc loại nào được chọn dưới đây sẽ bị hủy ngay, không vào túi (cả khi đánh tay lẫn tự đánh). Nhẫn, dây chuyền, cánh, ngọc, nguyên liệu và đồ trùm rơi lần đầu luôn giữ.</p>
+      <fieldset class="auto-keep"><legend class="small">Giữ lại</legend>${(AUTO.keep || []).map((k) => `<label class="small"><input type="checkbox" data-loot-keep="${k}" ${keep.includes(k) ? 'checked' : ''}> ${esc(keepLabel(k))}</label>`).join('')}</fieldset></div>`;
+  }
+
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
@@ -1521,6 +1531,7 @@
         <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>
           <button class="btn" data-act="mob-names" aria-pressed="${Map_.mobNames()}">${Map_.mobNames() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p></div>
+      ${lootFilterCard()}
       <div class="card set"><div class="row"><h3 class="grow">Hình đồ</h3>
         <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Pixel: hình vẽ điểm ảnh từ Dungeon Crawl Stone Soup (CC0). Biểu tượng: hình nét đơn giản.${HAS_MU ? ' MU: hình gốc máy chủ đặt riêng.' : ''}</p></div>
@@ -3403,6 +3414,7 @@
     if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
     if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
     if (act === 'icon-set') { setPref('hl-icons', t.dataset.set); render(); return; }
+    if (act === 'loot-filter') { const f = (P.view.autoCfg || {}).filter || {}; sendCommand({ act: 'loot_filter', on: f.on !== true, keep: Array.isArray(f.keep) ? f.keep : (AUTO.keep_default || []) }); return; }
     if (act === 'mob-names') { setPref('hl-mobname', Map_.mobNames() ? '0' : '1'); render(); return; }
     if (act === 'map-fx') { setPref('hl-fx', Map_.fxOn() ? '0' : '1'); render(); return; }
     if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
@@ -3782,6 +3794,10 @@
       if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
       if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
       if (e.target.dataset.auto) { const k = e.target.dataset.auto; autoUi[k] = k === 'hp' || k === 'mp' || k === 'range' ? +e.target.value : e.target.value; saveAutoUi(); render(); }
+      if (e.target.dataset.lootKeep) {
+        const f = (P.view.autoCfg || {}).filter || {}, k = e.target.dataset.lootKeep, cur = Array.isArray(f.keep) ? f.keep : (AUTO.keep_default || []);
+        sendCommand({ act: 'loot_filter', on: f.on === true, keep: e.target.checked ? [...new Set(cur.concat(k))] : cur.filter((x) => x !== k) });
+      }
       if (e.target.dataset.autoKeep) { const k = e.target.dataset.autoKeep; autoUi.keep = e.target.checked ? [...new Set(autoUi.keep.concat(k))] : autoUi.keep.filter((x) => x !== k); saveAutoUi(); render(); }
     });
     Net.onStatus((st, msg) => {

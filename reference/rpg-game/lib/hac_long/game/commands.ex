@@ -67,6 +67,9 @@ defmodule HacLong.Game.Commands do
       "auto" ->
         HacLong.Game.AutoHunt.configure(p, c)
 
+      "loot_filter" ->
+        HacLong.Game.AutoHunt.loot_filter(p, c)
+
       # Phase 3 (B-29): bộ kỹ năng mang vào trận
       "skill_set" ->
         Engine.set_skills(p, c["ids"])

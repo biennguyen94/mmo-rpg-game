@@ -100,6 +100,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Đòn có khoảng thấp ~ cao, có thể chí mạng; thủ của mục tiêu làm giảm sát thương nhưng không xuống dưới 20 % đòn gốc.
 - Thắng nhận kinh nghiệm, vàng, có khi rơi đồ hoặc ngọc. Gục ngã thì về Nhà, mất 10 % vàng đang mang.
 - **Hiệu ứng**: "LÊN CẤP" giữa màn hình khi lên cấp; số xanh khi hồi máu / MP; chữ lớn khi ép đồ thành công hay vỡ đồ.
+- **Tự hủy đồ rơi** (Menu → Cài đặt): bật thì trang bị rơi ra không thuộc loại được chọn "Giữ lại" (Excellent, Thần, May mắn / Kỹ năng, nhiều dòng, tốt hơn đồ đang mặc, mặc được) bị hủy ngay, cả khi đánh tay lẫn tự đánh; nhẫn, dây chuyền, cánh, ngọc, nguyên liệu luôn giữ.
 - **Tự đánh** (thanh 🤖 dưới bản đồ, chỉ khi đang mở game):
   - Bấm ⚙ (cài đặt kiểu MU Helper):
     - **Đánh**: tất cả quái (mặc định), quái không cao hơn mình (cấp ≤ cấp mình + 1), hoặc một loại trên bản đồ.

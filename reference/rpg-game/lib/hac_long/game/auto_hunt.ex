@@ -96,6 +96,8 @@ defmodule HacLong.Game.AutoHunt do
           auto
           |> Map.take([:target, :hp, :mp, :loot, :keep, :range, :skills])
           |> Map.new(fn {k, v} -> {to_string(k), v} end)
+          # giữ cài đặt tự hủy đồ rơi (`loot_filter/2`) đã lưu cùng chỗ
+          |> Map.merge(Map.take(Map.get(p, :auto_cfg) || %{}, ["filter"]))
 
         {%{ok: true, msg: "Bắt đầu tự đánh."},
          p |> Map.put(:auto, auto) |> Map.put(:auto_cfg, cfg)}
@@ -166,6 +168,32 @@ defmodule HacLong.Game.AutoHunt do
       g = Gear.find(p, uid)
       g != nil and !g[:locked] and !g[:stored] and not good?(p, Gear.resolve(g), keep)
     end)
+  end
+
+  @doc """
+  Lệnh `"loot_filter"` (Menu → Cài đặt): tự hủy đồ rơi không thuộc loại nào trong `keep` (như lọc đồ của tự đánh, áp
+  cả khi đánh tay; `Engine` bỏ món ngay lúc rơi). Lưu ở `p.auto_cfg["filter"]` = `%{"on", "keep"}` (theo nhân vật).
+  """
+  def loot_filter(p, c) do
+    on = c["on"] == true
+
+    keep =
+      if is_list(c["keep"]), do: Enum.filter(@r.keep, &(&1 in c["keep"])), else: @r.keep_default
+
+    cfg = Map.put(Map.get(p, :auto_cfg) || %{}, "filter", %{"on" => on, "keep" => keep})
+
+    {%{
+       ok: true,
+       msg: if(on, do: "Đã bật tự hủy đồ rơi không giữ lại.", else: "Đã tắt tự hủy đồ rơi.")
+     }, Map.put(p, :auto_cfg, cfg)}
+  end
+
+  @doc "Loại đồ giữ lại khi bật tự hủy đồ rơi, hoặc nil nếu tắt."
+  def filter_keep(p) do
+    case (Map.get(p, :auto_cfg) || %{})["filter"] do
+      %{"on" => true, "keep" => keep} when is_list(keep) -> keep
+      _ -> nil
+    end
   end
 
   @doc "Món đáng giữ khi lọc `\"pick\"` theo các loại `keep` (xem moduledoc)."

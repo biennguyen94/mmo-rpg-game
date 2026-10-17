@@ -707,3 +707,11 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Giữ 2 phần có ích: **"Mục tiêu kế tiếp"** (Menu → Nhiệm vụ và Trưởng Làng): chưa chuyển sinh và dưới cấp tối đa → trùm vùng kế
   tiếp; sau đó → lên cấp tối đa / hạ chúa tể (kèm tên bản đồ, `view.rebirthNeed.map`) / đủ điều kiện chuyển sinh; chuyển sinh tối
   đa thì ẩn. **Giờ trùm thế giới xuất hiện** ở Bảng Tin và Menu → Nhiệm vụ.
+
+## Cài đặt: tự hủy đồ rơi (2026-10-17, anh yêu cầu)
+- Menu → Cài đặt thẻ "Tự hủy đồ rơi": bật thì món trang bị rơi (`Engine.gear_drop`) không thuộc loại nào trong danh sách "Giữ
+  lại" bị bỏ ngay, không vào túi, ghi "🗑 Tự hủy …" — áp cả đánh tay lẫn tự đánh. Loại giữ lại và luật như lọc đồ của tự đánh
+  (`AutoHunt.good?/3`: Excellent, Thần, May mắn / Kỹ năng, từ `keep_opt_min` dòng, tốt hơn đồ đang mặc, mặc được); nhẫn, dây
+  chuyền, cánh, ngọc, nguyên liệu luôn giữ; đồ trùm rơi lần đầu (`boss_gear`) không lọc.
+- Lệnh `loot_filter {on, keep}`; lưu theo nhân vật trong `auto_cfg["filter"]` (cột có sẵn, không cần migration); bật tự đánh
+  không ghi đè mục này.

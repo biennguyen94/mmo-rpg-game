@@ -1770,8 +1770,16 @@ defmodule HacLong.Game.Engine do
            |> Gear.luck_skill(m)
            |> Gear.ancient(m) do
       label = Gear.label(g)
+      keep = HacLong.Game.AutoHunt.filter_keep(p)
 
-      case Gear.add(p, g) do
+      # Menu → Cài đặt "Tự hủy đồ rơi": món không thuộc loại giữ lại thì bỏ luôn, không vào túi
+      case if(keep && not HacLong.Game.AutoHunt.good?(p, Gear.resolve(g), keep),
+             do: :trash,
+             else: Gear.add(p, g)
+           ) do
+        :trash ->
+          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"), reward}
+
         {p, :kept} ->
           # `gear_ids`: món vào túi, client cho bấm xem / hủy ngay trên bảng kết quả
           {log(p, "🎁 Nhặt được #{label}!", "win"),
