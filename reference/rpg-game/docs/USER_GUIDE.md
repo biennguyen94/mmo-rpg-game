@@ -57,7 +57,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   - **Năng lượng**: MP; tấn công của Phù Thủy, Đấu Sĩ.
 - Bảng nhân vật hiện tấn công thấp ~ cao (ví dụ "68 ~ 84"), phòng thủ, tỉ lệ trúng quái cùng cấp.
 - Đánh quái thấp hơn mình quá 10 cấp thì kinh nghiệm giảm (mỗi cấp −10 %, còn tối thiểu 10 %): hãy lên vùng mới.
-- **Chuyển sinh**: đạt cấp tối đa thì gặp Trưởng Làng để về cấp 1, giữ đồ, vàng, vùng đã mở, nhận thêm điểm tiềm năng vĩnh viễn.
+- **Chuyển sinh**: đạt cấp tối đa thì gặp Trưởng Làng để về cấp 1, giữ đồ, vàng, vùng đã mở, nhận thêm điểm tiềm năng vĩnh viễn
+  (25 điểm × số lần đã chuyển sinh). Mỗi lần đã chuyển sinh làm kinh nghiệm lên cấp cần thêm 25 % (lần 4: gấp đôi). Từ lần thứ hai,
+  muốn chuyển sinh lần k + 1 phải từng hạ **chúa tể vùng chuyển sinh k** (vd chuyển sinh lần 2 cần hạ Chúa Tể Xích Viêm ở vùng 1).
 
 ## 4. Bản đồ, vùng đất, trùm
 

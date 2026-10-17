@@ -389,7 +389,9 @@ defmodule HacLong.Game.Engine do
   def view(p) do
     %{
       derived: derived(p),
-      xpToNext: xp_to_next(p.level),
+      xpToNext: xp_need(p),
+      # chúa tể cần hạ trước lần chuyển sinh kế (nil nếu không cần / đã hạ)
+      rebirthNeed: rebirth_need(p),
       restCost: rest_cost(p),
       # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
@@ -454,7 +456,15 @@ defmodule HacLong.Game.Engine do
     }
   end
 
-  def xp_to_next(lv), do: round(@rules.xp.coef * :math.pow(lv, @rules.xp.exp) + @rules.xp.base)
+  def xp_to_next(lv, rebirths \\ 0),
+    do:
+      round(
+        (@rules.xp.coef * :math.pow(lv, @rules.xp.exp) + @rules.xp.base) *
+          (1 + @char.rebirth_xp_pct * rebirths)
+      )
+
+  @doc "Kinh nghiệm cần để nhân vật `p` lên cấp kế (tính cả số lần đã chuyển sinh)."
+  def xp_need(p), do: xp_to_next(p.level, Map.get(p, :rebirths) || 0)
 
   @doc """
   Vùng `zi` vào được / đánh được chưa: **đủ cấp** (cấp nhân vật ≥ `zone_level/1`, cấp quái thấp nhất
@@ -1840,10 +1850,10 @@ defmodule HacLong.Game.Engine do
   def gain_xp(p, xp), do: level_up(%{p | xp: p.xp + xp}, 0)
 
   defp level_up(p, levels) do
-    if p.level < @max_level and p.xp >= xp_to_next(p.level) do
+    if p.level < @max_level and p.xp >= xp_need(p) do
       %{
         p
-        | xp: p.xp - xp_to_next(p.level),
+        | xp: p.xp - xp_need(p),
           level: p.level + 1,
           points: p.points + points_per_level(p.cls)
       }
@@ -2586,6 +2596,32 @@ defmodule HacLong.Game.Engine do
   # ---------- Chuyển sinh ----------
 
   def max_rebirths, do: @max_rebirths
+
+  @doc """
+  Chúa tể phải hạ trước lần chuyển sinh kế: đã chuyển sinh `n` ≥ `rebirth_lord_from` lần thì phải từng hạ (Sổ quái)
+  chúa tể vùng chuyển sinh `n`. Trả `%{id, name, realm}` hoặc nil (không cần / đã hạ / đã tối đa).
+  """
+  def rebirth_need(p) do
+    n = Map.get(p, :rebirths) || 0
+
+    with true <- n >= @char.rebirth_lord_from and n < @max_rebirths,
+         %{} = lord <- realm_lord(n),
+         true <- Bestiary.count(p, lord.id) < 1 do
+      %{id: lord.id, name: lord.name, realm: n}
+    else
+      _ -> nil
+    end
+  end
+
+  @doc "Chúa tể của vùng chuyển sinh `k` (quái `r<k>_…` có `rich` lớn hơn k, scripts/gen_realms.py)."
+  def realm_lord(k) do
+    prefix = "r#{k}_"
+
+    Enum.find(Data.side_monsters(), fn m ->
+      String.starts_with?(m.id, prefix) and (m[:rich] || 0) > k
+    end)
+  end
+
   def rebirth_points, do: @rebirth_points
 
   @doc """
@@ -2602,6 +2638,11 @@ defmodule HacLong.Game.Engine do
 
       p.level < @max_level ->
         {err("Cần đạt cấp #{@max_level} mới chuyển sinh được."), p}
+
+      need = rebirth_need(p) ->
+        {err(
+           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm} trước khi chuyển sinh lần #{n + 1}."
+         ), p}
 
       n >= @max_rebirths ->
         {err("Đã chuyển sinh tối đa #{@max_rebirths} lần."), p}

@@ -57,7 +57,7 @@ defmodule HacLong.Profile do
       },
       gold: p.gold,
       xp: p.xp,
-      xp_need: Engine.xp_to_next(p.level),
+      xp_need: Engine.xp_need(p),
       equip: Enum.flat_map(@slots, &equip(p, &1)),
       pet: p[:pet] && Pets.name(p),
       pets: length(Map.get(p, :pets) || []),

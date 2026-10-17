@@ -146,6 +146,7 @@ defmodule HacLong.Game.Journey do
 
   defp rebirth?(p, st) do
     p.level >= Engine.max_level() and rb(p) < min(st.opts.rebirths, Engine.max_rebirths()) and
+      Engine.rebirth_need(p) == nil and
       (not st.opts.boss_first or final_boss().id in p.bosses or st.boss_cd > st.fights + 1000)
   end
 
@@ -329,8 +330,15 @@ defmodule HacLong.Game.Journey do
     kind = if m.side, do: :side, else: :zone
     lord = lord(m, specs)
 
-    if lord != nil and
-         st.fights - Map.get(st.lord_at, m.id, -st.opts.lord_every) >= st.opts.lord_every and
+    # cần hạ chúa tể này để chuyển sinh tiếp: ở cấp tối đa thì thử thường hơn (mỗi `lord_every / 4` trận)
+    need = Engine.rebirth_need(p)
+
+    every =
+      if need && lord && need.id == lord.id && p.level >= Engine.max_level(),
+        do: max(1, div(st.opts.lord_every, 4)),
+        else: st.opts.lord_every
+
+    if lord != nil and st.fights - Map.get(st.lord_at, m.id, -every) >= every and
          p.level >= 40 do
       {kind, Map.put(lord, :lord, true)}
     else
@@ -524,6 +532,7 @@ defmodule HacLong.Game.Journey do
 
     %{
       cls: p.cls,
+      player: p,
       done: st.done,
       fights: st.fights,
       turns: st.turns,

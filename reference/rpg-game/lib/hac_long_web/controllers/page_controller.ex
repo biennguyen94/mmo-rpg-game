@@ -81,6 +81,7 @@ defmodule HacLongWeb.PageController do
             :skill_dmg
           ]),
         rebirthPoints: Engine.rebirth_points(),
+        rebirthXpPct: Data.rules().character.rebirth_xp_pct,
         maxRebirths: Engine.max_rebirths(),
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),

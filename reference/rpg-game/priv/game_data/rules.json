@@ -7,7 +7,10 @@
         "potion_s": 3
       },
       "max_rebirths": 10,
-      "rebirth_points": 15,
+      "rebirth_points": 25,
+      "rebirth_xp_pct": 0.25,
+      "rebirth_lord_from": 1,
+      "_rebirth_doc": "Chuyển sinh (DECISIONS \"Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể\"): sau lần chuyển sinh n được n × rebirth_points điểm tiềm năng (trước 15); kinh nghiệm lên cấp × (1 + rebirth_xp_pct × n); từ n ≥ rebirth_lord_from muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n.",
       "rest_per_level": 4,
       "death_gold_loss": 0.1,
       "death_hp": 0.5

@@ -529,7 +529,7 @@ defmodule HacLong.Game.Session do
 
         # không online: gửi thưởng qua hộp thư, lần sau vào game thấy ngay
         r when map_size(s.tabs) == 0 ->
-          xp = min(r.xp, 3 * Engine.xp_to_next(p.level))
+          xp = min(r.xp, 3 * Engine.xp_need(p))
 
           Mailbox.send(s.user_id, %{
             subject: "Thưởng trùm thế giới",
@@ -543,7 +543,7 @@ defmodule HacLong.Game.Session do
 
         r ->
           # không cho người cấp thấp nhảy vọt quá nhiều cấp nhờ một trận
-          xp = min(r.xp, 3 * Engine.xp_to_next(p.level))
+          xp = min(r.xp, 3 * Engine.xp_need(p))
           p = %{p | gold: p.gold + r.gold}
           p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
           {levels, p} = Engine.gain_xp(p, xp)

@@ -256,8 +256,22 @@ defmodule HacLong.Game.EngineTest do
     assert q.gold == 5000 and q.bosses == ["wolf"] and q.equip == p.equip
     assert q.hp == Engine.derived(q).maxHp
 
+    # lần 2 cần đã hạ chúa tể vùng chuyển sinh 1
+    lord = Engine.realm_lord(1)
+    assert %{id: id, realm: 1} = Engine.rebirth_need(%{q | level: 50})
+    assert id == lord.id
+    assert {%{ok: false, msg: need}, _} = Engine.rebirth(%{q | level: 50})
+    assert need =~ lord.name and need =~ "lần 2"
+
+    q = Map.put(q, :bestiary, %{lord.id => 1})
+    assert Engine.rebirth_need(q) == nil
     {_, q2} = Engine.rebirth(%{q | level: 50})
     assert q2.rebirths == 2 and q2.points == 2 * Engine.rebirth_points()
+
+    # kinh nghiệm lên cấp tăng theo số lần đã chuyển sinh
+    pct = HacLong.Game.Data.rules().character.rebirth_xp_pct
+    assert Engine.xp_need(q2) == round((25 * :math.pow(1, 1.75) + 15) * (1 + 2 * pct))
+    assert Engine.xp_need(q2) > Engine.xp_need(%{q2 | rebirths: 0})
     assert {%{ok: false}, _} = Engine.rebirth(%{q2 | level: 50, rebirths: Engine.max_rebirths()})
   end
 
