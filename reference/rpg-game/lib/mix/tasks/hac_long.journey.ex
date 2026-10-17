@@ -15,6 +15,8 @@ defmodule Mix.Tasks.HacLong.Journey do
   `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép cả +10/+11 ngay từ đầu, thất bại về +0),
   `--chaos-from N` (tự ép +10/+11 từ lần chuyển sinh N, mặc định 5), `--no-tower` (không leo tháp),
   `--tower-every N` (leo tháp mỗi N trận, mặc định 300), `--tower-floors N` (tối đa N tầng mỗi lần leo, mặc định 30),
+  `--swap-margin X` (thay đồ khi mạnh hơn ít nhất X, mặc định 0.05), `--swap-per-up X` (cộng thêm X mỗi cấp ép của món
+  bị tháo, mặc định 0.02), `--no-hoard` (ép mọi món liên tục, không ém ngọc), `--hoard-level N` (mặc định 45),
   `--no-boss-first` (chuyển sinh ngay ở cấp tối đa dù chưa hạ Hắc Long),
   `--no-pets` (không nuôi thú), `--no-feed` (không cho thú ăn), `--out thư_mục` (mặc định `tmp/journey`).
 
@@ -39,6 +41,10 @@ defmodule Mix.Tasks.HacLong.Journey do
     tower: :boolean,
     tower_every: :integer,
     tower_floors: :integer,
+    swap_margin: :float,
+    swap_per_up: :float,
+    hoard: :boolean,
+    hoard_level: :integer,
     boss_first: :boolean,
     pets: :boolean,
     feed: :boolean,
@@ -62,7 +68,7 @@ defmodule Mix.Tasks.HacLong.Journey do
     opts =
       o
       |> Keyword.take(
-        ~w(rebirths max_fights farm quests soul wings chaos_up chaos_from tower tower_every tower_floors boss_first pets feed)a
+        ~w(rebirths max_fights farm quests soul wings chaos_up chaos_from tower tower_every tower_floors swap_margin swap_per_up hoard hoard_level boss_first pets feed)a
       )
       |> Keyword.put(:rows, o[:csv] == true)
 

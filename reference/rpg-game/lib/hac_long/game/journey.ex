@@ -13,8 +13,11 @@ defmodule HacLong.Game.Journey do
     `ban_losses` trong `ban_window` trận gần nhất ở một bản đồ thì tránh nó `ban_fights` trận (lùi về bản đồ dễ hơn);
   - trùm vùng: đánh khi cấp ≥ cấp trùm + 1, thua thì chờ 20 trận rồi thử lại; chúa tể vùng chuyển sinh: thử mỗi
     `lord_every` trận ở vùng đó;
-  - đồ: mỗi khi lên cấp / nhặt đồ, thử mặc từng món trong túi và đồ cửa hàng mua được, giữ món làm tăng
-    `score/1` (công × độ trâu); đồ thừa bán, giữ một món đã ép cao nhất làm nguyên liệu cánh;
+  - đồ: mỗi khi lên cấp / nhặt đồ, thử mặc từng món trong túi và đồ cửa hàng mua được, chỉ thay khi `score/1`
+    (công × độ trâu) tăng hơn `swap_margin` + `swap_per_up` × cấp ép của món bị tháo (tiếc đồ đã ép); đồ thừa bán, giữ
+    một món đã ép cao nhất làm nguyên liệu cánh;
+  - ém ngọc (`hoard`): vũ khí và cánh ép ngay; món khác chỉ ép khi cấp ≥ `hoard_level` (đồ ổn định) hoặc đang đánh
+    vất vả (20 trận gần nhất có thua hoặc mất trung bình > `struggle_hp` máu);
   - ép: Ước Nguyện lên +6, Tâm Linh +7 → +9 (có thể về +0), Ngọc Sinh Mệnh thêm dòng, theo thứ tự vũ khí → giáp → …;
     +10 / +11 ở Máy Hỗn Nguyên khi `chaos_up` hoặc từ lần chuyển sinh `chaos_from` (thất bại về +0, mất hết +9);
   - cánh: ghép cánh 1 → 2 → 3 ở Máy Hỗn Nguyên khi đủ nguyên liệu (`wings`);
@@ -48,6 +51,11 @@ defmodule HacLong.Game.Journey do
     tower_every: 300,
     tower_level: 30,
     tower_floors: 30,
+    swap_margin: 0.05,
+    swap_per_up: 0.02,
+    hoard: true,
+    hoard_level: 45,
+    struggle_hp: 0.35,
     boss_first: true,
     ban_window: 8,
     ban_losses: 2,
@@ -98,6 +106,7 @@ defmodule HacLong.Game.Journey do
       boss_cd: 0,
       lord_at: %{},
       tower_at: 0,
+      recent: [],
       tower: %{runs: 0, floors: 0, fights: 0, losses: 0},
       map: nil,
       seen_maps: MapSet.new(),
@@ -342,6 +351,7 @@ defmodule HacLong.Game.Journey do
       st =
         %{st | fights: st.fights + 1, turns: st.turns + b.turn}
         |> record(p, map, m, res, b.turn, lost, reward, lv0)
+        |> Map.update!(:recent, &Enum.take([lost | &1], 20))
         |> boss_result(p, kind, m, res)
         |> lord_result(p, map, m, res)
         |> then(&if(spec[:lord], do: &1, else: track(&1, map.id, res)))
@@ -895,8 +905,13 @@ defmodule HacLong.Game.Journey do
           q = if price, do: elem(Engine.buy(p, id), 1), else: p
 
           case Engine.equip(q, id) do
-            {%{ok: true}, q} -> [{score(q) / base, id, price}]
-            _ -> []
+            {%{ok: true}, q} ->
+              # chỉ thay khi hơn hẳn: món bị tháo ép càng cao càng cần mạnh hơn nhiều (người chơi tiếc ngọc đã ép)
+              gain = score(q) / base
+              if gain > 1 + swap_margin(p, q, st), do: [{gain, id, price}], else: []
+
+            _ ->
+              []
           end
         else
           []
@@ -905,7 +920,7 @@ defmodule HacLong.Game.Journey do
       |> Enum.max_by(&elem(&1, 0), fn -> nil end)
 
     case best do
-      {gain, id, price} when gain > 1.005 ->
+      {_gain, id, price} ->
         p = if price, do: elem(Engine.buy(p, id), 1), else: p
         {_, p} = Engine.equip(p, id)
         it = Gear.item(p, id)
@@ -925,6 +940,20 @@ defmodule HacLong.Game.Journey do
       _ ->
         {p, st}
     end
+  end
+
+  # mức hơn tối thiểu để thay đồ: `swap_margin` + `swap_per_up` × cấp ép cao nhất của món bị tháo ra
+  defp swap_margin(p, q, st) do
+    kept = MapSet.new(Map.values(q.equip))
+
+    up =
+      p.equip
+      |> Map.values()
+      |> Enum.reject(&(&1 == nil or MapSet.member?(kept, &1)))
+      |> Enum.map(&Engine.upgrade_level(p, &1))
+      |> Enum.max(fn -> 0 end)
+
+    st.opts.swap_margin + st.opts.swap_per_up * up
   end
 
   # bán đồ thừa trong túi; giữ một món đã ép cao nhất (vũ khí / giáp / khiên) làm nguyên liệu cánh
@@ -969,7 +998,21 @@ defmodule HacLong.Game.Journey do
 
   defp forge_slot(p, st, _slot, 0), do: {p, st}
 
-  defp forge_slot(p, st, slot, n) do
+  # ém ngọc: món không phải vũ khí / cánh chỉ ép khi đồ đã ổn định (cấp ≥ `hoard_level`) hoặc đang đánh vất vả
+  defp forge_slot(p, st, slot, n) when slot not in ~w(weapon wing) do
+    if not st.opts.hoard or p.level >= st.opts.hoard_level or struggling?(st),
+      do: do_forge(p, st, slot, n),
+      else: {p, st}
+  end
+
+  defp forge_slot(p, st, slot, n), do: do_forge(p, st, slot, n)
+
+  # 20 trận gần nhất: có trận thua hoặc trung bình mất > `struggle_hp` máu mỗi trận thắng
+  defp struggling?(%{recent: r, opts: o}) do
+    r != [] and (Enum.any?(r, &(&1 >= 1.0)) or Enum.sum(r) / length(r) > o.struggle_hp)
+  end
+
+  defp do_forge(p, st, slot, n) do
     id = p.equip[String.to_existing_atom(slot)]
     lvl = id && Engine.upgrade_level(p, id)
     cost = id && Engine.upgrade_cost(Gear.item(p, id), lvl)
@@ -1006,7 +1049,7 @@ defmodule HacLong.Game.Journey do
               ),
             else: st
 
-        forge_slot(p, st, slot, n - 1)
+        do_forge(p, st, slot, n - 1)
       else
         {p, st}
       end
