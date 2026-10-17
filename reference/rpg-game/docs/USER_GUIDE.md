@@ -32,7 +32,7 @@
   đồ) dẫn từng bước và tặng quà khi xong; bấm "Bỏ qua" nếu không cần.
 - Chạm (hoặc bấm) vào một ô trên bản đồ để đi tới; bước vào quái để đánh; bước vào NPC để nói chuyện.
 - Thanh trên cùng (HUD): tên, cấp, vàng, máu (đỏ), MP (xanh), kinh nghiệm; nút 👥 bạn bè, 🔔 thông báo, ✉ hộp thư.
-- Thanh dưới cùng (dock): **Bản đồ**, **Nhân vật**, **Túi đồ**, **Chọn map** (sắp có), **Menu** (Nhiệm vụ, Hành trình, Đấu trường,
+- Thanh dưới cùng (dock): **Bản đồ**, **Nhân vật**, **Túi đồ**, **Chọn map** (sắp có), **Menu** (Nhiệm vụ — có thẻ "Mục tiêu kế tiếp" và giờ trùm thế giới, Đấu trường,
   Xếp hạng, Bang hội, Thành tựu, Thú cưng, Kỹ năng, Sổ quái, **Cài đặt**: âm thanh, nhạc, đăng xuất, đổi mật khẩu…). Phím **Tab** mở Menu.
 
 ## 2. Bốn lớp nhân vật

@@ -701,3 +701,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Đề xuất ghi "theo trung bình người trong phòng"; làm theo **người đánh** vì mỗi người đánh bản quái riêng (máu quái trên bản đồ
   chung lưu theo %), ai chuyển sinh nhiều gặp quái mạnh hơn, người mới vẫn đánh được. Trùm thế giới (máu chung cả server) và tháp
   (đã mạnh theo tầng) không áp.
+
+## Bỏ Menu → Hành trình (2026-10-17, anh "ok làm đi")
+- Mục Hành trình (tàn dư tab cũ: hồi máu, 6 trùm vùng, hết bình, giờ trùm thế giới, thẻ Chiến thắng) bỏ khỏi Menu.
+- Giữ 2 phần có ích: **"Mục tiêu kế tiếp"** (Menu → Nhiệm vụ và Trưởng Làng): chưa chuyển sinh và dưới cấp tối đa → trùm vùng kế
+  tiếp; sau đó → lên cấp tối đa / hạ chúa tể (kèm tên bản đồ, `view.rebirthNeed.map`) / đủ điều kiện chuyển sinh; chuyển sinh tối
+  đa thì ẩn. **Giờ trùm thế giới xuất hiện** ở Bảng Tin và Menu → Nhiệm vụ.

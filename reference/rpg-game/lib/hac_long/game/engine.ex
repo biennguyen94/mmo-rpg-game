@@ -391,7 +391,7 @@ defmodule HacLong.Game.Engine do
       derived: derived(p),
       xpToNext: xp_need(p),
       # chúa tể cần hạ trước lần chuyển sinh kế (nil nếu không cần / đã hạ)
-      rebirthNeed: rebirth_need(p),
+      rebirthNeed: with(%{} = n <- rebirth_need(p), do: Map.put(n, :map, lord_map_name(n.id))),
       restCost: rest_cost(p),
       # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
@@ -2656,6 +2656,14 @@ defmodule HacLong.Game.Engine do
     else
       _ -> nil
     end
+  end
+
+  # tên bản đồ có chúa tể `id` (bản đồ cuối của vùng chuyển sinh), nil nếu không thấy
+  defp lord_map_name(id) do
+    Enum.find_value(HacLong.World.Maps.ids(), fn mid ->
+      m = HacLong.World.Maps.get(mid)
+      if Enum.any?(m.spawns, &(&1.monster == id)), do: m.name
+    end)
   end
 
   @doc "Chúa tể của vùng chuyển sinh `k` (quái `r<k>_…` có `lord: true`, scripts/gen_realms.py)."

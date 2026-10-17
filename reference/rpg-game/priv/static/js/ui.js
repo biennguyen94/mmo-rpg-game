@@ -1459,29 +1459,32 @@
     return ZONES.findIndex((z) => !P.bosses.includes(z.boss.id));
   }
 
-  // Menu (Phase 9, U3): các mục trước đây gom trong tab Khác, mỗi mục một màn
-  function viewJourney() {
-    const d = P.view.derived, cost = P.view.restCost, full = P.hp >= d.maxHp && (P.mp || 0) >= d.maxMp;
-    const ni = nextBossIndex();
-    const pots = ['potion_s', 'potion_m', 'potion_l'].reduce((s, id) => s + (P.inv[id] || 0), 0);
-    return `
-      ${P.victory ? viewVictory() : ''}
-      <div class="card">
-        <div class="row">${icon('campfire', 'lg')}<div class="grow"><h3>Hồi máu</h3><p class="small muted">${full ? 'Máu và MP đang đầy.' : `Gặp Chủ Quán Trọ ở Làng để nghỉ${cost ? ` (${fmt(cost)} vàng)` : ' (miễn phí)'}, hoặc về Nhà uống nước giếng.`}</p></div></div>
-      </div>
+  // Mục tiêu kế tiếp (thay mục Menu → Hành trình cũ): trùm vùng chưa hạ (lần đầu, trước cấp tối đa) → cấp tối đa →
+  // chúa tể cần hạ để chuyển sinh → chuyển sinh; đã chuyển sinh tối đa thì không hiện. Ở Menu → Nhiệm vụ và Trưởng Làng.
+  function goalCard() {
+    const ni = nextBossIndex(), rb = P.rebirths || 0, need = P.view.rebirthNeed;
+    let body;
+    // chưa chuyển sinh và chưa cấp tối đa: trùm vùng; từ đó trở đi: điều kiện chuyển sinh
+    if (ni >= 0 && !rb && P.level < RULES.maxLevel) {
+      const z = ZONES[ni];
+      body = `<div class="row">${sprite(z.boss.id, '', z.boss.name)}<div class="grow"><b>Hạ ${esc(z.boss.name)}</b> (cấp ${z.boss.level}) ở ${esc(z.name)}.
+        <div class="small muted">Trùm vùng đã hạ: ${P.bosses.filter((id) => ZONES.some((zz) => zz.boss.id === id)).length}/${ZONES.length}.</div></div></div>`;
+    } else if (rb >= RULES.maxRebirths) {
+      return '';
+    } else if (P.level < RULES.maxLevel) {
+      body = `<p>Lên cấp <b>${RULES.maxLevel}</b> để chuyển sinh lần ${rb + 1} (đang cấp ${P.level}).</p>`;
+    } else if (need) {
+      body = `<div class="row">${sprite(need.id, '', need.name)}<div class="grow"><b>Hạ ${esc(need.name)}</b> ở ${esc(need.map || `vùng chuyển sinh ${need.realm}`)} để chuyển sinh lần ${rb + 1}.</div></div>`;
+    } else {
+      body = `<p>Đủ điều kiện <b>chuyển sinh lần ${rb + 1}</b>: gặp Trưởng Làng (ông già giữa Làng).</p>`;
+    }
+    return `<div class="card"><h3>${icon('campfire')} Mục tiêu kế tiếp</h3>${body}</div>`;
+  }
 
-      <div class="card">
-        <div class="row"><h3 class="grow">Hành trình diệt rồng</h3><span class="tag gold num">${P.bosses.length}/${ZONES.length} trùm</span></div>
-        <div class="journey">
-          ${ZONES.map((z, i) => `<div class="step ${P.bosses.includes(z.boss.id) ? 'done' : i === ni ? 'next' : ''}">${sprite(z.boss.id, '', z.boss.name)}<span>${z.boss.name}</span></div>`).join('')}
-        </div>
-        ${ni >= 0 ? `<p class="small muted">Mục tiêu kế tiếp: hạ <b style="color:var(--parch)">${ZONES[ni].boss.name}</b> (cấp ${ZONES[ni].boss.level}) ở ${ZONES[ni].name}.</p>` : '<p class="small" style="color:var(--gold)">Bạn đã hạ tất cả trùm. Vùng đất đã bình yên.</p>'}
-      </div>
-
-      ${pots === 0 ? `<div class="card"><div class="row">${icon('health-potion', 'lg')}<div class="grow"><h3>Hết bình máu</h3><p class="small muted">Mua ở Bà Lang trong Làng, hoặc hái Thảo Dược nhờ bà pha.</p></div></div></div>` : ''}
-
-      ${wb.alive ? '' : wb.nextAt ? `<div class="card"><div class="row">${sprite('ancient_dragon', '', '')}<div class="grow"><h3>Trùm thế giới</h3><p class="small muted">${esc(wb.name)} sẽ xuất hiện ở Tế Đàn sau khoảng ${Math.max(1, Math.round((wb.nextAt - wb.skew - Date.now()) / 60000))} phút. Cả server cùng đánh, chia thưởng theo sát thương.</p></div></div></div>` : ''}
-`;
+  // giờ trùm thế giới xuất hiện tới (khi đang sống đã có thanh báo trên bản đồ); ở Bảng Tin và Menu → Nhiệm vụ
+  function wbNextCard() {
+    if (wb.alive || !wb.nextAt) return '';
+    return `<div class="card"><div class="row">${sprite('ancient_dragon', '', '')}<div class="grow"><h3>Trùm thế giới</h3><p class="small muted">${esc(wb.name)} sẽ xuất hiện ở Tế Đàn sau khoảng ${Math.max(1, Math.round((wb.nextAt - wb.skew - Date.now()) / 60000))} phút. Cả server cùng đánh, chia thưởng theo sát thương.</p></div></div></div>`;
   }
 
   function viewStats() {
@@ -1698,15 +1701,6 @@
     </div>`;
   }
 
-  function viewVictory() {
-    return `
-      <div class="card victory">
-        ${sprite('shadow_dragon', '', 'Hắc Long đã chết')}
-        <h1>Chiến thắng!</h1>
-        <p>${esc(P.name)} đã tiêu diệt Hắc Long ở cấp ${P.level} sau ${fmt(P.kills)} trận đánh. Bạn vẫn có thể tiếp tục luyện cấp và săn quái.</p>
-      </div>`;
-  }
-
   // ---------- Nhân vật ----------
   // 4 chỉ số như MU; chỉ số nào tăng tấn công / phòng thủ tùy lớp (CLASSES[lớp].derived)
   const STAT_INFO = {
@@ -1862,7 +1856,7 @@
   }
 
   // ---------- Khác ----------
-  // Các phần không thuộc Nhân vật / Túi đồ gom về đây: toàn bộ tab Hành trình cũ (hồi máu, hành trình
+  // Các phần không thuộc Nhân vật / Túi đồ gom về đây: tab Hành trình cũ (nay bỏ: mục tiêu kế tiếp ở Nhiệm vụ, giờ trùm thế giới ở Bảng Tin; hồi máu, hành trình
   // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
   // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
   // anh quyết sau giữ hay bỏ từng phần.
@@ -1888,7 +1882,6 @@
   // ---------- Menu ----------
   const MENU = [
     ['quests', 'scroll-unfurled', 'Nhiệm vụ'],
-    ['journey', 'campfire', 'Hành trình'],
     ['arena', 'crossed-swords', 'Đấu trường'],
     ['board', 'laurels', 'Xếp hạng'],
     ['guild', 'hill-fort', 'Bang hội'],
@@ -1902,7 +1895,7 @@
   ];
   let menuSec = null; // mục Menu đang mở (null: lưới biểu tượng)
   const onMenu = (sec) => tab === 'menu' && menuSec === sec;
-  const MENU_VIEW = { quests: () => viewQuests(), journey: () => viewJourney(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), library: () => viewLibrary(), settings: () => viewSettings(), admin: () => viewAdmin() };
+  const MENU_VIEW = { quests: () => viewQuests(), arena: () => viewArena(), board: () => viewBoard(), guild: () => viewGuildCard(), stats: () => viewStats(), pets: () => viewPets(), skills: () => viewSkills(), bestiary: () => viewBestiary(), library: () => viewLibrary(), settings: () => viewSettings(), admin: () => viewAdmin() };
   function viewMenu() {
     const items = MENU.concat(Net.isAdmin ? [['admin', 'crowned-skull', 'Quản trị']] : []);
     if (menuSec && MENU_VIEW[menuSec]) {
@@ -2866,6 +2859,7 @@
     const sections = [];
     if (n.role === 'quests') {
       const act = activeQuests(), avail = availableQuests();
+      sections.push(goalCard());
       sections.push(`<div class="card"><h3>Nhiệm vụ đang làm</h3>${act.length ? `<div class="list">${act.map((q) => questRow(q, 'turnin')).join('')}</div>` : '<p class="small muted">Chưa nhận nhiệm vụ nào.</p>'}</div>`);
       if (P.level >= RULES.maxLevel || P.rebirths) {
         const pts = ((P.rebirths || 0) + 1) * RULES.rebirthPoints, max = P.rebirths >= RULES.maxRebirths;
@@ -2910,6 +2904,7 @@
       sections.push(csCard());
     }
     if (n.role === 'daily') {
+      sections.push(wbNextCard());
       sections.push(`<div class="card"><div class="row"><h3 class="grow">Việc hôm nay</h3><span class="small muted">Việc mới sau ${dailyLeft()}</span></div>${dailyList(true)}</div>`);
     }
     if (n.role === 'cook') sections.push(cookCard());
@@ -2977,6 +2972,7 @@
   function viewQuests() {
     const act = activeQuests();
     return `<h2 class="display">Nhiệm vụ</h2>
+      ${goalCard()}${wbNextCard()}
       <div class="card"><div class="row"><h3 class="grow">Việc hằng ngày</h3><span class="small muted">Việc mới sau ${dailyLeft()}</span></div>
         ${dailyList(false)}
         <p class="small muted">Tự tính khi bạn làm; xong thì đến Bảng Tin trong Làng nhận thưởng.</p>
