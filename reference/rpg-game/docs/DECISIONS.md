@@ -715,3 +715,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   chuyền, cánh, ngọc, nguyên liệu luôn giữ; đồ trùm rơi lần đầu (`boss_gear`) không lọc.
 - Lệnh `loot_filter {on, keep}`; lưu theo nhân vật trong `auto_cfg["filter"]` (cột có sẵn, không cần migration); bật tự đánh
   không ghi đè mục này.
+
+## Cài đặt: bỏ nút "Chơi lại từ đầu" (2026-10-17, anh hỏi "có cần không, không thì bỏ")
+- Mỗi tài khoản một nhân vật; nút xóa vĩnh viễn toàn bộ tiến trình (cấp, đồ, kho, ngọc, chuyển sinh) không hoàn tác được, dễ bấm
+  nhầm, và lợi ích duy nhất (đổi lớp / chơi lại) làm được bằng tài khoản mới. Bỏ nút và trạng thái xác nhận khỏi `ui.js`.
+- Lệnh server `reset` (`commands.ex`) giữ lại cho test / quản trị; client không còn gửi.

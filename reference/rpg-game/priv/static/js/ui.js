@@ -9,7 +9,6 @@
   let P = null;          // trạng thái người chơi
   let tab = 'map';       // tab đang mở
   let pickCls = 'dk';
-  let confirmReset = false;
   let confirmRebirth = false;
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
   let authMode = 'login'; // 'login' | 'register'
@@ -1559,10 +1558,6 @@
         </form>` : ''}
         <button class="btn" data-act="logout-all" style="margin-bottom:8px">Đăng xuất mọi thiết bị</button>
         ${blocked.length ? `<p class="small muted">Đã chặn chat:</p><div class="list">${blocked.map((b) => `<div class="item"><span class="grow">${esc(b.name)}</span><button class="btn small-btn" data-act="unblock" data-uid="${b.id}">Bỏ chặn</button></div>`).join('')}</div>` : ''}
-        ${confirmReset
-          ? `<p class="small" style="color:var(--bad)">Xóa nhân vật ${esc(P.name)} và chơi lại từ đầu? Không thể hoàn tác.</p>
-             <div class="btn-row"><button class="btn" data-act="reset-cancel">Giữ lại</button><button class="btn danger" data-act="reset-yes">Xóa và chơi lại</button></div>`
-          : `<button class="btn" data-act="reset-ask">Chơi lại từ đầu</button>`}
       </div>`;
   }
 
@@ -3185,7 +3180,6 @@
       case 'discard': case 'store': case 'unstore': return { act, id: d.id, n: +d.n || 1 };
       case 'lock': return { act, id: d.id, on: d.on === '1' };
       case 'chaos': return { act, id: d.id, gear: d.gear || null, cls: d.wcls || null };
-      case 'reset-yes': return { act: 'reset' };
       case 'craft': case 'quest_accept': case 'quest_turnin': case 'cook': case 'event_exchange': return { act, id: d.id };
       case 'smith': return { act, slot: d.slot };
       case 'daily_claim': return { act, i: +d.i };
@@ -3245,7 +3239,6 @@
         if ((cmd.act === 'upgrade' || cmd.act === 'chaos_upgrade' || cmd.act === 'life') && cmd.id && r.uid) forgePick = r.uid;
         if (cmd.act === 'mail_claim_all' && mail.list) mail.list.forEach((m) => { m.claimed = true; });
         if (cmd.act === 'mail_claim' && mail.list) { const m = mail.list.find((x) => x.id === cmd.id); if (m) m.claimed = true; }
-        confirmReset = false;
         confirmRebirth = false;
         dialog = null;
       }
@@ -3321,7 +3314,7 @@
     // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
     const sec = { quests: 'quests', misc: null, admin: 'admin' };
     if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
-    tab = id; confirmReset = false; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    tab = id; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
     stopFishing();
     if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
     render(); $('#view').scrollTop = 0;
@@ -3393,7 +3386,6 @@
     Net.logout();
     P = null;
     npc = null; dialog = null; pwForm = false;
-    confirmReset = false;
     render();
   }
 
@@ -3442,7 +3434,6 @@
       return;
     }
     if (!act || !P) return;
-    if (act === 'reset-ask' || act === 'reset-cancel') { confirmReset = act === 'reset-ask'; render(); return; }
     if (act === 'rebirth-ask' || act === 'rebirth-cancel') { confirmRebirth = act === 'rebirth-ask'; render(); return; }
     if (act === 'dialog-close') { dialog = null; render(); return; }
     if (act === 'noop') return;
