@@ -1514,7 +1514,10 @@
         <p class="small muted">Tự động: sáng tối theo giờ trong game.</p>
         <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
           <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
-        <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p></div>
+        <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p>
+        <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>
+          <button class="btn" data-act="mob-names" aria-pressed="${Map_.mobNames()}">${Map_.mobNames() ? 'Đang bật' : 'Đang tắt'}</button></div>
+        <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p></div>
       <div class="card set"><div class="row"><h3 class="grow">Hình đồ</h3>
         <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Pixel: hình vẽ điểm ảnh từ Dungeon Crawl Stone Soup (CC0). Biểu tượng: hình nét đơn giản.${HAS_MU ? ' MU: hình gốc máy chủ đặt riêng.' : ''}</p></div>
@@ -3398,6 +3401,7 @@
     if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
     if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
     if (act === 'icon-set') { setPref('hl-icons', t.dataset.set); render(); return; }
+    if (act === 'mob-names') { setPref('hl-mobname', Map_.mobNames() ? '0' : '1'); render(); return; }
     if (act === 'map-fx') { setPref('hl-fx', Map_.fxOn() ? '0' : '1'); render(); return; }
     if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
     if (act === 'auto-reset') { Object.assign(autoUi, autoDefaults()); saveAutoUi(); render(); return; }

@@ -157,6 +157,10 @@
     } catch (e) { /* bị chặn: theo mặc định */ }
     return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   };
+  // tên quái trên đầu (bản đồ, tháp, sự kiện, trùm thế giới): tắt ở Menu → Cài đặt (`hl-mobname`), mặc định bật
+  const mobNames = () => {
+    try { return localStorage.getItem('hl-mobname') !== '0'; } catch (e) { return true; }
+  };
   const FX_MS = 33;
   let fxRaf = null, fxLast = 0;
   function fxTick() {
@@ -431,6 +435,7 @@
 
     // sự kiện "map" có thể đến trước/sau lúc đổi bản đồ một chút
     const here = world.map === P.pos.map;
+    const names = mobNames();
     for (const q of mobs(P)) {
       const [qx, qy] = smooth('m' + q.id, q.x, q.y, DUR.monster, now);
       // quái đứng yên thì nhún nhẹ (chỉ là hình)
@@ -457,7 +462,7 @@
       ctx.globalAlpha = 1;
       // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
       const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
-      labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
+      if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
       const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
       ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
       ctx.fillStyle = q.gold ? '#e8b923' : q.boss ? '#c0392b' : '#d9483b'; ctx.fillRect(px - off + 4, py - off + sz + 2, Math.max(0, (bw - 2) * hpk), 3);
@@ -509,7 +514,7 @@
       const w = TILE * 2, k = boss.hp / boss.maxHp;
       ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - TILE / 2, py - TILE - 8, w, 6);
       ctx.fillStyle = '#d9483b'; ctx.fillRect(px - TILE / 2 + 1, py - TILE - 7, Math.max(0, (w - 2) * k), 4);
-      labels.push([boss.name, px + TILE / 2, py - TILE - 22, '#ef6a5a']);
+      if (names) labels.push([boss.name, px + TILE / 2, py - TILE - 22, '#ef6a5a']);
     }
 
     const hero = image('monsters/hero');
@@ -652,6 +657,7 @@
     players: () => (world.map === (getPlayer() || {}).pos?.map ? world.players.filter((o) => o.id !== userId) : []),
     mountedMap: () => mounted,
     fxOn,
+    mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
