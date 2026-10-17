@@ -1859,6 +1859,8 @@
   // ---------- Chọn bản đồ (Phase 15a, U2) ----------
   // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, Nhà, vùng đã mở, bản đồ phụ đã đi qua cổng.
   let travelQ = '';
+  // như Thợ Rèn: hai thẻ bản đồ thường / vùng đất chuyển sinh (`m.cs`), danh sách đỡ dài
+  let travelSeg = 'normal';
   const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
   const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
   // đủ cấp (≥ cấp quái thấp nhất của bản đồ) là tới được; vàng kiểm riêng (như server: World.can_travel?/2)
@@ -1877,12 +1879,13 @@
     const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
       <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
+      <div class="seg"><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
       <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
       <div id="travel-list">${travelList(all)}</div></div>`;
   }
   function travelList(all) {
     all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
-    const rows = all.filter((m) => L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
+    const rows = all.filter((m) => !!m.cs === (travelSeg === 'cs') && L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
     return `<div class="list">${rows.map((m) => {
       const here = P.pos.map === m.id, open = travelOpen(m), cost = travelCost(m);
       const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : 'Không có quái';
@@ -2601,9 +2604,12 @@
         <button class="btn ${ok ? 'danger' : ''}" data-act="chaos_upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('chaos-machine')}${fmt(c.gold)}</button>
       </div>`;
     }).join('');
+    // như Thợ Rèn: hai thẻ Đang mặc / Trong túi (dùng chung `forgeTab`)
+    const nBag = Object.values(P.view.forgeBag).filter((f) => f.cost && f.cost.at === 'chaos').length;
     return `<div class="card" data-panel="chaos-upgrade"><h3>${icon('chaos-machine')} Ép +10, +11</h3>
-      <p class="small muted">Đồ +9 lên +10, +10 lên +11 (đang mặc, hoặc chọn món trong túi bằng nút Ép). May mắn cộng tỉ lệ. Thất bại thì <b style="color:var(--bad)">vỡ đồ</b>, mất ngọc và vàng.</p>
-      ${rows ? `<div class="list">${rows}</div>` : '<p class="small muted">Chưa có món nào +9 hoặc +10. Ép tới +9 ở Thợ Rèn trước.</p>'}</div>`;
+      <p class="small muted">Đồ +9 lên +10, +10 lên +11. May mắn cộng tỉ lệ. Thất bại thì <b style="color:var(--bad)">vỡ đồ</b>, mất ngọc và vàng.</p>
+      <div class="seg"><button class="btn ${forgeTab === 'wear' ? 'primary' : ''}" data-act="forge-tab" data-tab2="wear">Đang mặc</button><button class="btn ${forgeTab === 'bag' ? 'primary' : ''}" data-act="forge-tab" data-tab2="bag">Trong túi <span class="small">${nBag}</span></button></div>
+      ${rows ? `<div class="list">${rows}</div>` : `<p class="small muted">${forgeTab === 'bag' ? 'Trong túi chưa có món nào +9 hoặc +10.' : 'Đồ đang mặc chưa có món nào +9 hoặc +10.'} Ép tới +9 ở Thợ Rèn trước.</p>`}</div>`;
   }
 
   function chaosCard() {
@@ -3438,6 +3444,7 @@
     // ép bước có thể vỡ đồ / ghép mất đồ: hỏi lại trước
     if ((act === 'upgrade' || act === 'chaos_upgrade') && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
     if (act === 'forge-tab') { forgeTab = t.dataset.tab2; render(); return; }
+    if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
     if (act === 'forge-pick') {
       forgePick = t.dataset.id;
       forgeTab = 'bag';
