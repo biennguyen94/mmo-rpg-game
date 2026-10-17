@@ -463,3 +463,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - **Sửa lỗi bot đứng yên:** mốc "nghỉ sau khi gục" khởi đầu bằng 0 trong khi `System.monotonic_time` có thể là số âm
     (máy ảo) → bot bị coi là đang nghỉ mãi, không làm gì từ lúc khởi động server. Giờ mốc khởi đầu là lúc bot khởi động.
     Chạy thử 90 giây: cả 20 bot về Làng mua bình rồi đi săn, lên kinh nghiệm bình thường.
+- **B-33** (anh "ok làm phase 7") **Bộ hình đồ thay thế, không dùng hình MU.**
+  - Menu → Cài đặt → **Hình đồ**: **MU** (chỉ hiện khi máy chủ có hình MU riêng, `mix hac_long.icons`) / **Pixel** / **Biểu tượng**
+    (SVG game-icons như trước). Mặc định: MU nếu có, không thì Pixel. Lưu ở trình duyệt (`hl-icons`); chỉ đổi hình, không đổi luật.
+  - **Pixel:** 173 hình CC0 từ Dungeon Crawl Stone Soup cho 454 món (mọi vũ khí, khiên, mũ, giáp, quần, găng, giày, nhẫn, dây
+    chuyền, bình, ngọc, vé / nguyên liệu sự kiện). `scripts/pixel_icons.py`: mỗi loại đồ một dãy hình yếu → mạnh, món trong loại
+    xếp theo cấp rồi chia đều nên đồ cấp cao trông xịn hơn; Pháp Sư mặc áo choàng / đội nón, Tiên Nữ giáp da / vảy rồng; nhẫn,
+    dây chuyền theo nguyên tố trong tên. Bỏ mọi file thuộc `TILES_UNDER_UNKNOWN_LICENSE.md`.
+  - Chưa có hình pixel (cánh, đồ ăn, nguyên liệu đã có hình riêng) thì giữ hình cũ.
+  - Hình MU vẫn không vào git / Docker; bộ Pixel có trong git (CC0, ghi ở `CREDITS.md`).

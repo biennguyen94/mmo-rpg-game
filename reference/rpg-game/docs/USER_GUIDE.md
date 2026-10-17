@@ -271,6 +271,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Điện thoại: mọi thao tác bằng chạm; nút đủ lớn, không cần kéo ngang.
 - Nút **⤢** góc trên phải bản đồ: thu cả bản đồ cho vừa khung (bấm lại để tắt).
 - **Menu → Cài đặt → Bản đồ**: Sáng / Tối / Tự động (theo giờ trong game).
+- **Menu → Cài đặt → Hình đồ**: MU (nếu máy chủ có) / Pixel (hình điểm ảnh CC0) / Biểu tượng.
 - **Bản đồ động**: nước gợn, cây lay, quái nhún nhẹ, mưa ở đầm lầy, tro lửa ở hang rồng / vùng chuyển sinh, tuyết trên núi,
   sương ở nghĩa địa, lá rơi ở rừng / trại, khói bếp ở Làng, đài phun nước lấp lánh; ban đêm có đom đóm và đèn lồng quanh
   người dân. Tắt ở **Menu → Cài đặt → Bản đồ → Hiệu ứng động** (máy đặt "giảm chuyển động" thì mặc định tắt).

@@ -31,8 +31,8 @@ defmodule HacLongWeb.PageController do
     |> send_resp(200, html)
   end
 
-  defp item_icons do
-    path = Application.app_dir(:hac_long, "priv/static/assets/item_icons.json")
+  defp item_icons(file \\ "item_icons.json") do
+    path = Application.app_dir(:hac_long, "priv/static/assets/" <> file)
 
     with {:ok, bin} <- File.read(path), {:ok, map} <- Jason.decode(bin) do
       map
@@ -53,6 +53,8 @@ defmodule HacLongWeb.PageController do
         end),
       # bộ hình đồ đổi theo cấp +N (`mix hac_long.icons`), đọc mỗi lần tải trang nên không cần build lại
       ITEM_ICONS: item_icons(),
+      # Phase 7 (B-33): bộ hình đồ Pixel CC0 (scripts/pixel_icons.py), có trong git
+      PIXEL_ICONS: item_icons("pixel_icons.json"),
       SHOP: Data.shop(),
       RECIPES: Data.recipes(),
       QUESTS: Data.quests(),

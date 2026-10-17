@@ -803,3 +803,7 @@ body.tl-on { overflow: hidden; }
 .auto-set select { width: 100%; }
 .auto-set p { grid-column: 1 / -1; margin: 0; }
 @media (prefers-reduced-motion: reduce) { .auto-dot { animation: none; } }
+
+/* Phase 7 (B-33): bộ hình đồ Pixel (Dungeon Crawl, CC0): giữ điểm ảnh sắc khi phóng */
+img.own.pix { object-fit: contain; image-rendering: pixelated; }
+.itemtip .big img.own.pix { width: 64px; height: 64px; }

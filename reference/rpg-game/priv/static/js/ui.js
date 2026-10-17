@@ -78,17 +78,26 @@
   // Hình riêng của đồ theo cấp nâng (bộ hình của anh, `mix hac_long.icons`): khóa `ref` ("nhóm/số"
   // trong Item.txt) hoặc "custom/{id}"; lấy mức lớn nhất ≤ cấp. Không có thì dùng icon / sprite cũ.
   const ITEM_ICONS = window.GAME_DATA.ITEM_ICONS || {};
+  // Phase 7 (B-33): bộ hình đồ chọn ở Menu → Cài đặt (`hl-icons`): 'mu' hình MU (chỉ khi máy chủ có),
+  // 'pixel' hình pixel CC0 (Dungeon Crawl), 'svg' biểu tượng. Mặc định: MU nếu có, không thì Pixel.
+  const PIXEL_ICONS = window.GAME_DATA.PIXEL_ICONS || {};
+  const HAS_MU = Object.keys(ITEM_ICONS).length > 0;
+  const iconSet = () => { const v = pref('hl-icons', HAS_MU ? 'mu' : 'pixel'); return v === 'mu' && !HAS_MU ? 'pixel' : v; };
   function ownIcon(it, level) {
+    const set = iconSet();
+    if (set === 'pixel') { const p = PIXEL_ICONS[it.base || it.id]; return p ? asset(p) : null; }
+    if (set !== 'mu') return null;
     const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
     return path ? asset(path) : null;
   }
   // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px), giữ đúng kích thước, không phóng to cho khỏi vỡ hình
   const NAT_SLOTS = ['ring', 'pendant'];
-  const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${NAT_SLOTS.includes(it.slot) ? ' nat' : ''}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
+  const ownCls = (it) => (iconSet() === 'pixel' ? ' pix' : NAT_SLOTS.includes(it.slot) ? ' nat' : '');
+  const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${ownCls(it)}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
   // hình nhỏ cạnh tên ngọc / nguyên liệu (hình gốc MU nếu có); không có hình thì `fallback`
   // hình vé (nút Mua vé ở Người Gác Tháp): hình gốc MU nếu có, không thì biểu tượng của món
   const ticketIc = (id) => smallIc(id, ITEMS[id] ? icon(ITEMS[id].icon) : '');
-  const smallIc = (id, fallback = '') => { const it = ITEMS[id], own = it && ownIcon(it, 0); return own ? `<img class="ic jw own" src="${own}" alt="">` : fallback; };
+  const smallIc = (id, fallback = '') => { const it = ITEMS[id], own = it && ownIcon(it, 0); return own ? `<img class="ic jw own${it && ownCls(it)}" src="${own}" alt="">` : fallback; };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
@@ -1479,6 +1488,9 @@
         <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
           <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p></div>
+      <div class="card"><div class="row"><h3 class="grow">Hình đồ</h3>
+        <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
+        <p class="small muted">Pixel: hình vẽ điểm ảnh từ Dungeon Crawl Stone Soup (CC0). Biểu tượng: hình nét đơn giản.${HAS_MU ? ' MU: hình gốc máy chủ đặt riêng.' : ''}</p></div>
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -2128,7 +2140,7 @@
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
-    if (own) return `<img src="${own}" alt="" draggable="false" class="own${NAT_SLOTS.includes(it.slot) ? ' nat' : ''}">`;
+    if (own) return `<img src="${own}" alt="" draggable="false" class="own${ownCls(it)}">`;
     return it.sprite ? `<img src="${asset(it.sprite + '.png')}" alt="" draggable="false" class="px">` : `<img src="${asset('icons/' + it.icon + '.svg')}" alt="" draggable="false">`;
   }
 
@@ -3297,6 +3309,7 @@
     const act = t.dataset.act;
     if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
     if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
+    if (act === 'icon-set') { setPref('hl-icons', t.dataset.set); render(); return; }
     if (act === 'map-fx') { setPref('hl-fx', Map_.fxOn() ? '0' : '1'); render(); return; }
     if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
     if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot }); return; }

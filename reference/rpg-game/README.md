@@ -320,6 +320,14 @@ mix hac_long.icons              # quét assets_src/items/icons → priv/static/a
 mix hac_long.items.import       # Item.txt → priv/items_raw.json + priv/items_from_txt.json (nháp)
 ```
 
+Bộ hình đồ Pixel CC0 (Phase 7, đã có sẵn trong git; chỉ chạy lại khi thêm đồ mới):
+
+```bash
+git clone --depth 1 https://github.com/crawl/tiles /tmp/crawl-tiles
+python3 scripts/pixel_icons.py /tmp/crawl-tiles/releases/Nov-2015   # → priv/static/assets/pixel/ + pixel_icons.json
+node e2e/crop_icons.mjs                                             # cắt sát hình quần
+```
+
 Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):
 [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md). Hướng dẫn người chơi: [docs/USER_GUIDE.md](docs/USER_GUIDE.md); lịch và cách
 tham gia các sự kiện: [docs/EVENTS.md](docs/EVENTS.md).
@@ -331,5 +339,5 @@ Kế hoạch hiện tại: [docs/PHASE_PLAN.md](docs/PHASE_PLAN.md) (các phase 
 
 ## Bản quyền hình ảnh
 
-Hình quái vật và ô bản đồ từ Dungeon Crawl Stone Soup (CC0) và icon từ game-icons.net (CC BY 3.0).
+Hình quái vật, ô bản đồ và bộ hình đồ Pixel từ Dungeon Crawl Stone Soup (CC0), icon từ game-icons.net (CC BY 3.0).
 Chi tiết và ghi tên tác giả xem [CREDITS.md](CREDITS.md).

@@ -17,6 +17,15 @@ Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/a
 `scripts/side_monsters.py`; danh sách trong `priv/game_data/side.json`. Không dùng hình nào trong
 `TILES_UNDER_UNKNOWN_LICENSE.md` của bộ tile.
 
+## Bộ hình đồ "Pixel" (`priv/static/assets/pixel/`, Phase 7)
+
+Cũng từ bộ tile Dungeon Crawl Stone Soup ở trên (CC0, `releases/Nov-2015`): vũ khí (`item/weapon`, `item/weapon/ranged`),
+gậy / quyền trượng / sách (`item/staff`, `item/rod`, `item/book`), khiên, mũ, giáp, găng, giày (`item/armour`), nhẫn và dây
+chuyền (`item/ring`, `item/amulet`), bình (`item/potion`), vé / bản đồ (`item/scroll`), ngọc (`item/misc/runes`), đồ vật
+(`item/misc`); hình quần lấy từ hình chân nhân vật (`player/legs`), cắt sát và phóng lại bằng `e2e/crop_icons.mjs`.
+Chọn và chép bằng `scripts/pixel_icons.py` (bảng tra `priv/static/assets/pixel_icons.json`); script tự bỏ mọi file có
+trong `TILES_UNDER_UNKNOWN_LICENSE.md`. Không dùng hình MU nào.
+
 ## Icon (`priv/static/assets/icons/`)
 
 Lấy từ **game-icons.net** (https://github.com/game-icons/icons), đã đổi màu và bỏ nền đen.
