@@ -230,7 +230,7 @@ stat_rows = "".join([
          f"Sát thương nhận = đòn² / (đòn + thủ), không dưới {pct(C['soft_floor'])} đòn: đòn bằng thủ chỉ còn một nửa. Như nhau khi bị quái hay người đánh."),
     srow("Chí mạng", f"{pct(cr['base'])} + Nhanh nhẹn × {pct(cr['per_agi'], 2)} (tối đa {pct(cr['max'])}) + Excellent + May mắn vũ khí. Hệ số ×({n(cm['base'])} + Nhanh nhẹn × {n(cm['per_agi'])}), tối đa ×{n(cm['max'])}",
          f"Đòn thường và kỹ năng (đánh quái, Đồ sát, Đấu trường). PK cược: kỹ năng không chí mạng. Quái chí mạng {pct(MON['crit'])} ×{n(C['monster_crit_mult'])}."),
-    srow("Né đòn", f"{pct(dg['base'])} + Nhanh nhẹn × {pct(dg['per_agi'], 2)} (tối đa {pct(dg['max'])}), × Excellent tỉ lệ phòng thủ, trần cuối {pct(dg['max_total'])}",
+    srow("Né đòn", f"{pct(dg['base'])} + Nhanh nhẹn × {pct(dg['per_agi'], 2)} (tối đa {pct(dg['max'])}), × Excellent tỉ lệ phòng thủ, trần cuối {pct(dg['max_total'])}; đánh quái cộng buff né, tổng tối đa {pct(dg['max_with_buff'])}",
          "Né đòn thường của quái và của người. Không né được đòn đặc biệt của quái và kỹ năng của người."),
     srow("Cánh", f"Số gốc của cánh + {pct(C['wing_per_level'])} mỗi cấp ép",
          "+% sát thương mọi đòn và −% sát thương nhận, cả đánh quái lẫn đánh người. Dòng phụ: máu, MP, bỏ qua phòng thủ."),
@@ -437,7 +437,7 @@ for mp in sorted(D["maps"], key=lambda m: m["realm"]):
     raw = rl["loot_per_realm"] * ms[0]["rich"] if ms else 0
     loot = min(rl["loot_max"], raw)
     rrows += (f"<tr><td class=n>{k}</td><td><b>{E(mp['name'])}</b></td><td class=n>{mp['min_rebirths']}</td><td class=n>{ms[0]['level']}–{ms[-1]['level']}</td>"
-              f"<td>{el(ms[0].get('element'))}</td><td class=n>×{n(round(ms[0]['mult'], 2))}</td><td class=n>+{pct(loot)}{' (trần)' if raw > rl['loot_max'] + 1e-9 else ''}</td>"
+              f"<td>{el(ms[0].get('element'))}</td><td class=n>×{n(round(ms[0]['mult'], 2))} / ×{n(round(ms[0].get('atk_mult', ms[0]['mult']), 2))}</td><td class=n>+{pct(loot)}{' (trần)' if raw > rl['loot_max'] + 1e-9 else ''}</td>"
               f"<td class=n>{pct(ms[0]['jewel_chance'])}</td><td>{names}</td></tr>")
 
 # ---------- Vật phẩm khác ----------
@@ -474,10 +474,10 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=pct(ls['luck_upgrade']), LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
-                 LIFE=f"+{life['per_line']} mỗi dòng, tối đa {life['max_lines']} dòng, {pct(life['rate'])}",
+                 LIFE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']}) mỗi dòng, tối đa {life['max_lines']} dòng, {pct(life['rate'])}",
                  EXCLINES=", ".join(f"{a} dòng {pct(b/sum(w for _, w in ex['lines']))}" for a, b in ex["lines"]),
                  EXCPRICE=n(ex['price_mult']), DMGRED=pct(ex['max_dmg_red']), REFL=pct(ex['max_reflect']),
-                 ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=str(life['per_line']),
+                 ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
                  STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']),
                  RMIN=str(rl['min_level']), RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RBOSS=n(rl['boss_mult']),
                  SELL=pct(R['shop']['sell_ratio'])).items():

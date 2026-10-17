@@ -124,7 +124,7 @@ code{font-size:13px}
 <section id="dong">
   <h2>Dòng phụ trên đồ rơi</h2>
   <div class="cols">
-    <div class="card"><h3>Dòng cộng thêm</h3><p class="note">Mỗi dòng +{{PERLINE}} công (vũ khí) hoặc thủ (món khác). Số dòng trên đồ rơi:</p><ul>{{OPT}}</ul></div>
+    <div class="card"><h3>Dòng cộng thêm</h3><p class="note">Mỗi dòng cộng {{PERLINE}}: công với vũ khí, thủ với món khác. Số dòng trên đồ rơi:</p><ul>{{OPT}}</ul></div>
     <div class="card"><h3 class="exc">Excellent</h3><p class="note">{{EXCLINES}}. Giá bán ×{{EXCPRICE}}. Máy Hỗn Nguyên thêm tới đủ 6 dòng.</p>
       <b>Vũ khí, dây chuyền</b><ul>{{EXC_W}}</ul><b>Giáp, khiên, nhẫn</b><ul>{{EXC_A}}</ul><p class="note">Giảm sát thương tối đa {{DMGRED}}, phản tối đa {{REFL}}.</p></div>
     <div class="card"><h3 class="anc">Đồ Thần</h3><p class="note">Chỉ món bộ giáp. Thủ món +{{ANCDEF}}, giá bán ×{{ANCPRICE}}. Thưởng theo số món Thần cùng bộ, cộng dồn:</p><ul>{{ANC}}</ul></div>
@@ -188,9 +188,9 @@ code{font-size:13px}
   <h2>Vùng đất chuyển sinh</h2>
   <p>Vào bằng Chọn bản đồ hoặc cổng bên trái Làng. Vùng k cần chuyển sinh ít nhất k lần và cấp {{RMIN}}+. Cấp tối đa nhân vật vẫn là 50: chỉ số quái tính ở cấp {{RSTAT}} nhân hệ số (1 + {{RMULT}} × k, chúa tể ×{{RBOSS}}); vàng và kinh nghiệm theo cấp hiện trên quái. Tháp Vô Tận tầng 61–160 dùng quái các vùng này; từ tầng 161 quay vòng lại từ đầu, tên quái thêm tiền tố (Cổ Đại, Hắc Ám…).</p>
   <div class="scroll"><table>
-    <thead><tr><th>Vùng</th><th>Tên</th><th>Chuyển sinh</th><th>Cấp quái</th><th>Hệ</th><th>Sức mạnh</th><th>Rơi quý thêm</th><th>Ngọc / con</th><th>Quái</th></tr></thead>
+    <thead><tr><th>Vùng</th><th>Tên</th><th>Chuyển sinh</th><th>Cấp quái</th><th>Hệ</th><th>Máu / công</th><th>Rơi quý thêm</th><th>Ngọc / con</th><th>Quái</th></tr></thead>
     <tbody>{{REALMS}}</tbody></table></div>
-  <p class="note">"Rơi quý thêm": tỉ lệ ra đồ, Excellent, May mắn, đồ Thần nhân (1 + số này); tăng {{RLOOT}} mỗi vùng, trần {{RLOOTMAX}} nên vùng 9 và 10 bằng nhau. "Ngọc / con": tỉ lệ mỗi con rơi 1 viên ngọc (loại theo tỉ lệ ở mục Vật phẩm khác); chúa tể ×5.</p>
+  <p class="note">"Rơi quý thêm": nhân tỉ lệ ra đồ (1 + số này); tỉ lệ Excellent, May mắn, Thần nhân giữ như thường; tăng {{RLOOT}} mỗi vùng, trần {{RLOOTMAX}} nên vùng 9 và 10 bằng nhau. "Máu / công": máu và công của quái so với quái thường cùng cấp. "Ngọc / con": tỉ lệ mỗi con rơi 1 viên ngọc (loại theo tỉ lệ ở mục Vật phẩm khác); chúa tể ×5.</p>
 </section>
 
 <section id="su-kien">

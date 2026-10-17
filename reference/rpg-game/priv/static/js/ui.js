@@ -337,7 +337,7 @@
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
-      ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm +${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
+      ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `${o} dòng cộng thêm` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
           <select name="wopt" aria-label="Dòng phụ cánh"><option value="">Cánh: không dòng phụ</option><option value="hp">Cánh: máu tối đa</option><option value="mp">Cánh: MP tối đa</option><option value="ignore_def">Cánh: bỏ qua phòng thủ</option></select></div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
@@ -409,7 +409,7 @@
           <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="item">+ Thêm</button></div></div>
       <div class="gift-add"><span class="small muted">Trang bị riêng (vũ khí, giáp, trang sức, cánh)</span>
         <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear">${Object.entries(ITEMS).filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
-          <select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `Cộng thêm ${o * RULES.life.per_line}` : 'Không dòng cộng thêm'}</option>`).join('')}</select>
+          <select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `${o} dòng cộng thêm` : 'Không dòng cộng thêm'}</option>`).join('')}</select>
           <label class="small">+ <input type="number" name="gup" min="0" max="${UPGRADE.max}" value="0"></label>
           <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label>
           <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div></div>
@@ -1230,6 +1230,8 @@
     }
   }
 
+  // giá trị một dòng cộng thêm của món (như `Engine.line_value/1`): % công / thủ gốc, ít nhất `per_line`
+  const lineVal = (it) => Math.max(RULES.life.per_line, Math.round(((it && (it.atk || it.def)) || 0) * (RULES.life.per_line_pct || 0)));
   function bar(kind, cur, max, label) {
     const w = max ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0;
     return `<div class="bar ${kind}"><i style="width:${w}%"></i><span>${label || `${fmt(cur)} / ${fmt(max)}`}</span></div>`;
@@ -1271,13 +1273,13 @@
     if (id.startsWith('gearx:')) {
       try {
         const x = JSON.parse(atob(id.slice(6).replace(/-/g, '+').replace(/_/g, '/')));
-        const tags = [x.anc ? 'Đồ Thần' : x.exc && x.exc.length ? 'Hoàn hảo' : '', x.opt ? `cộng thêm ${x.opt * RULES.life.per_line}` : '', x.luck ? 'May mắn' : ''].filter(Boolean);
+        const tags = [x.anc ? 'Đồ Thần' : x.exc && x.exc.length ? 'Hoàn hảo' : '', x.opt ? `cộng thêm ${x.opt * lineVal(ITEMS[x.base])}` : '', x.luck ? 'May mắn' : ''].filter(Boolean);
         if (ITEMS[x.base]) return `${ITEMS[x.base].name}${tags.length ? ` (${tags.join(', ')})` : ''}`;
       } catch (e) { /* khóa hỏng: hiện nguyên */ }
       return id;
     }
     const g = id.startsWith('gear:') && id.split(':');
-    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (cộng thêm ${g[2] * RULES.life.per_line})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
+    if (g && ITEMS[g[1]]) return `${ITEMS[g[1]].name}${+g[2] ? ` (cộng thêm ${g[2] * lineVal(ITEMS[g[1]])})` : ''}${+g[3] ? ` +${g[3]}` : ''}`;
     return ITEMS[id] ? ITEMS[id].name : id;
   }
   function mailGifts(m) {
@@ -1723,7 +1725,7 @@
   const KIND_CLS = { opt: 'k-opt', exc: 'exc', anc: 'anc' };
   const KIND_NAME = { exc: 'Hoàn hảo', anc: 'Đồ Thần' };
   // nhãn ngắn như `Gear.label/1`: Đồ Thần / Hoàn hảo / cộng thêm N ("+N" chỉ dành cho cấp ép)
-  const kindTag = (it) => KIND_NAME[it.kind] || (it.opt ? `cộng thêm ${it.opt * RULES.life.per_line}` : '');
+  const kindTag = (it) => KIND_NAME[it.kind] || (it.opt ? `cộng thêm ${it.opt * lineVal(it)}` : '');
   // nhãn ngắn cho đồ bản riêng trong danh sách chọn: loại và / hoặc cấp nâng
   const gearTag = (id) => { const it = itemOf(id), up = upLevel(id); return [kindTag(it), up ? `+${up}` : ''].filter(Boolean).map((x) => ` (${x})`).join(''); };
   const itemName = (id) => {
@@ -1817,7 +1819,7 @@
       case 'hit': return `Chỉ dùng khi đánh quái: tỉ lệ trúng = AR / (AR + cấp quái × ${hit.monster_dr}), trong khoảng ${pc(hit.min)}–${pc(hit.max)}. AR = cấp × ${hit.level} + Nhanh nhẹn × ${hit.agi} (cộng Excellent). Quái cấp cao hơn thì khó trúng hơn. Kỹ năng luôn trúng. Đánh người thì không dùng số này mà tùy né của đối thủ.`;
       case 'def': return `Sát thương nhận = đòn² / (đòn + phòng thủ), không dưới ${pc(H.softFloor)} đòn; đòn bằng đúng phòng thủ của bạn (${fmt(d.def)}) chỉ còn một nửa. Gồm thủ mọi món giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn, cộng ép và dòng cộng thêm; nhân thú / món ăn / Đài, đủ bộ, đồ Thần. Dùng như nhau khi bị quái hay người đánh.`;
       case 'crit': return `Tỉ lệ = ${pc(cr.base)} + Nhanh nhẹn × ${pc(cr.per_agi)} (tối đa ${pc(cr.max)}), cộng Excellent và May mắn vũ khí. Đòn chí mạng nhân ×${d.critMult.toFixed(2)} (= ${cm.base} + Nhanh nhẹn × ${cm.per_agi}, tối đa ×${cm.max}). Có ở đòn thường và kỹ năng khi đánh quái, Đồ sát, Đấu trường; PK cược thì đòn kỹ năng không chí mạng. Quái chí mạng ${pc(H.monsterCrit)} ×${H.monsterCritMult}.`;
-      case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường, PK cược). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
+      case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}; khi đánh quái cộng thêm buff né (Ảnh Bộ…), tổng tối đa ${pc(dg.max_with_buff)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường, PK cược). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
       case 'wing': return `Mọi đòn của bạn +${pc(d.wingDmg)} sát thương; đòn nhận vào chỉ còn ${pc(1 - d.wingAbsorb)}. Mỗi cấp ép cánh thêm ${pc(RULES.wingPerLevel)} cả hai. Có tác dụng cả khi đánh quái lẫn đánh người.`;
       case 'ign': return `Đòn của bạn bỏ qua ${pc(d.ignoreDef)} phòng thủ mục tiêu (dòng phụ của cánh), cả quái lẫn người.`;
       case 'hp': return 'Theo hệ số lớp, Thể lực và cấp; cộng nhẫn máu, đủ bộ giáp, đồ Thần, dòng cánh; nhân thú cưng / món ăn / Đài Phúc Lành và Excellent "máu tối đa". Hết máu là gục.';
@@ -2253,7 +2255,7 @@
   let tipAt = null; // { id?, slot?, x, y }
   let forgePick = null; // món trong túi chọn để ép ở Thợ Rèn (nút "Ép" trong tooltip)
   // dòng Ngọc Sinh Mệnh của món đồ
-  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * RULES.life.per_line} ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
+  const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * lineVal(it)} ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
   function hideTip() {
     tipAt = null;
     const el = document.getElementById('itemtip');
@@ -2286,7 +2288,7 @@
         h.push(muOpt(`May mắn (tỉ lệ ép ngọc +${lsPct(r.luck_upgrade)}%)`));
         if (it.slot === 'weapon') h.push(muOpt(`May mắn (tỉ lệ chí mạng +${lsPct(r.luck_crit)}%)`));
       }
-      if (it.opt) h.push(muOpt(`Gia tăng ${atkSlot(it) ? 'lực tấn công' : 'phòng thủ'} +${it.opt * RULES.life.per_line}`));
+      if (it.opt) h.push(muOpt(`Gia tăng ${atkSlot(it) ? 'lực tấn công' : 'phòng thủ'} +${it.opt * lineVal(it)}`));
       for (const l of it.exc_lines || []) h.push(muOpt((EXC_TEXT[l.id] || (() => l.id))(l.value)));
       if (it.wopt) {
         const v = it.wopt_value;
@@ -2463,7 +2465,7 @@
       <ul class="small muted">
         <li>Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi.</li>
         <li>Món có May mắn: tỉ lệ +${Math.round(RULES.luckSkill.luck_upgrade * 100)}%. Thất bại vẫn mất ngọc và vàng.</li>
-        <li>${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)}: thêm một dòng cộng thêm +${life.per_line} tấn công (vũ khí) hoặc phòng thủ (đồ khác), tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</li>
+        <li>${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)}: thêm một dòng cộng thêm +${Math.round(life.per_line_pct * 100)}% tấn công gốc (vũ khí) hoặc phòng thủ gốc (đồ khác), ít nhất +${life.per_line}, tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</li>
       </ul></details>`;
   }
   function forgeCard() {
@@ -2691,8 +2693,8 @@
 
   function chestCard() {
     const full = bagGear().length >= RULES.gearBag;
-    // B-15: tỉ lệ số dòng cộng thêm (mỗi dòng +RULES.life.per_line)
-    const odds = (o) => [3, 2, 1].filter((r) => o[r]).map((r) => `<span class="k-opt">+${r * RULES.life.per_line} ${o[r]}%</span>`).join(' · ');
+    // B-15: tỉ lệ số dòng cộng thêm (mỗi dòng `lineVal`)
+    const odds = (o) => [3, 2, 1].filter((r) => o[r]).map((r) => `<span class="k-opt">${r} dòng ${o[r]}%</span>`).join(' · ');
     return `<div class="card"><h3>Rương Báu</h3>
       <p class="small muted">Mở ra một món đồ hợp cấp của bạn, luôn có dòng cộng thêm.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy, bán bớt đã.</span>' : ''}</p>
       <div class="list">${P.view.chests.map((c) => `<div class="item">
@@ -2737,7 +2739,7 @@
     // Phase 15b: "giáp" rèn ra một món bất kỳ của bộ giáp (mũ / giáp / quần / găng / giày) đúng lớp
     const slots = [['weapon', 'Vũ khí'], ['armor', 'Bộ giáp (mũ, giáp, quần, găng hoặc giày)'], ['shield', 'Khiên']];
     return `<div class="card"><h3>Rèn đồ</h3>${craftLevel('smith', 'Rèn đồ')}
-      <p class="small muted">Rèn một món đồ hợp cấp bạn, luôn có dòng cộng thêm: +${3 * RULES.life.per_line} ${epic}%, +${2 * RULES.life.per_line} ${RULES.smithRare}%. Nghề càng cao càng dễ ra +${3 * RULES.life.per_line}.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
+      <p class="small muted">Rèn một món đồ hợp cấp bạn, luôn có dòng cộng thêm: 3 dòng ${epic}%, 2 dòng ${RULES.smithRare}%. Nghề càng cao càng dễ ra 3 dòng.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
       <div class="list">${slots.map(([slot, label]) => {
         const cost = Object.entries(RULES.smithCosts[slot]);
         const ok = !full && P.gold >= gold && cost.every(([id, n]) => (P.inv[id] || 0) >= n);

@@ -12,7 +12,7 @@ defmodule HacLong.Game.Gear do
     khi nạp (`load/1`) đổi `rarity` N thành N dòng cộng thêm (`opt`) và bỏ `bonus`.
   - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
   - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
-  - `opt`: số dòng cộng thêm kiểu MU (0–4, mỗi dòng `RULES.upgrade.life.per_line` tấn công / phòng thủ): rơi kèm
+  - `opt`: số dòng cộng thêm kiểu MU (0–4, mỗi dòng `Engine.line_value/1` tấn công / phòng thủ): rơi kèm
     theo trọng số (`roll/4`) hoặc thêm bằng Ngọc Sinh Mệnh (`Engine.life/2`).
   - `exc`: dòng Excellent (Phase 15c); `luck: true` / `skill: true`: dòng May mắn / Kỹ năng (Phase 15d,
     `RULES.luck_skill`); `anc: true`: đồ Bộ Thần (Phase 15g, `RULES.ancient`); `wopt`: dòng phụ của cánh `"hp" | "mp" | "ignore_def"` (Phase 15e, `RULES.wing_options`).
@@ -82,9 +82,16 @@ defmodule HacLong.Game.Gear do
 
     tag =
       case kind(g) do
-        "anc" -> "Đồ Thần"
-        "exc" -> "Hoàn hảo"
-        _ -> if (g[:opt] || 0) > 0, do: "cộng thêm #{g.opt * @life.per_line}", else: nil
+        "anc" ->
+          "Đồ Thần"
+
+        "exc" ->
+          "Hoàn hảo"
+
+        _ ->
+          if (g[:opt] || 0) > 0,
+            do: "cộng thêm #{g.opt * HacLong.Game.Engine.line_value(resolve(g))}",
+            else: nil
       end
 
     if tag, do: "#{name} (#{tag})", else: name
@@ -273,7 +280,8 @@ defmodule HacLong.Game.Gear do
            |> Enum.map(&Atom.to_string/1)
 
   @doc "Tỉ lệ một món rơi từ quái `m` là Excellent (`RULES.excellent.chance`)."
-  def exc_chance(m), do: rich(m, base_exc_chance(m))
+  # vùng chuyển sinh chỉ nhân tỉ lệ ra đồ (`drop_chance/1`), không nhân chất lượng (tránh nhân hai tầng)
+  def exc_chance(m), do: base_exc_chance(m)
 
   defp base_exc_chance(m) do
     c = @exc.chance
@@ -354,7 +362,7 @@ defmodule HacLong.Game.Gear do
   # ---------- May mắn / Kỹ năng (Phase 15d) ----------
 
   @doc "Tỉ lệ một món rơi từ quái `m` có May mắn (`RULES.luck_skill.luck_chance`)."
-  def luck_chance(m), do: rich(m, base_luck_chance(m))
+  def luck_chance(m), do: base_luck_chance(m)
 
   defp base_luck_chance(m) do
     c = @ls.luck_chance
@@ -422,7 +430,10 @@ defmodule HacLong.Game.Gear do
 
   @realms Data.rules().realms
 
-  @doc "Phase 6 (B-30): tỉ lệ rơi quý hơn ở vùng chuyển sinh: × (1 + loot_per_realm × rich), tối đa loot_max."
+  @doc """
+  Phase 6 (B-30): tỉ lệ ra đồ ở vùng chuyển sinh: × (1 + loot_per_realm × rich), tối đa loot_max. Chỉ áp cho tỉ lệ ra đồ
+  (từ "Cân bằng cuối game"): Excellent / May mắn / Thần giữ tỉ lệ gốc trên món đã rơi.
+  """
   def rich(m, c) do
     case m[:rich] do
       k when is_number(k) and k > 0 and c > 0 ->
@@ -434,7 +445,7 @@ defmodule HacLong.Game.Gear do
   end
 
   @doc "Tỉ lệ một món bộ giáp rơi từ quái `m` là đồ Thần (`RULES.ancient.chance`)."
-  def anc_chance(m), do: rich(m, base_anc_chance(m))
+  def anc_chance(m), do: base_anc_chance(m)
 
   defp base_anc_chance(m) do
     c = @anc.chance

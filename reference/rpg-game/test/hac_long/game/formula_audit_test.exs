@@ -33,19 +33,23 @@ defmodule HacLong.Game.FormulaAuditTest do
   @sword "item_0_26"
   @armor "item_8_33"
 
-  test "dòng cộng thêm (Ngọc Sinh Mệnh): vũ khí / dây chuyền + tấn công, đồ khác + phòng thủ, mỗi dòng per_line" do
+  test "dòng cộng thêm (Ngọc Sinh Mệnh): vũ khí / dây chuyền + tấn công, đồ khác + phòng thủ, mỗi dòng line_value" do
+    lv = &Engine.line_value(Data.item(&1))
     base = hero() |> wear(:weapon, Gear.new(@sword)) |> wear(:armor, Gear.new(@armor))
     opt = hero() |> wear(:weapon, Gear.new(@sword, 3)) |> wear(:armor, Gear.new(@armor, 2))
-    assert d(opt).atk - d(base).atk == 3 * @per_line
-    assert d(opt).def - d(base).def == 2 * @per_line
+    assert d(opt).atk - d(base).atk == 3 * lv.(@sword)
+    assert d(opt).def - d(base).def == 2 * lv.(@armor)
+    # % chỉ số gốc, ít nhất per_line
+    assert lv.(@sword) ==
+             max(@per_line, round(Data.item(@sword).atk * @r.upgrade.life.per_line_pct))
 
     p0 = hero() |> wear(:pendant, Gear.new("item_13_27"))
     p2 = hero() |> wear(:pendant, Gear.new("item_13_27", 2))
-    assert d(p2).atk - d(p0).atk == 2 * @per_line
+    assert d(p2).atk - d(p0).atk == 2 * lv.("item_13_27")
 
     r0 = hero() |> wear(:ring1, Gear.new("item_13_24"))
     r1 = hero() |> wear(:ring1, Gear.new("item_13_24", 1))
-    assert d(r1).def - d(r0).def == @per_line
+    assert d(r1).def - d(r0).def == lv.("item_13_24")
   end
 
   test "ép +N: mỗi cấp hiệu dụng + bonus_pct chỉ số món; từ double_from tính gấp đôi" do
@@ -188,6 +192,18 @@ defmodule HacLong.Game.FormulaAuditTest do
       key = %{"hp" => :maxHp, "atk" => :atk, "def" => :def}[k]
       assert_in_delta Map.fetch!(d(p), key), Map.fetch!(b, key) * (1 + Blessing.rules().pct), 1
     end
+  end
+
+  test "né trong trận: buff né cộng thêm nhưng không vượt trần max_with_buff" do
+    p = hero()
+    {_, p} = Engine.start_battle(p, 0, true)
+    base = Engine.dodge_chance(p)
+    assert base == d(p).dodge
+
+    buffed =
+      put_in(p.battle[:effects], %{player: [%{id: "evade", turns: 2, power: 1.0}], monster: []})
+
+    assert Engine.dodge_chance(buffed) == @r.combat.dodge.max_with_buff
   end
 
   test "sát thương: thủ kiểu đòn²/(đòn+thủ), sàn mềm, sàn cứng 1, × taken" do

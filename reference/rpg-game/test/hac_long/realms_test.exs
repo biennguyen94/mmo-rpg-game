@@ -49,15 +49,17 @@ defmodule HacLong.RealmsTest do
     base = Engine.make_monster(%{id: "x", name: "x", level: @r.stat_level}, false)
     assert m.level == 150
     assert m.maxHp == round(base.maxHp * spec.mult)
-    assert m.atk == round(base.atk * spec.mult)
+    # công nhân hệ số riêng, nhẹ hơn máu (phòng thủ người chơi còn ý nghĩa)
+    assert m.atk == round(base.atk * spec.atk_mult) and spec.atk_mult < spec.mult
     assert m.element == "light"
 
     plain = %{boss: false}
     rich = %{boss: false, rich: 5}
     assert Gear.drop_chance(rich) > Gear.drop_chance(plain)
 
-    assert Gear.exc_chance(rich) ==
-             min(@r.loot_max, Gear.exc_chance(plain) * (1 + @r.loot_per_realm * 5))
+    # chỉ nhân tỉ lệ ra đồ, chất lượng món đã rơi giữ tỉ lệ gốc (không nhân hai tầng)
+    assert Gear.exc_chance(rich) == Gear.exc_chance(plain)
+    assert Gear.luck_chance(rich) == Gear.luck_chance(plain)
   end
 
   test "tháp: tầng 1–60 vùng cũ, 61–160 vùng chuyển sinh, sau đó quay vòng có tiền tố" do

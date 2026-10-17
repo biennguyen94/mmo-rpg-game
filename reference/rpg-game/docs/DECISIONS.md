@@ -507,3 +507,24 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   (`World.finish_encounter/2` với kết quả "fled": quái nhả ra, giữ máu; đồng đội đánh tiếp), không phạt; nhật ký trận đồ sát ghi
   "Trận với … bị cắt ngang". Chỉ chặn khi người đó đang trong một trận đồ sát khác (`Slay.slaying?/1`).
 - Người tấn công vẫn phải rảnh tay (không trong trận nào). Tự đánh của người bị đánh tự tắt như trước (bị đồ sát).
+
+## Cân bằng cuối game (2026-10-17, anh chốt "ok như đề xuất")
+- **A. Công quái vùng chuyển sinh** tách khỏi máu: máu vẫn × (1 + 0,4k), công × (1 + 0,15k) (`RULES.realms.atk_mult_per_realm`,
+  `realms.json` thêm `atk_mult`, chúa tể × hệ số chúa tể). Trước đó công nhân cùng hệ số máu nên vùng 10 công ×5, giáp gần như vô dụng.
+- **B. Ngọc vùng chuyển sinh**: 2 % + 1 %·k mỗi con (`jewel_per_realm` 0,004 → 0,01). Vàng đã nhân theo vùng nên giữ.
+- **C. "Rơi quý thêm"** chỉ nhân tỉ lệ ra đồ; tỉ lệ Excellent / May mắn / Thần nhân không nhân nữa (trước nhân hai lần: nhiều đồ rơi hơn và mỗi món dễ quý hơn).
+- **D. Dòng cộng thêm / Ngọc Sinh Mệnh**: mỗi dòng = 4 % công (vũ khí) hoặc thủ (món khác) gốc của món, ít nhất +4
+  (`RULES.upgrade.life.per_line_pct`; `Engine.line_value/1`, client `lineVal`). Trước cộng phẳng +4 nên đồ bậc cao gần như không đáng ép dòng.
+- **E. Né trong trận đánh quái** cộng buff né (Ảnh Bộ…) tối đa 85 % (`RULES.combat.dodge.max_with_buff`; `Engine.dodge_chance/2`). Trước buff cộng không trần.
+- **F. MP kỹ năng** tăng 2 % mỗi cấp nhân vật (`skill_mp_per_level` 0,04 → 0,02): cấp 50 trước tốn ×2,96, nay ×1,98.
+- Không làm (để sau): đường cong ép +N so với bậc đồ, định giá hiệu ứng kỹ năng.
+- Mô phỏng (Kiếm Sĩ cấp 50, đồ bậc 11 +7 hai dòng, cánh cấp 3 +7, 200 trận mỗi loại quái), trước → sau:
+
+  | Quái | Công | Máu mất mỗi trận thắng | Thua | Excellent / 100 con | Ngọc / 100 con |
+  |---|---|---|---|---|---|
+  | Vùng 1 | 462 → 379 | 3,5 % → 2,4 % | 0 → 0 | — | — |
+  | Vùng 5 | 990 → 578 | 16,8 % → 6,4 % | 0 → 0 | 1,8 → 1,2 | 4 → 7 |
+  | Vùng 10 | 1650 → 825 | 55 % → 27 % | 25 % → 0 % | 3,2 → 1,6 | 6 → 12 |
+  | Chúa tể vùng 10 | 2970 → 1485 | — | 100 % → 83 % (không bình) | — | 30 → 60 |
+
+- `mix hac_long.simulate 5 --seed 42`: cả 4 lớp vẫn hạ Hắc Long 5/5; Kiếm Sĩ "chỉ đánh" 508 → 451 trận, chết 6 → 1; các lớp khác xê dịch ít.

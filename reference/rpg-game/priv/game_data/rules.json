@@ -38,7 +38,9 @@
         "per_agi": 0.0025,
         "max": 0.4,
         "max_total": 0.6,
-        "_doc_max_total": "Phase 8 (B-28): trần né sau khi nhân Excellent def_rate"
+        "_doc_max_total": "Phase 8 (B-28): trần né sau khi nhân Excellent def_rate",
+        "max_with_buff": 0.85,
+        "_doc_max_with_buff": "Trần né khi cộng thêm buff né (ảnh bộ, Tinh Linh Hộ Vệ…); trước đây không có trần nên buff +100% là né chắc chắn (DECISIONS \"Cân bằng cuối game\")"
       },
       "damage_spread": [
         0.9,
@@ -58,7 +60,7 @@
       "monster_crit_mult": 1.5,
       "wing_per_level": 0.02,
       "mp_regen_ene": 0.1,
-      "skill_mp_per_level": 0.04
+      "skill_mp_per_level": 0.02
     },
     "skill_effects": {
       "cleave": {
@@ -367,6 +369,8 @@
       "life": {
         "jewel": "jewel_life",
         "per_line": 4,
+        "per_line_pct": 0.04,
+        "_per_line_doc": "Mỗi dòng cộng thêm (rơi kèm, Ngọc Sinh Mệnh, rèn): per_line_pct × công (vũ khí, dây chuyền) hoặc thủ gốc của món, ít nhất per_line (DECISIONS \"Cân bằng cuối game\").",
         "max_lines": 4,
         "rate": 0.5
       }
@@ -474,17 +478,18 @@
       "verified": false
     },
     "realms": {
-      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), cấp hiện trên quái 50+10k−8 … 50+10k (vàng, kinh nghiệm theo cấp hiện). Rơi đồ quý hơn: tỉ lệ ra đồ / Excellent / May mắn / đồ Thần × (1 + loot_per_realm × rich), tối đa loot_max; ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5).",
+      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), riêng công × (1 + atk_mult_per_realm × k) (× boss_mult) cho phòng thủ còn ý nghĩa (version 2, DECISIONS \"Cân bằng cuối game\"), cấp hiện trên quái 50+10k−8 … 50+10k (vàng, kinh nghiệm theo cấp hiện). Rơi đồ nhiều hơn: tỉ lệ ra đồ × (1 + loot_per_realm × rich), tối đa loot_max (Excellent / May mắn / đồ Thần trên món đã rơi giữ tỉ lệ gốc, version 2); ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5).",
       "min_level": 40,
       "stat_level": 50,
       "mult_per_realm": 0.4,
+      "atk_mult_per_realm": 0.15,
       "boss_mult": 1.8,
       "loot_per_realm": 0.1,
       "loot_max": 0.9,
       "jewel_base": 0.02,
-      "jewel_per_realm": 0.004,
+      "jewel_per_realm": 0.01,
       "sourceType": "DESIGN",
-      "version": 1,
+      "version": 2,
       "verified": false
     },
     "blessing": {

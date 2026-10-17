@@ -384,7 +384,7 @@
       "slot": "material",
       "icon": "gem-life",
       "price": 1250,
-      "desc": "Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối. Rơi như Ngọc Ước Nguyện."
+      "desc": "Ép ở Thợ Rèn: thêm một dòng cộng thêm 4 % tấn công gốc (vũ khí) hoặc phòng thủ gốc (giáp, khiên, cánh), ít nhất +4, tối đa 4 dòng; 50 %, thất bại mất dòng cuối. Rơi như Ngọc Ước Nguyện."
     },
     "wing_dk_1": {
       "name": "Cánh Ác Quỷ",

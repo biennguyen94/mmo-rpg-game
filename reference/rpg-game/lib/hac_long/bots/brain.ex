@@ -32,7 +32,6 @@ defmodule HacLong.Bots.Brain do
   @shop Data.rules().bots
   @hp_ids ~w(potion_s potion_m potion_l)
   @mp_ids ~w(mana_s mana_m mana_l)
-  @opt_line Data.rules().upgrade.life.per_line
 
   @doc """
   Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
@@ -154,7 +153,7 @@ defmodule HacLong.Bots.Brain do
   def power(nil), do: 0
 
   def power(it),
-    do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * @opt_line
+    do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * Engine.line_value(it)
 
   # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
   defp heal(p, _d, snap) do

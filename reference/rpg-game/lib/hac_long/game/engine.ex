@@ -483,7 +483,8 @@ defmodule HacLong.Game.Engine do
       raid: Map.get(spec, :raid),
       jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + sl * @mon.hp.level + sl * sl * @mon.hp.level_sq) * m * bm),
-      atk: round((@mon.atk.base + sl * @mon.atk.level) * m),
+      # vùng chuyển sinh: công nhân hệ số riêng `atk_mult` (nhẹ hơn máu), không có thì như máu
+      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m)),
       def: round((@mon.def.base + sl * @mon.def.level) * m),
       # Phase 6: vùng chuyển sinh rơi đồ quý hơn (`Gear.rich/2`)
       rich: Map.get(spec, :rich, 0),
@@ -780,6 +781,10 @@ defmodule HacLong.Game.Engine do
       e -> e.power
     end
   end
+
+  @doc "Tỉ lệ né đòn thường của quái trong trận: né (đã có trần) + buff né, tối đa `RULES.combat.dodge.max_with_buff`."
+  def dodge_chance(p, d \\ nil),
+    do: min(@combat.dodge.max_with_buff, (d || derived(p)).dodge + power(p, :player, "evade"))
 
   defp set_effects(p, who, list) do
     all = Map.get(p.battle, :effects) || %{player: [], monster: []}
@@ -1278,7 +1283,7 @@ defmodule HacLong.Game.Engine do
       m_atk = round(m_atk * (1 - power(p, :monster, "weaken")))
 
       p =
-        if not special and chance(d.dodge + power(p, :player, "evade")) do
+        if not special and chance(dodge_chance(p, d)) do
           log(p, "Bạn né được đòn của #{m.name}.", "info")
         else
           mc = not special and chance(m.crit)
@@ -2041,7 +2046,7 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   Ngọc Sinh Mệnh (`RULES.upgrade.life`): thêm một dòng tùy chọn cho món `target` (như `upgrade/3`):
-  vũ khí +`per_line` tấn công, giáp / khiên / cánh +`per_line` phòng thủ, tối đa `max_lines`. Tỉ lệ `rate`;
+  vũ khí +`line_value/1` tấn công, giáp / khiên / cánh +`line_value/1` phòng thủ, tối đa `max_lines`. Tỉ lệ `rate`;
   thất bại mất dòng cuối.
   """
   def life(p, target) do
@@ -2074,7 +2079,9 @@ defmodule HacLong.Game.Engine do
 
         {r, p} =
           if chance(l.rate) do
-            {ok("💚 #{it.name}: thêm dòng +#{l.per_line} #{stat} (#{lines + 1}/#{l.max_lines}).")
+            {ok(
+               "💚 #{it.name}: thêm dòng +#{line_value(it)} #{stat} (#{lines + 1}/#{l.max_lines})."
+             )
              |> Map.put(:life, %{result: "success", lines: lines + 1}),
              Gear.put(p, uid, :opt, lines + 1)}
           else
@@ -2094,10 +2101,21 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  @doc "Tấn công / phòng thủ cộng thêm từ dòng Ngọc Sinh Mệnh của món `id`."
+  @doc "Tấn công / phòng thủ cộng thêm từ dòng cộng thêm (Ngọc Sinh Mệnh) của món `id`."
   def life_bonus(p, id) do
-    if Gear.instance?(id), do: ((Gear.find(p, id) || %{})[:opt] || 0) * @up.life.per_line, else: 0
+    if Gear.instance?(id),
+      do: ((Gear.find(p, id) || %{})[:opt] || 0) * line_value(Gear.item(p, id)),
+      else: 0
   end
+
+  @doc """
+  Giá trị một dòng cộng thêm của món `it`: `per_line_pct` × công (vũ khí, dây chuyền) hoặc thủ gốc, ít nhất `per_line`
+  (từ "Cân bằng cuối game": dòng cộng thêm theo bậc đồ thay vì +4 phẳng).
+  """
+  def line_value(nil), do: @up.life.per_line
+
+  def line_value(it),
+    do: max(@up.life.per_line, round((it[:atk] || it[:def] || 0) * @up.life.per_line_pct))
 
   @doc """
   Vứt đồ: `n` món đồ thường `id`, hoặc món đồ hiếm `id` (uid). Không vứt đồ đang mặc, đang khóa,

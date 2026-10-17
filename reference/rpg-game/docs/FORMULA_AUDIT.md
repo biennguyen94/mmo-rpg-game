@@ -40,7 +40,7 @@ Trong game: tab Nhân vật, bấm vào từng dòng chỉ số để xem giải
 ## 2. Kết quả kiểm
 
 **Đúng (có test):**
-- Dòng cộng thêm: vũ khí / dây chuyền → tấn công, giáp / khiên / cánh / nhẫn → phòng thủ, +4 mỗi dòng.
+- Dòng cộng thêm: vũ khí / dây chuyền → tấn công, giáp / khiên / cánh / nhẫn → phòng thủ, mỗi dòng 4 % công / thủ gốc của món, ít nhất +4 (cân bằng cuối game 2026-10-17).
 - Ép +1…+11, cấp hiệu dụng gấp đôi từ +10.
 - Cả 12 dòng Excellent: cộng đúng chỉ số; trần giảm sát thương / phản đòn 20 % khi mặc nhiều món.
   - `gold_pct` vào vàng khi hạ quái.

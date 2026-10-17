@@ -70,10 +70,10 @@ defmodule HacLong.Game.EngineTest do
     {%{ok: true}, p} = Engine.act(p, "skill", "heal")
     assert Engine.cooldown(p, "heal") == 4
 
-    # tốn MP theo cấp (14 × (1 + 0.04 × 9) = 19), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
+    # tốn MP theo cấp (14 × (1 + 0.02 × 9) = 17), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
     max_mp = Engine.derived(p).maxMp
     cost = Engine.skill_mp(p, Enum.find(Engine.skills(p), &(&1.id == "heal")))
-    assert cost == 19
+    assert cost == 17
     assert p.mp == min(max_mp, mp + round(max_mp * 0.03 + p.stats.ene * 0.1)) - cost
     assert Enum.any?(p.battle.log, &(&1.text =~ "Khiên Thánh hồi"))
 
