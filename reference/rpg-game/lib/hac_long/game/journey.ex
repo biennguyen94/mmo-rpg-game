@@ -16,19 +16,23 @@ defmodule HacLong.Game.Journey do
   - đồ: mỗi khi lên cấp / nhặt đồ, thử mặc từng món trong túi và đồ cửa hàng mua được, giữ món làm tăng
     `score/1` (công × độ trâu); đồ thừa bán, giữ một món đã ép cao nhất làm nguyên liệu cánh;
   - ép: Ước Nguyện lên +6, Tâm Linh +7 → +9 (có thể về +0), Ngọc Sinh Mệnh thêm dòng, theo thứ tự vũ khí → giáp → …;
-    +10 / +11 ở Máy Hỗn Nguyên chỉ khi `chaos_up` (thất bại về +0, mất hết +9);
+    +10 / +11 ở Máy Hỗn Nguyên khi `chaos_up` hoặc từ lần chuyển sinh `chaos_from` (thất bại về +0, mất hết +9);
   - cánh: ghép cánh 1 → 2 → 3 ở Máy Hỗn Nguyên khi đủ nguyên liệu (`wings`);
   - thú cưng (`pets`): mua / thuần phục con mạnh hơn hẳn khi giá ≤ 30 % vàng dư, dắt con mạnh nhất, dư nhiều vàng thì
     cho ăn (`feed`);
+  - tháp (`tower`): mỗi `tower_every` trận (từ cấp `tower_level`) leo Tháp Vô Tận từ tầng bắt đầu cao nhất đã mở,
+    đánh hết quái từng tầng bằng `Tower.build/2` + `Tower.battle_monster/1`, lên cầu thang bằng `Tower.climb/1` (thưởng
+    vàng, kinh nghiệm, ngọc mỗi 10 tầng, kỷ lục `tower_best` mở kỹ năng tháp); dừng khi máu < 50 % sau một tầng,
+    đã leo `tower_floors` tầng, hoặc thua (chết như ngoài bản đồ). Kỹ năng mang vào trận: bộ mạnh nhất mặc định;
   - nghỉ trọ khi máu < 60 % (hết vàng thì về Nhà uống giếng, miễn phí), mua bình như bot (`Brain.restock/1`);
   - chuyển sinh ngay khi đạt cấp tối đa (nếu `boss_first`: sau khi hạ Hắc Long).
 
-  Không mô phỏng: việc hằng ngày, sự kiện, tháp, nhà / nấu ăn, chợ, tổ đội, PK, trùm thế giới.
+  Không mô phỏng: việc hằng ngày, sự kiện, nhà / nấu ăn, chợ, tổ đội, PK, trùm thế giới.
   Hàm thuần; số ngẫu nhiên theo `:rand` (đặt seed ở mix task để chạy lại ra đúng kết quả).
   """
 
   alias HacLong.Bots.Brain
-  alias HacLong.Game.{Chaos, Data, Engine, Gear, Pets, Quests}
+  alias HacLong.Game.{Chaos, Data, Engine, Gear, Pets, Quests, Tower}
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -39,6 +43,11 @@ defmodule HacLong.Game.Journey do
     soul: true,
     wings: true,
     chaos_up: false,
+    chaos_from: 5,
+    tower: true,
+    tower_every: 300,
+    tower_level: 30,
+    tower_floors: 30,
     boss_first: true,
     ban_window: 8,
     ban_losses: 2,
@@ -88,6 +97,8 @@ defmodule HacLong.Game.Journey do
       ban: %{},
       boss_cd: 0,
       lord_at: %{},
+      tower_at: 0,
+      tower: %{runs: 0, floors: 0, fights: 0, losses: 0},
       map: nil,
       seen_maps: MapSet.new(),
       gear_key: nil,
@@ -130,6 +141,12 @@ defmodule HacLong.Game.Journey do
       finished?(p, st) and (st.farm || 0) <= 0 ->
         {p, %{event(st, p, "Hoàn thành: chuyển sinh #{rb(p)}, cấp #{p.level}.") | done: true}}
 
+      tower?(p, st) ->
+        p
+        |> heal(st, 1.0)
+        |> then(fn {p, st} -> tower_run(p, st) end)
+        |> then(fn {p, st} -> loop(p, st) end)
+
       true ->
         p
         |> heal(st)
@@ -162,11 +179,11 @@ defmodule HacLong.Game.Journey do
 
   # ---------- Hồi máu ----------
 
-  defp heal(p, st) do
+  defp heal(p, st, at \\ 0.6) do
     d = Engine.derived(p)
 
     cond do
-      p.hp >= d.maxHp * 0.6 ->
+      p.hp >= d.maxHp * at ->
         {p, st}
 
       p.gold >= Engine.rest_cost(p) ->
@@ -177,6 +194,121 @@ defmodule HacLong.Game.Journey do
       true ->
         # hết vàng: về Nhà uống giếng (miễn phí)
         {Map.merge(p, %{hp: d.maxHp, mp: d.maxMp}), %{st | fountain: st.fountain + 1}}
+    end
+  end
+
+  # ---------- Tháp Vô Tận ----------
+
+  defp tower?(p, st),
+    do:
+      st.opts.tower and p.level >= st.opts.tower_level and
+        st.fights - st.tower_at >= st.opts.tower_every
+
+  @tower_map %{id: "tower", name: "Tháp Vô Tận"}
+
+  defp tower_run(p, st) do
+    best0 = Map.get(p, :tower_best) || 0
+    skills0 = Engine.available_skills(p) |> Enum.map(& &1.id)
+    start = List.last(Tower.starts(best0))
+
+    # nhân vật mô phỏng không có vị trí; tháp cần (`Tower.climb/1` đặt chỗ đứng tầng mới)
+    pos = p[:pos]
+    p = Map.put(p, :pos, pos || %{map: "village", x: 1, y: 1})
+    st = %{st | tower_at: st.fights, tower: %{st.tower | runs: st.tower.runs + 1}}
+
+    {p, st, top} =
+      tower_floor(Map.put(p, :tower, tower_build(st, start)), st, start, start, start - 1)
+
+    p =
+      p
+      |> Map.put(:tower, nil)
+      |> then(&if(pos, do: %{&1 | pos: pos}, else: Map.delete(&1, :pos)))
+
+    best = Map.get(p, :tower_best) || 0
+    new = Engine.available_skills(p) |> Enum.map(& &1.id) |> Kernel.--(skills0)
+
+    st =
+      event(
+        st,
+        p,
+        "Leo tháp từ tầng #{start}: vượt tới tầng #{top}" <>
+          if(best > best0, do: " (kỷ lục mới #{best})", else: " (kỷ lục #{best})") <>
+          if(new != [],
+            do: " · mở kỹ năng tháp #{Enum.map_join(new, ", ", &skill_name(p, &1))}",
+            else: ""
+          ) <> "."
+      )
+
+    {p, st}
+  end
+
+  defp skill_name(p, id),
+    do: Enum.find_value(Engine.available_skills(p), id, &(&1.id == id && &1.name))
+
+  # tầng riêng dựng theo số trận (chạy lại cùng seed ra cùng tầng)
+  defp tower_build(st, floor), do: Tower.build(floor, "journey|#{st.fights}")
+
+  # đánh hết quái tầng `floor` rồi lên cầu thang; trả {nhân vật, st, tầng cao nhất đã vượt}
+  defp tower_floor(p, st, start, floor, top) do
+    case p.tower.monsters do
+      [m | _] ->
+        case tower_fight(p, st, floor, m) do
+          {p, st, "win"} -> tower_floor(p, st, start, floor, top)
+          {p, st, _lost} -> {p, st, top}
+        end
+
+      [] ->
+        {_, p} = Tower.climb(p)
+        p = Map.put(p, :tower, tower_build(st, floor + 1))
+        d = Engine.derived(p)
+        p = potions(p)
+
+        if p.hp < d.maxHp * 0.5 or floor - start + 1 >= st.opts.tower_floors,
+          do: {p, st, floor},
+          else: tower_floor(p, st, start, floor + 1, floor)
+    end
+  end
+
+  defp tower_fight(p, st, floor, m) do
+    lv0 = p.level
+    max0 = Engine.derived(p).maxHp
+    zi = min(div(floor - 1, 10), Data.zone_count() - 1)
+
+    case Engine.start_with_monster(p, zi, Tower.battle_monster(m)) do
+      {%{ok: true}, p} ->
+        p = put_in(p, [:battle, :encounter], %{tower: m.id})
+        {p, taken} = fight(p, 0)
+        b = p.battle
+        res = b.result
+        reward = b.reward || %{xp: 0, gold: 0}
+        p = Tower.after_battle(p)
+        {_, p} = Engine.leave_battle(p)
+        lost = if res == "win", do: taken / max0, else: 1.0
+        t = st.tower
+
+        st =
+          %{
+            st
+            | fights: st.fights + 1,
+              turns: st.turns + b.turn,
+              tower: %{
+                t
+                | fights: t.fights + 1,
+                  losses: t.losses + if(res == "win", do: 0, else: 1),
+                  floors: t.floors + if(p[:tower] && p.tower.monsters == [], do: 1, else: 0)
+              }
+          }
+          |> record(p, @tower_map, b.monster, res, b.turn, lost, reward, lv0)
+
+        st =
+          if res == "win",
+            do: st,
+            else: event(st, p, "💀 Thua #{b.monster.name} ở tháp tầng #{floor}.")
+
+        {p, st, res}
+
+      _ ->
+        {p, st, "skip"}
     end
   end
 
@@ -544,6 +676,7 @@ defmodule HacLong.Game.Journey do
       lines: st.lines,
       wing_tries: st.wing_tries,
       pet_gold: st.pet_gold,
+      tower: Map.put(st.tower, :best, Map.get(p, :tower_best) || 0),
       events: Enum.reverse(st.events),
       cycles: st.cycles,
       bands: st.bands,
@@ -834,7 +967,8 @@ defmodule HacLong.Game.Journey do
 
     ok? =
       cost != nil and p.gold >= cost.gold + reserve(p) and spendable?(p, st, cost.items) and
-        (cost.fail != "reset" or st.opts.soul) and (cost.at == "smith" or st.opts.chaos_up)
+        (cost.fail != "reset" or st.opts.soul) and
+        (cost.at == "smith" or st.opts.chaos_up or rb(p) >= st.opts.chaos_from)
 
     if ok? do
       {r, p} = Engine.upgrade(p, slot, true, cost.at)

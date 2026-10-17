@@ -648,3 +648,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Quái bản đồ 1 giữ id cũ (sổ quái, thú đã thuần không đổi); bản đồ sau `r<k>_<loài>_<n>` (`depth: n`), hình tô tối dần.
 - Chúa tể dời sang bản đồ 5, sức vẫn theo vùng k, đánh dấu `lord: true` (trước nhận diện bằng `rich > k`, nay bản đồ sâu có
   `rich` lẻ nên đổi sang cờ: `Engine.realm_lord/1`, thú cưng, tháp, mô phỏng). Tháp tầng 61–160 chỉ dùng quái bản đồ 1.
+
+## Mô phỏng hành trình: leo tháp, ép +10/+11 ở chặng cao (2026-10-17, anh yêu cầu mô phỏng đầy đủ hơn)
+- Trước đó mô phỏng không leo tháp (không có kỹ năng tháp) và không ép +10/+11, nên nhân vật chuyển sinh cao yếu hơn người
+  chơi thật. Thử chúa tể với cùng nhân vật (200 trận, chúa tể giữ nguyên sức): Pháp Sư chúa tể vùng 9 0 % → tháp 100: 84 %,
+  +9 đủ 4 dòng + tháp 100: 98,5 %; Thuật Sĩ chúa tể vùng 8 0 % → tháp 50: 62 %, +9 + tháp 100: 99,5 %.
+- `Journey` thêm: leo Tháp Vô Tận mỗi `tower_every` (300) trận từ cấp `tower_level` (30), từ tầng bắt đầu cao nhất đã mở,
+  tối đa `tower_floors` (30) tầng / lần, dừng khi máu < 50 % sau một tầng hoặc thua; dùng `Tower.build/2`,
+  `Tower.battle_monster/1`, `Tower.climb/1` (thưởng, ngọc mỗi 10 tầng, kỷ lục mở kỹ năng tháp). Ép +10/+11 tự bật từ lần
+  chuyển sinh `chaos_from` (5). Tùy chọn `--no-tower`, `--tower-every`, `--tower-floors`, `--chaos-from`.

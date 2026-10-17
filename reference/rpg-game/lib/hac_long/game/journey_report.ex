@@ -16,6 +16,7 @@ defmodule HacLong.Game.JourneyReport do
     | #{r.fights} | #{r.turns} | #{dec(r.turns / max(1, r.fights))} | #{r.deaths} | #{r.rebirths} | #{r.level} | #{r.bosses} | #{r.rest_gold} | #{r.fountain} |
 
     Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần · vàng cho thú cưng (mua, thuần, cho ăn) #{r.pet_gold}.
+    #{tower(r)}
 
     ## Từng chặng (giữa hai lần chuyển sinh)
     #{cycles(r)}
@@ -33,6 +34,12 @@ defmodule HacLong.Game.JourneyReport do
     #{events(r)}
     """
   end
+
+  defp tower(%{tower: t}) when is_map(t),
+    do:
+      "Tháp Vô Tận: #{t.runs} lần leo, vượt #{t.floors} tầng, #{t.fights} trận (thua #{t.losses}), kỷ lục tầng #{t.best}."
+
+  defp tower(_r), do: ""
 
   defp cycles(r) do
     head =

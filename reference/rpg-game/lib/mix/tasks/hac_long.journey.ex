@@ -12,7 +12,9 @@ defmodule Mix.Tasks.HacLong.Journey do
 
   Tùy chọn: `--cls dk|dw|elf|mg|all`, `--rebirths N` (0–10), `--seed N`, `--max-fights N`,
   `--farm N` (đủ chuyển sinh và cấp tối đa rồi cày thêm N trận: xem rơi đồ, ép, cánh ở vùng cuối),
-  `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép cả +10/+11, thất bại về +0),
+  `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép cả +10/+11 ngay từ đầu, thất bại về +0),
+  `--chaos-from N` (tự ép +10/+11 từ lần chuyển sinh N, mặc định 5), `--no-tower` (không leo tháp),
+  `--tower-every N` (leo tháp mỗi N trận, mặc định 300), `--tower-floors N` (tối đa N tầng mỗi lần leo, mặc định 30),
   `--no-boss-first` (chuyển sinh ngay ở cấp tối đa dù chưa hạ Hắc Long),
   `--no-pets` (không nuôi thú), `--no-feed` (không cho thú ăn), `--out thư_mục` (mặc định `tmp/journey`).
 
@@ -33,6 +35,10 @@ defmodule Mix.Tasks.HacLong.Journey do
     soul: :boolean,
     wings: :boolean,
     chaos_up: :boolean,
+    chaos_from: :integer,
+    tower: :boolean,
+    tower_every: :integer,
+    tower_floors: :integer,
     boss_first: :boolean,
     pets: :boolean,
     feed: :boolean,
@@ -56,7 +62,7 @@ defmodule Mix.Tasks.HacLong.Journey do
     opts =
       o
       |> Keyword.take(
-        ~w(rebirths max_fights farm quests soul wings chaos_up boss_first pets feed)a
+        ~w(rebirths max_fights farm quests soul wings chaos_up chaos_from tower tower_every tower_floors boss_first pets feed)a
       )
       |> Keyword.put(:rows, o[:csv] == true)
 
