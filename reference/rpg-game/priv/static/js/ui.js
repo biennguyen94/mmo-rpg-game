@@ -2493,10 +2493,10 @@
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
       const step = c ? Math.round(per * upEff(f.level + 1)) - Math.round(per * upEff(f.level)) : 0;
-      const odds = c && c.rate < 1 ? `Tỉ lệ <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
+      const odds = c && c.rate < 1 ? `<div class="small muted">Tỉ lệ <b>${Math.round(c.rate * 100)}%</b></div>${c.fail ? `<div class="small" style="color:var(--bad)">${RISK[c.fail]}</div>` : ''}` : '';
       return `<div class="item">${itemIcon(it, it.kind, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? (() => { const d = (k) => Math.round((wingUp(k, it.tier, f.level + 1) - wingUp(k, it.tier, f.level)) * 1000) / 10; return `, +${d('dmg')}% sát thương, +${d('absorb')}% hấp thụ`; })() : ''}</div>${odds ? `<div class="small muted">${odds}</div>` : ''}${needList(need)}`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? (() => { const d = (k) => Math.round((wingUp(k, it.tier, f.level + 1) - wingUp(k, it.tier, f.level)) * 1000) / 10; return `, +${d('dmg')}% sát thương, +${d('absorb')}% hấp thụ`; })() : ''}</div>${odds}${needList(need)}`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}
@@ -2654,7 +2654,8 @@
       const ok = P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       return `<div class="item">${itemIcon(it, it.kind, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          <div class="small muted">Lên +${f.level + 1} · tỉ lệ <b>${Math.round(c.rate * 100)}%</b></div>
+          <div class="small muted">Lên +${f.level + 1}</div>
+          <div class="small muted">Tỉ lệ <b>${Math.round(c.rate * 100)}%</b></div>
           <div class="small" style="color:var(--bad)">${RISK[c.fail]}</div>
           ${needList(need)}
         </div>
