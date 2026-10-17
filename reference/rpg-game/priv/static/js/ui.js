@@ -1869,7 +1869,7 @@
       <div class="card"><div class="row"><h3 class="grow">Kỹ năng</h3><button class="btn small-btn primary" data-act="skill-pick-open">⚙ Chọn bộ kỹ năng</button></div>
         <p class="small muted">Mang tối đa ${(RULES.towerSkills || {}).loadout || 4} kỹ năng vào trận. Nguyên tố: ${Object.keys(EL.beats || {}).filter((e) => !['light', 'dark'].includes(e)).map((e) => `${elTag(e)} khắc ${(EL.beats[e] || []).map(elTag).join('')}`).join(' · ')} · ${elTag('light')} ↔ ${elTag('dark')}.</p>
         <h4>Kỹ năng lớp</h4><div class="list">${c.skills.map(row).join('')}</div>
-        <h4>Kỹ năng Tháp Thử Thách</h4><div class="list">${(c.tower_skills || []).map(row).join('')}</div>
+        <h4>Kỹ năng Tháp Vô Tận</h4><div class="list">${(c.tower_skills || []).map(row).join('')}</div>
       </div>${viewSkillPick()}`;
   }
 
@@ -2995,7 +2995,7 @@
         <span class="small">${locked ? lock : on ? `✔ ${skillPick.indexOf(k.id) + 1}` : ''}</span></button>`;
     };
     return `<div class="map-dialog card skill-dialog"><div class="row"><h3 class="grow">⚙ Bộ kỹ năng (${skillPick.length}/${max})</h3><button class="btn small-btn" data-act="skill-pick-close">✕</button></div>
-      <p class="small muted">Chọn tối đa ${max} kỹ năng mang vào trận. Kỹ năng tháp mở khi kỷ lục Tháp Thử Thách đạt tầng ghi bên cạnh. Đúng hệ khắc nguyên tố quái: +${Math.round(EL.strong * 100)}% sát thương, bị khắc: −${Math.round(EL.weak * 100)}%.</p>
+      <p class="small muted">Chọn tối đa ${max} kỹ năng mang vào trận. Kỹ năng tháp mở khi kỷ lục Tháp Vô Tận đạt tầng ghi bên cạnh. Đúng hệ khắc nguyên tố quái: +${Math.round(EL.strong * 100)}% sát thương, bị khắc: −${Math.round(EL.weak * 100)}%.</p>
       <div class="list">${allSkills().map(row).join('')}</div>
       <div class="btn-row"><button class="btn primary" data-act="skill-pick-save" ${skillPick.length ? '' : 'disabled'}>Lưu bộ kỹ năng</button></div></div>`;
   }

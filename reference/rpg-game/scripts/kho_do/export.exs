@@ -7,6 +7,8 @@ out = %{
   classes: Data.classes(),
   realm_monsters: Data.side_monsters() |> Enum.filter(&String.starts_with?(&1.id, "r")) |> Enum.filter(&Map.has_key?(&1, :stat_level)),
   rules: Data.rules(),
+  chaos: Data.chaos(),
+  jewels: Data.jewels(),
   maps: HacLong.World.Maps.ids() |> Enum.map(&HacLong.World.Maps.get/1) |> Enum.filter(&(&1[:realm])) |> Enum.map(&Map.take(&1, [:id, :name, :realm, :min_rebirths, :min_level]))
 }
 File.write!(System.argv() |> hd, Jason.encode!(out, pretty: false))

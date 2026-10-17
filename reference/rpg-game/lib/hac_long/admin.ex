@@ -83,7 +83,7 @@ defmodule HacLong.Admin do
      end}
   end
 
-  # Phase 3: kỷ lục Tháp Thử Thách (mở kỹ năng tháp ở tầng 10, 20, … 100)
+  # Phase 3: kỷ lục Tháp Vô Tận (mở kỹ năng tháp ở tầng 10, 20, … 100)
   def build("set_tower", %{"floor" => f}) when is_integer(f) and f in 0..1000 do
     {:ok,
      fn p ->

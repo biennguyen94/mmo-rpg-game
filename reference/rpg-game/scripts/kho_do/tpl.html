@@ -68,7 +68,7 @@ code{font-size:13px}
 </header>
 
 <nav aria-label="Mục lục">
-  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#khac">Vật phẩm khác</a>
+  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#quy-tac" class="new">Quy tắc chi tiết</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#khac">Vật phẩm khác</a>
 </nav>
 
 <section id="tong-quan">
@@ -81,6 +81,7 @@ code{font-size:13px}
   <div class="tabs" role="group" aria-label="Chọn lớp">{{TABS}}</div>
   <div class="legend"><span><b>Đậm</b>: món chính</span><span class="alt">Xanh: món phụ</span><span>🛒 bán ở Thợ Rèn</span><span>Công: trung bình (thấp~cao) của món chính</span><span>Hình: bộ ở giữa của bộ giáp</span></div>
   {{PANES}}
+  {{GAPS}}
 </section>
 
 <section id="bac">
@@ -110,7 +111,7 @@ code{font-size:13px}
 
 <section id="ep">
   <h2>Ép +N</h2>
-  <p>Mỗi cấp cộng {{UPPCT}} chỉ số gốc của món (ít nhất +1). Từ +{{DOUBLE}} mỗi cấp tính gấp đôi. Từ +{{ANNOUNCE}} cả server thấy thông báo. Đồ có May mắn: tỉ lệ ép bằng Ngọc Tâm Linh / Hỗn Nguyên cộng {{LUCKUP}}, tối đa {{LUCKMAX}}.</p>
+  <p>Mỗi cấp cộng {{UPPCT}} chỉ số gốc của món (ít nhất +1). Từ +{{DOUBLE}} mỗi cấp tính gấp đôi. Từ +{{ANNOUNCE}} cả server thấy thông báo. Đồ có May mắn: tỉ lệ ép bằng Ngọc Tâm Linh / Hỗn Nguyên cộng {{LUCKUP}}, trần {{LUCKMAX}} (bảng hiện tại cao nhất {{LUCKREAL}}). Phí vàng mỗi lần ép: max(giá món, {{COSTMIN}}) × {{COSTPCT}} × cấp ép lên.</p>
   <div class="scroll" style="max-width:820px"><table>
     <thead><tr><th>Lên</th><th>Ở đâu</th><th>Cần</th><th>Tỉ lệ</th><th>Thất bại</th><th>Tính như</th></tr></thead>
     <tbody>{{UPG}}</tbody></table></div>
@@ -139,7 +140,7 @@ code{font-size:13px}
 
 <section id="ky-nang">
   <h2>Kỹ năng</h2>
-  <p>Mỗi lớp có 3 kỹ năng mở theo cấp và 10 kỹ năng Tháp Thử Thách mở khi kỷ lục tháp đạt tầng 10, 20, … 100 (giữ vĩnh viễn). Mang tối đa {{LOADOUT}} kỹ năng vào trận, chọn ở Menu → Kỹ năng → ⚙. MP tốn tăng theo cấp nhân vật.</p>
+  <p>Mỗi lớp có 3 kỹ năng mở theo cấp và 10 kỹ năng Tháp Vô Tận mở khi kỷ lục tháp đạt tầng 10, 20, … 100 (giữ vĩnh viễn). Mang tối đa {{LOADOUT}} kỹ năng vào trận, chọn ở Menu → Kỹ năng → ⚙. MP tốn tăng theo cấp nhân vật.</p>
   <div class="tabs" role="group" aria-label="Chọn lớp">{{STABS}}</div>
   {{SPANES}}
 </section>
@@ -165,21 +166,36 @@ code{font-size:13px}
   <p class="note">{{MONSTER}} PK cược vàng: hai bản sao chỉ số tự đánh nhau, không ai điều khiển.</p>
 </section>
 
+<section id="quy-tac">
+  <h2>Quy tắc chi tiết</h2>
+  <ul>{{RULELI}}</ul>
+  <h3>Hệ số lớp</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Lớp</th><th>Chỉ số đầu (STR / AGI / VIT / ENE)</th><th>Điểm mỗi cấp</th><th>Tấn công</th><th>Phòng thủ</th><th>Máu</th><th>MP</th></tr></thead>
+    <tbody>{{CLASSROWS}}</tbody></table></div>
+  <p class="note">Đây là phần gốc theo chỉ số và cấp, trước khi cộng đồ và các % (xem Chỉ số, chiến đấu). Đồ có yêu cầu chỉ số riêng, ghi trong game khi xem món.</p>
+  <h3>Máy Hỗn Nguyên</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Công thức</th><th>Cần</th><th>Vàng</th><th>Tỉ lệ</th></tr></thead>
+    <tbody>{{CHAOSROWS}}</tbody></table></div>
+  <p class="note">Thất bại mất hết món đồ, nguyên liệu và vàng. Đồ đã khóa không bỏ vào máy được.</p>
+</section>
+
 <section id="chuyen-sinh">
   <h2>Vùng đất chuyển sinh</h2>
-  <p>Vào bằng Chọn bản đồ hoặc cổng bên trái Làng. Vùng k cần chuyển sinh ít nhất k lần và cấp {{RMIN}}+. Cấp tối đa nhân vật vẫn là 50: chỉ số quái tính ở cấp {{RSTAT}} nhân hệ số (1 + {{RMULT}} × k, chúa tể ×{{RBOSS}}); vàng và kinh nghiệm theo cấp hiện trên quái. Tháp tầng 61–160 dùng quái các vùng này.</p>
+  <p>Vào bằng Chọn bản đồ hoặc cổng bên trái Làng. Vùng k cần chuyển sinh ít nhất k lần và cấp {{RMIN}}+. Cấp tối đa nhân vật vẫn là 50: chỉ số quái tính ở cấp {{RSTAT}} nhân hệ số (1 + {{RMULT}} × k, chúa tể ×{{RBOSS}}); vàng và kinh nghiệm theo cấp hiện trên quái. Tháp Vô Tận tầng 61–160 dùng quái các vùng này; từ tầng 161 quay vòng lại từ đầu, tên quái thêm tiền tố (Cổ Đại, Hắc Ám…).</p>
   <div class="scroll"><table>
     <thead><tr><th>Vùng</th><th>Tên</th><th>Chuyển sinh</th><th>Cấp quái</th><th>Hệ</th><th>Sức mạnh</th><th>Rơi quý thêm</th><th>Ngọc / con</th><th>Quái</th></tr></thead>
     <tbody>{{REALMS}}</tbody></table></div>
-  <p class="note">"Rơi quý thêm": tỉ lệ ra đồ, Excellent, May mắn, đồ Thần nhân (1 + số này). Chúa tể rơi ngọc ×5.</p>
+  <p class="note">"Rơi quý thêm": tỉ lệ ra đồ, Excellent, May mắn, đồ Thần nhân (1 + số này); tăng {{RLOOT}} mỗi vùng, trần {{RLOOTMAX}} nên vùng 9 và 10 bằng nhau. "Ngọc / con": tỉ lệ mỗi con rơi 1 viên ngọc (loại theo tỉ lệ ở mục Vật phẩm khác); chúa tể ×5.</p>
 </section>
 
 <section id="khac">
   <h2>Vật phẩm khác</h2>
   <div class="scroll"><table>
-    <thead><tr><th>Tên</th><th>Công dụng</th><th>Giá</th></tr></thead>
+    <thead><tr><th>Tên</th><th>Công dụng</th><th>Mua ở</th><th>Bán lại</th></tr></thead>
     <tbody>{{OTHER}}</tbody></table></div>
-  <p class="note">Giá 0: không bán ở cửa hàng. Giá bình thuốc ở cửa hàng tăng theo cấp nhân vật. Hình đồ: Dungeon Crawl Stone Soup (CC0).</p>
+  <p class="note">"Mua ở" "—": không bán, chỉ có từ quái, sự kiện, rương, Máy Hỗn Nguyên. Giá bình thuốc tăng {{POTLV}} mỗi cấp nhân vật. "Bán lại": giá NPC mua lại. {{JEWELSRC}} Hình đồ: Dungeon Crawl Stone Soup (CC0).</p>
 </section>
 </div>
 

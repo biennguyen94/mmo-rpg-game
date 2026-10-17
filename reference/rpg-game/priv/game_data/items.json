@@ -253,7 +253,7 @@
       "slot": "material",
       "sprite": "items/fish_eel",
       "price": 60,
-      "desc": "Chỉ có ở Đầm Lầy và Hang Rồng. Bà Lang nấu 2 con thành Bình Máu Lớn."
+      "desc": "Chỉ có ở Đầm Lầy và Hang Hắc Long. Bà Lang nấu 2 con thành Bình Máu Lớn."
     },
     "fish_gold": {
       "name": "Cá Chép Vàng",
@@ -363,28 +363,28 @@
       "slot": "material",
       "icon": "gem-bless",
       "price": 1000,
-      "desc": "Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương."
+      "desc": "Ép đồ +1 → +6 ở Thợ Rèn, mỗi cấp 1 viên, chắc chắn thành công. Cũng cần khi ép +10, +11 ở Máy Hỗn Nguyên. Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương, sự kiện."
     },
     "jewel_soul": {
       "name": "Ngọc Tâm Linh",
       "slot": "material",
       "icon": "gem-soul",
       "price": 1500,
-      "desc": "Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp."
+      "desc": "Ép đồ +7 → +9 ở Thợ Rèn, mỗi cấp 1 viên, có thể thất bại: đồ về +0 (May mắn tăng tỉ lệ). Cũng cần khi ép +10, +11. Rơi như Ngọc Ước Nguyện."
     },
     "jewel_chaos": {
       "name": "Ngọc Hỗn Nguyên",
       "slot": "material",
       "icon": "gem-chaos",
       "price": 1250,
-      "desc": "Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên."
+      "desc": "Ép đồ +10, +11 ở Máy Hỗn Nguyên (kèm Ước Nguyện và Tâm Linh; thất bại là vỡ đồ) và nguyên liệu ghép ở Máy Hỗn Nguyên. Rơi như Ngọc Ước Nguyện."
     },
     "jewel_life": {
       "name": "Ngọc Sinh Mệnh",
       "slot": "material",
       "icon": "gem-life",
       "price": 1250,
-      "desc": "Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối."
+      "desc": "Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối. Rơi như Ngọc Ước Nguyện."
     },
     "wing_dk_1": {
       "name": "Cánh Ác Quỷ",
