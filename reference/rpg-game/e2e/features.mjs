@@ -66,6 +66,11 @@ p = await send(page, { act: 'travel', to: 'realm_01' });
 R.check('chuyển sinh 1 lần: vào vùng chuyển sinh 1', p.pos.map === 'realm_01', p.pos.map);
 p = await send(page, { act: 'travel', to: 'realm_02' });
 R.check('vùng 2 vẫn khóa (cần chuyển sinh 2 lần)', p.pos.map !== 'realm_02', p.pos.map);
+p = await send(page, { act: 'travel', to: 'realm_01_5' });
+R.check('vùng 1 bản đồ 5 (sâu nhất) vào được', p.pos.map === 'realm_01_5', p.pos.map);
+await page.waitForTimeout(800);
+await shot(page, 'realm-depth5.png');
+p = await send(page, { act: 'travel', to: 'realm_01' });
 
 // ---------- Bộ hình đồ, hiệu ứng bản đồ ----------
 const bagSrcs = async () => {

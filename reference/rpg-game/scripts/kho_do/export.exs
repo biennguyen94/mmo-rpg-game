@@ -15,6 +15,6 @@ out = %{
   jewels: Data.jewels(),
   pets: Data.pets(),
   festivals: Data.events(),
-  maps: HacLong.World.Maps.ids() |> Enum.map(&HacLong.World.Maps.get/1) |> Enum.filter(&(&1[:realm])) |> Enum.map(&Map.take(&1, [:id, :name, :realm, :min_rebirths, :min_level]))
+  maps: HacLong.World.Maps.ids() |> Enum.map(&HacLong.World.Maps.get/1) |> Enum.filter(&(&1[:realm])) |> Enum.map(&(&1 |> Map.take([:id, :name, :realm, :min_rebirths, :min_level]) |> Map.put(:monsters, Enum.map(&1.spawns, fn s -> s.monster end))))
 }
 File.write!(System.argv() |> hd, Jason.encode!(out, pretty: false))

@@ -244,9 +244,20 @@ defmodule HacLong.Game.Journey do
   # ---------- Chọn nơi đánh ----------
 
   defp pick_target(p, st) do
-    case boss_target(p, st) do
-      nil -> map_target(p, st)
-      t -> t
+    boss_target(p, st) || lord_target(p, st) || map_target(p, st)
+  end
+
+  # cần hạ chúa tể để chuyển sinh tiếp và đã ở cấp tối đa: tới bản đồ của chúa tể thử mỗi `lord_every / 4` trận
+  defp lord_target(p, st) do
+    with %{id: id} <- Engine.rebirth_need(p),
+         true <- p.level >= Engine.max_level(),
+         %{} = m <- Enum.find(all_maps(), &Enum.any?(&1.spawns, fn s -> s.monster == id end)),
+         true <- World.can_travel?(p, m),
+         every = max(1, div(st.opts.lord_every, 4)),
+         true <- st.fights - Map.get(st.lord_at, m.id, -every) >= every do
+      {:side, m, Map.put(Data.side_monster(id), :lord, true)}
+    else
+      _ -> nil
     end
   end
 
@@ -280,7 +291,7 @@ defmodule HacLong.Game.Journey do
           specs = map_specs(m),
           specs != [],
           m.realm != nil or Enum.max(Enum.map(specs, & &1.level)) <= p.level + 2,
-          do: {xp_score(p, specs), m, specs}
+          do: {xp_score(p, normal_specs(m, specs)), m, specs}
 
     case Enum.max_by(maps, &elem(&1, 0), fn -> nil end) do
       nil ->
@@ -304,15 +315,8 @@ defmodule HacLong.Game.Journey do
 
   defp map_specs(_), do: []
 
-  # chúa tể vùng chuyển sinh: con có hệ số máu cao nhất, cao hơn hẳn các con khác
-  defp lord(%{realm: k}, specs) when is_integer(k) do
-    top = Enum.max_by(specs, &Map.get(&1, :mult, 1))
-    rest = specs -- [top]
-
-    if rest != [] and
-         Map.get(top, :mult, 1) > 1.5 * Enum.max(Enum.map(rest, &Map.get(&1, :mult, 1))),
-       do: top
-  end
+  # chúa tể vùng chuyển sinh (`lord: true`, ở bản đồ cuối của vùng, scripts/gen_realms.py)
+  defp lord(%{realm: k}, specs) when is_integer(k), do: Enum.find(specs, & &1[:lord])
 
   defp lord(_m, _specs), do: nil
 
@@ -330,13 +334,7 @@ defmodule HacLong.Game.Journey do
     kind = if m.side, do: :side, else: :zone
     lord = lord(m, specs)
 
-    # cần hạ chúa tể này để chuyển sinh tiếp: ở cấp tối đa thì thử thường hơn (mỗi `lord_every / 4` trận)
-    need = Engine.rebirth_need(p)
-
-    every =
-      if need && lord && need.id == lord.id && p.level >= Engine.max_level(),
-        do: max(1, div(st.opts.lord_every, 4)),
-        else: st.opts.lord_every
+    every = st.opts.lord_every
 
     if lord != nil and st.fights - Map.get(st.lord_at, m.id, -every) >= every and
          p.level >= 40 do

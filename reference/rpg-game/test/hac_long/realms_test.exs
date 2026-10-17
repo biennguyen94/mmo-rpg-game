@@ -19,15 +19,37 @@ defmodule HacLong.RealmsTest do
     })
   end
 
-  test "10 vùng: cần chuyển sinh 1…10, 3 quái + 1 chúa tể, cấp quái 52…150" do
+  test "10 vùng × 5 bản đồ: cần chuyển sinh 1…10, quái mạnh dần theo bản đồ, chúa tể ở bản đồ cuối" do
+    n = @r.maps_per_realm
+
     for k <- 1..10 do
-      m = Maps.get("realm_" <> String.pad_leading("#{k}", 2, "0"))
-      assert m.realm == k and m.min_rebirths == k and m.min_level == @r.min_level
-      assert m.waystone
-      specs = Enum.map(m.spawns, &Data.side_monster(&1.monster))
-      assert length(specs) == 4
-      assert Enum.max_by(specs, & &1.level).level == 50 + 10 * k
-      assert Enum.all?(specs, &(&1.stat_level == @r.stat_level and &1.rich >= k))
+      id = "realm_" <> String.pad_leading("#{k}", 2, "0")
+      maps = Enum.map(1..n, &Maps.get(if &1 == 1, do: id, else: "#{id}_#{&1}"))
+
+      assert Enum.all?(
+               maps,
+               &(&1.realm == k and &1.min_rebirths == k and &1.min_level == @r.min_level)
+             )
+
+      assert hd(maps).waystone
+
+      # bản đồ 1 nối bản đồ 2, …, bản đồ n−1 nối bản đồ n
+      for {a, b} <- Enum.zip(maps, tl(maps)) do
+        assert Enum.any?(a.portals, &(&1.to == b.id))
+        assert Enum.any?(b.portals, &(&1.to == a.id))
+      end
+
+      specs = Enum.map(maps, fn m -> Enum.map(m.spawns, &Data.side_monster(&1.monster)) end)
+      assert Enum.map(specs, &length/1) == List.duplicate(3, n - 1) ++ [4]
+      lord = Enum.find(List.last(specs), & &1[:lord])
+      assert lord.level == 50 + 10 * k and Engine.realm_lord(k).id == lord.id
+      normal = Enum.map(specs, &Enum.reject(&1, fn s -> s[:lord] end))
+
+      # càng sâu càng mạnh, nhưng bản đồ cuối vẫn yếu hơn bản đồ 1 vùng sau
+      mults = Enum.map(normal, &hd(&1).mult)
+      assert mults == Enum.sort(Enum.uniq(mults))
+      assert List.last(mults) < 1 + @r.mult_per_realm * (k + 1)
+      assert Enum.all?(List.flatten(specs), &(&1.stat_level == @r.stat_level and &1.rich >= k))
     end
   end
 

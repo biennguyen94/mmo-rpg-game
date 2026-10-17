@@ -5,6 +5,10 @@
   (1 + mult_per_realm × k; chúa tể × boss_mult); riêng công nhân (1 + atk_mult_per_realm × k) (× boss_mult); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult). Rơi đồ quý hơn theo `rich` = k (RULES.realms.loot_per_realm).
 - Hình quái: tô lại từ hình CC0 sẵn có (e2e/tint_sprites.mjs đọc danh sách REALM_TINTS trong realms.json).
 - Cổng: vùng k trái → vùng k−1 (vùng 1 → Làng, một chiều), phải → vùng k+1. Mỗi vùng một Đài Phúc Lành.
+- Mỗi vùng `RULES.realms.maps_per_realm` bản đồ (DECISIONS "Vùng chuyển sinh 5 bản đồ"): bản đồ 1 `realm_KK` là cửa vào
+  (cổng vùng trước / sau, Đài Phúc Lành), cổng mép dưới vào nhánh `realm_KK_2` → … → `realm_KK_5`. Bản đồ thứ d (0…4 tính
+  từ bản đồ 1) đánh như vùng k + depth_step × d: hệ số máu / công / kinh nghiệm, `rich` (rơi đồ), ngọc và cấp hiện nội suy
+  giữa vùng k và k + 1. Quái bản đồ 1 giữ id cũ, bản đồ sau `r<k>_<loài>_<d+1>`. Chúa tể (`lord: true`) ở bản đồ cuối.
 Chạy: python3 scripts/gen_realms.py  rồi  node e2e/tint_sprites.mjs realm
 """
 import json, os, random
@@ -16,6 +20,7 @@ RULES = json.load(open(os.path.join(ROOT, "priv/game_data/rules.json"), encoding
 W, H = 26, 16
 MID = H // 2
 WALK = set(".,:*DAO><W")
+DOWN = W // 2
 
 # (tên, nền, theme, tường, vật cản, trang trí, thu thập, nguyên tố, [(hình gốc, tên quái)] ×3, (hình gốc, tên chúa tể), bộ lọc tô màu)
 REALMS = [
@@ -52,8 +57,8 @@ REALMS = [
 ]
 
 
-def rid(k):
-    return "realm_%02d" % k
+def rid(k, n=1):
+    return "realm_%02d" % k if n == 1 else "realm_%02d_%d" % (k, n)
 
 
 def bfs(grid, start):
@@ -68,9 +73,10 @@ def bfs(grid, start):
     return seen
 
 
-def make_map(k, r, mons):
+def make_map(k, r, mons, n, last):
+    """Bản đồ thứ n (1…last) của vùng k; `mons`: 3 quái thường (+ chúa tể nếu là bản đồ cuối)."""
     name, floor, theme, wall, obst, deco, gather = r[:7]
-    rnd = random.Random(6000 + k)
+    rnd = random.Random(6000 + k if n == 1 else 6000 + 100 * n + k)
     grid = [[wall if x in (0, W - 1) or y in (0, H - 1) else "." for x in range(W)] for y in range(H)]
     for y in range(1, H - 1):
         for x in range(1, W - 1):
@@ -95,29 +101,49 @@ def make_map(k, r, mons):
     for dx in (1, 2, 3):
         grid[MID][dx] = "."
         grid[MID][W - 1 - dx] = "."
-    # Đài Phúc Lành gần cổng vào, chỗ đứng ngay dưới
-    grid[MID - 2][3] = "W"
-    grid[MID - 1][3] = "."
-    portals = [{"at": [0, MID], "to": rid(k - 1) if k > 1 else "village",
-                "spawn": [W - 2, MID] if k > 1 else None}]
+    if n == 1:
+        # Đài Phúc Lành gần cổng vào, chỗ đứng ngay dưới
+        grid[MID - 2][3] = "W"
+        grid[MID - 1][3] = "."
+        portals = [{"at": [0, MID], "to": rid(k - 1) if k > 1 else "village",
+                    "spawn": [W - 2, MID] if k > 1 else None}]
+        if k < len(REALMS):
+            grid[MID][W - 1] = "O"
+            portals.append({"at": [W - 1, MID], "to": rid(k + 1), "spawn": [1, MID]})
+        if last > 1:
+            # nhánh sâu: cổng mép dưới giữa bản đồ, lối đi thẳng xuống từ đường chính
+            for yy in range(MID, H - 1):
+                grid[yy][DOWN] = ":" if deco else "."
+            grid[H - 1][DOWN] = "O"
+            portals.append({"at": [DOWN, H - 1], "to": rid(k, 2), "spawn": [1, MID]})
+    else:
+        portals = [{"at": [0, MID], "to": rid(k, n - 1), "spawn": [DOWN, H - 2] if n == 2 else [W - 2, MID]}]
+        if n < last:
+            grid[MID][W - 1] = "O"
+            portals.append({"at": [W - 1, MID], "to": rid(k, n + 1), "spawn": [1, MID]})
     grid[MID][0] = "O"
-    if k < len(REALMS):
-        grid[MID][W - 1] = "O"
-        portals.append({"at": [W - 1, MID], "to": rid(k + 1), "spawn": [1, MID]})
     ok = bfs(grid, (1, MID))
     for yy in range(1, H - 1):
         for xx in range(1, W - 1):
             if grid[yy][xx] in WALK and (xx, yy) not in ok and grid[yy][xx] != "W":
                 grid[yy][xx] = obst[0][0]
     spawns = [{"monster": m["id"], "max": 4, "respawn": 25} for m in mons[:3]]
-    spawns.append({"monster": mons[3]["id"], "max": 1, "respawn": 240})
-    return {
-        "id": rid(k), "name": name, "zone": None, "side": True, "theme": theme, "floor": floor,
-        "realm": k, "min_rebirths": k, "min_level": RULES["min_level"],
+    if len(mons) > 3:
+        spawns.append({"monster": mons[3]["id"], "max": 1, "respawn": 240})
+    m = {
+        "id": rid(k, n), "name": name if n == 1 else f"{name} {n}", "zone": None, "side": True, "theme": theme,
+        "floor": floor, "realm": k, "min_rebirths": k, "min_level": RULES["min_level"],
         "tiles": ["".join(r) for r in grid], "portals": portals, "spawns": spawns,
         "gather": [{"item": it, "max": 2, "respawn": 60} for it in gather], "npcs": [],
-        "waystone": {"at": [3, MID - 2], "spawn": [3, MID - 1]},
     }
+    if n == 1:
+        m["waystone"] = {"at": [3, MID - 2], "spawn": [3, MID - 1]}
+    return m
+
+
+def depth_tint(n):
+    """Bản đồ càng sâu hình quái càng tối, đậm màu hơn chút (cùng hình gốc)."""
+    return "" if n == 1 else " brightness(%s) saturate(%s)" % (round(1 - 0.06 * (n - 1), 2), round(1 + 0.12 * (n - 1), 2))
 
 
 def add_parent_portal(parent_id, to, spawn_in):
@@ -149,29 +175,43 @@ def add_parent_portal(parent_id, to, spawn_in):
 
 def main():
     monsters, tints = [], []
+    last = RULES["maps_per_realm"]
+    step = RULES["depth_step"]
     for k, r in enumerate(REALMS, 1):
         el, kinds, boss, flt = r[7], r[8], r[9], r[10]
-        mult = round(1 + RULES["mult_per_realm"] * k, 3)
-        # công nhân riêng (nhẹ hơn máu) để phòng thủ người chơi còn ý nghĩa ở vùng cao (DECISIONS "Cân bằng cuối game")
-        atk = round(1 + RULES["atk_mult_per_realm"] * k, 3)
-        xpm = round(1 + RULES["xp_mult_per_realm"] * k, 3)
         top = 50 + 10 * k
-        mons = []
-        for j, (base, nm) in enumerate(kinds):
-            mons.append({"id": f"r{k}_{base}", "name": nm, "level": top - 8 + 3 * j, "stat_level": RULES["stat_level"],
-                         "mult": mult, "atk_mult": atk, "xp_mult": xpm, "element": el, "rich": k,
-                         "jewel_chance": round(RULES["jewel_base"] + RULES["jewel_per_realm"] * k, 4)})
-        mons.append({"id": f"r{k}_{boss[0]}", "name": boss[1], "level": top, "stat_level": RULES["stat_level"],
-                     "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["boss_mult"], 3), "xp_mult": round(xpm * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
-                     "jewel_chance": round((RULES["jewel_base"] + RULES["jewel_per_realm"] * k) * 5, 4)})
-        monsters += mons
-        tints += [[f"monsters/{b}", f"monsters/{m['id']}", flt] for (b, _), m in zip(kinds + [boss], mons)]
-        m = make_map(k, r, mons)
-        if k == 1:
-            m["portals"][0]["spawn"] = add_parent_portal("village", rid(1), [1, MID])
-        with open(os.path.join(MAPS, rid(k) + ".json"), "w", encoding="utf-8") as f:
-            json.dump(m, f, ensure_ascii=False, indent=2)
-            f.write("\n")
+        for n in range(1, last + 1):
+            d = n - 1
+            # bản đồ thứ n đánh như vùng ke = k + depth_step × (n − 1) (nội suy tới vùng k + 1)
+            ke = round(k + step * d, 3) if d else k
+            mult = round(1 + RULES["mult_per_realm"] * ke, 3)
+            # công nhân riêng (nhẹ hơn máu) để phòng thủ người chơi còn ý nghĩa ở vùng cao (DECISIONS "Cân bằng cuối game")
+            atk = round(1 + RULES["atk_mult_per_realm"] * ke, 3)
+            xpm = round(1 + RULES["xp_mult_per_realm"] * ke, 3)
+            up = round(10 * step * d)
+            mons = []
+            for j, (base, nm) in enumerate(kinds):
+                mons.append({"id": f"r{k}_{base}" + ("" if n == 1 else f"_{n}"), "name": nm,
+                             "level": top - 8 + 3 * j + up, "stat_level": RULES["stat_level"],
+                             "mult": mult, "atk_mult": atk, "xp_mult": xpm, "element": el, "rich": ke,
+                             "jewel_chance": round(RULES["jewel_base"] + RULES["jewel_per_realm"] * ke, 4)})
+                if n > 1:
+                    mons[-1]["depth"] = n
+            tints += [[f"monsters/{b}", f"monsters/{m['id']}", flt + depth_tint(n)] for (b, _), m in zip(kinds, mons)]
+            if n == last:
+                # chúa tể: sức vùng k (không theo bản đồ), đứng ở bản đồ cuối của vùng
+                mult, atk, xpm = (round(1 + RULES[f] * k, 3) for f in ("mult_per_realm", "atk_mult_per_realm", "xp_mult_per_realm"))
+                mons.append({"id": f"r{k}_{boss[0]}", "name": boss[1], "level": top, "stat_level": RULES["stat_level"],
+                             "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["boss_mult"], 3), "xp_mult": round(xpm * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
+                             "jewel_chance": round((RULES["jewel_base"] + RULES["jewel_per_realm"] * k) * 5, 4), "lord": True})
+                tints.append([f"monsters/{boss[0]}", f"monsters/{mons[-1]['id']}", flt])
+            monsters += mons
+            m = make_map(k, r, mons, n, last)
+            if k == 1 and n == 1:
+                m["portals"][0]["spawn"] = add_parent_portal("village", rid(1), [1, MID])
+            with open(os.path.join(MAPS, rid(k, n) + ".json"), "w", encoding="utf-8") as f:
+                json.dump(m, f, ensure_ascii=False, indent=2)
+                f.write("\n")
     for m in monsters:
         m.update({"sourceType": "DESIGN", "version": 1, "verified": False})
     # sinh bởi scripts/gen_realms.py (Phase 6, B-30): sửa số ở RULES.realms rồi chạy lại
@@ -179,7 +219,7 @@ def main():
     with open(os.path.join(ROOT, "priv/game_data/realms.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    print(len(REALMS), "vùng,", len(monsters), "quái")
+    print(len(REALMS), "vùng ×", last, "bản đồ,", len(monsters), "quái")
 
 
 main()

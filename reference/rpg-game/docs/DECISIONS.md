@@ -625,3 +625,26 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   đang ở tầng và có tab mở, không trong trận, không bị giao dịch giữ; `Tower.wander/4`: mỗi con 35 % đi một ô sang ô trống `.`,
   không đè quái khác, không vào ô người chơi; trùm tầng (`elite`) đứng yên. Vị trí mới đẩy cho client như mọi thay đổi nhân vật.
 - Hiệu ứng bản đồ (lá, tuyết, mưa, tro, sương) bật cả trên tầng, theo nền của tầng; không có ngày đêm (trong nhà).
+
+## Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể (2026-10-17, anh chốt A + C, 25 điểm)
+- **A.** Kinh nghiệm lên cấp × (1 + `character.rebirth_xp_pct` × số lần đã chuyển sinh), `rebirth_xp_pct` = 0,25
+  (`Engine.xp_to_next/2`, `xp_need/1`; trần EXP trùm thế giới cũng theo `xp_need`).
+- **C.** Từ lần chuyển sinh `rebirth_lord_from` (1): muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n
+  (đếm trong sổ quái; `Engine.rebirth_need/1`, `realm_lord/1`). Thẻ chuyển sinh ở Trưởng Làng ghi chúa tể còn thiếu và ẩn nút.
+- **Điểm:** 15 → 25 điểm tiềm năng mỗi lần chuyển sinh (`rebirth_points`).
+- Cả ba số sửa được trong `priv/game_data/rules.json` (`character`), khởi động lại server để có hiệu lực.
+- Mô phỏng (seed 42, `tmp/journey_ac`): mỗi lớp ~12 900–16 200 trận (trước ~5 900), mỗi chặng 593 → ~1 760 trận; Kiếm Sĩ / Tiên Nữ chết
+  ~13 lần. Pháp Sư kẹt chúa tể vùng 9 (thua 138 trận), Thuật Sĩ kẹt vùng 7–8 (thua ~290 trận): đánh một mình chúa tể vùng 7–10
+  gần như không thắng (thử 200 trận ở cấp 50: Kiếm Sĩ 0 %, Pháp Sư 1 %, Thuật Sĩ 0 %). Sức chúa tể: đang hỏi anh
+  (giữ khó để đánh cùng người khác hay giảm theo vùng).
+
+## Vùng chuyển sinh 5 bản đồ (2026-10-17, anh yêu cầu "thêm mỗi vùng 4 bản đồ", chốt quái mạnh dần, chúa tể ở bản đồ 5)
+- `RULES.realms.maps_per_realm` = 5, `depth_step` = 0,2 (version 4), sinh bằng `scripts/gen_realms.py`.
+- Bản đồ 1 `realm_KK` giữ như cũ (cửa vào, Đài Phúc Lành, cổng vùng trước / sau), thêm cổng mép dưới vào `realm_KK_2` → … →
+  `realm_KK_5` (tên "<vùng> 2…5"); bản đồ 2–5 không có Đài Phúc Lành. Vào bằng cổng hoặc Chọn bản đồ, cùng điều kiện vùng.
+- Quái: 3 loài của vùng; bản đồ thứ n đánh như vùng k + 0,2 × (n − 1): hệ số máu / công / kinh nghiệm, `rich` (rơi đồ), ngọc
+  và cấp hiện (+2 mỗi bản đồ) nội suy về phía vùng k + 1, nên bản đồ 5 vẫn yếu hơn bản đồ 1 vùng sau. (Đề xuất ban đầu
+  +5 % / bản đồ; nội suy để vùng cao không vượt vùng sau — ví dụ vùng 9 bản đồ 5 +5 % × 4 sẽ mạnh hơn vùng 10.)
+  Quái bản đồ 1 giữ id cũ (sổ quái, thú đã thuần không đổi); bản đồ sau `r<k>_<loài>_<n>` (`depth: n`), hình tô tối dần.
+- Chúa tể dời sang bản đồ 5, sức vẫn theo vùng k, đánh dấu `lord: true` (trước nhận diện bằng `rich > k`, nay bản đồ sâu có
+  `rich` lẻ nên đổi sang cờ: `Engine.realm_lord/1`, thú cưng, tháp, mô phỏng). Tháp tầng 61–160 chỉ dùng quái bản đồ 1.

@@ -105,12 +105,13 @@ defmodule HacLong.Game.Tower do
 
   # Mỗi 10 tầng một nhóm quái: 6 vùng (tầng 1–60), rồi 10 vùng đất chuyển sinh (Phase 6, tầng 61–160); hết thì
   # quay vòng, mỗi vòng thêm tiền tố tên (`cycle_prefix/1`) để tầng cao không trùng hình + tên với tầng dưới.
+  # (chỉ quái bản đồ 1 của mỗi vùng, không lấy quái bản đồ sâu `depth`; trùm tầng là chúa tể vùng)
   @realm_groups Data.side_monsters()
-                |> Enum.filter(&String.match?(&1.id, ~r/^r\d+_/))
+                |> Enum.filter(&(String.match?(&1.id, ~r/^r\d+_/) and &1[:depth] == nil))
                 |> Enum.group_by(fn m -> m.id |> String.split("_") |> hd() end)
                 |> Enum.sort_by(fn {"r" <> k, _} -> String.to_integer(k) end)
                 |> Enum.map(fn {"r" <> k, list} ->
-                  {mons, [boss]} = Enum.split(list, 3)
+                  {[boss], mons} = Enum.split_with(list, &(&1[:lord] == true))
                   map = HacLong.World.Maps.get("realm_" <> String.pad_leading(k, 2, "0"))
                   %{monsters: mons, boss: boss, floor: (map && map.floor) || "floors/lair"}
                 end)

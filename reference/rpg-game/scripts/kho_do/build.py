@@ -457,18 +457,19 @@ rule_items = [
 rule_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in rule_items)
 
 # ---------- Vùng chuyển sinh ----------
-rm = defaultdict(list)
-for m in D["realm_monsters"]:
-    rm[int(m["id"].split("_")[0][1:])].append(m)
+# mỗi vùng nhiều bản đồ (bản đồ sau mạnh hơn, chúa tể ở bản đồ cuối): mỗi dòng một bản đồ, quái theo chỗ xuất hiện
+RM = {m["id"]: m for m in D["realm_monsters"]}
 rrows = ""
-for mp in sorted(D["maps"], key=lambda m: m["realm"]):
-    k = mp["realm"]; ms = sorted(rm[k], key=lambda m: m["level"])
-    names = ", ".join(E(m["name"]) for m in ms)
-    raw = rl["loot_per_realm"] * ms[0]["rich"] if ms else 0
+for mp in sorted(D["maps"], key=lambda m: (m["realm"], len(m["id"]), m["id"])):
+    k = mp["realm"]; ms = sorted((RM[i] for i in mp["monsters"] if i in RM), key=lambda m: m["level"])
+    reg = [m for m in ms if not m.get("lord")] or ms
+    names = ", ".join(E(m["name"]) + (" <b>(chúa tể)</b>" if m.get("lord") else "") for m in ms)
+    m0 = reg[0]
+    raw = rl["loot_per_realm"] * m0["rich"]
     loot = min(rl["loot_max"], raw)
     rrows += (f"<tr><td class=n>{k}</td><td><b>{E(mp['name'])}</b></td><td class=n>{mp['min_rebirths']}</td><td class=n>{ms[0]['level']}–{ms[-1]['level']}</td>"
-              f"<td>{el(ms[0].get('element'))}</td><td class=n>×{n(round(ms[0]['mult'], 2))} / ×{n(round(ms[0].get('atk_mult', ms[0]['mult']), 2))}</td><td class=n>+{pct(loot)}{' (trần)' if raw > rl['loot_max'] + 1e-9 else ''}</td>"
-              f"<td class=n>{pct(ms[0]['jewel_chance'])}</td><td>{names}</td></tr>")
+              f"<td>{el(m0.get('element'))}</td><td class=n>×{n(round(m0['mult'], 2))} / ×{n(round(m0.get('atk_mult', m0['mult']), 2))}</td><td class=n>+{pct(loot)}{' (trần)' if raw > rl['loot_max'] + 1e-9 else ''}</td>"
+              f"<td class=n>{pct(m0['jewel_chance'])}</td><td>{names}</td></tr>")
 
 # ---------- Vật phẩm khác ----------
 # nơi mua: cửa hàng (giá gốc; bình thuốc tăng theo cấp nhân vật), vé ở Người Gác Tháp (RULES.<sự kiện>.ticket_price)
@@ -509,7 +510,7 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  EXCPRICE=n(ex['price_mult']), DMGRED=pct(ex['max_dmg_red']), REFL=pct(ex['max_reflect']),
                  ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
                  STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']),
-                 RMIN=str(rl['min_level']), REBIRTH=f"Chuyển sinh lần n: +{R['character']['rebirth_points']} × n điểm tiềm năng, kinh nghiệm lên cấp × (1 + {pct(R['character']['rebirth_xp_pct'])} × n); từ lần {R['character']['rebirth_lord_from'] + 1}, muốn chuyển sinh lần k + 1 phải từng hạ chúa tể vùng k.", RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']),
+                 RMIN=str(rl['min_level']), REBIRTH=f"Chuyển sinh lần n: +{R['character']['rebirth_points']} × n điểm tiềm năng, kinh nghiệm lên cấp × (1 + {pct(R['character']['rebirth_xp_pct'])} × n); từ lần {R['character']['rebirth_lord_from'] + 1}, muốn chuyển sinh lần k + 1 phải từng hạ chúa tể vùng k.", RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']), RMAPS=str(rl['maps_per_realm']), RSTEP=n(rl['depth_step']),
                  SELL=pct(R['shop']['sell_ratio'])).items():
     page = page.replace("{{" + k + "}}", v)
 assert "{{" not in page, page[page.index("{{"):page.index("{{") + 40]

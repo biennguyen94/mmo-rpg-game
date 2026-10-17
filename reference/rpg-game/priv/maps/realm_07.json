@@ -17,14 +17,14 @@
     "K.....KK.S..::::.::::::.:K",
     "K..W:::..:.K::..:.....:.:K",
     "K...:::::::::..:.:..:...:K",
-    "O...:S:..........S:......O",
-    "K:.....K.:..K............K",
-    "K.....K.K.S:SS..K..:..K.KK",
-    "KK.KKKS:...:K......:.K..KK",
-    "K...:......K.K.K..:..:...K",
+    "O...:S:......:...S:......O",
+    "K:.....K.:..K:...........K",
+    "K.....K.K.S:S:..K..:..K.KK",
+    "KK.KKKS:...:K:.....:.K..KK",
+    "K...:......K.:.K..:..:...K",
     "K......K...:.:..K.:.K..S.K",
-    "K.:K...:....:.:..SS..K.K.K",
-    "KKKKKKKKKKKKKKKKKKKKKKKKKK"
+    "K.:K...:....:::..SS..K.K.K",
+    "KKKKKKKKKKKKKOKKKKKKKKKKKK"
   ],
   "portals": [
     {
@@ -48,6 +48,17 @@
         1,
         8
       ]
+    },
+    {
+      "at": [
+        13,
+        15
+      ],
+      "to": "realm_07_2",
+      "spawn": [
+        1,
+        8
+      ]
     }
   ],
   "spawns": [
@@ -65,11 +76,6 @@
       "monster": "r7_revenant",
       "max": 4,
       "respawn": 25
-    },
-    {
-      "monster": "r7_shadow_dragon",
-      "max": 1,
-      "respawn": 240
     }
   ],
   "gather": [

@@ -46,6 +46,198 @@
       "verified": false
     },
     {
+      "id": "r1_fire_elemental_2",
+      "name": "Hỏa Linh Xích Viêm",
+      "level": 54,
+      "stat_level": 50,
+      "mult": 1.48,
+      "atk_mult": 1.18,
+      "xp_mult": 1.24,
+      "element": "fire",
+      "rich": 1.2,
+      "jewel_chance": 0.032,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_hell_hound_2",
+      "name": "Chó Ngục Viêm",
+      "level": 57,
+      "stat_level": 50,
+      "mult": 1.48,
+      "atk_mult": 1.18,
+      "xp_mult": 1.24,
+      "element": "fire",
+      "rich": 1.2,
+      "jewel_chance": 0.032,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_red_devil_2",
+      "name": "Quỷ Đỏ Sa Mạc",
+      "level": 60,
+      "stat_level": 50,
+      "mult": 1.48,
+      "atk_mult": 1.18,
+      "xp_mult": 1.24,
+      "element": "fire",
+      "rich": 1.2,
+      "jewel_chance": 0.032,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_fire_elemental_3",
+      "name": "Hỏa Linh Xích Viêm",
+      "level": 56,
+      "stat_level": 50,
+      "mult": 1.56,
+      "atk_mult": 1.21,
+      "xp_mult": 1.28,
+      "element": "fire",
+      "rich": 1.4,
+      "jewel_chance": 0.034,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_hell_hound_3",
+      "name": "Chó Ngục Viêm",
+      "level": 59,
+      "stat_level": 50,
+      "mult": 1.56,
+      "atk_mult": 1.21,
+      "xp_mult": 1.28,
+      "element": "fire",
+      "rich": 1.4,
+      "jewel_chance": 0.034,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_red_devil_3",
+      "name": "Quỷ Đỏ Sa Mạc",
+      "level": 62,
+      "stat_level": 50,
+      "mult": 1.56,
+      "atk_mult": 1.21,
+      "xp_mult": 1.28,
+      "element": "fire",
+      "rich": 1.4,
+      "jewel_chance": 0.034,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_fire_elemental_4",
+      "name": "Hỏa Linh Xích Viêm",
+      "level": 58,
+      "stat_level": 50,
+      "mult": 1.64,
+      "atk_mult": 1.24,
+      "xp_mult": 1.32,
+      "element": "fire",
+      "rich": 1.6,
+      "jewel_chance": 0.036,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_hell_hound_4",
+      "name": "Chó Ngục Viêm",
+      "level": 61,
+      "stat_level": 50,
+      "mult": 1.64,
+      "atk_mult": 1.24,
+      "xp_mult": 1.32,
+      "element": "fire",
+      "rich": 1.6,
+      "jewel_chance": 0.036,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_red_devil_4",
+      "name": "Quỷ Đỏ Sa Mạc",
+      "level": 64,
+      "stat_level": 50,
+      "mult": 1.64,
+      "atk_mult": 1.24,
+      "xp_mult": 1.32,
+      "element": "fire",
+      "rich": 1.6,
+      "jewel_chance": 0.036,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_fire_elemental_5",
+      "name": "Hỏa Linh Xích Viêm",
+      "level": 60,
+      "stat_level": 50,
+      "mult": 1.72,
+      "atk_mult": 1.27,
+      "xp_mult": 1.36,
+      "element": "fire",
+      "rich": 1.8,
+      "jewel_chance": 0.038,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_hell_hound_5",
+      "name": "Chó Ngục Viêm",
+      "level": 63,
+      "stat_level": 50,
+      "mult": 1.72,
+      "atk_mult": 1.27,
+      "xp_mult": 1.36,
+      "element": "fire",
+      "rich": 1.8,
+      "jewel_chance": 0.038,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r1_red_devil_5",
+      "name": "Quỷ Đỏ Sa Mạc",
+      "level": 66,
+      "stat_level": 50,
+      "mult": 1.72,
+      "atk_mult": 1.27,
+      "xp_mult": 1.36,
+      "element": "fire",
+      "rich": 1.8,
+      "jewel_chance": 0.038,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r1_balrug",
       "name": "Chúa Tể Xích Viêm",
       "level": 60,
@@ -56,6 +248,7 @@
       "element": "fire",
       "rich": 3,
       "jewel_chance": 0.15,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -106,6 +299,198 @@
       "verified": false
     },
     {
+      "id": "r2_ice_beast_2",
+      "name": "Băng Thú Vĩnh Cửu",
+      "level": 64,
+      "stat_level": 50,
+      "mult": 1.88,
+      "atk_mult": 1.33,
+      "xp_mult": 1.44,
+      "element": "ice",
+      "rich": 2.2,
+      "jewel_chance": 0.042,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_frost_giant_2",
+      "name": "Người Khổng Lồ Sương",
+      "level": 67,
+      "stat_level": 50,
+      "mult": 1.88,
+      "atk_mult": 1.33,
+      "xp_mult": 1.44,
+      "element": "ice",
+      "rich": 2.2,
+      "jewel_chance": 0.042,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_polar_bear_2",
+      "name": "Gấu Tuyết Cổ",
+      "level": 70,
+      "stat_level": 50,
+      "mult": 1.88,
+      "atk_mult": 1.33,
+      "xp_mult": 1.44,
+      "element": "ice",
+      "rich": 2.2,
+      "jewel_chance": 0.042,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_ice_beast_3",
+      "name": "Băng Thú Vĩnh Cửu",
+      "level": 66,
+      "stat_level": 50,
+      "mult": 1.96,
+      "atk_mult": 1.36,
+      "xp_mult": 1.48,
+      "element": "ice",
+      "rich": 2.4,
+      "jewel_chance": 0.044,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_frost_giant_3",
+      "name": "Người Khổng Lồ Sương",
+      "level": 69,
+      "stat_level": 50,
+      "mult": 1.96,
+      "atk_mult": 1.36,
+      "xp_mult": 1.48,
+      "element": "ice",
+      "rich": 2.4,
+      "jewel_chance": 0.044,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_polar_bear_3",
+      "name": "Gấu Tuyết Cổ",
+      "level": 72,
+      "stat_level": 50,
+      "mult": 1.96,
+      "atk_mult": 1.36,
+      "xp_mult": 1.48,
+      "element": "ice",
+      "rich": 2.4,
+      "jewel_chance": 0.044,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_ice_beast_4",
+      "name": "Băng Thú Vĩnh Cửu",
+      "level": 68,
+      "stat_level": 50,
+      "mult": 2.04,
+      "atk_mult": 1.39,
+      "xp_mult": 1.52,
+      "element": "ice",
+      "rich": 2.6,
+      "jewel_chance": 0.046,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_frost_giant_4",
+      "name": "Người Khổng Lồ Sương",
+      "level": 71,
+      "stat_level": 50,
+      "mult": 2.04,
+      "atk_mult": 1.39,
+      "xp_mult": 1.52,
+      "element": "ice",
+      "rich": 2.6,
+      "jewel_chance": 0.046,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_polar_bear_4",
+      "name": "Gấu Tuyết Cổ",
+      "level": 74,
+      "stat_level": 50,
+      "mult": 2.04,
+      "atk_mult": 1.39,
+      "xp_mult": 1.52,
+      "element": "ice",
+      "rich": 2.6,
+      "jewel_chance": 0.046,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_ice_beast_5",
+      "name": "Băng Thú Vĩnh Cửu",
+      "level": 70,
+      "stat_level": 50,
+      "mult": 2.12,
+      "atk_mult": 1.42,
+      "xp_mult": 1.56,
+      "element": "ice",
+      "rich": 2.8,
+      "jewel_chance": 0.048,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_frost_giant_5",
+      "name": "Người Khổng Lồ Sương",
+      "level": 73,
+      "stat_level": 50,
+      "mult": 2.12,
+      "atk_mult": 1.42,
+      "xp_mult": 1.56,
+      "element": "ice",
+      "rich": 2.8,
+      "jewel_chance": 0.048,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r2_polar_bear_5",
+      "name": "Gấu Tuyết Cổ",
+      "level": 76,
+      "stat_level": 50,
+      "mult": 2.12,
+      "atk_mult": 1.42,
+      "xp_mult": 1.56,
+      "element": "ice",
+      "rich": 2.8,
+      "jewel_chance": 0.048,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r2_ice_dragon",
       "name": "Băng Long Vĩnh Cửu",
       "level": 70,
@@ -116,6 +501,7 @@
       "element": "ice",
       "rich": 4,
       "jewel_chance": 0.2,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -166,6 +552,198 @@
       "verified": false
     },
     {
+      "id": "r3_air_elemental_2",
+      "name": "Lôi Linh",
+      "level": 74,
+      "stat_level": 50,
+      "mult": 2.28,
+      "atk_mult": 1.48,
+      "xp_mult": 1.64,
+      "element": "lightning",
+      "rich": 3.2,
+      "jewel_chance": 0.052,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_griffon_2",
+      "name": "Sư Ưng Sấm",
+      "level": 77,
+      "stat_level": 50,
+      "mult": 2.28,
+      "atk_mult": 1.48,
+      "xp_mult": 1.64,
+      "element": "lightning",
+      "rich": 3.2,
+      "jewel_chance": 0.052,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_harpy_2",
+      "name": "Điểu Nữ Lôi Phong",
+      "level": 80,
+      "stat_level": 50,
+      "mult": 2.28,
+      "atk_mult": 1.48,
+      "xp_mult": 1.64,
+      "element": "lightning",
+      "rich": 3.2,
+      "jewel_chance": 0.052,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_air_elemental_3",
+      "name": "Lôi Linh",
+      "level": 76,
+      "stat_level": 50,
+      "mult": 2.36,
+      "atk_mult": 1.51,
+      "xp_mult": 1.68,
+      "element": "lightning",
+      "rich": 3.4,
+      "jewel_chance": 0.054,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_griffon_3",
+      "name": "Sư Ưng Sấm",
+      "level": 79,
+      "stat_level": 50,
+      "mult": 2.36,
+      "atk_mult": 1.51,
+      "xp_mult": 1.68,
+      "element": "lightning",
+      "rich": 3.4,
+      "jewel_chance": 0.054,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_harpy_3",
+      "name": "Điểu Nữ Lôi Phong",
+      "level": 82,
+      "stat_level": 50,
+      "mult": 2.36,
+      "atk_mult": 1.51,
+      "xp_mult": 1.68,
+      "element": "lightning",
+      "rich": 3.4,
+      "jewel_chance": 0.054,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_air_elemental_4",
+      "name": "Lôi Linh",
+      "level": 78,
+      "stat_level": 50,
+      "mult": 2.44,
+      "atk_mult": 1.54,
+      "xp_mult": 1.72,
+      "element": "lightning",
+      "rich": 3.6,
+      "jewel_chance": 0.056,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_griffon_4",
+      "name": "Sư Ưng Sấm",
+      "level": 81,
+      "stat_level": 50,
+      "mult": 2.44,
+      "atk_mult": 1.54,
+      "xp_mult": 1.72,
+      "element": "lightning",
+      "rich": 3.6,
+      "jewel_chance": 0.056,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_harpy_4",
+      "name": "Điểu Nữ Lôi Phong",
+      "level": 84,
+      "stat_level": 50,
+      "mult": 2.44,
+      "atk_mult": 1.54,
+      "xp_mult": 1.72,
+      "element": "lightning",
+      "rich": 3.6,
+      "jewel_chance": 0.056,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_air_elemental_5",
+      "name": "Lôi Linh",
+      "level": 80,
+      "stat_level": 50,
+      "mult": 2.52,
+      "atk_mult": 1.57,
+      "xp_mult": 1.76,
+      "element": "lightning",
+      "rich": 3.8,
+      "jewel_chance": 0.058,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_griffon_5",
+      "name": "Sư Ưng Sấm",
+      "level": 83,
+      "stat_level": 50,
+      "mult": 2.52,
+      "atk_mult": 1.57,
+      "xp_mult": 1.76,
+      "element": "lightning",
+      "rich": 3.8,
+      "jewel_chance": 0.058,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r3_harpy_5",
+      "name": "Điểu Nữ Lôi Phong",
+      "level": 86,
+      "stat_level": 50,
+      "mult": 2.52,
+      "atk_mult": 1.57,
+      "xp_mult": 1.76,
+      "element": "lightning",
+      "rich": 3.8,
+      "jewel_chance": 0.058,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r3_storm_dragon",
       "name": "Lôi Long Phong Bạo",
       "level": 80,
@@ -176,6 +754,7 @@
       "element": "lightning",
       "rich": 5,
       "jewel_chance": 0.25,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -226,6 +805,198 @@
       "verified": false
     },
     {
+      "id": "r4_bog_body_2",
+      "name": "Xác Đầm Thực Thi",
+      "level": 84,
+      "stat_level": 50,
+      "mult": 2.68,
+      "atk_mult": 1.63,
+      "xp_mult": 1.84,
+      "element": "earth",
+      "rich": 4.2,
+      "jewel_chance": 0.062,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_swamp_worm_2",
+      "name": "Giun Đầm Khổng Lồ",
+      "level": 87,
+      "stat_level": 50,
+      "mult": 2.68,
+      "atk_mult": 1.63,
+      "xp_mult": 1.84,
+      "element": "earth",
+      "rich": 4.2,
+      "jewel_chance": 0.062,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_basilisk_2",
+      "name": "Xà Vương Hóa Đá",
+      "level": 90,
+      "stat_level": 50,
+      "mult": 2.68,
+      "atk_mult": 1.63,
+      "xp_mult": 1.84,
+      "element": "earth",
+      "rich": 4.2,
+      "jewel_chance": 0.062,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_bog_body_3",
+      "name": "Xác Đầm Thực Thi",
+      "level": 86,
+      "stat_level": 50,
+      "mult": 2.76,
+      "atk_mult": 1.66,
+      "xp_mult": 1.88,
+      "element": "earth",
+      "rich": 4.4,
+      "jewel_chance": 0.064,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_swamp_worm_3",
+      "name": "Giun Đầm Khổng Lồ",
+      "level": 89,
+      "stat_level": 50,
+      "mult": 2.76,
+      "atk_mult": 1.66,
+      "xp_mult": 1.88,
+      "element": "earth",
+      "rich": 4.4,
+      "jewel_chance": 0.064,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_basilisk_3",
+      "name": "Xà Vương Hóa Đá",
+      "level": 92,
+      "stat_level": 50,
+      "mult": 2.76,
+      "atk_mult": 1.66,
+      "xp_mult": 1.88,
+      "element": "earth",
+      "rich": 4.4,
+      "jewel_chance": 0.064,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_bog_body_4",
+      "name": "Xác Đầm Thực Thi",
+      "level": 88,
+      "stat_level": 50,
+      "mult": 2.84,
+      "atk_mult": 1.69,
+      "xp_mult": 1.92,
+      "element": "earth",
+      "rich": 4.6,
+      "jewel_chance": 0.066,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_swamp_worm_4",
+      "name": "Giun Đầm Khổng Lồ",
+      "level": 91,
+      "stat_level": 50,
+      "mult": 2.84,
+      "atk_mult": 1.69,
+      "xp_mult": 1.92,
+      "element": "earth",
+      "rich": 4.6,
+      "jewel_chance": 0.066,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_basilisk_4",
+      "name": "Xà Vương Hóa Đá",
+      "level": 94,
+      "stat_level": 50,
+      "mult": 2.84,
+      "atk_mult": 1.69,
+      "xp_mult": 1.92,
+      "element": "earth",
+      "rich": 4.6,
+      "jewel_chance": 0.066,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_bog_body_5",
+      "name": "Xác Đầm Thực Thi",
+      "level": 90,
+      "stat_level": 50,
+      "mult": 2.92,
+      "atk_mult": 1.72,
+      "xp_mult": 1.96,
+      "element": "earth",
+      "rich": 4.8,
+      "jewel_chance": 0.068,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_swamp_worm_5",
+      "name": "Giun Đầm Khổng Lồ",
+      "level": 93,
+      "stat_level": 50,
+      "mult": 2.92,
+      "atk_mult": 1.72,
+      "xp_mult": 1.96,
+      "element": "earth",
+      "rich": 4.8,
+      "jewel_chance": 0.068,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r4_basilisk_5",
+      "name": "Xà Vương Hóa Đá",
+      "level": 96,
+      "stat_level": 50,
+      "mult": 2.92,
+      "atk_mult": 1.72,
+      "xp_mult": 1.96,
+      "element": "earth",
+      "rich": 4.8,
+      "jewel_chance": 0.068,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r4_swamp_dragon",
       "name": "Long Đầm Thực Thi",
       "level": 90,
@@ -236,6 +1007,7 @@
       "element": "earth",
       "rich": 6,
       "jewel_chance": 0.3,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -286,6 +1058,198 @@
       "verified": false
     },
     {
+      "id": "r5_wyvern_2",
+      "name": "Dực Long Gió Hú",
+      "level": 94,
+      "stat_level": 50,
+      "mult": 3.08,
+      "atk_mult": 1.78,
+      "xp_mult": 2.04,
+      "element": "wind",
+      "rich": 5.2,
+      "jewel_chance": 0.072,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_manticore_2",
+      "name": "Sư Nhân Gió",
+      "level": 97,
+      "stat_level": 50,
+      "mult": 3.08,
+      "atk_mult": 1.78,
+      "xp_mult": 2.04,
+      "element": "wind",
+      "rich": 5.2,
+      "jewel_chance": 0.072,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_cyclops_2",
+      "name": "Độc Nhãn Cao Nguyên",
+      "level": 100,
+      "stat_level": 50,
+      "mult": 3.08,
+      "atk_mult": 1.78,
+      "xp_mult": 2.04,
+      "element": "wind",
+      "rich": 5.2,
+      "jewel_chance": 0.072,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_wyvern_3",
+      "name": "Dực Long Gió Hú",
+      "level": 96,
+      "stat_level": 50,
+      "mult": 3.16,
+      "atk_mult": 1.81,
+      "xp_mult": 2.08,
+      "element": "wind",
+      "rich": 5.4,
+      "jewel_chance": 0.074,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_manticore_3",
+      "name": "Sư Nhân Gió",
+      "level": 99,
+      "stat_level": 50,
+      "mult": 3.16,
+      "atk_mult": 1.81,
+      "xp_mult": 2.08,
+      "element": "wind",
+      "rich": 5.4,
+      "jewel_chance": 0.074,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_cyclops_3",
+      "name": "Độc Nhãn Cao Nguyên",
+      "level": 102,
+      "stat_level": 50,
+      "mult": 3.16,
+      "atk_mult": 1.81,
+      "xp_mult": 2.08,
+      "element": "wind",
+      "rich": 5.4,
+      "jewel_chance": 0.074,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_wyvern_4",
+      "name": "Dực Long Gió Hú",
+      "level": 98,
+      "stat_level": 50,
+      "mult": 3.24,
+      "atk_mult": 1.84,
+      "xp_mult": 2.12,
+      "element": "wind",
+      "rich": 5.6,
+      "jewel_chance": 0.076,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_manticore_4",
+      "name": "Sư Nhân Gió",
+      "level": 101,
+      "stat_level": 50,
+      "mult": 3.24,
+      "atk_mult": 1.84,
+      "xp_mult": 2.12,
+      "element": "wind",
+      "rich": 5.6,
+      "jewel_chance": 0.076,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_cyclops_4",
+      "name": "Độc Nhãn Cao Nguyên",
+      "level": 104,
+      "stat_level": 50,
+      "mult": 3.24,
+      "atk_mult": 1.84,
+      "xp_mult": 2.12,
+      "element": "wind",
+      "rich": 5.6,
+      "jewel_chance": 0.076,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_wyvern_5",
+      "name": "Dực Long Gió Hú",
+      "level": 100,
+      "stat_level": 50,
+      "mult": 3.32,
+      "atk_mult": 1.87,
+      "xp_mult": 2.16,
+      "element": "wind",
+      "rich": 5.8,
+      "jewel_chance": 0.078,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_manticore_5",
+      "name": "Sư Nhân Gió",
+      "level": 103,
+      "stat_level": 50,
+      "mult": 3.32,
+      "atk_mult": 1.87,
+      "xp_mult": 2.16,
+      "element": "wind",
+      "rich": 5.8,
+      "jewel_chance": 0.078,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r5_cyclops_5",
+      "name": "Độc Nhãn Cao Nguyên",
+      "level": 106,
+      "stat_level": 50,
+      "mult": 3.32,
+      "atk_mult": 1.87,
+      "xp_mult": 2.16,
+      "element": "wind",
+      "rich": 5.8,
+      "jewel_chance": 0.078,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r5_hydra5",
       "name": "Cửu Đầu Xà Bão Tố",
       "level": 100,
@@ -296,6 +1260,7 @@
       "element": "wind",
       "rich": 7,
       "jewel_chance": 0.35,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -346,6 +1311,198 @@
       "verified": false
     },
     {
+      "id": "r6_crystal_guardian_2",
+      "name": "Vệ Binh Pha Lê",
+      "level": 104,
+      "stat_level": 50,
+      "mult": 3.48,
+      "atk_mult": 1.93,
+      "xp_mult": 2.24,
+      "element": "light",
+      "rich": 6.2,
+      "jewel_chance": 0.082,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_iron_golem_2",
+      "name": "Người Sắt Thánh Địa",
+      "level": 107,
+      "stat_level": 50,
+      "mult": 3.48,
+      "atk_mult": 1.93,
+      "xp_mult": 2.24,
+      "element": "light",
+      "rich": 6.2,
+      "jewel_chance": 0.082,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_titan_2",
+      "name": "Titan Hoàng Kim",
+      "level": 110,
+      "stat_level": 50,
+      "mult": 3.48,
+      "atk_mult": 1.93,
+      "xp_mult": 2.24,
+      "element": "light",
+      "rich": 6.2,
+      "jewel_chance": 0.082,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_crystal_guardian_3",
+      "name": "Vệ Binh Pha Lê",
+      "level": 106,
+      "stat_level": 50,
+      "mult": 3.56,
+      "atk_mult": 1.96,
+      "xp_mult": 2.28,
+      "element": "light",
+      "rich": 6.4,
+      "jewel_chance": 0.084,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_iron_golem_3",
+      "name": "Người Sắt Thánh Địa",
+      "level": 109,
+      "stat_level": 50,
+      "mult": 3.56,
+      "atk_mult": 1.96,
+      "xp_mult": 2.28,
+      "element": "light",
+      "rich": 6.4,
+      "jewel_chance": 0.084,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_titan_3",
+      "name": "Titan Hoàng Kim",
+      "level": 112,
+      "stat_level": 50,
+      "mult": 3.56,
+      "atk_mult": 1.96,
+      "xp_mult": 2.28,
+      "element": "light",
+      "rich": 6.4,
+      "jewel_chance": 0.084,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_crystal_guardian_4",
+      "name": "Vệ Binh Pha Lê",
+      "level": 108,
+      "stat_level": 50,
+      "mult": 3.64,
+      "atk_mult": 1.99,
+      "xp_mult": 2.32,
+      "element": "light",
+      "rich": 6.6,
+      "jewel_chance": 0.086,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_iron_golem_4",
+      "name": "Người Sắt Thánh Địa",
+      "level": 111,
+      "stat_level": 50,
+      "mult": 3.64,
+      "atk_mult": 1.99,
+      "xp_mult": 2.32,
+      "element": "light",
+      "rich": 6.6,
+      "jewel_chance": 0.086,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_titan_4",
+      "name": "Titan Hoàng Kim",
+      "level": 114,
+      "stat_level": 50,
+      "mult": 3.64,
+      "atk_mult": 1.99,
+      "xp_mult": 2.32,
+      "element": "light",
+      "rich": 6.6,
+      "jewel_chance": 0.086,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_crystal_guardian_5",
+      "name": "Vệ Binh Pha Lê",
+      "level": 110,
+      "stat_level": 50,
+      "mult": 3.72,
+      "atk_mult": 2.02,
+      "xp_mult": 2.36,
+      "element": "light",
+      "rich": 6.8,
+      "jewel_chance": 0.088,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_iron_golem_5",
+      "name": "Người Sắt Thánh Địa",
+      "level": 113,
+      "stat_level": 50,
+      "mult": 3.72,
+      "atk_mult": 2.02,
+      "xp_mult": 2.36,
+      "element": "light",
+      "rich": 6.8,
+      "jewel_chance": 0.088,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r6_titan_5",
+      "name": "Titan Hoàng Kim",
+      "level": 116,
+      "stat_level": 50,
+      "mult": 3.72,
+      "atk_mult": 2.02,
+      "xp_mult": 2.36,
+      "element": "light",
+      "rich": 6.8,
+      "jewel_chance": 0.088,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r6_golden_dragon",
       "name": "Kim Long Thánh Địa",
       "level": 110,
@@ -356,6 +1513,7 @@
       "element": "light",
       "rich": 8,
       "jewel_chance": 0.4,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -406,6 +1564,198 @@
       "verified": false
     },
     {
+      "id": "r7_phantom_2",
+      "name": "U Hồn Hư Không",
+      "level": 114,
+      "stat_level": 50,
+      "mult": 3.88,
+      "atk_mult": 2.08,
+      "xp_mult": 2.44,
+      "element": "dark",
+      "rich": 7.2,
+      "jewel_chance": 0.092,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_wight_2",
+      "name": "Thi Ma Hư Không",
+      "level": 117,
+      "stat_level": 50,
+      "mult": 3.88,
+      "atk_mult": 2.08,
+      "xp_mult": 2.44,
+      "element": "dark",
+      "rich": 7.2,
+      "jewel_chance": 0.092,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_revenant_2",
+      "name": "Oan Hồn Báo Thù",
+      "level": 120,
+      "stat_level": 50,
+      "mult": 3.88,
+      "atk_mult": 2.08,
+      "xp_mult": 2.44,
+      "element": "dark",
+      "rich": 7.2,
+      "jewel_chance": 0.092,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_phantom_3",
+      "name": "U Hồn Hư Không",
+      "level": 116,
+      "stat_level": 50,
+      "mult": 3.96,
+      "atk_mult": 2.11,
+      "xp_mult": 2.48,
+      "element": "dark",
+      "rich": 7.4,
+      "jewel_chance": 0.094,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_wight_3",
+      "name": "Thi Ma Hư Không",
+      "level": 119,
+      "stat_level": 50,
+      "mult": 3.96,
+      "atk_mult": 2.11,
+      "xp_mult": 2.48,
+      "element": "dark",
+      "rich": 7.4,
+      "jewel_chance": 0.094,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_revenant_3",
+      "name": "Oan Hồn Báo Thù",
+      "level": 122,
+      "stat_level": 50,
+      "mult": 3.96,
+      "atk_mult": 2.11,
+      "xp_mult": 2.48,
+      "element": "dark",
+      "rich": 7.4,
+      "jewel_chance": 0.094,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_phantom_4",
+      "name": "U Hồn Hư Không",
+      "level": 118,
+      "stat_level": 50,
+      "mult": 4.04,
+      "atk_mult": 2.14,
+      "xp_mult": 2.52,
+      "element": "dark",
+      "rich": 7.6,
+      "jewel_chance": 0.096,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_wight_4",
+      "name": "Thi Ma Hư Không",
+      "level": 121,
+      "stat_level": 50,
+      "mult": 4.04,
+      "atk_mult": 2.14,
+      "xp_mult": 2.52,
+      "element": "dark",
+      "rich": 7.6,
+      "jewel_chance": 0.096,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_revenant_4",
+      "name": "Oan Hồn Báo Thù",
+      "level": 124,
+      "stat_level": 50,
+      "mult": 4.04,
+      "atk_mult": 2.14,
+      "xp_mult": 2.52,
+      "element": "dark",
+      "rich": 7.6,
+      "jewel_chance": 0.096,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_phantom_5",
+      "name": "U Hồn Hư Không",
+      "level": 120,
+      "stat_level": 50,
+      "mult": 4.12,
+      "atk_mult": 2.17,
+      "xp_mult": 2.56,
+      "element": "dark",
+      "rich": 7.8,
+      "jewel_chance": 0.098,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_wight_5",
+      "name": "Thi Ma Hư Không",
+      "level": 123,
+      "stat_level": 50,
+      "mult": 4.12,
+      "atk_mult": 2.17,
+      "xp_mult": 2.56,
+      "element": "dark",
+      "rich": 7.8,
+      "jewel_chance": 0.098,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r7_revenant_5",
+      "name": "Oan Hồn Báo Thù",
+      "level": 126,
+      "stat_level": 50,
+      "mult": 4.12,
+      "atk_mult": 2.17,
+      "xp_mult": 2.56,
+      "element": "dark",
+      "rich": 7.8,
+      "jewel_chance": 0.098,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r7_shadow_dragon",
       "name": "Ám Long Hư Không",
       "level": 120,
@@ -416,6 +1766,7 @@
       "element": "dark",
       "rich": 9,
       "jewel_chance": 0.45,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -466,6 +1817,198 @@
       "verified": false
     },
     {
+      "id": "r8_fire_giant_2",
+      "name": "Hỏa Nhân Diệt Thế",
+      "level": 124,
+      "stat_level": 50,
+      "mult": 4.28,
+      "atk_mult": 2.23,
+      "xp_mult": 2.64,
+      "element": "fire",
+      "rich": 8.2,
+      "jewel_chance": 0.102,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_quicksilver_dragon_2",
+      "name": "Thủy Ngân Long",
+      "level": 127,
+      "stat_level": 50,
+      "mult": 4.28,
+      "atk_mult": 2.23,
+      "xp_mult": 2.64,
+      "element": "fire",
+      "rich": 8.2,
+      "jewel_chance": 0.102,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_ettin_2",
+      "name": "Song Đầu Dung Nham",
+      "level": 130,
+      "stat_level": 50,
+      "mult": 4.28,
+      "atk_mult": 2.23,
+      "xp_mult": 2.64,
+      "element": "fire",
+      "rich": 8.2,
+      "jewel_chance": 0.102,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_fire_giant_3",
+      "name": "Hỏa Nhân Diệt Thế",
+      "level": 126,
+      "stat_level": 50,
+      "mult": 4.36,
+      "atk_mult": 2.26,
+      "xp_mult": 2.68,
+      "element": "fire",
+      "rich": 8.4,
+      "jewel_chance": 0.104,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_quicksilver_dragon_3",
+      "name": "Thủy Ngân Long",
+      "level": 129,
+      "stat_level": 50,
+      "mult": 4.36,
+      "atk_mult": 2.26,
+      "xp_mult": 2.68,
+      "element": "fire",
+      "rich": 8.4,
+      "jewel_chance": 0.104,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_ettin_3",
+      "name": "Song Đầu Dung Nham",
+      "level": 132,
+      "stat_level": 50,
+      "mult": 4.36,
+      "atk_mult": 2.26,
+      "xp_mult": 2.68,
+      "element": "fire",
+      "rich": 8.4,
+      "jewel_chance": 0.104,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_fire_giant_4",
+      "name": "Hỏa Nhân Diệt Thế",
+      "level": 128,
+      "stat_level": 50,
+      "mult": 4.44,
+      "atk_mult": 2.29,
+      "xp_mult": 2.72,
+      "element": "fire",
+      "rich": 8.6,
+      "jewel_chance": 0.106,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_quicksilver_dragon_4",
+      "name": "Thủy Ngân Long",
+      "level": 131,
+      "stat_level": 50,
+      "mult": 4.44,
+      "atk_mult": 2.29,
+      "xp_mult": 2.72,
+      "element": "fire",
+      "rich": 8.6,
+      "jewel_chance": 0.106,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_ettin_4",
+      "name": "Song Đầu Dung Nham",
+      "level": 134,
+      "stat_level": 50,
+      "mult": 4.44,
+      "atk_mult": 2.29,
+      "xp_mult": 2.72,
+      "element": "fire",
+      "rich": 8.6,
+      "jewel_chance": 0.106,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_fire_giant_5",
+      "name": "Hỏa Nhân Diệt Thế",
+      "level": 130,
+      "stat_level": 50,
+      "mult": 4.52,
+      "atk_mult": 2.32,
+      "xp_mult": 2.76,
+      "element": "fire",
+      "rich": 8.8,
+      "jewel_chance": 0.108,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_quicksilver_dragon_5",
+      "name": "Thủy Ngân Long",
+      "level": 133,
+      "stat_level": 50,
+      "mult": 4.52,
+      "atk_mult": 2.32,
+      "xp_mult": 2.76,
+      "element": "fire",
+      "rich": 8.8,
+      "jewel_chance": 0.108,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r8_ettin_5",
+      "name": "Song Đầu Dung Nham",
+      "level": 136,
+      "stat_level": 50,
+      "mult": 4.52,
+      "atk_mult": 2.32,
+      "xp_mult": 2.76,
+      "element": "fire",
+      "rich": 8.8,
+      "jewel_chance": 0.108,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r8_ancient_dragon",
       "name": "Cổ Long Diệt Thế",
       "level": 130,
@@ -476,6 +2019,7 @@
       "element": "fire",
       "rich": 10,
       "jewel_chance": 0.5,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -526,6 +2070,198 @@
       "verified": false
     },
     {
+      "id": "r9_death_knight_2",
+      "name": "Kỵ Sĩ Thần Ma",
+      "level": 134,
+      "stat_level": 50,
+      "mult": 4.68,
+      "atk_mult": 2.38,
+      "xp_mult": 2.84,
+      "element": "dark",
+      "rich": 9.2,
+      "jewel_chance": 0.112,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_vampire_2",
+      "name": "Huyết Tộc Cổ",
+      "level": 137,
+      "stat_level": 50,
+      "mult": 4.68,
+      "atk_mult": 2.38,
+      "xp_mult": 2.84,
+      "element": "dark",
+      "rich": 9.2,
+      "jewel_chance": 0.112,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_reaper_2",
+      "name": "Tử Thần Mộ Địa",
+      "level": 140,
+      "stat_level": 50,
+      "mult": 4.68,
+      "atk_mult": 2.38,
+      "xp_mult": 2.84,
+      "element": "dark",
+      "rich": 9.2,
+      "jewel_chance": 0.112,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_death_knight_3",
+      "name": "Kỵ Sĩ Thần Ma",
+      "level": 136,
+      "stat_level": 50,
+      "mult": 4.76,
+      "atk_mult": 2.41,
+      "xp_mult": 2.88,
+      "element": "dark",
+      "rich": 9.4,
+      "jewel_chance": 0.114,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_vampire_3",
+      "name": "Huyết Tộc Cổ",
+      "level": 139,
+      "stat_level": 50,
+      "mult": 4.76,
+      "atk_mult": 2.41,
+      "xp_mult": 2.88,
+      "element": "dark",
+      "rich": 9.4,
+      "jewel_chance": 0.114,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_reaper_3",
+      "name": "Tử Thần Mộ Địa",
+      "level": 142,
+      "stat_level": 50,
+      "mult": 4.76,
+      "atk_mult": 2.41,
+      "xp_mult": 2.88,
+      "element": "dark",
+      "rich": 9.4,
+      "jewel_chance": 0.114,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_death_knight_4",
+      "name": "Kỵ Sĩ Thần Ma",
+      "level": 138,
+      "stat_level": 50,
+      "mult": 4.84,
+      "atk_mult": 2.44,
+      "xp_mult": 2.92,
+      "element": "dark",
+      "rich": 9.6,
+      "jewel_chance": 0.116,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_vampire_4",
+      "name": "Huyết Tộc Cổ",
+      "level": 141,
+      "stat_level": 50,
+      "mult": 4.84,
+      "atk_mult": 2.44,
+      "xp_mult": 2.92,
+      "element": "dark",
+      "rich": 9.6,
+      "jewel_chance": 0.116,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_reaper_4",
+      "name": "Tử Thần Mộ Địa",
+      "level": 144,
+      "stat_level": 50,
+      "mult": 4.84,
+      "atk_mult": 2.44,
+      "xp_mult": 2.92,
+      "element": "dark",
+      "rich": 9.6,
+      "jewel_chance": 0.116,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_death_knight_5",
+      "name": "Kỵ Sĩ Thần Ma",
+      "level": 140,
+      "stat_level": 50,
+      "mult": 4.92,
+      "atk_mult": 2.47,
+      "xp_mult": 2.96,
+      "element": "dark",
+      "rich": 9.8,
+      "jewel_chance": 0.118,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_vampire_5",
+      "name": "Huyết Tộc Cổ",
+      "level": 143,
+      "stat_level": 50,
+      "mult": 4.92,
+      "atk_mult": 2.47,
+      "xp_mult": 2.96,
+      "element": "dark",
+      "rich": 9.8,
+      "jewel_chance": 0.118,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r9_reaper_5",
+      "name": "Tử Thần Mộ Địa",
+      "level": 146,
+      "stat_level": 50,
+      "mult": 4.92,
+      "atk_mult": 2.47,
+      "xp_mult": 2.96,
+      "element": "dark",
+      "rich": 9.8,
+      "jewel_chance": 0.118,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r9_bone_dragon",
       "name": "Cốt Long Thần Ma",
       "level": 140,
@@ -536,6 +2272,7 @@
       "element": "dark",
       "rich": 11,
       "jewel_chance": 0.55,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -586,6 +2323,198 @@
       "verified": false
     },
     {
+      "id": "r10_white_wizard_2",
+      "name": "Pháp Sư Thiên Giới",
+      "level": 144,
+      "stat_level": 50,
+      "mult": 5.08,
+      "atk_mult": 2.53,
+      "xp_mult": 3.04,
+      "element": "light",
+      "rich": 10.2,
+      "jewel_chance": 0.122,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_lich_2",
+      "name": "Vu Yêu Hỗn Mang",
+      "level": 147,
+      "stat_level": 50,
+      "mult": 5.08,
+      "atk_mult": 2.53,
+      "xp_mult": 3.04,
+      "element": "light",
+      "rich": 10.2,
+      "jewel_chance": 0.122,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_stone_giant_2",
+      "name": "Thạch Thần",
+      "level": 150,
+      "stat_level": 50,
+      "mult": 5.08,
+      "atk_mult": 2.53,
+      "xp_mult": 3.04,
+      "element": "light",
+      "rich": 10.2,
+      "jewel_chance": 0.122,
+      "depth": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_white_wizard_3",
+      "name": "Pháp Sư Thiên Giới",
+      "level": 146,
+      "stat_level": 50,
+      "mult": 5.16,
+      "atk_mult": 2.56,
+      "xp_mult": 3.08,
+      "element": "light",
+      "rich": 10.4,
+      "jewel_chance": 0.124,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_lich_3",
+      "name": "Vu Yêu Hỗn Mang",
+      "level": 149,
+      "stat_level": 50,
+      "mult": 5.16,
+      "atk_mult": 2.56,
+      "xp_mult": 3.08,
+      "element": "light",
+      "rich": 10.4,
+      "jewel_chance": 0.124,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_stone_giant_3",
+      "name": "Thạch Thần",
+      "level": 152,
+      "stat_level": 50,
+      "mult": 5.16,
+      "atk_mult": 2.56,
+      "xp_mult": 3.08,
+      "element": "light",
+      "rich": 10.4,
+      "jewel_chance": 0.124,
+      "depth": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_white_wizard_4",
+      "name": "Pháp Sư Thiên Giới",
+      "level": 148,
+      "stat_level": 50,
+      "mult": 5.24,
+      "atk_mult": 2.59,
+      "xp_mult": 3.12,
+      "element": "light",
+      "rich": 10.6,
+      "jewel_chance": 0.126,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_lich_4",
+      "name": "Vu Yêu Hỗn Mang",
+      "level": 151,
+      "stat_level": 50,
+      "mult": 5.24,
+      "atk_mult": 2.59,
+      "xp_mult": 3.12,
+      "element": "light",
+      "rich": 10.6,
+      "jewel_chance": 0.126,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_stone_giant_4",
+      "name": "Thạch Thần",
+      "level": 154,
+      "stat_level": 50,
+      "mult": 5.24,
+      "atk_mult": 2.59,
+      "xp_mult": 3.12,
+      "element": "light",
+      "rich": 10.6,
+      "jewel_chance": 0.126,
+      "depth": 4,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_white_wizard_5",
+      "name": "Pháp Sư Thiên Giới",
+      "level": 150,
+      "stat_level": 50,
+      "mult": 5.32,
+      "atk_mult": 2.62,
+      "xp_mult": 3.16,
+      "element": "light",
+      "rich": 10.8,
+      "jewel_chance": 0.128,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_lich_5",
+      "name": "Vu Yêu Hỗn Mang",
+      "level": 153,
+      "stat_level": 50,
+      "mult": 5.32,
+      "atk_mult": 2.62,
+      "xp_mult": 3.16,
+      "element": "light",
+      "rich": 10.8,
+      "jewel_chance": 0.128,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
+      "id": "r10_stone_giant_5",
+      "name": "Thạch Thần",
+      "level": 156,
+      "stat_level": 50,
+      "mult": 5.32,
+      "atk_mult": 2.62,
+      "xp_mult": 3.16,
+      "element": "light",
+      "rich": 10.8,
+      "jewel_chance": 0.128,
+      "depth": 5,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    {
       "id": "r10_ancient_lich",
       "name": "Hỗn Mang Chi Chủ",
       "level": 150,
@@ -596,6 +2525,7 @@
       "element": "light",
       "rich": 12,
       "jewel_chance": 0.6,
+      "lord": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -618,6 +2548,66 @@
       "hue-rotate(-15deg) saturate(1.6) brightness(1.05)"
     ],
     [
+      "monsters/fire_elemental",
+      "monsters/r1_fire_elemental_2",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/hell_hound",
+      "monsters/r1_hell_hound_2",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/red_devil",
+      "monsters/r1_red_devil_2",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/fire_elemental",
+      "monsters/r1_fire_elemental_3",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/hell_hound",
+      "monsters/r1_hell_hound_3",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/red_devil",
+      "monsters/r1_red_devil_3",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/fire_elemental",
+      "monsters/r1_fire_elemental_4",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/hell_hound",
+      "monsters/r1_hell_hound_4",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/red_devil",
+      "monsters/r1_red_devil_4",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/fire_elemental",
+      "monsters/r1_fire_elemental_5",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/hell_hound",
+      "monsters/r1_hell_hound_5",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/red_devil",
+      "monsters/r1_red_devil_5",
+      "hue-rotate(-15deg) saturate(1.6) brightness(1.05) brightness(0.76) saturate(1.48)"
+    ],
+    [
       "monsters/balrug",
       "monsters/r1_balrug",
       "hue-rotate(-15deg) saturate(1.6) brightness(1.05)"
@@ -636,6 +2626,66 @@
       "monsters/polar_bear",
       "monsters/r2_polar_bear",
       "saturate(1.3) brightness(1.2) contrast(1.1)"
+    ],
+    [
+      "monsters/ice_beast",
+      "monsters/r2_ice_beast_2",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/frost_giant",
+      "monsters/r2_frost_giant_2",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/polar_bear",
+      "monsters/r2_polar_bear_2",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/ice_beast",
+      "monsters/r2_ice_beast_3",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/frost_giant",
+      "monsters/r2_frost_giant_3",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/polar_bear",
+      "monsters/r2_polar_bear_3",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/ice_beast",
+      "monsters/r2_ice_beast_4",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/frost_giant",
+      "monsters/r2_frost_giant_4",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/polar_bear",
+      "monsters/r2_polar_bear_4",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/ice_beast",
+      "monsters/r2_ice_beast_5",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/frost_giant",
+      "monsters/r2_frost_giant_5",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/polar_bear",
+      "monsters/r2_polar_bear_5",
+      "saturate(1.3) brightness(1.2) contrast(1.1) brightness(0.76) saturate(1.48)"
     ],
     [
       "monsters/ice_dragon",
@@ -658,6 +2708,66 @@
       "hue-rotate(40deg) saturate(1.8) brightness(1.1)"
     ],
     [
+      "monsters/air_elemental",
+      "monsters/r3_air_elemental_2",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/griffon",
+      "monsters/r3_griffon_2",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/harpy",
+      "monsters/r3_harpy_2",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/air_elemental",
+      "monsters/r3_air_elemental_3",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/griffon",
+      "monsters/r3_griffon_3",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/harpy",
+      "monsters/r3_harpy_3",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/air_elemental",
+      "monsters/r3_air_elemental_4",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/griffon",
+      "monsters/r3_griffon_4",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/harpy",
+      "monsters/r3_harpy_4",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/air_elemental",
+      "monsters/r3_air_elemental_5",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/griffon",
+      "monsters/r3_griffon_5",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/harpy",
+      "monsters/r3_harpy_5",
+      "hue-rotate(40deg) saturate(1.8) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
       "monsters/storm_dragon",
       "monsters/r3_storm_dragon",
       "hue-rotate(40deg) saturate(1.8) brightness(1.1)"
@@ -676,6 +2786,66 @@
       "monsters/basilisk",
       "monsters/r4_basilisk",
       "hue-rotate(60deg) saturate(1.4) brightness(0.9)"
+    ],
+    [
+      "monsters/bog_body",
+      "monsters/r4_bog_body_2",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/swamp_worm",
+      "monsters/r4_swamp_worm_2",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/basilisk",
+      "monsters/r4_basilisk_2",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/bog_body",
+      "monsters/r4_bog_body_3",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/swamp_worm",
+      "monsters/r4_swamp_worm_3",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/basilisk",
+      "monsters/r4_basilisk_3",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/bog_body",
+      "monsters/r4_bog_body_4",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/swamp_worm",
+      "monsters/r4_swamp_worm_4",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/basilisk",
+      "monsters/r4_basilisk_4",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/bog_body",
+      "monsters/r4_bog_body_5",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/swamp_worm",
+      "monsters/r4_swamp_worm_5",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/basilisk",
+      "monsters/r4_basilisk_5",
+      "hue-rotate(60deg) saturate(1.4) brightness(0.9) brightness(0.76) saturate(1.48)"
     ],
     [
       "monsters/swamp_dragon",
@@ -698,6 +2868,66 @@
       "hue-rotate(110deg) saturate(1.3) brightness(1.1)"
     ],
     [
+      "monsters/wyvern",
+      "monsters/r5_wyvern_2",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/manticore",
+      "monsters/r5_manticore_2",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/cyclops",
+      "monsters/r5_cyclops_2",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/wyvern",
+      "monsters/r5_wyvern_3",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/manticore",
+      "monsters/r5_manticore_3",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/cyclops",
+      "monsters/r5_cyclops_3",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/wyvern",
+      "monsters/r5_wyvern_4",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/manticore",
+      "monsters/r5_manticore_4",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/cyclops",
+      "monsters/r5_cyclops_4",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/wyvern",
+      "monsters/r5_wyvern_5",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/manticore",
+      "monsters/r5_manticore_5",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/cyclops",
+      "monsters/r5_cyclops_5",
+      "hue-rotate(110deg) saturate(1.3) brightness(1.1) brightness(0.76) saturate(1.48)"
+    ],
+    [
       "monsters/hydra5",
       "monsters/r5_hydra5",
       "hue-rotate(110deg) saturate(1.3) brightness(1.1)"
@@ -716,6 +2946,66 @@
       "monsters/titan",
       "monsters/r6_titan",
       "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2)"
+    ],
+    [
+      "monsters/crystal_guardian",
+      "monsters/r6_crystal_guardian_2",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/iron_golem",
+      "monsters/r6_iron_golem_2",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/titan",
+      "monsters/r6_titan_2",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/crystal_guardian",
+      "monsters/r6_crystal_guardian_3",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/iron_golem",
+      "monsters/r6_iron_golem_3",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/titan",
+      "monsters/r6_titan_3",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/crystal_guardian",
+      "monsters/r6_crystal_guardian_4",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/iron_golem",
+      "monsters/r6_iron_golem_4",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/titan",
+      "monsters/r6_titan_4",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/crystal_guardian",
+      "monsters/r6_crystal_guardian_5",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/iron_golem",
+      "monsters/r6_iron_golem_5",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/titan",
+      "monsters/r6_titan_5",
+      "sepia(0.6) saturate(2) hue-rotate(-10deg) brightness(1.2) brightness(0.76) saturate(1.48)"
     ],
     [
       "monsters/golden_dragon",
@@ -738,6 +3028,66 @@
       "hue-rotate(250deg) saturate(1.5) brightness(0.85)"
     ],
     [
+      "monsters/phantom",
+      "monsters/r7_phantom_2",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/wight",
+      "monsters/r7_wight_2",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/revenant",
+      "monsters/r7_revenant_2",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/phantom",
+      "monsters/r7_phantom_3",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/wight",
+      "monsters/r7_wight_3",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/revenant",
+      "monsters/r7_revenant_3",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/phantom",
+      "monsters/r7_phantom_4",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/wight",
+      "monsters/r7_wight_4",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/revenant",
+      "monsters/r7_revenant_4",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/phantom",
+      "monsters/r7_phantom_5",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/wight",
+      "monsters/r7_wight_5",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/revenant",
+      "monsters/r7_revenant_5",
+      "hue-rotate(250deg) saturate(1.5) brightness(0.85) brightness(0.76) saturate(1.48)"
+    ],
+    [
       "monsters/shadow_dragon",
       "monsters/r7_shadow_dragon",
       "hue-rotate(250deg) saturate(1.5) brightness(0.85)"
@@ -756,6 +3106,66 @@
       "monsters/ettin",
       "monsters/r8_ettin",
       "hue-rotate(-30deg) saturate(2) contrast(1.15)"
+    ],
+    [
+      "monsters/fire_giant",
+      "monsters/r8_fire_giant_2",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/quicksilver_dragon",
+      "monsters/r8_quicksilver_dragon_2",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/ettin",
+      "monsters/r8_ettin_2",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/fire_giant",
+      "monsters/r8_fire_giant_3",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/quicksilver_dragon",
+      "monsters/r8_quicksilver_dragon_3",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/ettin",
+      "monsters/r8_ettin_3",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/fire_giant",
+      "monsters/r8_fire_giant_4",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/quicksilver_dragon",
+      "monsters/r8_quicksilver_dragon_4",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/ettin",
+      "monsters/r8_ettin_4",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/fire_giant",
+      "monsters/r8_fire_giant_5",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/quicksilver_dragon",
+      "monsters/r8_quicksilver_dragon_5",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/ettin",
+      "monsters/r8_ettin_5",
+      "hue-rotate(-30deg) saturate(2) contrast(1.15) brightness(0.76) saturate(1.48)"
     ],
     [
       "monsters/ancient_dragon",
@@ -778,6 +3188,66 @@
       "hue-rotate(300deg) saturate(1.6) brightness(0.9)"
     ],
     [
+      "monsters/death_knight",
+      "monsters/r9_death_knight_2",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/vampire",
+      "monsters/r9_vampire_2",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/reaper",
+      "monsters/r9_reaper_2",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/death_knight",
+      "monsters/r9_death_knight_3",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/vampire",
+      "monsters/r9_vampire_3",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/reaper",
+      "monsters/r9_reaper_3",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/death_knight",
+      "monsters/r9_death_knight_4",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/vampire",
+      "monsters/r9_vampire_4",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/reaper",
+      "monsters/r9_reaper_4",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/death_knight",
+      "monsters/r9_death_knight_5",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/vampire",
+      "monsters/r9_vampire_5",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/reaper",
+      "monsters/r9_reaper_5",
+      "hue-rotate(300deg) saturate(1.6) brightness(0.9) brightness(0.76) saturate(1.48)"
+    ],
+    [
       "monsters/bone_dragon",
       "monsters/r9_bone_dragon",
       "hue-rotate(300deg) saturate(1.6) brightness(0.9)"
@@ -796,6 +3266,66 @@
       "monsters/stone_giant",
       "monsters/r10_stone_giant",
       "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15)"
+    ],
+    [
+      "monsters/white_wizard",
+      "monsters/r10_white_wizard_2",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/lich",
+      "monsters/r10_lich_2",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/stone_giant",
+      "monsters/r10_stone_giant_2",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.94) saturate(1.12)"
+    ],
+    [
+      "monsters/white_wizard",
+      "monsters/r10_white_wizard_3",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/lich",
+      "monsters/r10_lich_3",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/stone_giant",
+      "monsters/r10_stone_giant_3",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.88) saturate(1.24)"
+    ],
+    [
+      "monsters/white_wizard",
+      "monsters/r10_white_wizard_4",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/lich",
+      "monsters/r10_lich_4",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/stone_giant",
+      "monsters/r10_stone_giant_4",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.82) saturate(1.36)"
+    ],
+    [
+      "monsters/white_wizard",
+      "monsters/r10_white_wizard_5",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/lich",
+      "monsters/r10_lich_5",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.76) saturate(1.48)"
+    ],
+    [
+      "monsters/stone_giant",
+      "monsters/r10_stone_giant_5",
+      "invert(0.15) hue-rotate(200deg) saturate(1.8) brightness(1.15) brightness(0.76) saturate(1.48)"
     ],
     [
       "monsters/ancient_lich",

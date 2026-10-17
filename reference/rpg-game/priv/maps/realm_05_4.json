@@ -1,0 +1,83 @@
+{
+  "id": "realm_05_4",
+  "name": "Cao Nguyên Gió Hú 4",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "realm": 5,
+  "min_rebirths": 5,
+  "min_level": 40,
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "R....R...YR..R.....:.....R",
+    "RR.....RRR...R.R....R....R",
+    "RR..Y...R...:...:...R.:..R",
+    "RRR.R...R......:..:..R.R.R",
+    "R...:.......::::......:..R",
+    "R..R..:...:::..::::..::::R",
+    "RR...::::::R...:..::::..:R",
+    "O...::::.R:.::....:......O",
+    "R...:::..RR.::R.R.:.R.:.RR",
+    "R.:.:..R..Y.R:..:R..:R..RR",
+    "R:...R...R....Y..::..:.::R",
+    "R:........:...R:....R.:..R",
+    "R.........:..:...Y....:..R",
+    "R:.YR.....R.....RRR.:...RR",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_05_3",
+      "spawn": [
+        24,
+        8
+      ]
+    },
+    {
+      "at": [
+        25,
+        8
+      ],
+      "to": "realm_05_5",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r5_wyvern_4",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r5_manticore_4",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r5_cyclops_4",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 60
+    },
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": []
+}

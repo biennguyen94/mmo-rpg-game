@@ -163,8 +163,8 @@ defmodule HacLong.Game.Pets do
     end
   end
 
-  # chúa tể vùng chuyển sinh: `rich` = k + 2 (scripts/gen_realms.py)
-  defp lord?(m), do: realm(m.id) > 0 and (m[:rich] || 0) > realm(m.id)
+  # chúa tể vùng chuyển sinh: `lord: true` (scripts/gen_realms.py)
+  defp lord?(m), do: realm(m.id) > 0 and m[:lord] == true
 
   defp tame_price(m),
     do:

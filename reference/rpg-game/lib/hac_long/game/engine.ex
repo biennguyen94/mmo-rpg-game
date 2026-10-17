@@ -2613,13 +2613,10 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  @doc "Chúa tể của vùng chuyển sinh `k` (quái `r<k>_…` có `rich` lớn hơn k, scripts/gen_realms.py)."
+  @doc "Chúa tể của vùng chuyển sinh `k` (quái `r<k>_…` có `lord: true`, scripts/gen_realms.py)."
   def realm_lord(k) do
     prefix = "r#{k}_"
-
-    Enum.find(Data.side_monsters(), fn m ->
-      String.starts_with?(m.id, prefix) and (m[:rich] || 0) > k
-    end)
+    Enum.find(Data.side_monsters(), &(String.starts_with?(&1.id, prefix) and &1[:lord] == true))
   end
 
   def rebirth_points, do: @rebirth_points
