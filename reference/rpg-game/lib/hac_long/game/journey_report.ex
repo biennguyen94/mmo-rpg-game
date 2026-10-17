@@ -18,6 +18,9 @@ defmodule HacLong.Game.JourneyReport do
     Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần · vàng cho thú cưng (mua, thuần, cho ăn) #{r.pet_gold}.
     #{tower(r)}
 
+    ## Sổ ngọc (vào + / ra −, theo nguồn)
+    #{ledger(r)}
+
     ## Từng chặng (giữa hai lần chuyển sinh)
     #{cycles(r)}
 
@@ -40,6 +43,22 @@ defmodule HacLong.Game.JourneyReport do
       "Tháp Vô Tận: #{t.runs} lần leo, vượt #{t.floors} tầng, #{t.fights} trận (thua #{t.losses}), kỷ lục tầng #{t.best}."
 
   defp tower(_r), do: ""
+
+  defp ledger(%{ledger: l}) when map_size(l) > 0 do
+    ids = l |> Map.keys() |> Enum.map(&elem(&1, 0)) |> Enum.uniq() |> Enum.sort()
+    whys = l |> Map.keys() |> Enum.map(&elem(&1, 1)) |> Enum.uniq() |> Enum.sort()
+
+    "| Nguồn | " <>
+      Enum.map_join(ids, " | ", &Data.item(&1).name) <>
+      " |\n|---|" <>
+      String.duplicate("---|", length(ids)) <>
+      "\n" <>
+      Enum.map_join(whys, "\n", fn w ->
+        "| #{w} | " <> Enum.map_join(ids, " | ", &"#{Map.get(l, {&1, w}, "")}") <> " |"
+      end)
+  end
+
+  defp ledger(_r), do: ""
 
   defp cycles(r) do
     head =

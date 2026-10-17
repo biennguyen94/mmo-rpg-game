@@ -107,6 +107,7 @@ defmodule HacLong.Game.Journey do
       lord_at: %{},
       tower_at: 0,
       recent: [],
+      ledger: %{},
       tower: %{runs: 0, floors: 0, fights: 0, losses: 0},
       map: nil,
       seen_maps: MapSet.new(),
@@ -153,14 +154,14 @@ defmodule HacLong.Game.Journey do
       tower?(p, st) ->
         p
         |> heal(st, 1.0)
-        |> then(fn {p, st} -> tower_run(p, st) end)
+        |> then(fn {p, st} -> tracked(p, st, "tháp", &tower_run/2) end)
         |> then(fn {p, st} -> loop(p, st) end)
 
       true ->
         p
         |> heal(st)
         |> then(fn {p, st} ->
-          {p, st} = battle(p, st)
+          {p, st} = tracked(p, st, "rơi khi đánh", &battle/2)
           loop(p, if(st.farm, do: %{st | farm: st.farm - 1}, else: st))
         end)
     end
@@ -205,6 +206,29 @@ defmodule HacLong.Game.Journey do
         {Map.merge(p, %{hp: d.maxHp, mp: d.maxMp}), %{st | fountain: st.fountain + 1}}
     end
   end
+
+  # ---------- Sổ ngọc ----------
+
+  # ghi ngọc vào / ra quanh một bước (`fun`), theo lý do
+  defp tracked(p, st, why, fun) do
+    inv0 = p.inv
+    {p, st} = fun.(p, st)
+    {p, ledger(st, inv0, p.inv, why)}
+  end
+
+  defp ledger(st, inv0, inv1, why) do
+    Enum.reduce(Map.keys(inv0) ++ Map.keys(inv1), st, fn id, st ->
+      d = Map.get(inv1, id, 0) - Map.get(inv0, id, 0)
+
+      if String.starts_with?(id, "jewel_") and d != 0,
+        do: %{st | ledger: Map.update(st.ledger, {id, why}, d, &(&1 + d))},
+        else: st
+    end)
+  end
+
+  defp bucket(n) when n <= 6, do: "1…6"
+  defp bucket(n) when n <= 9, do: "7…9"
+  defp bucket(_), do: "10…11"
 
   # ---------- Tháp Vô Tận ----------
 
@@ -687,6 +711,7 @@ defmodule HacLong.Game.Journey do
       wing_tries: st.wing_tries,
       pet_gold: st.pet_gold,
       tower: Map.put(st.tower, :best, Map.get(p, :tower_best) || 0),
+      ledger: st.ledger,
       events: Enum.reverse(st.events),
       cycles: st.cycles,
       bands: st.bands,
@@ -708,14 +733,14 @@ defmodule HacLong.Game.Journey do
   end
 
   defp maintain(p, st) do
-    {p, st} = quests(p, st)
+    {p, st} = tracked(p, st, "nhiệm vụ", &quests/2)
     key = {p.level, rb(p), length(Gear.list(p)), Map.keys(p.inv) |> length(), div(p.gold, 5000)}
 
     {p, st} =
       if key != st.gear_key do
         {p, st} = p |> gear_up(st)
         {p, st} = forge(p, st)
-        {p, st} = wings(p, st)
+        {p, st} = tracked(p, st, "ghép cánh", &wings/2)
         {p, st} = gear_up(p, st)
         {p, st} = pets(p, st)
         {sell_junk(p, st), %{st | gear_key: key}}
@@ -1023,7 +1048,9 @@ defmodule HacLong.Game.Journey do
         (cost.at == "smith" or st.opts.chaos_up or rb(p) >= st.opts.chaos_from)
 
     if ok? do
+      inv0 = p.inv
       {r, p} = Engine.upgrade(p, slot, true, cost.at)
+      st = ledger(st, inv0, p.inv, "ép +#{bucket(lvl + 1)}")
 
       if r.ok do
         res = r[:upgrade][:result]
