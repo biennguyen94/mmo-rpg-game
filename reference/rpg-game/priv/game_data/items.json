@@ -407,7 +407,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -433,7 +433,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -459,7 +459,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -485,7 +485,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."

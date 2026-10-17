@@ -106,7 +106,13 @@ defmodule HacLongWeb.PageController do
           safe: Data.rules().slay.safe_maps,
           redMult: Data.rules().slay.red_gold_mult
         },
-        wingPerLevel: Data.rules().combat.wing_per_level,
+        # % sát thương / hấp thụ cánh cộng thêm theo [bậc][cấp ép 0..11] (Engine.wing_up/3), trần hấp thụ
+        wingUp:
+          Map.new([:dmg, :absorb], fn k ->
+            {k,
+             for(t <- 1..3, do: for(l <- 0..Engine.max_upgrade(), do: Engine.wing_up(k, t, l)))}
+          end),
+        wingAbsorbMax: Data.rules().wing_upgrade.absorb.max,
         # tự đánh: lựa chọn và mặc định cho bảng cài đặt
         auto:
           Map.take(Data.rules().auto, [

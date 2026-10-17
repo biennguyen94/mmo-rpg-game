@@ -143,16 +143,32 @@ for t in sorted({w["tier"] for w in wings}):
     wrows += (f"<tr><td class=n>{t}</td><td>{names}</td><td class=n>{w0['level']}</td><td class=n>{w0['def']}</td>"
               f"<td class=n>+{pct(w0['dmg'])}</td><td class=n>−{pct(w0['absorb'])}</td><td>{optt}</td></tr>")
 
+# ép cánh theo bậc (RULES.wing_upgrade, như Engine.wing_up/3)
+WU = R["wing_upgrade"]
+def wing_up(key, tier, lv):
+    t = WU[key]; i = min(max(tier, 1), len(t["per_level"])) - 1
+    return t["per_level"][i] * min(lv, 9) + (t["jump10"][i] if lv >= 10 else 0) + (t["jump11"][i] if lv >= 11 else 0)
+WLV = [0, 6, 9, 10, 11]
+wuprows = ""
+for t in sorted({w["tier"] for w in wings}):
+    w0 = [w for w in wings if w["tier"] == t][0]
+    dm = " / ".join(pct(w0["dmg"] + wing_up("dmg", t, l)) for l in WLV)
+    ab = " / ".join(pct(min(WU["absorb"]["max"], w0["absorb"] + wing_up("absorb", t, l))) for l in WLV)
+    wuprows += f"<tr><td class=n>{t}</td><td class=n>+{dm}</td><td class=n>−{ab}</td></tr>"
+
 # ---------- Ép ----------
 up = D["upgrade"]
 FAIL = {None: "—", "down": "tụt 1 cấp", "reset": "<span class=bad>về +0</span>", "destroy": "<span class=bad>vỡ đồ</span>"}
 AT = {"smith": "Thợ Rèn", "chaos": "Máy Hỗn Nguyên"}
 erows = ""
+ls0 = R["luck_skill"]
+def luck_txt(s):
+    return f" (May mắn {pct(min(ls0['luck_max_rate'], s['rate'] + s['luck']))})" if s.get("luck") else ""
 for s in up["steps"]:
     lv = s["level"]
     eff = f"{n(s['eff'])} ({pct(s['eff'] * R['upgrade']['bonus_pct'], 0)})"
     need = " + ".join(f"{k2} {IT[k]['name']}" for k, k2 in s["items"].items())
-    erows += (f"<tr><td class=n>+{lv}</td><td>{AT.get(s['at'], s['at'])}</td><td>vàng + {need}</td><td class=n>{pct(s['rate'])}</td>"
+    erows += (f"<tr><td class=n>+{lv}</td><td>{AT.get(s['at'], s['at'])}</td><td>vàng + {need}</td><td class=n>{pct(s['rate'])}{luck_txt(s)}</td>"
               f"<td>{FAIL.get(s.get('fail'), s.get('fail'))}</td><td class=n>{eff}</td></tr>")
 ls = R["luck_skill"]; life = R["upgrade"]["life"]
 
@@ -232,7 +248,7 @@ stat_rows = "".join([
          f"Đòn thường và kỹ năng (đánh quái, Đồ sát, Đấu trường). PK cược: kỹ năng không chí mạng. Quái chí mạng {pct(MON['crit'])} ×{n(C['monster_crit_mult'])}."),
     srow("Né đòn", f"{pct(dg['base'])} + Nhanh nhẹn × {pct(dg['per_agi'], 2)} (tối đa {pct(dg['max'])}), × Excellent tỉ lệ phòng thủ, trần cuối {pct(dg['max_total'])}; đánh quái cộng buff né, tổng tối đa {pct(dg['max_with_buff'])}",
          "Né đòn thường của quái và của người. Không né được đòn đặc biệt của quái và kỹ năng của người."),
-    srow("Cánh", f"Số gốc của cánh + {pct(C['wing_per_level'])} mỗi cấp ép",
+    srow("Cánh", f"Số gốc của cánh + phần ép theo bậc cánh (mục Cánh); hấp thụ tối đa {pct(WU['absorb']['max'])}",
          "+% sát thương mọi đòn và −% sát thương nhận, cả đánh quái lẫn đánh người. Dòng phụ: máu, MP, bỏ qua phòng thủ."),
     srow("Máu", "Hệ số lớp theo Thể lực và cấp + nhẫn máu + đủ bộ + đồ Thần + dòng cánh; × thú / món ăn / Đài; × Excellent", "Hết máu là gục."),
     srow("MP", "Hệ số lớp theo Năng lượng + dòng cánh; × Excellent",
@@ -399,7 +415,8 @@ gap_note = ("<p class=\"note\">Dữ liệu còn thiếu, đang chờ chọn thê
 # ---------- Quy tắc chi tiết ----------
 UPR, LS, JW = R["upgrade"], R["luck_skill"], D["jewels"]
 max_step = max(st["rate"] for st in D["upgrade"]["steps"] if st["rate"] < 1)
-luck_real = min(LS["luck_max_rate"], max_step + LS["luck_upgrade"])
+luck_real = max(min(LS["luck_max_rate"], st["rate"] + st.get("luck", LS["luck_upgrade"])) for st in D["upgrade"]["steps"] if st["rate"] < 1)
+luck_up = ", ".join(f"+{st['level']} {pct(st['luck'])}" for st in D["upgrade"]["steps"] if st.get("luck"))
 jw_tot = sum(JW["weights"].values())
 jewel_src = ("Ngọc rơi: quái từ cấp " + str(JW["monster_level"]) + " " + pct(JW["monster_chance"]) + " mỗi con, trùm " + pct(JW["boss_chance"]) +
              ", Tháp Vô Tận mỗi " + str(JW["tower_every"]) + " tầng, rương, sự kiện; loại ngọc: " +
@@ -422,7 +439,7 @@ bm = R["bestiary"]["marks"]
 dq = lambda e: R["skill_effects"][e]
 rule_items = [
     ("Cấp quái khi tính trúng", "cấp hiện trên quái (vùng chuyển sinh 142–150 là dùng số đó), không phải cấp tính chỉ số."),
-    ("Ép cánh", f"{pct(C['wing_per_level'])} mỗi cấp tính theo cột \"Tính như\" (+11 tính 13 cấp), cộng cả % sát thương lẫn % giảm nhận; không có trần tổng."),
+    ("Ép cánh", f"sát thương +{pct(WU['dmg']['per_level'][0])} mỗi cấp tới +9, lên +10 thêm {pct(WU['dmg']['jump10'][0])}, lên +11 thêm {pct(WU['dmg']['jump11'][0])}; hấp thụ theo bậc cánh (bảng ở mục Cánh), tổng hấp thụ của cánh tối đa {pct(WU['absorb']['max'])}; phòng thủ cánh theo bảng ép như đồ."),
     ("MP kỹ năng", f"số MP trong bảng là ở cấp 1; tốn = MP × (1 + {n(C['skill_mp_per_level'])} × (cấp − 1)), cộng thẳng, không lũy thừa."),
     ("Cột \"Hồi\" (kỹ năng)", "số lượt phải chờ trước khi dùng lại kỹ năng đó (hồi chiêu)."),
     ("Kỹ năng nhiều đòn", "hệ số là tổng, chia đều cho các đòn; chí mạng tính một lần cho cả chiêu, phòng thủ trừ riêng từng đòn."),
@@ -433,7 +450,7 @@ rule_items = [
     ("Đồ rơi theo cấp", "món rơi lấy trong 2 mức cấp cao nhất không quá cấp quái của ô đó, đúng lớp người hạ; \"bộ giáp\" là một món ngẫu nhiên trong mũ, giáp, quần, găng, giày (Đấu Sĩ không có mũ); \"trang sức\" là nhẫn hoặc dây chuyền."),
     ("Đủ bộ, đồ Thần cùng bộ", "đủ bộ tính các món cùng tên bộ, cùng bậc; đồ Thần đếm các món Thần cùng tên bộ. Đấu Sĩ đủ bộ là 4 món (không mũ), cho cả thưởng đủ bộ lẫn mức \"đủ bộ\" của đồ Thần."),
     ("Phí vàng ép", f"max(giá món, {n(UPR['cost_min_price'])}) × {pct(UPR['cost_pct'])} × cấp ép lên."),
-    ("May mắn khi ép", f"cộng {pct(LS['luck_upgrade'])}, trần {pct(LS['luck_max_rate'])}; với bảng ép hiện tại cao nhất là {pct(luck_real)}."),
+    ("May mắn khi ép", f"cộng {luck_up}, trần {pct(LS['luck_max_rate'])}; với bảng ép hiện tại cao nhất là {pct(luck_real)}."),
     ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số và có lúc cắn quái."),
     ("Đài Phúc Lành", f"chạm vào: phúc lành của bản đồ ({R['blessing']['battles']} trận, +{pct(R['blessing']['pct'])} kinh nghiệm / vàng / công / thủ / máu tùy đài) và thành điểm hồi sinh khi gục."),
 ]
@@ -481,12 +498,12 @@ other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình ma
          grp("Quà lễ hội", ["moon_cake", "pumpkin_candy", "gift_box", "lucky_apple"]))
 
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
-for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, UPG=erows, EXC_W=exl("weapon"),
+for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
                  CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
-                 LUCKUP=pct(ls['luck_upgrade']), LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
+                 LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
                  LIFE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']}) mỗi dòng, tối đa {life['max_lines']} dòng, {pct(life['rate'])}",
                  EXCLINES=", ".join(f"{a} dòng {pct(b/sum(w for _, w in ex['lines']))}" for a, b in ex["lines"]),
                  EXCPRICE=n(ex['price_mult']), DMGRED=pct(ex['max_dmg_red']), REFL=pct(ex['max_reflect']),

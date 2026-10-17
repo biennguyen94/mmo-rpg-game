@@ -58,9 +58,16 @@
       "flee_chance": 0.7,
       "flee_chance_boss": 0.35,
       "monster_crit_mult": 1.5,
-      "wing_per_level": 0.02,
       "mp_regen_ene": 0.1,
       "skill_mp_per_level": 0.02
+    },
+    "wing_upgrade": {
+      "_doc": "Ép cánh (DECISIONS \"Ép +10/+11 khác biệt, cánh theo bậc\"): % sát thương / % hấp thụ cộng thêm = per_level[bậc − 1] × min(cấp, 9) + jump10[bậc − 1] (từ +10) + jump11[bậc − 1] (ở +11). Hấp thụ của cánh (gốc + ép) tối đa absorb.max. Phòng thủ của cánh theo bảng eff của UPGRADE như đồ.",
+      "dmg": { "per_level": [0.02, 0.02, 0.02], "jump10": [0.12, 0.12, 0.12], "jump11": [0.15, 0.15, 0.15] },
+      "absorb": { "per_level": [0.005, 0.0075, 0.01], "jump10": [0.03, 0.05, 0.07], "jump11": [0.05, 0.07, 0.09], "max": 0.5 },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     },
     "skill_effects": {
       "cleave": {

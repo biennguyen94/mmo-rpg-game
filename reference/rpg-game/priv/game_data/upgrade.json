@@ -1,6 +1,6 @@
 {
   "UPGRADE": {
-    "_doc": "Ép đồ kiểu MU (DECISIONS B-13): +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công; +7 → +9 1 Ngọc Tâm Linh, tỉ lệ rate (May mắn cộng thêm RULES.luck_skill.luck_upgrade), thất bại về +0 (fail reset); +10, +11 ép ở Máy Hỗn Nguyên (at chaos) bằng Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ đồ, 2026-10-17). items: ngọc tốn mỗi lần ép; vàng theo RULES.upgrade.cost_pct. eff: cấp tính chỉ số (chỉ số cộng = eff × RULES.upgrade.bonus_pct × chỉ số gốc): +7 → +11 tăng mạnh dần (62 %, 80 %, 104 %, 140 %, 190 %), DECISIONS \"Ép +7 → +11 chênh lệch lớn, +10/+11 không vỡ\". fail: null | down (tụt 1 cấp) | reset (về +0) | destroy (vỡ đồ).",
+    "_doc": "Ép đồ kiểu MU (DECISIONS B-13): +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công; +7 → +9 1 Ngọc Tâm Linh, tỉ lệ rate (May mắn cộng thêm RULES.luck_skill.luck_upgrade), thất bại về +0 (fail reset); +10, +11 ép ở Máy Hỗn Nguyên (at chaos) bằng Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ đồ, 2026-10-17). items: ngọc tốn mỗi lần ép; vàng theo RULES.upgrade.cost_pct. eff: cấp tính chỉ số (chỉ số cộng = eff × RULES.upgrade.bonus_pct × chỉ số gốc): +1 → +9 mỗi cấp 8 %, +10 = 120 %, +11 = 180 %. luck: tỉ lệ cộng thêm khi món có May mắn (+7 → +9: 25 %, +10 / +11: 10 %). DECISIONS \"Ép +10/+11 khác biệt, cánh theo bậc\". fail: null | down (tụt 1 cấp) | reset (về +0) | destroy (vỡ đồ).",
     "max": 11,
     "announce_from": 7,
     "double_from": 10,
@@ -73,7 +73,8 @@
         "rate": 0.5,
         "fail": "reset",
         "at": "smith",
-        "eff": 7.75
+        "eff": 7,
+        "luck": 0.25
       },
       {
         "level": 8,
@@ -83,7 +84,8 @@
         "rate": 0.5,
         "fail": "reset",
         "at": "smith",
-        "eff": 10
+        "eff": 8,
+        "luck": 0.25
       },
       {
         "level": 9,
@@ -93,7 +95,8 @@
         "rate": 0.5,
         "fail": "reset",
         "at": "smith",
-        "eff": 13
+        "eff": 9,
+        "luck": 0.25
       },
       {
         "level": 10,
@@ -105,7 +108,8 @@
         "rate": 0.35,
         "fail": "reset",
         "at": "chaos",
-        "eff": 17.5
+        "eff": 15,
+        "luck": 0.1
       },
       {
         "level": 11,
@@ -117,10 +121,11 @@
         "rate": 0.25,
         "fail": "reset",
         "at": "chaos",
-        "eff": 23.75
+        "eff": 22.5,
+        "luck": 0.1
       }
     ],
-    "version": 2
+    "version": 3
   },
   "JEWELS": {
     "weights": {

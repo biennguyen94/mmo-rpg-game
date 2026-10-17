@@ -17,6 +17,8 @@ defmodule HacLong.Game.Engine do
   @boss_weights Enum.map(@rules.boss_rewards.first_kill_weights, &List.to_tuple/1)
   @char @rules.character
   @combat @rules.combat
+  # ép cánh theo bậc (RULES.wing_upgrade)
+  @wing_up @rules.wing_upgrade
   @effects @rules.skill_effects
   @mon @rules.monster
   @loot @rules.loot
@@ -362,9 +364,23 @@ defmodule HacLong.Game.Engine do
 
   defp wing_pct(_p, nil, _key), do: 0
 
-  defp wing_pct(p, wg, key),
-    do:
-      Float.round(wg[key] + @combat.wing_per_level * effective_level(upgrade_level(p, wg.uid)), 3)
+  defp wing_pct(p, wg, key) do
+    v = wg[key] + wing_up(key, wg[:tier] || 1, upgrade_level(p, wg.uid))
+    v = if key == :absorb, do: min(v, @wing_up.absorb.max), else: v
+    Float.round(v, 3)
+  end
+
+  @doc """
+  % sát thương (`:dmg`) / hấp thụ (`:absorb`) cộng thêm khi ép cánh bậc `tier` lên +`lv` (`RULES.wing_upgrade`):
+  mỗi cấp tới +9 một ít, +10 và +11 nhảy lớn. Hấp thụ tổng (gốc + ép) có trần ở `wing_pct/3`.
+  """
+  def wing_up(key, tier, lv) do
+    t = @wing_up[key]
+    i = min(max(tier, 1), length(t.per_level)) - 1
+
+    Enum.at(t.per_level, i) * min(lv, 9) + if(lv >= 10, do: Enum.at(t.jump10, i), else: 0) +
+      if(lv >= 11, do: Enum.at(t.jump11, i), else: 0)
+  end
 
   @doc """
   Các chỉ số tính ra từ trạng thái, gửi kèm cho client để hiển thị
@@ -1878,7 +1894,7 @@ defmodule HacLong.Game.Engine do
 
   def max_upgrade, do: Data.upgrade().max
 
-  @doc "Cấp tính % sát thương / hấp thụ của cánh: từ `double_from` (+10) mỗi cấp tính gấp đôi (+11 tương đương 13 cấp)."
+  @doc "Cấp tính kiểu cũ: từ `double_from` (+10) mỗi cấp tính gấp đôi (chỉ còn dùng khi bước ép không có `eff`)."
   def effective_level(l), do: l + max(0, l - Data.upgrade().double_from + 1)
 
   @doc """
@@ -1947,7 +1963,8 @@ defmodule HacLong.Game.Engine do
         %{
           gold: round(max(it.price, @up.cost_min_price) * @up.cost_pct * n),
           items: step.items,
-          rate: Gear.luck_rate(it, step.rate),
+          rate:
+            Gear.luck_rate(it, step.rate, step[:luck] || Gear.luck_skill_rules().luck_upgrade),
           fail: step.fail,
           at: step.at
         }

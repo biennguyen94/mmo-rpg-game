@@ -608,3 +608,14 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 
   +1 → +6 không đổi. Cánh: % sát thương / hấp thụ theo cấp vẫn như cũ (`effective_level/1`, từ +10 gấp đôi), chỉ phần thủ của cánh theo bảng mới.
 - Mô phỏng hành trình giữ mặc định không ép +10/+11 (`--chaos-up` để bật): seed 42 bật thì bot thử +10 hai lần đều trượt, vũ khí +9 về +0.
+
+## Ép +10/+11 khác biệt, cánh theo bậc (2026-10-17, anh chốt; thay cho mục "Ép +7 → +11 chênh lệch lớn" ngay trên)
+- Đồ: +1 → +9 như cũ (8 %/cấp, +9 = 72 %); **+10 = 120 %, +11 = 180 %** chỉ số gốc (`UPGRADE.steps[].eff` 15 / 22,5).
+- Tỉ lệ: +10 35 %, +11 25 %, thất bại về +0 (không vỡ). **May mắn theo bước** (`UPGRADE.steps[].luck`): +7 → +9 cộng 25 % (75 %),
+  +10 / +11 chỉ cộng 10 % (45 % / 35 %) — May mắn dễ có (đồ rơi 10–35 %, Pha May mắn) nên không để +11 thành 50 %.
+- Cánh (`RULES.wing_upgrade`, `Engine.wing_up/3`; bỏ `combat.wing_per_level`):
+  - sát thương mọi bậc: +2 %/cấp tới +9, lên +10 thêm 12 %, lên +11 thêm 15 % (+11 = +45 %; cánh 3 +11 gây thêm 70 %);
+  - hấp thụ theo bậc: cánh 1 +0,5 %/cấp, +3 %, +5 %; cánh 2 +0,75 %/cấp, +5 %, +7 %; cánh 3 +1 %/cấp, +7 %, +9 %; trần 50 %
+    (+9 / +10 / +11: cánh 1 14,5 / 17,5 / 22,5 %, cánh 2 21,75 / 26,75 / 33,75 %, cánh 3 34 / 41 / 50 %); cánh 2 hấp thụ gốc 18 % → 15 %;
+  - phòng thủ cánh theo bảng eff như đồ.
+- Ảnh hưởng người chơi hiện có: đồ +10 / +11 mạnh lên; cánh đang ép giảm hấp thụ (vd cánh 3 +9 43 % → 34 %, cánh 2 +9 36 % → 21,75 %).

@@ -1715,6 +1715,8 @@
   const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
   const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
+  // % sát thương / hấp thụ cánh bậc `tier` cộng thêm ở +`lv` (server tính sẵn: Engine.wing_up/3)
+  const wingUp = (key, tier, lv) => ((RULES.wingUp[key] || [])[Math.min(Math.max(tier || 1, 1), 3) - 1] || [])[lv || 0] || 0;
   // cấp tính chỉ số đồ (như Engine.upgrade_eff): `eff` của bước ép
   const upEff = (l) => (l > 0 ? ((UPGRADE.steps.find((s) => s.level === l) || {}).eff ?? effLevel(l)) : 0);
   // màu viền theo cấp nâng (+7, +9, +11)
@@ -1752,8 +1754,9 @@
   function itemStat(it, id, up = upLevel(id)) {
     const b = id ? P.view.bonus[id] || 0 : 0;
     if (it.slot === 'wing') {
-      const pct = (v) => Math.round((v + RULES.wingPerLevel * effLevel(up)) * 100);
-      return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${pct(it.dmg)}% · Nhận sát thương −${pct(it.absorb)}% · ${CLASSES[it.cls].name}`;
+      const dmg = Math.round((it.dmg + wingUp('dmg', it.tier, up)) * 100);
+      const abs = Math.round(Math.min(RULES.wingAbsorbMax, it.absorb + wingUp('absorb', it.tier, up)) * 100);
+      return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${dmg}% · Nhận sát thương −${abs}% · ${CLASSES[it.cls].name}`;
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
     if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? ` · Phòng thủ <span class="up">+${b}</span>` : ''}`; }
@@ -1822,7 +1825,7 @@
       case 'def': return `Sát thương nhận = đòn² / (đòn + phòng thủ), không dưới ${pc(H.softFloor)} đòn; đòn bằng đúng phòng thủ của bạn (${fmt(d.def)}) chỉ còn một nửa. Gồm thủ mọi món giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn, cộng ép và dòng cộng thêm; nhân thú / món ăn / Đài, đủ bộ, đồ Thần. Dùng như nhau khi bị quái hay người đánh.`;
       case 'crit': return `Tỉ lệ = ${pc(cr.base)} + Nhanh nhẹn × ${pc(cr.per_agi)} (tối đa ${pc(cr.max)}), cộng Excellent và May mắn vũ khí. Đòn chí mạng nhân ×${d.critMult.toFixed(2)} (= ${cm.base} + Nhanh nhẹn × ${cm.per_agi}, tối đa ×${cm.max}). Có ở đòn thường và kỹ năng khi đánh quái, Đồ sát, Đấu trường; PK cược thì đòn kỹ năng không chí mạng. Quái chí mạng ${pc(H.monsterCrit)} ×${H.monsterCritMult}.`;
       case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}; khi đánh quái cộng thêm buff né (Ảnh Bộ…), tổng tối đa ${pc(dg.max_with_buff)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường, PK cược). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
-      case 'wing': return `Mọi đòn của bạn +${pc(d.wingDmg)} sát thương; đòn nhận vào chỉ còn ${pc(1 - d.wingAbsorb)}. Mỗi cấp ép cánh thêm ${pc(RULES.wingPerLevel)} cả hai. Có tác dụng cả khi đánh quái lẫn đánh người.`;
+      case 'wing': return `Mọi đòn của bạn +${pc(d.wingDmg)} sát thương; đòn nhận vào chỉ còn ${pc(1 - d.wingAbsorb)}. Ép cánh: +1 → +9 tăng ít, +10 và +11 tăng mạnh; cánh bậc cao tăng hấp thụ nhiều hơn; hấp thụ tối đa ${pc(RULES.wingAbsorbMax)}. Có tác dụng cả khi đánh quái lẫn đánh người.`;
       case 'ign': return `Đòn của bạn bỏ qua ${pc(d.ignoreDef)} phòng thủ mục tiêu (dòng phụ của cánh), cả quái lẫn người.`;
       case 'hp': return 'Theo hệ số lớp, Thể lực và cấp; cộng nhẫn máu, đủ bộ giáp, đồ Thần, dòng cánh; nhân thú cưng / món ăn / Đài Phúc Lành và Excellent "máu tối đa". Hết máu là gục.';
       case 'mp': return 'Theo hệ số lớp và Năng lượng, cộng dòng cánh, nhân Excellent "MP tối đa". Kỹ năng tốn MP (tốn thêm theo cấp kỹ năng); MP hồi dần mỗi lượt và theo Năng lượng.';
@@ -2467,8 +2470,8 @@
       </ol>
       <table class="adm-table forge-table"><tr><th>Cấp</th><th>Cần</th><th>Tỉ lệ</th><th>Thất bại</th></tr>${rows}</table>
       <ul class="small muted">
-        <li>Chỉ số cộng thêm (so với chỉ số gốc món đồ): ${UPGRADE.steps.map((s) => `+${s.level} ${Math.round(s.eff * RULES.upgradeBonusPct * 100)}%`).join(', ')}. Từ +7 mỗi cấp tăng mạnh hơn hẳn.</li>
-        <li>Món có May mắn: tỉ lệ +${Math.round(RULES.luckSkill.luck_upgrade * 100)}%. Thất bại vẫn mất ngọc và vàng.</li>
+        <li>Chỉ số cộng thêm (so với chỉ số gốc món đồ): ${UPGRADE.steps.map((s) => `+${s.level} ${Math.round(s.eff * RULES.upgradeBonusPct * 100)}%`).join(', ')}. +10 và +11 tăng mạnh hơn hẳn.</li>
+        <li>Món có May mắn: tỉ lệ ${UPGRADE.steps.filter((s) => s.luck).map((s) => `+${s.level} +${Math.round(s.luck * 100)}%`).join(', ')}. Thất bại vẫn mất ngọc và vàng.</li>
         <li>${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)}: thêm một dòng cộng thêm +${Math.round(life.per_line_pct * 100)}% tấn công gốc (vũ khí) hoặc phòng thủ gốc (đồ khác), ít nhất +${life.per_line}, tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</li>
       </ul></details>`;
   }
@@ -2491,7 +2494,7 @@
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${itemIcon(it, it.kind, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
-          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? `, +${Math.round(RULES.wingPerLevel * 100)}% sát thương / hấp thụ` : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
+          ${c ? `<div class="small muted">Lên +${f.level + 1}: ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} +${step}${slot === 'wing' ? (() => { const d = (k) => Math.round((wingUp(k, it.tier, f.level + 1) - wingUp(k, it.tier, f.level)) * 1000) / 10; return `, +${d('dmg')}% sát thương, +${d('absorb')}% hấp thụ`; })() : ''}${odds} · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>`
             : '<div class="small" style="color:var(--gold)">Đã nâng tối đa</div>'}
         </div>
         ${c ? `<button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('anvil')}${fmt(c.gold)}</button>` : ''}

@@ -144,7 +144,7 @@ w(table(['Loại', 'Tên', 'Cấp', 'Chỉ số', 'Giá'], rows) + '\n')
 wings = [v for v in leg.values() if v.get('slot') == 'wing']
 recipe = {c['out']: c for c in chaos if isinstance(c, dict) and str(c.get('out', '')).startswith('wing_')}
 w('## Cánh\n')
-w(f"Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm {pct(rules['combat']['wing_per_level'])} sát thương và hấp thụ.\n")
+w(f"Ghép ở Máy Hỗn Nguyên. Ép cánh thêm sát thương và hấp thụ theo bậc cánh (RULES.wing_upgrade), +10 / +11 tăng mạnh, hấp thụ tối đa {pct(rules['wing_upgrade']['absorb']['max'])}.\n")
 rows = []
 for t in (1, 2, 3):
     ws = [x for x in wings if x['tier'] == t]

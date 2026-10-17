@@ -138,28 +138,15 @@ defmodule HacLong.Game.ForgeTest do
                Engine.upgrade(p6, "weapon", false, "chaos")
     end
 
-    test "+7 → +11 chỉ số tăng mạnh dần (eff); cánh vẫn tính gấp đôi từ +10; +11 là tối đa" do
-      assert Enum.map(0..11, &Engine.upgrade_eff/1) == [
-               0,
-               1,
-               2,
-               3,
-               4,
-               5,
-               6,
-               7.75,
-               10,
-               13,
-               17.5,
-               23.75
-             ]
+    test "+1 → +9 mỗi cấp 8 %, +10 = 120 %, +11 = 180 % (eff); +11 là tối đa" do
+      assert Enum.map(0..11, &Engine.upgrade_eff/1) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 22.5]
 
       assert Engine.effective_level(10) == 11 and Engine.effective_level(11) == 13
 
       p = player() |> armed("greatsword", 11) |> jewels()
       assert {%{ok: false, msg: "Đại Kiếm đã nâng cấp tối đa."}, _} = Engine.upgrade(p, "weapon")
       # Đại Kiếm tấn công 44: mỗi cấp round(44 × 0,08) = 4
-      assert Engine.upgrade_bonus(p, p.equip.weapon) == round(23.75 * 4)
+      assert Engine.upgrade_bonus(p, p.equip.weapon) == round(22.5 * 4)
     end
   end
 
@@ -179,9 +166,9 @@ defmodule HacLong.Game.ForgeTest do
       assert d.wingDmg == 0.1 and d.wingAbsorb == 0.1 and d.def == base.def + 6
       assert Engine.look(q).wing == %{cls: "dk", tier: 1}
 
-      # mỗi cấp nâng +2 %
+      # cánh 1 +5: sát thương +2 % mỗi cấp, hấp thụ +0,5 % mỗi cấp (RULES.wing_upgrade)
       d5 = Engine.derived(Map.put(q, :upgrades, %{w.uid => 5}))
-      assert d5.wingDmg == 0.2 and d5.wingAbsorb == 0.2
+      assert d5.wingDmg == 0.2 and d5.wingAbsorb == 0.125
 
       {%{ok: true}, q} = Engine.unequip(q, "wing")
       assert q.equip.wing == nil and Engine.derived(q) == base

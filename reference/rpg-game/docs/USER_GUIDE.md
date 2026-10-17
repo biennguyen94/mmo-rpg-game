@@ -159,8 +159,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   - Ép kiểu MU. +1 → +6: mỗi lần 1 Ngọc Ước Nguyện, luôn thành công.
   - +7 / +8 / +9: 1 Ngọc Tâm Linh, 50 % (đồ có May mắn 75 %); thất bại đồ **về +0**.
   - +10 / +11: ép ở **Lão Hỗn Nguyên** (thẻ "Ép +10, +11"): +10 cần 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh (35 %),
-    +11 cần 1 Hỗn Nguyên + 2 Ước Nguyện + 2 Tâm Linh (25 %); May mắn cộng 25 %; thất bại đồ **về +0** (không vỡ).
-  - Chỉ số cộng thêm so với chỉ số gốc món đồ: +1 → +6 mỗi cấp 8 % (+6 = 48 %); +7 = 62 %, +8 = 80 %, +9 = 104 %, +10 = 140 %, +11 = 190 %.
+    +11 cần 1 Hỗn Nguyên + 2 Ước Nguyện + 2 Tâm Linh (25 %); May mắn cộng 10 % (45 % / 35 %); thất bại đồ **về +0** (không vỡ).
+  - Chỉ số cộng thêm so với chỉ số gốc món đồ: +1 → +9 mỗi cấp 8 % (+9 = 72 %); **+10 = 120 %, +11 = 180 %**.
+  - Ép cánh: sát thương +2 % mỗi cấp tới +9, lên +10 thêm 12 %, lên +11 thêm 15 % (+11 = +45 %); hấp thụ theo bậc cánh
+    (cánh 1 / 2 / 3 ở +11: 22,5 % / 33,75 % / 50 %), tối đa 50 %; phòng thủ cánh như đồ.
   - Ngọc và vàng mất cả khi thất bại. Ép thành công từ +7 được báo cả server.
 - **Ngọc Sinh Mệnh** 💚: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; tỉ lệ 50 %,
   thất bại mất một dòng.

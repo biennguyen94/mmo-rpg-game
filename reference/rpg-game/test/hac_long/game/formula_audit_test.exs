@@ -52,7 +52,7 @@ defmodule HacLong.Game.FormulaAuditTest do
     assert d(r1).def - d(r0).def == lv.("item_13_24")
   end
 
-  test "ép +N: cấp tính (eff của bước) × bonus_pct chỉ số món; +7 → +11 tăng mạnh dần" do
+  test "ép +N: cấp tính (eff của bước) × bonus_pct chỉ số món; +10, +11 tăng mạnh" do
     w = Data.item(@sword)
     step = max(1, round(w.atk * @r.upgrade.bonus_pct))
     p0 = hero() |> wear(:weapon, Gear.new(@sword))
@@ -62,9 +62,12 @@ defmodule HacLong.Game.FormulaAuditTest do
       assert d(pu).atk - d(p0).atk == round(Engine.upgrade_eff(up) * step)
     end
 
-    # mỗi bước từ +6 lên +11 tăng nhiều hơn bước trước
-    gaps = for l <- 6..10, do: Engine.upgrade_eff(l + 1) - Engine.upgrade_eff(l)
-    assert gaps == Enum.sort(gaps) and hd(gaps) > 1
+    # +1 → +9 mỗi cấp như nhau; lên +10, +11 nhảy lớn
+    assert Enum.map(1..9, &Engine.upgrade_eff/1) == Enum.to_list(1..9)
+    assert Engine.upgrade_eff(10) - Engine.upgrade_eff(9) >= 5
+
+    assert Engine.upgrade_eff(11) - Engine.upgrade_eff(10) >
+             Engine.upgrade_eff(10) - Engine.upgrade_eff(9)
   end
 
   test "Excellent: mỗi dòng đổi đúng chỉ số" do
@@ -173,8 +176,22 @@ defmodule HacLong.Game.FormulaAuditTest do
     w = Data.item(wid)
     p0 = hero()
     p = hero() |> wear(:wing, Map.put(Gear.new(wid), :wopt, "hp"), 5)
-    assert d(p).wingDmg == Float.round(w.dmg + @r.combat.wing_per_level * 5, 3)
-    assert d(p).wingAbsorb == Float.round(w.absorb + @r.combat.wing_per_level * 5, 3)
+    assert d(p).wingDmg == Float.round(w.dmg + Engine.wing_up(:dmg, 3, 5), 3)
+    assert d(p).wingAbsorb == Float.round(w.absorb + Engine.wing_up(:absorb, 3, 5), 3)
+
+    # cánh 3 +11: sát thương +45 %, hấp thụ chạm trần 50 %; cánh bậc thấp tăng hấp thụ chậm hơn
+    p11 = hero() |> wear(:wing, Gear.new(wid), 11)
+    assert d(p11).wingDmg == Float.round(w.dmg + 0.45, 3)
+    assert d(p11).wingAbsorb == @r.wing_upgrade.absorb.max
+    assert Engine.wing_up(:absorb, 1, 11) < Engine.wing_up(:absorb, 2, 11)
+    assert Engine.wing_up(:absorb, 2, 11) < Engine.wing_up(:absorb, 3, 11)
+    # +10 và +11 nhảy lớn hơn hẳn một bước +1 → +9
+    for k <- [:dmg, :absorb], t <- 1..3 do
+      step = Engine.wing_up(k, t, 9) - Engine.wing_up(k, t, 8)
+      assert Engine.wing_up(k, t, 10) - Engine.wing_up(k, t, 9) > 3 * step
+      assert Engine.wing_up(k, t, 11) - Engine.wing_up(k, t, 10) > 3 * step
+    end
+
     assert d(p).def - d(p0).def == w.def + 5 * max(1, round(w.def * @r.upgrade.bonus_pct))
     assert d(p).maxHp - d(p0).maxHp == Gear.wopt_value(w.tier, "hp")
 

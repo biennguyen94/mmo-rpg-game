@@ -409,10 +409,13 @@ defmodule HacLong.Game.Gear do
     }
   end
 
-  @doc "Tỉ lệ ép ngọc `rate` của món `it` (thông tin món, `resolve/1`): May mắn cộng `luck_upgrade`, tối đa `luck_max_rate`."
-  def luck_rate(it, rate) do
+  @doc """
+  Tỉ lệ ép ngọc `rate` của món `it` (thông tin món, `resolve/1`): May mắn cộng `bonus` (mặc định `luck_upgrade`;
+  bước ép có `luck` riêng thì dùng số đó), tối đa `luck_max_rate`.
+  """
+  def luck_rate(it, rate, bonus \\ @ls.luck_upgrade) do
     if is_map(it) and it[:luck] == true and rate < 1,
-      do: max(rate, min(@ls.luck_max_rate, Float.round(rate + @ls.luck_upgrade, 3))),
+      do: max(rate, min(@ls.luck_max_rate, Float.round(rate + bonus, 3))),
       else: rate
   end
 
