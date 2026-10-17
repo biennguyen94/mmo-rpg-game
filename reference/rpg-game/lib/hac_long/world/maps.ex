@@ -66,6 +66,10 @@ defmodule HacLong.World.Maps do
              # B-19: bản đồ của một sự kiện (vd "chaos_castle"): chỉ vào qua sự kiện, không chọn map / dịch chuyển tới,
              # vào lại game đang ở đó thì về Làng
              event: m["event"],
+             # Phase 6 (B-30): vùng đất chuyển sinh: cần chuyển sinh ≥ min_rebirths và cấp ≥ min_level
+             realm: m["realm"],
+             min_rebirths: m["min_rebirths"],
+             min_level: m["min_level"],
              theme: m["theme"],
              width: String.length(hd(rows)),
              height: length(rows),
@@ -171,6 +175,7 @@ defmodule HacLong.World.Maps do
            zone: m.zone,
            side: m.side,
            event: m.event,
+           realm: m.realm,
            theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,

@@ -24,7 +24,7 @@ defmodule HacLong.Admin do
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal set_tower)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal set_tower set_rebirths)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -89,6 +89,20 @@ defmodule HacLong.Admin do
      fn p ->
        {:ok, Map.put(p, :tower_best, f), "Kỷ lục tháp: #{Map.get(p, :tower_best) || 0} → #{f}."}
      end}
+  end
+
+  # Phase 6: số lần chuyển sinh (mở vùng đất chuyển sinh); không đổi cấp / điểm
+  def build("set_rebirths", %{"n" => n}) when is_integer(n) do
+    max = Data.rules().character.max_rebirths
+
+    if n in 0..max,
+      do:
+        {:ok,
+         fn p ->
+           {:ok, Map.put(p, :rebirths, n),
+            "Chuyển sinh: #{Map.get(p, :rebirths) || 0} → #{n} lần."}
+         end},
+      else: {:error, "Số lần chuyển sinh phải từ 0 tới #{max}."}
   end
 
   def build("set_level", %{"level" => lv}) when is_integer(lv) do

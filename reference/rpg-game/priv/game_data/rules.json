@@ -471,6 +471,20 @@
       "version": 1,
       "verified": false
     },
+    "realms": {
+      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), cấp hiện trên quái 50+10k−8 … 50+10k (vàng, kinh nghiệm theo cấp hiện). Rơi đồ quý hơn: tỉ lệ ra đồ / Excellent / May mắn / đồ Thần × (1 + loot_per_realm × rich), tối đa loot_max; ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5).",
+      "min_level": 40,
+      "stat_level": 50,
+      "mult_per_realm": 0.4,
+      "boss_mult": 1.8,
+      "loot_per_realm": 0.1,
+      "loot_max": 0.9,
+      "jewel_base": 0.02,
+      "jewel_per_realm": 0.004,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "blessing": {
       "_doc": "Phase 2 (B-26): Đài Phúc Lành thay đá dịch chuyển (ô W). Chạm vào: nhận phúc lành của bản đồ trong `battles` trận (như món ăn, không theo giờ) và đài thành điểm hồi sinh khi gục. Mỗi bản đồ một loại theo thứ tự đài trong `kinds` (lặp lại): xp / gold = % kinh nghiệm / vàng; atk / def / hp = % tấn công / phòng thủ / máu tối đa. Làng không có phúc lành, chỉ là điểm hồi sinh.",
       "battles": 30,

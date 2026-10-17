@@ -46,7 +46,15 @@ defmodule HacLong.Library do
       %{
         id: m.id,
         name: m.name,
-        zone: if(m.side, do: "Bản đồ phụ", else: zone_name(m.zone, zones)),
+        zone:
+          cond do
+            m.realm -> "Vùng đất chuyển sinh #{m.realm}"
+            m.side -> "Bản đồ phụ"
+            true -> zone_name(m.zone, zones)
+          end,
+        # Phase 6 (B-30): vùng chuyển sinh cần chuyển sinh ≥ cs và cấp ≥ need
+        cs: m.realm && m.min_rebirths,
+        need: m.realm && m.min_level,
         min: Enum.min(lv, fn -> nil end),
         max: Enum.max(lv, fn -> nil end),
         monsters: kinds,

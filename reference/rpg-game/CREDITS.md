@@ -10,7 +10,7 @@ các họa sĩ của Dungeon Crawl Stone Soup và dự án RLTiles.
 Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 
 Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint_sprites.mjs` (vẫn CC0): `red_dragon.png` (từ
-`golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`). `nodes/ore_rare.png` (Quặng Mithril) cũng tô lại từ `nodes/ore.png` cùng script. `tiles/blessing.png` (Đài Phúc Lành) tô lại từ `tiles/waystone.png`.
+`golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`). `nodes/ore_rare.png` (Quặng Mithril) cũng tô lại từ `nodes/ore.png` cùng script. `tiles/blessing.png` (Đài Phúc Lành) tô lại từ `tiles/waystone.png`. 40 hình quái vùng đất chuyển sinh `monsters/r1_…` → `r10_…` (Phase 6) tô lại từ các hình quái CC0 ở trên, danh sách ở `priv/game_data/realms.json` (`REALM_TINTS`).
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng

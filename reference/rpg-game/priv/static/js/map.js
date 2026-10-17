@@ -117,7 +117,8 @@
     const zi = t.ds || t.bc || t.kal ? ZONES.length - 1 : Math.floor((t.floor - 1) / 10) % ZONES.length;
     const KAL_STAGE = { guards: 'Hạ quái Kalima', boss: 'Hạ Kundun', done: 'Hoàn thành' };
     const name = t.kal ? `Kalima ${t.kal.n} · ${KAL_STAGE[t.kal.stage] || ''}` : t.bc ? `Lâu Đài Máu · ${BC_STAGE[t.bc.stage] || ''}` : t.ds ? `Quảng Trường Quỷ · Đợt ${t.floor}/${t.ds.waves}` : `Tháp Vô Tận · Tầng ${t.floor}`;
-    return { name, zone: null, floor: 'floors/' + ZONES[zi].id, tiles: t.tiles, portals: [], npcs: [], tower: t };
+    // Phase 6: tầng 61+ dùng nền vùng đất chuyển sinh (server gửi `theme`)
+    return { name, zone: null, floor: (!t.ds && !t.bc && !t.kal && t.theme) || 'floors/' + ZONES[zi].id, tiles: t.tiles, portals: [], npcs: [], tower: t };
   }
 
   // Quái trên bản đồ đang đứng: quái dùng chung (sự kiện "map") hoặc quái của tầng tháp.

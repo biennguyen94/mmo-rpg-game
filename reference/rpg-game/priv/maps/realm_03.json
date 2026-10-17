@@ -1,0 +1,93 @@
+{
+  "id": "realm_03",
+  "name": "Rừng Lôi Phong",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "realm": 3,
+  "min_rebirths": 3,
+  "min_level": 40,
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T....TT.....T.,.......,.,T",
+    "T....,.....,........TT...T",
+    "TT..TT.,.,..,,.,,..,T....T",
+    "T..,.,.,...,,.T,....,...,T",
+    "T...T..,.T..Y..T.......T.T",
+    "T..W.Y........,....,.,...T",
+    "T......T.T...........T..YT",
+    "O...::::::.T,.::::,......O",
+    "T...Y....::.:::..::.YT:::T",
+    "T,.......,:::....,:::::..T",
+    "T..Y...........T..,...,.TT",
+    "TT...T......,.,YY..,TT,..T",
+    "T......,.....TY.T..T.....T",
+    "T.....T..........T....T..T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_02",
+      "spawn": [
+        24,
+        8
+      ]
+    },
+    {
+      "at": [
+        25,
+        8
+      ],
+      "to": "realm_04",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r3_air_elemental",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r3_griffon",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r3_harpy",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r3_storm_dragon",
+      "max": 1,
+      "respawn": 240
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": [],
+  "waystone": {
+    "at": [
+      3,
+      6
+    ],
+    "spawn": [
+      3,
+      7
+    ]
+  }
+}

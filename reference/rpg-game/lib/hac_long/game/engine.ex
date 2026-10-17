@@ -458,6 +458,9 @@ defmodule HacLong.Game.Engine do
   # ---------- Quái ----------
   def make_monster(spec, boss?) do
     l = spec.level
+
+    # Phase 6 (B-30): quái vùng chuyển sinh tính chỉ số ở `stat_level` (cấp hiện `level` chỉ cho vàng / EXP)
+    sl = Map.get(spec, :stat_level) || l
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
@@ -476,9 +479,11 @@ defmodule HacLong.Game.Engine do
       golden: Map.get(spec, :golden, false),
       raid: Map.get(spec, :raid),
       jewel_chance: Map.get(spec, :jewel_chance),
-      maxHp: round((@mon.hp.base + l * @mon.hp.level + l * l * @mon.hp.level_sq) * m * bm),
-      atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
-      def: round((@mon.def.base + l * @mon.def.level) * m),
+      maxHp: round((@mon.hp.base + sl * @mon.hp.level + sl * sl * @mon.hp.level_sq) * m * bm),
+      atk: round((@mon.atk.base + sl * @mon.atk.level) * m),
+      def: round((@mon.def.base + sl * @mon.def.level) * m),
+      # Phase 6: vùng chuyển sinh rơi đồ quý hơn (`Gear.rich/2`)
+      rich: Map.get(spec, :rich, 0),
       crit: @mon.crit,
       # Phase 3 (B-29): nguyên tố riêng của quái, không có thì theo cấp
       element: Map.get(spec, :element) || Elements.for_level(l),

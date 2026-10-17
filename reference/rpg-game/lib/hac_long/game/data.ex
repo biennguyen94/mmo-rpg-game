@@ -91,7 +91,8 @@ defmodule HacLong.Game.Data do
   @classes by_id.(raw["CLASSES"])
   @zones atomize.(atomize, raw["ZONES"])
   # Phase 15a: quái của bản đồ phụ (không thuộc vùng nào), `side.json`
-  @side_monsters atomize.(atomize, raw["SIDE_MONSTERS"] || [])
+  # Phase 6 (B-30): quái 10 vùng đất chuyển sinh (`realms.json`, scripts/gen_realms.py) đánh như quái bản đồ phụ
+  @side_monsters atomize.(atomize, (raw["SIDE_MONSTERS"] || []) ++ (raw["REALM_MONSTERS"] || []))
   @side_by_id Map.new(@side_monsters, &{&1.id, &1})
   # Phase 15b (`docs/ITEMS_PHASE15B.md`): đồ dựng từ Item.txt (`items_mu.json`, khóa `ITEMS_MU`,
   # `mix hac_long.items.build`) gộp vào ITEMS. Khi có đồ mới, đồ cũ trong `ITEM_PICK.legacy` mang

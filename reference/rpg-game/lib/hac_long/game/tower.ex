@@ -45,7 +45,9 @@ defmodule HacLong.Game.Tower do
       tiles: tiles,
       stairs: Tuple.to_list(stairs),
       exit: Tuple.to_list(exit),
-      monsters: monsters
+      monsters: monsters,
+      # nền tầng (client vẽ), Phase 6
+      theme: theme(floor)
     }
   end
 
@@ -101,15 +103,31 @@ defmodule HacLong.Game.Tower do
     flood(grid, next ++ rest, Enum.reduce(next, seen, &MapSet.put(&2, &1)))
   end
 
-  # Mỗi 10 tầng một vùng; hết vùng thì quay vòng lại từ vùng đầu, mỗi vòng thêm tiền tố tên (`cycle_prefix/1`)
-  # để tầng cao không trùng hình + tên với tầng dưới (trước đây từ tầng 61 trở đi đều là quái vùng cuối).
-  defp tier(floor), do: rem(div(floor - 1, 10), Data.zone_count())
+  # Mỗi 10 tầng một nhóm quái: 6 vùng (tầng 1–60), rồi 10 vùng đất chuyển sinh (Phase 6, tầng 61–160); hết thì
+  # quay vòng, mỗi vòng thêm tiền tố tên (`cycle_prefix/1`) để tầng cao không trùng hình + tên với tầng dưới.
+  @realm_groups Data.side_monsters()
+                |> Enum.filter(&String.match?(&1.id, ~r/^r\d+_/))
+                |> Enum.group_by(fn m -> m.id |> String.split("_") |> hd() end)
+                |> Enum.sort_by(fn {"r" <> k, _} -> String.to_integer(k) end)
+                |> Enum.map(fn {"r" <> k, list} ->
+                  {mons, [boss]} = Enum.split(list, 3)
+                  map = HacLong.World.Maps.get("realm_" <> String.pad_leading(k, 2, "0"))
+                  %{monsters: mons, boss: boss, floor: (map && map.floor) || "floors/lair"}
+                end)
+
+  defp groups do
+    Enum.map(Data.zones(), &%{monsters: &1.monsters, boss: &1.boss, floor: "floors/" <> &1.id}) ++
+      @realm_groups
+  end
+
+  defp group_count, do: Data.zone_count() + length(@realm_groups)
+  defp group(floor), do: Enum.at(groups(), rem(div(floor - 1, 10), group_count()))
 
   @prefixes ["", "Cổ Đại", "Hắc Ám", "Thần Thoại", "Hỗn Mang", "Vĩnh Hằng"]
 
-  @doc "Tiền tố tên quái theo vòng vùng của tầng `floor` (vòng đầu không có)."
+  @doc "Tiền tố tên quái theo vòng của tầng `floor` (vòng đầu không có)."
   def cycle_prefix(floor) do
-    cycle = div(floor - 1, Data.zone_count() * 10)
+    cycle = div(floor - 1, group_count() * 10)
     Enum.at(@prefixes, min(cycle, length(@prefixes) - 1))
   end
 
@@ -120,10 +138,11 @@ defmodule HacLong.Game.Tower do
     end
   end
 
-  def theme(floor), do: "floors/" <> Data.zone(tier(floor)).id
+  @doc "Nền của tầng `floor` (`floors/...`)."
+  def theme(floor), do: group(floor).floor
 
   defp monsters(floor, tiles, avoid, rng) do
-    zone = Data.zone(tier(floor))
+    zone = group(floor)
     boss? = rem(floor, @rules.boss_every) == 0
 
     count =
@@ -204,7 +223,11 @@ defmodule HacLong.Game.Tower do
   @doc "Quái dùng trong trận với con `m` trên tầng."
   def battle_monster(m) do
     mult = 1 + max(0, m.level - @rules.harder_from) * @rules.harder_per_floor
-    base = if m.elite, do: Enum.find(Data.zones(), &(&1.boss.id == m.kind)).boss, else: %{}
+
+    base =
+      if m.elite,
+        do: Enum.find_value(groups(), %{}, &(&1.boss.id == m.kind && &1.boss)),
+        else: %{}
 
     spec = %{
       id: m.kind,
@@ -212,7 +235,9 @@ defmodule HacLong.Game.Tower do
       level: m.level,
       mult: if(m.elite, do: mult * @rules.elite_mult, else: mult),
       special: base[:special],
-      on_hit: if(m.elite, do: nil, else: Data.monster(m.kind)[:on_hit])
+      on_hit: if(m.elite, do: nil, else: Data.monster(m.kind)[:on_hit]),
+      # Phase 6: quái vùng chuyển sinh giữ nguyên tố riêng
+      element: base[:element] || (Data.side_monster(m.kind) || %{})[:element]
     }
 
     q = Engine.make_monster(spec, false)

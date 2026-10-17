@@ -290,6 +290,8 @@ defmodule HacLong.Game.Characters do
           |> Map.reject(fn {k, v} -> k == :role and v == nil end)
         end)
     }
+    # Phase 6: nền tầng (tầng 61+ là vùng đất chuyển sinh); bản lưu cũ không có
+    |> then(fn tw -> if t["theme"], do: Map.put(tw, :theme, t["theme"]), else: tw end)
     |> then(fn tw ->
       if is_map(ds),
         do:
@@ -340,7 +342,7 @@ defmodule HacLong.Game.Characters do
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
-                    ds bc kal gear_ids taken ignore_def crit_mult element)a,
+                    ds bc kal gear_ids taken ignore_def crit_mult element rich)a,
                  &{Atom.to_string(&1), &1}
                )
 

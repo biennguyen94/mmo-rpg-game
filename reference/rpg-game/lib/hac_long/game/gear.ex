@@ -161,7 +161,9 @@ defmodule HacLong.Game.Gear do
   # ---------- Rơi đồ ----------
 
   @doc "Tỉ lệ rơi đồ ngẫu nhiên khi hạ quái `m`."
-  def drop_chance(m) do
+  def drop_chance(m), do: rich(m, base_drop_chance(m))
+
+  defp base_drop_chance(m) do
     cond do
       m[:world] || m[:pvp] -> 0
       m[:elite] -> @loot.gear_chance.elite
@@ -271,7 +273,9 @@ defmodule HacLong.Game.Gear do
            |> Enum.map(&Atom.to_string/1)
 
   @doc "Tỉ lệ một món rơi từ quái `m` là Excellent (`RULES.excellent.chance`)."
-  def exc_chance(m) do
+  def exc_chance(m), do: rich(m, base_exc_chance(m))
+
+  defp base_exc_chance(m) do
     c = @exc.chance
 
     cond do
@@ -350,7 +354,9 @@ defmodule HacLong.Game.Gear do
   # ---------- May mắn / Kỹ năng (Phase 15d) ----------
 
   @doc "Tỉ lệ một món rơi từ quái `m` có May mắn (`RULES.luck_skill.luck_chance`)."
-  def luck_chance(m) do
+  def luck_chance(m), do: rich(m, base_luck_chance(m))
+
+  defp base_luck_chance(m) do
     c = @ls.luck_chance
 
     cond do
@@ -414,8 +420,23 @@ defmodule HacLong.Game.Gear do
       else: r
   end
 
+  @realms Data.rules().realms
+
+  @doc "Phase 6 (B-30): tỉ lệ rơi quý hơn ở vùng chuyển sinh: × (1 + loot_per_realm × rich), tối đa loot_max."
+  def rich(m, c) do
+    case m[:rich] do
+      k when is_number(k) and k > 0 and c > 0 ->
+        min(@realms.loot_max, c * (1 + @realms.loot_per_realm * k))
+
+      _ ->
+        c
+    end
+  end
+
   @doc "Tỉ lệ một món bộ giáp rơi từ quái `m` là đồ Thần (`RULES.ancient.chance`)."
-  def anc_chance(m) do
+  def anc_chance(m), do: rich(m, base_anc_chance(m))
+
+  defp base_anc_chance(m) do
     c = @anc.chance
 
     cond do

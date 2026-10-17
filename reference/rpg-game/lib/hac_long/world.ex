@@ -313,20 +313,32 @@ defmodule HacLong.World do
   defp use_portal(p, uid, portal) do
     target = Maps.get(portal.to)
 
-    if target.zone && not Engine.zone_unlocked?(p, target.zone) do
-      {%{
-         ok: false,
-         msg:
-           "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
-       }, p}
-    else
-      leave(p, uid)
-      {x, y} = portal.spawn
-      p = p |> put_pos(target.id, x, y) |> visit(target)
-      enter(p, uid)
-      {%{ok: true, msg: "Đến #{target.name}."}, p}
+    cond do
+      target.zone && not Engine.zone_unlocked?(p, target.zone) ->
+        {%{
+           ok: false,
+           msg:
+             "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
+         }, p}
+
+      target.realm && not realm_open?(p, target) ->
+        {%{ok: false, msg: realm_msg(target)}, p}
+
+      true ->
+        leave(p, uid)
+        {x, y} = portal.spawn
+        p = p |> put_pos(target.id, x, y) |> visit(target)
+        enter(p, uid)
+        {%{ok: true, msg: "Đến #{target.name}."}, p}
     end
   end
+
+  @doc "Phase 6 (B-30): vào được vùng đất chuyển sinh `map` không (đủ số lần chuyển sinh và cấp)."
+  def realm_open?(p, map),
+    do: (Map.get(p, :rebirths) || 0) >= map.min_rebirths and p.level >= map.min_level
+
+  defp realm_msg(map),
+    do: "#{map.name} cần chuyển sinh #{map.min_rebirths} lần và cấp #{map.min_level} trở lên."
 
   # bản đồ phụ đã tới thì dịch chuyển tới được bằng bảng chọn bản đồ
   defp visit(p, %{side: true, id: id}) do
@@ -375,6 +387,7 @@ defmodule HacLong.World do
     cond do
       map.id in @travel.free -> true
       map.private or map.id == "tower" -> false
+      map.realm -> realm_open?(p, map)
       true -> p.level >= (min_level(map) || 0)
     end
   end
@@ -394,7 +407,12 @@ defmodule HacLong.World do
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       not can_travel?(p, target) ->
-        {%{ok: false, msg: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."}, p}
+        msg =
+          if target.realm,
+            do: realm_msg(target),
+            else: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."
+
+        {%{ok: false, msg: msg}, p}
 
       p.gold < travel_cost(target) ->
         {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}

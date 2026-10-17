@@ -419,3 +419,18 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     - Chưa chọn thì mặc định 4 kỹ năng mạnh nhất đã mở.
     - Cột mới `characters.skill_set` (migration `20261106000000_add_skill_set`).
     - Quản trị thêm `set_tower {floor}`.
+- **B-30** (anh chốt phương án (a) và "ok" Phase 6) **10 vùng đất chuyển sinh** (`realm_01…10`, `scripts/gen_realms.py`,
+  `priv/game_data/realms.json`, `RULES.realms`).
+  - **Vào:** vùng k cần chuyển sinh ≥ k và cấp ≥ 40 (qua Chọn bản đồ, cổng nối vùng k ↔ k+1, vùng 1 nối Làng);
+    mỗi vùng có Đài Phúc Lành.
+  - **Quái:** mỗi vùng 3 quái + 1 chúa tể, cấp hiện 52…150, nguyên tố riêng.
+    - Giữ cấp tối đa 50: chỉ số quái tính ở cấp 50 × hệ số (1 + 0,4k; chúa tể × 1,8).
+    - Vàng / kinh nghiệm theo cấp hiện.
+    - Đo bằng script cân bằng: nhân vật CS1 đồ +7 đánh được vùng 1; chúa tể vùng 10 là thử thách cho nhân vật tối đa
+      (hạ ~9 lượt, trụ ~12 lượt). Hệ số 0,15 thử trước quá dễ, đã tăng lên 0,4.
+  - **Rơi quý hơn:** tỉ lệ ra đồ / Excellent / May mắn / đồ Thần × (1 + 0,1 × k), tối đa 0,9; ngọc 2 % + 0,4 % × k mỗi quái
+    (chúa tể × 5).
+  - **Tháp:** tầng 1–60 quái 6 vùng cũ, 61–160 quái 10 vùng đất chuyển sinh (nền tầng theo vùng), sau đó quay vòng có
+    tiền tố tên.
+  - **Hình quái:** 40 hình tô lại từ hình CC0 sẵn có (`e2e/tint_sprites.mjs`).
+  - **Quản trị:** thêm `set_rebirths {n}` (chỉ đặt số lần, không về cấp 1).

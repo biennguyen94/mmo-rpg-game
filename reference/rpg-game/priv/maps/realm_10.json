@@ -1,0 +1,87 @@
+{
+  "id": "realm_10",
+  "name": "Thiên Giới Hỗn Mang",
+  "zone": null,
+  "side": true,
+  "theme": "lair",
+  "floor": "floors/lair",
+  "realm": 10,
+  "min_rebirths": 10,
+  "min_level": 40,
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "R.~~........:.....RR~...~R",
+    "R.RR....:.....:....R...:.R",
+    "R.:.::R.....:.~:......:.:R",
+    "R...R:...::...:.:.~:....RR",
+    "R::...R:RR:R.RR.:..:..~.~R",
+    "R..W:....:.....:..:.~:~.~R",
+    "R...........:~R.R...R:...R",
+    "O...::.R.::R.........:...R",
+    "R...:::::~R....:....::...R",
+    "R.....:.:::::.:::::::..~.R",
+    "R~.....~....:::.......~R.R",
+    "R......:~......R...:.~...R",
+    "R:...R....~...R...~......R",
+    "R~.R....:.~......:R.....:R",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_09",
+      "spawn": [
+        24,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r10_white_wizard",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r10_lich",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r10_stone_giant",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r10_ancient_lich",
+      "max": 1,
+      "respawn": 240
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 60
+    },
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": [],
+  "waystone": {
+    "at": [
+      3,
+      6
+    ],
+    "spawn": [
+      3,
+      7
+    ]
+  }
+}
