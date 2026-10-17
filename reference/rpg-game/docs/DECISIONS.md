@@ -683,3 +683,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   chỉ ép khi cấp ≥ 45 hoặc đánh vất vả) và thay đồ khắt khe hơn: tốn ngọc ít hơn nhưng chết nhiều gấp 3–10 lần → giữ mặc định
   (thay khi hơn 5 % + 2 % mỗi cấp ép). **Anh chốt (a): giữ nguyên** — đồ ép cao "dính" ở chặng cuối như MU; tỉ lệ Ước Nguyện 60 /
   Tâm Linh 25 giữ; không thêm chuyển cấp ép.
+
+## Máy Hỗn Nguyên: Pha Excellent / May mắn thất bại giữ món (2026-10-17, anh: "cánh thì mất, còn lại không mất đồ")
+- Công thức `mode` (Pha Excellent, Pha May mắn) thất bại: **giữ món đồ** (cấp ép, dòng không đổi), chỉ mất nguyên liệu + vàng;
+  không hỏi xác nhận nữa. Công thức ra món mới (ghép cánh 1 / 2 / 3) vẫn mất món đồ bỏ vào (`Chaos.transform/4`).

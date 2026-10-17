@@ -50,12 +50,18 @@ defmodule HacLong.Game.Chaos15fTest do
     assert m =~ "đủ dòng Excellent"
   end
 
-  test "Pha Excellent thất bại: mất món, nguyên liệu, vàng" do
+  test "Pha Excellent thất bại: giữ món (cấp nâng, dòng không đổi), mất nguyên liệu, vàng" do
     g = %{Gear.new("item_8_5", 1) | uid: "#A"}
     p = setup_p(g, 5)
     Rng.put_sequence([0.99])
     {res, q} = Chaos.combine(p, "add_exc", "#A")
-    assert res.chaos.result == "fail" and q.gear == [] and q.upgrades == %{}
+    assert res.chaos.result == "fail" and q.gear == p.gear and q.upgrades == p.upgrades
+    assert res.msg =~ "còn nguyên"
+
+    assert Enum.all?(Data.chaos("add_exc").items, fn {id, n} ->
+             Map.get(q.inv, id, 0) == Map.get(p.inv, id, 0) - n
+           end)
+
     assert q.gold == p.gold - Data.chaos("add_exc").gold
   end
 

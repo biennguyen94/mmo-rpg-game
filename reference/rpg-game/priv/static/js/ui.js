@@ -2705,11 +2705,11 @@
           ${needList(need)}
           <div class="small">Tỉ lệ <b>${Math.round(rate * 100)}%</b></div>
         </div>
-        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" data-wcls="${perCls ? cls : ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
+        <button class="btn ${ok ? 'primary' : ''}" data-act="chaos" data-id="${r.id}" data-gear="${pick || ''}" ${r.mode ? 'data-keep="1"' : ''} data-wcls="${perCls ? cls : ''}" ${ok ? '' : 'disabled'}>${icon('two-coins')}${fmt(r.gold)}</button>
       </div>`;
     }).join('');
     return `<div class="card"><h3>${icon('chaos-machine')} Máy Hỗn Nguyên</h3>
-      <p class="small muted">Thất bại thì <b style="color:var(--bad)">mất hết</b> món đồ, nguyên liệu và vàng. Đồ đã khóa không bỏ vào máy được. Đồ cấp nâng cao hơn thì dễ thành hơn (tối đa 60%).</p>
+      <p class="small muted">Thất bại thì mất nguyên liệu và vàng; ghép cánh còn <b style="color:var(--bad)">mất luôn món đồ</b> bỏ vào, Pha Excellent / May mắn thì giữ món. Đồ đã khóa không bỏ vào máy được. Đồ cấp nâng cao hơn thì dễ thành hơn (tối đa 60%).</p>
       <div class="list">${rows}</div></div>`;
   }
 
@@ -3549,7 +3549,7 @@
       sendCommand({ act: 'discard', id: t.dataset.id, n });
       return;
     }
-    if (act === 'chaos' && t.dataset.gear && !confirm(`Ghép thất bại sẽ mất ${itemOf(t.dataset.gear).name} +${upLevel(t.dataset.gear)} cùng nguyên liệu. Vẫn ghép?`)) return;
+    if (act === 'chaos' && t.dataset.gear && !t.dataset.keep && !confirm(`Ghép thất bại sẽ mất ${itemOf(t.dataset.gear).name} +${upLevel(t.dataset.gear)} cùng nguyên liệu. Vẫn ghép?`)) return;
     sendCommand(command(act, t));
   }
 

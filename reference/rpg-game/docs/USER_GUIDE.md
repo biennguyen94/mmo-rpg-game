@@ -172,7 +172,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   thất bại mất một dòng.
 - **Ngọc rơi** từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương báu.
 - **Máy Hỗn Nguyên** (Lão Hỗn Nguyên, Làng): ghép **cánh** (từ đồ +5 trở lên + ngọc + vàng; ép càng cao tỉ lệ càng tăng) và
-  Ngọc Hỗn Nguyên. Thất bại mất hết nguyên liệu. **Cánh** cộng % sát thương và giảm % sát thương nhận.
+  Ngọc Hỗn Nguyên. Thất bại mất nguyên liệu và vàng; ghép cánh mất luôn món đồ bỏ vào, Pha Excellent / Pha May mắn giữ món. **Cánh** cộng % sát thương và giảm % sát thương nhận.
 
 ![Ép đồ](screenshots/e2e-forge.png)
 
