@@ -1879,7 +1879,7 @@
     const c = CLASSES[P.cls];
     return `
       <div class="card"><div class="row"><h3 class="grow">Kỹ năng</h3><button class="btn small-btn primary" data-act="skill-pick-open">⚙ Chọn bộ kỹ năng</button></div>
-        <p class="small muted">Mang tối đa ${(RULES.towerSkills || {}).loadout || 4} kỹ năng vào trận. Nguyên tố: ${Object.keys(EL.beats || {}).filter((e) => !['light', 'dark'].includes(e)).map((e) => `${elTag(e)} khắc ${(EL.beats[e] || []).map(elTag).join('')}`).join(' · ')} · ${elTag('light')} ↔ ${elTag('dark')}.</p>
+        <p class="small muted">Mang tối đa ${(RULES.towerSkills || {}).loadout || 4} kỹ năng vào trận. Nguyên tố (kỹ năng khắc quái +${Math.round((EL.strong || 0) * 100)}% sát thương, bị quái khắc −${Math.round((EL.weak || 0) * 100)}%):<br>${elOrder().map((e) => `${elTag(e)} khắc ${(EL.beats[e] || []).map(elTag).join('')}`).join('<br>')}</p>
         <h4>Kỹ năng lớp</h4><div class="list">${c.skills.map(row).join('')}</div>
         <h4>Kỹ năng Tháp Vô Tận</h4><div class="list">${(c.tower_skills || []).map(row).join('')}</div>
       </div>${viewSkillPick()}`;
@@ -2993,6 +2993,12 @@
   const mySkills = () => (P.view.skillSet || []).map(skillById).filter(Boolean);
   const EL = RULES.elements || { names: {}, icons: {}, beats: {}, strong: 0, weak: 0 };
   const elTag = (el) => (el ? `<span class="el el-${el}" title="${esc(EL.names[el] || el)}">${EL.icons[el] || ''}</span>` : '');
+  // thứ tự vòng khắc (Lửa → Băng → Gió → Đất → Sét → Lửa), rồi các hệ còn lại (Ánh Sáng, Bóng Tối)
+  const elOrder = () => {
+    const beats = EL.beats || {}, out = [];
+    for (let e = 'fire'; beats[e] && !out.includes(e); e = beats[e][0]) out.push(e);
+    return out.concat(Object.keys(beats).filter((e) => !out.includes(e)));
+  };
   // kỹ năng nguyên tố `a` đánh quái nguyên tố `b`: 1 khắc, -1 bị khắc, 0 bình thường
   const elVs = (a, b) => (a && b && (EL.beats[a] || []).includes(b) ? 1 : a && b && (EL.beats[b] || []).includes(a) ? -1 : 0);
   // mô tả kỹ năng tháp dựng từ số trong dữ liệu (không chép chữ, đổi số là chữ đổi theo)
