@@ -3,7 +3,9 @@ defmodule HacLong.Slay do
   Đồ sát (PK không cần đồng ý, thay PK cược vàng; `DECISIONS.md` P18).
 
   - `attack/2` (gọi từ kênh của người tấn công): cả hai online, cùng bản đồ chung, không ở vùng
-    an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`, không ai đang đánh.
+    an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`. Người tấn công không đang đánh;
+    người bị đánh đang đánh quái vẫn bị đồ sát ngay (trận đánh quái bị ngắt, quái được nhả ra giữ máu),
+    chỉ không được khi đang trong một trận đồ sát khác (`DECISIONS.md` "Đồ sát cắt ngang trận đánh quái").
     Hai bên vào trận ngay (`Session.slay_begin/2`), đối thủ hiện như quái là bản sao chỉ số.
   - Máu hai bên giữ ở đây. Luân phiên lượt, người tấn công đi trước. Mỗi lượt `RULES.slay.turn_s`
     giây; quá giờ thì server đánh thường thay (`Session.slay_auto/1`).
@@ -103,8 +105,8 @@ defmodule HacLong.Slay do
       pa.battle != nil ->
         {:error, "Bạn đang trong trận đấu."}
 
-      pb.battle != nil ->
-        {:error, "#{pb.name} đang trong trận đấu."}
+      slaying?(pb) ->
+        {:error, "#{pb.name} đang bị đồ sát / đồ sát người khác."}
 
       pa.hp <= 0 ->
         {:error, "Bạn cần hồi máu trước."}
@@ -133,6 +135,9 @@ defmodule HacLong.Slay do
         :ok
     end
   end
+
+  @doc "Đang trong trận đồ sát chưa xong (không cắt ngang được)."
+  def slaying?(p), do: match?(%{battle: %{over: false, encounter: %{slay: _}}}, p)
 
   defp safe_ok?(pos), do: pos.map not in @r.safe_maps and World.shared?(pos)
 

@@ -408,7 +408,11 @@ defmodule HacLong.Game.Session do
     p = s.player
 
     cond do
-      p.battle != nil ->
+      HacLong.Slay.slaying?(p) ->
+        reply({:error, "#{p.name} đang trong trận đồ sát khác."}, s)
+
+      # người tấn công phải rảnh tay (Slay.check); người bị đánh đang đánh quái thì trận đó bị ngắt
+      f.mine and p.battle != nil ->
         reply({:error, "#{p.name} đang trong trận đấu."}, s)
 
       p.hp <= 0 ->
@@ -418,6 +422,8 @@ defmodule HacLong.Game.Session do
         reply({:error, "#{p.name} đã rời bản đồ."}, s)
 
       true ->
+        cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
+        p = interrupt_battle(p, s.user_id)
         mp = Maps.get(f.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
@@ -436,6 +442,7 @@ defmodule HacLong.Game.Session do
             do: "🗡 Bạn đồ sát #{foe.name}! Bạn ra đòn trước.",
             else: "⚠ #{foe.name} đồ sát bạn! Bỏ chạy tính như gục ngã."
 
+        text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}
         p2 = %{p2 | battle: b}
         left_trade(s.user_id, p, p2)
@@ -1098,6 +1105,17 @@ defmodule HacLong.Game.Session do
         player
     end
   end
+
+  # Bị đồ sát giữa trận đánh quái: trận đó kết thúc như bỏ chạy (quái nhả ra, giữ máu; đồng đội đánh tiếp),
+  # không mất gì. Đang ở bảng kết quả (trận đã xong) thì chỉ đóng bảng.
+  defp interrupt_battle(%{battle: %{over: false} = b} = p, uid) do
+    p
+    |> Map.put(:battle, %{b | over: true, result: "fled"})
+    |> World.finish_encounter(uid)
+    |> Map.put(:battle, nil)
+  end
+
+  defp interrupt_battle(p, _uid), do: Map.put(p, :battle, nil)
 
   # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
   # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.

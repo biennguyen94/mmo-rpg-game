@@ -358,7 +358,7 @@ tower_rows = "".join(
 # ---------- PK, đồ sát ----------
 SL, AR, GW, PKR = R["slay"], R["arena"], R["guild_war"], R["pk"]
 pk_items = [
-    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ tự đánh thường. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ tự đánh thường. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
     ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
     ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); mỗi người đồ sát cùng một người tối đa {SL['per_target_hour']} lần trong 60 phút."),
     ("PK cược vàng", f"mời người khác cược từ {n(PKR['min'])} tới {n(PKR['max'])} vàng, tối đa {PKR['per_day']} trận mỗi ngày; hai bản sao chỉ số tự đánh (xem Chỉ số, chiến đấu), người thắng nhận tiền cược."),

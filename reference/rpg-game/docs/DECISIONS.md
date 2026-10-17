@@ -501,3 +501,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - **CHANGE_REASON (schema):** thêm cột `characters.auto_cfg` (map, migration `20261107000000_add_auto_cfg`) lưu cài đặt
   lần bật gần nhất (target, hp, mp, loot, keep, range, skills). `p.auto` (đang chạy) vẫn chỉ trong bộ nhớ như B-31.
 - Lệnh `auto` nhận thêm `range`, `skills`, `keep` (protocol thêm trường, client cũ không gửi thì lấy mặc định).
+
+## Đồ sát cắt ngang trận đánh quái (2026-10-17, anh chốt)
+- Người bị đồ sát đang đánh quái (bản đồ chung, đánh cùng tổ đội, ở bảng kết quả) vẫn bị đồ sát ngay: trận đó kết thúc như bỏ chạy
+  (`World.finish_encounter/2` với kết quả "fled": quái nhả ra, giữ máu; đồng đội đánh tiếp), không phạt; nhật ký trận đồ sát ghi
+  "Trận với … bị cắt ngang". Chỉ chặn khi người đó đang trong một trận đồ sát khác (`Slay.slaying?/1`).
+- Người tấn công vẫn phải rảnh tay (không trong trận nào). Tự đánh của người bị đánh tự tắt như trước (bị đồ sát).
