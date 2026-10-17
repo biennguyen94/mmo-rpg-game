@@ -720,3 +720,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Mỗi tài khoản một nhân vật; nút xóa vĩnh viễn toàn bộ tiến trình (cấp, đồ, kho, ngọc, chuyển sinh) không hoàn tác được, dễ bấm
   nhầm, và lợi ích duy nhất (đổi lớp / chơi lại) làm được bằng tài khoản mới. Bỏ nút và trạng thái xác nhận khỏi `ui.js`.
 - Lệnh server `reset` (`commands.ex`) giữ lại cho test / quản trị; client không còn gửi.
+
+## Icon ứng dụng (2026-10-17, anh yêu cầu "thêm avatar hình cho game")
+- Ô tắt trình duyệt / màn hình chính hiện trống vì `favicon.ico` là ảnh trong suốt mặc định. Icon mới: hình trùm **Hắc Long**
+  (`monsters/shadow_dragon.png`, CC0) phóng to kiểu pixel trên nền tối viền vàng, sinh bằng `node e2e/app_icons.mjs`.
+- `priv/static/app/`: `icon-192/512.png`, `icon-maskable-512.png` (Android cắt hình), `apple-touch-icon.png` (iPhone),
+  `favicon-32.png`; `favicon.ico` 64×64. `manifest.json` (tên, màu, icon; "Thêm vào màn hình chính" mở toàn màn hình).
+  `static_paths` thêm `app`, `manifest.json`.
