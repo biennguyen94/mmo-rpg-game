@@ -435,6 +435,37 @@ def chrow(r):
     rate = pct(r["rate"]) + (f", +{pct(r['per_up'])} mỗi cấp ép trên +{r['gear'].get('min_up', 0)}, tối đa {pct(r['max_rate'])}" if r.get("per_up") else "")
     return f"<tr><td><b>{E(r['name'])}</b></td><td>{need}</td><td class=n>{n(r['gold'])}</td><td>{rate}</td></tr>"
 chaos_rows = "".join(chrow(r) for r in D["chaos"])
+
+# ---------- Dòng xanh: lấy thêm sau, ép có đổi gì (ví dụ món "relic") ----------
+CHR = {r["id"]: r for r in D["chaos"]}
+def chaos_need(r):
+    items = " + ".join(f"{k} {IT[i]['name']}" for i, k in r["items"].items())
+    return f"món +{r['gear']['min_up']} trở lên + {items} + {n(r['gold'])} vàng, tỉ lệ {pct(r['rate'])}" + (f" (+{pct(r['per_up'])} mỗi cấp ép trên +{r['gear']['min_up']}, tối đa {pct(r['max_rate'])})" if r.get("per_up") else "")
+LC = ls["luck_chance"]
+MONK = {"normal": "quái thường", "elite": "tinh anh", "night": "quái Bóng Đêm", "boss": "trùm"}
+lc_txt = ", ".join(f"{MONK.get(k, k)} {pct(v)}" for k, v in LC.items())
+step_eff = {st["level"]: st["eff"] for st in D["upgrade"]["steps"]}
+lines_rows = "".join(f"<tr><td><b>{a}</b></td><td>{b}</td><td>{c}</td><td>{d}</td><td>{e}</td></tr>" for a, b, c, d, e in [
+    ("Kỹ năng (chỉ vũ khí)", f"{pct(ls['skill_chance'])} vũ khí rơi có", "❌ Không thêm được", "1", f"Không — luôn +{pct(ls['skill_dmg'])} sát thương chiêu"),
+    ("May mắn", f"theo loại quái: {lc_txt}", f"✅ Pha May mắn (Lão Hỗn Nguyên): {chaos_need(CHR['add_luck'])}" if "add_luck" in CHR else "—", "1",
+     f"Không — vũ khí +{pct(ls['luck_crit'])} chí mạng; mọi món cộng tỉ lệ ép ngọc ({luck_up})"),
+    ("Dòng cộng thêm (\"Gia tăng lực tấn công / phòng thủ\")", "0–4 dòng khi rơi (xem thẻ bên trên)",
+     f"✅ Ngọc Sinh Mệnh (Thợ Rèn): tỉ lệ {pct(life['rate'])} thêm 1 dòng, thất bại mất 1 dòng", str(life["max_lines"]),
+     f"Không — mỗi dòng = {pct(life['per_line_pct'])} công / thủ <b>gốc</b> của món (ít nhất +{life['per_line']}), không tính phần ép"),
+    ("Excellent (xanh lam: tốc độ đánh, sát thương, chí mạng, hồi máu / MP…)", "theo tỉ lệ Excellent ở mục Tỉ lệ rơi",
+     f"✅ Pha Excellent (Lão Hỗn Nguyên): {chaos_need(CHR['add_exc'])}, mỗi lần thêm 1 dòng" if "add_exc" in CHR else "—", "6",
+     "Không — giá trị cố định; riêng dòng \"+ cấp × hệ số\" tăng theo <b>cấp nhân vật</b>"),
+])
+rel = IT.get("relic")
+if rel:
+    per = max(1, round(rel["atk"] * R["upgrade"]["bonus_pct"]))
+    up11 = round(step_eff.get(11, 0) * per)
+    line = max(life["per_line"], round(rel["atk"] * life["per_line_pct"]))
+    lines_example = (f"Ví dụ <b>{E(rel['name'])} +11</b>, 4 dòng cộng thêm, 6 Excellent: tấn công gốc {rel['atk']}; phần xanh lá "
+        f"<b>+{up11 + 4 * line}</b> = ép +11 ({n(step_eff.get(11, 0))} × {per} = +{up11}) + 4 dòng × {line} (= +{4 * line}). "
+        f"Ép thêm chỉ đổi phần ép; 4 dòng × {line} và 6 dòng Excellent giữ nguyên. Món đã đủ 4 dòng cộng thêm và 6 Excellent thì không thêm dòng được nữa.")
+else:
+    lines_example = ""
 bm = R["bestiary"]["marks"]
 dq = lambda e: R["skill_effects"][e]
 rule_items = [
@@ -501,7 +532,7 @@ other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình ma
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
