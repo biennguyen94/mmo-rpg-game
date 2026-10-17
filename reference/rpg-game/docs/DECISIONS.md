@@ -492,7 +492,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 ## Tự đánh kiểu MU Helper: phạm vi, kỹ năng, lọc đồ, lưu cài đặt (2026-10-17, anh chốt "làm như đề xuất")
 - So với MU Helper (Hunting / Obtaining): làm (1) phạm vi săn + về chỗ cũ, (2) cách dùng kỹ năng + buff trước,
   (3) lọc đồ theo loại tích chọn, (5) lưu cài đặt theo nhân vật. Không làm: đánh trả từ xa, nhặt theo phạm vi, sửa đồ
-  (game theo lượt, đồ tự vào túi, không có độ bền). Chưa làm, chờ anh chốt: giữ đồ theo tên, tự về Làng mua bình.
+  (game theo lượt, đồ tự vào túi, không có độ bền). Không làm (anh chốt 2026-10-17): giữ đồ theo tên, tự về Làng mua bình (hết bình máu thì tự đánh vẫn tắt).
 - `RULES.auto` (version 2): `range_options` [0, 4, 8, 12] ô (0 = cả bản đồ, mặc định), khoảng cách Manhattan tính từ chỗ bật;
   `skills` all / basic / boss; `keep` exc / anc / luck / opt / better / cls, `keep_default` như bộ lọc "chỉ đồ quý" cũ
   (không có `cls`). Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ. `loot: "good"` cũ đọc như `"pick"` + mặc định.
