@@ -241,7 +241,7 @@ lúc hạ từng trùm.
 Các `act`: `create {name, cls}`, `reset`, `move {dir, confirm?}` (`up`/`down`/`left`/`right`;
 bước vào trùm thì nhận `confirm: "boss"`, gửi lại với `confirm: true` để đấu),
 (bước vào Đài Phúc Lành, ô `W`, thì nhận `blessing: true`: phúc lành + điểm hồi sinh; lệnh `teleport` cũ đã bỏ, B-26),
-`attack`, `skill {skill?}` (id kỹ năng trong bộ đang mang, không có thì dùng kỹ năng đầu), `skill_set {ids}` (Phase 3: chọn tối đa 4 kỹ năng đã mở mang vào trận, đổi được cả khi đang đánh), `potion`, `flee`, `leave`, `alloc {stat, n}`, `equip {id}`,
+`attack`, `skill {skill?}` (id kỹ năng trong bộ đang mang, không có thì dùng kỹ năng đầu), `skill_set {ids}` (Phase 3: chọn tối đa 4 kỹ năng đã mở mang vào trận, đổi được cả khi đang đánh), `potion`, `flee`, `leave`, `auto {on, target, hp, mp, loot}` (Phase 4: bật / tắt tự đánh khi online, B-31), `alloc {stat, n}`, `equip {id}`,
 `unequip {slot}`, `use {id}` (`equip`, `sell`, `upgrade` nhận cả id đồ ngẫu nhiên `#...`), `rebirth`
 (Trưởng Làng, cấp 50), `mail_claim {id}` (mở thư, nhận quà), `title_set {id}` (`null` để
 bỏ danh hiệu), `fish_cast` (đứng cạnh nước; trả `wait` mili giây tới lúc cá cắn và `window`),

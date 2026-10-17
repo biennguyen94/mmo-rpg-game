@@ -218,7 +218,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (visit) {
@@ -823,6 +823,40 @@
   // kênh chat đang có: thế giới, bang (nếu có bang), tổ đội (nếu có tổ đội)
   const chatChannels = () => ['world'].concat(P && P.guild ? ['guild'] : [], party ? ['party'] : []);
 
+  // ---------- Tự đánh (Phase 4, B-31) ----------
+  // Server tự đi tới quái, đánh (bộ 4 kỹ năng), uống bình, rời trận khi còn tab mở; client chỉ gửi bật / tắt và cài đặt.
+  // Cài đặt lần trước nhớ ở trình duyệt (`hl-auto`).
+  const autoUi = (() => { let a = {}; try { a = JSON.parse(localStorage.getItem('hl-auto') || '{}') || {}; } catch (e) { a = {}; } return { target: a.target || 'level', hp: a.hp || 40, mp: a.mp != null ? a.mp : 30, loot: a.loot || 'all', open: false }; })();
+  const saveAutoUi = () => setPref('hl-auto', JSON.stringify({ target: autoUi.target, hp: autoUi.hp, mp: autoUi.mp, loot: autoUi.loot }));
+  const autoKills = () => (P.auto ? Math.max(0, P.kills - P.auto.kills) : 0);
+  const autoTargetName = (a) => a.target === 'level' ? 'quái hợp cấp' : ((P.view.autoMap.kinds.find((k) => k.id === a.target) || {}).name || a.target);
+
+  function viewAuto() {
+    const am = P.view.autoMap || { ok: false, kinds: [] };
+    const a = P.auto;
+    if (a) {
+      return `<div class="auto-bar on" id="auto-bar"><span class="auto-dot" aria-hidden="true"></span>
+        <span class="grow small" id="auto-stat">🤖 Tự đánh ${esc(autoTargetName(a))} · đã hạ <b class="num">${fmt(autoKills())}</b> · máu dưới ${a.hp}% · ${a.loot === 'good' ? 'chỉ giữ đồ quý' : 'giữ hết đồ'}</span>
+        <button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>`;
+    }
+    if (!am.ok) return '<div class="auto-bar" id="auto-bar"><span class="small muted">🤖 Tự đánh: bản đồ này không có quái để tự đánh.</span></div>';
+    if (autoUi.target !== 'level' && !am.kinds.some((k) => k.id === autoUi.target)) autoUi.target = 'level';
+    const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
+    const pcts = (lo, hi, cur) => { const o = []; for (let v = lo; v <= hi; v += 10) o.push(opt(v, cur, `${v}%`)); return o.join(''); };
+    const settings = autoUi.open ? `<div class="auto-set">
+        <label class="small">Đánh <select data-auto="target">${opt('level', autoUi.target, 'Quái hợp cấp')}${am.kinds.map((k) => opt(k.id, autoUi.target, `${k.name} (cấp ${k.level})`)).join('')}</select></label>
+        <label class="small">Uống máu khi dưới <select data-auto="hp">${pcts(10, 90, autoUi.hp)}</select></label>
+        <label class="small">Uống mana khi dưới <select data-auto="mp">${pcts(0, 90, autoUi.mp)}</select></label>
+        <label class="small">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('good', autoUi.loot, 'Chỉ giữ đồ quý')}</select></label>
+        <p class="small muted">Dùng bộ 4 kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game.</p>
+      </div>` : '';
+    return `<div class="auto-bar" id="auto-bar">
+        <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
+        <span class="grow small muted">${esc(autoUi.target === 'level' ? 'Quái hợp cấp' : autoTargetName(autoUi))} · máu dưới ${autoUi.hp}%</span>
+        <button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh">⚙</button>
+        ${settings}</div>`;
+  }
+
   // ---------- Tổ đội ----------
   function viewParty() {
     if (!party) return '<div id="party-card" hidden></div>';
@@ -1154,6 +1188,10 @@
       if (tut) tut.outerHTML = viewTutorial();
       const fish = $('#fish-ui');
       if (fish) fish.outerHTML = viewFishing();
+      // tự đánh: bật / tắt thì vẽ lại cả thanh; đang bật chỉ đổi dòng trạng thái (không đóng ô cài đặt đang chọn)
+      const ab = $('#auto-bar');
+      if (ab && ab.classList.contains('on') !== !!P.auto) ab.outerHTML = viewAuto();
+      else if (ab && P.auto) { const tpl = document.createElement('template'); tpl.innerHTML = viewAuto(); ab.replaceWith(tpl.content.firstElementChild); }
       Map_.draw();
     } else {
       render();
@@ -2970,6 +3008,7 @@
         <div class="grow" style="flex:1;min-width:0">${bar('hp', P.hp, d.maxHp, `❤ ${fmt(P.hp)} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
+      ${P.auto ? `<div class="auto-bar on"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">🤖 Đang tự đánh · đã hạ <b class="num">${fmt(autoKills())}</b></span><button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>` : ''}
       ${bottom}`;
   }
 
@@ -3255,6 +3294,9 @@
     const act = t.dataset.act;
     if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
     if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
+    if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
+    if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot }); return; }
+    if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
@@ -3625,6 +3667,7 @@
       if (e.target.dataset.chaosCls) { chaosCls[e.target.dataset.chaosCls] = e.target.value; render(); }
       if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
       if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
+      if (e.target.dataset.auto) { const k = e.target.dataset.auto; autoUi[k] = k === 'hp' || k === 'mp' ? +e.target.value : e.target.value; saveAutoUi(); render(); }
     });
     Net.onStatus((st, msg) => {
       const bar = $('#netbar');

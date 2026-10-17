@@ -53,7 +53,7 @@ defmodule HacLong.Bots.Brain do
   def decide(%{battle: %{over: true}}, _snap, _opts), do: %{"act" => "leave"}
   # đồ sát: chưa tới lượt thì chờ (không gửi lệnh)
   def decide(%{battle: %{live: true, encounter: %{mine: false}}}, _snap, _opts), do: nil
-  def decide(%{battle: %{} = b} = p, _snap, _opts), do: fight(p, b)
+  def decide(%{battle: %{}} = p, _snap, _opts), do: fight(p)
 
   def decide(p, snap, opts) do
     d = Engine.derived(p)
@@ -75,7 +75,11 @@ defmodule HacLong.Bots.Brain do
 
   # ---------- Trận đánh ----------
 
-  defp fight(p, _b) do
+  @doc """
+  Lệnh trong trận: máu < `hp` (tỉ lệ máu tối đa) và có bình → uống; chưa có kỹ năng dùng được và MP < `mp` → uống
+  mana; kỹ năng mạnh nhất (cuối bộ kỹ năng) đang sẵn → dùng; còn lại đánh thường. Tự đánh (Phase 4) dùng chung.
+  """
+  def fight(p, hp \\ 0.35, mp_pct \\ 0.3) do
     d = Engine.derived(p)
     mp = Map.get(p, :mp) || 0
 
@@ -86,10 +90,10 @@ defmodule HacLong.Bots.Brain do
       |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and mp >= Engine.skill_mp(p, &1)))
 
     cond do
-      p.hp < d.maxHp * 0.35 and Engine.best_potion(p, d.maxHp - p.hp) ->
+      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "potion"}
 
-      skill == nil and mp < d.maxMp * 0.3 and Engine.best_mana(p, d.maxMp - mp) ->
+      skill == nil and mp < d.maxMp * mp_pct and Engine.best_mana(p, d.maxMp - mp) ->
         %{"act" => "mana"}
 
       skill ->
@@ -115,9 +119,10 @@ defmodule HacLong.Bots.Brain do
     end)
   end
 
-  defp power(nil), do: 0
+  @doc "Sức mạnh thô một món đồ (tấn công + phòng thủ + dòng cộng thêm), để so với món đang mặc."
+  def power(nil), do: 0
 
-  defp power(it),
+  def power(it),
     do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * @opt_line
 
   defp heal(p, d) do
@@ -257,16 +262,22 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
-  defp hunt(p, nil), do: wander(p)
+  @doc """
+  Đi tới con quái gần nhất không ai đánh (trùm thường của bản đồ có quái hồi sinh thì bỏ qua) thỏa `keep`
+  (`fn quái, bản_đồ -> bool`, mặc định cấp không quá cấp mình + 1); không có con nào thì đi lang thang.
+  """
+  def hunt(p, snap, keep \\ nil)
+  def hunt(p, nil, _keep), do: wander(p)
 
-  defp hunt(p, snap) do
+  def hunt(p, snap, keep) do
     me = {p.pos.x, p.pos.y}
     map = Maps.get(p.pos.map)
+    keep = keep || fn m, map -> monster_level(map, m.kind) <= p.level + 1 end
 
     targets =
       snap.monsters
       |> Enum.reject(&(&1.busy or (&1.boss and map.spawns != [])))
-      |> Enum.filter(&(monster_level(map, &1.kind) <= p.level + 1))
+      |> Enum.filter(&keep.(&1, map))
       |> Enum.sort_by(&dist(me, {&1.x, &1.y}))
       |> Enum.map(&{&1.x, &1.y})
 
@@ -276,14 +287,15 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
-  defp monster_level(%{side: true}, kind), do: Data.side_monster(kind).level
+  @doc "Cấp loại quái `kind` trên bản đồ `map` (99 nếu không biết)."
+  def monster_level(%{side: true}, kind), do: (Data.side_monster(kind) || %{level: 99}).level
 
-  defp monster_level(%{zone: zi}, kind) when is_integer(zi) do
+  def monster_level(%{zone: zi}, kind) when is_integer(zi) do
     z = Data.zone(zi)
     Enum.find_value(z.monsters ++ [z.boss], 99, &(&1.id == kind && &1.level))
   end
 
-  defp monster_level(_, _), do: 99
+  def monster_level(_, _), do: 99
 
   defp wander(p) do
     map = Maps.get(p.pos.map)

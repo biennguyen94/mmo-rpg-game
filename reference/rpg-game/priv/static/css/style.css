@@ -791,3 +791,15 @@ body.tl-on { overflow: hidden; }
 .skill-pick { width: 100%; text-align: left; background: none; border: 1px solid var(--line); border-radius: 8px; color: inherit; font: inherit; cursor: pointer; }
 .skill-pick.on { border-color: var(--gold, #d8a24a); background: rgba(216, 162, 74, 0.12); }
 .skill-pick.locked { opacity: 0.5; cursor: not-allowed; }
+
+/* Phase 4 (B-31): thanh tự đánh dưới bản đồ / trong trận */
+.auto-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--ink-2); flex: 0 0 auto; }
+.auto-bar.on { border-color: var(--good); }
+.auto-bar .grow { flex: 1 1 140px; min-width: 0; }
+.auto-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); animation: auto-pulse 1.2s ease-in-out infinite; }
+@keyframes auto-pulse { 50% { opacity: 0.35; } }
+.auto-set { flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 10px; }
+.auto-set label { display: flex; flex-direction: column; gap: 2px; }
+.auto-set select { width: 100%; }
+.auto-set p { grid-column: 1 / -1; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .auto-dot { animation: none; } }

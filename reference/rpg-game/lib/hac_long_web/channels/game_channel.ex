@@ -1093,6 +1093,11 @@ defmodule HacLongWeb.GameChannel do
         # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
         slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
+        # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
+        autoMap: %{
+          ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),
+          kinds: HacLong.Game.AutoHunt.kinds(player.pos.map)
+        },
         achievements: Achievements.view(player),
         chestReady: player[:chest_day] != Daily.today(),
         event: event_view(player),

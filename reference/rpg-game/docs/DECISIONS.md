@@ -434,3 +434,18 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     tiền tố tên.
   - **Hình quái:** 40 hình tô lại từ hình CC0 sẵn có (`e2e/tint_sprites.mjs`).
   - **Quản trị:** thêm `set_rebirths {n}` (chỉ đặt số lần, không về cấp 1).
+- **B-31** (anh chốt "chỉ online thôi, làm phase 4") **Tự đánh quái** (`HacLong.Game.AutoHunt`, `RULES.auto`).
+  - **Chỉ khi online:** chạy trong `Session` (nhịp `:auto_tick`) khi còn ít nhất một tab mở; đóng hết tab là tắt.
+    Không có tự đánh offline.
+  - **Server-authoritative:** client chỉ gửi lệnh `auto {on, target, hp, mp, loot}`; mỗi nhịp server tự chọn lệnh
+    (`move` / `attack` / `skill` / `potion` / `mana` / `use` / `discard` / `leave`) và chạy qua đúng đường lệnh client
+    (cùng luật, cùng giới hạn tốc độ, cùng lưu database).
+  - **Dùng lại bot:** `Bots.Brain.fight/3` (ngưỡng máu / mana theo cài đặt, kỹ năng mạnh nhất trong bộ 4 kỹ năng đang mang)
+    và `Brain.hunt/3` (tìm đường tới con quái gần nhất không ai đánh).
+  - **Chọn quái:** quái hợp cấp (cấp ≤ cấp mình + 1; bản đồ không có con nào như vậy, vd vùng chuyển sinh, thì mọi quái thường)
+    hoặc một loại có trên bản đồ. Không đánh trùm của bản đồ có quái hồi sinh.
+  - **Lọc đồ "chỉ đồ quý":** hủy món đồ thường vừa nhặt; giữ Excellent / Thần / May mắn / Kỹ năng / từ
+    `keep_opt_min` (2) dòng cộng thêm / cánh / trang sức / món tốt hơn đồ đang mặc / món đã khóa. Ngọc, bình, nguyên liệu luôn giữ.
+  - **Dừng:** hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ.
+  - **Không tự đánh:** bản đồ riêng (Nhà, sự kiện), Làng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
+  - Cài đặt chỉ nằm trong bộ nhớ (`player.auto`, không thêm cột database); cài đặt lần trước nhớ ở trình duyệt.

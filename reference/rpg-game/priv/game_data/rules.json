@@ -909,6 +909,16 @@
         "home"
       ]
     },
+    "auto": {
+      "_doc": "Phase 4 (B-31): tự đánh quái khi đang online (HacLong.Game.AutoHunt). tick_ms: nhịp ra lệnh (trong trận / đang đi / đứng chờ); hp_pct, mp_pct: ngưỡng % uống bình máu / mana mặc định và giới hạn chỉnh; keep_opt_min: lọc đồ 'chỉ đồ quý' giữ món có từ chừng này dòng cộng thêm trở lên (ngoài Excellent / Thần / May mắn / Kỹ năng / tốt hơn đồ đang mặc).",
+      "tick_ms": {"battle": 900, "move": 320, "idle": 1500},
+      "hp_pct": {"default": 40, "min": 10, "max": 90},
+      "mp_pct": {"default": 30, "min": 0, "max": 90},
+      "keep_opt_min": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "bots": {
       "count": 20,
       "rest_after_death_s": [30, 90]

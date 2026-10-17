@@ -20,6 +20,7 @@ defmodule HacLong.Game.Session do
 
   alias HacLong.Game.{
     Achievements,
+    AutoHunt,
     Characters,
     Commands,
     Daily,
@@ -199,7 +200,9 @@ defmodule HacLong.Game.Session do
       rid_order: :queue.new(),
       # `{ref, timer}` khi giao dịch đang giữ Session (`hold/1`); `queue`: lệnh đợi tới lúc nhả
       held: nil,
-      queue: []
+      queue: [],
+      # Phase 4: hẹn giờ nhịp tự đánh (`:auto_tick`) khi `player.auto` đang bật
+      auto_timer: nil
     }
 
     {:ok, s, @idle_timeout}
@@ -685,6 +688,7 @@ defmodule HacLong.Game.Session do
 
     Enum.each(notes, &notify(s, &1))
     track_guild(old, player, result)
+    s = arm_auto(s)
 
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
@@ -889,6 +893,8 @@ defmodule HacLong.Game.Session do
 
     if map_size(s.tabs) == 0 do
       World.leave(s.player, s.user_id)
+      # tự đánh chỉ chạy khi online: đóng hết tab là tắt
+      s = auto_off(s, nil)
 
       # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch và lời mời cược đang dính
       HacLong.Party.away(s.user_id)
@@ -899,6 +905,26 @@ defmodule HacLong.Game.Session do
       {:noreply, flush(s), @idle_timeout}
     else
       {:noreply, s}
+    end
+  end
+
+  # Nhịp tự đánh (Phase 4): hỏi `AutoHunt` lệnh tiếp theo rồi chạy như lệnh client gửi (cùng giới hạn tốc độ).
+  def handle_info(:auto_tick, s) do
+    s = %{s | auto_timer: nil}
+
+    cond do
+      not AutoHunt.on?(s.player) ->
+        {:noreply, s, timeout(s)}
+
+      map_size(s.tabs) == 0 ->
+        {:noreply, auto_off(s, nil), timeout(s)}
+
+      # giao dịch đang giữ Session: chờ nhịp sau
+      s.held != nil ->
+        {:noreply, arm_auto(s, AutoHunt.delay(s.player, nil)), timeout(s)}
+
+      true ->
+        {:noreply, auto_step(s), timeout(s)}
     end
   end
 
@@ -948,6 +974,57 @@ defmodule HacLong.Game.Session do
   end
 
   defp reply(value, s), do: {:reply, value, s, timeout(s)}
+
+  # ---------- Tự đánh (Phase 4) ----------
+
+  defp auto_step(s) do
+    p = s.player
+
+    case AutoHunt.decide(p, auto_snapshot(p)) do
+      {:stop, why} ->
+        auto_off(s, why)
+
+      :wait ->
+        arm_auto(s, AutoHunt.delay(p, nil))
+
+      {:cmd, cmd} ->
+        {reason, ref} = save_reason({:command, cmd, :auto})
+        Characters.put_reason(reason, ref)
+
+        # `:busy`: lệnh đang chạy không tự hẹn nhịp (hẹn ngay dưới đây theo lệnh vừa gửi)
+        {:reply, _value, s, _t} =
+          handle({:command, cmd, :auto}, nil, fresh(%{s | auto_timer: :busy}))
+
+        arm_auto(%{s | auto_timer: nil}, AutoHunt.delay(s.player, cmd))
+    end
+  end
+
+  defp auto_snapshot(%{pos: %{map: id}}),
+    do: if(AutoHunt.map_ok?(id), do: MapServer.snapshot(id))
+
+  # hẹn nhịp tự đánh tiếp theo (nếu đang bật, còn tab và chưa hẹn)
+  defp arm_auto(s, ms \\ nil)
+
+  defp arm_auto(%{auto_timer: nil, player: p} = s, ms) when map_size(s.tabs) > 0 do
+    if AutoHunt.on?(p),
+      do: %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))},
+      else: s
+  end
+
+  defp arm_auto(s, _ms), do: s
+
+  defp auto_off(s, why) do
+    if AutoHunt.on?(s.player) do
+      if is_reference(s.auto_timer), do: Process.cancel_timer(s.auto_timer)
+      p = AutoHunt.stop(s.player)
+      s = %{s | player: p, auto_timer: nil}
+      broadcast(s, p, nil)
+      notify(s, why)
+      s
+    else
+      s
+    end
+  end
 
   # B-19: mở lại game khi đã bị loại khỏi Hỗn Chiến Thành (đóng tab là bị loại) thì về Làng
   defp cc_back(%{player: %{pos: %{map: map}, battle: nil} = p, tabs: tabs} = s)

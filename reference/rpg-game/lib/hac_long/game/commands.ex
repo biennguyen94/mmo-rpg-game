@@ -63,6 +63,10 @@ defmodule HacLong.Game.Commands do
       "leave" ->
         Engine.leave_battle(p)
 
+      # Phase 4 (B-31): bật / tắt tự đánh (Session chạy nhịp ra lệnh khi còn tab mở)
+      "auto" ->
+        HacLong.Game.AutoHunt.configure(p, c)
+
       # Phase 3 (B-29): bộ kỹ năng mang vào trận
       "skill_set" ->
         Engine.set_skills(p, c["ids"])
