@@ -29,7 +29,7 @@ R.check('tên bản đồ "Kalima 3 · Hạ quái Kalima"', ((await page.textCon
 await shot(page, 'kalima-guards.png');
 
 const seen = new Set();
-for (let i = 0; i < 25; i++) {
+for (let i = 0; i < 40; i++) {
   await page.waitForFunction(() => { const t = window.__hl.player().tower; return !t || t.kal.done || t.monsters.length > 0; }, null, { timeout: 5000 }).catch(() => null);
   p = await player(page);
   if (!p.tower || p.tower.kal.done || !p.tower.monsters.length) break;
@@ -37,6 +37,8 @@ for (let i = 0; i < 25; i++) {
   if (p.hp < p.maxHp / 2) await admin('heal', P.name, {});
   for (const m of p.tower.monsters) {
     await walkTo(page, m.x, m.y);
+    // walkTo chỉ bắt đầu đi (từng bước): chờ tới lúc vào trận, kẻo hết lượt vòng lặp trước khi đánh xong Kundun
+    await page.waitForFunction(() => !!window.__hl.player().battle, null, { timeout: 6000 }).catch(() => null);
     if ((await player(page)).battle) break;
   }
   if ((await player(page)).battle) {

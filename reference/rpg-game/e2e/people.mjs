@@ -76,7 +76,7 @@ await shot(A.page, 'people-map.png');
 
 // ---------- Tab Nhân vật: % cộng thêm ----------
 const ex = await A.page.evaluate(() => window.__hl.player().view.extra);
-R.check('tab Nhân vật có dữ liệu phần cộng thêm (đồ / thú cưng / món ăn)', ex && typeof ex.atk === 'number' && ex.gear != null, JSON.stringify(ex));
+R.check('tab Nhân vật có dữ liệu phần cộng thêm (đồ / thú cưng / món ăn)', ex && ['atk', 'def', 'hp'].every((k) => typeof ex[k] === 'number'), JSON.stringify(ex));
 
 R.check('không lỗi JS', A.errors.length === 0 && B.errors.length === 0, A.errors.concat(B.errors).join(' | '));
 await R.done(browser);

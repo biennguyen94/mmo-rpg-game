@@ -39,7 +39,9 @@ p = await player(page);
 R.check('thắng quái trong Rừng Mê, nhận kinh nghiệm + vàng', wins >= 1 && p.kills >= 1 && (p.xp > 0 || p.level > 1) && p.gold > 30, `wins=${wins} kills=${p.kills}`);
 
 // về Làng: Thợ Rèn (xem hàng), Bà Lang: mua một bình, bán lại
-if (p.pos.map !== 'village') await travel(page, 'village');
+// đi bộ qua cổng có thể bị quái lang thang chắn: thử lại, cuối cùng dịch chuyển (đã có vàng từ quái)
+for (let k = 0; k < 3 && (await player(page)).pos.map !== 'village'; k++) await travel(page, 'village').catch(() => null);
+if ((await player(page)).pos.map !== 'village') await send(page, { act: 'travel', to: 'village' }).catch(() => null);
 R.check('gặp Thợ Rèn, có hàng bán', (await meetNpc(page, 'blacksmith')) && (await page.$$('[data-act="buy"]')).length >= 5);
 await shot(page, 'smoke-shop.png');
 await leaveNpc(page);

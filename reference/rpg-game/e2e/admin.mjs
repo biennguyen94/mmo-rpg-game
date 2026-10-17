@@ -43,6 +43,9 @@ await page.fill('#adm-gift-all input[name="subject"]', subj);
 await page.fill('#adm-gift-all input[name="gold"]', '123');
 await page.selectOption('#adm-gift-all select[name="gbase"]', { index: 1 });
 await page.fill('#adm-gift-all input[name="gup"]', '3');
+// Phase 2: bỏ đồ vào giỏ ("+ Thêm"), gửi thì xác nhận số người nhận (hộp confirm)
+await page.click('#adm-gift-all [data-act="gift-add"][data-kind="gear"]');
+page.once('dialog', (d) => d.accept());
 await page.click('#adm-gift-all button[type="submit"]');
 // chờ thư tới: hỏi hộp thư mỗi giây từ phía node (waitForFunction coi Promise là "đúng" nên thoát ngay;
 // cũng không hỏi dồn, kẻo đụng giới hạn 30 lần / phút)
