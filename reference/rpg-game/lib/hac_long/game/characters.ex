@@ -285,9 +285,10 @@ defmodule HacLong.Game.Characters do
             x: m["x"],
             y: m["y"],
             elite: m["elite"],
-            role: m["role"]
+            role: m["role"],
+            hp_pct: m["hp_pct"]
           }
-          |> Map.reject(fn {k, v} -> k == :role and v == nil end)
+          |> Map.reject(fn {k, v} -> k in [:role, :hp_pct] and v == nil end)
         end)
     }
     # Phase 6: nền tầng (tầng 61+ là vùng đất chuyển sinh); bản lưu cũ không có

@@ -147,8 +147,9 @@
 
   // ---------- Bản đồ động (Phase 5, B-32) ----------
   // Chỉ là hình: nước gợn, cây lay, quái nhún nhẹ, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp ở Làng,
-  // đài phun nước lấp lánh. Hạt tính thẳng từ thời gian (không giữ trạng thái) nên rất nhẹ; vẽ lại ~12 khung/giây khi
-  // đang xem bản đồ. Tắt ở Menu → Cài đặt (`hl-fx`); máy đặt "giảm chuyển động" thì mặc định tắt.
+  // đài phun nước lấp lánh. Hạt tính thẳng từ thời gian (không giữ trạng thái) nên rất nhẹ; vẽ lại ~30 khung/giây
+  // (requestAnimationFrame, bỏ bớt khung cho đều nhịp) khi đang xem bản đồ. Tắt ở Menu → Cài đặt (`hl-fx`); máy đặt
+  // "giảm chuyển động" thì mặc định tắt.
   const fxOn = () => {
     try {
       const v = localStorage.getItem('hl-fx');
@@ -156,11 +157,19 @@
     } catch (e) { /* bị chặn: theo mặc định */ }
     return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   };
-  const FX_MS = 85;
-  let fxTimer = null;
+  const FX_MS = 33;
+  let fxRaf = null, fxLast = 0;
   function fxTick() {
-    if (fxTimer || !fxOn() || !canvas || document.hidden) return;
-    fxTimer = setTimeout(() => { fxTimer = null; if (canvas && canvas.isConnected) requestAnimationFrame(draw); }, FX_MS);
+    if (fxRaf || !fxOn() || !canvas || document.hidden) return;
+    const loop = (t) => {
+      fxRaf = null;
+      if (!canvas || !canvas.isConnected || document.hidden || !fxOn()) return;
+      // khung tới sớm (màn 60 / 120 Hz): chờ khung sau, giữ nhịp đều ~30 khung/giây
+      if (t - fxLast < FX_MS - 4) { fxRaf = requestAnimationFrame(loop); return; }
+      fxLast = t;
+      draw();
+    };
+    fxRaf = requestAnimationFrame(loop);
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) draw(); });
   // số giả ngẫu nhiên cố định theo chỉ số (hạt thời tiết, đom đóm)

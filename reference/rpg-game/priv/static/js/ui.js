@@ -90,7 +90,7 @@
     const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
     return path ? asset(path) : null;
   }
-  // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px), giữ đúng kích thước, không phóng to cho khỏi vỡ hình
+  // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px): phóng vừa ô kiểu điểm ảnh (CSS `img.own.nat`)
   const NAT_SLOTS = ['ring', 'pendant'];
   const ownCls = (it) => (iconSet() === 'pixel' ? ' pix' : NAT_SLOTS.includes(it.slot) ? ' nat' : '');
   const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${ownCls(it)}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
@@ -833,7 +833,7 @@
   const chatChannels = () => ['world'].concat(P && P.guild ? ['guild'] : [], party ? ['party'] : []);
 
   // ---------- Tự đánh (Phase 4, B-31) ----------
-  // Server tự đi tới quái, đánh (bộ 4 kỹ năng), uống bình, rời trận khi còn tab mở; client chỉ gửi bật / tắt và cài đặt.
+  // Server tự đi tới quái, đánh (bộ kỹ năng đang mang), uống bình, rời trận khi còn tab mở; client chỉ gửi bật / tắt và cài đặt.
   // Cài đặt lần trước nhớ ở trình duyệt (`hl-auto`).
   const autoUi = (() => { let a = {}; try { a = JSON.parse(localStorage.getItem('hl-auto') || '{}') || {}; } catch (e) { a = {}; } return { target: a.target || 'level', hp: a.hp || 40, mp: a.mp != null ? a.mp : 30, loot: a.loot || 'all', open: false }; })();
   const saveAutoUi = () => setPref('hl-auto', JSON.stringify({ target: autoUi.target, hp: autoUi.hp, mp: autoUi.mp, loot: autoUi.loot }));
@@ -857,7 +857,7 @@
         <label class="small">Uống máu khi dưới <select data-auto="hp">${pcts(10, 90, autoUi.hp)}</select></label>
         <label class="small">Uống mana khi dưới <select data-auto="mp">${pcts(0, 90, autoUi.mp)}</select></label>
         <label class="small">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('good', autoUi.loot, 'Chỉ giữ đồ quý')}</select></label>
-        <p class="small muted">Dùng bộ 4 kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game.</p>
+        <p class="small muted">Dùng bộ ${(RULES.towerSkills || {}).loadout || 5} kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game.</p>
       </div>` : '';
     return `<div class="auto-bar" id="auto-bar">
         <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
@@ -1218,9 +1218,9 @@
       <div class="hud-top">
         <button class="hud-ava" data-act="profile" data-uid="${Net.userId}" aria-label="Hồ sơ của bạn">${heroSprite()}</button>
         <div class="hud-who">
-          <div class="hud-name">${esc(P.name)} <span class="small muted num">Cấp ${P.level}</span></div>
+          <div class="hud-name"><span class="nm">${esc(P.name)}</span> <span class="small muted num lv">Cấp ${P.level}</span></div>
+          <div class="gold">${icon('two-coins')}${fmt(P.gold)}</div>
         </div>
-        <div class="gold">${icon('two-coins')}${fmt(P.gold)}</div>
         <button class="hud-btn" data-act="friends-open" aria-label="Bạn bè${friendsBadge() ? `, ${friendsBadge()} tin mới` : ''}">👥${friendsBadge() ? `<span class="points-dot">${friendsBadge()}</span>` : ''}</button>
         <button class="hud-btn" data-act="notes-open" aria-label="Thông báo${notesUnread() ? `, ${notesUnread()} tin mới` : ''}">🔔${notesUnread() ? `<span class="points-dot">${notesUnread()}</span>` : ''}</button>
         <button class="hud-btn" data-act="mail-open" aria-label="Hộp thư${mail.unread ? `, ${mail.unread} thư mới` : ''}">${icon('envelope')}${mail.unread ? `<span class="points-dot">${mail.unread}</span>` : ''}</button>
@@ -1479,19 +1479,19 @@
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
     return `
-      <div class="card" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
+      <div class="card set" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
         <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
         <button class="btn ${lg === 'en' ? 'primary' : ''}" data-act="lang" data-lang="en" aria-pressed="${lg === 'en'}">English</button></div></div></div>
-      <div class="card"><div class="row"><h3 class="grow">Bản đồ</h3>
+      <div class="card set"><div class="row"><h3 class="grow">Bản đồ</h3>
         <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Tự động: sáng tối theo giờ trong game.</p>
         <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
           <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p></div>
-      <div class="card"><div class="row"><h3 class="grow">Hình đồ</h3>
+      <div class="card set"><div class="row"><h3 class="grow">Hình đồ</h3>
         <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Pixel: hình vẽ điểm ảnh từ Dungeon Crawl Stone Soup (CC0). Biểu tượng: hình nét đơn giản.${HAS_MU ? ' MU: hình gốc máy chủ đặt riêng.' : ''}</p></div>
-      <div class="card">
+      <div class="card set">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
         <label class="small volume">Âm lượng <input type="range" id="volume" min="0" max="100" value="${Math.round(Sound.volume * 100)}" ${Sound.on ? '' : 'disabled'}></label>
@@ -1500,7 +1500,7 @@
         <label class="small volume">Âm lượng nhạc <input type="range" id="music-volume" min="0" max="100" value="${Math.round(Sound.musicVolume * 100)}" ${Sound.musicOn ? '' : 'disabled'}></label>
       </div>
 
-      <div class="card">
+      <div class="card set">
         <h3>Dữ liệu</h3>
         <p class="small muted">Nhân vật lưu trên máy chủ, tài khoản <b>${esc(Net.username)}</b>.</p>
         <div class="btn-row" style="margin-bottom:8px">
@@ -1808,7 +1808,7 @@
   // diệt rồng, bang, đấu trường, sổ tay quái, trùm thế giới, xếp hạng, thành tích, âm thanh, dữ liệu),
   // rồi thú cưng, kỹ năng, danh hiệu, thành tựu;
   // anh quyết sau giữ hay bỏ từng phần.
-  // Phase 3: kỹ năng lớp (mở theo cấp) + kỹ năng tháp (mở theo kỷ lục tháp), bộ 4 kỹ năng mang vào trận
+  // Phase 3: kỹ năng lớp (mở theo cấp) + kỹ năng tháp (mở theo kỷ lục tháp), bộ kỹ năng mang vào trận (RULES.tower_skills.loadout)
   function viewSkills() {
     const open = P.view.skillsOpen || [], set = P.view.skillSet || [];
     const row = (k) => {
@@ -3015,7 +3015,7 @@
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
         <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
-        ${bar(m.golden ? 'gold' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp)}
+        ${bar(m.golden ? 'goldbar' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp, `❤ ${fmt(m.hp)} / ${fmt(m.maxHp)}`)}
         ${effectTags(fxs.monster)}
       </div>
       <div class="me ${fx && fx.pDmg ? 'hurt' : ''}">

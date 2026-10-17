@@ -1,5 +1,5 @@
 defmodule HacLong.Game.TowerSkillsTest do
-  @moduledoc "Phase 3 (B-29): kỹ năng tháp mở theo kỷ lục tháp, bộ 4 kỹ năng, nguyên tố, tác dụng mới."
+  @moduledoc "Phase 3 (B-29): kỹ năng tháp mở theo kỷ lục tháp, bộ kỹ năng mang vào trận, nguyên tố, tác dụng mới."
   use ExUnit.Case, async: true
 
   alias HacLong.Game.{Commands, Data, Elements, Engine, Rng}
@@ -42,12 +42,14 @@ defmodule HacLong.Game.TowerSkillsTest do
     end
   end
 
-  test "mở theo kỷ lục tháp; mặc định 4 kỹ năng mạnh nhất; chọn bộ 4 kỹ năng" do
+  test "mở theo kỷ lục tháp; mặc định RULES.tower_skills.loadout (5) kỹ năng mạnh nhất; chọn bộ kỹ năng" do
     assert length(Engine.available_skills(hero(0))) == 3
     p = hero(35)
     ids = Enum.map(Engine.available_skills(p), & &1.id)
     assert length(ids) == 6
-    assert Enum.map(Engine.skills(p), & &1.id) == Enum.take(ids, -4)
+    loadout = HacLong.Game.Data.rules().tower_skills.loadout
+    assert loadout == 5
+    assert Enum.map(Engine.skills(p), & &1.id) == Enum.take(ids, -loadout)
 
     pick = [tskill("dk", 1).id, "twisting_slash"]
     assert {%{ok: true}, p2} = Commands.run(p, %{"act" => "skill_set", "ids" => pick})
@@ -55,7 +57,7 @@ defmodule HacLong.Game.TowerSkillsTest do
     assert Engine.view(p2).skillSet == pick
 
     assert {%{ok: false}, _} = Engine.set_skills(p, [tskill("dk", 5).id])
-    assert {%{ok: false}, _} = Engine.set_skills(p, ids |> Enum.take(5))
+    assert {%{ok: false}, _} = Engine.set_skills(p, ids |> Enum.take(loadout + 1))
     assert {%{ok: false}, _} = Engine.set_skills(p, ["twisting_slash", "twisting_slash"])
     # chỉ dùng được kỹ năng trong bộ
     p3 = fight(p2, 50)

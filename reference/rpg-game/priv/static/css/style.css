@@ -81,7 +81,10 @@ p { margin: 0; }
 }
 .hud-top { display: flex; align-items: center; gap: 10px; }
 .hud-top .sprite { width: 40px; height: 40px; background: var(--ink-3); border-radius: 8px; border: 1px solid var(--line); }
-.hud-name { font-weight: 700; line-height: 1.2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-name { font-weight: 700; line-height: 1.2; min-width: 0; display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+/* tên dài thì cắt tên, cấp luôn hiện */
+.hud-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hud-name .lv { flex: none; }
 .hud-who { flex: 1; min-width: 0; }
 .gold { display: flex; align-items: center; gap: 5px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
 .points-dot { background: var(--gold); color: var(--ink); border-radius: 99px; font-size: 0.7rem; font-weight: 700; padding: 0 6px; margin-left: 6px; vertical-align: 2px; }
@@ -504,7 +507,8 @@ img.own { object-fit: contain; image-rendering: auto; }
 /* hình gốc đồ (Phase 15b): khổ đứng, cho cao hơn */
 .itemtip .big img.own { width: 72px; height: 88px; }
 /* nhẫn, dây chuyền: hình gốc nhỏ, giữ đúng kích thước (to hơn khung thì chỉ thu nhỏ, không phóng to) */
-img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; }
+/* nhẫn, dây chuyền MU: hình gốc rất nhỏ (~21 px): phóng vừa ô, giữ điểm ảnh sắc, sáng hơn chút cho khỏi mờ */
+img.own.nat, .itemtip .big img.own.nat { object-fit: contain; image-rendering: pixelated; filter: brightness(1.2) contrast(1.1); }
 .itemtip .bad { color: var(--bad); }
 .itemtip .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .itemtip .btns .btn { flex: 1; }
@@ -542,20 +546,21 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; }
 .card.inv { border-color: #b8933a; background: linear-gradient(90deg, rgba(255, 200, 70, 0.14), transparent); }
 .stage.golden { box-shadow: inset 0 0 40px rgba(255, 205, 80, 0.45); }
 .stage.golden .sprite { filter: drop-shadow(0 0 8px #ffd24a); }
-.bar.gold { height: 18px; }
-.bar.gold > span { line-height: 16px; }
-.bar.gold i { background: linear-gradient(90deg, #b8862a, #ffd24a); }
+.bar.goldbar { height: 18px; }
+.bar.goldbar > span { line-height: 16px; }
+.bar.goldbar > i { background: linear-gradient(90deg, #b8862a, #ffd24a); }
 
 /* B1: HUD trên điện thoại — tên co lại, nút nhỏ hơn, số đỏ không lòi ra ngoài màn hình */
 #hud { grid-template-columns: minmax(0, 1fr); }
 .bars > * { min-width: 0; }
 .hud-top > * { min-width: 0; }
-.hud-top .gold { white-space: nowrap; flex: none; }
+/* vàng nằm dưới tên (header gọn, tên + cấp đủ chỗ trên điện thoại) */
+.hud-who .gold { white-space: nowrap; font-size: 0.85rem; gap: 3px; line-height: 1.2; }
+.hud-who .gold .ic { width: 14px; height: 14px; }
 .hud-who .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 480px) {
   .hud-top { gap: 6px; }
   .hud-top .sprite { width: 34px; height: 34px; }
-  .hud-top .gold { font-size: 0.85rem; gap: 3px; }
   .hud-btn { min-width: 32px; min-height: 32px; padding: 3px; flex: none; }
   .hud-btn .points-dot { top: -5px; right: -3px; }
 }
@@ -807,3 +812,8 @@ body.tl-on { overflow: hidden; }
 /* Phase 7 (B-33): bộ hình đồ Pixel (Dungeon Crawl, CC0): giữ điểm ảnh sắc khi phóng */
 img.own.pix { object-fit: contain; image-rendering: pixelated; }
 .itemtip .big img.own.pix { width: 64px; height: 64px; }
+
+/* Cài đặt: tiêu đề mục không bị nút che, hàng nút xuống dòng khi hẹp */
+.card.set > .row { flex-wrap: wrap; row-gap: 8px; }
+.card.set > .row > h3 { flex: 1 1 auto; min-width: 7em; }
+.card.set .btn-row { flex-wrap: wrap; }

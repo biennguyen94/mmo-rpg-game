@@ -454,11 +454,11 @@ defmodule HacLong.World.MapServer do
     {m, %{s | monsters: Map.put(s.monsters, m.id, m), next_id: s.next_id + 1}}
   end
 
-  # Máu quái (phần trăm) bị bỏ dở hồi `@hp_regen` % mỗi giây kể từ lúc được nhả; đầy thì nil.
-  @hp_regen 2
+  # Máu quái (phần trăm) bị bỏ dở hồi `RULES.monster.flee_regen_pct_s` % mỗi giây kể từ lúc được nhả; đầy thì nil.
+  @hp_regen HacLong.Game.Data.rules().monster.flee_regen_pct_s
   defp cur_hp(%{hp: hp, hp_at: at}) when is_number(hp) and is_integer(at) do
     v = hp + @hp_regen * (now_s() - at)
-    if v >= 100, do: nil, else: v
+    if v >= 100, do: nil, else: round(v)
   end
 
   defp cur_hp(m), do: m[:hp]

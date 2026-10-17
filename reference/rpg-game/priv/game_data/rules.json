@@ -108,6 +108,8 @@
       }
     },
     "monster": {
+      "_flee_regen_doc": "Quái bị bỏ dở (người chơi bỏ chạy / thua) giữ % máu còn lại, hồi flee_regen_pct_s % máu tối đa mỗi giây cho tới đầy.",
+      "flee_regen_pct_s": 0.5,
       "hp": {
         "base": 170,
         "level": 26,
@@ -465,7 +467,7 @@
     },
     "tower_skills": {
       "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Thử Thách ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận.",
-      "loadout": 4,
+      "loadout": 5,
       "stun_boss_resist": 0.5,
       "sourceType": "DESIGN",
       "version": 1,

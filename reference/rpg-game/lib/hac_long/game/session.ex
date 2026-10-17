@@ -1156,7 +1156,8 @@ defmodule HacLong.Game.Session do
 
   # Trận vừa kết thúc: cập nhật quái trên bản đồ, gục ngã thì về Nhà, tính nhiệm vụ...
   defp battle_over(s, old, player) do
-    player = player |> Tower.after_battle() |> World.finish_encounter(s.user_id)
+    player =
+      player |> Tower.keep_hp() |> Tower.after_battle() |> World.finish_encounter(s.user_id)
 
     # lần đầu hạ Hắc Long: ghi lại thời điểm cho bảng xếp hạng
     player =

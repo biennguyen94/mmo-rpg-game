@@ -160,8 +160,11 @@ defmodule HacLong.World do
 
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, DevilSquare.battle_monster(m)) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == ">" ->
@@ -190,8 +193,11 @@ defmodule HacLong.World do
 
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, BloodCastle.battle_monster(m)) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == "<" ->
@@ -216,8 +222,11 @@ defmodule HacLong.World do
 
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, Kalima.battle_monster(m)) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == "<" ->
@@ -242,8 +251,11 @@ defmodule HacLong.World do
                min(div(t.floor - 1, 10), Data.zone_count() - 1),
                Tower.battle_monster(m)
              ) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == ">" ->

@@ -320,6 +320,29 @@ defmodule HacLong.Game.Tower do
     end
   end
 
+  @doc """
+  Bỏ chạy khỏi quái trong tháp / sự kiện (Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima): quái giữ phần trăm máu còn lại
+  (`hp_pct`), đánh lại thì tiếp từ đó (`resume_hp/2`), như quái trên bản đồ chung.
+  """
+  def keep_hp(
+        %{
+          tower: %{monsters: mons} = t,
+          battle: %{over: true, result: "fled", encounter: %{tower: id}, monster: m}
+        } = p
+      ) do
+    pct = max(1, round(max(m.hp, 0) * 100 / max(m.maxHp, 1)))
+    mons = Enum.map(mons, fn q -> if q.id == id, do: Map.put(q, :hp_pct, pct), else: q end)
+    %{p | tower: %{t | monsters: mons}}
+  end
+
+  def keep_hp(p), do: p
+
+  @doc "Vào trận với quái tháp `m` đã bị đánh dở: máu quái theo `m.hp_pct`."
+  def resume_hp(%{battle: %{monster: q}} = p, %{hp_pct: pct}) when is_number(pct) and pct < 100,
+    do: put_in(p.battle.monster, %{q | hp: max(1, round(q.maxHp * pct / 100))})
+
+  def resume_hp(p, _m), do: p
+
   @doc "Trận trong tháp vừa kết thúc."
   def after_battle(%{tower: %{ds: %{}}} = p), do: HacLong.Game.DevilSquare.after_battle(p)
   def after_battle(%{tower: %{bc: %{}}} = p), do: HacLong.Game.BloodCastle.after_battle(p)

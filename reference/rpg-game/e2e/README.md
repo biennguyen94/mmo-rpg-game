@@ -8,7 +8,7 @@ Chạy trên **server thật** (database thật), mỗi kịch bản dùng tài 
 cd reference/rpg-game
 mix ecto.setup                       # nếu chưa có database
 mix run scripts/e2e_seed.exs         # tài khoản quản trị e2e_admin (dùng để tặng vàng / đồ cho nhân vật test)
-TRUSTED_PROXIES=127.0.0.1 mix phx.server
+HL_DS_OPEN=1 HL_BOTS=0 TRUSTED_PROXIES=127.0.0.1 mix phx.server   # ds / bc cần sự kiện luôn mở; tắt bot cho ổn định
 ```
 
 `TRUSTED_PROXIES=127.0.0.1`: mỗi người chơi test gửi `X-Forwarded-For` riêng, không chạm giới hạn đăng ký 5 tài khoản / giờ / IP.

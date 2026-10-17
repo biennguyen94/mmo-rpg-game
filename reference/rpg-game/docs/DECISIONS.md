@@ -472,3 +472,13 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     dây chuyền theo nguyên tố trong tên. Bỏ mọi file thuộc `TILES_UNDER_UNKNOWN_LICENSE.md`.
   - Chưa có hình pixel (cánh, đồ ăn, nguyên liệu đã có hình riêng) thì giữ hình cũ.
   - Hình MU vẫn không vào git / Docker; bộ Pixel có trong git (CC0, ghi ở `CREDITS.md`).
+- **B-34** (anh góp ý sau đợt 8 phase, 2026-10-17) **Sửa theo phản hồi.**
+  - Mang **5 kỹ năng** vào trận (`RULES.tower_skills.loadout` 4 → 5; điện thoại 4 kỹ năng để trống một ô).
+  - **Bỏ chạy giữ máu quái** cả trong Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima (`Tower.keep_hp/1`, `resume_hp/2`; quái
+    lưu `hp_pct`). Quái bản đồ chung hồi `RULES.monster.flee_regen_pct_s` = 0,5 %/giây (trước 2 %/giây, đầy lại sau ~50 giây
+    nên trông như không giữ máu).
+  - Thanh máu quái: chữ "❤ máu / tối đa" ở giữa cho mọi loại quái (quái vàng trước bị lệch trái do trùng class `.gold`).
+  - Nhẫn, dây chuyền MU (hình gốc ~21 px) phóng vừa ô kiểu điểm ảnh, sáng hơn.
+  - Header điện thoại: tên + cấp một dòng (cấp luôn hiện), vàng xuống dòng dưới tên.
+  - Cài đặt: hàng nút xuống dòng, không che tiêu đề mục.
+  - Hiệu ứng bản đồ: vòng `requestAnimationFrame` ~30 khung/giây đều nhịp (trước ~12 khung/giây bằng hẹn giờ nên lá / tuyết giật).
