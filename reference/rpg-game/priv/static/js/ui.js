@@ -3122,16 +3122,21 @@
 
   // Đồ nhận được sau trận: bấm xem chi tiết (bảng như trong túi, có nút Vứt); nút 🗑 hủy nhanh. Món đã vứt / bán
   // thì không còn trong túi, hiện gạch ngang.
+  // vật phẩm xếp chồng (bình, ngọc) đã hủy từ bảng này: túi có thể vẫn còn loại đó từ trước nên đếm riêng theo trận
+  let lootGone = { key: '', n: {} };
+  const lootKey = (rw) => [rw.xp, rw.gold, (rw.gear_ids || []).join(), (rw.items || []).join()].join('|');
   function lootList(rw) {
+    if (lootGone.key !== lootKey(rw)) lootGone = { key: lootKey(rw), n: {} };
     const ids = (rw.gear_ids || []).concat([...new Set(rw.items || [])]);
     const extra = (rw.gear || []).slice((rw.gear_ids || []).length); // đồ gửi Hộp thư (túi đầy)
     if (!ids.length && !extra.length) return '';
     const row = (id) => {
-      const it = itemOf(id), gone = !it || (isGear(id) ? false : !P.inv[id]);
+      const it = itemOf(id);
       if (!it) return `<div class="loot-row gone"><span class="small muted">Đã hủy</span></div>`;
-      const n = isGear(id) ? 1 : (rw.items || []).filter((x) => x === id).length;
+      const got = isGear(id) ? 1 : (rw.items || []).filter((x) => x === id).length;
+      const n = isGear(id) ? 1 : Math.min(got - (lootGone.n[id] || 0), P.inv[id] || 0), gone = n <= 0;
       return `<div class="loot-row ${gone ? 'gone' : ''}">
-        <button class="loot-item" data-act="loot-tip" data-id="${esc(id)}" data-n="${n}">${itemIcon(it, it.kind, upLevel(id))}<span>${itemName(id)}${n > 1 ? ` ×${n}` : ''}</span></button>
+        <button class="loot-item" data-act="loot-tip" data-id="${esc(id)}" data-n="${n}">${itemIcon(it, it.kind, upLevel(id))}<span>${itemName(id)}${got > 1 ? ` ×${gone ? got : n}` : ''}</span></button>
         ${gone || it.locked ? '' : `<button class="btn small-btn danger" data-act="discard" data-id="${esc(id)}" data-n="${n}" data-name="${esc(it.name)}" title="Hủy món này">🗑 Hủy</button>`}</div>`;
     };
     return `<div class="loot">${ids.map(row).join('')}${extra.map((l) => `<div class="loot-row"><span class="small">📬 ${esc(l)} <span class="muted">(Hộp thư)</span></span></div>`).join('')}</div>`;
@@ -3554,6 +3559,8 @@
         n = Math.floor(+a);
         if (!(n >= 1 && n <= max)) { toast('Số lượng không hợp lệ.', true); return; }
       } else if (!confirm(`Vứt ${t.dataset.name}? Món đồ sẽ mất hẳn.`)) return;
+      // hủy từ bảng đồ rơi sau trận (nút 🗑 hoặc bảng chi tiết mở từ đó): ghi để gạch ngang dòng
+      if (t.closest('.loot') || (tipAt && tipAt.loot && tipAt.id === t.dataset.id)) lootGone.n[t.dataset.id] = (lootGone.n[t.dataset.id] || 0) + n;
       hideTip();
       sendCommand({ act: 'discard', id: t.dataset.id, n });
       return;
