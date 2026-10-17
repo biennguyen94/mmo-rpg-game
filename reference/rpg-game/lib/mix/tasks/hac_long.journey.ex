@@ -13,7 +13,8 @@ defmodule Mix.Tasks.HacLong.Journey do
   Tùy chọn: `--cls dk|dw|elf|mg|all`, `--rebirths N` (0–10), `--seed N`, `--max-fights N`,
   `--farm N` (đủ chuyển sinh và cấp tối đa rồi cày thêm N trận: xem rơi đồ, ép, cánh ở vùng cuối),
   `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép +10/+11, có thể vỡ),
-  `--no-boss-first` (chuyển sinh ngay ở cấp tối đa dù chưa hạ Hắc Long), `--out thư_mục` (mặc định `tmp/journey`).
+  `--no-boss-first` (chuyển sinh ngay ở cấp tối đa dù chưa hạ Hắc Long),
+  `--no-pets` (không nuôi thú), `--no-feed` (không cho thú ăn), `--out thư_mục` (mặc định `tmp/journey`).
 
   Ra: `<out>/<lớp>-s<seed>.md` (và `.csv`), `<out>/summary-s<seed>.md` khi `--cls all`. Đổi số liệu trong
   `priv/game_data/` rồi chạy lại cùng seed để so trước / sau.
@@ -33,6 +34,8 @@ defmodule Mix.Tasks.HacLong.Journey do
     wings: :boolean,
     chaos_up: :boolean,
     boss_first: :boolean,
+    pets: :boolean,
+    feed: :boolean,
     csv: :boolean,
     out: :string
   ]
@@ -52,7 +55,9 @@ defmodule Mix.Tasks.HacLong.Journey do
 
     opts =
       o
-      |> Keyword.take(~w(rebirths max_fights farm quests soul wings chaos_up boss_first)a)
+      |> Keyword.take(
+        ~w(rebirths max_fights farm quests soul wings chaos_up boss_first pets feed)a
+      )
       |> Keyword.put(:rows, o[:csv] == true)
 
     results =

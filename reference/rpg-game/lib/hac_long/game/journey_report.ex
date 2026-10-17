@@ -15,7 +15,7 @@ defmodule HacLong.Game.JourneyReport do
     |---|---|---|---|---|---|---|---|---|
     | #{r.fights} | #{r.turns} | #{dec(r.turns / max(1, r.fights))} | #{r.deaths} | #{r.rebirths} | #{r.level} | #{r.bosses} | #{r.rest_gold} | #{r.fountain} |
 
-    Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần.
+    Ép đồ: #{r.upgrades.tries} lần, thành công #{r.upgrades.ok}, về +0 #{r.upgrades.reset}, vỡ #{r.upgrades.destroy} · Ngọc Sinh Mệnh: #{r.lines.tries} lần, thêm dòng #{r.lines.ok} · ghép cánh #{r.wing_tries} lần · vàng cho thú cưng (mua, thuần, cho ăn) #{r.pet_gold}.
 
     ## Từng chặng (giữa hai lần chuyển sinh)
     #{cycles(r)}
@@ -99,7 +99,7 @@ defmodule HacLong.Game.JourneyReport do
 
       #{Enum.map_join(s.gear, "\n", fn {slot, name} -> "- #{slot}: #{name}" end)}
 
-      Ngọc: #{kv(s.jewels)} · Bình: #{kv(s.potions)}
+      Thú: #{s.pet} · Ngọc: #{kv(s.jewels)} · Bình: #{kv(s.potions)}
       """
     end)
   end

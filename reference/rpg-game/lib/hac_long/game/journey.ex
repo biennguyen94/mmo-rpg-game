@@ -18,15 +18,17 @@ defmodule HacLong.Game.Journey do
   - ép: Ước Nguyện lên +6, Tâm Linh +7 → +9 (có thể về +0), Ngọc Sinh Mệnh thêm dòng, theo thứ tự vũ khí → giáp → …;
     +10 / +11 ở Máy Hỗn Nguyên chỉ khi `chaos_up` (có thể vỡ đồ);
   - cánh: ghép cánh 1 → 2 → 3 ở Máy Hỗn Nguyên khi đủ nguyên liệu (`wings`);
+  - thú cưng (`pets`): mua / thuần phục con mạnh hơn hẳn khi giá ≤ 30 % vàng dư, dắt con mạnh nhất, dư nhiều vàng thì
+    cho ăn (`feed`);
   - nghỉ trọ khi máu < 60 % (hết vàng thì về Nhà uống giếng, miễn phí), mua bình như bot (`Brain.restock/1`);
   - chuyển sinh ngay khi đạt cấp tối đa (nếu `boss_first`: sau khi hạ Hắc Long).
 
-  Không mô phỏng: việc hằng ngày, sự kiện, tháp, thú cưng / nhà / nấu ăn, chợ, tổ đội, PK, trùm thế giới.
+  Không mô phỏng: việc hằng ngày, sự kiện, tháp, nhà / nấu ăn, chợ, tổ đội, PK, trùm thế giới.
   Hàm thuần; số ngẫu nhiên theo `:rand` (đặt seed ở mix task để chạy lại ra đúng kết quả).
   """
 
   alias HacLong.Bots.Brain
-  alias HacLong.Game.{Chaos, Data, Engine, Gear, Quests}
+  alias HacLong.Game.{Chaos, Data, Engine, Gear, Pets, Quests}
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -42,6 +44,8 @@ defmodule HacLong.Game.Journey do
     ban_losses: 2,
     ban_fights: 150,
     lord_every: 40,
+    pets: true,
+    feed: true,
     farm: 0,
     rows: false
   }
@@ -92,6 +96,8 @@ defmodule HacLong.Game.Journey do
       upgrades: %{tries: 0, ok: 0, reset: 0, destroy: 0},
       lines: %{tries: 0, ok: 0},
       wing_tries: 0,
+      pet_gold: 0,
+      pet_marks: MapSet.new(),
       farm: nil,
       done: false
     }
@@ -481,6 +487,7 @@ defmodule HacLong.Game.Journey do
           into: %{},
           do: {Data.item(id).name, n}
         ),
+      pet: if(p[:pet], do: "#{Pets.name(p)} cấp #{Pets.level(p, p.pet)}", else: "—"),
       potions:
         for(
           {id, n} <- p.inv,
@@ -529,6 +536,7 @@ defmodule HacLong.Game.Journey do
       upgrades: st.upgrades,
       lines: st.lines,
       wing_tries: st.wing_tries,
+      pet_gold: st.pet_gold,
       events: Enum.reverse(st.events),
       cycles: st.cycles,
       bands: st.bands,
@@ -559,6 +567,7 @@ defmodule HacLong.Game.Journey do
         {p, st} = forge(p, st)
         {p, st} = wings(p, st)
         {p, st} = gear_up(p, st)
+        {p, st} = pets(p, st)
         {sell_junk(p, st), %{st | gear_key: key}}
       else
         {p, st}
@@ -566,6 +575,107 @@ defmodule HacLong.Game.Journey do
 
     {potions(p), st}
   end
+
+  # ---------- Thú cưng ----------
+
+  # sức của thú `id` ở cấp `lv` với bot: phần đòn cắn trung bình mỗi lượt (Cắn Xé đã học thì × rend_mult)
+  # + công cộng thêm + nửa thủ / máu cộng thêm
+  defp pet_power(_p, nil, _lv), do: 0
+
+  defp pet_power(_p, id, lv) do
+    pt = Pets.data(id)
+    r = Data.rules().pets
+
+    rend? =
+      Enum.zip(Pets.skills(id), [r.skill_level, r.skill2_level])
+      |> Enum.any?(fn {k, at} -> k.id == "rend" and lv >= at end)
+
+    b = pt.bonus
+    mult = 1 + (lv - 1) * r.bonus_per_level
+
+    Pets.bite_chance(lv) * Pets.bite_power(id, lv) * if(rend?, do: r.skills.rend_mult, else: 1) +
+      ((b[:atk] || 0) + 0.5 * ((b[:def] || 0) + (b[:hp] || 0))) * mult
+  end
+
+  defp pet_power(p, id), do: pet_power(p, id, if(id, do: Pets.level(p, id), else: 1))
+
+  # mua thú cửa hàng / thuần phục khi mạnh hơn hẳn thú đang có và giá ≤ 30 % vàng dư; dắt con mạnh nhất; dư vàng thì cho ăn
+  defp pets(p, %{opts: %{pets: false}} = st), do: {p, st}
+
+  defp pets(p, st) do
+    budget = (p.gold - reserve(p)) * 0.3
+    owned = Map.get(p, :pets) || []
+    cur = pet_power(p, Enum.max_by(owned, &pet_power(p, &1), fn -> nil end))
+
+    shop =
+      for pt <- Data.pets(), pt.id not in owned, pt.price <= budget, do: {:buy, pt.id, pt.price}
+
+    tame = for t <- Pets.tameable(p), t.price <= budget, do: {:tame, t.id, t.price}
+
+    cand =
+      (shop ++ tame)
+      |> Enum.map(fn {k, id, price} ->
+        {k, id, price, pet_power(p, if(k == :tame, do: "tame:" <> id, else: id), 1)}
+      end)
+      |> Enum.max_by(&elem(&1, 3), fn -> nil end)
+
+    {p, st} =
+      case cand do
+        {k, id, price, pw} when pw > cur * 1.1 ->
+          {r, p} = if k == :tame, do: Pets.tame(p, id), else: Pets.buy(p, id)
+          verb = if k == :tame, do: "Thuần phục", else: "Mua"
+
+          if r.ok,
+            do:
+              {p,
+               %{
+                 event(st, p, "🐾 #{verb} #{Pets.name(p)} (#{price} vàng).")
+                 | pet_gold: st.pet_gold + price
+               }},
+            else: {p, st}
+
+        _ ->
+          {p, st}
+      end
+
+    best = Enum.max_by(Map.get(p, :pets) || [], &pet_power(p, &1), fn -> nil end)
+    p = if best && best != p.pet, do: elem(Pets.choose(p, best), 1), else: p
+    {p, st} = feed(p, st, 5)
+    pet_mark(p, st)
+  end
+
+  defp feed(p, st, 0), do: {p, st}
+
+  defp feed(p, %{opts: %{feed: true}} = st, n) do
+    cost = Pets.feed_cost(p)
+
+    if cost && p.gold - reserve(p) > 20 * cost do
+      {_, p} = Pets.feed(p)
+      feed(p, %{st | pet_gold: st.pet_gold + cost}, n - 1)
+    else
+      {p, st}
+    end
+  end
+
+  defp feed(p, st, _n), do: {p, st}
+
+  # ghi diễn biến khi thú đang dắt đạt cấp 5, 10, 15, 20
+  defp pet_mark(%{pet: id} = p, st) when is_binary(id) do
+    lv = Pets.level(p, id)
+    mark = {id, div(lv, 5) * 5}
+
+    if lv >= 5 and not MapSet.member?(st.pet_marks, mark) do
+      {p,
+       %{
+         event(st, p, "🐾 #{Pets.name(p)} đạt cấp #{elem(mark, 1)}.")
+         | pet_marks: MapSet.put(st.pet_marks, mark)
+       }}
+    else
+      {p, st}
+    end
+  end
+
+  defp pet_mark(p, st), do: {p, st}
 
   defp quests(p, %{opts: %{quests: false}} = st), do: {p, st}
 
