@@ -76,7 +76,7 @@ defmodule HacLong.Game.ForgeStorageTest do
   end
 
   describe "ép +N đồ trong túi (D8)" do
-    test "đồ hiếm và đồ thường trong túi ép được (Ước Nguyện); vỡ đồ trong túi chỉ mất món đó" do
+    test "đồ hiếm và đồ thường trong túi ép được (Ước Nguyện); +11 thất bại về +0, không mất đồ" do
       g = sword()
       p = player(%{gear: [g], inv: %{"jewel_bless" => 10, "dagger" => 1}})
 
@@ -90,7 +90,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       [d] = Enum.filter(Gear.list(p), &(&1.base == "dagger"))
       assert Engine.upgrade_level(p, d.uid) == 1 and p.inv["dagger"] == nil
 
-      # +10 → +11 thất bại là vỡ: món trong túi biến mất, đồ đang mặc không đổi
+      # +10 → +11 thất bại: món trong túi về +0 (không vỡ), đồ đang mặc không đổi
       # (+10, +11 ép ở Máy Hỗn Nguyên, B-13)
       inv = Map.merge(p.inv, %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2})
       p = %{p | upgrades: Map.put(p.upgrades, g.uid, 10), inv: inv}
@@ -105,10 +105,11 @@ defmodule HacLong.Game.ForgeStorageTest do
       p = %{p | pos: %{map: "village", x: 20, y: 7}}
       Rng.put_sequence([0.99])
 
-      {%{ok: true, upgrade: %{result: "destroy"}}, p} =
-        Commands.run(p, %{"act" => "chaos_upgrade", "id" => g.uid, "confirm" => true})
+      {%{ok: true, upgrade: %{result: "reset"}}, p} =
+        Commands.run(p, %{"act" => "chaos_upgrade", "id" => g.uid})
 
-      assert Gear.find(p, g.uid) == nil and p.equip.weapon == "item_1_0"
+      assert Gear.find(p, g.uid) != nil and Engine.upgrade_level(p, g.uid) == 0
+      assert p.equip.weapon == "item_1_0"
     end
   end
 

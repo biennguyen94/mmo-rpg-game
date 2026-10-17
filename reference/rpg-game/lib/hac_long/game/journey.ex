@@ -16,7 +16,7 @@ defmodule HacLong.Game.Journey do
   - đồ: mỗi khi lên cấp / nhặt đồ, thử mặc từng món trong túi và đồ cửa hàng mua được, giữ món làm tăng
     `score/1` (công × độ trâu); đồ thừa bán, giữ một món đã ép cao nhất làm nguyên liệu cánh;
   - ép: Ước Nguyện lên +6, Tâm Linh +7 → +9 (có thể về +0), Ngọc Sinh Mệnh thêm dòng, theo thứ tự vũ khí → giáp → …;
-    +10 / +11 ở Máy Hỗn Nguyên chỉ khi `chaos_up` (có thể vỡ đồ);
+    +10 / +11 ở Máy Hỗn Nguyên chỉ khi `chaos_up` (thất bại về +0, mất hết +9);
   - cánh: ghép cánh 1 → 2 → 3 ở Máy Hỗn Nguyên khi đủ nguyên liệu (`wings`);
   - thú cưng (`pets`): mua / thuần phục con mạnh hơn hẳn khi giá ≤ 30 % vàng dư, dắt con mạnh nhất, dư nhiều vàng thì
     cho ăn (`feed`);

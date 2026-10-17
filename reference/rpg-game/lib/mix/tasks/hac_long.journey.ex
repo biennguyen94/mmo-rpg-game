@@ -12,7 +12,7 @@ defmodule Mix.Tasks.HacLong.Journey do
 
   Tùy chọn: `--cls dk|dw|elf|mg|all`, `--rebirths N` (0–10), `--seed N`, `--max-fights N`,
   `--farm N` (đủ chuyển sinh và cấp tối đa rồi cày thêm N trận: xem rơi đồ, ép, cánh ở vùng cuối),
-  `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép +10/+11, có thể vỡ),
+  `--no-quests`, `--no-soul` (không ép +7..+9), `--no-wings`, `--chaos-up` (ép cả +10/+11, thất bại về +0),
   `--no-boss-first` (chuyển sinh ngay ở cấp tối đa dù chưa hạ Hắc Long),
   `--no-pets` (không nuôi thú), `--no-feed` (không cho thú ăn), `--out thư_mục` (mặc định `tmp/journey`).
 

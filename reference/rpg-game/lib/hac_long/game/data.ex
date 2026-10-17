@@ -42,7 +42,7 @@ defmodule HacLong.Game.Data do
     là phần sát thương gây thêm / giảm khi nhận.
   - `UPGRADE`: các bước ép kiểu MU, mỗi cấp một bước (`steps`: `level`, `items` (ngọc tốn mỗi lần),
     `rate`, `fail` = nil | `down` (tụt một cấp) | `reset` (về +0) | `destroy` (vỡ đồ), `at` = `smith`
-    (Thợ Rèn) | `chaos` (Máy Hỗn Nguyên)); từ `double_from` mỗi cấp tính gấp đôi; ép thành công từ
+    (Thợ Rèn) | `chaos` (Máy Hỗn Nguyên), `eff` cấp tính chỉ số đồ); cánh: từ `double_from` mỗi cấp tính gấp đôi; ép thành công từ
     `announce_from` thì báo cả server (DECISIONS B-13).
   - `JEWELS`: tỉ lệ rơi ngọc (`weights` theo loại; quái cấp ≥ `monster_level`, trùm, tháp, rương).
   - `CHAOS`: công thức Máy Hỗn Nguyên (`HacLong.Game.Chaos`).

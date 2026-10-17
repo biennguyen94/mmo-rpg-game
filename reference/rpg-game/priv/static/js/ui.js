@@ -1715,6 +1715,8 @@
   const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
   const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
+  // cấp tính chỉ số đồ (như Engine.upgrade_eff): `eff` của bước ép
+  const upEff = (l) => (l > 0 ? ((UPGRADE.steps.find((s) => s.level === l) || {}).eff ?? effLevel(l)) : 0);
   // màu viền theo cấp nâng (+7, +9, +11)
   const upClass = L.upClass;
   // Món đồ theo id: đồ thường trong ITEMS, đồ riêng từng món (id bắt đầu bằng #) do server gửi.
@@ -2436,7 +2438,7 @@
   }
 
   // Ép kiểu MU (DECISIONS B-13): Thợ Rèn +1 → +6 Ước Nguyện (chắc chắn), +7 → +9 Tâm Linh (thất bại về +0);
-  // +10, +11 ở Máy Hỗn Nguyên (thất bại vỡ đồ). `cost.at` do server gửi: "smith" | "chaos".
+  // +10, +11 ở Máy Hỗn Nguyên (thất bại về +0). `cost.at` do server gửi: "smith" | "chaos".
   const RISK = { down: 'thất bại tụt 1 cấp', reset: 'thất bại về +0', destroy: 'thất bại VỠ ĐỒ' };
   const FORGE_SLOTS = [['weapon', 'Vũ khí'], ['shield', 'Khiên'], ['helm', 'Mũ'], ['armor', 'Giáp'], ['pants', 'Quần'], ['gloves', 'Găng'], ['boots', 'Giày'], ['wing', 'Cánh'], ['ring1', 'Nhẫn 1'], ['ring2', 'Nhẫn 2'], ['pendant', 'Dây chuyền']];
   // Phase 2: Thợ Rèn chọn món theo hai thẻ: đồ đang mặc (theo ô) và đồ trong túi (mọi món ép được)
@@ -2465,7 +2467,7 @@
       </ol>
       <table class="adm-table forge-table"><tr><th>Cấp</th><th>Cần</th><th>Tỉ lệ</th><th>Thất bại</th></tr>${rows}</table>
       <ul class="small muted">
-        <li>Mỗi cấp thêm ${Math.round(RULES.upgradeBonusPct * 100)}% chỉ số món đồ; từ +${UPGRADE.double_from} mỗi cấp tính gấp đôi.</li>
+        <li>Chỉ số cộng thêm (so với chỉ số gốc món đồ): ${UPGRADE.steps.map((s) => `+${s.level} ${Math.round(s.eff * RULES.upgradeBonusPct * 100)}%`).join(', ')}. Từ +7 mỗi cấp tăng mạnh hơn hẳn.</li>
         <li>Món có May mắn: tỉ lệ +${Math.round(RULES.luckSkill.luck_upgrade * 100)}%. Thất bại vẫn mất ngọc và vàng.</li>
         <li>${smallIc(life.jewel, '💚')} ${esc(ITEMS[life.jewel].name)}: thêm một dòng cộng thêm +${Math.round(life.per_line_pct * 100)}% tấn công gốc (vũ khí) hoặc phòng thủ gốc (đồ khác), ít nhất +${life.per_line}, tối đa ${life.max_lines} dòng; tỉ lệ ${Math.round(life.rate * 100)}%, thất bại mất một dòng.</li>
       </ul></details>`;
@@ -2485,7 +2487,7 @@
       const need = c ? Object.entries(c.items) : [];
       const ok = c && P.gold >= c.gold && need.every(([id, n]) => (P.inv[id] || 0) >= n);
       const per = it.atk || it.def ? Math.max(1, Math.round((it.atk || it.def) * RULES.upgradeBonusPct)) : 0;
-      const step = c ? per * (effLevel(f.level + 1) - effLevel(f.level)) : 0;
+      const step = c ? Math.round(per * upEff(f.level + 1)) - Math.round(per * upEff(f.level)) : 0;
       const odds = c && c.rate < 1 ? ` · <b>${Math.round(c.rate * 100)}%</b>${c.fail ? `, <span style="color:var(--bad)">${RISK[c.fail]}</span>` : ''}` : '';
       return `<div class="item">${itemIcon(it, it.kind, f.level)}<div class="grow">
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
@@ -2638,7 +2640,7 @@
   let chaosPick = {}; // công thức → uid món đồ chọn
   let chaosCls = {}; // công thức ra theo lớp ({cls}) → lớp chọn (mặc định lớp mình)
   const chaosRate = L.chaosRate;
-  // Máy Hỗn Nguyên: ép +10, +11 (bước `at: "chaos"`), thất bại vỡ đồ
+  // Máy Hỗn Nguyên: ép +10, +11 (bước `at: "chaos"`), thất bại theo `fail` của bước (về +0)
   function chaosUpgradeCard() {
     const rows = forgeSlots().filter(([, , f]) => f && f.cost && f.cost.at === 'chaos').map(([slot, label, f]) => {
       const it = itemOf(f.id), c = f.cost;
@@ -2649,13 +2651,13 @@
           <div class="small muted">${label}</div><div class="name">${itemName(f.id)}</div>
           <div class="small muted">Lên +${f.level + 1} · <b>${Math.round(c.rate * 100)}%</b>, <span style="color:var(--bad)">${RISK[c.fail]}</span> · ${need.map(([id, n]) => `<span style="${(P.inv[id] || 0) >= n ? '' : 'color:var(--bad)'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}</span>`).join(' · ')}</div>
         </div>
-        <button class="btn ${ok ? 'danger' : ''}" data-act="chaos_upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('chaos-machine')}${fmt(c.gold)}</button>
+        <button class="btn ${ok ? (c.fail === 'destroy' ? 'danger' : 'primary') : ''}" data-act="chaos_upgrade" ${target} data-risk="${c.fail || ''}" data-name="${esc(it.name)} +${f.level}" ${ok ? '' : 'disabled'}>${icon('chaos-machine')}${fmt(c.gold)}</button>
       </div>`;
     }).join('');
     // như Thợ Rèn: hai thẻ Đang mặc / Trong túi (dùng chung `forgeTab`)
     const nBag = Object.values(P.view.forgeBag).filter((f) => f.cost && f.cost.at === 'chaos').length;
     return `<div class="card" data-panel="chaos-upgrade"><h3>${icon('chaos-machine')} Ép +10, +11</h3>
-      <p class="small muted">Đồ +9 lên +10, +10 lên +11. May mắn cộng tỉ lệ. Thất bại thì <b style="color:var(--bad)">vỡ đồ</b>, mất ngọc và vàng.</p>
+      <p class="small muted">Đồ +9 lên +10, +10 lên +11. May mắn cộng tỉ lệ. Thất bại thì <b style="color:var(--bad)">về +0</b> (không mất đồ), mất ngọc và vàng.</p>
       <div class="seg"><button class="btn ${forgeTab === 'wear' ? 'primary' : ''}" data-act="forge-tab" data-tab2="wear">Đang mặc</button><button class="btn ${forgeTab === 'bag' ? 'primary' : ''}" data-act="forge-tab" data-tab2="bag">Trong túi <span class="small">${nBag}</span></button></div>
       ${rows ? `<div class="list">${rows}</div>` : `<p class="small muted">${forgeTab === 'bag' ? 'Trong túi chưa có món nào +9 hoặc +10.' : 'Đồ đang mặc chưa có món nào +9 hoặc +10.'} Ép tới +9 ở Thợ Rèn trước.</p>`}</div>`;
   }

@@ -594,3 +594,17 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Kiếm Sĩ, 10 lần chuyển sinh + cày 1000 trận, seed 42: không thú → có thú: 7051 → 6880 trận, chết 204 → 55, lượt / trận các chặng
   sau 4,2 → 3,3. Bot mua Cừu Bông ở cấp 41 (vàng đầu game eo hẹp), Bằng Mã Lửa (40.000) ở chặng 1, thú đạt cấp 20 sau ~1.850 trận
   dắt theo; vàng dư không đủ để cho ăn (cần > 20 lần giá).
+
+## Ép +7 → +11 chênh lệch lớn, +10/+11 không vỡ (2026-10-17, anh yêu cầu, em đề xuất số)
+- +10, +11 (Máy Hỗn Nguyên) thất bại **về +0, không vỡ đồ** (`fail: "reset"`, không cần xác nhận nữa); tỉ lệ giảm: +10 50 % → **35 %**,
+  +11 45 % → **25 %** (May mắn vẫn + 25 %). +7 → +9 giữ 50 %.
+- Chỉ số cộng theo bảng `eff` của từng bước trong `UPGRADE` (`Engine.upgrade_eff/1`): cộng = eff × 8 % × chỉ số gốc món.
+
+  | Cấp | +6 | +7 | +8 | +9 | +10 | +11 |
+  |---|---|---|---|---|---|---|
+  | Trước (% chỉ số gốc) | 48 | 56 | 64 | 72 | 88 | 104 |
+  | Sau | 48 | 62 | 80 | 104 | 140 | 190 |
+  | Bước nhảy sau (trước) | | +14 (+8) | +18 (+8) | +24 (+8) | +36 (+16) | +50 (+16) |
+
+  +1 → +6 không đổi. Cánh: % sát thương / hấp thụ theo cấp vẫn như cũ (`effective_level/1`, từ +10 gấp đôi), chỉ phần thủ của cánh theo bảng mới.
+- Mô phỏng hành trình giữ mặc định không ép +10/+11 (`--chaos-up` để bật): seed 42 bật thì bot thử +10 hai lần đều trượt, vũ khí +9 về +0.

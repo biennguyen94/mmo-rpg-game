@@ -52,18 +52,19 @@ defmodule HacLong.Game.FormulaAuditTest do
     assert d(r1).def - d(r0).def == lv.("item_13_24")
   end
 
-  test "ép +N: mỗi cấp hiệu dụng + bonus_pct chỉ số món; từ double_from tính gấp đôi" do
+  test "ép +N: cấp tính (eff của bước) × bonus_pct chỉ số món; +7 → +11 tăng mạnh dần" do
     w = Data.item(@sword)
     step = max(1, round(w.atk * @r.upgrade.bonus_pct))
     p0 = hero() |> wear(:weapon, Gear.new(@sword))
 
     for up <- [1, 6, 9, 10, 11] do
       pu = hero() |> wear(:weapon, Gear.new(@sword), up)
-      assert d(pu).atk - d(p0).atk == Engine.effective_level(up) * step
+      assert d(pu).atk - d(p0).atk == round(Engine.upgrade_eff(up) * step)
     end
 
-    assert Engine.effective_level(9) == 9
-    assert Engine.effective_level(11) == 11 + 11 - Data.upgrade().double_from + 1
+    # mỗi bước từ +6 lên +11 tăng nhiều hơn bước trước
+    gaps = for l <- 6..10, do: Engine.upgrade_eff(l + 1) - Engine.upgrade_eff(l)
+    assert gaps == Enum.sort(gaps) and hd(gaps) > 1
   end
 
   test "Excellent: mỗi dòng đổi đúng chỉ số" do
@@ -278,7 +279,10 @@ defmodule HacLong.Game.FormulaAuditTest do
     hp = Data.item(ring).hp
     r0 = hero() |> wear(:ring1, Gear.new(ring))
     r7 = hero() |> wear(:ring1, Gear.new(ring), 7)
-    assert d(r7).maxHp - d(r0).maxHp == 7 * max(1, round(hp * @r.upgrade.bonus_pct))
+
+    assert d(r7).maxHp - d(r0).maxHp ==
+             round(Engine.upgrade_eff(7) * max(1, round(hp * @r.upgrade.bonus_pct)))
+
     assert d(r7).def == d(r0).def
 
     assert Engine.make_monster(%{id: "x", name: "x", level: 30}, false).dodge == 0

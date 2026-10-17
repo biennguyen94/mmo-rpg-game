@@ -150,7 +150,7 @@ AT = {"smith": "Thợ Rèn", "chaos": "Máy Hỗn Nguyên"}
 erows = ""
 for s in up["steps"]:
     lv = s["level"]
-    eff = lv if lv < up["double_from"] else up["double_from"] - 1 + 2 * (lv - up["double_from"] + 1)
+    eff = f"{n(s['eff'])} ({pct(s['eff'] * R['upgrade']['bonus_pct'], 0)})"
     need = " + ".join(f"{k2} {IT[k]['name']}" for k, k2 in s["items"].items())
     erows += (f"<tr><td class=n>+{lv}</td><td>{AT.get(s['at'], s['at'])}</td><td>vàng + {need}</td><td class=n>{pct(s['rate'])}</td>"
               f"<td>{FAIL.get(s.get('fail'), s.get('fail'))}</td><td class=n>{eff}</td></tr>")

@@ -1878,8 +1878,15 @@ defmodule HacLong.Game.Engine do
 
   def max_upgrade, do: Data.upgrade().max
 
-  @doc "Cấp tính chỉ số: từ `double_from` (+10) mỗi cấp tính gấp đôi (+11 tương đương 13 cấp)."
+  @doc "Cấp tính % sát thương / hấp thụ của cánh: từ `double_from` (+10) mỗi cấp tính gấp đôi (+11 tương đương 13 cấp)."
   def effective_level(l), do: l + max(0, l - Data.upgrade().double_from + 1)
+
+  @doc """
+  Cấp tính chỉ số đồ đã ép +`l` (`eff` của bước trong `UPGRADE`): chỉ số cộng = eff × `bonus_pct` × chỉ số gốc.
+  +1..+6 tăng đều, +7 → +11 tăng mạnh dần (DECISIONS "Ép +7 → +11 chênh lệch lớn").
+  """
+  def upgrade_eff(0), do: 0
+  def upgrade_eff(l), do: (Data.upgrade_step(l) || %{})[:eff] || effective_level(l)
 
   defp upgrades(p), do: Map.get(p, :upgrades) || %{}
 
@@ -1898,7 +1905,7 @@ defmodule HacLong.Game.Engine do
       {l, it} ->
         if hp_only?(it),
           do: 0,
-          else: effective_level(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct))
+          else: round(upgrade_eff(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct)))
     end
   end
 
@@ -1909,7 +1916,7 @@ defmodule HacLong.Game.Engine do
   def upgrade_hp(p, id) do
     case {upgrade_level(p, id), Gear.item(p, id)} do
       {l, %{hp: hp} = it} when l > 0 and is_number(hp) ->
-        if hp_only?(it), do: effective_level(l) * max(1, round(hp * @up.bonus_pct)), else: 0
+        if hp_only?(it), do: round(upgrade_eff(l) * max(1, round(hp * @up.bonus_pct))), else: 0
 
       _ ->
         0

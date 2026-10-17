@@ -106,26 +106,30 @@ defmodule HacLong.Game.ForgeTest do
       assert Engine.upgrade_level(q, q.equip.weapon) == 7
     end
 
-    test "+10 chỉ ép ở Máy Hỗn Nguyên: Hỗn Nguyên + Ước Nguyện + Tâm Linh, phải xác nhận, thất bại vỡ đồ" do
+    test "+10 chỉ ép ở Máy Hỗn Nguyên: Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ)" do
       p = player() |> armed("greatsword", 9) |> jewels()
       assert {%{ok: false, msg: msg}, ^p} = Engine.upgrade(p, "weapon")
       assert msg =~ "Lão Hỗn Nguyên"
 
-      assert {%{ok: false, confirm: true}, ^p} = Engine.upgrade(p, "weapon", false, "chaos")
-
       Rng.put_sequence([0.1])
-      {r, q} = Engine.upgrade(p, "weapon", true, "chaos")
+      {r, q} = Engine.upgrade(p, "weapon", false, "chaos")
       assert r.upgrade == %{result: "success", level: 10}
       assert {q.inv["jewel_chaos"], q.inv["jewel_bless"], q.inv["jewel_soul"]} == {4, 4, 4}
 
-      # +11: 1 Hỗn Nguyên, 2 Ước Nguyện, 2 Tâm Linh, 45 %
-      assert %{rate: 0.45, items: %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2}} =
+      # +10: 35 %; +11: 1 Hỗn Nguyên, 2 Ước Nguyện, 2 Tâm Linh, 25 %; thất bại về +0
+      assert %{rate: 0.35, fail: "reset"} = Engine.upgrade_cost("greatsword", 9)
+
+      assert %{
+               rate: 0.25,
+               fail: "reset",
+               items: %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2}
+             } =
                Engine.upgrade_cost("greatsword", 10)
 
       Rng.put_sequence([0.99])
-      {r, q} = Engine.upgrade(p, "weapon", true, "chaos")
-      assert r.upgrade.result == "destroy" and r.msg =~ "vỡ"
-      assert q.equip.weapon == "item_1_0" and q.gear == [] and q.upgrades == %{}
+      {r, q} = Engine.upgrade(p, "weapon", false, "chaos")
+      assert r.upgrade == %{result: "reset", level: 0} and r.msg =~ "về +0"
+      assert q.equip.weapon == p.equip.weapon and Engine.upgrade_level(q, q.equip.weapon) == 0
 
       # bước của Thợ Rèn không làm ở Máy Hỗn Nguyên
       p6 = player() |> armed("greatsword", 5) |> jewels()
@@ -134,15 +138,28 @@ defmodule HacLong.Game.ForgeTest do
                Engine.upgrade(p6, "weapon", false, "chaos")
     end
 
-    test "+10, +11 tính gấp đôi; +11 là tối đa" do
-      assert Engine.effective_level(9) == 9
-      assert Engine.effective_level(10) == 11
-      assert Engine.effective_level(11) == 13
+    test "+7 → +11 chỉ số tăng mạnh dần (eff); cánh vẫn tính gấp đôi từ +10; +11 là tối đa" do
+      assert Enum.map(0..11, &Engine.upgrade_eff/1) == [
+               0,
+               1,
+               2,
+               3,
+               4,
+               5,
+               6,
+               7.75,
+               10,
+               13,
+               17.5,
+               23.75
+             ]
+
+      assert Engine.effective_level(10) == 11 and Engine.effective_level(11) == 13
 
       p = player() |> armed("greatsword", 11) |> jewels()
       assert {%{ok: false, msg: "Đại Kiếm đã nâng cấp tối đa."}, _} = Engine.upgrade(p, "weapon")
       # Đại Kiếm tấn công 44: mỗi cấp round(44 × 0,08) = 4
-      assert Engine.upgrade_bonus(p, p.equip.weapon) == 13 * 4
+      assert Engine.upgrade_bonus(p, p.equip.weapon) == round(23.75 * 4)
     end
   end
 
