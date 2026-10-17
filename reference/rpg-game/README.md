@@ -182,7 +182,7 @@ lib/hac_long/world_boss.ex          Trùm thế giới: lịch xuất hiện, m�
 lib/hac_long_web/channels/          UserSocket, GameChannel
 lib/hac_long_web/controllers/       API đăng nhập; trang chủ (chèn dữ liệu game cho client)
 lib/hac_long_web/remote_ip.ex       Lấy IP thật từ X-Forwarded-For khi chạy sau proxy tin cậy
-lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, mix hac_long.audit
+lib/mix/tasks/                      mix hac_long.simulate, hac_long.journey, hac_long.admin, hac_long.audit
 priv/static/js/logic.js             Hàm thuần của giao diện (tìm đường, hình theo cấp…), test bằng node --test
 e2e/                                E2E Playwright + soak test (xem e2e/README.md)
 .github/workflows/ci.yml            CI: format, biên dịch không cảnh báo, mix test
@@ -213,6 +213,19 @@ Kết quả in ra, cho mỗi lớp và bốn cách chơi (chỉ đánh, +nhiệm
 đồ ở Thợ Rèn), số trận
 trung bình để thắng, số lần chết, vàng/kinh nghiệm từ nhiệm vụ và việc hằng ngày, và cấp độ
 lúc hạ từng trùm.
+
+Muốn xem **cả hành trình một nhân vật** (từ cấp 1, mặc đồ gì, ép tới đâu, hạ trùm, chuyển sinh, vào vùng chuyển sinh,
+mất bao nhiêu trận mỗi chặng, chết ở đâu):
+
+```bash
+scripts/balance/journey.sh --cls dk --rebirths 10 --seed 42          # = mix hac_long.journey …
+scripts/balance/journey.sh --cls all --rebirths 3 --seed 1 --csv     # cả 4 lớp, bảng so sánh, CSV từng trận
+scripts/balance/journey.sh --rebirths 10 --farm 1000 --seed 42       # đủ chuyển sinh rồi cày thêm 1000 trận ở vùng cuối
+```
+
+Báo cáo Markdown (và CSV) ghi ở `tmp/journey/`: tổng, từng chặng, từng khoảng cấp (bản đồ chính, lượt / trận, máu bị đánh,
+vàng), quái hay làm gục, nhân vật ở mỗi mốc chuyển sinh (chỉ số, đồ +N, dòng, Excellent, ngọc), diễn biến. Cùng seed thì
+cùng kết quả, nên chạy trước / sau khi đổi số. Cách bot chơi: `lib/hac_long/game/journey.ex` (moduledoc).
 
 ## Giao thức
 

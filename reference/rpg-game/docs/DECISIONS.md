@@ -528,3 +528,19 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   | Chúa tể vùng 10 | 2970 → 1485 | — | 100 % → 83 % (không bình) | — | 30 → 60 |
 
 - `mix hac_long.simulate 5 --seed 42`: cả 4 lớp vẫn hạ Hắc Long 5/5; Kiếm Sĩ "chỉ đánh" 508 → 451 trận, chết 6 → 1; các lớp khác xê dịch ít.
+
+## Công cụ mô phỏng cả hành trình (2026-10-17, anh yêu cầu)
+- `mix hac_long.journey` / `scripts/balance/journey.sh` (`HacLong.Game.Journey`, báo cáo `HacLong.Game.JourneyReport`): một bot
+  chơi từ cấp 1 qua tối đa 10 lần chuyển sinh bằng đúng hàm của game (đánh, rơi đồ, ép, Ngọc Sinh Mệnh, Máy Hỗn Nguyên
+  ghép cánh, nghỉ trọ, mua bình như bot thật, chuyển sinh). Chỉ là công cụ đo, không đổi luật game.
+- Cách bot tự quyết (không có trong KB, em tự chọn cho công cụ): chọn bản đồ nhiều EXP nhất mỗi con trong các bản đồ dịch
+  chuyển tới được (bản đồ thường bỏ nếu quái cao hơn mình quá 2 cấp), thua 2 trong 8 trận gần nhất thì tránh bản đồ đó 150 trận;
+  chúa tể vùng chuyển sinh thử mỗi 40 trận (cấp ≥ 40); so đồ bằng điểm `công × máu hiệu dụng` (`Journey.score/1`);
+  ép Ước Nguyện → +6, Tâm Linh → +9 (tắt bằng `--no-soul`), +10/+11 chỉ khi `--chaos-up`; giữ ngọc cho bậc cánh tiếp theo;
+  chuyển sinh ngay ở cấp 50 sau khi hạ Hắc Long. Không mô phỏng: việc hằng ngày, sự kiện, tháp, thú cưng, chợ, tổ đội, PK, trùm thế giới.
+- Lần chạy đầu (`--rebirths 10 --farm 1000 --seed 42`, Kiếm Sĩ), để anh xem:
+  - mỗi chặng sau chuyển sinh vẫn ~470–530 trận (chặng đầu ~590): 15 điểm mỗi lần chuyển sinh và đồ giữ lại làm cấp 1–40 nhanh
+    hơn ít (lượt / trận giảm 4,7 → 3), nhưng số trận gần như không đổi vì EXP cần lên cấp không đổi;
+  - cấp 40 → 50 ở vùng chuyển sinh chỉ mất 3–5 trận (quái vùng cấp 52–150 cho EXP rất lớn);
+  - cày ở các vùng cuối sau cấp 50: ~14 % trận thua, phần lớn do chúa tể (thua gần 100 %) và quái vùng 9–10;
+  - ghép cánh 1 với món +5 chỉ 10 %: 7 lần thử đều trượt; ngọc Ước Nguyện hiếm nên đồ ép ít khi quá +5.

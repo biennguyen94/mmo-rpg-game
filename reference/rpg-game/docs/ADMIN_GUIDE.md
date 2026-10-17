@@ -401,6 +401,8 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.
 - Đổi số cân bằng thì chạy `mix hac_long.simulate 20 --seed 1` trước và sau để so (cùng seed → cùng kết quả nếu số không đổi).
+- Xem cả hành trình một nhân vật tới chuyển sinh và vùng chuyển sinh: `scripts/balance/journey.sh --cls dk --rebirths 10 --seed 42`
+  (báo cáo ở `tmp/journey/`, tùy chọn: `mix help hac_long.journey`).
 
 **Từ cấm** (`names`):
 
