@@ -27,7 +27,7 @@ await page.waitForSelector('[data-act="auto-set"]', { timeout: 5000 }).catch(() 
 await act(page, 'auto-set');
 await page.selectOption('[data-auto="loot"]', 'good');
 await page.selectOption('[data-auto="hp"]', '30');
-await act(page, 'auto-on');
+await act(page, '.auto-go');
 let p = await player(page);
 R.check('bật tự đánh: server nhận cài đặt', p.auto && p.auto.loot === 'good' && p.auto.hp === 30 && p.auto.map === 'forest_1', JSON.stringify(p.auto));
 const k0 = p.kills;

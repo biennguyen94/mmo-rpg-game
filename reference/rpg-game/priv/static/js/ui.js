@@ -852,12 +852,14 @@
     if (autoUi.target !== 'level' && !am.kinds.some((k) => k.id === autoUi.target)) autoUi.target = 'level';
     const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
     const pcts = (lo, hi, cur) => { const o = []; for (let v = lo; v <= hi; v += 10) o.push(opt(v, cur, `${v}%`)); return o.join(''); };
-    const settings = autoUi.open ? `<div class="auto-set">
+    const settings = autoUi.open ? `<div class="auto-set" role="dialog" aria-label="Cài đặt tự đánh">
+        <div class="auto-set-head"><b>⚙ Cài đặt tự đánh</b><button class="btn small-btn" data-act="auto-set">Đóng</button></div>
         <label class="small">Đánh <select data-auto="target">${opt('level', autoUi.target, 'Quái hợp cấp')}${am.kinds.map((k) => opt(k.id, autoUi.target, `${k.name} (cấp ${k.level})`)).join('')}</select></label>
         <label class="small">Uống máu khi dưới <select data-auto="hp">${pcts(10, 90, autoUi.hp)}</select></label>
         <label class="small">Uống mana khi dưới <select data-auto="mp">${pcts(0, 90, autoUi.mp)}</select></label>
         <label class="small">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('good', autoUi.loot, 'Chỉ giữ đồ quý')}</select></label>
         <p class="small muted">Dùng bộ ${(RULES.towerSkills || {}).loadout || 5} kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game.</p>
+        <button class="btn primary auto-go" data-act="auto-on">🤖 Bắt đầu tự đánh</button>
       </div>` : '';
     return `<div class="auto-bar" id="auto-bar">
         <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
