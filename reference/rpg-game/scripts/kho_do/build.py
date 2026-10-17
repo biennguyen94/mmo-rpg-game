@@ -250,6 +250,123 @@ mh, ma, md = MON["hp"], MON["atk"], MON["def"]
 monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
                 f"thủ {n(md['base'])} + {n(md['level'])}L. Quái không né (mình trúng theo tỉ lệ trúng).")
 
+# ---------- Sự kiện (RULES: devil_square, blood_castle, chaos_castle, kalima, castle_siege, raids, invasion; world_boss) ----------
+LIB = D["library"]
+MON = {m["id"]: m for m in LIB["monsters"]}
+MAPN = {**{m["id"]: m["name"] for m in LIB["maps"]}, "home": "Nhà"}
+def clock(every_h, off_min=0):
+    t = [(off_min + every_h * 60 * i) % 1440 for i in range(24 // every_h)]
+    s = sorted(t)
+    f = lambda m: f"{m // 60}h{m % 60:02d}"
+    return f"mỗi {every_h} giờ: {f(s[0])}, {f(s[1])} … {f(s[-1])}"
+def items_txt(d):
+    return ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in d.items())
+def tiers_txt(ts, key="level"):
+    return "; ".join(f"cấp {t['from']}+ → quái cấp {t[key]}" + (f" (Kalima {t['n']})" if "n" in t else "") for t in ts)
+def ticket_txt(ev):
+    t = ev.get("ticket"); s = f"1 {E(IT[t]['name'])}" if t in IT else "—"
+    if ev.get("ticket_price"):
+        s += f" (Người Gác Tháp {n(ev['ticket_price'])} vàng"
+        td = ev.get("ticket_drop") or {}
+        if td.get("parts"):
+            s += f"; hoặc ghép {' + '.join(E(IT[x]['name']) for x in td['parts'])} ở Máy Hỗn Nguyên, mảnh rơi {pct(td['chance'])} từ quái cấp {td['min_level']}+"
+        elif td:
+            s += f"; hoặc rơi {pct(td['chance'])} từ quái cấp {td['min_level']}+"
+        s += ")"
+    return s
+ds, bc, cc, ka, cs, rd, inv = R["devil_square"], R["blood_castle"], R["chaos_castle"], R["kalima"], R["castle_siege"], R["raids"], R["invasion"]
+WB = D["world_boss"]
+WD = ["", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy", "Chủ Nhật"]
+def ev_row(name, when, who, entry, how, reward):
+    rows = [("Khi nào", when), ("Ai vào", who), ("Vào bằng", entry), ("Diễn biến", how), ("Thưởng", reward)]
+    return f'<div class="card ev"><h3>{name}</h3><dl>' + "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in rows) + "</dl></div>"
+waves = " + ".join(str(w["count"]) + (" (trùm)" if w["boss"] else "") for w in ds["waves"])
+top = "; ".join(f"hạng {i + 1}: {n(t['gold'])} vàng + {items_txt(t['items'])}" for i, t in enumerate(ds["top"]))
+ka_mark = E(IT[ka["mark"]]["name"]) if ka["mark"] in IT else ka["mark"]
+ev_rows = "".join([
+    ev_row("Quảng Trường Quỷ", f"{clock(ds['every_hours'], ds['offset_hours'] * 60)}; vào trong {ds['entry_minutes']} phút, đánh {ds['run_minutes']} phút",
+           f"cấp {ds['min_level']}+; {tiers_txt(ds['tiers'])}", ticket_txt(ds),
+           f"{len(ds['waves'])} đợt quái ({waves}), quái mỗi đợt mạnh dần; điểm: quái {ds['score']['monster']}, trùm {ds['score']['boss']}",
+           f"vàng, kinh nghiệm theo điểm; mỗi {ds['reward']['jewel_every']} điểm 1 ngọc; qua hết đợt được 1 món đồ ({pct(ds['reward']['clear_exc_chance'])} Excellent, {pct(ds['reward']['clear_anc_chance'])} Thần). Top ngày (thư lúc 0h): {top}"),
+    ev_row("Lâu Đài Máu", f"{clock(bc['every_hours'], bc['offset_minutes'])}; vào trong {bc['entry_minutes']} phút, đánh {bc['run_minutes']} phút",
+           f"cấp {bc['min_level']}+; {tiers_txt(bc['tiers'])}", ticket_txt(bc),
+           f"hạ {bc['guards']} quái canh → phá {E(bc['gate']['name'])} (không đánh trả, máu ×{bc['gate']['hp_mult']}) → hạ {E(bc['boss']['name'])}",
+           f"thắng: vàng, kinh nghiệm, {items_txt(bc['reward']['success']['items'])}, {bc['reward']['success']['jewels']} ngọc; không xong: thưởng theo số quái canh đã hạ"),
+    ev_row("Hỗn Chiến Thành", f"{clock(cc['every_hours'], cc['offset_minutes'])}; vào trong {cc['entry_minutes']} phút, đánh {cc['run_minutes']} phút",
+           f"cấp {cc['min_level']}+; quái quanh cấp trung bình người vào (±{cc['level_spread']})", ticket_txt(cc),
+           f"{cc['total']} đối thủ (quái + người, ít nhất {cc['min_monsters']} quái); gục là bị loại, không mất vàng, không tên đỏ",
+           f"người cuối cùng: {n(cc['reward']['winner']['gold'])} vàng + {items_txt(cc['reward']['winner']['items'])}; trụ tới hết giờ: {n(cc['reward']['survivor']['gold'])} vàng + {items_txt(cc['reward']['survivor']['items'])}; mỗi người hạ được +{n(cc['reward']['per_player_kill'])} vàng"),
+    ev_row("Kalima", "lúc nào cũng vào được", f"cấp {ka['min_level']}+; {tiers_txt(ka['tiers'])}", ticket_txt(ka) + f" (ghép từ 5 {ka_mark}, rơi {pct(ka['mark_drop']['chance'])} từ quái cấp {ka['mark_drop']['min_level']}+)",
+           f"bản đồ riêng {ka['run_minutes']} phút: hạ {ka['guards']} quái → {E(ka['boss']['name'])} xuất hiện",
+           f"hạ {E(ka['boss']['name'])}: vàng, kinh nghiệm, {ka['reward']['success']['jewels']} ngọc, 1 món đồ ({pct(ka['reward']['success']['exc_chance'])} Excellent, {pct(ka['reward']['success']['anc_chance'])} Thần); không xong: theo số quái đã hạ"),
+    ev_row("Công Thành Chiến", f"{WD[cs['weekday']]} {cs['hour']}h{cs['minute']:02d}, {cs['run_minutes']} phút",
+           f"thành viên (cấp {cs['min_level']}+) của bang đã đăng ký và bang giữ thành", f"bang chủ / phó đăng ký ở Người Gác Tháp ({n(cs['register_gold'])} vàng)",
+           f"giữ {E(cs['crown']['name'])} giữa thành (hạ được thì giữ, hiện lại sau {cs['crown']['respawn_s']} giây); đánh nhau không mất vàng, không tên đỏ",
+           f"bang giữ Vương Miện lúc hết giờ là Chủ Thành tới trận sau; mỗi thành viên {n(cs['reward']['gold'])} vàng + {items_txt(cs['reward']['items'])}"),
+] + [ev_row(f"{v['icon']} {E(v['name'])}", f"{clock(v['every_hours'], v['offset_minutes'])}, {v['minutes']} phút", "mọi người",
+            "không cần", f"{v['leader']['count']} {E(v['leader']['name'])} (cấp + {v['leader']['level_bonus']}, sức ×{n(v['leader']['mult'])})" +
+            (f" và {v['minion']['count']} {E(v['minion']['name'])}" if v.get("minion") else "") + f" ở {v['pick']} bản đồ ngẫu nhiên trong {len(v['maps'])} vùng chính",
+            f"thưởng ×{v['reward_mult']}; con đầu đàn chắc chắn rơi ngọc, thêm " + ", ".join(f"{E(IT[k]['name'])} {pct(c)}" for k, c in v["drops"].items()))
+   for v in rd.values() if isinstance(v, dict) and v.get("leader")] + [
+    ev_row("✨ Quái Vàng", f"{clock(inv['every_hours'])}, {inv['minutes']} phút", "mọi người", "không cần",
+           f"{sum(inv['maps'].values())} quái vàng ở {len(inv['maps'])} vùng chính (sức ×{n(inv['strength_mult'])}); hạ hết một bản đồ thì trùm vàng xuất hiện",
+           f"thưởng ×{inv['reward_mult']}, quái vàng {pct(inv['jewel_chance'])} rơi ngọc, trùm vàng chắc chắn"),
+    ev_row("🐉 Trùm thế giới", f"lần đầu {WB.get('first_after_minutes')} phút sau khi máy chủ chạy, rồi cứ {WB.get('every_minutes')} phút sau khi con trước gục / bay đi; ở {WB.get('duration_minutes')} phút",
+           "mọi người, ở Tế Đàn", "không cần", f"cả máy chủ đánh chung một thanh máu ({n(WB.get('hp'))})",
+           "chia thưởng theo phần sát thương; 3 người gây nhiều nhất thêm Vảy Cổ Long; đòn cuối thêm vàng; hết giờ chưa hạ thì không ai được"),
+])
+fest = "".join(f"<tr><td>{e['icon']} <b>{E(e['name'])}</b></td><td>{e['from']} → {e['to']}</td><td>{E(e['desc'])}</td><td>{E(IT[e['token']]['name']) if e.get('token') in IT else '—'}</td></tr>"
+               for e in D["festivals"])
+
+# ---------- Bản đồ và quái ----------
+def mrow(m):
+    lv = "—" if not m["min"] else (f"{m['min']}" if m["min"] == m["max"] else f"{m['min']}–{m['max']}")
+    mons = ", ".join(E(MON[k]["name"]) for k in m["monsters"] if k in MON and not MON[k]["boss"])
+    bk = [k for k in m["monsters"] if k in MON and MON[k]["boss"]] + ([m["boss"]] if m.get("boss") in MON and m["boss"] not in m["monsters"] else [])
+    boss = ", ".join(f"<b>{E(MON[k]['name'])}</b>" for k in bk)
+    # như client (travelCost): Làng, Nhà miễn phí; nơi khác base + per_level × cấp quái thấp nhất (không quái: 0)
+    cost = "miễn phí" if m["id"] in R["travel"]["free"] else n(R["travel"]["base"] + R["travel"]["per_level"] * (m["min"] or 0))
+    need = f"CS {m['cs']}, cấp {m['need']}+" if m.get("cs") else (f"cấp {m['min']}+" if m["min"] else "—")
+    return f"<tr><td><b>{E(m['name'])}</b></td><td class=n>{lv}</td><td>{need}</td><td>{mons or ''}{(' · ' if mons else '') + 'trùm ' + boss if boss else ''}{'—' if not mons and not boss else ''}</td><td class=n>{cost}</td></tr>"
+grp_maps = defaultdict(list)
+for m in LIB["maps"]:
+    if m["id"] == "tower":
+        continue
+    key = "Vùng đất chuyển sinh" if m.get("cs") else (m.get("zone") or "Làng, Tế Đàn")
+    grp_maps[key].append(m)
+order = sorted(grp_maps, key=lambda k: (k == "Vùng đất chuyển sinh", k == "Bản đồ phụ", min((x["min"] or 0) for x in grp_maps[k])))
+map_rows = "".join(f"<tr class=grp><td colspan=5>{E(k)} ({len(grp_maps[k])})</td></tr>" + "".join(mrow(m) for m in sorted(grp_maps[k], key=lambda x: (x["min"] or 0, x["name"]))) for k in order)
+bosses = sorted([m for m in LIB["monsters"] if m["boss"]], key=lambda m: m["level"])
+boss_rows = "".join(f"<tr><td><b>{E(m['name'])}</b></td><td class=n>{m['level']}</td><td>{', '.join(E(w) for w in m['where'])}</td><td class=n>{n(m['hp'])}</td><td class=n>{n(m['atk'])} / {n(m['def'])}</td>"
+                    f"<td>{E(m['special']['name']) + ' mỗi ' + str(m['special']['every']) + ' lượt' if m.get('special') else '—'}</td></tr>" for m in bosses)
+br = R["boss_rewards"]; fkw = sum(w for _, w in br["first_kill_weights"])
+boss_note = ("Hạ trùm vùng lần đầu: 1 món đồ hiếm đúng lớp (" + ", ".join(f"{a} dòng cộng thêm {pct(w / fkw)}" for a, w in br["first_kill_weights"]) +
+            "); mỗi ngày lần đầu hạ trùm vùng: " + "; ".join(
+                 f"vùng {d['from_zone'] + 1}" + (f"–{br['daily'][i + 1]['from_zone']}" if i + 1 < len(br['daily']) else " trở đi") + f" được {d['n']} {E(IT[d['item']]['name'])}"
+                 for i, d in enumerate(br["daily"])) + ".")
+
+# ---------- Tháp Vô Tận ----------
+TW = R["tower"]
+def tw_mult(f):
+    return 1 + max(0, f - TW["harder_from"]) * TW["harder_per_floor"]
+tower_rows = "".join(
+    f"<tr><td class=n>{r['floor']}</td><td class=n>{r['floor']}</td><td class=n>×{n(round(tw_mult(r['floor']), 2))}</td>"
+    f"<td class=n>{(str(TW['boss_monsters']) + ' + trùm') if r['floor'] % TW['boss_every'] == 0 else min(TW['max_monsters'], TW['monsters'] + TW['monsters_per_10'] * (r['floor'] // 10))}</td>"
+    f"<td class=n>{n(r['gold'])}</td><td class=n>{n(r['xp'])}</td><td>{items_txt(r['items']) or '—'}{' + 1 ngọc (lần đầu)' if r['floor'] % D['jewels']['tower_every'] == 0 else ''}</td></tr>"
+    for r in D["tower_rows"])
+
+# ---------- PK, đồ sát ----------
+SL, AR, GW, PKR = R["slay"], R["arena"], R["guild_war"], R["pk"]
+pk_items = [
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ tự đánh thường. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
+    ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); mỗi người đồ sát cùng một người tối đa {SL['per_target_hour']} lần trong 60 phút."),
+    ("PK cược vàng", f"mời người khác cược từ {n(PKR['min'])} tới {n(PKR['max'])} vàng, tối đa {PKR['per_day']} trận mỗi ngày; hai bản sao chỉ số tự đánh (xem Chỉ số, chiến đấu), người thắng nhận tiền cược."),
+    ("Đấu trường", f"đánh bản sao chỉ số người khác, tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']})."),
+    ("Chiến bang", f"bang chủ / phó bang tuyên chiến bang khác (bang kia nhận trong {GW['answer_s']} giây), kéo dài {GW['minutes']} phút. Mỗi trận Đấu trường thắng thành viên bang địch +1 điểm (cùng một đối thủ tính tối đa {GW['same_target_max']} lần). Bang nhiều điểm thắng: quỹ +{n(GW['win_fund'])}, thành viên có điểm nhận {n(GW['win_gold'])} vàng qua thư; hai bang chờ {GW['rematch_hours']} giờ mới chiến lại."),
+]
+pk_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in pk_items)
+
 # ---------- Lỗ hổng dữ liệu (OPEN_QUESTIONS KD-1): bậc thiếu bộ giáp / vũ khí chính theo lớp ----------
 gaps = []
 for c, label in CLS:
@@ -353,7 +470,7 @@ other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình ma
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, CHAOSROWS=chaos_rows, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=pct(ls['luck_upgrade']), LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),

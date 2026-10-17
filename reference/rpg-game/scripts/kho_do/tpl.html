@@ -59,6 +59,9 @@ img.px{width:24px;height:24px;image-rendering:pixelated;background:var(--icobg);
 .card ul{margin:0;padding-left:18px;display:grid;gap:3px}
 .note{font-size:13px;color:var(--muted)}
 code{font-size:13px}
+.ev dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 10px;margin:6px 0 0}
+.ev dt{color:var(--muted);font-size:13px}
+.ev dd{margin:0}
 </style>
 
 <div class="wrap">
@@ -68,7 +71,7 @@ code{font-size:13px}
 </header>
 
 <nav aria-label="Mục lục">
-  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#quy-tac" class="new">Quy tắc chi tiết</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#khac">Vật phẩm khác</a>
+  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#quy-tac" class="new">Quy tắc chi tiết</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#su-kien" class="new">Sự kiện</a><a href="#ban-do" class="new">Bản đồ, quái</a><a href="#thap" class="new">Tháp Vô Tận</a><a href="#pk" class="new">PK, đồ sát</a><a href="#khac">Vật phẩm khác</a>
 </nav>
 
 <section id="tong-quan">
@@ -188,6 +191,45 @@ code{font-size:13px}
     <thead><tr><th>Vùng</th><th>Tên</th><th>Chuyển sinh</th><th>Cấp quái</th><th>Hệ</th><th>Sức mạnh</th><th>Rơi quý thêm</th><th>Ngọc / con</th><th>Quái</th></tr></thead>
     <tbody>{{REALMS}}</tbody></table></div>
   <p class="note">"Rơi quý thêm": tỉ lệ ra đồ, Excellent, May mắn, đồ Thần nhân (1 + số này); tăng {{RLOOT}} mỗi vùng, trần {{RLOOTMAX}} nên vùng 9 và 10 bằng nhau. "Ngọc / con": tỉ lệ mỗi con rơi 1 viên ngọc (loại theo tỉ lệ ở mục Vật phẩm khác); chúa tể ×5.</p>
+</section>
+
+<section id="su-kien">
+  <h2>Sự kiện</h2>
+  <p>Giờ là giờ Việt Nam. Vào các sự kiện có vé ở Người Gác Tháp (Làng). Phần thưởng sự kiện gửi qua Hộp thư.</p>
+  <div class="cols evs">{{EVROWS}}</div>
+  <h3>Lễ hội theo mùa</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Lễ hội</th><th>Ngày (tháng-ngày)</th><th>Nội dung</th><th>Vật phẩm đổi quà</th></tr></thead>
+    <tbody>{{FEST}}</tbody></table></div>
+  <p class="note">Vật phẩm lễ hội mang tới Người Tổ Chức Hội đổi quà.</p>
+</section>
+
+<section id="ban-do">
+  <h2>Bản đồ và quái</h2>
+  <p>Đủ cấp (≥ cấp quái thấp nhất) là vào được. Dịch chuyển bằng Chọn bản đồ: {{TRAVEL}} vàng (Làng, Nhà miễn phí). Vùng chuyển sinh cần số lần chuyển sinh ghi ở cột "Vào".</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Bản đồ</th><th>Cấp quái</th><th>Vào</th><th>Quái</th><th>Dịch chuyển</th></tr></thead>
+    <tbody>{{MAPROWS}}</tbody></table></div>
+  <h3>Trùm</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Trùm</th><th>Cấp</th><th>Ở đâu</th><th>Máu</th><th>Công / thủ</th><th>Đòn đặc biệt</th></tr></thead>
+    <tbody>{{BOSSROWS}}</tbody></table></div>
+  <p class="note">{{BOSSNOTE}} Ban đêm quái thường đôi khi thành quái Bóng Đêm (mạnh hơn, thưởng nhiều hơn).</p>
+</section>
+
+<section id="thap">
+  <h2>Tháp Vô Tận</h2>
+  <p>Vào ở Người Gác Tháp. Mỗi tầng là bản đồ nhỏ riêng cho mình; hạ hết quái thì cầu thang lên mở, lên tầng thì nhận thưởng. Tầng N có quái cấp N; từ tầng {{TWHARD}} quái mạnh thêm {{TWPER}} mỗi tầng nên tháp không có đỉnh. Tầng chia hết cho {{TWBOSS}} có trùm tầng (cấp tầng + {{TWOFF}}, sức ×{{TWELITE}}) và ít quái thường hơn. Máu không tự hồi giữa các tầng; gục là hết lượt leo, đi cầu thang xuống ở đầu tầng để về Làng. Lần sau bắt đầu ở tầng 1, 11, 21… không quá kỷ lục + 1. Kỷ lục mở kỹ năng tháp (tầng 10, 20 … 100, xem mục Kỹ năng).</p>
+  <div class="scroll" style="max-width:820px"><table>
+    <thead><tr><th>Tầng</th><th>Cấp quái</th><th>Sức mạnh</th><th>Số quái</th><th>Vàng</th><th>Kinh nghiệm</th><th>Thêm</th></tr></thead>
+    <tbody>{{TOWERROWS}}</tbody></table></div>
+  <p class="note">Quái tháp: tầng 1–60 theo 6 vùng chính, 61–160 theo 10 vùng chuyển sinh, sau đó quay vòng (tên thêm tiền tố). Ngọc mỗi 10 tầng chỉ nhận lần đầu vượt tầng đó.</p>
+</section>
+
+<section id="pk">
+  <h2>PK, đồ sát</h2>
+  <ul>{{PKLI}}</ul>
+  <p class="note">Cách tính trúng, né, chí mạng khi đánh người: xem bảng "Đánh quái và đánh người" ở mục Chỉ số, chiến đấu.</p>
 </section>
 
 <section id="khac">
