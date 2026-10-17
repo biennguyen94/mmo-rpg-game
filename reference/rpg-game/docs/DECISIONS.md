@@ -678,3 +678,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   79 MP ở cấp 50. `RULES.tower_skills.mp_mult` = {dk: 0,5, elf: 0,6} nhân MP **kỹ năng tháp** (có `floor`) của lớp đó; kỹ
   năng lớp và lớp khác giữ nguyên (`Engine.skill_mp/2`, client `Logic.skillMp` nhận hệ số qua `RULES.towerSkills.mp_mult`).
   Kiếm Sĩ cấp 50: kỹ năng tầng 100 79 → 40 MP; Tiên Nữ 79 → 47 MP.
+- Sổ ngọc mô phỏng (`JourneyReport` mục "Sổ ngọc"): mỗi lớp nhận ~250 Ước Nguyện cả hành trình, dùng 150–210 để ép +1…+6 — đủ
+  ~40 món +6, nhưng đồ cuối vẫn +0…+4 vì mỗi chặng chuyển sinh rơi đồ bậc cao hơn, thay món đã ép. Bot đã thử ém ngọc (món phụ
+  chỉ ép khi cấp ≥ 45 hoặc đánh vất vả) và thay đồ khắt khe hơn: tốn ngọc ít hơn nhưng chết nhiều gấp 3–10 lần → giữ mặc định
+  (thay khi hơn 5 % + 2 % mỗi cấp ép). **Anh chốt (a): giữ nguyên** — đồ ép cao "dính" ở chặng cuối như MU; tỉ lệ Ước Nguyện 60 /
+  Tâm Linh 25 giữ; không thêm chuyển cấp ép.
