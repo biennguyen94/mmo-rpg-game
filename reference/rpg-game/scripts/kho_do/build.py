@@ -19,8 +19,8 @@ def n(x):
     return f"{x:,}" if isinstance(x, int) else str(x).replace(".", ",")
 
 
-def pct(x):
-    v = round(x * 100, 1)
+def pct(x, d=1):
+    v = round(x * 100, d)
     return (str(int(v)) if v == int(v) else str(v).replace(".", ",")) + "%"
 
 
@@ -202,7 +202,7 @@ def skill_table(c):
     rows = ""
     for k in CL[c].get("skills", []):
         rows += (f"<tr><td>cấp {k.get('level', 1)}</td><td><b>{E(k['name'])}</b></td><td>{el(k.get('element'))}</td>"
-                 f"<td class=n>{'×' + n(k['mult']) if 'mult' in k else '—'}</td><td class=n>{k.get('mp', 0)}</td><td class=n>{k.get('cooldown', 0)}</td><td>{E(k.get('desc') or sdesc(k))}</td></tr>")
+                 f"<td class=n>×{n(k.get('mult') or R['skill_effects'].get(k.get('effect'), {}).get('mult', 1))}</td><td class=n>{k.get('mp', 0)}</td><td class=n>{k.get('cooldown', 0)}</td><td>{E(k.get('desc') or sdesc(k))}</td></tr>")
     for k in CL[c]["tower_skills"]:
         rows += (f"<tr><td>tháp {k['floor']}</td><td><b>{E(k['name'])}</b></td><td>{el(k.get('element'))}</td>"
                  f"<td class=n>×{n(k['mult'])}</td><td class=n>{k['mp']}</td><td class=n>{k['cooldown']}</td><td>{sdesc(k)}</td></tr>")
@@ -212,6 +212,40 @@ stabs = "".join(f'<button type="button" class="tab" data-g="sk" data-c="{c}">{l}
 spanes = "".join(f'<div class="ctab" data-g="sk" data-c="{c}"{" hidden" if i else ""}>{skill_table(c)}</div>' for i, (c, _) in enumerate(CLS))
 cycle = " › ".join(el(e) for e in ["fire", "ice", "wind", "earth", "lightning", "fire"])
 bylv = ", ".join(f"cấp {a}+ {el(e)}" for a, e in EL["by_level"])
+
+# ---------- Chỉ số & chiến đấu ----------
+C, MON, PK = R["combat"], R["monster"], R["pk"]
+cr, cm, dg, hit = C["crit"], C["crit_mult"], C["dodge"], C["hit"]
+def srow(name, how, use):
+    return f"<tr><td><b>{name}</b></td><td>{how}</td><td>{use}</td></tr>"
+stat_rows = "".join([
+    srow("Tấn công", "Hệ số lớp theo Sức mạnh / Nhanh nhẹn / Năng lượng + công vũ khí và dây chuyền + ép + dòng cộng thêm; × (1 + thú cưng + món ăn + Đài Phúc Lành); × (1 + Excellent + đủ bộ + đồ Thần)",
+         f"Mỗi đòn lấy ngẫu nhiên {pct(C['damage_spread'][0])}–{pct(C['damage_spread'][1])} tấn công. Kỹ năng nhân hệ số của kỹ năng; cánh, Kỹ năng vũ khí, sổ tay quái nhân thêm."),
+    srow("Trúng quái", f"AR / (AR + cấp quái × {n(hit['monster_dr'])}), trong {pct(hit['min'])}–{pct(hit['max'])}; AR = cấp × {n(hit['level'])} + Nhanh nhẹn × {n(hit['agi'])} (+ Excellent)",
+         "Chỉ khi đánh quái. Quái cấp cao hơn khó trúng hơn. Kỹ năng luôn trúng. Đánh người thì xem né của đối thủ."),
+    srow("Phòng thủ", "Tổng thủ giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn + ép + dòng cộng thêm; × thú / món ăn / Đài; × đủ bộ, đồ Thần",
+         f"Sát thương nhận = đòn² / (đòn + thủ), không dưới {pct(C['soft_floor'])} đòn: đòn bằng thủ chỉ còn một nửa. Như nhau khi bị quái hay người đánh."),
+    srow("Chí mạng", f"{pct(cr['base'])} + Nhanh nhẹn × {pct(cr['per_agi'], 2)} (tối đa {pct(cr['max'])}) + Excellent + May mắn vũ khí. Hệ số ×({n(cm['base'])} + Nhanh nhẹn × {n(cm['per_agi'])}), tối đa ×{n(cm['max'])}",
+         f"Đòn thường và kỹ năng (đánh quái, Đồ sát, Đấu trường). PK cược: kỹ năng không chí mạng. Quái chí mạng {pct(MON['crit'])} ×{n(C['monster_crit_mult'])}."),
+    srow("Né đòn", f"{pct(dg['base'])} + Nhanh nhẹn × {pct(dg['per_agi'], 2)} (tối đa {pct(dg['max'])}), × Excellent tỉ lệ phòng thủ, trần cuối {pct(dg['max_total'])}",
+         "Né đòn thường của quái và của người. Không né được đòn đặc biệt của quái và kỹ năng của người."),
+    srow("Cánh", f"Số gốc của cánh + {pct(C['wing_per_level'])} mỗi cấp ép",
+         "+% sát thương mọi đòn và −% sát thương nhận, cả đánh quái lẫn đánh người. Dòng phụ: máu, MP, bỏ qua phòng thủ."),
+    srow("Máu", "Hệ số lớp theo Thể lực và cấp + nhẫn máu + đủ bộ + đồ Thần + dòng cánh; × thú / món ăn / Đài; × Excellent", "Hết máu là gục."),
+    srow("MP", "Hệ số lớp theo Năng lượng + dòng cánh; × Excellent",
+         f"Kỹ năng tốn MP, tăng {pct(C['skill_mp_per_level'])} mỗi cấp nhân vật; hồi {pct(C['mp_regen'])} mỗi lượt và thêm theo Năng lượng."),
+])
+mode_rows = "".join([
+    "<tr><td><b>Mình trúng</b></td><td>tỉ lệ trúng quái; quái không né</td><td>theo né của đối thủ</td><td>đòn thường theo né đối thủ; kỹ năng không né được</td></tr>",
+    "<tr><td><b>Mình bị đánh</b></td><td>né của mình (đòn đặc biệt của quái không né được)</td><td>né của mình</td><td>né của mình, trừ kỹ năng</td></tr>",
+    "<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td>hệ số thật của mỗi bên</td><td>chỉ đòn thường</td></tr>",
+    "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ</td><td>như Đồ sát</td></tr>",
+    f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái</td><td>mỗi {PK['special_every']} lượt kỹ năng lớp ×{n(PK['special_mult'])}</td></tr>",
+    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu</td><td>hết máu; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
+])
+mh, ma, md = MON["hp"], MON["atk"], MON["def"]
+monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
+                f"thủ {n(md['base'])} + {n(md['level'])}L. Quái không né (mình trúng theo tỉ lệ trúng).")
 
 # ---------- Vùng chuyển sinh ----------
 rm = defaultdict(list)
@@ -248,7 +282,7 @@ other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình ma
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other,
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, MONSTER=monster_line,
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=pct(ls['luck_upgrade']), LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),

@@ -64,11 +64,11 @@ code{font-size:13px}
 <div class="wrap">
 <header style="display:grid;gap:10px">
   <h1>Kho Đồ <span>Hắc Long</span></h1>
-  <p class="lead">Mọi loại đồ, kỹ năng và vùng đất đang có trong game, đọc thẳng từ dữ liệu <code>priv/game_data</code> (bản ngày 17/10/2026, sau đợt 8 phase: kỹ năng tháp, nguyên tố, vùng chuyển sinh, tự đánh, bộ hình Pixel).</p>
+  <p class="lead">Mọi loại đồ, kỹ năng và vùng đất đang có trong game, đọc thẳng từ dữ liệu <code>priv/game_data</code> (bản ngày 17/10/2026, sau đợt 8 phase: kỹ năng tháp, nguyên tố, vùng chuyển sinh, tự đánh, bộ hình Pixel; cập nhật hệ số kỹ năng lớp mới và mục Chỉ số, chiến đấu).</p>
 </header>
 
 <nav aria-label="Mục lục">
-  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#khac">Vật phẩm khác</a>
+  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#khac">Vật phẩm khác</a>
 </nav>
 
 <section id="tong-quan">
@@ -150,6 +150,19 @@ code{font-size:13px}
     <div class="card"><h3>Vòng khắc</h3><p>{{CYCLE}}</p><p>✨ Ánh Sáng và 🌑 Bóng Tối khắc nhau.</p><p class="note">Kỹ năng khắc nguyên tố quái: +{{STRONG}} sát thương (nút kỹ năng hiện ▲). Bị quái khắc: −{{WEAK}} (▼). Đòn thường không nguyên tố.</p></div>
     <div class="card"><h3>Nguyên tố của quái</h3><p class="note">Theo cấp quái: {{BYLV}}. Quái vùng chuyển sinh mang nguyên tố riêng của vùng.</p></div>
   </div>
+</section>
+
+<section id="chi-so">
+  <h2>Chỉ số và chiến đấu</h2>
+  <p>Tab Nhân vật trong game hiện các chỉ số này; bấm vào từng dòng để xem giải thích ngay trong game.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Chỉ số</th><th>Cách tính</th><th>Dùng khi nào</th></tr></thead>
+    <tbody>{{STATROWS}}</tbody></table></div>
+  <h3>Đánh quái và đánh người</h3>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th>Đánh quái</th><th>Đồ sát, Đấu trường</th><th>PK cược vàng</th></tr></thead>
+    <tbody>{{MODEROWS}}</tbody></table></div>
+  <p class="note">{{MONSTER}} PK cược vàng: hai bản sao chỉ số tự đánh nhau, không ai điều khiển.</p>
 </section>
 
 <section id="chuyen-sinh">
