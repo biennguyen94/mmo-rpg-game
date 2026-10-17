@@ -657,3 +657,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   tối đa `tower_floors` (30) tầng / lần, dừng khi máu < 50 % sau một tầng hoặc thua; dùng `Tower.build/2`,
   `Tower.battle_monster/1`, `Tower.climb/1` (thưởng, ngọc mỗi 10 tầng, kỷ lục mở kỹ năng tháp). Ép +10/+11 tự bật từ lần
   chuyển sinh `chaos_from` (5). Tùy chọn `--no-tower`, `--tower-every`, `--tower-floors`, `--chaos-from`.
+- Kết quả (seed 42, `tmp/journey_full`, 5 bản đồ / vùng, chúa tể giữ nguyên sức): mọi lớp xong 10 lần chuyển sinh trong
+  12 200–12 800 trận (~16–20 giờ đánh), chết 8–22 lần; hạ chúa tể 26–32 lần, thua 3–6; kỷ lục tháp 49–59. Không còn chặng
+  kẹt → **giữ nguyên sức chúa tể** (khó với người chơi chưa leo tháp / ép đồ, đúng ý ban đầu).
