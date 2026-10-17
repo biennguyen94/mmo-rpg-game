@@ -90,14 +90,13 @@ defmodule HacLong.Bots.Brain do
   Lệnh trong trận: máu < `hp` (tỉ lệ máu tối đa) và có bình → uống; chưa có kỹ năng dùng được và MP < `mp` → uống
   mana; kỹ năng mạnh nhất (cuối bộ kỹ năng) đang sẵn → dùng; còn lại đánh thường. Tự đánh (Phase 4) dùng chung.
   """
-  def fight(p, hp \\ 0.35, mp_pct \\ 0.3) do
+  def fight(p, hp \\ 0.35, mp_pct \\ 0.3, mode \\ nil) do
     d = Engine.derived(p)
     mp = Map.get(p, :mp) || 0
 
     skill =
       p
-      |> Engine.skills()
-      |> Enum.reverse()
+      |> fight_skills(mode)
       |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and mp >= Engine.skill_mp(p, &1)))
 
     cond do
@@ -114,6 +113,27 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "attack"}
     end
   end
+
+  # bot (mode nil): kỹ năng mạnh nhất trước. Tự đánh: "all" kỹ năng buff trước rồi mạnh nhất, "basic" không dùng,
+  # "boss" chỉ khi quái là trùm / tinh anh / quái vàng / quái Bóng Đêm
+  defp fight_skills(p, nil), do: p |> Engine.skills() |> Enum.reverse()
+  defp fight_skills(_p, "basic"), do: []
+
+  defp fight_skills(p, "boss") do
+    m = (p.battle || %{})[:monster] || %{}
+
+    if m[:boss] || m[:elite] || m[:golden] || m[:rare] || m[:world],
+      do: fight_skills(p, "all"),
+      else: []
+  end
+
+  defp fight_skills(p, _all) do
+    {buffs, rest} = p |> Engine.skills() |> Enum.reverse() |> Enum.split_with(&buff?/1)
+    buffs ++ rest
+  end
+
+  @buff_effects ~w(war_cry guard shadow_step)
+  defp buff?(k), do: k[:buff] != nil or k[:effect] in @buff_effects
 
   # ---------- Đồ đạc, hồi máu ----------
 
@@ -335,10 +355,10 @@ defmodule HacLong.Bots.Brain do
   Đi tới con quái gần nhất không ai đánh (trùm thường của bản đồ có quái hồi sinh thì bỏ qua) thỏa `keep`
   (`fn quái, bản_đồ -> bool`, mặc định cấp không quá cấp mình + 1); không có con nào thì đi lang thang.
   """
-  def hunt(p, snap, keep \\ nil)
-  def hunt(p, nil, _keep), do: wander(p)
+  def hunt(p, snap, keep \\ nil, wander? \\ true)
+  def hunt(p, nil, _keep, wander?), do: if(wander?, do: wander(p))
 
-  def hunt(p, snap, keep) do
+  def hunt(p, snap, keep, wander?) do
     me = {p.pos.x, p.pos.y}
     map = Maps.get(p.pos.map)
     keep = keep || fn m, map -> monster_level(map, m.kind) <= p.level + 1 end
@@ -351,8 +371,8 @@ defmodule HacLong.Bots.Brain do
       |> Enum.map(&{&1.x, &1.y})
 
     case targets do
-      [] -> wander(p)
-      _ -> walk(p, map, Enum.take(targets, 3), snap) || wander(p)
+      [] -> if(wander?, do: wander(p))
+      _ -> walk(p, map, Enum.take(targets, 3), snap) || if(wander?, do: wander(p))
     end
   end
 

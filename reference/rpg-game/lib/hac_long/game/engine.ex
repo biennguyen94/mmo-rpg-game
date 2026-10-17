@@ -125,6 +125,7 @@ defmodule HacLong.Game.Engine do
           food: nil,
           blessing: nil,
           skill_set: nil,
+          auto_cfg: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
           furniture: %{},
@@ -399,6 +400,8 @@ defmodule HacLong.Game.Engine do
       # Phase 3: kỹ năng mang vào trận (id, theo thứ tự) và mọi kỹ năng đã mở
       skillSet: Enum.map(skills(p), & &1.id),
       skillsOpen: Enum.map(available_skills(p), & &1.id),
+      # cài đặt tự đánh đã lưu (lần bật gần nhất), để bảng cài đặt mở lại đúng như cũ
+      autoCfg: Map.get(p, :auto_cfg),
       # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
       blessing: Blessing.view(p),
       comfort: Home.comfort(p),

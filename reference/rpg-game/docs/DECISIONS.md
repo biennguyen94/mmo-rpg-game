@@ -488,3 +488,16 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - `RULES.skill_effects`: `cleave` 2.2 → 1.4 (Chém Xoáy); `fire_ball` 2.0 → 1.35, giữ xuyên 30% giáp (Cầu Lửa, Kiếm Lửa); `judgement` 1.8 → 1.4 (Phán Quyết); `backstab` `def_mult` 0.5 → 0.7 (Tam Tiễn xuyên 30% giáp, vẫn chắc chắn chí mạng). Mô tả trong `classes.json` sửa theo.
 - Giữ nguyên các kỹ năng mà tác dụng phụ là chính: Trảm Choáng, Tia Sét, Hồi Sinh Lực, Tăng Sức Mạnh, Khiên Linh Hồn, Nộ Chiến, Kiếm Độc Hỏa.
 - `mix hac_long.simulate 5 --seed 42` trước / sau: cả 4 lớp vẫn hạ Hắc Long 5/5 mọi cách chơi; phần lớn số trận chỉ xê dịch vài phần trăm, chết 0–2. Riêng Kiếm Sĩ "chỉ đánh" (không nhiệm vụ / nâng cấp) khó hơn rõ: 450 → 508 trận, chết 0 → 6 (Chém Xoáy là đòn chính của lớp này). Theo dõi; cần thì nâng `cleave` lên 1.5.
+
+## Tự đánh kiểu MU Helper: phạm vi, kỹ năng, lọc đồ, lưu cài đặt (2026-10-17, anh chốt "làm như đề xuất")
+- So với MU Helper (Hunting / Obtaining): làm (1) phạm vi săn + về chỗ cũ, (2) cách dùng kỹ năng + buff trước,
+  (3) lọc đồ theo loại tích chọn, (5) lưu cài đặt theo nhân vật. Không làm: đánh trả từ xa, nhặt theo phạm vi, sửa đồ
+  (game theo lượt, đồ tự vào túi, không có độ bền). Chưa làm, chờ anh chốt: giữ đồ theo tên, tự về Làng mua bình.
+- `RULES.auto` (version 2): `range_options` [0, 4, 8, 12] ô (0 = cả bản đồ, mặc định), khoảng cách Manhattan tính từ chỗ bật;
+  `skills` all / basic / boss; `keep` exc / anc / luck / opt / better / cls, `keep_default` như bộ lọc "chỉ đồ quý" cũ
+  (không có `cls`). Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ. `loot: "good"` cũ đọc như `"pick"` + mặc định.
+- "Kỹ năng buff tung trước": kỹ năng có `buff` (Tháp) hoặc tác dụng war_cry / guard / shadow_step xếp trước trong lượt chọn;
+  hồi chiêu các kỹ năng này đều ≥ số lượt buff nên không tung đè.
+- **CHANGE_REASON (schema):** thêm cột `characters.auto_cfg` (map, migration `20261107000000_add_auto_cfg`) lưu cài đặt
+  lần bật gần nhất (target, hp, mp, loot, keep, range, skills). `p.auto` (đang chạy) vẫn chỉ trong bộ nhớ như B-31.
+- Lệnh `auto` nhận thêm `range`, `skills`, `keep` (protocol thêm trường, client cũ không gửi thì lấy mặc định).

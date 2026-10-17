@@ -917,8 +917,14 @@
       "hp_pct": {"default": 40, "min": 10, "max": 90},
       "mp_pct": {"default": 30, "min": 0, "max": 90},
       "keep_opt_min": 2,
+      "_cfg_doc": "Kiểu MU Helper: range: phạm vi săn (0 = cả bản đồ; N = chỉ quái trong N ô quanh chỗ bật, hết quái thì về chỗ bật đứng chờ), chọn trong range_options. skills: all = dùng bộ kỹ năng mang theo (kỹ năng buff tung trước), basic = chỉ đòn thường, boss = chỉ dùng kỹ năng với trùm / tinh anh / quái vàng / quái Bóng Đêm. keep: loại đồ giữ lại khi lọc (loot = pick): exc Excellent, anc đồ Thần, luck May mắn hoặc Kỹ năng, opt từ keep_opt_min dòng cộng thêm, better tốt hơn đồ đang mặc, cls mặc được (đúng lớp, đủ cấp); ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ.",
+      "range_options": [0, 4, 8, 12],
+      "range_default": 0,
+      "skills": ["all", "basic", "boss"],
+      "keep": ["exc", "anc", "luck", "opt", "better", "cls"],
+      "keep_default": ["exc", "anc", "luck", "opt", "better"],
       "sourceType": "DESIGN",
-      "version": 1,
+      "version": 2,
       "verified": false
     },
     "bots": {

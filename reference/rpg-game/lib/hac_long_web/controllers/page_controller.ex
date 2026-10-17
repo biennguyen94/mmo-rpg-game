@@ -106,6 +106,18 @@ defmodule HacLongWeb.PageController do
           redMult: Data.rules().slay.red_gold_mult
         },
         wingPerLevel: Data.rules().combat.wing_per_level,
+        # tự đánh: lựa chọn và mặc định cho bảng cài đặt
+        auto:
+          Map.take(Data.rules().auto, [
+            :hp_pct,
+            :mp_pct,
+            :range_options,
+            :range_default,
+            :skills,
+            :keep,
+            :keep_default,
+            :keep_opt_min
+          ]),
         # giải thích chỉ số ở tab Nhân vật (bấm vào từng dòng): số lấy từ RULES, client không giữ số riêng
         combatHelp: %{
           crit: Data.rules().combat.crit,

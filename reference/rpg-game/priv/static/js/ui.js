@@ -834,36 +834,57 @@
 
   // ---------- Tự đánh (Phase 4, B-31) ----------
   // Server tự đi tới quái, đánh (bộ kỹ năng đang mang), uống bình, rời trận khi còn tab mở; client chỉ gửi bật / tắt và cài đặt.
-  // Cài đặt lần trước nhớ ở trình duyệt (`hl-auto`).
-  const autoUi = (() => { let a = {}; try { a = JSON.parse(localStorage.getItem('hl-auto') || '{}') || {}; } catch (e) { a = {}; } return { target: a.target || 'level', hp: a.hp || 40, mp: a.mp != null ? a.mp : 30, loot: a.loot || 'all', open: false }; })();
-  const saveAutoUi = () => setPref('hl-auto', JSON.stringify({ target: autoUi.target, hp: autoUi.hp, mp: autoUi.mp, loot: autoUi.loot }));
+  // Cài đặt lần trước: server lưu theo nhân vật (`P.view.autoCfg`, đổi máy vẫn giữ); chưa có thì nhớ ở trình duyệt (`hl-auto`).
+  // Kiểu MU Helper: phạm vi săn, cách dùng kỹ năng, giữ loại đồ nào (`RULES.auto`).
+  const AUTO = RULES.auto || {};
+  const autoDefaults = () => ({ target: 'level', hp: (AUTO.hp_pct || {}).default || 40, mp: (AUTO.mp_pct || {}).default != null ? AUTO.mp_pct.default : 30, loot: 'all', keep: (AUTO.keep_default || []).slice(), range: AUTO.range_default || 0, skills: 'all' });
+  const autoFrom = (a) => {
+    const d = autoDefaults();
+    const loot = a.loot === 'good' ? 'pick' : a.loot === 'pick' ? 'pick' : 'all';
+    return { target: a.target || d.target, hp: a.hp || d.hp, mp: a.mp != null ? a.mp : d.mp, loot, keep: Array.isArray(a.keep) ? a.keep : d.keep, range: (AUTO.range_options || []).includes(a.range) ? a.range : d.range, skills: (AUTO.skills || []).includes(a.skills) ? a.skills : d.skills };
+  };
+  const autoUi = (() => { let a = {}; try { a = JSON.parse(localStorage.getItem('hl-auto') || '{}') || {}; } catch (e) { a = {}; } return Object.assign(autoFrom(a), { open: false, synced: false }); })();
+  const saveAutoUi = () => setPref('hl-auto', JSON.stringify({ target: autoUi.target, hp: autoUi.hp, mp: autoUi.mp, loot: autoUi.loot, keep: autoUi.keep, range: autoUi.range, skills: autoUi.skills }));
+  // lần đầu có dữ liệu nhân vật: lấy cài đặt server đã lưu
+  const syncAutoUi = () => { if (autoUi.synced || !P || !P.view) return; autoUi.synced = true; if (P.view.autoCfg) { Object.assign(autoUi, autoFrom(P.view.autoCfg)); saveAutoUi(); } };
+  const AUTO_SKILLS = { all: 'Dùng bộ kỹ năng (buff trước)', basic: 'Chỉ đòn thường (đỡ tốn mana)', boss: 'Kỹ năng chỉ với trùm, tinh anh' };
+  const AUTO_KEEP = { exc: 'Excellent', anc: 'Đồ Thần', luck: 'May mắn / Kỹ năng', opt: 'Có dòng cộng thêm', better: 'Tốt hơn đồ đang mặc', cls: 'Mặc được (đúng lớp)' };
+  const autoRangeLabel = (r) => (r ? `Quanh chỗ đứng ${r} ô` : 'Cả bản đồ');
   const autoKills = () => (P.auto ? Math.max(0, P.kills - P.auto.kills) : 0);
   const autoTargetName = (a) => a.target === 'level' ? 'quái hợp cấp' : ((P.view.autoMap.kinds.find((k) => k.id === a.target) || {}).name || a.target);
 
   function viewAuto() {
+    syncAutoUi();
     const am = P.view.autoMap || { ok: false, kinds: [] };
     const a = P.auto;
     if (a) {
       return `<div class="auto-bar on" id="auto-bar"><span class="auto-dot" aria-hidden="true"></span>
-        <span class="grow small" id="auto-stat">🤖 Tự đánh ${esc(autoTargetName(a))} · đã hạ <b class="num">${fmt(autoKills())}</b> · máu dưới ${a.hp}% · ${a.loot === 'good' ? 'chỉ giữ đồ quý' : 'giữ hết đồ'}</span>
+        <span class="grow small" id="auto-stat">🤖 Tự đánh ${esc(autoTargetName(a))} · đã hạ <b class="num">${fmt(autoKills())}</b> · ${esc(autoRangeLabel(a.range))} · máu dưới ${a.hp}% · ${a.loot === 'pick' ? 'lọc đồ' : 'giữ hết đồ'}</span>
         <button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>`;
     }
     if (!am.ok) return '<div class="auto-bar" id="auto-bar"><span class="small muted">🤖 Tự đánh: bản đồ này không có quái để tự đánh.</span></div>';
     if (autoUi.target !== 'level' && !am.kinds.some((k) => k.id === autoUi.target)) autoUi.target = 'level';
     const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
     const pcts = (lo, hi, cur) => { const o = []; for (let v = lo; v <= hi; v += 10) o.push(opt(v, cur, `${v}%`)); return o.join(''); };
+    const keepLabel = (k) => (k === 'opt' ? `Từ ${AUTO.keep_opt_min || 2} dòng cộng thêm` : AUTO_KEEP[k] || k);
+    const keeps = autoUi.loot === 'pick' ? `<fieldset class="auto-keep"><legend class="small">Giữ lại</legend>${(AUTO.keep || []).map((k) => `<label class="small"><input type="checkbox" data-auto-keep="${k}" ${autoUi.keep.includes(k) ? 'checked' : ''}> ${esc(keepLabel(k))}</label>`).join('')}
+        <p class="small muted">Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ. Món khác bị hủy ngay sau trận.</p></fieldset>` : '';
     const settings = autoUi.open ? `<div class="auto-set" role="dialog" aria-label="Cài đặt tự đánh">
         <div class="auto-set-head"><b>⚙ Cài đặt tự đánh</b><button class="btn small-btn" data-act="auto-set">Đóng</button></div>
         <label class="small">Đánh <select data-auto="target">${opt('level', autoUi.target, 'Quái hợp cấp')}${am.kinds.map((k) => opt(k.id, autoUi.target, `${k.name} (cấp ${k.level})`)).join('')}</select></label>
+        <label class="small wide">Phạm vi săn <select data-auto="range">${(AUTO.range_options || [0]).map((r) => opt(r, autoUi.range, autoRangeLabel(r))).join('')}</select></label>
+        <label class="small wide">Kỹ năng <select data-auto="skills">${(AUTO.skills || ['all']).map((k) => opt(k, autoUi.skills, AUTO_SKILLS[k] || k)).join('')}</select></label>
         <label class="small">Uống máu khi dưới <select data-auto="hp">${pcts(10, 90, autoUi.hp)}</select></label>
         <label class="small">Uống mana khi dưới <select data-auto="mp">${pcts(0, 90, autoUi.mp)}</select></label>
-        <label class="small">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('good', autoUi.loot, 'Chỉ giữ đồ quý')}</select></label>
-        <p class="small muted">Dùng bộ ${(RULES.towerSkills || {}).loadout || 5} kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game.</p>
+        <label class="small wide">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('pick', autoUi.loot, 'Chỉ giữ loại đã chọn')}</select></label>
+        ${keeps}
+        <p class="small muted">${autoUi.range ? `Chỉ đánh quái trong ${autoUi.range} ô quanh chỗ bấm bắt đầu; hết quái thì quay về chỗ đó đứng chờ. ` : ''}Bộ ${(RULES.towerSkills || {}).loadout || 5} kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game. Cài đặt lưu theo nhân vật khi bắt đầu.</p>
+        <button class="btn small-btn" data-act="auto-reset">Về mặc định</button>
         <button class="btn primary auto-go" data-act="auto-on">🤖 Bắt đầu tự đánh</button>
       </div>` : '';
     return `<div class="auto-bar" id="auto-bar">
         <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
-        <span class="grow small muted">${esc(autoUi.target === 'level' ? 'Quái hợp cấp' : autoTargetName(autoUi))} · máu dưới ${autoUi.hp}%</span>
+        <span class="grow small muted">${esc(autoUi.target === 'level' ? 'Quái hợp cấp' : autoTargetName(autoUi))} · ${esc(autoRangeLabel(autoUi.range))} · máu dưới ${autoUi.hp}%</span>
         <button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh">⚙</button>
         ${settings}</div>`;
   }
@@ -3343,7 +3364,8 @@
     if (act === 'icon-set') { setPref('hl-icons', t.dataset.set); render(); return; }
     if (act === 'map-fx') { setPref('hl-fx', Map_.fxOn() ? '0' : '1'); render(); return; }
     if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
-    if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot }); return; }
+    if (act === 'auto-reset') { Object.assign(autoUi, autoDefaults()); saveAutoUi(); render(); return; }
+    if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot, keep: autoUi.keep, range: +autoUi.range, skills: autoUi.skills }); return; }
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
@@ -3717,7 +3739,8 @@
       if (e.target.dataset.chaosCls) { chaosCls[e.target.dataset.chaosCls] = e.target.value; render(); }
       if (e.target.matches('[data-market-kind]')) { market.kind = e.target.value; render(); }
       if (e.target.matches('[data-market-sort]')) { market.sort = e.target.value; render(); }
-      if (e.target.dataset.auto) { const k = e.target.dataset.auto; autoUi[k] = k === 'hp' || k === 'mp' ? +e.target.value : e.target.value; saveAutoUi(); render(); }
+      if (e.target.dataset.auto) { const k = e.target.dataset.auto; autoUi[k] = k === 'hp' || k === 'mp' || k === 'range' ? +e.target.value : e.target.value; saveAutoUi(); render(); }
+      if (e.target.dataset.autoKeep) { const k = e.target.dataset.autoKeep; autoUi.keep = e.target.checked ? [...new Set(autoUi.keep.concat(k))] : autoUi.keep.filter((x) => x !== k); saveAutoUi(); render(); }
     });
     Net.onStatus((st, msg) => {
       const bar = $('#netbar');

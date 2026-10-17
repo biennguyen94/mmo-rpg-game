@@ -95,10 +95,16 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Thắng nhận kinh nghiệm, vàng, có khi rơi đồ hoặc ngọc. Gục ngã thì về Nhà, mất 10 % vàng đang mang.
 - **Hiệu ứng**: "LÊN CẤP" giữa màn hình khi lên cấp; số xanh khi hồi máu / MP; chữ lớn khi ép đồ thành công hay vỡ đồ.
 - **Tự đánh** (thanh 🤖 dưới bản đồ, chỉ khi đang mở game):
-  - Bấm ⚙ để chọn quái (quái hợp cấp hoặc một loại trên bản đồ), % máu / mana thì uống bình, giữ hết đồ hay chỉ đồ quý.
-  - Bấm **🤖 Tự đánh**: server tự đi tới quái, đánh bằng bộ 4 kỹ năng đang mang, uống bình, rời bảng kết quả.
-    "Chỉ đồ quý" thì hủy món đồ thường vừa nhặt (giữ Excellent, Thần, May mắn, Kỹ năng, từ 2 dòng cộng thêm, cánh,
-    trang sức, món tốt hơn đồ đang mặc).
+  - Bấm ⚙ (cài đặt kiểu MU Helper):
+    - **Đánh**: quái hợp cấp hoặc một loại trên bản đồ.
+    - **Phạm vi săn**: cả bản đồ, hoặc chỉ quái trong 4 / 8 / 12 ô quanh chỗ bấm bắt đầu; hết quái thì quay về chỗ đó đứng chờ.
+    - **Kỹ năng**: dùng bộ kỹ năng đang mang (kỹ năng buff tung trước), chỉ đòn thường (đỡ tốn mana), hoặc chỉ dùng kỹ năng với
+      trùm / tinh anh / quái vàng / quái Bóng Đêm.
+    - **Uống máu / mana** khi dưới bao nhiêu %.
+    - **Đồ rơi**: giữ hết, hoặc chỉ giữ loại đã tích (Excellent, Đồ Thần, May mắn / Kỹ năng, từ 2 dòng cộng thêm, tốt hơn đồ
+      đang mặc, mặc được); món khác bị hủy ngay sau trận. Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ.
+    - **Về mặc định** đưa mọi ô về như ban đầu. Cài đặt lưu theo nhân vật khi bấm bắt đầu (đổi máy vẫn giữ).
+  - Bấm **🤖 Tự đánh** / **Bắt đầu tự đánh**: server tự đi tới quái, đánh, uống bình, rời bảng kết quả.
   - Tự tắt khi: hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ, đóng hết tab game.
     Bấm **Tắt** (dưới bản đồ hoặc trong trận) để dừng bất cứ lúc nào.
 

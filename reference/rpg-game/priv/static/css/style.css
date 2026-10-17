@@ -816,9 +816,14 @@ body.tl-on { overflow: hidden; }
 .auto-set-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
 .auto-set-head b { flex: 1 1 auto; }
 .auto-set label { display: flex; flex-direction: column; justify-content: space-between; gap: 2px; min-width: 0; }
-.auto-set label:first-of-type { grid-column: 1 / -1; }
+.auto-set > label:first-of-type { grid-column: 1 / -1; }
 .auto-set select { width: 100%; }
 .auto-set p { grid-column: 1 / -1; margin: 0; }
+.auto-keep { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.auto-keep legend { padding: 0 4px; }
+.auto-keep label { flex-direction: row; align-items: center; justify-content: flex-start; gap: 6px; }
+.auto-set > label.wide { grid-column: 1 / -1; }
+.auto-keep p { grid-column: 1 / -1; }
 .auto-set .auto-go { grid-column: 1 / -1; }
 @media (prefers-reduced-motion: reduce) { .auto-dot { animation: none; } }
 

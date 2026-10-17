@@ -3,13 +3,18 @@ defmodule HacLong.Game.AutoHunt do
   Tự đánh quái (Phase 4, `DECISIONS.md` B-31): chỉ chạy khi người chơi đang online (còn tab mở), trên bản đồ đang đứng.
 
   Cài đặt nằm ở `p.auto` (chỉ trong bộ nhớ, không lưu database; đóng hết tab là tắt):
-  `%{map, target, hp, mp, loot, kills}`.
+  `%{map, target, hp, mp, loot, keep, range, origin, skills, kills}`. Bật là lưu cài đặt (trừ bản đồ, chỗ bật, số
+  quái) vào `p.auto_cfg` (cột `characters.auto_cfg`) để lần sau, máy khác, mở lại đúng như cũ.
 
   - `target`: `"level"` (quái cấp không quá cấp mình + 1; bản đồ không có con nào như vậy, vd vùng chuyển sinh, thì
     mọi quái thường) hoặc mã một loại quái có trên bản đồ.
   - `hp`, `mp`: % máu / MP dưới mức này thì uống bình (`RULES.auto.hp_pct`, `mp_pct`).
-  - `loot`: `"all"` giữ mọi đồ rơi; `"good"` hủy món đồ thường vừa nhặt (giữ Excellent, Thần, May mắn, Kỹ năng,
-    từ `RULES.auto.keep_opt_min` dòng cộng thêm, cánh / trang sức, món tốt hơn đồ đang mặc).
+  - `loot`: `"all"` giữ mọi đồ rơi; `"pick"` hủy món đồ vừa nhặt không thuộc loại nào trong `keep`
+    (`RULES.auto.keep`: exc, anc, luck, opt, better, cls; cánh / nhẫn / dây chuyền / ngọc / nguyên liệu luôn giữ).
+    `"good"` cũ đọc như `"pick"` với `RULES.auto.keep_default`.
+  - `range`: 0 săn cả bản đồ; N chỉ đánh quái trong N ô (Manhattan) quanh `origin` (chỗ bật), hết quái thì về `origin`.
+  - `skills`: `"all"` dùng bộ kỹ năng (buff trước), `"basic"` chỉ đòn thường, `"boss"` chỉ dùng kỹ năng với trùm /
+    tinh anh / quái vàng / quái Bóng Đêm (`Brain.fight/4`).
   - `kills`: số quái đã hạ lúc bật (client hiện số hạ được từ lúc bật).
 
   `decide/2` là hàm thuần: từ nhân vật và trạng thái bản đồ (`MapServer.snapshot/1`) trả `{:cmd, lệnh}` (lệnh như
@@ -23,7 +28,6 @@ defmodule HacLong.Game.AutoHunt do
   alias HacLong.World.Maps
 
   @r Data.rules().auto
-  @loots ~w(all good)
 
   @doc "Nhịp (ms) tới lần ra lệnh sau, theo lệnh vừa gửi."
   def delay(%{battle: %{}}, _cmd), do: @r.tick_ms.battle
@@ -73,18 +77,39 @@ defmodule HacLong.Game.AutoHunt do
         {%{ok: false, msg: "Chọn quái có trên bản đồ này."}, p}
 
       true ->
+        {loot, keep} = loot(c["loot"], c["keep"])
+
         auto = %{
           map: id,
           target: target,
           hp: pct(c["hp"], @r.hp_pct),
           mp: pct(c["mp"], @r.mp_pct),
-          loot: if(c["loot"] in @loots, do: c["loot"], else: "all"),
+          loot: loot,
+          keep: keep,
+          range: if(c["range"] in @r.range_options, do: c["range"], else: @r.range_default),
+          origin: [p.pos.x, p.pos.y],
+          skills: if(c["skills"] in @r.skills, do: c["skills"], else: "all"),
           kills: p.kills
         }
 
-        {%{ok: true, msg: "Bắt đầu tự đánh."}, Map.put(p, :auto, auto)}
+        cfg =
+          auto
+          |> Map.take([:target, :hp, :mp, :loot, :keep, :range, :skills])
+          |> Map.new(fn {k, v} -> {to_string(k), v} end)
+
+        {%{ok: true, msg: "Bắt đầu tự đánh."},
+         p |> Map.put(:auto, auto) |> Map.put(:auto_cfg, cfg)}
     end
   end
+
+  # "good" (bản cũ) = lọc theo mặc định
+  defp loot("good", _keep), do: {"pick", @r.keep_default}
+
+  defp loot("pick", keep) when is_list(keep),
+    do: {"pick", Enum.filter(@r.keep, &(&1 in keep))}
+
+  defp loot("pick", _keep), do: {"pick", @r.keep_default}
+  defp loot(_, _keep), do: {"all", @r.keep_default}
 
   defp pct(v, r) when is_integer(v), do: v |> max(r.min) |> min(r.max)
   defp pct(_v, r), do: r.default
@@ -109,7 +134,7 @@ defmodule HacLong.Game.AutoHunt do
       %{} ->
         if p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) == nil,
           do: {:stop, "Hết bình máu — tự đánh đã tắt."},
-          else: {:cmd, Brain.fight(p, hp, a.mp / 100)}
+          else: {:cmd, Brain.fight(p, hp, a.mp / 100, Map.get(a, :skills, "all"))}
 
       nil ->
         roam(p, snap, a, d, hp)
@@ -125,7 +150,7 @@ defmodule HacLong.Game.AutoHunt do
            else: "Đã rời trận — tự đánh đã tắt."
          )}
 
-      id = a.loot == "good" && junk(p, b) ->
+      id = a.loot == "pick" && junk(p, b, a.keep) ->
         {:cmd, %{"act" => "discard", "id" => id}}
 
       true ->
@@ -134,20 +159,28 @@ defmodule HacLong.Game.AutoHunt do
   end
 
   # món đồ thường vừa nhặt (còn trong túi, chưa khóa) đầu tiên
-  defp junk(p, b) do
+  defp junk(p, b, keep) do
     reward = b[:reward] || %{}
 
     Enum.find(reward[:gear_ids] || [], fn uid ->
       g = Gear.find(p, uid)
-      g != nil and !g[:locked] and !g[:stored] and not good?(p, Gear.resolve(g))
+      g != nil and !g[:locked] and !g[:stored] and not good?(p, Gear.resolve(g), keep)
     end)
   end
 
-  @doc "Món đáng giữ khi lọc `\"good\"` (xem moduledoc)."
-  def good?(p, it) do
-    it.exc != [] or it.anc or it.luck or it.skill or it.opt >= @r.keep_opt_min or
-      it.slot not in Engine.gear_slots() or it.slot in ["ring", "pendant"] or better?(p, it)
+  @doc "Món đáng giữ khi lọc `\"pick\"` theo các loại `keep` (xem moduledoc)."
+  def good?(p, it, keep \\ @r.keep_default) do
+    it.slot not in Engine.gear_slots() or it.slot in ["ring", "pendant"] or
+      Enum.any?(keep, &keep?(&1, p, it))
   end
+
+  defp keep?("exc", _p, it), do: it.exc != []
+  defp keep?("anc", _p, it), do: it.anc == true
+  defp keep?("luck", _p, it), do: it.luck == true or it.skill == true
+  defp keep?("opt", _p, it), do: it.opt >= @r.keep_opt_min
+  defp keep?("better", p, it), do: better?(p, it)
+  defp keep?("cls", p, it), do: Engine.can_wear?(p, it)
+  defp keep?(_, _p, _it), do: false
 
   defp better?(p, it) do
     Engine.can_wear?(p, it) and
@@ -169,10 +202,28 @@ defmodule HacLong.Game.AutoHunt do
         {:cmd, %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}}
 
       true ->
-        case Brain.hunt(p, snap, keep(p, a)) do
-          nil -> :wait
-          cmd -> {:cmd, cmd}
-        end
+        hunt(p, snap, a)
+    end
+  end
+
+  # cả bản đồ: như bot (không có quái thì đi lang thang)
+  defp hunt(p, snap, %{range: r} = a) when r > 0 do
+    [ox, oy] = a.origin
+    near = keep(p, a)
+    keep = fn m, map -> abs(m.x - ox) + abs(m.y - oy) <= r and near.(m, map) end
+
+    cond do
+      cmd = Brain.hunt(p, snap, keep, false) -> {:cmd, cmd}
+      [p.pos.x, p.pos.y] == a.origin -> :wait
+      cmd = Brain.walk(p, Maps.get(p.pos.map), [{ox, oy}], snap) -> {:cmd, cmd}
+      true -> :wait
+    end
+  end
+
+  defp hunt(p, snap, a) do
+    case Brain.hunt(p, snap, keep(p, a)) do
+      nil -> :wait
+      cmd -> {:cmd, cmd}
     end
   end
 

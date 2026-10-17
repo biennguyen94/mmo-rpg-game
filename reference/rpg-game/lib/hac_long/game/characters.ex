@@ -191,6 +191,7 @@ defmodule HacLong.Game.Characters do
       food: food(c.food),
       blessing: HacLong.Game.Blessing.load(c.blessing),
       skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
+      auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,
         smith: (c.crafting || %{})["smith"] || 0
