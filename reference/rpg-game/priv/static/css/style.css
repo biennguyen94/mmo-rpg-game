@@ -592,16 +592,15 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering
 #view.fit { overflow: hidden; padding-bottom: 10px; gap: 8px; }
 #view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
 #view.fit .map-hint { display: none; }
-#view.fit .log { flex: 2 1 120px; min-height: 120px; height: auto; }
-#view.fit > .stage { flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px; }
+#view.fit .log { flex: 2 1 120px; min-height: 64px; height: auto; }
+/* màn trận khít màn hình: lưới, hàng hình quái (hàng 2) co từ 0 tới đủ cỡ; các hàng chữ và thanh máu quái không co,
+   nên màn thấp / chữ to thì hình quái nhỏ lại (tới mất hẳn) chứ thanh máu quái không bị cắt */
+#view.fit > .stage { flex: 0 1 auto; min-height: auto; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-auto-rows: auto; justify-items: center; align-content: start; gap: 4px; padding: 10px 12px; overflow: visible; }
 #view.fit > .stage h2 { font-size: 1.6rem; }
 #view.fit > .stage > .small { font-size: 0.78rem; }
 #view.fit .me .sprite { width: 34px; height: 34px; }
-/* V8: điện thoại thấp — hình quái co lại, tên và thanh máu quái luôn thấy */
-#view.fit > .stage > * { flex: none; }
-#view.fit > .stage .sprite { flex: 0 1 96px; min-height: 48px; height: 96px; width: auto; aspect-ratio: 1; object-fit: contain; }
-#view.fit > .stage.boss .sprite { flex-basis: 128px; height: 128px; }
-#view.fit > .stage.world .sprite { flex-basis: 128px; height: 128px; }
+#view.fit > .stage > .sprite { grid-row: 2; height: 100%; max-height: 96px; min-height: 0; width: auto; max-width: 96px; aspect-ratio: 1; object-fit: contain; }
+#view.fit > .stage.boss > .sprite, #view.fit > .stage.world > .sprite { max-height: 128px; max-width: 128px; }
 .map-wrap .map-dialog { z-index: 6; }
 
 /* V7: nút Vừa màn hình trên bản đồ */

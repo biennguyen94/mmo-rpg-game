@@ -38,7 +38,7 @@
         {
           "id": "twisting_slash",
           "name": "Chém Xoáy",
-          "desc": "Gây 220% sát thương.",
+          "desc": "Gây 140% sát thương.",
           "icon": "sword-spin",
           "cooldown": 3,
           "level": 1,
@@ -236,7 +236,7 @@
         {
           "id": "fire_ball",
           "name": "Cầu Lửa",
-          "desc": "Gây 200% sát thương, xuyên 30% giáp.",
+          "desc": "Gây 135% sát thương, xuyên 30% giáp.",
           "icon": "dragon-breath",
           "cooldown": 3,
           "level": 1,
@@ -425,7 +425,7 @@
         {
           "id": "triple_shot",
           "name": "Tam Tiễn",
-          "desc": "Chắc chắn chí mạng, xuyên 50% giáp.",
+          "desc": "Chắc chắn chí mạng, xuyên 30% giáp.",
           "icon": "backstab",
           "cooldown": 3,
           "level": 1,
@@ -628,7 +628,7 @@
         {
           "id": "power_slash",
           "name": "Kiếm Lửa",
-          "desc": "Gây 200% sát thương, xuyên 30% giáp.",
+          "desc": "Gây 135% sát thương, xuyên 30% giáp.",
           "icon": "relic-blade",
           "cooldown": 3,
           "level": 1,
@@ -650,7 +650,7 @@
         {
           "id": "gigantic_storm",
           "name": "Phán Quyết",
-          "desc": "Gây 180% sát thương, làm quái suy yếu: tấn công -30% trong 3 lượt.",
+          "desc": "Gây 140% sát thương, làm quái suy yếu: tấn công -30% trong 3 lượt.",
           "icon": "winged-sword",
           "cooldown": 5,
           "level": 25,

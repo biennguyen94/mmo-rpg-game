@@ -482,3 +482,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - Header điện thoại: tên + cấp một dòng (cấp luôn hiện), vàng xuống dòng dưới tên.
   - Cài đặt: hàng nút xuống dòng, không che tiêu đề mục.
   - Hiệu ứng bản đồ: vòng `requestAnimationFrame` ~30 khung/giây đều nhịp (trước ~12 khung/giây bằng hẹn giờ nên lá / tuyết giật).
+
+## Hạ kỹ năng lớp xuống dưới kỹ năng Tháp (2026-10-17, anh chốt phương án A)
+- Trước: kỹ năng lớp cấp 1 mạnh hơn kỹ năng Tháp tầng 10–30 (Chém Xoáy 220% hồi 3 lượt so với Phong Trảm tầng 10 145% hồi 4 lượt), thưởng Tháp gần như vô nghĩa đầu game.
+- `RULES.skill_effects`: `cleave` 2.2 → 1.4 (Chém Xoáy); `fire_ball` 2.0 → 1.35, giữ xuyên 30% giáp (Cầu Lửa, Kiếm Lửa); `judgement` 1.8 → 1.4 (Phán Quyết); `backstab` `def_mult` 0.5 → 0.7 (Tam Tiễn xuyên 30% giáp, vẫn chắc chắn chí mạng). Mô tả trong `classes.json` sửa theo.
+- Giữ nguyên các kỹ năng mà tác dụng phụ là chính: Trảm Choáng, Tia Sét, Hồi Sinh Lực, Tăng Sức Mạnh, Khiên Linh Hồn, Nộ Chiến, Kiếm Độc Hỏa.
+- `mix hac_long.simulate 5 --seed 42` trước / sau: cả 4 lớp vẫn hạ Hắc Long 5/5 mọi cách chơi; phần lớn số trận chỉ xê dịch vài phần trăm, chết 0–2. Riêng Kiếm Sĩ "chỉ đánh" (không nhiệm vụ / nâng cấp) khó hơn rõ: 450 → 508 trận, chết 0 → 6 (Chém Xoáy là đòn chính của lớp này). Theo dõi; cần thì nâng `cleave` lên 1.5.
