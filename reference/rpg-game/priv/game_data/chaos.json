@@ -80,20 +80,6 @@
       "out": "jewel_chaos"
     },
     {
-      "id": "soul_to_bless",
-      "name": "Đổi Ngọc Ước Nguyện",
-      "desc": "2 Ngọc Tâm Linh → 1 Ngọc Ước Nguyện, luôn thành công (Tâm Linh thừa khi đồ đã +9 thì đổi lấy Ước Nguyện để ép các món còn lại).",
-      "items": {
-        "jewel_soul": 2
-      },
-      "gold": 10000,
-      "rate": 1.0,
-      "out": "jewel_bless",
-      "sourceType": "DESIGN",
-      "version": 1,
-      "verified": false
-    },
-    {
       "id": "add_exc",
       "name": "Pha Excellent",
       "mode": "excellent",

@@ -129,11 +129,12 @@
   },
   "JEWELS": {
     "weights": {
-      "jewel_bless": 50,
-      "jewel_soul": 35,
+      "jewel_bless": 60,
+      "jewel_soul": 25,
       "jewel_chaos": 15,
       "jewel_life": 10
     },
+    "_doc_weights": "Trọng số loại ngọc rơi. Ước Nguyện 50 → 60, Tâm Linh 35 → 25 (2026-10-17, DECISIONS \"Tỉ lệ rơi Ước Nguyện\"): mô phỏng đầy đủ thừa Tâm Linh, thiếu Ước Nguyện cho +1…+6.",
     "monster_level": 12,
     "monster_chance": 0.015,
     "_doc_monster_chance": "Quái thường cấp ≥ monster_level rơi 1 viên ngọc (loại theo weights). 0,006 → 0,015 (2026-10-17, DECISIONS \"Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh\"): trước ~370 con mới có 1 Ước Nguyện.",

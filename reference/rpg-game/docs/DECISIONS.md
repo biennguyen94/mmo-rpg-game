@@ -661,11 +661,14 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   12 200–12 800 trận (~16–20 giờ đánh), chết 8–22 lần; hạ chúa tể 26–32 lần, thua 3–6; kỷ lục tháp 49–59. Không còn chặng
   kẹt → **giữ nguyên sức chúa tể** (khó với người chơi chưa leo tháp / ép đồ, đúng ý ban đầu).
 
-## Đổi Tâm Linh lấy Ước Nguyện; bot chọn kỹ năng, uống mana (2026-10-17, anh "sửa 2 điểm trên")
-- Mô phỏng đầy đủ: cuối hành trình còn 33–56 Ngọc Tâm Linh không dùng, Ước Nguyện cạn (giáp kẹt +0…+4 vì +1…+6 cần Ước Nguyện).
-  Thêm công thức Máy Hỗn Nguyên `soul_to_bless`: **2 Tâm Linh → 1 Ước Nguyện**, 10 000 vàng, luôn thành công (`chaos.json`).
-  Bot mô phỏng đổi khi Ước Nguyện < 6 và Tâm Linh dư ngoài 6 viên giữ cho +7…+9 và phần giữ cho cánh.
+## Bot chọn kỹ năng, uống mana (2026-10-17, anh "sửa 2 điểm trên")
+- (Bản đầu thêm công thức đổi 2 Tâm Linh → 1 Ước Nguyện; anh không muốn đổi ngọc → bỏ, thay bằng chỉnh tỉ lệ rơi, mục dưới.)
 - Tiên Nữ ở tháp 100 thua chúa tể nhiều hơn tháp 50: không phải mất kỹ năng hồi máu (bộ vẫn có Phúc Lành) mà do MP — kỹ năng
   tháp 60–100 tốn 55–79 MP ở cấp 50, Tiên Nữ / Kiếm Sĩ chỉ có 83–113 MP; bot chỉ uống mana khi MP < 30 %. Sửa bot
   (`Brain.fight/1`): còn kỹ năng hết hồi chiêu mà không đủ MP thì uống bình mana; `Brain.loadout/2`: bỏ kỹ năng tốn hơn MP tối
   đa, giữ một kỹ năng hồi / hút máu, còn lại hệ số cao nhất. Tiên Nữ tháp 100 vs chúa tể vùng 9: 21 % → 54 % (tháp 50: 83 %).
+
+## Tỉ lệ rơi Ước Nguyện (2026-10-17, anh: không đổi ngọc, chỉnh tỉ lệ rơi)
+- Trọng số loại ngọc (`JEWELS.weights`, upgrade.json): Ước Nguyện 50 → **60**, Tâm Linh 35 → **25** (Hỗn Nguyên 15, Sinh Mệnh 10
+  giữ nguyên, tổng không đổi nên số ngọc rơi như cũ). Mỗi viên ngọc rơi: Ước Nguyện 45 % → 55 %, Tâm Linh 32 % → 23 %.
+- Lý do: mô phỏng đầy đủ thừa 33–56 Tâm Linh cuối hành trình, Ước Nguyện cạn nên giáp / trang sức kẹt +0…+4.
