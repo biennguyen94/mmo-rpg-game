@@ -10,10 +10,12 @@ defmodule HacLong.Bots.Brain do
      kỹ năng mạnh nhất đang sẵn → dùng; còn lại đánh thường.
   3. Còn điểm tiềm năng → cộng hết vào chỉ số chính của lớp.
   4. Trong túi có vũ khí / giáp / khiên tốt hơn đồ đang mặc → mặc.
-  5. Máu < 45 %: có bình thì uống, không thì về Nhà (miễn phí) uống nước giếng.
-  6. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
-  7. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
-  8. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
+  5. Máu < 45 % và có bình → uống.
+  6. Sắp hết bình (Phase 5, `RULES.bots.potion_min` / `mana_min`) mà đủ vàng → về Làng mua ở Bà Lang (`restock/1`).
+  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì về Nhà (miễn phí) uống nước giếng.
+  8. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
+  9. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
+  10. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
@@ -27,6 +29,9 @@ defmodule HacLong.Bots.Brain do
   @dirs %{"up" => {0, -1}, "down" => {0, 1}, "left" => {-1, 0}, "right" => {1, 0}}
 
   @rest Data.rules().bots.rest_after_death_s
+  @shop Data.rules().bots
+  @hp_ids ~w(potion_s potion_m potion_l)
+  @mp_ids ~w(mana_s mana_m mana_l)
   @opt_line Data.rules().upgrade.life.per_line
 
   @doc """
@@ -65,8 +70,14 @@ defmodule HacLong.Bots.Brain do
       g = better_gear(p) ->
         %{"act" => "equip", "id" => g}
 
+      p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
+        %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
+
+      (need = restock(p)) != [] ->
+        shop(p, need, snap)
+
       p.hp < d.maxHp * 0.45 ->
-        heal(p, d)
+        heal(p, d, snap)
 
       true ->
         roam(p, snap, opts[:seed] || 0)
@@ -125,12 +136,70 @@ defmodule HacLong.Bots.Brain do
   def power(it),
     do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * @opt_line
 
-  defp heal(p, d) do
-    case Engine.best_potion(p, d.maxHp - p.hp) do
-      nil -> go_home_fountain(p)
-      id -> %{"act" => "use", "id" => id}
-    end
+  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
+  defp heal(p, _d, snap) do
+    if p.gold >= Engine.rest_cost(p) * @shop.inn_gold_mult and village_npc("inn"),
+      do: at_village_npc(p, "inn", snap, fn -> %{"act" => "rest"} end),
+      else: go_home_fountain(p)
   end
+
+  # ---------- Mua bình (Phase 5, B-32) ----------
+
+  @doc """
+  Bình cần mua: `[{id, số}]`. Còn ít hơn `RULES.bots.potion_min` bình máu thì mua tới `potion_buy` (bình mana tương
+  tự, chỉ lớp có MP); chỉ tính khi mua được ít nhất mức tối thiểu với số vàng đang có.
+  """
+  def restock(p) do
+    d = Engine.derived(p)
+
+    kinds =
+      [{@hp_ids, d.maxHp, @shop.potion_min, @shop.potion_buy}] ++
+        if d.maxMp > 0, do: [{@mp_ids, d.maxMp, @shop.mana_min, @shop.mana_buy}], else: []
+
+    {need, _gold} =
+      Enum.reduce(kinds, {[], p.gold}, fn {ids, max, min, buy}, {acc, gold} ->
+        have = Enum.sum(Enum.map(ids, &Map.get(p.inv, &1, 0)))
+
+        with true <- have < min,
+             id when id != nil <- pick_potion(p, ids, max, gold, min),
+             n = min(buy - have, div(gold, Engine.price(p, id))),
+             true <- n >= min - have do
+          {acc ++ [{id, n}], gold - n * Engine.price(p, id)}
+        else
+          _ -> {acc, gold}
+        end
+      end)
+
+    need
+  end
+
+  # rẻ nhất mà hồi được ≥ `potion_heal_min` máu (MP) tối đa; không có thì loại mạnh nhất mua được `min` bình
+  defp pick_potion(p, ids, max, gold, min) do
+    ok =
+      Enum.filter(ids, fn id ->
+        it = Data.item(id)
+        (it[:level] || 0) <= p.level and gold >= Engine.price(p, id) * min
+      end)
+
+    Enum.find(ok, &(elem(Engine.potion_amount(p, &1), 1) >= max * @shop.potion_heal_min)) ||
+      List.last(ok)
+  end
+
+  defp shop(p, [{id, n} | _], snap),
+    do: at_village_npc(p, "herbalist", snap, fn -> %{"act" => "buy", "id" => id, "n" => n} end)
+
+  defp village_npc(role), do: Enum.find(Maps.get("village").npcs, &(&1.role == role))
+
+  # tới NPC `role` ở Làng; đứng cạnh rồi thì ra lệnh `then`
+  defp at_village_npc(%{pos: %{map: "village", x: x, y: y}} = p, role, snap, then) do
+    %{at: {nx, ny}} = village_npc(role)
+
+    if abs(nx - x) + abs(ny - y) == 1,
+      do: then.(),
+      else: walk(p, Maps.get("village"), [{nx, ny}], snap)
+  end
+
+  defp at_village_npc(p, _role, _snap, _then), do: go_to(p, "village")
 
   defp go_home_fountain(%{pos: %{map: "home"}} = p) do
     map = Maps.get("home")

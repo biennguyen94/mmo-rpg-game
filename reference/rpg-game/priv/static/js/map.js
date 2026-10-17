@@ -145,6 +145,122 @@
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
 
+  // ---------- Bản đồ động (Phase 5, B-32) ----------
+  // Chỉ là hình: nước gợn, cây lay, quái nhún nhẹ, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp ở Làng,
+  // đài phun nước lấp lánh. Hạt tính thẳng từ thời gian (không giữ trạng thái) nên rất nhẹ; vẽ lại ~12 khung/giây khi
+  // đang xem bản đồ. Tắt ở Menu → Cài đặt (`hl-fx`); máy đặt "giảm chuyển động" thì mặc định tắt.
+  const fxOn = () => {
+    try {
+      const v = localStorage.getItem('hl-fx');
+      if (v) return v === '1';
+    } catch (e) { /* bị chặn: theo mặc định */ }
+    return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  };
+  const FX_MS = 85;
+  let fxTimer = null;
+  function fxTick() {
+    if (fxTimer || !fxOn() || !canvas || document.hidden) return;
+    fxTimer = setTimeout(() => { fxTimer = null; if (canvas && canvas.isConnected) requestAnimationFrame(draw); }, FX_MS);
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) draw(); });
+  // số giả ngẫu nhiên cố định theo chỉ số (hạt thời tiết, đom đóm)
+  const rnd = (i, k) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+  // thời tiết theo nền bản đồ
+  function weatherOf(m, id) {
+    if (id === 'village') return 'smoke';
+    const f = m.floor || '';
+    if (f.includes('swamp')) return 'rain';
+    if (f.includes('lair')) return 'embers';
+    if (f.includes('mountain')) return 'snow';
+    if (f.includes('graveyard')) return 'fog';
+    if (f.includes('forest') || f.includes('camp')) return 'leaves';
+    return null;
+  }
+  // ống khói: góc trên phải mỗi khối nhà gạch (ô "#") ở Làng
+  const chimneyCache = new Map();
+  function chimneys(m, id) {
+    if (!chimneyCache.has(id)) {
+      const out = [];
+      m.tiles.forEach((row, y) => [...row].forEach((c, x) => {
+        if (c === '#' && tileAt(m, x, y - 1) !== '#' && tileAt(m, x + 1, y) !== '#') out.push([x, y]);
+      }));
+      chimneyCache.set(id, out);
+    }
+    return chimneyCache.get(id);
+  }
+
+  function weather(kind, t, cx, cy, m, id) {
+    const vw = VW(), vh = VH();
+    if (kind === 'rain') {
+      ctx.strokeStyle = 'rgba(170, 200, 230, 0.5)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 70; i++) {
+        const x = ((rnd(i, 1) * vw + t * 0.12) % (vw + 40)) - 20, y = (rnd(i, 2) * vh + t * 0.55) % vh;
+        ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9);
+      }
+      ctx.stroke();
+    } else if (kind === 'snow') {
+      ctx.fillStyle = 'rgba(245, 248, 255, 0.8)';
+      for (let i = 0; i < 55; i++) {
+        const x = (rnd(i, 1) * vw + Math.sin(t / 900 + i) * 12 + vw) % vw, y = (rnd(i, 2) * vh + t * (0.025 + rnd(i, 3) * 0.03)) % vh;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    } else if (kind === 'embers') {
+      for (let i = 0; i < 40; i++) {
+        const x = (rnd(i, 1) * vw + Math.sin(t / 700 + i) * 10 + vw) % vw, y = vh - ((rnd(i, 2) * vh + t * (0.02 + rnd(i, 3) * 0.03)) % vh);
+        const a = 0.4 + 0.5 * Math.abs(Math.sin(t / 300 + i));
+        ctx.fillStyle = `rgba(255, ${120 + Math.round(rnd(i, 4) * 80)}, 40, ${a})`;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    } else if (kind === 'leaves') {
+      for (let i = 0; i < 12; i++) {
+        const x = (rnd(i, 1) * vw + t * 0.03 + Math.sin(t / 800 + i) * 18 + vw) % vw, y = (rnd(i, 2) * vh + t * 0.022) % vh;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t / 500 + i) * 0.9);
+        ctx.fillStyle = rnd(i, 3) > 0.5 ? 'rgba(196, 140, 52, 0.75)' : 'rgba(120, 160, 60, 0.7)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    } else if (kind === 'fog') {
+      for (let i = 0; i < 6; i++) {
+        const x = ((rnd(i, 1) * (vw + 240) + t * 0.012 * (1 + rnd(i, 3))) % (vw + 240)) - 120, y = rnd(i, 2) * vh;
+        const g = ctx.createRadialGradient(x, y, 4, x, y, 110);
+        g.addColorStop(0, 'rgba(200, 205, 220, 0.16)'); g.addColorStop(1, 'rgba(200, 205, 220, 0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 110, y - 110, 220, 220);
+      }
+    } else if (kind === 'smoke') {
+      chimneys(m, id).forEach(([gx, gy], j) => {
+        const bx = gx * TILE - cx + TILE - 8, by = gy * TILE - cy + 2;
+        for (let i = 0; i < 6; i++) {
+          const k = ((t / 2600 + i / 6 + j * 0.37) % 1);
+          const r = 3 + k * 8;
+          ctx.fillStyle = `rgba(210, 205, 200, ${0.4 * (1 - k)})`;
+          ctx.beginPath(); ctx.arc(bx + Math.sin(t / 700 + i + j) * 4 + k * 10, by - k * 34, r, 0, Math.PI * 2); ctx.fill();
+        }
+      });
+    }
+  }
+
+  // sau lớp bóng tối: đom đóm ngoài trời và đèn lồng quanh người dân ở Làng
+  function nightGlow(t, m, cx, cy, dark) {
+    const vw = VW(), vh = VH();
+    for (const n of m.npcs || []) {
+      const x = n.at[0] * TILE - cx + TILE / 2, y = n.at[1] * TILE - cy + TILE / 2;
+      if (x < -60 || y < -60 || x > vw + 60 || y > vh + 60) continue;
+      const f = 0.85 + 0.15 * Math.sin(t / 180 + n.at[0]);
+      const g = ctx.createRadialGradient(x, y, 2, x, y, TILE * 1.6);
+      g.addColorStop(0, `rgba(255, 196, 110, ${0.35 * dark * f})`); g.addColorStop(1, 'rgba(255, 196, 110, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.6, y - TILE * 1.6, TILE * 3.2, TILE * 3.2);
+    }
+    for (let i = 0; i < 16; i++) {
+      const x = (rnd(i, 1) * vw + Math.sin(t / 1300 + i * 2) * 30 + vw) % vw, y = (rnd(i, 2) * vh + Math.cos(t / 1700 + i) * 22 + vh) % vh;
+      const a = Math.max(0, Math.sin(t / 420 + i * 1.7)) * dark;
+      if (a < 0.05) continue;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
+      g.addColorStop(0, `rgba(220, 255, 140, ${a})`); g.addColorStop(1, 'rgba(220, 255, 140, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 6, y - 6, 12, 12);
+    }
+  }
+
   // Hỗn Chiến Thành (B-19): chờ hỗn chiến / còn bao nhiêu người, quái (P.view.cc)
   function ccTop(P) {
     const c = P.view && P.view.cc;
@@ -258,6 +374,7 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
+    const fx = fxOn(), fountains = [];
 
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -267,7 +384,21 @@
         if (kind !== 'floor') {
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
           const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
-          if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+          const sway = fx && (kind === 'tree' || kind === 'tree_autumn') ? Math.sin(now / 900 + x * 0.8 + y * 0.5) * 0.045 : 0;
+          if (im.complete && sway) {
+            // cây lay theo gió: nghiêng quanh gốc
+            ctx.save(); ctx.translate(px + TILE / 2, py + TILE); ctx.transform(1, 0, sway, 1, 0, 0);
+            ctx.drawImage(im, -TILE / 2, -TILE, TILE, TILE); ctx.restore();
+          } else if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+          if (fx && kind === 'water') {
+            // nước gợn: hai vệt sáng trôi ngang
+            for (let k = 0; k < 2; k++) {
+              const ph = (now / 1400 + x * 0.37 + y * 0.61 + k * 0.5) % 1;
+              ctx.fillStyle = `rgba(220, 240, 255, ${0.16 * Math.sin(ph * Math.PI)})`;
+              ctx.fillRect(px + 4 + ph * (TILE - 14), py + 8 + k * 12 + ((x + y + k) % 3) * 2, 8, 1.5);
+            }
+          }
+          if (fx && kind === 'fountain') fountains.push([px, py]);
         }
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
@@ -287,7 +418,9 @@
     const here = world.map === P.pos.map;
     for (const q of mobs(P)) {
       const [qx, qy] = smooth('m' + q.id, q.x, q.y, DUR.monster, now);
-      const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy);
+      // quái đứng yên thì nhún nhẹ (chỉ là hình)
+      const bob = fx && qx === q.x && qy === q.y ? Math.round(Math.sin(now / 380 + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0)) * 1.5) : 0;
+      const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy) + bob;
       if (px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
       ctx.globalAlpha = q.busy ? 0.45 : 1;
       if (q.boss && !q.gold) {
@@ -407,6 +540,18 @@
       ctx.beginPath(); ctx.moveTo(gx - 8, ay); ctx.lineTo(gx + 8, ay); ctx.lineTo(gx, ay + 10); ctx.fill();
       if (!tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
     }
+    if (fx) {
+      // đài phun nước lấp lánh
+      for (const [fx0, fy0] of fountains) {
+        for (let i = 0; i < 5; i++) {
+          const k = (now / 900 + i / 5) % 1;
+          ctx.fillStyle = `rgba(230, 245, 255, ${0.8 * (1 - k)})`;
+          ctx.fillRect(fx0 + TILE / 2 + Math.sin(i * 2.1) * 8 * k, fy0 + TILE / 2 - Math.sin(k * Math.PI) * 12, 2, 2);
+        }
+      }
+      const w = outdoors(P) && weatherOf(m, P.pos.map);
+      if (w) weather(w, now, cx, cy, m, P.pos.map);
+    }
     // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng
     const dark = PHASES[shade()] && outdoors(P) ? PHASES[shade()][1] : 0;
     if (dark) {
@@ -416,6 +561,7 @@
       g.addColorStop(1, `rgba(8, 10, 32, ${dark})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, VW(), VH());
+      if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
     }
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
@@ -423,6 +569,7 @@
     if (bubbles.size && !bubbleTimer) bubbleTimer = setTimeout(() => { bubbleTimer = null; draw(); }, 1000);
     // bỏ những con quái/người đã biến mất khỏi bản đồ
     for (const [k, a] of anim) if (a.seen !== now) anim.delete(k);
+    fxTick();
   }
 
   // Ô dưới ngón tay/chuột.
@@ -488,6 +635,7 @@
     // người chơi khác đang ở cùng bản đồ (Phase 13)
     players: () => (world.map === (getPlayer() || {}).pos?.map ? world.players.filter((o) => o.id !== userId) : []),
     mountedMap: () => mounted,
+    fxOn,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },

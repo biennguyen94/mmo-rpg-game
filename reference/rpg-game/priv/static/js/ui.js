@@ -1475,7 +1475,10 @@
         <button class="btn ${lg === 'en' ? 'primary' : ''}" data-act="lang" data-lang="en" aria-pressed="${lg === 'en'}">English</button></div></div></div>
       <div class="card"><div class="row"><h3 class="grow">Bản đồ</h3>
         <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
-        <p class="small muted">Tự động: sáng tối theo giờ trong game.</p></div>
+        <p class="small muted">Tự động: sáng tối theo giờ trong game.</p>
+        <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
+          <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
+        <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p></div>
       <div class="card">
         <div class="row">${icon(Sound.on ? 'speaker' : 'speaker-off', 'lg')}<h3 class="grow">Âm thanh</h3>
           <button class="btn" data-act="sound-toggle" aria-pressed="${Sound.on}">${Sound.on ? 'Đang bật' : 'Đang tắt'}</button></div>
@@ -3294,6 +3297,7 @@
     const act = t.dataset.act;
     if (act === 'map-zoom') { setPref('hl-zoom', pref('hl-zoom', '0') === '1' ? '0' : '1'); t.classList.toggle('on'); t.setAttribute('aria-pressed', t.classList.contains('on')); Map_.draw(); return; }
     if (act === 'theme') { setPref('hl-theme', t.dataset.theme); render(); return; }
+    if (act === 'map-fx') { setPref('hl-fx', Map_.fxOn() ? '0' : '1'); render(); return; }
     if (act === 'auto-set') { autoUi.open = !autoUi.open; render(); return; }
     if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot }); return; }
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }

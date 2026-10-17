@@ -449,3 +449,17 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - **Dừng:** hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ.
   - **Không tự đánh:** bản đồ riêng (Nhà, sự kiện), Làng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
   - Cài đặt chỉ nằm trong bộ nhớ (`player.auto`, không thêm cột database); cài đặt lần trước nhớ ở trình duyệt.
+- **B-32** (anh "ok làm phase 5") **Bản đồ động + bot thông minh hơn.**
+  - **Bản đồ động** (chỉ ở client, `map.js`, không đổi luật): nước gợn, cây lay theo gió, quái đứng yên nhún nhẹ, đài phun nước lấp lánh;
+    thời tiết theo nền bản đồ (đầm lầy mưa, hang / vùng chuyển sinh tro lửa, núi tuyết, nghĩa địa sương, rừng / trại lá rơi,
+    Làng khói bếp từ góc mỗi khối nhà); ban đêm / chạng vạng có đom đóm và đèn lồng quanh người dân.
+    - Hạt tính thẳng từ thời gian (không giữ trạng thái), vẽ lại ~12 khung/giây khi đang xem bản đồ, dừng khi ẩn tab.
+    - Nút tắt ở Menu → Cài đặt (`hl-fx`); máy đặt "giảm chuyển động" thì mặc định tắt.
+  - **Bot mua bình** (`Brain.restock/1`, `RULES.bots`): còn < 3 bình máu (< 2 bình mana, lớp có MP) mà đủ vàng mua ít nhất
+    mức đó thì về Làng mua ở Bà Lang tới 10 / 6 bình. Loại bình: rẻ nhất hồi được ≥ 30 % máu (MP) tối đa, không có thì
+    loại mạnh nhất mua được.
+  - **Bot nghỉ trọ:** máu < 45 %, hết bình, không mua nổi bình mà có ≥ 2 × giá trọ thì nghỉ ở Quán Trọ Làng; không thì về
+    Nhà uống giếng như cũ.
+  - **Sửa lỗi bot đứng yên:** mốc "nghỉ sau khi gục" khởi đầu bằng 0 trong khi `System.monotonic_time` có thể là số âm
+    (máy ảo) → bot bị coi là đang nghỉ mãi, không làm gì từ lúc khởi động server. Giờ mốc khởi đầu là lúc bot khởi động.
+    Chạy thử 90 giây: cả 20 bot về Làng mua bình rồi đi săn, lên kinh nghiệm bình thường.

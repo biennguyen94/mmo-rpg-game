@@ -271,6 +271,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Điện thoại: mọi thao tác bằng chạm; nút đủ lớn, không cần kéo ngang.
 - Nút **⤢** góc trên phải bản đồ: thu cả bản đồ cho vừa khung (bấm lại để tắt).
 - **Menu → Cài đặt → Bản đồ**: Sáng / Tối / Tự động (theo giờ trong game).
+- **Bản đồ động**: nước gợn, cây lay, quái nhún nhẹ, mưa ở đầm lầy, tro lửa ở hang rồng / vùng chuyển sinh, tuyết trên núi,
+  sương ở nghĩa địa, lá rơi ở rừng / trại, khói bếp ở Làng, đài phun nước lấp lánh; ban đêm có đom đóm và đèn lồng quanh
+  người dân. Tắt ở **Menu → Cài đặt → Bản đồ → Hiệu ứng động** (máy đặt "giảm chuyển động" thì mặc định tắt).
 - Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
 - **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.

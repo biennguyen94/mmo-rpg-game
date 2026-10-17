@@ -47,8 +47,8 @@ defmodule HacLong.Bots.BrainTest do
              Brain.decide(%{player("dw") | points: 7}, nil)
   end
 
-  test "máu thấp ngoài trận: có bình thì uống, không thì về Nhà uống giếng" do
-    p = player() |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
+  test "máu thấp ngoài trận: có bình thì uống; hết bình, không vàng thì về Nhà uống giếng" do
+    p = %{player() | level: 5, gold: 0} |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
     d = Engine.derived(p)
 
     assert %{"act" => "use", "id" => "potion_s"} =
@@ -60,6 +60,35 @@ defmodule HacLong.Bots.BrainTest do
     at_home = %{p | hp: 1, inv: %{}, pos: home}
     assert %{"act" => "move"} = Brain.decide(at_home, nil)
     assert d.maxHp > 1
+  end
+
+  test "Phase 5: sắp hết bình mà đủ vàng thì về Làng mua ở Bà Lang" do
+    p =
+      %{player() | level: 5, gold: 5000, inv: %{}}
+      |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
+
+    assert [{"potion_" <> _ = hp, 10}, {"mana_" <> _, 6}] = Brain.restock(p)
+    assert %{"act" => "travel", "to" => "village"} = Brain.decide(p, nil)
+
+    # ở Làng: đi tới Bà Lang, đứng cạnh thì mua
+    {hx, hy} = Enum.find(Maps.get("village").npcs, &(&1.role == "herbalist")).at
+    assert %{"act" => "move"} = Brain.decide(%{p | pos: %{map: "village", x: 12, y: 5}}, nil)
+
+    assert %{"act" => "buy", "id" => ^hp, "n" => 10} =
+             Brain.decide(%{p | pos: %{map: "village", x: hx, y: hy + 1}}, nil)
+
+    # đủ bình thì thôi; ít vàng quá không mua nổi mức tối thiểu thì cũng thôi
+    assert Brain.restock(%{p | inv: %{"potion_s" => 3, "mana_s" => 2}}) == []
+    assert Brain.restock(%{p | gold: 10}) == []
+  end
+
+  test "Phase 5: máu thấp, hết bình, không mua nổi bình mà đủ tiền trọ thì nghỉ ở Quán Trọ" do
+    p = %{player() | level: 5, inv: %{}} |> Map.put(:pos, %{map: "village", x: 12, y: 5})
+    p = %{p | hp: 1, gold: Engine.rest_cost(%{p | hp: 1}) * 2}
+    assert Brain.restock(p) == []
+    {ix, iy} = Enum.find(Maps.get("village").npcs, &(&1.role == "inn")).at
+    assert %{"act" => "move"} = Brain.decide(p, nil)
+    assert %{"act" => "rest"} = Brain.decide(%{p | pos: %{map: "village", x: ix, y: iy + 1}}, nil)
   end
 
   test "chọn bản đồ hợp cấp, mỗi bot (seed) có thể chọn khác nhau" do
