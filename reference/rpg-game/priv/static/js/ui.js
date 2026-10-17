@@ -839,7 +839,7 @@
   // Cài đặt lần trước: server lưu theo nhân vật (`P.view.autoCfg`, đổi máy vẫn giữ); chưa có thì nhớ ở trình duyệt (`hl-auto`).
   // Kiểu MU Helper: phạm vi săn, cách dùng kỹ năng, giữ loại đồ nào (`RULES.auto`).
   const AUTO = RULES.auto || {};
-  const autoDefaults = () => ({ target: 'level', hp: (AUTO.hp_pct || {}).default || 40, mp: (AUTO.mp_pct || {}).default != null ? AUTO.mp_pct.default : 30, loot: 'all', keep: (AUTO.keep_default || []).slice(), range: AUTO.range_default || 0, skills: 'all' });
+  const autoDefaults = () => ({ target: 'all', hp: (AUTO.hp_pct || {}).default || 40, mp: (AUTO.mp_pct || {}).default != null ? AUTO.mp_pct.default : 30, loot: 'all', keep: (AUTO.keep_default || []).slice(), range: AUTO.range_default || 0, skills: 'all' });
   const autoFrom = (a) => {
     const d = autoDefaults();
     const loot = a.loot === 'good' ? 'pick' : a.loot === 'pick' ? 'pick' : 'all';
@@ -853,7 +853,7 @@
   const AUTO_KEEP = { exc: 'Excellent', anc: 'Đồ Thần', luck: 'May mắn / Kỹ năng', opt: 'Có dòng cộng thêm', better: 'Tốt hơn đồ đang mặc', cls: 'Mặc được (đúng lớp)' };
   const autoRangeLabel = (r) => (r ? `Quanh chỗ đứng ${r} ô` : 'Cả bản đồ');
   const autoKills = () => (P.auto ? Math.max(0, P.kills - P.auto.kills) : 0);
-  const autoTargetName = (a) => a.target === 'level' ? 'quái hợp cấp' : ((P.view.autoMap.kinds.find((k) => k.id === a.target) || {}).name || a.target);
+  const autoTargetName = (a) => a.target === 'all' ? 'tất cả quái' : a.target === 'level' ? 'quái không cao hơn mình' : ((P.view.autoMap.kinds.find((k) => k.id === a.target) || {}).name || a.target);
 
   function viewAuto() {
     syncAutoUi();
@@ -873,7 +873,7 @@
         <p class="small muted">Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ. Món khác bị hủy ngay sau trận.</p></fieldset>` : '';
     const settings = autoUi.open ? `<div class="auto-set" role="dialog" aria-label="Cài đặt tự đánh">
         <div class="auto-set-head"><b>⚙ Cài đặt tự đánh</b><button class="btn small-btn" data-act="auto-set">Đóng</button></div>
-        <label class="small">Đánh <select data-auto="target">${opt('level', autoUi.target, 'Quái hợp cấp')}${am.kinds.map((k) => opt(k.id, autoUi.target, `${k.name} (cấp ${k.level})`)).join('')}</select></label>
+        <label class="small">Đánh <select data-auto="target">${opt('all', autoUi.target, 'Tất cả quái')}${opt('level', autoUi.target, 'Quái không cao hơn mình (≤ cấp + 1)')}${am.kinds.map((k) => opt(k.id, autoUi.target, `${k.name} (cấp ${k.level})`)).join('')}</select></label>
         <label class="small wide">Phạm vi săn <select data-auto="range">${(AUTO.range_options || [0]).map((r) => opt(r, autoUi.range, autoRangeLabel(r))).join('')}</select></label>
         <label class="small wide">Kỹ năng <select data-auto="skills">${(AUTO.skills || ['all']).map((k) => opt(k, autoUi.skills, AUTO_SKILLS[k] || k)).join('')}</select></label>
         <label class="small">Uống máu khi dưới <select data-auto="hp">${pcts(10, 90, autoUi.hp)}</select></label>
@@ -886,7 +886,7 @@
       </div>` : '';
     return `<div class="auto-bar" id="auto-bar">
         <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
-        <span class="grow small muted">${esc(autoUi.target === 'level' ? 'Quái hợp cấp' : autoTargetName(autoUi))} · ${esc(autoRangeLabel(autoUi.range))} · máu dưới ${autoUi.hp}%</span>
+        <span class="grow small muted">${esc(autoTargetName(autoUi).replace(/^./, (c) => c.toUpperCase()))} · ${esc(autoRangeLabel(autoUi.range))} · máu dưới ${autoUi.hp}%</span>
         <button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh">⚙</button>
         ${settings}</div>`;
   }

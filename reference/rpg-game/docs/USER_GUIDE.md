@@ -100,7 +100,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Hiệu ứng**: "LÊN CẤP" giữa màn hình khi lên cấp; số xanh khi hồi máu / MP; chữ lớn khi ép đồ thành công hay vỡ đồ.
 - **Tự đánh** (thanh 🤖 dưới bản đồ, chỉ khi đang mở game):
   - Bấm ⚙ (cài đặt kiểu MU Helper):
-    - **Đánh**: quái hợp cấp hoặc một loại trên bản đồ.
+    - **Đánh**: tất cả quái (mặc định), quái không cao hơn mình (cấp ≤ cấp mình + 1), hoặc một loại trên bản đồ.
     - **Phạm vi săn**: cả bản đồ, hoặc chỉ quái trong 4 / 8 / 12 ô quanh chỗ bấm bắt đầu; hết quái thì quay về chỗ đó đứng chờ.
     - **Kỹ năng**: dùng bộ kỹ năng đang mang (kỹ năng buff tung trước), chỉ đòn thường (đỡ tốn mana), hoặc chỉ dùng kỹ năng với
       trùm / tinh anh / quái vàng / quái Bóng Đêm.

@@ -44,6 +44,13 @@ defmodule HacLong.Game.AutoHuntTest do
     refute c["confirm"] && c["dir"] == "up"
   end
 
+  test "đánh tất cả: mọi loại quái trên bản đồ, kể cả quái cao cấp hơn mình" do
+    p = on(player(), %{"target" => "all"})
+    assert p.auto.target == "all"
+    strong = %{bat(13, 15) | kind: "jackal"}
+    assert {:cmd, %{"act" => "move", "dir" => "up"}} = AutoHunt.decide(p, snap([strong]))
+  end
+
   test "dừng khi có người tên đỏ, hết bình máu, rời bản đồ" do
     p = on(player())
     red = %{id: 9, name: "Sát Thủ", red: true, x: 1, y: 1}

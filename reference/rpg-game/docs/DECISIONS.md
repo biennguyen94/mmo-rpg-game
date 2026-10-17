@@ -687,3 +687,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 ## Máy Hỗn Nguyên: Pha Excellent / May mắn thất bại giữ món (2026-10-17, anh: "cánh thì mất, còn lại không mất đồ")
 - Công thức `mode` (Pha Excellent, Pha May mắn) thất bại: **giữ món đồ** (cấp ép, dòng không đổi), chỉ mất nguyên liệu + vàng;
   không hỏi xác nhận nữa. Công thức ra món mới (ghép cánh 1 / 2 / 3) vẫn mất món đồ bỏ vào (`Chaos.transform/4`).
+
+## Tự đánh: thêm "Tất cả quái", đổi tên "Quái hợp cấp" (2026-10-17, anh yêu cầu)
+- `AutoHunt` thêm `target: "all"` (mọi quái trên bản đồ), **mặc định mới**. `"level"` giữ nguyên cách lọc (cấp ≤ cấp mình + 1,
+  không có thì mọi quái) nhưng đổi tên hiển thị "Quái không cao hơn mình (≤ cấp + 1)" — tên cũ "Quái hợp cấp" gây hiểu nhầm vì
+  ở cấp cao / vùng chuyển sinh gần như đánh tất cả. Cài đặt đã lưu (`auto_cfg`) giữ lựa chọn cũ của người chơi.

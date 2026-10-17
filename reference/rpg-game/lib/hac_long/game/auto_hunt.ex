@@ -6,8 +6,8 @@ defmodule HacLong.Game.AutoHunt do
   `%{map, target, hp, mp, loot, keep, range, origin, skills, kills}`. Bật là lưu cài đặt (trừ bản đồ, chỗ bật, số
   quái) vào `p.auto_cfg` (cột `characters.auto_cfg`) để lần sau, máy khác, mở lại đúng như cũ.
 
-  - `target`: `"level"` (quái cấp không quá cấp mình + 1; bản đồ không có con nào như vậy, vd vùng chuyển sinh, thì
-    mọi quái thường) hoặc mã một loại quái có trên bản đồ.
+  - `target`: `"all"` (mọi quái trên bản đồ), `"level"` (quái cấp không quá cấp mình + 1; bản đồ không có con nào
+    như vậy, vd vùng chuyển sinh, thì mọi quái) hoặc mã một loại quái có trên bản đồ.
   - `hp`, `mp`: % máu / MP dưới mức này thì uống bình (`RULES.auto.hp_pct`, `mp_pct`).
   - `loot`: `"all"` giữ mọi đồ rơi; `"pick"` hủy món đồ vừa nhặt không thuộc loại nào trong `keep`
     (`RULES.auto.keep`: exc, anc, luck, opt, better, cls; cánh / nhẫn / dây chuyền / ngọc / nguyên liệu luôn giữ).
@@ -73,7 +73,7 @@ defmodule HacLong.Game.AutoHunt do
       not map_ok?(id) ->
         {%{ok: false, msg: "Bản đồ này không tự đánh được."}, p}
 
-      target != "level" and target not in kinds ->
+      target not in ["all", "level"] and target not in kinds ->
         {%{ok: false, msg: "Chọn quái có trên bản đồ này."}, p}
 
       true ->
@@ -226,6 +226,8 @@ defmodule HacLong.Game.AutoHunt do
       cmd -> {:cmd, cmd}
     end
   end
+
+  defp keep(_p, %{target: "all"}), do: fn _m, _map -> true end
 
   defp keep(p, %{target: "level"}) do
     map = Maps.get(p.pos.map)
