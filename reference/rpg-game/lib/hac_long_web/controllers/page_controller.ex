@@ -106,6 +106,18 @@ defmodule HacLongWeb.PageController do
           redMult: Data.rules().slay.red_gold_mult
         },
         wingPerLevel: Data.rules().combat.wing_per_level,
+        # giải thích chỉ số ở tab Nhân vật (bấm vào từng dòng): số lấy từ RULES, client không giữ số riêng
+        combatHelp: %{
+          crit: Data.rules().combat.crit,
+          critMult: Data.rules().combat.crit_mult,
+          dodge: Map.delete(Data.rules().combat.dodge, :_doc_max_total),
+          spread: Data.rules().combat.damage_spread,
+          softFloor: Data.rules().combat.soft_floor,
+          hit: Data.rules().combat.hit,
+          monsterCrit: Data.rules().monster.crit,
+          monsterCritMult: Data.rules().combat.monster_crit_mult,
+          pk: Map.take(Data.rules().pk, [:rounds, :special_every, :special_mult])
+        },
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
         # Phase 3 (B-29): nguyên tố, kỹ năng tháp

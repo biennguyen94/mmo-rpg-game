@@ -453,6 +453,11 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .kv { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
 .kv > span:first-child { color: var(--dim); }
 .kv .free { color: var(--gold); font-weight: 700; }
+/* tab Nhân vật: dòng chỉ số bấm được, mở giải thích ngay dưới */
+button.kv-help { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 4px 0; }
+button.kv-help .help-i { font-size: 0.8em; opacity: 0.55; }
+button.kv-help[aria-expanded="true"] .help-i { opacity: 1; color: var(--gold); }
+.stat-help { margin: 0 0 6px; padding: 6px 8px; border-left: 2px solid var(--gold); background: var(--ink-3); border-radius: 4px; }
 .statrow { display: grid; grid-template-columns: 1fr auto 44px; align-items: center; gap: 10px; padding: 3px 0; }
 .statrow > span:nth-child(2) { font-weight: 700; font-size: 1.05rem; text-align: right; }
 .statrow .btn { padding: 2px 0; min-width: 44px; font-size: 1rem; }

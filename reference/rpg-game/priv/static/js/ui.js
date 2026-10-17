@@ -1748,6 +1748,7 @@
     const ex = P.view.extra || {};
     const pc = (v) => (v ? ` <span class="up" title="Thú cưng + món ăn">+${Math.round(v * 100)}%</span>` : '');
     const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
+    const kvh = (key, k, v) => `<button class="kv kv-help" data-act="stat-help" data-k="${key}" aria-expanded="${statHelp === key}"><span>${k} <span class="help-i" aria-hidden="true">ⓘ</span></span><span class="num">${v}</span></button>${statHelp === key ? `<p class="small stat-help">${esc(statHelpText(key, d))}</p>` : ''}`;
     const stat = (k) => {
       const [n, hint] = STAT_INFO[k], pend = allocPending[k] || 0;
       return `<div class="statrow" title="${esc(hint)}">
@@ -1769,18 +1770,40 @@
         ${kv('Điểm còn', free, free > 0 ? 'free' : '')}
         <p class="small muted">Mỗi lần lên cấp nhận ${c.points} điểm. Điểm đã cộng không gỡ được.</p>
         <hr class="sep">
-        ${kv('Tấn công', `${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}${pc(ex.atk)}`)}
-        ${kv('Trúng quái cùng cấp', `${Math.round(d.hitRate * 100)}%`)}
-        ${kv('Phòng thủ', `${fmt(d.def)}${pc(ex.def)}`)}
-        ${kv('Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
-        ${kv('Né đòn', `${Math.round(d.dodge * 100)}%`)}
-        ${d.wingDmg ? kv('Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
-        ${d.ignoreDef ? kv('Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
-        ${kv('Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
-        ${kv('MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        <p class="small muted">Bấm vào từng chỉ số để xem cách tính và dùng ở đâu.</p>
+        ${kvh('atk', 'Tấn công', `${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}${pc(ex.atk)}`)}
+        ${kvh('hit', 'Trúng quái cùng cấp', `${Math.round(d.hitRate * 100)}%`)}
+        ${kvh('def', 'Phòng thủ', `${fmt(d.def)}${pc(ex.def)}`)}
+        ${kvh('crit', 'Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
+        ${kvh('dodge', 'Né đòn', `${Math.round(d.dodge * 100)}%`)}
+        ${d.wingDmg ? kvh('wing', 'Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
+        ${d.ignoreDef ? kvh('ign', 'Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
+        ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
+        ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        ${kvh('pvp', 'Đánh quái và đánh người khác nhau thế nào?', '')}
         ${P.view.blessing ? kv('✨ Đài Phúc Lành', `${esc(P.view.blessing.name)}${P.view.blessing.left ? ` · +${Math.round(P.view.blessing.pct * 100)}% ${P.view.blessing.label}, còn ${P.view.blessing.left} trận` : ''} · hồi sinh ở đây`) : ''}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
       </div>`;
+  }
+
+  // Bấm vào từng dòng chỉ số ở tab Nhân vật: giải thích cách tính và dùng ở đâu (số từ `RULES.combatHelp`)
+  let statHelp = null;
+  function statHelpText(key, d) {
+    const H = RULES.combatHelp || {}, pc = (x) => `${Math.round(x * 10000) / 100}%`;
+    const sp = H.spread || [1, 1], hit = H.hit || {}, cr = H.crit || {}, cm = H.critMult || {}, dg = H.dodge || {}, pk = H.pk || {};
+    switch (key) {
+      case 'atk': return `Mỗi đòn lấy ngẫu nhiên ${pc(sp[0])}–${pc(sp[1])} tấn công (${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}). Gồm hệ số lớp theo Sức mạnh / Nhanh nhẹn / Năng lượng, công vũ khí và dây chuyền, ép +N, dòng cộng thêm; nhân thú cưng, món ăn, Đài Phúc Lành (phần % xanh), rồi Excellent, đủ bộ, đồ Thần. Kỹ năng nhân thêm hệ số của kỹ năng (vd. 140%).`;
+      case 'hit': return `Chỉ dùng khi đánh quái: tỉ lệ trúng = AR / (AR + cấp quái × ${hit.monster_dr}), trong khoảng ${pc(hit.min)}–${pc(hit.max)}. AR = cấp × ${hit.level} + Nhanh nhẹn × ${hit.agi} (cộng Excellent). Quái cấp cao hơn thì khó trúng hơn. Kỹ năng luôn trúng. Đánh người thì không dùng số này mà tùy né của đối thủ.`;
+      case 'def': return `Sát thương nhận = đòn² / (đòn + phòng thủ), không dưới ${pc(H.softFloor)} đòn; đòn bằng đúng phòng thủ của bạn (${fmt(d.def)}) chỉ còn một nửa. Gồm thủ mọi món giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn, cộng ép và dòng cộng thêm; nhân thú / món ăn / Đài, đủ bộ, đồ Thần. Dùng như nhau khi bị quái hay người đánh.`;
+      case 'crit': return `Tỉ lệ = ${pc(cr.base)} + Nhanh nhẹn × ${pc(cr.per_agi)} (tối đa ${pc(cr.max)}), cộng Excellent và May mắn vũ khí. Đòn chí mạng nhân ×${d.critMult.toFixed(2)} (= ${cm.base} + Nhanh nhẹn × ${cm.per_agi}, tối đa ×${cm.max}). Có ở đòn thường và kỹ năng khi đánh quái, Đồ sát, Đấu trường; PK cược thì đòn kỹ năng không chí mạng. Quái chí mạng ${pc(H.monsterCrit)} ×${H.monsterCritMult}.`;
+      case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường, PK cược). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
+      case 'wing': return `Mọi đòn của bạn +${pc(d.wingDmg)} sát thương; đòn nhận vào chỉ còn ${pc(1 - d.wingAbsorb)}. Mỗi cấp ép cánh thêm ${pc(RULES.wingPerLevel)} cả hai. Có tác dụng cả khi đánh quái lẫn đánh người.`;
+      case 'ign': return `Đòn của bạn bỏ qua ${pc(d.ignoreDef)} phòng thủ mục tiêu (dòng phụ của cánh), cả quái lẫn người.`;
+      case 'hp': return 'Theo hệ số lớp, Thể lực và cấp; cộng nhẫn máu, đủ bộ giáp, đồ Thần, dòng cánh; nhân thú cưng / món ăn / Đài Phúc Lành và Excellent "máu tối đa". Hết máu là gục.';
+      case 'mp': return 'Theo hệ số lớp và Năng lượng, cộng dòng cánh, nhân Excellent "MP tối đa". Kỹ năng tốn MP (tốn thêm theo cấp kỹ năng); MP hồi dần mỗi lượt và theo Năng lượng.';
+      case 'pvp': return `Đánh quái: bạn trúng theo "Trúng quái cùng cấp", quái không né. Đồ sát / Đấu trường: bạn trúng hay không tùy né của đối thủ; cánh, Excellent giảm sát thương và bỏ qua phòng thủ của cả hai bên đều tính. PK cược vàng: hai bản sao chỉ số tự đánh, cứ ${pk.special_every} lượt mỗi bên tung kỹ năng lớp ×${pk.special_mult} (không chí mạng, không né được); quá ${pk.rounds} lượt thì bên còn nhiều % máu hơn thắng.`;
+      default: return '';
+    }
   }
 
   // Cộng điểm gom lệnh (như MU Web `alloc.ts`): mỗi lần bấm [+] cộng 1 điểm chờ, 200 ms sau lần bấm
@@ -3444,6 +3467,7 @@
     // ép bước có thể vỡ đồ / ghép mất đồ: hỏi lại trước
     if ((act === 'upgrade' || act === 'chaos_upgrade') && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
     if (act === 'forge-tab') { forgeTab = t.dataset.tab2; render(); return; }
+    if (act === 'stat-help') { statHelp = statHelp === t.dataset.k ? null : t.dataset.k; render(); return; }
     if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
     if (act === 'forge-pick') {
       forgePick = t.dataset.id;

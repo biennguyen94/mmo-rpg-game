@@ -23,6 +23,20 @@ có thật sự được cộng vào chỉ số không, có đúng số trong `p
 | Đồ Thần | thủ món × 1,2; 2 món +3 % công, 3 món +5 % thủ, đủ bộ +5 % công +5 % thủ +150 máu (cộng dồn) |
 | Đủ bộ giáp (bậc ≥ 2) | +10 % thủ, +3 % công, + 15 × bậc máu |
 
+### 1b. Đánh quái và đánh người (nơi tính: `Engine` trận đánh, `HacLong.Game.PkFight`)
+
+| | Đánh quái | Đồ sát / Đấu trường | PK cược vàng |
+|---|---|---|---|
+| Ai điều khiển | người chơi | người chơi đánh bản sao chỉ số đối thủ | hai bản sao tự đánh |
+| Mình trúng | tỉ lệ trúng AR (§1), quái không né; kỹ năng luôn trúng | theo **né của đối thủ**; kỹ năng luôn trúng | đòn thường theo né đối thủ; kỹ năng không né được |
+| Mình bị đánh | né của mình (đòn đặc biệt của quái không né được) | né của mình | né của mình (trừ kỹ năng) |
+| Chí mạng | của mình (đòn thường và kỹ năng); quái `monster.crit` 5 % × `combat.monster_crit_mult` 1,5 | hệ số thật của mỗi bên | chỉ đòn thường; hệ số thật mỗi bên |
+| Giảm sát thương | thủ thế, hấp thụ cánh, Excellent giảm sát thương | như cột trái, cả hai bên (`taken` của bản sao), dòng cánh bỏ qua thủ cả hai bên | như cột giữa |
+| Kỹ năng | kỹ năng lớp / Tháp trong bộ mang vào trận | như đánh quái | mỗi `pk.special_every` (3) lượt kỹ năng lớp × `pk.special_mult` (1,8) |
+| Kết thúc | hết máu | hết máu (Đấu trường); Đồ sát theo luật `slay` | hết máu; quá `pk.rounds` (30) lượt thì bên còn nhiều **% máu** hơn thắng |
+
+Trong game: tab Nhân vật, bấm vào từng dòng chỉ số để xem giải thích (số lấy từ `RULES.combatHelp`, server gửi từ `rules.json`).
+
 ## 2. Kết quả kiểm
 
 **Đúng (có test):**
@@ -36,7 +50,7 @@ có thật sự được cộng vào chỉ số không, có đúng số trong `p
 - Cánh: thủ, ép, % sát thương / hấp thụ, dòng phụ.
 - Nhẫn máu, Đài Phúc Lành.
 - Sát thương: trừ thủ, sàn mềm, sàn cứng, phần nhận. Tỉ lệ trúng.
-- Kỹ năng: hệ số khớp mô tả (220 %, 200 % xuyên 30 %, chắc chí mạng xuyên 50 %, 130 % + hồi 25 %…).
+- Kỹ năng: hệ số khớp mô tả (140 %, 135 % xuyên 30 %, chắc chí mạng xuyên 30 %, 130 % + hồi 25 %…; số mới từ 2026-10-17, DECISIONS "Hạ kỹ năng lớp").
   - Thời lượng hiệu ứng khớp mô tả: Nộ Chiến 3 lượt tiếp theo; thủ thế / ảnh bộ / suy yếu tính cả lượt dùng; độc 3 lần.
 
 **Lỗi đã sửa:**
