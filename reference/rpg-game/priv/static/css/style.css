@@ -506,9 +506,8 @@ img.own { object-fit: contain; image-rendering: auto; }
 .itemtip .big .ic.lg { width: 56px; height: 56px; }
 /* hình gốc đồ (Phase 15b): khổ đứng, cho cao hơn */
 .itemtip .big img.own { width: 72px; height: 88px; }
-/* nhẫn, dây chuyền: hình gốc nhỏ, giữ đúng kích thước (to hơn khung thì chỉ thu nhỏ, không phóng to) */
-/* nhẫn, dây chuyền MU: hình gốc rất nhỏ (~21 px): phóng vừa ô, giữ điểm ảnh sắc, sáng hơn chút cho khỏi mờ */
-img.own.nat, .itemtip .big img.own.nat { object-fit: contain; image-rendering: pixelated; filter: brightness(1.2) contrast(1.1); }
+/* nhẫn, dây chuyền MU: hình gốc rất nhỏ (~21 px): giữ đúng kích thước gốc, không phóng to (phóng to thì mờ); to hơn ô thì thu nhỏ */
+img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering: auto; }
 .itemtip .bad { color: var(--bad); }
 .itemtip .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .itemtip .btns .btn { flex: 1; }
@@ -766,7 +765,10 @@ body.tl-on { overflow: hidden; }
 .hud-ava { background: none; border: 0; padding: 0; cursor: pointer; flex: none; line-height: 0; border-radius: 8px; }
 .hud-ava:focus-visible { outline: 2px solid var(--accent, #d8a24a); }
 #hud { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: 6px; gap: 6px; }
-#hud .bars { gap: 6px; }
+#hud .bars { gap: 4px 6px; grid-template-columns: 1fr 1fr; }
+/* kinh nghiệm xuống dòng riêng, mảnh: máu và mana đủ chỗ hiện số lớn */
+#hud .bars > .bar.xp { grid-column: 1 / -1; height: 12px; }
+#hud .bars > .bar.xp > span { font-size: 0.62rem; line-height: 10px; }
 /* Phase 2: đồ nhận sau trận, bấm xem / hủy */
 .loot { display: grid; gap: 4px; margin: 6px 0; }
 .loot-row { display: flex; align-items: center; gap: 8px; }

@@ -90,7 +90,7 @@
     const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
     return path ? asset(path) : null;
   }
-  // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px): phóng vừa ô kiểu điểm ảnh (CSS `img.own.nat`)
+  // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px): giữ kích thước gốc, không phóng to (CSS `img.own.nat`)
   const NAT_SLOTS = ['ring', 'pendant'];
   const ownCls = (it) => (iconSet() === 'pixel' ? ' pix' : NAT_SLOTS.includes(it.slot) ? ' nat' : '');
   const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${ownCls(it)}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };

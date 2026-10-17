@@ -121,9 +121,9 @@
     return { name, zone: null, floor: (!t.ds && !t.bc && !t.kal && t.theme) || 'floors/' + ZONES[zi].id, tiles: t.tiles, portals: [], npcs: [], tower: t };
   }
 
-  // Quái trên bản đồ đang đứng: quái dùng chung (sự kiện "map") hoặc quái của tầng tháp.
+  // Quái trên bản đồ đang đứng: quái dùng chung (sự kiện "map") hoặc quái của tầng tháp (máu phần trăm ở `hp_pct`).
   function mobs(P) {
-    if (P.pos.map === 'tower' && P.tower) return P.tower.monsters.map((q) => Object.assign({}, q, { id: 't' + q.id, boss: q.elite }));
+    if (P.pos.map === 'tower' && P.tower) return P.tower.monsters.map((q) => Object.assign({}, q, { id: 't' + q.id, boss: q.elite, hp: q.hp_pct == null ? 100 : q.hp_pct }));
     return world.map === P.pos.map ? world.monsters : [];
   }
 
