@@ -760,3 +760,14 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 ## Bot mặc định 0 (2026-10-18, anh yêu cầu)
 - `rules.json` `RULES.bots.count` 20 → **0**: server không chạy bot trừ khi đặt `HL_BOTS` (vd. `.env` `HL_BOTS=10`). Bot cũ
   trong database giữ nguyên, chỉ không chạy.
+
+## Trang bị luôn là món riêng (2026-10-18, anh "làm đi")
+- Trước: trang bị mua ở cửa hàng / thưởng / admin "Đồ thường" nằm xếp chồng trong `inv` (không tính túi), còn đồ rơi là món
+  riêng (tính túi) → cùng một món mà hai kiểu, mua vô hạn không giới hạn túi. Nay mọi trang bị (vũ khí, giáp, khiên, nhẫn,
+  dây chuyền, cánh) là **món riêng** trong túi trang bị (`Engine.add_item/3` → `Gear.add/2`, 0 dòng, túi đầy thì gửi Hộp
+  thư); bình, ngọc, nguyên liệu, vé vẫn xếp chồng. Mua trang bị khi túi đầy bị từ chối. Đồ khởi đầu đang mặc cũng là món riêng.
+- Dữ liệu cũ (`Engine.instance_gear/1`, chạy lúc nạp nhân vật, sau `split_upgrades`): đồ đang mặc mã loại → món riêng; chồng
+  trang bị trong túi → từng món (dư thì `mail_out` → Hộp thư, không mất); chồng trang bị trong Tủ Đồ → món cất tủ.
+- Lệnh gửi mã loại (`equip` / `sell` / `discard` / `lock` với `"item_1_0"`, công cụ / test cũ) dùng món riêng cùng loại đầu
+  tiên trong túi (`Engine.bag_uid/2`). Thư cũ có trang bị mã loại cũng cần chỗ túi khi mở.
+- Tab Quản trị: "Đồ thường (bình, ngọc, nguyên liệu, vé…)" không còn liệt kê trang bị; trang bị tặng ở "Trang bị".

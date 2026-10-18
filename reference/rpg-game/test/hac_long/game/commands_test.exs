@@ -1,7 +1,7 @@
 defmodule HacLong.Game.CommandsTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Commands, Data, Engine, Quests, Rng}
+  alias HacLong.Game.{Commands, Data, Engine, Gear, Quests, Rng}
 
   defp player do
     {_, p} =
@@ -70,7 +70,8 @@ defmodule HacLong.Game.CommandsTest do
     # Phase 15b: Rìu Tay (bậc 2 của Kiếm Sĩ); đồ khởi đầu Rìu Nhỏ giá 0 bán như đồ không giá
     {%{ok: true}, p} = Commands.run(p, %{"act" => "buy", "id" => "item_1_1"})
     {%{ok: true}, p} = Commands.run(p, %{"act" => "equip", "id" => "item_1_1"})
-    assert p.equip.weapon == "item_1_1" and p.inv["item_1_0"] == 1
+    assert Gear.find(p, p.equip.weapon).base == "item_1_1"
+    assert [%{base: "item_1_0"}] = Gear.bag(p)
     {%{ok: true}, p} = Commands.run(p, %{"act" => "sell", "id" => "item_1_0"})
     assert p.gold == 500 - 60 + 80
 

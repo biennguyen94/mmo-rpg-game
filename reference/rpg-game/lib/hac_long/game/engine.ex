@@ -145,6 +145,8 @@ defmodule HacLong.Game.Engine do
           hp: 0
         }
 
+        # đồ khởi đầu đang mặc cũng là món riêng như mọi trang bị
+        p = instance_gear(p)
         d = derived(p)
         {:ok, %{p | hp: d.maxHp, mp: d.maxMp}}
     end
@@ -443,12 +445,12 @@ defmodule HacLong.Game.Engine do
         end,
       storage: HacLong.Game.Storage.view(p),
       forge:
-        for {slot, id} <- p.equip, id != nil, into: %{} do
+        for {slot, id} <- p.equip, id != nil, it = Gear.item(p, id), into: %{} do
           {slot,
            %{
              id: id,
              level: upgrade_level(p, id),
-             cost: upgrade_cost(Gear.item(p, id), upgrade_level(p, id))
+             cost: upgrade_cost(it, upgrade_level(p, id))
            }}
         end,
       # đồ ngẫu nhiên (cả món đang mặc) đã tính tên, chỉ số, giá bán
@@ -2246,6 +2248,13 @@ defmodule HacLong.Game.Engine do
   end
 
   def discard(p, id, n) do
+    case bag_uid(p, id) do
+      "#" <> _ = uid -> discard(p, uid, n)
+      id -> discard_stack(p, id, n)
+    end
+  end
+
+  defp discard_stack(p, id, n) do
     have = Map.get(p.inv, id, 0)
 
     cond do
@@ -2416,6 +2425,7 @@ defmodule HacLong.Game.Engine do
   được. Đồ thường (vũ khí / giáp / khiên / cánh) được tách thành bản riêng để khóa từng món.
   """
   def lock(p, id, on?) when is_binary(id) do
+    id = bag_uid(p, id)
     slot = Enum.find(@equip_slots, &(p.equip[String.to_existing_atom(&1)] == id))
     it = Gear.item(p, id)
 
@@ -2450,7 +2460,62 @@ defmodule HacLong.Game.Engine do
   def lock(p, _id, _on?), do: {err("Không có món này."), p}
 
   # ---------- Đồ đạc ----------
-  def add_item(p, id, n \\ 1), do: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
+  @doc """
+  Thêm `n` món `id` vào túi. Trang bị (`gear_item?/1`) luôn là từng món riêng trong túi trang bị (đồ trắng, 0 dòng;
+  túi đầy thì gửi Hộp thư như đồ rơi), không xếp chồng; món khác (bình, ngọc, nguyên liệu, vé…) xếp chồng trong `inv`.
+  """
+  def add_item(p, id, n \\ 1) do
+    if gear_item?(id),
+      do: Enum.reduce(1..n//1, p, fn _, p -> p |> Gear.add(Gear.plain(id)) |> elem(0) end),
+      else: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
+  end
+
+  @doc """
+  Lệnh gửi mã loại trang bị (vd. `"item_1_0"`, test / công cụ cũ) mà túi không còn chồng đồ thường loại đó: dùng món
+  riêng cùng loại đầu tiên trong túi. Mã khác trả nguyên.
+  """
+  def bag_uid(p, id) do
+    if gear_item?(id) and Map.get(p.inv, id, 0) == 0,
+      do: Enum.find_value(Gear.bag(p), id, &(&1.base == id && &1.uid)),
+      else: id
+  end
+
+  @doc "Món `id` (mã loại, không phải `uid`) là trang bị mặc được: vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền."
+  def gear_item?(id) do
+    it = is_binary(id) and not Gear.instance?(id) and Data.item(id)
+    is_map(it) and it.slot in @item_slots
+  end
+
+  @doc """
+  Dữ liệu cũ: trang bị còn xếp chồng thành từng món riêng: đang mặc (đồ khởi đầu, đồ mua), trong túi (túi đầy thì
+  phần dư gửi Hộp thư qua `mail_out`, không mất món nào), trong Tủ Đồ (thành món cất tủ). Chạy lúc nạp nhân vật và
+  tạo nhân vật mới; không có gì để đổi thì trả nguyên `p`.
+  """
+  def instance_gear(p) do
+    p =
+      Enum.reduce(@equip_slots, p, fn s, p ->
+        slot = String.to_existing_atom(s)
+        if gear_item?(p.equip[slot]), do: p |> ensure_instance(slot) |> elem(0), else: p
+      end)
+
+    {gear_inv, rest} = Enum.split_with(p.inv, fn {id, _} -> gear_item?(id) end)
+    p = Enum.reduce(gear_inv, %{p | inv: Map.new(rest)}, fn {id, n}, p -> add_item(p, id, n) end)
+
+    case Map.get(p, :storage) do
+      %{inv: inv} = st ->
+        {gear_st, rest} = Enum.split_with(inv, fn {id, _} -> gear_item?(id) end)
+        stored = for {id, n} <- gear_st, _ <- 1..n//1, do: Map.put(Gear.plain(id), :stored, true)
+
+        if stored == [],
+          do: p,
+          else:
+            %{p | storage: %{st | inv: Map.new(rest)}}
+            |> Map.put(:gear, Gear.list(p) ++ stored)
+
+      _ ->
+        p
+    end
+  end
 
   def take_item(p, id, n \\ 1) do
     inv =
@@ -2483,6 +2548,9 @@ defmodule HacLong.Game.Engine do
 
       p.gold < price(p, id) * n ->
         {err("Không đủ vàng."), p}
+
+      gear_item?(id) and length(Gear.bag(p)) + n > Gear.max_bag() ->
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món). Bán bớt đã."), p}
 
       true ->
         {ok(if(n > 1, do: "Đã mua #{n} #{it.name}.", else: "Đã mua #{it.name}.")),
@@ -2533,6 +2601,13 @@ defmodule HacLong.Game.Engine do
   end
 
   def sell(p, id) do
+    case bag_uid(p, id) do
+      "#" <> _ = uid -> sell(p, uid)
+      id -> sell_stack(p, id)
+    end
+  end
+
+  defp sell_stack(p, id) do
     if Map.get(p.inv, id, 0) > 0 and Data.item(id) do
       g = sell_price(id)
       p = %{take_item(p, id) | gold: p.gold + g}
@@ -2547,6 +2622,7 @@ defmodule HacLong.Game.Engine do
   end
 
   def equip(p, id) do
+    id = bag_uid(p, id)
     it = Gear.item(p, id)
     gear? = Gear.instance?(id)
 

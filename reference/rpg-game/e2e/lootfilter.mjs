@@ -40,7 +40,7 @@ async function huntDrop(tries = 80) {
     const r = await fight(page);
     const p = await player(page);
     const line = r === 'win' && (p.battle?.log || []).find((l) => /🎁|🗑/.test(l.text));
-    if (line) return { line: line.text, bag: (p.gear || []).length };
+    if (line) return { line: line.text, bag: Object.values(p.view.gear || {}).filter((g) => !Object.values(p.equip).includes(g.uid)).length };
     await act(page, 'leave').catch(() => null);
   }
   return null;

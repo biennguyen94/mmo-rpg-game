@@ -138,7 +138,11 @@ defmodule HacLong.Game.Characters do
   # Máu / MP không vượt mức tối đa (B-15: đồ cũ mất điểm chỉ số cộng thêm nên máu tối đa có thể giảm).
   defp to_player(%Character{} = c) do
     p =
-      c |> to_map() |> HacLong.Game.Engine.migrate_items() |> HacLong.Game.Engine.split_upgrades()
+      c
+      |> to_map()
+      |> HacLong.Game.Engine.migrate_items()
+      |> HacLong.Game.Engine.split_upgrades()
+      |> HacLong.Game.Engine.instance_gear()
 
     d = HacLong.Game.Engine.derived(p)
     %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)}

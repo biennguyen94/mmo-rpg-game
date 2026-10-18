@@ -13,6 +13,9 @@ defmodule HacLong.Game.ForgeStorageTest do
 
   defp player(attrs) do
     {:ok, p} = Engine.new_player("Thử", "dk")
+
+    # đồ khởi đầu đang mặc là món riêng: giữ chúng, thêm món của test vào sau
+    attrs = if attrs[:gear], do: %{attrs | gear: Gear.list(p) ++ attrs.gear}, else: attrs
     Map.merge(Map.merge(p, %{pos: @smith, gold: 100_000, tutorial: nil, level: 30}), attrs)
   end
 
@@ -63,7 +66,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       Rng.put_sequence([0.0])
       {%{ok: true}, p} = Commands.run(p, %{"act" => "life", "id" => "chain"})
       assert p.inv["chain"] == 1
-      assert [%{base: "chain", opt: 1}] = Gear.list(p)
+      assert [%{base: "chain", opt: 1}] = Gear.bag(p)
 
       assert {%{ok: false, msg: "Cần 1 Ngọc Sinh Mệnh."}, _} =
                Commands.run(p, %{"act" => "life", "id" => "chain"})
@@ -109,7 +112,7 @@ defmodule HacLong.Game.ForgeStorageTest do
         Commands.run(p, %{"act" => "chaos_upgrade", "id" => g.uid})
 
       assert Gear.find(p, g.uid) != nil and Engine.upgrade_level(p, g.uid) == 0
-      assert p.equip.weapon == "item_1_0"
+      assert Gear.find(p, p.equip.weapon).base == "item_1_0"
     end
   end
 

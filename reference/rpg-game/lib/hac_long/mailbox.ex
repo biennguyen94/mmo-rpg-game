@@ -346,7 +346,13 @@ defmodule HacLong.Mailbox do
   defp give(p, mail) do
     p = %{p | gold: p.gold + mail.gold}
     {gear, plain} = Enum.split_with(mail.items, fn {id, _} -> parse_gear(id) != nil end)
-    need = Enum.reduce(gear, 0, fn {_, n}, acc -> acc + n end)
+
+    # trang bị gửi dạng mã loại (thư cũ / quà) cũng thành món riêng, cần chỗ trong túi
+    need =
+      Enum.reduce(gear, 0, fn {_, n}, acc -> acc + n end) +
+        Enum.reduce(plain, 0, fn {id, n}, acc ->
+          if Engine.gear_item?(id), do: acc + n, else: acc
+        end)
 
     if need > 0 and length(Gear.bag(p)) + need > Gear.max_bag(),
       do: Repo.rollback("Túi trang bị không đủ chỗ cho #{need} món, dọn bớt rồi mở thư.")

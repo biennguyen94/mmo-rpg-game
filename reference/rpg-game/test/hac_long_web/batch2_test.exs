@@ -279,7 +279,7 @@ defmodule HacLongWeb.Batch2Test do
                %{base: "relic", rarity: 0, uid: ruid},
                %{base: "dragonshield", opt: 3, uid: guid}
              ] =
-               t.gear
+               HacLong.Game.Gear.bag(t)
 
       assert t.upgrades[ruid] == 5 and t.upgrades[guid] == 5
 

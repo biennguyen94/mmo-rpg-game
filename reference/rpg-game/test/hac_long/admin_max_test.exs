@@ -87,7 +87,7 @@ defmodule HacLong.AdminMaxTest do
       assert wing.opt == 4 and wing.luck and wing.wopt == "ignore_def"
 
       p =
-        Enum.reduce(Gear.list(p), p, fn g, p ->
+        Enum.reduce(Gear.bag(p), p, fn g, p ->
           {r, p} = Commands.run(p, %{"act" => "equip", "id" => g.uid})
           assert r.ok, "#{g.base}: #{r[:msg]}"
           p

@@ -35,15 +35,16 @@ defmodule HacLong.Game.Items15cTest do
     base = Engine.derived(p)
     {%{ok: true}, p} = Engine.equip(p, "item_13_8")
     {%{ok: true}, p} = Engine.equip(p, "item_13_8")
-    assert p.equip.ring1 == "item_13_8" and p.equip.ring2 == "item_13_8"
+    base_of = &Gear.item(p, &1).base
+    assert base_of.(p.equip.ring1) == "item_13_8" and base_of.(p.equip.ring2) == "item_13_8"
     assert Engine.derived(p).maxHp == base.maxHp + 50
 
     {%{ok: true}, p} = Engine.equip(p, "item_13_12")
-    assert p.equip.pendant == "item_13_12"
+    assert Gear.item(p, p.equip.pendant).base == "item_13_12"
     assert Engine.derived(p).atk == base.atk + 3
 
     {%{ok: true}, p} = Engine.unequip(p, "ring2")
-    assert p.equip.ring2 == nil and p.inv["item_13_8"] == 1
+    assert p.equip.ring2 == nil and Enum.count(Gear.bag(p), &(&1.base == "item_13_8")) == 1
     refute "item_13_8" in Data.shop() or "item_13_12" in Data.shop()
     refute Map.has_key?(Data.starters("dk"), :ring1)
   end

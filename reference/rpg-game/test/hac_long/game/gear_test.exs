@@ -62,16 +62,16 @@ defmodule HacLong.Game.GearTest do
 
     # Kiếm Sĩ: Đại Đao 42 tấn công thay Rìu Nhỏ 4; 2 dòng cộng thêm +8 (làm tròn nên lệch tối đa 1)
     assert abs(d.atk - (base.atk + 38 + 8)) <= 1
-    assert Gear.bag(p) == []
-    # rìu cũ về túi đồ thường
-    assert p.inv["item_1_0"] == 1
+    # rìu khởi đầu (món riêng) về túi trang bị
+    assert [%{base: "item_1_0", uid: axe}] = Gear.bag(p)
+    refute Map.has_key?(p.inv, "item_1_0")
     assert {%{ok: false, msg: "Đang mặc món này."}, _} = Engine.sell(p, "#KIEM")
 
-    {_, p} = Engine.equip(p, "item_1_0")
+    {_, p} = Engine.equip(p, axe)
     assert [%{uid: "#KIEM"}] = Gear.bag(p)
     gold = p.gold
     {%{ok: true}, p} = Engine.sell(p, "#KIEM")
-    assert p.gold > gold and p.gear == []
+    assert p.gold > gold and Gear.bag(p) == []
   end
 
   test "nâng cấp đồ ngẫu nhiên như đồ thường" do
@@ -95,7 +95,7 @@ defmodule HacLong.Game.GearTest do
 
     g = sword()
     assert {p2, :mailed} = Gear.add(p, g)
-    assert p2.gold == p.gold and length(p2.gear) == Gear.max_bag() and p2.mail_out == [g]
+    assert p2.gold == p.gold and length(Gear.bag(p2)) == Gear.max_bag() and p2.mail_out == [g]
   end
 
   test "lưu và nạp lại từ database" do

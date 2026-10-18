@@ -636,7 +636,7 @@ defmodule HacLongWeb.GameChannelTest do
       assert a.gold == pa.gold - 100 + 250 and b.gold == pb.gold - 250 + 100
       assert a.inv["potion_s"] == 3 and b.inv["potion_s"] == Map.get(pb.inv, "potion_s", 0) + 2
       assert a.gear == []
-      assert [%{uid: "#TRADE1"}] = b.gear
+      assert [%{uid: "#TRADE1"}] = HacLong.Game.Gear.bag(b)
       assert b.upgrades["#TRADE1"] == 2 and not Map.has_key?(a.upgrades || %{}, "#TRADE1")
       assert Characters.load(ub.id).gold == b.gold
     end
@@ -965,7 +965,7 @@ defmodule HacLongWeb.GameChannelTest do
                cmd(sb, %{"act" => "market_buy", "listing" => pot.id})
 
       r = cmd(sb, %{"act" => "market_buy", "listing" => gear.id})
-      assert [%{uid: "#CHO1"}] = r.player.gear
+      assert Enum.any?(r.player.gear, &(&1.uid == "#CHO1"))
       assert r.player.upgrades["#CHO1"] == 2
 
       # rút về

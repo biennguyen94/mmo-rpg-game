@@ -1,7 +1,7 @@
 defmodule HacLong.Game.EngineTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Daily, Data, Engine, Rng, Simulator}
+  alias HacLong.Game.{Daily, Data, Engine, Gear, Rng, Simulator}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -213,9 +213,9 @@ defmodule HacLong.Game.EngineTest do
     assert Engine.derived(p).atk == atk + 1
     assert p.inv["jewel_bless"] == 19 and p.gold == 10_000 - 8
 
-    # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
+    # đồ khởi đầu đang mặc là món riêng (cấp nâng theo từng món)
     club = p.equip.weapon
-    assert [%{uid: ^club, base: "item_1_0", rarity: 0}] = p.gear
+    assert %{uid: ^club, base: "item_1_0", rarity: 0} = Enum.find(p.gear, &(&1.uid == club))
     p = Enum.reduce(1..4, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
     assert Engine.upgrade_level(p, club) == 5
 
@@ -234,12 +234,13 @@ defmodule HacLong.Game.EngineTest do
     {_, p} = Engine.equip(p, club)
     assert Engine.derived(p).atk == Engine.derived(%{p | upgrades: %{}}).atk + 5
 
-    # bán gậy thường không mất cấp của gậy đã nâng; bán gậy đã nâng thì mất
+    # bán gậy mới (cấp 0) không mất cấp của gậy đã nâng; bán gậy đã nâng thì mất
     {_, p} = Engine.equip(p, "broadsword")
-    {_, p} = Engine.sell(p, "club")
+    fresh = Enum.find_value(Gear.bag(p), &(&1.base == "club" && &1.uid))
+    {_, p} = Engine.sell(p, fresh)
     assert p.upgrades == %{club => 5}
     {_, p} = Engine.sell(p, club)
-    assert p.upgrades == %{} and p.gear == []
+    assert p.upgrades == %{} and Enum.all?(p.gear, &(&1.uid != club))
     assert {%{ok: false, msg: "Chưa mặc đồ ở chỗ này."}, _} = Engine.upgrade(p, "shield")
   end
 

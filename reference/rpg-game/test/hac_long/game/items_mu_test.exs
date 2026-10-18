@@ -17,13 +17,16 @@ defmodule HacLong.Game.ItemsMuTest do
     Map.merge(p, attrs)
   end
 
-  test "nhân vật mới mặc đồ khởi đầu đúng lớp; Đấu Sĩ không có mũ" do
-    assert %{weapon: "item_1_0", helm: "item_7_5", armor: "item_8_5", shield: nil} =
-             player("dk").equip
+  defp worn(p), do: Map.new(p.equip, fn {s, id} -> {s, id && Gear.find(p, id).base} end)
 
-    assert player("dw").equip.weapon == "item_5_0"
-    assert player("elf").equip.weapon == "item_4_0"
-    mg = player("mg").equip
+  test "nhân vật mới mặc đồ khởi đầu đúng lớp; Đấu Sĩ không có mũ" do
+    # đồ khởi đầu là món riêng (`uid`), so theo loại đồ
+    assert %{weapon: "item_1_0", helm: "item_7_5", armor: "item_8_5", shield: nil} =
+             worn(player("dk"))
+
+    assert worn(player("dw")).weapon == "item_5_0"
+    assert worn(player("elf")).weapon == "item_4_0"
+    mg = worn(player("mg"))
     assert mg.weapon == "item_1_0" and mg.armor == "item_8_5" and mg.helm == nil
 
     # 11 ô (thêm 2 nhẫn, dây chuyền ở Phase 15c); thủ = tổng mọi ô phòng thủ (5 món bậc 1, mỗi món 1)
@@ -39,7 +42,7 @@ defmodule HacLong.Game.ItemsMuTest do
              Engine.equip(p, "item_0_3")
 
     assert {%{ok: true}, p} = Engine.equip(p, "item_5_3")
-    assert p.equip.weapon == "item_5_3"
+    assert worn(p).weapon == "item_5_3"
 
     # Cung Bạc (bậc 7): AGI 35 > 25 của Tiên Nữ mới tạo
     e = player("elf", %{level: 30}) |> Engine.add_item("item_4_5")
@@ -51,15 +54,15 @@ defmodule HacLong.Game.ItemsMuTest do
              Engine.equip(%{e | level: 10}, "item_4_5")
 
     {%{ok: true}, q} = Engine.unequip(player("dk"), "helm")
-    assert q.equip.helm == nil and q.inv["item_7_5"] == 1
+    assert q.equip.helm == nil and Enum.map(Gear.bag(q), & &1.base) == ["item_7_5"]
 
     # B-11: vũ khí, giáp cũng tháo được; tay không / không giáp thì chỉ còn phần theo chỉ số
     p = player("dk")
     {%{ok: true}, q} = Engine.unequip(p, "armor")
-    assert q.equip.armor == nil and q.inv[p.equip.armor] == 1
+    assert q.equip.armor == nil and Enum.any?(Gear.bag(q), &(&1.uid == p.equip.armor))
     assert Engine.derived(q).def < Engine.derived(p).def
     {%{ok: true}, q} = Engine.unequip(q, "weapon")
-    assert q.equip.weapon == nil and q.inv[p.equip.weapon] == 1
+    assert q.equip.weapon == nil and Enum.any?(Gear.bag(q), &(&1.uid == p.equip.weapon))
     assert Engine.derived(q).atk < Engine.derived(p).atk and Engine.derived(q).atk > 0
     assert %{weapon: nil, armor: nil} = Engine.look(q)
     assert {%{ok: false}, _} = Engine.unequip(q, "weapon")

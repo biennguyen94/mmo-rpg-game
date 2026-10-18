@@ -34,7 +34,7 @@ defmodule HacLongWeb.Market15hTest do
     assert %{exc: ["atk_pct"], luck: true, skill: true, opt: 2, up: 7} = l.gear
 
     {:ok, _, b2} = Market.buy(buyer.id, b, l.id, &Characters.save!(buyer.id, &1))
-    [got] = b2.gear
+    [got] = Enum.filter(b2.gear, & &1[:exc])
     assert %{exc: ["atk_pct"], luck: true, skill: true, opt: 2, bonus: %{}} = got
     assert b2.upgrades[got.uid] == 7
   end

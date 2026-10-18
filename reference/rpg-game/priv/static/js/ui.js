@@ -325,6 +325,8 @@
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
     const gearBases = all.filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy);
+    // trang bị luôn là món riêng (tặng ở mục Trang bị); mục Đồ thường chỉ còn đồ xếp chồng
+    const stackItems = all.filter(([, it]) => !GEAR_KINDS.includes(it.slot) && it.slot !== 'wing');
     const up = `<label class="small">+ <input type="number" name="up" min="0" max="${UPGRADE.max}" value="0"></label>`;
     const line = (op, label, inner, btn = 'Làm') => `<form class="adm-char gift-form" data-op="${op}" data-uid="${u.id}"><div class="btn-row"><span class="small grow">${label}</span>${inner}<button class="btn small-btn" type="submit">${btn}</button></div></form>`;
     const num = (name, value, attrs = '') => `<input type="number" name="${name}" value="${value}" ${attrs}>`;
@@ -337,8 +339,8 @@
       ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh)', num('n', 0, 'min="0" max="10"'), 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
-      ${line('give_item', 'Đồ thường', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${all.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}${up}`, 'Tặng')}
-      ${line('give_gear', 'Đồ riêng', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `${o} dòng cộng thêm` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
+      ${line('give_item', 'Đồ thường (bình, ngọc, nguyên liệu, vé…)', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${stackItems.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}`, 'Tặng')}
+      ${line('give_gear', 'Trang bị (vũ khí, giáp, khiên, trang sức, cánh)', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `${o} dòng cộng thêm` : 'Không dòng cộng thêm'}</option>`).join('')}</select>${up}
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
           <select name="wopt" aria-label="Dòng phụ cánh"><option value="">Cánh: không dòng phụ</option><option value="hp">Cánh: máu tối đa</option><option value="mp">Cánh: MP tối đa</option><option value="ignore_def">Cánh: bỏ qua phòng thủ</option></select></div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}

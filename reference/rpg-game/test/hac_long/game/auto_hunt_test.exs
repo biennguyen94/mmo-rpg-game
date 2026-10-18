@@ -7,6 +7,9 @@ defmodule HacLong.Game.AutoHuntTest do
   defp player(attrs \\ %{}) do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Thợ Săn", "cls" => "dk"})
 
+    # đồ khởi đầu đang mặc là món riêng: giữ chúng, thêm món của test vào sau
+    attrs = if attrs[:gear], do: %{attrs | gear: Gear.list(p) ++ attrs.gear}, else: attrs
+
     p
     |> Map.merge(%{pos: %{map: "forest_1", x: 13, y: 16}, inv: %{"potion_s" => 5}})
     |> Map.merge(attrs)

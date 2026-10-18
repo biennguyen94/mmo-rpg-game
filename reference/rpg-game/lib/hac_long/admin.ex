@@ -13,7 +13,7 @@ defmodule HacLong.Admin do
   | `give_xp` | `xp` (1..1e9) | cộng kinh nghiệm, lên cấp như đánh quái |
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
-  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
+  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); trang bị (vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền) thì mỗi món là một món riêng trong túi trang bị |
   | `give_gear` | `base`, `opt` (0..4: số dòng cộng thêm +4 mỗi dòng), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng một món đồ (kiểu MU, B-15) |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
@@ -146,11 +146,11 @@ defmodule HacLong.Admin do
       not (is_integer(up) and up in 0..Engine.max_upgrade()) ->
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
-      (up > 0 or it.slot == "wing") and it.slot not in Engine.equip_slots() ->
+      up > 0 and it.slot not in Engine.equip_slots() ->
         {:error, "#{it.name} không nâng cấp được."}
 
-      # đồ đã nâng cấp và cánh là từng món riêng (`Gear.plain/1`), nằm trong túi đồ hiếm
-      up > 0 or it.slot == "wing" ->
+      # trang bị luôn là từng món riêng (`Gear.plain/1`) trong túi trang bị
+      Engine.gear_item?(id) ->
         {:ok,
          fn p ->
            if length(Gear.bag(p)) + count > Gear.max_bag() do
