@@ -811,8 +811,17 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - Bỏ 6 công thức pha / nấu bình máu ở Bà Lang (bình vẫn mua ở Bà Lang). Thay bằng 4 đồ uống (`items.json`, `drink: true`,
     `slot: "food"`): Bia Thảo Dược (Thảo Dược ×3) vàng +8 %; Rượu Thuốc (Thảo Dược ×2 + Linh Chi) máu +6 %; Rượu Linh Chi
     (Linh Chi ×2) EXP +8 % — 30 trận; Rượu Long Huyết (Linh Chi ×3 + Cá Chép Vàng, nghề cấp 3) công +4 %, thủ +4 %, 40 trận.
-    Pha dùng chung cấp nghề Nấu ăn (`Crafting.brew/2`, được 1 kinh nghiệm nghề).
+    Pha cần cấp nghề Nấu ăn (`Crafting.brew/2`; sau đó đổi thành không cộng kinh nghiệm nghề, mục dưới).
   - Đồ uống nằm **ô riêng** `characters.drink` (migration `20261108000000_add_drink`), cộng dồn với món ăn; uống món khác thì thay.
   - Món ăn Bác Đầu Bếp (trước 10–20 % trong 5–10 trận, hết rất nhanh khi tự đánh): Chả Cá công +5 % 30 trận, Bánh Mì Cá thủ
     +6 % 30 trận, Bánh Xèo Lươn máu +6 % công +4 % 40 trận, Mâm Cỗ Cá Vàng EXP +10 % vàng +5 % 50 trận — ngang Đài Phúc
     Lành (+5 %, 30 trận). Hình đồ uống: chai thuốc CC0 của Dungeon Crawl (`assets/food/`, `CREDITS.md`).
+- (anh "ok làm đi") **Nghề Nấu ăn chậm lại; món cá vàng mạnh hẳn.** Cá Chép Vàng cắn câu 1 % (hồ sâu 2 %), ~7–14 phút câu một
+  con, nên hai món cần nó phải đáng công:
+  - Mâm Cỗ Cá Vàng: EXP +10 %, vàng +10 %, công / thủ / máu +5 %, **100 trận**. Rượu Long Huyết: công +8 %, thủ +8 %, máu +5 %,
+    **80 trận**. Hai món cùng lúc: +13 % công / thủ, +10 % máu. Món thường giữ nguyên.
+  - Ngưỡng nghề Nấu ăn `RULES.crafting.cook_levels` = 0 / 20 / 60 / 120 / 200 (trước dùng chung `levels` 0 / 5 / 15 / 30 / 50 với
+    Rèn; Rèn giữ nguyên). Kinh nghiệm theo công thức (`xp` trong `recipes.json`): Chả Cá, Bánh Mì Cá 1; Bánh Xèo Lươn 2; Mâm Cỗ 5;
+    **pha đồ uống 0** (chỉ nấu ở Bác Đầu Bếp mới lên nghề). Cày riêng: cấp 3 ~40–60 phút, cấp 5 ~2,5–3,5 giờ.
+  - Nhân vật đã có kinh nghiệm nghề giữ số lần nấu, cấp tính lại theo ngưỡng mới (có thể tụt cấp). Client nhận
+    `RULES.craftLevels` dạng `{cook, smith}`.

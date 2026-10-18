@@ -326,11 +326,14 @@
       "food": {
         "buff": {
           "xp": 0.1,
-          "gold": 0.05
+          "gold": 0.1,
+          "atk": 0.05,
+          "def": 0.05,
+          "hp": 0.05
         },
-        "battles": 50
+        "battles": 100
       },
-      "desc": "Kinh nghiệm +10%, vàng +5% trong 50 trận."
+      "desc": "Kinh nghiệm +10%, vàng +10%, tấn công +5%, phòng thủ +5%, máu tối đa +5% trong 100 trận."
     },
     "bia_thao_duoc": {
       "name": "Bia Thảo Dược",
@@ -382,12 +385,13 @@
       "price": 600,
       "food": {
         "buff": {
-          "atk": 0.04,
-          "def": 0.04
+          "atk": 0.08,
+          "def": 0.08,
+          "hp": 0.05
         },
-        "battles": 40
+        "battles": 80
       },
-      "desc": "Tấn công +4%, phòng thủ +4% trong 40 trận."
+      "desc": "Tấn công +8%, phòng thủ +8%, máu tối đa +5% trong 80 trận."
     },
     "moon_cake": {
       "name": "Bánh Trung Thu",

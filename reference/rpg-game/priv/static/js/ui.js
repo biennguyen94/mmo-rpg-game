@@ -2780,10 +2780,10 @@
 
   // Cấp nghề: thanh tiến độ tới cấp sau
   function craftLevel(kind, label) {
-    const xp = (P.crafting && P.crafting[kind]) || 0, L = RULES.craftLevels;
+    const xp = (P.crafting && P.crafting[kind]) || 0, L = RULES.craftLevels[kind];
     const lv = L.filter((x) => xp >= x).length, next = L[lv];
     return `<div class="row"><span class="grow small">Nghề ${label} <b style="color:var(--gold)">cấp ${lv}</b></span><span class="small muted">${next != null ? `${xp}/${next}` : 'tối đa'}</span></div>
-      ${bar('xp', next != null ? xp - L[lv - 1] : 1, next != null ? next - L[lv - 1] : 1, next != null ? `${xp}/${next} lần` : 'Cấp tối đa')}`;
+      ${bar('xp', next != null ? xp - L[lv - 1] : 1, next != null ? next - L[lv - 1] : 1, next != null ? `${xp}/${next} kinh nghiệm` : 'Cấp tối đa')}`;
   }
 
   function cookCard() {
@@ -2795,7 +2795,7 @@
         const ok = lv >= need && needs.every(([id, n]) => (P.inv[id] || 0) >= n);
         return `<div class="item">${itemIcon(out)}<div class="grow"><div class="name">${esc(out.name)}</div>
           <div class="small">${esc(out.desc)}</div>
-          <div class="small muted">${lv < need ? `<span style="color:var(--bad)">Cần nghề cấp ${need}</span> · ` : ''}${needs.map(([id, n]) => `${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}`).join(' · ')}</div></div>
+          <div class="small muted">${lv < need ? `<span style="color:var(--bad)">Cần nghề cấp ${need}</span> · ` : ''}${needs.map(([id, n]) => `${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}`).join(' · ')} · +${r.xp ?? 1} kinh nghiệm nghề</div></div>
           <button class="btn ${ok ? 'primary' : ''}" data-act="cook" data-id="${r.id}" ${ok ? '' : 'disabled'}>Nấu</button></div>`;
       }).join('')}</div></div>`;
   }
@@ -2829,11 +2829,11 @@
       }).join('')}</div></div>`;
   }
 
-  // Bà Lang: pha đồ uống từ Thảo Dược / Linh Chi (dùng chung cấp nghề Nấu ăn); uống ở tab Túi đồ, cộng dồn với món ăn
+  // Bà Lang: pha đồ uống từ Thảo Dược / Linh Chi (cần cấp nghề Nấu ăn, không cộng kinh nghiệm nghề); uống ở tab Túi đồ, cộng dồn với món ăn
   function craftCard() {
     const lv = P.view.crafting.cook;
     return `<div class="card"><h3>Pha chế · đồ uống</h3>
-      <p class="small muted">Uống ngoài trận (tab Túi đồ) thì mạnh hơn trong một số trận. Đồ uống cộng dồn với món ăn của Bác Đầu Bếp; mỗi lúc uống một thứ. Pha dùng chung cấp nghề Nấu ăn.</p>${drinkNow()}
+      <p class="small muted">Uống ngoài trận (tab Túi đồ) thì mạnh hơn trong một số trận. Đồ uống cộng dồn với món ăn của Bác Đầu Bếp; mỗi lúc uống một thứ. Pha cần cấp nghề Nấu ăn nhưng không cộng kinh nghiệm nghề; lên nghề ở Bác Đầu Bếp.</p>${drinkNow()}
       <div class="list">${RECIPES.filter((r) => r.npc === 'herbalist').map((r) => {
         const out = ITEMS[r.out], needs = Object.entries(r.needs), need = r.level || 1;
         const ok = lv >= need && needs.every(([id, n]) => (P.inv[id] || 0) >= n);

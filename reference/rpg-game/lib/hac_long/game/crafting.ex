@@ -11,7 +11,8 @@ defmodule HacLong.Game.Crafting do
     uống món khác thì thay đồ uống cũ.
   - **Rèn đồ** (`smith/2`): chọn vũ khí, giáp hoặc khiên; tốn quặng và vàng, ra một món đồ
     ngẫu nhiên hợp cấp. Cấp nghề rèn càng cao càng dễ ra đồ nhiều dòng cộng thêm (+12).
-  - Mỗi lần nấu/rèn được 1 kinh nghiệm nghề; cấp nghề 1–5 (`level/1`).
+  - Mỗi lần rèn được 1 kinh nghiệm nghề, mỗi lần nấu được `xp` của công thức (pha đồ uống 0); cấp nghề 1–5
+    (`level/2`), ngưỡng riêng từng nghề (`levels/1`).
 
   Trạng thái trong nhân vật: `crafting: %{cook: số, smith: số}`, `food` / `drink`: `%{id, left} | nil`.
   """
@@ -20,19 +21,20 @@ defmodule HacLong.Game.Crafting do
 
   # số ở `RULES.crafting` (`priv/game_data/rules.json`)
   @rules Data.rules().crafting
-  @levels @rules.levels
+  @levels %{cook: @rules.cook_levels, smith: @rules.levels}
   @names %{cook: "Nấu ăn", smith: "Rèn đồ"}
   # nguyên liệu mỗi lần rèn theo loại đồ; vàng = cấp nhân vật × 15
   @smith_costs @rules.smith_costs
 
+  def levels(skill), do: @levels[skill]
   def levels, do: @levels
-  def max_level, do: length(@levels)
+  def max_level, do: length(@levels.smith)
   def smith_costs, do: @smith_costs
   def smith_gold(p), do: p.level * @rules.smith_gold_per_level
 
   def xp(p, skill), do: Map.get(Map.get(p, :crafting) || %{}, skill, 0)
-  def level(xp) when is_integer(xp), do: Enum.count(@levels, &(xp >= &1))
-  def level(p, skill), do: level(xp(p, skill))
+  def level(xp, skill) when is_integer(xp), do: Enum.count(@levels[skill], &(xp >= &1))
+  def level(p, skill), do: level(xp(p, skill), skill)
 
   @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng 6% mỗi cấp, 2 dòng 50%, còn lại 1 dòng."
   def smith_weights(lv) do
@@ -40,10 +42,13 @@ defmodule HacLong.Game.Crafting do
     [{3, epic}, {2, @rules.smith_rare}, {1, 100 - @rules.smith_rare - epic}]
   end
 
-  defp gain(p, skill) do
+  defp gain(p, skill, n \\ 1)
+  defp gain(p, _skill, 0), do: {p, ""}
+
+  defp gain(p, skill, n) do
     before = level(p, skill)
     all = Map.get(p, :crafting) || %{cook: 0, smith: 0}
-    p = Map.put(p, :crafting, Map.put(all, skill, xp(p, skill) + 1))
+    p = Map.put(p, :crafting, Map.put(all, skill, xp(p, skill) + n))
     now = level(p, skill)
 
     note =
@@ -67,7 +72,7 @@ defmodule HacLong.Game.Crafting do
 
   def cook(p, id), do: make(p, id, "cook", &"Nấu được #{&1}.#{&2}")
 
-  @doc "Pha đồ uống ở Bà Lang (công thức `npc: \"herbalist\"`), dùng chung cấp nghề Nấu ăn."
+  @doc "Pha đồ uống ở Bà Lang (công thức `npc: \"herbalist\"`): cần cấp nghề Nấu ăn, không cộng kinh nghiệm nghề."
   def brew(p, id), do: make(p, id, "herbalist", &"Pha được #{&1}.#{&2}")
 
   defp make(p, id, npc, done) do
@@ -85,7 +90,7 @@ defmodule HacLong.Game.Crafting do
 
       true ->
         p = p |> take_all(r.needs) |> Engine.add_item(r.out)
-        {p, note} = gain(p, :cook)
+        {p, note} = gain(p, :cook, r[:xp] || 1)
         {%{ok: true, msg: done.(Data.item(r.out).name, note)}, p}
     end
   end

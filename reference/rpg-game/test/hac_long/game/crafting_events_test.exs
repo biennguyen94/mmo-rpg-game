@@ -30,14 +30,39 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert p.inv["cha_ca"] == 1 and p.inv["fish_small"] == 18 and p.inv["herb"] == 19
 
     p = Enum.reduce(1..4, p, fn _, p -> elem(Crafting.cook(p, "cook_cha_ca"), 1) end)
-    assert Crafting.xp(p, :cook) == 5 and Crafting.level(p, :cook) == 2
-    assert Enum.map([0, 4, 5, 15, 30, 50, 999], &Crafting.level/1) == [1, 1, 2, 3, 4, 5, 5]
+    assert Crafting.xp(p, :cook) == 5 and Crafting.level(p, :cook) == 1
+
+    assert Enum.map([0, 19, 20, 60, 120, 200, 999], &Crafting.level(&1, :cook)) ==
+             [1, 1, 2, 3, 4, 5, 5]
+
+    # nghề Rèn giữ ngưỡng riêng
+    assert Enum.map([0, 4, 5, 15, 30, 50], &Crafting.level(&1, :smith)) == [1, 1, 2, 3, 4, 5]
 
     # Bà Lang không nấu món của Bác Đầu Bếp
     herbalist = Map.put(p, :pos, %{map: "village", x: 16, y: 13})
 
     assert {%{ok: false, msg: "Không có món này."}, _} =
              Commands.run(herbalist, %{"act" => "craft", "id" => "cook_cha_ca"})
+  end
+
+  test "kinh nghiệm nghề theo món; món cá vàng mạnh và lâu" do
+    p =
+      player(%{
+        inv: %{"fish_eel" => 1, "fish_gold" => 1, "herb_rare" => 3},
+        crafting: %{cook: 199, smith: 0}
+      })
+
+    {%{ok: true}, p} = Crafting.cook(p, "cook_banh_xeo_luon")
+    assert Crafting.xp(p, :cook) == 201 and Crafting.level(p, :cook) == 5
+    {%{ok: true}, p} = Crafting.cook(p, "cook_mam_co")
+    assert Crafting.xp(p, :cook) == 206
+
+    base = Engine.derived(p)
+    {%{ok: true}, p} = Crafting.eat(p, "mam_co")
+    assert p.food == %{id: "mam_co", left: 100}
+    d = Engine.derived(p)
+    assert abs(d.atk - base.atk * 1.05) <= 1 and abs(d.maxHp - base.maxHp * 1.05) <= 1
+    assert Crafting.food_bonus(p, :xp) == 0.1 and Crafting.food_bonus(p, :gold) == 0.1
   end
 
   test "ăn món: cộng chỉ số trong vài trận rồi hết" do
@@ -66,7 +91,7 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert p.battle.over and p.food.left == 29
   end
 
-  test "đồ uống Bà Lang: pha (cấp nghề Nấu ăn), ô riêng cộng dồn với món ăn, hết theo trận" do
+  test "đồ uống Bà Lang: pha (cần cấp nghề Nấu ăn, không cộng kinh nghiệm), ô riêng cộng dồn với món ăn, hết theo trận" do
     p = player(%{inv: %{"herb" => 10, "herb_rare" => 10, "fish_gold" => 1, "cha_ca" => 1}})
     herbalist = Map.put(p, :pos, %{map: "village", x: 16, y: 13})
 
@@ -77,7 +102,8 @@ defmodule HacLong.Game.CraftingEventsTest do
       Commands.run(herbalist, %{"act" => "craft", "id" => "brew_ruou_thuoc"})
 
     assert p.inv["ruou_thuoc"] == 1 and p.inv["herb"] == 8 and p.inv["herb_rare"] == 9
-    assert Crafting.xp(p, :cook) == 1
+    # pha đồ uống không cộng kinh nghiệm nghề
+    assert Crafting.xp(p, :cook) == 0
     # Bác Đầu Bếp không pha đồ uống
     assert {%{ok: false}, _} = Crafting.cook(p, "brew_bia")
 

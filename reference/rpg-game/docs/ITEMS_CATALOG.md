@@ -4,14 +4,14 @@
 
 ## Tổng quan
 
-- **416 món trang bị**, trong đó **217 món phụ** (chỉ rơi, không bán).
+- **417 món trang bị**, trong đó **218 món phụ** (chỉ rơi, không bán).
 - **11 bậc** đồ (bậc 9+ từ DECISIONS B-17); ép tối đa **+11**; **29 bộ giáp chính + 25 bộ phụ**.
 - Ô trang bị: vũ khí, khiên, mũ, giáp, quần, găng, giày, 2 nhẫn, dây chuyền, cánh. Đấu Sĩ không đội mũ.
 - Món phụ có công, thủ, cấp và giá như món chính cùng bậc; chỉ khác tên, hình và yêu cầu chỉ số.
 
 | Loại | Món chính | Món phụ |
 |---|---|---|
-| Vũ khí | 33 | 88 |
+| Vũ khí | 33 | 89 |
 | Khiên | 10 | 11 |
 | Bộ giáp (món) | 145 | 118 |
 | Nhẫn | 6 | — |
@@ -35,7 +35,7 @@
 | 8 | 32 / 32 | **Rìu Lưỡi Liềm**, *Kiếm Hủy Diệt*, *Kiếm Pha Lê*, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Quyền Trượng Bậc Thầy*, *Rìu Rồng Hỗn Nguyên*, *Đại Lưỡi Hái*, *Đại Quyền Trượng* | 79 (69~89) | **Phượng Hoàng Đen**, *Dũng Sĩ*, *Thép Đen*, *Titan* | 60 | **Khiên Đồng** |
 | 9 | 37 / 40 | **Kiếm Phá Hắc Ám**, *Giáo Rồng*, *Quyền Trượng Chúa Tể*, *Quyền Trượng Ánh Sáng* | 98 (89~107) | **Đại Long**, *Hắc Chủ* | 81 | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
 | 10 | 42 / 48 | **Kiếm Bình Minh** | 120 (109~131) | **Long Kỵ Sĩ**, *Bá Vương*, *Ánh Dương* | 106 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
-| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Kiếm Lửa Lượn*, *Kiếm Phá Giáp*, *Kiếm Xương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
+| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Kiếm Lửa Lượn*, *Kiếm Phá Giáp*, *Kiếm Tổng Lãnh Thiên Thần*, *Kiếm Xương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
 
 ### Phù Thủy
 
@@ -83,7 +83,7 @@
 | 8 | 32 / 32 | **Rìu Lưỡi Liềm**, *Kiếm Hủy Diệt*, *Kiếm Pha Lê*, *Kiếm Sấm*, *Kiếm Xoắn*, *Kích Balrog*, *Quyền Trượng Bậc Thầy*, *Rìu Rồng Hỗn Nguyên*, *Đại Lưỡi Hái*, *Đại Quyền Trượng* | 79 (69~89) | **Phượng Hoàng Đen**, *Cuồng Phong*, *Dũng Sĩ*, *Thép Đen*, *Titan*, *Ưng Sấm* | 49 | **Khiên Đồng** |
 | 9 | 37 / 40 | **Kiếm Phá Hắc Ám**, *Gậy Tổng Lãnh Thiên Thần*, *Kiếm Cổ Tự*, *Kiếm Sấm*, *Quyền Trượng Chúa Tể*, *Quyền Trượng Ánh Sáng* | 98 (89~107) | **Đại Long**, *Hắc Chủ* | 66 | **Khiên Nguyên Tố**, *Khiên Thập Tự*, *Khiên Đại Linh Hồn* |
 | 10 | 42 / 48 | **Kiếm Bình Minh**, *Kiếm Vũ Công* | 120 (109~131) | **Long Kỵ Sĩ**, *Bá Vương*, *Bóng Ma*, *Hủy Diệt*, *Núi Lửa*, *Ánh Dương* | 86 | **Khiên Vinh Quang Đỏ**, *Khiên Hộ Vệ*, *Khiên Kết Giới Băng*, *Khiên Kỳ Nhông* |
-| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Gậy Kundun*, *Gậy Sắc Ánh*, *Gậy Tử Thần*, *Kiếm Bộc Phá*, *Kiếm Hắc Vương*, *Kiếm Đế Vương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
+| 11 | 47 / — | **Kiếm Hiệp Sĩ**, *Giáo Beuroba*, *Gậy Kundun*, *Gậy Sắc Ánh*, *Gậy Tử Thần*, *Kiếm Bộc Phá*, *Kiếm Hắc Vương*, *Kiếm Tổng Lãnh Thiên Thần*, *Kiếm Đế Vương*, *Quyền Trượng Công Kích*, *Quyền Trượng Mặt Trời*, *Quyền Trượng Tuyệt Đối*, *Quyền Trượng Tổng Lãnh Thiên Thần*, *Quyền Trượng Đại Chúa Tể* | 145 (140~150) |  | — | — |
 
 ## Bậc, cấp, giá
 
@@ -125,12 +125,12 @@ Chỉ rơi từ quái và rương, mọi lớp dùng được, không đòi ch�
 
 ## Cánh
 
-Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm 2% sát thương và hấp thụ.
+Ghép ở Máy Hỗn Nguyên. Ép cánh thêm sát thương và hấp thụ theo bậc cánh (RULES.wing_upgrade), +10 / +11 tăng mạnh, hấp thụ tối đa 50%.
 
 | Cấp | Tên theo lớp | Cấp đeo | Thủ | Sát thương | Nhận vào | Dòng phụ | Cách ghép |
 |---|---|---|---|---|---|---|---|
-| 1 | Cánh Ác Quỷ (Kiếm Sĩ), Cánh Thiên Đường (Phù Thủy), Cánh Tiên (Tiên Nữ), Cánh Bóng Tối (Đấu Sĩ) | 20 | 6 | +10% | −10% | — | 1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 (chọn lớp: của mình hoặc lớp khác để bán / tặng). 20.000 vàng, 10% |
-| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −18% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 (chọn lớp). 200.000 vàng, 20% |
+| 1 | Cánh Ác Quỷ (Kiếm Sĩ), Cánh Thiên Đường (Phù Thủy), Cánh Tiên (Tiên Nữ), Cánh Bóng Tối (Đấu Sĩ) | 20 | 6 | +10% | −10% | — | 1 vũ khí / giáp / khiên +5 trở lên + 1 Ngọc Hỗn Nguyên → cánh cấp 1 (chọn lớp: của mình hoặc lớp khác để bán / tặng). 20.000 vàng, 25% |
+| 2 | Cánh Rồng (Kiếm Sĩ), Cánh Linh Hồn (Phù Thủy), Cánh Tinh Linh (Tiên Nữ), Cánh Hủy Diệt (Đấu Sĩ) | 35 | 12 | +18% | −15% | 1 dòng: +60 máu / +40 MP / bỏ qua 3% thủ | 1 cánh cấp 1 +5 trở lên + 5 Ước Nguyện + 5 Tâm Linh + 2 Hỗn Nguyên → cánh cấp 2 (chọn lớp). 200.000 vàng, 20% |
 | 3 | Cánh Bão Tố (Kiếm Sĩ), Cánh Không Gian (Phù Thủy), Cánh Ảo Ảnh (Tiên Nữ), Cánh Cuồng Phong (Đấu Sĩ) | 45 | 22 | +25% | −25% | 1 dòng: +120 máu / +80 MP / bỏ qua 5% thủ | 1 cánh cấp 2 +9 trở lên + 1 Lông Vũ Kền Kền + 10 Ước Nguyện + 10 Tâm Linh + 3 Hỗn Nguyên + 3 Sinh Mệnh → cánh cấp 3 (chọn lớp). 500.000 vàng, 15% |
 
 ## Ép +N (kiểu MU)
@@ -148,8 +148,8 @@ Mỗi cấp cộng 8% chỉ số gốc của món (ít nhất +1). Từ +10 mỗ
 | +7 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 7 |
 | +8 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 8 |
 | +9 | Thợ Rèn | vàng + 1 Ngọc Tâm Linh | 50% | **về +0** | 9 |
-| +10 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 1 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh | 50% | **vỡ đồ** | 11 |
-| +11 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 2 Ngọc Ước Nguyện + 2 Ngọc Tâm Linh | 45% | **vỡ đồ** | 13 |
+| +10 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 1 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh | 35% | **về +0** | 11 |
+| +11 | Máy Hỗn Nguyên | vàng + 1 Ngọc Hỗn Nguyên + 2 Ngọc Ước Nguyện + 2 Ngọc Tâm Linh | 25% | **về +0** | 13 |
 
 Vàng = 8% giá món × cấp lên (giá tối thiểu 100). Ngọc Sinh Mệnh: +4 mỗi dòng, tối đa 4 dòng, 50%; vũ khí cộng công, giáp / khiên / cánh cộng thủ; thất bại mất dòng cuối.
 
@@ -168,7 +168,7 @@ Mỗi dòng +4 tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh 
 
 Số dòng: 1 dòng 70%, 2 dòng 25%, 3 dòng 5%. Giá bán ×2.
 
-- Vũ khí, dây chuyền: Tấn công +5%; Chí mạng +4%; Hồi 6% máu khi hạ quái; Hồi 10% MP khi hạ quái; Tấn công + cấp × 0.1; Tỉ lệ trúng +10%
+- Vũ khí, dây chuyền: Tấn công +5%; Chí mạng +4%; Hồi 6% máu khi hạ quái; Hồi 10% MP khi hạ quái; Tấn công + cấp × 0.6; Tỉ lệ trúng +10%
 - Giáp, khiên, nhẫn: Máu tối đa +4%; Giảm sát thương nhận 3%; Vàng nhận +15%; MP tối đa +4%; Phản sát thương 5%; Tỉ lệ né +10%
 
 Tổng giảm sát thương tối đa 20%. Pha thêm ở Máy Hỗn Nguyên (tối đa 3 dòng).
@@ -193,12 +193,12 @@ Chỉ món bộ giáp. Thủ món +20%, giá bán ×3. Thưởng theo số món 
 
 | Loại quái | Rơi đồ | Excellent | Thần | May mắn | Kỹ năng |
 |---|---|---|---|---|---|
-| Quái thường | 6% | 10% | 5% | 10% | 15% |
+| Quái thường | 8% | 10% | 5% | 10% | 15% |
 | Quái đêm | 25% | 8% | 2% | 15% | 15% |
 | Tinh anh | 50% | 12% | 4% | 20% | 15% |
 | Trùm | 35% | 20% | 8% | 35% | 15% |
 
-Quái thường: khoảng 1/167 con ra Excellent, 1/775 con ra đồ Thần. Ngọc rơi riêng: quái từ cấp 12 có 0,6% mỗi con, trùm 30%.
+Quái thường: khoảng 1/125 con ra Excellent, 1/581 con ra đồ Thần. Ngọc rơi riêng: quái từ cấp 12 có 1,5% mỗi con, trùm 30%.
 
 ## Vật phẩm khác
 
@@ -218,30 +218,34 @@ Quái thường: khoảng 1/167 con ra Excellent, 1/775 con ra đồ Thần. Ng�
 | **Bình Mana Vừa** | hồi 40% MP | 55 |
 | **Bình Mana Lớn** | hồi 70% MP | 150 |
 
-### Món ăn (4)
+### Món ăn (8)
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Chả Cá** | Tấn công +10% trong 5 trận. | 20 |
-| **Bánh Mì Cá** | Phòng thủ +12% trong 5 trận. | 40 |
-| **Bánh Xèo Lươn** | Máu tối đa +12%, tấn công +8% trong 8 trận. | 120 |
-| **Mâm Cỗ Cá Vàng** | Kinh nghiệm +20%, vàng +10% trong 10 trận. | 600 |
+| **Chả Cá** | Tấn công +5% trong 30 trận. | 20 |
+| **Bánh Mì Cá** | Phòng thủ +6% trong 30 trận. | 40 |
+| **Bánh Xèo Lươn** | Máu tối đa +6%, tấn công +4% trong 40 trận. | 120 |
+| **Mâm Cỗ Cá Vàng** | Kinh nghiệm +10%, vàng +10%, tấn công +5%, phòng thủ +5%, máu tối đa +5% trong 100 trận. | 600 |
+| **Bia Thảo Dược** | Vàng nhặt +8% trong 30 trận. | 30 |
+| **Rượu Thuốc** | Máu tối đa +6% trong 30 trận. | 60 |
+| **Rượu Linh Chi** | Kinh nghiệm +8% trong 30 trận. | 100 |
+| **Rượu Long Huyết** | Tấn công +8%, phòng thủ +8%, máu tối đa +5% trong 80 trận. | 600 |
 
 ### Ngọc (4)
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Ngọc Ước Nguyện** | Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương. | 1.000 |
-| **Ngọc Tâm Linh** | Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp. | 1.500 |
-| **Ngọc Hỗn Nguyên** | Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên. | 1.250 |
-| **Ngọc Sinh Mệnh** | Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối. | 1.250 |
+| **Ngọc Ước Nguyện** | Ép đồ +1 → +6 ở Thợ Rèn, mỗi cấp 1 viên, chắc chắn thành công. Cũng cần khi ép +10, +11 ở Máy Hỗn Nguyên. Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương, sự kiện. | 1.000 |
+| **Ngọc Tâm Linh** | Ép đồ +7 → +9 ở Thợ Rèn, mỗi cấp 1 viên, có thể thất bại: đồ về +0 (May mắn tăng tỉ lệ). Cũng cần khi ép +10, +11. Rơi như Ngọc Ước Nguyện. | 1.500 |
+| **Ngọc Hỗn Nguyên** | Ép đồ +10, +11 ở Máy Hỗn Nguyên (kèm Ước Nguyện và Tâm Linh; thất bại đồ về +0) và nguyên liệu ghép ở Máy Hỗn Nguyên. Rơi như Ngọc Ước Nguyện. | 1.250 |
+| **Ngọc Sinh Mệnh** | Ép ở Thợ Rèn: thêm một dòng cộng thêm 4 % tấn công gốc (vũ khí) hoặc phòng thủ gốc (giáp, khiên, cánh), ít nhất +4, tối đa 4 dòng; 50 %, thất bại mất dòng cuối. Rơi như Ngọc Ước Nguyện. | 1.250 |
 
 ### Vé, nguyên liệu sự kiện (3)
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Vé Quảng Trường** | Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 30 trở lên. | 0 |
-| **Vé Lâu Đài** | Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 35 trở lên. | 0 |
+| **Vé Quảng Trường** | Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc ghép Mắt Quỷ + Chìa Khóa Quỷ ở Máy Hỗn Nguyên. | 0 |
+| **Vé Lâu Đài** | Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc ghép Cuộn Giấy Tổng Lãnh Thiên Thần + Xương Máu ở Máy Hỗn Nguyên. | 0 |
 | **Lông Vũ Kền Kền** | Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên. | 0 |
 
 ### Nguyên liệu thu thập (10)
@@ -254,8 +258,8 @@ Quái thường: khoảng 1/167 con ra Excellent, 1/775 con ra đồ Thần. Ng�
 | **Quặng Mithril** | Đào ở Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long. | 125 |
 | **Cá Diếc** | Câu ở hồ nước. Bác Đầu Bếp nấu thành Chả Cá. | 10 |
 | **Cá Chép** | Câu ở hồ nước. Bác Đầu Bếp nấu thành Bánh Mì Cá. | 25 |
-| **Lươn Điện** | Chỉ có ở Đầm Lầy và Hang Rồng. Bác Đầu Bếp nấu thành Bánh Xèo Lươn. | 60 |
-| **Cá Chép Vàng** | Hiếm lắm mới câu được. Bán được giá cao. | 500 |
+| **Lươn Điện** | Chỉ có ở Đầm Lầy và Hang Hắc Long. Bác Đầu Bếp nấu thành Bánh Xèo Lươn. | 60 |
+| **Cá Chép Vàng** | Hiếm lắm mới câu được. Nấu Mâm Cỗ Cá Vàng, pha Rượu Long Huyết, hoặc bán được giá cao. | 500 |
 | **Chiếc Ủng Cũ** | Ai vứt xuống hồ thế này... | 2 |
 | **Vảy Cổ Long** | Chiến lợi phẩm từ trùm thế giới. Bán được giá cao. | 1.000 |
 
