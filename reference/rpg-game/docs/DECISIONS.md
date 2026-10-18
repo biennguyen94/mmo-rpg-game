@@ -794,3 +794,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Bộ hình Pixel: cánh (trước dùng biểu tượng SVG) dùng đôi cánh Draconian của Dungeon Crawl (`player/drcwing`, CC0, anh
   chỉ nguồn), ghép sát hai cánh + căn giữa, để ở `assets_src/pixel_extra/wings/`. Màu theo lớp / bậc 1→3: Chiến Binh nâu →
   đỏ → tím, Pháp Sư trắng → vàng → xanh nhạt, Tiên Nữ lục → đốm → trắng, Đấu Sĩ xám → tím → đen.
+- Hình MU (`mix hac_long.icons`): mũ (`item_7_*`), bình / ngọc (`item_14_*`) sau khi cắt viền được chừa thêm viền trong suốt
+  (`-extent 118%`) để món đồ chiếm ~85% khung. Hình gốc của các món này chỉ ~20–60 px nên bị phóng 2–3 lần trên màn hình
+  nét và nhòe; chừa viền làm món đồ nhỏ đi chút trong ô nhưng bớt nhòe (anh xem ảnh trước / sau và đồng ý). Máy chủ chạy lại
+  `mix hac_long.icons` (hoặc `scripts/setup_items.sh`) để có hình mới.

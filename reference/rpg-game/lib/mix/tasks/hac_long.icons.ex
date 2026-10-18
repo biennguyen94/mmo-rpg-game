@@ -9,7 +9,8 @@ defmodule Mix.Tasks.HacLong.Icons do
       mix hac_long.icons --no-trim            # chép nguyên, không cắt viền trong suốt
 
   Máy có ImageMagick (`magick` hoặc `convert`) thì cắt bỏ viền trong suốt quanh món đồ khi chép (hình gốc MU để
-  món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); không có thì chép nguyên.
+  món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); mũ, bình, ngọc (`item_7_*`, `item_14_*`, hình gốc rất
+  nhỏ) được chừa thêm viền để món đồ chiếm ~85% khung, bớt bị trình duyệt phóng to gây nhòe. Không có thì chép nguyên.
 
   Không có thư mục / không có hình: ghi bảng rỗng, game dùng icon cũ, **không lỗi** (thoát 0).
   Tải lại trang là thấy hình mới (không cần build lại server).
@@ -80,8 +81,15 @@ defmodule Mix.Tasks.HacLong.Icons do
 
   defp copy(nil, from, to), do: File.cp!(from, to)
 
+  # mũ (nhóm 7 trong Item.txt), bình / ngọc (nhóm 14): hình gốc rất nhỏ (~20–60 px) nên trình duyệt phóng to cho đầy ô
+  # thì nhòe; chừa thêm viền trong suốt để món đồ chiếm ~85% khung — nhỏ hơn chút trong ô nhưng bớt bị phóng
+  @padded ~r/^item_(7|14)_/
+  @pad ~w(-background none -gravity center -extent 118%x118%)
+
   defp copy(convert, from, to) do
-    case System.cmd(convert, [from, "-trim", "+repage", to], stderr_to_stdout: true) do
+    pad = if Regex.match?(@padded, Path.basename(from)), do: @pad, else: []
+
+    case System.cmd(convert, [from, "-trim", "+repage"] ++ pad ++ [to], stderr_to_stdout: true) do
       {_, 0} -> :ok
       _ -> File.cp!(from, to)
     end
