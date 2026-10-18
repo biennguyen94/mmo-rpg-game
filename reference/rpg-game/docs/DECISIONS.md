@@ -787,3 +787,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   dây chuyền"; giáp, mũ, quần, găng, giày, khiên, nhẫn → "Excellent giáp / khiên / nhẫn"; cánh → không có), "Kỹ năng" chỉ
   với vũ khí, "Đồ Thần" chỉ với món thuộc bộ; đổi món thì bỏ tick các ô bị ẩn. Server `give_gear` cũng từ chối Excellent
   trên cánh (như rơi đồ: cánh không ra Excellent).
+- Bộ hình Pixel: quần thay hình chân nhân vật Dungeon Crawl (`player/legs`, bị cắt / phóng nên xấu) bằng **CC0 Leggings
+  Icons** (AntumDeluge, CC0, anh tải gửi; 9 hình 32×32 ở `assets_src/pixel_extra/leggings/`, nguồn trong `SOURCES.md`).
+  `scripts/pixel_icons.py` đọc "extra:leggings/…" từ thư mục đó; dãy hình: Pháp Sư vải → áo choàng → quần lụa → giáp quỷ,
+  Tiên Nữ da → lá rừng → giáp xanh, còn lại vải → da → xích → giáp tấm → giáp thép → giáp quỷ. Bỏ `e2e/crop_icons.mjs`.

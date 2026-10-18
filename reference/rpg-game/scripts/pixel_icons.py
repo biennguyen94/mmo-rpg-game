@@ -2,7 +2,9 @@
 https://github.com/crawl/tiles, releases/Nov-2015).
 
 Chạy:  python3 scripts/pixel_icons.py <thư_mục releases/Nov-2015 của crawl/tiles>
-       node e2e/crop_icons.mjs        # cắt sát + phóng hình quần (hình chân trong player/legs)
+
+Hình quần không có trong bộ tile trên: lấy từ "CC0 Leggings Icons" (CC0, có sẵn trong repo ở
+assets_src/pixel_extra/leggings/, nguồn ghi trong SOURCES.md); trong RULES viết là "extra:leggings/<tên>".
 
 Ghi priv/static/assets/pixel/*.png (chỉ những hình được dùng) và priv/static/assets/pixel_icons.json
 (mã món → đường dẫn hình). Mỗi loại đồ có một dãy hình xếp từ yếu tới mạnh; món trong loại xếp theo cấp rồi
@@ -14,10 +16,12 @@ import json, os, re, shutil, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "priv/static/assets/pixel")
 OUT_MAP = os.path.join(ROOT, "priv/static/assets/pixel_icons.json")
+EXTRA_DIR = os.path.join(ROOT, "assets_src/pixel_extra")
 
 # (điều kiện trên món, dãy hình từ yếu tới mạnh; đường dẫn trong releases/Nov-2015/)
 W = "item/weapon/"
 A = "item/armour/"
+LEG = "extra:leggings/"
 RULES = [
     # vũ khí (nhóm MU: 0 kiếm, 1 rìu, 2 chùy / quyền trượng, 3 giáo / lưỡi hái, 4 cung / nỏ, 5 gậy / sách)
     (lambda it, g, n: it["slot"] == "weapon" and g == "4" and re.search(r"crossbow|arquebus", n),
@@ -74,14 +78,14 @@ RULES = [
     (lambda it, g, n: it["slot"] == "armor",
      [A + "ring_mail1", A + "ring_mail2", A + "scale_mail1", A + "scale_mail2", A + "scale_mail3", A + "plate1",
       A + "ice_dragon_armour", A + "blue_dragon_scale_mail", A + "shadow_dragon_scale_mail", A + "gold_dragon_armour"]),
-    # quần: hình chân của nhân vật (player/legs), cắt sát bằng e2e/crop_icons.mjs
+    # quần (CC0 Leggings Icons): Pháp Sư vải → áo choàng → quần lụa → giáp quỷ, Tiên Nữ da → lá rừng → giáp xanh,
+    # còn lại vải → da → xích → giáp tấm → giáp thép → giáp quỷ
     (lambda it, g, n: it["slot"] == "pants" and it.get("classes") == ["dw"],
-     ["player/legs/pants_brown", "player/legs/skirt_blue", "player/legs/pants_l_white", "player/legs/skirt_white"]),
+     [LEG + "cloth", LEG + "robe", LEG + "plate", LEG + "underworld"]),
     (lambda it, g, n: it["slot"] == "pants" and it.get("classes") == ["elf"],
-     ["player/legs/pants_darkgreen", "player/legs/trouser_green", "player/legs/skirt_green", "player/legs/metal_green"]),
+     [LEG + "leather", LEG + "forest", LEG + "plate_green"]),
     (lambda it, g, n: it["slot"] == "pants",
-     ["player/legs/pants_black", "player/legs/leg_armour00", "player/legs/leg_armour01", "player/legs/leg_armour02",
-      "player/legs/leg_armour03", "player/legs/leg_armour04", "player/legs/leg_armour05", "player/legs/metal_gray"]),
+     [LEG + "cloth", LEG + "leather", LEG + "chain", LEG + "plate", LEG + "medieval", LEG + "underworld"]),
     (lambda it, g, n: it["slot"] == "gloves",
      [A + "glove1", A + "glove2", A + "glove3", A + "glove4", A + "glove5"]),
     (lambda it, g, n: it["slot"] == "boots",
@@ -128,9 +132,14 @@ def unknown_license(src):
         return {m.group(1) for m in re.finditer(r"rltiles/([\w/.-]+)\.png", f.read())}
 
 
+def source(src, p):
+    """Đường dẫn file hình: "extra:…" trong assets_src/pixel_extra, còn lại trong bộ tile."""
+    return os.path.join(EXTRA_DIR, p[6:] + ".png") if p.startswith("extra:") else os.path.join(src, p + ".png")
+
+
 def main(src):
     bad = unknown_license(src)
-    ok = lambda p: os.path.exists(os.path.join(src, p + ".png")) and p not in bad
+    ok = lambda p: os.path.exists(source(src, p)) and p not in bad
     items = {}
     for name, key in [("items.json", "ITEMS"), ("items_mu.json", "ITEMS_MU")]:
         with open(os.path.join(ROOT, "priv/game_data", name), encoding="utf-8") as f:
@@ -166,8 +175,8 @@ def main(src):
     os.makedirs(OUT_DIR)
     out = {}
     for i, p in sorted(mapping.items()):
-        flat = p.replace("item/", "").replace("/", "_")
-        shutil.copyfile(os.path.join(src, p + ".png"), os.path.join(OUT_DIR, flat + ".png"))
+        flat = p.replace("extra:", "").replace("item/", "").replace("/", "_")
+        shutil.copyfile(source(src, p), os.path.join(OUT_DIR, flat + ".png"))
         out[i] = "pixel/" + flat + ".png"
     with open(OUT_MAP, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, sort_keys=True, indent=0)
