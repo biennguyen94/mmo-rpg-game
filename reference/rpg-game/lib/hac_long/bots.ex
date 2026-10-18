@@ -1,6 +1,6 @@
 defmodule HacLong.Bots do
   @moduledoc """
-  Người chơi AI (Phase 16, câu 16-A): `RULES.bots.count` bot (mặc định 20) chạy trên server như người chơi
+  Người chơi AI (Phase 16, câu 16-A): `RULES.bots.count` bot (mặc định 0 = tắt, bật bằng `HL_BOTS`) chạy trên server như người chơi
   thật (đi lại, đánh quái, lên cấp, cộng điểm, mặc đồ rơi ra, về Nhà hồi máu, nói vài câu trong chat).
 
   - Mỗi bot là một tài khoản `bot_01`… (`users.role = "bot"`, mật khẩu ngẫu nhiên, không đăng nhập được

@@ -104,7 +104,7 @@ Biến thử nghiệm, không cần cho server thật: `EVENT` (bật một lễ
 `WORLD_BOSS_FIRST_MINUTES`, `WORLD_BOSS_EVERY_MINUTES`, `WORLD_BOSS_DURATION_MINUTES`,
 `WORLD_BOSS_HP`. Muốn dùng thì thêm vào mục `environment` của `app` trong `docker-compose.yml`.
 
-`HL_BOTS`: số người chơi AI (mặc định 20 = `rules.json` `bots.count`, `0` để tắt; xem `ADMIN_GUIDE.md`). Ghi vào `.env`
+`HL_BOTS`: số người chơi AI (mặc định 0 = tắt, theo `rules.json` `bots.count`; vd. `HL_BOTS=20` để bật 20 bot; xem `ADMIN_GUIDE.md`). Ghi vào `.env`
 (vd. `HL_BOTS=10`) rồi `docker compose up -d` để tạo lại container; `docker-compose.yml` truyền biến này vào app. Bản cập nhật Phase 15a / 16 có
 migration mới (cột `characters.visited`, vai trò `bot`): migration chạy tự động khi container khởi động như thường lệ.
 

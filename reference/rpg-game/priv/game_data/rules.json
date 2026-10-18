@@ -970,7 +970,8 @@
       "verified": false
     },
     "bots": {
-      "count": 20,
+      "count": 0,
+      "_count_doc": "Số bot mặc định (0 = không chạy bot; đặt HL_BOTS trong .env để bật, vd. HL_BOTS=10). 20 → 0 (DECISIONS \"Bot mặc định 0\").",
       "rest_after_death_s": [30, 90],
       "_shop_doc": "Phase 5 (B-32): còn ít hơn potion_min bình máu (mana_min bình mana, lớp có MP) thì về Làng mua tới potion_buy / mana_buy bình ở Bà Lang (mua được ít nhất min thì mới đi). Loại bình: rẻ nhất mà hồi được ≥ potion_heal_min máu (MP) tối đa, không có thì loại mạnh nhất mua được. Máu thấp, hết bình mà đủ vàng (≥ inn_gold_mult × giá trọ) thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.",
       "potion_min": 3,

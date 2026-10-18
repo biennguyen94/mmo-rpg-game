@@ -756,3 +756,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 ## Deploy: truyền `HL_BOTS` vào container (2026-10-18)
 - `docker-compose.yml` chưa truyền `HL_BOTS` nên đặt trong `.env` không có tác dụng (luôn 20 bot). Thêm `HL_BOTS: ${HL_BOTS:-}`;
   `config/runtime.exs` coi giá trị rỗng là chưa đặt (lấy `RULES.bots.count`). `.env.example`, `DEPLOY.md` ghi cách đặt.
+
+## Bot mặc định 0 (2026-10-18, anh yêu cầu)
+- `rules.json` `RULES.bots.count` 20 → **0**: server không chạy bot trừ khi đặt `HL_BOTS` (vd. `.env` `HL_BOTS=10`). Bot cũ
+  trong database giữ nguyên, chỉ không chạy.

@@ -439,7 +439,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 - Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
   trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
-- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
+- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (deploy: ghi `HL_BOTS=5` vào `.env` rồi `docker compose up -d`; `HL_BOTS=0` để tắt). Mặc định `RULES.bots.count` = 0 (không có bot).
 - Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
   rồi xóa tài khoản trong database.
 
