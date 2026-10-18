@@ -156,6 +156,8 @@
       }
     },
     "loot": {
+      "gear_bag": 40,
+      "_gear_bag_doc": "Số trang bị chưa mặc tối đa trong túi (mỗi món rơi là một món riêng, kể cả đồ trắng / xanh). Đầy thì món rơi gửi Hộp thư. 20 → 40 (DECISIONS \"Túi trang bị 40\").",
       "potion_chance": 0.12,
       "potions": [
         {

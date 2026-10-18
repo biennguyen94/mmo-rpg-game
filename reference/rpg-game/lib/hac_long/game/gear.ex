@@ -22,9 +22,9 @@ defmodule HacLong.Game.Gear do
 
   alias HacLong.Game.{Data, Rng}
 
-  @max_bag 20
   # số ở `RULES.loot`, `RULES.shop` (`priv/game_data/rules.json`)
   @loot Data.rules().loot
+  @max_bag @loot.gear_bag
   @shop Data.rules().shop
   @weights Enum.map(@loot.gear_weights, &List.to_tuple/1)
   @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)

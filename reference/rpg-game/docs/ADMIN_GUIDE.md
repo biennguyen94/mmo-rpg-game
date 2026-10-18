@@ -87,7 +87,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
 | Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
 | Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
 | Hồi đầy máu | `heal` | | |
@@ -260,7 +260,7 @@ for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('g
 await A('heal');
 ```
 
-Cần 13 chỗ trong túi đồ hiếm (tối đa 20): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc.
+Cần 13 chỗ trong túi trang bị (tối đa 40): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc.
 
 Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / cánh vào ô trang bị (hoặc bấm món → **Trang bị**).
 Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →
@@ -291,7 +291,7 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 | Không thấy tab Quản trị | chưa tải lại trang sau khi cấp quyền; vai trò vẫn `player` | `SELECT username, role FROM users WHERE username = '...'`, cấp lại, tải lại trang |
 | "Cần quyền quản trị viên." | tài khoản là `mod` | cấp `admin` nếu cần |
 | "Người này chưa có nhân vật." | tài khoản chưa tạo nhân vật / đã xóa | |
-| "Túi đồ hiếm đã đầy (20 món)." | `give_gear` khi túi đủ 20 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
+| "Túi trang bị đã đầy (40 món)." | `give_gear` khi túi đủ 40 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
 | Người chơi báo "đồ rơi biến mất" khi túi đồ hiếm đầy | từ Phase 1 đồ rơi lúc túi đầy được **gửi Hộp thư** (mỗi món một thư, cùng transaction với lần lưu nhân vật) | bảo người chơi mở Hộp thư; tra `gear_log` lý do lưu của trận đó |
 | Bot đứng yên, không đánh quái | (đã sửa ở Phase 5) mốc nghỉ của bot so với đồng hồ đơn điệu có thể âm | cập nhật bản mới; kiểm `characters.updated_at` của tài khoản `bot_*` có đổi sau vài phút |
 | Tự đánh tự tắt | hết bình máu, có người tên đỏ, bị đồ sát, gục / bỏ chạy, rời bản đồ, đóng hết tab | đúng thiết kế (B-31); thông báo lý do hiện ở góc màn hình người chơi |

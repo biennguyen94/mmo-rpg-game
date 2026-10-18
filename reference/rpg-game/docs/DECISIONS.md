@@ -747,3 +747,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   xanh cũng nằm đó. Đổi mọi chữ người chơi thấy: "Túi trang bị đầy…", "Trang bị x/20" (Túi đồ, Tủ Đồ), lọc chợ "Trang bị",
   thư "Túi trang bị đầy: …"; bản tiếng Anh "Gear bag". Đồ Excellent / Thần vẫn có nhãn riêng. Tên nội bộ (`gear_log`, đối
   soát, tài liệu quản trị) giữ nguyên.
+
+## Túi trang bị 40 (2026-10-18, anh "làm như em đề xuất")
+- Giới hạn túi trang bị (món chưa mặc) từ số cứng 20 trong `Gear` (có từ thời túi chỉ chứa đồ hiếm) chuyển vào
+  `rules.json` `RULES.loot.gear_bag`, tăng lên **40**: mọi món rơi giờ đều vào túi, ~32 món / giờ cày nên 20 đầy chưa tới
+  một giờ. Client đọc `RULES.gearBag` như cũ. Tủ Đồ (20, mở rộng bằng vàng) không đổi.
