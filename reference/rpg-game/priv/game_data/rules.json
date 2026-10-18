@@ -544,7 +544,7 @@
       "smith_costs": {
         "weapon": {
           "ore": 6,
-          "ore_rare": 1
+          "ore_rare": 2
         },
         "armor": {
           "ore": 5,

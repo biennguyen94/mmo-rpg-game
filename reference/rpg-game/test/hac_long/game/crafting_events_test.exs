@@ -136,6 +136,13 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert p2.inv["ore"] == 15 and p2.inv["ore_rare"] == 2 and p2.gold == p.gold - 150
     assert Crafting.xp(p2, :smith) == 1
 
+    # vũ khí tốn 2 Quặng Mithril
+    {%{ok: true}, p3} = Crafting.smith(p2, "weapon")
+    assert p3.inv["ore"] == 9 and p3.inv["ore_rare"] == nil
+
+    assert {%{ok: false, msg: "Chưa đủ quặng."}, _} =
+             Crafting.smith(%{p | inv: %{"ore" => 6, "ore_rare" => 1}}, "weapon")
+
     assert Crafting.smith_weights(1) == [{3, 4}, {2, 50}, {1, 46}]
     assert Crafting.smith_weights(5) == [{3, 20}, {2, 50}, {1, 30}]
   end

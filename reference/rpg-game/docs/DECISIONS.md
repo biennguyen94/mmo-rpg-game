@@ -829,3 +829,5 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   quặng lên cấp 5), 3 dòng 6 % × cấp nghề (cấp 5: 30 %, quái rơi chỉ 3 %). Nay `RULES.crafting.levels` = 0 / 15 / 40 / 80 / 130
   (cấp 3 ~2 giờ, cấp 5 ~5–6 giờ cày riêng) và `smith_epic_per_level` = 4 (cấp 5: 20 %); 2 dòng 50 %, giá quặng / vàng và "luôn
   ít nhất 1 dòng" giữ nguyên. Cấp Rèn đã có tính lại theo ngưỡng mới. Kho Đồ thêm ghi chú rèn đồ (`{{SMITH}}`).
+- (anh "ok nâng 2 cục đi") **Rèn vũ khí tốn 2 Quặng Mithril** (`RULES.crafting.smith_costs.weapon.ore_rare` 1 → 2; giáp, khiên giữ 1).
+  Quặng Mithril hái từ cấp 18 (~25–40 giây một cục khi hái riêng), trước đó nút thắt chỉ là quặng thường.
