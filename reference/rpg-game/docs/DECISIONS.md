@@ -781,3 +781,5 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Form gửi quà (riêng / mọi người): mục "Đồ thường (bình, ngọc, nguyên liệu, vé…)" không còn liệt kê trang bị; trang bị gửi
   ở mục "Trang bị" (chọn món một dòng riêng, rồi số dòng "0–4 dòng", +N, số lượng). Giữ hai mục vì trang bị cần dòng / +N,
   đồ xếp chồng chỉ cần số lượng.
+- Tab Quản trị → Trang bị: ô "dòng phụ cánh" chỉ hiện khi món chọn là cánh có dòng phụ (bậc trong `wing_options.by_tier`,
+  hiện là cấp 2–3), ghi số của bậc đó (vd. "Cánh: máu tối đa +120"); client nhận bảng qua `RULES.wingOptions`.

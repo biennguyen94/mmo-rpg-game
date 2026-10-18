@@ -66,6 +66,8 @@ defmodule HacLongWeb.PageController do
       RULES: %{
         maxLevel: Engine.max_level(),
         gearBag: HacLong.Game.Gear.max_bag(),
+        # Phase 15e: dòng phụ cánh theo bậc (số để ghi trong ô chọn ở tab Quản trị)
+        wingOptions: Data.rules().wing_options.by_tier,
         # Phase 15c: thưởng đủ bộ giáp (số để hiện chữ)
         setBonus: Map.take(Data.rules().set_bonus, [:min_tier, :def_pct, :atk_pct, :hp_per_tier]),
         # Phase 15g: chữ đồ Bộ Thần trong tooltip

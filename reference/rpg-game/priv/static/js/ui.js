@@ -55,6 +55,20 @@
   let selFocus = null; // key của ô tìm đang gõ (vẽ lại trang thì trả con trỏ về)
   const selSearch = (key) => `<input type="search" class="sel-q" data-sel-q="${key}" placeholder="Tìm…" value="${esc(selQ[key] || '')}" autocomplete="off" aria-label="Tìm trong danh sách">`;
   const selAll = new WeakMap(); // select → mọi option ban đầu
+  // Dòng phụ cánh (tab Quản trị → Trang bị): chỉ hiện khi món chọn là cánh có dòng phụ (bậc trong
+  // `RULES.wingOptions`), ghi luôn số của bậc đó
+  function woptSelect(base) {
+    const it = ITEMS[base], t = it && it.slot === 'wing' && (RULES.wingOptions || []).find((o) => o.tier === it.tier);
+    if (!t) return '<select name="wopt" aria-label="Dòng phụ cánh" hidden><option value=""></option></select>';
+    const opts = [['', 'Cánh: không dòng phụ'], ['hp', `Cánh: máu tối đa +${t.hp}`], ['mp', `Cánh: MP tối đa +${t.mp}`], ['ignore_def', `Cánh: bỏ qua ${Math.round(t.ignore_def * 100)}% phòng thủ đối thủ`]];
+    return `<select name="wopt" aria-label="Dòng phụ cánh">${opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+  }
+  function syncWopt() {
+    const form = document.querySelector('form.adm-char[data-op="give_gear"]');
+    const old = form && form.querySelector('select[name="wopt"]');
+    if (old) old.outerHTML = woptSelect(form.querySelector('select[name="base"]').value);
+  }
+
   function filterSel(key) {
     const sel = document.querySelector(`select[data-sel="${key}"]`);
     if (!sel) return;
@@ -342,7 +356,7 @@
       ${line('give_item', 'Đồ thường (bình, ngọc, nguyên liệu, vé…)', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${stackItems.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}`, 'Tặng')}
       ${line('give_gear', 'Trang bị (vũ khí, giáp, khiên, trang sức, cánh)', `${selSearch('adm-gear')}<select name="base" data-sel="adm-gear">${gearBases.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select><select name="opt" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o} dòng</option>`).join('')}</select>${up}
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
-          <select name="wopt" aria-label="Dòng phụ cánh"><option value="">Cánh: không dòng phụ</option><option value="hp">Cánh: máu tối đa</option><option value="mp">Cánh: MP tối đa</option><option value="ignore_def">Cánh: bỏ qua phòng thủ</option></select></div>
+          ${woptSelect(gearBases[0] && gearBases[0][0])}</div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
@@ -3786,11 +3800,12 @@
       if (e.target.id === 'chat-input') chatDraft = e.target.value;
       if (e.target.id === 'travel-q') { travelQ = e.target.value; const l = $('#travel-list'); if (l) l.innerHTML = travelList(); }
       if (e.target.id === 'lib-q') { libUi.q = e.target.value; libUi.open = null; libRefresh(); }
-      if (e.target.dataset.selQ) { selQ[e.target.dataset.selQ] = e.target.value; filterSel(e.target.dataset.selQ); }
+      if (e.target.dataset.selQ) { selQ[e.target.dataset.selQ] = e.target.value; filterSel(e.target.dataset.selQ); if (e.target.dataset.selQ === 'adm-gear') syncWopt(); }
     });
     document.addEventListener('focusin', (e) => { if (e.target.dataset && e.target.dataset.selQ) selFocus = e.target.dataset.selQ; });
     document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.selQ) setTimeout(() => { if (!(document.activeElement && document.activeElement.dataset.selQ)) selFocus = null; }, 0); });
     document.addEventListener('change', (e) => {
+      if (e.target.matches('form.adm-char[data-op="give_gear"] select[name="base"]')) syncWopt();
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
