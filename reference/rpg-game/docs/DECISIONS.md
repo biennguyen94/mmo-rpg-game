@@ -855,3 +855,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   tặng thú, đặt cấp thú, dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị có mục **Thú cưng** (🐉 Long Vương đầu danh sách),
   công thức nhân vật tối đa (ADMIN_GUIDE §6) thêm Long Vương cấp 20 + 100 Mồi Rồng. Thú quản trị tặng **không** ghi Bia Long Vương
   và không báo cả server (bia chỉ dành cho người tự câu được); thành tựu / danh hiệu Long Vương Chủ vẫn có (tính theo thú đang có).
+- (anh "làm 1-6") **Hiệu ứng câu cá và Hồ Long Vương** (chỉ client, `map.js` + `ui.js`, không đổi luật; game vẽ bằng Canvas 2D, không
+  dùng Phaser). Câu ở mọi hồ: cần + dây + phao (ném theo đường cong, vòng gợn, nhấp nhô), cắn câu (phao chìm, dấu ! nảy, nước bắn,
+  bản đồ rung nhẹ; Long Vương quầng vàng, rung mạnh), câu được (cá bay vòng cung xoay tròn, lấp lánh; Cá Chép Vàng / Long Vương có
+  cột sáng và sao, Long Vương hiện hình rồng lớn), Ủng Cũ (ủng bay to dần vào màn hình, 💫 trên đầu, quạ bay ngang). Hồ Long
+  Vương (`fish: "lake"`): bóng cá lượn (trang trí, không liên quan tỉ lệ), xoáy Vực Rồng, lá / hoa rơi ban ngày, tia nắng lúc sáng
+  sớm / chiều tà, đèn lồng sáng ban đêm. Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Không làm "cá to kéo lê nhân vật"
+  (vị trí do server quyết) và chưa cho người khác thấy phao của mình.

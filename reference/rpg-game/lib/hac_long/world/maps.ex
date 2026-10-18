@@ -194,6 +194,7 @@ defmodule HacLong.World.Maps do
            event: m.event,
            realm: m.realm,
            minLevel: m.min_level,
+           fish: m.fish,
            theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,

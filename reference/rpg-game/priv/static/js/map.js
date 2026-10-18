@@ -393,7 +393,7 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
-    const fx = fxOn(), fountains = [];
+    const fx = fxOn(), fountains = [], lanterns = [];
 
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -418,6 +418,7 @@
             }
           }
           if (fx && kind === 'fountain') fountains.push([px, py]);
+          if (kind === 'lantern') lanterns.push([px, py]);
         }
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
@@ -537,6 +538,8 @@
     if (myDoll) ctx.drawImage(myDoll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
     const mine = bubbleOf(userId, now);
     if (mine) talk.push([mine, px + TILE / 2, py]);
+    // câu cá: cần, dây, phao, cá bay lên (chỉ phía mình)
+    if (fishing) fishFx(now, m, cx, cy, px, py, fx);
     // hướng dẫn người mới: vòng sáng nhấp nháy và mũi tên ở ô cần tới
     const goal = P.view && P.view.tutorial && P.view.tutorial.target;
     if (goal && goal.map === P.pos.map) {
@@ -569,6 +572,8 @@
           ctx.fillRect(fx0 + TILE / 2 + Math.sin(i * 2.1) * 8 * k, fy0 + TILE / 2 - Math.sin(k * Math.PI) * 12, 2, 2);
         }
       }
+      // Hồ Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
+      if (m.fish === 'lake') lakeFx(now, m, cx, cy);
       // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
       const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
@@ -583,6 +588,13 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, VW(), VH());
       if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
+      // đèn lồng (Hồ Long Vương) tỏa sáng ban đêm
+      if (dark >= 0.3) for (const [lx0, ly0] of lanterns) {
+        const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.85 + 0.15 * Math.sin(now / 230 + lx0) : 1;
+        const g = ctx.createRadialGradient(x, y, 1, x, y, TILE * 1.8);
+        g.addColorStop(0, `rgba(255, 120, 70, ${0.55 * dark * f})`); g.addColorStop(1, 'rgba(255, 120, 70, 0)');
+        ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.8, y - TILE * 1.8, TILE * 3.6, TILE * 3.6);
+      }
     }
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
@@ -646,6 +658,201 @@
     put(Doll.canvas(v.look) || image('monsters/hero'), hx, hy);
   }
 
+  // ---------- Hồ Long Vương: không khí (chỉ vẽ, không ảnh hưởng luật) ----------
+  const lakeCache = new Map();
+  function lakeInfo(m) {
+    if (lakeCache.has(m)) return lakeCache.get(m);
+    let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, dx = 0, dy = 0, dn = 0;
+    m.tiles.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c === '~' || c === '=') { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      if (c === '=') { dx += x; dy += y; dn++; }
+    }));
+    const info = { x0, y0, x1, y1, deep: dn ? [dx / dn + 0.5, dy / dn + 0.5] : null };
+    lakeCache.set(m, info);
+    return info;
+  }
+  const isWater = (m, x, y) => '~='.includes((m.tiles[Math.floor(y)] || '')[Math.floor(x)] || '#');
+  function lakeFx(t, m, cx, cy) {
+    const L = lakeInfo(m), vw = VW(), vh = VH(), dark = PHASES[shade()] ? PHASES[shade()][1] : 0;
+    // bóng cá lượn dưới nước (chỉ để trang trí, không liên quan tỉ lệ câu)
+    for (let i = 0; i < 5; i++) {
+      const sp = 9000 + i * 2300, k = t / sp + i * 1.7;
+      const fx0 = L.x0 + 0.5 + (L.x1 - L.x0) * (0.5 + 0.45 * Math.sin(k * 2 * Math.PI));
+      const fy0 = L.y0 + 0.5 + (L.y1 - L.y0) * (0.5 + 0.42 * Math.sin(k * 2 * Math.PI * 1.7 + i));
+      if (!isWater(m, fx0, fy0)) continue;
+      const ang = Math.atan2(Math.cos(k * 2 * Math.PI * 1.7 + i) * 1.7 * (L.y1 - L.y0), Math.cos(k * 2 * Math.PI) * (L.x1 - L.x0));
+      const x = fx0 * TILE - cx, y = fy0 * TILE - cy, big = i === 0 ? 1.6 : 1;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = 'rgba(0, 10, 25, 0.28)';
+      ctx.beginPath(); ctx.ellipse(0, 0, 9 * big, 3.5 * big, 0, 0, Math.PI * 2); ctx.fill();
+      const w = Math.sin(t / 150 + i) * 2;
+      ctx.beginPath(); ctx.moveTo(-8 * big, 0); ctx.lineTo(-14 * big, -4 * big + w); ctx.lineTo(-14 * big, 4 * big + w); ctx.fill();
+      ctx.restore();
+    }
+    // Vực Rồng: xoáy nước chậm
+    if (L.deep) {
+      const x = L.deep[0] * TILE - cx, y = L.deep[1] * TILE - cy;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const a0 = t / (2600 + i * 700) + i * 2.1, r = TILE * (0.6 + i * 0.55);
+        ctx.strokeStyle = `rgba(150, 210, 255, ${0.22 - i * 0.05})`;
+        ctx.beginPath(); ctx.arc(x, y, r, a0, a0 + 2.2); ctx.stroke();
+      }
+    }
+    if (dark < 0.3) {
+      // ban ngày: lá vàng, hoa hồng rơi chậm, xoay nhẹ
+      for (let i = 0; i < 12; i++) {
+        const fall = 9000 + rnd(i, 3) * 6000, k = (t / fall + rnd(i, 4)) % 1;
+        const x = wrap(rnd(i, 1) * vw + Math.sin(t / 1400 + i) * 26 - cx * 0.2, vw), y = k * (vh + 20) - 10;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t / 600 + i) * 1.2);
+        ctx.fillStyle = i % 3 ? 'rgba(230, 180, 60, 0.75)' : 'rgba(245, 160, 190, 0.8)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // tia nắng chéo lúc sáng sớm / chiều tà
+    if (shade() === 'dawn' || shade() === 'dusk') {
+      const col = shade() === 'dawn' ? '255, 230, 170' : '255, 190, 120';
+      for (let i = 0; i < 3; i++) {
+        const a = 0.07 + 0.05 * Math.sin(t / 2200 + i * 2), x = wrap(i * vw / 3 + 40 - cx * 0.3, vw + 200) - 100;
+        ctx.fillStyle = `rgba(${col}, ${a})`;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x - 80, vh); ctx.lineTo(x - 170, vh); ctx.fill();
+      }
+    }
+  }
+
+  // ---------- Câu cá: cần, dây, phao, cá bay (ui.js gọi MapView.fish) ----------
+  // fishing: { phase: cast | wait | bite | catch | boot | miss, t0, tx, ty (ô phao), big, item }
+  let fishing = null;
+  const FISH_MS = { cast: 450, catch: 1800, boot: 2600, miss: 600 };
+  function bobberTile(P, m) {
+    for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const w = (k) => '~=MQU'.includes((m.tiles[P.pos.y + dy * k] || '')[P.pos.x + dx * k] || '#');
+      if (w(1)) return w(2) && !'MU'.includes(m.tiles[P.pos.y + dy * 2][P.pos.x + dx * 2]) ? [P.pos.x + dx * 2, P.pos.y + dy * 2] : [P.pos.x + dx, P.pos.y + dy];
+    }
+    return null;
+  }
+  function shakeMap(strong) {
+    const el = canvas && canvas.parentElement;
+    if (!el || !fxOn()) return;
+    el.classList.remove('map-shake', 'map-shake-big'); void el.offsetWidth;
+    el.classList.add(strong ? 'map-shake-big' : 'map-shake');
+  }
+  // giọt nước bắn (hạt tính theo thời gian)
+  function splash(x, y, k, n, col) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI * (0.15 + 0.7 * rnd(i, 7)), v = 22 + 20 * rnd(i, 8);
+      const dx = Math.cos(a) * v * k * (i % 2 ? 1 : -1), dy = -Math.sin(a) * v * k + 60 * k * k;
+      ctx.fillStyle = `rgba(${col}, ${1 - k})`;
+      ctx.fillRect(x + dx, y + dy, 2, 2);
+    }
+  }
+  function ripple(x, y, k, col = '210, 235, 255') {
+    ctx.strokeStyle = `rgba(${col}, ${0.7 * (1 - k)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(x, y, 4 + 14 * k, 2 + 6 * k, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  function sparkle(x, y, t, n, r, col) {
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2 + t / 500, rr = r * (0.4 + 0.6 * ((t / 700 + rnd(i, 5)) % 1));
+      const sx = x + Math.cos(a) * rr, sy = y + Math.sin(a) * rr, s = 1 + 2 * Math.abs(Math.sin(t / 120 + i));
+      ctx.fillStyle = col; ctx.fillRect(sx - s / 2, sy - 0.5, s, 1); ctx.fillRect(sx - 0.5, sy - s / 2, 1, s);
+    }
+  }
+  function fishFx(now, m, cx, cy, px, py, anim) {
+    const f = fishing, el = now - f.t0;
+    const hx = px + TILE - 6, hy = py + 8; // đầu cần (tay phải nhân vật)
+    const bx = f.tx * TILE - cx + TILE / 2, by = f.ty * TILE - cy + TILE / 2;
+    const auto = (ph) => FISH_MS[ph] && el > FISH_MS[ph];
+    if (f.phase === 'cast' && auto('cast')) { f.phase = 'wait'; f.t0 = now - (el - FISH_MS.cast); }
+    if (['catch', 'boot', 'miss'].includes(f.phase) && auto(f.phase)) { fishing = null; return; }
+    const e = now - f.t0;
+    // cần câu
+    ctx.strokeStyle = '#8a6a2a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px + TILE - 12, py + 20); ctx.lineTo(hx, hy); ctx.stroke();
+    let ox = bx, oy = by, show = true;
+    if (f.phase === 'cast') {
+      // quỹ đạo ném: đường cong, phao rơi xuống
+      const k = Math.min(1, e / FISH_MS.cast), cxp = (hx + bx) / 2, cyp = Math.min(hy, by) - 40;
+      ox = (1 - k) * (1 - k) * hx + 2 * (1 - k) * k * cxp + k * k * bx;
+      oy = (1 - k) * (1 - k) * hy + 2 * (1 - k) * k * cyp + k * k * by;
+    } else if (f.phase === 'wait') {
+      oy = by + (anim ? Math.sin(e / 420) * 1.5 : 0);
+      if (anim) { ripple(bx, by + 3, (e % 1700) / 1700); if (e < 800) { ripple(bx, by + 3, e / 800); splash(bx, by, e / 800, 6, '220, 240, 255'); } }
+    } else if (f.phase === 'bite') {
+      oy = by + Math.min(5, e / 30); // phao chìm nhanh
+      if (anim) {
+        splash(bx, by, Math.min(1, e / 600), 12, f.big ? '255, 220, 120' : '220, 240, 255');
+        ripple(bx, by + 3, (e % 500) / 500, f.big ? '255, 210, 90' : '210, 235, 255');
+      }
+      if (f.big) {
+        const g = ctx.createRadialGradient(bx, by, 2, bx, by, TILE * 1.4);
+        g.addColorStop(0, 'rgba(255, 210, 80, 0.55)'); g.addColorStop(1, 'rgba(255, 210, 80, 0)');
+        ctx.fillStyle = g; ctx.fillRect(bx - TILE * 1.4, by - TILE * 1.4, TILE * 2.8, TILE * 2.8);
+      }
+      // dấu ! nảy lên trên phao
+      const j = anim ? Math.abs(Math.sin(e / 110)) * 6 : 0;
+      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+      ctx.strokeText('!', bx, by - 12 - j); ctx.fillStyle = f.big ? '#ffd34d' : '#ffe14d'; ctx.fillText('!', bx, by - 12 - j);
+    } else {
+      show = f.phase === 'miss' && e < 300;
+      if (show) oy = by - e / 30;
+    }
+    // dây câu (căng và rung khi kéo)
+    if (show || (f.phase !== 'miss' && e < 400)) {
+      const tug = f.phase === 'catch' && e < 400 && anim ? Math.sin(e / 18) * 3 : 0;
+      ctx.strokeStyle = 'rgba(235, 235, 235, 0.85)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.quadraticCurveTo((hx + ox) / 2 + tug, Math.max(hy, oy) + (f.phase === 'wait' ? 10 : tug), ox, oy); ctx.stroke();
+      if (tug) splash(ox, oy, (e % 400) / 400, 8, '220, 240, 255');
+    }
+    if (show) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, oy - 2, 3.2, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#e8352a'; ctx.beginPath(); ctx.arc(ox, oy - 2, 3.2, 0, Math.PI); ctx.fill();
+    }
+    if (f.phase === 'catch') {
+      // cột sáng cho đồ hiếm
+      const rare = f.item === 'fish_gold' || f.item === 'long_vuong', dragon = f.item === 'long_vuong';
+      if (rare && anim) {
+        const a = Math.max(0, 1 - e / FISH_MS.catch) * (dragon ? 0.6 : 0.45), w = TILE * (dragon ? 1.3 : 0.8);
+        const g = ctx.createLinearGradient(0, by - VH(), 0, by);
+        g.addColorStop(0, 'rgba(255, 225, 120, 0)'); g.addColorStop(1, `rgba(255, 225, 120, ${a})`);
+        ctx.fillStyle = g; ctx.fillRect(bx - w / 2, 0, w, by + 4);
+        sparkle(bx, by - TILE, e, dragon ? 18 : 10, TILE * (dragon ? 2.4 : 1.4), '#fff2a8');
+      }
+      // cá bay vòng cung về phía nhân vật, xoay tròn
+      const k = Math.min(1, e / 700), tx = px + TILE / 2, ty = py;
+      const x = bx + (tx - bx) * k, y = by + (ty - by) * k - Math.sin(k * Math.PI) * (dragon ? 70 : 40);
+      const im = image(dragon ? 'pets/long_vuong' : 'items/' + f.item), sz = TILE * (dragon ? 1.8 : 0.8);
+      if (im.complete && k < 1) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(anim && !dragon ? k * Math.PI * 4 : 0);
+        ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+        if (anim) sparkle(x, y, e, 5, 12, 'rgba(255, 255, 255, 0.9)');
+      }
+    }
+    if (f.phase === 'boot') {
+      // ủng cũ bay thẳng vào màn hình, nhân vật choáng, quạ bay ngang
+      const vw = VW(), vh = VH(), k = Math.min(1, e / 650);
+      const im = image('items/old_boot'), sz = TILE * (0.8 + 5 * k * k);
+      if (im.complete && e < 900) {
+        ctx.globalAlpha = e < 650 ? 1 : Math.max(0, 1 - (e - 650) / 250);
+        const x = bx + (vw / 2 - bx) * k, y = by + (vh / 2 - by) * k;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(k * 5); ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+      if (e > 650) {
+        ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+        for (let i = 0; i < 3; i++) {
+          const a = e / 260 + i * 2.1;
+          ctx.fillText('💫', px + TILE / 2 + Math.cos(a) * 10, py - 4 + Math.sin(a) * 3);
+        }
+        const q = (e - 650) / (FISH_MS.boot - 650);
+        ctx.font = '16px sans-serif';
+        for (let i = 0; i < 3; i++) ctx.fillText('🐦‍⬛', -30 + q * (vw + 60) - i * 26, 30 + i * 12 + Math.sin(e / 120 + i) * 4);
+      }
+    }
+    if (!anim && !frame) frame = requestAnimationFrame(() => { frame = null; draw(); });
+  }
+
   window.MapView = {
     drawHome,
     setRelations(f) { relations = f; },
@@ -667,5 +874,20 @@
       draw();
     },
     world: () => world,
+    // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
+    fish(ev, data = {}) {
+      const P = getPlayer(), m = P && cur(P);
+      if (!ev || !m) { fishing = null; draw(); return; }
+      if (ev === 'cast') {
+        const t = bobberTile(P, m);
+        fishing = t && { phase: 'cast', t0: performance.now(), tx: t[0], ty: t[1], big: false };
+      } else if (fishing) {
+        const ph = ev === 'catch' && data.item === 'old_boot' ? 'boot' : ev;
+        Object.assign(fishing, data, { phase: ph, t0: performance.now() });
+        if (ev === 'bite') shakeMap(fishing.big);
+        if (ph === 'catch' && (data.item === 'fish_gold' || data.item === 'long_vuong')) shakeMap(data.item === 'long_vuong');
+      }
+      draw();
+    },
   };
 })();

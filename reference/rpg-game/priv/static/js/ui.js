@@ -749,10 +749,12 @@
     return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button></div>`;
   }
 
-  function stopFishing() {
+  // `fx`: hiệu ứng trên bản đồ (MapView.fish) khi dừng: 'miss', hoặc null để xóa ngay (thu cần, đi chỗ khác)
+  function stopFishing(fx = null) {
     if (!fishing) return;
     fishing.timers.forEach(clearTimeout);
     fishing = null;
+    if (fx !== false) Map_.fish(fx);
   }
 
   function redrawFishing() {
@@ -779,10 +781,12 @@
         f.phase = 'bite'; Sound.play(f.big ? 'rare' : 'bite');
         if (navigator.vibrate) navigator.vibrate(f.big ? [200, 80, 200, 80, 300] : 120);
         if (f.big) bigFx('🐉 Có gì đó rất lớn…', 'level');
+        Map_.fish('bite', { big: f.big });
         redrawFishing();
       }, biteIn));
-      f.timers.push(setTimeout(() => { if (fishing !== f) return; stopFishing(); toast(f.big ? 'Dây câu đứt phựt! Bóng vàng khổng lồ lặn mất xuống Vực Rồng...' : 'Chậm tay rồi, cá ăn mất mồi.', true); redrawFishing(); }, biteIn + r.window + 400));
+      f.timers.push(setTimeout(() => { if (fishing !== f) return; stopFishing('miss'); toast(f.big ? 'Dây câu đứt phựt! Bóng vàng khổng lồ lặn mất xuống Vực Rồng...' : 'Chậm tay rồi, cá ăn mất mồi.', true); redrawFishing(); }, biteIn + r.window + 400));
       Sound.play('cast');
+      Map_.fish('cast');
     } catch (e) { toast(e.msg, true); }
     busy = false;
     redrawFishing();
@@ -790,13 +794,14 @@
 
   async function reelIn() {
     if (!fishing || busy) return;
-    stopFishing();
+    stopFishing(false);
     busy = true;
     try {
       const r = await Net.send({ act: 'fish_reel' });
       P = r.player;
       result(r);
       if (r.dragon) { bigFx('🐉 LONG VƯƠNG!', 'level'); dragonAt = 0; }
+      Map_.fish(r.ok ? 'catch' : 'miss', { item: r.dragon ? 'long_vuong' : r.fish });
       Sound.play(!r.ok ? 'error' : r.fish === 'fish_gold' || r.dragon ? 'rare' : 'catch');
     } catch (e) { toast(e.msg, true); }
     busy = false;
