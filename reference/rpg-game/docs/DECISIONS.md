@@ -804,3 +804,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   trùng hình với đồ trùm Thánh Kiếm Diệt Long (`relic`). Không còn hình kiếm MU nào chưa dùng (`0/32`–`0/35` là găng đấm,
   `2/22` trống), nên `relic` giữ hình `0/19` nhưng luôn lấy **bản phát sáng** (`icon_variant: "e"` trong `items.json`, client
   `ownIcon`). Công thức nhân vật tối đa (ADMIN_GUIDE §6): vũ khí Kiếm Sĩ đổi từ Kiếm Lửa Lượn sang Kiếm Tổng Lãnh Thiên Thần.
+- Công thức nhân vật tối đa (ADMIN_GUIDE §6) dựng theo **tên** (`NAME`, trống = chính mình): lớp lấy từ nhân vật được dựng
+  (`lookup` trả thêm `character.cls`), không theo admin; chia điểm bằng `add_stats` + `add_points` (lệnh quản trị) thay cho
+  lệnh người chơi `alloc`, nên dựng được cho người khác, online hay offline. Console in "Dựng cho: …" để kiểm đúng người.

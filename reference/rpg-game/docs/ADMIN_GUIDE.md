@@ -187,13 +187,17 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 
 ## 6. Công thức: nhân vật admin tối đa
 
-Đăng nhập tài khoản admin, mở console trình duyệt (F12 → Console), dán cả khối. `Net.userId` là tài khoản đang
-đăng nhập; đổi thành id người khác nếu muốn dựng cho họ (id lấy ở thẻ tra cứu hoặc `Net.admin('lookup', {name})`).
+Đăng nhập tài khoản admin (lớp nào cũng được), mở console trình duyệt (F12 → Console), sửa dòng `NAME` rồi dán cả
+khối. `NAME` là **tên nhân vật hoặc tên đăng nhập** của người cần dựng (để trống = chính mình). Lớp, bộ đồ và tỉ lệ
+chia điểm lấy theo **nhân vật được dựng**, không theo admin; người đó đang online hay không đều được (đang online thì
+thấy ngay). Dòng đầu console ghi "Dựng cho: …" để kiểm đúng người trước khi xem kết quả.
 
 ```js
-const uid = Net.userId;
-const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); } catch (e) { console.warn(op, e.msg); } };
-const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;   // dk / dw / elf / mg
+const NAME = '';   // tên nhân vật / tên đăng nhập cần dựng; để trống = chính mình
+const who = (await Net.admin('lookup', { name: NAME || window.__hl.player().name })).user;
+const uid = who.id, cls = who.character.cls;   // dk / dw / elf / mg
+console.log(`Dựng cho: ${who.character.name} (${cls}), tài khoản ${who.username}`);
+const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); return r; } catch (e) { console.warn(op, e.msg); } };
 
 // chuyển sinh 10 lần: mở đủ 10 vùng đất chuyển sinh (Phase 6); lệnh này chỉ đặt số lần, không về cấp 1
 await A('set_rebirths', { n: 10 });
@@ -203,26 +207,22 @@ await A('set_level', { level: 50 });
 await A('set_tower', { floor: 100 });
 // đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
 // cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Thuật Sĩ Kiếm 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
-await A('reset_stats');
+const pts = Number((await A('reset_stats')).msg.match(/(\d+) điểm/)[1]);
 
 // vàng
 await A('add_gold', { amount: 100000000 });
 
-// tự cộng điểm theo tỉ lệ gợi ý (chỉ chạy được cho chính mình: lệnh "alloc" là lệnh người chơi, mỗi lần tối đa 99,
-// nghỉ 0,3 giây giữa các lần kẻo server báo "Thao tác quá nhanh";
-// dựng cho người khác thì để họ tự cộng ở tab Nhân vật). Điểm lẻ cộng vào chỉ số đầu.
+// chia hết điểm tiềm năng theo tỉ lệ gợi ý của lớp (lệnh quản trị, chạy được cho cả người khác); điểm lẻ vào chỉ số đầu
 const SHARE = {
   dk:  [['str', 0.45], ['agi', 0.2], ['vit', 0.25], ['ene', 0.1]],
   dw:  [['ene', 0.5], ['agi', 0.2], ['vit', 0.2], ['str', 0.1]],
   elf: [['agi', 0.45], ['str', 0.2], ['vit', 0.25], ['ene', 0.1]],
   mg:  [['str', 0.4], ['ene', 0.25], ['agi', 0.2], ['vit', 0.15]],
 }[cls];
-if (uid === Net.userId) {
-  const alloc = async (stat, n) => { for (; n > 0; n -= 99) { await new Promise((r) => setTimeout(r, 300)); await Net.send({ act: 'alloc', stat, n: Math.min(n, 99) }); } };
-  const total = (await Net.send({ act: 'title_set', id: null })).player.points;
-  for (const [stat, r] of SHARE) await alloc(stat, Math.floor(total * r));
-  await alloc(SHARE[0][0], (await Net.send({ act: 'title_set', id: null })).player.points);
-}
+const add = Object.fromEntries(SHARE.map(([k, r]) => [k, Math.floor(pts * r)]));
+add[SHARE[0][0]] += pts - Object.values(add).reduce((a, b) => a + b, 0);
+await A('add_stats', add);
+await A('add_points', { n: -pts });
 
 // đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
 const SET = {

@@ -22,16 +22,6 @@ defmodule HacLong.AdminMaxTest do
     "mg" => [{"str", 0.4}, {"ene", 0.25}, {"agi", 0.2}, {"vit", 0.15}]
   }
 
-  defp alloc(p, _stat, 0), do: p
-
-  # mỗi lệnh cộng tối đa 99 điểm (như nút cộng nhiều trong game)
-  defp alloc(p, stat, n) do
-    k = min(n, 99)
-    {r, p} = Commands.run(p, %{"act" => "alloc", "stat" => stat, "n" => k})
-    assert r.ok, inspect(r)
-    alloc(p, stat, n - k)
-  end
-
   defp op(p, name, params) do
     {:ok, f} = Admin.build(name, params)
     assert {:ok, p, _msg} = f.(p)
@@ -55,10 +45,16 @@ defmodule HacLong.AdminMaxTest do
       assert p.points ==
                49 * Engine.points_per_level(cls) + 10 * Engine.rebirth_points()
 
+      # như tài liệu: chia điểm bằng lệnh quản trị (add_stats rồi add_points trừ hết), dựng được cả cho người khác
       total = p.points
-      p = Enum.reduce(@share[cls], p, fn {k, r}, p -> alloc(p, k, floor(total * r)) end)
-      p = alloc(p, @share[cls] |> hd() |> elem(0), p.points)
+      base_sum = p.stats |> Map.values() |> Enum.sum()
+      add = Map.new(@share[cls], fn {k, r} -> {k, floor(total * r)} end)
+      {first, _} = hd(@share[cls])
+      add = Map.update!(add, first, &(&1 + total - Enum.sum(Map.values(add))))
+
+      p = p |> op("add_stats", add) |> op("add_points", %{"n" => -total})
       assert p.points == 0
+      assert p.stats |> Map.values() |> Enum.sum() == base_sum + total
 
       p =
         p
