@@ -113,6 +113,22 @@ defmodule HacLong.AdminMaxTest do
     assert p.points == 29 * Engine.points_per_level("dk") + 2 * Engine.rebirth_points()
   end
 
+  test "give_gear: Excellent đúng loại món (vũ khí / dây chuyền, giáp / khiên / nhẫn), cánh không có Excellent" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Exc", "cls" => "dk"})
+
+    give = fn base, exc ->
+      with {:ok, f} <- Admin.build("give_gear", %{"base" => base, "exc" => exc}), do: f.(p)
+    end
+
+    assert {:ok, _, _} = give.("item_0_26", ["atk_pct"])
+    assert {:ok, _, _} = give.("item_13_27", ["crit"])
+    assert {:ok, _, _} = give.("item_13_24", ["hp_pct"])
+    assert {:error, _} = give.("item_0_26", ["hp_pct"])
+    assert {:error, _} = give.("item_13_24", ["atk_pct"])
+    assert {:error, "Dòng Excellent" <> _} = give.("wing_dk_3", ["hp_pct"])
+    assert {:ok, _, _} = give.("wing_dk_3", [])
+  end
+
   test "clear_bag: hủy mọi trang bị trong túi (cả món khóa, cấp ép), giữ đồ đang mặc và đồ cất tủ" do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Don", "cls" => "dk"})
     worn = p.equip

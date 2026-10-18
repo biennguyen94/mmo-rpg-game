@@ -207,7 +207,8 @@ defmodule HacLong.Admin do
       not (is_integer(up) and up in 0..Engine.max_upgrade()) ->
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
-      not (is_list(exc) and Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
+      not (is_list(exc) and (exc == [] or it.slot != "wing") and
+               Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
         {:error, "Dòng Excellent không hợp lệ cho loại đồ này."}
 
       skill and it.slot != "weapon" ->

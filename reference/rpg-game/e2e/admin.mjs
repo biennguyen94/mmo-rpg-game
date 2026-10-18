@@ -80,6 +80,24 @@ await page.click(`${gg} button[type="submit"]`);
 await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
 const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
 R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
+// Excellent / Kỹ năng / Đồ Thần chỉ hiện khi hợp món đang chọn (vũ khí, dây chuyền → Excellent vũ khí; giáp, khiên,
+// nhẫn → Excellent giáp; cánh → không có Excellent)
+{
+  const vis = () => page.evaluate((f) => Object.fromEntries([...document.querySelectorAll(`${f} [data-gear-show]`)].map((el) => [el.dataset.gearShow, !el.hidden])), gg);
+  const want = { item_0_3: 'weapon', item_13_27: 'weapon', item_6_18: 'armor', item_13_24: 'armor', item_8_33: 'armor', wing_dk_3: '' };
+  let ok = true; const got = {};
+  await page.selectOption(`${gg} select[name="base"]`, 'item_0_3');
+  await page.check(`${gg} input[name="exc"][value="atk_pct"]`);
+  for (const [base, t] of Object.entries(want)) {
+    await page.selectOption(`${gg} select[name="base"]`, base);
+    const v = await vis(); got[base] = v;
+    ok = ok && v.weapon === (t === 'weapon') && v.armor === (t === 'armor') && v.skill === (base === 'item_0_3');
+    if (base === 'item_6_18') { await page.locator(gg).scrollIntoViewIfNeeded(); await shot(page, 'admin_exc_shield.png'); }
+    if (base === 'item_13_27') { await page.locator(gg).scrollIntoViewIfNeeded(); await shot(page, 'admin_exc_pendant.png'); }
+  }
+  const stale = await page.evaluate((f) => document.querySelector(`${f} input[name="exc"][value="atk_pct"]`).checked, gg);
+  R.check('tặng trang bị: Excellent đúng loại món, cánh không có; đổi món bỏ tick dòng bị ẩn', ok && !stale, JSON.stringify(got));
+}
 // sự kiện mở ngay: Quảng Trường Quỷ / Lâu Đài Máu (người chơi thấy đang mở, chat có thông báo)
 for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['open_bc', 'bc', 'Lâu Đài Máu']]) {
   await page.click(`[data-tab="admin"]`).catch(() => null);

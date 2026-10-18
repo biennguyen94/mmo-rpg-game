@@ -783,3 +783,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   đồ xếp chồng chỉ cần số lượng.
 - Tab Quản trị → Trang bị: ô "dòng phụ cánh" chỉ hiện khi món chọn là cánh có dòng phụ (bậc trong `wing_options.by_tier`,
   hiện là cấp 2–3), ghi số của bậc đó (vd. "Cánh: máu tối đa +120"); client nhận bảng qua `RULES.wingOptions`.
+- Tab Quản trị → Trang bị: ô tick Excellent chỉ hiện nhóm hợp món đang chọn (vũ khí / dây chuyền → "Excellent vũ khí /
+  dây chuyền"; giáp, mũ, quần, găng, giày, khiên, nhẫn → "Excellent giáp / khiên / nhẫn"; cánh → không có), "Kỹ năng" chỉ
+  với vũ khí, "Đồ Thần" chỉ với món thuộc bộ; đổi món thì bỏ tick các ô bị ẩn. Server `give_gear` cũng từ chối Excellent
+  trên cánh (như rơi đồ: cánh không ra Excellent).
