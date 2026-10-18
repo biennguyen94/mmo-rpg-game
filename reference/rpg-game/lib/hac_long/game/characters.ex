@@ -193,6 +193,7 @@ defmodule HacLong.Game.Characters do
       daily_done: c.daily_done || 0,
       boss_top: c.boss_top || 0,
       food: food(c.food),
+      drink: food(c.drink),
       blessing: HacLong.Game.Blessing.load(c.blessing),
       skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
       auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),

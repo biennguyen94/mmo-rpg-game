@@ -34,6 +34,11 @@ Hình cánh: đôi cánh Draconian của bộ tile Dungeon Crawl ở trên (`pla
 Chọn và chép bằng `scripts/pixel_icons.py` (bảng tra `priv/static/assets/pixel_icons.json`); script tự bỏ mọi file có
 trong `TILES_UNDER_UNKNOWN_LICENSE.md`. Không dùng hình MU nào.
 
+## Hình đồ uống (`priv/static/assets/food/bia_thao_duoc.png`, `ruou_thuoc.png`, `ruou_linh_chi.png`, `ruou_long_huyet.png`)
+
+Chai thuốc của bộ tile Dungeon Crawl Stone Soup ở trên (CC0, `releases/Nov-2015/item/potion/`: `brown`, `murky`, `golden`,
+`puce`), không sửa.
+
 ## Icon (`priv/static/assets/icons/`)
 
 Lấy từ **game-icons.net** (https://github.com/game-icons/icons), đã đổi màu và bỏ nền đen.

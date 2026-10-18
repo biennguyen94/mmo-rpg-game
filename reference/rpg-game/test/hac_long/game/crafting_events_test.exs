@@ -23,7 +23,7 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert {%{ok: false, msg: "Cần nghề Nấu ăn cấp 3."}, _} =
              Crafting.cook(p, "cook_banh_xeo_luon")
 
-    assert {%{ok: false}, _} = Crafting.cook(p, "brew_s")
+    assert {%{ok: false}, _} = Crafting.cook(p, "brew_bia")
 
     {%{ok: true, msg: msg}, p} = Crafting.cook(p, "cook_cha_ca")
     assert msg == "Nấu được Chả Cá."
@@ -36,7 +36,7 @@ defmodule HacLong.Game.CraftingEventsTest do
     # Bà Lang không nấu món của Bác Đầu Bếp
     herbalist = Map.put(p, :pos, %{map: "village", x: 16, y: 13})
 
-    assert {%{ok: false, msg: "Không có công thức này."}, _} =
+    assert {%{ok: false, msg: "Không có món này."}, _} =
              Commands.run(herbalist, %{"act" => "craft", "id" => "cook_cha_ca"})
   end
 
@@ -46,14 +46,14 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert {%{ok: false}, _} = Crafting.eat(p, "potion_s")
 
     {%{ok: true}, p} = Crafting.eat(p, "cha_ca")
-    assert p.food == %{id: "cha_ca", left: 5} and p.inv["cha_ca"] == 1
-    assert abs(Engine.derived(p).atk - base.atk * 1.1) <= 1
+    assert p.food == %{id: "cha_ca", left: 30} and p.inv["cha_ca"] == 1
+    assert abs(Engine.derived(p).atk - base.atk * 1.05) <= 1
 
     # dùng qua lệnh "use" cũng được
     {%{ok: true}, p2} = Commands.run(p, %{"act" => "use", "id" => "cha_ca"})
-    assert p2.food.left == 5 and not Map.has_key?(p2.inv, "cha_ca")
+    assert p2.food.left == 30 and not Map.has_key?(p2.inv, "cha_ca")
 
-    p = Enum.reduce(1..4, p, fn _, p -> Crafting.tick(p) end)
+    p = Enum.reduce(1..29, p, fn _, p -> Crafting.tick(p) end)
     assert p.food.left == 1
     p = Crafting.tick(p)
     assert p.food == nil and Engine.derived(p) == base
@@ -63,7 +63,34 @@ defmodule HacLong.Game.CraftingEventsTest do
     {_, p} = Engine.start_battle(p, 0, false)
     Rng.put_sequence([0.0])
     {_, p} = Engine.act(p, "flee")
-    assert p.battle.over and p.food.left == 4
+    assert p.battle.over and p.food.left == 29
+  end
+
+  test "đồ uống Bà Lang: pha (cấp nghề Nấu ăn), ô riêng cộng dồn với món ăn, hết theo trận" do
+    p = player(%{inv: %{"herb" => 10, "herb_rare" => 10, "fish_gold" => 1, "cha_ca" => 1}})
+    herbalist = Map.put(p, :pos, %{map: "village", x: 16, y: 13})
+
+    assert {%{ok: false, msg: "Cần nghề Nấu ăn cấp 3."}, _} =
+             Commands.run(herbalist, %{"act" => "craft", "id" => "brew_long_huyet"})
+
+    {%{ok: true, msg: "Pha được Rượu Thuốc."}, p} =
+      Commands.run(herbalist, %{"act" => "craft", "id" => "brew_ruou_thuoc"})
+
+    assert p.inv["ruou_thuoc"] == 1 and p.inv["herb"] == 8 and p.inv["herb_rare"] == 9
+    assert Crafting.xp(p, :cook) == 1
+    # Bác Đầu Bếp không pha đồ uống
+    assert {%{ok: false}, _} = Crafting.cook(p, "brew_bia")
+
+    base = Engine.derived(p)
+    {%{ok: true, msg: "Uống Rượu Thuốc" <> _}, p} = Crafting.eat(p, "ruou_thuoc")
+    {%{ok: true}, p} = Crafting.eat(p, "cha_ca")
+    # món ăn không thay đồ uống: cả hai cùng tác dụng
+    assert p.drink == %{id: "ruou_thuoc", left: 30} and p.food == %{id: "cha_ca", left: 30}
+    d = Engine.derived(p)
+    assert abs(d.maxHp - base.maxHp * 1.06) <= 1 and abs(d.atk - base.atk * 1.05) <= 1
+
+    p = Enum.reduce(1..30, p, fn _, p -> Crafting.tick(p) end)
+    assert p.drink == nil and p.food == nil and Engine.derived(p) == base
   end
 
   test "rèn đồ: tốn quặng và vàng, đúng loại đồ, cấp nghề tăng tỉ lệ Sử Thi" do

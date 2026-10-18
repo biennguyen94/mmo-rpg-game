@@ -252,9 +252,9 @@ Quái thường: khoảng 1/167 con ra Excellent, 1/775 con ra đồ Thần. Ng�
 | **Linh Chi** | Mọc ở Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long. | 75 |
 | **Quặng Sắt** | Đào ở Rừng Mê, Trại Goblin, Nghĩa Địa Cổ. | 25 |
 | **Quặng Mithril** | Đào ở Núi Khổng Lồ, Đầm Lầy Rồng, Hang Hắc Long. | 125 |
-| **Cá Diếc** | Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Nhỏ. | 10 |
-| **Cá Chép** | Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Vừa. | 25 |
-| **Lươn Điện** | Chỉ có ở Đầm Lầy và Hang Rồng. Bà Lang nấu 2 con thành Bình Máu Lớn. | 60 |
+| **Cá Diếc** | Câu ở hồ nước. Bác Đầu Bếp nấu thành Chả Cá. | 10 |
+| **Cá Chép** | Câu ở hồ nước. Bác Đầu Bếp nấu thành Bánh Mì Cá. | 25 |
+| **Lươn Điện** | Chỉ có ở Đầm Lầy và Hang Rồng. Bác Đầu Bếp nấu thành Bánh Xèo Lươn. | 60 |
 | **Cá Chép Vàng** | Hiếm lắm mới câu được. Bán được giá cao. | 500 |
 | **Chiếc Ủng Cũ** | Ai vứt xuống hồ thế này... | 2 |
 | **Vảy Cổ Long** | Chiến lợi phẩm từ trùm thế giới. Bán được giá cao. | 1.000 |

@@ -60,9 +60,9 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 - NPC trong Làng: Trưởng Làng giao nhiệm vụ, Thợ Rèn bán vũ khí/giáp/khiên, Bà Lang bán và pha
   thuốc, Chủ Quán Trọ cho nghỉ; mua bán phải đến gặp họ. 2 món đồ hiếm chỉ rơi từ trùm
 - Hái Thảo Dược/Linh Chi, đào Quặng Sắt/Mithril trên bản đồ (dùng chung, mọc lại); mang đi pha
-  thuốc, bán, nộp nhiệm vụ hoặc nhờ Thợ Rèn nâng cấp đồ đang mặc (tới +5)
-- Câu cá ở hồ nước: phao chìm thì giật đúng lúc; Cá Chép Vàng rất hiếm; Bà Lang nấu cá thành
-  bình máu; việc hằng ngày có câu cá
+  đồ uống ở Bà Lang, bán, nộp nhiệm vụ hoặc nhờ Thợ Rèn nâng cấp đồ đang mặc (tới +5)
+- Câu cá ở hồ nước: phao chìm thì giật đúng lúc; Cá Chép Vàng rất hiếm; Bác Đầu Bếp nấu cá thành
+  món ăn; việc hằng ngày có câu cá
 - 18 nhiệm vụ: mỗi vùng một việc diệt quái, một việc thu thập, một việc hạ trùm
 - Việc hằng ngày ở Bảng Tin: 3 việc mới mỗi ngày cho mỗi người, theo các vùng đã mở
 - Tên nhân vật không trùng nhau (không phân biệt hoa thường)

@@ -185,7 +185,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 |---|---|
 | Trưởng Làng | Nhiệm vụ (nhận, trả thưởng), chuyển sinh |
 | Thợ Rèn | Mua / bán đồ, ép đồ, rèn đồ, rương báu |
-| Bà Lang | Bình máu, pha chế từ thảo dược |
+| Bà Lang | Bán bình máu / mana; pha đồ uống (Bia Thảo Dược, Rượu Thuốc, Rượu Linh Chi, Rượu Long Huyết) từ Thảo Dược / Linh Chi |
 | Chủ Quán Trọ | Nghỉ một đêm: hồi đầy máu và MP |
 | Bảng Tin | 4 việc hằng ngày, đổi mới mỗi ngày |
 | Người Gác Tháp | Vào Tháp Vô Tận |
@@ -204,7 +204,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   chúa tể) để thuần phục. Thú đi theo, cộng % chỉ số và hay cắn thêm một đòn; thú đắt cắn mạnh hơn, thú thuần từ vùng chuyển sinh
   càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt);
   cấp 5 và 15 học hai kỹ năng riêng. Xem tỉ lệ cắn, sức cắn, kỹ năng ở Menu → Thú cưng.
-- **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp (món ăn cho hiệu ứng có hạn).
+- **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác
 

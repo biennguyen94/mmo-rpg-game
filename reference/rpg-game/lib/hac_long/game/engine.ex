@@ -125,6 +125,7 @@ defmodule HacLong.Game.Engine do
           daily_done: 0,
           boss_top: 0,
           food: nil,
+          drink: nil,
           blessing: nil,
           skill_set: nil,
           auto_cfg: nil,

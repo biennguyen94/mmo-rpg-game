@@ -522,7 +522,8 @@ def grp(title, ids):
         r += f"<tr><td>{nm(v, True)}</td><td>{E(use)}</td><td>{buy_at(i, v)}</td><td class=n>{n(v.get('sell') or 0) if v.get('sell') else '—'}</td></tr>"
     return r
 other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình mana", ["mana_s", "mana_m", "mana_l"]) +
-         grp("Món ăn", ["cha_ca", "banh_mi_ca", "banh_xeo_luon", "mam_co"]) +
+         grp("Món ăn (Bác Đầu Bếp)", ["cha_ca", "banh_mi_ca", "banh_xeo_luon", "mam_co"]) +
+         grp("Đồ uống (Bà Lang, cộng dồn với món ăn)", ["bia_thao_duoc", "ruou_thuoc", "ruou_linh_chi", "ruou_long_huyet"]) +
          grp("Ngọc", ["jewel_bless", "jewel_soul", "jewel_chaos", "jewel_life"]) +
          grp("Vé và nguyên liệu sự kiện", ["ds_ticket", "bc_ticket", "cc_ticket", "devil_eye", "devil_key", "archangel_scroll", "blood_bone",
                                            "kundun_mark", "lost_map", "condor_feather"]) +

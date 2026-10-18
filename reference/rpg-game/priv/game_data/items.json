@@ -241,28 +241,28 @@
       "slot": "material",
       "sprite": "items/fish_small",
       "price": 10,
-      "desc": "Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Nhỏ."
+      "desc": "Câu ở hồ nước. Bác Đầu Bếp nấu thành Chả Cá."
     },
     "fish_carp": {
       "name": "Cá Chép",
       "slot": "material",
       "sprite": "items/fish_carp",
       "price": 25,
-      "desc": "Câu ở hồ nước. Bà Lang nấu 2 con thành Bình Máu Vừa."
+      "desc": "Câu ở hồ nước. Bác Đầu Bếp nấu thành Bánh Mì Cá."
     },
     "fish_eel": {
       "name": "Lươn Điện",
       "slot": "material",
       "sprite": "items/fish_eel",
       "price": 60,
-      "desc": "Chỉ có ở Đầm Lầy và Hang Hắc Long. Bà Lang nấu 2 con thành Bình Máu Lớn."
+      "desc": "Chỉ có ở Đầm Lầy và Hang Hắc Long. Bác Đầu Bếp nấu thành Bánh Xèo Lươn."
     },
     "fish_gold": {
       "name": "Cá Chép Vàng",
       "slot": "material",
       "sprite": "items/fish_gold",
       "price": 500,
-      "desc": "Hiếm lắm mới câu được. Bán được giá cao."
+      "desc": "Hiếm lắm mới câu được. Nấu Mâm Cỗ Cá Vàng, pha Rượu Long Huyết, hoặc bán được giá cao."
     },
     "old_boot": {
       "name": "Chiếc Ủng Cũ",
@@ -285,11 +285,11 @@
       "price": 20,
       "food": {
         "buff": {
-          "atk": 0.1
+          "atk": 0.05
         },
-        "battles": 5
+        "battles": 30
       },
-      "desc": "Tấn công +10% trong 5 trận."
+      "desc": "Tấn công +5% trong 30 trận."
     },
     "banh_mi_ca": {
       "name": "Bánh Mì Cá",
@@ -298,11 +298,11 @@
       "price": 40,
       "food": {
         "buff": {
-          "def": 0.12
+          "def": 0.06
         },
-        "battles": 5
+        "battles": 30
       },
-      "desc": "Phòng thủ +12% trong 5 trận."
+      "desc": "Phòng thủ +6% trong 30 trận."
     },
     "banh_xeo_luon": {
       "name": "Bánh Xèo Lươn",
@@ -311,12 +311,12 @@
       "price": 120,
       "food": {
         "buff": {
-          "hp": 0.12,
-          "atk": 0.08
+          "hp": 0.06,
+          "atk": 0.04
         },
-        "battles": 8
+        "battles": 40
       },
-      "desc": "Máu tối đa +12%, tấn công +8% trong 8 trận."
+      "desc": "Máu tối đa +6%, tấn công +4% trong 40 trận."
     },
     "mam_co": {
       "name": "Mâm Cỗ Cá Vàng",
@@ -325,12 +325,69 @@
       "price": 600,
       "food": {
         "buff": {
-          "xp": 0.2,
-          "gold": 0.1
+          "xp": 0.1,
+          "gold": 0.05
         },
-        "battles": 10
+        "battles": 50
       },
-      "desc": "Kinh nghiệm +20%, vàng +10% trong 10 trận."
+      "desc": "Kinh nghiệm +10%, vàng +5% trong 50 trận."
+    },
+    "bia_thao_duoc": {
+      "name": "Bia Thảo Dược",
+      "slot": "food",
+      "drink": true,
+      "sprite": "food/bia_thao_duoc",
+      "price": 30,
+      "food": {
+        "buff": {
+          "gold": 0.08
+        },
+        "battles": 30
+      },
+      "desc": "Vàng nhặt +8% trong 30 trận."
+    },
+    "ruou_thuoc": {
+      "name": "Rượu Thuốc",
+      "slot": "food",
+      "drink": true,
+      "sprite": "food/ruou_thuoc",
+      "price": 60,
+      "food": {
+        "buff": {
+          "hp": 0.06
+        },
+        "battles": 30
+      },
+      "desc": "Máu tối đa +6% trong 30 trận."
+    },
+    "ruou_linh_chi": {
+      "name": "Rượu Linh Chi",
+      "slot": "food",
+      "drink": true,
+      "sprite": "food/ruou_linh_chi",
+      "price": 100,
+      "food": {
+        "buff": {
+          "xp": 0.08
+        },
+        "battles": 30
+      },
+      "desc": "Kinh nghiệm +8% trong 30 trận."
+    },
+    "ruou_long_huyet": {
+      "name": "Rượu Long Huyết",
+      "slot": "food",
+      "drink": true,
+      "sprite": "food/ruou_long_huyet",
+      "price": 600,
+      "food": {
+        "buff": {
+          "atk": 0.04,
+          "def": 0.04
+        },
+        "battles": 40
+      },
+      "desc": "Tấn công +4%, phòng thủ +4% trong 40 trận."
     },
     "moon_cake": {
       "name": "Bánh Trung Thu",

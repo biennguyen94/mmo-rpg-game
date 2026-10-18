@@ -807,3 +807,12 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Công thức nhân vật tối đa (ADMIN_GUIDE §6) dựng theo **tên** (`NAME`, trống = chính mình): lớp lấy từ nhân vật được dựng
   (`lookup` trả thêm `character.cls`), không theo admin; chia điểm bằng `add_stats` + `add_points` (lệnh quản trị) thay cho
   lệnh người chơi `alloc`, nên dựng được cho người khác, online hay offline. Console in "Dựng cho: …" để kiểm đúng người.
+- (anh "theo e đề xuất hết") **Bà Lang: đồ uống thay pha bình máu; món ăn giảm % kéo dài trận.**
+  - Bỏ 6 công thức pha / nấu bình máu ở Bà Lang (bình vẫn mua ở Bà Lang). Thay bằng 4 đồ uống (`items.json`, `drink: true`,
+    `slot: "food"`): Bia Thảo Dược (Thảo Dược ×3) vàng +8 %; Rượu Thuốc (Thảo Dược ×2 + Linh Chi) máu +6 %; Rượu Linh Chi
+    (Linh Chi ×2) EXP +8 % — 30 trận; Rượu Long Huyết (Linh Chi ×3 + Cá Chép Vàng, nghề cấp 3) công +4 %, thủ +4 %, 40 trận.
+    Pha dùng chung cấp nghề Nấu ăn (`Crafting.brew/2`, được 1 kinh nghiệm nghề).
+  - Đồ uống nằm **ô riêng** `characters.drink` (migration `20261108000000_add_drink`), cộng dồn với món ăn; uống món khác thì thay.
+  - Món ăn Bác Đầu Bếp (trước 10–20 % trong 5–10 trận, hết rất nhanh khi tự đánh): Chả Cá công +5 % 30 trận, Bánh Mì Cá thủ
+    +6 % 30 trận, Bánh Xèo Lươn máu +6 % công +4 % 40 trận, Mâm Cỗ Cá Vàng EXP +10 % vàng +5 % 50 trận — ngang Đài Phúc
+    Lành (+5 %, 30 trận). Hình đồ uống: chai thuốc CC0 của Dungeon Crawl (`assets/food/`, `CREDITS.md`).

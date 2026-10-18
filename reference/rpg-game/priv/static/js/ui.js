@@ -1852,6 +1852,7 @@
         ${kvh('pvp', 'Đánh quái và đánh người khác nhau thế nào?', '')}
         ${P.view.blessing ? kv('✨ Đài Phúc Lành', `${esc(P.view.blessing.name)}${P.view.blessing.left ? ` · +${Math.round(P.view.blessing.pct * 100)}% ${P.view.blessing.label}, còn ${P.view.blessing.left} trận` : ''} · hồi sinh ở đây`) : ''}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
+        ${P.drink ? kv('Đồ uống', `${esc(ITEMS[P.drink.id].name)} · còn ${P.drink.left} trận`) : ''}
       </div>`;
   }
 
@@ -2380,7 +2381,7 @@
       ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
       : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${lockBtn}`
       : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
-      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">Ăn</button>` : '';
+      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
     // ép món trong túi (mang tới Thợ Rèn), vứt món trong túi
     const forgeBtn = !at.slot && P.view.forgeBag[id] ? `<button class="btn" data-act="forge-pick" data-id="${esc(id)}">${icon('anvil')}Ép</button>` : '';
@@ -2764,11 +2765,17 @@
       </div>`).join('')}</div></div>`;
   }
 
-  // Món đang ăn (Crafting.food_bonus): tên và số trận còn tác dụng
+  // Món đang ăn / đồ đang uống (Crafting.food_bonus): tên và số trận còn tác dụng
+  const buffText = (it) => esc(it.desc.replace(/ trong \d+ trận\.?/, ''));
   function foodNow() {
     if (!P.food) return '';
     const it = ITEMS[P.food.id];
-    return `<p class="small" style="color:var(--good)">🍽 Đang no bụng: ${esc(it.name)} (${esc(it.desc.replace(/ trong \d+ trận\.?/, ''))}), còn ${P.food.left} trận.</p>`;
+    return `<p class="small" style="color:var(--good)">🍽 Đang no bụng: ${esc(it.name)} (${buffText(it)}), còn ${P.food.left} trận.</p>`;
+  }
+  function drinkNow() {
+    if (!P.drink) return '';
+    const it = ITEMS[P.drink.id];
+    return `<p class="small" style="color:var(--good)">🍺 Đang ngà ngà: ${esc(it.name)} (${buffText(it)}), còn ${P.drink.left} trận.</p>`;
   }
 
   // Cấp nghề: thanh tiến độ tới cấp sau
@@ -2782,7 +2789,7 @@
   function cookCard() {
     const lv = P.view.crafting.cook;
     return `<div class="card"><h3>Nấu ăn</h3>${craftLevel('cook', 'Nấu ăn')}
-      <p class="small muted">Ăn món ngon ngoài trận (tab Túi đồ) thì mạnh hơn trong vài trận. Mỗi lúc chỉ no một món.</p>${foodNow()}
+      <p class="small muted">Ăn món ngon ngoài trận (tab Túi đồ) thì mạnh hơn trong một số trận. Mỗi lúc chỉ no một món; cộng dồn với đồ uống của Bà Lang.</p>${foodNow()}
       <div class="list">${RECIPES.filter((r) => r.npc === 'cook').map((r) => {
         const out = ITEMS[r.out], needs = Object.entries(r.needs), need = r.level || 1;
         const ok = lv >= need && needs.every(([id, n]) => (P.inv[id] || 0) >= n);
@@ -2822,15 +2829,19 @@
       }).join('')}</div></div>`;
   }
 
+  // Bà Lang: pha đồ uống từ Thảo Dược / Linh Chi (dùng chung cấp nghề Nấu ăn); uống ở tab Túi đồ, cộng dồn với món ăn
   function craftCard() {
-    return `<div class="card"><h3>Pha thuốc · nấu cá</h3><div class="list">${RECIPES.filter((r) => r.npc === 'herbalist').map((r) => {
-      const out = ITEMS[r.out];
-      const needs = Object.entries(r.needs);
-      const ok = needs.every(([id, n]) => (P.inv[id] || 0) >= n);
-      return `<div class="item">${itemIcon(out)}<div class="grow"><div class="name">${out.name}</div>
-        <div class="small muted">${needs.map(([id, n]) => `${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}`).join(' · ')}</div></div>
-        <button class="btn ${ok ? 'primary' : ''}" data-act="craft" data-id="${r.id}" ${ok ? '' : 'disabled'}>Pha</button></div>`;
-    }).join('')}</div></div>`;
+    const lv = P.view.crafting.cook;
+    return `<div class="card"><h3>Pha chế · đồ uống</h3>
+      <p class="small muted">Uống ngoài trận (tab Túi đồ) thì mạnh hơn trong một số trận. Đồ uống cộng dồn với món ăn của Bác Đầu Bếp; mỗi lúc uống một thứ. Pha dùng chung cấp nghề Nấu ăn.</p>${drinkNow()}
+      <div class="list">${RECIPES.filter((r) => r.npc === 'herbalist').map((r) => {
+        const out = ITEMS[r.out], needs = Object.entries(r.needs), need = r.level || 1;
+        const ok = lv >= need && needs.every(([id, n]) => (P.inv[id] || 0) >= n);
+        return `<div class="item">${itemIcon(out)}<div class="grow"><div class="name">${esc(out.name)}</div>
+          <div class="small">${esc(out.desc)}</div>
+          <div class="small muted">${lv < need ? `<span style="color:var(--bad)">Cần nghề cấp ${need}</span> · ` : ''}${needs.map(([id, n]) => `${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}`).join(' · ')}</div></div>
+          <button class="btn ${ok ? 'primary' : ''}" data-act="craft" data-id="${r.id}" ${ok ? '' : 'disabled'}>Pha</button></div>`;
+      }).join('')}</div></div>`;
   }
 
   // Tiến độ nhiệm vụ đang làm (server vẫn là nơi kiểm tra cuối cùng).

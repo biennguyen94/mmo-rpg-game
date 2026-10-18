@@ -261,29 +261,8 @@ defmodule HacLong.Game.Commands do
   defp sell(p, id),
     do: at_npc(p, @merchants, "Thợ Rèn hoặc Bà Lang", fn _ -> Engine.sell(p, id) end)
 
-  defp craft(p, id) do
-    at_npc(p, ["herbalist"], "Bà Lang", fn _ ->
-      case Data.recipe(id) do
-        r when r == nil or r.npc != "herbalist" ->
-          {%{ok: false, msg: "Không có công thức này."}, p}
-
-        r ->
-          if Enum.all?(r.needs, fn {item, n} -> Map.get(p.inv, item, 0) >= n end) do
-            inv =
-              Enum.reduce(r.needs, p.inv, fn {item, n}, inv ->
-                if inv[item] > n,
-                  do: Map.put(inv, item, inv[item] - n),
-                  else: Map.delete(inv, item)
-              end)
-
-            {%{ok: true, msg: "Pha được #{Data.item(r.out).name}."},
-             Engine.add_item(%{p | inv: inv}, r.out)}
-          else
-            {%{ok: false, msg: "Chưa đủ nguyên liệu."}, p}
-          end
-      end
-    end)
-  end
+  defp craft(p, id),
+    do: at_npc(p, ["herbalist"], "Bà Lang", fn _ -> Crafting.brew(p, id) end)
 
   defp int(n) when is_integer(n), do: n
 
