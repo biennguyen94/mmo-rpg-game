@@ -2281,7 +2281,7 @@
     const pt = P.pet && petInfo(P.pet);
     const own = pt && pt.ref && ownIcon(pt, 0);
     const img = !pt ? '' : own ? `<img src="${own}" alt="" draggable="false" class="own">` : `<img src="${asset(pt.sprite + '.png')}" alt="" draggable="false" class="px">`;
-    return `<button class="slot pet${pt ? '' : ' empty'}" data-act="pet-slot" data-slot="pet" title="${esc(pt ? pt.name : 'Chưa dắt thú nào')}">
+    return `<button class="slot pet${pt ? '' : ' empty'}${pt && pt.rare ? ' dragon-glow' : ''}" data-act="pet-slot" data-slot="pet" title="${esc(pt ? pt.name : 'Chưa dắt thú nào')}">
         ${img}${pt ? `<span class="lvl">Lv${petLevel(pt.id).lv}</span>` : ''}
         <span class="lbl">${SLOT_LABEL.pet}</span>
       </button>`;

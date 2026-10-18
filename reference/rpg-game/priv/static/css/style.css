@@ -500,6 +500,24 @@ button.kv-help[aria-expanded="true"] .help-i { opacity: 1; color: var(--gold); }
 .up11 { box-shadow: inset 0 0 10px #ff6b3d, 0 0 8px #ff6b3d; animation: up11 1.6s ease-in-out infinite alternate; }
 @keyframes up11 { from { box-shadow: inset 0 0 6px #ff6b3d, 0 0 4px #ff6b3d; } to { box-shadow: inset 0 0 12px #ffb03d, 0 0 10px #ffb03d; } }
 @media (prefers-reduced-motion: reduce) { .up11 { animation: none; } }
+/* ô Thú nuôi khi dắt thú hiếm (Long Vương): viền vàng – đỏ xoay vòng, vệt sáng lướt qua, quầng thở */
+@property --dg-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.slot.dragon-glow { border-color: transparent; overflow: hidden; isolation: isolate;
+  animation: dragon-pulse 1.8s ease-in-out infinite alternate; }
+.slot.dragon-glow::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px; z-index: 2; pointer-events: none;
+  background: conic-gradient(from var(--dg-a), #ffd36a, #ff6b3d, #fff3b0, #e9a400, #ff6b3d, #ffd36a);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: dragon-spin 3s linear infinite; }
+.slot.dragon-glow::after { content: ''; position: absolute; inset: -40%; z-index: 1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 240, 180, 0.55) 50%, transparent 60%);
+  transform: translateX(-100%); animation: dragon-sheen 2.6s ease-in-out infinite; }
+.slot.dragon-glow img { position: relative; z-index: 0; filter: drop-shadow(0 0 4px #ffcf5a); }
+.slot.dragon-glow .lvl, .slot.dragon-glow .lbl { z-index: 3; }
+@keyframes dragon-spin { to { --dg-a: 360deg; } }
+@keyframes dragon-sheen { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes dragon-pulse { from { box-shadow: inset 0 0 8px #e9a400, 0 0 6px #ffb03d; } to { box-shadow: inset 0 0 16px #ffd36a, 0 0 14px #ff8a3d; } }
+@media (prefers-reduced-motion: reduce) { .slot.dragon-glow, .slot.dragon-glow::before, .slot.dragon-glow::after { animation: none; } }
 .cell .lockb, .slot .lockb { position: absolute; right: 2px; bottom: 0; font-size: 0.6rem; pointer-events: none; }
 .lock-ic { font-size: 0.75em; }
 /* hình đồ riêng: giữ tỉ lệ, không kéo giãn (M10) */
