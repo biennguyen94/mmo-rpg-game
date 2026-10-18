@@ -787,7 +787,3 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   dây chuyền"; giáp, mũ, quần, găng, giày, khiên, nhẫn → "Excellent giáp / khiên / nhẫn"; cánh → không có), "Kỹ năng" chỉ
   với vũ khí, "Đồ Thần" chỉ với món thuộc bộ; đổi món thì bỏ tick các ô bị ẩn. Server `give_gear` cũng từ chối Excellent
   trên cánh (như rơi đồ: cánh không ra Excellent).
-- Hình trang bị MU (mọi ô trang bị + cánh, trừ nhẫn / dây chuyền đã giữ cỡ gốc): không phóng quá 1 lần theo điểm ảnh
-  thật của màn hình (`MAX_ZOOM` trong ui.js, tính cả `devicePixelRatio`); hình nhỏ hơn ô thì thu phần hình bằng padding,
-  khung ô giữ nguyên. Lý do: mũ sau khi cắt viền chỉ ~40–60 px, bị kéo đầy ô trên điện thoại (2–3 điểm ảnh / px) nên
-  nhòe so với giáp (~85–125 px). Đổi lại mũ / khiên trông nhỏ hơn trong ô; bình, ngọc, nguyên liệu không đổi.
