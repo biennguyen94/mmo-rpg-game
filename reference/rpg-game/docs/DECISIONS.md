@@ -778,3 +778,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Bảng chi tiết món đồ (và Thư viện): mỗi chỉ số chính một dòng (cánh: phòng thủ / sát thương / nhận sát thương / lớp; nhẫn:
   máu / phòng thủ) thay vì nối " · ". Danh sách gọn (cửa hàng, chợ) vẫn một dòng. Tab Nhân vật / hồ sơ: dòng Cánh tách
   "+x% sát thương" và "−y% nhận" thành hai dòng.
+- Form gửi quà (riêng / mọi người): mục "Đồ thường (bình, ngọc, nguyên liệu, vé…)" không còn liệt kê trang bị; trang bị gửi
+  ở mục "Trang bị" (chọn món một dòng riêng, rồi số dòng "0–4 dòng", +N, số lượng). Giữ hai mục vì trang bị cần dòng / +N,
+  đồ xếp chồng chỉ cần số lượng.

@@ -398,7 +398,8 @@
   // xem trước số người nhận rồi mới gửi, lịch sử các đợt gửi. Giỏ chỉ vẽ lại phần giỏ để ô nhập không mất chữ.
   const giftBasket = {}; // id form → { khóa món: số }
   function giftForm(id, uid) {
-    const items = Object.entries(ITEMS).filter(([, it]) => it.slot !== 'material' || it.price);
+    // trang bị luôn là món riêng: chỉ gửi ở mục Trang bị (chọn dòng, +N); mục Đồ thường chỉ còn đồ xếp chồng
+    const items = Object.entries(ITEMS).filter(([, it]) => (it.slot !== 'material' || it.price) && !GEAR_KINDS.includes(it.slot) && it.slot !== 'wing');
     const all = !uid;
     giftBasket[id] = giftBasket[id] || {};
     return `<form id="${id}" class="gift-form" ${uid ? `data-uid="${uid}"` : ''}>
@@ -406,13 +407,13 @@
       <input type="text" name="body" maxlength="300" placeholder="Lời nhắn (không bắt buộc)">
       <div class="btn-row"><label class="small">Vàng <input type="number" name="gold" min="0" value="0"></label>
         <label class="small">EXP <input type="number" name="xp" min="0" value="0"></label></div>
-      <div class="gift-add"><span class="small muted">Đồ thường</span>
+      <div class="gift-add"><span class="small muted">Đồ thường (bình, ngọc, nguyên liệu, vé…)</span>
         <div class="btn-row">${selSearch(id + '-item')}<select name="item" data-sel="${id}-item">${items.map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
           <label class="small">× <input type="number" name="n" min="1" max="100" value="1"></label>
           <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="item">+ Thêm</button></div></div>
-      <div class="gift-add"><span class="small muted">Trang bị riêng (vũ khí, giáp, trang sức, cánh)</span>
-        <div class="btn-row">${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear">${Object.entries(ITEMS).filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
-          <select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o ? `${o} dòng cộng thêm` : 'Không dòng cộng thêm'}</option>`).join('')}</select>
+      <div class="gift-add"><span class="small muted">Trang bị (vũ khí, giáp, khiên, trang sức, cánh)</span>
+        ${selSearch(id + '-gear')}<select name="gbase" data-sel="${id}-gear">${Object.entries(ITEMS).filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy).map(([k, it]) => `<option value="${k}">${esc(it.name)}</option>`).join('')}</select>
+        <div class="btn-row"><select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o} dòng</option>`).join('')}</select>
           <label class="small">+ <input type="number" name="gup" min="0" max="${UPGRADE.max}" value="0"></label>
           <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label>
           <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div></div>
