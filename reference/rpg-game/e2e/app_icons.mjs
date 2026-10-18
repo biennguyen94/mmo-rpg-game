@@ -1,5 +1,5 @@
 // Icon ứng dụng (ô tắt trình duyệt, màn hình chính điện thoại, tab): hình trùm Hắc Long (`monsters/shadow_dragon.png`,
-// CC0, xem CREDITS.md) phóng to kiểu pixel trên nền tím. Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
+// CC0, xem CREDITS.md) phóng to kiểu pixel trên nền trắng. Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
 // Chạy: node e2e/app_icons.mjs  (cần Chromium của Playwright)
 import { launch } from './lib.mjs';
 import fs from 'node:fs';
@@ -29,16 +29,16 @@ async function render(size, scale) {
     c.width = c.height = size;
     const g = c.getContext('2d');
     const bg = g.createRadialGradient(size / 2, size * 0.45, size * 0.05, size / 2, size / 2, size * 0.7);
-    bg.addColorStop(0, '#8a3a62');
-    bg.addColorStop(0.6, '#3a2140');
-    bg.addColorStop(1, '#1a1220');
+    bg.addColorStop(0, '#ffffff');
+    bg.addColorStop(0.7, '#f7f4fa');
+    bg.addColorStop(1, '#ebe5f0');
     g.fillStyle = bg;
     g.fillRect(0, 0, size, size);
     const k = size * scale >= im.width ? Math.floor((size * scale) / im.width) : (size * scale) / im.width;
     const w = Math.round(im.width * k), x = Math.round((size - w) / 2), y = Math.round((size - w) / 2 + size * 0.02);
     g.imageSmoothingEnabled = k < 1;
-    g.shadowColor = 'rgba(255, 90, 110, 0.7)';
-    g.shadowBlur = size * 0.05;
+    g.shadowColor = 'rgba(40, 20, 50, 0.35)';
+    g.shadowBlur = size * 0.03;
     g.drawImage(im, x, y, w, w);
     return c.toDataURL('image/png');
   }, [dragon, size, scale]);
