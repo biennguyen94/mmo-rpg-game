@@ -741,3 +741,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - `docs/ADMIN_GUIDE.md` §6: `set_rebirths 10` → `set_level 50` → `reset_stats` (495 điểm, Thuật Sĩ Kiếm 593), bỏ
   `add_points 300` / `add_stats`; thêm đoạn tự chia điểm theo tỉ lệ gợi ý từng lớp (chỉ cho chính mình). Sửa "+3 điểm mỗi cấp"
   thành đúng 5 (Thuật Sĩ Kiếm 7). Vàng / đồ vẫn cộng thêm (anh chỉ chọn mục 1).
+
+## Đổi chữ "đồ hiếm" thành "trang bị" (2026-10-18, anh "đồ chữ trắng, xanh vẫn được xem là đồ hiếm")
+- Từ B-15 mọi trang bị rơi ra là một món riêng (có `uid`, dòng cộng thêm), nên "túi đồ hiếm" thật ra là túi trang bị: đồ trắng,
+  xanh cũng nằm đó. Đổi mọi chữ người chơi thấy: "Túi trang bị đầy…", "Trang bị x/20" (Túi đồ, Tủ Đồ), lọc chợ "Trang bị",
+  thư "Túi trang bị đầy: …"; bản tiếng Anh "Gear bag". Đồ Excellent / Thần vẫn có nhãn riêng. Tên nội bộ (`gear_log`, đối
+  soát, tài liệu quản trị) giữ nguyên.

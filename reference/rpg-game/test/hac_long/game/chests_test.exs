@@ -34,7 +34,7 @@ defmodule HacLong.Game.ChestsTest do
         elem(Gear.add(p, %{uid: "##{i}", base: "mace", rarity: 1, bonus: %{str: 1}}), 0)
       end)
 
-    assert {%{ok: false, msg: "Túi đồ hiếm đầy" <> _}, ^p} = Chests.buy(p, "wood")
+    assert {%{ok: false, msg: "Túi trang bị đầy" <> _}, ^p} = Chests.buy(p, "wood")
   end
 
   test "rương ở Nhà mở mỗi ngày một lần" do

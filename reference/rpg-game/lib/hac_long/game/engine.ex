@@ -1786,7 +1786,7 @@ defmodule HacLong.Game.Engine do
            Map.merge(reward, %{gear: [label], gear_ids: [g.uid]})}
 
         {p, :mailed} ->
-          {log(p, "🎁 Nhặt được #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
+          {log(p, "🎁 Nhặt được #{label}, túi trang bị đầy nên gửi vào Hộp thư.", "good"),
            Map.put(reward, :gear, [label])}
       end
     else
@@ -1847,7 +1847,7 @@ defmodule HacLong.Game.Engine do
              |> Map.update(:gear_ids, [g.uid], &(&1 ++ [g.uid]))}
 
           {p, :mailed} ->
-            {log(p, "🎁 #{m.name} để lại #{label}, túi đồ hiếm đầy nên gửi vào Hộp thư.", "good"),
+            {log(p, "🎁 #{m.name} để lại #{label}, túi trang bị đầy nên gửi vào Hộp thư.", "good"),
              Map.update(reward, :gear, [label], &(&1 ++ [label]))}
         end
     end
@@ -2053,7 +2053,7 @@ defmodule HacLong.Game.Engine do
          ), p}
 
       slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
 
       p.battle ->
         {err("Đang trong trận."), p}
@@ -2169,7 +2169,7 @@ defmodule HacLong.Game.Engine do
         {err("Cần 1 #{Data.item(l.jewel).name}."), p}
 
       slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
 
       true ->
         hp_ratio = p.hp / derived(p).maxHp
@@ -2438,7 +2438,7 @@ defmodule HacLong.Game.Engine do
         {err("Không có món này."), p}
 
       length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món), không tách món này ra để khóa được."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món), không tách món này ra để khóa được."), p}
 
       true ->
         g = Gear.plain(id) |> Map.put(:locked, true)

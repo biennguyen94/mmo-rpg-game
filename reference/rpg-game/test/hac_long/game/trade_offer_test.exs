@@ -52,7 +52,7 @@ defmodule HacLong.Game.TradeOfferTest do
       )
 
     {:ok, o} = TradeOffer.parse(p, %{"gold" => 10})
-    assert {:error, "Túi đồ hiếm không đủ chỗ."} = TradeOffer.take(full, o, 1)
+    assert {:error, "Túi trang bị không đủ chỗ."} = TradeOffer.take(full, o, 1)
     assert {:ok, _, _} = TradeOffer.take(full, o, 0)
 
     # đưa đi một món thì nhận về được một món

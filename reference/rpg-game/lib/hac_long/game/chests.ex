@@ -50,7 +50,7 @@ defmodule HacLong.Game.Chests do
         {%{ok: false, msg: "Cần #{cost} vàng."}, p}
 
       length(Gear.bag(p)) >= Gear.max_bag() ->
-        {%{ok: false, msg: "Túi đồ hiếm đầy (#{Gear.max_bag()} món). Bán bớt đã."}, p}
+        {%{ok: false, msg: "Túi trang bị đầy (#{Gear.max_bag()} món). Bán bớt đã."}, p}
 
       true ->
         g = roll(p, t.weights)

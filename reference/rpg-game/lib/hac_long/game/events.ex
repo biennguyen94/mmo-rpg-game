@@ -110,7 +110,7 @@ defmodule HacLong.Game.Events do
         {%{ok: false, msg: "Cần #{offer.cost} #{Data.item(e.token).name}."}, p}
 
       id == "gear" and length(Gear.bag(p)) >= Gear.max_bag() ->
-        {%{ok: false, msg: "Túi đồ hiếm đầy (#{Gear.max_bag()} món). Bán bớt đã."}, p}
+        {%{ok: false, msg: "Túi trang bị đầy (#{Gear.max_bag()} món). Bán bớt đã."}, p}
 
       true ->
         left = p.inv[e.token] - offer.cost

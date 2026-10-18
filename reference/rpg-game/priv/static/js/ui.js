@@ -1062,7 +1062,7 @@
       const opt = (v, t, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${t}</option>`;
       body = `<form id="market-search" class="chat-form"><input type="text" id="market-q" placeholder="Tìm theo tên" value="${esc(market.q)}"><button class="btn" type="submit">Tìm</button></form>
         <div class="row market-filter">
-          <select data-market-kind aria-label="Lọc loại hàng">${[['all', 'Tất cả'], ['gear', 'Đồ hiếm'], ['exc', 'Excellent'], ['anc', 'Đồ Thần'], ['luck', 'May mắn / Kỹ năng'], ['wing', 'Cánh'], ['item', 'Đồ thường, ngọc']].map(([v, t]) => opt(v, t, market.kind)).join('')}</select>
+          <select data-market-kind aria-label="Lọc loại hàng">${[['all', 'Tất cả'], ['gear', 'Trang bị'], ['exc', 'Excellent'], ['anc', 'Đồ Thần'], ['luck', 'May mắn / Kỹ năng'], ['wing', 'Cánh'], ['item', 'Đồ thường, ngọc']].map(([v, t]) => opt(v, t, market.kind)).join('')}</select>
           <select data-market-sort aria-label="Sắp xếp">${[['new', 'Mới nhất'], ['cheap', 'Rẻ nhất'], ['dear', 'Đắt nhất']].map(([v, t]) => opt(v, t, market.sort)).join('')}</select>
         </div>
         ${others.length ? `<div class="list">${others.map((l) => listingRow(l, `<button class="btn ${P.gold >= l.price ? 'primary' : ''}" data-act="market_buy" data-listing="${l.id}" ${P.gold >= l.price ? '' : 'disabled'}>${icon('two-coins')}${fmt(l.price)}</button>`, true)).join('')}</div>` : '<p class="small muted">Chợ chưa có hàng nào.</p>'}`;
@@ -2253,7 +2253,7 @@
         <div class="bag" data-drop-bag style="--cols:${BAG_COLUMNS}">${bag}</div>
         ${items.length ? '' : '<p class="small muted emptytext">Túi trống</p>'}
         <div class="bag-bottom">
-          <div class="row"><span class="gold">${icon('two-coins')}${fmt(P.gold)}</span><span class="num">Đồ hiếm ${bagGear().length}/${RULES.gearBag}</span></div>
+          <div class="row"><span class="gold">${icon('two-coins')}${fmt(P.gold)}</span><span class="num">Trang bị ${bagGear().length}/${RULES.gearBag}</span></div>
           <div class="row"><span>${icon('health-potion')} Bình máu ×<b class="num">${potionCount()}</b></span><span class="num">${items.length} món</span></div>
           ${foodNow()}
           ${setLine()}
@@ -2526,9 +2526,9 @@
     const bag = Object.keys(P.inv).filter((id) => P.inv[id] > 0).map((id) => row(id, P.inv[id], 'store', 'Cất'))
       .concat(bagGear().map((uid) => row(uid, 1, 'store', 'Cất')));
     const nx = st.next;
-    return `<div class="card"><div class="row"><h3 class="grow">Trong tủ</h3><span class="tag num">Đồ thường ${Object.keys(st.inv).length}/${st.items_cap} loại · Đồ hiếm ${st.gear.length}/${st.cap}</span></div>
+    return `<div class="card"><div class="row"><h3 class="grow">Trong tủ</h3><span class="tag num">Đồ thường ${Object.keys(st.inv).length}/${st.items_cap} loại · Trang bị ${st.gear.length}/${st.cap}</span></div>
       ${inside.length ? `<div class="list">${inside.join('')}</div>` : '<p class="small muted">Tủ đang trống.</p>'}
-      ${nx ? `<button class="btn block" data-act="storage_expand" ${P.gold < nx.gold ? 'disabled' : ''}>Thêm ${nx.gear} chỗ đồ hiếm · ${icon('two-coins')}${fmt(nx.gold)}</button>` : '<p class="small muted">Tủ đã mở rộng tối đa.</p>'}
+      ${nx ? `<button class="btn block" data-act="storage_expand" ${P.gold < nx.gold ? 'disabled' : ''}>Thêm ${nx.gear} chỗ trang bị · ${icon('two-coins')}${fmt(nx.gold)}</button>` : '<p class="small muted">Tủ đã mở rộng tối đa.</p>'}
     </div>
     <div class="card"><h3>Túi đồ</h3><p class="small muted">Đồ trong tủ không mất, không mặc / bán / giao dịch được cho tới khi lấy ra. Đồ đang mặc phải tháo ra trước.</p>
       ${bag.length ? `<div class="list">${bag.join('')}</div>` : '<p class="small muted">Túi trống.</p>'}</div>`;
@@ -2721,7 +2721,7 @@
     // B-15: tỉ lệ số dòng cộng thêm (mỗi dòng `lineVal`)
     const odds = (o) => [3, 2, 1].filter((r) => o[r]).map((r) => `<span class="k-opt">${r} dòng ${o[r]}%</span>`).join(' · ');
     return `<div class="card"><h3>Rương Báu</h3>
-      <p class="small muted">Mở ra một món đồ hợp cấp của bạn, luôn có dòng cộng thêm.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy, bán bớt đã.</span>' : ''}</p>
+      <p class="small muted">Mở ra một món đồ hợp cấp của bạn, luôn có dòng cộng thêm.${full ? ' <span style="color:var(--bad)">Túi trang bị đầy, bán bớt đã.</span>' : ''}</p>
       <div class="list">${P.view.chests.map((c) => `<div class="item">
         <img class="ic lg px" src="${asset('items/chest_' + c.id + '.png')}" alt="">
         <div class="grow"><div class="name">${c.name}</div><div class="small">${odds(c.odds)}</div></div>
@@ -2764,7 +2764,7 @@
     // Phase 15b: "giáp" rèn ra một món bất kỳ của bộ giáp (mũ / giáp / quần / găng / giày) đúng lớp
     const slots = [['weapon', 'Vũ khí'], ['armor', 'Bộ giáp (mũ, giáp, quần, găng hoặc giày)'], ['shield', 'Khiên']];
     return `<div class="card"><h3>Rèn đồ</h3>${craftLevel('smith', 'Rèn đồ')}
-      <p class="small muted">Rèn một món đồ hợp cấp bạn, luôn có dòng cộng thêm: 3 dòng ${epic}%, 2 dòng ${RULES.smithRare}%. Nghề càng cao càng dễ ra 3 dòng.${full ? ' <span style="color:var(--bad)">Túi đồ hiếm đầy.</span>' : ''}</p>
+      <p class="small muted">Rèn một món đồ hợp cấp bạn, luôn có dòng cộng thêm: 3 dòng ${epic}%, 2 dòng ${RULES.smithRare}%. Nghề càng cao càng dễ ra 3 dòng.${full ? ' <span style="color:var(--bad)">Túi trang bị đầy.</span>' : ''}</p>
       <div class="list">${slots.map(([slot, label]) => {
         const cost = Object.entries(RULES.smithCosts[slot]);
         const ok = !full && P.gold >= gold && cost.every(([id, n]) => (P.inv[id] || 0) >= n);

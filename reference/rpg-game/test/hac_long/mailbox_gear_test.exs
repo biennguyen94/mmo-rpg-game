@@ -47,7 +47,7 @@ defmodule HacLong.MailboxGearTest do
     p = Mailbox.send_overflow(user.id, p)
     refute Map.has_key?(p, :mail_out)
     [m] = Mailbox.list(user.id)
-    assert m.subject =~ "Túi đồ hiếm đầy"
+    assert m.subject =~ "Túi trang bị đầy"
 
     # chưa dọn túi: không mở được; dọn một món rồi mở thì có đủ dòng
     assert {:error, _} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)

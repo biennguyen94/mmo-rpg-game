@@ -154,7 +154,7 @@ defmodule HacLong.Admin do
         {:ok,
          fn p ->
            if length(Gear.bag(p)) + count > Gear.max_bag() do
-             {:error, "Túi đồ hiếm không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
+             {:error, "Túi trang bị không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
            else
              gs = for _ <- 1..count, do: Gear.plain(id)
              gs = if wopt, do: Enum.map(gs, &Map.put(&1, :wopt, wopt)), else: gs
@@ -220,7 +220,7 @@ defmodule HacLong.Admin do
         {:ok,
          fn p ->
            if length(Gear.bag(p)) >= Gear.max_bag() do
-             {:error, "Túi đồ hiếm đã đầy (#{Gear.max_bag()} món)."}
+             {:error, "Túi trang bị đã đầy (#{Gear.max_bag()} món)."}
            else
              g = Gear.new(base, opt)
              g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))

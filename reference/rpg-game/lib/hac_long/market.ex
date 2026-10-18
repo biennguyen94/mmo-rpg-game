@@ -219,7 +219,7 @@ defmodule HacLong.Market do
         row == nil -> Repo.rollback("Món này đã có người mua hoặc đã rút về.")
         row.seller_id == uid -> Repo.rollback("Đây là hàng của bạn.")
         p.gold < row.price -> Repo.rollback("Không đủ vàng.")
-        row.gear && length(Gear.bag(p)) >= Gear.max_bag() -> Repo.rollback("Túi đồ hiếm đầy.")
+        row.gear && length(Gear.bag(p)) >= Gear.max_bag() -> Repo.rollback("Túi trang bị đầy.")
         true -> :ok
       end
 
@@ -269,7 +269,7 @@ defmodule HacLong.Market do
       row = hd(rows)
 
       if row.gear && length(Gear.bag(p)) >= Gear.max_bag(),
-        do: Repo.rollback("Túi đồ hiếm đầy, bán bớt đồ trước khi rút về.")
+        do: Repo.rollback("Túi trang bị đầy, bán bớt đồ trước khi rút về.")
 
       p = receive_goods(p, row)
       save.(p)

@@ -107,7 +107,7 @@ defmodule HacLong.Game.TradeOffer do
     room = Gear.max_bag() - length(Gear.bag(p)) + length(offer.gear)
 
     with :ok <- check(p, offer),
-         :ok <- if(incoming <= room, do: :ok, else: {:error, "Túi đồ hiếm không đủ chỗ."}) do
+         :ok <- if(incoming <= room, do: :ok, else: {:error, "Túi trang bị không đủ chỗ."}) do
       inv =
         Enum.reduce(offer.items, p.inv, fn {id, n}, inv ->
           if inv[id] > n, do: Map.put(inv, id, inv[id] - n), else: Map.delete(inv, id)

@@ -330,9 +330,9 @@ defmodule HacLong.Mailbox do
 
     Enum.each(mail, fn g ->
       __MODULE__.send(user_id, %{
-        subject: "Túi đồ hiếm đầy: #{Gear.label(g)}",
+        subject: "Túi trang bị đầy: #{Gear.label(g)}",
         body:
-          "Món này rơi lúc túi đồ hiếm đã đủ #{Gear.max_bag()} món. Dọn túi rồi mở thư để nhận.",
+          "Món này rơi lúc túi trang bị đã đủ #{Gear.max_bag()} món. Dọn túi rồi mở thư để nhận.",
         items: %{gearx_key(g) => 1}
       })
     end)
@@ -349,7 +349,7 @@ defmodule HacLong.Mailbox do
     need = Enum.reduce(gear, 0, fn {_, n}, acc -> acc + n end)
 
     if need > 0 and length(Gear.bag(p)) + need > Gear.max_bag(),
-      do: Repo.rollback("Túi đồ hiếm không đủ chỗ cho #{need} món, dọn bớt rồi mở thư.")
+      do: Repo.rollback("Túi trang bị không đủ chỗ cho #{need} món, dọn bớt rồi mở thư.")
 
     p =
       Enum.reduce(plain, p, fn {id, n}, p ->
