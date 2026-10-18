@@ -798,3 +798,4 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   (`-extent 118%`) để món đồ chiếm ~85% khung. Hình gốc của các món này chỉ ~20–60 px nên bị phóng 2–3 lần trên màn hình
   nét và nhòe; chừa viền làm món đồ nhỏ đi chút trong ô nhưng bớt nhòe (anh xem ảnh trước / sau và đồng ý). Máy chủ chạy lại
   `mix hac_long.icons` (hoặc `scripts/setup_items.sh`) để có hình mới.
+- Hình MU mũ / bình / ngọc: đổi mức chừa viền từ ~85% sang **~75%** khung (`-extent 133%`, anh chọn).
