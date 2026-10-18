@@ -700,10 +700,12 @@
       }
     }
     if (dark < 0.3) {
-      // ban ngày: lá vàng, hoa hồng rơi chậm, xoay nhẹ
-      for (let i = 0; i < 12; i++) {
+      // ban ngày: lá vàng, hoa hồng rơi chậm, xoay nhẹ; neo theo bản đồ (không đi theo nhân vật / camera)
+      const W = m.tiles[0].length * TILE, H = m.tiles.length * TILE;
+      for (let i = 0; i < 30; i++) {
         const fall = 9000 + rnd(i, 3) * 6000, k = (t / fall + rnd(i, 4)) % 1;
-        const x = wrap(rnd(i, 1) * vw + Math.sin(t / 1400 + i) * 26 - cx * 0.2, vw), y = k * (vh + 20) - 10;
+        const x = wrap(rnd(i, 1) * W + Math.sin(t / 1400 + i) * 26, W) - cx, y = k * H - cy;
+        if (x < -10 || y < -10 || x > vw + 10 || y > vh + 10) continue;
         ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t / 600 + i) * 1.2);
         ctx.fillStyle = i % 3 ? 'rgba(230, 180, 60, 0.75)' : 'rgba(245, 160, 190, 0.8)';
         ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
@@ -714,7 +716,7 @@
     if (shade() === 'dawn' || shade() === 'dusk') {
       const col = shade() === 'dawn' ? '255, 230, 170' : '255, 190, 120';
       for (let i = 0; i < 3; i++) {
-        const a = 0.07 + 0.05 * Math.sin(t / 2200 + i * 2), x = wrap(i * vw / 3 + 40 - cx * 0.3, vw + 200) - 100;
+        const a = 0.07 + 0.05 * Math.sin(t / 2200 + i * 2), x = (i + 0.5) * m.tiles[0].length * TILE / 3 - cx;
         ctx.fillStyle = `rgba(${col}, ${a})`;
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x - 80, vh); ctx.lineTo(x - 170, vh); ctx.fill();
       }
