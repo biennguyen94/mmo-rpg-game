@@ -210,9 +210,13 @@ defmodule HacLong.Game.AutoHunt do
   defp keep?("cls", p, it), do: Engine.can_wear?(p, it)
   defp keep?(_, _p, _it), do: false
 
+  # đồ đang mặc tính cả cấp ép (+N), như so sánh trên bảng chi tiết của client (`view.bonus`); món mới rơi luôn +0
   defp better?(p, it) do
+    cur = p.equip[Engine.equip_slot(p, it)]
+
     Engine.can_wear?(p, it) and
-      Brain.power(it) > Brain.power(Gear.item(p, p.equip[Engine.equip_slot(p, it)]))
+      Brain.power(it) >
+        Brain.power(Gear.item(p, cur)) + if(cur, do: Engine.upgrade_bonus(p, cur), else: 0)
   end
 
   defp roam(p, snap, a, d, hp) do

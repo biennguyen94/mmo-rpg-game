@@ -41,4 +41,21 @@ defmodule HacLong.Game.LootFilterTest do
     assert Enum.any?(trashed.battle.log, &(&1.text =~ "Tự hủy"))
     assert Data.rules().auto.keep != []
   end
+
+  test "\"Tốt hơn đồ đang mặc\" tính cả cấp ép của đồ đang mặc (như so sánh trên bảng chi tiết)" do
+    p = %{hero() | level: 50, stats: %{str: 200, agi: 200, vit: 50, ene: 50}}
+    {p, :kept} = Gear.add(p, Gear.plain("item_6_12"))
+    [worn] = Gear.bag(p)
+    p = %{p | equip: Map.put(p.equip, :shield, worn.uid)}
+    drop = Gear.resolve(Gear.plain("item_6_20"))
+    assert drop.def > Gear.item(p, worn.uid).def
+
+    # khiên đang mặc +0 yếu hơn: món rơi tốt hơn, giữ
+    assert AutoHunt.good?(p, drop, ["better"])
+
+    # ép +11: đang mặc mạnh hơn món rơi (+0), không giữ
+    p = Map.put(p, :upgrades, %{worn.uid => 11})
+    assert Gear.item(p, worn.uid).def + Engine.upgrade_bonus(p, worn.uid) >= drop.def
+    refute AutoHunt.good?(p, drop, ["better"])
+  end
 end
