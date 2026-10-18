@@ -63,6 +63,17 @@ defmodule HacLong.Game.Commands do
       "leave" ->
         Engine.leave_battle(p)
 
+      # Phase 4 (B-31): bật / tắt tự đánh (Session chạy nhịp ra lệnh khi còn tab mở)
+      "auto" ->
+        HacLong.Game.AutoHunt.configure(p, c)
+
+      "loot_filter" ->
+        HacLong.Game.AutoHunt.loot_filter(p, c)
+
+      # Phase 3 (B-29): bộ kỹ năng mang vào trận
+      "skill_set" ->
+        Engine.set_skills(p, c["ids"])
+
       "alloc" ->
         Engine.allocate(p, c["stat"], int(c["n"] || 1))
 
@@ -119,6 +130,9 @@ defmodule HacLong.Game.Commands do
       "pet_tame" ->
         at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.tame(p, c["id"]) end)
 
+      "pet_feed" ->
+        at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.feed(p) end)
+
       "pet_choose" ->
         Pets.choose(p, c["id"])
 
@@ -142,6 +156,12 @@ defmodule HacLong.Game.Commands do
       "upgrade" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ ->
           Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true)
+        end)
+
+      # Phase 20: ép +10 / +11 kiểu MU ở Máy Hỗn Nguyên (DECISIONS B-13)
+      "chaos_upgrade" ->
+        at_npc(p, ["chaos"], "Lão Hỗn Nguyên ở Làng", fn _ ->
+          Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true, "chaos")
         end)
 
       "life" ->
@@ -184,6 +204,22 @@ defmodule HacLong.Game.Commands do
 
       "bc_buy" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> BloodCastle.buy_ticket(p) end)
+
+      # Hỗn Chiến Thành (B-19): mua vé ở Người Gác Tháp (vào thành đi qua Session, act "cc_enter")
+      "cc_buy" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
+          HacLong.ChaosCastle.buy_ticket(p)
+        end)
+
+      # Công Thành Chiến (B-22): bang chủ / phó bang đăng ký ở Người Gác Tháp
+      "cs_register" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
+          HacLong.CastleSiege.register(p, nil)
+        end)
+
+      # Kalima (B-21): đưa Bản Đồ Thất Lạc cho Người Gác Tháp
+      "kal_enter" ->
+        at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ -> HacLong.Game.Kalima.enter(p) end)
 
       "tower_enter" ->
         at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->

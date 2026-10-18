@@ -13,10 +13,13 @@ defmodule HacLong.Game.ForgeStorageTest do
 
   defp player(attrs) do
     {:ok, p} = Engine.new_player("Thử", "dk")
+
+    # đồ khởi đầu đang mặc là món riêng: giữ chúng, thêm món của test vào sau
+    attrs = if attrs[:gear], do: %{attrs | gear: Gear.list(p) ++ attrs.gear}, else: attrs
     Map.merge(Map.merge(p, %{pos: @smith, gold: 100_000, tutorial: nil, level: 30}), attrs)
   end
 
-  defp sword(attrs \\ %{}), do: Map.merge(Gear.new("broadsword", 2, %{str: 3}), attrs)
+  defp sword(attrs \\ %{}), do: Map.merge(Gear.new("broadsword"), attrs)
 
   describe "Ngọc Sinh Mệnh (D4)" do
     test "thành công thêm dòng +4 tấn công; thất bại mất dòng cuối; tối đa 4 dòng" do
@@ -63,7 +66,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       Rng.put_sequence([0.0])
       {%{ok: true}, p} = Commands.run(p, %{"act" => "life", "id" => "chain"})
       assert p.inv["chain"] == 1
-      assert [%{base: "chain", opt: 1}] = Gear.list(p)
+      assert [%{base: "chain", opt: 1}] = Gear.bag(p)
 
       assert {%{ok: false, msg: "Cần 1 Ngọc Sinh Mệnh."}, _} =
                Commands.run(p, %{"act" => "life", "id" => "chain"})
@@ -76,9 +79,9 @@ defmodule HacLong.Game.ForgeStorageTest do
   end
 
   describe "ép +N đồ trong túi (D8)" do
-    test "đồ hiếm và đồ thường trong túi ép được bằng quặng; vỡ đồ trong túi chỉ mất món đó" do
+    test "đồ hiếm và đồ thường trong túi ép được (Ước Nguyện); +11 thất bại về +0, không mất đồ" do
       g = sword()
-      p = player(%{gear: [g], inv: %{"ore" => 10, "dagger" => 1}})
+      p = player(%{gear: [g], inv: %{"jewel_bless" => 10, "dagger" => 1}})
 
       {%{ok: true, upgrade: %{level: 1}}, p} =
         Commands.run(p, %{"act" => "upgrade", "id" => g.uid})
@@ -90,14 +93,26 @@ defmodule HacLong.Game.ForgeStorageTest do
       [d] = Enum.filter(Gear.list(p), &(&1.base == "dagger"))
       assert Engine.upgrade_level(p, d.uid) == 1 and p.inv["dagger"] == nil
 
-      # +10 → +11 thất bại là vỡ: món trong túi biến mất, đồ đang mặc không đổi
-      p = %{p | upgrades: Map.put(p.upgrades, g.uid, 10), inv: Map.put(p.inv, "jewel_chaos", 1)}
+      # +10 → +11 thất bại: món trong túi về +0 (không vỡ), đồ đang mặc không đổi
+      # (+10, +11 ép ở Máy Hỗn Nguyên, B-13)
+      inv = Map.merge(p.inv, %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2})
+      p = %{p | upgrades: Map.put(p.upgrades, g.uid, 10), inv: inv}
+
+      assert {%{ok: false, msg: "Ép lên +11 ở Lão Hỗn Nguyên (Máy Hỗn Nguyên)."}, _} =
+               Commands.run(p, %{"act" => "upgrade", "id" => g.uid, "confirm" => true})
+
+      assert {%{ok: false, msg: "Hãy đến gặp Lão Hỗn Nguyên ở Làng."}, _} =
+               Commands.run(p, %{"act" => "chaos_upgrade", "id" => g.uid, "confirm" => true})
+
+      # đứng cạnh Lão Hỗn Nguyên (ô [20, 6] ở Làng)
+      p = %{p | pos: %{map: "village", x: 20, y: 7}}
       Rng.put_sequence([0.99])
 
-      {%{ok: true, upgrade: %{result: "destroy"}}, p} =
-        Commands.run(p, %{"act" => "upgrade", "id" => g.uid, "confirm" => true})
+      {%{ok: true, upgrade: %{result: "reset"}}, p} =
+        Commands.run(p, %{"act" => "chaos_upgrade", "id" => g.uid})
 
-      assert Gear.find(p, g.uid) == nil and p.equip.weapon == "item_1_0"
+      assert Gear.find(p, g.uid) != nil and Engine.upgrade_level(p, g.uid) == 0
+      assert Gear.find(p, p.equip.weapon).base == "item_1_0"
     end
   end
 

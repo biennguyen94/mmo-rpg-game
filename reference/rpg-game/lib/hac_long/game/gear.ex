@@ -1,18 +1,19 @@
 defmodule HacLong.Game.Gear do
   @moduledoc """
-  Đồ có chỉ số ngẫu nhiên (rơi từ quái). Hàm thuần, như `Engine`.
+  Đồ rơi / rèn / mở rương, từng món một bản riêng (kiểu MU, DECISIONS B-15). Hàm thuần, như `Engine`.
 
   Khác đồ thường (đếm theo loại trong `inv`), mỗi món ở đây là một bản riêng, lưu trong
   `gear: [%{uid, base, rarity, bonus}]` của nhân vật:
 
   - `uid`: bắt đầu bằng `#`, dùng thay id đồ ở `equip`, `sell`, `upgrades`...
   - `base`: đồ gốc trong `ITEMS` (`priv/game_data/items.json`) (quyết định chỗ mặc, tấn công/phòng thủ, cấp cần).
-  - `rarity`: 1 Tốt, 2 Hiếm, 3 Sử Thi, bằng số dòng chỉ số cộng thêm. `0`: đồ thường đã tách
-    thành bản riêng (`plain/1`) để có cấp nâng / khóa riêng từng món (đồ đã nâng cấp, đồ đã khóa, cánh).
-  - `bonus`: `%{str | agi | vit | ene => điểm}` cộng vào chỉ số khi mặc.
+  - `rarity`, `bonus`: hệ độ hiếm cũ (Tốt / Hiếm / Sử Thi, chỉ số cộng ngẫu nhiên), đã bỏ theo kiểu MU
+    (B-15). Đồ mới luôn `rarity: 0, bonus: %{}`; giữ hai trường để không đổi schema / nhật ký đồ. Đồ cũ
+    khi nạp (`load/1`) đổi `rarity` N thành N dòng cộng thêm (`opt`) và bỏ `bonus`.
   - `locked: true` (không bắt buộc): đã khóa, không bán / rao chợ / giao dịch / bỏ vào máy ghép được.
   - `stored: true`: đang cất trong Tủ Đồ ở Nhà (`HacLong.Game.Storage`), không nằm trong túi.
-  - `opt`: số dòng Ngọc Sinh Mệnh (0–4, `Engine.life/2`).
+  - `opt`: số dòng cộng thêm kiểu MU (0–4, mỗi dòng `Engine.line_value/1` tấn công / phòng thủ): rơi kèm
+    theo trọng số (`roll/4`) hoặc thêm bằng Ngọc Sinh Mệnh (`Engine.life/2`).
   - `exc`: dòng Excellent (Phase 15c); `luck: true` / `skill: true`: dòng May mắn / Kỹ năng (Phase 15d,
     `RULES.luck_skill`); `anc: true`: đồ Bộ Thần (Phase 15g, `RULES.ancient`); `wopt`: dòng phụ của cánh `"hp" | "mp" | "ignore_def"` (Phase 15e, `RULES.wing_options`).
 
@@ -21,16 +22,29 @@ defmodule HacLong.Game.Gear do
 
   alias HacLong.Game.{Data, Rng}
 
-  @max_bag 20
   # số ở `RULES.loot`, `RULES.shop` (`priv/game_data/rules.json`)
   @loot Data.rules().loot
+  @max_bag @loot.gear_bag
   @shop Data.rules().shop
   @weights Enum.map(@loot.gear_weights, &List.to_tuple/1)
   @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)
   # Phase 15c: đồ Excellent (`RULES.excellent`)
   @exc Data.rules().excellent
   @exc_lines Enum.map(@exc.lines, &List.to_tuple/1)
-  @exc_zero %{atk_pct: 0, crit: 0, heal_kill: 0, mp_kill: 0, hp_pct: 0, dmg_red: 0, gold_pct: 0}
+  @exc_zero %{
+    atk_pct: 0,
+    crit: 0,
+    heal_kill: 0,
+    mp_kill: 0,
+    atk_lvl: 0,
+    ar_pct: 0,
+    hp_pct: 0,
+    dmg_red: 0,
+    gold_pct: 0,
+    mp_pct: 0,
+    reflect: 0,
+    def_rate: 0
+  }
   # Phase 15d: May mắn / Kỹ năng (`RULES.luck_skill`)
   @ls Data.rules().luck_skill
   # Phase 15g: đồ Bộ Thần (`RULES.ancient`)
@@ -38,15 +52,50 @@ defmodule HacLong.Game.Gear do
   # Phase 15e: dòng phụ của cánh (`RULES.wing_options`), theo bậc cánh
   @wopt Map.new(Data.rules().wing_options.by_tier, &{&1.tier, Map.delete(&1, :tier)})
   @wopt_ids ~w(hp mp ignore_def)
-  @stats ~w(str agi vit ene)a
   @set_pieces ~w(helm armor pants gloves boots)
-  @rarity_names %{1 => "Tốt", 2 => "Hiếm", 3 => "Sử Thi"}
-  @suffix %{str: "Sức Mạnh", agi: "Nhanh Nhẹn", vit: "Bền Bỉ", ene: "Linh Lực"}
+  @life Data.rules().upgrade.life
 
   def max_bag, do: @max_bag
-  @doc "Tỉ lệ độ hiếm mặc định của đồ rơi (`RULES.loot.gear_weights`)."
+
+  @doc "Tỉ lệ số dòng cộng thêm mặc định của đồ rơi (`RULES.loot.gear_weights`, `[{số_dòng, tỉ_lệ}]`)."
   def weights, do: @weights
-  def rarity_names, do: @rarity_names
+
+  @doc "Số dòng cộng thêm tối đa của một món (`RULES.upgrade.life.max_lines`)."
+  def max_opt, do: @life.max_lines
+
+  @doc """
+  Loại món kiểu MU để ghi trong tin nhắn và tô màu ở client: `"anc"` đồ Thần, `"exc"` đồ hoàn hảo,
+  `"opt"` đồ thường có May mắn / Kỹ năng / dòng cộng thêm, `""` đồ thường.
+  """
+  def kind(g) do
+    cond do
+      g[:anc] == true -> "anc"
+      (g[:exc] || []) != [] -> "exc"
+      g[:luck] == true or g[:skill] == true or (g[:opt] || 0) > 0 -> "opt"
+      true -> ""
+    end
+  end
+
+  @doc "Tên món kèm loại cho tin nhắn: `Kiếm Rồng (Hoàn hảo)`, `Mũ Đồng (cộng thêm 8)`, `Giáp Da`."
+  def label(g) do
+    name = resolve(g).name
+
+    tag =
+      case kind(g) do
+        "anc" ->
+          "Đồ Thần"
+
+        "exc" ->
+          "Hoàn hảo"
+
+        _ ->
+          if (g[:opt] || 0) > 0,
+            do: "cộng thêm #{g.opt * HacLong.Game.Engine.line_value(resolve(g))}",
+            else: nil
+      end
+
+    if tag, do: "#{name} (#{tag})", else: name
+  end
 
   def instance?(id), do: is_binary(id) and String.starts_with?(id, "#")
 
@@ -61,7 +110,7 @@ defmodule HacLong.Game.Gear do
 
   @doc """
   Thông tin món đồ `id` như `Data.item/1`: đồ thường lấy thẳng; đồ ngẫu nhiên thì lấy đồ
-  gốc, đổi tên và thêm `uid`, `rarity`, `bonus`, `sell`.
+  gốc và thêm `uid`, `kind`, các dòng (`opt`, `exc`, `luck`…), `sell`.
   """
   def item(_p, nil), do: nil
 
@@ -78,15 +127,12 @@ defmodule HacLong.Game.Gear do
 
   def resolve(g) do
     base = Data.item(g.base)
-    main = g.bonus |> Enum.max_by(fn {_, v} -> v end, fn -> {nil, 0} end) |> elem(0)
 
     base
     |> Map.merge(%{
       uid: g.uid,
       base: g.base,
-      name: if(main, do: "#{base.name} #{@suffix[main]}", else: base.name),
-      rarity: g.rarity,
-      bonus: g.bonus,
+      kind: kind(g),
       locked: g[:locked] == true,
       stored: g[:stored] == true,
       opt: g[:opt] || 0,
@@ -104,7 +150,7 @@ defmodule HacLong.Game.Gear do
     |> anc_def(base, g)
   end
 
-  @doc "Giá bán: giá đồ gốc tăng theo độ hiếm và số điểm cộng thêm."
+  @doc "Giá bán: giá đồ gốc tăng theo số dòng cộng thêm, Excellent, May mắn / Kỹ năng, đồ Thần."
   def price(g) do
     # đồ không bán ở cửa hàng (giá 0) tính như giá 200, như `Engine.sell_price/1`
     base = with 0 <- Data.item(g.base).price, do: @shop.unpriced_value
@@ -114,25 +160,17 @@ defmodule HacLong.Game.Gear do
     exc = if g[:anc] == true, do: exc * @anc.price_mult, else: exc
 
     round(
-      (base * @shop.sell_ratio * (1 + @shop.gear_rarity_value * g.rarity) +
-         @shop.gear_bonus_value * Enum.sum(Map.values(g.bonus))) * exc * @ls.price_mult ** ls
+      base * @shop.sell_ratio * (1 + @shop.gear_opt_value * (g[:opt] || 0)) * exc *
+        @ls.price_mult ** ls
     )
-  end
-
-  @doc "Tổng điểm chỉ số cộng thêm từ các món đang mặc."
-  def bonus_stats(p) do
-    p.equip
-    |> Map.values()
-    |> Enum.filter(&instance?/1)
-    |> Enum.map(&find(p, &1))
-    |> Enum.reject(&is_nil/1)
-    |> Enum.reduce(%{}, fn g, acc -> Map.merge(acc, g.bonus, fn _, a, b -> a + b end) end)
   end
 
   # ---------- Rơi đồ ----------
 
   @doc "Tỉ lệ rơi đồ ngẫu nhiên khi hạ quái `m`."
-  def drop_chance(m) do
+  def drop_chance(m), do: rich(m, base_drop_chance(m))
+
+  defp base_drop_chance(m) do
     cond do
       m[:world] || m[:pvp] -> 0
       m[:elite] -> @loot.gear_chance.elite
@@ -145,7 +183,8 @@ defmodule HacLong.Game.Gear do
   @doc """
   Tạo một món ngẫu nhiên hợp với quái cấp `level` (nil nếu không có đồ gốc phù hợp);
   `slot` chọn loại đồ (mặc định ngẫu nhiên).
-  `weights`: tỉ lệ các độ hiếm `[{độ_hiếm, tỉ_lệ}]` (mặc định 5% Sử Thi, 25% Hiếm, 70% Tốt).
+  `weights`: tỉ lệ số dòng cộng thêm `[{số_dòng, tỉ_lệ}]` (mặc định `RULES.loot.gear_weights`; tối đa
+  `RULES.upgrade.life.max_lines` dòng).
   """
   def roll(level, weights \\ @weights, slot \\ nil, cls \\ nil) do
     bases =
@@ -175,17 +214,7 @@ defmodule HacLong.Game.Gear do
 
       _ ->
         {base, _} = Enum.at(bases, floor(Rng.uniform() * length(bases)))
-        rarity = pick_weighted(weights)
-
-        stats = shuffle(@stats) |> Enum.take(rarity)
-
-        bonus =
-          Map.new(
-            stats,
-            &{&1, 1 + floor(Rng.uniform() * (1 + level / @loot.gear_bonus_per_level))}
-          )
-
-        %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
+        new(base, pick_weighted(weights))
     end
   end
 
@@ -206,6 +235,9 @@ defmodule HacLong.Game.Gear do
   end
 
   defp slot_bases(slot, level, cls), do: bases(slot, level, cls)
+
+  @doc "Id đồ gốc có thể rơi ở ô `slot` từ quái cấp `level` (mọi lớp), cho Thư viện."
+  def drop_ids(slot, level), do: bases(slot, level, nil) |> Enum.map(&elem(&1, 0))
 
   # Đồ gốc thuộc 2 mức cấp cao nhất (≤ `level`) của ô `slot`: có giá, không phải đồ trùm, không phải đồ cũ
   # đã thay (Phase 15b), hợp lớp `cls` (nil: lớp nào cũng được). Lấy theo mức cấp chứ không theo số món để
@@ -248,7 +280,10 @@ defmodule HacLong.Game.Gear do
            |> Enum.map(&Atom.to_string/1)
 
   @doc "Tỉ lệ một món rơi từ quái `m` là Excellent (`RULES.excellent.chance`)."
-  def exc_chance(m) do
+  # vùng chuyển sinh chỉ nhân tỉ lệ ra đồ (`drop_chance/1`), không nhân chất lượng (tránh nhân hai tầng)
+  def exc_chance(m), do: base_exc_chance(m)
+
+  defp base_exc_chance(m) do
     c = @exc.chance
 
     cond do
@@ -303,8 +338,9 @@ defmodule HacLong.Game.Gear do
   end
 
   @doc """
-  Tổng dòng Excellent của các món đang mặc: `%{atk_pct, crit, heal_kill, mp_kill, hp_pct, dmg_red, gold_pct}`
-  (giảm sát thương tối đa `excellent.max_dmg_red`).
+  Tổng dòng Excellent của các món đang mặc: `%{atk_pct, crit, heal_kill, mp_kill, atk_lvl, ar_pct, hp_pct, dmg_red,
+  gold_pct, mp_pct, reflect, def_rate}` (giảm sát thương tối đa `excellent.max_dmg_red`, phản sát thương tối đa
+  `excellent.max_reflect`).
   """
   def exc_stats(p) do
     p.equip
@@ -320,12 +356,15 @@ defmodule HacLong.Game.Gear do
       end)
     end)
     |> Map.update!(:dmg_red, &min(&1, @exc.max_dmg_red))
+    |> Map.update!(:reflect, &min(&1, @exc.max_reflect))
   end
 
   # ---------- May mắn / Kỹ năng (Phase 15d) ----------
 
   @doc "Tỉ lệ một món rơi từ quái `m` có May mắn (`RULES.luck_skill.luck_chance`)."
-  def luck_chance(m) do
+  def luck_chance(m), do: base_luck_chance(m)
+
+  defp base_luck_chance(m) do
     c = @ls.luck_chance
 
     cond do
@@ -370,10 +409,13 @@ defmodule HacLong.Game.Gear do
     }
   end
 
-  @doc "Tỉ lệ ép ngọc `rate` của món `it` (thông tin món, `resolve/1`): May mắn cộng `luck_upgrade`, tối đa `luck_max_rate`."
-  def luck_rate(it, rate) do
+  @doc """
+  Tỉ lệ ép ngọc `rate` của món `it` (thông tin món, `resolve/1`): May mắn cộng `bonus` (mặc định `luck_upgrade`;
+  bước ép có `luck` riêng thì dùng số đó), tối đa `luck_max_rate`.
+  """
+  def luck_rate(it, rate, bonus \\ @ls.luck_upgrade) do
     if is_map(it) and it[:luck] == true and rate < 1,
-      do: max(rate, min(@ls.luck_max_rate, Float.round(rate + @ls.luck_upgrade, 3))),
+      do: max(rate, min(@ls.luck_max_rate, Float.round(rate + bonus, 3))),
       else: rate
   end
 
@@ -389,8 +431,26 @@ defmodule HacLong.Game.Gear do
       else: r
   end
 
+  @realms Data.rules().realms
+
+  @doc """
+  Phase 6 (B-30): tỉ lệ ra đồ ở vùng chuyển sinh: × (1 + loot_per_realm × rich), tối đa loot_max. Chỉ áp cho tỉ lệ ra đồ
+  (từ "Cân bằng cuối game"): Excellent / May mắn / Thần giữ tỉ lệ gốc trên món đã rơi.
+  """
+  def rich(m, c) do
+    case m[:rich] do
+      k when is_number(k) and k > 0 and c > 0 ->
+        min(@realms.loot_max, c * (1 + @realms.loot_per_realm * k))
+
+      _ ->
+        c
+    end
+  end
+
   @doc "Tỉ lệ một món bộ giáp rơi từ quái `m` là đồ Thần (`RULES.ancient.chance`)."
-  def anc_chance(m) do
+  def anc_chance(m), do: base_anc_chance(m)
+
+  defp base_anc_chance(m) do
     c = @anc.chance
 
     cond do
@@ -459,13 +519,15 @@ defmodule HacLong.Game.Gear do
     end
   end
 
-  @doc "Món đồ với độ hiếm và chỉ số cho sẵn (quản trị viên tặng, `HacLong.Admin`)."
-  def new(base, rarity, bonus), do: %{uid: new_uid(), base: base, rarity: rarity, bonus: bonus}
+  @doc "Món đồ `base` với `opt` dòng cộng thêm (0..`RULES.upgrade.life.max_lines`)."
+  def new(base, opt \\ 0) do
+    g = %{uid: new_uid(), base: base, rarity: 0, bonus: %{}}
+    opt = min(opt, @life.max_lines)
+    if opt > 0, do: Map.put(g, :opt, opt), else: g
+  end
 
-  def stats, do: @stats
-
-  @doc "Bản riêng của một món đồ thường (độ hiếm 0, không chỉ số cộng thêm)."
-  def plain(base), do: new(base, 0, %{})
+  @doc "Bản riêng của một món đồ thường (không dòng nào), để có cấp nâng / khóa riêng từng món."
+  def plain(base), do: new(base)
 
   def locked?(p, uid), do: match?(%{locked: true}, find(p, uid))
 
@@ -502,12 +564,13 @@ defmodule HacLong.Game.Gear do
   defp new_uid, do: "#" <> Base.encode32(:crypto.strong_rand_bytes(5), padding: false)
 
   @doc """
-  Thêm món `g` vào túi. Túi đầy (#{@max_bag} món chưa mặc) thì bán luôn.
-  Trả về `{nhân_vật, :kept | {:sold, vàng}}`.
+  Thêm món `g` vào túi. Túi đầy (#{@max_bag} món chưa mặc) thì xếp vào hàng gửi Hộp thư (`:mail_out`,
+  `Session` gửi khi lưu nhân vật; hộp thư đầy mới bán, `HacLong.Mailbox.send_overflow/2`).
+  Trả về `{nhân_vật, :kept | :mailed}`.
   """
   def add(p, g) do
     if length(bag(p)) >= @max_bag do
-      {%{p | gold: p.gold + price(g)}, {:sold, price(g)}}
+      {Map.update(p, :mail_out, [g], &(&1 ++ [g])), :mailed}
     else
       {Map.put(p, :gear, list(p) ++ [g]), :kept}
     end
@@ -518,12 +581,8 @@ defmodule HacLong.Game.Gear do
   @doc "Đọc từ database (khóa chuỗi) về dạng engine dùng."
   def load(list) when is_list(list) do
     for g <- list, Data.item(g["base"]) do
-      m = %{
-        uid: g["uid"],
-        base: g["base"],
-        rarity: g["rarity"],
-        bonus: Map.new(g["bonus"], fn {k, v} -> {String.to_existing_atom(k), v} end)
-      }
+      # B-15: độ hiếm cũ (Tốt / Hiếm / Sử Thi) thành dòng cộng thêm, bỏ chỉ số cộng ngẫu nhiên
+      m = %{uid: g["uid"], base: g["base"], rarity: 0, bonus: %{}}
 
       m = if g["locked"] == true, do: Map.put(m, :locked, true), else: m
       m = if g["stored"] == true, do: Map.put(m, :stored, true), else: m
@@ -531,12 +590,15 @@ defmodule HacLong.Game.Gear do
       m = if g["skill"] == true, do: Map.put(m, :skill, true), else: m
       m = if g["anc"] == true, do: Map.put(m, :anc, true), else: m
       m = if g["wopt"] in @wopt_ids, do: Map.put(m, :wopt, g["wopt"]), else: m
-      opt = g["opt"]
-      m = if is_integer(opt) and opt > 0, do: Map.put(m, :opt, opt), else: m
+      opt = max(int(g["opt"]), int(g["rarity"])) |> min(@life.max_lines)
+      m = if opt > 0, do: Map.put(m, :opt, opt), else: m
       exc = for e <- g["exc"] || [], e in @exc_ids, do: e
       if exc == [], do: m, else: Map.put(m, :exc, exc)
     end
   end
 
   def load(_), do: []
+
+  defp int(n) when is_integer(n), do: n
+  defp int(_), do: 0
 end

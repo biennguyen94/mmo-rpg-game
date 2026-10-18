@@ -54,10 +54,17 @@ defmodule HacLong.Game.Storage do
     g = Gear.find(p, uid)
 
     cond do
-      g == nil or g[:stored] -> {err("Không có món này trong túi."), p}
-      Gear.equipped?(p, uid) -> {err("Tháo món này ra trước khi cất."), p}
-      length(stored_gear(p)) >= gear_cap(p) -> {err("Tủ đã đầy đồ hiếm (#{gear_cap(p)} món)."), p}
-      true -> {ok("Đã cất #{Gear.resolve(g).name} vào tủ."), Gear.put(p, uid, :stored, true)}
+      g == nil or g[:stored] ->
+        {err("Không có món này trong túi."), p}
+
+      Gear.equipped?(p, uid) ->
+        {err("Tháo món này ra trước khi cất."), p}
+
+      length(stored_gear(p)) >= gear_cap(p) ->
+        {err("Tủ đã đầy trang bị (#{gear_cap(p)} món)."), p}
+
+      true ->
+        {ok("Đã cất #{Gear.resolve(g).name} vào tủ."), Gear.put(p, uid, :stored, true)}
     end
   end
 
@@ -97,7 +104,7 @@ defmodule HacLong.Game.Storage do
         {err("Không có món này trong tủ."), p}
 
       length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món)."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món)."), p}
 
       true ->
         {ok("Đã lấy #{Gear.resolve(g).name} ra túi."), Gear.put(p, uid, :stored, nil)}
@@ -138,7 +145,7 @@ defmodule HacLong.Game.Storage do
       %{gold: gold, gear: n} ->
         s = get(p)
         p = %{p | gold: p.gold - gold} |> Map.put(:storage, %{s | extra: s.extra + 1})
-        {ok("Tủ chứa thêm #{n} món đồ hiếm (#{gear_cap(p)} món)."), p}
+        {ok("Tủ chứa thêm #{n} món trang bị (#{gear_cap(p)} món)."), p}
     end
   end
 

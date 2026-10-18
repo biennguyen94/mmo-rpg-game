@@ -1,0 +1,78 @@
+{
+  "id": "realm_02_3",
+  "name": "Băng Nguyên Vĩnh Cửu 3",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "realm": 2,
+  "min_rebirths": 2,
+  "min_level": 40,
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "R~.R..~R....:..R...::R.~.R",
+    "RR:..:R..:..:...~........R",
+    "R:.:.:....R...RR..::...:.R",
+    "R.......:...R...R....R..RR",
+    "R...~...~.........R.....:R",
+    "R:R....:..:....:...:..:..R",
+    "R.:R.:R:..R.........:::::R",
+    "O...::::::::::...::::....O",
+    "R.....R...::::..::..:....R",
+    "R.::.:.......::::..R.:..:R",
+    "R...R..~.....~::.......R:R",
+    "R:.R:...:::..R...RRR.....R",
+    "R:.R...R...:.R........:.:R",
+    "R.~..:...R:..R:R.RR..:...R",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_02_2",
+      "spawn": [
+        24,
+        8
+      ]
+    },
+    {
+      "at": [
+        25,
+        8
+      ],
+      "to": "realm_02_4",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r2_ice_beast_3",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r2_frost_giant_3",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r2_polar_bear_3",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": []
+}

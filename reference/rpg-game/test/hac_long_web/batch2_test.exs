@@ -268,8 +268,7 @@ defmodule HacLongWeb.Batch2Test do
                adm(sa, "give_gear", %{
                  "uid" => target.id,
                  "base" => "dragonshield",
-                 "rarity" => 3,
-                 "bonus" => %{"str" => 9, "vit" => 9, "ene" => 9},
+                 "opt" => 3,
                  "up" => 5
                })
 
@@ -278,9 +277,9 @@ defmodule HacLongWeb.Batch2Test do
       # đồ +N là món riêng (Đợt 3, cấp nâng theo từng món)
       assert [
                %{base: "relic", rarity: 0, uid: ruid},
-               %{base: "dragonshield", rarity: 3, bonus: %{str: 9}, uid: guid}
+               %{base: "dragonshield", opt: 3, uid: guid}
              ] =
-               t.gear
+               HacLong.Game.Gear.bag(t)
 
       assert t.upgrades[ruid] == 5 and t.upgrades[guid] == 5
 

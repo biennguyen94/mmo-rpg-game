@@ -7,7 +7,7 @@ defmodule HacLong.Game.Fishing do
     mili giây phải chờ để hiện phao chìm.
   - `reel/2`: giật cần. Chỉ được cá nếu giật trong `@window` kể từ lúc cá cắn; giật sớm hay
     muộn thì trượt. Đi chỗ khác thì mất lượt câu.
-  - Loại cá tùy vùng (`pool/1`): Làng và Rừng Mê cá thường; Đầm Lầy và Hang Rồng có Lươn Điện.
+  - Loại cá tùy vùng (`pool/1`): Làng và Rừng Mê cá thường; Đầm Lầy và Hang Hắc Long có Lươn Điện.
     Rất hiếm mới có Cá Chép Vàng.
 
   Trạng thái lượt câu (`fishing: %{bite, pos}`) chỉ giữ trong Session, không lưu database.

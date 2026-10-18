@@ -319,6 +319,22 @@ xem trận + xem lại ván. 17a lõi luật · 17b phòng chơi + vàng · 17c 
 
 ---
 
+## Đợt 8 phase 2026-10 ✅ (xong 2026-10-17)
+
+Đề xuất 8 phase, anh chọn thứ tự 1 → 2 → 8 → 3 → 6 → 4 → 5 → 7; mỗi phase một commit, báo cáo và chờ "OK".
+Quyết định: `DECISIONS.md` B-25 … B-33; hướng dẫn vận hành: `ADMIN_GUIDE.md` §12.
+
+| Phase | Nội dung | Quyết định |
+|---|---|---|
+| 1 ✅ | Sửa lỗi: tháp quay vòng, quái giữ máu sau bỏ chạy, hình nhân vật trong trận, đồ rơi lúc túi đầy → Hộp thư, quà cánh | B-25 |
+| 2 ✅ | Giao diện: hồ sơ từ avatar, Hủy đồ rơi, ép đồ trong túi, header gọn, Đài Phúc Lành, quà cho mọi người | B-26 |
+| 8 ✅ | Rà công thức + sửa (FORMULA_AUDIT.md) | B-27, B-28 |
+| 3 ✅ | Kỹ năng Tháp Thử Thách, nguyên tố, bộ 4 kỹ năng | B-29 |
+| 6 ✅ | 10 vùng đất chuyển sinh, tháp 61–160 | B-30 |
+| 4 ✅ | Tự đánh khi online | B-31 |
+| 5 ✅ | Bản đồ động, bot mua bình / nghỉ trọ, sửa lỗi bot đứng yên | B-32 |
+| 7 ✅ | Bộ hình đồ Pixel CC0 | B-33 |
+
 ## Gợi ý lịch (mỗi phase dừng chờ anh duyệt)
 
 | Thứ tự | Phase | Ghi chú |

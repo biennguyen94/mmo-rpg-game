@@ -1,0 +1,78 @@
+{
+  "id": "realm_01_2",
+  "name": "Hoang Mạc Xích Viêm 2",
+  "zone": null,
+  "side": true,
+  "theme": "lair",
+  "floor": "floors/lair",
+  "realm": 1,
+  "min_rebirths": 1,
+  "min_level": 40,
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "R.:.:....~........:...:..R",
+    "R.....:..................R",
+    "R........~..:..R..:.~...~R",
+    "R.....:..:.R......:......R",
+    "R..:.......:..:.....R.~:.R",
+    "R....R.R:~R..:..::::::..:R",
+    "R..::~:::::::::::::~.::::R",
+    "O...:::..::.:...R~..:....O",
+    "R.::.....R:.:...R....:..:R",
+    "R..R.....~.....R.........R",
+    "R..R...:~....::....:.R..RR",
+    "R.....RR..~:.:......RRR..R",
+    "R....~R....:.~...R....:~.R",
+    "R.........:~..RR......:~.R",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_01",
+      "spawn": [
+        13,
+        14
+      ]
+    },
+    {
+      "at": [
+        25,
+        8
+      ],
+      "to": "realm_01_3",
+      "spawn": [
+        1,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r1_fire_elemental_2",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r1_hell_hound_2",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r1_red_devil_2",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": []
+}

@@ -29,7 +29,9 @@ defmodule HacLong.Game.DevilSquare do
   Đợt mở chứa thời điểm `now` (DateTime UTC): `%{slot, opens_at, closes_at}` (unix) nếu đang cho vào, `nil` nếu không.
   `slot` là số thứ tự đợt (để chặn vào lại cùng đợt).
   """
-  def window(now \\ DateTime.utc_now()) do
+  def window(now \\ DateTime.utc_now()), do: forced(now) || scheduled(now)
+
+  defp scheduled(now) do
     local = DateTime.to_unix(now) + @utc_offset - @rules.offset_hours * 3600
     step = @rules.every_hours * 3600
     slot = div(local, step)
@@ -42,6 +44,24 @@ defmodule HacLong.Game.DevilSquare do
   end
 
   def open?(now \\ DateTime.utc_now()), do: window(now) != nil
+
+  @doc """
+  Quản trị viên mở ngay một đợt ngoài lịch: cho vào trong `entry_minutes` phút kể từ `now`. Đợt này có `slot` riêng
+  (số âm) nên người đã vào đợt thường vẫn vào được. Giữ trong bộ nhớ (khởi động lại server là mất).
+  """
+  def open_now(now \\ DateTime.utc_now()) do
+    opens = DateTime.to_unix(now)
+    w = %{slot: -opens, opens_at: opens, closes_at: opens + @rules.entry_minutes * 60}
+    :persistent_term.put({__MODULE__, :forced}, w)
+    w
+  end
+
+  defp forced(now) do
+    case :persistent_term.get({__MODULE__, :forced}, nil) do
+      %{closes_at: c} = w -> if DateTime.to_unix(now) < c, do: w
+      _ -> nil
+    end
+  end
 
   @doc "Lần mở tiếp theo (unix) sau `now`."
   def next_open(now \\ DateTime.utc_now()) do
@@ -85,7 +105,13 @@ defmodule HacLong.Game.DevilSquare do
          %{p | gold: p.gold - price} |> Engine.add_item(@rules.ticket)}
   end
 
-  @doc "Tỉ lệ quái `m` rơi vé (quái thường cấp ≥ `ticket_drop.min_level`)."
+  @doc "Mảnh vé rơi từ quái (kiểu MU, B-18): một món ngẫu nhiên trong `ticket_drop.parts`, ghép ra vé ở Máy Hỗn Nguyên."
+  def ticket_part do
+    parts = @rules.ticket_drop.parts
+    Enum.at(parts, floor(HacLong.Game.Rng.uniform() * length(parts)))
+  end
+
+  @doc "Tỉ lệ quái `m` rơi mảnh vé (quái thường cấp ≥ `ticket_drop.min_level`)."
   def ticket_chance(m) do
     d = @rules.ticket_drop
     if m[:world] || m[:pvp] || m[:tower] || m.level < d.min_level, do: 0, else: d.chance

@@ -8,9 +8,16 @@ const R = reporter('items');
 const browser = await launch();
 const E = await newPlayer(browser, { cls: 'elf' });
 const { admin } = await adminSession(browser);
+// trang bị luôn là món riêng (`uid`): đổi về mã loại để so; đếm món cùng loại trong túi trang bị
+const B = (p) => Object.fromEntries(Object.entries(p.equip).map(([s, id]) => [s, id && ((p.view.gear || {})[id] || {}).base]));
+const hasGear = (base, n = 1) => E.page.waitForFunction(([b, n]) => Object.values(window.__hl.player().view.gear || {}).filter((g) => g.base === b).length >= n, [base, n], { timeout: 5000 }).catch(() => null);
+const uidOf = async (base) => {
+  const p = await player(E.page);
+  return Object.values(p.view.gear || {}).find((g) => g.base === base && !Object.values(p.equip).includes(g.uid))?.uid;
+};
 
 // ---------- đồ khởi đầu theo lớp, 8 ô ----------
-const eq = (await player(E.page)).equip;
+const eq = B(await player(E.page));
 R.check('Tiên Nữ mới: Cung Ngắn + bộ Dây Leo (mũ, giáp, quần, găng, giày)', eq.weapon === 'item_4_0' && eq.helm === 'item_7_10' && eq.armor === 'item_8_10' && eq.pants === 'item_9_10' && eq.gloves === 'item_10_10' && eq.boots === 'item_11_10', JSON.stringify(eq));
 await E.page.click('#tabs [data-tab="bag"]');
 await E.page.waitForSelector('[data-act="slot-tip"][data-slot="boots"]', { timeout: 5000 }).catch(() => null);
@@ -26,24 +33,25 @@ await shot(E.page, 'items-bag.png');
 // ---------- yêu cầu chỉ số: Cung Bạc (bậc 7) cần Nhanh nhẹn 35 ----------
 await admin('set_level', E.name, { level: 30 });
 await admin('give_item', E.name, { id: 'item_4_5', count: 1 });
-await E.page.waitForFunction(() => (window.__hl.player().inv || {}).item_4_5 >= 1, null, { timeout: 5000 }).catch(() => null);
+await hasGear('item_4_5');
+const bow = await uidOf('item_4_5');
 await E.page.click('#tabs [data-tab="map"]');
 await E.page.click('#tabs [data-tab="bag"]');
-await E.page.click('[data-act="bag-tip"][data-id="item_4_5"]');
+await E.page.click(`[data-act="bag-tip"][data-id="${bow}"]`);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tip = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('bảng chi tiết: tên gốc, Dùng cho Tiên Nữ, Cần Nhanh nhẹn 35 (đỏ)', tip.includes('Silver Bow') && tip.includes('Dùng cho') && !!(await E.page.$('#itemtip .bad')) && tip.includes('Nhanh nhẹn 35'), tip.slice(0, 160));
+R.check('bảng chi tiết kiểu MU: tên gốc, Dùng cho Tiên Nữ, "Nhanh nhẹn yêu cầu: 35" (đỏ, kèm số thiếu)', tip.includes('Silver Bow') && tip.includes('Dùng cho') && !!(await E.page.$('#itemtip .mu-req.bad')) && tip.includes('Nhanh nhẹn yêu cầu: 35') && tip.includes('thiếu'), tip.slice(0, 160));
 R.check('thiếu chỉ số thì nút Trang bị bị khóa', !!(await E.page.$('#itemtip [data-act="equip"][disabled]')));
 await shot(E.page, 'items-tip.png');
-const r1 = await send(E.page, { act: 'equip', id: 'item_4_5' });
-R.check('server cũng từ chối mặc khi thiếu chỉ số', r1.equip.weapon === 'item_4_0');
+const r1 = await send(E.page, { act: 'equip', id: bow });
+R.check('server cũng từ chối mặc khi thiếu chỉ số', B(r1).weapon === 'item_4_0');
 
 // ---------- tháo / mặc lại mũ ----------
 await E.page.keyboard.press('Escape').catch(() => null);
 const p1 = await send(E.page, { act: 'unequip', slot: 'helm' });
-R.check('tháo mũ: ô trống, mũ về túi', p1.equip.helm == null && p1.inv.item_7_10 === 1);
-const p2 = await send(E.page, { act: 'equip', id: 'item_7_10' });
-R.check('mặc lại mũ', p2.equip.helm === 'item_7_10');
+R.check('tháo mũ: ô trống, mũ về túi trang bị', p1.equip.helm == null && Object.values(p1.view.gear).some((g) => g.base === 'item_7_10' && !Object.values(p1.equip).includes(g.uid)));
+const p2 = await send(E.page, { act: 'equip', id: await uidOf('item_7_10') });
+R.check('mặc lại mũ', B(p2).helm === 'item_7_10');
 
 // ---------- Thợ Rèn chỉ bày đồ đúng lớp ----------
 await E.page.click('#tabs [data-tab="map"]');
@@ -62,12 +70,12 @@ R.check('mua đồ lớp khác bị từ chối', last, JSON.stringify(bad && ba
 await admin('add_stats', E.name, { agi: 20 });
 await admin('give_item', E.name, { id: 'item_13_8', count: 2 });
 await admin('give_item', E.name, { id: 'item_13_12', count: 1 });
-await E.page.waitForFunction(() => (window.__hl.player().inv || {}).item_13_12 >= 1, null, { timeout: 5000 }).catch(() => null);
-await send(E.page, { act: 'equip', id: 'item_13_8' });
-await send(E.page, { act: 'equip', id: 'item_13_8' });
-const pj = await send(E.page, { act: 'equip', id: 'item_13_12' });
-R.check('hai nhẫn vào ring1 + ring2, dây chuyền vào ô dây chuyền', pj.equip.ring1 === 'item_13_8' && pj.equip.ring2 === 'item_13_8' && pj.equip.pendant === 'item_13_12', JSON.stringify(pj.equip));
-await admin('give_gear', E.name, { base: 'item_4_2', rarity: 1, bonus: { agi: 1 }, exc: ['atk_pct', 'crit'], luck: true, skill: true });
+await hasGear('item_13_12');
+await send(E.page, { act: 'equip', id: await uidOf('item_13_8') });
+await send(E.page, { act: 'equip', id: await uidOf('item_13_8') });
+const pj = await send(E.page, { act: 'equip', id: await uidOf('item_13_12') });
+R.check('hai nhẫn vào ring1 + ring2, dây chuyền vào ô dây chuyền', B(pj).ring1 === 'item_13_8' && B(pj).ring2 === 'item_13_8' && B(pj).pendant === 'item_13_12', JSON.stringify(B(pj)));
+await admin('give_gear', E.name, { base: 'item_4_2', opt: 1, exc: ['atk_pct', 'crit'], luck: true, skill: true });
 await E.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.excellent), null, { timeout: 5000 }).catch(() => null);
 const exc = await E.page.evaluate(() => Object.values(window.__hl.player().view.gear || {}).find((g) => g.excellent));
 await E.page.click('#tabs [data-tab="map"]');
@@ -75,8 +83,8 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click(`[data-act="bag-tip"][data-id="${exc && exc.uid}"]`).catch(() => null);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tipE = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('Phase 15d: dòng May mắn (chí mạng + ép ngọc) và Kỹ năng trên vũ khí', !!(await E.page.$('#itemtip .ls')) && tipE.includes('May mắn (chí mạng') && tipE.includes('Kỹ năng (sát thương chiêu'), tipE.slice(0, 300));
-R.check('đồ Excellent: tên xanh, dòng "Tăng sát thương" và "Tỉ lệ chí mạng"', !!(await E.page.$('#itemtip b .exc')) && tipE.includes('Excellent') && tipE.includes('Tăng sát thương') && tipE.includes('Tỉ lệ chí mạng'), tipE.slice(0, 200));
+R.check('Phase 15d: dòng May mắn (chí mạng + ép ngọc) và Kỹ năng trên vũ khí', !!(await E.page.$('#itemtip .mu-opt')) && tipE.includes('May mắn (tỉ lệ chí mạng') && tipE.includes('Kỹ năng (sát thương chiêu'), tipE.slice(0, 300));
+R.check('đồ Excellent: "Đồ hoàn hảo …" tên xanh, dòng "Tăng sát thương" và "Tỉ lệ chí mạng"', !!(await E.page.$('#itemtip .mu-name.exc')) && tipE.includes('Đồ hoàn hảo') && tipE.includes('Tăng sát thương') && tipE.includes('Tỉ lệ chí mạng'), tipE.slice(0, 200));
 if (icons) {
   const src = await E.page.$eval('#itemtip img.own', (e) => e.getAttribute('src')).catch(() => '');
   R.check('đồ Excellent dùng hình _e', /_e\.png/.test(src), src);
@@ -96,13 +104,13 @@ await E.page.click('#tabs [data-tab="bag"]');
 await E.page.click(`[data-act="bag-tip"][data-id="${w3 && w3.uid}"]`).catch(() => null);
 await E.page.waitForSelector('#itemtip', { timeout: 3000 }).catch(() => null);
 const tipW = (await E.page.textContent('#itemtip').catch(() => '')) || '';
-R.check('cánh cấp 3: tên, dòng cánh "Máu tối đa +"', !!w3 && w3.wopt === 'hp' && tipW.includes('Cánh Ảo Ảnh') && tipW.includes('Dòng cánh: Máu tối đa +'), tipW.slice(0, 200));
+R.check('cánh cấp 3: tên, dòng cánh "Máu tối đa +"', !!w3 && w3.wopt === 'hp' && tipW.includes('Cánh Ảo Ảnh') && tipW.includes('Máu tối đa +'), tipW.slice(0, 200));
 await shot(E.page, 'items-wing3.png');
 
 // đủ bộ Lụa (bậc 2): 5 món → có thưởng
 for (const id of ['item_7_11', 'item_8_11', 'item_9_11', 'item_10_11', 'item_11_11']) await admin('give_item', E.name, { id, count: 1 });
-await E.page.waitForFunction(() => (window.__hl.player().inv || {}).item_11_11 >= 1, null, { timeout: 5000 }).catch(() => null);
-for (const id of ['item_7_11', 'item_8_11', 'item_9_11', 'item_10_11', 'item_11_11']) await send(E.page, { act: 'equip', id });
+await hasGear('item_11_11');
+for (const id of ['item_7_11', 'item_8_11', 'item_9_11', 'item_10_11', 'item_11_11']) await send(E.page, { act: 'equip', id: await uidOf(id) });
 const sb = (await player(E.page)).view.setBonus;
 R.check('đủ 5 món bộ Lụa: thưởng đủ bộ bật', sb.name === 'Lụa' && sb.have === 5 && sb.active, JSON.stringify(sb));
 await E.page.click('#tabs [data-tab="map"]');

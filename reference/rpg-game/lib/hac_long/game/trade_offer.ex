@@ -3,7 +3,7 @@ defmodule HacLong.Game.TradeOffer do
   Phần hàm thuần của giao dịch trực tiếp (`HacLong.Trade`): kiểm tra món mình đưa ra, lấy
   đồ khỏi nhân vật và trao đồ cho nhân vật kia.
 
-  Món đưa ra (`offer`): `%{items: %{id => số}, gear: [%{uid, base, name, rarity, up}], gold: số}`.
+  Món đưa ra (`offer`): `%{items: %{id => số}, gear: [%{uid, base, name, kind, up}], gold: số}`.
   Đồ chỉ số ngẫu nhiên phải đang ở trong túi (không mặc); đồ nâng cấp giữ nguyên cấp.
   """
 
@@ -54,7 +54,7 @@ defmodule HacLong.Game.TradeOffer do
 
   def parse(_p, _raw), do: {:error, "Món đưa ra không hợp lệ."}
 
-  # thêm tên, độ hiếm, cấp nâng của đồ chỉ số ngẫu nhiên để người kia thấy
+  # thêm tên, loại (kiểu MU), cấp nâng của đồ riêng từng món để người kia thấy
   defp describe(p, offer) do
     gear =
       for %{uid: uid} <- offer.gear do
@@ -64,7 +64,7 @@ defmodule HacLong.Game.TradeOffer do
           uid: uid,
           base: it.base,
           name: it.name,
-          rarity: it.rarity,
+          kind: it.kind,
           up: Engine.upgrade_level(p, uid)
         }
       end
@@ -107,7 +107,7 @@ defmodule HacLong.Game.TradeOffer do
     room = Gear.max_bag() - length(Gear.bag(p)) + length(offer.gear)
 
     with :ok <- check(p, offer),
-         :ok <- if(incoming <= room, do: :ok, else: {:error, "Túi đồ hiếm không đủ chỗ."}) do
+         :ok <- if(incoming <= room, do: :ok, else: {:error, "Túi trang bị không đủ chỗ."}) do
       inv =
         Enum.reduce(offer.items, p.inv, fn {id, n}, inv ->
           if inv[id] > n, do: Map.put(inv, id, inv[id] - n), else: Map.delete(inv, id)

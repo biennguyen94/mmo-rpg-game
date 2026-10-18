@@ -75,8 +75,8 @@ defmodule HacLong.World.MapServer do
   def hp(map_id, mid, pct), do: GenServer.cast(via(map_id), {:hp, mid, pct})
 
   @doc "Đặt một con quái vào ô cho trước (dùng trong test)."
-  def put_monster(map_id, kind, {x, y}, boss? \\ false, rare? \\ false),
-    do: GenServer.call(via(map_id), {:put_monster, kind, {x, y}, boss?, rare?})
+  def put_monster(map_id, kind, {x, y}, boss? \\ false, rare? \\ false, extra \\ %{}),
+    do: GenServer.call(via(map_id), {:put_monster, kind, {x, y}, boss?, rare?, extra})
 
   @doc "Đặt một điểm thu thập vào ô cho trước (dùng trong test)."
   def put_node(map_id, item, {x, y}), do: GenServer.call(via(map_id), {:put_node, item, {x, y}})
@@ -86,6 +86,15 @@ defmodule HacLong.World.MapServer do
 
   @doc "Golden Invasion: thả trùm vàng của vùng."
   def invade_boss(map_id), do: GenServer.call(via(map_id), :invade_boss)
+
+  @doc """
+  Xâm lăng (B-20, `HacLong.Raids`): thả quái loại `key` vào bản đồ; `units`: `[{kind, số_con, đầu_đàn?}]`. Không hồi
+  sinh, đầu đàn đứng yên. Trả số con có mặt.
+  """
+  def raid(map_id, key, units), do: GenServer.call(via(map_id), {:raid, key, units})
+
+  @doc "Xâm lăng `key` kết thúc: con chưa ai đánh thì biến mất."
+  def end_raid(map_id, key), do: GenServer.call(via(map_id), {:end_raid, key})
 
   @doc "Golden Invasion kết thúc: quái vàng chưa ai đánh thì biến mất."
   def end_invasion(map_id), do: GenServer.call(via(map_id), :end_invasion)
@@ -155,6 +164,11 @@ defmodule HacLong.World.MapServer do
             if not Enum.any?(s.monsters, fn {_, x} -> x[:gold] end),
               do: HacLong.Invasion.cleared(s.map.id, m.boss)
 
+          # quái xâm lăng (B-20) không hồi sinh
+          m[:raid] ->
+            left = Enum.count(s.monsters, fn {_, x} -> x[:raid] == m.raid end)
+            HacLong.Raids.killed(m.raid, s.map.id, m.boss, left)
+
           s.respawn ->
             Process.send_after(self(), {:respawn, m.origin}, respawn_ms(s, m.origin))
 
@@ -179,7 +193,9 @@ defmodule HacLong.World.MapServer do
   def handle_call({:release, uid, mid}, _from, s) do
     case s.monsters[mid] do
       %{busy: ^uid} = m ->
-        {:reply, :ok, changed(put_in(s.monsters[mid], Map.merge(m, %{busy: nil, hp: nil})))}
+        # bỏ chạy / thua: quái giữ máu, hồi dần (không đầy lại ngay)
+        {:reply, :ok,
+         changed(put_in(s.monsters[mid], Map.merge(m, %{busy: nil, hp_at: now_s()})))}
 
       _ ->
         {:reply, :ok, s}
@@ -188,10 +204,11 @@ defmodule HacLong.World.MapServer do
 
   def handle_call(:snapshot, _from, s), do: {:reply, snapshot_of(s), s}
 
-  def handle_call({:put_monster, kind, pos, boss?, rare?}, _from, s) do
+  def handle_call({:put_monster, kind, pos, boss?, rare?, extra}, _from, s) do
     origin = if boss?, do: :boss, else: {:manual, kind}
     {m, s} = new_monster(s, kind, pos, boss?, origin)
-    m = %{m | rare: rare?}
+    # `extra`: tên / cấp riêng hiện trên bản đồ (vd Vương Miện, B-22)
+    m = Map.merge(%{m | rare: rare?}, Map.take(extra, [:name, :level]))
     s = put_in(s.monsters[m.id], m)
     {:reply, public(m), changed(s)}
   end
@@ -228,6 +245,33 @@ defmodule HacLong.World.MapServer do
         s = put_in(s.monsters[m.id], Map.put(m, :gold, true))
         {:reply, :ok, changed(s)}
     end
+  end
+
+  def handle_call({:raid, key, units}, _from, s) do
+    s =
+      for {kind, n, leader?} <- units, _ <- 1..n//1, reduce: s do
+        s ->
+          case s.zone && free_tile(s) do
+            nil ->
+              s
+
+            pos ->
+              {m, s} = new_monster(s, kind, pos, leader?, {:raid, key})
+              spec = HacLong.Raids.spec(key, kind, s.map.zone)
+
+              put_in(
+                s.monsters[m.id],
+                Map.merge(%{m | rare: false}, %{raid: key, name: spec.name, level: spec.level})
+              )
+          end
+      end
+
+    {:reply, Enum.count(s.monsters, fn {_, m} -> m[:raid] == key end), changed(s)}
+  end
+
+  def handle_call({:end_raid, key}, _from, s) do
+    gone = for {id, m} <- s.monsters, m[:raid] == key && m.busy == nil, do: id
+    {:reply, :ok, changed(%{s | monsters: Map.drop(s.monsters, gone)})}
   end
 
   def handle_call(:end_invasion, _from, s) do
@@ -291,7 +335,9 @@ defmodule HacLong.World.MapServer do
         {:reply, {:confirm_boss, public(m)}, s}
 
       %{busy: nil} = m ->
-        {:reply, {:engage, public(m)}, changed(put_in(s.monsters[m.id].busy, uid))}
+        # máu còn lại sau khi người trước bỏ chạy (hồi dần theo thời gian, `cur_hp/1`)
+        m = Map.merge(m, %{busy: uid, hp: cur_hp(m), hp_at: nil})
+        {:reply, {:engage, public(m)}, changed(put_in(s.monsters[m.id], m))}
 
       %{busy: ^uid} = m ->
         {:reply, {:engage, public(m)}, s}
@@ -356,7 +402,7 @@ defmodule HacLong.World.MapServer do
 
         monsters =
           Map.new(s.monsters, fn
-            {id, %{busy: ^uid} = m} -> {id, Map.merge(m, %{busy: nil, hp: nil})}
+            {id, %{busy: ^uid} = m} -> {id, Map.merge(m, %{busy: nil, hp_at: now_s()})}
             other -> other
           end)
 
@@ -407,6 +453,17 @@ defmodule HacLong.World.MapServer do
     m = %{id: s.next_id, kind: kind, pos: pos, boss: boss?, busy: nil, origin: origin, rare: rare}
     {m, %{s | monsters: Map.put(s.monsters, m.id, m), next_id: s.next_id + 1}}
   end
+
+  # Máu quái (phần trăm) bị bỏ dở hồi `RULES.monster.flee_regen_pct_s` % mỗi giây kể từ lúc được nhả; đầy thì nil.
+  @hp_regen HacLong.Game.Data.rules().monster.flee_regen_pct_s
+  defp cur_hp(%{hp: hp, hp_at: at}) when is_number(hp) and is_integer(at) do
+    v = hp + @hp_regen * (now_s() - at)
+    if v >= 100, do: nil, else: round(v)
+  end
+
+  defp cur_hp(m), do: m[:hp]
+
+  defp now_s, do: System.monotonic_time(:second)
 
   defp monster_at(s, pos), do: Enum.find_value(s.monsters, fn {_, m} -> m.pos == pos && m end)
 
@@ -463,8 +520,12 @@ defmodule HacLong.World.MapServer do
       busy: m.busy != nil,
       rare: m.rare,
       gold: m[:gold] == true,
-      # phần trăm máu (100 khi chưa ai đánh)
-      hp: m[:hp] || 100
+      # quái xâm lăng (B-20): tên, cấp riêng (không có trong bảng quái của client)
+      raid: m[:raid],
+      name: m[:name],
+      level: m[:level],
+      # phần trăm máu (100 khi chưa ai đánh; bị bỏ dở thì hồi dần)
+      hp: cur_hp(m) || 100
     }
   end
 

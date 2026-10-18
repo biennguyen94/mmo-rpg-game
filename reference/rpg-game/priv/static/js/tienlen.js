@@ -391,8 +391,8 @@
           <label class="small tl-check"><input type="checkbox" name="private"> Bàn riêng (không hiện ở sảnh)</label>
           <button class="btn primary">Mở bàn</button>
         </form>
-        <p class="small muted">Cược S: cần ít nhất 10×S vàng mới được chia bài. Bàn có máy chơi chỉ chơi vui (cược 0).</p>
-        <form data-tl-form="code" class="tl-form row"><input name="code" placeholder="Mã phòng" class="grow" autocomplete="off"><button class="btn">Vào bằng mã</button></form>
+        <p class="small muted">Cược S: cần ít nhất ${meta.min_balance_mult || 2}×S vàng mới được chia bài. Bàn có máy chơi chỉ chơi vui (cược 0).</p>
+        <form data-tl-form="code" class="tl-form row"><input type="text" name="code" placeholder="Mã phòng" class="grow" autocomplete="off"><button class="btn">Vào bằng mã</button></form>
       </div>
       <div class="card"><div class="row"><h3 class="grow">Các bàn</h3><button class="btn" data-tl="refresh">↻</button></div>
         <div class="list">${rooms || '<p class="small muted">Chưa có bàn nào. Mở một bàn rồi thêm máy chơi để chơi ngay.</p>'}</div></div>

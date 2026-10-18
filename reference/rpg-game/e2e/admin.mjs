@@ -43,6 +43,9 @@ await page.fill('#adm-gift-all input[name="subject"]', subj);
 await page.fill('#adm-gift-all input[name="gold"]', '123');
 await page.selectOption('#adm-gift-all select[name="gbase"]', { index: 1 });
 await page.fill('#adm-gift-all input[name="gup"]', '3');
+// Phase 2: bỏ đồ vào giỏ ("+ Thêm"), gửi thì xác nhận số người nhận (hộp confirm)
+await page.click('#adm-gift-all [data-act="gift-add"][data-kind="gear"]');
+page.once('dialog', (d) => d.accept());
 await page.click('#adm-gift-all button[type="submit"]');
 // chờ thư tới: hỏi hộp thư mỗi giây từ phía node (waitForFunction coi Promise là "đúng" nên thoát ngay;
 // cũng không hỏi dồn, kẻo đụng giới hạn 30 lần / phút)
@@ -66,6 +69,95 @@ await page.fill('form.adm-char[data-op="add_gold"] input[name="amount"]', '1000'
 await page.click('form.adm-char[data-op="add_gold"] button[type="submit"]');
 await X.page.waitForFunction((g) => window.__hl.player().gold === g, g1 + 1000, { timeout: 5000 }).catch(() => null);
 R.check('cộng 1000 vàng, người chơi thấy ngay', (await player(X.page)).gold === g1 + 1000);
+
+// B-16: tặng đồ riêng có May mắn, Kỹ năng và 2 dòng Excellent bằng ô tick
+const gg = 'form.adm-char[data-op="give_gear"]';
+const ng = Object.keys((await player(X.page)).view.gear || {}).length;
+await page.selectOption(`${gg} select[name="base"]`, 'item_0_3');
+await page.selectOption(`${gg} select[name="opt"]`, '4');
+for (const sel of ['input[name="luck"]', 'input[name="skill"]', 'input[name="exc"][value="atk_pct"]', 'input[name="exc"][value="atk_lvl"]']) await page.check(`${gg} ${sel}`);
+await page.click(`${gg} button[type="submit"]`);
+await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
+const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
+R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
+// Excellent / Kỹ năng / Đồ Thần chỉ hiện khi hợp món đang chọn (vũ khí, dây chuyền → Excellent vũ khí; giáp, khiên,
+// nhẫn → Excellent giáp; cánh → không có Excellent)
+{
+  const vis = () => page.evaluate((f) => Object.fromEntries([...document.querySelectorAll(`${f} [data-gear-show]`)].map((el) => [el.dataset.gearShow, !el.hidden])), gg);
+  const want = { item_0_3: 'weapon', item_13_27: 'weapon', item_6_18: 'armor', item_13_24: 'armor', item_8_33: 'armor', wing_dk_3: '' };
+  let ok = true; const got = {};
+  await page.selectOption(`${gg} select[name="base"]`, 'item_0_3');
+  await page.check(`${gg} input[name="exc"][value="atk_pct"]`);
+  for (const [base, t] of Object.entries(want)) {
+    await page.selectOption(`${gg} select[name="base"]`, base);
+    const v = await vis(); got[base] = v;
+    ok = ok && v.weapon === (t === 'weapon') && v.armor === (t === 'armor') && v.skill === (base === 'item_0_3');
+    if (base === 'item_6_18') { await page.locator(gg).scrollIntoViewIfNeeded(); await shot(page, 'admin_exc_shield.png'); }
+    if (base === 'item_13_27') { await page.locator(gg).scrollIntoViewIfNeeded(); await shot(page, 'admin_exc_pendant.png'); }
+  }
+  const stale = await page.evaluate((f) => document.querySelector(`${f} input[name="exc"][value="atk_pct"]`).checked, gg);
+  R.check('tặng trang bị: Excellent đúng loại món, cánh không có; đổi món bỏ tick dòng bị ẩn', ok && !stale, JSON.stringify(got));
+}
+// sự kiện mở ngay: Quảng Trường Quỷ / Lâu Đài Máu (người chơi thấy đang mở, chat có thông báo)
+for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['open_bc', 'bc', 'Lâu Đài Máu']]) {
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click(`[data-adm="${op}"]`);
+  await page.waitForTimeout(800);
+  // tải lại trang người chơi để lấy view mới (chat cũng nạp lại lịch sử)
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view[key];
+  const said = await X.page.evaluate((n) => document.body.textContent.includes(n + ' mở ngay'), name);
+  R.check(`quản trị mở ngay ${name}: người chơi thấy đang mở, chat báo`, !!v && v.open === true && said, JSON.stringify(v && { open: v.open }));
+}
+
+// B-19: Hỗn Chiến Thành mở ngay → người chơi thấy pha "entry", chat báo mở cửa
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="open_cc"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view.cc;
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Hỗn Chiến Thành mở cửa'));
+  R.check('quản trị mở ngay Hỗn Chiến Thành: người chơi thấy cho vào, chat báo', !!v && v.phase === 'entry' && said, JSON.stringify(v && { phase: v.phase }));
+}
+
+// B-20: Rồng Đỏ xâm lăng mở ngay → chat báo, có Rồng Đỏ ở bản đồ được chọn
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="raid_red_dragon"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Rồng Đỏ xâm lăng!'));
+  R.check('quản trị mở Rồng Đỏ xâm lăng: chat báo', said);
+}
+
+// B-22: Công Thành Chiến mở ngay → chat báo, thẻ ở Người Gác Tháp thấy đang đánh
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.click('[data-adm="open_cs"]');
+  await page.waitForTimeout(800);
+  await X.page.reload();
+  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await X.page.waitForTimeout(500);
+  const v = (await player(X.page)).view.cs;
+  const said = await X.page.evaluate(() => document.body.textContent.includes('Công Thành Chiến bắt đầu'));
+  R.check('quản trị mở Công Thành Chiến: đang đánh, chat báo', !!v && v.phase === 'fight' && said, JSON.stringify(v && { phase: v.phase }));
+}
+
+// danh sách đồ có nhẫn (item_13_8), dây chuyền (item_13_12); tặng nhẫn có Excellent giáp
+const kinds = await page.$$eval(`${gg} select[name="base"] option`, (os) => os.map((o) => o.value));
+R.check('ô Quản trị có nhẫn và dây chuyền', kinds.includes('item_13_8') && kinds.includes('item_13_12'), `${kinds.length} món`);
+await page.selectOption(`${gg} select[name="base"]`, 'item_13_8');
+await page.check(`${gg} input[name="exc"][value="reflect"]`);
+await page.click(`${gg} button[type="submit"]`);
+await X.page.waitForFunction(() => Object.values(window.__hl.player().view.gear || {}).some((g) => g.base === 'item_13_8'), null, { timeout: 5000 }).catch(() => null);
+R.check('tặng nhẫn Excellent phản sát thương', Object.values((await player(X.page)).view.gear || {}).some((g) => g.base === 'item_13_8' && g.exc.includes('reflect')));
 await shot(page, 'admin-user.png');
 
 // nhật ký vàng của người này có dòng ADMIN; kiểm tra vàng; nhật ký quản trị

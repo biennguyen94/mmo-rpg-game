@@ -1,7 +1,7 @@
 defmodule HacLong.Game.EngineTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Daily, Data, Engine, Rng, Simulator}
+  alias HacLong.Game.{Daily, Data, Engine, Gear, Rng, Simulator}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -70,10 +70,10 @@ defmodule HacLong.Game.EngineTest do
     {%{ok: true}, p} = Engine.act(p, "skill", "heal")
     assert Engine.cooldown(p, "heal") == 4
 
-    # tốn MP theo cấp (14 × (1 + 0.04 × 9) = 19), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
+    # tốn MP theo cấp (14 × (1 + 0.02 × 9) = 17), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
     max_mp = Engine.derived(p).maxMp
     cost = Engine.skill_mp(p, Enum.find(Engine.skills(p), &(&1.id == "heal")))
-    assert cost == 19
+    assert cost == 17
     assert p.mp == min(max_mp, mp + round(max_mp * 0.03 + p.stats.ene * 0.1)) - cost
     assert Enum.any?(p.battle.log, &(&1.text =~ "Khiên Thánh hồi"))
 
@@ -168,7 +168,7 @@ defmodule HacLong.Game.EngineTest do
     {%{result: "win"}, won} = Engine.act(p, "attack")
     assert "wolf" in won.bosses
     assert [g] = HacLong.Game.Gear.bag(won)
-    assert g.rarity in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
+    assert g[:opt] in [2, 3] and Data.item(g.base)[:cls] in [nil, "dk"]
     assert won.inv["jewel_bless"] == 1 and won.daily.bosses == ["wolf"]
     assert Enum.any?(won.battle.log, &(&1.text =~ "Lần đầu hạ"))
     {won, _} = HacLong.Game.Achievements.check(won)
@@ -200,40 +200,32 @@ defmodule HacLong.Game.EngineTest do
     assert mg.points == 7
   end
 
-  test "Thợ Rèn nâng cấp đồ đang mặc bằng quặng và vàng" do
+  test "Thợ Rèn nâng cấp đồ đang mặc bằng Ngọc Ước Nguyện và vàng (B-13)" do
     p = %{player() | gold: 10_000}
     atk = Engine.derived(p).atk
 
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Quặng Sắt 0/1."}, _} =
-             Engine.upgrade(p, "weapon")
-
-    p = Engine.add_item(p, "ore", 20)
-    {%{ok: true, msg: "Đã nâng Rìu Nhỏ lên +1."}, p} = Engine.upgrade(p, "weapon")
-    # Rìu Nhỏ tấn công 4: mỗi cấp ít nhất +1
-    assert Engine.derived(p).atk == atk + 1
-    assert p.inv["ore"] == 19 and p.gold == 10_000 - 8
-
-    # lần nâng đầu tiên tách gậy đang mặc thành bản riêng (cấp nâng theo từng món)
-    club = p.equip.weapon
-    assert [%{uid: ^club, base: "item_1_0", rarity: 0}] = p.gear
-    p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
-    assert Engine.upgrade_level(p, club) == 4
-    # +5 cần Vảy Cổ Long
-    assert {%{ok: false, msg: "Thiếu nguyên liệu: Vảy Cổ Long 0/1."}, _} =
-             Engine.upgrade(p, "weapon")
-
-    {%{ok: true}, p} = p |> Engine.add_item("dragon_scale") |> Engine.upgrade("weapon")
-    # +6 trở lên cần ngọc
     assert {%{ok: false, msg: "Thiếu nguyên liệu: Ngọc Ước Nguyện 0/1."}, _} =
              Engine.upgrade(p, "weapon")
 
+    p = Engine.add_item(p, "jewel_bless", 20)
+    {%{ok: true, msg: "✨ Ép thành công Rìu Nhỏ lên +1!"}, p} = Engine.upgrade(p, "weapon")
+    # Rìu Nhỏ tấn công 4: mỗi cấp ít nhất +1
+    assert Engine.derived(p).atk == atk + 1
+    assert p.inv["jewel_bless"] == 19 and p.gold == 10_000 - 8
+
+    # đồ khởi đầu đang mặc là món riêng (cấp nâng theo từng món)
+    club = p.equip.weapon
+    assert %{uid: ^club, base: "item_1_0", rarity: 0} = Enum.find(p.gear, &(&1.uid == club))
+    p = Enum.reduce(1..4, p, fn _, p -> elem(Engine.upgrade(p, "weapon"), 1) end)
+    assert Engine.upgrade_level(p, club) == 5
+
     assert Engine.view(p).bonus == %{club => 5}
 
-    assert %{id: ^club, level: 5, cost: %{items: %{"jewel_bless" => 1}}} =
+    assert %{id: ^club, level: 5, cost: %{items: %{"jewel_bless" => 1}, at: "smith"}} =
              Engine.view(p).forge.weapon
 
-    # đồ cấp cao dùng Mithril; gậy mới mua là món khác, cấp 0
-    assert %{gold: 600, items: %{"ore_rare" => 1}} = Engine.upgrade_cost("waraxe", 0)
+    # gậy mới mua là món khác, cấp 0
+    assert %{gold: 600, items: %{"jewel_bless" => 1}} = Engine.upgrade_cost("waraxe", 0)
     p = %{p | level: 10} |> Engine.add_item("broadsword") |> Engine.add_item("club")
     {_, p} = Engine.equip(p, "broadsword")
     assert Engine.upgrade_level(p, "broadsword") == 0
@@ -242,12 +234,13 @@ defmodule HacLong.Game.EngineTest do
     {_, p} = Engine.equip(p, club)
     assert Engine.derived(p).atk == Engine.derived(%{p | upgrades: %{}}).atk + 5
 
-    # bán gậy thường không mất cấp của gậy đã nâng; bán gậy đã nâng thì mất
+    # bán gậy mới (cấp 0) không mất cấp của gậy đã nâng; bán gậy đã nâng thì mất
     {_, p} = Engine.equip(p, "broadsword")
-    {_, p} = Engine.sell(p, "club")
+    fresh = Enum.find_value(Gear.bag(p), &(&1.base == "club" && &1.uid))
+    {_, p} = Engine.sell(p, fresh)
     assert p.upgrades == %{club => 5}
     {_, p} = Engine.sell(p, club)
-    assert p.upgrades == %{} and p.gear == []
+    assert p.upgrades == %{} and Enum.all?(p.gear, &(&1.uid != club))
     assert {%{ok: false, msg: "Chưa mặc đồ ở chỗ này."}, _} = Engine.upgrade(p, "shield")
   end
 
@@ -264,8 +257,22 @@ defmodule HacLong.Game.EngineTest do
     assert q.gold == 5000 and q.bosses == ["wolf"] and q.equip == p.equip
     assert q.hp == Engine.derived(q).maxHp
 
+    # lần 2 cần đã hạ chúa tể vùng chuyển sinh 1
+    lord = Engine.realm_lord(1)
+    assert %{id: id, realm: 1} = Engine.rebirth_need(%{q | level: 50})
+    assert id == lord.id
+    assert {%{ok: false, msg: need}, _} = Engine.rebirth(%{q | level: 50})
+    assert need =~ lord.name and need =~ "lần 2"
+
+    q = Map.put(q, :bestiary, %{lord.id => 1})
+    assert Engine.rebirth_need(q) == nil
     {_, q2} = Engine.rebirth(%{q | level: 50})
     assert q2.rebirths == 2 and q2.points == 2 * Engine.rebirth_points()
+
+    # kinh nghiệm lên cấp tăng theo số lần đã chuyển sinh
+    pct = HacLong.Game.Data.rules().character.rebirth_xp_pct
+    assert Engine.xp_need(q2) == round((25 * :math.pow(1, 1.75) + 15) * (1 + 2 * pct))
+    assert Engine.xp_need(q2) > Engine.xp_need(%{q2 | rebirths: 0})
     assert {%{ok: false}, _} = Engine.rebirth(%{q2 | level: 50, rebirths: Engine.max_rebirths()})
   end
 

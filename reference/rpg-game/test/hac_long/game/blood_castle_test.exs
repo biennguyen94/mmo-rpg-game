@@ -117,4 +117,22 @@ defmodule HacLong.Game.BloodCastleTest do
     {%{ok: true}, q} = HacLong.World.move(p, 0, "up", true)
     assert q.battle.monster.bc == true and q.battle.encounter == %{tower: m.id}
   end
+
+  test "quản trị viên mở ngay ngoài lịch: cho vào entry_minutes phút, đợt riêng (đã vào đợt thường vẫn vào được)" do
+    on_exit(fn -> :persistent_term.erase({BloodCastle, :forced}) end)
+    r = BloodCastle.rules()
+    # giữa hai đợt thường: đang đóng
+    closed = DateTime.add(vn(12, 0), 40 * 60)
+    refute BloodCastle.open?(closed)
+
+    w = BloodCastle.open_now(closed)
+    assert w.slot < 0 and w.closes_at - w.opens_at == r.entry_minutes * 60
+    assert BloodCastle.open?(closed)
+    assert BloodCastle.open?(DateTime.add(closed, r.entry_minutes * 60 - 1))
+    refute BloodCastle.open?(DateTime.add(closed, r.entry_minutes * 60))
+
+    # người đã vào đợt thường hôm nay vẫn vào được đợt mở ngay
+    p = Map.put(player(), :daily, %{bc_slot: 123})
+    assert BloodCastle.view(p, closed).open and not BloodCastle.view(p, closed).used
+  end
 end

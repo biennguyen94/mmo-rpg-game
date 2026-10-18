@@ -8,7 +8,7 @@ Chạy trên **server thật** (database thật), mỗi kịch bản dùng tài 
 cd reference/rpg-game
 mix ecto.setup                       # nếu chưa có database
 mix run scripts/e2e_seed.exs         # tài khoản quản trị e2e_admin (dùng để tặng vàng / đồ cho nhân vật test)
-TRUSTED_PROXIES=127.0.0.1 mix phx.server
+HL_DS_OPEN=1 HL_BOTS=0 TRUSTED_PROXIES=127.0.0.1 mix phx.server   # ds / bc cần sự kiện luôn mở; tắt bot cho ổn định
 ```
 
 `TRUSTED_PROXIES=127.0.0.1`: mỗi người chơi test gửi `X-Forwarded-For` riêng, không chạm giới hạn đăng ký 5 tài khoản / giờ / IP.
@@ -39,6 +39,10 @@ không vào git).
 | `admin.mjs` | tab Quản trị: tra cứu, cấm / bỏ cấm chat, gửi quà qua thư, cộng vàng, nhật ký vàng, kiểm tra vàng |
 | `mobile.mjs` | 360 × 740: các tab, NPC, trận đánh không tràn ngang; nút đủ lớn để chạm |
 | `pk.mjs` | Phase 5, hai trình duyệt: PK cược vàng (nhận / từ chối / quá số vàng / hết hạn 30 s), lịch sử trận, xếp hạng theo lớp, lệnh chat `/w`, danh sách online của quản trị |
+| `features.mjs` | đợt 8 phase 2026-10: tự đánh (bật, tự hạ quái, tắt; Làng không bật được), kỷ lục tháp mở kỹ năng tháp + chọn bộ 4 kỹ năng, khóa vùng chuyển sinh theo số lần chuyển sinh, bộ hình đồ Pixel / Biểu tượng, nút hiệu ứng bản đồ |
+| `lose.mjs` | gục ngã ở vùng chuyển sinh 10: thanh máu màn trận hiện 0, bảng kết quả ghi số máu được hồi ở nhà trọ, không lỗi JS (vẽ bản đồ khi khung ẩn) |
+| `pets.mjs` | thú cưng: Người Nuôi Thú hiện sức cắn + kỹ năng, mua Chó Săn, cho ăn (+20 trận, lên cấp, giá theo cấp²), Menu Thú cưng hiện tỉ lệ cắn và hai kỹ năng, chưa đủ sổ quái thì không thuần được quái bản đồ phụ |
+| `tower.mjs` | Tháp Vô Tận: vào tầng 1, quái trên tầng tự đi lang thang (server đẩy vị trí mới), hiệu ứng bản đồ theo nền tầng, không lỗi JS |
 | `soak.mjs` | N bot WebSocket (không cần trình duyệt): đi, đánh, chat, xem chợ; đo p50 / p95 / max, lỗi, mất kết nối, bộ nhớ |
 
 Mọi kịch bản Playwright còn kiểm **không có lỗi JS** trên trang.

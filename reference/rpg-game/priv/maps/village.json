@@ -12,7 +12,7 @@
     "A:::::::,,,,*,,,,,::::::A",
     "T,,,,,:,,,~~~~~,,,:,,,,,T",
     "T,*,,,:,,~~~~~~~,,:,,,*,T",
-    "T,,,,,:,,~~~~~~~,,:,,,,,T",
+    "O,,,,,:,,~~~~~~~,,:,,,,,T",
     "T,,,,,:,,,~~~~~,,,:,,,,,T",
     "T,####:,,,,,,,,,,,:####,T",
     "A:::::::::::::::::::::::O",
@@ -110,6 +110,17 @@
         10,
         13
       ]
+    },
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_01",
+      "spawn": [
+        1,
+        8
+      ]
     }
   ],
   "waystone": {
@@ -164,7 +175,7 @@
       ],
       "lines": [
         "Vũ khí, giáp, khiên, cái gì cũng có. Đồ cũ ta cũng mua lại.",
-        "Mang quặng về đây, ta rèn đồ cậu đang mặc thêm sắc bén. Đến +5 thì cần cả Vảy Cổ Long."
+        "Mang Ngọc Ước Nguyện về đây, ta ép đồ lên tới +6. Từ +7 cần Ngọc Tâm Linh, hỏng là về +0 đấy."
       ]
     },
     {
@@ -213,7 +224,7 @@
       "role": "talk",
       "lines": [
         "Cổng phía trên bên trái dẫn tới Rừng Mê, dễ nhất đó.",
-        "Đá dịch chuyển cạnh nhà Bà Lang. Chạm vào đá ở các vùng để nhớ đường về.",
+        "Đài Phúc Lành cạnh nhà Bà Lang. Chạm vào đài ở các vùng để được ban phúc và hồi sinh ở đó khi gục.",
         "Ở Nhà có giếng nước, uống vào là hết mệt, không tốn đồng nào.",
         "Hồ giữa làng nhiều cá lắm. Đứng sát mép nước rồi bấm Câu cá, phao chìm thì giật ngay!"
       ]
@@ -326,7 +337,8 @@
       "role": "chaos",
       "lines": [
         "Bỏ đồ vào máy, thêm ngọc, cầu trời. Thành thì có cánh, hỏng thì mất sạch.",
-        "Đồ đã khóa thì ta không nhận, kẻo cậu lỡ tay."
+        "Đồ đã khóa thì ta không nhận, kẻo cậu lỡ tay.",
+        "Đồ +9 muốn lên +10, +11 thì mang đến đây, thêm Hỗn Nguyên, Ước Nguyện, Tâm Linh. Hỏng là vỡ."
       ]
     },
     {

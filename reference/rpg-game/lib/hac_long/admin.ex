@@ -13,8 +13,8 @@ defmodule HacLong.Admin do
   | `give_xp` | `xp` (1..1e9) | cộng kinh nghiệm, lên cấp như đánh quái |
   | `set_level` | `level` (1..cấp tối đa) | đặt cấp, xp về 0; điểm tiềm năng ± 3 × số cấp đổi |
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
-  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); có `up` hoặc là cánh thì mỗi món là bản riêng trong túi đồ hiếm |
-  | `give_gear` | `base`, `rarity` (1..3), `bonus` (`%{str, agi, vit, ene}`), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng đồ chỉ số ngẫu nhiên |
+  | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); trang bị (vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền) thì mỗi món là một món riêng trong túi trang bị |
+  | `give_gear` | `base`, `opt` (0..4: số dòng cộng thêm +4 mỗi dòng), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng một món đồ (kiểu MU, B-15) |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
@@ -24,7 +24,7 @@ defmodule HacLong.Admin do
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats reset_stats clear_bag heal set_tower set_rebirths)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -73,8 +73,36 @@ defmodule HacLong.Admin do
     {:ok,
      fn p ->
        {levels, p} = Engine.gain_xp(p, xp)
-       {:ok, p, "+#{xp} kinh nghiệm#{if levels > 0, do: ", lên cấp #{p.level}", else: ""}."}
+
+       msg =
+         if levels > 0,
+           do: "+#{xp} kinh nghiệm, lên cấp #{p.level}.",
+           else: "+#{xp} kinh nghiệm."
+
+       {:ok, p, msg}
      end}
+  end
+
+  # Phase 3: kỷ lục Tháp Vô Tận (mở kỹ năng tháp ở tầng 10, 20, … 100)
+  def build("set_tower", %{"floor" => f}) when is_integer(f) and f in 0..1000 do
+    {:ok,
+     fn p ->
+       {:ok, Map.put(p, :tower_best, f), "Kỷ lục tháp: #{Map.get(p, :tower_best) || 0} → #{f}."}
+     end}
+  end
+
+  # Phase 6: số lần chuyển sinh (mở vùng đất chuyển sinh); không đổi cấp / điểm
+  def build("set_rebirths", %{"n" => n}) when is_integer(n) do
+    max = Data.rules().character.max_rebirths
+
+    if n in 0..max,
+      do:
+        {:ok,
+         fn p ->
+           {:ok, Map.put(p, :rebirths, n),
+            "Chuyển sinh: #{Map.get(p, :rebirths) || 0} → #{n} lần."}
+         end},
+      else: {:error, "Số lần chuyển sinh phải từ 0 tới #{max}."}
   end
 
   def build("set_level", %{"level" => lv}) when is_integer(lv) do
@@ -118,21 +146,27 @@ defmodule HacLong.Admin do
       not (is_integer(up) and up in 0..Engine.max_upgrade()) ->
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
-      (up > 0 or it.slot == "wing") and it.slot not in Engine.equip_slots() ->
+      up > 0 and it.slot not in Engine.equip_slots() ->
         {:error, "#{it.name} không nâng cấp được."}
 
-      # đồ đã nâng cấp và cánh là từng món riêng (`Gear.plain/1`), nằm trong túi đồ hiếm
-      up > 0 or it.slot == "wing" ->
+      # trang bị luôn là từng món riêng (`Gear.plain/1`) trong túi trang bị
+      Engine.gear_item?(id) ->
         {:ok,
          fn p ->
            if length(Gear.bag(p)) + count > Gear.max_bag() do
-             {:error, "Túi đồ hiếm không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
+             {:error, "Túi trang bị không đủ chỗ cho #{count} món (tối đa #{Gear.max_bag()})."}
            else
              gs = for _ <- 1..count, do: Gear.plain(id)
              gs = if wopt, do: Enum.map(gs, &Map.put(&1, :wopt, wopt)), else: gs
              p = Map.put(p, :gear, (Map.get(p, :gear) || []) ++ gs)
              p = Enum.reduce(gs, p, &put_upgrade(&2, &1.uid, up))
-             {:ok, p, "Đã tặng #{it.name}#{if up > 0, do: " +#{up}", else: ""} ×#{count}."}
+
+             msg =
+               if up > 0,
+                 do: "Đã tặng #{it.name} +#{up} ×#{count}.",
+                 else: "Đã tặng #{it.name} ×#{count}."
+
+             {:ok, p, msg}
            end
          end}
 
@@ -146,10 +180,9 @@ defmodule HacLong.Admin do
   end
 
   def build("give_gear", %{"base" => base} = a) do
-    rarity = a["rarity"] || 3
+    opt = a["opt"] || 0
     up = a["up"] || 0
     it = is_binary(base) && Data.item(base)
-    bonus = a["bonus"]
     # Phase 15c: dòng Excellent cho sẵn (`exc`: danh sách id dòng hợp loại đồ)
     exc = a["exc"] || []
     # Phase 15d: May mắn (mọi món) / Kỹ năng (chỉ vũ khí)
@@ -158,20 +191,24 @@ defmodule HacLong.Admin do
     # Phase 15g: đồ Bộ Thần (chỉ món bộ giáp)
     anc = a["anc"] == true
 
-    cond do
-      !it or it.slot not in Engine.gear_slots() ->
-        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên (cánh: dùng give_item)."}
+    # cánh: dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh `wopt` (hp / mp / ignore_def)
+    wopt = a["wopt"]
 
-      rarity not in 1..3 ->
-        {:error, "Độ hiếm phải là 1, 2 hoặc 3."}
+    cond do
+      !it or it.slot not in ["wing" | Engine.gear_slots()] ->
+        {:error, "\"#{base}\" không phải vũ khí / giáp / khiên / trang sức / cánh."}
+
+      wopt not in [nil, ""] and not (it.slot == "wing" and Gear.wopt_value(it[:tier], wopt) > 0) ->
+        {:error, "Dòng cánh không hợp lệ (cánh bậc có dòng: hp, mp, ignore_def)."}
+
+      not (is_integer(opt) and opt in 0..Gear.max_opt()) ->
+        {:error, "Số dòng cộng thêm phải từ 0 tới #{Gear.max_opt()}."}
 
       not (is_integer(up) and up in 0..Engine.max_upgrade()) ->
         {:error, "Cấp nâng phải từ 0 tới #{Engine.max_upgrade()}."}
 
-      bonus != nil and not valid_stats?(bonus, 0) ->
-        {:error, "Chỉ số cộng thêm không hợp lệ (str, agi, vit, ene: 0..#{@max_stat})."}
-
-      not (is_list(exc) and Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
+      not (is_list(exc) and (exc == [] or it.slot != "wing") and
+               Enum.all?(exc, &(is_binary(&1) and Gear.exc_value(it.slot, &1) > 0))) ->
         {:error, "Dòng Excellent không hợp lệ cho loại đồ này."}
 
       skill and it.slot != "weapon" ->
@@ -184,13 +221,14 @@ defmodule HacLong.Admin do
         {:ok,
          fn p ->
            if length(Gear.bag(p)) >= Gear.max_bag() do
-             {:error, "Túi đồ hiếm đã đầy (#{Gear.max_bag()} món)."}
+             {:error, "Túi trang bị đã đầy (#{Gear.max_bag()} món)."}
            else
-             g = Gear.new(base, rarity, gear_bonus(bonus, rarity, p.level))
+             g = Gear.new(base, opt)
              g = if exc == [], do: g, else: Map.put(g, :exc, Enum.uniq(exc))
              g = if luck, do: Map.put(g, :luck, true), else: g
              g = if skill, do: Map.put(g, :skill, true), else: g
              g = if anc, do: Map.put(g, :anc, true), else: g
+             g = if wopt in [nil, ""], do: g, else: Map.put(g, :wopt, wopt)
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
              {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}
@@ -226,6 +264,39 @@ defmodule HacLong.Admin do
     end
   end
 
+  # chỉ số về gốc của lớp, điểm tiềm năng đúng như người chơi thật ở cấp / số lần chuyển sinh này (chưa cộng):
+  # (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × `rebirth_points`
+  def build("reset_stats", _a),
+    do:
+      {:ok,
+       fn p ->
+         points =
+           (p.level - 1) * Engine.points_per_level(p.cls) +
+             (Map.get(p, :rebirths) || 0) * Engine.rebirth_points()
+
+         p = %{p | stats: Data.class(p.cls).base, points: points}
+         d = Engine.derived(p)
+
+         {:ok, Map.merge(p, %{hp: min(p.hp, d.maxHp), mp: min(p.mp || 0, d.maxMp)}),
+          "Đặt lại chỉ số gốc, #{points} điểm tiềm năng chưa cộng."}
+       end}
+
+  # hủy mọi trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên
+  def build("clear_bag", _a),
+    do:
+      {:ok,
+       fn p ->
+         bag = Gear.bag(p)
+         uids = Enum.map(bag, & &1.uid)
+
+         p =
+           p
+           |> Map.put(:gear, Enum.reject(Gear.list(p), &(&1.uid in uids)))
+           |> Map.update(:upgrades, %{}, &Map.drop(&1 || %{}, uids))
+
+         {:ok, p, "Đã hủy #{length(bag)} trang bị trong túi."}
+       end}
+
   def build("heal", _a),
     do:
       {:ok,
@@ -240,25 +311,6 @@ defmodule HacLong.Admin do
 
   defp put_upgrade(p, id, up),
     do: Map.put(p, :upgrades, Map.put(Map.get(p, :upgrades) || %{}, id, up))
-
-  defp valid_stats?(m, min) when is_map(m) and map_size(m) > 0 do
-    Enum.all?(m, fn {k, v} ->
-      k in ~w(str agi vit ene) and is_integer(v) and v in min..@max_stat
-    end)
-  end
-
-  defp valid_stats?(_, _), do: false
-
-  # Không cho sẵn chỉ số: lấy `rarity` dòng đầu (str, agi, vit, ene) với mức cao nhất mà đồ rơi ở
-  # cấp đó có thể có (như `Gear.roll/3`).
-  defp gear_bonus(nil, rarity, level) do
-    top = 1 + floor(level / 6)
-    Gear.stats() |> Enum.take(rarity) |> Map.new(&{&1, top})
-  end
-
-  defp gear_bonus(bonus, _rarity, _level) do
-    for {k, v} <- bonus, v > 0, into: %{}, do: {String.to_existing_atom(k), v}
-  end
 
   # ---------- Nhật ký quản trị ----------
 
@@ -304,6 +356,24 @@ defmodule HacLong.Admin do
     )
 
     :ok
+  end
+
+  @doc "Các dòng `admin_log` mới nhất của lệnh `op` (vd. lịch sử tặng quà)."
+  def recent_op(op, limit) do
+    Repo.all(
+      from l in "admin_log",
+        where: l.op == ^op,
+        order_by: [desc: l.id],
+        limit: ^limit,
+        select: %{
+          id: l.id,
+          admin: l.admin_name,
+          target_id: l.target_id,
+          params: l.params,
+          result: l.result,
+          at: l.inserted_at
+        }
+    )
   end
 
   @doc "Các dòng `admin_log` mới nhất (lọc theo người bị tác động nếu có `target_id`)."

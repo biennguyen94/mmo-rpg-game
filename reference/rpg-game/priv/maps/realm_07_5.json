@@ -1,0 +1,72 @@
+{
+  "id": "realm_07_5",
+  "name": "Vực Hư Không 5",
+  "zone": null,
+  "side": true,
+  "theme": "graveyard",
+  "floor": "floors/graveyard",
+  "realm": 7,
+  "min_rebirths": 7,
+  "min_level": 40,
+  "tiles": [
+    "KKKKKKKKKKKKKKKKKKKKKKKKKK",
+    "K.....:.:K:...:..KK..:...K",
+    "K..:..S....KK..S..:......K",
+    "K.S........:......:..:...K",
+    "K.SK........:..K...:.....K",
+    "K:.....:::.........K..:..K",
+    "K.:.KKK:.S..K::..........K",
+    "K..:.:::::::.....K.......K",
+    "O...:::...::::::::::::...K",
+    "K.....K..:...:::.::....K.K",
+    "K.:..S.:....K:.S..S...S..K",
+    "K..............::S....K..K",
+    "K:SK...:..K.K.....:K:....K",
+    "K..K...S.:....:.....:....K",
+    "K:S....:...K......:......K",
+    "KKKKKKKKKKKKKKKKKKKKKKKKKK"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_07_4",
+      "spawn": [
+        24,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r7_phantom_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r7_wight_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r7_revenant_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r7_shadow_dragon",
+      "max": 1,
+      "respawn": 240
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": []
+}

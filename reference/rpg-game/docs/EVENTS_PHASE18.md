@@ -10,8 +10,8 @@ Kền Kền (M2). Mọi số ở `priv/game_data/rules.json`, đổi được, k
 - **Lịch:** mỗi `every_hours` (2) giờ, giờ Việt Nam, lệch `offset_hours` (1) giờ so với Golden Invasion → mở lúc 1h, 3h,
   5h … 23h; cho vào trong `entry_minutes` (10) phút. Mỗi lần mở mỗi nhân vật vào **một lần**.
 - **Vào:** gặp **Người Gác Tháp** ở Làng (thẻ "😈 Quảng Trường Quỷ" dưới Tháp Vô Tận), từ cấp `min_level` (35), tốn 1
-  **Vé Quảng Trường** (`ds_ticket`). Vé mua tại đó giá `ticket_price` (20 000 vàng) hoặc rơi từ quái thường cấp
-  ≥ `ticket_drop.min_level` (30) với tỉ lệ `ticket_drop.chance` (1 %).
+  **Vé Quảng Trường** (`ds_ticket`). Vé mua tại đó giá `ticket_price` (20 000 vàng) hoặc ghép từ mảnh (B-18): quái thường cấp
+  ≥ `ticket_drop.min_level` (30) rơi một mảnh trong `ticket_drop.parts` với tỉ lệ `ticket_drop.chance` (2 %), ghép ở Máy Hỗn Nguyên.
 - **Trong lượt:** bản đồ riêng (như một tầng Tháp), `waves` (5) đợt: 4 / 5 / 6 / 6 quái rồi 2 trùm. Hạ hết quái thì
   cầu thang "Đợt sau" mở. Lượt dài `run_minutes` (5) phút.
 - **Kết thúc** khi: hết giờ (bước tiếp theo sau giờ hết), gục ngã, qua hết các đợt, hoặc tự đi cầu thang xuống "Về Làng".
@@ -27,7 +27,7 @@ Kền Kền (M2). Mọi số ở `priv/game_data/rules.json`, đổi được, k
 | `reward.gold_per_point` | 5 | vàng = `base_gold(cấp quái)` × hệ số × điểm (lượt đủ ≈ 17 000–22 000 ≈ giá vé) |
 | `reward.xp_per_point` | 0,15 | kinh nghiệm = `base_xp(cấp quái)` × hệ số × điểm (lượt đủ ≈ 1 cấp) |
 | `reward.jewel_every` | 8 | mỗi 8 điểm một viên ngọc (Ước Nguyện / Tâm Linh / Hỗn Nguyên / Sinh Mệnh theo `JEWELS.weights`) |
-| `reward.clear_exc_chance` / `clear_anc_chance` | 0,3 / 0,15 | qua hết đợt: thêm 1 món đồ Hiếm / Sử Thi; 30 % Excellent, 15 % là đồ Thần (nếu là món bộ giáp) |
+| `reward.clear_exc_chance` / `clear_anc_chance` | 0,3 / 0,15 | qua hết đợt: thêm 1 món đồ có dòng cộng thêm +8 (60 %) / +12 (40 %) (kiểu MU, DECISIONS B-15; trước là Hiếm / Sử Thi); 30 % Excellent, 15 % là đồ Thần (nếu là món bộ giáp) |
 | `top` | 100k + 3 Hỗn Nguyên + 3 Tâm Linh / 60k + 2 + 2 / 30k + 1 + 1 | thưởng hạng 1 / 2 / 3 mỗi ngày, gửi thư lúc 0h05 |
 
 - Quái trong lượt **không** rơi đồ / ngọc / vé riêng (như Tháp); thưởng tính một lần lúc kết thúc.
@@ -54,7 +54,7 @@ Kền Kền (M2). Mọi số ở `priv/game_data/rules.json`, đổi được, k
   giữa Golden Invasion và Quảng Trường Quỷ); cho vào trong `entry_minutes` (10) phút; mỗi lần mở vào **một lần**
   (`daily.bc_slot`).
 - **Vào:** Người Gác Tháp ở Làng (thẻ "🏰 Lâu Đài Máu"), từ cấp `min_level` (40), tốn 1 **Vé Lâu Đài** (`bc_ticket`): mua
-  giá `ticket_price` (30 000 vàng) hoặc rơi từ quái thường cấp ≥ `ticket_drop.min_level` (35), tỉ lệ 0,5 %.
+  giá `ticket_price` (30 000 vàng) hoặc ghép từ mảnh (B-18): quái thường cấp ≥ `ticket_drop.min_level` (35) rơi mảnh, tỉ lệ 1 %.
 - **Ba bước** trong `run_minutes` (8) phút, bản đồ riêng:
   1. hạ `guards` (8) **quân canh** (quái vùng cuối, máu / đòn × `guard_mult` 1,1);
   2. phá **Cổng Thành** (`gate`: không đánh trả, máu × 6) — hiện gần cầu thang lên;

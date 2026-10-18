@@ -13,7 +13,8 @@ defmodule HacLong.Game.MpReworkTest do
     p = player()
     fb = hd(Engine.skills(p))
     assert Engine.skill_mp(p, fb) == fb.mp
-    assert Engine.skill_mp(%{p | level: 26}, fb) == round(fb.mp * 2)
+    per = HacLong.Game.Data.rules().combat.skill_mp_per_level
+    assert Engine.skill_mp(%{p | level: 26}, fb) == round(fb.mp * (1 + per * 25))
   end
 
   test "hồi MP mỗi lượt theo MP tối đa và Năng lượng" do

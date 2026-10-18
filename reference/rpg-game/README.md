@@ -27,12 +27,12 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 - Bản đồ ô vuông: Nhà riêng, Làng và 6 vùng đất; mỗi vùng có 2 bản đồ quái và một phòng trùm,
   nối với nhau bằng cổng. Quái dùng chung giữa mọi người, đi lang thang và hồi lại sau khi bị hạ;
   thấy người chơi khác trên cùng bản đồ. Nhân vật và quái di chuyển mượt
-- Đá dịch chuyển ở Làng và sâu trong mỗi vùng: chạm để ghi nhớ, rồi dịch chuyển qua lại
+- Đài Phúc Lành ở Làng và sâu trong mỗi vùng: chạm để nhận phúc lành của vùng và đặt điểm hồi sinh; đi xa dùng Chọn bản đồ
 - 24 loại quái thường, 6 trùm trong phòng riêng (hỏi xác nhận trước khi đấu; hạ trùm để mở
   cổng sang vùng tiếp theo)
 - Chiến đấu theo lượt: tấn công, kỹ năng (có hồi chiêu), uống máu, bỏ chạy; hiệu ứng trạng thái
   (độc, bỏng, choáng, suy yếu, cuồng nộ...)
-- Đồ có chỉ số ngẫu nhiên rơi từ quái (Tốt, Hiếm, Sử Thi)
+- Đồ rơi từ quái kiểu MU: đồ thường (May mắn, Kỹ năng, dòng cộng thêm +4…+16), đồ hoàn hảo, đồ Thần (DECISIONS B-15)
 - Sổ tay quái vật: hạ đủ mốc mỗi loài thì đánh loài đó mạnh hơn
 - Chuyển sinh ở cấp 50: về cấp 1 với điểm tiềm năng cộng thêm
 - Ngày và đêm theo giờ Việt Nam; ban đêm có quái Bóng Đêm
@@ -81,6 +81,16 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 
 - Quản trị viên: xử lý báo cáo, cấm chat, khóa tài khoản, thông báo cả server, tặng quà qua
   hộp thư, gọi trùm thế giới
+
+Thêm từ đợt 8 phase 2026-10 (`docs/PHASE_PLAN.md`):
+
+- 10 kỹ năng Tháp Thử Thách mỗi lớp (mở ở tầng 10 … 100), **nguyên tố** khắc nhau, mang **bộ 4 kỹ năng** vào trận
+- **10 vùng đất chuyển sinh** cấp quái 52–150 (cần chuyển sinh 1…10), rơi đồ quý hơn; Tháp tầng 61–160 dùng quái các vùng này
+- **Tự đánh** khi đang mở game: chọn quái, % uống bình, lọc đồ quý; tự tắt khi hết bình, có người tên đỏ, rời bản đồ
+- **Bản đồ động**: nước gợn, cây lay, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp (tắt được)
+- Người chơi AI biết về Làng mua bình, nghỉ trọ
+- Bộ hình đồ **Pixel** CC0 thay cho hình MU (Menu → Cài đặt → Hình đồ)
+- Đồ rơi lúc túi đồ hiếm đầy gửi vào Hộp thư; hủy đồ ngay trên bảng kết quả trận; ép đồ trong túi ở Thợ Rèn
 
 Một lượt chơi từ đầu đến khi hạ Hắc Long mất khoảng 430 trận nếu chỉ đánh quái, khoảng 340
 trận nếu làm cả nhiệm vụ và việc hằng ngày (theo mô phỏng).
@@ -172,7 +182,7 @@ lib/hac_long/world_boss.ex          Trùm thế giới: lịch xuất hiện, m�
 lib/hac_long_web/channels/          UserSocket, GameChannel
 lib/hac_long_web/controllers/       API đăng nhập; trang chủ (chèn dữ liệu game cho client)
 lib/hac_long_web/remote_ip.ex       Lấy IP thật từ X-Forwarded-For khi chạy sau proxy tin cậy
-lib/mix/tasks/                      mix hac_long.simulate, mix hac_long.admin, mix hac_long.audit
+lib/mix/tasks/                      mix hac_long.simulate, hac_long.journey, hac_long.admin, hac_long.audit
 priv/static/js/logic.js             Hàm thuần của giao diện (tìm đường, hình theo cấp…), test bằng node --test
 e2e/                                E2E Playwright + soak test (xem e2e/README.md)
 .github/workflows/ci.yml            CI: format, biên dịch không cảnh báo, mix test
@@ -204,6 +214,19 @@ Kết quả in ra, cho mỗi lớp và bốn cách chơi (chỉ đánh, +nhiệm
 trung bình để thắng, số lần chết, vàng/kinh nghiệm từ nhiệm vụ và việc hằng ngày, và cấp độ
 lúc hạ từng trùm.
 
+Muốn xem **cả hành trình một nhân vật** (từ cấp 1, mặc đồ gì, ép tới đâu, hạ trùm, chuyển sinh, vào vùng chuyển sinh,
+mất bao nhiêu trận mỗi chặng, chết ở đâu):
+
+```bash
+scripts/balance/journey.sh --cls dk --rebirths 10 --seed 42          # = mix hac_long.journey …
+scripts/balance/journey.sh --cls all --rebirths 3 --seed 1 --csv     # cả 4 lớp, bảng so sánh, CSV từng trận
+scripts/balance/journey.sh --rebirths 10 --farm 1000 --seed 42       # đủ chuyển sinh rồi cày thêm 1000 trận ở vùng cuối
+```
+
+Báo cáo Markdown (và CSV) ghi ở `tmp/journey/`: tổng, từng chặng, từng khoảng cấp (bản đồ chính, lượt / trận, máu bị đánh,
+vàng), quái hay làm gục, nhân vật ở mỗi mốc chuyển sinh (chỉ số, đồ +N, dòng, Excellent, ngọc), diễn biến. Cùng seed thì
+cùng kết quả, nên chạy trước / sau khi đổi số. Cách bot chơi: `lib/hac_long/game/journey.ex` (moduledoc).
+
 ## Giao thức
 
 | Kênh | Nội dung |
@@ -233,15 +256,15 @@ lúc hạ từng trùm.
 | push `"arena"` | → `{me: {rating, wins, losses, today, per_day}, suggestions, top}` |
 | push `"market"` | `{q?}` → `{listings: [{id, seller, name, item, count, gear, price, mine}], fee, max}` |
 | push `"mail"` | → `{mails: [{id, subject, body, gold, xp, items, claimed, at}], unread}`; server đẩy `"mail"` `{unread}` khi có thư mới hoặc vừa mở thư |
-| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, subject, body?, gold?, xp?, items?}`, `world_boss`; chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, vit?, agi?, def?}`, `give_item {id, count?, up?}`, `give_gear {base, rarity?, bonus?, up?}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
+| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, filter?: {min_level?, max_level?, min_rebirths?, online?}, subject, body?, gold?, xp?, items?}` (gửi mọi người: trừ bot), `gift_count {filter?}` → `{count}`, `gift_log` → `{log}` (20 đợt gửi gần nhất), `world_boss`, `invasion`, `open_ds`, `open_bc` (mở ngay Quảng Trường Quỷ / Lâu Đài Máu); chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, agi?, vit?, ene?}`, `reset_stats` (chỉ số gốc của lớp, điểm tiềm năng theo cấp / chuyển sinh), `clear_bag` (hủy mọi trang bị trong túi, giữ đồ đang mặc / cất tủ), `give_item {id, count?, up?}`, `give_gear {base, opt?, exc?, luck?, skill?, anc?, wopt?, up?}`, `set_tower {floor}` (kỷ lục tháp), `set_rebirths {n}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
 | server push `"world_boss"` | `{alive, name, hp, maxHp, endsAt, nextAt, now, fighters, top}` khi trùm thế giới thay đổi |
 | server push `"notice"` | `{msg}`: thông báo riêng (vd. nhận thưởng trùm thế giới) |
 | push `"leaderboard"` | → `{level, kills, dragon, tower, guild, guild_boss, arena, me}` (mỗi bảng 10 người kèm `title`, `me` là hạng theo cấp) |
 
 Các `act`: `create {name, cls}`, `reset`, `move {dir, confirm?}` (`up`/`down`/`left`/`right`;
 bước vào trùm thì nhận `confirm: "boss"`, gửi lại với `confirm: true` để đấu),
-`teleport {to}` (đứng cạnh đá dịch chuyển; bước vào đá thì nhận `waystone: true`),
-`attack`, `skill {skill?}` (id kỹ năng, không có thì dùng kỹ năng đầu), `potion`, `flee`, `leave`, `alloc {stat, n}`, `equip {id}`,
+(bước vào Đài Phúc Lành, ô `W`, thì nhận `blessing: true`: phúc lành + điểm hồi sinh; lệnh `teleport` cũ đã bỏ, B-26),
+`attack`, `skill {skill?}` (id kỹ năng trong bộ đang mang, không có thì dùng kỹ năng đầu), `skill_set {ids}` (Phase 3: chọn tối đa 4 kỹ năng đã mở mang vào trận, đổi được cả khi đang đánh), `potion`, `flee`, `leave`, `auto {on, target, hp, mp, loot}` (Phase 4: bật / tắt tự đánh khi online, B-31), `alloc {stat, n}`, `equip {id}`,
 `unequip {slot}`, `use {id}` (`equip`, `sell`, `upgrade` nhận cả id đồ ngẫu nhiên `#...`), `rebirth`
 (Trưởng Làng, cấp 50), `mail_claim {id}` (mở thư, nhận quà), `title_set {id}` (`null` để
 bỏ danh hiệu), `fish_cast` (đứng cạnh nước; trả `wait` mili giây tới lúc cá cắn và `window`),
@@ -261,7 +284,7 @@ Trạng thái nhân vật có `pos: {map, x, y}`, `waystones` (các đá đã gh
 `guild` (bang đang ở: `{id, name, tag, level, role}`, không lưu trong bảng characters),
 `chest_day`, `pet`, `pets`, `furniture: {id: số}` (đồ trang trí trong kho), `decor: [{id, x, y}]`
 (đồ đã đặt), `view.look` (`{hair, weapon, armor, shield, pet}`: lớp hình để vẽ nhân vật),
-`view.comfort`, `fish_caught`, `gear: [{uid, base, rarity, bonus}]` (đồ ngẫu nhiên; `view.gear` có tên, chỉ số,
+`view.comfort`, `fish_caught`, `gear: [{uid, base, opt, exc, luck, skill, anc…}]` (đồ riêng từng món; `view.gear` có tên, `kind`, chỉ số,
 giá bán), `bestiary: {id_quái: số}`, `rebirths`, `battle.effects: {player, monster}` (hiệu ứng
 `[{id, turns, power}]`), `battle.cds` (hồi chiêu `[{id, turns}]`), `achievements: [id]`, `title` (id thành tựu làm danh hiệu), `view.achievements`
 (`[{id, done, have}]`), `view.forge` (đồ đang mặc, cấp nâng và giá lên cấp tiếp), `tutorial` (bước
@@ -320,8 +343,17 @@ mix hac_long.icons              # quét assets_src/items/icons → priv/static/a
 mix hac_long.items.import       # Item.txt → priv/items_raw.json + priv/items_from_txt.json (nháp)
 ```
 
+Bộ hình đồ Pixel CC0 (Phase 7, đã có sẵn trong git; chỉ chạy lại khi thêm đồ mới):
+
+```bash
+git clone --depth 1 https://github.com/crawl/tiles /tmp/crawl-tiles
+python3 scripts/pixel_icons.py /tmp/crawl-tiles/releases/Nov-2015   # → priv/static/assets/pixel/ + pixel_icons.json
+# hình quần / cánh lấy từ assets_src/pixel_extra/{leggings,wings}/ (CC0, có sẵn trong git)
+```
+
 Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):
-[docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md).
+[docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md). Hướng dẫn người chơi: [docs/USER_GUIDE.md](docs/USER_GUIDE.md); lịch và cách
+tham gia các sự kiện: [docs/EVENTS.md](docs/EVENTS.md).
 
 ## Hướng phát triển tiếp
 
@@ -330,5 +362,5 @@ Kế hoạch hiện tại: [docs/PHASE_PLAN.md](docs/PHASE_PLAN.md) (các phase 
 
 ## Bản quyền hình ảnh
 
-Hình quái vật và ô bản đồ từ Dungeon Crawl Stone Soup (CC0) và icon từ game-icons.net (CC BY 3.0).
+Hình quái vật, ô bản đồ và bộ hình đồ Pixel từ Dungeon Crawl Stone Soup (CC0), icon từ game-icons.net (CC BY 3.0).
 Chi tiết và ghi tên tác giả xem [CREDITS.md](CREDITS.md).

@@ -79,7 +79,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -777,7 +777,7 @@ defmodule HacLongWeb.GameChannel do
         {:error, "Mỗi thư tối đa #{cap.max_xp} kinh nghiệm."}
 
       %{"all" => true} ->
-        with {:ok, n} <- Mailbox.send_all(mail), do: {:ok, %{sent: n}}
+        with {:ok, n} <- Mailbox.send_all(mail, p["filter"] || %{}), do: {:ok, %{sent: n}}
 
       %{"uid" => id} when is_integer(id) ->
         with :ok <- Mailbox.send(id, mail), do: {:ok, %{sent: 1}}
@@ -787,12 +787,58 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Phase 2: xem trước số người nhận quà cho mọi người (theo bộ lọc), lịch sử các đợt gửi
+  defp admin("gift_count", p, _s),
+    do: {:ok, %{count: length(Mailbox.recipients(p["filter"] || %{}))}}
+
+  defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
+
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
+  # Quảng Trường Quỷ / Lâu Đài Máu mở ngay một đợt ngoài lịch, báo cả server
+  defp admin("open_ds", _p, _s), do: open_event(HacLong.Game.DevilSquare, "😈 Quảng Trường Quỷ")
+  defp admin("open_bc", _p, _s), do: open_event(HacLong.Game.BloodCastle, "🏰 Lâu Đài Máu")
+
+  # B-19: Hỗn Chiến Thành mở ngay (tự báo kênh chat), hỗn chiến sau `entry_minutes` phút
+  defp admin("open_cc", _p, _s) do
+    {:ok, w} = HacLong.ChaosCastle.open_now()
+    mins = div(w.starts_at - System.os_time(:second) + 59, 60)
+    {:ok, %{msg: "Đã mở ⚔ Hỗn Chiến Thành: vào trong #{mins} phút, rồi hỗn chiến.", window: w}}
+  end
+
+  # B-22: Công Thành Chiến bắt đầu ngay, mọi bang vào được (tự báo kênh chat)
+  defp admin("open_cs", _p, _s) do
+    :ok = HacLong.CastleSiege.start_now(true)
+    {:ok, %{msg: "Đã mở 🏰 Công Thành Chiến (mọi bang vào được)."}}
+  end
+
+  # B-20: xâm lăng mở ngay (tự báo kênh chat)
+  defp admin("raid_" <> key, _p, _s) when key in ["red_dragon", "white_wizard"] do
+    case HacLong.Raids.start_now(key) do
+      {:ok, st} ->
+        r = HacLong.Raids.rule(key)
+        {:ok, %{msg: "Đã mở #{r.icon} #{r.name} ở #{map_size(st.maps)} bản đồ.", raid: st}}
+
+      err ->
+        err
+    end
+  end
+
   defp admin(_op, _p, _s), do: {:error, "Lệnh quản trị không hợp lệ."}
+
+  defp open_event(mod, name) do
+    w = mod.open_now()
+    mins = div(w.closes_at - w.opens_at, 60)
+
+    HacLong.Chat.system(
+      "#{name} mở ngay (quản trị viên): vào trong #{mins} phút ở Người Gác Tháp, cấp từ #{mod.rules().min_level}, cần vé."
+    )
+
+    {:ok, %{msg: "Đã mở #{name} trong #{mins} phút.", window: w}}
+  end
 
   # `minutes`: số phút, hoặc nil/0 là vĩnh viễn
   defp punish("mute", id, p), do: Moderation.mute(id, minutes(p))
@@ -1047,6 +1093,11 @@ defmodule HacLongWeb.GameChannel do
         # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
         slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
+        # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
+        autoMap: %{
+          ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),
+          kinds: HacLong.Game.AutoHunt.kinds(player.pos.map)
+        },
         achievements: Achievements.view(player),
         chestReady: player[:chest_day] != Daily.today(),
         event: event_view(player),

@@ -86,12 +86,17 @@ defmodule HacLong.Arena do
       final: false,
       special: %{name: skill.name, every: 3, mult: 1.8},
       on_hit: nil,
-      # cánh: % sát thương gộp vào tấn công, % giảm sát thương nhận gộp vào máu
-      maxHp: round(d.maxHp / (1 - d.wingAbsorb)),
-      hp: round(d.maxHp / (1 - d.wingAbsorb)),
+      # cánh: % sát thương gộp vào tấn công. Phase 8: phần giảm sát thương nhận (cánh × Excellent) ở `taken`,
+      # bỏ qua phòng thủ (dòng cánh) ở `ignore_def`, máu thật (trước đây gộp hấp thụ của cánh vào máu, bỏ sót Excellent)
+      maxHp: d.maxHp,
+      hp: d.maxHp,
       atk: round(d.atk * (1 + d.wingDmg)),
+      taken: Float.round((1 - d.wingAbsorb) * (1 - d.excAbsorb) * 1.0, 4),
+      ignore_def: d.ignoreDef,
       def: d.def,
       crit: d.crit,
+      # Phase 8: hệ số chí mạng thật của người đó (trước đây ×monster_crit_mult như quái)
+      crit_mult: d.critMult,
       dodge: d.dodge,
       xp: 0,
       gold: 0,

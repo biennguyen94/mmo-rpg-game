@@ -118,8 +118,10 @@ defmodule HacLong.Invasion do
     s = cancel(s)
     timer = Process.send_after(self(), :tick, @rules.minutes * 60 * 1000)
 
+    where = Enum.map_join(Map.keys(counts), ", ", &map_name/1)
+
     Chat.system(
-      "✨ Golden Invasion! Quái vàng xuất hiện ở #{Enum.map_join(Map.keys(counts), ", ", &map_name/1)} trong #{@rules.minutes} phút: thưởng ×#{@rules.reward_mult}, dễ rơi ngọc."
+      "✨ Golden Invasion! Quái vàng xuất hiện ở #{where} trong #{@rules.minutes} phút: thưởng ×#{@rules.reward_mult}, dễ rơi ngọc."
     )
 
     publish(%{s | active: true, ends_at: ends, maps: counts, timer: timer})

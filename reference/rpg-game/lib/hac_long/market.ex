@@ -81,13 +81,13 @@ defmodule HacLong.Market do
     Map.merge(Map.drop(l, [:gear]), info)
   end
 
-  # đồ chỉ số ngẫu nhiên lưu trong cột gear (khóa chuỗi) → dạng engine dùng; đọc qua `Gear.load/1` để giữ mọi
+  # đồ riêng từng món lưu trong cột gear (khóa chuỗi) → dạng engine dùng; đọc qua `Gear.load/1` để giữ mọi
   # dòng của món (Ngọc Sinh Mệnh `opt`, Excellent, May mắn / Kỹ năng, Bộ Thần, dòng cánh)
   defp gear_of(g) do
     case Gear.load([g]) do
       [m] -> Map.put(m, :up, g["up"] || 0)
       # đồ gốc không còn trong dữ liệu: giữ phần tối thiểu để vẫn rút về / hiện được
-      [] -> %{uid: g["uid"], base: g["base"], rarity: g["rarity"], bonus: %{}, up: g["up"] || 0}
+      [] -> %{uid: g["uid"], base: g["base"], rarity: 0, bonus: %{}, up: g["up"] || 0}
     end
   end
 
@@ -139,7 +139,10 @@ defmodule HacLong.Market do
           p,
           save,
           row,
-          "Đã rao bán #{it.name}#{if count > 1, do: " ×#{count}", else: ""} giá #{price} vàng."
+          if(count > 1,
+            do: "Đã rao bán #{it.name} ×#{count} giá #{price} vàng.",
+            else: "Đã rao bán #{it.name} giá #{price} vàng."
+          )
         )
     end
   end
@@ -216,7 +219,7 @@ defmodule HacLong.Market do
         row == nil -> Repo.rollback("Món này đã có người mua hoặc đã rút về.")
         row.seller_id == uid -> Repo.rollback("Đây là hàng của bạn.")
         p.gold < row.price -> Repo.rollback("Không đủ vàng.")
-        row.gear && length(Gear.bag(p)) >= Gear.max_bag() -> Repo.rollback("Túi đồ hiếm đầy.")
+        row.gear && length(Gear.bag(p)) >= Gear.max_bag() -> Repo.rollback("Túi trang bị đầy.")
         true -> :ok
       end
 
@@ -233,7 +236,10 @@ defmodule HacLong.Market do
       Mailbox.send(row.seller_id, %{
         subject: "Chợ: bán được #{name}",
         body:
-          "Có người mua #{name}#{if row.count > 1, do: " ×#{row.count}", else: ""} giá #{row.price} vàng. Phí chợ #{@fee_pct}%.",
+          if(row.count > 1,
+            do: "Có người mua #{name} ×#{row.count} giá #{row.price} vàng. Phí chợ #{@fee_pct}%.",
+            else: "Có người mua #{name} giá #{row.price} vàng. Phí chợ #{@fee_pct}%."
+          ),
         gold: earned
       })
 
@@ -263,7 +269,7 @@ defmodule HacLong.Market do
       row = hd(rows)
 
       if row.gear && length(Gear.bag(p)) >= Gear.max_bag(),
-        do: Repo.rollback("Túi đồ hiếm đầy, bán bớt đồ trước khi rút về.")
+        do: Repo.rollback("Túi trang bị đầy, bán bớt đồ trước khi rút về.")
 
       p = receive_goods(p, row)
       save.(p)

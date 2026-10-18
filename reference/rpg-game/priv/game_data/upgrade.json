@@ -1,56 +1,143 @@
 {
   "UPGRADE": {
+    "_doc": "Ép đồ kiểu MU (DECISIONS B-13): +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công; +7 → +9 1 Ngọc Tâm Linh, tỉ lệ rate (May mắn cộng thêm RULES.luck_skill.luck_upgrade), thất bại về +0 (fail reset); +10, +11 ép ở Máy Hỗn Nguyên (at chaos) bằng Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ đồ, 2026-10-17). items: ngọc tốn mỗi lần ép; vàng theo RULES.upgrade.cost_pct. eff: cấp tính chỉ số (chỉ số cộng = eff × RULES.upgrade.bonus_pct × chỉ số gốc): +1 → +9 mỗi cấp 8 %, +10 = 120 %, +11 = 180 %. luck: tỉ lệ cộng thêm khi món có May mắn (+7 → +9: 25 %, +10 / +11: 10 %). DECISIONS \"Ép +10/+11 khác biệt, cánh theo bậc\". fail: null | down (tụt 1 cấp) | reset (về +0) | destroy (vỡ đồ).",
     "max": 11,
     "announce_from": 7,
     "double_from": 10,
     "steps": [
       {
-        "level": 6,
-        "jewel": "jewel_bless",
+        "level": 1,
+        "items": {
+          "jewel_bless": 1
+        },
         "rate": 1.0,
-        "fail": null
+        "fail": null,
+        "at": "smith",
+        "eff": 1
+      },
+      {
+        "level": 2,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith",
+        "eff": 2
+      },
+      {
+        "level": 3,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith",
+        "eff": 3
+      },
+      {
+        "level": 4,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith",
+        "eff": 4
+      },
+      {
+        "level": 5,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith",
+        "eff": 5
+      },
+      {
+        "level": 6,
+        "items": {
+          "jewel_bless": 1
+        },
+        "rate": 1.0,
+        "fail": null,
+        "at": "smith",
+        "eff": 6
       },
       {
         "level": 7,
-        "jewel": "jewel_soul",
-        "rate": 0.7,
-        "fail": "down"
+        "items": {
+          "jewel_soul": 1
+        },
+        "rate": 0.5,
+        "fail": "reset",
+        "at": "smith",
+        "eff": 7,
+        "luck": 0.25
       },
       {
         "level": 8,
-        "jewel": "jewel_soul",
-        "rate": 0.6,
-        "fail": "down"
+        "items": {
+          "jewel_soul": 1
+        },
+        "rate": 0.5,
+        "fail": "reset",
+        "at": "smith",
+        "eff": 8,
+        "luck": 0.25
       },
       {
         "level": 9,
-        "jewel": "jewel_soul",
+        "items": {
+          "jewel_soul": 1
+        },
         "rate": 0.5,
-        "fail": "down"
+        "fail": "reset",
+        "at": "smith",
+        "eff": 9,
+        "luck": 0.25
       },
       {
         "level": 10,
-        "jewel": "jewel_chaos",
-        "rate": 0.5,
-        "fail": "destroy"
+        "items": {
+          "jewel_chaos": 1,
+          "jewel_bless": 1,
+          "jewel_soul": 1
+        },
+        "rate": 0.35,
+        "fail": "reset",
+        "at": "chaos",
+        "eff": 15,
+        "luck": 0.1
       },
       {
         "level": 11,
-        "jewel": "jewel_chaos",
-        "rate": 0.45,
-        "fail": "destroy"
+        "items": {
+          "jewel_chaos": 1,
+          "jewel_bless": 2,
+          "jewel_soul": 2
+        },
+        "rate": 0.25,
+        "fail": "reset",
+        "at": "chaos",
+        "eff": 22.5,
+        "luck": 0.1
       }
-    ]
+    ],
+    "version": 3
   },
   "JEWELS": {
     "weights": {
-      "jewel_bless": 50,
-      "jewel_soul": 35,
+      "jewel_bless": 60,
+      "jewel_soul": 25,
       "jewel_chaos": 15,
       "jewel_life": 10
     },
+    "_doc_weights": "Trọng số loại ngọc rơi. Ước Nguyện 50 → 60, Tâm Linh 35 → 25 (2026-10-17, DECISIONS \"Tỉ lệ rơi Ước Nguyện\"): mô phỏng đầy đủ thừa Tâm Linh, thiếu Ước Nguyện cho +1…+6.",
     "monster_level": 12,
-    "monster_chance": 0.006,
+    "monster_chance": 0.015,
+    "_doc_monster_chance": "Quái thường cấp ≥ monster_level rơi 1 viên ngọc (loại theo weights). 0,006 → 0,015 (2026-10-17, DECISIONS \"Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh\"): trước ~370 con mới có 1 Ước Nguyện.",
     "boss_chance": 0.3,
     "tower_every": 10,
     "chest_chance": {

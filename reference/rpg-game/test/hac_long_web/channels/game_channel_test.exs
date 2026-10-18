@@ -154,7 +154,7 @@ defmodule HacLongWeb.GameChannelTest do
     assert Characters.load(user.id).battle == nil
   end
 
-  test "chạm đá dịch chuyển rồi dịch chuyển về Làng" do
+  test "chạm Đài Phúc Lành: nhận phúc lành, lưu điểm hồi sinh" do
     two = HacLong.World.Maps.get("forest_2")
     {sx, sy} = two.waystone.spawn
     user = create_user()
@@ -162,13 +162,9 @@ defmodule HacLongWeb.GameChannelTest do
     {_, socket} = join_game(user)
 
     r = cmd(socket, %{"act" => "move", "dir" => "up"})
-    assert r.ok and r.waystone
-    assert Characters.load(user.id).waystones == ["forest_2"]
-
-    r = cmd(socket, %{"act" => "teleport", "to" => "village"})
-    assert r.ok and r.player.pos.map == "village"
-    assert_push "map", %{map: "village"}
-    assert Characters.load(user.id).pos.map == "village"
+    assert r.ok and r.blessing
+    c = Characters.load(user.id)
+    assert c.waystones == ["forest_2"] and c.blessing.map == "forest_2"
   end
 
   test "chat thế giới: mọi người nhận được, chữ được làm sạch, chống spam" do
@@ -228,7 +224,8 @@ defmodule HacLongWeb.GameChannelTest do
       player_at(user, %{map: "lair_boss", x: 7, y: 4}, %{
         level: 50,
         bosses: bosses,
-        stats: %{str: 400, agi: 0, vit: 200, ene: 200},
+        # máu khi nạp không vượt máu tối đa: Thể lực 600 cho tối đa ~6500 để giữ đủ 5000
+        stats: %{str: 400, agi: 0, vit: 600, ene: 200},
         hp: 5000
       })
 
@@ -585,7 +582,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "mời, bỏ đồ, đổi gì cũng phải xác nhận lại, cả hai xác nhận thì đổi" do
-      sword = %{uid: "#TRADE1", base: "club", rarity: 2, bonus: %{str: 3}}
+      sword = %{uid: "#TRADE1", base: "club", rarity: 0, bonus: %{}, opt: 2}
       ua = create_user()
 
       pa =
@@ -621,7 +618,7 @@ defmodule HacLongWeb.GameChannelTest do
       assert {:ok, %{trade: %{mine: %{gold: 100, gear: [g]}}}} =
                top(sa, "offer", %{"offer" => offer_a})
 
-      assert g.up == 2 and g.rarity == 2
+      assert g.up == 2 and g.kind == "opt"
 
       assert {:ok, _} = top(sb, "offer", %{"offer" => %{"gold" => 300}})
       assert {:ok, %{trade: %{my_ready: true, their_ready: false}}} = top(sa, "ready")
@@ -639,7 +636,7 @@ defmodule HacLongWeb.GameChannelTest do
       assert a.gold == pa.gold - 100 + 250 and b.gold == pb.gold - 250 + 100
       assert a.inv["potion_s"] == 3 and b.inv["potion_s"] == Map.get(pb.inv, "potion_s", 0) + 2
       assert a.gear == []
-      assert [%{uid: "#TRADE1"}] = b.gear
+      assert [%{uid: "#TRADE1"}] = HacLong.Game.Gear.bag(b)
       assert b.upgrades["#TRADE1"] == 2 and not Map.has_key?(a.upgrades || %{}, "#TRADE1")
       assert Characters.load(ub.id).gold == b.gold
     end
@@ -838,7 +835,7 @@ defmodule HacLongWeb.GameChannelTest do
           online: false,
           rank: rank,
           class_rank: crank,
-          stats: %{str: %{base: 5, gear: 0}},
+          stats: %{str: %{base: 5}},
           crit_mult: cm,
           hit_rate: hr,
           counts: %{kills: _, pk_wins: 0, pk_losses: 0},
@@ -926,7 +923,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "rao bán, mua, rút về; người bán nhận tiền qua hộp thư trừ phí" do
-      sword = %{uid: "#CHO1", base: "item_0_3", rarity: 2, bonus: %{str: 3, agi: 1}}
+      sword = %{uid: "#CHO1", base: "item_0_3", rarity: 0, bonus: %{}, luck: true}
       ua = create_user()
 
       player_at(ua, %{map: "village", x: 7, y: 14}, %{
@@ -954,7 +951,7 @@ defmodule HacLongWeb.GameChannelTest do
       pot = Enum.find(listings, &(&1.item == "potion_m"))
       gear = Enum.find(listings, &(&1.gear != nil))
       assert pot.count == 3 and pot.seller_id == ua.id and not pot.mine
-      assert gear.gear.up == 2 and gear.name == "Đao Katana Sức Mạnh"
+      assert gear.gear.up == 2 and gear.name == "Đao Katana"
 
       assert %{ok: false, msg: "Đây là hàng của bạn."} =
                cmd(sa, %{"act" => "market_buy", "listing" => pot.id})
@@ -968,7 +965,7 @@ defmodule HacLongWeb.GameChannelTest do
                cmd(sb, %{"act" => "market_buy", "listing" => pot.id})
 
       r = cmd(sb, %{"act" => "market_buy", "listing" => gear.id})
-      assert [%{uid: "#CHO1"}] = r.player.gear
+      assert Enum.any?(r.player.gear, &(&1.uid == "#CHO1"))
       assert r.player.upgrades["#CHO1"] == 2
 
       # rút về

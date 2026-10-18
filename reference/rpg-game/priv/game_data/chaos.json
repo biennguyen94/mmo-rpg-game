@@ -16,7 +16,7 @@
         "jewel_chaos": 1
       },
       "gold": 20000,
-      "rate": 0.1,
+      "rate": 0.25,
       "per_up": 0.05,
       "max_rate": 0.6,
       "out": "wing_{cls}_1"
@@ -83,7 +83,7 @@
       "id": "add_exc",
       "name": "Pha Excellent",
       "mode": "excellent",
-      "desc": "1 vũ khí / giáp / khiên / trang sức +5 trở lên + 1 Hỗn Nguyên + 2 Sinh Mệnh → món đó thêm 1 dòng Excellent (tối đa 3 dòng).",
+      "desc": "1 vũ khí / giáp / khiên / trang sức +5 trở lên + 1 Hỗn Nguyên + 2 Sinh Mệnh → món đó thêm 1 dòng Excellent (tối đa 6 dòng).",
       "gear": {
         "slots": [
           "weapon",
@@ -134,6 +134,41 @@
       "rate": 0.5,
       "per_up": 0.05,
       "max_rate": 0.75
+    },
+    {
+      "id": "ds_ticket",
+      "name": "Vé Quảng Trường",
+      "desc": "1 Mắt Quỷ + 1 Chìa Khóa Quỷ → 1 Vé Quảng Trường (kiểu MU).",
+      "items": {
+        "devil_eye": 1,
+        "devil_key": 1
+      },
+      "gold": 12000,
+      "rate": 0.8,
+      "out": "ds_ticket"
+    },
+    {
+      "id": "lost_map",
+      "name": "Bản Đồ Thất Lạc",
+      "desc": "5 Dấu Ấn Kundun → 1 Bản Đồ Thất Lạc (kiểu MU), luôn thành công.",
+      "items": {
+        "kundun_mark": 5
+      },
+      "gold": 5000,
+      "rate": 1.0,
+      "out": "lost_map"
+    },
+    {
+      "id": "bc_ticket",
+      "name": "Vé Lâu Đài",
+      "desc": "1 Cuộn Giấy Tổng Lãnh Thiên Thần + 1 Xương Máu → 1 Vé Lâu Đài (kiểu MU).",
+      "items": {
+        "archangel_scroll": 1,
+        "blood_bone": 1
+      },
+      "gold": 18000,
+      "rate": 0.8,
+      "out": "bc_ticket"
     }
   ]
 }

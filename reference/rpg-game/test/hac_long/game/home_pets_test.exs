@@ -100,7 +100,8 @@ defmodule HacLong.Game.HomePetsTest do
     on_exit(&HacLong.Game.Rng.clear/0)
     assert Pets.bite(player(), 100, 0.0) == 0
     {_, p} = Pets.buy(player(), "hound")
-    assert Pets.bite(p, 100, 0.1) == 25
+    # sức cắn riêng của Chó Săn (PETS.bite)
+    assert Pets.bite(p, 100, 0.1) == round(100 * HacLong.Game.Data.pet("hound").bite)
     assert Pets.bite(p, 100, 0.9) == 0
     assert Pets.bite(p, 1, 0.1) == 1
 
@@ -140,6 +141,7 @@ defmodule HacLong.Game.HomePetsTest do
     {_, p} = Pets.buy(player(), "sheep")
     assert Pets.level(p, "sheep") == 1 and Pets.active_skill(p) == nil
     assert Enum.map(1..10, &Pets.xp_for/1) == [0, 10, 30, 60, 100, 150, 210, 280, 360, 450]
+    assert Pets.max_level() == 20 and Pets.xp_for(20) == 1900
 
     {p, nil} = Pets.gain(p, false)
     assert Pets.xp(p, "sheep") == 1
@@ -151,20 +153,29 @@ defmodule HacLong.Game.HomePetsTest do
     base = Engine.derived(Map.put(p, :pet, nil))
     lv5 = Map.put(p, :pet_xp, %{"sheep" => 100})
     assert Pets.level(lv5, "sheep") == 5
-    assert_in_delta Pets.bonus(lv5, :hp), 0.05 * 1.4, 1.0e-9
-    assert Engine.derived(lv5).maxHp == round(base.maxHp * (1 + 0.05 * 1.4))
+    r = HacLong.Game.Data.rules().pets
+    mult = 1 + 4 * r.bonus_per_level
+    assert_in_delta Pets.bonus(lv5, :hp), 0.05 * mult, 1.0e-9
+    assert Engine.derived(lv5).maxHp == round(base.maxHp * (1 + 0.05 * mult))
     assert %{id: "heal"} = Pets.active_skill(lv5)
-    assert Pets.bite(lv5, 100, 0.42) == 33
-    assert Pets.bite(lv5, 100, 0.44) == 0
+    assert [%{id: "heal"}] = Pets.active_skills(lv5)
+    chance = r.bite_chance + 4 * r.bite_chance_per_level
+    power = HacLong.Game.Data.pet("sheep").bite + 4 * r.bite_power_per_level
+    assert Pets.bite(lv5, 100, chance - 0.01) == round(100 * power)
+    assert Pets.bite(lv5, 100, chance + 0.01) == 0
 
-    # không lên quá cấp 10; thú thuần có Cắn Xé
-    assert Pets.level(Map.put(p, :pet_xp, %{"sheep" => 99_999}), "sheep") == 10
+    # cấp kỹ năng 2: học thêm kỹ năng thứ hai
+    lv15 = Map.put(p, :pet_xp, %{"sheep" => Pets.xp_for(Pets.skill2_level())})
+    assert [%{id: "heal"}, %{id: "bash"}] = Pets.active_skills(lv15)
+
+    # không lên quá cấp tối đa; thú thuần có Cắn Xé
+    assert Pets.level(Map.put(p, :pet_xp, %{"sheep" => 99_999}), "sheep") == Pets.max_level()
     assert %{id: "rend"} = Pets.skill("tame:bat")
     assert {p, nil} = Pets.gain(Map.put(p, :pet, nil), false)
     assert Pets.xp(p, "sheep") == 10
   end
 
-  test "thắng trận thì thú được tính; kỹ năng Cắn Xé nhân đôi cú cắn" do
+  test "thắng trận thì thú được tính; kỹ năng Cắn Xé tăng cú cắn" do
     on_exit(&HacLong.Game.Rng.clear/0)
     {_, p} = Pets.buy(player(), "hound")
     p = Map.put(p, :pet_xp, %{"hound" => 99})
@@ -201,5 +212,62 @@ defmodule HacLong.Game.HomePetsTest do
     got = p.achievements
     assert Enum.all?(~w(daily_10 boss_top tamer pet_skill), &(&1 in got))
     refute Enum.any?(~w(daily_100 boss_top_10 pet_master), &(&1 in got))
+  end
+
+  test "cho thú ăn: tốn vàng theo cấp², thêm trận cho thú đang dắt; tối đa thì thôi" do
+    r = HacLong.Game.Data.rules().pets
+    assert {%{ok: false, msg: "Chưa dắt theo thú nào."}, _} = Pets.feed(player())
+    {_, p} = Pets.buy(player(), "sheep")
+    gold = p.gold
+    assert Pets.feed_cost(p) == r.feed_gold
+    {%{ok: true}, p} = Pets.feed(p)
+    assert Pets.xp(p, "sheep") == r.feed_xp and p.gold == gold - r.feed_gold
+    assert Pets.level(p, "sheep") == 2 and Pets.feed_cost(p) == r.feed_gold * 4
+
+    top = Map.put(p, :pet_xp, %{"sheep" => Pets.xp_for(Pets.max_level())})
+    assert Pets.feed_cost(top) == nil
+    assert {%{ok: false}, _} = Pets.feed(top)
+    assert {%{ok: false, msg: "Cần " <> _}, _} = Pets.feed(%{p | gold: 0})
+    # trận thắng không đẩy quá cấp tối đa
+    {top2, nil} = Pets.gain(top, true)
+    assert Pets.xp(top2, "sheep") == Pets.xp_for(Pets.max_level())
+  end
+
+  test "thuần phục quái vùng chuyển sinh: mạnh hơn, đắt hơn; chúa tể không thuần được" do
+    r = HacLong.Game.Data.rules().pets
+    p = Map.put(player(), :gold, 10_000_000)
+    p = Map.put(p, :bestiary, %{"r5_wyvern" => 100, "r5_hydra5" => 100, "adder" => 100})
+    ids = Enum.map(Pets.tameable(p), & &1.id)
+    assert "r5_wyvern" in ids and "adder" in ids
+    refute "r5_hydra5" in ids
+    pet = Pets.data("tame:r5_wyvern")
+    assert_in_delta pet.bonus.atk, r.tame_bonus + 5 * r.tame_realm_bonus, 1.0e-9
+    assert_in_delta pet.bite, r.tame_bite + 5 * r.tame_realm_bite, 1.0e-9
+    assert pet.price > Pets.data("tame:adder").price * 5
+    {%{ok: true}, p} = Pets.tame(p, "r5_wyvern")
+    assert p.pet == "tame:r5_wyvern"
+
+    assert [%{id: "tame:r5_wyvern", level: 1, skills: [%{id: "rend"}, %{id: "bash"}]}] =
+             Pets.view(p)
+  end
+
+  test "Móc Túi lấy phần vàng quái rơi, không theo cấp quái" do
+    on_exit(&HacLong.Game.Rng.clear/0)
+    {_, p} = Pets.buy(player(), "quokka")
+    p = Map.put(p, :pet_xp, %{"quokka" => Pets.xp_for(5)})
+    {_, p} = Engine.start_battle(p, 0, false)
+
+    p =
+      p
+      |> put_in([:battle, :monster, :hp], 100_000)
+      |> put_in([:battle, :monster, :gold], 1000)
+      |> put_in([:battle, :monster, :level], 150)
+
+    gold = p.gold
+    HacLong.Game.Rng.put_sequence([0.0])
+    {_, p} = Engine.act(p, "attack")
+    got = round(1000 * HacLong.Game.Data.rules().pets.skills.pickpocket_gold_pct)
+    assert Enum.any?(p.battle.log, &(&1.text =~ "móc được #{got} vàng"))
+    assert p.gold == gold + got
   end
 end

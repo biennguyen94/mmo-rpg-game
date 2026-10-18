@@ -71,7 +71,9 @@
       "price": 0,
       "level": 30,
       "drop": true,
-      "doll": "hand1/heavy_sword"
+      "doll": "hand1/heavy_sword",
+      "_icon_variant_doc": "hình MU dùng chung với Kiếm Tổng Lãnh Thiên Thần (0/19); đồ trùm lấy bản phát sáng (Excellent) để phân biệt",
+      "icon_variant": "e"
     },
     "vest": {
       "name": "Áo Da Mỏng",
@@ -253,7 +255,7 @@
       "slot": "material",
       "sprite": "items/fish_eel",
       "price": 60,
-      "desc": "Chỉ có ở Đầm Lầy và Hang Rồng. Bà Lang nấu 2 con thành Bình Máu Lớn."
+      "desc": "Chỉ có ở Đầm Lầy và Hang Hắc Long. Bà Lang nấu 2 con thành Bình Máu Lớn."
     },
     "fish_gold": {
       "name": "Cá Chép Vàng",
@@ -363,28 +365,28 @@
       "slot": "material",
       "icon": "gem-bless",
       "price": 1000,
-      "desc": "Ép đồ từ +5 lên +6 ở Thợ Rèn (chắc chắn). Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương."
+      "desc": "Ép đồ +1 → +6 ở Thợ Rèn, mỗi cấp 1 viên, chắc chắn thành công. Cũng cần khi ép +10, +11 ở Máy Hỗn Nguyên. Rơi hiếm từ quái cấp 12 trở lên, trùm, Tháp Vô Tận, rương, sự kiện."
     },
     "jewel_soul": {
       "name": "Ngọc Tâm Linh",
       "slot": "material",
       "icon": "gem-soul",
       "price": 1500,
-      "desc": "Ép đồ từ +6 lên +9 ở Thợ Rèn. Có thể thất bại: tụt một cấp."
+      "desc": "Ép đồ +7 → +9 ở Thợ Rèn, mỗi cấp 1 viên, có thể thất bại: đồ về +0 (May mắn tăng tỉ lệ). Cũng cần khi ép +10, +11. Rơi như Ngọc Ước Nguyện."
     },
     "jewel_chaos": {
       "name": "Ngọc Hỗn Nguyên",
       "slot": "material",
       "icon": "gem-chaos",
       "price": 1250,
-      "desc": "Ép đồ từ +9 lên +11 (thất bại là vỡ đồ) và dùng ở Máy Hỗn Nguyên."
+      "desc": "Ép đồ +10, +11 ở Máy Hỗn Nguyên (kèm Ước Nguyện và Tâm Linh; thất bại đồ về +0) và nguyên liệu ghép ở Máy Hỗn Nguyên. Rơi như Ngọc Ước Nguyện."
     },
     "jewel_life": {
       "name": "Ngọc Sinh Mệnh",
       "slot": "material",
       "icon": "gem-life",
       "price": 1250,
-      "desc": "Ép ở Thợ Rèn: thêm một dòng +4 tấn công (vũ khí) hoặc +4 phòng thủ (giáp, khiên, cánh), tối đa 4 dòng; 50 %, thất bại mất dòng cuối."
+      "desc": "Ép ở Thợ Rèn: thêm một dòng cộng thêm 4 % tấn công gốc (vũ khí) hoặc phòng thủ gốc (giáp, khiên, cánh), ít nhất +4, tối đa 4 dòng; 50 %, thất bại mất dòng cuối. Rơi như Ngọc Ước Nguyện."
     },
     "wing_dk_1": {
       "name": "Cánh Ác Quỷ",
@@ -407,7 +409,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -433,7 +435,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -459,7 +461,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -485,7 +487,7 @@
       "icon": "feathered-wing",
       "def": 12,
       "dmg": 0.18,
-      "absorb": 0.18,
+      "absorb": 0.15,
       "price": 0,
       "level": 35,
       "desc": "Cánh cấp 2, ghép từ cánh cấp 1 +5 trở lên ở Máy Hỗn Nguyên."
@@ -547,14 +549,14 @@
       "slot": "material",
       "icon": "scroll-unfurled",
       "price": 0,
-      "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 30 trở lên."
+      "desc": "Vào Quảng Trường Quỷ (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 35). Mua ở Người Gác Tháp hoặc ghép Mắt Quỷ + Chìa Khóa Quỷ ở Máy Hỗn Nguyên."
     },
     "bc_ticket": {
       "name": "Vé Lâu Đài",
       "slot": "material",
       "icon": "scroll-unfurled",
       "price": 0,
-      "desc": "Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 35 trở lên."
+      "desc": "Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc ghép Cuộn Giấy Tổng Lãnh Thiên Thần + Xương Máu ở Máy Hỗn Nguyên."
     },
     "condor_feather": {
       "name": "Lông Vũ Kền Kền",
@@ -562,6 +564,55 @@
       "icon": "feathered-wing",
       "price": 0,
       "desc": "Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên."
+    },
+    "cc_ticket": {
+      "name": "Áo Giáp Vệ Binh",
+      "slot": "material",
+      "icon": "breastplate",
+      "price": 0,
+      "desc": "Vé vào Hỗn Chiến Thành (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 15). Mua ở Người Gác Tháp hoặc rơi từ quái cấp 15 trở lên."
+    },
+    "kundun_mark": {
+      "name": "Dấu Ấn Kundun",
+      "slot": "material",
+      "icon": "skull-crossed-bones",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 20 trở lên. Ghép 5 dấu ấn ở Máy Hỗn Nguyên ra Bản Đồ Thất Lạc (vào Kalima)."
+    },
+    "lost_map": {
+      "name": "Bản Đồ Thất Lạc",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Đưa Người Gác Tháp ở Làng để vào Kalima (từ cấp 20, cấp Kalima theo cấp nhân vật), hạ quái rồi hạ Kundun."
+    },
+    "devil_eye": {
+      "name": "Mắt Quỷ",
+      "slot": "material",
+      "icon": "crowned-skull",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Chìa Khóa Quỷ ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+    },
+    "devil_key": {
+      "name": "Chìa Khóa Quỷ",
+      "slot": "material",
+      "icon": "padlock",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 30 trở lên. Ghép với Mắt Quỷ ở Máy Hỗn Nguyên ra Vé Quảng Trường."
+    },
+    "archangel_scroll": {
+      "name": "Cuộn Giấy Tổng Lãnh Thiên Thần",
+      "slot": "material",
+      "icon": "scroll-unfurled",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Xương Máu ở Máy Hỗn Nguyên ra Vé Lâu Đài."
+    },
+    "blood_bone": {
+      "name": "Xương Máu",
+      "slot": "material",
+      "icon": "skull-crossed-bones",
+      "price": 0,
+      "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Cuộn Giấy Tổng Lãnh Thiên Thần ở Máy Hỗn Nguyên ra Vé Lâu Đài."
     }
   }
 }

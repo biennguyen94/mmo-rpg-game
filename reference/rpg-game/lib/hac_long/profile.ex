@@ -17,7 +17,6 @@ defmodule HacLong.Profile do
 
   def build(uid, p, online?) do
     d = Engine.derived(p)
-    bonus = Gear.bonus_stats(p)
     {seen, joined} = dates(uid)
     q = Map.get(p, :quests) || %{}
 
@@ -37,7 +36,7 @@ defmodule HacLong.Profile do
       max_mp: d.maxMp,
       stats:
         Map.new(~w(str agi vit ene)a, fn k ->
-          {k, %{base: Map.get(p.stats, k, 0), gear: Map.get(bonus, k, 0)}}
+          {k, %{base: Map.get(p.stats, k, 0)}}
         end),
       atk_min: d.atkMin,
       atk_max: d.atkMax,
@@ -58,7 +57,7 @@ defmodule HacLong.Profile do
       },
       gold: p.gold,
       xp: p.xp,
-      xp_need: Engine.xp_to_next(p.level),
+      xp_need: Engine.xp_need(p),
       equip: Enum.flat_map(@slots, &equip(p, &1)),
       pet: p[:pet] && Pets.name(p),
       pets: length(Map.get(p, :pets) || []),
@@ -87,7 +86,20 @@ defmodule HacLong.Profile do
 
       it ->
         up = (Map.get(p, :upgrades) || %{})[id] || 0
-        [%{slot: slot, id: it[:base] || id, name: it.name, rarity: it[:rarity] || 0, up: up}]
+
+        # `item`: đủ thông tin món (dòng cộng thêm, Excellent, May mắn…) để client hiện bảng chi tiết như trong túi
+        item = Map.drop(it, [:uid, :locked, :stored, :sell, :price])
+
+        [
+          %{
+            slot: slot,
+            id: it[:base] || id,
+            name: it.name,
+            kind: it[:kind] || "",
+            up: up,
+            item: item
+          }
+        ]
     end
   end
 

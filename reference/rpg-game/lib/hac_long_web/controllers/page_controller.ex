@@ -31,8 +31,8 @@ defmodule HacLongWeb.PageController do
     |> send_resp(200, html)
   end
 
-  defp item_icons do
-    path = Application.app_dir(:hac_long, "priv/static/assets/item_icons.json")
+  defp item_icons(file \\ "item_icons.json") do
+    path = Application.app_dir(:hac_long, "priv/static/assets/" <> file)
 
     with {:ok, bin} <- File.read(path), {:ok, map} <- Jason.decode(bin) do
       map
@@ -53,6 +53,8 @@ defmodule HacLongWeb.PageController do
         end),
       # bộ hình đồ đổi theo cấp +N (`mix hac_long.icons`), đọc mỗi lần tải trang nên không cần build lại
       ITEM_ICONS: item_icons(),
+      # Phase 7 (B-33): bộ hình đồ Pixel CC0 (scripts/pixel_icons.py), có trong git
+      PIXEL_ICONS: item_icons("pixel_icons.json"),
       SHOP: Data.shop(),
       RECIPES: Data.recipes(),
       QUESTS: Data.quests(),
@@ -64,10 +66,14 @@ defmodule HacLongWeb.PageController do
       RULES: %{
         maxLevel: Engine.max_level(),
         gearBag: HacLong.Game.Gear.max_bag(),
+        # Phase 15e: dòng phụ cánh theo bậc (số để ghi trong ô chọn ở tab Quản trị)
+        wingOptions: Data.rules().wing_options.by_tier,
         # Phase 15c: thưởng đủ bộ giáp (số để hiện chữ)
         setBonus: Map.take(Data.rules().set_bonus, [:min_tier, :def_pct, :atk_pct, :hp_per_tier]),
         # Phase 15g: chữ đồ Bộ Thần trong tooltip
-        ancient: Map.take(Data.rules().ancient, [:piece_def_pct]),
+        ancient: Map.take(Data.rules().ancient, [:piece_def_pct, :bonus]),
+        # B-16: các dòng Excellent (ô chọn dòng khi quản trị tặng đồ)
+        excOptions: Data.rules().excellent.options,
         # Phase 15d: chữ dòng May mắn / Kỹ năng trong tooltip
         luckSkill:
           Map.take(Data.rules().luck_skill, [
@@ -77,12 +83,14 @@ defmodule HacLongWeb.PageController do
             :skill_dmg
           ]),
         rebirthPoints: Engine.rebirth_points(),
+        rebirthXpPct: Data.rules().character.rebirth_xp_pct,
         maxRebirths: Engine.max_rebirths(),
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
         petMaxLevel: HacLong.Game.Pets.max_level(),
         petSkillLevel: HacLong.Game.Pets.skill_level(),
+        petSkill2Level: HacLong.Game.Pets.skill2_level(),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),
@@ -101,9 +109,42 @@ defmodule HacLongWeb.PageController do
           safe: Data.rules().slay.safe_maps,
           redMult: Data.rules().slay.red_gold_mult
         },
-        wingPerLevel: Data.rules().combat.wing_per_level,
+        # % sát thương / hấp thụ cánh cộng thêm theo [bậc][cấp ép 0..11] (Engine.wing_up/3), trần hấp thụ
+        wingUp:
+          Map.new([:dmg, :absorb], fn k ->
+            {k,
+             for(t <- 1..3, do: for(l <- 0..Engine.max_upgrade(), do: Engine.wing_up(k, t, l)))}
+          end),
+        wingAbsorbMax: Data.rules().wing_upgrade.absorb.max,
+        # tự đánh: lựa chọn và mặc định cho bảng cài đặt
+        auto:
+          Map.take(Data.rules().auto, [
+            :hp_pct,
+            :mp_pct,
+            :range_options,
+            :range_default,
+            :skills,
+            :keep,
+            :keep_default,
+            :keep_opt_min
+          ]),
+        # giải thích chỉ số ở tab Nhân vật (bấm vào từng dòng): số lấy từ RULES, client không giữ số riêng
+        combatHelp: %{
+          crit: Data.rules().combat.crit,
+          critMult: Data.rules().combat.crit_mult,
+          dodge: Map.delete(Data.rules().combat.dodge, :_doc_max_total),
+          spread: Data.rules().combat.damage_spread,
+          softFloor: Data.rules().combat.soft_floor,
+          hit: Data.rules().combat.hit,
+          monsterCrit: Data.rules().monster.crit,
+          monsterCritMult: Data.rules().combat.monster_crit_mult,
+          pk: Map.take(Data.rules().pk, [:rounds, :special_every, :special_mult])
+        },
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
+        # Phase 3 (B-29): nguyên tố, kỹ năng tháp
+        elements: Map.drop(Data.rules().elements, [:_doc, :sourceType, :version, :verified]),
+        towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist, :mp_mult]),
         potionPricePerLevel: Data.rules().shop.potion_price_per_level,
         # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
         travel: %{
@@ -116,7 +157,8 @@ defmodule HacLongWeb.PageController do
         tameBonus: Data.rules().pets.tame_bonus,
         tamePrice: Data.rules().pets.tame_price,
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
-        petXpCoef: Data.rules().pets.xp_coef
+        petXpCoef: Data.rules().pets.xp_coef,
+        petFeedXp: Data.rules().pets.feed_xp
       },
       WORLD: Maps.client_data(),
       # Phase 14: Thư viện (bản đồ, quái, vật phẩm)

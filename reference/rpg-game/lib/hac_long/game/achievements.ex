@@ -10,7 +10,7 @@ defmodule HacLong.Game.Achievements do
   Trạng thái trong nhân vật: `achievements: [id]` (theo thứ tự đạt được), `title: id | nil`.
   """
 
-  alias HacLong.Game.{Bestiary, Data, Engine, Pets}
+  alias HacLong.Game.{Bestiary, Data, Engine, Gear, Pets}
   alias HacLong.World.Maps
 
   @list [
@@ -88,7 +88,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "traveler",
       name: "Lữ Khách",
-      desc: "Chạm vào mọi đá dịch chuyển.",
+      desc: "Ghé mọi Đài Phúc Lành.",
       stat: :waystones,
       goal: :all_waystones,
       title: "Lữ Khách"
@@ -176,7 +176,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "epic",
       name: "Của Hiếm",
-      desc: "Nhặt được một món đồ Sử Thi.",
+      desc: "Có một món đồ hoàn hảo hoặc đồ Thần.",
       stat: :epic,
       goal: 1,
       title: "Kẻ May Mắn"
@@ -337,7 +337,9 @@ defmodule HacLong.Game.Achievements do
   def value(p, :species),
     do: Enum.count(Bestiary.species(), &(Bestiary.count(p, &1) > 0))
 
-  def value(p, :epic), do: min(1, Enum.count(Map.get(p, :gear) || [], &(&1.rarity == 3)))
+  def value(p, :epic),
+    do: min(1, Enum.count(Map.get(p, :gear) || [], &(Gear.kind(&1) in ["exc", "anc"])))
+
   def value(p, :deaths), do: p.deaths
 
   def value(p, :forge),
@@ -363,11 +365,14 @@ defmodule HacLong.Game.Achievements do
         titles = new |> Enum.map(& &1[:title]) |> Enum.filter(& &1)
 
         msg =
-          "🏅 Thành tựu mới: #{Enum.map_join(new, ", ", & &1.name)}." <>
-            if(titles == [],
-              do: "",
-              else: " Danh hiệu mới: #{Enum.join(titles, ", ")} (chọn ở tab Nhân vật)."
-            )
+          (
+            names = Enum.map_join(new, ", ", & &1.name)
+            tl = Enum.join(titles, ", ")
+
+            if titles == [],
+              do: "🏅 Thành tựu mới: #{names}.",
+              else: "🏅 Thành tựu mới: #{names}. Danh hiệu mới: #{tl} (chọn ở tab Nhân vật)."
+          )
 
         {p, msg}
     end

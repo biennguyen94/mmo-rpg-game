@@ -135,9 +135,18 @@ defmodule HacLong.Game.Characters do
 
   # Cột kiểu map được Postgres trả về với khóa chuỗi; đổi lại thành atom như engine dùng.
   # Cấp nâng theo loại đồ thường (dữ liệu trước Đợt 3) được tách thành bản riêng từng món.
-  defp to_player(%Character{} = c),
-    do:
-      c |> to_map() |> HacLong.Game.Engine.migrate_items() |> HacLong.Game.Engine.split_upgrades()
+  # Máu / MP không vượt mức tối đa (B-15: đồ cũ mất điểm chỉ số cộng thêm nên máu tối đa có thể giảm).
+  defp to_player(%Character{} = c) do
+    p =
+      c
+      |> to_map()
+      |> HacLong.Game.Engine.migrate_items()
+      |> HacLong.Game.Engine.split_upgrades()
+      |> HacLong.Game.Engine.instance_gear()
+
+    d = HacLong.Game.Engine.derived(p)
+    %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)}
+  end
 
   defp to_map(c) do
     %{
@@ -184,6 +193,9 @@ defmodule HacLong.Game.Characters do
       daily_done: c.daily_done || 0,
       boss_top: c.boss_top || 0,
       food: food(c.food),
+      blessing: HacLong.Game.Blessing.load(c.blessing),
+      skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
+      auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,
         smith: (c.crafting || %{})["smith"] || 0
@@ -261,6 +273,7 @@ defmodule HacLong.Game.Characters do
     # Quảng Trường Quỷ / Lâu Đài Máu (Phase 18) chạy trên trạng thái tháp, thêm `ds` / `bc`
     ds = t["ds"]
     bc = t["bc"]
+    kal = t["kal"]
 
     %{
       floor: floor,
@@ -277,11 +290,14 @@ defmodule HacLong.Game.Characters do
             x: m["x"],
             y: m["y"],
             elite: m["elite"],
-            role: m["role"]
+            role: m["role"],
+            hp_pct: m["hp_pct"]
           }
-          |> Map.reject(fn {k, v} -> k == :role and v == nil end)
+          |> Map.reject(fn {k, v} -> k in [:role, :hp_pct] and v == nil end)
         end)
     }
+    # Phase 6: nền tầng (tầng 61+ là vùng đất chuyển sinh); bản lưu cũ không có
+    |> then(fn tw -> if t["theme"], do: Map.put(tw, :theme, t["theme"]), else: tw end)
     |> then(fn tw ->
       if is_map(ds),
         do:
@@ -306,6 +322,21 @@ defmodule HacLong.Game.Characters do
           }),
         else: tw
     end)
+    # Kalima (B-21)
+    |> then(fn tw ->
+      if is_map(kal),
+        do:
+          Map.put(tw, :kal, %{
+            n: kal["n"],
+            level: kal["level"],
+            ends_at: kal["ends_at"],
+            stage: kal["stage"],
+            guards: kal["guards"],
+            killed: kal["killed"],
+            done: kal["done"] == true
+          }),
+        else: tw
+    end)
   end
 
   defp tower(_), do: nil
@@ -316,7 +347,8 @@ defmodule HacLong.Game.Characters do
                     log over result reward encounter map mid world world_boss tower elite
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
-                    shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live)a,
+                    shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
+                    ds bc kal gear_ids taken ignore_def crit_mult element rich)a,
                  &{Atom.to_string(&1), &1}
                )
 

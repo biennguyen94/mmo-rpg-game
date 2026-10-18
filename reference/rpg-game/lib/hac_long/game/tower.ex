@@ -45,7 +45,9 @@ defmodule HacLong.Game.Tower do
       tiles: tiles,
       stairs: Tuple.to_list(stairs),
       exit: Tuple.to_list(exit),
-      monsters: monsters
+      monsters: monsters,
+      # nền tầng (client vẽ), Phase 6
+      theme: theme(floor)
     }
   end
 
@@ -101,12 +103,47 @@ defmodule HacLong.Game.Tower do
     flood(grid, next ++ rest, Enum.reduce(next, seen, &MapSet.put(&2, &1)))
   end
 
-  defp tier(floor), do: min(Data.zone_count() - 1, div(floor - 1, 10))
+  # Mỗi 10 tầng một nhóm quái: 6 vùng (tầng 1–60), rồi 10 vùng đất chuyển sinh (Phase 6, tầng 61–160); hết thì
+  # quay vòng, mỗi vòng thêm tiền tố tên (`cycle_prefix/1`) để tầng cao không trùng hình + tên với tầng dưới.
+  # (chỉ quái bản đồ 1 của mỗi vùng, không lấy quái bản đồ sâu `depth`; trùm tầng là chúa tể vùng)
+  @realm_groups Data.side_monsters()
+                |> Enum.filter(&(String.match?(&1.id, ~r/^r\d+_/) and &1[:depth] == nil))
+                |> Enum.group_by(fn m -> m.id |> String.split("_") |> hd() end)
+                |> Enum.sort_by(fn {"r" <> k, _} -> String.to_integer(k) end)
+                |> Enum.map(fn {"r" <> k, list} ->
+                  {[boss], mons} = Enum.split_with(list, &(&1[:lord] == true))
+                  map = HacLong.World.Maps.get("realm_" <> String.pad_leading(k, 2, "0"))
+                  %{monsters: mons, boss: boss, floor: (map && map.floor) || "floors/lair"}
+                end)
 
-  def theme(floor), do: "floors/" <> Data.zone(tier(floor)).id
+  defp groups do
+    Enum.map(Data.zones(), &%{monsters: &1.monsters, boss: &1.boss, floor: "floors/" <> &1.id}) ++
+      @realm_groups
+  end
+
+  defp group_count, do: Data.zone_count() + length(@realm_groups)
+  defp group(floor), do: Enum.at(groups(), rem(div(floor - 1, 10), group_count()))
+
+  @prefixes ["", "Cổ Đại", "Hắc Ám", "Thần Thoại", "Hỗn Mang", "Vĩnh Hằng"]
+
+  @doc "Tiền tố tên quái theo vòng của tầng `floor` (vòng đầu không có)."
+  def cycle_prefix(floor) do
+    cycle = div(floor - 1, group_count() * 10)
+    Enum.at(@prefixes, min(cycle, length(@prefixes) - 1))
+  end
+
+  defp named(name, floor) do
+    case cycle_prefix(floor) do
+      "" -> name
+      p -> "#{name} #{p}"
+    end
+  end
+
+  @doc "Nền của tầng `floor` (`floors/...`)."
+  def theme(floor), do: group(floor).floor
 
   defp monsters(floor, tiles, avoid, rng) do
-    zone = Data.zone(tier(floor))
+    zone = group(floor)
     boss? = rem(floor, @rules.boss_every) == 0
 
     count =
@@ -127,7 +164,19 @@ defmodule HacLong.Game.Tower do
       Enum.reduce(1..count, {[], rng}, fn i, {acc, rng} ->
         {m, rng} = pick(zone.monsters, rng)
         {x, y} = Enum.at(spots, i)
-        {[%{id: i, kind: m.id, name: m.name, level: floor, x: x, y: y, elite: false} | acc], rng}
+
+        {[
+           %{
+             id: i,
+             kind: m.id,
+             name: named(m.name, floor),
+             level: floor,
+             x: x,
+             y: y,
+             elite: false
+           }
+           | acc
+         ], rng}
       end)
 
     list =
@@ -138,7 +187,7 @@ defmodule HacLong.Game.Tower do
           %{
             id: 0,
             kind: zone.boss.id,
-            name: zone.boss.name,
+            name: named(zone.boss.name, floor),
             level: floor + @rules.level_offset,
             x: x,
             y: y,
@@ -151,6 +200,38 @@ defmodule HacLong.Game.Tower do
       end
 
     {Enum.reverse(list), rng}
+  end
+
+  @dirs [{1, 0}, {-1, 0}, {0, 1}, {0, -1}]
+
+  @doc """
+  Quái trên tầng (Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima) đi lang thang như quái bản đồ thường
+  (`HacLong.World.MapServer`): mỗi nhịp mỗi con có `chance` đi một ô sang ô trống `.` kề bên, không đè quái khác,
+  không vào ô người chơi `{px, py}`. Trùm tầng (`elite`) đứng yên. `roll` cho số ngẫu nhiên trong [0, 1).
+  """
+  def wander(
+        %{monsters: ms, tiles: tiles} = t,
+        {px, py},
+        chance \\ 0.35,
+        roll \\ &:rand.uniform/0
+      ) do
+    taken = MapSet.new(ms, &{&1.x, &1.y})
+
+    {list, _} =
+      Enum.map_reduce(ms, taken, fn m, taken ->
+        {dx, dy} = Enum.at(@dirs, trunc(roll.() * 4) |> min(3))
+        to = {m.x + dx, m.y + dy}
+
+        if m.elite or roll.() >= chance or MapSet.member?(taken, to) or to == {px, py} or
+             tiles |> Enum.at(elem(to, 1), "") |> String.at(elem(to, 0)) != "." do
+          {m, taken}
+        else
+          {%{m | x: elem(to, 0), y: elem(to, 1)},
+           taken |> MapSet.delete({m.x, m.y}) |> MapSet.put(to)}
+        end
+      end)
+
+    %{t | monsters: list}
   end
 
   defp uniform(n, rng), do: :rand.uniform_s(n, rng)
@@ -175,7 +256,11 @@ defmodule HacLong.Game.Tower do
   @doc "Quái dùng trong trận với con `m` trên tầng."
   def battle_monster(m) do
     mult = 1 + max(0, m.level - @rules.harder_from) * @rules.harder_per_floor
-    base = if m.elite, do: Enum.find(Data.zones(), &(&1.boss.id == m.kind)).boss, else: %{}
+
+    base =
+      if m.elite,
+        do: Enum.find_value(groups(), %{}, &(&1.boss.id == m.kind && &1.boss)),
+        else: %{}
 
     spec = %{
       id: m.kind,
@@ -183,7 +268,9 @@ defmodule HacLong.Game.Tower do
       level: m.level,
       mult: if(m.elite, do: mult * @rules.elite_mult, else: mult),
       special: base[:special],
-      on_hit: if(m.elite, do: nil, else: Data.monster(m.kind)[:on_hit])
+      on_hit: if(m.elite, do: nil, else: Data.monster(m.kind)[:on_hit]),
+      # Phase 6: quái vùng chuyển sinh giữ nguyên tố riêng
+      element: base[:element] || (Data.side_monster(m.kind) || %{})[:element]
     }
 
     q = Engine.make_monster(spec, false)
@@ -266,9 +353,33 @@ defmodule HacLong.Game.Tower do
     end
   end
 
+  @doc """
+  Bỏ chạy khỏi quái trong tháp / sự kiện (Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima): quái giữ phần trăm máu còn lại
+  (`hp_pct`), đánh lại thì tiếp từ đó (`resume_hp/2`), như quái trên bản đồ chung.
+  """
+  def keep_hp(
+        %{
+          tower: %{monsters: mons} = t,
+          battle: %{over: true, result: "fled", encounter: %{tower: id}, monster: m}
+        } = p
+      ) do
+    pct = max(1, round(max(m.hp, 0) * 100 / max(m.maxHp, 1)))
+    mons = Enum.map(mons, fn q -> if q.id == id, do: Map.put(q, :hp_pct, pct), else: q end)
+    %{p | tower: %{t | monsters: mons}}
+  end
+
+  def keep_hp(p), do: p
+
+  @doc "Vào trận với quái tháp `m` đã bị đánh dở: máu quái theo `m.hp_pct`."
+  def resume_hp(%{battle: %{monster: q}} = p, %{hp_pct: pct}) when is_number(pct) and pct < 100,
+    do: put_in(p.battle.monster, %{q | hp: max(1, round(q.maxHp * pct / 100))})
+
+  def resume_hp(p, _m), do: p
+
   @doc "Trận trong tháp vừa kết thúc."
   def after_battle(%{tower: %{ds: %{}}} = p), do: HacLong.Game.DevilSquare.after_battle(p)
   def after_battle(%{tower: %{bc: %{}}} = p), do: HacLong.Game.BloodCastle.after_battle(p)
+  def after_battle(%{tower: %{kal: %{}}} = p), do: HacLong.Game.Kalima.after_battle(p)
 
   def after_battle(
         %{tower: t, battle: %{over: true, result: result, encounter: %{tower: id}}} = p

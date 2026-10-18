@@ -65,7 +65,11 @@ sets_main = len({i['set'] for i in items if i.get('set') and not i.get('alt')})
 sets_alt = len({i['set'] for i in items if i.get('set') and i.get('alt')})
 w('## Tổng quan\n')
 w(f"- **{len(items)} món trang bị**, trong đó **{alt_n} món phụ** (chỉ rơi, không bán).")
-w(f"- **8 bậc** đồ; ép tối đa **+{up['UPGRADE']['max']}**; **{sets_main} bộ giáp chính + {sets_alt} bộ phụ**.")
+TMAX = max(i['tier'] for i in items if i['slot'] in ('weapon', 'shield', 'armor'))
+# số theo bậc; loại không có bậc đó (vd bộ giáp bậc 11) thì "—"
+def at(arr, t, f=lambda v: v):
+    return f(arr[t - 1]) if t <= len(arr) else '—'
+w(f"- **{TMAX} bậc** đồ (bậc 9+ từ DECISIONS B-17); ép tối đa **+{up['UPGRADE']['max']}**; **{sets_main} bộ giáp chính + {sets_alt} bộ phụ**.")
 w('- Ô trang bị: vũ khí, khiên, mũ, giáp, quần, găng, giày, 2 nhẫn, dây chuyền, cánh. Đấu Sĩ không đội mũ.')
 w('- Món phụ có công, thủ, cấp và giá như món chính cùng bậc; chỉ khác tên, hình và yêu cầu chỉ số.\n')
 
@@ -89,7 +93,7 @@ w('**Đậm**: món chính (bán ở cửa hàng). *Nghiêng*: món phụ (chỉ
 for cls, cname in CLS.items():
     w(f'### {cname}\n')
     rows = []
-    for t in range(1, 9):
+    for t in range(1, TMAX + 1):
         ws = sorted((i for i in items if i['slot'] == 'weapon' and i['tier'] == t and cls in i['classes']),
                     key=lambda i: (bool(i.get('alt')), i['name']))
         w0 = next((i for i in ws if not i.get('alt')), ws[0] if ws else None)
@@ -100,27 +104,28 @@ for cls, cname in CLS.items():
         sets = sorted(sets.items(), key=lambda x: (x[1], x[0]))
         first = sets[0][0] if sets else None
         setdef = sum(i['def'] for i in items
-                     if i.get('set') == first and i['tier'] == t and cls in i['classes'])
+                     if first and i.get('set') == first and i['tier'] == t and cls in i['classes']) or '—'
         sh = sorted((i for i in items if i['slot'] == 'shield' and i['tier'] == t and cls in i['classes']),
                     key=lambda i: (bool(i.get('alt')), i['name']))
         rows.append([
-            t, lv['weapon'][t - 1],
+            t, f"{at(lv['weapon'], t)} / {at(lv['set'], t)}",
             ', '.join(nm(i) for i in ws),
             f"{w0['atk']} ({w0['atkMin']}~{w0['atkMax']})" if w0 else '—',
             ', '.join(f'*{s}*' if a else f'**{s}**' for s, a in sets),
             setdef,
             ', '.join(nm(i) for i in sh) or '—',
         ])
-    w(table(['Bậc', 'Cấp', 'Vũ khí', 'Công', 'Bộ giáp', 'Thủ cả bộ', 'Khiên'], rows) + '\n')
+    w(table(['Bậc', 'Cấp vũ khí / giáp', 'Vũ khí', 'Công', 'Bộ giáp', 'Thủ cả bộ', 'Khiên'], rows) + '\n')
 
 # ---------- bậc / cấp / giá ----------
 sb = rules['set_bonus']
 w('## Bậc, cấp, giá\n')
 w('Mọi lớp dùng chung. Giá bộ giáp là giá đủ bộ, chia cho từng món theo tỉ lệ thủ. Bậc 1 là đồ khởi đầu '
   f"(giá 0). Bán lại cho NPC được {pct(rules['shop']['sell_ratio'])} giá.\n")
-rows = [[t, lv['weapon'][t - 1], num(pr['weapon'][t - 1]), num(pr['set'][t - 1]), st['set_def'][t - 1],
-         lv['shield'][t - 1], num(pr['shield'][t - 1]), st['shield_def'][t - 1]] for t in range(1, 9)]
-w(table(['Bậc', 'Cấp vũ khí / giáp', 'Giá vũ khí', 'Giá bộ giáp', 'Thủ cả bộ', 'Cấp khiên', 'Giá khiên',
+rows = [[t, at(lv['weapon'], t), at(lv['set'], t), at(pr['weapon'], t, num), at(pr['set'], t, num),
+         at(st['set_def'], t), at(lv['shield'], t), at(pr['shield'], t, num), at(st['shield_def'], t)]
+        for t in range(1, TMAX + 1)]
+w(table(['Bậc', 'Cấp vũ khí', 'Cấp giáp', 'Giá vũ khí', 'Giá bộ giáp', 'Thủ cả bộ', 'Cấp khiên', 'Giá khiên',
          'Thủ khiên'], rows) + '\n')
 w(f"Thưởng đủ bộ (từ bậc {sb['min_tier']}): +{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, "
   f"+{sb['hp_per_tier']} máu × bậc bộ.\n")
@@ -139,7 +144,7 @@ w(table(['Loại', 'Tên', 'Cấp', 'Chỉ số', 'Giá'], rows) + '\n')
 wings = [v for v in leg.values() if v.get('slot') == 'wing']
 recipe = {c['out']: c for c in chaos if isinstance(c, dict) and str(c.get('out', '')).startswith('wing_')}
 w('## Cánh\n')
-w(f"Ghép ở Máy Hỗn Nguyên. Mỗi cấp ép cánh thêm {pct(rules['combat']['wing_per_level'])} sát thương và hấp thụ.\n")
+w(f"Ghép ở Máy Hỗn Nguyên. Ép cánh thêm sát thương và hấp thụ theo bậc cánh (RULES.wing_upgrade), +10 / +11 tăng mạnh, hấp thụ tối đa {pct(rules['wing_upgrade']['absorb']['max'])}.\n")
 rows = []
 for t in (1, 2, 3):
     ws = [x for x in wings if x['tier'] == t]
@@ -157,27 +162,26 @@ w(table(['Cấp', 'Tên theo lớp', 'Cấp đeo', 'Thủ', 'Sát thương', 'Nh
 # ---------- ép ----------
 U, ur, ls = up['UPGRADE'], rules['upgrade'], rules['luck_skill']
 jn = {k: v['name'] for k, v in leg.items() if k.startswith('jewel')}
-fail = {None: '—', 'down': 'tụt 1 cấp', 'destroy': '**vỡ đồ**'}
+fail = {None: '—', 'down': 'tụt 1 cấp', 'reset': '**về +0**', 'destroy': '**vỡ đồ**'}
+where = {'smith': 'Thợ Rèn', 'chaos': 'Máy Hỗn Nguyên'}
 
 
 def eff(l):
     return l + max(0, l - U['double_from'] + 1)
 
 
-w('## Ép +N (Thợ Rèn)\n')
+w('## Ép +N (kiểu MU)\n')
 w(f"Mỗi cấp cộng {pct(ur['bonus_pct'])} chỉ số gốc của món (ít nhất +1). Từ +{U['double_from']} mỗi cấp tính "
-  f"gấp đôi. Từ +{U['announce_from']} cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ ép +7 đến +11 cộng "
+  f"gấp đôi. Từ +{U['announce_from']} cả bản đồ thấy thông báo. Đồ có May mắn: tỉ lệ các bước không chắc chắn cộng "
   f"{pct(ls['luck_upgrade'])}, tối đa {pct(ls['luck_max_rate'])}.\n")
 rows = []
-for n in range(1, U['steps'][0]['level']):
-    extra = ' + 1 Vảy Cổ Long' if n == ur['scale_step'] else ''
-    rows.append([f'+{n}', f'vàng + {n} quặng{extra}', '100%', '—', n])
 for s in U['steps']:
-    rows.append([f"+{s['level']}", f"vàng + 1 {jn[s['jewel']]}", pct(s['rate']), fail[s['fail']], eff(s['level'])])
-w(table(['Lên', 'Cần', 'Tỉ lệ', 'Thất bại', 'Tính như (cấp)'], rows) + '\n')
+    need = ' + '.join(f"{n} {jn[k]}" for k, n in s['items'].items())
+    rows.append([f"+{s['level']}", where[s['at']], f"vàng + {need}", pct(s['rate']), fail[s['fail']], eff(s['level'])])
+w(table(['Lên', 'Ở đâu', 'Cần', 'Tỉ lệ', 'Thất bại', 'Tính như (cấp)'], rows) + '\n')
 life = ur['life']
-w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {ur['cost_min_price']}). Quặng Mithril thay "
-  f"Quặng Sắt với đồ từ cấp {ur['rare_ore_level']}. Ngọc Sinh Mệnh: +{life['per_line']} mỗi dòng, tối đa "
+w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {ur['cost_min_price']}). Ngọc Sinh Mệnh: "
+  f"+{life['per_line']} mỗi dòng, tối đa "
   f"{life['max_lines']} dòng, {pct(life['rate'])}; vũ khí cộng công, giáp / khiên / cánh cộng thủ; thất bại mất "
   'dòng cuối.\n')
 
@@ -185,16 +189,20 @@ w(f"Vàng = {pct(ur['cost_pct'])} giá món × cấp lên (giá tối thiểu {u
 ex, an, lo = rules['excellent'], rules['ancient'], rules['loot']
 exn = {'atk_pct': 'Tấn công +{}', 'crit': 'Chí mạng +{}', 'heal_kill': 'Hồi {} máu khi hạ quái',
        'mp_kill': 'Hồi {} MP khi hạ quái', 'hp_pct': 'Máu tối đa +{}', 'dmg_red': 'Giảm sát thương nhận {}',
-       'gold_pct': 'Vàng nhận +{}'}
+       'gold_pct': 'Vàng nhận +{}', 'atk_lvl': 'Tấn công + cấp × {}', 'ar_pct': 'Tỉ lệ trúng +{}',
+       'mp_pct': 'MP tối đa +{}', 'reflect': 'Phản sát thương {}', 'def_rate': 'Tỉ lệ né +{}'}
 w('## Dòng phụ trên đồ rơi\n')
-w('### Độ hiếm\n')
-for (r, wt), name in zip(lo['gear_weights'], ['Sử Thi', 'Hiếm', 'Tốt']):
-    w(f"- **{name}** ({wt}%): {r} dòng STR / AGI / VIT / ENE")
-w(f"\nMỗi dòng +1 đến 1 + cấp quái / {lo['gear_bonus_per_level']}.\n")
+w('### Dòng cộng thêm (kiểu MU, DECISIONS B-15)\n')
+life = rules['upgrade']['life']
+tot = sum(wt for _, wt in lo['gear_weights'])
+for r, wt in lo['gear_weights']:
+    lab = f"+{r * life['per_line']}" if r else 'Không dòng'
+    w(f"- {lab} ({round(wt * 100 / tot)}%)")
+w(f"\nMỗi dòng +{life['per_line']} tấn công (vũ khí) / phòng thủ (đồ khác); Ngọc Sinh Mệnh thêm dòng tới tối đa {life['max_lines']}. Không còn độ hiếm Tốt / Hiếm / Sử Thi.\n")
 w('### Excellent\n')
 w('Số dòng: ' + ', '.join(f"{n} dòng {wt}%" for n, wt in ex['lines']) + f". Giá bán ×{ex['price_mult']}.\n")
-w('- Vũ khí, dây chuyền: ' + '; '.join(exn[k].format(pct(v)) for k, v in ex['options']['weapon'].items()))
-w('- Giáp, khiên, nhẫn: ' + '; '.join(exn[k].format(pct(v)) for k, v in ex['options']['armor'].items()))
+w('- Vũ khí, dây chuyền: ' + '; '.join(exn[k].format(v if k == 'atk_lvl' else pct(v)) for k, v in ex['options']['weapon'].items()))
+w('- Giáp, khiên, nhẫn: ' + '; '.join(exn[k].format(v if k == 'atk_lvl' else pct(v)) for k, v in ex['options']['armor'].items()))
 w(f"\nTổng giảm sát thương tối đa {pct(ex['max_dmg_red'])}. Pha thêm ở Máy Hỗn Nguyên (tối đa 3 dòng).\n")
 w('### Đồ Thần\n')
 w(f"Chỉ món bộ giáp. Thủ món +{pct(an['piece_def_pct'])}, giá bán ×{an['price_mult']}. "

@@ -1,0 +1,24 @@
+// Gục ngã: màn trận hiện máu 0 (server đã hồi một phần máu khi về nhà trọ, ghi chú ở bảng kết quả); không lỗi vẽ bản đồ khi khung ẩn.
+import { launch, reporter, newPlayer, adminSession, player, send, engage, fight, shot } from './lib.mjs';
+const R = reporter('lose');
+const browser = await launch();
+const P = await newPlayer(browser, { viewport: { width: 400, height: 860 } });
+const page = P.page;
+const { admin } = await adminSession(browser);
+await admin('set_level', P.name, { level: 45 });
+await admin('set_rebirths', P.name, { n: 10 });
+await admin('add_gold', P.name, { amount: 500000 });
+await page.waitForFunction(() => (window.__hl.player().rebirths || 0) >= 10 && window.__hl.player().gold >= 500000, null, { timeout: 8000 });
+let p = await send(page, { act: 'travel', to: 'realm_10' });
+R.check('vào vùng 10', p.pos.map === 'realm_10', p.pos.map);
+await engage(page);
+const res = await fight(page, 200);
+R.check('gục ngã', res === 'lose', res);
+p = await player(page);
+const txt = await page.textContent('.me', { timeout: 5000 }).catch(() => '');
+R.check('thanh máu trong trận hiện 0', /❤\s*0\s*\/\s*\d/.test(txt), JSON.stringify(txt));
+const note = await page.textContent('.card.result', { timeout: 5000 }).catch(() => '');
+R.check('ghi chú hồi máu ở nhà trọ', note.includes('Về nhà trọ được hồi lại') && p.hp > 0, note);
+await shot(page, 'lose.png');
+R.check('không lỗi JS', P.errors.length === 0, P.errors.join(' | '));
+await R.done(browser);

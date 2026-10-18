@@ -52,12 +52,12 @@ defmodule HacLong.Game.Balance do
     end
   end
 
-  @doc "Tỉ lệ ép ngọc từng bước +6..+11: `[%{level, jewel, rate, luck_rate, fail}]`."
+  @doc "Tỉ lệ ép từng bước +1..+11: `[%{level, jewel, rate, luck_rate, fail}]` (`jewel`: tên ngọc tốn)."
   def upgrade_table do
     for s <- Data.upgrade().steps do
       %{
         level: s.level,
-        jewel: Data.item(s.jewel).name,
+        jewel: Enum.map_join(s.items, " + ", fn {id, n} -> "#{n} #{Data.item(id).name}" end),
         rate: s.rate,
         luck_rate: Gear.luck_rate(%{luck: true}, s.rate),
         fail: s.fail
@@ -101,7 +101,9 @@ defmodule HacLong.Game.Balance do
 
     ups =
       for u <- upgrade_table() do
-        fail = %{"down" => "tụt 1 cấp", "destroy" => "vỡ đồ", nil => "—"}[u.fail]
+        fail =
+          %{"down" => "tụt 1 cấp", "reset" => "về +0", "destroy" => "vỡ đồ", nil => "—"}[u.fail]
+
         "| +#{u.level} | #{u.jewel} | #{pct.(u.rate)} | #{pct.(u.luck_rate)} | #{fail} |"
       end
 
@@ -147,7 +149,7 @@ defmodule HacLong.Game.Balance do
     |---|---|---|---|---|---|
     #{Enum.join(drops, "\n")}
 
-    ## 2. Ép ngọc +6 → +11
+    ## 2. Ép +1 → +11 (kiểu MU, DECISIONS B-13)
 
     | Bước | Ngọc | Tỉ lệ | Có May mắn | Thất bại |
     |---|---|---|---|---|

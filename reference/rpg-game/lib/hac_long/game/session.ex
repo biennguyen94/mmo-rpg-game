@@ -20,6 +20,7 @@ defmodule HacLong.Game.Session do
 
   alias HacLong.Game.{
     Achievements,
+    AutoHunt,
     Characters,
     Commands,
     Daily,
@@ -199,7 +200,11 @@ defmodule HacLong.Game.Session do
       rid_order: :queue.new(),
       # `{ref, timer}` khi giao dịch đang giữ Session (`hold/1`); `queue`: lệnh đợi tới lúc nhả
       held: nil,
-      queue: []
+      queue: [],
+      # Phase 4: hẹn giờ nhịp tự đánh (`:auto_tick`) khi `player.auto` đang bật
+      auto_timer: nil,
+      # nhịp quái tầng Tháp / Quảng Trường / Lâu Đài / Kalima đi lang thang (`:tower_wander`)
+      tower_timer: nil
     }
 
     {:ok, s, @idle_timeout}
@@ -313,6 +318,7 @@ defmodule HacLong.Game.Session do
   defp handle(:online_info, _from, s), do: reply(nil, s)
 
   defp handle({:attach, pid}, _from, s) do
+    s = cc_back(s)
     if map_size(s.tabs) == 0, do: World.enter(s.player, s.user_id)
     HacLong.Party.back(s.user_id)
     s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
@@ -320,7 +326,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "teleport", "travel"] do
+       when act in ["move", "travel", "cc_enter", "cs_enter"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -404,7 +410,11 @@ defmodule HacLong.Game.Session do
     p = s.player
 
     cond do
-      p.battle != nil ->
+      HacLong.Slay.slaying?(p) ->
+        reply({:error, "#{p.name} đang trong trận đồ sát khác."}, s)
+
+      # người tấn công phải rảnh tay (Slay.check); người bị đánh đang đánh quái thì trận đó bị ngắt
+      f.mine and p.battle != nil ->
         reply({:error, "#{p.name} đang trong trận đấu."}, s)
 
       p.hp <= 0 ->
@@ -414,6 +424,8 @@ defmodule HacLong.Game.Session do
         reply({:error, "#{p.name} đã rời bản đồ."}, s)
 
       true ->
+        cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
+        p = interrupt_battle(p, s.user_id)
         mp = Maps.get(f.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
@@ -432,6 +444,7 @@ defmodule HacLong.Game.Session do
             do: "🗡 Bạn đồ sát #{foe.name}! Bạn ra đòn trước.",
             else: "⚠ #{foe.name} đồ sát bạn! Bỏ chạy tính như gục ngã."
 
+        text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}
         p2 = %{p2 | battle: b}
         left_trade(s.user_id, p, p2)
@@ -516,7 +529,7 @@ defmodule HacLong.Game.Session do
 
         # không online: gửi thưởng qua hộp thư, lần sau vào game thấy ngay
         r when map_size(s.tabs) == 0 ->
-          xp = min(r.xp, 3 * Engine.xp_to_next(p.level))
+          xp = min(r.xp, 3 * Engine.xp_need(p))
 
           Mailbox.send(s.user_id, %{
             subject: "Thưởng trùm thế giới",
@@ -530,7 +543,7 @@ defmodule HacLong.Game.Session do
 
         r ->
           # không cho người cấp thấp nhảy vọt quá nhiều cấp nhờ một trận
-          xp = min(r.xp, 3 * Engine.xp_to_next(p.level))
+          xp = min(r.xp, 3 * Engine.xp_need(p))
           p = %{p | gold: p.gold + r.gold}
           p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
           {levels, p} = Engine.gain_xp(p, xp)
@@ -684,6 +697,7 @@ defmodule HacLong.Game.Session do
 
     Enum.each(notes, &notify(s, &1))
     track_guild(old, player, result)
+    s = arm_auto(s)
 
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
@@ -888,6 +902,8 @@ defmodule HacLong.Game.Session do
 
     if map_size(s.tabs) == 0 do
       World.leave(s.player, s.user_id)
+      # tự đánh chỉ chạy khi online: đóng hết tab là tắt
+      s = auto_off(s, nil)
 
       # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch và lời mời cược đang dính
       HacLong.Party.away(s.user_id)
@@ -899,6 +915,44 @@ defmodule HacLong.Game.Session do
     else
       {:noreply, s}
     end
+  end
+
+  # Nhịp tự đánh (Phase 4): hỏi `AutoHunt` lệnh tiếp theo rồi chạy như lệnh client gửi (cùng giới hạn tốc độ).
+  def handle_info(:auto_tick, s) do
+    s = %{s | auto_timer: nil}
+
+    cond do
+      not AutoHunt.on?(s.player) ->
+        {:noreply, s, timeout(s)}
+
+      map_size(s.tabs) == 0 ->
+        {:noreply, auto_off(s, nil), timeout(s)}
+
+      # giao dịch đang giữ Session: chờ nhịp sau
+      s.held != nil ->
+        {:noreply, arm_auto(s, AutoHunt.delay(s.player, nil)), timeout(s)}
+
+      true ->
+        {:noreply, auto_step(s), timeout(s)}
+    end
+  end
+
+  def handle_info(:tower_wander, s) do
+    s = %{s | tower_timer: nil}
+    p = s.player
+
+    s =
+      with %{pos: %{map: "tower", x: x, y: y}, tower: %{} = t, battle: nil} <- p,
+           nil <- s.held,
+           t2 when t2 != t <- Tower.wander(t, {x, y}) do
+        p = %{p | tower: t2}
+        broadcast(s, p, nil)
+        s |> Map.put(:player, p) |> mark_dirty()
+      else
+        _ -> s
+      end
+
+    {:noreply, arm_tower(s), timeout(s)}
   end
 
   def handle_info(:flush, s) do
@@ -946,7 +1000,83 @@ defmodule HacLong.Game.Session do
     end
   end
 
-  defp reply(value, s), do: {:reply, value, s, timeout(s)}
+  defp reply(value, s), do: {:reply, value, arm_tower(s), timeout(s)}
+
+  # đang ở tầng riêng (`tower`) và có tab mở: hẹn nhịp cho quái tầng đi lang thang (như `:wander_ms` của bản đồ chung)
+  defp arm_tower(%{tower_timer: nil, player: %{pos: %{map: "tower"}, tower: %{}}} = s)
+       when map_size(s.tabs) > 0 do
+    case Application.get_env(:hac_long, :wander_ms) do
+      ms when is_integer(ms) -> %{s | tower_timer: Process.send_after(self(), :tower_wander, ms)}
+      _ -> s
+    end
+  end
+
+  defp arm_tower(s), do: s
+
+  # ---------- Tự đánh (Phase 4) ----------
+
+  defp auto_step(s) do
+    p = s.player
+
+    case AutoHunt.decide(p, auto_snapshot(p)) do
+      {:stop, why} ->
+        auto_off(s, why)
+
+      :wait ->
+        arm_auto(s, AutoHunt.delay(p, nil))
+
+      {:cmd, cmd} ->
+        {reason, ref} = save_reason({:command, cmd, :auto})
+        Characters.put_reason(reason, ref)
+
+        # `:busy`: lệnh đang chạy không tự hẹn nhịp (hẹn ngay dưới đây theo lệnh vừa gửi)
+        {:reply, _value, s, _t} =
+          handle({:command, cmd, :auto}, nil, fresh(%{s | auto_timer: :busy}))
+
+        arm_auto(%{s | auto_timer: nil}, AutoHunt.delay(s.player, cmd))
+    end
+  end
+
+  defp auto_snapshot(%{pos: %{map: id}}),
+    do: if(AutoHunt.map_ok?(id), do: MapServer.snapshot(id))
+
+  # hẹn nhịp tự đánh tiếp theo (nếu đang bật, còn tab và chưa hẹn)
+  defp arm_auto(s, ms \\ nil)
+
+  defp arm_auto(%{auto_timer: nil, player: p} = s, ms) when map_size(s.tabs) > 0 do
+    if AutoHunt.on?(p),
+      do: %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))},
+      else: s
+  end
+
+  defp arm_auto(s, _ms), do: s
+
+  defp auto_off(s, why) do
+    if AutoHunt.on?(s.player) do
+      if is_reference(s.auto_timer), do: Process.cancel_timer(s.auto_timer)
+      p = AutoHunt.stop(s.player)
+      s = %{s | player: p, auto_timer: nil}
+      broadcast(s, p, nil)
+      notify(s, why)
+      s
+    else
+      s
+    end
+  end
+
+  # B-19: mở lại game khi đã bị loại khỏi Hỗn Chiến Thành (đóng tab là bị loại) thì về Làng
+  defp cc_back(%{player: %{pos: %{map: map}, battle: nil} = p, tabs: tabs} = s)
+       when map_size(tabs) == 0 do
+    out? =
+      (map == HacLong.ChaosCastle.map_id() and not HacLong.ChaosCastle.alive?(s.user_id)) or
+        (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
+
+    if out?,
+      do: save(s, %{p | pos: World.village_spawn()}),
+      else: s
+  end
+
+  defp cc_back(s), do: s
 
   # Còn tab đang mở thì không tự tắt (nhân vật vẫn đứng trên bản đồ).
   defp timeout(%{tabs: tabs}) when map_size(tabs) > 0, do: :infinity
@@ -960,8 +1090,10 @@ defmodule HacLong.Game.Session do
     World.travel(s.player, s.user_id, cmd["to"])
   end
 
-  defp run_move(s, %{"act" => "teleport"} = cmd),
-    do: World.teleport(s.player, s.user_id, cmd["to"])
+  # B-19: vào Hỗn Chiến Thành (đổi bản đồ như dịch chuyển)
+  defp run_move(s, %{"act" => "cc_enter"}), do: HacLong.ChaosCastle.enter(s.player, s.user_id)
+  # B-22: vào Công Thành Chiến
+  defp run_move(s, %{"act" => "cs_enter"}), do: HacLong.CastleSiege.enter(s.player, s.user_id)
 
   defp run_move(s, cmd),
     do: World.move(s.player, s.user_id, cmd["dir"], cmd["confirm"] == true)
@@ -1004,6 +1136,17 @@ defmodule HacLong.Game.Session do
         player
     end
   end
+
+  # Bị đồ sát giữa trận đánh quái: trận đó kết thúc như bỏ chạy (quái nhả ra, giữ máu; đồng đội đánh tiếp),
+  # không mất gì. Đang ở bảng kết quả (trận đã xong) thì chỉ đóng bảng.
+  defp interrupt_battle(%{battle: %{over: false} = b} = p, uid) do
+    p
+    |> Map.put(:battle, %{b | over: true, result: "fled"})
+    |> World.finish_encounter(uid)
+    |> Map.put(:battle, nil)
+  end
+
+  defp interrupt_battle(p, _uid), do: Map.put(p, :battle, nil)
 
   # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
   # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.
@@ -1049,7 +1192,12 @@ defmodule HacLong.Game.Session do
       HacLong.PubSub,
       topic(target),
       {:notice,
-       "🏟 #{player.name} thách đấu bạn ở đấu trường và #{if r.won, do: "thắng", else: "thua"} (điểm của bạn #{sign.(r.their_delta)})."}
+       if(r.won,
+         do:
+           "🏟 #{player.name} thách đấu bạn ở đấu trường và thắng (điểm của bạn #{sign.(r.their_delta)}).",
+         else:
+           "🏟 #{player.name} thách đấu bạn ở đấu trường và thua (điểm của bạn #{sign.(r.their_delta)})."
+       )}
     )
 
     player
@@ -1057,7 +1205,8 @@ defmodule HacLong.Game.Session do
 
   # Trận vừa kết thúc: cập nhật quái trên bản đồ, gục ngã thì về Nhà, tính nhiệm vụ...
   defp battle_over(s, old, player) do
-    player = player |> Tower.after_battle() |> World.finish_encounter(s.user_id)
+    player =
+      player |> Tower.keep_hp() |> Tower.after_battle() |> World.finish_encounter(s.user_id)
 
     # lần đầu hạ Hắc Long: ghi lại thời điểm cho bảng xếp hạng
     player =
@@ -1117,6 +1266,18 @@ defmodule HacLong.Game.Session do
 
   defp left_trade(_uid, _old, _new), do: :ok
 
+  # đồ rơi lúc túi đồ hiếm đầy (`Gear.add/2`): gửi Hộp thư cùng transaction với lần ghi nhân vật
+  defp save(s, %{mail_out: [_ | _]} = player) do
+    {:ok, player} =
+      HacLong.Repo.transaction(fn ->
+        player = Mailbox.send_overflow(s.user_id, player)
+        Characters.save!(s.user_id, player)
+        player
+      end)
+
+    cancel_flush(%{s | player: player, dirty: false})
+  end
+
   defp save(s, player) do
     Characters.save!(s.user_id, player)
     cancel_flush(%{s | player: player, dirty: false})
@@ -1126,6 +1287,8 @@ defmodule HacLong.Game.Session do
     Characters.delete!(s.user_id)
     cancel_flush(%{s | player: nil, dirty: false})
   end
+
+  defp mark_dirty(%{player: %{mail_out: [_ | _]} = p} = s), do: save(s, p)
 
   defp mark_dirty(%{flush_timer: nil} = s),
     do: %{s | dirty: true, flush_timer: Process.send_after(self(), :flush, @flush_ms)}

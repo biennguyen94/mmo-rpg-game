@@ -28,6 +28,7 @@ defmodule HacLongWeb.Batch3Test do
     u = create_user()
     # nhân vật lưu trước Phase 15b: Gậy Gỗ +4 đang mặc và một cây trong túi
     player(u, %{
+      gear: [],
       upgrades: %{"club" => 4},
       inv: %{"club" => 1},
       equip: %{weapon: "club", armor: "vest"}
@@ -36,8 +37,12 @@ defmodule HacLongWeb.Batch3Test do
     p = Characters.load(u.id)
 
     # Gậy Gỗ → Rìu Nhỏ (bậc 1 Kiếm Sĩ); Áo Da Mỏng → Giáp Da; ô mới nhận đồ khởi đầu
-    assert [%{base: "item_1_0"} = a, %{base: "item_1_0"} = b] = p.gear
-    assert p.equip.armor == "item_8_5" and p.equip.boots == "item_11_5"
+    # mọi trang bị thành món riêng (đang mặc lẫn trong túi)
+    assert [%{base: "item_1_0"} = a, %{base: "item_1_0"} = b] =
+             Enum.filter(p.gear, &(&1.base == "item_1_0"))
+
+    assert Gear.find(p, p.equip.armor).base == "item_8_5"
+    assert Gear.find(p, p.equip.boots).base == "item_11_5"
     assert p.upgrades == %{a.uid => 4, b.uid => 4}
     assert p.equip.weapon in [a.uid, b.uid] and p.equip.wing == nil
   end

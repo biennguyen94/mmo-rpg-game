@@ -9,7 +9,7 @@ defmodule HacLong.World do
   Session luôn gọi MapServer, không bao giờ ngược lại, nên không thể bị treo chờ nhau.
   """
 
-  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Tower}
+  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Kalima, Tower}
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
 
@@ -26,6 +26,10 @@ defmodule HacLong.World do
       nil ->
         Maps.home_spawn()
 
+      # bản đồ sự kiện (B-19): sự kiện đã xong hoặc mất kết nối giữa chừng thì về Làng
+      %{event: e} when is_binary(e) ->
+        village_spawn()
+
       map ->
         free? = fn {dx, dy} -> Maps.walkable?(map, x + dx, y + dy) end
 
@@ -36,6 +40,22 @@ defmodule HacLong.World do
   end
 
   def valid_pos(_), do: Maps.home_spawn()
+
+  @doc "Chỗ đứng ở Làng khi bị đưa về (bị loại khỏi sự kiện, sự kiện kết thúc)."
+  def village_spawn do
+    {x, y} = Maps.get("village").waystone.spawn
+    %{map: "village", x: x, y: y}
+  end
+
+  @doc """
+  Đưa nhân vật tới `pos` (bản đồ sự kiện, về Làng…): rời bản đồ cũ, có mặt ở bản đồ mới. Không kiểm tra điều kiện.
+  """
+  def warp(p, uid, %{map: _, x: _, y: _} = pos) do
+    leave(p, uid)
+    p = %{p | pos: pos}
+    enter(p, uid)
+    p
+  end
 
   @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
   def shared?(%{map: id}), do: not Maps.get(id).private
@@ -70,6 +90,8 @@ defmodule HacLong.World do
   @doc "Rời bản đồ hiện tại (đóng game, xóa nhân vật)."
   def leave(%{pos: pos}, uid) do
     if shared?(pos), do: MapServer.leave(pos.map, uid)
+    # rời Hỗn Chiến Thành (gục, đổi bản đồ, thoát game) là bị loại
+    if Maps.get(pos.map)[:event] == "chaos_castle", do: HacLong.ChaosCastle.out(uid)
     :ok
   end
 
@@ -88,8 +110,8 @@ defmodule HacLong.World do
   Đi một bước theo hướng `dir`. Trả về `{kết_quả, nhân_vật}` như các lệnh khác.
 
   Bước vào trùm thì lần đầu chỉ nhận `%{confirm: "boss", boss: ...}`; gửi lại với
-  `confirm: true` mới vào trận. Bước vào đá dịch chuyển thì ghi nhớ đá đó và nhận
-  `%{waystone: true}` để client mở bảng chọn nơi đến. Bước vào NPC thì nhận `%{npc: id}`
+  `confirm: true` mới vào trận. Bước vào Đài Phúc Lành (ô `W`) thì nhận phúc lành của bản đồ và
+  ghi điểm hồi sinh (`%{blessing: true}`). Bước vào NPC thì nhận `%{npc: id}`
   để mở hội thoại. Bước vào điểm thu thập thì nhận nguyên liệu.
   """
   def move(p, uid, dir, confirm? \\ false) do
@@ -138,8 +160,15 @@ defmodule HacLong.World do
 
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, DevilSquare.battle_monster(m)) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == ">" ->
@@ -168,12 +197,52 @@ defmodule HacLong.World do
 
       m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
         case Engine.start_with_monster(p, Data.zone_count() - 1, BloodCastle.battle_monster(m)) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == "<" ->
         p |> BloodCastle.leave() |> ds_back(uid)
+
+      tile in [".", ">"] ->
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
+  # Kalima (B-21): cùng bản đồ riêng `tower`, trạng thái `p.tower.kal`
+  defp tower_move(%{tower: %{kal: kal} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+
+    cond do
+      kal.done or Kalima.expired?(p) ->
+        p |> Kalima.leave() |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        case Engine.start_with_monster(p, Data.zone_count() - 1, Kalima.battle_monster(m)) do
+          {%{ok: true} = r, p} ->
+            {r,
+             p
+             |> Engine.scale_event()
+             |> Tower.resume_hp(m)
+             |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
+        end
+
+      tile == "<" ->
+        p |> Kalima.leave() |> ds_back(uid)
 
       tile in [".", ">"] ->
         {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
@@ -194,8 +263,11 @@ defmodule HacLong.World do
                min(div(t.floor - 1, 10), Data.zone_count() - 1),
                Tower.battle_monster(m)
              ) do
-          {%{ok: true} = r, p} -> {r, put_in(p.battle[:encounter], %{tower: m.id})}
-          other -> other
+          {%{ok: true} = r, p} ->
+            {r, p |> Tower.resume_hp(m) |> put_in([:battle, :encounter], %{tower: m.id})}
+
+          other ->
+            other
         end
 
       tile == ">" ->
@@ -265,20 +337,32 @@ defmodule HacLong.World do
   defp use_portal(p, uid, portal) do
     target = Maps.get(portal.to)
 
-    if target.zone && not Engine.zone_unlocked?(p, target.zone) do
-      {%{
-         ok: false,
-         msg:
-           "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
-       }, p}
-    else
-      leave(p, uid)
-      {x, y} = portal.spawn
-      p = p |> put_pos(target.id, x, y) |> visit(target)
-      enter(p, uid)
-      {%{ok: true, msg: "Đến #{target.name}."}, p}
+    cond do
+      target.zone && not Engine.zone_unlocked?(p, target.zone) ->
+        {%{
+           ok: false,
+           msg:
+             "Cần đạt cấp #{Engine.zone_level(target.zone)} để vào #{Data.zone(target.zone).name}."
+         }, p}
+
+      target.realm && not realm_open?(p, target) ->
+        {%{ok: false, msg: realm_msg(target)}, p}
+
+      true ->
+        leave(p, uid)
+        {x, y} = portal.spawn
+        p = p |> put_pos(target.id, x, y) |> visit(target)
+        enter(p, uid)
+        {%{ok: true, msg: "Đến #{target.name}."}, p}
     end
   end
+
+  @doc "Phase 6 (B-30): vào được vùng đất chuyển sinh `map` không (đủ số lần chuyển sinh và cấp)."
+  def realm_open?(p, map),
+    do: (Map.get(p, :rebirths) || 0) >= map.min_rebirths and p.level >= map.min_level
+
+  defp realm_msg(map),
+    do: "#{map.name} cần chuyển sinh #{map.min_rebirths} lần và cấp #{map.min_level} trở lên."
 
   # bản đồ phụ đã tới thì dịch chuyển tới được bằng bảng chọn bản đồ
   defp visit(p, %{side: true, id: id}) do
@@ -327,6 +411,7 @@ defmodule HacLong.World do
     cond do
       map.id in @travel.free -> true
       map.private or map.id == "tower" -> false
+      map.realm -> realm_open?(p, map)
       true -> p.level >= (min_level(map) || 0)
     end
   end
@@ -339,14 +424,19 @@ defmodule HacLong.World do
       p.battle ->
         {%{ok: false, msg: "Đang trong trận đấu."}, p}
 
-      !target or target.id == "tower" ->
+      !target or target.id == "tower" or target.event != nil ->
         {%{ok: false, msg: "Không có bản đồ đó."}, p}
 
       to == p.pos.map ->
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
 
       not can_travel?(p, target) ->
-        {%{ok: false, msg: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."}, p}
+        msg =
+          if target.realm,
+            do: realm_msg(target),
+            else: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."
+
+        {%{ok: false, msg: msg}, p}
 
       p.gold < travel_cost(target) ->
         {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}
@@ -358,8 +448,14 @@ defmodule HacLong.World do
         p = %{put_pos(p, target.id, x, y) | gold: p.gold - cost}
         enter(p, uid)
 
-        {%{ok: true, msg: "Đến #{target.name}#{if cost > 0, do: " (−#{cost} vàng)", else: ""}."},
-         p}
+        {%{
+           ok: true,
+           msg:
+             if(cost > 0,
+               do: "Đến #{target.name} (−#{cost} vàng).",
+               else: "Đến #{target.name}."
+             )
+         }, p}
     end
   end
 
@@ -386,6 +482,13 @@ defmodule HacLong.World do
       {:engage, m} ->
         case encounter(p, map, m) do
           {%{ok: true} = r, p} ->
+            # quái đang dở máu (người trước bỏ chạy): đánh tiếp từ máu đó
+            p =
+              if is_number(m[:hp]) and m.hp < 100,
+                do:
+                  update_in(p.battle.monster, &%{&1 | hp: max(1, round(&1.maxHp * m.hp / 100))}),
+                else: p
+
             # trong tổ đội: ghi trận để đồng đội vào đánh cùng
             key = fight_key(map.id, m.id)
             Party.open_fight(key, uid, p.battle.monster)
@@ -398,16 +501,41 @@ defmodule HacLong.World do
     end
   end
 
+  # quái sự kiện (bản đồ sự kiện, quái vàng) mạnh theo số lần chuyển sinh người đánh (`Engine.scale_event/1`)
+  defp encounter(p, map, m) do
+    case do_encounter(p, map, m) do
+      {%{ok: true} = r, p} ->
+        if is_binary(map[:event]) or m[:gold] == true,
+          do: {r, Engine.scale_event(p)},
+          else: {r, p}
+
+      other ->
+        other
+    end
+  end
+
   # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
-  defp encounter(p, %{side: true} = map, m),
+  defp do_encounter(p, %{side: true} = map, m),
     do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
 
-  defp encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
+  # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ;
+  # B-22: bang đang giữ Vương Miện không đánh được nó
+  defp do_encounter(p, %{event: e} = map, m) when is_binary(e) do
+    case e == "castle_siege" && HacLong.CastleSiege.crown_blocked(p, m) do
+      msg when is_binary(msg) -> {%{ok: false, msg: msg}, p}
+      _ -> Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+    end
+  end
+
+  defp do_encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
 
   defp spec_of(map, m) do
     spec =
       cond do
+        m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map.zone)
+        map.event == "castle_siege" -> HacLong.CastleSiege.crown_spec()
         map.side -> Data.side_monster(m.kind)
+        map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)
         m.boss -> Data.zone(map.zone).boss
         true -> Enum.find(Data.zone(map.zone).monsters, &(&1.id == m.kind))
       end
@@ -459,59 +587,19 @@ defmodule HacLong.World do
     })
   end
 
-  # ---------- Đá dịch chuyển ----------
+  # ---------- Đài Phúc Lành (thay đá dịch chuyển, Phase 2 B-26) ----------
 
+  # chạm đài: phúc lành của bản đồ + điểm hồi sinh; vẫn ghi đài đã ghé (thành tựu ghé đủ đài)
   defp touch_waystone(p, map) do
     known = Map.get(p, :waystones, [])
 
-    if map.id in known or map.id == "village" do
-      {%{ok: true, waystone: true}, p}
-    else
-      {%{ok: true, waystone: true, msg: "Đã ghi nhớ đá dịch chuyển ở #{map.name}."},
-       Map.put(p, :waystones, known ++ [map.id])}
-    end
-  end
+    p =
+      if map.id in known or map.id == "village",
+        do: p,
+        else: Map.put(p, :waystones, known ++ [map.id])
 
-  @doc "Những nơi có thể dịch chuyển tới: Làng và các đá đã ghi nhớ."
-  def waystones(p), do: ["village" | Map.get(p, :waystones, [])]
-
-  defp next_to_waystone?(%{pos: %{map: id, x: x, y: y}}) do
-    case Maps.get(id).waystone do
-      %{at: {wx, wy}} -> abs(wx - x) + abs(wy - y) == 1
-      nil -> false
-    end
-  end
-
-  @doc "Dịch chuyển từ đá đang đứng cạnh tới đá ở bản đồ `to`."
-  def teleport(p, uid, to) do
-    target = is_binary(to) && Maps.get(to)
-
-    cond do
-      p.battle ->
-        {%{ok: false, msg: "Đang trong trận đấu."}, p}
-
-      not next_to_waystone?(p) ->
-        {%{ok: false, msg: "Hãy đứng cạnh đá dịch chuyển."}, p}
-
-      !target or target.waystone == nil ->
-        {%{ok: false, msg: "Không có đá dịch chuyển ở đó."}, p}
-
-      to not in waystones(p) ->
-        {%{ok: false, msg: "Bạn chưa tới đá dịch chuyển đó."}, p}
-
-      to == p.pos.map ->
-        {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}
-
-      target.zone && not Engine.zone_unlocked?(p, target.zone) ->
-        {%{ok: false, msg: "Cần đạt cấp #{Engine.zone_level(target.zone)} để tới vùng này."}, p}
-
-      true ->
-        leave(p, uid)
-        {x, y} = target.waystone.spawn
-        p = put_pos(p, target.id, x, y)
-        enter(p, uid)
-        {%{ok: true, msg: "Dịch chuyển tới #{target.name}."}, p}
-    end
+    {msg, p} = HacLong.Game.Blessing.touch(p, map)
+    {%{ok: true, blessing: true, msg: msg}, p}
   end
 
   @doc """
@@ -528,6 +616,10 @@ defmodule HacLong.World do
         cond do
           b.result == "win" ->
             MapServer.defeat(map_id, uid, mid)
+            if map_id == HacLong.ChaosCastle.map_id(), do: HacLong.ChaosCastle.kill(uid, :monster)
+
+            if map_id == HacLong.CastleSiege.map_id(),
+              do: HacLong.CastleSiege.defeated(uid, mid, p[:guild])
 
           # mình thua hoặc bỏ chạy nhưng đồng đội còn đánh: chuyển quái cho người khác
           enc[:shared] ->
@@ -546,7 +638,13 @@ defmodule HacLong.World do
 
     if b.result == "lose" do
       leave(p, uid)
-      %{p | pos: Maps.home_spawn()}
+      # gục trong bản đồ sự kiện (Hỗn Chiến Thành): bị loại, về Làng
+      # gục ở bản đồ thường: hồi sinh cạnh Đài Phúc Lành đã chạm, chưa chạm đài nào thì về Nhà
+      cond do
+        Maps.get(p.pos.map)[:event] -> %{p | pos: village_spawn()}
+        pos = HacLong.Game.Blessing.respawn(p) -> %{p | pos: pos}
+        true -> %{p | pos: Maps.home_spawn()}
+      end
     else
       p
     end

@@ -69,7 +69,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 | Bán đồ ngẫu nhiên | `Engine.sell("#"<>uid)` `engine.ex:1082` | `it.sell` |
 | Bán đồ thường | `Engine.sell(id)` `engine.ex:1092`, `sell_price` `1067` | `floor(price*0.4)` (giá 0 thì tính 200) |
 | Nghỉ trọ | `Engine.rest` `engine.ex:1155, 1167-1171` | `level*4-4` |
-| Túi đồ ngẫu nhiên đầy thì tự bán | `Gear.add` `gear.ex:156-158` | |
+| Túi đồ hiếm đầy: đồ rơi vào Hộp thư (đủ dòng, khóa `gearx:`), hộp thư đầy mới bán (B-25) | `Gear.add`, `Mailbox.send_overflow`, `Session.save` | |
 | Rèn đồ ngẫu nhiên | `Crafting.smith` `crafting.ex:30, 128-148` | `level*15` |
 | Mua rương | `Chests.buy` `chests.ex:49, 57` | giá `chests.ex:24-35` |
 | Rương nhà mỗi ngày | `Chests.open_daily` `chests.ex:73, 88` | `20+level*8` |
@@ -134,13 +134,11 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 
 ### Đồ ngẫu nhiên (`HacLong.Game.Gear`, `gear.ex`)
 
-- Dạng: `%{uid, base, rarity, bonus}`.
-  - `base`: id đồ thường làm nền.
-  - `rarity`: 1 Tốt / 2 Hiếm / 3 Sử Thi (`gear.ex:20`), cũng là số dòng chỉ số cộng.
-  - `bonus`: `%{str|vit|agi|def => điểm}`, mỗi dòng `1+floor(rand*(1+level/6))` (`gear.ex:133`).
-- Tên có hậu tố theo chỉ số cao nhất (`gear.ex:21, 54-67`).
-- Giá: `base*0.4*(1+0.25*rarity) + 5*sum(bonus)` (`gear.ex:70-73`).
-- Tỉ lệ độ hiếm `[{3,5},{2,25},{1,70}]`.
+- Dạng: `%{uid, base, rarity: 0, bonus: %{}, opt?, exc?, luck?, skill?, anc?, wopt?}` (B-15: bỏ độ hiếm, `rarity` / `bonus`
+  chỉ còn để không đổi schema; đồ cũ khi `Gear.load/1` thì độ hiếm N → `opt` N).
+  - `base`: id đồ thường làm nền; `opt`: số dòng cộng thêm (+4 mỗi dòng), `Gear.kind/1`: "" / opt / exc / anc.
+- Giá: `base*0.4*(1+0.25*opt)` × Excellent × May mắn / Kỹ năng × Thần.
+- Tỉ lệ số dòng khi rơi `RULES.loot.gear_weights` `[[0,50],[1,35],[2,12],[3,3]]`.
 - Ô đồ: vũ khí 45 % / giáp 35 % / khiên 20 %.
 - Nền: 2 món cửa hàng cấp cao nhất ≤ cấp quái (`gear.ex:103-137`).
 - Tỉ lệ rơi: quái thường 0,04; ban đêm 0,25; trùm 0,35; tinh anh 0,5; trùm thế giới / PvP 0 (`gear.ex:88-96`).
@@ -192,7 +190,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 | `announce {text}` | `Chat.system("📢 …")`, tối đa 200 ký tự |
 | `gift {subject, body, gold, xp, items, uid \| all: true}` | `Mailbox.send` / `send_all` |
 | `world_boss` | `WorldBoss.spawn_now()` |
-| `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `give_item`, `give_gear`, `heal` `{uid, …}` | `HacLong.Admin.run/4` → `Session.admin/3` (chạy trong Session người đó, lưu với lý do `ADMIN`, `ref = admin:<id>`) → `{msg, user}` |
+| `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `reset_stats`, `clear_bag`, `give_item`, `give_gear`, `set_tower`, `set_rebirths`, `heal` `{uid, …}` | `HacLong.Admin.run/4` → `Session.admin/3` (chạy trong Session người đó, lưu với lý do `ADMIN`, `ref = admin:<id>`) → `{msg, user}` |
 | `audit {days}` | `HacLong.Audit.run/1` |
 | `gold_log {uid}` / `admin_log {uid?}` | `Audit.gold_history/2` / `Admin.recent/2` |
 

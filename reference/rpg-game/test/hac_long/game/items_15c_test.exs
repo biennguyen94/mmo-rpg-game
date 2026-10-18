@@ -35,15 +35,16 @@ defmodule HacLong.Game.Items15cTest do
     base = Engine.derived(p)
     {%{ok: true}, p} = Engine.equip(p, "item_13_8")
     {%{ok: true}, p} = Engine.equip(p, "item_13_8")
-    assert p.equip.ring1 == "item_13_8" and p.equip.ring2 == "item_13_8"
+    base_of = &Gear.item(p, &1).base
+    assert base_of.(p.equip.ring1) == "item_13_8" and base_of.(p.equip.ring2) == "item_13_8"
     assert Engine.derived(p).maxHp == base.maxHp + 50
 
     {%{ok: true}, p} = Engine.equip(p, "item_13_12")
-    assert p.equip.pendant == "item_13_12"
+    assert Gear.item(p, p.equip.pendant).base == "item_13_12"
     assert Engine.derived(p).atk == base.atk + 3
 
     {%{ok: true}, p} = Engine.unequip(p, "ring2")
-    assert p.equip.ring2 == nil and p.inv["item_13_8"] == 1
+    assert p.equip.ring2 == nil and Enum.count(Gear.bag(p), &(&1.base == "item_13_8")) == 1
     refute "item_13_8" in Data.shop() or "item_13_12" in Data.shop()
     refute Map.has_key?(Data.starters("dk"), :ring1)
   end
@@ -87,19 +88,21 @@ defmodule HacLong.Game.Items15cTest do
   end
 
   test "Excellent: dòng đúng loại đồ, cộng vào chỉ số, lưu / nạp, bán đắt hơn" do
-    g = Gear.new("item_0_3", 0, %{})
+    g = Gear.new("item_0_3", 0)
     assert Gear.excellent(g, 0) == g
 
     Rng.put_sequence([0.0, 0.99, 0.1, 0.5, 0.9])
     w = Gear.excellent(g, 1.0)
-    assert w.exc != [] and Enum.all?(w.exc, &(&1 in ~w(atk_pct crit heal_kill mp_kill)))
 
-    arm = Gear.excellent(Gear.new("item_8_5", 0, %{}), 1.0)
-    assert Enum.all?(arm.exc, &(&1 in ~w(hp_pct dmg_red gold_pct)))
+    assert w.exc != [] and
+             Enum.all?(w.exc, &(&1 in ~w(atk_pct crit heal_kill mp_kill atk_lvl ar_pct)))
+
+    arm = Gear.excellent(Gear.new("item_8_5", 0), 1.0)
+    assert Enum.all?(arm.exc, &(&1 in ~w(hp_pct dmg_red gold_pct mp_pct reflect def_rate)))
 
     # mặc vũ khí Excellent "atk_pct": tấn công tăng theo %
     p = player("dk", %{level: 20})
-    sword = %{Gear.new("item_0_3", 0, %{}) | uid: "#EXC"} |> Map.put(:exc, ["atk_pct", "crit"])
+    sword = %{Gear.new("item_0_3", 0) | uid: "#EXC"} |> Map.put(:exc, ["atk_pct", "crit"])
     plain = %{sword | uid: "#PLN"} |> Map.delete(:exc)
     {pe, _} = Gear.add(p, sword)
     {%{ok: true}, pe} = Engine.equip(pe, "#EXC")
@@ -123,12 +126,55 @@ defmodule HacLong.Game.Items15cTest do
     assert [%{exc: ["atk_pct", "crit"]}] = Gear.load([saved])
   end
 
+  test "B-16: đủ 6 dòng Excellent như MU: tấn công theo cấp, tỉ lệ trúng, MP %, né, phản sát thương" do
+    w = @rules.excellent.options.weapon
+    a = @rules.excellent.options.armor
+    p = player("dk", %{level: 40})
+    sword = %{Gear.new("item_0_3") | uid: "#W6"} |> Map.put(:exc, ~w(atk_lvl ar_pct))
+    armor = %{Gear.new("item_8_5") | uid: "#A6"} |> Map.put(:exc, ~w(mp_pct def_rate reflect))
+    base = Engine.derived(p)
+    # mặc đồ thường cùng loại để so (chỉ khác các dòng Excellent)
+    plain =
+      Enum.reduce([%{sword | uid: "#W0", exc: []}, %{armor | uid: "#A0", exc: []}], p, fn g, p ->
+        p |> Gear.add(g) |> elem(0) |> Engine.equip(g.uid) |> elem(1)
+      end)
+
+    full =
+      Enum.reduce([sword, armor], p, fn g, p ->
+        p |> Gear.add(g) |> elem(0) |> Engine.equip(g.uid) |> elem(1)
+      end)
+
+    d0 = Engine.derived(plain)
+    d = Engine.derived(full)
+    assert base.maxMp == d0.maxMp
+    assert_in_delta d.atk, (d0.atk / 1 + w.atk_lvl * 40) |> round(), 2
+    assert_in_delta d.ar, d0.ar * (1 + w.ar_pct), 1.0e-6
+    assert d.maxMp == round(d0.maxMp * (1 + a.mp_pct))
+    assert_in_delta d.dodge, d0.dodge * (1 + a.def_rate), 1.0e-9
+    assert d.excReflect == a.reflect
+
+    # phản sát thương: quái đánh trúng thì mất phần trăm sát thương, không chết vì phản đòn
+    {_, b} = Engine.start_battle(full, 0, false)
+    b = put_in(b.battle.monster.hp, 1_000_000)
+    # quái đánh mạnh để 5 % sát thương không làm tròn về 0
+    b = put_in(b.battle.monster.atk, 3000)
+    b = %{b | hp: 100_000}
+
+    # 0.99: đòn mình trúng, quái không né / không chí mạng, mình không né đòn quái
+    Rng.put_sequence([0.99])
+    {_, q} = Engine.act(b, "attack")
+    [hit] = for l <- q.battle.log, l.text =~ "đánh bạn", do: l.text
+    [taken] = Regex.run(~r/đánh bạn (\d+) máu/, hit, capture: :all_but_first)
+    back = round(String.to_integer(taken) * a.reflect)
+    assert Enum.any?(q.battle.log, &(&1.text =~ "↩ Phản lại #{back} sát thương"))
+  end
+
   test "Excellent giảm sát thương bị chặn ở max_dmg_red" do
     p = player("dk", %{level: 20})
 
     gs =
       for {base, i} <- Enum.with_index(~w(item_8_5 item_9_5 item_10_5 item_11_5 item_7_5)) do
-        %{Gear.new(base, 0, %{}) | uid: "#A#{i}"} |> Map.put(:exc, ["dmg_red"])
+        %{Gear.new(base, 0) | uid: "#A#{i}"} |> Map.put(:exc, ["dmg_red"])
       end
 
     p =

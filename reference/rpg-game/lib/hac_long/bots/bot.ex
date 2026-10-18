@@ -37,7 +37,17 @@ defmodule HacLong.Bots.Bot do
   @impl true
   def init({uid, name, cls}) do
     Process.send_after(self(), :start, 1000 + :rand.uniform(4000))
-    {:ok, %{uid: uid, name: name, cls: cls, tries: 0, deaths: nil, rest_until: 0}}
+
+    # `rest_until` theo đồng hồ đơn điệu (có thể là số âm trên máy ảo): mốc "chưa nghỉ" là lúc khởi động, không phải 0
+    {:ok,
+     %{
+       uid: uid,
+       name: name,
+       cls: cls,
+       tries: 0,
+       deaths: nil,
+       rest_until: System.monotonic_time(:millisecond)
+     }}
   end
 
   @impl true

@@ -76,7 +76,41 @@ defmodule HacLongWeb.SlayTest do
              Slay.check(%{a | pos: village}, %{b | pos: village})
 
     assert {:error, "Hãy đến cùng bản đồ" <> _} = Slay.check(a, %{b | pos: village})
-    assert {:error, "B đang trong trận đấu."} = Slay.check(a, %{b | battle: %{}})
+    assert {:error, "Bạn đang trong trận đấu."} = Slay.check(%{a | battle: %{}}, b)
+
+    # người bị đánh đang đánh quái vẫn đồ sát được; đang trong trận đồ sát khác thì không
+    assert Slay.check(a, %{b | battle: %{over: false, encounter: %{map: "forest_1", mid: 1}}}) ==
+             :ok
+
+    assert {:error, "B đang bị đồ sát" <> _} =
+             Slay.check(a, %{b | battle: %{over: false, encounter: %{slay: 7}}})
+  end
+
+  test "đồ sát người đang đánh quái: trận đánh quái bị cắt ngang, vào trận đồ sát ngay" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, strong())
+    pb = player(ub, %{level: 12})
+
+    {_, fight} =
+      HacLong.Game.Engine.start_with_monster(
+        pb,
+        0,
+        HacLong.Game.Engine.make_monster(%{level: 1, id: "bat", name: "Dơi Hang"}, false)
+      )
+
+    Characters.save!(ub.id, fight, "TEST")
+    sa = join(ua)
+    _sb = join(ub)
+    assert Session.get(ub.id).battle.monster.name == "Dơi Hang"
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    pb = Session.get(ub.id)
+    assert pb.battle.live and pb.battle.encounter[:slay]
+    assert pb.battle.monster.name == Session.get(ua.id).name
+    assert Enum.any?(pb.battle.log, &(&1.text =~ "Dơi Hang bị cắt ngang"))
   end
 
   test "đồ sát → luân phiên lượt → người thua chết, vàng mất chuyển cho người thắng, audit sạch" do

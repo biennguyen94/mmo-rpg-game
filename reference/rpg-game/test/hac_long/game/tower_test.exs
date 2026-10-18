@@ -58,6 +58,34 @@ defmodule HacLong.Game.TowerTest do
     assert strong.maxHp > weak.maxHp * 3
   end
 
+  test "quái tầng đi lang thang: một ô sang ô trống, không đè nhau, không vào ô người chơi, trùm đứng yên" do
+    t = Tower.build(10, "lang thang")
+    [ex, ey] = t.exit
+    me = {ex, ey - 1}
+    floor? = fn {x, y} -> t.tiles |> Enum.at(y) |> String.at(x) == "." end
+
+    moved =
+      Enum.reduce(1..30, t, fn _, acc ->
+        next = Tower.wander(acc, me, 1.0)
+        pos = Enum.map(next.monsters, &{&1.x, &1.y})
+        assert length(Enum.uniq(pos)) == length(pos)
+        refute me in pos
+
+        for {a, b} <- Enum.zip(acc.monsters, next.monsters) do
+          assert a.id == b.id
+          assert abs(a.x - b.x) + abs(a.y - b.y) <= 1
+          assert floor?.({b.x, b.y})
+          if a.elite, do: assert({a.x, a.y} == {b.x, b.y})
+        end
+
+        next
+      end)
+
+    assert Enum.map(moved.monsters, &{&1.x, &1.y}) != Enum.map(t.monsters, &{&1.x, &1.y})
+    # không ai đi khi tỉ lệ 0
+    assert Tower.wander(t, me, 0.0) == t
+  end
+
   test "mốc bắt đầu theo kỷ lục" do
     assert Tower.starts(0) == [1]
     assert Tower.starts(9) == [1]

@@ -1,11 +1,11 @@
 defmodule HacLong.Game.ForgeTest do
   @moduledoc """
   Đợt 3 (docs/INTEGRATION_PLAN.md §3, §4; FEATURE_CATALOG C10, C18, D1, D2, D3, D5, D6, D7):
-  cấp nâng theo từng món, khóa đồ, ép +6 → +11 bằng ngọc, Máy Hỗn Nguyên, cánh, ngọc rơi.
+  cấp nâng theo từng món, khóa đồ, ép kiểu MU (B-13), Máy Hỗn Nguyên, cánh, ngọc rơi.
   """
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Chaos, Engine, Gear, Rng, TradeOffer}
+  alias HacLong.Game.{Chaos, Data, Engine, Gear, Rng, TradeOffer}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -20,7 +20,7 @@ defmodule HacLong.Game.ForgeTest do
   # vũ khí đang mặc ở cấp `up` (bản riêng)
   defp armed(p, base, up) do
     g = Gear.plain(base)
-    p = %{p | equip: %{p.equip | weapon: g.uid}, gear: [g]}
+    p = %{p | equip: %{p.equip | weapon: g.uid}, gear: Gear.list(p) ++ [g]}
     Map.put(p, :upgrades, %{g.uid => up})
   end
 
@@ -29,8 +29,14 @@ defmodule HacLong.Game.ForgeTest do
 
   describe "C10 cấp nâng theo từng món" do
     test "dữ liệu cũ (cấp theo loại) tách thành từng món giữ nguyên cấp" do
-      p = player() |> Map.put(:upgrades, %{"item_1_0" => 3, "broadsword" => 2, "potion_s" => 1})
-      p = p |> Engine.add_item("broadsword", 2)
+      # nhân vật lưu kiểu cũ: đồ mặc và đồ trong túi là đồ thường xếp chồng (mã loại), cấp nâng theo loại
+      p = %{player() | gear: [], equip: Map.merge(Engine.empty_equip(), Data.starters("dk"))}
+
+      p =
+        p
+        |> Map.put(:upgrades, %{"item_1_0" => 3, "broadsword" => 2, "potion_s" => 1})
+        |> Map.put(:inv, Map.put(p.inv, "broadsword", 2))
+
       q = Engine.split_upgrades(p)
 
       assert q.inv["broadsword"] == nil
@@ -51,15 +57,15 @@ defmodule HacLong.Game.ForgeTest do
       p = player() |> Engine.add_item("broadsword")
       {%{ok: true}, p} = Engine.lock(p, "broadsword", true)
       assert p.inv["broadsword"] == nil
-      [%{uid: uid, locked: true}] = p.gear
-      assert Gear.resolve(hd(p.gear)).locked
+      [%{uid: uid, locked: true} = g] = Gear.bag(p)
+      assert Gear.resolve(g).locked
 
       assert {%{ok: false, msg: msg}, _} = Engine.sell(p, uid)
       assert msg =~ "đang khóa"
       assert {:error, "Có món đang khóa." <> _} = TradeOffer.parse(p, %{"gear" => [uid]})
 
       # đồ đang mặc khóa tại chỗ
-      {%{ok: true}, p} = Engine.lock(p, "item_1_0", true)
+      {%{ok: true}, p} = Engine.lock(p, p.equip.weapon, true)
       assert Gear.locked?(p, p.equip.weapon)
 
       {%{ok: true}, p} = Engine.lock(p, uid, false)
@@ -69,16 +75,29 @@ defmodule HacLong.Game.ForgeTest do
     end
   end
 
-  describe "D1 ép +6 → +11 bằng ngọc" do
-    test "+5 → +6 chắc chắn bằng Ngọc Ước Nguyện" do
-      p = player() |> armed("greatsword", 5) |> jewels()
-      {%{ok: true, upgrade: %{result: "success", level: 6}}, q} = Engine.upgrade(p, "weapon")
+  describe "ép kiểu MU (DECISIONS B-13)" do
+    test "+0 → +6: mỗi lần 1 Ngọc Ước Nguyện, luôn thành công, không tốn quặng" do
+      p = player() |> armed("greatsword", 0) |> jewels(10)
+
+      q =
+        Enum.reduce(1..6, p, fn n, q ->
+          {%{ok: true, upgrade: %{result: "success", level: ^n}}, q} = Engine.upgrade(q, "weapon")
+          q
+        end)
+
       assert Engine.upgrade_level(q, q.equip.weapon) == 6
-      assert q.inv["jewel_bless"] == 4
+      assert q.inv["jewel_bless"] == 4 and q.inv["jewel_soul"] == 10
+      assert Engine.upgrade_cost("greatsword", 0).items == %{"jewel_bless" => 1}
     end
 
-    test "+6 → +7: thành công có thông báo; thất bại tụt một cấp, mất ngọc" do
+    test "+6 → +7 bằng Ngọc Tâm Linh 50% (May mắn 75%): thành công có thông báo; thất bại về +0" do
       p = player() |> armed("greatsword", 6) |> jewels()
+
+      assert %{rate: 0.5, fail: "reset", items: %{"jewel_soul" => 1}} =
+               Engine.upgrade_cost("greatsword", 6)
+
+      assert Engine.upgrade_cost(%{price: 100, luck: true}, 6).rate == 0.75
+
       Rng.put_sequence([0.1])
       {r, q} = Engine.upgrade(p, "weapon")
       assert r.upgrade == %{result: "success", level: 7}
@@ -86,31 +105,54 @@ defmodule HacLong.Game.ForgeTest do
 
       Rng.put_sequence([0.9])
       {r, q2} = Engine.upgrade(p, "weapon")
-      assert r.upgrade == %{result: "down", level: 5} and not Map.has_key?(r, :announce)
-      assert Engine.upgrade_level(q2, q2.equip.weapon) == 5
+      assert r.upgrade == %{result: "reset", level: 0} and not Map.has_key?(r, :announce)
+      assert r.msg =~ "về +0"
+      assert Engine.upgrade_level(q2, q2.equip.weapon) == 0
       assert q2.inv["jewel_soul"] == 4 and q2.gold < p.gold
       assert Engine.upgrade_level(q, q.equip.weapon) == 7
     end
 
-    test "+9 → +10 phải xác nhận; thất bại vỡ đồ, vũ khí về đồ khởi đầu" do
+    test "+10 chỉ ép ở Máy Hỗn Nguyên: Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ)" do
       p = player() |> armed("greatsword", 9) |> jewels()
-      assert {%{ok: false, confirm: true}, ^p} = Engine.upgrade(p, "weapon")
+      assert {%{ok: false, msg: msg}, ^p} = Engine.upgrade(p, "weapon")
+      assert msg =~ "Lão Hỗn Nguyên"
+
+      Rng.put_sequence([0.1])
+      {r, q} = Engine.upgrade(p, "weapon", false, "chaos")
+      assert r.upgrade == %{result: "success", level: 10}
+      assert {q.inv["jewel_chaos"], q.inv["jewel_bless"], q.inv["jewel_soul"]} == {4, 4, 4}
+
+      # +10: 35 %; +11: 1 Hỗn Nguyên, 2 Ước Nguyện, 2 Tâm Linh, 25 %; thất bại về +0
+      assert %{rate: 0.35, fail: "reset"} = Engine.upgrade_cost("greatsword", 9)
+
+      assert %{
+               rate: 0.25,
+               fail: "reset",
+               items: %{"jewel_chaos" => 1, "jewel_bless" => 2, "jewel_soul" => 2}
+             } =
+               Engine.upgrade_cost("greatsword", 10)
 
       Rng.put_sequence([0.99])
-      {r, q} = Engine.upgrade(p, "weapon", true)
-      assert r.upgrade.result == "destroy" and r.msg =~ "vỡ"
-      assert q.equip.weapon == "item_1_0" and q.gear == [] and q.upgrades == %{}
+      {r, q} = Engine.upgrade(p, "weapon", false, "chaos")
+      assert r.upgrade == %{result: "reset", level: 0} and r.msg =~ "về +0"
+      assert q.equip.weapon == p.equip.weapon and Engine.upgrade_level(q, q.equip.weapon) == 0
+
+      # bước của Thợ Rèn không làm ở Máy Hỗn Nguyên
+      p6 = player() |> armed("greatsword", 5) |> jewels()
+
+      assert {%{ok: false, msg: "Ép lên +6 ở Thợ Rèn."}, _} =
+               Engine.upgrade(p6, "weapon", false, "chaos")
     end
 
-    test "+10, +11 tính gấp đôi; +11 là tối đa" do
-      assert Engine.effective_level(9) == 9
-      assert Engine.effective_level(10) == 11
-      assert Engine.effective_level(11) == 13
+    test "+1 → +9 mỗi cấp 8 %, +10 = 120 %, +11 = 180 % (eff); +11 là tối đa" do
+      assert Enum.map(0..11, &Engine.upgrade_eff/1) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 22.5]
+
+      assert Engine.effective_level(10) == 11 and Engine.effective_level(11) == 13
 
       p = player() |> armed("greatsword", 11) |> jewels()
       assert {%{ok: false, msg: "Đại Kiếm đã nâng cấp tối đa."}, _} = Engine.upgrade(p, "weapon")
       # Đại Kiếm tấn công 44: mỗi cấp round(44 × 0,08) = 4
-      assert Engine.upgrade_bonus(p, p.equip.weapon) == 13 * 4
+      assert Engine.upgrade_bonus(p, p.equip.weapon) == round(22.5 * 4)
     end
   end
 
@@ -119,7 +161,7 @@ defmodule HacLong.Game.ForgeTest do
       p = player()
       w = Gear.plain("wing_dk_1")
       wk = Gear.plain("wing_mg_1")
-      p = %{p | gear: [w, wk]}
+      p = %{p | gear: Gear.list(p) ++ [w, wk]}
       assert {%{ok: false, msg: "Cần cấp 20."}, _} = Engine.equip(%{p | level: 10}, w.uid)
       assert {%{ok: false, msg: msg}, _} = Engine.equip(p, wk.uid)
       assert msg =~ "Đấu Sĩ"
@@ -130,9 +172,9 @@ defmodule HacLong.Game.ForgeTest do
       assert d.wingDmg == 0.1 and d.wingAbsorb == 0.1 and d.def == base.def + 6
       assert Engine.look(q).wing == %{cls: "dk", tier: 1}
 
-      # mỗi cấp nâng +2 %
+      # cánh 1 +5: sát thương +2 % mỗi cấp, hấp thụ +0,5 % mỗi cấp (RULES.wing_upgrade)
       d5 = Engine.derived(Map.put(q, :upgrades, %{w.uid => 5}))
-      assert d5.wingDmg == 0.2 and d5.wingAbsorb == 0.2
+      assert d5.wingDmg == 0.2 and d5.wingAbsorb == 0.125
 
       {%{ok: true}, q} = Engine.unequip(q, "wing")
       assert q.equip.wing == nil and Engine.derived(q) == base
@@ -142,14 +184,14 @@ defmodule HacLong.Game.ForgeTest do
   describe "D5 Máy Hỗn Nguyên" do
     defp wing_input(p, up) do
       g = Gear.plain("greatsword")
-      p = %{p | gear: [g]} |> Map.put(:upgrades, %{g.uid => up}) |> jewels()
+      p = %{p | gear: Gear.list(p) ++ [g]} |> Map.put(:upgrades, %{g.uid => up}) |> jewels()
       {p, g.uid}
     end
 
     test "tỉ lệ theo cấp đồ, tối đa 60 %" do
       r = HacLong.Game.Data.chaos("wing1")
-      assert Chaos.rate(r, 5) == 0.1
-      assert Chaos.rate(r, 9) == 0.3
+      assert Chaos.rate(r, 5) == r.rate
+      assert Chaos.rate(r, 9) == Float.round(r.rate + 4 * r.per_up, 3)
       assert Chaos.rate(r, 20) == 0.6
       assert Chaos.rate(HacLong.Game.Data.chaos("make_chaos")) == 0.7
     end
@@ -160,12 +202,12 @@ defmodule HacLong.Game.ForgeTest do
       {r, q} = Chaos.combine(p, "wing1", uid)
       assert r.chaos == %{result: "success", out: "wing_elf_1"}
       assert r.announce =~ "Cánh Tiên"
-      assert [%{base: "wing_elf_1", rarity: 0}] = q.gear
+      assert [%{base: "wing_elf_1", rarity: 0}] = Gear.bag(q)
       assert q.gold == p.gold - 20_000 and q.inv["jewel_chaos"] == 4
 
       Rng.put_sequence([0.99])
       {r, q} = Chaos.combine(p, "wing1", uid)
-      assert r.chaos.result == "fail" and q.gear == [] and q.upgrades == %{}
+      assert r.chaos.result == "fail" and Gear.bag(q) == [] and q.upgrades == %{}
       assert q.gold == p.gold - 20_000
     end
 

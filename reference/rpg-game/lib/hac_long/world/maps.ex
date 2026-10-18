@@ -10,7 +10,7 @@ defmodule HacLong.World.Maps do
     bản đồ `to`, đứng ở `spawn`. Cổng vào vùng chưa mở (chưa hạ trùm vùng trước) bị khóa.
   - `spawns`: `{monster, max, respawn}`: loại quái, số con tối đa, số giây hồi lại.
   - `boss`: `{at, respawn}`: chỗ trùm của vùng đứng (trùm không đi lang thang).
-  - `waystone`: `{at, spawn}`: đá dịch chuyển (ô `W`) và chỗ đứng khi dịch chuyển tới đây.
+  - `waystone`: `{at, spawn}`: Đài Phúc Lành (ô `W`, trước là đá dịch chuyển) và chỗ đứng / chỗ hồi sinh cạnh đài.
     Chạm vào đá lần đầu thì ghi nhớ nó; đứng cạnh bất kỳ đá nào đều dịch chuyển được tới
     các đá đã ghi nhớ (Làng luôn có sẵn).
   - `private: true`: bản đồ riêng của mỗi người (Nhà), không có ai khác.
@@ -63,6 +63,13 @@ defmodule HacLong.World.Maps do
              private: m["private"] == true,
              # Phase 15a: bản đồ phụ (quái ở `SIDE_MONSTERS`, không khóa theo vùng), `theme`: nền trận đánh
              side: m["side"] == true,
+             # B-19: bản đồ của một sự kiện (vd "chaos_castle"): chỉ vào qua sự kiện, không chọn map / dịch chuyển tới,
+             # vào lại game đang ở đó thì về Làng
+             event: m["event"],
+             # Phase 6 (B-30): vùng đất chuyển sinh: cần chuyển sinh ≥ min_rebirths và cấp ≥ min_level
+             realm: m["realm"],
+             min_rebirths: m["min_rebirths"],
+             min_level: m["min_level"],
              theme: m["theme"],
              width: String.length(hd(rows)),
              height: length(rows),
@@ -167,6 +174,8 @@ defmodule HacLong.World.Maps do
            name: m.name,
            zone: m.zone,
            side: m.side,
+           event: m.event,
+           realm: m.realm,
            theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,

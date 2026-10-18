@@ -19,6 +19,7 @@ nhật ký vàng / đồ hiếm / quản trị, và công thức dựng nhân v�
 9. [Ép đồ, Máy Hỗn Nguyên, khóa đồ (Đợt 3)](#9-ép-đồ-máy-hỗn-nguyên-khóa-đồ-đợt-3)
 10. [Hình đồ theo cấp và Item.txt](#10-hình-đồ-theo-cấp-và-itemtxt)
 11. [Chỉnh số luật chơi, từ cấm khi đặt tên](#11-chỉnh-số-luật-chơi-từ-cấm-khi-đặt-tên)
+12. [Đợt 8 phase 2026-10: tự đánh, bot mua bình, bộ hình Pixel, vùng chuyển sinh](#12-đợt-8-phase-2026-10)
 
 ---
 
@@ -59,8 +60,14 @@ Thứ tự các khối trong tab:
    trạng thái khóa / cấm chat, các nút cấm chat / khóa. (Bỏ "gửi quà" riêng từ Phase 11: dùng **Chỉnh nhân vật**.)
 3. **Chỉnh nhân vật** (admin, hiện dưới thẻ tra cứu): xem mục 3.
 4. **Thông báo cho cả server**: hiện trong chat của mọi người.
-5. **Quà cho mọi người** (admin): thư kèm vàng / kinh nghiệm / vật phẩm, và một món trang bị (đồ thường hoặc đồ hiếm Tốt / Hiếm / Sử Thi, +0…+11, ×1…10) vào hộp thư mọi nhân vật. Đồ hiếm có chỉ số theo cấp người nhận; túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
-6. **Trùm thế giới** (admin): gọi Cổ Long xuất hiện ngay.
+5. **Quà cho mọi người** (admin, Phase 2): thư kèm vàng / kinh nghiệm và **nhiều món** (bấm **+ Thêm** cho từng đồ thường
+   hoặc trang bị riêng: 0–4 dòng cộng thêm, +0…+11, ×1…10; **✕** để bỏ khỏi giỏ).
+   - **Người nhận:** bỏ trống là mọi nhân vật (không tính bot); lọc được theo cấp từ / đến, số lần chuyển sinh tối thiểu,
+     chỉ người đang online.
+   - **Xem trước và gửi:** hiện số người khớp bộ lọc và nội dung thư, xác nhận rồi mới gửi.
+   - **Lịch sử gửi:** 20 đợt gần nhất (lúc gửi, người gửi, tiêu đề, quà, bộ lọc, kết quả).
+   - Túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
+6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 
@@ -73,13 +80,17 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 
 | Dòng | `op` | Tham số | Ghi chú |
 |---|---|---|---|
-| Kinh nghiệm | `give_xp` | `xp` 1..1 000 000 000 | lên cấp như đánh quái (mỗi cấp +3 điểm tiềm năng), dừng ở cấp tối đa 50 |
-| Đặt cấp | `set_level` | `level` 1..50 | xp về 0; điểm tiềm năng ± 3 × số cấp đổi (không dưới 0); hồi đầy máu |
+| Kinh nghiệm | `give_xp` | `xp` 1..1 000 000 000 | lên cấp như đánh quái (mỗi cấp +5 điểm tiềm năng, Thuật Sĩ Kiếm +7), dừng ở cấp tối đa 50 |
+| Đặt cấp | `set_level` | `level` 1..50 | xp về 0; điểm tiềm năng ± điểm mỗi cấp × số cấp đổi (không dưới 0, **cộng vào** điểm đang có); hồi đầy máu |
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
-| Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
-| Đồ hiếm | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, vd `["atk_pct","crit"]` cho vũ khí / dây chuyền, `["hp_pct","dmg_red","gold_pct"]` cho đồ khác), `base` (mọi loại trừ cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `rarity` 1..3, `bonus` `{str, agi, vit, ene}`, `up` | tạo một món chỉ số ngẫu nhiên với chỉ số chọn sẵn; để 0 cả bốn ô thì tự lấy `rarity` dòng đầu với mức cao nhất đồ rơi ở cấp đó có thể có. Túi đồ hiếm đầy (20) thì báo lỗi |
+| Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
+| Đồ thường (xếp chồng) | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Trang bị (vũ khí, giáp, khiên, trang sức, cánh) luôn thành **món riêng** 0 dòng trong túi trang bị, mỗi món một chỗ (cần chỗ trống). Tab Quản trị: mục **Đồ thường** chỉ liệt kê bình, ngọc, nguyên liệu, vé…; trang bị tặng ở mục **Trang bị** |
+| Trang bị | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`, cánh không có Excellent; trên trang Quản trị là các ô tick, chỉ hiện nhóm hợp món đang chọn — Kỹ năng chỉ hiện với vũ khí, Đồ Thần chỉ với món thuộc bộ), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
+| Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
+| Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
+| Hủy trang bị trong túi | `clear_bag` | | xóa **mọi** trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên; bình, ngọc, nguyên liệu không đụng. Nút **Hủy trang bị trong túi** (đỏ, hỏi xác nhận). Không hoàn tác |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.
@@ -182,44 +193,85 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 ```js
 const uid = Net.userId;
 const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); } catch (e) { console.warn(op, e.msg); } };
+const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;   // dk / dw / elf / mg
 
-// cấp tối đa (50): +3 điểm tiềm năng mỗi cấp
+// chuyển sinh 10 lần: mở đủ 10 vùng đất chuyển sinh (Phase 6); lệnh này chỉ đặt số lần, không về cấp 1
+await A('set_rebirths', { n: 10 });
+// cấp tối đa (50)
 await A('set_level', { level: 50 });
+// kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ kỹ năng ở Menu → Kỹ năng → ⚙
+await A('set_tower', { floor: 100 });
+// đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
+// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Thuật Sĩ Kiếm 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
+await A('reset_stats');
 
-// vàng, điểm tiềm năng, chỉ số
+// vàng
 await A('add_gold', { amount: 100000000 });
-await A('add_points', { n: 300 });
-await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI / VIT / ENE như MU
 
-// đồ hiếm Sử Thi tự chọn chỉ số, nâng tối đa (+11, từ +10 mỗi cấp tính gấp đôi)
-await A('give_gear', { base: 'relic', rarity: 3, bonus: { str: 30, agi: 20, vit: 20 }, up: 11 });       // Thánh Kiếm Diệt Long
-await A('give_gear', { base: 'item_8_1', rarity: 3, bonus: { vit: 30, agi: 30, str: 10 }, up: 11 }); // Giáp Rồng (Kiếm Sĩ / Đấu Sĩ)
-await A('give_gear', { base: 'dragonshield', rarity: 3, bonus: { ene: 30, vit: 30, agi: 10 }, up: 11 }); // Khiên Vảy Rồng
+// tự cộng điểm theo tỉ lệ gợi ý (chỉ chạy được cho chính mình: lệnh "alloc" là lệnh người chơi, mỗi lần tối đa 99,
+// nghỉ 0,3 giây giữa các lần kẻo server báo "Thao tác quá nhanh";
+// dựng cho người khác thì để họ tự cộng ở tab Nhân vật). Điểm lẻ cộng vào chỉ số đầu.
+const SHARE = {
+  dk:  [['str', 0.45], ['agi', 0.2], ['vit', 0.25], ['ene', 0.1]],
+  dw:  [['ene', 0.5], ['agi', 0.2], ['vit', 0.2], ['str', 0.1]],
+  elf: [['agi', 0.45], ['str', 0.2], ['vit', 0.25], ['ene', 0.1]],
+  mg:  [['str', 0.4], ['ene', 0.25], ['agi', 0.2], ['vit', 0.15]],
+}[cls];
+if (uid === Net.userId) {
+  const alloc = async (stat, n) => { for (; n > 0; n -= 99) { await new Promise((r) => setTimeout(r, 300)); await Net.send({ act: 'alloc', stat, n: Math.min(n, 99) }); } };
+  const total = (await Net.send({ act: 'title_set', id: null })).player.points;
+  for (const [stat, r] of SHARE) await alloc(stat, Math.floor(total * r));
+  await alloc(SHARE[0][0], (await Net.send({ act: 'title_set', id: null })).player.points);
+}
 
-// cánh cấp 2 đúng lớp, +11 (dk / dw / elf / mg); cấp mặc 35
-const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;
-await A('give_item', { id: `wing_${cls}_2`, count: 1, up: 11 });
+// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
+const SET = {
+  dk:  { weapon: 'item_0_19', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
+  dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
+  elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                       // Cung Air Lyn, bộ Tia Tiên
+  mg:  { weapon: 'item_0_28', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },                                    // Kiếm Đế Vương, bộ Long Kỵ Sĩ
+}[cls];
+const EXC_W = ['atk_pct', 'crit', 'heal_kill', 'mp_kill', 'atk_lvl', 'ar_pct'];   // vũ khí / dây chuyền
+const EXC_A = ['hp_pct', 'dmg_red', 'gold_pct', 'mp_pct', 'reflect', 'def_rate']; // giáp / khiên / nhẫn
+// "+N" là cấp ép (tối đa +11); opt 4 = 4 dòng cộng thêm (+16 tấn công / phòng thủ), luck = May mắn
+await A('give_gear', { base: SET.weapon, opt: 4, luck: true, skill: true, up: 11, exc: EXC_W });
+if (SET.shield) await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });
+for (const base of SET.set) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
+// Đồ Thần thay cho Excellent (chọn một trong hai cho bộ giáp): await A('give_gear', { base, opt: 4, luck: true, up: 11, anc: true });
+await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });   // Nhẫn Phép × 2
+await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });
+await A('give_gear', { base: 'item_13_27', opt: 4, luck: true, up: 11, exc: EXC_W });   // Dây Chuyền Nước
+// cánh cấp 3 đúng lớp (cấp mặc 45): 4 dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh hp / mp / ignore_def
+await A('give_gear', { base: `wing_${cls}_3`, opt: 4, luck: true, up: 11, wopt: 'ignore_def' });
 
 // ngọc để tự ép / ghép thêm
-await A('give_item', { id: 'jewel_bless', count: 20 });
-await A('give_item', { id: 'jewel_soul', count: 20 });
-await A('give_item', { id: 'jewel_chaos', count: 20 });
+await A('give_item', { id: 'jewel_bless', count: 50 });
+await A('give_item', { id: 'jewel_soul', count: 50 });
+await A('give_item', { id: 'jewel_chaos', count: 50 });
+await A('give_item', { id: 'jewel_life', count: 50 });
 
-// bình máu, nguyên liệu nâng cấp / nấu ăn
-await A('give_item', { id: 'potion_l', count: 200 });
+// bình máu / mana, nguyên liệu nâng cấp / nấu ăn, vé sự kiện
+await A('give_item', { id: 'potion_l', count: 500 });
+await A('give_item', { id: 'mana_l', count: 500 });
 await A('give_item', { id: 'ore_rare', count: 100 });
 await A('give_item', { id: 'dragon_scale', count: 20 });
 await A('give_item', { id: 'mam_co', count: 20 });
+for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
 await A('heal');
 ```
+
+Cần 13 chỗ trong túi trang bị (tối đa 40): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc.
 
 Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / cánh vào ô trang bị (hoặc bấm món → **Trang bị**).
 Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →
 tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm tra vàng** vẫn "Không có lỗi".
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): chuyển sinh, thú cưng, kỹ năng (kỹ năng mở theo cấp,
-cấp 50 là đủ), thành tựu, nhiệm vụ.
+Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nhờ `reset_stats`); riêng **vàng** (`add_gold`) và **đồ / ngọc**
+(`give_gear`, `give_item`) vẫn cộng thêm vào cái đang có.
+
+Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thú cưng, kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
+kỹ năng tháp mở bằng `set_tower`), thành tựu, nhiệm vụ.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
 
@@ -240,7 +292,10 @@ Thấy dòng này thường xuyên là có vấn đề, nên báo lập trình v
 | Không thấy tab Quản trị | chưa tải lại trang sau khi cấp quyền; vai trò vẫn `player` | `SELECT username, role FROM users WHERE username = '...'`, cấp lại, tải lại trang |
 | "Cần quyền quản trị viên." | tài khoản là `mod` | cấp `admin` nếu cần |
 | "Người này chưa có nhân vật." | tài khoản chưa tạo nhân vật / đã xóa | |
-| "Túi đồ hiếm đã đầy (20 món)." | `give_gear` khi túi đủ 20 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
+| "Túi trang bị đã đầy (40 món)." | `give_gear` khi túi đủ 40 món chưa mặc | bảo người chơi bán bớt, hoặc tặng đồ thường |
+| Người chơi báo "đồ rơi biến mất" khi túi đồ hiếm đầy | từ Phase 1 đồ rơi lúc túi đầy được **gửi Hộp thư** (mỗi món một thư, cùng transaction với lần lưu nhân vật) | bảo người chơi mở Hộp thư; tra `gear_log` lý do lưu của trận đó |
+| Bot đứng yên, không đánh quái | (đã sửa ở Phase 5) mốc nghỉ của bot so với đồng hồ đơn điệu có thể âm | cập nhật bản mới; kiểm `characters.updated_at` của tài khoản `bot_*` có đổi sau vài phút |
+| Tự đánh tự tắt | hết bình máu, có người tên đỏ, bị đồ sát, gục / bỏ chạy, rời bản đồ, đóng hết tab | đúng thiết kế (B-31); thông báo lý do hiện ở góc màn hình người chơi |
 | `gold_mismatch` sau khi sửa SQL tay | sửa vàng thẳng database không có dòng nhật ký | đừng sửa tay; dùng `add_gold`. Đã lỡ thì thêm một dòng `gold_log` (`reason = 'MANUAL'`, `delta` = phần chênh) |
 | Kiểm tra vàng chậm | bảng nhật ký lớn | dọn `--prune 180` |
 
@@ -272,7 +327,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 ### Golden Invasion (Phase 7)
 
-- Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → "Golden Invasion" → **Bắt đầu ngay** để chạy thử / bù.
+- Tự chạy mỗi 2 giờ (0h, 2h… giờ Việt Nam), 15 phút. Tab Quản trị → khung **Sự kiện** → **✨ Golden Invasion** để chạy thử / bù.
 - Chỉnh ở `rules.json` → `RULES.invasion`: `every_hours`, `minutes`, `maps` (bản đồ → số quái vàng), `strength_mult`,
   `reward_mult`, `jewel_chance`, `boss`, `boss_jewel_chance`. Build lại sau khi sửa.
 
@@ -350,17 +405,26 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Chí mạng, hệ số chí mạng, né theo Nhanh nhẹn; % hồi MP mỗi lượt; tỉ lệ bỏ chạy; đòn thấp ~ cao (`damage_spread`), sàn mềm (`soft_floor`), tỉ lệ trúng quái (`hit`) | `combat` |
 | Sức mạnh kỹ năng (hệ số đòn, số lượt, % hiệu ứng) | `skill_effects` (theo kiểu tác dụng, xem `effect` của kỹ năng trong `classes.json`) |
 | Chỉ số quái theo cấp, hệ số trùm | `monster` |
-| Tỉ lệ rơi bình máu / đồ hiếm, độ hiếm | `loot` |
+| Tỉ lệ rơi bình máu / đồ, số dòng cộng thêm (`gear_weights`) | `loot` |
 | Giá bán lại (40 %) | `shop.sell_ratio` |
 | Rương, rèn, tháp, thú cưng, sổ quái, nhà, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`, `daily`, `fishing` |
 | Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |
 | Từ cấm khi đặt tên nhân vật / bang | `names` |
 | Ngọc Sinh Mệnh; sức chứa Tủ Đồ và giá mở rộng; trần vàng / EXP mỗi thư quản trị | `upgrade.life`, `storage`, `mail` |
 | PK cược vàng, chiến bang, tổ đội (chia thưởng, hạn mời), giao dịch tự hủy, hộp thư (giữ / hết hạn), xếp hạng (top, cache), phó bang tối đa, hạn đơn xin vào | `pk`, `guild_war`, `party`, `trade`, `mail`, `leaderboard`, `guild.max_officers`, `guild.request_days` |
+| Đài Phúc Lành (số trận phúc lành, % cộng thêm) | `blessing` |
+| Nguyên tố (vòng khắc, % mạnh / yếu, nguyên tố quái theo cấp) | `elements` |
+| Kỹ năng Tháp Thử Thách (số kỹ năng mang vào trận, kháng choáng của trùm); số từng kỹ năng ở `classes.json` → `tower_skills` | `tower_skills` |
+| Vùng đất chuyển sinh (cấp vào, hệ số sức mạnh quái, rơi đồ / ngọc thêm); quái từng vùng ở `realms.json` | `realms` |
+| Né tối đa (`combat.dodge.max_total`), dòng Excellent theo cấp (`excellent.options.weapon.atk_lvl`) | `combat`, `excellent` |
+| Tự đánh: nhịp ra lệnh, % uống bình mặc định / giới hạn, số dòng cộng thêm để giữ đồ khi lọc "chỉ đồ quý" | `auto` |
+| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`) | `bots` |
 
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.
 - Đổi số cân bằng thì chạy `mix hac_long.simulate 20 --seed 1` trước và sau để so (cùng seed → cùng kết quả nếu số không đổi).
+- Xem cả hành trình một nhân vật tới chuyển sinh và vùng chuyển sinh: `scripts/balance/journey.sh --cls dk --rebirths 10 --seed 42`
+  (báo cáo ở `tmp/journey/`, tùy chọn: `mix help hac_long.journey`).
 
 **Từ cấm** (`names`):
 
@@ -376,7 +440,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 - Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
   trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
-- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (vd. `HL_BOTS=5`, `HL_BOTS=0` để tắt). Mặc định ở `RULES.bots.count`.
+- Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (deploy: ghi `HL_BOTS=5` vào `.env` rồi `docker compose up -d`; `HL_BOTS=0` để tắt). Mặc định `RULES.bots.count` = 0 (không có bot).
 - Tài khoản bot có trong tab Quản trị như người chơi thường (tra cứu, chỉnh nhân vật, khóa…). Xóa hẳn: tắt bot (`HL_BOTS=0`)
   rồi xóa tài khoản trong database.
 
@@ -392,3 +456,43 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 - Lịch, vé, thưởng: `RULES.blood_castle`, giải thích ở `docs/EVENTS_PHASE18.md` §M2. `HL_DS_OPEN=1` mở luôn cả Lâu Đài.
 - Tặng vé: `give_item` với `id: "bc_ticket"`; tặng lông vũ (bù lỗi): `id: "condor_feather"`.
+
+## 12. Đợt 8 phase 2026-10
+
+Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng công thức ở `docs/FORMULA_AUDIT.md`.
+
+| Phase | Nội dung | Việc của người vận hành |
+|---|---|---|
+| 1 | Sửa lỗi: tháp quay vòng có tiền tố tên, quái giữ máu sau khi người chơi bỏ chạy, đồ rơi lúc túi đầy gửi Hộp thư, `give_gear` tặng được cánh và dòng phụ cánh | Không |
+| 2 | Giao diện: bấm avatar mở hồ sơ, nút Hủy đồ rơi, Thợ Rèn ép đồ trong túi, Đài Phúc Lành thay Đá dịch chuyển, quà cho mọi người nhiều món + lịch sử | Migration `add_blessing` |
+| 8 | Rà công thức (B-28): Excellent "tấn công theo cấp" 0,6, né tối đa 60 %, ép nhẫn máu cộng máu, quái không né; PvP dùng đúng chỉ số | Không |
+| 3 | 10 kỹ năng Tháp Thử Thách mỗi lớp, nguyên tố, bộ 4 kỹ năng (Menu → Kỹ năng → ⚙) | Migration `add_skill_set`; quản trị `set_tower` |
+| 6 | 10 vùng đất chuyển sinh (cấp quái 52–150), tháp tầng 61–160 | Quản trị `set_rebirths`; sinh lại dữ liệu: `python3 scripts/gen_realms.py` rồi `node e2e/tint_sprites.mjs` |
+| 4 | Tự đánh khi online (thanh 🤖 dưới bản đồ) | Không; chỉnh số ở `RULES.auto` |
+| 5 | Bản đồ động; bot mua bình / nghỉ trọ; sửa lỗi bot đứng yên | Chỉnh số ở `RULES.bots` |
+| 7 | Bộ hình đồ Pixel CC0 (Menu → Cài đặt → Hình đồ) | Không; xem mục 12.3 |
+
+### 12.1 Tự đánh (Phase 4, B-31)
+
+- Chạy **trong Session của người chơi** khi còn ít nhất một tab mở; đóng hết tab là tắt. Không có tự đánh offline, không thêm cột
+  database (cài đặt nằm trong bộ nhớ `player.auto`).
+- Mỗi nhịp server tự chọn lệnh và chạy qua đúng đường lệnh client (cùng luật, giới hạn tốc độ, nhật ký vàng / đồ). Lý do lưu
+  trong `gold_log` / `gear_log` vẫn là tên lệnh (`ATTACK`, `SKILL`, `DISCARD`…).
+- Không bật được ở Làng, Nhà, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
+- Lọc "chỉ đồ quý" hủy đồ thường vừa nhặt; người chơi khiếu nại mất đồ thì tra `gear_log` lý do `DISCARD` quanh giờ đó.
+
+### 12.2 Người chơi AI (Phase 5, B-32)
+
+- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.
+- Kiểm tra bot có chạy: `SELECT c.name, c.map_id, c.gold, c.updated_at FROM characters c JOIN users u ON u.id = c.user_id
+  WHERE u.role = 'bot' ORDER BY c.updated_at DESC;` — `updated_at` phải đổi sau vài phút.
+
+### 12.3 Bộ hình đồ Pixel (Phase 7, B-33)
+
+- Người chơi chọn ở Menu → Cài đặt → **Hình đồ**: MU (chỉ hiện khi máy chủ có hình MU, mục 10.1) / Pixel / Biểu tượng.
+  Mặc định MU nếu có, không thì Pixel.
+- Hình Pixel (CC0, Dungeon Crawl Stone Soup) **có sẵn trong git**: `priv/static/assets/pixel/` và bảng tra
+  `priv/static/assets/pixel_icons.json`. Thêm đồ mới thì chạy lại (xem README → "Chỉnh sửa game"):
+  `python3 scripts/pixel_icons.py <crawl/tiles>/releases/Nov-2015` (hình quần lấy sẵn từ `assets_src/pixel_extra/leggings/`). Món chưa có hình Pixel
+  (đồ ăn) dùng hình cũ; cánh dùng đôi cánh Draconian của Dungeon Crawl (`assets_src/pixel_extra/wings/`).
+- Hình MU vẫn **không bao giờ** vào git / Docker (mục 10.1).

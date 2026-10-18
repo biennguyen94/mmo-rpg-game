@@ -7,7 +7,10 @@
         "potion_s": 3
       },
       "max_rebirths": 10,
-      "rebirth_points": 15,
+      "rebirth_points": 25,
+      "rebirth_xp_pct": 0.25,
+      "rebirth_lord_from": 1,
+      "_rebirth_doc": "Chuyển sinh (DECISIONS \"Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể\"): sau lần chuyển sinh n được n × rebirth_points điểm tiềm năng (trước 15); kinh nghiệm lên cấp × (1 + rebirth_xp_pct × n); từ n ≥ rebirth_lord_from muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n.",
       "rest_per_level": 4,
       "death_gold_loss": 0.1,
       "death_hp": 0.5
@@ -36,7 +39,11 @@
       "dodge": {
         "base": 0.02,
         "per_agi": 0.0025,
-        "max": 0.4
+        "max": 0.4,
+        "max_total": 0.6,
+        "_doc_max_total": "Phase 8 (B-28): trần né sau khi nhân Excellent def_rate",
+        "max_with_buff": 0.85,
+        "_doc_max_with_buff": "Trần né khi cộng thêm buff né (ảnh bộ, Tinh Linh Hộ Vệ…); trước đây không có trần nên buff +100% là né chắc chắn (DECISIONS \"Cân bằng cuối game\")"
       },
       "damage_spread": [
         0.9,
@@ -54,21 +61,28 @@
       "flee_chance": 0.7,
       "flee_chance_boss": 0.35,
       "monster_crit_mult": 1.5,
-      "wing_per_level": 0.02,
       "mp_regen_ene": 0.1,
-      "skill_mp_per_level": 0.04
+      "skill_mp_per_level": 0.02
+    },
+    "wing_upgrade": {
+      "_doc": "Ép cánh (DECISIONS \"Ép +10/+11 khác biệt, cánh theo bậc\"): % sát thương / % hấp thụ cộng thêm = per_level[bậc − 1] × min(cấp, 9) + jump10[bậc − 1] (từ +10) + jump11[bậc − 1] (ở +11). Hấp thụ của cánh (gốc + ép) tối đa absorb.max. Phòng thủ của cánh theo bảng eff của UPGRADE như đồ.",
+      "dmg": { "per_level": [0.02, 0.02, 0.02], "jump10": [0.12, 0.12, 0.12], "jump11": [0.15, 0.15, 0.15] },
+      "absorb": { "per_level": [0.005, 0.0075, 0.01], "jump10": [0.03, 0.05, 0.07], "jump11": [0.05, 0.07, 0.09], "max": 0.5 },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     },
     "skill_effects": {
       "cleave": {
-        "mult": 2.2
+        "mult": 1.4
       },
       "fire_ball": {
-        "mult": 2.0,
+        "mult": 1.35,
         "def_mult": 0.7
       },
       "backstab": {
         "mult": 1,
-        "def_mult": 0.5,
+        "def_mult": 0.7,
         "always_crit": true
       },
       "holy": {
@@ -100,12 +114,14 @@
         "power": 0.5
       },
       "judgement": {
-        "mult": 1.8,
+        "mult": 1.4,
         "turns": 3,
         "power": 0.3
       }
     },
     "monster": {
+      "_flee_regen_doc": "Quái bị bỏ dở (người chơi bỏ chạy / thua) giữ % máu còn lại, hồi flee_regen_pct_s % máu tối đa mỗi giây cho tới đầy.",
+      "flee_regen_pct_s": 0.5,
       "hp": {
         "base": 170,
         "level": 26,
@@ -120,10 +136,6 @@
         "level": 2.0
       },
       "crit": 0.05,
-      "dodge": {
-        "base": 0.03,
-        "level": 0.001
-      },
       "xp": {
         "base": 8,
         "level": 6,
@@ -144,6 +156,8 @@
       }
     },
     "loot": {
+      "gear_bag": 40,
+      "_gear_bag_doc": "Số trang bị chưa mặc tối đa trong túi (mỗi món rơi là một món riêng, kể cả đồ trắng / xanh). Đầy thì món rơi gửi Hộp thư. 20 → 40 (DECISIONS \"Túi trang bị 40\").",
       "potion_chance": 0.12,
       "potions": [
         {
@@ -163,22 +177,10 @@
         "elite": 0.5,
         "night": 0.25,
         "boss": 0.35,
-        "normal": 0.06
+        "normal": 0.08
       },
-      "gear_weights": [
-        [
-          3,
-          5
-        ],
-        [
-          2,
-          25
-        ],
-        [
-          1,
-          70
-        ]
-      ],
+      "_gear_weights_doc": "B-15 (kiểu MU): [số dòng cộng thêm, trọng số] của đồ rơi; mỗi dòng +RULES.upgrade.life.per_line tấn công / phòng thủ. Rương, rèn, sự kiện, trùm cũng dùng [số dòng, trọng số].",
+      "gear_weights": [[0, 50], [1, 35], [2, 12], [3, 3]],
       "gear_slots": [
         [
           0.38,
@@ -198,7 +200,6 @@
         ]
       ],
       "gear_own_class": true,
-      "gear_bonus_per_level": 6,
       "event_token_chance": 0.2,
       "event_token_boss": 3
     },
@@ -214,9 +215,11 @@
       "chance": { "normal": 0.1, "elite": 0.12, "night": 0.08, "boss": 0.2 },
       "lines": [[1, 70], [2, 25], [3, 5]],
       "options": {
-        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1 },
-        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15 }
+        "weapon": { "atk_pct": 0.05, "crit": 0.04, "heal_kill": 0.06, "mp_kill": 0.1, "atk_lvl": 0.6, "ar_pct": 0.1 },
+        "armor": { "hp_pct": 0.04, "dmg_red": 0.03, "gold_pct": 0.15, "mp_pct": 0.04, "reflect": 0.05, "def_rate": 0.1 }
       },
+      "_b16_doc": "B-16: đủ 6 dòng mỗi nhóm như MU. atk_lvl: tấn công + cấp × giá trị (MU: cấp/20); ar_pct: tỉ lệ trúng +% (thay tốc độ đánh, trận theo lượt); mp_pct: MP tối đa +%; reflect: phản lại % sát thương quái gây ra (không giết quái, tối đa max_reflect); def_rate: tỉ lệ né +% (nhân). Máy Hỗn Nguyên thêm tới đủ 6 dòng.",
+      "max_reflect": 0.2,
       "max_dmg_red": 0.2,
       "price_mult": 2
     },
@@ -229,7 +232,7 @@
       "min_level": 35,
       "ticket": "ds_ticket",
       "ticket_price": 20000,
-      "ticket_drop": { "min_level": 30, "chance": 0.01 },
+      "ticket_drop": { "min_level": 30, "chance": 0.05, "parts": ["devil_eye", "devil_key"], "_doc": "Kiểu MU (B-18): quái rơi một mảnh vé (ngẫu nhiên trong parts), ghép ở Máy Hỗn Nguyên (chaos.json ds_ticket)." },
       "tiers": [
         { "from": 35, "level": 36 },
         { "from": 40, "level": 42 },
@@ -253,6 +256,74 @@
         { "gold": 30000, "items": { "jewel_chaos": 1, "jewel_soul": 1 } }
       ]
     },
+    "chaos_castle": {
+      "_doc": "B-19 Hỗn Chiến Thành (kiểu MU Chaos Castle). Giờ Việt Nam: mở cho vào mỗi every_hours giờ, lệch offset_minutes phút (1h30, 3h30 … 23h30), vào trong entry_minutes phút; hết giờ vào thì quái xuất hiện và được đánh nhau run_minutes phút. Vào: ở Người Gác Tháp, từ min_level, tốn 1 vé ticket (mua ticket_price hoặc quái cấp ≥ ticket_drop.min_level rơi). Số quái = max(min_monsters, total - số người); cấp quái quanh cấp trung bình người vào (± level_spread). Gục ngã (quái / người) là bị loại, về Làng, không mất vàng, không tên đỏ. Còn 1 người và hết quái: thắng (reward.winner); hết giờ: người còn trụ nhận reward.survivor. Thưởng gửi qua thư.",
+      "every_hours": 2,
+      "offset_minutes": 90,
+      "entry_minutes": 5,
+      "run_minutes": 10,
+      "min_level": 15,
+      "ticket": "cc_ticket",
+      "ticket_price": 5000,
+      "ticket_drop": { "min_level": 15, "chance": 0.02 },
+      "total": 30,
+      "min_monsters": 10,
+      "level_spread": 2,
+      "map": "chaos_castle",
+      "reward": {
+        "winner": { "gold": 60000, "items": { "jewel_chaos": 1, "jewel_bless": 2, "jewel_soul": 1 } },
+        "survivor": { "gold": 8000, "items": { "jewel_bless": 1 } },
+        "per_player_kill": 2000
+      }
+    },
+    "kalima": {
+      "_doc": "B-21: Kalima kiểu MU (HacLong.Game.Kalima). Không theo lịch: đưa 1 Bản Đồ Thất Lạc (ticket) cho Người Gác Tháp, từ min_level. Cấp Kalima (tiers: cấp nhân vật from → Kalima n, quái cấp level). Bản đồ riêng run_minutes phút: hạ guards quái → Kundun (boss) hiện gần cầu thang lên → hạ Kundun thắng: reward.success (vàng, kinh nghiệm theo cấp, jewels ngọc, đồ: gear_chance, Excellent exc_chance, đồ Thần anc_chance). Không xong: reward.partial theo số quái đã hạ. Dấu Ấn Kundun rơi từ quái thường cấp ≥ mark_drop.min_level.",
+      "min_level": 20,
+      "ticket": "lost_map",
+      "run_minutes": 10,
+      "mark": "kundun_mark",
+      "mark_drop": {"min_level": 20, "chance": 0.04},
+      "tiers": [
+        {"from": 20, "n": 1, "level": 22},
+        {"from": 25, "n": 2, "level": 27},
+        {"from": 30, "n": 3, "level": 32},
+        {"from": 35, "n": 4, "level": 37},
+        {"from": 40, "n": 5, "level": 42},
+        {"from": 45, "n": 6, "level": 47},
+        {"from": 50, "n": 7, "level": 52}
+      ],
+      "guards": 10,
+      "guard_mult": 1.15,
+      "guard_kinds": ["lich", "necrophage", "wight", "revenant", "phantom"],
+      "guard_names": ["Pháp Sư Kalima", "Kẻ Ăn Xác", "Âm Hồn", "Hồn Ma Báo Oán", "Bóng Ma"],
+      "boss": {"kind": "ancient_lich", "name": "Kundun", "mult": 1.8, "hp": 5, "add_level": 3},
+      "reward": {
+        "success": {"gold_mult": 300, "xp_mult": 10, "jewels": 3, "gear_chance": 1.0, "exc_chance": 0.5, "anc_chance": 0.3},
+        "partial": {"gold_per_guard": 6, "xp_per_guard": 0.3}
+      }
+    },
+    "event_scale": {
+      "_doc": "Quái sự kiện mạnh theo số lần chuyển sinh của người đánh (DECISIONS \"Quái sự kiện theo chuyển sinh\"): Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến (Vương Miện), quái vàng Golden Invasion. Với k lần chuyển sinh (tối đa max_rebirths): máu và thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k) — như vùng chuyển sinh; kinh nghiệm và vàng × (1 + reward_per_rebirth × k). Trùm thế giới (máu chung cả server) và tháp (đã mạnh theo tầng) không áp.",
+      "hp_per_rebirth": 0.4,
+      "atk_per_rebirth": 0.15,
+      "reward_per_rebirth": 0.2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "castle_siege": {
+      "_doc": "B-22: Công Thành Chiến (HacLong.CastleSiege). Mỗi tuần vào thứ weekday (1 = thứ Hai … 7 = Chủ Nhật) lúc hour:minute giờ Việt Nam, kéo dài run_minutes phút trên bản đồ map. Bang chủ / phó bang đăng ký ở Người Gác Tháp trước giờ đánh (tốn register_gold vàng của người đăng ký). Thành viên (từ min_level) của bang đã đăng ký và bang đang giữ thành vào được trong lúc đánh, vào lại được sau khi gục. Vương Miện (crown) ở giữa thành: bang hạ được thì giữ Vương Miện, nó hiện lại sau crown.respawn_s giây, bang đang giữ không đánh được. Người các bang khác nhau đồ sát nhau không mất vàng, không tên đỏ. Hết giờ: bang giữ Vương Miện là Chủ Thành tới trận sau, mọi thành viên nhận reward qua thư.",
+      "map": "castle_siege",
+      "weekday": 6,
+      "hour": 20,
+      "minute": 0,
+      "run_minutes": 30,
+      "min_level": 30,
+      "register_gold": 200000,
+      "spawn_rows": [14, 18],
+      "crown": {"kind": "crystal_guardian", "name": "Vương Miện", "at": [12, 5], "level": 50, "mult": 2.5, "respawn_s": 60},
+      "reward": {"gold": 100000, "items": {"jewel_chaos": 1, "jewel_bless": 3, "jewel_soul": 2}}
+    },
     "blood_castle": {
       "_doc": "Phase 18 M2: Lâu Đài Máu (docs/EVENTS_PHASE18.md §M2). Mở mỗi every_hours giờ (giờ Việt Nam) lệch offset_minutes phút, cho vào trong entry_minutes phút, lượt run_minutes phút, từ cấp min_level, tốn 1 vé ticket (mua ticket_price hoặc rơi từ quái cấp ≥ ticket_drop.min_level). Ba bước: hạ guards quái canh cổng → phá Cổng Thành (gate: không đánh trả, máu × hp_mult) → hạ trùm (boss). Hạ trùm: thưởng success (có Lông Vũ Kền Kền — nguyên liệu cánh cấp 3). Không xong: thưởng partial theo số quái canh đã hạ.",
       "every_hours": 2,
@@ -262,7 +333,7 @@
       "min_level": 40,
       "ticket": "bc_ticket",
       "ticket_price": 30000,
-      "ticket_drop": { "min_level": 35, "chance": 0.005 },
+      "ticket_drop": { "min_level": 35, "chance": 0.04, "parts": ["archangel_scroll", "blood_bone"], "_doc": "Kiểu MU (B-18): mảnh vé Lâu Đài, ghép ở Máy Hỗn Nguyên (chaos.json bc_ticket)." },
       "tiers": [
         { "from": 40, "level": 44 },
         { "from": 45, "level": 50 }
@@ -305,21 +376,22 @@
       "price_mult": 1.25
     },
     "shop": {
+      "smith_max_level": 17,
+      "_smith_doc": "B-24: Thợ Rèn chỉ bán đồ thường cấp ≤ smith_max_level (kiểu MU: cửa hàng chỉ có đồ cơ bản); đồ cao hơn chỉ có từ quái rơi, sự kiện, rương, chợ.",
       "sell_ratio": 0.4,
       "unpriced_value": 200,
-      "gear_rarity_value": 0.25,
-      "gear_bonus_value": 5,
+      "gear_opt_value": 0.25,
       "potion_price_per_level": 0.1
     },
     "upgrade": {
       "bonus_pct": 0.08,
       "cost_pct": 0.08,
       "cost_min_price": 100,
-      "rare_ore_level": 17,
-      "scale_step": 5,
       "life": {
         "jewel": "jewel_life",
         "per_line": 4,
+        "per_line_pct": 0.04,
+        "_per_line_doc": "Mỗi dòng cộng thêm (rơi kèm, Ngọc Sinh Mệnh, rèn): per_line_pct × công (vũ khí, dây chuyền) hoặc thủ gốc của món, ít nhất per_line (DECISIONS \"Cân bằng cuối game\").",
         "max_lines": 4,
         "rate": 0.5
       }
@@ -405,6 +477,55 @@
         ]
       }
     },
+    "elements": {
+      "_doc": "Phase 3 (B-29): nguyên tố. Kỹ năng có `element`; quái mang nguyên tố theo cấp (`by_level`: [cấp từ, nguyên tố], lấy dòng cuối có cấp ≤ cấp quái) hoặc `element` riêng. `beats`: hệ khắc (vòng Lửa > Băng > Gió > Đất > Sét > Lửa; Ánh Sáng và Bóng Tối khắc nhau). Kỹ năng khắc quái: × (1 + strong); quái khắc kỹ năng: × (1 − weak). Đòn thường không nguyên tố.",
+      "list": ["fire", "ice", "lightning", "earth", "wind", "light", "dark"],
+      "names": {"fire": "Lửa", "ice": "Băng", "lightning": "Sét", "earth": "Đất", "wind": "Gió", "light": "Ánh Sáng", "dark": "Bóng Tối"},
+      "icons": {"fire": "🔥", "ice": "❄️", "lightning": "⚡", "earth": "🪨", "wind": "🌪", "light": "✨", "dark": "🌑"},
+      "beats": {"fire": ["ice"], "ice": ["wind"], "wind": ["earth"], "earth": ["lightning"], "lightning": ["fire"], "light": ["dark"], "dark": ["light"]},
+      "strong": 0.3,
+      "weak": 0.2,
+      "by_level": [[1, "earth"], [6, "fire"], [12, "dark"], [18, "ice"], [24, "lightning"], [30, "fire"], [36, "wind"], [43, "light"]],
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "tower_skills": {
+      "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Vô Tận ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận. mp_mult: MP kỹ năng tháp nhân thêm theo lớp (lớp ít MP: Kiếm Sĩ, Tiên Nữ; DECISIONS \"MP kỹ năng tháp theo lớp\"), lớp không ghi ×1.",
+      "loadout": 5,
+      "stun_boss_resist": 0.5,
+      "mp_mult": {"dk": 0.5, "elf": 0.6},
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
+    },
+    "realms": {
+      "_doc": "Phase 6 (B-30): 10 vùng đất chuyển sinh (scripts/gen_realms.py). Vùng k cần chuyển sinh ≥ k và cấp ≥ min_level. Phương án (a): giữ cấp tối đa 50; chỉ số quái tính ở cấp stat_level × mult (1 + mult_per_realm × k, chúa tể × boss_mult), riêng công × (1 + atk_mult_per_realm × k) (× boss_mult) cho phòng thủ còn ý nghĩa (version 2, DECISIONS \"Cân bằng cuối game\"), cấp hiện trên quái 50+10k−8 … 50+10k (vàng theo cấp hiện); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult), trước tính theo cấp hiện nên cấp 40 → 50 chỉ vài con (version 3, DECISIONS \"Cân bằng ngọc, cánh, kinh nghiệm vùng chuyển sinh\"). Rơi đồ nhiều hơn: tỉ lệ ra đồ × (1 + loot_per_realm × rich), tối đa loot_max (Excellent / May mắn / đồ Thần trên món đã rơi giữ tỉ lệ gốc, version 2); ngọc jewel_base + jewel_per_realm × k mỗi quái (chúa tể × 5). Mỗi vùng maps_per_realm bản đồ (version 4, DECISIONS \"Vùng chuyển sinh 5 bản đồ\"): bản đồ thứ n đánh như vùng k + depth_step × (n − 1) (máu, công, kinh nghiệm, rơi đồ, ngọc, cấp hiện +10 × depth_step mỗi bản đồ); chúa tể (lord) ở bản đồ cuối, sức vùng k. Sửa số rồi chạy python3 scripts/gen_realms.py và node e2e/tint_sprites.mjs realm (hình).",
+      "min_level": 40,
+      "stat_level": 50,
+      "mult_per_realm": 0.4,
+      "atk_mult_per_realm": 0.15,
+      "xp_mult_per_realm": 0.2,
+      "boss_mult": 1.8,
+      "maps_per_realm": 5,
+      "depth_step": 0.2,
+      "loot_per_realm": 0.1,
+      "loot_max": 0.9,
+      "jewel_base": 0.02,
+      "jewel_per_realm": 0.01,
+      "sourceType": "DESIGN",
+      "version": 4,
+      "verified": false
+    },
+    "blessing": {
+      "_doc": "Phase 2 (B-26): Đài Phúc Lành thay đá dịch chuyển (ô W). Chạm vào: nhận phúc lành của bản đồ trong `battles` trận (như món ăn, không theo giờ) và đài thành điểm hồi sinh khi gục. Mỗi bản đồ một loại theo thứ tự đài trong `kinds` (lặp lại): xp / gold = % kinh nghiệm / vàng; atk / def / hp = % tấn công / phòng thủ / máu tối đa. Làng không có phúc lành, chỉ là điểm hồi sinh.",
+      "battles": 30,
+      "pct": 0.05,
+      "kinds": ["xp", "def", "atk", "gold", "hp"],
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "crafting": {
       "levels": [
         0,
@@ -449,27 +570,39 @@
       "boss_potions": 2
     },
     "pets": {
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
       "tame_kills": 100,
       "tame_bonus": 0.03,
+      "tame_bite": 0.15,
+      "tame_realm_bonus": 0.005,
+      "tame_realm_bite": 0.01,
+      "tame_realm_price": 1,
       "tame_price": 1000,
       "tame_price_per_level": 100,
-      "bite_chance": 0.35,
-      "bite_power": 0.25,
-      "bite_per_level": 0.02,
-      "bonus_per_level": 0.1,
-      "max_level": 10,
+      "bite_chance": 0.3,
+      "bite_chance_per_level": 0.005,
+      "bite_power": 0.15,
+      "bite_power_per_level": 0.008,
+      "bonus_per_level": 0.05,
+      "max_level": 20,
       "skill_level": 5,
+      "skill2_level": 15,
       "xp_coef": 5,
       "boss_wins": 5,
+      "feed_gold": 500,
+      "feed_xp": 20,
       "skills": {
-        "heal": 0.05,
+        "heal": 0.04,
         "bash_turns": 2,
         "bash_power": 0.15,
-        "pickpocket_per_level": 3,
+        "pickpocket_gold_pct": 0.1,
         "venom_turns": 3,
         "venom_power": 0.5,
-        "rend_mult": 2
-      }
+        "rend_mult": 1.6
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     "bestiary": {
       "marks": [
@@ -671,6 +804,39 @@
       "special_every": 3,
       "special_mult": 1.8
     },
+    "raids": {
+      "_doc": "B-20: xâm lăng kiểu MU (HacLong.Raids). Mỗi loại theo lịch giờ VN: mốc every_hours giờ + offset_minutes phút, kéo dài minutes phút, chọn ngẫu nhiên pick bản đồ trong maps. leader/minion: quái thả vào mỗi bản đồ (cấp = trùm vùng / quái mạnh nhất vùng + level_bonus, sức × mult), không hồi sinh. drops: đồ thêm khi hạ con đầu đàn (tỉ lệ).",
+      "red_dragon": {
+        "name": "Rồng Đỏ xâm lăng",
+        "icon": "🐲",
+        "every_hours": 4,
+        "offset_minutes": 165,
+        "minutes": 20,
+        "maps": ["forest_1", "camp_1", "graveyard_1", "mountain_1", "swamp_1", "lair_1"],
+        "pick": 3,
+        "leader": {"kind": "red_dragon", "name": "Rồng Đỏ", "count": 2, "level_bonus": 4, "mult": 1.5},
+        "minion": null,
+        "reward_mult": 4,
+        "jewel_chance": 1.0,
+        "minion_jewel_chance": 0,
+        "drops": {"jewel_chaos": 0.3, "jewel_life": 0.1}
+      },
+      "white_wizard": {
+        "name": "Phù Thủy Trắng xâm lăng",
+        "icon": "🧙",
+        "every_hours": 4,
+        "offset_minutes": 45,
+        "minutes": 20,
+        "maps": ["forest_1", "camp_1", "graveyard_1", "mountain_1", "swamp_1", "lair_1"],
+        "pick": 2,
+        "leader": {"kind": "white_wizard", "name": "Phù Thủy Trắng", "count": 1, "level_bonus": 5, "mult": 2.0},
+        "minion": {"kind": "orc_soldier", "name": "Lính Orc", "count": 6, "level_bonus": 1, "mult": 1.2},
+        "reward_mult": 3,
+        "jewel_chance": 1.0,
+        "minion_jewel_chance": 0.15,
+        "drops": {"jewel_chaos": 0.5, "jewel_soul": 0.3}
+      }
+    },
     "invasion": {
       "every_hours": 2,
       "minutes": 15,
@@ -787,9 +953,36 @@
         "home"
       ]
     },
+    "auto": {
+      "_doc": "Phase 4 (B-31): tự đánh quái khi đang online (HacLong.Game.AutoHunt). tick_ms: nhịp ra lệnh (trong trận / đang đi / đứng chờ); hp_pct, mp_pct: ngưỡng % uống bình máu / mana mặc định và giới hạn chỉnh; keep_opt_min: lọc đồ 'chỉ đồ quý' giữ món có từ chừng này dòng cộng thêm trở lên (ngoài Excellent / Thần / May mắn / Kỹ năng / tốt hơn đồ đang mặc).",
+      "tick_ms": {"battle": 900, "move": 320, "idle": 1500},
+      "hp_pct": {"default": 40, "min": 10, "max": 90},
+      "mp_pct": {"default": 30, "min": 0, "max": 90},
+      "keep_opt_min": 2,
+      "_cfg_doc": "Kiểu MU Helper: range: phạm vi săn (0 = cả bản đồ; N = chỉ quái trong N ô quanh chỗ bật, hết quái thì về chỗ bật đứng chờ), chọn trong range_options. skills: all = dùng bộ kỹ năng mang theo (kỹ năng buff tung trước), basic = chỉ đòn thường, boss = chỉ dùng kỹ năng với trùm / tinh anh / quái vàng / quái Bóng Đêm. keep: loại đồ giữ lại khi lọc (loot = pick): exc Excellent, anc đồ Thần, luck May mắn hoặc Kỹ năng, opt từ keep_opt_min dòng cộng thêm, better tốt hơn đồ đang mặc, cls mặc được (đúng lớp, đủ cấp); ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ.",
+      "range_options": [0, 4, 8, 12],
+      "range_default": 0,
+      "skills": ["all", "basic", "boss"],
+      "keep": ["exc", "anc", "luck", "opt", "better", "cls"],
+      "keep_default": ["exc", "anc", "luck", "opt", "better"],
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
+    },
     "bots": {
-      "count": 20,
-      "rest_after_death_s": [30, 90]
+      "count": 0,
+      "_count_doc": "Số bot mặc định (0 = không chạy bot; đặt HL_BOTS trong .env để bật, vd. HL_BOTS=10). 20 → 0 (DECISIONS \"Bot mặc định 0\").",
+      "rest_after_death_s": [30, 90],
+      "_shop_doc": "Phase 5 (B-32): còn ít hơn potion_min bình máu (mana_min bình mana, lớp có MP) thì về Làng mua tới potion_buy / mana_buy bình ở Bà Lang (mua được ít nhất min thì mới đi). Loại bình: rẻ nhất mà hồi được ≥ potion_heal_min máu (MP) tối đa, không có thì loại mạnh nhất mua được. Máu thấp, hết bình mà đủ vàng (≥ inn_gold_mult × giá trọ) thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.",
+      "potion_min": 3,
+      "potion_buy": 10,
+      "mana_min": 2,
+      "mana_buy": 6,
+      "potion_heal_min": 0.3,
+      "inn_gold_mult": 2,
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
     },
     "slay": {
       "turn_s": 10,
@@ -830,7 +1023,9 @@
     },
     "tienlen": {
       "max_rooms": 50,
-      "stake_max": 100000
+      "stake_max": 100000,
+      "_min_balance_doc": "Cược S: cần ít nhất min_balance_mult × S vàng mới được chia bài (anh chốt 2×, trước 10×).",
+      "min_balance_mult": 2
     }
   }
 }

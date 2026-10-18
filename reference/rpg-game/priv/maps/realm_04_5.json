@@ -1,0 +1,77 @@
+{
+  "id": "realm_04_5",
+  "name": "Đầm Lầy Thực Thi 5",
+  "zone": null,
+  "side": true,
+  "theme": "swamp",
+  "floor": "floors/swamp",
+  "realm": 4,
+  "min_rebirths": 4,
+  "min_level": 40,
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T,......~~..KK~~......K.KT",
+    "T,...~,,...,....~...,....T",
+    "T........~..~..K....K...,T",
+    "T...~..,K,..,.,K..,~K...,T",
+    "T...~...K~~....K...,,~~..T",
+    "T....~.,.~K.~.....,~.KK..T",
+    "T~....,..::.~::::::::::::T",
+    "O...::::::::::..,.~.K....T",
+    "T~.....K......~..,.~..,..T",
+    "T.~.,......~,.,..,.~,....T",
+    "T......~.~.~..~..,..~~...T",
+    "T........,~....~..KK...~.T",
+    "T..K........K..,..,....~.T",
+    "T.....~~..,~..~K.~..,,..~T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        8
+      ],
+      "to": "realm_04_4",
+      "spawn": [
+        24,
+        8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "r4_bog_body_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r4_swamp_worm_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r4_basilisk_5",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "r4_swamp_dragon",
+      "max": 1,
+      "respawn": 240
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 60
+    },
+    {
+      "item": "herb_rare",
+      "max": 2,
+      "respawn": 60
+    }
+  ],
+  "npcs": []
+}

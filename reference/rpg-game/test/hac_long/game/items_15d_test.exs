@@ -24,11 +24,11 @@ defmodule HacLong.Game.Items15dTest do
     p
   end
 
-  defp gear(base, extra), do: Map.merge(Gear.new(base, 1, %{}), extra)
+  defp gear(base, extra), do: Map.merge(Gear.new(base, 1), extra)
 
   test "đồ rơi: May mắn theo loại quái, Kỹ năng chỉ ở vũ khí; đấu trường / trùm thế giới không bốc" do
-    sword = Gear.new("item_0_3", 1, %{})
-    armor = Gear.new("item_8_5", 1, %{})
+    sword = Gear.new("item_0_3", 1)
+    armor = Gear.new("item_8_5", 1)
 
     # bốc 0.0 (< mọi tỉ lệ) thì có cả hai dòng
     Rng.put_sequence([0.0, 0.0])
@@ -67,18 +67,22 @@ defmodule HacLong.Game.Items15dTest do
     assert Engine.derived(wear(p, gear("item_0_3", %{skill: true}))).skillDmg == @ls.skill_dmg
   end
 
-  test "ép ngọc: May mắn cộng tỉ lệ +7..+11, tối đa luck_max_rate; +6 vẫn 100%" do
+  test "ép ngọc: May mắn cộng tỉ lệ theo bước (+7..+9 nhiều, +10/+11 ít), tối đa luck_max_rate; +6 vẫn 100%" do
     it = %{price: 1000, level: 10, luck: true}
     plain = Map.delete(it, :luck)
 
     for lv <- 6..10 do
       base = Engine.upgrade_cost(plain, lv).rate
       lucky = Engine.upgrade_cost(it, lv).rate
+      bonus = HacLong.Game.Data.upgrade_step(lv + 1)[:luck] || @ls.luck_upgrade
 
       if base >= 1,
         do: assert(lucky == 1.0),
-        else: assert(lucky == min(@ls.luck_max_rate, Float.round(base + @ls.luck_upgrade, 3)))
+        else: assert(lucky == min(@ls.luck_max_rate, Float.round(base + bonus, 3)))
     end
+
+    # +10: 35 % → 45 %, +11: 25 % → 35 %
+    assert Engine.upgrade_cost(it, 9).rate == 0.45 and Engine.upgrade_cost(it, 10).rate == 0.35
 
     # hiện ở tooltip / thợ rèn qua Gear.item (resolve mang theo luck)
     p = player("dk", %{level: 20}) |> wear(gear("item_0_3", %{luck: true}))
@@ -86,7 +90,7 @@ defmodule HacLong.Game.Items15dTest do
   end
 
   test "giá bán nhân price_mult mỗi dòng; lưu / nạp giữ dòng" do
-    plain = Gear.new("item_0_3", 1, %{})
+    plain = Gear.new("item_0_3", 1)
     both = Map.merge(plain, %{luck: true, skill: true})
     assert Gear.price(both) == round(Gear.price(plain) * @ls.price_mult * @ls.price_mult)
 

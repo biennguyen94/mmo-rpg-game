@@ -9,10 +9,30 @@ Giấy phép: **CC0 1.0** (public domain). Không bắt buộc ghi tên, nhưng 
 các họa sĩ của Dungeon Crawl Stone Soup và dự án RLTiles.
 Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 
+Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint_sprites.mjs` (vẫn CC0): `red_dragon.png` (từ
+`golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`). `nodes/ore_rare.png` (Quặng Mithril) cũng tô lại từ `nodes/ore.png` cùng script. `tiles/blessing.png` (Đài Phúc Lành) tô lại từ `tiles/waystone.png`. 40 hình quái vùng đất chuyển sinh `monsters/r1_…` → `r10_…` (Phase 6) tô lại từ các hình quái CC0 ở trên, danh sách ở `priv/game_data/realms.json` (`REALM_TINTS`).
+
+Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): hình trùm Hắc Long `monsters/shadow_dragon.png` (CC0, bộ trên) phóng to trên nền vẽ bằng `e2e/app_icons.mjs`.
+
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng
 `scripts/side_monsters.py`; danh sách trong `priv/game_data/side.json`. Không dùng hình nào trong
 `TILES_UNDER_UNKNOWN_LICENSE.md` của bộ tile.
+
+## Bộ hình đồ "Pixel" (`priv/static/assets/pixel/`, Phase 7)
+
+Cũng từ bộ tile Dungeon Crawl Stone Soup ở trên (CC0, `releases/Nov-2015`): vũ khí (`item/weapon`, `item/weapon/ranged`),
+gậy / quyền trượng / sách (`item/staff`, `item/rod`, `item/book`), khiên, mũ, giáp, găng, giày (`item/armour`), nhẫn và dây
+chuyền (`item/ring`, `item/amulet`), bình (`item/potion`), vé / bản đồ (`item/scroll`), ngọc (`item/misc/runes`), đồ vật
+(`item/misc`).
+Hình quần: **CC0 Leggings Icons** của AntumDeluge (https://opengameart.org/content/cc0-leggings-icons, giấy phép
+**CC0**), gom từ bộ hình Flare (https://opengameart.org/node/12815, /node/13879, /node/12818) và các bộ
+https://opengameart.org/node/108781, /node/108295, /node/108448; bản 32×32 để ở `assets_src/pixel_extra/leggings/`
+(nguồn từng file trong `SOURCES.md` cùng thư mục).
+Hình cánh: đôi cánh Draconian của bộ tile Dungeon Crawl ở trên (`player/drcwing`, CC0), đã ghép sát hai cánh và căn giữa,
+để ở `assets_src/pixel_extra/wings/`.
+Chọn và chép bằng `scripts/pixel_icons.py` (bảng tra `priv/static/assets/pixel_icons.json`); script tự bỏ mọi file có
+trong `TILES_UNDER_UNKNOWN_LICENSE.md`. Không dùng hình MU nào.
 
 ## Icon (`priv/static/assets/icons/`)
 

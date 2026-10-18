@@ -1,0 +1,277 @@
+<title>Kho Đồ Hắc Long</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Philosopher:wght@700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
+<style>
+/* Layout: một cột tài liệu tra cứu, mục lục dính trên cùng, bảng cuộn ngang trong khung riêng */
+:root{
+  --bg:#f2f3f6; --panel:#ffffff; --fg:#1d2230; --muted:#5d6577; --line:#d9dce4;
+  --gold:#94661a; --alt:#2f6f9e; --exc:#2e8a3e; --anc:#b5591b; --bad:#b3261e; --chip:#ece6d9; --icobg:#2a2f3c;
+  --display:"Philosopher", Georgia, serif; --body:"Be Vietnam Pro", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151d; --panel:#1a1e29; --fg:#e4e6ec; --muted:#9aa1b2; --line:#2c3242;
+  --gold:#e0b25c; --alt:#7cb6e4; --exc:#6fd27f; --anc:#f0965a; --bad:#ff8a80; --chip:#2a2619; --icobg:#0d1017; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151d; --panel:#1a1e29; --fg:#e4e6ec; --muted:#9aa1b2; --line:#2c3242;
+  --gold:#e0b25c; --alt:#7cb6e4; --exc:#6fd27f; --anc:#f0965a; --bad:#ff8a80; --chip:#2a2619; --icobg:#0d1017; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px;display:grid;gap:36px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;color:var(--fg)}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1}
+h1 span{color:var(--gold)}
+h2{font-size:24px;border-bottom:1px solid var(--line);padding-bottom:6px}
+h3{font-size:15px;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0;max-width:72ch}
+.lead{color:var(--muted)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 14px;padding-block:10px;font-size:14px}
+nav a{color:var(--muted);text-decoration:none}
+nav a:hover,nav a:focus-visible{color:var(--gold)}
+nav a.new::after{content:" mới";font-size:11px;color:var(--exc);font-weight:700}
+section{display:grid;gap:14px;scroll-margin-top:56px;min-width:0}
+.wrap>*,section>*{min-width:0}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap;background:var(--panel)}
+tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.grp td{background:var(--chip);font-weight:700;color:var(--gold)}
+.it{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+img.px{width:24px;height:24px;image-rendering:pixelated;background:var(--icobg);border-radius:4px;flex:none}
+.shop{font-size:12px}
+.alt{color:var(--alt)}
+.exc{color:var(--exc);font-weight:700}
+.anc{color:var(--anc);font-weight:700}
+.bad{color:var(--bad);font-weight:600}
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px;min-width:120px;flex:1 1 140px}
+.stat b{display:block;font-family:var(--display);font-size:26px;color:var(--gold);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.note{font-size:13px;color:var(--muted)}
+code{font-size:13px}
+.ev dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 10px;margin:6px 0 0}
+.ev dt{color:var(--muted);font-size:13px}
+.ev dd{margin:0}
+</style>
+
+<div class="wrap">
+<header style="display:grid;gap:10px">
+  <h1>Kho Đồ <span>Hắc Long</span></h1>
+  <p class="lead">Mọi loại đồ, kỹ năng và vùng đất đang có trong game, đọc thẳng từ dữ liệu <code>priv/game_data</code> (bản ngày 17/10/2026, sau đợt 8 phase: kỹ năng tháp, nguyên tố, vùng chuyển sinh, tự đánh, bộ hình Pixel; cập nhật hệ số kỹ năng lớp mới và mục Chỉ số, chiến đấu).</p>
+</header>
+
+<nav aria-label="Mục lục">
+  <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#quy-tac" class="new">Quy tắc chi tiết</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#su-kien" class="new">Sự kiện</a><a href="#thu-cung" class="new">Thú cưng</a><a href="#ban-do" class="new">Bản đồ, quái</a><a href="#thap" class="new">Tháp Vô Tận</a><a href="#pk" class="new">PK, đồ sát</a><a href="#khac">Vật phẩm khác</a>
+</nav>
+
+<section id="tong-quan">
+  <h2>Tổng quan</h2>
+  {{OVERVIEW}}
+</section>
+
+<section id="theo-lop">
+  <h2>Đồ theo lớp</h2>
+  <div class="tabs" role="group" aria-label="Chọn lớp">{{TABS}}</div>
+  <div class="legend"><span><b>Đậm</b>: món chính</span><span class="alt">Xanh: món phụ</span><span>🛒 bán ở Thợ Rèn</span><span>Công: trung bình (thấp~cao) của món chính</span><span>Hình: bộ ở giữa của bộ giáp</span></div>
+  {{PANES}}
+  {{GAPS}}
+</section>
+
+<section id="bac">
+  <h2>Bậc, cấp, giá</h2>
+  <p>Mọi lớp dùng chung một bảng (món chính, khoảng từ thấp tới cao). Bán lại cho NPC được {{SELL}} giá.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Bậc</th><th>Cấp vũ khí</th><th>Giá vũ khí</th><th>Cấp món giáp</th><th>Giá món giáp</th><th>Cấp khiên</th><th>Thủ khiên</th></tr></thead>
+    <tbody>{{TIERS}}</tbody></table></div>
+  <p class="note">Thưởng đủ bộ (từ bậc 2): {{SB}}.</p>
+</section>
+
+<section id="trang-suc">
+  <h2>Nhẫn, dây chuyền</h2>
+  <p>Chỉ rơi từ quái và rương, mọi lớp dùng được, không đòi chỉ số. Đeo được 2 nhẫn và 1 dây chuyền.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Loại</th><th>Tên</th><th>Cấp</th><th>Chỉ số</th><th>Giá</th></tr></thead>
+    <tbody>{{JEW}}</tbody></table></div>
+</section>
+
+<section id="canh">
+  <h2>Cánh</h2>
+  <p>Ghép ở Máy Hỗn Nguyên theo cấp: cấp 1 từ đồ +5, cấp 2 từ cánh cấp 1 +5, cấp 3 từ cánh cấp 2 +9 kèm Lông Vũ Kền Kền. Mỗi cấp ép cánh thêm sát thương và hấp thụ. Bộ hình Pixel chưa có hình cánh nên trong game cánh giữ biểu tượng cũ.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Cấp</th><th>Tên theo lớp</th><th>Cấp đeo</th><th>Thủ</th><th>Sát thương</th><th>Nhận vào</th><th>Dòng phụ</th></tr></thead>
+    <tbody>{{WINGS}}</tbody></table></div>
+  <h3>Ép cánh</h3>
+  <p class="note">+1 → +9 tăng ít, +10 và +11 tăng mạnh; cánh bậc cao tăng hấp thụ nhanh hơn. Hấp thụ của cánh tối đa 50 %. Phòng thủ cánh theo bảng Ép +N như đồ.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Cấp cánh</th><th>Sát thương ở +0 / +6 / +9 / +10 / +11</th><th>Nhận vào ở +0 / +6 / +9 / +10 / +11</th></tr></thead>
+    <tbody>{{WINGUP}}</tbody></table></div>
+</section>
+
+<section id="ep">
+  <h2>Ép +N</h2>
+  <p>Chỉ số cộng = "cấp tính" × {{UPPCT}} chỉ số gốc của món (ít nhất +1 mỗi cấp tính); cột cuối bảng là cấp tính và tổng % cộng thêm: +1 → +9 mỗi cấp như nhau, +10 và +11 tăng mạnh. Cánh: % sát thương / hấp thụ theo cấp, từ +{{DOUBLE}} mỗi cấp tính gấp đôi. Từ +{{ANNOUNCE}} cả server thấy thông báo. Đồ có May mắn: tỉ lệ ép bằng Ngọc Tâm Linh / Hỗn Nguyên cộng {{LUCKUP}}, trần {{LUCKMAX}} (bảng hiện tại cao nhất {{LUCKREAL}}). Phí vàng mỗi lần ép: max(giá món, {{COSTMIN}}) × {{COSTPCT}} × cấp ép lên.</p>
+  <div class="scroll" style="max-width:820px"><table>
+    <thead><tr><th>Lên</th><th>Ở đâu</th><th>Cần</th><th>Tỉ lệ</th><th>Thất bại</th><th>Cấp tính (cộng thêm)</th></tr></thead>
+    <tbody>{{UPG}}</tbody></table></div>
+  <p class="note">"Cấp tính": số nhân với phần trăm mỗi cấp để ra chỉ số cộng thêm. Ngọc Sinh Mệnh (Thợ Rèn): {{LIFE}} (vũ khí cộng công, giáp / khiên / cánh cộng thủ); thất bại mất dòng cuối.</p>
+</section>
+
+<section id="dong">
+  <h2>Dòng phụ trên đồ rơi</h2>
+  <div class="cols">
+    <div class="card"><h3>Dòng cộng thêm</h3><p class="note">Mỗi dòng cộng {{PERLINE}}: công với vũ khí, thủ với món khác. Số dòng trên đồ rơi:</p><ul>{{OPT}}</ul></div>
+    <div class="card"><h3 class="exc">Excellent</h3><p class="note">{{EXCLINES}}. Giá bán ×{{EXCPRICE}}. Máy Hỗn Nguyên thêm tới đủ 6 dòng.</p>
+      <b>Vũ khí, dây chuyền</b><ul>{{EXC_W}}</ul><b>Giáp, khiên, nhẫn</b><ul>{{EXC_A}}</ul><p class="note">Giảm sát thương tối đa {{DMGRED}}, phản tối đa {{REFL}}.</p></div>
+    <div class="card"><h3 class="anc">Đồ Thần</h3><p class="note">Chỉ món bộ giáp. Thủ món +{{ANCDEF}}, giá bán ×{{ANCPRICE}}. Thưởng theo số món Thần cùng bộ, cộng dồn:</p><ul>{{ANC}}</ul></div>
+    <div class="card"><h3>May mắn, Kỹ năng</h3><ul><li><b>May mắn</b>: vũ khí +{{LUCKCRIT}} chí mạng; mọi món +{{LUCKUP}} tỉ lệ ép bằng ngọc</li><li><b>Kỹ năng</b> (chỉ vũ khí): chiêu +{{SKILLDMG}} sát thương</li></ul></div>
+  </div>
+  <h3>Thêm dòng sau khi có đồ, ép +N có đổi dòng không</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Dòng</th><th>Có sẵn khi rơi</th><th>Thêm sau</th><th>Tối đa</th><th>Ép +N có đổi dòng này?</th></tr></thead>
+    <tbody>{{LINESROWS}}</tbody></table></div>
+  <p class="note"><b>Ép ngọc (+N) chỉ tăng chỉ số gốc</b> (số xanh lá cạnh "Tấn công / Phòng thủ"; cánh thêm % sát thương / hấp thụ) và tỉ lệ khi dùng món làm nguyên liệu ở Máy Hỗn Nguyên — không đổi dòng xanh nào. {{LINESEX}}</p>
+</section>
+
+<section id="roi">
+  <h2>Tỉ lệ rơi</h2>
+  <p>"Rơi đồ" là tỉ lệ mỗi con rơi một món trang bị; các cột sau tính trên món đã rơi (Thần chỉ tính món bộ giáp). Món rơi đúng lớp người hạ: {{SLOTS}}. Túi đồ hiếm đầy thì đồ rơi gửi vào Hộp thư.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Loại quái</th><th>Rơi đồ</th><th class="exc">Excellent</th><th class="anc">Thần</th><th>May mắn</th><th>Kỹ năng (vũ khí)</th></tr></thead>
+    <tbody>{{LOOT}}</tbody></table></div>
+  <p class="note">Vùng đất chuyển sinh nhân các tỉ lệ này thêm (xem mục Vùng chuyển sinh).</p>
+</section>
+
+<section id="ky-nang">
+  <h2>Kỹ năng</h2>
+  <p>Mỗi lớp có 3 kỹ năng mở theo cấp và 10 kỹ năng Tháp Vô Tận mở khi kỷ lục tháp đạt tầng 10, 20, … 100 (giữ vĩnh viễn). Mang tối đa {{LOADOUT}} kỹ năng vào trận, chọn ở Menu → Kỹ năng → ⚙. MP tốn tăng theo cấp nhân vật.</p>
+  <div class="tabs" role="group" aria-label="Chọn lớp">{{STABS}}</div>
+  {{SPANES}}
+</section>
+
+<section id="nguyen-to">
+  <h2>Nguyên tố</h2>
+  <div class="cols">
+    <div class="card"><h3>Vòng khắc</h3><p>{{CYCLE}}</p><p>✨ Ánh Sáng và 🌑 Bóng Tối khắc nhau.</p><p class="note">Kỹ năng khắc nguyên tố quái: +{{STRONG}} sát thương (nút kỹ năng hiện ▲). Bị quái khắc: −{{WEAK}} (▼). Đòn thường không nguyên tố.</p></div>
+    <div class="card"><h3>Nguyên tố của quái</h3><p class="note">Theo cấp quái: {{BYLV}}. Quái vùng chuyển sinh mang nguyên tố riêng của vùng.</p></div>
+  </div>
+</section>
+
+<section id="chi-so">
+  <h2>Chỉ số và chiến đấu</h2>
+  <p>Tab Nhân vật trong game hiện các chỉ số này; bấm vào từng dòng để xem giải thích ngay trong game.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Chỉ số</th><th>Cách tính</th><th>Dùng khi nào</th></tr></thead>
+    <tbody>{{STATROWS}}</tbody></table></div>
+  <h3>Đánh quái và đánh người</h3>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th>Đánh quái</th><th>Đồ sát, Đấu trường</th><th>PK cược vàng</th></tr></thead>
+    <tbody>{{MODEROWS}}</tbody></table></div>
+  <p class="note">{{MONSTER}} PK cược vàng: hai bản sao chỉ số tự đánh nhau, không ai điều khiển.</p>
+</section>
+
+<section id="quy-tac">
+  <h2>Quy tắc chi tiết</h2>
+  <ul>{{RULELI}}</ul>
+  <h3>Hệ số lớp</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Lớp</th><th>Chỉ số đầu (STR / AGI / VIT / ENE)</th><th>Điểm mỗi cấp</th><th>Tấn công</th><th>Phòng thủ</th><th>Máu</th><th>MP</th></tr></thead>
+    <tbody>{{CLASSROWS}}</tbody></table></div>
+  <p class="note">Đây là phần gốc theo chỉ số và cấp, trước khi cộng đồ và các % (xem Chỉ số, chiến đấu). Đồ có yêu cầu chỉ số riêng, ghi trong game khi xem món.</p>
+  <h3>Máy Hỗn Nguyên</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Công thức</th><th>Cần</th><th>Vàng</th><th>Tỉ lệ</th></tr></thead>
+    <tbody>{{CHAOSROWS}}</tbody></table></div>
+  <p class="note">Thất bại mất nguyên liệu và vàng; công thức ghép cánh mất luôn món đồ bỏ vào, Pha Excellent / Pha May mắn giữ nguyên món (cấp ép, dòng không đổi). Đồ đã khóa không bỏ vào máy được.</p>
+</section>
+
+<section id="chuyen-sinh">
+  <h2>Vùng đất chuyển sinh</h2>
+  <p>Vào bằng Chọn bản đồ hoặc cổng bên trái Làng. Vùng k cần chuyển sinh ít nhất k lần và cấp {{RMIN}}+. {{REBIRTH}} Cấp tối đa nhân vật vẫn là 50: chỉ số quái tính ở cấp {{RSTAT}} nhân hệ số (1 + {{RMULT}} × k, chúa tể ×{{RBOSS}}); vàng theo cấp hiện trên quái; kinh nghiệm tính ở cấp {{RSTAT}} × (1 + {{RXP}} × k), chúa tể ×{{RBOSS}}. Mỗi vùng {{RMAPS}} bản đồ: bản đồ 1 là cửa vào (Đài Phúc Lành, cổng vùng trước / sau), cổng mép dưới vào bản đồ 2 → … → {{RMAPS}}; bản đồ thứ n đánh như vùng k + {{RSTEP}} × (n − 1) (máu, công, kinh nghiệm, rơi đồ, ngọc mạnh dần), chúa tể đứng ở bản đồ cuối. Tháp Vô Tận tầng 61–160 dùng quái các vùng này; từ tầng 161 quay vòng lại từ đầu, tên quái thêm tiền tố (Cổ Đại, Hắc Ám…).</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Vùng</th><th>Tên</th><th>Chuyển sinh</th><th>Cấp quái</th><th>Hệ</th><th>Máu / công</th><th>Rơi quý thêm</th><th>Ngọc / con</th><th>Quái</th></tr></thead>
+    <tbody>{{REALMS}}</tbody></table></div>
+  <p class="note">"Rơi quý thêm": nhân tỉ lệ ra đồ (1 + số này); tỉ lệ Excellent, May mắn, Thần nhân giữ như thường; tăng {{RLOOT}} mỗi vùng, trần {{RLOOTMAX}} nên vùng 9 và 10 bằng nhau. "Máu / công": máu và công của quái so với quái thường cùng cấp. "Ngọc / con": tỉ lệ mỗi con rơi 1 viên ngọc (loại theo tỉ lệ ở mục Vật phẩm khác); chúa tể ×5.</p>
+</section>
+
+<section id="su-kien">
+  <h2>Sự kiện</h2>
+  <p>Giờ là giờ Việt Nam. Vào các sự kiện có vé ở Người Gác Tháp (Làng). Phần thưởng sự kiện gửi qua Hộp thư. {{EVSCALE}}</p>
+  <div class="cols evs">{{EVROWS}}</div>
+  <h3>Lễ hội theo mùa</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Lễ hội</th><th>Ngày (tháng-ngày)</th><th>Nội dung</th><th>Vật phẩm đổi quà</th></tr></thead>
+    <tbody>{{FEST}}</tbody></table></div>
+  <p class="note">Vật phẩm lễ hội mang tới Người Tổ Chức Hội đổi quà.</p>
+</section>
+
+<section id="ban-do">
+  <h2>Bản đồ và quái</h2>
+  <p>Đủ cấp (≥ cấp quái thấp nhất) là vào được. Dịch chuyển bằng Chọn bản đồ: {{TRAVEL}} vàng (Làng, Nhà miễn phí). Vùng chuyển sinh cần số lần chuyển sinh ghi ở cột "Vào".</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Bản đồ</th><th>Cấp quái</th><th>Vào</th><th>Quái</th><th>Dịch chuyển</th></tr></thead>
+    <tbody>{{MAPROWS}}</tbody></table></div>
+  <h3>Trùm</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Trùm</th><th>Cấp</th><th>Ở đâu</th><th>Máu</th><th>Công / thủ</th><th>Đòn đặc biệt</th></tr></thead>
+    <tbody>{{BOSSROWS}}</tbody></table></div>
+  <p class="note">{{BOSSNOTE}} Ban đêm quái thường đôi khi thành quái Bóng Đêm (mạnh hơn, thưởng nhiều hơn).</p>
+</section>
+
+<section id="thap">
+  <h2>Tháp Vô Tận</h2>
+  <p>Vào ở Người Gác Tháp. Mỗi tầng là bản đồ nhỏ riêng cho mình; hạ hết quái thì cầu thang lên mở, lên tầng thì nhận thưởng. Tầng N có quái cấp N; từ tầng {{TWHARD}} quái mạnh thêm {{TWPER}} mỗi tầng nên tháp không có đỉnh. Tầng chia hết cho {{TWBOSS}} có trùm tầng (cấp tầng + {{TWOFF}}, sức ×{{TWELITE}}) và ít quái thường hơn. Máu không tự hồi giữa các tầng; gục là hết lượt leo, đi cầu thang xuống ở đầu tầng để về Làng. Lần sau bắt đầu ở tầng 1, 11, 21… không quá kỷ lục + 1. Kỷ lục mở kỹ năng tháp (tầng 10, 20 … 100, xem mục Kỹ năng).</p>
+  <div class="scroll" style="max-width:820px"><table>
+    <thead><tr><th>Tầng</th><th>Cấp quái</th><th>Sức mạnh</th><th>Số quái</th><th>Vàng</th><th>Kinh nghiệm</th><th>Thêm</th></tr></thead>
+    <tbody>{{TOWERROWS}}</tbody></table></div>
+  <p class="note">Quái tháp: tầng 1–60 theo 6 vùng chính, 61–160 theo 10 vùng chuyển sinh, sau đó quay vòng (tên thêm tiền tố). Ngọc mỗi 10 tầng chỉ nhận lần đầu vượt tầng đó.</p>
+</section>
+
+<section id="thu-cung">
+  <h2>Thú cưng</h2>
+  <p>Mua ở Người Nuôi Thú (Làng), dắt theo một con. Thú cộng % chỉ số và hay cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. {{PETRULE}}</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Thú</th><th>Giá</th><th>Chỉ số cộng (cấp 1)</th><th>Sức cắn (cấp 1)</th><th>Kỹ năng cấp {{PETSK1}}</th><th>Kỹ năng cấp {{PETSK2}}</th></tr></thead>
+    <tbody>{{PETROWS}}</tbody></table></div>
+  <p class="note">{{PETTAME}}</p>
+</section>
+
+<section id="pk">
+  <h2>PK, đồ sát</h2>
+  <ul>{{PKLI}}</ul>
+  <p class="note">Cách tính trúng, né, chí mạng khi đánh người: xem bảng "Đánh quái và đánh người" ở mục Chỉ số, chiến đấu.</p>
+</section>
+
+<section id="khac">
+  <h2>Vật phẩm khác</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Tên</th><th>Công dụng</th><th>Mua ở</th><th>Bán lại</th></tr></thead>
+    <tbody>{{OTHER}}</tbody></table></div>
+  <p class="note">"Mua ở" "—": không bán, chỉ có từ quái, sự kiện, rương, Máy Hỗn Nguyên. Giá bình thuốc tăng {{POTLV}} mỗi cấp nhân vật. "Bán lại": giá NPC mua lại. {{JEWELSRC}} Hình đồ: Dungeon Crawl Stone Soup (CC0).</p>
+</section>
+</div>
+
+<script>
+(function(){
+  ['cls','sk'].forEach(function(g){
+    var tabs=[].slice.call(document.querySelectorAll('.tab[data-g="'+g+'"]')), panes=[].slice.call(document.querySelectorAll('.ctab[data-g="'+g+'"]'));
+    function show(c){
+      tabs.forEach(function(t){t.setAttribute('aria-pressed', t.dataset.c===c ? 'true':'false')});
+      panes.forEach(function(p){p.hidden = p.dataset.c!==c});
+      try{localStorage.setItem('hl-cls',c)}catch(e){}
+    }
+    tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.c)})});
+    var saved='dk'; try{saved=localStorage.getItem('hl-cls')||'dk'}catch(e){}
+    show(saved);
+  });
+})();
+</script>

@@ -134,4 +134,49 @@ defmodule HacLong.Game.DevilSquareTest do
     assert DevilSquare.ticket_chance(%{level: 40, tower: true}) == 0
     assert DevilSquare.ticket_chance(%{level: 40, pvp: true}) == 0
   end
+
+  test "quản trị viên mở ngay ngoài lịch: cho vào entry_minutes phút, đợt riêng (đã vào đợt thường vẫn vào được)" do
+    on_exit(fn -> :persistent_term.erase({DevilSquare, :forced}) end)
+    r = DevilSquare.rules()
+    # giữa hai đợt thường: đang đóng
+    closed = DateTime.add(vn(12, 0), 40 * 60)
+    refute DevilSquare.open?(closed)
+
+    w = DevilSquare.open_now(closed)
+    assert w.slot < 0 and w.closes_at - w.opens_at == r.entry_minutes * 60
+    assert DevilSquare.open?(closed)
+    assert DevilSquare.open?(DateTime.add(closed, r.entry_minutes * 60 - 1))
+    refute DevilSquare.open?(DateTime.add(closed, r.entry_minutes * 60))
+
+    # người đã vào đợt thường hôm nay vẫn vào được đợt mở ngay
+    p = Map.put(player(), :daily, %{ds_slot: 123})
+    assert DevilSquare.view(p, closed).open and not DevilSquare.view(p, closed).used
+  end
+
+  test "B-18: quái rơi mảnh vé, ghép Mắt Quỷ + Chìa Khóa Quỷ ra vé ở Máy Hỗn Nguyên" do
+    assert DevilSquare.ticket_part() in @r.ticket_drop.parts
+    r = HacLong.Game.Data.chaos("ds_ticket")
+    assert r.out == @r.ticket
+
+    p =
+      player(%{gold: 100_000})
+      |> Engine.add_item("devil_eye")
+      |> Engine.add_item("devil_key")
+
+    # thiếu mảnh thì không ghép
+    {%{ok: false}, _} =
+      HacLong.Game.Chaos.combine(%{p | inv: Map.delete(p.inv, "devil_key")}, "ds_ticket", nil)
+
+    Rng.put_sequence([0.0])
+
+    {%{ok: true, chaos: %{result: "success"}}, q} =
+      HacLong.Game.Chaos.combine(p, "ds_ticket", nil)
+
+    assert q.inv[@r.ticket] == 1 and q.gold == p.gold - r.gold
+    refute Map.has_key?(q.inv, "devil_eye") or Map.has_key?(q.inv, "devil_key")
+
+    # Lâu Đài: Cuộn Giấy + Xương Máu
+    assert HacLong.Game.Data.chaos("bc_ticket").out == HacLong.Game.BloodCastle.ticket()
+    assert HacLong.Game.BloodCastle.ticket_part() in ~w(archangel_scroll blood_bone)
+  end
 end

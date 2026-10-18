@@ -65,11 +65,13 @@ defmodule HacLong.Audit do
       """)
 
     for [uid, places] <- rows do
+      list = Enum.join(places, ", ")
+
       %{
         kind: "gear_duplicate",
         uid: uid,
         places: places,
-        text: "Đồ #{uid} nằm ở #{length(places)} chỗ: #{Enum.join(places, ", ")}."
+        text: "Đồ #{uid} nằm ở #{length(places)} chỗ: #{list}."
       }
     end
   end
@@ -93,7 +95,11 @@ defmodule HacLong.Audit do
         name: name,
         uid: gear_uid,
         text:
-          "#{name} giữ #{gear_uid} nhưng nhật ký cuối là #{(action && "#{action} (tài khoản #{last_uid})") || "không có"}."
+          if(action,
+            do:
+              "#{name} giữ #{gear_uid} nhưng nhật ký cuối là #{action} (tài khoản #{last_uid}).",
+            else: "#{name} giữ #{gear_uid} nhưng nhật ký cuối là không có."
+          )
       }
     end
   end

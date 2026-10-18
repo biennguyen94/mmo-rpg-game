@@ -9,9 +9,10 @@ defmodule HacLong.Game.Chaos do
   trên `min_up` cộng `per_up` vào tỉ lệ, tối đa `max_rate`.
 
   Công thức có `mode` (Phase 15f, `docs/ITEMS_PHASE15B.md` §9) không có `out`: thành công thì **chính món đồ**
-  bỏ vào được thêm dòng (`"excellent"`: 1 dòng Excellent, tối đa 3; `"luck"`: dòng May mắn), giữ nguyên cấp nâng.
+  bỏ vào được thêm dòng (`"excellent"`: 1 dòng Excellent, tới đủ 6 dòng như MU (B-16); `"luck"`: dòng May mắn), giữ nguyên cấp nâng.
 
-  Thất bại: **mất hết** nguyên liệu, món đồ và phí. Thành công ra cánh thì báo cả server.
+  Thất bại: mất nguyên liệu và phí; công thức ra món mới (ghép cánh…) mất cả món đồ bỏ vào, công thức `mode` (Pha
+  Excellent, Pha May mắn) **giữ** món đồ, cấp nâng không đổi (anh chốt 2026-10-17). Thành công ra cánh thì báo cả server.
   """
 
   alias HacLong.Game.{Data, Engine, Gear, Rng}
@@ -89,13 +90,10 @@ defmodule HacLong.Game.Chaos do
            chaos: %{result: "success", out: g.base}
          }, p}
       else
-        p = p |> Gear.remove(g.uid)
-        p = Map.put(p, :upgrades, Map.delete(Map.get(p, :upgrades) || %{}, g.uid))
-
         {%{
            ok: true,
            msg:
-             "💥 #{r.name} thất bại (#{round(rate * 100)}%). Mất #{it.name} +#{up}, nguyên liệu và #{r.gold} vàng.",
+             "💥 #{r.name} thất bại (#{round(rate * 100)}%). #{it.name} +#{up} còn nguyên, mất nguyên liệu và #{r.gold} vàng.",
            chaos: %{result: "fail", out: g.base}
          }, p}
       end
@@ -105,7 +103,7 @@ defmodule HacLong.Game.Chaos do
   end
 
   defp mode_ok("excellent", g, it) do
-    if length(g[:exc] || []) < min(3, length(Gear.exc_pool(it.slot))),
+    if length(g[:exc] || []) < length(Gear.exc_pool(it.slot)),
       do: :ok,
       else: {:error, "#{it.name} đã đủ dòng Excellent."}
   end

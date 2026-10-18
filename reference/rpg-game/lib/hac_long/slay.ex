@@ -3,7 +3,9 @@ defmodule HacLong.Slay do
   Đồ sát (PK không cần đồng ý, thay PK cược vàng; `DECISIONS.md` P18).
 
   - `attack/2` (gọi từ kênh của người tấn công): cả hai online, cùng bản đồ chung, không ở vùng
-    an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`, không ai đang đánh.
+    an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`. Người tấn công không đang đánh;
+    người bị đánh đang đánh quái vẫn bị đồ sát ngay (trận đánh quái bị ngắt, quái được nhả ra giữ máu),
+    chỉ không được khi đang trong một trận đồ sát khác (`DECISIONS.md` "Đồ sát cắt ngang trận đánh quái").
     Hai bên vào trận ngay (`Session.slay_begin/2`), đối thủ hiện như quái là bản sao chỉ số.
   - Máu hai bên giữ ở đây. Luân phiên lượt, người tấn công đi trước. Mỗi lượt `RULES.slay.turn_s`
     giây; quá giờ thì server đánh thường thay (`Session.slay_auto/1`).
@@ -88,21 +90,63 @@ defmodule HacLong.Slay do
   @doc "Điều kiện đồ sát (hàm thuần): người tấn công `pa`, người bị đánh `pb`."
   def check(pa, pb) do
     cond do
-      pa == nil -> {:error, "Chưa có nhân vật."}
-      pb == nil -> {:error, "Người này chưa có nhân vật."}
-      pa.level < @r.min_level -> {:error, "Cần đạt cấp #{@r.min_level} mới được đồ sát."}
-      pb.level < @r.min_level -> {:error, "#{pb.name} dưới cấp #{@r.min_level}, chưa đánh được."}
-      pa.battle != nil -> {:error, "Bạn đang trong trận đấu."}
-      pb.battle != nil -> {:error, "#{pb.name} đang trong trận đấu."}
-      pa.hp <= 0 -> {:error, "Bạn cần hồi máu trước."}
-      pb.hp <= 0 -> {:error, "#{pb.name} đang gục ngã."}
-      pa.pos.map != pb.pos.map -> {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
-      not safe_ok?(pa.pos) -> {:error, "Đây là vùng an toàn, không được đánh nhau."}
-      true -> :ok
+      pa == nil ->
+        {:error, "Chưa có nhân vật."}
+
+      pb == nil ->
+        {:error, "Người này chưa có nhân vật."}
+
+      pa.level < @r.min_level ->
+        {:error, "Cần đạt cấp #{@r.min_level} mới được đồ sát."}
+
+      pb.level < @r.min_level ->
+        {:error, "#{pb.name} dưới cấp #{@r.min_level}, chưa đánh được."}
+
+      pa.battle != nil ->
+        {:error, "Bạn đang trong trận đấu."}
+
+      slaying?(pb) ->
+        {:error, "#{pb.name} đang bị đồ sát / đồ sát người khác."}
+
+      pa.hp <= 0 ->
+        {:error, "Bạn cần hồi máu trước."}
+
+      pb.hp <= 0 ->
+        {:error, "#{pb.name} đang gục ngã."}
+
+      pa.pos.map != pb.pos.map ->
+        {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
+
+      not safe_ok?(pa.pos) ->
+        {:error, "Đây là vùng an toàn, không được đánh nhau."}
+
+      # Hỗn Chiến Thành (B-19): chỉ đánh nhau khi thành đang hỗn chiến (hết giờ vào)
+      chaos_castle?(pa) and not HacLong.ChaosCastle.fighting?() ->
+        {:error, "Hỗn Chiến Thành chưa bắt đầu, chưa được đánh nhau."}
+
+      # Công Thành Chiến (B-22): chỉ lúc đang đánh, giữa hai bang khác nhau
+      castle?(pa) and not HacLong.CastleSiege.fighting?() ->
+        {:error, "Công Thành Chiến chưa bắt đầu, chưa được đánh nhau."}
+
+      castle?(pa) and (pa[:guild] == nil or pb[:guild] == nil or pa.guild.id == pb.guild.id) ->
+        {:error, "Trong Công Thành Chiến chỉ đánh người bang khác."}
+
+      true ->
+        :ok
     end
   end
 
+  @doc "Đang trong trận đồ sát chưa xong (không cắt ngang được)."
+  def slaying?(p), do: match?(%{battle: %{over: false, encounter: %{slay: _}}}, p)
+
   defp safe_ok?(pos), do: pos.map not in @r.safe_maps and World.shared?(pos)
+
+  # trong Hỗn Chiến Thành: không mất vàng, không tên đỏ / bảo vệ, thua là bị loại về Làng
+  defp chaos_castle?(p), do: p.pos.map == HacLong.ChaosCastle.map_id()
+  defp castle?(p), do: p.pos.map == HacLong.CastleSiege.map_id()
+
+  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến): không tên đỏ / vàng thêm, thua về Làng
+  defp event_map?(p), do: chaos_castle?(p) or castle?(p)
 
   # Session `uid` vào trận với bản sao của `foe`; lỗi thì hủy trận (và trận đã mở của bên kia).
   defp begin(uid, f, foe, foe_p, undo) do
@@ -318,7 +362,13 @@ defmodule HacLong.Slay do
             end)
 
             if pl2.pos.map != pl.pos.map, do: World.leave(pl, loser)
-            marks(f, winner, loser)
+
+            cond do
+              chaos_castle?(pw) -> HacLong.ChaosCastle.kill(winner, :player)
+              castle?(pw) -> :ok
+              true -> marks(f, winner, loser)
+            end
+
             HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
@@ -357,9 +407,11 @@ defmodule HacLong.Slay do
 
         {_, pl2} = Engine.finish_lose(pl)
 
-        # tên đỏ gục: mất vàng gấp `red_gold_mult` lần
+        cc? = event_map?(pl)
+
+        # tên đỏ gục: mất vàng gấp `red_gold_mult` lần (không áp trong Hỗn Chiến Thành)
         extra =
-          if f.red[foe(f, winner)],
+          if f.red[foe(f, winner)] and not cc?,
             do: min(pl2.gold, floor(pl.gold * @death_loss * (@r.red_gold_mult - 1))),
             else: 0
 
@@ -368,7 +420,7 @@ defmodule HacLong.Slay do
             do: log(%{pl2 | gold: pl2.gold - extra}, "🔴 Tên đỏ: mất thêm #{extra} vàng.", "bad"),
             else: pl2
 
-        %{pl2 | pos: Maps.home_spawn()}
+        %{pl2 | pos: if(cc?, do: World.village_spawn(), else: Maps.home_spawn())}
       else
         pl
       end

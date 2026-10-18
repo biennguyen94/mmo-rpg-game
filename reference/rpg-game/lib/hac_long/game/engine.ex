@@ -8,7 +8,7 @@ defmodule HacLong.Game.Engine do
   để test cố định được kết quả.
   """
 
-  alias HacLong.Game.{Bestiary, Crafting, Data, Events, Gear, Home, Pets, Rng}
+  alias HacLong.Game.{Bestiary, Blessing, Crafting, Elements, Data, Events, Gear, Home, Pets, Rng}
 
   @save_version 1
   # số luật chơi: `RULES` trong `priv/game_data/rules.json`
@@ -17,6 +17,8 @@ defmodule HacLong.Game.Engine do
   @boss_weights Enum.map(@rules.boss_rewards.first_kill_weights, &List.to_tuple/1)
   @char @rules.character
   @combat @rules.combat
+  # ép cánh theo bậc (RULES.wing_upgrade)
+  @wing_up @rules.wing_upgrade
   @effects @rules.skill_effects
   @mon @rules.monster
   @loot @rules.loot
@@ -123,6 +125,9 @@ defmodule HacLong.Game.Engine do
           daily_done: 0,
           boss_top: 0,
           food: nil,
+          blessing: nil,
+          skill_set: nil,
+          auto_cfg: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
           furniture: %{},
@@ -140,6 +145,8 @@ defmodule HacLong.Game.Engine do
           hp: 0
         }
 
+        # đồ khởi đầu đang mặc cũng là món riêng như mọi trang bị
+        p = instance_gear(p)
         d = derived(p)
         {:ok, %{p | hp: d.maxHp, mp: d.maxMp}}
     end
@@ -180,15 +187,20 @@ defmodule HacLong.Game.Engine do
   `base` (= 1). Chí mạng và né theo Nhanh nhẹn, như nhau cho mọi lớp.
   """
   def derived(p) do
-    # chỉ số cộng thêm của đồ ngẫu nhiên đang mặc
-    s = Map.merge(p.stats, Gear.bonus_stats(p), fn _, a, b -> a + b end)
+    s = p.stats
     f = Data.class(p.cls).derived
     w = Gear.item(p, p.equip.weapon)
     wg = Gear.item(p, p.equip[:wing])
     pd = Gear.item(p, p.equip[:pendant])
     # Phase 15c: máu cộng từ đồ (nhẫn), thưởng đủ bộ, dòng Excellent
     gear_hp =
-      p.equip |> Map.values() |> Enum.map(&((Gear.item(p, &1) || %{})[:hp] || 0)) |> Enum.sum()
+      p.equip
+      |> Map.values()
+      |> Enum.map(fn
+        nil -> 0
+        id -> ((Gear.item(p, id) || %{})[:hp] || 0) + upgrade_hp(p, id)
+      end)
+      |> Enum.sum()
 
     sb = set_bonus(p)
     anc = ancient_bonus(p)
@@ -207,15 +219,17 @@ defmodule HacLong.Game.Engine do
     end
 
     # thú cưng đang dắt theo và món đang ăn cộng phần trăm
-    pet = fn key -> 1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) end
+    pet = fn key ->
+      1 + Pets.bonus(p, key) + Crafting.food_bonus(p, key) + Blessing.bonus(p, key)
+    end
 
     %{
       maxHp:
         round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
-      maxMp: round(lin.(f.mp) + wo.mp),
+      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)),
       atk:
         round(
-          (lin.(f.atk) + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
+          (lin.(f.atk) + exc.atk_lvl * p.level + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
              if(pd, do: pd[:atk] || 0, else: 0) + up.(p.equip[:pendant])) * pet.(:atk) *
             (1 + exc.atk_pct + sb.atk_pct + anc.atk_pct)
         ),
@@ -234,13 +248,21 @@ defmodule HacLong.Game.Engine do
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
-      ar: p.level * @combat.hit.level + s.agi * @combat.hit.agi,
-      dodge: clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max),
+      ar: (p.level * @combat.hit.level + s.agi * @combat.hit.agi) * (1 + exc.ar_pct),
+      # B-28: trần `max` theo Nhanh nhẹn, rồi nhân Excellent def_rate, chặn `max_total`
+      dodge:
+        min(
+          clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
+            (1 + exc.def_rate),
+          @combat.dodge.max_total
+        ),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
       wingDmg: wing_pct(p, wg, :dmg),
       wingAbsorb: wing_pct(p, wg, :absorb),
       # Excellent: giảm sát thương nhận (cộng dồn các món, tối đa `excellent.max_dmg_red`)
       excAbsorb: exc.dmg_red,
+      # Excellent (B-16): phản lại phần sát thương quái gây ra
+      excReflect: exc.reflect,
       # Kỹ năng (Phase 15d): sát thương chiêu cộng thêm
       skillDmg: ls.skill_dmg,
       # dòng cánh (Phase 15e): bỏ qua phần phòng thủ của đối thủ
@@ -344,9 +366,23 @@ defmodule HacLong.Game.Engine do
 
   defp wing_pct(_p, nil, _key), do: 0
 
-  defp wing_pct(p, wg, key),
-    do:
-      Float.round(wg[key] + @combat.wing_per_level * effective_level(upgrade_level(p, wg.uid)), 3)
+  defp wing_pct(p, wg, key) do
+    v = wg[key] + wing_up(key, wg[:tier] || 1, upgrade_level(p, wg.uid))
+    v = if key == :absorb, do: min(v, @wing_up.absorb.max), else: v
+    Float.round(v, 3)
+  end
+
+  @doc """
+  % sát thương (`:dmg`) / hấp thụ (`:absorb`) cộng thêm khi ép cánh bậc `tier` lên +`lv` (`RULES.wing_upgrade`):
+  mỗi cấp tới +9 một ít, +10 và +11 nhảy lớn. Hấp thụ tổng (gốc + ép) có trần ở `wing_pct/3`.
+  """
+  def wing_up(key, tier, lv) do
+    t = @wing_up[key]
+    i = min(max(tier, 1), length(t.per_level)) - 1
+
+    Enum.at(t.per_level, i) * min(lv, 9) + if(lv >= 10, do: Enum.at(t.jump10, i), else: 0) +
+      if(lv >= 11, do: Enum.at(t.jump11, i), else: 0)
+  end
 
   @doc """
   Các chỉ số tính ra từ trạng thái, gửi kèm cho client để hiển thị
@@ -355,14 +391,15 @@ defmodule HacLong.Game.Engine do
   def view(p) do
     %{
       derived: derived(p),
-      xpToNext: xp_to_next(p.level),
+      xpToNext: xp_need(p),
+      # chúa tể cần hạ trước lần chuyển sinh kế (nil nếu không cần / đã hạ)
+      rebirthNeed: with(%{} = n <- rebirth_need(p), do: Map.put(n, :map, lord_map_name(n.id))),
       restCost: rest_cost(p),
-      # Phase 13: phần cộng thêm cho tab Nhân vật: chỉ số từ đồ hiếm, % từ thú cưng + món ăn
+      # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
-        gear: Gear.bonus_stats(p),
-        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp),
-        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk),
-        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def)
+        hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp) + Blessing.bonus(p, :hp),
+        atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk) + Blessing.bonus(p, :atk),
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def)
       },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
@@ -371,14 +408,34 @@ defmodule HacLong.Game.Engine do
       ds: HacLong.Game.DevilSquare.view(p),
       # Lâu Đài Máu (Phase 18 M2)
       bc: HacLong.Game.BloodCastle.view(p),
+      # Hỗn Chiến Thành (B-19)
+      cc: HacLong.ChaosCastle.view(p),
+      # Kalima (B-21)
+      kal: HacLong.Game.Kalima.view(p),
+      # Công Thành Chiến (B-22)
+      cs: HacLong.CastleSiege.view(p),
       ancient: ancient_bonus(p),
       exc: Gear.exc_stats(p),
       look: look(p),
+      # Phase 3: kỹ năng mang vào trận (id, theo thứ tự) và mọi kỹ năng đã mở
+      skillSet: Enum.map(skills(p), & &1.id),
+      skillsOpen: Enum.map(available_skills(p), & &1.id),
+      # cài đặt tự đánh đã lưu (lần bật gần nhất), để bảng cài đặt mở lại đúng như cũ
+      autoCfg: Map.get(p, :auto_cfg),
+      # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
+      blessing: Blessing.view(p),
       comfort: Home.comfort(p),
+      # thú cưng đã có (cấp, cắn, kỹ năng, giá cho ăn) và loài thuần được / đang hạ dở
+      pets: Pets.view(p),
+      tameable: Pets.tameable(p),
+      taming: Pets.taming(p),
       # cộng thêm của đồ đã nâng cấp (để client so sánh đồ) và giá nâng cấp đồ đang mặc
       bonus:
         (Map.keys(upgrades(p)) ++ for(g <- Gear.list(p), g[:opt], do: g.uid))
         |> Map.new(&{&1, upgrade_bonus(p, &1) + life_bonus(p, &1)}),
+      # B-28: máu cộng thêm khi ép nhẫn máu
+      bonusHp:
+        for(id <- Map.keys(upgrades(p)), (v = upgrade_hp(p, id)) > 0, into: %{}, do: {id, v}),
       # giá ép từng món trong túi (đồ hiếm chưa cất, đồ thường mặc được), cho nút "Ép" trong tooltip
       forgeBag:
         for id <- Enum.map(Gear.bag(p), & &1.uid) ++ Map.keys(p.inv),
@@ -388,12 +445,12 @@ defmodule HacLong.Game.Engine do
         end,
       storage: HacLong.Game.Storage.view(p),
       forge:
-        for {slot, id} <- p.equip, id != nil, into: %{} do
+        for {slot, id} <- p.equip, id != nil, it = Gear.item(p, id), into: %{} do
           {slot,
            %{
              id: id,
              level: upgrade_level(p, id),
-             cost: upgrade_cost(Gear.item(p, id), upgrade_level(p, id))
+             cost: upgrade_cost(it, upgrade_level(p, id))
            }}
         end,
       # đồ ngẫu nhiên (cả món đang mặc) đã tính tên, chỉ số, giá bán
@@ -401,7 +458,15 @@ defmodule HacLong.Game.Engine do
     }
   end
 
-  def xp_to_next(lv), do: round(@rules.xp.coef * :math.pow(lv, @rules.xp.exp) + @rules.xp.base)
+  def xp_to_next(lv, rebirths \\ 0),
+    do:
+      round(
+        (@rules.xp.coef * :math.pow(lv, @rules.xp.exp) + @rules.xp.base) *
+          (1 + @char.rebirth_xp_pct * rebirths)
+      )
+
+  @doc "Kinh nghiệm cần để nhân vật `p` lên cấp kế (tính cả số lần đã chuyển sinh)."
+  def xp_need(p), do: xp_to_next(p.level, Map.get(p, :rebirths) || 0)
 
   @doc """
   Vùng `zi` vào được / đánh được chưa: **đủ cấp** (cấp nhân vật ≥ `zone_level/1`, cấp quái thấp nhất
@@ -428,6 +493,9 @@ defmodule HacLong.Game.Engine do
   # ---------- Quái ----------
   def make_monster(spec, boss?) do
     l = spec.level
+
+    # Phase 6 (B-30): quái vùng chuyển sinh tính chỉ số ở `stat_level` (cấp hiện `level` chỉ cho vàng / EXP)
+    sl = Map.get(spec, :stat_level) || l
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
@@ -444,17 +512,65 @@ defmodule HacLong.Game.Engine do
       on_hit: Map.get(spec, :on_hit),
       night: Map.get(spec, :night, false),
       golden: Map.get(spec, :golden, false),
+      raid: Map.get(spec, :raid),
       jewel_chance: Map.get(spec, :jewel_chance),
-      maxHp: round((@mon.hp.base + l * @mon.hp.level + l * l * @mon.hp.level_sq) * m * bm),
-      atk: round((@mon.atk.base + l * @mon.atk.level) * m * 1),
-      def: round((@mon.def.base + l * @mon.def.level) * m),
+      maxHp: round((@mon.hp.base + sl * @mon.hp.level + sl * sl * @mon.hp.level_sq) * m * bm),
+      # vùng chuyển sinh: công nhân hệ số riêng `atk_mult` (nhẹ hơn máu), không có thì như máu
+      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m)),
+      def: round((@mon.def.base + sl * @mon.def.level) * m),
+      # Phase 6: vùng chuyển sinh rơi đồ quý hơn (`Gear.rich/2`)
+      rich: Map.get(spec, :rich, 0),
       crit: @mon.crit,
-      dodge: @mon.dodge.base + l * @mon.dodge.level,
-      xp: round(base_xp(l) * m * rw * if(boss?, do: @mon.boss.xp, else: 1)),
+      # Phase 3 (B-29): nguyên tố riêng của quái, không có thì theo cấp
+      element: Map.get(spec, :element) || Elements.for_level(l),
+      # B-28: quái không có né (đòn thường trúng theo AR / DR, `hit_chance/2`); né chỉ có ở bản sao người chơi
+      dodge: 0,
+      # vùng chuyển sinh: kinh nghiệm ở `stat_level` × `xp_mult` (cấp hiện 52–150 cho quá nhiều), không có thì theo cấp hiện × mult
+      xp:
+        round(
+          if(Map.has_key?(spec, :xp_mult), do: base_xp(sl) * spec.xp_mult, else: base_xp(l) * m) *
+            rw * if(boss?, do: @mon.boss.xp, else: 1)
+        ),
       gold:
         round(base_gold(l) * m * rw * rand(gs_lo, gs_hi) * if(boss?, do: @mon.boss.gold, else: 1))
     }
   end
+
+  @ev_scale @rules.event_scale
+
+  @doc """
+  Quái sự kiện (Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến, quái vàng) mạnh theo số lần
+  chuyển sinh `k` của người đánh (`RULES.event_scale`): máu / thủ × (1 + hp_per_rebirth × k), công
+  × (1 + atk_per_rebirth × k), kinh nghiệm / vàng × (1 + reward_per_rebirth × k). Gọi ngay sau khi vào trận.
+  """
+  def scale_event(%{battle: %{monster: m}} = p) do
+    k = min(Map.get(p, :rebirths) || 0, @char.max_rebirths)
+
+    if k <= 0 do
+      p
+    else
+      fh = 1 + @ev_scale.hp_per_rebirth * k
+      fa = 1 + @ev_scale.atk_per_rebirth * k
+      fr = 1 + @ev_scale.reward_per_rebirth * k
+
+      up = fn m, key, f ->
+        if is_number(m[key]), do: Map.put(m, key, round(m[key] * f)), else: m
+      end
+
+      m =
+        m
+        |> up.(:maxHp, fh)
+        |> up.(:hp, fh)
+        |> up.(:def, fh)
+        |> up.(:atk, fa)
+        |> up.(:xp, fr)
+        |> up.(:gold, fr)
+
+      put_in(p.battle.monster, m)
+    end
+  end
+
+  def scale_event(p), do: p
 
   @doc "Kinh nghiệm gốc của quái cấp `l` (chưa nhân hệ số), dùng chung cho tháp, việc hằng ngày."
   def base_xp(l), do: @mon.xp.base + l * @mon.xp.level + l * l * @mon.xp.level_sq
@@ -637,14 +753,68 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   MP kỹ năng tốn ở cấp hiện tại (Phase 12): `mp` gốc của kỹ năng (kỹ năng mạnh gốc cao hơn) ×
-  (1 + `skill_mp_per_level` × (cấp − 1)), để MP vẫn là giới hạn khi MP tối đa tăng theo cấp.
+  (1 + `skill_mp_per_level` × (cấp − 1)), để MP vẫn là giới hạn khi MP tối đa tăng theo cấp. Kỹ năng tháp (có `floor`)
+  nhân thêm `RULES.tower_skills.mp_mult` theo lớp (Kiếm Sĩ, Tiên Nữ ít MP).
   """
-  def skill_mp(p, skill), do: round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)))
+  def skill_mp(p, skill) do
+    cls = if skill[:floor], do: tower_mp_mult(p.cls), else: 1
+    round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)) * cls)
+  end
+
+  defp tower_mp_mult(cls) do
+    m = Map.get(@rules.tower_skills, :mp_mult) || %{}
+    Map.get(m, String.to_atom(cls)) || Map.get(m, cls) || 1
+  end
 
   # ---------- Kỹ năng ----------
 
   @doc "Các kỹ năng đã mở ở cấp hiện tại (mỗi lớp mở thêm kỹ năng ở cấp 10 và 25)."
-  def skills(p), do: Enum.filter(Data.class(p.cls).skills, &(&1.level <= p.level))
+  def skills(p) do
+    avail = available_skills(p)
+
+    case Map.get(p, :skill_set) do
+      [_ | _] = ids ->
+        picked = Enum.flat_map(ids, fn id -> Enum.filter(avail, &(&1.id == id)) end)
+        if picked == [], do: default_set(avail), else: picked
+
+      _ ->
+        default_set(avail)
+    end
+  end
+
+  @tower_skills @rules.tower_skills
+  @loadout @tower_skills.loadout
+
+  @doc """
+  Mọi kỹ năng nhân vật đã có (Phase 3, B-29): kỹ năng lớp mở theo cấp, rồi kỹ năng tháp mở theo kỷ lục tháp
+  (`tower_best` ≥ `floor`). `skills/1` là các kỹ năng mang vào trận (tối đa `RULES.tower_skills.loadout`).
+  """
+  def available_skills(p) do
+    c = Data.class(p.cls)
+    best = Map.get(p, :tower_best) || 0
+
+    Enum.filter(c.skills, &(&1.level <= p.level)) ++
+      Enum.filter(c[:tower_skills] || [], &(&1.floor <= best))
+  end
+
+  # chưa chọn: `loadout` kỹ năng mạnh nhất (cuối danh sách: lớp theo cấp, rồi tháp theo tầng), giữ thứ tự
+  defp default_set(avail), do: Enum.take(avail, -@loadout)
+
+  @doc "Chọn kỹ năng mang vào trận (`ids`: tối đa `loadout`, không trùng, đã mở). Đổi được cả trong trận (hồi chiêu giữ nguyên)."
+  def set_skills(p, ids) do
+    avail = Enum.map(available_skills(p), & &1.id)
+
+    cond do
+      not is_list(ids) or ids == [] or length(ids) > @loadout ->
+        {err("Chọn từ 1 tới #{@loadout} kỹ năng."), p}
+
+      Enum.uniq(ids) != ids or Enum.any?(ids, &(&1 not in avail)) ->
+        {err("Kỹ năng không hợp lệ hoặc chưa mở."), p}
+
+      true ->
+        {ok("Đã đổi bộ kỹ năng."), Map.put(p, :skill_set, ids)}
+    end
+  end
 
   @doc "Số lượt còn phải chờ để dùng lại kỹ năng `id` trong trận hiện tại."
   def cooldown(%{battle: %{} = b}, id) do
@@ -675,7 +845,11 @@ defmodule HacLong.Game.Engine do
     "weaken" => "suy yếu",
     "rage" => "cuồng nộ",
     "guard" => "thủ thế",
-    "evade" => "ảnh bộ"
+    "evade" => "ảnh bộ",
+    # Phase 3: kỹ năng tháp
+    "sunder" => "phá giáp",
+    "shield" => "khiên",
+    "undying" => "bất tử"
   }
 
   def effect_names, do: @effect_names
@@ -689,6 +863,10 @@ defmodule HacLong.Game.Engine do
       e -> e.power
     end
   end
+
+  @doc "Tỉ lệ né đòn thường của quái trong trận: né (đã có trần) + buff né, tối đa `RULES.combat.dodge.max_with_buff`."
+  def dodge_chance(p, d \\ nil),
+    do: min(@combat.dodge.max_with_buff, (d || derived(p)).dodge + power(p, :player, "evade"))
 
   defp set_effects(p, who, list) do
     all = Map.get(p.battle, :effects) || %{player: [], monster: []}
@@ -748,9 +926,9 @@ defmodule HacLong.Game.Engine do
 
   defp mp(p), do: Map.get(p, :mp) || 0
 
-  @doc "MP hồi mỗi lượt trong trận: `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng (cả đồ cộng)."
+  @doc "MP hồi mỗi lượt trong trận: `mp_regen` × MP tối đa + `mp_regen_ene` × Năng lượng."
   def mp_regen(p) do
-    ene = Map.get(p.stats, :ene, 0) + Map.get(Gear.bonus_stats(p), :ene, 0)
+    ene = Map.get(p.stats, :ene, 0)
     max(1, round(derived(p).maxMp * @mp_regen + ene * @mp_regen_ene))
   end
 
@@ -802,7 +980,7 @@ defmodule HacLong.Game.Engine do
             else:
               p
               |> set_effects(:player, Enum.reject(effects(p, :player), &(&1.id in @dots)))
-              |> log("Hết #{Enum.map_join(poisoned, ", ", &@effect_names[&1.id])}.", "good")
+              |> log("Hết #{effect_list(poisoned)}.", "good")
 
         monster_turn(p, d)
     end
@@ -834,7 +1012,9 @@ defmodule HacLong.Game.Engine do
         {p, atk, dfn, crit, mult, name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(d.crit))
 
-        dfn = round(dfn * (1 - d.ignoreDef))
+        dfn = round(dfn * (1 - d.ignoreDef) * (1 - power(p, :monster, "sunder")))
+        # Phase 3: nguyên tố kỹ năng so với nguyên tố quái
+        {emult, eres} = Elements.mult(skill && skill[:element], m[:element])
 
         # kỹ năng luôn trúng; đòn thường: đấu trường theo né của đối thủ, quái theo tỉ lệ trúng
         p =
@@ -844,11 +1024,34 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
-            mult = if skill, do: mult * (1 + d.skillDmg), else: mult
-            dmg = damage(atk, dfn, mult * if(crit, do: d.critMult, else: 1))
+            mult = if skill, do: mult * (1 + d.skillDmg) * emult, else: mult
+            hits = (skill && skill[:hits]) || 1
+
+            # đối thủ là người (đấu trường, đồ sát): giảm sát thương nhận của cánh và Excellent bên đó;
+            # kỹ năng nhiều đòn: chia đều hệ số, mỗi đòn trừ giáp riêng
+            dmg =
+              Enum.sum(
+                for _ <- 1..hits,
+                    do:
+                      damage(
+                        atk,
+                        dfn,
+                        mult / hits * if(crit, do: d.critMult, else: 1),
+                        m[:taken] || 1
+                      )
+              )
+
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
-            suffix = if crit, do: " (CHÍ MẠNG!)", else: ""
+
+            suffix =
+              if(hits > 1, do: " (#{hits} đòn)", else: "") <>
+                if(crit, do: " (CHÍ MẠNG!)", else: "") <>
+                case eres do
+                  :strong -> " (khắc hệ #{Elements.name(m[:element])}!)"
+                  :weak -> " (bị hệ #{Elements.name(m[:element])} khắc)"
+                  nil -> ""
+                end
 
             p
             |> log(
@@ -879,14 +1082,17 @@ defmodule HacLong.Game.Engine do
         else: 0
 
     if bite > 0 do
-      sk = Pets.active_skill(p)
-      bite = if sk && sk.id == "rend", do: bite * @pet_sk.rend_mult, else: bite
-      what = if sk && sk.id == "rend", do: "#{sk.name}: ", else: ""
+      sks = Pets.active_skills(p)
+      rend = Enum.find(sks, &(&1.id == "rend"))
+      bite = if rend, do: round(bite * @pet_sk.rend_mult), else: bite
+      what = if rend, do: "#{rend.name}: ", else: ""
 
-      p
-      |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
-      |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
-      |> pet_skill(sk, d, bite)
+      p =
+        p
+        |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
+        |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
+
+      Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
     else
       p
     end
@@ -908,7 +1114,8 @@ defmodule HacLong.Game.Engine do
   end
 
   defp pet_skill(p, %{id: "pickpocket"} = sk, _d, _bite) do
-    gold = max(1, p.battle.monster.level * @pet_sk.pickpocket_per_level)
+    # phần vàng con quái rơi (trước tính theo cấp hiện: quái vùng chuyển sinh cấp 150 cho gấp đôi vàng)
+    gold = max(1, round((p.battle.monster[:gold] || 0) * @pet_sk.pickpocket_gold_pct))
     %{p | gold: p.gold + gold} |> log("🐾 #{sk.name}: móc được #{gold} vàng.", "good")
   end
 
@@ -932,6 +1139,36 @@ defmodule HacLong.Game.Engine do
   # Trả về {nhân_vật, tấn_công, phòng_thủ_quái, chí_mạng?, hệ_số, tên, hàm_sau_khi_trúng}.
   defp strike_with(p, nil, _d, atk, dfn, crit),
     do: {p, atk, dfn, crit, 1, "tấn công", fn p, _ -> p end}
+
+  # Phase 3 (B-29): kỹ năng tháp, mọi tác dụng ghi trong dữ liệu (`RULES.tower_skills._doc`)
+  defp strike_with(p, %{floor: _} = skill, d, atk, dfn, crit) do
+    p = set_cd(p, skill.id, skill.cooldown + 1)
+    p = %{p | mp: mp(p) - skill_mp(p, skill)}
+    m = p.battle.monster
+    dfn = if skill[:def_mult], do: round(dfn * skill.def_mult), else: dfn
+    crit = skill[:crit] == true or crit
+
+    p =
+      case skill[:heal] do
+        h when is_number(h) ->
+          before = p.hp
+          p = %{p | hp: min(d.maxHp, p.hp + round(d.maxHp * h))}
+          log(p, "#{skill.name} hồi #{p.hp - before} máu.", "good")
+
+        _ ->
+          p
+      end
+
+    on_hit = fn p, dmg ->
+      p
+      |> skill_drain(skill, d, dmg)
+      |> skill_stun(skill, m)
+      |> skill_buff(skill[:buff], d)
+      |> skill_debuff(skill[:debuff], m, dmg)
+    end
+
+    {p, atk, dfn, crit, skill.mult, skill.name, on_hit}
+  end
 
   defp strike_with(p, skill, d, atk, dfn, crit) do
     # +1 vì cuối lượt sẽ trừ 1
@@ -1011,6 +1248,109 @@ defmodule HacLong.Game.Engine do
     end
   end
 
+  defp skill_drain(p, %{drain: f}, d, dmg) when is_number(f) and dmg > 0 do
+    before = p.hp
+    p = %{p | hp: min(d.maxHp, p.hp + round(dmg * f))}
+    if p.hp > before, do: log(p, "🩸 Hút #{p.hp - before} máu.", "good"), else: p
+  end
+
+  defp skill_drain(p, _skill, _d, _dmg), do: p
+
+  defp skill_stun(p, %{stun: c}, m) when is_number(c) do
+    cond do
+      p.battle.monster.hp <= 0 or not chance(c) ->
+        p
+
+      (m.boss || m[:world]) && chance(@tower_skills.stun_boss_resist) ->
+        log(p, "#{m.name} không bị choáng.", "info")
+
+      true ->
+        p
+        |> put_effect(:monster, "stun", 1, 0)
+        |> log("💫 #{m.name} bị khống chế, mất lượt!", "good")
+    end
+  end
+
+  defp skill_stun(p, _skill, _m), do: p
+
+  defp skill_buff(p, %{id: "shield", turns: t, power: f}, d) do
+    pool = max(1, round(d.maxHp * f))
+
+    p
+    |> put_effect(:player, "shield", t, pool)
+    |> log("🛡 Khiên hấp thụ #{pool} sát thương.", "good")
+  end
+
+  defp skill_buff(p, %{id: "undying", turns: t, power: f}, _d) do
+    p
+    |> put_effect(:player, "undying", t, f)
+    |> log("✨ Bất tử: gục ngã trong #{t} lượt sẽ đứng dậy với #{round(f * 100)}% máu.", "good")
+  end
+
+  defp skill_buff(p, %{id: id, turns: t, power: f}, _d) do
+    p
+    |> put_effect(:player, id, t, f)
+    |> log("Bạn được #{@effect_names[id]} (#{round(f * 100)}%) trong #{t} lượt.", "good")
+  end
+
+  defp skill_buff(p, _b, _d), do: p
+
+  defp skill_debuff(p, %{id: id, turns: t, power: f}, m, dmg) when id in @dots do
+    if p.battle.monster.hp > 0 and dmg > 0 do
+      p
+      |> put_effect(:monster, id, t, max(1, round(dmg * f)))
+      |> log("#{m.name} #{@effect_names[id]}.", "good")
+    else
+      p
+    end
+  end
+
+  defp skill_debuff(p, %{id: id, turns: t, power: f}, m, _dmg) do
+    if p.battle.monster.hp > 0 do
+      p
+      |> put_effect(:monster, id, t, f)
+      |> log("#{m.name} bị #{@effect_names[id]} #{round(f * 100)}% trong #{t} lượt.", "good")
+    else
+      p
+    end
+  end
+
+  defp skill_debuff(p, _x, _m, _dmg), do: p
+
+  # khiên (kỹ năng tháp) hấp thụ sát thương trước khi mất máu: `{sát_thương_còn_lại, nhân_vật}`
+  defp absorb_shield(p, dmg) do
+    case effect(p, :player, "shield") do
+      %{power: pool} when pool > 0 and dmg > 0 ->
+        used = min(pool, dmg)
+
+        list =
+          effects(p, :player)
+          |> Enum.map(&if(&1.id == "shield", do: %{&1 | power: pool - used}, else: &1))
+          |> Enum.reject(&(&1.id == "shield" and &1.power <= 0))
+
+        {dmg - used,
+         p |> set_effects(:player, list) |> log("🛡 Khiên đỡ #{used} sát thương.", "good")}
+
+      _ ->
+        {dmg, p}
+    end
+  end
+
+  # bất tử (kỹ năng tháp): gục thì đứng dậy với `power` × máu tối đa, một lần
+  defp survive(%{hp: hp} = p, d) when hp <= 0 do
+    case effect(p, :player, "undying") do
+      %{power: f} ->
+        %{p | hp: max(1, round(d.maxHp * f))}
+        |> drop_effect(:player, "undying")
+        |> log("✨ Bất tử! Bạn đứng dậy với #{max(1, round(d.maxHp * f))} máu.", "good")
+
+      nil ->
+        p
+    end
+  end
+
+  defp survive(p, _d), do: p
+
   # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
   defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
 
@@ -1029,7 +1369,7 @@ defmodule HacLong.Game.Engine do
       m_atk = round(m_atk * (1 - power(p, :monster, "weaken")))
 
       p =
-        if not special and chance(d.dodge + power(p, :player, "evade")) do
+        if not special and chance(dodge_chance(p, d)) do
           log(p, "Bạn né được đòn của #{m.name}.", "info")
         else
           mc = not special and chance(m.crit)
@@ -1037,19 +1377,25 @@ defmodule HacLong.Game.Engine do
           dmg =
             damage(
               m_atk,
-              d.def,
-              if(mc, do: @combat.monster_crit_mult, else: 1),
+              # đối thủ là người có dòng cánh "bỏ qua phòng thủ"
+              round(d.def * (1 - (m[:ignore_def] || 0))),
+              if(mc, do: m[:crit_mult] || @combat.monster_crit_mult, else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb)
             )
 
-          p = %{p | hp: max(0, p.hp - dmg)}
+          {dmg, p} = absorb_shield(p, dmg)
+          p = %{p | hp: max(0, p.hp - dmg)} |> survive(d)
 
           text =
             if special,
               do: "🔥 #{m.name} dùng #{m.special.name}! Bạn mất #{dmg} máu.",
-              else: "#{m.name} đánh bạn #{dmg} máu#{if mc, do: " (chí mạng)", else: ""}."
+              else:
+                if(mc,
+                  do: "#{m.name} đánh bạn #{dmg} máu (chí mạng).",
+                  else: "#{m.name} đánh bạn #{dmg} máu."
+                )
 
-          p = log(p, text, "bad")
+          p = log(p, text, "bad") |> reflect(dmg, d.excReflect)
 
           cond do
             special and m.special[:effect] ->
@@ -1065,6 +1411,20 @@ defmodule HacLong.Game.Engine do
 
       if p.hp <= 0, do: lose(p), else: round_end(p)
     end
+  end
+
+  # Excellent "phản sát thương" (B-16): quái mất `pct` phần sát thương vừa gây, không chết vì phản đòn (còn ít nhất 1).
+  defp reflect(p, _dmg, pct) when pct <= 0, do: p
+
+  defp reflect(p, dmg, pct) do
+    m = p.battle.monster
+    back = min(round(dmg * pct), m.hp - 1)
+
+    if back > 0,
+      do:
+        put_in(p.battle.monster.hp, m.hp - back)
+        |> log("↩ Phản lại #{back} sát thương cho #{m.name}.", "good"),
+      else: p
   end
 
   # Quái gây hiệu ứng lên người chơi.
@@ -1119,13 +1479,14 @@ defmodule HacLong.Game.Engine do
 
           log(
             p,
-            "Bạn mất #{pdot} máu vì #{Enum.map_join(pdots, ", ", &@effect_names[&1.id])}.",
+            "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.",
             "bad"
           )
         else
           p
         end
 
+      p = if p.hp <= 0, do: survive(p, derived(p)), else: p
       if p.hp <= 0, do: lose(p), else: tick_round(p)
     end
   end
@@ -1189,7 +1550,11 @@ defmodule HacLong.Game.Engine do
     exc = Gear.exc_stats(p)
 
     gold =
-      round(m.gold * (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold) + exc.gold_pct))
+      round(
+        m.gold *
+          (1 + Pets.bonus(p, :gold) + Crafting.food_bonus(p, :gold) + Blessing.bonus(p, :gold) +
+             exc.gold_pct)
+      )
 
     # quái thường thấp hơn mình quá nhiều cấp thì bớt EXP (không áp trùm, tháp, trùm thế giới, đấu trường)
     normal? = not m.boss and !m[:world] and !m[:pvp] and !m[:tower]
@@ -1199,6 +1564,7 @@ defmodule HacLong.Game.Engine do
       round(
         m.xp * xf *
           (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
+             Blessing.bonus(p, :xp) +
              Events.xp_bonus(event))
       )
 
@@ -1213,7 +1579,11 @@ defmodule HacLong.Game.Engine do
         else:
           log(
             p,
-            "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm#{if xf < 1, do: " (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp)"}, +#{gold} vàng.",
+            if(xf < 1,
+              do:
+                "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm (−#{round((1 - xf) * 100)}% vì cao hơn quái #{p.level - m.level} cấp), +#{gold} vàng.",
+              else: "🏆 Bạn đã hạ #{m.name}! +#{xp} kinh nghiệm, +#{gold} vàng."
+            ),
             "win"
           )
 
@@ -1230,6 +1600,9 @@ defmodule HacLong.Game.Engine do
     {p, reward} = jewel_drop(p, m, reward)
     {p, reward} = ds_ticket_drop(p, m, reward)
     {p, reward} = bc_ticket_drop(p, m, reward)
+    {p, reward} = cc_ticket_drop(p, m, reward)
+    {p, reward} = raid_drop(p, m, reward)
+    {p, reward} = kundun_mark_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -1313,12 +1686,12 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Vé Quảng Trường Quỷ (Phase 18 M1): quái thường cấp cao thỉnh thoảng rơi
+  # Mảnh vé Quảng Trường Quỷ (Phase 18 M1; B-18: rơi mảnh, ghép vé ở Máy Hỗn Nguyên): quái thường cấp cao thỉnh thoảng rơi
   defp ds_ticket_drop(p, m, reward) do
     c = HacLong.Game.DevilSquare.ticket_chance(m)
 
     if c > 0 and chance(c) do
-      id = HacLong.Game.DevilSquare.ticket()
+      id = HacLong.Game.DevilSquare.ticket_part()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
@@ -1326,18 +1699,58 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Vé Lâu Đài (Phase 18 M2)
+  # Mảnh vé Lâu Đài (Phase 18 M2; B-18)
   defp bc_ticket_drop(p, m, reward) do
     c = HacLong.Game.BloodCastle.ticket_chance(m)
 
     if c > 0 and chance(c) do
-      id = HacLong.Game.BloodCastle.ticket()
+      id = HacLong.Game.BloodCastle.ticket_part()
       p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
       {p, %{reward | items: reward.items ++ [id]}}
     else
       {p, reward}
     end
   end
+
+  # Vé Hỗn Chiến Thành (B-19): quái thường cấp ≥ `ticket_drop.min_level` thỉnh thoảng rơi
+  defp cc_ticket_drop(p, m, reward) do
+    c = HacLong.ChaosCastle.ticket_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.ChaosCastle.ticket()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Dấu Ấn Kundun (B-21): quái thường cấp ≥ `kalima.mark_drop.min_level` thỉnh thoảng rơi
+  defp kundun_mark_drop(p, m, reward) do
+    c = HacLong.Game.Kalima.mark_chance(m)
+
+    if c > 0 and chance(c) do
+      id = HacLong.Game.Kalima.mark()
+      p = p |> add_item(id) |> log("🎟 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
+  # Xâm lăng (B-20): con đầu đàn rơi thêm đồ theo `RULES.raids.<loại>.drops`
+  defp raid_drop(p, %{raid: key, boss: true}, reward) when is_binary(key) do
+    Enum.reduce(HacLong.Raids.drops(key), {p, reward}, fn {id, c}, {p, reward} ->
+      if chance(c) do
+        {p |> add_item(id) |> log("💎 Nhặt được #{Data.item(id).name}!", "win"),
+         %{reward | items: reward.items ++ [id]}}
+      else
+        {p, reward}
+      end
+    end)
+  end
+
+  defp raid_drop(p, _m, reward), do: {p, reward}
 
   @doc "Một viên ngọc ngẫu nhiên theo trọng số `JEWELS.weights`."
   def pick_jewel do
@@ -1358,15 +1771,24 @@ defmodule HacLong.Game.Engine do
            |> Gear.excellent(Gear.exc_chance(m))
            |> Gear.luck_skill(m)
            |> Gear.ancient(m) do
-      it = Gear.resolve(g)
-      label = "#{it.name} (#{Gear.rarity_names()[g.rarity]})"
+      label = Gear.label(g)
+      keep = HacLong.Game.AutoHunt.filter_keep(p)
 
-      case Gear.add(p, g) do
+      # Menu → Cài đặt "Tự hủy đồ rơi": món không thuộc loại giữ lại thì bỏ luôn, không vào túi
+      case if(keep && not HacLong.Game.AutoHunt.good?(p, Gear.resolve(g), keep),
+             do: :trash,
+             else: Gear.add(p, g)
+           ) do
+        :trash ->
+          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"), reward}
+
         {p, :kept} ->
-          {log(p, "🎁 Nhặt được #{label}!", "win"), Map.put(reward, :gear, [label])}
+          # `gear_ids`: món vào túi, client cho bấm xem / hủy ngay trên bảng kết quả
+          {log(p, "🎁 Nhặt được #{label}!", "win"),
+           Map.merge(reward, %{gear: [label], gear_ids: [g.uid]})}
 
-        {p, {:sold, gold}} ->
-          {log(p, "🎁 Nhặt được #{label}, túi đầy nên bán luôn được #{gold} vàng.", "good"),
+        {p, :mailed} ->
+          {log(p, "🎁 Nhặt được #{label}, túi trang bị đầy nên gửi vào Hộp thư.", "good"),
            Map.put(reward, :gear, [label])}
       end
     else
@@ -1387,7 +1809,7 @@ defmodule HacLong.Game.Engine do
           {p, %{reward | items: reward.items ++ [drop]}}
       end
 
-    # lần đầu hạ trùm vùng: chắc chắn một món đồ Hiếm / Sử Thi đúng lớp (danh hiệu ở thành tựu)
+    # lần đầu hạ trùm vùng: chắc chắn một món đồ có dòng cộng thêm đúng lớp (danh hiệu ở thành tựu)
     {p, reward} =
       if is_integer(p.battle.zone),
         do: boss_gear(p, m, reward),
@@ -1417,15 +1839,17 @@ defmodule HacLong.Game.Engine do
         {p, reward}
 
       g ->
-        label = "#{Gear.resolve(g).name} (#{Gear.rarity_names()[g.rarity]})"
+        label = Gear.label(g)
 
         case Gear.add(p, g) do
           {p, :kept} ->
             {log(p, "🎁 #{m.name} để lại #{label}!", "win"),
-             Map.update(reward, :gear, [label], &(&1 ++ [label]))}
+             reward
+             |> Map.update(:gear, [label], &(&1 ++ [label]))
+             |> Map.update(:gear_ids, [g.uid], &(&1 ++ [g.uid]))}
 
-          {p, {:sold, gold}} ->
-            {log(p, "🎁 #{m.name} để lại #{label}, túi đầy nên bán được #{gold} vàng.", "good"),
+          {p, :mailed} ->
+            {log(p, "🎁 #{m.name} để lại #{label}, túi trang bị đầy nên gửi vào Hộp thư.", "good"),
              Map.update(reward, :gear, [label], &(&1 ++ [label]))}
         end
     end
@@ -1451,15 +1875,26 @@ defmodule HacLong.Game.Engine do
   defp boss_daily(p, _m, reward), do: {p, reward}
 
   defp lose(p) do
-    lost = floor(p.gold * @char.death_gold_loss)
+    # Hỗn Chiến Thành (B-19): gục là bị loại, không mất vàng
+    event? = (m = p[:pos] && HacLong.World.Maps.get(p.pos.map)) && m[:event] != nil
+    lost = if event?, do: 0, else: floor(p.gold * @char.death_gold_loss)
     p = %{p | gold: p.gold - lost, deaths: p.deaths + 1}
-    p = log(p, "💀 Bạn đã gục ngã... Mất #{lost} vàng. Dân làng đưa bạn về nhà trọ.", "bad")
+
+    p =
+      if event?,
+        do: log(p, "💀 Bạn đã gục ngã và bị loại khỏi sự kiện. Không mất vàng; về Làng.", "bad"),
+        else: log(p, "💀 Bạn đã gục ngã... Mất #{lost} vàng. Dân làng đưa bạn về nhà trọ.", "bad")
+
     p = %{p | hp: round(derived(p).maxHp * @char.death_hp)}
     finish(p, "lose")
   end
 
   defp finish(p, result) do
-    p = update_in(p.battle, &%{&1 | over: true, result: result}) |> Crafting.tick()
+    p =
+      update_in(p.battle, &%{&1 | over: true, result: result})
+      |> Crafting.tick()
+      |> Blessing.tick()
+
     {%{ok: true, result: result}, p}
   end
 
@@ -1470,10 +1905,10 @@ defmodule HacLong.Game.Engine do
   def gain_xp(p, xp), do: level_up(%{p | xp: p.xp + xp}, 0)
 
   defp level_up(p, levels) do
-    if p.level < @max_level and p.xp >= xp_to_next(p.level) do
+    if p.level < @max_level and p.xp >= xp_need(p) do
       %{
         p
-        | xp: p.xp - xp_to_next(p.level),
+        | xp: p.xp - xp_need(p),
           level: p.level + 1,
           points: p.points + points_per_level(p.cls)
       }
@@ -1520,12 +1955,19 @@ defmodule HacLong.Game.Engine do
   # ---------- Nâng cấp đồ (Thợ Rèn) ----------
   # Cấp nâng lưu theo từng món (`upgrades: %{uid => cấp}`): đồ thường được tách thành bản riêng
   # (`Gear.plain/1`) lúc nâng cấp lần đầu hoặc lúc khóa, nên hai thanh kiếm cùng loại có cấp riêng.
-  # +1 → +5 dùng quặng (luôn thành công); +6 → +11 dùng ngọc theo bảng `UPGRADE` (có rủi ro).
+  # Ép kiểu MU theo bảng `UPGRADE` (DECISIONS B-13): +1..+6 Ước Nguyện, +7..+9 Tâm Linh, +10/+11 Máy Hỗn Nguyên.
 
   def max_upgrade, do: Data.upgrade().max
 
-  @doc "Cấp tính chỉ số: từ `double_from` (+10) mỗi cấp tính gấp đôi (+11 tương đương 13 cấp)."
+  @doc "Cấp tính kiểu cũ: từ `double_from` (+10) mỗi cấp tính gấp đôi (chỉ còn dùng khi bước ép không có `eff`)."
   def effective_level(l), do: l + max(0, l - Data.upgrade().double_from + 1)
+
+  @doc """
+  Cấp tính chỉ số đồ đã ép +`l` (`eff` của bước trong `UPGRADE`): chỉ số cộng = eff × `bonus_pct` × chỉ số gốc.
+  +1..+6 tăng đều, +7 → +11 tăng mạnh dần (DECISIONS "Ép +7 → +11 chênh lệch lớn").
+  """
+  def upgrade_eff(0), do: 0
+  def upgrade_eff(l), do: (Data.upgrade_step(l) || %{})[:eff] || effective_level(l)
 
   defp upgrades(p), do: Map.get(p, :upgrades) || %{}
 
@@ -1534,54 +1976,73 @@ defmodule HacLong.Game.Engine do
   @doc "Tấn công/phòng thủ cộng thêm: mỗi cấp +8% chỉ số gốc của món đồ (ít nhất +1)."
   def upgrade_bonus(p, id) do
     case {upgrade_level(p, id), Gear.item(p, id)} do
-      {0, _} -> 0
-      {_, nil} -> 0
-      {l, it} -> effective_level(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct))
+      {0, _} ->
+        0
+
+      {_, nil} ->
+        0
+
+      # B-28: món chỉ có máu (nhẫn máu): ép cộng máu (`upgrade_hp/2`), không cộng thủ
+      {l, it} ->
+        if hp_only?(it),
+          do: 0,
+          else: round(upgrade_eff(l) * max(1, round((it[:atk] || it[:def] || 0) * @up.bonus_pct)))
+    end
+  end
+
+  defp hp_only?(it),
+    do: is_number(it[:hp]) and not is_number(it[:atk]) and not is_number(it[:def])
+
+  @doc "Máu cộng thêm khi ép món chỉ có máu (nhẫn máu, B-28): mỗi cấp hiệu dụng + bonus_pct máu gốc."
+  def upgrade_hp(p, id) do
+    case {upgrade_level(p, id), Gear.item(p, id)} do
+      {l, %{hp: hp} = it} when l > 0 and is_number(hp) ->
+        if hp_only?(it), do: round(upgrade_eff(l) * max(1, round(hp * @up.bonus_pct))), else: 0
+
+      _ ->
+        0
     end
   end
 
   @doc """
   Giá nâng món đồ (id đồ thường hoặc thông tin món đồ) từ cấp `level` lên cấp tiếp theo:
-  `%{gold, items, rate, fail}` hoặc `nil` nếu đã tối đa.
+  `%{gold, items, rate, fail, at}` hoặc `nil` nếu đã tối đa. Ép kiểu MU (bảng `UPGRADE`,
+  DECISIONS B-13):
 
-  - +1 → +5: quặng (đồ dưới cấp 17 dùng Quặng Sắt, từ cấp 17 dùng Mithril), +5 cần thêm Vảy Cổ
-    Long; luôn thành công.
-  - +6 → +11: một viên ngọc theo bảng `UPGRADE`, tỉ lệ `rate`; thất bại (`fail`) tụt một cấp
-    (`"down"`) hoặc vỡ đồ (`"destroy"`). Ngọc và vàng mất cả khi thất bại.
+  - +1 → +6: một Ngọc Ước Nguyện, luôn thành công.
+  - +7 → +9: một Ngọc Tâm Linh, tỉ lệ `rate`; thất bại về +0 (`"reset"`).
+  - +10, +11: ở Máy Hỗn Nguyên (`at: "chaos"`), Hỗn Nguyên + Ước Nguyện + Tâm Linh; thất bại vỡ đồ.
+
+  May mắn (Phase 15d) cộng tỉ lệ các bước không chắc chắn. Ngọc và vàng mất cả khi thất bại.
   """
   def upgrade_cost(id, level) when is_binary(id), do: upgrade_cost(Data.item(id), level)
 
   def upgrade_cost(it, level) do
     n = level + 1
-    gold = round(max(it.price, @up.cost_min_price) * @up.cost_pct * n)
 
-    cond do
-      level >= max_upgrade() ->
+    case Data.upgrade_step(n) do
+      nil ->
         nil
 
-      step = Data.upgrade_step(n) ->
-        # May mắn (Phase 15d) cộng tỉ lệ ép ngọc
+      step ->
         %{
-          gold: gold,
-          items: %{step.jewel => 1},
-          rate: Gear.luck_rate(it, step.rate),
-          fail: step.fail
+          gold: round(max(it.price, @up.cost_min_price) * @up.cost_pct * n),
+          items: step.items,
+          rate:
+            Gear.luck_rate(it, step.rate, step[:luck] || Gear.luck_skill_rules().luck_upgrade),
+          fail: step.fail,
+          at: step.at
         }
-
-      true ->
-        ore = if (it[:level] || 1) >= @up.rare_ore_level, do: "ore_rare", else: "ore"
-        items = %{ore => n}
-        items = if n == @up.scale_step, do: Map.put(items, "dragon_scale", 1), else: items
-        %{gold: gold, items: items, rate: 1.0, fail: nil}
     end
   end
 
   @doc """
   Ép món đang mặc ở ô `slot`. Bước có thể vỡ đồ thì phải gửi `confirm` (client hỏi lại trước).
-  Kết quả có `upgrade: %{result: "success" | "down" | "destroy" | "fail", level}`; ép thành công
+  `at`: nơi ép (`"smith"` Thợ Rèn, `"chaos"` Máy Hỗn Nguyên), phải đúng `at` của bước. Kết quả có
+  `upgrade: %{result: "success" | "down" | "reset" | "destroy" | "fail", level}`; ép thành công
   từ `announce_from` thì kèm `announce` (Session đưa lên kênh chat hệ thống).
   """
-  def upgrade(p, target, confirm \\ false) do
+  def upgrade(p, target, confirm \\ false, at \\ "smith") do
     {id, slot} = forge_target(p, target)
     level = if id, do: upgrade_level(p, id), else: 0
     it = id && Gear.item(p, id)
@@ -1594,13 +2055,20 @@ defmodule HacLong.Game.Engine do
          ), p}
 
       slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
 
       p.battle ->
         {err("Đang trong trận."), p}
 
       cost == nil ->
         {err("#{it.name} đã nâng cấp tối đa."), p}
+
+      cost.at != at ->
+        {err(
+           if cost.at == "chaos",
+             do: "Ép lên +#{level + 1} ở Lão Hỗn Nguyên (Máy Hỗn Nguyên).",
+             else: "Ép lên +#{level + 1} ở Thợ Rèn."
+         ), p}
 
       p.gold < cost.gold ->
         {err("Cần #{cost.gold} vàng."), p}
@@ -1680,7 +2148,7 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   Ngọc Sinh Mệnh (`RULES.upgrade.life`): thêm một dòng tùy chọn cho món `target` (như `upgrade/3`):
-  vũ khí +`per_line` tấn công, giáp / khiên / cánh +`per_line` phòng thủ, tối đa `max_lines`. Tỉ lệ `rate`;
+  vũ khí +`line_value/1` tấn công, giáp / khiên / cánh +`line_value/1` phòng thủ, tối đa `max_lines`. Tỉ lệ `rate`;
   thất bại mất dòng cuối.
   """
   def life(p, target) do
@@ -1703,7 +2171,7 @@ defmodule HacLong.Game.Engine do
         {err("Cần 1 #{Data.item(l.jewel).name}."), p}
 
       slot == nil and not Gear.instance?(id) and length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món): món ép riêng cần một chỗ."), p}
 
       true ->
         hp_ratio = p.hp / derived(p).maxHp
@@ -1713,7 +2181,9 @@ defmodule HacLong.Game.Engine do
 
         {r, p} =
           if chance(l.rate) do
-            {ok("💚 #{it.name}: thêm dòng +#{l.per_line} #{stat} (#{lines + 1}/#{l.max_lines}).")
+            {ok(
+               "💚 #{it.name}: thêm dòng +#{line_value(it)} #{stat} (#{lines + 1}/#{l.max_lines})."
+             )
              |> Map.put(:life, %{result: "success", lines: lines + 1}),
              Gear.put(p, uid, :opt, lines + 1)}
           else
@@ -1733,10 +2203,21 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  @doc "Tấn công / phòng thủ cộng thêm từ dòng Ngọc Sinh Mệnh của món `id`."
+  @doc "Tấn công / phòng thủ cộng thêm từ dòng cộng thêm (Ngọc Sinh Mệnh) của món `id`."
   def life_bonus(p, id) do
-    if Gear.instance?(id), do: ((Gear.find(p, id) || %{})[:opt] || 0) * @up.life.per_line, else: 0
+    if Gear.instance?(id),
+      do: ((Gear.find(p, id) || %{})[:opt] || 0) * line_value(Gear.item(p, id)),
+      else: 0
   end
+
+  @doc """
+  Giá trị một dòng cộng thêm của món `it`: `per_line_pct` × công (vũ khí, dây chuyền) hoặc thủ gốc, ít nhất `per_line`
+  (từ "Cân bằng cuối game": dòng cộng thêm theo bậc đồ thay vì +4 phẳng).
+  """
+  def line_value(nil), do: @up.life.per_line
+
+  def line_value(it),
+    do: max(@up.life.per_line, round((it[:atk] || it[:def] || 0) * @up.life.per_line_pct))
 
   @doc """
   Vứt đồ: `n` món đồ thường `id`, hoặc món đồ hiếm `id` (uid). Không vứt đồ đang mặc, đang khóa,
@@ -1744,7 +2225,9 @@ defmodule HacLong.Game.Engine do
   """
   def discard(p, id, n \\ 1)
 
-  def discard(%{battle: b} = p, _id, _n) when b != nil, do: {err("Đang trong trận."), p}
+  # trận đã xong (bảng kết quả) thì vứt được: hủy đồ vừa nhặt ngay trên bảng
+  def discard(%{battle: %{over: over}} = p, _id, _n) when over != true,
+    do: {err("Đang trong trận."), p}
 
   def discard(p, "#" <> _ = uid, _n) do
     g = Gear.find(p, uid)
@@ -1765,6 +2248,13 @@ defmodule HacLong.Game.Engine do
   end
 
   def discard(p, id, n) do
+    case bag_uid(p, id) do
+      "#" <> _ = uid -> discard(p, uid, n)
+      id -> discard_stack(p, id, n)
+    end
+  end
+
+  defp discard_stack(p, id, n) do
     have = Map.get(p.inv, id, 0)
 
     cond do
@@ -1799,6 +2289,12 @@ defmodule HacLong.Game.Engine do
             else: r
 
         {r, p}
+
+      cost.fail == "reset" ->
+        p = put_upgrade(p, uid, 0)
+
+        {ok("💥 Ép thất bại, #{it.name} về +0.")
+         |> Map.put(:upgrade, %{result: "reset", level: 0}), p}
 
       cost.fail == "down" ->
         p = put_upgrade(p, uid, level - 1)
@@ -1929,6 +2425,7 @@ defmodule HacLong.Game.Engine do
   được. Đồ thường (vũ khí / giáp / khiên / cánh) được tách thành bản riêng để khóa từng món.
   """
   def lock(p, id, on?) when is_binary(id) do
+    id = bag_uid(p, id)
     slot = Enum.find(@equip_slots, &(p.equip[String.to_existing_atom(&1)] == id))
     it = Gear.item(p, id)
 
@@ -1951,7 +2448,7 @@ defmodule HacLong.Game.Engine do
         {err("Không có món này."), p}
 
       length(Gear.bag(p)) >= Gear.max_bag() ->
-        {err("Túi đồ hiếm đầy (#{Gear.max_bag()} món), không tách món này ra để khóa được."), p}
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món), không tách món này ra để khóa được."), p}
 
       true ->
         g = Gear.plain(id) |> Map.put(:locked, true)
@@ -1963,9 +2460,64 @@ defmodule HacLong.Game.Engine do
   def lock(p, _id, _on?), do: {err("Không có món này."), p}
 
   # ---------- Đồ đạc ----------
-  def add_item(p, id, n \\ 1), do: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
+  @doc """
+  Thêm `n` món `id` vào túi. Trang bị (`gear_item?/1`) luôn là từng món riêng trong túi trang bị (đồ trắng, 0 dòng;
+  túi đầy thì gửi Hộp thư như đồ rơi), không xếp chồng; món khác (bình, ngọc, nguyên liệu, vé…) xếp chồng trong `inv`.
+  """
+  def add_item(p, id, n \\ 1) do
+    if gear_item?(id),
+      do: Enum.reduce(1..n//1, p, fn _, p -> p |> Gear.add(Gear.plain(id)) |> elem(0) end),
+      else: %{p | inv: Map.update(p.inv, id, n, &(&1 + n))}
+  end
 
-  defp take_item(p, id, n \\ 1) do
+  @doc """
+  Lệnh gửi mã loại trang bị (vd. `"item_1_0"`, test / công cụ cũ) mà túi không còn chồng đồ thường loại đó: dùng món
+  riêng cùng loại đầu tiên trong túi. Mã khác trả nguyên.
+  """
+  def bag_uid(p, id) do
+    if gear_item?(id) and Map.get(p.inv, id, 0) == 0,
+      do: Enum.find_value(Gear.bag(p), id, &(&1.base == id && &1.uid)),
+      else: id
+  end
+
+  @doc "Món `id` (mã loại, không phải `uid`) là trang bị mặc được: vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền."
+  def gear_item?(id) do
+    it = is_binary(id) and not Gear.instance?(id) and Data.item(id)
+    is_map(it) and it.slot in @item_slots
+  end
+
+  @doc """
+  Dữ liệu cũ: trang bị còn xếp chồng thành từng món riêng: đang mặc (đồ khởi đầu, đồ mua), trong túi (túi đầy thì
+  phần dư gửi Hộp thư qua `mail_out`, không mất món nào), trong Tủ Đồ (thành món cất tủ). Chạy lúc nạp nhân vật và
+  tạo nhân vật mới; không có gì để đổi thì trả nguyên `p`.
+  """
+  def instance_gear(p) do
+    p =
+      Enum.reduce(@equip_slots, p, fn s, p ->
+        slot = String.to_existing_atom(s)
+        if gear_item?(p.equip[slot]), do: p |> ensure_instance(slot) |> elem(0), else: p
+      end)
+
+    {gear_inv, rest} = Enum.split_with(p.inv, fn {id, _} -> gear_item?(id) end)
+    p = Enum.reduce(gear_inv, %{p | inv: Map.new(rest)}, fn {id, n}, p -> add_item(p, id, n) end)
+
+    case Map.get(p, :storage) do
+      %{inv: inv} = st ->
+        {gear_st, rest} = Enum.split_with(inv, fn {id, _} -> gear_item?(id) end)
+        stored = for {id, n} <- gear_st, _ <- 1..n//1, do: Map.put(Gear.plain(id), :stored, true)
+
+        if stored == [],
+          do: p,
+          else:
+            %{p | storage: %{st | inv: Map.new(rest)}}
+            |> Map.put(:gear, Gear.list(p) ++ stored)
+
+      _ ->
+        p
+    end
+  end
+
+  def take_item(p, id, n \\ 1) do
     inv =
       case Map.get(p.inv, id, 0) do
         have when have > n -> Map.put(p.inv, id, have - n)
@@ -1997,8 +2549,11 @@ defmodule HacLong.Game.Engine do
       p.gold < price(p, id) * n ->
         {err("Không đủ vàng."), p}
 
+      gear_item?(id) and length(Gear.bag(p)) + n > Gear.max_bag() ->
+        {err("Túi trang bị đầy (#{Gear.max_bag()} món). Bán bớt đã."), p}
+
       true ->
-        {ok("Đã mua #{if n > 1, do: "#{n} ", else: ""}#{it.name}."),
+        {ok(if(n > 1, do: "Đã mua #{n} #{it.name}.", else: "Đã mua #{it.name}.")),
          %{p | gold: p.gold - price(p, id) * n} |> add_item(id, n)}
     end
   end
@@ -2046,6 +2601,13 @@ defmodule HacLong.Game.Engine do
   end
 
   def sell(p, id) do
+    case bag_uid(p, id) do
+      "#" <> _ = uid -> sell(p, uid)
+      id -> sell_stack(p, id)
+    end
+  end
+
+  defp sell_stack(p, id) do
     if Map.get(p.inv, id, 0) > 0 and Data.item(id) do
       g = sell_price(id)
       p = %{take_item(p, id) | gold: p.gold + g}
@@ -2060,6 +2622,7 @@ defmodule HacLong.Game.Engine do
   end
 
   def equip(p, id) do
+    id = bag_uid(p, id)
     it = Gear.item(p, id)
     gear? = Gear.instance?(id)
 
@@ -2162,6 +2725,37 @@ defmodule HacLong.Game.Engine do
   # ---------- Chuyển sinh ----------
 
   def max_rebirths, do: @max_rebirths
+
+  @doc """
+  Chúa tể phải hạ trước lần chuyển sinh kế: đã chuyển sinh `n` ≥ `rebirth_lord_from` lần thì phải từng hạ (Sổ quái)
+  chúa tể vùng chuyển sinh `n`. Trả `%{id, name, realm}` hoặc nil (không cần / đã hạ / đã tối đa).
+  """
+  def rebirth_need(p) do
+    n = Map.get(p, :rebirths) || 0
+
+    with true <- n >= @char.rebirth_lord_from and n < @max_rebirths,
+         %{} = lord <- realm_lord(n),
+         true <- Bestiary.count(p, lord.id) < 1 do
+      %{id: lord.id, name: lord.name, realm: n}
+    else
+      _ -> nil
+    end
+  end
+
+  # tên bản đồ có chúa tể `id` (bản đồ cuối của vùng chuyển sinh), nil nếu không thấy
+  defp lord_map_name(id) do
+    Enum.find_value(HacLong.World.Maps.ids(), fn mid ->
+      m = HacLong.World.Maps.get(mid)
+      if Enum.any?(m.spawns, &(&1.monster == id)), do: m.name
+    end)
+  end
+
+  @doc "Chúa tể của vùng chuyển sinh `k` (quái `r<k>_…` có `lord: true`, scripts/gen_realms.py)."
+  def realm_lord(k) do
+    prefix = "r#{k}_"
+    Enum.find(Data.side_monsters(), &(String.starts_with?(&1.id, prefix) and &1[:lord] == true))
+  end
+
   def rebirth_points, do: @rebirth_points
 
   @doc """
@@ -2178,6 +2772,11 @@ defmodule HacLong.Game.Engine do
 
       p.level < @max_level ->
         {err("Cần đạt cấp #{@max_level} mới chuyển sinh được."), p}
+
+      need = rebirth_need(p) ->
+        {err(
+           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm} trước khi chuyển sinh lần #{n + 1}."
+         ), p}
 
       n >= @max_rebirths ->
         {err("Đã chuyển sinh tối đa #{@max_rebirths} lần."), p}
@@ -2219,4 +2818,7 @@ defmodule HacLong.Game.Engine do
          })}
     end
   end
+
+  # tên các hiệu ứng, cách nhau dấu phẩy (tính trước để câu nhật ký dịch được theo mẫu)
+  defp effect_list(effs), do: Enum.map_join(effs, ", ", &@effect_names[&1.id])
 end

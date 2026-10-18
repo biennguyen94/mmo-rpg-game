@@ -10,10 +10,12 @@ defmodule HacLong.Bots.Brain do
      kỹ năng mạnh nhất đang sẵn → dùng; còn lại đánh thường.
   3. Còn điểm tiềm năng → cộng hết vào chỉ số chính của lớp.
   4. Trong túi có vũ khí / giáp / khiên tốt hơn đồ đang mặc → mặc.
-  5. Máu < 45 %: có bình thì uống, không thì về Nhà (miễn phí) uống nước giếng.
-  6. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
-  7. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
-  8. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
+  5. Máu < 45 % và có bình → uống.
+  6. Sắp hết bình (Phase 5, `RULES.bots.potion_min` / `mana_min`) mà đủ vàng → về Làng mua ở Bà Lang (`restock/1`).
+  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì về Nhà (miễn phí) uống nước giếng.
+  8. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
+  9. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
+  10. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
@@ -27,6 +29,9 @@ defmodule HacLong.Bots.Brain do
   @dirs %{"up" => {0, -1}, "down" => {0, 1}, "left" => {-1, 0}, "right" => {1, 0}}
 
   @rest Data.rules().bots.rest_after_death_s
+  @shop Data.rules().bots
+  @hp_ids ~w(potion_s potion_m potion_l)
+  @mp_ids ~w(mana_s mana_m mana_l)
 
   @doc """
   Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
@@ -52,7 +57,7 @@ defmodule HacLong.Bots.Brain do
   def decide(%{battle: %{over: true}}, _snap, _opts), do: %{"act" => "leave"}
   # đồ sát: chưa tới lượt thì chờ (không gửi lệnh)
   def decide(%{battle: %{live: true, encounter: %{mine: false}}}, _snap, _opts), do: nil
-  def decide(%{battle: %{} = b} = p, _snap, _opts), do: fight(p, b)
+  def decide(%{battle: %{}} = p, _snap, _opts), do: fight(p)
 
   def decide(p, snap, opts) do
     d = Engine.derived(p)
@@ -64,8 +69,14 @@ defmodule HacLong.Bots.Brain do
       g = better_gear(p) ->
         %{"act" => "equip", "id" => g}
 
+      p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
+        %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
+
+      (need = restock(p)) != [] ->
+        shop(p, need, snap)
+
       p.hp < d.maxHp * 0.45 ->
-        heal(p, d)
+        heal(p, d, snap)
 
       true ->
         roam(p, snap, opts[:seed] || 0)
@@ -74,21 +85,25 @@ defmodule HacLong.Bots.Brain do
 
   # ---------- Trận đánh ----------
 
-  defp fight(p, _b) do
+  @doc """
+  Lệnh trong trận: máu < `hp` (tỉ lệ máu tối đa) và có bình → uống; chưa có kỹ năng dùng được và MP < `mp` → uống
+  mana; kỹ năng mạnh nhất (cuối bộ kỹ năng) đang sẵn → dùng; còn lại đánh thường. Tự đánh (Phase 4) dùng chung.
+  """
+  def fight(p, hp \\ 0.35, mp_pct \\ 0.3, mode \\ nil) do
     d = Engine.derived(p)
     mp = Map.get(p, :mp) || 0
 
-    skill =
-      p
-      |> Engine.skills()
-      |> Enum.reverse()
-      |> Enum.find(&(Engine.cooldown(p, &1.id) == 0 and mp >= Engine.skill_mp(p, &1)))
+    ready = p |> fight_skills(mode) |> Enum.filter(&(Engine.cooldown(p, &1.id) == 0))
+    skill = Enum.find(ready, &(mp >= Engine.skill_mp(p, &1)))
+
+    # hết MP cho kỹ năng đã hồi chiêu (lớp ít MP với kỹ năng tháp tốn nhiều) thì cũng uống bình mana
+    starved? = ready != [] and d.maxMp >= Enum.min(Enum.map(ready, &Engine.skill_mp(p, &1)))
 
     cond do
-      p.hp < d.maxHp * 0.35 and Engine.best_potion(p, d.maxHp - p.hp) ->
+      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "potion"}
 
-      skill == nil and mp < d.maxMp * 0.3 and Engine.best_mana(p, d.maxMp - mp) ->
+      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->
         %{"act" => "mana"}
 
       skill ->
@@ -98,6 +113,45 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "attack"}
     end
   end
+
+  # bot (mode nil): kỹ năng mạnh nhất trước. Tự đánh: "all" kỹ năng buff trước rồi mạnh nhất, "basic" không dùng,
+  # "boss" chỉ khi quái là trùm / tinh anh / quái vàng / quái Bóng Đêm
+  defp fight_skills(p, nil), do: p |> Engine.skills() |> Enum.reverse()
+  defp fight_skills(_p, "basic"), do: []
+
+  defp fight_skills(p, "boss") do
+    m = (p.battle || %{})[:monster] || %{}
+
+    if m[:boss] || m[:elite] || m[:golden] || m[:rare] || m[:world],
+      do: fight_skills(p, "all"),
+      else: []
+  end
+
+  defp fight_skills(p, _all) do
+    {buffs, rest} = p |> Engine.skills() |> Enum.reverse() |> Enum.split_with(&buff?/1)
+    buffs ++ rest
+  end
+
+  @buff_effects ~w(war_cry guard shadow_step)
+  defp buff?(k), do: k[:buff] != nil or k[:effect] in @buff_effects
+
+  @doc """
+  Bộ kỹ năng bot mang vào trận (tối đa `loadout`, chỉ kỹ năng tốn không quá MP tối đa): luôn giữ một kỹ năng hồi máu /
+  hút máu mạnh nhất nếu có, còn lại là các kỹ năng hệ số cao nhất (kỹ năng lớp không có hệ số tính 1).
+  Trả danh sách id xếp yếu → mạnh (`fight/1` dùng từ cuối lên).
+  """
+  def loadout(p, n) do
+    # bỏ kỹ năng tốn hơn MP tối đa (không bao giờ dùng được)
+    max_mp = Engine.derived(p).maxMp
+    avail = Enum.filter(Engine.available_skills(p), &(Engine.skill_mp(p, &1) <= max_mp))
+    sustain = avail |> Enum.filter(&sustain?/1) |> Enum.max_by(&skill_power/1, fn -> nil end)
+    rest = avail |> Enum.reject(&(&1 == sustain)) |> Enum.sort_by(&skill_power/1, :desc)
+    picked = if sustain, do: [sustain | Enum.take(rest, n - 1)], else: Enum.take(rest, n)
+    picked |> Enum.sort_by(&skill_power/1) |> Enum.map(& &1.id)
+  end
+
+  defp sustain?(k), do: k[:effect] == "holy" or (k[:heal] || 0) > 0 or (k[:drain] || 0) > 0
+  defp skill_power(k), do: k[:mult] || 1
 
   # ---------- Đồ đạc, hồi máu ----------
 
@@ -114,17 +168,76 @@ defmodule HacLong.Bots.Brain do
     end)
   end
 
-  defp power(nil), do: 0
+  @doc "Sức mạnh thô một món đồ (tấn công + phòng thủ + dòng cộng thêm), để so với món đang mặc."
+  def power(nil), do: 0
 
-  defp power(it),
-    do: (it[:atk] || 0) + (it[:def] || 0) + Enum.sum(Map.values(it[:bonus] || %{}))
+  def power(it),
+    do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * Engine.line_value(it)
 
-  defp heal(p, d) do
-    case Engine.best_potion(p, d.maxHp - p.hp) do
-      nil -> go_home_fountain(p)
-      id -> %{"act" => "use", "id" => id}
-    end
+  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
+  defp heal(p, _d, snap) do
+    if p.gold >= Engine.rest_cost(p) * @shop.inn_gold_mult and village_npc("inn"),
+      do: at_village_npc(p, "inn", snap, fn -> %{"act" => "rest"} end),
+      else: go_home_fountain(p)
   end
+
+  # ---------- Mua bình (Phase 5, B-32) ----------
+
+  @doc """
+  Bình cần mua: `[{id, số}]`. Còn ít hơn `RULES.bots.potion_min` bình máu thì mua tới `potion_buy` (bình mana tương
+  tự, chỉ lớp có MP); chỉ tính khi mua được ít nhất mức tối thiểu với số vàng đang có.
+  """
+  def restock(p) do
+    d = Engine.derived(p)
+
+    kinds =
+      [{@hp_ids, d.maxHp, @shop.potion_min, @shop.potion_buy}] ++
+        if d.maxMp > 0, do: [{@mp_ids, d.maxMp, @shop.mana_min, @shop.mana_buy}], else: []
+
+    {need, _gold} =
+      Enum.reduce(kinds, {[], p.gold}, fn {ids, max, min, buy}, {acc, gold} ->
+        have = Enum.sum(Enum.map(ids, &Map.get(p.inv, &1, 0)))
+
+        with true <- have < min,
+             id when id != nil <- pick_potion(p, ids, max, gold, min),
+             n = min(buy - have, div(gold, Engine.price(p, id))),
+             true <- n >= min - have do
+          {acc ++ [{id, n}], gold - n * Engine.price(p, id)}
+        else
+          _ -> {acc, gold}
+        end
+      end)
+
+    need
+  end
+
+  # rẻ nhất mà hồi được ≥ `potion_heal_min` máu (MP) tối đa; không có thì loại mạnh nhất mua được `min` bình
+  defp pick_potion(p, ids, max, gold, min) do
+    ok =
+      Enum.filter(ids, fn id ->
+        it = Data.item(id)
+        (it[:level] || 0) <= p.level and gold >= Engine.price(p, id) * min
+      end)
+
+    Enum.find(ok, &(elem(Engine.potion_amount(p, &1), 1) >= max * @shop.potion_heal_min)) ||
+      List.last(ok)
+  end
+
+  defp shop(p, [{id, n} | _], snap),
+    do: at_village_npc(p, "herbalist", snap, fn -> %{"act" => "buy", "id" => id, "n" => n} end)
+
+  defp village_npc(role), do: Enum.find(Maps.get("village").npcs, &(&1.role == role))
+
+  # tới NPC `role` ở Làng; đứng cạnh rồi thì ra lệnh `then`
+  defp at_village_npc(%{pos: %{map: "village", x: x, y: y}} = p, role, snap, then) do
+    %{at: {nx, ny}} = village_npc(role)
+
+    if abs(nx - x) + abs(ny - y) == 1,
+      do: then.(),
+      else: walk(p, Maps.get("village"), [{nx, ny}], snap)
+  end
+
+  defp at_village_npc(p, _role, _snap, _then), do: go_to(p, "village")
 
   defp go_home_fountain(%{pos: %{map: "home"}} = p) do
     map = Maps.get("home")
@@ -256,33 +369,40 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
-  defp hunt(p, nil), do: wander(p)
+  @doc """
+  Đi tới con quái gần nhất không ai đánh (trùm thường của bản đồ có quái hồi sinh thì bỏ qua) thỏa `keep`
+  (`fn quái, bản_đồ -> bool`, mặc định cấp không quá cấp mình + 1); không có con nào thì đi lang thang.
+  """
+  def hunt(p, snap, keep \\ nil, wander? \\ true)
+  def hunt(p, nil, _keep, wander?), do: if(wander?, do: wander(p))
 
-  defp hunt(p, snap) do
+  def hunt(p, snap, keep, wander?) do
     me = {p.pos.x, p.pos.y}
     map = Maps.get(p.pos.map)
+    keep = keep || fn m, map -> monster_level(map, m.kind) <= p.level + 1 end
 
     targets =
       snap.monsters
       |> Enum.reject(&(&1.busy or (&1.boss and map.spawns != [])))
-      |> Enum.filter(&(monster_level(map, &1.kind) <= p.level + 1))
+      |> Enum.filter(&keep.(&1, map))
       |> Enum.sort_by(&dist(me, {&1.x, &1.y}))
       |> Enum.map(&{&1.x, &1.y})
 
     case targets do
-      [] -> wander(p)
-      _ -> walk(p, map, Enum.take(targets, 3), snap) || wander(p)
+      [] -> if(wander?, do: wander(p))
+      _ -> walk(p, map, Enum.take(targets, 3), snap) || if(wander?, do: wander(p))
     end
   end
 
-  defp monster_level(%{side: true}, kind), do: Data.side_monster(kind).level
+  @doc "Cấp loại quái `kind` trên bản đồ `map` (99 nếu không biết)."
+  def monster_level(%{side: true}, kind), do: (Data.side_monster(kind) || %{level: 99}).level
 
-  defp monster_level(%{zone: zi}, kind) when is_integer(zi) do
+  def monster_level(%{zone: zi}, kind) when is_integer(zi) do
     z = Data.zone(zi)
     Enum.find_value(z.monsters ++ [z.boss], 99, &(&1.id == kind && &1.level))
   end
 
-  defp monster_level(_, _), do: 99
+  def monster_level(_, _), do: 99
 
   defp wander(p) do
     map = Maps.get(p.pos.map)
