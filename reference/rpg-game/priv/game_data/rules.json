@@ -529,10 +529,10 @@
     "crafting": {
       "levels": [
         0,
-        5,
         15,
-        30,
-        50
+        40,
+        80,
+        130
       ],
       "cook_levels": [
         0,
@@ -556,7 +556,7 @@
         }
       },
       "smith_gold_per_level": 15,
-      "smith_epic_per_level": 6,
+      "smith_epic_per_level": 4,
       "smith_rare": 50
     },
     "tower": {

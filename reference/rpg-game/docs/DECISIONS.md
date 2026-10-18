@@ -825,3 +825,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
     **pha đồ uống 0** (chỉ nấu ở Bác Đầu Bếp mới lên nghề). Cày riêng: cấp 3 ~40–60 phút, cấp 5 ~2,5–3,5 giờ.
   - Nhân vật đã có kinh nghiệm nghề giữ số lần nấu, cấp tính lại theo ngưỡng mới (có thể tụt cấp). Client nhận
     `RULES.craftLevels` dạng `{cook, smith}`.
+- (anh "ok làm đi") **Nghề Rèn chậm lại, ít ra đồ 3 dòng hơn.** Trước: ngưỡng 0 / 5 / 15 / 30 / 50 lần rèn (~1,5–2,5 giờ hái
+  quặng lên cấp 5), 3 dòng 6 % × cấp nghề (cấp 5: 30 %, quái rơi chỉ 3 %). Nay `RULES.crafting.levels` = 0 / 15 / 40 / 80 / 130
+  (cấp 3 ~2 giờ, cấp 5 ~5–6 giờ cày riêng) và `smith_epic_per_level` = 4 (cấp 5: 20 %); 2 dòng 50 %, giá quặng / vàng và "luôn
+  ít nhất 1 dòng" giữ nguyên. Cấp Rèn đã có tính lại theo ngưỡng mới. Kho Đồ thêm ghi chú rèn đồ (`{{SMITH}}`).

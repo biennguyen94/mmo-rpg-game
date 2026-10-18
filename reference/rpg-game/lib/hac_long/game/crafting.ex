@@ -36,7 +36,7 @@ defmodule HacLong.Game.Crafting do
   def level(xp, skill) when is_integer(xp), do: Enum.count(@levels[skill], &(xp >= &1))
   def level(p, skill), do: level(xp(p, skill), skill)
 
-  @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng 6% mỗi cấp, 2 dòng 50%, còn lại 1 dòng."
+  @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng `smith_epic_per_level`% mỗi cấp (4), 2 dòng 50%, còn lại 1 dòng."
   def smith_weights(lv) do
     epic = @rules.smith_epic_per_level * lv
     [{3, epic}, {2, @rules.smith_rare}, {1, 100 - @rules.smith_rare - epic}]

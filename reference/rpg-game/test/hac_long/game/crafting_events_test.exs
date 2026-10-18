@@ -36,7 +36,7 @@ defmodule HacLong.Game.CraftingEventsTest do
              [1, 1, 2, 3, 4, 5, 5]
 
     # nghề Rèn giữ ngưỡng riêng
-    assert Enum.map([0, 4, 5, 15, 30, 50], &Crafting.level(&1, :smith)) == [1, 1, 2, 3, 4, 5]
+    assert Enum.map([0, 14, 15, 40, 80, 130], &Crafting.level(&1, :smith)) == [1, 1, 2, 3, 4, 5]
 
     # Bà Lang không nấu món của Bác Đầu Bếp
     herbalist = Map.put(p, :pos, %{map: "village", x: 16, y: 13})
@@ -136,8 +136,8 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert p2.inv["ore"] == 15 and p2.inv["ore_rare"] == 2 and p2.gold == p.gold - 150
     assert Crafting.xp(p2, :smith) == 1
 
-    assert Crafting.smith_weights(1) == [{3, 6}, {2, 50}, {1, 44}]
-    assert Crafting.smith_weights(5) == [{3, 30}, {2, 50}, {1, 20}]
+    assert Crafting.smith_weights(1) == [{3, 4}, {2, 50}, {1, 46}]
+    assert Crafting.smith_weights(5) == [{3, 20}, {2, 50}, {1, 30}]
   end
 
   test "lịch sự kiện theo ngày, qua năm mới" do
