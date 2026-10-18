@@ -3,7 +3,7 @@ defmodule HacLong.AdminMaxTest do
   use ExUnit.Case, async: true
 
   alias HacLong.Admin
-  alias HacLong.Game.{Commands, Gear}
+  alias HacLong.Game.{Commands, Data, Engine, Gear}
 
   @exc_w ~w(atk_pct crit heal_kill mp_kill atk_lvl ar_pct)
   @exc_a ~w(hp_pct dmg_red gold_pct mp_pct reflect def_rate)
@@ -13,6 +13,24 @@ defmodule HacLong.AdminMaxTest do
     "elf" => {"item_4_24", nil, ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
     "mg" => {"item_0_28", nil, ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
   }
+
+  # tỉ lệ chia điểm gợi ý (docs/ADMIN_GUIDE.md §6), điểm lẻ cộng vào chỉ số đầu
+  @share %{
+    "dk" => [{"str", 0.45}, {"agi", 0.2}, {"vit", 0.25}, {"ene", 0.1}],
+    "dw" => [{"ene", 0.5}, {"agi", 0.2}, {"vit", 0.2}, {"str", 0.1}],
+    "elf" => [{"agi", 0.45}, {"str", 0.2}, {"vit", 0.25}, {"ene", 0.1}],
+    "mg" => [{"str", 0.4}, {"ene", 0.25}, {"agi", 0.2}, {"vit", 0.15}]
+  }
+
+  defp alloc(p, _stat, 0), do: p
+
+  # mỗi lệnh cộng tối đa 99 điểm (như nút cộng nhiều trong game)
+  defp alloc(p, stat, n) do
+    k = min(n, 99)
+    {r, p} = Commands.run(p, %{"act" => "alloc", "stat" => stat, "n" => k})
+    assert r.ok, inspect(r)
+    alloc(p, stat, n - k)
+  end
 
   defp op(p, name, params) do
     {:ok, f} = Admin.build(name, params)
@@ -29,8 +47,21 @@ defmodule HacLong.AdminMaxTest do
 
       p =
         p
+        |> op("set_rebirths", %{"n" => 10})
         |> op("set_level", %{"level" => 50})
-        |> op("add_stats", %{"str" => 300, "agi" => 300, "vit" => 200, "ene" => 300})
+        |> op("reset_stats", %{})
+
+      # điểm đúng như người chơi thật (49 cấp + 10 lần chuyển sinh), cộng theo tỉ lệ gợi ý trong tài liệu
+      assert p.points ==
+               49 * Engine.points_per_level(cls) + 10 * Engine.rebirth_points()
+
+      total = p.points
+      p = Enum.reduce(@share[cls], p, fn {k, r}, p -> alloc(p, k, floor(total * r)) end)
+      p = alloc(p, @share[cls] |> hd() |> elem(0), p.points)
+      assert p.points == 0
+
+      p =
+        p
         |> op("give_gear", Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => @exc_w}))
 
       p =
@@ -65,5 +96,20 @@ defmodule HacLong.AdminMaxTest do
       worn = p.equip |> Map.values() |> Enum.count(& &1)
       assert worn == if(shield, do: 11, else: 10) - if(cls == "mg", do: 1, else: 0)
     end
+  end
+
+  test "reset_stats: chỉ số về gốc, điểm theo cấp và chuyển sinh, bỏ điểm cày / cộng thêm trước đó" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Reset", "cls" => "dk"})
+
+    p =
+      p
+      |> op("set_level", %{"level" => 30})
+      |> op("add_points", %{"n" => 77})
+      |> op("add_stats", %{"str" => 120})
+      |> op("set_rebirths", %{"n" => 2})
+      |> op("reset_stats", %{})
+
+    assert p.stats == Data.class("dk").base
+    assert p.points == 29 * Engine.points_per_level("dk") + 2 * Engine.rebirth_points()
   end
 end

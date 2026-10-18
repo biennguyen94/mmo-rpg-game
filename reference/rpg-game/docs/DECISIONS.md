@@ -733,3 +733,11 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   duyệt tải lại; đổi hình lần sau thì tăng số này.
 - Bản 3 (2026-10-18, anh "nền trắng ok hơn đen"): nền icon trắng (giữa trắng, mép tím rất nhạt), bóng rồng xám nhẹ thay ánh
   đỏ; đường dẫn `?v=3`.
+
+## Quản trị: lệnh `reset_stats` (2026-10-18, anh "làm 1 thôi")
+- Công thức "nhân vật admin tối đa" cộng dồn lên điểm / chỉ số đã cày nên mạnh hơn người chơi thật. Lệnh mới `reset_stats`
+  (nút **Đặt lại chỉ số** ở Chỉnh nhân vật, hỏi xác nhận): chỉ số về gốc của lớp, điểm tiềm năng **đặt** bằng
+  (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × `rebirth_points` (chỉ lên cấp và chuyển sinh cho điểm), chưa cộng.
+- `docs/ADMIN_GUIDE.md` §6: `set_rebirths 10` → `set_level 50` → `reset_stats` (495 điểm, Thuật Sĩ Kiếm 593), bỏ
+  `add_points 300` / `add_stats`; thêm đoạn tự chia điểm theo tỉ lệ gợi ý từng lớp (chỉ cho chính mình). Sửa "+3 điểm mỗi cấp"
+  thành đúng 5 (Thuật Sĩ Kiếm 7). Vàng / đồ vẫn cộng thêm (anh chỉ chọn mục 1).

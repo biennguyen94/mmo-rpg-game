@@ -24,7 +24,7 @@ defmodule HacLong.Admin do
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats heal set_tower set_rebirths)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats reset_stats heal set_tower set_rebirths)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -262,6 +262,23 @@ defmodule HacLong.Admin do
       {:error, "Cần ít nhất một trong str, agi, vit, ene (số nguyên)."}
     end
   end
+
+  # chỉ số về gốc của lớp, điểm tiềm năng đúng như người chơi thật ở cấp / số lần chuyển sinh này (chưa cộng):
+  # (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × `rebirth_points`
+  def build("reset_stats", _a),
+    do:
+      {:ok,
+       fn p ->
+         points =
+           (p.level - 1) * Engine.points_per_level(p.cls) +
+             (Map.get(p, :rebirths) || 0) * Engine.rebirth_points()
+
+         p = %{p | stats: Data.class(p.cls).base, points: points}
+         d = Engine.derived(p)
+
+         {:ok, Map.merge(p, %{hp: min(p.hp, d.maxHp), mp: min(p.mp || 0, d.maxMp)}),
+          "Đặt lại chỉ số gốc, #{points} điểm tiềm năng chưa cộng."}
+       end}
 
   def build("heal", _a),
     do:

@@ -190,7 +190,7 @@ Các bảng hiện có: `users`, `user_tokens`, `characters`, `chat_reports`, `u
 | `announce {text}` | `Chat.system("📢 …")`, tối đa 200 ký tự |
 | `gift {subject, body, gold, xp, items, uid \| all: true}` | `Mailbox.send` / `send_all` |
 | `world_boss` | `WorldBoss.spawn_now()` |
-| `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `give_item`, `give_gear`, `heal` `{uid, …}` | `HacLong.Admin.run/4` → `Session.admin/3` (chạy trong Session người đó, lưu với lý do `ADMIN`, `ref = admin:<id>`) → `{msg, user}` |
+| `give_xp`, `set_level`, `add_gold`, `add_points`, `add_stats`, `reset_stats`, `give_item`, `give_gear`, `set_tower`, `set_rebirths`, `heal` `{uid, …}` | `HacLong.Admin.run/4` → `Session.admin/3` (chạy trong Session người đó, lưu với lý do `ADMIN`, `ref = admin:<id>`) → `{msg, user}` |
 | `audit {days}` | `HacLong.Audit.run/1` |
 | `gold_log {uid}` / `admin_log {uid?}` | `Audit.gold_history/2` / `Admin.recent/2` |
 

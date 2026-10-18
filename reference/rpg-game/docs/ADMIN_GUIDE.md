@@ -80,11 +80,12 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 
 | Dòng | `op` | Tham số | Ghi chú |
 |---|---|---|---|
-| Kinh nghiệm | `give_xp` | `xp` 1..1 000 000 000 | lên cấp như đánh quái (mỗi cấp +3 điểm tiềm năng), dừng ở cấp tối đa 50 |
-| Đặt cấp | `set_level` | `level` 1..50 | xp về 0; điểm tiềm năng ± 3 × số cấp đổi (không dưới 0); hồi đầy máu |
+| Kinh nghiệm | `give_xp` | `xp` 1..1 000 000 000 | lên cấp như đánh quái (mỗi cấp +5 điểm tiềm năng, Thuật Sĩ Kiếm +7), dừng ở cấp tối đa 50 |
+| Đặt cấp | `set_level` | `level` 1..50 | xp về 0; điểm tiềm năng ± điểm mỗi cấp × số cấp đổi (không dưới 0, **cộng vào** điểm đang có); hồi đầy máu |
 | Vàng | `add_gold` | `amount` (âm để trừ) | không xuống dưới 0 |
 | Điểm tiềm năng | `add_points` | `n` (âm để trừ) | |
 | Chỉ số | `add_stats` | `str`, `agi`, `vit`, `ene` (âm để trừ) | cộng thẳng vào chỉ số, không dưới 1 |
+| Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
 | Đồ thường | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Có `up` (vũ khí / giáp / khiên / cánh) hoặc là cánh thì mỗi món là một **bản riêng** trong túi đồ hiếm (cần chỗ trống) |
 | Đồ riêng | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi đồ hiếm đầy (20) thì báo lỗi |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
@@ -193,17 +194,34 @@ const uid = Net.userId;
 const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); } catch (e) { console.warn(op, e.msg); } };
 const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;   // dk / dw / elf / mg
 
-// cấp tối đa (50): +3 điểm tiềm năng mỗi cấp
-await A('set_level', { level: 50 });
-// kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ 4 kỹ năng ở Menu → Kỹ năng → ⚙
-await A('set_tower', { floor: 100 });
 // chuyển sinh 10 lần: mở đủ 10 vùng đất chuyển sinh (Phase 6); lệnh này chỉ đặt số lần, không về cấp 1
 await A('set_rebirths', { n: 10 });
+// cấp tối đa (50)
+await A('set_level', { level: 50 });
+// kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ kỹ năng ở Menu → Kỹ năng → ⚙
+await A('set_tower', { floor: 100 });
+// đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
+// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Thuật Sĩ Kiếm 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
+await A('reset_stats');
 
-// vàng, điểm tiềm năng, chỉ số
+// vàng
 await A('add_gold', { amount: 100000000 });
-await A('add_points', { n: 300 });
-await A('add_stats', { str: 200, agi: 150, vit: 200, ene: 150 });   // STR / AGI / VIT / ENE như MU
+
+// tự cộng điểm theo tỉ lệ gợi ý (chỉ chạy được cho chính mình: lệnh "alloc" là lệnh người chơi, mỗi lần tối đa 99,
+// nghỉ 0,3 giây giữa các lần kẻo server báo "Thao tác quá nhanh";
+// dựng cho người khác thì để họ tự cộng ở tab Nhân vật). Điểm lẻ cộng vào chỉ số đầu.
+const SHARE = {
+  dk:  [['str', 0.45], ['agi', 0.2], ['vit', 0.25], ['ene', 0.1]],
+  dw:  [['ene', 0.5], ['agi', 0.2], ['vit', 0.2], ['str', 0.1]],
+  elf: [['agi', 0.45], ['str', 0.2], ['vit', 0.25], ['ene', 0.1]],
+  mg:  [['str', 0.4], ['ene', 0.25], ['agi', 0.2], ['vit', 0.15]],
+}[cls];
+if (uid === Net.userId) {
+  const alloc = async (stat, n) => { for (; n > 0; n -= 99) { await new Promise((r) => setTimeout(r, 300)); await Net.send({ act: 'alloc', stat, n: Math.min(n, 99) }); } };
+  const total = (await Net.send({ act: 'title_set', id: null })).player.points;
+  for (const [stat, r] of SHARE) await alloc(stat, Math.floor(total * r));
+  await alloc(SHARE[0][0], (await Net.send({ act: 'title_set', id: null })).player.points);
+}
 
 // đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
 const SET = {
@@ -248,8 +266,11 @@ Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / c
 Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →
 tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm tra vàng** vẫn "Không có lỗi".
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): chuyển sinh, thú cưng, kỹ năng (kỹ năng mở theo cấp,
-cấp 50 là đủ), thành tựu, nhiệm vụ.
+Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nhờ `reset_stats`); riêng **vàng** (`add_gold`) và **đồ / ngọc**
+(`give_gear`, `give_item`) vẫn cộng thêm vào cái đang có.
+
+Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thú cưng, kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
+kỹ năng tháp mở bằng `set_tower`), thành tựu, nhiệm vụ.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
 
