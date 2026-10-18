@@ -723,7 +723,11 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 
 ## Icon ứng dụng (2026-10-17, anh yêu cầu "thêm avatar hình cho game")
 - Ô tắt trình duyệt / màn hình chính hiện trống vì `favicon.ico` là ảnh trong suốt mặc định. Icon mới: hình trùm **Hắc Long**
-  (`monsters/shadow_dragon.png`, CC0) phóng to kiểu pixel trên nền tối viền vàng, sinh bằng `node e2e/app_icons.mjs`.
+  (`monsters/shadow_dragon.png`, CC0) phóng to kiểu pixel trên nền tím, sinh bằng `node e2e/app_icons.mjs`.
 - `priv/static/app/`: `icon-192/512.png`, `icon-maskable-512.png` (Android cắt hình), `apple-touch-icon.png` (iPhone),
   `favicon-32.png`; `favicon.ico` 64×64. `manifest.json` (tên, màu, icon; "Thêm vào màn hình chính" mở toàn màn hình).
   `static_paths` thêm `app`, `manifest.json`.
+- Bản 2 (2026-10-18, anh "theo em đề xuất"): Chrome không hiện icon thẻ (giữ icon trống cũ), Brave vẽ rồng nhỏ, tối. Icon thành
+  hình vuông kín nền tím sáng hơn, không viền / lề, rồng gần kín ô (trình duyệt, máy tự bo góc / cắt tròn; maskable vẫn chừa
+  vùng an toàn). `favicon.ico` là ICO thật 16/32/48 (trước là PNG đổi đuôi). Đường dẫn icon / manifest thêm `?v=2` để trình
+  duyệt tải lại; đổi hình lần sau thì tăng số này.
