@@ -4,7 +4,7 @@
 > (req_mult 0.35, set_def_mult 1.0).
 > **Đừng sửa tay file này**: sửa `item_pick.json` rồi chạy lại. Giải thích: `docs/ITEMS_PHASE15B.md`.
 
-Tổng 416 món: Vũ khí 121, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54, Giày 54, Nhẫn 6, Dây chuyền 5.
+Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54, Giày 54, Nhẫn 6, Dây chuyền 5.
 
 ## Vũ khí
 
@@ -111,6 +111,7 @@ Tổng 416 món: Vũ khí 121, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 11 | 47 | Kiếm Xương | Bone Blade | `0/22` | dk | 145 (140~150) | agi 12 str 35 | 85000 |
 | 11 | 47 | Kiếm Lửa Lượn | Flamberge | `0/26` | dk | 145 (140~150) | agi 19 str 68 | 85000 |
 | 11 | 47 | Kiếm Phá Giáp | Sword Bracker | `0/27` | dk | 145 (140~150) | agi 62 str 19 | 85000 |
+| 11 | 47 | Kiếm Tổng Lãnh Thiên Thần | Sword of Archangel | `0/19` | dk, mg | 145 (140~150) | agi 18 str 49 | 85000 |
 | 11 | 47 | Kiếm Hiệp Sĩ | Knight Blade | `0/20` | dk, mg | 145 (140~150) | agi 13 str 41 | 85000 |
 | 11 | 47 | Quyền Trượng Đại Chúa Tể | Great Lord Scepter | `2/12` | dk, mg | 145 (140~150) | agi 7 str 31 | 85000 |
 | 11 | 47 | Quyền Trượng Tổng Lãnh Thiên Thần | Scepter of Archangel | `2/13` | dk, mg | 145 (140~150) | agi 6 str 26 | 85000 |

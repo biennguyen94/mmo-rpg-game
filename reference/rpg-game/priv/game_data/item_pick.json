@@ -644,6 +644,12 @@
             "mode": "curve"
           },
           {
+            "ref": "0/19",
+            "name": "Kiếm Tổng Lãnh Thiên Thần",
+            "doll": "hand1/great_sword_slant",
+            "mode": "curve"
+          },
+          {
             "ref": "2/17",
             "name": "Quyền Trượng Tuyệt Đối",
             "doll": "hand1/morningstar",
@@ -1177,6 +1183,12 @@
             "ref": "0/23",
             "name": "Kiếm Bộc Phá",
             "doll": "hand1/heavy_sword",
+            "mode": "curve"
+          },
+          {
+            "ref": "0/19",
+            "name": "Kiếm Tổng Lãnh Thiên Thần",
+            "doll": "hand1/great_sword_slant",
             "mode": "curve"
           },
           {

@@ -71,7 +71,9 @@
       "price": 0,
       "level": 30,
       "drop": true,
-      "doll": "hand1/heavy_sword"
+      "doll": "hand1/heavy_sword",
+      "_icon_variant_doc": "hình MU dùng chung với Kiếm Tổng Lãnh Thiên Thần (0/19); đồ trùm lấy bản phát sáng (Excellent) để phân biệt",
+      "icon_variant": "e"
     },
     "vest": {
       "name": "Áo Da Mỏng",

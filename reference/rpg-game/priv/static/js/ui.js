@@ -113,7 +113,9 @@
     const set = iconSet();
     if (set === 'pixel') { const p = PIXEL_ICONS[it.base || it.id]; return p ? asset(p) : null; }
     if (set !== 'mu') return null;
-    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, it.excellent ? 'e' : '');
+    // `icon_variant: "e"`: món luôn dùng bản phát sáng (Thánh Kiếm Diệt Long, chung hình với Kiếm Tổng Lãnh Thiên Thần)
+    const variant = it.excellent || (ITEMS[it.base || it.id] || {}).icon_variant === 'e' ? 'e' : '';
+    const path = L.iconForLevel(ITEM_ICONS[it.ref] || ITEM_ICONS['custom/' + (it.base || it.id)], level, variant);
     return path ? asset(path) : null;
   }
   // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px): giữ kích thước gốc, không phóng to (CSS `img.own.nat`)

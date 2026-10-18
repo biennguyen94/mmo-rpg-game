@@ -226,7 +226,7 @@ if (uid === Net.userId) {
 
 // đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
 const SET = {
-  dk:  { weapon: 'item_0_26', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Lửa Lượn, bộ Ánh Dương
+  dk:  { weapon: 'item_0_19', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
   dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
   elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                       // Cung Air Lyn, bộ Tia Tiên
   mg:  { weapon: 'item_0_28', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },                                    // Kiếm Đế Vương, bộ Long Kỵ Sĩ

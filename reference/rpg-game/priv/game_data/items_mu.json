@@ -2520,6 +2520,32 @@
       "version": 1,
       "verified": false
     },
+    "item_0_19": {
+      "name": "Kiếm Tổng Lãnh Thiên Thần",
+      "mu_name": "Sword of Archangel",
+      "slot": "weapon",
+      "tier": 11,
+      "level": 47,
+      "classes": [
+        "dk",
+        "mg"
+      ],
+      "atk": 145,
+      "atkMin": 140,
+      "atkMax": 150,
+      "req": {
+        "agi": 18,
+        "str": 49
+      },
+      "price": 85000,
+      "ref": "0/19",
+      "icon": "war-axe",
+      "doll": "hand1/great_sword_slant",
+      "alt": true,
+      "sourceType": "MU_ITEM_TXT",
+      "version": 1,
+      "verified": false
+    },
     "item_0_20": {
       "name": "Kiếm Hiệp Sĩ",
       "mu_name": "Knight Blade",

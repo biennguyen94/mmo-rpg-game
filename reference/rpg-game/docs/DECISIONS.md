@@ -799,3 +799,8 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   nét và nhòe; chừa viền làm món đồ nhỏ đi chút trong ô nhưng bớt nhòe (anh xem ảnh trước / sau và đồng ý). Máy chủ chạy lại
   `mix hac_long.icons` (hoặc `scripts/setup_items.sh`) để có hình mới.
 - Hình MU mũ / bình / ngọc: đổi mức chừa viền từ ~85% sang **~75%** khung (`-extent 133%`, anh chọn).
+- (anh "ok làm đi") **Thêm Kiếm Tổng Lãnh Thiên Thần** (Sword of Archangel, `0/19`) làm kiếm phụ bậc 11 cho Kiếm Sĩ + Đấu
+  Sĩ (`item_0_19`, cấp 47, công 145, cùng giá / chỉ rơi như các món phụ bậc 11; yêu cầu str 49 agi 18) — B-17 từng bỏ vì
+  trùng hình với đồ trùm Thánh Kiếm Diệt Long (`relic`). Không còn hình kiếm MU nào chưa dùng (`0/32`–`0/35` là găng đấm,
+  `2/22` trống), nên `relic` giữ hình `0/19` nhưng luôn lấy **bản phát sáng** (`icon_variant: "e"` trong `items.json`, client
+  `ownIcon`). Công thức nhân vật tối đa (ADMIN_GUIDE §6): vũ khí Kiếm Sĩ đổi từ Kiếm Lửa Lượn sang Kiếm Tổng Lãnh Thiên Thần.

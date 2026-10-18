@@ -8,7 +8,7 @@ defmodule HacLong.AdminMaxTest do
   @exc_w ~w(atk_pct crit heal_kill mp_kill atk_lvl ar_pct)
   @exc_a ~w(hp_pct dmg_red gold_pct mp_pct reflect def_rate)
   @set %{
-    "dk" => {"item_0_26", "item_6_18", ~w(item_7_33 item_8_33 item_9_33 item_10_33 item_11_33)},
+    "dk" => {"item_0_19", "item_6_18", ~w(item_7_33 item_8_33 item_9_33 item_10_33 item_11_33)},
     "dw" => {"item_5_11", "item_6_18", ~w(item_7_30 item_8_30 item_9_30 item_10_30 item_11_30)},
     "elf" => {"item_4_24", nil, ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
     "mg" => {"item_0_28", nil, ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
