@@ -494,5 +494,5 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
 - Hình Pixel (CC0, Dungeon Crawl Stone Soup) **có sẵn trong git**: `priv/static/assets/pixel/` và bảng tra
   `priv/static/assets/pixel_icons.json`. Thêm đồ mới thì chạy lại (xem README → "Chỉnh sửa game"):
   `python3 scripts/pixel_icons.py <crawl/tiles>/releases/Nov-2015` (hình quần lấy sẵn từ `assets_src/pixel_extra/leggings/`). Món chưa có hình Pixel
-  (cánh, đồ ăn) dùng hình cũ.
+  (đồ ăn) dùng hình cũ; cánh dùng đôi cánh Draconian của Dungeon Crawl (`assets_src/pixel_extra/wings/`).
 - Hình MU vẫn **không bao giờ** vào git / Docker (mục 10.1).

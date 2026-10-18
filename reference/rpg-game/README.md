@@ -348,7 +348,7 @@ Bộ hình đồ Pixel CC0 (Phase 7, đã có sẵn trong git; chỉ chạy lạ
 ```bash
 git clone --depth 1 https://github.com/crawl/tiles /tmp/crawl-tiles
 python3 scripts/pixel_icons.py /tmp/crawl-tiles/releases/Nov-2015   # → priv/static/assets/pixel/ + pixel_icons.json
-# hình quần lấy từ assets_src/pixel_extra/leggings/ (CC0 Leggings Icons, có sẵn trong git)
+# hình quần / cánh lấy từ assets_src/pixel_extra/{leggings,wings}/ (CC0, có sẵn trong git)
 ```
 
 Hướng dẫn quản trị đầy đủ (tab Quản trị, chỉnh nhân vật, nhật ký, công thức nhân vật admin):

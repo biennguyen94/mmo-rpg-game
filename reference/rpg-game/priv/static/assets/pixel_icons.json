@@ -452,5 +452,17 @@
 "scale": "pixel/armour_scale_mail1.png",
 "spiked": "pixel/armour_shields_buckler3.png",
 "vest": "pixel/armour_ring_mail1.png",
-"waraxe": "pixel/weapon_mace2.png"
+"waraxe": "pixel/weapon_mace2.png",
+"wing_dk_1": "pixel/wings_brown.png",
+"wing_dk_2": "pixel/wings_red.png",
+"wing_dk_3": "pixel/wings_purple.png",
+"wing_dw_1": "pixel/wings_white.png",
+"wing_dw_2": "pixel/wings_yellow.png",
+"wing_dw_3": "pixel/wings_pale.png",
+"wing_elf_1": "pixel/wings_green.png",
+"wing_elf_2": "pixel/wings_mottled.png",
+"wing_elf_3": "pixel/wings_white.png",
+"wing_mg_1": "pixel/wings_grey.png",
+"wing_mg_2": "pixel/wings_purple.png",
+"wing_mg_3": "pixel/wings_black.png"
 }

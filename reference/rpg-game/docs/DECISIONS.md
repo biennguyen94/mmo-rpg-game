@@ -791,3 +791,6 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Icons** (AntumDeluge, CC0, anh tải gửi; 9 hình 32×32 ở `assets_src/pixel_extra/leggings/`, nguồn trong `SOURCES.md`).
   `scripts/pixel_icons.py` đọc "extra:leggings/…" từ thư mục đó; dãy hình: Pháp Sư vải → áo choàng → quần lụa → giáp quỷ,
   Tiên Nữ da → lá rừng → giáp xanh, còn lại vải → da → xích → giáp tấm → giáp thép → giáp quỷ. Bỏ `e2e/crop_icons.mjs`.
+- Bộ hình Pixel: cánh (trước dùng biểu tượng SVG) dùng đôi cánh Draconian của Dungeon Crawl (`player/drcwing`, CC0, anh
+  chỉ nguồn), ghép sát hai cánh + căn giữa, để ở `assets_src/pixel_extra/wings/`. Màu theo lớp / bậc 1→3: Chiến Binh nâu →
+  đỏ → tím, Pháp Sư trắng → vàng → xanh nhạt, Tiên Nữ lục → đốm → trắng, Đấu Sĩ xám → tím → đen.

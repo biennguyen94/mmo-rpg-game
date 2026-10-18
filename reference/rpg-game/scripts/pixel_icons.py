@@ -5,6 +5,9 @@ Chạy:  python3 scripts/pixel_icons.py <thư_mục releases/Nov-2015 của craw
 
 Hình quần không có trong bộ tile trên: lấy từ "CC0 Leggings Icons" (CC0, có sẵn trong repo ở
 assets_src/pixel_extra/leggings/, nguồn ghi trong SOURCES.md); trong RULES viết là "extra:leggings/<tên>".
+Hình cánh: đôi cánh Draconian của bộ tile trên (player/drcwing), đã ghép sát hai cánh và căn giữa sẵn ở
+assets_src/pixel_extra/wings/
+("extra:wings/<màu>").
 
 Ghi priv/static/assets/pixel/*.png (chỉ những hình được dùng) và priv/static/assets/pixel_icons.json
 (mã món → đường dẫn hình). Mỗi loại đồ có một dãy hình xếp từ yếu tới mạnh; món trong loại xếp theo cấp rồi
@@ -22,6 +25,7 @@ EXTRA_DIR = os.path.join(ROOT, "assets_src/pixel_extra")
 W = "item/weapon/"
 A = "item/armour/"
 LEG = "extra:leggings/"
+WING = "extra:wings/"
 RULES = [
     # vũ khí (nhóm MU: 0 kiếm, 1 rìu, 2 chùy / quyền trượng, 3 giáo / lưỡi hái, 4 cung / nỏ, 5 gậy / sách)
     (lambda it, g, n: it["slot"] == "weapon" and g == "4" and re.search(r"crossbow|arquebus", n),
@@ -86,6 +90,16 @@ RULES = [
      [LEG + "leather", LEG + "forest", LEG + "plate_green"]),
     (lambda it, g, n: it["slot"] == "pants",
      [LEG + "cloth", LEG + "leather", LEG + "chain", LEG + "plate", LEG + "medieval", LEG + "underworld"]),
+    # cánh (bậc 1 → 3) theo lớp: Chiến Binh nâu → rồng đỏ → bão tím, Pháp Sư trắng → vàng → xanh nhạt,
+    # Tiên Nữ lục → đốm → trắng, Đấu Sĩ xám → tím → đen
+    (lambda it, g, n: it["slot"] == "wing" and it["id"].startswith("wing_dk_"),
+     [WING + "brown", WING + "red", WING + "purple"]),
+    (lambda it, g, n: it["slot"] == "wing" and it["id"].startswith("wing_dw_"),
+     [WING + "white", WING + "yellow", WING + "pale"]),
+    (lambda it, g, n: it["slot"] == "wing" and it["id"].startswith("wing_elf_"),
+     [WING + "green", WING + "mottled", WING + "white"]),
+    (lambda it, g, n: it["slot"] == "wing" and it["id"].startswith("wing_mg_"),
+     [WING + "grey", WING + "purple", WING + "black"]),
     (lambda it, g, n: it["slot"] == "gloves",
      [A + "glove1", A + "glove2", A + "glove3", A + "glove4", A + "glove5"]),
     (lambda it, g, n: it["slot"] == "boots",

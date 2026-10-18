@@ -29,6 +29,8 @@ Hình quần: **CC0 Leggings Icons** của AntumDeluge (https://opengameart.org/
 **CC0**), gom từ bộ hình Flare (https://opengameart.org/node/12815, /node/13879, /node/12818) và các bộ
 https://opengameart.org/node/108781, /node/108295, /node/108448; bản 32×32 để ở `assets_src/pixel_extra/leggings/`
 (nguồn từng file trong `SOURCES.md` cùng thư mục).
+Hình cánh: đôi cánh Draconian của bộ tile Dungeon Crawl ở trên (`player/drcwing`, CC0), đã ghép sát hai cánh và căn giữa,
+để ở `assets_src/pixel_extra/wings/`.
 Chọn và chép bằng `scripts/pixel_icons.py` (bảng tra `priv/static/assets/pixel_icons.json`); script tự bỏ mọi file có
 trong `TILES_UNDER_UNKNOWN_LICENSE.md`. Không dùng hình MU nào.
 
