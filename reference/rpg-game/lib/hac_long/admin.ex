@@ -24,7 +24,7 @@ defmodule HacLong.Admin do
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats reset_stats heal set_tower set_rebirths)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats reset_stats clear_bag heal set_tower set_rebirths)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -278,6 +278,22 @@ defmodule HacLong.Admin do
 
          {:ok, Map.merge(p, %{hp: min(p.hp, d.maxHp), mp: min(p.mp || 0, d.maxMp)}),
           "Đặt lại chỉ số gốc, #{points} điểm tiềm năng chưa cộng."}
+       end}
+
+  # hủy mọi trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên
+  def build("clear_bag", _a),
+    do:
+      {:ok,
+       fn p ->
+         bag = Gear.bag(p)
+         uids = Enum.map(bag, & &1.uid)
+
+         p =
+           p
+           |> Map.put(:gear, Enum.reject(Gear.list(p), &(&1.uid in uids)))
+           |> Map.update(:upgrades, %{}, &Map.drop(&1 || %{}, uids))
+
+         {:ok, p, "Đã hủy #{length(bag)} trang bị trong túi."}
        end}
 
   def build("heal", _a),

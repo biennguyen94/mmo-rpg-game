@@ -90,6 +90,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Trang bị | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`; trên trang Quản trị là các ô tick), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
+| Hủy trang bị trong túi | `clear_bag` | | xóa **mọi** trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên; bình, ngọc, nguyên liệu không đụng. Nút **Hủy trang bị trong túi** (đỏ, hỏi xác nhận). Không hoàn tác |
 | Hồi đầy máu | `heal` | | |
 
 - Lệnh chạy **trong tiến trình Session** của người đó, nên không đè lên lệnh người chơi đang gửi.

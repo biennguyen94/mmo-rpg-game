@@ -112,4 +112,23 @@ defmodule HacLong.AdminMaxTest do
     assert p.stats == Data.class("dk").base
     assert p.points == 29 * Engine.points_per_level("dk") + 2 * Engine.rebirth_points()
   end
+
+  test "clear_bag: hủy mọi trang bị trong túi (cả món khóa, cấp ép), giữ đồ đang mặc và đồ cất tủ" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Don", "cls" => "dk"})
+    worn = p.equip
+    p = p |> Engine.add_item("item_1_1", 3) |> Engine.add_item("potion_s", 2)
+    [a, b, c] = Gear.bag(p)
+
+    p =
+      p
+      |> Gear.set_locked(a.uid, true)
+      |> Gear.put(b.uid, :stored, true)
+      |> Map.put(:upgrades, %{a.uid => 5, b.uid => 3})
+
+    p = op(p, "clear_bag", %{})
+    assert Gear.bag(p) == [] and p.equip == worn
+    assert [%{uid: uid}] = Enum.filter(Gear.list(p), & &1[:stored])
+    assert uid == b.uid and Gear.find(p, c.uid) == nil
+    assert p.upgrades == %{b.uid => 3} and p.inv["potion_s"] == 5
+  end
 end

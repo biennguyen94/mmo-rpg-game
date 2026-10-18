@@ -771,3 +771,10 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Lệnh gửi mã loại (`equip` / `sell` / `discard` / `lock` với `"item_1_0"`, công cụ / test cũ) dùng món riêng cùng loại đầu
   tiên trong túi (`Engine.bag_uid/2`). Thư cũ có trang bị mã loại cũng cần chỗ túi khi mở.
 - Tab Quản trị: "Đồ thường (bình, ngọc, nguyên liệu, vé…)" không còn liệt kê trang bị; trang bị tặng ở "Trang bị".
+
+## Quản trị `clear_bag` + chỉ số món đồ xuống dòng (2026-10-18, anh yêu cầu)
+- Lệnh `clear_bag` (nút "Hủy trang bị trong túi", hỏi xác nhận): xóa mọi trang bị trong túi trang bị, cả món khóa và cấp ép
+  của chúng; đồ đang mặc, đồ cất Tủ Đồ, bình / ngọc / nguyên liệu giữ nguyên.
+- Bảng chi tiết món đồ (và Thư viện): mỗi chỉ số chính một dòng (cánh: phòng thủ / sát thương / nhận sát thương / lớp; nhẫn:
+  máu / phòng thủ) thay vì nối " · ". Danh sách gọn (cửa hàng, chợ) vẫn một dòng. Tab Nhân vật / hồ sơ: dòng Cánh tách
+  "+x% sát thương" và "−y% nhận" thành hai dòng.

@@ -344,7 +344,7 @@
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
           <select name="wopt" aria-label="Dòng phụ cánh"><option value="">Cánh: không dòng phụ</option><option value="hp">Cánh: máu tối đa</option><option value="mp">Cánh: MP tối đa</option><option value="ignore_def">Cánh: bỏ qua phòng thủ</option></select></div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small"><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
-      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button>
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
       ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
@@ -507,6 +507,7 @@
       return;
     }
     if (op === 'reset_stats' && !confirm('Đặt lại chỉ số về gốc của lớp và trả điểm tiềm năng theo cấp / chuyển sinh?')) return;
+    if (op === 'clear_bag' && !confirm('Hủy MỌI trang bị trong túi của nhân vật này (cả món đang khóa)? Đồ đang mặc và đồ trong Tủ Đồ giữ nguyên. Không hoàn tác được.')) return;
     const payload = {};
     if (d.id) payload.id = +d.id;
     if (d.uid) payload.uid = +d.uid;
@@ -999,7 +1000,7 @@
         ${kv('Phòng thủ', `<b>${fmt(pr.def)}</b>${plus(pr.pct.def)}`)}
         ${kv('Chí mạng', `${Math.round(pr.crit * 100)}%${pr.crit_mult ? ` ×${pr.crit_mult.toFixed(2)}` : ''}`)}
         ${kv('Né đòn', `${Math.round(pr.dodge * 100)}%`)}
-        ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương · −${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
+        ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương<br>−${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
         ${pr.ignore_def ? kv('Bỏ qua phòng thủ', `${Math.round(pr.ignore_def * 100)}%`) : ''}
         ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
       </div>
@@ -1759,15 +1760,16 @@
     return out.join('');
   }
 
-  function itemStat(it, id, up = upLevel(id)) {
+  // `sep`: ngăn cách các chỉ số (" · " trên một dòng ở danh sách; "<br>" mỗi chỉ số một dòng ở bảng chi tiết)
+  function itemStat(it, id, up = upLevel(id), sep = ' · ') {
     const b = id ? P.view.bonus[id] || 0 : 0;
     if (it.slot === 'wing') {
       const dmg = Math.round((it.dmg + wingUp('dmg', it.tier, up)) * 100);
       const abs = Math.round(Math.min(RULES.wingAbsorbMax, it.absorb + wingUp('absorb', it.tier, up)) * 100);
-      return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''} · Sát thương +${dmg}% · Nhận sát thương −${abs}% · ${CLASSES[it.cls].name}`;
+      return [`Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`, `Sát thương +${dmg}%`, `Nhận sát thương −${abs}%`, CLASSES[it.cls].name].join(sep);
     }
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
-    if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? ` · Phòng thủ <span class="up">+${b}</span>` : ''}`; }
+    if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? `${sep}Phòng thủ <span class="up">+${b}</span>` : ''}`; }
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`;
     if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
     if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
@@ -1812,7 +1814,7 @@
         ${kvh('def', 'Phòng thủ', `${fmt(d.def)}${pc(ex.def)}`)}
         ${kvh('crit', 'Chí mạng', `${Math.round(d.crit * 100)}% ×${d.critMult.toFixed(2)}`)}
         ${kvh('dodge', 'Né đòn', `${Math.round(d.dodge * 100)}%`)}
-        ${d.wingDmg ? kvh('wing', 'Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương · −${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
+        ${d.wingDmg ? kvh('wing', 'Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương<br>−${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
         ${d.ignoreDef ? kvh('ign', 'Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
         ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
         ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
@@ -2012,7 +2014,7 @@
     const head = libHead(key, itemIcon(it), esc(x.name), `${SLOT_NAME[x.slot] || esc(x.slot)}${x.level ? ` · cần cấp ${x.level}` : ''}${x.cls && CLASSES[x.cls] ? ` · ${CLASSES[x.cls].name}` : ''}`);
     if (libUi.open !== key) return head;
     return head + `<div class="lib-detail">
-      ${libLine('Chỉ số', itemStat(it))}
+      ${libLine('Chỉ số', itemStat(it, undefined, 0, '<br>'))}
       ${libLine('Giá', x.price ? `${fmt(x.price)} vàng` : '')}
       ${libLine('Có được từ', x.sources.length ? x.sources.map(esc).join('<br>') : 'Chưa có nguồn (đồ đặc biệt)')}
     </div>`;
@@ -2285,7 +2287,7 @@
     const prefix = it.anc ? 'Đồ Thần ' : it.excellent ? 'Đồ hoàn hảo ' : '';
     const h = [`<div class="mu-name ${kind}">${prefix}${esc(it.name)}${up ? ` +${up}` : ''}${it.locked ? ' 🔒' : ''}${!at.slot && n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</div>`];
     if (it.mu_name) h.push(`<div class="small muted" data-notr>${esc(it.mu_name)}</div>`);
-    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id, up);
+    const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id, up, '<br>');
     if (desc) h.push(`<div class="mu-main">${desc}</div>`);
     if (wearable) {
       if (it.level) h.push(`<div class="mu-req ${it.level > P.level ? 'bad' : ''}">Cấp yêu cầu: ${it.level}${it.level > P.level ? ` (thiếu ${it.level - P.level})` : ''}</div>`);
