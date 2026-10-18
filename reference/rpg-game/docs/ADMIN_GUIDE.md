@@ -206,7 +206,7 @@ await A('set_level', { level: 50 });
 // kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ kỹ năng ở Menu → Kỹ năng → ⚙
 await A('set_tower', { floor: 100 });
 // đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
-// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Thuật Sĩ Kiếm 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
+// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Đấu Sĩ 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
 const pts = Number((await A('reset_stats')).msg.match(/(\d+) điểm/)[1]);
 
 // vàng
@@ -224,7 +224,7 @@ add[SHARE[0][0]] += pts - Object.values(add).reduce((a, b) => a + b, 0);
 await A('add_stats', add);
 await A('add_points', { n: -pts });
 
-// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
+// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Đấu Sĩ không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
 const SET = {
   dk:  { weapon: 'item_0_19', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
   dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
