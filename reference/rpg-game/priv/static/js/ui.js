@@ -746,7 +746,7 @@
       </div>`;
     }
     if (dialog || P.pos.map === 'tower' || !nearWater()) return '<div id="fish-ui" hidden></div>';
-    return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button></div>`;
+    return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button><span class="small muted">hoặc chạm vào mặt nước</span></div>`;
   }
 
   // `fx`: hiệu ứng trên bản đồ (MapView.fish) khi dừng: 'miss', hoặc null để xóa ngay (thu cần, đi chỗ khác)
@@ -762,7 +762,7 @@
     if (el) el.outerHTML = viewFishing();
   }
 
-  async function castLine() {
+  async function castLine(at) {
     if (busy || fishing) return;
     busy = true;
     const t0 = performance.now();
@@ -786,7 +786,7 @@
       }, biteIn));
       f.timers.push(setTimeout(() => { if (fishing !== f) return; stopFishing('miss'); toast(f.big ? 'Dây câu đứt phựt! Bóng vàng khổng lồ lặn mất xuống Vực Rồng...' : 'Chậm tay rồi, cá ăn mất mồi.', true); redrawFishing(); }, biteIn + r.window + 400));
       Sound.play('cast');
-      Map_.fish('cast');
+      Map_.fish('cast', at ? { tx: at[0], ty: at[1] } : {});
     } catch (e) { toast(e.msg, true); }
     busy = false;
     redrawFishing();
@@ -3463,6 +3463,14 @@
     if (decor.on && P.pos.map === 'home') { decorTap(x, y); return; }
     const other = Map_.playerAt(x, y);
     if (other) { openPlayer(other); return; }
+    // chạm vào mặt nước: thả câu (phao rơi đúng ô đó), đang câu thì giật cần
+    const m = WORLD.maps[P.pos.map], water = WORLD.water || ['~'];
+    if (m && water.includes((m.tiles[y] || '')[x]) && P.pos.map !== 'tower') {
+      if (fishing) { reelIn(); return; }
+      if (nearWater() && Math.max(Math.abs(x - P.pos.x), Math.abs(y - P.pos.y)) <= 3) { castLine([x, y]); return; }
+      toast('Đứng sát mép nước rồi chạm vào mặt nước để câu.');
+      return;
+    }
     walkTo(x, y);
   }
 

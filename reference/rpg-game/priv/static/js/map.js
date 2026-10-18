@@ -881,7 +881,7 @@
       const P = getPlayer(), m = P && cur(P);
       if (!ev || !m) { fishing = null; draw(); return; }
       if (ev === 'cast') {
-        const t = bobberTile(P, m);
+        const t = data.tx != null ? [data.tx, data.ty] : bobberTile(P, m);
         fishing = t && { phase: 'cast', t0: performance.now(), tx: t[0], ty: t[1], big: false };
       } else if (fishing) {
         const ph = ev === 'catch' && data.item === 'old_boot' ? 'boot' : ev;
