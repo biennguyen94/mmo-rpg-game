@@ -8,6 +8,7 @@ out = %{
   realm_monsters: Data.side_monsters() |> Enum.filter(&String.starts_with?(&1.id, "r")) |> Enum.filter(&Map.has_key?(&1, :stat_level)),
   rules: Data.rules(),
   chaos: Data.chaos(),
+  recipes: Data.recipes(),
   library: HacLong.Library.get(),
   # lịch mặc định trong config/config.exs (máy chủ có thể đổi bằng biến môi trường WORLD_BOSS_*)
   world_boss: Map.new(Config.Reader.read!("config/config.exs", env: :prod)[:hac_long][:world_boss]),

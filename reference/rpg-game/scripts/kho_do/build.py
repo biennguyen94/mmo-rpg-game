@@ -505,7 +505,18 @@ for mp in sorted(D["maps"], key=lambda m: (m["realm"], len(m["id"]), m["id"])):
 # ---------- Vật phẩm khác ----------
 # nơi mua: cửa hàng (giá gốc; bình thuốc tăng theo cấp nhân vật), vé ở Người Gác Tháp (RULES.<sự kiện>.ticket_price)
 TICKET = {v["ticket"]: v["ticket_price"] for v in R.values() if isinstance(v, dict) and v.get("ticket") and v.get("ticket_price")}
+# món ăn / đồ uống: nấu / pha ở NPC nào, nguyên liệu, cấp nghề Nấu ăn, kinh nghiệm nghề được
+CRAFT_NPC = {"cook": "Bác Đầu Bếp", "herbalist": "Bà Lang"}
+RECIPE_OF = {r["out"]: r for r in D.get("recipes", []) if r.get("npc") in CRAFT_NPC}
+COOK_LV = D["rules"]["crafting"]["cook_levels"]
+def craft_at(r):
+    needs = " + ".join(f"{k} {E(IT[i]['name'])}" for i, k in r["needs"].items())
+    xp = r.get("xp", 1)
+    return (f"{CRAFT_NPC[r['npc']]}: {needs}<br><small>nghề Nấu ăn cấp {r.get('level') or 1} · "
+            + (f"+{xp} kinh nghiệm nghề" if xp else "không cộng kinh nghiệm nghề") + "</small>")
 def buy_at(i, v):
+    if i in RECIPE_OF:
+        return craft_at(RECIPE_OF[i])
     if i in TICKET:
         return f"Người Gác Tháp: {n(TICKET[i])}"
     if i in D["shop"] and v.get("price", 0) > 0:
@@ -522,7 +533,7 @@ def grp(title, ids):
         r += f"<tr><td>{nm(v, True)}</td><td>{E(use)}</td><td>{buy_at(i, v)}</td><td class=n>{n(v.get('sell') or 0) if v.get('sell') else '—'}</td></tr>"
     return r
 other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình mana", ["mana_s", "mana_m", "mana_l"]) +
-         grp("Món ăn (Bác Đầu Bếp)", ["cha_ca", "banh_mi_ca", "banh_xeo_luon", "mam_co"]) +
+         grp(f"Món ăn (Bác Đầu Bếp; nghề Nấu ăn cấp 1–{len(COOK_LV)} ở {' / '.join(map(str, COOK_LV))} kinh nghiệm)", ["cha_ca", "banh_mi_ca", "banh_xeo_luon", "mam_co"]) +
          grp("Đồ uống (Bà Lang, cộng dồn với món ăn)", ["bia_thao_duoc", "ruou_thuoc", "ruou_linh_chi", "ruou_long_huyet"]) +
          grp("Ngọc", ["jewel_bless", "jewel_soul", "jewel_chaos", "jewel_life"]) +
          grp("Vé và nguyên liệu sự kiện", ["ds_ticket", "bc_ticket", "cc_ticket", "devil_eye", "devil_key", "archangel_scroll", "blood_bone",
