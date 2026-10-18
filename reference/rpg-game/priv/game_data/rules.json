@@ -796,6 +796,25 @@
         "sourceType": "DESIGN",
         "version": 2,
         "verified": false
+      },
+      "school": {
+        "_doc": "DECISIONS \"Đàn Cá Vàng, việc của Ông Lão\": mỗi `every` giây, vào lúc ngẫu nhiên, Đàn Cá Vàng hiện ở một ô nước ngẫu nhiên của Hồ Long Vương (như ô Long Vương) trong `stay` giây. Thả câu trúng ô đó: cá câu được là `gold_fish` với tỉ lệ `gold_chance` (còn lại theo bảng cá hồ), mỗi con +`long_khi` Long Khí thay cho +1.",
+        "every": 900,
+        "stay": 120,
+        "gold_fish": "fish_gold",
+        "gold_chance": 0.15,
+        "long_khi": 3,
+        "sourceType": "DESIGN",
+        "version": 1,
+        "verified": false
+      },
+      "elder": {
+        "_doc": "Việc mỗi ngày của Ông Lão Câu Cá: câu `count` con cá ở Hồ Long Vương (ủng cũ không tính) rồi gặp Ông Lão nhận thưởng: vàng / kinh nghiệm tính như việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật) và +`long_khi` Long Khí (không quá tối đa).",
+        "count": 30,
+        "long_khi": 20,
+        "sourceType": "DESIGN",
+        "version": 1,
+        "verified": false
       }
     },
     "tutorial": {

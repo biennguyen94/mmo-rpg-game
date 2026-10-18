@@ -22,7 +22,7 @@
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
   let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
-  let lake = null; // Long Vương đang nổi (HacLong.LakeEvent): { x, y, until }
+  let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   const Doll = window.Doll;
   Doll.onReady(() => draw());
@@ -597,6 +597,7 @@
         ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.8, y - TILE * 1.8, TILE * 3.6, TILE * 3.6);
       }
     }
+    if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
@@ -747,6 +748,26 @@
     ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
   }
 
+  // Đàn Cá Vàng: vài con cá vàng lượn vòng, lấp lánh (vẽ cả khi tắt hiệu ứng, chỉ không động)
+  function schoolSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0;
+    for (let i = 0; i < 5; i++) {
+      const a = k / 700 + i * 1.26, r = TILE * (0.18 + 0.06 * (i % 2));
+      ctx.save(); ctx.translate(c + Math.cos(a) * r, d + Math.sin(a) * r * 0.7); ctx.rotate(a + Math.PI / 2);
+      ctx.fillStyle = 'rgba(255, 190, 40, 0.85)';
+      ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-3, 0); ctx.lineTo(-6, -2); ctx.lineTo(-6, 2); ctx.fill();
+      ctx.restore();
+    }
+    for (let i = 0; i < 4; i++) {
+      const p = fx ? (t / 500 + i / 4) % 1 : i / 4;
+      ctx.fillStyle = `rgba(255, 250, 200, ${0.9 * Math.sin(p * Math.PI)})`;
+      ctx.fillRect(x + 4 + ((i * 11) % (TILE - 8)), y + 4 + ((i * 7 + 5) % (TILE - 8)), 2, 2);
+    }
+    ctx.strokeStyle = 'rgba(255, 200, 80, 0.5)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]);
+  }
+
   // ---------- Câu cá: cần, dây, phao, cá bay (ui.js gọi MapView.fish) ----------
   // fishing: { phase: cast | wait | bite | catch | boot | miss, t0, tx, ty (ô phao), big, item }
   let fishing = null;
@@ -893,8 +914,11 @@
     mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
-    // st: { tile: [x, y] | null, left: mili giây }
-    setLake(st) { lake = st && st.tile ? { x: st.tile[0], y: st.tile[1], until: Date.now() + st.left } : null; draw(); },
+    // l, s: { tile: [x, y], until } (ui.js onLake) hoặc null
+    setLake(l, s) {
+      const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
+      lake = at(l); school = at(s); draw();
+    },
     // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)
     bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },

@@ -107,6 +107,41 @@ defmodule HacLong.Game.LongVuongTest do
     assert p.long_khi == 0
   end
 
+  test "Đàn Cá Vàng: thả trúng ô đàn thì dễ ra Cá Chép Vàng, +Long Khí của đàn; lệch ô thì như thường" do
+    sc = Data.rules().fishing.school
+    at = spot()
+    Rng.put_sequence([0.0])
+    {%{ok: true, school: true}, p} = Fishing.cast(angler(), 0, at, nil, at)
+    Rng.put_sequence([sc.gold_chance * 0.9])
+    {%{ok: true, fish: "fish_gold"}, p} = Fishing.reel(p, 3_100)
+    assert p.long_khi == sc.long_khi
+
+    Rng.put_sequence([0.0, 0.5])
+    {r, p} = Fishing.cast(angler(), 0, at, nil, {0, 0})
+    refute r[:school]
+    {%{ok: true}, p} = Fishing.reel(p, 3_100)
+    assert p.long_khi == 1
+  end
+
+  test "việc của Ông Lão: câu đủ cá ở hồ trong ngày thì nhận vàng, kinh nghiệm, Long Khí một lần" do
+    el = Data.rules().fishing.elder
+    p = HacLong.Game.Daily.ensure(angler(), "2026-10-18")
+    assert {%{ok: false, msg: "Câu đủ" <> _}, _} = Fishing.claim_elder(p)
+
+    p = Enum.reduce(1..el.count, p, fn _, p -> Fishing.land(p, "fish_eel") |> elem(1) end)
+    {_, p} = Fishing.land(p, "old_boot")
+    e = Fishing.elder(p)
+    assert e.n == el.count and not e.done and e.reward.gold > 0 and e.reward.xp > 0
+
+    {%{ok: true}, got} = Fishing.claim_elder(p)
+    assert got.gold == p.gold + e.reward.gold
+    assert got.long_khi == min(p.long_khi + el.long_khi, @dragon.long_khi_max)
+    assert {%{ok: false, msg: "Hôm nay lão trả công rồi" <> _}, _} = Fishing.claim_elder(got)
+
+    # ngày mới: đếm lại
+    assert Fishing.elder(HacLong.Game.Daily.ensure(got, "2026-10-19")).n == 0
+  end
+
   test "LakeEvent: nổi ở ô câu được, báo mọi người, có người câu được hoặc hết giờ thì lặn" do
     spots = HacLong.LakeEvent.spots()
     assert spot() in spots
@@ -120,8 +155,13 @@ defmodule HacLong.Game.LongVuongTest do
     assert_receive {:lake, %{tile: [^x, ^y]}}
     assert HacLong.LakeEvent.tile() == {x, y}
 
+    # Đàn Cá Vàng hiện ở ô khác ô Ngài
+    %{school: [sx, sy]} = HacLong.LakeEvent.school_summon()
+    assert {sx, sy} != {x, y} and {sx, sy} in spots
+    assert HacLong.LakeEvent.tiles() == {{x, y}, {sx, sy}}
+
     HacLong.LakeEvent.dive()
-    assert_receive {:lake, %{tile: nil}}
+    assert_receive {:lake, %{tile: nil, school: [^sx, ^sy]}}
     assert HacLong.LakeEvent.tile() == nil
   end
 

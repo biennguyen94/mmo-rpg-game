@@ -208,7 +208,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   Ngài **nổi lên một lần** vào lúc ngẫu nhiên, ở một ô nước ngẫu nhiên của hồ (bọt vàng sủi, bóng rồng vàng; ai đang ở hồ đều được báo),
   ở lại 3 phút. Chạm đúng ô đó để thả câu: mỗi lần có 1/2.000 cơ hội Ngài cắn câu (phao giật mạnh, "Có gì đó rất lớn…": giật ngay!),
   nhân thêm theo **Long Khí** (mỗi con cá câu ở hồ +1, tối đa 200 = cơ hội ×3, về 0 khi câu được Ngài); có **Mồi Rồng** (Bà Lang pha
-  100 mồi từ Cá Chép Vàng + 3 Linh Chi) thì gấp đôi, chỉ tốn mồi khi thả trúng ô Ngài. Có người câu được hoặc hết giờ thì Ngài lặn. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
+  100 mồi từ Cá Chép Vàng + 3 Linh Chi) thì gấp đôi, chỉ tốn mồi khi thả trúng ô Ngài. Có người câu được hoặc hết giờ thì Ngài lặn.
+  Giữa các lần Ngài nổi: **Đàn Cá Vàng** khoảng 15 phút một lần lấp lánh ở một ô nước trong 2 phút (cá vàng lượn, viền chấm), thả trúng
+  ô đó thì 15 % ra Cá Chép Vàng và mỗi con +3 Long Khí; **việc của Ông Lão** mỗi ngày: câu 30 con cá ở hồ rồi gặp Ông Lão nhận vàng,
+  kinh nghiệm và +20 Long Khí. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
   Ba kỹ năng ở cấp 5 / 15 / 20: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh. Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 

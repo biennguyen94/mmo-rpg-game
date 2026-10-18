@@ -125,7 +125,11 @@ defmodule HacLong.Game.Commands do
             _ -> nil
           end
 
-        Fishing.cast(p, System.monotonic_time(:millisecond), at, HacLong.LakeEvent.tile())
+        {dragon, school} = HacLong.LakeEvent.tiles()
+        Fishing.cast(p, System.monotonic_time(:millisecond), at, dragon, school)
+
+      "elder_claim" ->
+        Fishing.claim_elder(p)
 
       "fish_reel" ->
         Fishing.reel(p, System.monotonic_time(:millisecond))

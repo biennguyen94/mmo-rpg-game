@@ -413,7 +413,10 @@ pet_rule += (f" <b>{E(D['lake']['name'])}</b> (cấp {D['lake']['min_level']}+, 
              + f"ở lại {DRG['stay'] // 60} phút; chỉ lần thả câu trúng đúng ô đó mới có cơ hội 1/{n(round(1 / DRG['chance']))} Ngài cắn câu (giật trễ thì mất), "
              + f"× (1 + Long Khí / {DRG['long_khi_div']}) (Long Khí +1 mỗi con cá câu ở hồ, tối đa {DRG['long_khi_max']}, về 0 khi câu được Ngài); có {E(IT[DRG['bait']]['name'])} "
              + f"(Bà Lang pha {_bait.get('n', 1)} mồi từ " + " + ".join(f"{k} {E(IT[i]['name'])}" for i, k in _bait["needs"].items())
-             + f", nghề Nấu ăn cấp {_bait['level']}) thì tốn 1 mồi mỗi lần thả trúng ô Ngài, cơ hội ×{DRG['bait_mult']}. Có người câu được hoặc hết giờ thì Ngài lặn. Mỗi nhân vật một con; "
+             + f", nghề Nấu ăn cấp {_bait['level']}) thì tốn 1 mồi mỗi lần thả trúng ô Ngài, cơ hội ×{DRG['bait_mult']}. Có người câu được hoặc hết giờ thì Ngài lặn. "
+             + f"Đàn Cá Vàng: khoảng {R['fishing']['school']['every'] // 60} phút một lần một ô lấp lánh {R['fishing']['school']['stay'] // 60} phút, thả trúng ô đó "
+             + f"{pct(R['fishing']['school']['gold_chance'])} ra {E(IT[R['fishing']['school']['gold_fish']]['name'])}, mỗi con +{R['fishing']['school']['long_khi']} Long Khí. "
+             + f"Việc của Ông Lão mỗi ngày: câu {R['fishing']['elder']['count']} con cá ở hồ → vàng, kinh nghiệm, +{R['fishing']['elder']['long_khi']} Long Khí. Mỗi nhân vật một con; "
              + "người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.")
 pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; không thuần được trùm, chúa tể) rồi trả "
             f"({n(PR['tame_price'])} + {PR['tame_price_per_level']} × cấp quái) × (1 + {n(PR['tame_realm_price'])} × k) vàng (k: số vùng chuyển sinh, 0 nếu không phải). "

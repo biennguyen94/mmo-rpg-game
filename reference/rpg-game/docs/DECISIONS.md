@@ -878,4 +878,16 @@ việc để làm ở hồ ngoài lúc đó.
   tối đa `long_khi_max` 200, về 0 khi câu được Ngài. Hiện ở thanh câu cá và thẻ Long Vương (cơ hội hiện tại).
 - Đầy Long Khí + mồi: 1/333 mỗi lần thả trúng ô; ~20 lần thả trong 3 phút ≈ 5,8 % mỗi lần nổi, trung bình ~17 lần nổi (~17 giờ nếu lần
   nào cũng có mặt). Quản trị: `lake_summon` gọi Ngài nổi ngay. Test: `config :hac_long, :lake_event, auto: false`.
-- Bước 2 (Đàn Cá Vàng, việc ngày của Ông Lão) chưa làm, chờ anh.
+- Bước 2: xem "Đàn Cá Vàng, việc của Ông Lão".
+
+## Đàn Cá Vàng, việc của Ông Lão
+
+Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian giữa các lần Ngài nổi vẫn đáng ở hồ:
+- **Đàn Cá Vàng** (`RULES.fishing.school`): `HacLong.LakeEvent` hẹn thêm sự kiện thứ hai, mỗi `every` = 900 giây vào lúc ngẫu nhiên,
+  hiện ở một ô câu tới được (khác ô Ngài nếu Ngài đang nổi) trong `stay` = 120 giây; không tan khi có người câu. Thả trúng ô đó:
+  `gold_chance` = 15 % ra Cá Chép Vàng (còn lại theo bảng cá hồ, Cá Chép Vàng 3 %), mỗi con cá +`long_khi` = 3 Long Khí thay cho +1.
+  Client vẽ cá vàng lượn + viền chấm, báo người đang ở hồ. Quản trị: `lake_school`.
+- **Việc của Ông Lão** (`RULES.fishing.elder`): câu `count` = 30 con cá ở hồ trong ngày (ủng cũ không tính; đếm ở `daily.lake_n`, cùng
+  ngày với việc ở Bảng Tin nên không cần migration) rồi gặp Ông Lão (thẻ trên Long Vương) nhận một lần: vàng / kinh nghiệm theo công
+  thức việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật, × 30 con) và +`long_khi` = 20 Long Khí. Lệnh `elder_claim`.
+- Ủng cũ không còn cộng Long Khí (chỉ cá).

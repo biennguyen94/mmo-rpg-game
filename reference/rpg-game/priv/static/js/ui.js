@@ -336,7 +336,7 @@
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
-        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button>
+        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
@@ -746,7 +746,7 @@
       </div>`;
     }
     if (dialog || P.pos.map === 'tower' || !nearWater()) return '<div id="fish-ui" hidden></div>';
-    const lk = WORLD.maps[P.pos.map].fish === 'lake' ? `<span class="small" title="Long Khí: mỗi con cá câu ở hồ +1, càng đầy càng dễ câu Long Vương">🐉 Long Khí <b class="num">${P.long_khi || 0}/${RULES.dragon.long_khi_max}</b>${lake ? ' · <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</span>` : '';
+    const lk = WORLD.maps[P.pos.map].fish === 'lake' ? `<span class="small" title="Long Khí: mỗi con cá câu ở hồ +1, càng đầy càng dễ câu Long Vương">🐉 Long Khí <b class="num">${P.long_khi || 0}/${RULES.dragon.long_khi_max}</b>${lake ? ' · <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}${school ? ' · <b style="color:var(--gold)">✨ Đàn Cá Vàng</b>' : ''}</span>` : '';
     return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button><span class="small muted">hoặc chạm vào mặt nước</span>${lk}</div>`;
   }
 
@@ -824,16 +824,19 @@
   // ---------- Trùm thế giới ----------
   const clock = (ms) => { const t = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
-  // ---------- Long Vương nổi (HacLong.LakeEvent) ----------
-  let lake = null; // { tile: [x, y], left } khi Ngài đang nổi
-  let lakeTimer = null;
+  // ---------- Long Vương nổi, Đàn Cá Vàng (HacLong.LakeEvent) ----------
+  let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng đang hiện: { tile: [x, y], until }
+  const lakeTimers = [];
   function onLake(st) {
-    const was = lake;
-    lake = st && st.tile ? st : null;
-    clearTimeout(lakeTimer);
-    if (lake) lakeTimer = setTimeout(() => onLake(null), lake.left);
-    Map_.setLake(lake);
-    if (lake && !was && P && WORLD.maps[P.pos.map]?.fish === 'lake') { bigFx('🐉 Long Vương nổi lên!', 'level'); toast('Bọt vàng sủi lên ở một ô nước. Thả câu đúng ô đó!'); Sound.play('rare'); }
+    const was = lake, wasSchool = school, now = Date.now(), atLake = P && WORLD.maps[P.pos.map]?.fish === 'lake';
+    lake = st && st.tile ? { tile: st.tile, until: now + st.left } : null;
+    school = st && st.school ? { tile: st.school, until: now + st.schoolLeft } : null;
+    lakeTimers.splice(0).forEach(clearTimeout);
+    if (lake) lakeTimers.push(setTimeout(() => onLake({ ...st, tile: null, school: school && school.tile, schoolLeft: school ? school.until - Date.now() : 0 }), st.left));
+    if (school) lakeTimers.push(setTimeout(() => onLake({ ...st, school: null, tile: lake && lake.tile, left: lake ? lake.until - Date.now() : 0 }), st.schoolLeft));
+    Map_.setLake(lake, school);
+    if (lake && !was && atLake) { bigFx('🐉 Long Vương nổi lên!', 'level'); toast('Bọt vàng sủi lên ở một ô nước. Thả câu đúng ô đó!'); Sound.play('rare'); }
+    if (school && !wasSchool && atLake) { toast('✨ Đàn Cá Vàng lấp lánh ở một ô nước! Thả câu đúng ô đó để dễ ra Cá Chép Vàng.'); Sound.play('bite'); }
     if (P) redrawFishing();
   }
 
@@ -2883,6 +2886,16 @@
     try { const r = await Net.send({ act: 'dragon_board' }); if (r.ok) { dragonBoard = r.board; refresh(); } } catch (e) { /* thử lại lần mở sau */ }
     dragonLoading = false;
   }
+  // việc mỗi ngày của Ông Lão Câu Cá (Fishing.elder)
+  function elderCard() {
+    const e = P.view.elder, S = RULES.school;
+    return `<div class="card"><h3>🎣 Việc của Ông Lão hôm nay</h3>
+      <p class="small">Câu <b>${e.count}</b> con cá ở hồ này (ủng cũ không tính) rồi quay lại đây: <b>${fmt(e.reward.gold)}</b> vàng, <b>${fmt(e.reward.xp)}</b> kinh nghiệm, <b>+${e.reward.long_khi}</b> Long Khí.</p>
+      <p class="small">Đã câu: <b class="num">${e.n}/${e.count}</b></p>
+      <button class="btn ${e.n >= e.count && !e.done ? 'primary' : ''} block" data-act="elder_claim" ${e.n >= e.count && !e.done ? '' : 'disabled'}>${e.done ? 'Hôm nay đã nhận, mai quay lại' : 'Nhận công'}</button>
+      <p class="small muted">✨ Đàn Cá Vàng: khoảng ${Math.round(S.every / 60)} phút một lần, một ô nước lấp lánh trong ${Math.round(S.stay / 60)} phút. Thả câu trúng ô đó thì ${Math.round(S.gold_chance * 100)}% ra Cá Chép Vàng, mỗi con +${S.long_khi} Long Khí.${school ? ' <b style="color:var(--gold)">Đàn đang ở hồ!</b>' : ''}</p></div>`;
+  }
+
   function dragonCard() {
     const D = RULES.dragon, pet = PETS.find((x) => x.id === D.pet), bait = P.inv[D.bait] || 0;
     if (Date.now() - dragonAt > 60000) loadDragonBoard();
@@ -3066,6 +3079,7 @@
     if (n.role === 'talk') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
+    if (n.id === 'fisher') sections.push(elderCard());
     if (n.role === 'dragon') sections.push(dragonCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
@@ -3307,7 +3321,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }

@@ -796,6 +796,17 @@ defmodule HacLongWeb.GameChannel do
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
+  defp admin("lake_school", _p, _s) do
+    st = HacLong.LakeEvent.school_summon()
+
+    {:ok,
+     %{
+       msg:
+         "Đàn Cá Vàng đã hiện ở ô #{Enum.join(st.school, ", ")} Hồ Long Vương (#{div(st.schoolLeft, 1000)} giây).",
+       lake: st
+     }}
+  end
+
   defp admin("lake_summon", _p, _s) do
     st = HacLong.LakeEvent.summon()
 
@@ -1111,6 +1122,8 @@ defmodule HacLongWeb.GameChannel do
         # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
         slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
+        # việc của Ông Lão Câu Cá (Hồ Long Vương)
+        elder: HacLong.Game.Fishing.elder(player),
         # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
         autoMap: %{
           ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),

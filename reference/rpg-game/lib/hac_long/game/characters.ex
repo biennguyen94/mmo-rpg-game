@@ -254,11 +254,19 @@ defmodule HacLong.Game.Characters do
     }
     # Quảng Trường Quỷ (Phase 18 M1): đợt đã vào, điểm cao nhất hôm nay (chỉ có khi đã chơi)
     |> then(fn m ->
-      Enum.reduce([{"ds_slot", :ds_slot}, {"ds_best", :ds_best}, {"bc_slot", :bc_slot}], m, fn {k,
-                                                                                                a},
-                                                                                               m ->
-        if d[k] == nil, do: m, else: Map.put(m, a, d[k])
-      end)
+      Enum.reduce(
+        [
+          {"ds_slot", :ds_slot},
+          {"ds_best", :ds_best},
+          {"bc_slot", :bc_slot},
+          {"lake_n", :lake_n},
+          {"lake_done", :lake_done}
+        ],
+        m,
+        fn {k, a}, m ->
+          if d[k] == nil, do: m, else: Map.put(m, a, d[k])
+        end
+      )
     end)
   end
 

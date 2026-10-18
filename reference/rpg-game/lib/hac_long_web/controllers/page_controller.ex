@@ -93,6 +93,13 @@ defmodule HacLongWeb.PageController do
         petSkill2Level: HacLong.Game.Pets.skill2_level(),
         petSkill3Level: HacLong.Game.Pets.skill3_level(),
         # Long Vương (DECISIONS "Long Vương"): cơ hội mỗi lần thả câu ở Hồ Long Vương, mồi gấp bao nhiêu
+        school:
+          Map.take(HacLong.Game.Data.rules().fishing.school, [
+            :every,
+            :stay,
+            :gold_chance,
+            :long_khi
+          ]),
         dragon:
           Map.take(HacLong.Game.Fishing.dragon(), [
             :pet,
