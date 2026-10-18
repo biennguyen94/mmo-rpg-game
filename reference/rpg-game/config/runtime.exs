@@ -23,8 +23,9 @@ end
 # Chỉnh trùm thế giới khi chạy (vd. cho xuất hiện sớm để thử):
 #   WORLD_BOSS_FIRST_MINUTES=0.2 WORLD_BOSS_HP=5000 mix phx.server
 # Số người chơi AI (Phase 16), 0 là tắt: HL_BOTS=0 mix phx.server
-if config_env() != :test and System.get_env("HL_BOTS") do
-  config :hac_long, :bots, count: String.to_integer(System.get_env("HL_BOTS"))
+# (trống thì lấy mặc định RULES.bots.count, docker-compose truyền HL_BOTS rỗng khi .env không đặt)
+if config_env() != :test and System.get_env("HL_BOTS") not in [nil, ""] do
+  config :hac_long, :bots, count: String.to_integer(String.trim(System.get_env("HL_BOTS")))
 end
 
 # Quảng Trường Quỷ luôn mở (thử / e2e, Phase 18): HL_DS_OPEN=1 mix phx.server

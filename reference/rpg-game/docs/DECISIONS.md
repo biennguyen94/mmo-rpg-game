@@ -752,3 +752,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
 - Giới hạn túi trang bị (món chưa mặc) từ số cứng 20 trong `Gear` (có từ thời túi chỉ chứa đồ hiếm) chuyển vào
   `rules.json` `RULES.loot.gear_bag`, tăng lên **40**: mọi món rơi giờ đều vào túi, ~32 món / giờ cày nên 20 đầy chưa tới
   một giờ. Client đọc `RULES.gearBag` như cũ. Tủ Đồ (20, mở rộng bằng vàng) không đổi.
+
+## Deploy: truyền `HL_BOTS` vào container (2026-10-18)
+- `docker-compose.yml` chưa truyền `HL_BOTS` nên đặt trong `.env` không có tác dụng (luôn 20 bot). Thêm `HL_BOTS: ${HL_BOTS:-}`;
+  `config/runtime.exs` coi giá trị rỗng là chưa đặt (lấy `RULES.bots.count`). `.env.example`, `DEPLOY.md` ghi cách đặt.

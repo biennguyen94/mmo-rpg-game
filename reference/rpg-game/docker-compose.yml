@@ -34,6 +34,8 @@ services:
       CHECK_ORIGIN: ${CHECK_ORIGIN:-}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
       PHX_IPV6: ${PHX_IPV6:-}
+      # số người chơi AI (trống = mặc định RULES.bots.count, 0 = tắt)
+      HL_BOTS: ${HL_BOTS:-}
       PORT: "4000"
       POOL_SIZE: "10"
     ports:
