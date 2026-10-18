@@ -851,3 +851,7 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   - **Bia Long Vương**: bảng `rare_pets` (migration `20261109000000_create_rare_pets`, `HacLong.RarePets`), đánh số theo thứ tự;
     câu được thì báo cả server "… Long Vương Chủ thứ #n", thành tựu + danh hiệu **Long Vương Chủ**. NPC Ông Lão Câu Cá và Bia Long
     Vương (role `dragon`) hiện tỉ lệ, số mồi, kỹ năng và bảng tên (lệnh `dragon_board`).
+- (anh "cập nhật admin để cấp thú nuôi này") **Lệnh quản trị `give_pet`** (`id` thú trong `PETS` kể cả `long_vuong`, `level` 1..20):
+  tặng thú, đặt cấp thú, dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị có mục **Thú cưng** (🐉 Long Vương đầu danh sách),
+  công thức nhân vật tối đa (ADMIN_GUIDE §6) thêm Long Vương cấp 20 + 100 Mồi Rồng. Thú quản trị tặng **không** ghi Bia Long Vương
+  và không báo cả server (bia chỉ dành cho người tự câu được); thành tựu / danh hiệu Long Vương Chủ vẫn có (tính theo thú đang có).

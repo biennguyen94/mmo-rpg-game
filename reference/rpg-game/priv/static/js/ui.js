@@ -374,6 +374,7 @@
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label${k === 'luck' ? '' : ` data-gear-show="${k}"${show0[k] ? '' : ' hidden'}`}><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
           ${woptSelect(gearBases[0] && gearBases[0][0])}</div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
+      ${line('give_pet', 'Thú cưng (cả Long Vương), đặt cấp thú, dắt theo luôn', `<select name="id">${[...PETS].sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0) || a.price - b.price).map((pt) => `<option value="${pt.id}">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</option>`).join('')}</select><label class="small">Cấp ${num('level', RULES.petMaxLevel, `min="1" max="${RULES.petMaxLevel}"`)}</label>`, 'Tặng')}
       <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
@@ -416,6 +417,7 @@
     if (op === 'add_points') payload.n = n('n');
     if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
     if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });
+    if (op === 'give_pet') Object.assign(payload, { id: f.get('id'), level: n('level') || 1 });
     if (op === 'give_gear') {
       Object.assign(payload, { base: f.get('base'), opt: n('opt'), up: n('up'), exc: f.getAll('exc') });
       if (f.get('wopt')) payload.wopt = f.get('wopt');

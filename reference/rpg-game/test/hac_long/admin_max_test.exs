@@ -91,7 +91,31 @@ defmodule HacLong.AdminMaxTest do
 
       worn = p.equip |> Map.values() |> Enum.count(& &1)
       assert worn == if(shield, do: 11, else: 10) - if(cls == "mg", do: 1, else: 0)
+
+      # Long Vương cấp tối đa, dắt theo, đủ 3 kỹ năng
+      p = p |> op("give_pet", %{"id" => "long_vuong", "level" => 20})
+      assert p.pet == "long_vuong" and "long_vuong" in p.pets
+      assert length(HacLong.Game.Pets.active_skills(p)) == 3
     end
+  end
+
+  test "give_pet: thú thường / thú hiếm, đặt cấp, đã có thì không thêm lần nữa; sai id / cấp thì báo lỗi" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Pet", "cls" => "dk"})
+
+    p =
+      p
+      |> op("give_pet", %{"id" => "sheep", "level" => 5})
+      |> op("give_pet", %{"id" => "long_vuong"})
+
+    assert p.pets == ["sheep", "long_vuong"] and p.pet == "long_vuong"
+
+    assert HacLong.Game.Pets.level(p, "sheep") == 5 and
+             HacLong.Game.Pets.level(p, "long_vuong") == 1
+
+    p = op(p, "give_pet", %{"id" => "long_vuong", "level" => 15})
+    assert p.pets == ["sheep", "long_vuong"] and HacLong.Game.Pets.level(p, "long_vuong") == 15
+    assert {:error, _} = Admin.build("give_pet", %{"id" => "rong_gia"})
+    assert {:error, _} = Admin.build("give_pet", %{"id" => "sheep", "level" => 21})
   end
 
   test "reset_stats: chỉ số về gốc, điểm theo cấp và chuyển sinh, bỏ điểm cày / cộng thêm trước đó" do

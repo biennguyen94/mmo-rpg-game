@@ -88,6 +88,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
 | Đồ thường (xếp chồng) | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Trang bị (vũ khí, giáp, khiên, trang sức, cánh) luôn thành **món riêng** 0 dòng trong túi trang bị, mỗi món một chỗ (cần chỗ trống). Tab Quản trị: mục **Đồ thường** chỉ liệt kê bình, ngọc, nguyên liệu, vé…; trang bị tặng ở mục **Trang bị** |
 | Trang bị | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`, cánh không có Excellent; trên trang Quản trị là các ô tick, chỉ hiện nhóm hợp món đang chọn — Kỹ năng chỉ hiện với vũ khí, Đồ Thần chỉ với món thuộc bộ), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
+| Thú cưng | `give_pet` | `id` (thú trong `priv/game_data/pets.json`, kể cả thú hiếm `long_vuong`), `level` 1..20 | tặng thú, đặt cấp thú (cấp 5 / 15 / 20 mở kỹ năng), dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị: mục **Thú cưng** (🐉 Long Vương ở đầu danh sách). Không ghi Bia Long Vương |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
 | Hủy trang bị trong túi | `clear_bag` | | xóa **mọi** trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên; bình, ngọc, nguyên liệu không đụng. Nút **Hủy trang bị trong túi** (đỏ, hỏi xác nhận). Không hoàn tác |
@@ -258,6 +259,10 @@ await A('give_item', { id: 'dragon_scale', count: 20 });
 await A('give_item', { id: 'mam_co', count: 20 });
 for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
+// thú hiếm Long Vương cấp tối đa (đủ 3 kỹ năng), dắt theo luôn; Mồi Rồng để câu ở Hồ Long Vương
+await A('give_pet', { id: 'long_vuong', level: 20 });
+await A('give_item', { id: 'dragon_bait', count: 100 });
+
 await A('heal');
 ```
 
@@ -270,7 +275,10 @@ tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm 
 Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nhờ `reset_stats`); riêng **vàng** (`add_gold`) và **đồ / ngọc**
 (`give_gear`, `give_item`) vẫn cộng thêm vào cái đang có.
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thú cưng, kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
+Thú Long Vương tặng bằng `give_pet` **không** ghi lên Bia Long Vương và không báo cả server (bia chỉ ghi người tự câu được);
+danh hiệu Long Vương Chủ thì có (thành tựu tính theo thú đang có).
+
+Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
 kỹ năng tháp mở bằng `set_tower`), thành tựu, nhiệm vụ.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
