@@ -135,7 +135,7 @@
   // Cổng vào vùng chưa mở (P.view.unlocked do server tính).
   function locked(P, portal) {
     const target = mapOf(portal.to);
-    return target.zone != null && !P.view.unlocked[target.zone];
+    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel);
   }
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]

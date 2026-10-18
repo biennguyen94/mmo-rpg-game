@@ -9,6 +9,8 @@ out = %{
   rules: Data.rules(),
   chaos: Data.chaos(),
   recipes: Data.recipes(),
+  # Hồ Long Vương: cấp vào (DECISIONS "Long Vương")
+  lake: Map.take(HacLong.World.Maps.get("long_vuong_lake"), [:name, :min_level]),
   library: HacLong.Library.get(),
   # lịch mặc định trong config/config.exs (máy chủ có thể đổi bằng biến môi trường WORLD_BOSS_*)
   world_boss: Map.new(Config.Reader.read!("config/config.exs", env: :prod)[:hac_long][:world_boss]),

@@ -1086,12 +1086,37 @@ defmodule HacLong.Game.Engine do
       sks = Pets.active_skills(p)
       rend = Enum.find(sks, &(&1.id == "rend"))
       bite = if rend, do: round(bite * @pet_sk.rend_mult), else: bite
-      what = if rend, do: "#{rend.name}: ", else: ""
+
+      # Long Vương: Thủy Long Ba mỗi `tidal_every` lượt một lần, mạnh gấp `tidal_mult`, quái mất 1 lượt
+      tidal = Enum.find(sks, &(&1.id == "tidal"))
+
+      tidal =
+        tidal &&
+          p.battle.turn - (p.battle[:tidal_at] || -@pet_sk.tidal_every) >= @pet_sk.tidal_every &&
+          tidal
+
+      bite = if tidal, do: round(bite * @pet_sk.tidal_mult), else: bite
+
+      what =
+        cond do
+          tidal -> "#{tidal.name}: "
+          rend -> "#{rend.name}: "
+          true -> ""
+        end
 
       p =
         p
         |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
         |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
+
+      p =
+        if tidal && p.battle.monster.hp > 0,
+          do:
+            p
+            |> put_in([:battle, :tidal_at], p.battle.turn)
+            |> put_effect(:monster, "stun", 1, 0)
+            |> log("🌊 #{p.battle.monster.name} bị cột nước đánh choáng!", "good"),
+          else: p
 
       Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
     else
@@ -1105,6 +1130,15 @@ defmodule HacLong.Game.Engine do
 
     if healed > 0,
       do: %{p | hp: p.hp + healed} |> log("🐾 #{sk.name}: hồi #{healed} máu.", "good"),
+      else: p
+  end
+
+  # Long Vương: Long Lân Hộ Thể hồi `scales_heal` máu mỗi lần cắn (giảm sát thương nhận ở `pet_guard/1`)
+  defp pet_skill(p, %{id: "scales"} = sk, d, _bite) do
+    healed = min(d.maxHp - p.hp, max(1, round(d.maxHp * @pet_sk.scales_heal)))
+
+    if healed > 0,
+      do: %{p | hp: p.hp + healed} |> log("🐉 #{sk.name}: hồi #{healed} máu.", "good"),
       else: p
   end
 
@@ -1136,6 +1170,12 @@ defmodule HacLong.Game.Engine do
   end
 
   defp pet_skill(p, _sk, _d, _bite), do: p
+
+  defp pet_has?(p, id),
+    do: Map.get(p, :pet) != nil and Enum.any?(Pets.active_skills(p), &(&1.id == id))
+
+  # phần sát thương nhận bị thú đỡ (Long Vương: Long Lân Hộ Thể)
+  defp pet_guard(p), do: if(pet_has?(p, "scales"), do: @pet_sk.scales_reduce, else: 0)
 
   # Trả về {nhân_vật, tấn_công, phòng_thủ_quái, chí_mạng?, hệ_số, tên, hàm_sau_khi_trúng}.
   defp strike_with(p, nil, _d, atk, dfn, crit),
@@ -1346,11 +1386,24 @@ defmodule HacLong.Game.Engine do
         |> log("✨ Bất tử! Bạn đứng dậy với #{max(1, round(d.maxHp * f))} máu.", "good")
 
       nil ->
-        p
+        pet_rebirth(p, d)
     end
   end
 
   defp survive(p, _d), do: p
+
+  # Long Vương Hồi Sinh: mỗi trận một lần, gục thì sống lại với `rebirth_hp` máu tối đa
+  defp pet_rebirth(p, d) do
+    if pet_has?(p, "rebirth") and not Map.get(p.battle, :pet_revived, false) do
+      hp = max(1, round(d.maxHp * @pet_sk.rebirth_hp))
+
+      %{p | hp: hp}
+      |> put_in([:battle, :pet_revived], true)
+      |> log("🐉 Long Vương Hồi Sinh! #{Pets.name(p)} cứu bạn, đứng dậy với #{hp} máu.", "good")
+    else
+      p
+    end
+  end
 
   # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
   defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
@@ -1381,7 +1434,8 @@ defmodule HacLong.Game.Engine do
               # đối thủ là người có dòng cánh "bỏ qua phòng thủ"
               round(d.def * (1 - (m[:ignore_def] || 0))),
               if(mc, do: m[:crit_mult] || @combat.monster_crit_mult, else: 1),
-              (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb)
+              (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
+                (1 - pet_guard(p))
             )
 
           {dmg, p} = absorb_shield(p, dmg)
@@ -1633,10 +1687,10 @@ defmodule HacLong.Game.Engine do
 
     p =
       cond do
-        pet_up == Pets.skill_level() ->
+        pet_up && Pets.skill_at(p.pet, pet_up) ->
           log(
             p,
-            "🐾 #{Pets.name(p)} lên cấp #{pet_up}, học được #{Pets.skill(p.pet).name}!",
+            "🐾 #{Pets.name(p)} lên cấp #{pet_up}, học được #{Pets.skill_at(p.pet, pet_up).name}!",
             "win"
           )
 

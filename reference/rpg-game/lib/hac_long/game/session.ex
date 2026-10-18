@@ -699,11 +699,26 @@ defmodule HacLong.Game.Session do
     track_guild(old, player, result)
     s = arm_auto(s)
 
+    # câu được thú hiếm (Long Vương): ghi Bia Long Vương, đánh số, báo cả server
+    {rare, result} = if is_map(result), do: Map.pop(result, :rare_pet), else: {nil, result}
+    result = if rare && player, do: rare_pet(s, player, rare, result), else: result
+
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
     if announce, do: HacLong.Chat.system(announce)
 
     reply({result, player}, s)
+  end
+
+  defp rare_pet(s, player, pet, result) do
+    name = HacLong.Game.Data.pet(pet).name
+    n = HacLong.RarePets.record!(s.user_id, player.name, pet)
+
+    Map.merge(result, %{
+      msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+      dragon: true,
+      announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
+    })
   end
 
   # Góp tiến độ nhiệm vụ bang (không chờ: ghi database ngoài tiến trình này).
@@ -767,6 +782,16 @@ defmodule HacLong.Game.Session do
     else
       {:error, msg} -> {%{ok: false, msg: msg}, p}
     end
+  end
+
+  # Bia Long Vương: người đã câu được Long Vương, sớm trước
+  defp run(_s, p, %{"act" => "dragon_board"}) do
+    board =
+      HacLong.Game.Fishing.dragon().pet
+      |> HacLong.RarePets.list()
+      |> Enum.map(&%{n: &1.n, name: &1.name, at: Date.to_iso8601(DateTime.to_date(&1.at))})
+
+    {%{ok: true, board: board}, p}
   end
 
   defp run(_s, p, cmd), do: Commands.run(p, cmd)

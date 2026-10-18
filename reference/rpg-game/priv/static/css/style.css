@@ -358,6 +358,11 @@ ol.board .rank { width: 1.6em; text-align: right; color: var(--gold); font-weigh
 .fish-ui b { flex: 1; min-width: 0; }
 .fish-ui.idle { left: auto; background: none; border: 0; padding: 0; }
 .fish-ui.bite { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(233, 196, 106, 0.35); }
+/* Long Vương cắn câu: khung rung, ánh vàng */
+.fish-ui.big { border-color: #ffd34d; box-shadow: 0 0 14px 4px rgba(255, 200, 60, 0.55); animation: fish-big 0.18s infinite alternate; }
+@keyframes fish-big { from { transform: translateX(-2px); } to { transform: translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { .fish-ui.big { animation: none; } }
+.item.rare-pet { background: linear-gradient(90deg, rgba(255, 200, 60, 0.12), transparent); }
 .fish-ui b { font-size: 0.85rem; }
 .bobber { width: 14px; height: 18px; border-radius: 50% 50% 45% 45%; background: linear-gradient(#e0583f 50%, #f4f1e8 50%); flex: none; animation: bob 1.4s ease-in-out infinite; }
 .bobber.sink { animation: sink 0.25s ease-in-out infinite alternate; }

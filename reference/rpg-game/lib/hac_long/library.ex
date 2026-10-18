@@ -50,13 +50,15 @@ defmodule HacLong.Library do
           cond do
             m.realm -> "Vùng đất chuyển sinh #{m.realm}"
             m.side -> "Bản đồ phụ"
+            m.fish -> "Hồ câu, không có quái"
             true -> zone_name(m.zone, zones)
           end,
         # Phase 6 (B-30): vùng chuyển sinh cần chuyển sinh ≥ cs và cấp ≥ need
         cs: m.realm && m.min_rebirths,
         need: m.realm && m.min_level,
-        min: Enum.min(lv, fn -> nil end),
-        max: Enum.max(lv, fn -> nil end),
+        # bản đồ không có quái nhưng cần cấp (Hồ Long Vương): cấp vào ghi ở min / max
+        min: Enum.min(lv, fn -> if(!m.realm, do: m.min_level) end),
+        max: Enum.max(lv, fn -> if(!m.realm, do: m.min_level) end),
         monsters: kinds,
         boss: m.boss && zone && zone.boss.id,
         world_boss: m.world_boss != nil,

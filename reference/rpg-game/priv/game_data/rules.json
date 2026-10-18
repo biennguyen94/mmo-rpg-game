@@ -577,7 +577,7 @@
       "boss_potions": 2
     },
     "pets": {
-      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level, kỹ năng 3 (chỉ Long Vương) ở skill3_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
       "tame_kills": 100,
       "tame_bonus": 0.03,
       "tame_bite": 0.15,
@@ -594,6 +594,7 @@
       "max_level": 20,
       "skill_level": 5,
       "skill2_level": 15,
+      "skill3_level": 20,
       "xp_coef": 5,
       "boss_wins": 5,
       "feed_gold": 500,
@@ -605,7 +606,12 @@
         "pickpocket_gold_pct": 0.1,
         "venom_turns": 3,
         "venom_power": 0.5,
-        "rend_mult": 1.6
+        "rend_mult": 1.6,
+        "tidal_mult": 2,
+        "tidal_every": 3,
+        "scales_reduce": 0.1,
+        "scales_heal": 0.05,
+        "rebirth_hp": 0.3
       },
       "sourceType": "DESIGN",
       "version": 2,
@@ -751,7 +757,40 @@
             2,
             "fish_gold"
           ]
+        ],
+        "lake": [
+          [
+            5,
+            "old_boot"
+          ],
+          [
+            25,
+            "fish_small"
+          ],
+          [
+            35,
+            "fish_carp"
+          ],
+          [
+            32,
+            "fish_eel"
+          ],
+          [
+            3,
+            "fish_gold"
+          ]
         ]
+      },
+      "dragon": {
+        "_doc": "DECISIONS \"Long Vương\": mỗi lần câu được cá ở bản đồ có `fish: \"lake\"` (Hồ Long Vương), thêm `chance` cơ hội Long Vương (`pet`) cắn câu; có `bait` (Mồi Rồng) trong túi thì tốn 1 mồi, cơ hội × `bait_mult`. Mỗi nhân vật tối đa 1 con; đã có thì lần cắn câu đó ra `dupe` (Cá Chép Vàng).",
+        "pet": "long_vuong",
+        "chance": 0.00005,
+        "bait": "dragon_bait",
+        "bait_mult": 2,
+        "dupe": "fish_gold",
+        "sourceType": "DESIGN",
+        "version": 1,
+        "verified": false
       }
     },
     "tutorial": {

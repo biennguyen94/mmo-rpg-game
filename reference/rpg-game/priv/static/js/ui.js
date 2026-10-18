@@ -730,15 +730,16 @@
   function nearWater() {
     const m = WORLD.maps[P.pos.map];
     if (!m) return false;
-    return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (m.tiles[P.pos.y + dy] || '')[P.pos.x + dx] === '~');
+    const water = WORLD.water || ['~'];
+    return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => water.includes((m.tiles[P.pos.y + dy] || '')[P.pos.x + dx]));
   }
 
   function viewFishing() {
     if (fishing) {
-      const bite = fishing.phase === 'bite';
-      return `<div id="fish-ui" class="fish-ui ${bite ? 'bite' : ''}">
+      const bite = fishing.phase === 'bite', big = bite && fishing.big;
+      return `<div id="fish-ui" class="fish-ui ${bite ? 'bite' : ''} ${big ? 'big' : ''}">
         <span class="bobber ${bite ? 'sink' : ''}" aria-hidden="true"></span>
-        <b>${bite ? 'Cá cắn câu! Giật ngay!' : 'Đang chờ cá cắn câu…'}</b>
+        <b>${big ? '🐉 Có gì đó rất lớn cắn câu! Giật ngay!' : bite ? 'Cá cắn câu! Giật ngay!' : 'Đang chờ cá cắn câu…'}</b>
         <button class="btn ${bite ? 'primary' : ''}" data-act="fish-reel">${icon('fishing-pole')} Giật cần</button>
       </div>`;
     }
@@ -769,10 +770,16 @@
       // server tính giờ cá cắn từ lúc nhận lệnh; lệnh giật cũng mất nửa vòng mạng mới tới,
       // nên hiện "cá cắn" sớm hơn một vòng mạng để bấm kịp
       const biteIn = Math.max(0, r.wait - rtt);
-      const f = { phase: 'wait', timers: [] };
+      const f = { phase: 'wait', timers: [], big: !!r.big };
       fishing = f;
-      f.timers.push(setTimeout(() => { if (fishing !== f) return; f.phase = 'bite'; Sound.play('bite'); if (navigator.vibrate) navigator.vibrate(120); redrawFishing(); }, biteIn));
-      f.timers.push(setTimeout(() => { if (fishing !== f) return; stopFishing(); toast('Chậm tay rồi, cá ăn mất mồi.', true); redrawFishing(); }, biteIn + r.window + 400));
+      f.timers.push(setTimeout(() => {
+        if (fishing !== f) return;
+        f.phase = 'bite'; Sound.play(f.big ? 'rare' : 'bite');
+        if (navigator.vibrate) navigator.vibrate(f.big ? [200, 80, 200, 80, 300] : 120);
+        if (f.big) bigFx('🐉 Có gì đó rất lớn…', 'level');
+        redrawFishing();
+      }, biteIn));
+      f.timers.push(setTimeout(() => { if (fishing !== f) return; stopFishing(); toast(f.big ? 'Dây câu đứt phựt! Bóng vàng khổng lồ lặn mất xuống Vực Rồng...' : 'Chậm tay rồi, cá ăn mất mồi.', true); redrawFishing(); }, biteIn + r.window + 400));
       Sound.play('cast');
     } catch (e) { toast(e.msg, true); }
     busy = false;
@@ -787,7 +794,8 @@
       const r = await Net.send({ act: 'fish_reel' });
       P = r.player;
       result(r);
-      Sound.play(!r.ok ? 'error' : r.fish === 'fish_gold' ? 'rare' : 'catch');
+      if (r.dragon) { bigFx('🐉 LONG VƯƠNG!', 'level'); dragonAt = 0; }
+      Sound.play(!r.ok ? 'error' : r.fish === 'fish_gold' || r.dragon ? 'rare' : 'catch');
     } catch (e) { toast(e.msg, true); }
     busy = false;
     refresh();
@@ -2081,7 +2089,7 @@
   function viewPets() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);
     if (!owned.length) return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Chưa có thú cưng. Gặp Người Nuôi Thú ở góc dưới bên phải Làng.</p></div>`;
-    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} và ${RULES.petSkill2Level} học kỹ năng.</p><div class="list">${owned.map((pt) => {
+    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} và ${RULES.petSkill2Level} học kỹ năng (Long Vương thêm kỹ năng thứ ba ở cấp ${RULES.petSkill3Level}).</p><div class="list">${owned.map((pt) => {
       const L = petLevel(pt.id);
       const pct = L.next ? Math.round(((L.xp - L.from) / (L.next - L.from)) * 100) : 100;
       return `<div class="item">${petPic(pt)}<div class="grow">
@@ -2837,11 +2845,34 @@
       <div class="list">${RECIPES.filter((r) => r.npc === 'herbalist').map((r) => {
         const out = ITEMS[r.out], needs = Object.entries(r.needs), need = r.level || 1;
         const ok = lv >= need && needs.every(([id, n]) => (P.inv[id] || 0) >= n);
-        return `<div class="item">${itemIcon(out)}<div class="grow"><div class="name">${esc(out.name)}</div>
+        return `<div class="item">${itemIcon(out)}<div class="grow"><div class="name">${esc(out.name)}${r.n > 1 ? ` <span class="small num">×${r.n}</span>` : ''}</div>
           <div class="small">${esc(out.desc)}</div>
           <div class="small muted">${lv < need ? `<span style="color:var(--bad)">Cần nghề cấp ${need}</span> · ` : ''}${needs.map(([id, n]) => `${ITEMS[id].name} ${Math.min(P.inv[id] || 0, n)}/${n}`).join(' · ')}</div></div>
           <button class="btn ${ok ? 'primary' : ''}" data-act="craft" data-id="${r.id}" ${ok ? '' : 'disabled'}>Pha</button></div>`;
       }).join('')}</div></div>`;
+  }
+
+  // ---------- Miếu Long Vương (DECISIONS "Long Vương") ----------
+  // Bia Long Vương: tải từ server khi mở NPC (lệnh dragon_board), giữ tới khi có người câu được thêm
+  let dragonBoard = null, dragonAt = 0, dragonLoading = false;
+  async function loadDragonBoard() {
+    if (dragonLoading) return;
+    dragonLoading = true; dragonAt = Date.now();
+    try { const r = await Net.send({ act: 'dragon_board' }); if (r.ok) { dragonBoard = r.board; refresh(); } } catch (e) { /* thử lại lần mở sau */ }
+    dragonLoading = false;
+  }
+  function dragonCard() {
+    const D = RULES.dragon, pet = PETS.find((x) => x.id === D.pet), bait = P.inv[D.bait] || 0;
+    if (Date.now() - dragonAt > 60000) loadDragonBoard();
+    const odds = (k) => `1/${fmt(Math.round(1 / (D.chance * k)))}`;
+    const board = dragonBoard || [];
+    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
+      <p class="small">Mỗi lần thả câu ở hồ này, cơ hội ${esc(pet.name)} cắn câu là <b>${odds(1)}</b>; có ${esc(ITEMS[D.bait].name)} trong túi thì tốn 1 mồi mỗi lần thả, cơ hội <b>${odds(D.bait_mult)}</b>. ${esc(ITEMS[D.bait].name)} pha ở Bà Lang.</p>
+      <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>
+      <p class="small muted">Kỹ năng: ${[pet.skill, pet.skill2, pet.skill3].map((k, i) => `${esc(k.name)} (cấp ${[RULES.petSkillLevel, RULES.petSkill2Level, RULES.petSkill3Level][i]}): ${esc(k.desc)}`).join(' · ')}</p></div>
+      <div class="card"><h3>Bia Long Vương</h3>${dragonBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
+        : board.length ? `<div class="list">${board.map((b) => `<div class="item"><b class="num" style="color:var(--gold)">#${b.n}</b><div class="grow">${esc(b.name)}</div><span class="small muted">${esc(b.at)}</span></div>`).join('')}</div>`
+        : '<p class="small muted">Bia còn trống. Chưa ai câu được Long Vương.</p>'}</div>`;
   }
 
   // Tiến độ nhiệm vụ đang làm (server vẫn là nơi kiểm tra cuối cùng).
@@ -2974,9 +3005,10 @@
       sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Thú đắt cắn mạnh hơn. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          const sk = [pt.skill, pt.skill2].filter(Boolean).map((k) => esc(k.name)).join(', ');
-          return `<div class="item">${petPic(pt)}<div class="grow"><div class="name">${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)} Cắn ${pc0(pt.bite || 0)} đòn thường.${sk ? ` Kỹ năng: ${sk}.` : ''}</div></div>
+          const sk = [pt.skill, pt.skill2, pt.skill3].filter(Boolean).map((k) => esc(k.name)).join(', ');
+          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)} Cắn ${pc0(pt.bite || 0)} đòn thường.${sk ? ` Kỹ năng: ${sk}.` : ''}</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
+              : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Hồ Long Vương</span>'
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
         }).join('')}</div></div>`);
       const ready = P.view.tameable || [], near = P.view.taming || [];
@@ -3011,6 +3043,7 @@
     if (n.role === 'talk') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
+    if (n.role === 'dragon') sections.push(dragonCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
       <div class="card npc-head">

@@ -204,6 +204,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   chúa tể) để thuần phục. Thú đi theo, cộng % chỉ số và hay cắn thêm một đòn; thú đắt cắn mạnh hơn, thú thuần từ vùng chuyển sinh
   càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt);
   cấp 5 và 15 học hai kỹ năng riêng. Xem tỉ lệ cắn, sức cắn, kỹ năng ở Menu → Thú cưng.
+- **Long Vương** 🐉: thú hiếm duy nhất, không bán, chỉ câu được ở **Hồ Long Vương** (cổng mép trái Rừng Mê 1, từ cấp 30). Mỗi lần
+  thả câu ở hồ có 1/20.000 cơ hội Ngài cắn câu (phao giật mạnh, "Có gì đó rất lớn…": giật ngay!); có **Mồi Rồng** (Bà Lang pha 100 mồi
+  từ Cá Chép Vàng + 3 Linh Chi) thì gấp đôi. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
+  Ba kỹ năng ở cấp 5 / 15 / 20: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh. Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác

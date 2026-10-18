@@ -248,7 +248,7 @@ Quái thường: khoảng 1/125 con ra Excellent, 1/581 con ra đồ Thần. Ng�
 | **Vé Lâu Đài** | Vào Lâu Đài Máu (gặp Người Gác Tháp ở Làng, trong giờ mở cửa, từ cấp 40). Mua ở Người Gác Tháp hoặc ghép Cuộn Giấy Tổng Lãnh Thiên Thần + Xương Máu ở Máy Hỗn Nguyên. | 0 |
 | **Lông Vũ Kền Kền** | Thưởng khi hạ Hiệp Sĩ Máu ở Lâu Đài Máu. Nguyên liệu ghép cánh cấp 3 ở Máy Hỗn Nguyên. | 0 |
 
-### Nguyên liệu thu thập (10)
+### Nguyên liệu thu thập (11)
 
 | Tên | Công dụng | Giá |
 |---|---|---|
@@ -260,6 +260,7 @@ Quái thường: khoảng 1/125 con ra Excellent, 1/581 con ra đồ Thần. Ng�
 | **Cá Chép** | Câu ở hồ nước. Bác Đầu Bếp nấu thành Bánh Mì Cá. | 25 |
 | **Lươn Điện** | Chỉ có ở Đầm Lầy và Hang Hắc Long. Bác Đầu Bếp nấu thành Bánh Xèo Lươn. | 60 |
 | **Cá Chép Vàng** | Hiếm lắm mới câu được. Nấu Mâm Cỗ Cá Vàng, pha Rượu Long Huyết, hoặc bán được giá cao. | 500 |
+| **Mồi Rồng** | Mồi thơm làm từ Cá Chép Vàng. Câu được cá ở Hồ Long Vương thì tốn 1 mồi, cơ hội Long Vương cắn câu gấp đôi. | 20 |
 | **Chiếc Ủng Cũ** | Ai vứt xuống hồ thế này... | 2 |
 | **Vảy Cổ Long** | Chiến lợi phẩm từ trùm thế giới. Bán được giá cao. | 1.000 |
 

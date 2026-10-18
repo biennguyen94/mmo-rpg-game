@@ -831,3 +831,23 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   ít nhất 1 dòng" giữ nguyên. Cấp Rèn đã có tính lại theo ngưỡng mới. Kho Đồ thêm ghi chú rèn đồ (`{{SMITH}}`).
 - (anh "ok nâng 2 cục đi") **Rèn vũ khí tốn 2 Quặng Mithril** (`RULES.crafting.smith_costs.weapon.ore_rare` 1 → 2; giáp, khiên giữ 1).
   Quặng Mithril hái từ cấp 18 (~25–40 giây một cục khi hái riêng), trước đó nút thắt chỉ là quặng thường.
+- (anh "ok làm đi", chọn màu vàng, "thêm bến, thuyền, cầu") **Long Vương: thú hiếm duy nhất, câu ở Hồ Long Vương.**
+  - Bản đồ mới `long_vuong_lake` (27 × 20, `priv/maps/long_vuong_lake.json`): hồ ở giữa, Vực Rồng (nước sâu) ở tâm, lối đi vòng
+    quanh, 4 bến gỗ + một cầu bắc qua hồ có nhánh ra sát Vực Rồng, thuyền, sen, cây đước, đèn lồng, Miếu Long Vương có tượng rồng
+    vàng. Không có quái, không PK (không phải bản đồ sự kiện, không có quái để đánh). Cổng ở mép trái Rừng Mê 1; cũng có trong
+    bảng Chọn map. Vào từ **cấp 30** (`min_level`; trước đây chỉ vùng chuyển sinh có `min_level`, nay bản đồ thường không quái cũng
+    dùng: cổng chặn, `World.min_level/1` trả cấp này để tính giá dịch chuyển).
+  - Ô mới (`Maps.@legend`): `=` nước sâu, `M` cây đước, `Q` sen, `U` thuyền (đều là nước, đứng cạnh câu được), `B` / `E` bến / cầu
+    gỗ (đi được), `G` tượng rồng, `J` đèn lồng. Hình: `scripts/long_vuong_assets.sh` (CREDITS).
+  - Bảng cá `RULES.fishing.pools.lake`: ủng 5, Cá Diếc 25, Cá Chép 35, Lươn Điện 32, **Cá Chép Vàng 3** (hồ sâu 2, hồ thường 1).
+  - `RULES.fishing.dragon`: mỗi lần **thả câu** ở hồ có 1/20.000 cơ hội Long Vương cắn (quyết định lúc thả, client hiện "Có gì đó rất
+    lớn…", khung rung); giật đúng lúc thì được, trễ thì "dây câu đứt". Có **Mồi Rồng** trong túi: mỗi lần thả tốn 1 mồi, 1/10.000.
+    Mồi pha ở Bà Lang: Cá Chép Vàng + 3 Linh Chi → **100 mồi** (công thức có `n`), cần nghề Nấu ăn cấp 3, không cộng kinh nghiệm nghề.
+  - Mỗi nhân vật tối đa 1 con; đã có thì lần đó ra Cá Chép Vàng. Không bán (`PETS.rare`), không tính vào thành tựu "đủ thú".
+  - Chỉ số (`pets.json`): công +10 %, thủ +8 %, máu +8 %, EXP +5 %, vàng +5 % (×1,95 ở cấp 20), sức cắn 45 %. Kỹ năng: **Thủy Long Ba**
+    (cấp 5, cắn ×2 và quái choáng 1 lượt, mỗi 3 lượt một lần), **Long Lân Hộ Thể** (cấp 15, giảm 10 % sát thương nhận, mỗi lần cắn hồi
+    5 % máu), **Long Vương Hồi Sinh** (cấp 20 = `RULES.pets.skill3_level`, mỗi trận một lần gục thì sống lại 30 % máu). Số ở
+    `RULES.pets.skills` (`tidal_*`, `scales_*`, `rebirth_hp`).
+  - **Bia Long Vương**: bảng `rare_pets` (migration `20261109000000_create_rare_pets`, `HacLong.RarePets`), đánh số theo thứ tự;
+    câu được thì báo cả server "… Long Vương Chủ thứ #n", thành tựu + danh hiệu **Long Vương Chủ**. NPC Ông Lão Câu Cá và Bia Long
+    Vương (role `dragon`) hiện tỉ lệ, số mồi, kỹ năng và bảng tên (lệnh `dragon_board`).

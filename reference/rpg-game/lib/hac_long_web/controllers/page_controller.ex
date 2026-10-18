@@ -91,6 +91,9 @@ defmodule HacLongWeb.PageController do
         petMaxLevel: HacLong.Game.Pets.max_level(),
         petSkillLevel: HacLong.Game.Pets.skill_level(),
         petSkill2Level: HacLong.Game.Pets.skill2_level(),
+        petSkill3Level: HacLong.Game.Pets.skill3_level(),
+        # Long Vương (DECISIONS "Long Vương"): cơ hội mỗi lần thả câu ở Hồ Long Vương, mồi gấp bao nhiêu
+        dragon: Map.take(HacLong.Game.Fishing.dragon(), [:pet, :chance, :bait, :bait_mult]),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),

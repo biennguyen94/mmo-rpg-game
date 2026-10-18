@@ -383,10 +383,22 @@ pk_items = [
 ]
 # ---------- Thú cưng ----------
 PR = R["pets"]
+# thú hiếm (Long Vương): không bán, câu được ở Hồ Long Vương (RULES.fishing.dragon), có kỹ năng 3 ở skill3_level
+DRG = R["fishing"]["dragon"]
+def pet_price(pt):
+    if not pt.get("rare"):
+        return n(pt["price"])
+    return (f"🎣 câu ở {E(D['lake']['name'])} (cấp {D['lake']['min_level']}+): 1/{n(round(1 / DRG['chance']))} mỗi lần thả, "
+            f"có Mồi Rồng 1/{n(round(1 / (DRG['chance'] * DRG['bait_mult'])))}")
+def pet_sk2(pt):
+    s2 = f"{E(pt['skill2']['name'])}: {E(pt['skill2']['desc'])}"
+    if pt.get("skill3"):
+        s2 += f"<br><b>Cấp {PR['skill3_level']}</b> {E(pt['skill3']['name'])}: {E(pt['skill3']['desc'])}"
+    return s2
 pet_rows = "".join(
-    f"<tr><td><b>{E(pt['name'])}</b></td><td class=n>{n(pt['price'])}</td><td>{E(pt['desc'])}</td><td class=n>{pct(pt['bite'])}</td>"
-    f"<td>{E(pt['skill']['name'])}: {E(pt['skill']['desc'])}</td><td>{E(pt['skill2']['name'])}: {E(pt['skill2']['desc'])}</td></tr>"
-    for pt in sorted(D["pets"], key=lambda x: x["price"]))
+    f"<tr><td><b>{E(pt['name'])}</b></td><td class=n>{pet_price(pt)}</td><td>{E(pt['desc'])}</td><td class=n>{pct(pt['bite'])}</td>"
+    f"<td>{E(pt['skill']['name'])}: {E(pt['skill']['desc'])}</td><td>{pet_sk2(pt)}</td></tr>"
+    for pt in sorted(D["pets"], key=lambda x: (x.get("rare", False), x["price"])))
 pet_rule = (f"Cắn: {pct(PR['bite_chance'])} số lượt (+{pct(PR['bite_chance_per_level'])} mỗi cấp), mỗi lần bằng sức cắn × đòn thường (+{pct(PR['bite_power_per_level'])} mỗi cấp). "
             f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
             f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); chỉ số cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)). "
@@ -535,6 +547,7 @@ def grp(title, ids):
 other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình mana", ["mana_s", "mana_m", "mana_l"]) +
          grp(f"Món ăn (Bác Đầu Bếp; nghề Nấu ăn cấp 1–{len(COOK_LV)} ở {' / '.join(map(str, COOK_LV))} kinh nghiệm)", ["cha_ca", "banh_mi_ca", "banh_xeo_luon", "mam_co"]) +
          grp("Đồ uống (Bà Lang, cộng dồn với món ăn)", ["bia_thao_duoc", "ruou_thuoc", "ruou_linh_chi", "ruou_long_huyet"]) +
+         grp("Mồi câu (Bà Lang)", ["dragon_bait"]) +
          grp("Ngọc", ["jewel_bless", "jewel_soul", "jewel_chaos", "jewel_life"]) +
          grp("Vé và nguyên liệu sự kiện", ["ds_ticket", "bc_ticket", "cc_ticket", "devil_eye", "devil_key", "archangel_scroll", "blood_bone",
                                            "kundun_mark", "lost_map", "condor_feather"]) +

@@ -348,6 +348,10 @@ defmodule HacLong.World do
       target.realm && not realm_open?(p, target) ->
         {%{ok: false, msg: realm_msg(target)}, p}
 
+      # bản đồ không có quái nhưng cần cấp (Hồ Long Vương)
+      !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
+        {%{ok: false, msg: "Cần đạt cấp #{target.min_level} để vào #{target.name}."}, p}
+
       true ->
         leave(p, uid)
         {x, y} = portal.spawn
@@ -391,6 +395,8 @@ defmodule HacLong.World do
     Enum.min(lv, fn -> nil end)
   end
 
+  # bản đồ không có quái nhưng ghi `min_level` (Hồ Long Vương)
+  def min_level(%{realm: nil, min_level: lv}) when is_integer(lv), do: lv
   def min_level(_), do: nil
 
   @doc "Giá dịch chuyển tới bản đồ: `base + per_level × cấp quái thấp nhất`; Làng, Nhà miễn phí."

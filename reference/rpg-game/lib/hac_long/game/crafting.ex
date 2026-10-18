@@ -89,9 +89,11 @@ defmodule HacLong.Game.Crafting do
         {%{ok: false, msg: "Chưa đủ nguyên liệu."}, p}
 
       true ->
-        p = p |> take_all(r.needs) |> Engine.add_item(r.out)
+        n = r[:n] || 1
+        p = p |> take_all(r.needs) |> Engine.add_item(r.out, n)
         {p, note} = gain(p, :cook, r[:xp] || 1)
-        {%{ok: true, msg: done.(Data.item(r.out).name, note)}, p}
+        name = if n > 1, do: "#{Data.item(r.out).name} ×#{n}", else: Data.item(r.out).name
+        {%{ok: true, msg: done.(name, note)}, p}
     end
   end
 

@@ -15,6 +15,9 @@ defmodule HacLong.Game.Pets do
   mỗi cấp tăng chỉ số cộng thêm, tỷ lệ và sức cắn; kỹ năng 1 ở `skill_level`, kỹ năng 2 ở `skill2_level`
   (`skill`, `skill2` trong `PETS`; thú thuần dùng Cắn Xé rồi Húc Ngã), dùng khi cắn.
 
+  Long Vương (`rare: true`, DECISIONS "Long Vương"): không bán, chỉ câu được ở Hồ Long Vương
+  (`HacLong.Game.Fishing`); có thêm kỹ năng 3 (`skill3`) ở `skill3_level`.
+
   Trạng thái trong nhân vật: `pets: [id]` (đã có), `pet: id | nil` (đang dắt theo),
   `pet_xp: %{id => số trận}`.
   """
@@ -28,6 +31,8 @@ defmodule HacLong.Game.Pets do
   @max_level @rules.max_level
   @skill_level @rules.skill_level
   @skill2_level @rules.skill2_level
+  @skill3_level @rules.skill3_level
+  @unlock [@skill_level, @skill2_level, @skill3_level]
   @tame_skills [
     %{id: "rend", name: "Cắn Xé", desc: "Cú cắn mạnh gấp #{@rules.skills.rend_mult} lần."},
     %{id: "bash", name: "Húc Ngã", desc: "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."}
@@ -37,6 +42,15 @@ defmodule HacLong.Game.Pets do
   def max_level, do: @max_level
   def skill_level, do: @skill_level
   def skill2_level, do: @skill2_level
+  def skill3_level, do: @skill3_level
+
+  @doc "Thú hiếm (không bán, vd Long Vương)."
+  def rare?(id), do: match?(%{rare: true}, Data.pet(id))
+
+  @doc "Kỹ năng thú `id` mở ở đúng cấp `lv` (nil nếu cấp đó không mở kỹ năng nào)."
+  def skill_at(id, lv) do
+    id |> skills() |> Enum.zip(@unlock) |> Enum.find_value(fn {s, at} -> if at == lv, do: s end)
+  end
 
   # ---------- Cấp của thú ----------
 
@@ -52,11 +66,11 @@ defmodule HacLong.Game.Pets do
 
   defp active_level(p), do: level(p, p.pet)
 
-  @doc "Hai kỹ năng riêng của thú `id` (mở ở cấp `skill_level` và `skill2_level`)."
+  @doc "Các kỹ năng riêng của thú `id` (mở ở cấp `skill_level`, `skill2_level`, `skill3_level`)."
   def skills(id) do
     case data(id) do
       %{tame: _} -> @tame_skills
-      %{} = pt -> Enum.reject([pt[:skill], pt[:skill2]], &is_nil/1)
+      %{} = pt -> Enum.reject([pt[:skill], pt[:skill2], pt[:skill3]], &is_nil/1)
       _ -> []
     end
   end
@@ -263,7 +277,7 @@ defmodule HacLong.Game.Pets do
 
       p.pet
       |> skills()
-      |> Enum.zip([@skill_level, @skill2_level])
+      |> Enum.zip(@unlock)
       |> Enum.filter(&(lv >= elem(&1, 1)))
       |> Enum.map(&elem(&1, 0))
     else
@@ -303,7 +317,7 @@ defmodule HacLong.Game.Pets do
         skills:
           id
           |> skills()
-          |> Enum.zip([@skill_level, @skill2_level])
+          |> Enum.zip(@unlock)
           |> Enum.map(fn {s, at} -> Map.merge(s, %{at: at, learned: lv >= at}) end),
         name: pt.name,
         desc: pt.desc,
@@ -320,6 +334,9 @@ defmodule HacLong.Game.Pets do
     cond do
       pet == nil ->
         {%{ok: false, msg: "Không có con thú này."}, p}
+
+      pet[:rare] ->
+        {%{ok: false, msg: "#{pet.name} không bán, chỉ câu được ở Hồ Long Vương."}, p}
 
       id in owned(p) ->
         {%{ok: false, msg: "Bạn đã có #{pet.name} rồi."}, p}

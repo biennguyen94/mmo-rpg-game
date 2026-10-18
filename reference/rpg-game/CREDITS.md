@@ -102,3 +102,10 @@ Không dùng file âm thanh: mọi hiệu ứng được tổng hợp trong trì
 
 Hình nhân vật cầm cung, nỏ, gậy phép (`doll/hand1/bow.png`, `crossbow.png`, `staff.png`, Phase 15c): tự vẽ cho game này
 bằng `scripts/doll_weapons.py` (CC0). Hình đồ gốc MU (`mu_items/`) không nằm trong repo, xem `docs/ITEMS_PHASE15B.md`.
+
+## Hồ Long Vương, thú Long Vương (`tiles/`, `pets/long_vuong.png`, `npcs/fisher.png`, `items/dragon_bait.png`)
+
+Dựng bằng `scripts/long_vuong_assets.sh` từ bộ tile Dungeon Crawl Stone Soup ở trên (CC0, đã đối chiếu với danh sách chưa rõ
+giấy phép): Long Vương (`mon/dragons/quicksilver_dragon`, tô dải màu vàng kim), Ông Lão Câu Cá (`mon/unique/joseph`, vẽ thêm cần
+câu), nước sâu Vực Rồng (`dngn/water/deep_water`), cây đước (`dngn/trees/mangrove1`), tượng rồng vàng (`dngn/statues/statue_dragon`).
+Bến / cầu gỗ (`pier_v`, `pier_h`), thuyền (`boat`), sen (`lotus`), đèn lồng (`lantern`), hũ Mồi Rồng: tự vẽ cho game này (CC0).

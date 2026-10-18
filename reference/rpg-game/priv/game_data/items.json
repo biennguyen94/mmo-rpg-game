@@ -264,6 +264,13 @@
       "price": 500,
       "desc": "Hiếm lắm mới câu được. Nấu Mâm Cỗ Cá Vàng, pha Rượu Long Huyết, hoặc bán được giá cao."
     },
+    "dragon_bait": {
+      "name": "Mồi Rồng",
+      "slot": "material",
+      "sprite": "items/dragon_bait",
+      "price": 20,
+      "desc": "Mồi thơm làm từ Cá Chép Vàng. Câu được cá ở Hồ Long Vương thì tốn 1 mồi, cơ hội Long Vương cắn câu gấp đôi."
+    },
     "old_boot": {
       "name": "Chiếc Ủng Cũ",
       "slot": "material",

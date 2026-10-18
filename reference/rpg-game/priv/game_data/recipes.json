@@ -85,6 +85,18 @@
       "npc": "cook",
       "level": 5,
       "xp": 5
+    },
+    {
+      "id": "brew_dragon_bait",
+      "out": "dragon_bait",
+      "n": 100,
+      "needs": {
+        "fish_gold": 1,
+        "herb_rare": 3
+      },
+      "npc": "herbalist",
+      "level": 3,
+      "xp": 0
     }
   ]
 }

@@ -8,7 +8,11 @@ defmodule HacLong.Game.Fishing do
   - `reel/2`: giật cần. Chỉ được cá nếu giật trong `@window` kể từ lúc cá cắn; giật sớm hay
     muộn thì trượt. Đi chỗ khác thì mất lượt câu.
   - Loại cá tùy vùng (`pool/1`): Làng và Rừng Mê cá thường; Đầm Lầy và Hang Hắc Long có Lươn Điện.
-    Rất hiếm mới có Cá Chép Vàng.
+    Rất hiếm mới có Cá Chép Vàng. Hồ Long Vương (`fish: "lake"`) có bảng cá riêng.
+  - Long Vương (DECISIONS "Long Vương"): mỗi lần thả câu ở Hồ Long Vương có `RULES.fishing.dragon.chance`
+    cơ hội Ngài cắn câu (quyết định lúc thả câu, client nhận `big: true` để hiện phao giật mạnh); có Mồi Rồng
+    trong túi thì tốn 1 mồi, cơ hội × `bait_mult`. Giật đúng lúc thì được thú Long Vương (mỗi nhân vật một
+    con; đã có thì được Cá Chép Vàng), kết quả có `rare_pet` để Session ghi Bia Long Vương và báo cả server.
 
   Trạng thái lượt câu (`fishing: %{bite, pos}`) chỉ giữ trong Session, không lưu database.
   Số cá đã câu được lưu ở `fish_caught` (cho thành tựu).
@@ -25,9 +29,16 @@ defmodule HacLong.Game.Fishing do
   # {tỉ lệ, món}, ở `RULES.fishing` (`priv/game_data/rules.json`)
   @rules Data.rules().fishing
   @pools Map.new(@rules.pools, fn {k, l} -> {k, Enum.map(l, &List.to_tuple/1)} end)
+  @dragon @rules.dragon
+
+  def dragon, do: @dragon
+
+  @doc "Bản đồ `map_id` là hồ có Long Vương."
+  def dragon_lake?(map_id), do: match?(%{fish: "lake"}, Maps.get(map_id))
 
   def pool(map_id) do
     case Maps.get(map_id) do
+      %{fish: f} when is_binary(f) -> Map.fetch!(@pools, String.to_existing_atom(f))
       %{zone: z} when is_integer(z) and z >= @rules.deep_zone -> @pools.deep
       _ -> @pools.default
     end
@@ -41,7 +52,7 @@ defmodule HacLong.Game.Fishing do
 
       m ->
         Enum.any?([{1, 0}, {-1, 0}, {0, 1}, {0, -1}], fn {dx, dy} ->
-          Maps.tile(m, x + dx, y + dy) == "~"
+          Maps.water?(m, x + dx, y + dy)
         end)
     end
   end
@@ -59,9 +70,22 @@ defmodule HacLong.Game.Fishing do
       true ->
         lo..hi//_ = @wait
         wait = lo + floor(Rng.uniform() * (hi - lo))
+        {p, big} = dragon_roll(p)
+        reply = %{ok: true, wait: wait, window: @window}
+        reply = if big, do: Map.put(reply, :big, true), else: reply
+        {reply, Map.put(p, :fishing, %{bite: now + wait, pos: p.pos, big: big})}
+    end
+  end
 
-        {%{ok: true, wait: wait, window: @window},
-         Map.put(p, :fishing, %{bite: now + wait, pos: p.pos})}
+  # Hồ Long Vương: có Mồi Rồng thì tốn 1 mồi, cơ hội gấp `bait_mult`
+  defp dragon_roll(p) do
+    if dragon_lake?(p.pos.map) do
+      bait? = Map.get(p.inv, @dragon.bait, 0) > 0
+      p = if bait?, do: Engine.take_item(p, @dragon.bait), else: p
+      chance = @dragon.chance * if(bait?, do: @dragon.bait_mult, else: 1)
+      {p, Rng.uniform() < chance}
+    else
+      {p, false}
     end
   end
 
@@ -70,11 +94,55 @@ defmodule HacLong.Game.Fishing do
     p = Map.put(p, :fishing, nil)
 
     cond do
-      f == nil -> {%{ok: false, msg: "Bạn chưa thả câu."}, p}
-      f.pos != p.pos -> {%{ok: false, msg: "Bạn đã rời chỗ câu."}, p}
-      now < f.bite -> {%{ok: false, msg: "Giật sớm quá, cá sợ bỏ đi mất."}, p}
-      now > f.bite + @window -> {%{ok: false, msg: "Chậm tay rồi, cá ăn mất mồi."}, p}
-      true -> catch_fish(p)
+      f == nil ->
+        {%{ok: false, msg: "Bạn chưa thả câu."}, p}
+
+      f.pos != p.pos ->
+        {%{ok: false, msg: "Bạn đã rời chỗ câu."}, p}
+
+      now < f.bite ->
+        {%{ok: false, msg: "Giật sớm quá, cá sợ bỏ đi mất."}, p}
+
+      now > f.bite + @window and f[:big] ->
+        {%{ok: false, msg: "Dây câu đứt phựt! Bóng vàng khổng lồ lặn mất xuống Vực Rồng..."}, p}
+
+      now > f.bite + @window ->
+        {%{ok: false, msg: "Chậm tay rồi, cá ăn mất mồi."}, p}
+
+      f[:big] ->
+        land_dragon(p)
+
+      true ->
+        catch_fish(p)
+    end
+  end
+
+  @doc "Long Vương cắn câu và được kéo lên (tách riêng để kiểm thử)."
+  def land_dragon(p) do
+    pet = @dragon.pet
+    owned = Map.get(p, :pets) || []
+
+    if pet in owned do
+      {r, p} = land(p, @dragon.dupe)
+
+      {%{
+         r
+         | msg:
+             "🐉 Long Vương trồi lên nhìn bạn, nhả lại một #{Data.item(@dragon.dupe).name} rồi lặn mất."
+       }, p}
+    else
+      p =
+        p
+        |> Map.put(:pets, owned ++ [pet])
+        |> Map.put(:fish_caught, Map.get(p, :fish_caught, 0) + 1)
+
+      name = Data.pet(pet).name
+
+      {%{
+         ok: true,
+         msg: "🐉 Câu được #{name}! Ngài đã nhận bạn làm chủ. Dắt theo ở tab Nhân vật.",
+         rare_pet: pet
+       }, p}
     end
   end
 
