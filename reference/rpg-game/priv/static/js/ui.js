@@ -118,7 +118,21 @@
   }
   // nhẫn, dây chuyền: hình gốc MU rất nhỏ (~15–21 px): giữ kích thước gốc, không phóng to (CSS `img.own.nat`)
   const NAT_SLOTS = ['ring', 'pendant'];
-  const ownCls = (it) => (iconSet() === 'pixel' ? ' pix' : NAT_SLOTS.includes(it.slot) ? ' nat' : '');
+  const ownCls = (it) => (iconSet() === 'pixel' ? ' pix' : NAT_SLOTS.includes(it.slot) ? ' nat' : GEAR_KINDS.includes(it.slot) || it.slot === 'wing' ? ' cap' : '');
+  // hình trang bị MU nhỏ (mũ chỉ ~40–60 px sau khi cắt viền) bị kéo cho đầy ô thì nhòe, nhất là màn hình nét (2–3 điểm
+  // ảnh / px): không phóng quá MAX_ZOOM lần tính theo điểm ảnh thật — thu nhỏ phần hình bằng padding, khung giữ nguyên
+  const MAX_ZOOM = 1;
+  document.addEventListener('load', (e) => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.matches('img.own.cap')) return;
+    img.style.padding = '';
+    const w = img.clientWidth, h = img.clientHeight, nw = img.naturalWidth, nh = img.naturalHeight;
+    if (!w || !h || !nw || !nh) return;
+    const k = MAX_ZOOM / (window.devicePixelRatio || 1);
+    if (Math.min(w / nw, h / nh) <= k) return;
+    img.style.boxSizing = 'border-box';
+    img.style.padding = `${Math.max(0, (h - nh * k) / 2)}px ${Math.max(0, (w - nw * k) / 2)}px`;
+  }, true);
   const itemIcon = (it, kind, level) => { const own = ownIcon(it, level); return own ? `<img class="ic lg own${ownCls(it)}" src="${own}" alt="">` : it.sprite ? `<img class="ic lg px" src="${asset(it.sprite + '.png')}" alt="">` : icon(it.icon, 'lg' + (kind ? ` k-ic-${kind}` : '')); };
   // hình nhỏ cạnh tên ngọc / nguyên liệu (hình gốc MU nếu có); không có hình thì `fallback`
   // hình vé (nút Mua vé ở Người Gác Tháp): hình gốc MU nếu có, không thì biểu tượng của món
