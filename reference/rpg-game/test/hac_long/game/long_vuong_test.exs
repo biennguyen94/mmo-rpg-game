@@ -50,30 +50,79 @@ defmodule HacLong.Game.LongVuongTest do
     assert pool["fish_gold"] == 3 and pool["fish_eel"] > 0
   end
 
-  test "Long Vương cắn câu: giật đúng lúc thì được thú, trễ thì mất; mồi gấp đôi cơ hội" do
+  # ô nước cạnh chỗ đứng của angler()
+  defp spot do
+    m = Maps.get(@lake)
+    Enum.find([{14, 7}, {13, 6}, {15, 6}, {14, 5}], fn {x, y} -> Maps.water?(m, x, y) end)
+  end
+
+  test "Long Vương cắn câu chỉ khi thả trúng ô Ngài nổi; giật đúng lúc thì được thú, trễ thì mất" do
+    at = spot()
     # lần ngẫu nhiên 1: thời gian chờ; lần 2: cơ hội Long Vương (dưới chance)
     Rng.put_sequence([0.0, @dragon.chance * 0.5])
-    {%{ok: true, big: true}, p} = Fishing.cast(angler(), 0)
+    {%{ok: true, big: true}, p} = Fishing.cast(angler(), 0, at, at)
     assert {%{ok: false, msg: "Dây câu đứt phựt!" <> _}, _} = Fishing.reel(p, 5_000)
 
-    {%{ok: true, rare_pet: "long_vuong"}, got} = Fishing.reel(p, 3_100)
-    assert "long_vuong" in got.pets
+    {%{ok: true, rare_pet: "long_vuong"}, got} = Fishing.reel(%{p | long_khi: 150}, 3_100)
+    assert "long_vuong" in got.pets and got.long_khi == 0
 
-    # mồi: cơ hội × bait_mult, mỗi lần thả tốn 1 mồi
+    # mồi: cơ hội × bait_mult, chỉ tốn khi thả trúng ô Ngài
     bait = Engine.add_item(angler(), @dragon.bait, 2)
     Rng.put_sequence([0.0, @dragon.chance * 1.5])
-    {%{ok: true, big: true}, p} = Fishing.cast(bait, 0)
+    {%{ok: true, big: true}, p} = Fishing.cast(bait, 0, at, at)
     assert p.inv[@dragon.bait] == 1
+    Rng.put_sequence([0.0, 0.0, 0.5])
+    {r, p} = Fishing.cast(bait, 0, at, nil)
+    refute r[:big]
+    assert p.inv[@dragon.bait] == 2
 
-    # không mồi thì cùng số đó không đủ
+    # Long Khí đầy: cơ hội × (1 + max/div); không mồi, không Long Khí thì cùng số đó không đủ
+    full = %{angler() | long_khi: @dragon.long_khi_max}
+    k = 1 + @dragon.long_khi_max / @dragon.long_khi_div
+    Rng.put_sequence([0.0, @dragon.chance * (k - 0.1)])
+    assert {%{big: true}, _} = Fishing.cast(full, 0, at, at)
     Rng.put_sequence([0.0, @dragon.chance * 1.5, 0.5])
-    {r, _} = Fishing.cast(angler(), 0)
+    {r, _} = Fishing.cast(angler(), 0, at, at)
     refute r[:big]
 
-    # ở hồ khác không có Long Vương
-    Rng.put_sequence([0.0, 0.0])
-    {r, _} = Fishing.cast(Map.put(angler(), :pos, %{map: "village", x: 10, y: 5}), 0)
+    # thả lệch ô Ngài, ô ngoài tầm, ở hồ khác: không có Long Vương
+    Rng.put_sequence([0.0, 0.0, 0.5])
+    {r, _} = Fishing.cast(angler(), 0, at, {0, 0})
     refute r[:big]
+
+    assert {%{ok: false, msg: "Ô đó xa quá" <> _}, _} =
+             Fishing.cast(angler(), 0, {14, 6 + 9}, nil)
+
+    Rng.put_sequence([0.0, 0.0, 0.5])
+    {r, _} = Fishing.cast(Map.put(angler(), :pos, %{map: "village", x: 10, y: 5}), 0, nil, at)
+    refute r[:big]
+  end
+
+  test "Long Khí: +1 mỗi con cá câu ở hồ, tối đa long_khi_max; hồ khác không tính" do
+    {_, p} = Fishing.land(angler(), "fish_eel")
+    assert p.long_khi == 1
+    {_, p} = Fishing.land(%{p | long_khi: @dragon.long_khi_max}, "fish_eel")
+    assert p.long_khi == @dragon.long_khi_max
+    {_, p} = Fishing.land(Map.put(angler(), :pos, %{map: "village", x: 10, y: 5}), "fish_eel")
+    assert p.long_khi == 0
+  end
+
+  test "LakeEvent: nổi ở ô câu được, báo mọi người, có người câu được hoặc hết giờ thì lặn" do
+    spots = HacLong.LakeEvent.spots()
+    assert spot() in spots
+    m = Maps.get(@lake)
+    assert Enum.all?(spots, fn {x, y} -> Maps.water?(m, x, y) end)
+
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
+    st = HacLong.LakeEvent.summon()
+    assert %{tile: [x, y], left: left} = st
+    assert {x, y} in spots and left > 0 and left <= @dragon.stay * 1000
+    assert_receive {:lake, %{tile: [^x, ^y]}}
+    assert HacLong.LakeEvent.tile() == {x, y}
+
+    HacLong.LakeEvent.dive()
+    assert_receive {:lake, %{tile: nil}}
+    assert HacLong.LakeEvent.tile() == nil
   end
 
   test "mỗi nhân vật một con: đã có thì được Cá Chép Vàng" do

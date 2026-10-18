@@ -62,8 +62,8 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 - Hái Thảo Dược/Linh Chi, đào Quặng Sắt/Mithril trên bản đồ (dùng chung, mọc lại); mang đi pha
   đồ uống ở Bà Lang, bán, nộp nhiệm vụ hoặc nhờ Thợ Rèn nâng cấp đồ đang mặc (tới +5)
 - Câu cá ở hồ nước: phao chìm thì giật đúng lúc; Cá Chép Vàng rất hiếm; Bác Đầu Bếp nấu cá thành
-  món ăn; việc hằng ngày có câu cá. Hồ Long Vương (từ cấp 30): câu được thú hiếm Long Vương (1/20.000 mỗi lần thả,
-  Mồi Rồng gấp đôi), Bia Long Vương ghi tên người câu được
+  món ăn; việc hằng ngày có câu cá. Hồ Long Vương (từ cấp 30): câu được thú hiếm Long Vương (mỗi giờ Ngài nổi
+  3 phút ở một ô nước ngẫu nhiên; thả trúng ô đó 1/2.000, Long Khí tới ×3, Mồi Rồng ×2), Bia Long Vương ghi tên người câu được
 - 18 nhiệm vụ: mỗi vùng một việc diệt quái, một việc thu thập, một việc hạ trùm
 - Việc hằng ngày ở Bảng Tin: 3 việc mới mỗi ngày cho mỗi người, theo các vùng đã mở
 - Tên nhân vật không trùng nhau (không phân biệt hoa thường)

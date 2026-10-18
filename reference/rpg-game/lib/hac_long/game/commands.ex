@@ -119,7 +119,13 @@ defmodule HacLong.Game.Commands do
         Achievements.set_title(p, c["id"])
 
       "fish_cast" ->
-        Fishing.cast(p, System.monotonic_time(:millisecond))
+        at =
+          case c do
+            %{"x" => x, "y" => y} when is_integer(x) and is_integer(y) -> {x, y}
+            _ -> nil
+          end
+
+        Fishing.cast(p, System.monotonic_time(:millisecond), at, HacLong.LakeEvent.tile())
 
       "fish_reel" ->
         Fishing.reel(p, System.monotonic_time(:millisecond))

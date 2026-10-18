@@ -862,3 +862,20 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   Vương (`fish: "lake"`): bóng cá lượn (trang trí, không liên quan tỉ lệ), xoáy Vực Rồng, lá / hoa rơi ban ngày, tia nắng lúc sáng
   sớm / chiều tà, đèn lồng sáng ban đêm. Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Không làm "cá to kéo lê nhân vật"
   (vị trí do server quyết) và chưa cho người khác thấy phao của mình.
+
+## Long Vương nổi mỗi giờ (thay 1/20.000 mỗi lần thả)
+
+Anh chọn (bước 1): thay cơ hội 1/20.000 ở mọi lần thả câu bằng một lần **Long Vương nổi** mỗi giờ để người chơi có lúc hồi hộp và có
+việc để làm ở hồ ngoài lúc đó.
+- `HacLong.LakeEvent` (GenServer, trong bộ nhớ): mỗi `RULES.fishing.dragon.every` = 3600 giây, vào một lúc ngẫu nhiên trong giờ, Ngài
+  nổi ở một ô nước ngẫu nhiên của Hồ Long Vương (ô trong tầm `reach` = 3 ô của một ô đi được cạnh nước, tức câu tới được), ở lại
+  `stay` = 180 giây. Có người câu được (`Session.rare_pet` gọi `dive/0`) hoặc hết giờ thì lặn. Mọi người nhận `lake` (`{tile, left}`)
+  qua kênh; client vẽ bọt vàng + bóng rồng ở ô đó (cả khi tắt hiệu ứng, chỉ không động) và báo người đang ở hồ.
+- Thả câu gửi ô nước đã chọn (`fish_cast` có `x`, `y`; nút Câu cá gửi ô phao mặc định). Server kiểm ô là nước, trong tầm `reach`.
+  Chỉ lần thả **trúng đúng ô Ngài** ở hồ mới có cơ hội `chance` = 1/2.000 × (1 + Long Khí / `long_khi_div` 100) × `bait_mult` 2 nếu có
+  Mồi Rồng; mồi **chỉ tốn khi thả trúng ô Ngài**.
+- **Long Khí** (`characters.long_khi`, migration `20261110000000_add_long_khi`): +1 mỗi con cá (kể cả Cá Chép Vàng nhả lại) câu được ở hồ,
+  tối đa `long_khi_max` 200, về 0 khi câu được Ngài. Hiện ở thanh câu cá và thẻ Long Vương (cơ hội hiện tại).
+- Đầy Long Khí + mồi: 1/333 mỗi lần thả trúng ô; ~20 lần thả trong 3 phút ≈ 5,8 % mỗi lần nổi, trung bình ~17 lần nổi (~17 giờ nếu lần
+  nào cũng có mặt). Quản trị: `lake_summon` gọi Ngài nổi ngay. Test: `config :hac_long, :lake_event, auto: false`.
+- Bước 2 (Đàn Cá Vàng, việc ngày của Ông Lão) chưa làm, chờ anh.

@@ -782,14 +782,19 @@
         ]
       },
       "dragon": {
-        "_doc": "DECISIONS \"Long Vương\": mỗi lần câu được cá ở bản đồ có `fish: \"lake\"` (Hồ Long Vương), thêm `chance` cơ hội Long Vương (`pet`) cắn câu; có `bait` (Mồi Rồng) trong túi thì tốn 1 mồi, cơ hội × `bait_mult`. Mỗi nhân vật tối đa 1 con; đã có thì lần cắn câu đó ra `dupe` (Cá Chép Vàng).",
+        "_doc": "DECISIONS \"Long Vương nổi mỗi giờ\": mỗi `every` giây, vào lúc ngẫu nhiên, Long Vương (`pet`) nổi ở một ô nước ngẫu nhiên của bản đồ có `fish: \"lake\"` (trong tầm `reach` ô từ bờ) trong `stay` giây. Chỉ lần thả câu trúng đúng ô đó mới có `chance` cơ hội × (1 + Long Khí / `long_khi_div`) × `bait_mult` nếu có `bait` (Mồi Rồng, chỉ tốn khi thả trúng ô Ngài). Long Khí +1 mỗi con cá câu được ở hồ, tối đa `long_khi_max`, về 0 khi câu được Ngài. Mỗi nhân vật tối đa 1 con; đã có thì ra `dupe` (Cá Chép Vàng).",
         "pet": "long_vuong",
-        "chance": 0.00005,
+        "chance": 0.0005,
+        "every": 3600,
+        "stay": 180,
+        "reach": 3,
+        "long_khi_max": 200,
+        "long_khi_div": 100,
         "bait": "dragon_bait",
         "bait_mult": 2,
         "dupe": "fish_gold",
         "sourceType": "DESIGN",
-        "version": 1,
+        "version": 2,
         "verified": false
       }
     },

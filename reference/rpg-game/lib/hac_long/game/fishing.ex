@@ -9,10 +9,13 @@ defmodule HacLong.Game.Fishing do
     muộn thì trượt. Đi chỗ khác thì mất lượt câu.
   - Loại cá tùy vùng (`pool/1`): Làng và Rừng Mê cá thường; Đầm Lầy và Hang Hắc Long có Lươn Điện.
     Rất hiếm mới có Cá Chép Vàng. Hồ Long Vương (`fish: "lake"`) có bảng cá riêng.
-  - Long Vương (DECISIONS "Long Vương"): mỗi lần thả câu ở Hồ Long Vương có `RULES.fishing.dragon.chance`
-    cơ hội Ngài cắn câu (quyết định lúc thả câu, client nhận `big: true` để hiện phao giật mạnh); có Mồi Rồng
-    trong túi thì tốn 1 mồi, cơ hội × `bait_mult`. Giật đúng lúc thì được thú Long Vương (mỗi nhân vật một
-    con; đã có thì được Cá Chép Vàng), kết quả có `rare_pet` để Session ghi Bia Long Vương và báo cả server.
+  - Long Vương (DECISIONS "Long Vương nổi mỗi giờ"): Ngài nổi ở một ô nước của Hồ Long Vương
+    (`HacLong.LakeEvent`). Chỉ lần thả câu trúng đúng ô đó (`spot`) mới có `RULES.fishing.dragon.chance` cơ hội
+    × (1 + Long Khí / `long_khi_div`) × `bait_mult` nếu có Mồi Rồng (chỉ tốn mồi khi thả trúng ô Ngài).
+    Quyết định lúc thả câu, client nhận `big: true` để hiện phao giật mạnh. Giật đúng lúc thì được thú
+    Long Vương (mỗi nhân vật một con; đã có thì được Cá Chép Vàng), kết quả có `rare_pet` để Session ghi
+    Bia Long Vương, báo cả server và cho Ngài lặn. Long Khí (`long_khi`) +1 mỗi con cá câu được ở hồ, tối đa
+    `long_khi_max`, về 0 khi câu được Ngài.
 
   Trạng thái lượt câu (`fishing: %{bite, pos}`) chỉ giữ trong Session, không lưu database.
   Số cá đã câu được lưu ở `fish_caught` (cho thành tựu).
@@ -59,7 +62,11 @@ defmodule HacLong.Game.Fishing do
 
   def near_water?(_), do: false
 
-  def cast(p, now) do
+  @doc """
+  Thả câu. `at` là ô nước `{x, y}` người chơi chọn (trong tầm `reach`; nil thì ô nước cạnh bên),
+  `spot` là ô Long Vương đang nổi (`HacLong.LakeEvent.tile/0`, nil nếu chưa nổi).
+  """
+  def cast(p, now, at \\ nil, spot \\ nil) do
     cond do
       p.battle ->
         {%{ok: false, msg: "Đang trong trận."}, p}
@@ -67,22 +74,39 @@ defmodule HacLong.Game.Fishing do
       not near_water?(p) ->
         {%{ok: false, msg: "Hãy đứng cạnh hồ nước để câu."}, p}
 
+      at != nil and not castable?(p, at) ->
+        {%{ok: false, msg: "Ô đó xa quá hoặc không phải nước."}, p}
+
       true ->
         lo..hi//_ = @wait
         wait = lo + floor(Rng.uniform() * (hi - lo))
-        {p, big} = dragon_roll(p)
+        {p, big} = dragon_roll(p, at, spot)
         reply = %{ok: true, wait: wait, window: @window}
         reply = if big, do: Map.put(reply, :big, true), else: reply
         {reply, Map.put(p, :fishing, %{bite: now + wait, pos: p.pos, big: big})}
     end
   end
 
-  # Hồ Long Vương: có Mồi Rồng thì tốn 1 mồi, cơ hội gấp `bait_mult`
-  defp dragon_roll(p) do
-    if dragon_lake?(p.pos.map) do
+  # ô nước trong tầm `reach` (Chebyshev) của chỗ đứng
+  defp castable?(%{pos: %{map: id, x: x, y: y}}, {tx, ty}) do
+    m = Maps.get(id)
+    max(abs(tx - x), abs(ty - y)) <= @dragon.reach and Maps.water?(m, tx, ty)
+  end
+
+  @doc "Cơ hội Long Vương cắn câu khi thả trúng ô Ngài (có / không có Mồi Rồng)."
+  def dragon_chance(p, bait?) do
+    @dragon.chance * (1 + long_khi(p) / @dragon.long_khi_div) *
+      if(bait?, do: @dragon.bait_mult, else: 1)
+  end
+
+  def long_khi(p), do: Map.get(p, :long_khi) || 0
+
+  # Hồ Long Vương, thả trúng ô Ngài đang nổi: có Mồi Rồng thì tốn 1 mồi, cơ hội gấp `bait_mult`
+  defp dragon_roll(p, at, spot) do
+    if spot != nil and at == spot and dragon_lake?(p.pos.map) do
       bait? = Map.get(p.inv, @dragon.bait, 0) > 0
+      chance = dragon_chance(p, bait?)
       p = if bait?, do: Engine.take_item(p, @dragon.bait), else: p
-      chance = @dragon.chance * if(bait?, do: @dragon.bait_mult, else: 1)
       {p, Rng.uniform() < chance}
     else
       {p, false}
@@ -135,6 +159,7 @@ defmodule HacLong.Game.Fishing do
         p
         |> Map.put(:pets, owned ++ [pet])
         |> Map.put(:fish_caught, Map.get(p, :fish_caught, 0) + 1)
+        |> Map.put(:long_khi, 0)
 
       name = Data.pet(pet).name
 
@@ -152,6 +177,12 @@ defmodule HacLong.Game.Fishing do
   def land(p, id) do
     p = p |> Engine.add_item(id) |> Map.put(:fish_caught, Map.get(p, :fish_caught, 0) + 1)
     p = if id == "old_boot", do: p, else: Daily.on_fish(p)
+
+    p =
+      if dragon_lake?(p.pos.map),
+        do: Map.put(p, :long_khi, min(long_khi(p) + 1, @dragon.long_khi_max)),
+        else: p
+
     name = Data.item(id).name
 
     msg =

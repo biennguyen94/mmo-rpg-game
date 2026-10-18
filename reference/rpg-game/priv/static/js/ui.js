@@ -336,7 +336,7 @@
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
-        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button>
+        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
@@ -746,7 +746,8 @@
       </div>`;
     }
     if (dialog || P.pos.map === 'tower' || !nearWater()) return '<div id="fish-ui" hidden></div>';
-    return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button><span class="small muted">hoặc chạm vào mặt nước</span></div>`;
+    const lk = WORLD.maps[P.pos.map].fish === 'lake' ? `<span class="small" title="Long Khí: mỗi con cá câu ở hồ +1, càng đầy càng dễ câu Long Vương">🐉 Long Khí <b class="num">${P.long_khi || 0}/${RULES.dragon.long_khi_max}</b>${lake ? ' · <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</span>` : '';
+    return `<div id="fish-ui" class="fish-ui idle"><button class="btn" data-act="fish-cast">${icon('fishing-pole')} Câu cá</button><span class="small muted">hoặc chạm vào mặt nước</span>${lk}</div>`;
   }
 
   // `fx`: hiệu ứng trên bản đồ (MapView.fish) khi dừng: 'miss', hoặc null để xóa ngay (thu cần, đi chỗ khác)
@@ -767,7 +768,8 @@
     busy = true;
     const t0 = performance.now();
     try {
-      const r = await Net.send({ act: 'fish_cast' });
+      at = at || Map_.bobberTile();
+      const r = await Net.send(at ? { act: 'fish_cast', x: at[0], y: at[1] } : { act: 'fish_cast' });
       P = r.player;
       if (!r.ok) { toast(r.msg, true); busy = false; return; }
       const rtt = performance.now() - t0;
@@ -821,6 +823,19 @@
 
   // ---------- Trùm thế giới ----------
   const clock = (ms) => { const t = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+
+  // ---------- Long Vương nổi (HacLong.LakeEvent) ----------
+  let lake = null; // { tile: [x, y], left } khi Ngài đang nổi
+  let lakeTimer = null;
+  function onLake(st) {
+    const was = lake;
+    lake = st && st.tile ? st : null;
+    clearTimeout(lakeTimer);
+    if (lake) lakeTimer = setTimeout(() => onLake(null), lake.left);
+    Map_.setLake(lake);
+    if (lake && !was && P && WORLD.maps[P.pos.map]?.fish === 'lake') { bigFx('🐉 Long Vương nổi lên!', 'level'); toast('Bọt vàng sủi lên ở một ô nước. Thả câu đúng ô đó!'); Sound.play('rare'); }
+    if (P) redrawFishing();
+  }
 
   // ---------- Golden Invasion (Phase 7) ----------
   let invasion = null; // { active, ends_at, maps: { id: 'run' | 'boss' | 'done' } }
@@ -2874,7 +2889,8 @@
     const odds = (k) => `1/${fmt(Math.round(1 / (D.chance * k)))}`;
     const board = dragonBoard || [];
     return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
-      <p class="small">Mỗi lần thả câu ở hồ này, cơ hội ${esc(pet.name)} cắn câu là <b>${odds(1)}</b>; có ${esc(ITEMS[D.bait].name)} trong túi thì tốn 1 mồi mỗi lần thả, cơ hội <b>${odds(D.bait_mult)}</b>. ${esc(ITEMS[D.bait].name)} pha ở Bà Lang.</p>
+      <p class="small">Mỗi giờ ${esc(pet.name)} nổi lên một lần, lúc ngẫu nhiên, ở một ô nước bất kỳ trong hồ (bọt vàng sủi), ở lại ${Math.round(D.stay / 60)} phút. Chỉ thả câu trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần thả, nhân thêm theo Long Khí, có ${esc(ITEMS[D.bait].name)} thì gấp ${D.bait_mult} (chỉ tốn mồi khi thả trúng ô Ngài). Có người câu được hoặc hết giờ thì Ngài lặn.</p>
+      <p class="small">Long Khí: mỗi con cá câu ở hồ +1, tối đa ${D.long_khi_max} (cơ hội ×${1 + D.long_khi_max / D.long_khi_div}); câu được Ngài thì về 0. Bạn đang có <b>${P.long_khi || 0}</b>, cơ hội hiện tại <b>${odds((1 + (P.long_khi || 0) / D.long_khi_div) * (bait ? D.bait_mult : 1))}</b>.${lake ? ' <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</p>
       <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>
       <p class="small muted">Kỹ năng: ${[pet.skill, pet.skill2, pet.skill3].map((k, i) => `${esc(k.name)} (cấp ${[RULES.petSkillLevel, RULES.petSkill2Level, RULES.petSkill3Level][i]}): ${esc(k.desc)}`).join(' · ')}</p></div>
       <div class="card"><h3>Bia Long Vương</h3>${dragonBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
@@ -3794,6 +3810,7 @@
     Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); refreshPeopleDot(); });
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
+    Net.onLake(onLake);
     Net.onInvasion(onInvasion);
     Net.onNotice((msg) => { toast(msg); note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good'); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
     window.Doll.onReady(() => { if (P) refresh(); });

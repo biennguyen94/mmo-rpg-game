@@ -388,8 +388,9 @@ DRG = R["fishing"]["dragon"]
 def pet_price(pt):
     if not pt.get("rare"):
         return n(pt["price"])
-    return (f"🎣 câu ở {E(D['lake']['name'])} (cấp {D['lake']['min_level']}+): 1/{n(round(1 / DRG['chance']))} mỗi lần thả, "
-            f"có Mồi Rồng 1/{n(round(1 / (DRG['chance'] * DRG['bait_mult'])))}")
+    _k = 1 + DRG['long_khi_max'] / DRG['long_khi_div']
+    return (f"🎣 câu ở {E(D['lake']['name'])} (cấp {D['lake']['min_level']}+) khi Ngài nổi (mỗi giờ một lần, {DRG['stay'] // 60} phút): "
+            f"thả trúng ô Ngài 1/{n(round(1 / DRG['chance']))} mỗi lần, đầy Long Khí + Mồi Rồng 1/{n(round(1 / (DRG['chance'] * _k * DRG['bait_mult'])))}")
 def pet_sk2(pt):
     s2 = f"{E(pt['skill2']['name'])}: {E(pt['skill2']['desc'])}"
     if pt.get("skill3"):
@@ -408,9 +409,11 @@ _lake = R["fishing"]["pools"]["lake"]; _tot = sum(w for w, _ in _lake)
 _bait = next(r for r in D["recipes"] if r["out"] == DRG["bait"])
 pet_rule += (f" <b>{E(D['lake']['name'])}</b> (cấp {D['lake']['min_level']}+, không có quái): cá "
              + ", ".join(f"{E(IT[i]['name'])} {pct(w / _tot)}" for w, i in _lake)
-             + f"; mỗi lần thả câu 1/{n(round(1 / DRG['chance']))} Long Vương cắn câu (giật trễ thì mất), có {E(IT[DRG['bait']]['name'])} "
+             + f"; mỗi {DRG['every'] // 3600} giờ Long Vương nổi một lần vào lúc ngẫu nhiên, ở một ô nước ngẫu nhiên (bọt vàng, trong tầm {DRG['reach']} ô từ bờ), "
+             + f"ở lại {DRG['stay'] // 60} phút; chỉ lần thả câu trúng đúng ô đó mới có cơ hội 1/{n(round(1 / DRG['chance']))} Ngài cắn câu (giật trễ thì mất), "
+             + f"× (1 + Long Khí / {DRG['long_khi_div']}) (Long Khí +1 mỗi con cá câu ở hồ, tối đa {DRG['long_khi_max']}, về 0 khi câu được Ngài); có {E(IT[DRG['bait']]['name'])} "
              + f"(Bà Lang pha {_bait.get('n', 1)} mồi từ " + " + ".join(f"{k} {E(IT[i]['name'])}" for i, k in _bait["needs"].items())
-             + f", nghề Nấu ăn cấp {_bait['level']}) thì mỗi lần thả tốn 1 mồi, cơ hội ×{DRG['bait_mult']}. Mỗi nhân vật một con; "
+             + f", nghề Nấu ăn cấp {_bait['level']}) thì tốn 1 mồi mỗi lần thả trúng ô Ngài, cơ hội ×{DRG['bait_mult']}. Có người câu được hoặc hết giờ thì Ngài lặn. Mỗi nhân vật một con; "
              + "người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.")
 pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; không thuần được trùm, chúa tể) rồi trả "
             f"({n(PR['tame_price'])} + {PR['tame_price_per_level']} × cấp quái) × (1 + {n(PR['tame_realm_price'])} × k) vàng (k: số vùng chuyển sinh, 0 nếu không phải). "

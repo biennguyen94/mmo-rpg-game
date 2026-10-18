@@ -94,6 +94,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(uid))
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
     blocked = Moderation.blocked(uid)
@@ -795,6 +796,17 @@ defmodule HacLongWeb.GameChannel do
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
+  defp admin("lake_summon", _p, _s) do
+    st = HacLong.LakeEvent.summon()
+
+    {:ok,
+     %{
+       msg:
+         "Long Vương đã nổi ở ô #{Enum.join(st.tile, ", ")} Hồ Long Vương (#{div(st.left, 1000)} giây).",
+       lake: st
+     }}
+  end
+
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
@@ -893,11 +905,17 @@ defmodule HacLongWeb.GameChannel do
 
     push(socket, "world_boss", WorldBoss.status())
     push(socket, "invasion", HacLong.Invasion.status())
+    push(socket, "lake", HacLong.LakeEvent.public())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
   end
 
   def handle_info({:invasion, status}, socket) do
     push(socket, "invasion", status)
+    {:noreply, socket}
+  end
+
+  def handle_info({:lake, st}, socket) do
+    push(socket, "lake", st)
     {:noreply, socket}
   end
 

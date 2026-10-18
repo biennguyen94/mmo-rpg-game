@@ -269,7 +269,7 @@
       "slot": "material",
       "sprite": "items/dragon_bait",
       "price": 20,
-      "desc": "Mồi thơm làm từ Cá Chép Vàng. Câu được cá ở Hồ Long Vương thì tốn 1 mồi, cơ hội Long Vương cắn câu gấp đôi."
+      "desc": "Mồi thơm làm từ Cá Chép Vàng. Thả câu trúng ô Long Vương đang nổi ở Hồ Long Vương thì tốn 1 mồi, cơ hội Ngài cắn câu gấp đôi."
     },
     "old_boot": {
       "name": "Chiếc Ủng Cũ",

@@ -181,6 +181,7 @@ defmodule HacLong.Game.Characters do
           HacLong.Game.Data.item(id) || HacLong.Game.Gear.instance?(id)
         end),
       fish_caught: c.fish_caught || 0,
+      long_khi: c.long_khi || 0,
       achievements: c.achievements || [],
       title: c.title,
       gear: HacLong.Game.Gear.load(c.gear),

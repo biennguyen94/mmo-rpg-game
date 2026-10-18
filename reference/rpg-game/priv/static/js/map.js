@@ -22,6 +22,7 @@
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
   let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
+  let lake = null; // Long Vương đang nổi (HacLong.LakeEvent): { x, y, until }
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   const Doll = window.Doll;
   Doll.onReady(() => draw());
@@ -596,6 +597,7 @@
         ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.8, y - TILE * 1.8, TILE * 3.6, TILE * 3.6);
       }
     }
+    if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
     // vẽ lại khi bong bóng hết hạn
@@ -721,6 +723,28 @@
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x - 80, vh); ctx.lineTo(x - 170, vh); ctx.fill();
       }
     }
+  }
+
+  // Long Vương nổi: bóng rồng vàng lượn dưới ô nước, bọt vàng sủi lên (vẽ cả khi tắt hiệu ứng, chỉ không động)
+  function dragonSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0;
+    const g = ctx.createRadialGradient(c, d, 2, c, d, TILE * 0.9);
+    g.addColorStop(0, `rgba(255, 215, 90, ${0.55 + 0.2 * Math.sin(k / 300)})`); g.addColorStop(1, 'rgba(255, 215, 90, 0)');
+    ctx.fillStyle = g; ctx.fillRect(c - TILE, d - TILE, TILE * 2, TILE * 2);
+    // thân rồng: chuỗi vảy uốn lượn quanh ô
+    ctx.fillStyle = 'rgba(120, 80, 0, 0.45)';
+    for (let i = 0; i < 9; i++) {
+      const a = k / 900 + i * 0.45, r = TILE * 0.32;
+      ctx.beginPath(); ctx.arc(c + Math.cos(a) * r, d + Math.sin(a * 1.3) * r * 0.6, 4.5 - i * 0.35, 0, Math.PI * 2); ctx.fill();
+    }
+    // bọt vàng
+    for (let i = 0; i < 6; i++) {
+      const p = fx ? (t / 1100 + i / 6) % 1 : i / 6;
+      ctx.fillStyle = `rgba(255, 236, 150, ${0.9 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(c + Math.sin(i * 2.4) * TILE * 0.3, d - p * TILE * 0.45, 1.5 + p * 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255, 220, 110, 0.8)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
   }
 
   // ---------- Câu cá: cần, dây, phao, cá bay (ui.js gọi MapView.fish) ----------
@@ -869,6 +893,10 @@
     mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
+    // st: { tile: [x, y] | null, left: mili giây }
+    setLake(st) { lake = st && st.tile ? { x: st.tile[0], y: st.tile[1], until: Date.now() + st.left } : null; draw(); },
+    // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)
+    bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
     setDecorating(on) { decorating = on; draw(); },
     setWorld(snap) {

@@ -136,6 +136,7 @@ defmodule HacLong.Game.Engine do
           storage: %{inv: %{}, extra: 0},
           visited: [],
           fish_caught: 0,
+          long_khi: 0,
           achievements: [],
           title: nil,
           bosses: [],

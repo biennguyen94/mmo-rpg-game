@@ -18,6 +18,7 @@ defmodule HacLong.Application do
       HacLong.Accounts.WsTicket,
       HacLong.Chat,
       HacLong.WorldBoss,
+      HacLong.LakeEvent,
       HacLong.Party,
       HacLong.Trade,
       HacLong.PkBet,

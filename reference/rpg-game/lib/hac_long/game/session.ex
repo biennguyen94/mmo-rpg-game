@@ -713,6 +713,7 @@ defmodule HacLong.Game.Session do
   defp rare_pet(s, player, pet, result) do
     name = HacLong.Game.Data.pet(pet).name
     n = HacLong.RarePets.record!(s.user_id, player.name, pet)
+    HacLong.LakeEvent.dive()
 
     Map.merge(result, %{
       msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
