@@ -403,6 +403,15 @@ pet_rule = (f"Cắn: {pct(PR['bite_chance'])} số lượt (+{pct(PR['bite_chanc
             f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
             f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); chỉ số cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)). "
             f"Cho ăn ở Người Nuôi Thú: {n(PR['feed_gold'])} × cấp² vàng được {PR['feed_xp']} trận.")
+# Hồ Long Vương: bảng cá riêng, Mồi Rồng (công thức của Bà Lang)
+_lake = R["fishing"]["pools"]["lake"]; _tot = sum(w for w, _ in _lake)
+_bait = next(r for r in D["recipes"] if r["out"] == DRG["bait"])
+pet_rule += (f" <b>{E(D['lake']['name'])}</b> (cấp {D['lake']['min_level']}+, không có quái): cá "
+             + ", ".join(f"{E(IT[i]['name'])} {pct(w / _tot)}" for w, i in _lake)
+             + f"; mỗi lần thả câu 1/{n(round(1 / DRG['chance']))} Long Vương cắn câu (giật trễ thì mất), có {E(IT[DRG['bait']]['name'])} "
+             + f"(Bà Lang pha {_bait.get('n', 1)} mồi từ " + " + ".join(f"{k} {E(IT[i]['name'])}" for i, k in _bait["needs"].items())
+             + f", nghề Nấu ăn cấp {_bait['level']}) thì mỗi lần thả tốn 1 mồi, cơ hội ×{DRG['bait_mult']}. Mỗi nhân vật một con; "
+             + "người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.")
 pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; không thuần được trùm, chúa tể) rồi trả "
             f"({n(PR['tame_price'])} + {PR['tame_price_per_level']} × cấp quái) × (1 + {n(PR['tame_realm_price'])} × k) vàng (k: số vùng chuyển sinh, 0 nếu không phải). "
             f"Thú thuần: công +{pct(PR['tame_bonus'])} + {pct(PR['tame_realm_bonus'])} × k, sức cắn {pct(PR['tame_bite'])} + {pct(PR['tame_realm_bite'])} × k; kỹ năng Cắn Xé rồi Húc Ngã.")
