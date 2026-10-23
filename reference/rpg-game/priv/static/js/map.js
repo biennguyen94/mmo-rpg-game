@@ -29,19 +29,6 @@
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
-  // Thú cưng đi sau chủ một ô: nhớ ô trước đó của mỗi người.
-  const trails = new Map();
-  function petTile(key, x, y) {
-    let t = trails.get(key);
-    if (!t) { t = { last: [x, y], pet: [x, y + 1] }; trails.set(key, t); }
-    if (t.last[0] !== x || t.last[1] !== y) {
-      // nhảy xa (qua cổng, dịch chuyển) thì thú hiện ngay sau lưng
-      t.pet = Math.abs(t.last[0] - x) + Math.abs(t.last[1] - y) > 1 ? [x, y + 1] : t.last;
-      t.last = [x, y];
-    }
-    return t.pet;
-  }
-
   // Đồ trang trí đã đặt trong Nhà (chỉ nhà của mình).
   const decorAt = (P, x, y) => P.pos.map === 'home' && (P.decor || []).find((d) => d.x === x && d.y === y);
 
@@ -522,18 +509,10 @@
     }
 
     const hero = image('monsters/hero');
-    // thú cưng: nhỏ hơn một chút, đi sau chủ một ô
-    const drawPet = (id, key, x, y) => {
-      if (!id) return;
-      const [tx, ty] = petTile(key, x, y);
-      const [qx, qy] = smooth('pet' + key, tx, ty, DUR.player * 1.4, now);
-      const im = image(id.startsWith('tame:') ? 'monsters/' + id.slice(5) : 'pets/' + id);
-      if (im.complete) ctx.drawImage(im, Math.round(qx * TILE - cx) + 4, Math.round(qy * TILE - cy) + 6, TILE - 8, TILE - 8);
-    };
     // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
     // xem danh sách người trong bản đồ ở nút 👫 trên dock.
+    // không vẽ thú cưng trên bản đồ (rối bản đồ, anh yêu cầu 2026-10-23): thú chỉ hiện trong trận, hồ sơ, Nhà
     const look = P.view && P.view.look;
-    if (!m.tower) drawPet(look && look.pet, 'me', P.pos.x, P.pos.y);
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
     if (fx) moveFx(now, m, P, cx, cy, px, py);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';

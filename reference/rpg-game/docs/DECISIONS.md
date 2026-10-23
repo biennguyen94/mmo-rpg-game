@@ -960,3 +960,8 @@ máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2
   44–56% (trước: Kiếm Sĩ thắng Đấu Sĩ 197/200).
 - Sửa kèm: trận lưu khóa `tidal_at` / `pet_revived` (Long Vương) trước đây không nạp lại được sau khi server khởi động lại.
 
+
+## Không vẽ thú cưng trên bản đồ (2026-10-23, anh yêu cầu)
+
+Thú cưng đi cạnh nhân vật làm rối bản đồ: `map.js` không vẽ thú trên bản đồ nữa (bỏ `drawPet` / `petTile`). Thú vẫn đánh cùng
+trong trận, vẫn hiện trong hồ sơ và hình xem trước Nhà. Không đổi luật chơi.
