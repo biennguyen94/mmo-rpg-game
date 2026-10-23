@@ -275,6 +275,16 @@
       add({ k: 'dragon', W, y: H * 0.32, life: 1500 });
       flash('#ffd24a', 0.18, 400);
     },
+    // rương bật nắp (Rương Gia Truyền / mua rương): nắp mở, sáng vàng, vật phẩm bay ra
+    chest() {
+      const W = canvas.width / dpr, H = canvas.height / dpr, x = W / 2, y = H * 0.45;
+      add({ k: 'chest', x, y, life: 1300 });
+      setTimeout(() => {
+        burst(x, y - 14, 26, ['#ffd24a', '#fff3b0', '#9fd8ff', '#c49bff'], { up: true, vmin: 160, vmax: 360, g: 420, glow: true, life: 1100 });
+        ring(x, y - 10, '#ffe9a0', { r1: 110, life: 600, w: 4 });
+      }, 380);
+    },
+    boss(e) { if (window.Celebrate) window.Celebrate.boss(e.name); shake(true); flash('#ffd24a', 0.3, 500); },
     ghost(e) {
       const bar = document.querySelector('#view .stage .bar');
       const fill = bar && bar.querySelector('i');
@@ -452,6 +462,23 @@
         c.shadowBlur = 0;
         break;
       }
+      case 'chest': {
+        // hộp gỗ viền vàng, nắp xoay mở từ 0,25 tới 0,45 thời gian; quầng sáng từ trong rương
+        const a = Math.min(1, k * 6, (1 - k) * 4), open = Math.min(1, Math.max(0, (k - 0.2) / 0.2)), w = 64, h = 40;
+        c.globalAlpha = a;
+        if (open > 0) {
+          const g = c.createRadialGradient(p.x, p.y - h / 2, 4, p.x, p.y - h / 2, 90);
+          g.addColorStop(0, `rgba(255, 230, 140, ${0.8 * open})`); g.addColorStop(1, 'rgba(255, 230, 140, 0)');
+          c.fillStyle = g; c.fillRect(p.x - 90, p.y - h / 2 - 90, 180, 180);
+        }
+        c.fillStyle = '#6b3f1d'; c.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+        c.strokeStyle = '#e0b040'; c.lineWidth = 3; c.strokeRect(p.x - w / 2, p.y - h / 2, w, h);
+        c.fillStyle = '#e0b040'; c.fillRect(p.x - 5, p.y - h / 2 + 4, 10, 10);
+        c.save(); c.translate(p.x - w / 2, p.y - h / 2); c.rotate(-open * 1.9);
+        c.fillStyle = '#7d4a22'; c.fillRect(0, -16, w, 16); c.strokeRect(0, -16, w, 16);
+        c.restore();
+        break;
+      }
       case 'bubble': {
         const y = p.y - k * p.rise, x = p.x + Math.sin(k * 8 + p.ph) * 4;
         c.globalAlpha = (1 - k) * 0.85; c.strokeStyle = p.col; c.lineWidth = 1.5;
@@ -527,6 +554,88 @@
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí
       const play = (e) => { try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ } };
       requestAnimationFrame(() => events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e))));
+    },
+  };
+})();
+
+/* Khoảnh khắc thành tích (docs/FX_PLAN.md đợt 4): lên cấp, chuyển sinh, thẻ thành tựu, dải thông báo cả server.
+ * Phần tử DOM phủ lên màn hình (không bắt chuột trừ khi bấm tắt), tự gỡ; "giảm chuyển động" thì CSS tắt chuyển động. */
+(function () {
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const sound = (id) => { if (window.Sound) window.Sound.play(id); };
+  function mount(cls, html, ms) {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = html;
+    document.body.appendChild(el);
+    if (ms) setTimeout(() => el.remove(), ms);
+    return el;
+  }
+
+  // đặt ngay dưới thanh trên cùng (tên, máu, vàng) để không che
+  function belowHud(el, gap) {
+    const hud = document.getElementById('hud');
+    const r = hud && !hud.hidden && hud.getBoundingClientRect();
+    if (r && r.height) el.style.top = `${Math.round(r.bottom + gap)}px`;
+  }
+
+  // dải thông báo: xếp hàng, mỗi lần một dải chạy ngang đầu màn hình
+  const queue = [];
+  let showing = false;
+  // loại theo biểu tượng / chữ đầu dòng (server gửi chữ, client tô màu)
+  function kindOf(text) {
+    if (/^🐉/.test(text)) return 'dragon';
+    if (/^✨/.test(text) || /Đồ Thần/.test(text)) return 'anc';
+    if (/^📢/.test(text) && /\+1[01]\b|ép thành công|ghép thành công/.test(text)) return 'forge';
+    if (/^(👑|🐲|🔥)/.test(text) || /Trùm|trùm thế giới|Rồng Đỏ|Phù Thủy/.test(text)) return 'boss';
+    if (/^(⚔|🏰|🏆|🎉)/.test(text)) return 'event';
+    return 'info';
+  }
+  function next() {
+    const text = queue.shift();
+    if (!text) { showing = false; return; }
+    showing = true;
+    const k = kindOf(text);
+    // dòng đã mở đầu bằng biểu tượng thì dùng luôn biểu tượng đó (không lặp)
+    const lead = text.match(/^(\p{Extended_Pictographic}\uFE0F?)\s*/u);
+    const icon = lead ? lead[1] : { dragon: '🐉', anc: '★', forge: '⚒', boss: '👑', event: '⚔', info: '📢' }[k];
+    const body = lead ? text.slice(lead[0].length) : text;
+    const el = mount(`ticker t-${k}`, `<span class="ti">${icon}</span><span class="tt"><span>${esc(body)}</span></span>`, 0);
+    belowHud(el, 6);
+    const t = el.querySelector('.tt span');
+    // chữ dài thì chạy ngang, ngắn thì đứng giữa
+    requestAnimationFrame(() => {
+      const over = t.scrollWidth - el.querySelector('.tt').clientWidth;
+      if (over > 0) { t.style.setProperty('--run', `-${over + 24}px`); t.classList.add('run'); }
+    });
+    if (k !== 'info') sound('rare');
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); next(); }, 400); }, 5200);
+  }
+
+  window.Celebrate = {
+    banner(text) { if (!text) return; queue.push(text); if (queue.length > 5) queue.shift(); if (!showing) next(); },
+    badge(text) {
+      const m = String(text).match(/(Thành tựu mới|Danh hiệu mới)[:\s]*(.*)/);
+      belowHud(mount('badge-card', `<span class="bi">🏅</span><span class="bt"><b>${esc(m ? m[1] : 'Thành tựu')}</b><span>${esc(m ? m[2] : text)}</span></span>`, 3600), 52);
+      sound('achieve');
+    },
+    // lines: ['+120 máu', …]
+    levelUp(level, lines) {
+      const el = mount('lvup', `<div class="lv-rays"></div><div class="lv-t">LEVEL UP</div><div class="lv-n">Cấp ${level}</div>
+        <div class="lv-lines">${(lines || []).map((l, i) => `<span style="animation-delay:${0.35 + i * 0.12}s">${esc(l)}</span>`).join('')}</div>`, 2600);
+      return el;
+    },
+    // màn chuyển cảnh chuyển sinh: bấm để tắt sớm
+    rebirth(n, doll, name) {
+      const el = mount('rebirth-fx', `<div class="rb-swirl"></div><img class="rb-doll" src="${doll}" alt=""><div class="rb-t">CHUYỂN SINH</div>
+        <div class="rb-n">Lần thứ ${n}</div><div class="rb-name">${esc(name || '')}</div>`, 4200);
+      el.addEventListener('click', () => el.remove());
+      sound('levelup');
+    },
+    boss(name) {
+      mount('boss-down', `<div class="bd-t">TRÙM ĐÃ GỤC</div><div class="bd-n">${esc(name || '')}</div>`, 2400);
+      sound('win');
     },
   };
 })();

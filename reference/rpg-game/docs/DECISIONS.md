@@ -942,6 +942,21 @@ Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian
     (cả quái và mình).
   - Thú cưng: đọc nhật ký trận (🐾 … cắn thêm N): hình thú nhảy từ mình sang quái, vết cào + số màu hồng; Thủy Long Ba (🌊) thêm
     cột nước + rồng vàng bay ngang màn hình; Long Vương Hồi Sinh (🐉) rồng vàng bay ngang.
+- **Đợt 4 (2026-10-23):** (`window.Celebrate` trong `js/fx.js`)
+  - Lên cấp: chữ LEVEL UP + tia sáng giữa màn hình, chỉ số tăng (máu, MP, tấn công, phòng thủ, điểm cộng) bay lên, cột sáng vàng
+    ở chỗ nhân vật trên bản đồ. Chạy cả khi tự đánh / quản trị cộng kinh nghiệm (so trạng thái cũ với mới mỗi lần server đẩy).
+  - Chuyển sinh: màn chuyển cảnh (xoáy sáng, hình nhân vật lớn, "Lần thứ N"), bấm để tắt sớm.
+  - Thành tựu / danh hiệu mới: thẻ huy hiệu trượt xuống dưới thanh trên cùng (thay toast). Lần đầu hạ trùm / Hắc Long: chữ lớn
+    "TRÙM ĐÃ GỤC" + chớp + rung.
+  - Thông báo cả server (tin hệ thống `uid 0` trong chat thế giới: ép +7 trở lên, ghép cánh, Long Vương, trùm vàng, sự kiện, quản
+    trị): dải chạy ngang dưới thanh trên cùng, màu theo loại (đoán từ biểu tượng / chữ), xếp hàng tối đa 5. Thêm một tin: **nhặt
+    được đồ Thần** (`Session.anc_announce/2`, "✨ X vừa nhặt được … (Đồ Thần)!"), dùng đúng kênh tin hệ thống có sẵn.
+- **Đợt 5 (2026-10-23):**
+  - Di chuyển: nhân vật nhún khi đi, vừa sang bản đồ thì hiện từ nhỏ tới to (thêm cột sáng có sẵn).
+  - Giao diện: số vàng trên đầu trang chạy dần tới số mới; món mới vào túi: ô nảy + viền sáng lần đầu thấy trong Túi đồ; rương bật
+    nắp, sáng vàng, vật phẩm bay ra (Rương Gia Truyền, mua rương); nút "Nhận quà" / "Nhận hết" trong Hộp thư lắc nhẹ.
+  - Thế giới: cổng đi được có vòng xoáy sáng; Thợ Rèn tóe tia lửa, Bà Lang / Bác Đầu Bếp nồi bốc khói, Ông Lão Câu Cá giật cần,
+    Lão Hỗn Nguyên lò xoáy sáng; Trại có bụi cát bay (game không có Núi Lửa / Hoang Mạc; Hang / Núi đã có tàn lửa / tuyết).
 
 ## Cân bằng đánh người
 

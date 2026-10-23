@@ -714,9 +714,26 @@ defmodule HacLong.Game.Session do
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
     if announce, do: HacLong.Chat.system(announce)
+    Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
 
     reply({result, player}, s)
   end
+
+  @doc """
+  Vừa thắng trận (`old` đang đánh, `player` đã xong) và nhặt được đồ Thần: các dòng báo cả server (docs/FX_PLAN.md đợt 4,
+  dải thông báo).
+  """
+  def anc_announce(
+        %{battle: %{over: false}},
+        %{battle: %{over: true, reward: %{gear_ids: ids}}} = p
+      ) do
+    for id <- ids,
+        g = HacLong.Game.Gear.find(p, id),
+        g[:anc],
+        do: "✨ #{p.name} vừa nhặt được #{HacLong.Game.Gear.label(g)}!"
+  end
+
+  def anc_announce(_old, _player), do: []
 
   defp rare_pet(s, player, pet, result) do
     name = HacLong.Game.Data.pet(pet).name

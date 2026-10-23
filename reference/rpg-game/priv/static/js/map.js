@@ -28,6 +28,7 @@
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
+  let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
@@ -181,7 +182,8 @@
     if (f.includes('lair')) return 'embers';
     if (f.includes('mountain')) return 'snow';
     if (f.includes('graveyard')) return 'fog';
-    if (f.includes('forest') || f.includes('camp')) return 'leaves';
+    if (f.includes('camp')) return 'dust';
+    if (f.includes('forest')) return 'leaves';
     return null;
   }
   // ống khói: góc trên phải mỗi khối nhà gạch (ô "#") ở Làng
@@ -229,6 +231,13 @@
         ctx.fillStyle = rnd(i, 3) > 0.5 ? 'rgba(196, 140, 52, 0.75)' : 'rgba(120, 160, 60, 0.7)';
         ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+      }
+    } else if (kind === 'dust') {
+      // Trại (đất khô): bụi cát bay ngang theo gió (FX_PLAN đợt 5)
+      for (let i = 0; i < 26; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * (0.08 + rnd(i, 3) * 0.06) - cx, vw + 30) - 15, y = wrap(rnd(i, 2) * vh + Math.sin(t / 600 + i) * 6 - cy, vh);
+        ctx.fillStyle = `rgba(214, 186, 132, ${0.25 + 0.3 * rnd(i, 4)})`;
+        ctx.fillRect(x, y, 6 + rnd(i, 5) * 8, 1.5);
       }
     } else if (kind === 'fog') {
       for (let i = 0; i < 6; i++) {
@@ -419,7 +428,7 @@
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);
         if (portal) {
           const shut = locked(P, portal);
-          if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); }
+          if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); } else if (fx) portalSwirl(px + TILE / 2, py + TILE / 2, now);
           // nhãn nằm trong ô cổng để không đè lên người đứng cạnh
           labels.push([(shut ? '🔒 ' : '') + mapOf(portal.to).name, px + TILE / 2, py + TILE - 13, shut ? '#9a93a3' : '#f0cf7a']);
         }
@@ -501,6 +510,7 @@
       const px = Math.round(n.at[0] * TILE - cx), py = Math.round(n.at[1] * TILE - cy);
       const im = image('npcs/' + n.sprite);
       if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+      if (fx) npcAct(n.id, px, py, now);
       labels.push([n.name, px + TILE / 2, py - 14, n.role === 'quests' ? '#f0cf7a' : '#c8f0b0']);
       if ((n.role === 'quests' && P.view.questReady) || (n.role === 'daily' && P.view.dailyReady) || (n.role === 'chest' && P.view.chestReady)) label('!', px + TILE - 4, py - 2, '#f0cf7a');
     }
@@ -528,7 +538,13 @@
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
-    if (myDoll) ctx.drawImage(myDoll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
+    // đang đi: nhún nhẹ; vừa sang bản đồ: hiện ra từ nhỏ tới to (FX_PLAN đợt 5)
+    const walking = fx && (mx !== P.pos.x || my !== P.pos.y);
+    const bobY = walking ? -Math.abs(Math.sin(now / 85)) * 2.5 : 0;
+    const grow = fx && arrive && now - arrive < 420 ? 0.35 + 0.65 * ((now - arrive) / 420) : 1;
+    const hs = TILE * grow, hx = px + (TILE - hs) / 2, hy = py + (TILE - hs) + bobY;
+    if (myDoll) ctx.drawImage(myDoll, hx, hy, hs, hs); else if (hero.complete) ctx.drawImage(hero, hx, hy, hs, hs);
+    if (fx && levelAt && now - levelAt < 1600) levelColumn(px, py, (now - levelAt) / 1600);
     const mine = bubbleOf(userId, now);
     if (mine) talk.push([mine, px + TILE / 2, py]);
     // câu cá: cần, dây, phao, cá bay lên (chỉ phía mình)
@@ -719,6 +735,67 @@
   }
 
   // Dấu bước chân (bụi trên đất, gợn nước trên bến / cầu gỗ), vòng sáng ở ô đích, cột sáng khi vừa sang bản đồ mới
+  // cổng đi được: vòng xoáy sáng quay chậm
+  function portalSwirl(x, y, t) {
+    ctx.save();
+    ctx.translate(x, y + 4); ctx.scale(1, 0.45);
+    for (let i = 0; i < 3; i++) {
+      const a = t / 600 + i * 2.1;
+      ctx.strokeStyle = `rgba(150, 210, 255, ${0.55 - i * 0.12})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, 9 + i * 4, a, a + 2.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // động tác người dân (chỉ là hình): Thợ Rèn gõ búa tia lửa, Bà Lang / Bác Đầu Bếp nồi bốc khói, Ông Lão giật cần,
+  // Lão Hỗn Nguyên lò xoáy sáng
+  function npcAct(id, px, py, t) {
+    const x = px + TILE / 2, y = py + TILE / 2;
+    if (id === 'blacksmith') {
+      const k = (t % 1100) / 1100;
+      if (k < 0.25) for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i - 2.5) * 0.45, r = 3 + k * 4 * 14;
+        ctx.fillStyle = `rgba(255, ${190 + i * 10}, 90, ${1 - k * 4})`;
+        ctx.fillRect(x + 8 + Math.cos(a) * r, y + 6 + Math.sin(a) * r, 2, 2);
+      }
+    } else if (id === 'herbalist' || id === 'cook') {
+      for (let i = 0; i < 4; i++) {
+        const k = ((t / 1800) + i / 4) % 1;
+        ctx.fillStyle = id === 'herbalist' ? `rgba(160, 230, 170, ${0.45 * (1 - k)})` : `rgba(225, 220, 215, ${0.45 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(x + 10 + Math.sin(t / 500 + i) * 3, y + 4 - k * 22, 2 + k * 4, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (id === 'fisher') {
+      // cần câu giật nhẹ mỗi vài giây
+      const tug = (t % 3200) < 260 ? Math.sin((t % 3200) / 260 * Math.PI) * 4 : 0;
+      ctx.strokeStyle = 'rgba(120, 90, 50, 0.9)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x + 6, y); ctx.lineTo(x + 20, y - 12 - tug); ctx.stroke();
+      ctx.strokeStyle = 'rgba(230, 230, 230, 0.6)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(x + 20, y - 12 - tug); ctx.lineTo(x + 24, y + 10); ctx.stroke();
+    } else if (id === 'chaos') {
+      for (let i = 0; i < 3; i++) {
+        const a = t / 400 + i * 2.1;
+        ctx.fillStyle = ['#ff8a5a', '#c49bff', '#9fd8ff'][i];
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * 13, y - 4 + Math.sin(a) * 5, 1.8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  // cột sáng vàng khi lên cấp (k: 0..1)
+  function levelColumn(px, py, k) {
+    const x = px + TILE / 2, y = py + TILE - 4, h = 110 * Math.min(1, k * 4);
+    const a = k < 0.7 ? 1 : (1 - k) / 0.3;
+    const g = ctx.createLinearGradient(0, y - h, 0, y);
+    g.addColorStop(0, 'rgba(255, 230, 140, 0)'); g.addColorStop(0.5, `rgba(255, 215, 90, ${0.55 * a})`); g.addColorStop(1, `rgba(255, 250, 220, ${0.9 * a})`);
+    ctx.fillStyle = g; ctx.fillRect(x - 13, y - h, 26, h);
+    ctx.strokeStyle = `rgba(255, 215, 90, ${a})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y, 8 + k * 26, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 8; i++) {
+      const kk = (k * 2 + i / 8) % 1;
+      ctx.fillStyle = `rgba(255, 240, 170, ${a * (1 - kk)})`;
+      ctx.fillRect(x + Math.sin(i * 1.7) * 12, y - kk * 90, 2, 2);
+    }
+  }
+
   // vệt chém chéo (k: 0..1) ở tâm (x, y)
   function slashAt(x, y, k, col) {
     ctx.save();
@@ -1012,6 +1089,8 @@
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
       lake = at(l); school = at(s); draw();
     },
+    // vừa lên cấp (ui.js celebrate): cột sáng vàng ở chỗ nhân vật
+    levelUp() { levelAt = performance.now(); draw(); },
     // vòng sáng ở ô vừa chạm để đi tới (ui.js walkTo)
     mark(x, y) { const P = getPlayer(); if (P && P.pos) { mark = { x, y, map: P.pos.map, t0: performance.now() }; draw(); } },
     // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)

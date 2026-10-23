@@ -174,7 +174,6 @@
   // `played`: hoạt cảnh ép đồ (js/fx.js) đã hiện chữ lớn
   function resultFx(cmd, r, old, played) {
     if (!r || !r.ok || !P) return;
-    if (old && P.level > old.level) { bigFx(`LÊN CẤP ${P.level}!`, 'level'); note(`Lên cấp ${P.level}.`, 'good'); }
     const up = r.upgrade, ch = r.chaos, life = r.life;
     const big = played ? () => {} : bigFx;
     if (up) {
@@ -189,6 +188,58 @@
     if (old && ['use', 'rest', 'potion'].includes(cmd.act)) {
       const hp = P.hp - old.hp, mp = (P.mp || 0) - (old.mp || 0);
       if (hp > 0 || mp > 0) bigFx([hp > 0 ? `+${fmt(hp)} máu` : '', mp > 0 ? `+${fmt(mp)} MP` : ''].filter(Boolean).join('  '), 'heal');
+    }
+  }
+
+  // FX đợt 5: số vàng trên đầu trang chạy dần tới số mới (vẽ lại trang thì tiếp tục từ số đang hiện)
+  let goldShown = null, goldAnim = null;
+  function tweenGold() {
+    const el = document.querySelector('.hud-who .gold');
+    if (!el || !P) return;
+    if (goldShown == null || !Map_.fxOn() || Math.abs(P.gold - goldShown) < 1) { goldShown = P.gold; goldAnim = null; return; }
+    if (!goldAnim || goldAnim.to !== P.gold) goldAnim = { from: goldShown, to: P.gold, t0: performance.now() };
+    const step = () => {
+      const g = goldAnim, cur = document.querySelector('.hud-who .gold');
+      if (!g || !cur) return;
+      const k = Math.min(1, (performance.now() - g.t0) / 700), e = 1 - (1 - k) * (1 - k);
+      goldShown = Math.round(g.from + (g.to - g.from) * e);
+      cur.innerHTML = `${icon('two-coins')}${fmt(goldShown)}`;
+      cur.classList.toggle('gold-up', g.to > g.from && k < 1);
+      if (k < 1) requestAnimationFrame(step); else goldAnim = null;
+    };
+    step();
+  }
+
+  // FX đợt 5: món mới vào túi (đồ thường, đồ hiếm): ô nảy + sáng lần đầu thấy trong Túi đồ
+  let bagSeen = null;
+  const bagFresh = new Set();
+  function trackBag() {
+    if (!P || !P.inv) return;
+    const ids = Object.keys(P.inv).filter((k) => P.inv[k] > 0).concat(Object.keys((P.view && P.view.gear) || {}));
+    if (bagSeen) for (const id of ids) if (!bagSeen.has(id)) bagFresh.add(id);
+    bagSeen = new Set(ids);
+  }
+  // gọi khi vẽ ô túi: trả ' fresh-item' rồi bỏ khỏi danh sách sau khi đã hiện một lúc
+  function freshCls(id) {
+    if (!bagFresh.has(id)) return '';
+    setTimeout(() => bagFresh.delete(id), 2500);
+    return ' fresh-item';
+  }
+
+  // FX đợt 4: khoảnh khắc thành tích khi trạng thái nhân vật đổi (lệnh của mình hoặc server đẩy: tự đánh, đánh chung)
+  function celebrate(old, p) {
+    if (!old || !p || old.name !== p.name) return;
+    if ((p.rebirths || 0) > (old.rebirths || 0)) {
+      Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
+      return;
+    }
+    if (p.level > old.level) {
+      const a = old.view.derived, b = p.view.derived, d = (k) => (b[k] || 0) - (a[k] || 0);
+      const lines = [d('maxHp') > 0 && `+${fmt(d('maxHp'))} máu`, d('maxMp') > 0 && `+${fmt(d('maxMp'))} MP`, d('atk') > 0 && `+${fmt(d('atk'))} tấn công`,
+        d('def') > 0 && `+${fmt(d('def'))} phòng thủ`, p.points > old.points && `+${p.points - old.points} điểm cộng`].filter(Boolean);
+      Celebrate.levelUp(p.level, lines);
+      Map_.levelUp();
+      note(`Lên cấp ${p.level}.`, 'good');
     }
   }
 
@@ -239,6 +290,8 @@
     }
     hud.hidden = false;
     hud.innerHTML = viewHud();
+    tweenGold();
+    trackBag();
     if (P.battle) {
       tabs.hidden = true;
       view.classList.add('fit');
@@ -1239,6 +1292,8 @@
 
   function onChatMessage(m) {
     m._t = Date.now();
+    // FX đợt 4: thông báo cả server (ép +11, đồ Thần, Long Vương, trùm, sự kiện): dải chạy ngang đầu màn hình
+    if (m.uid === 0) Celebrate.banner(m.text);
     chats.push(m);
     if (chats.length > 50) chats.shift();
     // người nói đang ở cùng bản đồ thì hiện bong bóng trên đầu
@@ -1311,6 +1366,7 @@
     Sound.music(musicMood());
     if (P && !P.battle && tab === 'map' && !npc && Map_.mountedMap() === P.pos.map && $('#map-canvas')) {
       $('#hud').innerHTML = viewHud();
+      tweenGold(); trackBag();
       const head = $('.map-top');
       if (head) head.outerHTML = Map_.top(P);
       const tut = $('#tut');
@@ -1431,7 +1487,7 @@
     Sound.play('mail');
     if (P && !P.battle) refreshHud();
   }
-  function refreshHud() { const h = $('#hud'); if (h && P && !P.battle) h.innerHTML = viewHud(); }
+  function refreshHud() { const h = $('#hud'); if (h && P && !P.battle) { h.innerHTML = viewHud(); tweenGold(); } }
   const hhmm = (t) => new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
 
   function viewFriends() {
@@ -2365,7 +2421,7 @@
       if (!id) return '<span class="cell empty"></span>';
       const it = itemOf(id), n = isGear(id) ? 1 : P.inv[id];
       const wearable = WEAR_KINDS.includes(it.slot);
-      return `<button class="cell${it.kind ? ` b-${it.kind}` : ''}${upClass(upLevel(id))}${cantWear(it) ? ' low' : ''}" data-act="bag-tip" data-id="${esc(id)}"
+      return `<button class="cell${it.kind ? ` b-${it.kind}` : ''}${upClass(upLevel(id))}${cantWear(it) ? ' low' : ''}${freshCls(id)}" data-act="bag-tip" data-id="${esc(id)}"
           ${wearable ? `draggable="true" data-drag-id="${esc(id)}"` : ''} aria-label="${esc(it.name)}">
         ${cellIcon(it, upLevel(id))}${n > 1 ? `<span class="qty num">${n}</span>` : ''}${upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it.locked ? '<span class="lockb">🔒</span>' : ''}
       </button>`;
@@ -3376,6 +3432,8 @@
       ev.push({ type: 'pet', img, dmg: +bite.text.match(/cắn thêm (\d+)/)[1], tidal: newLog.some((l) => l.text.startsWith('🌊')), delay: f.mDmg > 0 ? 240 : 0 });
     }
     if (newLog.some((l) => l.text.startsWith('🐉'))) ev.push({ type: 'dragon', delay: 500 });
+    // FX đợt 4: lần đầu hạ trùm / Hắc Long
+    if (newLog.some((l) => l.text.startsWith('🏆 Lần đầu hạ') || l.text.startsWith('Hắc Long đã gục ngã'))) ev.push({ type: 'boss', name: m.name, delay: 700 });
     if (b.over && b.result === 'win') ev.push({ type: 'kill', delay: 320 });
     const items = b.over && b.result === 'win' ? lootFx(b.reward) : [];
     if (items.length) ev.push({ type: 'loot', delay: 650, items });
@@ -3486,6 +3544,8 @@
         commandSound(cmd, r, old);
         resultFx(cmd, r, old);
       }
+      if (r.ok) celebrate(old, P);
+      if (r.ok && (cmd.act === 'chest_open' || cmd.act === 'chest_buy')) BattleFx.run([{ type: 'chest', gold: cmd.act === 'chest_open' }]);
       if (r.ok) {
         if (cmd.act === 'leave' || cmd.act === 'create') tab = 'map';
         if (cmd.act === 'reset') tab = 'map';
@@ -3975,8 +4035,10 @@
       // tự đánh / đánh chung: server đẩy trạng thái trận mới, suy ra hiệu ứng từ máu hai bên
       const ob = P && P.battle, nb = p && p.battle;
       const before = ob && nb && !ob.over && ob.monster.id === nb.monster.id ? snapBattle() : null;
+      const old = P;
       P = p;
       refresh();
+      celebrate(old, P);
       if (before && (before.mHp !== nb.monster.hp || before.pHp !== battleHp() || nb.over)) {
         const act = before.mHp !== nb.monster.hp ? 'attack' : 'potion';
         BattleFx.run(battleEvents(before, act, null, fxOf(before, act)));
@@ -3987,7 +4049,12 @@
     Net.onWorldBoss(onWorldBoss);
     Net.onLake(onLake);
     Net.onInvasion(onInvasion);
-    Net.onNotice((msg) => { toast(msg); note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good'); Sound.play(/Thành tựu/.test(msg) ? 'achieve' : 'notice'); });
+    Net.onNotice((msg) => {
+      note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good');
+      // FX đợt 4: thành tựu / danh hiệu mới: thẻ huy hiệu trượt xuống (có âm riêng)
+      if (/Thành tựu mới|Danh hiệu mới/.test(msg)) Celebrate.badge(msg);
+      else { toast(msg); Sound.play('notice'); }
+    });
     window.Doll.onReady(() => { if (P) refresh(); });
     Net.onParty((pt) => {
       const had = !!party;
@@ -4059,7 +4126,7 @@
       const more = n > mail.unread;
       mail.unread = n;
       if (more) { toast('Bạn có thư mới.'); note('Bạn có thư mới trong Hộp thư.', 'mail'); Sound.play('mail'); if (mail.open) loadMail(); }
-      if (P && !P.battle) $('#hud').innerHTML = viewHud();
+      if (P && !P.battle) { $('#hud').innerHTML = viewHud(); tweenGold(); }
     });
     setInterval(() => { const el = $('#wb-left'); if (el && wb.alive) el.textContent = clock(wb.endsAt - wb.skew - Date.now()); }, 1000);
     Net.onChatHistory((msgs) => { chats = msgs; const log = $('#chat-log'); if (log) { log.innerHTML = chats.map(ovLine).join(''); log.scrollTop = log.scrollHeight; } });
