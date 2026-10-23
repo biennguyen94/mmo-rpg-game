@@ -233,7 +233,9 @@ cycle = " › ".join(el(e) for e in ["fire", "ice", "wind", "earth", "lightning"
 bylv = ", ".join(f"cấp {a}+ {el(e)}" for a, e in EL["by_level"])
 
 # ---------- Chỉ số & chiến đấu ----------
-C, MON, PK = R["combat"], R["monster"], R["pk"]
+C, MON, PK, PV = R["combat"], R["monster"], R["pk"], R["pvp"]
+CLN = {"dk": "Kiếm Sĩ", "dw": "Phù Thủy", "elf": "Tiên Nữ", "mg": "Đấu Sĩ"}
+pv_cls = ", ".join(f"{CLN.get(k, k)} ×{n(v)}" for k, v in PV.get("class_taken", {}).items())
 cr, cm, dg, hit = C["crit"], C["crit_mult"], C["dodge"], C["hit"]
 def srow(name, how, use):
     return f"<tr><td><b>{name}</b></td><td>{how}</td><td>{use}</td></tr>"
@@ -245,9 +247,9 @@ stat_rows = "".join([
     srow("Phòng thủ", "Tổng thủ giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn + ép + dòng cộng thêm; × thú / món ăn / Đài; × đủ bộ, đồ Thần",
          f"Sát thương nhận = đòn² / (đòn + thủ), không dưới {pct(C['soft_floor'])} đòn: đòn bằng thủ chỉ còn một nửa. Như nhau khi bị quái hay người đánh."),
     srow("Chí mạng", f"{pct(cr['base'])} + Nhanh nhẹn × {pct(cr['per_agi'], 2)} (tối đa {pct(cr['max'])}) + Excellent + May mắn vũ khí. Hệ số ×({n(cm['base'])} + Nhanh nhẹn × {n(cm['per_agi'])}), tối đa ×{n(cm['max'])}",
-         f"Đòn thường và kỹ năng (đánh quái, Đồ sát, Đấu trường). PK cược: kỹ năng không chí mạng. Quái chí mạng {pct(MON['crit'])} ×{n(C['monster_crit_mult'])}."),
+         f"Đòn thường và kỹ năng. Đánh người: tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])}. Quái chí mạng {pct(MON['crit'])} ×{n(C['monster_crit_mult'])}."),
     srow("Né đòn", f"{pct(dg['base'])} + Nhanh nhẹn × {pct(dg['per_agi'], 2)} (tối đa {pct(dg['max'])}), × Excellent tỉ lệ phòng thủ, trần cuối {pct(dg['max_total'])}; đánh quái cộng buff né, tổng tối đa {pct(dg['max_with_buff'])}",
-         "Né đòn thường của quái và của người. Không né được đòn đặc biệt của quái và kỹ năng của người."),
+         f"Né đòn thường của quái và của người (đánh người: né ×{n(PV['dodge_mult'])}). Không né được đòn đặc biệt của quái và kỹ năng của người."),
     srow("Cánh", f"Số gốc của cánh + phần ép theo bậc cánh (mục Cánh); hấp thụ tối đa {pct(WU['absorb']['max'])}",
          "+% sát thương mọi đòn và −% sát thương nhận, cả đánh quái lẫn đánh người. Dòng phụ: máu, MP, bỏ qua phòng thủ."),
     srow("Máu", "Hệ số lớp theo Thể lực và cấp + nhẫn máu + đủ bộ + đồ Thần + dòng cánh; × thú / món ăn / Đài; × Excellent", "Hết máu là gục."),
@@ -255,12 +257,14 @@ stat_rows = "".join([
          f"Kỹ năng tốn MP, tăng {pct(C['skill_mp_per_level'])} mỗi cấp nhân vật; hồi {pct(C['mp_regen'])} mỗi lượt và thêm theo Năng lượng."),
 ])
 mode_rows = "".join([
+    f"<tr><td><b>Sát thương</b></td><td>đầy đủ</td><td colspan=2>mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) ×{n(PV['dmg_mult'])}, nhân thêm theo lớp người bị đánh: {pv_cls}</td></tr>",
     "<tr><td><b>Mình trúng</b></td><td>đòn thường theo tỉ lệ trúng quái; quái không né; kỹ năng luôn trúng</td><td>đòn thường theo né đối thủ; kỹ năng luôn trúng</td><td>đòn thường theo né đối thủ; kỹ năng không né được</td></tr>",
     "<tr><td><b>Mình bị đánh</b></td><td>né được đòn thường; đòn đặc biệt của quái không né được</td><td>né được đòn thường; kỹ năng của đối thủ không né được</td><td>né được đòn thường; kỹ năng không né được</td></tr>",
-    "<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td>hệ số thật của mỗi bên</td><td>chỉ đòn thường</td></tr>",
+    f"<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td colspan=2>tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])} (thu nhỏ theo tỉ lệ, không chặn trần)</td></tr>",
+    f"<tr><td><b>Choáng</b></td><td>quái mất lượt</td><td colspan=2>mất lượt; vừa thoát choáng thì kháng {PV['stun_immune']} lượt</td></tr>",
     "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ</td><td>như Đồ sát</td></tr>",
-    f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái</td><td>mỗi {PK['special_every']} lượt kỹ năng lớp ×{n(PK['special_mult'])}</td></tr>",
-    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu</td><td>hết máu; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
+    f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái; đối thủ Đấu trường (máy) dùng kỹ năng mạnh nhất, thú, buff, hồi máu như người</td><td>mỗi bên tự dùng kỹ năng mạnh nhất còn dùng được</td></tr>",
+    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
 ])
 mh, ma, md = MON["hp"], MON["atk"], MON["def"]
 monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
@@ -374,11 +378,11 @@ tower_rows = "".join(
 # ---------- PK, đồ sát ----------
 SL, AR, GW, PKR = R["slay"], R["arena"], R["guild_war"], R["pk"]
 pk_items = [
-    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ tự đánh thường. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
     ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
     ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); mỗi người đồ sát cùng một người tối đa {SL['per_target_hour']} lần trong 60 phút."),
     ("PK cược vàng", f"mời người khác cược từ {n(PKR['min'])} tới {n(PKR['max'])} vàng, tối đa {PKR['per_day']} trận mỗi ngày; hai bản sao chỉ số tự đánh (xem Chỉ số, chiến đấu), người thắng nhận tiền cược."),
-    ("Đấu trường", f"đánh bản sao chỉ số người khác, tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']})."),
+    ("Đấu trường", f"đánh người khác do máy điều khiển (kỹ năng, thú cưng, buff, hồi máu của chính người đó), tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']})."),
     ("Chiến bang", f"bang chủ / phó bang tuyên chiến bang khác (bang kia nhận trong {GW['answer_s']} giây), kéo dài {GW['minutes']} phút. Mỗi trận Đấu trường thắng thành viên bang địch +1 điểm (cùng một đối thủ tính tối đa {GW['same_target_max']} lần). Bang nhiều điểm thắng: quỹ +{n(GW['win_fund'])}, thành viên có điểm nhận {n(GW['win_gold'])} vàng qua thư; hai bang chờ {GW['rematch_hours']} giờ mới chiến lại."),
 ]
 # ---------- Thú cưng ----------
