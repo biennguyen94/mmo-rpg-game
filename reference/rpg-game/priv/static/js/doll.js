@@ -13,7 +13,8 @@
   const listeners = [];
   let notifyTimer = null;
 
-  const layers = (look) => BASE.concat([look && look.armor, look && look.hair, look && look.weapon, look && look.shield].filter(Boolean));
+  // `look.body`: thân riêng theo lớp (Tiên Nữ: base/elf_f), thay thân nam mặc định
+  const layers = (look) => [(look && look.body) || BASE[0]].concat(BASE.slice(1), [look && look.armor, look && look.hair, look && look.weapon, look && look.shield].filter(Boolean));
   const wingKey = (look) => (look && look.wing ? `wing:${look.wing.cls}:${look.wing.tier}` : '');
   const key = (look) => layers(look).join('|') + wingKey(look);
 

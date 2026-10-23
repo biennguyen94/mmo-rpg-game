@@ -11,7 +11,7 @@
   let pickCls = 'dk';
   let confirmRebirth = false;
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
-  let authMode = 'login'; // 'login' | 'register'
+  let authMode = 'login'; // 'login' | 'register' | 'forgot'
   let loading = true;    // đang kết nối server
   let busy = false;      // đang chờ server trả lời
   let walk = null;       // đích đang đi tới trên bản đồ: { x, y, monster, id }
@@ -318,6 +318,7 @@
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}" data-minutes="1440">Khóa 1 ngày</button>
           <button class="btn small-btn danger" data-adm="ban" data-uid="${u.id}">Khóa vĩnh viễn</button>
           <button class="btn small-btn" data-adm="unban" data-uid="${u.id}">Mở khóa</button>
+          <button class="btn small-btn" data-adm="reset_password" data-uid="${u.id}">🔑 Đặt lại mật khẩu</button>
         </div>
 ` : ''}
       </div>
@@ -338,11 +339,25 @@
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
+      ${viewPwRequests()}
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
   }
 
   const isAdminRole = () => Net.role === 'admin';
+
+  // Quên mật khẩu (DECISIONS "Quên mật khẩu"): yêu cầu người chơi gửi từ màn đăng nhập; mật khẩu tạm vừa đặt
+  function viewPwRequests() {
+    const temp = adm.temp ? `<div class="item" style="border-color:var(--gold)"><div class="grow"><div class="name">Mật khẩu mới của @${esc(adm.temp.username)}</div>
+        <div class="num" style="font-size:1.3rem;color:var(--gold);user-select:all">${esc(adm.temp.temp)}</div>
+        <div class="small muted">Báo cho người chơi qua kênh liên lạc của họ; đăng nhập xong nhắc họ đổi mật khẩu. Mọi thiết bị của họ đã bị đăng xuất.</div></div></div>` : '';
+    const list = !adm.pw ? '' : adm.pw.length ? `<div class="list">${adm.pw.map((r) => `<div class="item"><div class="grow">
+        <div class="name">@${esc(r.username)}</div><div class="small">Liên lạc: ${esc(r.contact)}</div><div class="small muted">${new Date(r.at).toLocaleString('vi-VN')}</div>
+        <div class="btn-row"><button class="btn small-btn primary" data-adm="reset_password" data-uid="${r.uid}">Đặt lại mật khẩu</button><button class="btn small-btn" data-adm="pw_dismiss" data-id="${r.id}">Bỏ qua</button></div></div></div>`).join('')}</div>`
+      : '<p class="small muted">Không có yêu cầu nào.</p>';
+    return `<div class="card"><div class="row"><h3 class="grow">🔑 Quên mật khẩu</h3><button class="btn small-btn" data-adm="pw_requests">${adm.pw ? 'Tải lại' : 'Xem'}</button></div>
+      <p class="small muted">Người chơi gửi yêu cầu ở màn đăng nhập. Kiểm tra đúng chủ tài khoản (qua liên lạc họ để lại) rồi mới đặt lại.</p>${temp}${list}</div>`;
+  }
   // loại đồ tặng được bằng "Đồ riêng" (như `Engine.gear_slots/0`: mọi trang bị trừ cánh, có nhẫn / dây chuyền)
   const GEAR_KINDS = ['weapon', 'armor', 'shield', 'helm', 'pants', 'gloves', 'boots', 'ring', 'pendant'];
   // vũ khí và dây chuyền cộng tấn công (ép, dòng cộng thêm), đồ khác cộng phòng thủ — như `Engine.derived/1`
@@ -540,6 +555,7 @@
       return;
     }
     if (op === 'reset_stats' && !confirm('Đặt lại chỉ số về gốc của lớp và trả điểm tiềm năng theo cấp / chuyển sinh?')) return;
+    if (op === 'reset_password' && !confirm('Đặt lại mật khẩu tài khoản này? Mật khẩu cũ hết dùng được, mọi thiết bị của họ bị đăng xuất.')) return;
     if (op === 'clear_bag' && !confirm('Hủy MỌI trang bị trong túi của nhân vật này (cả món đang khóa)? Đồ đang mặc và đồ trong Tủ Đồ giữ nguyên. Không hoàn tác được.')) return;
     const payload = {};
     if (d.id) payload.id = +d.id;
@@ -553,6 +569,9 @@
       if (op === 'online') { adm.online = r.online; return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
+      if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
+      if (op === 'reset_password') { adm.temp = { username: r.username, temp: r.temp }; if (adm.pw) adm.pw = adm.pw.filter((x) => x.uid !== payload.uid); toast(`Đã đặt lại mật khẩu @${r.username}.`); return render(); }
+      if (op === 'pw_dismiss') { adm.pw = (adm.pw || []).filter((x) => x.id !== payload.id); return render(); }
       toast(r.msg || 'Đã xong.');
       if (r.user) adm.user = r.user;
       if (op === 'resolve') adm.reports = adm.reports.filter((r) => r.id !== payload.id);
@@ -1074,7 +1093,8 @@
         ${bar('xp', pr.xp, pr.xp_need, '')}
       </div>
       <div class="card"><h3>Trang bị</h3>
-        ${pr.equip.length ? `<div class="prof-gear">${pr.equip.map((g, i) => `<button class="prof-item" data-act="prof-tip" data-i="${i}">${itemIcon(g.item || ITEMS[g.id] || { icon: 'sword' }, g.kind, g.up)}<span class="${KIND_CLS[g.kind] || ''}">${esc(g.name)}</span>${g.up ? ` <span class="up-lv">+${g.up}</span>` : ''}</button>`).join('')}</div>` : '<p class="small muted">Chưa mặc gì.</p>'}
+        <div class="grid3 prof-equip">${profEquip(pr)}</div>
+        ${pr.equip.length ? '' : '<p class="small muted" style="text-align:center">Chưa mặc gì.</p>'}
       </div>
       <div class="card">
         ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
@@ -1508,7 +1528,18 @@
         <h1>Hắc Long</h1>
         <p>${reg ? 'Tạo tài khoản để lưu nhân vật trên máy chủ và chơi trên mọi thiết bị.' : 'Đăng nhập để tiếp tục hành trình.'}</p>
       </div>
-      <form id="auth" class="card">
+      ${authMode === 'forgot' ? `<form id="forgot" class="card">
+        <h3>Quên mật khẩu</h3>
+        <p class="small muted">Để lại tên đăng nhập và cách liên lạc (Zalo, Facebook, số điện thoại…). Quản trị viên sẽ kiểm tra rồi gửi mật khẩu mới cho bạn; đăng nhập xong nhớ đổi lại mật khẩu.</p>
+        <label class="field" for="fg-user">Tên đăng nhập
+          <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        </label>
+        <label class="field" for="fg-contact">Cách liên lạc
+          <input type="text" id="fg-contact" maxlength="120" autocomplete="off" required>
+        </label>
+        <button class="btn primary block" type="submit">Gửi yêu cầu</button>
+        <button class="btn block" type="button" data-auth="login">‹ Quay lại đăng nhập</button>
+      </form>` : `<form id="auth" class="card">
         <label class="field" for="auth-user">Tên đăng nhập
           <input type="text" id="auth-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         </label>
@@ -1518,7 +1549,8 @@
         ${reg ? '<p class="small muted">Tên đăng nhập 3–20 ký tự: chữ không dấu, số, dấu gạch dưới. Mật khẩu từ 6 ký tự.</p>' : ''}
         <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>${reg ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
         <button class="btn block" type="button" data-auth="${reg ? 'login' : 'register'}">${reg ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký'}</button>
-      </form>`;
+        ${reg ? '' : '<p class="small" style="text-align:center;margin:4px 0 0"><button class="btn small-btn" type="button" data-auth="forgot">Quên mật khẩu?</button></p>'}
+      </form>`}`;
   }
 
   // ---------- Làng ----------
@@ -2285,6 +2317,25 @@
         ${img}${pt ? `<span class="lvl">Lv${petLevel(pt.id).lv}</span>` : ''}
         <span class="lbl">${SLOT_LABEL.pet}</span>
       </button>`;
+  }
+
+  // Hồ sơ: lưới ô y như Túi đồ → Trang bị đang mặc (viền loại đồ, viền +N, thú hiếm phát sáng); bấm ô xem chi tiết
+  function profEquip(pr) {
+    return EQUIP_GRID.flat().map((slot) => {
+      if (!slot) return '<span class="slot none"></span>';
+      if (slot === 'pet') {
+        const pt = pr.pet_id && petInfo(pr.pet_id), own = pt && pt.ref && ownIcon(pt, 0);
+        const img = !pt ? '' : own ? `<img src="${own}" alt="" draggable="false" class="own">` : `<img src="${asset(pt.sprite + '.png')}" alt="" draggable="false" class="px">`;
+        return `<span class="slot pet${pt ? '' : ' empty'}${pt && pt.rare ? ' dragon-glow' : ''}" title="${esc(pt ? pt.name : 'Không dắt thú')}">
+          ${img}${pt && pr.pet_lv ? `<span class="lvl">Lv${pr.pet_lv}</span>` : ''}<span class="lbl">${SLOT_LABEL.pet}</span></span>`;
+      }
+      const i = pr.equip.findIndex((g) => g.slot === slot), g = pr.equip[i];
+      const it = g && (g.item || ITEMS[g.id]);
+      if (!it) return `<span class="slot empty"><span class="lbl">${SLOT_LABEL[slot]}</span></span>`;
+      const kind = g.kind || it.kind;
+      return `<button class="slot${kind ? ` b-${kind}` : ''}${upClass(g.up)}" data-act="prof-tip" data-i="${i}" title="${esc(g.name)}">
+        ${cellIcon(it, g.up)}${g.up ? `<span class="lvl">+${g.up}</span>` : ''}<span class="lbl">${SLOT_LABEL[slot]}</span></button>`;
+    }).join('');
   }
 
   function viewBag() {
@@ -3699,13 +3750,27 @@
     const user = $('#auth-user').value.trim(), pass = $('#auth-pass').value;
     if (!user || !pass) { toast('Nhập tên đăng nhập và mật khẩu.', true); return; }
     busy = true;
+    // phản hồi ngay khi bấm / Enter: khóa nút, đổi chữ (server cần một lúc để kiểm mật khẩu)
+    const btn = $('#auth button[type="submit"]'), label = btn && btn.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = authMode === 'register' ? 'Đang tạo tài khoản…' : 'Đang đăng nhập…'; }
     try {
       enter(await Net.login(user, pass, authMode === 'register'));
       toast(authMode === 'register' ? 'Đã tạo tài khoản.' : `Xin chào ${Net.username}!`);
     } catch (err) {
       toast(err.msg, true);
+      if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = label; }
     }
     busy = false;
+  }
+
+  async function onForgot() {
+    const user = $('#fg-user').value.trim(), contact = $('#fg-contact').value.trim();
+    if (!user || !contact) { toast('Nhập tên đăng nhập và cách liên lạc.', true); return; }
+    try {
+      await Net.forgot(user, contact);
+      authMode = 'login'; render();
+      toast('Đã gửi yêu cầu. Quản trị viên sẽ liên lạc với bạn.');
+    } catch (err) { toast(err.msg, true); }
   }
 
   async function onPassword() {
@@ -3725,6 +3790,7 @@
 
   function onSubmit(e) {
     if (e.target.id === 'auth') { e.preventDefault(); onAuth(); return; }
+    if (e.target.id === 'forgot') { e.preventDefault(); onForgot(); return; }
     if (e.target.id === 'pw-form') { e.preventDefault(); onPassword(); return; }
     if (e.target.id === 'chat-form') { e.preventDefault(); onChatSubmit(); return; }
     if (e.target.id === 'arena-find') {

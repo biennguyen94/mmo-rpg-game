@@ -9,6 +9,7 @@ defmodule HacLongWeb.Router do
     pipe_through :api
     post "/register", AuthController, :register
     post "/login", AuthController, :login
+    post "/forgot", AuthController, :forgot
     get "/me", AuthController, :me
     post "/logout", AuthController, :logout
     post "/logout_all", AuthController, :logout_all

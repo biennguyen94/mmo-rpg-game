@@ -48,12 +48,16 @@ defmodule HacLong.Game.HomePetsTest do
 
     assert Engine.look(p) == %{
              hair: "hair/knot_red",
+             body: nil,
              weapon: "hand1/club_slant",
              armor: "body/shirt_vest",
              wing: nil,
              shield: nil,
              pet: nil
            }
+
+    # Tiên Nữ: thân nữ, tóc vàng
+    assert %{body: "base/elf_f", hair: "hair/fem_yellow"} = Engine.look(%{p | cls: "elf"})
   end
 
   test "đặt và cất đồ trang trí; không chắn lối, không đặt chỗ đứng trước cửa" do

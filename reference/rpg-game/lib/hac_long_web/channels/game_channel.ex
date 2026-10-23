@@ -79,7 +79,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -461,7 +461,7 @@ defmodule HacLongWeb.GameChannel do
         true ->
           id = HacLong.Admin.log!(admin_of(socket), op, target(p), p, nil)
           result = admin(op, p, socket)
-          HacLong.Admin.set_result(id, result)
+          HacLong.Admin.set_result(id, log_result(op, result))
           result
       end
 
@@ -475,6 +475,12 @@ defmodule HacLongWeb.GameChannel do
   def handle_in("admin", _p, socket), do: {:reply, {:error, %{msg: "Không có quyền."}}, socket}
 
   def handle_in(_event, _payload, socket), do: {:reply, {:error, %{msg: "Sai cú pháp."}}, socket}
+
+  # không ghi mật khẩu tạm vào admin_log
+  defp log_result("reset_password", {:ok, %{username: name}}),
+    do: {:ok, "đã đặt lại mật khẩu #{name}"}
+
+  defp log_result(_op, result), do: result
 
   # người đang online thì lấy trạng thái mới nhất, không thì đọc database
   defp online_or_saved(uid) do
@@ -751,6 +757,28 @@ defmodule HacLongWeb.GameChannel do
       _ -> punish(op, id, p)
     end
   end
+
+  # Quên mật khẩu (DECISIONS "Quên mật khẩu"): yêu cầu chờ xử lý, đặt lại mật khẩu tạm, bỏ qua yêu cầu
+  defp admin("pw_requests", _p, _s),
+    do: {:ok, %{requests: HacLong.Accounts.PasswordReset.open()}}
+
+  defp admin("reset_password", %{"uid" => id}, s) when is_integer(id) do
+    case HacLong.Accounts.PasswordReset.reset(id, s.assigns.user_id) do
+      {:ok, name, temp} ->
+        {:ok,
+         %{
+           temp: temp,
+           username: name,
+           msg: "Mật khẩu mới của #{name}: #{temp} (báo cho người chơi, đăng nhập rồi đổi lại)."
+         }}
+
+      {:error, msg} ->
+        {:error, msg}
+    end
+  end
+
+  defp admin("pw_dismiss", %{"id" => id}, s) when is_integer(id),
+    do: HacLong.Accounts.PasswordReset.dismiss(id, s.assigns.user_id)
 
   defp admin("announce", %{"text" => text}, _s) when is_binary(text) and text != "" do
     Chat.system("📢 " <> String.slice(String.trim(text), 0, 200))

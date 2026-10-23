@@ -392,7 +392,8 @@
       "mu": "Fairy Elf",
       "desc": "Cung thủ nhanh nhẹn, hay chí mạng và né đòn, biết hồi máu.",
       "icon": "laurels",
-      "hair": "hair/elf_black",
+      "hair": "hair/fem_yellow",
+      "body": "base/elf_f",
       "base": {
         "str": 22,
         "agi": 25,

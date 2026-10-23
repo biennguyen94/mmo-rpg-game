@@ -891,3 +891,19 @@ Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian
   ngày với việc ở Bảng Tin nên không cần migration) rồi gặp Ông Lão (thẻ trên Long Vương) nhận một lần: vàng / kinh nghiệm theo công
   thức việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật, × 30 con) và +`long_khi` = 20 Long Khí. Lệnh `elder_claim`.
 - Ủng cũ không còn cộng Long Khí (chỉ cá).
+
+## Đăng nhập nhanh hơn, quên mật khẩu, hồ sơ, Tiên Nữ
+
+- **Đăng nhập nhanh hơn:** `pbkdf2_elixir` tự lặp 160.000 vòng HMAC bằng Elixir (~0,6 giây mỗi lần đăng nhập / đăng ký).
+  `HacLong.Accounts.Password` dùng `:crypto.pbkdf2_hmac/5` (C trong OTP): cùng thuật toán, số vòng, định dạng hash nên tài khoản cũ
+  vẫn đăng nhập được, ~0,13 giây (đo ở máy dev). Nút đăng nhập / tạo tài khoản đổi chữ "Đang đăng nhập…" ngay khi bấm.
+- **Quên mật khẩu:** tài khoản không có email nên không gửi mail được. Màn đăng nhập có "Quên mật khẩu?": người chơi để lại tên
+  đăng nhập + cách liên lạc (`POST /api/forgot`, giới hạn 5 lần/giờ/IP, luôn trả ok để không lộ tài khoản có tồn tại không; mỗi
+  tài khoản một yêu cầu chờ). Bảng `password_resets` (migration `20261111000000`). Quản trị đặt lại → mật khẩu tạm 8 ký tự, thu hồi
+  mọi token, đăng xuất mọi thiết bị; mật khẩu tạm không ghi vào `admin_log`.
+- **Hồ sơ:** phần Trang bị dùng lưới ô y như Túi đồ → Trang bị đang mặc (viền loại đồ, viền +N, ô Thú nuôi; thú hiếm như Long
+  Vương có viền vàng xoay). Profile gửi thêm `pet_id`, `pet_lv`. Viền +7 / +9 giờ cũng nhấp nháy nhẹ (+11 vẫn mạnh nhất), ở mọi chỗ
+  có ô đồ.
+- **Tiên Nữ hình nữ:** thân `base/elf_f` + tóc `hair/fem_yellow` (Dungeon Crawl CC0); `classes.json` thêm `body`, `Engine.look`
+  gửi `body`, `doll.js` dùng `look.body` thay thân nam mặc định.
+

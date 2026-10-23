@@ -60,6 +60,9 @@ defmodule HacLong.Profile do
       xp_need: Engine.xp_need(p),
       equip: Enum.flat_map(@slots, &equip(p, &1)),
       pet: p[:pet] && Pets.name(p),
+      # ô Thú nuôi trong lưới trang bị của hồ sơ: id + cấp thú đang dắt
+      pet_id: p[:pet],
+      pet_lv: p[:pet] && Pets.level(p, p.pet),
       pets: length(Map.get(p, :pets) || []),
       market: market(uid),
       counts: %{

@@ -207,6 +207,9 @@
       return j;
     },
 
+    // Quên mật khẩu: gửi yêu cầu cho quản trị (server luôn trả ok).
+    forgot(username, contact) { return api('POST', '/api/forgot', { username, contact }); },
+
     // Đăng xuất thiết bị này. `local`: token đã hết hiệu lực, không cần báo server.
     logout(local) {
       const token = store.get();

@@ -1992,6 +1992,8 @@ defmodule HacLong.Game.Engine do
 
     %{
       hair: Data.class(p.cls)[:hair],
+      # thân theo lớp (Tiên Nữ: thân nữ), không có thì thân nam mặc định ở doll.js
+      body: Data.class(p.cls)[:body],
       weapon: doll.(p.equip.weapon),
       armor: doll.(p.equip.armor),
       shield: doll.(p.equip.shield),
