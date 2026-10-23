@@ -903,3 +903,12 @@ img.own.pix { object-fit: contain; image-rendering: pixelated; }
 .fx-pop { animation: fx-pop 0.26s ease-out; }
 @keyframes fx-pop { 50% { transform: scale(1.25); color: #fff3b0; } }
 @media (prefers-reduced-motion: reduce) { .fx-hit, .fx-lunge, .fx-cast, .fx-dodge, .fx-shake, .fx-shake-big, .fx-pop { animation: none; } }
+
+/* FX đợt 3: hào quang nhân vật theo đồ (đủ bộ +7 xanh dương, +9 vàng, +11 cam đỏ); :where để hiệu ứng trận (.fx-*) đè lên */
+:where(.sprite.aura-7) { filter: drop-shadow(0 0 3px #6fb4ff) drop-shadow(0 0 7px #6fb4ffaa); animation: aura7 2.2s ease-in-out infinite; }
+:where(.sprite.aura-9) { filter: drop-shadow(0 0 3px #ffd24a) drop-shadow(0 0 8px #ffd24aaa); animation: aura9 2s ease-in-out infinite; }
+:where(.sprite.aura-11) { filter: drop-shadow(0 0 4px #ff6a2a) drop-shadow(0 0 10px #ff8a3dcc); animation: aura11 1.6s ease-in-out infinite; }
+@keyframes aura7 { 50% { filter: drop-shadow(0 0 4px #9fd0ff) drop-shadow(0 0 11px #6fb4ffcc); } }
+@keyframes aura9 { 50% { filter: drop-shadow(0 0 4px #fff0a0) drop-shadow(0 0 13px #ffd24acc); } }
+@keyframes aura11 { 50% { filter: drop-shadow(0 0 5px #ffb35a) drop-shadow(0 0 16px #ff4a1fee); } }
+@media (prefers-reduced-motion: reduce) { :where(.sprite.aura-7, .sprite.aura-9, .sprite.aura-11) { animation: none; } }

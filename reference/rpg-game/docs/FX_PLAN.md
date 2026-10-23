@@ -2,7 +2,8 @@
 
 **Đã làm (2026-10-23):** Đợt 1 (đánh quái + kỹ năng theo hệ trong bảng trận, `js/fx.js`), phần di chuyển của Đợt 5
 (bụi bước chân, ô đích, cột sáng khi sang bản đồ), viền +7/+9 nhấp nháy. Đợt 2 (đồ rơi theo độ quý, ép đồ / Máy Hỗn Nguyên /
-Ngọc Sinh Mệnh). Còn lại: Đợt 3 (gồm hướng C), 4, phần còn lại của 5.
+Ngọc Sinh Mệnh). Đợt 3 (bản đồ hướng C trong giới hạn không vẽ người khác, hào quang đồ + cánh, trạng thái trong trận, thú
+cưng trong trận; bỏ "vệt vàng Long Vương trên bản đồ" vì thú không còn vẽ trên bản đồ). Còn lại: Đợt 4, phần còn lại của 5.
 
 Ghi lại các đề xuất đã bàn ngày 2026-10-19. Mọi hiệu ứng **chỉ vẽ ở client** (server vẫn quyết định sát thương, đồ, kết quả):
 không đổi luật chơi, không cần file hình mới (vẽ bằng Canvas 2D / CSS), tôn trọng công tắc hiệu ứng (`hl-fx`, `MapView.fxOn`)

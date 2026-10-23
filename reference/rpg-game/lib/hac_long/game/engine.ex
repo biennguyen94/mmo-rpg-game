@@ -2307,8 +2307,31 @@ defmodule HacLong.Game.Engine do
       armor: doll.(p.equip.armor),
       shield: doll.(p.equip.shield),
       wing: wing_look(p),
-      pet: Map.get(p, :pet)
+      pet: Map.get(p, :pet),
+      aura: aura(p)
     }
+  end
+
+  @doc """
+  Hào quang theo đồ (chỉ để vẽ, docs/FX_PLAN.md đợt 3, giống MU): mặc đủ bộ giáp (`set_bonus/1`: đủ món của bộ cho lớp
+  này) và mọi món của bộ đều từ +7 → 7 (xanh dương), +9 → 9 (vàng), +11 → 11 (cam đỏ); không thì 0.
+  """
+  def aura(p) do
+    sb = set_bonus(p)
+
+    if sb.need > 0 and sb.have >= sb.need do
+      lv =
+        for {_slot, id} <- p.equip,
+            id,
+            it = Gear.item(p, id),
+            it[:set] == sb.name and it.tier == sb.tier,
+            do: upgrade_level(p, id)
+
+      lv = Enum.min(lv, fn -> 0 end)
+      Enum.find([11, 9, 7], 0, &(lv >= &1))
+    else
+      0
+    end
   end
 
   # cánh vẽ bằng code ở client (doll.js): chỉ cần lớp và cấp cánh

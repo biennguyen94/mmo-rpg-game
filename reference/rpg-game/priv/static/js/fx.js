@@ -14,6 +14,10 @@
  *                               dương, ngọc theo màu ngọc); Thần / Excellent: cột to, tên món, chớp, rung, âm "rare"
  *   forge  { mode, icon, outcome, level, n }  ép đồ / Máy Hỗn Nguyên / Ngọc Sinh Mệnh: món giữa màn hình, ngọc / nguyên
  *                               liệu bay vào, búa gõ tia lửa (~0,8 giây), rồi nổ sáng (thành) hoặc nứt / khói / vỡ (hỏng)
+ *   pet    { img, dmg, tidal }  thú cưng nhảy ra cắn (FX đợt 3): số sát thương màu riêng; Thủy Long Ba: cột nước + rồng vàng
+ *   dragon                      Long Vương (Hồi Sinh): rồng vàng uốn lượn bay ngang màn hình
+ * `BattleFx.ambient({ mon, me, aura, wing })`: hiệu ứng nền khi đang ở màn trận (gọi sau mỗi lần vẽ, null để tắt):
+ *   trạng thái (độc bong bóng xanh, bỏng tàn lửa, chảy máu giọt đỏ, choáng sao xoay), hào quang đồ +7/+9/+11, hạt cánh.
  * Tắt hiệu ứng (`MapView.fxOn`, "giảm chuyển động") thì không phát gì. */
 (function () {
   const COLORS = {
@@ -241,6 +245,36 @@
         }
       }, AT);
     },
+    pet(e) {
+      const me = spot(ME), t = spot(MON);
+      if (!t) return;
+      const from = me ? { x: me.x + me.w * 0.6, y: me.y } : { x: t.x - 80, y: t.y + 140 };
+      const img = e.img ? Object.assign(new Image(), { src: e.img }) : null;
+      fly(from, t, (c, x, y, ang, k) => {
+        if (img && img.complete && img.naturalWidth) { const sz = 34 + Math.sin(k * Math.PI) * 10; c.drawImage(img, x - sz / 2, y - sz / 2, sz, sz); }
+        else { c.fillStyle = '#ff9ad5'; c.beginPath(); c.arc(x, y, 8, 0, Math.PI * 2); c.fill(); }
+      }, 260, () => {
+        add({ k: 'claw', x: t.x, y: t.y, r: t.w * 0.4, life: 300, col: '#ff9ad5' });
+        burst(t.x, t.y, 10, ['#ff9ad5', '#ffffff'], { vmax: 200 });
+        if (e.dmg) text(t.x + t.w * 0.35, t.y - t.h * 0.2, `🐾 -${e.dmg}`, '#ff9ad5', 18);
+        bump(t.el, 'fx-hit', 260);
+        if (e.tidal) EV.tidal(e);
+      });
+    },
+    tidal() {
+      const t = spot(MON);
+      if (!t) return;
+      add({ k: 'pillar', x: t.x, y: t.y + t.h * 0.45, w: t.w * 0.7, h: t.h * 2.2, col: '#4aa8e8', life: 900, big: true });
+      burst(t.x, t.y + t.h * 0.4, 30, COLORS.water, { up: true, vmin: 120, vmax: 380, g: 600, life: 900 });
+      ring(t.x, t.y + t.h * 0.45, '#9fe0ff', { r1: t.w, life: 600, w: 4 });
+      shake(true);
+      EV.dragon();
+    },
+    dragon() {
+      const W = canvas.width / dpr, H = canvas.height / dpr;
+      add({ k: 'dragon', W, y: H * 0.32, life: 1500 });
+      flash('#ffd24a', 0.18, 400);
+    },
     ghost(e) {
       const bar = document.querySelector('#view .stage .bar');
       const fill = bar && bar.querySelector('i');
@@ -403,6 +437,51 @@
         c.globalAlpha = 0.3; c.beginPath(); c.arc(x, y, 11, 0, Math.PI * 2); c.fill();
         break;
       }
+      case 'dragon': {
+        // thân rồng: chuỗi vảy vàng uốn lượn từ trái sang phải, đầu to, đuôi nhỏ dần
+        const head = -120 + (p.W + 240) * k, n = 26;
+        for (let i = n - 1; i >= 0; i--) {
+          const x = head - i * 11, y = p.y + Math.sin(x / 55 + k * 6) * 26 + Math.sin(x / 23) * 4;
+          const r = i === 0 ? 13 : Math.max(3, 10 - i * 0.28);
+          c.globalAlpha = Math.min(1, k * 6, (1 - k) * 6) * (i === 0 ? 1 : 0.9);
+          c.fillStyle = i % 3 === 0 ? '#fff0a8' : '#ffc93d';
+          c.shadowColor = '#ffd24a'; c.shadowBlur = 12;
+          c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+          if (i === 0) { c.fillStyle = '#8a2a00'; c.beginPath(); c.arc(x + 5, y - 3, 2.2, 0, Math.PI * 2); c.fill(); }
+        }
+        c.shadowBlur = 0;
+        break;
+      }
+      case 'bubble': {
+        const y = p.y - k * p.rise, x = p.x + Math.sin(k * 8 + p.ph) * 4;
+        c.globalAlpha = (1 - k) * 0.85; c.strokeStyle = p.col; c.lineWidth = 1.5;
+        c.beginPath(); c.arc(x, y, p.r * (0.6 + k * 0.6), 0, Math.PI * 2); c.stroke();
+        c.globalAlpha = (1 - k) * 0.35; c.fillStyle = p.col; c.fill();
+        break;
+      }
+      case 'drop': {
+        const y = p.y + k * k * 40;
+        c.globalAlpha = 1 - k; c.fillStyle = p.col;
+        c.beginPath(); c.moveTo(p.x, y - 6); c.quadraticCurveTo(p.x + 4, y + 1, p.x, y + 3); c.quadraticCurveTo(p.x - 4, y + 1, p.x, y - 6); c.fill();
+        break;
+      }
+      case 'stars': {
+        const a0 = now() / 260;
+        for (let i = 0; i < 3; i++) {
+          const a = a0 + i * (Math.PI * 2 / 3), x = p.x + Math.cos(a) * p.r, y = p.y + Math.sin(a) * p.r * 0.35;
+          c.globalAlpha = 0.95; c.fillStyle = '#ffe066'; c.font = '700 14px system-ui, sans-serif'; c.textAlign = 'center';
+          c.fillText('★', x, y + 5);
+        }
+        break;
+      }
+      case 'spark': {
+        const y = p.y + (p.vy || 0) * k;
+        c.globalAlpha = Math.sin(k * Math.PI) * (p.a || 1); c.fillStyle = p.col;
+        c.shadowColor = p.col; c.shadowBlur = 6;
+        c.beginPath(); c.arc(p.x, y, p.r, 0, Math.PI * 2); c.fill();
+        c.shadowBlur = 0;
+        break;
+      }
       case 'claw':
         c.globalAlpha = 1 - k; c.strokeStyle = p.col; c.lineWidth = 3; c.lineCap = 'round';
         for (let i = -1; i <= 1; i++) { const d = Math.min(1, k * 3); c.beginPath(); c.moveTo(p.x - p.r * 0.6 + i * 8, p.y - p.r * 0.6); c.lineTo(p.x - p.r * 0.6 + i * 8 + p.r * 1.2 * d, p.y - p.r * 0.6 + p.r * 1.2 * d); c.stroke(); }
@@ -410,8 +489,39 @@
     }
   }
 
+  // ---------- hiệu ứng nền ở màn trận (trạng thái, hào quang, cánh) ----------
+  let amb = null, ambTimer = null;
+  const AURA_COL = { 7: ['#6fb4ff', '#cfe6ff'], 9: ['#ffd24a', '#fff3b0'], 11: ['#ff6a2a', '#ffb35a'] };
+  function ambientTick() {
+    if (!amb || !on() || document.hidden) return;
+    const t = spot(MON), me = spot(ME);
+    if (!t && !me) return;
+    const status = (s, list, under) => {
+      if (!s) return;
+      for (const id of list) {
+        if (id === 'poison' && Math.random() < 0.7) add({ k: 'bubble', x: s.x + rand(-s.w * 0.3, s.w * 0.3), y: s.y + s.h * 0.2, rise: rand(30, 60), r: rand(3, 6), ph: rand(0, 6), col: '#8fe05a', life: 900 });
+        if (id === 'burn') add({ k: 'spark', x: s.x + rand(-s.w * 0.3, s.w * 0.3), y: s.y + s.h * 0.3, vy: -rand(30, 60), r: rand(1.5, 3), col: ['#ffb03d', '#ff4a1f', '#fff3b0'][Math.floor(rand(0, 3))], life: 700 });
+        if (id === 'bleed' && Math.random() < 0.6) add({ k: 'drop', x: s.x + rand(-s.w * 0.25, s.w * 0.25), y: s.y + rand(-4, s.h * 0.2), col: '#d61f2c', life: 600 });
+        if (id === 'stun' && !under) add({ k: 'stars', x: s.x, y: s.y - s.h * 0.55, r: Math.max(14, s.w * 0.3), life: 150 });
+      }
+    };
+    status(t, amb.mon || []);
+    status(me, amb.me || [], true);
+    if (me && AURA_COL[amb.aura]) {
+      const col = AURA_COL[amb.aura], n = amb.aura >= 11 ? 2 : 1;
+      for (let i = 0; i < n; i++) if (amb.aura >= 9 || Math.random() < 0.5) add({ k: 'spark', x: me.x + rand(-me.w * 0.45, me.w * 0.45), y: me.y + me.h * 0.35, vy: -rand(25, 55), r: rand(1.2, 2.6), col: col[i % 2], a: 0.9, life: 900 });
+    }
+    if (me && amb.wing && Math.random() < 0.5) add({ k: 'spark', x: me.x + (Math.random() < 0.5 ? -1 : 1) * rand(me.w * 0.25, me.w * 0.6), y: me.y - me.h * 0.2, vy: rand(25, 45), r: rand(1, 2), col: '#e8f4ff', a: 0.8, life: 900 });
+  }
+
   window.BattleFx = {
     enabled: on,
+    // trạng thái nền của màn trận: { mon: [id], me: [id], aura, wing } hoặc null (rời trận)
+    ambient(state) {
+      amb = state && ((state.mon || []).length || (state.me || []).length || state.aura || state.wing) ? state : null;
+      if (amb && !ambTimer && on() && ensure()) ambTimer = setInterval(ambientTick, 150);
+      if (!amb && ambTimer) { clearInterval(ambTimer); ambTimer = null; }
+    },
     run(events) {
       if (!events || !events.length || !on() || !ensure()) return;
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí

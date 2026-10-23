@@ -26,6 +26,8 @@
   let steps = [], lastTile = null, mark = null, arrive = 0;
   let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
+  // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
+  let mobFx = [];
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
@@ -464,7 +466,14 @@
       ctx.fillStyle = levelColor(P, lv);
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText(String(lv), px + TILE - 7, py + TILE - 9);
+      // đang có người đánh (⚔): thỉnh thoảng lóe tia chém (người khác không vẽ trên bản đồ, chỉ thấy quái bị đánh)
+      if (fx && q.busy) {
+        const ph = ((now + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0) * 137) % 1100) / 1100;
+        if (ph < 0.3) slashAt(px + TILE / 2, py + TILE / 2, ph / 0.3, '#ffe9b0');
+      }
     }
+
+    if (fx) drawMobFx(now, cx, cy);
 
     for (const n of here ? world.nodes || [] : []) {
       const px = Math.round(n.x * TILE - cx), py = Math.round(n.y * TILE - cy);
@@ -515,6 +524,7 @@
     const look = P.view && P.view.look;
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
     if (fx) moveFx(now, m, P, cx, cy, px, py);
+    if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
@@ -709,6 +719,73 @@
   }
 
   // Dấu bước chân (bụi trên đất, gợn nước trên bến / cầu gỗ), vòng sáng ở ô đích, cột sáng khi vừa sang bản đồ mới
+  // vệt chém chéo (k: 0..1) ở tâm (x, y)
+  function slashAt(x, y, k, col) {
+    ctx.save();
+    ctx.globalAlpha = 1 - k; ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    const d = 9 + k * 6;
+    ctx.beginPath(); ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d); ctx.stroke();
+    ctx.fillStyle = col;
+    for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.6; ctx.beginPath(); ctx.arc(x + Math.cos(a) * d * 1.3, y + Math.sin(a) * d * 1.3, 1.6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+
+  function drawMobFx(t, cx, cy) {
+    mobFx = mobFx.filter((e) => t - e.t0 < e.life);
+    for (const e of mobFx) {
+      const k = (t - e.t0) / e.life, x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
+      if (e.k === 'hit') {
+        slashAt(x, y, k, '#ffffff');
+        ctx.save(); ctx.globalAlpha = 1 - k; ctx.font = '800 11px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14);
+        ctx.fillStyle = '#ff8a6a'; ctx.fillText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14); ctx.restore();
+      } else {
+        // gục: hình mờ dần bay lên, hạt tỏa ra
+        const im = image('monsters/' + e.kind);
+        ctx.save();
+        ctx.globalAlpha = (1 - k) * 0.8;
+        if (im.complete && k < 0.6) ctx.drawImage(im, x - TILE / 2, y - TILE / 2 - k * 12, TILE, TILE);
+        for (let i = 0; i < 14; i++) {
+          const a = i * 2.39996, r = 4 + k * (14 + (i % 4) * 5);
+          ctx.fillStyle = i % 3 ? '#e8dcc0' : '#ffd24a';
+          ctx.beginPath(); ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r - k * 16, 2 * (1 - k) + 0.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // hào quang theo đồ (look.aura 7 / 9 / 11) + hạt sáng cánh rơi phía sau; tắt hiệu ứng thì chỉ vẽ quầng tĩnh
+  const AURA = { 7: [111, 180, 255], 9: [255, 210, 74], 11: [255, 106, 42] };
+  function heroAura(t, px, py, look, fx) {
+    const x = px + TILE / 2, y = py + TILE / 2, c = AURA[look.aura];
+    ctx.save();
+    if (c) {
+      const pulse = fx ? 0.5 + 0.5 * Math.sin(t / 380) : 0.5;
+      const g = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, TILE * 0.75);
+      g.addColorStop(0, `rgba(${c}, ${0.35 + 0.2 * pulse})`); g.addColorStop(1, `rgba(${c}, 0)`);
+      ctx.fillStyle = g; ctx.fillRect(x - TILE, y - TILE, TILE * 2, TILE * 2);
+      ctx.strokeStyle = `rgba(${c}, ${0.5 + 0.3 * pulse})`; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(x, py + TILE - 4, 13 + pulse * 2, 5 + pulse, 0, 0, Math.PI * 2); ctx.stroke();
+      // +11: hạt cam đỏ bay lên; +9: vài đốm vàng
+      const n = fx ? (look.aura >= 11 ? 7 : look.aura >= 9 ? 4 : 2) : 0;
+      for (let i = 0; i < n; i++) {
+        const k = ((t / 1400) + i / n) % 1, xx = x + Math.sin(i * 2.1 + t / 600) * 10;
+        ctx.fillStyle = `rgba(${c}, ${1 - k})`;
+        ctx.beginPath(); ctx.arc(xx, py + TILE - 6 - k * 30, 1.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (look.wing && fx) {
+      for (let i = 0; i < 4; i++) {
+        const k = ((t / 1600) + i / 4) % 1, side = i % 2 ? 1 : -1;
+        ctx.fillStyle = `rgba(232, 244, 255, ${0.85 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(x + side * (12 + (i % 3) * 3), py + 8 + k * 26, 1.3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   function moveFx(t, m, P, cx, cy, px, py) {
     const key = `${P.pos.map}:${P.pos.x},${P.pos.y}`;
     if (lastTile && lastTile.key !== key) {
@@ -942,6 +1019,16 @@
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
     setDecorating(on) { decorating = on; draw(); },
     setWorld(snap) {
+      // FX đợt 3: so với lần trước (cùng bản đồ): máu quái tụt → tia chém; quái biến mất khi đã bị đánh → tan thành hạt
+      if (fxOn() && world.map && snap && snap.map === world.map) {
+        const t = performance.now(), next = new Map((snap.monsters || []).map((q) => [q.id, q]));
+        for (const q of world.monsters || []) {
+          const n = next.get(q.id), hp = q.hp == null ? 100 : q.hp;
+          if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600 });
+          else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t, life: 900 });
+        }
+        if (mobFx.length > 40) mobFx = mobFx.slice(-40);
+      }
       world = snap;
       draw();
     },

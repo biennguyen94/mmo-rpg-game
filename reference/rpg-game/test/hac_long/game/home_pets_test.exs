@@ -53,7 +53,8 @@ defmodule HacLong.Game.HomePetsTest do
              armor: "body/shirt_vest",
              wing: nil,
              shield: nil,
-             pet: nil
+             pet: nil,
+             aura: 0
            }
 
     # Tiên Nữ: thân nữ, tóc vàng

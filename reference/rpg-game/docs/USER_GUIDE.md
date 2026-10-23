@@ -127,7 +127,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Nhẫn, dây chuyền, đồ Excellent, đủ bộ (Phase 15c):** 2 ô nhẫn (máu / thủ) và 1 ô dây chuyền (tấn công), chỉ rơi từ quái.
   Đồ **Excellent** (tên xanh lục) có thêm 1–3 dòng đặc biệt: tăng sát thương, chí mạng, hồi máu / MP khi hạ quái, máu tối đa,
   giảm sát thương nhận, vàng nhặt được. Mặc **đủ bộ giáp** từ bậc 2 trở lên được +10 % phòng thủ, +3 % tấn công và thêm máu
-  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32.
+  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32. Đủ bộ và mọi món của bộ ép từ **+7** thì nhân vật có
+  **hào quang** xanh dương (+9 vàng, +11 cam đỏ có hạt bay lên), ai xem hồ sơ / đấu trường cũng thấy; chỉ để đẹp, không cộng chỉ số.
 - **May mắn, Kỹ năng (Phase 15d):** đồ rơi đôi khi có dòng xanh dương **May mắn** (ép ngọc +7..+11 dễ thành công hơn 25 %;
   nếu là vũ khí thì thêm 5 % chí mạng) và vũ khí có thể có **Kỹ năng** (chiêu gây thêm 10 % sát thương). Đồ có các dòng này bán
   được giá hơn.

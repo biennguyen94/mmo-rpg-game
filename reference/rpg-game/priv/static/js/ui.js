@@ -129,7 +129,9 @@
   const needList = (need) => `<div class="needs">${need.map(([id, n]) => { const have = P.inv[id] || 0; return `<span class="${have >= n ? 'ok' : 'lack'}">${smallIc(id)}${ITEMS[id].name} ${Math.min(have, n)}/${n}</span>`; }).join('')}</div>`;
   const smallIc = (id, fallback = '') => { const it = ITEMS[id], own = it && ownIcon(it, 0); return own ? `<img class="ic jw own${it && ownCls(it)}" src="${own}" alt="">` : fallback; };
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
-  const heroSprite = (cls) => `<img class="sprite ${cls || ''}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
+  // FX đợt 3: hào quang theo đồ (look.aura: 7 / 9 / 11, server tính) — viền sáng quanh hình nhân vật
+  const auraCls = (look) => (look && look.aura ? ` aura-${look.aura}` : '');
+  const heroSprite = (cls) => `<img class="sprite ${cls || ''}${auraCls(P && P.view.look)}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
 
   // ---------- Thông báo (Phase 8, L2) ----------
@@ -244,8 +246,12 @@
       const log = view.querySelector('.log');
       if (log) log.scrollTop = log.scrollHeight;
       fx = null;
+      // FX đợt 3: trạng thái hai bên, hào quang đồ, hạt cánh (js/fx.js)
+      const ef = (!P.battle.over && P.battle.effects) || {}, lk = P.view.look || {};
+      BattleFx.ambient({ mon: (ef.monster || []).map((e) => e.id), me: (ef.player || []).map((e) => e.id), aura: lk.aura || 0, wing: !!lk.wing });
       return;
     }
+    BattleFx.ambient(null);
     tabs.hidden = false;
     // dock (Phase 9, U3): Bản đồ, Nhân vật, Túi đồ, Chọn bản đồ, Menu
     tabs.innerHTML = [
@@ -1068,7 +1074,7 @@
         ${pr.protect_s ? `<div class="small" style="color:var(--good)">🛡 Được bảo vệ sau khi gục · còn ${pr.protect_s} giây</div>` : ''}
         ${o.guild ? `<div class="small muted">Bang ${esc(o.guild.name)}</div>` : ''}
         <div class="prof-lv">${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} ${esc(c.name || '')}</div>
-        <img class="sprite prof-doll" src="${window.Doll.url(o.look)}" alt="">
+        <img class="sprite prof-doll${auraCls(o.look)}" src="${window.Doll.url(o.look)}" alt="">
         <div class="small muted">${pr.online ? `🟢 Đang online${pr.where ? ` @ ${esc(pr.where)}` : ''}` : `Lần cuối: ${day(pr.last_seen)}`}</div>
       </div>
       <div class="prof-boxes">
@@ -3274,7 +3280,7 @@
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
         <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : m.ds ? `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}` : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
-        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
+        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
         <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
@@ -3361,6 +3367,15 @@
       ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
     if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
+    // FX đợt 3: thú cưng cắn (🐾 … cắn thêm N), Thủy Long Ba (🌊), Long Vương Hồi Sinh (🐉)
+    const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
+    const bite = newLog.find((l) => l.text.startsWith('🐾') && /cắn thêm (\d+)/.test(l.text));
+    if (bite) {
+      const pet = P.view.look && P.view.look.pet;
+      const img = pet ? asset((pet.startsWith('tame:') ? 'monsters/' + pet.slice(5) : 'pets/' + pet) + '.png') : null;
+      ev.push({ type: 'pet', img, dmg: +bite.text.match(/cắn thêm (\d+)/)[1], tidal: newLog.some((l) => l.text.startsWith('🌊')), delay: f.mDmg > 0 ? 240 : 0 });
+    }
+    if (newLog.some((l) => l.text.startsWith('🐉'))) ev.push({ type: 'dragon', delay: 500 });
     if (b.over && b.result === 'win') ev.push({ type: 'kill', delay: 320 });
     const items = b.over && b.result === 'win' ? lootFx(b.reward) : [];
     if (items.length) ev.push({ type: 'loot', delay: 650, items });
