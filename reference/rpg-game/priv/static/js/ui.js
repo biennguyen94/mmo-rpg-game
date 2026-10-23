@@ -169,19 +169,21 @@
     setTimeout(() => el.remove(), 1600);
   }
   // hiệu ứng theo kết quả một lệnh
-  function resultFx(cmd, r, old) {
+  // `played`: hoạt cảnh ép đồ (js/fx.js) đã hiện chữ lớn
+  function resultFx(cmd, r, old, played) {
     if (!r || !r.ok || !P) return;
     if (old && P.level > old.level) { bigFx(`LÊN CẤP ${P.level}!`, 'level'); note(`Lên cấp ${P.level}.`, 'good'); }
     const up = r.upgrade, ch = r.chaos, life = r.life;
+    const big = played ? () => {} : bigFx;
     if (up) {
-      if (up.result === 'success') bigFx(`✨ +${up.level || ''}`.trim(), 'good');
-      else if (up.result === 'destroyed' || up.result === 'destroy') bigFx('💥 VỠ ĐỒ', 'bad');
-      else if (up.result === 'reset') bigFx('💥 VỀ +0', 'bad');
-      else bigFx('THẤT BẠI', 'bad');
+      if (up.result === 'success') big(`✨ +${up.level || ''}`.trim(), 'good');
+      else if (up.result === 'destroyed' || up.result === 'destroy') big('💥 VỠ ĐỒ', 'bad');
+      else if (up.result === 'reset') big('💥 VỀ +0', 'bad');
+      else big('THẤT BẠI', 'bad');
       if (up.result !== 'success' || (up.level || 0) >= 7) note(r.msg, up.result === 'success' ? 'good' : 'bad');
     }
-    if (ch) { bigFx(ch.result === 'fail' ? '💥 THẤT BẠI' : '✨ THÀNH CÔNG', ch.result === 'fail' ? 'bad' : 'good'); note(r.msg, ch.result === 'fail' ? 'bad' : 'good'); }
-    if (life) bigFx(life.result === 'success' ? '💚 +1 dòng' : '💔 THẤT BẠI', life.result === 'success' ? 'good' : 'bad');
+    if (ch) { big(ch.result === 'fail' ? '💥 THẤT BẠI' : '✨ THÀNH CÔNG', ch.result === 'fail' ? 'bad' : 'good'); note(r.msg, ch.result === 'fail' ? 'bad' : 'good'); }
+    if (life) big(life.result === 'success' ? '💚 +1 dòng' : '💔 THẤT BẠI', life.result === 'success' ? 'good' : 'bad');
     if (old && ['use', 'rest', 'potion'].includes(cmd.act)) {
       const hp = P.hp - old.hp, mp = (P.mp || 0) - (old.mp || 0);
       if (hp > 0 || mp > 0) bigFx([hp > 0 ? `+${fmt(hp)} máu` : '', mp > 0 ? `+${fmt(mp)} MP` : ''].filter(Boolean).join('  '), 'heal');
@@ -3294,7 +3296,9 @@
   let lootGone = { key: '', n: {} };
   const lootKey = (rw) => [rw.xp, rw.gold, (rw.gear_ids || []).join(), (rw.items || []).join()].join('|');
   function lootList(rw) {
-    if (lootGone.key !== lootKey(rw)) lootGone = { key: lootKey(rw), n: {} };
+    if (lootGone.key !== lootKey(rw)) lootGone = { key: lootKey(rw), n: {}, at: Date.now() };
+    // hiện dần chỉ ngay sau trận (màn hình vẽ lại nhiều lần thì không chạy lại)
+    const fresh = Date.now() - lootGone.at < 1200 ? ' fresh' : '';
     const ids = (rw.gear_ids || []).concat([...new Set(rw.items || [])]);
     const extra = (rw.gear || []).slice((rw.gear_ids || []).length); // đồ gửi Hộp thư (túi đầy)
     if (!ids.length && !extra.length) return '';
@@ -3303,7 +3307,8 @@
       if (!it) return `<div class="loot-row gone"><span class="small muted">Đã hủy</span></div>`;
       const got = isGear(id) ? 1 : (rw.items || []).filter((x) => x === id).length;
       const n = isGear(id) ? 1 : Math.min(got - (lootGone.n[id] || 0), P.inv[id] || 0), gone = n <= 0;
-      return `<div class="loot-row ${gone ? 'gone' : ''}">
+      const tier = it.kind === 'anc' || it.kind === 'exc' ? it.kind : it.opt || it.kind === 'opt' ? 'opt' : JEWEL_COL[id] ? 'jewel' : '';
+      return `<div class="loot-row ${gone ? 'gone' : ''} ${tier ? 'lt-' + tier : ''}${fresh}">
         <button class="loot-item" data-act="loot-tip" data-id="${esc(id)}" data-n="${n}">${itemIcon(it, it.kind, upLevel(id))}<span>${itemName(id)}${got > 1 ? ` ×${gone ? got : n}` : ''}</span></button>
         ${gone || it.locked ? '' : `<button class="btn small-btn danger" data-act="discard" data-id="${esc(id)}" data-n="${n}" data-name="${esc(it.name)}" title="Hủy món này">🗑 Hủy</button>`}</div>`;
     };
@@ -3357,7 +3362,40 @@
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
     if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
     if (b.over && b.result === 'win') ev.push({ type: 'kill', delay: 320 });
+    const items = b.over && b.result === 'win' ? lootFx(b.reward) : [];
+    if (items.length) ev.push({ type: 'loot', delay: 650, items });
     return ev;
+  }
+
+  // FX đợt 2: cột sáng đồ rơi theo độ quý (Thần vàng, Excellent xanh lá, có dòng cộng xanh dương, ngọc theo màu ngọc)
+  const LOOT_COL = { anc: '#ffd24a', exc: '#5fe08a', opt: '#6fa8ff', normal: '#e8e0d0' };
+  const JEWEL_COL = { jewel_bless: '#cfe8ff', jewel_soul: '#c49bff', jewel_chaos: '#ff8a5a', jewel_life: '#7ee08a' };
+  function lootFx(rw) {
+    if (!rw) return [];
+    const gear = (rw.gear_ids || []).map((id) => {
+      const it = itemOf(id);
+      if (!it) return null;
+      const tier = it.kind === 'anc' || it.kind === 'exc' ? it.kind : it.opt || it.kind === 'opt' ? 'opt' : 'normal';
+      return { tier, name: it.name, col: LOOT_COL[tier] };
+    });
+    const jewels = [...new Set(rw.items || [])].filter((id) => JEWEL_COL[id] && ITEMS[id]).map((id) => ({ tier: 'jewel', name: ITEMS[id].name, col: JEWEL_COL[id] }));
+    return gear.filter(Boolean).concat(jewels).slice(0, 6);
+  }
+
+  // FX đợt 2: hoạt cảnh ép đồ / Máy Hỗn Nguyên / Ngọc Sinh Mệnh (js/fx.js `forge`); kết quả hiện sau ~0,8 giây
+  const FORGE_ACTS = { upgrade: 'upgrade', chaos_upgrade: 'upgrade', chaos: 'chaos', life: 'life' };
+  function forgeIcon(cmd) {
+    const id = cmd.act === 'chaos' ? cmd.gear : cmd.slot ? P.equip[cmd.slot] : cmd.id;
+    const it = id && itemOf(id);
+    if (!it) return null;
+    return ownIcon(it, upLevel(id)) || (it.sprite ? asset(it.sprite + '.png') : asset('icons/' + it.icon + '.svg'));
+  }
+  function forgeFx(cmd, r, icon) {
+    const up = r.upgrade, ch = r.chaos, life = r.life;
+    if (!r.ok || !(up || ch || life) || !BattleFx.enabled()) return false;
+    const outcome = up ? (up.result === 'destroyed' ? 'destroy' : up.result) : ch ? (ch.result === 'fail' ? 'fail' : 'success') : life.result === 'success' ? 'success' : 'fail';
+    BattleFx.run([{ type: 'forge', mode: FORGE_ACTS[cmd.act] || 'upgrade', icon, outcome, level: up && up.level, n: cmd.act === 'chaos' ? 4 : 2 }]);
+    return true;
   }
 
   // Tên thao tác của nút → lệnh gửi server (xem lib/hac_long/game/commands.ex).
@@ -3418,13 +3456,21 @@
     const before = battle ? snapBattle() : null;
     const scroll = $('#view').scrollTop;
     const old = P;
+    const ficon = FORGE_ACTS[cmd.act] && P ? forgeIcon(cmd) : null;
     try {
       const r = await Net.send(cmd);
       P = r.player;
-      result(r);
-      if (r.ok && before) battleFx(before, cmd.act, cmd.skill);
-      commandSound(cmd, r, old);
-      resultFx(cmd, r, old);
+      if (forgeFx(cmd, r, ficon)) {
+        // âm thanh, chữ lớn phát trong hoạt cảnh lúc ra kết quả; thông báo và màn hình chờ hoạt cảnh xong
+        await new Promise((ok) => setTimeout(ok, 850));
+        result(r);
+        resultFx(cmd, r, old, true);
+      } else {
+        result(r);
+        if (r.ok && before) battleFx(before, cmd.act, cmd.skill);
+        commandSound(cmd, r, old);
+        resultFx(cmd, r, old);
+      }
       if (r.ok) {
         if (cmd.act === 'leave' || cmd.act === 'create') tab = 'map';
         if (cmd.act === 'reset') tab = 'map';

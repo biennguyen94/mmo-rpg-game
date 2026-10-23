@@ -10,6 +10,10 @@
  *   hurt   { crit }             quái / đối thủ đánh trúng mình
  *   kill                        quái gục: tan thành hạt, vàng bay về túi
  *   ghost  { from }             thanh máu quái: lớp trắng trễ chạy từ % cũ (`from`, 0..100) về % mới
+ *   loot   { items: [{ tier, name, col }] }   đồ rơi (FX đợt 2): cột sáng theo độ quý (anc vàng, exc xanh lá, opt xanh
+ *                               dương, ngọc theo màu ngọc); Thần / Excellent: cột to, tên món, chớp, rung, âm "rare"
+ *   forge  { mode, icon, outcome, level, n }  ép đồ / Máy Hỗn Nguyên / Ngọc Sinh Mệnh: món giữa màn hình, ngọc / nguyên
+ *                               liệu bay vào, búa gõ tia lửa (~0,8 giây), rồi nổ sáng (thành) hoặc nứt / khói / vỡ (hỏng)
  * Tắt hiệu ứng (`MapView.fxOn`, "giảm chuyển động") thì không phát gì. */
 (function () {
   const COLORS = {
@@ -181,6 +185,62 @@
         setTimeout(() => fly({ x: t.x + rand(-20, 20), y: t.y + rand(-10, 20) }, gold, coin, 520, () => bump(gold.el, 'fx-pop', 260)), 260 + i * 60);
       }
     },
+    loot(e) {
+      const t = spot(MON) || spot('#view .stage');
+      if (!t) return;
+      const items = (e.items || []).slice(0, 6);
+      let rare = false;
+      items.forEach((it, i) => setTimeout(() => {
+        const big = it.tier === 'anc' || it.tier === 'exc';
+        const x = t.x + (i - (items.length - 1) / 2) * 34, y = t.y + t.h * 0.35;
+        add({ k: 'pillar', x, y, w: big ? 22 : 12, h: big ? 260 : 120, col: it.col, life: big ? 1400 : 900, big });
+        burst(x, y, big ? 26 : 10, [it.col, '#ffffff'], { up: true, g: 60, vmin: 40, vmax: big ? 260 : 150, life: 1000, glow: true });
+        if (big) {
+          ring(x, y, it.col, { r1: 110, life: 700, w: 4 });
+          text(x, Math.max(36, y - 150), it.tier === 'anc' ? `★ ${it.name}` : `✦ ${it.name}`, it.col, 18);
+          if (!rare) { rare = true; flash(it.col, 0.25, 300); shake(true); if (window.Sound) window.Sound.play('rare'); }
+        }
+      }, i * 160));
+    },
+    forge(e) {
+      const W = canvas.width / dpr, H = canvas.height / dpr, x = W / 2, y = H * 0.42, AT = 800, LIFE = 1700;
+      const img = e.icon ? Object.assign(new Image(), { src: e.icon }) : null;
+      add({ k: 'dim', a: 0.55, life: LIFE });
+      add({ k: 'icon', img, x, y, size: 72, life: LIFE, at: AT, outcome: e.outcome });
+      // nguyên liệu bay vào: ngọc (ép), vật liệu xoáy (Máy Hỗn Nguyên), ngọc xanh (Sinh Mệnh)
+      const cols = e.mode === 'chaos' ? ['#ff8a5a', '#c49bff', '#9fd8ff', '#ffe08a'] : e.mode === 'life' ? ['#7ee08a'] : ['#9fd8ff', '#c49bff'];
+      const n = e.mode === 'chaos' ? Math.min(8, Math.max(3, e.n || 4)) : e.mode === 'life' ? 1 : 2;
+      for (let i = 0; i < n; i++) add({ k: 'spiral', x, y, r: 150, a0: (i / n) * Math.PI * 2, col: cols[i % cols.length], life: 560, t0: now() + i * 50 });
+      // búa gõ / lò rung: tia lửa nhỏ
+      for (const ms of [300, 500, 680]) setTimeout(() => { burst(x, y + 10, 8, ['#ffd27a', '#fff3b0'], { vmax: 200, g: 500, life: 500 }); ring(x, y, '#ffe9b0', { r0: 20, r1: 48, life: 260, w: 2 }); }, ms);
+      setTimeout(() => {
+        const lv = e.level || 0;
+        if (e.outcome === 'success') {
+          const col = lv >= 10 ? '#ff8a3d' : lv >= 9 ? '#ffd24a' : lv >= 7 ? '#6fb4ff' : '#ffffff';
+          burst(x, y, lv >= 10 ? 60 : 34, [col, '#ffffff', '#fff3b0'], { vmax: lv >= 10 ? 420 : 300, g: 200, glow: true, life: 900 });
+          ring(x, y, col, { r1: lv >= 10 ? 200 : 130, life: 650, w: 5 });
+          if (lv >= 7) add({ k: 'rays', x, y, col, life: 900 });
+          text(x, y - 70, e.mode === 'upgrade' && lv ? `+${lv}` : e.mode === 'life' ? '+1 dòng' : 'THÀNH CÔNG', col, lv >= 10 ? 40 : 30);
+          if (lv >= 10) { flash(col, 0.35, 400); shake(true); }
+          if (window.Sound) window.Sound.play(lv >= 7 ? 'levelup' : 'forge');
+        } else if (e.outcome === 'destroy') {
+          for (let i = 0; i < 22; i++) {
+            const a = Math.random() * Math.PI * 2, v = 120 + Math.random() * 260;
+            add({ k: 'dot', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 500, life: 900, r: 2 + Math.random() * 4, col: ['#b8a890', '#6b5a48', '#e0d0b0'][i % 3] });
+          }
+          flash('#ff2a1a', 0.35, 400); shake(true);
+          text(x, y - 60, '💥 VỠ ĐỒ', '#ff6b5a', 32);
+          if (window.Sound) window.Sound.play('error');
+        } else {
+          const segs = [[-4, -30, 6, -6], [6, -6, -8, 10], [-8, 10, 4, 30], [6, -6, 22, 4]];
+          add({ k: 'crack', x, y, segs, life: 900 });
+          burst(x, y - 10, 16, ['#8a8a8a', '#5a5a5a', '#b0b0b0'], { up: true, g: -40, vmin: 20, vmax: 80, life: 1100, rmin: 3, rmax: 6 });
+          shake(false);
+          text(x, y - 60, e.outcome === 'reset' ? 'VỀ +0' : e.outcome === 'down' ? 'TỤT CẤP' : 'THẤT BẠI', '#c8c8c8', 28);
+          if (window.Sound) window.Sound.play('error');
+        }
+      }, AT);
+    },
     ghost(e) {
       const bar = document.querySelector('#view .stage .bar');
       const fill = bar && bar.querySelector('i');
@@ -302,6 +362,47 @@
         c.globalAlpha = 1 - k; c.fillStyle = p.col;
         c.fillRect(p.x - 1.5, p.y - 5 - k * 34, 3, 10); c.fillRect(p.x - 5, p.y - 1.5 - k * 34, 10, 3);
         break;
+      case 'pillar': {
+        const a = Math.sin(Math.min(1, k * 1.4) * Math.PI) * (p.big ? 0.95 : 0.75);
+        const g = c.createLinearGradient(0, p.y - p.h, 0, p.y);
+        g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.6, p.col); g.addColorStop(1, '#ffffff');
+        c.globalAlpha = a; c.fillStyle = g;
+        c.fillRect(p.x - p.w / 2, p.y - p.h * Math.min(1, k * 3), p.w, p.h * Math.min(1, k * 3));
+        c.globalAlpha = a * 0.5; c.beginPath(); c.ellipse(p.x, p.y, p.w * 1.4, p.w * 0.45, 0, 0, Math.PI * 2); c.fill();
+        break;
+      }
+      case 'dim':
+        c.globalAlpha = p.a * Math.min(1, k * 6, (1 - k) * 4); c.fillStyle = '#05030a';
+        c.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+        break;
+      case 'icon': {
+        const t = k * p.life, out = t >= p.at, sz = p.size;
+        if (out && p.outcome === 'destroy') break;
+        const pre = Math.min(1, t / p.at), sh = out ? 0 : pre * pre * 4;
+        const pulse = out && p.outcome === 'success' ? 1 + 0.25 * Math.sin(Math.min(1, (t - p.at) / 300) * Math.PI) : 1;
+        const x = p.x + (Math.random() - 0.5) * sh, y = p.y + (Math.random() - 0.5) * sh;
+        c.globalAlpha = Math.min(1, k * 8, (1 - k) * 5);
+        if (out && p.outcome !== 'success') c.filter = 'grayscale(1) brightness(0.6)';
+        if (p.img && p.img.complete && p.img.naturalWidth) c.drawImage(p.img, x - sz * pulse / 2, y - sz * pulse / 2, sz * pulse, sz * pulse);
+        else { c.fillStyle = '#ffe79a'; c.beginPath(); c.arc(x, y, sz * 0.3 * pulse, 0, Math.PI * 2); c.fill(); }
+        c.filter = 'none';
+        break;
+      }
+      case 'crack':
+        c.globalAlpha = Math.min(1, (1 - k) * 3); c.strokeStyle = '#1a1210'; c.lineWidth = 2;
+        for (const seg of p.segs) { c.beginPath(); c.moveTo(p.x + seg[0], p.y + seg[1]); c.lineTo(p.x + seg[2], p.y + seg[3]); c.stroke(); }
+        break;
+      case 'rays':
+        c.globalAlpha = Math.sin(k * Math.PI) * 0.7; c.strokeStyle = p.col; c.lineWidth = 3;
+        for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + k; c.beginPath(); c.moveTo(p.x + Math.cos(a) * 30, p.y + Math.sin(a) * 30); c.lineTo(p.x + Math.cos(a) * (60 + k * 90), p.y + Math.sin(a) * (60 + k * 90)); c.stroke(); }
+        break;
+      case 'spiral': {
+        const a = p.a0 + k * 5, r = p.r * (1 - k);
+        const x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r * 0.8;
+        c.globalAlpha = 0.9; c.fillStyle = p.col; c.beginPath(); c.arc(x, y, 5, 0, Math.PI * 2); c.fill();
+        c.globalAlpha = 0.3; c.beginPath(); c.arc(x, y, 11, 0, Math.PI * 2); c.fill();
+        break;
+      }
       case 'claw':
         c.globalAlpha = 1 - k; c.strokeStyle = p.col; c.lineWidth = 3; c.lineCap = 'round';
         for (let i = -1; i <= 1; i++) { const d = Math.min(1, k * 3); c.beginPath(); c.moveTo(p.x - p.r * 0.6 + i * 8, p.y - p.r * 0.6); c.lineTo(p.x - p.r * 0.6 + i * 8 + p.r * 1.2 * d, p.y - p.r * 0.6 + p.r * 1.2 * d); c.stroke(); }
@@ -310,6 +411,7 @@
   }
 
   window.BattleFx = {
+    enabled: on,
     run(events) {
       if (!events || !events.length || !on() || !ensure()) return;
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí

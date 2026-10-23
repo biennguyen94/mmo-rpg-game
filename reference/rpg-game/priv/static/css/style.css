@@ -799,6 +799,22 @@ body.tl-on { overflow: hidden; }
 .loot { display: grid; gap: 4px; margin: 6px 0; }
 .loot-row { display: flex; align-items: center; gap: 8px; }
 .loot-row.gone { opacity: 0.45; text-decoration: line-through; }
+/* FX đợt 2: dòng đồ rơi hiện dần, viền sáng theo độ quý (tắt khi "giảm chuyển động") */
+.loot-row { border-radius: 6px; }
+.loot-row.fresh { animation: loot-in 0.35s ease-out both; }
+.loot-row:nth-child(2) { animation-delay: 0.08s; } .loot-row:nth-child(3) { animation-delay: 0.16s; }
+.loot-row:nth-child(4) { animation-delay: 0.24s; } .loot-row:nth-child(n+5) { animation-delay: 0.32s; }
+.loot-row.lt-anc { box-shadow: 0 0 0 1px #ffd24a88, 0 0 12px #ffd24a66; animation: loot-glow-anc 1.6s ease-in-out 0.4s infinite; }
+.loot-row.lt-exc { box-shadow: 0 0 0 1px #5fe08a88, 0 0 10px #5fe08a55; animation: loot-glow-exc 1.6s ease-in-out 0.4s infinite; }
+.loot-row.lt-opt { box-shadow: 0 0 0 1px #6fa8ff66; }
+.loot-row.lt-jewel { box-shadow: 0 0 0 1px #c49bff66; }
+.loot-row.lt-anc.fresh { animation: loot-in 0.35s ease-out both, loot-glow-anc 1.6s ease-in-out 0.4s infinite; }
+.loot-row.lt-exc.fresh { animation: loot-in 0.35s ease-out both, loot-glow-exc 1.6s ease-in-out 0.4s infinite; }
+.loot-row.gone { animation: none; box-shadow: none; }
+@keyframes loot-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes loot-glow-anc { 50% { box-shadow: 0 0 0 1px #ffd24a, 0 0 20px #ffd24aaa; } }
+@keyframes loot-glow-exc { 50% { box-shadow: 0 0 0 1px #5fe08a, 0 0 18px #5fe08a99; } }
+@media (prefers-reduced-motion: reduce) { .loot-row.fresh, .loot-row.lt-anc, .loot-row.lt-exc { animation: none; } }
 .loot-item { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; color: inherit; font: inherit; cursor: pointer; text-align: left; }
 .loot-item .ic.lg { width: 28px; height: 28px; }
 /* Phase 2: hướng dẫn ép đồ gọn */

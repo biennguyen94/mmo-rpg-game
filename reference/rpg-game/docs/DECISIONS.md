@@ -922,6 +922,15 @@ Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian
   vừa sang bản đồ mới.
 - Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Hướng C (người khác thấy mình đánh trên bản đồ) cần server gửi thêm sự
   kiện, chưa làm.
+- **Đợt 2 (2026-10-23):**
+  - Đồ rơi: thắng trận thì mỗi món (tối đa 6) một cột sáng ở chỗ quái theo độ quý: Thần vàng, Excellent xanh lá, có dòng cộng
+    thêm xanh dương, ngọc theo màu ngọc (Ước Nguyện trắng xanh, Tâm Linh tím, Hỗn Nguyên cam, Sinh Mệnh xanh lá). Thần /
+    Excellent: cột to, tên món, chớp màn hình, rung, âm "rare". Dòng đồ nhận được hiện dần và viền sáng theo độ quý (Thần /
+    Excellent nhấp nháy).
+  - Ép đồ (Thợ Rèn, +10/+11 ở Máy Hỗn Nguyên), Máy Hỗn Nguyên, Ngọc Sinh Mệnh: món ở giữa màn hình (nền tối), ngọc / nguyên liệu
+    xoáy vào, búa gõ tia lửa ~0,8 giây rồi ra kết quả. Thành công nổ sáng mạnh dần (từ +7 có tia, +10/+11 cam + chớp + rung);
+    thất bại nứt + khói xám ("THẤT BẠI" / "VỀ +0" / "TỤT CẤP"); vỡ đồ thì vỡ thành mảnh. Kết quả do server quyết ngay từ đầu;
+    client chỉ hoãn thông báo + vẽ lại màn hình ~0,85 giây cho khớp hoạt cảnh (tắt hiệu ứng thì như cũ, không chờ).
 
 ## Cân bằng đánh người
 
