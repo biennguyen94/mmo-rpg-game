@@ -3326,16 +3326,38 @@
     return P.battle && P.battle.over && P.battle.result === 'lose' ? 0 : P.hp;
   }
 
-  function battleFx(before, action) {
+  function battleFx(before, action, skill) {
     if (!P || !P.battle) return;
+    fx = fxOf(before, action);
+    BattleFx.run(battleEvents(before, action, skill, fx));
+  }
+
+  // số sát thương hai bên của lượt vừa rồi (so với ảnh chụp `before`)
+  function fxOf(before, action) {
     // Nhật ký giới hạn 60 dòng; khi đã đầy thì xem vài dòng cuối.
     const newLog = before.logLen < 60 ? P.battle.log.slice(before.logLen) : P.battle.log.slice(-4);
     const struck = action === 'attack' || action === 'skill';
-    fx = {
+    return {
       mDmg: struck ? before.mHp - P.battle.monster.hp : null,
       pDmg: before.pHp - battleHp() > 0 ? before.pHp - battleHp() : 0,
       crit: newLog.some((l) => l.kind === 'crit'),
     };
+  }
+
+  // Hiệu ứng (js/fx.js) cho một lượt: đòn của mình theo lớp / hệ kỹ năng, quái đánh trả, quái gục, thanh máu trễ
+  const SELF_FX = ['war_cry', 'guard', 'shadow_step', 'holy', 'heal', 'regen', 'buff'];
+  function battleEvents(before, action, skill, f) {
+    const b = P.battle, m = b.monster, ev = [];
+    const sk = action === 'skill' && skill ? skillById(skill) : null;
+    if (f.mDmg > 0) {
+      ev.push(sk ? { type: 'skill', element: sk.element, crit: f.crit } : { type: 'attack', cls: P.cls, crit: f.crit });
+      ev.push({ type: 'ghost', from: Math.max(0, Math.min(100, (before.mHp / m.maxHp) * 100)) });
+    } else if (sk && (SELF_FX.includes(sk.effect) || !f.mDmg)) {
+      ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
+    } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
+    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
+    if (b.over && b.result === 'win') ev.push({ type: 'kill', delay: 320 });
+    return ev;
   }
 
   // Tên thao tác của nút → lệnh gửi server (xem lib/hac_long/game/commands.ex).
@@ -3400,7 +3422,7 @@
       const r = await Net.send(cmd);
       P = r.player;
       result(r);
-      if (r.ok && before) battleFx(before, cmd.act);
+      if (r.ok && before) battleFx(before, cmd.act, cmd.skill);
       commandSound(cmd, r, old);
       resultFx(cmd, r, old);
       if (r.ok) {
@@ -3461,6 +3483,7 @@
   // Đi dần tới ô đích (hoặc đuổi theo con quái đã chạm vào), tính lại đường sau mỗi bước.
   async function walkTo(x, y) {
     const target = Map_.monsterAt(x, y);
+    if (!target) Map_.mark(x, y);
     const me = { x, y, monster: target ? target.id : null, id: Symbol('walk') };
     walk = me;
     // B2: trong tháp, lên tầng vẫn là bản đồ `tower`; tầng đổi thì dừng (không đi tiếp tới cùng toạ độ ở tầng mới)
@@ -3886,7 +3909,18 @@
     document.addEventListener('dragend', () => { dragging = null; document.querySelectorAll('.over').forEach((x) => x.classList.remove('over')); });
     document.addEventListener('pointerdown', onMapTap);
     window.addEventListener('resize', () => Map_.resize());
-    Net.onPlayer((p) => { if (!busy) { P = p; refresh(); } });
+    Net.onPlayer((p) => {
+      if (busy) return;
+      // tự đánh / đánh chung: server đẩy trạng thái trận mới, suy ra hiệu ứng từ máu hai bên
+      const ob = P && P.battle, nb = p && p.battle;
+      const before = ob && nb && !ob.over && ob.monster.id === nb.monster.id ? snapBattle() : null;
+      P = p;
+      refresh();
+      if (before && (before.mHp !== nb.monster.hp || before.pHp !== battleHp() || nb.over)) {
+        const act = before.mHp !== nb.monster.hp ? 'attack' : 'potion';
+        BattleFx.run(battleEvents(before, act, null, fxOf(before, act)));
+      }
+    });
     Net.onMap((snap) => { Map_.setWorld(snap); Sound.music(musicMood()); refreshPeopleDot(); });
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);

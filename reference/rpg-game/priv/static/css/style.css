@@ -868,3 +868,22 @@ img.own.pix { object-fit: contain; image-rendering: pixelated; }
 .map-shake-big { animation: map-shake 0.12s 5; }
 @keyframes map-shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, -1px); } }
 @media (prefers-reduced-motion: reduce) { .map-shake, .map-shake-big { animation: none; } }
+
+/* Hiệu ứng trận đánh (js/fx.js, docs/FX_PLAN.md hướng A) */
+#bfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 60; }
+.bar > b.fx-ghost { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: rgba(255, 245, 230, 0.75); transition: width 0.6s ease-in 0.18s; }
+.fx-hit { animation: fx-hit 0.32s; }
+@keyframes fx-hit { 0%, 100% { transform: none; filter: none; } 20% { transform: translateX(-7px) scale(1.04); filter: brightness(3) drop-shadow(0 0 8px #fff); } 55% { transform: translateX(5px); } }
+.fx-lunge { animation: fx-lunge 0.3s ease-out; }
+@keyframes fx-lunge { 40% { transform: translateY(-10px) scale(1.12); } }
+.fx-cast { animation: fx-cast 0.36s ease-out; }
+@keyframes fx-cast { 50% { transform: translateY(-4px); filter: brightness(1.8) drop-shadow(0 0 6px #ffe79a); } }
+.fx-dodge { animation: fx-dodge 0.36s ease-out; }
+@keyframes fx-dodge { 35% { transform: translateX(26px) rotate(6deg); opacity: 0.7; } }
+.fx-dying { animation: fx-dying 0.9s ease-in forwards; }
+@keyframes fx-dying { 0% { filter: brightness(2.5); } 100% { transform: scale(0.6) translateY(18px); opacity: 0; filter: grayscale(1) brightness(0.5); } }
+.fx-shake { animation: map-shake 0.25s linear 2; }
+.fx-shake-big { animation: map-shake 0.18s linear 3; }
+.fx-pop { animation: fx-pop 0.26s ease-out; }
+@keyframes fx-pop { 50% { transform: scale(1.25); color: #fff3b0; } }
+@media (prefers-reduced-motion: reduce) { .fx-hit, .fx-lunge, .fx-cast, .fx-dodge, .fx-shake, .fx-shake-big, .fx-pop { animation: none; } }

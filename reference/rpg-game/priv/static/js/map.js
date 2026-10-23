@@ -22,6 +22,8 @@
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
   let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
+  // hiệu ứng di chuyển (docs/FX_PLAN.md): dấu bước chân, ô đích vừa chạm, lúc sang bản đồ mới
+  let steps = [], lastTile = null, mark = null, arrive = 0;
   let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   const Doll = window.Doll;
@@ -533,6 +535,7 @@
     const look = P.view && P.view.look;
     if (!m.tower) drawPet(look && look.pet, 'me', P.pos.x, P.pos.y);
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
+    if (fx) moveFx(now, m, P, cx, cy, px, py);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
@@ -723,6 +726,40 @@
         ctx.fillStyle = `rgba(${col}, ${a})`;
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x - 80, vh); ctx.lineTo(x - 170, vh); ctx.fill();
       }
+    }
+  }
+
+  // Dấu bước chân (bụi trên đất, gợn nước trên bến / cầu gỗ), vòng sáng ở ô đích, cột sáng khi vừa sang bản đồ mới
+  function moveFx(t, m, P, cx, cy, px, py) {
+    const key = `${P.pos.map}:${P.pos.x},${P.pos.y}`;
+    if (lastTile && lastTile.key !== key) {
+      if (lastTile.map === P.pos.map) steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
+      else arrive = t;
+    }
+    lastTile = { key, map: P.pos.map, x: P.pos.x, y: P.pos.y };
+    steps = steps.filter((s) => t - s.t0 < 520);
+    for (const s of steps) {
+      const k = (t - s.t0) / 520, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 5 - cy;
+      if (s.wet) {
+        ctx.strokeStyle = `rgba(200, 235, 255, ${0.6 * (1 - k)})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(x, y, 5 + k * 10, 2 + k * 4, 0, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.fillStyle = `rgba(205, 185, 150, ${0.45 * (1 - k)})`;
+        for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(x + i * (4 + k * 6), y - k * 4 - Math.abs(i) * 1, 2 + k * 2.5, 0, Math.PI * 2); ctx.fill(); }
+      }
+    }
+    if (mark && t - mark.t0 < 900 && mark.map === P.pos.map) {
+      const k = (t - mark.t0) / 900, x = mark.x * TILE + TILE / 2 - cx, y = mark.y * TILE + TILE / 2 - cy;
+      ctx.strokeStyle = `rgba(240, 207, 122, ${0.9 * (1 - k)})`; ctx.lineWidth = 2;
+      for (const d of [0, 0.35]) { const kk = Math.max(0, k - d); ctx.beginPath(); ctx.ellipse(x, y + 8, 4 + kk * 14, 2 + kk * 6, 0, 0, Math.PI * 2); ctx.stroke(); }
+    } else if (mark && t - mark.t0 >= 900) mark = null;
+    if (arrive && t - arrive < 800) {
+      const k = (t - arrive) / 800, x = px + TILE / 2, y = py + TILE - 4;
+      const g = ctx.createLinearGradient(x - 14, 0, x + 14, 0);
+      g.addColorStop(0, 'rgba(180, 220, 255, 0)'); g.addColorStop(0.5, `rgba(220, 240, 255, ${0.7 * (1 - k)})`); g.addColorStop(1, 'rgba(180, 220, 255, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 14, y - 70 * (1 - k * 0.3), 28, 70 * (1 - k * 0.3));
+      ctx.strokeStyle = `rgba(200, 230, 255, ${0.8 * (1 - k)})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x, y, 6 + k * 22, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
     }
   }
 
@@ -919,6 +956,8 @@
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
       lake = at(l); school = at(s); draw();
     },
+    // vòng sáng ở ô vừa chạm để đi tới (ui.js walkTo)
+    mark(x, y) { const P = getPlayer(); if (P && P.pos) { mark = { x, y, map: P.pos.map, t0: performance.now() }; draw(); } },
     // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)
     bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },

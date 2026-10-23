@@ -907,3 +907,19 @@ Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian
 - **Tiên Nữ hình nữ:** thân `base/elf_f` + tóc `hair/fem_yellow` (Dungeon Crawl CC0); `classes.json` thêm `body`, `Engine.look`
   gửi `body`, `doll.js` dùng `look.body` thay thân nam mặc định.
 
+## Hiệu ứng trận đánh và di chuyển (FX_PLAN đợt 1 + một phần đợt 5)
+
+- `priv/static/js/fx.js` (`BattleFx`): canvas trong suốt phủ màn hình (`#bfx`, không bắt chuột), vị trí lấy từ hình quái / nhân
+  vật trong bảng trận lúc phát, nên mọi chế độ dùng bảng trận đều có. Chỉ là hình, server vẫn quyết định kết quả.
+  - Đòn thường theo lớp: Kiếm Sĩ / Đấu Sĩ hai vệt chém, Tiên Nữ tên bay, Phù Thủy cầu phép; nhân vật nhún tới; quái chớp trắng,
+    hạt tung; chí mạng: chữ "CHÍ MẠNG!", vòng to, rung bảng. Trượt: quái né sang bên.
+  - Kỹ năng theo hệ: lửa (cầu lửa + tàn lửa bay lên), sét (3 tia từ trên + chớp màn hình), gió (3 lưỡi gió + xoáy), đất (đá rơi +
+    bụi + rung), bóng tối (cầu tím + co lại), ánh sáng (cột sáng). Kỹ năng lên mình (hồi máu, tăng sức) có vòng sáng + dấu "+".
+  - Quái đánh mình: vết cào đỏ + viền đỏ màn hình. Quái gục: tan thành hạt, vàng bay về số vàng trên đầu trang.
+    Thanh máu quái có lớp trắng trễ chạy theo.
+  - Tự đánh / đánh chung: suy ra từ máu hai bên khi server đẩy trạng thái trận mới.
+- Bản đồ (`map.js` `moveFx`): bụi bước chân (gợn nước khi đi trên bến / cầu gỗ), vòng sáng ở ô vừa chạm để đi tới, cột sáng khi
+  vừa sang bản đồ mới.
+- Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Hướng C (người khác thấy mình đánh trên bản đồ) cần server gửi thêm sự
+  kiện, chưa làm.
+
