@@ -923,3 +923,19 @@ Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian
 - Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Hướng C (người khác thấy mình đánh trên bản đồ) cần server gửi thêm sự
   kiện, chưa làm.
 
+## Cân bằng đánh người
+
+Anh duyệt (2026-10-23) sau khi đo 2 nhân vật cấp 50, chuyển sinh 10, đồ +11 full Excellent, cánh 3, Long Vương: đòn thường 45–78%
+máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2,5, né 56–60% → một chiêu là chết, ai đánh trước thắng.
+- `RULES.pvp` (khi đối thủ là người: bản sao `HacLong.Arena.opponent/2` có `pvp`): mọi sát thương lên người × `dmg_mult` 0,3 (đòn
+  thường, kỹ năng, thú cắn — trước đây thú cắn còn bỏ qua giảm sát thương của cánh / Excellent bên kia —, độc); tỉ lệ chí mạng ×
+  `crit_rate_mult` 0,5, phần cộng thêm của hệ số chí mạng × `crit_bonus_mult` 0,5; né × `dodge_mult` 0,6. **Thu nhỏ theo tỉ lệ,
+  không chặn trần** (anh lo chặn trần thiệt người đồ VIP). Áp cả hai chiều (người đánh bản sao và bản sao đánh người).
+- Choáng: bản sao vừa thoát choáng thì kháng `stun_immune` 2 lượt (`Engine.stun_monster/2`).
+- Đồ sát hết giờ: server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (`Engine.auto_strike/1`), không có thì đánh thường.
+  Sửa luôn: trận `live` (đồ sát) trước đây không trừ hồi chiêu sau đòn đánh / kỹ năng (chỉ trừ khi uống bình).
+- PK cược (`PkFight`, đang tắt mời, thay bằng đồ sát): dùng đúng bộ máy trận (`Engine.act`, chế độ `live`), mỗi bên dùng kỹ năng
+  thật (`auto_strike`), **ra đòn cùng lúc** mỗi lượt; cả hai cùng gục thì bên bị đánh lố ít hơn thắng.
+- Kết quả giả lập (PK cược, 200 trận mỗi cặp, nhân vật tối đa): cùng lớp ~50/50 (hết lợi thế đánh trước), 7–10 lượt. Lớp chênh
+  nhau rõ: Kiếm Sĩ thắng Đấu Sĩ 197/200, Tiên Nữ thắng Phù Thủy 144/200 → cân bằng lớp là việc riêng, chưa làm.
+

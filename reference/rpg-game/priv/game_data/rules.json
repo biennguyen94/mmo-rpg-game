@@ -865,6 +865,17 @@
       "max_s": 180,
       "range": 8
     },
+    "pvp": {
+      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến, PK cược). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt.",
+      "dmg_mult": 0.3,
+      "crit_rate_mult": 0.5,
+      "crit_bonus_mult": 0.5,
+      "dodge_mult": 0.6,
+      "stun_immune": 2,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "pk": {
       "min": 100,
       "max": 1000000,

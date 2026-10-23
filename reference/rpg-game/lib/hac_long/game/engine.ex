@@ -24,6 +24,8 @@ defmodule HacLong.Game.Engine do
   @loot @rules.loot
   @max_level @char.max_level
   @pet_sk @rules.pets.skills
+  # DECISIONS "Cân bằng đánh người"
+  @pvp @rules.pvp
   @up @rules.upgrade
   @shop @rules.shop
   # Phase 15b: đồ ngẫu nhiên rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class`)
@@ -1011,8 +1013,10 @@ defmodule HacLong.Game.Engine do
         atk =
           round(d.atk * (1 + power(p, :player, "rage")) * (1 - power(p, :player, "weaken")))
 
+        pvp = m[:pvp] != nil
+
         {p, atk, dfn, crit, mult, name, on_hit} =
-          strike_with(p, skill, d, atk, m.def, chance(d.crit))
+          strike_with(p, skill, d, atk, m.def, chance(if pvp, do: pvp_crit(d.crit), else: d.crit))
 
         dfn = round(dfn * (1 - d.ignoreDef) * (1 - power(p, :monster, "sunder")))
         # Phase 3: nguyên tố kỹ năng so với nguyên tố quái
@@ -1021,7 +1025,10 @@ defmodule HacLong.Game.Engine do
         # kỹ năng luôn trúng; đòn thường: đấu trường theo né của đối thủ, quái theo tỉ lệ trúng
         p =
           if skill == nil and
-               if(m[:pvp], do: chance(m.dodge), else: chance(1 - hit_chance(d.ar, m.level))) do
+               if(pvp,
+                 do: chance(m.dodge * @pvp.dodge_mult),
+                 else: chance(1 - hit_chance(d.ar, m.level))
+               ) do
             log(p, "Trượt! #{m.name} tránh được đòn #{name}.", "info")
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
@@ -1038,8 +1045,12 @@ defmodule HacLong.Game.Engine do
                       damage(
                         atk,
                         dfn,
-                        mult / hits * if(crit, do: d.critMult, else: 1),
-                        m[:taken] || 1
+                        mult / hits *
+                          if(crit,
+                            do: if(pvp, do: pvp_crit_mult(d.critMult), else: d.critMult),
+                            else: 1
+                          ),
+                        (m[:taken] || 1) * if(pvp, do: @pvp.dmg_mult, else: 1)
                       )
               )
 
@@ -1066,8 +1077,9 @@ defmodule HacLong.Game.Engine do
         p = pet_bite(p, d)
 
         cond do
-          # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó)
-          p.battle[:live] -> {ok(), p}
+          # đồ sát / PK cược: thắng thua do HacLong.Slay / PkFight quyết (máu hai bên giữ ở đó);
+          # vẫn trừ hồi chiêu và hiệu ứng mỗi lượt của mình
+          p.battle[:live] -> tick_round(p)
           p.battle.monster.hp <= 0 -> win(p)
           true -> monster_turn(p, d)
         end
@@ -1082,6 +1094,12 @@ defmodule HacLong.Game.Engine do
       if m.hp > 0 and Map.get(p, :pet),
         do: Pets.bite(p, damage(d.atk, m.def), Rng.uniform()),
         else: 0
+
+    # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
+    bite =
+      if bite > 0 and m[:pvp],
+        do: max(1, round(bite * (m[:taken] || 1) * @pvp.dmg_mult)),
+        else: bite
 
     if bite > 0 do
       sks = Pets.active_skills(p)
@@ -1115,8 +1133,7 @@ defmodule HacLong.Game.Engine do
           do:
             p
             |> put_in([:battle, :tidal_at], p.battle.turn)
-            |> put_effect(:monster, "stun", 1, 0)
-            |> log("🌊 #{p.battle.monster.name} bị cột nước đánh choáng!", "good"),
+            |> stun_monster("🌊 #{p.battle.monster.name} bị cột nước đánh choáng!"),
           else: p
 
       Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
@@ -1240,8 +1257,7 @@ defmodule HacLong.Game.Engine do
          fn p, _ ->
            if (m.boss || m[:world]) && chance(e.boss_resist),
              do: log(p, "#{m.name} không bị choáng.", "info"),
-             else:
-               p |> put_effect(:monster, "stun", 1, 0) |> log("💫 #{m.name} bị choáng!", "good")
+             else: stun_monster(p, "💫 #{m.name} bị choáng!")
          end}
 
       "war_cry" ->
@@ -1307,9 +1323,7 @@ defmodule HacLong.Game.Engine do
         log(p, "#{m.name} không bị choáng.", "info")
 
       true ->
-        p
-        |> put_effect(:monster, "stun", 1, 0)
-        |> log("💫 #{m.name} bị khống chế, mất lượt!", "good")
+        stun_monster(p, "💫 #{m.name} bị khống chế, mất lượt!")
     end
   end
 
@@ -1416,6 +1430,7 @@ defmodule HacLong.Game.Engine do
     if effect(p, :monster, "stun") do
       p
       |> drop_effect(:monster, "stun")
+      |> stun_cooled()
       |> log("💫 #{m.name} bị choáng, không đánh được.", "good")
       |> round_end()
     else
@@ -1423,20 +1438,24 @@ defmodule HacLong.Game.Engine do
       m_atk = if special, do: round(m.atk * m.special.mult), else: m.atk
       m_atk = round(m_atk * (1 - power(p, :monster, "weaken")))
 
+      pvp = m[:pvp] != nil
+
       p =
-        if not special and chance(dodge_chance(p, d)) do
+        if not special and
+             chance(dodge_chance(p, d) * if(pvp, do: @pvp.dodge_mult, else: 1)) do
           log(p, "Bạn né được đòn của #{m.name}.", "info")
         else
-          mc = not special and chance(m.crit)
+          mc = not special and chance(if pvp, do: pvp_crit(m.crit), else: m.crit)
+          cm = m[:crit_mult] || @combat.monster_crit_mult
 
           dmg =
             damage(
               m_atk,
               # đối thủ là người có dòng cánh "bỏ qua phòng thủ"
               round(d.def * (1 - (m[:ignore_def] || 0))),
-              if(mc, do: m[:crit_mult] || @combat.monster_crit_mult, else: 1),
+              if(mc, do: if(pvp, do: pvp_crit_mult(cm), else: cm), else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-                (1 - pet_guard(p))
+                (1 - pet_guard(p)) * if(pvp, do: @pvp.dmg_mult, else: 1)
             )
 
           {dmg, p} = absorb_shield(p, dmg)
@@ -1514,6 +1533,8 @@ defmodule HacLong.Game.Engine do
       |> Enum.map(& &1.power)
       |> Enum.sum()
 
+    mdot = if m[:pvp] && mdot > 0, do: max(1, round(mdot * @pvp.dmg_mult)), else: mdot
+
     p =
       if mdot > 0 do
         p
@@ -1545,6 +1566,51 @@ defmodule HacLong.Game.Engine do
       p = if p.hp <= 0, do: survive(p, derived(p)), else: p
       if p.hp <= 0, do: lose(p), else: tick_round(p)
     end
+  end
+
+  # ---------- Đánh người (DECISIONS "Cân bằng đánh người", RULES.pvp) ----------
+  @doc "Tỉ lệ chí mạng khi đánh người: thu nhỏ theo tỉ lệ (không chặn trần)."
+  def pvp_crit(c), do: c * @pvp.crit_rate_mult
+
+  @doc "Hệ số chí mạng khi đánh người: phần cộng thêm trên ×1 thu nhỏ theo tỉ lệ."
+  def pvp_crit_mult(cm), do: 1 + (cm - 1) * @pvp.crit_bonus_mult
+
+  def pvp_rules, do: @pvp
+
+  # Gây choáng cho quái / đối thủ; đối thủ là người vừa hết choáng thì kháng `stun_immune` lượt.
+  defp stun_monster(p, text) do
+    b = p.battle
+
+    if b.monster[:pvp] && b.turn < (b[:stun_free] || 0),
+      do: log(p, "#{b.monster.name} vừa thoát choáng, kháng được.", "info"),
+      else: p |> put_effect(:monster, "stun", 1, 0) |> log(text, "good")
+  end
+
+  defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,
+    do: put_in(p, [:battle, :stun_free], p.battle.turn + 1 + @pvp.stun_immune)
+
+  defp stun_cooled(p), do: p
+
+  @doc """
+  Lệnh tự đánh khi đánh người (đồ sát hết giờ, PK cược): kỹ năng mạnh nhất đang dùng được (hết hồi chiêu,
+  đủ MP), không có thì đánh thường. Trả `{"skill", id}` hoặc `{"attack", nil}`.
+  """
+  def auto_strike(p) do
+    p
+    |> skills()
+    |> Enum.filter(&(cooldown(p, &1.id) == 0 and mp(p) >= skill_mp(p, &1)))
+    |> Enum.max_by(&skill_power/1, fn -> nil end)
+    |> case do
+      nil -> {"attack", nil}
+      k -> {"skill", k.id}
+    end
+  end
+
+  defp skill_power(%{floor: _} = k), do: k[:mult] || 1
+
+  defp skill_power(k) do
+    e = @effects[String.to_existing_atom(k[:effect] || k.id)] || %{}
+    (e[:mult] || 1) * (((k[:hits] || 1) > 1 && 1.05) || 1)
   end
 
   # Giảm số lượt hiệu ứng và hồi chiêu.

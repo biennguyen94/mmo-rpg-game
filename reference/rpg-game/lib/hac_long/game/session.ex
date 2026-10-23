@@ -463,8 +463,16 @@ defmodule HacLong.Game.Session do
 
   defp handle({:slay_cancel, _id}, _from, s), do: reply(:ok, s)
 
-  defp handle(:slay_auto, _from, %{player: %{battle: %{over: false, live: true}}} = s),
-    do: run_command_(s, %{"act" => "attack", "auto" => true}, nil)
+  # hết giờ lượt đồ sát: server ra đòn thay, dùng kỹ năng mạnh nhất còn dùng được (DECISIONS "Cân bằng đánh người")
+  defp handle(:slay_auto, _from, %{player: %{battle: %{over: false, live: true}} = p} = s) do
+    cmd =
+      case HacLong.Game.Engine.auto_strike(p) do
+        {"skill", id} -> %{"act" => "skill", "skill" => id, "auto" => true}
+        _ -> %{"act" => "attack", "auto" => true}
+      end
+
+    run_command_(s, cmd, nil)
+  end
 
   defp handle(:slay_auto, _from, s), do: reply(:ok, s)
 

@@ -17,7 +17,7 @@ defmodule HacLong.PkBet do
   require Logger
   import Ecto.Query
 
-  alias HacLong.{Arena, Repo}
+  alias HacLong.Repo
   alias HacLong.Game.{Characters, Daily, Data, PkFight, Session}
 
   @pk Data.rules().pk
@@ -252,7 +252,7 @@ defmodule HacLong.PkBet do
          :ok <- ready(pb, w),
          :ok <- under_limit(inv.from, pa.name, day),
          :ok <- under_limit(inv.to, pb.name, day) do
-      r = PkFight.fight(Arena.opponent(pa, inv.from), Arena.opponent(pb, inv.to))
+      r = PkFight.fight(pa, pb, inv.from, inv.to)
 
       {winner, pa2, pb2} =
         case r.winner do

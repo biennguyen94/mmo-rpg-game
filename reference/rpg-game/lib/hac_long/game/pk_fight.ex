@@ -1,116 +1,145 @@
 defmodule HacLong.Game.PkFight do
   @moduledoc """
-  Trận PK cược vàng (Phase 5, H7 + H8): hai **bản sao chỉ số** (`HacLong.Arena.opponent/2`) tự đánh
-  nhau theo cùng một luật, không ai điều khiển. Hàm thuần, ngẫu nhiên qua `HacLong.Game.Rng`.
+  Trận PK cược vàng (Phase 5, H7 + H8): hai nhân vật tự đánh nhau, không ai điều khiển. Hàm thuần, ngẫu nhiên qua
+  `HacLong.Game.Rng`.
 
-  - Người mời (`a`) đánh trước, rồi hai bên thay phiên. Mỗi bên dùng kỹ năng của lớp ở lượt thứ
-    `RULES.pk.special_every` (×`special_mult`, không chí mạng, không né được); đòn thường có thể bị né
-    (`dodge`) và chí mạng (`crit`, hệ số `RULES.combat.monster_crit_mult`).
-  - Hết máu thì thua. Quá `RULES.pk.rounds` lượt thì bên còn **% máu** cao hơn thắng; bằng nhau là hòa.
+  DECISIONS "Cân bằng đánh người": dùng đúng bộ máy trận thật (`Engine.act/3`, chế độ `live` như đồ sát): mỗi bên đánh
+  bản sao chỉ số của bên kia (`HacLong.Arena.opponent/2`), mỗi lượt dùng kỹ năng mạnh nhất đang dùng được
+  (`Engine.auto_strike/1`), không có thì đánh thường; luật đánh người (`RULES.pvp`) áp như mọi trận đánh người.
+  **Hai bên ra đòn cùng lúc** trong một lượt (không ai được lợi vì đánh trước): sát thương và hồi máu của cả lượt cộng
+  rồi mới tính ai gục. Bị choáng thì mất lượt sau, vừa thoát choáng thì kháng `RULES.pvp.stun_immune` lượt.
 
-  Trả về `%{winner: :a | :b | :draw, rounds, hp: %{a, b}, log: [%{text, kind}]}`.
+  - Hết máu thì thua; cả hai cùng gục trong một lượt thì bên bị đánh lố ít hơn (so với máu tối đa) thắng, bằng nhau là
+    hòa. Quá `RULES.pk.rounds` lượt thì bên còn **% máu** cao hơn thắng; bằng nhau
+    là hòa.
+
+  `fight(pa, pb, a_id, b_id)`: `pa`, `pb` là nhân vật (người mời trước). Trả về
+  `%{winner: :a | :b | :draw, rounds, hp: %{a, b}, log: [%{text, kind}]}`.
   """
 
-  alias HacLong.Game.{Data, Engine, Rng}
+  alias HacLong.Arena
+  alias HacLong.Game.{Data, Engine}
 
   @pk Data.rules().pk
-  @crit_mult Data.rules().combat.monster_crit_mult
+  @immune Data.rules().pvp.stun_immune
 
-  def fight(a, b) do
-    st = %{a: Map.put(a, :hp, a.maxHp), b: Map.put(b, :hp, b.maxHp), log: [], round: 1}
-    st = loop(st, :a)
+  def fight(pa, pb, a_id \\ 1, b_id \\ 2) do
+    st = %{
+      a: side(pa, Arena.opponent(pb, b_id)),
+      b: side(pb, Arena.opponent(pa, a_id)),
+      log: [],
+      round: 1,
+      # lượt cuối: máu (có thể âm) / máu tối đa, để phân thắng thua khi cả hai cùng gục
+      over: %{a: 0, b: 0}
+    }
+
+    st = loop(st)
+    ha = st.a.p.hp
+    hb = st.b.p.hp
 
     winner =
       cond do
-        st.a.hp <= 0 -> :b
-        st.b.hp <= 0 -> :a
-        ratio(st.a) > ratio(st.b) -> :a
-        ratio(st.b) > ratio(st.a) -> :b
+        ha <= 0 and hb <= 0 and st.over.a > st.over.b -> :a
+        ha <= 0 and hb <= 0 and st.over.b > st.over.a -> :b
+        ha <= 0 and hb <= 0 -> :draw
+        ha <= 0 -> :b
+        hb <= 0 -> :a
+        ha / st.a.max > hb / st.b.max -> :a
+        hb / st.b.max > ha / st.a.max -> :b
         true -> :draw
       end
 
     end_text =
       case winner do
+        :draw when ha <= 0 -> "Hai bên cùng gục: hòa."
         :draw -> "Hết #{@pk.rounds} lượt, hai bên ngang nhau: hòa."
-        w -> "🏆 #{st[w].name} thắng!"
+        w -> "🏆 #{st[w].p.name} thắng!"
       end
 
     %{
       winner: winner,
       rounds: min(st.round, @pk.rounds),
-      hp: %{a: max(st.a.hp, 0), b: max(st.b.hp, 0)},
+      hp: %{a: max(ha, 0), b: max(hb, 0)},
       log: Enum.reverse([%{text: end_text, kind: "win"} | st.log])
     }
   end
 
-  defp ratio(x), do: x.hp / x.maxHp
-
-  # một lượt = cả hai bên đánh một lần (người mời trước)
-  defp loop(st, side) do
-    cond do
-      st.a.hp <= 0 or st.b.hp <= 0 -> st
-      st.round > @pk.rounds -> st
-      true -> st |> strike(side, other(side)) |> next(side)
-    end
+  # một bên: nhân vật trong trận `live` với bản sao bên kia, cờ choáng, lượt hết kháng choáng
+  defp side(p, foe) do
+    d = Engine.derived(p)
+    p = %{p | battle: nil, hp: d.maxHp} |> Map.put(:mp, d.maxMp)
+    {_, p} = Engine.start_with_monster(p, 1, foe)
+    %{p: put_in(p, [:battle, :live], true), max: d.maxHp, stunned: false, free: 0}
   end
 
-  defp next(st, :a), do: loop(st, :b)
-  defp next(st, :b), do: loop(%{st | round: st.round + 1}, :a)
-
-  defp other(:a), do: :b
-  defp other(:b), do: :a
-
-  defp strike(st, me, them) do
-    m = st[me]
-    t = st[them]
-
-    if t.hp <= 0 do
+  defp loop(st) do
+    if st.a.p.hp <= 0 or st.b.p.hp <= 0 or st.round > @pk.rounds do
       st
     else
-      special = rem(st.round, @pk.special_every) == 0
+      {a, dealt_a, stun_b, log_a} = strike(st.a, st.b.p.name, st.round)
+      {b, dealt_b, stun_a, log_b} = strike(st.b, st.a.p.name, st.round)
 
-      cond do
-        not special and chance(t.dodge) ->
-          say(st, "#{t.name} né được đòn của #{m.name}.", "info")
-
-        special ->
-          dmg = Engine.damage(m.atk, def_of(m, t), @pk.special_mult, t[:taken] || 1)
-
-          st
-          |> hurt(them, dmg)
-          |> say("🔥 #{m.name} dùng #{m.special.name}: #{t.name} mất #{dmg} máu.", kind(me))
-
-        true ->
-          crit = chance(m.crit)
-
-          dmg =
-            Engine.damage(
-              m.atk,
-              def_of(m, t),
-              if(crit, do: m[:crit_mult] || @crit_mult, else: 1),
-              t[:taken] || 1
-            )
-
-          st
-          |> hurt(them, dmg)
-          |> say(
-            if(crit,
-              do: "#{m.name} đánh #{t.name} #{dmg} máu (chí mạng).",
-              else: "#{m.name} đánh #{t.name} #{dmg} máu."
-            ),
-            kind(me)
-          )
-      end
+      # cùng lúc: máu mới = máu sau đòn của mình (hồi máu) − đòn bên kia
+      ra = a.p.hp - dealt_b
+      rb = b.p.hp - dealt_a
+      ha = max(ra, 0)
+      hb = max(rb, 0)
+      a = sync(a, ha, hb) |> stun(stun_a, st.round)
+      b = sync(b, hb, ha) |> stun(stun_b, st.round)
+      over = %{a: ra / a.max, b: rb / b.max}
+      loop(%{st | a: a, b: b, log: log_b ++ log_a ++ st.log, round: st.round + 1, over: over})
     end
   end
 
-  # phòng thủ của `t` sau dòng cánh "bỏ qua phòng thủ" của `m`
-  defp def_of(m, t), do: round(t.def * (1 - (m[:ignore_def] || 0)))
+  # một bên ra đòn: trả bên đó sau lượt, sát thương gây cho bên kia, có làm choáng bên kia không, các dòng nhật ký
+  defp strike(%{stunned: true} = s, _foe, round) do
+    s = %{s | stunned: false, free: round + 1 + @immune}
+    {s, 0, false, [%{text: "💫 #{s.p.name} bị choáng, mất lượt.", kind: "info"}]}
+  end
 
-  defp kind(:a), do: "hit"
-  defp kind(:b), do: "hurt"
+  # máu đệm cho bản sao lúc tính đòn: Engine chặn máu ở 0, cần biết đòn lố bao nhiêu khi cả hai cùng gục
+  @pad 10_000_000
 
-  defp hurt(st, who, dmg), do: put_in(st, [who, :hp], st[who].hp - dmg)
-  defp say(st, text, kind), do: %{st | log: [%{text: text, kind: kind} | st.log]}
-  defp chance(p), do: Rng.uniform() < p
+  defp strike(s, foe, _round) do
+    p = update_in(s.p, [:battle, :monster, :hp], &(&1 + @pad))
+    before = p.battle.monster.hp
+
+    {act, skill} = Engine.auto_strike(p)
+    {_, p2} = Engine.act(p, act, skill)
+    dealt = before - p2.battle.monster.hp
+    stunned? = Enum.any?(get_in(p2, [:battle, :effects, :monster]) || [], &(&1.id == "stun"))
+    p2 = update_in(p2, [:battle, :effects], &drop_stun/1)
+    name = skill && Enum.find(Engine.skills(p), &(&1.id == skill)).name
+    crit? = Enum.any?(Enum.drop(p2.battle.log, length(p.battle.log)), &(&1.kind == "crit"))
+
+    text =
+      cond do
+        dealt <= 0 and name == nil ->
+          "#{foe} né được đòn của #{p.name}."
+
+        name ->
+          "✨ #{p.name} dùng #{name}: #{foe} mất #{dealt} máu#{if crit?, do: " (chí mạng)", else: ""}."
+
+        true ->
+          "#{p.name} đánh #{foe} #{dealt} máu#{if crit?, do: " (chí mạng)", else: ""}."
+      end
+
+    healed = p2.hp - p.hp
+    heal = if healed > 0, do: [%{text: "#{p.name} hồi #{healed} máu.", kind: "good"}], else: []
+    {%{s | p: p2}, dealt, stunned?, heal ++ [%{text: text, kind: "hit"}]}
+  end
+
+  defp drop_stun(nil), do: nil
+
+  defp drop_stun(fx),
+    do: Map.update(fx, :monster, [], &Enum.reject(&1, fn e -> e.id == "stun" end))
+
+  defp sync(s, hp, foe_hp) do
+    p = %{s.p | hp: hp} |> put_in([:battle, :monster, :hp], foe_hp)
+    %{s | p: p}
+  end
+
+  # bị bên kia làm choáng: mất lượt sau, trừ khi vừa thoát choáng (còn kháng)
+  defp stun(s, true, round) when round + 1 >= s.free, do: %{s | stunned: true}
+  defp stun(s, _, _), do: s
 end

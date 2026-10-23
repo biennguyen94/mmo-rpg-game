@@ -2,7 +2,7 @@ defmodule HacLongWeb.PkBetTest do
   @moduledoc "Phase 5 (H7 + H8): PK cược vàng — trận tự đánh thuần; mời cược qua kênh đã tắt (thay bằng đồ sát)."
   use HacLongWeb.ChannelCase
 
-  alias HacLong.{Accounts, Arena, PkBet}
+  alias HacLong.{Accounts, PkBet}
   alias HacLong.Game.{Characters, Commands, PkFight, Rng, Session}
   alias HacLongWeb.{ClientVersion, UserSocket}
 
@@ -36,9 +36,9 @@ defmodule HacLongWeb.PkBetTest do
       strong = %{strong | level: 40, stats: Map.new(strong.stats, fn {k, v} -> {k, v * 5} end)}
 
       Rng.put_sequence([0.5, 0.3, 0.7, 0.9, 0.1])
-      r1 = PkFight.fight(Arena.opponent(strong, 1), Arena.opponent(weak, 2))
+      r1 = PkFight.fight(strong, weak, 1, 2)
       Rng.put_sequence([0.5, 0.3, 0.7, 0.9, 0.1])
-      r2 = PkFight.fight(Arena.opponent(strong, 1), Arena.opponent(weak, 2))
+      r2 = PkFight.fight(strong, weak, 1, 2)
 
       assert r1.winner == :a and r1 == r2
       assert r1.hp.b == 0 and r1.rounds >= 1
@@ -46,17 +46,18 @@ defmodule HacLongWeb.PkBetTest do
 
       # đổi chỗ: người mời yếu vẫn thua
       Rng.put_sequence([0.5])
-      assert PkFight.fight(Arena.opponent(weak, 2), Arena.opponent(strong, 1)).winner == :b
+      assert PkFight.fight(weak, strong, 2, 1).winner == :b
     end
 
-    test "hai bản sao không làm gì được nhau quá số lượt: hòa" do
+    test "ra đòn cùng lúc: hai nhân vật y hệt, cùng dãy số thì hòa (không ai lợi vì đánh trước)" do
       {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Hoa", "cls" => "dk"})
-      a = %{Arena.opponent(p, 1) | maxHp: 10_000, hp: 10_000, dodge: 0.0, crit: 0.0}
+      p = %{p | level: 30, stats: Map.new(p.stats, fn {k, v} -> {k, v * 3} end)}
 
-      # cùng chỉ số, không né, không chí mạng, đòn cố định → máu hai bên giảm như nhau
       Rng.put_sequence([0.5])
-      r = PkFight.fight(a, %{a | name: "Hoa 2"})
-      assert r.winner == :draw and r.rounds == PkBet.rules().rounds
+      r = PkFight.fight(p, %{p | name: "Hoa 2"}, 1, 2)
+      assert r.winner == :draw and r.hp.a == r.hp.b
+      # dùng kỹ năng thật của lớp
+      assert Enum.any?(r.log, &(&1.text =~ "✨ Hoa dùng"))
     end
   end
 
