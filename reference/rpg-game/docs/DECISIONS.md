@@ -965,3 +965,10 @@ máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2
 
 Thú cưng đi cạnh nhân vật làm rối bản đồ: `map.js` không vẽ thú trên bản đồ nữa (bỏ `drawPet` / `petTile`). Thú vẫn đánh cùng
 trong trận, vẫn hiện trong hồ sơ và hình xem trước Nhà. Không đổi luật chơi.
+
+## Phản sát thương khi đánh người (2026-10-23, anh duyệt)
+
+Anh báo đối thủ đấu trường còn 1 máu không chết: Excellent "phản sát thương" (B-16) cố ý chừa 1 máu. Đổi: **đánh người**
+(đối thủ có `pvp`: đấu trường, bản sao) phản đòn hạ được đối thủ, cả hai chiều (đối thủ phản lại mình cũng hạ được mình).
+Đánh quái giữ như cũ (quái không chết vì phản đòn). Đối thủ đấu trường gục vì phản đòn / độc vẫn được Long Vương Hồi Sinh
+(`mirror_revive`), mình gục vì phản đòn cũng vậy. Đồ sát / PK cược không có phản đòn (mỗi bên tính đòn riêng) nên không đổi.

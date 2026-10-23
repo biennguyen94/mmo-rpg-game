@@ -167,6 +167,26 @@ defmodule HacLong.Game.Items15cTest do
     [taken] = Regex.run(~r/đánh bạn (\d+) máu/, hit, capture: :all_but_first)
     back = round(String.to_integer(taken) * a.reflect)
     assert Enum.any?(q.battle.log, &(&1.text =~ "↩ Phản lại #{back} sát thương"))
+
+    # quái còn ít máu: phản đòn không hạ được quái
+    Rng.put_sequence([0.99])
+    {_, q} = Engine.act(put_in(b.battle.monster.hp, 1), "attack")
+    assert q.battle.monster.hp == 1 or q.battle.over
+
+    # đánh người (đối thủ có `pvp`): phản đòn hạ được đối thủ (DECISIONS "Phản sát thương khi đánh người")
+    foe = Map.merge(b.battle.monster, %{pvp: 2, cls: "dk"})
+    Rng.put_sequence([0.99])
+    {_, q} = Engine.act(put_in(b.battle.monster, foe), "attack")
+    # đòn mình để đối thủ còn 1 máu, đòn đối thủ bị phản lại hạ luôn
+    [mine] = for l <- q.battle.log, l.text =~ "Bạn gây", do: l.text
+    [dealt] = Regex.run(~r/gây (\d+) sát thương/, mine, capture: :all_but_first)
+    Rng.put_sequence([0.99])
+
+    {_, q} =
+      Engine.act(put_in(b.battle.monster, %{foe | hp: String.to_integer(dealt) + 1}), "attack")
+
+    assert Enum.any?(q.battle.log, &(&1.text =~ "↩ Phản lại"))
+    assert q.battle.over and q.battle.result == "win"
   end
 
   test "Excellent giảm sát thương bị chặn ở max_dmg_red" do

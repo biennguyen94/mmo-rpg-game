@@ -1587,15 +1587,8 @@ defmodule HacLong.Game.Engine do
   # Đối thủ đấu trường vừa bị hạ: Long Vương Hồi Sinh của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
   # kịp ra đòn cuối (cùng lúc với đòn của mình). Cả hai cùng gục: bên bị đánh lố ít hơn (so với máu tối đa) thắng.
   defp mirror_last(p, d) do
-    mi = p.battle.mirror
-    saved = survive(%{mi | hp: 0}, derived(mi))
-
-    if saved.hp > 0 do
-      p
-      |> put_in([:battle, :monster, :hp], saved.hp)
-      |> put_in([:battle, :mirror], saved)
-      |> log("🐉 #{p.battle.monster.name} được thú cứu, đứng dậy với #{saved.hp} máu.", "bad")
-      |> monster_turn(d)
+    if q = mirror_revive(p) do
+      monster_turn(q, d)
     else
       foe_over = (p.battle[:overkill] || 0) / max(p.battle.monster.maxHp, 1)
       hp0 = p.hp
@@ -1610,6 +1603,20 @@ defmodule HacLong.Game.Engine do
       end
     end
   end
+
+  # đối thủ đấu trường hết máu: Long Vương Hồi Sinh của họ (mỗi trận một lần); không được cứu thì nil
+  defp mirror_revive(%{battle: %{mirror: %{} = mi}} = p) do
+    saved = survive(%{mi | hp: 0}, derived(mi))
+
+    if saved.hp > 0 do
+      p
+      |> put_in([:battle, :monster, :hp], saved.hp)
+      |> put_in([:battle, :mirror], saved)
+      |> log("🐉 #{p.battle.monster.name} được thú cứu, đứng dậy với #{saved.hp} máu.", "bad")
+    end
+  end
+
+  defp mirror_revive(_p), do: nil
 
   defp mirror_strike(p, d) do
     b = p.battle
@@ -1682,11 +1689,12 @@ defmodule HacLong.Game.Engine do
   end
 
   # Excellent "phản sát thương" (B-16): quái mất `pct` phần sát thương vừa gây, không chết vì phản đòn (còn ít nhất 1).
+  # Đánh người (đối thủ có `pvp`): phản đòn hạ được đối thủ (anh duyệt 2026-10-23); `round_end/1` xử thắng.
   defp reflect(p, _dmg, pct) when pct <= 0, do: p
 
   defp reflect(p, dmg, pct) do
     m = p.battle.monster
-    back = min(round(dmg * pct), m.hp - 1)
+    back = min(round(dmg * pct), if(m[:pvp], do: m.hp, else: m.hp - 1))
 
     if back > 0,
       do:
@@ -1737,28 +1745,35 @@ defmodule HacLong.Game.Engine do
         p
       end
 
-    if p.battle.monster.hp <= 0 do
-      win(p)
-    else
-      pdots = p |> effects(:player) |> Enum.filter(&(&1.id in @dots))
-      pdot = pdots |> Enum.map(& &1.power) |> Enum.sum()
+    # quái / đối thủ gục vì độc hoặc phản sát thương (đánh người) trong lượt
+    q = p.battle.monster.hp <= 0 && mirror_revive(p)
 
-      p =
-        if pdot > 0 do
-          p = %{p | hp: max(0, p.hp - pdot)}
-
-          log(
-            p,
-            "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.",
-            "bad"
-          )
-        else
-          p
-        end
-
-      p = if p.hp <= 0, do: survive(p, derived(p)), else: p
-      if p.hp <= 0, do: lose(p), else: tick_round(p)
+    cond do
+      q -> tick_round(q)
+      p.battle.monster.hp <= 0 -> win(p)
+      true -> round_end_player(p)
     end
+  end
+
+  defp round_end_player(p) do
+    pdots = p |> effects(:player) |> Enum.filter(&(&1.id in @dots))
+    pdot = pdots |> Enum.map(& &1.power) |> Enum.sum()
+
+    p =
+      if pdot > 0 do
+        p = %{p | hp: max(0, p.hp - pdot)}
+
+        log(
+          p,
+          "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.",
+          "bad"
+        )
+      else
+        p
+      end
+
+    p = if p.hp <= 0, do: survive(p, derived(p)), else: p
+    if p.hp <= 0, do: lose(p), else: tick_round(p)
   end
 
   # ---------- Đánh người (DECISIONS "Cân bằng đánh người", RULES.pvp) ----------
@@ -1796,16 +1811,17 @@ defmodule HacLong.Game.Engine do
   end
 
   # Đối thủ đấu trường chạy như người: buff thủ, thú che chắn của đối thủ giảm đòn của mình; phản sát thương (Excellent)
-  # của đối thủ đánh lại mình (không làm mình gục)
+  # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Long Vương Hồi Sinh của mình vẫn cứu)
   defp mirror_guard(%{battle: %{mirror: %{} = mi}} = p, dmg) do
     dmg = round(dmg * (1 - power(mi, :player, "guard")) * (1 - pet_guard(mi)))
-    back = min(round(dmg * derived(mi).excReflect), p.hp - 1)
+    back = min(round(dmg * derived(mi).excReflect), p.hp)
 
     p =
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad"),
+          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad")
+          |> then(&if(&1.hp <= 0, do: survive(&1, derived(&1)), else: &1)),
         else: p
 
     {dmg, p}
