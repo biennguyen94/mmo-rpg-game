@@ -59,7 +59,7 @@ defmodule HacLong.Arena do
 
   @doc """
   Kiểm tra được thách đấu `target` không, và dựng quái-bản-sao của đối thủ.
-  Trả về `{:ok, quái}` hoặc `{:error, lý_do}`.
+  Trả về `{:ok, quái, nhân vật đối thủ}` hoặc `{:error, lý_do}`.
   """
   def challenge(uid, target) do
     s = stats(uid)
@@ -69,7 +69,7 @@ defmodule HacLong.Arena do
       target == uid -> {:error, "Không tự thách đấu mình được."}
       !opp -> {:error, "Không tìm thấy đối thủ."}
       s.today >= @per_day -> {:error, "Hôm nay đã đấu đủ #{@per_day} trận. Mai quay lại nhé."}
-      true -> {:ok, opponent(opp, target)}
+      true -> {:ok, opponent(opp, target), opp}
     end
   end
 
@@ -101,7 +101,13 @@ defmodule HacLong.Arena do
       xp: 0,
       gold: 0,
       pvp: uid,
-      look: Engine.look(p)
+      look: Engine.look(p),
+      # DECISIONS "Cân bằng đánh người": lớp (hệ số nhận sát thương theo lớp) và kỹ năng thật của người đó
+      cls: p.cls,
+      skills: Engine.copy_skills(p),
+      mp: d.maxMp,
+      maxMp: d.maxMp,
+      mp_regen: Engine.mp_regen(p)
     }
   end
 

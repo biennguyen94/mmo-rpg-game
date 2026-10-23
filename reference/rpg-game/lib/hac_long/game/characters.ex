@@ -36,6 +36,8 @@ defmodule HacLong.Game.Characters do
         name_key: Names.key(player.name)
       })
       |> Map.take(Character.fields())
+      # đối thủ đấu trường chạy như người (`battle.mirror`) chỉ giữ trong bộ nhớ
+      |> Map.update(:battle, nil, &(&1 && Map.delete(&1, :mirror)))
 
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
@@ -358,7 +360,9 @@ defmodule HacLong.Game.Characters do
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
-                    ds bc kal gear_ids taken ignore_def crit_mult element rich)a,
+                    ds bc kal gear_ids taken ignore_def crit_mult element rich
+                    cls skills mp maxMp mp_regen mcds stun_free pstun_free hits def_mult cd overkill
+                    last_hit pet_revived tidal_at)a,
                  &{Atom.to_string(&1), &1}
                )
 

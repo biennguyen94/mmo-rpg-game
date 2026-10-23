@@ -1134,6 +1134,10 @@ defmodule HacLongWeb.GameChannel do
 
   defp present(nil), do: nil
 
+  # không gửi đối thủ đấu trường chạy như người (đồ đạc của người khác) xuống client
+  defp present(%{battle: %{mirror: _} = b} = player),
+    do: present(%{player | battle: Map.delete(b, :mirror)})
+
   defp present(player) do
     # có việc mới hoặc việc đã xong chờ trả: hiện dấu "!" trên đầu Trưởng Làng
     ready =

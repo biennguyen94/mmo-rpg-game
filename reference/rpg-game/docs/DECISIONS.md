@@ -938,4 +938,16 @@ máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2
   thật (`auto_strike`), **ra đòn cùng lúc** mỗi lượt; cả hai cùng gục thì bên bị đánh lố ít hơn thắng.
 - Kết quả giả lập (PK cược, 200 trận mỗi cặp, nhân vật tối đa): cùng lớp ~50/50 (hết lợi thế đánh trước), 7–10 lượt. Lớp chênh
   nhau rõ: Kiếm Sĩ thắng Đấu Sĩ 197/200, Tiên Nữ thắng Phù Thủy 144/200 → cân bằng lớp là việc riêng, chưa làm.
+- **Đấu trường: đối thủ chạy như người** (anh duyệt): `Engine.mirror/2` dựng nhân vật bị thách đấu trong trận `live` với bản
+  sao người thách đấu, giữ ở `battle.mirror` (chỉ trong bộ nhớ: không lưu database — `Characters.save!` bỏ đi —, không gửi client —
+  `present/1` bỏ đi). Lượt đối thủ (`mirror_turn`): kỹ năng mạnh nhất (`auto_strike`), thú cưng, buff, hồi máu, gây choáng mình
+  (kháng 2 lượt sau khi thoát). Cho công bằng như ra đòn cùng lúc: choáng gây trong lượt có hiệu lực từ lượt sau; buff thủ / thú
+  che chắn / phản sát thương (Excellent) của đối thủ áp lên đòn của mình; đối thủ bị hạ vẫn được Long Vương Hồi Sinh và kịp ra đòn
+  cuối, cả hai cùng gục thì bên bị đánh lố ít hơn thắng. Mất `mirror` (server khởi động lại giữa trận) thì đối thủ dùng kỹ năng
+  của bản sao (`copy_skill`, theo `Arena.opponent.skills`). Giả lập 200 trận, hai nhân vật giống nhau: người thách đấu thắng
+  ~55–60% (trước đây 100%).
+- **Cân bằng lớp** (anh duyệt): `RULES.pvp.class_taken` nhân thêm vào sát thương lên người theo lớp người bị đánh: Kiếm Sĩ 1,16,
+  Tiên Nữ 1,08, Phù Thủy 0,9, Đấu Sĩ 0,66 (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
+  44–56% (trước: Kiếm Sĩ thắng Đấu Sĩ 197/200).
+- Sửa kèm: trận lưu khóa `tidal_at` / `pet_revived` (Long Vương) trước đây không nạp lại được sau khi server khởi động lại.
 

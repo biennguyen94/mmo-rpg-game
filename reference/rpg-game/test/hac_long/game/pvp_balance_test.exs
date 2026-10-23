@@ -39,7 +39,8 @@ defmodule HacLong.Game.PvpBalanceTest do
       monster = hit(a, foe, nil, act, skill)
       Rng.put_sequence([0.99, 0.5])
       person = hit(a, foe, 2, act, skill)
-      assert_in_delta person / monster, Engine.pvp_rules().dmg_mult, 0.02
+      # đối thủ Kiếm Sĩ: dmg_mult × class_taken.dk
+      assert_in_delta person / monster, Engine.pvp_taken("dk"), 0.02
     end
   end
 
@@ -58,5 +59,31 @@ defmodule HacLong.Game.PvpBalanceTest do
 
     assert {"skill", _} = Engine.auto_strike(%{p | mp: 9_999} |> put_in([:battle, :cds], []))
     assert {"attack", nil} = Engine.auto_strike(%{p | mp: 0})
+  end
+
+  test "hệ số theo lớp: lớp ít máu nhận ít hơn" do
+    assert Engine.pvp_taken("mg") < Engine.pvp_taken("dw")
+    assert Engine.pvp_taken("dw") < Engine.pvp_taken("dk")
+    assert Engine.pvp_taken(nil) == Engine.pvp_rules().dmg_mult
+  end
+
+  test "đấu trường: đối thủ máy đánh bằng kỹ năng thật, có thể gây choáng, trận kết thúc bình thường" do
+    a = hero("Khach", "dk")
+    b = hero("Chu", "dk")
+    {_, p} = Engine.start_with_monster(%{a | pet: nil}, 1, Arena.opponent(b, 2))
+    p = put_in(p.battle[:mirror], Engine.mirror(%{b | pet: nil}, Arena.opponent(a, 1)))
+
+    p =
+      Enum.reduce_while(1..60, p, fn _, p ->
+        if p.battle.over do
+          {:halt, p}
+        else
+          {act, k} = Engine.auto_strike(p)
+          {:cont, elem(Engine.act(p, act, k), 1)}
+        end
+      end)
+
+    assert p.battle.over and p.battle.result in ~w(win lose)
+    assert Enum.any?(p.battle.log, &(&1.text =~ "✨ Chu dùng"))
   end
 end

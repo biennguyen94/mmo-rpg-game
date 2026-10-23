@@ -241,7 +241,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 11. Đấu trường và Đồ sát
 
-- **Đấu trường** (tab Khác): đánh với **bản sao chỉ số** của người khác (họ không cần online). Điểm Elo lên / xuống; 15 trận mỗi
+- **Đấu trường** (tab Khác): đánh với người khác do máy điều khiển (họ không cần online): đối thủ dùng kỹ năng, thú cưng,
+  buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
   ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Nhà); bỏ chạy thì không mất gì.
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
   luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (hết MP / đang hồi chiêu thì đánh thường). Hết máu hoặc **bỏ chạy** là gục ngã:
@@ -254,6 +255,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến, PK cược): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
   chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
   lệ nên đồ tốt vẫn hơn, chỉ là trận dài hơn (khoảng 7–10 lượt giữa hai người ngang nhau). Vừa thoát choáng thì miễn choáng 2 lượt.
+  Mỗi lớp nhận sát thương khác nhau một chút để các lớp ngang nhau khi đánh người (Đấu Sĩ, Phù Thủy ít máu nên nhận ít hơn).
 
 ![Đồ sát](screenshots/e2e-pk.png)
 

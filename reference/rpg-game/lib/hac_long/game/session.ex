@@ -784,8 +784,15 @@ defmodule HacLong.Game.Session do
   defp run(s, p, %{"act" => "pvp_challenge"} = cmd) do
     with nil <- p.battle && {:error, "Đang trong trận đấu."},
          true <- p.hp > 0 || {:error, "Bạn cần hồi máu trước."},
-         {:ok, m} <- Arena.challenge(s.user_id, cmd["uid"]) do
+         {:ok, m, foe} <- Arena.challenge(s.user_id, cmd["uid"]) do
       {r, p2} = Engine.start_with_monster(p, 1, m)
+
+      # đối thủ đánh như người thật (kỹ năng, thú cưng, buff), DECISIONS "Cân bằng đánh người"
+      p2 =
+        if p2.battle,
+          do: put_in(p2.battle[:mirror], Engine.mirror(foe, Arena.opponent(p, s.user_id))),
+          else: p2
+
       enc = %{pvp: m.pvp, hp: p.hp, gold: p.gold, deaths: p.deaths}
       {Map.put(r, :msg, "Thách đấu #{m.name}!"), put_in(p2.battle[:encounter], enc)}
     else

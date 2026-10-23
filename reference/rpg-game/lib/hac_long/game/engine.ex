@@ -905,6 +905,12 @@ defmodule HacLong.Game.Engine do
         p
         |> next_turn()
         |> drop_effect(:player, "stun")
+        |> then(
+          &if(b.monster[:pvp],
+            do: put_in(&1, [:battle, :pstun_free], &1.battle.turn + 1 + @pvp.stun_immune),
+            else: &1
+          )
+        )
         |> log("💫 Bạn bị choáng, mất một lượt.", "bad")
         |> monster_turn(derived(p))
 
@@ -1050,10 +1056,12 @@ defmodule HacLong.Game.Engine do
                             do: if(pvp, do: pvp_crit_mult(d.critMult), else: d.critMult),
                             else: 1
                           ),
-                        (m[:taken] || 1) * if(pvp, do: @pvp.dmg_mult, else: 1)
+                        (m[:taken] || 1) * if(pvp, do: pvp_taken(m[:cls]), else: 1)
                       )
               )
 
+            {dmg, p} = mirror_guard(p, dmg)
+            p = put_in(p, [:battle, :overkill], p.battle.monster.hp - dmg)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
 
@@ -1080,6 +1088,7 @@ defmodule HacLong.Game.Engine do
           # đồ sát / PK cược: thắng thua do HacLong.Slay / PkFight quyết (máu hai bên giữ ở đó);
           # vẫn trừ hồi chiêu và hiệu ứng mỗi lượt của mình
           p.battle[:live] -> tick_round(p)
+          p.battle.monster.hp <= 0 and p.battle[:mirror] != nil -> mirror_last(p, d)
           p.battle.monster.hp <= 0 -> win(p)
           true -> monster_turn(p, d)
         end
@@ -1098,7 +1107,7 @@ defmodule HacLong.Game.Engine do
     # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
     bite =
       if bite > 0 and m[:pvp],
-        do: max(1, round(bite * (m[:taken] || 1) * @pvp.dmg_mult)),
+        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls]))),
         else: bite
 
     if bite > 0 do
@@ -1424,16 +1433,36 @@ defmodule HacLong.Game.Engine do
   defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
 
   defp monster_turn(p, d) do
+    p = copy_tick(p)
     b = p.battle
     m = b.monster
 
-    if effect(p, :monster, "stun") do
+    # đấu trường (đối thủ chạy như người): choáng vừa gây trong lượt này có hiệu lực từ lượt sau, như hai bên ra đòn
+    # cùng lúc (người ra đòn trước không được thêm lợi thế)
+    st = effect(p, :monster, "stun")
+    fresh? = st && b[:mirror] && st.power == b.turn
+
+    if st && !fresh? do
       p
       |> drop_effect(:monster, "stun")
       |> stun_cooled()
       |> log("💫 #{m.name} bị choáng, không đánh được.", "good")
       |> round_end()
     else
+      cond do
+        b[:mirror] -> mirror_turn(p, d)
+        k = m[:skills] && copy_pick(b) -> copy_skill(p, d, k)
+        true -> monster_strike(p, d)
+      end
+    end
+  end
+
+  # đòn thường / chiêu đặc biệt của quái (và bản sao người khi chưa có kỹ năng dùng được)
+  defp monster_strike(p, d) do
+    b = p.battle
+    m = b.monster
+
+    (
       special = m.special != nil and rem(b.turn, m.special.every) == 0
       m_atk = if special, do: round(m.atk * m.special.mult), else: m.atk
       m_atk = round(m_atk * (1 - power(p, :monster, "weaken")))
@@ -1455,7 +1484,7 @@ defmodule HacLong.Game.Engine do
               round(d.def * (1 - (m[:ignore_def] || 0))),
               if(mc, do: if(pvp, do: pvp_crit_mult(cm), else: cm), else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-                (1 - pet_guard(p)) * if(pvp, do: @pvp.dmg_mult, else: 1)
+                (1 - pet_guard(p)) * if(pvp, do: pvp_taken(p.cls), else: 1)
             )
 
           {dmg, p} = absorb_shield(p, dmg)
@@ -1485,6 +1514,170 @@ defmodule HacLong.Game.Engine do
         end
 
       if p.hp <= 0, do: lose(p), else: round_end(p)
+    )
+  end
+
+  # ---------- Bản sao người dùng kỹ năng thật (đấu trường; DECISIONS "Cân bằng đánh người") ----------
+  # đầu lượt của bản sao: trừ hồi chiêu, hồi MP
+  defp copy_tick(%{battle: %{monster: %{skills: [_ | _]} = m} = b} = p) do
+    cds = for %{turns: n} = c <- Map.get(b, :mcds, []), n > 1, do: %{c | turns: n - 1}
+    m = %{m | mp: min(m.maxMp, m.mp + m.mp_regen)}
+    %{p | battle: %{b | monster: m} |> Map.put(:mcds, cds)}
+  end
+
+  defp copy_tick(p), do: p
+
+  # kỹ năng mạnh nhất đã hết hồi chiêu và đủ MP
+  defp copy_pick(b) do
+    m = b.monster
+    busy = for c <- Map.get(b, :mcds, []), do: c.id
+
+    m.skills
+    |> Enum.filter(&(&1.id not in busy and m.mp >= &1.mp))
+    |> Enum.max_by(& &1.mult, fn -> nil end)
+  end
+
+  defp copy_skill(p, d, k) do
+    m = p.battle.monster
+    atk = round(m.atk * (1 - power(p, :monster, "weaken")))
+    dfn = round(d.def * (1 - (m[:ignore_def] || 0)) * (k.def_mult || 1))
+    crit = k.crit or chance(pvp_crit(m.crit))
+    cm = if crit, do: pvp_crit_mult(m[:crit_mult] || @combat.monster_crit_mult), else: 1
+
+    taken =
+      (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
+        (1 - pet_guard(p)) * pvp_taken(p.cls)
+
+    dmg = Enum.sum(for _ <- 1..k.hits, do: damage(atk, dfn, k.mult / k.hits * cm, taken))
+    {dmg, p} = absorb_shield(p, dmg)
+    p = %{p | hp: max(0, p.hp - dmg)} |> survive(d)
+
+    p =
+      p
+      |> put_in([:battle, :monster, :mp], m.mp - k.mp)
+      |> put_in([:battle, :mcds], [%{id: k.id, turns: k.cd + 1} | Map.get(p.battle, :mcds, [])])
+      |> log(
+        "✨ #{m.name} dùng #{k.name}! Bạn mất #{dmg} máu#{if crit, do: " (chí mạng)", else: ""}.",
+        "bad"
+      )
+      |> reflect(dmg, d.excReflect)
+
+    if p.hp <= 0, do: lose(p), else: round_end(p)
+  end
+
+  # ---------- Đối thủ đấu trường chạy như người thật (`battle.mirror`) ----------
+  # `mirror`: nhân vật bên bị thách đấu trong trận `live` với bản sao của người thách đấu; mỗi lượt của đối thủ máy
+  # chọn kỹ năng mạnh nhất (`auto_strike/1`) và đánh bằng đúng bộ máy trận (thú cưng, buff, hồi máu, gây choáng).
+  # Chỉ giữ trong bộ nhớ (không lưu, không gửi client); mất thì đối thủ dùng `copy_skill/3`.
+  @pad 10_000_000
+
+  @doc "Dựng `mirror` cho trận đấu trường: `foe` là nhân vật bị thách đấu, `copy` là bản sao người thách đấu."
+  def mirror(foe, copy) do
+    d = derived(foe)
+    foe = %{foe | battle: nil, hp: d.maxHp} |> Map.put(:mp, d.maxMp)
+    {_, foe} = start_with_monster(foe, 1, copy)
+    put_in(foe, [:battle, :live], true)
+  end
+
+  defp mirror_turn(p, d) do
+    p = mirror_strike(p, d)
+    if p.hp <= 0, do: lose(p), else: round_end(p)
+  end
+
+  # Đối thủ đấu trường vừa bị hạ: Long Vương Hồi Sinh của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
+  # kịp ra đòn cuối (cùng lúc với đòn của mình). Cả hai cùng gục: bên bị đánh lố ít hơn (so với máu tối đa) thắng.
+  defp mirror_last(p, d) do
+    mi = p.battle.mirror
+    saved = survive(%{mi | hp: 0}, derived(mi))
+
+    if saved.hp > 0 do
+      p
+      |> put_in([:battle, :monster, :hp], saved.hp)
+      |> put_in([:battle, :mirror], saved)
+      |> log("🐉 #{p.battle.monster.name} được thú cứu, đứng dậy với #{saved.hp} máu.", "bad")
+      |> monster_turn(d)
+    else
+      foe_over = (p.battle[:overkill] || 0) / max(p.battle.monster.maxHp, 1)
+      hp0 = p.hp
+      p = mirror_strike(%{p | battle: %{p.battle | monster: %{p.battle.monster | hp: 1}}}, d)
+      p = put_in(p, [:battle, :monster, :hp], 0)
+      me_over = (hp0 - (p.battle[:last_hit] || 0)) / d.maxHp
+
+      cond do
+        p.hp > 0 -> win(p)
+        me_over >= foe_over -> win(%{p | hp: 1})
+        true -> lose(p)
+      end
+    end
+  end
+
+  defp mirror_strike(p, d) do
+    b = p.battle
+    m = b.monster
+    mi = %{b.mirror | hp: m.hp} |> put_in([:battle, :monster, :hp], p.hp + @pad)
+    log0 = length(mi.battle.log)
+    {act, sk} = auto_strike(mi)
+    {_, mi} = act(mi, act, sk)
+    dealt = p.hp + @pad - mi.battle.monster.hp
+    stun? = effect(mi, :monster, "stun")
+    mi = drop_effect(mi, :monster, "stun")
+    crit = Enum.any?(Enum.drop(mi.battle.log, log0), &(&1.kind == "crit"))
+    healed = mi.hp - m.hp
+    p = put_in(p, [:battle, :monster, :hp], min(m.maxHp, mi.hp))
+
+    # buff phòng thủ / khiên / thú che chắn của mình trong trận vẫn tính
+    dealt = round(dealt * (1 - power(p, :player, "guard")) * (1 - pet_guard(p)))
+    {dealt, p} = if dealt > 0, do: absorb_shield(p, dealt), else: {0, p}
+    p = %{p | hp: max(0, p.hp - dealt)} |> survive(d) |> put_in([:battle, :last_hit], dealt)
+    name = sk && Enum.find(skills(mi), &(&1.id == sk)).name
+    c = if crit, do: " (chí mạng)", else: ""
+
+    p =
+      p
+      |> then(&if(healed > 0, do: log(&1, "#{m.name} hồi #{healed} máu.", "info"), else: &1))
+      |> log(
+        cond do
+          dealt <= 0 and name == nil -> "Bạn né được đòn của #{m.name}."
+          name -> "✨ #{m.name} dùng #{name}! Bạn mất #{dealt} máu#{c}."
+          true -> "#{m.name} đánh bạn #{dealt} máu#{c}."
+        end,
+        if(dealt > 0, do: "bad", else: "info")
+      )
+      |> reflect(dealt, d.excReflect)
+      |> put_in([:battle, :mirror], mi)
+
+    p =
+      cond do
+        !stun? or p.hp <= 0 ->
+          p
+
+        p.battle.turn < (p.battle[:pstun_free] || 0) ->
+          log(p, "Bạn vừa thoát choáng, kháng được.", "info")
+
+        true ->
+          p |> put_effect(:player, "stun", 1, 0) |> log("💫 Bạn bị choáng!", "bad")
+      end
+
+    p
+  end
+
+  @doc "Kỹ năng đang mang của `p` cho bản sao người (`HacLong.Arena.opponent/2`): hệ số, số đòn, hồi chiêu, MP."
+  def copy_skills(p) do
+    d = derived(p)
+
+    for k <- skills(p) do
+      e = if k[:floor], do: k, else: @effects[String.to_existing_atom(k[:effect] || k.id)] || %{}
+
+      %{
+        id: k.id,
+        name: k.name,
+        mult: (k[:mult] || e[:mult] || 1) * (1 + d.skillDmg),
+        hits: k[:hits] || 1,
+        def_mult: k[:def_mult] || e[:def_mult],
+        crit: k[:crit] == true or e[:always_crit] == true,
+        cd: k.cooldown,
+        mp: skill_mp(p, k)
+      }
     end
   end
 
@@ -1533,7 +1726,7 @@ defmodule HacLong.Game.Engine do
       |> Enum.map(& &1.power)
       |> Enum.sum()
 
-    mdot = if m[:pvp] && mdot > 0, do: max(1, round(mdot * @pvp.dmg_mult)), else: mdot
+    mdot = if m[:pvp] && mdot > 0, do: max(1, round(mdot * pvp_taken(m[:cls]))), else: mdot
 
     p =
       if mdot > 0 do
@@ -1577,14 +1770,48 @@ defmodule HacLong.Game.Engine do
 
   def pvp_rules, do: @pvp
 
+  @doc "Hệ số sát thương lên người lớp `cls` khi đánh người: `dmg_mult` × `class_taken[lớp]` (cân bằng lớp)."
+  def pvp_taken(cls) do
+    k =
+      cls && Enum.find_value(@pvp[:class_taken] || %{}, fn {c, v} -> to_string(c) == cls && v end)
+
+    @pvp.dmg_mult * (k || 1)
+  end
+
   # Gây choáng cho quái / đối thủ; đối thủ là người vừa hết choáng thì kháng `stun_immune` lượt.
   defp stun_monster(p, text) do
     b = p.battle
 
-    if b.monster[:pvp] && b.turn < (b[:stun_free] || 0),
-      do: log(p, "#{b.monster.name} vừa thoát choáng, kháng được.", "info"),
-      else: p |> put_effect(:monster, "stun", 1, 0) |> log(text, "good")
+    cond do
+      # đang chờ mất lượt (đấu trường: choáng có hiệu lực từ lượt sau) thì giữ choáng cũ
+      b.monster[:pvp] && effect(p, :monster, "stun") ->
+        p
+
+      b.monster[:pvp] && b.turn < (b[:stun_free] || 0) ->
+        log(p, "#{b.monster.name} vừa thoát choáng, kháng được.", "info")
+
+      true ->
+        p |> put_effect(:monster, "stun", 1, b.turn) |> log(text, "good")
+    end
   end
+
+  # Đối thủ đấu trường chạy như người: buff thủ, thú che chắn của đối thủ giảm đòn của mình; phản sát thương (Excellent)
+  # của đối thủ đánh lại mình (không làm mình gục)
+  defp mirror_guard(%{battle: %{mirror: %{} = mi}} = p, dmg) do
+    dmg = round(dmg * (1 - power(mi, :player, "guard")) * (1 - pet_guard(mi)))
+    back = min(round(dmg * derived(mi).excReflect), p.hp - 1)
+
+    p =
+      if back > 0,
+        do:
+          %{p | hp: p.hp - back}
+          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad"),
+        else: p
+
+    {dmg, p}
+  end
+
+  defp mirror_guard(p, dmg), do: {dmg, p}
 
   defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,
     do: put_in(p, [:battle, :stun_free], p.battle.turn + 1 + @pvp.stun_immune)
