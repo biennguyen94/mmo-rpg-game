@@ -263,6 +263,7 @@ mode_rows = "".join([
     f"<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td colspan=2>tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])} (thu nhỏ theo tỉ lệ, không chặn trần)</td></tr>",
     f"<tr><td><b>Choáng</b></td><td>quái mất lượt</td><td colspan=2>mất lượt; vừa thoát choáng thì kháng {PV['stun_immune']} lượt</td></tr>",
     "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ</td><td>như Đồ sát</td></tr>",
+    "<tr><td><b>Phản sát thương (Excellent)</b></td><td>quái mất phần phản lại nhưng không chết vì phản đòn (còn ít nhất 1 máu)</td><td>Đấu trường: phản đòn hạ được đối thủ, cả hai chiều (Long Vương Hồi Sinh vẫn cứu)</td><td>không có (mỗi bên tính đòn riêng)</td></tr>",
     f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái; đối thủ Đấu trường (máy) dùng kỹ năng mạnh nhất, thú, buff, hồi máu như người</td><td>mỗi bên tự dùng kỹ năng mạnh nhất còn dùng được</td></tr>",
     f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
 ])
