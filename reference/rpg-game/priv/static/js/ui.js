@@ -2428,6 +2428,9 @@
       if (slot === 'pet') return petSlot();
       const id = SLOT_OPEN.includes(slot) ? P.equip[slot] : null, it = id ? itemOf(id) : null;
       const locked = !SLOT_OPEN.includes(slot);
+      // ô khiên khi cầm vũ khí 2 tay: khóa (server cũng chặn)
+      const w = P.equip.weapon && itemOf(P.equip.weapon), two = slot === 'shield' && !it && w && w.hands === 2;
+      if (two) return `<span class="slot empty locked" title="Vũ khí 2 tay: không cầm khiên"><span class="lockb">🔒</span><span class="lbl">2 tay</span></span>`;
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.kind ? ` b-${it.kind}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
         ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
@@ -2487,6 +2490,8 @@
     if (it.mu_name) h.push(`<div class="small muted" data-notr>${esc(it.mu_name)}</div>`);
     const desc = ['material', 'food'].includes(it.slot) ? esc(it.desc || '') : itemStat(it, id, up, '<br>');
     if (desc) h.push(`<div class="mu-main">${desc}</div>`);
+    // vũ khí 1 tay / 2 tay (Item.txt; 2 tay không cầm khiên)
+    if (it.slot === 'weapon' && it.hands) h.push(`<div class="small muted">${it.hands === 2 ? 'Vũ khí 2 tay (không cầm khiên)' : 'Vũ khí 1 tay'}</div>`);
     if (wearable) {
       if (it.level) h.push(`<div class="mu-req ${it.level > P.level ? 'bad' : ''}">Cấp yêu cầu: ${it.level}${it.level > P.level ? ` (thiếu ${it.level - P.level})` : ''}</div>`);
       for (const [k, v] of Object.entries(it.req || {})) {

@@ -100,7 +100,13 @@
         98,
         120,
         145
-      ]
+      ],
+      "two_hand": {
+        "window": 12,
+        "scale": 1.15,
+        "min": 1.0,
+        "max": null
+      }
     },
     "prices": {
       "weapon": [
@@ -295,14 +301,14 @@
           "doll": "hand1/staff"
         },
         {
-          "ref": "5/2",
-          "name": "Gậy Rắn",
+          "ref": "5/14",
+          "name": "Gậy Bí Ẩn",
           "mode": "staff",
           "doll": "hand1/staff"
         },
         {
-          "ref": "5/3",
-          "name": "Gậy Sấm Sét",
+          "ref": "5/15",
+          "name": "Gậy Gió Dữ",
           "mode": "staff",
           "doll": "hand1/staff"
         },
@@ -325,8 +331,8 @@
           "doll": "hand1/staff"
         },
         {
-          "ref": "5/7",
-          "name": "Gậy Sấm Hỗn Nguyên",
+          "ref": "5/17",
+          "name": "Gậy Cổ Đại",
           "mode": "staff",
           "doll": "hand1/staff"
         },
@@ -692,8 +698,8 @@
         [],
         [
           {
-            "ref": "5/14",
-            "name": "Gậy Bí Ẩn",
+            "ref": "5/2",
+            "name": "Gậy Rắn",
             "doll": "hand1/staff"
           },
           {
@@ -704,8 +710,8 @@
         ],
         [
           {
-            "ref": "5/15",
-            "name": "Gậy Gió Dữ",
+            "ref": "5/3",
+            "name": "Gậy Sấm Sét",
             "doll": "hand1/staff"
           }
         ],
@@ -742,8 +748,8 @@
         ],
         [
           {
-            "ref": "5/17",
-            "name": "Gậy Cổ Đại",
+            "ref": "5/7",
+            "name": "Gậy Sấm Hỗn Nguyên",
             "doll": "hand1/staff"
           },
           {

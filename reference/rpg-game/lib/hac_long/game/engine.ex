@@ -3146,6 +3146,9 @@ defmodule HacLong.Game.Engine do
       (why = can_wear(p, it)) != :ok ->
         {err(elem(why, 1)), p}
 
+      it.slot == "shield" and two_handed?(Gear.item(p, p.equip.weapon)) ->
+        {err("#{Gear.item(p, p.equip.weapon).name} là vũ khí 2 tay: không cầm khiên được."), p}
+
       true ->
         slot = equip_slot(p, it)
         hp_ratio = p.hp / derived(p).maxHp
@@ -3155,8 +3158,31 @@ defmodule HacLong.Game.Engine do
         p = if gear?, do: p, else: take_item(p, id)
         p = if old && not Gear.instance?(old), do: add_item(p, old), else: p
         p = %{p | equip: Map.put(p.equip, slot, id)}
-        {ok("Đã trang bị #{it.name}."), %{p | hp: round(hp_ratio * derived(p).maxHp)}}
+        # vũ khí 2 tay (B-41): khiên đang cầm về túi
+        off = slot == :weapon and two_handed?(it) and p.equip.shield
+        p = if off, do: free_shield(p), else: p
+        note = if off, do: " Khiên về túi (vũ khí 2 tay).", else: ""
+        {ok("Đã trang bị #{it.name}.#{note}"), %{p | hp: round(hp_ratio * derived(p).maxHp)}}
     end
+  end
+
+  @doc "Vũ khí `it` cầm 2 tay (`hands: 2`: cung, nỏ, món rộng 2 ô trong Item.txt; B-41): không cầm khiên cùng."
+  def two_handed?(it), do: is_map(it) and it[:hands] == 2
+
+  defp free_shield(p) do
+    old = p.equip.shield
+    p = if Gear.instance?(old), do: p, else: add_item(p, old)
+    %{p | equip: Map.put(p.equip, :shield, nil)}
+  end
+
+  @doc """
+  Nhân vật có trước luật 2 tay (B-41) đang cầm vũ khí 2 tay cùng khiên: khiên về túi (khiên là món riêng trong túi
+  trang bị nên không mất; túi đầy vẫn giữ được, như khi tháo đồ). Chạy lúc nạp nhân vật.
+  """
+  def two_hand_fix(p) do
+    if p.equip[:shield] && two_handed?(Gear.item(p, p.equip[:weapon])),
+      do: free_shield(p),
+      else: p
   end
 
   def unequip(p, slot) when slot in @removable do

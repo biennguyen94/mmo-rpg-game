@@ -17,79 +17,79 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 2 | 3 | Dao Găm Kris | Kris | `0/0` | dk, mg | 7 (4~9) | agi 14 str 14 | 60 |
 | 2 | 3 | Rìu Tay | Hand Axe | `1/1` | dk, mg | 7 (4~9) | str 25 | 60 |
 | 2 | 3 | Chùy Tròn | Mace | `2/0` | dk, mg | 7 (4~9) | str 35 | 60 |
-| 2 | 3 | Gậy Thiên Thần | Angelic Staff | `5/1` | dw | 7 (6~8) | str 18 | 60 |
+| 2 | 3 | Gậy Thiên Thần | Angelic Staff | `5/1` | dw | 8 (7~9) | str 18 | 60 |
 | 2 | 3 | Nỏ | Crossbow | `4/8` | elf | 7 (5~8) | agi 31 str 7 | 60 |
 | 3 | 7 | Kiếm Mảnh | Rapier | `0/2` | dk, mg | 12 (9~15) | agi 14 str 18 | 220 |
 | 3 | 7 | Kiếm Sát Thủ | Sword of Assassain | `0/4` | dk, mg | 12 (9~15) | agi 14 str 21 | 220 |
 | 3 | 7 | Rìu Đôi | Double Axe | `1/2` | dk, mg | 12 (9~15) | str 31 | 220 |
 | 3 | 7 | Chùy Sao Mai | Morning Star | `2/1` | dk, mg | 12 (9~15) | str 35 | 220 |
-| 3 | 7 | Thương Rồng | Dragon Lance | `3/2` | dk, mg | 12 (9~15) | agi 18 str 25 | 220 |
-| 3 | 7 | Kích Đôi | Double Poleaxe | `3/5` | dk, mg | 12 (9~15) | agi 18 str 25 | 220 |
+| 3 | 7 | Thương Rồng | Dragon Lance | `3/2` | dk, mg | 21 (15~26) | agi 18 str 25 | 220 |
+| 3 | 7 | Kích Đôi | Double Poleaxe | `3/5` | dk, mg | 22 (16~27) | agi 18 str 25 | 220 |
 | 3 | 7 | Gậy Bí Ẩn | Mistery Staff | `5/14` | dw | 13 (13~13) | agi 5 str 12 | 220 |
 | 3 | 7 | Gậy Rắn | Serpent Staff | `5/2` | dw | 13 (13~13) | str 18 | 220 |
 | 3 | 7 | Rìu Tiên | Elven Axe | `1/4` | dw, elf, mg | 13 (13~13) | agi 25 str 18 | 220 |
 | 3 | 7 | Cung Săn | Bow | `4/1` | elf | 11 (9~13) | agi 31 str 11 | 220 |
-| 3 | 7 | Nỏ Vàng | Golden Crossbow | `4/9` | elf | 11 (9~13) | agi 31 str 11 | 220 |
+| 3 | 7 | Nỏ Vàng | Golden Crossbow | `4/9` | elf | 13 (10~15) | agi 31 str 11 | 220 |
 | 4 | 12 | Đao Katana | Katana | `0/3` | dk, mg | 21 (16~26) | agi 14 str 28 | 650 |
 | 4 | 12 | Kiếm Gladius | Gladius | `0/6` | dk, mg | 21 (16~26) | str 39 | 650 |
 | 4 | 12 | Rìu Tomahawk | Tomahawk | `1/3` | dk, mg | 21 (16~26) | str 35 | 650 |
 | 4 | 12 | Chùy Xích | Flail | `2/2` | dk, mg | 21 (16~26) | agi 18 str 28 | 650 |
-| 4 | 12 | Kích Halberd | Halberd | `3/6` | dk, mg | 21 (16~26) | agi 18 str 25 | 650 |
+| 4 | 12 | Kích Halberd | Halberd | `3/6` | dk, mg | 33 (25~41) | agi 18 str 25 | 650 |
 | 4 | 12 | Gậy Gió Dữ | Violent Wind Staff | `5/15` | dw | 21 (20~22) | agi 6 str 12 | 650 |
-| 4 | 12 | Gậy Sấm Sét | Thunder Staff | `5/3` | dw | 21 (20~22) | agi 4 str 14 | 650 |
-| 4 | 12 | Nỏ Arquebus | Arquebus | `4/10` | elf | 21 (17~24) | agi 31 str 11 | 650 |
-| 4 | 12 | Cung Tiên | Elven Bow | `4/2` | elf | 21 (17~24) | agi 31 str 11 | 650 |
+| 4 | 12 | Gậy Sấm Sét | Thunder Staff | `5/3` | dw | 24 (23~25) | agi 4 str 14 | 650 |
+| 4 | 12 | Nỏ Arquebus | Arquebus | `4/10` | elf | 27 (22~31) | agi 31 str 11 | 650 |
+| 4 | 12 | Cung Tiên | Elven Bow | `4/2` | elf | 27 (22~30) | agi 31 str 11 | 650 |
 | 5 | 17 | Đao Cong | Falchion | `0/7` | dk, mg | 29 (24~34) | str 42 | 1600 |
 | 5 | 17 | Kiếm Xà | Serpent Sword | `0/8` | dk, mg | 29 (24~34) | str 46 | 1600 |
-| 5 | 17 | Kiếm Kỳ Nhông Lửa | Sword of Salamander | `0/9` | dk, mg | 29 (24~34) | str 36 | 1600 |
-| 5 | 17 | Rìu Chiến Binh | Battle Axe | `1/5` | dk, mg | 29 (24~34) | str 42 | 1600 |
-| 5 | 17 | Rìu Nikkea | Nikkea Axe | `1/6` | dk, mg | 29 (24~34) | str 46 | 1600 |
-| 5 | 17 | Giáo Dài | Spear | `3/1` | dk, mg | 29 (24~34) | agi 18 str 25 | 1600 |
-| 5 | 17 | Đinh Ba Khổng Lồ | Giant Trident | `3/3` | dk, mg | 29 (24~34) | agi 11 str 31 | 1600 |
+| 5 | 17 | Kiếm Kỳ Nhông Lửa | Sword of Salamander | `0/9` | dk, mg | 41 (34~48) | str 36 | 1600 |
+| 5 | 17 | Rìu Chiến Binh | Battle Axe | `1/5` | dk, mg | 44 (36~51) | str 42 | 1600 |
+| 5 | 17 | Rìu Nikkea | Nikkea Axe | `1/6` | dk, mg | 44 (37~52) | str 46 | 1600 |
+| 5 | 17 | Giáo Dài | Spear | `3/1` | dk, mg | 49 (41~58) | agi 18 str 25 | 1600 |
+| 5 | 17 | Đinh Ba Khổng Lồ | Giant Trident | `3/3` | dk, mg | 43 (35~50) | agi 11 str 31 | 1600 |
 | 5 | 17 | Sách Sahamutt | Book of Sahamutt | `5/21` | dw | 31 (29~33) | agi 7 ene 47 | 1600 |
-| 5 | 17 | Gậy Xà Nữ | Gorgon Staff | `5/4` | dw | 31 (29~33) | str 18 | 1600 |
-| 5 | 17 | Nỏ Nhẹ | Light Crossbow | `4/11` | elf | 33 (28~37) | agi 31 str 11 | 1600 |
-| 5 | 17 | Cung Chiến | Battle Bow | `4/3` | elf | 33 (28~37) | agi 31 str 11 | 1600 |
-| 6 | 22 | Kiếm Ánh Sáng | Light Saber | `0/10` | dk, mg | 42 (36~47) | agi 21 str 28 | 3600 |
+| 5 | 17 | Gậy Xà Nữ | Gorgon Staff | `5/4` | dw | 38 (35~40) | str 18 | 1600 |
+| 5 | 17 | Nỏ Nhẹ | Light Crossbow | `4/11` | elf | 48 (41~54) | agi 31 str 11 | 1600 |
+| 5 | 17 | Cung Chiến | Battle Bow | `4/3` | elf | 45 (38~50) | agi 31 str 11 | 1600 |
+| 6 | 22 | Kiếm Ánh Sáng | Light Saber | `0/10` | dk, mg | 60 (52~68) | agi 21 str 28 | 3600 |
 | 6 | 22 | Đại Đao | Blade | `0/5` | dk, mg | 42 (36~47) | agi 18 str 28 | 3600 |
-| 6 | 22 | Đại Chùy | Great Hammer | `2/3` | dk, mg | 42 (36~47) | str 53 | 3600 |
+| 6 | 22 | Đại Chùy | Great Hammer | `2/3` | dk, mg | 61 (53~69) | str 53 | 3600 |
 | 6 | 22 | Quyền Trượng Chiến | Battle Scepter | `2/8` | dk, mg | 42 (36~47) | agi 6 str 28 | 3600 |
-| 6 | 22 | Giáo Ánh Sáng | Light Spear | `3/0` | dk, mg | 42 (36~47) | agi 25 str 21 | 3600 |
-| 6 | 22 | Rìu Cán Dài | Berdysh | `3/7` | dk, mg | 42 (36~47) | agi 18 str 28 | 3600 |
+| 6 | 22 | Giáo Ánh Sáng | Light Spear | `3/0` | dk, mg | 63 (54~70) | agi 25 str 21 | 3600 |
+| 6 | 22 | Rìu Cán Dài | Berdysh | `3/7` | dk, mg | 58 (49~64) | agi 18 str 28 | 3600 |
 | 6 | 22 | Gậy Cánh Đỏ | Red Wing Staff | `5/16` | dw | 44 (43~45) | agi 5 str 13 | 3600 |
 | 6 | 22 | Sách Neil | Book of Neil | `5/22` | dw | 44 (43~45) | agi 9 ene 59 | 3600 |
 | 6 | 22 | Gậy Huyền Thoại | Legendary Staff | `5/5` | dw | 44 (43~45) | str 18 | 3600 |
-| 6 | 22 | Nỏ Xà | Serpent Crossbow | `4/12` | elf | 47 (42~52) | agi 35 str 11 | 3600 |
-| 6 | 22 | Cung Hổ | Tiger Bow | `4/4` | elf | 47 (42~52) | agi 35 str 11 | 3600 |
-| 7 | 27 | Chùy Sao Pha Lê | Crystal Morning Star | `2/4` | dk, dw, elf, mg | 64 (56~72) | str 46 | 7500 |
-| 7 | 27 | Kiếm Huyền Thoại | Legendary Sword | `0/11` | dk, mg | 64 (56~72) | str 42 | 7500 |
+| 6 | 22 | Nỏ Xà | Serpent Crossbow | `4/12` | elf | 59 (53~66) | agi 35 str 11 | 3600 |
+| 6 | 22 | Cung Hổ | Tiger Bow | `4/4` | elf | 59 (53~66) | agi 35 str 11 | 3600 |
+| 7 | 27 | Chùy Sao Pha Lê | Crystal Morning Star | `2/4` | dk, dw, elf, mg | 118 (104~133) | str 46 | 7500 |
+| 7 | 27 | Kiếm Huyền Thoại | Legendary Sword | `0/11` | dk, mg | 100 (88~113) | str 42 | 7500 |
 | 7 | 27 | Song Nhận Kiếm | Double Blade | `0/13` | dk, mg | 64 (56~72) | agi 25 str 25 | 7500 |
-| 7 | 27 | Cự Kiếm | Giant Sword | `0/15` | dk, mg | 64 (56~72) | str 49 | 7500 |
-| 7 | 27 | Rìu Larkan | Larkan Axe | `1/7` | dk, mg | 64 (56~72) | str 49 | 7500 |
-| 7 | 27 | Giáo Xà | Serpent Spear | `3/4` | dk, mg | 64 (56~72) | agi 11 str 31 | 7500 |
+| 7 | 27 | Cự Kiếm | Giant Sword | `0/15` | dk, mg | 99 (87~112) | str 49 | 7500 |
+| 7 | 27 | Rìu Larkan | Larkan Axe | `1/7` | dk, mg | 95 (83~107) | str 49 | 7500 |
+| 7 | 27 | Giáo Xà | Serpent Spear | `3/4` | dk, mg | 108 (95~122) | agi 11 str 31 | 7500 |
 | 7 | 27 | Sách Bóng Ma | Book of Ghost Phantom | `5/23` | dw | 60 (57~63) | agi 11 ene 70 | 7500 |
 | 7 | 27 | Gậy Hồi Sinh | Staff of Resurrection | `5/6` | dw | 60 (57~63) | agi 4 str 21 | 7500 |
-| 7 | 27 | Cung Bạc | Silver Bow | `4/5` | elf | 65 (59~71) | agi 35 str 11 | 7500 |
-| 8 | 32 | Kiếm Pha Lê | Crystal Sword | `2/5` | dk, dw, elf, mg | 79 (69~89) | agi 25 str 46 | 15000 |
-| 8 | 32 | Kiếm Xoắn | Helical Sword | `0/12` | dk, mg | 79 (69~89) | str 49 | 15000 |
+| 7 | 27 | Cung Bạc | Silver Bow | `4/5` | elf | 90 (81~98) | agi 35 str 11 | 7500 |
+| 8 | 32 | Kiếm Pha Lê | Crystal Sword | `2/5` | dk, dw, elf, mg | 125 (109~141) | agi 25 str 46 | 15000 |
+| 8 | 32 | Kiếm Xoắn | Helical Sword | `0/12` | dk, mg | 145 (126~163) | str 49 | 15000 |
 | 8 | 32 | Kiếm Sấm | Lightning Sword | `0/14` | dk, mg | 79 (69~89) | agi 18 str 31 | 15000 |
 | 8 | 32 | Kiếm Hủy Diệt | Sword of Destruction | `0/16` | dk, mg | 79 (69~89) | agi 21 str 56 | 15000 |
-| 8 | 32 | Rìu Lưỡi Liềm | Crescent Axe | `1/8` | dk, mg | 79 (69~89) | agi 14 str 35 | 15000 |
+| 8 | 32 | Rìu Lưỡi Liềm | Crescent Axe | `1/8` | dk, mg | 133 (116~150) | agi 14 str 35 | 15000 |
 | 8 | 32 | Đại Quyền Trượng | Great Scepter | `2/10` | dk, mg | 79 (69~89) | agi 7 str 35 | 15000 |
-| 8 | 32 | Rìu Rồng Hỗn Nguyên | Chaos Dragon Axe | `2/6` | dk, mg | 79 (69~89) | agi 18 str 49 | 15000 |
+| 8 | 32 | Rìu Rồng Hỗn Nguyên | Chaos Dragon Axe | `2/6` | dk, mg | 119 (104~134) | agi 18 str 49 | 15000 |
 | 8 | 32 | Quyền Trượng Bậc Thầy | Master Scepter | `2/9` | dk, mg | 79 (69~89) | agi 6 str 30 | 15000 |
-| 8 | 32 | Đại Lưỡi Hái | Great Scythe | `3/8` | dk, mg | 79 (69~89) | agi 18 str 31 | 15000 |
-| 8 | 32 | Kích Balrog | Bill of Balrog | `3/9` | dk, mg | 79 (69~89) | agi 18 str 28 | 15000 |
-| 8 | 32 | Gậy Cổ Đại | Ancient Staff | `5/17` | dw | 78 (77~79) | agi 7 str 18 | 15000 |
-| 8 | 32 | Gậy Sấm Hỗn Nguyên | Chaos Lightning Staff | `5/7` | dw | 78 (77~79) | agi 4 str 21 | 15000 |
-| 8 | 32 | Gậy Hủy Diệt | Staff of Destruction | `5/8` | dw | 78 (77~79) | agi 4 str 21 | 15000 |
+| 8 | 32 | Đại Lưỡi Hái | Great Scythe | `3/8` | dk, mg | 138 (121~156) | agi 18 str 31 | 15000 |
+| 8 | 32 | Kích Balrog | Bill of Balrog | `3/9` | dk, mg | 140 (122~158) | agi 18 str 28 | 15000 |
+| 8 | 32 | Gậy Cổ Đại | Ancient Staff | `5/17` | dw | 78 (76~80) | agi 7 str 18 | 15000 |
+| 8 | 32 | Gậy Sấm Hỗn Nguyên | Chaos Lightning Staff | `5/7` | dw | 115 (112~118) | agi 4 str 21 | 15000 |
+| 8 | 32 | Gậy Hủy Diệt | Staff of Destruction | `5/8` | dw | 105 (102~107) | agi 4 str 21 | 15000 |
 | 8 | 32 | Chùy Nguyên Tố | Elemental Mace | `2/7` | elf | 75 (68~82) | agi 15 str 5 | 15000 |
-| 8 | 32 | Nỏ Cánh Lam | Bluewing Crossbow | `4/13` | elf | 75 (68~82) | agi 39 str 14 | 15000 |
-| 8 | 32 | Nỏ Thủy Kim | Aquagold Crossbow | `4/14` | elf | 75 (68~82) | agi 46 str 18 | 15000 |
-| 8 | 32 | Nỏ Thánh | Saint Crossbow | `4/16` | elf | 75 (68~82) | agi 56 str 18 | 15000 |
-| 8 | 32 | Cung Thiên Nhiên Hỗn Nguyên | Chaos Nature Bow | `4/6` | elf | 75 (68~82) | agi 53 str 14 | 15000 |
-| 9 | 37 | Giáo Rồng | Dragon Spear | `3/10` | dk | 98 (89~107) | agi 21 str 59 | 28000 |
-| 9 | 37 | Kiếm Phá Hắc Ám | Dark Breaker | `0/17` | dk, mg | 98 (89~107) | agi 18 str 63 | 28000 |
+| 8 | 32 | Nỏ Cánh Lam | Bluewing Crossbow | `4/13` | elf | 103 (93~112) | agi 39 str 14 | 15000 |
+| 8 | 32 | Nỏ Thủy Kim | Aquagold Crossbow | `4/14` | elf | 96 (87~105) | agi 46 str 18 | 15000 |
+| 8 | 32 | Nỏ Thánh | Saint Crossbow | `4/16` | elf | 117 (106~128) | agi 56 str 18 | 15000 |
+| 8 | 32 | Cung Thiên Nhiên Hỗn Nguyên | Chaos Nature Bow | `4/6` | elf | 95 (86~103) | agi 53 str 14 | 15000 |
+| 9 | 37 | Giáo Rồng | Dragon Spear | `3/10` | dk | 155 (141~169) | agi 21 str 59 | 28000 |
+| 9 | 37 | Kiếm Phá Hắc Ám | Dark Breaker | `0/17` | dk, mg | 158 (143~172) | agi 18 str 63 | 28000 |
 | 9 | 37 | Quyền Trượng Chúa Tể | Lord Scepter | `2/11` | dk, mg | 98 (89~107) | agi 8 str 37 | 28000 |
 | 9 | 37 | Quyền Trượng Ánh Sáng | Shining Scepter | `2/15` | dk, mg | 98 (89~107) | agi 8 str 38 | 28000 |
 | 9 | 37 | Gậy Bạch Kim | Platina Staff | `5/13` | dw | 98 (96~100) | agi 6 str 18 | 28000 |
@@ -97,17 +97,17 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 9 | 37 | Gậy Hào Quang | Aura Staff | `5/19` | dw | 98 (96~100) | agi 5 str 22 | 28000 |
 | 9 | 37 | Gậy Đại Linh Hồn | Grand Soul Staff | `5/9` | dw | 98 (96~100) | agi 6 str 18 | 28000 |
 | 9 | 37 | Gậy Tổng Lãnh Thiên Thần | Staff of Archangel | `5/10` | dw, mg | 98 (96~100) | agi 1 str 13 | 28000 |
-| 9 | 37 | Cung Thiên Giới | Celestial Bow | `4/17` | elf | 98 (88~108) | agi 69 str 19 | 28000 |
-| 9 | 37 | Nỏ Tổng Lãnh Thiên Thần | Divine Crossbow of Archangel | `4/18` | elf | 98 (88~108) | agi 39 str 14 | 28000 |
-| 9 | 37 | Nỏ Đại Vương | Great Reign Crossbow | `4/19` | elf | 98 (88~108) | agi 100 str 21 | 28000 |
-| 9 | 37 | Cung Hải Âu | Albatross Bow | `4/22` | elf | 98 (88~108) | agi 93 str 21 | 28000 |
-| 9 | 37 | Kiếm Sấm | Thunder Blade | `0/18` | mg | 98 (89~107) | agi 18 str 63 | 28000 |
-| 9 | 37 | Kiếm Cổ Tự | Rune Blade | `0/31` | mg | 98 (89~107) | agi 22 ene 3 str 47 | 28000 |
-| 10 | 42 | Kiếm Bình Minh | Daybreak | `0/24` | dk, mg | 120 (109~131) | agi 11 str 67 | 50000 |
+| 9 | 37 | Cung Thiên Giới | Celestial Bow | `4/17` | elf | 173 (156~191) | agi 69 str 19 | 28000 |
+| 9 | 37 | Nỏ Tổng Lãnh Thiên Thần | Divine Crossbow of Archangel | `4/18` | elf | 192 (172~212) | agi 39 str 14 | 28000 |
+| 9 | 37 | Nỏ Đại Vương | Great Reign Crossbow | `4/19` | elf | 199 (179~219) | agi 100 str 21 | 28000 |
+| 9 | 37 | Cung Hải Âu | Albatross Bow | `4/22` | elf | 172 (154~189) | agi 93 str 21 | 28000 |
+| 9 | 37 | Kiếm Sấm | Thunder Blade | `0/18` | mg | 172 (156~187) | agi 18 str 63 | 28000 |
+| 9 | 37 | Kiếm Cổ Tự | Rune Blade | `0/31` | mg | 145 (132~158) | agi 22 ene 3 str 47 | 28000 |
+| 10 | 42 | Kiếm Bình Minh | Daybreak | `0/24` | dk, mg | 239 (217~261) | agi 11 str 67 | 50000 |
 | 10 | 42 | Gậy Huệ Tây | Lilium Staff | `5/20` | dw | 120 (118~122) | agi 9 str 21 | 50000 |
 | 10 | 42 | Gậy Merlin | Merlin Staff | `5/32` | dw | 120 (118~122) | agi 5 str 19 | 50000 |
 | 10 | 42 | Chùy Băng Giá | Frost Mace | `2/16` | elf | 120 (101~139) | agi 7 str 9 | 50000 |
-| 10 | 42 | Kiếm Vũ Công | Sword of Dancer | `0/25` | mg | 120 (109~131) | agi 20 ene 3 str 48 | 50000 |
+| 10 | 42 | Kiếm Vũ Công | Sword of Dancer | `0/25` | mg | 146 (133~160) | agi 20 ene 3 str 48 | 50000 |
 | 11 | 47 | Kiếm Xương | Bone Blade | `0/22` | dk | 145 (140~150) | agi 12 str 35 | 85000 |
 | 11 | 47 | Kiếm Lửa Lượn | Flamberge | `0/26` | dk | 145 (140~150) | agi 19 str 68 | 85000 |
 | 11 | 47 | Kiếm Phá Giáp | Sword Bracker | `0/27` | dk | 145 (140~150) | agi 62 str 19 | 85000 |
@@ -118,18 +118,18 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 11 | 47 | Quyền Trượng Mặt Trời | Solay Scepter | `2/14` | dk, mg | 145 (140~150) | agi 5 str 28 | 85000 |
 | 11 | 47 | Quyền Trượng Tuyệt Đối | Absolute Scepter | `2/17` | dk, mg | 145 (140~150) | agi 8 str 42 | 85000 |
 | 11 | 47 | Quyền Trượng Công Kích | Stryker Scepter | `2/18` | dk, mg | 145 (140~150) | agi 7 str 30 | 85000 |
-| 11 | 47 | Giáo Beuroba | Beuroba Spear | `3/11` | dk, mg | 145 (140~150) | agi 9 str 53 | 85000 |
+| 11 | 47 | Giáo Beuroba | Beuroba Spear | `3/11` | dk, mg | 284 (274~294) | agi 9 str 53 | 85000 |
 | 11 | 47 | Gậy Đại Xà | Grand Viper Staff | `5/12` | dw | 145 (137~153) | agi 5 str 14 | 85000 |
 | 11 | 47 | Gậy Đế Vương | Imperial Staff | `5/31` | dw | 145 (137~153) | agi 5 str 17 | 85000 |
 | 11 | 47 | Gậy Quạ | Raven Stick | `5/34` | dw | 145 (137~153) | agi 5 str 18 | 85000 |
 | 11 | 47 | Gậy Kundun | Kundun Staff | `5/11` | dw, mg | 145 (137~153) | agi 6 str 16 | 85000 |
 | 11 | 47 | Gậy Sắc Ánh | Chroma Ticks Staff | `5/33` | dw, mg | 145 (137~153) | agi 4 str 18 | 85000 |
-| 11 | 47 | Cung Rắn Lục | Arrow Viper Bow | `4/20` | elf | 145 (136~154) | agi 86 str 18 | 85000 |
-| 11 | 47 | Cung Gió Tiên | Sylph Wind Bow | `4/21` | elf | 145 (136~154) | agi 74 str 16 | 85000 |
-| 11 | 47 | Cung Ngòi Đen | Dark Stinger Bow | `4/23` | elf | 145 (136~154) | agi 73 str 11 | 85000 |
-| 11 | 47 | Cung Air Lyn | Air Lyn Bow | `4/24` | elf | 145 (136~154) | agi 79 str 17 | 85000 |
-| 11 | 47 | Kiếm Hắc Vương | Dark Reign Blade | `0/21` | mg | 145 (140~150) | agi 19 ene 3 str 41 | 85000 |
-| 11 | 47 | Kiếm Bộc Phá | Explosion Blade | `0/23` | mg | 145 (140~150) | agi 17 ene 2 str 34 | 85000 |
+| 11 | 47 | Cung Rắn Lục | Arrow Viper Bow | `4/20` | elf | 251 (235~266) | agi 86 str 18 | 85000 |
+| 11 | 47 | Cung Gió Tiên | Sylph Wind Bow | `4/21` | elf | 258 (242~274) | agi 74 str 16 | 85000 |
+| 11 | 47 | Cung Ngòi Đen | Dark Stinger Bow | `4/23` | elf | 248 (233~263) | agi 73 str 11 | 85000 |
+| 11 | 47 | Cung Air Lyn | Air Lyn Bow | `4/24` | elf | 248 (233~263) | agi 79 str 17 | 85000 |
+| 11 | 47 | Kiếm Hắc Vương | Dark Reign Blade | `0/21` | mg | 180 (174~186) | agi 19 ene 3 str 41 | 85000 |
+| 11 | 47 | Kiếm Bộc Phá | Explosion Blade | `0/23` | mg | 193 (186~200) | agi 17 ene 2 str 34 | 85000 |
 | 11 | 47 | Kiếm Đế Vương | Imperial Sword | `0/28` | mg | 145 (140~150) | agi 26 ene 6 str 32 | 85000 |
 | 11 | 47 | Gậy Tử Thần | Deadly Staff | `5/30` | mg | 145 (140~150) | agi 6 str 16 | 85000 |
 

@@ -38,6 +38,9 @@ def ic(i):
 def nm(it, bold=None):
     b = (not it.get("alt")) if bold is None else bold
     name = E(it["name"]) + (' <span class="shop" title="Bán ở Thợ Rèn">🛒</span>' if it["id"] in SHOP else "")
+    # vũ khí 2 tay (cung, nỏ, món rộng 2 ô trong Item.txt): không cầm khiên (B-41)
+    if it.get("hands") == 2:
+        name += ' <span class="hand2" title="Vũ khí 2 tay: không cầm khiên">2 tay</span>'
     inner = f"{ic(it['id'])}<b>{name}</b>" if b else f'{ic(it["id"])}<span class="alt">{name}</span>'
     return f'<span class="it">{inner}</span>'
 
@@ -78,11 +81,17 @@ def class_table(c):
         sh = sorted([v for v in gear(c, "shield") if v["tier"] == t], key=lambda v: (bool(v.get("alt")), v["name"]))
         if not (w or arm or sh):
             continue
-        mains = [v for v in w if not v.get("alt")] or w
+        # công bậc = công vũ khí 1 tay; vũ khí 2 tay mạnh hơn theo Item.txt (B-41)
+        one = [v for v in w if v.get("hands") != 2]
+        two = [v for v in w if v.get("hands") == 2]
+        base = [v for v in one if not v.get("alt")] or one or [v for v in w if not v.get("alt")] or w
         atk = ""
-        if mains:
-            lo = round(sum(v["atkMin"] for v in mains) / len(mains)); hi = round(sum(v["atkMax"] for v in mains) / len(mains))
+        if base and one:
+            lo = round(sum(v["atkMin"] for v in base) / len(base)); hi = round(sum(v["atkMax"] for v in base) / len(base))
             atk = f"{round((lo+hi)/2)} ({lo}~{hi})"
+        if two:
+            a2 = sorted(v["atk"] for v in two)
+            atk += ("<br>" if atk else "") + f'<span class="muted">2 tay {a2[0]}{"–" + str(a2[-1]) if a2[-1] != a2[0] else ""}</span>'
         by_set = defaultdict(list)
         for v in arm:
             by_set[(bool(v.get("alt")), v.get("set") or v["name"])].append(v)

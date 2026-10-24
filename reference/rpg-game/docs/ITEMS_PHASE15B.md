@@ -306,3 +306,18 @@ Dựng bằng `mix hac_long.items.build` từ `ITEM_PICK` (281 món, trong đó 
 - Món phụ mang `alt: true`: `Data` bỏ khỏi cửa hàng, đồ khởi đầu, đồ thay; `Gear.roll` vẫn bốc (2 mức cấp cao nhất ≤ cấp quái).
 - Test: `test/hac_long/game/items_alt_test.exs`.
 - Danh mục mọi loại đồ (tự sinh): `docs/ITEMS_CATALOG.md`, chạy lại `python3 scripts/items_catalog.py` khi đổi dữ liệu.
+
+## 14. Vũ khí 1 tay / 2 tay (2026-10-24, B-41)
+
+- `hands` (1 / 2) của mỗi vũ khí lấy từ Item.txt (`ItemBuild.hands/1`): cung / nỏ (nhóm 4) và món rộng 2 ô (`X = 2`) là 2 tay.
+  Item.txt không có cột "2 tay" riêng; cột `X` là cách các bản MU giả lập vẫn dùng.
+- Công của bậc (`stats.weapon_atk` / `staff_atk` / món chính) là **công vũ khí 1 tay**. Vũ khí 2 tay nhân hệ số riêng
+  (`ItemBuild.two_hand_mult/3`, `stats.two_hand`):
+  - vũ khí cận chiến, cung, nỏ: sát thương trung bình của món ÷ trung bình vũ khí cận chiến 1 tay (nhóm 0–3) cùng cấp Item.txt
+    (± `window` = 12, không có thì ± 24);
+  - gậy (nhóm 5): sức mạnh phép ÷ gậy 1 tay cùng cấp;
+  - nhân `scale` (1,15: cân bằng chung, giữ thứ tự mạnh yếu của Item.txt), không dưới `min` (1,0), trần `max` (null = không trần).
+- Phù Thủy: món chính bậc 3 / 4 / 8 đổi sang gậy 1 tay cùng cấp (Gậy Bí Ẩn, Gậy Gió Dữ, Gậy Cổ Đại); gậy 2 tay cũ (Gậy Rắn,
+  Gậy Sấm Sét, Gậy Sấm Hỗn Nguyên) thành món phụ. Gậy 2 tay trong Item.txt gần như không mạnh hơn gậy 1 tay nên món chính
+  2 tay sẽ bắt người chơi mua vũ khí rồi mất khiên.
+- Test: `test/hac_long/game/two_hand_test.exs`.

@@ -320,7 +320,8 @@ defmodule HacLong.Bots.Brain do
 
   # ---------- Đồ đạc, hồi máu ----------
 
-  # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ)
+  # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ;
+  # vũ khí 2 tay so với vũ khí + khiên đang cầm)
   defp better_gear(p) do
     p
     |> Gear.bag()
@@ -329,7 +330,23 @@ defmodule HacLong.Bots.Brain do
     |> Enum.find_value(fn it ->
       slot = Engine.equip_slot(p, it)
       cur = Gear.item(p, p.equip[slot])
-      if power(it) > power(cur), do: it.uid
+      weapon = Gear.item(p, p.equip.weapon)
+
+      cond do
+        # vũ khí 2 tay không cầm khiên (B-41)
+        slot == :shield and Engine.two_handed?(weapon) ->
+          nil
+
+        # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn khiên đang cầm
+        slot == :weapon and Engine.two_handed?(it) ->
+          if power(it) > power(cur) + power(Gear.item(p, p.equip.shield)), do: it.uid
+
+        power(it) > power(cur) ->
+          it.uid
+
+        true ->
+          nil
+      end
     end)
   end
 

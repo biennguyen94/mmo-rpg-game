@@ -145,6 +145,8 @@ defmodule HacLong.Game.Characters do
       |> HacLong.Game.Engine.migrate_items()
       |> HacLong.Game.Engine.split_upgrades()
       |> HacLong.Game.Engine.instance_gear()
+      # vũ khí 2 tay không cầm khiên (B-41)
+      |> HacLong.Game.Engine.two_hand_fix()
       # nhân vật có trước thông thạo kỹ năng: kỹ năng đang có lên cấp tối đa
       |> HacLong.Game.Mastery.legacy()
 

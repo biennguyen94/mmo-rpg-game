@@ -21,7 +21,7 @@ defmodule HacLong.Game.ItemsAltTest do
     assert MapSet.subset?(MapSet.new(~w(weapon shield armor)), slots)
   end
 
-  test "vũ khí / khiên phụ: công, thủ, cấp, giá như món chính cùng bậc và cùng lớp" do
+  test "vũ khí / khiên phụ: công, thủ, cấp, giá như món chính cùng bậc và cùng lớp (vũ khí 2 tay: công × hệ số 2 tay)" do
     keys = ~w(atk atkMin atkMax def level price)a
 
     for {id, a} <- alts(), a.slot in ~w(weapon shield) do
@@ -32,9 +32,17 @@ defmodule HacLong.Game.ItemsAltTest do
 
       assert cands != [], "#{id} không có món chính cùng bậc"
 
-      # món dùng chung nhiều lớp (vd gậy Phù Thủy + Đấu Sĩ) chép số của món chính một trong các lớp đó
-      assert Enum.any?(cands, fn m -> Enum.all?(keys, &(a[&1] == m[&1])) end),
-             "#{id} khác mọi món chính cùng bậc"
+      # món dùng chung nhiều lớp (vd gậy Phù Thủy + Đấu Sĩ) chép số của món chính một trong các lớp đó; công
+      # của bậc là công 1 tay (B-41): món 1 tay bằng món chính 1 tay, món 2 tay không yếu hơn
+      one = &(&1[:hands] != 2)
+
+      ok? =
+        Enum.any?(cands, fn m ->
+          same = if one.(a) and one.(m), do: keys, else: ~w(level price)a
+          Enum.all?(same, &(a[&1] == m[&1])) and (one.(a) or a.atk >= m.atk or not one.(m))
+        end)
+
+      assert ok?, "#{id} khác mọi món chính cùng bậc"
     end
   end
 

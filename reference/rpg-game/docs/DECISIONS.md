@@ -1046,3 +1046,20 @@ nhiều hơn mốc cũ (2 → 11 trận). Anh duyệt tăng nguồn (`RULES.skil
 - quái tinh anh 10 % → 15 %; trùm hạ lại 30 %, trùm thế giới 100 % giữ nguyên.
 Chạy lại cùng seed: 20–30 cuốn sau 3 lần chuyển sinh, kỹ năng đang mang lên cấp 9–10; Kiếm Sĩ chặng đầu chết 11 → 5, các chặng
 sau còn nhẹ hơn mốc cũ (mất 10–15 % máu / trận so với 20–29 %). Không đổi sức kỹ năng cấp 1 (anh chưa duyệt mục 2).
+
+## Vũ khí 1 tay / 2 tay (B-41, 2026-10-24, anh duyệt hướng 2)
+
+Anh: theo MU, vũ khí 2 tay không cầm khiên; "làm sao sát MU nhất mà vẫn cân bằng".
+- `hands` của vũ khí lấy từ Item.txt (cung / nỏ, món rộng 2 ô = 2 tay; `ItemBuild.hands/1`). Item.txt không có cột 2 tay riêng.
+- MU không có hệ số "2 tay ×…": lợi thế nằm sẵn trong sát thương từng món (2 tay cùng cấp mạnh hơn 1 tay khoảng ×1,06–1,73,
+  trung bình ×1,37; gậy so sức mạnh phép chỉ khoảng ×1,07). Game chia bậc nên trước đây mọi món cùng bậc chép công của món chính,
+  mất chênh lệch này. Nay: công bậc = công **1 tay**; món 2 tay nhân tỉ lệ của chính nó so với 1 tay cùng cấp Item.txt
+  (`ITEM_PICK.stats.two_hand`), giữ đúng thứ tự mạnh yếu của MU.
+- Cân bằng: đo bằng điểm sức mạnh của bot (`Journey.score`, sát thương × máu hiệu dụng), 2 tay cần khoảng ×1,6 ở bậc giữa / cao
+  mới bằng 1 tay + khiên → thêm `scale` 1,15 chung (2 tay ≈ hòa vốn, món MU vốn mạnh như Daybreak, Beuroba vẫn mạnh hơn),
+  sàn ×1,0 (2 tay không yếu hơn 1 tay cùng bậc).
+- Mặc 2 tay: khiên về túi; cầm 2 tay thì không mặc khiên; nhân vật cũ cầm 2 tay + khiên: khiên về túi lúc nạp
+  (`Engine.two_hand_fix/1`). Tiên Nữ cầm cung / nỏ không có khiên (đúng MU).
+- Phù Thủy: món chính bậc 3 / 4 / 8 đổi sang gậy 1 tay cùng cấp (gậy 2 tay MU gần như không mạnh hơn nên không đáng mất khiên).
+- Bot: đổi sang 2 tay khi hơn cả vũ khí + khiên đang cầm.
+- Chưa làm: cầm 2 vũ khí 1 tay (Kiếm Sĩ, Đấu Sĩ) — chờ công thức (`OPEN_QUESTIONS` B41-A).

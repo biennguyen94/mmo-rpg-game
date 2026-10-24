@@ -234,14 +234,14 @@ await A('add_points', { n: -pts });
 const SET = {
   dk:  { weapon: 'item_0_19', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
   dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
-  elf: { weapon: 'item_4_24', shield: 'item_6_19', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] }, // Cung Air Lyn, Khiên Kết Giới Băng, bộ Tia Tiên
+  elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                       // Cung Air Lyn (2 tay: không khiên), bộ Tia Tiên
   mg:  { weapon: 'item_0_28', shield: 'item_6_18', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },              // Kiếm Đế Vương, Khiên Kỳ Nhông, bộ Long Kỵ Sĩ
 }[cls];
 const EXC_W = ['atk_pct', 'crit', 'heal_kill', 'mp_kill', 'atk_lvl', 'ar_pct'];   // vũ khí / dây chuyền
 const EXC_A = ['hp_pct', 'dmg_red', 'gold_pct', 'mp_pct', 'reflect', 'def_rate']; // giáp / khiên / nhẫn
 // "+N" là cấp ép (tối đa +11); opt 4 = 4 dòng cộng thêm (+16 tấn công / phòng thủ), luck = May mắn
 await A('give_gear', { base: SET.weapon, opt: 4, luck: true, skill: true, up: 11, exc: EXC_W });
-await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });
+if (SET.shield) await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });   // vũ khí 2 tay (cung, nỏ) không cầm khiên
 for (const base of SET.set) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
 // Đồ Thần thay cho Excellent (chọn một trong hai cho bộ giáp): await A('give_gear', { base, opt: 4, luck: true, up: 11, anc: true });
 await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });   // Nhẫn Phép × 2
