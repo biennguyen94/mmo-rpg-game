@@ -2323,7 +2323,10 @@
   const DUAL = RULES.dualWield || { classes: [] };
   const canLeft = (it) => {
     const w = P && P.equip.weapon && itemOf(P.equip.weapon);
-    return !!(it && it.slot === 'weapon' && it.hands === 1 && P && DUAL.classes.includes(P.cls) && w && w.hands !== 2);
+    // gậy chỉ cặp với gậy (`staff_pair_only`)
+    const staff = (x) => String(x.ref || '').startsWith('5/');
+    const pair = !DUAL.staff_pair_only || staff(it) === staff(w);
+    return !!(it && it.slot === 'weapon' && it.hands === 1 && P && DUAL.classes.includes(P.cls) && w && w.hands !== 2 && pair);
   };
   const WEAR_KINDS = [...new Set(SLOT_OPEN.map(slotKind))];
   // Phase 15c: chữ cho dòng Excellent (giá trị do server gửi trong `exc_lines`)

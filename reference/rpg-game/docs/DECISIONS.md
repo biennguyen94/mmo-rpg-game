@@ -1091,3 +1091,6 @@ Anh: Kiếm Sĩ, Phù Thủy, Đấu Sĩ cầm được 2 vũ khí 1 tay (vd 2 G
   vũ khí (`ADMIN_GUIDE` §6), Tiên Nữ cung. Chỉnh `RULES.pvp.class_taken` bằng PK cược 300 trận mỗi cặp: Tiên Nữ 1,3 → **0,98**,
   Đấu Sĩ 0,66 → **0,75** (Kiếm Sĩ 1,16, Phù Thủy 0,9 giữ nguyên) → mọi cặp khác lớp 47–54 % (trước khi chỉnh: Đấu Sĩ thắng 64–82 %,
   Tiên Nữ thua 16–22 %). Người cầm khiên cuối game chịu thiệt khi đánh người (đúng lựa chọn k = 1).
+- Anh chọn (2026-10-24): **gậy chỉ cặp với gậy** (`dual_wield.staff_pair_only`, `Engine.dual_pair?/2`); kiếm / rìu / chùy / giáo 1 tay
+  cặp tự do (kiếm + rìu được). Đổi tay phải sang loại không hợp (gậy ↔ kiếm…) thì vũ khí tay trái về túi; nạp nhân vật cũ cầm cặp
+  không hợp thì tay trái về túi.

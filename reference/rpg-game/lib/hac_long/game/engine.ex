@@ -3173,6 +3173,9 @@ defmodule HacLong.Game.Engine do
       left? and two_handed?(right) ->
         {err("#{right.name} là vũ khí 2 tay: không cầm thêm vũ khí được."), p}
 
+      left? and not dual_pair?(right, it) ->
+        {err("Gậy chỉ cầm cùng gậy (không cầm gậy với kiếm / rìu / chùy)."), p}
+
       true ->
         slot = if left?, do: :shield, else: equip_slot(p, it)
         hp_ratio = p.hp / derived(p).maxHp
@@ -3182,9 +3185,25 @@ defmodule HacLong.Game.Engine do
         p = if gear?, do: p, else: take_item(p, id)
         p = if old && not Gear.instance?(old), do: add_item(p, old), else: p
         p = %{p | equip: Map.put(p.equip, slot, id)}
-        # vũ khí 2 tay (B-41): khiên / vũ khí tay trái đang cầm về túi
-        off = slot == :weapon and two_handed?(it) and p.equip.shield
-        note = if off, do: " #{left_name(p)} về túi (vũ khí 2 tay).", else: ""
+
+        # vũ khí 2 tay (B-41): khiên / vũ khí tay trái đang cầm về túi; tay phải đổi loại không hợp với
+        # vũ khí tay trái (gậy với kiếm…, B-42) thì vũ khí tay trái về túi
+        lw = left_weapon(p)
+        mismatch = slot == :weapon and lw != nil and not dual_pair?(it, lw)
+        off = slot == :weapon and ((two_handed?(it) and p.equip.shield != nil) or mismatch)
+
+        note =
+          cond do
+            off && mismatch && not two_handed?(it) ->
+              " Vũ khí tay trái về túi (gậy chỉ cầm cùng gậy)."
+
+            off ->
+              " #{left_name(p)} về túi (vũ khí 2 tay)."
+
+            true ->
+              ""
+          end
+
         p = if off, do: free_shield(p), else: p
         {ok("Đã trang bị #{it.name}.#{note}"), %{p | hp: round(hp_ratio * derived(p).maxHp)}}
     end
@@ -3197,6 +3216,17 @@ defmodule HacLong.Game.Engine do
   def dual_class?(cls), do: cls in @dual.classes
 
   def dual_rules, do: @dual
+
+  @doc """
+  Hai vũ khí `a` (tay phải), `b` (tay trái) cầm cùng được không: `dual_wield.staff_pair_only` thì gậy (nhóm 5 Item.txt)
+  chỉ cặp với gậy; kiếm / rìu / chùy… cặp tự do.
+  """
+  def dual_pair?(a, b) do
+    not Map.get(@dual, :staff_pair_only, false) or staff?(a) == staff?(b)
+  end
+
+  @doc "Gậy (nhóm 5 trong Item.txt)."
+  def staff?(it), do: is_map(it) and String.starts_with?(it[:ref] || "", "5/")
 
   @doc "Vũ khí đang cầm ở tay trái (ô `shield`, cầm 2 vũ khí) hoặc nil (trống / khiên)."
   def left_weapon(p) do
@@ -3221,7 +3251,9 @@ defmodule HacLong.Game.Engine do
 
     if p.equip[:shield] &&
          (two_handed?(Gear.item(p, p.equip[:weapon])) or
-            (lw && (two_handed?(lw) or not dual_class?(p.cls)))),
+            (lw &&
+               (two_handed?(lw) or not dual_class?(p.cls) or
+                  not dual_pair?(Gear.item(p, p.equip[:weapon]), lw)))),
        do: free_shield(p),
        else: p
   end

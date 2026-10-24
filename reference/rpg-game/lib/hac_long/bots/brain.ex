@@ -353,7 +353,7 @@ defmodule HacLong.Bots.Brain do
 
         # cầm 2 vũ khí (B-42): vũ khí 1 tay vào tay trái nếu hơn khiên / vũ khí tay trái
         slot == :weapon and Engine.dual_class?(p.cls) and weapon && not Engine.two_handed?(weapon) and
-            power(it) * k > left_power ->
+          Engine.dual_pair?(weapon, it) and power(it) * k > left_power ->
           equip(it, "left")
 
         slot != :weapon and power(it) > power(cur) and

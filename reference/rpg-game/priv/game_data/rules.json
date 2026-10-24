@@ -891,6 +891,7 @@
       "classes": ["dk", "dw", "mg"],
       "mult": 1.0,
       "left_exc": ["heal_kill", "mp_kill"],
+      "staff_pair_only": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false

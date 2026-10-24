@@ -149,6 +149,39 @@ defmodule HacLong.Game.TwoHandTest do
     assert Engine.dual_class?("dw") and Engine.dual_class?("mg") and not Engine.dual_class?("elf")
   end
 
+  test "cầm 2 vũ khí: gậy chỉ cặp với gậy; kiếm cặp rìu được; đổi tay phải sang loại khác thì tay trái về túi" do
+    staff = "item_5_11"
+    sword = "item_0_28"
+
+    axe =
+      Data.items()
+      |> Enum.find(fn {_, it} ->
+        it.slot == "weapon" and String.starts_with?(it[:ref] || "", "1/") and it[:hands] == 1 and
+          "mg" in (it[:classes] || [])
+      end)
+      |> elem(0)
+
+    p =
+      player("mg", %{level: 50})
+      |> Engine.add_item(staff)
+      |> Engine.add_item(sword)
+      |> Engine.add_item(axe)
+
+    {%{ok: true}, p} = Engine.equip(p, uid(p, sword))
+
+    {r, p} = Engine.equip(p, uid(p, staff), "left")
+    refute r.ok
+    assert r.msg =~ "Gậy chỉ cầm cùng gậy"
+
+    {r, p} = Engine.equip(p, uid(p, axe), "left")
+    assert r.ok and worn(p, :shield) == axe
+
+    # tay phải đổi sang gậy: rìu tay trái về túi
+    {r, p} = Engine.equip(p, uid(p, staff))
+    assert r.ok and r.msg =~ "gậy chỉ cầm cùng gậy"
+    assert worn(p, :weapon) == staff and p.equip.shield == nil
+  end
+
   test "cầm 2 vũ khí: dòng Excellent % của vũ khí tay trái không cộng" do
     one = weapon("mg", 1)
     p = player("mg", %{level: 30})
