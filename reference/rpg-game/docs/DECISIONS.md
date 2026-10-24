@@ -982,7 +982,7 @@ máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2
   của bản sao (`copy_skill`, theo `Arena.opponent.skills`). Giả lập 200 trận, hai nhân vật giống nhau: người thách đấu thắng
   ~55–60% (trước đây 100%).
 - **Cân bằng lớp** (anh duyệt): `RULES.pvp.class_taken` nhân thêm vào sát thương lên người theo lớp người bị đánh: Kiếm Sĩ 1,16,
-  Tiên Nữ 1,08, Phù Thủy 0,9, Đấu Sĩ 0,66 (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
+  Tiên Nữ 1,08 (nay 1,3, xem B-41), Phù Thủy 0,9, Đấu Sĩ 0,66 (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
   44–56% (trước: Kiếm Sĩ thắng Đấu Sĩ 197/200).
 - Sửa kèm: trận lưu khóa `tidal_at` / `pet_revived` (Long Vương) trước đây không nạp lại được sau khi server khởi động lại.
 
@@ -1062,4 +1062,10 @@ Anh: theo MU, vũ khí 2 tay không cầm khiên; "làm sao sát MU nhất mà v
   (`Engine.two_hand_fix/1`). Tiên Nữ cầm cung / nỏ không có khiên (đúng MU).
 - Phù Thủy: món chính bậc 3 / 4 / 8 đổi sang gậy 1 tay cùng cấp (gậy 2 tay MU gần như không mạnh hơn nên không đáng mất khiên).
 - Bot: đổi sang 2 tay khi hơn cả vũ khí + khiên đang cầm.
+- Kiểm tra (`mix hac_long.journey`, 4 lớp, chuyển sinh 3, seed 1–5, trung bình, bản cũ / bản mới): số trận Kiếm Sĩ 3190 / 3231,
+  Phù Thủy 3157 / 3165, Tiên Nữ 3120 / 3120, Đấu Sĩ 3150 / 3125; số lần chết dao động theo seed (Kiếm Sĩ 18 / 19, Phù Thủy 7 / 6,
+  Tiên Nữ 8 / 6, Đấu Sĩ 2 / 4) → chơi từ đầu không lệch.
+- Đánh người (PK cược 300 trận mỗi cặp, nhân vật tối đa như `ADMIN_GUIDE` §6): Tiên Nữ tối đa vốn không cầm khiên, nay Cung Air Lyn
+  công 145 → 248 nên thắng 72–76 % mọi lớp. Chỉnh `RULES.pvp.class_taken.elf` 1,08 → **1,3** (như cách chỉnh cân bằng lớp trước):
+  mọi cặp có Tiên Nữ 48–52 %. Các cặp khác giữ như cũ (Kiếm Sĩ / Đấu Sĩ 41 %, trước 35 %).
 - Chưa làm: cầm 2 vũ khí 1 tay (Kiếm Sĩ, Đấu Sĩ) — chờ công thức (`OPEN_QUESTIONS` B41-A).
