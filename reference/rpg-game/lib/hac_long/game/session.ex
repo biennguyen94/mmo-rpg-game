@@ -286,7 +286,8 @@ defmodule HacLong.Game.Session do
 
   def handle_cast({:slay_sync, info}, %{player: %{battle: %{over: false} = b} = p} = s) do
     if b[:encounter][:slay] == info.id do
-      log = Enum.take(b.log ++ [%{text: info.text, kind: "bad"}], -60)
+      lines = for t <- List.wrap(info.text), do: %{text: t, kind: "bad"}
+      log = Enum.take(b.log ++ lines, -60)
       enc = %{b.encounter | mine: true, until: info.until}
       b = %{b | log: log, encounter: enc, monster: %{b.monster | hp: info.foe_hp}}
       p = %{p | hp: info.hp, battle: b}
@@ -851,12 +852,19 @@ defmodule HacLong.Game.Session do
       f ->
         p = %{p | hp: f.hp} |> put_in([:battle, :monster, :hp], f.foe_hp)
 
-        case Commands.run(p, Map.delete(cmd, "auto")) do
-          {%{ok: false}, _} = r ->
-            r
+        # chạy lượt với nhật ký trống để biết đúng những dòng lượt này (kỹ năng, chí mạng, trượt…)
+        # rồi gửi sang đối thủ
+        old_log = p.battle.log
+
+        case Commands.run(put_in(p.battle.log, []), Map.delete(cmd, "auto")) do
+          {%{ok: false} = r, _} ->
+            {r, p}
 
           {r, p2} ->
-            case Slay.acted(uid, p2.hp, p2.battle.monster.hp, cmd["auto"] == true) do
+            lines = Enum.map(p2.battle.log, & &1.text)
+            p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
+
+            case Slay.acted(uid, p2.hp, p2.battle.monster.hp, cmd["auto"] == true, lines) do
               {:ok, v} ->
                 enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
                 {r, put_in(p2.battle.encounter, enc)}

@@ -1131,3 +1131,12 @@ tỉ lệ phòng thủ, % máu), chí mạng, né, trúng, phòng thủ đều c
 Sửa một chỗ thiếu: đánh **bản sao người** (đồ sát, PK cược; đấu trường khi mất `mirror`) trước đây bỏ sót Excellent "phản sát thương"
 của bên bị đánh. Nay bản sao mang `reflect` (`Arena.opponent/2`), người đánh bị phản lại; phản đòn ở đây không hạ gục (còn ít nhất
 1 máu) vì trận do Slay / PkFight chốt theo máu hai bên. Đấu trường (`mirror`) giữ như cũ (phản đòn hạ được).
+
+## Nhật ký đồ sát chi tiết cho bên bị đánh (2026-10-24, anh yêu cầu)
+
+Trước: bên bị đánh chỉ thấy tóm tắt theo máu ("X gây N sát thương cho bạn", đòn cuối chỉ "X hạ gục bạn").
+Nay `Session` chạy lượt của người đánh với nhật ký trống, gửi đúng các dòng của lượt đó (kỹ năng, chí mạng, nhiều đòn,
+khắc hệ, trượt, thú cưng cắn, hút máu…) cho `Slay.acted/5`; `Slay.mirror/3` đổi góc nhìn ("Bạn" → tên người đánh,
+tên người bị đánh → "bạn", "gây N sát thương" thêm "cho bạn", dòng không nhắc tên người đánh thì thêm "Tên: " ở đầu)
+rồi ghi sang nhật ký đối thủ, mỗi dòng một dòng. Đòn kết liễu cũng ghi các dòng đó trước "X hạ gục bạn.".
+Không có dòng nào thì vẫn tóm tắt theo máu như trước. Chỉ là chữ hiển thị, không đổi luật.

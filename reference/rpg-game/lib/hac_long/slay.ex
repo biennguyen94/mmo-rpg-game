@@ -177,9 +177,12 @@ defmodule HacLong.Slay do
   @doc "Trận đồ sát của `uid`: `%{id, foe, turn, hp, foe_hp, until}` hoặc nil."
   def peek(uid), do: GenServer.call(__MODULE__, {:peek, uid})
 
-  @doc "`uid` vừa ra đòn xong ở lượt của mình: máu mình và máu đối thủ sau lượt."
-  def acted(uid, hp, foe_hp, auto? \\ false),
-    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?})
+  @doc """
+  `uid` vừa ra đòn xong ở lượt của mình: máu mình và máu đối thủ sau lượt; `lines` là nhật ký trận
+  của lượt đó (phía người đánh), được đổi góc nhìn rồi ghi sang nhật ký đối thủ.
+  """
+  def acted(uid, hp, foe_hp, auto? \\ false, lines \\ []),
+    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?, lines})
 
   @doc "`uid` bỏ chạy: thua như gục ngã."
   def flee(uid), do: GenServer.call(__MODULE__, {:flee, uid})
@@ -248,15 +251,18 @@ defmodule HacLong.Slay do
     {:reply, with(%{} = f <- fight(s, uid), do: public(f, uid)), s}
   end
 
-  def handle_call({:acted, uid, hp, foe_hp, auto?}, _from, s) do
+  def handle_call({:acted, uid, hp, foe_hp, auto?, lines}, _from, s) do
     case fight(s, uid) do
       %{turn: ^uid} = f ->
         foe = foe(f, uid)
         dmg = max(0, f.hp[foe] - max(foe_hp, 0))
         healed = max(0, hp - f.hp[uid])
         f = %{f | hp: %{uid => hp, foe => max(foe_hp, 0)}, turns: f.turns + 1, misses: 0}
+        text = sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?)
 
         if f.hp[foe] <= 0 do
+          # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "hạ gục bạn"
+          f = Map.put(f, :last, text)
           {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
         else
           cancel(f)
@@ -267,7 +273,7 @@ defmodule HacLong.Slay do
             hp: f.hp[foe],
             foe_hp: hp,
             until: f.until,
-            text: sync_text(f.names[uid], dmg, healed, auto?)
+            text: text
           })
 
           {:reply, {:ok, %{mine: false, until: f.until}}, put(s, f)}
@@ -403,7 +409,9 @@ defmodule HacLong.Slay do
         pl =
           if why == :fled,
             do: log(pl, "🏃 Bạn bỏ chạy: tính như gục ngã.", "bad"),
-            else: log(pl, "#{f.names[winner]} hạ gục bạn.", "bad")
+            else:
+              Enum.reduce(f[:last] || [], pl, &log(&2, &1, "bad"))
+              |> log("#{f.names[winner]} hạ gục bạn.", "bad")
 
         {_, pl2} = Engine.finish_lose(pl)
 
@@ -471,14 +479,52 @@ defmodule HacLong.Slay do
 
   # ---------- Tiện ích ----------
 
-  defp sync_text(name, dmg, healed, auto?) do
+  # Nhật ký lượt của người đánh, đổi sang góc nhìn người bị đánh (một dòng mỗi dòng gốc).
+  # Không có dòng nào (lượt chạy ngoài Session) thì tóm tắt theo máu như trước.
+  defp sync_text(name, foe_name, lines, dmg, healed, auto?) do
     who = if auto?, do: "#{name} (hết giờ, tự đánh)", else: name
 
-    cond do
-      dmg > 0 -> "⚔ #{who} gây #{dmg} sát thương cho bạn."
-      healed > 0 -> "#{who} hồi #{healed} máu."
-      true -> "#{who} ra đòn nhưng không trúng."
+    case Enum.map(lines, &mirror(&1, name, foe_name)) do
+      [] ->
+        cond do
+          dmg > 0 -> ["⚔ #{who} gây #{dmg} sát thương cho bạn."]
+          healed > 0 -> ["#{who} hồi #{healed} máu."]
+          true -> ["#{who} ra đòn nhưng không trúng."]
+        end
+
+      mirrored when auto? ->
+        ["⏱ #{name} hết giờ, server đánh thay." | mirrored]
+
+      mirrored ->
+        mirrored
     end
+  end
+
+  @doc """
+  Một dòng nhật ký của người đánh `name` → góc nhìn người bị đánh `foe_name`: "Bạn" → `name`,
+  `foe_name` (là "quái" bên kia) → "bạn", "gây / cắn thêm N sát thương" thêm "cho bạn"; dòng không
+  nhắc tên người đánh (trượt, Khiên Thánh hồi máu, thú cưng cắn…) thì thêm "`name`: " ở đầu.
+  """
+  def mirror(text, name, foe_name) do
+    word = fn w -> ~r/(?<![\p{L}\p{N}_])#{w}(?![\p{L}\p{N}_])/u end
+
+    # \0 giữ chỗ người bị đánh để không lẫn với "bạn" (người đánh) trong câu gốc
+    t = Regex.replace(word.(Regex.escape(foe_name)), text, "\0")
+    t = Regex.replace(word.("[Bb]ạn"), t, name)
+
+    t =
+      if String.contains?(t, "\0"),
+        do: t,
+        else:
+          Regex.replace(~r/(gây|cắn thêm) \d+ sát thương(?! cho)/u, t, "\\0 cho \0",
+            global: false
+          )
+
+    t =
+      Regex.replace(~r/(^|[!:.] |^[^\p{L}\p{N}]+ )\x{0}/u, t, "\\1Bạn")
+      |> String.replace("\0", "bạn")
+
+    if String.contains?(t, name), do: t, else: "#{name}: #{t}"
   end
 
   defp public(f, uid) do
