@@ -1906,6 +1906,22 @@ defmodule HacLong.Game.Engine do
     {dmg, p}
   end
 
+  # bản sao người (đồ sát, PK cược, đấu trường khi mất `mirror`): phản sát thương (Excellent) của người đó đánh lại mình;
+  # ở đây phản đòn không hạ gục (còn ít nhất 1 máu) vì trận do Slay / PkFight chốt theo máu hai bên
+  defp mirror_guard(%{battle: %{monster: %{pvp: pvp, reflect: r}}} = p, dmg)
+       when pvp != nil and is_number(r) and r > 0 do
+    back = min(round(dmg * r), p.hp - 1)
+
+    p =
+      if back > 0,
+        do:
+          %{p | hp: p.hp - back}
+          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad"),
+        else: p
+
+    {dmg, p}
+  end
+
   defp mirror_guard(p, dmg), do: {dmg, p}
 
   defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,

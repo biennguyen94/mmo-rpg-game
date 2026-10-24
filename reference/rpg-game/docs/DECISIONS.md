@@ -1122,3 +1122,12 @@ Tủ Đồ ở Nhà nhận thêm vàng (`storage.gold`, lưu chung cột `storag
 đứng cạnh Tủ Đồ như cất đồ. Vàng trong tủ không tính là vàng mang theo: không mất khi chết (`death_gold_loss`) hay thua đồ sát, không
 tiêu / giao dịch được cho tới khi rút ra (giống kho Zen MU). Không phí, không giới hạn (`RULES.storage.gold_max` để trống; đặt số thì
 có trần). Nhật ký vàng (`gold_log`) ghi phần vàng mang theo giảm / tăng như mọi lệnh khác nên đối soát vẫn khớp.
+
+## Kiểm tra mọi chỉ số có tác dụng (2026-10-24, anh hỏi)
+
+Đo bằng thí nghiệm (cùng nhân vật, cùng quái, bật / tắt từng chỉ số) và test `test/hac_long/game/stat_effect_test.exs`:
+cánh (% sát thương, % hấp thụ, ép +N, dòng bỏ qua phòng thủ / máu / MP, dòng cộng thêm), Excellent (chí mạng, % công, giảm sát thương,
+tỉ lệ phòng thủ, % máu), chí mạng, né, trúng, phòng thủ đều có tác dụng khi đánh quái và đánh người.
+Sửa một chỗ thiếu: đánh **bản sao người** (đồ sát, PK cược; đấu trường khi mất `mirror`) trước đây bỏ sót Excellent "phản sát thương"
+của bên bị đánh. Nay bản sao mang `reflect` (`Arena.opponent/2`), người đánh bị phản lại; phản đòn ở đây không hạ gục (còn ít nhất
+1 máu) vì trận do Slay / PkFight chốt theo máu hai bên. Đấu trường (`mirror`) giữ như cũ (phản đòn hạ được).

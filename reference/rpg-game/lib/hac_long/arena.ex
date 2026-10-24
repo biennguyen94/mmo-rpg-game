@@ -93,6 +93,8 @@ defmodule HacLong.Arena do
       atk: round(d.atk * (1 + d.wingDmg)),
       taken: Float.round((1 - d.wingAbsorb) * (1 - d.excAbsorb) * 1.0, 4),
       ignore_def: d.ignoreDef,
+      # Excellent "phản sát thương" của người đó: người đánh bản sao (đồ sát, PK cược) cũng bị phản
+      reflect: d.excReflect,
       def: d.def,
       crit: d.crit,
       # Phase 8: hệ số chí mạng thật của người đó (trước đây ×monster_crit_mult như quái)
