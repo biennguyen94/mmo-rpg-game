@@ -203,6 +203,19 @@ defmodule HacLong.Game.TwoHandTest do
     assert exc.atk_pct == 0 and exc.heal_kill > 0
   end
 
+  test "sách phép Summoner đã bỏ (B-43): không còn trong đồ; dữ liệu cũ đổi sang gậy 1 tay của Phù Thủy" do
+    for id <- ~w(item_5_21 item_5_22 item_5_23), do: refute(Map.has_key?(Data.items(), id))
+    assert Data.item("item_5_22").name == Data.item("item_5_5").name
+    assert Data.legacy?("item_5_21") and Data.replacement("item_5_23", "dw") == "item_5_6"
+
+    p = player("dw", %{level: 30})
+    g = %{uid: "#BOOK0001", base: "item_5_22"}
+    p = %{p | gear: Gear.list(p) ++ [g], equip: %{p.equip | shield: "#BOOK0001"}}
+    p = Engine.migrate_items(p)
+    assert Gear.find(p, "#BOOK0001").base == "item_5_5"
+    assert p.equip.shield == "#BOOK0001"
+  end
+
   test "ItemBuild: hệ số 2 tay so với 1 tay cùng cấp; gậy theo sức mạnh phép; kẹp min / max, nhân scale" do
     d = fn ref, x, lvl, atk, magic ->
       {ref, %{"ref" => ref, "cells" => [x, 3], "itemLvl" => lvl, "atk" => atk, "magic" => magic}}

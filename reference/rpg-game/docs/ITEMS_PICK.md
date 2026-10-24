@@ -4,7 +4,7 @@
 > (req_mult 0.35, set_def_mult 1.0).
 > **Đừng sửa tay file này**: sửa `item_pick.json` rồi chạy lại. Giải thích: `docs/ITEMS_PHASE15B.md`.
 
-Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54, Giày 54, Nhẫn 6, Dây chuyền 5.
+Tổng 414 món: Vũ khí 119, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54, Giày 54, Nhẫn 6, Dây chuyền 5.
 
 ## Vũ khí
 
@@ -46,7 +46,6 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 5 | 17 | Rìu Nikkea | Nikkea Axe | `1/6` | dk, mg | 44 (37~52) | str 46 | 1600 |
 | 5 | 17 | Giáo Dài | Spear | `3/1` | dk, mg | 49 (41~58) | agi 18 str 25 | 1600 |
 | 5 | 17 | Đinh Ba Khổng Lồ | Giant Trident | `3/3` | dk, mg | 43 (35~50) | agi 11 str 31 | 1600 |
-| 5 | 17 | Sách Sahamutt | Book of Sahamutt | `5/21` | dw | 31 (29~33) | agi 7 ene 47 | 1600 |
 | 5 | 17 | Gậy Xà Nữ | Gorgon Staff | `5/4` | dw | 38 (35~40) | str 18 | 1600 |
 | 5 | 17 | Nỏ Nhẹ | Light Crossbow | `4/11` | elf | 48 (41~54) | agi 31 str 11 | 1600 |
 | 5 | 17 | Cung Chiến | Battle Bow | `4/3` | elf | 45 (38~50) | agi 31 str 11 | 1600 |
@@ -57,7 +56,6 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 6 | 22 | Giáo Ánh Sáng | Light Spear | `3/0` | dk, mg | 63 (54~70) | agi 25 str 21 | 3600 |
 | 6 | 22 | Rìu Cán Dài | Berdysh | `3/7` | dk, mg | 58 (49~64) | agi 18 str 28 | 3600 |
 | 6 | 22 | Gậy Cánh Đỏ | Red Wing Staff | `5/16` | dw | 44 (43~45) | agi 5 str 13 | 3600 |
-| 6 | 22 | Sách Neil | Book of Neil | `5/22` | dw | 44 (43~45) | agi 9 ene 59 | 3600 |
 | 6 | 22 | Gậy Huyền Thoại | Legendary Staff | `5/5` | dw | 44 (43~45) | str 18 | 3600 |
 | 6 | 22 | Nỏ Xà | Serpent Crossbow | `4/12` | elf | 59 (53~66) | agi 35 str 11 | 3600 |
 | 6 | 22 | Cung Hổ | Tiger Bow | `4/4` | elf | 59 (53~66) | agi 35 str 11 | 3600 |
@@ -67,7 +65,6 @@ Tổng 417 món: Vũ khí 122, Khiên 21, Mũ 47, Giáp 54, Quần 54, Găng 54,
 | 7 | 27 | Cự Kiếm | Giant Sword | `0/15` | dk, mg | 99 (87~112) | str 49 | 7500 |
 | 7 | 27 | Rìu Larkan | Larkan Axe | `1/7` | dk, mg | 95 (83~107) | str 49 | 7500 |
 | 7 | 27 | Giáo Xà | Serpent Spear | `3/4` | dk, mg | 108 (95~122) | agi 11 str 31 | 7500 |
-| 7 | 27 | Sách Bóng Ma | Book of Ghost Phantom | `5/23` | dw | 60 (57~63) | agi 11 ene 70 | 7500 |
 | 7 | 27 | Gậy Hồi Sinh | Staff of Resurrection | `5/6` | dw | 60 (57~63) | agi 4 str 21 | 7500 |
 | 7 | 27 | Cung Bạc | Silver Bow | `4/5` | elf | 90 (81~98) | agi 35 str 11 | 7500 |
 | 8 | 32 | Kiếm Pha Lê | Crystal Sword | `2/5` | dk, dw, elf, mg | 125 (109~141) | agi 25 str 46 | 15000 |

@@ -108,6 +108,9 @@ defmodule HacLong.Game.Data do
                 into: %{},
                 do: {id, %{kind: kind, tier: tier}}
               )
+  # `ITEM_PICK.removed` (B-43): đồ Item.txt đã bỏ khỏi game (sách phép Summoner) → món thay; nạp nhân vật thì đổi
+  # (`Engine.migrate_items/1`), tra món đã bỏ (thư, chợ cũ) thì trả món thay
+  @removed @pick["removed"] || %{}
   # `ITEM_PICK.refs`: đồ riêng của Hắc Long (cánh, đồ trùm) mượn hình gốc theo `ref` "nhóm/số"
   @refs @pick["refs"] || %{}
   @items by_id.(raw["ITEMS"])
@@ -239,10 +242,10 @@ defmodule HacLong.Game.Data do
   @doc "Quái (hoặc trùm vùng) theo id."
   def monster(id), do: Map.get(@monsters, id)
   def items, do: @items
-  def item(id), do: Map.get(@items, id)
+  def item(id), do: Map.get(@items, id) || ((r = @removed[id]) && Map.get(@items, r))
 
   @doc "Đồ mới thay đồ cũ `id` cho lớp `cls` (Phase 15b); nil nếu `id` không phải đồ cũ đã thay."
-  def replacement(id, cls), do: Map.get(@replace, {id, cls})
+  def replacement(id, cls), do: Map.get(@replace, {id, cls}) || @removed[id]
 
   # số món của mỗi bộ giáp cho từng lớp (Phase 15c, thưởng đủ bộ): `{bộ, lớp} => n`
   @set_sizes for({_, it} <- @mu_sorted, it[:set], c <- it.classes, do: {it.set, c})
@@ -252,7 +255,7 @@ defmodule HacLong.Game.Data do
   def set_size(set, cls), do: Map.get(@set_sizes, {set, cls}, 0)
 
   @doc "Đồ cũ đã được thay bằng đồ Item.txt (thôi bán / rơi)."
-  def legacy?(id), do: Map.has_key?(@legacy, id)
+  def legacy?(id), do: Map.has_key?(@legacy, id) or Map.has_key?(@removed, id)
 
   @doc """
   Đồ khởi đầu của lớp `cls`: `%{weapon: id, armor: id, …}` (bậc 1 trong `items_mu.json`).

@@ -923,32 +923,6 @@
       "version": 1,
       "verified": false
     },
-    "item_5_21": {
-      "name": "Sách Sahamutt",
-      "mu_name": "Book of Sahamutt",
-      "slot": "weapon",
-      "tier": 5,
-      "level": 17,
-      "classes": [
-        "dw"
-      ],
-      "hands": 1,
-      "atk": 31,
-      "atkMin": 29,
-      "atkMax": 33,
-      "req": {
-        "agi": 7,
-        "ene": 47
-      },
-      "price": 1600,
-      "ref": "5/21",
-      "icon": "battle-axe",
-      "doll": "hand1/staff",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
     "item_5_4": {
       "name": "Gậy Xà Nữ",
       "mu_name": "Gorgon Staff",
@@ -1210,32 +1184,6 @@
       "version": 1,
       "verified": false
     },
-    "item_5_22": {
-      "name": "Sách Neil",
-      "mu_name": "Book of Neil",
-      "slot": "weapon",
-      "tier": 6,
-      "level": 22,
-      "classes": [
-        "dw"
-      ],
-      "hands": 1,
-      "atk": 44,
-      "atkMin": 43,
-      "atkMax": 45,
-      "req": {
-        "agi": 9,
-        "ene": 59
-      },
-      "price": 3600,
-      "ref": "5/22",
-      "icon": "two-handed-sword",
-      "doll": "hand1/staff",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
     "item_5_5": {
       "name": "Gậy Huyền Thoại",
       "mu_name": "Legendary Staff",
@@ -1465,32 +1413,6 @@
       "ref": "3/4",
       "icon": "war-axe",
       "doll": "hand1/axe_double",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
-    "item_5_23": {
-      "name": "Sách Bóng Ma",
-      "mu_name": "Book of Ghost Phantom",
-      "slot": "weapon",
-      "tier": 7,
-      "level": 27,
-      "classes": [
-        "dw"
-      ],
-      "hands": 1,
-      "atk": 60,
-      "atkMin": 57,
-      "atkMax": 63,
-      "req": {
-        "agi": 11,
-        "ene": 70
-      },
-      "price": 7500,
-      "ref": "5/23",
-      "icon": "war-axe",
-      "doll": "hand1/staff",
       "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,

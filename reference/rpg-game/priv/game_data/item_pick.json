@@ -218,6 +218,11 @@
       "lost_map": "14/28",
       "bi_kip": "14/10"
     },
+    "removed": {
+      "item_5_21": "item_5_5",
+      "item_5_22": "item_5_5",
+      "item_5_23": "item_5_6"
+    },
     "icons": {
       "helm": "visored-helm",
       "pants": "lamellar",
@@ -715,22 +720,11 @@
             "doll": "hand1/staff"
           }
         ],
-        [
-          {
-            "ref": "5/21",
-            "name": "Sách Sahamutt",
-            "doll": "hand1/staff"
-          }
-        ],
+        [],
         [
           {
             "ref": "5/16",
             "name": "Gậy Cánh Đỏ",
-            "doll": "hand1/staff"
-          },
-          {
-            "ref": "5/22",
-            "name": "Sách Neil",
             "doll": "hand1/staff"
           }
         ],
@@ -739,11 +733,6 @@
             "ref": "2/4",
             "name": "Chùy Sao Pha Lê",
             "doll": "hand1/morningstar"
-          },
-          {
-            "ref": "5/23",
-            "name": "Sách Bóng Ma",
-            "doll": "hand1/staff"
           }
         ],
         [
