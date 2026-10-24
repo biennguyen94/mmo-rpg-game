@@ -189,6 +189,8 @@ defmodule HacLong.Game.Session do
     s = %{
       user_id: user_id,
       player: with_guild(Characters.load(user_id), user_id),
+      # tài khoản bot: không báo cả server khi bot ép / ghép thành công, nhặt đồ Thần (tránh loãng dải thông báo)
+      bot: HacLong.Bots.bot?(user_id),
       tabs: %{},
       dirty: false,
       flush_timer: nil,
@@ -713,8 +715,8 @@ defmodule HacLong.Game.Session do
 
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
-    if announce, do: HacLong.Chat.system(announce)
-    Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
+    if announce && !s[:bot], do: HacLong.Chat.system(announce)
+    if !s[:bot], do: Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
 
     reply({result, player}, s)
   end

@@ -1018,3 +1018,20 @@ cấp 10** (không ai yếu đi), kỹ năng mở sau đó và nhân vật mới
   vàng + vòng sáng trên nhân vật. Quản trị `set_mastery` đặt cấp mọi kỹ năng đang có.
 - Không chạy lại giả lập đánh người: ở cấp 10 mọi số y như trước nên kết quả cân bằng cũ giữ nguyên; chênh lệch chỉ khi hai bên khác
   cấp thông thạo (người luyện nhiều mạnh hơn, đúng ý tính năng).
+
+## Bot ép đồ, chuyển sinh (2026-10-24, anh duyệt)
+
+Trước đây bot không ép đồ (ngọc nhặt được nằm yên, đồ luôn +0) và lên cấp tối đa thì đứng luyện mãi. Anh duyệt đề xuất:
+- `HacLong.Bots.Brain.forge_job/2` (`RULES.bots.forge`, DESIGN): lúc rảnh (sau mua bình / nghỉ) mà vàng dư quá
+  `gold_keep_per_level` × cấp (400 × cấp, để mua bình) thì về Làng rèn, gửi đúng lệnh như người chơi:
+  - ép món đang mặc cấp thấp nhất trước ở Thợ Rèn; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` (2) viên
+    mỗi loại ngọc cần; +10 / +11 ở Máy Hỗn Nguyên chỉ bot "liều" (seed chia hết cho `daring_every` = 10, khoảng 10 % bot);
+  - Ngọc Sinh Mệnh thêm dòng cho vũ khí, áo giáp (tới 4 dòng);
+  - cánh: chưa có thì ép một món trong túi (vũ khí / giáp / khiên) tới +5 rồi ghép cánh cấp 1; cánh đang mặc đủ cấp ép và đủ
+    nguyên liệu công thức kế tiếp thì tháo ra rồi ghép lên cấp (bước ghép làm trước cả bước mặc đồ để không mặc lại).
+- Bot ép / ghép thành công, nhặt đồ Thần: **không báo cả server** (Session biết tài khoản bot, `HacLong.Bots.bot?/1`).
+- Chuyển sinh như người thật: cấp tối đa, chưa chuyển sinh tối đa, đã hạ chúa tể nếu cần → về Trưởng Làng chuyển sinh. Cần hạ
+  chúa tể vùng chuyển sinh N thì đi vùng đó (`realm_target/1`): đánh mọi quái (quái vùng chuyển sinh cao hơn cấp tối đa),
+  hạ đủ `realm_kills` (30) quái ở bản đồ trước mới sang bản đồ sau, chúa tể ở bản đồ cuối, gặp chúa tể thì đánh trước.
+- Bot mạnh lên theo thời gian (ảnh hưởng xếp hạng): chấp nhận, để người chơi có đối thủ ngang tầm. Bảng xếp hạng vẫn loại bot
+  như trước (`role != "bot"`).

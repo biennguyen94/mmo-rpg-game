@@ -1084,8 +1084,10 @@
       "mana_buy": 6,
       "potion_heal_min": 0.3,
       "inn_gold_mult": 2,
+      "_forge_doc": "DECISIONS \"Bot ép đồ, chuyển sinh\": lúc rảnh ở Làng bot ép đồ đang mặc (cấp thấp nhất trước) bằng ngọc như người thật, giữ lại gold_keep_per_level × cấp vàng; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` viên mỗi loại ngọc cần; Ngọc Sinh Mệnh thêm dòng cho `life_slots`; ghép / nâng cánh ở Máy Hỗn Nguyên; +10 / +11 chỉ bot \"liều\" (seed chia hết cho daring_every). Cấp tối đa đã đủ điều kiện thì chuyển sinh; cần hạ chúa tể thì đi vùng chuyển sinh, qua từng bản đồ của vùng khi đã hạ realm_kills quái ở bản đồ trước.",
+      "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30},
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     "slay": {
