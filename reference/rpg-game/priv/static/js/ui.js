@@ -2319,6 +2319,8 @@
   const SLOT_REMOVABLE = SLOT_OPEN;
   // loại đồ của món mặc được vào ô `slot` (hai ô nhẫn chung loại "ring")
   const slotKind = (slot) => (slot === 'ring1' || slot === 'ring2' ? 'ring' : slot);
+  // tên ô: ô khiên đang cầm vũ khí (cầm 2 vũ khí, B-42) ghi "Tay trái"
+  const slotLabel = (slot, it) => (slot === 'shield' && it && it.slot === 'weapon' ? 'Tay trái' : SLOT_LABEL[slot]);
   // cầm 2 vũ khí (B-42): lớp được cầm, vũ khí 1 tay, tay phải đang cầm vũ khí 1 tay
   const DUAL = RULES.dualWield || { classes: [] };
   const canLeft = (it) => {
@@ -2425,7 +2427,7 @@
       if (!it) return `<span class="slot empty"><span class="lbl">${SLOT_LABEL[slot]}</span></span>`;
       const kind = g.kind || it.kind;
       return `<button class="slot${kind ? ` b-${kind}` : ''}${upClass(g.up)}" data-act="prof-tip" data-i="${i}" title="${esc(g.name)}">
-        ${cellIcon(it, g.up)}${g.up ? `<span class="lvl">+${g.up}</span>` : ''}<span class="lbl">${SLOT_LABEL[slot]}</span></button>`;
+        ${cellIcon(it, g.up)}${g.up ? `<span class="lvl">+${g.up}</span>` : ''}<span class="lbl">${slotLabel(slot, it)}</span></button>`;
     }).join('');
   }
 
@@ -2443,7 +2445,7 @@
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.kind ? ` b-${it.kind}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
         ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
-        <span class="lbl">${slot === 'shield' && it && it.slot === 'weapon' ? 'Tay trái' : SLOT_LABEL[slot]}</span>
+        <span class="lbl">${slotLabel(slot, it)}</span>
       </button>`;
     }).join('');
     const bag = Array.from({ length: cells }, (_, i) => {
@@ -2676,7 +2678,7 @@
       const ids = Object.keys(P.view.forgeBag).sort((a, b) => (a === forgePick ? -1 : b === forgePick ? 1 : 0));
       return ids.map((id) => [null, id === forgePick ? 'Trong túi (đã chọn)' : 'Trong túi', Object.assign({ id }, P.view.forgeBag[id])]);
     }
-    return FORGE_SLOTS.map(([slot, label]) => [slot, label, P.view.forge[slot]]);
+    return FORGE_SLOTS.map(([slot, label]) => [slot, slot === 'shield' && P.equip.shield ? slotLabel(slot, itemOf(P.equip.shield)) : label, P.view.forge[slot]]);
   }
   // hướng dẫn gọn: bảng các bước ép, rồi vài dòng ghi chú
   function upGuide() {
