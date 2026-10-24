@@ -96,6 +96,80 @@ defmodule HacLong.Game.TwoHandTest do
     assert Engine.two_hand_fix(p) == p
   end
 
+  test "cầm 2 vũ khí (B-42): Kiếm Sĩ / Phù Thủy / Đấu Sĩ cầm vũ khí 1 tay ở tay trái, công cộng thêm × mult" do
+    one = weapon("dk", 1)
+
+    p =
+      player("dk", %{level: 30})
+      |> Engine.add_item(one)
+      |> Engine.add_item(one)
+      |> Engine.add_item(shield())
+
+    [a, b] = for g <- Gear.bag(p), g.base == one, do: g.uid
+    {%{ok: true}, p} = Engine.equip(p, a)
+    {%{ok: true}, p} = Engine.equip(p, uid(p, shield()))
+    with_shield = Engine.derived(p)
+
+    {r, p} = Engine.equip(p, b, "left")
+    assert r.ok
+    assert worn(p, :weapon) == one and worn(p, :shield) == one
+    assert Engine.left_weapon(p).name == Data.item(one).name
+    d = Engine.derived(p)
+    k = Engine.dual_rules().mult
+
+    # tay trái là vũ khí: không còn phòng thủ khiên, công cộng thêm công vũ khí × k (trước nhân phần trăm)
+    assert d.def < with_shield.def
+    assert d.atk > with_shield.atk
+    assert_in_delta d.atk - with_shield.atk, k * Data.item(one).atk, 2
+
+    # mặc vũ khí 2 tay: vũ khí tay trái về túi
+    two = weapon("dk", 2)
+    p = Engine.add_item(p, two)
+    {r, p} = Engine.equip(p, uid(p, two))
+    assert r.ok and r.msg =~ "Vũ khí tay trái về túi"
+    assert p.equip.shield == nil
+  end
+
+  test "cầm 2 vũ khí: Tiên Nữ không được; vũ khí 2 tay không vào tay trái; chưa cầm tay phải thì không được" do
+    p = player("elf", %{level: 30}) |> Engine.add_item(weapon("elf", 1))
+    {r, _} = Engine.equip(p, uid(p, weapon("elf", 1)), "left")
+    refute r.ok
+
+    two = weapon("dk", 2)
+    p = player("dk", %{level: 30}) |> Engine.add_item(two)
+    {r, _} = Engine.equip(p, uid(p, two), "left")
+    refute r.ok and r.msg =~ "2 tay"
+
+    one = weapon("dk", 1)
+    p = player("dk", %{level: 30}) |> Engine.add_item(one)
+    p = %{p | equip: %{p.equip | weapon: nil}}
+    {r, _} = Engine.equip(p, uid(p, one), "left")
+    refute r.ok
+
+    assert Engine.dual_class?("dw") and Engine.dual_class?("mg") and not Engine.dual_class?("elf")
+  end
+
+  test "cầm 2 vũ khí: dòng Excellent % của vũ khí tay trái không cộng" do
+    one = weapon("mg", 1)
+    p = player("mg", %{level: 30})
+    p = Engine.add_item(p, one) |> Engine.add_item(one)
+    [a, b] = for g <- Gear.bag(p), g.base == one, do: g.uid
+
+    p = %{
+      p
+      | gear:
+          Enum.map(
+            Gear.list(p),
+            &if(&1.uid == b, do: Map.put(&1, :exc, ~w(atk_pct heal_kill)), else: &1)
+          )
+    }
+
+    {%{ok: true}, p} = Engine.equip(p, a)
+    {%{ok: true}, p} = Engine.equip(p, b, "left")
+    exc = Gear.exc_stats(p)
+    assert exc.atk_pct == 0 and exc.heal_kill > 0
+  end
+
   test "ItemBuild: hệ số 2 tay so với 1 tay cùng cấp; gậy theo sức mạnh phép; kẹp min / max, nhân scale" do
     d = fn ref, x, lvl, atk, magic ->
       {ref, %{"ref" => ref, "cells" => [x, 3], "itemLvl" => lvl, "atk" => atk, "magic" => magic}}

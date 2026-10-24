@@ -82,7 +82,7 @@ defmodule HacLong.Game.Commands do
         Engine.allocate(p, c["stat"], int(c["n"] || 1))
 
       "equip" ->
-        Engine.equip(p, c["id"])
+        Engine.equip(p, c["id"], c["hand"])
 
       "unequip" ->
         Engine.unequip(p, c["slot"])

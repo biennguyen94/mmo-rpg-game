@@ -2319,6 +2319,12 @@
   const SLOT_REMOVABLE = SLOT_OPEN;
   // loại đồ của món mặc được vào ô `slot` (hai ô nhẫn chung loại "ring")
   const slotKind = (slot) => (slot === 'ring1' || slot === 'ring2' ? 'ring' : slot);
+  // cầm 2 vũ khí (B-42): lớp được cầm, vũ khí 1 tay, tay phải đang cầm vũ khí 1 tay
+  const DUAL = RULES.dualWield || { classes: [] };
+  const canLeft = (it) => {
+    const w = P && P.equip.weapon && itemOf(P.equip.weapon);
+    return !!(it && it.slot === 'weapon' && it.hands === 1 && P && DUAL.classes.includes(P.cls) && w && w.hands !== 2);
+  };
   const WEAR_KINDS = [...new Set(SLOT_OPEN.map(slotKind))];
   // Phase 15c: chữ cho dòng Excellent (giá trị do server gửi trong `exc_lines`)
   const EXC_TEXT = {
@@ -2434,7 +2440,7 @@
       return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.kind ? ` b-${it.kind}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
         ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
-        <span class="lbl">${SLOT_LABEL[slot]}</span>
+        <span class="lbl">${slot === 'shield' && it && it.slot === 'weapon' ? 'Tay trái' : SLOT_LABEL[slot]}</span>
       </button>`;
     }).join('');
     const bag = Array.from({ length: cells }, (_, i) => {
@@ -2550,7 +2556,7 @@
     const lockBtn = wearable ? `<button class="btn" data-act="lock" data-id="${esc(id)}" data-on="${it.locked ? '0' : '1'}">${it.locked ? 'Mở khóa' : '🔒 Khóa'}</button>` : '';
     const btns = at.slot
       ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
-      : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${lockBtn}`
+      : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${canLeft(it) ? `<button class="btn" data-act="equip" data-hand="left" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Cầm tay trái</button>` : ''}${lockBtn}`
       // bình mana: sáng khi MP chưa đầy; bình máu: khi máu chưa đầy (như server `Engine.use_potion/2`)
       : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana_pct ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
       : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
@@ -2608,6 +2614,8 @@
     e.preventDefault();
     if (from.id) {
       const it = itemOf(from.id);
+      // vũ khí 1 tay thả vào ô khiên: cầm tay trái (lớp cầm 2 vũ khí)
+      if (t.dataset.dropSlot === 'shield' && canLeft(it)) { sendCommand({ act: 'equip', id: from.id, hand: 'left' }); return; }
       if (!it || it.slot !== slotKind(t.dataset.dropSlot)) { toast(`Món này không mặc vào ô ${SLOT_LABEL[t.dataset.dropSlot]}.`, true); return; }
       sendCommand({ act: 'equip', id: from.id });
     } else if (SLOT_REMOVABLE.includes(from.equip)) {
@@ -3531,7 +3539,8 @@
       case 'alloc5': return { act: 'alloc', stat: d.stat, n: 5 };
       case 'buy': return { act, id: d.id, n: 1 };
       case 'buy5': return { act: 'buy', id: d.id, n: 5 };
-      case 'equip': case 'use': case 'sell': return { act, id: d.id };
+      case 'equip': return d.hand ? { act, id: d.id, hand: d.hand } : { act, id: d.id };
+      case 'use': case 'sell': return { act, id: d.id };
       case 'unequip': return { act, slot: d.slot };
       case 'upgrade': case 'chaos_upgrade': return { act, slot: d.slot, id: d.id, confirm: d.risk === 'destroy' };
       case 'life': return { act, slot: d.slot, id: d.id };

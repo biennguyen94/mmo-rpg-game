@@ -10,13 +10,13 @@
 |---|---|---|---|
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
-| B41-A | Vũ khí 2 tay | Kiếm Sĩ / Đấu Sĩ **cầm 2 vũ khí 1 tay** (MU cho cầm vũ khí ở tay trái thay khiên): sát thương tính thế nào? Em không có mã nguồn / tài liệu MU để đối chiếu nên chưa làm (ô tay trái hiện chỉ nhận khiên). | Anh gửi công thức MU bản anh theo, hoặc chốt một hệ số (vd tổng 2 vũ khí × 0,6) |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
 
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| B41-A | 2026-10-24 | Cầm 2 vũ khí 1 tay: lớp nào, sát thương tính thế nào? | Kiếm Sĩ, Phù Thủy, Đấu Sĩ; cộng thẳng 2 vũ khí (k = 1), đo rồi mới quyết (DECISIONS B-42) |
 | 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |
 | 9-B | 2026-10-04 | 20 bản đồ mới đặt ở đâu? | Bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, **không liên quan Hắc Long** |
 | 9-C | 2026-10-04 | Giá dịch chuyển? | 20 + 4 × cấp quái thấp nhất; Làng / Nhà miễn phí; đá dịch chuyển vẫn miễn phí |

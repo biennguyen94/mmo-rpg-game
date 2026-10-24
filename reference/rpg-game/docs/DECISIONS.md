@@ -1069,3 +1069,15 @@ Anh: theo MU, vũ khí 2 tay không cầm khiên; "làm sao sát MU nhất mà v
   công 145 → 248 nên thắng 72–76 % mọi lớp. Chỉnh `RULES.pvp.class_taken.elf` 1,08 → **1,3** (như cách chỉnh cân bằng lớp trước):
   mọi cặp có Tiên Nữ 48–52 %. Các cặp khác giữ như cũ (Kiếm Sĩ / Đấu Sĩ 41 %, trước 35 %).
 - Chưa làm: cầm 2 vũ khí 1 tay (Kiếm Sĩ, Đấu Sĩ) — chờ công thức (`OPEN_QUESTIONS` B41-A).
+
+## Cầm 2 vũ khí 1 tay (B-42, 2026-10-24, anh duyệt)
+
+Anh: Kiếm Sĩ, Phù Thủy, Đấu Sĩ cầm được 2 vũ khí 1 tay (vd 2 Gậy Tổng Lãnh Thiên Thần cho Phù Thủy / Đấu Sĩ); Tiên Nữ không
+(cung / nỏ 2 tay). Anh chọn bắt đầu bằng **cộng thẳng 2 vũ khí** (k = 1), đo xong mới quyết có hạ hay không.
+- `RULES.dual_wield` (DESIGN): `classes` dk / dw / mg, `mult` k = 1,0, `left_exc` (dòng Excellent của vũ khí tay trái được tính:
+  hồi máu / MP khi hạ quái; các dòng % như tăng sát thương, chí mạng, trúng, công theo cấp chỉ lấy của tay phải).
+- Vũ khí tay trái nằm ở ô `shield` (không đổi database): lệnh `equip` thêm `hand: "left"` (tùy chọn). Công thêm = k × (công + ép +
+  dòng cộng thêm của vũ khí tay trái), cộng trước các phần trăm; không có phòng thủ khiên. May mắn / Kỹ năng chỉ của tay phải.
+- Điều kiện: lớp trong `classes`, vũ khí 1 tay, tay phải đang cầm vũ khí 1 tay. Mặc vũ khí 2 tay: vũ khí tay trái về túi (như khiên).
+- Bot (`Brain`), mô phỏng hành trình (`Journey.gear_up` thử cả tay trái), giao diện (nút "Cầm tay trái" trong bảng chi tiết, kéo vũ
+  khí vào ô khiên, ô ghi "Tay trái"). Hình nhân vật chưa vẽ vũ khí tay trái.

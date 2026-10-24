@@ -165,6 +165,8 @@ defmodule HacLongWeb.PageController do
         # Phase 3 (B-29): nguyên tố, kỹ năng tháp
         elements: Map.drop(Data.rules().elements, [:_doc, :sourceType, :version, :verified]),
         towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist, :mp_mult]),
+        # cầm 2 vũ khí 1 tay (B-42): lớp được cầm, hệ số công tay trái
+        dualWield: Map.take(Data.rules().dual_wield, [:classes, :mult]),
         # tác dụng kỹ năng lớp (mô tả kỹ năng theo cấp thông thạo ở client)
         skillEffects: Data.rules().skill_effects,
         # thông thạo kỹ năng (Menu → Kỹ năng): cấp tối đa, vật phẩm đột phá, MP cấp thấp

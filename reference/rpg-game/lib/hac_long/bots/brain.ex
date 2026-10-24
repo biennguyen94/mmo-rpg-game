@@ -74,7 +74,7 @@ defmodule HacLong.Bots.Brain do
         do_job(p, job, snap)
 
       g = better_gear(p) ->
-        %{"act" => "equip", "id" => g}
+        g
 
       p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
@@ -321,8 +321,13 @@ defmodule HacLong.Bots.Brain do
   # ---------- Đồ đạc, hồi máu ----------
 
   # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ;
-  # vũ khí 2 tay so với vũ khí + khiên đang cầm)
+  # vũ khí 2 tay so với vũ khí + khiên đang cầm; lớp cầm 2 vũ khí: vũ khí 1 tay ở tay trái so với khiên / vũ khí
+  # tay trái đang cầm). Trả lệnh `equip` hoặc nil.
   defp better_gear(p) do
+    weapon = Gear.item(p, p.equip.weapon)
+    left = Gear.item(p, p.equip.shield)
+    k = Engine.dual_rules().mult
+
     p
     |> Gear.bag()
     |> Enum.map(&Gear.resolve/1)
@@ -330,25 +335,41 @@ defmodule HacLong.Bots.Brain do
     |> Enum.find_value(fn it ->
       slot = Engine.equip_slot(p, it)
       cur = Gear.item(p, p.equip[slot])
-      weapon = Gear.item(p, p.equip.weapon)
+
+      left_power =
+        if left && left.slot == "weapon", do: power(left) * k, else: power(left)
 
       cond do
         # vũ khí 2 tay không cầm khiên (B-41)
         slot == :shield and Engine.two_handed?(weapon) ->
           nil
 
-        # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn khiên đang cầm
+        # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn tay trái đang cầm
         slot == :weapon and Engine.two_handed?(it) ->
-          if power(it) > power(cur) + power(Gear.item(p, p.equip.shield)), do: it.uid
+          if power(it) > power(cur) + left_power, do: equip(it)
 
-        power(it) > power(cur) ->
-          it.uid
+        slot == :weapon and power(it) > power(cur) ->
+          equip(it)
+
+        # cầm 2 vũ khí (B-42): vũ khí 1 tay vào tay trái nếu hơn khiên / vũ khí tay trái
+        slot == :weapon and Engine.dual_class?(p.cls) and weapon && not Engine.two_handed?(weapon) and
+            power(it) * k > left_power ->
+          equip(it, "left")
+
+        slot != :weapon and power(it) > power(cur) and
+            not (slot == :shield and left && left.slot == "weapon") ->
+          equip(it)
 
         true ->
           nil
       end
     end)
   end
+
+  defp equip(it, hand \\ nil),
+    do:
+      %{"act" => "equip", "id" => it.uid}
+      |> then(&if(hand, do: Map.put(&1, "hand", hand), else: &1))
 
   @doc "Sức mạnh thô một món đồ (tấn công + phòng thủ + dòng cộng thêm), để so với món đang mặc."
   def power(nil), do: 0

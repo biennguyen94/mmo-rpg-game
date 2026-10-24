@@ -38,6 +38,8 @@ defmodule HacLong.Game.Engine do
   @pet_sk @rules.pets.skills
   # DECISIONS "Cân bằng đánh người"
   @pvp @rules.pvp
+  # cầm 2 vũ khí 1 tay (B-42)
+  @dual @rules.dual_wield
   @up @rules.upgrade
   @shop @rules.shop
   # Phase 15b: đồ ngẫu nhiên rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class`)
@@ -228,6 +230,10 @@ defmodule HacLong.Game.Engine do
 
     up = fn id -> if id, do: upgrade_bonus(p, id) + life_bonus(p, id), else: 0 end
 
+    # vũ khí thứ hai ở tay trái (B-42): công + ép + dòng cộng thêm × `dual_wield.mult`
+    lw = left_weapon(p)
+    dual = if lw, do: @dual.mult * (lw.atk + up.(p.equip.shield)), else: 0
+
     lin = fn terms ->
       Enum.reduce(terms, 0, fn
         {:level, k}, acc -> acc + k * p.level
@@ -248,14 +254,14 @@ defmodule HacLong.Game.Engine do
       atk:
         round(
           (lin.(f.atk) + exc.atk_lvl * p.level + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
-             if(pd, do: pd[:atk] || 0, else: 0) + up.(p.equip[:pendant])) * pet.(:atk) *
+             dual + if(pd, do: pd[:atk] || 0, else: 0) + up.(p.equip[:pendant])) * pet.(:atk) *
             (1 + exc.atk_pct + sb.atk_pct + anc.atk_pct)
         ),
       def:
         round(
           (lin.(f.def) +
              Enum.sum(
-               for slot <- @def_slots, id = p.equip[slot] do
+               for slot <- @def_slots, id = p.equip[slot], !(slot == :shield && lw) do
                  Map.get(Gear.item(p, id) || %{}, :def, 0) + up.(id)
                end
              )) * pet.(:def) * (1 + sb.def_pct + anc.def_pct)
@@ -3126,10 +3132,16 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  def equip(p, id) do
+  @doc """
+  Mặc món `id`. `hand: "left"`: vũ khí 1 tay cầm ở tay trái (ô `shield`, thay khiên) — chỉ lớp trong
+  `RULES.dual_wield.classes`, tay phải đang cầm vũ khí 1 tay (B-42).
+  """
+  def equip(p, id, hand \\ nil) do
     id = bag_uid(p, id)
     it = Gear.item(p, id)
     gear? = Gear.instance?(id)
+    right = Gear.item(p, p.equip.weapon)
+    left? = hand == "left" and is_map(it) and it.slot == "weapon"
 
     owned =
       if gear?,
@@ -3146,11 +3158,23 @@ defmodule HacLong.Game.Engine do
       (why = can_wear(p, it)) != :ok ->
         {err(elem(why, 1)), p}
 
-      it.slot == "shield" and two_handed?(Gear.item(p, p.equip.weapon)) ->
-        {err("#{Gear.item(p, p.equip.weapon).name} là vũ khí 2 tay: không cầm khiên được."), p}
+      it.slot == "shield" and two_handed?(right) ->
+        {err("#{right.name} là vũ khí 2 tay: không cầm khiên được."), p}
+
+      left? and not dual_class?(p.cls) ->
+        {err("#{Data.class(p.cls).name} không cầm 2 vũ khí được."), p}
+
+      left? and two_handed?(it) ->
+        {err("#{it.name} là vũ khí 2 tay: không cầm ở tay trái được."), p}
+
+      left? and right == nil ->
+        {err("Cầm vũ khí ở tay phải trước."), p}
+
+      left? and two_handed?(right) ->
+        {err("#{right.name} là vũ khí 2 tay: không cầm thêm vũ khí được."), p}
 
       true ->
-        slot = equip_slot(p, it)
+        slot = if left?, do: :shield, else: equip_slot(p, it)
         hp_ratio = p.hp / derived(p).maxHp
         old = p.equip[slot]
 
@@ -3158,16 +3182,29 @@ defmodule HacLong.Game.Engine do
         p = if gear?, do: p, else: take_item(p, id)
         p = if old && not Gear.instance?(old), do: add_item(p, old), else: p
         p = %{p | equip: Map.put(p.equip, slot, id)}
-        # vũ khí 2 tay (B-41): khiên đang cầm về túi
+        # vũ khí 2 tay (B-41): khiên / vũ khí tay trái đang cầm về túi
         off = slot == :weapon and two_handed?(it) and p.equip.shield
+        note = if off, do: " #{left_name(p)} về túi (vũ khí 2 tay).", else: ""
         p = if off, do: free_shield(p), else: p
-        note = if off, do: " Khiên về túi (vũ khí 2 tay).", else: ""
         {ok("Đã trang bị #{it.name}.#{note}"), %{p | hp: round(hp_ratio * derived(p).maxHp)}}
     end
   end
 
   @doc "Vũ khí `it` cầm 2 tay (`hands: 2`: cung, nỏ, món rộng 2 ô trong Item.txt; B-41): không cầm khiên cùng."
   def two_handed?(it), do: is_map(it) and it[:hands] == 2
+
+  @doc "Lớp `cls` cầm được 2 vũ khí 1 tay (`RULES.dual_wield.classes`, B-42)."
+  def dual_class?(cls), do: cls in @dual.classes
+
+  def dual_rules, do: @dual
+
+  @doc "Vũ khí đang cầm ở tay trái (ô `shield`, cầm 2 vũ khí) hoặc nil (trống / khiên)."
+  def left_weapon(p) do
+    it = Gear.item(p, p.equip[:shield])
+    if is_map(it) and it.slot == "weapon", do: it
+  end
+
+  defp left_name(p), do: if(left_weapon(p), do: "Vũ khí tay trái", else: "Khiên")
 
   defp free_shield(p) do
     old = p.equip.shield
@@ -3180,9 +3217,13 @@ defmodule HacLong.Game.Engine do
   trang bị nên không mất; túi đầy vẫn giữ được, như khi tháo đồ). Chạy lúc nạp nhân vật.
   """
   def two_hand_fix(p) do
-    if p.equip[:shield] && two_handed?(Gear.item(p, p.equip[:weapon])),
-      do: free_shield(p),
-      else: p
+    lw = left_weapon(p)
+
+    if p.equip[:shield] &&
+         (two_handed?(Gear.item(p, p.equip[:weapon])) or
+            (lw && (two_handed?(lw) or not dual_class?(p.cls)))),
+       do: free_shield(p),
+       else: p
   end
 
   def unequip(p, slot) when slot in @removable do

@@ -954,6 +954,11 @@ defmodule HacLong.Game.Journey do
           Engine.can_wear?(p, it),
           do: {id, it.price}
 
+    # lớp cầm 2 vũ khí (B-42): vũ khí 1 tay thử cả ở tay trái
+    hands = fn it ->
+      if it.slot == "weapon" and Engine.dual_class?(p.cls), do: [nil, "left"], else: [nil]
+    end
+
     best =
       (owned ++ shop)
       |> Enum.flat_map(fn {id, price} ->
@@ -962,15 +967,12 @@ defmodule HacLong.Game.Journey do
         if it && Engine.can_wear?(p, it) do
           q = if price, do: elem(Engine.buy(p, id), 1), else: p
 
-          case Engine.equip(q, id) do
-            {%{ok: true}, q} ->
+          for hand <- hands.(it),
+              {%{ok: true}, q} <- [Engine.equip(q, id, hand)],
               # chỉ thay khi hơn hẳn: món bị tháo ép càng cao càng cần mạnh hơn nhiều (người chơi tiếc ngọc đã ép)
-              gain = score(q) / base
-              if gain > 1 + swap_margin(p, q, st), do: [{gain, id, price}], else: []
-
-            _ ->
-              []
-          end
+              gain = score(q) / base,
+              gain > 1 + swap_margin(p, q, st),
+              do: {gain, id, price, hand}
         else
           []
         end
@@ -978,9 +980,9 @@ defmodule HacLong.Game.Journey do
       |> Enum.max_by(&elem(&1, 0), fn -> nil end)
 
     case best do
-      {_gain, id, price} ->
+      {_gain, id, price, hand} ->
         p = if price, do: elem(Engine.buy(p, id), 1), else: p
-        {_, p} = Engine.equip(p, id)
+        {_, p} = Engine.equip(p, id, hand)
         it = Gear.item(p, id)
 
         st =

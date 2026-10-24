@@ -30,6 +30,7 @@ defmodule HacLong.Game.Gear do
   @slots Enum.map(@loot.gear_slots, &List.to_tuple/1)
   # Phase 15c: đồ Excellent (`RULES.excellent`)
   @exc Data.rules().excellent
+  @left_exc Data.rules().dual_wield.left_exc
   @exc_lines Enum.map(@exc.lines, &List.to_tuple/1)
   @exc_zero %{
     atk_pct: 0,
@@ -344,14 +345,16 @@ defmodule HacLong.Game.Gear do
   """
   def exc_stats(p) do
     p.equip
-    |> Map.values()
-    |> Enum.filter(&instance?/1)
-    |> Enum.map(&find(p, &1))
-    |> Enum.reject(&(is_nil(&1) or (&1[:exc] || []) == []))
-    |> Enum.reduce(@exc_zero, fn g, acc ->
+    |> Enum.filter(fn {_, id} -> instance?(id) end)
+    |> Enum.map(fn {at, id} -> {at, find(p, id)} end)
+    |> Enum.reject(fn {_, g} -> is_nil(g) or (g[:exc] || []) == [] end)
+    |> Enum.reduce(@exc_zero, fn {at, g}, acc ->
       slot = Data.item(g.base).slot
 
-      Enum.reduce(g.exc, acc, fn id, acc ->
+      # vũ khí tay trái (cầm 2 vũ khí, B-42): chỉ các dòng `dual_wield.left_exc` (không cộng dồn dòng %)
+      lines = if at == :shield and slot == "weapon", do: g.exc -- g.exc -- @left_exc, else: g.exc
+
+      Enum.reduce(lines, acc, fn id, acc ->
         Map.update!(acc, String.to_existing_atom(id), &(&1 + exc_value(slot, id)))
       end)
     end)
