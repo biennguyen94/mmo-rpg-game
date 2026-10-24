@@ -1182,3 +1182,8 @@ Kiếm Sĩ được cứu nhiều lần mỗi trận (thắng 78% đồ sát / 8
 Mô phỏng sau khi áp (4 lớp tối đa, `scripts/pvp/`): PK cược 47 / 46 / 62 / 45% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ);
 đồ sát không uống bình 41 / 60 / 43 / 55%. Chưa đổi `class_taken.dw` (đề xuất 0.95 lúc trước): PK cược Phù Thủy đã 46%,
 và đồ sát có uống bình máu cho số khác hẳn (DS-4) nên chờ chốt DS-4 rồi chỉnh một lần.
+
+## Đánh người: sát thương ×0.2 (2026-10-24, anh duyệt DS-4a)
+
+`RULES.pvp.dmg_mult` 0.3 → 0.2: ở cấp tối đa một đòn còn ~35–55% máu (trước 55–84%), cần 3–4 đòn mới hạ. Luật bình máu khi
+đánh người (DS-4b) chờ anh chọn; số mô phỏng các phương án ở `OPEN_QUESTIONS.md` DS-4.
