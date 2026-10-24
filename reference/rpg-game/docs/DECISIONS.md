@@ -1149,3 +1149,25 @@ Mở rộng (anh yêu cầu "làm cho tất cả"): hàm đổi góc nhìn chuy�
   người thách đấu: "✨ Tam Tiễn: Chu gây N sát thương cho bạn"); máu mình bị giảm thêm nhờ thủ thế / khiên / thú che chắn thì
   có dòng "Bạn chỉ mất N máu (…)".
 Bỏ dòng "hồi 0 máu" (Khiên Thánh lúc đầy máu) khỏi nhật ký đổi góc nhìn.
+
+## Đồ sát: hiệu ứng chéo (2026-10-24, anh duyệt DS-1)
+
+Lỗi cũ: đồ sát và PK cược để mỗi bên đánh bản sao chỉ số tĩnh của bên kia, nên hiệu ứng chỉ nằm ở trận người gây ra:
+choáng / suy yếu / độc lên đối thủ không có tác dụng; thủ thế, khiên, bất tử, ảnh bộ, Vảy Rồng, Long Vương Hồi Sinh của
+người bị đánh không đỡ được đòn. Sửa cho chạy đúng như dữ liệu đã ghi (hàm thuần `Engine.pvp_*`):
+- `Slay` giữ trạng thái trận mỗi bên (`fx`: hiệu ứng trên mình, lượt, kháng choáng, Long Vương đã cứu) và nhân vật lúc vào
+  trận; `Session.slay_turn` lấy lại trạng thái đó đầu lượt (đối thủ có thể đã đặt choáng / độc, làm vỡ khiên…).
+- Đầu lượt: độc / bỏng / chảy máu trên mình trừ máu (`pvp_turn_start`); bị choáng thì mất lượt — Session tự bỏ lượt ngay
+  khi nhận tin (không chờ hết giờ), nhật ký không ghi "hết giờ".
+- Bản sao đối thủ né thêm theo buff ảnh bộ của họ (trần như né người), kháng choáng nếu họ vừa thoát choáng (`pvp_aim`).
+- Sát thương lượt này (máu bản sao đệm thêm trong lượt để biết cả phần lố) đi qua thủ thế, thú che chắn, khiên, rồi bất tử /
+  Long Vương của người bị đánh (`pvp_defend`); hiệu ứng mình đặt lên bản sao chuyển sang họ (`pvp_take_debuffs` /
+  `pvp_receive`, phá giáp giữ lại vì tính trong đòn của mình). Nhật ký hai bên có dòng khiên đỡ / bất tử / "chỉ mất N máu".
+- PK cược (đánh cùng lúc) dùng chung các hàm trên; bỏ cờ choáng riêng của `PkFight`.
+- `RULES.pvp.stun_mult = 0.5`: mọi tỉ lệ choáng lên người (kỹ năng lớp, kỹ năng tháp, Thủy Long Ba) × 0.5 (anh duyệt);
+  đánh quái giữ nguyên. Áp cả đấu trường.
+- Đấu trường (bản sao chạy `battle.mirror`) giữ như trước (đã có thủ thế / khiên / thú của người chơi), chỉ thêm `stun_mult`.
+
+Mô phỏng 4 lớp tối đa (`scripts/pvp/run.exs`, `scripts/pvp/pk.exs`) sau khi sửa: Kiếm Sĩ thắng 78% đồ sát / 83% PK cược
+vì **Bất Tử dùng lại được mỗi lần hết hồi chiêu** (cứu nhiều lần một trận, cộng Long Vương). Chờ anh duyệt cân bằng (DS-3).
+Bản mô phỏng trước (062849a) gửi sai khóa kỹ năng (luôn dùng kỹ năng đầu) nên số 46–54% lúc đó không đúng.

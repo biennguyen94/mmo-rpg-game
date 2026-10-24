@@ -50,7 +50,9 @@ defmodule HacLong.Game.PvpBalanceTest do
     a = hero("Choang", "dk")
     foe = %{Arena.opponent(hero("Bia", "dk"), 2) | dodge: 0.0, hp: 1_000_000, maxHp: 1_000_000}
     {_, p} = Engine.start_with_monster(%{a | pet: nil, mp: 9_999}, 1, foe)
-    Rng.put_sequence([0.99])
+
+    # 0.3 < RULES.pvp.stun_mult: lần choáng nào cũng trúng (đánh người: tỉ lệ choáng × stun_mult)
+    Rng.put_sequence([0.3])
 
     # Trảm Choáng: quái mất lượt, lượt sau đánh lại thì kháng
     {_, p} = Engine.act(p, "skill", "falling_slash")
@@ -61,6 +63,12 @@ defmodule HacLong.Game.PvpBalanceTest do
 
     assert {"skill", _} = Engine.auto_strike(%{p | mp: 9_999} |> put_in([:battle, :cds], []))
     assert {"attack", nil} = Engine.auto_strike(%{p | mp: 0})
+
+    # 0.99 ≥ stun_mult: Trảm Choáng (chắc choáng với quái) không choáng được người
+    {_, p} = Engine.start_with_monster(%{a | pet: nil, mp: 9_999}, 1, foe)
+    Rng.put_sequence([0.99])
+    {_, p} = Engine.act(p, "skill", "falling_slash")
+    assert Enum.any?(p.battle.log, &(&1.text == "Bia không bị choáng."))
   end
 
   test "hệ số theo lớp: lớp ít máu nhận ít hơn" do

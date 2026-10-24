@@ -1,0 +1,149 @@
+defmodule HacLong.Game.PvpCrossTest do
+  @moduledoc """
+  Đồ sát / PK cược: hiệu ứng chéo giữa hai người (DECISIONS "Đồ sát: hiệu ứng chéo"). Mỗi bên đánh bản sao của bên kia;
+  choáng / suy yếu / độc đặt lên bản sao chuyển sang người kia, đòn vào người kia đi qua thủ thế / khiên / bất tử /
+  Long Vương của họ.
+  """
+  use ExUnit.Case, async: true
+
+  alias HacLong.{Admin, Arena}
+  alias HacLong.Game.{Commands, Engine, PkFight, Rng}
+
+  defp hero(name, cls, pet? \\ false) do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => cls})
+    p = %{p | level: 40, stats: Map.new(p.stats, fn {k, v} -> {k, v * 4} end), pet: nil}
+    p = HacLong.Game.Mastery.maxed(p)
+
+    if pet? do
+      {:ok, f} = Admin.build("give_pet", %{"id" => "long_vuong", "level" => 20})
+      {:ok, p, _} = f.(p)
+      p
+    else
+      p
+    end
+  end
+
+  # `p` trong trận đồ sát với bản sao `foe`
+  defp in_fight(p, foe, uid) do
+    {_, p} = Engine.start_with_monster(%{p | mp: 9_999}, 1, Arena.opponent(foe, uid))
+    put_in(p, [:battle, :live], true)
+  end
+
+  defp with_fx(p, list),
+    do: put_in(p, [:battle, :effects], %{player: list, monster: []})
+
+  test "choáng đặt lên bản sao chuyển sang người kia: mất lượt, rồi kháng choáng stun_immune lượt" do
+    a = hero("Choang", "dk")
+    b = hero("Bia", "dk")
+    pa = in_fight(a, b, 2)
+    pb = in_fight(b, a, 1)
+
+    Rng.put_sequence([0.3])
+    {_, pa} = Engine.act(pa, "skill", "falling_slash")
+    {pa, debuffs} = Engine.pvp_take_debuffs(pa)
+    assert [%{id: "stun"}] = debuffs
+    # đã tách khỏi trận người đánh
+    refute Enum.any?(pa.battle.effects.monster, &(&1.id == "stun"))
+
+    pb = Engine.pvp_receive(pb, debuffs)
+    assert Engine.stunned?(pb)
+    {_, pb} = Engine.act(pb, "attack")
+    assert List.last(pb.battle.log).text == "💫 Bạn bị choáng, mất một lượt."
+    refute Engine.stunned?(pb)
+
+    # vừa thoát choáng: người đánh ngắm thấy đối thủ đang kháng, choáng không vào
+    pa = pa |> put_in([:battle, :cds], []) |> Engine.pvp_aim(pb)
+    {_, pa} = Engine.act(pa, "skill", "falling_slash")
+    assert List.last(Enum.filter(pa.battle.log, &(&1.kind == "info"))).text =~ "kháng được"
+    {_, debuffs} = Engine.pvp_take_debuffs(pa)
+    refute Engine.stunned?(Engine.pvp_receive(pb, debuffs))
+  end
+
+  test "suy yếu chuyển sang người kia: đòn của họ yếu đi; độc trừ máu đầu lượt của họ" do
+    a = hero("Yeu", "dk")
+    b = in_fight(hero("Manh", "dk"), a, 1) |> put_in([:battle, :monster, :dodge], 0.0)
+
+    hit = fn p ->
+      Rng.put_sequence([0.99])
+      {_, p2} = Engine.act(p, "attack")
+      p.battle.monster.hp - p2.battle.monster.hp
+    end
+
+    full = hit.(b)
+    weak = hit.(Engine.pvp_receive(b, [%{id: "weaken", turns: 2, power: 0.3}]))
+    assert weak < full
+
+    p = Engine.pvp_receive(b, [%{id: "poison", turns: 3, power: 40}])
+    p = Engine.pvp_turn_start(p)
+    assert p.hp == b.hp - 40
+    assert List.last(p.battle.log).text =~ "Bạn mất 40 máu vì trúng độc"
+  end
+
+  test "đòn vào người bị đánh đi qua thủ thế, khiên, bất tử, Long Vương của họ" do
+    v0 = Engine.pvp_victim(hero("Thu", "dk"), nil, 1000)
+    assert {%{hp: 900}, 100} = Engine.pvp_defend(v0, 100)
+
+    # Long Vương: Vảy Rồng giảm sát thương nhận
+    v = Engine.pvp_victim(hero("Thu", "dk", true), nil, 1000)
+    assert {%{hp: hp}, real} = Engine.pvp_defend(v, 100)
+    assert real < 100 and hp == 1000 - real
+    v = v0
+
+    {g, real} = Engine.pvp_defend(with_fx(v, [%{id: "guard", turns: 2, power: 0.5}]), 100)
+    assert real == 50 and g.hp == 950
+
+    {sh, real} = Engine.pvp_defend(with_fx(v, [%{id: "shield", turns: 3, power: 80}]), 100)
+    assert real == 20 and sh.hp == 980
+    assert Engine.pvp_fx(sh).effects == []
+
+    # bất tử trước, Long Vương sau (mỗi trận một lần)
+    {u, _} = Engine.pvp_defend(with_fx(v, [%{id: "undying", turns: 3, power: 0.3}]), 5000)
+    assert u.hp > 0 and Engine.pvp_fx(u).effects == []
+    v = Engine.pvp_victim(hero("Thu", "dk", true), nil, 1000)
+    {r1, _} = Engine.pvp_defend(v, 5000)
+    assert r1.hp > 0 and Engine.pvp_fx(r1).pet_revived
+    {r2, _} = Engine.pvp_defend(r1, 99_999)
+    assert r2.hp <= 0
+  end
+
+  test "trạng thái trận qua lại: pvp_fx / pvp_put_fx / pvp_victim giữ hiệu ứng, kháng choáng, Long Vương đã cứu" do
+    p = in_fight(hero("Fx", "elf"), hero("Kia", "dw"), 2)
+
+    fx = %{
+      effects: [%{id: "guard", turns: 2, power: 0.2}],
+      turn: 5,
+      pstun_free: 8,
+      pet_revived: true
+    }
+
+    q = Engine.pvp_put_fx(p, fx)
+    assert Engine.pvp_fx(q) == %{fx | turn: p.battle.turn}
+    v = Engine.pvp_victim(hero("Fx", "elf"), fx, 321)
+    assert v.hp == 321 and Engine.pvp_fx(v) == fx
+  end
+
+  test "ảnh bộ của người bị đánh làm bản sao của họ né nhiều hơn (có trần)" do
+    p = in_fight(hero("Ngam", "dk"), hero("Ne", "elf"), 2)
+    base = p.battle.monster.dodge
+    foe = Engine.pvp_victim(hero("Ne", "elf"), nil, 100)
+    assert Engine.pvp_aim(p, foe).battle.monster.dodge == base
+
+    foe = with_fx(foe, [%{id: "evade", turns: 2, power: 0.2}])
+    aimed = Engine.pvp_aim(p, foe)
+    assert aimed.battle.monster.dodge > base
+    # hết buff: về né gốc
+    assert Engine.pvp_aim(aimed, Engine.pvp_victim(hero("Ne", "elf"), nil, 100)).battle.monster.dodge ==
+             base
+  end
+
+  test "PK cược vẫn chạy trọn trận với hiệu ứng chéo, kết quả lặp lại theo dãy số" do
+    a = hero("Pk A", "dw")
+    b = hero("Pk B", "dk")
+    Rng.put_sequence([0.2, 0.5, 0.8, 0.35])
+    r1 = PkFight.fight(a, b, 1, 2)
+    Rng.put_sequence([0.2, 0.5, 0.8, 0.35])
+    r2 = PkFight.fight(a, b, 1, 2)
+    assert r1 == r2 and r1.winner in [:a, :b, :draw]
+    assert List.last(r1.log).kind == "win"
+  end
+end

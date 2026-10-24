@@ -180,9 +180,11 @@ defmodule HacLong.Slay do
   @doc """
   `uid` vừa ra đòn xong ở lượt của mình: máu mình và máu đối thủ sau lượt; `lines` là nhật ký trận
   của lượt đó (phía người đánh), được đổi góc nhìn rồi ghi sang nhật ký đối thủ.
+  `extra`: `fx` / `foe_fx` trạng thái trận mới của mình / đối thủ (`Engine.pvp_fx/1`), `foe_lines` dòng nhật ký
+  đã ở góc nhìn đối thủ (khiên đỡ, bất tử…).
   """
-  def acted(uid, hp, foe_hp, auto? \\ false, lines \\ []),
-    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?, lines})
+  def acted(uid, hp, foe_hp, auto? \\ false, lines \\ [], extra \\ %{}),
+    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?, lines, extra})
 
   @doc "`uid` bỏ chạy: thua như gục ngã."
   def flee(uid), do: GenServer.call(__MODULE__, {:flee, uid})
@@ -220,6 +222,10 @@ defmodule HacLong.Slay do
           names: %{a => pa.name, b => pb.name},
           red: %{a => red?(a), b => red?(b)},
           hp: %{a => pa.hp, b => pb.hp},
+          # hiệu ứng chéo (DECISIONS "Đồ sát: hiệu ứng chéo"): trạng thái trận mỗi bên (`Engine.pvp_fx/1`, nil: đầu trận)
+          # và nhân vật lúc vào trận (đồ, thú cưng) để bên kia tính đòn đỡ của người này
+          fx: %{a => nil, b => nil},
+          chars: %{a => pa, b => pb},
           map: pa.pos.map,
           turn: a,
           turns: 0,
@@ -251,32 +257,54 @@ defmodule HacLong.Slay do
     {:reply, with(%{} = f <- fight(s, uid), do: public(f, uid)), s}
   end
 
-  def handle_call({:acted, uid, hp, foe_hp, auto?, lines}, _from, s) do
+  def handle_call({:acted, uid, hp, foe_hp, auto?, lines, extra}, _from, s) do
     case fight(s, uid) do
       %{turn: ^uid} = f ->
         foe = foe(f, uid)
         dmg = max(0, f.hp[foe] - max(foe_hp, 0))
         healed = max(0, hp - f.hp[uid])
+        hp = max(hp, 0)
         f = %{f | hp: %{uid => hp, foe => max(foe_hp, 0)}, turns: f.turns + 1, misses: 0}
-        text = sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?)
 
-        if f.hp[foe] <= 0 do
-          # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "hạ gục bạn"
-          f = Map.put(f, :last, text)
-          {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
-        else
-          cancel(f)
-          f = arm(%{f | turn: foe})
+        fx =
+          (f[:fx] || %{})
+          |> then(&if(extra[:fx], do: Map.put(&1, uid, extra.fx), else: &1))
+          |> then(&if(extra[:foe_fx], do: Map.put(&1, foe, extra.foe_fx), else: &1))
 
-          Session.slay_sync(foe, %{
-            id: f.id,
-            hp: f.hp[foe],
-            foe_hp: hp,
-            until: f.until,
-            text: text
-          })
+        f = Map.put(f, :fx, fx)
 
-          {:reply, {:ok, %{mine: false, until: f.until}}, put(s, f)}
+        text =
+          sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?) ++
+            (extra[:foe_lines] || [])
+
+        cond do
+          f.hp[foe] <= 0 ->
+            # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "hạ gục bạn"
+            f = Map.put(f, :last, text)
+            {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
+
+          # gục vì độc đầu lượt của mình
+          hp <= 0 ->
+            {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, foe, uid, :ko)}
+
+          true ->
+            cancel(f)
+            f = arm(%{f | turn: foe})
+
+            # đối thủ bị choáng: Session của họ tự bỏ lượt ngay khi nhận tin này (không chờ hết giờ)
+            Session.slay_sync(foe, %{
+              id: f.id,
+              hp: f.hp[foe],
+              foe_hp: hp,
+              until: f.until,
+              text: text,
+              fx: fx[foe],
+              stunned:
+                match?(%{effects: [_ | _]}, fx[foe]) and
+                  Enum.any?(fx[foe].effects, &(&1.id == "stun"))
+            })
+
+            {:reply, {:ok, %{mine: false, until: f.until}}, put(s, f)}
         end
 
       nil ->
@@ -512,7 +540,10 @@ defmodule HacLong.Slay do
       hp: f.hp[uid],
       foe_hp: f.hp[foe],
       until: f.until,
-      map: f.map
+      map: f.map,
+      fx: (f[:fx] || %{})[uid],
+      foe_fx: (f[:fx] || %{})[foe],
+      foe_char: (f[:chars] || %{})[foe]
     }
   end
 

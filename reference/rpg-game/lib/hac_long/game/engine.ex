@@ -1880,7 +1880,129 @@ defmodule HacLong.Game.Engine do
     @pvp.dmg_mult * (k || 1)
   end
 
+  # ---------- Đánh người theo lượt: hiệu ứng chéo (DECISIONS "Đồ sát: hiệu ứng chéo") ----------
+  # Đồ sát / PK cược: mỗi bên đánh bản sao chỉ số của bên kia trong trận của mình, nên hiệu ứng chỉ nằm ở trận của
+  # người gây ra. Các hàm dưới chuyển chúng sang người kia: choáng / suy yếu / độc mình đặt lên bản sao thành hiệu ứng
+  # trên người bị đánh; sát thương vào người bị đánh đi qua thủ thế, thú che chắn, khiên, bất tử, Long Vương của họ.
+  @pvp_debuffs ~w(stun weaken) ++ @dots
+
+  @doc "Trạng thái trận của `p` mà người kia cần biết / sửa (hiệu ứng trên mình, lượt, kháng choáng, Long Vương đã cứu)."
+  def pvp_fx(%{battle: b} = p) do
+    %{
+      effects: effects(p, :player),
+      turn: b.turn,
+      pstun_free: b[:pstun_free] || 0,
+      pet_revived: b[:pet_revived] || false
+    }
+  end
+
+  @doc "Ghi lại trạng thái `fx` (từ `pvp_fx/1`, có thể đã bị người kia sửa) vào trận của `p`."
+  def pvp_put_fx(p, nil), do: p
+
+  def pvp_put_fx(p, fx) do
+    p
+    |> set_effects(:player, fx.effects)
+    |> put_in([:battle, :pstun_free], fx.pstun_free)
+    |> put_in([:battle, :pet_revived], fx.pet_revived)
+  end
+
+  @doc "Người bị đánh dựng từ nhân vật `char` (đồ, thú cưng), máu `hp` và trạng thái `fx` (nil: đầu trận)."
+  def pvp_victim(char, fx, hp) do
+    b = %{
+      log: [],
+      turn: (fx && fx.turn) || 0,
+      effects: %{player: [], monster: []},
+      monster: %{pvp: true}
+    }
+
+    pvp_put_fx(%{char | hp: hp, battle: b}, fx)
+  end
+
+  @doc """
+  Trước lượt của người đánh `p`: bản sao người bị đánh `foe` né thêm theo buff ảnh bộ của họ (trần như né của người),
+  và kháng choáng nếu họ vừa thoát choáng.
+  """
+  def pvp_aim(p, foe) do
+    m = p.battle.monster
+    base = m[:base_dodge] || m.dodge
+    evade = power(foe, :player, "evade")
+
+    dodge =
+      if evade > 0, do: max(base, min(@combat.dodge.max_with_buff, base + evade)), else: base
+
+    immune? = foe.battle.turn + 1 < (foe.battle[:pstun_free] || 0)
+
+    p
+    |> put_in([:battle, :monster], Map.merge(m, %{dodge: dodge, base_dodge: base}))
+    |> put_in([:battle, :stun_free], if(immune?, do: p.battle.turn + 2, else: 0))
+  end
+
+  @doc "Thêm một dòng nhật ký trận cho `p` (dùng bên ngoài Engine, vd. đồ sát ghi dòng đỡ đòn của người bị đánh)."
+  def add_log(p, text, kind), do: log(p, text, kind)
+
+  @doc "Người đánh `p` có đang bị choáng (lượt này mất lượt) không."
+  def stunned?(p), do: effect(p, :player, "stun") != nil
+
+  @doc """
+  Tách khỏi trận của `p` các hiệu ứng `p` vừa đặt lên bản sao đối thủ (choáng, suy yếu, độc / bỏng / chảy máu) để
+  `pvp_receive/2` đặt sang người kia. Phá giáp giữ lại (tính trong đòn của chính `p`). Trả `{p, hiệu_ứng}`.
+  """
+  def pvp_take_debuffs(p) do
+    {out, keep} = Enum.split_with(effects(p, :monster), &(&1.id in @pvp_debuffs))
+    cls = p.battle.monster[:cls]
+
+    out =
+      Enum.map(out, fn
+        %{id: "stun"} = e -> %{e | turns: 1, power: 0}
+        %{id: id} = e when id in @dots -> %{e | power: max(1, round(e.power * pvp_taken(cls)))}
+        e -> e
+      end)
+
+    {set_effects(p, :monster, keep), out}
+  end
+
+  @doc "Người bị đánh `p` nhận hiệu ứng `list` (từ `pvp_take_debuffs/1`); đang kháng choáng thì bỏ choáng."
+  def pvp_receive(p, list) do
+    Enum.reduce(list, p, fn
+      %{id: "stun"}, p ->
+        if p.battle.turn + 1 < (p.battle[:pstun_free] || 0),
+          do: p,
+          else: put_effect(p, :player, "stun", 1, 0)
+
+      e, p ->
+        put_effect(p, :player, e.id, e.turns, e.power)
+    end)
+  end
+
+  @doc """
+  Người bị đánh `p` nhận `dmg` sát thương (bên đánh đã tính đủ công, thủ, chí mạng, giảm sát thương của cánh / Excellent):
+  thủ thế, thú che chắn, khiên, rồi bất tử / Long Vương Hồi Sinh của chính họ. Máu có thể âm (không được cứu).
+  Trả `{p, sát_thương_thật}`; dòng nhật ký (góc nhìn người bị đánh) ghi vào trận của `p`.
+  """
+  def pvp_defend(p, dmg) when dmg <= 0, do: {p, 0}
+
+  def pvp_defend(p, dmg) do
+    dmg = max(1, round(dmg * (1 - power(p, :player, "guard")) * (1 - pet_guard(p))))
+    {dmg, p} = absorb_shield(p, dmg)
+    p = %{p | hp: p.hp - dmg}
+    {if(p.hp <= 0, do: survive(p, derived(p)), else: p), dmg}
+  end
+
+  @doc "Đầu lượt của mình (đánh người theo lượt): độc / bỏng / chảy máu đối thủ đặt lên mình trừ máu."
+  def pvp_turn_start(p) do
+    pdots = p |> effects(:player) |> Enum.filter(&(&1.id in @dots))
+    pdot = pdots |> Enum.map(& &1.power) |> Enum.sum()
+
+    if pdot > 0 do
+      p = %{p | hp: p.hp - pdot} |> log("Bạn mất #{pdot} máu vì #{effect_list(pdots)}.", "bad")
+      if p.hp <= 0, do: survive(p, derived(p)), else: p
+    else
+      p
+    end
+  end
+
   # Gây choáng cho quái / đối thủ; đối thủ là người vừa hết choáng thì kháng `stun_immune` lượt.
+  # Đánh người: tỉ lệ choáng × `RULES.pvp.stun_mult` (DECISIONS "Đồ sát: hiệu ứng chéo").
   defp stun_monster(p, text) do
     b = p.battle
 
@@ -1891,6 +2013,9 @@ defmodule HacLong.Game.Engine do
 
       b.monster[:pvp] && b.turn < (b[:stun_free] || 0) ->
         log(p, "#{b.monster.name} vừa thoát choáng, kháng được.", "info")
+
+      b.monster[:pvp] && not chance(@pvp[:stun_mult] || 1) ->
+        log(p, "#{b.monster.name} không bị choáng.", "info")
 
       true ->
         p |> put_effect(:monster, "stun", 1, b.turn) |> log(text, "good")

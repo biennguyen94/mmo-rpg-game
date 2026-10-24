@@ -21,6 +21,7 @@ defmodule HacLong.Game.Session do
   alias HacLong.Game.{
     Achievements,
     AutoHunt,
+    BattleText,
     Characters,
     Commands,
     Daily,
@@ -850,30 +851,104 @@ defmodule HacLong.Game.Session do
         {%{ok: true, msg: "Bạn bỏ chạy: tính như gục ngã."}, p}
 
       f ->
-        p = %{p | hp: f.hp} |> put_in([:battle, :monster, :hp], f.foe_hp)
+        slay_turn(uid, p, f, cmd)
+    end
+  end
 
-        # chạy lượt với nhật ký trống để biết đúng những dòng lượt này (kỹ năng, chí mạng, trượt…)
-        # rồi gửi sang đối thủ
-        old_log = p.battle.log
+  @slay_pad 10_000_000
 
-        case Commands.run(put_in(p.battle.log, []), Map.delete(cmd, "auto")) do
-          {%{ok: false} = r, _} ->
-            {r, p}
+  # Một lượt đồ sát (DECISIONS "Đồ sát: hiệu ứng chéo"): trạng thái trận của mình lấy từ Slay (đối thủ có thể đã
+  # đặt choáng / suy yếu / độc, đã làm vỡ khiên của mình…); bản sao đối thủ né theo buff của họ; sát thương mình gây
+  # đi qua thủ thế / khiên / bất tử / thú / Long Vương của đối thủ; hiệu ứng mình đặt lên bản sao chuyển sang họ.
+  # Chạy với nhật ký trống để biết đúng những dòng lượt này rồi gửi sang đối thủ.
+  defp slay_turn(uid, p, f, cmd) do
+    old_log = p.battle.log
 
-          {r, p2} ->
-            lines = Enum.map(p2.battle.log, & &1.text)
-            p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
+    # máu bản sao đệm thêm `@slay_pad` trong lượt: Engine chặn máu ở 0, cần đủ sát thương (cả phần lố) để trừ phần
+    # đỡ đòn của đối thủ trước rồi mới biết họ còn sống không
+    p =
+      %{p | hp: f.hp}
+      |> put_in([:battle, :monster, :hp], f.foe_hp + @slay_pad)
+      |> put_in([:battle, :log], [])
+      |> Engine.pvp_put_fx(f[:fx])
 
-            case Slay.acted(uid, p2.hp, p2.battle.monster.hp, cmd["auto"] == true, lines) do
-              {:ok, v} ->
-                enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
-                {r, put_in(p2.battle.encounter, enc)}
+    foe = f[:foe_char] && Engine.pvp_victim(f.foe_char, f[:foe_fx], f.foe_hp)
+    p = if foe, do: Engine.pvp_aim(p, foe), else: p
+    stunned? = Engine.stunned?(p)
+    p = Engine.pvp_turn_start(p)
 
-              {:error, msg} ->
-                {%{ok: false, msg: msg}, p}
-            end
+    ran =
+      if p.hp <= 0,
+        do: {%{ok: true}, p},
+        else: Commands.run(p, Map.delete(cmd, "auto"))
+
+    case ran do
+      {%{ok: false} = r, _} ->
+        {r, slay_undo(p, f, old_log)}
+
+      {r, p2} ->
+        lines = Enum.map(p2.battle.log, & &1.text)
+        {p2, foe2} = slay_hit(p2, foe, f.foe_hp)
+        foe_lines = if foe2, do: Enum.map(foe2.battle.log, & &1.text), else: []
+        p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
+
+        extra = %{
+          fx: Engine.pvp_fx(p2),
+          foe_fx: foe2 && Engine.pvp_fx(foe2),
+          foe_lines: foe_lines
+        }
+
+        auto? = cmd["auto"] == true and not stunned?
+
+        case Slay.acted(uid, p2.hp, p2.battle.monster.hp, auto?, lines, extra) do
+          {:ok, v} ->
+            enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
+            {r, put_in(p2.battle.encounter, enc)}
+
+          {:error, msg} ->
+            {%{ok: false, msg: msg}, slay_undo(p, f, old_log)}
         end
     end
+  end
+
+  defp slay_undo(p, f, old_log) do
+    %{p | hp: f.hp}
+    |> put_in([:battle, :monster, :hp], f.foe_hp)
+    |> put_in([:battle, :log], old_log)
+  end
+
+  # sát thương lượt này vào đối thủ đi qua phần đỡ đòn của họ; hiệu ứng lên bản sao chuyển sang họ.
+  # Dòng của đối thủ (khiên đỡ, bất tử…) ghi ở trận của họ (góc nhìn họ) và ở trận mình (đổi góc nhìn).
+  defp slay_hit(p2, nil, foe_hp) do
+    hp = max(0, foe_hp - (foe_hp + @slay_pad - p2.battle.monster.hp))
+    {put_in(p2, [:battle, :monster, :hp], hp), nil}
+  end
+
+  defp slay_hit(p2, foe, foe_hp) do
+    raw = foe_hp + @slay_pad - p2.battle.monster.hp
+    {p2, debuffs} = Engine.pvp_take_debuffs(p2)
+    {foe2, real} = Engine.pvp_defend(foe, raw)
+    foe2 = Engine.pvp_receive(foe2, debuffs)
+    name = p2.battle.monster.name
+
+    foe2 =
+      if raw > 0 and real < raw,
+        do:
+          Engine.add_log(
+            foe2,
+            "🛡 Bạn chỉ mất #{real} máu (thủ thế / khiên / thú che chắn).",
+            "good"
+          ),
+        else: foe2
+
+    mine = Enum.map(foe2.battle.log, &BattleText.mirror(&1.text, name, p2.name))
+
+    p2 =
+      p2
+      |> put_in([:battle, :monster, :hp], max(foe2.hp, 0))
+      |> update_in([:battle, :log], &(&1 ++ Enum.map(mine, fn t -> %{text: t, kind: "info"} end)))
+
+    {p2, foe2}
   end
 
   defp world_strike(s, p, cmd) do

@@ -18,16 +18,14 @@ IO.puts("\n== Đồ sát (hàng = người tấn công đi trước), #{n} trậ
 all = for a <- ~w(dk dw elf mg), b <- ~w(dk dw elf mg), do: {a, b}
 fx = %{}
 
-{rows, fx, mism, turns} =
-  Enum.reduce(all, {[], fx, 0, 0}, fn {a, b}, {rows, fx, m, t} ->
+{rows, fx} =
+  Enum.reduce(all, {[], fx}, fn {a, b}, {rows, fx} ->
     pb = %{ps[b] | name: ps[b].name <> "2"}
     res = for _ <- 1..n, do: SlaySim.fight(ps[a], pb)
     w = Enum.count(res, &(&1.winner == 1))
     avg = Enum.sum(Enum.map(res, & &1.turns)) / n
-    fx = Enum.reduce(res, fx, fn r, fx -> Map.merge(fx, r.st.fx, fn _, x, y -> x + y end) end)
-    m = m + Enum.sum(Enum.map(res, & &1.st.mismatch))
-    t = t + Enum.sum(Enum.map(res, & &1.st.turns))
-    {[{a, b, w, avg} | rows], fx, m, t}
+    fx = Enum.reduce(res, fx, fn r, fx -> Map.merge(fx, r.st, fn _, x, y -> x + y end) end)
+    {[{a, b, w, avg} | rows], fx}
   end)
 
 for {a, b, w, avg} <- Enum.reverse(rows),
@@ -46,5 +44,5 @@ for c <- ~w(dk dw elf mg) do
   IO.puts("  #{c}: #{round(w * 100 / tot)}%")
 end
 
-IO.puts("\nSát thương hiện ≠ máu mất: #{mism} / #{turns} lượt")
-IO.puts("Hiệu ứng lượt-lượt (đếm lượt có hiệu ứng): #{inspect(Enum.sort(fx))}")
+IO.puts("\nTổng #{fx.turns} lượt: sát thương hiện ≠ sát thương tính #{fx.mismatch}; mất lượt vì choáng #{fx.stunned};")
+IO.puts("  đòn bị giảm bởi thủ thế / khiên / thú #{fx.reduced}; được bất tử / Long Vương cứu #{fx.saved}")
