@@ -35,7 +35,7 @@ defmodule HacLong.Game.Journey do
   """
 
   alias HacLong.Bots.Brain
-  alias HacLong.Game.{Chaos, Data, Engine, Gear, Pets, Quests, Tower}
+  alias HacLong.Game.{Chaos, Data, Engine, Gear, Mastery, Pets, Quests, Tower}
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -220,7 +220,8 @@ defmodule HacLong.Game.Journey do
     Enum.reduce(Map.keys(inv0) ++ Map.keys(inv1), st, fn id, st ->
       d = Map.get(inv1, id, 0) - Map.get(inv0, id, 0)
 
-      if String.starts_with?(id, "jewel_") and d != 0,
+      # ngọc và Bí Kíp (đột phá thông thạo kỹ năng)
+      if (String.starts_with?(id, "jewel_") or id == "bi_kip") and d != 0,
         do: %{st | ledger: Map.update(st.ledger, {id, why}, d, &(&1 + d))},
         else: st
     end)
@@ -660,6 +661,9 @@ defmodule HacLong.Game.Journey do
           do: {Data.item(id).name, n}
         ),
       pet: if(p[:pet], do: "#{Pets.name(p)} cấp #{Pets.level(p, p.pet)}", else: "—"),
+      # thông thạo kỹ năng đang mang
+      mastery: Enum.map(Engine.skills(p), &{&1.name, Mastery.level(p, &1.id)}),
+      bi_kip: Map.get(p.inv, "bi_kip", 0),
       potions:
         for(
           {id, n} <- p.inv,
@@ -741,6 +745,7 @@ defmodule HacLong.Game.Journey do
         {p, st} = p |> gear_up(st)
         {p, st} = forge(p, st)
         {p, st} = tracked(p, st, "ghép cánh", &wings/2)
+        {p, st} = tracked(p, st, "đột phá kỹ năng", &masteries/2)
         {p, st} = gear_up(p, st)
         {p, st} = pets(p, st)
         {sell_junk(p, st), %{st | gear_key: key}}
@@ -749,6 +754,34 @@ defmodule HacLong.Game.Journey do
       end
 
     {p |> skills() |> potions(), st}
+  end
+
+  # thông thạo kỹ năng: đủ điểm ở mốc thì đột phá, kỹ năng đang mang trước; Bí Kíp trước, thiếu thì Ngọc Tâm Linh khi
+  # còn dư nhiều (giữ Tâm Linh cho ép đồ)
+  defp masteries(p, st) do
+    on = Engine.skills(p)
+    ks = on ++ (Engine.available_skills(p) -- on)
+
+    p =
+      Enum.reduce(ks, p, fn k, p ->
+        v = Mastery.view(p)[k.id]
+
+        cond do
+          v == nil or v.brk == nil ->
+            p
+
+          Map.get(p.inv, "bi_kip", 0) >= v.brk.cost ->
+            elem(Mastery.break_through(p, k.id, "item"), 1)
+
+          Map.get(p.inv, "jewel_soul", 0) >= v.brk.alt + 10 ->
+            elem(Mastery.break_through(p, k.id, "alt"), 1)
+
+          true ->
+            p
+        end
+      end)
+
+    {p, st}
   end
 
   # bộ kỹ năng mang vào trận như người chơi tự chọn (`Brain.loadout/2`: giữ kỹ năng hồi máu, còn lại mạnh nhất)

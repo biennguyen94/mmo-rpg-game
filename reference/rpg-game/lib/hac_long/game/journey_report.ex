@@ -126,6 +126,8 @@ defmodule HacLong.Game.JourneyReport do
       #{Enum.map_join(s.gear, "\n", fn {slot, name} -> "- #{slot}: #{name}" end)}
 
       Thú: #{s.pet} · Ngọc: #{kv(s.jewels)} · Bình: #{kv(s.potions)}
+
+      Thông thạo kỹ năng: #{Enum.map_join(s[:mastery] || [], ", ", fn {n, lv} -> "#{n} #{lv}" end)} · Bí Kíp còn #{s[:bi_kip] || 0}
       """
     end)
   end
