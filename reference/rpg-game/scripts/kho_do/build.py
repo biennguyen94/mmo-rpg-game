@@ -229,15 +229,37 @@ def sdesc(k):
     if k.get("buff"): b = k["buff"]; p.append(BUFF.get(b["id"], b["id"]).format(pct(b["power"])) + f" ({b['turns']} lượt)")
     if k.get("debuff"): b = k["debuff"]; p.append(DEBUFF.get(b["id"], b["id"]).format(pct(b["power"])) + f" ({b['turns']} lượt)")
     return ", ".join(p) or "đòn mạnh"
+# kỹ năng lớp: mô tả lấy từ RULES.skill_effects (số cấp tối đa), như client (ui.js skillDesc)
+def cdesc(k):
+    e = R["skill_effects"].get(k.get("effect") or k["id"])
+    if not e: return k.get("desc") or ""
+    p = []
+    if e.get("def_mult") is not None: p.append(f"xuyên {pct(1 - e['def_mult'])} giáp")
+    if e.get("always_crit"): p.append("chắc chí mạng")
+    eff = k.get("effect") or k["id"]
+    pw, t = e.get("power", 0), e.get("turns")
+    if eff == "holy": p.append(f"hồi {pct(e['heal'])} máu")
+    elif eff == "stun_bash": p.append(f"làm quái choáng mất lượt (trùm {pct(e['boss_resist'])} kháng)")
+    elif eff == "war_cry": p.append(f"cuồng nộ +{pct(pw)} công ({t} lượt)")
+    elif eff == "venom": p.append(f"{'đốt' if k.get('element') == 'fire' else 'độc'}: mỗi lượt {pct(pw)} sát thương vừa gây ({t} lượt)")
+    elif eff == "shadow_step": p.append(f"né +{pct(pw)} ({t} lượt)")
+    elif eff == "guard": p.append(f"thủ thế −{pct(pw)} sát thương nhận ({t} lượt)")
+    elif eff == "judgement": p.append(f"suy yếu quái −{pct(pw)} công ({t} lượt)")
+    return ", ".join(p) or "đòn mạnh"
+
+# hệ số cấp thông thạo 1 → tối đa
+def mrange(m):
+    return f"×{n(round(m * R['skill_mastery']['mult_min'], 2))} → ×{n(m)}"
+
 def skill_table(c):
     rows = ""
     for k in CL[c].get("skills", []):
         rows += (f"<tr><td>cấp {k.get('level', 1)}</td><td><b>{E(k['name'])}</b></td><td>{el(k.get('element'))}</td>"
-                 f"<td class=n>×{n(k.get('mult') or R['skill_effects'].get(k.get('effect'), {}).get('mult', 1))}</td><td class=n>{k.get('mp', 0)}</td><td class=n>{k.get('cooldown', 0)}</td><td>{E(k.get('desc') or sdesc(k))}</td></tr>")
+                 f"<td class=n>{mrange(k.get('mult') or R['skill_effects'].get(k.get('effect'), {}).get('mult', 1))}</td><td class=n>{k.get('mp', 0)}</td><td class=n>{k.get('cooldown', 0)}</td><td>{E(cdesc(k))}</td></tr>")
     for k in CL[c]["tower_skills"]:
         rows += (f"<tr><td>tháp {k['floor']}</td><td><b>{E(k['name'])}</b></td><td>{el(k.get('element'))}</td>"
-                 f"<td class=n>×{n(k['mult'])}</td><td class=n>{k['mp']}</td><td class=n>{k['cooldown']}</td><td>{sdesc(k)}</td></tr>")
-    return ("<div class=\"scroll\"><table><thead><tr><th>Mở</th><th>Kỹ năng</th><th>Hệ</th><th>Hệ số</th><th>MP</th><th>Hồi</th>"
+                 f"<td class=n>{mrange(k['mult'])}</td><td class=n>{k['mp']}</td><td class=n>{k['cooldown']}</td><td>{sdesc(k)}</td></tr>")
+    return ("<div class=\"scroll\"><table><thead><tr><th>Mở</th><th>Kỹ năng</th><th>Hệ</th><th>Hệ số (cấp 1 → 10)</th><th>MP</th><th>Hồi</th>"
             "<th>Tác dụng</th></tr></thead><tbody>" + rows + "</tbody></table></div>")
 stabs = "".join(f'<button type="button" class="tab" data-g="sk" data-c="{c}">{l}</button>' for c, l in CLS)
 spanes = "".join(f'<div class="ctab" data-g="sk" data-c="{c}"{" hidden" if i else ""}>{skill_table(c)}</div>' for i, (c, _) in enumerate(CLS))
