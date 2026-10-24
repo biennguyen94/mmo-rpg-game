@@ -982,7 +982,7 @@ máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2
   của bản sao (`copy_skill`, theo `Arena.opponent.skills`). Giả lập 200 trận, hai nhân vật giống nhau: người thách đấu thắng
   ~55–60% (trước đây 100%).
 - **Cân bằng lớp** (anh duyệt): `RULES.pvp.class_taken` nhân thêm vào sát thương lên người theo lớp người bị đánh: Kiếm Sĩ 1,16,
-  Tiên Nữ 1,08 (nay 1,3, xem B-41), Phù Thủy 0,9, Đấu Sĩ 0,66 (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
+  Tiên Nữ 1,08 (nay 0,98, xem B-41 / B-42), Phù Thủy 0,9, Đấu Sĩ 0,66 (nay 0,75) (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
   44–56% (trước: Kiếm Sĩ thắng Đấu Sĩ 197/200).
 - Sửa kèm: trận lưu khóa `tidal_at` / `pet_revived` (Long Vương) trước đây không nạp lại được sau khi server khởi động lại.
 
@@ -1086,4 +1086,8 @@ Anh: Kiếm Sĩ, Phù Thủy, Đấu Sĩ cầm được 2 vũ khí 1 tay (vd 2 G
     chọn Kiếm Bình Minh 2 tay; số trận / số lần chết như trước (Phù Thủy 3157 trận, chết 4,6; trước 3165 / 5,8).
   - Nhân vật tối đa (PK cược 300 trận, đồ +11 full Excellent): 2 vũ khí thắng bản 1 tay + khiên cùng lớp 75–79 % (k = 0,65:
     64–69 %; k = 0,5: 57–59 %); 2 vũ khí thắng Tiên Nữ 78–84 % (k = 0,5: 58–66 %). Khiên cuối game yếu vì các dòng Excellent
-    phòng thủ của khiên trùng với bộ giáp (giảm sát thương, phản đòn có trần). Chờ anh chốt k.
+    phòng thủ của khiên trùng với bộ giáp (giảm sát thương, phản đòn có trần).
+- Anh chọn **giữ k = 1** (2026-10-24) và cân bằng lại lớp khi đánh người: nhân vật tối đa nay là Kiếm Sĩ / Phù Thủy / Đấu Sĩ cầm 2
+  vũ khí (`ADMIN_GUIDE` §6), Tiên Nữ cung. Chỉnh `RULES.pvp.class_taken` bằng PK cược 300 trận mỗi cặp: Tiên Nữ 1,3 → **0,98**,
+  Đấu Sĩ 0,66 → **0,75** (Kiếm Sĩ 1,16, Phù Thủy 0,9 giữ nguyên) → mọi cặp khác lớp 47–54 % (trước khi chỉnh: Đấu Sĩ thắng 64–82 %,
+  Tiên Nữ thua 16–22 %). Người cầm khiên cuối game chịu thiệt khi đánh người (đúng lựa chọn k = 1).

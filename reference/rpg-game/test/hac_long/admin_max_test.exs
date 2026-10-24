@@ -1,5 +1,5 @@
 defmodule HacLong.AdminMaxTest do
-  @moduledoc "Công thức nhân vật tối đa trong docs/ADMIN_GUIDE.md §6: mọi lệnh hợp lệ, mặc được đủ 11 ô (Đấu Sĩ 10, không mũ)."
+  @moduledoc "Công thức nhân vật tối đa trong docs/ADMIN_GUIDE.md §6: mọi lệnh hợp lệ, mặc được đủ 11 ô (Đấu Sĩ 10, không mũ; Tiên Nữ không tay trái)."
   use ExUnit.Case, async: true
 
   alias HacLong.Admin
@@ -8,10 +8,10 @@ defmodule HacLong.AdminMaxTest do
   @exc_w ~w(atk_pct crit heal_kill mp_kill atk_lvl ar_pct)
   @exc_a ~w(hp_pct dmg_red gold_pct mp_pct reflect def_rate)
   @set %{
-    "dk" => {"item_0_19", "item_6_18", ~w(item_7_33 item_8_33 item_9_33 item_10_33 item_11_33)},
-    "dw" => {"item_5_11", "item_6_18", ~w(item_7_30 item_8_30 item_9_30 item_10_30 item_11_30)},
-    "elf" => {"item_4_24", nil, ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
-    "mg" => {"item_0_28", "item_6_18", ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
+    "dk" => {"item_0_19", true, ~w(item_7_33 item_8_33 item_9_33 item_10_33 item_11_33)},
+    "dw" => {"item_5_11", true, ~w(item_7_30 item_8_30 item_9_30 item_10_30 item_11_30)},
+    "elf" => {"item_4_24", false, ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
+    "mg" => {"item_0_28", true, ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
   }
 
   # tỉ lệ chia điểm gợi ý (docs/ADMIN_GUIDE.md §6), điểm lẻ cộng vào chỉ số đầu
@@ -32,7 +32,8 @@ defmodule HacLong.AdminMaxTest do
     test "nhân vật #{cls} tối đa" do
       cls = unquote(cls)
       {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Max#{cls}", "cls" => cls})
-      {weapon, shield, set} = @set[cls]
+      # dual: cầm 2 vũ khí (B-42), vũ khí thứ hai ở tay trái thay khiên
+      {weapon, dual, set} = @set[cls]
       full = %{"opt" => 4, "luck" => true, "up" => 11}
 
       p =
@@ -61,11 +62,6 @@ defmodule HacLong.AdminMaxTest do
         |> op("give_gear", Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => @exc_w}))
 
       p =
-        if shield,
-          do: op(p, "give_gear", Map.merge(full, %{"base" => shield, "exc" => @exc_a})),
-          else: p
-
-      p =
         Enum.reduce(
           set,
           p,
@@ -89,8 +85,26 @@ defmodule HacLong.AdminMaxTest do
           p
         end)
 
+      p =
+        if dual do
+          p =
+            op(
+              p,
+              "give_gear",
+              Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => @exc_w})
+            )
+
+          g = Enum.find(Gear.bag(p), &(&1.base == weapon))
+          {r, p} = Commands.run(p, %{"act" => "equip", "id" => g.uid, "hand" => "left"})
+          assert r.ok, r[:msg]
+          p
+        else
+          p
+        end
+
       worn = p.equip |> Map.values() |> Enum.count(& &1)
-      assert worn == if(shield, do: 11, else: 10) - if(cls == "mg", do: 1, else: 0)
+      assert worn == if(dual, do: 11, else: 10) - if(cls == "mg", do: 1, else: 0)
+      if dual, do: assert(Engine.left_weapon(p).name == Data.item(weapon).name)
 
       # Long Vương cấp tối đa, dắt theo, đủ 3 kỹ năng
       p = p |> op("give_pet", %{"id" => "long_vuong", "level" => 20})
