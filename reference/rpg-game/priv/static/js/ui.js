@@ -3254,22 +3254,47 @@
   // kỹ năng nguyên tố `a` đánh quái nguyên tố `b`: 1 khắc, -1 bị khắc, 0 bình thường
   const elVs = (a, b) => (a && b && (EL.beats[a] || []).includes(b) ? 1 : a && b && (EL.beats[b] || []).includes(a) ? -1 : 0);
   // mô tả kỹ năng tháp dựng từ số trong dữ liệu (không chép chữ, đổi số là chữ đổi theo)
-  function skillDesc(k) {
-    if (!k.floor) return k.desc;
+  // Mô tả kỹ năng đúng số của cấp thông thạo hiện tại (`lv`, mặc định cấp của nhân vật; chưa học: cấp 1). Số trong dữ liệu
+  // là của cấp tối đa: hệ số × (mult_min → 1), tác dụng phụ × effect_low dưới cấp tối đa (như HacLong.Game.Mastery).
+  function skillDesc(k, lv) {
+    const SM = RULES.skillMastery || {}, max = SM.max || 10;
+    lv = lv || (mastery(k.id) ? mastery(k.id).lv : 1);
+    const f = SM.mult_min == null ? 1 : SM.mult_min + (1 - SM.mult_min) * (Math.min(lv, max) - 1) / (max - 1);
+    const ef = lv < max ? (SM.effect_low || 1) : 1;
     const pc = (x) => `${Math.round(x * 100)}%`;
     const fx = { rage: 'tấn công +', guard: 'sát thương nhận −', evade: 'né +', weaken: 'tấn công quái −', sunder: 'phòng thủ quái −' };
-    const parts = [`Gây ${pc(k.mult)} sát thương${k.hits ? ` chia ${k.hits} đòn` : ''}`];
+    const parts = [];
+    if (!k.floor) {
+      const e = (RULES.skillEffects || {})[k.effect || k.id];
+      if (!e) return k.desc;
+      parts.push(`Gây ${pc(e.mult * f)} sát thương`);
+      if (e.def_mult) parts.push(`xuyên ${pc(1 - e.def_mult)} giáp`);
+      if (e.always_crit) parts.push('chắc chắn chí mạng');
+      const p = (e.power || 0) * ef, t = e.turns;
+      switch (k.effect || k.id) {
+        case 'holy': parts.push(`hồi ${pc(e.heal * ef)} máu`); break;
+        case 'stun_bash': parts.push(`làm quái choáng mất lượt${ef < 1 ? ` (${pc(ef)} trúng)` : ''}, trùm có ${pc(e.boss_resist)} kháng`); break;
+        case 'war_cry': parts.push(`nổi cuồng nộ: tấn công +${pc(p)} trong ${t} lượt`); break;
+        case 'venom': parts.push(`${k.element === 'fire' ? 'đốt' : 'tẩm độc'}: quái mất ${pc(p)} sát thương vừa gây mỗi lượt trong ${t} lượt`); break;
+        case 'shadow_step': parts.push(`né thêm ${pc(p)} trong ${t} lượt`); break;
+        case 'guard': parts.push(`giảm ${pc(p)} sát thương nhận trong ${t} lượt`); break;
+        case 'judgement': parts.push(`làm quái suy yếu: tấn công −${pc(p)} trong ${t} lượt`); break;
+        default: break;
+      }
+      return parts.join(', ') + '.';
+    }
+    parts.push(`Gây ${pc(k.mult * f)} sát thương${k.hits ? ` chia ${k.hits} đòn` : ''}`);
     if (k.def_mult) parts.push(`xuyên ${pc(1 - k.def_mult)} giáp`);
     if (k.crit) parts.push('chắc chắn chí mạng');
-    if (k.heal) parts.push(`hồi ${pc(k.heal)} máu`);
-    if (k.drain) parts.push(`hút ${pc(k.drain)} sát thương thành máu`);
-    if (k.stun) parts.push(`${pc(k.stun)} làm quái mất lượt`);
+    if (k.heal) parts.push(`hồi ${pc(k.heal * ef)} máu`);
+    if (k.drain) parts.push(`hút ${pc(k.drain * ef)} sát thương thành máu`);
+    if (k.stun) parts.push(`${pc(k.stun * ef)} làm quái mất lượt`);
     const b = k.buff, db = k.debuff;
-    if (b && b.id === 'shield') parts.push(`khiên ${pc(b.power)} máu tối đa trong ${b.turns} lượt`);
-    else if (b && b.id === 'undying') parts.push(`gục trong ${b.turns} lượt thì đứng dậy với ${pc(b.power)} máu`);
-    else if (b) parts.push(`${fx[b.id] || b.id}${pc(b.power)} trong ${b.turns} lượt`);
-    if (db && ['poison', 'burn'].includes(db.id)) parts.push(`${db.id === 'burn' ? 'đốt' : 'độc'} ${pc(db.power)} sát thương mỗi lượt, ${db.turns} lượt`);
-    else if (db) parts.push(`${fx[db.id] || db.id}${pc(db.power)} trong ${db.turns} lượt`);
+    if (b && b.id === 'shield') parts.push(`khiên ${pc(b.power * ef)} máu tối đa trong ${b.turns} lượt`);
+    else if (b && b.id === 'undying') parts.push(`gục trong ${b.turns} lượt thì đứng dậy với ${pc(b.power * ef)} máu`);
+    else if (b) parts.push(`${fx[b.id] || b.id}${pc(b.power * ef)} trong ${b.turns} lượt`);
+    if (db && ['poison', 'burn'].includes(db.id)) parts.push(`${db.id === 'burn' ? 'đốt' : 'độc'} ${pc(db.power * ef)} sát thương mỗi lượt, ${db.turns} lượt`);
+    else if (db) parts.push(`${fx[db.id] || db.id}${pc(db.power * ef)} trong ${db.turns} lượt`);
     return parts.join(', ') + '.';
   }
   let skillPick = null; // đang chọn bộ kỹ năng: mảng id
