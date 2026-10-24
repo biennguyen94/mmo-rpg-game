@@ -84,7 +84,7 @@ defmodule HacLong.Game.ItemsAltTest do
     assert picks |> Enum.map(& &1.tier) |> Enum.uniq() |> length() == 2
   end
 
-  test "B-17: đủ đồ Item.txt — vũ khí bậc 9–11 và bộ giáp bậc 10 cho mọi lớp, Phù Thủy có gậy và sách" do
+  test "B-17: đủ đồ Item.txt — vũ khí bậc 9–11 và bộ giáp bậc 10 cho mọi lớp, Phù Thủy có đủ gậy (sách Summoner đã bỏ, B-43)" do
     for cls <- ~w(dk dw elf mg), t <- 9..11 do
       assert Enum.any?(mains(), fn {_, it} ->
                it.slot == "weapon" and it.tier == t and cls in it.classes
@@ -99,7 +99,8 @@ defmodule HacLong.Game.ItemsAltTest do
     end
 
     staffs = for {id, it} <- mu(), String.starts_with?(id, "item_5_"), "dw" in it.classes, do: id
-    assert length(staffs) >= 28
+    assert length(staffs) >= 25
+    refute Enum.any?(staffs, &(&1 in ~w(item_5_21 item_5_22 item_5_23)))
 
     assert Enum.max(for {_, it} <- mu(), it.slot == "weapon", do: it.level) <=
              HacLong.Game.Engine.max_level()
