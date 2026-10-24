@@ -199,6 +199,18 @@ for p, s in gs:
 rl = R["realms"]
 
 # ---------- Kỹ năng ----------
+def mastery_note():
+    sm = R["skill_mastery"]
+    br = ", ".join(f"cấp {lv}: {c['cost']} Bí Kíp hoặc {c['alt']} Ngọc Tâm Linh" for lv, c in sorted(sm["break"].items(), key=lambda kv: int(kv[0])))
+    need = " / ".join(f"{x:,}".replace(",", ".") for x in sm["need"])
+    return E(f"Thông thạo: mỗi kỹ năng có cấp 1–{sm['max']}; số trong bảng là của cấp {sm['max']}. "
+             f"Cấp 1 gây {pct(sm['mult_min'])} hệ số, mỗi cấp tăng đều tới 100 %; dưới cấp {sm['mp_level']} tốn MP ×{n(sm['mp_low'])}, "
+             f"dưới cấp {sm['cd_level']} hồi chiêu +{sm['cd_low']} lượt, dưới cấp {sm['max']} tác dụng phụ (hồi máu, choáng, buff, độc…) ×{n(sm['effect_low'])}. "
+             f"Luyện: mỗi lần dùng với quái +{sm['points']} điểm (tự đánh +{sm['points_auto']}), trùm / tinh anh ×{sm['boss_mult']}, quái thấp hơn quá {sm['level_gap']} cấp không tính, đánh người không tính. "
+             f"Tổng điểm lên cấp 2…{sm['max']}: {need}. Đột phá: {br}. "
+             f"Bí Kíp rơi: trùm vùng {pct(sm['drop']['boss'])}, quái tinh anh {pct(sm['drop']['elite'])}, trùm thế giới {pct(sm['drop']['world'])}. "
+             f"Nhân vật có trước tính năng: kỹ năng đang có đã ở cấp {sm['max']}.")
+
 EL = R["elements"]
 def el(e):
     return f'{EL["icons"][e]} {EL["names"][e]}' if e else "—"
@@ -595,7 +607,7 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  EXCLINES=", ".join(f"{a} dòng {pct(b/sum(w for _, w in ex['lines']))}" for a, b in ex["lines"]),
                  EXCPRICE=n(ex['price_mult']), DMGRED=pct(ex['max_dmg_red']), REFL=pct(ex['max_reflect']),
                  ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
-                 STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']),
+                 STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']), MASTERY=mastery_note(),
                  RMIN=str(rl['min_level']), REBIRTH=f"Chuyển sinh lần n: +{R['character']['rebirth_points']} × n điểm tiềm năng, kinh nghiệm lên cấp × (1 + {pct(R['character']['rebirth_xp_pct'])} × n); từ lần {R['character']['rebirth_lord_from'] + 1}, muốn chuyển sinh lần k + 1 phải từng hạ chúa tể vùng k.", RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']), RMAPS=str(rl['maps_per_realm']), RSTEP=n(rl['depth_step']),
                  SELL=pct(R['shop']['sell_ratio'])).items():
     page = page.replace("{{" + k + "}}", v)

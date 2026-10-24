@@ -6,7 +6,7 @@ defmodule HacLong.Game.TowerMpTest do
 
   defp hero(cls) do
     {:ok, p} = Engine.new_player("Mp", cls)
-    %{p | level: 50}
+    HacLong.Game.Mastery.maxed(%{p | level: 50})
   end
 
   test "kỹ năng tháp: Kiếm Sĩ ×0,5, Tiên Nữ ×0,6, Pháp Sư ×1; kỹ năng lớp giữ nguyên" do

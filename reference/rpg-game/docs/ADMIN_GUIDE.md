@@ -95,6 +95,7 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Thú cưng | `give_pet` | `id` (thú trong `priv/game_data/pets.json`, kể cả thú hiếm `long_vuong`), `level` 1..20 | tặng thú, đặt cấp thú (cấp 5 / 15 / 20 mở kỹ năng), dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị: mục **Thú cưng** (🐉 Long Vương ở đầu danh sách). Không ghi Bia Long Vương |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
+| Thông thạo kỹ năng | `set_mastery` | `lv` 1..10 | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp 4 / 9 thì đủ điểm chờ đột phá) |
 | Hủy trang bị trong túi | `clear_bag` | | xóa **mọi** trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên; bình, ngọc, nguyên liệu không đụng. Nút **Hủy trang bị trong túi** (đỏ, hỏi xác nhận). Không hoàn tác |
 | Hồi đầy máu | `heal` | | |
 

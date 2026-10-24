@@ -998,3 +998,23 @@ Anh báo đối thủ đấu trường còn 1 máu không chết: Excellent "ph�
 (đối thủ có `pvp`: đấu trường, bản sao) phản đòn hạ được đối thủ, cả hai chiều (đối thủ phản lại mình cũng hạ được mình).
 Đánh quái giữ như cũ (quái không chết vì phản đòn). Đối thủ đấu trường gục vì phản đòn / độc vẫn được Long Vương Hồi Sinh
 (`mirror_revive`), mình gục vì phản đòn cũng vậy. Đồ sát / PK cược không có phản đòn (mỗi bên tính đòn riêng) nên không đổi.
+
+## Thông thạo kỹ năng (2026-10-24, anh duyệt)
+
+Anh muốn kỹ năng có cấp và rèn qua đánh. Anh duyệt đề xuất và chốt: **thông số kỹ năng hiện có là của cấp 10** (không tăng
+sức mạnh tối đa, cân bằng đánh người vừa chỉnh giữ nguyên ở cấp tối đa); **nhân vật có trước tính năng: mọi kỹ năng đang có lên
+cấp 10** (không ai yếu đi), kỹ năng mở sau đó và nhân vật mới luyện từ cấp 1.
+- `HacLong.Game.Mastery`, số ở `RULES.skill_mastery` (DESIGN). Cột mới `characters.skill_mastery` (map `id → %{lv, xp}`; NULL =
+  nhân vật cũ, nạp lên cấp 10, `Mastery.legacy/1`).
+- Cấp L: hệ số sát thương × (0,75 + 0,25 × (L − 1) / 9); dưới cấp 4 MP ×1,15; dưới cấp 7 hồi chiêu +1 lượt; dưới cấp 10 tác dụng
+  phụ ×0,8 (hồi máu, hút máu, tỉ lệ khống chế / choáng của Trảm Choáng, sức buff / debuff / độc). Áp cả bản sao đấu trường (theo
+  cấp của người đó).
+- Luyện: mỗi lần dùng kỹ năng với quái +2 điểm, tự đánh +1, trùm / quái tinh anh / trùm thế giới ×3, quái thấp hơn mình quá 10 cấp
+  không tính, đánh người không tính (tránh hai người đánh nhau để luyện). Tổng điểm lên cấp 2…10: 20 / 60 / 120 / 200 / 320 / 480 /
+  700 / 1000 / 1400.
+- Đột phá lên cấp 5 (1 Bí Kíp hoặc 5 Ngọc Tâm Linh) và cấp 10 (3 Bí Kíp hoặc 15 Ngọc Tâm Linh) ở Menu → Kỹ năng (lệnh
+  `skill_break`). Bí Kíp (vật phẩm mới `bi_kip`, hình pixel sách da) rơi: trùm vùng 30 %, quái tinh anh 10 %, trùm thế giới 100 %.
+- Giao diện: số cấp trên nút kỹ năng trong trận, Menu → Kỹ năng có cấp / sức % / thanh điểm / nút đột phá; lên cấp kỹ năng có chữ
+  vàng + vòng sáng trên nhân vật. Quản trị `set_mastery` đặt cấp mọi kỹ năng đang có.
+- Không chạy lại giả lập đánh người: ở cấp 10 mọi số y như trước nên kết quả cân bằng cũ giữ nguyên; chênh lệch chỉ khi hai bên khác
+  cấp thông thạo (người luyện nhiều mạnh hơn, đúng ý tính năng).

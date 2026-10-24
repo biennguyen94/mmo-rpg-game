@@ -8,7 +8,19 @@ defmodule HacLong.Game.Engine do
   để test cố định được kết quả.
   """
 
-  alias HacLong.Game.{Bestiary, Blessing, Crafting, Elements, Data, Events, Gear, Home, Pets, Rng}
+  alias HacLong.Game.{
+    Bestiary,
+    Blessing,
+    Crafting,
+    Elements,
+    Data,
+    Events,
+    Gear,
+    Home,
+    Mastery,
+    Pets,
+    Rng
+  }
 
   @save_version 1
   # số luật chơi: `RULES` trong `priv/game_data/rules.json`
@@ -130,6 +142,8 @@ defmodule HacLong.Game.Engine do
           drink: nil,
           blessing: nil,
           skill_set: nil,
+          # thông thạo kỹ năng (`HacLong.Game.Mastery`): nhân vật mới luyện từ cấp 1
+          skill_mastery: %{},
           auto_cfg: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
@@ -423,6 +437,18 @@ defmodule HacLong.Game.Engine do
       look: look(p),
       # Phase 3: kỹ năng mang vào trận (id, theo thứ tự) và mọi kỹ năng đã mở
       skillSet: Enum.map(skills(p), & &1.id),
+      # thông thạo kỹ năng: cấp, điểm, mốc, cần đột phá; MP và hồi chiêu ở cấp hiện tại
+      mastery:
+        Map.new(Mastery.view(p), fn {id, v} ->
+          k = Enum.find(available_skills(p), &(&1.id == id))
+
+          {id,
+           Map.merge(v, %{
+             mp: skill_mp(p, k),
+             cd: skill_cd(p, k),
+             pct: round(Mastery.mult(v.lv) * 100)
+           })}
+        end),
       skillsOpen: Enum.map(available_skills(p), & &1.id),
       # cài đặt tự đánh đã lưu (lần bật gần nhất), để bảng cài đặt mở lại đúng như cũ
       autoCfg: Map.get(p, :auto_cfg),
@@ -762,8 +788,13 @@ defmodule HacLong.Game.Engine do
   """
   def skill_mp(p, skill) do
     cls = if skill[:floor], do: tower_mp_mult(p.cls), else: 1
-    round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)) * cls)
+    # thông thạo kỹ năng: cấp thấp tốn thêm MP (`RULES.skill_mastery.mp_low`)
+    ms = Mastery.mp_factor(Mastery.level(p, skill.id))
+    round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)) * cls * ms)
   end
+
+  @doc "Hồi chiêu kỹ năng ở cấp thông thạo hiện tại (cấp thấp + `RULES.skill_mastery.cd_low` lượt)."
+  def skill_cd(p, skill), do: skill.cooldown + Mastery.cd_extra(Mastery.level(p, skill.id))
 
   defp tower_mp_mult(cls) do
     m = Map.get(@rules.tower_skills, :mp_mult) || %{}
@@ -1024,6 +1055,9 @@ defmodule HacLong.Game.Engine do
         {p, atk, dfn, crit, mult, name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(if pvp, do: pvp_crit(d.crit), else: d.crit))
 
+        # thông thạo kỹ năng: hệ số trong dữ liệu là của cấp tối đa
+        mult = if skill, do: mult * Mastery.mult(Mastery.level(p, skill.id)), else: mult
+
         dfn = round(dfn * (1 - d.ignoreDef) * (1 - power(p, :monster, "sunder")))
         # Phase 3: nguyên tố kỹ năng so với nguyên tố quái
         {emult, eres} = Elements.mult(skill && skill[:element], m[:element])
@@ -1082,6 +1116,8 @@ defmodule HacLong.Game.Engine do
             |> on_hit.(dmg)
           end
 
+        # dùng kỹ năng với quái: cộng điểm thông thạo (đánh người không tính)
+        p = if skill && !pvp, do: Mastery.gain(p, skill, m), else: p
         p = pet_bite(p, d)
 
         cond do
@@ -1210,9 +1246,12 @@ defmodule HacLong.Game.Engine do
 
   # Phase 3 (B-29): kỹ năng tháp, mọi tác dụng ghi trong dữ liệu (`RULES.tower_skills._doc`)
   defp strike_with(p, %{floor: _} = skill, d, atk, dfn, crit) do
-    p = set_cd(p, skill.id, skill.cooldown + 1)
+    p = set_cd(p, skill.id, skill_cd(p, skill) + 1)
     p = %{p | mp: mp(p) - skill_mp(p, skill)}
     m = p.battle.monster
+
+    # thông thạo kỹ năng: dưới cấp tối đa tác dụng phụ yếu hơn (`effect_low`)
+    skill = scale_tower(skill, Mastery.effect(Mastery.level(p, skill.id)))
     dfn = if skill[:def_mult], do: round(dfn * skill.def_mult), else: dfn
     crit = skill[:crit] == true or crit
 
@@ -1240,14 +1279,16 @@ defmodule HacLong.Game.Engine do
 
   defp strike_with(p, skill, d, atk, dfn, crit) do
     # +1 vì cuối lượt sẽ trừ 1
-    p = set_cd(p, skill.id, skill.cooldown + 1)
+    p = set_cd(p, skill.id, skill_cd(p, skill) + 1)
     p = %{p | mp: mp(p) - skill_mp(p, skill)}
     m = p.battle.monster
     none = fn p, _ -> p end
 
-    # tác dụng theo `effect` (kỹ năng các lớp dùng chung vài kiểu tác dụng), số ở `RULES.skill_effects`
+    # tác dụng theo `effect` (kỹ năng các lớp dùng chung vài kiểu tác dụng), số ở `RULES.skill_effects`;
+    # thông thạo kỹ năng: dưới cấp tối đa hồi máu / sức tác dụng / tỉ lệ choáng × `effect_low`
     effect = skill[:effect] || skill.id
-    e = @effects[String.to_existing_atom(effect)]
+    ef = Mastery.effect(Mastery.level(p, skill.id))
+    e = scale_effect(@effects[String.to_existing_atom(effect)], ef)
     dfn = if e[:def_mult], do: round(dfn * e.def_mult), else: dfn
     crit = e[:always_crit] || crit
     pct = fn x -> round(x * 100) end
@@ -1264,9 +1305,17 @@ defmodule HacLong.Game.Engine do
       "stun_bash" ->
         {p, atk, dfn, crit, e.mult, skill.name,
          fn p, _ ->
-           if (m.boss || m[:world]) && chance(e.boss_resist),
-             do: log(p, "#{m.name} không bị choáng.", "info"),
-             else: stun_monster(p, "💫 #{m.name} bị choáng!")
+           cond do
+             (m.boss || m[:world]) && chance(e.boss_resist) ->
+               log(p, "#{m.name} không bị choáng.", "info")
+
+             # chưa tối đa thông thạo: không chắc choáng
+             ef < 1 and not chance(ef) ->
+               log(p, "#{m.name} không bị choáng.", "info")
+
+             true ->
+               stun_monster(p, "💫 #{m.name} bị choáng!")
+           end
          end}
 
       "war_cry" ->
@@ -1313,6 +1362,29 @@ defmodule HacLong.Game.Engine do
       _ ->
         {p, atk, dfn, crit, e.mult, skill.name, none}
     end
+  end
+
+  # thông thạo kỹ năng: tác dụng phụ kỹ năng tháp × `f` (hồi máu, hút máu, tỉ lệ khống chế, sức buff / debuff)
+  defp scale_tower(skill, f) when f == 1, do: skill
+
+  defp scale_tower(skill, f) do
+    num = fn v -> if is_number(v), do: v * f, else: v end
+    pw = fn b -> if is_map(b) and is_number(b[:power]), do: %{b | power: b.power * f}, else: b end
+
+    skill
+    |> Map.update(:heal, nil, num)
+    |> Map.update(:drain, nil, num)
+    |> Map.update(:stun, nil, num)
+    |> Map.update(:buff, nil, pw)
+    |> Map.update(:debuff, nil, pw)
+  end
+
+  defp scale_effect(e, f) when f == 1, do: e
+
+  defp scale_effect(e, f) do
+    e
+    |> then(&if(is_number(&1[:heal]), do: %{&1 | heal: &1.heal * f}, else: &1))
+    |> then(&if(is_number(&1[:power]), do: %{&1 | power: &1.power * f}, else: &1))
   end
 
   defp skill_drain(p, %{drain: f}, d, dmg) when is_number(f) and dmg > 0 do
@@ -1678,11 +1750,12 @@ defmodule HacLong.Game.Engine do
       %{
         id: k.id,
         name: k.name,
-        mult: (k[:mult] || e[:mult] || 1) * (1 + d.skillDmg),
+        mult:
+          (k[:mult] || e[:mult] || 1) * (1 + d.skillDmg) * Mastery.mult(Mastery.level(p, k.id)),
         hits: k[:hits] || 1,
         def_mult: k[:def_mult] || e[:def_mult],
         crit: k[:crit] == true or e[:always_crit] == true,
-        cd: k.cooldown,
+        cd: skill_cd(p, k),
         mp: skill_mp(p, k)
       }
     end
@@ -1968,6 +2041,7 @@ defmodule HacLong.Game.Engine do
     {p, reward} = cc_ticket_drop(p, m, reward)
     {p, reward} = raid_drop(p, m, reward)
     {p, reward} = kundun_mark_drop(p, m, reward)
+    {p, reward} = bi_kip_drop(p, m, reward)
     {p, reward} = event_drop(p, m, event, reward)
 
     {p, reward} =
@@ -2091,6 +2165,28 @@ defmodule HacLong.Game.Engine do
   end
 
   # Dấu Ấn Kundun (B-21): quái thường cấp ≥ `kalima.mark_drop.min_level` thỉnh thoảng rơi
+  # Bí Kíp (đột phá thông thạo kỹ năng): trùm vùng, quái tinh anh, trùm thế giới (`RULES.skill_mastery.drop`)
+  defp bi_kip_drop(p, m, reward) do
+    dr = Mastery.rules().drop
+
+    c =
+      cond do
+        m[:pvp] -> 0
+        m[:world] -> dr.world
+        m.boss -> dr.boss
+        m[:elite] -> dr.elite
+        true -> 0
+      end
+
+    if c > 0 and chance(c) do
+      id = Mastery.rules().item
+      p = p |> add_item(id) |> log("📕 Nhặt được #{Data.item(id).name}!", "win")
+      {p, %{reward | items: reward.items ++ [id]}}
+    else
+      {p, reward}
+    end
+  end
+
   defp kundun_mark_drop(p, m, reward) do
     c = HacLong.Game.Kalima.mark_chance(m)
 

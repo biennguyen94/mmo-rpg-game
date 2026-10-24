@@ -9,7 +9,8 @@ defmodule HacLong.Game.EngineTest do
 
   defp player(cls \\ "dk") do
     {:ok, p} = Engine.new_player("Thử", cls)
-    p
+    # thông số kỹ năng trong dữ liệu là của cấp thông thạo tối đa
+    HacLong.Game.Mastery.maxed(p)
   end
 
   test "chỉ số nhân vật mới" do

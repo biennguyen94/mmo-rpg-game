@@ -145,6 +145,8 @@ defmodule HacLong.Game.Characters do
       |> HacLong.Game.Engine.migrate_items()
       |> HacLong.Game.Engine.split_upgrades()
       |> HacLong.Game.Engine.instance_gear()
+      # nhân vật có trước thông thạo kỹ năng: kỹ năng đang có lên cấp tối đa
+      |> HacLong.Game.Mastery.legacy()
 
     d = HacLong.Game.Engine.derived(p)
     %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)}
@@ -199,6 +201,7 @@ defmodule HacLong.Game.Characters do
       drink: food(c.drink),
       blessing: HacLong.Game.Blessing.load(c.blessing),
       skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
+      skill_mastery: HacLong.Game.Mastery.load(c.skill_mastery),
       auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,

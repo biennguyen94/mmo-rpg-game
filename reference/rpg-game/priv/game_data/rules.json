@@ -490,6 +490,28 @@
       "version": 1,
       "verified": false
     },
+    "skill_mastery": {
+      "_doc": "Thông thạo kỹ năng (DECISIONS \"Thông thạo kỹ năng\"): mỗi kỹ năng (lớp + tháp) có cấp 1..max, luyện bằng cách dùng trong trận với quái (không tính đánh người). Mỗi lần dùng được `points` điểm (tự đánh `points_auto`), trùm / quái tinh anh / trùm thế giới × `boss_mult`; quái thấp hơn mình quá `level_gap` cấp không được điểm. `need[i]`: tổng điểm để lên cấp i + 2. Thông số kỹ năng trong dữ liệu là của cấp max; cấp L: hệ số sát thương × (mult_min + (1 − mult_min) × (L − 1) / (max − 1)); dưới cấp `mp_level` MP × `mp_low`; dưới cấp `cd_level` hồi chiêu + `cd_low`; dưới cấp max tác dụng phụ (hồi máu, hút máu, choáng, buff, độc...) × `effect_low`. Lên `break` cấp cần đột phá: `cost` Bí Kíp hoặc `alt` Ngọc Tâm Linh. Bí Kíp rơi: trùm vùng `drop.boss`, quái tinh anh (tháp, sự kiện) `drop.elite`, trùm thế giới `drop.world`. Nhân vật có trước tính năng: mọi kỹ năng đang có được cấp max.",
+      "max": 10,
+      "points": 2,
+      "points_auto": 1,
+      "boss_mult": 3,
+      "level_gap": 10,
+      "need": [20, 60, 120, 200, 320, 480, 700, 1000, 1400],
+      "mult_min": 0.75,
+      "mp_level": 4,
+      "mp_low": 1.15,
+      "cd_level": 7,
+      "cd_low": 1,
+      "effect_low": 0.8,
+      "break": {"5": {"cost": 1, "alt": 5}, "10": {"cost": 3, "alt": 15}},
+      "item": "bi_kip",
+      "alt_item": "jewel_soul",
+      "drop": {"boss": 0.3, "elite": 0.1, "world": 1.0},
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "tower_skills": {
       "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Vô Tận ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận. mp_mult: MP kỹ năng tháp nhân thêm theo lớp (lớp ít MP: Kiếm Sĩ, Tiên Nữ; DECISIONS \"MP kỹ năng tháp theo lớp\"), lớp không ghi ×1.",
       "loadout": 5,

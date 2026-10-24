@@ -647,6 +647,13 @@
       "price": 0,
       "desc": "Rơi từ quái cấp 20 trở lên. Ghép 5 dấu ấn ở Máy Hỗn Nguyên ra Bản Đồ Thất Lạc (vào Kalima)."
     },
+    "bi_kip": {
+      "name": "Bí Kíp",
+      "slot": "material",
+      "icon": "open-book",
+      "price": 0,
+      "desc": "Đột phá kỹ năng lên cấp 5 (1 cuốn) và cấp 10 (3 cuốn) ở Menu → Kỹ năng. Rơi từ trùm vùng, quái tinh anh, trùm thế giới."
+    },
     "lost_map": {
       "name": "Bản Đồ Thất Lạc",
       "slot": "material",

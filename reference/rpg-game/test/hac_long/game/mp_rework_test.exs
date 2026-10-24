@@ -6,7 +6,7 @@ defmodule HacLong.Game.MpReworkTest do
 
   defp player(cls \\ "dw") do
     {:ok, p} = Engine.new_player("Thử", cls)
-    p
+    HacLong.Game.Mastery.maxed(p)
   end
 
   test "MP kỹ năng tăng theo cấp" do

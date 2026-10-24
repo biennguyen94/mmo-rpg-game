@@ -284,6 +284,15 @@
         ring(x, y - 10, '#ffe9a0', { r1: 110, life: 600, w: 4 });
       }, 380);
     },
+    // thông thạo kỹ năng lên cấp: sách sáng + chữ vàng trên đầu nhân vật
+    mastery(e) {
+      const me = spot(ME);
+      if (!me) return;
+      ring(me.x, me.y, '#ffd24a', { r1: 70, life: 600, w: 3 });
+      burst(me.x, me.y - me.h * 0.3, 14, ['#ffd24a', '#fff3b0', '#9fd8ff'], { up: true, vmax: 180, glow: true, life: 900 });
+      text(me.x, me.y - me.h * 0.7, `📘 ${e.text}`, '#ffd24a', 17);
+      if (window.Sound) window.Sound.play('achieve');
+    },
     boss(e) { if (window.Celebrate) window.Celebrate.boss(e.name); shake(true); flash('#ffd24a', 0.3, 500); },
     ghost(e) {
       const bar = document.querySelector('#view .stage .bar');

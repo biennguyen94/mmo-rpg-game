@@ -165,6 +165,16 @@ defmodule HacLongWeb.PageController do
         # Phase 3 (B-29): nguyên tố, kỹ năng tháp
         elements: Map.drop(Data.rules().elements, [:_doc, :sourceType, :version, :verified]),
         towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist, :mp_mult]),
+        # thông thạo kỹ năng (Menu → Kỹ năng): cấp tối đa, vật phẩm đột phá, MP cấp thấp
+        skillMastery:
+          Map.take(Data.rules().skill_mastery, [
+            :max,
+            :item,
+            :alt_item,
+            :mp_low,
+            :mult_min,
+            :level_gap
+          ]),
         potionPricePerLevel: Data.rules().shop.potion_price_per_level,
         # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
         travel: %{

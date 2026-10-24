@@ -976,3 +976,10 @@ img.own.pix { object-fit: contain; image-rendering: pixelated; }
   .ticker, .ticker.out, .ticker .tt span.run, .badge-card, .badge-card .bi, .lvup *, .rebirth-fx, .rebirth-fx *, .boss-down *, .cell.fresh-item,
   [data-act="mail_claim"].primary, [data-act="mail_claim_all"] { animation: none !important; }
 }
+
+/* Thông thạo kỹ năng: số cấp trên nút kỹ năng, thanh điểm trong Menu → Kỹ năng */
+.actions .btn { position: relative; }
+.sk-lv { position: absolute; top: 3px; right: 4px; min-width: 16px; padding: 0 4px; border-radius: 8px; font: 700 10px/16px system-ui, sans-serif; color: #1a1206; background: #f0cf7a; }
+.mastery { margin-top: 4px; }
+.mastery .bar { margin-top: 3px; }
+.mastery .btn-row { margin-top: 4px; flex-wrap: wrap; }

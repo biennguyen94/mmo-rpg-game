@@ -17,6 +17,7 @@ defmodule HacLong.Game.TowerSkillsTest do
       mp: 5000,
       tower_best: best
     })
+    |> HacLong.Game.Mastery.maxed()
   end
 
   defp tskill(cls, n), do: Enum.at(Data.class(cls).tower_skills, n - 1)

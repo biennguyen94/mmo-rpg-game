@@ -19,13 +19,14 @@ defmodule HacLong.Admin do
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
+  | `set_mastery` | `lv` (1..`RULES.skill_mastery.max`) | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp ngay trước mốc đột phá thì đủ điểm, chờ đột phá) |
   """
 
   import Ecto.Query
   alias HacLong.Repo
   alias HacLong.Game.{Data, Engine, Gear, Pets, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear give_pet add_points add_stats reset_stats clear_bag heal set_tower set_rebirths)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear give_pet add_points add_stats reset_stats clear_bag heal set_tower set_rebirths set_mastery)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -93,6 +94,22 @@ defmodule HacLong.Admin do
   end
 
   # Phase 6: số lần chuyển sinh (mở vùng đất chuyển sinh); không đổi cấp / điểm
+  def build("set_mastery", %{"lv" => lv}) when is_integer(lv) do
+    max = HacLong.Game.Mastery.max()
+
+    if lv in 1..max,
+      do:
+        {:ok,
+         fn p ->
+           # cấp ngay trước mốc đột phá (4, 9): đủ điểm, chờ đột phá
+           brk = lv < max and HacLong.Game.Mastery.break_cost(lv + 1)
+           e = %{lv: lv, xp: HacLong.Game.Mastery.need(if(brk, do: lv + 1, else: lv))}
+           m = for k <- Engine.available_skills(p), into: %{}, do: {k.id, e}
+           {:ok, Map.put(p, :skill_mastery, m), "Thông thạo mọi kỹ năng: cấp #{lv}."}
+         end},
+      else: {:error, "Cấp thông thạo phải từ 1 tới #{max}."}
+  end
+
   def build("set_rebirths", %{"n" => n}) when is_integer(n) do
     max = Data.rules().character.max_rebirths
 

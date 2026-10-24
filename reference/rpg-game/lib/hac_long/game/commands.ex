@@ -74,6 +74,10 @@ defmodule HacLong.Game.Commands do
       "skill_set" ->
         Engine.set_skills(p, c["ids"])
 
+      # thông thạo kỹ năng: đột phá ở mốc cấp 5 / 10 bằng Bí Kíp ("item") hoặc Ngọc Tâm Linh ("alt")
+      "skill_break" ->
+        HacLong.Game.Mastery.break_through(p, to_string(c["skill"]), c["pay"])
+
       "alloc" ->
         Engine.allocate(p, c["stat"], int(c["n"] || 1))
 

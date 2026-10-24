@@ -11,7 +11,9 @@ defmodule HacLong.Game.PvpBalanceTest do
 
   defp hero(name, cls) do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => cls})
+    # thông số kỹ năng trong dữ liệu là của cấp thông thạo tối đa
     %{p | level: 40, stats: Map.new(p.stats, fn {k, v} -> {k, v * 4} end)}
+    |> HacLong.Game.Mastery.maxed()
   end
 
   # một đòn của `p` vào bản sao `foe` (pvp: uid hoặc nil = coi như quái); không né, không chí mạng
