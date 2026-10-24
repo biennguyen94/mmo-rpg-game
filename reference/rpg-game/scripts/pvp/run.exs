@@ -31,6 +31,9 @@ fx = %{}
 for {a, b, w, avg} <- Enum.reverse(rows),
     do: IO.puts("#{a} đánh #{b}: thắng #{round(w * 100 / n)}%  (TB #{Float.round(avg, 1)} lượt)")
 
+first = Enum.sum(for {_, _, w, _} <- rows, do: w) / (length(rows) * n)
+same = Enum.sum(for {a, b, w, _} <- rows, a == b, do: w) / (4 * n)
+IO.puts("\nNgười đi trước thắng: #{round(first * 100)}% (cùng lớp #{round(same * 100)}%)")
 IO.puts("\nTổng theo lớp (cả đi trước lẫn đi sau, không tính trận cùng lớp):")
 
 for c <- ~w(dk dw elf mg) do

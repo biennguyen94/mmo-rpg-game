@@ -20,8 +20,11 @@ defmodule SlaySim do
   def fight(a, b, cap \\ 200) do
     ps = %{1 => enter(a, b, 2), 2 => enter(b, a, 1)}
     chars = %{1 => a, 2 => b}
+    # DEF_SHIELD: người bị đánh (2) vào trận có khiên = X × máu tối đa (hết khi vỡ)
+    sh = String.to_float(System.get_env("DEF_SHIELD") || "0.0")
+    fx2 = if sh > 0, do: %{effects: [%{id: "shield", turns: 999, power: round(sh * ps[2].hp)}], turn: 0, pstun_free: 0, pet_revived: false}
     st = %{mismatch: 0, turns: 0, stunned: 0, reduced: 0, saved: 0, pots: 0}
-    loop(ps, chars, %{1 => ps[1].hp, 2 => ps[2].hp}, %{1 => nil, 2 => nil}, 1, 0, cap, st)
+    loop(ps, chars, %{1 => ps[1].hp, 2 => ps[2].hp}, %{1 => nil, 2 => fx2}, 1, 0, cap, st)
   end
 
   defp loop(_ps, _c, hp, _fx, _uid, n, cap, st) when n >= cap,
@@ -74,6 +77,8 @@ defmodule SlaySim do
       end
 
     raw = hp[foe_id] + @pad - p2.battle.monster.hp
+    # thử giảm lợi thế đi trước (DS-2): FIRST_MULT nhân đòn lượt đầu của người tấn công
+    raw = if n == 0, do: round(raw * String.to_float(System.get_env("FIRST_MULT") || "1.0")), else: raw
 
     shown =
       p2.battle.log
