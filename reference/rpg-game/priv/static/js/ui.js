@@ -2546,7 +2546,8 @@
     const btns = at.slot
       ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
       : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${lockBtn}`
-      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${P.hp >= d.maxHp ? 'disabled' : ''}>Dùng</button>`
+      // bình mana: sáng khi MP chưa đầy; bình máu: khi máu chưa đầy (như server `Engine.use_potion/2`)
+      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana_pct ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
       : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
     // ép món trong túi (mang tới Thợ Rèn), vứt món trong túi
