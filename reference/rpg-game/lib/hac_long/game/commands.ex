@@ -190,6 +190,13 @@ defmodule HacLong.Game.Commands do
       "unstore" ->
         at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.take(p, c["id"], c["n"] || 1) end)
 
+      # cất / rút vàng ở Tủ Đồ (`n` vàng)
+      "gold_store" ->
+        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.store_gold(p, c["n"]) end)
+
+      "gold_take" ->
+        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.take_gold(p, c["n"]) end)
+
       "storage_expand" ->
         at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.expand(p) end)
 

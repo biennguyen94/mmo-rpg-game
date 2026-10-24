@@ -8,14 +8,17 @@ defmodule HacLong.Game.Storage do
     tính, không mặc / bán / giao dịch được, nhưng nhật ký đồ hiếm và đối soát không phải đổi.
     Tối đa `RULES.storage.gear` món, mở rộng thêm theo `RULES.storage.expand` (trả vàng).
 
-  Nhân vật lưu `storage: %{inv: %{}, extra: số_lần_mở_rộng}`.
+  - Vàng cất trong `storage.gold` (2026-10-24): không mất khi chết / thua đồ sát, không tiêu được cho tới khi rút ra;
+    tối đa `RULES.storage.gold_max` (null = không giới hạn).
+
+  Nhân vật lưu `storage: %{inv: %{}, extra: số_lần_mở_rộng, gold: vàng_trong_tủ}`.
   """
 
   alias HacLong.Game.{Data, Engine, Gear}
 
   @rules Data.rules().storage
 
-  def empty, do: %{inv: %{}, extra: 0}
+  def empty, do: %{inv: %{}, extra: 0, gold: 0}
 
   @doc "Đọc từ database (khóa chuỗi); bỏ món không còn trong dữ liệu."
   def load(m) when is_map(m) do
@@ -23,13 +26,17 @@ defmodule HacLong.Game.Storage do
 
     %{
       inv: for({id, n} <- inv, Data.item(id), is_integer(n) and n > 0, into: %{}, do: {id, n}),
-      extra: min(m["extra"] || 0, length(@rules.expand))
+      extra: min(m["extra"] || 0, length(@rules.expand)),
+      gold: max(0, if(is_integer(m["gold"]), do: m["gold"], else: 0))
     }
   end
 
   def load(_), do: empty()
 
-  def get(p), do: Map.get(p, :storage) || empty()
+  def get(p), do: Map.merge(empty(), Map.get(p, :storage) || %{})
+
+  @doc "Vàng đang cất trong tủ."
+  def gold(p), do: get(p).gold
 
   @doc "Số món đồ hiếm cất được (gốc + các lần mở rộng)."
   def gear_cap(p) do
@@ -149,9 +156,52 @@ defmodule HacLong.Game.Storage do
     end
   end
 
-  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], cap, items_cap, next}`."
+  @doc "Cất `n` vàng vào tủ (tối đa `RULES.storage.gold_max` nếu có)."
+  def store_gold(%{battle: b} = p, _n) when b != nil, do: {err("Đang trong trận."), p}
+
+  def store_gold(p, n) do
+    s = get(p)
+    max = @rules[:gold_max]
+
+    cond do
+      not (is_integer(n) and n >= 1) ->
+        {err("Số vàng không hợp lệ."), p}
+
+      p.gold < n ->
+        {err("Chỉ có #{p.gold} vàng."), p}
+
+      max && s.gold + n > max ->
+        {err("Tủ chứa tối đa #{max} vàng."), p}
+
+      true ->
+        {ok("Đã cất #{n} vàng vào tủ."),
+         %{p | gold: p.gold - n} |> Map.put(:storage, %{s | gold: s.gold + n})}
+    end
+  end
+
+  @doc "Rút `n` vàng từ tủ ra túi."
+  def take_gold(%{battle: b} = p, _n) when b != nil, do: {err("Đang trong trận."), p}
+
+  def take_gold(p, n) do
+    s = get(p)
+
+    cond do
+      not (is_integer(n) and n >= 1) ->
+        {err("Số vàng không hợp lệ."), p}
+
+      s.gold < n ->
+        {err("Tủ chỉ có #{s.gold} vàng."), p}
+
+      true ->
+        {ok("Đã rút #{n} vàng."),
+         %{p | gold: p.gold + n} |> Map.put(:storage, %{s | gold: s.gold - n})}
+    end
+  end
+
+  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], cap, items_cap, next, gold}`."
   def view(p) do
     %{
+      gold: gold(p),
       inv: get(p).inv,
       gear: Enum.map(stored_gear(p), & &1.uid),
       cap: gear_cap(p),

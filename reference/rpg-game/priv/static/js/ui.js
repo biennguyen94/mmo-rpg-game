@@ -2747,7 +2747,13 @@
     const bag = Object.keys(P.inv).filter((id) => P.inv[id] > 0).map((id) => row(id, P.inv[id], 'store', 'Cất'))
       .concat(bagGear().map((uid) => row(uid, 1, 'store', 'Cất')));
     const nx = st.next;
-    return `<div class="card"><div class="row"><h3 class="grow">Trong tủ</h3><span class="tag num">Đồ thường ${Object.keys(st.inv).length}/${st.items_cap} loại · Trang bị ${st.gear.length}/${st.cap}</span></div>
+    const sg = st.gold || 0;
+    const goldCard = `<div class="card"><div class="row"><h3 class="grow">${icon('two-coins')}Vàng trong tủ</h3><span class="tag num">${fmt(sg)}</span></div>
+      <p class="small muted">Vàng trong tủ không mất khi chết hay thua đồ sát; muốn tiêu thì rút ra túi.</p>
+      <div class="row"><input id="wd-gold" type="number" min="1" inputmode="numeric" placeholder="Số vàng" class="grow">
+        <button class="btn primary" data-act="gold_store" ${P.gold > 0 ? '' : 'disabled'}>Cất</button><button class="btn" data-act="gold_take" ${sg > 0 ? '' : 'disabled'}>Rút</button></div>
+      <div class="row"><button class="btn grow" data-act="gold_store" data-all="1" ${P.gold > 0 ? '' : 'disabled'}>Cất hết (${fmt(P.gold)})</button><button class="btn grow" data-act="gold_take" data-all="1" ${sg > 0 ? '' : 'disabled'}>Rút hết</button></div></div>`;
+    return goldCard + `<div class="card"><div class="row"><h3 class="grow">Trong tủ</h3><span class="tag num">Đồ thường ${Object.keys(st.inv).length}/${st.items_cap} loại · Trang bị ${st.gear.length}/${st.cap}</span></div>
       ${inside.length ? `<div class="list">${inside.join('')}</div>` : '<p class="small muted">Tủ đang trống.</p>'}
       ${nx ? `<button class="btn block" data-act="storage_expand" ${P.gold < nx.gold ? 'disabled' : ''}>Thêm ${nx.gear} chỗ trang bị · ${icon('two-coins')}${fmt(nx.gold)}</button>` : '<p class="small muted">Tủ đã mở rộng tối đa.</p>'}
     </div>
@@ -3550,6 +3556,12 @@
       case 'upgrade': case 'chaos_upgrade': return { act, slot: d.slot, id: d.id, confirm: d.risk === 'destroy' };
       case 'life': return { act, slot: d.slot, id: d.id };
       case 'discard': case 'store': case 'unstore': return { act, id: d.id, n: +d.n || 1 };
+      // vàng ở Tủ Đồ: số nhập trong ô, hoặc "hết"
+      case 'gold_store': case 'gold_take': {
+        const all = act === 'gold_store' ? P.gold : (P.view.storage.gold || 0);
+        const box = document.getElementById('wd-gold');
+        return { act, n: d.all ? all : Math.floor(+(box && box.value) || 0) };
+      }
       case 'lock': return { act, id: d.id, on: d.on === '1' };
       case 'chaos': return { act, id: d.id, gear: d.gear || null, cls: d.wcls || null };
       case 'craft': case 'quest_accept': case 'quest_turnin': case 'cook': case 'event_exchange': return { act, id: d.id };
@@ -3572,7 +3584,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }

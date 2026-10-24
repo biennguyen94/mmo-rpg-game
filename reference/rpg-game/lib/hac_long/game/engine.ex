@@ -151,7 +151,7 @@ defmodule HacLong.Game.Engine do
           festival: 0,
           furniture: %{},
           decor: [],
-          storage: %{inv: %{}, extra: 0},
+          storage: %{inv: %{}, extra: 0, gold: 0},
           visited: [],
           fish_caught: 0,
           long_khi: 0,

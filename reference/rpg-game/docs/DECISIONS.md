@@ -1115,3 +1115,10 @@ như đang trong tháp. Sửa:
 - Chọn map khi đang trong tháp / sự kiện: chặn, "ra bằng cổng trước" (để kết thúc lượt, nhận thưởng như cũ).
 - `World.drop_stale_tower/1`: đổi vị trí sang bản đồ khác (`warp`, Chọn map) hoặc nạp nhân vật mà không đứng ở `tower` thì bỏ
   `p.tower`; vào Kalima / Lâu Đài Máu / Quảng Trường Quỷ chỉ chặn khi thật sự đang đứng trong tháp → nhân vật đang kẹt vào lại được ngay.
+
+## Cất vàng trong Tủ Đồ (2026-10-24, anh yêu cầu)
+
+Tủ Đồ ở Nhà nhận thêm vàng (`storage.gold`, lưu chung cột `storage`, không đổi database): lệnh `gold_store` / `gold_take` (`n` vàng),
+đứng cạnh Tủ Đồ như cất đồ. Vàng trong tủ không tính là vàng mang theo: không mất khi chết (`death_gold_loss`) hay thua đồ sát, không
+tiêu / giao dịch được cho tới khi rút ra (giống kho Zen MU). Không phí, không giới hạn (`RULES.storage.gold_max` để trống; đặt số thì
+có trần). Nhật ký vàng (`gold_log`) ghi phần vàng mang theo giảm / tăng như mọi lệnh khác nên đối soát vẫn khớp.
