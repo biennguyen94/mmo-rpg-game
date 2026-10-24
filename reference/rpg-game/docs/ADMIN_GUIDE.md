@@ -211,6 +211,8 @@ await A('set_rebirths', { n: 10 });
 await A('set_level', { level: 50 });
 // kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ kỹ năng ở Menu → Kỹ năng → ⚙
 await A('set_tower', { floor: 100 });
+// thông thạo mọi kỹ năng cấp tối đa (10): chạy SAU set_level / set_tower để có đủ kỹ năng
+await A('set_mastery', { lv: 10 });
 // đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
 // cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Đấu Sĩ 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
 const pts = Number((await A('reset_stats')).msg.match(/(\d+) điểm/)[1]);
@@ -286,8 +288,8 @@ Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nh�
 Thú Long Vương tặng bằng `give_pet` **không** ghi lên Bia Long Vương và không báo cả server (bia chỉ ghi người tự câu được);
 danh hiệu Long Vương Chủ thì có (thành tựu tính theo thú đang có).
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
-kỹ năng tháp mở bằng `set_tower`), thành tựu, nhiệm vụ.
+Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thành tựu, nhiệm vụ. Kỹ năng thường mở theo cấp (cấp 50 là đủ),
+kỹ năng tháp mở bằng `set_tower`, thông thạo bằng `set_mastery`.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
 
