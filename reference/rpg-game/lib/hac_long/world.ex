@@ -52,7 +52,9 @@ defmodule HacLong.World do
   """
   def warp(p, uid, %{map: _, x: _, y: _} = pos) do
     leave(p, uid)
-    p = %{p | pos: pos}
+
+    # ra khỏi bản đồ riêng `tower` (Tháp / sự kiện) thì bỏ luôn trạng thái tháp, không kẹt lại
+    p = %{p | pos: pos} |> drop_stale_tower()
     enter(p, uid)
     p
   end
@@ -321,7 +323,17 @@ defmodule HacLong.World do
   def world_battle?(%{battle: %{encounter: %{world_boss: true}}}), do: true
   def world_battle?(_), do: false
 
-  defp put_pos(p, map, x, y), do: %{p | pos: %{map: map, x: x, y: y}}
+  defp put_pos(p, map, x, y), do: drop_stale_tower(%{p | pos: %{map: map, x: x, y: y}})
+
+  @doc """
+  Trạng thái tháp (`p.tower`) chỉ có nghĩa khi đang đứng ở bản đồ riêng `tower`; ở bản đồ khác (dữ liệu kẹt từ trước,
+  bị đưa ra bằng đường khác) thì bỏ, để vào lại Tháp / Kalima / Lâu Đài Máu / Quảng Trường Quỷ được.
+  """
+  def drop_stale_tower(%{pos: %{map: map}} = p) do
+    if Map.get(p, :tower) && map != Tower.map_id(), do: Map.put(p, :tower, nil), else: p
+  end
+
+  def drop_stale_tower(p), do: p
 
   # giếng ở Nhà hồi đầy máu và MP
   defp drink_fountain(p) do
@@ -432,6 +444,10 @@ defmodule HacLong.World do
 
       !target or target.id == "tower" or target.event != nil ->
         {%{ok: false, msg: "Không có bản đồ đó."}, p}
+
+      # đang trong Tháp / Quảng Trường Quỷ / Lâu Đài Máu / Kalima: phải ra bằng cổng (để kết thúc lượt, nhận thưởng)
+      p.pos.map == Tower.map_id() ->
+        {%{ok: false, msg: "Đang ở trong Tháp / sự kiện: ra bằng cổng trước."}, p}
 
       to == p.pos.map ->
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}

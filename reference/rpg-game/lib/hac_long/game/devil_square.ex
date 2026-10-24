@@ -131,7 +131,7 @@ defmodule HacLong.Game.DevilSquare do
 
     cond do
       p.battle -> {%{ok: false, msg: "Đang trong trận đấu."}, p}
-      p[:tower] -> {%{ok: false, msg: "Đang ở trong Tháp."}, p}
+      p[:tower] && p.pos.map == "tower" -> {%{ok: false, msg: "Đang ở trong Tháp."}, p}
       p.hp <= 0 -> {%{ok: false, msg: "Bạn cần hồi máu trước."}, p}
       p.level < @rules.min_level -> {%{ok: false, msg: "Cần cấp #{@rules.min_level}."}, p}
       w == nil -> {%{ok: false, msg: "Quảng Trường Quỷ chưa mở cửa."}, p}

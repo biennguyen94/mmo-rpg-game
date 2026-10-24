@@ -1106,3 +1106,12 @@ vũ khí và làm món phụ của Phù Thủy bậc 5–7 (chép công món ch�
 ## Thông báo ép đồ từ +10 (2026-10-24, anh yêu cầu)
 
 `UPGRADE.announce_from` 7 → **10**: chỉ ép thành công +10, +11 (Máy Hỗn Nguyên) mới báo cả server; +7 → +9 chỉ người ép thấy.
+
+## Sửa kẹt "Đang ở trong Tháp" (2026-10-24, anh báo lỗi)
+
+Anh bấm vào Kalima ở Làng nhưng báo "Đang ở trong Tháp". Nguyên nhân: Chọn map (`World.travel`) không chặn khi đang ở bản đồ riêng
+`tower` (Tháp / Quảng Trường Quỷ / Lâu Đài Máu / Kalima) → nhân vật ra bản đồ khác nhưng `p.tower` vẫn còn, các lối vào sự kiện coi
+như đang trong tháp. Sửa:
+- Chọn map khi đang trong tháp / sự kiện: chặn, "ra bằng cổng trước" (để kết thúc lượt, nhận thưởng như cũ).
+- `World.drop_stale_tower/1`: đổi vị trí sang bản đồ khác (`warp`, Chọn map) hoặc nạp nhân vật mà không đứng ở `tower` thì bỏ
+  `p.tower`; vào Kalima / Lâu Đài Máu / Quảng Trường Quỷ chỉ chặn khi thật sự đang đứng trong tháp → nhân vật đang kẹt vào lại được ngay.

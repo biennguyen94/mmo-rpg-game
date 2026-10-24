@@ -147,6 +147,8 @@ defmodule HacLong.Game.Characters do
       |> HacLong.Game.Engine.instance_gear()
       # vũ khí 2 tay không cầm khiên (B-41)
       |> HacLong.Game.Engine.two_hand_fix()
+      # trạng thái tháp kẹt khi đã ở bản đồ khác (dịch chuyển ra từ trong sự kiện trước bản sửa)
+      |> HacLong.World.drop_stale_tower()
       # nhân vật có trước thông thạo kỹ năng: kỹ năng đang có lên cấp tối đa
       |> HacLong.Game.Mastery.legacy()
 
