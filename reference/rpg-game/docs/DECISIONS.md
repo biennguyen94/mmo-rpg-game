@@ -1081,3 +1081,9 @@ Anh: Kiếm Sĩ, Phù Thủy, Đấu Sĩ cầm được 2 vũ khí 1 tay (vd 2 G
 - Điều kiện: lớp trong `classes`, vũ khí 1 tay, tay phải đang cầm vũ khí 1 tay. Mặc vũ khí 2 tay: vũ khí tay trái về túi (như khiên).
 - Bot (`Brain`), mô phỏng hành trình (`Journey.gear_up` thử cả tay trái), giao diện (nút "Cầm tay trái" trong bảng chi tiết, kéo vũ
   khí vào ô khiên, ô ghi "Tay trái"). Hình nhân vật chưa vẽ vũ khí tay trái.
+- Đo với k = 1:
+  - Chơi từ đầu (`mix hac_long.journey`, 4 lớp, chuyển sinh 3, seed 1–5): bot Phù Thủy cầm 2 gậy ở 4/5 seed, Kiếm Sĩ / Đấu Sĩ vẫn
+    chọn Kiếm Bình Minh 2 tay; số trận / số lần chết như trước (Phù Thủy 3157 trận, chết 4,6; trước 3165 / 5,8).
+  - Nhân vật tối đa (PK cược 300 trận, đồ +11 full Excellent): 2 vũ khí thắng bản 1 tay + khiên cùng lớp 75–79 % (k = 0,65:
+    64–69 %; k = 0,5: 57–59 %); 2 vũ khí thắng Tiên Nữ 78–84 % (k = 0,5: 58–66 %). Khiên cuối game yếu vì các dòng Excellent
+    phòng thủ của khiên trùng với bộ giáp (giảm sát thương, phản đòn có trần). Chờ anh chốt k.
