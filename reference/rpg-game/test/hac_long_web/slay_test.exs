@@ -182,7 +182,7 @@ defmodule HacLongWeb.SlayTest do
   end
 
   test "nhật ký người đánh đổi sang góc nhìn người bị đánh" do
-    m = &Slay.mirror(&1, "bien", "bien2")
+    m = &HacLong.Game.BattleText.mirror(&1, "bien", "bien2")
 
     assert m.("✨ Hắc Long Trảm: Bạn gây 1842 sát thương (CHÍ MẠNG!).") ==
              "✨ Hắc Long Trảm: bien gây 1842 sát thương cho bạn (CHÍ MẠNG!)."
@@ -193,6 +193,17 @@ defmodule HacLongWeb.SlayTest do
     assert m.("☠ bien2 trúng độc.") == "bien: ☠ Bạn trúng độc."
     assert m.("🐾 Sói cắn thêm 12 sát thương.") == "bien: 🐾 Sói cắn thêm 12 sát thương cho bạn."
     assert m.("Bạn nổi cuồng nộ: tấn công +20%.") == "bien nổi cuồng nộ: tấn công +20%."
+
+    # PK cược: người xem đọc ngôi thứ ba
+    assert HacLong.Game.BattleText.mirror("Bạn gây 30 sát thương.", "bien", "bien2", "bien2") ==
+             "bien gây 30 sát thương cho bien2."
+
+    assert HacLong.Game.BattleText.view(
+             [%{text: "Khiên Thánh hồi 0 máu.", kind: "good"}],
+             "a",
+             "b"
+           ) ==
+             []
   end
 
   test "bỏ chạy tính như gục ngã" do

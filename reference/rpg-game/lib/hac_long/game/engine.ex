@@ -9,6 +9,7 @@ defmodule HacLong.Game.Engine do
   """
 
   alias HacLong.Game.{
+    BattleText,
     Bestiary,
     Blessing,
     Crafting,
@@ -1699,34 +1700,41 @@ defmodule HacLong.Game.Engine do
   defp mirror_strike(p, d) do
     b = p.battle
     m = b.monster
-    mi = %{b.mirror | hp: m.hp} |> put_in([:battle, :monster, :hp], p.hp + @pad)
-    log0 = length(mi.battle.log)
+
+    # nhật ký trống: lấy đúng các dòng lượt của đối thủ (kỹ năng, chí mạng, nhiều đòn, trượt, thú cưng…)
+    mi =
+      %{b.mirror | hp: m.hp}
+      |> put_in([:battle, :monster, :hp], p.hp + @pad)
+      |> put_in([:battle, :log], [])
+
     {act, sk} = auto_strike(mi)
     {_, mi} = act(mi, act, sk)
-    dealt = p.hp + @pad - mi.battle.monster.hp
+    raw = p.hp + @pad - mi.battle.monster.hp
     stun? = effect(mi, :monster, "stun")
     mi = drop_effect(mi, :monster, "stun")
-    crit = Enum.any?(Enum.drop(mi.battle.log, log0), &(&1.kind == "crit"))
     healed = mi.hp - m.hp
     p = put_in(p, [:battle, :monster, :hp], min(m.maxHp, mi.hp))
 
     # buff phòng thủ / khiên / thú che chắn của mình trong trận vẫn tính
-    dealt = round(dealt * (1 - power(p, :player, "guard")) * (1 - pet_guard(p)))
+    dealt = round(raw * (1 - power(p, :player, "guard")) * (1 - pet_guard(p)))
     {dealt, p} = if dealt > 0, do: absorb_shield(p, dealt), else: {0, p}
     p = %{p | hp: max(0, p.hp - dealt)} |> survive(d) |> put_in([:battle, :last_hit], dealt)
-    name = sk && Enum.find(skills(mi), &(&1.id == sk)).name
-    c = if crit, do: " (chí mạng)", else: ""
+
+    lines =
+      for l <- BattleText.view(mi.battle.log, m.name, p.name),
+          do: {l.text, if(l.kind in ~w(hit crit), do: "bad", else: "info")}
+
+    lines = if lines == [], do: [{"#{m.name} ra đòn nhưng không trúng.", "info"}], else: lines
+    healed? = healed > 0 and not Enum.any?(lines, fn {t, _} -> t =~ ~r/hồi|Hút/u end)
 
     p =
-      p
-      |> then(&if(healed > 0, do: log(&1, "#{m.name} hồi #{healed} máu.", "info"), else: &1))
-      |> log(
-        cond do
-          dealt <= 0 and name == nil -> "Bạn né được đòn của #{m.name}."
-          name -> "✨ #{m.name} dùng #{name}! Bạn mất #{dealt} máu#{c}."
-          true -> "#{m.name} đánh bạn #{dealt} máu#{c}."
-        end,
-        if(dealt > 0, do: "bad", else: "info")
+      Enum.reduce(lines, p, fn {t, k}, p -> log(p, t, k) end)
+      |> then(&if(healed?, do: log(&1, "#{m.name} hồi #{healed} máu.", "info"), else: &1))
+      |> then(
+        &if(dealt != raw and raw > 0,
+          do: log(&1, "Bạn chỉ mất #{dealt} máu (thủ thế / khiên / thú che chắn).", "info"),
+          else: &1
+        )
       )
       |> reflect(dealt, d.excReflect)
       |> put_in([:battle, :mirror], mi)

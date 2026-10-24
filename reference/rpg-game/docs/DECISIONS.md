@@ -1140,3 +1140,12 @@ khắc hệ, trượt, thú cưng cắn, hút máu…) cho `Slay.acted/5`; `Slay
 tên người bị đánh → "bạn", "gây N sát thương" thêm "cho bạn", dòng không nhắc tên người đánh thì thêm "Tên: " ở đầu)
 rồi ghi sang nhật ký đối thủ, mỗi dòng một dòng. Đòn kết liễu cũng ghi các dòng đó trước "X hạ gục bạn.".
 Không có dòng nào thì vẫn tóm tắt theo máu như trước. Chỉ là chữ hiển thị, không đổi luật.
+
+Mở rộng (anh yêu cầu "làm cho tất cả"): hàm đổi góc nhìn chuyển sang `HacLong.Game.BattleText` (`mirror/4`, `view/4`), dùng chung:
+- **Đồ sát** (cả Hỗn Chiến Thành / Công Thành dùng Slay): như trên.
+- **PK cược** (`PkFight`): nhật ký trận (cả hai bên cùng xem) ghi ngôi thứ ba từ đúng dòng của Engine
+  ("✨ Chém Xoáy: A gây N sát thương cho B (CHÍ MẠNG!)", "A nổi cuồng nộ…", "A: 💫 B bị choáng!"), thay câu tóm tắt cũ.
+- **Đấu trường / thách đấu** (bản sao chạy `battle.mirror`): lượt của đối thủ máy hiện đúng các dòng của nó (góc nhìn
+  người thách đấu: "✨ Tam Tiễn: Chu gây N sát thương cho bạn"); máu mình bị giảm thêm nhờ thủ thế / khiên / thú che chắn thì
+  có dòng "Bạn chỉ mất N máu (…)".
+Bỏ dòng "hồi 0 máu" (Khiên Thánh lúc đầy máu) khỏi nhật ký đổi góc nhìn.

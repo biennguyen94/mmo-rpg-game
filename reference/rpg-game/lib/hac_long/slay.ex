@@ -33,7 +33,7 @@ defmodule HacLong.Slay do
   require Logger
 
   alias HacLong.{Repo, World}
-  alias HacLong.Game.{Characters, Daily, Data, Engine, Session}
+  alias HacLong.Game.{BattleText, Characters, Daily, Data, Engine, Session}
   alias HacLong.World.Maps
 
   @r Data.rules().slay
@@ -484,7 +484,9 @@ defmodule HacLong.Slay do
   defp sync_text(name, foe_name, lines, dmg, healed, auto?) do
     who = if auto?, do: "#{name} (hết giờ, tự đánh)", else: name
 
-    case Enum.map(lines, &mirror(&1, name, foe_name)) do
+    lines = for t <- lines, do: %{text: t, kind: "hit"}
+
+    case Enum.map(BattleText.view(lines, name, foe_name), & &1.text) do
       [] ->
         cond do
           dmg > 0 -> ["⚔ #{who} gây #{dmg} sát thương cho bạn."]
@@ -498,33 +500,6 @@ defmodule HacLong.Slay do
       mirrored ->
         mirrored
     end
-  end
-
-  @doc """
-  Một dòng nhật ký của người đánh `name` → góc nhìn người bị đánh `foe_name`: "Bạn" → `name`,
-  `foe_name` (là "quái" bên kia) → "bạn", "gây / cắn thêm N sát thương" thêm "cho bạn"; dòng không
-  nhắc tên người đánh (trượt, Khiên Thánh hồi máu, thú cưng cắn…) thì thêm "`name`: " ở đầu.
-  """
-  def mirror(text, name, foe_name) do
-    word = fn w -> ~r/(?<![\p{L}\p{N}_])#{w}(?![\p{L}\p{N}_])/u end
-
-    # \0 giữ chỗ người bị đánh để không lẫn với "bạn" (người đánh) trong câu gốc
-    t = Regex.replace(word.(Regex.escape(foe_name)), text, "\0")
-    t = Regex.replace(word.("[Bb]ạn"), t, name)
-
-    t =
-      if String.contains?(t, "\0"),
-        do: t,
-        else:
-          Regex.replace(~r/(gây|cắn thêm) \d+ sát thương(?! cho)/u, t, "\\0 cho \0",
-            global: false
-          )
-
-    t =
-      Regex.replace(~r/(^|[!:.] |^[^\p{L}\p{N}]+ )\x{0}/u, t, "\\1Bạn")
-      |> String.replace("\0", "bạn")
-
-    if String.contains?(t, name), do: t, else: "#{name}: #{t}"
   end
 
   defp public(f, uid) do

@@ -86,6 +86,6 @@ defmodule HacLong.Game.PvpBalanceTest do
       end)
 
     assert p.battle.over and p.battle.result in ~w(win lose)
-    assert Enum.any?(p.battle.log, &(&1.text =~ "✨ Chu dùng"))
+    assert Enum.any?(p.battle.log, &(&1.text =~ ~r/^✨ .+: Chu gây \d+ sát thương cho bạn/u))
   end
 end

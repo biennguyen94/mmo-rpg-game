@@ -57,7 +57,7 @@ defmodule HacLongWeb.PkBetTest do
       r = PkFight.fight(p, %{p | name: "Hoa 2"}, 1, 2)
       assert r.winner == :draw and r.hp.a == r.hp.b
       # dùng kỹ năng thật của lớp
-      assert Enum.any?(r.log, &(&1.text =~ "✨ Hoa dùng"))
+      assert Enum.any?(r.log, &(&1.text =~ ~r/^✨ .+: Hoa gây \d+ sát thương cho Hoa 2/u))
     end
   end
 

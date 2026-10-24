@@ -18,7 +18,7 @@ defmodule HacLong.Game.PkFight do
   """
 
   alias HacLong.Arena
-  alias HacLong.Game.{Data, Engine}
+  alias HacLong.Game.{BattleText, Data, Engine}
 
   @pk Data.rules().pk
   @immune Data.rules().pvp.stun_immune
@@ -101,7 +101,8 @@ defmodule HacLong.Game.PkFight do
   @pad 10_000_000
 
   defp strike(s, foe, _round) do
-    p = update_in(s.p, [:battle, :monster, :hp], &(&1 + @pad))
+    # nhật ký trống: lấy đúng các dòng của lượt này (kỹ năng, chí mạng, nhiều đòn, trượt, thú cưng…)
+    p = update_in(s.p, [:battle, :monster, :hp], &(&1 + @pad)) |> put_in([:battle, :log], [])
     before = p.battle.monster.hp
 
     {act, skill} = Engine.auto_strike(p)
@@ -109,24 +110,23 @@ defmodule HacLong.Game.PkFight do
     dealt = before - p2.battle.monster.hp
     stunned? = Enum.any?(get_in(p2, [:battle, :effects, :monster]) || [], &(&1.id == "stun"))
     p2 = update_in(p2, [:battle, :effects], &drop_stun/1)
-    name = skill && Enum.find(Engine.skills(p), &(&1.id == skill)).name
-    crit? = Enum.any?(Enum.drop(p2.battle.log, length(p.battle.log)), &(&1.kind == "crit"))
 
-    text =
-      cond do
-        dealt <= 0 and name == nil ->
-          "#{foe} né được đòn của #{p.name}."
+    # người xem đọc ở ngôi thứ ba: "Bạn" → tên người đánh, đối thủ giữ tên
+    lines = BattleText.view(p2.battle.log, p.name, foe, foe)
 
-        name ->
-          "✨ #{p.name} dùng #{name}: #{foe} mất #{dealt} máu#{if crit?, do: " (chí mạng)", else: ""}."
-
-        true ->
-          "#{p.name} đánh #{foe} #{dealt} máu#{if crit?, do: " (chí mạng)", else: ""}."
-      end
+    lines =
+      if lines == [],
+        do: [%{text: "#{p.name} ra đòn nhưng không trúng.", kind: "info"}],
+        else: lines
 
     healed = p2.hp - p.hp
-    heal = if healed > 0, do: [%{text: "#{p.name} hồi #{healed} máu.", kind: "good"}], else: []
-    {%{s | p: p2}, dealt, stunned?, heal ++ [%{text: text, kind: "hit"}]}
+
+    heal =
+      if healed > 0 and not Enum.any?(lines, &(&1.text =~ ~r/hồi|Hút/u)),
+        do: [%{text: "#{p.name} hồi #{healed} máu.", kind: "good"}],
+        else: []
+
+    {%{s | p: p2}, dealt, stunned?, Enum.reverse(lines ++ heal)}
   end
 
   defp drop_stun(nil), do: nil
