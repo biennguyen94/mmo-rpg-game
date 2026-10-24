@@ -1,5 +1,5 @@
 defmodule HacLong.AdminMaxTest do
-  @moduledoc "Công thức nhân vật tối đa trong docs/ADMIN_GUIDE.md §6: mọi lệnh hợp lệ, mặc được đủ 11 ô (Pháp Sư 10)."
+  @moduledoc "Công thức nhân vật tối đa trong docs/ADMIN_GUIDE.md §6: mọi lệnh hợp lệ, mặc được đủ 11 ô (Đấu Sĩ 10, không mũ)."
   use ExUnit.Case, async: true
 
   alias HacLong.Admin
@@ -10,8 +10,8 @@ defmodule HacLong.AdminMaxTest do
   @set %{
     "dk" => {"item_0_19", "item_6_18", ~w(item_7_33 item_8_33 item_9_33 item_10_33 item_11_33)},
     "dw" => {"item_5_11", "item_6_18", ~w(item_7_30 item_8_30 item_9_30 item_10_30 item_11_30)},
-    "elf" => {"item_4_24", nil, ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
-    "mg" => {"item_0_28", nil, ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
+    "elf" => {"item_4_24", "item_6_19", ~w(item_7_31 item_8_31 item_9_31 item_10_31 item_11_31)},
+    "mg" => {"item_0_28", "item_6_18", ~w(item_8_29 item_9_29 item_10_29 item_11_29)}
   }
 
   # tỉ lệ chia điểm gợi ý (docs/ADMIN_GUIDE.md §6), điểm lẻ cộng vào chỉ số đầu
