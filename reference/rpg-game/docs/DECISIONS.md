@@ -1187,3 +1187,15 @@ và đồ sát có uống bình máu cho số khác hẳn (DS-4) nên chờ ch�
 
 `RULES.pvp.dmg_mult` 0.3 → 0.2: ở cấp tối đa một đòn còn ~35–55% máu (trước 55–84%), cần 3–4 đòn mới hạ. Luật bình máu khi
 đánh người (DS-4b) chờ anh chọn; số mô phỏng các phương án ở `OPEN_QUESTIONS.md` DS-4.
+
+## Đánh người: bình máu + chỉnh hệ số lớp (2026-10-24, anh duyệt DS-4b)
+
+Khi đánh người (đồ sát, Đấu trường; PK cược tự đánh nên không uống): bình máu hồi × `RULES.pvp.potion_mult` (0.5), mỗi
+`potion_cd` (3) lượt của mình uống được một lần — uống ở lượt T thì lượt T + 3 mới uống lại; chưa tới thì báo "bình máu
+dùng lại sau N lượt", không mất lượt (`Engine.act_potion`, `battle.pot_at`). Bình mana và đánh quái giữ nguyên.
+Lý do: một đòn ~35–55% máu, bình lớn hồi 70% mỗi lượt thì bên bị đánh đau hơn cứ uống mãi; thử 4 phương án
+(OPEN_QUESTIONS DS-4 cũ), hồi ×0.5 + hồi chiêu gần cân bằng nhất, trận 9–15 lượt.
+
+`class_taken`: Kiếm Sĩ 1.16 → 1.1, Tiên Nữ 0.98 → 1.06 (Phù Thủy 0.9, Đấu Sĩ 0.75 giữ). Mô phỏng 4 lớp tối đa
+(`scripts/pvp/`, đồ sát `POT=1` uống bình dưới 50% máu / mana khi hết MP): đồ sát 47 / 46 / 52 / 55%, PK cược
+54 / 45 / 52 / 49% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ).

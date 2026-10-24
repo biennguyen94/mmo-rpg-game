@@ -11,8 +11,7 @@
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
-| DS-4 | Đồ sát | Có uống bình máu (dưới 50% máu, như người thật): ở cấp tối đa mỗi đòn lấy 55–84% máu tối đa, bình lớn hồi 70% → trận kéo dài 17–37 lượt, ~40% lượt là uống bình; bên bị đánh đau hơn bình hồi được thì uống mãi không đánh được. Kiếm Sĩ (nhận ×1.16) tụt còn 24%, Phù Thủy / Đấu Sĩ 63–64%. | Đánh người: (1) giảm `pvp.dmg_mult` 0.3 → ~0.2 để một đòn còn ~35–55% máu; (2) bình máu khi đánh người hồi ×0.5 hoặc hồi chiêu 2 lượt; rồi chỉnh lại `class_taken` theo cả đồ sát (có bình) lẫn PK cược |
-| DS-2 | Đồ sát | Người ra đòn trước thắng 52–69% (trận ngắn 5–10 lượt). Giữ hay giảm? | Giữ (người bị đánh có quyền chọn kỹ năng trước của lượt sau); hoặc người bị đánh được giảm sát thương lượt đầu |
+| DS-2 | Đồ sát | Sau DS-1 / DS-3 / DS-4 (trận 9–15 lượt): người ra đòn trước vẫn thắng 55–85% (cùng lớp 65–77%). Giữ hay giảm? | Em đề xuất sau khi xem số mới |
 
 ## Đã chốt
 

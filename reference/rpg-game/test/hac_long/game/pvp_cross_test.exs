@@ -121,6 +121,40 @@ defmodule HacLong.Game.PvpCrossTest do
     assert u3.hp <= 0
   end
 
+  test "đánh người: bình máu hồi × potion_mult, mỗi potion_cd lượt uống một lần; đánh quái giữ nguyên" do
+    r = Engine.pvp_rules()
+    a = hero("Binh", "dk") |> Map.put(:inv, %{"potion_l" => 5})
+    low = fn p -> %{p | hp: 100} end
+
+    pvp = in_fight(a, hero("Kia", "dk"), 2) |> low.()
+    {_, pvp1} = Engine.act(pvp, "potion")
+    # cùng đối thủ nhưng bỏ cờ `pvp`: như đánh quái
+    mob = Map.put(Arena.opponent(hero("Kia", "dk"), 2), :pvp, nil)
+    {_, pve} = Engine.start_with_monster(%{a | mp: 9_999}, 1, mob)
+    {_, pve1} = Engine.act(low.(pve), "potion")
+
+    healed = fn p ->
+      t = Enum.find(p.battle.log, &(&1.text =~ "Bạn uống")).text
+      [_, n] = Regex.run(~r/hồi (\d+) máu/u, t)
+      String.to_integer(n)
+    end
+
+    assert healed.(pvp1) == round(healed.(pve1) * r.potion_mult)
+
+    # vừa uống: chờ đủ potion_cd lượt
+    assert {%{ok: false, msg: msg}, _} = Engine.act(low.(pvp1), "potion")
+    assert msg =~ "dùng lại sau #{r.potion_cd - 1} lượt"
+
+    later =
+      Enum.reduce(1..(r.potion_cd - 1), pvp1, fn _, p ->
+        elem(Engine.act(p |> put_in([:battle, :cds], []), "attack"), 1)
+      end)
+
+    assert {%{ok: true}, _} = Engine.act(low.(later), "potion")
+    # đánh quái: uống liền được
+    assert {%{ok: true}, _} = Engine.act(low.(pve1), "potion")
+  end
+
   test "trạng thái trận qua lại: pvp_fx / pvp_put_fx / pvp_victim giữ hiệu ứng, kháng choáng, Long Vương đã cứu" do
     p = in_fight(hero("Fx", "elf"), hero("Kia", "dw"), 2)
 

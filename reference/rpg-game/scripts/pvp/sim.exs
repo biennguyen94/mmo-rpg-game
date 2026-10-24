@@ -50,32 +50,25 @@ defmodule SlaySim do
         pot? =
           System.get_env("POT") == "1" and
             p.hp < Engine.derived(p).maxHp * String.to_float(System.get_env("POT_PCT") || "0.5") and
-            Map.get(p.inv, "potion_l", 0) > 0 and
-            p.battle.turn - (p.battle[:pot_at] || -99) >= String.to_integer(System.get_env("POT_CD") || "1")
+            Map.get(p.inv, "potion_l", 0) > 0
 
         # hết MP cho mọi kỹ năng đã hồi chiêu xong thì uống bình mana (POT=1)
         mana? =
           System.get_env("POT") == "1" and sk == nil and Map.get(p.inv, "mana_l", 0) > 0 and
             Enum.any?(Engine.skills(p), &(Engine.cooldown(p, &1.id) == 0 and (p.mp || 0) < Engine.skill_mp(p, &1)))
 
+        strike = if sk, do: %{"act" => "skill", "skill" => sk}, else: %{"act" => act}
+
         cmd =
           cond do
             pot? -> %{"act" => "potion"}
             mana? -> %{"act" => "mana"}
-            sk -> %{"act" => "skill", "skill" => sk}
-            true -> %{"act" => act}
+            true -> strike
           end
-        {r, p2} = Commands.run(p, cmd)
-        p2 = if r[:ok] == false, do: elem(Commands.run(p, %{"act" => "attack"}), 1), else: p2
 
-        # thử luật bình máu khi đánh người: POT_MULT hệ số hồi, POT_CD số lượt giữa hai lần uống
-        if pot? do
-          mult = String.to_float(System.get_env("POT_MULT") || "1.0")
-          healed = p2.hp - p.hp
-          %{p2 | hp: p.hp + round(healed * mult)} |> put_in([:battle, :pot_at], p2.battle.turn)
-        else
-          p2
-        end
+        # bình máu đang hồi (luật đánh người RULES.pvp.potion_cd) thì đánh
+        {r, p2} = Commands.run(p, cmd)
+        if r[:ok] == false, do: elem(Commands.run(p, strike), 1), else: p2
       else
         p
       end
