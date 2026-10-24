@@ -1102,3 +1102,7 @@ vũ khí và làm món phụ của Phù Thủy bậc 5–7 (chép công món ch�
 - xóa khỏi `ITEM_PICK.weapons_alt.dw` (không rơi, không trong Thư viện / Kho Đồ);
 - `ITEM_PICK.removed`: sách → gậy 1 tay của Phù Thủy (Sahamutt, Neil → Gậy Huyền Thoại bậc 6; Bóng Ma → Gậy Hồi Sinh bậc 7). Nạp nhân
   vật thì đổi (giữ ép +N, dòng, Excellent), `Data.item/1` của sách (thư, chợ cũ) trả món thay.
+
+## Thông báo ép đồ từ +10 (2026-10-24, anh yêu cầu)
+
+`UPGRADE.announce_from` 7 → **10**: chỉ ép thành công +10, +11 (Máy Hỗn Nguyên) mới báo cả server; +7 → +9 chỉ người ép thấy.

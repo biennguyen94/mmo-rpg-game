@@ -321,7 +321,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 - **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Ước Nguyện (100 %); +7 / +8 / +9 bằng Ngọc Tâm Linh
   (70 / 60 / 50 %, thất bại tụt 1 cấp); +10 / +11 bằng Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**: vũ khí về Gậy Gỗ,
-  giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +7 thì báo cả server.
+  giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +10 thì báo cả server (`UPGRADE.announce_from`).
 - **Ngọc rơi:** quái cấp ≥ 12 (0,6 %), trùm vùng (30 %; trùm trong tháp tính như quái thường), top 3 trùm thế giới
   (1 viên), Tháp Vô Tận mỗi 10 tầng (chỉ lần đầu lên tới tầng đó), Rương Báu (3 / 8 / 15 %).
 - **Máy Hỗn Nguyên** (Lão Hỗn Nguyên, Làng): cánh cấp 1 (đồ +5↑ + 1 Hỗn Nguyên + 20 000 vàng, 10 % + 5 % mỗi cấp trên +5,
