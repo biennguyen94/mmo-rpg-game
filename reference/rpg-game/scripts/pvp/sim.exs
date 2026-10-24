@@ -20,7 +20,7 @@ defmodule SlaySim do
   def fight(a, b, cap \\ 200) do
     ps = %{1 => enter(a, b, 2), 2 => enter(b, a, 1)}
     chars = %{1 => a, 2 => b}
-    st = %{mismatch: 0, turns: 0, stunned: 0, reduced: 0, saved: 0}
+    st = %{mismatch: 0, turns: 0, stunned: 0, reduced: 0, saved: 0, pots: 0}
     loop(ps, chars, %{1 => ps[1].hp, 2 => ps[2].hp}, %{1 => nil, 2 => nil}, 1, 0, cap, st)
   end
 
@@ -46,7 +46,24 @@ defmodule SlaySim do
     p2 =
       if p.hp > 0 do
         {act, sk} = Engine.auto_strike(p)
-        cmd = if sk, do: %{"act" => "skill", "skill" => sk}, else: %{"act" => act}
+        # POT=1: như người chơi thật, máu dưới POT_PCT (mặc định 50%) thì uống bình máu (mất lượt)
+        pot? =
+          System.get_env("POT") == "1" and
+            p.hp < Engine.derived(p).maxHp * String.to_float(System.get_env("POT_PCT") || "0.5") and
+            Map.get(p.inv, "potion_l", 0) > 0
+
+        # hết MP cho mọi kỹ năng đã hồi chiêu xong thì uống bình mana (POT=1)
+        mana? =
+          System.get_env("POT") == "1" and sk == nil and Map.get(p.inv, "mana_l", 0) > 0 and
+            Enum.any?(Engine.skills(p), &(Engine.cooldown(p, &1.id) == 0 and (p.mp || 0) < Engine.skill_mp(p, &1)))
+
+        cmd =
+          cond do
+            pot? -> %{"act" => "potion"}
+            mana? -> %{"act" => "mana"}
+            sk -> %{"act" => "skill", "skill" => sk}
+            true -> %{"act" => act}
+          end
         {r, p2} = Commands.run(p, cmd)
         if r[:ok] == false, do: elem(Commands.run(p, %{"act" => "attack"}), 1), else: p2
       else
@@ -66,22 +83,8 @@ defmodule SlaySim do
     debuffs = if System.get_env("NO_STUN") == "1", do: Enum.reject(debuffs, &(&1.id == "stun")), else: debuffs
     foe = if System.get_env("NO_UNDYING") == "1", do: put_in(foe, [:battle, :effects, :player], Enum.reject(foe.battle.effects.player, &(&1.id == "undying"))), else: foe
     foe = if System.get_env("NO_REVIVE") == "1", do: put_in(foe, [:battle, :pet_revived], true), else: foe
-    foe =
-      if System.get_env("ONE_SAVE") == "1" and foe.battle[:pet_revived],
-        do: put_in(foe, [:battle, :effects, :player], Enum.reject(foe.battle.effects.player, &(&1.id == "undying"))),
-        else: foe
-
     {foe2, real} = if cross?, do: Engine.pvp_defend(foe, raw), else: {%{foe | hp: foe.hp - raw}, raw}
     foe2 = Engine.pvp_receive(foe2, debuffs)
-
-    # ONE_SAVE=1: mỗi trận được cứu một lần (Bất Tử hoặc Long Vương)
-    foe2 =
-      if System.get_env("ONE_SAVE") == "1" and foe.hp - real <= 0 and foe2.hp > 0,
-        do:
-          foe2
-          |> put_in([:battle, :pet_revived], true)
-          |> put_in([:battle, :effects, :player], Enum.reject(foe2.battle.effects.player, &(&1.id == "undying"))),
-        else: foe2
 
     bad = if shown != raw, do: 1, else: 0
 
@@ -91,7 +94,8 @@ defmodule SlaySim do
         turns: st.turns + 1,
         stunned: st.stunned + if(stunned?, do: 1, else: 0),
         reduced: st.reduced + if(raw > 0 and real < raw, do: 1, else: 0),
-        saved: st.saved + if(foe.hp - real <= 0 and foe2.hp > 0, do: 1, else: 0)
+        saved: st.saved + if(foe.hp - real <= 0 and foe2.hp > 0, do: 1, else: 0),
+        pots: st.pots + if(Map.get(p2.inv, "potion_l", 0) < Map.get(p.inv, "potion_l", 0), do: 1, else: 0)
     }
 
     hp = %{uid => max(p2.hp, 0), foe_id => max(foe2.hp, 0)}

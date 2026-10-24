@@ -45,4 +45,4 @@ for c <- ~w(dk dw elf mg) do
 end
 
 IO.puts("\nTổng #{fx.turns} lượt: sát thương hiện ≠ sát thương tính #{fx.mismatch}; mất lượt vì choáng #{fx.stunned};")
-IO.puts("  đòn bị giảm bởi thủ thế / khiên / thú #{fx.reduced}; được bất tử / Long Vương cứu #{fx.saved}")
+IO.puts("  đòn bị giảm bởi thủ thế / khiên / thú #{fx.reduced}; được bất tử / Long Vương cứu #{fx.saved}; uống bình máu #{fx.pots}")

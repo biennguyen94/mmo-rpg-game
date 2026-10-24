@@ -1171,3 +1171,14 @@ người bị đánh không đỡ được đòn. Sửa cho chạy đúng như d
 Mô phỏng 4 lớp tối đa (`scripts/pvp/run.exs`, `scripts/pvp/pk.exs`) sau khi sửa: Kiếm Sĩ thắng 78% đồ sát / 83% PK cược
 vì **Bất Tử dùng lại được mỗi lần hết hồi chiêu** (cứu nhiều lần một trận, cộng Long Vương). Chờ anh duyệt cân bằng (DS-3).
 Bản mô phỏng trước (062849a) gửi sai khóa kỹ năng (luôn dùng kỹ năng đầu) nên số 46–54% lúc đó không đúng.
+
+## Đánh người: mỗi trận cứu một lần (2026-10-24, anh duyệt DS-3)
+
+Khi đối thủ là người (đồ sát, PK cược, Đấu trường, Hỗn Chiến / Công Thành dùng Slay), Bất Tử và Long Vương Hồi Sinh
+dùng chung **một lần cứu mỗi trận** (`battle.pet_revived`): cái nào kích hoạt trước thì cái kia không cứu nữa, dùng lại
+Bất Tử (hết hồi chiêu) cũng không cứu thêm (`Engine.survive/2`). Đánh quái giữ như cũ. Lý do: Bất Tử dùng lại được nên
+Kiếm Sĩ được cứu nhiều lần mỗi trận (thắng 78% đồ sát / 83% PK cược).
+
+Mô phỏng sau khi áp (4 lớp tối đa, `scripts/pvp/`): PK cược 47 / 46 / 62 / 45% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ);
+đồ sát không uống bình 41 / 60 / 43 / 55%. Chưa đổi `class_taken.dw` (đề xuất 0.95 lúc trước): PK cược Phù Thủy đã 46%,
+và đồ sát có uống bình máu cho số khác hẳn (DS-4) nên chờ chốt DS-4 rồi chỉnh một lần.

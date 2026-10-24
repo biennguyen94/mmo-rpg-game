@@ -72,7 +72,12 @@ defmodule Max do
           p
       end
 
-    p = p |> op("give_pet", %{"id" => "long_vuong", "level" => 20}) |> op("set_mastery", %{"lv" => Mastery.max()})
+    p =
+      p
+      |> op("give_pet", %{"id" => "long_vuong", "level" => 20})
+      |> op("set_mastery", %{"lv" => Mastery.max()})
+      |> op("give_item", %{"id" => "potion_l", "count" => 500})
+      |> op("give_item", %{"id" => "mana_l", "count" => 500})
     %{p | hp: Engine.derived(p).maxHp} |> Map.put(:mp, Engine.derived(p).maxMp)
   end
 end

@@ -1480,12 +1480,21 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # bất tử (kỹ năng tháp): gục thì đứng dậy với `power` × máu tối đa, một lần
+  # bất tử (kỹ năng tháp): gục thì đứng dậy với `power` × máu tối đa, một lần.
+  # Đánh người (DECISIONS "Đánh người: mỗi trận cứu một lần"): bất tử và Long Vương Hồi Sinh chung một lần cứu mỗi trận
+  # (`pet_revived`), dùng lại Bất Tử không cứu thêm.
+  defp survive(%{hp: hp, battle: %{monster: %{pvp: pvp}, pet_revived: true}} = p, _d)
+       when hp <= 0 and pvp not in [nil, false],
+       do: p
+
   defp survive(%{hp: hp} = p, d) when hp <= 0 do
     case effect(p, :player, "undying") do
       %{power: f} ->
         %{p | hp: max(1, round(d.maxHp * f))}
         |> drop_effect(:player, "undying")
+        |> then(
+          &if(&1.battle.monster[:pvp], do: put_in(&1, [:battle, :pet_revived], true), else: &1)
+        )
         |> log("✨ Bất tử! Bạn đứng dậy với #{max(1, round(d.maxHp * f))} máu.", "good")
 
       nil ->

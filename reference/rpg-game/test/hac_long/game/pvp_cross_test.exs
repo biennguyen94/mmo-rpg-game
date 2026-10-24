@@ -106,6 +106,21 @@ defmodule HacLong.Game.PvpCrossTest do
     assert r2.hp <= 0
   end
 
+  test "đánh người: mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương), dùng lại Bất Tử không cứu thêm" do
+    v = Engine.pvp_victim(hero("Mot", "dk", true), nil, 1000)
+    undying = [%{id: "undying", turns: 3, power: 0.3}]
+
+    # Bất Tử cứu trước, sau đó Long Vương không cứu nữa
+    {u, _} = Engine.pvp_defend(with_fx(v, undying), 5000)
+    assert u.hp > 0 and Engine.pvp_fx(u).pet_revived
+    {u2, _} = Engine.pvp_defend(u, 99_999)
+    assert u2.hp <= 0
+
+    # đã được cứu: dùng lại Bất Tử cũng không cứu
+    {u3, _} = Engine.pvp_defend(put_in(u, [:battle, :effects, :player], undying), 99_999)
+    assert u3.hp <= 0
+  end
+
   test "trạng thái trận qua lại: pvp_fx / pvp_put_fx / pvp_victim giữ hiệu ứng, kháng choáng, Long Vương đã cứu" do
     p = in_fight(hero("Fx", "elf"), hero("Kia", "dw"), 2)
 
