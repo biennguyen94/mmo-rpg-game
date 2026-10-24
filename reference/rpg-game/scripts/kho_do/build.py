@@ -550,6 +550,7 @@ rule_items = [
     ("May mắn khi ép", f"cộng {luck_up}, trần {pct(LS['luck_max_rate'])}; với bảng ép hiện tại cao nhất là {pct(luck_real)}."),
     ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số và có lúc cắn quái."),
     ("Đài Phúc Lành", f"chạm vào: phúc lành của bản đồ ({R['blessing']['battles']} trận, +{pct(R['blessing']['pct'])} kinh nghiệm / vàng / công / thủ / máu tùy đài) và thành điểm hồi sinh khi gục."),
+    ("Bot (người chơi máy)", f"ép đồ như người thật khi dư vàng (giữ lại {R['bots']['forge']['gold_keep_per_level']} × cấp vàng mua bình): +1 → +9 món đang mặc cấp thấp nhất trước, từ +7 chỉ khi dư {R['bots']['forge']['spare']} viên ngọc; thêm dòng Ngọc Sinh Mệnh cho vũ khí, áo giáp; ghép / nâng cánh; +10 / +11 chỉ khoảng 1/{R['bots']['forge']['daring_every']} số bot. Cấp tối đa thì chuyển sinh, cần chúa tể thì đi vùng chuyển sinh săn. Bot không được báo cả server, không vào bảng xếp hạng."),
 ]
 rule_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in rule_items)
 
