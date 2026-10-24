@@ -9,8 +9,9 @@ defmodule Mix.Tasks.HacLong.Icons do
       mix hac_long.icons --no-trim            # chép nguyên, không cắt viền trong suốt
 
   Máy có ImageMagick (`magick` hoặc `convert`) thì cắt bỏ viền trong suốt quanh món đồ khi chép (hình gốc MU để
-  món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); mũ, bình, ngọc (`item_7_*`, `item_14_*`, hình gốc rất
-  nhỏ) được chừa thêm viền để món đồ chiếm ~75% khung, bớt bị trình duyệt phóng to gây nhòe. Không có thì chép nguyên.
+  món đồ nhỏ giữa khung lớn, đặt vào ô túi đồ trông rất bé); mũ, bình, ngọc (`item_7_*`, `item_14_*`, Jewel of
+  Chaos `item_12_15_*`, hình gốc rất nhỏ) được chừa thêm viền để món đồ chiếm ~75% khung, bớt bị trình duyệt
+  phóng to gây nhòe. Không có thì chép nguyên.
 
   Không có thư mục / không có hình: ghi bảng rỗng, game dùng icon cũ, **không lỗi** (thoát 0).
   Tải lại trang là thấy hình mới (không cần build lại server).
@@ -81,10 +82,10 @@ defmodule Mix.Tasks.HacLong.Icons do
 
   defp copy(nil, from, to), do: File.cp!(from, to)
 
-  # mũ (nhóm 7 trong Item.txt), bình / ngọc (nhóm 14): hình gốc rất nhỏ (~20–60 px) nên trình duyệt phóng to cho đầy ô
-  # thì nhòe; chừa thêm viền trong suốt để món đồ chiếm ~75% khung — nhỏ hơn chút trong ô nhưng bớt bị phóng.
+  # mũ (nhóm 7 trong Item.txt), bình / ngọc (nhóm 14), Jewel of Chaos (nhóm 12 số 15): hình gốc rất nhỏ (~20–60 px)
+  # nên trình duyệt phóng to cho đầy ô thì nhòe; chừa thêm viền trong suốt để món đồ chiếm ~75% khung — nhỏ hơn chút trong ô nhưng bớt bị phóng.
   # Đổi tỉ lệ: `-extent` = 100 / tỉ lệ (85% → 118%, 80% → 125%, 75% → 133%, 70% → 143%)
-  @padded ~r/^item_(7|14)_/
+  @padded ~r/^item_(7_|14_|12_15_)/
   @pad ~w(-background none -gravity center -extent 133%x133%)
 
   defp copy(convert, from, to) do
