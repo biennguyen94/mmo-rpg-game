@@ -208,7 +208,7 @@ def mastery_note():
              f"dưới cấp {sm['cd_level']} hồi chiêu +{sm['cd_low']} lượt, dưới cấp {sm['max']} tác dụng phụ (hồi máu, choáng, buff, độc…) ×{n(sm['effect_low'])}. "
              f"Luyện: mỗi lần dùng với quái +{sm['points']} điểm (tự đánh +{sm['points_auto']}), trùm / tinh anh ×{sm['boss_mult']}, quái thấp hơn quá {sm['level_gap']} cấp không tính, đánh người không tính. "
              f"Tổng điểm lên cấp 2…{sm['max']}: {need}. Đột phá: {br}. "
-             f"Bí Kíp rơi: trùm vùng {pct(sm['drop']['boss'])}, quái tinh anh {pct(sm['drop']['elite'])}, trùm thế giới {pct(sm['drop']['world'])}. "
+             f"Bí Kíp: lần đầu hạ mỗi trùm vùng / chúa tể vùng chuyển sinh chắc chắn {sm['drop']['first_boss']} cuốn, Tháp Vô Tận mỗi {sm['drop']['tower_every']} tầng vượt lần đầu 1 cuốn; rơi thêm: trùm hạ lại {pct(sm['drop']['boss'])}, quái tinh anh {pct(sm['drop']['elite'])}, trùm thế giới {pct(sm['drop']['world'])}. "
              f"Nhân vật có trước tính năng: kỹ năng đang có đã ở cấp {sm['max']}.")
 
 EL = R["elements"]

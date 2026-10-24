@@ -113,9 +113,21 @@ defmodule HacLong.Game.MasteryTest do
     assert Mastery.load(saved) == q.skill_mastery
   end
 
-  test "trùm rơi Bí Kíp (tỉ lệ drop.boss)" do
+  test "trùm rơi Bí Kíp: lần đầu chắc chắn, hạ lại theo tỉ lệ drop.boss" do
     {:ok, p} = Engine.new_player("Trum", "dk")
     p = %{p | level: 50, stats: Map.new(p.stats, fn {k, v} -> {k, v * 20} end)}
+
+    # lần đầu hạ trùm vùng
+    {_, b} = Engine.start_battle(p, 0, true)
+    b = put_in(b.battle.monster, %{b.battle.monster | hp: 1})
+
+    q =
+      Enum.reduce_while(1..10, b, fn _, b ->
+        if b.battle.over, do: {:halt, b}, else: {:cont, elem(Engine.act(b, "attack"), 1)}
+      end)
+
+    assert q.battle.result == "win" and q.inv["bi_kip"] == @r.drop.first_boss
+    p = %{p | bosses: q.bosses}
 
     got =
       for _ <- 1..300 do

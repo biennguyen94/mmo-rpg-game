@@ -1035,3 +1035,14 @@ Trước đây bot không ép đồ (ngọc nhặt được nằm yên, đồ lu
   hạ đủ `realm_kills` (30) quái ở bản đồ trước mới sang bản đồ sau, chúa tể ở bản đồ cuối, gặp chúa tể thì đánh trước.
 - Bot mạnh lên theo thời gian (ảnh hưởng xếp hạng): chấp nhận, để người chơi có đối thủ ngang tầm. Bảng xếp hạng vẫn loại bot
   như trước (`role != "bot"`).
+
+## Nguồn Bí Kíp (2026-10-24, anh duyệt)
+
+Kiểm tra cân bằng bằng `mix hac_long.journey` (4 lớp, chuyển sinh 3 lần, seed 1–2, có thêm bước đột phá kỹ năng): Bí Kíp chỉ
+1–4 cuốn sau 3 lần chuyển sinh, kỹ năng kẹt ở cấp 4 / 9 (cần khoảng 20 cuốn cho 5 kỹ năng đang mang), Kiếm Sĩ đầu game chết
+nhiều hơn mốc cũ (2 → 11 trận). Anh duyệt tăng nguồn (`RULES.skill_mastery.drop`):
+- lần đầu hạ mỗi trùm vùng / chúa tể vùng chuyển sinh: chắc chắn `first_boss` (1) cuốn;
+- Tháp Vô Tận: mỗi `tower_every` (10) tầng vượt lần đầu 1 cuốn (`Tower.climb/1`, cùng mốc ngọc mỗi 10 tầng);
+- quái tinh anh 10 % → 15 %; trùm hạ lại 30 %, trùm thế giới 100 % giữ nguyên.
+Chạy lại cùng seed: 20–30 cuốn sau 3 lần chuyển sinh, kỹ năng đang mang lên cấp 9–10; Kiếm Sĩ chặng đầu chết 11 → 5, các chặng
+sau còn nhẹ hơn mốc cũ (mất 10–15 % máu / trận so với 20–29 %). Không đổi sức kỹ năng cấp 1 (anh chưa duyệt mục 2).

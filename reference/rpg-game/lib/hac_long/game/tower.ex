@@ -338,6 +338,14 @@ defmodule HacLong.Game.Tower do
           do: %{r | items: Map.update(r.items, Engine.pick_jewel(), 1, &(&1 + 1))},
           else: r
 
+      # Bí Kíp (thông thạo kỹ năng): mỗi `tower_every` tầng vượt lần đầu một cuốn
+      dr = HacLong.Game.Mastery.rules()
+
+      r =
+        if rem(t.floor, dr.drop.tower_every) == 0 and t.floor > Map.get(p, :tower_best, 0),
+          do: %{r | items: Map.update(r.items, dr.item, 1, &(&1 + 1))},
+          else: r
+
       p = %{p | gold: p.gold + r.gold}
       p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
       {_levels, p} = Engine.gain_xp(p, r.xp)

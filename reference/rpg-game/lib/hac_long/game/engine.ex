@@ -2165,9 +2165,21 @@ defmodule HacLong.Game.Engine do
   end
 
   # Dấu Ấn Kundun (B-21): quái thường cấp ≥ `kalima.mark_drop.min_level` thỉnh thoảng rơi
-  # Bí Kíp (đột phá thông thạo kỹ năng): trùm vùng, quái tinh anh, trùm thế giới (`RULES.skill_mastery.drop`)
+  # Bí Kíp (đột phá thông thạo kỹ năng): trùm vùng, quái tinh anh, trùm thế giới; lần đầu hạ trùm vùng / chúa tể chắc
+  # chắn (`RULES.skill_mastery.drop`)
   defp bi_kip_drop(p, m, reward) do
     dr = Mastery.rules().drop
+
+    # lần đầu hạ trùm vùng (chưa ghi `bosses`) / chúa tể vùng chuyển sinh (chưa có trong Sổ quái): chắc chắn
+    lord? = m[:lord] || (Data.side_monster(m.id) || %{})[:lord]
+
+    first =
+      cond do
+        m[:pvp] -> 0
+        m.boss and m.id not in p.bosses -> dr.first_boss
+        lord? && Bestiary.count(p, m.id) == 0 -> dr.first_boss
+        true -> 0
+      end
 
     c =
       cond do
@@ -2178,10 +2190,17 @@ defmodule HacLong.Game.Engine do
         true -> 0
       end
 
-    if c > 0 and chance(c) do
+    n = if(first > 0, do: first, else: if(c > 0 and chance(c), do: 1, else: 0))
+
+    if n > 0 do
       id = Mastery.rules().item
-      p = p |> add_item(id) |> log("📕 Nhặt được #{Data.item(id).name}!", "win")
-      {p, %{reward | items: reward.items ++ [id]}}
+
+      p =
+        p
+        |> add_item(id, n)
+        |> log("📕 Nhặt được #{Data.item(id).name}#{if n > 1, do: " ×#{n}", else: ""}!", "win")
+
+      {p, %{reward | items: reward.items ++ List.duplicate(id, n)}}
     else
       {p, reward}
     end
