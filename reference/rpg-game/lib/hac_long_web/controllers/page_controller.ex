@@ -158,7 +158,15 @@ defmodule HacLongWeb.PageController do
           hit: Data.rules().combat.hit,
           monsterCrit: Data.rules().monster.crit,
           monsterCritMult: Data.rules().combat.monster_crit_mult,
-          pk: Map.take(Data.rules().pk, [:rounds, :special_every, :special_mult])
+          pk: Map.take(Data.rules().pk, [:rounds]),
+          pvp:
+            Map.take(Data.rules().pvp, [
+              :dmg_mult,
+              :crit_rate_mult,
+              :dodge_mult,
+              :stun_mult,
+              :stun_immune
+            ])
         },
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,

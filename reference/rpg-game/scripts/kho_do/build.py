@@ -234,7 +234,7 @@ def sdesc(k):
     if k.get("crit"): p.append("chắc chí mạng")
     if k.get("heal"): p.append(f"hồi {pct(k['heal'])} máu")
     if k.get("drain"): p.append(f"hút {pct(k['drain'])} sát thương")
-    if k.get("stun"): p.append(f"{pct(k['stun'])} làm quái mất lượt")
+    if k.get("stun"): p.append(f"{pct(k['stun'])} làm quái mất lượt (người: {pct(k['stun'] * R['pvp']['stun_mult'])})")
     if k.get("buff"): b = k["buff"]; p.append(BUFF.get(b["id"], b["id"]).format(pct(b["power"])) + f" ({b['turns']} lượt)")
     if k.get("debuff"): b = k["debuff"]; p.append(DEBUFF.get(b["id"], b["id"]).format(pct(b["power"])) + f" ({b['turns']} lượt)")
     return ", ".join(p) or "đòn mạnh"
@@ -248,7 +248,7 @@ def cdesc(k):
     eff = k.get("effect") or k["id"]
     pw, t = e.get("power", 0), e.get("turns")
     if eff == "holy": p.append(f"hồi {pct(e['heal'])} máu")
-    elif eff == "stun_bash": p.append(f"làm quái choáng mất lượt (trùm {pct(e['boss_resist'])} kháng)")
+    elif eff == "stun_bash": p.append(f"làm quái choáng mất lượt (trùm {pct(e['boss_resist'])} kháng; người: {pct(R['pvp']['stun_mult'])})")
     elif eff == "war_cry": p.append(f"cuồng nộ +{pct(pw)} công ({t} lượt)")
     elif eff == "venom": p.append(f"{'đốt' if k.get('element') == 'fire' else 'độc'}: mỗi lượt {pct(pw)} sát thương vừa gây ({t} lượt)")
     elif eff == "shadow_step": p.append(f"né +{pct(pw)} ({t} lượt)")
@@ -304,11 +304,12 @@ mode_rows = "".join([
     "<tr><td><b>Mình trúng</b></td><td>đòn thường theo tỉ lệ trúng quái; quái không né; kỹ năng luôn trúng</td><td>đòn thường theo né đối thủ; kỹ năng luôn trúng</td><td>đòn thường theo né đối thủ; kỹ năng không né được</td></tr>",
     "<tr><td><b>Mình bị đánh</b></td><td>né được đòn thường; đòn đặc biệt của quái không né được</td><td>né được đòn thường; kỹ năng của đối thủ không né được</td><td>né được đòn thường; kỹ năng không né được</td></tr>",
     f"<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td colspan=2>tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])} (thu nhỏ theo tỉ lệ, không chặn trần)</td></tr>",
-    f"<tr><td><b>Choáng</b></td><td>quái mất lượt</td><td colspan=2>mất lượt; vừa thoát choáng thì kháng {PV['stun_immune']} lượt</td></tr>",
-    "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ</td><td>như Đồ sát</td></tr>",
-    "<tr><td><b>Phản sát thương (Excellent)</b></td><td>quái mất phần phản lại nhưng không chết vì phản đòn (còn ít nhất 1 máu)</td><td>Đấu trường: phản đòn hạ được đối thủ, cả hai chiều (Long Vương Hồi Sinh vẫn cứu)</td><td>không có (mỗi bên tính đòn riêng)</td></tr>",
+    f"<tr><td><b>Choáng</b></td><td>quái mất lượt</td><td colspan=2>tỉ lệ choáng ×{n(PV['stun_mult'])} (mọi kỹ năng, cả Thủy Long Ba); bị choáng mất một lượt; vừa thoát choáng thì kháng {PV['stun_immune']} lượt</td></tr>",
+    "<tr><td><b>Hiệu ứng lên nhau</b></td><td>choáng, suy yếu, độc lên quái; buff lên mình</td><td>choáng, suy yếu, độc / bỏng mình gây chuyển sang người bị đánh (độc trừ máu đầu lượt của họ); thủ thế, khiên, Bất Tử, Ảnh Bộ, thú cưng che chắn, Long Vương Hồi Sinh của người bị đánh vẫn đỡ đòn</td><td>như Đồ sát</td></tr>",
+    "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, khiên, thú che chắn, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ; thêm thủ thế / khiên / thú của người bị đánh</td><td>như Đồ sát</td></tr>",
+    "<tr><td><b>Phản sát thương (Excellent)</b></td><td>quái mất phần phản lại nhưng không chết vì phản đòn (còn ít nhất 1 máu)</td><td>Đồ sát: người đánh mất phần phản lại, còn ít nhất 1 máu; Đấu trường: phản đòn hạ được đối thủ, cả hai chiều (Long Vương Hồi Sinh vẫn cứu)</td><td>người đánh mất phần phản lại, còn ít nhất 1 máu</td></tr>",
     f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái; đối thủ Đấu trường (máy) dùng kỹ năng mạnh nhất, thú, buff, hồi máu như người</td><td>mỗi bên tự dùng kỹ năng mạnh nhất còn dùng được</td></tr>",
-    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
+    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đồ sát: luân phiên lượt, người tấn công đi trước; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
 ])
 mh, ma, md = MON["hp"], MON["atk"], MON["def"]
 monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
