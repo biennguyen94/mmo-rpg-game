@@ -155,6 +155,11 @@ defmodule HacLongWeb.SlayTest do
     name_a = pa.name
     texts = Enum.map(pb.battle.log, & &1.text)
     assert Enum.any?(texts, &(&1 =~ "#{name_a} gây " and &1 =~ "sát thương cho bạn"))
+
+    # đòn mở màn của người tấn công (RULES.slay.first_strike_mult); đòn thường đầu tiên có thể bị né (không sát thương)
+    assert Enum.any?(texts, &(&1 =~ "Đòn mở màn")) or
+             Enum.any?(texts, &(&1 =~ "Trượt! Bạn tránh được"))
+
     ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục bạn."))
     assert ko && Enum.at(texts, ko - 1) =~ name_a
 

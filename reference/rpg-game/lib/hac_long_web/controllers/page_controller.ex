@@ -159,6 +159,7 @@ defmodule HacLongWeb.PageController do
           monsterCrit: Data.rules().monster.crit,
           monsterCritMult: Data.rules().combat.monster_crit_mult,
           pk: Map.take(Data.rules().pk, [:rounds]),
+          slayFirst: Data.rules().slay.first_strike_mult,
           pvp:
             Map.take(Data.rules().pvp, [
               :dmg_mult,

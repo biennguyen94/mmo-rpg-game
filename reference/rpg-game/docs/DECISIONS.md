@@ -1199,3 +1199,15 @@ Lý do: một đòn ~35–55% máu, bình lớn hồi 70% mỗi lượt thì bê
 `class_taken`: Kiếm Sĩ 1.16 → 1.1, Tiên Nữ 0.98 → 1.06 (Phù Thủy 0.9, Đấu Sĩ 0.75 giữ). Mô phỏng 4 lớp tối đa
 (`scripts/pvp/`, đồ sát `POT=1` uống bình dưới 50% máu / mana khi hết MP): đồ sát 47 / 46 / 52 / 55%, PK cược
 54 / 45 / 52 / 49% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ).
+
+## Đồ sát: đòn mở màn (2026-10-25, anh duyệt DS-2 phương án A)
+
+Lượt đầu của người tấn công gây sát thương × `RULES.slay.first_strike_mult` (0.5): đối thủ kịp phòng bị. Tính ở
+`Session.slay_hit` (Slay báo `first` khi chưa ai ra đòn), trước phần đỡ đòn của người bị đánh; nhật ký hai bên có dòng
+"⚔ Đòn mở màn". Chỉ đồ sát (cả Hỗn Chiến Thành / Công Thành dùng Slay); PK cược đánh cùng lúc, Đấu trường giữ luật riêng.
+Thử 4 phương án (`scripts/pvp/run.exs`, `FIRST_MULT`, `DEF_SHIELD`): người đi trước thắng 69% → 48–50%.
+
+`class_taken` chỉnh lại theo cả hai chế độ: Kiếm Sĩ 1.1 → 1.08, Phù Thủy 0.9 → 0.86 (Tiên Nữ 1.06, Đấu Sĩ 0.75).
+Mô phỏng 4 lớp tối đa: đồ sát (uống bình) 43 / 54 / 53 / 50%, PK cược 54 / 45 / 50 / 51% (Kiếm Sĩ / Phù Thủy / Tiên Nữ /
+Đấu Sĩ); người đi trước thắng 49%. Kiếm Sĩ đồ sát hơi thấp: hai chế độ kéo ngược nhau (PK cược tự đánh không uống bình,
+Kiếm Sĩ mạnh; đồ sát dài và có bình, Kiếm Sĩ ít MP) nên một hệ số không cân được cả hai.

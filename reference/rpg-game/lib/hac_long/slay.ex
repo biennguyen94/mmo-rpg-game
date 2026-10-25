@@ -174,7 +174,7 @@ defmodule HacLong.Slay do
   def start(a, b, pa, pb), do: GenServer.call(__MODULE__, {:start, a, b, pa, pb})
   def abort(id), do: GenServer.call(__MODULE__, {:abort, id})
 
-  @doc "Trận đồ sát của `uid`: `%{id, foe, turn, hp, foe_hp, until}` hoặc nil."
+  @doc "Trận đồ sát của `uid`: `%{id, foe, mine, hp, foe_hp, until, map, first, fx, foe_fx, foe_char}` hoặc nil."
   def peek(uid), do: GenServer.call(__MODULE__, {:peek, uid})
 
   @doc """
@@ -541,6 +541,8 @@ defmodule HacLong.Slay do
       foe_hp: f.hp[foe],
       until: f.until,
       map: f.map,
+      # lượt đầu của người tấn công (đòn mở màn, `RULES.slay.first_strike_mult`)
+      first: f.turns == 0,
       fx: (f[:fx] || %{})[uid],
       foe_fx: (f[:fx] || %{})[foe],
       foe_char: (f[:chars] || %{})[foe]

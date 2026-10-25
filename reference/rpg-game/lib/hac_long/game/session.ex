@@ -888,7 +888,7 @@ defmodule HacLong.Game.Session do
 
       {r, p2} ->
         lines = Enum.map(p2.battle.log, & &1.text)
-        {p2, foe2} = slay_hit(p2, foe, f.foe_hp)
+        {p2, foe2} = slay_hit(p2, foe, f.foe_hp, f[:first] == true)
         foe_lines = if foe2, do: Enum.map(foe2.battle.log, & &1.text), else: []
         p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
 
@@ -919,17 +919,32 @@ defmodule HacLong.Game.Session do
 
   # sát thương lượt này vào đối thủ đi qua phần đỡ đòn của họ; hiệu ứng lên bản sao chuyển sang họ.
   # Dòng của đối thủ (khiên đỡ, bất tử…) ghi ở trận của họ (góc nhìn họ) và ở trận mình (đổi góc nhìn).
-  defp slay_hit(p2, nil, foe_hp) do
+  @first_strike HacLong.Game.Data.rules().slay[:first_strike_mult] || 1
+
+  defp slay_hit(p2, nil, foe_hp, _first?) do
     hp = max(0, foe_hp - (foe_hp + @slay_pad - p2.battle.monster.hp))
     {put_in(p2, [:battle, :monster, :hp], hp), nil}
   end
 
-  defp slay_hit(p2, foe, foe_hp) do
+  # `first?`: lượt đầu của người tấn công, sát thương × `RULES.slay.first_strike_mult` (đòn mở màn)
+  defp slay_hit(p2, foe, foe_hp, first?) do
     raw = foe_hp + @slay_pad - p2.battle.monster.hp
+    opening? = first? and raw > 0 and @first_strike < 1
+    raw = if opening?, do: round(raw * @first_strike), else: raw
     {p2, debuffs} = Engine.pvp_take_debuffs(p2)
     {foe2, real} = Engine.pvp_defend(foe, raw)
     foe2 = Engine.pvp_receive(foe2, debuffs)
     name = p2.battle.monster.name
+
+    foe2 =
+      if opening?,
+        do:
+          Engine.add_log(
+            foe2,
+            "⚔ Đòn mở màn: sát thương ×#{@first_strike} (bạn kịp phòng bị).",
+            "info"
+          ),
+        else: foe2
 
     foe2 =
       if raw > 0 and real < raw,

@@ -906,7 +906,7 @@
       "stun_mult": 0.5,
       "potion_mult": 0.5,
       "potion_cd": 3,
-      "class_taken": {"dk": 1.1, "elf": 1.06, "dw": 0.9, "mg": 0.75},
+      "class_taken": {"dk": 1.08, "elf": 1.06, "dw": 0.86, "mg": 0.75},
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -1113,7 +1113,9 @@
       "protect_s": 120,
       "per_target_hour": 3,
       "red_s": 1800,
-      "red_gold_mult": 2
+      "red_gold_mult": 2,
+      "first_strike_mult": 0.5,
+      "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
     "boss_rewards": {
       "first_kill_weights": [

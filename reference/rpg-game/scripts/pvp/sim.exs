@@ -77,8 +77,10 @@ defmodule SlaySim do
       end
 
     raw = hp[foe_id] + @pad - p2.battle.monster.hp
-    # thử giảm lợi thế đi trước (DS-2): FIRST_MULT nhân đòn lượt đầu của người tấn công
-    raw = if n == 0, do: round(raw * String.to_float(System.get_env("FIRST_MULT") || "1.0")), else: raw
+    # đòn mở màn (RULES.slay.first_strike_mult, như Session.slay_hit); FIRST_MULT=… để thử số khác
+    first = System.get_env("FIRST_MULT")
+    first = if first, do: String.to_float(first), else: HacLong.Game.Data.rules().slay.first_strike_mult
+    raw = if n == 0, do: round(raw * first), else: raw
 
     shown =
       p2.battle.log

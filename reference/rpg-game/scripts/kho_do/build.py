@@ -310,7 +310,7 @@ mode_rows = "".join([
     "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, khiên, thú che chắn, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ; thêm thủ thế / khiên / thú của người bị đánh</td><td>như Đồ sát</td></tr>",
     "<tr><td><b>Phản sát thương (Excellent)</b></td><td>quái mất phần phản lại nhưng không chết vì phản đòn (còn ít nhất 1 máu)</td><td>Đồ sát: người đánh mất phần phản lại, còn ít nhất 1 máu; Đấu trường: phản đòn hạ được đối thủ, cả hai chiều (Long Vương Hồi Sinh vẫn cứu)</td><td>người đánh mất phần phản lại, còn ít nhất 1 máu</td></tr>",
     f"<tr><td><b>Kỹ năng</b></td><td>bộ {R['tower_skills']['loadout']} kỹ năng mang vào trận</td><td>như đánh quái; đối thủ Đấu trường (máy) dùng kỹ năng mạnh nhất, thú, buff, hồi máu như người</td><td>mỗi bên tự dùng kỹ năng mạnh nhất còn dùng được</td></tr>",
-    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đồ sát: luân phiên lượt, người tấn công đi trước; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
+    f"<tr><td><b>Thắng thua</b></td><td>hết máu</td><td>hết máu; Đồ sát: luân phiên lượt, người tấn công đi trước, đòn mở màn (lượt đầu) chỉ gây ×{n(R['slay']['first_strike_mult'])} sát thương; Đấu trường: cả hai cùng gục thì bên bị đánh lố ít hơn thắng</td><td>hai bên ra đòn cùng lúc; cùng gục thì bên bị đánh lố ít hơn thắng; quá {PK['rounds']} lượt thì bên còn nhiều % máu hơn thắng</td></tr>",
 ])
 mh, ma, md = MON["hp"], MON["atk"], MON["def"]
 monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
