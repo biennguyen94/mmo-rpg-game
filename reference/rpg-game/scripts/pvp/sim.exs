@@ -72,7 +72,14 @@ defmodule SlaySim do
         {r, p2} = Commands.run(p, cmd)
 
         # bình máu chưa dùng được (RULES.pvp.potion_cd / potion_max) thì đánh
-        if r[:ok] == false, do: elem(Commands.run(p, strike), 1), else: p2
+        {used, p2} = if r[:ok] == false, do: {strike, elem(Commands.run(p, strike), 1)}, else: {cmd, p2}
+
+        # HEAL_MULT=x: thử giảm hồi máu từ kỹ năng / thú khi đánh người (không đụng bình máu)
+        hm = System.get_env("HEAL_MULT")
+
+        if hm && used["act"] != "potion" && p2.hp > p.hp,
+          do: %{p2 | hp: p.hp + round((p2.hp - p.hp) * String.to_float(hm))},
+          else: p2
       else
         p
       end
@@ -108,6 +115,19 @@ defmodule SlaySim do
         saved: st.saved + if(foe.hp - real <= 0 and foe2.hp > 0, do: 1, else: 0),
         pots: st.pots + if(Map.get(p2.inv, "potion_l", 0) < Map.get(p.inv, "potion_l", 0), do: 1, else: 0)
     }
+
+    # theo từng bên (1 = người tấn công): sát thương thật gây ra, máu tự hồi trong lượt mình, lượt bị choáng
+    by = Map.get(st, :by, %{})
+    add = fn by, k, v -> Map.update(by, {uid, k}, v, &(&1 + v)) end
+
+    by =
+      by
+      |> add.(:dealt, real)
+      |> add.(:healed, max(0, p2.hp - p.hp))
+      |> add.(:stunned, if(stunned?, do: 1, else: 0))
+      |> add.(:turns, 1)
+
+    st = Map.put(st, :by, by)
 
     hp = %{uid => max(p2.hp, 0), foe_id => max(foe2.hp, 0)}
     fx = %{fx | uid => Engine.pvp_fx(p2), foe_id => Engine.pvp_fx(foe2)}

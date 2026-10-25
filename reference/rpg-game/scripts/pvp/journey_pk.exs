@@ -2,6 +2,7 @@
 # ép, thú, thông thạo ngang nhau theo đúng tiến độ chơi; mỗi lớp nhiều seed (giảm may rủi rơi đồ), seed s đấu seed s.
 #   KS=0,1,3,5,7,10 SEEDS=2 N=50 mix run --no-start scripts/pvp/journey_pk.exs
 # Nhân vật hành trình lưu ở tmp/journey_pk/<lớp>-r<k>-s<seed>.bin (chạy lại dùng luôn; xóa để dựng lại khi đổi dữ liệu).
+#   SRC=tier SEEDS=1 N=100 …: thay nhân vật hành trình bằng bộ đồ giống hệt nhau theo mốc (tách lớp khỏi may rủi đồ).
 # Đồ sát: uống bình máu dưới 50% máu, bình mana khi hết MP (mỗi người mang 100 bình lớn mỗi loại).
 Code.require_file(Path.join(__DIR__, "sim.exs"))
 # POT=0: không uống bình (mặc định 1)
@@ -20,7 +21,11 @@ char = fn cls, k, s ->
   f = Path.join(dir, "#{cls}-r#{k}-s#{s}.bin")
 
   p =
-    case File.read(f) do
+    case System.get_env("SRC") == "tier" || File.read(f) do
+      # SRC=tier: nhân vật đồ giống hệt nhau theo mốc (Max.tier/2, scripts/pvp/build.exs); seed không dùng
+      true ->
+        elem(Max.tier(cls, k), 0)
+
       {:ok, bin} ->
         :erlang.binary_to_term(bin)
 

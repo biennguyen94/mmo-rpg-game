@@ -24,17 +24,66 @@ defmodule Max do
     p
   end
 
+  @doc """
+  DS-6: nhân vật ĐỒ GIỐNG HỆT NHAU theo mốc chuyển sinh `k` (mọi lớp cùng hồ sơ): cấp 50, k lần chuyển sinh, điểm chia
+  như công thức admin, bộ đồ tốt nhất của lớp (như build/2) với +N ≈ 1.1k (tối đa +11), dòng cộng thêm k/2 (tối đa 4),
+  May mắn từ k ≥ 2, Excellent ⌈k/2⌉ dòng (tối đa 6), cánh cấp 1 (k 1–3) / 2 (4–6) / 3 (7+), tháp 10 + 5k, thông thạo
+  6 + k (tối đa 10), không thú cưng. Trả {nhân vật, món mặc không được (yêu cầu chỉ số)}.
+  """
+  def tier(cls, k) do
+    prof = %{
+      rebirths: k,
+      up: min(11, round(k * 1.1)),
+      opt: min(4, div(k, 2)),
+      luck: k >= 2,
+      exc: min(6, div(k + 1, 2)),
+      wing: cond do
+        k >= 7 -> 3
+        k >= 4 -> 2
+        k >= 1 -> 1
+        true -> nil
+      end,
+      tower: min(100, 10 + 5 * k),
+      mastery: min(Mastery.max(), 6 + k),
+      pet: false,
+      potions: true
+    }
+
+    gen(cls, prof)
+  end
+
   def build(cls, opts \\ []) do
+    {p, _} =
+      gen(cls, %{
+        rebirths: 10,
+        up: 11,
+        opt: 4,
+        luck: true,
+        exc: 6,
+        wing: 3,
+        tower: 100,
+        mastery: Mastery.max(),
+        pet: true,
+        potions: true,
+        shield: opts[:shield]
+      })
+
+    p
+  end
+
+  defp gen(cls, prof) do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Max#{cls}", "cls" => cls})
     {weapon, left, set} = @set[cls]
-    left = if opts[:shield], do: nil, else: left
-    full = %{"opt" => 4, "luck" => true, "up" => 11}
+    left = if prof[:shield], do: nil, else: left
+    full = %{"up" => prof.up, "luck" => prof.luck} |> then(&if(prof.opt > 0, do: Map.put(&1, "opt", prof.opt), else: &1))
+    exc_w = Enum.take(@exc_w, prof.exc)
+    exc_a = Enum.take(@exc_a, prof.exc)
 
     p =
       p
-      |> op("set_rebirths", %{"n" => 10})
+      |> op("set_rebirths", %{"n" => prof.rebirths})
       |> op("set_level", %{"level" => 50})
-      |> op("set_tower", %{"floor" => 100})
+      |> op("set_tower", %{"floor" => prof.tower})
       |> op("reset_stats", %{})
 
     total = p.points
@@ -42,29 +91,43 @@ defmodule Max do
     {first, _} = hd(@share[cls])
     add = Map.update!(add, first, &(&1 + total - Enum.sum(Map.values(add))))
     p = p |> op("add_stats", add) |> op("add_points", %{"n" => -total})
-    p = op(p, "give_gear", Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => @exc_w}))
-    p = Enum.reduce(set, p, &op(&2, "give_gear", Map.merge(full, %{"base" => &1, "exc" => @exc_a})))
+    p = op(p, "give_gear", Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => exc_w}))
+    p = Enum.reduce(set, p, &op(&2, "give_gear", Map.merge(full, %{"base" => &1, "exc" => exc_a})))
 
     p =
       p
-      |> op("give_gear", Map.merge(full, %{"base" => "item_13_24", "exc" => @exc_a}))
-      |> op("give_gear", Map.merge(full, %{"base" => "item_13_24", "exc" => @exc_a}))
-      |> op("give_gear", Map.merge(full, %{"base" => "item_13_27", "exc" => @exc_w}))
-      |> op("give_gear", Map.merge(full, %{"base" => "wing_#{cls}_3", "wopt" => "ignore_def"}))
+      |> op("give_gear", Map.merge(full, %{"base" => "item_13_24", "exc" => exc_a}))
+      |> op("give_gear", Map.merge(full, %{"base" => "item_13_24", "exc" => exc_a}))
+      |> op("give_gear", Map.merge(full, %{"base" => "item_13_27", "exc" => exc_w}))
 
-    p = Enum.reduce(Gear.bag(p), p, fn g, p -> elem(Commands.run(p, %{"act" => "equip", "id" => g.uid}), 1) end)
+    p =
+      if prof.wing,
+        do:
+          op(
+            p,
+            "give_gear",
+            Map.merge(full, %{"base" => "wing_#{cls}_#{prof.wing}"})
+            # cánh cấp 1 không có dòng phụ
+            |> then(&if(prof.wing >= 2, do: Map.put(&1, "wopt", "ignore_def"), else: &1))
+          ),
+        else: p
+
+    {p, fails} =
+      Enum.reduce(Gear.bag(p), {p, []}, fn g, {p, f} ->
+        {r, p2} = Commands.run(p, %{"act" => "equip", "id" => g.uid})
+        if r[:ok] == false, do: {p, ["#{g.base}: #{r[:msg]}" | f]}, else: {p2, f}
+      end)
 
     p =
       cond do
         left ->
-          p = op(p, "give_gear", Map.merge(full, %{"base" => left, "skill" => true, "exc" => @exc_w}))
+          p = op(p, "give_gear", Map.merge(full, %{"base" => left, "skill" => true, "exc" => exc_w}))
           g = Enum.find(Gear.bag(p), &(&1.base == left))
-          {r, p} = Commands.run(p, %{"act" => "equip", "id" => g.uid, "hand" => "left"})
-          true = r.ok
-          p
+          {r, p2} = Commands.run(p, %{"act" => "equip", "id" => g.uid, "hand" => "left"})
+          if r[:ok] == false, do: p, else: p2
 
-        opts[:shield] && cls != "elf" ->
-          p = op(p, "give_gear", Map.merge(full, %{"base" => "item_6_18", "exc" => @exc_a}))
+        prof[:shield] && cls != "elf" ->
+          p = op(p, "give_gear", Map.merge(full, %{"base" => "item_6_18", "exc" => exc_a}))
           g = Enum.find(Gear.bag(p), &(&1.base == "item_6_18"))
           elem(Commands.run(p, %{"act" => "equip", "id" => g.uid}), 1)
 
@@ -72,12 +135,14 @@ defmodule Max do
           p
       end
 
+    p = if prof.pet, do: op(p, "give_pet", %{"id" => "long_vuong", "level" => 20}), else: p
+
     p =
       p
-      |> op("give_pet", %{"id" => "long_vuong", "level" => 20})
-      |> op("set_mastery", %{"lv" => Mastery.max()})
+      |> op("set_mastery", %{"lv" => prof.mastery})
       |> op("give_item", %{"id" => "potion_l", "count" => 500})
       |> op("give_item", %{"id" => "mana_l", "count" => 500})
-    %{p | hp: Engine.derived(p).maxHp} |> Map.put(:mp, Engine.derived(p).maxMp)
+
+    {%{p | hp: Engine.derived(p).maxHp} |> Map.put(:mp, Engine.derived(p).maxMp), fails}
   end
 end

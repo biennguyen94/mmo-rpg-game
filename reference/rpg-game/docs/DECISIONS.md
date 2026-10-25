@@ -1232,3 +1232,16 @@ Phù Thủy / Đấu Sĩ không đổi.
 
 Ghi chú: `Journey.run/2` không tự đặt seed (mix task đặt `:rand.seed`); script đo trước đây gọi thẳng `run(…, seed: s)`
 nên không lặp lại được — đã sửa `scripts/pvp/journey_pk.exs`.
+
+## MP mỗi cấp Kiếm Sĩ / Tiên Nữ 1 → 3 (2026-10-25, anh duyệt DS-6 bước 2a)
+
+`CLASSES.dk.derived.mp.level` và `CLASSES.elf.derived.mp.level` 1 → 3 (Phù Thủy / Đấu Sĩ 2). Lý do: MP Kiếm Sĩ =
+20 + 1×cấp + 1×Năng lượng (80 ở cấp 50 khi không cộng Năng lượng), hồi MP = 3% MP tối đa → ~3–4 MP / lượt trong khi kỹ
+năng tốn 8–25 (đã ×0.5); sau bước 1 Kiếm Sĩ vẫn chỉ dùng kỹ năng 27–37% lượt. Cấp 50 không cộng Năng lượng: Kiếm Sĩ
+80 → 180 MP, Tiên Nữ ~112 → ~212.
+Đánh quái (hành trình 3 lần chuyển sinh, 3 seed, cùng seed trước / sau 2a): Kiếm Sĩ ~7 600 → ~6 750 lượt (−8–16%),
+Tiên Nữ ~5 950 → ~5 280 (−8–13%), Phù Thủy / Đấu Sĩ không đổi; 4 lớp nay 4 900–7 500 lượt (trước bước 1 Kiếm Sĩ ~9 000).
+Đánh người: tỉ lệ dùng kỹ năng với đồ giống nhau 62–93% mọi lớp (trước Kiếm Sĩ 22–28%).
+
+`scripts/pvp/build.exs` `Max.tier/2`: nhân vật đồ giống hệt nhau theo mốc chuyển sinh (cùng hồ sơ cho mọi lớp) để đo
+đánh người tách khỏi may rủi đồ của hành trình (`SRC=tier` cho `journey_pk.exs`, `why.exs`).

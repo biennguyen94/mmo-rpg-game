@@ -20,8 +20,8 @@ defmodule HacLong.Game.EngineTest do
     d = Engine.derived(p)
     # 40 + 1*10 + 25*10
     assert d.maxHp == 300 and p.hp == 300
-    # 20 + 1*1 + 10*1
-    assert d.maxMp == 31 and p.mp == 31
+    # 20 + 3*1 + 10*1 (Kiếm Sĩ +3 MP mỗi cấp, DECISIONS "MP mỗi cấp Kiếm Sĩ / Tiên Nữ")
+    assert d.maxMp == 33 and p.mp == 33
     # 28*2.8 + 20*0.5 + cấp 1 + Rìu Nhỏ 4 (đồ khởi đầu Kiếm Sĩ, Phase 15b)
     assert d.atk == 93
     assert Engine.points_per_level("dk") == 5 and Engine.points_per_level("mg") == 7
