@@ -115,11 +115,15 @@ out = %{
   "_doc" =>
     "Hồ sơ đồ theo mốc chuyển sinh (scripts/pvp/profile.exs từ HacLong.Game.Journey, #{length(Enum.to_list(seeds))} seed × 4 lớp). " <>
       "Max.tier/2 dựng 4 lớp cùng hồ sơ: món tốt nhất của lớp có cấp đồ ≤ *_level, ép +up, opt dòng cộng thêm, exc dòng Excellent, " <>
-      "cánh bậc wing (0 = không) +wing_up, tháp tower, thông thạo mastery, thú pet. Sửa tay được; chạy lại profile.exs để tạo mới.",
+      "cánh bậc wing (0 = không) +wing_up, tháp tower, thông thạo mastery, thú pet; \"max\": true thì dùng nhân vật tối đa (mặc định mốc 10). " <>
+      "Sửa tay được; chạy lại profile.exs để tạo mới.",
   "sourceType" => "SIMULATED",
   "version" => 1,
   "verified" => false,
-  "tiers" => Map.new(rows)
+  # mốc cuối: người chơi ở lâu, lên dần tới đồ tối đa → Max.tier dùng nhân vật tối đa (DS-7); MAX_LAST=0 để tắt
+  "tiers" =>
+    Map.new(rows)
+    |> then(&if(System.get_env("MAX_LAST") == "0", do: &1, else: put_in(&1, ["10", "max"], true)))
 }
 
 File.write!(Path.join(__DIR__, "tier_profile.json"), Jason.encode!(out, pretty: true) <> "\n")

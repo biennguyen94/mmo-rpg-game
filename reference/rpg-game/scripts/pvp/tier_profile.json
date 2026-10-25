@@ -1,5 +1,5 @@
 {
-  "_doc": "Hồ sơ đồ theo mốc chuyển sinh (scripts/pvp/profile.exs từ HacLong.Game.Journey, 3 seed × 4 lớp). Max.tier/2 dựng 4 lớp cùng hồ sơ: món tốt nhất của lớp có cấp đồ ≤ *_level, ép +up, opt dòng cộng thêm, exc dòng Excellent, cánh bậc wing (0 = không) +wing_up, tháp tower, thông thạo mastery, thú pet. Sửa tay được; chạy lại profile.exs để tạo mới.",
+  "_doc": "Hồ sơ đồ theo mốc chuyển sinh (scripts/pvp/profile.exs từ HacLong.Game.Journey, 3 seed × 4 lớp). Max.tier/2 dựng 4 lớp cùng hồ sơ: món tốt nhất của lớp có cấp đồ ≤ *_level, ép +up, opt dòng cộng thêm, exc dòng Excellent, cánh bậc wing (0 = không) +wing_up, tháp tower, thông thạo mastery, thú pet; \"max\": true thì dùng nhân vật tối đa (mặc định mốc 10). Sửa tay được; chạy lại profile.exs để tạo mới.",
   "sourceType": "SIMULATED",
   "tiers": {
     "0": {
@@ -48,7 +48,8 @@
       "up": 1,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 1,
+      "max": true
     },
     "2": {
       "armor_level": 12,

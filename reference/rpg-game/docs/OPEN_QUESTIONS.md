@@ -11,12 +11,12 @@
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
-| DS-7 | Đánh người | Dòng r10 của `class_taken_by_rebirth` chỉnh cho người **vừa đạt** 10 lần chuyển sinh (hồ sơ hành trình: giáp cấp 17, +1, cánh bậc 1). Nhân vật **tối đa** (+11 full Excellent, cánh 3, thú) dùng dòng này lệch: Kiếm Sĩ 43%, Phù Thủy 71%, Tiên Nữ 55%, Đấu Sĩ 31%. Mốc 10 là mốc cuối, người chơi ở lâu và lên dần tới đồ tối đa. | (A) dòng r10 chỉnh trên nhân vật tối đa (r0–r9 giữ theo hành trình); (B) giữ như hiện tại; (C) thêm dòng theo độ mạnh đồ (phức tạp hơn) |
 
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| DS-7 | 2026-10-25 | Mốc 10 (cuối) cân theo người vừa đạt hay nhân vật tối đa? | Nhân vật tối đa: `tier_profile.json` mốc 10 `"max": true`; dòng r10 1.07 / 0.86 / 1.04 / 0.78 (DECISIONS "Mốc 10 chỉnh trên nhân vật tối đa") |
 | DS-6 | 2026-10-25 | Đánh người: cân bằng lớp theo mốc chuyển sinh? | Bảng `RULES.pvp.class_taken_by_rebirth` theo số lần chuyển sinh của người bị đánh (DECISIONS "Đánh người: hệ số lớp theo mốc chuyển sinh"); chạy lại `scripts/pvp/tune.exs` khi đổi gameplay |
 | B41-A | 2026-10-24 | Cầm 2 vũ khí 1 tay: lớp nào, sát thương tính thế nào? | Kiếm Sĩ, Phù Thủy, Đấu Sĩ; cộng thẳng 2 vũ khí (k = 1), đo rồi mới quyết (DECISIONS B-42) |
 | 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |

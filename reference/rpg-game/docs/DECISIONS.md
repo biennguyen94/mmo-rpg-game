@@ -1302,3 +1302,10 @@ r5 1.12/0.73/0.90/1.02 · r6 1.10/0.74/0.97/0.93 · r7 1.08/0.75/0.98/0.92 · r8
 r9 1.12/0.73/1.01/0.90 · r10 1.12/0.75/1.00/0.88. Kiểm (seed khác, 48 trận mỗi chiều): mọi mốc lệch 3–9%.
 Nhân vật tối đa (+11 full Excellent, cánh 3, thú; `run.exs`) với dòng r10: Kiếm Sĩ 43%, Phù Thủy 71%, Tiên Nữ 55%,
 Đấu Sĩ 31% — chờ anh chọn cách cân mốc cuối (OPEN_QUESTIONS DS-7).
+
+### Mốc 10 chỉnh trên nhân vật tối đa (2026-10-25, anh duyệt DS-7 phương án A)
+
+Mốc 10 là mốc cuối: người chơi ở lâu, lên dần tới đồ tối đa. `tier_profile.json` mốc 10 có `"max": true` →
+`Max.tier/2` dùng nhân vật tối đa (`Max.build/2`: +11 full Excellent, cánh 3, Long Vương); `profile.exs` tự đặt cờ này
+(`MAX_LAST=0` để tắt). Dòng r10 chỉnh lại: Kiếm Sĩ 1.07, Phù Thủy 0.86, Tiên Nữ 1.04, Đấu Sĩ 0.78 (trước 1.12 / 0.75 /
+1.00 / 0.88). Kiểm: r10 lệch 4%; `run.exs` (nhân vật tối đa, 60 trận mỗi cặp) 47 / 58 / 47 / 48%. r0–r9 không đổi.

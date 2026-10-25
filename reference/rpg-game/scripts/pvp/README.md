@@ -46,6 +46,9 @@ Nhân vật dùng để đo không phải đồ max mà là **đồ của ngư�
 - `Max.tier/2` (`build.exs`) dựng 4 lớp cùng hồ sơ: mỗi ô mặc **món tốt nhất của lớp** (công / thủ cao nhất) có cấp
   đồ ≤ cấp trong hồ sơ, mặc được theo chỉ số; Kiếm Sĩ / Phù Thủy / Đấu Sĩ cầm 2 vũ khí 1 tay, Tiên Nữ 1 vũ khí; điểm
   chia theo tỉ lệ cố định của lớp.
+- **Mốc 10 (cuối)** có `"max": true`: dùng nhân vật tối đa (`Max.build/2`: +11 full Excellent, cánh 3, Long Vương),
+  vì người chơi ở mốc cuối lâu và lên dần tới đồ tối đa. `profile.exs` tự đặt cờ này (`MAX_LAST=0` để tắt); đặt
+  `"max": true` cho mốc khác cũng được.
 - Hành trình đã chạy lưu ở `tmp/journey_tiers/` (dùng lại; `FRESH=1` để chạy mới).
 
 ## Biến tùy chọn
@@ -72,7 +75,7 @@ Nhân vật dùng để đo không phải đồ max mà là **đồ của ngư�
 Lưu ý:
 - Đồ giống hệt nhau nên trận gần như tất định, tỉ lệ thắng nhảy mạnh theo hệ số; ±5–10% giữa hai lần chạy là bình thường.
 - Bảng chỉ đúng với hồ sơ đồ đang dùng: đổi cách người chơi lên đồ thì tạo lại hồ sơ (`profile.exs`) rồi mới chỉnh.
-- Nhân vật tối đa (đồ +11 full Excellent, cánh 3, thú) đo riêng bằng `run.exs`; bảng theo mốc không nhắm mốc đó.
+- Nhân vật tối đa là mốc 10 của bảng; `run.exs` đo thêm đồ sát chéo chi tiết từng cặp lớp.
 - Bảng chỉ làm các lớp ngang nhau **khi cùng mốc, đồ ngang nhau**. Người mốc cao hơn vẫn gần như luôn thắng người mốc thấp.
 
 ## Các script khác

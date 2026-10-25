@@ -31,13 +31,16 @@ defmodule Max do
   DS-6: nhân vật ĐỒ NGANG NHAU theo mốc chuyển sinh `k` (mọi lớp cùng một hồ sơ, `scripts/pvp/tier_profile.json`, tạo
   bằng `scripts/pvp/profile.exs` từ hành trình chơi thật): cấp 50, k lần chuyển sinh, điểm chia như công thức admin;
   mỗi ô mặc món tốt nhất CỦA LỚP có cấp đồ ≤ cấp trong hồ sơ (vũ khí / giáp / trang sức), ép +up, opt dòng cộng thêm,
-  May mắn, exc dòng Excellent, cánh bậc wing +wing_up, tháp, thông thạo, thú cưng như hồ sơ. Kiếm Sĩ / Phù Thủy / Đấu Sĩ
+  May mắn, exc dòng Excellent, cánh bậc wing +wing_up, tháp, thông thạo, thú cưng như hồ sơ. Mốc có `"max": true`
+  (mặc định mốc 10) dùng nhân vật tối đa `build/2`. Kiếm Sĩ / Phù Thủy / Đấu Sĩ
   cầm 2 vũ khí 1 tay (như `build/2`), Tiên Nữ 1 vũ khí. Trả {nhân vật, món mặc không được}.
   """
   def tier(cls, k) do
     tiers = profile()["tiers"]
     row = tiers[to_string(k)] || tiers[tiers |> Map.keys() |> Enum.max_by(&String.to_integer/1)]
-    tier_gen(cls, k, row)
+
+    # "max": true (mốc cuối, DS-7): người chơi ở lâu và lên dần tới đồ tối đa → dùng nhân vật tối đa (build/2)
+    if row["max"], do: {build(cls), []}, else: tier_gen(cls, k, row)
   end
 
   def profile, do: @profile |> File.read!() |> Jason.decode!()
