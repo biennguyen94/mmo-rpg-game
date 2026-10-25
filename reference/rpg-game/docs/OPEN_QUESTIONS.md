@@ -11,12 +11,12 @@
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
-| DS-6 | Đánh người | Đã làm bước 1, 2a, 2b, (c) `pvp.heal_mult` 0.5. PK cược vàng đã bỏ (DECISIONS "Bỏ PK cược vàng") nên chỉ cân **đồ sát**. (d) `scripts/pvp/tune.exs` tự chỉnh `class_taken` trên đồ giống nhau theo mốc (đồ sát có bình, cả hai chiều, N=32/cặp; kiểm lại trên seed khác N=48). Bảng hiện tại (dk 1.08 / dw 0.86 / elf 1.06 / mg 0.75) lệch tối đa 30–50% mỗi mốc. **Một bộ chung tốt nhất** (dk 1.07 dw 0.80 elf 1.02 mg 0.85) vẫn lệch TB 35% (23–43%). **Bảng riêng từng mốc** lệch 2–10% (TB 5%, seed mới) — dk/dw/elf/mg: r0 0.98/0.85/0.97/0.91, r1 1.00/0.85/1.00/0.87, r2 0.95/0.83/1.07/0.87, r3 0.96/0.84/1.12/0.81, r4 1.14/0.78/1.13/0.74, r5 1.16/0.78/1.12/0.74, r6 1.12/0.71/0.95/0.98, r7 1.10/0.71/0.97/0.97, r8 1.12/0.73/1.01/0.90, r9 1.33/0.67/1.03/0.81, r10 1.24/0.84/0.91/0.78. Lưu ý: đồ giống hệt nhau nên trận gần như tất định, tỉ lệ thắng nhảy mạnh theo hệ số; người thật đồ khác nhau nên số theo mốc chỉ là hướng. | Anh chọn: (A) bảng `class_taken` theo số lần chuyển sinh (11 dòng trên; đề xuất lấy dòng theo số lần chuyển sinh của **người bị đánh**), (C) một bộ chung (1.07 / 0.80 / 1.02 / 0.85), hoặc giữ bảng hiện tại |
 
 ## Đã chốt
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| DS-6 | 2026-10-25 | Đánh người: cân bằng lớp theo mốc chuyển sinh? | Bảng `RULES.pvp.class_taken_by_rebirth` theo số lần chuyển sinh của người bị đánh (DECISIONS "Đánh người: hệ số lớp theo mốc chuyển sinh"); chạy lại `scripts/pvp/tune.exs` khi đổi gameplay |
 | B41-A | 2026-10-24 | Cầm 2 vũ khí 1 tay: lớp nào, sát thương tính thế nào? | Kiếm Sĩ, Phù Thủy, Đấu Sĩ; cộng thẳng 2 vũ khí (k = 1), đo rồi mới quyết (DECISIONS B-42) |
 | 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |
 | 9-B | 2026-10-04 | 20 bản đồ mới đặt ở đâu? | Bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, **không liên quan Hắc Long** |

@@ -71,10 +71,21 @@ defmodule HacLong.Game.PvpBalanceTest do
     assert Enum.any?(p.battle.log, &(&1.text == "Bia không bị choáng."))
   end
 
-  test "hệ số theo lớp: lớp ít máu nhận ít hơn" do
-    assert Engine.pvp_taken("mg") < Engine.pvp_taken("dw")
-    assert Engine.pvp_taken("dw") < Engine.pvp_taken("dk")
-    assert Engine.pvp_taken(nil) == Engine.pvp_rules().dmg_mult
+  test "hệ số lớp theo số lần chuyển sinh của người bị đánh (quá bảng dùng dòng cuối)" do
+    rows = Engine.pvp_rules().class_taken_by_rebirth
+    dm = Engine.pvp_rules().dmg_mult
+    row = fn k -> Map.new(rows[String.to_atom("#{k}")], fn {c, v} -> {to_string(c), v} end) end
+
+    for k <- 0..10,
+        c <- ~w(dk dw elf mg),
+        do: assert_in_delta(Engine.pvp_taken(c, k), dm * row.(k)[c], 1.0e-9)
+
+    assert Engine.pvp_taken("dk", 25) == Engine.pvp_taken("dk", 10)
+    assert Engine.pvp_taken("dk") == Engine.pvp_taken("dk", 0)
+    assert Engine.pvp_taken(nil, 4) == dm
+
+    # bản sao người (đồ sát / đấu trường) mang số lần chuyển sinh để tra đúng dòng
+    assert Arena.opponent(Map.put(hero("Rb", "dk"), :rebirths, 4), 2).rebirths == 4
   end
 
   test "đấu trường: đối thủ máy đánh bằng kỹ năng thật, có thể gây choáng, trận kết thúc bình thường" do

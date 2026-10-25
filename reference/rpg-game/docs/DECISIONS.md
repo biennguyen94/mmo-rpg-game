@@ -1268,3 +1268,20 @@ PK cược vàng bỏ hẳn khỏi game: Đồ sát là đủ. Từ P18 (2026-10
   `slay_history` → `HacLong.Slay.history/2` (thay `pk` op `info`); hồ sơ "PK cược thắng / thua" đổi thành "Đồ sát thắng / thua"
   (cùng số đếm từ `pk_matches`). Không cần migration, không mất dữ liệu.
 - Cân bằng lớp (DS-6) từ nay chỉ đo đồ sát: `scripts/pvp/tune.exs`, `journey_pk.exs` bỏ phần PK cược.
+
+## Đánh người: hệ số lớp theo mốc chuyển sinh (2026-10-25, anh duyệt DS-6 phương án A)
+
+`RULES.pvp.class_taken` (một bộ cho mọi mốc) thay bằng `RULES.pvp.class_taken_by_rebirth`: 11 dòng (0–10 lần chuyển
+sinh) × 4 lớp. Sát thương lên người = đòn × `dmg_mult` × hệ số của **lớp và số lần chuyển sinh của người bị đánh**
+(`Engine.pvp_taken/2`; bản sao người `Arena.opponent` mang `rebirths`; quá 10 lần dùng dòng 10). Áp cho Đồ sát
+(cả Hỗn Chiến Thành / Công Thành Chiến) và Đấu trường. Lý do: một bộ chung tốt nhất vẫn lệch TB 35% (lớp mạnh đổi theo
+mốc), bảng theo mốc lệch 2–10% (đo đồ giống nhau theo mốc, `Max.tier/2`).
+
+Bảng ban đầu (dk / dw / elf / mg): r0 0.98/0.85/0.97/0.91 · r1 1.00/0.85/1.00/0.87 · r2 0.95/0.83/1.07/0.87 ·
+r3 0.96/0.84/1.12/0.81 · r4 1.14/0.78/1.13/0.74 · r5 1.16/0.78/1.12/0.74 · r6 1.12/0.71/0.95/0.98 ·
+r7 1.10/0.71/0.97/0.97 · r8 1.12/0.73/1.01/0.90 · r9 1.33/0.67/1.03/0.81 · r10 1.24/0.84/0.91/0.78.
+
+Công cụ chạy lại khi đổi gameplay (`scripts/pvp/README.md`): `scripts/pvp/tune.exs` kiểm tra (mặc định) / tự chỉnh và gợi
+ý (`TUNE=1`) / ghi rules.json (`WRITE=1`); test `mix test --only balance` (ngưỡng 15%, không chạy cùng `mix test`).
+Trận khác mốc: người mốc cao gần như luôn thắng (chênh 1 mốc ≥ 99% ở r0–r7, r8 vs r7 83%, r10 vs r9 96%); hệ số lớp
+không bù được khoảng cách mốc và không nhằm làm việc đó.

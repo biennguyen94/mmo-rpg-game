@@ -1,171 +1,100 @@
-# DS-6 (d): tự chỉnh RULES.pvp.class_taken (hệ số sát thương nhận theo lớp) để 4 lớp thắng ~50% khi đánh người, với
-# nhân vật đồ giống hệt nhau theo mốc chuyển sinh (Max.tier/2). Mỗi vòng: đo tỉ lệ thắng mỗi lớp (đồ sát cả hai chiều,
-# có bình máu như người thật), lớp thắng nhiều thì nhận sát thương nhiều hơn:
-#   taken[c] ×= (thắng[c] / 50%) ^ bước (bước đầu STEP, tệ đi thì quay về bộ tốt nhất và giảm nửa bước), rồi chuẩn hóa để trung bình nhân giữ như ban đầu (sát thương chung không đổi).
-# Hai kiểu:
-#   TUNE=tier   chỉnh riêng từng mốc → bảng theo số lần chuyển sinh (xem một bộ chung có đủ không)
-#   TUNE=global một bộ chung cho mọi mốc trong KS (tối thiểu tổng lệch), in lệch còn lại từng mốc
-#   TUNE=check  đo một bảng có sẵn: TABLE=file.json {"0-3": {"dk": 1.0, …}, "4": {…}} (khóa: mốc hoặc khoảng mốc)
-#   KS=0,1,2,3,4,5,6,7,8,9,10 N=24 ITERS=6 STEP=0.3 TUNE=tier mix run --no-start scripts/pvp/tune.exs
-#   TUNE=check TABLE=tmp/taken.json SEED=1 N=48 mix run --no-start scripts/pvp/tune.exs
-# Đè bảng bằng :persistent_term ({Engine, :class_taken}), không sửa rules.json; in số để chép vào rules.json.
-Code.require_file(Path.join(__DIR__, "sim.exs"))
-System.put_env("POT", System.get_env("POT") || "1")
+# Cân bằng lớp khi đồ sát theo mốc chuyển sinh (RULES.pvp.class_taken_by_rebirth). Hướng dẫn: scripts/pvp/README.md.
+#
+#   mix run --no-start scripts/pvp/tune.exs                 kiểm tra bảng hiện tại (mặc định)
+#   TUNE=1 mix run --no-start scripts/pvp/tune.exs          tự chỉnh mốc nào lệch quá TOL, in bảng gợi ý
+#   TUNE=1 WRITE=1 mix run --no-start scripts/pvp/tune.exs  như trên rồi ghi luôn vào priv/game_data/rules.json
+#
+# Biến: KS=0,1,…,10 (mốc), N (trận mỗi chiều mỗi cặp lớp: kiểm 48, chỉnh 32), N_VERIFY=48, TOL=0.10 (lệch cho phép
+# so với 50%), ITERS=8, STEP=0.3 (bước chỉnh). Chỉnh đo trên seed 0, kiểm lại trên seed 1 (bộ số ngẫu nhiên khác) trước
+# khi gợi ý. Kết quả cũng ghi ở tmp/pvp_tune/report.md và tmp/pvp_tune/suggest.json.
+Code.require_file(Path.join(__DIR__, "balance.exs"))
 
-alias HacLong.Game.Engine
+env = fn k, d -> System.get_env(k) || d end
+ks = env.("KS", "0,1,2,3,4,5,6,7,8,9,10") |> String.split(",") |> Enum.map(&String.to_integer/1)
+tol = String.to_float(env.("TOL", "0.10"))
+tune? = System.get_env("TUNE") == "1"
+n = String.to_integer(env.("N", if(tune?, do: "32", else: "48")))
+n_verify = String.to_integer(env.("N_VERIFY", "48"))
+opts = [n: n, tol: tol, iters: String.to_integer(env.("ITERS", "8")), step: String.to_float(env.("STEP", "0.3"))]
 
-ks =
-  (System.get_env("KS") || "0,1,2,3,4,5,6,7,8,9,10")
-  |> String.split(",")
-  |> Enum.map(&String.to_integer/1)
+table = PvpBalance.rules_table()
+pc = fn x -> "#{round(x * 100)}%" end
+dev = &PvpBalance.dev/1
+File.mkdir_p!("tmp/pvp_tune")
 
-n = String.to_integer(System.get_env("N") || "24")
-iters = String.to_integer(System.get_env("ITERS") || "6")
-step = String.to_float(System.get_env("STEP") || "0.3")
-mode = System.get_env("TUNE") || "tier"
-# SEED=…: bộ seed khác (kiểm lại bảng đã chỉnh trên seed chưa dùng khi chỉnh)
-seed = String.to_integer(System.get_env("SEED") || "0")
-classes = ~w(dk dw elf mg)
+if not tune? do
+  IO.puts("Kiểm tra RULES.pvp.class_taken_by_rebirth (đồ sát, đồ giống nhau theo mốc, N=#{n}/chiều, lệch cho phép #{pc.(tol)})\n")
 
-base =
-  Map.new(Engine.pvp_rules()[:class_taken] || %{}, fn {c, v} -> {to_string(c), v} end)
-  |> then(&Map.new(classes, fn c -> {c, &1[c] || 1.0} end))
-
-gmean = fn t -> :math.exp(Enum.sum(Enum.map(classes, &:math.log(t[&1]))) / length(classes)) end
-g0 = gmean.(base)
-
-char = fn c, k ->
-  {p, _} = Max.tier(c, k)
-  d = Engine.derived(p)
-  inv = p.inv |> Map.put("potion_l", 100) |> Map.put("mana_l", 100)
-  %{p | hp: d.maxHp, battle: nil, inv: inv} |> Map.put(:mp, d.maxMp)
-end
-
-chars = for k <- ks, c <- classes, into: %{}, do: {{c, k}, char.(c, k)}
-
-# tỉ lệ thắng mỗi lớp ở mốc k với bảng t (hòa không tính); cùng seed mỗi lần đo để so vòng trước / sau công bằng
-measure = fn t, k ->
-  :persistent_term.put({Engine, :class_taken}, t)
-  :rand.seed(:exsss, {k + 1, 7, 11 + seed})
-
-  slay =
-    for a <- classes, b <- classes, a != b, reduce: %{} do
-      acc ->
-        res =
-          for _ <- 1..n, do: SlaySim.fight(chars[{a, k}], %{chars[{b, k}] | name: "#{b}x"}).winner
-
-        w = Enum.count(res, &(&1 == 1))
-        l = Enum.count(res, &(&1 == 2))
-
-        acc
-        |> Map.update(a, {w, w + l}, fn {x, y} -> {x + w, y + w + l} end)
-        |> Map.update(b, {l, w + l}, fn {x, y} -> {x + l, y + w + l} end)
+  rows =
+    for k <- ks do
+      r = PvpBalance.row(table, k)
+      m = PvpBalance.measure(r, k, n, 1)
+      ok = dev.(m) <= tol
+      mark = if ok, do: "✓", else: "✗ CẦN CHỈNH"
+      IO.puts("r#{k}: #{PvpBalance.fmt_m(m)}  lệch #{pc.(dev.(m))} #{mark}  (hòa #{pc.(m.draws)})")
+      {k, r, m, ok}
     end
 
-  r = fn {w, tot} -> if tot == 0, do: 0.5, else: w / tot end
-  Map.new(classes, fn c -> {c, r.(slay[c])} end)
-end
+  bad = for {k, _, _, false} <- rows, do: k
 
-wr = fn m, c -> m[c] end
-dev = fn m -> Enum.max(Enum.map(classes, &abs(wr.(m, &1) - 0.5))) end
-fmt_t = fn t -> Enum.map_join(classes, " ", &"#{&1} #{Float.round(t[&1], 2)}") end
+  IO.puts(
+    if bad == [],
+      do: "\nĐẠT: mọi mốc lệch ≤ #{pc.(tol)}.",
+      else: "\nCHƯA ĐẠT ở mốc #{Enum.join(bad, ", ")} → chạy TUNE=1 để có gợi ý."
+  )
 
-fmt_m = fn m -> Enum.map_join(classes, "  ", &"#{&1} #{round(m[&1] * 100)}%") end
+  File.write!(
+    "tmp/pvp_tune/report.md",
+    "# Kiểm tra cân bằng đồ sát\n\n| Mốc | Hệ số (dk dw elf mg) | Thắng | Lệch |\n|---|---|---|---|\n" <>
+      Enum.map_join(rows, "\n", fn {k, r, m, ok} ->
+        "| r#{k} | #{PvpBalance.fmt_row(r)} | #{PvpBalance.fmt_m(m)} | #{pc.(dev.(m))} #{if ok, do: "✓", else: "✗"} |"
+      end) <> "\n"
+  )
 
-update = fn t, ms, step ->
-  # ms: danh sách kết quả các mốc cần khớp chung; lớp thắng nhiều nhận sát thương nhiều hơn
-  t =
-    Map.new(classes, fn c ->
-      w = Enum.sum(Enum.map(ms, &wr.(&1, c))) / length(ms)
-      {c, t[c] * :math.pow(max(w, 0.05) / 0.5, step)}
-    end)
+  if bad != [], do: System.halt(1)
+else
+  IO.puts("Tự chỉnh (chỉnh trên seed 0 N=#{n}, kiểm lại seed 1 N=#{n_verify}, lệch cho phép #{pc.(tol)})")
 
-  g = gmean.(t)
-  Map.new(t, fn {c, v} -> {c, v * g0 / g} end)
-end
+  results =
+    for k <- ks do
+      cur = PvpBalance.row(table, k)
+      IO.puts("\nr#{k} — hiện tại #{PvpBalance.fmt_row(cur)}")
+      {best, _bm, log} = PvpBalance.tune(k, cur, opts)
 
-IO.puts(
-  "bảng hiện tại: #{fmt_t.(base)} | N=#{n}/cặp, #{iters} vòng, STEP #{step}, chế độ #{mode}"
-)
+      for {t, m} <- log,
+          do: IO.puts("    #{PvpBalance.fmt_row(t)} → #{PvpBalance.fmt_m(m)} (lệch #{pc.(dev.(m))})")
 
+      # kiểm lại trên bộ số khác: chỉ nhận bộ mới khi tốt hơn bộ hiện tại
+      vc = PvpBalance.measure(cur, k, n_verify, 1)
+      vb = if best == cur, do: vc, else: PvpBalance.measure(best, k, n_verify, 1)
+      {pick, vp} = if dev.(vb) < dev.(vc), do: {best, vb}, else: {cur, vc}
+      what = if pick == cur, do: "GIỮ", else: "ĐỔI thành #{PvpBalance.fmt_row(pick)}"
+      IO.puts("  kiểm lại: hiện tại lệch #{pc.(dev.(vc))}, gợi ý lệch #{pc.(dev.(vb))} → #{what}")
+      {k, cur, pick, vc, vp}
+    end
 
-case mode do
-  "tier" ->
-    rows =
-      for k <- ks do
-        m0 = measure.(base, k)
+  suggest = Map.merge(table, Map.new(results, fn {k, _, p, _, _} -> {k, p} end))
 
-        IO.puts(
-          "\n#{k} lần chuyển sinh — bảng hiện tại: #{fmt_m.(m0)} (lệch tối đa #{round(dev.(m0) * 100)}%)"
-        )
-
-        {best, bm, _} =
-          Enum.reduce(1..iters, {base, m0, step}, fn i, {b, bm, st} ->
-            t2 = update.(b, [bm], st)
-            m2 = measure.(t2, k)
-            IO.puts("  vòng #{i}: #{fmt_t.(t2)} → #{fmt_m.(m2)} (lệch #{round(dev.(m2) * 100)}%)")
-            if dev.(m2) < dev.(bm), do: {t2, m2, st}, else: {b, bm, st / 2}
-          end)
-
-        IO.puts("  TỐT NHẤT: #{fmt_t.(best)} (lệch #{round(dev.(bm) * 100)}%)")
-        {k, best, dev.(m0), dev.(bm)}
-      end
-
-    IO.puts("\n===== bảng theo mốc =====")
-
-    for {k, t, d0, d1} <- rows,
-        do: IO.puts("r#{k}: #{fmt_t.(t)}   lệch #{round(d0 * 100)}% → #{round(d1 * 100)}%")
-
-  "global" ->
-    m0 = Map.new(ks, &{&1, measure.(base, &1)})
-
-    for k <- ks,
-        do: IO.puts("r#{k} hiện tại: #{fmt_m.(m0[k])} (lệch #{round(dev.(m0[k]) * 100)}%)")
-
-    score = fn ms -> Enum.sum(Enum.map(ks, &dev.(ms[&1]))) / length(ks) end
-
-    {best, bm, _} =
-      Enum.reduce(1..iters, {base, m0, step}, fn i, {bt, bms, st} ->
-        t2 = update.(bt, Map.values(bms), st)
-        ms2 = Map.new(ks, &{&1, measure.(t2, &1)})
-        IO.puts("\nvòng #{i}: #{fmt_t.(t2)} lệch TB #{round(score.(ms2) * 100)}%")
-
-        for k <- ks,
-            do: IO.puts("  r#{k}: #{fmt_m.(ms2[k])} (lệch #{round(dev.(ms2[k]) * 100)}%)")
-
-        if score.(ms2) < score.(bms), do: {t2, ms2, st}, else: {bt, bms, st / 2}
+  lines =
+    ["===== Gợi ý class_taken_by_rebirth (dk dw elf mg) ====="] ++
+      Enum.map(results, fn {k, c, p, vc, vp} ->
+        "r#{k}: #{PvpBalance.fmt_row(p)}   lệch #{pc.(dev.(vc))} → #{pc.(dev.(vp))}" <>
+          if(p == c, do: "  (giữ)", else: "  (trước: #{PvpBalance.fmt_row(c)})")
       end)
 
-    IO.puts(
-      "\n===== bộ chung tốt nhất: #{fmt_t.(best)} (lệch TB #{round(score.(m0) * 100)}% → #{round(score.(bm) * 100)}%) ====="
-    )
+  IO.puts("\n" <> Enum.join(lines, "\n"))
 
-    for k <- ks, do: IO.puts("  r#{k}: #{fmt_m.(bm[k])} (lệch #{round(dev.(bm[k]) * 100)}%)")
+  File.write!(
+    "tmp/pvp_tune/suggest.json",
+    Jason.encode!(Map.new(suggest, fn {k, r} -> {to_string(k), r} end), pretty: true)
+  )
 
-  "check" ->
-    rows = Jason.decode!(File.read!(System.fetch_env!("TABLE")))
+  File.write!("tmp/pvp_tune/report.md", "# Gợi ý cân bằng đồ sát\n\n```\n" <> Enum.join(lines, "\n") <> "\n```\n")
 
-    pick = fn k ->
-      Enum.find_value(rows, fn {key, t} ->
-        [lo, hi] =
-          key
-          |> String.split("-")
-          |> Enum.map(&String.to_integer/1)
-          |> then(&if(length(&1) == 1, do: &1 ++ &1, else: &1))
-
-        k in lo..hi && Map.new(classes, fn c -> {c, t[c] * 1.0} end)
-      end) || base
-    end
-
-    devs =
-      for k <- ks do
-        t = pick.(k)
-        m = measure.(t, k)
-        IO.puts("r#{k}: #{fmt_t.(t)} → #{fmt_m.(m)} (lệch #{round(dev.(m) * 100)}%)")
-        dev.(m)
-      end
-
-    IO.puts(
-      "lệch TB #{round(Enum.sum(devs) / length(devs) * 100)}%, tối đa #{round(Enum.max(devs) * 100)}%"
-    )
+  if System.get_env("WRITE") == "1" do
+    PvpBalance.write_rules!(suggest)
+    IO.puts("\nĐã ghi priv/game_data/rules.json. Chạy lại không có TUNE để kiểm tra, rồi mix test.")
+  else
+    IO.puts("\nChưa ghi rules.json (thêm WRITE=1 để ghi). Bảng gợi ý: tmp/pvp_tune/suggest.json")
+  end
 end

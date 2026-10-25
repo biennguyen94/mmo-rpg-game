@@ -1119,7 +1119,7 @@ defmodule HacLong.Game.Engine do
                             do: if(pvp, do: pvp_crit_mult(d.critMult), else: d.critMult),
                             else: 1
                           ),
-                        (m[:taken] || 1) * if(pvp, do: pvp_taken(m[:cls]), else: 1)
+                        (m[:taken] || 1) * if(pvp, do: pvp_taken(m[:cls], m[:rebirths]), else: 1)
                       )
               )
 
@@ -1172,7 +1172,7 @@ defmodule HacLong.Game.Engine do
     # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
     bite =
       if bite > 0 and m[:pvp],
-        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls]))),
+        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls], m[:rebirths]))),
         else: bite
 
     if bite > 0 do
@@ -1594,7 +1594,7 @@ defmodule HacLong.Game.Engine do
               round(d.def * (1 - (m[:ignore_def] || 0))),
               if(mc, do: if(pvp, do: pvp_crit_mult(cm), else: cm), else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-                (1 - pet_guard(p)) * if(pvp, do: pvp_taken(p.cls), else: 1)
+                (1 - pet_guard(p)) * if(pvp, do: pvp_taken(p.cls, Map.get(p, :rebirths)), else: 1)
             )
 
           {dmg, p} = absorb_shield(p, dmg)
@@ -1656,7 +1656,7 @@ defmodule HacLong.Game.Engine do
 
     taken =
       (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-        (1 - pet_guard(p)) * pvp_taken(p.cls)
+        (1 - pet_guard(p)) * pvp_taken(p.cls, Map.get(p, :rebirths))
 
     dmg = Enum.sum(for _ <- 1..k.hits, do: damage(atk, dfn, k.mult / k.hits * cm, taken))
     {dmg, p} = absorb_shield(p, dmg)
@@ -1852,7 +1852,10 @@ defmodule HacLong.Game.Engine do
       |> Enum.map(& &1.power)
       |> Enum.sum()
 
-    mdot = if m[:pvp] && mdot > 0, do: max(1, round(mdot * pvp_taken(m[:cls]))), else: mdot
+    mdot =
+      if m[:pvp] && mdot > 0,
+        do: max(1, round(mdot * pvp_taken(m[:cls], m[:rebirths]))),
+        else: mdot
 
     p =
       if mdot > 0 do
@@ -1903,13 +1906,35 @@ defmodule HacLong.Game.Engine do
 
   def pvp_rules, do: @pvp
 
-  @doc "Hệ số sát thương lên người lớp `cls` khi đánh người: `dmg_mult` × `class_taken[lớp]` (cân bằng lớp)."
-  def pvp_taken(cls) do
-    # script cân bằng (scripts/pvp/tune.exs) đè bảng lớp lúc chạy; server không đặt nên luôn dùng rules.json
-    tab = :persistent_term.get({__MODULE__, :class_taken}, @pvp[:class_taken] || %{})
-    k = cls && Enum.find_value(tab, fn {c, v} -> to_string(c) == cls && v end)
+  # bảng hệ số lớp theo số lần chuyển sinh: [{mốc, %{"dk" => hệ số, …}}] tăng dần
+  @taken_rows (@pvp[:class_taken_by_rebirth] || %{})
+              |> Enum.map(fn {r, row} ->
+                {String.to_integer(to_string(r)),
+                 Map.new(row, fn {c, v} -> {to_string(c), v} end)}
+              end)
+              |> Enum.sort()
 
-    @pvp.dmg_mult * (k || 1)
+  @doc """
+  Hệ số sát thương lên người lớp `cls`, `rebirths` lần chuyển sinh, khi đánh người: `dmg_mult` ×
+  `class_taken_by_rebirth[mốc][lớp]` (cân bằng lớp theo mốc; quá bảng thì dùng dòng cuối).
+  """
+  def pvp_taken(cls, rebirths \\ 0),
+    do: @pvp.dmg_mult * ((cls && class_taken(cls, rebirths || 0)) || 1)
+
+  defp class_taken(cls, rb) do
+    # script cân bằng (scripts/pvp/balance.exs) đè hệ số lớp lúc chạy; server không đặt nên luôn dùng rules.json
+    case :persistent_term.get({__MODULE__, :class_taken}, nil) do
+      nil ->
+        row =
+          Enum.reduce(@taken_rows, nil, fn {r, row}, acc ->
+            if r <= rb or acc == nil, do: row, else: acc
+          end)
+
+        row && row[cls]
+
+      tab ->
+        Enum.find_value(tab, fn {c, v} -> to_string(c) == cls && v end)
+    end
   end
 
   # ---------- Đánh người theo lượt: hiệu ứng chéo (DECISIONS "Đồ sát: hiệu ứng chéo") ----------
@@ -1988,13 +2013,18 @@ defmodule HacLong.Game.Engine do
   """
   def pvp_take_debuffs(p) do
     {out, keep} = Enum.split_with(effects(p, :monster), &(&1.id in @pvp_debuffs))
-    cls = p.battle.monster[:cls]
+    %{} = m = p.battle.monster
 
     out =
       Enum.map(out, fn
-        %{id: "stun"} = e -> %{e | turns: 1, power: 0}
-        %{id: id} = e when id in @dots -> %{e | power: max(1, round(e.power * pvp_taken(cls)))}
-        e -> e
+        %{id: "stun"} = e ->
+          %{e | turns: 1, power: 0}
+
+        %{id: id} = e when id in @dots ->
+          %{e | power: max(1, round(e.power * pvp_taken(m[:cls], m[:rebirths])))}
+
+        e ->
+          e
       end)
 
     {set_effects(p, :monster, keep), out}

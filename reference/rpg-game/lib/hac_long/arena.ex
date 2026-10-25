@@ -106,6 +106,8 @@ defmodule HacLong.Arena do
       look: Engine.look(p),
       # DECISIONS "Cân bằng đánh người": lớp (hệ số nhận sát thương theo lớp) và kỹ năng thật của người đó
       cls: p.cls,
+      # số lần chuyển sinh: chọn dòng hệ số lớp (RULES.pvp.class_taken_by_rebirth)
+      rebirths: Map.get(p, :rebirths) || 0,
       skills: Engine.copy_skills(p),
       mp: d.maxMp,
       maxMp: d.maxMp,
