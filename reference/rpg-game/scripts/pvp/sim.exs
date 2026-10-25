@@ -72,14 +72,7 @@ defmodule SlaySim do
         {r, p2} = Commands.run(p, cmd)
 
         # bình máu chưa dùng được (RULES.pvp.potion_cd / potion_max) thì đánh
-        {used, p2} = if r[:ok] == false, do: {strike, elem(Commands.run(p, strike), 1)}, else: {cmd, p2}
-
-        # HEAL_MULT=x: thử giảm hồi máu từ kỹ năng / thú khi đánh người (không đụng bình máu)
-        hm = System.get_env("HEAL_MULT")
-
-        if hm && used["act"] != "potion" && p2.hp > p.hp,
-          do: %{p2 | hp: p.hp + round((p2.hp - p.hp) * String.to_float(hm))},
-          else: p2
+        if r[:ok] == false, do: elem(Commands.run(p, strike), 1), else: p2
       else
         p
       end

@@ -1245,3 +1245,14 @@ Tiên Nữ ~5 950 → ~5 280 (−8–13%), Phù Thủy / Đấu Sĩ không đổ
 
 `scripts/pvp/build.exs` `Max.tier/2`: nhân vật đồ giống hệt nhau theo mốc chuyển sinh (cùng hồ sơ cho mọi lớp) để đo
 đánh người tách khỏi may rủi đồ của hành trình (`SRC=tier` cho `journey_pk.exs`, `why.exs`).
+
+## Đánh người: hồi máu từ kỹ năng / thú × heal_mult (2026-10-25, anh duyệt DS-6 (c))
+
+`RULES.pvp.heal_mult` = 0.5: khi đánh người (Đồ sát, PK cược, Đấu trường) máu hồi từ kỹ năng (Hồi Sinh Lực, Tăng Sức
+Mạnh, Phúc Lành… — `skill.heal` và hiệu ứng `holy`) và kỹ năng thú (hồi máu, Long Lân Hộ Thể) × 0.5 (`Engine.pvp_heal/2`).
+Đánh quái giữ nguyên; bình máu đã có luật riêng (`potion_mult`); hút máu và khiên không đổi. Lý do (DS-6,
+`scripts/pvp/why.exs`, đồ giống nhau theo mốc): Tiên Nữ hồi 208–278 máu / lượt ở 3–5 lần chuyển sinh ≈ 70–80% sát thương
+nhận, đánh không chết. Hiện trong ⓘ "Đánh quái và đánh người khác nhau thế nào?" và Kho Đồ.
+
+`Engine.pvp_taken/1` đọc bảng lớp từ `:persistent_term` `{Engine, :class_taken}` nếu có (chỉ `scripts/pvp/tune.exs` đặt
+để thử bảng khác không cần biên dịch lại); server không đặt nên luôn dùng `RULES.pvp.class_taken`.

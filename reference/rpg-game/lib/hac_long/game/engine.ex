@@ -1218,7 +1218,7 @@ defmodule HacLong.Game.Engine do
 
   # kỹ năng riêng của thú (từ cấp 5), dùng khi thú cắn
   defp pet_skill(p, %{id: "heal"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, round(d.maxHp * @pet_sk.heal)))
+    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.heal)))
 
     if healed > 0,
       do: %{p | hp: p.hp + healed} |> log("🐾 #{sk.name}: hồi #{healed} máu.", "good"),
@@ -1227,7 +1227,7 @@ defmodule HacLong.Game.Engine do
 
   # Long Vương: Long Lân Hộ Thể hồi `scales_heal` máu mỗi lần cắn (giảm sát thương nhận ở `pet_guard/1`)
   defp pet_skill(p, %{id: "scales"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, round(d.maxHp * @pet_sk.scales_heal)))
+    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.scales_heal)))
 
     if healed > 0,
       do: %{p | hp: p.hp + healed} |> log("🐉 #{sk.name}: hồi #{healed} máu.", "good"),
@@ -1288,7 +1288,7 @@ defmodule HacLong.Game.Engine do
       case skill[:heal] do
         h when is_number(h) ->
           before = p.hp
-          p = %{p | hp: min(d.maxHp, p.hp + round(d.maxHp * h))}
+          p = %{p | hp: min(d.maxHp, p.hp + pvp_heal(p, d.maxHp * h))}
           log(p, "#{skill.name} hồi #{p.hp - before} máu.", "good")
 
         _ ->
@@ -1324,7 +1324,7 @@ defmodule HacLong.Game.Engine do
 
     case effect do
       "holy" ->
-        heal = round(d.maxHp * e.heal)
+        heal = pvp_heal(p, d.maxHp * e.heal)
         before = p.hp
         p = %{p | hp: min(d.maxHp, p.hp + heal)}
 
@@ -1905,8 +1905,9 @@ defmodule HacLong.Game.Engine do
 
   @doc "Hệ số sát thương lên người lớp `cls` khi đánh người: `dmg_mult` × `class_taken[lớp]` (cân bằng lớp)."
   def pvp_taken(cls) do
-    k =
-      cls && Enum.find_value(@pvp[:class_taken] || %{}, fn {c, v} -> to_string(c) == cls && v end)
+    # script cân bằng (scripts/pvp/tune.exs) đè bảng lớp lúc chạy; server không đặt nên luôn dùng rules.json
+    tab = :persistent_term.get({__MODULE__, :class_taken}, @pvp[:class_taken] || %{})
+    k = cls && Enum.find_value(tab, fn {c, v} -> to_string(c) == cls && v end)
 
     @pvp.dmg_mult * (k || 1)
   end
@@ -1970,6 +1971,13 @@ defmodule HacLong.Game.Engine do
 
   @doc "Thêm một dòng nhật ký trận cho `p` (dùng bên ngoài Engine, vd. đồ sát ghi dòng đỡ đòn của người bị đánh)."
   def add_log(p, text, kind), do: log(p, text, kind)
+
+  # Hồi máu theo % máu tối đa từ kỹ năng / thú cưng: đánh người × `RULES.pvp.heal_mult` (sát thương lên người × dmg_mult
+  # nên hồi máu không giảm thì quá mạnh; DECISIONS "Đánh người: hồi máu kỹ năng"). Hút máu tính theo sát thương nên giữ nguyên.
+  defp pvp_heal(%{battle: %{monster: %{pvp: pvp}}}, n) when pvp not in [nil, false],
+    do: round(n * (@pvp[:heal_mult] || 1))
+
+  defp pvp_heal(_p, n), do: round(n)
 
   @doc "Người đánh `p` có đang bị choáng (lượt này mất lượt) không."
   def stunned?(p), do: effect(p, :player, "stun") != nil

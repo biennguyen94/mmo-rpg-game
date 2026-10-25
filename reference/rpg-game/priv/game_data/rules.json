@@ -897,7 +897,7 @@
       "verified": false
     },
     "pvp": {
-      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến, PK cược). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận (DECISIONS \"Đánh người: bình máu\").",
+      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến, PK cược). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\").",
       "dmg_mult": 0.2,
       "crit_rate_mult": 0.5,
       "crit_bonus_mult": 0.5,
@@ -907,6 +907,7 @@
       "potion_mult": 0.5,
       "potion_cd": 3,
       "potion_max": 3,
+      "heal_mult": 0.5,
       "class_taken": {"dk": 1.08, "elf": 1.06, "dw": 0.86, "mg": 0.75},
       "sourceType": "DESIGN",
       "version": 1,

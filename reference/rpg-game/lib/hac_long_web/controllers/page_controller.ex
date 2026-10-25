@@ -169,7 +169,8 @@ defmodule HacLongWeb.PageController do
               :stun_immune,
               :potion_mult,
               :potion_cd,
-              :potion_max
+              :potion_max,
+              :heal_mult
             ])
         },
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp

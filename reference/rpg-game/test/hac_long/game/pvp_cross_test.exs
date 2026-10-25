@@ -160,6 +160,28 @@ defmodule HacLong.Game.PvpCrossTest do
     assert msg =~ "chỉ uống được #{r.potion_max} bình"
   end
 
+  test "đánh người: hồi máu từ kỹ năng × heal_mult (đánh quái giữ nguyên)" do
+    a = hero("Hoi", "elf") |> Map.put(:inv, %{})
+    foe = hero("Kia", "dk")
+    healed = fn p -> p.battle.log |> Enum.find(&(&1.text =~ "hồi")) |> Map.fetch!(:text) end
+
+    amount = fn t ->
+      [_, n] = Regex.run(~r/hồi (\d+) máu/u, t)
+      String.to_integer(n)
+    end
+
+    pvp = in_fight(a, foe, 2) |> Map.put(:hp, 10)
+    mob = Map.put(Arena.opponent(foe, 2), :pvp, nil)
+    {_, pve} = Engine.start_with_monster(%{a | mp: 9_999, hp: 10}, 1, mob)
+
+    Rng.put_sequence([0.5])
+    {_, pvp1} = Engine.act(pvp, "skill", "heal")
+    Rng.put_sequence([0.5])
+    {_, pve1} = Engine.act(pve, "skill", "heal")
+
+    assert amount.(healed.(pvp1)) == round(amount.(healed.(pve1)) * Engine.pvp_rules().heal_mult)
+  end
+
   test "trạng thái trận qua lại: pvp_fx / pvp_put_fx / pvp_victim giữ hiệu ứng, kháng choáng, Long Vương đã cứu" do
     p = in_fight(hero("Fx", "elf"), hero("Kia", "dw"), 2)
 
