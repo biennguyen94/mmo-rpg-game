@@ -71,10 +71,10 @@ defmodule HacLong.Game.EngineTest do
     {%{ok: true}, p} = Engine.act(p, "skill", "heal")
     assert Engine.cooldown(p, "heal") == 4
 
-    # tốn MP theo cấp (14 × (1 + 0.02 × 9) = 17), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
+    # tốn MP theo cấp và lớp (Tiên Nữ ×0,6: 14 × (1 + 0.02 × 9) × 0,6 = 10), đầu lượt hồi 3 % MP tối đa + Năng lượng / 10
     max_mp = Engine.derived(p).maxMp
     cost = Engine.skill_mp(p, Enum.find(Engine.skills(p), &(&1.id == "heal")))
-    assert cost == 17
+    assert cost == 10
     assert p.mp == min(max_mp, mp + round(max_mp * 0.03 + p.stats.ene * 0.1)) - cost
     assert Enum.any?(p.battle.log, &(&1.text =~ "Khiên Thánh hồi"))
 
@@ -83,7 +83,7 @@ defmodule HacLong.Game.EngineTest do
 
     # hết MP thì không dùng được
     {_, q} = Engine.start_battle(%{player("elf") | mp: 0}, 0, false)
-    assert {%{ok: false, msg: "Không đủ MP cho Tam Tiễn (cần 8)."}, _} = Engine.act(q, "skill")
+    assert {%{ok: false, msg: "Không đủ MP cho Tam Tiễn (cần 5)."}, _} = Engine.act(q, "skill")
   end
 
   test "kỹ năng mở theo cấp" do

@@ -795,7 +795,8 @@ defmodule HacLong.Game.Engine do
   nhân thêm `RULES.tower_skills.mp_mult` theo lớp (Kiếm Sĩ, Tiên Nữ ít MP).
   """
   def skill_mp(p, skill) do
-    cls = if skill[:floor], do: tower_mp_mult(p.cls), else: 1
+    # lớp ít MP (Kiếm Sĩ, Tiên Nữ): mọi kỹ năng (lớp + tháp) × `RULES.tower_skills.mp_mult` (DECISIONS "MP kỹ năng theo lớp")
+    cls = class_mp_mult(p.cls)
     # thông thạo kỹ năng: cấp thấp tốn thêm MP (`RULES.skill_mastery.mp_low`)
     ms = Mastery.mp_factor(Mastery.level(p, skill.id))
     round((skill[:mp] || 0) * (1 + @skill_mp_per_level * (p.level - 1)) * cls * ms)
@@ -804,7 +805,7 @@ defmodule HacLong.Game.Engine do
   @doc "Hồi chiêu kỹ năng ở cấp thông thạo hiện tại (cấp thấp + `RULES.skill_mastery.cd_low` lượt)."
   def skill_cd(p, skill), do: skill.cooldown + Mastery.cd_extra(Mastery.level(p, skill.id))
 
-  defp tower_mp_mult(cls) do
+  defp class_mp_mult(cls) do
     m = Map.get(@rules.tower_skills, :mp_mult) || %{}
     Map.get(m, String.to_atom(cls)) || Map.get(m, cls) || 1
   end

@@ -25,7 +25,9 @@ char = fn cls, k, s ->
         :erlang.binary_to_term(bin)
 
       _ ->
-        p = Journey.run(cls, rebirths: k, seed: s).player
+        # như mix hac_long.journey: Journey dùng :rand, seed đặt ở đây để chạy lại ra đúng nhân vật
+        :rand.seed(:exsss, {s, s, s})
+        p = Journey.run(cls, rebirths: k).player
         File.write!(f, :erlang.term_to_binary(p))
         p
     end

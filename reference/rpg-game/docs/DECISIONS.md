@@ -1218,3 +1218,17 @@ Kiếm Sĩ mạnh; đồ sát dài và có bình, Kiếm Sĩ ít MP) nên một 
 `battle.pots_used`, báo "mỗi trận chỉ uống được 3 bình máu", không mất lượt). Lý do: nhân vật chưa max (hành trình thật
 0–5 lần chuyển sinh) sát thương nhỏ hơn lượng bình hồi → 42–100% trận đồ sát hòa 200 lượt; có giới hạn thì hết hòa ở
 mọi mốc, ở mốc max mỗi người vốn uống 2–3 bình nên gần như không đổi.
+
+## MP kỹ năng theo lớp: cả kỹ năng lớp (2026-10-25, anh duyệt DS-6 bước 1)
+
+`RULES.tower_skills.mp_mult` (Kiếm Sĩ ×0.5, Tiên Nữ ×0.6) trước chỉ nhân MP kỹ năng tháp; nay nhân **mọi kỹ năng**
+(lớp + tháp) — `Engine.skill_mp/2`, client `logic.js skillMp`. Lý do (DS-6, `scripts/pvp/why.exs`): hai lớp ít Năng lượng
+(Kiếm Sĩ 80 MP mọi mốc trong hành trình, Tiên Nữ ~115) chỉ dùng được kỹ năng 22–37% lượt, Phù Thủy / Đấu Sĩ 75–100%;
+MP vô hạn thì sát thương / lượt Kiếm Sĩ +25–80%, Tiên Nữ ~+40%.
+
+Đánh quái (hành trình 3 lần chuyển sinh, 3 seed, cùng seed trước / sau): Kiếm Sĩ đi hết hành trình ít hơn 12–20% lượt
+(~9 000 → ~7 600; trước chậm nhất, nay ngang Đấu Sĩ 6 200–7 500), chết 3 / 7 / 13 → 1 / 2 / 4; Tiên Nữ −1–7% lượt;
+Phù Thủy / Đấu Sĩ không đổi.
+
+Ghi chú: `Journey.run/2` không tự đặt seed (mix task đặt `:rand.seed`); script đo trước đây gọi thẳng `run(…, seed: s)`
+nên không lặp lại được — đã sửa `scripts/pvp/journey_pk.exs`.
