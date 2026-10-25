@@ -23,7 +23,7 @@ có thật sự được cộng vào chỉ số không, có đúng số trong `p
 | Đồ Thần | thủ món × 1,2; 2 món +3 % công, 3 món +5 % thủ, đủ bộ +5 % công +5 % thủ +150 máu (cộng dồn) |
 | Đủ bộ giáp (bậc ≥ 2) | +10 % thủ, +3 % công, + 15 × bậc máu |
 
-### 1b. Đánh quái và đánh người (nơi tính: `Engine` trận đánh, `HacLong.Game.PkFight`)
+### 1b. Đánh quái và đánh người (nơi tính: `Engine` trận đánh; cột PK cược vàng là lịch sử — chế độ đã bỏ 2026-10-25)
 
 | | Đánh quái | Đồ sát / Đấu trường | PK cược vàng |
 |---|---|---|---|

@@ -10,7 +10,7 @@ defmodule HacLong.Bots.Bot do
   use GenServer, restart: :transient
   require Logger
 
-  alias HacLong.{Chat, PkBet}
+  alias HacLong.Chat
   alias HacLong.Bots.Brain
   alias HacLong.Game.Session
   alias HacLong.World.{Maps, MapServer}
@@ -72,17 +72,6 @@ defmodule HacLong.Bots.Bot do
       Logger.warning("bot #{s.uid}: #{inspect(kind)} #{inspect(reason)}")
       Process.send_after(self(), :tick, 3000)
       {:noreply, s}
-  end
-
-  # lời mời cược đấu: từ chối sau vài giây
-  def handle_info({:pk_invite, %{} = _inv}, s) do
-    Process.send_after(self(), :decline_pk, 2000 + :rand.uniform(3000))
-    {:noreply, s}
-  end
-
-  def handle_info(:decline_pk, s) do
-    PkBet.decline(s.uid)
-    {:noreply, s}
   end
 
   # các tin khác phát cho người chơi (thông báo, cập nhật nhân vật…): bỏ qua

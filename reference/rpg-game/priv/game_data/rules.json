@@ -897,7 +897,7 @@
       "verified": false
     },
     "pvp": {
-      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến, PK cược). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\").",
+      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\").",
       "dmg_mult": 0.2,
       "crit_rate_mult": 0.5,
       "crit_bonus_mult": 0.5,
@@ -912,15 +912,6 @@
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
-    },
-    "pk": {
-      "min": 100,
-      "max": 1000000,
-      "per_day": 10,
-      "invite_s": 30,
-      "rounds": 30,
-      "special_every": 3,
-      "special_mult": 1.8
     },
     "raids": {
       "_doc": "B-20: xâm lăng kiểu MU (HacLong.Raids). Mỗi loại theo lịch giờ VN: mốc every_hours giờ + offset_minutes phút, kéo dài minutes phút, chọn ngẫu nhiên pick bản đồ trong maps. leader/minion: quái thả vào mỗi bản đồ (cấp = trùm vùng / quái mạnh nhất vùng + level_bonus, sức × mult), không hồi sinh. drops: đồ thêm khi hạ con đầu đàn (tỉ lệ).",

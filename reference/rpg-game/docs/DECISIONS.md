@@ -1248,7 +1248,7 @@ Tiên Nữ ~5 950 → ~5 280 (−8–13%), Phù Thủy / Đấu Sĩ không đổ
 
 ## Đánh người: hồi máu từ kỹ năng / thú × heal_mult (2026-10-25, anh duyệt DS-6 (c))
 
-`RULES.pvp.heal_mult` = 0.5: khi đánh người (Đồ sát, PK cược, Đấu trường) máu hồi từ kỹ năng (Hồi Sinh Lực, Tăng Sức
+`RULES.pvp.heal_mult` = 0.5: khi đánh người (Đồ sát, Đấu trường) máu hồi từ kỹ năng (Hồi Sinh Lực, Tăng Sức
 Mạnh, Phúc Lành… — `skill.heal` và hiệu ứng `holy`) và kỹ năng thú (hồi máu, Long Lân Hộ Thể) × 0.5 (`Engine.pvp_heal/2`).
 Đánh quái giữ nguyên; bình máu đã có luật riêng (`potion_mult`); hút máu và khiên không đổi. Lý do (DS-6,
 `scripts/pvp/why.exs`, đồ giống nhau theo mốc): Tiên Nữ hồi 208–278 máu / lượt ở 3–5 lần chuyển sinh ≈ 70–80% sát thương
@@ -1256,3 +1256,15 @@ nhận, đánh không chết. Hiện trong ⓘ "Đánh quái và đánh người
 
 `Engine.pvp_taken/1` đọc bảng lớp từ `:persistent_term` `{Engine, :class_taken}` nếu có (chỉ `scripts/pvp/tune.exs` đặt
 để thử bảng khác không cần biên dịch lại); server không đặt nên luôn dùng `RULES.pvp.class_taken`.
+
+## Bỏ PK cược vàng (2026-10-25, theo yêu cầu anh)
+
+PK cược vàng bỏ hẳn khỏi game: Đồ sát là đủ. Từ P18 (2026-10-10) mời cược đã tắt, nay xóa luôn phần còn lại:
+`HacLong.PkBet` (lời mời, nhận lời mời cũ, hủy khi rớt mạng), `HacLong.Game.PkFight` (trận tự đánh), sự kiện kênh `pk`,
+`pk_invite`, `pk_result`, hộp thoại lời mời / kết quả cược ở client, bot từ chối cược, `RULES.pk`, `pk_bet_test`,
+`scripts/pvp/pk.exs`; chữ "PK cược" trong ⓘ (chí mạng, né, đánh người) và cột PK cược ở Kho Đồ.
+
+- Giữ bảng `pk_matches`: Đồ sát ghi lịch sử trận vào đó (cả dòng cược cũ). Lịch sử lấy bằng sự kiện kênh mới
+  `slay_history` → `HacLong.Slay.history/2` (thay `pk` op `info`); hồ sơ "PK cược thắng / thua" đổi thành "Đồ sát thắng / thua"
+  (cùng số đếm từ `pk_matches`). Không cần migration, không mất dữ liệu.
+- Cân bằng lớp (DS-6) từ nay chỉ đo đồ sát: `scripts/pvp/tune.exs`, `journey_pk.exs` bỏ phần PK cược.

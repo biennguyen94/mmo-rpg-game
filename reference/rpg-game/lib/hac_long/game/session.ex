@@ -1063,11 +1063,10 @@ defmodule HacLong.Game.Session do
       # tự đánh chỉ chạy khi online: đóng hết tab là tắt
       s = auto_off(s, nil)
 
-      # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch và lời mời cược đang dính
+      # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch đang dính
       HacLong.Party.away(s.user_id)
       uid = s.user_id
       Task.start(fn -> HacLong.Trade.cancel(uid) end)
-      Task.start(fn -> HacLong.PkBet.disconnect(uid) end)
       Characters.put_reason("MOVE")
       {:noreply, flush(s), @idle_timeout}
     else

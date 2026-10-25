@@ -1,4 +1,4 @@
-# Đồ sát / PK cược chéo 4 lớp với nhân vật CHƠI THẬT (HacLong.Game.Journey) ở từng mốc chuyển sinh: cùng mốc thì đồ,
+# Đồ sát chéo 4 lớp với nhân vật CHƠI THẬT (HacLong.Game.Journey) ở từng mốc chuyển sinh: cùng mốc thì đồ,
 # ép, thú, thông thạo ngang nhau theo đúng tiến độ chơi; mỗi lớp nhiều seed (giảm may rủi rơi đồ), seed s đấu seed s.
 #   KS=0,1,3,5,7,10 SEEDS=2 N=50 mix run --no-start scripts/pvp/journey_pk.exs
 # Nhân vật hành trình lưu ở tmp/journey_pk/<lớp>-r<k>-s<seed>.bin (chạy lại dùng luôn; xóa để dựng lại khi đổi dữ liệu).
@@ -8,7 +8,7 @@ Code.require_file(Path.join(__DIR__, "sim.exs"))
 # POT=0: không uống bình (mặc định 1)
 System.put_env("POT", System.get_env("POT") || "1")
 
-alias HacLong.Game.{Engine, Journey, Gear, PkFight}
+alias HacLong.Game.{Engine, Journey, Gear}
 
 ks = (System.get_env("KS") || "0,1,3,5,7,10") |> String.split(",") |> Enum.map(&String.to_integer/1)
 seeds = 1..String.to_integer(System.get_env("SEEDS") || "2")
@@ -60,7 +60,7 @@ for k <- ks do
     )
   end
 
-  # đồ sát: a tấn công b (a đi trước), cả hai chiều; PK cược: cùng lúc
+  # đồ sát: a tấn công b (a đi trước), cả hai chiều
   slay =
     for a <- classes, b <- classes, a != b, s <- seeds, reduce: %{} do
       acc ->
@@ -77,19 +77,6 @@ for k <- ks do
         |> Map.update(:len, {len, n}, fn {x, y} -> {x + len, y + n} end)
     end
 
-  pk =
-    for a <- classes, b <- classes, a < b, s <- seeds, reduce: %{} do
-      acc ->
-        pb = %{ps[{b, s}] | name: "#{b}#{s}x"}
-        res = for _ <- 1..n, do: PkFight.fight(ps[{a, s}], pb, 1, 2).winner
-        wa = Enum.count(res, &(&1 == :a))
-        wb = Enum.count(res, &(&1 == :b))
-
-        acc
-        |> Map.update({a, b}, {wa, n}, fn {x, y} -> {x + wa, y + n} end)
-        |> Map.update({b, a}, {wb, n}, fn {x, y} -> {x + wb, y + n} end)
-    end
-
   # mirror cùng lớp: tỉ lệ người đi trước thắng
   first =
     for c <- classes, s <- seeds, reduce: {0, 0} do
@@ -99,10 +86,10 @@ for k <- ks do
     end
 
   total = fn tab, c ->
-    # tỉ lệ thắng của lớp c trên mọi trận với lớp khác (đồ sát: cả khi tấn công lẫn khi bị đánh)
+    # tỉ lệ thắng của lớp c trên mọi trận với lớp khác (cả khi tấn công lẫn khi bị đánh)
     Enum.reduce(Map.drop(tab, [:draws, :len]), {0, 0}, fn
       {{^c, _}, {w, t}}, {x, y} -> {x + w, y + t}
-      {{_, ^c}, {w, t}}, {x, y} when tab == slay -> {x + t - w, y + t}
+      {{_, ^c}, {w, t}}, {x, y} -> {x + t - w, y + t}
       _, acc -> acc
     end)
   end
@@ -126,8 +113,4 @@ for k <- ks do
       Enum.map_join(classes, "  ", fn c -> {w, t} = total.(slay, c); "#{c} #{pct.(w, t)}" end)
   )
 
-  IO.puts(
-    "  TỔNG PK cược: " <>
-      Enum.map_join(classes, "  ", fn c -> {w, t} = total.(pk, c); "#{c} #{pct.(w, t)}" end)
-  )
 end

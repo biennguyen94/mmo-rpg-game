@@ -124,8 +124,6 @@
         ch.on('friends', (m) => cb.friends && cb.friends(m.msg));
         ch.on('dm', (m) => cb.dm && cb.dm(m));
         ch.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
-        ch.on('pk_invite', (m) => cb.pkInvite && cb.pkInvite(m.invite));
-        ch.on('pk_result', (m) => cb.pkResult && cb.pkResult(m));
         ch.on('shared', (m) => cb.shared && cb.shared(m));
         // Tiến Lên (Phase 17): bàn bài, chat bàn, hiệu ứng, sảnh đổi
         ch.on('tl', (m) => cb.tl && cb.tl(m));
@@ -246,8 +244,8 @@
     party(op, payload) { return push('party', Object.assign({ op }, payload || {})); },
     // Giao dịch: trade('request', { uid }), trade('accept'), trade('offer', { offer }), trade('ready')...
     trade(op, payload) { return push('trade', Object.assign({ op }, payload || {})); },
-    // PK cược vàng: pk('invite', { uid, wager }), pk('accept'), pk('decline'), pk('cancel'), pk('info').
-    pk(op, payload) { return push('pk', Object.assign({ op }, payload || {})); },
+    // Lịch sử đồ sát: { history: [...] }.
+    slayHistory() { return push('slay_history', {}); },
     // Đồ sát: đánh ngay người chơi cùng bản đồ (không cần đồng ý).
     slay(uid) { return push('slay', { uid }); },
     // Tiến Lên: tl('lobby'), tl('create', { stake, private }), tl('join', { id }), tl('play', { cards })…
@@ -314,8 +312,6 @@
     // Bảng giao dịch đổi (hoặc null khi xong/hủy) / có người mời giao dịch.
     onTrade(f) { cb.trade = f; },
     onTradeRequest(f) { cb.tradeRequest = f; },
-    onPkInvite(f) { cb.pkInvite = f; },
-    onPkResult(f) { cb.pkResult = f; },
     onTl(f) { cb.tl = f; },
     onTlChat(f) { cb.tlChat = f; },
     onTlFx(f) { cb.tlFx = f; },

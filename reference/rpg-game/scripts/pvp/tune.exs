@@ -1,6 +1,6 @@
 # DS-6 (d): tự chỉnh RULES.pvp.class_taken (hệ số sát thương nhận theo lớp) để 4 lớp thắng ~50% khi đánh người, với
 # nhân vật đồ giống hệt nhau theo mốc chuyển sinh (Max.tier/2). Mỗi vòng: đo tỉ lệ thắng mỗi lớp (đồ sát cả hai chiều,
-# có bình máu như người thật, + PK cược), lớp thắng nhiều thì nhận sát thương nhiều hơn:
+# có bình máu như người thật), lớp thắng nhiều thì nhận sát thương nhiều hơn:
 #   taken[c] ×= (thắng[c] / 50%) ^ bước (bước đầu STEP, tệ đi thì quay về bộ tốt nhất và giảm nửa bước), rồi chuẩn hóa để trung bình nhân giữ như ban đầu (sát thương chung không đổi).
 # Hai kiểu:
 #   TUNE=tier   chỉnh riêng từng mốc → bảng theo số lần chuyển sinh (xem một bộ chung có đủ không)
@@ -12,7 +12,7 @@
 Code.require_file(Path.join(__DIR__, "sim.exs"))
 System.put_env("POT", System.get_env("POT") || "1")
 
-alias HacLong.Game.{Engine, PkFight}
+alias HacLong.Game.Engine
 
 ks =
   (System.get_env("KS") || "0,1,2,3,4,5,6,7,8,9,10")
@@ -62,35 +62,15 @@ measure = fn t, k ->
         |> Map.update(b, {l, w + l}, fn {x, y} -> {x + l, y + w + l} end)
     end
 
-  pk =
-    for a <- classes, b <- classes, a < b, reduce: %{} do
-      acc ->
-        res =
-          for _ <- 1..n,
-              do: PkFight.fight(chars[{a, k}], %{chars[{b, k}] | name: "#{b}x"}, 1, 2).winner
-
-        wa = Enum.count(res, &(&1 == :a))
-        wb = Enum.count(res, &(&1 == :b))
-
-        acc
-        |> Map.update(a, {wa, wa + wb}, fn {x, y} -> {x + wa, y + wa + wb} end)
-        |> Map.update(b, {wb, wa + wb}, fn {x, y} -> {x + wb, y + wa + wb} end)
-    end
-
   r = fn {w, tot} -> if tot == 0, do: 0.5, else: w / tot end
-  Map.new(classes, fn c -> {c, %{slay: r.(slay[c]), pk: r.(pk[c])}} end)
+  Map.new(classes, fn c -> {c, r.(slay[c])} end)
 end
 
-# thắng gộp (đồ sát 2/3, PK 1/3: đồ sát là chế độ chính, mỗi lớp có gấp đôi trận đồ sát)
-wr = fn m, c -> (2 * m[c].slay + m[c].pk) / 3 end
+wr = fn m, c -> m[c] end
 dev = fn m -> Enum.max(Enum.map(classes, &abs(wr.(m, &1) - 0.5))) end
 fmt_t = fn t -> Enum.map_join(classes, " ", &"#{&1} #{Float.round(t[&1], 2)}") end
 
-fmt_m = fn m ->
-  Enum.map_join(classes, "  ", fn c ->
-    "#{c} #{round(m[c].slay * 100)}/#{round(m[c].pk * 100)}"
-  end)
-end
+fmt_m = fn m -> Enum.map_join(classes, "  ", &"#{&1} #{round(m[&1] * 100)}%") end
 
 update = fn t, ms, step ->
   # ms: danh sách kết quả các mốc cần khớp chung; lớp thắng nhiều nhận sát thương nhiều hơn
@@ -108,7 +88,6 @@ IO.puts(
   "bảng hiện tại: #{fmt_t.(base)} | N=#{n}/cặp, #{iters} vòng, STEP #{step}, chế độ #{mode}"
 )
 
-IO.puts("(số in: thắng đồ sát / thắng PK cược, %)")
 
 case mode do
   "tier" ->

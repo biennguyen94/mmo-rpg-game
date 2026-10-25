@@ -357,7 +357,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
   `tienlen_settlements` nên không trả hai lần.
 - Ván đã chơi ở bảng `tienlen_games` (người thật trong `player_ids`, `replay` để xem lại).
 
-### Xã hội, PK cược vàng, chiến bang (Phase 5)
+### Xã hội, PK cược vàng (đã bỏ 2026-10-25), chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
 - **Đồ sát** (thay PK cược vàng từ 2026-10-10, `RULES.slay`, `DECISIONS.md` P18): không cần đồng ý, luân phiên lượt 10 giây, người thua mất `death_gold_loss` vàng cho người thắng (nhật ký vàng lý do `SLAY`). PK cược cũ (`RULES.pk`): mời cược đã tắt. Mỗi trận một dòng ở bảng `pk_matches`

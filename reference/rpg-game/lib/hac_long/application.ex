@@ -21,7 +21,6 @@ defmodule HacLong.Application do
       HacLong.LakeEvent,
       HacLong.Party,
       HacLong.Trade,
-      HacLong.PkBet,
       HacLong.Slay,
       # Tiến Lên (Phase 17): mỗi phòng một tiến trình
       {Registry, keys: :unique, name: HacLong.TienLen.RoomRegistry},

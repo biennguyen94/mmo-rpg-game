@@ -97,7 +97,7 @@ defmodule HacLong.Game.StatEffectTest do
     assert elem(exchange(red), 1) < elem(exchange(base), 1)
   end
 
-  test "đánh bản sao người (đồ sát, PK cược): cánh hấp thụ của đối thủ giảm đòn, phản sát thương của đối thủ đánh lại" do
+  test "đánh bản sao người (đồ sát): cánh hấp thụ của đối thủ giảm đòn, phản sát thương của đối thủ đánh lại" do
     me = hero()
     foe = wear(hero(), %{"base" => "item_8_33", "exc" => ["reflect"]})
     plain = Arena.opponent(hero(), 2)

@@ -1,6 +1,6 @@
 defmodule HacLong.Slay do
   @moduledoc """
-  Đồ sát (PK không cần đồng ý, thay PK cược vàng; `DECISIONS.md` P18).
+  Đồ sát (PK không cần đồng ý; thay PK cược vàng, đã bỏ; `DECISIONS.md` P18).
 
   - `attack/2` (gọi từ kênh của người tấn công): cả hai online, cùng bản đồ chung, không ở vùng
     an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`. Người tấn công không đang đánh;
@@ -31,6 +31,7 @@ defmodule HacLong.Slay do
   """
   use GenServer
   require Logger
+  import Ecto.Query
 
   alias HacLong.{Repo, World}
   alias HacLong.Game.{BattleText, Characters, Daily, Data, Engine, Session}
@@ -50,6 +51,27 @@ defmodule HacLong.Slay do
 
   @doc "Còn bao nhiêu giây tên đỏ (0 nếu không)."
   def red_s(uid), do: max(0, ceil((until(uid, :red) - now()) / 1000))
+
+  @doc "Các trận đồ sát gần nhất của `uid` (bảng `pk_matches`; `wager` = số vàng người thua mất)."
+  def history(uid, n \\ 20) do
+    from(m in "pk_matches",
+      where: m.a_id == ^uid or m.b_id == ^uid,
+      order_by: [desc: m.id],
+      limit: ^n,
+      select: %{
+        id: m.id,
+        a_id: m.a_id,
+        b_id: m.b_id,
+        a_name: m.a_name,
+        b_name: m.b_name,
+        wager: m.wager,
+        winner_id: m.winner_id,
+        rounds: m.rounds,
+        at: m.inserted_at
+      }
+    )
+    |> Repo.all()
+  end
 
   defp until(uid, key) do
     case :ets.whereis(@marks) != :undefined && :ets.lookup(@marks, {uid, key}) do

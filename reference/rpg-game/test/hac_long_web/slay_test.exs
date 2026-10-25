@@ -172,6 +172,11 @@ defmodule HacLongWeb.SlayTest do
 
     assert winner == ua.id
 
+    # lịch sử đồ sát qua kênh (tab Khác → Đấu trường)
+    ref = push(sa, "slay_history", %{})
+    assert_reply ref, :ok, %{history: [%{wager: 300, b_id: b_id, winner_id: w}]}
+    assert b_id == ub.id and w == ua.id
+
     deltas =
       Repo.all(
         from l in "gold_log",
@@ -199,7 +204,7 @@ defmodule HacLongWeb.SlayTest do
     assert m.("🐾 Sói cắn thêm 12 sát thương.") == "bien: 🐾 Sói cắn thêm 12 sát thương cho bạn."
     assert m.("Bạn nổi cuồng nộ: tấn công +20%.") == "bien nổi cuồng nộ: tấn công +20%."
 
-    # PK cược: người xem đọc ngôi thứ ba
+    # ngôi thứ ba (người xem trận)
     assert HacLong.Game.BattleText.mirror("Bạn gây 30 sát thương.", "bien", "bien2", "bien2") ==
              "bien gây 30 sát thương cho bien2."
 

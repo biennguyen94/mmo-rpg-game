@@ -1,13 +1,13 @@
 defmodule HacLong.Game.PvpCrossTest do
   @moduledoc """
-  Đồ sát / PK cược: hiệu ứng chéo giữa hai người (DECISIONS "Đồ sát: hiệu ứng chéo"). Mỗi bên đánh bản sao của bên kia;
+  Đồ sát: hiệu ứng chéo giữa hai người (DECISIONS "Đồ sát: hiệu ứng chéo"). Mỗi bên đánh bản sao của bên kia;
   choáng / suy yếu / độc đặt lên bản sao chuyển sang người kia, đòn vào người kia đi qua thủ thế / khiên / bất tử /
   Long Vương của họ.
   """
   use ExUnit.Case, async: true
 
   alias HacLong.{Admin, Arena}
-  alias HacLong.Game.{Commands, Engine, PkFight, Rng}
+  alias HacLong.Game.{Commands, Engine, Rng}
 
   defp hero(name, cls, pet? \\ false) do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => cls})
@@ -210,16 +210,5 @@ defmodule HacLong.Game.PvpCrossTest do
     # hết buff: về né gốc
     assert Engine.pvp_aim(aimed, Engine.pvp_victim(hero("Ne", "elf"), nil, 100)).battle.monster.dodge ==
              base
-  end
-
-  test "PK cược vẫn chạy trọn trận với hiệu ứng chéo, kết quả lặp lại theo dãy số" do
-    a = hero("Pk A", "dw")
-    b = hero("Pk B", "dk")
-    Rng.put_sequence([0.2, 0.5, 0.8, 0.35])
-    r1 = PkFight.fight(a, b, 1, 2)
-    Rng.put_sequence([0.2, 0.5, 0.8, 0.35])
-    r2 = PkFight.fight(a, b, 1, 2)
-    assert r1 == r2 and r1.winner in [:a, :b, :draw]
-    assert List.last(r1.log).kind == "win"
   end
 end

@@ -116,12 +116,9 @@ defmodule HacLongWeb.PageController do
         friendsMax: HacLong.Friends.max(),
         upgradeBonusPct: Data.rules().upgrade.bonus_pct,
         life: Data.rules().upgrade.life,
-        pkMin: Data.rules().pk.min,
         warMinutes: Data.rules().guild_war.minutes,
         warFund: Data.rules().guild_war.win_fund,
         warGold: Data.rules().guild_war.win_gold,
-        pkMax: Data.rules().pk.max,
-        pkInvite: Data.rules().pk.invite_s,
         # đồ sát: số giây mỗi lượt, cấp tối thiểu, bản đồ an toàn
         slay: %{
           turnS: Data.rules().slay.turn_s,
@@ -158,7 +155,6 @@ defmodule HacLongWeb.PageController do
           hit: Data.rules().combat.hit,
           monsterCrit: Data.rules().monster.crit,
           monsterCritMult: Data.rules().combat.monster_crit_mult,
-          pk: Map.take(Data.rules().pk, [:rounds]),
           slayFirst: Data.rules().slay.first_strike_mult,
           pvp:
             Map.take(Data.rules().pvp, [

@@ -56,7 +56,6 @@ defmodule HacLongWeb.GameChannel do
     Market,
     Moderation,
     Party,
-    PkBet,
     RateLimit,
     Trade,
     WorldBoss
@@ -257,20 +256,9 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
-  # PK cược vàng (Phase 5, H7 + H8): mời / nhận / từ chối / hủy / xem
-  def handle_in("pk", %{"op" => op} = p, socket) do
-    uid = socket.assigns.user_id
-
-    with :ok <- limit({:pk, uid}, 30, :timer.minutes(1)) do
-      case pk(op, p, uid) do
-        :ok -> {:reply, {:ok, pk_view(uid)}, socket}
-        {:ok, result} -> {:reply, {:ok, Map.put(pk_view(uid), :result, result)}, socket}
-        {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-      end
-    else
-      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-    end
-  end
+  # lịch sử đồ sát (tab Khác → Đấu trường)
+  def handle_in("slay_history", _p, socket),
+    do: {:reply, {:ok, %{history: HacLong.Slay.history(socket.assigns.user_id)}}, socket}
 
   # Đồ sát (`HacLong.Slay`): đánh ngay người chơi cùng bản đồ, không cần đồng ý
   def handle_in("slay", %{"uid" => target}, socket) do
@@ -488,30 +476,6 @@ defmodule HacLongWeb.GameChannel do
       [_] -> Session.get(uid)
       [] -> HacLong.Game.Characters.load(uid)
     end
-  end
-
-  # ---------- PK cược vàng ----------
-
-  # PK cược vàng đã thay bằng đồ sát (`HacLong.Slay`); còn xem lịch sử, nhận / từ chối lời mời cũ
-  defp pk("invite", _p, _uid),
-    do: {:error, "PK cược đã thay bằng Đồ sát: chạm tên người chơi rồi bấm Đồ sát."}
-
-  defp pk("accept", _p, uid) do
-    with {:ok, inv} <- PkBet.take(uid), do: PkBet.execute(inv)
-  end
-
-  defp pk("decline", _p, uid), do: PkBet.decline(uid)
-  defp pk("cancel", _p, uid), do: PkBet.cancel(uid)
-  defp pk("info", _p, _uid), do: :ok
-  defp pk(_op, _p, _uid), do: {:error, "Thao tác không hợp lệ."}
-
-  defp pk_view(uid) do
-    %{
-      invite: PkBet.of(uid),
-      history: PkBet.history(uid),
-      today: PkBet.today_count(uid),
-      rules: Map.take(PkBet.rules(), [:min, :max, :per_day, :invite_s])
-    }
   end
 
   # ---------- Giao dịch ----------
@@ -1006,16 +970,6 @@ defmodule HacLongWeb.GameChannel do
   # tin riêng: người đã chặn thì không nhận
   def handle_info({:dm, msg}, socket) do
     unless msg.from in socket.assigns.blocked, do: push(socket, "dm", msg)
-    {:noreply, socket}
-  end
-
-  def handle_info({:pk_invite, inv}, socket) do
-    push(socket, "pk_invite", %{invite: inv})
-    {:noreply, socket}
-  end
-
-  def handle_info({:pk_result, view}, socket) do
-    push(socket, "pk_result", view)
     {:noreply, socket}
   end
 

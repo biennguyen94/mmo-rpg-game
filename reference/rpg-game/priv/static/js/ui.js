@@ -34,7 +34,7 @@
   let party = null;      // tổ đội: { id, leader, members: [{ id, name, level, hp, maxHp, map }], max }
   let arena = null;
   let arenaFind = { q: '', found: null }; // ô tìm đối thủ theo tên ở Đấu trường
-  let pk = null; // { invite, history, today, rules } (PK cược vàng)
+  let slayHist = null; // lịch sử đồ sát (tab Khác → Đấu trường)
   let market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
@@ -643,14 +643,6 @@
     } catch (e) { toast(e.msg, true); }
   }
 
-  // ---------- Giao dịch trực tiếp ----------
-  function pkNote(v) {
-    const foe = v.a.uid === Net.userId ? v.b.name : v.a.name;
-    if (v.winner == null) note(`Cược đấu với ${foe}: hòa.`, 'info');
-    else if (v.winner === Net.userId) note(`Cược đấu thắng ${foe}: +${fmt(v.wager)} vàng.`, 'good');
-    else note(`Cược đấu thua ${foe}: −${fmt(v.wager)} vàng.`, 'bad');
-  }
-
   // Đồ sát: không cần đồng ý; server mở trận cho cả hai, client nhận nhân vật mới qua sự kiện "player".
   function slayRow(o) {
     const safe = RULES.slay.safe.includes(P.pos.map);
@@ -664,21 +656,6 @@
       profileUi = { open: false, info: null };
       dialog = null; npc = null; tab = 'map';
     } catch (e) { toast(e.msg, true); }
-    render();
-  }
-
-  async function pkOp(op, payload) {
-    try {
-      const r = await Net.pk(op, payload);
-      pk = r;
-      if (op === 'invite') { toast(`Đã mời cược ${fmt(payload.wager)} vàng. Chờ người kia nhận…`); profileUi = { open: false, info: null }; tab = 'map'; }
-      if (dialog && dialog.type === 'pk') dialog = null;
-      if (r.result) { dialog = { type: 'pkResult', view: r.result }; Sound.play('rare'); pkNote(r.result); }
-      else if (op !== 'invite' && dialog && dialog.type === 'player') dialog = null;
-    } catch (e) {
-      toast(e.msg, true);
-      if (dialog && dialog.type === 'pk') dialog = null;
-    }
     render();
   }
 
@@ -752,25 +729,6 @@
       return `<div class="map-dialog card">
         <h3>Mời vào tổ đội</h3><p class="small">${esc(dialog.name || 'Một người chơi')} mời bạn vào tổ đội. Đánh chung một con quái thì cùng thắng, chia thưởng.</p>
         <div class="btn-row"><button class="btn" data-act="party-decline">Từ chối</button><button class="btn primary" data-act="party-accept">Vào tổ đội</button></div>
-      </div>`;
-    }
-    if (dialog.type === 'pk') {
-      const v = dialog.inv;
-      return `<div class="map-dialog card">
-        <h3>⚔ Lời mời cược đấu</h3>
-        <p class="small"><b>${esc(v.name)}</b> (${CLASSES[v.cls] ? CLASSES[v.cls].name : ''} · cấp ${v.level}) mời bạn cược <b style="color:var(--gold)">${fmt(v.wager)} vàng</b>.</p>
-        <p class="small muted">Bản sao chỉ số của hai người tự đánh nhau ngay. Thắng nhận ${fmt(v.wager)} vàng của đối thủ, thua mất ${fmt(v.wager)} vàng, hòa không ai mất gì. Lời mời hết hạn sau ${RULES.pkInvite} giây.</p>
-        <div class="btn-row"><button class="btn" data-act="pk-op" data-op="decline">Từ chối</button><button class="btn primary" data-act="pk-op" data-op="accept">${icon('crossed-swords')} Nhận cược</button></div>
-      </div>`;
-    }
-    if (dialog.type === 'pkResult') {
-      const v = dialog.view, me = Net.userId;
-      const out = v.winner == null ? 'Hòa' : v.winner === me ? `Thắng +${fmt(v.wager)} vàng` : `Thua −${fmt(v.wager)} vàng`;
-      return `<div class="map-dialog card" id="pk-result">
-        <h3>⚔ ${esc(v.a.name)} đấu ${esc(v.b.name)}</h3>
-        <p><b style="color:var(${v.winner == null ? '--parch' : v.winner === me ? '--good' : '--bad'})">${out}</b> <span class="small muted">· ${v.rounds} lượt · cược ${fmt(v.wager)}</span></p>
-        <div class="log" style="height:220px">${v.log.map((l) => `<div class="${l.kind === 'hurt' ? 'bad' : l.kind}">${esc(l.text)}</div>`).join('')}</div>
-        <div class="btn-row"><button class="btn primary" data-act="dialog-close">Đóng</button></div>
       </div>`;
     }
     if (dialog.type === 'trade') {
@@ -1169,7 +1127,7 @@
         ${kv('Trùm đã hạ', fmt(pr.counts.bosses))}
         ${kv('Tháp cao nhất', `Tầng ${pr.counts.tower}`)}
         ${kv('Đấu trường thắng / thua', `${pr.arena.wins} / ${pr.arena.losses}`)}
-        ${kv('PK cược thắng / thua', `${pr.counts.pk_wins} / ${pr.counts.pk_losses}`)}
+        ${kv('Đồ sát thắng / thua', `${pr.counts.pk_wins} / ${pr.counts.pk_losses}`)}
         ${kv('Gục ngã', fmt(pr.counts.deaths))}
       </div>
       <div class="card small muted">
@@ -1234,7 +1192,7 @@
 
   // ---------- Đấu trường ----------
   async function loadArena() {
-    try { arena = await Net.arena(); pk = await Net.pk('info'); } catch (e) { /* thử lại lần sau */ }
+    try { arena = await Net.arena(); slayHist = (await Net.slayHistory()).history; } catch (e) { /* thử lại lần sau */ }
     if (onMenu('arena')) { const el = $('#arena'), keep = arenaTyping(); if (el) el.outerHTML = viewArena(); keep(); }
   }
   // Ô tìm đối thủ: vẽ lại bảng (trạng thái đổi, tải lại đấu trường) không mất chữ đang gõ, không mất con trỏ
@@ -1261,8 +1219,8 @@
       ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
         <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
       <div class="list">${arena.suggestions.map((o) => arenaRow(o, left)).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
-      ${pk ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
-        <div class="list" id="pk-history">${pk.history.map((h) => {
+      ${slayHist ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
+        <div class="list" id="pk-history">${slayHist.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
           const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
           return `<div class="item"><div class="grow"><div class="name">${esc(foe)}</div><div class="small muted">${h.rounds} lượt · ${new Date(h.at).toLocaleString('vi-VN')}</div></div>${res}</div>`;
@@ -1993,18 +1951,18 @@
   let statHelp = null;
   function statHelpText(key, d) {
     const H = RULES.combatHelp || {}, pc = (x) => `${Math.round(x * 10000) / 100}%`;
-    const sp = H.spread || [1, 1], hit = H.hit || {}, cr = H.crit || {}, cm = H.critMult || {}, dg = H.dodge || {}, pk = H.pk || {}, pv = H.pvp || {};
+    const sp = H.spread || [1, 1], hit = H.hit || {}, cr = H.crit || {}, cm = H.critMult || {}, dg = H.dodge || {}, pv = H.pvp || {};
     switch (key) {
       case 'atk': return `Mỗi đòn lấy ngẫu nhiên ${pc(sp[0])}–${pc(sp[1])} tấn công (${fmt(d.atkMin)} ~ ${fmt(d.atkMax)}). Gồm hệ số lớp theo Sức mạnh / Nhanh nhẹn / Năng lượng, công vũ khí và dây chuyền, ép +N, dòng cộng thêm; nhân thú cưng, món ăn, Đài Phúc Lành (phần % xanh), rồi Excellent, đủ bộ, đồ Thần. Kỹ năng nhân thêm hệ số của kỹ năng (vd. 140%).`;
       case 'hit': return `Chỉ dùng khi đánh quái: tỉ lệ trúng = AR / (AR + cấp quái × ${hit.monster_dr}), trong khoảng ${pc(hit.min)}–${pc(hit.max)}. AR = cấp × ${hit.level} + Nhanh nhẹn × ${hit.agi} (cộng Excellent). Quái cấp cao hơn thì khó trúng hơn. Kỹ năng luôn trúng. Đánh người thì không dùng số này mà tùy né của đối thủ.`;
       case 'def': return `Sát thương nhận = đòn² / (đòn + phòng thủ), không dưới ${pc(H.softFloor)} đòn; đòn bằng đúng phòng thủ của bạn (${fmt(d.def)}) chỉ còn một nửa. Gồm thủ mọi món giáp, khiên, cánh, mũ, quần, găng, giày, nhẫn, cộng ép và dòng cộng thêm; nhân thú / món ăn / Đài, đủ bộ, đồ Thần. Dùng như nhau khi bị quái hay người đánh.`;
-      case 'crit': return `Tỉ lệ = ${pc(cr.base)} + Nhanh nhẹn × ${pc(cr.per_agi)} (tối đa ${pc(cr.max)}), cộng Excellent và May mắn vũ khí. Đòn chí mạng nhân ×${d.critMult.toFixed(2)} (= ${cm.base} + Nhanh nhẹn × ${cm.per_agi}, tối đa ×${cm.max}). Có ở đòn thường và kỹ năng khi đánh quái, Đồ sát, Đấu trường; PK cược thì đòn kỹ năng không chí mạng. Quái chí mạng ${pc(H.monsterCrit)} ×${H.monsterCritMult}.`;
-      case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}; cộng thêm buff né (Ảnh Bộ…), tổng tối đa ${pc(dg.max_with_buff)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường, PK cược). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
+      case 'crit': return `Tỉ lệ = ${pc(cr.base)} + Nhanh nhẹn × ${pc(cr.per_agi)} (tối đa ${pc(cr.max)}), cộng Excellent và May mắn vũ khí. Đòn chí mạng nhân ×${d.critMult.toFixed(2)} (= ${cm.base} + Nhanh nhẹn × ${cm.per_agi}, tối đa ×${cm.max}). Có ở đòn thường và kỹ năng khi đánh quái, Đồ sát, Đấu trường. Quái chí mạng ${pc(H.monsterCrit)} ×${H.monsterCritMult}.`;
+      case 'dodge': return `Tỉ lệ = ${pc(dg.base)} + Nhanh nhẹn × ${pc(dg.per_agi)} (tối đa ${pc(dg.max)}), nhân Excellent "tỉ lệ phòng thủ", trần cuối ${pc(dg.max_total)}; cộng thêm buff né (Ảnh Bộ…), tổng tối đa ${pc(dg.max_with_buff)}. Né được đòn thường của quái và của người (Đồ sát, Đấu trường). Không né được đòn đặc biệt của quái và kỹ năng của người.`;
       case 'wing': return `Mọi đòn của bạn +${pc(d.wingDmg)} sát thương; đòn nhận vào chỉ còn ${pc(1 - d.wingAbsorb)}. Ép cánh: +1 → +9 tăng ít, +10 và +11 tăng mạnh; cánh bậc cao tăng hấp thụ nhiều hơn; hấp thụ tối đa ${pc(RULES.wingAbsorbMax)}. Có tác dụng cả khi đánh quái lẫn đánh người.`;
       case 'ign': return `Đòn của bạn bỏ qua ${pc(d.ignoreDef)} phòng thủ mục tiêu (dòng phụ của cánh), cả quái lẫn người.`;
       case 'hp': return 'Theo hệ số lớp, Thể lực và cấp; cộng nhẫn máu, đủ bộ giáp, đồ Thần, dòng cánh; nhân thú cưng / món ăn / Đài Phúc Lành và Excellent "máu tối đa". Hết máu là gục.';
       case 'mp': return 'Theo hệ số lớp và Năng lượng, cộng dòng cánh, nhân Excellent "MP tối đa". Kỹ năng tốn MP (tốn thêm theo cấp kỹ năng); MP hồi dần mỗi lượt và theo Năng lượng.';
-      case 'pvp': return `Đánh quái: bạn trúng theo "Trúng quái cùng cấp", quái không né. Đánh người (Đồ sát, PK cược, Đấu trường): đòn thường trúng hay không tùy né của đối thủ (né ×${pv.dodge_mult}), kỹ năng luôn trúng; mọi sát thương lên người ×${pv.dmg_mult} rồi nhân theo lớp người bị đánh; tỉ lệ chí mạng ×${pv.crit_rate_mult}. Cánh, Excellent giảm sát thương và bỏ qua phòng thủ của cả hai bên đều tính. Hiệu ứng có tác dụng lên nhau: choáng (tỉ lệ ×${pv.stun_mult}, mất một lượt, vừa thoát choáng thì kháng ${pv.stun_immune} lượt), suy yếu, độc; thủ thế, khiên, Bất Tử, Ảnh Bộ, thú cưng và Long Vương Hồi Sinh của người bị đánh vẫn đỡ đòn; mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương Hồi Sinh). Bình máu hồi ×${pv.potion_mult}, mỗi ${pv.potion_cd} lượt uống được một lần, tối đa ${pv.potion_max} bình mỗi trận. Hồi máu bằng kỹ năng và thú cưng ×${pv.heal_mult}. Đồ sát: hai bên luân phiên ra đòn, người tấn công đi trước nhưng đòn mở màn chỉ gây ×${H.slayFirst} sát thương. PK cược vàng: hai bên tự đánh cùng lúc bằng kỹ năng mạnh nhất còn dùng được; quá ${pk.rounds} lượt thì bên còn nhiều % máu hơn thắng.`;
+      case 'pvp': return `Đánh quái: bạn trúng theo "Trúng quái cùng cấp", quái không né. Đánh người (Đồ sát, Đấu trường): đòn thường trúng hay không tùy né của đối thủ (né ×${pv.dodge_mult}), kỹ năng luôn trúng; mọi sát thương lên người ×${pv.dmg_mult} rồi nhân theo lớp người bị đánh; tỉ lệ chí mạng ×${pv.crit_rate_mult}. Cánh, Excellent giảm sát thương và bỏ qua phòng thủ của cả hai bên đều tính. Hiệu ứng có tác dụng lên nhau: choáng (tỉ lệ ×${pv.stun_mult}, mất một lượt, vừa thoát choáng thì kháng ${pv.stun_immune} lượt), suy yếu, độc; thủ thế, khiên, Bất Tử, Ảnh Bộ, thú cưng và Long Vương Hồi Sinh của người bị đánh vẫn đỡ đòn; mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương Hồi Sinh). Bình máu hồi ×${pv.potion_mult}, mỗi ${pv.potion_cd} lượt uống được một lần, tối đa ${pv.potion_max} bình mỗi trận. Hồi máu bằng kỹ năng và thú cưng ×${pv.heal_mult}. Đồ sát: hai bên luân phiên ra đòn, người tấn công đi trước nhưng đòn mở màn chỉ gây ×${H.slayFirst} sát thương.`;
       default: return '';
     }
   }
@@ -3852,7 +3810,6 @@
       return;
     }
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
-    if (act === 'pk-op') { pkOp(t.dataset.op); return; }
     if (act === 'slay') { slay(+t.dataset.uid); return; }
     if (act === 'trade-rm') {
       const d = t.dataset;
@@ -4161,24 +4118,7 @@
       if (was && !t && dialog && dialog.type === 'trade') dialog = null;
       if (P && !P.battle) render();
     });
-    Net.onPkInvite((inv) => {
-      if (inv && inv.to === Net.userId) {
-        toast(`${inv.name} mời bạn cược đấu ${fmt(inv.wager)} vàng.`);
-        note(`${inv.name} mời bạn cược đấu ${fmt(inv.wager)} vàng.`, 'invite');
-        Sound.play('mail');
-        dialog = { type: 'pk', inv };
-        if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; }
-      } else if (!inv && dialog && dialog.type === 'pk') dialog = null;
-      if (P && !P.battle) render();
-    });
     if (window.TL) window.TL.init();
-    Net.onPkResult((view) => {
-      dialog = { type: 'pkResult', view };
-      pkNote(view);
-      Sound.play('rare');
-      pk = null;
-      if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; render(); }
-    });
     Net.onTradeRequest((m) => {
       toast(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`);
       note(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`, 'invite');

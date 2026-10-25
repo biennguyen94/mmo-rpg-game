@@ -16,7 +16,7 @@ chậm nhịp đánh (kể cả tự đánh).
 ## Hướng đã bàn cho đánh quái / kỹ năng
 
 - **A — giữ bảng đánh quái, phủ một lớp canvas trong suốt lên bảng** (`viewBattle`, `battleFx` trong `priv/static/js/ui.js`).
-  Mọi chế độ dùng chung bảng (đánh tay, tự đánh, tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến, đồ sát, PK cược) đều có
+  Mọi chế độ dùng chung bảng (đánh tay, tự đánh, tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến, đồ sát) đều có
   hiệu ứng. Hình to, nhìn rõ trên điện thoại, ít rủi ro.
 - **C — thêm trên bản đồ** (`priv/static/js/map.js`): người khác thấy mình đang đánh (vung vũ khí, tia sáng, số sát thương nhỏ
   trên đầu quái), quái chết tan thành hạt. Có thể cần server gửi thêm sự kiện nhẹ cho cả bản đồ (hỏi anh trước nếu đụng protocol).

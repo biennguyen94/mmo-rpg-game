@@ -255,7 +255,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   - Người vừa gục được **bảo vệ 2 phút**; mỗi giờ chỉ đồ sát cùng một người tối đa 3 lần.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
-- **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến, PK cược): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
+- **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
   chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
   lệ nên đồ tốt vẫn hơn, chỉ là trận dài hơn (khoảng 7–10 lượt giữa hai người ngang nhau). Vừa thoát choáng thì miễn choáng 2 lượt.
   Mỗi lớp nhận sát thương khác nhau một chút để các lớp ngang nhau khi đánh người (Đấu Sĩ, Phù Thủy ít máu nên nhận ít hơn).

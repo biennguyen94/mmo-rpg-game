@@ -1,7 +1,7 @@
 defmodule HacLong.Game.BattleText do
   @moduledoc """
   Đổi góc nhìn nhật ký trận đánh người (DECISIONS "Nhật ký đánh người chi tiết"): `Engine` ghi nhật ký theo
-  người đánh ("Bạn gây N sát thương", đối thủ là "quái" mang tên người kia). Đồ sát, PK cược, đấu trường dùng
+  người đánh ("Bạn gây N sát thương", đối thủ là "quái" mang tên người kia). Đồ sát, đấu trường dùng
   hàm ở đây để bên kia (hoặc người xem) đọc được đúng đòn đó: kỹ năng, chí mạng, nhiều đòn, khắc hệ, trượt, thú cưng…
   """
 

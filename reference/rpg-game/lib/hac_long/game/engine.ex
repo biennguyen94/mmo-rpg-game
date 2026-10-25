@@ -1150,7 +1150,7 @@ defmodule HacLong.Game.Engine do
         p = pet_bite(p, d)
 
         cond do
-          # đồ sát / PK cược: thắng thua do HacLong.Slay / PkFight quyết (máu hai bên giữ ở đó);
+          # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó);
           # vẫn trừ hồi chiêu và hiệu ứng mỗi lượt của mình
           p.battle[:live] -> tick_round(p)
           p.battle.monster.hp <= 0 and p.battle[:mirror] != nil -> mirror_last(p, d)
@@ -1913,7 +1913,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # ---------- Đánh người theo lượt: hiệu ứng chéo (DECISIONS "Đồ sát: hiệu ứng chéo") ----------
-  # Đồ sát / PK cược: mỗi bên đánh bản sao chỉ số của bên kia trong trận của mình, nên hiệu ứng chỉ nằm ở trận của
+  # Đồ sát: mỗi bên đánh bản sao chỉ số của bên kia trong trận của mình, nên hiệu ứng chỉ nằm ở trận của
   # người gây ra. Các hàm dưới chuyển chúng sang người kia: choáng / suy yếu / độc mình đặt lên bản sao thành hiệu ứng
   # trên người bị đánh; sát thương vào người bị đánh đi qua thủ thế, thú che chắn, khiên, bất tử, Long Vương của họ.
   @pvp_debuffs ~w(stun weaken) ++ @dots
@@ -2078,8 +2078,8 @@ defmodule HacLong.Game.Engine do
     {dmg, p}
   end
 
-  # bản sao người (đồ sát, PK cược, đấu trường khi mất `mirror`): phản sát thương (Excellent) của người đó đánh lại mình;
-  # ở đây phản đòn không hạ gục (còn ít nhất 1 máu) vì trận do Slay / PkFight chốt theo máu hai bên
+  # bản sao người (đồ sát, đấu trường khi mất `mirror`): phản sát thương (Excellent) của người đó đánh lại mình;
+  # ở đây phản đòn không hạ gục (còn ít nhất 1 máu) vì trận do Slay chốt theo máu hai bên
   defp mirror_guard(%{battle: %{monster: %{pvp: pvp, reflect: r}}} = p, dmg)
        when pvp != nil and is_number(r) and r > 0 do
     back = min(round(dmg * r), p.hp - 1)
@@ -2102,7 +2102,7 @@ defmodule HacLong.Game.Engine do
   defp stun_cooled(p), do: p
 
   @doc """
-  Lệnh tự đánh khi đánh người (đồ sát hết giờ, PK cược): kỹ năng mạnh nhất đang dùng được (hết hồi chiêu,
+  Lệnh tự đánh khi đánh người (đồ sát hết giờ / bị choáng): kỹ năng mạnh nhất đang dùng được (hết hồi chiêu,
   đủ MP), không có thì đánh thường. Trả `{"skill", id}` hoặc `{"attack", nil}`.
   """
   def auto_strike(p) do
