@@ -64,7 +64,9 @@ defmodule HacLong.Game.Journey do
     pets: true,
     feed: true,
     farm: 0,
-    rows: false
+    rows: false,
+    # giữ nhân vật đầy đủ ở mỗi mốc (vừa đạt cấp tối đa, trước khi chuyển sinh) trong `tiers` (scripts/pvp/profile.exs)
+    players: false
   }
 
   # cách cộng điểm theo lớp (lặp vòng), như `Simulator`
@@ -100,6 +102,7 @@ defmodule HacLong.Game.Journey do
       bands: %{},
       mons: %{},
       snapshots: [],
+      tiers: %{},
       rows: [],
       hist: %{},
       ban: %{},
@@ -182,6 +185,7 @@ defmodule HacLong.Game.Journey do
 
   defp rebirth(p, st) do
     st = snapshot(st, p, "Trước chuyển sinh #{rb(p) + 1}")
+    st = if st.opts.players, do: %{st | tiers: Map.put(st.tiers, rb(p), p)}, else: st
     {r, p} = Engine.rebirth(p)
     st = event(st, p, if(r.ok, do: r.msg, else: "Không chuyển sinh được: #{r.msg}"))
     {p, %{st | gear_key: nil, ban: %{}, hist: %{}}}
@@ -697,6 +701,7 @@ defmodule HacLong.Game.Journey do
 
   defp finish({p, st}) do
     st = snapshot(st, p, "Kết thúc")
+    st = if st.opts.players, do: %{st | tiers: Map.put(st.tiers, rb(p), p)}, else: st
 
     %{
       cls: p.cls,
@@ -721,6 +726,7 @@ defmodule HacLong.Game.Journey do
       bands: st.bands,
       mons: st.mons,
       snapshots: st.snapshots,
+      tiers: st.tiers,
       rows: Enum.reverse(st.rows),
       opts: st.opts
     }

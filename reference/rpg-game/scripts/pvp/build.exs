@@ -1,7 +1,7 @@
 # Dựng nhân vật tối đa đúng công thức ADMIN_GUIDE §6 (+ set_mastery tối đa), mô phỏng đồ sát như server.
 defmodule Max do
   alias HacLong.Admin
-  alias HacLong.Game.{Commands, Engine, Gear, Mastery}
+  alias HacLong.Game.{Commands, Data, Engine, Gear, Mastery}
 
   @exc_w ~w(atk_pct crit heal_kill mp_kill atk_lvl ar_pct)
   @exc_a ~w(hp_pct dmg_red gold_pct mp_pct reflect def_rate)
@@ -24,32 +24,122 @@ defmodule Max do
     p
   end
 
+  @profile Path.join(__DIR__, "tier_profile.json")
+  @wear ~w(weapon helm armor pants gloves boots ring pendant)
+
   @doc """
-  DS-6: nhân vật ĐỒ GIỐNG HỆT NHAU theo mốc chuyển sinh `k` (mọi lớp cùng hồ sơ): cấp 50, k lần chuyển sinh, điểm chia
-  như công thức admin, bộ đồ tốt nhất của lớp (như build/2) với +N ≈ 1.1k (tối đa +11), dòng cộng thêm k/2 (tối đa 4),
-  May mắn từ k ≥ 2, Excellent ⌈k/2⌉ dòng (tối đa 6), cánh cấp 1 (k 1–3) / 2 (4–6) / 3 (7+), tháp 10 + 5k, thông thạo
-  6 + k (tối đa 10), không thú cưng. Trả {nhân vật, món mặc không được (yêu cầu chỉ số)}.
+  DS-6: nhân vật ĐỒ NGANG NHAU theo mốc chuyển sinh `k` (mọi lớp cùng một hồ sơ, `scripts/pvp/tier_profile.json`, tạo
+  bằng `scripts/pvp/profile.exs` từ hành trình chơi thật): cấp 50, k lần chuyển sinh, điểm chia như công thức admin;
+  mỗi ô mặc món tốt nhất CỦA LỚP có cấp đồ ≤ cấp trong hồ sơ (vũ khí / giáp / trang sức), ép +up, opt dòng cộng thêm,
+  May mắn, exc dòng Excellent, cánh bậc wing +wing_up, tháp, thông thạo, thú cưng như hồ sơ. Kiếm Sĩ / Phù Thủy / Đấu Sĩ
+  cầm 2 vũ khí 1 tay (như `build/2`), Tiên Nữ 1 vũ khí. Trả {nhân vật, món mặc không được}.
   """
   def tier(cls, k) do
-    prof = %{
-      rebirths: k,
-      up: min(11, round(k * 1.1)),
-      opt: min(4, div(k, 2)),
-      luck: k >= 2,
-      exc: min(6, div(k + 1, 2)),
-      wing: cond do
-        k >= 7 -> 3
-        k >= 4 -> 2
-        k >= 1 -> 1
-        true -> nil
-      end,
-      tower: min(100, 10 + 5 * k),
-      mastery: min(Mastery.max(), 6 + k),
-      pet: false,
-      potions: true
+    tiers = profile()["tiers"]
+    row = tiers[to_string(k)] || tiers[tiers |> Map.keys() |> Enum.max_by(&String.to_integer/1)]
+    tier_gen(cls, k, row)
+  end
+
+  def profile, do: @profile |> File.read!() |> Jason.decode!()
+
+  # các món của lớp ở ô `slot` có cấp đồ ≤ `lv`, tốt nhất trước (bỏ đồ cũ không có bậc)
+  defp picks(cls, slot, lv, hands) do
+    Data.items()
+    |> Enum.filter(fn {_, i} ->
+      i[:slot] == slot and i[:tier] != nil and cls in (i[:classes] || []) and
+        (i[:level] || 0) <= max(lv, 1) and
+        (hands == nil or i[:hands] == hands)
+    end)
+    |> Enum.sort_by(fn {_, i} -> {-(i[:atkMax] || i[:def] || 0), -(i[:level] || 0)} end)
+    |> Enum.map(&elem(&1, 0))
+  end
+
+  # thử mặc lần lượt các món, giữ món đầu tiên mặc được
+  defp wear(p, ids, params, hand \\ nil) do
+    Enum.reduce_while(ids, {p, :none}, fn id, {p, _} ->
+      p2 = op(p, "give_gear", Map.put(params, "base", id))
+      g = Enum.find(Gear.bag(p2), &(&1.base == id))
+
+      cmd =
+        %{"act" => "equip", "id" => g.uid}
+        |> then(&if(hand, do: Map.put(&1, "hand", hand), else: &1))
+
+      {r, p3} = Commands.run(p2, cmd)
+      if r[:ok] == false, do: {:cont, {p, :none}}, else: {:halt, {p3, id}}
+    end)
+  end
+
+  defp tier_gen(cls, k, r) do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Max#{cls}", "cls" => cls})
+
+    p =
+      p
+      |> op("set_rebirths", %{"n" => k})
+      |> op("set_level", %{"level" => 50})
+      |> op("set_tower", %{"floor" => r["tower"]})
+      |> op("reset_stats", %{})
+
+    total = p.points
+    add = Map.new(@share[cls], fn {s, x} -> {s, floor(total * x)} end)
+    {first, _} = hd(@share[cls])
+    add = Map.update!(add, first, &(&1 + total - Enum.sum(Map.values(add))))
+    p = p |> op("add_stats", add) |> op("add_points", %{"n" => -total})
+
+    base =
+      %{"up" => r["up"], "luck" => r["luck"]}
+      |> then(&if(r["opt"] > 0, do: Map.put(&1, "opt", r["opt"]), else: &1))
+
+    exc_w = Enum.take(@exc_w, r["exc"])
+    exc_a = Enum.take(@exc_a, r["exc"])
+    dual = cls in Data.rules().dual_wield.classes
+
+    lv = %{
+      "weapon" => r["weapon_level"],
+      "ring" => r["jewel_level"],
+      "pendant" => r["jewel_level"]
     }
 
-    gen(cls, prof)
+    {p, fails} =
+      Enum.reduce(@wear, {p, []}, fn slot, {p, f} ->
+        l = lv[slot] || r["armor_level"]
+        exc = if slot in ~w(weapon pendant), do: exc_w, else: exc_a
+        params = Map.merge(base, %{"exc" => exc, "skill" => slot == "weapon" and r["skill"]})
+        ids = picks(cls, slot, l, if(slot == "weapon" and dual, do: 1))
+        # nhẫn: 2 ô
+        n = if slot == "ring", do: 2, else: 1
+
+        Enum.reduce(1..n, {p, f}, fn _, {p, f} ->
+          case wear(p, ids, params) do
+            {p, :none} ->
+              {p, if(ids == [], do: f, else: ["#{slot}: không mặc được" | f])}
+
+            {p, id} ->
+              {if(slot == "weapon" and dual, do: elem(wear(p, [id], params, "left"), 0), else: p),
+               f}
+          end
+        end)
+      end)
+
+    p =
+      if r["wing"] > 0 do
+        wp = Map.merge(base, %{"up" => r["wing_up"], "base" => "wing_#{cls}_#{r["wing"]}"})
+        wp = if r["wing"] >= 2, do: Map.put(wp, "wopt", "ignore_def"), else: wp
+        p = op(p, "give_gear", wp)
+        g = Enum.find(Gear.bag(p), &(&1.base == wp["base"]))
+        elem(Commands.run(p, %{"act" => "equip", "id" => g.uid}), 1)
+      else
+        p
+      end
+
+    p = if r["pet"], do: op(p, "give_pet", %{"id" => r["pet"], "level" => 20}), else: p
+
+    p =
+      p
+      |> op("set_mastery", %{"lv" => min(Mastery.max(), r["mastery"])})
+      |> op("give_item", %{"id" => "potion_l", "count" => 500})
+      |> op("give_item", %{"id" => "mana_l", "count" => 500})
+
+    {%{p | hp: Engine.derived(p).maxHp} |> Map.put(:mp, Engine.derived(p).maxMp), fails}
   end
 
   def build(cls, opts \\ []) do
@@ -75,7 +165,11 @@ defmodule Max do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Max#{cls}", "cls" => cls})
     {weapon, left, set} = @set[cls]
     left = if prof[:shield], do: nil, else: left
-    full = %{"up" => prof.up, "luck" => prof.luck} |> then(&if(prof.opt > 0, do: Map.put(&1, "opt", prof.opt), else: &1))
+
+    full =
+      %{"up" => prof.up, "luck" => prof.luck}
+      |> then(&if(prof.opt > 0, do: Map.put(&1, "opt", prof.opt), else: &1))
+
     exc_w = Enum.take(@exc_w, prof.exc)
     exc_a = Enum.take(@exc_a, prof.exc)
 
@@ -92,7 +186,9 @@ defmodule Max do
     add = Map.update!(add, first, &(&1 + total - Enum.sum(Map.values(add))))
     p = p |> op("add_stats", add) |> op("add_points", %{"n" => -total})
     p = op(p, "give_gear", Map.merge(full, %{"base" => weapon, "skill" => true, "exc" => exc_w}))
-    p = Enum.reduce(set, p, &op(&2, "give_gear", Map.merge(full, %{"base" => &1, "exc" => exc_a})))
+
+    p =
+      Enum.reduce(set, p, &op(&2, "give_gear", Map.merge(full, %{"base" => &1, "exc" => exc_a})))
 
     p =
       p
@@ -121,7 +217,13 @@ defmodule Max do
     p =
       cond do
         left ->
-          p = op(p, "give_gear", Map.merge(full, %{"base" => left, "skill" => true, "exc" => exc_w}))
+          p =
+            op(
+              p,
+              "give_gear",
+              Map.merge(full, %{"base" => left, "skill" => true, "exc" => exc_w})
+            )
+
           g = Enum.find(Gear.bag(p), &(&1.base == left))
           {r, p2} = Commands.run(p, %{"act" => "equip", "id" => g.uid, "hand" => "left"})
           if r[:ok] == false, do: p, else: p2

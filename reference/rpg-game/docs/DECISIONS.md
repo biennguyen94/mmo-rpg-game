@@ -1285,3 +1285,20 @@ Công cụ chạy lại khi đổi gameplay (`scripts/pvp/README.md`): `scripts/
 ý (`TUNE=1`) / ghi rules.json (`WRITE=1`); test `mix test --only balance` (ngưỡng 15%, không chạy cùng `mix test`).
 Trận khác mốc: người mốc cao gần như luôn thắng (chênh 1 mốc ≥ 99% ở r0–r7, r8 vs r7 83%, r10 vs r9 96%); hệ số lớp
 không bù được khoảng cách mốc và không nhằm làm việc đó.
+
+### Hồ sơ đồ theo mốc lấy từ hành trình chơi thật (2026-10-25, anh duyệt)
+
+Trước: `Max.tier/2` cho mọi mốc mặc **bậc đồ cao nhất** của lớp (chỉ khác +N / dòng / cánh theo công thức) — không giống
+người chơi mốc thấp. Nay: `scripts/pvp/profile.exs` chạy `Journey` 4 lớp × 3 seed × 10 lần chuyển sinh (`Journey`
+thêm tùy chọn `players: true` giữ nhân vật ở mỗi mốc), tính chung 4 lớp ở mỗi mốc (cấp đồ trung vị vũ khí / giáp /
+trang sức, +N, dòng, Excellent, cánh, tháp, thông thạo, thú; không giảm theo mốc) → `scripts/pvp/tier_profile.json`
+(sửa tay được). `Max.tier/2` mặc món tốt nhất của lớp có cấp đồ ≤ hồ sơ. Hồ sơ hiện tại: vũ khí cấp 47 từ r0 (thưởng
+trùm), giáp cấp 1 → 12 (r2) → 17 (r7), trang sức 29, ép +0 → +1, Excellent 0 → 1 dòng (r4), cánh bậc 1 +1 từ r3, tháp
+17 → 57, thông thạo 7 → 10, không thú.
+
+Bảng `class_taken_by_rebirth` chỉnh lại trên hồ sơ này (dk / dw / elf / mg): r0 1.02/0.83/0.97/0.89 ·
+r1 1.17/0.76/1.02/0.81 · r2 1.18/0.77/1.03/0.79 · r3 1.09/0.72/0.90/1.04 · r4 1.13/0.71/0.91/1.02 ·
+r5 1.12/0.73/0.90/1.02 · r6 1.10/0.74/0.97/0.93 · r7 1.08/0.75/0.98/0.92 · r8 1.10/0.77/0.97/0.90 ·
+r9 1.12/0.73/1.01/0.90 · r10 1.12/0.75/1.00/0.88. Kiểm (seed khác, 48 trận mỗi chiều): mọi mốc lệch 3–9%.
+Nhân vật tối đa (+11 full Excellent, cánh 3, thú; `run.exs`) với dòng r10: Kiếm Sĩ 43%, Phù Thủy 71%, Tiên Nữ 55%,
+Đấu Sĩ 31% — chờ anh chọn cách cân mốc cuối (OPEN_QUESTIONS DS-7).

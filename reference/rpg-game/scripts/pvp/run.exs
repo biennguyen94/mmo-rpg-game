@@ -6,7 +6,9 @@ n = String.to_integer(System.get_env("N") || "200")
 ps = Map.new(~w(dk dw elf mg), &{&1, Max.build(&1)})
 
 IO.puts("== Chỉ số (derived)")
-keys = ~w(maxHp maxMp atk def crit critMult dodge ar ignoreDef wingDmg wingAbsorb excAbsorb excReflect skillDmg)a
+
+keys =
+  ~w(maxHp maxMp atk def crit critMult dodge ar ignoreDef wingDmg wingAbsorb excAbsorb excReflect skillDmg)a
 
 for {c, p} <- ps do
   d = Engine.derived(p)
@@ -24,7 +26,12 @@ fx = %{}
     res = for _ <- 1..n, do: SlaySim.fight(ps[a], pb)
     w = Enum.count(res, &(&1.winner == 1))
     avg = Enum.sum(Enum.map(res, & &1.turns)) / n
-    fx = Enum.reduce(res, fx, fn r, fx -> Map.merge(fx, r.st, fn _, x, y -> x + y end) end)
+    # bỏ :by (thống kê theo từng bên, dạng map) khi cộng dồn
+    fx =
+      Enum.reduce(res, fx, fn r, fx ->
+        Map.merge(fx, Map.delete(r.st, :by), fn _, x, y -> x + y end)
+      end)
+
     {[{a, b, w, avg} | rows], fx}
   end)
 
@@ -47,5 +54,10 @@ for c <- ~w(dk dw elf mg) do
   IO.puts("  #{c}: #{round(w * 100 / tot)}%")
 end
 
-IO.puts("\nTổng #{fx.turns} lượt: sát thương hiện ≠ sát thương tính #{fx.mismatch}; mất lượt vì choáng #{fx.stunned};")
-IO.puts("  đòn bị giảm bởi thủ thế / khiên / thú #{fx.reduced}; được bất tử / Long Vương cứu #{fx.saved}; uống bình máu #{fx.pots}")
+IO.puts(
+  "\nTổng #{fx.turns} lượt: sát thương hiện ≠ sát thương tính #{fx.mismatch}; mất lượt vì choáng #{fx.stunned};"
+)
+
+IO.puts(
+  "  đòn bị giảm bởi thủ thế / khiên / thú #{fx.reduced}; được bất tử / Long Vương cứu #{fx.saved}; uống bình máu #{fx.pots}"
+)

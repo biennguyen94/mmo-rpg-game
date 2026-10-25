@@ -11,6 +11,7 @@
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
+| DS-7 | Đánh người | Dòng r10 của `class_taken_by_rebirth` chỉnh cho người **vừa đạt** 10 lần chuyển sinh (hồ sơ hành trình: giáp cấp 17, +1, cánh bậc 1). Nhân vật **tối đa** (+11 full Excellent, cánh 3, thú) dùng dòng này lệch: Kiếm Sĩ 43%, Phù Thủy 71%, Tiên Nữ 55%, Đấu Sĩ 31%. Mốc 10 là mốc cuối, người chơi ở lâu và lên dần tới đồ tối đa. | (A) dòng r10 chỉnh trên nhân vật tối đa (r0–r9 giữ theo hành trình); (B) giữ như hiện tại; (C) thêm dòng theo độ mạnh đồ (phức tạp hơn) |
 
 ## Đã chốt
 
