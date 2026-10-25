@@ -153,6 +153,11 @@ defmodule HacLong.Game.PvpCrossTest do
     assert {%{ok: true}, _} = Engine.act(low.(later), "potion")
     # đánh quái: uống liền được
     assert {%{ok: true}, _} = Engine.act(low.(pve1), "potion")
+
+    # tối đa potion_max bình mỗi trận
+    full = put_in(pvp1, [:battle, :pots_used], r.potion_max) |> put_in([:battle, :pot_at], -99)
+    assert {%{ok: false, msg: msg}, _} = Engine.act(low.(full), "potion")
+    assert msg =~ "chỉ uống được #{r.potion_max} bình"
   end
 
   test "trạng thái trận qua lại: pvp_fx / pvp_put_fx / pvp_victim giữ hiệu ứng, kháng choáng, Long Vương đã cứu" do

@@ -11,7 +11,6 @@
 | 10-A … 10-D | 6 | Ghép đồ từ Item.txt vào game (chọn món cho vùng / cửa hàng, giá, yêu cầu chỉ số) — `INTEGRATION_PLAN.md §10` | Chờ anh gửi Item.txt rồi chốt |
 | KD-1 | Kho Đồ | Tiên Nữ **bậc 9 không có bộ giáp** (bậc 8 Linh Hồn Đỏ cấp 32 → bậc 10 Tia Tiên cấp 48) và **bậc 10 chỉ có Chùy Băng Giá**, không có cung / nỏ (dữ liệu Item.txt đang chọn). Bổ sung thế nào? | Anh chọn món trong Item.txt (bộ giáp Tiên Nữ khoảng cấp 40, một cung / nỏ cấp ~42–48); em không tự thêm |
 | 15f-A | 15f | Trái Cây kiểu MU (dùng → +điểm tiềm năng vĩnh viễn, có trần mỗi nhân vật) cần thêm cột `fruits` vào bảng `characters` (migration). Có làm không? | Làm: Máy Hỗn Nguyên ra Trái Cây (1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh), mỗi trái +2 điểm, tối đa 20 trái |
-| DS-5 | Đồ sát | Nhân vật chưa max (hành trình thật, 0–10 lần chuyển sinh): luật bình máu (hồi ×0.5, 3 lượt / lần) vẫn làm 42–100% trận hòa ở 0–5 lần chuyển sinh — sát thương nhỏ hơn lượng bình hồi. | Thêm `pvp.potion_max` = 3 bình mỗi trận (mô phỏng: hết hòa ở mọi mốc; ở mốc max mỗi người vốn uống 2–3 bình nên gần như không đổi) |
 | DS-6 | Đánh người | Cân bằng lớp theo mốc chuyển sinh lệch nặng: Đấu Sĩ 65–100% ở 0–10 lần chuyển sinh, Kiếm Sĩ 2–12% ở 0–3 lần; bỏ `class_taken` (=1) thì lớp mạnh nhất đổi theo mốc (0: Tiên Nữ 94%, 3: Đấu Sĩ 96%, 10: Kiếm Sĩ 99%) — `class_taken` chỉnh ở mốc max không hợp mốc khác. | Tìm nguyên nhân gốc từng lớp theo mốc (vd. Tiên Nữ chí mạng / né chạm trần ngay 0 lần chuyển sinh) rồi chọn: sửa gốc, hoặc `class_taken` theo mốc chuyển sinh |
 
 ## Đã chốt

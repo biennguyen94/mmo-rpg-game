@@ -1008,7 +1008,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # Đánh người (DECISIONS "Đánh người: bình máu"): bình máu hồi × `RULES.pvp.potion_mult`, mỗi `potion_cd` lượt
-  # của mình uống được một lần (uống ở lượt T thì lượt T + potion_cd mới uống lại).
+  # của mình uống được một lần (uống ở lượt T thì lượt T + potion_cd mới uống lại), tối đa `potion_max` bình mỗi trận.
   defp act_potion(p, d) do
     id = best_potion(p, d.maxHp - p.hp)
     poisoned = Enum.filter(effects(p, :player), &(&1.id in @dots))
@@ -1023,12 +1023,23 @@ defmodule HacLong.Game.Engine do
       p.hp >= d.maxHp and poisoned == [] ->
         {err("Máu đang đầy."), p}
 
+      pvp? and (b[:pots_used] || 0) >= @pvp.potion_max ->
+        {err("Đánh người: mỗi trận chỉ uống được #{@pvp.potion_max} bình máu."), p}
+
       wait > 0 ->
         {err("Đánh người: bình máu dùng lại sau #{wait} lượt."), p}
 
       true ->
         {p, healed} = p |> next_turn() |> drink(id, if(pvp?, do: @pvp.potion_mult, else: 1))
-        p = if pvp?, do: put_in(p, [:battle, :pot_at], p.battle.turn), else: p
+
+        p =
+          if pvp?,
+            do:
+              p
+              |> put_in([:battle, :pot_at], p.battle.turn)
+              |> update_in([:battle, :pots_used], &((&1 || 0) + 1)),
+            else: p
+
         p = log(p, "Bạn uống #{Data.item(id).name}, hồi #{healed} máu.", "good")
 
         # bình máu giải luôn độc, bỏng, chảy máu

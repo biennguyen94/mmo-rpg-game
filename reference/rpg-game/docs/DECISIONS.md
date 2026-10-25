@@ -1211,3 +1211,10 @@ Thử 4 phương án (`scripts/pvp/run.exs`, `FIRST_MULT`, `DEF_SHIELD`): ngư�
 Mô phỏng 4 lớp tối đa: đồ sát (uống bình) 43 / 54 / 53 / 50%, PK cược 54 / 45 / 50 / 51% (Kiếm Sĩ / Phù Thủy / Tiên Nữ /
 Đấu Sĩ); người đi trước thắng 49%. Kiếm Sĩ đồ sát hơi thấp: hai chế độ kéo ngược nhau (PK cược tự đánh không uống bình,
 Kiếm Sĩ mạnh; đồ sát dài và có bình, Kiếm Sĩ ít MP) nên một hệ số không cân được cả hai.
+
+## Đánh người: tối đa 3 bình máu mỗi trận (2026-10-25, anh duyệt DS-5)
+
+`RULES.pvp.potion_max` = 3: khi đánh người mỗi trận uống tối đa 3 bình máu (thêm vào hồi ×0.5, 3 lượt / lần;
+`battle.pots_used`, báo "mỗi trận chỉ uống được 3 bình máu", không mất lượt). Lý do: nhân vật chưa max (hành trình thật
+0–5 lần chuyển sinh) sát thương nhỏ hơn lượng bình hồi → 42–100% trận đồ sát hòa 200 lượt; có giới hạn thì hết hòa ở
+mọi mốc, ở mốc max mỗi người vốn uống 2–3 bình nên gần như không đổi.

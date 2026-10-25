@@ -53,8 +53,7 @@ defmodule SlaySim do
         pot? =
           System.get_env("POT") == "1" and
             p.hp < Engine.derived(p).maxHp * String.to_float(System.get_env("POT_PCT") || "0.5") and
-            Map.get(p.inv, "potion_l", 0) > 0 and
-            (p.battle[:pots] || 0) < String.to_integer(System.get_env("POT_MAX") || "999")
+            Map.get(p.inv, "potion_l", 0) > 0
 
         # hết MP cho mọi kỹ năng đã hồi chiêu xong thì uống bình mana (POT=1)
         mana? =
@@ -70,15 +69,10 @@ defmodule SlaySim do
             true -> strike
           end
 
-        # bình máu đang hồi (luật đánh người RULES.pvp.potion_cd) thì đánh
         {r, p2} = Commands.run(p, cmd)
 
-        cond do
-          r[:ok] == false -> elem(Commands.run(p, strike), 1)
-          # POT_MAX: thử giới hạn số bình máu mỗi trận
-          pot? -> update_in(p2, [:battle, :pots], &((&1 || 0) + 1))
-          true -> p2
-        end
+        # bình máu chưa dùng được (RULES.pvp.potion_cd / potion_max) thì đánh
+        if r[:ok] == false, do: elem(Commands.run(p, strike), 1), else: p2
       else
         p
       end
