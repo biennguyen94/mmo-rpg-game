@@ -85,5 +85,7 @@ Lưu ý:
 - `profile.exs`: tạo `tier_profile.json` từ hành trình chơi thật.
 - `balance.exs`: đo / chỉnh / ghi bảng (dùng chung cho `tune.exs` và test).
 - `run.exs`: đồ sát chéo 4 lớp nhân vật tối đa.
+- `cross.exs`: đồ sát giữa hai người khác mốc chuyển sinh (`PAIRS=0-1,3-7`).
+- `arena.exs`: Đấu trường chéo 4 lớp theo mốc (đối thủ máy như người thật; `POT=0` không uống bình).
 - `journey_pk.exs`: đồ sát chéo với nhân vật chơi thật (`Journey`) hoặc `SRC=tier`.
 - `why.exs`: tìm nguyên nhân lệch (chỉ số, sát thương / lượt, hồi máu, số lượt để hạ).
