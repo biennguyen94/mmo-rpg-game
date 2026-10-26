@@ -1,3 +1,4 @@
+Code.require_file(Path.join(__DIR__, "event_monsters.exs"))
 alias HacLong.Game.{Data, Engine}
 items = Map.new(Data.items(), fn {id, it} -> {id, Map.merge(it, %{id: id, sell: Engine.sell_price(id), buy: (id in Data.shop() && it[:price]) || nil})} end)
 out = %{
@@ -18,6 +19,8 @@ out = %{
   jewels: Data.jewels(),
   pets: Data.pets(),
   festivals: Data.events(),
+  # quái sự kiện theo chuyển sinh, so với nhân vật cùng mốc (event_monsters.exs)
+  event_monsters: KhoDo.EventMonsters.rows(),
   maps: HacLong.World.Maps.ids() |> Enum.map(&HacLong.World.Maps.get/1) |> Enum.filter(&(&1[:realm])) |> Enum.map(&(&1 |> Map.take([:id, :name, :realm, :min_rebirths, :min_level]) |> Map.put(:monsters, Enum.map(&1.spawns, fn s -> s.monster end))))
 }
 File.write!(System.argv() |> hd, Jason.encode!(out, pretty: false))

@@ -355,6 +355,18 @@ def ev_row(name, when, who, entry, how, reward):
 waves = " + ".join(str(w["count"]) + (" (trùm)" if w["boss"] else "") for w in ds["waves"])
 top = "; ".join(f"hạng {i + 1}: {n(t['gold'])} vàng + {items_txt(t['items'])}" for i, t in enumerate(ds["top"]))
 ka_mark = E(IT[ka["mark"]]["name"]) if ka["mark"] in IT else ka["mark"]
+# quái sự kiện theo chuyển sinh (scripts/kho_do/event_monsters.exs): chỉ số + so với nhân vật cùng mốc
+def evmon_rows():
+    out = []
+    for m in D.get("event_monsters", []):
+        rs = m["rows"]
+        for i, r in enumerate(rs):
+            head = f'<td rowspan="{len(rs)}"><b>{E(m["name"])}</b><br><span class="muted">cấp {m["level"]}</span></td>' if i == 0 else ""
+            vs = "".join(f'<td>{r["vs"][c]["hits"]} đòn · {r["vs"][c]["taken"]}%</td>' for c in ("dk", "dw", "elf", "mg"))
+            out.append(f'<tr>{head}<td>{r["k"]}</td><td class=n>{n(r["hp"])}</td><td class=n>{n(r["atk"])}</td><td class=n>{n(r["def"])}</td>{vs}</tr>')
+    return "".join(out)
+evmon = evmon_rows()
+
 ev_rows = "".join([
     ev_row("Quảng Trường Quỷ", f"{clock(ds['every_hours'], ds['offset_hours'] * 60)}; vào trong {ds['entry_minutes']} phút, đánh {ds['run_minutes']} phút",
            f"cấp {ds['min_level']}+; {tiers_txt(ds['tiers'])}", ticket_txt(ds),
@@ -638,7 +650,7 @@ smith_note = (f"<b>Rèn đồ ở Thợ Rèn</b>: ra một món đúng cấp, đ
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Quái sự kiện mạnh theo số lần chuyển sinh k của người đánh</b> (Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Vương Miện Công Thành Chiến, quái vàng): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Quái sự kiện mạnh theo số lần chuyển sinh k của người đánh</b> (Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Vương Miện Công Thành Chiến, quái vàng): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
