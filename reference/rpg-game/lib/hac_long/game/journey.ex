@@ -801,26 +801,8 @@ defmodule HacLong.Game.Journey do
 
   # ---------- Thú cưng ----------
 
-  # sức của thú `id` ở cấp `lv` với bot: phần đòn cắn trung bình mỗi lượt (Cắn Xé đã học thì × rend_mult)
-  # + công cộng thêm + nửa thủ / máu cộng thêm
-  defp pet_power(_p, nil, _lv), do: 0
-
-  defp pet_power(_p, id, lv) do
-    pt = Pets.data(id)
-    r = Data.rules().pets
-
-    rend? =
-      Enum.zip(Pets.skills(id), [r.skill_level, r.skill2_level])
-      |> Enum.any?(fn {k, at} -> k.id == "rend" and lv >= at end)
-
-    b = pt.bonus
-    mult = 1 + (lv - 1) * r.bonus_per_level
-
-    Pets.bite_chance(lv) * Pets.bite_power(id, lv) * if(rend?, do: r.skills.rend_mult, else: 1) +
-      ((b[:atk] || 0) + 0.5 * ((b[:def] || 0) + (b[:hp] || 0))) * mult
-  end
-
-  defp pet_power(p, id), do: pet_power(p, id, if(id, do: Pets.level(p, id), else: 1))
+  defp pet_power(p, id, lv), do: Pets.power(p, id, lv)
+  defp pet_power(p, id), do: Pets.power(p, id)
 
   # mua thú cửa hàng / thuần phục khi mạnh hơn hẳn thú đang có và giá ≤ 30 % vàng dư; dắt con mạnh nhất; dư vàng thì cho ăn
   defp pets(p, %{opts: %{pets: false}} = st), do: {p, st}

@@ -3373,11 +3373,12 @@
         <div class="card result ${r}">
           <h2>${title}</h2>
           ${rw ? `<p class="num">+${fmt(rw.xp)} kinh nghiệm · +${fmt(rw.gold)} vàng</p>` : ''}
-          ${rw ? lootList(rw) : ''}
           ${rw && rw.levels ? `<p style="color:var(--gold);font-weight:600">Lên cấp ${P.level}! Vào tab Nhân vật để cộng điểm.</p>` : ''}
+          <!-- nút rời trận đứng trước danh sách đồ rơi: trùm rơi nhiều đồ thì danh sách dài, nút ở cuối bị đẩy khỏi màn hình -->
           <div class="btn-row">
             <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về nhà` : `${icon('walk')} Tiếp tục`}</button>
           </div>
+          ${rw ? lootList(rw) : ''}
           ${r === 'lose' ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
           ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Nhà uống nước giếng.</p>' : ''}
         </div>`;

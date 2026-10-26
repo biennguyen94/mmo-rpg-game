@@ -247,6 +247,28 @@ defmodule HacLong.Game.Pets do
     end
   end
 
+  @doc """
+  Sức của thú `id` ở cấp `lv` (mặc định cấp hiện tại của `p`) để so các thú (bot, mô phỏng hành trình): phần đòn cắn
+  trung bình mỗi lượt (Cắn Xé đã học thì × `rend_mult`) + công cộng thêm + nửa thủ / máu cộng thêm. nil → 0.
+  """
+  def power(p, id, lv \\ nil)
+  def power(_p, nil, _lv), do: 0
+
+  def power(p, id, lv) do
+    lv = lv || level(p, id)
+    pt = data(id)
+
+    rend? =
+      Enum.zip(skills(id), [@rules.skill_level, @rules.skill2_level])
+      |> Enum.any?(fn {k, at} -> k.id == "rend" and lv >= at end)
+
+    b = pt.bonus
+    mult = 1 + (lv - 1) * @rules.bonus_per_level
+
+    bite_chance(lv) * bite_power(id, lv) * if(rend?, do: @rules.skills.rend_mult, else: 1) +
+      ((b[:atk] || 0) + 0.5 * ((b[:def] || 0) + (b[:hp] || 0))) * mult
+  end
+
   @doc "Tỷ lệ cắn mỗi lượt của thú `id` ở cấp `lv`."
   def bite_chance(lv), do: @rules.bite_chance + (lv - 1) * @rules.bite_chance_per_level
 

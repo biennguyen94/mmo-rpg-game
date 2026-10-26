@@ -46,7 +46,9 @@ defmodule HacLong.Bots.Bot do
        cls: cls,
        tries: 0,
        deaths: nil,
-       rest_until: System.monotonic_time(:millisecond)
+       rest_until: System.monotonic_time(:millisecond),
+       # lần leo Tháp Vô Tận tiếp theo (`RULES.bots.play.tower_every_min`)
+       next_tower: next_tower(System.monotonic_time(:millisecond))
      }}
   end
 
@@ -88,17 +90,37 @@ defmodule HacLong.Bots.Bot do
     cmd =
       if Brain.resting?(p, s.rest_until, now),
         do: nil,
-        else: Brain.decide(p, snap, %{name: name, cls: s.cls, seed: s.uid})
+        else:
+          Brain.decide(p, snap, %{
+            name: name,
+            cls: s.cls,
+            seed: s.uid,
+            tower_due: now >= s.next_tower
+          })
 
     s =
       case cmd && Session.command(s.uid, cmd) do
-        {%{ok: false}, nil} -> %{s | tries: s.tries + 1}
-        _ -> s
+        {%{ok: false}, nil} ->
+          %{s | tries: s.tries + 1}
+
+        # vừa vào tháp: hẹn lần sau
+        {%{ok: true}, _} ->
+          if cmd["act"] == "tower_enter", do: %{s | next_tower: next_tower(now)}, else: s
+
+        _ ->
+          s
       end
 
     if p && !p.battle && :rand.uniform() < @chat_chance, do: say(s, p)
     Process.send_after(self(), :tick, delay(p, cmd))
     s
+  end
+
+  @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
+
+  defp next_tower(now) do
+    [lo, hi] = @tower_every
+    now + (lo + :rand.uniform(max(hi - lo, 1))) * 60_000
   end
 
   defp snapshot(%{pos: %{map: id}}) do

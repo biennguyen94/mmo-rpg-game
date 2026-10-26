@@ -1127,8 +1127,10 @@
       "inn_gold_mult": 2,
       "_forge_doc": "DECISIONS \"Bot ép đồ, chuyển sinh\": lúc rảnh ở Làng bot ép đồ đang mặc (cấp thấp nhất trước) bằng ngọc như người thật, giữ lại gold_keep_per_level × cấp vàng; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` viên mỗi loại ngọc cần; Ngọc Sinh Mệnh thêm dòng cho `life_slots`; ghép / nâng cánh ở Máy Hỗn Nguyên; +10 / +11 chỉ bot \"liều\" (seed chia hết cho daring_every). Cấp tối đa đã đủ điều kiện thì chuyển sinh; cần hạ chúa tể thì đi vùng chuyển sinh, qua từng bản đồ của vùng khi đã hạ realm_kills quái ở bản đồ trước.",
       "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30},
+      "_play_doc": "DECISIONS \"Bot chơi như người thật\": hồi máu tới event_hp × tối đa rồi vào Quảng Trường Quỷ / Lâu Đài Máu đang mở (ghép vé từ mảnh hoặc mua) và Kalima (ghép Bản Đồ Thất Lạc); thú cưng mạnh hơn pet_better × thú đang có mà giá ≤ pet_budget × vàng dư thì mua / thuần phục, dắt con mạnh nhất, vàng dư > feed_mult × giá cho ăn thì cho ăn; từ cấp tower_level, mỗi tower_every_min phút (ngẫu nhiên trong khoảng) hồi máu tới tower_enter_hp rồi vào Tháp Vô Tận từ tầng bắt đầu cao nhất, leo tới hết chặng 10 tầng hoặc máu < tower_hp sau một tầng; trong tháp / sự kiện hết bình mà máu < leave_hp thì ra cổng.",
+      "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3},
       "sourceType": "DESIGN",
-      "version": 3,
+      "version": 4,
       "verified": false
     },
     "slay": {

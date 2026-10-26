@@ -24,7 +24,7 @@ defmodule HacLong.Bots.Brain do
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
   chưa chết.
   """
-  alias HacLong.Game.{Data, Engine, Gear, Rng}
+  alias HacLong.Game.{BloodCastle, Data, DevilSquare, Engine, Gear, Kalima, Pets, Rng, Tower}
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -79,6 +79,10 @@ defmodule HacLong.Bots.Brain do
       p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
 
+      # trong Tháp / Quảng Trường / Lâu Đài / Kalima: đánh hết quái, lên tầng / đợt hoặc ra cổng
+      p.pos.map == "tower" ->
+        tower_play(p, d)
+
       (need = restock(p)) != [] ->
         shop(p, need, snap)
 
@@ -88,8 +92,17 @@ defmodule HacLong.Bots.Brain do
       rebirth_ready?(p) ->
         at_village_npc(p, "quests", snap, fn -> %{"act" => "rebirth"} end)
 
+      job = event_job(p, d) ->
+        if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
+
+      job = pet_job(p) ->
+        do_job(p, job, snap)
+
       job = forge_job(p, opts) ->
         do_job(p, job, snap)
+
+      job = tower_job(p, d, opts) ->
+        if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
       true ->
         roam(p, snap, opts[:seed] || 0)
@@ -122,8 +135,13 @@ defmodule HacLong.Bots.Brain do
   def forge_job(p, opts \\ %{}) do
     spare = spare_gold(p)
 
-    if spare > 0,
-      do: upgrade_job(p, spare, opts) || life_job(p) || wing_job(p, spare)
+    # chưa có cánh: làm cánh trước (không thì Ngọc Ước Nguyện cứ bị dùng ép lại đồ mới mặc, không bao giờ đủ cho
+    # món làm cánh); có cánh rồi thì ép đồ, cánh như thường rồi mới nâng cánh
+    cond do
+      spare <= 0 -> nil
+      p.equip[:wing] == nil -> wing_job(p, spare) || upgrade_job(p, spare, opts) || life_job(p)
+      true -> upgrade_job(p, spare, opts) || life_job(p) || wing_job(p, spare)
+    end
   end
 
   defp has?(p, items, extra \\ 0),
@@ -191,39 +209,226 @@ defmodule HacLong.Bots.Brain do
   defp wing_job(p, spare) do
     worn = p.equip[:wing]
     r = wing_recipe(wing_tier(p, worn) + 1)
+    ready = r != nil and r.gold <= spare and has?(p, r.items)
 
     cond do
-      r == nil or r.gold > spare or not has?(p, r.items) ->
+      r == nil ->
+        nil
+
+      # chưa có cánh: ép sẵn món làm cánh lên +min_up (kể cả khi chưa đủ Ngọc Hỗn Nguyên / vàng để ghép)
+      worn == nil ->
+        first_wing(p, r, spare, ready)
+
+      not ready ->
         nil
 
       # đang mặc cánh đủ cấp ép: tháo ra để ghép lên cấp (bước kế tiếp: `wing_combine/2`)
       worn && Engine.upgrade_level(p, worn) >= r.gear.min_up ->
         {nil, %{"act" => "unequip", "slot" => "wing"}}
 
-      worn ->
+      true ->
+        nil
+    end
+  end
+
+  # một món trong túi (vũ khí / giáp / khiên) ép tới +min_up rồi bỏ vào máy
+  defp first_wing(p, r, spare, ready) do
+    bag =
+      for g <- Gear.bag(p),
+          !g[:locked],
+          Gear.resolve(g).slot in r.gear.slots,
+          do: {Engine.upgrade_level(p, g.uid), g.uid}
+
+    case Enum.sort(bag, :desc) do
+      [{up, uid} | _] when up >= r.gear.min_up ->
+        if ready, do: {"chaos", %{"act" => "chaos", "id" => r.id, "gear" => uid}}
+
+      [{up, uid} | _] ->
+        cost = Engine.upgrade_cost(Gear.item(p, uid), up)
+
+        if cost && cost.at == "smith" && cost.gold <= spare && has?(p, cost.items),
+          do: {"shop", %{"act" => "upgrade", "id" => uid, "confirm" => true}}
+
+      [] ->
+        nil
+    end
+  end
+
+  # ---------- Sự kiện, thú cưng, tháp (DECISIONS "Bot chơi như người thật") ----------
+  @play Data.rules().bots.play
+
+  @doc """
+  Sự kiện bot tham gia lúc rảnh: Quảng Trường Quỷ / Lâu Đài Máu đang mở, đủ cấp, chưa vào đợt này → có vé thì vào, không
+  thì ghép vé từ mảnh ở Máy Hỗn Nguyên hoặc mua; Kalima: có Bản Đồ Thất Lạc thì vào, đủ 5 Dấu Ấn Kundun thì ghép bản đồ.
+  Trả `{vai NPC, lệnh}`, `:heal` (sắp vào mà máu < `play.event_hp`: hồi máu trước, như người chơi) hoặc nil.
+  """
+  def event_job(p, d \\ nil) do
+    d = d || Engine.derived(p)
+    spare = spare_gold(p)
+
+    job =
+      sched_event(p, DevilSquare.view(p), "ds", "ds_ticket", spare) ||
+        sched_event(p, BloodCastle.view(p), "bc", "bc_ticket", spare) ||
+        kalima_job(p, spare)
+
+    case job do
+      {_, %{"act" => act}} = job ->
+        if String.ends_with?(act, "_enter") and p.hp < d.maxHp * @play.event_hp,
+          do: :heal,
+          else: job
+
+      nil ->
+        nil
+    end
+  end
+
+  defp sched_event(p, v, kind, recipe, spare) do
+    r = Data.chaos(recipe)
+
+    cond do
+      not v.open or v.used or p.level < v.min_level -> nil
+      v.tickets > 0 -> {"tower", %{"act" => kind <> "_enter"}}
+      r.gold <= spare and has?(p, r.items) -> {"chaos", %{"act" => "chaos", "id" => recipe}}
+      v.price <= spare -> {"tower", %{"act" => kind <> "_buy"}}
+      true -> nil
+    end
+  end
+
+  defp kalima_job(p, spare) do
+    v = Kalima.view(p)
+    r = Data.chaos("lost_map")
+
+    cond do
+      p.level < v.min_level -> nil
+      v.maps > 0 -> {"tower", %{"act" => "kal_enter"}}
+      r.gold <= spare and has?(p, r.items) -> {"chaos", %{"act" => "chaos", "id" => "lost_map"}}
+      true -> nil
+    end
+  end
+
+  @doc """
+  Thú cưng như `HacLong.Game.Journey`: thú mạnh hơn hẳn (`Pets.power/3` > `play.pet_better` × thú mạnh nhất đang có)
+  mà giá ≤ `play.pet_budget` vàng dư → mua ở cửa hàng / thuần phục; dắt con mạnh nhất; vàng dư > `play.feed_mult` × giá
+  cho ăn → cho ăn. Trả `{vai NPC | nil, lệnh}` hoặc nil.
+  """
+  def pet_job(p) do
+    spare = spare_gold(p)
+    owned = Map.get(p, :pets) || []
+    best = Enum.max_by(owned, &Pets.power(p, &1), fn -> nil end)
+    cur = Pets.power(p, best)
+    budget = spare * @play.pet_budget
+
+    shop =
+      for pt <- Data.pets(),
+          !pt[:rare],
+          pt.id not in owned,
+          pt.price <= budget,
+          do: {"pet_buy", pt.id, pt.id}
+
+    tame =
+      for t <- Pets.tameable(p), t.price <= budget, do: {"pet_tame", t.id, "tame:" <> t.id}
+
+    cand =
+      (shop ++ tame)
+      |> Enum.map(fn {act, id, pet} -> {act, id, Pets.power(p, pet, 1)} end)
+      |> Enum.max_by(&elem(&1, 2), fn -> nil end)
+
+    feed = Pets.feed_cost(p)
+
+    cond do
+      match?({_, _, pw} when pw > cur * @play.pet_better, cand) ->
+        {act, id, _} = cand
+        {"pets", %{"act" => act, "id" => id}}
+
+      best && best != p[:pet] ->
+        {nil, %{"act" => "pet_choose", "id" => best}}
+
+      feed && spare > feed * @play.feed_mult ->
+        {"pets", %{"act" => "pet_feed"}}
+
+      true ->
+        nil
+    end
+  end
+
+  @doc """
+  Leo Tháp Vô Tận lúc rảnh: từ cấp `play.tower_level`, tới lượt (`opts.tower_due`: tiến trình bot đặt mỗi
+  `play.tower_every_min` phút) thì vào từ tầng bắt đầu cao nhất đã mở; máu chưa đầy thì hồi trước (`:heal`).
+  """
+  def tower_job(p, d, opts \\ %{}) do
+    cond do
+      not (opts[:tower_due] == true and p.level >= @play.tower_level) ->
         nil
 
-      # chưa có cánh: một món trong túi (vũ khí / giáp / khiên) ép tới +min_up rồi bỏ vào máy
+      p.hp < d.maxHp * @play.tower_enter_hp ->
+        :heal
+
       true ->
-        bag =
-          for g <- Gear.bag(p),
-              !g[:locked],
-              Gear.resolve(g).slot in r.gear.slots,
-              do: {Engine.upgrade_level(p, g.uid), g.uid}
+        floor = p |> Map.get(:tower_best, 0) |> Tower.starts() |> List.last()
+        {"tower", %{"act" => "tower_enter", "floor" => floor}}
+    end
+  end
 
-        case Enum.sort(bag, :desc) do
-          [{up, uid} | _] when up >= r.gear.min_up ->
-            {"chaos", %{"act" => "chaos", "id" => r.id, "gear" => uid}}
+  @doc """
+  Đang ở bản đồ riêng `tower` (Tháp, Quảng Trường, Lâu Đài, Kalima): còn quái thì tới con gần nhất đánh; hết quái thì
+  lên cầu thang (Tháp, Quảng Trường); Lâu Đài / Kalima xong thì bước một bước để về Làng. Ra cổng `<` khi máu
+  < `play.leave_hp` và hết bình, hoặc (Tháp) vừa xong một chặng 10 tầng / máu < `play.tower_hp` sau một tầng.
+  """
+  def tower_play(%{tower: nil} = p, _d), do: any_step(p)
 
-          [{up, uid} | _] ->
-            cost = Engine.upgrade_cost(Gear.item(p, uid), up)
+  def tower_play(%{tower: t} = p, d) do
+    me = {p.pos.x, p.pos.y}
+    low = p.hp < d.maxHp * @play.leave_hp and Engine.best_potion(p, d.maxHp - p.hp) == nil
+    done = (t[:bc] && t.bc.done) || (t[:kal] && t.kal.done)
+    plain? = t[:ds] == nil and t[:bc] == nil and t[:kal] == nil
 
-            if cost && cost.at == "smith" && cost.gold <= spare && has?(p, cost.items),
-              do: {"shop", %{"act" => "upgrade", "id" => uid, "confirm" => true}}
+    # mọi con là đích: quái chắn đường thì con chắn đó cũng là đích, luôn có đường
+    targets = t.monsters |> Enum.sort_by(&dist(me, {&1.x, &1.y})) |> Enum.map(&{&1.x, &1.y})
 
-          [] ->
-            nil
-        end
+    cond do
+      done ->
+        any_step(p)
+
+      low ->
+        tower_walk(p, [List.to_tuple(t.exit)])
+
+      targets != [] ->
+        tower_walk(p, targets)
+
+      plain? and (rem(t.floor, 10) == 0 or p.hp < d.maxHp * @play.tower_hp) ->
+        tower_walk(p, [List.to_tuple(t.exit)])
+
+      t[:ds] != nil or plain? ->
+        tower_walk(p, [List.to_tuple(t.stairs)])
+
+      # Lâu Đài / Kalima chưa xong mà hết quái (trùm sắp hiện): đứng chờ
+      true ->
+        nil
+    end
+  end
+
+  # bước một ô bất kỳ (Lâu Đài / Kalima xong, lượt đã hết: bước nào cũng về Làng)
+  defp any_step(p) do
+    Enum.find_value(["up", "down", "left", "right"], fn dir ->
+      {dx, dy} = @dirs[dir]
+      t = p[:tower]
+
+      if t == nil or tower_tile(t, {p.pos.x + dx, p.pos.y + dy}) in [".", ">", "<"],
+        do: %{"act" => "move", "dir" => dir}
+    end) || %{"act" => "move", "dir" => "up"}
+  end
+
+  defp tower_tile(t, {x, y}), do: t.tiles |> Enum.at(y, "") |> String.at(x)
+
+  # đường đi trên tầng (ô "." đi được; cầu thang, quái chỉ là đích)
+  defp tower_walk(%{tower: t} = p, goals) do
+    goals = MapSet.new(goals)
+    blocked = t.monsters |> MapSet.new(&{&1.x, &1.y}) |> MapSet.difference(goals)
+    free? = fn pos -> tower_tile(t, pos) == "." end
+
+    case first_step(free?, {p.pos.x, p.pos.y}, goals, blocked) do
+      nil -> nil
+      dir -> %{"act" => "move", "dir" => dir}
     end
   end
 
@@ -323,7 +528,25 @@ defmodule HacLong.Bots.Brain do
   # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ;
   # vũ khí 2 tay so với vũ khí + khiên đang cầm; lớp cầm 2 vũ khí: vũ khí 1 tay ở tay trái so với khiên / vũ khí
   # tay trái đang cầm). Trả lệnh `equip` hoặc nil.
-  defp better_gear(p) do
+  defp better_gear(p), do: better_wing(p) || better_armor(p)
+
+  # cánh trong túi (ghép xong ở Máy Hỗn Nguyên, nhặt được) hơn cánh đang mặc: bậc cao hơn, cùng bậc thì ép cao hơn.
+  # Trước đây chỉ xét `Engine.gear_slots/0` (không có cánh) nên bot ghép cánh xong để trong túi, rồi lại ghép tiếp.
+  defp better_wing(p) do
+    rank = fn uid -> {wing_tier(p, uid), Engine.upgrade_level(p, uid)} end
+    worn = p.equip[:wing]
+
+    p
+    |> Gear.bag()
+    |> Enum.filter(fn g ->
+      it = Gear.resolve(g)
+      it.slot == "wing" and Engine.can_wear?(p, it)
+    end)
+    |> Enum.max_by(&rank.(&1.uid), fn -> nil end)
+    |> then(fn g -> if g && (worn == nil or rank.(g.uid) > rank.(worn)), do: equip(g) end)
+  end
+
+  defp better_armor(p) do
     weapon = Gear.item(p, p.equip.weapon)
     left = Gear.item(p, p.equip.shield)
     k = Engine.dual_rules().mult
@@ -357,7 +580,7 @@ defmodule HacLong.Bots.Brain do
           equip(it, "left")
 
         slot != :weapon and power(it) > power(cur) and
-            not (slot == :shield and left && left.slot == "weapon") ->
+            not (slot == :shield and left != nil and left.slot == "weapon") ->
           equip(it)
 
         true ->
@@ -643,7 +866,7 @@ defmodule HacLong.Bots.Brain do
     start = {p.pos.x, p.pos.y}
     blocked = monsters_at(snap) |> MapSet.difference(goals)
 
-    case first_step(map, start, goals, blocked) do
+    case first_step(&plain?(map, &1), start, goals, blocked) do
       nil -> nil
       # gặp trùm vào trận luôn (như client, Phase 11)
       dir -> %{"act" => "move", "dir" => dir, "confirm" => true}
@@ -653,12 +876,13 @@ defmodule HacLong.Bots.Brain do
   defp monsters_at(nil), do: MapSet.new()
   defp monsters_at(snap), do: MapSet.new(snap.monsters, &{&1.x, &1.y})
 
-  defp first_step(map, start, goals, blocked) do
+  # `free?`: ô đi qua được (đích luôn bước vào được)
+  defp first_step(free?, start, goals, blocked) do
     queue = :queue.from_list([{start, nil}])
-    search(map, queue, MapSet.new([start]), goals, blocked)
+    search(free?, queue, MapSet.new([start]), goals, blocked)
   end
 
-  defp search(map, queue, seen, goals, blocked) do
+  defp search(free?, queue, seen, goals, blocked) do
     case :queue.out(queue) do
       {:empty, _} ->
         nil
@@ -674,14 +898,14 @@ defmodule HacLong.Bots.Brain do
               goal? = MapSet.member?(goals, nxt)
 
               if MapSet.member?(s, nxt) or MapSet.member?(blocked, nxt) or
-                   not (goal? or plain?(map, nxt)) do
+                   not (goal? or free?.(nxt)) do
                 {q, s}
               else
                 {:queue.in({nxt, first || dir}, q), MapSet.put(s, nxt)}
               end
             end)
 
-          search(map, queue, seen, goals, blocked)
+          search(free?, queue, seen, goals, blocked)
         end
     end
   end

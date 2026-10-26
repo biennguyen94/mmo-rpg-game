@@ -1397,3 +1397,23 @@ lượt riêng cũ (không có `room`) vẫn chạy như trước. Test: `test/h
 - Máu chung hiện ngay trên màn trận (2026-10-26, anh "có làm đi"): ai trong phòng đánh trúng con quái thì mọi người đang
   đánh con đó nhận máu mới ngay (sự kiện kênh `shared` như đánh chung tổ đội, khóa `encounter.room_key`), màn trận ghi
   "N người cùng đánh". Session của từng người cũng giữ máu mới (`{:room_hp, ...}`) để lần đẩy nhân vật sau không trả máu cũ.
+
+## Bot chơi như người thật (2026-10-26, anh "làm tất cả, như người chơi thật")
+
+Bot chuyển sinh 10 lần mà không có cánh, không leo tháp, không có thú. `HacLong.Bots.Brain` thêm (số ở `RULES.bots.play`):
+- **Cánh:** lỗi chính là bot ghép cánh xong **không bao giờ mặc** (bước "mặc đồ tốt hơn" chỉ xét `Engine.gear_slots/0`, không
+  có ô cánh) nên ghép mãi; nay mặc cánh trong túi khi chưa có / bậc cao hơn / cùng bậc ép cao hơn. Chưa có cánh thì làm cánh
+  trước khi ép đồ đang mặc (ép sẵn món làm cánh lên +5 kể cả khi chưa có Ngọc Hỗn Nguyên); có cánh rồi ép cánh như đồ khác.
+- **Thú cưng:** như mô phỏng `Journey` (hàm sức thú chung `Pets.power/3`): mua / thuần phục con mạnh hơn hẳn khi giá ≤ 30 %
+  vàng dư, dắt con mạnh nhất, dư nhiều vàng thì cho ăn.
+- **Tháp Vô Tận:** từ cấp 30, tiến trình bot hẹn 30–60 phút một lần: hồi máu rồi vào từ tầng bắt đầu cao nhất, hạ hết quái,
+  lên tầng; xong chặng 10 tầng, máu < 50 % sau một tầng, hoặc hết bình mà máu < 30 % thì ra cổng.
+- **Sự kiện:** Quảng Trường Quỷ / Lâu Đài Máu đang mở → hồi máu rồi vào (ghép vé từ mảnh hoặc mua); Kalima: ghép Bản Đồ
+  Thất Lạc từ 5 Dấu Ấn rồi vào. Trong phòng đánh quái gần nhất, hết quái thì lên đợt sau / bước ra như người chơi.
+- Sửa lỗi cũ: bot chưa cầm gì tay trái nhặt được khiên thì lỗi `not nil` mỗi nhịp, đứng im.
+Chạy thử 4 bot CS 10 trên máy: sau ~6 phút cả 4 có thú, 3 bot mặc cánh +2/+3 (1 bot ghép hỏng, đang ép món mới), kỷ lục tháp
+4–9, đã vào Quảng Trường, Lâu Đài, ghép Bản Đồ Thất Lạc. Test `test/hac_long/bots/brain_play_test.exs`.
+
+## Màn kết quả trận: nút Tiếp tục trước danh sách đồ rơi (2026-10-26, anh báo)
+Trùm rơi nhiều đồ thì danh sách dài đẩy nút "Tiếp tục" / "Về nhà" ra khỏi màn hình điện thoại. Nút nay nằm ngay dưới dòng
+kinh nghiệm / vàng, trước danh sách đồ.
