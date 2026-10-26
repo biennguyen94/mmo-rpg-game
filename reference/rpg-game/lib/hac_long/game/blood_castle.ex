@@ -114,7 +114,8 @@ defmodule HacLong.Game.BloodCastle do
     @rules.tiers |> Enum.filter(&(level >= &1.from)) |> List.last() |> then(&(&1 && &1.level))
   end
 
-  def enter(p, now \\ DateTime.utc_now()) do
+  @doc "Vào Lâu Đài Máu. `room`: hàm vào phòng chung như `DevilSquare.enter/3` (nil: lượt riêng)."
+  def enter(p, now \\ DateTime.utc_now(), room \\ nil) do
     w = window(now)
     daily = p[:daily] || %{}
 
@@ -141,12 +142,29 @@ defmodule HacLong.Game.BloodCastle do
         {%{ok: false, msg: "Cần 1 Vé Lâu Đài."}, p}
 
       true ->
-        {%{ok: true, msg: "Vào Lâu Đài Máu! Hạ quái canh, phá cổng, hạ Hiệp Sĩ Máu."},
-         start(p, w, now)}
+        start(p, w, now, room)
     end
   end
 
-  defp start(p, w, now) do
+  @entered "Vào Lâu Đài Máu! Hạ quái canh, phá cổng, hạ Hiệp Sĩ Máu."
+
+  defp start(p, w, _now, room) when is_function(room, 1) do
+    case room.(%{kind: "bc", slot: w.slot, level: tier_level(p.level)}) do
+      {:ok, t} ->
+        [ex, ey] = t.exit
+
+        {%{ok: true, msg: @entered},
+         %{p | inv: take_ticket(p.inv)}
+         |> Map.put(:daily, Map.put(p[:daily] || %{}, :bc_slot, w.slot))
+         |> Map.put(:pos, %{map: Tower.map_id(), x: ex, y: ey - 1})
+         |> Map.put(:tower, t)}
+
+      {:error, msg} ->
+        {%{ok: false, msg: msg}, p}
+    end
+  end
+
+  defp start(p, w, now, nil) do
     level = tier_level(p.level)
     t = Tower.build(1, "bc|#{p.name}|#{System.unique_integer([:positive])}")
     [ex, ey] = t.exit
@@ -162,15 +180,17 @@ defmodule HacLong.Game.BloodCastle do
 
     t = Map.merge(t, %{monsters: guards(level, t), bc: bc})
 
-    inv =
-      if p.inv[@rules.ticket] > 1,
-        do: Map.update!(p.inv, @rules.ticket, &(&1 - 1)),
-        else: Map.delete(p.inv, @rules.ticket)
+    {%{ok: true, msg: @entered},
+     %{p | inv: take_ticket(p.inv)}
+     |> Map.put(:daily, Map.put(p[:daily] || %{}, :bc_slot, w.slot))
+     |> Map.put(:pos, %{map: Tower.map_id(), x: ex, y: ey - 1})
+     |> Map.put(:tower, t)}
+  end
 
-    %{p | inv: inv}
-    |> Map.put(:daily, Map.put(p[:daily] || %{}, :bc_slot, w.slot))
-    |> Map.put(:pos, %{map: Tower.map_id(), x: ex, y: ey - 1})
-    |> Map.put(:tower, t)
+  defp take_ticket(inv) do
+    if inv[@rules.ticket] > 1,
+      do: Map.update!(inv, @rules.ticket, &(&1 - 1)),
+      else: Map.delete(inv, @rules.ticket)
   end
 
   defp free_spots(t) do
@@ -242,6 +262,64 @@ defmodule HacLong.Game.BloodCastle do
       elite: role == "boss",
       role: role
     })
+  end
+
+  # ---------- Phòng chung (DECISIONS "Sự kiện đánh chung theo phòng", `HacLong.EventRoom`) ----------
+
+  @doc "Phòng chung mới ở cấp `level`: quân canh, trạng thái `bc` chung (bước, số quân canh đã hạ cả phòng)."
+  def room_new(level, salt) do
+    t = Tower.build(1, "bc|#{salt}")
+    bc = %{level: level, stage: "guards", guards: @rules.guards, killed: 0, done: false}
+    Map.merge(t, %{monsters: guards(level, t), bc: bc})
+  end
+
+  @doc """
+  Quái `m` của phòng vừa bị hạ (người hạ đứng ở `pos`): qua bước như lượt riêng. Trả `{t, thông_báo | nil, bước}`
+  với bước `:guard | :gate | :boss | :done` (đã hạ trùm).
+  """
+  def room_kill(%{bc: bc} = t, m, pos) do
+    left = Enum.reject(t.monsters, &(&1.id == m.id))
+    killed = if m[:role] == "guard", do: bc.killed + 1, else: bc.killed
+
+    case {m[:role], left} do
+      {"guard", []} ->
+        t = %{t | monsters: [], bc: %{bc | killed: killed, stage: "gate"}}
+
+        {%{t | monsters: [spawn_at(t, "gate", pos)]},
+         "🏰 Đã hạ hết quân canh! Cổng Thành hiện ra, phá nó đi.", :gate}
+
+      {"gate", _} ->
+        t = %{t | monsters: [], bc: %{bc | stage: "boss"}}
+
+        {%{t | monsters: [spawn_at(t, "boss", pos)]},
+         "💥 Cổng Thành đã vỡ! #{@rules.boss.name} xuất hiện.", :boss}
+
+      {"boss", _} ->
+        {%{t | monsters: [], bc: %{bc | killed: killed, stage: "done", done: true}}, nil, :done}
+
+      _ ->
+        {%{t | monsters: left, bc: %{bc | killed: killed}}, nil, :guard}
+    end
+  end
+
+  @doc """
+  Thưởng một người trong phòng khi trùm bị hạ: người gây nhiều sát thương nhất lên trùm (`top?`) nhận `reward.success`
+  đầy đủ (có Lông Vũ Kền Kền); người khác nhận vàng / kinh nghiệm thắng × phần sát thương lên trùm `share` cộng thưởng
+  theo số quân canh mình hạ (`killed`).
+  """
+  def room_reward(level, killed, top?, share) do
+    if top? do
+      reward(level, killed, true)
+    else
+      s = @rules.reward.success
+      pt = reward(level, killed, false)
+
+      %{
+        gold: pt.gold + round(Engine.base_gold(level) * s.gold_mult * share),
+        xp: pt.xp + round(Engine.base_xp(level) * s.xp_mult * share),
+        items: %{}
+      }
+    end
   end
 
   @doc "Quái dùng trong trận ở Lâu Đài."
@@ -354,8 +432,30 @@ defmodule HacLong.Game.BloodCastle do
   @doc """
   Trả thưởng. Thắng: lượt đánh dấu `done` (còn ở lâu đài, bước tiếp là về Làng). Không thắng: rời lâu đài về Làng.
   """
-  def finish(%{tower: %{bc: bc} = t} = p, success?) do
-    r = reward(bc.level, bc.killed, success?)
+  def finish(%{tower: %{bc: bc}} = p, success?) do
+    # phòng chung: thưởng theo số quân canh mình hạ (`mine`), `killed` là của cả phòng
+    mine = Map.get(bc, :mine, bc.killed)
+    pay(p, reward(bc.level, mine, success?), success?, mine)
+  end
+
+  @doc """
+  Phòng chung vừa hạ trùm: trả thưởng `room_reward/4` (người gây nhiều sát thương nhất lên trùm `top?` thưởng đầy đủ, người
+  khác theo phần sát thương `share`); lượt `done` như thắng.
+  """
+  def room_finish(%{tower: %{bc: bc}} = p, top?, share) do
+    mine = Map.get(bc, :mine, 0)
+    {r, p} = pay(p, room_reward(bc.level, mine, top?, share), true, mine)
+    pct = round(share * 100)
+
+    note =
+      if top?,
+        do: " Bạn gây nhiều sát thương nhất lên trùm (#{pct}%).",
+        else: " Bạn gây #{pct}% sát thương lên trùm (người gây nhiều nhất nhận Lông Vũ)."
+
+    {%{r | msg: r.msg <> note}, p}
+  end
+
+  defp pay(%{tower: %{bc: bc} = t} = p, r, success?, killed) do
     p = %{p | gold: p.gold + r.gold}
     p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
     {_levels, p} = Engine.gain_xp(p, r.xp)
@@ -370,7 +470,7 @@ defmodule HacLong.Game.BloodCastle do
         do:
           "🏆 Hạ #{@rules.boss.name}! Lâu Đài Máu hoàn thành: +#{r.gold} vàng, +#{r.xp} kinh nghiệm#{items}.",
         else:
-          "Lâu Đài Máu kết thúc: hạ #{bc.killed} quân canh, +#{r.gold} vàng, +#{r.xp} kinh nghiệm."
+          "Lâu Đài Máu kết thúc: hạ #{killed} quân canh, +#{r.gold} vàng, +#{r.xp} kinh nghiệm."
 
     p =
       if success?,

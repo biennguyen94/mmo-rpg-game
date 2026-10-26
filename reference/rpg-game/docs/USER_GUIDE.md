@@ -91,8 +91,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
 - **Tháp Vô Tận** (Người Gác Tháp ở Làng): mỗi tầng hạ hết quái để lên; cứ 5 tầng có trùm; máu không tự hồi trong tháp.
 - **Quảng Trường Quỷ** (cấp 35+, 1h, 3h … 23h) và **Lâu Đài Máu** (cấp 40+, 0h30, 2h30 … 22h30), **Hỗn Chiến Thành** (cấp 15+, 1h30, 3h30 … 23h30): vào qua Người Gác Tháp, cần vé. Chi tiết: [`EVENTS.md`](EVENTS.md).
-  Quái sự kiện (cả Kalima, Vương Miện, quái vàng) **mạnh theo số lần chuyển sinh của bạn**: mỗi lần chuyển sinh máu / thủ +40 %,
-  công +15 %, kinh nghiệm / vàng +20 % (tối đa 10 lần). Trùm thế giới và tháp không đổi.
+  Sự kiện **đánh chung theo phòng** như MU: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh
+  (0–1, 2–3, 4–5, 6–7, 8–9, 10+), cùng phòng thì chung quái, chung máu quái; Kalima theo tổ đội. Quái mạnh theo mốc **cao nhất**
+  của phòng (Kalima: người chuyển sinh nhiều nhất trong tổ đội): mỗi mốc máu / thủ +40 %, công +15 %, kinh nghiệm / vàng +20 %
+  (tối đa 10). Vương Miện cố định mốc 10; quái vàng, trùm thế giới và tháp không đổi.
 
 ![Trận đánh](screenshots/e2e-battle.png)
 

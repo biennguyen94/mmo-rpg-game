@@ -35,6 +35,9 @@ defmodule HacLong.Application do
       HacLong.ChaosCastle,
       # Quảng Trường Quỷ (Phase 18 M1): bảng xếp hạng ngày + thưởng top 3
       HacLong.DevilSquareBoard,
+      # Quảng Trường Quỷ / Lâu Đài Máu / Kalima đánh chung: mỗi phòng một tiến trình
+      {Registry, keys: :unique, name: HacLong.EventRoom.Registry},
+      {DynamicSupervisor, name: HacLong.EventRoom.Supervisor, strategy: :one_for_one},
       {Registry, keys: :unique, name: HacLong.Game.Registry},
       {DynamicSupervisor, name: HacLong.Game.SessionSupervisor, strategy: :one_for_one},
       # mỗi bản đồ dùng chung (Làng, các vùng) một tiến trình

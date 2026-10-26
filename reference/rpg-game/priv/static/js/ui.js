@@ -2747,6 +2747,7 @@
     return `<div class="card" data-panel="devil-square">
       <div class="row"><h3 class="grow">😈 Quảng Trường Quỷ</h3>${state}</div>
       <p class="small muted">Từ cấp ${d.min_level}, mỗi lần mở vào một lần, tốn 1 Vé Quảng Trường. ${d.waves} đợt quái trong ${d.run_minutes} phút, đợt cuối có trùm. Thưởng vàng, kinh nghiệm, ngọc theo điểm; qua hết đợt thêm một món đồ (có thể Excellent / Thần). Top 3 mỗi ngày nhận thêm quà qua thư.</p>
+      <p class="small">Đánh chung kiểu MU: người cùng mốc chuyển sinh (và cùng bậc cấp) vào chung một phòng, chung quái, chung máu quái; quái mạnh theo mốc cao nhất của phòng. Ai hạ quái được điểm; người cùng đánh được vàng, kinh nghiệm theo phần sát thương.</p>
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b> · Điểm cao nhất hôm nay: <b class="num">${d.best}</b></span></div>
       <div class="btn-row">
@@ -2768,6 +2769,7 @@
     return `<div class="card" data-panel="blood-castle">
       <div class="row"><h3 class="grow">🏰 Lâu Đài Máu</h3>${state}</div>
       <p class="small muted">Từ cấp ${d.min_level}, mỗi lần mở vào một lần, tốn 1 Vé Lâu Đài. Trong ${d.run_minutes} phút: hạ ${d.guards} quân canh, phá Cổng Thành, rồi hạ Hiệp Sĩ Máu để nhận <b>Lông Vũ Kền Kền</b> (nguyên liệu cánh cấp 3) cùng vàng, kinh nghiệm, ngọc. Không xong thì được thưởng theo số quân canh đã hạ.</p>
+      <p class="small">Đánh chung kiểu MU: người cùng mốc chuyển sinh (và cùng bậc cấp) vào chung một lâu đài. Hạ Hiệp Sĩ Máu: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ và thưởng đầy đủ; người khác nhận vàng, kinh nghiệm theo phần sát thương lên trùm cộng thưởng theo số quân canh mình hạ.</p>
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b></span></div>
       <div class="btn-row">
@@ -2828,10 +2830,13 @@
     const d = P.view.kal;
     if (!d) return '';
     const lowLv = P.level < d.min_level;
-    const canEnter = !lowLv && d.maps > 0 && P.hp > 0;
+    // trong tổ đội: đồng đội đã mở Kalima thì vào cùng không tốn bản đồ (server kiểm)
+    const inParty = !!(party && party.members && party.members.length > 1);
+    const canEnter = !lowLv && (d.maps > 0 || inParty) && P.hp > 0;
     return `<div class="card" data-panel="kalima">
       <div class="row"><h3 class="grow">👹 Kalima</h3>${d.n ? `<span class="tag gold">Kalima ${d.n}</span>` : ''}</div>
       <p class="small muted">Từ cấp ${d.min_level}, lúc nào cũng vào được, tốn 1 Bản Đồ Thất Lạc (ghép 5 Dấu Ấn Kundun ở Máy Hỗn Nguyên; dấu ấn rơi từ quái cấp 20+). Kalima 1–7 theo cấp nhân vật. Trong ${d.run_minutes} phút: hạ ${d.guards} quái Kalima rồi hạ <b>Kundun</b> để nhận vàng, kinh nghiệm, 3 ngọc và một món đồ (có thể Excellent / Thần). Không xong thì được thưởng theo số quái đã hạ.</p>
+      <p class="small">Đi cùng tổ đội: một người dùng Bản Đồ Thất Lạc, đồng đội vào cùng phòng không tốn bản đồ; quái mạnh theo người chuyển sinh nhiều nhất trong tổ đội, hạ Kundun thì cả tổ đội cùng thắng.</p>
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Bản Đồ Thất Lạc: <b class="num">${d.maps}</b> · Dấu Ấn Kundun: <b class="num">${d.marks}</b>/5</span></div>
       <div class="btn-row"><button class="btn ${canEnter ? 'primary' : ''}" data-act="kal_enter" ${canEnter ? '' : 'disabled'}>Vào Kalima${d.n ? ' ' + d.n : ''}</button></div>

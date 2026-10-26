@@ -51,29 +51,68 @@ defmodule HacLong.Game.Kalima do
 
   # ---------- Vào ----------
 
-  def enter(p, now \\ DateTime.utc_now()) do
-    cond do
-      p.battle ->
-        {%{ok: false, msg: "Đang trong trận đấu."}, p}
+  @doc """
+  Vào Kalima bằng 1 Bản Đồ Thất Lạc. `room`: hàm mở phòng của tổ đội (`HacLong.EventRoom`, nhận `%{kind, n, level}`,
+  trả `{:ok, trạng_thái_tháp} | {:error, lý_do}`); nil thì lượt riêng.
+  """
+  def enter(p, now \\ DateTime.utc_now(), room \\ nil) do
+    case check(p) do
+      nil ->
+        if Map.get(p.inv, @rules.ticket, 0) < 1,
+          do: {%{ok: false, msg: "Cần 1 #{Data.item(@rules.ticket).name}."}, p},
+          else: start(p, now, room)
 
-      p[:tower] && p.pos.map == "tower" ->
-        {%{ok: false, msg: "Đang ở trong Tháp."}, p}
-
-      p.hp <= 0 ->
-        {%{ok: false, msg: "Bạn cần hồi máu trước."}, p}
-
-      p.level < @rules.min_level ->
-        {%{ok: false, msg: "Cần cấp #{@rules.min_level}."}, p}
-
-      Map.get(p.inv, @rules.ticket, 0) < 1 ->
-        {%{ok: false, msg: "Cần 1 #{Data.item(@rules.ticket).name}."}, p}
-
-      true ->
-        start(p, now)
+      err ->
+        {err, p}
     end
   end
 
-  defp start(p, now) do
+  @doc """
+  Vào phòng Kalima tổ đội đang mở (đồng đội đã dùng Bản Đồ Thất Lạc): không tốn vé. `room`: hàm vào phòng đó, trả
+  `{:ok, trạng_thái_tháp} | {:error, lý_do}`.
+  """
+  def join(p, room) do
+    case check(p) do
+      nil ->
+        case room.() do
+          {:ok, t} -> {%{ok: true, msg: "Vào Kalima #{t.kal.n} cùng tổ đội!"}, place(p, t)}
+          {:error, msg} -> {%{ok: false, msg: msg}, p}
+        end
+
+      err ->
+        {err, p}
+    end
+  end
+
+  defp check(p) do
+    cond do
+      p.battle -> %{ok: false, msg: "Đang trong trận đấu."}
+      p[:tower] && p.pos.map == "tower" -> %{ok: false, msg: "Đang ở trong Tháp."}
+      p.hp <= 0 -> %{ok: false, msg: "Bạn cần hồi máu trước."}
+      p.level < @rules.min_level -> %{ok: false, msg: "Cần cấp #{@rules.min_level}."}
+      true -> nil
+    end
+  end
+
+  defp place(p, t) do
+    [ex, ey] = t.exit
+    p |> Map.put(:pos, %{map: Tower.map_id(), x: ex, y: ey - 1}) |> Map.put(:tower, t)
+  end
+
+  defp start(p, _now, room) when is_function(room, 1) do
+    %{n: n, level: level} = tier(p.level)
+
+    case room.(%{kind: "kal", n: n, level: level}) do
+      {:ok, t} ->
+        {%{ok: true, msg: "Vào Kalima #{n}! Hạ #{@rules.guards} quái để gọi Kundun."},
+         p |> Engine.take_item(@rules.ticket) |> place(t)}
+
+      {:error, msg} ->
+        {%{ok: false, msg: msg}, p}
+    end
+  end
+
+  defp start(p, now, nil) do
     %{n: n, level: level} = tier(p.level)
     t = Tower.build(1, "kal|#{p.name}|#{System.unique_integer([:positive])}")
     [ex, ey] = t.exit
@@ -146,6 +185,36 @@ defmodule HacLong.Game.Kalima do
       elite: true,
       role: "boss"
     }
+  end
+
+  # ---------- Phòng của tổ đội (DECISIONS "Sự kiện đánh chung theo phòng", `HacLong.EventRoom`) ----------
+
+  @doc "Phòng Kalima `n` mới ở cấp `level`: quái Kalima, trạng thái `kal` chung."
+  def room_new(n, level, salt) do
+    t = Tower.build(1, "kal|#{salt}")
+    kal = %{n: n, level: level, stage: "guards", guards: @rules.guards, killed: 0, done: false}
+    Map.merge(t, %{monsters: guards(level, t), kal: kal})
+  end
+
+  @doc "Quái `m` của phòng vừa bị hạ (người hạ ở `pos`): `{t, thông_báo | nil, bước}`, bước `:guard | :boss | :done`."
+  def room_kill(%{kal: kal} = t, m, pos) do
+    left = Enum.reject(t.monsters, &(&1.id == m.id))
+    killed = if m[:role] == "guard", do: kal.killed + 1, else: kal.killed
+    kal = %{kal | killed: killed}
+
+    case {m[:role], left} do
+      {"guard", []} ->
+        t = %{t | monsters: [], kal: %{kal | stage: "boss"}}
+
+        {%{t | monsters: [boss_at(t, pos)]},
+         "👹 Đã hạ hết quái Kalima! #{@rules.boss.name} xuất hiện gần cầu thang.", :boss}
+
+      {"boss", _} ->
+        {%{t | monsters: [], kal: %{kal | stage: "done", done: true}}, nil, :done}
+
+      _ ->
+        {%{t | monsters: left, kal: kal}, nil, :guard}
+    end
   end
 
   @doc "Quái dùng trong trận ở Kalima."
@@ -246,7 +315,9 @@ defmodule HacLong.Game.Kalima do
 
   @doc "Trả thưởng. Thắng: lượt `done` (bước tiếp là về Làng). Không thắng: rời Kalima về Làng."
   def finish(%{tower: %{kal: kal} = t} = p, success?) do
-    r = reward(kal.level, kal.killed, success?)
+    # phòng tổ đội: thưởng theo số quái mình hạ (`mine`), `killed` là của cả phòng
+    killed = Map.get(kal, :mine, kal.killed)
+    r = reward(kal.level, killed, success?)
     p = %{p | gold: p.gold + r.gold}
     p = Enum.reduce(r.items, p, fn {id, n}, p -> Engine.add_item(p, id, n) end)
     {_levels, p} = Engine.gain_xp(p, r.xp)
@@ -271,7 +342,7 @@ defmodule HacLong.Game.Kalima do
         do:
           "🏆 Hạ #{@rules.boss.name}! Kalima #{kal.n} hoàn thành: +#{r.gold} vàng, +#{r.xp} kinh nghiệm#{items}#{gear_txt}.",
         else:
-          "Kalima #{kal.n} kết thúc: hạ #{kal.killed} quái, +#{r.gold} vàng, +#{r.xp} kinh nghiệm."
+          "Kalima #{kal.n} kết thúc: hạ #{killed} quái, +#{r.gold} vàng, +#{r.xp} kinh nghiệm."
 
     p =
       if success?,

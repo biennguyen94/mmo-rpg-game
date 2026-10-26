@@ -72,6 +72,17 @@ defmodule HacLong.Game.Session do
   """
   def shared_end(user_id, info), do: call(user_id, {:shared_end, info})
 
+  @doc """
+  Tin từ phòng sự kiện (`HacLong.EventRoom`): `{:room_sync, id, tháp}`, `{:room_kill, id, mid, phần}`,
+  `{:room_end, id, info}`. Không khởi động Session (người không online kết thúc lượt ở bước đi sau).
+  """
+  def room_cast(user_id, msg) do
+    case Registry.lookup(HacLong.Game.Registry, user_id) do
+      [{pid, _}] -> GenServer.cast(pid, msg)
+      [] -> :ok
+    end
+  end
+
   @doc "Đang mở game (Session chạy và có tab). Không khởi động Session."
   def online?(user_id) do
     case Registry.lookup(HacLong.Game.Registry, user_id) do
@@ -301,6 +312,76 @@ defmodule HacLong.Game.Session do
   end
 
   def handle_cast({:slay_sync, _info}, s), do: {:noreply, s, timeout(s)}
+
+  # phòng sự kiện: giao dịch đang giữ Session thì đợi nhả rồi mới đổi nhân vật
+  def handle_cast({tag, _, _} = msg, %{held: {_, _}} = s) when tag in [:room_sync, :room_end],
+    do: retry_cast(msg, s)
+
+  def handle_cast({:room_kill, _, _, _} = msg, %{held: {_, _}} = s), do: retry_cast(msg, s)
+
+  def handle_cast({:room_sync, id, shared}, %{player: %{tower: %{room: id} = t} = p} = s) do
+    t2 = HacLong.EventRoom.merge(t, shared)
+    p = %{p | tower: t2}
+
+    # cả phòng sang đợt sau (Quảng Trường): về chỗ vào của bãi mới
+    p =
+      if t2.floor != t.floor and p.battle == nil do
+        [ex, ey] = t2.exit
+        %{p | pos: %{p.pos | x: ex, y: ey - 1}}
+      else
+        p
+      end
+
+    s = s |> Map.put(:player, p) |> mark_dirty()
+    broadcast(s, p, nil)
+    {:noreply, s, timeout(s)}
+  end
+
+  # người khác hạ con quái mình đang đánh cùng: thắng, vàng / kinh nghiệm theo phần sát thương mình gây
+  def handle_cast(
+        {:room_kill, id, mid, share},
+        %{player: %{battle: %{over: false, encounter: %{room: id, tower: mid} = enc}} = old} = s
+      ) do
+    p =
+      old
+      |> put_in([:battle, :monster, :xp], round((enc[:base_xp] || 0) * share))
+      |> put_in([:battle, :monster, :gold], round((enc[:base_gold] || 0) * share))
+      |> put_in([:battle, :monster, :hp], 0)
+
+    {_, p} = Engine.finish_win(p)
+    text = "Người khác ra đòn kết liễu! Bạn góp #{round(share * 100)}% sát thương."
+    p = put_in(p.battle.log, Enum.take(p.battle.log ++ [%{text: text, kind: "info"}], -60))
+    p = battle_over(s, old, p)
+    s = save(s, p)
+    broadcast(s, p, nil)
+    track_guild(old, p, nil)
+    {:noreply, s, timeout(s)}
+  end
+
+  def handle_cast({:room_end, id, info}, %{player: %{tower: %{room: id}} = old} = s) do
+    p =
+      case old.battle do
+        %{over: false} = b ->
+          log = Enum.take(b.log ++ [%{text: "Sự kiện kết thúc.", kind: "info"}], -60)
+          %{old | battle: %{b | over: true, result: "fled", log: log}}
+
+        _ ->
+          old
+      end
+
+    {r, p} = HacLong.EventRoom.settle(p, info)
+    p = ds_record(p, s)
+    if p.pos.map != old.pos.map and map_size(s.tabs) > 0, do: World.enter(p, s.user_id)
+    s = save(s, p)
+    broadcast(s, p, nil)
+    notify(s, r.msg)
+    {:noreply, s, timeout(s)}
+  end
+
+  def handle_cast({tag, _, _}, s) when tag in [:room_sync, :room_end],
+    do: {:noreply, s, timeout(s)}
+
+  def handle_cast({:room_kill, _, _, _}, s), do: {:noreply, s, timeout(s)}
 
   def handle_cast(:refresh_guild, s) do
     p = with_guild(s.player, s.user_id)
@@ -797,6 +878,7 @@ defmodule HacLong.Game.Session do
       b[:live] -> slay_strike(s, p, cmd)
       World.world_battle?(p) -> world_strike(s, p, cmd)
       key = b[:encounter][:shared] -> shared_strike(s, p, cmd, key)
+      room = b[:encounter][:room] -> room_strike(s, p, cmd, room)
       true -> Commands.run(p, cmd)
     end
   end
@@ -837,6 +919,13 @@ defmodule HacLong.Game.Session do
       |> Enum.map(&%{n: &1.n, name: &1.name, at: Date.to_iso8601(DateTime.to_date(&1.at))})
 
     {%{ok: true, board: board}, p}
+  end
+
+  # Quảng Trường Quỷ / Lâu Đài Máu / Kalima: vào phòng đánh chung (HacLong.EventRoom)
+  defp run(s, p, %{"act" => act}) when act in ["ds_enter", "bc_enter", "kal_enter"] do
+    Commands.at_npc(p, ["tower"], "Người Gác Tháp ở Làng", fn _ ->
+      HacLong.EventRoom.enter(act, p, s.user_id)
+    end)
   end
 
   defp run(_s, p, cmd), do: Commands.run(p, cmd)
@@ -1037,6 +1126,56 @@ defmodule HacLong.Game.Session do
     end
   end
 
+  # Đánh quái phòng sự kiện: máu quái ở HacLong.EventRoom. Phần thưởng trận của người hạ theo phần sát thương mình gây
+  # (đặt sẵn trước đòn, đòn không hạ thì trả lại); người khác hạ trước thì đợi tin `{:room_kill, ...}` của phòng.
+  defp room_strike(s, p, cmd, room) do
+    enc = p.battle.encounter
+    mid = enc.tower
+
+    case HacLong.EventRoom.fight(room, mid, s.user_id) do
+      nil ->
+        {%{ok: true}, p}
+
+      f ->
+        share = min(1.0, (f.mine + f.hp) / max(f.max, 1))
+
+        p =
+          p
+          |> put_in([:battle, :monster, :hp], f.hp)
+          |> put_in([:battle, :monster, :xp], round(enc.base_xp * share))
+          |> put_in([:battle, :monster, :gold], round(enc.base_gold * share))
+
+        {result, p2} = Commands.run(p, cmd)
+        dealt = if p2.battle, do: f.hp - p2.battle.monster.hp, else: 0
+
+        case dealt > 0 && HacLong.EventRoom.hit(room, s.user_id, mid, dealt) do
+          false ->
+            {result, room_base(p2)}
+
+          {:alive, left} ->
+            {result, p2 |> put_in([:battle, :monster, :hp], left) |> room_base()}
+
+          {:killed, k} ->
+            enc2 = Map.merge(p2.battle.encounter, %{killed: true, pts: k.pts, role: k.role})
+            enc2 = if k[:end], do: Map.put(enc2, :end, k[:end]), else: enc2
+            p2 = put_in(p2.battle.encounter, enc2)
+            if p2.battle.over, do: {result, p2}, else: shared_win(p2)
+
+          :gone ->
+            {%{ok: true}, p}
+        end
+    end
+  end
+
+  # đòn chưa hạ quái: phần thưởng trận về như cũ (trận còn dài, phần sát thương còn đổi)
+  defp room_base(%{battle: %{over: false, encounter: enc}} = p) do
+    p
+    |> put_in([:battle, :monster, :xp], enc.base_xp)
+    |> put_in([:battle, :monster, :gold], enc.base_gold)
+  end
+
+  defp room_base(p), do: p
+
   defp shared_win(p) do
     {r, p} = Engine.finish_win(p)
     {Map.put(r, :result, "win"), p}
@@ -1151,6 +1290,11 @@ defmodule HacLong.Game.Session do
 
   # ---------- Nội bộ ----------
 
+  defp retry_cast(msg, s) do
+    Process.send_after(self(), {:"$gen_cast", msg}, 200)
+    {:noreply, s, timeout(s)}
+  end
+
   # "Thao tác quá nhanh" không ghi nhớ: gửi lại cùng mã sau đó vẫn chạy được.
   defp remember_rid(s, _rid, %{ok: false, msg: "Thao tác quá nhanh."}), do: s
 
@@ -1168,6 +1312,9 @@ defmodule HacLong.Game.Session do
   defp reply(value, s), do: {:reply, value, arm_tower(s), timeout(s)}
 
   # đang ở tầng riêng (`tower`) và có tab mở: hẹn nhịp cho quái tầng đi lang thang (như `:wander_ms` của bản đồ chung)
+  # phòng sự kiện chung: quái đứng yên (vị trí quái là của phòng, không của từng người)
+  defp arm_tower(%{player: %{tower: %{room: _}}} = s), do: s
+
   defp arm_tower(%{tower_timer: nil, player: %{pos: %{map: "tower"}, tower: %{}}} = s)
        when map_size(s.tabs) > 0 do
     case Application.get_env(:hac_long, :wander_ms) do
@@ -1395,7 +1542,10 @@ defmodule HacLong.Game.Session do
   # Trận vừa kết thúc: cập nhật quái trên bản đồ, gục ngã thì về Nhà, tính nhiệm vụ...
   defp battle_over(s, old, player) do
     player =
-      player |> Tower.keep_hp() |> Tower.after_battle() |> World.finish_encounter(s.user_id)
+      player
+      |> Tower.keep_hp()
+      |> room_after_battle(s.user_id)
+      |> World.finish_encounter(s.user_id)
 
     # lần đầu hạ Hắc Long: ghi lại thời điểm cho bảng xếp hạng
     player =
@@ -1412,6 +1562,12 @@ defmodule HacLong.Game.Session do
       player
     end
   end
+
+  # trận với quái phòng sự kiện (HacLong.EventRoom) hay quái tháp riêng
+  defp room_after_battle(%{tower: %{room: _}} = p, uid),
+    do: HacLong.EventRoom.after_battle(p, uid)
+
+  defp room_after_battle(p, _uid), do: Tower.after_battle(p)
 
   # Bang từ cấp 2: thêm kinh nghiệm mỗi trận thắng.
   defp guild_xp(%{guild: %{level: lv}} = p) when lv > 1 do

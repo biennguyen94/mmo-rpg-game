@@ -72,10 +72,13 @@ Mẹo: chọn vùng hợp cấp mình (dùng **Chọn map**, phím M, để đi 
 - **Vé:** mua ở Người Gác Tháp giá **20.000 vàng**, hoặc **ghép** ở Máy Hỗn Nguyên: **Mắt Quỷ + Chìa Khóa Quỷ**
   + 12.000 vàng (80 %). Mắt / Chìa Khóa rơi từ quái thường cấp ≥ 30 (5 %).
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **😈 Quảng Trường Quỷ** → Vào.
-- **Cách chơi:** bản đồ riêng, **5 phút**, **5 đợt**: 4 / 5 / 6 / 6 quái rồi 2 trùm (các trùm vùng). Hạ hết một đợt thì cầu
-  thang "Đợt sau" mở. Quái theo cấp mình: cấp 35–39 → quái cấp 36, 40–44 → 42, 45+ → 48 (mỗi đợt cao hơn một chút).
+- **Cách chơi:** **đánh chung theo phòng** (kiểu MU): người cùng mốc chuyển sinh (0–1, 2–3, 4–5, 6–7, 8–9, 10+) và cùng bậc
+  cấp vào chung một phòng — chung bản đồ, chung quái, chung máu quái, thấy nhau; quái mạnh theo mốc **cao nhất** của phòng.
+  **5 phút** tính từ lúc phòng mở, **5 đợt**: 4 / 5 / 6 / 6 quái rồi 2 trùm (các trùm vùng). Hạ hết một đợt thì cầu
+  thang "Đợt sau" mở; một người bước lên là cả phòng sang đợt sau. Quái theo cấp mình: cấp 35–39 → quái cấp 36, 40–44 → 42, 45+ → 48 (mỗi đợt cao hơn một chút).
 - **Kết thúc:** hết giờ, gục ngã, qua hết 5 đợt, hoặc tự đi cầu thang "Về Làng". Lúc nào cũng nhận thưởng theo điểm đã có.
-- **Điểm:** mỗi quái 1 điểm, mỗi trùm 10 điểm (tối đa 41).
+- **Điểm:** mỗi quái 1 điểm, mỗi trùm 10 điểm — điểm của **người ra đòn hạ**; người cùng đánh con đó được vàng / kinh nghiệm
+  trận theo phần sát thương mình gây. Thưởng cuối lượt theo **điểm của mình**.
 - **Thưởng:**
   - vàng và kinh nghiệm theo điểm (lượt đủ ≈ 17.000–22.000 vàng, ≈ 1 cấp kinh nghiệm);
   - cứ **8 điểm một viên ngọc** (Ước Nguyện / Tâm Linh / Hỗn Nguyên / Sinh Mệnh);
@@ -99,15 +102,18 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
 - **Vé:** mua ở Người Gác Tháp giá **30.000 vàng**, hoặc **ghép** ở Máy Hỗn Nguyên: **Cuộn Giấy Tổng Lãnh Thiên Thần + Xương
   Máu** + 18.000 vàng (80 %). Hai mảnh rơi từ quái thường cấp ≥ 35 (4 %).
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **🏰 Lâu Đài Máu** → Vào.
-- **Cách chơi:** bản đồ riêng, **8 phút**, ba bước:
+- **Cách chơi:** **đánh chung theo phòng** như Quảng Trường (mốc chuyển sinh + bậc cấp), **8 phút** từ lúc phòng mở, ba bước
+  chung của cả phòng:
   1. hạ **8 quân canh**;
   2. phá **Cổng Thành** (không đánh trả, nhiều máu) — ở gần cầu thang lên;
   3. hạ trùm **Hiệp Sĩ Máu** (mạnh hơn quân canh nhiều).
 
   Quái theo cấp mình: cấp 40–44 → 44, 45+ → 50.
-- **Thắng (hạ trùm):** ≈ 25.000–28.000 vàng, kinh nghiệm, **2 ngọc** và **1 Lông Vũ Kền Kền** — nguyên liệu bắt buộc để ghép
-  **cánh cấp 3** ở Máy Hỗn Nguyên (ghép hỏng mất lông vũ). Bước tiếp theo về Làng.
-- **Không xong** (hết giờ, gục, tự về): thưởng theo số quân canh đã hạ (đủ 8 ≈ 4.800 vàng), không có lông vũ.
+- **Thắng (hạ trùm):** người gây **nhiều sát thương nhất lên trùm** nhận ≈ 25.000–28.000 vàng, kinh nghiệm, **2 ngọc** và
+  **1 Lông Vũ Kền Kền** — nguyên liệu bắt buộc để ghép **cánh cấp 3** ở Máy Hỗn Nguyên (ghép hỏng mất lông vũ). Người khác
+  trong phòng: vàng / kinh nghiệm thắng × phần sát thương lên trùm, cộng thưởng theo số quân canh **mình** hạ. Bước tiếp theo
+  về Làng.
+- **Không xong** (hết giờ, gục, tự về): thưởng theo số quân canh **mình** đã hạ (8 con ≈ 4.800 vàng), không có lông vũ.
 
 ### Hỗn Chiến Thành (Chaos Castle)
 
@@ -135,10 +141,13 @@ Quái trong Quảng Trường không rơi đồ / ngọc riêng; thưởng tính
   thường cấp ≥ 20.
 - **Cách vào:** Làng → **Người Gác Tháp** → thẻ **👹 Kalima** → Vào. Cấp Kalima theo cấp nhân vật: 20 → Kalima 1, 25 → 2,
   30 → 3, 35 → 4, 40 → 5, 45 → 6, 50 → 7 (quái cấp 22, 27 … 52).
-- **Cách chơi:** bản đồ riêng, **10 phút**: hạ **10 quái Kalima**, rồi **Kundun** hiện gần cầu thang lên (rất trâu).
-- **Thắng (hạ Kundun):** vàng, kinh nghiệm lớn, **3 ngọc** và **1 món đồ** (50 % Excellent; bộ giáp thì 30 % là đồ Thần).
-  Bước tiếp theo về Làng.
-- **Không xong** (hết giờ, gục, tự về): thưởng theo số quái đã hạ.
+- **Cách chơi:** **10 phút**: hạ **10 quái Kalima**, rồi **Kundun** hiện gần cầu thang lên (rất trâu).
+- **Đi cùng tổ đội:** một người dùng Bản Đồ Thất Lạc mở phòng của tổ đội; đồng đội vào Kalima lúc phòng còn mở thì vào cùng,
+  **không tốn bản đồ**. Chung quái, chung máu quái; quái mạnh theo người **chuyển sinh nhiều nhất** trong tổ đội (đi một mình:
+  theo mình).
+- **Thắng (hạ Kundun):** **cả phòng** cùng nhận vàng, kinh nghiệm lớn, **3 ngọc** và **1 món đồ** (50 % Excellent; bộ giáp thì
+  30 % là đồ Thần). Bước tiếp theo về Làng.
+- **Không xong** (hết giờ, gục, tự về): thưởng theo số quái **mình** đã hạ.
 
 ### Công Thành Chiến (Castle Siege)
 

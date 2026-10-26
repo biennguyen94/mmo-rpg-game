@@ -262,7 +262,8 @@ defmodule HacLong.Game.Commands do
   @merchants ["shop", "herbalist"]
 
   # Chạy `fun` nếu đang đứng cạnh NPC có vai trò phù hợp.
-  defp at_npc(p, roles, who, fun) do
+  @doc "Chạy `fun` khi đứng cạnh NPC có vai trò trong `roles`; không thì nhắc đến gặp `who`."
+  def at_npc(p, roles, who, fun) do
     case World.near_npc(p, roles) do
       nil -> {%{ok: false, msg: "Hãy đến gặp #{who}."}, p}
       npc -> fun.(npc)

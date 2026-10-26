@@ -1,4 +1,4 @@
-# Quái sự kiện theo số lần chuyển sinh của người đánh: máu / công / thủ (đúng như game dựng: Engine.make_monster +
+# Quái sự kiện theo mốc chuyển sinh k của phòng (DECISIONS "Sự kiện đánh chung theo phòng"): máu / công / thủ (đúng như game dựng: Engine.make_monster +
 # hệ số của sự kiện + Engine.scale_event/1) và so với nhân vật cùng mốc (Max.tier/2, hồ sơ đồ chơi thật; mốc 10 đồ tối đa):
 # số đòn thường để hạ, % máu mất mỗi đòn quái trúng. Kho Đồ dùng qua export.exs; chạy riêng để xem nhanh:
 #   MIX_ENV=test mix run --no-start scripts/kho_do/event_monsters.exs print

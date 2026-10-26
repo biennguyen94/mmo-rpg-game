@@ -694,6 +694,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   ở cấp cao / vùng chuyển sinh gần như đánh tất cả. Cài đặt đã lưu (`auto_cfg`) giữ lựa chọn cũ của người chơi.
 
 ## Quái sự kiện theo chuyển sinh (2026-10-17, anh "theo e đề xuất")
+> Thay bởi "Sự kiện đánh chung theo phòng" (2026-10-26): hệ số giữ nguyên, nhưng `k` là mốc của phòng / tổ đội, không còn
+> theo người đánh.
+
 - Quái sự kiện làm cho cấp 35–50 chưa chuyển sinh (mạnh nhất ~×1,8), người chuyển sinh cao đánh quá dễ. `RULES.event_scale`:
   với k lần chuyển sinh của **người đánh** (tối đa `max_rebirths`): máu / thủ × (1 + 0,4k), công × (1 + 0,15k) — như vùng
   chuyển sinh — kinh nghiệm / vàng × (1 + 0,2k). `Engine.scale_event/1` gọi ngay khi vào trận: Quảng Trường Quỷ, Lâu Đài Máu,
@@ -1358,3 +1361,36 @@ Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (l�
 Workflow `.github/workflows/kho-do-pages.yml` dựng `scripts/kho_do/build.sh` trên `main` (khi đổi dữ liệu game / lib /
 hình Pixel / scripts/kho_do) và đăng GitHub Pages. Trang là phần thân của artifact nên bước đăng thêm doctype, charset
 UTF-8, viewport; đổi tên thành `index.html`, bỏ `data.json`. Chỉ có hình Pixel CC0, không asset MU (CLAUDE.md §7).
+
+## Sự kiện đánh chung theo phòng (2026-10-26, anh "A làm cả 3 mục")
+
+Kiểu MU: mọi người trong cùng một sự kiện đánh chung quái. Trước đây Quảng Trường Quỷ / Lâu Đài Máu / Kalima là bản đồ riêng của
+từng người và quái mạnh theo chuyển sinh của **người đánh** (tổ đội lách bằng người chuyển sinh ít đánh). Hệ số
+`RULES.event_scale` (máu / thủ × (1 + 0,4k), công × (1 + 0,15k), thưởng × (1 + 0,2k)) giữ nguyên, chỉ đổi `k`
+(`Engine.scale_event/2` nhận `k`, `event_scale.version` 2). Trùm sự kiện vẫn "máu trâu" (anh: "mục đích là để máu trâu").
+
+**Phòng theo mốc chuyển sinh** `RULES.event_rooms.bands` [0–1], [2–3], [4–5], [6–7], [8–9], [10+] (`HacLong.Game.EventRooms`):
+quái của phòng mạnh theo mốc **cao nhất** của khoảng (`k = min(đến, max_rebirths)`), người chuyển sinh ít trong phòng không làm
+quái yếu đi.
+
+1. **Hỗn Chiến Thành**: mỗi khoảng một bản đồ `chaos_castle`, `chaos_castle_1..5` (`scripts/gen_cc_rooms.py`), thả quái /
+   kết thúc / thưởng theo từng phòng. **Vương Miện** Công Thành Chiến cố định `event_scale.crown_rebirths` = 10. **Quái vàng**
+   Golden Invasion mạnh theo vùng như quái thường (không nhân).
+2. **Quảng Trường Quỷ, Lâu Đài Máu**: phòng = đợt mở + khoảng chuyển sinh + bậc cấp (`tiers`), mỗi phòng một tiến trình
+   `HacLong.EventRoom` (Registry + DynamicSupervisor): chung bản đồ, chung quái, **chung máu quái**, thấy nhau trên bản đồ (kênh
+   `event_room:<id>` đẩy sự kiện `map` như bản đồ chung). Giờ kết thúc là của phòng (người vào sau còn ít giờ hơn).
+   - Đánh: chạm quái lấy máu chung (`engage`), mỗi đòn trừ máu chung (`hit`). **Người hạ** nhận thưởng trận theo phần sát
+     thương mình gây lên con đó (một mình hạ: đủ) và **điểm** Quảng Trường / số quân canh Lâu Đài; **người cùng đánh** con đó
+     thắng trận, vàng / kinh nghiệm theo phần sát thương (không điểm, không rơi đồ).
+   - Quảng Trường: hạ hết quái, một người lên cầu thang là cả phòng sang đợt sau (về chỗ vào bãi mới). Qua hết đợt / hết giờ:
+     mỗi người nhận thưởng theo **điểm của mình** (`DevilSquare.finish/3`, bảng xếp hạng ngày như cũ).
+   - Lâu Đài: bước (quân canh → cổng → trùm) là của phòng. Hạ Hiệp Sĩ Máu: người gây **nhiều sát thương nhất lên trùm** nhận
+     `reward.success` đầy đủ (Lông Vũ Kền Kền); người khác vàng / kinh nghiệm `success` × phần sát thương lên trùm cộng thưởng
+     `partial` theo số quân canh **mình** hạ (`BloodCastle.room_reward/4`). Hết giờ: `partial` theo quân canh mình hạ.
+3. **Kalima theo tổ đội**: phòng `kal:p<tổ đội>` (một mình: `kal:u<người>`). Một người dùng Bản Đồ Thất Lạc mở phòng; đồng đội
+   bấm Vào Kalima ở Người Gác Tháp lúc phòng còn mở thì vào cùng, **không tốn bản đồ**. Quái mạnh theo người chuyển sinh
+   **nhiều nhất** trong tổ đội (đọc database lúc mở). Hạ Kundun: **cả phòng cùng thắng** (`reward.success` mỗi người).
+
+Quyết định nhỏ tự chọn: quái phòng chung đứng yên (không đi lang thang); người rời (cổng `<`, gục ngã) chỉ mình kết thúc lượt;
+phòng hết người thì đóng; người offline lúc phòng kết thúc thì kết thúc ở bước đi sau (phòng không còn → thưởng như hết giờ);
+lượt riêng cũ (không có `room`) vẫn chạy như trước. Test: `test/hac_long_web/event_room_test.exs`, e2e `e2e/eventroom.mjs`.
