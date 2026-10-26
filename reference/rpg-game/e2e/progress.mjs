@@ -72,8 +72,8 @@ const rare = Object.values(p.view.gear).find((g) => !Object.values(p.equip).incl
 const opt0 = p.view.gear[rare].opt || 0;
 await page.click('#tabs [data-tab="bag"]');
 await act(page, `[data-act="bag-tip"][data-id="${rare}"]`);
-R.check('tooltip đồ trong túi có nút Ép và Vứt', !!(await page.$('#itemtip [data-act="forge-pick"]')) && !!(await page.$('#itemtip [data-act="discard"]')));
-await act(page, '#itemtip [data-act="forge-pick"]');
+R.check('tooltip đồ trong túi có nút "Ép ở Thợ Rèn", xem trước bước ép, nút Vứt', !!(await page.$('#itemtip [data-act="forge-go"][data-at="smith"]')) && ((await page.textContent('#itemtip .tip-forge').catch(() => '')) || '').includes('Ép +') && !!(await page.$('#itemtip [data-act="discard"]')));
+await act(page, '#itemtip [data-act="forge-go"]');
 R.check('chọn Ép khi đang ở Thợ Rèn: thẻ rèn hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
 await act(page, `[data-act="life"][data-id="${rare}"]`);
 p = await player(page);

@@ -2449,6 +2449,7 @@
   // ---------- Bảng chi tiết món đồ (tooltip kiểu MU Web) ----------
   let tipAt = null; // { id?, slot?, x, y }
   let forgePick = null; // món trong túi chọn để ép ở Thợ Rèn (nút "Ép" trong tooltip)
+  let forgePickSlot = null; // ô đồ đang mặc chọn để ép (nút "Ép" trong tooltip), đứng đầu thẻ Đang mặc
   // dòng Ngọc Sinh Mệnh của món đồ
   const lifeLine = (it) => it.opt ? `<div class="small" style="color:var(--good)">${smallIc(RULES.life.jewel, '💚')} ${esc(ITEMS[RULES.life.jewel].name)}: +${it.opt * lineVal(it)} ${atkSlot(it) ? 'tấn công' : 'phòng thủ'} (${it.opt}/${RULES.life.max_lines} dòng)</div>` : '';
   function hideTip() {
@@ -2533,14 +2534,39 @@
       : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana_pct ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
       : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
-    // ép món trong túi (mang tới Thợ Rèn), vứt món trong túi
-    const forgeBtn = !at.slot && P.view.forgeBag[id] ? `<button class="btn" data-act="forge-pick" data-id="${esc(id)}">${icon('anvil')}Ép</button>` : '';
+    // ép: xem trước bước kế tiếp + nút tự đi tới đúng NPC (Thợ Rèn / Lão Hỗn Nguyên), DECISIONS "Ép từ khung đồ"
+    const fg = at.loot ? null : forgeOf(at.slot, id);
+    const forgeBtn = fg && fg.cost ? forgeGoBtn(at.slot, id, fg) : '';
     // mở từ bảng đồ nhận sau trận (`at.loot` = số vừa nhặt): nút Hủy đúng số đó
     const dropBtn = !at.slot && !it.locked ? `<button class="btn danger" data-act="discard" data-id="${esc(id)}" data-n="${at.loot ? Math.min(at.loot, n) : n}" data-name="${esc(itemName(id))}">${at.loot ? '🗑 Hủy' : 'Vứt'}</button>` : '';
     placeTip(at, `
       <div class="big">${itemIcon(it, it.kind, upLevel(id))}</div>
       ${muTipBody(it, id, at, n)}
+      ${fg ? forgePreview(fg) : ''}
       <div class="btns">${at.loot ? dropBtn : btns + forgeBtn + dropBtn}</div>`);
+  }
+
+  // bước ép kế tiếp của món đang mặc ở ô `slot` hoặc món `id` trong túi: `{id, level, cost}` (cost nil: đã tối đa)
+  function forgeOf(slot, id) {
+    if (slot) return P.view.forge[slot] || null;
+    return (id && P.view.forgeBag[id]) || null;
+  }
+  const forgeNpc = (c) => (c.at === 'chaos' ? 'Lão Hỗn Nguyên' : 'Thợ Rèn');
+  // khung đồ: "+L → +L+1 ở …: tỉ lệ · thất bại …" + ngọc (đủ xanh, thiếu đỏ) + vàng
+  function forgePreview(f) {
+    const c = f.cost;
+    if (!c) return `<div class="tip-forge small" style="color:var(--gold)">Đã ép tối đa +${f.level}.</div>`;
+    const rate = c.rate < 1 ? ` · tỉ lệ <b>${Math.round(c.rate * 100)}%</b>` : ' · chắc chắn';
+    const fail = c.fail ? ` · <span style="color:var(--bad)">${RISK[c.fail]}</span>` : '';
+    const gold = `<span class="${P.gold >= c.gold ? 'ok' : 'lack'}">${icon('two-coins')}${fmt(c.gold)} vàng</span>`;
+    return `<div class="tip-forge small"><div>Ép +${f.level} → +${f.level + 1} ở <b>${forgeNpc(c)}</b>${rate}${fail}</div>
+      ${needList(Object.entries(c.items)).replace('</div>', gold + '</div>')}</div>`;
+  }
+  // nút "Ép ở …": tự về Làng, đi tới NPC, mở bảng ép đã chọn sẵn món này; khóa khi đang trong trận / Tháp / sự kiện
+  function forgeGoBtn(slot, id, f) {
+    const why = P.battle ? 'Đang trong trận' : P.pos.map === 'tower' ? 'Ra khỏi Tháp / sự kiện trước' : '';
+    const target = slot ? `data-slot="${slot}"` : `data-id="${esc(id)}"`;
+    return `<button class="btn" data-act="forge-go" ${target} data-at="${f.cost.at}" ${why ? `disabled title="${why}"` : ''}>${icon(f.cost.at === 'chaos' ? 'chaos-machine' : 'anvil')}Ép ở ${forgeNpc(f.cost)}</button>${why ? `<span class="small muted">${why}</span>` : ''}`;
   }
   function placeTip(at, html) {
     tipAt = at;
@@ -2645,7 +2671,8 @@
       const ids = Object.keys(P.view.forgeBag).sort((a, b) => (a === forgePick ? -1 : b === forgePick ? 1 : 0));
       return ids.map((id) => [null, id === forgePick ? 'Trong túi (đã chọn)' : 'Trong túi', Object.assign({ id }, P.view.forgeBag[id])]);
     }
-    return FORGE_SLOTS.map(([slot, label]) => [slot, slot === 'shield' && P.equip.shield ? slotLabel(slot, itemOf(P.equip.shield)) : label, P.view.forge[slot]]);
+    const rows = FORGE_SLOTS.map(([slot, label]) => [slot, (slot === 'shield' && P.equip.shield ? slotLabel(slot, itemOf(P.equip.shield)) : label) + (slot === forgePickSlot ? ' (đã chọn)' : ''), P.view.forge[slot]]);
+    return rows.sort((a, b) => (a[0] === forgePickSlot ? -1 : b[0] === forgePickSlot ? 1 : 0));
   }
   // hướng dẫn gọn: bảng các bước ép, rồi vài dòng ghi chú
   function upGuide() {
@@ -3367,6 +3394,7 @@
           <button class="btn" data-act="flee" ${wait} title="${slayEnc ? 'Bỏ chạy: tính như gục ngã' : 'Bỏ chạy'}">${icon('walk')}<span class="lbl">Chạy</span>${slayEnc ? '<span class="sub">= chết</span>' : ''}</button>
         </div>`;
     } else {
+      // nút rời trận đứng trước danh sách đồ rơi: trùm rơi nhiều đồ thì danh sách dài, nút ở cuối bị đẩy khỏi màn hình
       const r = b.result, rw = b.reward;
       const title = r === 'win' ? (m.final ? 'Hắc Long đã chết!' : 'Chiến thắng!') : r === 'lose' ? 'Gục ngã' : 'Đã thoát';
       bottom = `
@@ -3374,7 +3402,6 @@
           <h2>${title}</h2>
           ${rw ? `<p class="num">+${fmt(rw.xp)} kinh nghiệm · +${fmt(rw.gold)} vàng</p>` : ''}
           ${rw && rw.levels ? `<p style="color:var(--gold);font-weight:600">Lên cấp ${P.level}! Vào tab Nhân vật để cộng điểm.</p>` : ''}
-          <!-- nút rời trận đứng trước danh sách đồ rơi: trùm rơi nhiều đồ thì danh sách dài, nút ở cuối bị đẩy khỏi màn hình -->
           <div class="btn-row">
             <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về nhà` : `${icon('walk')} Tiếp tục`}</button>
           </div>
@@ -3662,6 +3689,26 @@
     return ok;
   }
 
+  // Nút "Ép ở …" trong khung đồ: chọn sẵn món (thẻ Đang mặc / Trong túi), về Làng nếu cần (dịch chuyển như bảng chọn
+  // bản đồ, tốn vàng), đi bộ tới Thợ Rèn (`at` "smith") hoặc Lão Hỗn Nguyên ("chaos"); tới nơi bảng NPC mở như chạm NPC.
+  async function forgeGo(slot, id, at) {
+    forgePickSlot = slot;
+    forgePick = slot ? null : id;
+    forgeTab = slot ? 'wear' : 'bag';
+    hideTip();
+    const role = at === 'chaos' ? 'chaos' : 'shop';
+    if (npc && npcData().role === role) { goTab('map'); return; }
+    if (P.pos.map !== 'village') {
+      await sendCommand({ act: 'travel', to: 'village' });
+      if (!P || P.pos.map !== 'village') return; // không dịch chuyển được (thiếu vàng…): server đã báo lý do
+    }
+    const n = WORLD.maps.village.npcs.find((q) => q.role === role);
+    if (!n) return;
+    npc = null;
+    goTab('map');
+    await walkTo(n.at[0], n.at[1]);
+  }
+
   // Đi dần tới ô đích (hoặc đuổi theo con quái đã chạm vào), tính lại đường sau mỗi bước.
   async function walkTo(x, y) {
     const target = Map_.monsterAt(x, y);
@@ -3921,15 +3968,7 @@
     if (act === 'forge-tab') { forgeTab = t.dataset.tab2; render(); return; }
     if (act === 'stat-help') { statHelp = statHelp === t.dataset.k ? null : t.dataset.k; render(); return; }
     if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
-    if (act === 'forge-pick') {
-      forgePick = t.dataset.id;
-      forgeTab = 'bag';
-      hideTip();
-      const atChaos = P.view.forgeBag[forgePick] && P.view.forgeBag[forgePick].cost && P.view.forgeBag[forgePick].cost.at === 'chaos';
-      if (npc && npcData().role === (atChaos ? 'chaos' : 'shop')) { goTab('map'); return; }
-      toast(atChaos ? 'Mang món này đến Lão Hỗn Nguyên ở Làng để ép +10, +11.' : 'Mang món này đến Thợ Rèn ở Làng để ép.');
-      return;
-    }
+    if (act === 'forge-go') { forgeGo(t.dataset.slot || null, t.dataset.id || null, t.dataset.at); return; }
     if (act === 'discard') {
       const max = +t.dataset.n || 1;
       let n = 1;

@@ -1422,3 +1422,11 @@ kinh nghiệm / vàng, trước danh sách đồ.
 - Bỏ `RULES.slay.per_target_hour` (đồ sát cùng một người tối đa 3 lần / giờ): không còn giới hạn số lần đồ sát.
 - `RULES.slay.protect_s` 120 → 30: người vừa gục trong đồ sát được bảo vệ 30 giây (tự đi đồ sát thì mất bảo vệ như cũ).
 - Tên đỏ, mất vàng gấp đôi khi tên đỏ gục, vùng an toàn giữ nguyên.
+
+## Ép từ khung đồ (2026-10-26, anh "ok làm 1 và 2")
+Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và đồ đang mặc không có nút). Nay:
+- Khung đồ (đang mặc lẫn trong túi) xem trước bước ép kế tiếp: "Ép +L → +L+1 ở Thợ Rèn / Lão Hỗn Nguyên", tỉ lệ (đã tính
+  May mắn) hoặc "chắc chắn", thất bại thế nào, từng loại ngọc (đủ xanh, thiếu đỏ), vàng; tối đa thì "Đã ép tối đa +11".
+- Nút "Ép ở Thợ Rèn" (+0…+9) / "Ép ở Lão Hỗn Nguyên" (+10, +11): chọn sẵn món (thẻ Đang mặc / Trong túi, đứng đầu "đã
+  chọn"), ở bản đồ khác thì dịch chuyển về Làng (tốn vàng như bảng chọn bản đồ), đi bộ tới NPC, mở bảng ép. Luật không đổi
+  (vẫn phải đứng cạnh NPC). Đang trong trận / Tháp / phòng sự kiện thì nút khóa, ghi lý do. e2e `e2e/forgego.mjs`.
