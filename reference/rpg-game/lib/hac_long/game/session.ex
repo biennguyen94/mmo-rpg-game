@@ -1305,12 +1305,38 @@ defmodule HacLong.Game.Session do
 
   defp interrupt_battle(p, _uid), do: Map.put(p, :battle, nil)
 
+  # chiến bang sau trận đấu trường: thắng thành viên bang địch thì ghi điểm; đánh người bang địch mà không được điểm
+  # thì nói lý do. Trả phần chữ nối vào dòng kết quả ("" nếu hai người không thuộc hai bang đang chiến nhau).
+  defp war_note(won?, uid, target) do
+    alias HacLong.GuildWars
+
+    cond do
+      won? ->
+        case GuildWars.record(uid, target) do
+          {:ok, _} ->
+            " ⚔ Chiến bang: bang bạn +1 điểm."
+
+          {:error, :limit} ->
+            " ⚔ Chiến bang: không tính điểm (đã thắng người này #{GuildWars.rules().same_target_max} lần)."
+
+          _ ->
+            ""
+        end
+
+      GuildWars.war_between(uid, target) ->
+        " ⚔ Chiến bang: không tính điểm (chỉ thắng mới được điểm)."
+
+      true ->
+        ""
+    end
+  end
+
   # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
   # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.
   defp battle_over(s, _old, %{battle: %{encounter: %{pvp: target} = enc} = b} = player) do
     r = Arena.finish(s.user_id, target, b.result)
     # chiến bang: thắng thành viên bang địch thì ghi điểm cho bang
-    war = r.won && HacLong.GuildWars.record(s.user_id, target)
+    war = war_note(r.won, s.user_id, target)
 
     player =
       cond do
@@ -1329,14 +1355,12 @@ defmodule HacLong.Game.Session do
 
     text =
       if r.won,
-        do:
-          "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <>
-            if(war, do: " ⚔ Chiến bang: bang bạn +1 điểm.", else: ""),
+        do: "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <> war,
         else:
           if(b.result == "lose",
             do: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}).",
             else: "🏟 Bỏ chạy khỏi đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
-          )
+          ) <> war
 
     reward = %{xp: 0, gold: r.gold, items: [], levels: 0}
 

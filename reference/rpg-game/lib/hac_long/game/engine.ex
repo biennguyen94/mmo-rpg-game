@@ -1712,10 +1712,23 @@ defmodule HacLong.Game.Engine do
 
       cond do
         p.hp > 0 -> win(p)
-        me_over >= foe_over -> win(%{p | hp: 1})
-        true -> lose(p)
+        me_over >= foe_over -> p |> both_down(me_over, foe_over, true) |> Map.put(:hp, 1) |> win()
+        true -> p |> both_down(me_over, foe_over, false) |> lose()
       end
     end
+  end
+
+  # cả hai cùng gục: nói rõ ai bị đánh lố bao nhiêu (% máu tối đa) để người chơi hiểu vì sao thắng / thua
+  defp both_down(p, me_over, foe_over, won?) do
+    name = p.battle.monster.name
+    pc = fn x -> round(-x * 100) end
+
+    log(
+      p,
+      "⚖ Cả hai cùng gục: bạn bị đánh lố #{pc.(me_over)}% máu, #{name} lố #{pc.(foe_over)}% → " <>
+        if(won?, do: "bạn thắng.", else: "#{name} thắng."),
+      "info"
+    )
   end
 
   # đối thủ đấu trường hết máu: Long Vương Hồi Sinh của họ (mỗi trận một lần); không được cứu thì nil

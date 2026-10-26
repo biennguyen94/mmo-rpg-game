@@ -82,4 +82,39 @@ defmodule HacLongWeb.GuildWarArenaTest do
     assert %{mine: 1, theirs: 0} = GuildWars.brief(ga)
     assert %{mine: 0, theirs: 1} = GuildWars.brief(gb)
   end
+
+  test "thua thành viên bang địch: nhật ký nói không tính điểm; danh sách đấu trường có ký hiệu bang" do
+    ua = create_user()
+    player(ua, %{})
+    sa = join(ua)
+    ga = cmd(sa, %{"act" => "guild_create", "name" => "Bang Ba", "tag" => "BA3"}).player.guild.id
+
+    ub = create_user()
+    player(ub, %{level: 200, str: 3000, vit: 3000, agi: 500})
+    sb = join(ub)
+    cmd(sb, %{"act" => "guild_create", "name" => "Bang Tu", "tag" => "TU4"})
+
+    {:ok, _} = gop(sa, "war_declare", %{"tag" => "TU4"})
+    {:ok, _} = gop(sb, "war_accept")
+
+    assert Enum.any?(
+             HacLong.Arena.search(ua.id, "Bh"),
+             &(&1.user_id == ub.id and &1.tag == "TU4")
+           )
+
+    cmd(sa, %{"act" => "pvp_challenge", "uid" => ub.id})
+
+    r =
+      Enum.reduce_while(1..100, nil, fn _, _ ->
+        r = cmd(sa, %{"act" => "attack"})
+        if r.player.battle && r.player.battle.over, do: {:halt, r}, else: {:cont, r}
+      end)
+
+    assert r.player.battle.result == "lose"
+
+    assert List.last(r.player.battle.log).text =~
+             "Chiến bang: không tính điểm (chỉ thắng mới được điểm)"
+
+    assert %{mine: 0, theirs: 0} = GuildWars.brief(ga)
+  end
 end

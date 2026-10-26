@@ -116,7 +116,7 @@ defmodule HacLongWeb.GuildWarTest do
 
     # bang chủ A thắng bang chủ B ở đấu trường 4 lần: chỉ 3 lần tính điểm
     for _ <- 1..3, do: assert({:ok, _} = GuildWars.record(la.id, lb.id))
-    assert GuildWars.record(la.id, lb.id) == nil
+    assert GuildWars.record(la.id, lb.id) == {:error, :limit}
     # người ngoài bang địch không tính
     outsider = create_user()
     player(outsider)

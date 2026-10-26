@@ -1338,3 +1338,14 @@ test `mix test --only balance` kiểm cả hai chế độ.
 `RULES.loot.gear_slots`: vũ khí 38 → 25%, giáp (bộ) 43 → 55%, khiên 13 → 7%, trang sức 6 → 13%. Lý do (audit
 `docs/BALANCE_AUDIT_2026-10-26.md`): giáp lên rất chậm (cấp 1 → 12 → 17 qua 10 lần chuyển sinh) trong khi vũ khí đã cấp
 47 từ r0; trang sức gần như không rơi.
+
+## Đấu trường / chiến bang: nói rõ kết quả (2026-10-26, anh duyệt)
+
+Người chơi thua trận Đấu trường mà đối thủ cũng 0 máu tưởng là lỗi, và không biết vì sao chiến bang không lên điểm.
+Không đổi luật, chỉ thêm thông báo:
+- Cả hai cùng gục (đối thủ máy ra đòn cuối cùng lúc): nhật ký ghi "⚖ Cả hai cùng gục: bạn bị đánh lố X% máu, <đối thủ>
+  lố Y% → … thắng" (bên bị đánh lố ít hơn, so với máu tối đa, thắng — luật cũ).
+- Đấu với thành viên bang địch mà không được điểm: dòng kết quả thêm lý do ("chỉ thắng mới được điểm" / "đã thắng
+  người này N lần"). `GuildWars.record/2` trả `{:error, :limit}` khi quá `same_target_max`; thêm `war_between/2`.
+- Danh sách Đấu trường (gợi ý, tìm theo tên) hiện [ký hiệu bang], bang địch đang chiến tô đỏ như trên bản đồ.
+Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (lệnh `pvp_challenge` qua kênh).

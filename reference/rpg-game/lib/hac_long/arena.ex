@@ -156,6 +156,10 @@ defmodule HacLong.Arena do
     from(c in Character,
       left_join: r in "pvp",
       on: r.user_id == c.user_id,
+      left_join: gm in "guild_members",
+      on: gm.user_id == c.user_id,
+      left_join: g in "guilds",
+      on: g.id == gm.guild_id,
       where: c.user_id != ^uid,
       order_by: [asc: fragment("abs(coalesce(?, 1000) - ?)", r.rating, ^me), desc: c.level],
       limit: ^n,
@@ -164,7 +168,9 @@ defmodule HacLong.Arena do
         name: c.name,
         cls: c.cls,
         level: c.level,
-        rating: coalesce(r.rating, 1000)
+        rating: coalesce(r.rating, 1000),
+        # ký hiệu bang: danh sách tô màu bang địch đang chiến như trên bản đồ
+        tag: g.tag
       }
     )
     |> Repo.all()
@@ -183,6 +189,10 @@ defmodule HacLong.Arena do
       from(c in Character,
         left_join: r in "pvp",
         on: r.user_id == c.user_id,
+        left_join: gm in "guild_members",
+        on: gm.user_id == c.user_id,
+        left_join: g in "guilds",
+        on: g.id == gm.guild_id,
         where: c.user_id != ^uid and ilike(c.name, ^"%#{q}%"),
         order_by: [desc: fragment("lower(?) = lower(?)", c.name, ^q), desc: c.level, asc: c.name],
         limit: ^n,
@@ -191,7 +201,8 @@ defmodule HacLong.Arena do
           name: c.name,
           cls: c.cls,
           level: c.level,
-          rating: coalesce(r.rating, 1000)
+          rating: coalesce(r.rating, 1000),
+          tag: g.tag
         }
       )
       |> Repo.all()

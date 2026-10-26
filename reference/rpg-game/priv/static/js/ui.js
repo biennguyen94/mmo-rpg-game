@@ -1207,9 +1207,14 @@
   }
 
   // một dòng đối thủ (gợi ý hoặc kết quả tìm theo tên)
-  const arenaRow = (o, left) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div>
+  // bang địch đang chiến tô đỏ như trên bản đồ (chỉ thắng người bang địch ở đây mới ghi điểm chiến bang)
+  const arenaRow = (o, left) => {
+    const war = P && P.guild && P.guild.war && P.guild.war.enemy, enemy = war && o.tag && o.tag === war.tag;
+    const color = window.HLLogic.nameColor(o, { tag: P && P.guild && P.guild.tag, enemy: war && war.tag });
+    return `<div class="item"><div class="grow"><div class="name" style="color:${color}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${enemy ? ' <span class="small">· ⚔ Bang địch</span>' : ''}</div>
         <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · điểm ${o.rating}</div></div>
         <button class="btn" data-act="pvp_challenge" data-uid="${o.user_id}" ${left > 0 ? '' : 'disabled'}>Thách đấu</button></div>`;
+  };
   function viewArena() {
     if (!arena) return '<div class="card" id="arena"><h3>Đấu trường</h3><p class="small muted">Đang tải…</p></div>';
     const me = arena.me, left = me.per_day - me.today;
