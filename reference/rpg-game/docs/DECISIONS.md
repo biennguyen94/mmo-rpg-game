@@ -1424,6 +1424,8 @@ kinh nghiệm / vàng, trước danh sách đồ.
 - Tên đỏ, mất vàng gấp đôi khi tên đỏ gục, vùng an toàn giữ nguyên.
 
 ## Ép từ khung đồ (2026-10-26, anh "ok làm 1 và 2")
+> Đã bỏ (2026-10-26, anh: "bỏ phần gợi ý và cả phần di chuyển tới NPC luôn"): khung đồ không còn xem trước ép và nút "Ép
+> ở …"; ép như cũ ở Thợ Rèn / Lão Hỗn Nguyên (thẻ Đang mặc / Trong túi). Giữ phần khung đồ cuộn bên trong (dưới đây).
 Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và đồ đang mặc không có nút). Nay:
 - Khung đồ (đang mặc lẫn trong túi) xem trước bước ép kế tiếp: "Ép +L → +L+1 ở Thợ Rèn / Lão Hỗn Nguyên", tỉ lệ (đã tính
   May mắn) hoặc "chắc chắn", thất bại thế nào, từng loại ngọc (đủ xanh, thiếu đỏ), vàng; tối đa thì "Đã ép tối đa +11".

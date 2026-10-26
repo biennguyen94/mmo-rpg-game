@@ -1,5 +1,5 @@
-// Khung chi tiết đồ trên điện thoại (360 × 640): đồ nhiều dòng (6 dòng Excellent, May mắn, dòng cộng thêm, Bộ Thần, +9 có
-// xem trước ép) không lố màn hình: khung cao tối đa bằng màn hình, phần thông tin cuộn (mờ ở mép dưới khi còn dòng),
+// Khung chi tiết đồ trên điện thoại (360 × 640): đồ nhiều dòng (6 dòng Excellent, May mắn, dòng cộng thêm, Bộ Thần, +9)
+// không lố màn hình: khung cao tối đa bằng màn hình, phần thông tin cuộn (mờ ở mép dưới khi còn dòng),
 // hàng nút luôn thấy. Chạy: node e2e/longtip.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, act, shot } from './lib.mjs';
 const R = reporter('longtip');
@@ -22,8 +22,7 @@ for (const y of [100, 560]) {
   R.check(`khung đồ nằm trong màn hình, hàng nút thấy được (${JSON.stringify(g)})`, g.top >= 0 && g.bottom <= g.vh && g.btnBottom <= g.vh && g.btnTop >= 0);
   R.check('đồ nhiều dòng: phần thông tin cuộn được, có mờ ở mép dưới', g.scroll && (await page.$('#itemtip .tip-body.more')) !== null);
   await page.evaluate(() => { const b = document.querySelector('#itemtip .tip-body'); b.scrollTop = b.scrollHeight; b.dispatchEvent(new Event('scroll')); });
-  const prev = (await page.textContent('#itemtip .tip-forge').catch(() => '')) || '';
-  R.check('cuộn xuống thấy xem trước ép, hết mờ', prev.includes('Ép +9 → +10') && (await page.$('#itemtip .tip-body.more')) === null, prev);
+  R.check('cuộn tới cuối: hết mờ', (await page.$('#itemtip .tip-body.more')) === null);
   await shot(page, `longtip-end.png`);
   break;
 }

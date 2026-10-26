@@ -1,5 +1,5 @@
 // Tiến trình: nhiệm vụ Trưởng Làng (nhận → hạ 5 Dơi Hang → trả), việc hằng ngày ở Bảng Tin, ép đồ ở Thợ
-// Rèn (cả đồ trong túi, Ngọc Sinh Mệnh), mua rương, Máy Hỗn Nguyên, vứt đồ, Tủ Đồ ở Nhà. Chạy: node e2e/progress.mjs [url] [thư_mục_ảnh]
+// Rèn (cả đồ trong túi qua thẻ Trong túi, Ngọc Sinh Mệnh), mua rương, Máy Hỗn Nguyên, vứt đồ, Tủ Đồ ở Nhà. Chạy: node e2e/progress.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, player, act, idle, travel, meetNpc, leaveNpc, engage, fight, shot } from './lib.mjs';
 
 const R = reporter('progress');
@@ -72,9 +72,10 @@ const rare = Object.values(p.view.gear).find((g) => !Object.values(p.equip).incl
 const opt0 = p.view.gear[rare].opt || 0;
 await page.click('#tabs [data-tab="bag"]');
 await act(page, `[data-act="bag-tip"][data-id="${rare}"]`);
-R.check('tooltip đồ trong túi có nút "Ép ở Thợ Rèn", xem trước bước ép, nút Vứt', !!(await page.$('#itemtip [data-act="forge-go"][data-at="smith"]')) && ((await page.textContent('#itemtip .tip-forge').catch(() => '')) || '').includes('Ép +') && !!(await page.$('#itemtip [data-act="discard"]')));
-await act(page, '#itemtip [data-act="forge-go"]');
-R.check('chọn Ép khi đang ở Thợ Rèn: thẻ rèn hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
+R.check('tooltip đồ trong túi có nút Vứt', !!(await page.$('#itemtip [data-act="discard"]')));
+await page.click('#tabs [data-tab="map"]');
+await act(page, '[data-act="forge-tab"][data-tab2="bag"]');
+R.check('Thợ Rèn thẻ Trong túi: hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
 await act(page, `[data-act="life"][data-id="${rare}"]`);
 p = await player(page);
 R.check('ép Ngọc Sinh Mệnh vào đồ trong túi: tốn 1 ngọc, thêm / mất một dòng', p.inv.jewel_life === j0 - 2 && Math.abs((p.view.gear[rare].opt || 0) - opt0) === 1, `opt=${p.view.gear[rare].opt} trước ${opt0}`);
