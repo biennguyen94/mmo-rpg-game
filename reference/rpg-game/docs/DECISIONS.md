@@ -1349,3 +1349,6 @@ Không đổi luật, chỉ thêm thông báo:
   người này N lần"). `GuildWars.record/2` trả `{:error, :limit}` khi quá `same_target_max`; thêm `war_between/2`.
 - Danh sách Đấu trường (gợi ý, tìm theo tên) hiện [ký hiệu bang], bang địch đang chiến tô đỏ như trên bản đồ.
 Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (lệnh `pvp_challenge` qua kênh).
+- Nhật ký trận đánh người: dòng khiên / phản sát thương / đòn mở màn ghi **sau** dòng "Bạn gây N sát thương" (trước đây
+  ghi trước nên đọc như bị phản đòn khi chưa đánh); phản đòn ghi rõ "… phản lại N sát thương cho bạn". Đấu trường không
+  hồi máu trước trận: dòng đầu "❤ Bạn vào trận với X / Y máu" (người chơi vào trận còn ít máu, một lần phản đòn đã gục).

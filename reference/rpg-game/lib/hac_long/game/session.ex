@@ -815,6 +815,14 @@ defmodule HacLong.Game.Session do
           else: p2
 
       enc = %{pvp: m.pvp, hp: p.hp, gold: p.gold, deaths: p.deaths}
+
+      # Đấu trường không hồi máu trước trận: ghi máu lúc vào để người chơi biết vì sao gục sớm
+      start = %{
+        text: "❤ Bạn vào trận với #{p2.hp} / #{Engine.derived(p2).maxHp} máu.",
+        kind: "info"
+      }
+
+      p2 = if p2.battle, do: update_in(p2.battle.log, &(&1 ++ [start])), else: p2
       {Map.put(r, :msg, "Thách đấu #{m.name}!"), put_in(p2.battle[:encounter], enc)}
     else
       {:error, msg} -> {%{ok: false, msg: msg}, p}

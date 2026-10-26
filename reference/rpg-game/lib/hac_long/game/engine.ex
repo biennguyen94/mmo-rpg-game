@@ -1125,8 +1125,11 @@ defmodule HacLong.Game.Engine do
                       )
               )
 
-            {dmg, p} = mirror_guard(p, dmg)
+            # dòng của khiên / phản đòn / đòn mở màn ghi SAU dòng "Bạn gây …" (đúng thứ tự xảy ra)
+            log0 = p.battle.log
+            {dmg, p} = mirror_guard(put_in(p.battle.log, []), dmg)
             {dmg, p} = arena_opening(p, dmg)
+            {after_hit, p} = {p.battle.log, put_in(p.battle.log, log0)}
             p = put_in(p, [:battle, :overkill], p.battle.monster.hp - dmg)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
@@ -1145,6 +1148,7 @@ defmodule HacLong.Game.Engine do
               "#{prefix}Bạn gây #{dmg} sát thương#{suffix}.",
               if(crit, do: "crit", else: "hit")
             )
+            |> then(&Enum.reduce(after_hit, &1, fn e, p -> log(p, e.text, e.kind) end))
             |> on_hit.(dmg)
           end
 
@@ -2173,7 +2177,7 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad")
+          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad")
           |> then(&if(&1.hp <= 0, do: survive(&1, derived(&1)), else: &1)),
         else: p
 
@@ -2190,7 +2194,7 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương.", "bad"),
+          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad"),
         else: p
 
     {dmg, p}

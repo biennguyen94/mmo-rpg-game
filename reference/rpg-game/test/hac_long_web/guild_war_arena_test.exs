@@ -70,6 +70,7 @@ defmodule HacLongWeb.GuildWarArenaTest do
 
     r = cmd(sa, %{"act" => "pvp_challenge", "uid" => ub.id})
     assert r.msg =~ "Thách đấu"
+    assert Enum.any?(r.player.battle.log, &(&1.text =~ "❤ Bạn vào trận với"))
 
     r =
       Enum.reduce_while(1..100, r, fn _, _ ->
