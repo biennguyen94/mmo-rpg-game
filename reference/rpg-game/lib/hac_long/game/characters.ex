@@ -369,13 +369,27 @@ defmodule HacLong.Game.Characters do
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
                     ds bc kal gear_ids taken ignore_def crit_mult element rich
                     cls skills mp maxMp mp_regen mcds stun_free pstun_free hits def_mult cd overkill
-                    last_hit pet_revived tidal_at)a,
+                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at)a,
                  &{Atom.to_string(&1), &1}
                )
 
+  # khóa ngoài danh sách (vd. `look.aura`, `rebirths`, `pots_used` thêm sau): dùng atom nếu đã có sẵn, không thì
+  # giữ chuỗi — không tạo atom mới từ dữ liệu, và nhân vật lưu giữa trận vẫn nạp được (trước đây crash, không vào game)
   defp atomize(m) when is_map(m),
-    do: Map.new(m, fn {k, v} -> {Map.fetch!(@battle_keys, k), atomize(v)} end)
+    do: Map.new(m, fn {k, v} -> {battle_key(k), atomize(v)} end)
 
   defp atomize(l) when is_list(l), do: Enum.map(l, &atomize/1)
   defp atomize(v), do: v
+
+  defp battle_key(k) when is_binary(k) do
+    Map.get_lazy(@battle_keys, k, fn ->
+      try do
+        String.to_existing_atom(k)
+      rescue
+        ArgumentError -> k
+      end
+    end)
+  end
+
+  defp battle_key(k), do: k
 end

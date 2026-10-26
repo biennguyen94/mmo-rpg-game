@@ -1309,3 +1309,12 @@ Mốc 10 là mốc cuối: người chơi ở lâu, lên dần tới đồ tối
 `Max.tier/2` dùng nhân vật tối đa (`Max.build/2`: +11 full Excellent, cánh 3, Long Vương); `profile.exs` tự đặt cờ này
 (`MAX_LAST=0` để tắt). Dòng r10 chỉnh lại: Kiếm Sĩ 1.07, Phù Thủy 0.86, Tiên Nữ 1.04, Đấu Sĩ 0.78 (trước 1.12 / 0.75 /
 1.00 / 0.88). Kiểm: r10 lệch 4%; `run.exs` (nhân vật tối đa, 60 trận mỗi cặp) 47 / 58 / 47 / 48%. r0–r9 không đổi.
+
+## Sửa: nhân vật lưu giữa trận không vào được game (2026-10-26)
+
+Lỗi: `Characters.atomize/1` (nạp `battle` từ database) chỉ nhận khóa trong danh sách `@battle_keys`, gặp khóa khác thì
+crash (`badkey`) → Session không mở được, người chơi không vào game. Gặp ở nhân vật lưu khi đang đánh người: bản sao đối
+thủ có `look.aura` (hào quang, đợt FX), `rebirths` (hệ số lớp theo mốc), trận có `pots_used` / `pot_at` (bình máu đánh
+người) — các khóa này chưa được thêm vào danh sách. Sửa: thêm các khóa đó, và khóa ngoài danh sách dùng atom nếu đã có
+sẵn (`String.to_existing_atom`), không thì giữ chuỗi — không tạo atom mới từ dữ liệu, không crash với khóa thêm về sau.
+Test `side_save_test` "nhân vật lưu giữa trận đánh người … nạp lại được".

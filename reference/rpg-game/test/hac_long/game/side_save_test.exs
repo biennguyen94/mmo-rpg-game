@@ -23,4 +23,24 @@ defmodule HacLong.Game.SideSaveTest do
     assert q.battle.monster.id == "wild_hog"
     assert q.visited == ["side_01", "side_02"]
   end
+
+  test "nhân vật lưu giữa trận đánh người (bản sao có hào quang, chuyển sinh, bình đã uống) nạp lại được" do
+    {:ok, user} = Accounts.register(%{"username" => "slayguy", "password" => "matkhau1"})
+    {_, a} = Commands.run(nil, %{"act" => "create", "name" => "Người Đánh", "cls" => "dk"})
+    {_, b} = Commands.run(nil, %{"act" => "create", "name" => "Người Bị", "cls" => "elf"})
+    b = Map.put(b, :rebirths, 3)
+    {_, p} = Engine.start_with_monster(a, 0, HacLong.Slay.opponent(b, 2))
+    p = p |> put_in([:battle, :pots_used], 1) |> put_in([:battle, :pot_at], 0)
+    # khóa lạ chưa có atom (sinh lúc chạy): giữ chuỗi, không crash
+    odd = "zz_moi_#{System.unique_integer([:positive])}"
+    p = put_in(p, [:battle, :monster, :look], Map.put(p.battle.monster.look, odd, 1))
+
+    Characters.save!(user.id, p)
+    q = Characters.load(user.id)
+
+    assert Map.has_key?(q.battle.monster.look, :aura)
+    assert q.battle.monster.rebirths == 3
+    assert q.battle.pots_used == 1 and q.battle.pot_at == 0
+    assert q.battle.monster.look[odd] == 1
+  end
 end
