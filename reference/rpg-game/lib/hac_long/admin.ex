@@ -15,16 +15,18 @@ defmodule HacLong.Admin do
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
   | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); trang bị (vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền) thì mỗi món là một món riêng trong túi trang bị |
   | `give_gear` | `base`, `opt` (0..4: số dòng cộng thêm +4 mỗi dòng), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng một món đồ (kiểu MU, B-15) |
+  | `give_pet` | `id` (thú trong `PETS`, kể cả Long Vương), `level` (1..20) | tặng thú, đặt cấp thú, dắt theo luôn (không ghi Bia Long Vương) |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
+  | `set_mastery` | `lv` (1..`RULES.skill_mastery.max`) | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp ngay trước mốc đột phá thì đủ điểm, chờ đột phá) |
   """
 
   import Ecto.Query
   alias HacLong.Repo
-  alias HacLong.Game.{Data, Engine, Gear, Session}
+  alias HacLong.Game.{Data, Engine, Gear, Pets, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear add_points add_stats reset_stats clear_bag heal set_tower set_rebirths)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear give_pet add_points add_stats reset_stats clear_bag heal set_tower set_rebirths set_mastery)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -92,6 +94,22 @@ defmodule HacLong.Admin do
   end
 
   # Phase 6: số lần chuyển sinh (mở vùng đất chuyển sinh); không đổi cấp / điểm
+  def build("set_mastery", %{"lv" => lv}) when is_integer(lv) do
+    max = HacLong.Game.Mastery.max()
+
+    if lv in 1..max,
+      do:
+        {:ok,
+         fn p ->
+           # cấp ngay trước mốc đột phá (4, 9): đủ điểm, chờ đột phá
+           brk = lv < max and HacLong.Game.Mastery.break_cost(lv + 1)
+           e = %{lv: lv, xp: HacLong.Game.Mastery.need(if(brk, do: lv + 1, else: lv))}
+           m = for k <- Engine.available_skills(p), into: %{}, do: {k.id, e}
+           {:ok, Map.put(p, :skill_mastery, m), "Thông thạo mọi kỹ năng: cấp #{lv}."}
+         end},
+      else: {:error, "Cấp thông thạo phải từ 1 tới #{max}."}
+  end
+
   def build("set_rebirths", %{"n" => n}) when is_integer(n) do
     max = Data.rules().character.max_rebirths
 
@@ -124,6 +142,36 @@ defmodule HacLong.Admin do
        gold = max(0, p.gold + n)
        {:ok, %{p | gold: gold}, "Vàng: #{p.gold} → #{gold}."}
      end}
+  end
+
+  # Tặng thú cưng (kể cả thú hiếm Long Vương, DECISIONS "Long Vương"), đặt cấp thú và dắt theo luôn.
+  # Thú quản trị tặng không ghi Bia Long Vương (bia chỉ ghi người tự câu được).
+  def build("give_pet", %{"id" => id} = a) do
+    lv = a["level"] || 1
+    pet = is_binary(id) && Data.pet(id)
+
+    cond do
+      !pet ->
+        {:error, "Không có thú \"#{id}\"."}
+
+      not (is_integer(lv) and lv in 1..Pets.max_level()) ->
+        {:error, "Cấp thú phải từ 1 tới #{Pets.max_level()}."}
+
+      true ->
+        {:ok,
+         fn p ->
+           owned = Map.get(p, :pets) || []
+           xp = Map.put(Map.get(p, :pet_xp) || %{}, id, Pets.xp_for(lv))
+
+           p =
+             p
+             |> Map.put(:pets, if(id in owned, do: owned, else: owned ++ [id]))
+             |> Map.put(:pet_xp, xp)
+             |> Map.put(:pet, id)
+
+           {:ok, p, "Đã tặng #{pet.name} cấp #{lv} (đang dắt theo)."}
+         end}
+    end
   end
 
   def build("give_item", %{"id" => id} = a) do

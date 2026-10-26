@@ -60,9 +60,11 @@ node e2e/run.mjs   # e2e trình duyệt thật (chuẩn bị: e2e/README.md)
 - NPC trong Làng: Trưởng Làng giao nhiệm vụ, Thợ Rèn bán vũ khí/giáp/khiên, Bà Lang bán và pha
   thuốc, Chủ Quán Trọ cho nghỉ; mua bán phải đến gặp họ. 2 món đồ hiếm chỉ rơi từ trùm
 - Hái Thảo Dược/Linh Chi, đào Quặng Sắt/Mithril trên bản đồ (dùng chung, mọc lại); mang đi pha
-  thuốc, bán, nộp nhiệm vụ hoặc nhờ Thợ Rèn nâng cấp đồ đang mặc (tới +5)
-- Câu cá ở hồ nước: phao chìm thì giật đúng lúc; Cá Chép Vàng rất hiếm; Bà Lang nấu cá thành
-  bình máu; việc hằng ngày có câu cá
+  đồ uống ở Bà Lang, bán, nộp nhiệm vụ hoặc nhờ Thợ Rèn nâng cấp đồ đang mặc (tới +5)
+- Câu cá ở hồ nước: phao chìm thì giật đúng lúc; Cá Chép Vàng rất hiếm; Bác Đầu Bếp nấu cá thành
+  món ăn; việc hằng ngày có câu cá. Hồ Long Vương (từ cấp 30): câu được thú hiếm Long Vương (mỗi giờ Ngài nổi
+  3 phút ở một ô nước ngẫu nhiên; thả trúng ô đó 1/2.000, Long Khí tới ×3, Mồi Rồng ×2; Đàn Cá Vàng 15 phút
+  một lần, việc ngày của Ông Lão), Bia Long Vương ghi tên người câu được
 - 18 nhiệm vụ: mỗi vùng một việc diệt quái, một việc thu thập, một việc hạ trùm
 - Việc hằng ngày ở Bảng Tin: 3 việc mới mỗi ngày cho mỗi người, theo các vùng đã mở
 - Tên nhân vật không trùng nhau (không phân biệt hoa thường)
@@ -256,7 +258,7 @@ cùng kết quả, nên chạy trước / sau khi đổi số. Cách bot chơi: 
 | push `"arena"` | → `{me: {rating, wins, losses, today, per_day}, suggestions, top}` |
 | push `"market"` | `{q?}` → `{listings: [{id, seller, name, item, count, gear, price, mine}], fee, max}` |
 | push `"mail"` | → `{mails: [{id, subject, body, gold, xp, items, claimed, at}], unread}`; server đẩy `"mail"` `{unread}` khi có thư mới hoặc vừa mở thư |
-| push `"admin"` | `role` `mod`: `reports`, `lookup {name}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, filter?: {min_level?, max_level?, min_rebirths?, online?}, subject, body?, gold?, xp?, items?}` (gửi mọi người: trừ bot), `gift_count {filter?}` → `{count}`, `gift_log` → `{log}` (20 đợt gửi gần nhất), `world_boss`, `invasion`, `open_ds`, `open_bc` (mở ngay Quảng Trường Quỷ / Lâu Đài Máu); chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, agi?, vit?, ene?}`, `reset_stats` (chỉ số gốc của lớp, điểm tiềm năng theo cấp / chuyển sinh), `clear_bag` (hủy mọi trang bị trong túi, giữ đồ đang mặc / cất tủ), `give_item {id, count?, up?}`, `give_gear {base, opt?, exc?, luck?, skill?, anc?, wopt?, up?}`, `set_tower {floor}` (kỷ lục tháp), `set_rebirths {n}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
+| push `"admin"` | `role` `mod`: `reports`, `lookup {name}` → `{user: {id, username, role, character: {name, cls, level, gold, kills}, …}}`, `resolve {id, action: dismiss/mute, minutes}`, `mute {uid, minutes?}`, `unmute {uid}`, `announce {text}`. `role` `admin` thêm: `resolve` với `action: ban`, `ban {uid, minutes?, reason?}` (không có `minutes` là vĩnh viễn), `unban {uid}`, `gift {uid \| all: true, filter?: {min_level?, max_level?, min_rebirths?, online?}, subject, body?, gold?, xp?, items?}` (gửi mọi người: trừ bot), `gift_count {filter?}` → `{count}`, `gift_log` → `{log}` (20 đợt gửi gần nhất), `world_boss`, `invasion`, `open_ds`, `open_bc` (mở ngay Quảng Trường Quỷ / Lâu Đài Máu); chỉnh nhân vật `{uid, ...}`: `give_xp {xp}`, `set_level {level}`, `add_gold {amount}`, `add_points {n}`, `add_stats {str?, agi?, vit?, ene?}`, `reset_stats` (chỉ số gốc của lớp, điểm tiềm năng theo cấp / chuyển sinh), `clear_bag` (hủy mọi trang bị trong túi, giữ đồ đang mặc / cất tủ), `give_item {id, count?, up?}`, `give_gear {base, opt?, exc?, luck?, skill?, anc?, wopt?, up?}`, `set_tower {floor}` (kỷ lục tháp), `set_rebirths {n}`, `heal` → `{msg, user}`; xem: `audit {days?}` → `{audit: {problems, stats}}`, `gold_log {uid}` / `admin_log {uid?}` → `{log}`. Mọi lệnh có thay đổi ghi `admin_log`. Xem `docs/ADMIN_GUIDE.md` |
 | server push `"world_boss"` | `{alive, name, hp, maxHp, endsAt, nextAt, now, fighters, top}` khi trùm thế giới thay đổi |
 | server push `"notice"` | `{msg}`: thông báo riêng (vd. nhận thưởng trùm thế giới) |
 | push `"leaderboard"` | → `{level, kills, dragon, tower, guild, guild_boss, arena, me}` (mỗi bảng 10 người kèm `title`, `me` là hạng theo cấp) |

@@ -21,7 +21,7 @@ defmodule HacLong.Game.ItemsAltTest do
     assert MapSet.subset?(MapSet.new(~w(weapon shield armor)), slots)
   end
 
-  test "vũ khí / khiên phụ: công, thủ, cấp, giá như món chính cùng bậc và cùng lớp" do
+  test "vũ khí / khiên phụ: công, thủ, cấp, giá như món chính cùng bậc và cùng lớp (vũ khí 2 tay: công × hệ số 2 tay)" do
     keys = ~w(atk atkMin atkMax def level price)a
 
     for {id, a} <- alts(), a.slot in ~w(weapon shield) do
@@ -32,9 +32,17 @@ defmodule HacLong.Game.ItemsAltTest do
 
       assert cands != [], "#{id} không có món chính cùng bậc"
 
-      # món dùng chung nhiều lớp (vd gậy Phù Thủy + Đấu Sĩ) chép số của món chính một trong các lớp đó
-      assert Enum.any?(cands, fn m -> Enum.all?(keys, &(a[&1] == m[&1])) end),
-             "#{id} khác mọi món chính cùng bậc"
+      # món dùng chung nhiều lớp (vd gậy Phù Thủy + Đấu Sĩ) chép số của món chính một trong các lớp đó; công
+      # của bậc là công 1 tay (B-41): món 1 tay bằng món chính 1 tay, món 2 tay không yếu hơn
+      one = &(&1[:hands] != 2)
+
+      ok? =
+        Enum.any?(cands, fn m ->
+          same = if one.(a) and one.(m), do: keys, else: ~w(level price)a
+          Enum.all?(same, &(a[&1] == m[&1])) and (one.(a) or a.atk >= m.atk or not one.(m))
+        end)
+
+      assert ok?, "#{id} khác mọi món chính cùng bậc"
     end
   end
 
@@ -76,7 +84,7 @@ defmodule HacLong.Game.ItemsAltTest do
     assert picks |> Enum.map(& &1.tier) |> Enum.uniq() |> length() == 2
   end
 
-  test "B-17: đủ đồ Item.txt — vũ khí bậc 9–11 và bộ giáp bậc 10 cho mọi lớp, Phù Thủy có gậy và sách" do
+  test "B-17: đủ đồ Item.txt — vũ khí bậc 9–11 và bộ giáp bậc 10 cho mọi lớp, Phù Thủy có đủ gậy (sách Summoner đã bỏ, B-43)" do
     for cls <- ~w(dk dw elf mg), t <- 9..11 do
       assert Enum.any?(mains(), fn {_, it} ->
                it.slot == "weapon" and it.tier == t and cls in it.classes
@@ -91,7 +99,8 @@ defmodule HacLong.Game.ItemsAltTest do
     end
 
     staffs = for {id, it} <- mu(), String.starts_with?(id, "item_5_"), "dw" in it.classes, do: id
-    assert length(staffs) >= 28
+    assert length(staffs) >= 25
+    refute Enum.any?(staffs, &(&1 in ~w(item_5_21 item_5_22 item_5_23)))
 
     assert Enum.max(for {_, it} <- mu(), it.slot == "weapon", do: it.level) <=
              HacLong.Game.Engine.max_level()

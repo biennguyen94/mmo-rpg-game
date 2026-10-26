@@ -36,6 +36,8 @@ defmodule HacLong.Game.Characters do
         name_key: Names.key(player.name)
       })
       |> Map.take(Character.fields())
+      # đối thủ đấu trường chạy như người (`battle.mirror`) chỉ giữ trong bộ nhớ
+      |> Map.update(:battle, nil, &(&1 && Map.delete(&1, :mirror)))
 
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
@@ -143,6 +145,12 @@ defmodule HacLong.Game.Characters do
       |> HacLong.Game.Engine.migrate_items()
       |> HacLong.Game.Engine.split_upgrades()
       |> HacLong.Game.Engine.instance_gear()
+      # vũ khí 2 tay không cầm khiên (B-41)
+      |> HacLong.Game.Engine.two_hand_fix()
+      # trạng thái tháp kẹt khi đã ở bản đồ khác (dịch chuyển ra từ trong sự kiện trước bản sửa)
+      |> HacLong.World.drop_stale_tower()
+      # nhân vật có trước thông thạo kỹ năng: kỹ năng đang có lên cấp tối đa
+      |> HacLong.Game.Mastery.legacy()
 
     d = HacLong.Game.Engine.derived(p)
     %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)}
@@ -181,6 +189,7 @@ defmodule HacLong.Game.Characters do
           HacLong.Game.Data.item(id) || HacLong.Game.Gear.instance?(id)
         end),
       fish_caught: c.fish_caught || 0,
+      long_khi: c.long_khi || 0,
       achievements: c.achievements || [],
       title: c.title,
       gear: HacLong.Game.Gear.load(c.gear),
@@ -193,8 +202,10 @@ defmodule HacLong.Game.Characters do
       daily_done: c.daily_done || 0,
       boss_top: c.boss_top || 0,
       food: food(c.food),
+      drink: food(c.drink),
       blessing: HacLong.Game.Blessing.load(c.blessing),
       skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
+      skill_mastery: HacLong.Game.Mastery.load(c.skill_mastery),
       auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,
@@ -252,11 +263,19 @@ defmodule HacLong.Game.Characters do
     }
     # Quảng Trường Quỷ (Phase 18 M1): đợt đã vào, điểm cao nhất hôm nay (chỉ có khi đã chơi)
     |> then(fn m ->
-      Enum.reduce([{"ds_slot", :ds_slot}, {"ds_best", :ds_best}, {"bc_slot", :bc_slot}], m, fn {k,
-                                                                                                a},
-                                                                                               m ->
-        if d[k] == nil, do: m, else: Map.put(m, a, d[k])
-      end)
+      Enum.reduce(
+        [
+          {"ds_slot", :ds_slot},
+          {"ds_best", :ds_best},
+          {"bc_slot", :bc_slot},
+          {"lake_n", :lake_n},
+          {"lake_done", :lake_done}
+        ],
+        m,
+        fn {k, a}, m ->
+          if d[k] == nil, do: m, else: Map.put(m, a, d[k])
+        end
+      )
     end)
   end
 
@@ -348,13 +367,29 @@ defmodule HacLong.Game.Characters do
                     id name level boss final special maxHp atk def crit dodge xp gold hp
                     every mult text kind items levels gear night shared joined pvp look hair weapon armor
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
-                    ds bc kal gear_ids taken ignore_def crit_mult element rich)a,
+                    ds bc kal gear_ids taken ignore_def crit_mult element rich
+                    cls skills mp maxMp mp_regen mcds stun_free pstun_free hits def_mult cd overkill
+                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at)a,
                  &{Atom.to_string(&1), &1}
                )
 
+  # khóa ngoài danh sách (vd. `look.aura`, `rebirths`, `pots_used` thêm sau): dùng atom nếu đã có sẵn, không thì
+  # giữ chuỗi — không tạo atom mới từ dữ liệu, và nhân vật lưu giữa trận vẫn nạp được (trước đây crash, không vào game)
   defp atomize(m) when is_map(m),
-    do: Map.new(m, fn {k, v} -> {Map.fetch!(@battle_keys, k), atomize(v)} end)
+    do: Map.new(m, fn {k, v} -> {battle_key(k), atomize(v)} end)
 
   defp atomize(l) when is_list(l), do: Enum.map(l, &atomize/1)
   defp atomize(v), do: v
+
+  defp battle_key(k) when is_binary(k) do
+    Map.get_lazy(@battle_keys, k, fn ->
+      try do
+        String.to_existing_atom(k)
+      rescue
+        ArgumentError -> k
+      end
+    end)
+  end
+
+  defp battle_key(k), do: k
 end

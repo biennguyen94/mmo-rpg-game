@@ -180,5 +180,28 @@ defmodule HacLong.Game.ForgeStorageTest do
       assert p.gold == gold - first.gold and Storage.gear_cap(p) == r.gear + first.gear
       assert {%{ok: true}, _} = Storage.store(p, List.last(gear).uid)
     end
+
+    test "cất / rút vàng ở Tủ Đồ; sai số / thiếu vàng / ngoài Nhà thì báo lỗi; nạp lại giữ vàng trong tủ" do
+      p = player(%{pos: @wardrobe, gold: 10_000})
+      {%{ok: true}, p} = Commands.run(p, %{"act" => "gold_store", "n" => 7_000})
+      assert p.gold == 3_000 and Storage.gold(p) == 7_000
+      assert Engine.view(p).storage.gold == 7_000
+
+      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "gold_store", "n" => 3_001})
+      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "gold_store", "n" => 0})
+      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "gold_store", "n" => "100"})
+      assert {%{ok: false}, _} = Commands.run(p, %{"act" => "gold_take", "n" => 7_001})
+
+      {%{ok: true}, p} = Commands.run(p, %{"act" => "gold_take", "n" => 2_000})
+      assert p.gold == 5_000 and Storage.gold(p) == 5_000
+
+      # lưu database (khóa chuỗi) rồi nạp lại
+      raw = p.storage |> Jason.encode!() |> Jason.decode!()
+      assert Storage.load(raw).gold == 5_000
+      assert Storage.load(%{"inv" => %{}}).gold == 0
+
+      assert {%{ok: false}, _} =
+               Commands.run(%{p | pos: @smith}, %{"act" => "gold_take", "n" => 1})
+    end
   end
 end

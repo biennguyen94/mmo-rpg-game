@@ -181,17 +181,18 @@
       },
       "_gear_weights_doc": "B-15 (kiểu MU): [số dòng cộng thêm, trọng số] của đồ rơi; mỗi dòng +RULES.upgrade.life.per_line tấn công / phòng thủ. Rương, rèn, sự kiện, trùm cũng dùng [số dòng, trọng số].",
       "gear_weights": [[0, 50], [1, 35], [2, 12], [3, 3]],
+      "_gear_slots_doc": "Ngưỡng cộng dồn chọn ô đồ rơi: vũ khí 25%, bộ giáp 55% (chia đều các ô giáp hợp lớp), khiên 7%, trang sức 13% (nhẫn / dây chuyền). Trước 38 / 43 / 13 / 6%: giáp mỗi ô chỉ ~8,6% nên lên chậm (DECISIONS \"Tỉ lệ ô đồ rơi\", docs/BALANCE_AUDIT_2026-10-26.md).",
       "gear_slots": [
         [
-          0.38,
+          0.25,
           "weapon"
         ],
         [
-          0.81,
+          0.8,
           "set"
         ],
         [
-          0.94,
+          0.87,
           "shield"
         ],
         [
@@ -490,8 +491,30 @@
       "version": 1,
       "verified": false
     },
+    "skill_mastery": {
+      "_doc": "Thông thạo kỹ năng (DECISIONS \"Thông thạo kỹ năng\"): mỗi kỹ năng (lớp + tháp) có cấp 1..max, luyện bằng cách dùng trong trận với quái (không tính đánh người). Mỗi lần dùng được `points` điểm (tự đánh `points_auto`), trùm / quái tinh anh / trùm thế giới × `boss_mult`; quái thấp hơn mình quá `level_gap` cấp không được điểm. `need[i]`: tổng điểm để lên cấp i + 2. Thông số kỹ năng trong dữ liệu là của cấp max; cấp L: hệ số sát thương × (mult_min + (1 − mult_min) × (L − 1) / (max − 1)); dưới cấp `mp_level` MP × `mp_low`; dưới cấp `cd_level` hồi chiêu + `cd_low`; dưới cấp max tác dụng phụ (hồi máu, hút máu, choáng, buff, độc...) × `effect_low`. Lên `break` cấp cần đột phá: `cost` Bí Kíp hoặc `alt` Ngọc Tâm Linh. Bí Kíp rơi: trùm vùng `drop.boss`, quái tinh anh (tháp, sự kiện) `drop.elite`, trùm thế giới `drop.world`; lần đầu hạ mỗi trùm vùng / chúa tể vùng chuyển sinh chắc chắn `drop.first_boss` cuốn; Tháp Vô Tận mỗi `drop.tower_every` tầng vượt lần đầu 1 cuốn (DECISIONS \"Nguồn Bí Kíp\"). Nhân vật có trước tính năng: mọi kỹ năng đang có được cấp max.",
+      "max": 10,
+      "points": 2,
+      "points_auto": 1,
+      "boss_mult": 3,
+      "level_gap": 10,
+      "need": [20, 60, 120, 200, 320, 480, 700, 1000, 1400],
+      "mult_min": 0.75,
+      "mp_level": 4,
+      "mp_low": 1.15,
+      "cd_level": 7,
+      "cd_low": 1,
+      "effect_low": 0.8,
+      "break": {"5": {"cost": 1, "alt": 5}, "10": {"cost": 3, "alt": 15}},
+      "item": "bi_kip",
+      "alt_item": "jewel_soul",
+      "drop": {"boss": 0.3, "elite": 0.15, "world": 1.0, "first_boss": 1, "tower_every": 10},
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "tower_skills": {
-      "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Vô Tận ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận. mp_mult: MP kỹ năng tháp nhân thêm theo lớp (lớp ít MP: Kiếm Sĩ, Tiên Nữ; DECISIONS \"MP kỹ năng tháp theo lớp\"), lớp không ghi ×1.",
+      "_doc": "Phase 3 (B-29): kỹ năng tháp (`CLASSES[lớp].tower_skills`): mở khi kỷ lục Tháp Vô Tận ≥ `floor`, giữ vĩnh viễn. mult: hệ số sát thương; hits: số đòn (chia đều hệ số); def_mult: phần giáp quái còn tính; crit: chắc chí mạng; heal: hồi % máu tối đa; drain: hút % sát thương gây ra; stun: tỉ lệ làm quái mất lượt (trùm kháng stun_boss_resist); buff (lên mình): rage +% công, guard −% sát thương nhận, evade +né, shield khiên = power × máu tối đa hấp thụ sát thương, undying gục thì sống lại với power × máu tối đa (một lần); debuff (lên quái): weaken −% công, sunder −% thủ, poison / burn mỗi lượt mất power × sát thương vừa gây. turns: số lượt (tính cả lượt dùng). Mang tối đa `loadout` kỹ năng vào trận. mp_mult: MP mọi kỹ năng (lớp + tháp, từ 2026-10-25) nhân thêm theo lớp (lớp ít MP: Kiếm Sĩ, Tiên Nữ; DECISIONS \"MP kỹ năng tháp theo lớp\", \"MP kỹ năng theo lớp\"), lớp không ghi ×1.",
       "loadout": 5,
       "stun_boss_resist": 0.5,
       "mp_mult": {"dk": 0.5, "elf": 0.6},
@@ -529,15 +552,22 @@
     "crafting": {
       "levels": [
         0,
-        5,
         15,
-        30,
-        50
+        40,
+        80,
+        130
+      ],
+      "cook_levels": [
+        0,
+        20,
+        60,
+        120,
+        200
       ],
       "smith_costs": {
         "weapon": {
           "ore": 6,
-          "ore_rare": 1
+          "ore_rare": 2
         },
         "armor": {
           "ore": 5,
@@ -549,7 +579,7 @@
         }
       },
       "smith_gold_per_level": 15,
-      "smith_epic_per_level": 6,
+      "smith_epic_per_level": 4,
       "smith_rare": 50
     },
     "tower": {
@@ -570,7 +600,7 @@
       "boss_potions": 2
     },
     "pets": {
-      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level, kỹ năng 3 (chỉ Long Vương) ở skill3_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
       "tame_kills": 100,
       "tame_bonus": 0.03,
       "tame_bite": 0.15,
@@ -587,6 +617,7 @@
       "max_level": 20,
       "skill_level": 5,
       "skill2_level": 15,
+      "skill3_level": 20,
       "xp_coef": 5,
       "boss_wins": 5,
       "feed_gold": 500,
@@ -598,7 +629,12 @@
         "pickpocket_gold_pct": 0.1,
         "venom_turns": 3,
         "venom_power": 0.5,
-        "rend_mult": 1.6
+        "rend_mult": 1.6,
+        "tidal_mult": 2,
+        "tidal_every": 3,
+        "scales_reduce": 0.1,
+        "scales_heal": 0.05,
+        "rebirth_hp": 0.3
       },
       "sourceType": "DESIGN",
       "version": 2,
@@ -744,7 +780,64 @@
             2,
             "fish_gold"
           ]
+        ],
+        "lake": [
+          [
+            5,
+            "old_boot"
+          ],
+          [
+            25,
+            "fish_small"
+          ],
+          [
+            35,
+            "fish_carp"
+          ],
+          [
+            32,
+            "fish_eel"
+          ],
+          [
+            3,
+            "fish_gold"
+          ]
         ]
+      },
+      "dragon": {
+        "_doc": "DECISIONS \"Long Vương nổi mỗi giờ\": mỗi `every` giây, vào lúc ngẫu nhiên, Long Vương (`pet`) nổi ở một ô nước ngẫu nhiên của bản đồ có `fish: \"lake\"` (trong tầm `reach` ô từ bờ) trong `stay` giây. Chỉ lần thả câu trúng đúng ô đó mới có `chance` cơ hội × (1 + Long Khí / `long_khi_div`) × `bait_mult` nếu có `bait` (Mồi Rồng, chỉ tốn khi thả trúng ô Ngài). Long Khí +1 mỗi con cá câu được ở hồ, tối đa `long_khi_max`, về 0 khi câu được Ngài. Mỗi nhân vật tối đa 1 con; đã có thì ra `dupe` (Cá Chép Vàng).",
+        "pet": "long_vuong",
+        "chance": 0.0005,
+        "every": 3600,
+        "stay": 180,
+        "reach": 3,
+        "long_khi_max": 200,
+        "long_khi_div": 100,
+        "bait": "dragon_bait",
+        "bait_mult": 2,
+        "dupe": "fish_gold",
+        "sourceType": "DESIGN",
+        "version": 2,
+        "verified": false
+      },
+      "school": {
+        "_doc": "DECISIONS \"Đàn Cá Vàng, việc của Ông Lão\": mỗi `every` giây, vào lúc ngẫu nhiên, Đàn Cá Vàng hiện ở một ô nước ngẫu nhiên của Hồ Long Vương (như ô Long Vương) trong `stay` giây. Thả câu trúng ô đó: cá câu được là `gold_fish` với tỉ lệ `gold_chance` (còn lại theo bảng cá hồ), mỗi con +`long_khi` Long Khí thay cho +1.",
+        "every": 900,
+        "stay": 120,
+        "gold_fish": "fish_gold",
+        "gold_chance": 0.15,
+        "long_khi": 3,
+        "sourceType": "DESIGN",
+        "version": 1,
+        "verified": false
+      },
+      "elder": {
+        "_doc": "Việc mỗi ngày của Ông Lão Câu Cá: câu `count` con cá ở Hồ Long Vương (ủng cũ không tính) rồi gặp Ông Lão nhận thưởng: vàng / kinh nghiệm tính như việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật) và +`long_khi` Long Khí (không quá tối đa).",
+        "count": 30,
+        "long_khi": 20,
+        "sourceType": "DESIGN",
+        "version": 1,
+        "verified": false
       }
     },
     "tutorial": {
@@ -795,14 +888,56 @@
       "max_s": 180,
       "range": 8
     },
-    "pk": {
-      "min": 100,
-      "max": 1000000,
-      "per_day": 10,
-      "invite_s": 30,
-      "rounds": 30,
-      "special_every": 3,
-      "special_mult": 1.8
+    "dual_wield": {
+      "classes": ["dk", "dw", "mg"],
+      "mult": 1.0,
+      "left_exc": ["heal_kill", "mp_kill"],
+      "staff_pair_only": true,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "pvp": {
+      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\"). Hệ số nhận sát thương theo lớp: class_taken_by_rebirth[số lần chuyển sinh của người bị đánh][lớp] (mốc lớn hơn bảng dùng dòng cuối; DECISIONS \"Đánh người: hệ số lớp theo mốc chuyển sinh\"), chỉnh bằng scripts/pvp/tune.exs. Đấu trường: class_taken_arena_by_rebirth (PVP=arena scripts/pvp/tune.exs).",
+      "dmg_mult": 0.2,
+      "crit_rate_mult": 0.5,
+      "crit_bonus_mult": 0.5,
+      "dodge_mult": 0.6,
+      "stun_immune": 2,
+      "stun_mult": 0.5,
+      "potion_mult": 0.5,
+      "potion_cd": 3,
+      "potion_max": 3,
+      "heal_mult": 0.5,
+      "class_taken_by_rebirth": {
+        "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
+        "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
+        "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
+        "3": {"dk": 1.09, "dw": 0.72, "elf": 0.9, "mg": 1.04},
+        "4": {"dk": 1.13, "dw": 0.71, "elf": 0.91, "mg": 1.02},
+        "5": {"dk": 1.12, "dw": 0.73, "elf": 0.9, "mg": 1.02},
+        "6": {"dk": 1.1, "dw": 0.74, "elf": 0.97, "mg": 0.93},
+        "7": {"dk": 1.08, "dw": 0.75, "elf": 0.98, "mg": 0.92},
+        "8": {"dk": 1.1, "dw": 0.77, "elf": 0.97, "mg": 0.9},
+        "9": {"dk": 1.12, "dw": 0.73, "elf": 1.01, "mg": 0.9},
+        "10": {"dk": 1.07, "dw": 0.86, "elf": 1.04, "mg": 0.78}
+      },
+      "class_taken_arena_by_rebirth": {
+        "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
+        "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
+        "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
+        "3": {"dk": 1.09, "dw": 0.72, "elf": 0.9, "mg": 1.04},
+        "4": {"dk": 1.13, "dw": 0.71, "elf": 0.91, "mg": 1.02},
+        "5": {"dk": 1.12, "dw": 0.73, "elf": 0.9, "mg": 1.02},
+        "6": {"dk": 1.1, "dw": 0.74, "elf": 0.97, "mg": 0.93},
+        "7": {"dk": 1.08, "dw": 0.75, "elf": 0.98, "mg": 0.92},
+        "8": {"dk": 1.1, "dw": 0.77, "elf": 0.97, "mg": 0.9},
+        "9": {"dk": 1.12, "dw": 0.73, "elf": 1.01, "mg": 0.9},
+        "10": {"dk": 1.07, "dw": 0.86, "elf": 1.04, "mg": 0.78}
+      },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     },
     "raids": {
       "_doc": "B-20: xâm lăng kiểu MU (HacLong.Raids). Mỗi loại theo lịch giờ VN: mốc every_hours giờ + offset_minutes phút, kéo dài minutes phút, chọn ngẫu nhiên pick bản đồ trong maps. leader/minion: quái thả vào mỗi bản đồ (cấp = trùm vùng / quái mạnh nhất vùng + level_bonus, sức × mult), không hồi sinh. drops: đồ thêm khi hạ con đầu đàn (tỉ lệ).",
@@ -860,8 +995,10 @@
       "refresh_s": 60
     },
     "arena": {
+      "_doc": "Đấu trường (thách đấu bản sao người khác). first_strike_mult: đòn đầu (lượt đầu) của người thách đấu × hệ số này, như đồ sát (DECISIONS \"Đấu trường: công bằng người thách đấu / đối thủ máy\").",
       "per_day": 15,
-      "elo_k": 32
+      "elo_k": 32,
+      "first_strike_mult": 0.5
     },
     "party": {
       "max": 3,
@@ -980,8 +1117,10 @@
       "mana_buy": 6,
       "potion_heal_min": 0.3,
       "inn_gold_mult": 2,
+      "_forge_doc": "DECISIONS \"Bot ép đồ, chuyển sinh\": lúc rảnh ở Làng bot ép đồ đang mặc (cấp thấp nhất trước) bằng ngọc như người thật, giữ lại gold_keep_per_level × cấp vàng; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` viên mỗi loại ngọc cần; Ngọc Sinh Mệnh thêm dòng cho `life_slots`; ghép / nâng cánh ở Máy Hỗn Nguyên; +10 / +11 chỉ bot \"liều\" (seed chia hết cho daring_every). Cấp tối đa đã đủ điều kiện thì chuyển sinh; cần hạ chúa tể thì đi vùng chuyển sinh, qua từng bản đồ của vùng khi đã hạ realm_kills quái ở bản đồ trước.",
+      "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30},
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     "slay": {
@@ -995,7 +1134,9 @@
       "protect_s": 120,
       "per_target_hour": 3,
       "red_s": 1800,
-      "red_gold_mult": 2
+      "red_gold_mult": 2,
+      "first_strike_mult": 0.5,
+      "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
     "boss_rewards": {
       "first_kill_weights": [

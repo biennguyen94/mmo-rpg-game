@@ -43,11 +43,20 @@ const clickTile = async (page, dx, dy) => {
   const b = await page.locator('[data-test="game-canvas"]').boundingBox();
   await page.mouse.click(b.x + b.width / 2 + dx * 32, b.y + b.height / 2 + dy * 32);
 };
+const settled = (page) =>
+  page
+    .waitForFunction(() => {
+      const mu = window.__mu, me = mu.entities().find((e) => e.id === mu.selfId), d = mu.drawn(mu.selfId);
+      return me && d && Math.abs(d.x - me.x) < 0.05 && Math.abs(d.y - me.y) < 0.05;
+    }, null, { timeout: 3000 })
+    .then(() => true)
+    .catch(() => true);
 const walkTo = async (page, x, y, ms = 15000) => {
   const end = Date.now() + ms;
   while (Date.now() < end) {
     const p = await pos(page);
-    if (p.x === x && p.y === y) return true;
+    // tới nơi: chờ hình nhân vật trượt xong (DEC-186) — camera theo vị trí đang vẽ, `clickTile` tính ô theo tâm màn hình
+    if (p.x === x && p.y === y) return settled(page);
     // bấm trong tầm nhìn (tối đa ±12 ô mỗi lần)
     const dx = Math.max(-12, Math.min(12, x - p.x));
     const dy = Math.max(-8, Math.min(8, y - p.y));

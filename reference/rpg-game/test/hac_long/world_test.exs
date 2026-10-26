@@ -171,9 +171,13 @@ defmodule HacLong.WorldTest do
       two = Maps.get("#{z.id}_2")
       room = Maps.get("#{z.id}_boss")
       assert one.zone == zi and two.zone == zi and room.zone == zi
-      # bỏ qua cổng sang bản đồ phụ (Phase 15a)
+
+      # bỏ qua cổng sang bản đồ phụ (Phase 15a) và Hồ Long Vương (cổng ở Rừng Mê 1)
       main = fn m ->
-        m.portals |> Enum.map(& &1.to) |> Enum.reject(&Maps.get(&1).side) |> Enum.sort()
+        m.portals
+        |> Enum.map(& &1.to)
+        |> Enum.reject(&(Maps.get(&1).side or &1 == "long_vuong_lake"))
+        |> Enum.sort()
       end
 
       assert main.(one) == Enum.sort(["village", two.id])

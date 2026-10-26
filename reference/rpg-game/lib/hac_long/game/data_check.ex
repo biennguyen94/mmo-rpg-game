@@ -7,8 +7,8 @@ defmodule HacLong.Game.DataCheck do
   Hàm thuần trên dữ liệu đã đọc (khóa atom như trong `Data`), không gọi `Data`.
   """
 
-  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen)
-  @pet_skills ~w(heal bash pickpocket venom rend)
+  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen dragon)
+  @pet_skills ~w(heal bash pickpocket venom rend tidal scales rebirth)
   @fails [nil, "down", "reset", "destroy"]
 
   def npc_roles, do: @npc_roles
@@ -71,7 +71,7 @@ defmodule HacLong.Game.DataCheck do
       for {id, it} <- d.items, it.slot == "wing", not Map.has_key?(d.classes, it[:cls]) do
         "items.json: ITEMS[#{id}] là cánh của lớp \"#{it[:cls]}\" không có trong CLASSES"
       end,
-      for p <- d.pets, sk = p[:skill], sk.id not in @pet_skills do
+      for p <- d.pets, sk <- [p[:skill], p[:skill2], p[:skill3]], sk, sk.id not in @pet_skills do
         "pets.json: PETS[#{p.id}] kỹ năng \"#{sk.id}\" chưa có tác dụng (#{Enum.join(@pet_skills, ", ")})"
       end,
       for e <- d.events do

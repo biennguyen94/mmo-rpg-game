@@ -67,4 +67,10 @@ defmodule HacLong.Phase2UiTest do
     assert Characters.load(u.id).blessing == p.blessing
     assert Blessing.load(%{"map" => "khong_co"}) == nil
   end
+
+  test "người khác trên bản đồ thấy số lần chuyển sinh (Quanh đây)" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Chuyen Sinh", "cls" => "dk"})
+    assert HacLong.World.info(p).rebirths == 0
+    assert HacLong.World.info(Map.put(p, :rebirths, 7)).rebirths == 7
+  end
 end

@@ -151,6 +151,18 @@ defmodule HacLongWeb.SlayTest do
     assert pb.deaths == 1 and pb.pos == Maps.home_spawn()
     assert pb.hp > 0
 
+    # bên bị đánh thấy chi tiết đòn của người đánh (đổi góc nhìn), cả đòn kết liễu
+    name_a = pa.name
+    texts = Enum.map(pb.battle.log, & &1.text)
+    assert Enum.any?(texts, &(&1 =~ "#{name_a} gây " and &1 =~ "sát thương cho bạn"))
+
+    # đòn mở màn của người tấn công (RULES.slay.first_strike_mult); đòn thường đầu tiên có thể bị né (không sát thương)
+    assert Enum.any?(texts, &(&1 =~ "Đòn mở màn")) or
+             Enum.any?(texts, &(&1 =~ "Trượt! Bạn tránh được"))
+
+    ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục bạn."))
+    assert ko && Enum.at(texts, ko - 1) =~ name_a
+
     assert [%{wager: 300, winner_id: winner}] =
              Repo.all(
                from m in "pk_matches",
@@ -159,6 +171,11 @@ defmodule HacLongWeb.SlayTest do
              )
 
     assert winner == ua.id
+
+    # lịch sử đồ sát qua kênh (tab Khác → Đấu trường)
+    ref = push(sa, "slay_history", %{})
+    assert_reply ref, :ok, %{history: [%{wager: 300, b_id: b_id, winner_id: w}]}
+    assert b_id == ub.id and w == ua.id
 
     deltas =
       Repo.all(
@@ -172,6 +189,31 @@ defmodule HacLongWeb.SlayTest do
 
     # rời trận được như thường
     assert %{ok: true} = cmd(sa, %{"act" => "leave"})
+  end
+
+  test "nhật ký người đánh đổi sang góc nhìn người bị đánh" do
+    m = &HacLong.Game.BattleText.mirror(&1, "bien", "bien2")
+
+    assert m.("✨ Hắc Long Trảm: Bạn gây 1842 sát thương (CHÍ MẠNG!).") ==
+             "✨ Hắc Long Trảm: bien gây 1842 sát thương cho bạn (CHÍ MẠNG!)."
+
+    assert m.("Trượt! bien2 tránh được đòn tấn công.") ==
+             "bien: Trượt! Bạn tránh được đòn tấn công."
+
+    assert m.("☠ bien2 trúng độc.") == "bien: ☠ Bạn trúng độc."
+    assert m.("🐾 Sói cắn thêm 12 sát thương.") == "bien: 🐾 Sói cắn thêm 12 sát thương cho bạn."
+    assert m.("Bạn nổi cuồng nộ: tấn công +20%.") == "bien nổi cuồng nộ: tấn công +20%."
+
+    # ngôi thứ ba (người xem trận)
+    assert HacLong.Game.BattleText.mirror("Bạn gây 30 sát thương.", "bien", "bien2", "bien2") ==
+             "bien gây 30 sát thương cho bien2."
+
+    assert HacLong.Game.BattleText.view(
+             [%{text: "Khiên Thánh hồi 0 máu.", kind: "good"}],
+             "a",
+             "b"
+           ) ==
+             []
   end
 
   test "bỏ chạy tính như gục ngã" do

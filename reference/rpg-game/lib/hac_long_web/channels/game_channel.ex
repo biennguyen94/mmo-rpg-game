@@ -56,7 +56,6 @@ defmodule HacLongWeb.GameChannel do
     Market,
     Moderation,
     Party,
-    PkBet,
     RateLimit,
     Trade,
     WorldBoss
@@ -79,7 +78,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -94,6 +93,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(uid))
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
     blocked = Moderation.blocked(uid)
@@ -256,20 +256,9 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
-  # PK cược vàng (Phase 5, H7 + H8): mời / nhận / từ chối / hủy / xem
-  def handle_in("pk", %{"op" => op} = p, socket) do
-    uid = socket.assigns.user_id
-
-    with :ok <- limit({:pk, uid}, 30, :timer.minutes(1)) do
-      case pk(op, p, uid) do
-        :ok -> {:reply, {:ok, pk_view(uid)}, socket}
-        {:ok, result} -> {:reply, {:ok, Map.put(pk_view(uid), :result, result)}, socket}
-        {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-      end
-    else
-      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-    end
-  end
+  # lịch sử đồ sát (tab Khác → Đấu trường)
+  def handle_in("slay_history", _p, socket),
+    do: {:reply, {:ok, %{history: HacLong.Slay.history(socket.assigns.user_id)}}, socket}
 
   # Đồ sát (`HacLong.Slay`): đánh ngay người chơi cùng bản đồ, không cần đồng ý
   def handle_in("slay", %{"uid" => target}, socket) do
@@ -460,7 +449,7 @@ defmodule HacLongWeb.GameChannel do
         true ->
           id = HacLong.Admin.log!(admin_of(socket), op, target(p), p, nil)
           result = admin(op, p, socket)
-          HacLong.Admin.set_result(id, result)
+          HacLong.Admin.set_result(id, log_result(op, result))
           result
       end
 
@@ -475,36 +464,18 @@ defmodule HacLongWeb.GameChannel do
 
   def handle_in(_event, _payload, socket), do: {:reply, {:error, %{msg: "Sai cú pháp."}}, socket}
 
+  # không ghi mật khẩu tạm vào admin_log
+  defp log_result("reset_password", {:ok, %{username: name}}),
+    do: {:ok, "đã đặt lại mật khẩu #{name}"}
+
+  defp log_result(_op, result), do: result
+
   # người đang online thì lấy trạng thái mới nhất, không thì đọc database
   defp online_or_saved(uid) do
     case Registry.lookup(HacLong.Game.Registry, uid) do
       [_] -> Session.get(uid)
       [] -> HacLong.Game.Characters.load(uid)
     end
-  end
-
-  # ---------- PK cược vàng ----------
-
-  # PK cược vàng đã thay bằng đồ sát (`HacLong.Slay`); còn xem lịch sử, nhận / từ chối lời mời cũ
-  defp pk("invite", _p, _uid),
-    do: {:error, "PK cược đã thay bằng Đồ sát: chạm tên người chơi rồi bấm Đồ sát."}
-
-  defp pk("accept", _p, uid) do
-    with {:ok, inv} <- PkBet.take(uid), do: PkBet.execute(inv)
-  end
-
-  defp pk("decline", _p, uid), do: PkBet.decline(uid)
-  defp pk("cancel", _p, uid), do: PkBet.cancel(uid)
-  defp pk("info", _p, _uid), do: :ok
-  defp pk(_op, _p, _uid), do: {:error, "Thao tác không hợp lệ."}
-
-  defp pk_view(uid) do
-    %{
-      invite: PkBet.of(uid),
-      history: PkBet.history(uid),
-      today: PkBet.today_count(uid),
-      rules: Map.take(PkBet.rules(), [:min, :max, :per_day, :invite_s])
-    }
   end
 
   # ---------- Giao dịch ----------
@@ -751,6 +722,28 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # Quên mật khẩu (DECISIONS "Quên mật khẩu"): yêu cầu chờ xử lý, đặt lại mật khẩu tạm, bỏ qua yêu cầu
+  defp admin("pw_requests", _p, _s),
+    do: {:ok, %{requests: HacLong.Accounts.PasswordReset.open()}}
+
+  defp admin("reset_password", %{"uid" => id}, s) when is_integer(id) do
+    case HacLong.Accounts.PasswordReset.reset(id, s.assigns.user_id) do
+      {:ok, name, temp} ->
+        {:ok,
+         %{
+           temp: temp,
+           username: name,
+           msg: "Mật khẩu mới của #{name}: #{temp} (báo cho người chơi, đăng nhập rồi đổi lại)."
+         }}
+
+      {:error, msg} ->
+        {:error, msg}
+    end
+  end
+
+  defp admin("pw_dismiss", %{"id" => id}, s) when is_integer(id),
+    do: HacLong.Accounts.PasswordReset.dismiss(id, s.assigns.user_id)
+
   defp admin("announce", %{"text" => text}, _s) when is_binary(text) and text != "" do
     Chat.system("📢 " <> String.slice(String.trim(text), 0, 200))
     :ok
@@ -794,6 +787,28 @@ defmodule HacLongWeb.GameChannel do
   defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
+
+  defp admin("lake_school", _p, _s) do
+    st = HacLong.LakeEvent.school_summon()
+
+    {:ok,
+     %{
+       msg:
+         "Đàn Cá Vàng đã hiện ở ô #{Enum.join(st.school, ", ")} Hồ Long Vương (#{div(st.schoolLeft, 1000)} giây).",
+       lake: st
+     }}
+  end
+
+  defp admin("lake_summon", _p, _s) do
+    st = HacLong.LakeEvent.summon()
+
+    {:ok,
+     %{
+       msg:
+         "Long Vương đã nổi ở ô #{Enum.join(st.tile, ", ")} Hồ Long Vương (#{div(st.left, 1000)} giây).",
+       lake: st
+     }}
+  end
 
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
@@ -893,11 +908,17 @@ defmodule HacLongWeb.GameChannel do
 
     push(socket, "world_boss", WorldBoss.status())
     push(socket, "invasion", HacLong.Invasion.status())
+    push(socket, "lake", HacLong.LakeEvent.public())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
   end
 
   def handle_info({:invasion, status}, socket) do
     push(socket, "invasion", status)
+    {:noreply, socket}
+  end
+
+  def handle_info({:lake, st}, socket) do
+    push(socket, "lake", st)
     {:noreply, socket}
   end
 
@@ -949,16 +970,6 @@ defmodule HacLongWeb.GameChannel do
   # tin riêng: người đã chặn thì không nhận
   def handle_info({:dm, msg}, socket) do
     unless msg.from in socket.assigns.blocked, do: push(socket, "dm", msg)
-    {:noreply, socket}
-  end
-
-  def handle_info({:pk_invite, inv}, socket) do
-    push(socket, "pk_invite", %{invite: inv})
-    {:noreply, socket}
-  end
-
-  def handle_info({:pk_result, view}, socket) do
-    push(socket, "pk_result", view)
     {:noreply, socket}
   end
 
@@ -1077,6 +1088,10 @@ defmodule HacLongWeb.GameChannel do
 
   defp present(nil), do: nil
 
+  # không gửi đối thủ đấu trường chạy như người (đồ đạc của người khác) xuống client
+  defp present(%{battle: %{mirror: _} = b} = player),
+    do: present(%{player | battle: Map.delete(b, :mirror)})
+
   defp present(player) do
     # có việc mới hoặc việc đã xong chờ trả: hiện dấu "!" trên đầu Trưởng Làng
     ready =
@@ -1093,6 +1108,8 @@ defmodule HacLongWeb.GameChannel do
         # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
         slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
+        # việc của Ông Lão Câu Cá (Hồ Long Vương)
+        elder: HacLong.Game.Fishing.elder(player),
         # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
         autoMap: %{
           ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),

@@ -2,7 +2,7 @@
   "UPGRADE": {
     "_doc": "Ép đồ kiểu MU (DECISIONS B-13): +1 → +6 mỗi lần 1 Ngọc Ước Nguyện, luôn thành công; +7 → +9 1 Ngọc Tâm Linh, tỉ lệ rate (May mắn cộng thêm RULES.luck_skill.luck_upgrade), thất bại về +0 (fail reset); +10, +11 ép ở Máy Hỗn Nguyên (at chaos) bằng Hỗn Nguyên + Ước Nguyện + Tâm Linh, thất bại về +0 (không vỡ đồ, 2026-10-17). items: ngọc tốn mỗi lần ép; vàng theo RULES.upgrade.cost_pct. eff: cấp tính chỉ số (chỉ số cộng = eff × RULES.upgrade.bonus_pct × chỉ số gốc): +1 → +9 mỗi cấp 8 %, +10 = 120 %, +11 = 180 %. luck: tỉ lệ cộng thêm khi món có May mắn (+7 → +9: 25 %, +10 / +11: 10 %). DECISIONS \"Ép +10/+11 khác biệt, cánh theo bậc\". fail: null | down (tụt 1 cấp) | reset (về +0) | destroy (vỡ đồ).",
     "max": 11,
-    "announce_from": 7,
+    "announce_from": 10,
     "double_from": 10,
     "steps": [
       {

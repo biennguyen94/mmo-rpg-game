@@ -1,0 +1,76 @@
+{
+  "id": "long_vuong_lake",
+  "name": "Hồ Long Vương",
+  "zone": null,
+  "floor": "tiles/grass",
+  "min_level": 30,
+  "fish": "lake",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T,*,,R,,,,,#I###I#,,,,,R,,*,T",
+    "T,,,T,,Y,,,#,,G,,#,,,Y,,T,,,T",
+    "TJ,J,,,,,J,,,,:,,,,J,,,,,J,,T",
+    "O:::::::::::::::::::::::::::T",
+    "T:*,,,:,,,,*,,:,,,,:,,:,*,*:T",
+    "T:,M~~B~~~~~~~B~Q~~B~~B~~M,:T",
+    "T:,~Q~B~~~~Q~~B~~~~B~~B~~~,:T",
+    "T:,~~~BU~~~~~===~~~B~~BU~~,:T",
+    "T:,~~~~~~~~~=====~~B~~~~~~Y:T",
+    "T:T~U~~~Q~~~=====EEB~~~~~~,:T",
+    "T:,~~~~~~B~~~===~~~B~~~~Q~,:T",
+    "T:,~~Q~~~BU~~~~~~~~BU~~~~~,:T",
+    "T:,M~~~~~B~~~~~Q~~~B~~Q~~M,:T",
+    "T:*,*,,,,:,,R,,,,*,:,,,,,,*:T",
+    "T:::::::::::::::::::::::::::T",
+    "T,,J,,,,,J,,,,,,,,,J,,,,,J,JT",
+    "T,*,,,,Y,,,,T,,,T,,,,Y,,,,*,T",
+    "T,,,,R,,,,,,,,R,,,,,,,,R,,,,T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        4
+      ],
+      "to": "forest_1",
+      "spawn": [
+        1,
+        9
+      ]
+    }
+  ],
+  "spawns": [],
+  "npcs": [
+    {
+      "id": "fisher",
+      "name": "Ông Lão Câu Cá",
+      "sprite": "fisher",
+      "at": [
+        12,
+        3
+      ],
+      "role": "dragon",
+      "lines": [
+        "Đáy Vực Rồng kia có Long Vương ngủ say. Trăm năm mới có người câu được Ngài một lần.",
+        "Cứ kiên nhẫn, giật cần cho đúng lúc. Có Mồi Rồng của Bà Lang thì Ngài dễ cắn câu hơn."
+      ]
+    },
+    {
+      "id": "dragon_board",
+      "name": "Bia Long Vương",
+      "sprite": "board",
+      "at": [
+        16,
+        3
+      ],
+      "role": "dragon",
+      "lines": [
+        "Bia khắc tên những người đã câu được Long Vương."
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false
+}

@@ -9,6 +9,7 @@ defmodule HacLongWeb.AuthController do
   @register_per_ip {5, :timer.hours(1)}
   @password_per_user {5, :timer.minutes(5)}
   @ws_ticket_per_user {20, :timer.minutes(1)}
+  @forgot_per_ip {5, :timer.hours(1)}
 
   def register(conn, params) do
     with :ok <- limit(conn, {:register, ip(conn)}, @register_per_ip) do
@@ -37,6 +38,14 @@ defmodule HacLongWeb.AuthController do
         {:error, _} ->
           conn |> put_status(:unauthorized) |> json(%{error: "Sai tên đăng nhập hoặc mật khẩu."})
       end
+    end
+  end
+
+  @doc "Quên mật khẩu: ghi yêu cầu cho quản trị (luôn trả ok, không lộ tài khoản có tồn tại hay không)."
+  def forgot(conn, params) do
+    with :ok <- limit(conn, {:forgot, ip(conn)}, @forgot_per_ip) do
+      Accounts.PasswordReset.request(to_string(params["username"]), to_string(params["contact"]))
+      json(conn, %{ok: true})
     end
   end
 

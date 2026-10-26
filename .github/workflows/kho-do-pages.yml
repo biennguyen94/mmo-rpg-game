@@ -1,0 +1,81 @@
+# Trang "Kho Đồ Hắc Long" trên GitHub Pages: mỗi lần dữ liệu game đổi trên main, dựng lại bằng
+# reference/rpg-game/scripts/kho_do/build.sh rồi đăng lên https://<user>.github.io/<repo>/.
+# Hình trang dùng là bộ Pixel CC0 (CREDITS.md), không có asset MU.
+# Bật một lần: Settings → Pages → Source: GitHub Actions.
+name: Kho Đồ (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "reference/rpg-game/priv/game_data/**"
+      - "reference/rpg-game/priv/static/assets/pixel/**"
+      - "reference/rpg-game/priv/static/assets/pixel_icons.json"
+      - "reference/rpg-game/scripts/kho_do/**"
+      - "reference/rpg-game/lib/**"
+      - ".github/workflows/kho-do-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: kho-do-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: reference/rpg-game
+    env:
+      MIX_ENV: test
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25"
+          elixir-version: "1.17"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache thư viện và bản biên dịch
+        uses: actions/cache@v4
+        with:
+          path: |
+            reference/rpg-game/deps
+            reference/rpg-game/_build
+          key: kho-do-${{ runner.os }}-${{ hashFiles('reference/rpg-game/mix.lock') }}
+          restore-keys: kho-do-${{ runner.os }}-
+
+      - run: mix deps.get
+
+      - name: Dựng trang Kho Đồ
+        run: |
+          scripts/kho_do/build.sh "$GITHUB_WORKSPACE/_site"
+          cd "$GITHUB_WORKSPACE/_site"
+          # build.py ra phần thân trang (bản artifact được bọc khung khi đăng): thêm doctype, charset, viewport
+          { printf '<!doctype html>\n<html lang="vi">\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'; cat kho_do.html; } > index.html
+          rm -f kho_do.html data.json kho_do.html.files.json
+          touch .nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

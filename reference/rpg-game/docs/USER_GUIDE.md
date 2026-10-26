@@ -46,6 +46,8 @@
 
 Kỹ năng tốn MP, tốn nhiều hơn khi lên cấp (MP gốc × (1 + 2 % × (cấp − 1))). Mỗi lượt trong trận hồi 3 % MP tối đa + Năng lượng / 10; nghỉ trọ hồi đầy. Kỹ năng luôn trúng (đòn thường có thể trượt).
 
+**Thông thạo kỹ năng:** mỗi kỹ năng có cấp 1–10, luyện bằng cách dùng khi đánh quái (+2 điểm mỗi lần, tự đánh +1, trùm / quái tinh anh ×3; quái thấp hơn mình quá 10 cấp và đánh người không tính). Cấp 1 gây 75 % sức của cấp 10, cấp thấp tốn thêm MP (dưới cấp 4), hồi chiêu chậm hơn 1 lượt (dưới cấp 7), tác dụng phụ yếu hơn (dưới cấp 10). Lên cấp 5 và cấp 10 cần **đột phá** ở Menu → Kỹ năng: 1 / 3 **Bí Kíp** (lần đầu hạ mỗi trùm vùng / chúa tể chắc chắn 1 cuốn, Tháp Vô Tận mỗi 10 tầng vượt lần đầu 1 cuốn; còn rơi từ trùm hạ lại, quái tinh anh, trùm thế giới) hoặc 5 / 15 Ngọc Tâm Linh. Nhân vật tạo trước bản cập nhật có sẵn cấp 10 cho mọi kỹ năng đang có.
+
 Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 %, vừa 40 %, lớn 70 % máu / MP tối đa; giá tăng theo cấp nhân vật (+10 % mỗi cấp). Trong trận có nút **Uống máu** và **Uống mana** (mất một lượt).
 
 ## 3. Chỉ số và lên cấp
@@ -127,7 +129,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Nhẫn, dây chuyền, đồ Excellent, đủ bộ (Phase 15c):** 2 ô nhẫn (máu / thủ) và 1 ô dây chuyền (tấn công), chỉ rơi từ quái.
   Đồ **Excellent** (tên xanh lục) có thêm 1–3 dòng đặc biệt: tăng sát thương, chí mạng, hồi máu / MP khi hạ quái, máu tối đa,
   giảm sát thương nhận, vàng nhặt được. Mặc **đủ bộ giáp** từ bậc 2 trở lên được +10 % phòng thủ, +3 % tấn công và thêm máu
-  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32.
+  (dòng "Bộ … 5/5 ✓" ở tab Túi đồ). Đồ có thêm bậc 7–8 cho cấp 27 và 32. Đủ bộ và mọi món của bộ ép từ **+7** thì nhân vật có
+  **hào quang** xanh dương (+9 vàng, +11 cam đỏ có hạt bay lên), ai xem hồ sơ / đấu trường cũng thấy; chỉ để đẹp, không cộng chỉ số.
 - **May mắn, Kỹ năng (Phase 15d):** đồ rơi đôi khi có dòng xanh dương **May mắn** (ép ngọc +7..+11 dễ thành công hơn 25 %;
   nếu là vũ khí thì thêm 5 % chí mạng) và vũ khí có thể có **Kỹ năng** (chiêu gây thêm 10 % sát thương). Đồ có các dòng này bán
   được giá hơn.
@@ -185,7 +188,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 |---|---|
 | Trưởng Làng | Nhiệm vụ (nhận, trả thưởng), chuyển sinh |
 | Thợ Rèn | Mua / bán đồ, ép đồ, rèn đồ, rương báu |
-| Bà Lang | Bình máu, pha chế từ thảo dược |
+| Bà Lang | Bán bình máu / mana; pha đồ uống (Bia Thảo Dược, Rượu Thuốc, Rượu Linh Chi, Rượu Long Huyết) từ Thảo Dược / Linh Chi |
 | Chủ Quán Trọ | Nghỉ một đêm: hồi đầy máu và MP |
 | Bảng Tin | 4 việc hằng ngày, đổi mới mỗi ngày |
 | Người Gác Tháp | Vào Tháp Vô Tận |
@@ -204,7 +207,16 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   chúa tể) để thuần phục. Thú đi theo, cộng % chỉ số và hay cắn thêm một đòn; thú đắt cắn mạnh hơn, thú thuần từ vùng chuyển sinh
   càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt);
   cấp 5 và 15 học hai kỹ năng riêng. Xem tỉ lệ cắn, sức cắn, kỹ năng ở Menu → Thú cưng.
-- **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp (món ăn cho hiệu ứng có hạn).
+- **Long Vương** 🐉: thú hiếm duy nhất, không bán, chỉ câu được ở **Hồ Long Vương** (cổng mép trái Rừng Mê 1, từ cấp 30). Mỗi giờ
+  Ngài **nổi lên một lần** vào lúc ngẫu nhiên, ở một ô nước ngẫu nhiên của hồ (bọt vàng sủi, bóng rồng vàng; ai đang ở hồ đều được báo),
+  ở lại 3 phút. Chạm đúng ô đó để thả câu: mỗi lần có 1/2.000 cơ hội Ngài cắn câu (phao giật mạnh, "Có gì đó rất lớn…": giật ngay!),
+  nhân thêm theo **Long Khí** (mỗi con cá câu ở hồ +1, tối đa 200 = cơ hội ×3, về 0 khi câu được Ngài); có **Mồi Rồng** (Bà Lang pha
+  100 mồi từ Cá Chép Vàng + 3 Linh Chi) thì gấp đôi, chỉ tốn mồi khi thả trúng ô Ngài. Có người câu được hoặc hết giờ thì Ngài lặn.
+  Giữa các lần Ngài nổi: **Đàn Cá Vàng** khoảng 15 phút một lần lấp lánh ở một ô nước trong 2 phút (cá vàng lượn, viền chấm), thả trúng
+  ô đó thì 15 % ra Cá Chép Vàng và mỗi con +3 Long Khí; **việc của Ông Lão** mỗi ngày: câu 30 con cá ở hồ rồi gặp Ông Lão nhận vàng,
+  kinh nghiệm và +20 Long Khí. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
+  Ba kỹ năng ở cấp 5 / 15 / 20: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh. Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
+- **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác
 
@@ -232,16 +244,21 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 11. Đấu trường và Đồ sát
 
-- **Đấu trường** (tab Khác): đánh với **bản sao chỉ số** của người khác (họ không cần online). Điểm Elo lên / xuống; 15 trận mỗi
+- **Đấu trường** (tab Khác): đánh với người khác do máy điều khiển (họ không cần online): đối thủ dùng kỹ năng, thú cưng,
+  buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
   ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Nhà); bỏ chạy thì không mất gì.
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
-  luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì tự đánh thường. Hết máu hoặc **bỏ chạy** là gục ngã:
+  luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (hết MP / đang hồi chiêu thì đánh thường). Hết máu hoặc **bỏ chạy** là gục ngã:
   mất 10% vàng, về Nhà; số vàng đó về tay người thắng. Không đánh được ở Làng, Nhà và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
   - Người đang **đánh quái** vẫn bị đồ sát ngay: trận đánh quái bị cắt ngang (quái giữ nguyên máu, không mất gì). Chỉ không đánh
     được người đang trong một trận đồ sát khác. Bản thân mình phải rảnh tay (không đang trong trận) mới đồ sát được.
   - Người vừa gục được **bảo vệ 2 phút**; mỗi giờ chỉ đồ sát cùng một người tối đa 3 lần.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
+- **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
+  chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
+  lệ nên đồ tốt vẫn hơn, chỉ là trận dài hơn (khoảng 7–10 lượt giữa hai người ngang nhau). Vừa thoát choáng thì miễn choáng 2 lượt.
+  Mỗi lớp nhận sát thương khác nhau một chút để các lớp ngang nhau khi đánh người (Đấu Sĩ, Phù Thủy ít máu nên nhận ít hơn).
 
 ![Đồ sát](screenshots/e2e-pk.png)
 

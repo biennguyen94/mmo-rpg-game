@@ -59,7 +59,7 @@ defmodule HacLong.Arena do
 
   @doc """
   Kiểm tra được thách đấu `target` không, và dựng quái-bản-sao của đối thủ.
-  Trả về `{:ok, quái}` hoặc `{:error, lý_do}`.
+  Trả về `{:ok, quái, nhân vật đối thủ}` hoặc `{:error, lý_do}`.
   """
   def challenge(uid, target) do
     s = stats(uid)
@@ -69,7 +69,7 @@ defmodule HacLong.Arena do
       target == uid -> {:error, "Không tự thách đấu mình được."}
       !opp -> {:error, "Không tìm thấy đối thủ."}
       s.today >= @per_day -> {:error, "Hôm nay đã đấu đủ #{@per_day} trận. Mai quay lại nhé."}
-      true -> {:ok, opponent(opp, target)}
+      true -> {:ok, opponent(opp, target), opp}
     end
   end
 
@@ -93,6 +93,8 @@ defmodule HacLong.Arena do
       atk: round(d.atk * (1 + d.wingDmg)),
       taken: Float.round((1 - d.wingAbsorb) * (1 - d.excAbsorb) * 1.0, 4),
       ignore_def: d.ignoreDef,
+      # Excellent "phản sát thương" của người đó: người đánh bản sao (đồ sát) cũng bị phản
+      reflect: d.excReflect,
       def: d.def,
       crit: d.crit,
       # Phase 8: hệ số chí mạng thật của người đó (trước đây ×monster_crit_mult như quái)
@@ -101,7 +103,17 @@ defmodule HacLong.Arena do
       xp: 0,
       gold: 0,
       pvp: uid,
-      look: Engine.look(p)
+      look: Engine.look(p),
+      # DECISIONS "Cân bằng đánh người": lớp (hệ số nhận sát thương theo lớp) và kỹ năng thật của người đó
+      cls: p.cls,
+      # số lần chuyển sinh: chọn dòng hệ số lớp (RULES.pvp.class_taken_by_rebirth)
+      rebirths: Map.get(p, :rebirths) || 0,
+      # Đấu trường: hệ số lớp theo bảng riêng (RULES.pvp.class_taken_arena_by_rebirth); đồ sát ghi đè false
+      arena: true,
+      skills: Engine.copy_skills(p),
+      mp: d.maxMp,
+      maxMp: d.maxMp,
+      mp_regen: Engine.mp_regen(p)
     }
   end
 
@@ -144,6 +156,10 @@ defmodule HacLong.Arena do
     from(c in Character,
       left_join: r in "pvp",
       on: r.user_id == c.user_id,
+      left_join: gm in "guild_members",
+      on: gm.user_id == c.user_id,
+      left_join: g in "guilds",
+      on: g.id == gm.guild_id,
       where: c.user_id != ^uid,
       order_by: [asc: fragment("abs(coalesce(?, 1000) - ?)", r.rating, ^me), desc: c.level],
       limit: ^n,
@@ -152,7 +168,9 @@ defmodule HacLong.Arena do
         name: c.name,
         cls: c.cls,
         level: c.level,
-        rating: coalesce(r.rating, 1000)
+        rating: coalesce(r.rating, 1000),
+        # ký hiệu bang: danh sách tô màu bang địch đang chiến như trên bản đồ
+        tag: g.tag
       }
     )
     |> Repo.all()
@@ -171,6 +189,10 @@ defmodule HacLong.Arena do
       from(c in Character,
         left_join: r in "pvp",
         on: r.user_id == c.user_id,
+        left_join: gm in "guild_members",
+        on: gm.user_id == c.user_id,
+        left_join: g in "guilds",
+        on: g.id == gm.guild_id,
         where: c.user_id != ^uid and ilike(c.name, ^"%#{q}%"),
         order_by: [desc: fragment("lower(?) = lower(?)", c.name, ^q), desc: c.level, asc: c.name],
         limit: ^n,
@@ -179,7 +201,8 @@ defmodule HacLong.Arena do
           name: c.name,
           cls: c.cls,
           level: c.level,
-          rating: coalesce(r.rating, 1000)
+          rating: coalesce(r.rating, 1000),
+          tag: g.tag
         }
       )
       |> Repo.all()

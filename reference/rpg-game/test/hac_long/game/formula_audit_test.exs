@@ -146,6 +146,34 @@ defmodule HacLong.Game.FormulaAuditTest do
     assert Engine.ancient_bonus(two).atk_pct == lvl2.atk_pct
   end
 
+  test "hào quang (look.aura): đủ bộ, mọi món từ +7 / +9 / +11" do
+    pieces = [
+      armor: @armor,
+      helm: "item_7_33",
+      pants: "item_9_33",
+      gloves: "item_10_33",
+      boots: "item_11_33"
+    ]
+
+    at = fn ups ->
+      pieces
+      |> Enum.zip(ups)
+      |> Enum.reduce(hero(), fn {{s, id}, up}, p -> wear(p, s, Gear.new(id), up) end)
+      |> Engine.look()
+      |> Map.fetch!(:aura)
+    end
+
+    assert at.([7, 7, 7, 7, 7]) == 7
+    assert at.([9, 10, 9, 11, 9]) == 9
+    assert at.([11, 11, 11, 11, 11]) == 11
+    assert at.([11, 11, 11, 11, 6]) == 0
+    # thiếu một món: không đủ bộ
+    assert Enum.take(pieces, 4)
+           |> Enum.reduce(hero(), fn {s, id}, p -> wear(p, s, Gear.new(id), 11) end)
+           |> Engine.look()
+           |> Map.fetch!(:aura) == 0
+  end
+
   test "thưởng đủ bộ giáp: def_pct, atk_pct, máu hp_per_tier × bậc" do
     sb = @r.set_bonus
 

@@ -6,41 +6,49 @@ defmodule HacLong.Game.Crafting do
     (`level`). Món ăn (`slot: "food"`) ăn ngoài trận (`eat/2`) thì có tác dụng trong một số
     trận (`food.battles`): cộng phần trăm máu/tấn công/phòng thủ/kinh nghiệm/vàng
     (`food_bonus/2`). Mỗi lúc chỉ một món; ăn món khác thì thay món cũ.
+  - **Pha đồ uống** (`brew/2`, Bà Lang): công thức `npc: "herbalist"`, dùng chung cấp nghề Nấu ăn.
+    Đồ uống là món `slot: "food"` có `drink: true`, nằm ô riêng (`p.drink`) nên **cộng dồn** với món ăn;
+    uống món khác thì thay đồ uống cũ.
   - **Rèn đồ** (`smith/2`): chọn vũ khí, giáp hoặc khiên; tốn quặng và vàng, ra một món đồ
     ngẫu nhiên hợp cấp. Cấp nghề rèn càng cao càng dễ ra đồ nhiều dòng cộng thêm (+12).
-  - Mỗi lần nấu/rèn được 1 kinh nghiệm nghề; cấp nghề 1–5 (`level/1`).
+  - Mỗi lần rèn được 1 kinh nghiệm nghề, mỗi lần nấu được `xp` của công thức (pha đồ uống 0); cấp nghề 1–5
+    (`level/2`), ngưỡng riêng từng nghề (`levels/1`).
 
-  Trạng thái trong nhân vật: `crafting: %{cook: số, smith: số}`, `food: %{id, left} | nil`.
+  Trạng thái trong nhân vật: `crafting: %{cook: số, smith: số}`, `food` / `drink`: `%{id, left} | nil`.
   """
 
   alias HacLong.Game.{Data, Engine, Gear}
 
   # số ở `RULES.crafting` (`priv/game_data/rules.json`)
   @rules Data.rules().crafting
-  @levels @rules.levels
+  @levels %{cook: @rules.cook_levels, smith: @rules.levels}
   @names %{cook: "Nấu ăn", smith: "Rèn đồ"}
   # nguyên liệu mỗi lần rèn theo loại đồ; vàng = cấp nhân vật × 15
   @smith_costs @rules.smith_costs
 
+  def levels(skill), do: @levels[skill]
   def levels, do: @levels
-  def max_level, do: length(@levels)
+  def max_level, do: length(@levels.smith)
   def smith_costs, do: @smith_costs
   def smith_gold(p), do: p.level * @rules.smith_gold_per_level
 
   def xp(p, skill), do: Map.get(Map.get(p, :crafting) || %{}, skill, 0)
-  def level(xp) when is_integer(xp), do: Enum.count(@levels, &(xp >= &1))
-  def level(p, skill), do: level(xp(p, skill))
+  def level(xp, skill) when is_integer(xp), do: Enum.count(@levels[skill], &(xp >= &1))
+  def level(p, skill), do: level(xp(p, skill), skill)
 
-  @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng 6% mỗi cấp, 2 dòng 50%, còn lại 1 dòng."
+  @doc "Tỉ lệ số dòng cộng thêm khi rèn ở cấp nghề `lv` (B-15): 3 dòng `smith_epic_per_level`% mỗi cấp (4), 2 dòng 50%, còn lại 1 dòng."
   def smith_weights(lv) do
     epic = @rules.smith_epic_per_level * lv
     [{3, epic}, {2, @rules.smith_rare}, {1, 100 - @rules.smith_rare - epic}]
   end
 
-  defp gain(p, skill) do
+  defp gain(p, skill, n \\ 1)
+  defp gain(p, _skill, 0), do: {p, ""}
+
+  defp gain(p, skill, n) do
     before = level(p, skill)
     all = Map.get(p, :crafting) || %{cook: 0, smith: 0}
-    p = Map.put(p, :crafting, Map.put(all, skill, xp(p, skill) + 1))
+    p = Map.put(p, :crafting, Map.put(all, skill, xp(p, skill) + n))
     now = level(p, skill)
 
     note =
@@ -62,11 +70,16 @@ defmodule HacLong.Game.Crafting do
 
   # ---------- Nấu ăn ----------
 
-  def cook(p, id) do
+  def cook(p, id), do: make(p, id, "cook", &"Nấu được #{&1}.#{&2}")
+
+  @doc "Pha đồ uống ở Bà Lang (công thức `npc: \"herbalist\"`): cần cấp nghề Nấu ăn, không cộng kinh nghiệm nghề."
+  def brew(p, id), do: make(p, id, "herbalist", &"Pha được #{&1}.#{&2}")
+
+  defp make(p, id, npc, done) do
     r = Data.recipe(id)
 
     cond do
-      r == nil or r.npc != "cook" ->
+      r == nil or r.npc != npc ->
         {%{ok: false, msg: "Không có món này."}, p}
 
       level(p, :cook) < (r[:level] || 1) ->
@@ -76,48 +89,58 @@ defmodule HacLong.Game.Crafting do
         {%{ok: false, msg: "Chưa đủ nguyên liệu."}, p}
 
       true ->
-        p = p |> take_all(r.needs) |> Engine.add_item(r.out)
-        {p, note} = gain(p, :cook)
-        {%{ok: true, msg: "Nấu được #{Data.item(r.out).name}.#{note}"}, p}
+        n = r[:n] || 1
+        p = p |> take_all(r.needs) |> Engine.add_item(r.out, n)
+        {p, note} = gain(p, :cook, r[:xp] || 1)
+        name = if n > 1, do: "#{Data.item(r.out).name} ×#{n}", else: Data.item(r.out).name
+        {%{ok: true, msg: done.(name, note)}, p}
     end
   end
 
-  @doc "Ăn món `id` (ngoài trận): có tác dụng trong `food.battles` trận tới."
+  @doc "Ăn / uống món `id` (ngoài trận): có tác dụng trong `food.battles` trận tới (đồ uống vào ô `drink`)."
   def eat(p, id) do
     it = Data.item(id)
+    drink = it != nil and it[:drink] == true
 
     cond do
       p.battle ->
-        {%{ok: false, msg: "Không ăn được trong trận."}, p}
+        {%{
+           ok: false,
+           msg: if(drink, do: "Không uống được trong trận.", else: "Không ăn được trong trận.")
+         }, p}
 
       it == nil or it.slot != "food" or Map.get(p.inv, id, 0) <= 0 ->
         {%{ok: false, msg: "Không có món này."}, p}
 
       true ->
-        p = take_all(p, %{id => 1}) |> Map.put(:food, %{id: id, left: it.food.battles})
-        {%{ok: true, msg: "Ăn #{it.name}: #{it.desc}"}, p}
+        p =
+          take_all(p, %{id => 1})
+          |> Map.put(if(drink, do: :drink, else: :food), %{id: id, left: it.food.battles})
+
+        msg = if drink, do: "Uống #{it.name}: #{it.desc}", else: "Ăn #{it.name}: #{it.desc}"
+        {%{ok: true, msg: msg}, p}
     end
   end
 
-  @doc "Phần trăm cộng thêm của món đang ăn cho chỉ số `key` (hp, atk, def, xp, gold)."
-  def food_bonus(p, key) do
-    case Map.get(p, :food) do
-      %{id: id, left: left} when left > 0 ->
-        case Data.item(id) do
-          %{food: %{buff: b}} -> Map.get(b, key, 0)
-          _ -> 0
-        end
+  @doc "Phần trăm cộng thêm của món đang ăn + đồ đang uống cho chỉ số `key` (hp, atk, def, xp, gold)."
+  def food_bonus(p, key), do: buff(Map.get(p, :food), key) + buff(Map.get(p, :drink), key)
 
-      _ ->
-        0
+  defp buff(%{id: id, left: left}, key) when left > 0 do
+    case Data.item(id) do
+      %{food: %{buff: b}} -> Map.get(b, key, 0)
+      _ -> 0
     end
   end
 
-  @doc "Hết một trận: món ăn bớt một trận tác dụng."
-  def tick(p) do
-    case Map.get(p, :food) do
-      %{left: left} when left > 1 -> put_in(p.food.left, left - 1)
-      %{} -> Map.put(p, :food, nil)
+  defp buff(_, _key), do: 0
+
+  @doc "Hết một trận: món ăn và đồ uống bớt một trận tác dụng."
+  def tick(p), do: p |> tick(:food) |> tick(:drink)
+
+  defp tick(p, key) do
+    case Map.get(p, key) do
+      %{left: left} = f when left > 1 -> Map.put(p, key, %{f | left: left - 1})
+      %{} -> Map.put(p, key, nil)
       nil -> p
     end
   end

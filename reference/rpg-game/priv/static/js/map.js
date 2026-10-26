@@ -22,22 +22,15 @@
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
   let relations = () => ({});
   let boss = { alive: false }; // trùm thế giới (HacLong.WorldBoss)
+  // hiệu ứng di chuyển (docs/FX_PLAN.md): dấu bước chân, ô đích vừa chạm, lúc sang bản đồ mới
+  let steps = [], lastTile = null, mark = null, arrive = 0;
+  let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
   let decorating = false;       // đang trang trí nhà: tô các ô đặt được
+  // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
+  let mobFx = [];
+  let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
   const Doll = window.Doll;
   Doll.onReady(() => draw());
-
-  // Thú cưng đi sau chủ một ô: nhớ ô trước đó của mỗi người.
-  const trails = new Map();
-  function petTile(key, x, y) {
-    let t = trails.get(key);
-    if (!t) { t = { last: [x, y], pet: [x, y + 1] }; trails.set(key, t); }
-    if (t.last[0] !== x || t.last[1] !== y) {
-      // nhảy xa (qua cổng, dịch chuyển) thì thú hiện ngay sau lưng
-      t.pet = Math.abs(t.last[0] - x) + Math.abs(t.last[1] - y) > 1 ? [x, y + 1] : t.last;
-      t.last = [x, y];
-    }
-    return t.pet;
-  }
 
   // Đồ trang trí đã đặt trong Nhà (chỉ nhà của mình).
   const decorAt = (P, x, y) => P.pos.map === 'home' && (P.decor || []).find((d) => d.x === x && d.y === y);
@@ -135,7 +128,7 @@
   // Cổng vào vùng chưa mở (P.view.unlocked do server tính).
   function locked(P, portal) {
     const target = mapOf(portal.to);
-    return target.zone != null && !P.view.unlocked[target.zone];
+    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel);
   }
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
@@ -189,7 +182,8 @@
     if (f.includes('lair')) return 'embers';
     if (f.includes('mountain')) return 'snow';
     if (f.includes('graveyard')) return 'fog';
-    if (f.includes('forest') || f.includes('camp')) return 'leaves';
+    if (f.includes('camp')) return 'dust';
+    if (f.includes('forest')) return 'leaves';
     return null;
   }
   // ống khói: góc trên phải mỗi khối nhà gạch (ô "#") ở Làng
@@ -237,6 +231,13 @@
         ctx.fillStyle = rnd(i, 3) > 0.5 ? 'rgba(196, 140, 52, 0.75)' : 'rgba(120, 160, 60, 0.7)';
         ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+      }
+    } else if (kind === 'dust') {
+      // Trại (đất khô): bụi cát bay ngang theo gió (FX_PLAN đợt 5)
+      for (let i = 0; i < 26; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * (0.08 + rnd(i, 3) * 0.06) - cx, vw + 30) - 15, y = wrap(rnd(i, 2) * vh + Math.sin(t / 600 + i) * 6 - cy, vh);
+        ctx.fillStyle = `rgba(214, 186, 132, ${0.25 + 0.3 * rnd(i, 4)})`;
+        ctx.fillRect(x, y, 6 + rnd(i, 5) * 8, 1.5);
       }
     } else if (kind === 'fog') {
       for (let i = 0; i < 6; i++) {
@@ -393,7 +394,7 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
-    const fx = fxOn(), fountains = [];
+    const fx = fxOn(), fountains = [], lanterns = [];
 
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -418,6 +419,7 @@
             }
           }
           if (fx && kind === 'fountain') fountains.push([px, py]);
+          if (kind === 'lantern') lanterns.push([px, py]);
         }
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
@@ -426,7 +428,7 @@
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);
         if (portal) {
           const shut = locked(P, portal);
-          if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); }
+          if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); } else if (fx) portalSwirl(px + TILE / 2, py + TILE / 2, now);
           // nhãn nằm trong ô cổng để không đè lên người đứng cạnh
           labels.push([(shut ? '🔒 ' : '') + mapOf(portal.to).name, px + TILE / 2, py + TILE - 13, shut ? '#9a93a3' : '#f0cf7a']);
         }
@@ -473,7 +475,14 @@
       ctx.fillStyle = levelColor(P, lv);
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText(String(lv), px + TILE - 7, py + TILE - 9);
+      // đang có người đánh (⚔): thỉnh thoảng lóe tia chém (người khác không vẽ trên bản đồ, chỉ thấy quái bị đánh)
+      if (fx && q.busy) {
+        const ph = ((now + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0) * 137) % 1100) / 1100;
+        if (ph < 0.3) slashAt(px + TILE / 2, py + TILE / 2, ph / 0.3, '#ffe9b0');
+      }
     }
+
+    if (fx) drawMobFx(now, cx, cy);
 
     for (const n of here ? world.nodes || [] : []) {
       const px = Math.round(n.x * TILE - cx), py = Math.round(n.y * TILE - cy);
@@ -501,6 +510,7 @@
       const px = Math.round(n.at[0] * TILE - cx), py = Math.round(n.at[1] * TILE - cy);
       const im = image('npcs/' + n.sprite);
       if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
+      if (fx) npcAct(n.id, px, py, now);
       labels.push([n.name, px + TILE / 2, py - 14, n.role === 'quests' ? '#f0cf7a' : '#c8f0b0']);
       if ((n.role === 'quests' && P.view.questReady) || (n.role === 'daily' && P.view.dailyReady) || (n.role === 'chest' && P.view.chestReady)) label('!', px + TILE - 4, py - 2, '#f0cf7a');
     }
@@ -518,25 +528,27 @@
     }
 
     const hero = image('monsters/hero');
-    // thú cưng: nhỏ hơn một chút, đi sau chủ một ô
-    const drawPet = (id, key, x, y) => {
-      if (!id) return;
-      const [tx, ty] = petTile(key, x, y);
-      const [qx, qy] = smooth('pet' + key, tx, ty, DUR.player * 1.4, now);
-      const im = image(id.startsWith('tame:') ? 'monsters/' + id.slice(5) : 'pets/' + id);
-      if (im.complete) ctx.drawImage(im, Math.round(qx * TILE - cx) + 4, Math.round(qy * TILE - cy) + 6, TILE - 8, TILE - 8);
-    };
     // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
     // xem danh sách người trong bản đồ ở nút 👫 trên dock.
+    // không vẽ thú cưng trên bản đồ (rối bản đồ, anh yêu cầu 2026-10-23): thú chỉ hiện trong trận, hồ sơ, Nhà
     const look = P.view && P.view.look;
-    if (!m.tower) drawPet(look && look.pet, 'me', P.pos.x, P.pos.y);
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
+    if (fx) moveFx(now, m, P, cx, cy, px, py);
+    if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
-    if (myDoll) ctx.drawImage(myDoll, px, py, TILE, TILE); else if (hero.complete) ctx.drawImage(hero, px, py, TILE, TILE);
+    // đang đi: nhún nhẹ; vừa sang bản đồ: hiện ra từ nhỏ tới to (FX_PLAN đợt 5)
+    const walking = fx && (mx !== P.pos.x || my !== P.pos.y);
+    const bobY = walking ? -Math.abs(Math.sin(now / 85)) * 2.5 : 0;
+    const grow = fx && arrive && now - arrive < 420 ? 0.35 + 0.65 * ((now - arrive) / 420) : 1;
+    const hs = TILE * grow, hx = px + (TILE - hs) / 2, hy = py + (TILE - hs) + bobY;
+    if (myDoll) ctx.drawImage(myDoll, hx, hy, hs, hs); else if (hero.complete) ctx.drawImage(hero, hx, hy, hs, hs);
+    if (fx && levelAt && now - levelAt < 1600) levelColumn(px, py, (now - levelAt) / 1600);
     const mine = bubbleOf(userId, now);
     if (mine) talk.push([mine, px + TILE / 2, py]);
+    // câu cá: cần, dây, phao, cá bay lên (chỉ phía mình)
+    if (fishing) fishFx(now, m, cx, cy, px, py, fx);
     // hướng dẫn người mới: vòng sáng nhấp nháy và mũi tên ở ô cần tới
     const goal = P.view && P.view.tutorial && P.view.tutorial.target;
     if (goal && goal.map === P.pos.map) {
@@ -569,6 +581,8 @@
           ctx.fillRect(fx0 + TILE / 2 + Math.sin(i * 2.1) * 8 * k, fy0 + TILE / 2 - Math.sin(k * Math.PI) * 12, 2, 2);
         }
       }
+      // Hồ Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
+      if (m.fish === 'lake') lakeFx(now, m, cx, cy);
       // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
       const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
@@ -583,7 +597,16 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, VW(), VH());
       if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
+      // đèn lồng (Hồ Long Vương) tỏa sáng ban đêm
+      if (dark >= 0.3) for (const [lx0, ly0] of lanterns) {
+        const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.85 + 0.15 * Math.sin(now / 230 + lx0) : 1;
+        const g = ctx.createRadialGradient(x, y, 1, x, y, TILE * 1.8);
+        g.addColorStop(0, `rgba(255, 120, 70, ${0.55 * dark * f})`); g.addColorStop(1, 'rgba(255, 120, 70, 0)');
+        ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.8, y - TILE * 1.8, TILE * 3.6, TILE * 3.6);
+      }
     }
+    if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
+    if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
     // vẽ lại khi bong bóng hết hạn
@@ -646,6 +669,407 @@
     put(Doll.canvas(v.look) || image('monsters/hero'), hx, hy);
   }
 
+  // ---------- Hồ Long Vương: không khí (chỉ vẽ, không ảnh hưởng luật) ----------
+  const lakeCache = new Map();
+  function lakeInfo(m) {
+    if (lakeCache.has(m)) return lakeCache.get(m);
+    let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, dx = 0, dy = 0, dn = 0;
+    m.tiles.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c === '~' || c === '=') { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      if (c === '=') { dx += x; dy += y; dn++; }
+    }));
+    const info = { x0, y0, x1, y1, deep: dn ? [dx / dn + 0.5, dy / dn + 0.5] : null };
+    lakeCache.set(m, info);
+    return info;
+  }
+  const isWater = (m, x, y) => '~='.includes((m.tiles[Math.floor(y)] || '')[Math.floor(x)] || '#');
+  function lakeFx(t, m, cx, cy) {
+    const L = lakeInfo(m), vw = VW(), vh = VH(), dark = PHASES[shade()] ? PHASES[shade()][1] : 0;
+    // bóng cá lượn dưới nước (chỉ để trang trí, không liên quan tỉ lệ câu)
+    for (let i = 0; i < 5; i++) {
+      const sp = 9000 + i * 2300, k = t / sp + i * 1.7;
+      const fx0 = L.x0 + 0.5 + (L.x1 - L.x0) * (0.5 + 0.45 * Math.sin(k * 2 * Math.PI));
+      const fy0 = L.y0 + 0.5 + (L.y1 - L.y0) * (0.5 + 0.42 * Math.sin(k * 2 * Math.PI * 1.7 + i));
+      if (!isWater(m, fx0, fy0)) continue;
+      const ang = Math.atan2(Math.cos(k * 2 * Math.PI * 1.7 + i) * 1.7 * (L.y1 - L.y0), Math.cos(k * 2 * Math.PI) * (L.x1 - L.x0));
+      const x = fx0 * TILE - cx, y = fy0 * TILE - cy, big = i === 0 ? 1.6 : 1;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = 'rgba(0, 10, 25, 0.28)';
+      ctx.beginPath(); ctx.ellipse(0, 0, 9 * big, 3.5 * big, 0, 0, Math.PI * 2); ctx.fill();
+      const w = Math.sin(t / 150 + i) * 2;
+      ctx.beginPath(); ctx.moveTo(-8 * big, 0); ctx.lineTo(-14 * big, -4 * big + w); ctx.lineTo(-14 * big, 4 * big + w); ctx.fill();
+      ctx.restore();
+    }
+    // Vực Rồng: xoáy nước chậm
+    if (L.deep) {
+      const x = L.deep[0] * TILE - cx, y = L.deep[1] * TILE - cy;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const a0 = t / (2600 + i * 700) + i * 2.1, r = TILE * (0.6 + i * 0.55);
+        ctx.strokeStyle = `rgba(150, 210, 255, ${0.22 - i * 0.05})`;
+        ctx.beginPath(); ctx.arc(x, y, r, a0, a0 + 2.2); ctx.stroke();
+      }
+    }
+    if (dark < 0.3) {
+      // ban ngày: lá vàng, hoa hồng rơi chậm, xoay nhẹ; neo theo bản đồ (không đi theo nhân vật / camera)
+      const W = m.tiles[0].length * TILE, H = m.tiles.length * TILE;
+      for (let i = 0; i < 30; i++) {
+        const fall = 9000 + rnd(i, 3) * 6000, k = (t / fall + rnd(i, 4)) % 1;
+        const x = wrap(rnd(i, 1) * W + Math.sin(t / 1400 + i) * 26, W) - cx, y = k * H - cy;
+        if (x < -10 || y < -10 || x > vw + 10 || y > vh + 10) continue;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t / 600 + i) * 1.2);
+        ctx.fillStyle = i % 3 ? 'rgba(230, 180, 60, 0.75)' : 'rgba(245, 160, 190, 0.8)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // tia nắng chéo lúc sáng sớm / chiều tà
+    if (shade() === 'dawn' || shade() === 'dusk') {
+      const col = shade() === 'dawn' ? '255, 230, 170' : '255, 190, 120';
+      for (let i = 0; i < 3; i++) {
+        const a = 0.07 + 0.05 * Math.sin(t / 2200 + i * 2), x = (i + 0.5) * m.tiles[0].length * TILE / 3 - cx;
+        ctx.fillStyle = `rgba(${col}, ${a})`;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x - 80, vh); ctx.lineTo(x - 170, vh); ctx.fill();
+      }
+    }
+  }
+
+  // Dấu bước chân (bụi trên đất, gợn nước trên bến / cầu gỗ), vòng sáng ở ô đích, cột sáng khi vừa sang bản đồ mới
+  // cổng đi được: vòng xoáy sáng quay chậm
+  function portalSwirl(x, y, t) {
+    ctx.save();
+    ctx.translate(x, y + 4); ctx.scale(1, 0.45);
+    for (let i = 0; i < 3; i++) {
+      const a = t / 600 + i * 2.1;
+      ctx.strokeStyle = `rgba(150, 210, 255, ${0.55 - i * 0.12})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, 9 + i * 4, a, a + 2.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // động tác người dân (chỉ là hình): Thợ Rèn gõ búa tia lửa, Bà Lang / Bác Đầu Bếp nồi bốc khói, Ông Lão giật cần,
+  // Lão Hỗn Nguyên lò xoáy sáng
+  function npcAct(id, px, py, t) {
+    const x = px + TILE / 2, y = py + TILE / 2;
+    if (id === 'blacksmith') {
+      const k = (t % 1100) / 1100;
+      if (k < 0.25) for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i - 2.5) * 0.45, r = 3 + k * 4 * 14;
+        ctx.fillStyle = `rgba(255, ${190 + i * 10}, 90, ${1 - k * 4})`;
+        ctx.fillRect(x + 8 + Math.cos(a) * r, y + 6 + Math.sin(a) * r, 2, 2);
+      }
+    } else if (id === 'herbalist' || id === 'cook') {
+      for (let i = 0; i < 4; i++) {
+        const k = ((t / 1800) + i / 4) % 1;
+        ctx.fillStyle = id === 'herbalist' ? `rgba(160, 230, 170, ${0.45 * (1 - k)})` : `rgba(225, 220, 215, ${0.45 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(x + 10 + Math.sin(t / 500 + i) * 3, y + 4 - k * 22, 2 + k * 4, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (id === 'fisher') {
+      // cần câu giật nhẹ mỗi vài giây
+      const tug = (t % 3200) < 260 ? Math.sin((t % 3200) / 260 * Math.PI) * 4 : 0;
+      ctx.strokeStyle = 'rgba(120, 90, 50, 0.9)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x + 6, y); ctx.lineTo(x + 20, y - 12 - tug); ctx.stroke();
+      ctx.strokeStyle = 'rgba(230, 230, 230, 0.6)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(x + 20, y - 12 - tug); ctx.lineTo(x + 24, y + 10); ctx.stroke();
+    } else if (id === 'chaos') {
+      for (let i = 0; i < 3; i++) {
+        const a = t / 400 + i * 2.1;
+        ctx.fillStyle = ['#ff8a5a', '#c49bff', '#9fd8ff'][i];
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * 13, y - 4 + Math.sin(a) * 5, 1.8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  // cột sáng vàng khi lên cấp (k: 0..1)
+  function levelColumn(px, py, k) {
+    const x = px + TILE / 2, y = py + TILE - 4, h = 110 * Math.min(1, k * 4);
+    const a = k < 0.7 ? 1 : (1 - k) / 0.3;
+    const g = ctx.createLinearGradient(0, y - h, 0, y);
+    g.addColorStop(0, 'rgba(255, 230, 140, 0)'); g.addColorStop(0.5, `rgba(255, 215, 90, ${0.55 * a})`); g.addColorStop(1, `rgba(255, 250, 220, ${0.9 * a})`);
+    ctx.fillStyle = g; ctx.fillRect(x - 13, y - h, 26, h);
+    ctx.strokeStyle = `rgba(255, 215, 90, ${a})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y, 8 + k * 26, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 8; i++) {
+      const kk = (k * 2 + i / 8) % 1;
+      ctx.fillStyle = `rgba(255, 240, 170, ${a * (1 - kk)})`;
+      ctx.fillRect(x + Math.sin(i * 1.7) * 12, y - kk * 90, 2, 2);
+    }
+  }
+
+  // vệt chém chéo (k: 0..1) ở tâm (x, y)
+  function slashAt(x, y, k, col) {
+    ctx.save();
+    ctx.globalAlpha = 1 - k; ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    const d = 9 + k * 6;
+    ctx.beginPath(); ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d); ctx.stroke();
+    ctx.fillStyle = col;
+    for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.6; ctx.beginPath(); ctx.arc(x + Math.cos(a) * d * 1.3, y + Math.sin(a) * d * 1.3, 1.6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+
+  function drawMobFx(t, cx, cy) {
+    mobFx = mobFx.filter((e) => t - e.t0 < e.life);
+    for (const e of mobFx) {
+      const k = (t - e.t0) / e.life, x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
+      if (e.k === 'hit') {
+        slashAt(x, y, k, '#ffffff');
+        ctx.save(); ctx.globalAlpha = 1 - k; ctx.font = '800 11px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14);
+        ctx.fillStyle = '#ff8a6a'; ctx.fillText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14); ctx.restore();
+      } else {
+        // gục: hình mờ dần bay lên, hạt tỏa ra
+        const im = image('monsters/' + e.kind);
+        ctx.save();
+        ctx.globalAlpha = (1 - k) * 0.8;
+        if (im.complete && k < 0.6) ctx.drawImage(im, x - TILE / 2, y - TILE / 2 - k * 12, TILE, TILE);
+        for (let i = 0; i < 14; i++) {
+          const a = i * 2.39996, r = 4 + k * (14 + (i % 4) * 5);
+          ctx.fillStyle = i % 3 ? '#e8dcc0' : '#ffd24a';
+          ctx.beginPath(); ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r - k * 16, 2 * (1 - k) + 0.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // hào quang theo đồ (look.aura 7 / 9 / 11) + hạt sáng cánh rơi phía sau; tắt hiệu ứng thì chỉ vẽ quầng tĩnh
+  const AURA = { 7: [111, 180, 255], 9: [255, 210, 74], 11: [255, 106, 42] };
+  function heroAura(t, px, py, look, fx) {
+    const x = px + TILE / 2, y = py + TILE / 2, c = AURA[look.aura];
+    ctx.save();
+    if (c) {
+      const pulse = fx ? 0.5 + 0.5 * Math.sin(t / 380) : 0.5;
+      const g = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, TILE * 0.75);
+      g.addColorStop(0, `rgba(${c}, ${0.35 + 0.2 * pulse})`); g.addColorStop(1, `rgba(${c}, 0)`);
+      ctx.fillStyle = g; ctx.fillRect(x - TILE, y - TILE, TILE * 2, TILE * 2);
+      ctx.strokeStyle = `rgba(${c}, ${0.5 + 0.3 * pulse})`; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(x, py + TILE - 4, 13 + pulse * 2, 5 + pulse, 0, 0, Math.PI * 2); ctx.stroke();
+      // +11: hạt cam đỏ bay lên; +9: vài đốm vàng
+      const n = fx ? (look.aura >= 11 ? 7 : look.aura >= 9 ? 4 : 2) : 0;
+      for (let i = 0; i < n; i++) {
+        const k = ((t / 1400) + i / n) % 1, xx = x + Math.sin(i * 2.1 + t / 600) * 10;
+        ctx.fillStyle = `rgba(${c}, ${1 - k})`;
+        ctx.beginPath(); ctx.arc(xx, py + TILE - 6 - k * 30, 1.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (look.wing && fx) {
+      for (let i = 0; i < 4; i++) {
+        const k = ((t / 1600) + i / 4) % 1, side = i % 2 ? 1 : -1;
+        ctx.fillStyle = `rgba(232, 244, 255, ${0.85 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(x + side * (12 + (i % 3) * 3), py + 8 + k * 26, 1.3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function moveFx(t, m, P, cx, cy, px, py) {
+    const key = `${P.pos.map}:${P.pos.x},${P.pos.y}`;
+    if (lastTile && lastTile.key !== key) {
+      if (lastTile.map === P.pos.map) steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
+      else arrive = t;
+    }
+    lastTile = { key, map: P.pos.map, x: P.pos.x, y: P.pos.y };
+    steps = steps.filter((s) => t - s.t0 < 520);
+    for (const s of steps) {
+      const k = (t - s.t0) / 520, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 5 - cy;
+      if (s.wet) {
+        ctx.strokeStyle = `rgba(200, 235, 255, ${0.6 * (1 - k)})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(x, y, 5 + k * 10, 2 + k * 4, 0, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.fillStyle = `rgba(205, 185, 150, ${0.45 * (1 - k)})`;
+        for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(x + i * (4 + k * 6), y - k * 4 - Math.abs(i) * 1, 2 + k * 2.5, 0, Math.PI * 2); ctx.fill(); }
+      }
+    }
+    if (mark && t - mark.t0 < 900 && mark.map === P.pos.map) {
+      const k = (t - mark.t0) / 900, x = mark.x * TILE + TILE / 2 - cx, y = mark.y * TILE + TILE / 2 - cy;
+      ctx.strokeStyle = `rgba(240, 207, 122, ${0.9 * (1 - k)})`; ctx.lineWidth = 2;
+      for (const d of [0, 0.35]) { const kk = Math.max(0, k - d); ctx.beginPath(); ctx.ellipse(x, y + 8, 4 + kk * 14, 2 + kk * 6, 0, 0, Math.PI * 2); ctx.stroke(); }
+    } else if (mark && t - mark.t0 >= 900) mark = null;
+    if (arrive && t - arrive < 800) {
+      const k = (t - arrive) / 800, x = px + TILE / 2, y = py + TILE - 4;
+      const g = ctx.createLinearGradient(x - 14, 0, x + 14, 0);
+      g.addColorStop(0, 'rgba(180, 220, 255, 0)'); g.addColorStop(0.5, `rgba(220, 240, 255, ${0.7 * (1 - k)})`); g.addColorStop(1, 'rgba(180, 220, 255, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 14, y - 70 * (1 - k * 0.3), 28, 70 * (1 - k * 0.3));
+      ctx.strokeStyle = `rgba(200, 230, 255, ${0.8 * (1 - k)})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x, y, 6 + k * 22, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  // Long Vương nổi: bóng rồng vàng lượn dưới ô nước, bọt vàng sủi lên (vẽ cả khi tắt hiệu ứng, chỉ không động)
+  function dragonSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0;
+    const g = ctx.createRadialGradient(c, d, 2, c, d, TILE * 0.9);
+    g.addColorStop(0, `rgba(255, 215, 90, ${0.55 + 0.2 * Math.sin(k / 300)})`); g.addColorStop(1, 'rgba(255, 215, 90, 0)');
+    ctx.fillStyle = g; ctx.fillRect(c - TILE, d - TILE, TILE * 2, TILE * 2);
+    // thân rồng: chuỗi vảy uốn lượn quanh ô
+    ctx.fillStyle = 'rgba(120, 80, 0, 0.45)';
+    for (let i = 0; i < 9; i++) {
+      const a = k / 900 + i * 0.45, r = TILE * 0.32;
+      ctx.beginPath(); ctx.arc(c + Math.cos(a) * r, d + Math.sin(a * 1.3) * r * 0.6, 4.5 - i * 0.35, 0, Math.PI * 2); ctx.fill();
+    }
+    // bọt vàng
+    for (let i = 0; i < 6; i++) {
+      const p = fx ? (t / 1100 + i / 6) % 1 : i / 6;
+      ctx.fillStyle = `rgba(255, 236, 150, ${0.9 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(c + Math.sin(i * 2.4) * TILE * 0.3, d - p * TILE * 0.45, 1.5 + p * 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255, 220, 110, 0.8)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+  }
+
+  // Đàn Cá Vàng: vài con cá vàng lượn vòng, lấp lánh (vẽ cả khi tắt hiệu ứng, chỉ không động)
+  function schoolSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0;
+    for (let i = 0; i < 5; i++) {
+      const a = k / 700 + i * 1.26, r = TILE * (0.18 + 0.06 * (i % 2));
+      ctx.save(); ctx.translate(c + Math.cos(a) * r, d + Math.sin(a) * r * 0.7); ctx.rotate(a + Math.PI / 2);
+      ctx.fillStyle = 'rgba(255, 190, 40, 0.85)';
+      ctx.beginPath(); ctx.ellipse(0, 0, 3.5, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-3, 0); ctx.lineTo(-6, -2); ctx.lineTo(-6, 2); ctx.fill();
+      ctx.restore();
+    }
+    for (let i = 0; i < 4; i++) {
+      const p = fx ? (t / 500 + i / 4) % 1 : i / 4;
+      ctx.fillStyle = `rgba(255, 250, 200, ${0.9 * Math.sin(p * Math.PI)})`;
+      ctx.fillRect(x + 4 + ((i * 11) % (TILE - 8)), y + 4 + ((i * 7 + 5) % (TILE - 8)), 2, 2);
+    }
+    ctx.strokeStyle = 'rgba(255, 200, 80, 0.5)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]);
+  }
+
+  // ---------- Câu cá: cần, dây, phao, cá bay (ui.js gọi MapView.fish) ----------
+  // fishing: { phase: cast | wait | bite | catch | boot | miss, t0, tx, ty (ô phao), big, item }
+  let fishing = null;
+  const FISH_MS = { cast: 450, catch: 1800, boot: 2600, miss: 600 };
+  function bobberTile(P, m) {
+    for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const w = (k) => '~=MQU'.includes((m.tiles[P.pos.y + dy * k] || '')[P.pos.x + dx * k] || '#');
+      if (w(1)) return w(2) && !'MU'.includes(m.tiles[P.pos.y + dy * 2][P.pos.x + dx * 2]) ? [P.pos.x + dx * 2, P.pos.y + dy * 2] : [P.pos.x + dx, P.pos.y + dy];
+    }
+    return null;
+  }
+  function shakeMap(strong) {
+    const el = canvas && canvas.parentElement;
+    if (!el || !fxOn()) return;
+    el.classList.remove('map-shake', 'map-shake-big'); void el.offsetWidth;
+    el.classList.add(strong ? 'map-shake-big' : 'map-shake');
+  }
+  // giọt nước bắn (hạt tính theo thời gian)
+  function splash(x, y, k, n, col) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI * (0.15 + 0.7 * rnd(i, 7)), v = 22 + 20 * rnd(i, 8);
+      const dx = Math.cos(a) * v * k * (i % 2 ? 1 : -1), dy = -Math.sin(a) * v * k + 60 * k * k;
+      ctx.fillStyle = `rgba(${col}, ${1 - k})`;
+      ctx.fillRect(x + dx, y + dy, 2, 2);
+    }
+  }
+  function ripple(x, y, k, col = '210, 235, 255') {
+    ctx.strokeStyle = `rgba(${col}, ${0.7 * (1 - k)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(x, y, 4 + 14 * k, 2 + 6 * k, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  function sparkle(x, y, t, n, r, col) {
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2 + t / 500, rr = r * (0.4 + 0.6 * ((t / 700 + rnd(i, 5)) % 1));
+      const sx = x + Math.cos(a) * rr, sy = y + Math.sin(a) * rr, s = 1 + 2 * Math.abs(Math.sin(t / 120 + i));
+      ctx.fillStyle = col; ctx.fillRect(sx - s / 2, sy - 0.5, s, 1); ctx.fillRect(sx - 0.5, sy - s / 2, 1, s);
+    }
+  }
+  function fishFx(now, m, cx, cy, px, py, anim) {
+    const f = fishing, el = now - f.t0;
+    const hx = px + TILE - 6, hy = py + 8; // đầu cần (tay phải nhân vật)
+    const bx = f.tx * TILE - cx + TILE / 2, by = f.ty * TILE - cy + TILE / 2;
+    const auto = (ph) => FISH_MS[ph] && el > FISH_MS[ph];
+    if (f.phase === 'cast' && auto('cast')) { f.phase = 'wait'; f.t0 = now - (el - FISH_MS.cast); }
+    if (['catch', 'boot', 'miss'].includes(f.phase) && auto(f.phase)) { fishing = null; return; }
+    const e = now - f.t0;
+    // cần câu
+    ctx.strokeStyle = '#8a6a2a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px + TILE - 12, py + 20); ctx.lineTo(hx, hy); ctx.stroke();
+    let ox = bx, oy = by, show = true;
+    if (f.phase === 'cast') {
+      // quỹ đạo ném: đường cong, phao rơi xuống
+      const k = Math.min(1, e / FISH_MS.cast), cxp = (hx + bx) / 2, cyp = Math.min(hy, by) - 40;
+      ox = (1 - k) * (1 - k) * hx + 2 * (1 - k) * k * cxp + k * k * bx;
+      oy = (1 - k) * (1 - k) * hy + 2 * (1 - k) * k * cyp + k * k * by;
+    } else if (f.phase === 'wait') {
+      oy = by + (anim ? Math.sin(e / 420) * 1.5 : 0);
+      if (anim) { ripple(bx, by + 3, (e % 1700) / 1700); if (e < 800) { ripple(bx, by + 3, e / 800); splash(bx, by, e / 800, 6, '220, 240, 255'); } }
+    } else if (f.phase === 'bite') {
+      oy = by + Math.min(5, e / 30); // phao chìm nhanh
+      if (anim) {
+        splash(bx, by, Math.min(1, e / 600), 12, f.big ? '255, 220, 120' : '220, 240, 255');
+        ripple(bx, by + 3, (e % 500) / 500, f.big ? '255, 210, 90' : '210, 235, 255');
+      }
+      if (f.big) {
+        const g = ctx.createRadialGradient(bx, by, 2, bx, by, TILE * 1.4);
+        g.addColorStop(0, 'rgba(255, 210, 80, 0.55)'); g.addColorStop(1, 'rgba(255, 210, 80, 0)');
+        ctx.fillStyle = g; ctx.fillRect(bx - TILE * 1.4, by - TILE * 1.4, TILE * 2.8, TILE * 2.8);
+      }
+      // dấu ! nảy lên trên phao
+      const j = anim ? Math.abs(Math.sin(e / 110)) * 6 : 0;
+      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+      ctx.strokeText('!', bx, by - 12 - j); ctx.fillStyle = f.big ? '#ffd34d' : '#ffe14d'; ctx.fillText('!', bx, by - 12 - j);
+    } else {
+      show = f.phase === 'miss' && e < 300;
+      if (show) oy = by - e / 30;
+    }
+    // dây câu (căng và rung khi kéo)
+    if (show || (f.phase !== 'miss' && e < 400)) {
+      const tug = f.phase === 'catch' && e < 400 && anim ? Math.sin(e / 18) * 3 : 0;
+      ctx.strokeStyle = 'rgba(235, 235, 235, 0.85)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.quadraticCurveTo((hx + ox) / 2 + tug, Math.max(hy, oy) + (f.phase === 'wait' ? 10 : tug), ox, oy); ctx.stroke();
+      if (tug) splash(ox, oy, (e % 400) / 400, 8, '220, 240, 255');
+    }
+    if (show) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, oy - 2, 3.2, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#e8352a'; ctx.beginPath(); ctx.arc(ox, oy - 2, 3.2, 0, Math.PI); ctx.fill();
+    }
+    if (f.phase === 'catch') {
+      // cột sáng cho đồ hiếm
+      const rare = f.item === 'fish_gold' || f.item === 'long_vuong', dragon = f.item === 'long_vuong';
+      if (rare && anim) {
+        const a = Math.max(0, 1 - e / FISH_MS.catch) * (dragon ? 0.6 : 0.45), w = TILE * (dragon ? 1.3 : 0.8);
+        const g = ctx.createLinearGradient(0, by - VH(), 0, by);
+        g.addColorStop(0, 'rgba(255, 225, 120, 0)'); g.addColorStop(1, `rgba(255, 225, 120, ${a})`);
+        ctx.fillStyle = g; ctx.fillRect(bx - w / 2, 0, w, by + 4);
+        sparkle(bx, by - TILE, e, dragon ? 18 : 10, TILE * (dragon ? 2.4 : 1.4), '#fff2a8');
+      }
+      // cá bay vòng cung về phía nhân vật, xoay tròn
+      const k = Math.min(1, e / 700), tx = px + TILE / 2, ty = py;
+      const x = bx + (tx - bx) * k, y = by + (ty - by) * k - Math.sin(k * Math.PI) * (dragon ? 70 : 40);
+      const im = image(dragon ? 'pets/long_vuong' : 'items/' + f.item), sz = TILE * (dragon ? 1.8 : 0.8);
+      if (im.complete && k < 1) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(anim && !dragon ? k * Math.PI * 4 : 0);
+        ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+        if (anim) sparkle(x, y, e, 5, 12, 'rgba(255, 255, 255, 0.9)');
+      }
+    }
+    if (f.phase === 'boot') {
+      // ủng cũ bay thẳng vào màn hình, nhân vật choáng, quạ bay ngang
+      const vw = VW(), vh = VH(), k = Math.min(1, e / 650);
+      const im = image('items/old_boot'), sz = TILE * (0.8 + 5 * k * k);
+      if (im.complete && e < 900) {
+        ctx.globalAlpha = e < 650 ? 1 : Math.max(0, 1 - (e - 650) / 250);
+        const x = bx + (vw / 2 - bx) * k, y = by + (vh / 2 - by) * k;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(k * 5); ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+      if (e > 650) {
+        ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+        for (let i = 0; i < 3; i++) {
+          const a = e / 260 + i * 2.1;
+          ctx.fillText('💫', px + TILE / 2 + Math.cos(a) * 10, py - 4 + Math.sin(a) * 3);
+        }
+        const q = (e - 650) / (FISH_MS.boot - 650);
+        ctx.font = '16px sans-serif';
+        for (let i = 0; i < 3; i++) ctx.fillText('🐦‍⬛', -30 + q * (vw + 60) - i * 26, 30 + i * 12 + Math.sin(e / 120 + i) * 4);
+      }
+    }
+    if (!anim && !frame) frame = requestAnimationFrame(() => { frame = null; draw(); });
+  }
+
   window.MapView = {
     drawHome,
     setRelations(f) { relations = f; },
@@ -660,12 +1084,48 @@
     mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
+    // l, s: { tile: [x, y], until } (ui.js onLake) hoặc null
+    setLake(l, s) {
+      const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
+      lake = at(l); school = at(s); draw();
+    },
+    // vừa lên cấp (ui.js celebrate): cột sáng vàng ở chỗ nhân vật
+    levelUp() { levelAt = performance.now(); draw(); },
+    // vòng sáng ở ô vừa chạm để đi tới (ui.js walkTo)
+    mark(x, y) { const P = getPlayer(); if (P && P.pos) { mark = { x, y, map: P.pos.map, t0: performance.now() }; draw(); } },
+    // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)
+    bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
     setDecorating(on) { decorating = on; draw(); },
     setWorld(snap) {
+      // FX đợt 3: so với lần trước (cùng bản đồ): máu quái tụt → tia chém; quái biến mất khi đã bị đánh → tan thành hạt
+      if (fxOn() && world.map && snap && snap.map === world.map) {
+        const t = performance.now(), next = new Map((snap.monsters || []).map((q) => [q.id, q]));
+        for (const q of world.monsters || []) {
+          const n = next.get(q.id), hp = q.hp == null ? 100 : q.hp;
+          if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600 });
+          else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t, life: 900 });
+        }
+        if (mobFx.length > 40) mobFx = mobFx.slice(-40);
+      }
       world = snap;
       draw();
     },
     world: () => world,
+    // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
+    fish(ev, data = {}) {
+      const P = getPlayer(), m = P && cur(P);
+      if (!ev || !m) { fishing = null; draw(); return; }
+      if (ev === 'cast') {
+        const t = data.tx != null ? [data.tx, data.ty] : bobberTile(P, m);
+        fishing = t && { phase: 'cast', t0: performance.now(), tx: t[0], ty: t[1], big: false };
+      } else if (fishing) {
+        const ph = ev === 'catch' && data.item === 'old_boot' ? 'boot' : ev;
+        Object.assign(fishing, data, { phase: ph, t0: performance.now() });
+        if (ev === 'bite') shakeMap(fishing.big);
+        if (ph === 'catch' && (data.item === 'fish_gold' || data.item === 'long_vuong')) shakeMap(data.item === 'long_vuong');
+      }
+      draw();
+    },
   };
 })();

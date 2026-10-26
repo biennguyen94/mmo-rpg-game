@@ -52,7 +52,9 @@ defmodule HacLong.World do
   """
   def warp(p, uid, %{map: _, x: _, y: _} = pos) do
     leave(p, uid)
-    p = %{p | pos: pos}
+
+    # ra khỏi bản đồ riêng `tower` (Tháp / sự kiện) thì bỏ luôn trạng thái tháp, không kẹt lại
+    p = %{p | pos: pos} |> drop_stale_tower()
     enter(p, uid)
     p
   end
@@ -60,12 +62,13 @@ defmodule HacLong.World do
   @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
   def shared?(%{map: id}), do: not Maps.get(id).private
 
-  @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, ngoại hình, ký hiệu bang."
+  @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, số lần chuyển sinh, ngoại hình, ký hiệu bang."
   def info(p) do
     %{
       name: p.name,
       cls: p.cls,
       level: p.level,
+      rebirths: Map.get(p, :rebirths) || 0,
       look: Engine.look(p),
       tag: Map.get(p, :guild) && p.guild.tag
     }
@@ -321,7 +324,17 @@ defmodule HacLong.World do
   def world_battle?(%{battle: %{encounter: %{world_boss: true}}}), do: true
   def world_battle?(_), do: false
 
-  defp put_pos(p, map, x, y), do: %{p | pos: %{map: map, x: x, y: y}}
+  defp put_pos(p, map, x, y), do: drop_stale_tower(%{p | pos: %{map: map, x: x, y: y}})
+
+  @doc """
+  Trạng thái tháp (`p.tower`) chỉ có nghĩa khi đang đứng ở bản đồ riêng `tower`; ở bản đồ khác (dữ liệu kẹt từ trước,
+  bị đưa ra bằng đường khác) thì bỏ, để vào lại Tháp / Kalima / Lâu Đài Máu / Quảng Trường Quỷ được.
+  """
+  def drop_stale_tower(%{pos: %{map: map}} = p) do
+    if Map.get(p, :tower) && map != Tower.map_id(), do: Map.put(p, :tower, nil), else: p
+  end
+
+  def drop_stale_tower(p), do: p
 
   # giếng ở Nhà hồi đầy máu và MP
   defp drink_fountain(p) do
@@ -347,6 +360,10 @@ defmodule HacLong.World do
 
       target.realm && not realm_open?(p, target) ->
         {%{ok: false, msg: realm_msg(target)}, p}
+
+      # bản đồ không có quái nhưng cần cấp (Hồ Long Vương)
+      !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
+        {%{ok: false, msg: "Cần đạt cấp #{target.min_level} để vào #{target.name}."}, p}
 
       true ->
         leave(p, uid)
@@ -391,6 +408,8 @@ defmodule HacLong.World do
     Enum.min(lv, fn -> nil end)
   end
 
+  # bản đồ không có quái nhưng ghi `min_level` (Hồ Long Vương)
+  def min_level(%{realm: nil, min_level: lv}) when is_integer(lv), do: lv
   def min_level(_), do: nil
 
   @doc "Giá dịch chuyển tới bản đồ: `base + per_level × cấp quái thấp nhất`; Làng, Nhà miễn phí."
@@ -426,6 +445,10 @@ defmodule HacLong.World do
 
       !target or target.id == "tower" or target.event != nil ->
         {%{ok: false, msg: "Không có bản đồ đó."}, p}
+
+      # đang trong Tháp / Quảng Trường Quỷ / Lâu Đài Máu / Kalima: phải ra bằng cổng (để kết thúc lượt, nhận thưởng)
+      p.pos.map == Tower.map_id() ->
+        {%{ok: false, msg: "Đang ở trong Tháp / sự kiện: ra bằng cổng trước."}, p}
 
       to == p.pos.map ->
         {%{ok: false, msg: "Bạn đang ở đây rồi."}, p}

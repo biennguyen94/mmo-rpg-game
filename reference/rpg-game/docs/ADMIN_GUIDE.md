@@ -67,7 +67,11 @@ Thứ tự các khối trong tab:
    - **Xem trước và gửi:** hiện số người khớp bộ lọc và nội dung thư, xác nhận rồi mới gửi.
    - **Lịch sử gửi:** 20 đợt gần nhất (lúc gửi, người gửi, tiêu đề, quà, bộ lọc, kết quả).
    - Túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
-6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
+6. **🔑 Quên mật khẩu** (admin): danh sách yêu cầu người chơi gửi ở màn đăng nhập (tên đăng nhập + cách liên lạc). Kiểm tra
+   đúng chủ tài khoản rồi bấm **Đặt lại mật khẩu**: ra mật khẩu tạm 8 ký tự (chỉ hiện một lần, không ghi vào nhật ký quản trị),
+   mọi thiết bị của họ bị đăng xuất; báo mật khẩu cho người chơi, nhắc họ đổi lại. Ở thẻ tra cứu người chơi cũng có nút
+   **🔑 Đặt lại mật khẩu**. Lệnh: `pw_requests`, `reset_password` (`uid`), `pw_dismiss` (`id`).
+6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `lake_summon` (**🐉 Gọi Long Vương nổi**: Ngài nổi ngay ở một ô nước ngẫu nhiên của Hồ Long Vương trong 3 phút, như lần nổi theo giờ), `lake_school` (**✨ Gọi Đàn Cá Vàng**: hiện ngay 2 phút), `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 
@@ -88,8 +92,10 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
 | Đồ thường (xếp chồng) | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Trang bị (vũ khí, giáp, khiên, trang sức, cánh) luôn thành **món riêng** 0 dòng trong túi trang bị, mỗi món một chỗ (cần chỗ trống). Tab Quản trị: mục **Đồ thường** chỉ liệt kê bình, ngọc, nguyên liệu, vé…; trang bị tặng ở mục **Trang bị** |
 | Trang bị | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`, cánh không có Excellent; trên trang Quản trị là các ô tick, chỉ hiện nhóm hợp món đang chọn — Kỹ năng chỉ hiện với vũ khí, Đồ Thần chỉ với món thuộc bộ), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
+| Thú cưng | `give_pet` | `id` (thú trong `priv/game_data/pets.json`, kể cả thú hiếm `long_vuong`), `level` 1..20 | tặng thú, đặt cấp thú (cấp 5 / 15 / 20 mở kỹ năng), dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị: mục **Thú cưng** (🐉 Long Vương ở đầu danh sách). Không ghi Bia Long Vương |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
+| Thông thạo kỹ năng | `set_mastery` | `lv` 1..10 | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp 4 / 9 thì đủ điểm chờ đột phá) |
 | Hủy trang bị trong túi | `clear_bag` | | xóa **mọi** trang bị trong túi trang bị (cả món khóa, kèm cấp ép); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên; bình, ngọc, nguyên liệu không đụng. Nút **Hủy trang bị trong túi** (đỏ, hỏi xác nhận). Không hoàn tác |
 | Hồi đầy máu | `heal` | | |
 
@@ -187,13 +193,17 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 
 ## 6. Công thức: nhân vật admin tối đa
 
-Đăng nhập tài khoản admin, mở console trình duyệt (F12 → Console), dán cả khối. `Net.userId` là tài khoản đang
-đăng nhập; đổi thành id người khác nếu muốn dựng cho họ (id lấy ở thẻ tra cứu hoặc `Net.admin('lookup', {name})`).
+Đăng nhập tài khoản admin (lớp nào cũng được), mở console trình duyệt (F12 → Console), sửa dòng `NAME` rồi dán cả
+khối. `NAME` là **tên nhân vật hoặc tên đăng nhập** của người cần dựng (để trống = chính mình). Lớp, bộ đồ và tỉ lệ
+chia điểm lấy theo **nhân vật được dựng**, không theo admin; người đó đang online hay không đều được (đang online thì
+thấy ngay). Dòng đầu console ghi "Dựng cho: …" để kiểm đúng người trước khi xem kết quả.
 
 ```js
-const uid = Net.userId;
-const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); } catch (e) { console.warn(op, e.msg); } };
-const cls = (await Net.send({ act: 'title_set', id: null })).player.cls;   // dk / dw / elf / mg
+const NAME = '';   // tên nhân vật / tên đăng nhập cần dựng; để trống = chính mình
+const who = (await Net.admin('lookup', { name: NAME || window.__hl.player().name })).user;
+const uid = who.id, cls = who.character.cls;   // dk / dw / elf / mg
+console.log(`Dựng cho: ${who.character.name} (${cls}), tài khoản ${who.username}`);
+const A = async (op, p = {}) => { try { const r = await Net.admin(op, { uid, ...p }); console.log(op, r.msg); return r; } catch (e) { console.warn(op, e.msg); } };
 
 // chuyển sinh 10 lần: mở đủ 10 vùng đất chuyển sinh (Phase 6); lệnh này chỉ đặt số lần, không về cấp 1
 await A('set_rebirths', { n: 10 });
@@ -201,40 +211,41 @@ await A('set_rebirths', { n: 10 });
 await A('set_level', { level: 50 });
 // kỷ lục Tháp Thử Thách 100: mở đủ 10 kỹ năng tháp (Phase 3); chọn bộ kỹ năng ở Menu → Kỹ năng → ⚙
 await A('set_tower', { floor: 100 });
+// thông thạo mọi kỹ năng cấp tối đa (10): chạy SAU set_level / set_tower để có đủ kỹ năng
+await A('set_mastery', { lv: 10 });
 // đặt lại chỉ số (chạy SAU set_rebirths / set_level): chỉ số gốc của lớp, điểm tiềm năng đúng như người chơi thật
-// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Thuật Sĩ Kiếm 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
-await A('reset_stats');
+// cấp 50 chuyển sinh 10 lần: 49 × 5 + 10 × 25 = 495 (Đấu Sĩ 49 × 7 + 250 = 593). Điểm đã cày / cộng trước đó bỏ hết.
+const pts = Number((await A('reset_stats')).msg.match(/(\d+) điểm/)[1]);
 
 // vàng
 await A('add_gold', { amount: 100000000 });
 
-// tự cộng điểm theo tỉ lệ gợi ý (chỉ chạy được cho chính mình: lệnh "alloc" là lệnh người chơi, mỗi lần tối đa 99,
-// nghỉ 0,3 giây giữa các lần kẻo server báo "Thao tác quá nhanh";
-// dựng cho người khác thì để họ tự cộng ở tab Nhân vật). Điểm lẻ cộng vào chỉ số đầu.
+// chia hết điểm tiềm năng theo tỉ lệ gợi ý của lớp (lệnh quản trị, chạy được cho cả người khác); điểm lẻ vào chỉ số đầu
 const SHARE = {
   dk:  [['str', 0.45], ['agi', 0.2], ['vit', 0.25], ['ene', 0.1]],
   dw:  [['ene', 0.5], ['agi', 0.2], ['vit', 0.2], ['str', 0.1]],
   elf: [['agi', 0.45], ['str', 0.2], ['vit', 0.25], ['ene', 0.1]],
   mg:  [['str', 0.4], ['ene', 0.25], ['agi', 0.2], ['vit', 0.15]],
 }[cls];
-if (uid === Net.userId) {
-  const alloc = async (stat, n) => { for (; n > 0; n -= 99) { await new Promise((r) => setTimeout(r, 300)); await Net.send({ act: 'alloc', stat, n: Math.min(n, 99) }); } };
-  const total = (await Net.send({ act: 'title_set', id: null })).player.points;
-  for (const [stat, r] of SHARE) await alloc(stat, Math.floor(total * r));
-  await alloc(SHARE[0][0], (await Net.send({ act: 'title_set', id: null })).player.points);
-}
+const add = Object.fromEntries(SHARE.map(([k, r]) => [k, Math.floor(pts * r)]));
+add[SHARE[0][0]] += pts - Object.values(add).reduce((a, b) => a + b, 0);
+await A('add_stats', add);
+await A('add_points', { n: -pts });
 
-// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, khiên, bộ giáp 5 món (Pháp Sư không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
+// đồ tốt nhất từng lớp (cấp 47–48): vũ khí, tay trái (Kiếm Sĩ / Phù Thủy / Đấu Sĩ cầm 2 vũ khí, B-42; muốn khiên thì thay bằng
+// `shield: 'item_6_18'`), bộ giáp 5 món (Đấu Sĩ không mũ), 2 nhẫn, dây chuyền, cánh cấp 3
 const SET = {
-  dk:  { weapon: 'item_0_19', shield: 'item_6_18', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
-  dw:  { weapon: 'item_5_11', shield: 'item_6_18', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // Gậy Kundun, bộ Sương Độc
-  elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                       // Cung Air Lyn, bộ Tia Tiên
-  mg:  { weapon: 'item_0_28', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },                                    // Kiếm Đế Vương, bộ Long Kỵ Sĩ
+  dk:  { weapon: 'item_0_19', left: 'item_0_19', set: ['item_7_33', 'item_8_33', 'item_9_33', 'item_10_33', 'item_11_33'] }, // 2 Kiếm Tổng Lãnh Thiên Thần, bộ Ánh Dương
+  dw:  { weapon: 'item_5_11', left: 'item_5_11', set: ['item_7_30', 'item_8_30', 'item_9_30', 'item_10_30', 'item_11_30'] }, // 2 Gậy Kundun, bộ Sương Độc
+  elf: { weapon: 'item_4_24', set: ['item_7_31', 'item_8_31', 'item_9_31', 'item_10_31', 'item_11_31'] },                     // Cung Air Lyn (2 tay: không tay trái), bộ Tia Tiên
+  mg:  { weapon: 'item_0_28', left: 'item_0_28', set: ['item_8_29', 'item_9_29', 'item_10_29', 'item_11_29'] },              // 2 Kiếm Đế Vương, bộ Long Kỵ Sĩ
 }[cls];
 const EXC_W = ['atk_pct', 'crit', 'heal_kill', 'mp_kill', 'atk_lvl', 'ar_pct'];   // vũ khí / dây chuyền
 const EXC_A = ['hp_pct', 'dmg_red', 'gold_pct', 'mp_pct', 'reflect', 'def_rate']; // giáp / khiên / nhẫn
 // "+N" là cấp ép (tối đa +11); opt 4 = 4 dòng cộng thêm (+16 tấn công / phòng thủ), luck = May mắn
 await A('give_gear', { base: SET.weapon, opt: 4, luck: true, skill: true, up: 11, exc: EXC_W });
+// vũ khí tay trái: trong túi đồ bấm món → "Cầm tay trái" (hoặc kéo vào ô Khiên / Tay trái)
+if (SET.left) await A('give_gear', { base: SET.left, opt: 4, luck: true, skill: true, up: 11, exc: EXC_W });
 if (SET.shield) await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });
 for (const base of SET.set) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
 // Đồ Thần thay cho Excellent (chọn một trong hai cho bộ giáp): await A('give_gear', { base, opt: 4, luck: true, up: 11, anc: true });
@@ -258,6 +269,10 @@ await A('give_item', { id: 'dragon_scale', count: 20 });
 await A('give_item', { id: 'mam_co', count: 20 });
 for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
+// thú hiếm Long Vương cấp tối đa (đủ 3 kỹ năng), dắt theo luôn; Mồi Rồng để câu ở Hồ Long Vương
+await A('give_pet', { id: 'long_vuong', level: 20 });
+await A('give_item', { id: 'dragon_bait', count: 100 });
+
 await A('heal');
 ```
 
@@ -270,8 +285,11 @@ tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm 
 Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nhờ `reset_stats`); riêng **vàng** (`add_gold`) và **đồ / ngọc**
 (`give_gear`, `give_item`) vẫn cộng thêm vào cái đang có.
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thú cưng, kỹ năng (kỹ năng thường mở theo cấp, cấp 50 là đủ;
-kỹ năng tháp mở bằng `set_tower`), thành tựu, nhiệm vụ.
+Thú Long Vương tặng bằng `give_pet` **không** ghi lên Bia Long Vương và không báo cả server (bia chỉ ghi người tự câu được);
+danh hiệu Long Vương Chủ thì có (thành tựu tính theo thú đang có).
+
+Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thành tựu, nhiệm vụ. Kỹ năng thường mở theo cấp (cấp 50 là đủ),
+kỹ năng tháp mở bằng `set_tower`, thông thạo bằng `set_mastery`.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
 
@@ -305,7 +323,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 - **Thợ Rèn:** +1 → +5 bằng quặng (chắc chắn). +6 bằng Ngọc Ước Nguyện (100 %); +7 / +8 / +9 bằng Ngọc Tâm Linh
   (70 / 60 / 50 %, thất bại tụt 1 cấp); +10 / +11 bằng Ngọc Hỗn Nguyên (50 / 45 %, thất bại **vỡ đồ**: vũ khí về Gậy Gỗ,
-  giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +7 thì báo cả server.
+  giáp về Áo Da Mỏng, khiên / cánh trống). Ép thành công từ +10 thì báo cả server (`UPGRADE.announce_from`).
 - **Ngọc rơi:** quái cấp ≥ 12 (0,6 %), trùm vùng (30 %; trùm trong tháp tính như quái thường), top 3 trùm thế giới
   (1 viên), Tháp Vô Tận mỗi 10 tầng (chỉ lần đầu lên tới tầng đó), Rương Báu (3 / 8 / 15 %).
 - **Máy Hỗn Nguyên** (Lão Hỗn Nguyên, Làng): cánh cấp 1 (đồ +5↑ + 1 Hỗn Nguyên + 20 000 vàng, 10 % + 5 % mỗi cấp trên +5,
@@ -339,7 +357,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
   `tienlen_settlements` nên không trả hai lần.
 - Ván đã chơi ở bảng `tienlen_games` (người thật trong `player_ids`, `replay` để xem lại).
 
-### Xã hội, PK cược vàng, chiến bang (Phase 5)
+### Xã hội, PK cược vàng (đã bỏ 2026-10-25), chiến bang (Phase 5)
 
 - **Đang online:** tab Quản trị → "Đang online" → Xem (tên, lớp, cấp, bản đồ; Tra để mở thông tin). Mod cũng xem được.
 - **Đồ sát** (thay PK cược vàng từ 2026-10-10, `RULES.slay`, `DECISIONS.md` P18): không cần đồng ý, luân phiên lượt 10 giây, người thua mất `death_gold_loss` vàng cho người thắng (nhật ký vàng lý do `SLAY`). PK cược cũ (`RULES.pk`): mời cược đã tắt. Mỗi trận một dòng ở bảng `pk_matches`

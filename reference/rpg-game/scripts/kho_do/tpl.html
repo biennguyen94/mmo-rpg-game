@@ -42,6 +42,8 @@ tr.grp td{background:var(--chip);font-weight:700;color:var(--gold)}
 img.px{width:24px;height:24px;image-rendering:pixelated;background:var(--icobg);border-radius:4px;flex:none}
 .shop{font-size:12px}
 .alt{color:var(--alt)}
+.muted{color:var(--muted)}
+.hand2{font-size:.72em;padding:0 4px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .exc{color:var(--exc);font-weight:700}
 .anc{color:var(--anc);font-weight:700}
 .bad{color:var(--bad);font-weight:600}
@@ -94,6 +96,7 @@ code{font-size:13px}
     <thead><tr><th>Bậc</th><th>Cấp vũ khí</th><th>Giá vũ khí</th><th>Cấp món giáp</th><th>Giá món giáp</th><th>Cấp khiên</th><th>Thủ khiên</th></tr></thead>
     <tbody>{{TIERS}}</tbody></table></div>
   <p class="note">Thưởng đủ bộ (từ bậc 2): {{SB}}.</p>
+  <p class="note">Hào quang (chỉ để đẹp, không cộng chỉ số): mặc đủ bộ và mọi món của bộ từ +7 thì nhân vật sáng xanh dương, từ +9 vàng, +11 cam đỏ có hạt bay lên; người khác thấy trong hồ sơ, đấu trường.</p>
 </section>
 
 <section id="trang-suc">
@@ -124,6 +127,7 @@ code{font-size:13px}
     <thead><tr><th>Lên</th><th>Ở đâu</th><th>Cần</th><th>Tỉ lệ</th><th>Thất bại</th><th>Cấp tính (cộng thêm)</th></tr></thead>
     <tbody>{{UPG}}</tbody></table></div>
   <p class="note">"Cấp tính": số nhân với phần trăm mỗi cấp để ra chỉ số cộng thêm. Ngọc Sinh Mệnh (Thợ Rèn): {{LIFE}} (vũ khí cộng công, giáp / khiên / cánh cộng thủ); thất bại mất dòng cuối.</p>
+  <p class="note">{{SMITH}}</p>
 </section>
 
 <section id="dong">
@@ -132,7 +136,7 @@ code{font-size:13px}
     <div class="card"><h3>Dòng cộng thêm</h3><p class="note">Mỗi dòng cộng {{PERLINE}}: công với vũ khí, thủ với món khác. Số dòng trên đồ rơi:</p><ul>{{OPT}}</ul></div>
     <div class="card"><h3 class="exc">Excellent</h3><p class="note">{{EXCLINES}}. Giá bán ×{{EXCPRICE}}. Máy Hỗn Nguyên thêm tới đủ 6 dòng.</p>
       <b>Vũ khí, dây chuyền</b><ul>{{EXC_W}}</ul><b>Giáp, khiên, nhẫn</b><ul>{{EXC_A}}</ul><p class="note">Giảm sát thương tối đa {{DMGRED}}, phản tối đa {{REFL}}.</p></div>
-    <div class="card"><h3 class="anc">Đồ Thần</h3><p class="note">Chỉ món bộ giáp. Thủ món +{{ANCDEF}}, giá bán ×{{ANCPRICE}}. Thưởng theo số món Thần cùng bộ, cộng dồn:</p><ul>{{ANC}}</ul></div>
+    <div class="card"><h3 class="anc">Đồ Thần</h3><p class="note">Chỉ món bộ giáp. Thủ món +{{ANCDEF}}, giá bán ×{{ANCPRICE}}. Thưởng theo số món Thần cùng bộ, cộng dồn:</p><ul>{{ANC}}</ul><p class="note">Nhặt được đồ Thần khi đánh quái thì cả server được báo.</p></div>
     <div class="card"><h3>May mắn, Kỹ năng</h3><ul><li><b>May mắn</b>: vũ khí +{{LUCKCRIT}} chí mạng; mọi món +{{LUCKUP}} tỉ lệ ép bằng ngọc</li><li><b>Kỹ năng</b> (chỉ vũ khí): chiêu +{{SKILLDMG}} sát thương</li></ul></div>
   </div>
   <h3>Thêm dòng sau khi có đồ, ép +N có đổi dòng không</h3>
@@ -154,6 +158,7 @@ code{font-size:13px}
 <section id="ky-nang">
   <h2>Kỹ năng</h2>
   <p>Mỗi lớp có 3 kỹ năng mở theo cấp và 10 kỹ năng Tháp Vô Tận mở khi kỷ lục tháp đạt tầng 10, 20, … 100 (giữ vĩnh viễn). Mang tối đa {{LOADOUT}} kỹ năng vào trận, chọn ở Menu → Kỹ năng → ⚙. MP tốn tăng theo cấp nhân vật.</p>
+  <p class="note">{{MASTERY}}</p>
   <div class="tabs" role="group" aria-label="Chọn lớp">{{STABS}}</div>
   {{SPANES}}
 </section>
@@ -174,9 +179,18 @@ code{font-size:13px}
     <tbody>{{STATROWS}}</tbody></table></div>
   <h3>Đánh quái và đánh người</h3>
   <div class="scroll"><table>
-    <thead><tr><th></th><th>Đánh quái</th><th>Đồ sát, Đấu trường</th><th>PK cược vàng</th></tr></thead>
+    <thead><tr><th></th><th>Đánh quái</th><th>Đồ sát, Đấu trường</th></tr></thead>
     <tbody>{{MODEROWS}}</tbody></table></div>
-  <p class="note">{{MONSTER}} PK cược vàng: hai bản sao chỉ số tự đánh nhau, không ai điều khiển.</p>
+  <p class="note">{{MONSTER}}</p>
+  <h3>Hệ số nhận sát thương theo lớp khi đánh người</h3>
+  <p class="note">Theo số lần chuyển sinh của người bị đánh (quá 10 lần dùng dòng 10). Trên 1: nhận đòn đau hơn; dưới 1: nhẹ hơn. Chỉnh tự động để bốn lớp đồ ngang nhau thắng ~50% ở mỗi mốc. Bảng đầu: Đồ sát (scripts/pvp/tune.exs).</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Chuyển sinh</th><th>Kiếm Sĩ</th><th>Phù Thủy</th><th>Tiên Nữ</th><th>Đấu Sĩ</th></tr></thead>
+    <tbody>{{TAKENROWS}}</tbody></table></div>
+  <p class="note">Đấu trường dùng bảng riêng (đối thủ máy chơi khác người thật nên lệch khác), chỉnh tự động như trên (PVP=arena).</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Chuyển sinh</th><th>Kiếm Sĩ</th><th>Phù Thủy</th><th>Tiên Nữ</th><th>Đấu Sĩ</th></tr></thead>
+    <tbody>{{TAKENARENA}}</tbody></table></div>
 </section>
 
 <section id="quy-tac">
@@ -207,6 +221,11 @@ code{font-size:13px}
   <h2>Sự kiện</h2>
   <p>Giờ là giờ Việt Nam. Vào các sự kiện có vé ở Người Gác Tháp (Làng). Phần thưởng sự kiện gửi qua Hộp thư. {{EVSCALE}}</p>
   <div class="cols evs">{{EVROWS}}</div>
+  <h3>Sức mạnh quái sự kiện theo chuyển sinh</h3>
+  <p class="note">Quái mạnh nhất mỗi sự kiện (bậc cao nhất), đã nhân theo số lần chuyển sinh (CS) của người đánh. Bốn cột lớp: số <b>đòn thường</b> để hạ (dùng kỹ năng ít hơn khoảng 2–3 lần) · % máu mất mỗi lần quái đánh trúng, với nhân vật cùng mốc mặc đồ như người chơi thật (CS 10: đồ tối đa). Trùm sự kiện cố ý trâu máu: cần đánh lâu hoặc đi nhóm.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Quái</th><th>CS</th><th>Máu</th><th>Công</th><th>Thủ</th><th>Kiếm Sĩ</th><th>Phù Thủy</th><th>Tiên Nữ</th><th>Đấu Sĩ</th></tr></thead>
+    <tbody>{{EVMON}}</tbody></table></div>
   <h3>Lễ hội theo mùa</h3>
   <div class="scroll"><table>
     <thead><tr><th>Lễ hội</th><th>Ngày (tháng-ngày)</th><th>Nội dung</th><th>Vật phẩm đổi quà</th></tr></thead>
@@ -254,7 +273,7 @@ code{font-size:13px}
 <section id="khac">
   <h2>Vật phẩm khác</h2>
   <div class="scroll"><table>
-    <thead><tr><th>Tên</th><th>Công dụng</th><th>Mua ở</th><th>Bán lại</th></tr></thead>
+    <thead><tr><th>Tên</th><th>Công dụng</th><th>Mua / làm ở</th><th>Bán lại</th></tr></thead>
     <tbody>{{OTHER}}</tbody></table></div>
   <p class="note">"Mua ở" "—": không bán, chỉ có từ quái, sự kiện, rương, Máy Hỗn Nguyên. Giá bình thuốc tăng {{POTLV}} mỗi cấp nhân vật. "Bán lại": giá NPC mua lại. {{JEWELSRC}} Hình đồ: Dungeon Crawl Stone Soup (CC0).</p>
 </section>

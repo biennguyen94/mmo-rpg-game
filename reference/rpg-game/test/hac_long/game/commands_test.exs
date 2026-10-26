@@ -84,21 +84,22 @@ defmodule HacLong.Game.CommandsTest do
     assert {%{ok: false}, _} = Commands.run(far, %{"act" => "sell", "id" => "item_1_1"})
   end
 
-  test "pha thuốc ở Bà Lang" do
+  test "pha đồ uống ở Bà Lang" do
     p = %{player() | pos: @herbalist, inv: %{"herb" => 5}}
 
-    {%{ok: true, msg: "Pha được Bình Máu Nhỏ."}, p2} =
-      Commands.run(p, %{"act" => "craft", "id" => "brew_s"})
+    {%{ok: true, msg: "Pha được Bia Thảo Dược."}, p2} =
+      Commands.run(p, %{"act" => "craft", "id" => "brew_bia"})
 
-    assert p2.inv == %{"herb" => 3, "potion_s" => 1}
-    {%{ok: true}, p3} = Commands.run(p, %{"act" => "craft", "id" => "brew_m"})
-    assert p3.inv == %{"potion_m" => 1}
+    assert p2.inv == %{"herb" => 2, "bia_thao_duoc" => 1}
 
     assert {%{ok: false, msg: "Chưa đủ nguyên liệu."}, _} =
-             Commands.run(p, %{"act" => "craft", "id" => "brew_l"})
+             Commands.run(p, %{"act" => "craft", "id" => "brew_linh_chi"})
+
+    # bình máu không còn pha được (mua ở Bà Lang)
+    assert {%{ok: false}, _} = Commands.run(p, %{"act" => "craft", "id" => "brew_s"})
 
     assert {%{ok: false}, _} =
-             Commands.run(%{p | pos: @smith}, %{"act" => "craft", "id" => "brew_s"})
+             Commands.run(%{p | pos: @smith}, %{"act" => "craft", "id" => "brew_bia"})
   end
 
   test "nhận, làm và trả nhiệm vụ ở Trưởng Làng" do

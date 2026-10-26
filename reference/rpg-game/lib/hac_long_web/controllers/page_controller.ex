@@ -91,17 +91,34 @@ defmodule HacLongWeb.PageController do
         petMaxLevel: HacLong.Game.Pets.max_level(),
         petSkillLevel: HacLong.Game.Pets.skill_level(),
         petSkill2Level: HacLong.Game.Pets.skill2_level(),
+        petSkill3Level: HacLong.Game.Pets.skill3_level(),
+        # Long Vương (DECISIONS "Long Vương"): cơ hội mỗi lần thả câu ở Hồ Long Vương, mồi gấp bao nhiêu
+        school:
+          Map.take(HacLong.Game.Data.rules().fishing.school, [
+            :every,
+            :stay,
+            :gold_chance,
+            :long_khi
+          ]),
+        dragon:
+          Map.take(HacLong.Game.Fishing.dragon(), [
+            :pet,
+            :chance,
+            :bait,
+            :bait_mult,
+            :every,
+            :stay,
+            :long_khi_max,
+            :long_khi_div
+          ]),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),
         upgradeBonusPct: Data.rules().upgrade.bonus_pct,
         life: Data.rules().upgrade.life,
-        pkMin: Data.rules().pk.min,
         warMinutes: Data.rules().guild_war.minutes,
         warFund: Data.rules().guild_war.win_fund,
         warGold: Data.rules().guild_war.win_gold,
-        pkMax: Data.rules().pk.max,
-        pkInvite: Data.rules().pk.invite_s,
         # đồ sát: số giây mỗi lượt, cấp tối thiểu, bản đồ an toàn
         slay: %{
           turnS: Data.rules().slay.turn_s,
@@ -138,13 +155,41 @@ defmodule HacLongWeb.PageController do
           hit: Data.rules().combat.hit,
           monsterCrit: Data.rules().monster.crit,
           monsterCritMult: Data.rules().combat.monster_crit_mult,
-          pk: Map.take(Data.rules().pk, [:rounds, :special_every, :special_mult])
+          slayFirst: Data.rules().slay.first_strike_mult,
+          arenaFirst: Data.rules().arena[:first_strike_mult] || 1,
+          pvp:
+            Map.take(Data.rules().pvp, [
+              :dmg_mult,
+              :crit_rate_mult,
+              :dodge_mult,
+              :stun_mult,
+              :stun_immune,
+              :potion_mult,
+              :potion_cd,
+              :potion_max,
+              :heal_mult
+            ])
         },
         # Phase 12: MP kỹ năng theo cấp, giá bình theo cấp
         skillMpPerLevel: Data.rules().combat.skill_mp_per_level,
         # Phase 3 (B-29): nguyên tố, kỹ năng tháp
         elements: Map.drop(Data.rules().elements, [:_doc, :sourceType, :version, :verified]),
         towerSkills: Map.take(Data.rules().tower_skills, [:loadout, :stun_boss_resist, :mp_mult]),
+        # cầm 2 vũ khí 1 tay (B-42): lớp được cầm, hệ số công tay trái
+        dualWield: Map.take(Data.rules().dual_wield, [:classes, :mult, :staff_pair_only]),
+        # tác dụng kỹ năng lớp (mô tả kỹ năng theo cấp thông thạo ở client)
+        skillEffects: Data.rules().skill_effects,
+        # thông thạo kỹ năng (Menu → Kỹ năng): cấp tối đa, vật phẩm đột phá, MP cấp thấp
+        skillMastery:
+          Map.take(Data.rules().skill_mastery, [
+            :max,
+            :item,
+            :alt_item,
+            :mp_low,
+            :mult_min,
+            :level_gap,
+            :effect_low
+          ]),
         potionPricePerLevel: Data.rules().shop.potion_price_per_level,
         # Phase 15a: giá dịch chuyển bằng bảng chọn bản đồ
         travel: %{

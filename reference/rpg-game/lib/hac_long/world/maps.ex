@@ -47,9 +47,21 @@ defmodule HacLong.World.Maps do
     "A" => "arch",
     "O" => "portal",
     ">" => "stairs_up",
-    "<" => "stairs_down"
+    "<" => "stairs_down",
+    # Hồ Long Vương (DECISIONS "Long Vương"): nước sâu, cây đước, sen, thuyền là nước (câu được);
+    # bến / cầu gỗ đi được; tượng rồng, đèn lồng là cảnh
+    "=" => "deep_water",
+    "M" => "mangrove",
+    "Q" => "lotus",
+    "U" => "boat",
+    "B" => "pier_v",
+    "E" => "pier_h",
+    "G" => "dragon_statue",
+    "J" => "lantern"
   }
-  @walkable MapSet.new(~w(. , : * D A O > <))
+  @walkable MapSet.new(~w(. , : * D A O > < B E))
+  # ô nước: đứng cạnh thì câu được (`HacLong.Game.Fishing`)
+  @water ~w(~ = M Q U)
 
   @maps (for f <- @files, into: %{} do
            m = f |> File.read!() |> Jason.decode!()
@@ -70,6 +82,8 @@ defmodule HacLong.World.Maps do
              realm: m["realm"],
              min_rebirths: m["min_rebirths"],
              min_level: m["min_level"],
+             # bảng cá riêng (`RULES.fishing.pools`), vd Hồ Long Vương "lake"
+             fish: m["fish"],
              theme: m["theme"],
              width: String.length(hd(rows)),
              height: length(rows),
@@ -156,6 +170,9 @@ defmodule HacLong.World.Maps do
     end
   end
 
+  def water?(map, x, y), do: tile(map, x, y) in @water
+  def water_tiles, do: @water
+
   def walkable?(map, x, y), do: tile(map, x, y) in @walkable and npc_at(map, x, y) == nil
 
   def npc_at(map, x, y), do: Enum.find(map.npcs, &(&1.at == {x, y}))
@@ -176,6 +193,8 @@ defmodule HacLong.World.Maps do
            side: m.side,
            event: m.event,
            realm: m.realm,
+           minLevel: m.min_level,
+           fish: m.fish,
            theme: m.theme,
            floor: m.floor,
            tiles: m.tiles,
@@ -186,6 +205,6 @@ defmodule HacLong.World.Maps do
          }}
       end)
 
-    %{maps: maps, legend: @legend, walkable: MapSet.to_list(@walkable)}
+    %{maps: maps, legend: @legend, walkable: MapSet.to_list(@walkable), water: @water}
   end
 end

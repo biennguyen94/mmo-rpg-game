@@ -47,7 +47,7 @@ defmodule HacLongWeb.Batch3Test do
     assert p.equip.weapon in [a.uid, b.uid] and p.equip.wing == nil
   end
 
-  test "ép thành công +7 báo lên kênh chat hệ thống" do
+  test "ép thành công +7 không báo kênh chat hệ thống (chỉ từ +10)" do
     u = create_user()
     g = Gear.plain("greatsword")
 
@@ -68,8 +68,7 @@ defmodule HacLongWeb.Batch3Test do
     {r, p} = Session.command(u.id, %{"act" => "upgrade", "slot" => "weapon"})
     assert r.upgrade == %{result: "success", level: 7} and not Map.has_key?(r, :announce)
     assert Engine.upgrade_level(p, g.uid) == 7
-    assert_receive {:chat, %{text: text}}
-    assert text =~ "+7"
+    refute_receive {:chat, _}, 200
   end
 
   test "đồ khóa không rao chợ được" do

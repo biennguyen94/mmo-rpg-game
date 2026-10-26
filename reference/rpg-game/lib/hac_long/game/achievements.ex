@@ -134,6 +134,14 @@ defmodule HacLong.Game.Achievements do
       title: "Vua Câu Cá"
     },
     %{
+      id: "long_vuong",
+      name: "Long Vương Chủ",
+      desc: "Câu được Long Vương ở Hồ Long Vương.",
+      stat: :long_vuong,
+      goal: 1,
+      title: "Long Vương Chủ"
+    },
+    %{
       id: "forged",
       name: "Thần Binh",
       desc: "Rèn một món đồ lên +5.",
@@ -302,7 +310,8 @@ defmodule HacLong.Game.Achievements do
   defp goal(%{goal: :max_level}), do: Engine.max_level()
   defp goal(%{goal: :all_quests}), do: length(Data.quests())
   defp goal(%{goal: :all_species}), do: length(Bestiary.species())
-  defp goal(%{goal: :all_pets}), do: length(Data.pets())
+  # thú hiếm (Long Vương) không tính vào "đủ thú"
+  defp goal(%{goal: :all_pets}), do: Enum.count(Data.pets(), &(!&1[:rare]))
   defp goal(%{goal: :max_pet_level}), do: Pets.max_level()
   defp goal(%{goal: :max_craft_level}), do: HacLong.Game.Crafting.max_level()
   defp goal(%{goal: :all_waystones}), do: length(Maps.waystone_ids())
@@ -323,7 +332,13 @@ defmodule HacLong.Game.Achievements do
   def value(p, :gold), do: p.gold
   def value(p, :rebirths), do: Map.get(p, :rebirths) || 0
   def value(p, :comfort), do: HacLong.Game.Home.comfort(p)
-  def value(p, :pets), do: Enum.count(Map.get(p, :pets) || [], &Data.pet/1)
+
+  def value(p, :pets),
+    do: Enum.count(Map.get(p, :pets) || [], &(Data.pet(&1) && !Data.pet(&1)[:rare]))
+
+  def value(p, :long_vuong),
+    do: if("long_vuong" in (Map.get(p, :pets) || []), do: 1, else: 0)
+
   def value(p, :tamed), do: Enum.count(Map.get(p, :pets) || [], &String.starts_with?(&1, "tame:"))
   def value(p, :daily_done), do: Map.get(p, :daily_done) || 0
   def value(p, :boss_top), do: Map.get(p, :boss_top) || 0

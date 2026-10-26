@@ -159,7 +159,7 @@ defmodule HacLong.Moderation do
       Repo.one(
         from c in Character,
           where: c.user_id == ^u.id,
-          select: map(c, [:name, :level, :gold, :kills])
+          select: map(c, [:name, :cls, :level, :gold, :kills])
       )
 
     %{

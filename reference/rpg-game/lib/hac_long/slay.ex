@@ -1,6 +1,6 @@
 defmodule HacLong.Slay do
   @moduledoc """
-  Đồ sát (PK không cần đồng ý, thay PK cược vàng; `DECISIONS.md` P18).
+  Đồ sát (PK không cần đồng ý; thay PK cược vàng, đã bỏ; `DECISIONS.md` P18).
 
   - `attack/2` (gọi từ kênh của người tấn công): cả hai online, cùng bản đồ chung, không ở vùng
     an toàn (`RULES.slay.safe_maps`), cùng từ cấp `RULES.slay.min_level`. Người tấn công không đang đánh;
@@ -31,9 +31,10 @@ defmodule HacLong.Slay do
   """
   use GenServer
   require Logger
+  import Ecto.Query
 
   alias HacLong.{Repo, World}
-  alias HacLong.Game.{Characters, Daily, Data, Engine, Session}
+  alias HacLong.Game.{BattleText, Characters, Daily, Data, Engine, Session}
   alias HacLong.World.Maps
 
   @r Data.rules().slay
@@ -50,6 +51,27 @@ defmodule HacLong.Slay do
 
   @doc "Còn bao nhiêu giây tên đỏ (0 nếu không)."
   def red_s(uid), do: max(0, ceil((until(uid, :red) - now()) / 1000))
+
+  @doc "Các trận đồ sát gần nhất của `uid` (bảng `pk_matches`; `wager` = số vàng người thua mất)."
+  def history(uid, n \\ 20) do
+    from(m in "pk_matches",
+      where: m.a_id == ^uid or m.b_id == ^uid,
+      order_by: [desc: m.id],
+      limit: ^n,
+      select: %{
+        id: m.id,
+        a_id: m.a_id,
+        b_id: m.b_id,
+        a_name: m.a_name,
+        b_name: m.b_name,
+        wager: m.wager,
+        winner_id: m.winner_id,
+        rounds: m.rounds,
+        at: m.inserted_at
+      }
+    )
+    |> Repo.all()
+  end
 
   defp until(uid, key) do
     case :ets.whereis(@marks) != :undefined && :ets.lookup(@marks, {uid, key}) do
@@ -166,7 +188,7 @@ defmodule HacLong.Slay do
     max_hp = Engine.derived(p).maxHp
 
     HacLong.Arena.opponent(p, uid)
-    |> Map.merge(%{maxHp: max_hp, hp: min(p.hp, max_hp), special: nil})
+    |> Map.merge(%{maxHp: max_hp, hp: min(p.hp, max_hp), special: nil, arena: false})
   end
 
   # ---------- API cho Session ----------
@@ -174,12 +196,17 @@ defmodule HacLong.Slay do
   def start(a, b, pa, pb), do: GenServer.call(__MODULE__, {:start, a, b, pa, pb})
   def abort(id), do: GenServer.call(__MODULE__, {:abort, id})
 
-  @doc "Trận đồ sát của `uid`: `%{id, foe, turn, hp, foe_hp, until}` hoặc nil."
+  @doc "Trận đồ sát của `uid`: `%{id, foe, mine, hp, foe_hp, until, map, first, fx, foe_fx, foe_char}` hoặc nil."
   def peek(uid), do: GenServer.call(__MODULE__, {:peek, uid})
 
-  @doc "`uid` vừa ra đòn xong ở lượt của mình: máu mình và máu đối thủ sau lượt."
-  def acted(uid, hp, foe_hp, auto? \\ false),
-    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?})
+  @doc """
+  `uid` vừa ra đòn xong ở lượt của mình: máu mình và máu đối thủ sau lượt; `lines` là nhật ký trận
+  của lượt đó (phía người đánh), được đổi góc nhìn rồi ghi sang nhật ký đối thủ.
+  `extra`: `fx` / `foe_fx` trạng thái trận mới của mình / đối thủ (`Engine.pvp_fx/1`), `foe_lines` dòng nhật ký
+  đã ở góc nhìn đối thủ (khiên đỡ, bất tử…).
+  """
+  def acted(uid, hp, foe_hp, auto? \\ false, lines \\ [], extra \\ %{}),
+    do: GenServer.call(__MODULE__, {:acted, uid, hp, foe_hp, auto?, lines, extra})
 
   @doc "`uid` bỏ chạy: thua như gục ngã."
   def flee(uid), do: GenServer.call(__MODULE__, {:flee, uid})
@@ -217,6 +244,10 @@ defmodule HacLong.Slay do
           names: %{a => pa.name, b => pb.name},
           red: %{a => red?(a), b => red?(b)},
           hp: %{a => pa.hp, b => pb.hp},
+          # hiệu ứng chéo (DECISIONS "Đồ sát: hiệu ứng chéo"): trạng thái trận mỗi bên (`Engine.pvp_fx/1`, nil: đầu trận)
+          # và nhân vật lúc vào trận (đồ, thú cưng) để bên kia tính đòn đỡ của người này
+          fx: %{a => nil, b => nil},
+          chars: %{a => pa, b => pb},
           map: pa.pos.map,
           turn: a,
           turns: 0,
@@ -248,29 +279,54 @@ defmodule HacLong.Slay do
     {:reply, with(%{} = f <- fight(s, uid), do: public(f, uid)), s}
   end
 
-  def handle_call({:acted, uid, hp, foe_hp, auto?}, _from, s) do
+  def handle_call({:acted, uid, hp, foe_hp, auto?, lines, extra}, _from, s) do
     case fight(s, uid) do
       %{turn: ^uid} = f ->
         foe = foe(f, uid)
         dmg = max(0, f.hp[foe] - max(foe_hp, 0))
         healed = max(0, hp - f.hp[uid])
+        hp = max(hp, 0)
         f = %{f | hp: %{uid => hp, foe => max(foe_hp, 0)}, turns: f.turns + 1, misses: 0}
 
-        if f.hp[foe] <= 0 do
-          {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
-        else
-          cancel(f)
-          f = arm(%{f | turn: foe})
+        fx =
+          (f[:fx] || %{})
+          |> then(&if(extra[:fx], do: Map.put(&1, uid, extra.fx), else: &1))
+          |> then(&if(extra[:foe_fx], do: Map.put(&1, foe, extra.foe_fx), else: &1))
 
-          Session.slay_sync(foe, %{
-            id: f.id,
-            hp: f.hp[foe],
-            foe_hp: hp,
-            until: f.until,
-            text: sync_text(f.names[uid], dmg, healed, auto?)
-          })
+        f = Map.put(f, :fx, fx)
 
-          {:reply, {:ok, %{mine: false, until: f.until}}, put(s, f)}
+        text =
+          sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?) ++
+            (extra[:foe_lines] || [])
+
+        cond do
+          f.hp[foe] <= 0 ->
+            # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "hạ gục bạn"
+            f = Map.put(f, :last, text)
+            {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
+
+          # gục vì độc đầu lượt của mình
+          hp <= 0 ->
+            {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, foe, uid, :ko)}
+
+          true ->
+            cancel(f)
+            f = arm(%{f | turn: foe})
+
+            # đối thủ bị choáng: Session của họ tự bỏ lượt ngay khi nhận tin này (không chờ hết giờ)
+            Session.slay_sync(foe, %{
+              id: f.id,
+              hp: f.hp[foe],
+              foe_hp: hp,
+              until: f.until,
+              text: text,
+              fx: fx[foe],
+              stunned:
+                match?(%{effects: [_ | _]}, fx[foe]) and
+                  Enum.any?(fx[foe].effects, &(&1.id == "stun"))
+            })
+
+            {:reply, {:ok, %{mine: false, until: f.until}}, put(s, f)}
         end
 
       nil ->
@@ -403,7 +459,9 @@ defmodule HacLong.Slay do
         pl =
           if why == :fled,
             do: log(pl, "🏃 Bạn bỏ chạy: tính như gục ngã.", "bad"),
-            else: log(pl, "#{f.names[winner]} hạ gục bạn.", "bad")
+            else:
+              Enum.reduce(f[:last] || [], pl, &log(&2, &1, "bad"))
+              |> log("#{f.names[winner]} hạ gục bạn.", "bad")
 
         {_, pl2} = Engine.finish_lose(pl)
 
@@ -471,13 +529,26 @@ defmodule HacLong.Slay do
 
   # ---------- Tiện ích ----------
 
-  defp sync_text(name, dmg, healed, auto?) do
+  # Nhật ký lượt của người đánh, đổi sang góc nhìn người bị đánh (một dòng mỗi dòng gốc).
+  # Không có dòng nào (lượt chạy ngoài Session) thì tóm tắt theo máu như trước.
+  defp sync_text(name, foe_name, lines, dmg, healed, auto?) do
     who = if auto?, do: "#{name} (hết giờ, tự đánh)", else: name
 
-    cond do
-      dmg > 0 -> "⚔ #{who} gây #{dmg} sát thương cho bạn."
-      healed > 0 -> "#{who} hồi #{healed} máu."
-      true -> "#{who} ra đòn nhưng không trúng."
+    lines = for t <- lines, do: %{text: t, kind: "hit"}
+
+    case Enum.map(BattleText.view(lines, name, foe_name), & &1.text) do
+      [] ->
+        cond do
+          dmg > 0 -> ["⚔ #{who} gây #{dmg} sát thương cho bạn."]
+          healed > 0 -> ["#{who} hồi #{healed} máu."]
+          true -> ["#{who} ra đòn nhưng không trúng."]
+        end
+
+      mirrored when auto? ->
+        ["⏱ #{name} hết giờ, server đánh thay." | mirrored]
+
+      mirrored ->
+        mirrored
     end
   end
 
@@ -491,7 +562,12 @@ defmodule HacLong.Slay do
       hp: f.hp[uid],
       foe_hp: f.hp[foe],
       until: f.until,
-      map: f.map
+      map: f.map,
+      # lượt đầu của người tấn công (đòn mở màn, `RULES.slay.first_strike_mult`)
+      first: f.turns == 0,
+      fx: (f[:fx] || %{})[uid],
+      foe_fx: (f[:fx] || %{})[foe],
+      foe_char: (f[:chars] || %{})[foe]
     }
   end
 

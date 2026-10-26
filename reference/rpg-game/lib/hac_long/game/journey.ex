@@ -35,7 +35,7 @@ defmodule HacLong.Game.Journey do
   """
 
   alias HacLong.Bots.Brain
-  alias HacLong.Game.{Chaos, Data, Engine, Gear, Pets, Quests, Tower}
+  alias HacLong.Game.{Chaos, Data, Engine, Gear, Mastery, Pets, Quests, Tower}
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -64,7 +64,9 @@ defmodule HacLong.Game.Journey do
     pets: true,
     feed: true,
     farm: 0,
-    rows: false
+    rows: false,
+    # giữ nhân vật đầy đủ ở mỗi mốc (vừa đạt cấp tối đa, trước khi chuyển sinh) trong `tiers` (scripts/pvp/profile.exs)
+    players: false
   }
 
   # cách cộng điểm theo lớp (lặp vòng), như `Simulator`
@@ -100,6 +102,7 @@ defmodule HacLong.Game.Journey do
       bands: %{},
       mons: %{},
       snapshots: [],
+      tiers: %{},
       rows: [],
       hist: %{},
       ban: %{},
@@ -182,6 +185,7 @@ defmodule HacLong.Game.Journey do
 
   defp rebirth(p, st) do
     st = snapshot(st, p, "Trước chuyển sinh #{rb(p) + 1}")
+    st = if st.opts.players, do: %{st | tiers: Map.put(st.tiers, rb(p), p)}, else: st
     {r, p} = Engine.rebirth(p)
     st = event(st, p, if(r.ok, do: r.msg, else: "Không chuyển sinh được: #{r.msg}"))
     {p, %{st | gear_key: nil, ban: %{}, hist: %{}}}
@@ -220,7 +224,8 @@ defmodule HacLong.Game.Journey do
     Enum.reduce(Map.keys(inv0) ++ Map.keys(inv1), st, fn id, st ->
       d = Map.get(inv1, id, 0) - Map.get(inv0, id, 0)
 
-      if String.starts_with?(id, "jewel_") and d != 0,
+      # ngọc và Bí Kíp (đột phá thông thạo kỹ năng)
+      if (String.starts_with?(id, "jewel_") or id == "bi_kip") and d != 0,
         do: %{st | ledger: Map.update(st.ledger, {id, why}, d, &(&1 + d))},
         else: st
     end)
@@ -660,6 +665,9 @@ defmodule HacLong.Game.Journey do
           do: {Data.item(id).name, n}
         ),
       pet: if(p[:pet], do: "#{Pets.name(p)} cấp #{Pets.level(p, p.pet)}", else: "—"),
+      # thông thạo kỹ năng đang mang
+      mastery: Enum.map(Engine.skills(p), &{&1.name, Mastery.level(p, &1.id)}),
+      bi_kip: Map.get(p.inv, "bi_kip", 0),
       potions:
         for(
           {id, n} <- p.inv,
@@ -693,6 +701,7 @@ defmodule HacLong.Game.Journey do
 
   defp finish({p, st}) do
     st = snapshot(st, p, "Kết thúc")
+    st = if st.opts.players, do: %{st | tiers: Map.put(st.tiers, rb(p), p)}, else: st
 
     %{
       cls: p.cls,
@@ -717,6 +726,7 @@ defmodule HacLong.Game.Journey do
       bands: st.bands,
       mons: st.mons,
       snapshots: st.snapshots,
+      tiers: st.tiers,
       rows: Enum.reverse(st.rows),
       opts: st.opts
     }
@@ -741,6 +751,7 @@ defmodule HacLong.Game.Journey do
         {p, st} = p |> gear_up(st)
         {p, st} = forge(p, st)
         {p, st} = tracked(p, st, "ghép cánh", &wings/2)
+        {p, st} = tracked(p, st, "đột phá kỹ năng", &masteries/2)
         {p, st} = gear_up(p, st)
         {p, st} = pets(p, st)
         {sell_junk(p, st), %{st | gear_key: key}}
@@ -749,6 +760,34 @@ defmodule HacLong.Game.Journey do
       end
 
     {p |> skills() |> potions(), st}
+  end
+
+  # thông thạo kỹ năng: đủ điểm ở mốc thì đột phá, kỹ năng đang mang trước; Bí Kíp trước, thiếu thì Ngọc Tâm Linh khi
+  # còn dư nhiều (giữ Tâm Linh cho ép đồ)
+  defp masteries(p, st) do
+    on = Engine.skills(p)
+    ks = on ++ (Engine.available_skills(p) -- on)
+
+    p =
+      Enum.reduce(ks, p, fn k, p ->
+        v = Mastery.view(p)[k.id]
+
+        cond do
+          v == nil or v.brk == nil ->
+            p
+
+          Map.get(p.inv, "bi_kip", 0) >= v.brk.cost ->
+            elem(Mastery.break_through(p, k.id, "item"), 1)
+
+          Map.get(p.inv, "jewel_soul", 0) >= v.brk.alt + 10 ->
+            elem(Mastery.break_through(p, k.id, "alt"), 1)
+
+          true ->
+            p
+        end
+      end)
+
+    {p, st}
   end
 
   # bộ kỹ năng mang vào trận như người chơi tự chọn (`Brain.loadout/2`: giữ kỹ năng hồi máu, còn lại mạnh nhất)
@@ -921,6 +960,11 @@ defmodule HacLong.Game.Journey do
           Engine.can_wear?(p, it),
           do: {id, it.price}
 
+    # lớp cầm 2 vũ khí (B-42): vũ khí 1 tay thử cả ở tay trái
+    hands = fn it ->
+      if it.slot == "weapon" and Engine.dual_class?(p.cls), do: [nil, "left"], else: [nil]
+    end
+
     best =
       (owned ++ shop)
       |> Enum.flat_map(fn {id, price} ->
@@ -929,15 +973,12 @@ defmodule HacLong.Game.Journey do
         if it && Engine.can_wear?(p, it) do
           q = if price, do: elem(Engine.buy(p, id), 1), else: p
 
-          case Engine.equip(q, id) do
-            {%{ok: true}, q} ->
+          for hand <- hands.(it),
+              {%{ok: true}, q} <- [Engine.equip(q, id, hand)],
               # chỉ thay khi hơn hẳn: món bị tháo ép càng cao càng cần mạnh hơn nhiều (người chơi tiếc ngọc đã ép)
-              gain = score(q) / base
-              if gain > 1 + swap_margin(p, q, st), do: [{gain, id, price}], else: []
-
-            _ ->
-              []
-          end
+              gain = score(q) / base,
+              gain > 1 + swap_margin(p, q, st),
+              do: {gain, id, price, hand}
         else
           []
         end
@@ -945,9 +986,9 @@ defmodule HacLong.Game.Journey do
       |> Enum.max_by(&elem(&1, 0), fn -> nil end)
 
     case best do
-      {_gain, id, price} ->
+      {_gain, id, price, hand} ->
         p = if price, do: elem(Engine.buy(p, id), 1), else: p
-        {_, p} = Engine.equip(p, id)
+        {_, p} = Engine.equip(p, id, hand)
         it = Gear.item(p, id)
 
         st =

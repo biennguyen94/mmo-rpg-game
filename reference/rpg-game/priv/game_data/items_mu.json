@@ -10,6 +10,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 4,
       "atkMin": 1,
       "atkMax": 6,
@@ -33,6 +34,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 4,
       "atkMin": 1,
       "atkMax": 6,
@@ -54,6 +56,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 3,
       "atkMin": 3,
       "atkMax": 3,
@@ -75,6 +78,7 @@
       "classes": [
         "elf"
       ],
+      "hands": 2,
       "atk": 4,
       "atkMin": 3,
       "atkMax": 5,
@@ -97,6 +101,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 7,
       "atkMin": 4,
       "atkMax": 9,
@@ -123,6 +128,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 7,
       "atkMin": 4,
       "atkMax": 9,
@@ -147,6 +153,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 7,
       "atkMin": 4,
       "atkMax": 9,
@@ -171,9 +178,10 @@
       "classes": [
         "dw"
       ],
-      "atk": 7,
-      "atkMin": 6,
-      "atkMax": 8,
+      "hands": 2,
+      "atk": 8,
+      "atkMin": 7,
+      "atkMax": 9,
       "req": {
         "str": 18
       },
@@ -194,6 +202,7 @@
       "classes": [
         "elf"
       ],
+      "hands": 2,
       "atk": 7,
       "atkMin": 5,
       "atkMax": 8,
@@ -219,6 +228,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 12,
       "atkMin": 9,
       "atkMax": 15,
@@ -244,6 +254,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 12,
       "atkMin": 9,
       "atkMax": 15,
@@ -270,6 +281,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 12,
       "atkMin": 9,
       "atkMax": 15,
@@ -295,6 +307,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 12,
       "atkMin": 9,
       "atkMax": 15,
@@ -320,9 +333,10 @@
         "dk",
         "mg"
       ],
-      "atk": 12,
-      "atkMin": 9,
-      "atkMax": 15,
+      "hands": 2,
+      "atk": 21,
+      "atkMin": 15,
+      "atkMax": 26,
       "req": {
         "agi": 18,
         "str": 25
@@ -346,9 +360,10 @@
         "dk",
         "mg"
       ],
-      "atk": 12,
-      "atkMin": 9,
-      "atkMax": 15,
+      "hands": 2,
+      "atk": 22,
+      "atkMin": 16,
+      "atkMax": 27,
       "req": {
         "agi": 18,
         "str": 25
@@ -371,6 +386,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 13,
       "atkMin": 13,
       "atkMax": 13,
@@ -382,7 +398,6 @@
       "ref": "5/14",
       "icon": "broadsword",
       "doll": "hand1/staff",
-      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -396,6 +411,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 2,
       "atk": 13,
       "atkMin": 13,
       "atkMax": 13,
@@ -406,6 +422,7 @@
       "ref": "5/2",
       "icon": "broadsword",
       "doll": "hand1/staff",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -421,6 +438,7 @@
         "elf",
         "mg"
       ],
+      "hands": 1,
       "atk": 13,
       "atkMin": 13,
       "atkMax": 13,
@@ -446,6 +464,7 @@
       "classes": [
         "elf"
       ],
+      "hands": 2,
       "atk": 11,
       "atkMin": 9,
       "atkMax": 13,
@@ -470,9 +489,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 11,
-      "atkMin": 9,
-      "atkMax": 13,
+      "hands": 2,
+      "atk": 13,
+      "atkMin": 10,
+      "atkMax": 15,
       "req": {
         "agi": 31,
         "str": 11
@@ -496,6 +516,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 21,
       "atkMin": 16,
       "atkMax": 26,
@@ -521,6 +542,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 21,
       "atkMin": 16,
       "atkMax": 26,
@@ -546,6 +568,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 21,
       "atkMin": 16,
       "atkMax": 26,
@@ -571,6 +594,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 21,
       "atkMin": 16,
       "atkMax": 26,
@@ -597,9 +621,10 @@
         "dk",
         "mg"
       ],
-      "atk": 21,
-      "atkMin": 16,
-      "atkMax": 26,
+      "hands": 2,
+      "atk": 33,
+      "atkMin": 25,
+      "atkMax": 41,
       "req": {
         "agi": 18,
         "str": 25
@@ -622,6 +647,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 21,
       "atkMin": 20,
       "atkMax": 22,
@@ -633,7 +659,6 @@
       "ref": "5/15",
       "icon": "spiked-mace",
       "doll": "hand1/staff",
-      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -647,9 +672,10 @@
       "classes": [
         "dw"
       ],
-      "atk": 21,
-      "atkMin": 20,
-      "atkMax": 22,
+      "hands": 2,
+      "atk": 24,
+      "atkMin": 23,
+      "atkMax": 25,
       "req": {
         "agi": 4,
         "str": 14
@@ -658,6 +684,7 @@
       "ref": "5/3",
       "icon": "spiked-mace",
       "doll": "hand1/staff",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -671,9 +698,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 21,
-      "atkMin": 17,
-      "atkMax": 24,
+      "hands": 2,
+      "atk": 27,
+      "atkMin": 22,
+      "atkMax": 31,
       "req": {
         "agi": 31,
         "str": 11
@@ -696,9 +724,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 21,
-      "atkMin": 17,
-      "atkMax": 24,
+      "hands": 2,
+      "atk": 27,
+      "atkMin": 22,
+      "atkMax": 30,
       "req": {
         "agi": 31,
         "str": 11
@@ -721,6 +750,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 29,
       "atkMin": 24,
       "atkMax": 34,
@@ -745,6 +775,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 29,
       "atkMin": 24,
       "atkMax": 34,
@@ -770,9 +801,10 @@
         "dk",
         "mg"
       ],
-      "atk": 29,
-      "atkMin": 24,
-      "atkMax": 34,
+      "hands": 2,
+      "atk": 41,
+      "atkMin": 34,
+      "atkMax": 48,
       "req": {
         "str": 36
       },
@@ -795,9 +827,10 @@
         "dk",
         "mg"
       ],
-      "atk": 29,
-      "atkMin": 24,
-      "atkMax": 34,
+      "hands": 2,
+      "atk": 44,
+      "atkMin": 36,
+      "atkMax": 51,
       "req": {
         "str": 42
       },
@@ -820,9 +853,10 @@
         "dk",
         "mg"
       ],
-      "atk": 29,
-      "atkMin": 24,
-      "atkMax": 34,
+      "hands": 2,
+      "atk": 44,
+      "atkMin": 37,
+      "atkMax": 52,
       "req": {
         "str": 46
       },
@@ -845,9 +879,10 @@
         "dk",
         "mg"
       ],
-      "atk": 29,
-      "atkMin": 24,
-      "atkMax": 34,
+      "hands": 2,
+      "atk": 49,
+      "atkMin": 41,
+      "atkMax": 58,
       "req": {
         "agi": 18,
         "str": 25
@@ -871,9 +906,10 @@
         "dk",
         "mg"
       ],
-      "atk": 29,
-      "atkMin": 24,
-      "atkMax": 34,
+      "hands": 2,
+      "atk": 43,
+      "atkMin": 35,
+      "atkMax": 50,
       "req": {
         "agi": 11,
         "str": 31
@@ -882,31 +918,6 @@
       "ref": "3/3",
       "icon": "battle-axe",
       "doll": "hand1/battleaxe",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
-    "item_5_21": {
-      "name": "Sách Sahamutt",
-      "mu_name": "Book of Sahamutt",
-      "slot": "weapon",
-      "tier": 5,
-      "level": 17,
-      "classes": [
-        "dw"
-      ],
-      "atk": 31,
-      "atkMin": 29,
-      "atkMax": 33,
-      "req": {
-        "agi": 7,
-        "ene": 47
-      },
-      "price": 1600,
-      "ref": "5/21",
-      "icon": "battle-axe",
-      "doll": "hand1/staff",
       "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
@@ -921,9 +932,10 @@
       "classes": [
         "dw"
       ],
-      "atk": 31,
-      "atkMin": 29,
-      "atkMax": 33,
+      "hands": 2,
+      "atk": 38,
+      "atkMin": 35,
+      "atkMax": 40,
       "req": {
         "str": 18
       },
@@ -944,9 +956,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 33,
-      "atkMin": 28,
-      "atkMax": 37,
+      "hands": 2,
+      "atk": 48,
+      "atkMin": 41,
+      "atkMax": 54,
       "req": {
         "agi": 31,
         "str": 11
@@ -969,9 +982,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 33,
-      "atkMin": 28,
-      "atkMax": 37,
+      "hands": 2,
+      "atk": 45,
+      "atkMin": 38,
+      "atkMax": 50,
       "req": {
         "agi": 31,
         "str": 11
@@ -994,9 +1008,10 @@
         "dk",
         "mg"
       ],
-      "atk": 42,
-      "atkMin": 36,
-      "atkMax": 47,
+      "hands": 2,
+      "atk": 60,
+      "atkMin": 52,
+      "atkMax": 68,
       "req": {
         "agi": 21,
         "str": 28
@@ -1020,6 +1035,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 42,
       "atkMin": 36,
       "atkMax": 47,
@@ -1045,9 +1061,10 @@
         "dk",
         "mg"
       ],
-      "atk": 42,
-      "atkMin": 36,
-      "atkMax": 47,
+      "hands": 2,
+      "atk": 61,
+      "atkMin": 53,
+      "atkMax": 69,
       "req": {
         "str": 53
       },
@@ -1070,6 +1087,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 42,
       "atkMin": 36,
       "atkMax": 47,
@@ -1096,9 +1114,10 @@
         "dk",
         "mg"
       ],
-      "atk": 42,
-      "atkMin": 36,
-      "atkMax": 47,
+      "hands": 2,
+      "atk": 63,
+      "atkMin": 54,
+      "atkMax": 70,
       "req": {
         "agi": 25,
         "str": 21
@@ -1122,9 +1141,10 @@
         "dk",
         "mg"
       ],
-      "atk": 42,
-      "atkMin": 36,
-      "atkMax": 47,
+      "hands": 2,
+      "atk": 58,
+      "atkMin": 49,
+      "atkMax": 64,
       "req": {
         "agi": 18,
         "str": 28
@@ -1147,6 +1167,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 44,
       "atkMin": 43,
       "atkMax": 45,
@@ -1163,31 +1184,6 @@
       "version": 1,
       "verified": false
     },
-    "item_5_22": {
-      "name": "Sách Neil",
-      "mu_name": "Book of Neil",
-      "slot": "weapon",
-      "tier": 6,
-      "level": 22,
-      "classes": [
-        "dw"
-      ],
-      "atk": 44,
-      "atkMin": 43,
-      "atkMax": 45,
-      "req": {
-        "agi": 9,
-        "ene": 59
-      },
-      "price": 3600,
-      "ref": "5/22",
-      "icon": "two-handed-sword",
-      "doll": "hand1/staff",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
     "item_5_5": {
       "name": "Gậy Huyền Thoại",
       "mu_name": "Legendary Staff",
@@ -1197,6 +1193,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 44,
       "atkMin": 43,
       "atkMax": 45,
@@ -1220,9 +1217,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 47,
-      "atkMin": 42,
-      "atkMax": 52,
+      "hands": 2,
+      "atk": 59,
+      "atkMin": 53,
+      "atkMax": 66,
       "req": {
         "agi": 35,
         "str": 11
@@ -1245,9 +1243,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 47,
-      "atkMin": 42,
-      "atkMax": 52,
+      "hands": 2,
+      "atk": 59,
+      "atkMin": 53,
+      "atkMax": 66,
       "req": {
         "agi": 35,
         "str": 11
@@ -1272,9 +1271,10 @@
         "elf",
         "mg"
       ],
-      "atk": 64,
-      "atkMin": 56,
-      "atkMax": 72,
+      "hands": 2,
+      "atk": 118,
+      "atkMin": 104,
+      "atkMax": 133,
       "req": {
         "str": 46
       },
@@ -1297,9 +1297,10 @@
         "dk",
         "mg"
       ],
-      "atk": 64,
-      "atkMin": 56,
-      "atkMax": 72,
+      "hands": 2,
+      "atk": 100,
+      "atkMin": 88,
+      "atkMax": 113,
       "req": {
         "str": 42
       },
@@ -1321,6 +1322,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 64,
       "atkMin": 56,
       "atkMax": 72,
@@ -1347,9 +1349,10 @@
         "dk",
         "mg"
       ],
-      "atk": 64,
-      "atkMin": 56,
-      "atkMax": 72,
+      "hands": 2,
+      "atk": 99,
+      "atkMin": 87,
+      "atkMax": 112,
       "req": {
         "str": 49
       },
@@ -1372,9 +1375,10 @@
         "dk",
         "mg"
       ],
-      "atk": 64,
-      "atkMin": 56,
-      "atkMax": 72,
+      "hands": 2,
+      "atk": 95,
+      "atkMin": 83,
+      "atkMax": 107,
       "req": {
         "str": 49
       },
@@ -1397,9 +1401,10 @@
         "dk",
         "mg"
       ],
-      "atk": 64,
-      "atkMin": 56,
-      "atkMax": 72,
+      "hands": 2,
+      "atk": 108,
+      "atkMin": 95,
+      "atkMax": 122,
       "req": {
         "agi": 11,
         "str": 31
@@ -1408,31 +1413,6 @@
       "ref": "3/4",
       "icon": "war-axe",
       "doll": "hand1/axe_double",
-      "alt": true,
-      "sourceType": "MU_ITEM_TXT",
-      "version": 1,
-      "verified": false
-    },
-    "item_5_23": {
-      "name": "Sách Bóng Ma",
-      "mu_name": "Book of Ghost Phantom",
-      "slot": "weapon",
-      "tier": 7,
-      "level": 27,
-      "classes": [
-        "dw"
-      ],
-      "atk": 60,
-      "atkMin": 57,
-      "atkMax": 63,
-      "req": {
-        "agi": 11,
-        "ene": 70
-      },
-      "price": 7500,
-      "ref": "5/23",
-      "icon": "war-axe",
-      "doll": "hand1/staff",
       "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
@@ -1447,6 +1427,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 60,
       "atkMin": 57,
       "atkMax": 63,
@@ -1471,9 +1452,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 65,
-      "atkMin": 59,
-      "atkMax": 71,
+      "hands": 2,
+      "atk": 90,
+      "atkMin": 81,
+      "atkMax": 98,
       "req": {
         "agi": 35,
         "str": 11
@@ -1498,9 +1480,10 @@
         "elf",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 125,
+      "atkMin": 109,
+      "atkMax": 141,
       "req": {
         "agi": 25,
         "str": 46
@@ -1524,9 +1507,10 @@
         "dk",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 145,
+      "atkMin": 126,
+      "atkMax": 163,
       "req": {
         "str": 49
       },
@@ -1549,6 +1533,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 79,
       "atkMin": 69,
       "atkMax": 89,
@@ -1575,6 +1560,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 79,
       "atkMin": 69,
       "atkMax": 89,
@@ -1601,9 +1587,10 @@
         "dk",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 133,
+      "atkMin": 116,
+      "atkMax": 150,
       "req": {
         "agi": 14,
         "str": 35
@@ -1626,6 +1613,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 79,
       "atkMin": 69,
       "atkMax": 89,
@@ -1652,9 +1640,10 @@
         "dk",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 119,
+      "atkMin": 104,
+      "atkMax": 134,
       "req": {
         "agi": 18,
         "str": 49
@@ -1678,6 +1667,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 79,
       "atkMin": 69,
       "atkMax": 89,
@@ -1704,9 +1694,10 @@
         "dk",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 138,
+      "atkMin": 121,
+      "atkMax": 156,
       "req": {
         "agi": 18,
         "str": 31
@@ -1730,9 +1721,10 @@
         "dk",
         "mg"
       ],
-      "atk": 79,
-      "atkMin": 69,
-      "atkMax": 89,
+      "hands": 2,
+      "atk": 140,
+      "atkMin": 122,
+      "atkMax": 158,
       "req": {
         "agi": 18,
         "str": 28
@@ -1755,9 +1747,10 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 78,
-      "atkMin": 77,
-      "atkMax": 79,
+      "atkMin": 76,
+      "atkMax": 80,
       "req": {
         "agi": 7,
         "str": 18
@@ -1766,7 +1759,6 @@
       "ref": "5/17",
       "icon": "war-axe",
       "doll": "hand1/staff",
-      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1780,9 +1772,10 @@
       "classes": [
         "dw"
       ],
-      "atk": 78,
-      "atkMin": 77,
-      "atkMax": 79,
+      "hands": 2,
+      "atk": 115,
+      "atkMin": 112,
+      "atkMax": 118,
       "req": {
         "agi": 4,
         "str": 21
@@ -1791,6 +1784,7 @@
       "ref": "5/7",
       "icon": "war-axe",
       "doll": "hand1/staff",
+      "alt": true,
       "sourceType": "MU_ITEM_TXT",
       "version": 1,
       "verified": false
@@ -1804,9 +1798,10 @@
       "classes": [
         "dw"
       ],
-      "atk": 78,
-      "atkMin": 77,
-      "atkMax": 79,
+      "hands": 2,
+      "atk": 105,
+      "atkMin": 102,
+      "atkMax": 107,
       "req": {
         "agi": 4,
         "str": 21
@@ -1829,6 +1824,7 @@
       "classes": [
         "elf"
       ],
+      "hands": 1,
       "atk": 75,
       "atkMin": 68,
       "atkMax": 82,
@@ -1854,9 +1850,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 75,
-      "atkMin": 68,
-      "atkMax": 82,
+      "hands": 2,
+      "atk": 103,
+      "atkMin": 93,
+      "atkMax": 112,
       "req": {
         "agi": 39,
         "str": 14
@@ -1878,9 +1875,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 75,
-      "atkMin": 68,
-      "atkMax": 82,
+      "hands": 2,
+      "atk": 96,
+      "atkMin": 87,
+      "atkMax": 105,
       "req": {
         "agi": 46,
         "str": 18
@@ -1903,9 +1901,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 75,
-      "atkMin": 68,
-      "atkMax": 82,
+      "hands": 2,
+      "atk": 117,
+      "atkMin": 106,
+      "atkMax": 128,
       "req": {
         "agi": 56,
         "str": 18
@@ -1928,9 +1927,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 75,
-      "atkMin": 68,
-      "atkMax": 82,
+      "hands": 2,
+      "atk": 95,
+      "atkMin": 86,
+      "atkMax": 103,
       "req": {
         "agi": 53,
         "str": 14
@@ -1953,9 +1953,10 @@
       "classes": [
         "dk"
       ],
-      "atk": 98,
-      "atkMin": 89,
-      "atkMax": 107,
+      "hands": 2,
+      "atk": 155,
+      "atkMin": 141,
+      "atkMax": 169,
       "req": {
         "agi": 21,
         "str": 59
@@ -1979,9 +1980,10 @@
         "dk",
         "mg"
       ],
-      "atk": 98,
-      "atkMin": 89,
-      "atkMax": 107,
+      "hands": 2,
+      "atk": 158,
+      "atkMin": 143,
+      "atkMax": 172,
       "req": {
         "agi": 18,
         "str": 63
@@ -2004,6 +2006,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 89,
       "atkMax": 107,
@@ -2030,6 +2033,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 89,
       "atkMax": 107,
@@ -2055,6 +2059,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 96,
       "atkMax": 100,
@@ -2080,6 +2085,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 96,
       "atkMax": 100,
@@ -2105,6 +2111,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 96,
       "atkMax": 100,
@@ -2130,6 +2137,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 96,
       "atkMax": 100,
@@ -2155,6 +2163,7 @@
         "dw",
         "mg"
       ],
+      "hands": 1,
       "atk": 98,
       "atkMin": 96,
       "atkMax": 100,
@@ -2180,9 +2189,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 98,
-      "atkMin": 88,
-      "atkMax": 108,
+      "hands": 2,
+      "atk": 173,
+      "atkMin": 156,
+      "atkMax": 191,
       "req": {
         "agi": 69,
         "str": 19
@@ -2204,9 +2214,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 98,
-      "atkMin": 88,
-      "atkMax": 108,
+      "hands": 2,
+      "atk": 192,
+      "atkMin": 172,
+      "atkMax": 212,
       "req": {
         "agi": 39,
         "str": 14
@@ -2229,9 +2240,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 98,
-      "atkMin": 88,
-      "atkMax": 108,
+      "hands": 2,
+      "atk": 199,
+      "atkMin": 179,
+      "atkMax": 219,
       "req": {
         "agi": 100,
         "str": 21
@@ -2254,9 +2266,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 98,
-      "atkMin": 88,
-      "atkMax": 108,
+      "hands": 2,
+      "atk": 172,
+      "atkMin": 154,
+      "atkMax": 189,
       "req": {
         "agi": 93,
         "str": 21
@@ -2279,9 +2292,10 @@
       "classes": [
         "mg"
       ],
-      "atk": 98,
-      "atkMin": 89,
-      "atkMax": 107,
+      "hands": 2,
+      "atk": 172,
+      "atkMin": 156,
+      "atkMax": 187,
       "req": {
         "agi": 18,
         "str": 63
@@ -2304,9 +2318,10 @@
       "classes": [
         "mg"
       ],
-      "atk": 98,
-      "atkMin": 89,
-      "atkMax": 107,
+      "hands": 2,
+      "atk": 145,
+      "atkMin": 132,
+      "atkMax": 158,
       "req": {
         "agi": 22,
         "ene": 3,
@@ -2331,9 +2346,10 @@
         "dk",
         "mg"
       ],
-      "atk": 120,
-      "atkMin": 109,
-      "atkMax": 131,
+      "hands": 2,
+      "atk": 239,
+      "atkMin": 217,
+      "atkMax": 261,
       "req": {
         "agi": 11,
         "str": 67
@@ -2355,6 +2371,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 120,
       "atkMin": 118,
       "atkMax": 122,
@@ -2379,6 +2396,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 120,
       "atkMin": 118,
       "atkMax": 122,
@@ -2404,6 +2422,7 @@
       "classes": [
         "elf"
       ],
+      "hands": 1,
       "atk": 120,
       "atkMin": 101,
       "atkMax": 139,
@@ -2428,9 +2447,10 @@
       "classes": [
         "mg"
       ],
-      "atk": 120,
-      "atkMin": 109,
-      "atkMax": 131,
+      "hands": 2,
+      "atk": 146,
+      "atkMin": 133,
+      "atkMax": 160,
       "req": {
         "agi": 20,
         "ene": 3,
@@ -2454,6 +2474,7 @@
       "classes": [
         "dk"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2479,6 +2500,7 @@
       "classes": [
         "dk"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2504,6 +2526,7 @@
       "classes": [
         "dk"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2530,6 +2553,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2556,6 +2580,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2581,6 +2606,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2607,6 +2633,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2633,6 +2660,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2659,6 +2687,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2685,6 +2714,7 @@
         "dk",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -2711,9 +2741,10 @@
         "dk",
         "mg"
       ],
-      "atk": 145,
-      "atkMin": 140,
-      "atkMax": 150,
+      "hands": 2,
+      "atk": 284,
+      "atkMin": 274,
+      "atkMax": 294,
       "req": {
         "agi": 9,
         "str": 53
@@ -2736,6 +2767,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 137,
       "atkMax": 153,
@@ -2760,6 +2792,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 137,
       "atkMax": 153,
@@ -2785,6 +2818,7 @@
       "classes": [
         "dw"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 137,
       "atkMax": 153,
@@ -2811,6 +2845,7 @@
         "dw",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 137,
       "atkMax": 153,
@@ -2837,6 +2872,7 @@
         "dw",
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 137,
       "atkMax": 153,
@@ -2862,9 +2898,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 145,
-      "atkMin": 136,
-      "atkMax": 154,
+      "hands": 2,
+      "atk": 251,
+      "atkMin": 235,
+      "atkMax": 266,
       "req": {
         "agi": 86,
         "str": 18
@@ -2887,9 +2924,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 145,
-      "atkMin": 136,
-      "atkMax": 154,
+      "hands": 2,
+      "atk": 258,
+      "atkMin": 242,
+      "atkMax": 274,
       "req": {
         "agi": 74,
         "str": 16
@@ -2911,9 +2949,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 145,
-      "atkMin": 136,
-      "atkMax": 154,
+      "hands": 2,
+      "atk": 248,
+      "atkMin": 233,
+      "atkMax": 263,
       "req": {
         "agi": 73,
         "str": 11
@@ -2936,9 +2975,10 @@
       "classes": [
         "elf"
       ],
-      "atk": 145,
-      "atkMin": 136,
-      "atkMax": 154,
+      "hands": 2,
+      "atk": 248,
+      "atkMin": 233,
+      "atkMax": 263,
       "req": {
         "agi": 79,
         "str": 17
@@ -2961,9 +3001,10 @@
       "classes": [
         "mg"
       ],
-      "atk": 145,
-      "atkMin": 140,
-      "atkMax": 150,
+      "hands": 2,
+      "atk": 180,
+      "atkMin": 174,
+      "atkMax": 186,
       "req": {
         "agi": 19,
         "ene": 3,
@@ -2987,9 +3028,10 @@
       "classes": [
         "mg"
       ],
-      "atk": 145,
-      "atkMin": 140,
-      "atkMax": 150,
+      "hands": 2,
+      "atk": 193,
+      "atkMin": 186,
+      "atkMax": 200,
       "req": {
         "agi": 17,
         "ene": 2,
@@ -3013,6 +3055,7 @@
       "classes": [
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,
@@ -3039,6 +3082,7 @@
       "classes": [
         "mg"
       ],
+      "hands": 1,
       "atk": 145,
       "atkMin": 140,
       "atkMax": 150,

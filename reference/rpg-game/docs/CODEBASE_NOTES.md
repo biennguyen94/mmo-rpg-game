@@ -513,7 +513,7 @@ giới, đấu trường), nhật ký trận ghi "(−x% vì cao hơn quái n c�
 
 ## 9i. Xã hội, xếp hạng, PK cược vàng (Phase 5, 2026-10-04)
 
-- **PK cược:** `HacLong.Game.PkFight` (thuần), `HacLong.PkBet` (GenServer lời mời; `execute/1` chạy ở tiến trình kênh của
+- **PK cược (đã bỏ 2026-10-25, `DECISIONS.md` "Bỏ PK cược vàng"; code đã xóa):** `HacLong.Game.PkFight` (thuần), `HacLong.PkBet` (GenServer lời mời; `execute/1` chạy ở tiến trình kênh của
   người nhận, giữ hai Session như `HacLong.Trade`). Bảng `pk_matches`. Kênh `"pk"`.
 - **Chiến bang:** `HacLong.GuildWars` (GenServer giữ lời tuyên chiến; trận ở bảng `guild_wars`). `Guilds.brief/1` kèm `war`,
   `war_pending` — **GuildWars không được gọi `Guilds.brief/1`** (vòng gọi lại chính nó), dùng `Guilds.member_of/1`.

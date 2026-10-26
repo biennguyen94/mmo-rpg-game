@@ -804,3 +804,557 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   trùng hình với đồ trùm Thánh Kiếm Diệt Long (`relic`). Không còn hình kiếm MU nào chưa dùng (`0/32`–`0/35` là găng đấm,
   `2/22` trống), nên `relic` giữ hình `0/19` nhưng luôn lấy **bản phát sáng** (`icon_variant: "e"` trong `items.json`, client
   `ownIcon`). Công thức nhân vật tối đa (ADMIN_GUIDE §6): vũ khí Kiếm Sĩ đổi từ Kiếm Lửa Lượn sang Kiếm Tổng Lãnh Thiên Thần.
+- Công thức nhân vật tối đa (ADMIN_GUIDE §6) dựng theo **tên** (`NAME`, trống = chính mình): lớp lấy từ nhân vật được dựng
+  (`lookup` trả thêm `character.cls`), không theo admin; chia điểm bằng `add_stats` + `add_points` (lệnh quản trị) thay cho
+  lệnh người chơi `alloc`, nên dựng được cho người khác, online hay offline. Console in "Dựng cho: …" để kiểm đúng người.
+- (anh "theo e đề xuất hết") **Bà Lang: đồ uống thay pha bình máu; món ăn giảm % kéo dài trận.**
+  - Bỏ 6 công thức pha / nấu bình máu ở Bà Lang (bình vẫn mua ở Bà Lang). Thay bằng 4 đồ uống (`items.json`, `drink: true`,
+    `slot: "food"`): Bia Thảo Dược (Thảo Dược ×3) vàng +8 %; Rượu Thuốc (Thảo Dược ×2 + Linh Chi) máu +6 %; Rượu Linh Chi
+    (Linh Chi ×2) EXP +8 % — 30 trận; Rượu Long Huyết (Linh Chi ×3 + Cá Chép Vàng, nghề cấp 3) công +4 %, thủ +4 %, 40 trận.
+    Pha cần cấp nghề Nấu ăn (`Crafting.brew/2`; sau đó đổi thành không cộng kinh nghiệm nghề, mục dưới).
+  - Đồ uống nằm **ô riêng** `characters.drink` (migration `20261108000000_add_drink`), cộng dồn với món ăn; uống món khác thì thay.
+  - Món ăn Bác Đầu Bếp (trước 10–20 % trong 5–10 trận, hết rất nhanh khi tự đánh): Chả Cá công +5 % 30 trận, Bánh Mì Cá thủ
+    +6 % 30 trận, Bánh Xèo Lươn máu +6 % công +4 % 40 trận, Mâm Cỗ Cá Vàng EXP +10 % vàng +5 % 50 trận — ngang Đài Phúc
+    Lành (+5 %, 30 trận). Hình đồ uống: chai thuốc CC0 của Dungeon Crawl (`assets/food/`, `CREDITS.md`).
+- (anh "ok làm đi") **Nghề Nấu ăn chậm lại; món cá vàng mạnh hẳn.** Cá Chép Vàng cắn câu 1 % (hồ sâu 2 %), ~7–14 phút câu một
+  con, nên hai món cần nó phải đáng công:
+  - Mâm Cỗ Cá Vàng: EXP +10 %, vàng +10 %, công / thủ / máu +5 %, **100 trận**. Rượu Long Huyết: công +8 %, thủ +8 %, máu +5 %,
+    **80 trận**. Hai món cùng lúc: +13 % công / thủ, +10 % máu. Món thường giữ nguyên.
+  - Ngưỡng nghề Nấu ăn `RULES.crafting.cook_levels` = 0 / 20 / 60 / 120 / 200 (trước dùng chung `levels` 0 / 5 / 15 / 30 / 50 với
+    Rèn; Rèn giữ nguyên). Kinh nghiệm theo công thức (`xp` trong `recipes.json`): Chả Cá, Bánh Mì Cá 1; Bánh Xèo Lươn 2; Mâm Cỗ 5;
+    **pha đồ uống 0** (chỉ nấu ở Bác Đầu Bếp mới lên nghề). Cày riêng: cấp 3 ~40–60 phút, cấp 5 ~2,5–3,5 giờ.
+  - Nhân vật đã có kinh nghiệm nghề giữ số lần nấu, cấp tính lại theo ngưỡng mới (có thể tụt cấp). Client nhận
+    `RULES.craftLevels` dạng `{cook, smith}`.
+- (anh "ok làm đi") **Nghề Rèn chậm lại, ít ra đồ 3 dòng hơn.** Trước: ngưỡng 0 / 5 / 15 / 30 / 50 lần rèn (~1,5–2,5 giờ hái
+  quặng lên cấp 5), 3 dòng 6 % × cấp nghề (cấp 5: 30 %, quái rơi chỉ 3 %). Nay `RULES.crafting.levels` = 0 / 15 / 40 / 80 / 130
+  (cấp 3 ~2 giờ, cấp 5 ~5–6 giờ cày riêng) và `smith_epic_per_level` = 4 (cấp 5: 20 %); 2 dòng 50 %, giá quặng / vàng và "luôn
+  ít nhất 1 dòng" giữ nguyên. Cấp Rèn đã có tính lại theo ngưỡng mới. Kho Đồ thêm ghi chú rèn đồ (`{{SMITH}}`).
+- (anh "ok nâng 2 cục đi") **Rèn vũ khí tốn 2 Quặng Mithril** (`RULES.crafting.smith_costs.weapon.ore_rare` 1 → 2; giáp, khiên giữ 1).
+  Quặng Mithril hái từ cấp 18 (~25–40 giây một cục khi hái riêng), trước đó nút thắt chỉ là quặng thường.
+- (anh "ok làm đi", chọn màu vàng, "thêm bến, thuyền, cầu") **Long Vương: thú hiếm duy nhất, câu ở Hồ Long Vương.**
+  - Bản đồ mới `long_vuong_lake` (27 × 20, `priv/maps/long_vuong_lake.json`): hồ ở giữa, Vực Rồng (nước sâu) ở tâm, lối đi vòng
+    quanh, 4 bến gỗ + một cầu bắc qua hồ có nhánh ra sát Vực Rồng, thuyền, sen, cây đước, đèn lồng, Miếu Long Vương có tượng rồng
+    vàng. Không có quái, không PK (không phải bản đồ sự kiện, không có quái để đánh). Cổng ở mép trái Rừng Mê 1; cũng có trong
+    bảng Chọn map. Vào từ **cấp 30** (`min_level`; trước đây chỉ vùng chuyển sinh có `min_level`, nay bản đồ thường không quái cũng
+    dùng: cổng chặn, `World.min_level/1` trả cấp này để tính giá dịch chuyển).
+  - Ô mới (`Maps.@legend`): `=` nước sâu, `M` cây đước, `Q` sen, `U` thuyền (đều là nước, đứng cạnh câu được), `B` / `E` bến / cầu
+    gỗ (đi được), `G` tượng rồng, `J` đèn lồng. Hình: `scripts/long_vuong_assets.sh` (CREDITS).
+  - Bảng cá `RULES.fishing.pools.lake`: ủng 5, Cá Diếc 25, Cá Chép 35, Lươn Điện 32, **Cá Chép Vàng 3** (hồ sâu 2, hồ thường 1).
+  - `RULES.fishing.dragon`: mỗi lần **thả câu** ở hồ có 1/20.000 cơ hội Long Vương cắn (quyết định lúc thả, client hiện "Có gì đó rất
+    lớn…", khung rung); giật đúng lúc thì được, trễ thì "dây câu đứt". Có **Mồi Rồng** trong túi: mỗi lần thả tốn 1 mồi, 1/10.000.
+    Mồi pha ở Bà Lang: Cá Chép Vàng + 3 Linh Chi → **100 mồi** (công thức có `n`), cần nghề Nấu ăn cấp 3, không cộng kinh nghiệm nghề.
+  - Mỗi nhân vật tối đa 1 con; đã có thì lần đó ra Cá Chép Vàng. Không bán (`PETS.rare`), không tính vào thành tựu "đủ thú".
+  - Chỉ số (`pets.json`): công +10 %, thủ +8 %, máu +8 %, EXP +5 %, vàng +5 % (×1,95 ở cấp 20), sức cắn 45 %. Kỹ năng: **Thủy Long Ba**
+    (cấp 5, cắn ×2 và quái choáng 1 lượt, mỗi 3 lượt một lần), **Long Lân Hộ Thể** (cấp 15, giảm 10 % sát thương nhận, mỗi lần cắn hồi
+    5 % máu), **Long Vương Hồi Sinh** (cấp 20 = `RULES.pets.skill3_level`, mỗi trận một lần gục thì sống lại 30 % máu). Số ở
+    `RULES.pets.skills` (`tidal_*`, `scales_*`, `rebirth_hp`).
+  - **Bia Long Vương**: bảng `rare_pets` (migration `20261109000000_create_rare_pets`, `HacLong.RarePets`), đánh số theo thứ tự;
+    câu được thì báo cả server "… Long Vương Chủ thứ #n", thành tựu + danh hiệu **Long Vương Chủ**. NPC Ông Lão Câu Cá và Bia Long
+    Vương (role `dragon`) hiện tỉ lệ, số mồi, kỹ năng và bảng tên (lệnh `dragon_board`).
+- (anh "cập nhật admin để cấp thú nuôi này") **Lệnh quản trị `give_pet`** (`id` thú trong `PETS` kể cả `long_vuong`, `level` 1..20):
+  tặng thú, đặt cấp thú, dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị có mục **Thú cưng** (🐉 Long Vương đầu danh sách),
+  công thức nhân vật tối đa (ADMIN_GUIDE §6) thêm Long Vương cấp 20 + 100 Mồi Rồng. Thú quản trị tặng **không** ghi Bia Long Vương
+  và không báo cả server (bia chỉ dành cho người tự câu được); thành tựu / danh hiệu Long Vương Chủ vẫn có (tính theo thú đang có).
+- (anh "làm 1-6") **Hiệu ứng câu cá và Hồ Long Vương** (chỉ client, `map.js` + `ui.js`, không đổi luật; game vẽ bằng Canvas 2D, không
+  dùng Phaser). Câu ở mọi hồ: cần + dây + phao (ném theo đường cong, vòng gợn, nhấp nhô), cắn câu (phao chìm, dấu ! nảy, nước bắn,
+  bản đồ rung nhẹ; Long Vương quầng vàng, rung mạnh), câu được (cá bay vòng cung xoay tròn, lấp lánh; Cá Chép Vàng / Long Vương có
+  cột sáng và sao, Long Vương hiện hình rồng lớn), Ủng Cũ (ủng bay to dần vào màn hình, 💫 trên đầu, quạ bay ngang). Hồ Long
+  Vương (`fish: "lake"`): bóng cá lượn (trang trí, không liên quan tỉ lệ), xoáy Vực Rồng, lá / hoa rơi ban ngày, tia nắng lúc sáng
+  sớm / chiều tà, đèn lồng sáng ban đêm. Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Không làm "cá to kéo lê nhân vật"
+  (vị trí do server quyết) và chưa cho người khác thấy phao của mình.
+
+## Long Vương nổi mỗi giờ (thay 1/20.000 mỗi lần thả)
+
+Anh chọn (bước 1): thay cơ hội 1/20.000 ở mọi lần thả câu bằng một lần **Long Vương nổi** mỗi giờ để người chơi có lúc hồi hộp và có
+việc để làm ở hồ ngoài lúc đó.
+- `HacLong.LakeEvent` (GenServer, trong bộ nhớ): mỗi `RULES.fishing.dragon.every` = 3600 giây, vào một lúc ngẫu nhiên trong giờ, Ngài
+  nổi ở một ô nước ngẫu nhiên của Hồ Long Vương (ô trong tầm `reach` = 3 ô của một ô đi được cạnh nước, tức câu tới được), ở lại
+  `stay` = 180 giây. Có người câu được (`Session.rare_pet` gọi `dive/0`) hoặc hết giờ thì lặn. Mọi người nhận `lake` (`{tile, left}`)
+  qua kênh; client vẽ bọt vàng + bóng rồng ở ô đó (cả khi tắt hiệu ứng, chỉ không động) và báo người đang ở hồ.
+- Thả câu gửi ô nước đã chọn (`fish_cast` có `x`, `y`; nút Câu cá gửi ô phao mặc định). Server kiểm ô là nước, trong tầm `reach`.
+  Chỉ lần thả **trúng đúng ô Ngài** ở hồ mới có cơ hội `chance` = 1/2.000 × (1 + Long Khí / `long_khi_div` 100) × `bait_mult` 2 nếu có
+  Mồi Rồng; mồi **chỉ tốn khi thả trúng ô Ngài**.
+- **Long Khí** (`characters.long_khi`, migration `20261110000000_add_long_khi`): +1 mỗi con cá (kể cả Cá Chép Vàng nhả lại) câu được ở hồ,
+  tối đa `long_khi_max` 200, về 0 khi câu được Ngài. Hiện ở thanh câu cá và thẻ Long Vương (cơ hội hiện tại).
+- Đầy Long Khí + mồi: 1/333 mỗi lần thả trúng ô; ~20 lần thả trong 3 phút ≈ 5,8 % mỗi lần nổi, trung bình ~17 lần nổi (~17 giờ nếu lần
+  nào cũng có mặt). Quản trị: `lake_summon` gọi Ngài nổi ngay. Test: `config :hac_long, :lake_event, auto: false`.
+- Bước 2: xem "Đàn Cá Vàng, việc của Ông Lão".
+
+## Đàn Cá Vàng, việc của Ông Lão
+
+Anh chọn (bước 2 của "Long Vương nổi mỗi giờ"), để thời gian giữa các lần Ngài nổi vẫn đáng ở hồ:
+- **Đàn Cá Vàng** (`RULES.fishing.school`): `HacLong.LakeEvent` hẹn thêm sự kiện thứ hai, mỗi `every` = 900 giây vào lúc ngẫu nhiên,
+  hiện ở một ô câu tới được (khác ô Ngài nếu Ngài đang nổi) trong `stay` = 120 giây; không tan khi có người câu. Thả trúng ô đó:
+  `gold_chance` = 15 % ra Cá Chép Vàng (còn lại theo bảng cá hồ, Cá Chép Vàng 3 %), mỗi con cá +`long_khi` = 3 Long Khí thay cho +1.
+  Client vẽ cá vàng lượn + viền chấm, báo người đang ở hồ. Quản trị: `lake_school`.
+- **Việc của Ông Lão** (`RULES.fishing.elder`): câu `count` = 30 con cá ở hồ trong ngày (ủng cũ không tính; đếm ở `daily.lake_n`, cùng
+  ngày với việc ở Bảng Tin nên không cần migration) rồi gặp Ông Lão (thẻ trên Long Vương) nhận một lần: vàng / kinh nghiệm theo công
+  thức việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật, × 30 con) và +`long_khi` = 20 Long Khí. Lệnh `elder_claim`.
+- Ủng cũ không còn cộng Long Khí (chỉ cá).
+
+## Đăng nhập nhanh hơn, quên mật khẩu, hồ sơ, Tiên Nữ
+
+- **Đăng nhập nhanh hơn:** `pbkdf2_elixir` tự lặp 160.000 vòng HMAC bằng Elixir (~0,6 giây mỗi lần đăng nhập / đăng ký).
+  `HacLong.Accounts.Password` dùng `:crypto.pbkdf2_hmac/5` (C trong OTP): cùng thuật toán, số vòng, định dạng hash nên tài khoản cũ
+  vẫn đăng nhập được, ~0,13 giây (đo ở máy dev). Nút đăng nhập / tạo tài khoản đổi chữ "Đang đăng nhập…" ngay khi bấm.
+- **Quên mật khẩu:** tài khoản không có email nên không gửi mail được. Màn đăng nhập có "Quên mật khẩu?": người chơi để lại tên
+  đăng nhập + cách liên lạc (`POST /api/forgot`, giới hạn 5 lần/giờ/IP, luôn trả ok để không lộ tài khoản có tồn tại không; mỗi
+  tài khoản một yêu cầu chờ). Bảng `password_resets` (migration `20261111000000`). Quản trị đặt lại → mật khẩu tạm 8 ký tự, thu hồi
+  mọi token, đăng xuất mọi thiết bị; mật khẩu tạm không ghi vào `admin_log`.
+- **Hồ sơ:** phần Trang bị dùng lưới ô y như Túi đồ → Trang bị đang mặc (viền loại đồ, viền +N, ô Thú nuôi; thú hiếm như Long
+  Vương có viền vàng xoay). Profile gửi thêm `pet_id`, `pet_lv`. Viền +7 / +9 giờ cũng nhấp nháy nhẹ (+11 vẫn mạnh nhất), ở mọi chỗ
+  có ô đồ.
+- **Tiên Nữ hình nữ:** thân `base/elf_f` + tóc `hair/fem_yellow` (Dungeon Crawl CC0); `classes.json` thêm `body`, `Engine.look`
+  gửi `body`, `doll.js` dùng `look.body` thay thân nam mặc định.
+
+## Hiệu ứng trận đánh và di chuyển (FX_PLAN đợt 1 + một phần đợt 5)
+
+- `priv/static/js/fx.js` (`BattleFx`): canvas trong suốt phủ màn hình (`#bfx`, không bắt chuột), vị trí lấy từ hình quái / nhân
+  vật trong bảng trận lúc phát, nên mọi chế độ dùng bảng trận đều có. Chỉ là hình, server vẫn quyết định kết quả.
+  - Đòn thường theo lớp: Kiếm Sĩ / Đấu Sĩ hai vệt chém, Tiên Nữ tên bay, Phù Thủy cầu phép; nhân vật nhún tới; quái chớp trắng,
+    hạt tung; chí mạng: chữ "CHÍ MẠNG!", vòng to, rung bảng. Trượt: quái né sang bên.
+  - Kỹ năng theo hệ: lửa (cầu lửa + tàn lửa bay lên), sét (3 tia từ trên + chớp màn hình), gió (3 lưỡi gió + xoáy), đất (đá rơi +
+    bụi + rung), bóng tối (cầu tím + co lại), ánh sáng (cột sáng). Kỹ năng lên mình (hồi máu, tăng sức) có vòng sáng + dấu "+".
+  - Quái đánh mình: vết cào đỏ + viền đỏ màn hình. Quái gục: tan thành hạt, vàng bay về số vàng trên đầu trang.
+    Thanh máu quái có lớp trắng trễ chạy theo.
+  - Tự đánh / đánh chung: suy ra từ máu hai bên khi server đẩy trạng thái trận mới.
+- Bản đồ (`map.js` `moveFx`): bụi bước chân (gợn nước khi đi trên bến / cầu gỗ), vòng sáng ở ô vừa chạm để đi tới, cột sáng khi
+  vừa sang bản đồ mới.
+- Theo công tắc hiệu ứng (`hl-fx`) và "giảm chuyển động". Hướng C (người khác thấy mình đánh trên bản đồ) cần server gửi thêm sự
+  kiện, chưa làm.
+- **Đợt 2 (2026-10-23):**
+  - Đồ rơi: thắng trận thì mỗi món (tối đa 6) một cột sáng ở chỗ quái theo độ quý: Thần vàng, Excellent xanh lá, có dòng cộng
+    thêm xanh dương, ngọc theo màu ngọc (Ước Nguyện trắng xanh, Tâm Linh tím, Hỗn Nguyên cam, Sinh Mệnh xanh lá). Thần /
+    Excellent: cột to, tên món, chớp màn hình, rung, âm "rare". Dòng đồ nhận được hiện dần và viền sáng theo độ quý (Thần /
+    Excellent nhấp nháy).
+  - Ép đồ (Thợ Rèn, +10/+11 ở Máy Hỗn Nguyên), Máy Hỗn Nguyên, Ngọc Sinh Mệnh: món ở giữa màn hình (nền tối), ngọc / nguyên liệu
+    xoáy vào, búa gõ tia lửa ~0,8 giây rồi ra kết quả. Thành công nổ sáng mạnh dần (từ +7 có tia, +10/+11 cam + chớp + rung);
+    thất bại nứt + khói xám ("THẤT BẠI" / "VỀ +0" / "TỤT CẤP"); vỡ đồ thì vỡ thành mảnh. Kết quả do server quyết ngay từ đầu;
+    client chỉ hoãn thông báo + vẽ lại màn hình ~0,85 giây cho khớp hoạt cảnh (tắt hiệu ứng thì như cũ, không chờ).
+- **Đợt 3 (2026-10-23):**
+  - Bản đồ (hướng C): người khác không vẽ trên bản đồ (P13-2) nên không có "thấy người khác vung vũ khí"; thay vào đó quái đang
+    bị đánh (⚔) lóe tia chém, máu quái tụt thì hiện tia chém + "-N%" (máu quái server gửi theo %), quái đang bị đánh rồi biến
+    mất thì tan thành hạt. Suy ra từ sự kiện `map` có sẵn, không thêm gì vào protocol.
+  - Hào quang theo đồ: `Engine.aura/1` → `look.aura` (0 / 7 / 9 / 11): đủ bộ giáp (`set_bonus`) và mọi món của bộ từ +7 / +9 /
+    +11. Chỉ để vẽ: quầng sáng + hạt bay lên quanh nhân vật trên bản đồ, viền sáng nhấp nháy quanh hình nhân vật trong trận, đối
+    thủ đấu trường, hồ sơ (người khác cũng thấy qua `look`). Có cánh: hạt sáng rơi phía sau.
+  - Trạng thái trong trận (`BattleFx.ambient`): độc bong bóng xanh, bỏng tàn lửa, chảy máu giọt đỏ, choáng sao xoay trên đầu
+    (cả quái và mình).
+  - Thú cưng: đọc nhật ký trận (🐾 … cắn thêm N): hình thú nhảy từ mình sang quái, vết cào + số màu hồng; Thủy Long Ba (🌊) thêm
+    cột nước + rồng vàng bay ngang màn hình; Long Vương Hồi Sinh (🐉) rồng vàng bay ngang.
+- **Đợt 4 (2026-10-23):** (`window.Celebrate` trong `js/fx.js`)
+  - Lên cấp: chữ LEVEL UP + tia sáng giữa màn hình, chỉ số tăng (máu, MP, tấn công, phòng thủ, điểm cộng) bay lên, cột sáng vàng
+    ở chỗ nhân vật trên bản đồ. Chạy cả khi tự đánh / quản trị cộng kinh nghiệm (so trạng thái cũ với mới mỗi lần server đẩy).
+  - Chuyển sinh: màn chuyển cảnh (xoáy sáng, hình nhân vật lớn, "Lần thứ N"), bấm để tắt sớm.
+  - Thành tựu / danh hiệu mới: thẻ huy hiệu trượt xuống dưới thanh trên cùng (thay toast). Lần đầu hạ trùm / Hắc Long: chữ lớn
+    "TRÙM ĐÃ GỤC" + chớp + rung.
+  - Thông báo cả server (tin hệ thống `uid 0` trong chat thế giới: ép +7 trở lên, ghép cánh, Long Vương, trùm vàng, sự kiện, quản
+    trị): dải chạy ngang dưới thanh trên cùng, màu theo loại (đoán từ biểu tượng / chữ), xếp hàng tối đa 5. Thêm một tin: **nhặt
+    được đồ Thần** (`Session.anc_announce/2`, "✨ X vừa nhặt được … (Đồ Thần)!"), dùng đúng kênh tin hệ thống có sẵn.
+- **Đợt 5 (2026-10-23):**
+  - Di chuyển: nhân vật nhún khi đi, vừa sang bản đồ thì hiện từ nhỏ tới to (thêm cột sáng có sẵn).
+  - Giao diện: số vàng trên đầu trang chạy dần tới số mới; món mới vào túi: ô nảy + viền sáng lần đầu thấy trong Túi đồ; rương bật
+    nắp, sáng vàng, vật phẩm bay ra (Rương Gia Truyền, mua rương); nút "Nhận quà" / "Nhận hết" trong Hộp thư lắc nhẹ.
+  - Thế giới: cổng đi được có vòng xoáy sáng; Thợ Rèn tóe tia lửa, Bà Lang / Bác Đầu Bếp nồi bốc khói, Ông Lão Câu Cá giật cần,
+    Lão Hỗn Nguyên lò xoáy sáng; Trại có bụi cát bay (game không có Núi Lửa / Hoang Mạc; Hang / Núi đã có tàn lửa / tuyết).
+
+## Cân bằng đánh người
+
+Anh duyệt (2026-10-23) sau khi đo 2 nhân vật cấp 50, chuyển sinh 10, đồ +11 full Excellent, cánh 3, Long Vương: đòn thường 45–78%
+máu (có thú), một kỹ năng 75–167% máu, chí mạng 58–73% ×2,1–2,5, né 56–60% → một chiêu là chết, ai đánh trước thắng.
+- `RULES.pvp` (khi đối thủ là người: bản sao `HacLong.Arena.opponent/2` có `pvp`): mọi sát thương lên người × `dmg_mult` 0,3 (đòn
+  thường, kỹ năng, thú cắn — trước đây thú cắn còn bỏ qua giảm sát thương của cánh / Excellent bên kia —, độc); tỉ lệ chí mạng ×
+  `crit_rate_mult` 0,5, phần cộng thêm của hệ số chí mạng × `crit_bonus_mult` 0,5; né × `dodge_mult` 0,6. **Thu nhỏ theo tỉ lệ,
+  không chặn trần** (anh lo chặn trần thiệt người đồ VIP). Áp cả hai chiều (người đánh bản sao và bản sao đánh người).
+- Choáng: bản sao vừa thoát choáng thì kháng `stun_immune` 2 lượt (`Engine.stun_monster/2`).
+- Đồ sát hết giờ: server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (`Engine.auto_strike/1`), không có thì đánh thường.
+  Sửa luôn: trận `live` (đồ sát) trước đây không trừ hồi chiêu sau đòn đánh / kỹ năng (chỉ trừ khi uống bình).
+- PK cược (`PkFight`, đang tắt mời, thay bằng đồ sát): dùng đúng bộ máy trận (`Engine.act`, chế độ `live`), mỗi bên dùng kỹ năng
+  thật (`auto_strike`), **ra đòn cùng lúc** mỗi lượt; cả hai cùng gục thì bên bị đánh lố ít hơn thắng.
+- Kết quả giả lập (PK cược, 200 trận mỗi cặp, nhân vật tối đa): cùng lớp ~50/50 (hết lợi thế đánh trước), 7–10 lượt. Lớp chênh
+  nhau rõ: Kiếm Sĩ thắng Đấu Sĩ 197/200, Tiên Nữ thắng Phù Thủy 144/200 → cân bằng lớp là việc riêng, chưa làm.
+- **Đấu trường: đối thủ chạy như người** (anh duyệt): `Engine.mirror/2` dựng nhân vật bị thách đấu trong trận `live` với bản
+  sao người thách đấu, giữ ở `battle.mirror` (chỉ trong bộ nhớ: không lưu database — `Characters.save!` bỏ đi —, không gửi client —
+  `present/1` bỏ đi). Lượt đối thủ (`mirror_turn`): kỹ năng mạnh nhất (`auto_strike`), thú cưng, buff, hồi máu, gây choáng mình
+  (kháng 2 lượt sau khi thoát). Cho công bằng như ra đòn cùng lúc: choáng gây trong lượt có hiệu lực từ lượt sau; buff thủ / thú
+  che chắn / phản sát thương (Excellent) của đối thủ áp lên đòn của mình; đối thủ bị hạ vẫn được Long Vương Hồi Sinh và kịp ra đòn
+  cuối, cả hai cùng gục thì bên bị đánh lố ít hơn thắng. Mất `mirror` (server khởi động lại giữa trận) thì đối thủ dùng kỹ năng
+  của bản sao (`copy_skill`, theo `Arena.opponent.skills`). Giả lập 200 trận, hai nhân vật giống nhau: người thách đấu thắng
+  ~55–60% (trước đây 100%).
+- **Cân bằng lớp** (anh duyệt): `RULES.pvp.class_taken` nhân thêm vào sát thương lên người theo lớp người bị đánh: Kiếm Sĩ 1,16,
+  Tiên Nữ 1,08 (nay 0,98, xem B-41 / B-42), Phù Thủy 0,9, Đấu Sĩ 0,66 (nay 0,75) (chỉnh bằng giả lập PK cược 300 trận mỗi cặp, nhân vật tối đa): mọi cặp khác lớp
+  44–56% (trước: Kiếm Sĩ thắng Đấu Sĩ 197/200).
+- Sửa kèm: trận lưu khóa `tidal_at` / `pet_revived` (Long Vương) trước đây không nạp lại được sau khi server khởi động lại.
+
+
+## Không vẽ thú cưng trên bản đồ (2026-10-23, anh yêu cầu)
+
+Thú cưng đi cạnh nhân vật làm rối bản đồ: `map.js` không vẽ thú trên bản đồ nữa (bỏ `drawPet` / `petTile`). Thú vẫn đánh cùng
+trong trận, vẫn hiện trong hồ sơ và hình xem trước Nhà. Không đổi luật chơi.
+
+## Phản sát thương khi đánh người (2026-10-23, anh duyệt)
+
+Anh báo đối thủ đấu trường còn 1 máu không chết: Excellent "phản sát thương" (B-16) cố ý chừa 1 máu. Đổi: **đánh người**
+(đối thủ có `pvp`: đấu trường, bản sao) phản đòn hạ được đối thủ, cả hai chiều (đối thủ phản lại mình cũng hạ được mình).
+Đánh quái giữ như cũ (quái không chết vì phản đòn). Đối thủ đấu trường gục vì phản đòn / độc vẫn được Long Vương Hồi Sinh
+(`mirror_revive`), mình gục vì phản đòn cũng vậy. Đồ sát / PK cược không có phản đòn (mỗi bên tính đòn riêng) nên không đổi.
+
+## Thông thạo kỹ năng (2026-10-24, anh duyệt)
+
+Anh muốn kỹ năng có cấp và rèn qua đánh. Anh duyệt đề xuất và chốt: **thông số kỹ năng hiện có là của cấp 10** (không tăng
+sức mạnh tối đa, cân bằng đánh người vừa chỉnh giữ nguyên ở cấp tối đa); **nhân vật có trước tính năng: mọi kỹ năng đang có lên
+cấp 10** (không ai yếu đi), kỹ năng mở sau đó và nhân vật mới luyện từ cấp 1.
+- `HacLong.Game.Mastery`, số ở `RULES.skill_mastery` (DESIGN). Cột mới `characters.skill_mastery` (map `id → %{lv, xp}`; NULL =
+  nhân vật cũ, nạp lên cấp 10, `Mastery.legacy/1`).
+- Cấp L: hệ số sát thương × (0,75 + 0,25 × (L − 1) / 9); dưới cấp 4 MP ×1,15; dưới cấp 7 hồi chiêu +1 lượt; dưới cấp 10 tác dụng
+  phụ ×0,8 (hồi máu, hút máu, tỉ lệ khống chế / choáng của Trảm Choáng, sức buff / debuff / độc). Áp cả bản sao đấu trường (theo
+  cấp của người đó).
+- Luyện: mỗi lần dùng kỹ năng với quái +2 điểm, tự đánh +1, trùm / quái tinh anh / trùm thế giới ×3, quái thấp hơn mình quá 10 cấp
+  không tính, đánh người không tính (tránh hai người đánh nhau để luyện). Tổng điểm lên cấp 2…10: 20 / 60 / 120 / 200 / 320 / 480 /
+  700 / 1000 / 1400.
+- Đột phá lên cấp 5 (1 Bí Kíp hoặc 5 Ngọc Tâm Linh) và cấp 10 (3 Bí Kíp hoặc 15 Ngọc Tâm Linh) ở Menu → Kỹ năng (lệnh
+  `skill_break`). Bí Kíp (vật phẩm mới `bi_kip`, hình pixel sách da) rơi: trùm vùng 30 %, quái tinh anh 10 %, trùm thế giới 100 %.
+- Giao diện: số cấp trên nút kỹ năng trong trận, Menu → Kỹ năng có cấp / sức % / thanh điểm / nút đột phá; lên cấp kỹ năng có chữ
+  vàng + vòng sáng trên nhân vật. Quản trị `set_mastery` đặt cấp mọi kỹ năng đang có.
+- Không chạy lại giả lập đánh người: ở cấp 10 mọi số y như trước nên kết quả cân bằng cũ giữ nguyên; chênh lệch chỉ khi hai bên khác
+  cấp thông thạo (người luyện nhiều mạnh hơn, đúng ý tính năng).
+
+## Bot ép đồ, chuyển sinh (2026-10-24, anh duyệt)
+
+Trước đây bot không ép đồ (ngọc nhặt được nằm yên, đồ luôn +0) và lên cấp tối đa thì đứng luyện mãi. Anh duyệt đề xuất:
+- `HacLong.Bots.Brain.forge_job/2` (`RULES.bots.forge`, DESIGN): lúc rảnh (sau mua bình / nghỉ) mà vàng dư quá
+  `gold_keep_per_level` × cấp (400 × cấp, để mua bình) thì về Làng rèn, gửi đúng lệnh như người chơi:
+  - ép món đang mặc cấp thấp nhất trước ở Thợ Rèn; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` (2) viên
+    mỗi loại ngọc cần; +10 / +11 ở Máy Hỗn Nguyên chỉ bot "liều" (seed chia hết cho `daring_every` = 10, khoảng 10 % bot);
+  - Ngọc Sinh Mệnh thêm dòng cho vũ khí, áo giáp (tới 4 dòng);
+  - cánh: chưa có thì ép một món trong túi (vũ khí / giáp / khiên) tới +5 rồi ghép cánh cấp 1; cánh đang mặc đủ cấp ép và đủ
+    nguyên liệu công thức kế tiếp thì tháo ra rồi ghép lên cấp (bước ghép làm trước cả bước mặc đồ để không mặc lại).
+- Bot ép / ghép thành công, nhặt đồ Thần: **không báo cả server** (Session biết tài khoản bot, `HacLong.Bots.bot?/1`).
+- Chuyển sinh như người thật: cấp tối đa, chưa chuyển sinh tối đa, đã hạ chúa tể nếu cần → về Trưởng Làng chuyển sinh. Cần hạ
+  chúa tể vùng chuyển sinh N thì đi vùng đó (`realm_target/1`): đánh mọi quái (quái vùng chuyển sinh cao hơn cấp tối đa),
+  hạ đủ `realm_kills` (30) quái ở bản đồ trước mới sang bản đồ sau, chúa tể ở bản đồ cuối, gặp chúa tể thì đánh trước.
+- Bot mạnh lên theo thời gian (ảnh hưởng xếp hạng): chấp nhận, để người chơi có đối thủ ngang tầm. Bảng xếp hạng vẫn loại bot
+  như trước (`role != "bot"`).
+
+## Nguồn Bí Kíp (2026-10-24, anh duyệt)
+
+Kiểm tra cân bằng bằng `mix hac_long.journey` (4 lớp, chuyển sinh 3 lần, seed 1–2, có thêm bước đột phá kỹ năng): Bí Kíp chỉ
+1–4 cuốn sau 3 lần chuyển sinh, kỹ năng kẹt ở cấp 4 / 9 (cần khoảng 20 cuốn cho 5 kỹ năng đang mang), Kiếm Sĩ đầu game chết
+nhiều hơn mốc cũ (2 → 11 trận). Anh duyệt tăng nguồn (`RULES.skill_mastery.drop`):
+- lần đầu hạ mỗi trùm vùng / chúa tể vùng chuyển sinh: chắc chắn `first_boss` (1) cuốn;
+- Tháp Vô Tận: mỗi `tower_every` (10) tầng vượt lần đầu 1 cuốn (`Tower.climb/1`, cùng mốc ngọc mỗi 10 tầng);
+- quái tinh anh 10 % → 15 %; trùm hạ lại 30 %, trùm thế giới 100 % giữ nguyên.
+Chạy lại cùng seed: 20–30 cuốn sau 3 lần chuyển sinh, kỹ năng đang mang lên cấp 9–10; Kiếm Sĩ chặng đầu chết 11 → 5, các chặng
+sau còn nhẹ hơn mốc cũ (mất 10–15 % máu / trận so với 20–29 %). Không đổi sức kỹ năng cấp 1 (anh chưa duyệt mục 2).
+
+## Vũ khí 1 tay / 2 tay (B-41, 2026-10-24, anh duyệt hướng 2)
+
+Anh: theo MU, vũ khí 2 tay không cầm khiên; "làm sao sát MU nhất mà vẫn cân bằng".
+- `hands` của vũ khí lấy từ Item.txt (cung / nỏ, món rộng 2 ô = 2 tay; `ItemBuild.hands/1`). Item.txt không có cột 2 tay riêng.
+- MU không có hệ số "2 tay ×…": lợi thế nằm sẵn trong sát thương từng món (2 tay cùng cấp mạnh hơn 1 tay khoảng ×1,06–1,73,
+  trung bình ×1,37; gậy so sức mạnh phép chỉ khoảng ×1,07). Game chia bậc nên trước đây mọi món cùng bậc chép công của món chính,
+  mất chênh lệch này. Nay: công bậc = công **1 tay**; món 2 tay nhân tỉ lệ của chính nó so với 1 tay cùng cấp Item.txt
+  (`ITEM_PICK.stats.two_hand`), giữ đúng thứ tự mạnh yếu của MU.
+- Cân bằng: đo bằng điểm sức mạnh của bot (`Journey.score`, sát thương × máu hiệu dụng), 2 tay cần khoảng ×1,6 ở bậc giữa / cao
+  mới bằng 1 tay + khiên → thêm `scale` 1,15 chung (2 tay ≈ hòa vốn, món MU vốn mạnh như Daybreak, Beuroba vẫn mạnh hơn),
+  sàn ×1,0 (2 tay không yếu hơn 1 tay cùng bậc).
+- Mặc 2 tay: khiên về túi; cầm 2 tay thì không mặc khiên; nhân vật cũ cầm 2 tay + khiên: khiên về túi lúc nạp
+  (`Engine.two_hand_fix/1`). Tiên Nữ cầm cung / nỏ không có khiên (đúng MU).
+- Phù Thủy: món chính bậc 3 / 4 / 8 đổi sang gậy 1 tay cùng cấp (gậy 2 tay MU gần như không mạnh hơn nên không đáng mất khiên).
+- Bot: đổi sang 2 tay khi hơn cả vũ khí + khiên đang cầm.
+- Kiểm tra (`mix hac_long.journey`, 4 lớp, chuyển sinh 3, seed 1–5, trung bình, bản cũ / bản mới): số trận Kiếm Sĩ 3190 / 3231,
+  Phù Thủy 3157 / 3165, Tiên Nữ 3120 / 3120, Đấu Sĩ 3150 / 3125; số lần chết dao động theo seed (Kiếm Sĩ 18 / 19, Phù Thủy 7 / 6,
+  Tiên Nữ 8 / 6, Đấu Sĩ 2 / 4) → chơi từ đầu không lệch.
+- Đánh người (PK cược 300 trận mỗi cặp, nhân vật tối đa như `ADMIN_GUIDE` §6): Tiên Nữ tối đa vốn không cầm khiên, nay Cung Air Lyn
+  công 145 → 248 nên thắng 72–76 % mọi lớp. Chỉnh `RULES.pvp.class_taken.elf` 1,08 → **1,3** (như cách chỉnh cân bằng lớp trước):
+  mọi cặp có Tiên Nữ 48–52 %. Các cặp khác giữ như cũ (Kiếm Sĩ / Đấu Sĩ 41 %, trước 35 %).
+- Chưa làm: cầm 2 vũ khí 1 tay (Kiếm Sĩ, Đấu Sĩ) — chờ công thức (`OPEN_QUESTIONS` B41-A).
+
+## Cầm 2 vũ khí 1 tay (B-42, 2026-10-24, anh duyệt)
+
+Anh: Kiếm Sĩ, Phù Thủy, Đấu Sĩ cầm được 2 vũ khí 1 tay (vd 2 Gậy Tổng Lãnh Thiên Thần cho Phù Thủy / Đấu Sĩ); Tiên Nữ không
+(cung / nỏ 2 tay). Anh chọn bắt đầu bằng **cộng thẳng 2 vũ khí** (k = 1), đo xong mới quyết có hạ hay không.
+- `RULES.dual_wield` (DESIGN): `classes` dk / dw / mg, `mult` k = 1,0, `left_exc` (dòng Excellent của vũ khí tay trái được tính:
+  hồi máu / MP khi hạ quái; các dòng % như tăng sát thương, chí mạng, trúng, công theo cấp chỉ lấy của tay phải).
+- Vũ khí tay trái nằm ở ô `shield` (không đổi database): lệnh `equip` thêm `hand: "left"` (tùy chọn). Công thêm = k × (công + ép +
+  dòng cộng thêm của vũ khí tay trái), cộng trước các phần trăm; không có phòng thủ khiên. May mắn / Kỹ năng chỉ của tay phải.
+- Điều kiện: lớp trong `classes`, vũ khí 1 tay, tay phải đang cầm vũ khí 1 tay. Mặc vũ khí 2 tay: vũ khí tay trái về túi (như khiên).
+- Bot (`Brain`), mô phỏng hành trình (`Journey.gear_up` thử cả tay trái), giao diện (nút "Cầm tay trái" trong bảng chi tiết, kéo vũ
+  khí vào ô khiên, ô ghi "Tay trái"). Hình nhân vật chưa vẽ vũ khí tay trái.
+- Đo với k = 1:
+  - Chơi từ đầu (`mix hac_long.journey`, 4 lớp, chuyển sinh 3, seed 1–5): bot Phù Thủy cầm 2 gậy ở 4/5 seed, Kiếm Sĩ / Đấu Sĩ vẫn
+    chọn Kiếm Bình Minh 2 tay; số trận / số lần chết như trước (Phù Thủy 3157 trận, chết 4,6; trước 3165 / 5,8).
+  - Nhân vật tối đa (PK cược 300 trận, đồ +11 full Excellent): 2 vũ khí thắng bản 1 tay + khiên cùng lớp 75–79 % (k = 0,65:
+    64–69 %; k = 0,5: 57–59 %); 2 vũ khí thắng Tiên Nữ 78–84 % (k = 0,5: 58–66 %). Khiên cuối game yếu vì các dòng Excellent
+    phòng thủ của khiên trùng với bộ giáp (giảm sát thương, phản đòn có trần).
+- Anh chọn **giữ k = 1** (2026-10-24) và cân bằng lại lớp khi đánh người: nhân vật tối đa nay là Kiếm Sĩ / Phù Thủy / Đấu Sĩ cầm 2
+  vũ khí (`ADMIN_GUIDE` §6), Tiên Nữ cung. Chỉnh `RULES.pvp.class_taken` bằng PK cược 300 trận mỗi cặp: Tiên Nữ 1,3 → **0,98**,
+  Đấu Sĩ 0,66 → **0,75** (Kiếm Sĩ 1,16, Phù Thủy 0,9 giữ nguyên) → mọi cặp khác lớp 47–54 % (trước khi chỉnh: Đấu Sĩ thắng 64–82 %,
+  Tiên Nữ thua 16–22 %). Người cầm khiên cuối game chịu thiệt khi đánh người (đúng lựa chọn k = 1).
+- Anh chọn (2026-10-24): **gậy chỉ cặp với gậy** (`dual_wield.staff_pair_only`, `Engine.dual_pair?/2`); kiếm / rìu / chùy / giáo 1 tay
+  cặp tự do (kiếm + rìu được). Đổi tay phải sang loại không hợp (gậy ↔ kiếm…) thì vũ khí tay trái về túi; nạp nhân vật cũ cầm cặp
+  không hợp thì tay trái về túi.
+
+## Bỏ sách phép Summoner (B-43, 2026-10-24, anh chọn A)
+
+Sách Sahamutt / Neil / Bóng Ma (Item.txt 5/21–5/23) là sách phép tay trái của lớp Summoner (sát thương 0), trước đây bị nhập như
+vũ khí và làm món phụ của Phù Thủy bậc 5–7 (chép công món chính, cầm 2 vũ khí thì vào tay trái). Game không có Summoner nên bỏ:
+- xóa khỏi `ITEM_PICK.weapons_alt.dw` (không rơi, không trong Thư viện / Kho Đồ);
+- `ITEM_PICK.removed`: sách → gậy 1 tay của Phù Thủy (Sahamutt, Neil → Gậy Huyền Thoại bậc 6; Bóng Ma → Gậy Hồi Sinh bậc 7). Nạp nhân
+  vật thì đổi (giữ ép +N, dòng, Excellent), `Data.item/1` của sách (thư, chợ cũ) trả món thay.
+
+## Thông báo ép đồ từ +10 (2026-10-24, anh yêu cầu)
+
+`UPGRADE.announce_from` 7 → **10**: chỉ ép thành công +10, +11 (Máy Hỗn Nguyên) mới báo cả server; +7 → +9 chỉ người ép thấy.
+
+## Sửa kẹt "Đang ở trong Tháp" (2026-10-24, anh báo lỗi)
+
+Anh bấm vào Kalima ở Làng nhưng báo "Đang ở trong Tháp". Nguyên nhân: Chọn map (`World.travel`) không chặn khi đang ở bản đồ riêng
+`tower` (Tháp / Quảng Trường Quỷ / Lâu Đài Máu / Kalima) → nhân vật ra bản đồ khác nhưng `p.tower` vẫn còn, các lối vào sự kiện coi
+như đang trong tháp. Sửa:
+- Chọn map khi đang trong tháp / sự kiện: chặn, "ra bằng cổng trước" (để kết thúc lượt, nhận thưởng như cũ).
+- `World.drop_stale_tower/1`: đổi vị trí sang bản đồ khác (`warp`, Chọn map) hoặc nạp nhân vật mà không đứng ở `tower` thì bỏ
+  `p.tower`; vào Kalima / Lâu Đài Máu / Quảng Trường Quỷ chỉ chặn khi thật sự đang đứng trong tháp → nhân vật đang kẹt vào lại được ngay.
+
+## Cất vàng trong Tủ Đồ (2026-10-24, anh yêu cầu)
+
+Tủ Đồ ở Nhà nhận thêm vàng (`storage.gold`, lưu chung cột `storage`, không đổi database): lệnh `gold_store` / `gold_take` (`n` vàng),
+đứng cạnh Tủ Đồ như cất đồ. Vàng trong tủ không tính là vàng mang theo: không mất khi chết (`death_gold_loss`) hay thua đồ sát, không
+tiêu / giao dịch được cho tới khi rút ra (giống kho Zen MU). Không phí, không giới hạn (`RULES.storage.gold_max` để trống; đặt số thì
+có trần). Nhật ký vàng (`gold_log`) ghi phần vàng mang theo giảm / tăng như mọi lệnh khác nên đối soát vẫn khớp.
+
+## Kiểm tra mọi chỉ số có tác dụng (2026-10-24, anh hỏi)
+
+Đo bằng thí nghiệm (cùng nhân vật, cùng quái, bật / tắt từng chỉ số) và test `test/hac_long/game/stat_effect_test.exs`:
+cánh (% sát thương, % hấp thụ, ép +N, dòng bỏ qua phòng thủ / máu / MP, dòng cộng thêm), Excellent (chí mạng, % công, giảm sát thương,
+tỉ lệ phòng thủ, % máu), chí mạng, né, trúng, phòng thủ đều có tác dụng khi đánh quái và đánh người.
+Sửa một chỗ thiếu: đánh **bản sao người** (đồ sát, PK cược; đấu trường khi mất `mirror`) trước đây bỏ sót Excellent "phản sát thương"
+của bên bị đánh. Nay bản sao mang `reflect` (`Arena.opponent/2`), người đánh bị phản lại; phản đòn ở đây không hạ gục (còn ít nhất
+1 máu) vì trận do Slay / PkFight chốt theo máu hai bên. Đấu trường (`mirror`) giữ như cũ (phản đòn hạ được).
+
+## Nhật ký đồ sát chi tiết cho bên bị đánh (2026-10-24, anh yêu cầu)
+
+Trước: bên bị đánh chỉ thấy tóm tắt theo máu ("X gây N sát thương cho bạn", đòn cuối chỉ "X hạ gục bạn").
+Nay `Session` chạy lượt của người đánh với nhật ký trống, gửi đúng các dòng của lượt đó (kỹ năng, chí mạng, nhiều đòn,
+khắc hệ, trượt, thú cưng cắn, hút máu…) cho `Slay.acted/5`; `Slay.mirror/3` đổi góc nhìn ("Bạn" → tên người đánh,
+tên người bị đánh → "bạn", "gây N sát thương" thêm "cho bạn", dòng không nhắc tên người đánh thì thêm "Tên: " ở đầu)
+rồi ghi sang nhật ký đối thủ, mỗi dòng một dòng. Đòn kết liễu cũng ghi các dòng đó trước "X hạ gục bạn.".
+Không có dòng nào thì vẫn tóm tắt theo máu như trước. Chỉ là chữ hiển thị, không đổi luật.
+
+Mở rộng (anh yêu cầu "làm cho tất cả"): hàm đổi góc nhìn chuyển sang `HacLong.Game.BattleText` (`mirror/4`, `view/4`), dùng chung:
+- **Đồ sát** (cả Hỗn Chiến Thành / Công Thành dùng Slay): như trên.
+- **PK cược** (`PkFight`): nhật ký trận (cả hai bên cùng xem) ghi ngôi thứ ba từ đúng dòng của Engine
+  ("✨ Chém Xoáy: A gây N sát thương cho B (CHÍ MẠNG!)", "A nổi cuồng nộ…", "A: 💫 B bị choáng!"), thay câu tóm tắt cũ.
+- **Đấu trường / thách đấu** (bản sao chạy `battle.mirror`): lượt của đối thủ máy hiện đúng các dòng của nó (góc nhìn
+  người thách đấu: "✨ Tam Tiễn: Chu gây N sát thương cho bạn"); máu mình bị giảm thêm nhờ thủ thế / khiên / thú che chắn thì
+  có dòng "Bạn chỉ mất N máu (…)".
+Bỏ dòng "hồi 0 máu" (Khiên Thánh lúc đầy máu) khỏi nhật ký đổi góc nhìn.
+
+## Đồ sát: hiệu ứng chéo (2026-10-24, anh duyệt DS-1)
+
+Lỗi cũ: đồ sát và PK cược để mỗi bên đánh bản sao chỉ số tĩnh của bên kia, nên hiệu ứng chỉ nằm ở trận người gây ra:
+choáng / suy yếu / độc lên đối thủ không có tác dụng; thủ thế, khiên, bất tử, ảnh bộ, Vảy Rồng, Long Vương Hồi Sinh của
+người bị đánh không đỡ được đòn. Sửa cho chạy đúng như dữ liệu đã ghi (hàm thuần `Engine.pvp_*`):
+- `Slay` giữ trạng thái trận mỗi bên (`fx`: hiệu ứng trên mình, lượt, kháng choáng, Long Vương đã cứu) và nhân vật lúc vào
+  trận; `Session.slay_turn` lấy lại trạng thái đó đầu lượt (đối thủ có thể đã đặt choáng / độc, làm vỡ khiên…).
+- Đầu lượt: độc / bỏng / chảy máu trên mình trừ máu (`pvp_turn_start`); bị choáng thì mất lượt — Session tự bỏ lượt ngay
+  khi nhận tin (không chờ hết giờ), nhật ký không ghi "hết giờ".
+- Bản sao đối thủ né thêm theo buff ảnh bộ của họ (trần như né người), kháng choáng nếu họ vừa thoát choáng (`pvp_aim`).
+- Sát thương lượt này (máu bản sao đệm thêm trong lượt để biết cả phần lố) đi qua thủ thế, thú che chắn, khiên, rồi bất tử /
+  Long Vương của người bị đánh (`pvp_defend`); hiệu ứng mình đặt lên bản sao chuyển sang họ (`pvp_take_debuffs` /
+  `pvp_receive`, phá giáp giữ lại vì tính trong đòn của mình). Nhật ký hai bên có dòng khiên đỡ / bất tử / "chỉ mất N máu".
+- PK cược (đánh cùng lúc) dùng chung các hàm trên; bỏ cờ choáng riêng của `PkFight`.
+- `RULES.pvp.stun_mult = 0.5`: mọi tỉ lệ choáng lên người (kỹ năng lớp, kỹ năng tháp, Thủy Long Ba) × 0.5 (anh duyệt);
+  đánh quái giữ nguyên. Áp cả đấu trường.
+- Đấu trường (bản sao chạy `battle.mirror`) giữ như trước (đã có thủ thế / khiên / thú của người chơi), chỉ thêm `stun_mult`.
+
+Mô phỏng 4 lớp tối đa (`scripts/pvp/run.exs`, `scripts/pvp/pk.exs`) sau khi sửa: Kiếm Sĩ thắng 78% đồ sát / 83% PK cược
+vì **Bất Tử dùng lại được mỗi lần hết hồi chiêu** (cứu nhiều lần một trận, cộng Long Vương). Chờ anh duyệt cân bằng (DS-3).
+Bản mô phỏng trước (062849a) gửi sai khóa kỹ năng (luôn dùng kỹ năng đầu) nên số 46–54% lúc đó không đúng.
+
+## Đánh người: mỗi trận cứu một lần (2026-10-24, anh duyệt DS-3)
+
+Khi đối thủ là người (đồ sát, PK cược, Đấu trường, Hỗn Chiến / Công Thành dùng Slay), Bất Tử và Long Vương Hồi Sinh
+dùng chung **một lần cứu mỗi trận** (`battle.pet_revived`): cái nào kích hoạt trước thì cái kia không cứu nữa, dùng lại
+Bất Tử (hết hồi chiêu) cũng không cứu thêm (`Engine.survive/2`). Đánh quái giữ như cũ. Lý do: Bất Tử dùng lại được nên
+Kiếm Sĩ được cứu nhiều lần mỗi trận (thắng 78% đồ sát / 83% PK cược).
+
+Mô phỏng sau khi áp (4 lớp tối đa, `scripts/pvp/`): PK cược 47 / 46 / 62 / 45% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ);
+đồ sát không uống bình 41 / 60 / 43 / 55%. Chưa đổi `class_taken.dw` (đề xuất 0.95 lúc trước): PK cược Phù Thủy đã 46%,
+và đồ sát có uống bình máu cho số khác hẳn (DS-4) nên chờ chốt DS-4 rồi chỉnh một lần.
+
+## Đánh người: sát thương ×0.2 (2026-10-24, anh duyệt DS-4a)
+
+`RULES.pvp.dmg_mult` 0.3 → 0.2: ở cấp tối đa một đòn còn ~35–55% máu (trước 55–84%), cần 3–4 đòn mới hạ. Luật bình máu khi
+đánh người (DS-4b) chờ anh chọn; số mô phỏng các phương án ở `OPEN_QUESTIONS.md` DS-4.
+
+## Đánh người: bình máu + chỉnh hệ số lớp (2026-10-24, anh duyệt DS-4b)
+
+Khi đánh người (đồ sát, Đấu trường; PK cược tự đánh nên không uống): bình máu hồi × `RULES.pvp.potion_mult` (0.5), mỗi
+`potion_cd` (3) lượt của mình uống được một lần — uống ở lượt T thì lượt T + 3 mới uống lại; chưa tới thì báo "bình máu
+dùng lại sau N lượt", không mất lượt (`Engine.act_potion`, `battle.pot_at`). Bình mana và đánh quái giữ nguyên.
+Lý do: một đòn ~35–55% máu, bình lớn hồi 70% mỗi lượt thì bên bị đánh đau hơn cứ uống mãi; thử 4 phương án
+(OPEN_QUESTIONS DS-4 cũ), hồi ×0.5 + hồi chiêu gần cân bằng nhất, trận 9–15 lượt.
+
+`class_taken`: Kiếm Sĩ 1.16 → 1.1, Tiên Nữ 0.98 → 1.06 (Phù Thủy 0.9, Đấu Sĩ 0.75 giữ). Mô phỏng 4 lớp tối đa
+(`scripts/pvp/`, đồ sát `POT=1` uống bình dưới 50% máu / mana khi hết MP): đồ sát 47 / 46 / 52 / 55%, PK cược
+54 / 45 / 52 / 49% (Kiếm Sĩ / Phù Thủy / Tiên Nữ / Đấu Sĩ).
+
+## Đồ sát: đòn mở màn (2026-10-25, anh duyệt DS-2 phương án A)
+
+Lượt đầu của người tấn công gây sát thương × `RULES.slay.first_strike_mult` (0.5): đối thủ kịp phòng bị. Tính ở
+`Session.slay_hit` (Slay báo `first` khi chưa ai ra đòn), trước phần đỡ đòn của người bị đánh; nhật ký hai bên có dòng
+"⚔ Đòn mở màn". Chỉ đồ sát (cả Hỗn Chiến Thành / Công Thành dùng Slay); PK cược đánh cùng lúc, Đấu trường giữ luật riêng.
+Thử 4 phương án (`scripts/pvp/run.exs`, `FIRST_MULT`, `DEF_SHIELD`): người đi trước thắng 69% → 48–50%.
+
+`class_taken` chỉnh lại theo cả hai chế độ: Kiếm Sĩ 1.1 → 1.08, Phù Thủy 0.9 → 0.86 (Tiên Nữ 1.06, Đấu Sĩ 0.75).
+Mô phỏng 4 lớp tối đa: đồ sát (uống bình) 43 / 54 / 53 / 50%, PK cược 54 / 45 / 50 / 51% (Kiếm Sĩ / Phù Thủy / Tiên Nữ /
+Đấu Sĩ); người đi trước thắng 49%. Kiếm Sĩ đồ sát hơi thấp: hai chế độ kéo ngược nhau (PK cược tự đánh không uống bình,
+Kiếm Sĩ mạnh; đồ sát dài và có bình, Kiếm Sĩ ít MP) nên một hệ số không cân được cả hai.
+
+## Đánh người: tối đa 3 bình máu mỗi trận (2026-10-25, anh duyệt DS-5)
+
+`RULES.pvp.potion_max` = 3: khi đánh người mỗi trận uống tối đa 3 bình máu (thêm vào hồi ×0.5, 3 lượt / lần;
+`battle.pots_used`, báo "mỗi trận chỉ uống được 3 bình máu", không mất lượt). Lý do: nhân vật chưa max (hành trình thật
+0–5 lần chuyển sinh) sát thương nhỏ hơn lượng bình hồi → 42–100% trận đồ sát hòa 200 lượt; có giới hạn thì hết hòa ở
+mọi mốc, ở mốc max mỗi người vốn uống 2–3 bình nên gần như không đổi.
+
+## MP kỹ năng theo lớp: cả kỹ năng lớp (2026-10-25, anh duyệt DS-6 bước 1)
+
+`RULES.tower_skills.mp_mult` (Kiếm Sĩ ×0.5, Tiên Nữ ×0.6) trước chỉ nhân MP kỹ năng tháp; nay nhân **mọi kỹ năng**
+(lớp + tháp) — `Engine.skill_mp/2`, client `logic.js skillMp`. Lý do (DS-6, `scripts/pvp/why.exs`): hai lớp ít Năng lượng
+(Kiếm Sĩ 80 MP mọi mốc trong hành trình, Tiên Nữ ~115) chỉ dùng được kỹ năng 22–37% lượt, Phù Thủy / Đấu Sĩ 75–100%;
+MP vô hạn thì sát thương / lượt Kiếm Sĩ +25–80%, Tiên Nữ ~+40%.
+
+Đánh quái (hành trình 3 lần chuyển sinh, 3 seed, cùng seed trước / sau): Kiếm Sĩ đi hết hành trình ít hơn 12–20% lượt
+(~9 000 → ~7 600; trước chậm nhất, nay ngang Đấu Sĩ 6 200–7 500), chết 3 / 7 / 13 → 1 / 2 / 4; Tiên Nữ −1–7% lượt;
+Phù Thủy / Đấu Sĩ không đổi.
+
+Ghi chú: `Journey.run/2` không tự đặt seed (mix task đặt `:rand.seed`); script đo trước đây gọi thẳng `run(…, seed: s)`
+nên không lặp lại được — đã sửa `scripts/pvp/journey_pk.exs`.
+
+## MP mỗi cấp Kiếm Sĩ / Tiên Nữ 1 → 3 (2026-10-25, anh duyệt DS-6 bước 2a)
+
+`CLASSES.dk.derived.mp.level` và `CLASSES.elf.derived.mp.level` 1 → 3 (Phù Thủy / Đấu Sĩ 2). Lý do: MP Kiếm Sĩ =
+20 + 1×cấp + 1×Năng lượng (80 ở cấp 50 khi không cộng Năng lượng), hồi MP = 3% MP tối đa → ~3–4 MP / lượt trong khi kỹ
+năng tốn 8–25 (đã ×0.5); sau bước 1 Kiếm Sĩ vẫn chỉ dùng kỹ năng 27–37% lượt. Cấp 50 không cộng Năng lượng: Kiếm Sĩ
+80 → 180 MP, Tiên Nữ ~112 → ~212.
+Đánh quái (hành trình 3 lần chuyển sinh, 3 seed, cùng seed trước / sau 2a): Kiếm Sĩ ~7 600 → ~6 750 lượt (−8–16%),
+Tiên Nữ ~5 950 → ~5 280 (−8–13%), Phù Thủy / Đấu Sĩ không đổi; 4 lớp nay 4 900–7 500 lượt (trước bước 1 Kiếm Sĩ ~9 000).
+Đánh người: tỉ lệ dùng kỹ năng với đồ giống nhau 62–93% mọi lớp (trước Kiếm Sĩ 22–28%).
+
+`scripts/pvp/build.exs` `Max.tier/2`: nhân vật đồ giống hệt nhau theo mốc chuyển sinh (cùng hồ sơ cho mọi lớp) để đo
+đánh người tách khỏi may rủi đồ của hành trình (`SRC=tier` cho `journey_pk.exs`, `why.exs`).
+
+## Đánh người: hồi máu từ kỹ năng / thú × heal_mult (2026-10-25, anh duyệt DS-6 (c))
+
+`RULES.pvp.heal_mult` = 0.5: khi đánh người (Đồ sát, Đấu trường) máu hồi từ kỹ năng (Hồi Sinh Lực, Tăng Sức
+Mạnh, Phúc Lành… — `skill.heal` và hiệu ứng `holy`) và kỹ năng thú (hồi máu, Long Lân Hộ Thể) × 0.5 (`Engine.pvp_heal/2`).
+Đánh quái giữ nguyên; bình máu đã có luật riêng (`potion_mult`); hút máu và khiên không đổi. Lý do (DS-6,
+`scripts/pvp/why.exs`, đồ giống nhau theo mốc): Tiên Nữ hồi 208–278 máu / lượt ở 3–5 lần chuyển sinh ≈ 70–80% sát thương
+nhận, đánh không chết. Hiện trong ⓘ "Đánh quái và đánh người khác nhau thế nào?" và Kho Đồ.
+
+`Engine.pvp_taken/1` đọc bảng lớp từ `:persistent_term` `{Engine, :class_taken}` nếu có (chỉ `scripts/pvp/tune.exs` đặt
+để thử bảng khác không cần biên dịch lại); server không đặt nên luôn dùng `RULES.pvp.class_taken`.
+
+## Bỏ PK cược vàng (2026-10-25, theo yêu cầu anh)
+
+PK cược vàng bỏ hẳn khỏi game: Đồ sát là đủ. Từ P18 (2026-10-10) mời cược đã tắt, nay xóa luôn phần còn lại:
+`HacLong.PkBet` (lời mời, nhận lời mời cũ, hủy khi rớt mạng), `HacLong.Game.PkFight` (trận tự đánh), sự kiện kênh `pk`,
+`pk_invite`, `pk_result`, hộp thoại lời mời / kết quả cược ở client, bot từ chối cược, `RULES.pk`, `pk_bet_test`,
+`scripts/pvp/pk.exs`; chữ "PK cược" trong ⓘ (chí mạng, né, đánh người) và cột PK cược ở Kho Đồ.
+
+- Giữ bảng `pk_matches`: Đồ sát ghi lịch sử trận vào đó (cả dòng cược cũ). Lịch sử lấy bằng sự kiện kênh mới
+  `slay_history` → `HacLong.Slay.history/2` (thay `pk` op `info`); hồ sơ "PK cược thắng / thua" đổi thành "Đồ sát thắng / thua"
+  (cùng số đếm từ `pk_matches`). Không cần migration, không mất dữ liệu.
+- Cân bằng lớp (DS-6) từ nay chỉ đo đồ sát: `scripts/pvp/tune.exs`, `journey_pk.exs` bỏ phần PK cược.
+
+## Đánh người: hệ số lớp theo mốc chuyển sinh (2026-10-25, anh duyệt DS-6 phương án A)
+
+`RULES.pvp.class_taken` (một bộ cho mọi mốc) thay bằng `RULES.pvp.class_taken_by_rebirth`: 11 dòng (0–10 lần chuyển
+sinh) × 4 lớp. Sát thương lên người = đòn × `dmg_mult` × hệ số của **lớp và số lần chuyển sinh của người bị đánh**
+(`Engine.pvp_taken/2`; bản sao người `Arena.opponent` mang `rebirths`; quá 10 lần dùng dòng 10). Áp cho Đồ sát
+(cả Hỗn Chiến Thành / Công Thành Chiến) và Đấu trường. Lý do: một bộ chung tốt nhất vẫn lệch TB 35% (lớp mạnh đổi theo
+mốc), bảng theo mốc lệch 2–10% (đo đồ giống nhau theo mốc, `Max.tier/2`).
+
+Bảng ban đầu (dk / dw / elf / mg): r0 0.98/0.85/0.97/0.91 · r1 1.00/0.85/1.00/0.87 · r2 0.95/0.83/1.07/0.87 ·
+r3 0.96/0.84/1.12/0.81 · r4 1.14/0.78/1.13/0.74 · r5 1.16/0.78/1.12/0.74 · r6 1.12/0.71/0.95/0.98 ·
+r7 1.10/0.71/0.97/0.97 · r8 1.12/0.73/1.01/0.90 · r9 1.33/0.67/1.03/0.81 · r10 1.24/0.84/0.91/0.78.
+
+Công cụ chạy lại khi đổi gameplay (`scripts/pvp/README.md`): `scripts/pvp/tune.exs` kiểm tra (mặc định) / tự chỉnh và gợi
+ý (`TUNE=1`) / ghi rules.json (`WRITE=1`); test `mix test --only balance` (ngưỡng 15%, không chạy cùng `mix test`).
+Trận khác mốc: người mốc cao gần như luôn thắng (chênh 1 mốc ≥ 99% ở r0–r7, r8 vs r7 83%, r10 vs r9 96%); hệ số lớp
+không bù được khoảng cách mốc và không nhằm làm việc đó.
+
+### Hồ sơ đồ theo mốc lấy từ hành trình chơi thật (2026-10-25, anh duyệt)
+
+Trước: `Max.tier/2` cho mọi mốc mặc **bậc đồ cao nhất** của lớp (chỉ khác +N / dòng / cánh theo công thức) — không giống
+người chơi mốc thấp. Nay: `scripts/pvp/profile.exs` chạy `Journey` 4 lớp × 3 seed × 10 lần chuyển sinh (`Journey`
+thêm tùy chọn `players: true` giữ nhân vật ở mỗi mốc), tính chung 4 lớp ở mỗi mốc (cấp đồ trung vị vũ khí / giáp /
+trang sức, +N, dòng, Excellent, cánh, tháp, thông thạo, thú; không giảm theo mốc) → `scripts/pvp/tier_profile.json`
+(sửa tay được). `Max.tier/2` mặc món tốt nhất của lớp có cấp đồ ≤ hồ sơ. Hồ sơ hiện tại: vũ khí cấp 47 từ r0 (thưởng
+trùm), giáp cấp 1 → 12 (r2) → 17 (r7), trang sức 29, ép +0 → +1, Excellent 0 → 1 dòng (r4), cánh bậc 1 +1 từ r3, tháp
+17 → 57, thông thạo 7 → 10, không thú.
+
+Bảng `class_taken_by_rebirth` chỉnh lại trên hồ sơ này (dk / dw / elf / mg): r0 1.02/0.83/0.97/0.89 ·
+r1 1.17/0.76/1.02/0.81 · r2 1.18/0.77/1.03/0.79 · r3 1.09/0.72/0.90/1.04 · r4 1.13/0.71/0.91/1.02 ·
+r5 1.12/0.73/0.90/1.02 · r6 1.10/0.74/0.97/0.93 · r7 1.08/0.75/0.98/0.92 · r8 1.10/0.77/0.97/0.90 ·
+r9 1.12/0.73/1.01/0.90 · r10 1.12/0.75/1.00/0.88. Kiểm (seed khác, 48 trận mỗi chiều): mọi mốc lệch 3–9%.
+Nhân vật tối đa (+11 full Excellent, cánh 3, thú; `run.exs`) với dòng r10: Kiếm Sĩ 43%, Phù Thủy 71%, Tiên Nữ 55%,
+Đấu Sĩ 31% — chờ anh chọn cách cân mốc cuối (OPEN_QUESTIONS DS-7).
+
+### Mốc 10 chỉnh trên nhân vật tối đa (2026-10-25, anh duyệt DS-7 phương án A)
+
+Mốc 10 là mốc cuối: người chơi ở lâu, lên dần tới đồ tối đa. `tier_profile.json` mốc 10 có `"max": true` →
+`Max.tier/2` dùng nhân vật tối đa (`Max.build/2`: +11 full Excellent, cánh 3, Long Vương); `profile.exs` tự đặt cờ này
+(`MAX_LAST=0` để tắt). Dòng r10 chỉnh lại: Kiếm Sĩ 1.07, Phù Thủy 0.86, Tiên Nữ 1.04, Đấu Sĩ 0.78 (trước 1.12 / 0.75 /
+1.00 / 0.88). Kiểm: r10 lệch 4%; `run.exs` (nhân vật tối đa, 60 trận mỗi cặp) 47 / 58 / 47 / 48%. r0–r9 không đổi.
+
+## Sửa: nhân vật lưu giữa trận không vào được game (2026-10-26)
+
+Lỗi: `Characters.atomize/1` (nạp `battle` từ database) chỉ nhận khóa trong danh sách `@battle_keys`, gặp khóa khác thì
+crash (`badkey`) → Session không mở được, người chơi không vào game. Gặp ở nhân vật lưu khi đang đánh người: bản sao đối
+thủ có `look.aura` (hào quang, đợt FX), `rebirths` (hệ số lớp theo mốc), trận có `pots_used` / `pot_at` (bình máu đánh
+người) — các khóa này chưa được thêm vào danh sách. Sửa: thêm các khóa đó, và khóa ngoài danh sách dùng atom nếu đã có
+sẵn (`String.to_existing_atom`), không thì giữ chuỗi — không tạo atom mới từ dữ liệu, không crash với khóa thêm về sau.
+Test `side_save_test` "nhân vật lưu giữa trận đánh người … nạp lại được".
+
+## Đấu trường công bằng cho người thách đấu và đối thủ máy (2026-10-26, anh yêu cầu "làm 1")
+
+Đo trước khi sửa (`PVP=arena`, đồ giống nhau theo mốc): người thách đấu thắng 100 / 97 / 99 / 68% ở r0 / r3 / r6 / r10.
+Nguyên nhân: đối thủ máy (`battle.mirror`, chạy chế độ `live`) (1) không uống bình máu; (2) không nhận độc / suy yếu
+của người thách đấu; (3) khiên của nó không đỡ đòn; (4) buff vừa bật bị trừ lượt ngay trong lượt bật (chế độ `live`
+đếm lượt liền) nên khiên / thủ thế của máy ngắn hơn người một lượt — nguyên nhân chính ở Kiếm Sĩ: sát thương thô hai
+bên ngang nhau nhưng khiên người thách đấu đỡ 63.8k so với 43.5k của máy. Sửa trong `Engine.mirror_strike/…` và
+`mirror_guard`: máy uống bình dưới 50% máu (cùng luật bình đánh người), nhận debuff, khiên đỡ đòn, buff mới +1 lượt.
+Thêm đòn mở màn `RULES.arena.first_strike_mult` = 0.5 (như đồ sát). Sau sửa: 44 / 58 / 54 / 69%.
+
+Bảng hệ số lớp riêng cho Đấu trường `RULES.pvp.class_taken_arena_by_rebirth` (đối thủ có `arena: true`; đồ sát dùng
+`class_taken_by_rebirth`), tự chỉnh như đồ sát: `PVP=arena TUNE=1 WRITE=1 mix run --no-start scripts/pvp/tune.exs`;
+test `mix test --only balance` kiểm cả hai chế độ.
+
+## Tỉ lệ ô đồ rơi (2026-10-26, anh yêu cầu "làm 3")
+
+`RULES.loot.gear_slots`: vũ khí 38 → 25%, giáp (bộ) 43 → 55%, khiên 13 → 7%, trang sức 6 → 13%. Lý do (audit
+`docs/BALANCE_AUDIT_2026-10-26.md`): giáp lên rất chậm (cấp 1 → 12 → 17 qua 10 lần chuyển sinh) trong khi vũ khí đã cấp
+47 từ r0; trang sức gần như không rơi.
+
+## Đấu trường / chiến bang: nói rõ kết quả (2026-10-26, anh duyệt)
+
+Người chơi thua trận Đấu trường mà đối thủ cũng 0 máu tưởng là lỗi, và không biết vì sao chiến bang không lên điểm.
+Không đổi luật, chỉ thêm thông báo:
+- Cả hai cùng gục (đối thủ máy ra đòn cuối cùng lúc): nhật ký ghi "⚖ Cả hai cùng gục: bạn bị đánh lố X% máu, <đối thủ>
+  lố Y% → … thắng" (bên bị đánh lố ít hơn, so với máu tối đa, thắng — luật cũ).
+- Đấu với thành viên bang địch mà không được điểm: dòng kết quả thêm lý do ("chỉ thắng mới được điểm" / "đã thắng
+  người này N lần"). `GuildWars.record/2` trả `{:error, :limit}` khi quá `same_target_max`; thêm `war_between/2`.
+- Danh sách Đấu trường (gợi ý, tìm theo tên) hiện [ký hiệu bang], bang địch đang chiến tô đỏ như trên bản đồ.
+Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (lệnh `pvp_challenge` qua kênh).
+- Nhật ký trận đánh người: dòng khiên / phản sát thương / đòn mở màn ghi **sau** dòng "Bạn gây N sát thương" (trước đây
+  ghi trước nên đọc như bị phản đòn khi chưa đánh); phản đòn ghi rõ "… phản lại N sát thương cho bạn". Đấu trường không
+  hồi máu trước trận: dòng đầu "❤ Bạn vào trận với X / Y máu" (người chơi vào trận còn ít máu, một lần phản đòn đã gục).
+
+## Kho Đồ lên GitHub Pages (2026-10-26, anh duyệt cách 1)
+
+Workflow `.github/workflows/kho-do-pages.yml` dựng `scripts/kho_do/build.sh` trên `main` (khi đổi dữ liệu game / lib /
+hình Pixel / scripts/kho_do) và đăng GitHub Pages. Trang là phần thân của artifact nên bước đăng thêm doctype, charset
+UTF-8, viewport; đổi tên thành `index.html`, bỏ `data.json`. Chỉ có hình Pixel CC0, không asset MU (CLAUDE.md §7).

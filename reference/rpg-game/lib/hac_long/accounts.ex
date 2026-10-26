@@ -4,7 +4,7 @@ defmodule HacLong.Accounts do
   import Ecto.Query
 
   alias HacLong.Repo
-  alias HacLong.Accounts.{User, UserToken}
+  alias HacLong.Accounts.{Password, User, UserToken}
 
   # token đăng nhập có hạn 30 ngày
   @token_max_age 30 * 24 * 3600
@@ -19,7 +19,7 @@ defmodule HacLong.Accounts do
     user = Repo.get_by(User, username: username |> String.trim() |> String.downcase())
 
     cond do
-      user && Pbkdf2.verify_pass(password, user.password_hash) ->
+      user && Password.verify(password, user.password_hash) ->
         if banned?(user), do: {:error, {:banned, user}}, else: {:ok, user}
 
       user ->
@@ -27,7 +27,7 @@ defmodule HacLong.Accounts do
 
       true ->
         # chạy hash giả để thời gian phản hồi không lộ tên đăng nhập có tồn tại hay không
-        Pbkdf2.no_user_verify()
+        Password.no_user_verify()
         {:error, :invalid}
     end
   end

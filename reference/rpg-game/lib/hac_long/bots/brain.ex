@@ -16,6 +16,9 @@ defmodule HacLong.Bots.Brain do
   8. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
   9. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
   10. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
+  11. Cấp tối đa, đủ điều kiện → về Làng chuyển sinh (Trưởng Làng); cần hạ chúa tể vùng chuyển sinh trước thì đi vùng đó.
+  12. Rảnh mà dư vàng, có ngọc → về Làng ép đồ / thêm dòng / ghép, nâng cánh (`forge_job/2`, DECISIONS "Bot ép đồ,
+      chuyển sinh"). Đang chờ ghép cánh (cánh đã tháo ra túi) thì làm trước cả bước mặc đồ.
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
@@ -66,8 +69,12 @@ defmodule HacLong.Bots.Brain do
       p.points > 0 ->
         %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
 
+      # cánh đã tháo ra túi để ghép lên cấp: ghép trước (không thì bước mặc đồ lại mặc vào)
+      job = wing_combine(p, spare_gold(p)) ->
+        do_job(p, job, snap)
+
       g = better_gear(p) ->
-        %{"act" => "equip", "id" => g}
+        g
 
       p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
@@ -78,8 +85,166 @@ defmodule HacLong.Bots.Brain do
       p.hp < d.maxHp * 0.45 ->
         heal(p, d, snap)
 
+      rebirth_ready?(p) ->
+        at_village_npc(p, "quests", snap, fn -> %{"act" => "rebirth"} end)
+
+      job = forge_job(p, opts) ->
+        do_job(p, job, snap)
+
       true ->
         roam(p, snap, opts[:seed] || 0)
+    end
+  end
+
+  # ---------- Ép đồ, cánh, chuyển sinh ----------
+  @forge Data.rules().bots.forge
+  @life Data.rules().upgrade.life
+  @max_level Data.rules().character.max_level
+  @max_rebirths Data.rules().character.max_rebirths
+
+  # vàng được tiêu cho rèn (giữ lại `gold_keep_per_level` × cấp để mua bình)
+  defp spare_gold(p), do: p.gold - @forge.gold_keep_per_level * p.level
+
+  # `{vai NPC ở Làng hoặc nil, lệnh}`: đi tới NPC rồi gửi lệnh (nil: gửi ngay)
+  defp do_job(_p, {nil, cmd}, _snap), do: cmd
+  defp do_job(p, {role, cmd}, snap), do: at_village_npc(p, role, snap, fn -> cmd end)
+
+  @doc "Cấp tối đa, đủ điều kiện chuyển sinh (đã hạ chúa tể nếu cần, chưa chuyển sinh tối đa)."
+  def rebirth_ready?(p) do
+    p.level >= @max_level and (Map.get(p, :rebirths) || 0) < @max_rebirths and
+      Engine.rebirth_need(p) == nil
+  end
+
+  @doc """
+  Việc rèn bot làm được bây giờ: `{vai NPC, lệnh}` hoặc nil. Thứ tự: ép món đang mặc cấp thấp nhất (bước có thể hỏng chỉ
+  khi dư ngọc; +10 / +11 chỉ bot liều), thêm dòng Ngọc Sinh Mệnh, ghép / nâng cánh.
+  """
+  def forge_job(p, opts \\ %{}) do
+    spare = spare_gold(p)
+
+    if spare > 0,
+      do: upgrade_job(p, spare, opts) || life_job(p) || wing_job(p, spare)
+  end
+
+  defp has?(p, items, extra \\ 0),
+    do: Enum.all?(items, fn {m, n} -> Map.get(p.inv, to_string(m), 0) >= n + extra end)
+
+  defp upgrade_job(p, spare, opts) do
+    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0
+
+    p.equip
+    |> Enum.flat_map(fn {slot, id} ->
+      it = id && Gear.item(p, id)
+      lv = if id, do: Engine.upgrade_level(p, id), else: 0
+      cost = it && Engine.upgrade_cost(it, lv)
+
+      ok =
+        cost && cost.gold <= spare &&
+          has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
+          (cost.at == "smith" or daring)
+
+      if ok, do: [{lv, slot, cost.at}], else: []
+    end)
+    |> Enum.sort()
+    |> case do
+      [] ->
+        nil
+
+      [{_, slot, "smith"} | _] ->
+        {"shop", %{"act" => "upgrade", "slot" => to_string(slot), "confirm" => true}}
+
+      [{_, slot, _} | _] ->
+        {"chaos", %{"act" => "chaos_upgrade", "slot" => to_string(slot), "confirm" => true}}
+    end
+  end
+
+  defp life_job(p) do
+    if Map.get(p.inv, @life.jewel, 0) >= 1 do
+      Enum.find_value(@forge.life_slots, fn slot ->
+        id = p.equip[String.to_existing_atom(slot)]
+        g = id && Gear.instance?(id) && Gear.find(p, id)
+        lines = (g && g[:opt]) || 0
+
+        if id && lines < @life.max_lines,
+          do: {"shop", %{"act" => "life", "slot" => slot}}
+      end)
+    end
+  end
+
+  defp wing_recipe(tier), do: Data.chaos("wing#{tier}")
+
+  defp wing_tier(p, id), do: (id && (Gear.item(p, id) || %{})[:tier]) || 0
+
+  # cánh trong túi (vừa tháo ra) đủ điều kiện công thức kế tiếp: ghép ngay ở Máy Hỗn Nguyên
+  defp wing_combine(p, spare) do
+    Enum.find_value(Gear.bag(p), fn g ->
+      it = Gear.resolve(g)
+      r = it.slot == "wing" && wing_recipe((it[:tier] || 0) + 1)
+
+      if r && r.gold <= spare && has?(p, r.items) && it[:tier] == r.gear[:tier] &&
+           Engine.upgrade_level(p, g.uid) >= r.gear.min_up && !g[:locked] do
+        {"chaos", %{"act" => "chaos", "id" => r.id, "gear" => g.uid}}
+      end
+    end)
+  end
+
+  defp wing_job(p, spare) do
+    worn = p.equip[:wing]
+    r = wing_recipe(wing_tier(p, worn) + 1)
+
+    cond do
+      r == nil or r.gold > spare or not has?(p, r.items) ->
+        nil
+
+      # đang mặc cánh đủ cấp ép: tháo ra để ghép lên cấp (bước kế tiếp: `wing_combine/2`)
+      worn && Engine.upgrade_level(p, worn) >= r.gear.min_up ->
+        {nil, %{"act" => "unequip", "slot" => "wing"}}
+
+      worn ->
+        nil
+
+      # chưa có cánh: một món trong túi (vũ khí / giáp / khiên) ép tới +min_up rồi bỏ vào máy
+      true ->
+        bag =
+          for g <- Gear.bag(p),
+              !g[:locked],
+              Gear.resolve(g).slot in r.gear.slots,
+              do: {Engine.upgrade_level(p, g.uid), g.uid}
+
+        case Enum.sort(bag, :desc) do
+          [{up, uid} | _] when up >= r.gear.min_up ->
+            {"chaos", %{"act" => "chaos", "id" => r.id, "gear" => uid}}
+
+          [{up, uid} | _] ->
+            cost = Engine.upgrade_cost(Gear.item(p, uid), up)
+
+            if cost && cost.at == "smith" && cost.gold <= spare && has?(p, cost.items),
+              do: {"shop", %{"act" => "upgrade", "id" => uid, "confirm" => true}}
+
+          [] ->
+            nil
+        end
+    end
+  end
+
+  # cấp tối đa, cần hạ chúa tể vùng chuyển sinh: bản đồ của vùng đó, đi lần lượt (hạ đủ `realm_kills` quái ở bản đồ
+  # trước mới sang bản đồ sau; chúa tể ở bản đồ cuối)
+  @doc false
+  def realm_target(p) do
+    with true <- p.level >= @max_level,
+         %{realm: r} <- Engine.rebirth_need(p) do
+      maps =
+        Maps.ids()
+        |> Enum.map(&Maps.get/1)
+        |> Enum.filter(&(&1.realm == r and World.realm_open?(p, &1)))
+        |> Enum.sort_by(& &1.id)
+
+      Enum.find_value(maps, fn m ->
+        kills = m.spawns |> Enum.map(&HacLong.Game.Bestiary.count(p, &1.monster)) |> Enum.sum()
+        if kills < @forge.realm_kills, do: m.id
+      end) || (List.last(maps) && List.last(maps).id)
+    else
+      _ -> nil
     end
   end
 
@@ -155,8 +320,14 @@ defmodule HacLong.Bots.Brain do
 
   # ---------- Đồ đạc, hồi máu ----------
 
-  # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ)
+  # món trong túi đồ hiếm mạnh hơn món đang mặc cùng loại (vũ khí theo tấn công, giáp / khiên theo phòng thủ;
+  # vũ khí 2 tay so với vũ khí + khiên đang cầm; lớp cầm 2 vũ khí: vũ khí 1 tay ở tay trái so với khiên / vũ khí
+  # tay trái đang cầm). Trả lệnh `equip` hoặc nil.
   defp better_gear(p) do
+    weapon = Gear.item(p, p.equip.weapon)
+    left = Gear.item(p, p.equip.shield)
+    k = Engine.dual_rules().mult
+
     p
     |> Gear.bag()
     |> Enum.map(&Gear.resolve/1)
@@ -164,9 +335,41 @@ defmodule HacLong.Bots.Brain do
     |> Enum.find_value(fn it ->
       slot = Engine.equip_slot(p, it)
       cur = Gear.item(p, p.equip[slot])
-      if power(it) > power(cur), do: it.uid
+
+      left_power =
+        if left && left.slot == "weapon", do: power(left) * k, else: power(left)
+
+      cond do
+        # vũ khí 2 tay không cầm khiên (B-41)
+        slot == :shield and Engine.two_handed?(weapon) ->
+          nil
+
+        # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn tay trái đang cầm
+        slot == :weapon and Engine.two_handed?(it) ->
+          if power(it) > power(cur) + left_power, do: equip(it)
+
+        slot == :weapon and power(it) > power(cur) ->
+          equip(it)
+
+        # cầm 2 vũ khí (B-42): vũ khí 1 tay vào tay trái nếu hơn khiên / vũ khí tay trái
+        slot == :weapon and Engine.dual_class?(p.cls) and weapon && not Engine.two_handed?(weapon) and
+          Engine.dual_pair?(weapon, it) and power(it) * k > left_power ->
+          equip(it, "left")
+
+        slot != :weapon and power(it) > power(cur) and
+            not (slot == :shield and left && left.slot == "weapon") ->
+          equip(it)
+
+        true ->
+          nil
+      end
     end)
   end
+
+  defp equip(it, hand \\ nil),
+    do:
+      %{"act" => "equip", "id" => it.uid}
+      |> then(&if(hand, do: Map.put(&1, "hand", hand), else: &1))
 
   @doc "Sức mạnh thô một món đồ (tấn công + phòng thủ + dòng cộng thêm), để so với món đang mặc."
   def power(nil), do: 0
@@ -293,7 +496,8 @@ defmodule HacLong.Bots.Brain do
 
   defp roam(p, snap, seed) do
     here = p.pos.map
-    target = boss_room(p) || target_map(p, seed)
+    realm = realm_target(p)
+    target = boss_room(p) || realm || target_map(p, seed)
 
     cond do
       here == "home" and target != "home" ->
@@ -302,9 +506,21 @@ defmodule HacLong.Bots.Brain do
       here != target ->
         go_to(p, target)
 
+      # vùng chuyển sinh: quái cấp cao hơn cấp tối đa, đánh mọi con (chúa tể trước)
+      realm ->
+        lord = Engine.rebirth_need(p).id
+        hunt_first(p, snap, lord) || hunt(p, snap, fn _m, _map -> true end)
+
       true ->
         hunt(p, snap)
     end
+  end
+
+  defp hunt_first(_p, nil, _kind), do: nil
+
+  defp hunt_first(p, snap, kind) do
+    t = Enum.filter(snap.monsters, &(&1.kind == kind and not &1.busy))
+    if t != [], do: walk(p, Maps.get(p.pos.map), Enum.map(t, &{&1.x, &1.y}), snap)
   end
 
   # tới bản đồ `target`: dịch chuyển nếu được và đủ vàng (giữ lại ít nhất gấp đôi giá), không thì đi bộ qua cổng

@@ -47,7 +47,9 @@ defmodule HacLong.Accounts.User do
   end
 
   defp hash_password(%{valid?: true, changes: %{password: pw}} = cs) do
-    cs |> put_change(:password_hash, Pbkdf2.hash_pwd_salt(pw)) |> delete_change(:password)
+    cs
+    |> put_change(:password_hash, HacLong.Accounts.Password.hash(pw))
+    |> delete_change(:password)
   end
 
   defp hash_password(cs), do: cs

@@ -293,16 +293,15 @@ defmodule HacLong.GuildWars do
 
   @doc """
   Người thách đấu `winner` vừa thắng `loser` ở đấu trường. Nếu bang hai người đang chiến nhau thì
-  +1 điểm cho bang người thắng (tối đa `same_target_max` lần một cặp). Trả `{:ok, điểm_mới}` hoặc nil.
+  +1 điểm cho bang người thắng (tối đa `same_target_max` lần một cặp). Trả `{:ok, điểm_mới}`, `{:error, :limit}`
+  (đã thắng người này đủ số lần) hoặc nil (hai người không thuộc hai bang đang chiến nhau).
   """
   def record(winner, loser) do
-    with %{id: gw} <- Guilds.member_of(winner),
-         %{id: gl} <- Guilds.member_of(loser),
-         %{} = w <- active(gw),
-         true <- (w.a_id == gl or w.b_id == gl) and gw != gl,
+    with %{} = w <- war_between(winner, loser),
+         gw = Guilds.member_of(winner).id,
          key = "#{winner}:#{loser}",
          n = Map.get(w.pairs, key, 0),
-         true <- n < @rules.same_target_max do
+         true <- n < @rules.same_target_max || {:error, :limit} do
       side = if w.a_id == gw, do: :a_points, else: :b_points
       scores = Map.update(w.scores, to_string(winner), 1, &(&1 + 1))
 
@@ -315,6 +314,20 @@ defmodule HacLong.GuildWars do
       refresh(w.a_id)
       refresh(w.b_id)
       {:ok, Map.get(w, side) + 1}
+    else
+      {:error, _} = e -> e
+      _ -> nil
+    end
+  end
+
+  @doc "Trận chiến đang diễn ra giữa bang của `a` và bang của `b` (nil nếu hai người không thuộc hai bang đang chiến nhau)."
+  def war_between(a, b) do
+    with %{id: ga} <- Guilds.member_of(a),
+         %{id: gb} <- Guilds.member_of(b),
+         true <- ga != gb,
+         %{} = w <- active(ga),
+         true <- w.a_id == gb or w.b_id == gb do
+      w
     else
       _ -> nil
     end

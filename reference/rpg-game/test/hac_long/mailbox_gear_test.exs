@@ -29,7 +29,8 @@ defmodule HacLong.MailboxGearTest do
     plain = Enum.find(bag, &(&1[:opt] == nil))
     assert p2.upgrades[plain.uid] == 3
     assert Enum.count(bag, &(&1[:opt] == 2)) == 2
-    assert msg =~ "(cộng thêm 8)"
+    # 2 dòng cộng thêm, mỗi dòng theo công của món (`Engine.line_value/1`)
+    assert msg =~ "(cộng thêm #{2 * HacLong.Game.Engine.line_value(Data.item(w))})"
   end
 
   test "túi đồ hiếm đầy: đồ rơi vào Hộp thư đủ dòng; hộp thư đầy thì bán" do

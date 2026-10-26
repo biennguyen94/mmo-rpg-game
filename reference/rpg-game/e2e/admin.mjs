@@ -80,6 +80,18 @@ await page.click(`${gg} button[type="submit"]`);
 await X.page.waitForFunction((n) => Object.keys(window.__hl.player().view.gear || {}).length > n, ng, { timeout: 5000 }).catch(() => null);
 const newG = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === 'item_0_3' && g.excellent);
 R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excellent', !!newG && newG.luck && newG.skill && newG.opt === 4 && newG.exc.length === 2 && newG.exc.includes('atk_lvl'), JSON.stringify(newG && { exc: newG.exc, opt: newG.opt }));
+// ô Thú cưng: tặng Long Vương cấp 20, người chơi dắt theo ngay (lệnh give_pet)
+{
+  const pf = 'form.adm-char[data-op="give_pet"]';
+  await page.selectOption(`${pf} select[name="id"]`, 'long_vuong');
+  await page.fill(`${pf} input[name="level"]`, '20');
+  await page.locator(pf).scrollIntoViewIfNeeded();
+  await shot(page, 'admin_pet.png');
+  await page.click(`${pf} button[type="submit"]`);
+  await X.page.waitForFunction(() => window.__hl.player().pet === 'long_vuong', null, { timeout: 5000 }).catch(() => null);
+  const xp = await player(X.page);
+  R.check('ô Quản trị tặng thú: Long Vương cấp 20, đang dắt theo', xp.pet === 'long_vuong' && (xp.pet_xp || {}).long_vuong === 1900, JSON.stringify({ pet: xp.pet, xp: xp.pet_xp }));
+}
 // Excellent / Kỹ năng / Đồ Thần chỉ hiện khi hợp món đang chọn (vũ khí, dây chuyền → Excellent vũ khí; giáp, khiên,
 // nhẫn → Excellent giáp; cánh → không có Excellent)
 {

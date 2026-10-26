@@ -21,7 +21,15 @@ python3 scripts/kho_do/build.py /tmp/kho/data.json priv/static/assets/pixel_icon
 ```
 
 - `export.exs`: xuất dữ liệu game ra JSON.
+- `event_monsters.exs`: bảng "Sức mạnh quái sự kiện theo chuyển sinh" (máu / công / thủ quái mạnh nhất mỗi sự kiện ở CS 0 / 3 / 6 / 10, đúng như game dựng, và số đòn thường để hạ / % máu mất của nhân vật cùng mốc theo `scripts/pvp/tier_profile.json`). Xem nhanh: `MIX_ENV=test mix run --no-start scripts/kho_do/event_monsters.exs print`.
 - `build.py` + `tpl.html`: dựng trang; ghi `kho_do.html` và `kho_do.html.files.json` (danh sách hình, đường dẫn tương đối
   với `priv/static/assets/`).
 
 Bản đã đăng: artifact "Kho Đồ Hắc Long". Đăng lại sau khi build: nhờ Claude cập nhật artifact đó từ `tmp/kho_do/kho_do.html`.
+
+## GitHub Pages
+
+Workflow `.github/workflows/kho-do-pages.yml` (gốc repo) tự dựng lại trang mỗi lần push lên `main` có đổi dữ liệu game,
+`lib/`, hình Pixel hoặc `scripts/kho_do/`, rồi đăng lên `https://<user>.github.io/<repo>/` (chạy tay: tab Actions →
+"Kho Đồ (GitHub Pages)" → Run workflow). Bật một lần: Settings → Pages → Source: **GitHub Actions**. Trang công khai;
+hình là bộ Pixel CC0 (`CREDITS.md`), không có asset MU.

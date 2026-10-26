@@ -16,6 +16,9 @@
 
 | # | Ngày | Câu hỏi | Trả lời |
 |---|---|---|---|
+| DS-7 | 2026-10-25 | Mốc 10 (cuối) cân theo người vừa đạt hay nhân vật tối đa? | Nhân vật tối đa: `tier_profile.json` mốc 10 `"max": true`; dòng r10 1.07 / 0.86 / 1.04 / 0.78 (DECISIONS "Mốc 10 chỉnh trên nhân vật tối đa") |
+| DS-6 | 2026-10-25 | Đánh người: cân bằng lớp theo mốc chuyển sinh? | Bảng `RULES.pvp.class_taken_by_rebirth` theo số lần chuyển sinh của người bị đánh (DECISIONS "Đánh người: hệ số lớp theo mốc chuyển sinh"); chạy lại `scripts/pvp/tune.exs` khi đổi gameplay |
+| B41-A | 2026-10-24 | Cầm 2 vũ khí 1 tay: lớp nào, sát thương tính thế nào? | Kiếm Sĩ, Phù Thủy, Đấu Sĩ; cộng thẳng 2 vũ khí (k = 1), đo rồi mới quyết (DECISIONS B-42) |
 | 9-A | 2026-10-04 | Dịch tin từ server tới đâu? | Giao diện + dữ liệu + tin hay gặp trước, tin hiếm làm dần |
 | 9-B | 2026-10-04 | 20 bản đồ mới đặt ở đâu? | Bản đồ phụ, cổng vào từ các bản đồ hiện có, cấp 1–50 rải đều, **không liên quan Hắc Long** |
 | 9-C | 2026-10-04 | Giá dịch chuyển? | 20 + 4 × cấp quái thấp nhất; Làng / Nhà miễn phí; đá dịch chuyển vẫn miễn phí |

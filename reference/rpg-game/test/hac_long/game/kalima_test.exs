@@ -27,6 +27,21 @@ defmodule HacLong.Game.KalimaTest do
     Tower.after_battle(%{p | battle: b}) |> Map.put(:battle, nil)
   end
 
+  test "trạng thái tháp kẹt (đã ở Làng mà còn p.tower): vẫn vào Kalima được; Chọn map bị chặn khi đang trong sự kiện" do
+    q = inside()
+    assert q.pos.map == "tower"
+    # đang trong Kalima: không dịch chuyển bằng Chọn map (phải ra bằng cổng)
+    {r, _} = HacLong.World.travel(q, 0, "village")
+    refute r.ok
+    assert r.msg =~ "ra bằng cổng"
+
+    # dữ liệu kẹt từ trước bản sửa: đứng ở Làng nhưng còn trạng thái Kalima
+    stuck = %{q | pos: %{map: "village", x: 21, y: 9}} |> Engine.add_item(@r.ticket)
+    assert HacLong.World.drop_stale_tower(stuck).tower == nil
+    {r, p2} = Kalima.enter(stuck)
+    assert r.ok and p2.pos.map == "tower" and p2.tower.kal
+  end
+
   test "Kalima 1–7 theo cấp nhân vật" do
     assert Kalima.tier(@r.min_level - 1) == nil
     assert Kalima.tier(@r.min_level).n == 1

@@ -56,7 +56,7 @@ defmodule HacLong.Game.Kalima do
       p.battle ->
         {%{ok: false, msg: "Đang trong trận đấu."}, p}
 
-      p[:tower] ->
+      p[:tower] && p.pos.map == "tower" ->
         {%{ok: false, msg: "Đang ở trong Tháp."}, p}
 
       p.hp <= 0 ->

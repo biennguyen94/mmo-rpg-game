@@ -17,6 +17,8 @@ defmodule HacLong.Game.ItemBuild do
     giáp bậc 9): bậc đó lớp ấy không có món chính.
   - Bộ giáp (mũ, giáp, quần, găng, giày cùng số thứ tự trong nhóm 7–11): tổng thủ của bộ =
     `stats.set_def[bậc] × stats.set_def_mult`, chia cho từng món theo tỉ lệ `Def` trong file (tối thiểu 1).
+  - Vũ khí có `hands` (1 / 2, theo `hands/1`); công bậc là công vũ khí 1 tay, vũ khí 2 tay nhân
+    `two_hand_mult/3` (lợi thế 2 tay sẵn có trong Item.txt, bù cho việc không cầm khiên).
   - Khiên: thủ = `stats.shield_def[bậc]`.
   - Yêu cầu chỉ số = số trong file × `req_mult` (làm tròn); vũ khí / bộ giáp bậc trong `no_req_tiers`
     (đồ khởi đầu) không đòi chỉ số.
@@ -87,8 +89,16 @@ defmodule HacLong.Game.ItemBuild do
         {atk, lo, hi} =
           weapon_atk(if(main, do: drafts[main["ref"]], else: d), main || e, pick, tier)
 
+        # công của bậc là công vũ khí 1 tay; vũ khí 2 tay nhân hệ số của chính nó theo Item.txt
+        m = two_hand_mult(d, drafts, pick)
+
         base(d, e, pick, "weapon", tier, classes)
-        |> Map.merge(%{"atk" => atk, "atkMin" => lo, "atkMax" => hi})
+        |> Map.merge(%{
+          "atk" => round(atk * m),
+          "atkMin" => max(round(lo * m), 1),
+          "atkMax" => max(round(hi * m), 1),
+          "hands" => hands(d)
+        })
         |> Map.merge(Map.take(e, ["doll"]))
         |> Map.put("price", at(pick, ["prices", "weapon"], tier))
         |> alt(main)
@@ -111,6 +121,54 @@ defmodule HacLong.Game.ItemBuild do
         {round((mn + mx) / 2), mn, mx}
     end
   end
+
+  @doc """
+  Số tay cầm của vũ khí theo Item.txt: cung / nỏ (nhóm 4) và món rộng 2 ô (`X = 2`) là 2 tay, còn lại 1 tay.
+  """
+  def hands(%{"ref" => ref} = d) do
+    if group(ref) == 4 or hd(d["cells"] || [1]) >= 2, do: 2, else: 1
+  end
+
+  @doc """
+  Hệ số công của vũ khí 2 tay (`stats.two_hand`, B-41): sát thương trung bình của món chia trung bình vũ khí cận chiến
+  1 tay (nhóm 0–3) cùng cấp Item.txt (± `window`, không có thì ± 2 × `window`); gậy (nhóm 5) so sức mạnh phép với gậy
+  1 tay; nhân `scale` (cân bằng chung). Làm tròn 2 số, kẹp trong `min` ~ `max`. Vũ khí 1 tay: 1.
+  """
+  def two_hand_mult(d, drafts, pick) do
+    cfg = get_in(pick, ["stats", "two_hand"]) || %{}
+
+    if hands(d) == 1 or cfg == %{} do
+      1.0
+    else
+      staff? = group(d["ref"]) == 5
+      key = if staff?, do: "magic", else: "atk"
+
+      pool =
+        for {ref, x} <- drafts,
+            if(staff?, do: group(ref) == 5, else: group(ref) in 0..3),
+            hands(x) == 1,
+            (x["atk"] || 0) > 0,
+            (x[key] || 0) > 0,
+            do: x
+
+      w = cfg["window"] || 12
+
+      ref =
+        Enum.find_value([w, 2 * w], fn win ->
+          near = for x <- pool, abs(x["itemLvl"] - d["itemLvl"]) <= win, do: x[key]
+          if near != [], do: Enum.sum(near) / length(near)
+        end)
+
+      m = if ref && (d[key] || 0) > 0, do: d[key] / ref, else: 1.0
+
+      # `scale`: hệ số cân bằng chung (giữ thứ tự mạnh yếu của Item.txt), để 2 tay ngang 1 tay + khiên
+      m = max(m * (cfg["scale"] || 1.0), cfg["min"] || 1.0)
+      m = if cfg["max"], do: min(m, cfg["max"]), else: m
+      Float.round(m * 1.0, 2)
+    end
+  end
+
+  defp group(ref), do: ref |> String.split("/") |> hd() |> String.to_integer()
 
   # công `atk` với khoảng thấp ~ cao theo tỉ lệ DmgMin ~ DmgMax của file (file không có sát thương: ±10 %)
   defp scaled(atk, mn, mx) when mn + mx <= 0, do: {atk, round(atk * 0.9), round(atk * 1.1)}

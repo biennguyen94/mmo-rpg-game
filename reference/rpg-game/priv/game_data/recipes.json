@@ -1,52 +1,46 @@
 {
   "RECIPES": [
     {
-      "id": "brew_s",
-      "out": "potion_s",
+      "id": "brew_bia",
+      "out": "bia_thao_duoc",
       "needs": {
-        "herb": 2
+        "herb": 3
       },
-      "npc": "herbalist"
+      "npc": "herbalist",
+      "level": 1,
+      "xp": 0
     },
     {
-      "id": "brew_m",
-      "out": "potion_m",
+      "id": "brew_ruou_thuoc",
+      "out": "ruou_thuoc",
       "needs": {
-        "herb": 5
+        "herb": 2,
+        "herb_rare": 1
       },
-      "npc": "herbalist"
+      "npc": "herbalist",
+      "level": 1,
+      "xp": 0
     },
     {
-      "id": "brew_l",
-      "out": "potion_l",
+      "id": "brew_linh_chi",
+      "out": "ruou_linh_chi",
       "needs": {
         "herb_rare": 2
       },
-      "npc": "herbalist"
+      "npc": "herbalist",
+      "level": 1,
+      "xp": 0
     },
     {
-      "id": "cook_small",
-      "out": "potion_s",
+      "id": "brew_long_huyet",
+      "out": "ruou_long_huyet",
       "needs": {
-        "fish_small": 2
+        "herb_rare": 3,
+        "fish_gold": 1
       },
-      "npc": "herbalist"
-    },
-    {
-      "id": "cook_carp",
-      "out": "potion_m",
-      "needs": {
-        "fish_carp": 2
-      },
-      "npc": "herbalist"
-    },
-    {
-      "id": "cook_eel",
-      "out": "potion_l",
-      "needs": {
-        "fish_eel": 2
-      },
-      "npc": "herbalist"
+      "npc": "herbalist",
+      "level": 3,
+      "xp": 0
     },
     {
       "id": "cook_cha_ca",
@@ -56,7 +50,8 @@
         "herb": 1
       },
       "npc": "cook",
-      "level": 1
+      "level": 1,
+      "xp": 1
     },
     {
       "id": "cook_banh_mi_ca",
@@ -66,7 +61,8 @@
         "herb": 2
       },
       "npc": "cook",
-      "level": 1
+      "level": 1,
+      "xp": 1
     },
     {
       "id": "cook_banh_xeo_luon",
@@ -76,7 +72,8 @@
         "herb_rare": 1
       },
       "npc": "cook",
-      "level": 3
+      "level": 3,
+      "xp": 2
     },
     {
       "id": "cook_mam_co",
@@ -86,7 +83,20 @@
         "herb_rare": 2
       },
       "npc": "cook",
-      "level": 5
+      "level": 5,
+      "xp": 5
+    },
+    {
+      "id": "brew_dragon_bait",
+      "out": "dragon_bait",
+      "n": 100,
+      "needs": {
+        "fish_gold": 1,
+        "herb_rare": 3
+      },
+      "npc": "herbalist",
+      "level": 3,
+      "xp": 0
     }
   ]
 }

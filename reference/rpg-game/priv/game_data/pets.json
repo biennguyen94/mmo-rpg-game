@@ -286,6 +286,39 @@
         "name": "Phấn Độc",
         "desc": "Khi cắn, quái trúng độc 3 lượt."
       }
+    },
+    {
+      "id": "long_vuong",
+      "name": "Long Vương",
+      "rare": true,
+      "price": 0,
+      "bonus": {
+        "atk": 0.1,
+        "def": 0.08,
+        "hp": 0.08,
+        "xp": 0.05,
+        "gold": 0.05
+      },
+      "desc": "Thú hiếm duy nhất, chỉ câu được ở Hồ Long Vương. Tấn công +10%, phòng thủ +8%, máu +8%, kinh nghiệm +5%, vàng +5%.",
+      "skill": {
+        "id": "tidal",
+        "name": "Thủy Long Ba",
+        "desc": "Cột nước mạnh gấp 2 lần cú cắn, quái mất 1 lượt (mỗi 3 lượt một lần)."
+      },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false,
+      "bite": 0.45,
+      "skill2": {
+        "id": "scales",
+        "name": "Long Lân Hộ Thể",
+        "desc": "Giảm 10% sát thương nhận; mỗi lần cắn hồi 5% máu."
+      },
+      "skill3": {
+        "id": "rebirth",
+        "name": "Long Vương Hồi Sinh",
+        "desc": "Mỗi trận một lần: gục ngã thì sống lại với 30% máu."
+      }
     }
   ]
 }

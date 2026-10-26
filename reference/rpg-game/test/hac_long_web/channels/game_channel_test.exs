@@ -857,6 +857,10 @@ defmodule HacLongWeb.GameChannelTest do
       r = cmd(sa, %{"act" => "pvp_challenge", "uid" => ub.id})
       assert r.ok and r.player.battle.monster.pvp == ub.id
 
+      # đối thủ chạy như người (battle.mirror) chỉ ở server: không gửi đồ đạc người khác xuống client
+      refute Map.has_key?(r.player.battle, :mirror)
+      assert HacLong.Game.Session.get(ua.id).battle[:mirror]
+
       r =
         Enum.reduce_while(1..50, r, fn _, _ ->
           r = cmd(sa, %{"act" => "attack"})

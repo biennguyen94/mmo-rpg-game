@@ -12,6 +12,8 @@ Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint_sprites.mjs` (vẫn CC0): `red_dragon.png` (từ
 `golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`). `nodes/ore_rare.png` (Quặng Mithril) cũng tô lại từ `nodes/ore.png` cùng script. `tiles/blessing.png` (Đài Phúc Lành) tô lại từ `tiles/waystone.png`. 40 hình quái vùng đất chuyển sinh `monsters/r1_…` → `r10_…` (Phase 6) tô lại từ các hình quái CC0 ở trên, danh sách ở `priv/game_data/realms.json` (`REALM_TINTS`).
 
+Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
+
 Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): hình trùm Hắc Long `monsters/shadow_dragon.png` (CC0, bộ trên) phóng to trên nền vẽ bằng `e2e/app_icons.mjs`.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
@@ -33,6 +35,11 @@ Hình cánh: đôi cánh Draconian của bộ tile Dungeon Crawl ở trên (`pla
 để ở `assets_src/pixel_extra/wings/`.
 Chọn và chép bằng `scripts/pixel_icons.py` (bảng tra `priv/static/assets/pixel_icons.json`); script tự bỏ mọi file có
 trong `TILES_UNDER_UNKNOWN_LICENSE.md`. Không dùng hình MU nào.
+
+## Hình đồ uống (`priv/static/assets/food/bia_thao_duoc.png`, `ruou_thuoc.png`, `ruou_linh_chi.png`, `ruou_long_huyet.png`)
+
+Chai thuốc của bộ tile Dungeon Crawl Stone Soup ở trên (CC0, `releases/Nov-2015/item/potion/`: `brown`, `murky`, `golden`,
+`puce`), không sửa.
 
 ## Icon (`priv/static/assets/icons/`)
 
@@ -97,3 +104,10 @@ Không dùng file âm thanh: mọi hiệu ứng được tổng hợp trong trì
 
 Hình nhân vật cầm cung, nỏ, gậy phép (`doll/hand1/bow.png`, `crossbow.png`, `staff.png`, Phase 15c): tự vẽ cho game này
 bằng `scripts/doll_weapons.py` (CC0). Hình đồ gốc MU (`mu_items/`) không nằm trong repo, xem `docs/ITEMS_PHASE15B.md`.
+
+## Hồ Long Vương, thú Long Vương (`tiles/`, `pets/long_vuong.png`, `npcs/fisher.png`, `items/dragon_bait.png`)
+
+Dựng bằng `scripts/long_vuong_assets.sh` từ bộ tile Dungeon Crawl Stone Soup ở trên (CC0, đã đối chiếu với danh sách chưa rõ
+giấy phép): Long Vương (`mon/dragons/quicksilver_dragon`, tô dải màu vàng kim), Ông Lão Câu Cá (`mon/unique/joseph`, vẽ thêm cần
+câu), nước sâu Vực Rồng (`dngn/water/deep_water`), cây đước (`dngn/trees/mangrove1`), tượng rồng vàng (`dngn/statues/statue_dragon`).
+Bến / cầu gỗ (`pier_v`, `pier_h`), thuyền (`boat`), sen (`lotus`), đèn lồng (`lantern`), hũ Mồi Rồng: tự vẽ cho game này (CC0).

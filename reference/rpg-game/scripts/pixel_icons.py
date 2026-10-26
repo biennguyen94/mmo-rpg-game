@@ -131,6 +131,7 @@ BY_ID = {
     "lost_map": "item/scroll/scroll-brown",
     "archangel_scroll": "item/scroll/scroll-yellow",
     "kundun_mark": "item/misc/misc_stone",
+    "bi_kip": "item/book/leather",
     "devil_eye": "item/amulet/eye_magenta",
     "devil_key": "item/misc/misc_box",
     "blood_bone": "item/amulet/bone_gray",

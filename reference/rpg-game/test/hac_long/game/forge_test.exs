@@ -90,7 +90,7 @@ defmodule HacLong.Game.ForgeTest do
       assert Engine.upgrade_cost("greatsword", 0).items == %{"jewel_bless" => 1}
     end
 
-    test "+6 → +7 bằng Ngọc Tâm Linh 50% (May mắn 75%): thành công có thông báo; thất bại về +0" do
+    test "+6 → +7 bằng Ngọc Tâm Linh 50% (May mắn 75%): thành công không báo cả server (từ +10); thất bại về +0" do
       p = player() |> armed("greatsword", 6) |> jewels()
 
       assert %{rate: 0.5, fail: "reset", items: %{"jewel_soul" => 1}} =
@@ -101,7 +101,7 @@ defmodule HacLong.Game.ForgeTest do
       Rng.put_sequence([0.1])
       {r, q} = Engine.upgrade(p, "weapon")
       assert r.upgrade == %{result: "success", level: 7}
-      assert r.announce =~ "Thử vừa ép thành công Đại Kiếm +7"
+      refute Map.has_key?(r, :announce)
 
       Rng.put_sequence([0.9])
       {r, q2} = Engine.upgrade(p, "weapon")
@@ -120,6 +120,8 @@ defmodule HacLong.Game.ForgeTest do
       Rng.put_sequence([0.1])
       {r, q} = Engine.upgrade(p, "weapon", false, "chaos")
       assert r.upgrade == %{result: "success", level: 10}
+      # từ +10 (`UPGRADE.announce_from`) báo cả server
+      assert r.announce =~ "Thử vừa ép thành công Đại Kiếm +10"
       assert {q.inv["jewel_chaos"], q.inv["jewel_bless"], q.inv["jewel_soul"]} == {4, 4, 4}
 
       # +10: 35 %; +11: 1 Hỗn Nguyên, 2 Ước Nguyện, 2 Tâm Linh, 25 %; thất bại về +0

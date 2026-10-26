@@ -21,6 +21,7 @@ defmodule HacLong.Game.Session do
   alias HacLong.Game.{
     Achievements,
     AutoHunt,
+    BattleText,
     Characters,
     Commands,
     Daily,
@@ -189,6 +190,8 @@ defmodule HacLong.Game.Session do
     s = %{
       user_id: user_id,
       player: with_guild(Characters.load(user_id), user_id),
+      # tài khoản bot: không báo cả server khi bot ép / ghép thành công, nhặt đồ Thần (tránh loãng dải thông báo)
+      bot: HacLong.Bots.bot?(user_id),
       tabs: %{},
       dirty: false,
       flush_timer: nil,
@@ -284,7 +287,8 @@ defmodule HacLong.Game.Session do
 
   def handle_cast({:slay_sync, info}, %{player: %{battle: %{over: false} = b} = p} = s) do
     if b[:encounter][:slay] == info.id do
-      log = Enum.take(b.log ++ [%{text: info.text, kind: "bad"}], -60)
+      lines = for t <- List.wrap(info.text), do: %{text: t, kind: "bad"}
+      log = Enum.take(b.log ++ lines, -60)
       enc = %{b.encounter | mine: true, until: info.until}
       b = %{b | log: log, encounter: enc, monster: %{b.monster | hp: info.foe_hp}}
       p = %{p | hp: info.hp, battle: b}
@@ -463,8 +467,16 @@ defmodule HacLong.Game.Session do
 
   defp handle({:slay_cancel, _id}, _from, s), do: reply(:ok, s)
 
-  defp handle(:slay_auto, _from, %{player: %{battle: %{over: false, live: true}}} = s),
-    do: run_command_(s, %{"act" => "attack", "auto" => true}, nil)
+  # hết giờ lượt đồ sát: server ra đòn thay, dùng kỹ năng mạnh nhất còn dùng được (DECISIONS "Cân bằng đánh người")
+  defp handle(:slay_auto, _from, %{player: %{battle: %{over: false, live: true}} = p} = s) do
+    cmd =
+      case HacLong.Game.Engine.auto_strike(p) do
+        {"skill", id} -> %{"act" => "skill", "skill" => id, "auto" => true}
+        _ -> %{"act" => "attack", "auto" => true}
+      end
+
+    run_command_(s, cmd, nil)
+  end
 
   defp handle(:slay_auto, _from, s), do: reply(:ok, s)
 
@@ -699,11 +711,44 @@ defmodule HacLong.Game.Session do
     track_guild(old, player, result)
     s = arm_auto(s)
 
+    # câu được thú hiếm (Long Vương): ghi Bia Long Vương, đánh số, báo cả server
+    {rare, result} = if is_map(result), do: Map.pop(result, :rare_pet), else: {nil, result}
+    result = if rare && player, do: rare_pet(s, player, rare, result), else: result
+
     # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
-    if announce, do: HacLong.Chat.system(announce)
+    if announce && !s[:bot], do: HacLong.Chat.system(announce)
+    if !s[:bot], do: Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
 
     reply({result, player}, s)
+  end
+
+  @doc """
+  Vừa thắng trận (`old` đang đánh, `player` đã xong) và nhặt được đồ Thần: các dòng báo cả server (docs/FX_PLAN.md đợt 4,
+  dải thông báo).
+  """
+  def anc_announce(
+        %{battle: %{over: false}},
+        %{battle: %{over: true, reward: %{gear_ids: ids}}} = p
+      ) do
+    for id <- ids,
+        g = HacLong.Game.Gear.find(p, id),
+        g[:anc],
+        do: "✨ #{p.name} vừa nhặt được #{HacLong.Game.Gear.label(g)}!"
+  end
+
+  def anc_announce(_old, _player), do: []
+
+  defp rare_pet(s, player, pet, result) do
+    name = HacLong.Game.Data.pet(pet).name
+    n = HacLong.RarePets.record!(s.user_id, player.name, pet)
+    HacLong.LakeEvent.dive()
+
+    Map.merge(result, %{
+      msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+      dragon: true,
+      announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
+    })
   end
 
   # Góp tiến độ nhiệm vụ bang (không chờ: ghi database ngoài tiến trình này).
@@ -760,13 +805,38 @@ defmodule HacLong.Game.Session do
   defp run(s, p, %{"act" => "pvp_challenge"} = cmd) do
     with nil <- p.battle && {:error, "Đang trong trận đấu."},
          true <- p.hp > 0 || {:error, "Bạn cần hồi máu trước."},
-         {:ok, m} <- Arena.challenge(s.user_id, cmd["uid"]) do
+         {:ok, m, foe} <- Arena.challenge(s.user_id, cmd["uid"]) do
       {r, p2} = Engine.start_with_monster(p, 1, m)
+
+      # đối thủ đánh như người thật (kỹ năng, thú cưng, buff), DECISIONS "Cân bằng đánh người"
+      p2 =
+        if p2.battle,
+          do: put_in(p2.battle[:mirror], Engine.mirror(foe, Arena.opponent(p, s.user_id))),
+          else: p2
+
       enc = %{pvp: m.pvp, hp: p.hp, gold: p.gold, deaths: p.deaths}
+
+      # Đấu trường không hồi máu trước trận: ghi máu lúc vào để người chơi biết vì sao gục sớm
+      start = %{
+        text: "❤ Bạn vào trận với #{p2.hp} / #{Engine.derived(p2).maxHp} máu.",
+        kind: "info"
+      }
+
+      p2 = if p2.battle, do: update_in(p2.battle.log, &(&1 ++ [start])), else: p2
       {Map.put(r, :msg, "Thách đấu #{m.name}!"), put_in(p2.battle[:encounter], enc)}
     else
       {:error, msg} -> {%{ok: false, msg: msg}, p}
     end
+  end
+
+  # Bia Long Vương: người đã câu được Long Vương, sớm trước
+  defp run(_s, p, %{"act" => "dragon_board"}) do
+    board =
+      HacLong.Game.Fishing.dragon().pet
+      |> HacLong.RarePets.list()
+      |> Enum.map(&%{n: &1.n, name: &1.name, at: Date.to_iso8601(DateTime.to_date(&1.at))})
+
+    {%{ok: true, board: board}, p}
   end
 
   defp run(_s, p, cmd), do: Commands.run(p, cmd)
@@ -789,23 +859,119 @@ defmodule HacLong.Game.Session do
         {%{ok: true, msg: "Bạn bỏ chạy: tính như gục ngã."}, p}
 
       f ->
-        p = %{p | hp: f.hp} |> put_in([:battle, :monster, :hp], f.foe_hp)
+        slay_turn(uid, p, f, cmd)
+    end
+  end
 
-        case Commands.run(p, Map.delete(cmd, "auto")) do
-          {%{ok: false}, _} = r ->
-            r
+  @slay_pad 10_000_000
 
-          {r, p2} ->
-            case Slay.acted(uid, p2.hp, p2.battle.monster.hp, cmd["auto"] == true) do
-              {:ok, v} ->
-                enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
-                {r, put_in(p2.battle.encounter, enc)}
+  # Một lượt đồ sát (DECISIONS "Đồ sát: hiệu ứng chéo"): trạng thái trận của mình lấy từ Slay (đối thủ có thể đã
+  # đặt choáng / suy yếu / độc, đã làm vỡ khiên của mình…); bản sao đối thủ né theo buff của họ; sát thương mình gây
+  # đi qua thủ thế / khiên / bất tử / thú / Long Vương của đối thủ; hiệu ứng mình đặt lên bản sao chuyển sang họ.
+  # Chạy với nhật ký trống để biết đúng những dòng lượt này rồi gửi sang đối thủ.
+  defp slay_turn(uid, p, f, cmd) do
+    old_log = p.battle.log
 
-              {:error, msg} ->
-                {%{ok: false, msg: msg}, p}
-            end
+    # máu bản sao đệm thêm `@slay_pad` trong lượt: Engine chặn máu ở 0, cần đủ sát thương (cả phần lố) để trừ phần
+    # đỡ đòn của đối thủ trước rồi mới biết họ còn sống không
+    p =
+      %{p | hp: f.hp}
+      |> put_in([:battle, :monster, :hp], f.foe_hp + @slay_pad)
+      |> put_in([:battle, :log], [])
+      |> Engine.pvp_put_fx(f[:fx])
+
+    foe = f[:foe_char] && Engine.pvp_victim(f.foe_char, f[:foe_fx], f.foe_hp)
+    p = if foe, do: Engine.pvp_aim(p, foe), else: p
+    stunned? = Engine.stunned?(p)
+    p = Engine.pvp_turn_start(p)
+
+    ran =
+      if p.hp <= 0,
+        do: {%{ok: true}, p},
+        else: Commands.run(p, Map.delete(cmd, "auto"))
+
+    case ran do
+      {%{ok: false} = r, _} ->
+        {r, slay_undo(p, f, old_log)}
+
+      {r, p2} ->
+        lines = Enum.map(p2.battle.log, & &1.text)
+        {p2, foe2} = slay_hit(p2, foe, f.foe_hp, f[:first] == true)
+        foe_lines = if foe2, do: Enum.map(foe2.battle.log, & &1.text), else: []
+        p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
+
+        extra = %{
+          fx: Engine.pvp_fx(p2),
+          foe_fx: foe2 && Engine.pvp_fx(foe2),
+          foe_lines: foe_lines
+        }
+
+        auto? = cmd["auto"] == true and not stunned?
+
+        case Slay.acted(uid, p2.hp, p2.battle.monster.hp, auto?, lines, extra) do
+          {:ok, v} ->
+            enc = %{p2.battle.encounter | mine: v.mine, until: v.until}
+            {r, put_in(p2.battle.encounter, enc)}
+
+          {:error, msg} ->
+            {%{ok: false, msg: msg}, slay_undo(p, f, old_log)}
         end
     end
+  end
+
+  defp slay_undo(p, f, old_log) do
+    %{p | hp: f.hp}
+    |> put_in([:battle, :monster, :hp], f.foe_hp)
+    |> put_in([:battle, :log], old_log)
+  end
+
+  # sát thương lượt này vào đối thủ đi qua phần đỡ đòn của họ; hiệu ứng lên bản sao chuyển sang họ.
+  # Dòng của đối thủ (khiên đỡ, bất tử…) ghi ở trận của họ (góc nhìn họ) và ở trận mình (đổi góc nhìn).
+  @first_strike HacLong.Game.Data.rules().slay[:first_strike_mult] || 1
+
+  defp slay_hit(p2, nil, foe_hp, _first?) do
+    hp = max(0, foe_hp - (foe_hp + @slay_pad - p2.battle.monster.hp))
+    {put_in(p2, [:battle, :monster, :hp], hp), nil}
+  end
+
+  # `first?`: lượt đầu của người tấn công, sát thương × `RULES.slay.first_strike_mult` (đòn mở màn)
+  defp slay_hit(p2, foe, foe_hp, first?) do
+    raw = foe_hp + @slay_pad - p2.battle.monster.hp
+    opening? = first? and raw > 0 and @first_strike < 1
+    raw = if opening?, do: round(raw * @first_strike), else: raw
+    {p2, debuffs} = Engine.pvp_take_debuffs(p2)
+    {foe2, real} = Engine.pvp_defend(foe, raw)
+    foe2 = Engine.pvp_receive(foe2, debuffs)
+    name = p2.battle.monster.name
+
+    foe2 =
+      if opening?,
+        do:
+          Engine.add_log(
+            foe2,
+            "⚔ Đòn mở màn: sát thương ×#{@first_strike} (bạn kịp phòng bị).",
+            "info"
+          ),
+        else: foe2
+
+    foe2 =
+      if raw > 0 and real < raw,
+        do:
+          Engine.add_log(
+            foe2,
+            "🛡 Bạn chỉ mất #{real} máu (thủ thế / khiên / thú che chắn).",
+            "good"
+          ),
+        else: foe2
+
+    mine = Enum.map(foe2.battle.log, &BattleText.mirror(&1.text, name, p2.name))
+
+    p2 =
+      p2
+      |> put_in([:battle, :monster, :hp], max(foe2.hp, 0))
+      |> update_in([:battle, :log], &(&1 ++ Enum.map(mine, fn t -> %{text: t, kind: "info"} end)))
+
+    {p2, foe2}
   end
 
   defp world_strike(s, p, cmd) do
@@ -905,11 +1071,10 @@ defmodule HacLong.Game.Session do
       # tự đánh chỉ chạy khi online: đóng hết tab là tắt
       s = auto_off(s, nil)
 
-      # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch và lời mời cược đang dính
+      # rớt mạng / đóng hết tab: hẹn rời tổ đội, hủy giao dịch đang dính
       HacLong.Party.away(s.user_id)
       uid = s.user_id
       Task.start(fn -> HacLong.Trade.cancel(uid) end)
-      Task.start(fn -> HacLong.PkBet.disconnect(uid) end)
       Characters.put_reason("MOVE")
       {:noreply, flush(s), @idle_timeout}
     else
@@ -1148,12 +1313,38 @@ defmodule HacLong.Game.Session do
 
   defp interrupt_battle(p, _uid), do: Map.put(p, :battle, nil)
 
+  # chiến bang sau trận đấu trường: thắng thành viên bang địch thì ghi điểm; đánh người bang địch mà không được điểm
+  # thì nói lý do. Trả phần chữ nối vào dòng kết quả ("" nếu hai người không thuộc hai bang đang chiến nhau).
+  defp war_note(won?, uid, target) do
+    alias HacLong.GuildWars
+
+    cond do
+      won? ->
+        case GuildWars.record(uid, target) do
+          {:ok, _} ->
+            " ⚔ Chiến bang: bang bạn +1 điểm."
+
+          {:error, :limit} ->
+            " ⚔ Chiến bang: không tính điểm (đã thắng người này #{GuildWars.rules().same_target_max} lần)."
+
+          _ ->
+            ""
+        end
+
+      GuildWars.war_between(uid, target) ->
+        " ⚔ Chiến bang: không tính điểm (chỉ thắng mới được điểm)."
+
+      true ->
+        ""
+    end
+  end
+
   # Trận đấu trường xong: đổi điểm. Thua (gục ngã) tính như chết thường: mất vàng, về Nhà
   # (Engine đã trừ vàng/máu); bỏ chạy thì máu, vàng như trước trận.
   defp battle_over(s, _old, %{battle: %{encounter: %{pvp: target} = enc} = b} = player) do
     r = Arena.finish(s.user_id, target, b.result)
     # chiến bang: thắng thành viên bang địch thì ghi điểm cho bang
-    war = r.won && HacLong.GuildWars.record(s.user_id, target)
+    war = war_note(r.won, s.user_id, target)
 
     player =
       cond do
@@ -1172,14 +1363,12 @@ defmodule HacLong.Game.Session do
 
     text =
       if r.won,
-        do:
-          "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <>
-            if(war, do: " ⚔ Chiến bang: bang bạn +1 điểm.", else: ""),
+        do: "🏟 Thắng! Điểm đấu trường #{sign.(r.delta)}, thưởng #{r.gold} vàng." <> war,
         else:
           if(b.result == "lose",
             do: "🏟 Thua trận đấu trường (điểm #{sign.(r.delta)}).",
             else: "🏟 Bỏ chạy khỏi đấu trường (điểm #{sign.(r.delta)}). Không mất vàng."
-          )
+          ) <> war
 
     reward = %{xp: 0, gold: r.gold, items: [], levels: 0}
 
