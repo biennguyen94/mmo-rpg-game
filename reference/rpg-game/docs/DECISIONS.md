@@ -1417,3 +1417,8 @@ Chạy thử 4 bot CS 10 trên máy: sau ~6 phút cả 4 có thú, 3 bot mặc c
 ## Màn kết quả trận: nút Tiếp tục trước danh sách đồ rơi (2026-10-26, anh báo)
 Trùm rơi nhiều đồ thì danh sách dài đẩy nút "Tiếp tục" / "Về nhà" ra khỏi màn hình điện thoại. Nút nay nằm ngay dưới dòng
 kinh nghiệm / vàng, trước danh sách đồ.
+
+## Đồ sát: bỏ giới hạn mỗi giờ, bảo vệ 30 giây (2026-10-26, anh "bỏ mỗi giờ đi, giảm xuống bảo vệ 30s thôi")
+- Bỏ `RULES.slay.per_target_hour` (đồ sát cùng một người tối đa 3 lần / giờ): không còn giới hạn số lần đồ sát.
+- `RULES.slay.protect_s` 120 → 30: người vừa gục trong đồ sát được bảo vệ 30 giây (tự đi đồ sát thì mất bảo vệ như cũ).
+- Tên đỏ, mất vàng gấp đôi khi tên đỏ gục, vùng an toàn giữ nguyên.

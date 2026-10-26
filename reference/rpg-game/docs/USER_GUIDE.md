@@ -254,7 +254,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   mất 10% vàng, về Nhà; số vàng đó về tay người thắng. Không đánh được ở Làng, Nhà và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
   - Người đang **đánh quái** vẫn bị đồ sát ngay: trận đánh quái bị cắt ngang (quái giữ nguyên máu, không mất gì). Chỉ không đánh
     được người đang trong một trận đồ sát khác. Bản thân mình phải rảnh tay (không đang trong trận) mới đồ sát được.
-  - Người vừa gục được **bảo vệ 2 phút**; mỗi giờ chỉ đồ sát cùng một người tối đa 3 lần.
+  - Người vừa gục được **bảo vệ 30 giây**; không giới hạn số lần đồ sát.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
 - **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)

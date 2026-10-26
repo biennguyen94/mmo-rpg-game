@@ -18,7 +18,7 @@ defmodule HacLong.Slay do
   Chống lạm dụng (`DECISIONS.md` P19):
   - Người vừa gục được **bảo vệ** `RULES.slay.protect_s` giây (không bị đồ sát; tự đi đồ sát người khác
     thì mất bảo vệ).
-  - Mỗi người đồ sát cùng một người tối đa `RULES.slay.per_target_hour` lần trong 60 phút.
+  - Không giới hạn số lần đồ sát (anh bỏ giới hạn 3 lần / giờ cùng một người, 2026-10-26).
   - Người tấn công thắng một người **không** tên đỏ thì bị **tên đỏ** `RULES.slay.red_s` giây (cộng dồn).
     Người tên đỏ gục trong đồ sát mất vàng gấp `RULES.slay.red_gold_mult` lần. Hạ người tên đỏ thì không
     bị đỏ tên.
@@ -90,7 +90,7 @@ defmodule HacLong.Slay do
     if :ets.whereis(@marks) == :undefined,
       do: :ets.new(@marks, [:named_table, :public, read_concurrency: true])
 
-    {:ok, %{fights: %{}, by_uid: %{}, next: 1, hits: %{}}}
+    {:ok, %{fights: %{}, by_uid: %{}, next: 1}}
   end
 
   # ---------- Bắt đầu ----------
@@ -218,16 +218,9 @@ defmodule HacLong.Slay do
 
   @impl true
   def handle_call({:start, a, b, pa, pb}, _from, s) do
-    t = now()
-    hits = Enum.filter(Map.get(s.hits, {a, b}, []), &(&1 > t - 3_600_000))
-
     cond do
       protected_s(b) > 0 ->
         {:reply, {:error, "#{pb.name} vừa gục, đang được bảo vệ (còn #{protected_s(b)} giây)."},
-         s}
-
-      length(hits) >= @r.per_target_hour ->
-        {:reply, {:error, "Bạn đã đồ sát #{pb.name} #{@r.per_target_hour} lần trong 1 giờ qua."},
          s}
 
       Map.has_key?(s.by_uid, a) ->
@@ -263,8 +256,7 @@ defmodule HacLong.Slay do
 
         s = %{
           s
-          | hits: Map.put(s.hits, {a, b}, [t | hits]),
-            fights: Map.put(s.fights, f.id, f),
+          | fights: Map.put(s.fights, f.id, f),
             by_uid: s.by_uid |> Map.put(a, f.id) |> Map.put(b, f.id),
             next: s.next + 1
         }
