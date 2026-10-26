@@ -182,5 +182,7 @@ defmodule HacLongWeb.Phase5SocialTest do
     names = Enum.map(players, & &1.name)
     assert n >= 2 and pa.name in names and pu.name in names
     assert Enum.find(players, &(&1.name == pu.name)).map == "forest_1"
+    # số lần chuyển sinh hiện cạnh lớp / cấp
+    assert Enum.find(players, &(&1.name == pu.name)).rebirths == (pu[:rebirths] || 0)
   end
 end

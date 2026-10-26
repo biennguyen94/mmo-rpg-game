@@ -390,7 +390,7 @@
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
-        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></div><button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
+        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></div><button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
       </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
         <form id="adm-lookup" class="chat-form"><input type="text" id="adm-name" placeholder="Tên nhân vật hoặc tên đăng nhập" autocomplete="off"><button class="btn" type="submit">Tìm</button></form>

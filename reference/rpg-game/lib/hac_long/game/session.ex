@@ -147,7 +147,7 @@ defmodule HacLong.Game.Session do
     do: call(user_id, {:admin, fun, ref})
 
   @doc """
-  Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, cls, map}]}`
+  Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, rebirths, cls, map}]}`
   (tối đa `limit` người, theo tên). Không khởi động Session nào; Session đang bận quá 1 giây thì bỏ qua.
   """
   def online(limit \\ 200) do
@@ -409,7 +409,18 @@ defmodule HacLong.Game.Session do
   defp handle(:get, _from, s), do: reply(s.player, s)
 
   defp handle(:online_info, _from, %{player: p} = s) when p != nil and map_size(s.tabs) > 0,
-    do: reply(%{id: s.user_id, name: p.name, level: p.level, cls: p.cls, map: p.pos.map}, s)
+    do:
+      reply(
+        %{
+          id: s.user_id,
+          name: p.name,
+          level: p.level,
+          rebirths: Map.get(p, :rebirths) || 0,
+          cls: p.cls,
+          map: p.pos.map
+        },
+        s
+      )
 
   defp handle(:online_info, _from, s), do: reply(nil, s)
 
