@@ -166,7 +166,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -203,7 +203,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -236,7 +236,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -524,13 +524,23 @@ defmodule HacLong.World do
     end
   end
 
-  # quái sự kiện (bản đồ sự kiện, quái vàng) mạnh theo số lần chuyển sinh người đánh (`Engine.scale_event/1`)
+  # Quảng Trường Quỷ / Lâu Đài Máu / Kalima: quái mạnh theo mốc của phòng / tổ (`p.tower.k`, đặt lúc vào)
+  defp event_k(%{tower: %{k: k}}), do: k
+
+  defp event_k(p),
+    do: HacLong.Game.EventRooms.k(HacLong.Game.EventRooms.band(Map.get(p, :rebirths)))
+
+  # quái trên bản đồ sự kiện mạnh theo mốc chuyển sinh của PHÒNG (Hỗn Chiến Thành) hoặc cố định (Vương Miện Công Thành
+  # Chiến), không theo người đánh (DECISIONS "Sự kiện đánh chung theo phòng"); quái vàng mạnh theo vùng như quái thường
+  @crown_k Data.rules().event_scale.crown_rebirths
   defp encounter(p, map, m) do
     case do_encounter(p, map, m) do
       {%{ok: true} = r, p} ->
-        if is_binary(map[:event]) or m[:gold] == true,
-          do: {r, Engine.scale_event(p)},
-          else: {r, p}
+        case map[:event] do
+          "castle_siege" -> {r, Engine.scale_event(p, @crown_k)}
+          "chaos_castle" -> {r, Engine.scale_event(p, HacLong.ChaosCastle.room_k(map.id))}
+          _ -> {r, p}
+        end
 
       other ->
         other
@@ -639,7 +649,7 @@ defmodule HacLong.World do
         cond do
           b.result == "win" ->
             MapServer.defeat(map_id, uid, mid)
-            if map_id == HacLong.ChaosCastle.map_id(), do: HacLong.ChaosCastle.kill(uid, :monster)
+            if HacLong.ChaosCastle.map?(map_id), do: HacLong.ChaosCastle.kill(uid, :monster)
 
             if map_id == HacLong.CastleSiege.map_id(),
               do: HacLong.CastleSiege.defeated(uid, mid, p[:guild])

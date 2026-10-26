@@ -37,7 +37,7 @@ defmodule KhoDo.EventMonsters do
   defp monster(s, k) do
     m = Engine.make_monster(%{id: "ev", name: s.name, level: s.level, mult: s.mult}, false)
     m = %{m | maxHp: m.maxHp * s.hp}
-    Engine.scale_event(%{rebirths: k, battle: %{monster: m}}).battle.monster
+    Engine.scale_event(%{battle: %{monster: m}}, k).battle.monster
   end
 
   defp avg(f), do: Enum.sum(for(_ <- 1..200, do: f.())) / 200

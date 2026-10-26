@@ -1233,7 +1233,7 @@ defmodule HacLong.Game.Session do
   defp cc_back(%{player: %{pos: %{map: map}, battle: nil} = p, tabs: tabs} = s)
        when map_size(tabs) == 0 do
     out? =
-      (map == HacLong.ChaosCastle.map_id() and not HacLong.ChaosCastle.alive?(s.user_id)) or
+      (HacLong.ChaosCastle.map?(map) and not HacLong.ChaosCastle.alive?(s.user_id)) or
         (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
 
     if out?,

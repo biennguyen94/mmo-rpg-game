@@ -2789,6 +2789,7 @@
     return `<div class="card" data-panel="chaos-castle">
       <div class="row"><h3 class="grow">⚔ Hỗn Chiến Thành</h3>${state}</div>
       <p class="small muted">Từ cấp ${d.min_level}, tốn 1 Áo Giáp Vệ Binh. Cho vào ${d.entry_minutes} phút, rồi ${d.run_minutes} phút hỗn chiến: quái và người chơi đánh lẫn nhau (đồ sát không mất vàng, không tên đỏ). Gục ngã là bị loại, về Làng. Người trụ lại cuối cùng khi hết quái thắng lớn (vàng + ngọc); trụ đến hết giờ được thưởng nhỏ; hạ người được thêm vàng. Thưởng gửi qua thư.</p>
+      ${d.room ? `<p class="small">Phòng của bạn: <b>${d.room}</b> — chia phòng theo số lần chuyển sinh, quái mạnh theo mốc cao nhất của phòng.</p>` : ''}
       ${lowLv ? `<p class="small" style="color:var(--bad)">Cần cấp ${d.min_level}.</p>` : ''}
       <div class="row small"><span class="grow">Vé đang có: <b class="num">${d.tickets}</b>${d.phase !== 'idle' ? ` · Đã vào: <b class="num">${d.players}</b> người` : ''}</span></div>
       <div class="btn-row">

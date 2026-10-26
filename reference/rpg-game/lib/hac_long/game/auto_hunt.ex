@@ -39,7 +39,7 @@ defmodule HacLong.Game.AutoHunt do
     m = Maps.get(id)
 
     m != nil and not m.private and m.spawns != [] and
-      id not in ["tower", HacLong.ChaosCastle.map_id(), HacLong.CastleSiege.map_id()]
+      id not in ["tower", HacLong.CastleSiege.map_id()] and not HacLong.ChaosCastle.map?(id)
   end
 
   @doc "Loại quái (mã, tên, cấp) trên bản đồ `id`, để client cho chọn."

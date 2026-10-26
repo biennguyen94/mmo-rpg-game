@@ -164,7 +164,7 @@ defmodule HacLong.Slay do
   defp safe_ok?(pos), do: pos.map not in @r.safe_maps and World.shared?(pos)
 
   # trong Hỗn Chiến Thành: không mất vàng, không tên đỏ / bảo vệ, thua là bị loại về Làng
-  defp chaos_castle?(p), do: p.pos.map == HacLong.ChaosCastle.map_id()
+  defp chaos_castle?(p), do: HacLong.ChaosCastle.map?(p.pos.map)
   defp castle?(p), do: p.pos.map == HacLong.CastleSiege.map_id()
 
   # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến): không tên đỏ / vàng thêm, thua về Làng
