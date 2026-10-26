@@ -360,8 +360,17 @@ defmodule HacLong.World do
         mon = p2.battle.monster
 
         case EventRoom.engage(id, uid, m.id, mon.maxHp) do
-          {:ok, hp} ->
-            enc = %{tower: m.id, room: id, base_xp: mon.xp, base_gold: mon.gold}
+          {:ok, hp, n} ->
+            # room_key / room_n: màn trận nhận máu chung, số người đang đánh (sự kiện "shared" như tổ đội)
+            enc = %{
+              tower: m.id,
+              room: id,
+              room_key: EventRoom.key(id, m.id),
+              room_n: n,
+              base_xp: mon.xp,
+              base_gold: mon.gold
+            }
+
             {r, p2 |> put_in([:battle, :monster, :hp], hp) |> put_in([:battle, :encounter], enc)}
 
           {:error, msg} ->

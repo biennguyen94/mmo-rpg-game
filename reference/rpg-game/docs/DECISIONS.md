@@ -1394,3 +1394,6 @@ quái yếu đi.
 Quyết định nhỏ tự chọn: quái phòng chung đứng yên (không đi lang thang); người rời (cổng `<`, gục ngã) chỉ mình kết thúc lượt;
 phòng hết người thì đóng; người offline lúc phòng kết thúc thì kết thúc ở bước đi sau (phòng không còn → thưởng như hết giờ);
 lượt riêng cũ (không có `room`) vẫn chạy như trước. Test: `test/hac_long_web/event_room_test.exs`, e2e `e2e/eventroom.mjs`.
+- Máu chung hiện ngay trên màn trận (2026-10-26, anh "có làm đi"): ai trong phòng đánh trúng con quái thì mọi người đang
+  đánh con đó nhận máu mới ngay (sự kiện kênh `shared` như đánh chung tổ đội, khóa `encounter.room_key`), màn trận ghi
+  "N người cùng đánh". Session của từng người cũng giữ máu mới (`{:room_hp, ...}`) để lần đẩy nhân vật sau không trả máu cũ.

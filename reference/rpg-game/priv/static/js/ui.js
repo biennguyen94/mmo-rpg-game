@@ -38,6 +38,7 @@
   let market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' }; // chợ ở Chủ Chợ      // đấu trường: { me, suggestions, top }
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
+  let sharedKey = null;  // trận đánh chung của `sharedN`
   let decor = { on: false, pick: null }; // trang trí nhà: đang bật, món đang chọn để đặt    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
   let wb = { alive: false }; // trùm thế giới; `skew`: lệch đồng hồ máy chủ - máy này
   const Map_ = window.MapView;
@@ -2727,6 +2728,14 @@
       ${bag.length ? `<div class="list">${bag.join('')}</div>` : '<p class="small muted">Túi trống.</p>'}</div>`;
   }
 
+  // phòng sự kiện đánh chung: số người đang đánh cùng con quái (cập nhật theo sự kiện "shared")
+  function roomFighters(b) {
+    const e = b.encounter;
+    if (!e || !e.room_key) return '';
+    const n = sharedKey === e.room_key ? sharedN : e.room_n || 1;
+    return n > 1 ? ` · ${n} người cùng đánh` : '';
+  }
+
   // Quảng Trường Quỷ (Phase 18 M1): giờ mở, vé, vào, bảng xếp hạng hôm nay (P.view.ds, Net.dsTop)
   let dsTop = null, dsTopAt = 0, dsTopBest = -1;
   const dsClock = (unix) => new Date(unix * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -3375,7 +3384,7 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : m.ds ? `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}` : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
@@ -4142,9 +4151,12 @@
       if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; render(); }
     });
     Net.onShared((m) => {
-      if (!P || !P.battle || P.battle.over || !P.battle.encounter || P.battle.encounter.shared !== m.key) return;
+      // tổ đội (encounter.shared) hoặc phòng sự kiện đánh chung (encounter.room_key)
+      const enc = P && P.battle && !P.battle.over && P.battle.encounter;
+      if (!enc || (enc.shared || enc.room_key) !== m.key) return;
       P.battle.monster.hp = m.hp;
       sharedN = m.n;
+      sharedKey = m.key;
       render();
     });
     Net.onGuild((g) => {

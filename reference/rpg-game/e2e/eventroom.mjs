@@ -42,9 +42,13 @@ const bId = await B.page.evaluate(() => window.__hl.userId());
 await A.page.waitForFunction((id) => (window.__hl.world().players || []).some((o) => o.id === id), bId, { timeout: 5000 }).catch(() => null);
 const seen = await A.page.evaluate((id) => (window.__hl.world().players || []).some((o) => o.id === id), bId);
 R.check('A thấy B trên bản đồ phòng', seen);
-await A.page.waitForFunction(() => (document.querySelector('#app') || {}).textContent?.includes('2 người'), null, { timeout: 5000 }).catch(() => null);
+// chạy lại trong cùng đợt mở thì người của lần trước vẫn còn trong phòng: ít nhất 2 người
+const people = () => +(((document.querySelector('#app') || {}).textContent || '').match(/Phòng CS 0–1 · (\d+) người/) || [])[1] || 0;
+await A.page.waitForFunction(people, null, { timeout: 5000 }).catch(() => null);
+await A.page.waitForFunction((f) => new Function('return ' + f)()() >= 2, people.toString(), { timeout: 5000 }).catch(() => null);
 const hud = (await A.page.textContent('#app').catch(() => '')) || '';
-R.check('dòng trạng thái: "Phòng CS 0–1 · 2 người"', hud.includes('Phòng CS 0–1') && hud.includes('2 người'), hud.match(/[^·]*Phòng[^·]*·[^·]*/)?.[0] || '');
+const nPeople = +(hud.match(/Phòng CS 0–1 · (\d+) người/) || [])[1] || 0;
+R.check('dòng trạng thái: "Phòng CS 0–1 · N người" (N ≥ 2)', nPeople >= 2, hud.match(/Phòng[^·]*·[^·]*/)?.[0] || '');
 await shot(A.page, 'eventroom-shared.png');
 
 // A hạ một con: biến mất ở cả B
@@ -57,6 +61,28 @@ R.check('A hạ quái của phòng', res === 'win', String(res));
 await B.page.waitForFunction((id) => !window.__hl.player().tower.monsters.some((q) => q.id === id), m.id, { timeout: 5000 }).catch(() => null);
 const pb2 = await player(B.page);
 R.check('quái A hạ biến mất ở B, điểm là của A', !pb2.tower.monsters.some((q) => q.id === m.id) && pb2.tower.ds.score === 0 && (await player(A.page)).tower.ds.score > 0, JSON.stringify({ left: pb2.tower.monsters.length, scoreB: pb2.tower.ds.score }));
+
+// A, B cùng đánh một con: B ra đòn thì màn trận của A tụt máu ngay (không đợi A đánh), ghi "2 người cùng đánh"
+const m2 = (await player(A.page)).tower.monsters[0];
+await walkTo(A.page, m2.x, m2.y);
+await A.page.waitForFunction(() => !!window.__hl.player().battle, null, { timeout: 6000 }).catch(() => null);
+await walkTo(B.page, m2.x, m2.y);
+await B.page.waitForFunction(() => !!window.__hl.player().battle, null, { timeout: 6000 }).catch(() => null);
+const hpA = (await player(A.page)).battle?.monster.hp;
+for (let i = 0; i < 5; i++) {
+  await act(B.page, 'attack');
+  const ok = await A.page.waitForFunction((h) => { const b = window.__hl.player().battle; return b && (b.over || b.monster.hp < h); }, hpA, { timeout: 1500 }).then(() => true).catch(() => false);
+  if (ok) break;
+}
+const pa2 = await player(A.page);
+R.check('B đánh: máu quái trên màn trận của A tụt ngay', pa2.battle && (pa2.battle.over || pa2.battle.monster.hp < hpA), JSON.stringify({ before: hpA, after: pa2.battle && pa2.battle.monster.hp }));
+// sau lần đồng bộ phòng kế tiếp (đẩy cả nhân vật) máu vẫn là máu mới, không nhảy về đầy
+await A.page.waitForTimeout(600);
+const pa3 = await player(A.page);
+R.check('đồng bộ phòng sau đó không trả máu cũ', pa3.battle && (pa3.battle.over || pa3.battle.monster.hp < hpA), JSON.stringify({ before: hpA, later: pa3.battle && pa3.battle.monster.hp }));
+const eyebrow = (await A.page.textContent('.eyebrow').catch(() => '')) || '';
+R.check('màn trận ghi "2 người cùng đánh"', pa2.battle.over || eyebrow.includes('2 người cùng đánh'), eyebrow);
+await shot(A.page, 'eventroom-shared-fight.png');
 
 for (const X of [A, B, C]) R.check(`không lỗi JS (${X.name})`, X.errors.length === 0, X.errors.join(' | '));
 await R.done(browser);

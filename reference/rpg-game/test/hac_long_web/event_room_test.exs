@@ -28,6 +28,11 @@ defmodule HacLongWeb.EventRoomTest do
   defp player(user, attrs) do
     name = "Er #{System.unique_integer([:positive]) |> rem(100_000)}"
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => name, "cls" => "dk"})
+
+    # đủ mạnh để đánh quái sự kiện trong test mà không gục (đòn thường có thể trượt)
+    stats = %{p.stats | str: p.stats.str + 400, agi: p.stats.agi + 100, vit: p.stats.vit + 300}
+    p = %{p | stats: stats}
+    p = %{p | hp: HacLong.Game.Engine.derived(p).maxHp}
     p = p |> Map.put(:tutorial, nil) |> Map.put(:pos, @tower) |> Map.merge(attrs)
     Characters.save!(user.id, p, "TEST")
     p
@@ -142,6 +147,19 @@ defmodule HacLongWeb.EventRoomTest do
     assert {:alive, left} = EventRoom.hit(room, ua.id, m1.id, div(max, 2))
     pb = engage(sb, ub, m1)
     assert pb.battle.monster.hp == left
+    assert pb.battle.encounter.room_n == 2
+    assert pb.battle.encounter.room_key == EventRoom.key(room, m1.id)
+
+    # B đánh trúng: màn trận của A nhận máu mới ngay (sự kiện "shared" như tổ đội), không đợi A ra đòn
+    Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(ua.id))
+    assert {:alive, left2} = EventRoom.hit(room, ub.id, m1.id, 1)
+    key = EventRoom.key(room, m1.id)
+    assert_receive {:shared_hp, ^key, ^left2, 2}
+    assert_push "shared", %{key: ^key, hp: ^left2, n: 2}
+
+    # Session của A cũng giữ máu mới: lần đẩy nhân vật sau (đồng bộ phòng) không trả lại máu cũ
+    wait(fn -> Session.get(ua.id).battle.monster.hp == left2 end)
+    left = left2
 
     # B hạ (gọi thẳng phòng như một đòn của B): A đang đánh cùng thì thắng, góp 50%
     assert {:killed, %{share: share}} = EventRoom.hit(room, ub.id, m1.id, left)
@@ -164,7 +182,13 @@ defmodule HacLongWeb.EventRoomTest do
     cmd(sb, %{"act" => "leave"})
     pa = engage(sa, ua, m2)
     assert {:alive, 1} = EventRoom.hit(room, ub.id, m2.id, pa.battle.monster.maxHp - 1)
-    r = cmd(sa, %{"act" => "attack"})
+    # đòn thường có thể trượt: đánh tới khi xong (máu quái còn 1)
+    r =
+      Enum.reduce_while(1..20, nil, fn _, _ ->
+        r = cmd(sa, %{"act" => "attack"})
+        if r.player.battle.over, do: {:halt, r}, else: {:cont, r}
+      end)
+
     assert r.player.battle.over and r.player.battle.result == "win"
     assert r.player.tower.ds.score == DevilSquare.rules().score.monster
   end
@@ -180,7 +204,7 @@ defmodule HacLongWeb.EventRoomTest do
     room = a.player.tower.room
 
     for m <- a.player.tower.monsters do
-      {:ok, _} = EventRoom.engage(room, ua.id, m.id, 10)
+      {:ok, _, _} = EventRoom.engage(room, ua.id, m.id, 10)
       {:killed, _} = EventRoom.hit(room, ua.id, m.id, 10)
     end
 
@@ -293,7 +317,7 @@ defmodule HacLongWeb.EventRoomTest do
       %{s | t: %{s.t | monsters: [boss], kal: %{s.t.kal | stage: "boss"}}}
     end)
 
-    {:ok, _} = EventRoom.engage(room, ua.id, 100, 1000)
+    {:ok, _, _} = EventRoom.engage(room, ua.id, 100, 1000)
     assert {:killed, %{end: %{success: true}}} = EventRoom.hit(room, ua.id, 100, 1000)
     wait(fn -> Session.get(ub.id).tower.kal.done end)
   end

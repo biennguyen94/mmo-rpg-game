@@ -100,9 +100,19 @@ defmodule HacLong.EventRoom do
 
   # ---------- Trong phòng ----------
 
-  @doc "Chạm quái `mid` (máu tối đa `max` theo mốc phòng): `{:ok, máu_hiện_tại}` hoặc `{:error, lý_do}`."
+  @doc """
+  Chạm quái `mid` (máu tối đa `max` theo mốc phòng): `{:ok, máu_hiện_tại, số_người_đang_đánh}` hoặc `{:error, lý_do}`.
+  Từ lúc đó tới `disengage/3`, mỗi đòn của bất kỳ ai lên con này đẩy máu mới xuống màn trận (`{:shared_hp, key/2, ...}`,
+  như đánh chung tổ đội).
+  """
   def engage(id, uid, mid, max),
     do: call(id, {:engage, uid, mid, max}) || {:error, "Sự kiện đã kết thúc."}
+
+  @doc "Trận của `uid` với quái `mid` đã xong (thua, bỏ chạy, thắng): thôi nhận máu, bớt số người đang đánh."
+  def disengage(id, uid, mid), do: GenServer.cast(via(id), {:disengage, uid, mid})
+
+  @doc "Khóa trận chung của quái `mid` trong phòng `id` (client so với `encounter.room_key`)."
+  def key(id, mid), do: "room:#{id}:#{mid}"
 
   @doc "Trận chung với quái `mid`: `%{hp, max, mine}` (`mine`: sát thương của `uid`) hoặc nil (quái đã bị hạ)."
   def fight(id, mid, uid), do: call(id, {:fight, mid, uid})
@@ -173,6 +183,8 @@ defmodule HacLong.EventRoom do
         %{tower: %{room: id}, battle: %{over: true, result: r, encounter: enc}} = p,
         uid
       ) do
+    if enc[:tower], do: disengage(id, uid, enc.tower)
+
     case r do
       "win" ->
         p = if enc[:killed], do: credit(p, enc), else: p
@@ -263,8 +275,10 @@ defmodule HacLong.EventRoom do
         {:reply, {:error, "Quái đã bị hạ."}, s}
 
       true ->
-        f = s.fights[mid] || %{hp: max, max: max, hitters: %{}}
-        {:reply, {:ok, f.hp}, put_in(s.fights[mid], f)}
+        f = s.fights[mid] || %{hp: max, max: max, hitters: %{}, in: MapSet.new()}
+        f = %{f | in: MapSet.put(f.in, uid)}
+        tell_hp(s, mid, f, uid)
+        {:reply, {:ok, f.hp, MapSet.size(f.in)}, put_in(s.fights[mid], f)}
     end
   end
 
@@ -296,6 +310,7 @@ defmodule HacLong.EventRoom do
                 Enum.map(s.t.monsters, &if(&1.id == mid, do: Map.put(&1, :hp_pct, pct), else: &1))
           }
 
+          tell_hp(s, mid, f, uid)
           {:reply, {:alive, f.hp}, %{s | t: t, fights: Map.put(s.fights, mid, f)} |> dirty(:sync)}
         else
           kill(s, uid, mid, f)
@@ -326,6 +341,7 @@ defmodule HacLong.EventRoom do
   def handle_call({:climb, _uid}, _from, s), do: {:reply, {:error, "Không có đợt sau."}, s}
 
   def handle_call({:leave, uid}, _from, s) do
+    s = Enum.reduce(Map.keys(s.fights), s, &drop_fighter(&2, uid, &1))
     s = %{s | members: Map.delete(s.members, uid)}
 
     if s.members == %{},
@@ -336,6 +352,8 @@ defmodule HacLong.EventRoom do
   def handle_call(:snapshot, _from, s), do: {:reply, snapshot_of(s), s}
 
   @impl true
+  def handle_cast({:disengage, uid, mid}, s), do: {:noreply, drop_fighter(s, uid, mid)}
+
   def handle_cast({:move, uid, x, y}, s) do
     case s.members[uid] do
       nil -> {:noreply, s}
@@ -354,6 +372,34 @@ defmodule HacLong.EventRoom do
 
     finish(s, info, nil)
     {:stop, :normal, s}
+  end
+
+  defp drop_fighter(s, uid, mid) do
+    case s.fights[mid] do
+      %{in: fighters} = f ->
+        if MapSet.member?(fighters, uid) do
+          f = %{f | in: MapSet.delete(fighters, uid)}
+          tell_hp(s, mid, f, uid)
+          put_in(s.fights[mid], f)
+        else
+          s
+        end
+
+      _ ->
+        s
+    end
+  end
+
+  # máu mới / số người đang đánh quái `mid` gửi màn trận của những người khác đang đánh nó (người vừa đánh đã có trong
+  # kết quả lệnh của mình)
+  defp tell_hp(s, mid, f, except) do
+    msg = {:shared_hp, key(s.id, mid), f.hp, MapSet.size(f.in)}
+
+    for u <- f.in, u != except do
+      # Session giữ máu mới trong trận (lần đẩy nhân vật sau không trả máu cũ), kênh vẽ ngay
+      cast(u, {:room_hp, s.id, mid, f.hp, MapSet.size(f.in)})
+      Phoenix.PubSub.broadcast(HacLong.PubSub, HacLong.Game.Session.topic(u), msg)
+    end
   end
 
   # quái `mid` gục dưới đòn của `uid`: qua bước / đợt; người khác đang đánh con đó thắng theo phần sát thương

@@ -378,6 +378,17 @@ defmodule HacLong.Game.Session do
     {:noreply, s, timeout(s)}
   end
 
+  # người khác vừa đánh con quái phòng mình đang đánh: giữ máu mới, số người (kênh đã nhận "shared", không đẩy lại)
+  def handle_cast(
+        {:room_hp, id, mid, hp, n},
+        %{player: %{battle: %{over: false, encounter: %{room: id, tower: mid} = enc} = b} = p} = s
+      ) do
+    b = %{b | monster: %{b.monster | hp: hp}, encounter: %{enc | room_n: n}}
+    {:noreply, %{s | player: %{p | battle: b}}, timeout(s)}
+  end
+
+  def handle_cast({:room_hp, _, _, _, _}, s), do: {:noreply, s, timeout(s)}
+
   def handle_cast({tag, _, _}, s) when tag in [:room_sync, :room_end],
     do: {:noreply, s, timeout(s)}
 
