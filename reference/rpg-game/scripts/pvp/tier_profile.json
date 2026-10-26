@@ -3,7 +3,7 @@
   "sourceType": "SIMULATED",
   "tiers": {
     "0": {
-      "armor_level": 1,
+      "armor_level": 3,
       "chars": 12,
       "exc": 0,
       "jewel_level": 29,
@@ -12,14 +12,14 @@
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 17,
+      "tower": 19,
       "up": 0,
-      "weapon_level": 47,
+      "weapon_level": 42,
       "wing": 0,
       "wing_up": 0
     },
     "1": {
-      "armor_level": 3,
+      "armor_level": 7,
       "chars": 12,
       "exc": 0,
       "jewel_level": 29,
@@ -28,7 +28,7 @@
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 31,
+      "tower": 28,
       "up": 0,
       "weapon_level": 47,
       "wing": 0,
@@ -41,15 +41,15 @@
       "jewel_level": 29,
       "luck": false,
       "mastery": 10,
+      "max": true,
       "opt": 2,
       "pet": null,
       "skill": false,
-      "tower": 57,
+      "tower": 56,
       "up": 1,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1,
-      "max": true
+      "wing_up": 1
     },
     "2": {
       "armor_level": 12,
@@ -61,27 +61,27 @@
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 37,
-      "up": 1,
+      "tower": 35,
+      "up": 0,
       "weapon_level": 47,
-      "wing": 0,
+      "wing": 1,
       "wing_up": 0
     },
     "3": {
       "armor_level": 12,
       "chars": 12,
-      "exc": 0,
+      "exc": 1,
       "jewel_level": 29,
       "luck": false,
       "mastery": 9,
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 42,
-      "up": 1,
+      "tower": 40,
+      "up": 0,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "4": {
       "armor_level": 12,
@@ -93,11 +93,11 @@
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 46,
-      "up": 1,
+      "tower": 45,
+      "up": 0,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "5": {
       "armor_level": 12,
@@ -110,13 +110,13 @@
       "pet": null,
       "skill": false,
       "tower": 49,
-      "up": 1,
+      "up": 0,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "6": {
-      "armor_level": 12,
+      "armor_level": 17,
       "chars": 12,
       "exc": 1,
       "jewel_level": 29,
@@ -125,11 +125,11 @@
       "opt": 1,
       "pet": null,
       "skill": false,
-      "tower": 50,
-      "up": 1,
+      "tower": 51,
+      "up": 0,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "7": {
       "armor_level": 17,
@@ -145,7 +145,7 @@
       "up": 1,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "8": {
       "armor_level": 17,
@@ -153,15 +153,15 @@
       "exc": 1,
       "jewel_level": 29,
       "luck": false,
-      "mastery": 9,
+      "mastery": 10,
       "opt": 2,
       "pet": null,
       "skill": false,
-      "tower": 55,
+      "tower": 54,
       "up": 1,
       "weapon_level": 47,
       "wing": 1,
-      "wing_up": 1
+      "wing_up": 0
     },
     "9": {
       "armor_level": 17,
@@ -173,7 +173,7 @@
       "opt": 2,
       "pet": null,
       "skill": false,
-      "tower": 56,
+      "tower": 55,
       "up": 1,
       "weapon_level": 47,
       "wing": 1,
