@@ -540,6 +540,12 @@ img.own { object-fit: contain; image-rendering: auto; }
 img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering: auto; }
 .itemtip .bad { color: var(--bad); }
 .itemtip .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+/* đồ nhiều dòng: khung không cao quá màn hình, phần thông tin cuộn, nút luôn ở dưới */
+.itemtip { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); grid-template-rows: minmax(0, 1fr) auto; }
+.itemtip .tip-body { display: grid; gap: inherit; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+.itemtip .tip-body.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
+/* xem trước ép: ngọc + vàng trên một dòng (xuống dòng khi hẹp) cho gọn */
+.tip-forge .needs { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 0 8px; }
 .itemtip .btns .btn { flex: 1; }
 @media (max-width: 380px) {
   .grid3 { grid-template-columns: repeat(3, 58px); }

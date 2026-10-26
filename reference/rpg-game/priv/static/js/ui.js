@@ -2575,7 +2575,16 @@
     el.className = 'itemtip mu';
     el.setAttribute('role', 'dialog');
     el.innerHTML = html;
+    // đồ nhiều dòng (Excellent, bộ, xem trước ép…): phần thông tin cuộn bên trong, hàng nút luôn thấy ở dưới cùng
+    const body = document.createElement('div');
+    body.className = 'tip-body';
+    for (const c of [...el.children]) if (!c.classList.contains('btns')) body.appendChild(c);
+    el.prepend(body);
     document.body.appendChild(el);
+    // còn dòng bên dưới: mờ dần ở mép dưới để biết cuộn được; cuộn tới cuối thì bỏ
+    const more = () => body.classList.toggle('more', body.scrollTop + body.clientHeight < body.scrollHeight - 2);
+    body.addEventListener('scroll', more, { passive: true });
+    more();
     // đặt cạnh chỗ bấm, không tràn khỏi màn hình
     const r = el.getBoundingClientRect(), pad = 8;
     const left = Math.min(Math.max(pad, at.x + 12), innerWidth - r.width - pad);

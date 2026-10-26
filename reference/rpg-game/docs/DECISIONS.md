@@ -1430,3 +1430,6 @@ Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và 
 - Nút "Ép ở Thợ Rèn" (+0…+9) / "Ép ở Lão Hỗn Nguyên" (+10, +11): chọn sẵn món (thẻ Đang mặc / Trong túi, đứng đầu "đã
   chọn"), ở bản đồ khác thì dịch chuyển về Làng (tốn vàng như bảng chọn bản đồ), đi bộ tới NPC, mở bảng ép. Luật không đổi
   (vẫn phải đứng cạnh NPC). Đang trong trận / Tháp / phòng sự kiện thì nút khóa, ghi lý do. e2e `e2e/forgego.mjs`.
+- Bổ sung (anh: "item nhiều dòng sẽ lố màn hình"): khung đồ cao tối đa bằng màn hình; phần thông tin cuộn bên trong (mờ ở mép
+  dưới khi còn dòng), hàng nút (Trang bị / Ép / Vứt…) luôn ở dưới cùng. Xem trước ép gọn: ngọc + vàng chung một dòng.
+  e2e `e2e/longtip.mjs` (360 × 640, đồ 6 dòng Excellent + May mắn + Bộ Thần + 9).
