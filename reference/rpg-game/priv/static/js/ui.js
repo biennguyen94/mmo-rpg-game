@@ -288,6 +288,8 @@
       view.innerHTML = viewCreate();
       return;
     }
+    // đã sang bản đồ khác (chọn map, cổng, sự kiện…): đóng hội thoại với NPC của bản đồ cũ
+    if (npc && npc.map !== P.pos.map) { npc = null; market.data = null; }
     hud.hidden = false;
     hud.innerHTML = viewHud();
     tweenGold();
@@ -1046,13 +1048,13 @@
   }
   function viewPeople() {
     const m = WORLD.maps[P.pos.map] || {};
-    const list = others().slice().sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
+    const list = others().slice().sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || a.name.localeCompare(b.name));
     const inParty = (id) => party && party.members.some((x) => x.id === id);
     return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
       ${list.length ? `<div class="list">${list.map((o) => `<button class="item people-row" data-act="profile" data-uid="${o.id}">
         <img class="sprite sm" src="${window.Doll.url(o.look)}" alt="">
         <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
-          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
+          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
         <span class="small muted">›</span></button>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
       <p class="small muted">Người chơi khác không vẽ trên bản đồ; chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu…</p></div>`;
   }
@@ -1356,7 +1358,7 @@
       <div class="hud-top">
         <button class="hud-ava" data-act="profile" data-uid="${Net.userId}" aria-label="Hồ sơ của bạn">${heroSprite()}</button>
         <div class="hud-who">
-          <div class="hud-name"><span class="nm">${esc(P.name)}</span> <span class="small muted num lv">Cấp ${P.level}</span></div>
+          <div class="hud-name"><span class="nm">${esc(P.name)}</span> <span class="small muted num lv">${P.rebirths ? `CS ${P.rebirths} · ` : ''}Cấp ${P.level}</span></div>
           <div class="gold">${icon('two-coins')}${fmt(P.gold)}</div>
         </div>
         <button class="hud-btn" data-act="friends-open" aria-label="Bạn bè${friendsBadge() ? `, ${friendsBadge()} tin mới` : ''}">👥${friendsBadge() ? `<span class="points-dot">${friendsBadge()}</span>` : ''}</button>
@@ -4073,7 +4075,8 @@
       const before = ob && nb && !ob.over && ob.monster.id === nb.monster.id ? snapBattle() : null;
       const old = P;
       P = p;
-      refresh();
+      // server chuyển sang bản đồ khác khi đang nói chuyện với NPC: vẽ lại để đóng hội thoại cũ
+      if (npc && P && npc.map !== P.pos.map) render(); else refresh();
       celebrate(old, P);
       if (before && (before.mHp !== nb.monster.hp || before.pHp !== battleHp() || nb.over)) {
         const act = before.mHp !== nb.monster.hp ? 'attack' : 'potion';

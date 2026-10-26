@@ -62,12 +62,13 @@ defmodule HacLong.World do
   @doc "Bản đồ chung (nhiều người cùng thấy nhau), không phải bản đồ riêng như tháp."
   def shared?(%{map: id}), do: not Maps.get(id).private
 
-  @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, ngoại hình, ký hiệu bang."
+  @doc "Những gì người khác thấy về mình trên bản đồ: tên, lớp, cấp, số lần chuyển sinh, ngoại hình, ký hiệu bang."
   def info(p) do
     %{
       name: p.name,
       cls: p.cls,
       level: p.level,
+      rebirths: Map.get(p, :rebirths) || 0,
       look: Engine.look(p),
       tag: Map.get(p, :guild) && p.guild.tag
     }

@@ -544,6 +544,7 @@ defmodule HacLong.World.MapServer do
             name: p.name,
             cls: p.cls,
             level: p.level,
+            rebirths: p[:rebirths] || 0,
             look: p[:look],
             tag: p[:tag],
             # đồ sát: tên đỏ
