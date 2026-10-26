@@ -25,3 +25,10 @@ python3 scripts/kho_do/build.py /tmp/kho/data.json priv/static/assets/pixel_icon
   với `priv/static/assets/`).
 
 Bản đã đăng: artifact "Kho Đồ Hắc Long". Đăng lại sau khi build: nhờ Claude cập nhật artifact đó từ `tmp/kho_do/kho_do.html`.
+
+## GitHub Pages
+
+Workflow `.github/workflows/kho-do-pages.yml` (gốc repo) tự dựng lại trang mỗi lần push lên `main` có đổi dữ liệu game,
+`lib/`, hình Pixel hoặc `scripts/kho_do/`, rồi đăng lên `https://<user>.github.io/<repo>/` (chạy tay: tab Actions →
+"Kho Đồ (GitHub Pages)" → Run workflow). Bật một lần: Settings → Pages → Source: **GitHub Actions**. Trang công khai;
+hình là bộ Pixel CC0 (`CREDITS.md`), không có asset MU.

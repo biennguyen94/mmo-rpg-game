@@ -1352,3 +1352,9 @@ Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (l�
 - Nhật ký trận đánh người: dòng khiên / phản sát thương / đòn mở màn ghi **sau** dòng "Bạn gây N sát thương" (trước đây
   ghi trước nên đọc như bị phản đòn khi chưa đánh); phản đòn ghi rõ "… phản lại N sát thương cho bạn". Đấu trường không
   hồi máu trước trận: dòng đầu "❤ Bạn vào trận với X / Y máu" (người chơi vào trận còn ít máu, một lần phản đòn đã gục).
+
+## Kho Đồ lên GitHub Pages (2026-10-26, anh duyệt cách 1)
+
+Workflow `.github/workflows/kho-do-pages.yml` dựng `scripts/kho_do/build.sh` trên `main` (khi đổi dữ liệu game / lib /
+hình Pixel / scripts/kho_do) và đăng GitHub Pages. Trang là phần thân của artifact nên bước đăng thêm doctype, charset
+UTF-8, viewport; đổi tên thành `index.html`, bỏ `data.json`. Chỉ có hình Pixel CC0, không asset MU (CLAUDE.md §7).
