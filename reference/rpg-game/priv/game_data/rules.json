@@ -181,17 +181,18 @@
       },
       "_gear_weights_doc": "B-15 (kiểu MU): [số dòng cộng thêm, trọng số] của đồ rơi; mỗi dòng +RULES.upgrade.life.per_line tấn công / phòng thủ. Rương, rèn, sự kiện, trùm cũng dùng [số dòng, trọng số].",
       "gear_weights": [[0, 50], [1, 35], [2, 12], [3, 3]],
+      "_gear_slots_doc": "Ngưỡng cộng dồn chọn ô đồ rơi: vũ khí 25%, bộ giáp 55% (chia đều các ô giáp hợp lớp), khiên 7%, trang sức 13% (nhẫn / dây chuyền). Trước 38 / 43 / 13 / 6%: giáp mỗi ô chỉ ~8,6% nên lên chậm (DECISIONS \"Tỉ lệ ô đồ rơi\", docs/BALANCE_AUDIT_2026-10-26.md).",
       "gear_slots": [
         [
-          0.38,
+          0.25,
           "weapon"
         ],
         [
-          0.81,
+          0.8,
           "set"
         ],
         [
-          0.94,
+          0.87,
           "shield"
         ],
         [
@@ -897,7 +898,7 @@
       "verified": false
     },
     "pvp": {
-      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\"). Hệ số nhận sát thương theo lớp: class_taken_by_rebirth[số lần chuyển sinh của người bị đánh][lớp] (mốc lớn hơn bảng dùng dòng cuối; DECISIONS \"Đánh người: hệ số lớp theo mốc chuyển sinh\"), chỉnh bằng scripts/pvp/tune.exs.",
+      "_doc": "DECISIONS \"Cân bằng đánh người\": khi đối thủ là người (thách đấu, đồ sát, Hỗn Chiến). Mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) × dmg_mult; tỉ lệ chí mạng × crit_rate_mult, phần cộng thêm của hệ số chí mạng × crit_bonus_mult (×2.5 → 1 + 1.5 × 0.5); né × dodge_mult (thu nhỏ theo tỉ lệ, không chặn trần: đồ tốt vẫn hơn). Vừa hết choáng thì miễn choáng stun_immune lượt. Tỉ lệ choáng lên người × stun_mult (DECISIONS \"Đồ sát: hiệu ứng chéo\"). Bình máu khi đánh người hồi × potion_mult, mỗi potion_cd lượt của mình uống một lần, tối đa potion_max bình mỗi trận; hồi máu theo % máu tối đa từ kỹ năng / thú cưng × heal_mult (DECISIONS \"Đánh người: hồi máu kỹ năng\"; DECISIONS \"Đánh người: bình máu\"). Hệ số nhận sát thương theo lớp: class_taken_by_rebirth[số lần chuyển sinh của người bị đánh][lớp] (mốc lớn hơn bảng dùng dòng cuối; DECISIONS \"Đánh người: hệ số lớp theo mốc chuyển sinh\"), chỉnh bằng scripts/pvp/tune.exs. Đấu trường: class_taken_arena_by_rebirth (PVP=arena scripts/pvp/tune.exs).",
       "dmg_mult": 0.2,
       "crit_rate_mult": 0.5,
       "crit_bonus_mult": 0.5,
@@ -909,6 +910,19 @@
       "potion_max": 3,
       "heal_mult": 0.5,
       "class_taken_by_rebirth": {
+        "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
+        "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
+        "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
+        "3": {"dk": 1.09, "dw": 0.72, "elf": 0.9, "mg": 1.04},
+        "4": {"dk": 1.13, "dw": 0.71, "elf": 0.91, "mg": 1.02},
+        "5": {"dk": 1.12, "dw": 0.73, "elf": 0.9, "mg": 1.02},
+        "6": {"dk": 1.1, "dw": 0.74, "elf": 0.97, "mg": 0.93},
+        "7": {"dk": 1.08, "dw": 0.75, "elf": 0.98, "mg": 0.92},
+        "8": {"dk": 1.1, "dw": 0.77, "elf": 0.97, "mg": 0.9},
+        "9": {"dk": 1.12, "dw": 0.73, "elf": 1.01, "mg": 0.9},
+        "10": {"dk": 1.07, "dw": 0.86, "elf": 1.04, "mg": 0.78}
+      },
+      "class_taken_arena_by_rebirth": {
         "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
         "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
         "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
@@ -981,8 +995,10 @@
       "refresh_s": 60
     },
     "arena": {
+      "_doc": "Đấu trường (thách đấu bản sao người khác). first_strike_mult: đòn đầu (lượt đầu) của người thách đấu × hệ số này, như đồ sát (DECISIONS \"Đấu trường: công bằng người thách đấu / đối thủ máy\").",
       "per_day": 15,
-      "elo_k": 32
+      "elo_k": 32,
+      "first_strike_mult": 0.5
     },
     "party": {
       "max": 3,

@@ -20,9 +20,19 @@ defmodule SlaySim do
   def fight(a, b, cap \\ 200) do
     ps = %{1 => enter(a, b, 2), 2 => enter(b, a, 1)}
     chars = %{1 => a, 2 => b}
+
     # DEF_SHIELD: người bị đánh (2) vào trận có khiên = X × máu tối đa (hết khi vỡ)
     sh = String.to_float(System.get_env("DEF_SHIELD") || "0.0")
-    fx2 = if sh > 0, do: %{effects: [%{id: "shield", turns: 999, power: round(sh * ps[2].hp)}], turn: 0, pstun_free: 0, pet_revived: false}
+
+    fx2 =
+      if sh > 0,
+        do: %{
+          effects: [%{id: "shield", turns: 999, power: round(sh * ps[2].hp)}],
+          turn: 0,
+          pstun_free: 0,
+          pet_revived: false
+        }
+
     st = %{mismatch: 0, turns: 0, stunned: 0, reduced: 0, saved: 0, pots: 0}
     loop(ps, chars, %{1 => ps[1].hp, 2 => ps[2].hp}, %{1 => nil, 2 => fx2}, 1, 0, cap, st)
   end
@@ -49,6 +59,7 @@ defmodule SlaySim do
     p2 =
       if p.hp > 0 do
         {act, sk} = Engine.auto_strike(p)
+
         # POT=1: như người chơi thật, máu dưới POT_PCT (mặc định 50%) thì uống bình máu (mất lượt)
         pot? =
           System.get_env("POT") == "1" and
@@ -58,7 +69,10 @@ defmodule SlaySim do
         # hết MP cho mọi kỹ năng đã hồi chiêu xong thì uống bình mana (POT=1)
         mana? =
           System.get_env("POT") == "1" and sk == nil and Map.get(p.inv, "mana_l", 0) > 0 and
-            Enum.any?(Engine.skills(p), &(Engine.cooldown(p, &1.id) == 0 and (p.mp || 0) < Engine.skill_mp(p, &1)))
+            Enum.any?(
+              Engine.skills(p),
+              &(Engine.cooldown(p, &1.id) == 0 and (p.mp || 0) < Engine.skill_mp(p, &1))
+            )
 
         strike = if sk, do: %{"act" => "skill", "skill" => sk}, else: %{"act" => act}
 
@@ -78,23 +92,49 @@ defmodule SlaySim do
       end
 
     raw = hp[foe_id] + @pad - p2.battle.monster.hp
+
     # đòn mở màn (RULES.slay.first_strike_mult, như Session.slay_hit); FIRST_MULT=… để thử số khác
     first = System.get_env("FIRST_MULT")
-    first = if first, do: String.to_float(first), else: HacLong.Game.Data.rules().slay.first_strike_mult
+
+    first =
+      if first, do: String.to_float(first), else: HacLong.Game.Data.rules().slay.first_strike_mult
+
     raw = if n == 0, do: round(raw * first), else: raw
 
     shown =
       p2.battle.log
-      |> Enum.flat_map(&Regex.scan(~r/(?:gây|cắn thêm) (\d+) sát thương/u, &1.text, capture: :all_but_first))
+      |> Enum.flat_map(
+        &Regex.scan(~r/(?:gây|cắn thêm) (\d+) sát thương/u, &1.text, capture: :all_but_first)
+      )
       |> Enum.map(fn [x] -> String.to_integer(x) end)
       |> Enum.sum()
 
     {p2, debuffs} = if cross?, do: Engine.pvp_take_debuffs(p2), else: {p2, []}
+
     # so sánh: NO_STUN=1 bỏ choáng chéo, NO_UNDYING=1 bỏ Bất Tử, NO_REVIVE=1 bỏ Long Vương Hồi Sinh
-    debuffs = if System.get_env("NO_STUN") == "1", do: Enum.reject(debuffs, &(&1.id == "stun")), else: debuffs
-    foe = if System.get_env("NO_UNDYING") == "1", do: put_in(foe, [:battle, :effects, :player], Enum.reject(foe.battle.effects.player, &(&1.id == "undying"))), else: foe
-    foe = if System.get_env("NO_REVIVE") == "1", do: put_in(foe, [:battle, :pet_revived], true), else: foe
-    {foe2, real} = if cross?, do: Engine.pvp_defend(foe, raw), else: {%{foe | hp: foe.hp - raw}, raw}
+    debuffs =
+      if System.get_env("NO_STUN") == "1",
+        do: Enum.reject(debuffs, &(&1.id == "stun")),
+        else: debuffs
+
+    foe =
+      if System.get_env("NO_UNDYING") == "1",
+        do:
+          put_in(
+            foe,
+            [:battle, :effects, :player],
+            Enum.reject(foe.battle.effects.player, &(&1.id == "undying"))
+          ),
+        else: foe
+
+    foe =
+      if System.get_env("NO_REVIVE") == "1",
+        do: put_in(foe, [:battle, :pet_revived], true),
+        else: foe
+
+    {foe2, real} =
+      if cross?, do: Engine.pvp_defend(foe, raw), else: {%{foe | hp: foe.hp - raw}, raw}
+
     foe2 = Engine.pvp_receive(foe2, debuffs)
 
     bad = if shown != raw, do: 1, else: 0
@@ -106,7 +146,9 @@ defmodule SlaySim do
         stunned: st.stunned + if(stunned?, do: 1, else: 0),
         reduced: st.reduced + if(raw > 0 and real < raw, do: 1, else: 0),
         saved: st.saved + if(foe.hp - real <= 0 and foe2.hp > 0, do: 1, else: 0),
-        pots: st.pots + if(Map.get(p2.inv, "potion_l", 0) < Map.get(p.inv, "potion_l", 0), do: 1, else: 0)
+        pots:
+          st.pots +
+            if(Map.get(p2.inv, "potion_l", 0) < Map.get(p.inv, "potion_l", 0), do: 1, else: 0)
     }
 
     # theo từng bên (1 = người tấn công): sát thương thật gây ra, máu tự hồi trong lượt mình, lượt bị choáng

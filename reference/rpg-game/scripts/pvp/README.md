@@ -8,6 +8,12 @@ thương lên người = sát thương đòn × `pvp.dmg_mult` × hệ số củ
 Bảng được chỉnh tự động bằng mô phỏng, nên **sau mỗi lần đổi gameplay** (chỉ số lớp, kỹ năng, đồ, cánh, luật đánh
 người…) chỉ cần chạy lại các lệnh dưới.
 
+## Đồ sát và Đấu trường
+
+Hai bảng riêng vì luật khác nhau (Đấu trường: đối thủ máy chạy như người, đánh cùng lượt):
+`class_taken_by_rebirth` (đồ sát, mặc định) và `class_taken_arena_by_rebirth` (thêm `PVP=arena` vào mọi lệnh dưới,
+ví dụ `PVP=arena TUNE=1 WRITE=1 mix run --no-start scripts/pvp/tune.exs`). Test `mix test --only balance` kiểm cả hai.
+
 ## Ba lệnh
 
 Chạy trong thư mục dự án (`reference/rpg-game`), không cần server hay database.
@@ -86,6 +92,7 @@ Lưu ý:
 - `balance.exs`: đo / chỉnh / ghi bảng (dùng chung cho `tune.exs` và test).
 - `run.exs`: đồ sát chéo 4 lớp nhân vật tối đa.
 - `cross.exs`: đồ sát giữa hai người khác mốc chuyển sinh (`PAIRS=0-1,3-7`).
-- `arena.exs`: Đấu trường chéo 4 lớp theo mốc (đối thủ máy như người thật; `POT=0` không uống bình).
+- `arena.exs`: Đấu trường chéo 4 lớp theo mốc, in cả từng cặp (đối thủ máy như người thật; `POT=0` không uống bình).
+- `lords.exs`: từng lớp đánh chúa tể vùng chuyển sinh theo mốc (tỉ lệ thắng, số lượt).
 - `journey_pk.exs`: đồ sát chéo với nhân vật chơi thật (`Journey`) hoặc `SRC=tier`.
 - `why.exs`: tìm nguyên nhân lệch (chỉ số, sát thương / lượt, hồi máu, số lượt để hạ).

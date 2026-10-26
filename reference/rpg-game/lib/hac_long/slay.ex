@@ -188,7 +188,7 @@ defmodule HacLong.Slay do
     max_hp = Engine.derived(p).maxHp
 
     HacLong.Arena.opponent(p, uid)
-    |> Map.merge(%{maxHp: max_hp, hp: min(p.hp, max_hp), special: nil})
+    |> Map.merge(%{maxHp: max_hp, hp: min(p.hp, max_hp), special: nil, arena: false})
   end
 
   # ---------- API cho Session ----------

@@ -108,6 +108,8 @@ defmodule HacLong.Arena do
       cls: p.cls,
       # số lần chuyển sinh: chọn dòng hệ số lớp (RULES.pvp.class_taken_by_rebirth)
       rebirths: Map.get(p, :rebirths) || 0,
+      # Đấu trường: hệ số lớp theo bảng riêng (RULES.pvp.class_taken_arena_by_rebirth); đồ sát ghi đè false
+      arena: true,
       skills: Engine.copy_skills(p),
       mp: d.maxMp,
       maxMp: d.maxMp,

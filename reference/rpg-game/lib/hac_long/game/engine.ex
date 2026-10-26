@@ -39,6 +39,7 @@ defmodule HacLong.Game.Engine do
   @pet_sk @rules.pets.skills
   # DECISIONS "Cân bằng đánh người"
   @pvp @rules.pvp
+  @arena_first @rules.arena[:first_strike_mult] || 1
   # cầm 2 vũ khí 1 tay (B-42)
   @dual @rules.dual_wield
   @up @rules.upgrade
@@ -1119,11 +1120,13 @@ defmodule HacLong.Game.Engine do
                             do: if(pvp, do: pvp_crit_mult(d.critMult), else: d.critMult),
                             else: 1
                           ),
-                        (m[:taken] || 1) * if(pvp, do: pvp_taken(m[:cls], m[:rebirths]), else: 1)
+                        (m[:taken] || 1) *
+                          if(pvp, do: pvp_taken(m[:cls], m[:rebirths], m[:arena]), else: 1)
                       )
               )
 
             {dmg, p} = mirror_guard(p, dmg)
+            {dmg, p} = arena_opening(p, dmg)
             p = put_in(p, [:battle, :overkill], p.battle.monster.hp - dmg)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
             prefix = if skill, do: "✨ #{name}: ", else: ""
@@ -1172,7 +1175,7 @@ defmodule HacLong.Game.Engine do
     # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
     bite =
       if bite > 0 and m[:pvp],
-        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls], m[:rebirths]))),
+        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls], m[:rebirths], m[:arena]))),
         else: bite
 
     if bite > 0 do
@@ -1594,7 +1597,8 @@ defmodule HacLong.Game.Engine do
               round(d.def * (1 - (m[:ignore_def] || 0))),
               if(mc, do: if(pvp, do: pvp_crit_mult(cm), else: cm), else: 1),
               (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-                (1 - pet_guard(p)) * if(pvp, do: pvp_taken(p.cls, Map.get(p, :rebirths)), else: 1)
+                (1 - pet_guard(p)) *
+                if(pvp, do: pvp_taken(p.cls, Map.get(p, :rebirths), m[:arena]), else: 1)
             )
 
           {dmg, p} = absorb_shield(p, dmg)
@@ -1656,7 +1660,7 @@ defmodule HacLong.Game.Engine do
 
     taken =
       (1 - power(p, :player, "guard")) * (1 - d.wingAbsorb) * (1 - d.excAbsorb) *
-        (1 - pet_guard(p)) * pvp_taken(p.cls, Map.get(p, :rebirths))
+        (1 - pet_guard(p)) * pvp_taken(p.cls, Map.get(p, :rebirths), m[:arena])
 
     dmg = Enum.sum(for _ <- 1..k.hits, do: damage(atk, dfn, k.mult / k.hits * cm, taken))
     {dmg, p} = absorb_shield(p, dmg)
@@ -1738,13 +1742,43 @@ defmodule HacLong.Game.Engine do
       |> put_in([:battle, :monster, :hp], p.hp + @pad)
       |> put_in([:battle, :log], [])
 
-    {act, sk} = auto_strike(mi)
-    {_, mi} = act(mi, act, sk)
+      # suy yếu mình đặt lên đối thủ: đòn của đối thủ máy yếu đi như người thật (hiệu ứng chéo)
+      |> set_effects(
+        :player,
+        Enum.reject(effects(b.mirror, :player), &(&1.id == "weaken")) ++
+          Enum.filter(effects(p, :monster), &(&1.id == "weaken"))
+      )
+
+    # đối thủ máy uống bình máu như người (dưới nửa máu; luật bình khi đánh người: hồi ×, cách lượt, tối đa mỗi trận)
+    {r, mi2} =
+      if mi.hp < derived(mi).maxHp * 0.5 and best_potion(mi, derived(mi).maxHp - mi.hp) != nil,
+        do: act(mi, "potion"),
+        else: {%{ok: false}, mi}
+
+    mi =
+      if r[:ok] == false do
+        {act, sk} = auto_strike(mi)
+        elem(act(mi, act, sk), 1)
+      else
+        mi2
+      end
+      |> fresh_buffs(effects(mi, :player))
+
     raw = p.hp + @pad - mi.battle.monster.hp
     stun? = effect(mi, :monster, "stun")
     mi = drop_effect(mi, :monster, "stun")
+
+    # độc / bỏng / chảy máu / suy yếu đối thủ máy gây lên bản sao của mình: chuyển sang mình (như đồ sát)
+    {mi, debuffs} = pvp_take_debuffs(mi)
     healed = mi.hp - m.hp
-    p = put_in(p, [:battle, :monster, :hp], min(m.maxHp, mi.hp))
+
+    # máu tối đa của đối thủ theo chỉ số thật lúc này (buff tăng máu như Tăng Sinh Lực), như máu tối đa của mình
+    mmax = max(m.maxHp, derived(mi).maxHp)
+
+    p =
+      p
+      |> put_in([:battle, :monster, :maxHp], mmax)
+      |> put_in([:battle, :monster, :hp], min(mmax, mi.hp))
 
     # buff phòng thủ / khiên / thú che chắn của mình trong trận vẫn tính
     dealt = round(raw * (1 - power(p, :player, "guard")) * (1 - pet_guard(p)))
@@ -1768,6 +1802,7 @@ defmodule HacLong.Game.Engine do
         )
       )
       |> reflect(dealt, d.excReflect)
+      |> pvp_receive(debuffs)
       |> put_in([:battle, :mirror], mi)
 
     p =
@@ -1854,7 +1889,7 @@ defmodule HacLong.Game.Engine do
 
     mdot =
       if m[:pvp] && mdot > 0,
-        do: max(1, round(mdot * pvp_taken(m[:cls], m[:rebirths]))),
+        do: max(1, round(mdot * pvp_taken(m[:cls], m[:rebirths], m[:arena]))),
         else: mdot
 
     p =
@@ -1906,27 +1941,36 @@ defmodule HacLong.Game.Engine do
 
   def pvp_rules, do: @pvp
 
-  # bảng hệ số lớp theo số lần chuyển sinh: [{mốc, %{"dk" => hệ số, …}}] tăng dần
-  @taken_rows (@pvp[:class_taken_by_rebirth] || %{})
-              |> Enum.map(fn {r, row} ->
-                {String.to_integer(to_string(r)),
-                 Map.new(row, fn {c, v} -> {to_string(c), v} end)}
-              end)
-              |> Enum.sort()
+  # bảng hệ số lớp theo số lần chuyển sinh: [{mốc, %{"dk" => hệ số, …}}] tăng dần; Đấu trường có bảng riêng
+  # (`class_taken_arena_by_rebirth`, luật khác đồ sát: đối thủ máy, đánh cùng lượt), không có thì dùng bảng đồ sát
+  taken_rows = fn tab ->
+    (tab || %{})
+    |> Enum.map(fn {r, row} ->
+      {String.to_integer(to_string(r)), Map.new(row, fn {c, v} -> {to_string(c), v} end)}
+    end)
+    |> Enum.sort()
+  end
+
+  @taken_rows taken_rows.(@pvp[:class_taken_by_rebirth])
+  @taken_rows_arena taken_rows.(
+                      @pvp[:class_taken_arena_by_rebirth] || @pvp[:class_taken_by_rebirth]
+                    )
 
   @doc """
   Hệ số sát thương lên người lớp `cls`, `rebirths` lần chuyển sinh, khi đánh người: `dmg_mult` ×
-  `class_taken_by_rebirth[mốc][lớp]` (cân bằng lớp theo mốc; quá bảng thì dùng dòng cuối).
+  `class_taken_by_rebirth[mốc][lớp]` (cân bằng lớp theo mốc; quá bảng thì dùng dòng cuối); `arena?`: Đấu trường dùng
+  `class_taken_arena_by_rebirth`.
   """
-  def pvp_taken(cls, rebirths \\ 0),
-    do: @pvp.dmg_mult * ((cls && class_taken(cls, rebirths || 0)) || 1)
+  def pvp_taken(cls, rebirths \\ 0, arena? \\ false),
+    do: @pvp.dmg_mult * ((cls && class_taken(cls, rebirths || 0, arena? == true)) || 1)
 
-  defp class_taken(cls, rb) do
+  defp class_taken(cls, rb, arena?) do
     # script cân bằng (scripts/pvp/balance.exs) đè hệ số lớp lúc chạy; server không đặt nên luôn dùng rules.json
     case :persistent_term.get({__MODULE__, :class_taken}, nil) do
       nil ->
         row =
-          Enum.reduce(@taken_rows, nil, fn {r, row}, acc ->
+          Enum.reduce(if(arena?, do: @taken_rows_arena, else: @taken_rows), nil, fn {r, row},
+                                                                                    acc ->
             if r <= rb or acc == nil, do: row, else: acc
           end)
 
@@ -2021,7 +2065,7 @@ defmodule HacLong.Game.Engine do
           %{e | turns: 1, power: 0}
 
         %{id: id} = e when id in @dots ->
-          %{e | power: max(1, round(e.power * pvp_taken(m[:cls], m[:rebirths])))}
+          %{e | power: max(1, round(e.power * pvp_taken(m[:cls], m[:rebirths], m[:arena])))}
 
         e ->
           e
@@ -2095,6 +2139,21 @@ defmodule HacLong.Game.Engine do
   # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Long Vương Hồi Sinh của mình vẫn cứu)
   defp mirror_guard(%{battle: %{mirror: %{} = mi}} = p, dmg) do
     dmg = round(dmg * (1 - power(mi, :player, "guard")) * (1 - pet_guard(mi)))
+
+    # khiên của đối thủ máy đỡ đòn như khiên của mình (trước đây bỏ sót: chỉ người thách đấu được khiên đỡ)
+    {dmg, mi2} = absorb_shield(mi, dmg)
+
+    p =
+      if mi2 == mi,
+        do: p,
+        else:
+          p
+          |> put_in([:battle, :mirror], mi2)
+          |> log(
+            "🛡 Khiên của #{p.battle.monster.name} đỡ #{shield_used(mi, mi2)} sát thương.",
+            "info"
+          )
+
     back = min(round(dmg * derived(mi).excReflect), p.hp)
 
     p =
@@ -2125,6 +2184,33 @@ defmodule HacLong.Game.Engine do
   end
 
   defp mirror_guard(p, dmg), do: {dmg, p}
+
+  # Trận của đối thủ máy chạy `live`: hiệu ứng đếm lượt ngay sau đòn của nó, nên buff vừa đặt (khiên, thủ thế, né…)
+  # mất một lượt trước khi kịp đỡ đòn nào. Hiệu ứng của mình đếm ở cuối vòng (sau đòn của đối thủ). Bù 1 lượt cho hiệu
+  # ứng đối thủ máy vừa đặt / làm mới trong lượt này để hai bên được đỡ cùng số đòn.
+  defp fresh_buffs(mi, before) do
+    old = Map.new(before, &{&1.id, &1.turns})
+
+    list =
+      Enum.map(effects(mi, :player), fn e ->
+        if e.turns >= (old[e.id] || 0), do: %{e | turns: e.turns + 1}, else: e
+      end)
+
+    set_effects(mi, :player, list)
+  end
+
+  defp shield_used(a, b) do
+    pool = fn x -> (effect(x, :player, "shield") || %{power: 0}).power end
+    pool.(a) - pool.(b)
+  end
+
+  # Đấu trường: đòn trong lượt đầu của người thách đấu × `RULES.arena.first_strike_mult` (đòn mở màn, như đồ sát)
+  defp arena_opening(%{battle: %{mirror: %{}, turn: 1}} = p, dmg) when @arena_first < 1 do
+    dmg2 = round(dmg * @arena_first)
+    {dmg2, log(p, "⚔ Đòn mở màn chỉ gây ×#{@arena_first} sát thương.", "info")}
+  end
+
+  defp arena_opening(p, dmg), do: {dmg, p}
 
   defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,
     do: put_in(p, [:battle, :stun_free], p.battle.turn + 1 + @pvp.stun_immune)

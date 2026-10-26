@@ -1318,3 +1318,23 @@ thủ có `look.aura` (hào quang, đợt FX), `rebirths` (hệ số lớp theo 
 người) — các khóa này chưa được thêm vào danh sách. Sửa: thêm các khóa đó, và khóa ngoài danh sách dùng atom nếu đã có
 sẵn (`String.to_existing_atom`), không thì giữ chuỗi — không tạo atom mới từ dữ liệu, không crash với khóa thêm về sau.
 Test `side_save_test` "nhân vật lưu giữa trận đánh người … nạp lại được".
+
+## Đấu trường công bằng cho người thách đấu và đối thủ máy (2026-10-26, anh yêu cầu "làm 1")
+
+Đo trước khi sửa (`PVP=arena`, đồ giống nhau theo mốc): người thách đấu thắng 100 / 97 / 99 / 68% ở r0 / r3 / r6 / r10.
+Nguyên nhân: đối thủ máy (`battle.mirror`, chạy chế độ `live`) (1) không uống bình máu; (2) không nhận độc / suy yếu
+của người thách đấu; (3) khiên của nó không đỡ đòn; (4) buff vừa bật bị trừ lượt ngay trong lượt bật (chế độ `live`
+đếm lượt liền) nên khiên / thủ thế của máy ngắn hơn người một lượt — nguyên nhân chính ở Kiếm Sĩ: sát thương thô hai
+bên ngang nhau nhưng khiên người thách đấu đỡ 63.8k so với 43.5k của máy. Sửa trong `Engine.mirror_strike/…` và
+`mirror_guard`: máy uống bình dưới 50% máu (cùng luật bình đánh người), nhận debuff, khiên đỡ đòn, buff mới +1 lượt.
+Thêm đòn mở màn `RULES.arena.first_strike_mult` = 0.5 (như đồ sát). Sau sửa: 44 / 58 / 54 / 69%.
+
+Bảng hệ số lớp riêng cho Đấu trường `RULES.pvp.class_taken_arena_by_rebirth` (đối thủ có `arena: true`; đồ sát dùng
+`class_taken_by_rebirth`), tự chỉnh như đồ sát: `PVP=arena TUNE=1 WRITE=1 mix run --no-start scripts/pvp/tune.exs`;
+test `mix test --only balance` kiểm cả hai chế độ.
+
+## Tỉ lệ ô đồ rơi (2026-10-26, anh yêu cầu "làm 3")
+
+`RULES.loot.gear_slots`: vũ khí 38 → 25%, giáp (bộ) 43 → 55%, khiên 13 → 7%, trang sức 6 → 13%. Lý do (audit
+`docs/BALANCE_AUDIT_2026-10-26.md`): giáp lên rất chậm (cấp 1 → 12 → 17 qua 10 lần chuyển sinh) trong khi vũ khí đã cấp
+47 từ r0; trang sức gần như không rơi.

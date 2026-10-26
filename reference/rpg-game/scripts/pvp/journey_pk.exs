@@ -10,7 +10,9 @@ System.put_env("POT", System.get_env("POT") || "1")
 
 alias HacLong.Game.{Engine, Journey, Gear}
 
-ks = (System.get_env("KS") || "0,1,3,5,7,10") |> String.split(",") |> Enum.map(&String.to_integer/1)
+ks =
+  (System.get_env("KS") || "0,1,3,5,7,10") |> String.split(",") |> Enum.map(&String.to_integer/1)
+
 seeds = 1..String.to_integer(System.get_env("SEEDS") || "2")
 n = String.to_integer(System.get_env("N") || "50")
 classes = ~w(dk dw elf mg)
@@ -105,12 +107,17 @@ for k <- ks do
       do:
         IO.puts(
           "  #{a} tấn công: " <>
-            Enum.map_join(classes -- [a], "  ", fn b -> {w, t} = slay[{a, b}]; "#{b} #{pct.(w, t)}" end)
+            Enum.map_join(classes -- [a], "  ", fn b ->
+              {w, t} = slay[{a, b}]
+              "#{b} #{pct.(w, t)}"
+            end)
         )
 
   IO.puts(
     "  TỔNG đồ sát: " <>
-      Enum.map_join(classes, "  ", fn c -> {w, t} = total.(slay, c); "#{c} #{pct.(w, t)}" end)
+      Enum.map_join(classes, "  ", fn c ->
+        {w, t} = total.(slay, c)
+        "#{c} #{pct.(w, t)}"
+      end)
   )
-
 end

@@ -1081,7 +1081,9 @@
         <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
       ${slayRow(o)}
       <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button></div></div>`;
+    // hành động (tổ đội, giao dịch, thách đấu, đồ sát…) lên đầu hồ sơ cho dễ bấm
     return `${head}
+      ${actions}
       <div class="card prof-head">
         ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}
         <h2 class="display" ${pr.red_s ? 'style="color:#ff3b3b"' : ''}>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h2>
@@ -1135,8 +1137,7 @@
       <div class="card small muted">
         ${kv('Lần cuối online', pr.online ? 'Đang online' : day(pr.last_seen))}
         ${kv('Đăng ký', day(pr.registered))}
-      </div>
-      ${actions}`;
+      </div>`;
   }
 
   // ---------- Chợ ----------
@@ -1964,7 +1965,7 @@
       case 'ign': return `Đòn của bạn bỏ qua ${pc(d.ignoreDef)} phòng thủ mục tiêu (dòng phụ của cánh), cả quái lẫn người.`;
       case 'hp': return 'Theo hệ số lớp, Thể lực và cấp; cộng nhẫn máu, đủ bộ giáp, đồ Thần, dòng cánh; nhân thú cưng / món ăn / Đài Phúc Lành và Excellent "máu tối đa". Hết máu là gục.';
       case 'mp': return 'Theo hệ số lớp và Năng lượng, cộng dòng cánh, nhân Excellent "MP tối đa". Kỹ năng tốn MP (tốn thêm theo cấp kỹ năng); MP hồi dần mỗi lượt và theo Năng lượng.';
-      case 'pvp': return `Đánh quái: bạn trúng theo "Trúng quái cùng cấp", quái không né. Đánh người (Đồ sát, Đấu trường): đòn thường trúng hay không tùy né của đối thủ (né ×${pv.dodge_mult}), kỹ năng luôn trúng; mọi sát thương lên người ×${pv.dmg_mult} rồi nhân theo lớp và số lần chuyển sinh của người bị đánh (bảng ở Kho Đồ); tỉ lệ chí mạng ×${pv.crit_rate_mult}. Cánh, Excellent giảm sát thương và bỏ qua phòng thủ của cả hai bên đều tính. Hiệu ứng có tác dụng lên nhau: choáng (tỉ lệ ×${pv.stun_mult}, mất một lượt, vừa thoát choáng thì kháng ${pv.stun_immune} lượt), suy yếu, độc; thủ thế, khiên, Bất Tử, Ảnh Bộ, thú cưng và Long Vương Hồi Sinh của người bị đánh vẫn đỡ đòn; mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương Hồi Sinh). Bình máu hồi ×${pv.potion_mult}, mỗi ${pv.potion_cd} lượt uống được một lần, tối đa ${pv.potion_max} bình mỗi trận. Hồi máu bằng kỹ năng và thú cưng ×${pv.heal_mult}. Đồ sát: hai bên luân phiên ra đòn, người tấn công đi trước nhưng đòn mở màn chỉ gây ×${H.slayFirst} sát thương.`;
+      case 'pvp': return `Đánh quái: bạn trúng theo "Trúng quái cùng cấp", quái không né. Đánh người (Đồ sát, Đấu trường): đòn thường trúng hay không tùy né của đối thủ (né ×${pv.dodge_mult}), kỹ năng luôn trúng; mọi sát thương lên người ×${pv.dmg_mult} rồi nhân theo lớp và số lần chuyển sinh của người bị đánh (bảng ở Kho Đồ); tỉ lệ chí mạng ×${pv.crit_rate_mult}. Cánh, Excellent giảm sát thương và bỏ qua phòng thủ của cả hai bên đều tính. Hiệu ứng có tác dụng lên nhau: choáng (tỉ lệ ×${pv.stun_mult}, mất một lượt, vừa thoát choáng thì kháng ${pv.stun_immune} lượt), suy yếu, độc; thủ thế, khiên, Bất Tử, Ảnh Bộ, thú cưng và Long Vương Hồi Sinh của người bị đánh vẫn đỡ đòn; mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương Hồi Sinh). Bình máu hồi ×${pv.potion_mult}, mỗi ${pv.potion_cd} lượt uống được một lần, tối đa ${pv.potion_max} bình mỗi trận. Hồi máu bằng kỹ năng và thú cưng ×${pv.heal_mult}. Đồ sát: hai bên luân phiên ra đòn, người tấn công đi trước nhưng đòn mở màn chỉ gây ×${H.slayFirst} sát thương. Đấu trường: đối thủ máy chơi như người thật (uống bình máu, khiên đỡ đòn, chịu độc và suy yếu), đòn mở màn của người thách đấu chỉ gây ×${H.arenaFirst} sát thương.`;
       default: return '';
     }
   }

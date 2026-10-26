@@ -36,9 +36,16 @@ dpt = fn a, b ->
       p = if System.get_env("INF_MP") == "1", do: Map.put(p, :mp, 99_999), else: p
       {act, k} = Engine.auto_strike(p)
       {_, p2} = Engine.act(p, act, k)
+
       # độc / bỏng / chảy máu đang có trên đối thủ: mỗi lượt của họ mất ngần ấy (đã × hệ số đánh người khi chuyển)
       {_, deb} = Engine.pvp_take_debuffs(p2)
-      d = deb |> Enum.filter(&(&1.id in ~w(poison burn bleed))) |> Enum.map(& &1.power) |> Enum.sum()
+
+      d =
+        deb
+        |> Enum.filter(&(&1.id in ~w(poison burn bleed)))
+        |> Enum.map(& &1.power)
+        |> Enum.sum()
+
       # máu giữ ở 50% để thấy hồi máu (kỹ năng, hút máu, thú)
       {%{p2 | hp: half}, tot + pad - p2.battle.monster.hp, sk + if(k, do: 1, else: 0),
        heal + max(0, p2.hp - half), dot + d}
@@ -68,7 +75,9 @@ for k <- ks do
     )
   end
 
-  IO.puts("  DPT sát thương + độc / lượt (% lượt dùng kỹ năng, mình hồi máu / lượt) → TTK (lượt để hạ, chưa trừ hồi máu đối thủ), seed 1:")
+  IO.puts(
+    "  DPT sát thương + độc / lượt (% lượt dùng kỹ năng, mình hồi máu / lượt) → TTK (lượt để hạ, chưa trừ hồi máu đối thủ), seed 1:"
+  )
 
   for a <- classes do
     row =
@@ -76,6 +85,7 @@ for k <- ks do
         pa = ps[{a, 1}]
         pb = ps[{b, 1}]
         {x, skr, heal, dot} = dpt.(pa, pb)
+
         "#{b} #{round(x)}+độc #{round(dot)} (#{round(skr * 100)}%, hồi #{round(heal)}) → #{Float.round(Engine.derived(pb).maxHp / max(x + dot, 1), 1)}"
       end
 
