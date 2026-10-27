@@ -1446,3 +1446,11 @@ Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và 
 - **Hàng ép gọn**: tên + ô; dòng dưới "Lên +N · tỉ lệ · ⚠ (có rủi ro) · ngọc cần dạng chip". Chạm vào món mở chi tiết (chỉ số tăng, rủi ro đầy đủ, nguyên liệu). Nút ép và nút Ngọc Sinh Mệnh xếp dọc bên phải.
 - **Sắp xếp + gập**: món ép được lên đầu, rồi món thiếu nguyên liệu; món đã tối đa / phải ép ở Lão Hỗn Nguyên gập dưới "Đã tối đa / ép tiếp ở Lão Hỗn Nguyên (n)" (tự mở khi món vừa ép rơi vào đó). Máy Hỗn Nguyên: công thức chưa đủ nguyên liệu gập dưới "Chưa đủ nguyên liệu (n)". Phần gập giữ trạng thái mở khi server đẩy cập nhật.
 - Chỉ đổi giao diện; luật, tỉ lệ, lệnh gửi server không đổi (bot gửi lệnh thẳng, không ảnh hưởng). e2e `npctabs.mjs`.
+
+## Bot cuối game: tránh chỗ gục nhiều, luyện vùng chuyển sinh, dọn túi, cho thú ăn từ từ (2026-10-27, anh "ok làm hết")
+Kiểm 20 bot (đều CS10 cấp 50): 11 bot chưa hạ được Kim Long / Hắc Long, gục 10–27 lần mà vẫn quay lại phòng trùm; CS10 cấp tối đa thì luyện mãi bản đồ cấp ≤ 51 (kinh nghiệm bỏ phí); 2 bot đầy túi 40/40; vừa mua thú là cho ăn dồn 34 lần trong 30 giây (≈ 1,1 triệu vàng).
+- **Tránh chỗ gục nhiều**: gục `bots.play.avoid.deaths` (3) lần trong `window_min` (30) phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó `hours` (2) giờ rồi thử lại; trong lúc tránh đi luyện / ép đồ. Tiến trình bot nhớ (không lưu DB; khởi động lại server thì quên).
+- **CS tối đa + cấp tối đa**: luyện ở vùng chuyển sinh đã mở, khó dần (vùng 1 bản đồ 1 → …): hạ đủ `forge.realm_kills` (30) quái ở bản đồ trước mới sang bản đồ sau; bản đồ đang tránh thì đứng ở bản đồ trước nó; bản đồ đầu tiên cũng đang tránh thì về bản đồ thường. Vùng chuyển sinh khi cần hạ chúa tể (chưa CS tối đa) dùng cùng cách tránh.
+- **Dọn túi**: túi trang bị ≥ `bots.sell.full_at` (35) món thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tới còn `down_to` (20) món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và lớp mình không mặc được hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh.
+- **Cho thú ăn từ từ**: mỗi lần cách `bots.play.feed_every_min` ([2, 5]) phút, ngẫu nhiên; điều kiện vàng (`feed_mult`) giữ nguyên.
+- Số liệu ở `RULES.bots` (version 5). Test `brain_endgame_test.exs`.

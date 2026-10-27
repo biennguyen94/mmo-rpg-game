@@ -19,6 +19,10 @@ defmodule HacLong.Bots.Brain do
   11. Cấp tối đa, đủ điều kiện → về Làng chuyển sinh (Trưởng Làng); cần hạ chúa tể vùng chuyển sinh trước thì đi vùng đó.
   12. Rảnh mà dư vàng, có ngọc → về Làng ép đồ / thêm dòng / ghép, nâng cánh (`forge_job/2`, DECISIONS "Bot ép đồ,
       chuyển sinh"). Đang chờ ghép cánh (cánh đã tháo ra túi) thì làm trước cả bước mặc đồ.
+  13. Túi trang bị gần đầy → về Làng bán đồ thừa ở Thợ Rèn (`sell_job/1`); cho thú ăn mỗi vài phút (`opts.feed_due`).
+  14. Gục nhiều lần ở một chỗ (phòng trùm đánh không lại, bản đồ quá mạnh) → tạm tránh chỗ đó (`opts.avoid`, tiến trình
+      bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
+      (`realm_target/2`; DECISIONS "Bot cuối game").
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
@@ -95,7 +99,10 @@ defmodule HacLong.Bots.Brain do
       job = event_job(p, d) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
-      job = pet_job(p) ->
+      job = sell_job(p) ->
+        do_job(p, job, snap)
+
+      job = pet_job(p, opts) ->
         do_job(p, job, snap)
 
       job = forge_job(p, opts) ->
@@ -105,7 +112,7 @@ defmodule HacLong.Bots.Brain do
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
       true ->
-        roam(p, snap, opts[:seed] || 0)
+        roam(p, snap, opts[:seed] || 0, opts[:avoid] || [])
     end
   end
 
@@ -309,9 +316,9 @@ defmodule HacLong.Bots.Brain do
   @doc """
   Thú cưng như `HacLong.Game.Journey`: thú mạnh hơn hẳn (`Pets.power/3` > `play.pet_better` × thú mạnh nhất đang có)
   mà giá ≤ `play.pet_budget` vàng dư → mua ở cửa hàng / thuần phục; dắt con mạnh nhất; vàng dư > `play.feed_mult` × giá
-  cho ăn → cho ăn. Trả `{vai NPC | nil, lệnh}` hoặc nil.
+  cho ăn và tới lượt (`opts.feed_due`: mỗi `play.feed_every_min` phút, tiến trình bot hẹn) → cho ăn. Trả `{vai NPC | nil, lệnh}` hoặc nil.
   """
-  def pet_job(p) do
+  def pet_job(p, opts \\ %{}) do
     spare = spare_gold(p)
     owned = Map.get(p, :pets) || []
     best = Enum.max_by(owned, &Pets.power(p, &1), fn -> nil end)
@@ -343,7 +350,8 @@ defmodule HacLong.Bots.Brain do
       best && best != p[:pet] ->
         {nil, %{"act" => "pet_choose", "id" => best}}
 
-      feed && spare > feed * @play.feed_mult ->
+      # cho ăn từ từ như người thật: tiến trình bot hẹn giờ (`feed_due`, `play.feed_every_min`)
+      feed && spare > feed * @play.feed_mult && Map.get(opts, :feed_due, true) ->
         {"pets", %{"act" => "pet_feed"}}
 
       true ->
@@ -432,24 +440,114 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
-  # cấp tối đa, cần hạ chúa tể vùng chuyển sinh: bản đồ của vùng đó, đi lần lượt (hạ đủ `realm_kills` quái ở bản đồ
-  # trước mới sang bản đồ sau; chúa tể ở bản đồ cuối)
+  # Vùng chuyển sinh (DECISIONS "Bot cuối game"): cấp tối đa mà cần hạ chúa tể thì đi các bản đồ của vùng đó; đã chuyển sinh
+  # tối đa thì luyện ở vùng chuyển sinh (mọi vùng đã mở, khó dần) thay vì bản đồ thường. Đi lần lượt: hạ đủ `realm_kills`
+  # quái ở bản đồ trước mới sang bản đồ sau; bản đồ đang tránh (`avoid`, vừa chết nhiều) thì dừng ở bản đồ trước nó
+  # (bản đồ đầu tiên đã tránh: nil, luyện bản đồ thường).
   @doc false
-  def realm_target(p) do
-    with true <- p.level >= @max_level,
-         %{realm: r} <- Engine.rebirth_need(p) do
-      maps =
-        Maps.ids()
-        |> Enum.map(&Maps.get/1)
-        |> Enum.filter(&(&1.realm == r and World.realm_open?(p, &1)))
-        |> Enum.sort_by(& &1.id)
+  def realm_target(p, avoid \\ []) do
+    cond do
+      p.level < @max_level ->
+        nil
 
-      Enum.find_value(maps, fn m ->
-        kills = m.spawns |> Enum.map(&HacLong.Game.Bestiary.count(p, &1.monster)) |> Enum.sum()
-        if kills < @forge.realm_kills, do: m.id
-      end) || (List.last(maps) && List.last(maps).id)
-    else
-      _ -> nil
+      need = Engine.rebirth_need(p) ->
+        realm_walk(p, realm_maps(p, &(&1 == need.realm)), avoid)
+
+      (Map.get(p, :rebirths) || 0) >= @max_rebirths ->
+        realm_walk(p, realm_maps(p, &is_integer/1), avoid)
+
+      true ->
+        nil
+    end
+  end
+
+  defp realm_maps(p, realm?) do
+    Maps.ids()
+    |> Enum.map(&Maps.get/1)
+    |> Enum.filter(&(realm?.(&1.realm) and World.realm_open?(p, &1)))
+    |> Enum.sort_by(&{&1.realm, &1.id})
+  end
+
+  defp realm_walk(p, maps, avoid) do
+    Enum.reduce_while(maps, nil, fn m, prev ->
+      kills = m.spawns |> Enum.map(&HacLong.Game.Bestiary.count(p, &1.monster)) |> Enum.sum()
+
+      cond do
+        m.id in avoid -> {:halt, prev}
+        kills < @forge.realm_kills -> {:halt, m.id}
+        true -> {:cont, m.id}
+      end
+    end)
+  end
+
+  # ---------- Chết nhiều ở một chỗ: tạm tránh ----------
+  @avoid Data.rules().bots.play.avoid
+
+  @doc """
+  Ghi một lần gục ở bản đồ `map` (lúc `now`, ms) vào `%{fails: %{bản_đồ => [mốc]}, avoid: %{bản_đồ => tới_mốc}}`:
+  gục `play.avoid.deaths` lần trong `window_min` phút ở cùng một chỗ (phòng trùm đánh không lại, bản đồ quá mạnh) thì
+  tránh chỗ đó `hours` giờ (DECISIONS "Bot cuối game").
+  """
+  def note_death(st, map, now) do
+    win = @avoid.window_min * 60_000
+    recent = [now | Enum.filter(Map.get(st.fails, map, []), &(now - &1 < win))]
+
+    if length(recent) >= @avoid.deaths,
+      do: %{
+        st
+        | fails: Map.delete(st.fails, map),
+          avoid: Map.put(st.avoid, map, now + round(@avoid.hours * 3_600_000))
+      },
+      else: %{st | fails: Map.put(st.fails, map, recent)}
+  end
+
+  @doc "Các bản đồ đang tránh lúc `now`."
+  def avoiding(st, now), do: for({m, t} <- st.avoid, now < t, do: m)
+
+  # ---------- Dọn túi ----------
+  @sell Data.rules().bots.sell
+  @gear_bag Data.rules().loot.gear_bag
+
+  @doc """
+  Túi trang bị gần đầy (≥ `bots.sell.full_at` món) thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tiếp tới khi
+  còn `down_to` món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và mặc không được
+  (lớp khác) hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh (`first_wing/4`).
+  """
+  def sell_job(p) do
+    bag = Gear.bag(p)
+    n = length(bag)
+    village? = p.pos.map == "village"
+
+    if n >= min(@sell.full_at, @gear_bag) or (village? and n > @sell.down_to) do
+      keep = wing_material(p, bag)
+
+      Enum.find_value(bag, fn g ->
+        it = Gear.resolve(g)
+        if g.uid != keep and junk?(p, it), do: {"shop", %{"act" => "sell", "id" => g.uid}}
+      end)
+    end
+  end
+
+  defp junk?(p, it) do
+    plain =
+      not it.locked and not it.stored and it.slot != "wing" and not it.excellent and not it.luck and
+        not it.anc and Engine.upgrade_level(p, it.uid) == 0
+
+    plain and
+      (not Engine.can_wear?(p, it) or
+         (it.slot in Engine.gear_slots() and
+            power(it) <= power(Gear.item(p, p.equip[Engine.equip_slot(p, it)]))))
+  end
+
+  # món giữ lại để ghép cánh đầu tiên (như `first_wing/4`: món ép cao nhất trong các ô của công thức)
+  defp wing_material(p, bag) do
+    r = p.equip[:wing] == nil && wing_recipe(1)
+
+    if r do
+      bag
+      |> Enum.filter(&(!&1[:locked] and Gear.resolve(&1).slot in r.gear.slots))
+      |> Enum.max_by(&{Engine.upgrade_level(p, &1.uid), &1.uid}, fn -> nil end)
+      |> then(&(&1 && &1.uid))
     end
   end
 
@@ -717,10 +815,10 @@ defmodule HacLong.Bots.Brain do
   defp reachable?(p, %{zone: zi}) when is_integer(zi), do: Engine.zone_unlocked?(p, zi)
   defp reachable?(_p, _m), do: true
 
-  defp roam(p, snap, seed) do
+  defp roam(p, snap, seed, avoid) do
     here = p.pos.map
-    realm = realm_target(p)
-    target = boss_room(p) || realm || target_map(p, seed)
+    realm = realm_target(p, avoid)
+    target = boss_room(p, avoid) || realm || target_map(p, seed)
 
     cond do
       here == "home" and target != "home" ->
@@ -731,7 +829,7 @@ defmodule HacLong.Bots.Brain do
 
       # vùng chuyển sinh: quái cấp cao hơn cấp tối đa, đánh mọi con (chúa tể trước)
       realm ->
-        lord = Engine.rebirth_need(p).id
+        lord = (Engine.rebirth_need(p) || %{})[:id]
         hunt_first(p, snap, lord) || hunt(p, snap, fn _m, _map -> true end)
 
       true ->
@@ -793,7 +891,7 @@ defmodule HacLong.Bots.Brain do
   defp open?(_p, _m), do: true
 
   @doc "Phòng trùm nên vào: trùm của vùng cuối đã mở chưa hạ và cấp mình ≥ cấp trùm + 1 (nil nếu không)."
-  def boss_room(p) do
+  def boss_room(p, avoid \\ []) do
     zones = Data.zones()
 
     zones
@@ -801,7 +899,8 @@ defmodule HacLong.Bots.Brain do
     |> Enum.find(fn {z, i} -> Engine.zone_unlocked?(p, i) and z.boss.id not in p.bosses end)
     |> case do
       {z, _} when p.level >= z.boss.level + 1 ->
-        if(Maps.get(z.id <> "_boss"), do: z.id <> "_boss")
+        room = z.id <> "_boss"
+        if Maps.get(room) && room not in avoid, do: room
 
       _ ->
         nil

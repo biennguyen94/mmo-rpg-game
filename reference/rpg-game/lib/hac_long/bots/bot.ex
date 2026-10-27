@@ -29,6 +29,8 @@ defmodule HacLong.Bots.Bot do
   ]
   # trung bình khoảng 4 phút một câu (mỗi nhịp ~0,6 giây)
   @chat_chance 1 / 400
+  @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
+  @feed_every HacLong.Game.Data.rules().bots.play.feed_every_min
 
   def start_link({uid, _name, _cls} = arg),
     do:
@@ -48,7 +50,12 @@ defmodule HacLong.Bots.Bot do
        deaths: nil,
        rest_until: System.monotonic_time(:millisecond),
        # lần leo Tháp Vô Tận tiếp theo (`RULES.bots.play.tower_every_min`)
-       next_tower: next_tower(System.monotonic_time(:millisecond))
+       next_tower: next_tower(System.monotonic_time(:millisecond)),
+       # lần cho thú ăn tiếp theo (`play.feed_every_min`): ngay từ đầu được cho ăn
+       next_feed: System.monotonic_time(:millisecond),
+       # bản đồ đang đứng ở nhịp trước (gục thì biết gục ở đâu) và các chỗ đang tránh (`Brain.note_death/3`)
+       last_map: nil,
+       deaths_at: %{fails: %{}, avoid: %{}}
      }}
   end
 
@@ -82,7 +89,9 @@ defmodule HacLong.Bots.Bot do
   defp tick(s) do
     p = Session.get(s.uid)
     now = System.monotonic_time(:millisecond)
-    # vừa gục (về Nhà): nghỉ một lúc rồi mới đi luyện tiếp
+
+    # vừa gục (về Nhà): nghỉ một lúc rồi mới đi luyện tiếp; gục nhiều ở một chỗ thì tạm tránh chỗ đó
+    s = note_death(s, p, now)
     s = %{s | rest_until: Brain.rest_until(s.rest_until, s.deaths, p, now), deaths: p && p.deaths}
     snap = p && snapshot(p)
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
@@ -95,7 +104,9 @@ defmodule HacLong.Bots.Bot do
             name: name,
             cls: s.cls,
             seed: s.uid,
-            tower_due: now >= s.next_tower
+            tower_due: now >= s.next_tower,
+            feed_due: now >= s.next_feed,
+            avoid: Brain.avoiding(s.deaths_at, now)
           })
 
     s =
@@ -103,9 +114,13 @@ defmodule HacLong.Bots.Bot do
         {%{ok: false}, nil} ->
           %{s | tries: s.tries + 1}
 
-        # vừa vào tháp: hẹn lần sau
+        # vừa vào tháp / cho thú ăn: hẹn lần sau
         {%{ok: true}, _} ->
-          if cmd["act"] == "tower_enter", do: %{s | next_tower: next_tower(now)}, else: s
+          case cmd["act"] do
+            "tower_enter" -> %{s | next_tower: next_tower(now)}
+            "pet_feed" -> %{s | next_feed: next_in(now, @feed_every)}
+            _ -> s
+          end
 
         _ ->
           s
@@ -113,15 +128,20 @@ defmodule HacLong.Bots.Bot do
 
     if p && !p.battle && :rand.uniform() < @chat_chance, do: say(s, p)
     Process.send_after(self(), :tick, delay(p, cmd))
-    s
+    %{s | last_map: p && p.pos.map}
   end
 
-  @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
+  # số lần gục tăng so với nhịp trước: gục ở bản đồ nhịp trước đứng
+  defp note_death(%{deaths: d, last_map: m} = s, %{deaths: now_d}, now)
+       when is_integer(d) and is_binary(m) and now_d > d,
+       do: %{s | deaths_at: Brain.note_death(s.deaths_at, m, now)}
 
-  defp next_tower(now) do
-    [lo, hi] = @tower_every
-    now + (lo + :rand.uniform(max(hi - lo, 1))) * 60_000
-  end
+  defp note_death(s, _p, _now), do: s
+
+  defp next_tower(now), do: next_in(now, @tower_every)
+
+  # mốc ngẫu nhiên trong khoảng [lo, hi] phút kể từ `now`
+  defp next_in(now, [lo, hi]), do: now + round((lo + :rand.uniform() * (hi - lo)) * 60_000)
 
   defp snapshot(%{pos: %{map: id}}) do
     m = Maps.get(id)
