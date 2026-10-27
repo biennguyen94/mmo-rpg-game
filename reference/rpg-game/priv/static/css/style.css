@@ -883,6 +883,22 @@ img.own.pix { object-fit: contain; image-rendering: pixelated; }
 .needs .ok { color: var(--good); font-weight: 600; }
 .needs .lack { color: var(--bad); }
 
+/* Khung NPC nhiều phần (Thợ Rèn, Lão Hỗn Nguyên): thanh tab dính trên đầu khi cuộn (#view đệm trên 14px) */
+.npc-tabs { position: sticky; top: -14px; z-index: 5; margin: -6px -16px 0; padding: 8px 16px; background: var(--ink); box-shadow: 0 1px 0 var(--line); }
+/* hàng ép đồ / công thức gọn: nguyên liệu dạng chip trên cùng dòng, chạm vào món mở chi tiết */
+.item.fz { align-items: center; }
+.item.fz .grow[data-act] { cursor: pointer; }
+.fz-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.fz-more { opacity: .7; }
+.fz-btns { display: flex; flex-direction: column; gap: 4px; align-items: stretch; flex: none; }
+.fz-btns > span { text-align: center; }
+.needs.chips { flex-direction: row; flex-wrap: wrap; gap: 2px 8px; margin: 0; font-size: 1em; white-space: nowrap; }
+.needs.chips .ic.jw { width: 16px; height: 16px; vertical-align: -3px; }
+.fz-detail { display: grid; gap: 2px; margin-top: 4px; padding: 6px 8px; border-left: 2px solid var(--gold); background: var(--ink-3); border-radius: 0 6px 6px 0; }
+details.fold { margin-top: 8px; }
+details.fold > summary { cursor: pointer; color: var(--dim); font-size: .9em; padding: 6px 0; }
+details.fold > .list { margin-top: 4px; }
+
 /* câu cá: bản đồ rung nhẹ khi cá cắn câu, mạnh hơn với Long Vương / cá hiếm */
 .map-shake { animation: map-shake 0.3s; }
 .map-shake-big { animation: map-shake 0.12s 5; }

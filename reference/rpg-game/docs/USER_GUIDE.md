@@ -167,10 +167,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 7. Ép đồ, ngọc, Máy Hỗn Nguyên, cánh
 
-- **Thợ Rèn** (Làng), thẻ "Ép đồ": ép đồ đang mặc, hoặc đồ trong túi đã chọn bằng nút Ép.
+- **Thợ Rèn** (Làng), tab "Ép đồ" (khung Thợ Rèn chia tab Mua · Bán · Ép đồ · Rèn · Rương, nhớ tab mở lần trước; chấm vàng
+  trên tab là số món ép được ngay): ép đồ đang mặc, hoặc đồ trong túi đã chọn bằng nút Ép. Món ép được đứng đầu; chạm vào
+  món để xem chỉ số tăng và rủi ro; món đã tối đa gập ở cuối.
   - Ép kiểu MU. +1 → +6: mỗi lần 1 Ngọc Ước Nguyện, luôn thành công.
   - +7 / +8 / +9: 1 Ngọc Tâm Linh, 50 % (đồ có May mắn 75 %); thất bại đồ **về +0**.
-  - +10 / +11: ép ở **Lão Hỗn Nguyên** (thẻ "Ép +10, +11"): +10 cần 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh (35 %),
+  - +10 / +11: ép ở **Lão Hỗn Nguyên** (tab "Ép +10/+11"; các tab khác: Cánh · Pha dòng · Ngọc & vé, công thức chưa đủ nguyên liệu gập lại): +10 cần 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh (35 %),
     +11 cần 1 Hỗn Nguyên + 2 Ước Nguyện + 2 Tâm Linh (25 %); May mắn cộng 10 % (45 % / 35 %); thất bại đồ **về +0** (không vỡ).
   - Chỉ số cộng thêm so với chỉ số gốc món đồ: +1 → +9 mỗi cấp 8 % (+9 = 72 %); **+10 = 120 %, +11 = 180 %**.
   - Ép cánh: sát thương +2 % mỗi cấp tới +9, lên +10 thêm 12 %, lên +11 thêm 15 % (+11 = +45 %); hấp thụ theo bậc cánh

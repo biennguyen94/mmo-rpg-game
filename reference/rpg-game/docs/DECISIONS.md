@@ -1439,3 +1439,10 @@ Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và 
 ## Hình nhân vật không kẹt "hình trần" khi một lớp ảnh tải hỏng (2026-10-27, anh hỏi "tại sao nhân vật là k có đồ")
 - Server gửi đủ ngoại hình (`look`) của người khác — kiểm toàn bộ nhân vật trong DB, mọi lớp ảnh đều có trong `assets/doll`. Lỗi nằm ở `doll.js`: một lớp ảnh tải hỏng (mạng chập chờn, điện thoại vừa mở lại app) thì ảnh đó hỏng vĩnh viễn trong phiên, và **mọi** nhân vật dùng lớp đó bị thay bằng hình trần mặc định (`hero.png`) tới khi tải lại trang.
 - Sửa: lớp hỏng tự tải lại sau 1 s / 3 s / 8 s; vẫn hỏng thì bỏ riêng lớp đó khi ghép (vẫn thấy giáp, tóc, vũ khí còn lại). e2e `doll.mjs`.
+
+## Khung NPC gọn: Thợ Rèn, Lão Hỗn Nguyên (2026-10-27, anh "làm hết")
+- **Tab** đầu khung NPC, dính trên đầu khi cuộn, nhớ tab đã mở theo NPC (trình duyệt): Thợ Rèn `Mua · Bán · Ép đồ · Rèn · Rương` (mặc định Mua); Lão Hỗn Nguyên `Ép +10/+11 · Cánh · Pha dòng · Ngọc & vé` (mặc định Ép +10/+11). Nhóm công thức tính theo dữ liệu: ra cánh (`out` là cánh), có `mode` (pha dòng), còn lại.
+- **Chấm báo** trên tab: số món ép được ngay (cả đang mặc lẫn trong túi) / số công thức đủ nguyên liệu.
+- **Hàng ép gọn**: tên + ô; dòng dưới "Lên +N · tỉ lệ · ⚠ (có rủi ro) · ngọc cần dạng chip". Chạm vào món mở chi tiết (chỉ số tăng, rủi ro đầy đủ, nguyên liệu). Nút ép và nút Ngọc Sinh Mệnh xếp dọc bên phải.
+- **Sắp xếp + gập**: món ép được lên đầu, rồi món thiếu nguyên liệu; món đã tối đa / phải ép ở Lão Hỗn Nguyên gập dưới "Đã tối đa / ép tiếp ở Lão Hỗn Nguyên (n)" (tự mở khi món vừa ép rơi vào đó). Máy Hỗn Nguyên: công thức chưa đủ nguyên liệu gập dưới "Chưa đủ nguyên liệu (n)". Phần gập giữ trạng thái mở khi server đẩy cập nhật.
+- Chỉ đổi giao diện; luật, tỉ lệ, lệnh gửi server không đổi (bot gửi lệnh thẳng, không ảnh hưởng). e2e `npctabs.mjs`.
