@@ -4,13 +4,17 @@ defmodule HacLong.ChaosCastle do
 
   - **Lịch** (giờ Việt Nam, hàm thuần `phase_at/1`): mỗi `every_hours` giờ, lệch `offset_minutes` phút (1h30, 3h30 …):
     `entry_minutes` phút cho vào (`:entry`), rồi `run_minutes` phút hỗn chiến (`:fight`).
+  - **Phòng** (DECISIONS "Sự kiện đánh chung theo phòng", `HacLong.Game.EventRooms`): người vào theo số lần chuyển sinh
+    vào phòng của mình, mỗi phòng một bản đồ (`map_id/1`: phòng 0 là `map`, phòng b là `map_b`, sinh bằng
+    `scripts/gen_cc_rooms.py`). Các phòng chạy cùng lịch nhưng thắng thua, quái, thưởng tính riêng từng phòng; quái của
+    phòng mạnh theo mốc chuyển sinh của phòng (`room_k/1`, `Engine.scale_event/2`).
   - **Vào** (`enter/2`, gọi từ Session khi đứng cạnh Người Gác Tháp): từ `min_level`, tốn 1 vé `ticket`; đứng vào một ô
-    trống của bản đồ `map` (bản đồ chung, `event: "chaos_castle"`).
-  - **Bắt đầu hỗn chiến:** thả `max(min_monsters, total − số người)` quái cấp quanh cấp trung bình người vào; được đồ sát
-    nhau (`HacLong.Slay`, không mất vàng / tên đỏ trong thành).
+    trống của bản đồ phòng mình (bản đồ chung, `event: "chaos_castle"`).
+  - **Bắt đầu hỗn chiến:** mỗi phòng có người thả `max(min_monsters, total − số người phòng đó)` quái cấp quanh cấp
+    trung bình người trong phòng; được đồ sát nhau (`HacLong.Slay`, không mất vàng / tên đỏ trong thành).
   - **Bị loại:** gục (quái hoặc người), đổi bản đồ, thoát game (`HacLong.World.leave/2` gọi `out/1`). Gục thì về Làng,
     không mất vàng.
-  - **Kết thúc:** còn đúng 1 người và hết quái → người đó thắng (`reward.winner`); hết giờ → người còn trụ nhận
+  - **Kết thúc (từng phòng):** còn đúng 1 người và hết quái → người đó thắng (`reward.winner`); hết giờ → người còn trụ nhận
     `reward.survivor`; mỗi người hạ được thêm `reward.per_player_kill` vàng mỗi người. Thưởng gửi **qua thư**. Người còn
     trong thành được đưa về Làng, quái còn lại biến mất.
 
@@ -22,7 +26,7 @@ defmodule HacLong.ChaosCastle do
   require Logger
 
   alias HacLong.{Chat, Mailbox, World}
-  alias HacLong.Game.{Data, Engine, Session}
+  alias HacLong.Game.{Data, Engine, EventRooms, Session}
   alias HacLong.World.{MapServer, Maps}
 
   @r Data.rules().chaos_castle
@@ -30,8 +34,22 @@ defmodule HacLong.ChaosCastle do
   @table :chaos_castle
 
   def rules, do: @r
-  def map_id, do: @r.map
   def ticket, do: @r.ticket
+
+  @doc "Bản đồ của phòng `b` (phòng 0 là bản đồ gốc `RULES.chaos_castle.map`)."
+  def map_id(b \\ 0), do: if(b == 0, do: @r.map, else: "#{@r.map}_#{b}")
+
+  @doc "Mọi bản đồ phòng."
+  def map_ids, do: for(b <- 0..(EventRooms.count() - 1), do: map_id(b))
+
+  @doc "Bản đồ `id` là một phòng Hỗn Chiến Thành."
+  def map?(id), do: id in map_ids()
+
+  @doc "Phòng của bản đồ `id` (nil nếu không phải phòng Hỗn Chiến Thành)."
+  def room_of(id), do: Enum.find_index(map_ids(), &(&1 == id))
+
+  @doc "Mốc chuyển sinh quái phòng của bản đồ `id` mạnh theo."
+  def room_k(id), do: EventRooms.k(room_of(id) || 0)
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
@@ -72,8 +90,14 @@ defmodule HacLong.ChaosCastle do
   @doc "Người `uid` còn trụ trong lượt đang chạy."
   def alive?(uid) do
     case :ets.whereis(@table) do
-      :undefined -> false
-      _ -> match?([{:alive, a}] when is_map_key(a, uid), :ets.lookup(@table, :alive))
+      :undefined ->
+        false
+
+      _ ->
+        case :ets.lookup(@table, :alive) do
+          [{:alive, a}] -> MapSet.member?(a, uid)
+          _ -> false
+        end
     end
   end
 
@@ -85,7 +109,9 @@ defmodule HacLong.ChaosCastle do
       entry_minutes: @r.entry_minutes,
       run_minutes: @r.run_minutes,
       tickets: Map.get(p.inv, @r.ticket, 0),
-      inside: p[:pos] && p.pos.map == @r.map
+      inside: p[:pos] != nil and map?(p.pos.map),
+      # phòng của người này (theo số lần chuyển sinh)
+      room: EventRooms.label(EventRooms.band(Map.get(p, :rebirths)))
     })
   end
 
@@ -144,14 +170,16 @@ defmodule HacLong.ChaosCastle do
         {%{ok: false, msg: "Cần 1 #{Data.item(@r.ticket).name}."}, p}
 
       true ->
-        case GenServer.call(__MODULE__, {:join, uid, p.name, p.level}) do
+        room = EventRooms.band(Map.get(p, :rebirths))
+
+        case GenServer.call(__MODULE__, {:join, uid, p.name, p.level, room}) do
           {:ok, pos} ->
             p = p |> Engine.take_item(@r.ticket) |> then(&World.warp(&1, uid, pos))
 
             {%{
                ok: true,
                msg:
-                 "⚔ Vào Hỗn Chiến Thành! Chờ hết giờ vào rồi hỗn chiến: trụ lại cuối cùng để thắng."
+                 "⚔ Vào Hỗn Chiến Thành (phòng #{EventRooms.label(room)})! Chờ hết giờ vào rồi hỗn chiến: trụ lại cuối cùng để thắng."
              }, p}
 
           {:error, msg} ->
@@ -190,7 +218,8 @@ defmodule HacLong.ChaosCastle do
       ends_at: nil,
       players: %{},
       alive: MapSet.new(),
-      monsters: 0,
+      # phòng → %{monsters: số quái còn lại, open: còn đang hỗn chiến}
+      rooms: %{},
       timer: nil
     }
 
@@ -198,7 +227,7 @@ defmodule HacLong.ChaosCastle do
   end
 
   @impl true
-  def handle_call({:join, uid, name, level}, _from, s) do
+  def handle_call({:join, uid, name, level, room}, _from, s) do
     cond do
       s.phase != :entry ->
         {:reply, {:error, "Hỗn Chiến Thành chưa mở cửa (hoặc đã hết giờ vào)."}, s}
@@ -207,11 +236,12 @@ defmodule HacLong.ChaosCastle do
         {:reply, {:error, "Bạn đã vào lượt này rồi."}, s}
 
       true ->
-        pos = free_tile(s)
+        pos = free_tile(room)
 
         s = %{
           s
-          | players: Map.put(s.players, uid, %{name: name, level: level, kills: 0, pkills: 0})
+          | players:
+              Map.put(s.players, uid, %{name: name, level: level, room: room, kills: 0, pkills: 0})
         }
 
         s = %{s | alive: MapSet.put(s.alive, uid)}
@@ -230,7 +260,7 @@ defmodule HacLong.ChaosCastle do
         ends_at: t + (@r.entry_minutes + @r.run_minutes) * 60
     }
 
-    s = %{s | players: %{}, alive: MapSet.new(), monsters: 0}
+    s = %{s | players: %{}, alive: MapSet.new(), rooms: %{}}
     announce_open(s)
 
     {:reply, {:ok, %{starts_at: s.starts_at, ends_at: s.ends_at}},
@@ -243,7 +273,9 @@ defmodule HacLong.ChaosCastle do
   @impl true
   def handle_cast({:out, uid}, s) do
     if MapSet.member?(s.alive, uid),
-      do: {:noreply, %{s | alive: MapSet.delete(s.alive, uid)} |> publish() |> check_end()},
+      do:
+        {:noreply,
+         %{s | alive: MapSet.delete(s.alive, uid)} |> publish() |> check_end(s.players[uid].room)},
       else: {:noreply, s}
   end
 
@@ -260,10 +292,14 @@ defmodule HacLong.ChaosCastle do
               else: %{pl | kills: pl.kills + 1}
 
           s = put_in(s.players[uid], pl)
-          if what == :monster, do: %{s | monsters: max(0, s.monsters - 1)}, else: s
+
+          if what == :monster and s.rooms[pl.room],
+            do: update_in(s.rooms[pl.room].monsters, &max(0, &1 - 1)),
+            else: s
       end
 
-    {:noreply, s |> publish() |> check_end()}
+    room = s.players[uid] && s.players[uid].room
+    {:noreply, s |> publish() |> check_end(room)}
   end
 
   @impl true
@@ -278,7 +314,8 @@ defmodule HacLong.ChaosCastle do
             starts_at: starts,
             ends_at: ends,
             players: %{},
-            alive: MapSet.new()
+            alive: MapSet.new(),
+            rooms: %{}
         }
 
         announce_open(s)
@@ -299,55 +336,87 @@ defmodule HacLong.ChaosCastle do
       Chat.system("⚔ Hỗn Chiến Thành không có ai vào, lượt này hủy.")
       s |> reset() |> publish() |> schedule()
     else
-      n = max(@r.min_monsters, @r.total - MapSet.size(s.alive))
-      level = avg_level(s)
-      spawned = spawn_monsters(n, level, s)
+      # mỗi phòng có người: quái theo số người và cấp trung bình của phòng đó
+      rooms =
+        for room <- s.alive |> Enum.map(&s.players[&1].room) |> Enum.uniq(), into: %{} do
+          n = max(@r.min_monsters, @r.total - length(alive_in(s, room)))
+          {room, %{monsters: spawn_monsters(n, avg_level(s, room), room), open: true}}
+        end
+
+      spawned = rooms |> Map.values() |> Enum.map(& &1.monsters) |> Enum.sum()
 
       Chat.system(
-        "⚔ Hỗn Chiến Thành bắt đầu: #{MapSet.size(s.alive)} người, #{spawned} quái. Trụ lại cuối cùng để thắng!"
+        "⚔ Hỗn Chiến Thành bắt đầu: #{MapSet.size(s.alive)} người ở #{map_size(rooms)} phòng, #{spawned} quái. Trụ lại cuối cùng để thắng!"
       )
 
-      s = %{s | phase: :fight, monsters: spawned}
+      s = %{s | phase: :fight, rooms: rooms}
       s |> publish() |> arm(s.ends_at, :finish)
     end
   end
 
   defp begin_fight(s), do: s
 
-  defp check_end(%{phase: :fight} = s) do
-    cond do
-      MapSet.size(s.alive) == 0 -> finish(cancel(s), :empty)
-      MapSet.size(s.alive) == 1 and s.monsters == 0 -> finish(cancel(s), :winner)
-      true -> s
-    end
+  defp alive_in(s, room), do: Enum.filter(s.alive, &(s.players[&1].room == room))
+
+  # một phòng xong (hết người hoặc còn 1 người và hết quái); mọi phòng xong thì cả lượt kết thúc
+  defp check_end(%{phase: :fight} = s, room) do
+    r = s.rooms[room]
+    alive = if r && r.open, do: alive_in(s, room), else: nil
+
+    s =
+      cond do
+        alive == nil -> s
+        alive == [] -> finish_room(s, room, :empty)
+        length(alive) == 1 and r.monsters == 0 -> finish_room(s, room, :winner)
+        true -> s
+      end
+
+    if Enum.any?(s.rooms, fn {_, r} -> r.open end),
+      do: s,
+      else: s |> cancel() |> reset() |> publish() |> schedule()
   end
 
-  defp check_end(s), do: s
+  defp check_end(s, _room), do: s
 
   defp finish(%{phase: :idle} = s, _why), do: s
 
+  # hết giờ / không ai vào: kết thúc mọi phòng còn mở
   defp finish(s, why) do
-    winner = if why == :winner, do: s.alive |> MapSet.to_list() |> List.first()
-    survivors = if why == :time, do: MapSet.to_list(s.alive), else: []
-    inside = MapSet.to_list(s.alive)
-    players = s.players
+    s =
+      s.rooms
+      |> Enum.filter(fn {_, r} -> r.open end)
+      |> Enum.reduce(s, fn {room, _}, s -> finish_room(s, room, why) end)
+
+    if s.phase == :fight and s.rooms == %{} and why == :time,
+      do: Chat.system("⚔ Hỗn Chiến Thành hết giờ.")
+
+    s |> reset() |> publish() |> schedule()
+  end
+
+  defp finish_room(s, room, why) do
+    alive = alive_in(s, room)
+    winner = if why == :winner, do: List.first(alive)
+    survivors = if why == :time, do: alive, else: []
+    players = Map.filter(s.players, fn {_, pl} -> pl.room == room end)
+    label = EventRooms.label(room)
 
     text =
       case why do
-        :winner -> "🏆 #{players[winner].name} thắng Hỗn Chiến Thành!"
-        :time -> "⚔ Hỗn Chiến Thành hết giờ: #{length(survivors)} người trụ lại."
-        :empty -> "⚔ Hỗn Chiến Thành kết thúc: không còn ai trụ lại."
+        :winner -> "🏆 #{players[winner].name} thắng Hỗn Chiến Thành (#{label})!"
+        :time -> "⚔ Hỗn Chiến Thành (#{label}) hết giờ: #{length(survivors)} người trụ lại."
+        :empty -> "⚔ Hỗn Chiến Thành (#{label}) kết thúc: không còn ai trụ lại."
       end
 
     if s.phase == :fight or why != :empty, do: Chat.system(text)
 
     Task.start(fn ->
-      safe(fn -> MapServer.clear_monsters(@r.map) end)
-      Enum.each(inside, &send_home/1)
+      safe(fn -> MapServer.clear_monsters(map_id(room)) end)
+      Enum.each(alive, &send_home/1)
       Enum.each(players, fn {uid, pl} -> reward(uid, pl, uid == winner, uid in survivors) end)
     end)
 
-    s |> reset() |> publish() |> schedule()
+    %{s | alive: MapSet.difference(s.alive, MapSet.new(alive))}
+    |> put_in([:rooms, room], %{monsters: 0, open: false})
   end
 
   defp reset(s),
@@ -358,7 +427,7 @@ defmodule HacLong.ChaosCastle do
         ends_at: nil,
         players: %{},
         alive: MapSet.new(),
-        monsters: 0
+        rooms: %{}
     }
 
   # thưởng gửi qua thư: thắng / trụ đến hết giờ + vàng theo số người hạ được
@@ -397,7 +466,7 @@ defmodule HacLong.ChaosCastle do
     safe(fn ->
       if Session.online?(uid) do
         Session.admin(uid, fn p ->
-          if p.pos.map == @r.map and p.battle == nil,
+          if map?(p.pos.map) and p.battle == nil,
             do:
               {:ok, World.warp(p, uid, World.village_spawn()),
                "Hỗn Chiến Thành kết thúc, bạn được đưa về Làng."},
@@ -407,13 +476,13 @@ defmodule HacLong.ChaosCastle do
     end)
   end
 
-  defp avg_level(s) do
-    lv = Enum.map(s.players, fn {_, p} -> p.level end)
+  defp avg_level(s, room) do
+    lv = for {_, p} <- s.players, p.room == room, do: p.level
     if lv == [], do: @r.min_level, else: round(Enum.sum(lv) / length(lv))
   end
 
   # quái cấp trong khoảng cấp trung bình ± level_spread (quái vùng và bản đồ phụ, không lấy trùm)
-  defp spawn_monsters(n, level, _s) do
+  defp spawn_monsters(n, level, room) do
     pool =
       (Enum.flat_map(Data.zones(), & &1.monsters) ++ Data.side_monsters())
       |> Enum.filter(&(abs(&1.level - level) <= @r.level_spread))
@@ -428,14 +497,14 @@ defmodule HacLong.ChaosCastle do
 
     {count, _} =
       Enum.reduce(1..n, {0, taken}, fn _, {c, taken} ->
-        case free_tile_except(taken) do
+        case free_tile_except(room, taken) do
           nil ->
             {c, taken}
 
           {x, y} = pos ->
             kind = Enum.random(pool)
 
-            case safe(fn -> MapServer.put_monster(@r.map, kind, pos) end) do
+            case safe(fn -> MapServer.put_monster(map_id(room), kind, pos) end) do
               %{} -> {c + 1, MapSet.put(taken, {x, y})}
               _ -> {c, MapSet.put(taken, {x, y})}
             end
@@ -445,18 +514,18 @@ defmodule HacLong.ChaosCastle do
     count
   end
 
-  defp tiles do
-    m = Maps.get(@r.map)
+  defp tiles(room) do
+    m = Maps.get(map_id(room))
     for y <- 0..(m.height - 1), x <- 0..(m.width - 1), Maps.walkable?(m, x, y), do: {x, y}
   end
 
-  defp free_tile(_s) do
-    {x, y} = Enum.random(tiles())
-    %{map: @r.map, x: x, y: y}
+  defp free_tile(room) do
+    {x, y} = Enum.random(tiles(room))
+    %{map: map_id(room), x: x, y: y}
   end
 
-  defp free_tile_except(taken) do
-    case Enum.reject(tiles(), &MapSet.member?(taken, &1)) do
+  defp free_tile_except(room, taken) do
+    case Enum.reject(tiles(room), &MapSet.member?(taken, &1)) do
       [] -> nil
       l -> Enum.random(l)
     end
@@ -477,6 +546,9 @@ defmodule HacLong.ChaosCastle do
         {_, opens, _, _} -> opens + @r.every_hours * 3600
       end
 
+    # người còn trụ (`alive?/1`; trước đây không ghi nên luôn coi là đã bị loại)
+    :ets.insert(@table, {:alive, s.alive})
+
     :ets.insert(
       @table,
       {:status,
@@ -487,7 +559,7 @@ defmodule HacLong.ChaosCastle do
          next_at: next,
          players: map_size(s.players),
          alive: MapSet.size(s.alive),
-         monsters: s.monsters
+         monsters: s.rooms |> Map.values() |> Enum.map(& &1.monsters) |> Enum.sum()
        }}
     )
 

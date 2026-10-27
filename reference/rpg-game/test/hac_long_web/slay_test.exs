@@ -298,7 +298,7 @@ defmodule HacLongWeb.SlayTest do
     settled(ub.id)
     assert Slay.red?(ua.id) and Slay.red_s(ua.id) > 1700
     refute Slay.red?(ub.id)
-    assert Slay.protected_s(ub.id) in 100..120
+    assert Slay.protected_s(ub.id) in 20..30
     assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "đã đồ sát"))
 
     # hồ sơ hiện tên đỏ; ảnh chụp bản đồ có cờ đỏ
@@ -311,17 +311,16 @@ defmodule HacLongWeb.SlayTest do
     assert msg =~ "đang được bảo vệ"
   end
 
-  test "mỗi giờ đồ sát cùng một người tối đa 3 lần; tự đi đồ sát thì mất bảo vệ" do
+  test "không giới hạn số lần đồ sát cùng một người; tự đi đồ sát thì mất bảo vệ" do
     pa = %{name: "A", hp: 100, pos: field()}
     pb = %{name: "B", hp: 100, pos: field()}
 
-    for _ <- 1..3 do
+    for _ <- 1..6 do
       {:ok, f} = Slay.start(1, 2, pa, pb)
       Slay.abort(f.id)
     end
 
-    assert {:error, "Bạn đã đồ sát B 3 lần" <> _} = Slay.start(1, 2, pa, pb)
-    # người khác vẫn đánh được
+    # người khác cũng đánh được
     assert {:ok, f} = Slay.start(3, 2, %{pa | name: "C"}, pb)
     Slay.abort(f.id)
 

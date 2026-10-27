@@ -1,4 +1,4 @@
-# Quái sự kiện theo số lần chuyển sinh của người đánh: máu / công / thủ (đúng như game dựng: Engine.make_monster +
+# Quái sự kiện theo mốc chuyển sinh k của phòng (DECISIONS "Sự kiện đánh chung theo phòng"): máu / công / thủ (đúng như game dựng: Engine.make_monster +
 # hệ số của sự kiện + Engine.scale_event/1) và so với nhân vật cùng mốc (Max.tier/2, hồ sơ đồ chơi thật; mốc 10 đồ tối đa):
 # số đòn thường để hạ, % máu mất mỗi đòn quái trúng. Kho Đồ dùng qua export.exs; chạy riêng để xem nhanh:
 #   MIX_ENV=test mix run --no-start scripts/kho_do/event_monsters.exs print
@@ -37,7 +37,7 @@ defmodule KhoDo.EventMonsters do
   defp monster(s, k) do
     m = Engine.make_monster(%{id: "ev", name: s.name, level: s.level, mult: s.mult}, false)
     m = %{m | maxHp: m.maxHp * s.hp}
-    Engine.scale_event(%{rebirths: k, battle: %{monster: m}}).battle.monster
+    Engine.scale_event(%{battle: %{monster: m}}, k).battle.monster
   end
 
   defp avg(f), do: Enum.sum(for(_ <- 1..200, do: f.())) / 200

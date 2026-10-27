@@ -75,6 +75,11 @@
     g.restore();
   }
 
+  // Ảnh lớp tải hỏng (mạng chập chờn, điện thoại vừa mở lại app): thử lại sau RETRY ms; hết lượt thì
+  // bỏ lớp đó khi ghép (vẫn thấy các lớp còn lại) thay vì trả hình trần mặc định mãi mãi.
+  const RETRY = [1000, 3000, 8000];
+  const failed = {};
+  const tries = {};
   function image(path) {
     if (!images[path]) {
       const im = new Image();
@@ -82,7 +87,13 @@
         // gom nhiều hình tải xong gần nhau thành một lần vẽ lại
         if (!notifyTimer) notifyTimer = setTimeout(() => { notifyTimer = null; listeners.forEach((f) => f()); }, 30);
       };
-      im.src = 'assets/doll/' + path + '.png';
+      im.onerror = () => {
+        const n = tries[path] || 0;
+        tries[path] = n + 1;
+        if (n < RETRY.length) setTimeout(() => { delete images[path]; image(path); }, RETRY[n]);
+        else { failed[path] = true; listeners.forEach((f) => f()); }
+      };
+      im.src = 'assets/doll/' + path + '.png' + (tries[path] ? '?r=' + tries[path] : '');
       images[path] = im;
     }
     return images[path];
@@ -91,8 +102,9 @@
   function canvas(look) {
     const k = key(look);
     if (done[k]) return done[k];
-    const ims = layers(look).map(image);
-    if (!ims.every((im) => im.complete && im.naturalWidth)) return null;
+    const paths = layers(look).filter((p) => !failed[p]);
+    const ims = paths.map(image);
+    if (!ims.length || !ims.every((im) => im.complete && im.naturalWidth)) return null;
     const c = document.createElement('canvas');
     c.width = 32; c.height = 32;
     const g = c.getContext('2d');

@@ -15,6 +15,7 @@ await page.waitForFunction(() => (window.__hl.player().inv.jewel_chaos || 0) ===
 await travel(page, 'village');
 
 R.check('gặp Thợ Rèn', await meetNpc(page, 'blacksmith'));
+await page.click('[data-act="npc-tab"][data-t="forge"]');
 await page.click('[data-act="forge-tab"][data-tab2="bag"]').catch(() => null);
 await page.waitForTimeout(300);
 R.check('Thợ Rèn: nguyên liệu mỗi loại một dòng', (await page.$$('.needs')).length > 0);
@@ -29,6 +30,8 @@ await page.click('[data-panel="chaos-upgrade"] [data-act="forge-tab"][data-tab2=
 await page.waitForTimeout(300);
 await page.locator('[data-panel="chaos-upgrade"]').scrollIntoViewIfNeeded();
 await shot(page, 'forgeui-chaos-up.png');
+await page.click('[data-act="npc-tab"][data-t="wing"]');
+await page.click('[data-fold="chaos-wing-lack"] > summary').catch(() => null);
 const wing = page.locator('[data-act="chaos"][data-id="wing2"]');
 await wing.scrollIntoViewIfNeeded();
 const txt = await wing.locator('xpath=..').textContent();

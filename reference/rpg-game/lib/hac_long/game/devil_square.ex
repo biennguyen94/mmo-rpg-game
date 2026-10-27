@@ -124,8 +124,11 @@ defmodule HacLong.Game.DevilSquare do
     @rules.tiers |> Enum.filter(&(level >= &1.from)) |> List.last() |> then(&(&1 && &1.level))
   end
 
-  @doc "Vào Quảng Trường (đang mở, đủ cấp, có vé, chưa vào đợt này). `now` để test."
-  def enter(p, now \\ DateTime.utc_now()) do
+  @doc """
+  Vào Quảng Trường (đang mở, đủ cấp, có vé, chưa vào đợt này). `now` để test. `room`: hàm vào phòng chung
+  (`HacLong.EventRoom`, nhận `%{kind, slot, level}`, trả `{:ok, trạng_thái_tháp} | {:error, lý_do}`); nil thì lượt riêng.
+  """
+  def enter(p, now \\ DateTime.utc_now(), room \\ nil) do
     w = window(now)
     daily = p[:daily] || %{}
 
@@ -137,11 +140,30 @@ defmodule HacLong.Game.DevilSquare do
       w == nil -> {%{ok: false, msg: "Quảng Trường Quỷ chưa mở cửa."}, p}
       daily[:ds_slot] == w.slot -> {%{ok: false, msg: "Bạn đã vào đợt này rồi."}, p}
       Map.get(p.inv, @rules.ticket, 0) < 1 -> {%{ok: false, msg: "Cần 1 Vé Quảng Trường."}, p}
-      true -> {%{ok: true, msg: "Vào Quảng Trường Quỷ! Hạ quái thật nhanh."}, start(p, w, now)}
+      true -> start(p, w, now, room)
     end
   end
 
-  defp start(p, w, now) do
+  @entered "Vào Quảng Trường Quỷ! Hạ quái thật nhanh."
+
+  defp start(p, w, _now, room) when is_function(room, 1) do
+    case room.(%{kind: "ds", slot: w.slot, level: tier_level(p.level)}) do
+      {:ok, t} ->
+        [ex, ey] = t.exit
+        p = %{p | inv: take(p.inv, @rules.ticket)}
+
+        {%{ok: true, msg: @entered},
+         p
+         |> Map.put(:daily, Map.put(p[:daily] || %{}, :ds_slot, w.slot))
+         |> Map.put(:pos, %{map: Tower.map_id(), x: ex, y: ey - 1})
+         |> Map.put(:tower, t)}
+
+      {:error, msg} ->
+        {%{ok: false, msg: msg}, p}
+    end
+  end
+
+  defp start(p, w, now, nil) do
     level = tier_level(p.level)
 
     ds = %{
@@ -153,7 +175,7 @@ defmodule HacLong.Game.DevilSquare do
 
     p = %{p | inv: take(p.inv, @rules.ticket)}
     p = Map.put(p, :daily, Map.put(p[:daily] || %{}, :ds_slot, w.slot))
-    go_wave(p, 1, ds)
+    {%{ok: true, msg: @entered}, go_wave(p, 1, ds)}
   end
 
   defp take(inv, id) do
@@ -201,6 +223,40 @@ defmodule HacLong.Game.DevilSquare do
         end
 
       %{id: i + 1, kind: kind, name: name, level: lvl, x: x, y: y, elite: w.boss}
+    end
+  end
+
+  # ---------- Phòng chung (DECISIONS "Sự kiện đánh chung theo phòng", `HacLong.EventRoom`) ----------
+
+  @doc "Bãi quái mới của phòng chung: đợt `n` ở cấp `level` (`salt`: hạt giống bản đồ của phòng)."
+  def room_wave(n, level, salt) do
+    t = Tower.build(n, "ds|#{salt}|#{n}")
+    Map.merge(t, %{monsters: wave_monsters(n, level, t)})
+  end
+
+  @doc "Phòng chung mới: đợt 1, trạng thái `ds` chung (cấp, số đợt)."
+  def room_new(level, salt),
+    do: Map.put(room_wave(1, level, salt), :ds, %{level: level, waves: length(@rules.waves)})
+
+  @doc "Quái `m` của phòng vừa bị hạ: bỏ khỏi bãi; trả `{t, điểm cho người hạ}`."
+  def room_kill(t, m) do
+    pts = if m.elite, do: @rules.score.boss, else: @rules.score.monster
+    {%{t | monsters: Enum.reject(t.monsters, &(&1.id == m.id))}, pts}
+  end
+
+  @doc "Bước lên cầu thang của phòng: `{:error, msg}` (còn quái), `{:next, t}` (đợt sau) hoặc `:cleared` (qua hết đợt)."
+  def room_climb(t, salt) do
+    left = length(t.monsters)
+
+    cond do
+      left > 0 ->
+        {:error, "Hạ hết quái để sang đợt sau (còn #{left})."}
+
+      t.floor >= t.ds.waves ->
+        :cleared
+
+      true ->
+        {:next, Map.put(room_wave(t.floor + 1, t.ds.level, salt), :ds, t.ds)}
     end
   end
 

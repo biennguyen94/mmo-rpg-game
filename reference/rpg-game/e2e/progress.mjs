@@ -1,5 +1,5 @@
 // Tiến trình: nhiệm vụ Trưởng Làng (nhận → hạ 5 Dơi Hang → trả), việc hằng ngày ở Bảng Tin, ép đồ ở Thợ
-// Rèn (cả đồ trong túi, Ngọc Sinh Mệnh), mua rương, Máy Hỗn Nguyên, vứt đồ, Tủ Đồ ở Nhà. Chạy: node e2e/progress.mjs [url] [thư_mục_ảnh]
+// Rèn (cả đồ trong túi qua thẻ Trong túi, Ngọc Sinh Mệnh), mua rương, Máy Hỗn Nguyên, vứt đồ, Tủ Đồ ở Nhà. Chạy: node e2e/progress.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, player, act, idle, travel, meetNpc, leaveNpc, engage, fight, shot } from './lib.mjs';
 
 const R = reporter('progress');
@@ -52,6 +52,7 @@ await leaveNpc(page);
 
 // ---------- Ép đồ kiểu MU (+1 bằng Ngọc Ước Nguyện, B-13), rương ----------
 R.check('gặp Thợ Rèn', await meetNpc(page, 'blacksmith'));
+await act(page, '[data-act="npc-tab"][data-t="forge"]');
 const before = await player(page);
 await act(page, '[data-act="upgrade"][data-slot="weapon"]');
 p = await player(page);
@@ -59,12 +60,14 @@ const lvl = p.upgrades[p.equip.weapon] || 0;
 R.check('ép vũ khí lên +1: tốn 1 Ngọc Ước Nguyện và vàng', lvl === 1 && (p.inv.jewel_bless || 0) === before.inv.jewel_bless - 1 && p.gold < before.gold, `lvl=${lvl}`);
 await shot(page, 'progress-forge.png');
 const bag0 = Object.keys(p.view.gear).length;
+await act(page, '[data-act="npc-tab"][data-t="chest"]');
 await act(page, '[data-act="chest_buy"][data-tier="wood"]');
 p = await player(page);
 R.check('mua Rương Gỗ: thêm một món có dòng cộng thêm (B-15)', Object.keys(p.view.gear).length === bag0 + 1 && Object.values(p.view.gear).some((g) => g.kind === 'opt' && g.opt >= 1));
 
 // ---------- Ngọc Sinh Mệnh: đồ đang mặc, đồ trong túi (chọn qua nút "Ép" trong tooltip) ----------
 const j0 = p.inv.jewel_life;
+await act(page, '[data-act="npc-tab"][data-t="forge"]');
 await act(page, '[data-act="life"][data-slot="weapon"]');
 p = await player(page);
 R.check('ép Ngọc Sinh Mệnh vào vũ khí: tốn 1 ngọc', p.inv.jewel_life === j0 - 1);
@@ -72,9 +75,10 @@ const rare = Object.values(p.view.gear).find((g) => !Object.values(p.equip).incl
 const opt0 = p.view.gear[rare].opt || 0;
 await page.click('#tabs [data-tab="bag"]');
 await act(page, `[data-act="bag-tip"][data-id="${rare}"]`);
-R.check('tooltip đồ trong túi có nút Ép và Vứt', !!(await page.$('#itemtip [data-act="forge-pick"]')) && !!(await page.$('#itemtip [data-act="discard"]')));
-await act(page, '#itemtip [data-act="forge-pick"]');
-R.check('chọn Ép khi đang ở Thợ Rèn: thẻ rèn hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
+R.check('tooltip đồ trong túi có nút Vứt', !!(await page.$('#itemtip [data-act="discard"]')));
+await page.click('#tabs [data-tab="map"]');
+await act(page, '[data-act="forge-tab"][data-tab2="bag"]');
+R.check('Thợ Rèn thẻ Trong túi: hiện món trong túi', !!(await page.$(`[data-act="life"][data-id="${rare}"]`)));
 await act(page, `[data-act="life"][data-id="${rare}"]`);
 p = await player(page);
 R.check('ép Ngọc Sinh Mệnh vào đồ trong túi: tốn 1 ngọc, thêm / mất một dòng', p.inv.jewel_life === j0 - 2 && Math.abs((p.view.gear[rare].opt || 0) - opt0) === 1, `opt=${p.view.gear[rare].opt} trước ${opt0}`);
@@ -95,6 +99,7 @@ R.check('gặp Lão Hỗn Nguyên', await meetNpc(page, 'chaos'));
 R.check('Lão Hỗn Nguyên có thẻ ép +10, +11', !!(await page.$('[data-panel="chaos-upgrade"]')));
 const c0 = await player(page);
 const rec = await page.evaluate(() => window.GAME_DATA.CHAOS.find((r) => r.id === 'make_chaos'));
+await act(page, '[data-act="npc-tab"][data-t="misc"]');
 await act(page, '[data-act="chaos"][data-id="make_chaos"]');
 p = await player(page);
 R.check('ghép: tốn đúng nguyên liệu + vàng, thành công thì có Ngọc Hỗn Nguyên', (p.inv.ore_rare || 0) === c0.inv.ore_rare - rec.items.ore_rare && !(p.inv.dragon_scale > 0) && p.gold === c0.gold - rec.gold && (p.inv.jewel_chaos || 0) <= 1, `ore_rare ${c0.inv.ore_rare}→${p.inv.ore_rare} scale ${p.inv.dragon_scale} gold ${c0.gold}→${p.gold} rec ${JSON.stringify(rec)}`);

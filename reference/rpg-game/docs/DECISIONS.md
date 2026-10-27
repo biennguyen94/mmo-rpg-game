@@ -694,6 +694,9 @@ Nguồn: repo `biennguyen94/Tien-Len-Mien-Nam` @ `c1f3f07` (của anh, Elixir/Ph
   ở cấp cao / vùng chuyển sinh gần như đánh tất cả. Cài đặt đã lưu (`auto_cfg`) giữ lựa chọn cũ của người chơi.
 
 ## Quái sự kiện theo chuyển sinh (2026-10-17, anh "theo e đề xuất")
+> Thay bởi "Sự kiện đánh chung theo phòng" (2026-10-26): hệ số giữ nguyên, nhưng `k` là mốc của phòng / tổ đội, không còn
+> theo người đánh.
+
 - Quái sự kiện làm cho cấp 35–50 chưa chuyển sinh (mạnh nhất ~×1,8), người chuyển sinh cao đánh quá dễ. `RULES.event_scale`:
   với k lần chuyển sinh của **người đánh** (tối đa `max_rebirths`): máu / thủ × (1 + 0,4k), công × (1 + 0,15k) — như vùng
   chuyển sinh — kinh nghiệm / vàng × (1 + 0,2k). `Engine.scale_event/1` gọi ngay khi vào trận: Quảng Trường Quỷ, Lâu Đài Máu,
@@ -1358,3 +1361,96 @@ Test `test/hac_long_web/guild_war_arena_test.exs` đi hết đường thật (l�
 Workflow `.github/workflows/kho-do-pages.yml` dựng `scripts/kho_do/build.sh` trên `main` (khi đổi dữ liệu game / lib /
 hình Pixel / scripts/kho_do) và đăng GitHub Pages. Trang là phần thân của artifact nên bước đăng thêm doctype, charset
 UTF-8, viewport; đổi tên thành `index.html`, bỏ `data.json`. Chỉ có hình Pixel CC0, không asset MU (CLAUDE.md §7).
+
+## Sự kiện đánh chung theo phòng (2026-10-26, anh "A làm cả 3 mục")
+
+Kiểu MU: mọi người trong cùng một sự kiện đánh chung quái. Trước đây Quảng Trường Quỷ / Lâu Đài Máu / Kalima là bản đồ riêng của
+từng người và quái mạnh theo chuyển sinh của **người đánh** (tổ đội lách bằng người chuyển sinh ít đánh). Hệ số
+`RULES.event_scale` (máu / thủ × (1 + 0,4k), công × (1 + 0,15k), thưởng × (1 + 0,2k)) giữ nguyên, chỉ đổi `k`
+(`Engine.scale_event/2` nhận `k`, `event_scale.version` 2). Trùm sự kiện vẫn "máu trâu" (anh: "mục đích là để máu trâu").
+
+**Phòng theo mốc chuyển sinh** `RULES.event_rooms.bands` [0–1], [2–3], [4–5], [6–7], [8–9], [10+] (`HacLong.Game.EventRooms`):
+quái của phòng mạnh theo mốc **cao nhất** của khoảng (`k = min(đến, max_rebirths)`), người chuyển sinh ít trong phòng không làm
+quái yếu đi.
+
+1. **Hỗn Chiến Thành**: mỗi khoảng một bản đồ `chaos_castle`, `chaos_castle_1..5` (`scripts/gen_cc_rooms.py`), thả quái /
+   kết thúc / thưởng theo từng phòng. **Vương Miện** Công Thành Chiến cố định `event_scale.crown_rebirths` = 10. **Quái vàng**
+   Golden Invasion mạnh theo vùng như quái thường (không nhân).
+2. **Quảng Trường Quỷ, Lâu Đài Máu**: phòng = đợt mở + khoảng chuyển sinh + bậc cấp (`tiers`), mỗi phòng một tiến trình
+   `HacLong.EventRoom` (Registry + DynamicSupervisor): chung bản đồ, chung quái, **chung máu quái**, thấy nhau trên bản đồ (kênh
+   `event_room:<id>` đẩy sự kiện `map` như bản đồ chung). Giờ kết thúc là của phòng (người vào sau còn ít giờ hơn).
+   - Đánh: chạm quái lấy máu chung (`engage`), mỗi đòn trừ máu chung (`hit`). **Người hạ** nhận thưởng trận theo phần sát
+     thương mình gây lên con đó (một mình hạ: đủ) và **điểm** Quảng Trường / số quân canh Lâu Đài; **người cùng đánh** con đó
+     thắng trận, vàng / kinh nghiệm theo phần sát thương (không điểm, không rơi đồ).
+   - Quảng Trường: hạ hết quái, một người lên cầu thang là cả phòng sang đợt sau (về chỗ vào bãi mới). Qua hết đợt / hết giờ:
+     mỗi người nhận thưởng theo **điểm của mình** (`DevilSquare.finish/3`, bảng xếp hạng ngày như cũ).
+   - Lâu Đài: bước (quân canh → cổng → trùm) là của phòng. Hạ Hiệp Sĩ Máu: người gây **nhiều sát thương nhất lên trùm** nhận
+     `reward.success` đầy đủ (Lông Vũ Kền Kền); người khác vàng / kinh nghiệm `success` × phần sát thương lên trùm cộng thưởng
+     `partial` theo số quân canh **mình** hạ (`BloodCastle.room_reward/4`). Hết giờ: `partial` theo quân canh mình hạ.
+3. **Kalima theo tổ đội**: phòng `kal:p<tổ đội>` (một mình: `kal:u<người>`). Một người dùng Bản Đồ Thất Lạc mở phòng; đồng đội
+   bấm Vào Kalima ở Người Gác Tháp lúc phòng còn mở thì vào cùng, **không tốn bản đồ**. Quái mạnh theo người chuyển sinh
+   **nhiều nhất** trong tổ đội (đọc database lúc mở). Hạ Kundun: **cả phòng cùng thắng** (`reward.success` mỗi người).
+
+Quyết định nhỏ tự chọn: quái phòng chung đứng yên (không đi lang thang); người rời (cổng `<`, gục ngã) chỉ mình kết thúc lượt;
+phòng hết người thì đóng; người offline lúc phòng kết thúc thì kết thúc ở bước đi sau (phòng không còn → thưởng như hết giờ);
+lượt riêng cũ (không có `room`) vẫn chạy như trước. Test: `test/hac_long_web/event_room_test.exs`, e2e `e2e/eventroom.mjs`.
+- Máu chung hiện ngay trên màn trận (2026-10-26, anh "có làm đi"): ai trong phòng đánh trúng con quái thì mọi người đang
+  đánh con đó nhận máu mới ngay (sự kiện kênh `shared` như đánh chung tổ đội, khóa `encounter.room_key`), màn trận ghi
+  "N người cùng đánh". Session của từng người cũng giữ máu mới (`{:room_hp, ...}`) để lần đẩy nhân vật sau không trả máu cũ.
+
+## Bot chơi như người thật (2026-10-26, anh "làm tất cả, như người chơi thật")
+
+Bot chuyển sinh 10 lần mà không có cánh, không leo tháp, không có thú. `HacLong.Bots.Brain` thêm (số ở `RULES.bots.play`):
+- **Cánh:** lỗi chính là bot ghép cánh xong **không bao giờ mặc** (bước "mặc đồ tốt hơn" chỉ xét `Engine.gear_slots/0`, không
+  có ô cánh) nên ghép mãi; nay mặc cánh trong túi khi chưa có / bậc cao hơn / cùng bậc ép cao hơn. Chưa có cánh thì làm cánh
+  trước khi ép đồ đang mặc (ép sẵn món làm cánh lên +5 kể cả khi chưa có Ngọc Hỗn Nguyên); có cánh rồi ép cánh như đồ khác.
+- **Thú cưng:** như mô phỏng `Journey` (hàm sức thú chung `Pets.power/3`): mua / thuần phục con mạnh hơn hẳn khi giá ≤ 30 %
+  vàng dư, dắt con mạnh nhất, dư nhiều vàng thì cho ăn.
+- **Tháp Vô Tận:** từ cấp 30, tiến trình bot hẹn 30–60 phút một lần: hồi máu rồi vào từ tầng bắt đầu cao nhất, hạ hết quái,
+  lên tầng; xong chặng 10 tầng, máu < 50 % sau một tầng, hoặc hết bình mà máu < 30 % thì ra cổng.
+- **Sự kiện:** Quảng Trường Quỷ / Lâu Đài Máu đang mở → hồi máu rồi vào (ghép vé từ mảnh hoặc mua); Kalima: ghép Bản Đồ
+  Thất Lạc từ 5 Dấu Ấn rồi vào. Trong phòng đánh quái gần nhất, hết quái thì lên đợt sau / bước ra như người chơi.
+- Sửa lỗi cũ: bot chưa cầm gì tay trái nhặt được khiên thì lỗi `not nil` mỗi nhịp, đứng im.
+Chạy thử 4 bot CS 10 trên máy: sau ~6 phút cả 4 có thú, 3 bot mặc cánh +2/+3 (1 bot ghép hỏng, đang ép món mới), kỷ lục tháp
+4–9, đã vào Quảng Trường, Lâu Đài, ghép Bản Đồ Thất Lạc. Test `test/hac_long/bots/brain_play_test.exs`.
+
+## Màn kết quả trận: nút Tiếp tục trước danh sách đồ rơi (2026-10-26, anh báo)
+Trùm rơi nhiều đồ thì danh sách dài đẩy nút "Tiếp tục" / "Về nhà" ra khỏi màn hình điện thoại. Nút nay nằm ngay dưới dòng
+kinh nghiệm / vàng, trước danh sách đồ.
+
+## Đồ sát: bỏ giới hạn mỗi giờ, bảo vệ 30 giây (2026-10-26, anh "bỏ mỗi giờ đi, giảm xuống bảo vệ 30s thôi")
+- Bỏ `RULES.slay.per_target_hour` (đồ sát cùng một người tối đa 3 lần / giờ): không còn giới hạn số lần đồ sát.
+- `RULES.slay.protect_s` 120 → 30: người vừa gục trong đồ sát được bảo vệ 30 giây (tự đi đồ sát thì mất bảo vệ như cũ).
+- Tên đỏ, mất vàng gấp đôi khi tên đỏ gục, vùng an toàn giữ nguyên.
+
+## Ép từ khung đồ (2026-10-26, anh "ok làm 1 và 2")
+> Đã bỏ (2026-10-26, anh: "bỏ phần gợi ý và cả phần di chuyển tới NPC luôn"): khung đồ không còn xem trước ép và nút "Ép
+> ở …"; ép như cũ ở Thợ Rèn / Lão Hỗn Nguyên (thẻ Đang mặc / Trong túi). Giữ phần khung đồ cuộn bên trong (dưới đây).
+Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và đồ đang mặc không có nút). Nay:
+- Khung đồ (đang mặc lẫn trong túi) xem trước bước ép kế tiếp: "Ép +L → +L+1 ở Thợ Rèn / Lão Hỗn Nguyên", tỉ lệ (đã tính
+  May mắn) hoặc "chắc chắn", thất bại thế nào, từng loại ngọc (đủ xanh, thiếu đỏ), vàng; tối đa thì "Đã ép tối đa +11".
+- Nút "Ép ở Thợ Rèn" (+0…+9) / "Ép ở Lão Hỗn Nguyên" (+10, +11): chọn sẵn món (thẻ Đang mặc / Trong túi, đứng đầu "đã
+  chọn"), ở bản đồ khác thì dịch chuyển về Làng (tốn vàng như bảng chọn bản đồ), đi bộ tới NPC, mở bảng ép. Luật không đổi
+  (vẫn phải đứng cạnh NPC). Đang trong trận / Tháp / phòng sự kiện thì nút khóa, ghi lý do. e2e `e2e/forgego.mjs`.
+- Bổ sung (anh: "item nhiều dòng sẽ lố màn hình"): khung đồ cao tối đa bằng màn hình; phần thông tin cuộn bên trong (mờ ở mép
+  dưới khi còn dòng), hàng nút (Trang bị / Ép / Vứt…) luôn ở dưới cùng. Xem trước ép gọn: ngọc + vàng chung một dòng.
+  e2e `e2e/longtip.mjs` (360 × 640, đồ 6 dòng Excellent + May mắn + Bộ Thần + 9).
+
+## Hình nhân vật không kẹt "hình trần" khi một lớp ảnh tải hỏng (2026-10-27, anh hỏi "tại sao nhân vật là k có đồ")
+- Server gửi đủ ngoại hình (`look`) của người khác — kiểm toàn bộ nhân vật trong DB, mọi lớp ảnh đều có trong `assets/doll`. Lỗi nằm ở `doll.js`: một lớp ảnh tải hỏng (mạng chập chờn, điện thoại vừa mở lại app) thì ảnh đó hỏng vĩnh viễn trong phiên, và **mọi** nhân vật dùng lớp đó bị thay bằng hình trần mặc định (`hero.png`) tới khi tải lại trang.
+- Sửa: lớp hỏng tự tải lại sau 1 s / 3 s / 8 s; vẫn hỏng thì bỏ riêng lớp đó khi ghép (vẫn thấy giáp, tóc, vũ khí còn lại). e2e `doll.mjs`.
+
+## Khung NPC gọn: Thợ Rèn, Lão Hỗn Nguyên (2026-10-27, anh "làm hết")
+- **Tab** đầu khung NPC, dính trên đầu khi cuộn, nhớ tab đã mở theo NPC (trình duyệt): Thợ Rèn `Mua · Bán · Ép đồ · Rèn · Rương` (mặc định Mua); Lão Hỗn Nguyên `Ép +10/+11 · Cánh · Pha dòng · Ngọc & vé` (mặc định Ép +10/+11). Nhóm công thức tính theo dữ liệu: ra cánh (`out` là cánh), có `mode` (pha dòng), còn lại.
+- **Chấm báo** trên tab: số món ép được ngay (cả đang mặc lẫn trong túi) / số công thức đủ nguyên liệu.
+- **Hàng ép gọn**: tên + ô; dòng dưới "Lên +N · tỉ lệ · ⚠ (có rủi ro) · ngọc cần dạng chip". Chạm vào món mở chi tiết (chỉ số tăng, rủi ro đầy đủ, nguyên liệu). Nút ép và nút Ngọc Sinh Mệnh xếp dọc bên phải.
+- **Sắp xếp + gập**: món ép được lên đầu, rồi món thiếu nguyên liệu; món đã tối đa / phải ép ở Lão Hỗn Nguyên gập dưới "Đã tối đa / ép tiếp ở Lão Hỗn Nguyên (n)" (tự mở khi món vừa ép rơi vào đó). Máy Hỗn Nguyên: công thức chưa đủ nguyên liệu gập dưới "Chưa đủ nguyên liệu (n)". Phần gập giữ trạng thái mở khi server đẩy cập nhật.
+- Chỉ đổi giao diện; luật, tỉ lệ, lệnh gửi server không đổi (bot gửi lệnh thẳng, không ảnh hưởng). e2e `npctabs.mjs`.
+
+## Bot cuối game: tránh chỗ gục nhiều, luyện vùng chuyển sinh, dọn túi, cho thú ăn từ từ (2026-10-27, anh "ok làm hết")
+Kiểm 20 bot (đều CS10 cấp 50): 11 bot chưa hạ được Kim Long / Hắc Long, gục 10–27 lần mà vẫn quay lại phòng trùm; CS10 cấp tối đa thì luyện mãi bản đồ cấp ≤ 51 (kinh nghiệm bỏ phí); 2 bot đầy túi 40/40; vừa mua thú là cho ăn dồn 34 lần trong 30 giây (≈ 1,1 triệu vàng).
+- **Tránh chỗ gục nhiều**: gục `bots.play.avoid.deaths` (3) lần trong `window_min` (30) phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó `hours` (2) giờ rồi thử lại; trong lúc tránh đi luyện / ép đồ. Tiến trình bot nhớ (không lưu DB; khởi động lại server thì quên).
+- **CS tối đa + cấp tối đa**: luyện ở vùng chuyển sinh đã mở, khó dần (vùng 1 bản đồ 1 → …): hạ đủ `forge.realm_kills` (30) quái ở bản đồ trước mới sang bản đồ sau; bản đồ đang tránh thì đứng ở bản đồ trước nó; bản đồ đầu tiên cũng đang tránh thì về bản đồ thường. Vùng chuyển sinh khi cần hạ chúa tể (chưa CS tối đa) dùng cùng cách tránh.
+- **Dọn túi**: túi trang bị ≥ `bots.sell.full_at` (35) món thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tới còn `down_to` (20) món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và lớp mình không mặc được hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh.
+- **Cho thú ăn từ từ**: mỗi lần cách `bots.play.feed_every_min` ([2, 5]) phút, ngẫu nhiên; điều kiện vàng (`feed_mult`) giữ nguyên.
+- Số liệu ở `RULES.bots` (version 5). Test `brain_endgame_test.exs`.

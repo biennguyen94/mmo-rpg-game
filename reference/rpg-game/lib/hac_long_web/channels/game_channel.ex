@@ -1027,8 +1027,14 @@ defmodule HacLongWeb.GameChannel do
   end
 
   # Nhân vật sang bản đồ khác: đổi kênh PubSub đang nghe và gửi ngay trạng thái bản đồ mới.
+  # Phòng sự kiện đánh chung (HacLong.EventRoom): nghe kênh của phòng, người cùng phòng thấy nhau như bản đồ chung.
   defp follow_map(socket, player) do
-    map_id = player && player.pos.map
+    map_id =
+      case player do
+        %{pos: %{map: "tower"}, tower: %{room: room}} -> {:room, room}
+        %{pos: %{map: id}} -> id
+        _ -> nil
+      end
 
     if map_id == socket.assigns.map do
       socket
@@ -1036,23 +1042,49 @@ defmodule HacLongWeb.GameChannel do
       if old = socket.assigns.map, do: unsubscribe(old)
 
       if map_id do
-        if Maps.get(map_id).private do
-          push(socket, "map", %{
-            map: map_id,
-            phase: HacLong.World.Clock.phase(),
-            monsters: [],
-            nodes: [],
-            players: []
-          })
-        else
-          Phoenix.PubSub.subscribe(HacLong.PubSub, MapServer.topic(map_id))
-          push(socket, "map", MapServer.snapshot(map_id))
+        case map_id do
+          {:room, room} ->
+            Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.EventRoom.topic(room))
+
+            push(
+              socket,
+              "map",
+              HacLong.EventRoom.snapshot(room) ||
+                %{
+                  map: "tower",
+                  phase: HacLong.World.Clock.phase(),
+                  monsters: [],
+                  nodes: [],
+                  players: []
+                }
+            )
+
+          _ ->
+            follow_shared(socket, map_id)
         end
       end
 
       assign(socket, :map, map_id)
     end
   end
+
+  defp follow_shared(socket, map_id) do
+    if Maps.get(map_id).private do
+      push(socket, "map", %{
+        map: map_id,
+        phase: HacLong.World.Clock.phase(),
+        monsters: [],
+        nodes: [],
+        players: []
+      })
+    else
+      Phoenix.PubSub.subscribe(HacLong.PubSub, MapServer.topic(map_id))
+      push(socket, "map", MapServer.snapshot(map_id))
+    end
+  end
+
+  defp unsubscribe({:room, room}),
+    do: Phoenix.PubSub.unsubscribe(HacLong.PubSub, HacLong.EventRoom.topic(room))
 
   defp unsubscribe(map_id) do
     unless Maps.get(map_id).private,

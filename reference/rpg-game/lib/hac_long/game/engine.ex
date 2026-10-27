@@ -577,12 +577,12 @@ defmodule HacLong.Game.Engine do
   @ev_scale @rules.event_scale
 
   @doc """
-  Quái sự kiện (Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến, quái vàng) mạnh theo số lần
-  chuyển sinh `k` của người đánh (`RULES.event_scale`): máu / thủ × (1 + hp_per_rebirth × k), công
-  × (1 + atk_per_rebirth × k), kinh nghiệm / vàng × (1 + reward_per_rebirth × k). Gọi ngay sau khi vào trận.
+  Quái sự kiện mạnh theo mốc chuyển sinh `k` (`RULES.event_scale`): máu / thủ × (1 + hp_per_rebirth × k), công
+  × (1 + atk_per_rebirth × k), kinh nghiệm / vàng × (1 + reward_per_rebirth × k). `k` là mốc của phòng / tổ đội /
+  sự kiện (DECISIONS "Sự kiện đánh chung theo phòng"), không phải của người đánh. Gọi ngay sau khi vào trận.
   """
-  def scale_event(%{battle: %{monster: m}} = p) do
-    k = min(Map.get(p, :rebirths) || 0, @char.max_rebirths)
+  def scale_event(%{battle: %{monster: m}} = p, k) do
+    k = min(k || 0, @char.max_rebirths)
 
     if k <= 0 do
       p
@@ -608,7 +608,7 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  def scale_event(p), do: p
+  def scale_event(p, _k), do: p
 
   @doc "Kinh nghiệm gốc của quái cấp `l` (chưa nhân hệ số), dùng chung cho tháp, việc hằng ngày."
   def base_xp(l), do: @mon.xp.base + l * @mon.xp.level + l * l * @mon.xp.level_sq

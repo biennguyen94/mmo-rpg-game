@@ -132,6 +132,39 @@ defmodule HacLongWeb.ChaosCastleTest do
     wait(fn -> Session.get(ua.id).pos.map == "village" end)
   end
 
+  test "phòng theo số lần chuyển sinh: khác mốc vào bản đồ khác, quái mạnh theo mốc phòng, mỗi phòng thắng riêng" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, %{level: 30, inv: %{@r.ticket => 1}})
+    player(ub, %{level: 30, rebirths: 5, inv: %{@r.ticket => 1}})
+    sa = join(ua)
+    sb = join(ub)
+    {:ok, _} = ChaosCastle.open_now()
+
+    ra = cmd(sa, %{"act" => "cc_enter"})
+    rb = cmd(sb, %{"act" => "cc_enter"})
+    room_b = HacLong.Game.EventRooms.band(5)
+    assert ra.player.pos.map == ChaosCastle.map_id(0)
+    assert rb.player.pos.map == ChaosCastle.map_id(room_b)
+    assert rb.player.view.cc.room == HacLong.Game.EventRooms.label(room_b)
+    assert ChaosCastle.room_k(ChaosCastle.map_id(room_b)) == HacLong.Game.EventRooms.k(room_b)
+
+    # mỗi phòng một người: mỗi phòng thả quái riêng
+    :ok = ChaosCastle.start_fight()
+    n = max(@r.min_monsters, @r.total - 1)
+    assert length(MapServer.snapshot(ChaosCastle.map_id(0)).monsters) == n
+    assert length(MapServer.snapshot(ChaosCastle.map_id(room_b)).monsters) == n
+
+    # khác phòng thì không đồ sát nhau được (khác bản đồ)
+    refute Slay.check(Session.get(ua.id), Session.get(ub.id)) == :ok
+
+    # A hạ hết quái phòng mình → thắng phòng 0; phòng của B vẫn chạy
+    for _ <- 1..n, do: ChaosCastle.kill(ua.id, :monster)
+    wait(fn -> Mailbox.list(ua.id) |> Enum.any?(&(&1.subject =~ "Hỗn Chiến Thành")) end)
+    assert ChaosCastle.status().phase == "fight"
+    assert ChaosCastle.alive?(ub.id)
+  end
+
   test "không đủ cấp / không có vé / không đứng cạnh Người Gác Tháp" do
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Thử", "cls" => "dk"})
     p = %{p | pos: @tower, level: 30}

@@ -10,6 +10,7 @@ defmodule HacLong.World do
   """
 
   alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Kalima, Tower}
+  alias HacLong.EventRoom
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
 
@@ -152,6 +153,54 @@ defmodule HacLong.World do
   defp tower_move(%{tower: nil} = p, uid, _d),
     do: leave_tower(p, uid, "Lượt leo tháp đã kết thúc.")
 
+  # Phòng sự kiện đánh chung (Quảng Trường / Lâu Đài / Kalima, HacLong.EventRoom): bản đồ, quái, máu quái là của phòng
+  defp tower_move(%{tower: %{room: id} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
+    {tx, ty} = {x + dx, y + dy}
+    tile = t.tiles |> Enum.at(ty, "") |> String.at(tx)
+    kind = EventRoom.kind(t)
+    done? = kind != :ds and t[kind].done
+
+    cond do
+      done? ->
+        EventRoom.leave(id, uid)
+        p |> room_out(kind) |> ds_back(uid)
+
+      # hết giờ, hoặc phòng không còn (server khởi động lại, đã kết thúc lúc mình offline): kết thúc lượt
+      room_expired?(p, kind) or not EventRoom.alive?(id) ->
+        EventRoom.leave(id, uid)
+        p |> room_out(kind, "hết giờ") |> ds_back(uid)
+
+      m = Enum.find(t.monsters, &(&1.x == tx and &1.y == ty)) ->
+        room_engage(p, uid, id, kind, m)
+
+      tile == ">" and kind == :ds ->
+        case EventRoom.climb(id, uid) do
+          {:error, msg} ->
+            {%{ok: false, msg: msg}, p}
+
+          {:ok, t2} ->
+            [ex, ey] = t2.exit
+
+            {%{ok: true, msg: "Đợt #{t2.floor}/#{t2.ds.waves}!"},
+             %{p | tower: EventRoom.merge(t, t2), pos: %{p.pos | x: ex, y: ey - 1}}}
+
+          {:cleared, info} ->
+            p |> EventRoom.settle(info) |> ds_back(uid)
+        end
+
+      tile == "<" ->
+        EventRoom.leave(id, uid)
+        p |> room_out(kind, "tự rời") |> ds_back(uid)
+
+      tile in [".", ">"] ->
+        EventRoom.moved(id, uid, tx, ty)
+        {%{ok: true}, %{p | pos: %{p.pos | x: tx, y: ty}}}
+
+      true ->
+        {%{ok: false}, p}
+    end
+  end
+
   # Quảng Trường Quỷ (Phase 18 M1): cùng bản đồ riêng `tower`, trạng thái `p.tower.ds`
   defp tower_move(%{tower: %{ds: %{}} = t, pos: %{x: x, y: y}} = p, uid, {dx, dy}) do
     {tx, ty} = {x + dx, y + dy}
@@ -166,7 +215,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -203,7 +252,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -236,7 +285,7 @@ defmodule HacLong.World do
           {%{ok: true} = r, p} ->
             {r,
              p
-             |> Engine.scale_event()
+             |> Engine.scale_event(event_k(p))
              |> Tower.resume_hp(m)
              |> put_in([:battle, :encounter], %{tower: m.id})}
 
@@ -284,6 +333,52 @@ defmodule HacLong.World do
 
       true ->
         {%{ok: false}, p}
+    end
+  end
+
+  defp room_expired?(p, :ds), do: DevilSquare.expired?(p)
+  defp room_expired?(p, :bc), do: BloodCastle.expired?(p)
+  defp room_expired?(p, :kal), do: Kalima.expired?(p)
+
+  # rời phòng: kết thúc lượt của mình như lượt riêng (thưởng theo điểm / số quái mình hạ)
+  defp room_out(p, kind, why \\ nil)
+  defp room_out(p, :ds, why), do: DevilSquare.finish(p, why || "tự rời")
+  defp room_out(p, :bc, _why), do: BloodCastle.leave(p)
+  defp room_out(p, :kal, _why), do: Kalima.leave(p)
+
+  defp room_engage(p, uid, id, kind, m) do
+    q =
+      case kind do
+        :ds -> DevilSquare.battle_monster(m)
+        :bc -> BloodCastle.battle_monster(m)
+        :kal -> Kalima.battle_monster(m)
+      end
+
+    case Engine.start_with_monster(p, Data.zone_count() - 1, q) do
+      {%{ok: true} = r, p2} ->
+        p2 = Engine.scale_event(p2, p.tower.k)
+        mon = p2.battle.monster
+
+        case EventRoom.engage(id, uid, m.id, mon.maxHp) do
+          {:ok, hp, n} ->
+            # room_key / room_n: màn trận nhận máu chung, số người đang đánh (sự kiện "shared" như tổ đội)
+            enc = %{
+              tower: m.id,
+              room: id,
+              room_key: EventRoom.key(id, m.id),
+              room_n: n,
+              base_xp: mon.xp,
+              base_gold: mon.gold
+            }
+
+            {r, p2 |> put_in([:battle, :monster, :hp], hp) |> put_in([:battle, :encounter], enc)}
+
+          {:error, msg} ->
+            {%{ok: false, msg: msg}, p}
+        end
+
+      other ->
+        other
     end
   end
 
@@ -524,13 +619,23 @@ defmodule HacLong.World do
     end
   end
 
-  # quái sự kiện (bản đồ sự kiện, quái vàng) mạnh theo số lần chuyển sinh người đánh (`Engine.scale_event/1`)
+  # Quảng Trường Quỷ / Lâu Đài Máu / Kalima: quái mạnh theo mốc của phòng / tổ (`p.tower.k`, đặt lúc vào)
+  defp event_k(%{tower: %{k: k}}), do: k
+
+  defp event_k(p),
+    do: HacLong.Game.EventRooms.k(HacLong.Game.EventRooms.band(Map.get(p, :rebirths)))
+
+  # quái trên bản đồ sự kiện mạnh theo mốc chuyển sinh của PHÒNG (Hỗn Chiến Thành) hoặc cố định (Vương Miện Công Thành
+  # Chiến), không theo người đánh (DECISIONS "Sự kiện đánh chung theo phòng"); quái vàng mạnh theo vùng như quái thường
+  @crown_k Data.rules().event_scale.crown_rebirths
   defp encounter(p, map, m) do
     case do_encounter(p, map, m) do
       {%{ok: true} = r, p} ->
-        if is_binary(map[:event]) or m[:gold] == true,
-          do: {r, Engine.scale_event(p)},
-          else: {r, p}
+        case map[:event] do
+          "castle_siege" -> {r, Engine.scale_event(p, @crown_k)}
+          "chaos_castle" -> {r, Engine.scale_event(p, HacLong.ChaosCastle.room_k(map.id))}
+          _ -> {r, p}
+        end
 
       other ->
         other
@@ -639,7 +744,7 @@ defmodule HacLong.World do
         cond do
           b.result == "win" ->
             MapServer.defeat(map_id, uid, mid)
-            if map_id == HacLong.ChaosCastle.map_id(), do: HacLong.ChaosCastle.kill(uid, :monster)
+            if HacLong.ChaosCastle.map?(map_id), do: HacLong.ChaosCastle.kill(uid, :monster)
 
             if map_id == HacLong.CastleSiege.map_id(),
               do: HacLong.CastleSiege.defeated(uid, mid, p[:guild])

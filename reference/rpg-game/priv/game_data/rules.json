@@ -304,10 +304,18 @@
       }
     },
     "event_scale": {
-      "_doc": "Quái sự kiện mạnh theo số lần chuyển sinh của người đánh (DECISIONS \"Quái sự kiện theo chuyển sinh\"): Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến (Vương Miện), quái vàng Golden Invasion. Với k lần chuyển sinh (tối đa max_rebirths): máu và thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k) — như vùng chuyển sinh; kinh nghiệm và vàng × (1 + reward_per_rebirth × k). Trùm thế giới (máu chung cả server) và tháp (đã mạnh theo tầng) không áp.",
+      "_doc": "Quái sự kiện mạnh theo mốc chuyển sinh k (DECISIONS \"Sự kiện đánh chung theo phòng\", version 2): k là mốc của PHÒNG (event_rooms) ở Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành; của TỔ ĐỘI ở Kalima (người chuyển sinh nhiều nhất); crown_rebirths cố định ở Vương Miện Công Thành Chiến. Quái vàng Golden Invasion mạnh theo vùng như quái thường (không nhân). Máu và thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k) — như vùng chuyển sinh; kinh nghiệm và vàng × (1 + reward_per_rebirth × k). Trùm thế giới và tháp không áp. Version 1: k của người đánh.",
       "hp_per_rebirth": 0.4,
       "atk_per_rebirth": 0.15,
       "reward_per_rebirth": 0.2,
+      "crown_rebirths": 10,
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
+    },
+    "event_rooms": {
+      "_doc": "Phòng sự kiện kiểu MU (DECISIONS \"Sự kiện đánh chung theo phòng\"): Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh của người vào; cùng phòng (và cùng bậc cấp) thì vào chung một bản đồ, chung quái, chung máu quái. bands: [từ, đến] số lần chuyển sinh mỗi phòng; quái của phòng mạnh theo mốc ĐẾN (tối đa max_rebirths) để người chuyển sinh ít trong phòng không làm quái yếu đi.",
+      "bands": [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 1000]],
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
@@ -1119,8 +1127,12 @@
       "inn_gold_mult": 2,
       "_forge_doc": "DECISIONS \"Bot ép đồ, chuyển sinh\": lúc rảnh ở Làng bot ép đồ đang mặc (cấp thấp nhất trước) bằng ngọc như người thật, giữ lại gold_keep_per_level × cấp vàng; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` viên mỗi loại ngọc cần; Ngọc Sinh Mệnh thêm dòng cho `life_slots`; ghép / nâng cánh ở Máy Hỗn Nguyên; +10 / +11 chỉ bot \"liều\" (seed chia hết cho daring_every). Cấp tối đa đã đủ điều kiện thì chuyển sinh; cần hạ chúa tể thì đi vùng chuyển sinh, qua từng bản đồ của vùng khi đã hạ realm_kills quái ở bản đồ trước.",
       "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30},
+      "_play_doc": "DECISIONS \"Bot chơi như người thật\": hồi máu tới event_hp × tối đa rồi vào Quảng Trường Quỷ / Lâu Đài Máu đang mở (ghép vé từ mảnh hoặc mua) và Kalima (ghép Bản Đồ Thất Lạc); thú cưng mạnh hơn pet_better × thú đang có mà giá ≤ pet_budget × vàng dư thì mua / thuần phục, dắt con mạnh nhất, vàng dư > feed_mult × giá cho ăn thì cho ăn; từ cấp tower_level, mỗi tower_every_min phút (ngẫu nhiên trong khoảng) hồi máu tới tower_enter_hp rồi vào Tháp Vô Tận từ tầng bắt đầu cao nhất, leo tới hết chặng 10 tầng hoặc máu < tower_hp sau một tầng; trong tháp / sự kiện hết bình mà máu < leave_hp thì ra cổng.",
+      "_endgame_doc": "DECISIONS \"Bot cuối game\": cho thú ăn mỗi lần cách feed_every_min phút (ngẫu nhiên trong khoảng) thay vì dồn một lúc; gục avoid.deaths lần trong avoid.window_min phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó avoid.hours giờ; đã chuyển sinh tối đa và cấp tối đa thì luyện ở vùng chuyển sinh (khó dần, realm_kills quái mỗi bản đồ); túi trang bị ≥ sell.full_at món thì về Làng bán đồ thừa ở Thợ Rèn, ở Làng thì bán tới còn sell.down_to món.",
+      "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "feed_every_min": [2, 5], "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3, "avoid": {"deaths": 3, "window_min": 30, "hours": 2}},
+      "sell": {"full_at": 35, "down_to": 20},
       "sourceType": "DESIGN",
-      "version": 3,
+      "version": 5,
       "verified": false
     },
     "slay": {
@@ -1131,8 +1143,7 @@
         "village",
         "home"
       ],
-      "protect_s": 120,
-      "per_target_hour": 3,
+      "protect_s": 30,
       "red_s": 1800,
       "red_gold_mult": 2,
       "first_strike_mult": 0.5,

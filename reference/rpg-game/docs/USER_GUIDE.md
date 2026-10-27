@@ -91,8 +91,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
 - **Tháp Vô Tận** (Người Gác Tháp ở Làng): mỗi tầng hạ hết quái để lên; cứ 5 tầng có trùm; máu không tự hồi trong tháp.
 - **Quảng Trường Quỷ** (cấp 35+, 1h, 3h … 23h) và **Lâu Đài Máu** (cấp 40+, 0h30, 2h30 … 22h30), **Hỗn Chiến Thành** (cấp 15+, 1h30, 3h30 … 23h30): vào qua Người Gác Tháp, cần vé. Chi tiết: [`EVENTS.md`](EVENTS.md).
-  Quái sự kiện (cả Kalima, Vương Miện, quái vàng) **mạnh theo số lần chuyển sinh của bạn**: mỗi lần chuyển sinh máu / thủ +40 %,
-  công +15 %, kinh nghiệm / vàng +20 % (tối đa 10 lần). Trùm thế giới và tháp không đổi.
+  Sự kiện **đánh chung theo phòng** như MU: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh
+  (0–1, 2–3, 4–5, 6–7, 8–9, 10+), cùng phòng thì chung quái, chung máu quái; Kalima theo tổ đội. Quái mạnh theo mốc **cao nhất**
+  của phòng (Kalima: người chuyển sinh nhiều nhất trong tổ đội): mỗi mốc máu / thủ +40 %, công +15 %, kinh nghiệm / vàng +20 %
+  (tối đa 10). Vương Miện cố định mốc 10; quái vàng, trùm thế giới và tháp không đổi.
 
 ![Trận đánh](screenshots/e2e-battle.png)
 
@@ -165,10 +167,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 7. Ép đồ, ngọc, Máy Hỗn Nguyên, cánh
 
-- **Thợ Rèn** (Làng), thẻ "Ép đồ": ép đồ đang mặc, hoặc đồ trong túi đã chọn bằng nút Ép.
+- **Thợ Rèn** (Làng), tab "Ép đồ" (khung Thợ Rèn chia tab Mua · Bán · Ép đồ · Rèn · Rương, nhớ tab mở lần trước; chấm vàng
+  trên tab là số món ép được ngay): ép đồ đang mặc, hoặc đồ trong túi đã chọn bằng nút Ép. Món ép được đứng đầu; chạm vào
+  món để xem chỉ số tăng và rủi ro; món đã tối đa gập ở cuối.
   - Ép kiểu MU. +1 → +6: mỗi lần 1 Ngọc Ước Nguyện, luôn thành công.
   - +7 / +8 / +9: 1 Ngọc Tâm Linh, 50 % (đồ có May mắn 75 %); thất bại đồ **về +0**.
-  - +10 / +11: ép ở **Lão Hỗn Nguyên** (thẻ "Ép +10, +11"): +10 cần 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh (35 %),
+  - +10 / +11: ép ở **Lão Hỗn Nguyên** (tab "Ép +10/+11"; các tab khác: Cánh · Pha dòng · Ngọc & vé, công thức chưa đủ nguyên liệu gập lại): +10 cần 1 Hỗn Nguyên + 1 Ước Nguyện + 1 Tâm Linh (35 %),
     +11 cần 1 Hỗn Nguyên + 2 Ước Nguyện + 2 Tâm Linh (25 %); May mắn cộng 10 % (45 % / 35 %); thất bại đồ **về +0** (không vỡ).
   - Chỉ số cộng thêm so với chỉ số gốc món đồ: +1 → +9 mỗi cấp 8 % (+9 = 72 %); **+10 = 120 %, +11 = 180 %**.
   - Ép cánh: sát thương +2 % mỗi cấp tới +9, lên +10 thêm 12 %, lên +11 thêm 15 % (+11 = +45 %); hấp thụ theo bậc cánh
@@ -252,7 +256,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   mất 10% vàng, về Nhà; số vàng đó về tay người thắng. Không đánh được ở Làng, Nhà và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
   - Người đang **đánh quái** vẫn bị đồ sát ngay: trận đánh quái bị cắt ngang (quái giữ nguyên máu, không mất gì). Chỉ không đánh
     được người đang trong một trận đồ sát khác. Bản thân mình phải rảnh tay (không đang trong trận) mới đồ sát được.
-  - Người vừa gục được **bảo vệ 2 phút**; mỗi giờ chỉ đồ sát cùng một người tối đa 3 lần.
+  - Người vừa gục được **bảo vệ 30 giây**; không giới hạn số lần đồ sát.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
 - **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
