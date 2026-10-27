@@ -1435,3 +1435,7 @@ Nút "Ép" trong khung đồ trước chỉ nhắc "mang tới Thợ Rèn" (và 
 - Bổ sung (anh: "item nhiều dòng sẽ lố màn hình"): khung đồ cao tối đa bằng màn hình; phần thông tin cuộn bên trong (mờ ở mép
   dưới khi còn dòng), hàng nút (Trang bị / Ép / Vứt…) luôn ở dưới cùng. Xem trước ép gọn: ngọc + vàng chung một dòng.
   e2e `e2e/longtip.mjs` (360 × 640, đồ 6 dòng Excellent + May mắn + Bộ Thần + 9).
+
+## Hình nhân vật không kẹt "hình trần" khi một lớp ảnh tải hỏng (2026-10-27, anh hỏi "tại sao nhân vật là k có đồ")
+- Server gửi đủ ngoại hình (`look`) của người khác — kiểm toàn bộ nhân vật trong DB, mọi lớp ảnh đều có trong `assets/doll`. Lỗi nằm ở `doll.js`: một lớp ảnh tải hỏng (mạng chập chờn, điện thoại vừa mở lại app) thì ảnh đó hỏng vĩnh viễn trong phiên, và **mọi** nhân vật dùng lớp đó bị thay bằng hình trần mặc định (`hero.png`) tới khi tải lại trang.
+- Sửa: lớp hỏng tự tải lại sau 1 s / 3 s / 8 s; vẫn hỏng thì bỏ riêng lớp đó khi ghép (vẫn thấy giáp, tóc, vũ khí còn lại). e2e `doll.mjs`.
