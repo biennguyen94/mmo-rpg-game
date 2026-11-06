@@ -1511,3 +1511,6 @@ Như thú cưng: bình không còn hồi % máu / MP tối đa mà hồi số c�
 
 Số chốt bằng mô phỏng hành trình (4 lớp, 6 lần chuyển sinh, seed 1 / 2; bản % cũ chết 33 / 30): bộ anh duyệt đầu 50 / 300 / 1 200 (cấp 15 / 30) chết 45 / 65 — thiếu bình đủ mạnh ở cấp 11–30 lần chơi đầu (bản cũ mua được bình Lớn 70 % từ đầu) và bình Lớn hồi chỉ ~45 % cuối game; bộ trên chết 34 / 29.
 Bot (`Brain.restock`): chỉ đếm loại bình còn hồi ≥ `potion_heal_min` máu tối đa khi quyết định đi mua — trước đó bot giữ hàng trăm bình nhỏ nhặt từ đầu game nên không bao giờ mua bình Lớn và chết liên tục cuối game.
+
+## Nhật ký trận dễ đọc (2026-11-06, anh duyệt: chỉ máu quái, giữ icon)
+Mỗi dòng đánh / trượt / phản / uống bình / hồi máu có thêm các phần (`who`, `name`, `act`, `dmg`, `crit`, `miss`, `reflect`, `heal`, `mp`, `potion`, `hits`, `note`, `left`, `turn`); client vẽ câu ngắn kiểu: **Tên** dùng <u>Kỹ năng</u>. ⚔ **146** (máu còn lại: 1 930) / **Tên** gây ra ⚔ **35** 💥 chí mạng / **Tên** đánh trượt. / **Quái** bị phản ⚔ **8** / **Tên** uống Bình Máu Lớn, hồi ❤ **1 800**. Tên nhân vật màu vàng, quái / đối thủ màu đỏ, kỹ năng gạch dưới; chỉ hiện máu còn lại của quái; mỗi lượt một khối (cách dòng). `text` giữ câu đầy đủ như cũ (bot, test, dòng không có phần thì hiện chữ như trước).

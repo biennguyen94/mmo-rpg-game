@@ -3495,7 +3495,7 @@
         ${heroSprite()}
         <div class="grow" style="flex:1;min-width:0">${bar('hp', battleHp(), d.maxHp, `❤ ${fmt(battleHp())} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
-      <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
+      <div class="log" aria-live="polite">${b.log.map((l, i) => logLine(l, b.log[i - 1])).join('')}</div>
       ${P.auto ? `<div class="auto-bar on"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">🤖 Đang tự đánh · đã hạ <b class="num">${fmt(autoKills())}</b></span><button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>` : ''}
       ${bottom}`;
   }
@@ -3545,6 +3545,30 @@
     if (!P || !P.battle) return;
     fx = fxOf(before, action);
     BattleFx.run(battleEvents(before, action, skill, fx));
+  }
+
+  // Nhật ký trận dễ đọc (DECISIONS "Nhật ký trận dễ đọc"): dòng có `who` vẽ thành câu ngắn, tên đậm có màu,
+  // ⚔ sát thương / ❤ hồi máu / 💥 chí mạng, chỉ hiện máu còn lại của quái; mỗi lượt một khối. Dòng khác giữ chữ cũ.
+  function logLine(l, prev) {
+    const gap = l.turn != null && prev && prev.turn != null && prev.turn !== l.turn ? ' turn-gap' : '';
+    if (!l.who) return `<div class="${l.kind}${gap}">${esc(l.text)}</div>`;
+    const who = `<b class="lg-${l.who === 'me' ? 'me' : 'foe'}">${esc(l.name)}</b>`;
+    const act = l.act ? `<u class="lg-act">${esc(l.act)}</u>` : '';
+    const num = (n) => `<b class="lg-num">${fmt(n)}</b>`;
+    const left = l.left != null ? ` <span class="lg-left">(máu còn lại: ${fmt(l.left)})</span>` : '';
+    let s;
+    if (l.miss) s = `${who} ${act ? `<span>dùng</span> ${act}, ` : ''}<span>đánh trượt.</span>`;
+    else if (l.reflect != null) s = `${who} <span>bị phản</span> ⚔ ${num(l.reflect)}${left}`;
+    else if (l.mp != null) s = `${who} <span>uống</span> ${esc(l.act)}<span>, hồi</span> 💧 ${num(l.mp)} MP`;
+    else if (l.heal != null) s = `${who} ${l.potion ? `<span>uống</span> ${esc(l.act)}` : `<span>dùng</span> ${act}`}<span>, hồi</span> ❤ ${num(l.heal)}`;
+    else {
+      s = act ? `${who} <span>dùng</span> ${act}. ⚔ ${num(l.dmg)}` : `${who} <span>gây ra</span> ⚔ ${num(l.dmg)}`;
+      if (l.hits) s += ` <span>(${l.hits} đòn)</span>`;
+      if (l.crit) s += ` 💥 <span class="lg-crit">chí mạng</span>`;
+      if (l.note) s += ` <span class="lg-left">(${esc(l.note)})</span>`;
+      s += left;
+    }
+    return `<div class="lg ${l.kind}${gap}">${s}</div>`;
   }
 
   // số sát thương hai bên của lượt vừa rồi (so với ảnh chụp `before`)

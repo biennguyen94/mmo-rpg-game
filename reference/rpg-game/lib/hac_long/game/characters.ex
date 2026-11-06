@@ -363,7 +363,8 @@ defmodule HacLong.Game.Characters do
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
                     ds bc kal gear_ids taken ignore_def crit_mult element rich
                     cls skills mp maxMp mp_regen mcds stun_free pstun_free hits def_mult cd overkill
-                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at)a,
+                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at
+                    who act miss reflect heal left note potion)a,
                  &{Atom.to_string(&1), &1}
                )
 

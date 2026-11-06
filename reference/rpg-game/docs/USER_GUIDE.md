@@ -106,6 +106,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 
 - Trận theo lượt: **Đánh**, **Kỹ năng**, **Uống máu**, **Chạy**. Số bay lên cho biết sát thương; "Trượt" là đòn hụt.
 - Đòn có khoảng thấp ~ cao, có thể chí mạng; thủ của mục tiêu làm giảm sát thương nhưng không xuống dưới 20 % đòn gốc.
+- **Nhật ký trận**: mỗi lượt một khối; tên bạn màu vàng, quái màu đỏ; ⚔ sát thương, 💥 chí mạng, ❤ hồi máu; sau đòn của bạn có máu còn lại của quái.
+
+  ![Nhật ký trận](screenshots/battle-log.png)
 - Thắng nhận kinh nghiệm, vàng, có khi rơi đồ hoặc ngọc. Gục ngã thì về Làng, mất 10 % vàng đang mang.
 - **Hiệu ứng**: "LÊN CẤP" giữa màn hình khi lên cấp; số xanh khi hồi máu / MP; chữ lớn khi ép đồ thành công hay vỡ đồ.
 - **Tự hủy đồ rơi** (Menu → Cài đặt): bật thì trang bị rơi ra không thuộc loại được chọn "Giữ lại" (Excellent, Thần, May mắn / Kỹ năng, nhiều dòng, tốt hơn đồ đang mặc, mặc được) bị hủy ngay, cả khi đánh tay lẫn tự đánh; nhẫn, dây chuyền, cánh, ngọc, nguyên liệu luôn giữ.
