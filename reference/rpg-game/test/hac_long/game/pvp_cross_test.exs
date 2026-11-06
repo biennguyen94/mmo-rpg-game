@@ -48,7 +48,7 @@ defmodule HacLong.Game.PvpCrossTest do
     pb = Engine.pvp_receive(pb, debuffs)
     assert Engine.stunned?(pb)
     {_, pb} = Engine.act(pb, "attack")
-    assert List.last(pb.battle.log).text == "💫 Bạn bị choáng, mất một lượt."
+    assert List.last(pb.battle.log).text == "💫 Bia bị choáng, mất một lượt."
     refute Engine.stunned?(pb)
 
     # vừa thoát choáng: người đánh ngắm thấy đối thủ đang kháng, choáng không vào
@@ -76,7 +76,7 @@ defmodule HacLong.Game.PvpCrossTest do
     p = Engine.pvp_receive(b, [%{id: "poison", turns: 3, power: 40}])
     p = Engine.pvp_turn_start(p)
     assert p.hp == b.hp - 40
-    assert List.last(p.battle.log).text =~ "Bạn mất 40 máu vì trúng độc"
+    assert List.last(p.battle.log).text =~ "Manh mất 40 máu vì trúng độc"
   end
 
   test "đòn vào người bị đánh đi qua thủ thế, khiên, bất tử, thú Hộ vệ / Long Vương của họ" do
@@ -132,7 +132,7 @@ defmodule HacLong.Game.PvpCrossTest do
     {_, pve1} = Engine.act(low.(pve), "potion")
 
     healed = fn p ->
-      t = Enum.find(p.battle.log, &(&1.text =~ "Bạn uống")).text
+      t = Enum.find(p.battle.log, &(&1.text =~ "Binh uống")).text
       [_, n] = Regex.run(~r/hồi (\d+) máu/u, t)
       String.to_integer(n)
     end

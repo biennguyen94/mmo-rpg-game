@@ -741,7 +741,11 @@ defmodule HacLong.Game.Engine do
     {ok(), p |> Map.put(:battle, battle) |> log(text, "info")}
   end
 
+  # Nhật ký trận ghi tên, không xưng "bạn" (DECISIONS "Nhật ký trận: tên, dùng gì, gây bao nhiêu"): "Bạn" / "bạn"
+  # trong câu đổi thành tên nhân vật
+  @you ~r/(?<![\p{L}\p{N}_])[Bb]ạn(?![\p{L}\p{N}_])/u
   defp log(p, text, kind) do
+    text = if p[:name], do: Regex.replace(@you, text, p.name), else: text
     entries = p.battle.log ++ [%{text: text, kind: kind}]
     entries = if length(entries) > @log_limit, do: tl(entries), else: entries
     put_in(p.battle.log, entries)
@@ -1059,6 +1063,10 @@ defmodule HacLong.Game.Engine do
   defp pick_skill(p, nil), do: List.first(skills(p))
   defp pick_skill(p, id), do: Enum.find(skills(p), &(&1.id == id))
 
+  # "dùng gì" trong nhật ký trận: tên kỹ năng, không thì Đòn thường
+  defp strike_name(nil), do: "Đòn thường"
+  defp strike_name(skill), do: skill.name
+
   defp act_strike(p, action, skill_id, d) do
     m = p.battle.monster
     skill = if action == "skill", do: pick_skill(p, skill_id)
@@ -1081,7 +1089,7 @@ defmodule HacLong.Game.Engine do
 
         pvp = m[:pvp] != nil
 
-        {p, atk, dfn, crit, mult, name, on_hit} =
+        {p, atk, dfn, crit, mult, _name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(if pvp, do: pvp_crit(d.crit), else: d.crit))
 
         # thông thạo kỹ năng: hệ số trong dữ liệu là của cấp tối đa
@@ -1098,7 +1106,7 @@ defmodule HacLong.Game.Engine do
                  do: chance(m.dodge * @pvp.dodge_mult),
                  else: chance(1 - hit_chance(d.ar, m.level))
                ) do
-            log(p, "Trượt! #{m.name} tránh được đòn #{name}.", "info")
+            log(p, "#{p.name}, #{strike_name(skill)}, đánh trượt.", "info")
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
@@ -1131,7 +1139,6 @@ defmodule HacLong.Game.Engine do
             {after_hit, p} = {p.battle.log, put_in(p.battle.log, log0)}
             p = put_in(p, [:battle, :overkill], p.battle.monster.hp - dmg)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
-            prefix = if skill, do: "✨ #{name}: ", else: ""
 
             suffix =
               if(hits > 1, do: " (#{hits} đòn)", else: "") <>
@@ -1144,7 +1151,7 @@ defmodule HacLong.Game.Engine do
 
             p
             |> log(
-              "#{prefix}Bạn gây #{dmg} sát thương#{suffix}.",
+              "#{p.name}, #{strike_name(skill)}, gây #{dmg} sát thương#{suffix}.",
               if(crit, do: "crit", else: "hit")
             )
             |> then(&Enum.reduce(after_hit, &1, fn e, p -> log(p, e.text, e.kind) end))
@@ -1468,7 +1475,7 @@ defmodule HacLong.Game.Engine do
       p =
         if not special and
              chance(dodge_chance(p, d) * if(pvp, do: @pvp.dodge_mult, else: 1)) do
-          log(p, "Bạn né được đòn của #{m.name}.", "info")
+          log(p, "#{m.name}, Đòn thường, đánh trượt.", "info")
         else
           mc = not special and chance(if pvp, do: pvp_crit(m.crit), else: m.crit)
           cm = m[:crit_mult] || @combat.monster_crit_mult
@@ -1488,13 +1495,8 @@ defmodule HacLong.Game.Engine do
           p = %{p | hp: max(0, p.hp - dmg)} |> survive(d)
 
           text =
-            if special,
-              do: "🔥 #{m.name} dùng #{m.special.name}! Bạn mất #{dmg} máu.",
-              else:
-                if(mc,
-                  do: "#{m.name} đánh bạn #{dmg} máu (chí mạng).",
-                  else: "#{m.name} đánh bạn #{dmg} máu."
-                )
+            "#{m.name}, #{if special, do: m.special.name, else: "Đòn thường"}, gây #{dmg} sát thương" <>
+              if(mc, do: " (CHÍ MẠNG!).", else: ".")
 
           p = log(p, text, "bad") |> reflect(dmg, d.excReflect)
 
@@ -1554,7 +1556,7 @@ defmodule HacLong.Game.Engine do
       |> put_in([:battle, :monster, :mp], m.mp - k.mp)
       |> put_in([:battle, :mcds], [%{id: k.id, turns: k.cd + 1} | Map.get(p.battle, :mcds, [])])
       |> log(
-        "✨ #{m.name} dùng #{k.name}! Bạn mất #{dmg} máu#{if crit, do: " (chí mạng)", else: ""}.",
+        "#{m.name}, #{k.name}, gây #{dmg} sát thương#{if crit, do: " (CHÍ MẠNG!)", else: ""}.",
         "bad"
       )
       |> reflect(dmg, d.excReflect)
@@ -1748,7 +1750,7 @@ defmodule HacLong.Game.Engine do
     if back > 0,
       do:
         put_in(p.battle.monster.hp, m.hp - back)
-        |> log("↩ Phản lại #{back} sát thương cho #{m.name}.", "good"),
+        |> log("#{m.name}, bị phản #{back} sát thương.", "good"),
       else: p
   end
 
@@ -2056,7 +2058,7 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad")
+          |> log("#{p.name}, bị phản #{back} sát thương.", "bad")
           |> then(&if(&1.hp <= 0, do: survive(&1, derived(&1)), else: &1)),
         else: p
 
@@ -2073,7 +2075,7 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad"),
+          |> log("#{p.name}, bị phản #{back} sát thương.", "bad"),
         else: p
 
     {dmg, p}

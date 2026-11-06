@@ -64,6 +64,32 @@ const pc = await player(X.page);
 R.check('mở thư nhận 123 vàng và một món đồ', pc.gold === g0 + 123 && Object.keys(pc.view.gear || {}).length === n0 + 1, `${pc.gold - g0} vàng, ${Object.keys(pc.view.gear || {}).length - n0} đồ`);
 R.check('không còn mục Gửi quà riêng ở người chơi', !(await page.$('#adm-gift')));
 
+// Quà mọi người: tick May mắn + một dòng Excellent cho trang bị (như tặng người cụ thể)
+const subj2 = 'Quà dòng ' + Date.now();
+await page.fill('#adm-gift-all input[name="subject"]', subj2);
+await page.fill('#adm-gift-all input[name="gold"]', '0');
+const wpn = await page.evaluate(() => Object.keys(window.GAME_DATA.ITEMS).find((k) => window.GAME_DATA.ITEMS[k].slot === 'weapon' && !window.GAME_DATA.ITEMS[k].legacy));
+await page.fill('#adm-gift-all [data-sel-q="adm-gift-all-gear"]', '');
+await page.selectOption('#adm-gift-all select[name="gbase"]', wpn);
+await page.fill('#adm-gift-all input[name="gup"]', '2');
+await page.check('#adm-gift-all input[name="luck"]');
+const excBox = page.locator('#adm-gift-all [data-gear-show="weapon"] input[name="exc"]').first();
+const hasExc = await excBox.isVisible().catch(() => false);
+if (hasExc) await excBox.check();
+await page.click('#adm-gift-all [data-act="gift-add"][data-kind="gear"]');
+const basket = (await page.textContent('#adm-gift-all-basket')) || '';
+R.check('quà mọi người: có ô tick May mắn / Excellent, giỏ ghi rõ', hasExc && basket.includes('May mắn') && basket.includes('Hoàn hảo') && basket.includes('+2'), basket);
+page.once('dialog', (d) => d.accept());
+await page.click('#adm-gift-all button[type="submit"]');
+let gift2;
+for (let i = 0; i < 15 && !gift2; i++) {
+  gift2 = await X.page.evaluate((s) => window.Net.mail().then((m) => m.mails.find((x) => x.subject === s), () => null), subj2);
+  if (!gift2) await X.page.waitForTimeout(1000);
+}
+if (gift2) await send(X.page, { act: 'mail_claim', id: gift2.id });
+const gx = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === wpn && g.luck);
+R.check('mở thư: món có May mắn + Excellent', !!gx && gx.excellent, JSON.stringify(gx && { luck: gx.luck, exc: gx.exc }));
+
 // Chỉnh nhân vật: cộng 1000 vàng (người chơi đang online thấy liền)
 const g1 = (await player(X.page)).gold;
 await page.fill('form.adm-char[data-op="add_gold"] input[name="amount"]', '1000');

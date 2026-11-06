@@ -274,15 +274,18 @@ defmodule HacLong.Mailbox do
     end
   end
 
-  # đồ đủ dòng (May mắn / Kỹ năng / Excellent / Thần / dòng phụ cánh): "gearx:<base64 JSON>", server tự tạo
-  # khi túi đồ hiếm đầy (`send_overflow/2`)
+  # đồ đủ dòng (May mắn / Kỹ năng / Excellent / Thần / dòng phụ cánh, +N): "gearx:<base64 JSON>", server tự tạo
+  # khi túi đồ hiếm đầy (`send_overflow/2`); quà của quản trị cũng gửi dạng này khi có tick dòng
+  # (DECISIONS "Quà mọi người: tick dòng như tặng người cụ thể")
   defp parse_gear("gearx:" <> b64) do
     with {:ok, json} <- Base.url_decode64(b64, padding: false),
          {:ok, %{"base" => base} = m} <- Jason.decode(json),
          {base, 0, 0, it, _} <- parse_gear(gear_key(base, 0, 0)),
          opt when is_integer(opt) <- m["opt"] || 0,
-         true <- opt in 0..Gear.max_opt() and extras_ok?(it, m) do
-      {base, opt, 0, it, Map.take(m, ~w(luck skill exc anc wopt))}
+         # cấp ép (quà quản trị gửi đồ đủ dòng, có thể kèm +N)
+         up when is_integer(up) <- m["up"] || 0,
+         true <- opt in 0..Gear.max_opt() and up in 0..Engine.max_upgrade() and extras_ok?(it, m) do
+      {base, opt, up, it, Map.take(m, ~w(luck skill exc anc wopt))}
     else
       _ -> nil
     end
@@ -292,6 +295,8 @@ defmodule HacLong.Mailbox do
 
   defp extras_ok?(it, m) do
     m["luck"] in [nil, true] and m["skill"] in [nil, true] and m["anc"] in [nil, true] and
+      (m["skill"] != true or it.slot == "weapon") and (m["anc"] != true or it[:set] != nil) and
+      (m["exc"] in [nil, []] or it.slot != "wing") and
       (m["wopt"] == nil or Gear.wopt_value(it[:tier], m["wopt"]) > 0) and
       (m["exc"] == nil or
          (is_list(m["exc"]) and

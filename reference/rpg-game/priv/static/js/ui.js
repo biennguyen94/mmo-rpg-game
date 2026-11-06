@@ -68,16 +68,24 @@
     const opts = [['', 'Cánh: không dòng phụ'], ['hp', `Cánh: máu tối đa +${t.hp}`], ['mp', `Cánh: MP tối đa +${t.mp}`], ['ignore_def', `Cánh: bỏ qua ${Math.round(t.ignore_def * 100)}% phòng thủ đối thủ`]];
     return `<select name="wopt" aria-label="Dòng phụ cánh">${opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   }
+  // ô tick dòng của món (May mắn, Kỹ năng, Đồ Thần, Excellent, dòng phụ cánh): dùng cho "Chỉnh nhân vật → Trang bị"
+  // lẫn quà qua hộp thư (DECISIONS "Quà mọi người: tick dòng như tặng người cụ thể")
+  function gearExtras(base) {
+    const show0 = gearShow(base);
+    return `<div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label${k === 'luck' ? '' : ` data-gear-show="${k}"${show0[k] ? '' : ' hidden'}`}><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
+        ${woptSelect(base)}</div>
+      ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`;
+  }
   // form tặng trang bị: chỉ hiện dòng hợp với món đang chọn (như `Admin` kiểm tra) — Excellent vũ khí cho
   // vũ khí / dây chuyền, Excellent giáp cho đồ còn lại, cánh không có Excellent; Kỹ năng chỉ vũ khí; Đồ Thần chỉ món thuộc bộ
   function gearShow(base) {
     const it = ITEMS[base] || {}, exc = it.slot === 'wing' || !it.slot ? '' : atkSlot(it) ? 'weapon' : 'armor';
     return { weapon: exc === 'weapon', armor: exc === 'armor', skill: it.slot === 'weapon', anc: !!it.set };
   }
-  function syncGearForm() {
-    const form = document.querySelector('form.adm-char[data-op="give_gear"]');
+  function syncGearForm(form) {
+    form = form || document.querySelector('form.adm-char[data-op="give_gear"]');
     if (!form) return;
-    const base = form.querySelector('select[name="base"]').value;
+    const base = (form.querySelector('select[name="base"]') || form.querySelector('select[name="gbase"]')).value;
     const old = form.querySelector('select[name="wopt"]');
     if (old) old.outerHTML = woptSelect(base);
     const show = gearShow(base);
@@ -533,7 +541,8 @@
         <div class="btn-row"><select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o} dòng</option>`).join('')}</select>
           <label class="small">+ <input type="number" name="gup" min="0" max="${UPGRADE.max}" value="0"></label>
           <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label>
-          <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div></div>
+          <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div>
+        ${gearExtras(Object.keys(ITEMS).find((k) => (GEAR_KINDS.includes(ITEMS[k].slot) || ITEMS[k].slot === 'wing') && !ITEMS[k].legacy))}</div>
       <div id="${id}-basket" class="gift-basket">${giftBasketHtml(id)}</div>
       ${all ? `<fieldset class="gift-filter"><legend class="small">Người nhận (bỏ trống = mọi người, không tính bot)</legend>
         <div class="btn-row"><label class="small">Cấp từ <input type="number" name="min_level" min="1" max="${RULES.maxLevel}"></label>
@@ -547,7 +556,8 @@
   }
   // tên món trong giỏ / thư: đồ thường, hoặc "gear:<mẫu>:<dòng>:<+N>"
   function giftKeyHtml(k, n) {
-    const g = k.startsWith('gear:') && k.split(':');
+    let g = k.startsWith('gear:') && k.split(':');
+    if (k.startsWith('gearx:')) { try { const x = JSON.parse(atob(k.slice(6).replace(/-/g, '+').replace(/_/g, '/'))); g = ['gear', x.base, x.opt || 0, x.up || 0]; } catch (e) { g = null; } }
     const it = g ? ITEMS[g[1]] : ITEMS[k];
     return `${it ? itemIcon(it, '', g ? +g[3] : 0) : ''}<span class="grow">${esc(mailItemName(k))}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</span>`;
   }
@@ -569,7 +579,18 @@
     const form = document.getElementById(t.dataset.form);
     if (!form) return;
     const f = new FormData(form), b = giftBasket[form.id] = giftBasket[form.id] || {};
-    const key = t.dataset.kind === 'item' ? f.get('item') : `gear:${f.get('gbase')}:${+f.get('grar') || 0}:${Math.min(UPGRADE.max, +f.get('gup') || 0)}`;
+    let key = t.dataset.kind === 'item' ? f.get('item') : `gear:${f.get('gbase')}:${+f.get('grar') || 0}:${Math.min(UPGRADE.max, +f.get('gup') || 0)}`;
+    // có tick dòng (May mắn, Excellent…): khóa "gearx:<base64 JSON>" như server (Mailbox), kèm cả +N
+    if (t.dataset.kind === 'gear') {
+      const x = { base: f.get('gbase') };
+      if (+f.get('grar')) x.opt = +f.get('grar');
+      if (+f.get('gup')) x.up = Math.min(UPGRADE.max, +f.get('gup'));
+      for (const k of ['luck', 'skill', 'anc']) if (f.get(k)) x[k] = true;
+      const exc = f.getAll('exc');
+      if (exc.length) x.exc = exc;
+      if (f.get('wopt')) x.wopt = f.get('wopt');
+      if (x.luck || x.skill || x.anc || x.exc || x.wopt) key = 'gearx:' + btoa(unescape(encodeURIComponent(JSON.stringify(x)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
     const n = Math.max(1, Math.floor(+(t.dataset.kind === 'item' ? f.get('n') : f.get('gn')) || 1));
     if (!key || key === 'null') return;
     b[key] = Math.min(100, (b[key] || 0) + n);
@@ -1071,7 +1092,8 @@
     if (!o) return head + '<div class="card"><p class="small muted">Đang tải hồ sơ…</p></div>';
     const pr = o.profile, c = CLASSES[o.cls] || {};
     const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
-    const plus = (v) => (v ? ` <span class="up">+${Math.round(v * 100)}%</span>` : '');
+    // % cộng thêm từ thú cưng (đã nhân theo cấp thú) và món ăn / đồ uống / ban phước
+    const plus = (v) => (v ? ` <span class="up" title="Từ thú cưng${pr.pet ? ` (${esc(pr.pet)} cấp ${pr.pet_lv}: chỉ số cấp 1 × ${(1 + (pr.pet_lv - 1) * RULES.petPerLevel).toFixed(2)})` : ''}, món ăn, đồ uống">+${Math.round(v * 100)}%</span>` : '');
     // cùng cách ghi với tab Nhân vật: điểm gốc, phần đồ cộng thêm màu xanh
     const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base)}</b>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
     const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
@@ -1127,7 +1149,7 @@
         ${pr.equip.length ? '' : '<p class="small muted" style="text-align:center">Chưa mặc gì.</p>'}
       </div>
       <div class="card">
-        ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
+        ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} cấp ${pr.pet_lv} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
         ${kv('🏪 Đang bán ở chợ', `${pr.market} món`)}
       </div>
       <div class="card">
@@ -1399,8 +1421,8 @@
     if (id.startsWith('gearx:')) {
       try {
         const x = JSON.parse(atob(id.slice(6).replace(/-/g, '+').replace(/_/g, '/')));
-        const tags = [x.anc ? 'Đồ Thần' : x.exc && x.exc.length ? 'Hoàn hảo' : '', x.opt ? `cộng thêm ${x.opt * lineVal(ITEMS[x.base])}` : '', x.luck ? 'May mắn' : ''].filter(Boolean);
-        if (ITEMS[x.base]) return `${ITEMS[x.base].name}${tags.length ? ` (${tags.join(', ')})` : ''}`;
+        const tags = [x.anc ? 'Đồ Thần' : '', x.exc && x.exc.length ? `Hoàn hảo ${x.exc.length} dòng` : '', x.opt ? `cộng thêm ${x.opt * lineVal(ITEMS[x.base])}` : '', x.luck ? 'May mắn' : '', x.skill ? 'Kỹ năng' : '', x.wopt ? 'dòng cánh' : ''].filter(Boolean);
+        if (ITEMS[x.base]) return `${ITEMS[x.base].name}${x.up ? ` +${x.up}` : ''}${tags.length ? ` (${tags.join(', ')})` : ''}`;
       } catch (e) { /* khóa hỏng: hiện nguyên */ }
       return id;
     }
@@ -3150,7 +3172,7 @@
     if (Date.now() - dragonAt > 60000) loadDragonBoard();
     const odds = (k) => `1/${fmt(Math.round(1 / (D.chance * k)))}`;
     const board = dragonBoard || [];
-    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
+    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc.replace(/\.$/, ''))} (cấp 1; mỗi cấp thêm ${pctTxt(RULES.petPerLevel)}, cấp ${RULES.petMaxLevel} ×${(1 + (RULES.petMaxLevel - 1) * RULES.petPerLevel).toFixed(2)}).</div></div></div>
       <p class="small">Mỗi giờ ${esc(pet.name)} nổi lên một lần, lúc ngẫu nhiên, ở một ô nước bất kỳ trong hồ (bọt vàng sủi), ở lại ${Math.round(D.stay / 60)} phút. Chỉ thả câu trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần thả, nhân thêm theo Long Khí, có ${esc(ITEMS[D.bait].name)} thì gấp ${D.bait_mult} (chỉ tốn mồi khi thả trúng ô Ngài). Có người câu được hoặc hết giờ thì Ngài lặn.</p>
       <p class="small">Long Khí: mỗi con cá câu ở hồ +1, tối đa ${D.long_khi_max} (cơ hội ×${1 + D.long_khi_max / D.long_khi_div}); câu được Ngài thì về 0. Bạn đang có <b>${P.long_khi || 0}</b>, cơ hội hiện tại <b>${odds((1 + (P.long_khi || 0) / D.long_khi_div) * (bait ? D.bait_mult : 1))}</b>.${lake ? ' <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</p>
       <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>
@@ -3306,7 +3328,7 @@
       sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và cộng chỉ số (thú không đánh trong trận): ⚔️ Chiến tăng tấn công, chí mạng; 🛡️ Hộ vệ tăng máu, phòng thủ, giảm sát thương nhận; 🍀 Tài lộc tăng kinh nghiệm, vàng. Chỉ số tăng theo cấp thú. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)} ${petGroup(pt.group)}</div><div class="small muted">${esc(pt.desc)}</div></div>
+          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)} ${petGroup(pt.group)}</div><div class="small muted">${esc(pt.desc.replace(/\.$/, ''))} (cấp 1).</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
               : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Hồ Long Vương</span>'
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
@@ -4365,6 +4387,7 @@
     document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.selQ) setTimeout(() => { if (!(document.activeElement && document.activeElement.dataset.selQ)) selFocus = null; }, 0); });
     document.addEventListener('change', (e) => {
       if (e.target.matches('form.adm-char[data-op="give_gear"] select[name="base"]')) syncGearForm();
+      if (e.target.matches('form.gift-form select[name="gbase"]')) syncGearForm(e.target.closest('form'));
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }

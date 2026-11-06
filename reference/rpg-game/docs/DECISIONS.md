@@ -1477,3 +1477,13 @@ Kiểu MU: thú là món đi theo cộng chỉ số, không ra đòn.
 - **Ba nhóm** (`PETS.group`): `war` ⚔️ Chiến (tấn công, chí mạng), `guard` 🛡️ Hộ vệ (máu, phòng thủ, **giảm sát thương nhận** `reduce`, tối đa 50 %), `luck` 🍀 Tài lộc (kinh nghiệm, vàng rơi). Long Vương `all` (Thần thú) cộng cả ba. Thú thuần thuộc nhóm Chiến: công `tame_bonus` + `tame_realm_bonus` × k, chí mạng `tame_crit`.
 - **Giữ sức mạnh:** phần sát thương trung bình cú cắn cũ quy đổi vào % tấn công / chí mạng; `bonus_per_level` 0,05 → 0,08 (cấp 20 ×2,52) vì cú cắn cũ tăng mạnh theo cấp. So sức tấn công cấp 1 / cấp 20 (cũ → mới, chí mạng tính nửa): Ác Quỷ 0,17 → 0,18 / 0,44 → 0,45; Satan 0,15 → 0,16 / 0,40 → 0,39; Chó Săn 0,09 → 0,09 / 0,29 → 0,21.
 - Dữ liệu: `pets.json` version 3, `RULES.pets` version 3 (bỏ `bite_*`, `skill*_level`, `skills`). Thành tựu "Thầy Dạy Thú" giữ (nuôi thú lên cấp 5), bỏ chữ "học kỹ năng".
+
+## Nhật ký trận: tên, dùng gì, gây bao nhiêu (2026-11-06, anh "trong khung thông tin đánh quái… chú ý ko xài từ bạn")
+- Dòng đánh: "`Tên`, `Đòn thường | tên kỹ năng`, gây `N` sát thương" (+ "(CHÍ MẠNG!)", nhiều đòn, khắc hệ); trượt: "`Tên`, `dùng gì`, đánh trượt" (thay "Trượt! X tránh được…" / "Bạn né được…"); phản đòn: "`Tên người bị phản`, bị phản `N` sát thương". Quái / đối thủ ghi cùng cách (chiêu đặc biệt của quái là tên chiêu).
+- Mọi dòng khác trong nhật ký trận đổi "Bạn / bạn" thành tên nhân vật (uống bình, choáng, độc, hạ quái…), kể cả đồ sát. Đối thủ đọc nhật ký của nhau (đồ sát, đấu trường) không cần đổi góc nhìn nữa (`BattleText.mirror` chỉ thêm tên ở đầu dòng không nhắc tên).
+
+## Quà mọi người: tick dòng như tặng người cụ thể (2026-11-06)
+Form quà qua hộp thư (mọi người lẫn một người) có thêm ô tick May mắn, Kỹ năng, Đồ Thần, các dòng Excellent và dòng phụ cánh như "Chỉnh nhân vật → Trang bị". Món có tick gửi bằng khóa `gearx:<base64 JSON>` (đã có cho đồ tràn túi), nay nhận thêm `up` (+N); server kiểm Kỹ năng chỉ vũ khí, Đồ Thần chỉ món bộ giáp, cánh không có Excellent.
+
+## Chỉ số thú cưng ghi rõ theo cấp (2026-11-06, anh hỏi Long Vương +10% / +8% nhưng hồ sơ hiện +20% / +16%)
+Không phải lỗi: số trong mô tả thú là ở cấp 1, chỉ số thật nhân `1 + bonus_per_level × (cấp − 1)` (Long Vương cấp 20 ×1,95 với hệ số cũ). Cửa hàng / thẻ Long Vương ghi "(cấp 1)" và hệ số theo cấp; hồ sơ ghi cấp thú, rê chuột vào % thấy cách tính.

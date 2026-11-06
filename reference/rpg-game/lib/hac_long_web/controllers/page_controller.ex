@@ -204,6 +204,8 @@ defmodule HacLongWeb.PageController do
         tamePrice: Data.rules().pets.tame_price,
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
         petXpCoef: Data.rules().pets.xp_coef,
+        # chỉ số thú cưng cộng thêm mỗi cấp (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+        petPerLevel: Data.rules().pets.bonus_per_level,
         petFeedXp: Data.rules().pets.feed_xp
       },
       WORLD: Maps.client_data(),

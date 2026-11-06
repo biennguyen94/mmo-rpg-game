@@ -108,7 +108,7 @@ defmodule HacLong.Game.StatEffectTest do
     Rng.put_sequence(List.duplicate(0.5, 40))
     {_, q2} = Engine.act(put_in(q, [:battle, :live], true), "attack", nil)
     assert q2.hp < 1_000_000
-    assert Enum.any?(q2.battle.log, &(&1.text =~ "phản lại"))
+    assert Enum.any?(q2.battle.log, &(&1.text =~ "bị phản"))
 
     # cánh của đối thủ: bản sao nhận ít hơn
     winged = Arena.opponent(wear(hero(), %{"base" => "wing_dk_3", "up" => 11}), 2)

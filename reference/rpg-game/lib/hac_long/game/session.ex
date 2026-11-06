@@ -548,8 +548,8 @@ defmodule HacLong.Game.Session do
 
         text =
           if f.mine,
-            do: "🗡 Bạn đồ sát #{foe.name}! Bạn ra đòn trước.",
-            else: "⚠ #{foe.name} đồ sát bạn! Bỏ chạy tính như gục ngã."
+            do: "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước.",
+            else: "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
 
         text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}

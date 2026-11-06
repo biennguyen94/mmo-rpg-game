@@ -33,6 +33,37 @@ defmodule HacLong.MailboxGearTest do
     assert msg =~ "(cộng thêm #{2 * HacLong.Game.Engine.line_value(Data.item(w))})"
   end
 
+  test "quà quản trị đồ đủ dòng (gearx: May mắn, Kỹ năng, Excellent, +N); dòng sai loại đồ thì không gửi" do
+    # DECISIONS "Quà mọi người: tick dòng như tặng người cụ thể"
+    user = user("mgx")
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mgx", "cls" => "dk"})
+    key = fn m -> "gearx:" <> Base.url_encode64(Jason.encode!(m), padding: false) end
+
+    ok =
+      key.(%{base: "item_0_26", opt: 2, up: 5, luck: true, skill: true, exc: ["crit", "atk_pct"]})
+
+    assert :ok = Mailbox.send(user.id, %{subject: "Quà", items: %{ok => 1}})
+    [m] = Mailbox.list(user.id)
+    assert {:ok, msg, p2} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)
+    assert msg =~ "+5"
+    g = Enum.find(Gear.bag(p2), &(&1.base == "item_0_26"))
+    assert g.luck and g.skill and g.opt == 2 and Enum.sort(g.exc) == ["atk_pct", "crit"]
+    assert p2.upgrades[g.uid] == 5
+
+    # Kỹ năng chỉ vũ khí; Excellent không cho cánh
+    assert {:error, _} =
+             Mailbox.send(user.id, %{
+               subject: "x",
+               items: %{key.(%{base: base("armor"), skill: true}) => 1}
+             })
+
+    assert {:error, _} =
+             Mailbox.send(user.id, %{
+               subject: "x",
+               items: %{key.(%{base: "wing_dk_1", exc: ["crit"]}) => 1}
+             })
+  end
+
   test "túi đồ hiếm đầy: đồ rơi vào Hộp thư đủ dòng; hộp thư đầy thì bán" do
     user = user("mfull")
     {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mfull", "cls" => "dk"})

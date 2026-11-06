@@ -60,7 +60,7 @@ defmodule HacLong.Game.EngineTest do
     # số thứ hai nhỏ hơn tỉ lệ trượt (1 − tỉ lệ trúng): đánh trượt
     Rng.put_sequence([0.99, 0.0, 0.99])
     {_, p4} = Engine.act(p, "attack")
-    assert Enum.at(p4.battle.log, 1).text =~ "Trượt!"
+    assert Enum.at(p4.battle.log, 1).text =~ ", Đòn thường, đánh trượt."
     assert p4.battle.monster.hp == p.battle.monster.hp
   end
 
@@ -151,7 +151,7 @@ defmodule HacLong.Game.EngineTest do
     p = put_in(p.battle.monster.hp, 100_000)
     p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.act(p, "attack"), 1) end)
     assert [%{id: "burn", power: per}] = p.battle.effects.player
-    assert Enum.any?(p.battle.log, &(&1.text =~ "Bạn mất #{per} máu vì bị bỏng"))
+    assert Enum.any?(p.battle.log, &(&1.text =~ "Thử mất #{per} máu vì bị bỏng"))
     {_, p} = Engine.act(p, "potion")
     assert p.battle.effects.player == []
     assert Enum.any?(p.battle.log, &(&1.text == "Hết bị bỏng."))
