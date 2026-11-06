@@ -19,6 +19,8 @@ const user = 'l_' + Math.random().toString(36).slice(2, 8);
 await page.click('[data-auth="register"]');
 await page.fill('#auth-user', user);
 await page.fill('#auth-pass', 'password123');
+await page.selectOption('#auth-q', { index: 1 });
+await page.fill('#auth-a', 'meo mun');
 await page.click('#auth button[type="submit"]');
 await page.waitForSelector('#hero-name');
 await page.fill('#hero-name', 'En' + Math.random().toString(36).slice(2, 7));

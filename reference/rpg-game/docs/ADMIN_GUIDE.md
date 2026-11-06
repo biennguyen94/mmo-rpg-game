@@ -67,7 +67,8 @@ Thứ tự các khối trong tab:
    - **Xem trước và gửi:** hiện số người khớp bộ lọc và nội dung thư, xác nhận rồi mới gửi.
    - **Lịch sử gửi:** 20 đợt gần nhất (lúc gửi, người gửi, tiêu đề, quà, bộ lọc, kết quả).
    - Túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
-6. **🔑 Quên mật khẩu** (admin): danh sách yêu cầu người chơi gửi ở màn đăng nhập (tên đăng nhập + cách liên lạc). Kiểm tra
+6. **🔑 Quên mật khẩu** (admin): tài khoản có câu hỏi bảo mật thì người chơi tự lấy lại mật khẩu (trả lời đúng là đặt
+   mật khẩu mới). Ở đây là danh sách yêu cầu của tài khoản chưa có câu hỏi / quên câu trả lời, gửi ở màn đăng nhập (tên đăng nhập + cách liên lạc). Kiểm tra
    đúng chủ tài khoản rồi bấm **Đặt lại mật khẩu**: ra mật khẩu tạm 8 ký tự (chỉ hiện một lần, không ghi vào nhật ký quản trị),
    mọi thiết bị của họ bị đăng xuất; báo mật khẩu cho người chơi, nhắc họ đổi lại. Ở thẻ tra cứu người chơi cũng có nút
    **🔑 Đặt lại mật khẩu**. Lệnh: `pw_requests`, `reset_password` (`uid`), `pw_dismiss` (`id`).

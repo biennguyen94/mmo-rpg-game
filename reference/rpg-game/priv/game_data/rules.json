@@ -1178,6 +1178,24 @@
       "stake_max": 100000,
       "_min_balance_doc": "Cược S: cần ít nhất min_balance_mult × S vàng mới được chia bài (anh chốt 2×, trước 10×).",
       "min_balance_mult": 2
+    },
+    "account": {
+      "_doc": "DECISIONS \"Câu hỏi bảo mật\": lúc đăng ký chọn một câu hỏi bảo mật (security_questions) và trả lời (answer_min–answer_max ký tự; lưu dạng băm, không phân biệt hoa thường, khoảng trắng thừa). Quên mật khẩu: trả lời đúng thì đặt mật khẩu mới ngay; sai quá recover_per_user lần trong recover_window_min phút thì phải đợi. Tài khoản chưa có câu hỏi vẫn gửi yêu cầu cho quản trị như trước.",
+      "security_questions": [
+        {"id": "pet", "text": "Tên con vật nuôi đầu tiên của bạn?"},
+        {"id": "school", "text": "Tên trường tiểu học của bạn?"},
+        {"id": "city", "text": "Bạn sinh ra ở tỉnh / thành phố nào?"},
+        {"id": "friend", "text": "Tên người bạn thân nhất hồi nhỏ?"},
+        {"id": "food", "text": "Món ăn bạn thích nhất?"},
+        {"id": "game", "text": "Tựa game đầu tiên bạn chơi?"}
+      ],
+      "answer_min": 2,
+      "answer_max": 60,
+      "recover_per_user": 5,
+      "recover_window_min": 60,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     }
   }
 }

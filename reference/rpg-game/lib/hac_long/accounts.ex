@@ -120,5 +120,67 @@ defmodule HacLong.Accounts do
     end
   end
 
+  # ---------- Câu hỏi bảo mật (DECISIONS "Câu hỏi bảo mật") ----------
+
+  @doc "Câu trả lời chuẩn hóa trước khi băm / so: bỏ khoảng trắng thừa, không phân biệt hoa thường."
+  def normalize_answer(a) when is_binary(a),
+    do:
+      a
+      |> :unicode.characters_to_nfc_binary()
+      |> String.downcase()
+      |> String.split()
+      |> Enum.join(" ")
+
+  def normalize_answer(_), do: nil
+
+  @doc "Câu hỏi bảo mật của tài khoản `username` (id), nil nếu không có tài khoản / chưa đặt (tài khoản bot: nil)."
+  def security_question(username) when is_binary(username) do
+    case Repo.get_by(User, username: username |> String.trim() |> String.downcase()) do
+      %User{role: role, security_question: q} when role != "bot" -> q
+      _ -> nil
+    end
+  end
+
+  def security_question(_), do: nil
+
+  @doc """
+  Quên mật khẩu: câu trả lời đúng thì đặt mật khẩu mới và đăng xuất mọi thiết bị. `{:ok, user}`,
+  `{:error, :invalid}` (sai / không có tài khoản / chưa đặt câu hỏi) hoặc `{:error, changeset}` (mật khẩu mới không hợp lệ).
+  """
+  def recover(username, answer, new_password) when is_binary(username) do
+    u = Repo.get_by(User, username: username |> String.trim() |> String.downcase())
+    a = normalize_answer(answer)
+
+    cond do
+      u == nil or u.role == "bot" or u.security_answer_hash == nil or a == nil ->
+        Password.no_user_verify()
+        {:error, :invalid}
+
+      not Password.verify(a, u.security_answer_hash) ->
+        {:error, :invalid}
+
+      true ->
+        case Repo.update(User.password_changeset(u, %{"password" => new_password})) do
+          {:ok, u} ->
+            revoke_all(u)
+            {:ok, u}
+
+          error ->
+            error
+        end
+    end
+  end
+
+  def recover(_, _, _), do: {:error, :invalid}
+
+  @doc "Đặt / đổi câu hỏi bảo mật: cần mật khẩu hiện tại."
+  def set_security(%User{} = user, current, question, answer) do
+    with {:ok, _} <- authenticate(user.username, current) do
+      user
+      |> User.security_changeset(%{"question" => question, "answer" => answer})
+      |> Repo.update()
+    end
+  end
+
   defp hash(raw), do: :crypto.hash(:sha256, raw)
 end

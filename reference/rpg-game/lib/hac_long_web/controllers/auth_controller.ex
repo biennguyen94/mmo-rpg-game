@@ -10,10 +10,15 @@ defmodule HacLongWeb.AuthController do
   @password_per_user {5, :timer.minutes(5)}
   @ws_ticket_per_user {20, :timer.minutes(1)}
   @forgot_per_ip {5, :timer.hours(1)}
+  # câu hỏi bảo mật: xem câu hỏi / trả lời (chống dò câu trả lời)
+  @question_per_ip {30, :timer.hours(1)}
+  @account HacLong.Game.Data.rules().account
+  @recover_per_user {@account.recover_per_user, :timer.minutes(@account.recover_window_min)}
+  @recover_per_ip {20, :timer.hours(1)}
 
   def register(conn, params) do
     with :ok <- limit(conn, {:register, ip(conn)}, @register_per_ip) do
-      case Accounts.register(Map.take(params, ["username", "password"])) do
+      case Accounts.register(Map.take(params, ["username", "password", "question", "answer"])) do
         {:ok, user} ->
           conn |> put_status(:created) |> json(session(user))
 
@@ -49,9 +54,61 @@ defmodule HacLongWeb.AuthController do
     end
   end
 
+  @doc """
+  Quên mật khẩu bằng câu hỏi bảo mật, bước 1: câu hỏi của tài khoản (`{question: id | nil}`; nil thì gửi yêu cầu cho
+  quản trị như cũ).
+  """
+  def question(conn, params) do
+    with :ok <- limit(conn, {:question, ip(conn)}, @question_per_ip) do
+      json(conn, %{question: Accounts.security_question(to_string(params["username"]))})
+    end
+  end
+
+  @doc "Bước 2: trả lời đúng thì đặt mật khẩu mới, đăng xuất mọi thiết bị khác, đăng nhập luôn."
+  def recover(conn, params) do
+    name = params["username"] |> to_string() |> String.trim() |> String.downcase()
+
+    with :ok <- limit(conn, {:recover_ip, ip(conn)}, @recover_per_ip),
+         :ok <- limit(conn, {:recover_name, name}, @recover_per_user) do
+      case Accounts.recover(name, params["answer"], params["password"]) do
+        {:ok, user} ->
+          disconnect(user)
+          json(conn, session(user))
+
+        {:error, :invalid} ->
+          conn |> put_status(:unauthorized) |> json(%{error: "Câu trả lời không đúng."})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: first_error(cs)})
+      end
+    end
+  end
+
+  @doc "Đặt / đổi câu hỏi bảo mật (cần mật khẩu hiện tại)."
+  def security(conn, params) do
+    with {:ok, user, _token} <- current(conn),
+         :ok <- limit(conn, {:password, user.id}, @password_per_user) do
+      case Accounts.set_security(
+             user,
+             to_string(params["current"]),
+             params["question"],
+             params["answer"]
+           ) do
+        {:ok, user} ->
+          json(conn, %{ok: true, question: user.security_question})
+
+        {:error, :invalid} ->
+          conn |> put_status(:unauthorized) |> json(%{error: "Mật khẩu hiện tại không đúng."})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: first_error(cs)})
+      end
+    end
+  end
+
   def me(conn, _params) do
     with {:ok, user, _token} <- current(conn) do
-      json(conn, %{username: user.username})
+      json(conn, %{username: user.username, question: user.security_question})
     end
   end
 
@@ -147,7 +204,12 @@ defmodule HacLongWeb.AuthController do
 
   defp session(user), do: %{token: Accounts.sign_token(user), username: user.username}
 
-  @labels %{username: "Tên đăng nhập", password: "Mật khẩu"}
+  @labels %{
+    username: "Tên đăng nhập",
+    password: "Mật khẩu",
+    security_question: "Câu hỏi bảo mật",
+    security_answer: "Câu trả lời"
+  }
 
   defp first_error(cs) do
     {field, {msg, _}} = hd(cs.errors)

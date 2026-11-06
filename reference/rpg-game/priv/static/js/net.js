@@ -197,8 +197,9 @@
       return r;
     },
 
-    async login(username, password, register) {
-      const r = await api('POST', register ? '/api/register' : '/api/login', { username, password });
+    // `sec`: { question, answer } lúc đăng ký (câu hỏi bảo mật, DECISIONS "Câu hỏi bảo mật")
+    async login(username, password, register, sec) {
+      const r = await api('POST', register ? '/api/register' : '/api/login', Object.assign({ username, password }, register ? sec : {}));
       store.set(r.token);
       const j = await join(r.token);
       Net.username = j.username;
@@ -207,6 +208,22 @@
 
     // Quên mật khẩu: gửi yêu cầu cho quản trị (server luôn trả ok).
     forgot(username, contact) { return api('POST', '/api/forgot', { username, contact }); },
+
+    // Câu hỏi bảo mật của tài khoản: { question: id | null } (null: chưa đặt, gửi yêu cầu cho quản trị như cũ)
+    securityQuestion(username) { return api('POST', '/api/question', { username }); },
+
+    // Trả lời đúng câu hỏi bảo mật: đặt mật khẩu mới, đăng nhập luôn (mọi thiết bị khác bị đăng xuất)
+    async recover(username, answer, password) {
+      const r = await api('POST', '/api/recover', { username, answer, password });
+      store.set(r.token);
+      const j = await join(r.token);
+      Net.username = j.username;
+      return j;
+    },
+
+    // Đặt / đổi câu hỏi bảo mật (cần mật khẩu hiện tại); `me()`: câu hỏi đang đặt
+    setSecurity(current, question, answer) { return api('POST', '/api/security', { current, question, answer }, store.get()); },
+    me() { return api('GET', '/api/me', null, store.get()); },
 
     // Đăng xuất thiết bị này. `local`: token đã hết hiệu lực, không cần báo server.
     logout(local) {

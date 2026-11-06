@@ -14,6 +14,10 @@
   let authMode = 'login'; // 'login' | 'register' | 'forgot'
   let loading = true;    // đang kết nối server
   let busy = false;      // đang chờ server trả lời
+  // quên mật khẩu bằng câu hỏi bảo mật (DECISIONS "Câu hỏi bảo mật"): { user, q } sau bước 1; `admin`: gửi yêu cầu cho quản trị
+  let fg = { user: '', q: null, admin: false };
+  // cài đặt: form câu hỏi bảo mật đang mở; `secQ`: câu hỏi đang đặt (undefined: chưa tải, null: chưa đặt)
+  let secForm = false, secQ;
   let walk = null;       // đích đang đi tới trên bản đồ: { x, y, monster, id }
   let friendsUi = { open: false, data: null, chat: null, dm: 0 }; // bạn bè; chat: { uid, data }
   let trade = null;      // giao dịch trực tiếp (HacLong.Trade.view): { partner_name, status, incoming, mine, theirs, my_ready, their_ready }
@@ -1551,6 +1555,57 @@
     return `<div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
   }
 
+  // Câu hỏi bảo mật (RULES.account)
+  const ACC = RULES.account || { security_questions: [], answer_max: 60 };
+  const secText = (id) => ((ACC.security_questions.find((q) => q.id === id) || {}).text || '');
+  const secOptions = (cur) => `<option value="">Chọn câu hỏi…</option>${ACC.security_questions.map((q) => `<option value="${q.id}" ${q.id === cur ? 'selected' : ''}>${esc(q.text)}</option>`).join('')}`;
+
+  // Quên mật khẩu: bước 1 tên đăng nhập → có câu hỏi bảo mật thì trả lời + mật khẩu mới; chưa đặt câu hỏi (tài khoản cũ)
+  // hoặc không nhớ câu trả lời thì gửi yêu cầu cho quản trị như trước
+  function viewForgot() {
+    const back = '<button class="btn block" type="button" data-auth="login">‹ Quay lại đăng nhập</button>';
+    if (fg.admin) {
+      return `<form id="forgot" class="card">
+        <h3>Nhờ quản trị lấy lại mật khẩu</h3>
+        <p class="small muted">${fg.q === null && fg.user ? 'Tài khoản này chưa đặt câu hỏi bảo mật. ' : ''}Để lại tên đăng nhập và cách liên lạc (Zalo, Facebook, số điện thoại…). Quản trị viên sẽ kiểm tra rồi gửi mật khẩu mới cho bạn; đăng nhập xong nhớ đổi lại mật khẩu.</p>
+        <label class="field" for="fg-user">Tên đăng nhập
+          <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(fg.user)}" required>
+        </label>
+        <label class="field" for="fg-contact">Cách liên lạc
+          <input type="text" id="fg-contact" maxlength="120" autocomplete="off" required>
+        </label>
+        <button class="btn primary block" type="submit">Gửi yêu cầu</button>
+        ${back}
+      </form>`;
+    }
+    if (fg.q) {
+      return `<form id="recover" class="card">
+        <h3>Quên mật khẩu</h3>
+        <p class="small muted">Tài khoản <b>${esc(fg.user)}</b></p>
+        <p><b>${esc(secText(fg.q))}</b></p>
+        <label class="field" for="rc-a">Câu trả lời
+          <input type="text" id="rc-a" maxlength="${ACC.answer_max}" autocomplete="off" required>
+        </label>
+        <label class="field" for="rc-pass">Mật khẩu mới
+          <input type="password" id="rc-pass" minlength="6" maxlength="72" autocomplete="new-password" required>
+        </label>
+        <p class="small muted">Đổi xong bạn được đăng nhập luôn; các thiết bị khác bị đăng xuất.</p>
+        <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>Đặt mật khẩu mới</button>
+        <button class="btn block" type="button" data-act="fg-admin">Không nhớ câu trả lời? Nhờ quản trị</button>
+        ${back}
+      </form>`;
+    }
+    return `<form id="fg-find" class="card">
+      <h3>Quên mật khẩu</h3>
+      <p class="small muted">Nhập tên đăng nhập để trả lời câu hỏi bảo mật đã đặt lúc đăng ký.</p>
+      <label class="field" for="fg-user">Tên đăng nhập
+        <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(fg.user)}" required>
+      </label>
+      <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>Tiếp tục</button>
+      ${back}
+    </form>`;
+  }
+
   function viewLogin() {
     const reg = authMode === 'register';
     const lg = window.I18N ? window.I18N.lang : 'vi';
@@ -1561,25 +1616,20 @@
         <h1>Hắc Long</h1>
         <p>${reg ? 'Tạo tài khoản để lưu nhân vật trên máy chủ và chơi trên mọi thiết bị.' : 'Đăng nhập để tiếp tục hành trình.'}</p>
       </div>
-      ${authMode === 'forgot' ? `<form id="forgot" class="card">
-        <h3>Quên mật khẩu</h3>
-        <p class="small muted">Để lại tên đăng nhập và cách liên lạc (Zalo, Facebook, số điện thoại…). Quản trị viên sẽ kiểm tra rồi gửi mật khẩu mới cho bạn; đăng nhập xong nhớ đổi lại mật khẩu.</p>
-        <label class="field" for="fg-user">Tên đăng nhập
-          <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-        </label>
-        <label class="field" for="fg-contact">Cách liên lạc
-          <input type="text" id="fg-contact" maxlength="120" autocomplete="off" required>
-        </label>
-        <button class="btn primary block" type="submit">Gửi yêu cầu</button>
-        <button class="btn block" type="button" data-auth="login">‹ Quay lại đăng nhập</button>
-      </form>` : `<form id="auth" class="card">
+      ${authMode === 'forgot' ? viewForgot() : `<form id="auth" class="card">
         <label class="field" for="auth-user">Tên đăng nhập
           <input type="text" id="auth-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         </label>
         <label class="field" for="auth-pass">Mật khẩu
           <input type="password" id="auth-pass" maxlength="72" autocomplete="${reg ? 'new-password' : 'current-password'}" required>
         </label>
-        ${reg ? '<p class="small muted">Tên đăng nhập 3–20 ký tự: chữ không dấu, số, dấu gạch dưới. Mật khẩu từ 6 ký tự.</p>' : ''}
+        ${reg ? `<label class="field" for="auth-q">Câu hỏi bảo mật
+          <select id="auth-q" required>${secOptions()}</select>
+        </label>
+        <label class="field" for="auth-a">Câu trả lời
+          <input type="text" id="auth-a" maxlength="${ACC.answer_max}" autocomplete="off" required>
+        </label>
+        <p class="small muted">Tên đăng nhập 3–20 ký tự: chữ không dấu, số, dấu gạch dưới. Mật khẩu từ 6 ký tự. Câu hỏi bảo mật dùng để tự lấy lại mật khẩu khi quên (không phân biệt chữ hoa, chữ thường); hãy nhớ câu trả lời.</p>` : ''}
         <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>${reg ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
         <button class="btn block" type="button" data-auth="${reg ? 'login' : 'register'}">${reg ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký'}</button>
         ${reg ? '' : '<p class="small" style="text-align:center;margin:4px 0 0"><button class="btn small-btn" type="button" data-auth="forgot">Quên mật khẩu?</button></p>'}
@@ -1652,6 +1702,8 @@
 
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
+    // câu hỏi bảo mật đang đặt: tải một lần (nhắc đặt nếu chưa có)
+    if (secQ === undefined) { secQ = false; Net.me().then((r) => { secQ = r.question || null; render(); }).catch(() => { secQ = undefined; }); }
     return `
       <div class="card set" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
         <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
@@ -1684,7 +1736,16 @@
         <div class="btn-row" style="margin-bottom:8px">
           <button class="btn" data-act="logout">Đăng xuất</button>
           <button class="btn" data-act="pw-toggle">Đổi mật khẩu</button>
+          <button class="btn" data-act="sq-toggle">Câu hỏi bảo mật</button>
         </div>
+        ${secQ === null ? '<p class="small" style="color:var(--bad)">Bạn chưa đặt câu hỏi bảo mật: quên mật khẩu sẽ phải nhờ quản trị. Bấm "Câu hỏi bảo mật" để đặt.</p>' : ''}
+        ${secForm ? `<form id="sq-form" class="pw-form">
+          ${secQ ? `<p class="small muted">Đang đặt: ${esc(secText(secQ))}</p>` : ''}
+          <label class="field" for="sq-q">Câu hỏi bảo mật<select id="sq-q" required>${secOptions(secQ)}</select></label>
+          <label class="field" for="sq-a">Câu trả lời<input type="text" id="sq-a" maxlength="${ACC.answer_max}" autocomplete="off" required></label>
+          <label class="field" for="sq-cur">Mật khẩu hiện tại<input type="password" id="sq-cur" autocomplete="current-password" required></label>
+          <button class="btn primary" type="submit">Lưu câu hỏi bảo mật</button>
+        </form>` : ''}
         ${pwForm ? `<form id="pw-form" class="pw-form">
           <label class="field" for="pw-cur">Mật khẩu hiện tại<input type="password" id="pw-cur" autocomplete="current-password" required></label>
           <label class="field" for="pw-new">Mật khẩu mới<input type="password" id="pw-new" autocomplete="new-password" minlength="6" maxlength="72" required></label>
@@ -3827,6 +3888,7 @@
   }
 
   function enter(r) {
+    secQ = undefined; secForm = false;
     P = r ? r.player : null;
     if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
@@ -3850,7 +3912,7 @@
     // Tiến Lên (Phase 17) mở lớp phủ riêng (tienlen.js), không phải một mục Menu
     if (t.dataset.menu === 'tienlen') { window.TL.open(); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
-    if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
+    if (t.dataset.auth) { authMode = t.dataset.auth; if (authMode === 'forgot') fg = { user: '', q: null, admin: false }; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
@@ -3868,6 +3930,8 @@
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
+    if (act === 'fg-admin') { fg = Object.assign({}, fg, { admin: true }); render(); return; }
+    if (act === 'sq-toggle') { secForm = !secForm; render(); return; }
     if (t.dataset.adm) { onAdmin(t); return; }
     if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(ovLine).join(''); return; }
     if (act === 'chat-report') { Net.report(+t.dataset.id).then(() => toast('Đã gửi báo cáo. Cảm ơn bạn.')).catch((e) => toast(e.msg, true)); chatMenu = null; return; }
@@ -4025,12 +4089,59 @@
     const btn = $('#auth button[type="submit"]'), label = btn && btn.textContent;
     if (btn) { btn.disabled = true; btn.textContent = authMode === 'register' ? 'Đang tạo tài khoản…' : 'Đang đăng nhập…'; }
     try {
-      enter(await Net.login(user, pass, authMode === 'register'));
+      const reg = authMode === 'register';
+      const sec = reg ? { question: $('#auth-q').value, answer: $('#auth-a').value } : null;
+      if (reg && (!sec.question || !sec.answer.trim())) throw { msg: 'Chọn câu hỏi bảo mật và nhập câu trả lời.' };
+      enter(await Net.login(user, pass, reg, sec));
       toast(authMode === 'register' ? 'Đã tạo tài khoản.' : `Xin chào ${Net.username}!`);
     } catch (err) {
       toast(err.msg, true);
       if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = label; }
     }
+    busy = false;
+  }
+
+  async function onFgFind() {
+    if (busy) return;
+    const user = $('#fg-user').value.trim();
+    if (!user) { toast('Nhập tên đăng nhập.', true); return; }
+    busy = true;
+    try {
+      const r = await Net.securityQuestion(user);
+      fg = { user, q: r.question || null, admin: !r.question };
+    } catch (err) { toast(err.msg, true); }
+    busy = false;
+    render();
+  }
+
+  async function onRecover() {
+    if (busy) return;
+    const a = $('#rc-a').value, pass = $('#rc-pass').value;
+    if (!a.trim() || !pass) { toast('Nhập câu trả lời và mật khẩu mới.', true); return; }
+    busy = true;
+    try {
+      const j = await Net.recover(fg.user, a, pass);
+      fg = { user: '', q: null, admin: false };
+      authMode = 'login';
+      busy = false;
+      enter(j);
+      toast('Đã đặt mật khẩu mới. Các thiết bị khác đã bị đăng xuất.');
+      return;
+    } catch (err) { toast(err.msg, true); }
+    busy = false;
+    render();
+  }
+
+  async function onSecurity() {
+    if (busy) return;
+    busy = true;
+    try {
+      const r = await Net.setSecurity($('#sq-cur').value, $('#sq-q').value, $('#sq-a').value);
+      secQ = r.question;
+      secForm = false;
+      render();
+      toast('Đã lưu câu hỏi bảo mật.');
+    } catch (err) { toast(err.msg, true); }
     busy = false;
   }
 
@@ -4062,6 +4173,9 @@
   function onSubmit(e) {
     if (e.target.id === 'auth') { e.preventDefault(); onAuth(); return; }
     if (e.target.id === 'forgot') { e.preventDefault(); onForgot(); return; }
+    if (e.target.id === 'fg-find') { e.preventDefault(); onFgFind(); return; }
+    if (e.target.id === 'recover') { e.preventDefault(); onRecover(); return; }
+    if (e.target.id === 'sq-form') { e.preventDefault(); onSecurity(); return; }
     if (e.target.id === 'pw-form') { e.preventDefault(); onPassword(); return; }
     if (e.target.id === 'chat-form') { e.preventDefault(); onChatSubmit(); return; }
     if (e.target.id === 'arena-find') {
