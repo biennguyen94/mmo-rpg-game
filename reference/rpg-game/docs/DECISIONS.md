@@ -1459,3 +1459,8 @@ Kiểm 20 bot (đều CS10 cấp 50): 11 bot chưa hạ được Kim Long / Hắ
 Không đổi tỉ lệ rơi. Hai chỗ bot phí Ngọc Ước Nguyện:
 - **Thay đồ bỏ mất cấp ép**: trước đây so món mới với món đang mặc chỉ theo chỉ số gốc, nên món +5 bị thay bằng món +0 nhỉnh hơn chút và mất trắng 5 viên ngọc. Nay so cả phần cộng từ cấp ép (`Engine.upgrade_bonus/2`).
 - **Rải ngọc đều 9 ô**: trước đây ép món cấp thấp nhất trước (mũ, giày, nhẫn… ngang vũ khí). Nay dồn vào `bots.forge.focus_slots` (vũ khí, giáp, cánh, khiên) trước; ô khác chỉ ép khi kém món đáng giá thấp nhất `focus_lead` (3) cấp.
+
+## Bot không kẹt trong tháp (2026-11-06, anh báo "tất cả bot bị kẹt ở tháp vô tận")
+"Tháp Vô Tận" trong danh sách online là bản đồ riêng `tower`, dùng chung cho Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima. Nguyên nhân: ở Lâu Đài / Kalima khi hết quái mà chưa xong (chờ trùm), bot đứng im không gửi lệnh; không có đường tới quái / cầu thang thì cũng đứng im. Server chỉ xét "hết giờ" và "phòng đã đóng" (vd. sau khi khởi động lại server lúc bot đang trong phòng) khi người chơi bước đi, nên bot đứng im thì kẹt mãi.
+- Chờ trong tháp: bot đi qua lại ô trống (không bước vào cổng / cầu thang), mỗi 3–5 giây một bước; hết giờ / phòng đóng thì bước đó đưa về Làng như người chơi.
+- Chốt an toàn: ở bản đồ tháp quá `bots.play.tower_max_min` (40) phút liền thì đi ra cổng.

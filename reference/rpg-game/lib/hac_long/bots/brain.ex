@@ -84,6 +84,10 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
 
       # trong Tháp / Quảng Trường / Lâu Đài / Kalima: đánh hết quái, lên tầng / đợt hoặc ra cổng
+      # ở bản đồ tháp quá lâu (`opts.tower_stuck`, tiến trình bot đo): ra cổng
+      p.pos.map == "tower" and opts[:tower_stuck] == true and p[:tower] != nil ->
+        tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
+
       p.pos.map == "tower" ->
         tower_play(p, d)
 
@@ -414,11 +418,25 @@ defmodule HacLong.Bots.Brain do
       t[:ds] != nil or plain? ->
         tower_walk(p, [List.to_tuple(t.stairs)])
 
-      # Lâu Đài / Kalima chưa xong mà hết quái (trùm sắp hiện): đứng chờ
+      # Lâu Đài / Kalima chưa xong mà hết quái (trùm sắp hiện): đi qua lại chậm chờ (trước đây đứng im không gửi lệnh
+      # gì, mà server chỉ xét hết giờ / phòng đã đóng khi bước đi, nên bot kẹt mãi trong tháp, vd. sau khi khởi động lại)
       true ->
-        nil
+        idle_step(p)
     end
   end
+
+  @doc false
+  # bước sang ô trống "." kế bên (không bước vào cổng / cầu thang), đánh dấu `wait` để tiến trình bot hỏi lại chậm
+  def idle_step(%{tower: t} = p) when is_map(t) do
+    Enum.find_value(["up", "down", "left", "right"], fn dir ->
+      {dx, dy} = @dirs[dir]
+
+      if tower_tile(t, {p.pos.x + dx, p.pos.y + dy}) == ".",
+        do: %{"act" => "move", "dir" => dir, "wait" => true}
+    end) || Map.put(any_step(p), "wait", true)
+  end
+
+  def idle_step(p), do: Map.put(any_step(p), "wait", true)
 
   # bước một ô bất kỳ (Lâu Đài / Kalima xong, lượt đã hết: bước nào cũng về Làng)
   defp any_step(p) do
@@ -440,7 +458,8 @@ defmodule HacLong.Bots.Brain do
     free? = fn pos -> tower_tile(t, pos) == "." end
 
     case first_step(free?, {p.pos.x, p.pos.y}, goals, blocked) do
-      nil -> nil
+      # không có đường (quái chắn hết lối…): đi qua lại chờ, không đứng im
+      nil -> idle_step(p)
       dir -> %{"act" => "move", "dir" => dir}
     end
   end

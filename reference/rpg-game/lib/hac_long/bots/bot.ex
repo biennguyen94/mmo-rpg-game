@@ -31,6 +31,7 @@ defmodule HacLong.Bots.Bot do
   @chat_chance 1 / 400
   @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
   @feed_every HacLong.Game.Data.rules().bots.play.feed_every_min
+  @tower_max HacLong.Game.Data.rules().bots.play.tower_max_min * 60_000
 
   def start_link({uid, _name, _cls} = arg),
     do:
@@ -55,6 +56,8 @@ defmodule HacLong.Bots.Bot do
        next_feed: System.monotonic_time(:millisecond),
        # bản đồ đang đứng ở nhịp trước (gục thì biết gục ở đâu) và các chỗ đang tránh (`Brain.note_death/3`)
        last_map: nil,
+       # lúc vào bản đồ tháp (Tháp Vô Tận / Quảng Trường / Lâu Đài / Kalima): ở quá `play.tower_max_min` phút thì ra cổng
+       tower_since: nil,
        deaths_at: %{fails: %{}, avoid: %{}}
      }}
   end
@@ -106,6 +109,7 @@ defmodule HacLong.Bots.Bot do
             seed: s.uid,
             tower_due: now >= s.next_tower,
             feed_due: now >= s.next_feed,
+            tower_stuck: s.tower_since != nil and now - s.tower_since > @tower_max,
             avoid: Brain.avoiding(s.deaths_at, now)
           })
 
@@ -128,7 +132,8 @@ defmodule HacLong.Bots.Bot do
 
     if p && !p.battle && :rand.uniform() < @chat_chance, do: say(s, p)
     Process.send_after(self(), :tick, delay(p, cmd))
-    %{s | last_map: p && p.pos.map}
+    in_tower = p != nil and p.pos.map == "tower"
+    %{s | last_map: p && p.pos.map, tower_since: if(in_tower, do: s.tower_since || now)}
   end
 
   # số lần gục tăng so với nhịp trước: gục ở bản đồ nhịp trước đứng
@@ -153,6 +158,8 @@ defmodule HacLong.Bots.Bot do
   # trong trận (kể cả đang chờ lượt đồ sát) thì hỏi lại nhanh
   defp delay(%{battle: %{}}, _), do: 700 + :rand.uniform(700)
   defp delay(_p, nil), do: 2000 + :rand.uniform(2000)
+  # đi qua lại chờ (hết quái, chờ trùm / hết giờ): hỏi lại chậm
+  defp delay(_p, %{"act" => "move", "wait" => true}), do: 3000 + :rand.uniform(2000)
   defp delay(_p, %{"act" => "move"}), do: 280 + :rand.uniform(220)
   defp delay(_p, _), do: 600 + :rand.uniform(600)
 

@@ -175,6 +175,40 @@ defmodule HacLong.Bots.BrainPlayTest do
     end
   end
 
+  describe "không kẹt trong tháp" do
+    test "Lâu Đài hết quái mà chưa xong: đi qua lại chờ (trước đây đứng im); hết giờ thì bước kế tiếp đưa về Làng" do
+      {%{ok: true}, q} = BloodCastle.enter(player(%{inv: %{BloodCastle.ticket() => 1}}))
+      q = put_in(q.tower.monsters, [])
+      assert %{"act" => "move", "wait" => true, "dir" => dir} = Brain.decide(q, nil)
+
+      # hết giờ (vd. phòng đã đóng lúc server khởi động lại): bước chờ cũng kết thúc lượt
+      q = put_in(q.tower.bc.ends_at, System.os_time(:second) - 1)
+      {_r, q} = HacLong.World.move(q, -1, dir, true)
+      assert q.pos.map == "village"
+    end
+
+    test "ở bản đồ tháp quá lâu (`tower_stuck`): đi ra cổng" do
+      {_, p} = Tower.enter(player(), 1)
+      p = walk_until_with(p, &(&1.pos.map == "village"), %{tower_stuck: true})
+      assert p.pos.map == "village"
+    end
+  end
+
+  defp walk_until_with(p, stop?, opts, n \\ 80) do
+    cond do
+      stop?.(p) ->
+        p
+
+      n == 0 ->
+        flunk("bot không ra được: #{inspect(p.pos)}")
+
+      true ->
+        %{"act" => "move", "dir" => dir} = Brain.decide(p, nil, opts)
+        {_r, p} = HacLong.World.move(p, -1, dir, true)
+        walk_until_with(p, stop?, opts, n - 1)
+    end
+  end
+
   # chạy lệnh bước của bot qua World.move (bản đồ riêng `tower` không cần MapServer) tới khi `stop?`
   defp walk_until(p, stop?, n \\ 80) do
     cond do
