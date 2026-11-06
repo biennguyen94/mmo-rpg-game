@@ -1491,3 +1491,9 @@ Không phải lỗi: số trong mô tả thú là ở cấp 1, chỉ số thật
 ## Bỏ Nhà: Thủ Kho ở Làng (2026-11-06, anh yêu cầu)
 Nhà riêng không cần thiết: bỏ bản đồ `home`, đồ trang trí (`furniture.json`, Thợ Mộc, lệnh `decor_*`, điểm tiện nghi +% EXP, thăm / khen nhà, thành tựu "cozy", gói trang trí lễ hội). Tủ Đồ (gửi / lấy đồ, vàng) chuyển về NPC **Thủ Kho** giữa Làng, cạnh **Rương Gia Truyền** và giếng hồi máu; gục ngã / điểm hồi sinh về Đá Dịch Chuyển ở Làng. Dữ liệu cũ của nhân vật (đồ trang trí đã đặt) bỏ qua khi nạp, đồ trong tủ giữ nguyên. Hướng dẫn tân thủ giữ 5 bước trong dữ liệu (bước 0 "ra Làng" tự xong) để nhân vật đang làm dở không lệch; hiển thị 4 bước.
 Làng vẽ lại: hồ sen có cầu, đèn lồng, nhà quanh quảng trường, giếng ở giữa; vị trí các NPC cũ giữ nguyên.
+
+## Thú cưng: máu / MP cộng số (2026-11-06, anh duyệt đề xuất)
+Máu tối đa của thú không còn cộng %, mà cộng **số cố định × cấp thú** (`PETS.flat`): Cừu Bông +15, Thiên Thần Hộ Mệnh +25, Tinh Linh Hộ Vệ +35, Bằng Mã Lửa +8, Long Vương +30 máu mỗi cấp; thêm MP: Quạ Đen, Quỷ Satan +5, Long Vương +10 MP mỗi cấp (cấp 20: Tinh Linh +700 máu, Long Vương +600 máu / +200 MP). Phòng thủ, tấn công, giảm sát thương, kinh nghiệm, vàng vẫn %. Cộng sau mọi phần nhân (Excellent, món ăn), nên không phình theo cấp nhân vật. So sức thú (bot, mô phỏng) đổi máu / MP cộng số ra % theo `RULES.pets.power_ref`.
+
+## Quản trị: bật / tắt quái di chuyển (2026-11-06)
+Quái trên bản đồ do server điều khiển, mọi người thấy chung, nên công tắc là của cả server (Quản trị → Bản đồ), không phải cài đặt riêng từng người. Tắt: quái đứng yên trên mọi bản đồ (vẫn đánh, hồi sinh như thường; trùm vốn đã đứng yên). Không thêm bảng: trạng thái là dòng `admin_log` op `mob_move` mới nhất (`params.on`), đệm trong `:persistent_term`; khởi động lại vẫn giữ, chưa đặt bao giờ thì bật. Chỉ quản trị viên (không phải điều hành viên).

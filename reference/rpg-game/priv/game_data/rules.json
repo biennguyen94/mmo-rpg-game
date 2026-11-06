@@ -608,7 +608,7 @@
       "boss_potions": 2
     },
     "pets": {
-      "_doc": "Thú cưng (HacLong.Game.Pets). Version 3 (2026-11-06, DECISIONS \"Thú cưng 3 nhóm, chỉ cộng chỉ số\"): thú không đánh trong trận, không có kỹ năng, chỉ cộng % chỉ số theo nhóm (PETS.group: war Chiến tấn công / chí mạng, guard Hộ vệ máu / phòng thủ / giảm sát thương nhận, luck Tài lộc kinh nghiệm / vàng, all Long Vương cả ba); chỉ số cộng × (1 + bonus_per_level × (cấp − 1)), cấp tối đa max_level; lên cấp theo số trận thắng khi dắt theo (trùm tính boss_wins trận) hoặc cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể) sau tame_kills con: thú nhóm Chiến, tấn công tame_bonus + tame_realm_bonus × k (vùng chuyển sinh k), chí mạng tame_crit, giá (tame_price + cấp quái × tame_price_per_level) × (1 + tame_realm_price × k).",
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 3 (2026-11-06, DECISIONS \"Thú cưng 3 nhóm, chỉ cộng chỉ số\"): thú không đánh trong trận, không có kỹ năng, chỉ cộng % chỉ số theo nhóm, riêng máu / MP cộng số PETS.flat × cấp thú (version 4, DECISIONS \"Thú cưng: máu / MP cộng số\") (PETS.group: war Chiến tấn công / chí mạng, guard Hộ vệ máu / phòng thủ / giảm sát thương nhận, luck Tài lộc kinh nghiệm / vàng, all Long Vương cả ba); chỉ số cộng × (1 + bonus_per_level × (cấp − 1)), cấp tối đa max_level; lên cấp theo số trận thắng khi dắt theo (trùm tính boss_wins trận) hoặc cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể) sau tame_kills con: thú nhóm Chiến, tấn công tame_bonus + tame_realm_bonus × k (vùng chuyển sinh k), chí mạng tame_crit, giá (tame_price + cấp quái × tame_price_per_level) × (1 + tame_realm_price × k).",
       "tame_kills": 100,
       "tame_bonus": 0.05,
       "tame_realm_bonus": 0.012,
@@ -622,8 +622,15 @@
       "boss_wins": 5,
       "feed_gold": 500,
       "feed_xp": 20,
+      "power_ref": {
+        "_doc": "Chỉ để so sức thú (bot chọn thú, mô phỏng): máu / MP cộng số đổi ra phần trăm so với hp_base + hp_per_level × cấp nhân vật (mp tương tự), gần máu / MP thật của nhân vật theo mô phỏng hành trình (cấp 50 khoảng 2 300 máu, 200–700 MP).",
+        "hp_base": 200,
+        "hp_per_level": 42,
+        "mp_base": 100,
+        "mp_per_level": 6
+      },
       "sourceType": "DESIGN",
-      "version": 3,
+      "version": 4,
       "verified": false
     },
     "bestiary": {

@@ -34,8 +34,8 @@ defmodule HacLong.Game.Data do
   - `RECIPES`: công thức pha chế ở NPC `npc`: `needs` (nguyên liệu → số lượng) ra một `out`.
   - `ITEMS` vũ khí/giáp/khiên có `doll`: lớp hình (trong `priv/static/assets/doll`) vẽ lên
     nhân vật khi mặc món đó; `CLASSES` có `hair` (lớp tóc).
-  - `PETS`: thú cưng bán ở Người Nuôi Thú; `bonus` là phần trăm cộng thêm (`hp`, `atk`, `def`,
-    `gold` từ quái, `xp`).
+  - `PETS`: thú cưng bán ở Người Nuôi Thú; `bonus` là phần trăm cộng thêm (`atk`, `def`, `crit`, `reduce`,
+    `gold` từ quái, `xp`); `flat` là máu / MP cộng số mỗi cấp thú (`hp`, `mp`).
   - `ITEMS` có `slot: "wing"`: cánh (ô trang bị thứ tư) của lớp `cls`, cấp `tier`; `dmg` / `absorb`
     là phần sát thương gây thêm / giảm khi nhận.
   - `UPGRADE`: các bước ép kiểu MU, mỗi cấp một bước (`steps`: `level`, `items` (ngọc tốn mỗi lần),

@@ -75,7 +75,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -758,6 +758,19 @@ defmodule HacLongWeb.GameChannel do
     do: {:ok, %{count: length(Mailbox.recipients(p["filter"] || %{}))}}
 
   defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
+
+  defp admin("flags", _p, _s), do: {:ok, %{mob_move: HacLong.World.MobMove.on?()}}
+
+  # bật / tắt quái đi lang thang cho cả server; dòng admin_log này (params.on) là trạng thái lưu lại
+  defp admin("mob_move", %{"on" => on}, _s) when is_boolean(on) do
+    HacLong.World.MobMove.set(on)
+
+    {:ok,
+     %{
+       mob_move: on,
+       msg: if(on, do: "Quái đi lại bình thường.", else: "Quái đứng yên trên mọi bản đồ.")
+     }}
+  end
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 

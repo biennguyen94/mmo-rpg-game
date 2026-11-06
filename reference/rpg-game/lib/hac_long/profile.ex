@@ -50,6 +50,8 @@ defmodule HacLong.Profile do
       # phần trăm cộng thêm (thú cưng đang dắt + món đang ăn, cánh)
       pct: %{
         hp: pct(p, :hp),
+        hp_flat: Pets.flat(p, :hp),
+        mp_flat: Pets.flat(p, :mp),
         atk: pct(p, :atk),
         def: pct(p, :def),
         wing_dmg: d.wingDmg,

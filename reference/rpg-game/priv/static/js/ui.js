@@ -360,6 +360,7 @@
   async function loadReports() {
     adm.loading = true;
     try { adm.reports = (await Net.admin('reports')).reports; } catch (e) { toast(e.msg, true); }
+    if (isAdminRole()) { try { adm.flags = await Net.admin('flags'); } catch (e) { /* không tải được: ẩn nút */ } }
     adm.loading = false;
     if (onMenu('admin')) render();
   }
@@ -407,6 +408,8 @@
         <form id="adm-announce" class="chat-form"><input type="text" id="adm-text" maxlength="200" placeholder="Nội dung thông báo" autocomplete="off"><button class="btn" type="submit">Gửi</button></form>
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
+      ${adm.flags ? `<div class="card"><h3>Bản đồ</h3><p class="small muted">Quái đi lang thang trên mọi bản đồ, cho cả server. Tắt thì quái đứng yên tại chỗ (vẫn đánh, vẫn hồi sinh như thường).</p>
+        <div class="btn-row"><span class="grow">Quái di chuyển: <b>${adm.flags.mob_move ? 'Đang bật' : 'Đang tắt'}</b></span><button class="btn" data-adm="mob_move" data-on="${adm.flags.mob_move ? 0 : 1}">${adm.flags.mob_move ? 'Tắt' : 'Bật'}</button></div></div>` : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -649,10 +652,12 @@
     if (d.action) payload.action = d.action;
     if (d.minutes) payload.minutes = +d.minutes;
     if (d.days) payload.days = +d.days;
+    if (d.on) payload.on = d.on === '1';
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
       if (op === 'online') { adm.online = r.online; return render(); }
+      if (op === 'mob_move') { adm.flags = { ...adm.flags, mob_move: r.mob_move }; toast(r.msg); return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
@@ -1107,7 +1112,7 @@
         ${kv('Né đòn', `${Math.round(pr.dodge * 100)}%`)}
         ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương<br>−${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
         ${pr.ignore_def ? kv('Bỏ qua phòng thủ', `${Math.round(pr.ignore_def * 100)}%`) : ''}
-        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
+        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}${pr.pct.hp_flat ? ` <span class="up" title="Thú cưng">+${fmt(pr.pct.hp_flat)}</span>` : ''}`)}
       </div>
       <div class="card">
         ${kv(`${icon('two-coins')} Vàng`, fmt(pr.gold))}
@@ -1969,6 +1974,7 @@
     // Phase 13: phần cộng thêm (thú cưng + món ăn cộng %; đồ không cộng chỉ số, B-15)
     const ex = P.view.extra || {};
     const pc = (v) => (v ? ` <span class="up" title="Thú cưng + món ăn">+${Math.round(v * 100)}%</span>` : '');
+    const fl = (v) => (v ? ` <span class="up" title="Thú cưng">+${fmt(v)}</span>` : '');
     const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
     const kvh = (key, k, v) => `<button class="kv kv-help" data-act="stat-help" data-k="${key}" aria-expanded="${statHelp === key}"><span>${k} <span class="help-i" aria-hidden="true">ⓘ</span></span><span class="num">${v}</span></button>${statHelp === key ? `<p class="small stat-help">${esc(statHelpText(key, d))}</p>` : ''}`;
     const stat = (k) => {
@@ -2000,8 +2006,8 @@
         ${kvh('dodge', 'Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kvh('wing', 'Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương<br>−${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
         ${d.ignoreDef ? kvh('ign', 'Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
-        ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
-        ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}${fl(ex.hpFlat)}`)}
+        ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}${fl(ex.mpFlat)}`)}
         ${kvh('pvp', 'Đánh quái và đánh người khác nhau thế nào?', '')}
         ${P.view.blessing ? kv('✨ Đài Phúc Lành', `${esc(P.view.blessing.name)}${P.view.blessing.left ? ` · +${Math.round(P.view.blessing.pct * 100)}% ${P.view.blessing.label}, còn ${P.view.blessing.left} trận` : ''} · hồi sinh ở đây`) : ''}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
@@ -2240,14 +2246,18 @@
   const petView = (id) => ((P.view && P.view.pets) || []).find((x) => x.id === id);
   const pc0 = (x) => `${Math.round(x * 100)}%`;
   // Thú chỉ cộng chỉ số, chia nhóm (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
-  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi' };
+  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', mp: 'MP tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi' };
   const PET_GROUP_ICON = { war: '⚔️', guard: '🛡️', luck: '🍀', all: '🐉' };
   const petGroup = (g) => (g ? `<span class="tag pet-${g}">${PET_GROUP_ICON[g] || ''} ${esc((RULES.petGroups || {})[g] || g)}</span>` : '');
   const pctTxt = (x) => `${Math.round(x * 1000) / 10}%`;
   const petBonusText = (b, mult = 1) => Object.entries(b || {}).map(([k, v]) => `${PET_STAT[k] || k} +${pctTxt(v * mult)}`).join(', ');
+  // máu / MP cộng số: mỗi cấp thú (DECISIONS "Thú cưng: máu / MP cộng số")
+  const petFlatText = (f, lv) => Object.entries(f || {}).map(([k, v]) => `${PET_STAT[k] || k} +${fmt(v * lv)}`).join(', ');
   function petStats(v) {
     if (!v) return '';
-    return `<div class="small" style="color:var(--good)">${petBonusText(v.bonus, v.mult)}${v.level > 1 ? ` <span class="muted">(cấp ${v.level}: ×${v.mult.toFixed(2)})</span>` : ''}</div>`;
+    const txt = [petBonusText(v.bonus, v.mult), petFlatText(v.flat, v.level)].filter(Boolean).join(', ');
+    const per = Object.entries(v.flat || {}).map(([k, n]) => `${PET_STAT[k] || k} +${n}`).join(', ');
+    return `<div class="small" style="color:var(--good)">${txt}${v.level > 1 ? ` <span class="muted">(cấp ${v.level}: % ×${v.mult.toFixed(2)}${per ? `; ${per} mỗi cấp` : ''})</span>` : ''}</div>`;
   }
   function viewPets() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);

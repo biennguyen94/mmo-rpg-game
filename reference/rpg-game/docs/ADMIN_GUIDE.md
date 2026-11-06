@@ -516,3 +516,8 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   `python3 scripts/pixel_icons.py <crawl/tiles>/releases/Nov-2015` (hình quần lấy sẵn từ `assets_src/pixel_extra/leggings/`). Món chưa có hình Pixel
   (đồ ăn) dùng hình cũ; cánh dùng đôi cánh Draconian của Dungeon Crawl (`assets_src/pixel_extra/wings/`).
 - Hình MU vẫn **không bao giờ** vào git / Docker (mục 10.1).
+
+### Bật / tắt quái di chuyển
+
+- Quản trị → **Bản đồ**: nút Tắt / Bật quái đi lang thang cho **cả server** (mọi bản đồ). Tắt thì quái đứng yên, vẫn đánh và
+  hồi sinh như thường. Trạng thái lưu ở `admin_log` (op `mob_move`), khởi động lại server vẫn giữ. Chỉ quản trị viên.

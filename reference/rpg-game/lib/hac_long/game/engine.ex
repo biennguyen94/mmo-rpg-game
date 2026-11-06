@@ -247,8 +247,9 @@ defmodule HacLong.Game.Engine do
 
     %{
       maxHp:
-        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
-      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)),
+        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)) +
+          Pets.flat(p, :hp),
+      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)) + Pets.flat(p, :mp),
       atk:
         round(
           (lin.(f.atk) + exc.atk_lvl * p.level + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
@@ -421,7 +422,10 @@ defmodule HacLong.Game.Engine do
       extra: %{
         hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp) + Blessing.bonus(p, :hp),
         atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk) + Blessing.bonus(p, :atk),
-        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def)
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def),
+        # thú cưng: máu / MP cộng số
+        hpFlat: Pets.flat(p, :hp),
+        mpFlat: Pets.flat(p, :mp)
       },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có

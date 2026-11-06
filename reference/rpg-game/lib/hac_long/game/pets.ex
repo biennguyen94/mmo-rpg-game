@@ -13,7 +13,7 @@ defmodule HacLong.Game.Pets do
   sinh k cho thú thuần mạnh hơn (`tame_realm_*`).
 
   Thú lên cấp (tối đa `max_level`) theo số trận thắng khi được dắt theo (`gain/2`) hoặc cho ăn (`feed/1`, tốn vàng):
-  mỗi cấp tăng chỉ số cộng thêm `bonus_per_level`.
+  mỗi cấp tăng phần trăm cộng thêm `bonus_per_level`; máu / MP cộng số (`flat`) nhân thẳng với cấp thú (`flat/2`).
 
   Trạng thái trong nhân vật: `pets: [id]` (đã có), `pet: id | nil` (đang dắt theo),
   `pet_xp: %{id => số trận}`.
@@ -234,11 +234,17 @@ defmodule HacLong.Game.Pets do
 
   def power(p, id, lv) do
     lv = lv || level(p, id)
-    b = data(id).bonus
-    g = fn k -> b[k] || 0 end
+    pt = data(id)
+    g = fn k -> pt.bonus[k] || 0 end
 
-    (g.(:atk) + g.(:crit) + 0.5 * (g.(:def) + g.(:hp) + 2 * g.(:reduce)) +
-       0.25 * (g.(:xp) + g.(:gold))) * bonus_mult(lv)
+    # máu / MP cộng số: đổi ra phần trăm so với máu / MP ước lượng ở cấp nhân vật (`RULES.pets.power_ref`)
+    f = fn k -> (pt[:flat] || %{})[k] || 0 end
+    r = @rules.power_ref
+    hp = f.(:hp) * lv / (r.hp_base + r.hp_per_level * p.level)
+    mp = f.(:mp) * lv / (r.mp_base + r.mp_per_level * p.level)
+
+    (g.(:atk) + g.(:crit) + 0.5 * (g.(:def) + 2 * g.(:reduce)) + 0.25 * (g.(:xp) + g.(:gold))) *
+      bonus_mult(lv) + 0.5 * hp + 0.25 * mp
   end
 
   def name(p), do: data(p.pet).name
@@ -250,6 +256,17 @@ defmodule HacLong.Game.Pets do
   def bonus(p, key) do
     case Map.get(p, :pet) && data(p.pet) do
       %{bonus: b} -> Map.get(b, key, 0) * bonus_mult(active_level(p))
+      _ -> 0
+    end
+  end
+
+  @doc """
+  Máu / MP (`key` :hp, :mp) cộng số cố định của thú đang dắt theo: `flat[key]` × cấp thú
+  (DECISIONS "Thú cưng: máu / MP cộng số").
+  """
+  def flat(p, key) do
+    case Map.get(p, :pet) && data(p.pet) do
+      %{flat: f} -> Map.get(f, key, 0) * active_level(p)
       _ -> 0
     end
   end
@@ -267,6 +284,7 @@ defmodule HacLong.Game.Pets do
         mult: bonus_mult(lv),
         group: pt[:group],
         bonus: pt.bonus,
+        flat: pt[:flat] || %{},
         name: pt.name,
         desc: pt.desc,
         feed: if(id == Map.get(p, :pet), do: feed_cost(p))

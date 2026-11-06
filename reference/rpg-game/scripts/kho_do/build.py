@@ -463,7 +463,7 @@ pet_rows = "".join(
     f"<tr><td><b>{E(pt['name'])}</b></td><td>{PET_GROUP.get(pt['group'], pt['group'])}</td><td class=n>{pet_price(pt)}</td><td>{E(pt['desc'])}</td></tr>"
     for pt in sorted(D["pets"], key=lambda x: (x.get("rare", False), x["group"], x["price"])))
 pet_rule = (f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
-            f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); chỉ số cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)). "
+            f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); phần trăm cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)); máu / MP cộng số × cấp thú. "
             f"Cho ăn ở Người Nuôi Thú: {n(PR['feed_gold'])} × cấp² vàng được {PR['feed_xp']} trận.")
 # Hồ Long Vương: bảng cá riêng, Mồi Rồng (công thức của Bà Lang)
 _lake = R["fishing"]["pools"]["lake"]; _tot = sum(w for w, _ in _lake)
@@ -570,7 +570,7 @@ rule_items = [
     ("Đủ bộ, đồ Thần cùng bộ", "đủ bộ tính các món cùng tên bộ, cùng bậc; đồ Thần đếm các món Thần cùng tên bộ. Đấu Sĩ đủ bộ là 4 món (không mũ), cho cả thưởng đủ bộ lẫn mức \"đủ bộ\" của đồ Thần."),
     ("Phí vàng ép", f"max(giá món, {n(UPR['cost_min_price'])}) × {pct(UPR['cost_pct'])} × cấp ép lên."),
     ("May mắn khi ép", f"cộng {luck_up}, trần {pct(LS['luck_max_rate'])}; với bảng ép hiện tại cao nhất là {pct(luck_real)}."),
-    ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số và có lúc cắn quái."),
+    ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số (máu / MP cộng số theo cấp thú), không đánh trong trận."),
     ("Đài Phúc Lành", f"chạm vào: phúc lành của bản đồ ({R['blessing']['battles']} trận, +{pct(R['blessing']['pct'])} kinh nghiệm / vàng / công / thủ / máu tùy đài) và thành điểm hồi sinh khi gục."),
     ("Bot (người chơi máy)", f"ép đồ như người thật khi dư vàng (giữ lại {R['bots']['forge']['gold_keep_per_level']} × cấp vàng mua bình): +1 → +9 món đang mặc cấp thấp nhất trước, từ +7 chỉ khi dư {R['bots']['forge']['spare']} viên ngọc; thêm dòng Ngọc Sinh Mệnh cho vũ khí, áo giáp; ghép / nâng cánh; +10 / +11 chỉ khoảng 1/{R['bots']['forge']['daring_every']} số bot. Cấp tối đa thì chuyển sinh, cần chúa tể thì đi vùng chuyển sinh săn. Bot không được báo cả server, không vào bảng xếp hạng."),
 ]

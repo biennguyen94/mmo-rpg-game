@@ -16,7 +16,8 @@ defmodule HacLong.Game.HomePetsTest do
 
     {%{ok: true}, p} = Pets.buy(p, "sheep")
     assert p.pet == "sheep" and p.pets == ["sheep"] and p.gold == 100_000 - 1500
-    assert Engine.derived(p).maxHp == round(base.maxHp * (1 + Pets.data("sheep").bonus.hp))
+    # DECISIONS "Thú cưng: máu / MP cộng số": máu cộng số (cấp 1), không nhân %
+    assert Engine.derived(p).maxHp == base.maxHp + Pets.data("sheep").flat.hp
     assert {%{ok: false, msg: "Bạn đã có Cừu Bông rồi."}, _} = Pets.buy(p, "sheep")
 
     {%{ok: true}, p} = Pets.buy(p, "hound")
@@ -136,9 +137,13 @@ defmodule HacLong.Game.HomePetsTest do
     assert Pets.level(lv5, "sheep") == 5
     r = HacLong.Game.Data.rules().pets
     mult = 1 + 4 * r.bonus_per_level
-    hp = Pets.data("sheep").bonus.hp
-    assert_in_delta Pets.bonus(lv5, :hp), hp * mult, 1.0e-9
-    assert Engine.derived(lv5).maxHp == round(base.maxHp * (1 + hp * mult))
+    red = Pets.data("sheep").bonus.reduce
+    assert_in_delta Pets.bonus(lv5, :reduce), red * mult, 1.0e-9
+    # máu cộng số nhân thẳng cấp thú
+    hp = Pets.data("sheep").flat.hp
+    assert Pets.flat(lv5, :hp) == hp * 5
+    assert Engine.derived(lv5).maxHp == base.maxHp + hp * 5
+    assert Engine.derived(lv5).maxMp == base.maxMp
 
     # không lên quá cấp tối đa
     assert Pets.level(Map.put(p, :pet_xp, %{"sheep" => 99_999}), "sheep") == Pets.max_level()

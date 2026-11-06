@@ -293,7 +293,7 @@ defmodule HacLong.World.MapServer do
   @impl true
   def handle_info(:wander, s) do
     schedule_wander()
-    {:noreply, wander(s)}
+    {:noreply, if(HacLong.World.MobMove.on?(), do: wander(s), else: s)}
   end
 
   def handle_info({:respawn, :boss}, s), do: {:noreply, if(s.respawn, do: spawn_boss(s), else: s)}

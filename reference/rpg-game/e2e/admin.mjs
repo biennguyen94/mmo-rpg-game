@@ -137,6 +137,20 @@ R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excel
   const stale = await page.evaluate((f) => document.querySelector(`${f} input[name="exc"][value="atk_pct"]`).checked, gg);
   R.check('tặng trang bị: Excellent đúng loại món, cánh không có; đổi món bỏ tick dòng bị ẩn', ok && !stale, JSON.stringify(got));
 }
+// bật / tắt quái di chuyển cho cả server (DECISIONS "Quản trị: bật / tắt quái di chuyển")
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.waitForSelector('[data-adm="mob_move"]');
+  const label = async () => (await page.textContent('[data-adm="mob_move"]')).trim();
+  const was = await label();
+  await page.click('[data-adm="mob_move"]');
+  await page.waitForFunction((w) => document.querySelector('[data-adm="mob_move"]').textContent.trim() !== w, was);
+  const off = await label();
+  await page.click('[data-adm="mob_move"]');
+  await page.waitForFunction((w) => document.querySelector('[data-adm="mob_move"]').textContent.trim() !== w, off);
+  R.check('quản trị tắt rồi bật lại quái di chuyển', was === 'Tắt' && off === 'Bật' && (await label()) === 'Tắt', `${was} → ${off} → ${await label()}`);
+}
+
 // sự kiện mở ngay: Quảng Trường Quỷ / Lâu Đài Máu (người chơi thấy đang mở, chat có thông báo)
 for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['open_bc', 'bc', 'Lâu Đài Máu']]) {
   await page.click(`[data-tab="admin"]`).catch(() => null);

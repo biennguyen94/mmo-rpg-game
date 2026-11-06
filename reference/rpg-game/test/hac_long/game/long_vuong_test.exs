@@ -187,12 +187,15 @@ defmodule HacLong.Game.LongVuongTest do
     # DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số"
     pt = Pets.data("long_vuong")
     assert pt.group == "all" and pt[:skill] == nil
-    assert Enum.all?(~w(atk crit def hp reduce xp gold)a, &Map.has_key?(pt.bonus, &1))
+    assert Enum.all?(~w(atk crit def reduce xp gold)a, &Map.has_key?(pt.bonus, &1))
+    # máu / MP cộng số mỗi cấp thú (DECISIONS "Thú cưng: máu / MP cộng số")
+    assert pt.flat.hp > 0 and pt.flat.mp > 0
 
     base = Engine.derived(angler())
     d = Engine.derived(with_pet(angler(), 1))
     assert abs(d.atk - base.atk * (1 + pt.bonus.atk)) <= 1
-    assert abs(d.maxHp - base.maxHp * (1 + pt.bonus.hp)) <= 1
+    assert d.maxHp == base.maxHp + pt.flat.hp
+    assert d.maxMp == base.maxMp + pt.flat.mp
   end
 
   test "giảm sát thương nhận (Hộ vệ / Long Vương); không còn hồi sinh" do
