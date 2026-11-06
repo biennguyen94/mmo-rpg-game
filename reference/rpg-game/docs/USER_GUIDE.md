@@ -13,7 +13,7 @@
 6. [Đồ đạc, túi, Tủ Đồ](#6-đồ-đạc-túi-tủ-đồ)
 7. [Ép đồ, ngọc, Máy Hỗn Nguyên, cánh](#7-ép-đồ-ngọc-máy-hỗn-nguyên-cánh)
 8. [Làng: NPC và việc hằng ngày](#8-làng-npc-và-việc-hằng-ngày)
-9. [Nhà của bạn, thú cưng, câu cá, nấu ăn](#9-nhà-của-bạn-thú-cưng-câu-cá-nấu-ăn)
+9. [Thủ Kho, thú cưng, câu cá, nấu ăn](#9-thủ-kho-thú-cưng-câu-cá-nấu-ăn)
 10. [Chơi cùng người khác](#10-chơi-cùng-người-khác)
 11. [Đấu trường và Đồ sát](#11-đấu-trường-và-đồ-sát)
 12. [Bang hội và chiến bang](#12-bang-hội-và-chiến-bang)
@@ -32,7 +32,7 @@
   chữ hoa / thường) và đặt mật khẩu mới là vào game luôn; các thiết bị khác bị đăng xuất. Trả lời sai 5 lần thì phải đợi một
   giờ. Tài khoản cũ chưa có câu hỏi (hoặc quên câu trả lời) thì gửi yêu cầu cho quản trị như trước. Đổi / đặt câu hỏi ở
   Menu → Cài đặt → Câu hỏi bảo mật (cần mật khẩu hiện tại).
-- Bạn bắt đầu ở **Nhà của bạn**. Đi qua cổng để ra **Làng**. Lần đầu chơi có **hướng dẫn tân thủ** (khung vàng phía trên bản
+- Bạn bắt đầu ở **Làng** (cạnh Đá Dịch Chuyển). Lần đầu chơi có **hướng dẫn tân thủ** (khung vàng phía trên bản
   đồ) dẫn từng bước và tặng quà khi xong; bấm "Bỏ qua" nếu không cần.
 - Chạm (hoặc bấm) vào một ô trên bản đồ để đi tới; bước vào quái để đánh; bước vào NPC để nói chuyện.
 - Thanh trên cùng (HUD): tên, cấp, vàng, máu (đỏ), MP (xanh), kinh nghiệm; nút 👥 bạn bè, 🔔 thông báo, ✉ hộp thư.
@@ -87,7 +87,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
 - Gặp trùm là vào trận ngay như quái thường.
 - **50 bản đồ phụ** (cấp quái 1–50, 10 nhóm: Đồng Cỏ Xanh, Rừng Thưa, Gò Kiến Đỏ, Đầm Sương, Cao Nguyên Tuyết, Thung Lũng U Linh, Mộ Cổ Hoang, Lò Nguyên Tố, Đỉnh Khổng Lồ, Vực Quỷ): vào bằng cổng xanh ở mép phải Rừng Mê 1, Rừng Mê 2, Trại Goblin 1–2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1–2, Đầm Lầy Rồng 2, Hang Hắc Long 1–2; mỗi nhóm 5 bản đồ nối tiếp nhau.
-- **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng, Nhà miễn phí). Không cần mở vùng hay đi qua cổng trước.
+- **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).
 - **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
@@ -106,7 +106,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 - Trận theo lượt: **Đánh**, **Kỹ năng**, **Uống máu**, **Chạy**. Số bay lên cho biết sát thương; "Trượt" là đòn hụt.
 - Đòn có khoảng thấp ~ cao, có thể chí mạng; thủ của mục tiêu làm giảm sát thương nhưng không xuống dưới 20 % đòn gốc.
-- Thắng nhận kinh nghiệm, vàng, có khi rơi đồ hoặc ngọc. Gục ngã thì về Nhà, mất 10 % vàng đang mang.
+- Thắng nhận kinh nghiệm, vàng, có khi rơi đồ hoặc ngọc. Gục ngã thì về Làng, mất 10 % vàng đang mang.
 - **Hiệu ứng**: "LÊN CẤP" giữa màn hình khi lên cấp; số xanh khi hồi máu / MP; chữ lớn khi ép đồ thành công hay vỡ đồ.
 - **Tự hủy đồ rơi** (Menu → Cài đặt): bật thì trang bị rơi ra không thuộc loại được chọn "Giữ lại" (Excellent, Thần, May mắn / Kỹ năng, nhiều dòng, tốt hơn đồ đang mặc, mặc được) bị hủy ngay, cả khi đánh tay lẫn tự đánh; nhẫn, dây chuyền, cánh, ngọc, nguyên liệu luôn giữ.
 - **Tự đánh** (thanh 🤖 dưới bản đồ, chỉ khi đang mở game):
@@ -164,7 +164,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   tốn 1 Áo Giáp Vệ Binh (mua 5 000 vàng hoặc nhặt từ quái cấp 15+). Rồi 10 phút hỗn chiến: quái và người đánh lẫn nhau
   (không mất vàng, không tên đỏ); gục là bị loại. Người trụ cuối cùng khi hết quái thắng 60 000 vàng + ngọc; thưởng gửi thư.
 - **Loại đồ như MU**: đồ thường (có thể kèm May mắn, Kỹ năng, dòng cộng thêm +4 / +8 / +12 tấn công hoặc phòng thủ — tên xanh), đồ hoàn hảo (tên lục), đồ Thần. Ngọc Sinh Mệnh thêm dòng tới +16. Mỗi trang bị (rơi, mua, nhận thưởng) là một món riêng chiếm một chỗ trong túi trang bị, không xếp chồng; túi giữ tối đa 40 món chưa mặc (`rules.json` `loot.gear_bag`). Túi đầy thì không mua được trang bị, đồ rơi / quà gửi vào Hộp thư.
-- **Tủ Đồ** (trong Nhà): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
+- **Tủ Đồ** (Thủ Kho ở Làng): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.
 
 ![Tủ Đồ](screenshots/e2e-wardrobe.png)
@@ -201,16 +201,17 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 | Bảng Tin | 4 việc hằng ngày, đổi mới mỗi ngày |
 | Người Gác Tháp | Vào Tháp Vô Tận |
 | Lão Hỗn Nguyên | Máy Hỗn Nguyên |
-| Người Nuôi Thú, Thợ Mộc, Bác Đầu Bếp | Thú cưng, đồ trang trí Nhà, nấu ăn |
+| Thủ Kho, Rương Gia Truyền | Gửi / lấy đồ và vàng (Tủ Đồ); quà mỗi ngày |
+| Người Nuôi Thú, Bác Đầu Bếp | Thú cưng, nấu ăn |
 | Người Tổ Chức Hội | Đổi quà lễ hội (khi có sự kiện) |
 | Chủ Chợ | Rao bán, mua đồ của người khác (phí 5 %, tiền bán gửi qua thư) |
 
 ![Cửa hàng](screenshots/e2e-shop.png)
 
-## 9. Nhà của bạn, thú cưng, câu cá, nấu ăn
+## 9. Thủ Kho, thú cưng, câu cá, nấu ăn
 
-- **Nhà**: Rương Gia Truyền (quà mỗi ngày), Tủ Đồ, đặt đồ trang trí (mỗi 10 điểm tiện nghi +1 % kinh nghiệm, tối đa +5 %).
-  Bạn bè có thể ghé thăm và khen nhà.
+- **Thủ Kho** (giữa Làng, cạnh Rương Gia Truyền và giếng): gửi / lấy đồ và vàng. **Rương Gia Truyền**: quà mỗi ngày. Giếng
+  giữa Làng hồi đầy máu, MP. (Nhà riêng và đồ trang trí đã bỏ.)
 - **Thú cưng**: mua ở Người Nuôi Thú, hoặc hạ đủ 100 con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; trừ trùm,
   chúa tể) để thuần phục. Thú đi theo và **chỉ cộng % chỉ số** (kiểu MU: không đánh trong trận, không có kỹ năng), chia ba nhóm:
   ⚔️ **Chiến** (tấn công, chí mạng: Chó Săn, Quạ Đen, Bằng Mã Lửa, Quỷ Satan, Ác Quỷ Daemon, thú thuần), 🛡️ **Hộ vệ** (máu,
@@ -225,12 +226,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   Giữa các lần Ngài nổi: **Đàn Cá Vàng** khoảng 15 phút một lần lấp lánh ở một ô nước trong 2 phút (cá vàng lượn, viền chấm), thả trúng
   ô đó thì 15 % ra Cá Chép Vàng và mỗi con +3 Long Khí; **việc của Ông Lão** mỗi ngày: câu 30 con cá ở hồ rồi gặp Ông Lão nhận vàng,
   kinh nghiệm và +20 Long Khí. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
-  Ba kỹ năng ở cấp 5 / 15 / 20: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh. Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
+  Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác
 
-- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, thăm nhà, giao dịch, kết bạn, thách đấu, đồ sát,
+- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, giao dịch, kết bạn, thách đấu, đồ sát,
   chặn chat.
 - **Màu tên trên bản đồ**: xanh lá = đồng đội, xanh dương = cùng bang, đỏ = bang đang chiến với bang bạn.
 - **Tổ đội** (tối đa 3): đánh chung một con quái thì cùng thắng; mỗi người nhận thưởng × 1,2 / số người. Lời mời hết hạn sau
@@ -256,10 +257,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 - **Đấu trường** (tab Khác): đánh với người khác do máy điều khiển (họ không cần online): đối thủ dùng kỹ năng, chỉ số thú cưng,
   buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
-  ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Nhà); bỏ chạy thì không mất gì.
+  ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Làng); bỏ chạy thì không mất gì.
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
   luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (hết MP / đang hồi chiêu thì đánh thường). Hết máu hoặc **bỏ chạy** là gục ngã:
-  mất 10% vàng, về Nhà; số vàng đó về tay người thắng. Không đánh được ở Làng, Nhà và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
+  mất 10% vàng, về Làng; số vàng đó về tay người thắng. Không đánh được ở Làng và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
   - Người đang **đánh quái** vẫn bị đồ sát ngay: trận đánh quái bị cắt ngang (quái giữ nguyên máu, không mất gì). Chỉ không đánh
     được người đang trong một trận đồ sát khác. Bản thân mình phải rảnh tay (không đang trong trận) mới đồ sát được.
   - Người vừa gục được **bảo vệ 30 giây**; không giới hạn số lần đồ sát.

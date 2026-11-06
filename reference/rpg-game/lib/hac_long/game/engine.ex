@@ -1405,7 +1405,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # bất tử (kỹ năng tháp): gục thì đứng dậy với `power` × máu tối đa, một lần.
-  # Đánh người (DECISIONS "Đánh người: mỗi trận cứu một lần"): bất tử và Long Vương Hồi Sinh chung một lần cứu mỗi trận
+  # Đánh người (DECISIONS "Đánh người: mỗi trận cứu một lần"): bất tử chỉ cứu một lần mỗi trận
   # (`pet_revived`), dùng lại Bất Tử không cứu thêm.
   defp survive(%{hp: hp, battle: %{monster: %{pvp: pvp}, pet_revived: true}} = p, _d)
        when hp <= 0 and pvp not in [nil, false],
@@ -1579,7 +1579,7 @@ defmodule HacLong.Game.Engine do
     if p.hp <= 0, do: lose(p), else: round_end(p)
   end
 
-  # Đối thủ đấu trường vừa bị hạ: Long Vương Hồi Sinh của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
+  # Đối thủ đấu trường vừa bị hạ: Bất Tử của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
   # kịp ra đòn cuối (cùng lúc với đòn của mình). Cả hai cùng gục: bên bị đánh lố ít hơn (so với máu tối đa) thắng.
   defp mirror_last(p, d) do
     if q = mirror_revive(p) do
@@ -1612,7 +1612,7 @@ defmodule HacLong.Game.Engine do
     )
   end
 
-  # đối thủ đấu trường hết máu: Long Vương Hồi Sinh của họ (mỗi trận một lần); không được cứu thì nil
+  # đối thủ đấu trường hết máu: Bất Tử của họ (mỗi trận một lần); không được cứu thì nil
   defp mirror_revive(%{battle: %{mirror: %{} = mi}} = p) do
     saved = survive(%{mi | hp: 0}, derived(mi))
 
@@ -1620,7 +1620,7 @@ defmodule HacLong.Game.Engine do
       p
       |> put_in([:battle, :monster, :hp], saved.hp)
       |> put_in([:battle, :mirror], saved)
-      |> log("🐉 #{p.battle.monster.name} được thú cứu, đứng dậy với #{saved.hp} máu.", "bad")
+      |> log("🐉 #{p.battle.monster.name} đứng dậy với #{saved.hp} máu.", "bad")
     end
   end
 
@@ -1983,7 +1983,7 @@ defmodule HacLong.Game.Engine do
 
   @doc """
   Người bị đánh `p` nhận `dmg` sát thương (bên đánh đã tính đủ công, thủ, chí mạng, giảm sát thương của cánh / Excellent):
-  thủ thế, thú che chắn, khiên, rồi bất tử / Long Vương Hồi Sinh của chính họ. Máu có thể âm (không được cứu).
+  thủ thế, thú che chắn, khiên, rồi Bất Tử của chính họ. Máu có thể âm (không được cứu).
   Trả `{p, sát_thương_thật}`; dòng nhật ký (góc nhìn người bị đánh) ghi vào trận của `p`.
   """
   def pvp_defend(p, dmg) when dmg <= 0, do: {p, 0}
@@ -2030,7 +2030,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # Đối thủ đấu trường chạy như người: buff thủ, thú che chắn của đối thủ giảm đòn của mình; phản sát thương (Excellent)
-  # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Long Vương Hồi Sinh của mình vẫn cứu)
+  # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Bất Tử của mình vẫn cứu)
   defp mirror_guard(%{battle: %{mirror: %{} = mi}} = p, dmg) do
     dmg = round(dmg * (1 - power(mi, :player, "guard")) * (1 - pet_guard(mi)))
 

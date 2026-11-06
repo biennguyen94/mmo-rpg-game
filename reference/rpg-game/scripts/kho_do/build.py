@@ -325,7 +325,7 @@ monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(m
 # ---------- Sự kiện (RULES: devil_square, blood_castle, chaos_castle, kalima, castle_siege, raids, invasion; world_boss) ----------
 LIB = D["library"]
 MON = {m["id"]: m for m in LIB["monsters"]}
-MAPN = {**{m["id"]: m["name"] for m in LIB["maps"]}, "home": "Nhà"}
+MAPN = {m["id"]: m["name"] for m in LIB["maps"]}
 def clock(every_h, off_min=0):
     t = [(off_min + every_h * 60 * i) % 1440 for i in range(24 // every_h)]
     s = sorted(t)
@@ -408,7 +408,7 @@ def mrow(m):
     mons = ", ".join(E(MON[k]["name"]) for k in m["monsters"] if k in MON and not MON[k]["boss"])
     bk = [k for k in m["monsters"] if k in MON and MON[k]["boss"]] + ([m["boss"]] if m.get("boss") in MON and m["boss"] not in m["monsters"] else [])
     boss = ", ".join(f"<b>{E(MON[k]['name'])}</b>" for k in bk)
-    # như client (travelCost): Làng, Nhà miễn phí; nơi khác base + per_level × cấp quái thấp nhất (không quái: 0)
+    # như client (travelCost): Làng miễn phí; nơi khác base + per_level × cấp quái thấp nhất (không quái: 0)
     cost = "miễn phí" if m["id"] in R["travel"]["free"] else n(R["travel"]["base"] + R["travel"]["per_level"] * (m["min"] or 0))
     need = f"CS {m['cs']}, cấp {m['need']}+" if m.get("cs") else (f"cấp {m['min']}+" if m["min"] else "—")
     return f"<tr><td><b>{E(m['name'])}</b></td><td class=n>{lv}</td><td>{need}</td><td>{mons or ''}{(' · ' if mons else '') + 'trùm ' + boss if boss else ''}{'—' if not mons and not boss else ''}</td><td class=n>{cost}</td></tr>"

@@ -339,7 +339,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 - **Ngọc Sinh Mệnh** (`jewel_life`): ép ở Thợ Rèn, mỗi dòng +4 tấn công (vũ khí) / phòng thủ (giáp, khiên, cánh), tối đa 4
   dòng, 50 %; thất bại mất một dòng. Số ở `RULES.upgrade.life`; tỉ lệ rơi theo `JEWELS.weights.jewel_life` (`upgrade.json`).
-- **Tủ Đồ** ở Nhà: 40 loại đồ thường + 20 đồ hiếm, mở rộng +10 đồ hiếm × 3 lần bằng vàng (`RULES.storage`). Đồ hiếm đang cất
+- **Tủ Đồ** ở Thủ Kho (Làng): 40 loại đồ thường + 20 đồ hiếm, mở rộng +10 đồ hiếm × 3 lần bằng vàng (`RULES.storage`). Đồ hiếm đang cất
   vẫn thuộc danh sách đồ của nhân vật (cờ `stored`); cất / lấy không ghi `gear_log`.
 - **Vứt đồ:** đồ hiếm vứt đi ghi `gear_log` `out` lý do `DISCARD`; muốn trả lại thì tra `uid` như đồ vỡ khi ép.
 - **Thư quản trị** (`gift`, cả "gửi mọi người"): mỗi thư tối đa `RULES.mail.max_gold` vàng và `max_xp` EXP (1 000 000).
@@ -427,7 +427,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Chỉ số quái theo cấp, hệ số trùm | `monster` |
 | Tỉ lệ rơi bình máu / đồ, số dòng cộng thêm (`gear_weights`) | `loot` |
 | Giá bán lại (40 %) | `shop.sell_ratio` |
-| Rương, rèn, tháp, thú cưng, sổ quái, nhà, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`, `daily`, `fishing` |
+| Rương, rèn, tháp, thú cưng, sổ quái, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `events`, `daily`, `fishing` |
 | Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |
 | Từ cấm khi đặt tên nhân vật / bang | `names` |
 | Ngọc Sinh Mệnh; sức chứa Tủ Đồ và giá mở rộng; trần vàng / EXP mỗi thư quản trị | `upgrade.life`, `storage`, `mail` |
@@ -498,12 +498,12 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   database (cài đặt nằm trong bộ nhớ `player.auto`).
 - Mỗi nhịp server tự chọn lệnh và chạy qua đúng đường lệnh client (cùng luật, giới hạn tốc độ, nhật ký vàng / đồ). Lý do lưu
   trong `gold_log` / `gear_log` vẫn là tên lệnh (`ATTACK`, `SKILL`, `DISCARD`…).
-- Không bật được ở Làng, Nhà, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
+- Không bật được ở Làng, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
 - Lọc "chỉ đồ quý" hủy đồ thường vừa nhặt; người chơi khiếu nại mất đồ thì tra `gear_log` lý do `DISCARD` quanh giờ đó.
 
 ### 12.2 Người chơi AI (Phase 5, B-32)
 
-- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.
+- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về giếng giữa Làng.
 - Kiểm tra bot có chạy: `SELECT c.name, c.map_id, c.gold, c.updated_at FROM characters c JOIN users u ON u.id = c.user_id
   WHERE u.role = 'bot' ORDER BY c.updated_at DESC;` — `updated_at` phải đổi sau vài phút.
 

@@ -1487,3 +1487,7 @@ Form quà qua hộp thư (mọi người lẫn một người) có thêm ô tick
 
 ## Chỉ số thú cưng ghi rõ theo cấp (2026-11-06, anh hỏi Long Vương +10% / +8% nhưng hồ sơ hiện +20% / +16%)
 Không phải lỗi: số trong mô tả thú là ở cấp 1, chỉ số thật nhân `1 + bonus_per_level × (cấp − 1)` (Long Vương cấp 20 ×1,95 với hệ số cũ). Cửa hàng / thẻ Long Vương ghi "(cấp 1)" và hệ số theo cấp; hồ sơ ghi cấp thú, rê chuột vào % thấy cách tính.
+
+## Bỏ Nhà: Thủ Kho ở Làng (2026-11-06, anh yêu cầu)
+Nhà riêng không cần thiết: bỏ bản đồ `home`, đồ trang trí (`furniture.json`, Thợ Mộc, lệnh `decor_*`, điểm tiện nghi +% EXP, thăm / khen nhà, thành tựu "cozy", gói trang trí lễ hội). Tủ Đồ (gửi / lấy đồ, vàng) chuyển về NPC **Thủ Kho** giữa Làng, cạnh **Rương Gia Truyền** và giếng hồi máu; gục ngã / điểm hồi sinh về Đá Dịch Chuyển ở Làng. Dữ liệu cũ của nhân vật (đồ trang trí đã đặt) bỏ qua khi nạp, đồ trong tủ giữ nguyên. Hướng dẫn tân thủ giữ 5 bước trong dữ liệu (bước 0 "ra Làng" tự xong) để nhân vật đang làm dở không lệch; hiển thị 4 bước.
+Làng vẽ lại: hồ sen có cầu, đèn lồng, nhà quanh quảng trường, giếng ở giữa; vị trí các NPC cũ giữ nguyên.
