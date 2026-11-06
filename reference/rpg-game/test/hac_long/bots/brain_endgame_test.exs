@@ -158,4 +158,37 @@ defmodule HacLong.Bots.BrainEndgameTest do
     assert {"pets", %{"act" => "pet_feed"}} = Brain.pet_job(p, %{feed_due: true})
     assert Brain.pet_job(p, %{feed_due: false}) == nil
   end
+
+  describe "dùng ngọc khôn hơn" do
+    defp up(p, id, n), do: Map.put(p, :upgrades, Map.put(p[:upgrades] || %{}, id, n))
+
+    test "món đang mặc đã ép không bị thay bằng món +0 chỉ nhỉnh hơn chút (trước đây mất trắng ngọc)" do
+      p = player()
+      worn = Gear.find(p, p.equip.armor)
+
+      # cùng loại, thêm 1 dòng cộng thêm: hơn món đang mặc +0
+      {p, _} = Gear.add(p, %{Gear.new(worn.base) | uid: "#NEW"} |> Map.put(:opt, 1))
+      assert %{"act" => "equip", "id" => "#NEW"} = Brain.decide(p, nil)
+
+      # món đang mặc +5: giữ
+      refute match?(
+               %{"act" => "equip", "id" => "#NEW"},
+               Brain.decide(up(p, p.equip.armor, 5), nil)
+             )
+    end
+
+    test "dồn Ngọc Ước Nguyện vào vũ khí / giáp / cánh / khiên trước các ô khác" do
+      p = player(%{inv: %{"jewel_bless" => 1}})
+      p = Enum.reduce(p.equip, p, fn {_s, id}, p -> if id, do: up(p, id, 2), else: p end)
+      # mọi món +2: ép vũ khí / giáp trước mũ, giày…
+      assert {"shop", %{"act" => "upgrade", "slot" => slot}} = Brain.forge_job(p)
+      assert slot in Data.rules().bots.forge.focus_slots
+
+      # món đáng giá đã hơn các ô khác `focus_lead` cấp: tới lượt ô khác
+      lead = Data.rules().bots.forge.focus_lead
+      q = Enum.reduce([:weapon, :armor], p, fn s, q -> up(q, q.equip[s], 2 + lead + 1) end)
+      assert {"shop", %{"act" => "upgrade", "slot" => other}} = Brain.forge_job(q)
+      refute other in ["weapon", "armor"]
+    end
+  end
 end

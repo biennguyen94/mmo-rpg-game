@@ -168,7 +168,7 @@ defmodule HacLong.Bots.Brain do
           has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
           (cost.at == "smith" or daring)
 
-      if ok, do: [{lv, slot, cost.at}], else: []
+      if ok, do: [{lv + focus_lead(slot), slot, cost.at}], else: []
     end)
     |> Enum.sort()
     |> case do
@@ -182,6 +182,11 @@ defmodule HacLong.Bots.Brain do
         {"chaos", %{"act" => "chaos_upgrade", "slot" => to_string(slot), "confirm" => true}}
     end
   end
+
+  # dồn ngọc vào món đáng giá (vũ khí, giáp, cánh, khiên: `forge.focus_slots`) trước: các ô khác chỉ ép khi kém món
+  # đáng giá thấp nhất `forge.focus_lead` cấp (DECISIONS "Bot dùng ngọc khôn hơn")
+  defp focus_lead(slot),
+    do: if(to_string(slot) in @forge.focus_slots, do: 0, else: @forge.focus_lead)
 
   defp life_job(p) do
     if Map.get(p.inv, @life.jewel, 0) >= 1 do
@@ -658,7 +663,7 @@ defmodule HacLong.Bots.Brain do
       cur = Gear.item(p, p.equip[slot])
 
       left_power =
-        if left && left.slot == "weapon", do: power(left) * k, else: power(left)
+        if left && left.slot == "weapon", do: worth(p, left) * k, else: worth(p, left)
 
       cond do
         # vũ khí 2 tay không cầm khiên (B-41)
@@ -667,17 +672,17 @@ defmodule HacLong.Bots.Brain do
 
         # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn tay trái đang cầm
         slot == :weapon and Engine.two_handed?(it) ->
-          if power(it) > power(cur) + left_power, do: equip(it)
+          if worth(p, it) > worth(p, cur) + left_power, do: equip(it)
 
-        slot == :weapon and power(it) > power(cur) ->
+        slot == :weapon and worth(p, it) > worth(p, cur) ->
           equip(it)
 
         # cầm 2 vũ khí (B-42): vũ khí 1 tay vào tay trái nếu hơn khiên / vũ khí tay trái
         slot == :weapon and Engine.dual_class?(p.cls) and weapon && not Engine.two_handed?(weapon) and
-          Engine.dual_pair?(weapon, it) and power(it) * k > left_power ->
+          Engine.dual_pair?(weapon, it) and worth(p, it) * k > left_power ->
           equip(it, "left")
 
-        slot != :weapon and power(it) > power(cur) and
+        slot != :weapon and worth(p, it) > worth(p, cur) and
             not (slot == :shield and left != nil and left.slot == "weapon") ->
           equip(it)
 
@@ -697,6 +702,11 @@ defmodule HacLong.Bots.Brain do
 
   def power(it),
     do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * Engine.line_value(it)
+
+  # sức mạnh kể cả cấp ép (DECISIONS "Bot dùng ngọc khôn hơn"): món +5 không bị thay bằng món +0 nhỉnh hơn chút,
+  # trước đây mất trắng 5 Ngọc Ước Nguyện mỗi lần thay đồ
+  defp worth(_p, nil), do: 0
+  defp worth(p, it), do: power(it) + Engine.upgrade_bonus(p, it.uid)
 
   # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
   defp heal(p, _d, snap) do

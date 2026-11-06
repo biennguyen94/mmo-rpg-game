@@ -1454,3 +1454,8 @@ Kiểm 20 bot (đều CS10 cấp 50): 11 bot chưa hạ được Kim Long / Hắ
 - **Dọn túi**: túi trang bị ≥ `bots.sell.full_at` (35) món thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tới còn `down_to` (20) món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và lớp mình không mặc được hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh.
 - **Cho thú ăn từ từ**: mỗi lần cách `bots.play.feed_every_min` ([2, 5]) phút, ngẫu nhiên; điều kiện vàng (`feed_mult`) giữ nguyên.
 - Số liệu ở `RULES.bots` (version 5). Test `brain_endgame_test.exs`.
+
+## Bot dùng ngọc khôn hơn (2026-11-06, anh "ko tăng tỉ lệ rơi ngọc, nhưng có cách nào chỉnh bot để bot thông minh hơn")
+Không đổi tỉ lệ rơi. Hai chỗ bot phí Ngọc Ước Nguyện:
+- **Thay đồ bỏ mất cấp ép**: trước đây so món mới với món đang mặc chỉ theo chỉ số gốc, nên món +5 bị thay bằng món +0 nhỉnh hơn chút và mất trắng 5 viên ngọc. Nay so cả phần cộng từ cấp ép (`Engine.upgrade_bonus/2`).
+- **Rải ngọc đều 9 ô**: trước đây ép món cấp thấp nhất trước (mũ, giày, nhẫn… ngang vũ khí). Nay dồn vào `bots.forge.focus_slots` (vũ khí, giáp, cánh, khiên) trước; ô khác chỉ ép khi kém món đáng giá thấp nhất `focus_lead` (3) cấp.
