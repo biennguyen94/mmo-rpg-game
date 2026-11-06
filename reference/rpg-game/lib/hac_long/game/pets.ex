@@ -1,22 +1,19 @@
 defmodule HacLong.Game.Pets do
   @moduledoc """
   Thú cưng: mua ở Người Nuôi Thú trong Làng, đi theo sau nhân vật trên bản đồ (người khác
-  cũng thấy) và cộng một ít chỉ số (`bonus` trong `PETS` trong `priv/game_data/pets.json`).
-  Hàm thuần, như `Engine`.
+  cũng thấy) và **chỉ cộng chỉ số** (`bonus` trong `PETS` trong `priv/game_data/pets.json`), kiểu MU: thú không đánh
+  trong trận, không có kỹ năng (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số"). Hàm thuần, như `Engine`.
 
-  Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận (`bite/3`); mỗi thú có sức cắn riêng (`bite` trong
-  `PETS`): thú đắt cắn mạnh hơn.
+  Ba nhóm (`group`): `war` Chiến (tấn công, chí mạng), `guard` Hộ vệ (máu, phòng thủ, giảm sát thương nhận),
+  `luck` Tài lộc (kinh nghiệm, vàng rơi); Long Vương (`all`, `rare: true`, DECISIONS "Long Vương") cộng cả ba, không
+  bán, chỉ câu được ở Hồ Long Vương (`HacLong.Game.Fishing`).
 
   Hạ đủ `RULES.pets.tame_kills` con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh trừ chúa tể)
-  thì thuần phục được loài đó ở Người Nuôi Thú: thú thuần có id `"tame:<id quái>"`; quái vùng chuyển sinh k
-  cho thú thuần mạnh hơn (`tame_realm_*`).
+  thì thuần phục được loài đó ở Người Nuôi Thú: thú thuần (nhóm Chiến) có id `"tame:<id quái>"`; quái vùng chuyển
+  sinh k cho thú thuần mạnh hơn (`tame_realm_*`).
 
   Thú lên cấp (tối đa `max_level`) theo số trận thắng khi được dắt theo (`gain/2`) hoặc cho ăn (`feed/1`, tốn vàng):
-  mỗi cấp tăng chỉ số cộng thêm, tỷ lệ và sức cắn; kỹ năng 1 ở `skill_level`, kỹ năng 2 ở `skill2_level`
-  (`skill`, `skill2` trong `PETS`; thú thuần dùng Cắn Xé rồi Húc Ngã), dùng khi cắn.
-
-  Long Vương (`rare: true`, DECISIONS "Long Vương"): không bán, chỉ câu được ở Hồ Long Vương
-  (`HacLong.Game.Fishing`); có thêm kỹ năng 3 (`skill3`) ở `skill3_level`.
+  mỗi cấp tăng chỉ số cộng thêm `bonus_per_level`.
 
   Trạng thái trong nhân vật: `pets: [id]` (đã có), `pet: id | nil` (đang dắt theo),
   `pet_xp: %{id => số trận}`.
@@ -29,28 +26,22 @@ defmodule HacLong.Game.Pets do
   @tame_kills @rules.tame_kills
 
   @max_level @rules.max_level
-  @skill_level @rules.skill_level
-  @skill2_level @rules.skill2_level
-  @skill3_level @rules.skill3_level
-  @unlock [@skill_level, @skill2_level, @skill3_level]
-  @tame_skills [
-    %{id: "rend", name: "Cắn Xé", desc: "Cú cắn mạnh gấp #{@rules.skills.rend_mult} lần."},
-    %{id: "bash", name: "Húc Ngã", desc: "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."}
-  ]
+
+  @groups %{
+    "war" => "Chiến",
+    "guard" => "Hộ vệ",
+    "luck" => "Tài lộc",
+    "all" => "Thần thú"
+  }
 
   def tame_kills, do: @tame_kills
   def max_level, do: @max_level
-  def skill_level, do: @skill_level
-  def skill2_level, do: @skill2_level
-  def skill3_level, do: @skill3_level
+
+  @doc "Tên nhóm thú (Chiến / Hộ vệ / Tài lộc / Thần thú)."
+  def group_name(g), do: Map.get(@groups, g, g)
 
   @doc "Thú hiếm (không bán, vd Long Vương)."
   def rare?(id), do: match?(%{rare: true}, Data.pet(id))
-
-  @doc "Kỹ năng thú `id` mở ở đúng cấp `lv` (nil nếu cấp đó không mở kỹ năng nào)."
-  def skill_at(id, lv) do
-    id |> skills() |> Enum.zip(@unlock) |> Enum.find_value(fn {s, at} -> if at == lv, do: s end)
-  end
 
   # ---------- Cấp của thú ----------
 
@@ -65,18 +56,6 @@ defmodule HacLong.Game.Pets do
   end
 
   defp active_level(p), do: level(p, p.pet)
-
-  @doc "Các kỹ năng riêng của thú `id` (mở ở cấp `skill_level`, `skill2_level`, `skill3_level`)."
-  def skills(id) do
-    case data(id) do
-      %{tame: _} -> @tame_skills
-      %{} = pt -> Enum.reject([pt[:skill], pt[:skill2], pt[:skill3]], &is_nil/1)
-      _ -> []
-    end
-  end
-
-  @doc "Kỹ năng thứ nhất của thú `id`."
-  def skill(id), do: List.first(skills(id))
 
   @doc """
   Thú đang dắt theo được tính một trận thắng (trùm: `boss_wins` trận). Trả về
@@ -146,9 +125,9 @@ defmodule HacLong.Game.Pets do
           id: id,
           name: "#{m.name} (thuần)",
           price: tame_price(m),
-          bonus: %{atk: atk},
-          bite: Float.round(@rules.tame_bite + @rules.tame_realm_bite * k, 3),
-          desc: "Tấn công +#{pct(atk)}%.",
+          group: "war",
+          bonus: %{atk: atk, crit: @rules.tame_crit},
+          desc: "Tấn công +#{pct(atk)}%, Chí mạng +#{pct(@rules.tame_crit)}%.",
           tame: mid
         }
     end
@@ -216,8 +195,7 @@ defmodule HacLong.Game.Pets do
       name: m.name,
       price: pet.price,
       kills: Bestiary.count(p, m.id),
-      desc: pet.desc,
-      bite: pet.bite
+      desc: pet.desc
     }
   end
 
@@ -248,72 +226,25 @@ defmodule HacLong.Game.Pets do
   end
 
   @doc """
-  Sức của thú `id` ở cấp `lv` (mặc định cấp hiện tại của `p`) để so các thú (bot, mô phỏng hành trình): phần đòn cắn
-  trung bình mỗi lượt (Cắn Xé đã học thì × `rend_mult`) + công cộng thêm + nửa thủ / máu cộng thêm. nil → 0.
+  Sức của thú `id` ở cấp `lv` (mặc định cấp hiện tại của `p`) để so các thú (bot, mô phỏng hành trình): công + chí mạng
+  cộng thêm + nửa thủ / máu / giảm sát thương nhận. Thú Tài lộc (chỉ kinh nghiệm / vàng) tính một phần nhỏ. nil → 0.
   """
   def power(p, id, lv \\ nil)
   def power(_p, nil, _lv), do: 0
 
   def power(p, id, lv) do
     lv = lv || level(p, id)
-    pt = data(id)
+    b = data(id).bonus
+    g = fn k -> b[k] || 0 end
 
-    rend? =
-      Enum.zip(skills(id), [@rules.skill_level, @rules.skill2_level])
-      |> Enum.any?(fn {k, at} -> k.id == "rend" and lv >= at end)
-
-    b = pt.bonus
-    mult = 1 + (lv - 1) * @rules.bonus_per_level
-
-    bite_chance(lv) * bite_power(id, lv) * if(rend?, do: @rules.skills.rend_mult, else: 1) +
-      ((b[:atk] || 0) + 0.5 * ((b[:def] || 0) + (b[:hp] || 0))) * mult
+    (g.(:atk) + g.(:crit) + 0.5 * (g.(:def) + g.(:hp) + 2 * g.(:reduce)) +
+       0.25 * (g.(:xp) + g.(:gold))) * bonus_mult(lv)
   end
-
-  @doc "Tỷ lệ cắn mỗi lượt của thú `id` ở cấp `lv`."
-  def bite_chance(lv), do: @rules.bite_chance + (lv - 1) * @rules.bite_chance_per_level
-
-  @doc "Sức cắn (phần của đòn thường) của thú `id` ở cấp `lv`."
-  def bite_power(id, lv),
-    do: ((data(id) || %{})[:bite] || @rules.bite_power) + (lv - 1) * @rules.bite_power_per_level
-
-  @doc """
-  Thú đang dắt theo cắn thêm: trả về số sát thương (0 nếu không cắn) theo sát thương
-  một đòn thường `base` của nhân vật. `roll` là số ngẫu nhiên trong [0, 1).
-  """
-  def bite(p, base, roll) do
-    if Map.get(p, :pet) && data(p.pet) do
-      lv = active_level(p)
-
-      if roll < bite_chance(lv),
-        do: max(1, round(base * bite_power(p.pet, lv))),
-        else: 0
-    else
-      0
-    end
-  end
-
-  @doc "Các kỹ năng thú đang dắt đã học (theo cấp)."
-  def active_skills(p) do
-    if Map.get(p, :pet) && data(p.pet) do
-      lv = active_level(p)
-
-      p.pet
-      |> skills()
-      |> Enum.zip(@unlock)
-      |> Enum.filter(&(lv >= elem(&1, 1)))
-      |> Enum.map(&elem(&1, 0))
-    else
-      []
-    end
-  end
-
-  @doc "Kỹ năng đầu tiên thú đang dắt đã học (nil nếu chưa)."
-  def active_skill(p), do: List.first(active_skills(p))
 
   def name(p), do: data(p.pet).name
 
   @doc """
-  Phần trăm cộng thêm của thú đang dắt theo cho chỉ số `key` (hp, atk, def, gold, xp);
+  Phần trăm cộng thêm của thú đang dắt theo cho chỉ số `key` (hp, atk, def, crit, reduce, gold, xp);
   mỗi cấp trên 1 tăng thêm `bonus_per_level`.
   """
   def bonus(p, key) do
@@ -325,7 +256,7 @@ defmodule HacLong.Game.Pets do
 
   defp bonus_mult(lv), do: 1 + (lv - 1) * @rules.bonus_per_level
 
-  @doc "Thông tin thú đã có cho client: cấp, chỉ số cộng thêm, cắn, kỹ năng, giá cho ăn (thú đang dắt)."
+  @doc "Thông tin thú đã có cho client: cấp, nhóm, chỉ số cộng thêm, giá cho ăn (thú đang dắt)."
   def view(p) do
     for id <- owned(p), pt = data(id) do
       lv = level(p, id)
@@ -334,13 +265,8 @@ defmodule HacLong.Game.Pets do
         id: id,
         level: lv,
         mult: bonus_mult(lv),
-        bite_chance: bite_chance(lv),
-        bite_power: bite_power(id, lv),
-        skills:
-          id
-          |> skills()
-          |> Enum.zip(@unlock)
-          |> Enum.map(fn {s, at} -> Map.merge(s, %{at: at, learned: lv >= at}) end),
+        group: pt[:group],
+        bonus: pt.bonus,
         name: pt.name,
         desc: pt.desc,
         feed: if(id == Map.get(p, :pet), do: feed_cost(p))

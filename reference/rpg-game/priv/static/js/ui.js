@@ -2245,23 +2245,27 @@
   const petPic = (pt, cls = 'sprite') => { const own = pt.ref && ownIcon(pt, 0); return own ? `<img class="${cls} own" src="${own}" alt="">` : `<img class="${cls}" src="${asset((pt.sprite || 'pets/' + pt.id) + '.png')}" alt="">`; };
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
   const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
-  // tỉ lệ cắn, sức cắn (phần đòn thường), các kỹ năng của thú: server tính sẵn ở P.view.pets (HacLong.Game.Pets.view/1)
+  // nhóm, chỉ số cộng thêm theo cấp của thú: server tính sẵn ở P.view.pets (HacLong.Game.Pets.view/1)
   const petView = (id) => ((P.view && P.view.pets) || []).find((x) => x.id === id);
   const pc0 = (x) => `${Math.round(x * 100)}%`;
+  // Thú chỉ cộng chỉ số, chia nhóm (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi' };
+  const PET_GROUP_ICON = { war: '⚔️', guard: '🛡️', luck: '🍀', all: '🐉' };
+  const petGroup = (g) => (g ? `<span class="tag pet-${g}">${PET_GROUP_ICON[g] || ''} ${esc((RULES.petGroups || {})[g] || g)}</span>` : '');
+  const pctTxt = (x) => `${Math.round(x * 1000) / 10}%`;
+  const petBonusText = (b, mult = 1) => Object.entries(b || {}).map(([k, v]) => `${PET_STAT[k] || k} +${pctTxt(v * mult)}`).join(', ');
   function petStats(v) {
     if (!v) return '';
-    return `<div class="small">🦷 Cắn ${pc0(v.bite_chance)} số lượt, mỗi lần ${pc0(v.bite_power)} đòn thường${v.level > 1 ? ` · chỉ số cộng ×${v.mult.toFixed(2)}` : ''}</div>
-      ${v.skills.map((k) => `<div class="small" style="${k.learned ? 'color:var(--good)' : ''}">${k.learned ? '✨' : '🔒'} ${esc(k.name)}: ${esc(k.desc)}${k.learned ? '' : ` (cấp ${k.at})`}</div>`).join('')}`;
+    return `<div class="small" style="color:var(--good)">${petBonusText(v.bonus, v.mult)}${v.level > 1 ? ` <span class="muted">(cấp ${v.level}: ×${v.mult.toFixed(2)})</span>` : ''}</div>`;
   }
   function viewPets() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);
     if (!owned.length) return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Chưa có thú cưng. Gặp Người Nuôi Thú ở góc dưới bên phải Làng.</p></div>`;
-    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} và ${RULES.petSkill2Level} học kỹ năng (Long Vương thêm kỹ năng thứ ba ở cấp ${RULES.petSkill3Level}).</p><div class="list">${owned.map((pt) => {
+    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú dắt theo cộng chỉ số cho bạn (không đánh trong trận), theo nhóm: ⚔️ Chiến (tấn công, chí mạng), 🛡️ Hộ vệ (máu, phòng thủ, giảm sát thương nhận), 🍀 Tài lộc (kinh nghiệm, vàng). Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: chỉ số cộng tăng theo cấp.</p><div class="list">${owned.map((pt) => {
       const L = petLevel(pt.id);
       const pct = L.next ? Math.round(((L.xp - L.from) / (L.next - L.from)) * 100) : 100;
       return `<div class="item">${petPic(pt)}<div class="grow">
-        <div class="name">${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}</span></div>
-        <div class="small muted">${esc(pt.desc)}</div>
+        <div class="name">${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}</span> ${petGroup(pt.group)}</div>
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
         <div class="small muted">${L.next ? `${fmt(L.xp)}/${fmt(L.next)} trận thắng` : 'Cấp tối đa'}</div>
         ${petStats(petView(pt.id))}</div>
@@ -3150,7 +3154,7 @@
       <p class="small">Mỗi giờ ${esc(pet.name)} nổi lên một lần, lúc ngẫu nhiên, ở một ô nước bất kỳ trong hồ (bọt vàng sủi), ở lại ${Math.round(D.stay / 60)} phút. Chỉ thả câu trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần thả, nhân thêm theo Long Khí, có ${esc(ITEMS[D.bait].name)} thì gấp ${D.bait_mult} (chỉ tốn mồi khi thả trúng ô Ngài). Có người câu được hoặc hết giờ thì Ngài lặn.</p>
       <p class="small">Long Khí: mỗi con cá câu ở hồ +1, tối đa ${D.long_khi_max} (cơ hội ×${1 + D.long_khi_max / D.long_khi_div}); câu được Ngài thì về 0. Bạn đang có <b>${P.long_khi || 0}</b>, cơ hội hiện tại <b>${odds((1 + (P.long_khi || 0) / D.long_khi_div) * (bait ? D.bait_mult : 1))}</b>.${lake ? ' <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</p>
       <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>
-      <p class="small muted">Kỹ năng: ${[pet.skill, pet.skill2, pet.skill3].map((k, i) => `${esc(k.name)} (cấp ${[RULES.petSkillLevel, RULES.petSkill2Level, RULES.petSkill3Level][i]}): ${esc(k.desc)}`).join(' · ')}</p></div>
+      </div>
       <div class="card"><h3>Bia Long Vương</h3>${dragonBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
         : board.length ? `<div class="list">${board.map((b) => `<div class="item"><b class="num" style="color:var(--gold)">#${b.n}</b><div class="grow">${esc(b.name)}</div><span class="small muted">${esc(b.at)}</span></div>`).join('')}</div>`
         : '<p class="small muted">Bia còn trống. Chưa ai câu được Long Vương.</p>'}</div>`;
@@ -3299,11 +3303,10 @@
           <div class="item">${petPic(petInfo(P.pet))}<div class="grow"><div class="name">${esc(cur.name)} <span class="small num" style="color:var(--gold)">· Cấp ${cur.level}</span></div></div>
           ${cur.feed == null ? '<span class="tag good">Cấp tối đa</span>' : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_feed" ${poor ? 'disabled' : ''}>🍖 ${icon('two-coins')}${fmt(cur.feed)}</button>`}</div></div>`);
       }
-      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Thú đắt cắn mạnh hơn. Đổi con dắt theo ở tab Nhân vật.</p>
+      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và cộng chỉ số (thú không đánh trong trận): ⚔️ Chiến tăng tấn công, chí mạng; 🛡️ Hộ vệ tăng máu, phòng thủ, giảm sát thương nhận; 🍀 Tài lộc tăng kinh nghiệm, vàng. Chỉ số tăng theo cấp thú. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          const sk = [pt.skill, pt.skill2, pt.skill3].filter(Boolean).map((k) => esc(k.name)).join(', ');
-          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)} Cắn ${pc0(pt.bite || 0)} đòn thường.${sk ? ` Kỹ năng: ${sk}.` : ''}</div></div>
+          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)} ${petGroup(pt.group)}</div><div class="small muted">${esc(pt.desc)}</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
               : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Hồ Long Vương</span>'
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
@@ -3312,7 +3315,7 @@
       sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh, trừ chúa tể) thì mang về thuần được. Quái vùng chuyển sinh cho thú thuần mạnh hơn.</p>
         <div class="list">${ready.map((m) => {
           const poor = P.gold < m.price;
-          return `<div class="item">${sprite(m.id, '', m.name)}<div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${esc(m.desc)} Cắn ${pc0(m.bite)} đòn thường. Đã hạ ${fmt(m.kills)} con.</div></div>
+          return `<div class="item">${sprite(m.id, '', m.name)}<div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${petGroup('war')} ${esc(m.desc)} Đã hạ ${fmt(m.kills)} con.</div></div>
             <button class="btn ${poor ? '' : 'primary'}" data-act="pet_tame" data-id="${m.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(m.price)}</button></div>`;
         }).join('')}${near.map((m) => `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt="" style="opacity:.5"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Tiến độ ${fmt(m.kills)}/${RULES.tameKills}</div></div></div>`).join('')}
         ${ready.length || near.length ? '' : '<p class="small muted">Chưa có loài nào. Hạ thêm quái đi đã!</p>'}</div></div>`);
@@ -3598,15 +3601,7 @@
       ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
     if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
-    // FX đợt 3: thú cưng cắn (🐾 … cắn thêm N), Thủy Long Ba (🌊), Long Vương Hồi Sinh (🐉)
     const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
-    const bite = newLog.find((l) => l.text.startsWith('🐾') && /cắn thêm (\d+)/.test(l.text));
-    if (bite) {
-      const pet = P.view.look && P.view.look.pet;
-      const img = pet ? asset((pet.startsWith('tame:') ? 'monsters/' + pet.slice(5) : 'pets/' + pet) + '.png') : null;
-      ev.push({ type: 'pet', img, dmg: +bite.text.match(/cắn thêm (\d+)/)[1], tidal: newLog.some((l) => l.text.startsWith('🌊')), delay: f.mDmg > 0 ? 240 : 0 });
-    }
-    if (newLog.some((l) => l.text.startsWith('🐉'))) ev.push({ type: 'dragon', delay: 500 });
     // thông thạo kỹ năng lên cấp
     const ml = newLog.find((l) => l.text.startsWith('📘') && / lên cấp \d+!/.test(l.text));
     if (ml) ev.push({ type: 'mastery', text: ml.text.replace(/^📘\s*/, ''), delay: 450 });

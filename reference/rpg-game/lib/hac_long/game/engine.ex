@@ -36,7 +36,6 @@ defmodule HacLong.Game.Engine do
   @mon @rules.monster
   @loot @rules.loot
   @max_level @char.max_level
-  @pet_sk @rules.pets.skills
   # DECISIONS "Cân bằng đánh người"
   @pvp @rules.pvp
   @arena_first @rules.arena[:first_strike_mult] || 1
@@ -270,7 +269,7 @@ defmodule HacLong.Game.Engine do
         ),
       crit:
         clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max) + exc.crit +
-          ls.crit,
+          ls.crit + Pets.bonus(p, :crit),
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
@@ -1154,7 +1153,6 @@ defmodule HacLong.Game.Engine do
 
         # dùng kỹ năng với quái: cộng điểm thông thạo (đánh người không tính)
         p = if skill && !pvp, do: Mastery.gain(p, skill, m), else: p
-        p = pet_bite(p, d)
 
         cond do
           # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó);
@@ -1167,114 +1165,8 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Thú cưng đi theo thỉnh thoảng cắn thêm (khi quái còn sống)
-  defp pet_bite(p, d) do
-    m = p.battle.monster
-
-    bite =
-      if m.hp > 0 and Map.get(p, :pet),
-        do: Pets.bite(p, damage(d.atk, m.def), Rng.uniform()),
-        else: 0
-
-    # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
-    bite =
-      if bite > 0 and m[:pvp],
-        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls], m[:rebirths], m[:arena]))),
-        else: bite
-
-    if bite > 0 do
-      sks = Pets.active_skills(p)
-      rend = Enum.find(sks, &(&1.id == "rend"))
-      bite = if rend, do: round(bite * @pet_sk.rend_mult), else: bite
-
-      # Long Vương: Thủy Long Ba mỗi `tidal_every` lượt một lần, mạnh gấp `tidal_mult`, quái mất 1 lượt
-      tidal = Enum.find(sks, &(&1.id == "tidal"))
-
-      tidal =
-        tidal &&
-          p.battle.turn - (p.battle[:tidal_at] || -@pet_sk.tidal_every) >= @pet_sk.tidal_every &&
-          tidal
-
-      bite = if tidal, do: round(bite * @pet_sk.tidal_mult), else: bite
-
-      what =
-        cond do
-          tidal -> "#{tidal.name}: "
-          rend -> "#{rend.name}: "
-          true -> ""
-        end
-
-      p =
-        p
-        |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
-        |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
-
-      p =
-        if tidal && p.battle.monster.hp > 0,
-          do:
-            p
-            |> put_in([:battle, :tidal_at], p.battle.turn)
-            |> stun_monster("🌊 #{p.battle.monster.name} bị cột nước đánh choáng!"),
-          else: p
-
-      Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
-    else
-      p
-    end
-  end
-
-  # kỹ năng riêng của thú (từ cấp 5), dùng khi thú cắn
-  defp pet_skill(p, %{id: "heal"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.heal)))
-
-    if healed > 0,
-      do: %{p | hp: p.hp + healed} |> log("🐾 #{sk.name}: hồi #{healed} máu.", "good"),
-      else: p
-  end
-
-  # Long Vương: Long Lân Hộ Thể hồi `scales_heal` máu mỗi lần cắn (giảm sát thương nhận ở `pet_guard/1`)
-  defp pet_skill(p, %{id: "scales"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.scales_heal)))
-
-    if healed > 0,
-      do: %{p | hp: p.hp + healed} |> log("🐉 #{sk.name}: hồi #{healed} máu.", "good"),
-      else: p
-  end
-
-  defp pet_skill(p, %{id: "bash"} = sk, _d, _bite) do
-    p
-    |> put_effect(:monster, "weaken", @pet_sk.bash_turns, @pet_sk.bash_power)
-    |> log("🐾 #{sk.name}: #{p.battle.monster.name} bị suy yếu.", "good")
-  end
-
-  defp pet_skill(p, %{id: "pickpocket"} = sk, _d, _bite) do
-    # phần vàng con quái rơi (trước tính theo cấp hiện: quái vùng chuyển sinh cấp 150 cho gấp đôi vàng)
-    gold = max(1, round((p.battle.monster[:gold] || 0) * @pet_sk.pickpocket_gold_pct))
-    %{p | gold: p.gold + gold} |> log("🐾 #{sk.name}: móc được #{gold} vàng.", "good")
-  end
-
-  defp pet_skill(p, %{id: "venom"} = sk, _d, bite) do
-    if p.battle.monster.hp > 0 do
-      p
-      |> put_effect(
-        :monster,
-        "poison",
-        @pet_sk.venom_turns,
-        max(1, round(bite * @pet_sk.venom_power))
-      )
-      |> log("🐾 #{sk.name}: #{p.battle.monster.name} trúng độc.", "good")
-    else
-      p
-    end
-  end
-
-  defp pet_skill(p, _sk, _d, _bite), do: p
-
-  defp pet_has?(p, id),
-    do: Map.get(p, :pet) != nil and Enum.any?(Pets.active_skills(p), &(&1.id == id))
-
-  # phần sát thương nhận bị thú đỡ (Long Vương: Long Lân Hộ Thể)
-  defp pet_guard(p), do: if(pet_has?(p, "scales"), do: @pet_sk.scales_reduce, else: 0)
+  # phần sát thương nhận thú Hộ vệ / Long Vương đỡ (`bonus.reduce`, DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+  defp pet_guard(p), do: min(Pets.bonus(p, :reduce), 0.5)
 
   # Trả về {nhân_vật, tấn_công, phòng_thủ_quái, chí_mạng?, hệ_số, tên, hàm_sau_khi_trúng}.
   defp strike_with(p, nil, _d, atk, dfn, crit),
@@ -1527,24 +1419,11 @@ defmodule HacLong.Game.Engine do
         |> log("✨ Bất tử! Bạn đứng dậy với #{max(1, round(d.maxHp * f))} máu.", "good")
 
       nil ->
-        pet_rebirth(p, d)
+        p
     end
   end
 
   defp survive(p, _d), do: p
-
-  # Long Vương Hồi Sinh: mỗi trận một lần, gục thì sống lại với `rebirth_hp` máu tối đa
-  defp pet_rebirth(p, d) do
-    if pet_has?(p, "rebirth") and not Map.get(p.battle, :pet_revived, false) do
-      hp = max(1, round(d.maxHp * @pet_sk.rebirth_hp))
-
-      %{p | hp: hp}
-      |> put_in([:battle, :pet_revived], true)
-      |> log("🐉 Long Vương Hồi Sinh! #{Pets.name(p)} cứu bạn, đứng dậy với #{hp} máu.", "good")
-    else
-      p
-    end
-  end
 
   # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
   defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
@@ -2396,21 +2275,7 @@ defmodule HacLong.Game.Engine do
 
     {p, pet_up} = if m[:pvp], do: {p, nil}, else: Pets.gain(p, m.boss || m[:world] == true)
 
-    p =
-      cond do
-        pet_up && Pets.skill_at(p.pet, pet_up) ->
-          log(
-            p,
-            "🐾 #{Pets.name(p)} lên cấp #{pet_up}, học được #{Pets.skill_at(p.pet, pet_up).name}!",
-            "win"
-          )
-
-        pet_up ->
-          log(p, "🐾 #{Pets.name(p)} lên cấp #{pet_up}!", "win")
-
-        true ->
-          p
-      end
+    p = if pet_up, do: log(p, "🐾 #{Pets.name(p)} lên cấp #{pet_up}!", "win"), else: p
 
     {levels, p} = gain_xp(p, xp)
 

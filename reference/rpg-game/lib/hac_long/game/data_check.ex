@@ -8,7 +8,8 @@ defmodule HacLong.Game.DataCheck do
   """
 
   @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen dragon)
-  @pet_skills ~w(heal bash pickpocket venom rend tidal scales rebirth)
+  @pet_groups ~w(war guard luck all)
+  @pet_bonus ~w(atk def hp crit reduce xp gold)a
   @fails [nil, "down", "reset", "destroy"]
 
   def npc_roles, do: @npc_roles
@@ -71,9 +72,12 @@ defmodule HacLong.Game.DataCheck do
       for {id, it} <- d.items, it.slot == "wing", not Map.has_key?(d.classes, it[:cls]) do
         "items.json: ITEMS[#{id}] là cánh của lớp \"#{it[:cls]}\" không có trong CLASSES"
       end,
-      for p <- d.pets, sk <- [p[:skill], p[:skill2], p[:skill3]], sk, sk.id not in @pet_skills do
-        "pets.json: PETS[#{p.id}] kỹ năng \"#{sk.id}\" chưa có tác dụng (#{Enum.join(@pet_skills, ", ")})"
-      end,
+      for p <- d.pets, p[:group] not in @pet_groups do
+        "pets.json: PETS[#{p.id}] nhóm \"#{p[:group]}\" không hợp lệ (#{Enum.join(@pet_groups, ", ")})"
+      end ++
+        for p <- d.pets, k <- Map.keys(p.bonus), k not in @pet_bonus do
+          "pets.json: PETS[#{p.id}] chỉ số \"#{k}\" chưa có tác dụng (#{Enum.join(@pet_bonus, ", ")})"
+        end,
       for e <- d.events do
         [
           items.("events.json", "EVENTS[#{e.id}].token", [e.token]),

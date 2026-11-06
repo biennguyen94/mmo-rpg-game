@@ -183,40 +183,19 @@ defmodule HacLong.Game.LongVuongTest do
     assert Achievements.value(p, :pets) == 0
   end
 
-  test "chỉ số cao, ba kỹ năng mở ở cấp 5 / 15 / 20" do
+  test "Thần thú: cộng cả ba nhóm (tấn công, chí mạng, thủ, máu, giảm sát thương nhận, kinh nghiệm, vàng), không kỹ năng" do
+    # DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số"
+    pt = Pets.data("long_vuong")
+    assert pt.group == "all" and pt[:skill] == nil
+    assert Enum.all?(~w(atk crit def hp reduce xp gold)a, &Map.has_key?(pt.bonus, &1))
+
     base = Engine.derived(angler())
     d = Engine.derived(with_pet(angler(), 1))
-    assert abs(d.atk - base.atk * 1.10) <= 1 and abs(d.maxHp - base.maxHp * 1.08) <= 1
-
-    assert [] == Pets.active_skills(with_pet(angler(), 4))
-    assert ~w(tidal scales) == Enum.map(Pets.active_skills(with_pet(angler(), 15)), & &1.id)
-
-    assert ~w(tidal scales rebirth) ==
-             Enum.map(Pets.active_skills(with_pet(angler(), 20)), & &1.id)
-
-    assert Pets.skill_at("long_vuong", 20).name == "Long Vương Hồi Sinh"
+    assert abs(d.atk - base.atk * (1 + pt.bonus.atk)) <= 1
+    assert abs(d.maxHp - base.maxHp * (1 + pt.bonus.hp)) <= 1
   end
 
-  test "Thủy Long Ba: cắn gấp đôi, quái choáng; mỗi 3 lượt một lần" do
-    p = with_pet(angler(), 5)
-    {_, p} = Engine.start_battle(p, 0, false)
-    p = p |> put_in([:battle, :monster, :hp], 100_000) |> put_in([:battle, :monster, :dodge], 0)
-    Rng.put_sequence([0.0])
-    {_, p} = Engine.act(p, "attack")
-    assert Enum.any?(p.battle.log, &(&1.text =~ "Thủy Long Ba: cắn thêm"))
-    assert Enum.any?(p.battle.log, &(&1.text =~ "bị cột nước đánh choáng"))
-    assert Enum.any?(p.battle.log, &(&1.text =~ "bị choáng, không đánh được"))
-
-    # hai lượt sau còn trong thời gian chờ (cắn thường), lượt thứ ba lại dùng được
-    at = p.battle.tidal_at
-    {_, p} = Engine.act(p, "attack")
-    {_, p} = Engine.act(p, "attack")
-    assert p.battle.tidal_at == at
-    {_, p} = Engine.act(p, "attack")
-    assert p.battle.tidal_at == at + 3
-  end
-
-  test "Long Lân Hộ Thể giảm sát thương nhận; Long Vương Hồi Sinh cứu một lần mỗi trận" do
+  test "giảm sát thương nhận (Hộ vệ / Long Vương); không còn hồi sinh" do
     hit = fn p ->
       {_, p} = Engine.start_battle(p, 0, false)
 
@@ -228,14 +207,14 @@ defmodule HacLong.Game.LongVuongTest do
 
       hp = p.hp
 
-      # lần 1: trượt đòn của mình (≥ 0,95), thú không cắn; quái đánh trúng, không chí mạng
+      # trượt đòn của mình (≥ 0,95); quái đánh trúng, không chí mạng
       Rng.put_sequence([0.99])
       {_, p} = Engine.act(p, "attack")
       {hp - p.hp, p}
     end
 
-    {plain, _} = hit.(Map.put(with_pet(angler(), 1), :pet_xp, %{"long_vuong" => 0}))
-    {guarded, _} = hit.(with_pet(angler(), 15))
+    {plain, _} = hit.(Map.put(angler(), :pet, nil))
+    {guarded, _} = hit.(with_pet(angler(), 1))
     assert guarded < plain
 
     p = with_pet(angler(), 20)
@@ -248,9 +227,6 @@ defmodule HacLong.Game.LongVuongTest do
       |> Map.put(:hp, 1)
 
     Rng.put_sequence([0.99])
-    {_, p} = Engine.act(p, "attack")
-    assert p.hp > 0 and p.battle.pet_revived
-    assert Enum.any?(p.battle.log, &(&1.text =~ "Long Vương Hồi Sinh!"))
     {_, p} = Engine.act(p, "attack")
     assert p.battle.result == "lose"
   end

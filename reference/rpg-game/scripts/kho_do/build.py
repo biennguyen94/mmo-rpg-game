@@ -305,7 +305,7 @@ stat_rows = "".join([
          f"Kỹ năng tốn MP, tăng {pct(C['skill_mp_per_level'])} mỗi cấp nhân vật; hồi {pct(C['mp_regen'])} mỗi lượt và thêm theo Năng lượng."),
 ])
 mode_rows = "".join([
-    f"<tr><td><b>Sát thương</b></td><td>đầy đủ</td><td>mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc) ×{n(PV['dmg_mult'])}, nhân thêm theo lớp người bị đánh: {pv_cls}</td></tr>",
+    f"<tr><td><b>Sát thương</b></td><td>đầy đủ</td><td>mọi sát thương lên người (đòn thường, kỹ năng, độc) ×{n(PV['dmg_mult'])}, nhân thêm theo lớp người bị đánh: {pv_cls}</td></tr>",
     "<tr><td><b>Mình trúng</b></td><td>đòn thường theo tỉ lệ trúng quái; quái không né; kỹ năng luôn trúng</td><td>đòn thường theo né đối thủ; kỹ năng luôn trúng</td></tr>",
     "<tr><td><b>Mình bị đánh</b></td><td>né được đòn thường; đòn đặc biệt của quái không né được</td><td>né được đòn thường; kỹ năng của đối thủ không né được</td></tr>",
     f"<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td>tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])} (thu nhỏ theo tỉ lệ, không chặn trần)</td></tr>",
@@ -450,7 +450,7 @@ pk_items = [
 ]
 # ---------- Thú cưng ----------
 PR = R["pets"]
-# thú hiếm (Long Vương): không bán, câu được ở Hồ Long Vương (RULES.fishing.dragon), có kỹ năng 3 ở skill3_level
+# thú hiếm (Long Vương): không bán, câu được ở Hồ Long Vương (RULES.fishing.dragon)
 DRG = R["fishing"]["dragon"]
 def pet_price(pt):
     if not pt.get("rare"):
@@ -458,17 +458,11 @@ def pet_price(pt):
     _k = 1 + DRG['long_khi_max'] / DRG['long_khi_div']
     return (f"🎣 câu ở {E(D['lake']['name'])} (cấp {D['lake']['min_level']}+) khi Ngài nổi (mỗi giờ một lần, {DRG['stay'] // 60} phút): "
             f"thả trúng ô Ngài 1/{n(round(1 / DRG['chance']))} mỗi lần, đầy Long Khí + Mồi Rồng 1/{n(round(1 / (DRG['chance'] * _k * DRG['bait_mult'])))}")
-def pet_sk2(pt):
-    s2 = f"{E(pt['skill2']['name'])}: {E(pt['skill2']['desc'])}"
-    if pt.get("skill3"):
-        s2 += f"<br><b>Cấp {PR['skill3_level']}</b> {E(pt['skill3']['name'])}: {E(pt['skill3']['desc'])}"
-    return s2
+PET_GROUP = {"war": "⚔️ Chiến", "guard": "🛡️ Hộ vệ", "luck": "🍀 Tài lộc", "all": "🐉 Thần thú"}
 pet_rows = "".join(
-    f"<tr><td><b>{E(pt['name'])}</b></td><td class=n>{pet_price(pt)}</td><td>{E(pt['desc'])}</td><td class=n>{pct(pt['bite'])}</td>"
-    f"<td>{E(pt['skill']['name'])}: {E(pt['skill']['desc'])}</td><td>{pet_sk2(pt)}</td></tr>"
-    for pt in sorted(D["pets"], key=lambda x: (x.get("rare", False), x["price"])))
-pet_rule = (f"Cắn: {pct(PR['bite_chance'])} số lượt (+{pct(PR['bite_chance_per_level'])} mỗi cấp), mỗi lần bằng sức cắn × đòn thường (+{pct(PR['bite_power_per_level'])} mỗi cấp). "
-            f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
+    f"<tr><td><b>{E(pt['name'])}</b></td><td>{PET_GROUP.get(pt['group'], pt['group'])}</td><td class=n>{pet_price(pt)}</td><td>{E(pt['desc'])}</td></tr>"
+    for pt in sorted(D["pets"], key=lambda x: (x.get("rare", False), x["group"], x["price"])))
+pet_rule = (f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {PR['boss_wins']} trận), cấp N cần {PR['xp_coef']} × N × (N − 1) trận, tối đa cấp {PR['max_level']} "
             f"({n(PR['xp_coef'] * PR['max_level'] * (PR['max_level'] - 1))} trận); chỉ số cộng × (1 + {pct(PR['bonus_per_level'])} × (cấp − 1)). "
             f"Cho ăn ở Người Nuôi Thú: {n(PR['feed_gold'])} × cấp² vàng được {PR['feed_xp']} trận.")
 # Hồ Long Vương: bảng cá riêng, Mồi Rồng (công thức của Bà Lang)
@@ -487,7 +481,7 @@ pet_rule += (f" <b>{E(D['lake']['name'])}</b> (cấp {D['lake']['min_level']}+, 
              + "người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.")
 pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; không thuần được trùm, chúa tể) rồi trả "
             f"({n(PR['tame_price'])} + {PR['tame_price_per_level']} × cấp quái) × (1 + {n(PR['tame_realm_price'])} × k) vàng (k: số vùng chuyển sinh, 0 nếu không phải). "
-            f"Thú thuần: công +{pct(PR['tame_bonus'])} + {pct(PR['tame_realm_bonus'])} × k, sức cắn {pct(PR['tame_bite'])} + {pct(PR['tame_realm_bite'])} × k; kỹ năng Cắn Xé rồi Húc Ngã.")
+            f"Thú thuần (nhóm Chiến): công +{pct(PR['tame_bonus'])} + {pct(PR['tame_realm_bonus'])} × k, chí mạng +{pct(PR['tame_crit'])}.")
 pk_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in pk_items)
 
 # ---------- Lỗ hổng dữ liệu (OPEN_QUESTIONS KD-1): bậc thiếu bộ giáp / vũ khí chính theo lớp ----------
@@ -650,7 +644,7 @@ smith_note = (f"<b>Rèn đồ ở Thợ Rèn</b>: ra một món đúng cấp, đ
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, PETSK1=str(PR['skill_level']), PETSK2=str(PR['skill2_level']), TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),

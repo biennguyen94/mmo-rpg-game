@@ -1470,3 +1470,10 @@ Không đổi tỉ lệ rơi. Hai chỗ bot phí Ngọc Ước Nguyện:
 - **Quên mật khẩu:** nhập tên đăng nhập → hiện câu hỏi → trả lời đúng + mật khẩu mới thì đổi mật khẩu, thu hồi mọi token cũ, đăng nhập luôn. Chống dò: sai `recover_per_user` (5) lần trong `recover_window_min` (60) phút theo tên đăng nhập thì phải đợi; theo IP 20 lần / giờ; xem câu hỏi 30 lần / giờ / IP. Xem câu hỏi cho biết tài khoản có tồn tại hay không (chấp nhận, có giới hạn tần suất).
 - **Tài khoản cũ / quên câu trả lời:** gửi yêu cầu cho quản trị như trước ("Quên mật khẩu" ở tab Quản trị). Cài đặt nhắc đặt câu hỏi nếu chưa có; đổi câu hỏi cần mật khẩu hiện tại.
 - Schema: thêm `users.security_question`, `users.security_answer_hash` (migration `20261113000000_add_security_question`, CHANGE_REASON trong file). API mới: `POST /api/question`, `/api/recover`, `/api/security`; `/api/me` trả thêm `question`. e2e `secq.mjs`.
+
+## Thú cưng 3 nhóm, chỉ cộng chỉ số (2026-11-06, anh "ko cho thú cưng tham gia trực tiếp trận đánh… chia 3 nhóm, nhưng bỏ kĩ năng")
+Kiểu MU: thú là món đi theo cộng chỉ số, không ra đòn.
+- **Bỏ:** cú cắn trong trận (`Pets.bite`), mọi kỹ năng thú (Liếm Vết Thương, Húc Ngã, Móc Túi, Phấn Độc, Cắn Xé; Long Vương: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh). Nhật ký trận không còn dòng "🐾 … cắn thêm". Đấu trường / đồ sát cũng vậy.
+- **Ba nhóm** (`PETS.group`): `war` ⚔️ Chiến (tấn công, chí mạng), `guard` 🛡️ Hộ vệ (máu, phòng thủ, **giảm sát thương nhận** `reduce`, tối đa 50 %), `luck` 🍀 Tài lộc (kinh nghiệm, vàng rơi). Long Vương `all` (Thần thú) cộng cả ba. Thú thuần thuộc nhóm Chiến: công `tame_bonus` + `tame_realm_bonus` × k, chí mạng `tame_crit`.
+- **Giữ sức mạnh:** phần sát thương trung bình cú cắn cũ quy đổi vào % tấn công / chí mạng; `bonus_per_level` 0,05 → 0,08 (cấp 20 ×2,52) vì cú cắn cũ tăng mạnh theo cấp. So sức tấn công cấp 1 / cấp 20 (cũ → mới, chí mạng tính nửa): Ác Quỷ 0,17 → 0,18 / 0,44 → 0,45; Satan 0,15 → 0,16 / 0,40 → 0,39; Chó Săn 0,09 → 0,09 / 0,29 → 0,21.
+- Dữ liệu: `pets.json` version 3, `RULES.pets` version 3 (bỏ `bite_*`, `skill*_level`, `skills`). Thành tựu "Thầy Dạy Thú" giữ (nuôi thú lên cấp 5), bỏ chữ "học kỹ năng".

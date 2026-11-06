@@ -4,115 +4,68 @@
       "id": "sheep",
       "name": "Cừu Bông",
       "price": 1500,
+      "group": "guard",
       "bonus": {
-        "hp": 0.05
+        "hp": 0.06,
+        "reduce": 0.02
       },
-      "desc": "Máu tối đa +5%.",
-      "skill": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
-      "bite": 0.15,
-      "skill2": {
-        "id": "bash",
-        "name": "Húc Ngã",
-        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      },
+      "desc": "Máu tối đa +6%, Giảm sát thương nhận +2%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
       "id": "hound",
       "name": "Chó Săn",
       "price": 3000,
+      "group": "war",
       "bonus": {
-        "atk": 0.04
+        "atk": 0.08,
+        "crit": 0.01
       },
-      "desc": "Tấn công +4%.",
-      "skill": {
-        "id": "rend",
-        "name": "Cắn Xé",
-        "desc": "Cú cắn mạnh gấp 1,6 lần."
-      },
-      "bite": 0.18,
-      "skill2": {
-        "id": "bash",
-        "name": "Húc Ngã",
-        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      },
+      "desc": "Tấn công +8%, Chí mạng +1%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
       "id": "hog",
       "name": "Heo Hồng",
       "price": 3000,
+      "group": "guard",
       "bonus": {
-        "def": 0.05
+        "def": 0.06,
+        "reduce": 0.03
       },
-      "desc": "Phòng thủ +5%.",
-      "skill": {
-        "id": "bash",
-        "name": "Húc Ngã",
-        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      },
-      "bite": 0.15,
-      "skill2": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
+      "desc": "Phòng thủ +6%, Giảm sát thương nhận +3%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
       "id": "quokka",
       "name": "Sóc Túi",
       "price": 5000,
+      "group": "luck",
       "bonus": {
-        "gold": 0.1
+        "gold": 0.15
       },
-      "desc": "Vàng từ quái +10%.",
-      "skill": {
-        "id": "pickpocket",
-        "name": "Móc Túi",
-        "desc": "Khi cắn, móc được 10% số vàng quái rơi."
-      },
-      "bite": 0.15,
-      "skill2": {
-        "id": "venom",
-        "name": "Phấn Độc",
-        "desc": "Khi cắn, quái trúng độc 3 lượt."
-      },
+      "desc": "Vàng rơi +15%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
       "id": "butterfly",
       "name": "Bướm Lửa",
       "price": 8000,
+      "group": "luck",
       "bonus": {
-        "xp": 0.05
+        "xp": 0.08
       },
-      "desc": "Kinh nghiệm +5%.",
-      "skill": {
-        "id": "venom",
-        "name": "Phấn Độc",
-        "desc": "Khi cắn, quái trúng độc 3 lượt."
-      },
-      "bite": 0.18,
-      "skill2": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
+      "desc": "Kinh nghiệm +8%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
@@ -120,97 +73,60 @@
       "name": "Gấu Trúc",
       "ref": "13/80",
       "price": 12000,
+      "group": "luck",
       "bonus": {
-        "xp": 0.06,
-        "gold": 0.06
+        "xp": 0.1,
+        "gold": 0.1
       },
-      "desc": "Kinh nghiệm +6%, vàng từ quái +6%.",
-      "skill": {
-        "id": "pickpocket",
-        "name": "Móc Túi",
-        "desc": "Khi cắn, móc được 10% số vàng quái rơi."
-      },
+      "desc": "Kinh nghiệm +10%, Vàng rơi +10%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.18,
-      "skill2": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "raven",
       "name": "Quạ Đen",
       "ref": "13/5",
       "price": 20000,
+      "group": "war",
       "bonus": {
-        "atk": 0.05
+        "atk": 0.11,
+        "crit": 0.02
       },
-      "desc": "Tấn công +5%.",
-      "skill": {
-        "id": "venom",
-        "name": "Phấn Độc",
-        "desc": "Khi cắn, quái trúng độc 3 lượt."
-      },
+      "desc": "Tấn công +11%, Chí mạng +2%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.22,
-      "skill2": {
-        "id": "rend",
-        "name": "Cắn Xé",
-        "desc": "Cú cắn mạnh gấp 1,6 lần."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "angel",
       "name": "Thiên Thần Hộ Mệnh",
       "ref": "13/0",
       "price": 25000,
+      "group": "guard",
       "bonus": {
-        "def": 0.05,
-        "hp": 0.05
+        "hp": 0.08,
+        "def": 0.06,
+        "reduce": 0.05
       },
-      "desc": "Phòng thủ +5%, máu tối đa +5%.",
-      "skill": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
+      "desc": "Máu tối đa +8%, Phòng thủ +6%, Giảm sát thương nhận +5%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.2,
-      "skill2": {
-        "id": "bash",
-        "name": "Húc Ngã",
-        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "hippogriff",
       "name": "Bằng Mã Lửa",
       "price": 40000,
+      "group": "war",
       "bonus": {
-        "atk": 0.05,
-        "hp": 0.05
+        "atk": 0.12,
+        "crit": 0.02,
+        "hp": 0.03
       },
-      "desc": "Tấn công +5%, máu tối đa +5%.",
-      "skill": {
-        "id": "rend",
-        "name": "Cắn Xé",
-        "desc": "Cú cắn mạnh gấp 1,6 lần."
-      },
-      "bite": 0.25,
-      "skill2": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
+      "desc": "Tấn công +12%, Chí mạng +2%, Máu tối đa +3%.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     {
@@ -218,107 +134,66 @@
       "name": "Quỷ Satan",
       "ref": "13/1",
       "price": 60000,
+      "group": "war",
       "bonus": {
-        "atk": 0.07
+        "atk": 0.14,
+        "crit": 0.03
       },
-      "desc": "Tấn công +7%.",
-      "skill": {
-        "id": "rend",
-        "name": "Cắn Xé",
-        "desc": "Cú cắn mạnh gấp 1,6 lần."
-      },
+      "desc": "Tấn công +14%, Chí mạng +3%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.27,
-      "skill2": {
-        "id": "venom",
-        "name": "Phấn Độc",
-        "desc": "Khi cắn, quái trúng độc 3 lượt."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "spirit",
       "name": "Tinh Linh Hộ Vệ",
       "ref": "13/65",
       "price": 80000,
+      "group": "guard",
       "bonus": {
-        "def": 0.06,
-        "hp": 0.07
+        "hp": 0.1,
+        "def": 0.08,
+        "reduce": 0.07
       },
-      "desc": "Phòng thủ +6%, máu tối đa +7%.",
-      "skill": {
-        "id": "heal",
-        "name": "Liếm Vết Thương",
-        "desc": "Khi cắn, hồi cho chủ 4% máu tối đa."
-      },
+      "desc": "Máu tối đa +10%, Phòng thủ +8%, Giảm sát thương nhận +7%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.22,
-      "skill2": {
-        "id": "bash",
-        "name": "Húc Ngã",
-        "desc": "Khi cắn, quái bị suy yếu: tấn công -15% trong 2 lượt."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "daemon",
       "name": "Ác Quỷ Daemon",
       "ref": "13/64",
       "price": 120000,
+      "group": "war",
       "bonus": {
-        "atk": 0.08,
-        "xp": 0.03
+        "atk": 0.16,
+        "crit": 0.04
       },
-      "desc": "Tấn công +8%, kinh nghiệm +3%.",
-      "skill": {
-        "id": "rend",
-        "name": "Cắn Xé",
-        "desc": "Cú cắn mạnh gấp 1,6 lần."
-      },
+      "desc": "Tấn công +16%, Chí mạng +4%.",
       "sourceType": "MU_INSPIRED",
-      "version": 2,
-      "verified": false,
-      "bite": 0.3,
-      "skill2": {
-        "id": "venom",
-        "name": "Phấn Độc",
-        "desc": "Khi cắn, quái trúng độc 3 lượt."
-      }
+      "version": 3,
+      "verified": false
     },
     {
       "id": "long_vuong",
       "name": "Long Vương",
       "rare": true,
       "price": 0,
+      "group": "all",
       "bonus": {
-        "atk": 0.1,
-        "def": 0.08,
-        "hp": 0.08,
-        "xp": 0.05,
-        "gold": 0.05
+        "atk": 0.16,
+        "crit": 0.03,
+        "def": 0.1,
+        "hp": 0.1,
+        "reduce": 0.06,
+        "xp": 0.06,
+        "gold": 0.06
       },
-      "desc": "Thú hiếm duy nhất, chỉ câu được ở Hồ Long Vương. Tấn công +10%, phòng thủ +8%, máu +8%, kinh nghiệm +5%, vàng +5%.",
-      "skill": {
-        "id": "tidal",
-        "name": "Thủy Long Ba",
-        "desc": "Cột nước mạnh gấp 2 lần cú cắn, quái mất 1 lượt (mỗi 3 lượt một lần)."
-      },
+      "desc": "Tấn công +16%, Chí mạng +3%, Phòng thủ +10%, Máu tối đa +10%, Giảm sát thương nhận +6%, Kinh nghiệm +6%, Vàng rơi +6%.",
       "sourceType": "DESIGN",
-      "version": 1,
-      "verified": false,
-      "bite": 0.45,
-      "skill2": {
-        "id": "scales",
-        "name": "Long Lân Hộ Thể",
-        "desc": "Giảm 10% sát thương nhận; mỗi lần cắn hồi 5% máu."
-      },
-      "skill3": {
-        "id": "rebirth",
-        "name": "Long Vương Hồi Sinh",
-        "desc": "Mỗi trận một lần: gục ngã thì sống lại với 30% máu."
-      }
+      "version": 3,
+      "verified": false
     }
   ]
 }

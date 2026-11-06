@@ -91,9 +91,8 @@ defmodule HacLongWeb.PageController do
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
         petMaxLevel: HacLong.Game.Pets.max_level(),
-        petSkillLevel: HacLong.Game.Pets.skill_level(),
-        petSkill2Level: HacLong.Game.Pets.skill2_level(),
-        petSkill3Level: HacLong.Game.Pets.skill3_level(),
+        # nhóm thú cưng (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+        petGroups: Map.new(~w(war guard luck all), &{&1, HacLong.Game.Pets.group_name(&1)}),
         # Long Vương (DECISIONS "Long Vương"): cơ hội mỗi lần thả câu ở Hồ Long Vương, mồi gấp bao nhiêu
         school:
           Map.take(HacLong.Game.Data.rules().fishing.school, [

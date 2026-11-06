@@ -246,7 +246,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "pet_skill",
       name: "Thầy Dạy Thú",
-      desc: "Nuôi một con thú lên cấp 5 (học kỹ năng riêng).",
+      desc: "Nuôi một con thú lên cấp 5.",
       stat: :pet_level,
       goal: 5
     },

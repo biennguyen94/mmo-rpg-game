@@ -212,11 +212,13 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 - **Nhà**: Rương Gia Truyền (quà mỗi ngày), Tủ Đồ, đặt đồ trang trí (mỗi 10 điểm tiện nghi +1 % kinh nghiệm, tối đa +5 %).
   Bạn bè có thể ghé thăm và khen nhà.
 - **Thú cưng**: mua ở Người Nuôi Thú, hoặc hạ đủ 100 con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh; trừ trùm,
-  chúa tể) để thuần phục. Thú đi theo, cộng % chỉ số và hay cắn thêm một đòn; thú đắt cắn mạnh hơn, thú thuần từ vùng chuyển sinh
-  càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt);
-  cấp 5 và 15 học hai kỹ năng riêng. Xem tỉ lệ cắn, sức cắn, kỹ năng ở Menu → Thú cưng.
+  chúa tể) để thuần phục. Thú đi theo và **chỉ cộng % chỉ số** (kiểu MU: không đánh trong trận, không có kỹ năng), chia ba nhóm:
+  ⚔️ **Chiến** (tấn công, chí mạng: Chó Săn, Quạ Đen, Bằng Mã Lửa, Quỷ Satan, Ác Quỷ Daemon, thú thuần), 🛡️ **Hộ vệ** (máu,
+  phòng thủ, giảm sát thương nhận: Cừu Bông, Heo Hồng, Thiên Thần Hộ Mệnh, Tinh Linh Hộ Vệ), 🍀 **Tài lộc** (kinh nghiệm, vàng rơi:
+  Sóc Túi, Bướm Lửa, Gấu Trúc). Thú thuần từ vùng chuyển sinh càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt
+  theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt); mỗi cấp chỉ số cộng tăng thêm 8 % (cấp 20: ×2,52).
 - **Long Vương** 🐉: thú hiếm duy nhất, không bán, chỉ câu được ở **Hồ Long Vương** (cổng mép trái Rừng Mê 1, từ cấp 30). Mỗi giờ
-  Ngài **nổi lên một lần** vào lúc ngẫu nhiên, ở một ô nước ngẫu nhiên của hồ (bọt vàng sủi, bóng rồng vàng; ai đang ở hồ đều được báo),
+  Ngài (Thần thú: cộng cả ba nhóm) **nổi lên một lần** vào lúc ngẫu nhiên, ở một ô nước ngẫu nhiên của hồ (bọt vàng sủi, bóng rồng vàng; ai đang ở hồ đều được báo),
   ở lại 3 phút. Chạm đúng ô đó để thả câu: mỗi lần có 1/2.000 cơ hội Ngài cắn câu (phao giật mạnh, "Có gì đó rất lớn…": giật ngay!),
   nhân thêm theo **Long Khí** (mỗi con cá câu ở hồ +1, tối đa 200 = cơ hội ×3, về 0 khi câu được Ngài); có **Mồi Rồng** (Bà Lang pha
   100 mồi từ Cá Chép Vàng + 3 Linh Chi) thì gấp đôi, chỉ tốn mồi khi thả trúng ô Ngài. Có người câu được hoặc hết giờ thì Ngài lặn.
@@ -252,7 +254,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
 
 ## 11. Đấu trường và Đồ sát
 
-- **Đấu trường** (tab Khác): đánh với người khác do máy điều khiển (họ không cần online): đối thủ dùng kỹ năng, thú cưng,
+- **Đấu trường** (tab Khác): đánh với người khác do máy điều khiển (họ không cần online): đối thủ dùng kỹ năng, chỉ số thú cưng,
   buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
   ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Nhà); bỏ chạy thì không mất gì.
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
@@ -263,7 +265,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi theo phần trăm: nhỏ 20 
   - Người vừa gục được **bảo vệ 30 giây**; không giới hạn số lần đồ sát.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
-- **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, thú cắn, độc)
+- **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, độc)
   chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
   lệ nên đồ tốt vẫn hơn, chỉ là trận dài hơn (khoảng 7–10 lượt giữa hai người ngang nhau). Vừa thoát choáng thì miễn choáng 2 lượt.
   Mỗi lớp nhận sát thương khác nhau một chút để các lớp ngang nhau khi đánh người (Đấu Sĩ, Phù Thủy ít máu nên nhận ít hơn).
