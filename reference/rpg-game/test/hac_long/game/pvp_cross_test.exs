@@ -137,7 +137,10 @@ defmodule HacLong.Game.PvpCrossTest do
       String.to_integer(n)
     end
 
-    assert healed.(pvp1) == round(healed.(pve1) * r.potion_mult)
+    # bình hồi số cố định (DECISIONS "Bình máu / mana hồi số"); đánh quái hồi đủ (chặn ở máu tối đa)
+    full = HacLong.Game.Data.item("potion_l").heal
+    assert healed.(pvp1) == round(full * r.potion_mult)
+    assert healed.(pve1) == min(full, Engine.derived(pve1).maxHp - 100)
 
     # vừa uống: chờ đủ potion_cd lượt
     assert {%{ok: false, msg: msg}, _} = Engine.act(low.(pvp1), "potion")

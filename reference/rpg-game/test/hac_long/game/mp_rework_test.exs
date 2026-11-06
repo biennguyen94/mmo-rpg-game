@@ -25,18 +25,32 @@ defmodule HacLong.Game.MpReworkTest do
     assert Engine.mp_regen(q) > Engine.mp_regen(p)
   end
 
-  test "bình máu và bình mana hồi theo phần trăm" do
+  # DECISIONS "Bình máu / mana hồi số": hồi số cố định, không theo % máu / MP tối đa
+  test "bình máu và bình mana hồi số cố định, không vượt máu / MP tối đa" do
+    hp = fn id -> HacLong.Game.Data.item(id).heal end
+    mana = fn id -> HacLong.Game.Data.item(id).mana end
     p = player() |> Map.put(:level, 30)
     d = Engine.derived(p)
-    assert Engine.potion_amount(p, "potion_m") == {:hp, round(d.maxHp * 0.4)}
-    assert Engine.potion_amount(p, "mana_l") == {:mp, round(d.maxMp * 0.7)}
+    assert Engine.potion_amount(p, "potion_m") == {:hp, hp.("potion_m")}
+    assert Engine.potion_amount(Map.put(p, :level, 1), "potion_m") == {:hp, hp.("potion_m")}
+    assert Engine.potion_amount(p, "mana_l") == {:mp, mana.("mana_l")}
+    assert hp.("potion_s") < hp.("potion_m") and hp.("potion_m") < hp.("potion_l")
+    assert mana.("mana_s") < mana.("mana_m") and mana.("mana_m") < mana.("mana_l")
 
-    p = %{p | hp: 1, mp: 0, inv: Map.merge(p.inv, %{"mana_s" => 1, "potion_s" => 1})}
+    p = %{
+      p
+      | hp: 1,
+        mp: 0,
+        inv: Map.merge(p.inv, %{"mana_s" => 1, "potion_s" => 1, "potion_l" => 1})
+    }
+
     {%{ok: true}, q} = Engine.use_potion(p, "mana_s")
-    assert q.mp == round(d.maxMp * 0.2)
+    assert q.mp == min(d.maxMp, mana.("mana_s"))
     assert Map.get(q.inv, "mana_s", 0) == 0
     {%{ok: true}, q} = Engine.use_potion(q, "potion_s")
-    assert q.hp == 1 + round(d.maxHp * 0.2)
+    assert q.hp == 1 + hp.("potion_s")
+    {%{ok: true}, q} = Engine.use_potion(q, "potion_l")
+    assert q.hp == min(d.maxHp, 1 + hp.("potion_s") + hp.("potion_l"))
   end
 
   test "uống mana trong trận mất một lượt và hồi MP" do

@@ -1497,3 +1497,6 @@ Máu tối đa của thú không còn cộng %, mà cộng **số cố định �
 
 ## Quản trị: bật / tắt quái di chuyển (2026-11-06)
 Quái trên bản đồ do server điều khiển, mọi người thấy chung, nên công tắc là của cả server (Quản trị → Bản đồ), không phải cài đặt riêng từng người. Tắt: quái đứng yên trên mọi bản đồ (vẫn đánh, hồi sinh như thường; trùm vốn đã đứng yên). Không thêm bảng: trạng thái là dòng `admin_log` op `mob_move` mới nhất (`params.on`), đệm trong `:persistent_term`; khởi động lại vẫn giữ, chưa đặt bao giờ thì bật. Chỉ quản trị viên (không phải điều hành viên).
+
+## Bình máu / mana hồi số (2026-11-06, anh yêu cầu)
+Như thú cưng: bình không còn hồi % máu / MP tối đa mà hồi số cố định (`heal` / `mana` trong `items.json`): Bình Máu Nhỏ / Vừa / Lớn 150 / 500 / 1 500 máu, Bình Mana Nhỏ / Vừa / Lớn 50 / 150 / 400 MP. Giá vẫn tăng theo cấp (`potion_price_per_level`). Kiểm bằng mô phỏng hành trình (4 lớp, 6 lần chuyển sinh, seed 1 và 2): tổng lần chết 33 → 36 và 30 → 29, số trận ngang nhau. Bản thử đầu 100 / 400 / 1 500 làm Đấu Sĩ chết 9 → 34 (bình nhỏ / vừa cuối game quá yếu, phải mua bình lớn đắt, thiếu vàng ép đồ) nên nâng bình nhỏ / vừa. Đánh người vẫn × `RULES.pvp.potion_mult`.

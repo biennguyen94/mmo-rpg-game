@@ -618,7 +618,7 @@ def grp(title, ids):
     r = f"<tr class=grp><td colspan=4>{title} ({len(ids)})</td></tr>"
     for i in ids:
         v = IT[i]
-        use = v.get("desc") or (f"hồi {pct(v['heal_pct'])} máu" if v.get("heal_pct") else f"hồi {pct(v['mana_pct'])} MP" if v.get("mana_pct") else "")
+        use = v.get("desc") or (f"hồi {n(v['heal'])} máu" if v.get("heal") else f"hồi {n(v['mana'])} MP" if v.get("mana") else "")
         r += f"<tr><td>{nm(v, True)}</td><td>{E(use)}</td><td>{buy_at(i, v)}</td><td class=n>{n(v.get('sell') or 0) if v.get('sell') else '—'}</td></tr>"
     return r
 other = (grp("Bình máu", ["potion_s", "potion_m", "potion_l"]) + grp("Bình mana", ["mana_s", "mana_m", "mana_l"]) +

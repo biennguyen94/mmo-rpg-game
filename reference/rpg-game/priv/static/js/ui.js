@@ -1960,8 +1960,8 @@
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
     if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? `${sep}Phòng thủ <span class="up">+${b}</span>` : ''}`; }
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`;
-    if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
-    if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
+    if (it.heal) return `Hồi ${fmt(it.heal)} máu`;
+    if (it.mana) return `Hồi ${fmt(it.mana)} MP`;
     return '';
   }
 
@@ -2402,7 +2402,7 @@
     const gear = bagGear().concat(ids.filter((id) => WEAR_KINDS.includes(ITEMS[id].slot)));
     return gear.concat(by('potion'), by('food'), by('material'));
   }
-  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal_pct).reduce((a, id) => a + P.inv[id], 0);
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal).reduce((a, id) => a + P.inv[id], 0);
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
@@ -2572,7 +2572,7 @@
       ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
       : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${canLeft(it) ? `<button class="btn" data-act="equip" data-hand="left" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Cầm tay trái</button>` : ''}${lockBtn}`
       // bình mana: sáng khi MP chưa đầy; bình máu: khi máu chưa đầy (như server `Engine.use_potion/2`)
-      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana_pct ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
+      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
       : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
 
@@ -3798,7 +3798,7 @@
     }
     if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
     // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
-    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal_pct && P.inv[k] > 0);
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal && P.inv[k] > 0);
     if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
   }
   function hotkeyEscape() {

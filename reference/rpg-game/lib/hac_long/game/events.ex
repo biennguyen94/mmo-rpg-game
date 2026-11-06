@@ -73,7 +73,7 @@ defmodule HacLong.Game.Events do
         id: "potions",
         name: "#{@rules.potions} #{Data.item("potion_l").name}",
         cost: @rules.shop.potions,
-        desc: "Hồi #{potion_l_pct()}% máu tối đa mỗi bình."
+        desc: "Hồi #{Data.item("potion_l").heal} máu mỗi bình."
       },
       %{
         id: "gold",
@@ -128,6 +128,4 @@ defmodule HacLong.Game.Events do
     g = gold(p)
     {%{p | gold: p.gold + g}, "Nhận #{g} vàng."}
   end
-
-  defp potion_l_pct, do: round(Data.item("potion_l").heal_pct * 100)
 end

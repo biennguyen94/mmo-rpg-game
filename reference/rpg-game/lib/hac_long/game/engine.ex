@@ -45,7 +45,7 @@ defmodule HacLong.Game.Engine do
   # Phase 15b: đồ ngẫu nhiên rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class`)
   @loot_own_class @rules.loot[:gear_own_class] == true
   @log_limit 60
-  # bình máu / bình mana (Phase 12): hồi theo phần trăm máu / MP tối đa (`heal_pct`, `mana_pct`)
+  # bình máu / bình mana: hồi số cố định `heal` máu / `mana` MP (DECISIONS "Bình máu / mana hồi số")
   @potions ~w(potion_s potion_m potion_l)
   @manas ~w(mana_s mana_m mana_l)
   # Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (như MU)
@@ -751,14 +751,12 @@ defmodule HacLong.Game.Engine do
     put_in(p.battle.log, entries)
   end
 
-  @doc "Lượng hồi của bình `id` cho nhân vật `p` (theo % máu / MP tối đa): `{:hp | :mp, số}`."
-  def potion_amount(p, id) do
+  @doc "Lượng hồi của bình `id` (số cố định `heal` / `mana`, DECISIONS \"Bình máu / mana hồi số\"): `{:hp | :mp, số}`."
+  def potion_amount(_p, id) do
     it = Data.item(id)
-    d = derived(p)
 
     cond do
-      it[:mana_pct] -> {:mp, max(1, round(d.maxMp * it.mana_pct))}
-      it[:heal_pct] -> {:hp, max(1, round(d.maxHp * it.heal_pct))}
+      it[:mana] -> {:mp, it.mana}
       true -> {:hp, it[:heal] || 0}
     end
   end
@@ -3464,7 +3462,7 @@ defmodule HacLong.Game.Engine do
 
   def use_potion(p, id) do
     it = Data.item(id)
-    mana? = it != nil and it[:mana_pct] != nil
+    mana? = it != nil and it[:mana] != nil
 
     cond do
       p.battle ->
