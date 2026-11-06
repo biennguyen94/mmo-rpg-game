@@ -21,6 +21,7 @@ for (let i = 0; i < 20 && !(await page.$('[data-adm="mute"]')); i++) {
 }
 R.check('tra cứu thấy nhân vật', !!(await page.$('[data-adm="mute"]')));
 
+
 // ô tìm trước danh sách đồ dài: gõ không dấu, chỉ còn món khớp; vẽ lại trang vẫn giữ chữ
 await page.fill('[data-sel-q="adm-gear"]', 'giap rong');
 const gearOpts = await page.$$eval('select[data-sel="adm-gear"] option', (os) => os.map((o) => o.textContent));
@@ -209,6 +210,20 @@ if (gold) {
   R.check('thắng quái vàng, nhận thưởng lớn', res === 'win' && (p2.level > lv0 || p2.xp - xp0 >= p.battle.monster.xp * 0.5), `res=${res} xp ${xp0}→${p2.xp} reward ${p.battle && p.battle.monster.xp}`);
   await act(X.page, 'leave');
 }
+
+// Đang online: bấm tên mở hồ sơ người chơi
+// (bấm lại tab đang mở thì về Bản đồ: chỉ bấm khi chưa thấy mục Quản trị)
+if (!(await page.$('[data-adm="online"]'))) {
+  if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
+  await page.click('[data-menu="admin"]');
+}
+await page.click('[data-adm="online"]');
+const xId = await X.page.evaluate(() => window.__hl.userId());
+await page.waitForSelector(`#adm-online [data-act="profile"][data-uid="${xId}"]`, { timeout: 5000 }).catch(() => null);
+await page.click(`#adm-online [data-act="profile"][data-uid="${xId}"]`).catch(() => null);
+await page.waitForFunction((n) => (document.body.textContent || '').includes(n) && !!document.querySelector('.prof-doll'), X.name, { timeout: 5000 }).catch(() => null);
+R.check('Đang online: bấm tên mở hồ sơ người chơi', !!(await page.$('.prof-doll')));
+await shot(page, 'admin-online-profile.png');
 
 R.check('không lỗi JS', errors.length === 0 && X.errors.length === 0, [...errors, ...X.errors].join(' | '));
 await R.done(browser);

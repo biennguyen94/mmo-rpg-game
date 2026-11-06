@@ -1003,3 +1003,7 @@ details.fold > .list { margin-top: 4px; }
 .mastery { margin-top: 4px; }
 .mastery .bar { margin-top: 3px; }
 .mastery .btn-row { margin-top: 4px; flex-wrap: wrap; }
+
+/* Quản trị → Đang online: bấm tên mở hồ sơ người chơi */
+.adm-who { background: none; border: 0; padding: 0; margin: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+.adm-who:hover .name, .adm-who:focus-visible .name { color: var(--gold); }
