@@ -206,6 +206,7 @@ defmodule HacLong.Library do
           :cls,
           :heal,
           :mana,
+          :buy_level,
           :dmg,
           :absorb,
           :drop

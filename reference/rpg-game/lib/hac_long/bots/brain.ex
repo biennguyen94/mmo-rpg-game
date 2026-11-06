@@ -749,7 +749,7 @@ defmodule HacLong.Bots.Brain do
 
     {need, _gold} =
       Enum.reduce(kinds, {[], p.gold}, fn {ids, max, min, buy}, {acc, gold} ->
-        have = Enum.sum(Enum.map(ids, &Map.get(p.inv, &1, 0)))
+        have = Enum.sum(Enum.map(useful(p, ids, max), &Map.get(p.inv, &1, 0)))
 
         with true <- have < min,
              id when id != nil <- pick_potion(p, ids, max, gold, min),
@@ -764,12 +764,29 @@ defmodule HacLong.Bots.Brain do
     need
   end
 
+  # Bình hồi số cố định (DECISIONS "Bình máu / mana hồi số"): chỉ đếm loại còn hồi được ≥ `potion_heal_min` máu (MP)
+  # tối đa (trong các loại mua được ở cấp này); bình nhỏ nhặt từ đầu game không đủ dùng cuối game. Không loại nào đủ
+  # (đầu game): đếm hết.
+  defp useful(p, ids, max) do
+    ok? = fn id ->
+      Engine.buy_level_ok?(p, Data.item(id)) and
+        elem(Engine.potion_amount(p, id), 1) >= max * @shop.potion_heal_min
+    end
+
+    case Enum.filter(ids, ok?) do
+      [] -> ids
+      ok -> ok
+    end
+  end
+
   # rẻ nhất mà hồi được ≥ `potion_heal_min` máu (MP) tối đa; không có thì loại mạnh nhất mua được `min` bình
   defp pick_potion(p, ids, max, gold, min) do
     ok =
       Enum.filter(ids, fn id ->
         it = Data.item(id)
-        (it[:level] || 0) <= p.level and gold >= Engine.price(p, id) * min
+
+        (it[:level] || 0) <= p.level and Engine.buy_level_ok?(p, it) and
+          gold >= Engine.price(p, id) * min
       end)
 
     Enum.find(ok, &(elem(Engine.potion_amount(p, &1), 1) >= max * @shop.potion_heal_min)) ||

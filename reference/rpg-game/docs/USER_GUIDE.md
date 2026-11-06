@@ -52,7 +52,7 @@ Kỹ năng tốn MP, tốn nhiều hơn khi lên cấp (MP gốc × (1 + 2 % × 
 
 **Thông thạo kỹ năng:** mỗi kỹ năng có cấp 1–10, luyện bằng cách dùng khi đánh quái (+2 điểm mỗi lần, tự đánh +1, trùm / quái tinh anh ×3; quái thấp hơn mình quá 10 cấp và đánh người không tính). Cấp 1 gây 75 % sức của cấp 10, cấp thấp tốn thêm MP (dưới cấp 4), hồi chiêu chậm hơn 1 lượt (dưới cấp 7), tác dụng phụ yếu hơn (dưới cấp 10). Lên cấp 5 và cấp 10 cần **đột phá** ở Menu → Kỹ năng: 1 / 3 **Bí Kíp** (lần đầu hạ mỗi trùm vùng / chúa tể chắc chắn 1 cuốn, Tháp Vô Tận mỗi 10 tầng vượt lần đầu 1 cuốn; còn rơi từ trùm hạ lại, quái tinh anh, trùm thế giới) hoặc 5 / 15 Ngọc Tâm Linh. Nhân vật tạo trước bản cập nhật có sẵn cấp 10 cho mọi kỹ năng đang có.
 
-Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình máu nhỏ / vừa / lớn 150 / 500 / 1 500 máu, bình mana 50 / 150 / 400 MP; giá tăng theo cấp nhân vật (+10 % mỗi cấp). Trong trận có nút **Uống máu** và **Uống mana** (mất một lượt).
+Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình máu nhỏ / vừa / lớn 60 / 400 / 1 800 máu, bình mana 25 / 120 / 400 MP, giá cố định 10 / 60 / 200 vàng. Bình vừa mua được từ cấp 10, bình lớn từ cấp 25 (đã chuyển sinh thì mua được cả ba). Trong trận có nút **Uống máu** và **Uống mana** (mất một lượt).
 
 ## 3. Chỉ số và lên cấp
 

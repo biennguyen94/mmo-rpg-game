@@ -37,12 +37,13 @@ defmodule HacLong.Game.ChestsTest do
     assert {%{ok: false, msg: "Túi trang bị đầy" <> _}, ^p} = Chests.buy(p, "wood")
   end
 
-  test "rương ở Nhà mở mỗi ngày một lần" do
+  test "Rương Gia Truyền mở mỗi ngày một lần" do
     Rng.put_sequence([0.9])
-    p = player(10, 0)
-    {%{ok: true, msg: msg}, p} = Chests.open_daily(p, "2026-10-01")
+    p0 = player(10, 0)
+    pot = HacLong.Game.Data.potion_for(10)
+    {%{ok: true, msg: msg}, p} = Chests.open_daily(p0, "2026-10-01")
     assert msg =~ "Rương Gia Truyền"
-    assert p.gold == 20 + 10 * 8 and p.inv["potion_m"] == 2
+    assert p.gold == 20 + 10 * 8 and p.inv[pot] == Map.get(p0.inv, pot, 0) + 2
 
     assert {%{ok: false, msg: "Hôm nay đã mở rồi. Mai quay lại nhé."}, _} =
              Chests.open_daily(p, "2026-10-01")

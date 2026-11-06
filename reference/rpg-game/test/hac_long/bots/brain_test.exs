@@ -83,7 +83,7 @@ defmodule HacLong.Bots.BrainTest do
   end
 
   test "Phase 5: máu thấp, hết bình, không mua nổi bình mà đủ tiền trọ thì nghỉ ở Quán Trọ" do
-    p = %{player() | level: 5, inv: %{}} |> Map.put(:pos, %{map: "village", x: 12, y: 5})
+    p = %{player() | level: 3, inv: %{}} |> Map.put(:pos, %{map: "village", x: 12, y: 5})
     p = %{p | hp: 1, gold: Engine.rest_cost(%{p | hp: 1}) * 2}
     assert Brain.restock(p) == []
     {ix, iy} = Enum.find(Maps.get("village").npcs, &(&1.role == "inn")).at

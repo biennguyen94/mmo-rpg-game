@@ -3243,6 +3243,9 @@ defmodule HacLong.Game.Engine do
       it[:level] && p.level < it.level ->
         {err("Cần cấp #{it.level}."), p}
 
+      not buy_level_ok?(p, it) ->
+        {err("Cần cấp #{it.buy_level} (hoặc đã chuyển sinh) mới mua được #{it.name}."), p}
+
       p.gold < price(p, id) * n ->
         {err("Không đủ vàng."), p}
 
@@ -3256,8 +3259,15 @@ defmodule HacLong.Game.Engine do
   end
 
   @doc """
-  Giá mua ở cửa hàng cho nhân vật `p`. Bình máu / mana hồi theo % nên giá tăng theo cấp (Phase 12):
-  `giá × (1 + potion_price_per_level × (cấp − 1))`; giá bán lại vẫn theo giá gốc.
+  Mua được món có `buy_level` (bình Vừa / Lớn, DECISIONS "Bình máu / mana hồi số"): đủ cấp, hoặc đã chuyển sinh
+  ít nhất một lần (cấp về 1 nhưng máu vẫn cao).
+  """
+  def buy_level_ok?(p, it),
+    do: it[:buy_level] == nil or p.level >= it.buy_level or (Map.get(p, :rebirths) || 0) > 0
+
+  @doc """
+  Giá mua ở cửa hàng cho nhân vật `p`: bình thuốc `giá × (1 + potion_price_per_level × (cấp − 1))` (từ khi bình hồi
+  số cố định, `potion_price_per_level` = 0: giá cố định); giá bán lại vẫn theo giá gốc.
   """
   def price(p, id) do
     it = Data.item(id)

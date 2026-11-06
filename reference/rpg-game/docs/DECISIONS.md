@@ -1498,5 +1498,16 @@ Máu tối đa của thú không còn cộng %, mà cộng **số cố định �
 ## Quản trị: bật / tắt quái di chuyển (2026-11-06)
 Quái trên bản đồ do server điều khiển, mọi người thấy chung, nên công tắc là của cả server (Quản trị → Bản đồ), không phải cài đặt riêng từng người. Tắt: quái đứng yên trên mọi bản đồ (vẫn đánh, hồi sinh như thường; trùm vốn đã đứng yên). Không thêm bảng: trạng thái là dòng `admin_log` op `mob_move` mới nhất (`params.on`), đệm trong `:persistent_term`; khởi động lại vẫn giữ, chưa đặt bao giờ thì bật. Chỉ quản trị viên (không phải điều hành viên).
 
-## Bình máu / mana hồi số (2026-11-06, anh yêu cầu)
-Như thú cưng: bình không còn hồi % máu / MP tối đa mà hồi số cố định (`heal` / `mana` trong `items.json`): Bình Máu Nhỏ / Vừa / Lớn 150 / 500 / 1 500 máu, Bình Mana Nhỏ / Vừa / Lớn 50 / 150 / 400 MP. Giá vẫn tăng theo cấp (`potion_price_per_level`). Kiểm bằng mô phỏng hành trình (4 lớp, 6 lần chuyển sinh, seed 1 và 2): tổng lần chết 33 → 36 và 30 → 29, số trận ngang nhau. Bản thử đầu 100 / 400 / 1 500 làm Đấu Sĩ chết 9 → 34 (bình nhỏ / vừa cuối game quá yếu, phải mua bình lớn đắt, thiếu vàng ép đồ) nên nâng bình nhỏ / vừa. Đánh người vẫn × `RULES.pvp.potion_mult`.
+## Bình máu / mana hồi số (2026-11-06, anh yêu cầu; anh chọn "cách A")
+Như thú cưng: bình không còn hồi % máu / MP tối đa mà hồi số cố định (`heal` / `mana` trong `items.json`). Một con số không vừa cả đầu lẫn cuối game (bản thử 150 / 500 / 1 500: bình nhỏ hồi 50–75 % máu lúc mới chơi), nên bình mở theo cấp (`buy_level`, kiểu MU):
+
+| Bình | Máu | MP | Mua từ | Giá |
+|---|---|---|---|---|
+| Nhỏ | 60 | 25 | cấp 1 | 10 |
+| Vừa | 400 | 120 | cấp 10 | 60 |
+| Lớn | 1 800 | 400 | cấp 25 | 200 |
+
+Đã chuyển sinh (cấp về 1, máu vẫn cao) thì mua được cả ba. Giá cố định (`potion_price_per_level` 0.1 → 0: trước tăng theo cấp vì lượng hồi tăng theo máu). Quái rơi bình Vừa từ cấp 10, Lớn từ cấp 25 (`loot.potions`, trước 9 / 20). Đánh người vẫn × `RULES.pvp.potion_mult`.
+
+Số chốt bằng mô phỏng hành trình (4 lớp, 6 lần chuyển sinh, seed 1 / 2; bản % cũ chết 33 / 30): bộ anh duyệt đầu 50 / 300 / 1 200 (cấp 15 / 30) chết 45 / 65 — thiếu bình đủ mạnh ở cấp 11–30 lần chơi đầu (bản cũ mua được bình Lớn 70 % từ đầu) và bình Lớn hồi chỉ ~45 % cuối game; bộ trên chết 34 / 29.
+Bot (`Brain.restock`): chỉ đếm loại bình còn hồi ≥ `potion_heal_min` máu tối đa khi quyết định đi mua — trước đó bot giữ hàng trăm bình nhỏ nhặt từ đầu game nên không bao giờ mua bình Lớn và chết liên tục cuối game.

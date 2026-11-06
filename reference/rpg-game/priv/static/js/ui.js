@@ -2650,7 +2650,9 @@
 
   function shopRow(id) {
     const it = ITEMS[id], slot = it.slot;
-    const low = it.level && P.level < it.level;
+    // bình Vừa / Lớn mở theo cấp, đã chuyển sinh thì mua hết (DECISIONS "Bình máu / mana hồi số")
+    const need = it.level || (it.buy_level && !(P.rebirths > 0) ? it.buy_level : 0);
+    const low = need && P.level < need;
     const short = slot !== 'potion' && (!classOk(it) || reqShort(it));
     const worn = P.equip[slot] === id;
     const owned = P.inv[id] || 0;
@@ -2660,7 +2662,7 @@
       ${itemIcon(it)}
       <div class="grow">
         <div class="name">${it.name}</div>
-        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${short ? ` · <span style="color:var(--bad)">${!classOk(it) ? 'Lớp khác' : 'Thiếu chỉ số'}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
+        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${need}</span>` : ''}${short ? ` · <span style="color:var(--bad)">${!classOk(it) ? 'Lớp khác' : 'Thiếu chỉ số'}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
       </div>
       ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < price * 5 ? 'disabled' : ''}>×5</button>` : ''}
       <button class="btn ${!low && !poor && !short ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>

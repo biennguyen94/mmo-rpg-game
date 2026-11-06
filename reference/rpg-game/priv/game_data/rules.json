@@ -161,11 +161,11 @@
       "potion_chance": 0.12,
       "potions": [
         {
-          "level": 20,
+          "level": 25,
           "id": "potion_l"
         },
         {
-          "level": 9,
+          "level": 10,
           "id": "potion_m"
         },
         {
@@ -390,7 +390,7 @@
       "sell_ratio": 0.4,
       "unpriced_value": 200,
       "gear_opt_value": 0.25,
-      "potion_price_per_level": 0.1
+      "potion_price_per_level": 0
     },
     "upgrade": {
       "bonus_pct": 0.08,

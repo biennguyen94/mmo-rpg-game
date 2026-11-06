@@ -206,17 +206,17 @@ Quái thường: khoảng 1/125 con ra Excellent, 1/581 con ra đồ Thần. Ng�
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Bình Máu Nhỏ** | hồi 150 máu | 15 |
-| **Bình Máu Vừa** | hồi 500 máu | 55 |
-| **Bình Máu Lớn** | hồi 1500 máu | 150 |
+| **Bình Máu Nhỏ** | hồi 60 máu | 10 |
+| **Bình Máu Vừa** | hồi 400 máu (từ cấp 10) | 60 |
+| **Bình Máu Lớn** | hồi 1800 máu (từ cấp 25) | 200 |
 
 ### Bình mana (3)
 
 | Tên | Công dụng | Giá |
 |---|---|---|
-| **Bình Mana Nhỏ** | hồi 50 MP | 15 |
-| **Bình Mana Vừa** | hồi 150 MP | 55 |
-| **Bình Mana Lớn** | hồi 400 MP | 150 |
+| **Bình Mana Nhỏ** | hồi 25 MP | 10 |
+| **Bình Mana Vừa** | hồi 120 MP (từ cấp 10) | 60 |
+| **Bình Mana Lớn** | hồi 400 MP (từ cấp 25) | 200 |
 
 ### Món ăn (8)
 

@@ -91,7 +91,8 @@ defmodule HacLong.Game.DataRulesTest do
       price = Data.item("broadsword").price
       assert Engine.sell_price("broadsword") == floor(price * 0.4)
       assert Data.potion_for(1) == "potion_s"
-      assert Data.potion_for(9) == "potion_m"
+      assert Data.potion_for(9) == "potion_s"
+      assert Data.potion_for(10) == "potion_m"
       assert Data.potion_for(35) == "potion_l"
     end
 
