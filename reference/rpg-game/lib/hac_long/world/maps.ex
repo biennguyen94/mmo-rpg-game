@@ -131,20 +131,19 @@ defmodule HacLong.World.Maps do
 
   HacLong.Game.DataCheck.run_maps!(@maps, HacLong.Game.Data.check_input())
 
-  @home "home"
-
   def get(id), do: Map.get(@maps, id)
   def ids, do: Map.keys(@maps)
   def shared_ids, do: for({id, m} <- @maps, not m.private, do: id)
   def waystone_ids, do: for({id, m} <- @maps, m.waystone, do: id)
   def legend, do: @legend
-  def home, do: @home
 
-  @doc "Chỗ đứng mặc định ở Nhà (nhân vật mới, gục ngã)."
+  @doc """
+  Chỗ đứng mặc định (nhân vật mới, gục ngã chưa chạm Đài Phúc Lành nào): cạnh Đài Phúc Lành ở Làng. Trước đây là
+  Nhà riêng (đã bỏ, DECISIONS "Bỏ Nhà: Thủ Kho ở Làng").
+  """
   def home_spawn do
-    [p | _] = get(@home).portals
-    {x, y} = p.at
-    %{map: @home, x: x, y: y - 1}
+    {x, y} = get("village").waystone.spawn
+    %{map: "village", x: x, y: y}
   end
 
   def tile(%{grid: g, width: w, height: h}, x, y)

@@ -5,7 +5,7 @@ defmodule HacLong.Bots.Bot do
   `HacLong.Bots.Brain` lệnh tiếp theo và gửi qua `Session.command/2` như client.
 
   Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây. Vừa gục (bị đồ sát,
-  thua quái…) thì đứng nghỉ ở Nhà `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/4`).
+  thua quái…) thì đứng nghỉ ở Làng `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/4`).
   """
   use GenServer, restart: :transient
   require Logger
@@ -93,7 +93,7 @@ defmodule HacLong.Bots.Bot do
     p = Session.get(s.uid)
     now = System.monotonic_time(:millisecond)
 
-    # vừa gục (về Nhà): nghỉ một lúc rồi mới đi luyện tiếp; gục nhiều ở một chỗ thì tạm tránh chỗ đó
+    # vừa gục (về Làng): nghỉ một lúc rồi mới đi luyện tiếp; gục nhiều ở một chỗ thì tạm tránh chỗ đó
     s = note_death(s, p, now)
     s = %{s | rest_until: Brain.rest_until(s.rest_until, s.deaths, p, now), deaths: p && p.deaths}
     snap = p && snapshot(p)

@@ -47,14 +47,14 @@ defmodule HacLong.Bots.BrainTest do
              Brain.decide(%{player("dw") | points: 7}, nil)
   end
 
-  test "máu thấp ngoài trận: có bình thì uống; hết bình, không vàng thì về Nhà uống giếng" do
+  test "máu thấp ngoài trận: có bình thì uống; hết bình, không vàng thì về Làng uống giếng" do
     p = %{player() | level: 5, gold: 0} |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
     d = Engine.derived(p)
 
     assert %{"act" => "use", "id" => "potion_s"} =
              Brain.decide(%{p | hp: 1, inv: %{"potion_s" => 1}}, nil)
 
-    assert %{"act" => "travel", "to" => "home"} = Brain.decide(%{p | hp: 1, inv: %{}}, nil)
+    assert %{"act" => "travel", "to" => "village"} = Brain.decide(%{p | hp: 1, inv: %{}}, nil)
 
     home = Maps.home_spawn()
     at_home = %{p | hp: 1, inv: %{}, pos: home}

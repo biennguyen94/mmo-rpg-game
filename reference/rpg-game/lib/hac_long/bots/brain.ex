@@ -12,7 +12,7 @@ defmodule HacLong.Bots.Brain do
   4. Trong túi có vũ khí / giáp / khiên tốt hơn đồ đang mặc → mặc.
   5. Máu < 45 % và có bình → uống.
   6. Sắp hết bình (Phase 5, `RULES.bots.potion_min` / `mana_min`) mà đủ vàng → về Làng mua ở Bà Lang (`restock/1`).
-  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì về Nhà (miễn phí) uống nước giếng.
+  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì uống nước giếng giữa Làng (miễn phí).
   8. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
   9. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
   10. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
@@ -727,11 +727,11 @@ defmodule HacLong.Bots.Brain do
   defp worth(_p, nil), do: 0
   defp worth(p, it), do: power(it) + Engine.upgrade_bonus(p, it.uid)
 
-  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
+  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì uống giếng giữa Làng (miễn phí)
   defp heal(p, _d, snap) do
     if p.gold >= Engine.rest_cost(p) * @shop.inn_gold_mult and village_npc("inn"),
       do: at_village_npc(p, "inn", snap, fn -> %{"act" => "rest"} end),
-      else: go_home_fountain(p)
+      else: go_fountain(p, snap)
   end
 
   # ---------- Mua bình (Phase 5, B-32) ----------
@@ -792,16 +792,17 @@ defmodule HacLong.Bots.Brain do
 
   defp at_village_npc(p, _role, _snap, _then), do: go_to(p, "village")
 
-  defp go_home_fountain(%{pos: %{map: "home"}} = p) do
-    map = Maps.get("home")
+  # giếng ở Làng (ô "F"; Nhà đã bỏ, DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+  defp go_fountain(%{pos: %{map: "village"}} = p, snap) do
+    map = Maps.get("village")
 
     fountain =
       for {row, y} <- Enum.with_index(rows(map)), {"F", x} <- Enum.with_index(row), do: {x, y}
 
-    walk(p, map, fountain, nil)
+    walk(p, map, fountain, snap)
   end
 
-  defp go_home_fountain(_p), do: %{"act" => "travel", "to" => "home"}
+  defp go_fountain(p, _snap), do: go_to(p, "village")
 
   # ---------- Chọn nơi luyện, di chuyển ----------
 
@@ -850,9 +851,6 @@ defmodule HacLong.Bots.Brain do
     target = boss_room(p, avoid) || realm || target_map(p, seed)
 
     cond do
-      here == "home" and target != "home" ->
-        go_to(p, target)
-
       here != target ->
         go_to(p, target)
 

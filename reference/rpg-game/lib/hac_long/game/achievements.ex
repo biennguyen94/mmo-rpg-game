@@ -150,14 +150,6 @@ defmodule HacLong.Game.Achievements do
       title: "Thần Binh"
     },
     %{
-      id: "cozy",
-      name: "Tổ Ấm",
-      desc: "Trang trí nhà đạt 30 điểm tiện nghi.",
-      stat: :comfort,
-      goal: 30,
-      title: "Chủ Nhà Khéo Tay"
-    },
-    %{
       id: "pet_lover",
       name: "Bạn Của Muông Thú",
       desc: "Có đủ mọi loài thú cưng.",
@@ -331,7 +323,6 @@ defmodule HacLong.Game.Achievements do
   def value(p, :scale), do: min(1, Map.get(p.inv, "dragon_scale", 0))
   def value(p, :gold), do: p.gold
   def value(p, :rebirths), do: Map.get(p, :rebirths) || 0
-  def value(p, :comfort), do: HacLong.Game.Home.comfort(p)
 
   def value(p, :pets),
     do: Enum.count(Map.get(p, :pets) || [], &(Data.pet(&1) && !Data.pet(&1)[:rare]))

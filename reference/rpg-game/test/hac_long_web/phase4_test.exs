@@ -36,7 +36,7 @@ defmodule HacLongWeb.Phase4Test do
     player(u, %{
       gear: [g, junk],
       inv: %{"herb" => 3, "jewel_life" => 1},
-      pos: %{map: "home", x: 6, y: 1}
+      pos: %{map: "village", x: 11, y: 13}
     })
 
     {_, _} = join(u)

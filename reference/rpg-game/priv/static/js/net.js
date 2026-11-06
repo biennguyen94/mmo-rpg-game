@@ -280,9 +280,6 @@
     // Quảng Trường Quỷ: { top: [{ name, score }] } (hôm nay)
     dsTop() { return push('ds_top', {}); },
     inspect(uid) { return push('inspect', { uid }); },
-    // Thăm nhà: { id, name, look, decor, comfort, likes, liked }; khen nhà: { likes }.
-    visit(uid) { return push('visit', { uid }); },
-    homeLike(uid) { return push('home_like', { uid }); },
 
     // Bang hội: guild('list', { q }), guild('info'), guild('join', { id })... (xem GameChannel).
     guild(op, payload) { return push('guild', Object.assign({ op }, payload || {})); },

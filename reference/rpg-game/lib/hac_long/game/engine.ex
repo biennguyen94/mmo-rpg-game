@@ -17,7 +17,6 @@ defmodule HacLong.Game.Engine do
     Data,
     Events,
     Gear,
-    Home,
     Mastery,
     Pets,
     Rng
@@ -150,8 +149,6 @@ defmodule HacLong.Game.Engine do
           auto_cfg: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
-          furniture: %{},
-          decor: [],
           storage: %{inv: %{}, extra: 0, gold: 0},
           visited: [],
           fish_caught: 0,
@@ -461,7 +458,6 @@ defmodule HacLong.Game.Engine do
       autoCfg: Map.get(p, :auto_cfg),
       # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
       blessing: Blessing.view(p),
-      comfort: Home.comfort(p),
       # thú cưng đã có (cấp, cắn, kỹ năng, giá cho ăn) và loài thuần được / đang hạ dở
       pets: Pets.view(p),
       tameable: Pets.tameable(p),
@@ -2209,7 +2205,7 @@ defmodule HacLong.Game.Engine do
     xp =
       round(
         m.xp * xf *
-          (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
+          (1 + Pets.bonus(p, :xp) + Crafting.food_bonus(p, :xp) +
              Blessing.bonus(p, :xp) +
              Events.xp_bonus(event))
       )

@@ -1,7 +1,7 @@
 defmodule HacLong.Game.HomePetsTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Engine, Home, Pets}
+  alias HacLong.Game.{Engine, Pets}
   alias HacLong.World.Maps
 
   defp player(gold \\ 100_000) do
@@ -61,46 +61,6 @@ defmodule HacLong.Game.HomePetsTest do
 
     # Tiên Nữ: thân nữ, tóc vàng
     assert %{body: "base/elf_f", hair: "hair/fem_yellow"} = Engine.look(%{p | cls: "elf"})
-  end
-
-  test "đặt và cất đồ trang trí; không chắn lối, không đặt chỗ đứng trước cửa" do
-    p = player()
-    {%{ok: true}, p} = Home.buy(p, "statue_cat")
-    assert p.furniture == %{"statue_cat" => 1}
-
-    %{x: sx, y: sy} = Maps.home_spawn()
-    assert {%{ok: false, msg: "Không đặt được ở ô này."}, _} = Home.place(p, "statue_cat", sx, sy)
-    # ô tường
-    assert {%{ok: false}, _} = Home.place(p, "statue_cat", 0, 0)
-
-    {%{ok: true}, p} = Home.place(p, "statue_cat", 3, 3)
-    assert p.furniture == %{}
-    assert [%{id: "statue_cat", x: 3, y: 3}] = p.decor
-    assert Home.comfort(p) == 3
-
-    assert {%{ok: false, msg: "Bạn không có món này trong kho."}, _} =
-             Home.place(p, "statue_cat", 4, 3)
-
-    # đồ đặt rồi thì chặn đường
-    q = %{p | pos: %{map: "home", x: 3, y: 4}}
-    assert {%{ok: false}, ^q} = HacLong.World.move(q, 0, "up")
-
-    {%{ok: true}, p} = Home.take(p, 3, 3)
-    assert p.decor == [] and p.furniture == %{"statue_cat" => 1}
-
-    # không cho chắn kín một góc: quây ô (1,6) bằng hai món ở (1,5) và (2,6)
-    p = p |> Home.buy("plant") |> elem(1) |> Home.buy("plant") |> elem(1)
-    {%{ok: true}, p} = Home.place(p, "plant", 1, 5)
-    assert {%{ok: false, msg: "Đặt ở đây sẽ chắn lối đi."}, _} = Home.place(p, "plant", 2, 6)
-  end
-
-  test "nhà tiện nghi thì thêm kinh nghiệm, tối đa 5%" do
-    p = player()
-    assert Home.xp_bonus(p) == 0
-    p = Map.put(p, :decor, for(x <- 1..4, do: %{id: "golden_statue", x: x, y: 2}))
-    assert Home.comfort(p) == 32 and Home.xp_bonus(p) == 0.03
-    p = Map.put(p, :decor, for(x <- 1..8, do: %{id: "golden_statue", x: x, y: 2}))
-    assert Home.xp_bonus(p) == 0.05
   end
 
   test "thú không đánh trong trận, chỉ cộng chỉ số; ba nhóm Chiến / Hộ vệ / Tài lộc" do

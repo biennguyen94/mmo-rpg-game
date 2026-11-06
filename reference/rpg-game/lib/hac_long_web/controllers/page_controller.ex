@@ -59,7 +59,6 @@ defmodule HacLongWeb.PageController do
       RECIPES: Data.recipes(),
       QUESTS: Data.quests(),
       PETS: Data.pets(),
-      FURNITURE: Data.furniture(),
       ACHIEVEMENTS: Achievements.client_data(),
       UPGRADE: Data.upgrade(),
       CHAOS: Data.chaos(),

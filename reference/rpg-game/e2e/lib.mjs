@@ -143,6 +143,8 @@ export async function walkTo(page, x, y) {
 // Đi qua cổng sang bản đồ kề `to` (đứng trên ô cổng). Trả true nếu đã sang.
 export async function travel(page, to) {
   const p = await player(page);
+  // đang ở đó rồi (vd. nhân vật mới đứng ngay ở Làng, Nhà đã bỏ): xong
+  if (p.pos.map === to) return true;
   const portal = await page.evaluate(([from, to]) => {
     const m = window.GAME_DATA.WORLD.maps[from];
     return m.portals.find((q) => q.to === to);

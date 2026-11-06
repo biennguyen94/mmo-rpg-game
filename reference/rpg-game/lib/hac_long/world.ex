@@ -9,7 +9,7 @@ defmodule HacLong.World do
   Session luôn gọi MapServer, không bao giờ ngược lại, nên không thể bị treo chờ nhau.
   """
 
-  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Home, Kalima, Tower}
+  alias HacLong.Game.{BloodCastle, Daily, Data, DevilSquare, Engine, Kalima, Tower}
   alias HacLong.EventRoom
   alias HacLong.{Party, WorldBoss}
   alias HacLong.World.{Maps, MapServer}
@@ -20,7 +20,7 @@ defmodule HacLong.World do
 
   @doc """
   Vị trí hợp lệ khi vào game: bản đồ còn tồn tại, ô đi được và không bị bít kín bốn phía. Nếu
-  không (bản đồ đã sửa) thì về điểm vào của chính bản đồ đó (`Maps.entry/1`), không có thì về Nhà.
+  không (bản đồ đã sửa) thì về điểm vào của chính bản đồ đó (`Maps.entry/1`), không có thì về Làng.
   """
   def valid_pos(%{map: id, x: x, y: y} = pos) do
     case Maps.get(id) do
@@ -133,7 +133,6 @@ defmodule HacLong.World do
         Maps.tile(map, tx, ty) == "W" -> touch_waystone(p, map)
         map.world_boss == {tx, ty} and WorldBoss.hp() != nil -> world_boss(p, uid, confirm?)
         not Maps.walkable?(map, tx, ty) -> {%{ok: false}, p}
-        map.private and Home.at(p, tx, ty) != nil -> {%{ok: false}, p}
         map.private -> {%{ok: true}, put_pos(p, map_id, tx, ty)}
         true -> step_shared(p, uid, map, {tx, ty}, confirm?)
       end
@@ -562,7 +561,7 @@ defmodule HacLong.World do
       true ->
         cost = travel_cost(target)
         leave(p, uid)
-        %{x: x, y: y} = if target.id == "home", do: Maps.home_spawn(), else: Maps.entry(target.id)
+        %{x: x, y: y} = Maps.entry(target.id)
         p = %{put_pos(p, target.id, x, y) | gold: p.gold - cost}
         enter(p, uid)
 
@@ -767,7 +766,7 @@ defmodule HacLong.World do
     if b.result == "lose" do
       leave(p, uid)
       # gục trong bản đồ sự kiện (Hỗn Chiến Thành): bị loại, về Làng
-      # gục ở bản đồ thường: hồi sinh cạnh Đài Phúc Lành đã chạm, chưa chạm đài nào thì về Nhà
+      # gục ở bản đồ thường: hồi sinh cạnh Đài Phúc Lành đã chạm, chưa chạm đài nào thì về Làng
       cond do
         Maps.get(p.pos.map)[:event] -> %{p | pos: village_spawn()}
         pos = HacLong.Game.Blessing.respawn(p) -> %{p | pos: pos}

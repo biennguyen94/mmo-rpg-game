@@ -5,7 +5,8 @@ defmodule HacLong.Game.ForgeStorageTest do
   alias HacLong.Game.{Commands, Data, Engine, Gear, Rng, Storage}
 
   @smith %{map: "village", x: 8, y: 11}
-  @wardrobe %{map: "home", x: 6, y: 1}
+  # Thủ Kho ở Làng (11, 12) (DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+  @wardrobe %{map: "village", x: 11, y: 13}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -136,7 +137,7 @@ defmodule HacLong.Game.ForgeStorageTest do
     end
   end
 
-  describe "Tủ Đồ ở Nhà (C7)" do
+  describe "Tủ Đồ (Thủ Kho ở Làng, C7)" do
     test "cất / lấy đồ thường và đồ hiếm; đồ đang cất không nằm trong túi, không bán / mặc được" do
       g = sword()
       p = player(%{pos: @wardrobe, gear: [g], inv: %{"herb" => 5}})
@@ -155,7 +156,7 @@ defmodule HacLong.Game.ForgeStorageTest do
 
       village = %{p | pos: @smith}
 
-      assert {%{ok: false, msg: "Hãy đến gặp Tủ Đồ ở Nhà."}, _} =
+      assert {%{ok: false, msg: "Hãy đến gặp Thủ Kho ở Làng."}, _} =
                Commands.run(village, %{"act" => "store", "id" => "herb"})
     end
 
@@ -181,7 +182,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       assert {%{ok: true}, _} = Storage.store(p, List.last(gear).uid)
     end
 
-    test "cất / rút vàng ở Tủ Đồ; sai số / thiếu vàng / ngoài Nhà thì báo lỗi; nạp lại giữ vàng trong tủ" do
+    test "cất / rút vàng ở Tủ Đồ; sai số / thiếu vàng / xa Thủ Kho thì báo lỗi; nạp lại giữ vàng trong tủ" do
       p = player(%{pos: @wardrobe, gold: 10_000})
       {%{ok: true}, p} = Commands.run(p, %{"act" => "gold_store", "n" => 7_000})
       assert p.gold == 3_000 and Storage.gold(p) == 7_000

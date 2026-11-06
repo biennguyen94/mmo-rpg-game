@@ -212,12 +212,6 @@ defmodule HacLong.Game.Characters do
         smith: (c.crafting || %{})["smith"] || 0
       },
       festival: c.festival || 0,
-      furniture:
-        Map.filter(c.furniture || %{}, fn {id, _} -> HacLong.Game.Data.furniture(id) end),
-      decor:
-        for d <- c.decor || [], HacLong.Game.Data.furniture(d["id"]) do
-          %{id: d["id"], x: d["x"], y: d["y"]}
-        end,
       storage: HacLong.Game.Storage.load(c.storage),
       visited: Enum.filter(c.visited || [], &Maps.get/1)
     }

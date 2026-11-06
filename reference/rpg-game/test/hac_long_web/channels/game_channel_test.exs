@@ -74,7 +74,7 @@ defmodule HacLongWeb.GameChannelTest do
     assert %{ok: true} = cmd(sb, %{"act" => "create", "name" => "Rồng Đèn", "cls" => "elf"})
   end
 
-  test "tạo nhân vật rồi ra khỏi nhà" do
+  test "tạo nhân vật: đứng ngay ở Làng (Nhà đã bỏ)" do
     user = create_user()
     {reply, socket} = join_game(user)
     assert reply.player == nil
@@ -82,19 +82,15 @@ defmodule HacLongWeb.GameChannelTest do
 
     r = cmd(socket, %{"act" => "create", "name" => "Hiệp", "cls" => "mg"})
     assert r.ok and r.player.cls == "mg"
-    assert r.player.pos == %{map: "home", x: 5, y: 6}
-    assert_push "map", %{map: "home", monsters: []}
+    assert r.player.pos == HacLong.World.Maps.home_spawn() and r.player.pos.map == "village"
     assert [_, _, _, _] = r.player.daily.tasks
     assert Characters.load(user.id).daily.date == HacLong.Game.Daily.today()
     assert Characters.load(user.id).name == "Hiệp"
+    # hướng dẫn người mới: chỉ đường tới Trưởng Làng
+    assert %{step: 1, total: 4, target: %{map: "village"}} = r.player.view.tutorial
 
-    # bước xuống cửa nhà thì ra Làng
-    r = cmd(socket, %{"act" => "move", "dir" => "down"})
-    assert r.ok and r.player.pos == %{map: "village", x: 12, y: 15}
-    # hướng dẫn người mới sang bước 2, chỉ đường tới Trưởng Làng
-    assert_push "notice", %{msg: "Hướng dẫn 2/5" <> _}
-    assert %{step: 2, target: %{map: "village"}} = r.player.view.tutorial
-    assert Characters.load(user.id).tutorial == 1
+    r = cmd(socket, %{"act" => "move", "dir" => "up"})
+    assert r.ok
     assert_push "map", %{map: "village", players: players}
     assert Enum.any?(players, &(&1.id == user.id))
     assert Characters.load(user.id).pos.map == "village"
@@ -758,52 +754,6 @@ defmodule HacLongWeb.GameChannelTest do
       ref = push(sb, "block", %{"uid" => ua.id})
       assert_reply ref, :ok, _
       assert {:error, %{msg: "Không gửi được lời mời."}} = fop(sa, "request", %{"uid" => ub.id})
-    end
-  end
-
-  describe "thăm nhà" do
-    setup do
-      HacLong.RateLimit.reset()
-      :ok
-    end
-
-    test "xem nhà đã trang trí của người khác, khen nhà một lần, chủ nhà được báo" do
-      owner = create_user()
-
-      player_at(owner, %{map: "village", x: 12, y: 14}, %{
-        decor: [%{id: "plant", x: 3, y: 5}, %{id: "fountain", x: 7, y: 2}],
-        pet: "hound",
-        pets: ["hound"]
-      })
-
-      {_, so} = join_game(owner)
-      guest = create_user()
-      player_at(guest, %{map: "village", x: 13, y: 14})
-      {_, sg} = join_game(guest)
-
-      ref = push(sg, "visit", %{"uid" => owner.id})
-      assert_reply ref, :ok, v
-      assert v.id == owner.id and v.likes == 0 and not v.liked
-      assert [%{id: "plant", x: 3, y: 5}, %{id: "fountain"}] = v.decor
-      assert v.comfort > 0 and v.look.pet == "hound"
-
-      ref = push(sg, "home_like", %{"uid" => owner.id})
-      assert_reply ref, :ok, %{likes: 1}
-      assert_push "notice", %{msg: "🏡 " <> _}
-      ref = push(sg, "home_like", %{"uid" => owner.id})
-      assert_reply ref, :error, %{msg: "Bạn đã khen nhà này rồi."}
-
-      ref = push(sg, "visit", %{"uid" => owner.id})
-      assert_reply ref, :ok, %{likes: 1, liked: true}
-
-      # tự khen nhà mình thì không được; nhà của mình thì xem như đã khen
-      ref = push(so, "home_like", %{"uid" => owner.id})
-      assert_reply ref, :error, %{msg: "Không tự khen nhà mình được."}
-      ref = push(so, "visit", %{"uid" => owner.id})
-      assert_reply ref, :ok, %{liked: true}
-
-      ref = push(sg, "visit", %{"uid" => -1})
-      assert_reply ref, :error, %{msg: "Không tìm thấy người chơi."}
     end
   end
 

@@ -61,16 +61,8 @@ defmodule HacLong.Game.Events do
   end
 
   @doc "Quà đổi được ở sự kiện `e`: `[%{id, name, cost, kind}]` (giá tính bằng vật phẩm lễ hội)."
-  def shop(e, p) do
-    decor = Data.furniture(e.decor)
-
+  def shop(_e, p) do
     [
-      %{
-        id: "decor",
-        name: decor.name,
-        cost: @rules.shop.decor,
-        desc: "Đồ trang trí chỉ có trong mùa này (tiện nghi #{decor.comfort})."
-      },
       %{
         id: "gear",
         name: "Túi Quà Lễ Hội",
@@ -121,12 +113,6 @@ defmodule HacLong.Game.Events do
     end
   end
 
-  defp give(p, e, "decor") do
-    stock = Map.get(p, :furniture) || %{}
-    p = Map.put(p, :furniture, Map.update(stock, e.decor, 1, &(&1 + 1)))
-    {p, "Nhận #{Data.furniture(e.decor).name}! Về Nhà bấm Trang trí để đặt."}
-  end
-
   defp give(p, _e, "gear") do
     g = Gear.roll(max(p.level, Data.rules().chests.min_level), @gear_weights)
     {p, :kept} = Gear.add(p, g)
@@ -142,9 +128,6 @@ defmodule HacLong.Game.Events do
     g = gold(p)
     {%{p | gold: p.gold + g}, "Nhận #{g} vàng."}
   end
-
-  @doc "Đồ trang trí chỉ có trong sự kiện thì Thợ Mộc không bán."
-  def event_decor?(id), do: Enum.any?(Data.events(), &(&1.decor == id))
 
   defp potion_l_pct, do: round(Data.item("potion_l").heal_pct * 100)
 end

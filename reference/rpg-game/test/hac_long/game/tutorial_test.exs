@@ -10,15 +10,14 @@ defmodule HacLong.Game.TutorialTest do
 
   defp at(p, map, x, y), do: %{p | pos: %{map: map, x: x, y: y}}
 
-  test "đi hết 5 bước thì xong và nhận quà tân thủ" do
+  test "đi hết 4 bước thì xong và nhận quà tân thủ (bước \"Ra khỏi nhà\" cũ tự xong)" do
     p = player()
-    assert p.tutorial == 0
-    assert {^p, nil} = Tutorial.check(p)
-    assert %{step: 1, total: 5, target: %{map: "home", x: 5, y: 7}} = Tutorial.view(p)
+    assert p.tutorial == 0 and p.pos.map == "village"
+    # chưa kiểm: đã hiện bước "Gặp Trưởng Làng", mũi tên chỉ Trưởng Làng
+    assert %{step: 1, total: 4, target: %{map: "village", x: 12, y: 3}} = Tutorial.view(p)
 
-    {p, note} = Tutorial.check(at(p, "village", 12, 15))
-    assert p.tutorial == 1 and note =~ "Hướng dẫn 2/5"
-    # đang ở Làng: mũi tên chỉ Trưởng Làng
+    {p, note} = Tutorial.check(p)
+    assert p.tutorial == 1 and note =~ "Hướng dẫn 1/4"
     assert %{target: %{map: "village", x: 12, y: 3}} = Tutorial.view(p)
 
     {_, p} = Quests.accept(p, "forest_kill")
@@ -48,7 +47,7 @@ defmodule HacLong.Game.TutorialTest do
     p = player()
     {_, p} = Quests.accept(p, "forest_kill")
     {p, note} = Tutorial.check(at(p, "forest_1", 13, 16))
-    assert p.tutorial == 3 and note =~ "4/5"
+    assert p.tutorial == 3 and note =~ "3/4"
   end
 
   test "bỏ qua hướng dẫn; nhân vật cũ không có hướng dẫn" do

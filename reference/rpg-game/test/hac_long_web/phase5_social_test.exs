@@ -109,7 +109,7 @@ defmodule HacLongWeb.Phase5SocialTest do
 
       # đứng cạnh cổng Làng → Nhà ở (vị trí cổng lấy từ dữ liệu bản đồ)
       v = Maps.get("village")
-      {x, y} = Enum.find(v.portals, &(&1.to == "home")).at
+      {x, y} = Enum.find(v.portals, &(&1.to == "forest_1")).at
 
       {dir, ax, ay} =
         Enum.find(

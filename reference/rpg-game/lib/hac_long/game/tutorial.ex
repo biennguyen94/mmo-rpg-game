@@ -1,6 +1,6 @@
 defmodule HacLong.Game.Tutorial do
   @moduledoc """
-  Hướng dẫn người mới: 5 bước đầu tiên, dẫn tới việc hoàn thành nhiệm vụ "Lũ dơi hang".
+  Hướng dẫn người mới: 4 bước đầu tiên (bước 0 cũ "Ra khỏi nhà" tự xong), dẫn tới việc hoàn thành nhiệm vụ "Lũ dơi hang".
   Hàm thuần, như `Engine`.
 
   Mỗi bước tự xong khi trạng thái nhân vật thỏa điều kiện (không cần theo dõi sự kiện
@@ -20,10 +20,12 @@ defmodule HacLong.Game.Tutorial do
   @reward Data.rules().tutorial.reward
 
   @steps [
-    %{text: "Ra khỏi nhà", hint: "Đi xuống cửa nhà ở phía dưới."},
+    # bước cũ "Ra khỏi nhà": Nhà đã bỏ, nhân vật mới ở Làng ngay nên bước này tự xong (giữ để số bước của người
+    # đang làm dở không lệch; DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+    %{text: "Vào Làng", hint: "Nhân vật mới đứng ngay ở Làng."},
     %{
       text: "Gặp Trưởng Làng, nhận việc \"Lũ dơi hang\"",
-      hint: "Ông già râu ở giữa Làng, phía trên hồ nước. Bước vào ông để nói chuyện."
+      hint: "Ông già râu phía trên Làng, dưới hồ sen. Bước vào ông để nói chuyện."
     },
     %{text: "Ra Rừng Mê", hint: "Cổng phía trên bên trái Làng."},
     %{text: "Hạ 5 Dơi Hang", hint: "Chạm vào con dơi để đánh. Số nhỏ cạnh quái là cấp của nó."},
@@ -33,10 +35,11 @@ defmodule HacLong.Game.Tutorial do
     }
   ]
 
-  def total, do: length(@steps)
+  # bước 0 ("Vào Làng") tự xong, không đếm khi hiện số bước
+  def total, do: length(@steps) - 1
   def reward, do: @reward
 
-  defp done?(p, 0), do: p.pos.map != Maps.home() or done?(p, 1)
+  defp done?(_p, 0), do: true
   defp done?(p, 1), do: Map.has_key?(quests(p).active, @quest) or done?(p, 4)
   defp done?(p, 2), do: p.pos.map in @forest or kills(p) > 0 or done?(p, 4)
   defp done?(p, 3), do: Quests.complete?(p, Data.quest(@quest)) or done?(p, 4)
@@ -66,7 +69,7 @@ defmodule HacLong.Game.Tutorial do
 
       msg =
         if next < length(@steps),
-          do: "Hướng dẫn #{next + 1}/#{length(@steps)}: #{Enum.at(@steps, next).text}."
+          do: "Hướng dẫn #{next}/#{total()}: #{Enum.at(@steps, next).text}."
 
       advance(%{p | tutorial: next}, next, msg)
     else
@@ -78,8 +81,9 @@ defmodule HacLong.Game.Tutorial do
 
   @doc "Thông tin hiện cho client: bước đang làm và ô đích trên bản đồ đang đứng (nếu có)."
   def view(%{tutorial: step} = p) when is_integer(step) do
+    step = max(step, 1)
     s = Enum.at(@steps, step)
-    %{step: step + 1, total: length(@steps), text: s.text, hint: s.hint, target: target(p, step)}
+    %{step: step, total: total(), text: s.text, hint: s.hint, target: target(p, step)}
   end
 
   def view(_p), do: nil

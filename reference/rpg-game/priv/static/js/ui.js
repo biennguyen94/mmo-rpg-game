@@ -2,7 +2,7 @@
  * Mọi thao tác gửi lên server qua Net (net.js); server tính toán rồi trả trạng thái mới.
  * P.view chứa các chỉ số server tính sẵn (máu tối đa, tấn công, giá nghỉ trọ...). */
 (function () {
-  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE, UPGRADE, CHAOS } = window.GAME_DATA;
+  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, UPGRADE, CHAOS } = window.GAME_DATA;
   const Net = window.Net;
   const L = window.HLLogic; // hàm thuần (logic.js), có test node --test
 
@@ -22,7 +22,6 @@
   let friendsUi = { open: false, data: null, chat: null, dm: 0 }; // bạn bè; chat: { uid, data }
   let trade = null;      // giao dịch trực tiếp (HacLong.Trade.view): { partner_name, status, incoming, mine, theirs, my_ready, their_ready }
   let profileUi = { open: false, info: null }; // Phase 13: hồ sơ người chơi (mình hoặc người khác)
-  let visit = null;      // đang thăm nhà: { uid, info: null | { id, name, look, decor, comfort, likes, liked } }
   let dialog = null;    // bảng trên bản đồ: { type: 'boss', dir, boss }
   let npc = null;        // NPC đang nói chuyện: { map, id, line }
   let pwForm = false;    // đang mở form đổi mật khẩu
@@ -43,7 +42,7 @@
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
   let sharedKey = null;  // trận đánh chung của `sharedN`
-  let decor = { on: false, pick: null }; // trang trí nhà: đang bật, món đang chọn để đặt    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
+    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
   let wb = { alive: false }; // trùm thế giới; `skew`: lệch đồng hồ máy chủ - máy này
   const Map_ = window.MapView;
   const Sound = window.Sound;
@@ -280,7 +279,6 @@
     const b = P.battle;
     if (b && !b.over) return b.monster.boss || b.monster.world ? 'boss' : 'battle';
     const map = P.pos.map, phase = Map_.world().phase;
-    if (map === 'home') return 'home';
     if (map === 'tower') return 'tower';
     if (phase === 'night') return 'night';
     return map === 'village' ? 'village' : 'wild';
@@ -332,13 +330,10 @@
     ].map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${ic.startsWith('<') ? ic : icon(ic)}<span>${label}${id === 'people' ? peopleDot() : ''}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
-    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
-    } else if (visit) {
-      const c = $('#visit-canvas');
-      if (c && visit.info) Map_.drawHome(c, visit.info);
     } else if (friendsUi.open) {
       const log = $('#dm-log');
       if (log) log.scrollTop = log.scrollHeight;
@@ -727,29 +722,6 @@
       <button class="btn primary block" data-act="trade-op" data-op="ready" ${t.my_ready || busy ? 'disabled' : ''}>${busy ? 'Đang đổi…' : t.my_ready ? `Đợi ${esc(t.partner_name)} xác nhận…` : '✔ Xác nhận đổi'}</button>`;
   }
 
-  // ---------- Thăm nhà người khác ----------
-  async function openVisit(uid) {
-    visit = { uid, info: null };
-    dialog = null;
-    render();
-    try { visit.info = await Net.visit(uid); } catch (e) { toast(e.msg, true); visit = null; }
-    render();
-  }
-  function viewVisit() {
-    const v = visit.info;
-    const head = `<div class="row"><h2 class="display grow">🏡 ${v ? `Nhà của ${esc(v.name)}` : 'Đang ghé…'}</h2><button class="btn" data-act="visit-close">Về</button></div>`;
-    if (!v) return head;
-    return `${head}
-      <div class="card"><div class="map-wrap"><canvas id="visit-canvas" aria-label="Nhà của ${esc(v.name)}"></canvas></div>
-        <div class="row" style="margin-top:8px"><div class="grow small">
-          <div>Tiện nghi <b>${v.comfort}</b> · ${v.decor.length} món trang trí</div>
-          <div class="muted">❤ ${fmt(v.likes)} lượt khen</div></div>
-          ${v.id === Net.userId ? '<span class="small muted">Nhà của bạn</span>'
-            : v.liked ? '<span class="tag good">Đã khen</span>'
-            : `<button class="btn primary" data-act="home-like" data-uid="${v.id}">❤ Khen nhà</button>`}
-        </div></div>`;
-  }
-
   // Bảng nổi trên bản đồ: hỏi đấu trùm, chọn nơi dịch chuyển.
   function viewDialog() {
     if (!dialog) return '';
@@ -777,7 +749,6 @@
         <p class="small">${[o.gear.weapon, o.gear.armor, o.gear.shield, o.gear.wing].filter(Boolean).map(esc).join(' · ')}</p>
         <div class="btn-row">
           ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
-          <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
           <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
@@ -1102,7 +1073,6 @@
     const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
     const actions = o.me ? '' : `<div class="card"><h3>Hành động</h3><div class="btn-row">
         ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
-        <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
         <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
         <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
         <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
@@ -1247,14 +1217,14 @@
     const me = arena.me, left = me.per_day - me.today;
     return `<div class="card" id="arena">
       <div class="row">${icon('crossed-swords', 'lg')}<div class="grow"><h3>Đấu trường</h3>
-        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
+        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Làng). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
       <form id="arena-find" class="row" autocomplete="off"><input type="text" id="arena-q" class="grow" maxlength="24" placeholder="Tìm người chơi theo tên…" value="${esc(arenaFind.q)}" aria-label="Tìm người chơi theo tên"><button class="btn" type="submit">Tìm</button></form>
       ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
         <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
       <div class="list">${arena.suggestions.map((o) => arenaRow(o, left)).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
-      ${slayHist ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
+      ${slayHist ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${slayHist.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
           const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
@@ -1509,7 +1479,7 @@
       <div class="card"><h3>Bạn bè (${d.friends.length})</h3>${d.friends.length ? `<div class="list">${d.friends.map((f) => `<div class="item"><div class="grow">
           <div class="name">${f.online ? '<span style="color:var(--good)" title="Đang online">●</span>' : '<span class="muted" title="Không online">○</span>'} ${esc(f.name)}${f.unread ? ` <span class="tag gold num">${f.unread} tin mới</span>` : ''}</div>
           <div class="small muted">${f.level ? `Cấp ${f.level}` : ''}${f.cls && CLASSES[f.cls] ? ` ${CLASSES[f.cls].name}` : ''}</div>
-          <div class="btn-row"><button class="btn small-btn" data-act="home-visit" data-uid="${f.id}">🏡 Thăm nhà</button>${friendsUi.confirm === f.id
+          <div class="btn-row">${friendsUi.confirm === f.id
             ? `<button class="btn small-btn danger" data-act="friend-op" data-op="remove" data-uid="${f.id}">Xóa thật?</button>`
             : `<button class="btn small-btn" data-act="friend-ask" data-uid="${f.id}">Xóa bạn</button>`}</div></div>
           <button class="btn ${f.unread ? 'primary' : ''}" data-act="dm-open" data-uid="${f.id}">💬 Nhắn</button></div>`).join('')}</div>` : '<p class="small muted">Chưa có bạn nào.</p>'}</div>
@@ -1844,7 +1814,7 @@
       if (!me && m.role !== 'leader' && (leader || (g.role === 'officer' && m.role === 'member'))) acts.push(['kick', 'Mời ra']);
       const ask = guildUi.confirm && guildUi.confirm.uid === m.id ? guildUi.confirm : null;
       return `<div class="item member"><div class="grow">
-        <div class="name">${esc(m.name)}${me ? ' <span class="small muted">(bạn)</span>' : ` <button class="btn small-btn" data-act="home-visit" data-uid="${m.id}">🏡 Thăm nhà</button>`}</div>
+        <div class="name">${esc(m.name)}${me ? ' <span class="small muted">(mình)</span>' : ''}</div>
         <div class="small muted">${ROLES[m.role]} · ${m.level ? `Cấp ${m.level}` : ''}${m.cls && CLASSES[m.cls] ? ` ${CLASSES[m.cls].name}` : ''} · góp ${fmt(m.contributed)} vàng</div>
         ${ask ? `<div class="btn-row"><span class="small" style="color:var(--bad)">${ask.label} ${esc(m.name)}?</span><button class="btn small-btn" data-act="guild-confirm-no">Thôi</button><button class="btn small-btn danger" data-act="guild-op" data-op="${ask.op}" data-uid="${m.id}">Đồng ý</button></div>`
           : acts.length ? `<div class="btn-row">${acts.map(([op, label]) => `<button class="btn small-btn" data-act="guild-ask" data-op="${op}" data-uid="${m.id}" data-label="${label}">${label}</button>`).join('')}</div>` : ''}
@@ -2146,11 +2116,11 @@
   }
 
   // ---------- Chọn bản đồ (Phase 15a, U2) ----------
-  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, Nhà, vùng đã mở, bản đồ phụ đã đi qua cổng.
+  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, vùng đã mở, bản đồ phụ đã đi qua cổng.
   let travelQ = '';
   // như Thợ Rèn: hai thẻ bản đồ thường / vùng đất chuyển sinh (`m.cs`), danh sách đỡ dài
   let travelSeg = 'normal';
-  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
+  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village'] };
   const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
   // đủ cấp (≥ cấp quái thấp nhất của bản đồ) là tới được; vàng kiểm riêng (như server: World.can_travel?/2)
   function travelOpen(m) {
@@ -2164,16 +2134,15 @@
     if (P && P.pos.map === id) { Sound.play('portal'); goTab('map'); }
   }
   function viewTravel() {
-    const home = { id: 'home', name: WORLD.maps.home ? WORLD.maps.home.name : 'Nhà', min: null, max: null, zone: null };
-    const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    const all = LIB.maps.filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
-      <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
+      <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
       <div class="seg"><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
       <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
       <div id="travel-list">${travelList(all)}</div></div>`;
   }
   function travelList(all) {
-    all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    all = all || LIB.maps.filter((m) => m.id !== 'tower');
     const rows = all.filter((m) => !!m.cs === (travelSeg === 'cs') && L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
     return `<div class="list">${rows.map((m) => {
       const here = P.pos.map === m.id, open = travelOpen(m), cost = travelCost(m);
@@ -2295,31 +2264,7 @@
     }).join('')}</div></div>`;
   }
 
-  // ---------- Trang trí nhà ----------
-  function viewDecorButton() {
-    if (P.pos.map !== 'home' || decor.on) return '';
-    return `<div class="fish-ui idle"><button class="btn" data-act="decor-on">${icon('village')} Trang trí</button></div>`;
-  }
 
-  function viewDecorPanel() {
-    if (P.pos.map !== 'home' || !decor.on) return '';
-    const stock = Object.entries(P.furniture || {}).filter(([, n]) => n > 0);
-    if (decor.pick && !(P.furniture || {})[decor.pick]) decor.pick = null;
-    const name = (id) => (FURNITURE.find((f) => f.id === id) || { name: id }).name;
-    return `<div class="card decor-panel">
-      <div class="row"><h3 class="grow">Trang trí nhà</h3><span class="tag gold num">Tiện nghi ${P.view.comfort}</span><button class="btn" data-act="decor-off">Xong</button></div>
-      <p class="small muted">${decor.pick ? `Chạm vào ô trống để đặt <b>${esc(name(decor.pick))}</b>.` : 'Chọn một món trong kho rồi chạm vào ô để đặt. Chạm vào đồ đã đặt để cất vào kho.'}</p>
-      ${stock.length ? `<div class="chips">${stock.map(([id, n]) => `<button class="chip ${decor.pick === id ? 'on' : ''}" data-act="decor-pick" data-id="${id}"><img class="ic px" src="${asset('decor/' + id + '.png')}" alt=""> ${esc(name(id))}${n > 1 ? ` ×${n}` : ''}</button>`).join('')}</div>`
-        : '<p class="small muted">Kho trống. Mua đồ trang trí ở Thợ Mộc trong Làng.</p>'}
-    </div>`;
-  }
-
-  async function decorTap(x, y) {
-    const placed = (P.decor || []).find((d) => d.x === x && d.y === y);
-    if (placed) return sendCommand({ act: 'decor_take', x, y });
-    if (!decor.pick) { toast('Chọn một món trong kho trước.', true); return; }
-    await sendCommand({ act: 'decor_place', id: decor.pick, x, y });
-  }
 
   // ---------- Thành tựu, danh hiệu ----------
   const achTitle = (id) => { const a = ACHIEVEMENTS.find((x) => x.id === id); return a ? a.title : ''; };
@@ -2829,7 +2774,7 @@
       ${fold('forge-rest', `Đã tối đa / ép tiếp ở Lão Hỗn Nguyên (${g.rest.length})`, g.rest.map(row).join(''))}</div>`;
   }
 
-  // Tủ Đồ ở Nhà: cất / lấy đồ thường (theo loại) và đồ hiếm (theo món), mở rộng chỗ đồ hiếm bằng vàng.
+  // Tủ Đồ (Thủ Kho ở Làng): cất / lấy đồ thường (theo loại) và đồ hiếm (theo món), mở rộng chỗ đồ hiếm bằng vàng.
   function wardrobeCard() {
     const st = P.view.storage;
     const row = (id, n, act, label) => {
@@ -3342,15 +3287,6 @@
         }).join('')}${near.map((m) => `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt="" style="opacity:.5"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Tiến độ ${fmt(m.kills)}/${RULES.tameKills}</div></div></div>`).join('')}
         ${ready.length || near.length ? '' : '<p class="small muted">Chưa có loài nào. Hạ thêm quái đi đã!</p>'}</div></div>`);
     }
-    if (n.role === 'carpenter') {
-      const stock = P.furniture || {};
-      sections.push(`<div class="card"><h3>Đồ trang trí</h3><p class="small muted">Mua rồi về Nhà bấm Trang trí để đặt. Mỗi 10 điểm tiện nghi của đồ đã đặt: +1% kinh nghiệm mỗi trận (tối đa +5%). Nhà bạn đang có ${P.view.comfort} điểm.</p>
-        <div class="list">${FURNITURE.filter((fu) => !fu.event).map((fu) => {
-          const poor = P.gold < fu.price;
-          return `<div class="item"><img class="sprite" src="${asset('decor/' + fu.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(fu.name)}</div><div class="small muted">Tiện nghi +${fu.comfort}${stock[fu.id] ? ` · trong kho ${stock[fu.id]}` : ''}</div></div>
-            <button class="btn ${poor ? '' : 'primary'}" data-act="decor_buy" data-id="${fu.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(fu.price)}</button></div>`;
-        }).join('')}</div></div>`);
-    }
     if (n.role === 'market') sections.push(viewMarket());
     if (n.role === 'chaos') {
       const t = npcTabs(n.id, [['up', 'Ép +10/+11', forgeReady(true)], ['wing', 'Cánh', chaosReady('wing')], ['lines', 'Pha dòng', chaosReady('lines')], ['misc', 'Ngọc & vé', chaosReady('misc')]], 'up');
@@ -3526,11 +3462,11 @@
           ${rw ? `<p class="num">+${fmt(rw.xp)} kinh nghiệm · +${fmt(rw.gold)} vàng</p>` : ''}
           ${rw && rw.levels ? `<p style="color:var(--gold);font-weight:600">Lên cấp ${P.level}! Vào tab Nhân vật để cộng điểm.</p>` : ''}
           <div class="btn-row">
-            <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về nhà` : `${icon('walk')} Tiếp tục`}</button>
+            <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về Làng` : `${icon('walk')} Tiếp tục`}</button>
           </div>
           ${rw ? lootList(rw) : ''}
           ${r === 'lose' ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
-          ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Nhà uống nước giếng.</p>' : ''}
+          ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Làng uống nước giếng.</p>' : ''}
         </div>`;
     }
     return `
@@ -3699,7 +3635,7 @@
       case 'chest_buy': return { act, tier: d.tier };
       case 'pvp_challenge': return { act, uid: +d.uid };
       case 'market_buy': case 'market_cancel': return { act, listing: +d.listing };
-      case 'pet_buy': case 'pet_tame': case 'decor_buy': return { act, id: d.id };
+      case 'pet_buy': case 'pet_tame': return { act, id: d.id };
       case 'pet_feed': return { act };
       case 'pet_choose': return { act, id: d.id || null };
       case 'title_set': return { act, id: d.id || null };
@@ -3708,7 +3644,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -3834,9 +3770,8 @@
     // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
     const sec = { quests: 'quests', misc: null, admin: 'admin' };
     if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
-    tab = id; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    tab = id; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false;
     stopFishing();
-    if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
     render(); $('#view').scrollTop = 0;
   }
 
@@ -3861,7 +3796,7 @@
     if (tipAt) { hideTip(); return true; }
     if (npc) { npc = null; market.data = null; render(); return true; }
     if (dialog) { dialog = null; render(); return true; }
-    if (mail.open || notes.open || guildUi.open || friendsUi.open || visit) { mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
+    if (mail.open || notes.open || guildUi.open || friendsUi.open) { mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false; render(); return true; }
     if (!P.battle && tab !== 'map') { goTab('map'); return true; }
     return false;
   }
@@ -3890,7 +3825,6 @@
   function onMapTap(e) {
     if (e.target.id !== 'map-canvas' || !P || P.battle) return;
     const [x, y] = Map_.tileFromEvent(e);
-    if (decor.on && P.pos.map === 'home') { decorTap(x, y); return; }
     const other = Map_.playerAt(x, y);
     if (other) { openPlayer(other); return; }
     // chạm vào mặt nước: thả câu (phao rơi đúng ô đó), đang câu thì giật cần
@@ -3907,7 +3841,7 @@
   function enter(r) {
     secQ = undefined; secForm = false;
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -3925,7 +3859,7 @@
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
     // V4: bấm lại icon dock đang mở thì đóng, về Bản đồ
-    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open && !visit; goTab(open ? 'map' : t.dataset.tab); return; }
+    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open; goTab(open ? 'map' : t.dataset.tab); return; }
     // Tiến Lên (Phase 17) mở lớp phủ riêng (tienlen.js), không phải một mục Menu
     if (t.dataset.menu === 'tienlen') { window.TL.open(); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
@@ -3987,16 +3921,6 @@
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });
       return;
     }
-    if (act === 'home-visit') { walk = null; friendsUi.open = false; openVisit(+t.dataset.uid); $('#view').scrollTop = 0; return; }
-    if (act === 'visit-close') { visit = null; Map_.stopVisit(); render(); return; }
-    if (act === 'home-like') {
-      const v = visit && visit.info;
-      Net.homeLike(+t.dataset.uid).then((r) => {
-        if (v) { v.likes = r.likes; v.liked = true; }
-        Sound.play('quest'); toast('Đã khen nhà!'); render();
-      }).catch((e) => toast(e.msg, true));
-      return;
-    }
     if (act === 'market-tab') { market.tab = t.dataset.tab2; render(); return; }
     if (act === 'market-reload') { market.data = null; render(); return; }
     if (act === 'party-invite') { partyOp('invite', { uid: +t.dataset.uid }); return; }
@@ -4039,8 +3963,8 @@
       return;
     }
     if (act === 'profile-close') { profileUi = { open: false, info: null }; render(); return; }
-    // rời hồ sơ khi sang thăm nhà / vào trận
-    if (profileUi.open && (act === 'home-visit' || act === 'pvp_challenge')) profileUi = { open: false, info: null };
+    // rời hồ sơ khi vào trận
+    if (profileUi.open && act === 'pvp_challenge') profileUi = { open: false, info: null };
     if (act === 'notes-open') { notes.open = !notes.open; mail.open = false; walk = null; if (notes.open) { notes.list.forEach((n) => { n.read = true; }); saveNotes(); } render(); $('#view').scrollTop = 0; return; }
     if (act === 'notes-close') { notes.open = false; render(); return; }
     if (act === 'notes-clear') { notes.list = []; saveNotes(); render(); return; }
@@ -4049,8 +3973,6 @@
     if (act === 'fish-cast') { walk = null; castLine(); return; }
     if (act === 'sound-toggle') { Sound.toggle(); render(); return; }
     if (act === 'music-toggle') { Sound.toggleMusic(); render(); return; }
-    if (act === 'decor-on' || act === 'decor-off') { decor = { on: act === 'decor-on', pick: null }; walk = null; Map_.setDecorating(decor.on); render(); return; }
-    if (act === 'decor-pick') { decor.pick = decor.pick === t.dataset.id ? null : t.dataset.id; render(); return; }
     if (act === 'bestiary-toggle') { bestiaryOpen = !bestiaryOpen; render(); return; }
     if (act === 'guild-open') { guildUi.open = true; guildUi.list = null; guildUi.info = null; render(); $('#view').scrollTop = 0; loadGuild(); return; }
     if (act === 'guild-close') { guildUi.open = false; guildUi.confirm = null; render(); return; }

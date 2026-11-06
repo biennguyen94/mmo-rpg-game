@@ -1,7 +1,8 @@
 defmodule HacLong.Game.Storage do
   @moduledoc """
-  Tủ Đồ ở Nhà (Phase 4, C7). Hàm thuần, như `Engine`; lệnh chỉ chạy khi đứng cạnh Tủ Đồ
-  (`HacLong.Game.Commands`, NPC `role: "wardrobe"` trong `priv/maps/home.json`).
+  Tủ Đồ (Phase 4, C7) do Thủ Kho ở Làng giữ (trước ở Nhà; DECISIONS "Bỏ Nhà: Thủ Kho ở Làng"). Hàm thuần, như
+  `Engine`; lệnh chỉ chạy khi đứng cạnh Thủ Kho (`HacLong.Game.Commands`, NPC `role: "wardrobe"` trong
+  `priv/maps/village.json`).
 
   - Đồ thường cất trong `storage.inv` (`%{id => số}`), tối đa `RULES.storage.items` loại.
   - Đồ hiếm vẫn ở `gear` của nhân vật, gắn cờ `stored` (`HacLong.Game.Gear.stored?/2`): túi không

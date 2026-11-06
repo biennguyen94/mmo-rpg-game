@@ -79,14 +79,7 @@ defmodule HacLong.Game.DataCheck do
           "pets.json: PETS[#{p.id}] chỉ số \"#{k}\" chưa có tác dụng (#{Enum.join(@pet_bonus, ", ")})"
         end,
       for e <- d.events do
-        [
-          items.("events.json", "EVENTS[#{e.id}].token", [e.token]),
-          if(Enum.any?(d.furniture, &(&1.id == e.decor)),
-            do: [],
-            else:
-              "events.json: EVENTS[#{e.id}] có đồ trang trí \"#{e.decor}\" không có trong FURNITURE"
-          )
-        ]
+        items.("events.json", "EVENTS[#{e.id}].token", [e.token])
       end,
       for s <- d.upgrade.steps do
         [

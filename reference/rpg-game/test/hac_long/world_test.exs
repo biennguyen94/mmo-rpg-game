@@ -42,24 +42,34 @@ defmodule HacLong.WorldTest do
       assert Enum.any?(target.portals, &(&1.to == id)), "#{portal.to} không có cổng về #{id}"
     end
 
+    # chỗ hồi sinh mặc định ở Làng (Nhà đã bỏ, DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
     home = Maps.home_spawn()
-    assert Maps.walkable?(Maps.get("home"), home.x, home.y)
+    assert home.map == "village" and Maps.walkable?(Maps.get("village"), home.x, home.y)
+    assert Maps.get("home") == nil
   end
 
-  test "đi trong nhà, tường chặn, giếng hồi máu", %{uid: uid, p: p} do
-    assert p.pos == %{map: "home", x: 5, y: 6}
-    {%{ok: true}, p} = World.move(p, uid, "up")
-    assert p.pos.y == 5
+  test "nhân vật mới ở Làng; đá vào tường / cây bị chặn; giếng giữa Làng hồi máu", %{
+    uid: uid,
+    p: p
+  } do
+    assert p.pos == Maps.home_spawn() and p.pos.map == "village"
+    World.enter(p, uid)
 
-    {%{ok: false}, ^p} =
-      World.move(at(p, "home", 1, 1), uid, "left") |> then(fn {r, _} -> {r, p} end)
-
+    {%{ok: false}, _} = World.move(at(p, "village", 1, 1), uid, "up")
     {%{ok: false, msg: "Hướng đi không hợp lệ."}, _} = World.move(p, uid, "bay")
 
-    p = at(%{p | hp: 5}, "home", 8, 1)
-    {%{ok: true, msg: msg}, p} = World.move(p, uid, "right")
+    # giếng (ô F) ở giữa quảng trường
+    v = Maps.get("village")
+
+    {fx, fy} =
+      Enum.find_value(0..(v.height - 1), fn y ->
+        Enum.find_value(0..(v.width - 1), &(Maps.tile(v, &1, y) == "F" && {&1, y}))
+      end)
+
+    q = at(%{p | hp: 5}, "village", fx - 1, fy)
+    {%{ok: true, msg: msg}, q} = World.move(q, uid, "right")
     assert msg =~ "nước giếng"
-    assert p.hp == Engine.derived(p).maxHp and p.pos.x == 8
+    assert q.hp == Engine.derived(q).maxHp and q.pos.x == fx - 1
   end
 
   test "cổng vào vùng chưa đủ cấp bị khóa (mở theo cấp, không cần hạ trùm)", %{uid: uid, p: p} do
@@ -270,10 +280,10 @@ defmodule HacLong.WorldTest do
     assert Blessing.bonus(spent, String.to_atom(k)) == 0
     assert Blessing.respawn(spent) == %{map: "forest_2", x: sx, y: sy}
 
-    # gục ngã: về cạnh đài, không về Nhà
+    # gục ngã: về cạnh đài; chưa chạm đài nào thì về Làng
     lost = %{spent | battle: %{over: true, result: "lose"}}
     assert World.finish_encounter(lost, uid).pos == %{map: "forest_2", x: sx, y: sy}
-    assert World.finish_encounter(%{lost | blessing: nil}, uid).pos.map == "home"
+    assert World.finish_encounter(%{lost | blessing: nil}, uid).pos.map == "village"
   end
 
   # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì giữ máu, hồi dần (B-25)

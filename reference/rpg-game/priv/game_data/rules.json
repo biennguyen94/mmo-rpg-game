@@ -640,12 +640,6 @@
         }
       ]
     },
-    "home": {
-      "max_decor": 20,
-      "comfort_step": 10,
-      "xp_per_step": 0.01,
-      "max_xp_bonus": 0.05
-    },
     "storage": {
       "items": 40,
       "gear": 20,
@@ -667,7 +661,6 @@
     "events": {
       "xp_bonus": 0.1,
       "shop": {
-        "decor": 30,
         "gear": 12,
         "potions": 6,
         "gold": 3
@@ -1072,8 +1065,7 @@
       "base": 20,
       "per_level": 4,
       "free": [
-        "village",
-        "home"
+        "village"
       ]
     },
     "auto": {
@@ -1118,8 +1110,7 @@
       "max_timeouts": 3,
       "min_level": 10,
       "safe_maps": [
-        "village",
-        "home"
+        "village"
       ],
       "protect_s": 30,
       "red_s": 1800,

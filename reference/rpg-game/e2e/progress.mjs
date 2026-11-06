@@ -106,9 +106,9 @@ R.check('ghép: tốn đúng nguyên liệu + vàng, thành công thì có Ngọ
 await shot(page, 'progress-chaos.png');
 await leaveNpc(page);
 
-// ---------- Tủ Đồ ở Nhà ----------
-await travel(page, 'home');
-R.check('gặp Tủ Đồ', await meetNpc(page, 'wardrobe'));
+// ---------- Tủ Đồ (Thủ Kho ở Làng) ----------
+if ((await player(page)).pos.map !== 'village') await travel(page, 'village');
+R.check('gặp Thủ Kho (Tủ Đồ)', await meetNpc(page, 'wardrobe'));
 await act(page, `[data-act="store"][data-id="${rare}"]`);
 await act(page, '[data-act="store"][data-id="herb"][data-n="1"]');
 p = await player(page);
