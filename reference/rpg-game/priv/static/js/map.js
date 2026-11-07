@@ -671,6 +671,7 @@
       if (names) labels.push([boss.name, px + TILE / 2, py - TILE - 22, '#ef6a5a']);
     }
 
+    if (fx && P.pos.map === 'village') villageFx(now, m, cx, cy);
     const hero = image('monsters/hero');
     // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
     // xem danh sách người trong bản đồ ở nút 👫 trên dock.
@@ -897,6 +898,44 @@
       ctx.beginPath(); ctx.moveTo(x + 6, y); ctx.lineTo(x + 20, y - 12 - tug); ctx.stroke();
       ctx.strokeStyle = 'rgba(230, 230, 230, 0.6)'; ctx.lineWidth = 0.8;
       ctx.beginPath(); ctx.moveTo(x + 20, y - 12 - tug); ctx.lineTo(x + 24, y + 10); ctx.stroke();
+    } else if (id === 'pet_keeper') {
+      // B10: tim bay lên
+      for (let i = 0; i < 2; i++) {
+        const k = ((t / 2200) + i / 2) % 1;
+        ctx.fillStyle = `rgba(255, 120, 150, ${0.8 * (1 - k)})`;
+        heart(x + 9 + Math.sin(t / 400 + i * 3) * 3, y - 2 - k * 20, 2.6);
+      }
+    } else if (id === 'merchant' || id === 'dealer') {
+      // B10: xu / lá bài lấp lánh
+      const k = (t % 1600) / 1600;
+      if (k < 0.5) {
+        ctx.fillStyle = id === 'merchant' ? `rgba(255, 215, 90, ${1 - k * 2})` : `rgba(240, 240, 255, ${1 - k * 2})`;
+        ctx.fillRect(x + 8, y - 4 - k * 16, id === 'merchant' ? 4 : 3, id === 'merchant' ? 4 : 5);
+      }
+    } else if (id === 'board') {
+      // B10: tờ giấy rung theo gió
+      ctx.fillStyle = 'rgba(245, 235, 210, 0.9)';
+      ctx.save(); ctx.translate(x + 7, y - 6); ctx.rotate(Math.sin(t / 300) * 0.25); ctx.fillRect(-3, 0, 6, 7); ctx.restore();
+    } else if (id === 'festival' || id === 'wardrobe') {
+      // B10: hoa giấy / lấp lánh
+      for (let i = 0; i < 5; i++) {
+        const k = ((t / 1700) + i / 5) % 1;
+        ctx.fillStyle = ['#ff6a6a', '#ffd24a', '#7fd08a', '#9fd8ff', '#c49bff'][i];
+        ctx.globalAlpha = 0.85 * (1 - k);
+        ctx.fillRect(x - 10 + i * 5 + Math.sin(t / 300 + i) * 3, y - 18 + k * 26, 2, 3);
+        ctx.globalAlpha = 1;
+      }
+    } else if (id === 'tower_guard') {
+      // B10: mũi giáo lóe sáng
+      const k = (t % 2600) / 2600;
+      if (k < 0.12) { ctx.fillStyle = `rgba(255, 255, 255, ${1 - k / 0.12})`; ctx.fillRect(x + 9, y - 16, 2, 6); ctx.fillRect(x + 7, y - 14, 6, 2); }
+    } else if (id === 'girl') {
+      // B10: cánh hoa bay
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 2600) + i / 3) % 1;
+        ctx.fillStyle = `rgba(255, 180, 210, ${0.85 * (1 - k)})`;
+        ctx.beginPath(); ctx.ellipse(x - 6 + k * 22, y - 8 + Math.sin(k * 6 + i) * 6, 2, 1.2, k * 4, 0, Math.PI * 2); ctx.fill();
+      }
     } else if (id === 'chaos') {
       for (let i = 0; i < 3; i++) {
         const a = t / 400 + i * 2.1;
@@ -904,6 +943,74 @@
         ctx.beginPath(); ctx.arc(x + Math.cos(a) * 13, y - 4 + Math.sin(a) * 5, 1.8, 0, Math.PI * 2); ctx.fill();
       }
     }
+  }
+
+  function heart(x, y, r) {
+    ctx.beginPath(); ctx.moveTo(x, y + r);
+    ctx.bezierCurveTo(x - r * 2, y - r * 0.4, x - r * 0.8, y - r * 1.8, x, y - r * 0.6);
+    ctx.bezierCurveTo(x + r * 0.8, y - r * 1.8, x + r * 2, y - r * 0.4, x, y + r);
+    ctx.fill();
+  }
+
+  // B10: Làng sống động — dân làng đi dạo theo vòng đường đất, chó chạy theo, cừu gặm cỏ, gà mổ thóc, cờ bay trên cột.
+  // Chỉ là hình (không chắn đường, không bấm được); vị trí tính thẳng từ thời gian nên ai cũng thấy na ná nhau.
+  const LOOP = [[6, 5], [18, 5], [18, 11], [6, 11]];
+  function loopAt(k) {
+    const segs = LOOP.map((a, i) => [a, LOOP[(i + 1) % LOOP.length]]);
+    const lens = segs.map(([a, b]) => Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]));
+    let d = (((k % 1) + 1) % 1) * lens.reduce((s, v) => s + v, 0);
+    for (let i = 0; i < segs.length; i++) {
+      if (d <= lens[i]) { const [a, b] = segs[i], f = d / lens[i]; return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.sign(b[0] - a[0])]; }
+      d -= lens[i];
+    }
+    return [LOOP[0][0], LOOP[0][1], 1];
+  }
+  function sprite(path, x, y, s, flip) {
+    const im = image(path);
+    if (!im.complete) return;
+    ctx.save(); ctx.translate(x + TILE / 2, y + TILE);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(im, -TILE * s / 2, -TILE * s, TILE * s, TILE * s);
+    ctx.restore();
+  }
+  function villageFx(t, m, cx, cy) {
+    const walkers = [['npcs/carpenter', 0, 1 / 95000], ['npcs/hunter', 0.5, 1 / 110000]];
+    for (const [img, off, sp] of walkers) {
+      const [gx, gy, dir] = loopAt(off + t * sp);
+      const px = gx * TILE - cx, py = gy * TILE - cy - Math.abs(Math.sin(t / 160 + off * 9)) * 1.5;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'; ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 3, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+      sprite(img, px, py, 0.9, dir < 0);
+    }
+    // chó chạy theo người thứ nhất, lùi 1,2 ô
+    {
+      const [gx, gy, dir] = loopAt(t / 95000 - 0.03);
+      const px = gx * TILE - cx, py = gy * TILE - cy + 6 - Math.abs(Math.sin(t / 110)) * 3;
+      sprite('monsters/jackal', px, py, 0.6, dir > 0);
+    }
+    // cừu gặm cỏ ở bãi cỏ góc dưới phải (đi qua lại chậm), cúi đầu nhịp nhàng
+    for (let i = 0; i < 2; i++) {
+      const gx = 20.5 + Math.sin(t / 9000 + i * 2) * 1.5, gy = 12 + i * 0.5;
+      sprite('monsters/wild_sheep', gx * TILE - cx, gy * TILE - cy + Math.max(0, Math.sin(t / 700 + i * 3)) * 2, 0.7, Math.cos(t / 9000 + i * 2) < 0);
+    }
+    // gà mổ thóc cạnh Bác Đầu Bếp
+    for (let i = 0; i < 3; i++) {
+      const gx = 3 + i * 0.7 + Math.sin(t / 4000 + i * 2.3) * 0.4, gy = 9.6 + (i % 2) * 0.4;
+      const px = gx * TILE - cx, py = gy * TILE - cy, peck = (t / 380 + i * 1.7) % 3 < 0.4 ? 3 : 0;
+      ctx.fillStyle = '#f2efe6'; ctx.beginPath(); ctx.ellipse(px, py, 5, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px + 4, py - 3 + peck, 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d9483b'; ctx.fillRect(px + 3.5, py - 6.5 + peck, 2, 2);
+      ctx.fillStyle = '#e8b84a'; ctx.fillRect(px + 6.4, py - 3 + peck, 2, 1.2);
+    }
+    // cờ bay trên các cột đá (ô I)
+    m.tiles.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c !== 'I') return;
+      const px = x * TILE - cx + TILE / 2, py = y * TILE - cy - 6;
+      ctx.fillStyle = '#5a4630'; ctx.fillRect(px - 1, py - 14, 2, 16);
+      ctx.beginPath(); ctx.moveTo(px + 1, py - 14);
+      for (let i = 0; i <= 6; i++) ctx.lineTo(px + 1 + i * 2.2, py - 14 + Math.sin(t / 200 + i * 0.8 + x) * 1.6 + i * 0.25);
+      for (let i = 6; i >= 0; i--) ctx.lineTo(px + 1 + i * 2.2, py - 7 + Math.sin(t / 200 + i * 0.8 + x) * 1.6 - i * 0.25);
+      ctx.closePath(); ctx.fillStyle = x % 2 ? '#c0392b' : '#e8b84a'; ctx.fill();
+    }));
   }
 
   // cột sáng vàng khi lên cấp (k: 0..1)
