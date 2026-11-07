@@ -82,6 +82,8 @@
     rare() { noise(0.25, { freq: 1500, vol: 0.3 }); notes([1047, 1319, 1568, 2093], 0.07, { type: 'triangle', vol: 0.16, dur: 0.2, at: 0.1 }); },
     // B8: trùm xuất hiện — tiếng gầm trầm, rung
     roar() { tone(70, 0.9, { type: 'sawtooth', to: 38, vol: 0.4 }); tone(105, 0.7, { type: 'sawtooth', to: 52, vol: 0.25, at: 0.05 }); noise(0.9, { freq: 260, to: 90, vol: 0.35, type: 'lowpass' }); },
+    // B5: sấm xa khi giông
+    thunder() { noise(1.4, { freq: 180, to: 60, vol: 0.32, type: 'lowpass' }); tone(48, 1.2, { type: 'sawtooth', to: 30, vol: 0.12, at: 0.05 }); },
     // B8: pháo sáng khi hạ trùm
     firework() { noise(0.12, { freq: 4000, vol: 0.25 }); tone(1400, 0.25, { type: 'sine', to: 400, vol: 0.08, at: 0.02 }); },
     encounter() { tone(98, 0.12, { type: 'triangle', vol: 0.4 }); tone(98, 0.14, { type: 'triangle', vol: 0.4, at: 0.14 }); noise(0.1, { freq: 300, vol: 0.2, type: 'lowpass', at: 0.14 }); },

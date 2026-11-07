@@ -193,6 +193,18 @@
   // hạt đứng yên trong thế giới (tuyết, lá, mưa không "đi theo" nhân vật)
   const wrap = (v, m) => ((v % m) + m) % m;
   // thời tiết theo nền bản đồ
+  // B5: thời tiết chung cả server (server gửi `world.weather` theo giờ); bản đồ tháp / sự kiện: theo nền tầng như trước
+  const WEATHER_ICON = { clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' };
+  const WEATHER_NAME = { clear: 'Trời quang', rain: 'Mưa', storm: 'Giông bão', fog: 'Sương mù', snow: 'Tuyết rơi', blizzard: 'Bão tuyết', leaves: 'Lá bay', dust: 'Gió cát', embers: 'Tàn lửa' };
+  function weatherNow(m, id) {
+    if (world.map === id && world.weather && !m.tower) return world.weather === 'clear' ? null : world.weather;
+    return weatherOf(m, id);
+  }
+  // biểu tượng thời tiết trên thanh tên bản đồ (cập nhật khi sự kiện "map" tới, `setWorld`)
+  function wxIcon(P) {
+    const wk = P && world.map === P.pos.map && outdoors(P) ? world.weather : null;
+    return wk && WEATHER_ICON[wk] ? `<span title="${WEATHER_NAME[wk]}">${WEATHER_ICON[wk]}</span> ` : '';
+  }
   function weatherOf(m, id) {
     if (id === 'village') return 'smoke';
     const f = m.floor || '';
@@ -217,10 +229,36 @@
     return chimneyCache.get(id);
   }
 
+  let thunderAt = 0;
   function weather(kind, t, cx, cy, m, id) {
     const vw = VW(), vh = VH();
     // khung bản đồ đang ẩn (trong trận): rộng / cao 0 thì wrap chia cho 0 ra NaN
     if (!(vw > 0 && vh > 0)) return;
+    if (kind === 'storm') {
+      // mưa to xiên + chớp: mỗi ~9 giây một lần lóe (hai nhịp), sấm theo sau
+      ctx.strokeStyle = 'rgba(170, 200, 230, 0.55)'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < 130; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * 0.3 - cx, vw + 60) - 30, y = wrap(rnd(i, 2) * vh + t * 0.8 - cy, vh);
+        ctx.moveTo(x, y); ctx.lineTo(x - 6, y + 13);
+      }
+      ctx.stroke();
+      const cyc = t % 9000;
+      if (cyc < 90 || (cyc > 180 && cyc < 260)) {
+        ctx.fillStyle = `rgba(230, 235, 255, ${cyc < 90 ? 0.45 : 0.25})`; ctx.fillRect(0, 0, vw, vh);
+        if (t - thunderAt > 5000) { thunderAt = t; setTimeout(() => window.Sound && window.Sound.play('thunder'), 500); }
+      }
+      return;
+    }
+    if (kind === 'blizzard') {
+      for (let i = 0; i < 120; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * (0.12 + rnd(i, 4) * 0.08) - cx, vw), y = wrap(rnd(i, 2) * vh + t * (0.05 + rnd(i, 3) * 0.05) - cy, vh);
+        ctx.fillStyle = `rgba(245, 248, 255, ${0.5 + 0.4 * rnd(i, 5)})`;
+        ctx.fillRect(x, y, 2 + rnd(i, 6) * 2, 2);
+      }
+      ctx.fillStyle = 'rgba(225, 235, 250, 0.12)'; ctx.fillRect(0, 0, vw, vh);
+      return;
+    }
     if (kind === 'rain') {
       ctx.strokeStyle = 'rgba(170, 200, 230, 0.5)'; ctx.lineWidth = 1;
       ctx.beginPath();
@@ -418,7 +456,8 @@
     const z = m.zone != null ? ZONES[m.zone] : null;
     // bản đồ phụ (Phase 15a): cấp quái lấy từ Thư viện
     const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
-    const ph = PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '';
+    const ph = (PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '') +
+      `<span class="phase" id="map-wx">${wxIcon(P)}</span>`;
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
         <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
@@ -690,8 +729,10 @@
       // Hồ Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
       if (m.fish === 'lake') lakeFx(now, m, cx, cy);
       // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
-      const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
+      const w = (outdoors(P) || m.tower) && weatherNow(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
+      // Làng: khói bếp luôn có, thời tiết nào cũng vậy
+      if (P.pos.map === 'village' && w !== 'smoke') weather('smoke', now, cx, cy, m, P.pos.map);
     }
     // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng (B6: chuyển dần, ánh cam hồng lúc bình minh / hoàng hôn)
     const [dark0, glowK] = outdoors(P) ? sky() : [0, 0];
@@ -1250,6 +1291,7 @@
     bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
     setWorld(snap) {
+      const wxOld = world.weather;
       // FX đợt 3: so với lần trước (cùng bản đồ): máu quái tụt → tia chém; quái biến mất khi đã bị đánh → tan thành hạt
       if (fxOn() && world.map && snap && snap.map === world.map) {
         const t = performance.now(), next = new Map((snap.monsters || []).map((q) => [q.id, q]));
@@ -1261,6 +1303,8 @@
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }
       world = snap;
+      const wx = document.getElementById('map-wx');
+      if (wx && (snap.weather !== wxOld || !wx.innerHTML)) wx.innerHTML = wxIcon(getPlayer());
       draw();
     },
     world: () => world,

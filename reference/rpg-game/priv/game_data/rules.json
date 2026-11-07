@@ -1118,6 +1118,23 @@
       "version": 7,
       "verified": false
     },
+    "weather": {
+      "_doc": "DECISIONS \"Bản đồ đẹp hơn\" (B5): thời tiết chung cả server, đổi mỗi slot_min phút (theo giờ Việt Nam). Mỗi vùng (theo nền bản đồ; Làng, Hồ Long Vương riêng) bốc một loại theo trọng số, cùng mốc giờ thì mọi người thấy như nhau. Chỉ là hình, không đổi luật chơi. Loại: clear (trời quang), rain, storm (mưa to + chớp), fog, snow, blizzard (bão tuyết), leaves (lá rơi), dust (bụi cát), embers (tàn lửa). Bản đồ tháp / sự kiện giữ hiệu ứng theo nền tầng.",
+      "slot_min": 60,
+      "regions": {
+        "village": [["clear", 55], ["rain", 20], ["storm", 8], ["fog", 10], ["leaves", 7]],
+        "lake": [["clear", 50], ["rain", 20], ["fog", 20], ["storm", 10]],
+        "forest": [["leaves", 45], ["clear", 15], ["rain", 25], ["storm", 8], ["fog", 7]],
+        "swamp": [["rain", 40], ["fog", 30], ["storm", 15], ["clear", 15]],
+        "mountain": [["snow", 55], ["blizzard", 15], ["fog", 15], ["clear", 15]],
+        "graveyard": [["fog", 50], ["rain", 20], ["storm", 15], ["clear", 15]],
+        "camp": [["dust", 45], ["clear", 30], ["rain", 15], ["storm", 10]],
+        "lair": [["embers", 70], ["clear", 30]]
+      },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "slay": {
       "turn_s": 10,
       "max_timeouts": 3,

@@ -533,6 +533,8 @@ defmodule HacLong.World.MapServer do
     %{
       map: s.map.id,
       phase: Clock.phase(),
+      # B5: thời tiết chung cả server theo giờ (HacLong.World.Weather), nil ở bản đồ không có thời tiết
+      weather: HacLong.World.Weather.kind(s.map),
       monsters: s.monsters |> Map.values() |> Enum.map(&public/1),
       nodes: s.nodes |> Map.values() |> Enum.map(&public_node/1),
       players:
