@@ -27,6 +27,17 @@ defmodule HacLong.Bots.BrainTest do
     assert %{"act" => "leave"} = Brain.decide(put_in(p.battle.over, true), nil)
   end
 
+  test "đánh người: hết lượt uống bình (đã uống đủ / chưa hết lượt chờ) thì đánh tiếp, không đứng im" do
+    p = %{player() | hp: 5, inv: %{"potion_s" => 5}}
+    {_, p} = Engine.start_battle(p, 0, false)
+    p = put_in(p, [:battle, :monster, :pvp], true)
+    assert %{"act" => "potion"} = Brain.decide(p, nil)
+    used = put_in(p, [:battle, :pots_used], Engine.pvp_rules().potion_max)
+    refute match?(%{"act" => "potion"}, Brain.decide(used, nil))
+    waiting = put_in(p, [:battle, :pot_at], p.battle.turn)
+    refute match?(%{"act" => "potion"}, Brain.decide(waiting, nil))
+  end
+
   test "đồ sát: chưa tới lượt thì chờ, tới lượt thì đánh / uống bình như thường" do
     Rng.put_sequence([0.5])
     {_, p} = Engine.start_battle(%{player() | level: 10}, 0, true)

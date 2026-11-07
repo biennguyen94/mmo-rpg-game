@@ -161,6 +161,12 @@ defmodule HacLongWeb.SlayTest do
     assert Enum.any?(texts, &(&1 =~ "Đòn mở màn")) or
              Enum.any?(texts, &(&1 =~ ", đánh trượt."))
 
+    # nhật ký người đánh: máu còn lại là máu thật của đối thủ (không phải số tạm của máy tính trận), sát thương ≤ máu tối đa
+    max_b = HacLong.Game.Engine.derived(pb).maxHp
+    hits = Enum.filter(pa.battle.log, &(&1[:who] == "me" and is_integer(&1[:left])))
+    assert hits != []
+    assert Enum.all?(hits, &(&1.left <= max_b and &1.dmg <= max_b))
+
     ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục #{pb.name}."))
     assert ko && Enum.at(texts, ko - 1) =~ name_a
 

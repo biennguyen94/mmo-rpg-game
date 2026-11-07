@@ -1036,6 +1036,18 @@ defmodule HacLong.Game.Engine do
 
   # Đánh người (DECISIONS "Đánh người: bình máu"): bình máu hồi × `RULES.pvp.potion_mult`, mỗi `potion_cd` lượt
   # của mình uống được một lần (uống ở lượt T thì lượt T + potion_cd mới uống lại), tối đa `potion_max` bình mỗi trận.
+  @doc """
+  Uống bình máu được không lúc này (đánh người: chưa quá `potion_max` bình, đã qua `potion_cd` lượt). Bot dùng để không
+  gửi lệnh uống bị từ chối rồi đứng im tới hết lượt.
+  """
+  def potion_ready?(%{battle: %{monster: m} = b}) do
+    m[:pvp] == nil or
+      ((b[:pots_used] || 0) < @pvp.potion_max and
+         (b[:pot_at] || -99) + @pvp.potion_cd - (b.turn + 1) <= 0)
+  end
+
+  def potion_ready?(_p), do: true
+
   defp act_potion(p, d) do
     id = best_potion(p, d.maxHp - p.hp)
     poisoned = Enum.filter(effects(p, :player), &(&1.id in @dots))

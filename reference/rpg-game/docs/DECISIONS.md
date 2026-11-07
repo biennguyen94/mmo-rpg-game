@@ -1567,3 +1567,7 @@ Sau khi giảm tăng theo cấp của mọi thú xuống 5%, Long Vương giữ 
 ## Đấu trường: chỉ thách cùng hạng hoặc hạng trên (2026-11-07, anh chốt)
 Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự kiện (`RULES.event_rooms.bands`: CS 0–1, 2–3, 4–5, 6–7, 8–9, 10+). Chỉ thách đấu được người **cùng hạng hoặc hạng cao hơn** (`Arena.min_rebirths/1`: từ mốc đầu hạng mình trở lên); người hạng dưới không bị người hạng trên thách (không còn bị trừ điểm oan). Không thách nhân vật cùng tài khoản (chống nuôi điểm bằng nhân vật phụ). Gợi ý đối thủ và tìm theo tên chỉ ra người trong phạm vi được đánh (cùng hạng trước). Tab Đấu trường ghi hạng của mình. Đồ sát không đổi.
 
+## Đồ sát: sửa nhật ký và bot không đánh trả (2026-11-07)
+- Nhật ký người đánh hiện "máu còn lại: 9.999.548": máy tính trận đồ sát cộng tạm `@slay_pad` (10 triệu) vào máu bản sao đối thủ trong lượt. Nay `fix_slay_log` thay bằng máu thật của đối thủ, và sát thương ghi đúng phần đối thủ thật sự mất (sau đòn mở màn ×`first_strike_mult`, thủ thế / khiên / thú của họ) — trước ghi số trước khi giảm.
+- Bot bị đồ sát đứng im: máu thấp thì bot chọn uống bình, nhưng đánh người giới hạn `potion_max` bình mỗi trận và `potion_cd` lượt chờ → lệnh bị từ chối, bot không làm gì tới hết giờ lượt. Nay `Engine.potion_ready?/1`: hết lượt uống thì bot đánh / dùng kỹ năng.
+

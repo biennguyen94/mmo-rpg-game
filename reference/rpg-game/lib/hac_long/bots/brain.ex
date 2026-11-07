@@ -597,7 +597,9 @@ defmodule HacLong.Bots.Brain do
     starved? = ready != [] and d.maxMp >= Enum.min(Enum.map(ready, &Engine.skill_mp(p, &1)))
 
     cond do
-      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) ->
+      # đánh người: bình còn được uống (giới hạn số bình / lượt chờ), không thì đánh tiếp thay vì đứng im
+      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) != nil and
+          Engine.potion_ready?(p) ->
         %{"act" => "potion"}
 
       skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->

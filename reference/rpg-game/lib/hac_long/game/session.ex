@@ -1156,8 +1156,9 @@ defmodule HacLong.Game.Session do
   @first_strike HacLong.Game.Data.rules().slay[:first_strike_mult] || 1
 
   defp slay_hit(p2, nil, foe_hp, _first?) do
-    hp = max(0, foe_hp - (foe_hp + @slay_pad - p2.battle.monster.hp))
-    {put_in(p2, [:battle, :monster, :hp], hp), nil}
+    raw = foe_hp + @slay_pad - p2.battle.monster.hp
+    hp = max(0, foe_hp - raw)
+    {p2 |> fix_slay_log(raw, raw, hp) |> put_in([:battle, :monster, :hp], hp), nil}
   end
 
   # `first?`: lượt đầu của người tấn công, sát thương × `RULES.slay.first_strike_mult` (đòn mở màn)
@@ -1192,12 +1193,46 @@ defmodule HacLong.Game.Session do
 
     mine = Enum.map(foe2.battle.log, &BattleText.mirror(&1.text, name, p2.name))
 
+    # nhật ký lượt này của mình: máu còn lại thật của đối thủ (máy tính trận cộng tạm `@slay_pad`) và sát thương thật
+    # (sau đòn mở màn, thủ thế / khiên của họ) thay số tạm
+    p2 = fix_slay_log(p2, raw, real, max(foe2.hp, 0))
+
     p2 =
       p2
       |> put_in([:battle, :monster, :hp], max(foe2.hp, 0))
       |> update_in([:battle, :log], &(&1 ++ Enum.map(mine, fn t -> %{text: t, kind: "info"} end)))
 
     {p2, foe2}
+  end
+
+  defp fix_slay_log(p2, raw, real, left) do
+    log =
+      Enum.map(p2.battle.log, fn
+        %{left: l} = e when is_integer(l) and l > div(@slay_pad, 2) -> %{e | left: left}
+        e -> e
+      end)
+
+    # dòng đòn đánh cuối cùng của mình có sát thương (lượt này)
+    idx =
+      log
+      |> Enum.with_index()
+      |> Enum.filter(fn {e, _} -> e[:who] == "me" and e[:dmg] end)
+      |> List.last()
+
+    log =
+      case idx do
+        {%{dmg: d} = e, i} when raw > 0 and real != d ->
+          List.replace_at(log, i, %{
+            e
+            | dmg: real,
+              text: String.replace(e.text, "gây #{d} sát thương", "gây #{real} sát thương")
+          })
+
+        _ ->
+          log
+      end
+
+    put_in(p2, [:battle, :log], log)
   end
 
   defp world_strike(s, p, cmd) do
