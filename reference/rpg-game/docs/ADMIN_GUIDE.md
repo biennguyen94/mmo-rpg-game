@@ -438,7 +438,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Vùng đất chuyển sinh (cấp vào, hệ số sức mạnh quái, rơi đồ / ngọc thêm); quái từng vùng ở `realms.json` | `realms` |
 | Né tối đa (`combat.dodge.max_total`), dòng Excellent theo cấp (`excellent.options.weapon.atk_lvl`) | `combat`, `excellent` |
 | Tự đánh: nhịp ra lệnh, % uống bình mặc định / giới hạn, số dòng cộng thêm để giữ đồ khi lọc "chỉ đồ quý" | `auto` |
-| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`) | `bots` |
+| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`); câu cá, săn Long Vương (`fish`); bot try hard (`tryhard`) | `bots` |
 
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.

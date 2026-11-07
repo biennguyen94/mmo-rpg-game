@@ -1576,3 +1576,21 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
 ## Thùng đồ chung: không lẫn vào túi đồ (2026-11-07, lỗi anh báo)
 Đồ trong thùng chung (của nhân vật khác cất) hiện cả ở túi đồ / Thủ Kho phần "Túi đồ" của nhân vật vừa vào: `Engine.view.gear` bị gộp thêm đồ trong thùng để giao diện vẽ. Nay `view.gear` chỉ là đồ của nhân vật; đồ trong thùng có thông tin riêng ở `view.storage.items` (`Storage.view/1`), client `itemOf` tra cả hai.
 
+
+## Bot câu cá, bot try hard (2026-11-07, anh yêu cầu)
+- **Câu cá:** từ cấp vào được Hồ Long Vương, mỗi `RULES.bots.fish.every_min` phút (ngẫu nhiên trong khoảng) bot ra hồ câu
+  `stay_min` phút. Có Đàn Cá Vàng thì đứng trong tầm và thả trúng ô đàn cá, không thì thả ô nước cạnh bên. Câu đủ cá trong ngày thì
+  nhận việc Ông Lão. Thả câu xong, bot giật cần sau khi cá cắn `react_ms` mili giây (ngẫu nhiên). Bot thường giật chậm quá cửa sổ 1
+  giây khoảng 1/9 số lần thì trượt, như người. Đứng câu lâu một chỗ không bị coi là kẹt: số cá, Long Khí cũng là tiến triển.
+- **Săn Long Vương:** Ngài nổi thì bot "săn rồng" bỏ việc rảnh ra hồ, đứng trong tầm `fishing.dragon.reach` và thả trúng ô
+  Ngài. Bot săn rồng là bot try hard hoặc seed chia hết cho `fish.chase_every` (khoảng 1/3 số bot), và chưa có Long Vương. Đang
+  leo Tháp Vô Tận thì ra cổng đi luôn; đang ở Quảng Trường / Lâu Đài / Kalima thì đánh xong sự kiện. Có Mồi Rồng thì dùng như người.
+  Cơ hội vẫn theo luật chung (`fishing.dragon.chance` × Long Khí × mồi), bot không được ưu tiên gì.
+- **Bot câu được Long Vương:** ghi Bia Long Vương và **báo cả server** như người thật. Đây là ngoại lệ duy nhất của luật "bot
+  không báo cả server"; Long Vương rất hiếm nên không làm loãng dải thông báo.
+- **Bot try hard** (`RULES.bots.tryhard`, seed chia hết cho `every` = 5, khoảng 1/5 số bot):
+  - luôn săn Long Vương và luôn ép liều +10 / +11;
+  - nghỉ sau khi gục `rest_mult` × thời gian thường;
+  - leo Tháp mỗi `tower_every_min` phút, ra hồ mỗi `fish_every_min` phút, câu `fish_stay_min` phút;
+  - giật cần nhanh hơn (`react_ms`).
+- Nếu bot câu được Long Vương nhiều quá so với người chơi thật: giảm `fish.chase_every` (ít bot săn hơn) hoặc thời gian câu.

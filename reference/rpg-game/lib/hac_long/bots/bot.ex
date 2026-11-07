@@ -5,7 +5,11 @@ defmodule HacLong.Bots.Bot do
   `HacLong.Bots.Brain` lệnh tiếp theo và gửi qua `Session.command/2` như client.
 
   Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây. Vừa gục (bị đồ sát,
-  thua quái…) thì đứng nghỉ ở Làng `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/4`).
+  thua quái…) thì đứng nghỉ ở Làng `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/5`).
+
+  Câu cá (DECISIONS "Bot câu cá, bot try hard"): hẹn lượt ra Hồ Long Vương (`RULES.bots.fish`), báo Brain ô Long Vương /
+  Đàn Cá Vàng đang có; thả câu xong thì giật cần sau khi cá cắn `react_ms` mili giây. Bot try hard (`RULES.bots.tryhard`)
+  nghỉ ít hơn, leo Tháp và ra hồ thường hơn, giật cần nhanh hơn.
   """
   use GenServer, restart: :transient
   require Logger
@@ -30,6 +34,9 @@ defmodule HacLong.Bots.Bot do
   # trung bình khoảng 4 phút một câu (mỗi nhịp ~0,6 giây)
   @chat_chance 1 / 400
   @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
+  # câu cá, bot try hard (DECISIONS "Bot câu cá, bot try hard")
+  @fish HacLong.Game.Data.rules().bots.fish
+  @tryhard HacLong.Game.Data.rules().bots.tryhard
   @feed_every HacLong.Game.Data.rules().bots.play.feed_every_min
   @tower_max HacLong.Game.Data.rules().bots.play.tower_max_min * 60_000
   # tự gỡ kẹt (DECISIONS "Đưa về Làng"): đứng yên quá chừng này thì về Làng
@@ -53,7 +60,12 @@ defmodule HacLong.Bots.Bot do
        deaths: nil,
        rest_until: System.monotonic_time(:millisecond),
        # lần leo Tháp Vô Tận tiếp theo (`RULES.bots.play.tower_every_min`)
-       next_tower: next_tower(System.monotonic_time(:millisecond)),
+       next_tower: next_in(System.monotonic_time(:millisecond), tower_every(uid)),
+       # lượt ra Hồ Long Vương câu cá tiếp theo, và lúc lượt đang câu kết thúc
+       next_fish: next_in(System.monotonic_time(:millisecond), fish_every(uid)),
+       fish_until: System.monotonic_time(:millisecond),
+       # đã thả câu, đang chờ giật cần (`:reel`)
+       reeling: false,
        # lần cho thú ăn tiếp theo (`play.feed_every_min`): ngay từ đầu được cho ăn
        next_feed: System.monotonic_time(:millisecond),
        # bản đồ đang đứng ở nhịp trước (gục thì biết gục ở đâu) và các chỗ đang tránh (`Brain.note_death/3`)
@@ -81,6 +93,13 @@ defmodule HacLong.Bots.Bot do
       {:noreply, s}
   end
 
+  def handle_info(:reel, s) do
+    Session.command(s.uid, %{"act" => "fish_reel"})
+    {:noreply, %{s | reeling: false}}
+  catch
+    _, _ -> {:noreply, %{s | reeling: false}}
+  end
+
   def handle_info(:tick, s) do
     s = tick(s)
     {:noreply, s}
@@ -100,7 +119,15 @@ defmodule HacLong.Bots.Bot do
 
     # vừa gục (về Làng): nghỉ một lúc rồi mới đi luyện tiếp; gục nhiều ở một chỗ thì tạm tránh chỗ đó
     s = note_death(s, p, now)
-    s = %{s | rest_until: Brain.rest_until(s.rest_until, s.deaths, p, now), deaths: p && p.deaths}
+
+    s = %{
+      s
+      | rest_until: Brain.rest_until(s.rest_until, s.deaths, p, now, rest_mult(s.uid)),
+        deaths: p && p.deaths
+    }
+
+    s = fish_turn(s, now)
+    {dragon, school} = lake_tiles(p)
     snap = p && snapshot(p)
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
 
@@ -115,20 +142,34 @@ defmodule HacLong.Bots.Bot do
             tower_due: now >= s.next_tower,
             feed_due: now >= s.next_feed,
             tower_stuck: s.tower_since != nil and now - s.tower_since > @tower_max,
+            fishing: now < s.fish_until,
+            dragon: dragon,
+            school: school,
+            reeling: s.reeling,
             avoid: Brain.avoiding(s.deaths_at, now)
           })
 
     s =
       case cmd && Session.command(s.uid, cmd) do
+        # thả câu: giật cần sau khi cá cắn một lúc (phản xạ như người, chậm quá thì trượt)
         {%{ok: false}, nil} ->
           %{s | tries: s.tries + 1}
 
         # vừa vào tháp / cho thú ăn: hẹn lần sau
-        {%{ok: true}, _} ->
+        {%{ok: true} = r, _} ->
           case cmd["act"] do
-            "tower_enter" -> %{s | next_tower: next_tower(now)}
-            "pet_feed" -> %{s | next_feed: next_in(now, @feed_every)}
-            _ -> s
+            "fish_cast" ->
+              Process.send_after(self(), :reel, r.wait + react(s.uid))
+              %{s | reeling: true}
+
+            "tower_enter" ->
+              %{s | next_tower: next_in(now, tower_every(s.uid))}
+
+            "pet_feed" ->
+              %{s | next_feed: next_in(now, @feed_every)}
+
+            _ ->
+              s
           end
 
         _ ->
@@ -148,7 +189,10 @@ defmodule HacLong.Bots.Bot do
   defp unstick(s, _p, true, _now), do: %{s | sig: nil, still_since: nil}
 
   defp unstick(s, p, false, now) do
-    sig = {p.pos, p.hp, p.xp, p.gold, p.level, p.battle && p.battle[:turn]}
+    # câu cá lâu một chỗ không phải kẹt: số cá câu được, Long Khí cũng là tiến triển
+    sig =
+      {p.pos, p.hp, p.xp, p.gold, p.level, p.battle && p.battle[:turn], p[:fish_caught],
+       p[:long_khi]}
 
     cond do
       sig != s.sig ->
@@ -171,7 +215,35 @@ defmodule HacLong.Bots.Bot do
 
   defp note_death(s, _p, _now), do: s
 
-  defp next_tower(now), do: next_in(now, @tower_every)
+  defp tryhard?(uid), do: Brain.tryhard?(uid)
+  defp tower_every(uid), do: if(tryhard?(uid), do: @tryhard.tower_every_min, else: @tower_every)
+  defp fish_every(uid), do: if(tryhard?(uid), do: @tryhard.fish_every_min, else: @fish.every_min)
+  defp fish_stay(uid), do: if(tryhard?(uid), do: @tryhard.fish_stay_min, else: @fish.stay_min)
+  defp rest_mult(uid), do: if(tryhard?(uid), do: @tryhard.rest_mult, else: 1)
+
+  defp react(uid) do
+    [lo, hi] = if tryhard?(uid), do: @tryhard.react_ms, else: @fish.react_ms
+    lo + :rand.uniform(hi - lo + 1) - 1
+  end
+
+  # tới lượt ra hồ: câu trong `fish_stay` phút, hẹn lượt sau
+  defp fish_turn(s, now) do
+    if now >= s.next_fish,
+      do: %{
+        s
+        | fish_until: next_in(now, fish_stay(s.uid)),
+          next_fish: next_in(now, fish_every(s.uid))
+      },
+      else: s
+  end
+
+  # ô Long Vương / Đàn Cá Vàng đang có; chưa đủ cấp vào hồ thì khỏi hỏi
+  defp lake_tiles(%{level: lv}) do
+    lake = Maps.get(HacLong.LakeEvent.map_id())
+    if lake && lv >= (lake[:min_level] || 1), do: HacLong.LakeEvent.tiles(), else: {nil, nil}
+  end
+
+  defp lake_tiles(_), do: {nil, nil}
 
   # mốc ngẫu nhiên trong khoảng [lo, hi] phút kể từ `now`
   defp next_in(now, [lo, hi]), do: now + round((lo + :rand.uniform() * (hi - lo)) * 60_000)

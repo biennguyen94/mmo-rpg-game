@@ -1110,8 +1110,12 @@
       "_endgame_doc": "DECISIONS \"Bot cuối game\": cho thú ăn mỗi lần cách feed_every_min phút (ngẫu nhiên trong khoảng) thay vì dồn một lúc; gục avoid.deaths lần trong avoid.window_min phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó avoid.hours giờ; đã chuyển sinh tối đa và cấp tối đa thì luyện ở vùng chuyển sinh (khó dần, realm_kills quái mỗi bản đồ); túi trang bị ≥ sell.full_at món thì về Làng bán đồ thừa ở Thợ Rèn, ở Làng thì bán tới còn sell.down_to món. Trong bản đồ tháp (Tháp Vô Tận, Quảng Trường, Lâu Đài, Kalima) hết quái mà chưa xong thì đi qua lại chờ (server xét hết giờ khi bước); ở quá tower_max_min phút thì ra cổng. Tự gỡ kẹt (DECISIONS \"Đưa về Làng\"): không nghỉ mà vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi trong stuck_min phút thì về Làng.",
       "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "feed_every_min": [2, 5], "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3, "tower_max_min": 40, "stuck_min": 10, "avoid": {"deaths": 3, "window_min": 30, "hours": 2}},
       "sell": {"full_at": 35, "down_to": 20},
+      "_fish_doc": "DECISIONS \"Bot câu cá, bot try hard\": từ cấp vào được Hồ Long Vương, mỗi every_min phút (ngẫu nhiên trong khoảng) bot ra hồ câu stay_min phút (thả trúng ô Đàn Cá Vàng nếu có, câu đủ cá thì nhận việc Ông Lão); Long Vương nổi thì bot \"săn rồng\" (seed chia hết cho chase_every, hoặc bot try hard; chưa có Long Vương) bỏ việc rảnh ra hồ, đứng trong tầm câu và thả trúng ô Ngài. Giật cần sau khi cá cắn react_ms mili giây (ngẫu nhiên; quá cửa sổ giật thì trượt như người thật).",
+      "fish": {"every_min": [60, 150], "stay_min": [4, 10], "chase_every": 3, "react_ms": [200, 1100]},
+      "_tryhard_doc": "Bot try hard (seed chia hết cho every): luôn săn Long Vương, luôn ép liều (+10 / +11), nghỉ sau khi gục rest_mult × thời gian thường, leo Tháp mỗi tower_every_min phút, ra hồ mỗi fish_every_min phút câu fish_stay_min phút, giật cần nhanh hơn (react_ms).",
+      "tryhard": {"every": 5, "rest_mult": 0.3, "tower_every_min": [15, 30], "fish_every_min": [20, 45], "fish_stay_min": [8, 15], "react_ms": [150, 650]},
       "sourceType": "DESIGN",
-      "version": 6,
+      "version": 7,
       "verified": false
     },
     "slay": {

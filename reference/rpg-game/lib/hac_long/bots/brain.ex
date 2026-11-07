@@ -24,11 +24,27 @@ defmodule HacLong.Bots.Brain do
       bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
       (`realm_target/2`; DECISIONS "Bot cuối game").
 
+  15. Câu cá (DECISIONS "Bot câu cá, bot try hard"): Long Vương nổi thì bot săn rồng (`chaser?/1`, chưa có Ngài) bỏ việc
+      rảnh, kể cả đang leo Tháp Vô Tận, ra Hồ Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
+      Đàn Cá Vàng hoặc ô nước cạnh bên, câu đủ cá thì nhận việc Ông Lão. Bot try hard (`tryhard?/1`) chơi dồn dập hơn.
+
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
   chưa chết.
   """
-  alias HacLong.Game.{BloodCastle, Data, DevilSquare, Engine, Gear, Kalima, Pets, Rng, Tower}
+  alias HacLong.Game.{
+    BloodCastle,
+    Data,
+    DevilSquare,
+    Engine,
+    Fishing,
+    Gear,
+    Kalima,
+    Pets,
+    Rng,
+    Tower
+  }
+
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -44,10 +60,10 @@ defmodule HacLong.Bots.Brain do
   Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
   ngẫu nhiên trong `RULES.bots.rest_after_death_s` giây tính từ `now`; không thì giữ `until`.
   """
-  def rest_until(until, prev_deaths, p, now) do
+  def rest_until(until, prev_deaths, p, now, mult \\ 1) do
     if is_integer(prev_deaths) and p != nil and (p[:deaths] || 0) > prev_deaths do
       [lo, hi] = @rest
-      now + round((lo + Rng.uniform() * (hi - lo)) * 1000)
+      now + round((lo + Rng.uniform() * (hi - lo)) * 1000 * mult)
     else
       until
     end
@@ -73,6 +89,10 @@ defmodule HacLong.Bots.Brain do
       p.points > 0 ->
         %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
 
+      # đã thả câu, tiến trình bot hẹn giờ giật cần (`opts.reeling`): đứng yên chờ
+      opts[:reeling] == true and p[:fishing] != nil ->
+        nil
+
       # cánh đã tháo ra túi để ghép lên cấp: ghép trước (không thì bước mặc đồ lại mặc vào)
       job = wing_combine(p, spare_gold(p)) ->
         do_job(p, job, snap)
@@ -88,6 +108,10 @@ defmodule HacLong.Bots.Brain do
       p.pos.map == "tower" and opts[:tower_stuck] == true and p[:tower] != nil ->
         tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
 
+      # Long Vương nổi: bot săn rồng bỏ dở Tháp Vô Tận (không bỏ Quảng Trường / Lâu Đài / Kalima) ra hồ
+      p.pos.map == "tower" and plain_tower?(p) and chasing?(p, opts) ->
+        tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
+
       p.pos.map == "tower" ->
         tower_play(p, d)
 
@@ -99,6 +123,9 @@ defmodule HacLong.Bots.Brain do
 
       rebirth_ready?(p) ->
         at_village_npc(p, "quests", snap, fn -> %{"act" => "rebirth"} end)
+
+      cmd = fish_job(p, snap, opts, :chase) ->
+        cmd
 
       job = event_job(p, d) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
@@ -112,12 +139,114 @@ defmodule HacLong.Bots.Brain do
       job = forge_job(p, opts) ->
         do_job(p, job, snap)
 
+      cmd = fish_job(p, snap, opts, :idle) ->
+        cmd
+
       job = tower_job(p, d, opts) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
       true ->
         roam(p, snap, opts[:seed] || 0, opts[:avoid] || [])
     end
+  end
+
+  # ---------- Câu cá, săn Long Vương (DECISIONS "Bot câu cá, bot try hard") ----------
+  @fish Data.rules().bots.fish
+  @tryhard Data.rules().bots.tryhard
+  @reach Data.rules().fishing.dragon.reach
+  @dragon_pet Data.rules().fishing.dragon.pet
+
+  @doc "Bot try hard (`RULES.bots.tryhard.every`): chơi dồn dập hơn, luôn săn Long Vương, luôn ép liều."
+  def tryhard?(seed) when is_integer(seed), do: rem(seed, @tryhard.every) == 0
+  def tryhard?(_), do: false
+
+  @doc "Bot đi săn Long Vương khi Ngài nổi: bot try hard hoặc seed chia hết cho `RULES.bots.fish.chase_every`."
+  def chaser?(seed) when is_integer(seed), do: tryhard?(seed) or rem(seed, @fish.chase_every) == 0
+  def chaser?(_), do: false
+
+  @doc """
+  Câu cá ở Hồ Long Vương. `mode` `:chase`: Long Vương đang nổi (`opts.dragon`, ô `{x, y}`), bot săn rồng chưa có Ngài →
+  ra hồ, đứng trong tầm câu, thả trúng ô Ngài. `:idle`: đang trong lượt ra hồ (`opts.fishing`, tiến trình bot hẹn) →
+  câu ở ô Đàn Cá Vàng nếu có (`opts.school`), không thì ô nước cạnh bên; câu đủ cá thì nhận việc Ông Lão. Chưa đủ cấp
+  vào hồ thì nil.
+  """
+  def fish_job(p, snap, opts, mode) do
+    lake = Maps.get(HacLong.LakeEvent.map_id())
+
+    target =
+      case mode do
+        :chase ->
+          if chasing?(p, opts), do: opts[:dragon]
+
+        :idle ->
+          if opts[:fishing] == true, do: opts[:school] || :any
+      end
+
+    cond do
+      target == nil or lake == nil or p.level < (lake[:min_level] || 1) ->
+        nil
+
+      p.pos.map != lake.id ->
+        go_to(p, lake.id)
+
+      mode == :idle and elder_ready?(p) ->
+        %{"act" => "elder_claim"}
+
+      true ->
+        fish_at(p, lake, target, snap)
+    end
+  end
+
+  defp plain_tower?(%{tower: %{} = t}), do: t[:ds] == nil and t[:bc] == nil and t[:kal] == nil
+  defp plain_tower?(_), do: false
+
+  @doc "Long Vương đang nổi (`opts.dragon`), bot này săn rồng và chưa có Ngài, đủ cấp vào Hồ Long Vương."
+  def chasing?(p, opts) do
+    lake = Maps.get(HacLong.LakeEvent.map_id())
+
+    opts[:dragon] != nil and chaser?(opts[:seed]) and lake != nil and
+      p.level >= (lake[:min_level] || 1) and @dragon_pet not in (Map.get(p, :pets) || [])
+  end
+
+  defp elder_ready?(p) do
+    e = Fishing.elder(p)
+    p[:daily] != nil and e.n >= e.count and not e.done
+  end
+
+  defp fish_at(p, map, target, snap) do
+    me = {p.pos.x, p.pos.y}
+
+    stands =
+      case target do
+        :any ->
+          stand_tiles(map)
+
+        {tx, ty} ->
+          for {x, y} <- stand_tiles(map), max(abs(x - tx), abs(y - ty)) <= @reach, do: {x, y}
+      end
+
+    cond do
+      stands == [] and target != :any ->
+        fish_at(p, map, :any, snap)
+
+      me in stands ->
+        case target do
+          {x, y} -> %{"act" => "fish_cast", "x" => x, "y" => y}
+          :any -> %{"act" => "fish_cast"}
+        end
+
+      true ->
+        walk(p, map, stands, snap) || if(Fishing.near_water?(p), do: %{"act" => "fish_cast"})
+    end
+  end
+
+  @doc "Ô đứng câu được trên bản đồ `map`: đi được, không phải cổng, cạnh (4 hướng) một ô nước."
+  def stand_tiles(map) do
+    for y <- 0..(map.height - 1),
+        x <- 0..(map.width - 1),
+        plain?(map, {x, y}),
+        Enum.any?(Map.values(@dirs), fn {dx, dy} -> Maps.water?(map, x + dx, y + dy) end),
+        do: {x, y}
   end
 
   # ---------- Ép đồ, cánh, chuyển sinh ----------
@@ -164,7 +293,7 @@ defmodule HacLong.Bots.Brain do
     do: Enum.all?(items, fn {m, n} -> Map.get(p.inv, to_string(m), 0) >= n + extra end)
 
   defp upgrade_job(p, spare, opts) do
-    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0
+    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0 or tryhard?(opts[:seed] || 1)
 
     p.equip
     |> Enum.flat_map(fn {slot, id} ->

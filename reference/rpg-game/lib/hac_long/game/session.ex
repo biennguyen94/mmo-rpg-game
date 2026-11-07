@@ -933,9 +933,10 @@ defmodule HacLong.Game.Session do
     {rare, result} = if is_map(result), do: Map.pop(result, :rare_pet), else: {nil, result}
     result = if rare && player, do: rare_pet(s, player, rare, result), else: result
 
-    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
+    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client). Bot không báo, trừ khi câu được Long
+    # Vương (DECISIONS "Bot câu cá, bot try hard": hiếm, như người chơi thật)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
-    if announce && !s[:bot], do: HacLong.Chat.system(announce)
+    if announce && (!s[:bot] or rare != nil), do: HacLong.Chat.system(announce)
     if !s[:bot], do: Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
 
     reply({result, player}, s)
