@@ -1766,7 +1766,7 @@
       <div class="card set"><div class="row"><h3 class="grow">Bản đồ</h3>
         <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Tự động: sáng tối theo giờ trong game.</p>
-        <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
+        <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm, Làng, màn gặp trùm, pháo sáng)</span>
           <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p>
         <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>

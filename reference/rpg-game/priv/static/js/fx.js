@@ -572,6 +572,8 @@
 (function () {
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const sound = (id) => { if (window.Sound) window.Sound.play(id); };
+  // công tắc "Hiệu ứng động" (Cài đặt): tắt thì không có màn gặp trùm, pháo sáng (DECISIONS "Bản đồ đẹp hơn")
+  const fxOn = () => !(window.MapView && window.MapView.fxOn) || window.MapView.fxOn();
   function mount(cls, html, ms) {
     const el = document.createElement('div');
     el.className = cls;
@@ -646,7 +648,7 @@
       // B8: pháo sáng — 4 chùm nổ lệch giờ quanh chữ, mỗi chùm 14 tia
       const cols = ['#ffd24a', '#ff6a4a', '#9fd8ff', '#c49bff', '#7fe08a'];
       let fw = '';
-      for (let b = 0; b < 4; b++) {
+      for (let b = 0; b < (fxOn() ? 4 : 0); b++) {
         const x = 18 + ((b * 37) % 64), y = 18 + ((b * 23) % 34), c = cols[b % cols.length], d = (0.25 + b * 0.35).toFixed(2);
         fw += `<div class="fw" style="left:${x}%;top:${y}%;--c:${c};animation-delay:${d}s">`;
         for (let i = 0; i < 14; i++) fw += `<i style="--a:${Math.round((360 / 14) * i)}deg;animation-delay:${d}s"></i>`;
@@ -654,10 +656,11 @@
       }
       mount('boss-down', `${fw}<div class="bd-t">TRÙM ĐÃ GỤC</div><div class="bd-n">${esc(name || '')}</div>`, 2800);
       sound('win');
-      [0.25, 0.6, 0.95, 1.3].forEach((s) => setTimeout(() => sound('firework'), s * 1000));
+      if (fw) [0.25, 0.6, 0.95, 1.3].forEach((s) => setTimeout(() => sound('firework'), s * 1000));
     },
     // B8: gặp trùm — tối sầm, chớp đỏ, chữ TRÙM XUẤT HIỆN + tên, tiếng gầm, rung màn
     bossIn(name, sub) {
+      if (!fxOn()) return;
       mount('boss-in', `<div class="bi-dark"></div><div class="bi-t">⚠ TRÙM XUẤT HIỆN</div><div class="bi-n">${esc(name || '')}</div>${sub ? `<div class="bi-s">${esc(sub)}</div>` : ''}`, 2300);
       sound('roar');
       const v = document.getElementById('view');
