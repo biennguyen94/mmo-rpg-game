@@ -1540,3 +1540,13 @@ Mỗi tài khoản tối đa `RULES.account.max_characters` (5) nhân vật, m�
 - Hình nhân vật hiện "không mặc gì" (bot, người khác) ở Quanh đây / hồ sơ / bảng người chơi: lúc ảnh các lớp đồ chưa tải xong `Doll.url` trả hình mặc định và những chỗ đó không vẽ lại. Nay `Doll.src` đánh dấu ảnh tạm (`data-doll`), tải xong `Doll.fix` thay đúng hình (dữ liệu `look` ở server vẫn đúng: kiểm 226 nhân vật không thiếu lớp nào).
 - NPC Thủ Kho dùng hình người (hình Thợ Mộc cũ, CC0) thay hình cái tủ.
 
+## Thú cưng: giảm tấn công (2026-11-07, anh duyệt)
+Thú nhóm Chiến cấp 20 cộng tới +40% tấn công (bằng 8 dòng Excellent +5%). Giảm một nửa phần tấn công: Chó Săn 4%, Quạ Đen 5,5%, Bằng Mã Lửa 6%, Quỷ Satan 7%, Ác Quỷ Daemon 8%, Long Vương 8% (cấp 20 ×2,52: mạnh nhất khoảng +20%); thú thuần `tame_bonus` 0.05 → 0.025, `tame_realm_bonus` 0.012 → 0.006 (vùng 10, cấp 20 khoảng +21%). Chí mạng và các nhóm khác giữ nguyên.
+
+## Lễ hội: nâng phần thưởng (2026-11-07, anh duyệt)
+Trước: 3 kẹo đổi 60 + 12 × cấp vàng bất kể chuyển sinh (chuyển sinh 6 lần: mỗi kẹo ≈ 5% vàng của 5 trận đánh ra nó), Túi Quà đồ thường, bình máu. Nay (`RULES.events` version 2):
+- Vàng: (60 + 12 × cấp) × (1 + số lần chuyển sinh) (CS 6, cấp 50: 4 620).
+- Thêm ngọc: 15 kẹo → Ngọc Ước Nguyện, 25 → Ngọc Tâm Linh, 40 → Ngọc Sinh Mệnh.
+- Túi Quà (12 kẹo): chắc chắn dòng cộng thêm từ +8 (+8 75%, +12 25%), 10% thêm một dòng Excellent.
+- 3 Bình Máu Lớn (6 kẹo) giữ nguyên.
+

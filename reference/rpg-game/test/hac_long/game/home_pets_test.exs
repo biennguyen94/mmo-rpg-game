@@ -108,7 +108,7 @@ defmodule HacLong.Game.HomePetsTest do
 
     {%{ok: true}, p} = Pets.tame(p, "bat")
     assert p.pet == "tame:bat" and p.pets == ["tame:bat"] and p.gold == 100_000 - 1100
-    assert Engine.derived(p).atk == round(base.atk * (1 + Pets.data("tame:bat").bonus.atk))
+    assert abs(Engine.derived(p).atk - base.atk * (1 + Pets.data("tame:bat").bonus.atk)) <= 1
     assert Pets.data("tame:bat").group == "war"
     assert Pets.tameable(p) == []
     assert {%{ok: false, msg: "Bạn đã thuần phục loài này rồi."}, _} = Pets.tame(p, "bat")

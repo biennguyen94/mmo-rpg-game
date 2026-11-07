@@ -22,12 +22,12 @@
       "price": 3000,
       "group": "war",
       "bonus": {
-        "atk": 0.08,
+        "atk": 0.04,
         "crit": 0.01
       },
-      "desc": "Tấn công +8%, Chí mạng +1%.",
+      "desc": "Tấn công +4%, Chí mạng +1%.",
       "sourceType": "DESIGN",
-      "version": 4,
+      "version": 5,
       "verified": false
     },
     {
@@ -92,12 +92,12 @@
       "price": 20000,
       "group": "war",
       "bonus": {
-        "atk": 0.11,
+        "atk": 0.055,
         "crit": 0.02
       },
-      "desc": "Tấn công +11%, Chí mạng +2%, MP tối đa +5 mỗi cấp thú.",
+      "desc": "Tấn công +5.5%, Chí mạng +2%, MP tối đa +5 mỗi cấp thú.",
       "sourceType": "MU_INSPIRED",
-      "version": 4,
+      "version": 5,
       "verified": false,
       "flat": {
         "mp": 5
@@ -127,12 +127,12 @@
       "price": 40000,
       "group": "war",
       "bonus": {
-        "atk": 0.12,
+        "atk": 0.06,
         "crit": 0.02
       },
-      "desc": "Tấn công +12%, Chí mạng +2%, Máu tối đa +8 mỗi cấp thú.",
+      "desc": "Tấn công +6%, Chí mạng +2%, Máu tối đa +8 mỗi cấp thú.",
       "sourceType": "DESIGN",
-      "version": 4,
+      "version": 5,
       "verified": false,
       "flat": {
         "hp": 8
@@ -145,12 +145,12 @@
       "price": 60000,
       "group": "war",
       "bonus": {
-        "atk": 0.14,
+        "atk": 0.07,
         "crit": 0.03
       },
-      "desc": "Tấn công +14%, Chí mạng +3%, MP tối đa +5 mỗi cấp thú.",
+      "desc": "Tấn công +7%, Chí mạng +3%, MP tối đa +5 mỗi cấp thú.",
       "sourceType": "MU_INSPIRED",
-      "version": 4,
+      "version": 5,
       "verified": false,
       "flat": {
         "mp": 5
@@ -181,12 +181,12 @@
       "price": 120000,
       "group": "war",
       "bonus": {
-        "atk": 0.16,
+        "atk": 0.08,
         "crit": 0.04
       },
-      "desc": "Tấn công +16%, Chí mạng +4%.",
+      "desc": "Tấn công +8%, Chí mạng +4%.",
       "sourceType": "MU_INSPIRED",
-      "version": 4,
+      "version": 5,
       "verified": false
     },
     {
@@ -196,16 +196,16 @@
       "price": 0,
       "group": "all",
       "bonus": {
-        "atk": 0.16,
+        "atk": 0.08,
         "crit": 0.03,
         "def": 0.1,
         "reduce": 0.06,
         "xp": 0.06,
         "gold": 0.06
       },
-      "desc": "Tấn công +16%, Chí mạng +3%, Phòng thủ +10%, Giảm sát thương nhận +6%, Kinh nghiệm +6%, Vàng rơi +6%, Máu tối đa +30 mỗi cấp thú, MP tối đa +10 mỗi cấp thú.",
+      "desc": "Tấn công +8%, Chí mạng +3%, Phòng thủ +10%, Giảm sát thương nhận +6%, Kinh nghiệm +6%, Vàng rơi +6%, Máu tối đa +30 mỗi cấp thú, MP tối đa +10 mỗi cấp thú.",
       "sourceType": "DESIGN",
-      "version": 4,
+      "version": 5,
       "verified": false,
       "flat": {
         "hp": 30,

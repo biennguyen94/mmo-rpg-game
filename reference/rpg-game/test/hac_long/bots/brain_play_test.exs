@@ -86,8 +86,9 @@ defmodule HacLong.Bots.BrainPlayTest do
     end
 
     test "đã có thú: dắt con mạnh nhất, dư vàng thì cho ăn" do
-      p = player(%{gold: 30_000, pets: ["sheep", "hound"], pet: "sheep"})
-      best = Enum.max_by(["sheep", "hound"], &Pets.power(p, &1))
+      # có cả Heo Hồng: không còn thú rẻ nào mạnh hơn để mua
+      p = player(%{gold: 30_000, pets: ["sheep", "hound", "hog"], pet: "sheep"})
+      best = Enum.max_by(["sheep", "hound", "hog"], &Pets.power(p, &1))
 
       if best != "sheep",
         do: assert({nil, %{"act" => "pet_choose", "id" => ^best}} = Brain.pet_job(p))
