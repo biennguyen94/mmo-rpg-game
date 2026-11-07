@@ -153,6 +153,24 @@ defmodule HacLong.Game.Session do
   def to_village(user_id, why \\ "ADMIN"), do: call(user_id, {:to_village, why})
 
   @doc """
+  Tắt Session của `user_id` nếu đang chạy (ghi nốt trạng thái ở `terminate/2`). Dùng khi đổi / xóa nhân vật: mỗi tài
+  khoản một nhân vật online, Session của nhân vật khác không giữ bản cũ của thùng đồ chung (DECISIONS "Nhiều nhân vật").
+  """
+  def stop(user_id) do
+    case Registry.lookup(HacLong.Game.Registry, user_id) do
+      [{pid, _}] ->
+        try do
+          GenServer.stop(pid, :normal, 10_000)
+        catch
+          :exit, _ -> :ok
+        end
+
+      [] ->
+        :ok
+    end
+  end
+
+  @doc """
   Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, rebirths, cls, map}]}`
   (tối đa `limit` người, theo tên). Không khởi động Session nào; Session đang bận quá 1 giây thì bỏ qua.
   """

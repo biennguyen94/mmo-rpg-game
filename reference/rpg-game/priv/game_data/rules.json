@@ -1158,6 +1158,8 @@
       "min_balance_mult": 2
     },
     "account": {
+      "max_characters": 5,
+      "_characters_doc": "DECISIONS \"Nhiều nhân vật\": mỗi tài khoản tối đa max_characters nhân vật, một nhân vật online một lúc; thùng đồ ở Thủ Kho (đồ, vàng, mở rộng) chung cả tài khoản; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần.",
       "_doc": "DECISIONS \"Câu hỏi bảo mật\": lúc đăng ký chọn một câu hỏi bảo mật (security_questions) và trả lời (answer_min–answer_max ký tự; lưu dạng băm, không phân biệt hoa thường, khoảng trắng thừa). Quên mật khẩu: trả lời đúng thì đặt mật khẩu mới ngay; sai quá recover_per_user lần trong recover_window_min phút thì phải đợi. Tài khoản chưa có câu hỏi vẫn gửi yêu cầu cho quản trị như trước.",
       "security_questions": [
         {"id": "pet", "text": "Tên con vật nuôi đầu tiên của bạn?"},

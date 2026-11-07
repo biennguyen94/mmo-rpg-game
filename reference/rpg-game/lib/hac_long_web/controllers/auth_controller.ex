@@ -9,6 +9,7 @@ defmodule HacLongWeb.AuthController do
   @register_per_ip {5, :timer.hours(1)}
   @password_per_user {5, :timer.minutes(5)}
   @ws_ticket_per_user {20, :timer.minutes(1)}
+  @new_char_per_user {10, :timer.minutes(10)}
   @forgot_per_ip {5, :timer.hours(1)}
   # câu hỏi bảo mật: xem câu hỏi / trả lời (chống dò câu trả lời)
   @question_per_ip {30, :timer.hours(1)}
@@ -108,7 +109,40 @@ defmodule HacLongWeb.AuthController do
 
   def me(conn, _params) do
     with {:ok, user, _token} <- current(conn) do
-      json(conn, %{username: user.username, question: user.security_question})
+      json(conn, %{
+        username: user.username,
+        question: user.security_question,
+        characters: Accounts.characters(user.id),
+        max_characters: Accounts.max_characters()
+      })
+    end
+  end
+
+  @doc """
+  Chỗ tạo nhân vật mới (DECISIONS "Nhiều nhân vật"): `{cid}` — mã để lấy vé WebSocket vào màn tạo nhân vật; đã đủ số
+  nhân vật thì lỗi.
+  """
+  def new_character(conn, _params) do
+    with {:ok, user, _token} <- current(conn),
+         :ok <- limit(conn, {:new_char, user.id}, @new_char_per_user) do
+      case Accounts.character_slot(user) do
+        {:ok, cid} -> json(conn, %{cid: cid})
+        {:error, msg} -> conn |> put_status(:unprocessable_entity) |> json(%{error: msg})
+      end
+    end
+  end
+
+  @doc "Xóa nhân vật: gõ lại tên nhân vật và mật khẩu tài khoản. Đồ trên nhân vật mất hẳn."
+  def delete_character(conn, params) do
+    with {:ok, user, _token} <- current(conn),
+         :ok <- limit(conn, {:password, user.id}, @password_per_user) do
+      case Accounts.delete_character(user, params["cid"], params["name"], params["password"]) do
+        {:ok, name} ->
+          json(conn, %{ok: true, msg: "Đã xóa #{name}.", characters: Accounts.characters(user.id)})
+
+        {:error, msg} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: msg})
+      end
     end
   end
 
@@ -151,10 +185,14 @@ defmodule HacLongWeb.AuthController do
   Vé WebSocket dùng một lần (`{ticket}`), sống vài chục giây: client lấy trước mỗi lần mở / mở lại
   WebSocket, để token đăng nhập không nằm trong URL `/socket`.
   """
-  def ws_ticket(conn, _params) do
+  def ws_ticket(conn, params) do
     with {:ok, user, _token} <- current(conn),
          :ok <- limit(conn, {:ws_ticket, user.id}, @ws_ticket_per_user) do
-      json(conn, %{ticket: Accounts.issue_ws_ticket(user)})
+      # `cid`: nhân vật muốn vào (mặc định nhân vật trên dòng tài khoản)
+      case Accounts.issue_ws_ticket(user, if(is_integer(params["cid"]), do: params["cid"])) do
+        nil -> conn |> put_status(:forbidden) |> json(%{error: "Không có nhân vật này."})
+        ticket -> json(conn, %{ticket: ticket})
+      end
     end
   end
 
@@ -184,9 +222,11 @@ defmodule HacLongWeb.AuthController do
     end
   end
 
-  # Ngắt mọi WebSocket của người này (xem `HacLongWeb.UserSocket.id/1`).
-  defp disconnect(user),
-    do: HacLongWeb.Endpoint.broadcast("user_socket:#{user.id}", "disconnect", %{})
+  # Ngắt mọi WebSocket của tài khoản này, mọi nhân vật (xem `HacLongWeb.UserSocket.id/1`).
+  defp disconnect(user) do
+    for id <- Accounts.account_rows(user.id),
+        do: HacLongWeb.Endpoint.broadcast("user_socket:#{id}", "disconnect", %{})
+  end
 
   # Địa chỉ IP của người gọi (đã tính X-Forwarded-For nếu có proxy tin cậy, xem
   # HacLongWeb.RemoteIp).

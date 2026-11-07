@@ -123,7 +123,12 @@ defmodule HacLongWeb.AuthControllerTest do
       |> get("/api/me")
       |> json_response(200)
 
-    assert me == %{"username" => "anh_hung", "question" => nil}
+    assert %{
+             "username" => "anh_hung",
+             "question" => nil,
+             "characters" => [],
+             "max_characters" => 5
+           } = me
   end
 
   test "lỗi đăng ký, sai mật khẩu, token hỏng", %{conn: conn} do

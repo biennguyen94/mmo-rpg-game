@@ -16,6 +16,10 @@ defmodule HacLong.Accounts.User do
     field :security_question, :string
     field :security_answer, :string, virtual: true, redact: true
     field :security_answer_hash, :string, redact: true
+
+    # nhân vật thêm của tài khoản (DECISIONS "Nhiều nhân vật"): dòng `users` riêng, trỏ về tài khoản đăng nhập;
+    # nil = chính là tài khoản (đăng nhập được, có thể giữ nhân vật đầu tiên)
+    belongs_to :account, __MODULE__
     timestamps(type: :utc_datetime)
   end
 

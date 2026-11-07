@@ -18,6 +18,8 @@ defmodule HacLongWeb.Router do
     post "/logout_all", AuthController, :logout_all
     post "/password", AuthController, :password
     post "/ws-ticket", AuthController, :ws_ticket
+    post "/characters", AuthController, :new_character
+    post "/characters/delete", AuthController, :delete_character
   end
 
   scope "/", HacLongWeb do
