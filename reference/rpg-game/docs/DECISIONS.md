@@ -1635,3 +1635,13 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   - tên game Hắc Long (chỉ bộ giáp "Hắc Long" đổi).
 - **Không đổi:** chat của người chơi, ô nhập, danh sách chọn trong Quản trị, Kho Đồ (tài liệu ngoài game). Câu chat của bot
   có "Golden Invasion" đổi thành câu chung.
+
+## Kỹ năng tháp chia nhóm: thường / cao / đỉnh (2026-11-07, anh chọn phương án B)
+- **Tầng 10–60 giữ nguyên:** 1,27 → 2,02, mỗi tầng +0,15.
+- **Nhóm cao (tầng 70–80):** 2,24 / 2,28, tức nhảy +0,22 so với tầng 60.
+- **Nhóm đỉnh (tầng 90–100):** 2,55 / 2,62, tức nhảy +0,27 so với tầng 80. Trần 2,62 giữ nguyên.
+- **Chênh lệch:** nhóm cao mạnh hơn tầng 60 khoảng 12%, nhóm đỉnh mạnh hơn nhóm cao khoảng 13%. Trong cùng nhóm chỉ tăng nhẹ.
+- **Không đổi:** MP, hồi chiêu, tác dụng phụ.
+- **Vì sao chọn B:** mô phỏng sức leo tháp (đồ theo hồ sơ chơi thật) cho thấy người chơi mốc 0–9 chỉ tới tầng 54–59. Tầng
+  60–100 chỉ đạt khi đồ gần tối đa, nên người chơi thường không bị ảnh hưởng, và cân bằng PvP chỉ cần chỉnh mốc 10.
+- Chỉnh lại `pvp.class_taken_by_rebirth` mốc 10 (lệch 14% → 7%); đấu trường mốc 10 giữ (lệch 7%). `mix test --only balance` xanh.
