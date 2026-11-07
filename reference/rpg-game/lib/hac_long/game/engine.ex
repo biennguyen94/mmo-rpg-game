@@ -147,6 +147,7 @@ defmodule HacLong.Game.Engine do
           # thông thạo kỹ năng (`HacLong.Game.Mastery`): nhân vật mới luyện từ cấp 1
           skill_mastery: %{},
           auto_cfg: nil,
+          secret: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
           storage: %{inv: %{}, extra: 0, gold: 0},
@@ -693,7 +694,7 @@ defmodule HacLong.Game.Engine do
   Trận ở bản đồ phụ (Phase 15a): không thuộc vùng nào nên không cần mở vùng; `place` (tên bản đồ) và
   `theme` (nền) để client vẽ.
   """
-  def start_side_encounter(p, spec, place, theme) do
+  def start_side_encounter(p, spec, place, theme, boss? \\ false) do
     cond do
       p.battle ->
         {err("Đang trong trận đấu."), p}
@@ -702,7 +703,7 @@ defmodule HacLong.Game.Engine do
         {err("Bạn cần hồi máu trước."), p}
 
       true ->
-        {r, p} = do_start_battle(p, nil, spec, false)
+        {r, p} = do_start_battle(p, nil, spec, boss?)
         {r, update_in(p.battle, &Map.merge(&1, %{place: place, theme: theme}))}
     end
   end

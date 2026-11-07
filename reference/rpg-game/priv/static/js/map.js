@@ -132,9 +132,11 @@
   function locked(P, portal) {
     const target = mapOf(portal.to);
     return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel) ||
-      // bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở ban đêm (server kiểm lại)
-      (target.secret === 'night' && world.phase !== 'night');
+      // bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở những đêm động mở (server kiểm lại)
+      (target.secret === 'night' && !secretOpen(P));
   }
+
+  const secretOpen = (P) => !!(P && P.view && P.view.secret && P.view.secret.open);
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
   const PHASES = { dawn: ['🌅', 0.25], day: ['☀️', 0], dusk: ['🌇', 0.3], night: ['🌙', 0.62] };
@@ -403,6 +405,7 @@
     const z = m.zone != null ? ZONES[m.zone] : null;
     const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
     if (m.tower) return '';
+    if (m.secret) return 'Nơi bí ẩn';
     if (P.pos.map === 'village') return 'Nơi bình yên';
     if (P.pos.map.endsWith('_boss') && z) return `Phòng trùm · cấp ${z.boss.level}`;
     if (side && side.min && !(side.monsters || []).length) return `Không có quái · cần cấp ${side.min}`;
@@ -463,7 +466,7 @@
       `<span class="phase" id="map-wx">${wxIcon(P)}</span>`;
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : m.secret ? `Nơi bí ẩn · cần cấp ${m.minLevel || 38}` : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -590,6 +593,17 @@
         if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
         if (kind === 'stairs_down') labels.push(['Về Làng', px + TILE / 2, py + TILE - 13, '#b9d7ff']);
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);
+        // Động Bí Ẩn (D8): cửa đóng thì trông như vách đá, không nhãn; mở thì khe đá phát sáng tím
+        if (portal && (mapOf(portal.to) || {}).secret) {
+          if (!secretOpen(P)) {
+            const st = image('tiles/stone');
+            if (st.complete) ctx.drawImage(st, px, py, TILE, TILE);
+          } else {
+            crackFx(px, py, fx ? now : 0);
+            labels.push(['Khe Đá Phát Sáng', px + TILE / 2, py + TILE - 13, '#d6a8ff']);
+          }
+          continue;
+        }
         if (portal) {
           const shut = locked(P, portal);
           if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); } else if (fx) portalSwirl(px + TILE / 2, py + TILE / 2, now);
@@ -624,6 +638,11 @@
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
         ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
       }
+      // quái Tinh Anh (Động Bí Ẩn): viền tím
+      if (q.elite) {
+        ctx.strokeStyle = '#c084ff'; ctx.lineWidth = 2;
+        ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+      }
       const im = image('monsters/' + q.kind);
       if (q.rare) { ctx.shadowColor = '#b36bff'; ctx.shadowBlur = 12; }
       // quái vàng Golden Invasion: quầng vàng nhấp nháy; trùm vàng vẽ to 1,5 lần (Phase 7, M3)
@@ -638,8 +657,8 @@
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
-      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
-      if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
+      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.elite ? 'Tinh Anh · ' : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
+      if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.elite ? '#c084ff' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
       const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
       ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
       ctx.fillStyle = q.gold ? '#e8b923' : q.boss ? '#c0392b' : '#d9483b'; ctx.fillRect(px - off + 4, py - off + sz + 2, Math.max(0, (bw - 2) * hpk), 3);
@@ -753,7 +772,9 @@
     }
     // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng (B6: chuyển dần, ánh cam hồng lúc bình minh / hoàng hôn)
     const [dark0, glowK] = outdoors(P) ? sky() : [0, 0];
-    const dark = dark0 > 0.02 ? dark0 : 0;
+    // Động Bí Ẩn (D7): tối hẳn, chỉ sáng một vòng quanh nhân vật như cầm đuốc
+    const dark = m.secret ? 0.86 : dark0 > 0.02 ? dark0 : 0;
+    if (fx && m.secret) caveFx(now, m, cx, cy, x0, y0, x1, y1);
     if (glowK > 0.02 && outdoors(P)) {
       const g = ctx.createLinearGradient(0, 0, 0, VH());
       const dusk = shade() === 'dusk';
@@ -763,7 +784,7 @@
     }
     if (dark) {
       const lx = px + TILE / 2, ly = py + TILE / 2;
-      const g = ctx.createRadialGradient(lx, ly, TILE * 1.2, lx, ly, TILE * 5);
+      const g = ctx.createRadialGradient(lx, ly, TILE * (m.secret ? 0.9 : 1.2), lx, ly, TILE * (m.secret ? 3.2 : 5));
       g.addColorStop(0, `rgba(8, 10, 32, ${dark * 0.25})`);
       g.addColorStop(1, `rgba(8, 10, 32, ${dark})`);
       ctx.fillStyle = g;
@@ -1163,6 +1184,48 @@
     dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));
     g.strokeStyle = 'rgba(255, 255, 255, 0.55)'; g.lineWidth = 1;
     g.strokeRect(cx / TILE * s + 0.5, cy / TILE * s + 0.5, VW() / TILE * s, VH() / TILE * s);
+  }
+
+  // Động Bí Ẩn (D8): khe đá phát sáng tím — vết nứt sáng, hào quang nhấp nháy, hạt sáng bay ra
+  function crackFx(px, py, t) {
+    const st = image('tiles/stone');
+    if (st.complete) ctx.drawImage(st, px, py, TILE, TILE);
+    const k = t ? 0.7 + 0.3 * Math.sin(t / 300) : 1, cx0 = px + TILE / 2, cy0 = py + TILE / 2;
+    const g = ctx.createRadialGradient(cx0, cy0, 1, cx0, cy0, TILE * 1.3);
+    g.addColorStop(0, `rgba(190, 120, 255, ${0.55 * k})`); g.addColorStop(1, 'rgba(190, 120, 255, 0)');
+    ctx.fillStyle = g; ctx.fillRect(px - TILE, py - TILE, TILE * 3, TILE * 3);
+    ctx.strokeStyle = `rgba(235, 210, 255, ${0.95 * k})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx0 - 2, py + 3); ctx.lineTo(cx0 + 3, py + 11); ctx.lineTo(cx0 - 3, py + 18); ctx.lineTo(cx0 + 2, py + 29); ctx.stroke();
+    if (t) for (let i = 0; i < 4; i++) {
+      const q = ((t / 1400) + i / 4) % 1;
+      ctx.fillStyle = `rgba(220, 180, 255, ${0.9 * (1 - q)})`;
+      ctx.fillRect(cx0 + Math.sin(i * 2.3 + t / 500) * 8 * q, cy0 - q * 22, 2, 2);
+    }
+  }
+  // Động Bí Ẩn (D7): pha lê lấp lánh trên vách / cột, sương tím trôi sát đất, nước nhỏ giọt (âm thanh thưa)
+  let dripAt = 0;
+  function caveFx(t, m, cx, cy, x0, y0, x1, y1) {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = (m.tiles[y] || '')[x];
+        if ((c === 'R' || c === 'I') && rnd(x * 5 + 7, y * 3 + 1) < 0.35) {
+          const px = x * TILE - cx, py = y * TILE - cy, k = Math.max(0, Math.sin(t / 600 + x * 1.9 + y * 2.7));
+          const col = rnd(x, y) > 0.5 ? '180, 140, 255' : '120, 220, 255';
+          ctx.fillStyle = `rgba(${col}, ${0.35 + 0.5 * k})`;
+          const bx = px + 8 + rnd(x + 1, y) * 14, by = py + 6 + rnd(x, y + 1) * 14;
+          ctx.beginPath(); ctx.moveTo(bx, by - 6); ctx.lineTo(bx + 3, by); ctx.lineTo(bx, by + 3); ctx.lineTo(bx - 3, by); ctx.closePath(); ctx.fill();
+          if (k > 0.92) { ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(bx - 0.5, by - 8, 1, 4); ctx.fillRect(bx - 2, by - 6.5, 4, 1); }
+        }
+      }
+    }
+    const vw = VW(), vh = VH();
+    for (let i = 0; i < 7; i++) {
+      const x = wrap(rnd(i, 1) * (vw + 200) + t * 0.01 * (1 + rnd(i, 2)) - cx, vw + 200) - 100, y = wrap(rnd(i, 3) * vh - cy, vh);
+      const g = ctx.createRadialGradient(x, y, 4, x, y, 90);
+      g.addColorStop(0, 'rgba(150, 90, 220, 0.14)'); g.addColorStop(1, 'rgba(150, 90, 220, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 90, y - 90, 180, 180);
+    }
+    if (t - dripAt > 5200 + rnd(Math.floor(t / 5000), 3) * 4000) { dripAt = t; if (window.Sound) window.Sound.play('drip'); }
   }
 
   // B1: Rừng Tre — ô cây vẽ thành bụi tre (3–4 thân có đốt, lá nhọn, lay theo gió)

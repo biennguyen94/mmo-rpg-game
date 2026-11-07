@@ -1147,6 +1147,25 @@
       "version": 2,
       "verified": false
     },
+    "secret": {
+      "_doc": "DECISIONS \"Động Bí Ẩn\" (anh duyệt): cửa động mở khoảng open_chance số đêm (chọn cố định theo đêm), cần cấp như min_level của bản đồ. Trùm đêm boss thức giấc lúc ngẫu nhiên trong khung boss_from_h..boss_to_h giờ (giờ Việt Nam, qua 0 giờ), báo cả server; hạ được thì chắc chắn rơi ngọc (jewel_chance của quái) và thêm boss_items, tên lên Bia. Quái thường trong động có elite_chance là quái Tinh Anh: chỉ số × elite_mult, vàng / kinh nghiệm × elite_reward, tỉ lệ rơi ngọc × elite_jewel_mult. warn_min phút trước khi trời sáng (5 giờ) báo động sắp sụp; trời sáng thì đưa người trong động ra exit. Vào động night_walker đêm khác nhau: thành tựu Kẻ Đi Đêm.",
+      "map": "vn_dong_bi_an",
+      "exit": {"map": "vn_den_co", "x": 14, "y": 4},
+      "open_chance": 0.6,
+      "boss": "vn_thach_long_than",
+      "boss_from_h": 21,
+      "boss_to_h": 3,
+      "boss_items": {"bi_kip": 1},
+      "elite_chance": 0.1,
+      "elite_mult": 1.6,
+      "elite_reward": 2,
+      "elite_jewel_mult": 1.5,
+      "warn_min": 10,
+      "night_walker": 10,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "trader": {
       "_doc": "DECISIONS \"Bản đồ đẹp hơn\": Thương Nhân Chợ Nổi (NPC vai \"trader\"). Mỗi ngày (giờ Việt Nam) bày `show` món chọn cố định theo ngày trong `offers`; mỗi nhân vật mua mỗi món tối đa `limit` lần / ngày (đếm ở `daily.trader`). Mỗi lần mua: `n` món `item`, giá `price` vàng. Anh duyệt 2026-11-07.",
       "show": 4,

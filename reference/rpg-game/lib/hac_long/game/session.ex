@@ -907,6 +907,7 @@ defmodule HacLong.Game.Session do
       |> ds_record(s)
       |> Daily.ensure(Daily.today())
       |> weather_battle()
+      |> secret_boss(s.user_id)
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player =
@@ -1009,6 +1010,28 @@ defmodule HacLong.Game.Session do
 
   defp weather_battle(p), do: p
 
+  # Hạ trùm đêm Động Bí Ẩn (DECISIONS "Động Bí Ẩn"): thêm `RULES.secret.boss_items`, ghi Bia, báo cả server (một lần mỗi trận)
+  defp secret_boss(%{battle: %{over: true, result: "win", monster: %{id: id}} = b} = p, uid) do
+    r = HacLong.World.Secret.rules()
+
+    if id == r.boss and not Map.get(b, :secret_paid, false) do
+      p =
+        Enum.reduce(r.boss_items, p, fn {item, n}, p -> Engine.add_item(p, to_string(item), n) end)
+
+      night = HacLong.World.Secret.night_of(DateTime.utc_now())
+      HacLong.World.SecretRecords.record(uid, p.name, "boss", night)
+
+      if not HacLong.Bots.bot?(uid),
+        do: HacLong.Chat.system("⚔ #{p.name} đã hạ #{b.monster.name} trong Động Bí Ẩn!")
+
+      put_in(p, [:battle, :secret_paid], true)
+    else
+      p
+    end
+  end
+
+  defp secret_boss(p, _uid), do: p
+
   # Hướng dẫn người mới và thành tựu: tính lại sau mỗi thay đổi, trả về các thông báo mới.
   defp checks(player) do
     {player, tut} = Tutorial.check(player)
@@ -1063,6 +1086,10 @@ defmodule HacLong.Game.Session do
       {:error, msg} -> {%{ok: false, msg: msg}, p}
     end
   end
+
+  # Bia Động Bí Ẩn: người tìm ra động đầu tiên mỗi đêm, người hạ Thạch Long Ẩn, mới trước
+  defp run(_s, p, %{"act" => "secret_board"}),
+    do: {%{ok: true, board: HacLong.World.SecretRecords.recent(30)}, p}
 
   # Bia Long Vương: người đã câu được Long Vương, sớm trước
   defp run(_s, p, %{"act" => "dragon_board"}) do
@@ -1584,9 +1611,21 @@ defmodule HacLong.Game.Session do
       (HacLong.ChaosCastle.map?(map) and not HacLong.ChaosCastle.alive?(s.user_id)) or
         (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
 
-    if out?,
-      do: save(s, %{p | pos: World.village_spawn()}),
-      else: s
+    # Động Bí Ẩn đã đóng (vào lại game lúc trời sáng): ra cổng Đền Cổ
+    secret_out? =
+      Maps.get(map) && Maps.get(map).secret != nil and not HacLong.World.Secret.open?()
+
+    cond do
+      out? ->
+        save(s, %{p | pos: World.village_spawn()})
+
+      secret_out? ->
+        e = HacLong.World.Secret.rules().exit
+        save(s, %{p | pos: %{map: e.map, x: e.x, y: e.y}})
+
+      true ->
+        s
+    end
   end
 
   defp cc_back(s), do: s

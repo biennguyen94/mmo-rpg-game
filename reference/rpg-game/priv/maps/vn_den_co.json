@@ -96,8 +96,21 @@
       ],
       "role": "talk",
       "lines": [
-        "Sau bức tường đền có một hang động, chỉ hiện ra khi trời tối.",
-        "Ban ngày cửa động bị đá phong kín."
+        "Lão giữ ngôi đền này đã sáu mươi năm.",
+        "Đêm nào đá trong núi rung, đêm ấy khe đá sau đền mở ra."
+      ]
+    },
+    {
+      "id": "secret_board",
+      "name": "Bia Động Bí Ẩn",
+      "sprite": "board",
+      "at": [
+        11,
+        9
+      ],
+      "role": "secret_board",
+      "lines": [
+        "Tên khắc trên bia: những người đã tìm ra động và hạ Thạch Long Ẩn."
       ]
     }
   ],

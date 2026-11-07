@@ -106,7 +106,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   | Đồng Bằng Sông Nước (bản đồ lớn) | 26–30 | Đầm Lầy Rồng 1 |
   | Đền Cổ Trên Núi | 34–38 | Hang Hắc Long 2 |
 
-  Nghe nói sau bức tường Đền Cổ có một hang động chỉ mở khi trời tối…
+  Nghe nói sau bức tường Đền Cổ có một hang động chỉ mở vào vài đêm… Hỏi Lão Từ Giữ Đền xem đêm nay có mở không (cần
+  cấp 38). Trong động tối om, có quái Tinh Anh (viền tím) mạnh hơn nhưng thưởng gấp đôi, và một con trùm thức giấc lúc nửa
+  đêm. Gần sáng đá bắt đầu rơi, 5 giờ động sụp và đẩy mọi người ra. Tên người tìm ra động đầu tiên mỗi đêm và người hạ trùm
+  được khắc lên Bia ở Đền Cổ.
 - **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
   nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Tắt bản đồ thu nhỏ ở Menu → Cài đặt.
 - **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,

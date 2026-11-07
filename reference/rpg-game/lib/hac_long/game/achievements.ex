@@ -274,6 +274,23 @@ defmodule HacLong.Game.Achievements do
       goal: 10,
       title: "Người Đi Hội"
     },
+    # DECISIONS "Động Bí Ẩn"
+    %{
+      id: "night_walker",
+      name: "Kẻ Đi Đêm",
+      desc: "Vào Động Bí Ẩn trong 10 đêm khác nhau.",
+      stat: :secret_nights,
+      goal: :night_walker,
+      title: "Kẻ Đi Đêm"
+    },
+    %{
+      id: "secret_boss",
+      name: "Diệt Thạch Long",
+      desc: "Hạ Thạch Long Ẩn trong Động Bí Ẩn.",
+      stat: {:boss, "vn_thach_long_than"},
+      goal: 1,
+      title: "Diệt Thạch Long"
+    },
     %{
       id: "stubborn",
       name: "Lì Đòn",
@@ -307,11 +324,13 @@ defmodule HacLong.Game.Achievements do
   defp goal(%{goal: :max_pet_level}), do: Pets.max_level()
   defp goal(%{goal: :max_craft_level}), do: HacLong.Game.Crafting.max_level()
   defp goal(%{goal: :all_waystones}), do: length(Maps.waystone_ids())
+  defp goal(%{goal: :night_walker}), do: HacLong.World.Secret.rules().night_walker
   defp goal(%{goal: g}), do: g
 
   @doc "Giá trị hiện tại của chỉ số `stat` để so với mục tiêu."
   def value(p, {:boss, id}), do: if(id in p.bosses, do: 1, else: 0)
   def value(p, :kills), do: p.kills
+  def value(p, :secret_nights), do: HacLong.World.Secret.load(Map.get(p, :secret)).nights
   def value(p, :bosses), do: length(p.bosses)
   def value(p, :victory), do: if(p.victory, do: 1, else: 0)
   def value(p, :level), do: p.level

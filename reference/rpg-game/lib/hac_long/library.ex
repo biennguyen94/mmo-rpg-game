@@ -86,7 +86,7 @@ defmodule HacLong.Library do
           do: s.monster
 
     for spec <- Data.side_monsters(),
-        not MapSet.member?(hidden, spec.id) do
+        not MapSet.member?(hidden, spec.id) and spec[:hidden] != true do
       m = Engine.make_monster(spec, false)
 
       %{

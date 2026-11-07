@@ -1728,3 +1728,34 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   - Điểm thu thập: Quặng Mithril và Linh Chi, mỗi loại 4 điểm, hồi sau 45 giây (bản đồ phụ thường: 2 điểm, 70 giây).
   - Người đầu tiên vào mỗi đêm được báo cả server, một lần mỗi đêm, không tính bot (`HacLong.World.Secret`).
   - Số điểm thu thập: anh duyệt.
+
+## Động Bí Ẩn hoàn thiện (2026-11-07, anh chọn làm hết D1–D9)
+Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (canh mỗi 20 giây).
+- **D6 Đêm mở:** cửa mở khoảng 60% số đêm (`open_chance`), chọn cố định theo đêm. Đêm tính theo giờ Việt Nam lùi 12 tiếng.
+  Lão Từ Giữ Đền nói đêm nay mở hay đóng. Biến `SECRET_OPEN` = 1 / 0 ép mở / đóng để thử.
+- **D5 Chặn cấp:** cần cấp 38 (`min_level` của bản đồ).
+- **D8 Cửa động:** đóng thì ô cổng vẽ như vách đá, không nhãn; bước vào chỉ báo "Chỉ là vách đá lạnh ngắt". Mở thì thành "Khe
+  Đá Phát Sáng": vết nứt tím, hạt sáng bay ra.
+- **D1 Trùm đêm Thạch Long Ẩn** (`vn_thach_long_than`):
+  - cấp 46, chỉ số ×1,4, tính như trùm (máu, thưởng theo `RULES.monster.boss`);
+  - không có trong Thư viện, không hồi sinh;
+  - mỗi đêm mở thức giấc một lần, lúc ngẫu nhiên cố định theo đêm trong khung 21–3 giờ, báo cả server;
+  - hạ được thì chắc chắn rơi 1 ngọc (`jewel_chance` 1), thêm 1 Bí Kíp (`boss_items`), ghi Bia, báo cả server;
+  - lần đầu hạ được thêm như trùm khác: ghi vào `bosses`, Bí Kíp lần đầu.
+- **D2 Quái Tinh Anh:** quái sinh ra trong động có 10% là Tinh Anh: chỉ số ×1,6, vàng và kinh nghiệm ×2, tỉ lệ rơi ngọc ×1,5.
+  Trên bản đồ có viền và tên tím ("Tinh Anh ·"). Không hiện màn "TRÙM XUẤT HIỆN".
+- **D4 Động sụp:** 4 giờ 50 người trong động nhận cảnh báo "đá bắt đầu rơi". Cửa đóng (5 giờ, hoặc đêm không mở) thì
+  `SecretWatch` đưa người trong động ra cổng Đền Cổ (`exit`), như quản trị dịch chuyển: đang đánh thì kết thúc như bỏ chạy,
+  không mất gì. Vào lại game khi động đã đóng thì cũng ra Đền Cổ.
+- **D3 Thành tựu:**
+  - "Kẻ Đi Đêm": vào động 10 đêm khác nhau, danh hiệu cùng tên;
+  - "Diệt Thạch Long": hạ trùm đêm, danh hiệu cùng tên.
+- **D7 Không khí:**
+  - trong động tối hẳn, chỉ sáng một vòng nhỏ quanh nhân vật;
+  - pha lê tím / xanh lấp lánh trên vách đá, sương tím trôi;
+  - tiếng nước nhỏ giọt vài giây một lần; đuốc của nền hang.
+- **D9 Bia Động Bí Ẩn** (NPC vai `secret_board` ở Đền Cổ): 30 dòng gần nhất, gồm người tìm ra động đầu tiên mỗi đêm và
+  người hạ trùm.
+- **Schema** (CHANGE_REASON: lưu số đêm cho thành tựu, bảng tên cho Bia):
+  - cột `characters.secret` (map `nights`, `last`);
+  - bảng `secret_records` (`user_id`, `name`, `kind` found | boss, `night`), mỗi người mỗi loại mỗi đêm một dòng.

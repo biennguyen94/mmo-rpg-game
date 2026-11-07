@@ -389,6 +389,14 @@
    "id": "vn_thach_long",
    "name": "Thạch Long Ẩn",
    "level": 44
+  },
+  {
+   "id": "vn_thach_long_than",
+   "name": "Thạch Long Ẩn",
+   "level": 46,
+   "mult": 1.4,
+   "jewel_chance": 1.0,
+   "hidden": true
   }
  ],
  "VN_TINTS": [
@@ -521,6 +529,11 @@
    "monsters/quicksilver_dragon",
    "monsters/vn_thach_long",
    "hue-rotate(260deg) saturate(1.5)"
+  ],
+  [
+   "monsters/ancient_dragon",
+   "monsters/vn_thach_long_than",
+   "hue-rotate(250deg) saturate(1.6) brightness(0.9)"
   ]
  ]
 }

@@ -83,5 +83,6 @@
   "sourceType": "DESIGN",
   "version": 1,
   "verified": false,
-  "secret": "night"
+  "secret": "night",
+  "min_level": 38
 }

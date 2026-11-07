@@ -23,6 +23,9 @@ defmodule HacLong.LibraryTest do
           uniq: true,
           do: s.monster
 
+    # trùm đêm Động Bí Ẩn (`hidden`) cũng không liệt kê
+    hidden = Enum.uniq(hidden ++ for(s <- Data.side_monsters(), s[:hidden], do: s.id))
+
     assert length(lib.monsters) == n - length(hidden)
     bat = Enum.find(lib.monsters, &(&1.id == "bat"))
     assert bat.hp > 0 and bat.atk > 0 and bat.where != []

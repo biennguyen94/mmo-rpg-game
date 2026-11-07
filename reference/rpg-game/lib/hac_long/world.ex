@@ -455,18 +455,26 @@ defmodule HacLong.World do
       target.realm && not realm_open?(p, target) ->
         {%{ok: false, msg: realm_msg(target)}, p}
 
-      # bản đồ không có quái nhưng cần cấp (Hồ Long Vương)
-      !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
-        {%{ok: false, msg: "Cần đạt cấp #{target.min_level} để vào #{target.name}."}, p}
+      # bản đồ bí mật (Động Bí Ẩn, DECISIONS "Động Bí Ẩn"): cửa chỉ mở những đêm động mở; đóng thì chỉ là vách đá
+      target.secret == "night" and not HacLong.World.Secret.open?() ->
+        {%{ok: false, msg: "Chỉ là vách đá lạnh ngắt."}, p}
 
-      # bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở ban đêm; ở trong rồi thì trời sáng vẫn ở được, ra được
-      target.secret == "night" and not HacLong.World.Clock.night?() ->
-        {%{ok: false, msg: "Cửa động bị đá phong kín. Có lẽ phải chờ trời tối…"}, p}
+      # bản đồ không có quái nhưng cần cấp (Hồ Long Vương); Động Bí Ẩn cần cấp 38
+      !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
+        {%{
+           ok: false,
+           msg:
+             if(target.secret,
+               do: "Khe đá tỏa hơi lạnh buốt. Cần đạt cấp #{target.min_level} mới dám bước vào.",
+               else: "Cần đạt cấp #{target.min_level} để vào #{target.name}."
+             )
+         }, p}
 
       true ->
         leave(p, uid)
         {x, y} = portal.spawn
         p = p |> put_pos(target.id, x, y) |> visit(target)
+        p = if target.secret, do: HacLong.World.Secret.visit(p), else: p
         enter(p, uid)
         if target.secret, do: HacLong.World.Secret.found(target, p, uid)
         {%{ok: true, msg: "Đến #{target.name}."}, p}
@@ -648,7 +656,8 @@ defmodule HacLong.World do
 
   # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
   defp do_encounter(p, %{side: true} = map, m),
-    do: Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme)
+    do:
+      Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme, m[:night_boss] == true)
 
   # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ;
   # B-22: bang đang giữ Vương Miện không đánh được nó
@@ -674,9 +683,26 @@ defmodule HacLong.World do
 
     cond do
       m[:gold] -> golden_variant(spec, m.boss)
+      m[:elite] -> elite_variant(spec)
       m[:rare] -> night_variant(spec)
       true -> spec
     end
+  end
+
+  # Quái Tinh Anh ở Động Bí Ẩn (`RULES.secret`): mạnh hơn, thưởng nhiều hơn, dễ rơi ngọc hơn
+  defp elite_variant(spec) do
+    r = HacLong.World.Secret.rules()
+    j = Data.jewels()
+
+    Map.merge(spec, %{
+      name: "#{spec.name} Tinh Anh",
+      mult: Map.get(spec, :mult, 1) * r.elite_mult,
+      reward_mult: Map.get(spec, :reward_mult, 1) * r.elite_reward,
+      jewel_chance:
+        (spec[:jewel_chance] || if(spec.level >= j.monster_level, do: j.monster_chance, else: 0)) *
+          r.elite_jewel_mult,
+      elite: true
+    })
   end
 
   # Quái vàng Golden Invasion (`RULES.invasion`, Phase 7): mạnh hơn (`strength_mult`, trùm vàng giữ sức

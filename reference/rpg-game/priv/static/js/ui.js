@@ -3226,6 +3226,13 @@
   // ---------- Miếu Long Vương (DECISIONS "Long Vương") ----------
   // Bia Long Vương: tải từ server khi mở NPC (lệnh dragon_board), giữ tới khi có người câu được thêm
   let dragonBoard = null, dragonAt = 0, dragonLoading = false;
+  let secretBoard = null, secretAt = 0, secretLoading = false;
+  async function loadSecretBoard() {
+    if (secretLoading) return;
+    secretLoading = true; secretAt = Date.now();
+    try { const r = await Net.send({ act: 'secret_board' }); if (r.ok) { secretBoard = r.board; refresh(); } } catch (e) { /* thử lại lần mở sau */ }
+    secretLoading = false;
+  }
   async function loadDragonBoard() {
     if (dragonLoading) return;
     dragonLoading = true; dragonAt = Date.now();
@@ -3436,6 +3443,22 @@
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
     if (n.id === 'fisher') sections.push(elderCard());
+    // Động Bí Ẩn (D6): Lão Từ nói đêm nay cửa động có mở không
+    if (n.id === 'monk') {
+      const sc = P.view.secret || {};
+      const say = sc.open ? 'Đêm nay đá trong núi rung lên… Khe đá sau đền đã hé mở, ánh tím hắt ra. Đi đi, trước khi trời sáng.'
+        : sc.night ? 'Đêm nay núi yên ắng lạ thường. Khe đá vẫn đóng chặt, hẹn đêm khác.'
+          : 'Ban ngày cửa động bị đá phong kín. Chờ trời tối hãy quay lại hỏi lão.';
+      sections.push(`<div class="card"><p>“${say}”</p><p class="small muted">Động chỉ mở vài đêm, cần cấp ${(WORLD.maps.vn_dong_bi_an || {}).minLevel || 38} trở lên. Gần sáng (4 giờ 50) đá bắt đầu rơi, 5 giờ động sụp, ai còn trong động bị đẩy ra.</p></div>`);
+    }
+    // Bia Động Bí Ẩn (D9): người tìm ra động đầu tiên mỗi đêm, người hạ Thạch Long Ẩn
+    if (n.role === 'secret_board') {
+      if (Date.now() - secretAt > 60000) loadSecretBoard();
+      const rows = secretBoard || [];
+      sections.push(`<div class="card"><h3>Bia Động Bí Ẩn</h3>${secretBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
+        : rows.length ? `<div class="list">${rows.map((r) => `<div class="item"><span>${r.kind === 'boss' ? '⚔' : '🌙'}</span><div class="grow">${esc(r.name)}<div class="small muted">${r.kind === 'boss' ? 'hạ Thạch Long Ẩn' : 'người đầu tiên tìm ra động'}</div></div><span class="small muted">đêm ${esc(r.night)}</span></div>`).join('')}</div>`
+          : '<p class="small muted">Bia còn trống. Chưa ai tìm ra động.</p>'}</div>`);
+    }
     // Thương Nhân Chợ Nổi: mỗi ngày bày vài món hiếm, mỗi món mua giới hạn lần / ngày
     if (n.role === 'trader') {
       const offers = P.view.trader || [];

@@ -207,8 +207,11 @@ defmodule HacLong.World.MapServer do
   def handle_call({:put_monster, kind, pos, boss?, rare?, extra}, _from, s) do
     origin = if boss?, do: :boss, else: {:manual, kind}
     {m, s} = new_monster(s, kind, pos, boss?, origin)
-    # `extra`: tên / cấp riêng hiện trên bản đồ (vd Vương Miện, B-22)
-    m = Map.merge(%{m | rare: rare?}, Map.take(extra, [:name, :level]))
+
+    # `extra`: tên / cấp riêng hiện trên bản đồ (vd Vương Miện, B-22); `night_boss`: trùm đêm Động Bí Ẩn (hiện như trùm,
+    # không hồi sinh)
+    m = Map.merge(%{m | rare: rare?}, Map.take(extra, [:name, :level, :night_boss]))
+    m = if extra[:night_boss], do: %{m | boss: true}, else: m
     s = put_in(s.monsters[m.id], m)
     {:reply, public(m), changed(s)}
   end
@@ -450,7 +453,23 @@ defmodule HacLong.World.MapServer do
 
   defp new_monster(s, kind, pos, boss?, origin) do
     rare = match?({:spawn, _}, origin) and Clock.night?() and :rand.uniform() < @rare_chance
-    m = %{id: s.next_id, kind: kind, pos: pos, boss: boss?, busy: nil, origin: origin, rare: rare}
+
+    # Động Bí Ẩn (DECISIONS "Động Bí Ẩn"): quái sinh ra có `RULES.secret.elite_chance` là quái Tinh Anh
+    elite =
+      match?({:spawn, _}, origin) and s.map.secret != nil and
+        :rand.uniform() < HacLong.World.Secret.rules().elite_chance
+
+    m = %{
+      id: s.next_id,
+      kind: kind,
+      pos: pos,
+      boss: boss?,
+      busy: nil,
+      origin: origin,
+      rare: rare and not elite
+    }
+
+    m = if elite, do: Map.put(m, :elite, true), else: m
     {m, %{s | monsters: Map.put(s.monsters, m.id, m), next_id: s.next_id + 1}}
   end
 
@@ -520,6 +539,7 @@ defmodule HacLong.World.MapServer do
       busy: m.busy != nil,
       rare: m.rare,
       gold: m[:gold] == true,
+      elite: m[:elite] == true,
       # quái xâm lăng (B-20): tên, cấp riêng (không có trong bảng quái của client)
       raid: m[:raid],
       name: m[:name],

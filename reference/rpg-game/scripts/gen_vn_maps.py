@@ -286,7 +286,9 @@ def den_co():
     finish(g, (1, mid), "R")
     return g, [[0, mid], [14, 3]], [
         {"id": "monk", "name": "Lão Từ Giữ Đền", "sprite": "elder", "at": [16, 9], "role": "talk",
-         "lines": ["Sau bức tường đền có một hang động, chỉ hiện ra khi trời tối.", "Ban ngày cửa động bị đá phong kín."]}]
+         "lines": ["Lão giữ ngôi đền này đã sáu mươi năm.", "Đêm nào đá trong núi rung, đêm ấy khe đá sau đền mở ra."]},
+        {"id": "secret_board", "name": "Bia Động Bí Ẩn", "sprite": "board", "at": [11, 9], "role": "secret_board",
+         "lines": ["Tên khắc trên bia: những người đã tìm ra động và hạ Thạch Long Ẩn."]}]
 
 
 def dong_bi_an():
@@ -301,6 +303,11 @@ def dong_bi_an():
     finish(g, (14, H - 2), "R")
     return g, [[14, H - 1]], []
 
+
+# Trùm đêm Động Bí Ẩn (DECISIONS "Động Bí Ẩn"): không sinh theo `spawns`, HacLong.World.Secret thả mỗi đêm động mở;
+# `hidden`: không có trong Thư viện. Chỉ số ×`mult`, chắc chắn rơi ngọc (`jewel_chance` 1).
+NIGHT_BOSS = ("vn_thach_long_than", "Thạch Long Ẩn", 46, "ancient_dragon", "hue-rotate(250deg) saturate(1.6) brightness(0.9)",
+              {"mult": 1.4, "jewel_chance": 1.0, "hidden": True})
 
 # (id, tên, hàm, nền, nền trận, cha, cổng phụ, thêm)
 SPECS = [
@@ -317,7 +324,7 @@ SPECS = [
     ("vn_den_co", "Đền Cổ Trên Núi", den_co, "floors/mountain", "mountain", "lair_2",
      {"style": "temple", "gather": [("ore_rare", 2, 70)]}),
     ("vn_dong_bi_an", "Động Bí Ẩn", dong_bi_an, "floors/lair", "lair", None,
-     {"secret": "night", "gather": [("ore_rare", 4, 45), ("herb_rare", 4, 45)]}),
+     {"secret": "night", "min_level": 38, "gather": [("ore_rare", 4, 45), ("herb_rare", 4, 45)]}),
 ]
 
 
@@ -371,6 +378,9 @@ def main():
         for mid, name, lv, src, flt in mons:
             side["SIDE_MONSTERS"].append({"id": mid, "name": name, "level": lv})
             tints.append([f"monsters/{src}", f"monsters/{mid}", flt])
+    bid, bname, blv, bsrc, bflt, bextra = NIGHT_BOSS
+    side["SIDE_MONSTERS"].append({"id": bid, "name": bname, "level": blv, **bextra})
+    tints.append([f"monsters/{bsrc}", f"monsters/{bid}", bflt])
     side["VN_TINTS"] = tints
     with open(SIDE, "w", encoding="utf-8") as f:
         json.dump(side, f, ensure_ascii=False, indent=1)

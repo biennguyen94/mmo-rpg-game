@@ -209,6 +209,7 @@ defmodule HacLong.Game.Characters do
       skill_set: if(is_list(c.skill_set) and c.skill_set != [], do: c.skill_set),
       skill_mastery: HacLong.Game.Mastery.load(c.skill_mastery),
       auto_cfg: if(is_map(c.auto_cfg), do: c.auto_cfg),
+      secret: if(is_map(c.secret), do: HacLong.World.Secret.load(c.secret)),
       crafting: %{
         cook: (c.crafting || %{})["cook"] || 0,
         smith: (c.crafting || %{})["smith"] || 0

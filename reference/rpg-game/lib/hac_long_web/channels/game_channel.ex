@@ -1204,6 +1204,8 @@ defmodule HacLongWeb.GameChannel do
         elder: HacLong.Game.Fishing.elder(player),
         # Thương Nhân Chợ Nổi: món hôm nay, đã mua mấy lần
         trader: HacLong.Game.Trader.view(player, Daily.today()),
+        # Động Bí Ẩn: cửa đêm nay có mở không (Lão Từ nói, cổng hiện khe đá phát sáng)
+        secret: %{open: HacLong.World.Secret.open?(), night: HacLong.World.Clock.night?()},
         # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
         autoMap: %{
           ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),
