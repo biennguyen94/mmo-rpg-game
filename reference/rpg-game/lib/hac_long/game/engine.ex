@@ -147,6 +147,7 @@ defmodule HacLong.Game.Engine do
           # thông thạo kỹ năng (`HacLong.Game.Mastery`): nhân vật mới luyện từ cấp 1
           skill_mastery: %{},
           auto_cfg: nil,
+          secret: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
           storage: %{inv: %{}, extra: 0, gold: 0},
@@ -539,6 +540,9 @@ defmodule HacLong.Game.Engine do
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
+    # trùm: công / thủ nhân thêm (`RULES.monster.boss.atk` / `def`)
+    ba = if boss?, do: @mon.boss.atk, else: 1
+    bd = if boss?, do: @mon.boss.def, else: 1
     # thưởng nhân thêm (quái vàng Golden Invasion), không đổi sức mạnh
     rw = Map.get(spec, :reward_mult, 1)
 
@@ -556,8 +560,8 @@ defmodule HacLong.Game.Engine do
       jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + sl * @mon.hp.level + sl * sl * @mon.hp.level_sq) * m * bm),
       # vùng chuyển sinh: công nhân hệ số riêng `atk_mult` (nhẹ hơn máu), không có thì như máu
-      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m)),
-      def: round((@mon.def.base + sl * @mon.def.level) * m),
+      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m) * ba),
+      def: round((@mon.def.base + sl * @mon.def.level) * m * bd),
       # Phase 6: vùng chuyển sinh rơi đồ quý hơn (`Gear.rich/2`)
       rich: Map.get(spec, :rich, 0),
       crit: @mon.crit,
@@ -693,7 +697,7 @@ defmodule HacLong.Game.Engine do
   Trận ở bản đồ phụ (Phase 15a): không thuộc vùng nào nên không cần mở vùng; `place` (tên bản đồ) và
   `theme` (nền) để client vẽ.
   """
-  def start_side_encounter(p, spec, place, theme) do
+  def start_side_encounter(p, spec, place, theme, boss? \\ false) do
     cond do
       p.battle ->
         {err("Đang trong trận đấu."), p}
@@ -702,7 +706,7 @@ defmodule HacLong.Game.Engine do
         {err("Bạn cần hồi máu trước."), p}
 
       true ->
-        {r, p} = do_start_battle(p, nil, spec, false)
+        {r, p} = do_start_battle(p, nil, spec, boss?)
         {r, update_in(p.battle, &Map.merge(&1, %{place: place, theme: theme}))}
     end
   end
@@ -1153,7 +1157,10 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
-            mult = if skill, do: mult * (1 + d.skillDmg) * emult, else: mult
+
+            mult =
+              if skill, do: mult * (1 + d.skillDmg) * emult * weather_mult(p, skill), else: mult
+
             hits = (skill && skill[:hits]) || 1
 
             # đối thủ là người (đấu trường, đồ sát): giảm sát thương nhận của cánh và Excellent bên đó;
@@ -2225,6 +2232,12 @@ defmodule HacLong.Game.Engine do
   end
 
   defp arena_opening(p, dmg), do: {dmg, p}
+
+  @doc "Thời tiết của trận (`battle.wx`, Session ghi lúc bắt đầu): kỹ năng cùng hệ × (1 + pct)."
+  def weather_mult(%{battle: %{wx: %{element: el, pct: pct}}}, %{} = skill),
+    do: if(skill[:element] == el, do: 1 + pct, else: 1)
+
+  def weather_mult(_p, _skill), do: 1
 
   defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,
     do: put_in(p, [:battle, :stun_free], p.battle.turn + 1 + @pvp.stun_immune)

@@ -19,6 +19,7 @@ defmodule HacLong.Application do
       HacLong.Chat,
       HacLong.WorldBoss,
       HacLong.LakeEvent,
+      HacLong.World.SecretWatch,
       HacLong.Party,
       HacLong.Trade,
       HacLong.Slay,

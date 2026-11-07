@@ -15,7 +15,18 @@ defmodule HacLong.LibraryTest do
         acc + length(z.monsters) + 1
       end)
 
-    assert length(lib.monsters) == n
+    # quái chỉ có ở bản đồ bí mật (Động Bí Ẩn) không liệt kê (DECISIONS "Bản đồ đẹp hơn")
+    hidden =
+      for m <- Enum.map(HacLong.World.Maps.ids(), &HacLong.World.Maps.get/1),
+          m.secret != nil,
+          s <- m.spawns,
+          uniq: true,
+          do: s.monster
+
+    # trùm đêm Động Bí Ẩn (`hidden`) cũng không liệt kê
+    hidden = Enum.uniq(hidden ++ for(s <- Data.side_monsters(), s[:hidden], do: s.id))
+
+    assert length(lib.monsters) == n - length(hidden)
     bat = Enum.find(lib.monsters, &(&1.id == "bat"))
     assert bat.hp > 0 and bat.atk > 0 and bat.where != []
     wolf = Enum.find(lib.monsters, &(&1.id == "wolf"))

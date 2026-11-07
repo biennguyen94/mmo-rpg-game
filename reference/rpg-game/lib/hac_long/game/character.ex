@@ -2,7 +2,7 @@ defmodule HacLong.Game.Character do
   @moduledoc "Bảng `characters`: trạng thái nhân vật đã lưu của một tài khoản."
   use Ecto.Schema
 
-  @fields ~w(name cls level xp gold hp mp points stats equip inv bosses kills deaths victory battle map_id x y waystones quests victory_at name_key daily tower tower_best tutorial upgrades fish_caught long_khi achievements title gear bestiary rebirths chest_day pet pets pet_xp daily_done boss_top food drink crafting festival storage visited blessing skill_set skill_mastery auto_cfg)a
+  @fields ~w(name cls level xp gold hp mp points stats equip inv bosses kills deaths victory battle map_id x y waystones quests victory_at name_key daily tower tower_best tutorial upgrades fish_caught long_khi achievements title gear bestiary rebirths chest_day pet pets pet_xp daily_done boss_top food drink crafting festival storage visited blessing skill_set skill_mastery auto_cfg secret)a
 
   schema "characters" do
     belongs_to :user, HacLong.Accounts.User
@@ -60,6 +60,9 @@ defmodule HacLong.Game.Character do
     # thông thạo kỹ năng (`HacLong.Game.Mastery`); NULL: nhân vật có trước tính năng (nạp lên cấp tối đa)
     field :skill_mastery, :map
     field :auto_cfg, :map
+
+    # DECISIONS "Động Bí Ẩn": %{"nights" => số đêm đã vào động, "last" => đêm vào gần nhất}
+    field :secret, :map
     field :crafting, :map, default: %{}
     field :festival, :integer, default: 0
     timestamps(type: :utc_datetime)

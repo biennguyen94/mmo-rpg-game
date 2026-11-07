@@ -118,6 +118,12 @@ defmodule HacLong.Game.Commands do
       "craft" ->
         craft(p, c["id"])
 
+      # Thương Nhân Chợ Nổi (DECISIONS "Bản đồ đẹp hơn")
+      "trader_buy" ->
+        at_npc(p, ["trader"], "Thương Nhân ở Chợ Nổi", fn _ ->
+          HacLong.Game.Trader.buy(p, c["id"], HacLong.Game.Daily.today())
+        end)
+
       "title_set" ->
         Achievements.set_title(p, c["id"])
 

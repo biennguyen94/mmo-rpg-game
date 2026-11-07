@@ -1,0 +1,93 @@
+{
+  "id": "vn_cho_noi",
+  "name": "Chợ Nổi",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "tiles/grass",
+  "tiles": [
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~Q~~~~~~~~~~~~~~~~~",
+    "~~~U~~B~~~~~~~B~~~~~~~B~~~~~~~",
+    "~~~~EEEEEEEEEEEEEEEEEEEEEE~~~~",
+    "~~~~~~B~~~~~~~B~~~~~~~B~~~~U~~",
+    "~~~~~~B~~U~~~~B~~~U~~~B~~~~~~~",
+    "~~Q~~~B~~~~~~~B~~~~~~~B~~~~~~~",
+    "~~~~~~BJ~~E~~JB~~~~~~.B~~~~~~~",
+    "OEEEEEBEEEEEEEBEEEEEEEBEEEEEE~",
+    "~~~~~~B~J~~~~~BJ~~E~~~BJ~~~~~~",
+    "~~~~~~B~~~~~~~B~~~~~~~B~~~~~~~",
+    "~~~~~~B~~~~~~~B~~~~Q~~B~~U~~~~",
+    "~~~~~~B~~~U~~~B~~~~~~~B~~~~~~~",
+    "~~~~~~B~~~~~~~B~~~~~~~B~~~~~~~",
+    "~~~~EEEEEEEEEEEEEEEEEEEEEE~~~~",
+    "~~~~U~B~~~~~~~B~~U~~~~B~~~~~~~",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~Q~~~",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        9
+      ],
+      "to": "vn_lang_chai",
+      "spawn": [
+        28,
+        7
+      ]
+    }
+  ],
+  "spawns": [],
+  "gather": [],
+  "npcs": [
+    {
+      "id": "fruit_seller",
+      "name": "Cô Bán Trái Cây",
+      "sprite": "merchant",
+      "at": [
+        10,
+        8
+      ],
+      "role": "talk",
+      "lines": [
+        "Xoài, chôm chôm, sầu riêng đây! Đi xuồng cả buổi mới ra tới chợ đó.",
+        "Đêm chợ thắp đèn lồng, đẹp lắm."
+      ]
+    },
+    {
+      "id": "ferryman",
+      "name": "Ông Lái Đò",
+      "sprite": "fisher",
+      "at": [
+        18,
+        10
+      ],
+      "role": "talk",
+      "lines": [
+        "Câu cá ở đây ra cá to như ở vùng sâu.",
+        "Ngồi bến này câu thì nhớ để ý phao."
+      ]
+    },
+    {
+      "id": "trader",
+      "name": "Thương Nhân Phương Xa",
+      "sprite": "dealer",
+      "at": [
+        21,
+        8
+      ],
+      "role": "trader",
+      "lines": [
+        "Hàng hiếm từ khắp nơi, mỗi ngày một khác. Mua nhanh kẻo hết!"
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "fish": "deep",
+  "min_level": 8
+}

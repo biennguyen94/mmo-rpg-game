@@ -3,6 +3,7 @@
  * Dữ liệu bản đồ tĩnh ở GAME_DATA.WORLD; quái và người chơi khác đến từ sự kiện "map" của server. */
 (function () {
   const { WORLD, ZONES } = window.GAME_DATA;
+  const SECRET = (window.GAME_DATA.RULES || {}).secret || {};
   const TILE = 32;
   const WALK = new Set(WORLD.walkable);
   const PORTAL = new Set(['D', 'A', 'O']);
@@ -28,6 +29,10 @@
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
+  // B4 (DECISIONS "Bản đồ đẹp hơn"): vừa vào bản đồ (`enter.at`): mở dần từ tối + xoáy sáng, tên bản đồ to giữa màn
+  let enter = { map: null, at: 0 };
+  // B7: dấu chân lâu trên tuyết / cát (5 giây), cỏ bắn lên khi bước qua bụi cỏ, gợn nước khi đứng ven hồ
+  let prints = [], rustle = [], stillSince = 0;
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
@@ -127,8 +132,12 @@
   // Cổng vào vùng chưa mở (P.view.unlocked do server tính).
   function locked(P, portal) {
     const target = mapOf(portal.to);
-    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel);
+    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel) ||
+      // bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở những đêm động mở (server kiểm lại)
+      (target.secret === 'night' && !secretOpen(P));
   }
+
+  const secretOpen = (P) => !!(P && P.view && P.view.secret && P.view.secret.open);
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
   const PHASES = { dawn: ['🌅', 0.25], day: ['☀️', 0], dusk: ['🌇', 0.3], night: ['🌙', 0.62] };
@@ -136,6 +145,21 @@
   // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
+  // B6: độ tối chuyển dần theo giờ Việt Nam (mốc như HacLong.World.Clock: bình minh 5–7, ngày 7–18, hoàng hôn 18–20, đêm
+  // 20–5). Đồng hồ máy lệch (buổi tính ra khác buổi server gửi) thì dùng mức cố định của buổi server. Trả [độ tối, ánh
+  // cam hồng 0..1] — ánh mạnh nhất giữa bình minh / hoàng hôn.
+  function sky() {
+    const ph = shade();
+    const fixed = [PHASES[ph] ? PHASES[ph][1] : 0, ph === 'dawn' || ph === 'dusk' ? 0.6 : 0];
+    if (theme() !== 'auto') return fixed;
+    const d = new Date(), h = (d.getUTCHours() + 7 + d.getUTCMinutes() / 60) % 24;
+    const calc = h >= 5 && h < 7 ? 'dawn' : h >= 7 && h < 18 ? 'day' : h >= 18 && h < 20 ? 'dusk' : 'night';
+    if (calc !== ph) return fixed;
+    const N = PHASES.night[1];
+    if (ph === 'dawn') { const k = (h - 5) / 2; return [N * (1 - k), Math.sin(k * Math.PI)]; }
+    if (ph === 'dusk') { const k = (h - 18) / 2; return [N * k, Math.sin(k * Math.PI)]; }
+    return fixed;
+  }
 
   // ---------- Bản đồ động (Phase 5, B-32) ----------
   // Chỉ là hình: nước gợn, cây lay, quái nhún nhẹ, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp ở Làng,
@@ -174,6 +198,18 @@
   // hạt đứng yên trong thế giới (tuyết, lá, mưa không "đi theo" nhân vật)
   const wrap = (v, m) => ((v % m) + m) % m;
   // thời tiết theo nền bản đồ
+  // B5: thời tiết chung cả server (server gửi `world.weather` theo giờ); bản đồ tháp / sự kiện: theo nền tầng như trước
+  const WEATHER_ICON = { clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' };
+  const WEATHER_NAME = { clear: 'Trời quang', rain: 'Mưa', storm: 'Giông bão', fog: 'Sương mù', snow: 'Tuyết rơi', blizzard: 'Bão tuyết', leaves: 'Lá bay', dust: 'Gió cát', embers: 'Tàn lửa' };
+  function weatherNow(m, id) {
+    if (world.map === id && world.weather && !m.tower) return world.weather === 'clear' ? null : world.weather;
+    return weatherOf(m, id);
+  }
+  // biểu tượng thời tiết trên thanh tên bản đồ (cập nhật khi sự kiện "map" tới, `setWorld`)
+  function wxIcon(P) {
+    const wk = P && world.map === P.pos.map && outdoors(P) ? world.weather : null;
+    return wk && WEATHER_ICON[wk] ? `<span title="${WEATHER_NAME[wk]}">${WEATHER_ICON[wk]}</span> ` : '';
+  }
   function weatherOf(m, id) {
     if (id === 'village') return 'smoke';
     const f = m.floor || '';
@@ -198,10 +234,36 @@
     return chimneyCache.get(id);
   }
 
+  let thunderAt = 0;
   function weather(kind, t, cx, cy, m, id) {
     const vw = VW(), vh = VH();
     // khung bản đồ đang ẩn (trong trận): rộng / cao 0 thì wrap chia cho 0 ra NaN
     if (!(vw > 0 && vh > 0)) return;
+    if (kind === 'storm') {
+      // mưa to xiên + chớp: mỗi ~9 giây một lần lóe (hai nhịp), sấm theo sau
+      ctx.strokeStyle = 'rgba(170, 200, 230, 0.55)'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < 130; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * 0.3 - cx, vw + 60) - 30, y = wrap(rnd(i, 2) * vh + t * 0.8 - cy, vh);
+        ctx.moveTo(x, y); ctx.lineTo(x - 6, y + 13);
+      }
+      ctx.stroke();
+      const cyc = t % 9000;
+      if (cyc < 90 || (cyc > 180 && cyc < 260)) {
+        ctx.fillStyle = `rgba(230, 235, 255, ${cyc < 90 ? 0.45 : 0.25})`; ctx.fillRect(0, 0, vw, vh);
+        if (t - thunderAt > 5000) { thunderAt = t; setTimeout(() => window.Sound && window.Sound.play('thunder'), 500); }
+      }
+      return;
+    }
+    if (kind === 'blizzard') {
+      for (let i = 0; i < 120; i++) {
+        const x = wrap(rnd(i, 1) * vw + t * (0.12 + rnd(i, 4) * 0.08) - cx, vw), y = wrap(rnd(i, 2) * vh + t * (0.05 + rnd(i, 3) * 0.05) - cy, vh);
+        ctx.fillStyle = `rgba(245, 248, 255, ${0.5 + 0.4 * rnd(i, 5)})`;
+        ctx.fillRect(x, y, 2 + rnd(i, 6) * 2, 2);
+      }
+      ctx.fillStyle = 'rgba(225, 235, 250, 0.12)'; ctx.fillRect(0, 0, vw, vh);
+      return;
+    }
     if (kind === 'rain') {
       ctx.strokeStyle = 'rgba(170, 200, 230, 0.5)'; ctx.lineWidth = 1;
       ctx.beginPath();
@@ -270,13 +332,55 @@
       g.addColorStop(0, `rgba(255, 196, 110, ${0.35 * dark * f})`); g.addColorStop(1, 'rgba(255, 196, 110, 0)');
       ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.6, y - TILE * 1.6, TILE * 3.2, TILE * 3.2);
     }
-    for (let i = 0; i < 16; i++) {
+    const ff = /forest|swamp/.test(m.floor || '') ? 30 : 16;
+    for (let i = 0; i < ff; i++) {
       const x = wrap(rnd(i, 1) * vw + Math.sin(t / 1300 + i * 2) * 30 - cx, vw), y = wrap(rnd(i, 2) * vh + Math.cos(t / 1700 + i) * 22 - cy, vh);
       const a = Math.max(0, Math.sin(t / 420 + i * 1.7)) * dark;
       if (a < 0.05) continue;
       const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
       g.addColorStop(0, `rgba(220, 255, 140, ${a})`); g.addColorStop(1, 'rgba(220, 255, 140, 0)');
       ctx.fillStyle = g; ctx.fillRect(x - 6, y - 6, 12, 12);
+    }
+  }
+
+  // B6: đêm — cực quang trên núi, đuốc lập lòe ở hang / nghĩa địa (cột, đá cạnh lối đi), ánh trăng lấp lánh trên nước
+  function nightFx(t, m, cx, cy, dark, x0, y0, x1, y1) {
+    const vw = VW(), vh = VH(), f = m.floor || '';
+    if (f.includes('mountain')) {
+      for (let b = 0; b < 3; b++) {
+        ctx.beginPath();
+        const base = 26 + b * 18, amp = 10 + b * 4;
+        for (let x = 0; x <= vw; x += 12) {
+          const y = base + Math.sin(x / 70 + t / (2600 + b * 500) + b) * amp + Math.sin(x / 23 + t / 900) * 3;
+          x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.lineTo(vw, 0); ctx.lineTo(0, 0); ctx.closePath();
+        const a = (0.1 + 0.05 * Math.sin(t / 1700 + b)) * dark;
+        ctx.fillStyle = b === 1 ? `rgba(170, 110, 255, ${a})` : `rgba(90, 255, 170, ${a})`;
+        ctx.fill();
+      }
+    }
+    const torches = /lair|graveyard/.test(f);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = (m.tiles[y] || '')[x];
+        const px = x * TILE - cx, py = y * TILE - cy;
+        if (torches && (c === 'I' || c === 'R' || c === 'S') && rnd(x * 3 + 1, y * 5 + 2) < 0.12 && WALK.has((m.tiles[y + 1] || '')[x])) {
+          const fl = 0.75 + 0.25 * Math.sin(t / 90 + x * 3) * Math.sin(t / 37 + y);
+          const g = ctx.createRadialGradient(px + TILE / 2, py + 8, 1, px + TILE / 2, py + 8, TILE * 2);
+          g.addColorStop(0, `rgba(255, 150, 60, ${0.55 * dark * fl})`); g.addColorStop(1, 'rgba(255, 150, 60, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px - TILE * 1.5, py - TILE * 1.5, TILE * 4, TILE * 4);
+          ctx.fillStyle = `rgba(255, ${200 + Math.round(40 * fl)}, 120, ${0.9 * fl})`;
+          ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + 6 - fl * 2, 2.5, 4 + fl * 2, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        if ((c === '~' || c === '=') && rnd(x + 11, y + 7) < 0.5) {
+          const k = Math.max(0, Math.sin(t / 700 + x * 1.7 + y * 2.3));
+          if (k > 0.6) {
+            ctx.fillStyle = `rgba(230, 235, 255, ${(k - 0.6) * 1.6 * dark})`;
+            ctx.fillRect(px + 6 + rnd(x, y) * 18, py + 6 + rnd(y, x) * 18, 3, 1.2);
+          }
+        }
+      }
     }
   }
 
@@ -297,15 +401,73 @@
     return `👑 ${c.holder ? `[${c.holder.tag}] giữ Vương Miện` : 'Vương Miện chưa có chủ'} · hết lúc ${at}`;
   }
 
+  // dòng phụ của bảng tên bản đồ (B4): cấp quái / phòng trùm / sự kiện
+  function subtitle(P, m) {
+    const z = m.zone != null ? ZONES[m.zone] : null;
+    const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
+    if (m.tower) return '';
+    if (m.secret) return SECRET.min ? `Nơi bí ẩn · quái cấp ${SECRET.min}–${SECRET.max}` : 'Nơi bí ẩn';
+    if (P.pos.map === 'village') return 'Nơi bình yên';
+    if (P.pos.map.endsWith('_boss') && z) return `Phòng trùm · cấp ${z.boss.level}`;
+    if (side && side.min && !(side.monsters || []).length) return `Không có quái · cần cấp ${side.min}`;
+    if (side && side.min) return `Quái cấp ${side.min}–${side.max}`;
+    if (z) return `Quái cấp ${z.levels}`;
+    return '';
+  }
+
+  // B4: bảng tên bản đồ giữa màn (hiện 0,3 giây, giữ, mờ dần; tổng 2,6 giây) và màn mở dần từ tối khi vừa sang bản đồ
+  function enterFx(t, P, m, px, py) {
+    const k = t - enter.at;
+    if (k < 0 || k > 2600) return;
+    const vw = VW(), vh = VH();
+    if (k < 520) {
+      const a = 1 - k / 520;
+      ctx.fillStyle = `rgba(6, 4, 10, ${0.92 * a})`;
+      ctx.fillRect(0, 0, vw, vh);
+      // xoáy sáng quanh nhân vật (như bước qua cổng)
+      const x = px + TILE / 2, y = py + TILE / 2;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(k / 140);
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(190, 160, 255, ${0.7 * a})`; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, 10 + i * 9 + (k / 520) * 30, i * 2.1, i * 2.1 + 3.6); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    const a = k < 300 ? k / 300 : k > 1900 ? Math.max(0, 1 - (k - 1900) / 700) : 1;
+    const tr = (s) => (window.I18N ? window.I18N.tr(s) : s);
+    const name = tr(m.name || ''), sub = tr(subtitle(P, m));
+    const y = Math.round(vh * 0.26) - (1 - a) * 8;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '700 28px "Grenze Gotisch", "Palatino Linotype", Georgia, serif';
+    const w = Math.min(vw - 24, Math.max(ctx.measureText(name).width + 70, 200));
+    const g = ctx.createLinearGradient(vw / 2 - w / 2, 0, vw / 2 + w / 2, 0);
+    g.addColorStop(0, 'rgba(10, 7, 14, 0)'); g.addColorStop(0.2, `rgba(10, 7, 14, ${0.72 * a})`);
+    g.addColorStop(0.8, `rgba(10, 7, 14, ${0.72 * a})`); g.addColorStop(1, 'rgba(10, 7, 14, 0)');
+    ctx.fillStyle = g; ctx.fillRect(vw / 2 - w / 2, y - 26, w, sub ? 62 : 48);
+    ctx.fillStyle = `rgba(240, 207, 122, ${0.55 * a})`;
+    ctx.fillRect(vw / 2 - w * 0.32, y - 25, w * 0.64, 1); ctx.fillRect(vw / 2 - w * 0.32, y + (sub ? 35 : 21), w * 0.64, 1);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'; ctx.shadowBlur = 6;
+    ctx.fillStyle = `rgba(240, 207, 122, ${a})`;
+    ctx.fillText(name, vw / 2, y);
+    if (sub) {
+      ctx.font = '600 12px "Be Vietnam Pro", system-ui, sans-serif';
+      ctx.fillStyle = `rgba(241, 230, 207, ${0.9 * a})`;
+      ctx.fillText(sub, vw / 2, y + 23);
+    }
+    ctx.restore();
+  }
+
   function top(P) {
     const m = cur(P);
     const z = m.zone != null ? ZONES[m.zone] : null;
     // bản đồ phụ (Phase 15a): cấp quái lấy từ Thư viện
     const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
-    const ph = PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '';
+    const ph = (PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '') +
+      `<span class="phase" id="map-wx">${wxIcon(P)}</span>`;
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : m.secret ? `Nơi bí ẩn${SECRET.min ? ` · quái cấp ${SECRET.min}–${SECRET.max}` : ''} · cần cấp ${m.minLevel || 38}` : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -313,7 +475,7 @@
     const m = cur(P);
     return `
       ${top(P)}
-      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas><button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
+      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${miniOn() && !m.tower ? '<canvas class="mini-map" id="mini-map" role="button" tabindex="0" data-act="world-map" title="Bản đồ thế giới" aria-label="Bản đồ thu nhỏ, bấm để mở bản đồ thế giới"></canvas>' : ''}<button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
       <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh.</p>`;
   }
 
@@ -393,7 +555,8 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
-    const fx = fxOn(), fountains = [], lanterns = [];
+    const fx = fxOn(), fountains = [], lanterns = [], tufts = [], incense = [];
+    const grassy = /forest|swamp|grass/.test(m.floor || '') && outdoors(P);
 
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -404,7 +567,9 @@
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
           const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
           const sway = fx && (kind === 'tree' || kind === 'tree_autumn') ? Math.sin(now / 900 + x * 0.8 + y * 0.5) * 0.045 : 0;
-          if (im.complete && sway) {
+          if (m.style === 'bamboo' && (kind === 'tree' || kind === 'tree_autumn')) {
+            bamboo(px, py, x, y, fx ? now : 0);
+          } else if (im.complete && sway) {
             // cây lay theo gió: nghiêng quanh gốc
             ctx.save(); ctx.translate(px + TILE / 2, py + TILE); ctx.transform(1, 0, sway, 1, 0, 0);
             ctx.drawImage(im, -TILE / 2, -TILE, TILE, TILE); ctx.restore();
@@ -417,14 +582,29 @@
               ctx.fillRect(px + 4 + ph * (TILE - 14), py + 8 + k * 12 + ((x + y + k) % 3) * 2, 8, 1.5);
             }
           }
+          if (m.style === 'paddy' && kind === 'water') paddy(px, py, x, y, fx ? now : 0);
+          if (fx && m.style === 'temple' && kind === 'dragon_statue') incense.push([px, py]);
           if (fx && kind === 'fountain') fountains.push([px, py]);
           if (kind === 'lantern') lanterns.push([px, py]);
         }
+        // B7: bụi cỏ lay theo gió (ô cỏ / nền cỏ, ~1/3 số ô, chọn cố định theo vị trí)
+        if (fx && grassy && (kind === 'grass' || kind === 'floor') && rnd(x * 7 + y * 13, 9) < 0.34) tufts.push([px, py, x, y]);
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
         if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
         if (kind === 'stairs_down') labels.push(['Về Làng', px + TILE / 2, py + TILE - 13, '#b9d7ff']);
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);
+        // Động Bí Ẩn (D8): cửa đóng thì trông như vách đá, không nhãn; mở thì khe đá phát sáng tím
+        if (portal && (mapOf(portal.to) || {}).secret) {
+          if (!secretOpen(P)) {
+            const st = image('tiles/stone');
+            if (st.complete) ctx.drawImage(st, px, py, TILE, TILE);
+          } else {
+            crackFx(px, py, fx ? now : 0);
+            labels.push(['Khe Đá Phát Sáng', px + TILE / 2, py + TILE - 13, '#d6a8ff']);
+          }
+          continue;
+        }
         if (portal) {
           const shut = locked(P, portal);
           if (shut) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(px, py, TILE, TILE); } else if (fx) portalSwirl(px + TILE / 2, py + TILE / 2, now);
@@ -433,6 +613,17 @@
         }
       }
     }
+
+    groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
+    if (tufts.length) grassFx(now, tufts);
+    for (const [ix, iy] of incense) {
+      for (let i = 0; i < 4; i++) {
+        const k = ((now / 2600) + i / 4) % 1;
+        ctx.fillStyle = `rgba(220, 215, 230, ${0.35 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(ix + TILE / 2 + Math.sin(now / 600 + i * 2) * 4 * k, iy + 4 - k * 26, 1.5 + k * 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (fx) printFx(now, cx, cy);
 
     // sự kiện "map" có thể đến trước/sau lúc đổi bản đồ một chút
     const here = world.map === P.pos.map;
@@ -446,6 +637,11 @@
       ctx.globalAlpha = q.busy ? 0.45 : 1;
       if (q.boss && !q.gold) {
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
+        ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+      }
+      // quái Tinh Anh (Động Bí Ẩn): viền tím
+      if (q.elite) {
+        ctx.strokeStyle = '#c084ff'; ctx.lineWidth = 2;
         ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
       }
       const im = image('monsters/' + q.kind);
@@ -462,8 +658,8 @@
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
-      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
-      if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
+      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.elite ? 'Tinh Anh · ' : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
+      if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.elite ? '#c084ff' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
       const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
       ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
       ctx.fillStyle = q.gold ? '#e8b923' : q.boss ? '#c0392b' : '#d9483b'; ctx.fillRect(px - off + 4, py - off + sz + 2, Math.max(0, (bw - 2) * hpk), 3);
@@ -510,6 +706,8 @@
       if (names) labels.push([boss.name, px + TILE / 2, py - TILE - 22, '#ef6a5a']);
     }
 
+    if (fx && P.pos.map === 'village') villageFx(now, m, cx, cy);
+    miniMap(P, m, now, cx, cy);
     const hero = image('monsters/hero');
     // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
     // xem danh sách người trong bản đồ ở nút 👫 trên dock.
@@ -568,19 +766,32 @@
       // Hồ Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
       if (m.fish === 'lake') lakeFx(now, m, cx, cy);
       // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
-      const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
+      const w = (outdoors(P) || m.tower) && weatherNow(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
+      // Làng: khói bếp luôn có, thời tiết nào cũng vậy
+      if (P.pos.map === 'village' && w !== 'smoke') weather('smoke', now, cx, cy, m, P.pos.map);
     }
-    // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng
-    const dark = PHASES[shade()] && outdoors(P) ? PHASES[shade()][1] : 0;
+    // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng (B6: chuyển dần, ánh cam hồng lúc bình minh / hoàng hôn)
+    const [dark0, glowK] = outdoors(P) ? sky() : [0, 0];
+    // Động Bí Ẩn (D7): tối hẳn, chỉ sáng một vòng quanh nhân vật như cầm đuốc
+    const dark = m.secret ? 0.86 : dark0 > 0.02 ? dark0 : 0;
+    if (fx && m.secret) caveFx(now, m, cx, cy, x0, y0, x1, y1);
+    if (glowK > 0.02 && outdoors(P)) {
+      const g = ctx.createLinearGradient(0, 0, 0, VH());
+      const dusk = shade() === 'dusk';
+      g.addColorStop(0, `rgba(${dusk ? '255, 110, 90' : '255, 170, 110'}, ${0.22 * glowK})`);
+      g.addColorStop(1, `rgba(${dusk ? '140, 60, 120' : '255, 200, 150'}, ${0.08 * glowK})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VW(), VH());
+    }
     if (dark) {
       const lx = px + TILE / 2, ly = py + TILE / 2;
-      const g = ctx.createRadialGradient(lx, ly, TILE * 1.2, lx, ly, TILE * 5);
+      const g = ctx.createRadialGradient(lx, ly, TILE * (m.secret ? 0.9 : 1.2), lx, ly, TILE * (m.secret ? 3.2 : 5));
       g.addColorStop(0, `rgba(8, 10, 32, ${dark * 0.25})`);
       g.addColorStop(1, `rgba(8, 10, 32, ${dark})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, VW(), VH());
       if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
+      if (fx && dark >= 0.3) nightFx(now, m, cx, cy, dark, x0, y0, x1, y1);
       // đèn lồng (Hồ Long Vương) tỏa sáng ban đêm
       if (dark >= 0.3) for (const [lx0, ly0] of lanterns) {
         const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.85 + 0.15 * Math.sin(now / 230 + lx0) : 1;
@@ -593,6 +804,8 @@
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
+    if (enter.map !== P.pos.map) enter = { map: P.pos.map, at: now };
+    if (fx) enterFx(now, P, m, px, py);
     // vẽ lại khi bong bóng hết hạn
     if (bubbles.size && !bubbleTimer) bubbleTimer = setTimeout(() => { bubbleTimer = null; draw(); }, 1000);
     // bỏ những con quái/người đã biến mất khỏi bản đồ
@@ -723,6 +936,44 @@
       ctx.beginPath(); ctx.moveTo(x + 6, y); ctx.lineTo(x + 20, y - 12 - tug); ctx.stroke();
       ctx.strokeStyle = 'rgba(230, 230, 230, 0.6)'; ctx.lineWidth = 0.8;
       ctx.beginPath(); ctx.moveTo(x + 20, y - 12 - tug); ctx.lineTo(x + 24, y + 10); ctx.stroke();
+    } else if (id === 'pet_keeper') {
+      // B10: tim bay lên
+      for (let i = 0; i < 2; i++) {
+        const k = ((t / 2200) + i / 2) % 1;
+        ctx.fillStyle = `rgba(255, 120, 150, ${0.8 * (1 - k)})`;
+        heart(x + 9 + Math.sin(t / 400 + i * 3) * 3, y - 2 - k * 20, 2.6);
+      }
+    } else if (id === 'merchant' || id === 'dealer') {
+      // B10: xu / lá bài lấp lánh
+      const k = (t % 1600) / 1600;
+      if (k < 0.5) {
+        ctx.fillStyle = id === 'merchant' ? `rgba(255, 215, 90, ${1 - k * 2})` : `rgba(240, 240, 255, ${1 - k * 2})`;
+        ctx.fillRect(x + 8, y - 4 - k * 16, id === 'merchant' ? 4 : 3, id === 'merchant' ? 4 : 5);
+      }
+    } else if (id === 'board') {
+      // B10: tờ giấy rung theo gió
+      ctx.fillStyle = 'rgba(245, 235, 210, 0.9)';
+      ctx.save(); ctx.translate(x + 7, y - 6); ctx.rotate(Math.sin(t / 300) * 0.25); ctx.fillRect(-3, 0, 6, 7); ctx.restore();
+    } else if (id === 'festival' || id === 'wardrobe') {
+      // B10: hoa giấy / lấp lánh
+      for (let i = 0; i < 5; i++) {
+        const k = ((t / 1700) + i / 5) % 1;
+        ctx.fillStyle = ['#ff6a6a', '#ffd24a', '#7fd08a', '#9fd8ff', '#c49bff'][i];
+        ctx.globalAlpha = 0.85 * (1 - k);
+        ctx.fillRect(x - 10 + i * 5 + Math.sin(t / 300 + i) * 3, y - 18 + k * 26, 2, 3);
+        ctx.globalAlpha = 1;
+      }
+    } else if (id === 'tower_guard') {
+      // B10: mũi giáo lóe sáng
+      const k = (t % 2600) / 2600;
+      if (k < 0.12) { ctx.fillStyle = `rgba(255, 255, 255, ${1 - k / 0.12})`; ctx.fillRect(x + 9, y - 16, 2, 6); ctx.fillRect(x + 7, y - 14, 6, 2); }
+    } else if (id === 'girl') {
+      // B10: cánh hoa bay
+      for (let i = 0; i < 3; i++) {
+        const k = ((t / 2600) + i / 3) % 1;
+        ctx.fillStyle = `rgba(255, 180, 210, ${0.85 * (1 - k)})`;
+        ctx.beginPath(); ctx.ellipse(x - 6 + k * 22, y - 8 + Math.sin(k * 6 + i) * 6, 2, 1.2, k * 4, 0, Math.PI * 2); ctx.fill();
+      }
     } else if (id === 'chaos') {
       for (let i = 0; i < 3; i++) {
         const a = t / 400 + i * 2.1;
@@ -730,6 +981,74 @@
         ctx.beginPath(); ctx.arc(x + Math.cos(a) * 13, y - 4 + Math.sin(a) * 5, 1.8, 0, Math.PI * 2); ctx.fill();
       }
     }
+  }
+
+  function heart(x, y, r) {
+    ctx.beginPath(); ctx.moveTo(x, y + r);
+    ctx.bezierCurveTo(x - r * 2, y - r * 0.4, x - r * 0.8, y - r * 1.8, x, y - r * 0.6);
+    ctx.bezierCurveTo(x + r * 0.8, y - r * 1.8, x + r * 2, y - r * 0.4, x, y + r);
+    ctx.fill();
+  }
+
+  // B10: Làng sống động — dân làng đi dạo theo vòng đường đất, chó chạy theo, cừu gặm cỏ, gà mổ thóc, cờ bay trên cột.
+  // Chỉ là hình (không chắn đường, không bấm được); vị trí tính thẳng từ thời gian nên ai cũng thấy na ná nhau.
+  const LOOP = [[6, 5], [18, 5], [18, 11], [6, 11]];
+  function loopAt(k) {
+    const segs = LOOP.map((a, i) => [a, LOOP[(i + 1) % LOOP.length]]);
+    const lens = segs.map(([a, b]) => Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]));
+    let d = (((k % 1) + 1) % 1) * lens.reduce((s, v) => s + v, 0);
+    for (let i = 0; i < segs.length; i++) {
+      if (d <= lens[i]) { const [a, b] = segs[i], f = d / lens[i]; return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.sign(b[0] - a[0])]; }
+      d -= lens[i];
+    }
+    return [LOOP[0][0], LOOP[0][1], 1];
+  }
+  function sprite(path, x, y, s, flip) {
+    const im = image(path);
+    if (!im.complete) return;
+    ctx.save(); ctx.translate(x + TILE / 2, y + TILE);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(im, -TILE * s / 2, -TILE * s, TILE * s, TILE * s);
+    ctx.restore();
+  }
+  function villageFx(t, m, cx, cy) {
+    const walkers = [['npcs/carpenter', 0, 1 / 95000], ['npcs/hunter', 0.5, 1 / 110000]];
+    for (const [img, off, sp] of walkers) {
+      const [gx, gy, dir] = loopAt(off + t * sp);
+      const px = gx * TILE - cx, py = gy * TILE - cy - Math.abs(Math.sin(t / 160 + off * 9)) * 1.5;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'; ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 3, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+      sprite(img, px, py, 0.9, dir < 0);
+    }
+    // chó chạy theo người thứ nhất, lùi 1,2 ô
+    {
+      const [gx, gy, dir] = loopAt(t / 95000 - 0.03);
+      const px = gx * TILE - cx, py = gy * TILE - cy + 6 - Math.abs(Math.sin(t / 110)) * 3;
+      sprite('monsters/jackal', px, py, 0.6, dir > 0);
+    }
+    // cừu gặm cỏ ở bãi cỏ góc dưới phải (đi qua lại chậm), cúi đầu nhịp nhàng
+    for (let i = 0; i < 2; i++) {
+      const gx = 20.5 + Math.sin(t / 9000 + i * 2) * 1.5, gy = 12 + i * 0.5;
+      sprite('monsters/wild_sheep', gx * TILE - cx, gy * TILE - cy + Math.max(0, Math.sin(t / 700 + i * 3)) * 2, 0.7, Math.cos(t / 9000 + i * 2) < 0);
+    }
+    // gà mổ thóc cạnh Bác Đầu Bếp
+    for (let i = 0; i < 3; i++) {
+      const gx = 3 + i * 0.7 + Math.sin(t / 4000 + i * 2.3) * 0.4, gy = 9.6 + (i % 2) * 0.4;
+      const px = gx * TILE - cx, py = gy * TILE - cy, peck = (t / 380 + i * 1.7) % 3 < 0.4 ? 3 : 0;
+      ctx.fillStyle = '#f2efe6'; ctx.beginPath(); ctx.ellipse(px, py, 5, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px + 4, py - 3 + peck, 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d9483b'; ctx.fillRect(px + 3.5, py - 6.5 + peck, 2, 2);
+      ctx.fillStyle = '#e8b84a'; ctx.fillRect(px + 6.4, py - 3 + peck, 2, 1.2);
+    }
+    // cờ bay trên các cột đá (ô I)
+    m.tiles.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c !== 'I') return;
+      const px = x * TILE - cx + TILE / 2, py = y * TILE - cy - 6;
+      ctx.fillStyle = '#5a4630'; ctx.fillRect(px - 1, py - 14, 2, 16);
+      ctx.beginPath(); ctx.moveTo(px + 1, py - 14);
+      for (let i = 0; i <= 6; i++) ctx.lineTo(px + 1 + i * 2.2, py - 14 + Math.sin(t / 200 + i * 0.8 + x) * 1.6 + i * 0.25);
+      for (let i = 6; i >= 0; i--) ctx.lineTo(px + 1 + i * 2.2, py - 7 + Math.sin(t / 200 + i * 0.8 + x) * 1.6 - i * 0.25);
+      ctx.closePath(); ctx.fillStyle = x % 2 ? '#c0392b' : '#e8b84a'; ctx.fill();
+    }));
   }
 
   // cột sáng vàng khi lên cấp (k: 0..1)
@@ -832,13 +1151,272 @@
     ctx.restore();
   }
 
+  // B11: bản đồ thu nhỏ ở góc khung bản đồ (tắt ở Cài đặt, `hl-minimap`): nền ô tô màu theo loại (vẽ sẵn mỗi bản đồ một lần),
+  // chấm: mình (trắng), quái (đỏ, trùm vàng), cổng (tím), NPC (xanh); khung trắng là phần đang nhìn thấy
+  const miniOn = () => { try { return localStorage.getItem('hl-minimap') !== '0'; } catch (e) { return true; } };
+  const MINI_COL = { floor: '#3a3328', grass: '#3f5a2a', dirt: '#6a5030', flowers: '#4a6a30', tree: '#1f3a1a', tree_autumn: '#4a3a14', tree_dead: '#3a2e22',
+    rock: '#5a4a3e', water: '#1e4a7a', deep_water: '#163a66', brick: '#7a3e2a', stone: '#6a6a70', column: '#9a9aa0', fountain: '#4a8ac0', waystone: '#c0a040',
+    door: '#a07040', arch: '#a07040', portal: '#9a5aff', stairs_up: '#d0b060', stairs_down: '#80a0d0', mangrove: '#2a4a2a', lotus: '#3a6a5a', boat: '#5a3a20',
+    pier_v: '#7a5a30', pier_h: '#7a5a30', dragon_statue: '#b09040', lantern: '#c05030' };
+  const miniCache = new Map();
+  function miniBase(m, id) {
+    if (miniCache.has(id)) return miniCache.get(id);
+    const w = m.tiles[0].length, h = m.tiles.length, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    m.tiles.forEach((row, y) => [...row].forEach((ch, x) => { g.fillStyle = MINI_COL[WORLD.legend[ch]] || '#2a2430'; g.fillRect(x, y, 1, 1); }));
+    miniCache.set(id, c);
+    return c;
+  }
+  function miniMap(P, m, now, cx, cy) {
+    const el = document.getElementById('mini-map');
+    if (!el) return;
+    const w = m.tiles[0].length, h = m.tiles.length, s = Math.max(2, Math.min(4, Math.floor(96 / Math.max(w, h * 1.4))));
+    const dpr = window.devicePixelRatio || 1;
+    if (el.width !== w * s * dpr) { el.width = w * s * dpr; el.height = h * s * dpr; el.style.width = w * s + 'px'; el.style.height = h * s + 'px'; }
+    const g = el.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+    g.drawImage(miniBase(m, P.pos.map), 0, 0, w * s, h * s);
+    const dot = (x, y, col, r) => { g.fillStyle = col; g.fillRect(x * s + s / 2 - r, y * s + s / 2 - r, r * 2, r * 2); };
+    for (const n of m.npcs || []) dot(n.at[0], n.at[1], '#8fe08a', Math.max(1, s / 2));
+    for (const p of m.portals || []) dot(p.at[0], p.at[1], '#c49bff', Math.max(1.2, s / 2));
+    if (world.map === P.pos.map) for (const q of world.monsters || []) dot(q.x, q.y, q.boss ? '#ffd24a' : q.gold ? '#ffe08a' : '#ef5a4a', Math.max(1, s / 2.4));
+    const blink = 0.6 + 0.4 * Math.sin(now / 200);
+    dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));
+    g.strokeStyle = 'rgba(255, 255, 255, 0.55)'; g.lineWidth = 1;
+    g.strokeRect(cx / TILE * s + 0.5, cy / TILE * s + 0.5, VW() / TILE * s, VH() / TILE * s);
+  }
+
+  // Động Bí Ẩn (D8): khe đá phát sáng tím — vết nứt sáng, hào quang nhấp nháy, hạt sáng bay ra
+  function crackFx(px, py, t) {
+    const st = image('tiles/stone');
+    if (st.complete) ctx.drawImage(st, px, py, TILE, TILE);
+    const k = t ? 0.7 + 0.3 * Math.sin(t / 300) : 1, cx0 = px + TILE / 2, cy0 = py + TILE / 2;
+    const g = ctx.createRadialGradient(cx0, cy0, 1, cx0, cy0, TILE * 1.3);
+    g.addColorStop(0, `rgba(190, 120, 255, ${0.55 * k})`); g.addColorStop(1, 'rgba(190, 120, 255, 0)');
+    ctx.fillStyle = g; ctx.fillRect(px - TILE, py - TILE, TILE * 3, TILE * 3);
+    ctx.strokeStyle = `rgba(235, 210, 255, ${0.95 * k})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx0 - 2, py + 3); ctx.lineTo(cx0 + 3, py + 11); ctx.lineTo(cx0 - 3, py + 18); ctx.lineTo(cx0 + 2, py + 29); ctx.stroke();
+    if (t) for (let i = 0; i < 4; i++) {
+      const q = ((t / 1400) + i / 4) % 1;
+      ctx.fillStyle = `rgba(220, 180, 255, ${0.9 * (1 - q)})`;
+      ctx.fillRect(cx0 + Math.sin(i * 2.3 + t / 500) * 8 * q, cy0 - q * 22, 2, 2);
+    }
+  }
+  // Động Bí Ẩn (D7): pha lê lấp lánh trên vách / cột, sương tím trôi sát đất, nước nhỏ giọt (âm thanh thưa)
+  let dripAt = 0;
+  function caveFx(t, m, cx, cy, x0, y0, x1, y1) {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = (m.tiles[y] || '')[x];
+        if ((c === 'R' || c === 'I') && rnd(x * 5 + 7, y * 3 + 1) < 0.35) {
+          const px = x * TILE - cx, py = y * TILE - cy, k = Math.max(0, Math.sin(t / 600 + x * 1.9 + y * 2.7));
+          const col = rnd(x, y) > 0.5 ? '180, 140, 255' : '120, 220, 255';
+          ctx.fillStyle = `rgba(${col}, ${0.35 + 0.5 * k})`;
+          const bx = px + 8 + rnd(x + 1, y) * 14, by = py + 6 + rnd(x, y + 1) * 14;
+          ctx.beginPath(); ctx.moveTo(bx, by - 6); ctx.lineTo(bx + 3, by); ctx.lineTo(bx, by + 3); ctx.lineTo(bx - 3, by); ctx.closePath(); ctx.fill();
+          if (k > 0.92) { ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillRect(bx - 0.5, by - 8, 1, 4); ctx.fillRect(bx - 2, by - 6.5, 4, 1); }
+        }
+      }
+    }
+    const vw = VW(), vh = VH();
+    for (let i = 0; i < 7; i++) {
+      const x = wrap(rnd(i, 1) * (vw + 200) + t * 0.01 * (1 + rnd(i, 2)) - cx, vw + 200) - 100, y = wrap(rnd(i, 3) * vh - cy, vh);
+      const g = ctx.createRadialGradient(x, y, 4, x, y, 90);
+      g.addColorStop(0, 'rgba(150, 90, 220, 0.14)'); g.addColorStop(1, 'rgba(150, 90, 220, 0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 90, y - 90, 180, 180);
+    }
+    if (t - dripAt > 5200 + rnd(Math.floor(t / 5000), 3) * 4000) { dripAt = t; if (window.Sound) window.Sound.play('drip'); }
+  }
+
+  // B1: Rừng Tre — ô cây vẽ thành bụi tre (3–4 thân có đốt, lá nhọn, lay theo gió)
+  function bamboo(px, py, gx, gy, t) {
+    const n = 3 + Math.floor(rnd(gx, gy) * 2);
+    for (let i = 0; i < n; i++) {
+      const bx = px + 5 + (i / n) * (TILE - 8) + rnd(gx + i, gy) * 4, h = TILE + 6 + rnd(gx, gy + i) * 10;
+      const sw = t ? Math.sin(t / 800 + gx * 0.7 + i) * 2.5 : 0;
+      const tx = bx + sw, ty = py + TILE - h;
+      ctx.strokeStyle = i % 2 ? '#7aa83e' : '#8cbc48'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(bx, py + TILE); ctx.quadraticCurveTo(bx + sw * 0.3, py + TILE - h / 2, tx, ty); ctx.stroke();
+      ctx.fillStyle = '#4f7428';
+      for (let k = 0.25; k < 1; k += 0.25) ctx.fillRect(bx + sw * k * k - 1.6, py + TILE - h * k, 3.2, 1.2);
+      ctx.fillStyle = 'rgba(120, 175, 60, 0.9)';
+      for (let l = 0; l < 3; l++) {
+        const a = -0.6 + l * 0.6 + (t ? Math.sin(t / 600 + l + i) * 0.15 : 0);
+        ctx.save(); ctx.translate(tx, ty + l * 3); ctx.rotate(a + (l === 1 ? Math.PI : 0) * 0.15);
+        ctx.beginPath(); ctx.ellipse(l === 1 ? -5 : 5, 0, 6, 1.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  // B3: Ruộng Bậc Thang — mạ lúa mọc thành hàng trên ô nước
+  function paddy(px, py, gx, gy, t) {
+    ctx.strokeStyle = 'rgba(150, 200, 70, 0.9)'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        const bx = px + 4 + c * 8 + (r % 2) * 3, by = py + 9 + r * 9, sw = t ? Math.sin(t / 700 + gx * 0.5 + c) * 1.4 : 0;
+        ctx.moveTo(bx, by); ctx.lineTo(bx - 2 + sw, by - 6);
+        ctx.moveTo(bx, by); ctx.lineTo(bx + 2 + sw, by - 6);
+        ctx.moveTo(bx, by); ctx.lineTo(bx + sw, by - 7);
+      }
+    }
+    ctx.stroke();
+  }
+
+  // B9: mép ô mềm + bóng đổ + trang trí rải theo ô (chỉ vẽ, vị trí cố định theo ô, không chắn đường)
+  const WALLS = new Set(['#', 'R', 'S', 'I', 'K', 'T', 'Y']);
+  const WATERS = new Set(['~', '=']);
+  const DECOR = {
+    forest: ['pebble', 'flower', 'mushroom', 'flower'], swamp: ['mushroom', 'reed', 'pebble'], camp: ['pebble', 'bone', 'pebble'],
+    graveyard: ['bone', 'pebble', 'crack'], mountain: ['pebble', 'crack', 'pebble'], lair: ['crack', 'pebble', 'bone'], grass: ['flower', 'pebble', 'flower'],
+  };
+  function groundFx(m, x0, y0, x1, y1, cx, cy, t, fx) {
+    const at = (x, y) => (m.tiles[y] || '')[x];
+    const theme = ((m.floor || '').split('/')[1] || 'grass');
+    const decor = DECOR[theme] || DECOR.grass;
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = at(x, y), px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
+        // bóng đổ của tường / đá / cây xuống ô đi được ngay dưới
+        if (WALK.has(c) && WALLS.has(at(x, y - 1))) {
+          const g = ctx.createLinearGradient(0, py, 0, py + 11);
+          g.addColorStop(0, 'rgba(0, 0, 0, 0.32)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px, py, TILE, 11);
+        }
+        if (WALK.has(c) && WALLS.has(at(x - 1, y))) {
+          const g = ctx.createLinearGradient(px, 0, px + 6, 0);
+          g.addColorStop(0, 'rgba(0, 0, 0, 0.18)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px, py, 6, TILE);
+        }
+        // bờ nước: nước sát bờ tối hơn, viền bọt sáng lăn tăn
+        if (WATERS.has(c)) {
+          for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const n = at(x + dx, y + dy);
+            if (n == null || WATERS.has(n) || !WALK.has(n)) continue;
+            const vert = dy !== 0;
+            // dải sáng mềm sát bờ (bọt), nhấp nhô nhẹ theo thời gian
+            const pulse = fx ? 0.22 + 0.06 * Math.sin(t / 900 + x * 1.3 + y) : 0.24;
+            const g = vert
+              ? ctx.createLinearGradient(0, dy > 0 ? py + TILE : py, 0, dy > 0 ? py + TILE - 7 : py + 7)
+              : ctx.createLinearGradient(dx > 0 ? px + TILE : px, 0, dx > 0 ? px + TILE - 7 : px + 7, 0);
+            g.addColorStop(0, `rgba(225, 240, 255, ${pulse})`); g.addColorStop(1, 'rgba(225, 240, 255, 0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(vert ? px : (dx > 0 ? px + TILE - 7 : px), vert ? (dy > 0 ? py + TILE - 7 : py) : py, vert ? TILE : 7, vert ? 7 : TILE);
+          }
+        }
+        // đường đất lấn mép mềm vào cỏ / nền
+        if (c === ':') {
+          for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const n = at(x + dx, y + dy);
+            if (n !== ',' && n !== '.' && n !== '*') continue;
+            ctx.fillStyle = 'rgba(150, 112, 62, 0.55)';
+            for (let i = 0; i < 5; i++) {
+              const k = (i + rnd(x * 5 + i, y * 3 + dx + dy * 2)) / 5, r = 1.6 + rnd(x + i, y - i) * 2.4;
+              const bx = dx ? (dx > 0 ? px + TILE + r * 0.6 : px - r * 0.6) : px + k * TILE;
+              const by = dy ? (dy > 0 ? py + TILE + r * 0.6 : py - r * 0.6) : py + k * TILE;
+              ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        }
+        // trang trí rải: ~12 % ô nền / cỏ, không ở ô cổng, cạnh tường
+        if ((c === '.' || c === ',') && rnd(x * 11 + 3, y * 17 + 5) < 0.12) {
+          const kind = decor[Math.floor(rnd(x + 31, y + 7) * decor.length)];
+          const dx = px + 6 + rnd(x, y * 2) * (TILE - 12), dy = py + 8 + rnd(x * 2, y) * (TILE - 14);
+          decorAt(kind, dx, dy, x, y);
+        }
+      }
+    }
+  }
+  function decorAt(kind, x, y, gx, gy) {
+    if (kind === 'pebble') {
+      ctx.fillStyle = 'rgba(160, 155, 150, 0.75)'; ctx.beginPath(); ctx.ellipse(x, y, 2.4, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(120, 115, 110, 0.7)'; ctx.beginPath(); ctx.ellipse(x + 3.5, y + 1.5, 1.6, 1.1, 0, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 'flower') {
+      const col = ['#f2d24a', '#f08aa8', '#ffffff', '#b38cff'][Math.floor(rnd(gx + 3, gy + 9) * 4)];
+      for (const [ox, oy] of [[0, 0], [4, 2], [-3, 3]]) {
+        ctx.fillStyle = '#4f8a3a'; ctx.fillRect(x + ox, y + oy, 1, 3);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + ox + 0.5, y + oy, 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (kind === 'mushroom') {
+      ctx.fillStyle = '#e8dcc2'; ctx.fillRect(x - 0.8, y - 1, 1.8, 3.5);
+      ctx.fillStyle = rnd(gx, gy) > 0.5 ? '#c0392b' : '#b08050';
+      ctx.beginPath(); ctx.ellipse(x, y - 1.2, 3, 2, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(x - 1.5, y - 2.4, 1, 1);
+    } else if (kind === 'reed') {
+      ctx.strokeStyle = 'rgba(140, 160, 80, 0.9)'; ctx.lineWidth = 1;
+      ctx.beginPath(); for (let i = -1; i <= 1; i++) { ctx.moveTo(x + i * 2, y + 3); ctx.lineTo(x + i * 3, y - 6); } ctx.stroke();
+      ctx.fillStyle = '#6a4a2a'; ctx.fillRect(x - 0.6, y - 7, 1.6, 3);
+    } else if (kind === 'bone') {
+      ctx.strokeStyle = 'rgba(230, 225, 210, 0.8)'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x - 4, y + 1); ctx.lineTo(x + 4, y - 1); ctx.stroke();
+      ctx.fillStyle = 'rgba(230, 225, 210, 0.8)';
+      for (const [ox, oy] of [[-4, 1], [4, -1]]) { ctx.beginPath(); ctx.arc(x + ox, y + oy, 1.5, 0, Math.PI * 2); ctx.fill(); }
+    } else if (kind === 'crack') {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 2); ctx.lineTo(x - 1, y); ctx.lineTo(x + 1, y - 3); ctx.lineTo(x + 5, y + 1); ctx.moveTo(x - 1, y); ctx.lineTo(x, y + 4); ctx.stroke();
+    }
+  }
+
+  // B7: bụi cỏ — 3 lá cỏ mảnh lay theo gió (lệch pha theo vị trí, gió thổi từng đợt)
+  function grassFx(t, tufts) {
+    ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+    const gust = 0.6 + 0.4 * Math.sin(t / 2300);
+    for (const [px, py, x, y] of tufts) {
+      const bx = px + 6 + rnd(x, y + 3) * (TILE - 14), by = py + 12 + rnd(x + 5, y) * (TILE - 14);
+      const sw = Math.sin(t / 650 + x * 0.9 + y * 0.4) * 2.6 * gust;
+      ctx.strokeStyle = rnd(x, y) > 0.5 ? 'rgba(150, 200, 90, 0.85)' : 'rgba(110, 170, 70, 0.85)';
+      ctx.beginPath();
+      for (let i = -1; i <= 1; i++) { ctx.moveTo(bx + i * 2.5, by); ctx.quadraticCurveTo(bx + i * 3 + sw * 0.5, by - 4, bx + i * 3.5 + sw, by - 7 - Math.abs(i) * -1); }
+      ctx.stroke();
+    }
+  }
+  // B7: dấu chân mờ dần 5 giây (tuyết: lõm xanh xám; cát: nâu), cỏ bắn lên khi vừa bước vào bụi cỏ
+  function printFx(t, cx, cy) {
+    prints = prints.filter((s) => t - s.t0 < 5000);
+    for (const s of prints) {
+      const a = 0.5 * (1 - (t - s.t0) / 5000), x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE / 2 + 6 - cy;
+      const ang = Math.atan2(s.dy, s.dx) + Math.PI / 2;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = s.snow ? `rgba(120, 140, 170, ${a})` : `rgba(120, 90, 50, ${a})`;
+      ctx.beginPath(); ctx.ellipse(-3.5, -2, 2, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(3.5, 3, 2, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    rustle = rustle.filter((s) => t - s.t0 < 600);
+    for (const s of rustle) {
+      const k = (t - s.t0) / 600, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 6 - cy;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI - Math.PI, r = 4 + k * 12;
+        ctx.fillStyle = `rgba(${130 + i * 10}, ${190 - i * 5}, 80, ${0.8 * (1 - k)})`;
+        ctx.fillRect(x + Math.cos(a) * r, y + Math.sin(a) * r * 0.8 + k * k * 8, 2, 3);
+      }
+    }
+  }
+
   function moveFx(t, m, P, cx, cy, px, py) {
     const key = `${P.pos.map}:${P.pos.x},${P.pos.y}`;
     if (lastTile && lastTile.key !== key) {
-      if (lastTile.map === P.pos.map) steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
-      else arrive = t;
+      if (lastTile.map === P.pos.map) {
+        steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
+        const f = m.floor || '';
+        if (/mountain|camp/.test(f)) prints.push({ x: lastTile.x, y: lastTile.y, t0: t, dx: P.pos.x - lastTile.x, dy: P.pos.y - lastTile.y, snow: f.includes('mountain') });
+        if ((m.tiles[P.pos.y] || '')[P.pos.x] === ',' || ((m.tiles[P.pos.y] || '')[P.pos.x] === '.' && /forest|swamp/.test(f))) rustle.push({ x: P.pos.x, y: P.pos.y, t0: t });
+        if (prints.length > 40) prints.shift();
+      } else { arrive = t; prints = []; rustle = []; }
+      stillSince = t;
     }
     lastTile = { key, map: P.pos.map, x: P.pos.x, y: P.pos.y };
+    if (!stillSince) stillSince = t;
+    // đứng yên ven hồ: gợn nước lan ra ở ô nước kề bên, mỗi ~1,8 giây
+    if (t - stillSince > 600) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        if (!isWater(m, P.pos.x + dx, P.pos.y + dy)) continue;
+        const k = ((t - stillSince) % 1800) / 1800, x = (P.pos.x + dx) * TILE + TILE / 2 - cx, y = (P.pos.y + dy) * TILE + TILE / 2 - cy;
+        ctx.strokeStyle = `rgba(210, 235, 255, ${0.5 * (1 - k)})`; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(x - dx * 8, y - dy * 6, 3 + k * 12, 1.5 + k * 5, 0, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+    }
     steps = steps.filter((s) => t - s.t0 < 520);
     for (const s of steps) {
       const k = (t - s.t0) / 520, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 5 - cy;
@@ -1064,6 +1642,7 @@
     bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
     setWorld(snap) {
+      const wxOld = world.weather;
       // FX đợt 3: so với lần trước (cùng bản đồ): máu quái tụt → tia chém; quái biến mất khi đã bị đánh → tan thành hạt
       if (fxOn() && world.map && snap && snap.map === world.map) {
         const t = performance.now(), next = new Map((snap.monsters || []).map((q) => [q.id, q]));
@@ -1075,9 +1654,12 @@
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }
       world = snap;
+      const wx = document.getElementById('map-wx');
+      if (wx && (snap.weather !== wxOld || !wx.innerHTML)) wx.innerHTML = wxIcon(getPlayer());
       draw();
     },
     world: () => world,
+    miniOn,
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);

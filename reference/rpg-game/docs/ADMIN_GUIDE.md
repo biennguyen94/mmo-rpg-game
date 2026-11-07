@@ -458,6 +458,9 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 ## Người chơi AI (Phase 16)
 
+- **Động Bí Ẩn** (Quản trị → Động Bí Ẩn, chỉ quản trị viên): **Mở ngay**, **Đóng** (có hiệu lực tới 5 giờ sáng kế tiếp; đóng
+  thì người trong động bị đưa ra Đền Cổ), **Theo lịch** (ban đêm, khoảng 60% số đêm), **Gọi Thạch Long Ẩn** (trùm đêm thức
+  giấc ngay). Thử ở máy dev: biến `SECRET_OPEN=1` / `0`.
 - **Bộ tên** (Quản trị → Bộ tên, chỉ quản trị viên): chọn **Tên MU** (mặc định) hoặc **Tên mới** cho cả server. Người đang
   chơi tự tải lại trang. Chỉ đổi chữ hiện ra; đồ, dữ liệu, database giữ nguyên. Sửa / thêm tên mới ở
   `priv/static/i18n/names_alt.json` (mỗi dòng: tên gốc → [tên mới tiếng Việt, tiếng Anh]), không cần build, deploy lại là có.

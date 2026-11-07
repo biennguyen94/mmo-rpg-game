@@ -242,6 +242,11 @@
   // FX đợt 4: khoảnh khắc thành tích khi trạng thái nhân vật đổi (lệnh của mình hoặc server đẩy: tự đánh, đánh chung)
   function celebrate(old, p) {
     if (!old || !p || old.name !== p.name) return;
+    // B8: vừa vào trận với trùm (trùm vùng, trùm thế giới, chúa tể, trùm sự kiện; không tính trùm tầng tháp, đánh người)
+    const bm = p.battle && !old.battle && p.battle.monster;
+    if (bm && !bm.pvp && (bm.boss || bm.world || (bm.elite && (!bm.tower || bm.ds || bm.bc || bm.kal)))) {
+      Celebrate.bossIn(bm.name, bm.level ? `Cấp ${bm.level}` : '');
+    }
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
       Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
       return;
@@ -423,6 +428,13 @@
         <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>
       <div class="card" data-notr><h3>Bộ tên</h3><p class="small muted">Tên đồ, ngọc, sự kiện, quái, thú… cho cả server: tên MU (Quảng Trường Quỷ, Ngọc Ước Nguyện, Kalima…) hoặc tên mới (Quỷ Môn Trận, Ngọc Lam Tinh, Vực U Minh…). Chỉ đổi chữ hiện ra, đồ và dữ liệu giữ nguyên; người đang chơi tự tải lại trang. Danh sách tên mới: <code>priv/static/i18n/names_alt.json</code>.</p>
         <div class="btn-row"><span class="grow">Đang dùng: <b>${adm.flags.name_pack === 'alt' ? 'Tên mới' : 'Tên MU'}</b></span><button class="btn${adm.flags.name_pack === 'alt' ? '' : ' primary'}" data-adm="name_pack" data-pack="mu"${adm.flags.name_pack === 'alt' ? '' : ' disabled'}>Tên MU</button><button class="btn${adm.flags.name_pack === 'alt' ? ' primary' : ''}" data-adm="name_pack" data-pack="alt"${adm.flags.name_pack === 'alt' ? ' disabled' : ''}>Tên mới</button></div></div>` : ''}
+      ${adm.flags && adm.flags.secret ? (() => {
+        const sc = adm.flags.secret, ov = sc.override;
+        const state = ov === 'open' ? 'Quản trị đang mở (tới 5 giờ sáng)' : ov === 'close' ? 'Quản trị đang đóng (tới 5 giờ sáng)' : `Theo lịch · đêm nay ${sc.tonight ? 'là đêm mở' : 'không mở'}`;
+        return `<div class="card"><h3>Động Bí Ẩn</h3><p class="small muted">Cửa động sau Đền Cổ. Theo lịch: chỉ ban đêm (20–5 giờ), khoảng ${Math.round(((RULES.secret || {}).open_chance || 0.6) * 100)}% số đêm. Quản trị mở / đóng có hiệu lực tới 5 giờ sáng kế tiếp (đóng thì người trong động bị đưa ra Đền Cổ).</p>
+          <div class="btn-row"><span class="grow">Cửa động: <b>${sc.open ? 'Đang mở' : 'Đang đóng'}</b><br><span class="small muted">${state}</span></span></div>
+          <div class="btn-row"><button class="btn${ov === 'open' ? ' primary' : ''}" data-adm="secret" data-mode="open">🌙 Mở ngay</button><button class="btn${ov === 'close' ? ' primary' : ''}" data-adm="secret" data-mode="close">🪨 Đóng</button><button class="btn${!ov ? ' primary' : ''}" data-adm="secret" data-mode="auto">🕒 Theo lịch</button><button class="btn" data-adm="secret_boss" ${sc.open ? '' : 'disabled'}>🐉 Gọi Thạch Long Ẩn</button></div></div>`;
+      })() : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -669,12 +681,14 @@
     if (d.days) payload.days = +d.days;
     if (d.on) payload.on = d.on === '1';
     if (d.pack) payload.pack = d.pack;
+    if (d.mode) payload.mode = d.mode;
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
       if (op === 'online') { adm.online = r.online; return render(); }
       if (op === 'mob_move') { adm.flags = { ...adm.flags, mob_move: r.mob_move }; toast(r.msg); return render(); }
       if (op === 'name_pack') { adm.flags = { ...adm.flags, name_pack: r.name_pack }; toast(r.msg); return render(); }
+      if (op === 'secret' || op === 'secret_boss') { adm.flags = { ...adm.flags, secret: r.secret }; toast(r.msg); return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
@@ -1538,7 +1552,7 @@
   function viewCreate() {
     return `
       <div class="intro">
-        ${sprite('shadow_dragon', '', 'Hắc Long')}
+        ${heroArt()}
         <h1>Hắc Long</h1>
         <p>Hắc Long đã khủng bố vùng đất này nhiều năm. Rèn luyện qua sáu vùng đất, hạ các trùm canh giữ và tiêu diệt nó.</p>
       </div>
@@ -1566,6 +1580,8 @@
   }
 
   // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
+  // hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật: rồng vẽ tay (CC0, Cethiel, tô đen; CREDITS.md), nét ở mọi cỡ màn hình
+  function heroArt() { return '<img class="hero-art" src="assets/art/hac_long.webp" width="458" height="291" alt="Hắc Long" decoding="async">'; }
   function viewSelect() {
     // theo thứ tự tạo (server sắp sẵn)
     const list = Net.chars;
@@ -1587,7 +1603,7 @@
         </form>` : ''}`;
     };
     return `
-      <div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Chọn nhân vật</h1>
+      <div class="intro">${heroArt()}<h1>Chọn nhân vật</h1>
         <p>Mỗi tài khoản tối đa ${Net.maxChars} nhân vật, chơi một nhân vật một lúc. Thùng đồ ở Thủ Kho dùng chung.</p></div>
       <div class="card"><div class="list">${list.map(row).join('')}</div>
         ${list.length < Net.maxChars ? `<button class="btn block" data-act="char-new" ${busy ? 'disabled' : ''}>＋ Tạo nhân vật mới (${list.length}/${Net.maxChars})</button>` : `<p class="small muted">Đã đủ ${Net.maxChars} nhân vật.</p>`}</div>
@@ -1602,7 +1618,7 @@
 
   // ---------- Đăng nhập ----------
   function viewLoading() {
-    return `<div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
+    return `<div class="intro">${heroArt()}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
   }
 
   // Câu hỏi bảo mật (RULES.account)
@@ -1662,7 +1678,7 @@
     return `
       <p class="small" style="text-align:right;margin:0" data-notr><button class="btn small-btn" data-act="lang" data-lang="${lg === 'vi' ? 'en' : 'vi'}">${lg === 'vi' ? 'English' : 'Tiếng Việt'}</button></p>
       <div class="intro">
-        ${sprite('shadow_dragon', '', 'Hắc Long')}
+        ${heroArt()}
         <h1>Hắc Long</h1>
         <p>${reg ? 'Tạo tài khoản để lưu nhân vật trên máy chủ và chơi trên mọi thiết bị.' : 'Đăng nhập để tiếp tục hành trình.'}</p>
       </div>
@@ -1759,12 +1775,14 @@
       <div class="card set"><div class="row"><h3 class="grow">Bản đồ</h3>
         <div class="btn-row">${[['day', '☀️ Sáng'], ['night', '🌙 Tối'], ['auto', '🕒 Tự động']].map(([k, l]) => `<button class="btn ${pref('hl-theme', 'auto') === k ? 'primary' : ''}" data-act="theme" data-theme="${k}" aria-pressed="${pref('hl-theme', 'auto') === k}">${l}</button>`).join('')}</div></div>
         <p class="small muted">Tự động: sáng tối theo giờ trong game.</p>
-        <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm)</span>
+        <div class="row"><span class="grow small">Hiệu ứng động (nước, cây, thời tiết, đom đóm, Làng, màn gặp trùm, pháo sáng)</span>
           <button class="btn" data-act="map-fx" aria-pressed="${Map_.fxOn()}">${Map_.fxOn() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p>
         <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>
           <button class="btn" data-act="mob-names" aria-pressed="${Map_.mobNames()}">${Map_.mobNames() ? 'Đang bật' : 'Đang tắt'}</button></div>
-        <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p></div>
+        <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p>
+        <div class="row"><span class="grow small">Bản đồ thu nhỏ ở góc (bấm vào mở bản đồ thế giới)</span>
+          <button class="btn" data-act="mini-map" aria-pressed="${Map_.miniOn()}">${Map_.miniOn() ? 'Đang bật' : 'Đang tắt'}</button></div></div>
       ${lootFilterCard()}
       <div class="card set"><div class="row"><h3 class="grow">Hình đồ</h3>
         <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
@@ -2197,9 +2215,62 @@
     const all = LIB.maps.filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
       <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
-      <div class="seg"><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
-      <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
-      <div id="travel-list">${travelList(all)}</div></div>`;
+      <div class="seg"><button class="btn ${travelSeg === 'world' ? 'primary' : ''}" data-act="travel-seg" data-seg="world">🌐 Thế giới</button><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
+      ${travelSeg === 'world' ? worldMap() : `<input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
+      <div id="travel-list">${travelList(all)}</div>`}</div>`;
+  }
+  // B11: bản đồ thế giới — các bản đồ nối nhau qua cổng, xếp cột theo số bước từ Làng (BFS), hàng giữ nhánh gần nhau.
+  // Màu theo độ khó so với cấp mình; ô đang đứng viền vàng; bấm ô mở được là dịch chuyển (như danh sách).
+  let worldLayout = null;
+  function worldGraph() {
+    if (worldLayout) return worldLayout;
+    const pub = (id) => WORLD.maps[id] && !WORLD.maps[id].private && !WORLD.maps[id].event && !WORLD.maps[id].secret && id !== 'tower';
+    const depth = { village: 0 }, order = ['village'], parent = {};
+    for (let i = 0; i < order.length; i++) {
+      for (const p of WORLD.maps[order[i]].portals || []) {
+        if (pub(p.to) && !(p.to in depth)) { depth[p.to] = depth[order[i]] + 1; parent[p.to] = order[i]; order.push(p.to); }
+      }
+    }
+    const cols = {};
+    for (const id of order) (cols[depth[id]] = cols[depth[id]] || []).push(id);
+    const row = { village: 0 };
+    Object.keys(cols).map(Number).sort((a, b) => a - b).forEach((d) => {
+      if (!d) return;
+      cols[d].sort((a, b) => row[parent[a]] - row[parent[b]]);
+      cols[d].forEach((id, i) => { row[id] = i; });
+    });
+    const H = Math.max(...Object.values(cols).map((c) => c.length));
+    const pos = {};
+    for (const [d, ids] of Object.entries(cols)) ids.forEach((id, i) => { pos[id] = [16 + d * 132, 16 + (i + (H - ids.length) / 2) * 40]; });
+    const edges = [];
+    for (const id of order) for (const p of WORLD.maps[id].portals || []) if (pos[p.to] && id < p.to) edges.push([id, p.to]);
+    worldLayout = { pos, edges, w: 16 + (Object.keys(cols).length) * 132, h: 32 + H * 40 };
+    return worldLayout;
+  }
+  function worldMap() {
+    const { pos, edges, w, h } = worldGraph();
+    const lib = (id) => LIB.maps.find((m) => m.id === id) || { id, name: (WORLD.maps[id] || {}).name || id };
+    const nodes = Object.entries(pos).map(([id, [x, y]]) => {
+      const m = lib(id), here = P.pos.map === id, open = travelOpen(m), cost = travelCost(m);
+      const diff = !m.min ? 'free' : m.min > P.level + 2 ? 'hard' : m.max < P.level - 4 ? 'easy' : 'fit';
+      const cls = `wm-node ${here ? 'here' : ''} ${open ? diff : 'locked'}`;
+      const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : '';
+      const act = open && !here && P.gold >= cost ? ` role="button" tabindex="0" data-act="travel" data-to="${id}"` : '';
+      const tip = `${m.name}${lv ? ' · ' + lv : ''}${m.cs ? ` · cần chuyển sinh ${m.cs}` : ''}${!here && open ? ` · ${cost ? fmt(cost) + ' vàng' : 'miễn phí'}` : ''}`;
+      return `<g class="${cls}"${act} transform="translate(${x},${y})"><title>${esc(tip)}</title><rect width="118" height="30" rx="7"/>
+        <text x="59" y="13" text-anchor="middle" class="wm-name">${esc(m.name.length > 17 ? m.name.slice(0, 16) + '…' : m.name)}</text><text x="59" y="25" text-anchor="middle" class="wm-lv">${here ? '📍 Đang ở' : !open ? (m.cs ? `🔒 CS ${m.cs}` : `🔒 Cấp ${m.min}`) : lv || 'An toàn'}</text></g>`;
+    }).join('');
+    const lines = edges.map(([a, b]) => {
+      const [x1, y1] = pos[a], [x2, y2] = pos[b];
+      const sx = x1 + 118, sy = y1 + 15, ex = x2, ey = y2 + 15, mx = (sx + ex) / 2;
+      return x2 > x1 ? `<path d="M${sx} ${sy} C${mx} ${sy} ${mx} ${ey} ${ex} ${ey}"/>` : `<path d="M${x1 + 59} ${y1 + 30} L${x2 + 59} ${y2}"/>`;
+    }).join('');
+    setTimeout(() => {
+      const box = document.getElementById('wm-box'), me = pos[P.pos.map];
+      if (box && me) { box.scrollLeft = me[0] - box.clientWidth / 2 + 59; box.scrollTop = me[1] - box.clientHeight / 2 + 15; }
+    }, 0);
+    return `<p class="small muted">Các bản đồ nối nhau qua cổng (cột là số bước đi từ Làng). Bấm bản đồ mở được để dịch chuyển. <span class="wm-key fit">vừa sức</span> <span class="wm-key easy">dễ</span> <span class="wm-key hard">khó</span> <span class="wm-key locked">chưa mở</span></p>
+      <div class="wm-box" id="wm-box"><svg class="wm" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><g class="wm-edges">${lines}</g>${nodes}</svg></div>`;
   }
   function travelList(all) {
     all = all || LIB.maps.filter((m) => m.id !== 'tower');
@@ -3164,6 +3235,13 @@
   // ---------- Miếu Long Vương (DECISIONS "Long Vương") ----------
   // Bia Long Vương: tải từ server khi mở NPC (lệnh dragon_board), giữ tới khi có người câu được thêm
   let dragonBoard = null, dragonAt = 0, dragonLoading = false;
+  let secretBoard = null, secretAt = 0, secretLoading = false;
+  async function loadSecretBoard() {
+    if (secretLoading) return;
+    secretLoading = true; secretAt = Date.now();
+    try { const r = await Net.send({ act: 'secret_board' }); if (r.ok) { secretBoard = r.board; refresh(); } } catch (e) { /* thử lại lần mở sau */ }
+    secretLoading = false;
+  }
   async function loadDragonBoard() {
     if (dragonLoading) return;
     dragonLoading = true; dragonAt = Date.now();
@@ -3374,6 +3452,33 @@
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
     if (n.id === 'fisher') sections.push(elderCard());
+    // Động Bí Ẩn (D6): Lão Từ nói đêm nay cửa động có mở không
+    if (n.id === 'monk') {
+      const sc = P.view.secret || {};
+      const say = sc.open ? 'Đêm nay đá trong núi rung lên… Khe đá sau đền đã hé mở, ánh tím hắt ra. Đi đi, trước khi trời sáng.'
+        : sc.night ? 'Đêm nay núi yên ắng lạ thường. Khe đá vẫn đóng chặt, hẹn đêm khác.'
+          : 'Ban ngày cửa động bị đá phong kín. Chờ trời tối hãy quay lại hỏi lão.';
+      sections.push(`<div class="card"><p>“${say}”</p><p class="small muted">Động chỉ mở vài đêm, cần cấp ${(WORLD.maps.vn_dong_bi_an || {}).minLevel || 38} trở lên. Gần sáng (4 giờ 50) đá bắt đầu rơi, 5 giờ động sụp, ai còn trong động bị đẩy ra.</p></div>`);
+    }
+    // Bia Động Bí Ẩn (D9): người tìm ra động đầu tiên mỗi đêm, người hạ Thạch Long Ẩn
+    if (n.role === 'secret_board') {
+      if (Date.now() - secretAt > 60000) loadSecretBoard();
+      const rows = secretBoard || [];
+      sections.push(`<div class="card"><h3>Bia Động Bí Ẩn</h3>${secretBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
+        : rows.length ? `<div class="list">${rows.map((r) => `<div class="item"><span>${r.kind === 'boss' ? '⚔' : '🌙'}</span><div class="grow">${esc(r.name)}<div class="small muted">${r.kind === 'boss' ? 'hạ Thạch Long Ẩn' : 'người đầu tiên tìm ra động'}</div></div><span class="small muted">đêm ${esc(r.night)}</span></div>`).join('')}</div>`
+          : '<p class="small muted">Bia còn trống. Chưa ai tìm ra động.</p>'}</div>`);
+    }
+    // Thương Nhân Chợ Nổi: mỗi ngày bày vài món hiếm, mỗi món mua giới hạn lần / ngày
+    if (n.role === 'trader') {
+      const offers = P.view.trader || [];
+      sections.push(`<div class="card"><h3>Hàng hôm nay</h3><p class="small muted">Mỗi ngày một khác. Mỗi món mua tối đa vài lần mỗi ngày.</p>
+        <div class="list">${offers.map((o) => {
+          const it = ITEMS[o.item] || {}, left = o.limit - o.bought, can = left > 0 && P.gold >= o.price;
+          return `<div class="item">${itemIcon(it)}<div class="grow"><div class="name">${esc(o.name)}${o.n > 1 ? ` ×${o.n}` : ''}</div>
+            <div class="small muted">${it.desc ? esc(it.desc) + ' · ' : ''}còn ${left}/${o.limit} lần hôm nay</div></div>
+            <button class="btn small-btn ${can ? 'primary' : ''}" data-act="trader-buy" data-id="${o.id}" ${can ? '' : 'disabled'}>${icon('two-coins')}${fmt(o.price)}</button></div>`;
+        }).join('')}</div></div>`);
+    }
     if (n.role === 'dragon') sections.push(dragonCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
@@ -3514,7 +3619,7 @@
         ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayClock.until}">${slayLeft(slayClock.until)}</span>s</p>` : ''}
         <div class="actions">
           <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
-          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element); return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span>${mastery(k.id) ? `<span class="sk-lv">${mastery(k.id).lv}</span>` : ''}</button>`; }).join('')}
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element), wxk = b.wx && b.wx.element === k.element; return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}${wxk ? ' wx-on' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span>${mastery(k.id) ? `<span class="sk-lv">${mastery(k.id).lv}</span>` : ''}</button>`; }).join('')}
         </div>
         <div class="actions util">
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
@@ -3540,7 +3645,7 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}${b.wx ? ` <span class="wx-tag" title="Thời tiết: kỹ năng hệ ${EL.names[b.wx.element] || b.wx.element} gây thêm ${Math.round(b.wx.pct * 100)}% sát thương">${{ clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' }[b.wx.kind] || ''} ${EL.icons[b.wx.element] || ''} +${Math.round(b.wx.pct * 100)}%</span>` : ''}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
@@ -4101,6 +4206,9 @@
     }
     if (act === 'stat-help') { statHelp = statHelp === t.dataset.k ? null : t.dataset.k; render(); return; }
     if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
+    if (act === 'trader-buy') { sendCommand({ act: 'trader_buy', id: t.dataset.id }); return; }
+    if (act === 'world-map') { travelSeg = 'world'; goTab('travel'); return; }
+    if (act === 'mini-map') { setPref('hl-minimap', Map_.miniOn() ? '0' : '1'); render(); return; }
     if (act === 'discard') {
       const max = +t.dataset.n || 1;
       let n = 1;

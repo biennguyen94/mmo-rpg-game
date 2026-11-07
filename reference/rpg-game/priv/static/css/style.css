@@ -157,6 +157,7 @@ p { margin: 0; }
 /* ---------- Tạo nhân vật ---------- */
 .intro { text-align: center; display: grid; gap: 6px; padding: 18px 0 4px; justify-items: center; }
 .intro .sprite { width: 128px; height: 128px; filter: drop-shadow(0 8px 18px #000); }
+.intro .hero-art { width: min(340px, 82vw); height: auto; filter: drop-shadow(0 0 22px rgba(170, 30, 50, 0.45)) drop-shadow(0 10px 16px #000); }
 .intro h1 { font-family: var(--display); font-size: 3rem; line-height: 1; color: var(--gold); font-weight: 800; letter-spacing: 0.02em; }
 .intro p { max-width: 34ch; color: var(--dim); }
 label.field { display: grid; gap: 6px; font-weight: 600; }
@@ -647,6 +648,22 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering
 .map-wrap .map-dialog { z-index: 6; }
 
 /* V7: nút Vừa màn hình trên bản đồ */
+/* B11: bản đồ thế giới (tab Chọn map → Thế giới), bản đồ thu nhỏ trên khung bản đồ */
+.wm-box { overflow: auto; max-height: min(62vh, 560px); border: 1px solid var(--line); border-radius: 8px; background: radial-gradient(circle at 20% 30%, #241a2c, #120d16); -webkit-overflow-scrolling: touch; }
+.wm { display: block; }
+.wm-edges path { fill: none; stroke: rgba(240, 207, 122, 0.28); stroke-width: 1.5; }
+.wm-node rect { fill: #2a2130; stroke: #4a3d52; stroke-width: 1.2; }
+.wm-node .wm-name { fill: #f1e6cf; font: 600 10px "Be Vietnam Pro", system-ui, sans-serif; }
+.wm-node .wm-lv { fill: #b9aec2; font: 500 9px "Be Vietnam Pro", system-ui, sans-serif; }
+.wm-node.fit rect { stroke: #7fd08a; } .wm-node.easy rect { stroke: #8a8494; } .wm-node.hard rect { stroke: #ef6a5a; } .wm-node.free rect { stroke: #9fd8ff; }
+.wm-node.locked rect { fill: #1a151d; stroke: #3a3340; } .wm-node.locked text { fill: #6f6676; }
+.wm-node.here rect { fill: #3a2c18; stroke: #f0cf7a; stroke-width: 2.4; } .wm-node.here .wm-lv { fill: #f0cf7a; }
+.wm-node[data-act] { cursor: pointer; } .wm-node[data-act]:hover rect { fill: #3a2f44; }
+.wm-key { display: inline-block; padding: 0 6px; border-radius: 5px; border: 1px solid; font-size: 11px; }
+.wm-key.fit { border-color: #7fd08a; } .wm-key.easy { border-color: #8a8494; } .wm-key.hard { border-color: #ef6a5a; } .wm-key.locked { border-color: #3a3340; color: #6f6676; }
+.wx-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; background: rgba(159, 216, 255, 0.14); color: #cfe9ff; font-size: 0.85em; }
+.btn.wx-on { box-shadow: inset 0 0 0 1px rgba(159, 216, 255, 0.7), 0 0 8px rgba(159, 216, 255, 0.35); }
+.mini-map { position: absolute; left: 6px; top: 6px; z-index: 4; border: 1px solid rgba(240, 207, 122, 0.45); border-radius: 6px; background: rgba(12, 9, 16, 0.75); cursor: pointer; image-rendering: pixelated; }
 .zoom-btn { position: absolute; right: 6px; top: 6px; z-index: 4; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: rgba(12, 9, 16, 0.72); color: var(--text, #f1e6cf); font-size: 1.05rem; cursor: pointer; }
 .zoom-btn.on { background: linear-gradient(#f0cf7a, #d9ae4a); color: #2a1d06; border-color: #b58f35; }
 
@@ -994,6 +1011,17 @@ details.fold > .list { margin-top: 4px; }
 .boss-down { position: fixed; inset: 0; z-index: 69; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .boss-down .bd-t { font: 900 clamp(2rem, 10vw, 3.4rem) / 1 system-ui, sans-serif; color: #ff6a4a; letter-spacing: 0.05em; text-shadow: 0 0 22px #ff3a1a, 0 3px 0 #000; animation: bd-slam 2.4s ease-out forwards; }
 .boss-down .bd-n { color: #ffe08a; font-weight: 800; text-shadow: 0 2px 0 #000; animation: lv-pop 2.4s ease-out 0.2s both; }
+/* B8: pháo sáng khi hạ trùm, màn gặp trùm */
+.boss-down .fw { position: absolute; width: 0; height: 0; opacity: 0; animation: fw-on 1.2s ease-out forwards; }
+.boss-down .fw i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); transform: rotate(var(--a)) translateX(0); animation: fw-spark 1.2s cubic-bezier(.2,.7,.3,1) forwards; }
+@keyframes fw-on { 0% { opacity: 0; } 5% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fw-spark { from { transform: rotate(var(--a)) translateX(0); } to { transform: rotate(var(--a)) translateX(min(22vw, 120px)) translateY(18px); } }
+.boss-in { position: fixed; inset: 0; z-index: 69; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.boss-in .bi-dark { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(120, 10, 20, 0.35), rgba(4, 2, 6, 0.85) 70%); animation: bi-dark 2.3s ease-out forwards; }
+.boss-in .bi-t { position: relative; font: 900 clamp(1.4rem, 7vw, 2.4rem) / 1 system-ui, sans-serif; color: #ff5a3a; letter-spacing: 0.08em; text-shadow: 0 0 18px #ff2a1a, 0 3px 0 #000; animation: bd-slam 2.3s ease-out forwards; }
+.boss-in .bi-n { position: relative; font-family: var(--display); font-size: clamp(2rem, 10vw, 3.2rem); line-height: 1.05; color: #ffe08a; text-shadow: 0 0 14px rgba(255, 140, 60, 0.6), 0 3px 0 #000; animation: lv-pop 2.3s ease-out 0.15s both; text-align: center; padding: 0 12px; }
+.boss-in .bi-s { position: relative; color: #f1e6cf; opacity: 0.85; font-weight: 600; animation: lv-pop 2.3s ease-out 0.3s both; }
+@keyframes bi-dark { 0% { opacity: 0; } 8% { opacity: 1; } 12% { background-color: rgba(255, 40, 30, 0.35); } 20% { background-color: transparent; } 75% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes bd-slam { 0% { opacity: 0; transform: scale(2.4); } 12% { opacity: 1; transform: scale(0.95); } 18% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 /* FX đợt 5: vàng tăng, ô đồ mới, thư quà lắc */
 .hud-who .gold.gold-up { color: #fff3b0; text-shadow: 0 0 8px #ffd24a; }
@@ -1002,7 +1030,7 @@ details.fold > .list { margin-top: 4px; }
 [data-act="mail_claim"].primary, [data-act="mail_claim_all"]:not([disabled]) { animation: gift-wiggle 2.4s ease-in-out infinite; }
 @keyframes gift-wiggle { 0%, 80%, 100% { transform: none; } 84% { transform: rotate(-4deg); } 88% { transform: rotate(4deg); } 92% { transform: rotate(-3deg); } 96% { transform: rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .ticker, .ticker.out, .ticker .tt span.run, .badge-card, .badge-card .bi, .lvup *, .rebirth-fx, .rebirth-fx *, .boss-down *, .cell.fresh-item,
+  .ticker, .ticker.out, .ticker .tt span.run, .badge-card, .badge-card .bi, .lvup *, .rebirth-fx, .rebirth-fx *, .boss-down *, .boss-in *, .cell.fresh-item,
   [data-act="mail_claim"].primary, [data-act="mail_claim_all"] { animation: none !important; }
 }
 

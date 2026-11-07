@@ -1,0 +1,98 @@
+{
+  "id": "vn_lang_chai",
+  "name": "Làng Chài Ven Biển",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "tiles/grass",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T",
+    "T,,###,,,,###,,,,,,###,,,,,,,T",
+    "T,,###,,,,###,,,,,,###,,,,,,,T",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,:T",
+    "O::::::::::,,,,,,,,,,,,,,,,,:O",
+    "T,,,,,,,,,:::::::::::::::::::T",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,:T",
+    "T,,,,,,,,,,,,,,,,,,,,,,,,,,,:T",
+    "T,,,,,,,J,,,,,,,,J,,,,,,,,J,:T",
+    "T...:::::.:::..:.:::::.:.:.::T",
+    "T~~~~~B~~~~~~~~B~~~~~~~~B~~~~T",
+    "T~~~~~B~~~~~~~~B~~~~~~~~B~~~~T",
+    "T~~U~~B~~~~U~~~B~~~~U~~~B~~U~T",
+    "T~~~~~B~~~~~~~~B~~~~~~~~B~~~~T",
+    "T~~~~~U~~~~~~~~U~~~~~~~~U~~~~T",
+    "T~~~~~~~~~~~~~~~~~~~~~~~~~~~~T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        7
+      ],
+      "to": "camp_1",
+      "spawn": [
+        24,
+        6
+      ]
+    },
+    {
+      "at": [
+        29,
+        7
+      ],
+      "to": "vn_cho_noi",
+      "spawn": [
+        1,
+        9
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "vn_cua_da",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_ran_bien",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_thuy_quai_con",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": [
+    {
+      "id": "boat_lady",
+      "name": "Bà Chủ Thuyền",
+      "sprite": "girl",
+      "at": [
+        13,
+        11
+      ],
+      "role": "talk",
+      "lines": [
+        "Biển hôm nay động, cẩn thận lũ Cua Đá trên bờ.",
+        "Đi hết bờ biển về phía đông là tới Chợ Nổi đó cháu."
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "fish": "deep"
+}

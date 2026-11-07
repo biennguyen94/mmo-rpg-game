@@ -1635,3 +1635,143 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   - tên game Hắc Long (chỉ bộ giáp "Hắc Long" đổi).
 - **Không đổi:** chat của người chơi, ô nhập, danh sách chọn trong Quản trị, Kho Đồ (tài liệu ngoài game). Câu chat của bot
   có "Golden Invasion" đổi thành câu chung.
+
+## Kỹ năng tháp chia nhóm: thường / cao / đỉnh (2026-11-07, anh chọn phương án B)
+- **Tầng 10–60 giữ nguyên:** 1,27 → 2,02, mỗi tầng +0,15.
+- **Nhóm cao (tầng 70–80):** 2,24 / 2,28, tức nhảy +0,22 so với tầng 60.
+- **Nhóm đỉnh (tầng 90–100):** 2,55 / 2,62, tức nhảy +0,27 so với tầng 80. Trần 2,62 giữ nguyên.
+- **Chênh lệch:** nhóm cao mạnh hơn tầng 60 khoảng 12%, nhóm đỉnh mạnh hơn nhóm cao khoảng 13%. Trong cùng nhóm chỉ tăng nhẹ.
+- **Không đổi:** MP, hồi chiêu, tác dụng phụ.
+- **Vì sao chọn B:** mô phỏng sức leo tháp (đồ theo hồ sơ chơi thật) cho thấy người chơi mốc 0–9 chỉ tới tầng 54–59. Tầng
+  60–100 chỉ đạt khi đồ gần tối đa, nên người chơi thường không bị ảnh hưởng, và cân bằng PvP chỉ cần chỉnh mốc 10.
+- Chỉnh lại `pvp.class_taken_by_rebirth` mốc 10 (lệch 14% → 7%); đấu trường mốc 10 giữ (lệch 7%). `mix test --only balance` xanh.
+
+## Bản đồ đẹp hơn (2026-11-07, anh chọn làm hết nhóm B)
+- Mọi hiệu ứng chỉ là hình ở client, tôn trọng công tắc hiệu ứng (`hl-fx`) và chế độ "giảm chuyển động"; không đổi luật chơi,
+  trừ phần bản đồ mới ở dưới.
+- **B4 Bảng tên bản đồ:** vào bản đồ thì tên và cấp quái hiện giữa màn 2,6 giây. Sang bản đồ thì màn mở dần từ tối, kèm xoáy
+  sáng quanh nhân vật.
+- **B8 Trùm xuất hiện:** vào trận với trùm vùng, trùm thế giới, chúa tể vùng, trùm Quảng Trường / Lâu Đài / Kalima (không tính
+  trùm tầng tháp, không tính đánh người) thì màn tối sầm, chớp đỏ, rung, có tiếng gầm, hiện "⚠ TRÙM XUẤT HIỆN" và tên trùm.
+  Hạ trùm thì có thêm 4 chùm pháo sáng.
+- **B7 Chuyển động nhỏ:**
+  - cỏ lay theo gió trên khoảng 1/3 số ô cỏ ở rừng, đầm lầy, làng;
+  - dấu chân trên núi và trại mờ dần trong 5 giây;
+  - cỏ bắn lên khi bước qua bụi cỏ;
+  - đứng ven nước thì có gợn lan ra.
+- **B6 Ánh sáng:**
+  - độ tối đổi dần lúc bình minh (5–7 giờ) và hoàng hôn (18–20 giờ), kèm ánh cam hồng;
+  - mốc giờ vẫn theo server (`HacLong.World.Clock`); đồng hồ máy lệch buổi thì dùng mức cố định như cũ;
+  - ban đêm: đom đóm dày ở rừng và đầm lầy, đuốc ở hang và nghĩa địa, cực quang trên núi, trăng lấp lánh trên nước.
+- **B5 Thời tiết chung server:** `HacLong.World.Weather` là hàm thuần của mốc giờ (mỗi `RULES.weather.slot_min` = 60 phút,
+  giờ Việt Nam) và vùng, nên không cần trạng thái. Mỗi vùng bốc theo trọng số `RULES.weather.regions`.
+  - Loại mới: trời quang, giông (mưa xiên, chớp 9 giây một lần, sấm xa), bão tuyết. Làng luôn có khói bếp.
+  - Biểu tượng thời tiết hiện cạnh tên bản đồ. Ép một loại để thử bằng biến `WEATHER`.
+  - **Thời tiết ảnh hưởng chỉ số** (anh duyệt): đánh quái, không tính đánh người. Kỹ năng cùng hệ với thời tiết gây thêm
+    sát thương theo `RULES.weather.bonus`:
+
+    | Thời tiết | Hệ | Cộng |
+    |---|---|---|
+    | quang | Ánh Sáng | +5% |
+    | mưa / giông | Sét | +5% / +10% |
+    | tuyết / bão tuyết | Băng | +5% / +10% |
+    | sương | Bóng Tối | +5% |
+    | lá bay | Gió | +5% |
+    | gió cát | Đất | +5% |
+    | tàn lửa | Lửa | +5% |
+
+    - Session ghi mức cộng vào trận lúc bắt đầu (`battle.wx`), cả trận dùng một mức; Engine đọc ở `weather_mult/2`.
+    - Màn đánh hiện biểu tượng thời tiết và mức cộng; nút kỹ năng cùng hệ có viền sáng xanh.
+    - Mô phỏng cân bằng PvP không đổi, vì đánh người không có thời tiết.
+- **B10 Làng sống động:**
+  - 2 dân làng (hình Thợ Mộc, Thợ Săn vốn không còn dùng) đi dạo theo vòng đường đất, một chú chó chạy theo;
+  - 2 con cừu, 3 con gà, cờ bay trên các cột đá;
+  - hoạt cảnh mới cho Người Nuôi Thú, Chủ Chợ, Bà Chủ Sòng, Bảng Tin, Người Tổ Chức Hội, Tủ Quần Áo, Người Gác Tháp, Cô Bé;
+  - chỉ là hình: không chắn đường, không bấm được.
+- **B9 Mép ô và trang trí:**
+  - đường đất lấn mép mềm vào cỏ; bờ nước có dải bọt sáng;
+  - tường, đá, cây đổ bóng xuống ô dưới;
+  - trang trí rải trên khoảng 12% ô nền và ô cỏ, cố định theo vị trí, theo vùng: sỏi, hoa dại, nấm, sậy, xương, vết nứt.
+- **B11 Bản đồ thế giới:** tab Chọn map → 🌐 Thế giới.
+  - Bản đồ xếp cột theo số bước đi từ Làng (BFS qua cổng); màu theo độ khó so với cấp mình; bấm bản đồ mở được để dịch chuyển.
+  - Bản đồ thu nhỏ ở góc khung bản đồ, bấm để mở bản đồ thế giới, tắt ở Cài đặt (`hl-minimap`).
+- **B1, B3 Bản đồ mới** (`scripts/gen_vn_maps.py`, mỗi bản đồ ghi `sourceType: DESIGN`), 26 quái mới (`SIDE_MONSTERS` `vn_…`,
+  chỉ số theo cấp như quái bản đồ phụ khác, đồ rơi theo bảng chung):
+
+  | Bản đồ | Cấp quái | Cỡ | Vào từ | Ghi chú |
+  |---|---|---|---|---|
+  | Làng Chài Ven Biển | 8–10 | 30×20 | Trại Goblin 1 | câu cá bảng "vùng sâu" |
+  | Chợ Nổi | không quái, cần cấp 8 | 30×20 | Làng Chài | câu cá bảng "vùng sâu" |
+  | Rừng Tre | 14–16 | 30×20 | Nghĩa Địa Cổ 1 | vẽ bụi tre (`style: bamboo`) |
+  | Ruộng Bậc Thang | 20–24 | 50×35 | Núi Khổng Lồ 1 | vẽ mạ lúa trên ruộng (`style: paddy`) |
+  | Đồng Bằng Sông Nước | 26–30 | 50×35 | Đầm Lầy Rồng 1 | sông có cầu, câu cá bảng "vùng sâu" |
+  | Đền Cổ Trên Núi | 34–38 | 30×20 | Hang Hắc Long 2 | khói hương ở tượng rồng (`style: temple`) |
+
+  - Hai bản đồ 50×35 (B3) có tối đa 7 con mỗi loại quái, các bản đồ khác 4 con.
+  - NPC mới ở các bản đồ khác chỉ nói chuyện (`talk`).
+  - **Thương Nhân Phương Xa ở Chợ Nổi** (anh duyệt, vai `trader`, `HacLong.Game.Trader`, `RULES.trader`): mỗi ngày (giờ Việt
+    Nam) bày 4 trong 8 món, chọn cố định theo ngày. Mỗi nhân vật mua mỗi món tối đa vài lần mỗi ngày, đếm ở `daily.trader`:
+
+    | Món | Giá | Lần / ngày |
+    |---|---|---|
+    | Mồi Rồng ×10 | 400 | 2 |
+    | Linh Chi | 150 | 5 |
+    | Quặng Mithril | 250 | 5 |
+    | Cá Chép Vàng | 1.500 | 1 |
+    | Chìa Khóa Quỷ | 8.000 | 1 |
+    | Cuộn Giấy Tổng Lãnh Thiên Thần | 12.000 | 1 |
+    | Dấu Ấn Kundun | 6.000 | 1 |
+    | Bình Máu Lớn ×5 | 900 | 2 |
+- **B2 Động Bí Ẩn** (`secret: "night"`): cổng ẩn ở bức tường sau Đền Cổ, quái cấp 40–44.
+  - Chỉ vào được ban đêm (20–5 giờ). Đã ở trong thì trời sáng vẫn ở và ra được.
+  - Không dịch chuyển tới được; không có trong Thư viện, Chọn map, bản đồ thế giới; bot không chọn làm chỗ luyện.
+  - Điểm thu thập: Quặng Mithril và Linh Chi, mỗi loại 4 điểm, hồi sau 45 giây (bản đồ phụ thường: 2 điểm, 70 giây).
+  - Người đầu tiên vào mỗi đêm được báo cả server, một lần mỗi đêm, không tính bot (`HacLong.World.Secret`).
+  - Số điểm thu thập: anh duyệt.
+
+## Động Bí Ẩn hoàn thiện (2026-11-07, anh chọn làm hết D1–D9)
+Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (canh mỗi 20 giây).
+- **D6 Đêm mở:** cửa mở khoảng 60% số đêm (`open_chance`), chọn cố định theo đêm. Đêm tính theo giờ Việt Nam lùi 12 tiếng.
+  Lão Từ Giữ Đền nói đêm nay mở hay đóng. Biến `SECRET_OPEN` = 1 / 0 ép mở / đóng để thử.
+- **D5 Chặn cấp:** cần cấp 38 (`min_level` của bản đồ).
+- **D8 Cửa động:** đóng thì ô cổng vẽ như vách đá, không nhãn; bước vào chỉ báo "Chỉ là vách đá lạnh ngắt". Mở thì thành "Khe
+  Đá Phát Sáng": vết nứt tím, hạt sáng bay ra.
+- **D1 Trùm đêm Thạch Long Ẩn** (`vn_thach_long_than`):
+  - cấp 46, chỉ số ×1,4, tính như trùm (máu, thưởng theo `RULES.monster.boss`);
+  - không có trong Thư viện, không hồi sinh;
+  - mỗi đêm mở thức giấc một lần, lúc ngẫu nhiên cố định theo đêm trong khung 21–3 giờ, báo cả server;
+  - hạ được thì chắc chắn rơi 1 ngọc (`jewel_chance` 1), thêm 1 Bí Kíp (`boss_items`), ghi Bia, báo cả server;
+  - lần đầu hạ được thêm như trùm khác: ghi vào `bosses`, Bí Kíp lần đầu.
+- **D2 Quái Tinh Anh:** quái sinh ra trong động có 10% là Tinh Anh: chỉ số ×1,6, vàng và kinh nghiệm ×2, tỉ lệ rơi ngọc ×1,5.
+  Trên bản đồ có viền và tên tím ("Tinh Anh ·"). Không hiện màn "TRÙM XUẤT HIỆN".
+- **D4 Động sụp:** 4 giờ 50 người trong động nhận cảnh báo "đá bắt đầu rơi". Cửa đóng (5 giờ, hoặc đêm không mở) thì
+  `SecretWatch` đưa người trong động ra cổng Đền Cổ (`exit`), như quản trị dịch chuyển: đang đánh thì kết thúc như bỏ chạy,
+  không mất gì. Vào lại game khi động đã đóng thì cũng ra Đền Cổ.
+- **D3 Thành tựu:**
+  - "Kẻ Đi Đêm": vào động 10 đêm khác nhau, danh hiệu cùng tên;
+  - "Diệt Thạch Long": hạ trùm đêm, danh hiệu cùng tên.
+- **D7 Không khí:**
+  - trong động tối hẳn, chỉ sáng một vòng nhỏ quanh nhân vật;
+  - pha lê tím / xanh lấp lánh trên vách đá, sương tím trôi;
+  - tiếng nước nhỏ giọt vài giây một lần; đuốc của nền hang.
+- **D9 Bia Động Bí Ẩn** (NPC vai `secret_board` ở Đền Cổ): 30 dòng gần nhất, gồm người tìm ra động đầu tiên mỗi đêm và
+  người hạ trùm.
+- **Schema** (CHANGE_REASON: lưu số đêm cho thành tựu, bảng tên cho Bia):
+  - cột `characters.secret` (map `nights`, `last`);
+  - bảng `secret_records` (`user_id`, `name`, `kind` found | boss, `night`), mỗi người mỗi loại mỗi đêm một dòng.
+- (2026-11-07, anh duyệt) Màn "TRÙM XUẤT HIỆN" và pháo sáng khi hạ trùm (B8) theo công tắc "Hiệu ứng động" ở Cài đặt; chữ
+  "TRÙM ĐÃ GỤC" vốn có giữ như cũ. B9 (mép ô, bóng đổ, trang trí) là phần làm đẹp tĩnh, luôn vẽ. B6 sáng tối theo nút Sáng /
+  Tối / Tự động.
+- (2026-11-07, anh yêu cầu) **Quản trị mở động:** thẻ "Động Bí Ẩn" ở tab Quản trị, chỉ quản trị viên.
+  - Nút: Mở ngay, Đóng, Theo lịch. Mở / Đóng có hiệu lực tới 5 giờ sáng kế tiếp; đóng thì người trong động bị đưa ra Đền Cổ.
+  - Nút "Gọi Thạch Long Ẩn": thức giấc ngay, đêm nay không tự thả nữa.
+  - Không thêm bảng: trạng thái là dòng `admin_log` op `secret` mới nhất, khởi động lại vẫn giữ.
+  - Biến `SECRET_OPEN` vẫn thắng nếu có đặt.
+
+## Trùm mạnh hơn quái thường (2026-11-07, anh chọn "như em đề xuất")
+- Trước: trùm (cờ trùm: trùm vùng, trùm đêm Thạch Long Ẩn, trùm vàng…) chỉ có máu ×2,4; công / thủ bằng quái thường cùng cấp, chỉ nguy hiểm ở chiêu đặc biệt mỗi 3 lượt.
+- Nay: `RULES.monster.boss.atk` = 1,15, `def` = 1,2 (máu / EXP / vàng giữ nguyên ×2,4 / ×5 / ×6). Trùm thế giới, trùm tầng tháp, Kundun, trùm Lâu Đài Máu dựng quái không cờ trùm nên không đổi.
+- Chọn mức qua `mix hac_long.simulate 5 --seed 42` (đánh từ cấp 1 tới Hắc Long, 4 lớp × 5 cách chơi):
+  - mức 1,25 / 1,3: vẫn thắng 5/5, nhưng chết 4–13 lần (trước 0–2), số trận +10–25%, Hắc Long bị hạ ở cấp 35–41 → gắt quá;
+  - mức 1,15 / 1,2: thắng 5/5, chết 1–6 lần, số trận +2–10%, Hắc Long vẫn bị hạ quanh cấp 35 → chọn.
+- Quái Bóng Đêm: hệ số ×1,5 trước viết cứng trong `world.ex` (`night_variant`) chuyển sang `RULES.world.night_rare_mult` (giá trị không đổi).

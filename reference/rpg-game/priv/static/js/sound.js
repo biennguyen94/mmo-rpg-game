@@ -80,6 +80,14 @@
     bite() { tone(600, 0.06, { type: 'sine', to: 300, vol: 0.35 }); tone(600, 0.06, { type: 'sine', to: 300, vol: 0.35, at: 0.1 }); },
     catch() { noise(0.25, { freq: 1500, vol: 0.3 }); SFX.gather(); },
     rare() { noise(0.25, { freq: 1500, vol: 0.3 }); notes([1047, 1319, 1568, 2093], 0.07, { type: 'triangle', vol: 0.16, dur: 0.2, at: 0.1 }); },
+    // B8: trùm xuất hiện — tiếng gầm trầm, rung
+    roar() { tone(70, 0.9, { type: 'sawtooth', to: 38, vol: 0.4 }); tone(105, 0.7, { type: 'sawtooth', to: 52, vol: 0.25, at: 0.05 }); noise(0.9, { freq: 260, to: 90, vol: 0.35, type: 'lowpass' }); },
+    // Động Bí Ẩn: nước nhỏ giọt
+    drip() { tone(1400, 0.08, { type: 'sine', to: 700, vol: 0.12 }); tone(900, 0.12, { type: 'sine', to: 500, vol: 0.06, at: 0.09 }); },
+    // B5: sấm xa khi giông
+    thunder() { noise(1.4, { freq: 180, to: 60, vol: 0.32, type: 'lowpass' }); tone(48, 1.2, { type: 'sawtooth', to: 30, vol: 0.12, at: 0.05 }); },
+    // B8: pháo sáng khi hạ trùm
+    firework() { noise(0.12, { freq: 4000, vol: 0.25 }); tone(1400, 0.25, { type: 'sine', to: 400, vol: 0.08, at: 0.02 }); },
     encounter() { tone(98, 0.12, { type: 'triangle', vol: 0.4 }); tone(98, 0.14, { type: 'triangle', vol: 0.4, at: 0.14 }); noise(0.1, { freq: 300, vol: 0.2, type: 'lowpass', at: 0.14 }); },
     notice() { tone(880, 0.12, { type: 'sine', vol: 0.18 }); },
     error() { tone(160, 0.12, { type: 'square', vol: 0.12 }); },

@@ -151,8 +151,11 @@
         0.8,
         1.2
       ],
+      "_boss_doc": "Trùm (trùm vùng, trùm đêm, trùm vàng... — quái dựng với cờ trùm): máu × hp, công × atk, thủ × def, EXP × xp, vàng × gold. atk / def 1 → 1,15 / 1,2 (DECISIONS \"Trùm mạnh hơn quái thường\"): trước đó trùm chỉ trâu máu, đánh thường như quái cùng cấp.",
       "boss": {
         "hp": 2.4,
+        "atk": 1.15,
+        "def": 1.2,
         "xp": 5,
         "gold": 6
       }
@@ -908,7 +911,7 @@
         "7": {"dk": 1.06, "dw": 0.77, "elf": 0.93, "mg": 0.97},
         "8": {"dk": 1.03, "dw": 0.76, "elf": 0.99, "mg": 0.95},
         "9": {"dk": 1.04, "dw": 0.77, "elf": 0.96, "mg": 0.96},
-        "10": {"dk": 1.0, "dw": 0.86, "elf": 0.97, "mg": 0.89}
+        "10": {"dk": 0.96, "dw": 0.88, "elf": 1.0, "mg": 0.88}
       },
       "class_taken_arena_by_rebirth": {
         "0": {"dk": 0.97, "dw": 0.9, "elf": 0.97, "mg": 0.87},
@@ -995,7 +998,9 @@
       "leave_after_s": 60
     },
     "world": {
-      "night_rare_chance": 0.12
+      "night_rare_chance": 0.12,
+      "_night_rare_mult_doc": "Quái Bóng Đêm: máu / công / thủ × night_rare_mult (trước viết cứng 1,5 trong world.ex).",
+      "night_rare_mult": 1.5
     },
     "names": {
       "banned_words": [
@@ -1116,6 +1121,71 @@
       "tryhard": {"every": 5, "rest_mult": 0.3, "tower_every_min": [15, 30], "fish_every_min": [20, 45], "fish_stay_min": [8, 15], "react_ms": [150, 650]},
       "sourceType": "DESIGN",
       "version": 7,
+      "verified": false
+    },
+    "weather": {
+      "_doc": "DECISIONS \"Bản đồ đẹp hơn\" (B5): thời tiết chung cả server, đổi mỗi slot_min phút (theo giờ Việt Nam). Mỗi vùng (theo nền bản đồ; Làng, Hồ Long Vương riêng) bốc một loại theo trọng số, cùng mốc giờ thì mọi người thấy như nhau. Chỉ là hình, không đổi luật chơi. Loại: clear (trời quang), rain, storm (mưa to + chớp), fog, snow, blizzard (bão tuyết), leaves (lá rơi), dust (bụi cát), embers (tàn lửa). Bản đồ tháp / sự kiện giữ hiệu ứng theo nền tầng.",
+      "slot_min": 60,
+      "_bonus_doc": "Thời tiết ảnh hưởng chỉ số (anh duyệt 2026-11-07): đánh quái (không tính đánh người) lúc trời có thời tiết này thì kỹ năng hệ `element` gây thêm `pct` sát thương. Ghi vào trận lúc bắt đầu (cả trận dùng một mức).",
+      "bonus": {
+        "clear": {"element": "light", "pct": 0.05},
+        "rain": {"element": "lightning", "pct": 0.05},
+        "storm": {"element": "lightning", "pct": 0.1},
+        "snow": {"element": "ice", "pct": 0.05},
+        "blizzard": {"element": "ice", "pct": 0.1},
+        "fog": {"element": "dark", "pct": 0.05},
+        "leaves": {"element": "wind", "pct": 0.05},
+        "dust": {"element": "earth", "pct": 0.05},
+        "embers": {"element": "fire", "pct": 0.05}
+      },
+      "regions": {
+        "village": [["clear", 55], ["rain", 20], ["storm", 8], ["fog", 10], ["leaves", 7]],
+        "lake": [["clear", 50], ["rain", 20], ["fog", 20], ["storm", 10]],
+        "forest": [["leaves", 45], ["clear", 15], ["rain", 25], ["storm", 8], ["fog", 7]],
+        "swamp": [["rain", 40], ["fog", 30], ["storm", 15], ["clear", 15]],
+        "mountain": [["snow", 55], ["blizzard", 15], ["fog", 15], ["clear", 15]],
+        "graveyard": [["fog", 50], ["rain", 20], ["storm", 15], ["clear", 15]],
+        "camp": [["dust", 45], ["clear", 30], ["rain", 15], ["storm", 10]],
+        "lair": [["embers", 70], ["clear", 30]]
+      },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
+    },
+    "secret": {
+      "_doc": "DECISIONS \"Động Bí Ẩn\" (anh duyệt): cửa động mở khoảng open_chance số đêm (chọn cố định theo đêm), cần cấp như min_level của bản đồ. Trùm đêm boss thức giấc lúc ngẫu nhiên trong khung boss_from_h..boss_to_h giờ (giờ Việt Nam, qua 0 giờ), báo cả server; hạ được thì chắc chắn rơi ngọc (jewel_chance của quái) và thêm boss_items, tên lên Bia. Quái thường trong động có elite_chance là quái Tinh Anh: chỉ số × elite_mult, vàng / kinh nghiệm × elite_reward, tỉ lệ rơi ngọc × elite_jewel_mult. warn_min phút trước khi trời sáng (5 giờ) báo động sắp sụp; trời sáng thì đưa người trong động ra exit. Vào động night_walker đêm khác nhau: thành tựu Kẻ Đi Đêm.",
+      "map": "vn_dong_bi_an",
+      "exit": {"map": "vn_den_co", "x": 14, "y": 4},
+      "open_chance": 0.6,
+      "boss": "vn_thach_long_than",
+      "boss_from_h": 21,
+      "boss_to_h": 3,
+      "boss_items": {"bi_kip": 1},
+      "elite_chance": 0.1,
+      "elite_mult": 1.6,
+      "elite_reward": 2,
+      "elite_jewel_mult": 1.5,
+      "warn_min": 10,
+      "night_walker": 10,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "trader": {
+      "_doc": "DECISIONS \"Bản đồ đẹp hơn\": Thương Nhân Chợ Nổi (NPC vai \"trader\"). Mỗi ngày (giờ Việt Nam) bày `show` món chọn cố định theo ngày trong `offers`; mỗi nhân vật mua mỗi món tối đa `limit` lần / ngày (đếm ở `daily.trader`). Mỗi lần mua: `n` món `item`, giá `price` vàng. Anh duyệt 2026-11-07.",
+      "show": 4,
+      "offers": [
+        {"id": "bait", "item": "dragon_bait", "n": 10, "price": 400, "limit": 2},
+        {"id": "lingzhi", "item": "herb_rare", "n": 1, "price": 150, "limit": 5},
+        {"id": "mithril", "item": "ore_rare", "n": 1, "price": 250, "limit": 5},
+        {"id": "goldfish", "item": "fish_gold", "n": 1, "price": 1500, "limit": 1},
+        {"id": "devil_key", "item": "devil_key", "n": 1, "price": 8000, "limit": 1},
+        {"id": "scroll", "item": "archangel_scroll", "n": 1, "price": 12000, "limit": 1},
+        {"id": "mark", "item": "kundun_mark", "n": 1, "price": 6000, "limit": 1},
+        {"id": "potions", "item": "potion_l", "n": 5, "price": 900, "limit": 2}
+      ],
+      "sourceType": "DESIGN",
+      "version": 1,
       "verified": false
     },
     "slay": {

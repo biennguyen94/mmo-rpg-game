@@ -22,7 +22,11 @@ defmodule HacLong.Library do
 
   def build do
     zones = Data.zones() |> Enum.with_index()
-    maps = Maps.ids() |> Enum.map(&Maps.get/1) |> Enum.reject(&(&1.private or &1.event != nil))
+
+    maps =
+      Maps.ids()
+      |> Enum.map(&Maps.get/1)
+      |> Enum.reject(&(&1.private or &1.event != nil or &1.secret != nil))
 
     %{maps: maps(maps, zones), monsters: monsters(maps, zones), items: items(maps, zones)}
   end
@@ -72,9 +76,17 @@ defmodule HacLong.Library do
 
   defp monsters(maps, zones), do: zone_monsters(maps, zones) ++ side_monsters(maps)
 
-  # quái bản đồ phụ (Phase 15a)
+  # quái bản đồ phụ (Phase 15a); quái chỉ có ở bản đồ bí mật (Động Bí Ẩn) không liệt kê, giữ bí mật
   defp side_monsters(maps) do
-    for spec <- Data.side_monsters() do
+    hidden =
+      for m <- Maps.ids() |> Enum.map(&Maps.get/1),
+          m.secret != nil,
+          s <- m.spawns,
+          into: MapSet.new(),
+          do: s.monster
+
+    for spec <- Data.side_monsters(),
+        not MapSet.member?(hidden, spec.id) and spec[:hidden] != true do
       m = Engine.make_monster(spec, false)
 
       %{
