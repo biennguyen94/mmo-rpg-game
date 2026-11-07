@@ -85,6 +85,10 @@ defmodule HacLong.World.Maps do
              # bảng cá riêng (`RULES.fishing.pools`), vd Hồ Long Vương "lake"
              fish: m["fish"],
              theme: m["theme"],
+             # DECISIONS "Bản đồ đẹp hơn": kiểu vẽ riêng ("bamboo" | "paddy" | "temple", chỉ là hình) và bản đồ bí mật
+             # ("night": chỉ vào được ban đêm, không dịch chuyển tới, không có trong Thư viện / Chọn map)
+             style: m["style"],
+             secret: m["secret"],
              width: String.length(hd(rows)),
              height: length(rows),
              tiles: rows,
@@ -195,6 +199,8 @@ defmodule HacLong.World.Maps do
            minLevel: m.min_level,
            fish: m.fish,
            theme: m.theme,
+           style: m.style,
+           secret: m.secret,
            floor: m.floor,
            tiles: m.tiles,
            portals: Enum.map(m.portals, &%{at: Tuple.to_list(&1.at), to: &1.to}),

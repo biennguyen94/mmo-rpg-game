@@ -131,7 +131,9 @@
   // Cổng vào vùng chưa mở (P.view.unlocked do server tính).
   function locked(P, portal) {
     const target = mapOf(portal.to);
-    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel);
+    return (target.zone != null && !P.view.unlocked[target.zone]) || (!target.realm && target.minLevel != null && P.level < target.minLevel) ||
+      // bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở ban đêm (server kiểm lại)
+      (target.secret === 'night' && world.phase !== 'night');
   }
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
@@ -403,6 +405,7 @@
     if (m.tower) return '';
     if (P.pos.map === 'village') return 'Nơi bình yên';
     if (P.pos.map.endsWith('_boss') && z) return `Phòng trùm · cấp ${z.boss.level}`;
+    if (side && side.min && !(side.monsters || []).length) return `Không có quái · cần cấp ${side.min}`;
     if (side && side.min) return `Quái cấp ${side.min}–${side.max}`;
     if (z) return `Quái cấp ${z.levels}`;
     return '';
@@ -460,7 +463,7 @@
       `<span class="phase" id="map-wx">${wxIcon(P)}</span>`;
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -548,7 +551,7 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
-    const fx = fxOn(), fountains = [], lanterns = [], tufts = [];
+    const fx = fxOn(), fountains = [], lanterns = [], tufts = [], incense = [];
     const grassy = /forest|swamp|grass/.test(m.floor || '') && outdoors(P);
 
     for (let y = y0; y <= y1; y++) {
@@ -560,7 +563,9 @@
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
           const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
           const sway = fx && (kind === 'tree' || kind === 'tree_autumn') ? Math.sin(now / 900 + x * 0.8 + y * 0.5) * 0.045 : 0;
-          if (im.complete && sway) {
+          if (m.style === 'bamboo' && (kind === 'tree' || kind === 'tree_autumn')) {
+            bamboo(px, py, x, y, fx ? now : 0);
+          } else if (im.complete && sway) {
             // cây lay theo gió: nghiêng quanh gốc
             ctx.save(); ctx.translate(px + TILE / 2, py + TILE); ctx.transform(1, 0, sway, 1, 0, 0);
             ctx.drawImage(im, -TILE / 2, -TILE, TILE, TILE); ctx.restore();
@@ -573,6 +578,8 @@
               ctx.fillRect(px + 4 + ph * (TILE - 14), py + 8 + k * 12 + ((x + y + k) % 3) * 2, 8, 1.5);
             }
           }
+          if (m.style === 'paddy' && kind === 'water') paddy(px, py, x, y, fx ? now : 0);
+          if (fx && m.style === 'temple' && kind === 'dragon_statue') incense.push([px, py]);
           if (fx && kind === 'fountain') fountains.push([px, py]);
           if (kind === 'lantern') lanterns.push([px, py]);
         }
@@ -594,6 +601,13 @@
 
     groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
     if (tufts.length) grassFx(now, tufts);
+    for (const [ix, iy] of incense) {
+      for (let i = 0; i < 4; i++) {
+        const k = ((now / 2600) + i / 4) % 1;
+        ctx.fillStyle = `rgba(220, 215, 230, ${0.35 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(ix + TILE / 2 + Math.sin(now / 600 + i * 2) * 4 * k, iy + 4 - k * 26, 1.5 + k * 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
     if (fx) printFx(now, cx, cy);
 
     // sự kiện "map" có thể đến trước/sau lúc đổi bản đồ một chút
@@ -1149,6 +1163,40 @@
     dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));
     g.strokeStyle = 'rgba(255, 255, 255, 0.55)'; g.lineWidth = 1;
     g.strokeRect(cx / TILE * s + 0.5, cy / TILE * s + 0.5, VW() / TILE * s, VH() / TILE * s);
+  }
+
+  // B1: Rừng Tre — ô cây vẽ thành bụi tre (3–4 thân có đốt, lá nhọn, lay theo gió)
+  function bamboo(px, py, gx, gy, t) {
+    const n = 3 + Math.floor(rnd(gx, gy) * 2);
+    for (let i = 0; i < n; i++) {
+      const bx = px + 5 + (i / n) * (TILE - 8) + rnd(gx + i, gy) * 4, h = TILE + 6 + rnd(gx, gy + i) * 10;
+      const sw = t ? Math.sin(t / 800 + gx * 0.7 + i) * 2.5 : 0;
+      const tx = bx + sw, ty = py + TILE - h;
+      ctx.strokeStyle = i % 2 ? '#7aa83e' : '#8cbc48'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(bx, py + TILE); ctx.quadraticCurveTo(bx + sw * 0.3, py + TILE - h / 2, tx, ty); ctx.stroke();
+      ctx.fillStyle = '#4f7428';
+      for (let k = 0.25; k < 1; k += 0.25) ctx.fillRect(bx + sw * k * k - 1.6, py + TILE - h * k, 3.2, 1.2);
+      ctx.fillStyle = 'rgba(120, 175, 60, 0.9)';
+      for (let l = 0; l < 3; l++) {
+        const a = -0.6 + l * 0.6 + (t ? Math.sin(t / 600 + l + i) * 0.15 : 0);
+        ctx.save(); ctx.translate(tx, ty + l * 3); ctx.rotate(a + (l === 1 ? Math.PI : 0) * 0.15);
+        ctx.beginPath(); ctx.ellipse(l === 1 ? -5 : 5, 0, 6, 1.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  // B3: Ruộng Bậc Thang — mạ lúa mọc thành hàng trên ô nước
+  function paddy(px, py, gx, gy, t) {
+    ctx.strokeStyle = 'rgba(150, 200, 70, 0.9)'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        const bx = px + 4 + c * 8 + (r % 2) * 3, by = py + 9 + r * 9, sw = t ? Math.sin(t / 700 + gx * 0.5 + c) * 1.4 : 0;
+        ctx.moveTo(bx, by); ctx.lineTo(bx - 2 + sw, by - 6);
+        ctx.moveTo(bx, by); ctx.lineTo(bx + 2 + sw, by - 6);
+        ctx.moveTo(bx, by); ctx.lineTo(bx + sw, by - 7);
+      }
+    }
+    ctx.stroke();
   }
 
   // B9: mép ô mềm + bóng đổ + trang trí rải theo ô (chỉ vẽ, vị trí cố định theo ô, không chắn đường)

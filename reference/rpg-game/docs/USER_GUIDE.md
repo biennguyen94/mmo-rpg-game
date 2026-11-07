@@ -95,6 +95,22 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - Chạm vào **đá dịch chuyển** để ghi nhớ, sau đó dịch chuyển nhanh từ đó.
 - Gặp trùm là vào trận ngay như quái thường.
 - **50 bản đồ phụ** (cấp quái 1–50, 10 nhóm: Đồng Cỏ Xanh, Rừng Thưa, Gò Kiến Đỏ, Đầm Sương, Cao Nguyên Tuyết, Thung Lũng U Linh, Mộ Cổ Hoang, Lò Nguyên Tố, Đỉnh Khổng Lồ, Vực Quỷ): vào bằng cổng xanh ở mép phải Rừng Mê 1, Rừng Mê 2, Trại Goblin 1–2, Nghĩa Địa Cổ 2, Núi Khổng Lồ 1–2, Đầm Lầy Rồng 2, Hang Hắc Long 1–2; mỗi nhóm 5 bản đồ nối tiếp nhau.
+- **Bản đồ mang chất Việt** (cổng xanh ở mép phải bản đồ cha):
+
+  | Bản đồ | Cấp quái | Vào từ |
+  |---|---|---|
+  | Làng Chài Ven Biển (câu cá biển) | 8–10 | Trại Goblin 1 |
+  | Chợ Nổi (không có quái, câu cá) | cần cấp 8 | Làng Chài |
+  | Rừng Tre | 14–16 | Nghĩa Địa Cổ 1 |
+  | Ruộng Bậc Thang (bản đồ lớn) | 20–24 | Núi Khổng Lồ 1 |
+  | Đồng Bằng Sông Nước (bản đồ lớn) | 26–30 | Đầm Lầy Rồng 1 |
+  | Đền Cổ Trên Núi | 34–38 | Hang Hắc Long 2 |
+
+  Nghe nói sau bức tường Đền Cổ có một hang động chỉ mở khi trời tối…
+- **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
+  nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Tắt bản đồ thu nhỏ ở Menu → Cài đặt.
+- **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,
+  bão tuyết… Chỉ là cảnh, không ảnh hưởng chỉ số.
 - **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).

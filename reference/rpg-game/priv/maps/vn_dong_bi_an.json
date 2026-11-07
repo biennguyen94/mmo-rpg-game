@@ -1,0 +1,87 @@
+{
+  "id": "vn_dong_bi_an",
+  "name": "Động Bí Ẩn",
+  "zone": null,
+  "side": true,
+  "theme": "lair",
+  "floor": "floors/lair",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "RR.......~...RR..IR.RR.~.....R",
+    "R..RR~......R...IRR.R..R.....R",
+    "R..~..R...R....R.R........~R.R",
+    "R........~.......R...R..R.R..R",
+    "R.R..........R........R.....RR",
+    "R.I.R.~.R...IRR....I....~..RRR",
+    "R...~..RR~.....RRRR.........RR",
+    "R.R......~..RR...............R",
+    "R....R......R...R.....RR...R.R",
+    "R.....RR............I.~R.....R",
+    "R.........RRI...~....R....~..R",
+    "R....R..........R.R.......I..R",
+    "R..R....R......~R~I...~......R",
+    "R.......R...::..R.R.::::::~..R",
+    "R...::::...::::::..::..::::::R",
+    "R::::R.:::::..:.::::.RR...RR.R",
+    "RR~......R.R..:...........R..R",
+    "RRRR...~....I.:..........R...R",
+    "RRRRRRRRRRRRRRORRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        14,
+        19
+      ],
+      "to": "vn_den_co",
+      "spawn": [
+        14,
+        4
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "vn_tinh_linh_dong",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_nhen_ngoc",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_doi_ma",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_nguoi_da",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_thach_long",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 4,
+      "respawn": 45
+    },
+    {
+      "item": "herb_rare",
+      "max": 4,
+      "respawn": 45
+    }
+  ],
+  "npcs": [],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "secret": "night"
+}

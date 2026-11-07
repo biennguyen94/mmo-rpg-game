@@ -2215,7 +2215,7 @@
   let worldLayout = null;
   function worldGraph() {
     if (worldLayout) return worldLayout;
-    const pub = (id) => WORLD.maps[id] && !WORLD.maps[id].private && !WORLD.maps[id].event && id !== 'tower';
+    const pub = (id) => WORLD.maps[id] && !WORLD.maps[id].private && !WORLD.maps[id].event && !WORLD.maps[id].secret && id !== 'tower';
     const depth = { village: 0 }, order = ['village'], parent = {};
     for (let i = 0; i < order.length; i++) {
       for (const p of WORLD.maps[order[i]].portals || []) {

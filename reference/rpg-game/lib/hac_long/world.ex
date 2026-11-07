@@ -459,11 +459,16 @@ defmodule HacLong.World do
       !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
         {%{ok: false, msg: "Cần đạt cấp #{target.min_level} để vào #{target.name}."}, p}
 
+      # bản đồ bí mật (Động Bí Ẩn): cửa chỉ mở ban đêm; ở trong rồi thì trời sáng vẫn ở được, ra được
+      target.secret == "night" and not HacLong.World.Clock.night?() ->
+        {%{ok: false, msg: "Cửa động bị đá phong kín. Có lẽ phải chờ trời tối…"}, p}
+
       true ->
         leave(p, uid)
         {x, y} = portal.spawn
         p = p |> put_pos(target.id, x, y) |> visit(target)
         enter(p, uid)
+        if target.secret, do: HacLong.World.Secret.found(target, p, uid)
         {%{ok: true, msg: "Đến #{target.name}."}, p}
     end
   end
@@ -523,7 +528,7 @@ defmodule HacLong.World do
   def can_travel?(p, map) do
     cond do
       map.id in @travel.free -> true
-      map.private or map.id == "tower" -> false
+      map.private or map.id == "tower" or map.secret != nil -> false
       map.realm -> realm_open?(p, map)
       true -> p.level >= (min_level(map) || 0)
     end

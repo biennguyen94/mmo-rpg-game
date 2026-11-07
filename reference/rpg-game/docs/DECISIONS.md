@@ -1645,3 +1645,58 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
 - **Vì sao chọn B:** mô phỏng sức leo tháp (đồ theo hồ sơ chơi thật) cho thấy người chơi mốc 0–9 chỉ tới tầng 54–59. Tầng
   60–100 chỉ đạt khi đồ gần tối đa, nên người chơi thường không bị ảnh hưởng, và cân bằng PvP chỉ cần chỉnh mốc 10.
 - Chỉnh lại `pvp.class_taken_by_rebirth` mốc 10 (lệch 14% → 7%); đấu trường mốc 10 giữ (lệch 7%). `mix test --only balance` xanh.
+
+## Bản đồ đẹp hơn (2026-11-07, anh chọn làm hết nhóm B)
+- Mọi hiệu ứng chỉ là hình ở client, tôn trọng công tắc hiệu ứng (`hl-fx`) và chế độ "giảm chuyển động"; không đổi luật chơi,
+  trừ phần bản đồ mới ở dưới.
+- **B4 Bảng tên bản đồ:** vào bản đồ thì tên và cấp quái hiện giữa màn 2,6 giây. Sang bản đồ thì màn mở dần từ tối, kèm xoáy
+  sáng quanh nhân vật.
+- **B8 Trùm xuất hiện:** vào trận với trùm vùng, trùm thế giới, chúa tể vùng, trùm Quảng Trường / Lâu Đài / Kalima (không tính
+  trùm tầng tháp, không tính đánh người) thì màn tối sầm, chớp đỏ, rung, có tiếng gầm, hiện "⚠ TRÙM XUẤT HIỆN" và tên trùm.
+  Hạ trùm thì có thêm 4 chùm pháo sáng.
+- **B7 Chuyển động nhỏ:**
+  - cỏ lay theo gió trên khoảng 1/3 số ô cỏ ở rừng, đầm lầy, làng;
+  - dấu chân trên núi và trại mờ dần trong 5 giây;
+  - cỏ bắn lên khi bước qua bụi cỏ;
+  - đứng ven nước thì có gợn lan ra.
+- **B6 Ánh sáng:**
+  - độ tối đổi dần lúc bình minh (5–7 giờ) và hoàng hôn (18–20 giờ), kèm ánh cam hồng;
+  - mốc giờ vẫn theo server (`HacLong.World.Clock`); đồng hồ máy lệch buổi thì dùng mức cố định như cũ;
+  - ban đêm: đom đóm dày ở rừng và đầm lầy, đuốc ở hang và nghĩa địa, cực quang trên núi, trăng lấp lánh trên nước.
+- **B5 Thời tiết chung server:** `HacLong.World.Weather` là hàm thuần của mốc giờ (mỗi `RULES.weather.slot_min` = 60 phút,
+  giờ Việt Nam) và vùng, nên không cần trạng thái. Mỗi vùng bốc theo trọng số `RULES.weather.regions`.
+  - Loại mới: trời quang, giông (mưa xiên, chớp 9 giây một lần, sấm xa), bão tuyết. Làng luôn có khói bếp.
+  - Biểu tượng thời tiết hiện cạnh tên bản đồ. Ép một loại để thử bằng biến `WEATHER`.
+  - **Chưa làm** phần thời tiết ảnh hưởng chỉ số (vd mưa thì hệ Nước +5%): chờ anh chốt số.
+- **B10 Làng sống động:**
+  - 2 dân làng (hình Thợ Mộc, Thợ Săn vốn không còn dùng) đi dạo theo vòng đường đất, một chú chó chạy theo;
+  - 2 con cừu, 3 con gà, cờ bay trên các cột đá;
+  - hoạt cảnh mới cho Người Nuôi Thú, Chủ Chợ, Bà Chủ Sòng, Bảng Tin, Người Tổ Chức Hội, Tủ Quần Áo, Người Gác Tháp, Cô Bé;
+  - chỉ là hình: không chắn đường, không bấm được.
+- **B9 Mép ô và trang trí:**
+  - đường đất lấn mép mềm vào cỏ; bờ nước có dải bọt sáng;
+  - tường, đá, cây đổ bóng xuống ô dưới;
+  - trang trí rải trên khoảng 12% ô nền và ô cỏ, cố định theo vị trí, theo vùng: sỏi, hoa dại, nấm, sậy, xương, vết nứt.
+- **B11 Bản đồ thế giới:** tab Chọn map → 🌐 Thế giới.
+  - Bản đồ xếp cột theo số bước đi từ Làng (BFS qua cổng); màu theo độ khó so với cấp mình; bấm bản đồ mở được để dịch chuyển.
+  - Bản đồ thu nhỏ ở góc khung bản đồ, bấm để mở bản đồ thế giới, tắt ở Cài đặt (`hl-minimap`).
+- **B1, B3 Bản đồ mới** (`scripts/gen_vn_maps.py`, mỗi bản đồ ghi `sourceType: DESIGN`), 26 quái mới (`SIDE_MONSTERS` `vn_…`,
+  chỉ số theo cấp như quái bản đồ phụ khác, đồ rơi theo bảng chung):
+
+  | Bản đồ | Cấp quái | Cỡ | Vào từ | Ghi chú |
+  |---|---|---|---|---|
+  | Làng Chài Ven Biển | 8–10 | 30×20 | Trại Goblin 1 | câu cá bảng "vùng sâu" |
+  | Chợ Nổi | không quái, cần cấp 8 | 30×20 | Làng Chài | câu cá bảng "vùng sâu" |
+  | Rừng Tre | 14–16 | 30×20 | Nghĩa Địa Cổ 1 | vẽ bụi tre (`style: bamboo`) |
+  | Ruộng Bậc Thang | 20–24 | 50×35 | Núi Khổng Lồ 1 | vẽ mạ lúa trên ruộng (`style: paddy`) |
+  | Đồng Bằng Sông Nước | 26–30 | 50×35 | Đầm Lầy Rồng 1 | sông có cầu, câu cá bảng "vùng sâu" |
+  | Đền Cổ Trên Núi | 34–38 | 30×20 | Hang Hắc Long 2 | khói hương ở tượng rồng (`style: temple`) |
+
+  - Hai bản đồ 50×35 (B3) có tối đa 7 con mỗi loại quái, các bản đồ khác 4 con.
+  - NPC mới chỉ nói chuyện (`talk`). **Chưa làm** thương nhân đặc biệt ở Chợ Nổi: có hàng và giá mới thì cần anh chốt.
+- **B2 Động Bí Ẩn** (`secret: "night"`): cổng ẩn ở bức tường sau Đền Cổ, quái cấp 40–44.
+  - Chỉ vào được ban đêm (20–5 giờ). Đã ở trong thì trời sáng vẫn ở và ra được.
+  - Không dịch chuyển tới được; không có trong Thư viện, Chọn map, bản đồ thế giới; bot không chọn làm chỗ luyện.
+  - Điểm thu thập: Quặng Mithril và Linh Chi, mỗi loại 4 điểm, hồi sau 45 giây (bản đồ phụ thường: 2 điểm, 70 giây).
+  - Người đầu tiên vào mỗi đêm được báo cả server, một lần mỗi đêm, không tính bot (`HacLong.World.Secret`).
+  - ⚖️ Số điểm thu thập là đề xuất của em, anh duyệt hoặc chỉnh.

@@ -1,0 +1,108 @@
+{
+  "id": "vn_den_co",
+  "name": "Đền Cổ Trên Núi",
+  "zone": null,
+  "side": true,
+  "theme": "mountain",
+  "floor": "floors/mountain",
+  "tiles": [
+    "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+    "R..................RR........R",
+    "RR..R.................R...R.RR",
+    "RR......SSSSSSOSSSSSSSR.....YR",
+    "R.......S..G......G..S....R..R",
+    "R.......S.I..I..I..I.S....R..R",
+    "R..R.R..S............S.......R",
+    "R.......S.I..I..I..I.S.R.....R",
+    "R..R....S...J....J...SR......R",
+    "R...........Y.::.......R...R.R",
+    "R..R...R......::.......R.....R",
+    "R....R........::R............R",
+    "O:::::::......:::::::::::::::R",
+    "R......:::::::::.......R.....R",
+    "R.....Y...R...::....RY....R..R",
+    "R.........R.R.::..R....R.....R",
+    "R..........Y..::R....Y......RR",
+    "RR...R.......R::........R.R.RR",
+    "R........Y.R..::R.R........RRR",
+    "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        12
+      ],
+      "to": "lair_2",
+      "spawn": [
+        24,
+        12
+      ]
+    },
+    {
+      "at": [
+        14,
+        3
+      ],
+      "to": "vn_dong_bi_an",
+      "spawn": [
+        14,
+        18
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "vn_thach_su",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_hon_tuong",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_hau_vuong",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_rong_da",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_dao_si",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "ore_rare",
+      "max": 2,
+      "respawn": 70
+    }
+  ],
+  "npcs": [
+    {
+      "id": "monk",
+      "name": "Lão Từ Giữ Đền",
+      "sprite": "elder",
+      "at": [
+        16,
+        9
+      ],
+      "role": "talk",
+      "lines": [
+        "Sau bức tường đền có một hang động, chỉ hiện ra khi trời tối.",
+        "Ban ngày cửa động bị đá phong kín."
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "style": "temple"
+}

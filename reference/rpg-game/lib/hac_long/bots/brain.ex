@@ -967,7 +967,7 @@ defmodule HacLong.Bots.Brain do
     candidates =
       for id <- Maps.ids(),
           m = Maps.get(id),
-          not m.private and id != "tower" and m.spawns != [],
+          not m.private and id != "tower" and m.spawns != [] and m.secret == nil,
           reachable?(p, m),
           lo = World.min_level(m),
           lo != nil and lo <= p.level,
@@ -1058,7 +1058,7 @@ defmodule HacLong.Bots.Brain do
         for pt <- Maps.get(id).portals,
             not MapSet.member?(seen, pt.to),
             m = Maps.get(pt.to),
-            not m.private,
+            not m.private and m.secret == nil,
             open?(p, m),
             do: {pt.to, first || pt}
 

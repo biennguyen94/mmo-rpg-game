@@ -12,6 +12,9 @@ Danh sách họa sĩ: https://github.com/crawl/tiles/blob/master/ARTISTS.md
 Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint_sprites.mjs` (vẫn CC0): `red_dragon.png` (từ
 `golden_dragon`), `white_wizard.png` (từ `ancient_lich`), `orc_soldier.png` (từ `orc_warrior`). `nodes/ore_rare.png` (Quặng Mithril) cũng tô lại từ `nodes/ore.png` cùng script. `tiles/blessing.png` (Đài Phúc Lành) tô lại từ `tiles/waystone.png`. 40 hình quái vùng đất chuyển sinh `monsters/r1_…` → `r10_…` (Phase 6) tô lại từ các hình quái CC0 ở trên, danh sách ở `priv/game_data/realms.json` (`REALM_TINTS`).
 
+26 hình quái bản đồ chất Việt `monsters/vn_…` (DECISIONS "Bản đồ đẹp hơn") tô lại từ các hình quái CC0 ở trên bằng
+`e2e/tint_sprites.mjs`, danh sách ở `priv/game_data/side.json` (`VN_TINTS`, do `scripts/gen_vn_maps.py` ghi).
+
 Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
 
 Hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật (`priv/static/assets/art/hac_long.webp`): khung đầu hoạt cảnh "Idle" của

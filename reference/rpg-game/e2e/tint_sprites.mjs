@@ -21,6 +21,9 @@ const only = process.argv[2];
 // Phase 6 (B-30): quái vùng đất chuyển sinh, danh sách do scripts/gen_realms.py ghi ở realms.json
 const realms = JSON.parse(fs.readFileSync(new URL('../priv/game_data/realms.json', import.meta.url), 'utf8'));
 JOBS.push(...realms.REALM_TINTS.map(([src, dst, f]) => [src, dst.replace('monsters/', 'monsters/'), f]));
+// DECISIONS "Bản đồ đẹp hơn": quái bản đồ chất Việt, danh sách do scripts/gen_vn_maps.py ghi ở side.json
+const side = JSON.parse(fs.readFileSync(new URL('../priv/game_data/side.json', import.meta.url), 'utf8'));
+JOBS.push(...(side.VN_TINTS || []));
 for (const [src, dst, filter] of JOBS.filter((j) => !only || j[1].includes(only))) {
   const data = 'data:image/png;base64,' + fs.readFileSync(DIR + src + '.png').toString('base64');
   const out = await page.evaluate(async ([data, filter]) => {

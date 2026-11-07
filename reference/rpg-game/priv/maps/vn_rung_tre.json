@@ -1,0 +1,72 @@
+{
+  "id": "vn_rung_tre",
+  "name": "Rừng Tre",
+  "zone": null,
+  "side": true,
+  "theme": "forest",
+  "floor": "floors/forest",
+  "tiles": [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T.......~.T....~T.......~R...T",
+    "T.....T...T...T.......T......T",
+    "T..T....T....~.TTT.....T..T..T",
+    "T......T.T.T........:::.TT.TTT",
+    "T~T..~.T........T..::T::::..TT",
+    "T.T.......::::::~T::TT...::::T",
+    "T.....T..::....::::..T.......T",
+    "T..T....::...T...R....TRT....T",
+    "T.TT::.::...TT...T.TT........T",
+    "O:::::::~....T.T...T...T...T.T",
+    "T...............T~......R....T",
+    "T.TT...TT..T........T..T.....T",
+    "T~..........T..T........TT..~T",
+    "TTT..T.~.......T.TT.T........T",
+    "TTT.~.R....T.~.T.T.T..T......T",
+    "TTT..........~.T...TT........T",
+    "TTTT.......TT.......T.T....~.T",
+    "TTTT~.....TT..T.....TT...T...T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        10
+      ],
+      "to": "graveyard_1",
+      "spawn": [
+        24,
+        10
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "monster": "vn_ma_rung_tre",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_ho_xam",
+      "max": 4,
+      "respawn": 25
+    },
+    {
+      "monster": "vn_ran_ho_mang",
+      "max": 4,
+      "respawn": 25
+    }
+  ],
+  "gather": [
+    {
+      "item": "herb",
+      "max": 3,
+      "respawn": 60
+    }
+  ],
+  "npcs": [],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "style": "bamboo"
+}
