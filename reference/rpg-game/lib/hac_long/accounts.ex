@@ -158,6 +158,20 @@ defmodule HacLong.Accounts do
     end
   end
 
+  @doc "Tên đăng nhập của tài khoản cho từng mã người chơi: `%{uid => tên}`."
+  def account_names([]), do: %{}
+
+  def account_names(ids) do
+    Repo.all(
+      from u in User,
+        join: a in User,
+        on: a.id == coalesce(u.account_id, u.id),
+        where: u.id in ^ids,
+        select: {u.id, a.username}
+    )
+    |> Map.new()
+  end
+
   @doc "Các mã người chơi khác cùng tài khoản với `uid`."
   def siblings(uid), do: account_rows(uid) -- [uid]
 
@@ -218,6 +232,10 @@ defmodule HacLong.Accounts do
             password_hash: Password.hash(Base.encode64(:crypto.strong_rand_bytes(24))),
             role: "player",
             account_id: acct.id,
+            # cấm chat / khóa của tài khoản áp cả nhân vật mới
+            muted_until: acct.muted_until,
+            banned_until: acct.banned_until,
+            ban_reason: acct.ban_reason,
             inserted_at: now,
             updated_at: now
           })

@@ -115,7 +115,7 @@ defmodule HacLongWeb.GameChannel do
      socket
      |> assign(:map, nil)
      |> assign(:guild_id, gid)
-     |> assign(:blocked, MapSet.new(blocked, & &1.id))}
+     |> assign(:blocked, Moderation.blocked_ids(uid))}
   end
 
   @impl true
@@ -377,7 +377,7 @@ defmodule HacLongWeb.GameChannel do
     case Moderation.block(uid, id) do
       :ok ->
         {:reply, {:ok, %{blocked: Moderation.blocked(uid)}},
-         assign(socket, :blocked, MapSet.put(socket.assigns.blocked, id))}
+         assign(socket, :blocked, Moderation.blocked_ids(uid))}
 
       {:error, msg} ->
         {:reply, {:error, %{msg: msg}}, socket}
@@ -389,7 +389,7 @@ defmodule HacLongWeb.GameChannel do
     Moderation.unblock(uid, id)
 
     {:reply, {:ok, %{blocked: Moderation.blocked(uid)}},
-     assign(socket, :blocked, MapSet.delete(socket.assigns.blocked, id))}
+     assign(socket, :blocked, Moderation.blocked_ids(uid))}
   end
 
   def handle_in("report", %{"id" => id}, socket) when is_integer(id) do

@@ -43,9 +43,8 @@ defmodule HacLong.Friends do
 
   def friends?(a, b), do: Repo.exists?(row(a, b) |> where([f], f.accepted))
 
-  defp blocked_by?(target, uid) do
-    Repo.exists?(from b in "user_blocks", where: b.user_id == ^target and b.blocked_id == ^uid)
-  end
+  # chặn theo tài khoản (DECISIONS "Nhiều nhân vật")
+  defp blocked_by?(target, uid), do: HacLong.Moderation.blocked_by?(target, uid)
 
   defp count(uid),
     do: Repo.aggregate(from(f in "friends", where: f.user_id == ^uid and f.accepted), :count)

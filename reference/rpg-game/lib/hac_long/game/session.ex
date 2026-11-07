@@ -189,6 +189,10 @@ defmodule HacLong.Game.Session do
       end)
       |> Enum.reject(&is_nil/1)
 
+    # tên đăng nhập của tài khoản (nhiều nhân vật một tài khoản, DECISIONS "Nhiều nhân vật")
+    names = HacLong.Accounts.account_names(Enum.map(players, & &1.id))
+    players = Enum.map(players, &Map.put(&1, :account, names[&1.id]))
+
     %{count: length(players), players: players |> Enum.sort_by(& &1.name) |> Enum.take(limit)}
   end
 
