@@ -1594,3 +1594,19 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   - leo Tháp mỗi `tower_every_min` phút, ra hồ mỗi `fish_every_min` phút, câu `fish_stay_min` phút;
   - giật cần nhanh hơn (`react_ms`).
 - Nếu bot câu được Long Vương nhiều quá so với người chơi thật: giảm `fish.chase_every` (ít bot săn hơn) hoặc thời gian câu.
+
+## Nén hệ số kỹ năng tháp (2026-11-07, anh chọn phương án 1)
+- **Vì sao:** kỹ năng gây 93–100% sát thương (5 kỹ năng, lượt nào cũng có chiêu sẵn), mỗi đòn ×2–4,4 đòn thường. Công thức
+  trừ giáp còn khuếch đại hệ số cao, nên chúa tể vùng chuyển sinh chỉ trụ được 5–7 lượt.
+- **Đổi:** hệ số `mult` của 10 kỹ năng tháp mỗi lớp (`CLASSES[lớp].tower_skills`) từ 1,45 / 1,7 / … / 3,7 thành
+  1,27 / 1,42 / … / 2,62, tức `1 + (cũ − 1) × 0,6`. Tầng cao vẫn mạnh nhất, mỗi tầng vẫn +0,15. Tác dụng phụ (xuyên giáp, chí
+  mạng, nhiều đòn, buff…), MP, hồi chiêu giữ nguyên.
+- **Đo (mô phỏng 12 trận mỗi ô):**
+  - quái vùng chuyển sinh chết chậm hơn khoảng 20–40%;
+  - chúa tể vùng mốc 3–6 từ 4,6–6,7 lượt lên 6,2–8,3 lượt;
+  - kỹ năng còn ×1,6–3,0 đòn thường.
+- **Hành trình tới 6 lần chuyển sinh (3 seed):** tổng lượt đánh tăng dk +19%, dw +15%, elf +12%, mg +11%, số trận gần
+  như không đổi, không lớp nào kẹt.
+- Chỉnh lại `pvp.class_taken_by_rebirth` và `class_taken_arena_by_rebirth` bằng `scripts/pvp/tune.exs` (mọi mốc).
+  - đồ sát: đổi mốc 0, 2–8, còn lệch ≤ 13%;
+  - đấu trường: đổi mốc 2–8, còn lệch ≤ 10%; mốc 0, 1 giữ (lệch 11%, 13%, trong mức test 15%).
