@@ -110,7 +110,11 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
   nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Tắt bản đồ thu nhỏ ở Menu → Cài đặt.
 - **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,
-  bão tuyết… Chỉ là cảnh, không ảnh hưởng chỉ số.
+  bão tuyết… Khi đánh quái, kỹ năng cùng hệ với thời tiết mạnh hơn: quang → Ánh Sáng +5%, mưa / giông → Sét +5% / +10%,
+  tuyết / bão tuyết → Băng +5% / +10%, sương → Bóng Tối +5%, lá bay → Gió +5%, gió cát → Đất +5%, tàn lửa → Lửa +5%
+  (màn đánh ghi mức cộng; nút kỹ năng được cộng có viền sáng xanh). Đánh người không tính.
+- **Thương Nhân Phương Xa** ở Chợ Nổi: mỗi ngày bày 4 món hiếm khác nhau (Mồi Rồng, Linh Chi, Quặng Mithril, Cá Chép Vàng,
+  mảnh vé sự kiện, Bình Máu Lớn…), mỗi món mua được vài lần mỗi ngày.
 - **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
   theo sát thương (vắng mặt thì nhận qua thư).

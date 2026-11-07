@@ -48,6 +48,19 @@ defmodule HacLong.World.Weather do
     end)
   end
 
+  @doc """
+  Mức cộng của thời tiết ở bản đồ `map` lúc `now` (anh duyệt): `%{kind, element, pct}` — kỹ năng hệ `element` gây thêm
+  `pct` sát thương khi đánh quái; nil nếu bản đồ không có thời tiết.
+  """
+  def bonus(map, now \\ DateTime.utc_now()) do
+    with k when is_binary(k) <- kind(map, now),
+         %{element: el, pct: pct} <- Map.get(rules()[:bonus] || %{}, String.to_atom(k)) do
+      %{kind: k, element: el, pct: pct}
+    else
+      _ -> nil
+    end
+  end
+
   defp forced do
     case Application.get_env(:hac_long, :weather) || System.get_env("WEATHER") do
       k when is_binary(k) and k != "" -> k

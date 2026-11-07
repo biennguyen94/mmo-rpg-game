@@ -14,7 +14,7 @@
     "~~~~~~B~~~~~~~B~~~~~~~B~~~~U~~",
     "~~~~~~B~~U~~~~B~~~U~~~B~~~~~~~",
     "~~Q~~~B~~~~~~~B~~~~~~~B~~~~~~~",
-    "~~~~~~BJ~~E~~JB~~~~~~JB~~~~~~~",
+    "~~~~~~BJ~~E~~JB~~~~~~.B~~~~~~~",
     "OEEEEEBEEEEEEEBEEEEEEEBEEEEEE~",
     "~~~~~~B~J~~~~~BJ~~E~~~BJ~~~~~~",
     "~~~~~~B~~~~~~~B~~~~~~~B~~~~~~~",
@@ -69,6 +69,19 @@
       "lines": [
         "Câu cá ở đây ra cá to như ở vùng sâu.",
         "Ngồi bến này câu thì nhớ để ý phao."
+      ]
+    },
+    {
+      "id": "trader",
+      "name": "Thương Nhân Phương Xa",
+      "sprite": "dealer",
+      "at": [
+        21,
+        8
+      ],
+      "role": "trader",
+      "lines": [
+        "Hàng hiếm từ khắp nơi, mỗi ngày một khác. Mua nhanh kẻo hết!"
       ]
     }
   ],

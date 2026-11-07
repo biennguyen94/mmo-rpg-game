@@ -7,7 +7,7 @@ defmodule HacLong.Game.DataCheck do
   Hàm thuần trên dữ liệu đã đọc (khóa atom như trong `Data`), không gọi `Data`.
   """
 
-  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen dragon)
+  @npc_roles ~w(quests shop herbalist inn talk chest daily tower carpenter chaos cook event market pets wardrobe tienlen dragon trader)
   @pet_groups ~w(war guard luck all)
   @pet_bonus ~w(atk def crit reduce xp gold)a
   # máu / MP cộng số cố định theo cấp thú (DECISIONS "Thú cưng: máu / MP cộng số")

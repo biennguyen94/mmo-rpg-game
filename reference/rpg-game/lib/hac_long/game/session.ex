@@ -523,8 +523,9 @@ defmodule HacLong.Game.Session do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
-        # bước ra / lên cầu thang có thể kết thúc lượt Quảng Trường Quỷ
-        player = ds_record(player, s)
+
+        # bước ra / lên cầu thang có thể kết thúc lượt Quảng Trường Quỷ; gặp quái: ghi thời tiết vào trận
+        player = player |> ds_record(s) |> weather_battle()
         {player, notes} = checks(player)
         old = s.player
 
@@ -901,7 +902,11 @@ defmodule HacLong.Game.Session do
     {result, player} = run(s, old, cmd)
     # nhân vật vừa tạo cũng có ngay việc hằng ngày
     player =
-      s |> after_command(old, player, cmd) |> ds_record(s) |> Daily.ensure(Daily.today())
+      s
+      |> after_command(old, player, cmd)
+      |> ds_record(s)
+      |> Daily.ensure(Daily.today())
+      |> weather_battle()
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player =
@@ -993,6 +998,16 @@ defmodule HacLong.Game.Session do
     b && b.over && b.result == "win" && b.monster.boss && !b.monster[:world] &&
       !b.monster[:pvp] && !(old.battle && old.battle.over)
   end
+
+  # Thời tiết ảnh hưởng chỉ số (DECISIONS "Bản đồ đẹp hơn"): trận vừa bắt đầu ghi mức cộng của thời tiết bản đồ
+  # (`battle.wx`, nil nếu không có / đánh người); Engine đọc lúc tính sát thương kỹ năng.
+  defp weather_battle(%{battle: %{} = b, pos: %{map: map}} = p) when not is_map_key(b, :wx) do
+    pvp = b[:live] != nil or (is_map(b[:monster]) and b.monster[:pvp] != nil)
+    wx = if pvp, do: nil, else: Maps.get(map) |> then(&(&1 && HacLong.World.Weather.bonus(&1)))
+    %{p | battle: Map.put(b, :wx, wx)}
+  end
+
+  defp weather_battle(p), do: p
 
   # Hướng dẫn người mới và thành tựu: tính lại sau mỗi thay đổi, trả về các thông báo mới.
   defp checks(player) do

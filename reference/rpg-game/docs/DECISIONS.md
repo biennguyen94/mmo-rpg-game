@@ -1667,7 +1667,22 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   giờ Việt Nam) và vùng, nên không cần trạng thái. Mỗi vùng bốc theo trọng số `RULES.weather.regions`.
   - Loại mới: trời quang, giông (mưa xiên, chớp 9 giây một lần, sấm xa), bão tuyết. Làng luôn có khói bếp.
   - Biểu tượng thời tiết hiện cạnh tên bản đồ. Ép một loại để thử bằng biến `WEATHER`.
-  - **Chưa làm** phần thời tiết ảnh hưởng chỉ số (vd mưa thì hệ Nước +5%): chờ anh chốt số.
+  - **Thời tiết ảnh hưởng chỉ số** (anh duyệt): đánh quái, không tính đánh người. Kỹ năng cùng hệ với thời tiết gây thêm
+    sát thương theo `RULES.weather.bonus`:
+
+    | Thời tiết | Hệ | Cộng |
+    |---|---|---|
+    | quang | Ánh Sáng | +5% |
+    | mưa / giông | Sét | +5% / +10% |
+    | tuyết / bão tuyết | Băng | +5% / +10% |
+    | sương | Bóng Tối | +5% |
+    | lá bay | Gió | +5% |
+    | gió cát | Đất | +5% |
+    | tàn lửa | Lửa | +5% |
+
+    - Session ghi mức cộng vào trận lúc bắt đầu (`battle.wx`), cả trận dùng một mức; Engine đọc ở `weather_mult/2`.
+    - Màn đánh hiện biểu tượng thời tiết và mức cộng; nút kỹ năng cùng hệ có viền sáng xanh.
+    - Mô phỏng cân bằng PvP không đổi, vì đánh người không có thời tiết.
 - **B10 Làng sống động:**
   - 2 dân làng (hình Thợ Mộc, Thợ Săn vốn không còn dùng) đi dạo theo vòng đường đất, một chú chó chạy theo;
   - 2 con cừu, 3 con gà, cờ bay trên các cột đá;
@@ -1693,10 +1708,23 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
   | Đền Cổ Trên Núi | 34–38 | 30×20 | Hang Hắc Long 2 | khói hương ở tượng rồng (`style: temple`) |
 
   - Hai bản đồ 50×35 (B3) có tối đa 7 con mỗi loại quái, các bản đồ khác 4 con.
-  - NPC mới chỉ nói chuyện (`talk`). **Chưa làm** thương nhân đặc biệt ở Chợ Nổi: có hàng và giá mới thì cần anh chốt.
+  - NPC mới ở các bản đồ khác chỉ nói chuyện (`talk`).
+  - **Thương Nhân Phương Xa ở Chợ Nổi** (anh duyệt, vai `trader`, `HacLong.Game.Trader`, `RULES.trader`): mỗi ngày (giờ Việt
+    Nam) bày 4 trong 8 món, chọn cố định theo ngày. Mỗi nhân vật mua mỗi món tối đa vài lần mỗi ngày, đếm ở `daily.trader`:
+
+    | Món | Giá | Lần / ngày |
+    |---|---|---|
+    | Mồi Rồng ×10 | 400 | 2 |
+    | Linh Chi | 150 | 5 |
+    | Quặng Mithril | 250 | 5 |
+    | Cá Chép Vàng | 1.500 | 1 |
+    | Chìa Khóa Quỷ | 8.000 | 1 |
+    | Cuộn Giấy Tổng Lãnh Thiên Thần | 12.000 | 1 |
+    | Dấu Ấn Kundun | 6.000 | 1 |
+    | Bình Máu Lớn ×5 | 900 | 2 |
 - **B2 Động Bí Ẩn** (`secret: "night"`): cổng ẩn ở bức tường sau Đền Cổ, quái cấp 40–44.
   - Chỉ vào được ban đêm (20–5 giờ). Đã ở trong thì trời sáng vẫn ở và ra được.
   - Không dịch chuyển tới được; không có trong Thư viện, Chọn map, bản đồ thế giới; bot không chọn làm chỗ luyện.
   - Điểm thu thập: Quặng Mithril và Linh Chi, mỗi loại 4 điểm, hồi sau 45 giây (bản đồ phụ thường: 2 điểm, 70 giây).
   - Người đầu tiên vào mỗi đêm được báo cả server, một lần mỗi đêm, không tính bot (`HacLong.World.Secret`).
-  - ⚖️ Số điểm thu thập là đề xuất của em, anh duyệt hoặc chỉnh.
+  - Số điểm thu thập: anh duyệt.

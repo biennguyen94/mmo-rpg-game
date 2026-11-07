@@ -1202,6 +1202,8 @@ defmodule HacLongWeb.GameChannel do
         tutorial: Tutorial.view(player),
         # việc của Ông Lão Câu Cá (Hồ Long Vương)
         elder: HacLong.Game.Fishing.elder(player),
+        # Thương Nhân Chợ Nổi: món hôm nay, đã mua mấy lần
+        trader: HacLong.Game.Trader.view(player, Daily.today()),
         # Phase 4: tự đánh được ở bản đồ này không, loại quái cho chọn
         autoMap: %{
           ok: HacLong.Game.AutoHunt.map_ok?(player.pos.map),

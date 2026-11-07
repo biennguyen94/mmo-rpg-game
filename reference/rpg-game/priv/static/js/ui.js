@@ -3436,6 +3436,17 @@
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}</div>`);
     }
     if (n.id === 'fisher') sections.push(elderCard());
+    // Thương Nhân Chợ Nổi: mỗi ngày bày vài món hiếm, mỗi món mua giới hạn lần / ngày
+    if (n.role === 'trader') {
+      const offers = P.view.trader || [];
+      sections.push(`<div class="card"><h3>Hàng hôm nay</h3><p class="small muted">Mỗi ngày một khác. Mỗi món mua tối đa vài lần mỗi ngày.</p>
+        <div class="list">${offers.map((o) => {
+          const it = ITEMS[o.item] || {}, left = o.limit - o.bought, can = left > 0 && P.gold >= o.price;
+          return `<div class="item">${itemIcon(it)}<div class="grow"><div class="name">${esc(o.name)}${o.n > 1 ? ` ×${o.n}` : ''}</div>
+            <div class="small muted">${it.desc ? esc(it.desc) + ' · ' : ''}còn ${left}/${o.limit} lần hôm nay</div></div>
+            <button class="btn small-btn ${can ? 'primary' : ''}" data-act="trader-buy" data-id="${o.id}" ${can ? '' : 'disabled'}>${icon('two-coins')}${fmt(o.price)}</button></div>`;
+        }).join('')}</div></div>`);
+    }
     if (n.role === 'dragon') sections.push(dragonCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
@@ -3576,7 +3587,7 @@
         ${slayEnc ? `<p class="slay-turn ${slayEnc.mine ? 'mine' : ''}">${slayEnc.mine ? '🗡 Lượt của bạn' : '⏳ Lượt của đối thủ'} · <span class="num" data-until="${slayClock.until}">${slayLeft(slayClock.until)}</span>s</p>` : ''}
         <div class="actions">
           <button class="btn primary" data-act="attack" ${wait}>${icon('broadsword')}<span class="lbl">Tấn công</span></button>
-          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element); return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span>${mastery(k.id) ? `<span class="sk-lv">${mastery(k.id).lv}</span>` : ''}</button>`; }).join('')}
+          ${skills.map((k) => { const kmp = skillMp(k), noMp = (P.mp || 0) < kmp, vs = elVs(k.element, m.element), wxk = b.wx && b.wx.element === k.element; return `<button class="btn ${vs > 0 ? 'el-strong' : vs < 0 ? 'el-weak' : ''}${wxk ? ' wx-on' : ''}" data-act="skill" data-skill="${k.id}" ${cd(k.id) || noMp || wait ? 'disabled' : ''} title="${esc(k.name)} · ${esc(skillDesc(k))} · ${kmp} MP${vs > 0 ? ' · khắc hệ quái' : vs < 0 ? ' · bị hệ quái khắc' : ''}">${icon(k.icon)}<span class="lbl">${elTag(k.element)}${k.name}${vs > 0 ? ' ▲' : vs < 0 ? ' ▼' : ''}</span><span class="sub num">${cd(k.id) ? `chờ ${cd(k.id)}` : `${kmp} MP`}</span>${mastery(k.id) ? `<span class="sk-lv">${mastery(k.id).lv}</span>` : ''}</button>`; }).join('')}
         </div>
         <div class="actions util">
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
@@ -3602,7 +3613,7 @@
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
+        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}${b.wx ? ` <span class="wx-tag" title="Thời tiết: kỹ năng hệ ${EL.names[b.wx.element] || b.wx.element} gây thêm ${Math.round(b.wx.pct * 100)}% sát thương">${{ clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' }[b.wx.kind] || ''} ${EL.icons[b.wx.element] || ''} +${Math.round(b.wx.pct * 100)}%</span>` : ''}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
@@ -4163,6 +4174,7 @@
     }
     if (act === 'stat-help') { statHelp = statHelp === t.dataset.k ? null : t.dataset.k; render(); return; }
     if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
+    if (act === 'trader-buy') { sendCommand({ act: 'trader_buy', id: t.dataset.id }); return; }
     if (act === 'world-map') { travelSeg = 'world'; goTab('travel'); return; }
     if (act === 'mini-map') { setPref('hl-minimap', Map_.miniOn() ? '0' : '1'); render(); return; }
     if (act === 'discard') {

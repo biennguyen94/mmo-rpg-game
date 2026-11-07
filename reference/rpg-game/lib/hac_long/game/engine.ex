@@ -1153,7 +1153,10 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
-            mult = if skill, do: mult * (1 + d.skillDmg) * emult, else: mult
+
+            mult =
+              if skill, do: mult * (1 + d.skillDmg) * emult * weather_mult(p, skill), else: mult
+
             hits = (skill && skill[:hits]) || 1
 
             # đối thủ là người (đấu trường, đồ sát): giảm sát thương nhận của cánh và Excellent bên đó;
@@ -2225,6 +2228,12 @@ defmodule HacLong.Game.Engine do
   end
 
   defp arena_opening(p, dmg), do: {dmg, p}
+
+  @doc "Thời tiết của trận (`battle.wx`, Session ghi lúc bắt đầu): kỹ năng cùng hệ × (1 + pct)."
+  def weather_mult(%{battle: %{wx: %{element: el, pct: pct}}}, %{} = skill),
+    do: if(skill[:element] == el, do: 1 + pct, else: 1)
+
+  def weather_mult(_p, _skill), do: 1
 
   defp stun_cooled(%{battle: %{monster: %{pvp: pvp}}} = p) when pvp != nil,
     do: put_in(p, [:battle, :stun_free], p.battle.turn + 1 + @pvp.stun_immune)

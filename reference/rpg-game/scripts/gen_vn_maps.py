@@ -179,7 +179,9 @@ def cho_noi():
         {"id": "fruit_seller", "name": "Cô Bán Trái Cây", "sprite": "merchant", "at": [10, 8], "role": "talk",
          "lines": ["Xoài, chôm chôm, sầu riêng đây! Đi xuồng cả buổi mới ra tới chợ đó.", "Đêm chợ thắp đèn lồng, đẹp lắm."]},
         {"id": "ferryman", "name": "Ông Lái Đò", "sprite": "fisher", "at": [18, 10], "role": "talk",
-         "lines": ["Câu cá ở đây ra cá to như ở vùng sâu.", "Ngồi bến này câu thì nhớ để ý phao."]}]
+         "lines": ["Câu cá ở đây ra cá to như ở vùng sâu.", "Ngồi bến này câu thì nhớ để ý phao."]},
+        {"id": "trader", "name": "Thương Nhân Phương Xa", "sprite": "dealer", "at": [21, 8], "role": "trader",
+         "lines": ["Hàng hiếm từ khắp nơi, mỗi ngày một khác. Mua nhanh kẻo hết!"]}]
 
 
 def rung_tre():

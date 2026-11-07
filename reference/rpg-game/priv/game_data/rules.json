@@ -1121,6 +1121,18 @@
     "weather": {
       "_doc": "DECISIONS \"Bản đồ đẹp hơn\" (B5): thời tiết chung cả server, đổi mỗi slot_min phút (theo giờ Việt Nam). Mỗi vùng (theo nền bản đồ; Làng, Hồ Long Vương riêng) bốc một loại theo trọng số, cùng mốc giờ thì mọi người thấy như nhau. Chỉ là hình, không đổi luật chơi. Loại: clear (trời quang), rain, storm (mưa to + chớp), fog, snow, blizzard (bão tuyết), leaves (lá rơi), dust (bụi cát), embers (tàn lửa). Bản đồ tháp / sự kiện giữ hiệu ứng theo nền tầng.",
       "slot_min": 60,
+      "_bonus_doc": "Thời tiết ảnh hưởng chỉ số (anh duyệt 2026-11-07): đánh quái (không tính đánh người) lúc trời có thời tiết này thì kỹ năng hệ `element` gây thêm `pct` sát thương. Ghi vào trận lúc bắt đầu (cả trận dùng một mức).",
+      "bonus": {
+        "clear": {"element": "light", "pct": 0.05},
+        "rain": {"element": "lightning", "pct": 0.05},
+        "storm": {"element": "lightning", "pct": 0.1},
+        "snow": {"element": "ice", "pct": 0.05},
+        "blizzard": {"element": "ice", "pct": 0.1},
+        "fog": {"element": "dark", "pct": 0.05},
+        "leaves": {"element": "wind", "pct": 0.05},
+        "dust": {"element": "earth", "pct": 0.05},
+        "embers": {"element": "fire", "pct": 0.05}
+      },
       "regions": {
         "village": [["clear", 55], ["rain", 20], ["storm", 8], ["fog", 10], ["leaves", 7]],
         "lake": [["clear", 50], ["rain", 20], ["fog", 20], ["storm", 10]],
@@ -1131,6 +1143,23 @@
         "camp": [["dust", 45], ["clear", 30], ["rain", 15], ["storm", 10]],
         "lair": [["embers", 70], ["clear", 30]]
       },
+      "sourceType": "DESIGN",
+      "version": 2,
+      "verified": false
+    },
+    "trader": {
+      "_doc": "DECISIONS \"Bản đồ đẹp hơn\": Thương Nhân Chợ Nổi (NPC vai \"trader\"). Mỗi ngày (giờ Việt Nam) bày `show` món chọn cố định theo ngày trong `offers`; mỗi nhân vật mua mỗi món tối đa `limit` lần / ngày (đếm ở `daily.trader`). Mỗi lần mua: `n` món `item`, giá `price` vàng. Anh duyệt 2026-11-07.",
+      "show": 4,
+      "offers": [
+        {"id": "bait", "item": "dragon_bait", "n": 10, "price": 400, "limit": 2},
+        {"id": "lingzhi", "item": "herb_rare", "n": 1, "price": 150, "limit": 5},
+        {"id": "mithril", "item": "ore_rare", "n": 1, "price": 250, "limit": 5},
+        {"id": "goldfish", "item": "fish_gold", "n": 1, "price": 1500, "limit": 1},
+        {"id": "devil_key", "item": "devil_key", "n": 1, "price": 8000, "limit": 1},
+        {"id": "scroll", "item": "archangel_scroll", "n": 1, "price": 12000, "limit": 1},
+        {"id": "mark", "item": "kundun_mark", "n": 1, "price": 6000, "limit": 1},
+        {"id": "potions", "item": "potion_l", "n": 5, "price": 900, "limit": 2}
+      ],
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
