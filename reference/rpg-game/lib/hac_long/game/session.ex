@@ -740,8 +740,15 @@ defmodule HacLong.Game.Session do
         do: Map.put(p, :boss_top, (Map.get(p, :boss_top) || 0) + 1),
         else: p
 
+    # Long Ân: dắt Long Vương thì thưởng trùm thế giới thêm (DECISIONS "Long Vương: thần thú độc nhất")
+    boost = 1 + HacLong.Game.Pets.trait(p, :boss)
+
+    reward =
+      info.reward &&
+        %{info.reward | gold: round(info.reward.gold * boost), xp: round(info.reward.xp * boost)}
+
     {p, notice} =
-      case info.reward do
+      case reward do
         nil ->
           {p, if(info.result == "win", do: nil, else: "#{WorldBoss.name()} đã bay đi.")}
 

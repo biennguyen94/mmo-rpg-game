@@ -518,6 +518,7 @@
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
     if (fx) moveFx(now, m, P, cx, cy, px, py);
     if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
+    if (look && look.pet === 'long_vuong') dragonAura(now, px, py, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
@@ -809,6 +810,23 @@
         const k = ((t / 1600) + i / 4) % 1, side = i % 2 ? 1 : -1;
         ctx.fillStyle = `rgba(232, 244, 255, ${0.85 * (1 - k)})`;
         ctx.beginPath(); ctx.arc(x + side * (12 + (i % 3) * 3), py + 8 + k * 26, 1.3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Long Vương đi theo (DECISIONS "Long Vương: thần thú độc nhất"): vầng vàng quanh chân và vài vảy rồng vàng xoay quanh
+  function dragonAura(t, px, py, fx) {
+    const x = px + TILE / 2, y = py + TILE - 4;
+    const pulse = fx ? 0.5 + 0.5 * Math.sin(t / 500) : 0.5;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 214, 90, ${0.45 + 0.3 * pulse})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y, 15 + pulse * 2, 6 + pulse, 0, 0, Math.PI * 2); ctx.stroke();
+    if (fx) {
+      for (let i = 0; i < 3; i++) {
+        const a = t / 700 + (i * Math.PI * 2) / 3;
+        ctx.fillStyle = `rgba(255, 200, 60, ${0.6 + 0.3 * Math.sin(t / 300 + i)})`;
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * 15, y - 10 + Math.sin(a) * 6, 1.8, 0, Math.PI * 2); ctx.fill();
       }
     }
     ctx.restore();

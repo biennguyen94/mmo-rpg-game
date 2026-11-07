@@ -240,7 +240,11 @@ defmodule Max do
           p
       end
 
-    p = if prof.pet, do: op(p, "give_pet", %{"id" => "long_vuong", "level" => 20}), else: p
+    # nhân vật tối đa: Long Vương cấp tối đa (30, DECISIONS "Long Vương: thần thú độc nhất")
+    p =
+      if prof.pet,
+        do: op(p, "give_pet", %{"id" => "long_vuong", "level" => HacLong.Game.Pets.max_level("long_vuong")}),
+        else: p
 
     p =
       p

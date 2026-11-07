@@ -239,6 +239,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   Giữa các lần Ngài nổi: **Đàn Cá Vàng** khoảng 15 phút một lần lấp lánh ở một ô nước trong 2 phút (cá vàng lượn, viền chấm), thả trúng
   ô đó thì 15 % ra Cá Chép Vàng và mỗi con +3 Long Khí; **việc của Ông Lão** mỗi ngày: câu 30 con cá ở hồ rồi gặp Ông Lão nhận vàng,
   kinh nghiệm và +20 Long Khí. Mỗi nhân vật một con; người câu được có tên trên Bia Long Vương và danh hiệu Long Vương Chủ.
+  **Thần thú độc nhất:** cấp tối đa 30 (thú khác 20); **Long Uy** kháng một nửa choáng / độc / bỏng / chảy máu / suy yếu;
+  **Long Ân** quái rơi ngọc thêm 25 %, thưởng trùm thế giới thêm 10 %.
   Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 

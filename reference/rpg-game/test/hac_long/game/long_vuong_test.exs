@@ -252,4 +252,42 @@ defmodule HacLong.Game.LongVuongTest do
     assert RarePets.record!(a.id, "Một", "long_vuong") == 1
     assert [%{n: 1, name: "Một"}, %{n: 2, name: "Hai"}] = RarePets.list("long_vuong")
   end
+
+  describe "thần thú độc nhất (DECISIONS \"Long Vương: thần thú độc nhất\")" do
+    test "cấp tối đa 30 (thú khác 20), chỉ số nhân theo cấp 30; còn cho ăn được sau cấp 20" do
+      assert Pets.max_level("long_vuong") == 30 and Pets.max_level("sheep") == 20
+      p = with_pet(angler(), 30)
+      assert Pets.level(p, "long_vuong") == 30
+      mult = 1 + 29 * HacLong.Game.Data.rules().pets.bonus_per_level
+      assert_in_delta Pets.bonus(p, :atk), Pets.data("long_vuong").bonus.atk * mult, 1.0e-9
+      assert Pets.flat(p, :hp) == 30 * Pets.data("long_vuong").flat.hp
+      # thú thường cấp 20 là hết; Long Vương cấp 20 còn lên tiếp
+      assert Pets.feed_cost(with_pet(angler(), 20)) != nil
+      assert Pets.feed_cost(p) == nil
+      {p2, _} = Pets.gain(with_pet(angler(), 30), true)
+      assert Pets.level(p2, "long_vuong") == 30
+    end
+
+    test "Long Uy kháng một nửa hiệu ứng xấu; Long Ân thêm ngọc; thú khác không có" do
+      lv = with_pet(angler(), 1)
+
+      assert Pets.trait(lv, :ward) == 0.5 and Pets.trait(lv, :jewel) == 0.25 and
+               Pets.trait(lv, :boss) == 0.1
+
+      other = angler() |> Map.put(:pets, ["daemon"]) |> Map.put(:pet, "daemon")
+      assert Pets.trait(other, :ward) == 0 and Pets.trait(angler(), :jewel) == 0
+    end
+
+    test "Long Uy trong trận: trúng xác suất thì không bị choáng" do
+      p = with_pet(angler(), 1)
+      {_, p} = Engine.start_battle(p, 0, false)
+      Rng.put_sequence([0.1])
+      q = Engine.pvp_receive(p, [%{id: "stun", turns: 1, power: 0}])
+      refute Engine.stunned?(q)
+      assert Enum.any?(q.battle.log, &(&1.text =~ "Long Uy"))
+      Rng.put_sequence([0.9])
+      assert Engine.stunned?(Engine.pvp_receive(p, [%{id: "stun", turns: 1, power: 0}]))
+      on_exit(&Rng.clear/0)
+    end
+  end
 end

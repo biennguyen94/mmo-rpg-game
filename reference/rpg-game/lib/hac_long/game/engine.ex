@@ -1781,6 +1781,9 @@ defmodule HacLong.Game.Engine do
         p.battle.turn < (p.battle[:pstun_free] || 0) ->
           log(p, "Bạn vừa thoát choáng, kháng được.", "info")
 
+        ward?(p) ->
+          log(p, "🐉 Long Uy: #{p.name} kháng được choáng.", "good")
+
         true ->
           p |> put_effect(:player, "stun", 1, 0) |> log("💫 Bạn bị choáng!", "bad")
       end
@@ -1830,7 +1833,19 @@ defmodule HacLong.Game.Engine do
   end
 
   # Quái gây hiệu ứng lên người chơi.
+  # Long Uy (DECISIONS "Long Vương: thần thú độc nhất"): dắt Long Vương thì kháng một phần hiệu ứng xấu
+  defp ward?(p) do
+    w = Pets.trait(p, :ward)
+    w > 0 and chance(w)
+  end
+
   defp inflict(p, m, e) do
+    if ward?(p),
+      do: log(p, "🐉 Long Uy: #{p.name} kháng được #{@effect_names[e.id] || "hiệu ứng"}.", "good"),
+      else: inflict_(p, m, e)
+  end
+
+  defp inflict_(p, m, e) do
     case e.id do
       id when id in @dots ->
         per = max(1, round(m.atk * e.power))
@@ -2051,12 +2066,21 @@ defmodule HacLong.Game.Engine do
   def pvp_receive(p, list) do
     Enum.reduce(list, p, fn
       %{id: "stun"}, p ->
-        if p.battle.turn + 1 < (p.battle[:pstun_free] || 0),
-          do: p,
-          else: put_effect(p, :player, "stun", 1, 0)
+        cond do
+          p.battle.turn + 1 < (p.battle[:pstun_free] || 0) -> p
+          ward?(p) -> log(p, "🐉 Long Uy: #{p.name} kháng được choáng.", "good")
+          true -> put_effect(p, :player, "stun", 1, 0)
+        end
 
       e, p ->
-        put_effect(p, :player, e.id, e.turns, e.power)
+        if ward?(p),
+          do:
+            log(
+              p,
+              "🐉 Long Uy: #{p.name} kháng được #{@effect_names[e.id] || "hiệu ứng"}.",
+              "good"
+            ),
+          else: put_effect(p, :player, e.id, e.turns, e.power)
     end)
   end
 
@@ -2392,6 +2416,9 @@ defmodule HacLong.Game.Engine do
         m.level >= j.monster_level -> j.monster_chance
         true -> 0
       end
+
+    # Long Ân: dắt Long Vương thì quái rơi ngọc thêm (DECISIONS "Long Vương: thần thú độc nhất")
+    c = c * (1 + Pets.trait(p, :jewel))
 
     if c > 0 and chance(c) do
       id = pick_jewel()

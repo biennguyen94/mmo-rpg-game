@@ -155,8 +155,8 @@ defmodule HacLong.Admin do
       !pet ->
         {:error, "Không có thú \"#{id}\"."}
 
-      not (is_integer(lv) and lv in 1..Pets.max_level()) ->
-        {:error, "Cấp thú phải từ 1 tới #{Pets.max_level()}."}
+      not (is_integer(lv) and lv in 1..Pets.max_level(id)) ->
+        {:error, "Cấp thú phải từ 1 tới #{Pets.max_level(id)}."}
 
       true ->
         {:ok,

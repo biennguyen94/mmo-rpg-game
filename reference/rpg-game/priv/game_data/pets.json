@@ -203,13 +203,19 @@
         "xp": 0.06,
         "gold": 0.06
       },
-      "desc": "Tấn công +8%, Chí mạng +3%, Phòng thủ +10%, Giảm sát thương nhận +6%, Kinh nghiệm +6%, Vàng rơi +6%, Máu tối đa +30 mỗi cấp thú, MP tối đa +10 mỗi cấp thú.",
+      "desc": "Tấn công +8%, Chí mạng +3%, Phòng thủ +10%, Giảm sát thương nhận +6%, Kinh nghiệm +6%, Vàng rơi +6%, Máu tối đa +30 mỗi cấp thú, MP tối đa +10 mỗi cấp thú. Thần thú độc nhất: cấp tối đa 30; Long Uy: kháng một nửa choáng / độc / bỏng / chảy máu / suy yếu; Long Ân: quái rơi ngọc +25%, thưởng trùm thế giới +10%.",
       "sourceType": "DESIGN",
-      "version": 5,
+      "version": 6,
       "verified": false,
       "flat": {
         "hp": 30,
         "mp": 10
+      },
+      "max_level": 30,
+      "traits": {
+        "ward": 0.5,
+        "jewel": 0.25,
+        "boss": 0.1
       }
     }
   ]

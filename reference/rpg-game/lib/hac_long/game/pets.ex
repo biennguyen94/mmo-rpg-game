@@ -37,6 +37,23 @@ defmodule HacLong.Game.Pets do
   def tame_kills, do: @tame_kills
   def max_level, do: @max_level
 
+  @doc """
+  Cấp tối đa của thú `id`: `max_level` riêng của thú (Long Vương 30, DECISIONS "Long Vương: thần thú độc nhất"),
+  không có thì `RULES.pets.max_level`.
+  """
+  def max_level(id), do: (data(id) || %{})[:max_level] || @max_level
+
+  @doc """
+  Đặc tính riêng của thú đang dắt (`traits` trong pets.json, chỉ Long Vương): `:ward` (Long Uy: tỉ lệ kháng hiệu ứng
+  xấu), `:jewel` (Long Ân: quái rơi ngọc thêm), `:boss` (thưởng trùm thế giới thêm). Không có thì 0.
+  """
+  def trait(p, key) do
+    case Map.get(p, :pet) && data(p.pet) do
+      %{traits: t} -> Map.get(t, key, 0)
+      _ -> 0
+    end
+  end
+
   @doc "Tên nhóm thú (Chiến / Hộ vệ / Tài lộc / Thần thú)."
   def group_name(g), do: Map.get(@groups, g, g)
 
@@ -52,7 +69,7 @@ defmodule HacLong.Game.Pets do
 
   def level(p, id) do
     n = xp(p, id)
-    Enum.find(@max_level..1//-1, &(xp_for(&1) <= n))
+    Enum.find(max_level(id)..1//-1, &(xp_for(&1) <= n))
   end
 
   defp active_level(p), do: level(p, p.pet)
@@ -71,7 +88,7 @@ defmodule HacLong.Game.Pets do
   defp add_xp(p, id, n) do
     before = level(p, id)
     all = Map.get(p, :pet_xp) || %{}
-    p = Map.put(p, :pet_xp, Map.put(all, id, min(xp(p, id) + n, xp_for(@max_level))))
+    p = Map.put(p, :pet_xp, Map.put(all, id, min(xp(p, id) + n, xp_for(max_level(id)))))
     now = level(p, id)
     {p, if(now > before, do: now)}
   end
@@ -79,7 +96,8 @@ defmodule HacLong.Game.Pets do
   @doc "Giá cho thú đang dắt ăn một lần (`feed_gold` × cấp²), nil nếu không dắt thú hoặc thú đã tối đa."
   def feed_cost(p) do
     with id when is_binary(id) <- Map.get(p, :pet),
-         lv when lv < @max_level <- level(p, id),
+         lv = level(p, id),
+         true <- lv < max_level(id),
          do: @rules.feed_gold * lv * lv,
          else: (_ -> nil)
   end
@@ -285,6 +303,8 @@ defmodule HacLong.Game.Pets do
         group: pt[:group],
         bonus: pt.bonus,
         flat: pt[:flat] || %{},
+        max: max_level(id),
+        traits: pt[:traits] || %{},
         name: pt.name,
         desc: pt.desc,
         feed: if(id == Map.get(p, :pet), do: feed_cost(p))
