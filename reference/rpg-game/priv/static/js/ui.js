@@ -428,6 +428,13 @@
         <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>
       <div class="card" data-notr><h3>Bộ tên</h3><p class="small muted">Tên đồ, ngọc, sự kiện, quái, thú… cho cả server: tên MU (Quảng Trường Quỷ, Ngọc Ước Nguyện, Kalima…) hoặc tên mới (Quỷ Môn Trận, Ngọc Lam Tinh, Vực U Minh…). Chỉ đổi chữ hiện ra, đồ và dữ liệu giữ nguyên; người đang chơi tự tải lại trang. Danh sách tên mới: <code>priv/static/i18n/names_alt.json</code>.</p>
         <div class="btn-row"><span class="grow">Đang dùng: <b>${adm.flags.name_pack === 'alt' ? 'Tên mới' : 'Tên MU'}</b></span><button class="btn${adm.flags.name_pack === 'alt' ? '' : ' primary'}" data-adm="name_pack" data-pack="mu"${adm.flags.name_pack === 'alt' ? '' : ' disabled'}>Tên MU</button><button class="btn${adm.flags.name_pack === 'alt' ? ' primary' : ''}" data-adm="name_pack" data-pack="alt"${adm.flags.name_pack === 'alt' ? ' disabled' : ''}>Tên mới</button></div></div>` : ''}
+      ${adm.flags && adm.flags.secret ? (() => {
+        const sc = adm.flags.secret, ov = sc.override;
+        const state = ov === 'open' ? 'Quản trị đang mở (tới 5 giờ sáng)' : ov === 'close' ? 'Quản trị đang đóng (tới 5 giờ sáng)' : `Theo lịch · đêm nay ${sc.tonight ? 'là đêm mở' : 'không mở'}`;
+        return `<div class="card"><h3>Động Bí Ẩn</h3><p class="small muted">Cửa động sau Đền Cổ. Theo lịch: chỉ ban đêm (20–5 giờ), khoảng ${Math.round(((RULES.secret || {}).open_chance || 0.6) * 100)}% số đêm. Quản trị mở / đóng có hiệu lực tới 5 giờ sáng kế tiếp (đóng thì người trong động bị đưa ra Đền Cổ).</p>
+          <div class="btn-row"><span class="grow">Cửa động: <b>${sc.open ? 'Đang mở' : 'Đang đóng'}</b><br><span class="small muted">${state}</span></span></div>
+          <div class="btn-row"><button class="btn${ov === 'open' ? ' primary' : ''}" data-adm="secret" data-mode="open">🌙 Mở ngay</button><button class="btn${ov === 'close' ? ' primary' : ''}" data-adm="secret" data-mode="close">🪨 Đóng</button><button class="btn${!ov ? ' primary' : ''}" data-adm="secret" data-mode="auto">🕒 Theo lịch</button><button class="btn" data-adm="secret_boss" ${sc.open ? '' : 'disabled'}>🐉 Gọi Thạch Long Ẩn</button></div></div>`;
+      })() : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -674,12 +681,14 @@
     if (d.days) payload.days = +d.days;
     if (d.on) payload.on = d.on === '1';
     if (d.pack) payload.pack = d.pack;
+    if (d.mode) payload.mode = d.mode;
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
       if (op === 'online') { adm.online = r.online; return render(); }
       if (op === 'mob_move') { adm.flags = { ...adm.flags, mob_move: r.mob_move }; toast(r.msg); return render(); }
       if (op === 'name_pack') { adm.flags = { ...adm.flags, name_pack: r.name_pack }; toast(r.msg); return render(); }
+      if (op === 'secret' || op === 'secret_boss') { adm.flags = { ...adm.flags, secret: r.secret }; toast(r.msg); return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }

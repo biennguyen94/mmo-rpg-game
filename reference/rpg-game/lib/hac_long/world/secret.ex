@@ -26,13 +26,69 @@ defmodule HacLong.World.Secret do
   def open_night?(date),
     do: rem(:erlang.phash2({:secret_open, date}), 1000) < round(rules().open_chance * 1000)
 
-  @doc "Cửa động đang mở: ban đêm và đêm nay là đêm mở. Ép để thử: biến môi trường `SECRET_OPEN` = 1 / 0."
+  @doc """
+  Cửa động đang mở: ban đêm và đêm nay là đêm mở. Quản trị ép mở / đóng (`set_override/2`, tới 5 giờ sáng kế tiếp) thì theo
+  quản trị. Ép để thử: biến môi trường `SECRET_OPEN` = 1 / 0.
+  """
   def open?(now \\ DateTime.utc_now()) do
-    case System.get_env("SECRET_OPEN") do
-      "1" -> true
-      "0" -> false
+    case {System.get_env("SECRET_OPEN"), override(now)} do
+      {"1", _} -> true
+      {"0", _} -> false
+      {_, "open"} -> true
+      {_, "close"} -> false
       _ -> Clock.night?(now) and open_night?(night_of(now))
     end
+  end
+
+  # ---------- Quản trị mở / đóng động (DECISIONS "Động Bí Ẩn") ----------
+  # Không thêm bảng (như HacLong.World.MobMove): trạng thái là dòng `admin_log` op `secret` mới nhất (`params.mode`
+  # "open" | "close" | "auto"), hiệu lực tới 5 giờ sáng kế tiếp sau lúc ghi dòng đó; đệm trong `:persistent_term`.
+  @okey {__MODULE__, :override}
+
+  @doc "Chế độ quản trị đang có hiệu lực lúc `now`: \"open\" | \"close\" | nil (theo lịch)."
+  def override(now \\ DateTime.utc_now()) do
+    {mode, until} =
+      case :persistent_term.get(@okey, :unset) do
+        :unset ->
+          v = load_override()
+          :persistent_term.put(@okey, v)
+          v
+
+        v ->
+          v
+      end
+
+    if mode in ["open", "close"] and is_integer(until) and DateTime.to_unix(now) < until, do: mode
+  end
+
+  @doc "Quản trị đặt chế độ (`\"open\"` | `\"close\"` | `\"auto\"`), hiệu lực tới 5 giờ sáng kế tiếp. Trả `until` (giây Unix)."
+  def set_override(mode, now \\ DateTime.utc_now()) when mode in ["open", "close", "auto"] do
+    until = next_dawn(now) |> DateTime.to_unix()
+    :persistent_term.put(@okey, {mode, until})
+    until
+  end
+
+  @doc "5 giờ sáng (giờ Việt Nam) kế tiếp sau `now`."
+  def next_dawn(now) do
+    local = DateTime.add(now, @utc_offset, :second)
+
+    date =
+      if local.hour < 5, do: DateTime.to_date(local), else: Date.add(DateTime.to_date(local), 1)
+
+    {:ok, dt} = DateTime.new(date, ~T[05:00:00], "Etc/UTC")
+    DateTime.add(dt, -@utc_offset, :second)
+  end
+
+  defp utc(%DateTime{} = t), do: t
+  defp utc(%NaiveDateTime{} = t), do: DateTime.from_naive!(t, "Etc/UTC")
+
+  defp load_override do
+    case HacLong.Admin.recent_op("secret", 1) do
+      [%{params: %{"mode" => m}, at: at}] -> {m, at |> utc() |> next_dawn() |> DateTime.to_unix()}
+      _ -> {"auto", 0}
+    end
+  rescue
+    _ -> {"auto", 0}
   end
 
   @doc "Lúc trùm đêm thức giấc trong đêm `date` (UTC), ngẫu nhiên cố định theo đêm trong khung giờ."

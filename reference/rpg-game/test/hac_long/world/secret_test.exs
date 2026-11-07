@@ -67,4 +67,22 @@ defmodule HacLong.World.SecretTest do
     SecretRecords.record(-5, "Thử", "boss", night)
     assert [%{name: "Thử", kind: "boss"} | _] = SecretRecords.recent(5)
   end
+
+  test "quản trị mở / đóng có hiệu lực tới 5 giờ sáng kế tiếp" do
+    on_exit(fn -> :persistent_term.put({Secret, :override}, {"auto", 0}) end)
+    t = ~U[2026-11-07 10:00:00Z]
+    # 17 giờ giờ VN → 5 giờ sáng hôm sau = 22 giờ UTC
+    assert Secret.next_dawn(t) == ~U[2026-11-07 22:00:00Z]
+    assert Secret.next_dawn(~U[2026-11-07 20:00:00Z]) == ~U[2026-11-07 22:00:00Z]
+
+    Secret.set_override("open", t)
+    assert Secret.override(t) == "open"
+    assert Secret.open?(t)
+    refute Secret.override(~U[2026-11-07 22:00:01Z])
+
+    Secret.set_override("close", t)
+    refute Secret.open?(t)
+    Secret.set_override("auto", t)
+    assert Secret.override(t) == nil
+  end
 end

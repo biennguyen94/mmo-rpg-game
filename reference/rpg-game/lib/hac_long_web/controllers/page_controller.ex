@@ -88,6 +88,8 @@ defmodule HacLongWeb.PageController do
         maxRebirths: Engine.max_rebirths(),
         endlessPoints: Data.rules().character.endless_points,
         botStuckMin: Data.rules().bots.play.stuck_min,
+        # Động Bí Ẩn: tỉ lệ đêm mở (ghi trong thẻ quản trị)
+        secret: Map.take(Data.rules().secret, [:open_chance]),
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),

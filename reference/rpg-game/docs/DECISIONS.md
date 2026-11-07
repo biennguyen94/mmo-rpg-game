@@ -1762,3 +1762,8 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - (2026-11-07, anh duyệt) Màn "TRÙM XUẤT HIỆN" và pháo sáng khi hạ trùm (B8) theo công tắc "Hiệu ứng động" ở Cài đặt; chữ
   "TRÙM ĐÃ GỤC" vốn có giữ như cũ. B9 (mép ô, bóng đổ, trang trí) là phần làm đẹp tĩnh, luôn vẽ. B6 sáng tối theo nút Sáng /
   Tối / Tự động.
+- (2026-11-07, anh yêu cầu) **Quản trị mở động:** thẻ "Động Bí Ẩn" ở tab Quản trị, chỉ quản trị viên.
+  - Nút: Mở ngay, Đóng, Theo lịch. Mở / Đóng có hiệu lực tới 5 giờ sáng kế tiếp; đóng thì người trong động bị đưa ra Đền Cổ.
+  - Nút "Gọi Thạch Long Ẩn": thức giấc ngay, đêm nay không tự thả nữa.
+  - Không thêm bảng: trạng thái là dòng `admin_log` op `secret` mới nhất, khởi động lại vẫn giữ.
+  - Biến `SECRET_OPEN` vẫn thắng nếu có đặt.

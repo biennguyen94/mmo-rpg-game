@@ -443,6 +443,13 @@ defmodule HacLongWeb.GameChannel do
 
   def handle_in(_event, _payload, socket), do: {:reply, {:error, %{msg: "Sai cú pháp."}}, socket}
 
+  # Động Bí Ẩn: đang mở không, quản trị ép gì, đêm nay theo lịch có mở không
+  defp secret_flags do
+    alias HacLong.World.Secret
+    night = Secret.night_of(DateTime.utc_now())
+    %{open: Secret.open?(), override: Secret.override(), tonight: Secret.open_night?(night)}
+  end
+
   # không ghi mật khẩu tạm vào admin_log
   defp log_result("reset_password", {:ok, %{username: name}}),
     do: {:ok, "đã đặt lại mật khẩu #{name}"}
@@ -801,7 +808,35 @@ defmodule HacLongWeb.GameChannel do
   end
 
   defp admin("flags", _p, _s),
-    do: {:ok, %{mob_move: HacLong.World.MobMove.on?(), name_pack: HacLong.NamePack.get()}}
+    do:
+      {:ok,
+       %{
+         mob_move: HacLong.World.MobMove.on?(),
+         name_pack: HacLong.NamePack.get(),
+         secret: secret_flags()
+       }}
+
+  # Động Bí Ẩn (DECISIONS "Động Bí Ẩn"): quản trị mở / đóng / theo lịch (hiệu lực tới 5 giờ sáng), gọi trùm đêm.
+  # Dòng admin_log này (params.mode) là trạng thái lưu lại.
+  defp admin("secret", %{"mode" => mode}, _s) when mode in ["open", "close", "auto"] do
+    HacLong.World.Secret.set_override(mode)
+
+    msg =
+      case mode do
+        "open" -> "Đã mở Động Bí Ẩn tới 5 giờ sáng."
+        "close" -> "Đã đóng Động Bí Ẩn tới 5 giờ sáng."
+        "auto" -> "Động Bí Ẩn mở / đóng theo lịch."
+      end
+
+    {:ok, %{secret: secret_flags(), msg: msg}}
+  end
+
+  defp admin("secret_boss", _p, _s) do
+    case HacLong.World.SecretWatch.summon_boss() do
+      :ok -> {:ok, %{msg: "Thạch Long Ẩn đã thức giấc trong Động Bí Ẩn.", secret: secret_flags()}}
+      {:error, msg} -> {:error, msg}
+    end
+  end
 
   # bộ tên cho cả server (DECISIONS "Bộ tên thay cho tên MU"); dòng admin_log này (params.pack) là trạng thái lưu lại
   defp admin("name_pack", %{"pack" => pack}, _s) when is_binary(pack) do

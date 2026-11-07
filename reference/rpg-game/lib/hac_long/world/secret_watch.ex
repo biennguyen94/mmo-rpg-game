@@ -83,7 +83,7 @@ defmodule HacLong.World.SecretWatch do
     m = Maps.get(map)
 
     if Enum.any?(MapServer.snapshot(map).monsters, & &1.boss) do
-      :ok
+      {:error, "#{spec.name} đang thức rồi."}
     else
       pos =
         Enum.find(
@@ -102,6 +102,20 @@ defmodule HacLong.World.SecretWatch do
       HacLong.Chat.system(
         "🐉 #{spec.name} đã thức giấc trong động sâu! Kẻ nào đủ gan thì tìm tới."
       )
+
+      :ok
     end
+  end
+
+  @doc "Quản trị gọi trùm đêm thức giấc ngay (đêm nay không tự thả nữa). `:ok` | `{:error, lý do}`."
+  def summon_boss do
+    GenServer.call(__MODULE__, :summon_boss)
+  catch
+    :exit, _ -> spawn_boss(Secret.map_id())
+  end
+
+  @impl true
+  def handle_call(:summon_boss, _from, s) do
+    {:reply, spawn_boss(Secret.map_id()), %{s | boss_night: Secret.night_of(DateTime.utc_now())}}
   end
 end
