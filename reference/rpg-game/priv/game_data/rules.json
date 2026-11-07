@@ -612,13 +612,14 @@
     "pets": {
       "_doc": "Thú cưng (HacLong.Game.Pets). Version 3 (2026-11-06, DECISIONS \"Thú cưng 3 nhóm, chỉ cộng chỉ số\"): thú không đánh trong trận, không có kỹ năng, chỉ cộng % chỉ số theo nhóm, riêng máu / MP cộng số PETS.flat × cấp thú (version 4, DECISIONS \"Thú cưng: máu / MP cộng số\") (PETS.group: war Chiến tấn công / chí mạng, guard Hộ vệ máu / phòng thủ / giảm sát thương nhận, luck Tài lộc kinh nghiệm / vàng, all Long Vương cả ba); chỉ số cộng × (1 + bonus_per_level × (cấp − 1)), cấp tối đa max_level; lên cấp theo số trận thắng khi dắt theo (trùm tính boss_wins trận) hoặc cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể) sau tame_kills con: thú nhóm Chiến, tấn công tame_bonus + tame_realm_bonus × k (vùng chuyển sinh k), chí mạng tame_crit, giá (tame_price + cấp quái × tame_price_per_level) × (1 + tame_realm_price × k).",
       "tame_kills": 100,
-      "tame_bonus": 0.05,
-      "tame_realm_bonus": 0.012,
+      "tame_bonus": 0.025,
+      "tame_realm_bonus": 0.006,
       "tame_crit": 0.01,
       "tame_realm_price": 1,
       "tame_price": 1000,
       "tame_price_per_level": 100,
       "bonus_per_level": 0.08,
+      "_atk_doc": "Version 5 (2026-11-07, DECISIONS \"Thú cưng: giảm tấn công\"): tấn công thú nhóm Chiến và Long Vương giảm một nửa (con mạnh nhất cấp 20 khoảng +20%), thú thuần tame_bonus 0.05 → 0.025, tame_realm_bonus 0.012 → 0.006.",
       "max_level": 20,
       "xp_coef": 5,
       "boss_wins": 5,
@@ -668,6 +669,7 @@
       ]
     },
     "events": {
+      "_doc": "Lễ hội (HacLong.Game.Events). Version 2 (2026-11-07, DECISIONS \"Lễ hội: nâng phần thưởng\"): đổi kẹo ở Người Tổ Chức Hội — vàng shop.gold kẹo được (gold_base + gold_per_level × cấp) × (1 + gold_per_rebirth × số lần chuyển sinh); bình máu shop.potions kẹo được potions Bình Máu Lớn; ngọc (jewels: id, cost); Túi Quà shop.gear kẹo: một món hợp cấp, dòng cộng thêm theo gear_weights [số dòng, trọng số], exc_chance ra món Excellent (thêm một dòng Excellent).",
       "xp_bonus": 0.1,
       "shop": {
         "gear": 12,
@@ -676,20 +678,17 @@
       },
       "gold_base": 60,
       "gold_per_level": 12,
+      "gold_per_rebirth": 1,
       "potions": 3,
+      "jewels": [
+        {"id": "jewel_bless", "cost": 15},
+        {"id": "jewel_soul", "cost": 25},
+        {"id": "jewel_life", "cost": 40}
+      ],
+      "exc_chance": 0.1,
       "gear_weights": [
-        [
-          3,
-          15
-        ],
-        [
-          2,
-          60
-        ],
-        [
-          1,
-          25
-        ]
+        [3, 25],
+        [2, 75]
       ]
     },
     "daily": {
@@ -908,7 +907,7 @@
         "7": {"dk": 1.02, "dw": 0.79, "elf": 0.92, "mg": 0.98},
         "8": {"dk": 1.0, "dw": 0.79, "elf": 0.96, "mg": 0.97},
         "9": {"dk": 1.04, "dw": 0.77, "elf": 0.96, "mg": 0.96},
-        "10": {"dk": 1.32, "dw": 0.91, "elf": 0.81, "mg": 0.76}
+        "10": {"dk": 1.43, "dw": 0.86, "elf": 0.86, "mg": 0.71}
       },
       "class_taken_arena_by_rebirth": {
         "0": {"dk": 0.97, "dw": 0.9, "elf": 0.97, "mg": 0.87},
