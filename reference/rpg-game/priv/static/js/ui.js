@@ -1562,6 +1562,7 @@
 
   // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
   function viewSelect() {
+    // theo thứ tự tạo (server sắp sẵn)
     const list = Net.chars;
     const row = (c) => {
       const cls = CLASSES[c.cls] || {};
@@ -3922,7 +3923,7 @@
 
   function enter(r) {
     secQ = undefined; secForm = false;
-    if (r && r.select) { charSel = { del: null }; P = null; loading = false; npc = null; dialog = null; render(); return; }
+    if (r && r.select) { charSel = { del: null }; P = null; loading = false; busy = false; npc = null; dialog = null; render(); return; }
     charSel = null;
     P = r ? r.player : null;
     if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }

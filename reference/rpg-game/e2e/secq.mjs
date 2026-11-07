@@ -1,8 +1,8 @@
 // Câu hỏi bảo mật (DECISIONS "Câu hỏi bảo mật"): đăng ký chọn câu hỏi + câu trả lời (lib.mjs: câu thứ nhất, "meo mun");
-// quên mật khẩu → nhập tên → trả lời (sai: báo lỗi; đúng, khác hoa thường: đặt mật khẩu mới, vào game luôn);
+// quên mật khẩu → nhập tên → trả lời (sai: báo lỗi; đúng, khác hoa thường: đặt mật khẩu mới, đăng nhập luôn);
 // tài khoản chưa có câu hỏi → gửi yêu cầu cho quản trị như cũ; Cài đặt có mục đổi câu hỏi bảo mật.
 // Chạy: node e2e/secq.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, shot } from './lib.mjs';
+import { launch, reporter, newPlayer, shot, enterFirst } from './lib.mjs';
 
 const R = reporter('secq');
 const browser = await launch();
@@ -31,8 +31,9 @@ R.check('trả lời sai: báo lỗi, vẫn ở màn quên mật khẩu', body.i
 await page.fill('#rc-a', '  Meo   MUN ');
 await page.fill('#rc-pass', 'moi12345');
 await page.click('#recover button[type="submit"]');
-const inGame = await page.waitForFunction(() => window.__hl && window.__hl.player(), null, { timeout: 8000 }).then(() => true).catch(() => false);
-R.check('trả lời đúng (khác hoa thường, khoảng trắng): đặt mật khẩu mới, vào game luôn', inGame);
+// đăng nhập luôn → màn chọn nhân vật (như MU, DECISIONS "Nhiều nhân vật") → vào game
+const inGame = await enterFirst(page).then(() => true).catch(() => false);
+R.check('trả lời đúng (khác hoa thường, khoảng trắng): đặt mật khẩu mới, đăng nhập luôn', inGame);
 
 // mật khẩu mới đăng nhập được, mật khẩu cũ thì không
 const login = (pw) => page.evaluate(([u, p]) => fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: u, password: p }) }).then((r) => r.status), [user, pw]);

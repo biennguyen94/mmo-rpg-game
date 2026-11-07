@@ -91,8 +91,9 @@ export async function adminSession(browser) {
   await page.fill('#auth-pass', process.env.HL_E2E_ADMIN_PASS || 'e2e-admin-pass');
   await page.click('#auth button[type="submit"]');
   await page.waitForFunction(() => window.__hl && window.__hl.ui().logged && !window.__hl.ui().loading);
-  // tab Quản trị chỉ hiện khi đã có nhân vật: tài khoản quản trị mới thì tạo một nhân vật
-  await page.waitForSelector('#hero-name, #tabs:not([hidden])');
+  // tab Quản trị chỉ hiện khi đã có nhân vật: tài khoản quản trị mới thì tạo một nhân vật; có rồi thì chọn
+  await page.waitForSelector('#hero-name, #tabs:not([hidden]), .char-row');
+  if (await page.$('.char-row')) await enterFirst(page);
   if (await page.$('#hero-name')) {
     await page.fill('#hero-name', `KT${rand()}`);
     await page.click('#create button[type="submit"]');
@@ -114,6 +115,21 @@ export async function adminSession(browser) {
     return page.evaluate(([op, p]) => window.Net.admin(op, p).catch((e) => ({ error: e.msg })), [op, { uid, ...payload }]);
   }
   return { page, ctx, admin, lookup };
+}
+
+// Màn chọn nhân vật (luôn hiện khi mở game, như MU; DECISIONS "Nhiều nhân vật"): vào nhân vật đầu danh sách
+// (chơi gần nhất).
+export async function enterFirst(page) {
+  await page.waitForSelector('.char-row');
+  await page.click('.char-row [data-act="char-enter"]');
+  await page.waitForFunction(() => window.__hl.player());
+}
+
+// Tải lại trang rồi vào lại nhân vật (qua màn chọn nhân vật).
+export async function reloadGame(page) {
+  await page.reload();
+  await page.waitForFunction(() => window.__hl && (window.__hl.player() || document.querySelector('.char-row')));
+  if (!(await page.evaluate(() => window.__hl.player()))) await enterFirst(page);
 }
 
 // ---------- Trạng thái, thao tác (window.__hl, chỉ có khi mở trang với ?test=1) ----------

@@ -1,7 +1,7 @@
 // Quản trị qua tab Quản trị (tài khoản admin do scripts/e2e_seed.exs tạo): tra người chơi, cấm / bỏ cấm
 // chat, gửi quà qua hộp thư, cộng vàng (Chỉnh nhân vật), kiểm tra vàng, nhật ký quản trị.
 // Chạy: node e2e/admin.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, adminSession, player, send, shot, travel, walkTo, fight, act } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, player, send, shot, travel, walkTo, fight, act, reloadGame } from './lib.mjs';
 
 const R = reporter('admin');
 const browser = await launch();
@@ -157,8 +157,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-adm="${op}"]`);
   await page.waitForTimeout(800);
   // tải lại trang người chơi để lấy view mới (chat cũng nạp lại lịch sử)
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view[key];
   const said = await X.page.evaluate((n) => document.body.textContent.includes(n + ' mở ngay'), name);
@@ -170,8 +169,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="open_cc"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view.cc;
   const said = await X.page.evaluate(() => document.body.textContent.includes('Hỗn Chiến Thành mở cửa'));
@@ -183,8 +181,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="raid_red_dragon"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const said = await X.page.evaluate(() => document.body.textContent.includes('Rồng Đỏ xâm lăng!'));
   R.check('quản trị mở Rồng Đỏ xâm lăng: chat báo', said);
@@ -195,8 +192,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="open_cs"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view.cs;
   const said = await X.page.evaluate(() => document.body.textContent.includes('Công Thành Chiến bắt đầu'));

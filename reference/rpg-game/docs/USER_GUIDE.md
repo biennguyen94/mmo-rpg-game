@@ -28,8 +28,9 @@
 
 - **Ngôn ngữ / Language:** nút English / Tiếng Việt ở trang đăng nhập và trong Menu → Cài đặt.
 - Đăng ký tài khoản (tên đăng nhập + mật khẩu + **câu hỏi bảo mật** và câu trả lời), đặt tên nhân vật (2–16 ký tự) và chọn lớp.
-- **Nhiều nhân vật:** mỗi tài khoản tối đa 5 nhân vật, chơi một nhân vật một lúc. Đăng nhập xong chọn nhân vật (lần sau
-  tự vào nhân vật chơi gần nhất); đổi ở Menu → Cài đặt → **Đổi nhân vật**. Thùng đồ ở **Thủ Kho** (đồ, vàng, chỗ mở rộng) dùng
+- **Nhiều nhân vật:** mỗi tài khoản tối đa 5 nhân vật, chơi một nhân vật một lúc. Như MU, mở game (tab / ứng dụng mới) hoặc đăng
+  nhập thì hiện **màn chọn nhân vật** (theo thứ tự tạo); F5 / mất mạng nối lại thì vào thẳng nhân vật đang chơi. Đổi ở
+  Menu → Cài đặt → **Đổi nhân vật**. Thùng đồ ở **Thủ Kho** (đồ, vàng, chỗ mở rộng) dùng
   chung mọi nhân vật; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần. Bạn bè, bang, thư, chợ, đồ sát
   tính riêng từng nhân vật. Xóa nhân vật phải gõ lại tên và mật khẩu; đồ trên nhân vật đó mất hẳn (thùng chung giữ nguyên).
   Vào nhân vật khác ở máy / tab khác thì máy / tab đang chơi về màn chọn nhân vật.

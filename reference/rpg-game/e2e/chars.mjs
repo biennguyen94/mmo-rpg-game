@@ -22,6 +22,11 @@ async function enterChar(pg, name) {
   await pg.waitForFunction((n) => window.__hl.player() && window.__hl.player().name === n, name);
 }
 
+// 0. F5: vào thẳng nhân vật đang chơi (màn chọn chỉ hiện khi mở game: tab mới, bước 5)
+await page.reload();
+await page.waitForFunction(() => window.__hl && (window.__hl.player() || document.querySelector('.char-row')));
+R.check('F5: vào thẳng nhân vật đang chơi', !(await page.$('.char-row')) && (await player(page)).name === A.name);
+
 // 1. Cài đặt → Đổi nhân vật: màn chọn có nhân vật đầu
 await toSelect(page);
 R.check('màn chọn nhân vật hiện nhân vật đầu', (await page.textContent('#view')).includes(A.name));
@@ -54,6 +59,7 @@ R.check('nhân vật 1 thấy vàng trong thùng chung', (await player(page)).vi
 const tab2 = await A.ctx.newPage();
 await tab2.goto(`${BASE}/?test=1`);
 await tab2.waitForFunction(() => window.__hl && (window.__hl.player() || document.querySelector('.char-row')));
+R.check('mở game ở tab mới: hiện màn chọn nhân vật', !!(await tab2.$('.char-row')));
 if (!(await tab2.$('.char-row'))) await toSelect(tab2);
 await enterChar(tab2, name2);
 await page.waitForSelector('.char-row', { timeout: 8000 }).catch(() => null);

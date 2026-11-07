@@ -8,6 +8,12 @@
   const TOKEN_KEY = 'hac-long-token';
   // nhân vật đang chơi (DECISIONS "Nhiều nhân vật"): mã người chơi để lấy vé WebSocket
   const CID_KEY = 'hac-long-cid';
+  // nhân vật đang chơi trong tab này (sessionStorage: còn qua F5 / tự tải lại, mất khi đóng tab)
+  const PLAY_KEY = 'hac-long-playing';
+  const playing = {
+    get() { try { const v = +sessionStorage.getItem(PLAY_KEY); return v > 0 ? v : null; } catch (e) { return null; } },
+    set(v) { try { if (v) sessionStorage.setItem(PLAY_KEY, String(v)); else sessionStorage.removeItem(PLAY_KEY); } catch (e) { /* bỏ qua */ } },
+  };
   const cb = { player: null, map: null, status: null, rejoin: null, expired: null, chat: null, history: null, boss: null, notice: null, mail: null, guild: null, party: null, invite: null, shared: null, trade: null, tradeRequest: null, friends: null, dm: null };
   let socket = null, channel = null, checkTimer = null;
 
@@ -192,17 +198,19 @@
     chars: [],
     maxChars: 5,
 
-    // Sau khi đăng nhập: vào nhân vật đã chơi lần trước (hoặc nhân vật duy nhất); chưa có nhân vật thì vào màn tạo;
-    // nhiều nhân vật mà chưa chọn thì trả { select: true } để giao diện hiện màn chọn nhân vật.
-    async pick(token, username) {
+    // Như MU: mở game (tab / ứng dụng mới) hoặc đăng nhập thì hiện màn chọn nhân vật ({ select: true }); chưa có nhân
+    // vật thì vào màn tạo. F5 / trang tự tải lại (server cập nhật, đổi ngôn ngữ) thì vào thẳng nhân vật đang chơi trong
+    // tab này. Mất mạng tự nối lại thì không qua đây. `fresh`: vừa đăng nhập (bỏ nhân vật đang chơi của tab).
+    async pick(token, username, fresh) {
       const me = await api('GET', '/api/me', null, token);
       Net.username = me.username || username;
       Net.chars = me.characters || [];
       Net.maxChars = me.max_characters || 5;
-      const saved = store.cid();
-      const cid = Net.chars.some((c) => c.id === saved) ? saved : Net.chars.length === 1 ? Net.chars[0].id : null;
-      if (!cid && Net.chars.length) return { select: true, username: Net.username };
-      return Net.enterChar(cid);
+      if (fresh) playing.set(null);
+      if (!Net.chars.length) return Net.enterChar(null);
+      const cur = playing.get();
+      if (cur && Net.chars.some((c) => c.id === cur)) return Net.enterChar(cur);
+      return { select: true, username: Net.username };
     },
 
     // Vào nhân vật `cid` (null: dòng tài khoản — chưa có nhân vật thì màn tạo nhân vật).
@@ -210,6 +218,8 @@
       store.setCid(cid);
       const r = await join(store.get(), cid);
       Net.username = r.username;
+      // nhân vật đang chơi của tab (vào màn tạo nhân vật thì cid null: nhớ mã server trả)
+      if (r.user_id) { store.setCid(r.user_id); playing.set(r.user_id); }
       return r;
     },
 
@@ -230,7 +240,7 @@
     // Rời nhân vật đang chơi về màn chọn nhân vật.
     async toSelect() {
       close();
-      store.setCid(null);
+      playing.set(null);
       const me = await api('GET', '/api/me', null, store.get());
       Net.chars = me.characters || [];
       Net.maxChars = me.max_characters || 5;
@@ -254,9 +264,7 @@
     async login(username, password, register, sec) {
       const r = await api('POST', register ? '/api/register' : '/api/login', Object.assign({ username, password }, register ? sec : {}));
       store.set(r.token);
-      // tài khoản khác: bỏ nhân vật đã nhớ của người trước
-      if (r.username !== Net.username) store.setCid(null);
-      return Net.pick(r.token, r.username);
+      return Net.pick(r.token, r.username, true);
     },
 
     // Quên mật khẩu: gửi yêu cầu cho quản trị (server luôn trả ok).
@@ -270,7 +278,7 @@
       const r = await api('POST', '/api/recover', { username, answer, password });
       store.set(r.token);
       store.setCid(null);
-      return Net.pick(r.token, r.username);
+      return Net.pick(r.token, r.username, true);
     },
 
     // Đặt / đổi câu hỏi bảo mật (cần mật khẩu hiện tại); `me()`: câu hỏi đang đặt
@@ -283,6 +291,7 @@
       if (token && !local) api('POST', '/api/logout', null, token).catch(() => {});
       store.set(null);
       store.setCid(null);
+      playing.set(null);
       Net.username = null;
       Net.chars = [];
       close();
