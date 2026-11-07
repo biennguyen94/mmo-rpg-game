@@ -242,6 +242,11 @@
   // FX đợt 4: khoảnh khắc thành tích khi trạng thái nhân vật đổi (lệnh của mình hoặc server đẩy: tự đánh, đánh chung)
   function celebrate(old, p) {
     if (!old || !p || old.name !== p.name) return;
+    // B8: vừa vào trận với trùm (trùm vùng, trùm thế giới, chúa tể, trùm sự kiện; không tính trùm tầng tháp, đánh người)
+    const bm = p.battle && !old.battle && p.battle.monster;
+    if (bm && !bm.pvp && (bm.boss || bm.world || (bm.elite && (!bm.tower || bm.ds || bm.bc || bm.kal)))) {
+      Celebrate.bossIn(bm.name, bm.level ? `Cấp ${bm.level}` : '');
+    }
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
       Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
       return;
