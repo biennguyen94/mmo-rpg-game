@@ -228,7 +228,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   ⚔️ **Chiến** (tấn công, chí mạng: Chó Săn, Quạ Đen, Bằng Mã Lửa, Quỷ Satan, Ác Quỷ Daemon, thú thuần), 🛡️ **Hộ vệ** (máu,
   phòng thủ, giảm sát thương nhận: Cừu Bông, Heo Hồng, Thiên Thần Hộ Mệnh, Tinh Linh Hộ Vệ), 🍀 **Tài lộc** (kinh nghiệm, vàng rơi:
   Sóc Túi, Bướm Lửa, Gấu Trúc). Thú thuần từ vùng chuyển sinh càng xa càng mạnh. Thú lên cấp (tối đa 20) theo trận thắng khi dắt
-  theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt); mỗi cấp phần trăm cộng tăng thêm 8 % (cấp 20: ×2,52).
+  theo, hoặc **cho ăn** ở Người Nuôi Thú (tốn vàng, cấp càng cao càng đắt); mỗi cấp phần trăm cộng tăng thêm 5 % (cấp 20: ×1,95; Long Vương cấp 30: ×2,45).
   Riêng **máu / MP cộng số** theo cấp thú: Cừu Bông +15, Thiên Thần +25, Tinh Linh +35, Bằng Mã Lửa +8, Long Vương +30 máu
   mỗi cấp; Quạ Đen, Quỷ Satan +5, Long Vương +10 MP mỗi cấp.
 - **Long Vương** 🐉: thú hiếm duy nhất, không bán, chỉ câu được ở **Hồ Long Vương** (cổng mép trái Rừng Mê 1, từ cấp 30). Mỗi giờ

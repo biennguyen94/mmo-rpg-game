@@ -1552,9 +1552,12 @@ Trước: 3 kẹo đổi 60 + 12 × cấp vàng bất kể chuyển sinh (chuy�
 
 ## Long Vương: thần thú độc nhất (2026-11-07, anh duyệt bản đầy đủ)
 Sau khi giảm tấn công thú, Long Vương (câu 1/2 000 mỗi lần thả, mỗi giờ nổi một lần) chỉ ngang Ác Quỷ Daemon mua được. Thêm những gì chỉ Ngài có (`PETS.long_vuong`: `max_level`, `traits`; vẫn chỉ cộng chỉ số, không kỹ năng):
-- **Cấp tối đa 30** (thú khác 20; `Pets.max_level/1`): % nhân ×3,32 (tấn công ≈ +27%, phòng thủ +33%, giảm sát thương nhận +20%), máu +900, MP +300. Cấp 21–30 cần thêm ≈ 2 450 trận (cho ăn được tới cấp 30).
+- **Cấp tối đa 30** (thú khác 20; `Pets.max_level/1`): % nhân ×3,32 (tấn công ≈ +27%, phòng thủ +33%, giảm sát thương nhận +20%; sau khi giảm tăng theo cấp: ×2,45), máu +900, MP +300. Cấp 21–30 cần thêm ≈ 2 450 trận (cho ăn được tới cấp 30).
 - **Long Uy** (`traits.ward` 0.5): kháng một nửa choáng, độc / bỏng / chảy máu, suy yếu từ quái và người (nhật ký "🐉 Long Uy: … kháng được …").
 - **Long Ân**: quái rơi ngọc ×1,25 (`traits.jewel`), thưởng trùm thế giới (vàng, kinh nghiệm) ×1,1 (`traits.boss`).
 - Giao diện: tên vàng, nhãn "✨ Thần thú – Độc nhất", cấp hiện "x/30"; trên bản đồ vầng vàng và vảy rồng quanh chân khi dắt Ngài.
 - Cân bằng đồ sát / đấu trường: nhân vật mẫu mốc 10 (`scripts/pvp/build.exs`, nhân vật tối đa) dắt Long Vương cấp tối đa (30); chỉnh lại hệ số lớp mốc 10.
+
+## Thú cưng: tăng theo cấp thấp hơn (2026-11-07, anh duyệt)
+`RULES.pets.bonus_per_level` 0.08 → 0.05: phần trăm cộng của thú nhân (1 + 0,05 × (cấp − 1)) — cấp 20 ×1,95 (trước ×2,52), Long Vương cấp 30 ×2,45 (trước ×3,32). Thú mạnh nhất cấp 20 (Ác Quỷ Daemon) tấn công ≈ +16%; Long Vương cấp 30 ≈ +20% tấn công, +25% phòng thủ, +15% giảm sát thương nhận. Máu / MP cộng số không đổi. Kiểm cân bằng mốc 10: đồ sát lệch 10%, đấu trường 3% — giữ hệ số.
 
