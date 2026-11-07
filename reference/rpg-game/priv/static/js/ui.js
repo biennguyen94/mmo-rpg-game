@@ -1082,7 +1082,7 @@
     const pr = o.profile, c = CLASSES[o.cls] || {};
     const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
     // % cộng thêm từ thú cưng (đã nhân theo cấp thú) và món ăn / đồ uống / ban phước
-    const plus = (v) => (v ? ` <span class="up" title="Từ thú cưng${pr.pet ? ` (${esc(pr.pet)} cấp ${pr.pet_lv}: chỉ số cấp 1 × ${(1 + (pr.pet_lv - 1) * RULES.petPerLevel).toFixed(2)})` : ''}, món ăn, đồ uống">+${Math.round(v * 100)}%</span>` : '');
+    const plus = (v) => (v ? ` <span class="up" title="Từ thú cưng${pr.pet ? ` (${esc(pr.pet)} cấp ${pr.pet_lv}: chỉ số cấp 1 × ${(pr.pet_mult || 1).toFixed(2)})` : ''}, món ăn, đồ uống">+${Math.round(v * 100)}%</span>` : '');
     // cùng cách ghi với tab Nhân vật: điểm gốc, phần đồ cộng thêm màu xanh
     const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base)}</b>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
     const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
@@ -3179,7 +3179,7 @@
     if (Date.now() - dragonAt > 60000) loadDragonBoard();
     const odds = (k) => `1/${fmt(Math.round(1 / (D.chance * k)))}`;
     const board = dragonBoard || [];
-    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc.replace(/\.$/, ''))} (cấp 1; mỗi cấp thêm ${pctTxt(RULES.petPerLevel)}, cấp ${petMax(pet.id)} ×${(1 + (petMax(pet.id) - 1) * RULES.petPerLevel).toFixed(2)}).</div></div></div>
+    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc.replace(/\.$/, ''))} (cấp 1; mỗi cấp thêm ${pctTxt(pet.per_level || RULES.petPerLevel)}, cấp ${petMax(pet.id)} ×${(1 + (petMax(pet.id) - 1) * (pet.per_level || RULES.petPerLevel)).toFixed(2)}).</div></div></div>
       <p class="small">Mỗi giờ ${esc(pet.name)} nổi lên một lần, lúc ngẫu nhiên, ở một ô nước bất kỳ trong hồ (bọt vàng sủi), ở lại ${Math.round(D.stay / 60)} phút. Chỉ thả câu trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần thả, nhân thêm theo Long Khí, có ${esc(ITEMS[D.bait].name)} thì gấp ${D.bait_mult} (chỉ tốn mồi khi thả trúng ô Ngài). Có người câu được hoặc hết giờ thì Ngài lặn.</p>
       <p class="small">Long Khí: mỗi con cá câu ở hồ +1, tối đa ${D.long_khi_max} (cơ hội ×${1 + D.long_khi_max / D.long_khi_div}); câu được Ngài thì về 0. Bạn đang có <b>${P.long_khi || 0}</b>, cơ hội hiện tại <b>${odds((1 + (P.long_khi || 0) / D.long_khi_div) * (bait ? D.bait_mult : 1))}</b>.${lake ? ' <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</p>
       <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>

@@ -1561,3 +1561,6 @@ Sau khi giảm tấn công thú, Long Vương (câu 1/2 000 mỗi lần thả, m
 ## Thú cưng: tăng theo cấp thấp hơn (2026-11-07, anh duyệt)
 `RULES.pets.bonus_per_level` 0.08 → 0.05: phần trăm cộng của thú nhân (1 + 0,05 × (cấp − 1)) — cấp 20 ×1,95 (trước ×2,52), Long Vương cấp 30 ×2,45 (trước ×3,32). Thú mạnh nhất cấp 20 (Ác Quỷ Daemon) tấn công ≈ +16%; Long Vương cấp 30 ≈ +20% tấn công, +25% phòng thủ, +15% giảm sát thương nhận. Máu / MP cộng số không đổi. Kiểm cân bằng mốc 10: đồ sát lệch 10%, đấu trường 3% — giữ hệ số.
 
+## Long Vương mạnh hơn (2026-11-07, anh yêu cầu)
+Sau khi giảm tăng theo cấp của mọi thú xuống 5%, Long Vương giữ mức riêng `PETS.long_vuong.per_level` 0.08 (`Pets.bonus_mult/2`): cấp 30 ×3,32 → tấn công ≈ +27%, chí mạng +10%, phòng thủ +33%, giảm sát thương nhận +20%, kinh nghiệm / vàng rơi +20%, cùng máu +900, MP +300, Long Uy, Long Ân. Hồ sơ hiện hệ số thật của thú (`pet_mult`). Cân bằng mốc 10: đồ sát lệch 6%, đấu trường 9% — giữ hệ số.
+

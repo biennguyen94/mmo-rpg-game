@@ -262,10 +262,18 @@ defmodule HacLong.Game.Pets do
     mp = f.(:mp) * lv / (r.mp_base + r.mp_per_level * p.level)
 
     (g.(:atk) + g.(:crit) + 0.5 * (g.(:def) + 2 * g.(:reduce)) + 0.25 * (g.(:xp) + g.(:gold))) *
-      bonus_mult(lv) + 0.5 * hp + 0.25 * mp
+      bonus_mult(id, lv) + 0.5 * hp + 0.25 * mp
   end
 
   def name(p), do: data(p.pet).name
+
+  @doc "Hệ số nhân chỉ số % của thú đang dắt ở cấp hiện tại (1 nếu không dắt thú)."
+  def mult(p) do
+    case Map.get(p, :pet) do
+      id when is_binary(id) -> bonus_mult(id, active_level(p))
+      _ -> 1
+    end
+  end
 
   @doc """
   Phần trăm cộng thêm của thú đang dắt theo cho chỉ số `key` (hp, atk, def, crit, reduce, gold, xp);
@@ -273,7 +281,7 @@ defmodule HacLong.Game.Pets do
   """
   def bonus(p, key) do
     case Map.get(p, :pet) && data(p.pet) do
-      %{bonus: b} -> Map.get(b, key, 0) * bonus_mult(active_level(p))
+      %{bonus: b} -> Map.get(b, key, 0) * bonus_mult(p.pet, active_level(p))
       _ -> 0
     end
   end
@@ -289,7 +297,10 @@ defmodule HacLong.Game.Pets do
     end
   end
 
-  defp bonus_mult(lv), do: 1 + (lv - 1) * @rules.bonus_per_level
+  # mỗi cấp tăng `per_level` riêng của thú (Long Vương 0.08, DECISIONS "Long Vương mạnh hơn"), không có thì
+  # `RULES.pets.bonus_per_level`
+  defp bonus_mult(id, lv),
+    do: 1 + (lv - 1) * ((data(id) || %{})[:per_level] || @rules.bonus_per_level)
 
   @doc "Thông tin thú đã có cho client: cấp, nhóm, chỉ số cộng thêm, giá cho ăn (thú đang dắt)."
   def view(p) do
@@ -299,7 +310,7 @@ defmodule HacLong.Game.Pets do
       %{
         id: id,
         level: lv,
-        mult: bonus_mult(lv),
+        mult: bonus_mult(id, lv),
         group: pt[:group],
         bonus: pt.bonus,
         flat: pt[:flat] || %{},

@@ -65,6 +65,7 @@ defmodule HacLong.Profile do
       # ô Thú nuôi trong lưới trang bị của hồ sơ: id + cấp thú đang dắt
       pet_id: p[:pet],
       pet_lv: p[:pet] && Pets.level(p, p.pet),
+      pet_mult: Pets.mult(p),
       pets: length(Map.get(p, :pets) || []),
       market: market(uid),
       counts: %{

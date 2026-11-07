@@ -258,7 +258,12 @@ defmodule HacLong.Game.LongVuongTest do
       assert Pets.max_level("long_vuong") == 30 and Pets.max_level("sheep") == 20
       p = with_pet(angler(), 30)
       assert Pets.level(p, "long_vuong") == 30
-      mult = 1 + 29 * HacLong.Game.Data.rules().pets.bonus_per_level
+
+      # Long Vương tăng mỗi cấp riêng (`per_level` 0.08), thú khác `RULES.pets.bonus_per_level` (DECISIONS "Long Vương mạnh hơn")
+      per = Pets.data("long_vuong").per_level
+      assert per > HacLong.Game.Data.rules().pets.bonus_per_level
+      mult = 1 + 29 * per
+      assert_in_delta Pets.mult(p), mult, 1.0e-9
       assert_in_delta Pets.bonus(p, :atk), Pets.data("long_vuong").bonus.atk * mult, 1.0e-9
       assert Pets.flat(p, :hp) == 30 * Pets.data("long_vuong").flat.hp
       # thú thường cấp 20 là hết; Long Vương cấp 20 còn lên tiếp
