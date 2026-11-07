@@ -1158,7 +1158,7 @@ defmodule HacLong.Game.Session do
   defp slay_hit(p2, nil, foe_hp, _first?) do
     raw = foe_hp + @slay_pad - p2.battle.monster.hp
     hp = max(0, foe_hp - raw)
-    {p2 |> fix_slay_log(raw, raw, hp) |> put_in([:battle, :monster, :hp], hp), nil}
+    {p2 |> fix_slay_log(raw, raw, hp, false) |> put_in([:battle, :monster, :hp], hp), nil}
   end
 
   # `first?`: lượt đầu của người tấn công, sát thương × `RULES.slay.first_strike_mult` (đòn mở màn)
@@ -1191,11 +1191,15 @@ defmodule HacLong.Game.Session do
           ),
         else: foe2
 
-    mine = Enum.map(foe2.battle.log, &BattleText.mirror(&1.text, name, p2.name))
+    # đòn mở màn ghi ngay trong dòng đánh của mình (`fix_slay_log`), không thêm dòng riêng
+    mine =
+      foe2.battle.log
+      |> Enum.reject(&String.starts_with?(&1.text, "⚔ Đòn mở màn"))
+      |> Enum.map(&BattleText.mirror(&1.text, name, p2.name))
 
     # nhật ký lượt này của mình: máu còn lại thật của đối thủ (máy tính trận cộng tạm `@slay_pad`) và sát thương thật
     # (sau đòn mở màn, thủ thế / khiên của họ) thay số tạm
-    p2 = fix_slay_log(p2, raw, real, max(foe2.hp, 0))
+    p2 = fix_slay_log(p2, raw, real, max(foe2.hp, 0), opening?)
 
     p2 =
       p2
@@ -1205,7 +1209,7 @@ defmodule HacLong.Game.Session do
     {p2, foe2}
   end
 
-  defp fix_slay_log(p2, raw, real, left) do
+  defp fix_slay_log(p2, raw, real, left, opening?) do
     log =
       Enum.map(p2.battle.log, fn
         %{left: l} = e when is_integer(l) and l > div(@slay_pad, 2) -> %{e | left: left}
@@ -1219,14 +1223,23 @@ defmodule HacLong.Game.Session do
       |> Enum.filter(fn {e, _} -> e[:who] == "me" and e[:dmg] end)
       |> List.last()
 
+    note = "đòn mở màn ×#{@first_strike}"
+
     log =
       case idx do
-        {%{dmg: d} = e, i} when raw > 0 and real != d ->
-          List.replace_at(log, i, %{
-            e
-            | dmg: real,
-              text: String.replace(e.text, "gây #{d} sát thương", "gây #{real} sát thương")
-          })
+        {%{dmg: d} = e, i} when raw > 0 and (real != d or opening?) ->
+          text = String.replace(e.text, "gây #{d} sát thương", "gây #{real} sát thương")
+
+          e =
+            if opening?,
+              do: %{
+                e
+                | note: if(e[:note], do: "#{e.note}; #{note}", else: note),
+                  text: String.replace_suffix(text, ".", " (#{note}).")
+              },
+              else: %{e | text: text}
+
+          List.replace_at(log, i, %{e | dmg: real})
 
         _ ->
           log

@@ -167,6 +167,11 @@ defmodule HacLongWeb.SlayTest do
     assert hits != []
     assert Enum.all?(hits, &(&1.left <= max_b and &1.dmg <= max_b))
 
+    # đòn mở màn ghi ngay trong dòng đánh đầu của người tấn công, không thành dòng riêng
+    refute Enum.any?(pa.battle.log, &String.starts_with?(&1.text, "⚔ Đòn mở màn"))
+    first = Enum.find(hits, &(&1.dmg > 0))
+    if first && first.turn <= 1, do: assert(first.note =~ "đòn mở màn")
+
     ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục #{pb.name}."))
     assert ko && Enum.at(texts, ko - 1) =~ name_a
 

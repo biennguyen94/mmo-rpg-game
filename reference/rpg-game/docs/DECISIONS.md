@@ -1570,4 +1570,6 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
 ## Đồ sát: sửa nhật ký và bot không đánh trả (2026-11-07)
 - Nhật ký người đánh hiện "máu còn lại: 9.999.548": máy tính trận đồ sát cộng tạm `@slay_pad` (10 triệu) vào máu bản sao đối thủ trong lượt. Nay `fix_slay_log` thay bằng máu thật của đối thủ, và sát thương ghi đúng phần đối thủ thật sự mất (sau đòn mở màn ×`first_strike_mult`, thủ thế / khiên / thú của họ) — trước ghi số trước khi giảm.
 - Bot bị đồ sát đứng im: máu thấp thì bot chọn uống bình, nhưng đánh người giới hạn `potion_max` bình mỗi trận và `potion_cd` lượt chờ → lệnh bị từ chối, bot không làm gì tới hết giờ lượt. Nay `Engine.potion_ready?/1`: hết lượt uống thì bot đánh / dùng kỹ năng.
+- Thẻ đối thủ trong trận đánh người (đồ sát, đấu trường) ghi thêm lớp và số lần chuyển sinh ("Kiếm Sĩ · CS 0 · Cấp 20 · …").
+- Đòn mở màn ghi ngay trong dòng đánh đầu của người tấn công ("… gây ra ⚔ 544 💥 chí mạng (đòn mở màn ×0.5) (máu còn lại: 92)"), bỏ dòng "⚔ Đòn mở màn…" riêng ở nhật ký người tấn công; người bị đánh vẫn thấy dòng "kịp phòng bị" của mình.
 

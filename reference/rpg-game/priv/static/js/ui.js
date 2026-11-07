@@ -3539,7 +3539,7 @@
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
-        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
+        <span class="small muted">${m.pvp && CLASSES[m.cls] ? `${CLASSES[m.cls].name} · CS ${m.rebirths || 0} · ` : ''}Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
         ${bar(m.golden ? 'goldbar' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp, `❤ ${fmt(m.hp)} / ${fmt(m.maxHp)}`)}
         ${effectTags(fxs.monster)}
       </div>
