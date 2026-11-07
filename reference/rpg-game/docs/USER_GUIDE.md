@@ -28,6 +28,11 @@
 
 - **Ngôn ngữ / Language:** nút English / Tiếng Việt ở trang đăng nhập và trong Menu → Cài đặt.
 - Đăng ký tài khoản (tên đăng nhập + mật khẩu + **câu hỏi bảo mật** và câu trả lời), đặt tên nhân vật (2–16 ký tự) và chọn lớp.
+- **Nhiều nhân vật:** mỗi tài khoản tối đa 5 nhân vật, chơi một nhân vật một lúc. Đăng nhập xong chọn nhân vật (lần sau
+  tự vào nhân vật chơi gần nhất); đổi ở Menu → Cài đặt → **Đổi nhân vật**. Thùng đồ ở **Thủ Kho** (đồ, vàng, chỗ mở rộng) dùng
+  chung mọi nhân vật; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần. Bạn bè, bang, thư, chợ, đồ sát
+  tính riêng từng nhân vật. Xóa nhân vật phải gõ lại tên và mật khẩu; đồ trên nhân vật đó mất hẳn (thùng chung giữ nguyên).
+  Vào nhân vật khác ở máy / tab khác thì máy / tab đang chơi về màn chọn nhân vật.
 - **Quên mật khẩu:** ở màn đăng nhập bấm "Quên mật khẩu?", nhập tên đăng nhập, trả lời câu hỏi bảo mật (không phân biệt
   chữ hoa / thường) và đặt mật khẩu mới là vào game luôn; các thiết bị khác bị đăng xuất. Trả lời sai 5 lần thì phải đợi một
   giờ. Tài khoản cũ chưa có câu hỏi (hoặc quên câu trả lời) thì gửi yêu cầu cho quản trị như trước. Đổi / đặt câu hỏi ở

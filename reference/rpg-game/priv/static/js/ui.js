@@ -13,6 +13,7 @@
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
   let authMode = 'login'; // 'login' | 'register' | 'forgot'
   let loading = true;    // đang kết nối server
+  let charSel = null;    // màn chọn nhân vật (DECISIONS "Nhiều nhân vật"): { del: mã nhân vật đang hỏi xóa | null }
   let busy = false;      // đang chờ server trả lời
   // quên mật khẩu bằng câu hỏi bảo mật (DECISIONS "Câu hỏi bảo mật"): { user, q } sau bước 1; `admin`: gửi yêu cầu cho quản trị
   let fg = { user: '', q: null, admin: false };
@@ -292,6 +293,13 @@
     if (loading || !Net.username) {
       hud.hidden = true; tabs.hidden = true;
       view.innerHTML = loading ? viewLoading() : viewLogin();
+      return;
+    }
+    if (charSel) {
+      hud.hidden = true; tabs.hidden = true;
+      // chỉ vẽ lại khi nội dung đổi: giữ chữ đang gõ trong ô xóa nhân vật (trang vẽ lại định kỳ)
+      const html = viewSelect();
+      if (view.__sel !== html || !view.querySelector('.char-row')) { view.innerHTML = html; view.__sel = html; }
       return;
     }
     if (!P) {
@@ -1549,7 +1557,39 @@
         </div>
         <button class="btn primary block" type="submit">Bắt đầu hành trình</button>
       </form>
+      <p class="small muted" style="text-align:center">Tài khoản <b>${esc(Net.username)}</b> · ${Net.chars.length ? '<button class="btn" data-act="char-switch">‹ Chọn nhân vật khác</button> · ' : ''}<button class="btn" data-act="logout">Đăng xuất</button></p>`;
+  }
+
+  // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
+  function viewSelect() {
+    const list = Net.chars;
+    const row = (c) => {
+      const cls = CLASSES[c.cls] || {};
+      const where = (WORLD.maps[c.map] || {}).name || c.map || '';
+      const del = charSel.del === c.id;
+      return `<div class="item char-row">${icon(cls.icon || 'person', 'lg')}<div class="grow"><div class="name">${esc(c.name)}</div>
+          <div class="small muted">${esc(cls.name || c.cls)} · cấp ${c.level}${c.rebirths ? ` · CS ${c.rebirths}` : ''}${where ? ` · ${esc(where)}` : ''}</div></div>
+          <button class="btn" data-act="char-del" data-cid="${c.id}" aria-label="Xóa ${esc(c.name)}">Xóa</button>
+          <button class="btn primary" data-act="char-enter" data-cid="${c.id}" ${busy ? 'disabled' : ''}>Vào game</button></div>
+        ${del ? `<form id="char-del-form" class="card" data-cid="${c.id}" autocomplete="off">
+          <p class="small" style="color:var(--bad)">Xóa <b>${esc(c.name)}</b>? Đồ, vàng, bạn bè, bang, thư của nhân vật này mất hẳn, không lấy lại được. Thùng đồ chung ở Thủ Kho giữ nguyên.</p>
+          <label class="field">Gõ lại tên nhân vật<input type="text" id="cd-name" maxlength="16" required></label>
+          <label class="field">Mật khẩu tài khoản<input type="password" id="cd-pass" maxlength="72" autocomplete="current-password" required></label>
+          <div class="btn-row"><button class="btn" type="button" data-act="char-del-cancel">Thôi</button><button class="btn danger" type="submit" ${busy ? 'disabled' : ''}>Xóa vĩnh viễn</button></div>
+        </form>` : ''}`;
+    };
+    return `
+      <div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Chọn nhân vật</h1>
+        <p>Mỗi tài khoản tối đa ${Net.maxChars} nhân vật, chơi một nhân vật một lúc. Thùng đồ ở Thủ Kho dùng chung.</p></div>
+      <div class="card"><div class="list">${list.map(row).join('')}</div>
+        ${list.length < Net.maxChars ? `<button class="btn block" data-act="char-new" ${busy ? 'disabled' : ''}>＋ Tạo nhân vật mới (${list.length}/${Net.maxChars})</button>` : `<p class="small muted">Đã đủ ${Net.maxChars} nhân vật.</p>`}</div>
       <p class="small muted" style="text-align:center">Tài khoản <b>${esc(Net.username)}</b> · <button class="btn" data-act="logout">Đăng xuất</button></p>`;
+  }
+
+  // vào / tạo / rời nhân vật: chờ server rồi vẽ lại
+  function charGo(promise) {
+    busy = true; render();
+    promise.then((r) => { busy = false; enter(r); }).catch((e) => { busy = false; toast(e.msg, true); render(); });
   }
 
   // ---------- Đăng nhập ----------
@@ -1734,6 +1774,7 @@
         <h3>Dữ liệu</h3>
         <p class="small muted">Nhân vật lưu trên máy chủ, tài khoản <b>${esc(Net.username)}</b>.</p>
         <div class="btn-row" style="margin-bottom:8px">
+          <button class="btn" data-act="char-switch">Đổi nhân vật</button>
           <button class="btn" data-act="logout">Đăng xuất</button>
           <button class="btn" data-act="pw-toggle">Đổi mật khẩu</button>
           <button class="btn" data-act="sq-toggle">Câu hỏi bảo mật</button>
@@ -3880,6 +3921,8 @@
 
   function enter(r) {
     secQ = undefined; secForm = false;
+    if (r && r.select) { charSel = { del: null }; P = null; loading = false; npc = null; dialog = null; render(); return; }
+    charSel = null;
     P = r ? r.player : null;
     if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
@@ -3890,6 +3933,7 @@
   function logout() {
     Net.logout();
     P = null;
+    charSel = null;
     npc = null; dialog = null; pwForm = false;
     render();
   }
@@ -3920,6 +3964,11 @@
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
+    if (act === 'char-enter') return charGo(Net.enterChar(+t.dataset.cid));
+    if (act === 'char-new') return charGo(Net.newChar());
+    if (act === 'char-switch') return charGo(Net.toSelect());
+    if (act === 'char-del') { charSel.del = charSel.del === +t.dataset.cid ? null : +t.dataset.cid; render(); return; }
+    if (act === 'char-del-cancel') { charSel.del = null; render(); return; }
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
     if (act === 'fg-admin') { fg = Object.assign({}, fg, { admin: true }); render(); return; }
     if (act === 'sq-toggle') { secForm = !secForm; render(); return; }
@@ -4232,6 +4281,15 @@
       Net.admin('announce', { text: $('#adm-text').value }).then(() => { toast('Đã gửi thông báo.'); $('#adm-text').value = ''; }).catch((err) => toast(err.msg, true));
       return;
     }
+    if (e.target.id === 'char-del-form') {
+      e.preventDefault();
+      const cid = +e.target.dataset.cid, name = $('#cd-name').value.trim(), pass = $('#cd-pass').value;
+      busy = true; render();
+      Net.deleteChar(cid, name, pass)
+        .then((r) => { busy = false; charSel = { del: null }; toast(r.msg); render(); })
+        .catch((err) => { busy = false; toast(err.msg, true); render(); });
+      return;
+    }
     if (e.target.id !== 'create') return;
     e.preventDefault();
     const name = $('#hero-name').value.trim();
@@ -4371,6 +4429,11 @@
     });
     // vào lại sau khi mất mạng: lấy trạng thái mới nhất từ server
     Net.onRejoin((r) => { P = r.player; walk = null; render(); });
+    Net.onKicked((msg) => {
+      $('#netbar').hidden = true;
+      toast(msg, true);
+      charGo(Net.toSelect());
+    });
     Net.onExpired(() => {
       P = null; npc = null; dialog = null;
       $('#netbar').hidden = true;

@@ -529,3 +529,13 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   (op `to_village` / `bots_to_village`).
 - Bot tự về Làng khi đứng yên (vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi) quá `bots.play.stuck_min` phút (10);
   log server: `bot <id> kẹt ở <bản đồ> (x, y) quá lâu: về Làng`.
+
+### Nhiều nhân vật (theo tài khoản)
+
+- Mỗi nhân vật là một dòng `users` (nhân vật thêm có `account_id` trỏ về tài khoản, tên đăng nhập `~<id>~…`, không
+  đăng nhập được). Tra cứu theo tên nhân vật hoặc tên đăng nhập: thẻ hiện tài khoản và mọi nhân vật; bấm tên để xem nhân
+  vật khác. Lệnh sửa (cộng vàng, tặng đồ, về Làng…) áp **nhân vật đang xem**; cấm chat / khóa áp **cả tài khoản**.
+- Thùng đồ chung ở bảng `account_storage` (một dòng mỗi tài khoản). `mix hac_long.audit` đối soát cả thùng (đồ hiếm trong
+  thùng phải có `gear_log` cuối là `in`, lý do `SHARED`, mã tài khoản).
+- Quà "gửi mọi người": mỗi tài khoản một thư, vào nhân vật chơi gần nhất; "Số người nhận" đếm theo tài khoản.
+

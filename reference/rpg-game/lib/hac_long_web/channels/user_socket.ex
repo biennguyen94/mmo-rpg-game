@@ -11,7 +11,7 @@ defmodule HacLongWeb.UserSocket do
       # vật"). Mỗi tài khoản một nhân vật online: ngắt kết nối và tắt Session của các nhân vật khác.
       {:ok, user, acct} ->
         for sib <- HacLong.Accounts.siblings(user.id) do
-          HacLongWeb.Endpoint.broadcast("user_socket:#{sib}", "disconnect", %{})
+          Phoenix.PubSub.broadcast(HacLong.PubSub, HacLong.Game.Session.topic(sib), :kicked)
           HacLong.Game.Session.stop(sib)
         end
 

@@ -998,6 +998,13 @@ defmodule HacLongWeb.GameChannel do
     {:noreply, socket}
   end
 
+  # tài khoản vừa vào nhân vật khác (ở thiết bị / tab khác): mỗi tài khoản một nhân vật online (DECISIONS "Nhiều nhân
+  # vật"). Báo client (không tự nối lại) rồi đóng kênh.
+  def handle_info(:kicked, socket) do
+    push(socket, "kicked", %{msg: "Tài khoản vừa vào nhân vật khác ở nơi khác."})
+    {:stop, :normal, socket}
+  end
+
   def handle_info({:notice, msg}, socket) do
     push(socket, "notice", %{msg: msg})
     {:noreply, socket}
