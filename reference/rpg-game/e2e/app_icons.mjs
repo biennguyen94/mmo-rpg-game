@@ -1,5 +1,5 @@
-// Icon ứng dụng (ô tắt trình duyệt, màn hình chính điện thoại, tab): logo vector `priv/static/app/logo.svg` (rồng đen
-// viền vàng, tự vẽ, CC0; xem CREDITS.md). Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
+// Icon ứng dụng (ô tắt trình duyệt, màn hình chính điện thoại, tab): `priv/static/app/logo.svg` (khung viền vàng tự vẽ +
+// đầu Hắc Long vẽ tay của Cethiel, CC0; xem CREDITS.md). Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
 // Chạy: node e2e/app_icons.mjs  (cần Chromium của Playwright)
 import { launch } from './lib.mjs';
 import fs from 'node:fs';
@@ -7,6 +7,8 @@ import fs from 'node:fs';
 const STATIC = new URL('../priv/static/', import.meta.url).pathname;
 // logo vector tự vẽ (`priv/static/app/logo.svg`, CC0): nét ở mọi cỡ (trước dùng hình rồng pixel 32×32 phóng to nên vỡ hạt)
 const svg = fs.readFileSync(STATIC + 'app/logo.svg', 'utf8');
+// bản không nền cho icon maskable (vẽ thu nhỏ đè lên nền kín): khỏi lộ ô vuông nền của phần thu nhỏ
+const svgBare = svg.replace(/<rect width="512" height="512" fill="url\(#bg\)"\/>/, '');
 // [tệp, cỡ, hình chiếm (phần cạnh)]: maskable — Android cắt hình, phần vẽ thu vào vùng an toàn 80%, nền vẫn kín.
 const JOBS = [
   ['app/icon-512.png', 512, 1],
@@ -21,7 +23,7 @@ const ICO = [16, 32, 48];
 const browser = await launch();
 const page = await browser.newPage();
 async function render(size, scale) {
-  const out = await page.evaluate(async ([svg, size, scale]) => {
+  const out = await page.evaluate(async ([svg, bare, size, scale]) => {
     const load = async (src) => { const im = new Image(); im.src = src; await im.decode(); return im; };
     const im = await load('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
     const c = document.createElement('canvas');
@@ -39,10 +41,11 @@ async function render(size, scale) {
       g.fillStyle = bg;
       g.fillRect(0, 0, size, size);
       const w = size * scale, o = (size - w) / 2;
-      g.drawImage(im, o, o, w, w);
+      const small = await load('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(bare));
+      g.drawImage(small, o, o, w, w);
     }
     return c.toDataURL('image/png');
-  }, [svg, size, scale]);
+  }, [svg, svgBare, size, scale]);
   return Buffer.from(out.split(',')[1], 'base64');
 }
 
