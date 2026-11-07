@@ -140,6 +140,21 @@
   // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
+  // B6: độ tối chuyển dần theo giờ Việt Nam (mốc như HacLong.World.Clock: bình minh 5–7, ngày 7–18, hoàng hôn 18–20, đêm
+  // 20–5). Đồng hồ máy lệch (buổi tính ra khác buổi server gửi) thì dùng mức cố định của buổi server. Trả [độ tối, ánh
+  // cam hồng 0..1] — ánh mạnh nhất giữa bình minh / hoàng hôn.
+  function sky() {
+    const ph = shade();
+    const fixed = [PHASES[ph] ? PHASES[ph][1] : 0, ph === 'dawn' || ph === 'dusk' ? 0.6 : 0];
+    if (theme() !== 'auto') return fixed;
+    const d = new Date(), h = (d.getUTCHours() + 7 + d.getUTCMinutes() / 60) % 24;
+    const calc = h >= 5 && h < 7 ? 'dawn' : h >= 7 && h < 18 ? 'day' : h >= 18 && h < 20 ? 'dusk' : 'night';
+    if (calc !== ph) return fixed;
+    const N = PHASES.night[1];
+    if (ph === 'dawn') { const k = (h - 5) / 2; return [N * (1 - k), Math.sin(k * Math.PI)]; }
+    if (ph === 'dusk') { const k = (h - 18) / 2; return [N * k, Math.sin(k * Math.PI)]; }
+    return fixed;
+  }
 
   // ---------- Bản đồ động (Phase 5, B-32) ----------
   // Chỉ là hình: nước gợn, cây lay, quái nhún nhẹ, thời tiết theo vùng, đom đóm / đèn lồng ban đêm, khói bếp ở Làng,
@@ -274,13 +289,55 @@
       g.addColorStop(0, `rgba(255, 196, 110, ${0.35 * dark * f})`); g.addColorStop(1, 'rgba(255, 196, 110, 0)');
       ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.6, y - TILE * 1.6, TILE * 3.2, TILE * 3.2);
     }
-    for (let i = 0; i < 16; i++) {
+    const ff = /forest|swamp/.test(m.floor || '') ? 30 : 16;
+    for (let i = 0; i < ff; i++) {
       const x = wrap(rnd(i, 1) * vw + Math.sin(t / 1300 + i * 2) * 30 - cx, vw), y = wrap(rnd(i, 2) * vh + Math.cos(t / 1700 + i) * 22 - cy, vh);
       const a = Math.max(0, Math.sin(t / 420 + i * 1.7)) * dark;
       if (a < 0.05) continue;
       const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
       g.addColorStop(0, `rgba(220, 255, 140, ${a})`); g.addColorStop(1, 'rgba(220, 255, 140, 0)');
       ctx.fillStyle = g; ctx.fillRect(x - 6, y - 6, 12, 12);
+    }
+  }
+
+  // B6: đêm — cực quang trên núi, đuốc lập lòe ở hang / nghĩa địa (cột, đá cạnh lối đi), ánh trăng lấp lánh trên nước
+  function nightFx(t, m, cx, cy, dark, x0, y0, x1, y1) {
+    const vw = VW(), vh = VH(), f = m.floor || '';
+    if (f.includes('mountain')) {
+      for (let b = 0; b < 3; b++) {
+        ctx.beginPath();
+        const base = 26 + b * 18, amp = 10 + b * 4;
+        for (let x = 0; x <= vw; x += 12) {
+          const y = base + Math.sin(x / 70 + t / (2600 + b * 500) + b) * amp + Math.sin(x / 23 + t / 900) * 3;
+          x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.lineTo(vw, 0); ctx.lineTo(0, 0); ctx.closePath();
+        const a = (0.1 + 0.05 * Math.sin(t / 1700 + b)) * dark;
+        ctx.fillStyle = b === 1 ? `rgba(170, 110, 255, ${a})` : `rgba(90, 255, 170, ${a})`;
+        ctx.fill();
+      }
+    }
+    const torches = /lair|graveyard/.test(f);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = (m.tiles[y] || '')[x];
+        const px = x * TILE - cx, py = y * TILE - cy;
+        if (torches && (c === 'I' || c === 'R' || c === 'S') && rnd(x * 3 + 1, y * 5 + 2) < 0.12 && WALK.has((m.tiles[y + 1] || '')[x])) {
+          const fl = 0.75 + 0.25 * Math.sin(t / 90 + x * 3) * Math.sin(t / 37 + y);
+          const g = ctx.createRadialGradient(px + TILE / 2, py + 8, 1, px + TILE / 2, py + 8, TILE * 2);
+          g.addColorStop(0, `rgba(255, 150, 60, ${0.55 * dark * fl})`); g.addColorStop(1, 'rgba(255, 150, 60, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px - TILE * 1.5, py - TILE * 1.5, TILE * 4, TILE * 4);
+          ctx.fillStyle = `rgba(255, ${200 + Math.round(40 * fl)}, 120, ${0.9 * fl})`;
+          ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + 6 - fl * 2, 2.5, 4 + fl * 2, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        if ((c === '~' || c === '=') && rnd(x + 11, y + 7) < 0.5) {
+          const k = Math.max(0, Math.sin(t / 700 + x * 1.7 + y * 2.3));
+          if (k > 0.6) {
+            ctx.fillStyle = `rgba(230, 235, 255, ${(k - 0.6) * 1.6 * dark})`;
+            ctx.fillRect(px + 6 + rnd(x, y) * 18, py + 6 + rnd(y, x) * 18, 3, 1.2);
+          }
+        }
+      }
     }
   }
 
@@ -636,8 +693,16 @@
       const w = (outdoors(P) || m.tower) && weatherOf(m, P.pos.map);
       if (w) weather(w, now, cx, cy, m, P.pos.map);
     }
-    // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng
-    const dark = PHASES[shade()] && outdoors(P) ? PHASES[shade()][1] : 0;
+    // bóng tối theo giờ: tối dần ra xa nhân vật, quanh nhân vật vẫn sáng (B6: chuyển dần, ánh cam hồng lúc bình minh / hoàng hôn)
+    const [dark0, glowK] = outdoors(P) ? sky() : [0, 0];
+    const dark = dark0 > 0.02 ? dark0 : 0;
+    if (glowK > 0.02 && outdoors(P)) {
+      const g = ctx.createLinearGradient(0, 0, 0, VH());
+      const dusk = shade() === 'dusk';
+      g.addColorStop(0, `rgba(${dusk ? '255, 110, 90' : '255, 170, 110'}, ${0.22 * glowK})`);
+      g.addColorStop(1, `rgba(${dusk ? '140, 60, 120' : '255, 200, 150'}, ${0.08 * glowK})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VW(), VH());
+    }
     if (dark) {
       const lx = px + TILE / 2, ly = py + TILE / 2;
       const g = ctx.createRadialGradient(lx, ly, TILE * 1.2, lx, ly, TILE * 5);
@@ -646,6 +711,7 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, VW(), VH());
       if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
+      if (fx && dark >= 0.3) nightFx(now, m, cx, cy, dark, x0, y0, x1, y1);
       // đèn lồng (Hồ Long Vương) tỏa sáng ban đêm
       if (dark >= 0.3) for (const [lx0, ly0] of lanterns) {
         const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.85 + 0.15 * Math.sin(now / 230 + lx0) : 1;
