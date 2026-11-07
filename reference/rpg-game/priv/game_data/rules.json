@@ -151,8 +151,11 @@
         0.8,
         1.2
       ],
+      "_boss_doc": "Trùm (trùm vùng, trùm đêm, trùm vàng... — quái dựng với cờ trùm): máu × hp, công × atk, thủ × def, EXP × xp, vàng × gold. atk / def 1 → 1,15 / 1,2 (DECISIONS \"Trùm mạnh hơn quái thường\"): trước đó trùm chỉ trâu máu, đánh thường như quái cùng cấp.",
       "boss": {
         "hp": 2.4,
+        "atk": 1.15,
+        "def": 1.2,
         "xp": 5,
         "gold": 6
       }
@@ -995,7 +998,9 @@
       "leave_after_s": 60
     },
     "world": {
-      "night_rare_chance": 0.12
+      "night_rare_chance": 0.12,
+      "_night_rare_mult_doc": "Quái Bóng Đêm: máu / công / thủ × night_rare_mult (trước viết cứng 1,5 trong world.ex).",
+      "night_rare_mult": 1.5
     },
     "names": {
       "banned_words": [

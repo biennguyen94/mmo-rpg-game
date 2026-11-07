@@ -540,6 +540,9 @@ defmodule HacLong.Game.Engine do
     m = Map.get(spec, :mult, 1)
     [gs_lo, gs_hi] = @mon.gold_spread
     bm = if boss?, do: @mon.boss.hp, else: 1
+    # trùm: công / thủ nhân thêm (`RULES.monster.boss.atk` / `def`)
+    ba = if boss?, do: @mon.boss.atk, else: 1
+    bd = if boss?, do: @mon.boss.def, else: 1
     # thưởng nhân thêm (quái vàng Golden Invasion), không đổi sức mạnh
     rw = Map.get(spec, :reward_mult, 1)
 
@@ -557,8 +560,8 @@ defmodule HacLong.Game.Engine do
       jewel_chance: Map.get(spec, :jewel_chance),
       maxHp: round((@mon.hp.base + sl * @mon.hp.level + sl * sl * @mon.hp.level_sq) * m * bm),
       # vùng chuyển sinh: công nhân hệ số riêng `atk_mult` (nhẹ hơn máu), không có thì như máu
-      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m)),
-      def: round((@mon.def.base + sl * @mon.def.level) * m),
+      atk: round((@mon.atk.base + sl * @mon.atk.level) * Map.get(spec, :atk_mult, m) * ba),
+      def: round((@mon.def.base + sl * @mon.def.level) * m * bd),
       # Phase 6: vùng chuyển sinh rơi đồ quý hơn (`Gear.rich/2`)
       rich: Map.get(spec, :rich, 0),
       crit: @mon.crit,

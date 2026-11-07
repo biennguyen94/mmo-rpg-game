@@ -740,7 +740,7 @@ defmodule HacLong.World do
   defp night_variant(spec) do
     Map.merge(spec, %{
       name: "#{spec.name} Bóng Đêm",
-      mult: Map.get(spec, :mult, 1) * 1.5,
+      mult: Map.get(spec, :mult, 1) * Data.rules().world.night_rare_mult,
       night: true
     })
   end

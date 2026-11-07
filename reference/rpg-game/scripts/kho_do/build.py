@@ -320,7 +320,9 @@ mode_rows = "".join([
 ])
 mh, ma, md = MON["hp"], MON["atk"], MON["def"]
 monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(mh['level_sq'])}L², công {n(ma['base'])} + {n(ma['level'])}L, "
-                f"thủ {n(md['base'])} + {n(md['level'])}L. Quái không né (mình trúng theo tỉ lệ trúng).")
+                f"thủ {n(md['base'])} + {n(md['level'])}L. Quái không né (mình trúng theo tỉ lệ trúng). "
+                f"Trùm: máu ×{n(MON['boss']['hp'])}, công ×{n(MON['boss']['atk'])}, thủ ×{n(MON['boss']['def'])}, kinh nghiệm ×{n(MON['boss']['xp'])}, vàng ×{n(MON['boss']['gold'])}, "
+                f"thêm chiêu đặc biệt mỗi vài lượt. Quái Bóng Đêm ({pct(R['world']['night_rare_chance'])} quái mới sinh ban đêm): máu / công / thủ ×{n(R['world']['night_rare_mult'])}.")
 
 # ---------- Sự kiện (RULES: devil_square, blood_castle, chaos_castle, kalima, castle_siege, raids, invasion; world_boss) ----------
 LIB = D["library"]

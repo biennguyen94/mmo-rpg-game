@@ -1767,3 +1767,11 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   - Nút "Gọi Thạch Long Ẩn": thức giấc ngay, đêm nay không tự thả nữa.
   - Không thêm bảng: trạng thái là dòng `admin_log` op `secret` mới nhất, khởi động lại vẫn giữ.
   - Biến `SECRET_OPEN` vẫn thắng nếu có đặt.
+
+## Trùm mạnh hơn quái thường (2026-11-07, anh chọn "như em đề xuất")
+- Trước: trùm (cờ trùm: trùm vùng, trùm đêm Thạch Long Ẩn, trùm vàng…) chỉ có máu ×2,4; công / thủ bằng quái thường cùng cấp, chỉ nguy hiểm ở chiêu đặc biệt mỗi 3 lượt.
+- Nay: `RULES.monster.boss.atk` = 1,15, `def` = 1,2 (máu / EXP / vàng giữ nguyên ×2,4 / ×5 / ×6). Trùm thế giới, trùm tầng tháp, Kundun, trùm Lâu Đài Máu dựng quái không cờ trùm nên không đổi.
+- Chọn mức qua `mix hac_long.simulate 5 --seed 42` (đánh từ cấp 1 tới Hắc Long, 4 lớp × 5 cách chơi):
+  - mức 1,25 / 1,3: vẫn thắng 5/5, nhưng chết 4–13 lần (trước 0–2), số trận +10–25%, Hắc Long bị hạ ở cấp 35–41 → gắt quá;
+  - mức 1,15 / 1,2: thắng 5/5, chết 1–6 lần, số trận +2–10%, Hắc Long vẫn bị hạ quanh cấp 35 → chọn.
+- Quái Bóng Đêm: hệ số ×1,5 trước viết cứng trong `world.ex` (`night_variant`) chuyển sang `RULES.world.night_rare_mult` (giá trị không đổi).
