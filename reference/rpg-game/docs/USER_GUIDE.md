@@ -111,7 +111,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   đêm. Gần sáng đá bắt đầu rơi, 5 giờ động sụp và đẩy mọi người ra. Tên người tìm ra động đầu tiên mỗi đêm và người hạ trùm
   được khắc lên Bia ở Đền Cổ.
 - **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
-  nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Tắt bản đồ thu nhỏ ở Menu → Cài đặt.
+  nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Giữ và kéo bản đồ thu nhỏ để dời nó sang chỗ khác trong khung (máy nhớ vị trí);
+  tắt bản đồ thu nhỏ ở Menu → Cài đặt.
 - **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,
   bão tuyết… Khi đánh quái, kỹ năng cùng hệ với thời tiết mạnh hơn: quang → Ánh Sáng +5%, mưa / giông → Sét +5% / +10%,
   tuyết / bão tuyết → Băng +5% / +10%, sương → Bóng Tối +5%, lá bay → Gió +5%, gió cát → Đất +5%, tàn lửa → Lửa +5%

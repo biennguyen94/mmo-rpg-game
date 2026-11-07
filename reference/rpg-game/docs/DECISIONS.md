@@ -1775,3 +1775,9 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   - mức 1,25 / 1,3: vẫn thắng 5/5, nhưng chết 4–13 lần (trước 0–2), số trận +10–25%, Hắc Long bị hạ ở cấp 35–41 → gắt quá;
   - mức 1,15 / 1,2: thắng 5/5, chết 1–6 lần, số trận +2–10%, Hắc Long vẫn bị hạ quanh cấp 35 → chọn.
 - Quái Bóng Đêm: hệ số ×1,5 trước viết cứng trong `world.ex` (`night_variant`) chuyển sang `RULES.world.night_rare_mult` (giá trị không đổi).
+
+## Bản đồ thu nhỏ kéo được (2026-11-07, anh hỏi "giữ và kéo đi")
+- Giữ và kéo (chuột hoặc ngón tay, ngưỡng 6px) để dời bản đồ thu nhỏ trong khung bản đồ; bấm nhẹ vẫn mở bản đồ thế giới, kéo xong không mở.
+- Vị trí lưu ở trình duyệt (`localStorage` `hl-minimap-pos`) theo tỉ lệ khoảng trống trong khung (0..1), nên đổi cỡ màn / xoay máy / bật "vừa màn hình" vẫn đúng góc và không lọt ra ngoài khung. Chỉ là tùy chọn giao diện, không gửi server.
+- Nút chat (góc phải dưới) và nút vừa màn hình (góc phải trên) vẫn nằm trên bản đồ thu nhỏ để không bị che.
+- e2e `minimap` (máy tính, điện thoại, cảm ứng thật).
