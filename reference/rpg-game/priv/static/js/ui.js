@@ -1954,7 +1954,8 @@
   };
 
   // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
-  const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
+  // cấp ép: món trên người, hoặc món trong thùng đồ chung (`view.storage.ups`, DECISIONS "Nhiều nhân vật")
+  const upLevel = (id) => (P.upgrades && P.upgrades[id]) || (P.view && P.view.storage && P.view.storage.ups && P.view.storage.ups[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
   const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
   // % sát thương / hấp thụ cánh bậc `tier` cộng thêm ở +`lv` (server tính sẵn: Engine.wing_up/3)
