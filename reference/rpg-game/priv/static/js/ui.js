@@ -144,7 +144,7 @@
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   // FX đợt 3: hào quang theo đồ (look.aura: 7 / 9 / 11, server tính) — viền sáng quanh hình nhân vật
   const auraCls = (look) => (look && look.aura ? ` aura-${look.aura}` : '');
-  const heroSprite = (cls) => `<img class="sprite ${cls || ''}${auraCls(P && P.view.look)}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
+  const heroSprite = (cls) => `<img class="sprite ${cls || ''}${auraCls(P && P.view.look)}" ${window.Doll.src(P && P.view.look)} alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
 
   // ---------- Thông báo (Phase 8, L2) ----------
@@ -407,7 +407,7 @@
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
-        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}${o.account ? ` · @${esc(o.account)}` : ''}</div></button>${isAdminRole() ? `<button class="btn small-btn" data-adm="to_village" data-uid="${o.id}" title="Đưa về Làng (gỡ kẹt)" aria-label="Đưa ${esc(o.name)} về Làng">🏠</button>` : ''}<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
+        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}${o.account ? ` · @${esc(o.account)}` : ''}</div></button>${isAdminRole() ? `<button class="btn small-btn" data-adm="goto_player" data-uid="${o.id}" title="Tới chỗ người này" aria-label="Tới chỗ ${esc(o.name)}">📍</button>` : ''}${isAdminRole() ? `<button class="btn small-btn" data-adm="to_village" data-uid="${o.id}" title="Đưa về Làng (gỡ kẹt)" aria-label="Đưa ${esc(o.name)} về Làng">🏠</button>` : ''}<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
       </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
         <form id="adm-lookup" class="chat-form"><input type="text" id="adm-name" placeholder="Tên nhân vật hoặc tên đăng nhập" autocomplete="off"><button class="btn" type="submit">Tìm</button></form>
@@ -466,7 +466,7 @@
       ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
       ${line('set_tower', 'Kỷ lục tháp (mở kỹ năng tháp)', num('floor', 100, 'min="0" max="1000"'), 'Đặt')}
-      ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh)', num('n', 0, 'min="0" max="10"'), 'Đặt')}
+      ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh; quá 10 là chuyển sinh vô hạn)', num('n', 0, 'min="0" max="999"'), 'Đặt')}
       ${line('set_mastery', 'Cấp thông thạo mọi kỹ năng đang có', num('lv', 10, `min="1" max="${(RULES.skillMastery || {}).max || 10}"`), 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
@@ -476,7 +476,7 @@
           ${woptSelect(gearBases[0] && gearBases[0][0])}</div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
       ${line('give_pet', 'Thú cưng (cả Long Vương), đặt cấp thú, dắt theo luôn', `<select name="id">${[...PETS].sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0) || a.price - b.price).map((pt) => `<option value="${pt.id}">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</option>`).join('')}</select><label class="small">Cấp ${num('level', RULES.petMaxLevel, `min="1" max="${RULES.petMaxLevel}"`)}</label>`, 'Tặng')}
-      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="to_village" data-uid="${u.id}" title="Gỡ kẹt: kết thúc trận như bỏ chạy (không mất gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng">🏠 Về Làng</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="goto_player" data-uid="${u.id}" title="Nhân vật của mình dịch chuyển tới bản đồ và ô của người này">📍 Đến chỗ</button><button class="btn small-btn" data-adm="to_village" data-uid="${u.id}" title="Gỡ kẹt: kết thúc trận như bỏ chạy (không mất gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng">🏠 Về Làng</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
       ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
@@ -761,7 +761,7 @@
       const inParty = party && party.members.some((m) => m.id === o.id);
       const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
       return `<div class="map-dialog card">
-        <div class="row"><img class="sprite" src="${window.Doll.url(o.look)}" alt=""><div class="grow">
+        <div class="row"><img class="sprite" ${window.Doll.src(o.look)} alt=""><div class="grow">
           ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}<h3>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h3>
           <p class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} · Đấu trường ${o.arena.rating} (${o.arena.wins}T/${o.arena.losses}B)</p></div></div>
         <p class="small">${[o.gear.weapon, o.gear.armor, o.gear.shield, o.gear.wing].filter(Boolean).map(esc).join(' · ')}</p>
@@ -1067,7 +1067,7 @@
     const inParty = (id) => party && party.members.some((x) => x.id === id);
     return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
       ${list.length ? `<div class="list">${list.map((o) => `<button class="item people-row" data-act="profile" data-uid="${o.id}">
-        <img class="sprite sm" src="${window.Doll.url(o.look)}" alt="">
+        <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
         <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
           <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
         <span class="small muted">›</span></button>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
@@ -1106,7 +1106,7 @@
         ${pr.protect_s ? `<div class="small" style="color:var(--good)">🛡 Được bảo vệ sau khi gục · còn ${pr.protect_s} giây</div>` : ''}
         ${o.guild ? `<div class="small muted">Bang ${esc(o.guild.name)}</div>` : ''}
         <div class="prof-lv">${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} ${esc(c.name || '')}</div>
-        <img class="sprite prof-doll${auraCls(o.look)}" src="${window.Doll.url(o.look)}" alt="">
+        <img class="sprite prof-doll${auraCls(o.look)}" ${window.Doll.src(o.look)} alt="">
         <div class="small muted">${pr.online ? `🟢 Đang online${pr.where ? ` @ ${esc(pr.where)}` : ''}` : `Lần cuối: ${day(pr.last_seen)}`}</div>
       </div>
       <div class="prof-boxes">
@@ -1569,7 +1569,7 @@
       const where = (WORLD.maps[c.map] || {}).name || c.map || '';
       const del = charSel.del === c.id;
       // hình nhân vật mặc đồ (như hồ sơ), không có thì icon lớp
-      const pic = c.look ? `<img class="sprite${auraCls(c.look)}" src="${window.Doll.url(c.look)}" alt="">` : icon(cls.icon || 'person', 'lg');
+      const pic = c.look ? `<img class="sprite${auraCls(c.look)}" ${window.Doll.src(c.look)} alt="">` : icon(cls.icon || 'person', 'lg');
       return `<div class="item char-row">${pic}<div class="grow"><div class="name">${esc(c.name)}</div>
           <div class="small muted">${esc(cls.name || c.cls)} · cấp ${c.level}${c.rebirths ? ` · CS ${c.rebirths}` : ''}${where ? ` · ${esc(where)}` : ''}</div></div>
           <button class="btn" data-act="char-del" data-cid="${c.id}" aria-label="Xóa ${esc(c.name)}">Xóa</button>
@@ -3533,7 +3533,7 @@
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
         <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
-        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
+        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
         <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>

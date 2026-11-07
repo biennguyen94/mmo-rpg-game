@@ -767,6 +767,27 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # tới chỗ người chơi: nhân vật của quản trị dịch chuyển tới bản đồ và ô của người đó (bản đồ chung; tháp / phòng sự
+  # kiện / bản đồ riêng thì thôi)
+  defp admin("goto_player", %{"uid" => id}, s) when is_integer(id) do
+    me = s.assigns.user_id
+    target = if id == me, do: nil, else: Session.get(id)
+
+    cond do
+      target == nil ->
+        {:error, "Không tìm thấy nhân vật."}
+
+      not HacLong.World.shared?(target.pos) ->
+        {:error, "#{target.name} đang ở bản đồ riêng (tháp, sự kiện…), không tới được."}
+
+      true ->
+        case Session.teleport(me, target.pos) do
+          {:ok, msg} -> {:ok, %{msg: "#{msg} Chỗ của #{target.name}."}}
+          err -> err
+        end
+    end
+  end
+
   defp admin("bots_to_village", _p, _s) do
     ids = HacLong.Bots.user_ids()
     n = Enum.count(ids, &match?({:ok, _}, Session.to_village(&1, "ADMIN_BOTS")))

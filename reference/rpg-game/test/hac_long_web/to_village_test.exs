@@ -55,4 +55,26 @@ defmodule HacLongWeb.ToVillageTest do
     assert q.gold == gold
     assert {:ok, %{msg: "Đã đưa " <> _}} = admin(sa, "bots_to_village", %{})
   end
+
+  test "quản trị tới chỗ người chơi: nhân vật của quản trị sang đúng bản đồ, ô; bản đồ riêng thì thôi" do
+    a = create_user()
+    {:ok, _} = Moderation.set_admin(a.username, true)
+    player(a, %{pos: %{map: "village", x: 12, y: 14}})
+    sa = join(a)
+
+    u = create_user()
+    player(u, %{pos: %{map: "forest_1", x: 3, y: 3}})
+    _ = join(u)
+
+    assert {:ok, %{msg: "Đã tới " <> _}} = admin(sa, "goto_player", %{"uid" => u.id})
+
+    assert Session.get(a.id).pos == Session.get(u.id).pos and
+             Session.get(a.id).pos.map == "forest_1"
+
+    assert {:error, _} = admin(sa, "goto_player", %{"uid" => a.id})
+
+    # người thường không dùng được
+    su = join(create_user() |> tap(&player(&1, %{})))
+    assert {:error, _} = admin(su, "goto_player", %{"uid" => a.id})
+  end
 end

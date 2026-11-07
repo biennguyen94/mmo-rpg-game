@@ -1534,3 +1534,9 @@ Mỗi tài khoản tối đa `RULES.account.max_characters` (5) nhân vật, m�
 - **Quản trị**: tra cứu hiện tài khoản và mọi nhân vật (bấm để xem nhân vật khác); lệnh sửa nhân vật áp nhân vật đang xem; danh sách online ghi kèm `@tài khoản`.
 - Bot: mỗi bot vẫn một tài khoản một nhân vật.
 - **Màn chọn nhân vật** (anh chốt 2026-11-07, như MU): hiện mỗi lần mở game (tab / ứng dụng mới) và sau khi đăng nhập, kể cả tài khoản một nhân vật; danh sách theo thứ tự tạo, không đánh dấu nhân vật gần nhất, mỗi dòng là hình nhân vật mặc đồ đang mặc (`look` như hồ sơ, `/api/me` gửi kèm). F5, trang tự tải lại (server cập nhật, đổi ngôn ngữ), mất mạng nối lại thì vào thẳng nhân vật đang chơi của tab (nhớ trong `sessionStorage`, mất khi đóng tab). Chưa có nhân vật thì vào thẳng màn tạo nhân vật.
+
+## Quản trị tới chỗ người chơi, hình nhân vật, Thủ Kho (2026-11-07)
+- Quản trị: `goto_player` dịch chuyển nhân vật của quản trị tới bản đồ + ô của người chơi (bản đồ chung; `Session.teleport/2`, chung đường với "Đưa về Làng"). Ô "Số lần chuyển sinh" của Chỉnh nhân vật cho tới 999.
+- Hình nhân vật hiện "không mặc gì" (bot, người khác) ở Quanh đây / hồ sơ / bảng người chơi: lúc ảnh các lớp đồ chưa tải xong `Doll.url` trả hình mặc định và những chỗ đó không vẽ lại. Nay `Doll.src` đánh dấu ảnh tạm (`data-doll`), tải xong `Doll.fix` thay đúng hình (dữ liệu `look` ở server vẫn đúng: kiểm 226 nhân vật không thiếu lớp nào).
+- NPC Thủ Kho dùng hình người (hình Thợ Mộc cũ, CC0) thay hình cái tủ.
+

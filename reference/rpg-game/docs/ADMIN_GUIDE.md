@@ -539,3 +539,9 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   thùng phải có `gear_log` cuối là `in`, lý do `SHARED`, mã tài khoản).
 - Quà "gửi mọi người": mỗi tài khoản một thư, vào nhân vật chơi gần nhất; "Số người nhận" đếm theo tài khoản.
 
+### Tới chỗ người chơi
+
+- Nút 📍 ở danh sách online và **📍 Đến chỗ** ở thẻ tra cứu: nhân vật của quản trị dịch chuyển tới đúng bản đồ, ô của người đó
+  (đang đánh thì trận kết thúc như bỏ chạy). Người đó ở bản đồ riêng (tháp, sự kiện) thì không tới được. Ghi `admin_log`
+  op `goto_player`. Số lần chuyển sinh ở "Chỉnh nhân vật" đặt được tới 999 (chuyển sinh vô hạn).
+

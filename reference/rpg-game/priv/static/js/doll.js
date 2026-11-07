@@ -123,5 +123,24 @@
     return urls[k];
   }
 
-  window.Doll = { canvas, url, onReady: (f) => listeners.push(f) };
+  // Thuộc tính `src` cho <img> hình nhân vật: ảnh lớp chưa tải xong thì tạm hình mặc định và đánh dấu `data-doll`,
+  // tải xong thì `fix()` tự thay đúng hình (danh sách Quanh đây, hồ sơ… không vẽ lại cả trang; trước đây cứ hiện
+  // hình người trần dù đang mặc đồ).
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  function src(look) {
+    const u = url(look);
+    return u === FALLBACK ? `src="${u}" data-doll="${esc(JSON.stringify(look || {}))}"` : `src="${u}"`;
+  }
+  function fix() {
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll('img[data-doll]').forEach((im) => {
+      let look;
+      try { look = JSON.parse(im.dataset.doll); } catch (e) { return; }
+      const u = url(look);
+      if (u !== FALLBACK) { im.src = u; im.removeAttribute('data-doll'); }
+    });
+  }
+  listeners.push(fix);
+
+  window.Doll = { canvas, url, src, fix, onReady: (f) => listeners.push(f) };
 })();

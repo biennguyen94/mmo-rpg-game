@@ -155,6 +155,12 @@ defmodule HacLong.Game.Session do
   def to_village(user_id, why \\ "ADMIN"), do: call(user_id, {:to_village, why})
 
   @doc """
+  Quản trị dịch chuyển nhân vật của mình tới ô `pos` (`%{map, x, y}`, bản đồ chung) — tới chỗ người chơi khác.
+  Như `to_village/2`: đang trong trận thì kết thúc như bỏ chạy, rời tháp / phòng sự kiện.
+  """
+  def teleport(user_id, pos), do: call(user_id, {:teleport, pos})
+
+  @doc """
   Tắt Session của `user_id` nếu đang chạy (ghi nốt trạng thái ở `terminate/2`). Dùng khi đổi / xóa nhân vật: mỗi tài
   khoản một nhân vật online, Session của nhân vật khác không giữ bản cũ của thùng đồ chung (DECISIONS "Nhiều nhân vật").
   """
@@ -678,26 +684,17 @@ defmodule HacLong.Game.Session do
     do: reply({:error, "Chưa có nhân vật."}, s)
 
   defp handle({:to_village, _why}, _from, s) do
-    # đang ở bảng kết quả / trận đã xong vẫn được: chỉ đóng bảng
-    old = s.player
-    room = get_in(old, [:tower, :room])
-    if room, do: HacLong.EventRoom.leave(room, s.user_id)
-
-    p =
-      old
-      |> interrupt_battle(s.user_id)
-      |> Map.put(:tower, nil)
-      |> Map.put(:pos, World.village_spawn())
-
-    if map_size(s.tabs) > 0 do
-      World.leave(old, s.user_id)
-      World.enter(p, s.user_id)
-    end
-
-    s = save(s, p)
-    broadcast(s, p, nil)
+    {old, p, s} = relocate(s, World.village_spawn())
     notify(s, "🏠 Đã đưa bạn về Làng.")
     reply({:ok, "Đã đưa #{p.name} về Làng (từ #{old.pos.map})."}, s)
+  end
+
+  defp handle({:teleport, _pos}, _from, %{player: nil} = s),
+    do: reply({:error, "Chưa có nhân vật."}, s)
+
+  defp handle({:teleport, pos}, _from, s) do
+    {_old, _p, s} = relocate(s, pos)
+    reply({:ok, "Đã tới #{HacLong.World.Maps.get(pos.map).name} (#{pos.x}, #{pos.y})."}, s)
   end
 
   defp handle({:admin, fun, _ref}, _from, s) do
@@ -1745,6 +1742,29 @@ defmodule HacLong.Game.Session do
   defp left_trade(_uid, _old, _new), do: :ok
 
   # đồ rơi lúc túi đồ hiếm đầy (`Gear.add/2`): gửi Hộp thư cùng transaction với lần ghi nhân vật
+  # chuyển nhân vật sang ô `pos`: đang ở bảng kết quả / trận đã xong vẫn được (chỉ đóng bảng); trận đang đánh kết thúc
+  # như bỏ chạy; rời tháp / phòng sự kiện
+  defp relocate(s, pos) do
+    old = s.player
+    room = get_in(old, [:tower, :room])
+    if room, do: HacLong.EventRoom.leave(room, s.user_id)
+
+    p =
+      old
+      |> interrupt_battle(s.user_id)
+      |> Map.put(:tower, nil)
+      |> Map.put(:pos, pos)
+
+    if map_size(s.tabs) > 0 do
+      World.leave(old, s.user_id)
+      World.enter(p, s.user_id)
+    end
+
+    s = save(s, p)
+    broadcast(s, p, nil)
+    {old, p, s}
+  end
+
   # lệnh Thủ Kho đổi thùng chung: ghi thùng và nhân vật cùng transaction. Đồ vào thùng: nhân vật trước (nhật ký `out`
   # rồi `in`); đồ ra khỏi thùng: thùng trước.
   defp save(s, %{storage_dirty: true} = player) do
