@@ -30,6 +30,8 @@
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
   // B4 (DECISIONS "Bản đồ đẹp hơn"): vừa vào bản đồ (`enter.at`): mở dần từ tối + xoáy sáng, tên bản đồ to giữa màn
   let enter = { map: null, at: 0 };
+  // B7: dấu chân lâu trên tuyết / cát (5 giây), cỏ bắn lên khi bước qua bụi cỏ, gợn nước khi đứng ven hồ
+  let prints = [], rustle = [], stillSince = 0;
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
@@ -450,7 +452,8 @@
     const y1 = Math.min(m.tiles.length - 1, Math.ceil((cy + VH()) / TILE));
     const floor = image(m.floor);
     const labels = [], talk = [];
-    const fx = fxOn(), fountains = [], lanterns = [];
+    const fx = fxOn(), fountains = [], lanterns = [], tufts = [];
+    const grassy = /forest|swamp|grass/.test(m.floor || '') && outdoors(P);
 
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -477,6 +480,8 @@
           if (fx && kind === 'fountain') fountains.push([px, py]);
           if (kind === 'lantern') lanterns.push([px, py]);
         }
+        // B7: bụi cỏ lay theo gió (ô cỏ / nền cỏ, ~1/3 số ô, chọn cố định theo vị trí)
+        if (fx && grassy && (kind === 'grass' || kind === 'floor') && rnd(x * 7 + y * 13, 9) < 0.34) tufts.push([px, py, x, y]);
         if (GROUND[kind]) continue;
         if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
         if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
@@ -490,6 +495,9 @@
         }
       }
     }
+
+    if (tufts.length) grassFx(now, tufts);
+    if (fx) printFx(now, cx, cy);
 
     // sự kiện "map" có thể đến trước/sau lúc đổi bản đồ một chút
     const here = world.map === P.pos.map;
@@ -891,13 +899,66 @@
     ctx.restore();
   }
 
+  // B7: bụi cỏ — 3 lá cỏ mảnh lay theo gió (lệch pha theo vị trí, gió thổi từng đợt)
+  function grassFx(t, tufts) {
+    ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+    const gust = 0.6 + 0.4 * Math.sin(t / 2300);
+    for (const [px, py, x, y] of tufts) {
+      const bx = px + 6 + rnd(x, y + 3) * (TILE - 14), by = py + 12 + rnd(x + 5, y) * (TILE - 14);
+      const sw = Math.sin(t / 650 + x * 0.9 + y * 0.4) * 2.6 * gust;
+      ctx.strokeStyle = rnd(x, y) > 0.5 ? 'rgba(150, 200, 90, 0.85)' : 'rgba(110, 170, 70, 0.85)';
+      ctx.beginPath();
+      for (let i = -1; i <= 1; i++) { ctx.moveTo(bx + i * 2.5, by); ctx.quadraticCurveTo(bx + i * 3 + sw * 0.5, by - 4, bx + i * 3.5 + sw, by - 7 - Math.abs(i) * -1); }
+      ctx.stroke();
+    }
+  }
+  // B7: dấu chân mờ dần 5 giây (tuyết: lõm xanh xám; cát: nâu), cỏ bắn lên khi vừa bước vào bụi cỏ
+  function printFx(t, cx, cy) {
+    prints = prints.filter((s) => t - s.t0 < 5000);
+    for (const s of prints) {
+      const a = 0.5 * (1 - (t - s.t0) / 5000), x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE / 2 + 6 - cy;
+      const ang = Math.atan2(s.dy, s.dx) + Math.PI / 2;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = s.snow ? `rgba(120, 140, 170, ${a})` : `rgba(120, 90, 50, ${a})`;
+      ctx.beginPath(); ctx.ellipse(-3.5, -2, 2, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(3.5, 3, 2, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    rustle = rustle.filter((s) => t - s.t0 < 600);
+    for (const s of rustle) {
+      const k = (t - s.t0) / 600, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 6 - cy;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI - Math.PI, r = 4 + k * 12;
+        ctx.fillStyle = `rgba(${130 + i * 10}, ${190 - i * 5}, 80, ${0.8 * (1 - k)})`;
+        ctx.fillRect(x + Math.cos(a) * r, y + Math.sin(a) * r * 0.8 + k * k * 8, 2, 3);
+      }
+    }
+  }
+
   function moveFx(t, m, P, cx, cy, px, py) {
     const key = `${P.pos.map}:${P.pos.x},${P.pos.y}`;
     if (lastTile && lastTile.key !== key) {
-      if (lastTile.map === P.pos.map) steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
-      else arrive = t;
+      if (lastTile.map === P.pos.map) {
+        steps.push({ x: lastTile.x, y: lastTile.y, t0: t, wet: '=~'.includes((m.tiles[lastTile.y] || '')[lastTile.x]) });
+        const f = m.floor || '';
+        if (/mountain|camp/.test(f)) prints.push({ x: lastTile.x, y: lastTile.y, t0: t, dx: P.pos.x - lastTile.x, dy: P.pos.y - lastTile.y, snow: f.includes('mountain') });
+        if ((m.tiles[P.pos.y] || '')[P.pos.x] === ',' || ((m.tiles[P.pos.y] || '')[P.pos.x] === '.' && /forest|swamp/.test(f))) rustle.push({ x: P.pos.x, y: P.pos.y, t0: t });
+        if (prints.length > 40) prints.shift();
+      } else { arrive = t; prints = []; rustle = []; }
+      stillSince = t;
     }
     lastTile = { key, map: P.pos.map, x: P.pos.x, y: P.pos.y };
+    if (!stillSince) stillSince = t;
+    // đứng yên ven hồ: gợn nước lan ra ở ô nước kề bên, mỗi ~1,8 giây
+    if (t - stillSince > 600) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        if (!isWater(m, P.pos.x + dx, P.pos.y + dy)) continue;
+        const k = ((t - stillSince) % 1800) / 1800, x = (P.pos.x + dx) * TILE + TILE / 2 - cx, y = (P.pos.y + dy) * TILE + TILE / 2 - cy;
+        ctx.strokeStyle = `rgba(210, 235, 255, ${0.5 * (1 - k)})`; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(x - dx * 8, y - dy * 6, 3 + k * 12, 1.5 + k * 5, 0, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+    }
     steps = steps.filter((s) => t - s.t0 < 520);
     for (const s of steps) {
       const k = (t - s.t0) / 520, x = s.x * TILE + TILE / 2 - cx, y = s.y * TILE + TILE - 5 - cy;
