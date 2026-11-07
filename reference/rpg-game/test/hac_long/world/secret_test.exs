@@ -68,6 +68,16 @@ defmodule HacLong.World.SecretTest do
     assert [%{name: "Thử", kind: "boss"} | _] = SecretRecords.recent(5)
   end
 
+  test "quái trong động (ẩn khỏi Thư viện) mang tên, cấp để client vẽ đúng" do
+    map = Secret.map_id()
+    kind = hd(HacLong.World.Maps.get(map).spawns).monster
+    spec = Data.side_monster(kind)
+    MapServer.clear_monsters(map)
+    q = MapServer.put_monster(map, kind, {3, 3})
+    assert q.name == spec.name and q.level == spec.level
+    MapServer.clear_monsters(map)
+  end
+
   test "quản trị mở / đóng có hiệu lực tới 5 giờ sáng kế tiếp" do
     on_exit(fn -> :persistent_term.put({Secret, :override}, {"auto", 0}) end)
     t = ~U[2026-11-07 10:00:00Z]

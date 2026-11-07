@@ -470,6 +470,14 @@ defmodule HacLong.World.MapServer do
     }
 
     m = if elite, do: Map.put(m, :elite, true), else: m
+
+    # quái Động Bí Ẩn bị ẩn khỏi Thư viện (client không tra được): gửi kèm tên, cấp
+    m =
+      case s.map.secret && Data.side_monster(kind) do
+        %{name: name, level: level} -> Map.merge(m, %{name: name, level: level})
+        _ -> m
+      end
+
     {m, %{s | monsters: Map.put(s.monsters, m.id, m), next_id: s.next_id + 1}}
   end
 

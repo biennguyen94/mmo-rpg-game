@@ -49,6 +49,9 @@ await X.page.waitForFunction(() => window.__hl.player().pos.map === 'vn_dong_bi_
 R.check('cấp 40 bước vào khe đá: vào Động Bí Ẩn', (await X.page.evaluate(() => window.__hl.player().pos.map)) === 'vn_dong_bi_an');
 await X.page.waitForTimeout(2500);
 R.check('trong động thấy Thạch Long Ẩn', await X.page.evaluate(() => window.__hl.world().monsters.some((m) => m.boss)));
+R.check('quái trong động có tên, cấp (không phải cấp 1)', await X.page.evaluate(() => { const ms = window.__hl.world().monsters; return ms.length > 0 && ms.every((m) => m.name && m.level > 1); }));
+const top = await X.page.textContent('.map-top');
+R.check('thanh trên: khoảng cấp quái động', /Nơi bí ẩn · quái cấp \d+–\d+/.test(top) && !top.includes('undefined'), top.slice(0, 160));
 await shot(X.page, 'secret-cave.png');
 
 await openAdmin();

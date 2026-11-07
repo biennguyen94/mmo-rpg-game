@@ -659,6 +659,51 @@ smith_note = (f"<b>Rèn đồ ở Thợ Rèn</b>: ra một món đúng cấp, đ
 # bộ tên thay cho tên MU (DECISIONS "Bộ tên thay cho tên MU"): ô tick "Tên mới" trên trang đổi chữ theo bảng này
 _alt = json.load(open(os.path.join(os.path.dirname(__file__), "../../priv/static/i18n/names_alt.json"), encoding="utf-8"))
 names_alt = json.dumps({k: v[0] for g in _alt["groups"].values() for k, v in g.items()}, ensure_ascii=False).replace("</", "<\\/")
+# ---------- Thế giới (DECISIONS "Bản đồ đẹp hơn", "Động Bí Ẩn"): thời tiết, bản đồ mới, Thương Nhân, Động Bí Ẩn ----------
+WX = R["weather"]
+WXN = {"clear": "☀️ Quang", "rain": "🌧️ Mưa", "storm": "⛈️ Giông", "fog": "🌫️ Sương", "snow": "❄️ Tuyết", "blizzard": "🌨️ Bão tuyết",
+       "leaves": "🍂 Lá bay", "dust": "💨 Gió cát", "embers": "🔥 Tàn lửa"}
+REGN = {"village": "Làng (và bản đồ nền cỏ)", "lake": "Hồ Long Vương", "forest": "Rừng", "swamp": "Đầm lầy", "mountain": "Núi",
+        "graveyard": "Nghĩa địa", "camp": "Trại", "lair": "Hang"}
+ELN = R["elements"]["names"]
+ELI = R["elements"]["icons"]
+wx_bonus = "".join(f"<tr><td>{WXN.get(k, k)}</td><td>{ELI.get(v['element'], '')} {E(ELN.get(v['element'], v['element']))}</td><td class=n>+{pct(v['pct'])}</td></tr>"
+                   for k, v in WX["bonus"].items())
+def _wx_region(opts):
+    tot = sum(w for _, w in opts)
+    return ", ".join(f"{WXN.get(k, k)} {pct(w / tot)}" for k, w in opts)
+wx_regions = "".join(f"<tr><td>{E(REGN.get(r, r))}</td><td>{_wx_region(o)}</td></tr>" for r, o in WX["regions"].items())
+vn_maps = [m for m in LIB["maps"] if m["id"].startswith("vn_")]
+vn_rows = "".join(
+    f"<tr><td><b>{E(m['name'])}</b></td><td class=n>{(str(m['min']) + '–' + str(m['max'])) if m['monsters'] else ('cần cấp ' + str(m['min']) if m['min'] else '—')}</td>"
+    f"<td>{E(', '.join(MAPN.get(t, t) for t in m['to'] if t in MAPN))}</td><td>{E(', '.join(MON[k]['name'] for k in m['monsters'] if k in MON)) or 'không có quái'}</td></tr>"
+    for m in sorted(vn_maps, key=lambda x: x["min"] or 0))
+TRD = R["trader"]
+trader_rows = "".join(f"<tr><td>{E(IT.get(o['item'], {}).get('name', o['item']))}{' ×' + str(o['n']) if o['n'] > 1 else ''}</td><td class=n>{n(o['price'])}</td><td class=n>{o['limit']}</td></tr>" for o in TRD["offers"])
+SEC = R["secret"]
+_side = json.load(open(os.path.join(os.path.dirname(__file__), "../../priv/game_data/side.json"), encoding="utf-8"))["SIDE_MONSTERS"]
+_boss = next((m for m in _side if m["id"] == SEC["boss"]), {"name": SEC["boss"], "level": "?"})
+secret_li = "".join(f"<li>{x}</li>" for x in [
+    f"Cổng: <b>Khe Đá Phát Sáng</b> sau bức tường Đền Cổ Trên Núi. Không dịch chuyển tới được, không có trong Thư viện / Chọn map.",
+    f"Chỉ mở ban đêm (20–5 giờ), khoảng <b>{pct(SEC['open_chance'])}</b> số đêm (hỏi Lão Từ Giữ Đền). Cần cấp <b>38</b>. Quản trị mở / đóng được.",
+    f"Người đầu tiên vào mỗi đêm được báo cả server và khắc tên lên Bia Động Bí Ẩn.",
+    f"Trùm đêm <b>{E(_boss['name'])}</b> (cấp {_boss['level']}): thức giấc một lần mỗi đêm mở, lúc ngẫu nhiên {SEC['boss_from_h']}–{SEC['boss_to_h']} giờ, báo cả server. Hạ được: chắc chắn 1 ngọc, thêm "
+    + ", ".join(f"{n} {E(IT.get(k, {}).get('name', k))}" for k, n in SEC["boss_items"].items()) + ", tên lên Bia.",
+    f"Quái Tinh Anh (viền tím): {pct(SEC['elite_chance'])} quái trong động, chỉ số ×{n(SEC['elite_mult'])}, vàng / kinh nghiệm ×{n(SEC['elite_reward'])}, tỉ lệ rơi ngọc ×{n(SEC['elite_jewel_mult'])}.",
+    f"{SEC['warn_min']} phút trước 5 giờ sáng đá bắt đầu rơi; 5 giờ động sụp, ai còn trong động bị đưa ra Đền Cổ (không mất gì).",
+    f"Thành tựu: <b>Kẻ Đi Đêm</b> (vào động {SEC['night_walker']} đêm khác nhau), <b>Diệt Thạch Long</b> (hạ trùm đêm).",
+])
+WORLD_HTML = f"""<h3>Thời tiết</h3>
+  <p>Đổi mỗi {WX['slot_min']} phút (giờ Việt Nam), cả server thấy như nhau; biểu tượng cạnh tên bản đồ. Đánh quái (không tính đánh người): kỹ năng cùng hệ với thời tiết gây thêm sát thương.</p>
+  <div class="grid2"><div class="scroll"><table><thead><tr><th>Thời tiết</th><th>Hệ được cộng</th><th>Cộng</th></tr></thead><tbody>{wx_bonus}</tbody></table></div>
+  <div class="scroll"><table><thead><tr><th>Vùng</th><th>Thời tiết (tỉ lệ mỗi giờ)</th></tr></thead><tbody>{wx_regions}</tbody></table></div></div>
+  <h3>Bản đồ mang chất Việt</h3>
+  <div class="scroll"><table><thead><tr><th>Bản đồ</th><th>Cấp quái</th><th>Nối với</th><th>Quái</th></tr></thead><tbody>{vn_rows}</tbody></table></div>
+  <p class="note">Ruộng Bậc Thang và Đồng Bằng Sông Nước là bản đồ lớn 50×35. Làng Chài, Chợ Nổi, Đồng Bằng câu cá được (bảng cá vùng sâu).</p>
+  <h3>Thương Nhân Phương Xa (Chợ Nổi)</h3>
+  <p>Mỗi ngày bày {TRD['show']} trong {len(TRD['offers'])} món (đổi theo ngày), mỗi món mua tối đa vài lần mỗi ngày.</p>
+  <div class="scroll"><table><thead><tr><th>Món</th><th>Giá (vàng)</th><th>Lần / ngày</th></tr></thead><tbody>{trader_rows}</tbody></table></div>
+  <h3>Động Bí Ẩn</h3><ul>{secret_li}</ul>"""
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
@@ -672,7 +717,7 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
                  STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']), MASTERY=mastery_note(),
                  RMIN=str(rl['min_level']), REBIRTH=f"Chuyển sinh lần n: +{R['character']['rebirth_points']} × n điểm tiềm năng, kinh nghiệm lên cấp × (1 + {pct(R['character']['rebirth_xp_pct'])} × n); từ lần {R['character']['rebirth_lord_from'] + 1}, muốn chuyển sinh lần k + 1 phải từng hạ chúa tể vùng k. Không giới hạn: quá {R['character']['max_rebirths']} lần mỗi lần chỉ +{R['character']['endless_points']} điểm, kinh nghiệm như lần {R['character']['max_rebirths']}, phải hạ lại chúa tể vùng {R['character']['max_rebirths']} (tổng n − {R['character']['max_rebirths'] - 1} lần).", RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']), RMAPS=str(rl['maps_per_realm']), RSTEP=n(rl['depth_step']),
-                 SELL=pct(R['shop']['sell_ratio']), NAMESALT=names_alt, NAMESN=str(len(json.loads(names_alt)))).items():
+                 SELL=pct(R['shop']['sell_ratio']), NAMESALT=names_alt, WORLD=WORLD_HTML, NAMESN=str(len(json.loads(names_alt)))).items():
     page = page.replace("{{" + k + "}}", v)
 assert "{{" not in page, page[page.index("{{"):page.index("{{") + 40]
 open(OUT, "w", encoding="utf-8").write(page)

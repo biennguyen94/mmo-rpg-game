@@ -3,6 +3,7 @@
  * Dữ liệu bản đồ tĩnh ở GAME_DATA.WORLD; quái và người chơi khác đến từ sự kiện "map" của server. */
 (function () {
   const { WORLD, ZONES } = window.GAME_DATA;
+  const SECRET = (window.GAME_DATA.RULES || {}).secret || {};
   const TILE = 32;
   const WALK = new Set(WORLD.walkable);
   const PORTAL = new Set(['D', 'A', 'O']);
@@ -405,7 +406,7 @@
     const z = m.zone != null ? ZONES[m.zone] : null;
     const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
     if (m.tower) return '';
-    if (m.secret) return 'Nơi bí ẩn';
+    if (m.secret) return SECRET.min ? `Nơi bí ẩn · quái cấp ${SECRET.min}–${SECRET.max}` : 'Nơi bí ẩn';
     if (P.pos.map === 'village') return 'Nơi bình yên';
     if (P.pos.map.endsWith('_boss') && z) return `Phòng trùm · cấp ${z.boss.level}`;
     if (side && side.min && !(side.monsters || []).length) return `Không có quái · cần cấp ${side.min}`;
@@ -466,7 +467,7 @@
       `<span class="phase" id="map-wx">${wxIcon(P)}</span>`;
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : m.secret ? `Nơi bí ẩn · cần cấp ${m.minLevel || 38}` : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : m.secret ? `Nơi bí ẩn${SECRET.min ? ` · quái cấp ${SECRET.min}–${SECRET.max}` : ''} · cần cấp ${m.minLevel || 38}` : side ? (side.monsters && !side.monsters.length ? `Không có quái · cần cấp ${side.min}` : `Bản đồ phụ · quái cấp ${side.min}–${side.max}`) : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 

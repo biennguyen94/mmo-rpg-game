@@ -89,7 +89,7 @@ defmodule HacLongWeb.PageController do
         endlessPoints: Data.rules().character.endless_points,
         botStuckMin: Data.rules().bots.play.stuck_min,
         # Động Bí Ẩn: tỉ lệ đêm mở (ghi trong thẻ quản trị)
-        secret: Map.take(Data.rules().secret, [:open_chance]),
+        secret: secret_info(),
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
@@ -214,6 +214,22 @@ defmodule HacLongWeb.PageController do
       WORLD: Maps.client_data(),
       # Phase 14: Thư viện (bản đồ, quái, vật phẩm)
       LIBRARY: HacLong.Library.get()
+    }
+  end
+
+  # Động Bí Ẩn: tỉ lệ đêm mở (thẻ quản trị) và khoảng cấp quái (bản đồ bị ẩn khỏi Thư viện nên client không tự tính được)
+  defp secret_info do
+    r = HacLong.World.Secret.rules()
+
+    lv =
+      for sp <- (HacLong.World.Maps.get(r.map) || %{spawns: []}).spawns,
+          spec = Data.side_monster(sp.monster),
+          do: spec.level
+
+    %{
+      open_chance: r.open_chance,
+      min: Enum.min(lv, fn -> nil end),
+      max: Enum.max(lv, fn -> nil end)
     }
   end
 end
