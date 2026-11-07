@@ -14,7 +14,7 @@ Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint
 
 Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
 
-Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): hình trùm Hắc Long `monsters/shadow_dragon.png` (CC0, bộ trên) phóng to trên nền vẽ bằng `e2e/app_icons.mjs`.
+Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): logo vector `priv/static/app/logo.svg` tự vẽ cho game này (CC0), xuất các cỡ bằng `e2e/app_icons.mjs`.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng

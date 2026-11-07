@@ -1,18 +1,18 @@
-// Icon ứng dụng (ô tắt trình duyệt, màn hình chính điện thoại, tab): hình trùm Hắc Long (`monsters/shadow_dragon.png`,
-// CC0, xem CREDITS.md) phóng to kiểu pixel trên nền trắng. Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
+// Icon ứng dụng (ô tắt trình duyệt, màn hình chính điện thoại, tab): logo vector `priv/static/app/logo.svg` (rồng đen
+// viền vàng, tự vẽ, CC0; xem CREDITS.md). Ghi vào `priv/static/app/` và `priv/static/favicon.ico`.
 // Chạy: node e2e/app_icons.mjs  (cần Chromium của Playwright)
 import { launch } from './lib.mjs';
 import fs from 'node:fs';
 
 const STATIC = new URL('../priv/static/', import.meta.url).pathname;
-const dragon = 'data:image/png;base64,' + fs.readFileSync(STATIC + 'assets/monsters/shadow_dragon.png').toString('base64');
-// [tệp, cỡ, rồng chiếm (phần cạnh)]: hình vuông kín nền (trình duyệt / máy tự bo góc, cắt tròn); maskable: Android cắt
-// hình, rồng nằm trong vùng an toàn 80%. Cỡ dưới 32 thu nhỏ mượt, từ 32 phóng nguyên lần (pixel sắc nét).
+// logo vector tự vẽ (`priv/static/app/logo.svg`, CC0): nét ở mọi cỡ (trước dùng hình rồng pixel 32×32 phóng to nên vỡ hạt)
+const svg = fs.readFileSync(STATIC + 'app/logo.svg', 'utf8');
+// [tệp, cỡ, hình chiếm (phần cạnh)]: maskable — Android cắt hình, phần vẽ thu vào vùng an toàn 80%, nền vẫn kín.
 const JOBS = [
-  ['app/icon-512.png', 512, 0.96],
-  ['app/icon-192.png', 192, 0.96],
-  ['app/icon-maskable-512.png', 512, 0.62],
-  ['app/apple-touch-icon.png', 180, 0.9],
+  ['app/icon-512.png', 512, 1],
+  ['app/icon-192.png', 192, 1],
+  ['app/icon-maskable-512.png', 512, 0.78],
+  ['app/apple-touch-icon.png', 180, 1],
   ['app/favicon-32.png', 32, 1],
 ];
 // favicon.ico thật (nhiều cỡ, mỗi cỡ một ảnh PNG bên trong)
@@ -21,27 +21,28 @@ const ICO = [16, 32, 48];
 const browser = await launch();
 const page = await browser.newPage();
 async function render(size, scale) {
-  const out = await page.evaluate(async ([dragon, size, scale]) => {
-    const im = new Image();
-    im.src = dragon;
-    await im.decode();
+  const out = await page.evaluate(async ([svg, size, scale]) => {
+    const load = async (src) => { const im = new Image(); im.src = src; await im.decode(); return im; };
+    const im = await load('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
     const c = document.createElement('canvas');
     c.width = c.height = size;
     const g = c.getContext('2d');
-    const bg = g.createRadialGradient(size / 2, size * 0.45, size * 0.05, size / 2, size / 2, size * 0.7);
-    bg.addColorStop(0, '#ffffff');
-    bg.addColorStop(0.7, '#f7f4fa');
-    bg.addColorStop(1, '#ebe5f0');
-    g.fillStyle = bg;
-    g.fillRect(0, 0, size, size);
-    const k = size * scale >= im.width ? Math.floor((size * scale) / im.width) : (size * scale) / im.width;
-    const w = Math.round(im.width * k), x = Math.round((size - w) / 2), y = Math.round((size - w) / 2 + size * 0.02);
-    g.imageSmoothingEnabled = k < 1;
-    g.shadowColor = 'rgba(40, 20, 50, 0.35)';
-    g.shadowBlur = size * 0.03;
-    g.drawImage(im, x, y, w, w);
+    g.imageSmoothingQuality = 'high';
+    // nền kín cả ô (vẽ hình cỡ đầy đủ rồi phủ phần đã thu nhỏ lên trên)
+    g.drawImage(im, 0, 0, size, size);
+    if (scale < 1) {
+      // nền như logo (tâm đỏ tím, mép gần đen), không lộ ô vuông của phần thu nhỏ
+      const bg = g.createRadialGradient(size / 2, size * 0.4, 0, size / 2, size / 2, size * 0.75);
+      bg.addColorStop(0, '#3a1420');
+      bg.addColorStop(0.6, '#1b0f1d');
+      bg.addColorStop(1, '#0c0810');
+      g.fillStyle = bg;
+      g.fillRect(0, 0, size, size);
+      const w = size * scale, o = (size - w) / 2;
+      g.drawImage(im, o, o, w, w);
+    }
     return c.toDataURL('image/png');
-  }, [dragon, size, scale]);
+  }, [svg, size, scale]);
   return Buffer.from(out.split(',')[1], 'base64');
 }
 
