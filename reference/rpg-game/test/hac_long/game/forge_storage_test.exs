@@ -153,7 +153,9 @@ defmodule HacLong.Game.ForgeStorageTest do
       assert Engine.view(p).storage.gear == [g.uid] and
                Engine.view(p).storage.ups == %{g.uid => 4}
 
-      assert Engine.view(p).gear[g.uid]
+      # món trong thùng không lẫn vào đồ của nhân vật (túi đồ trên giao diện)
+      refute Engine.view(p).gear[g.uid]
+      assert Engine.view(p).storage.items[g.uid]
       assert {%{ok: false}, _} = Engine.sell(p, g.uid)
       assert {%{ok: false}, _} = Engine.equip(p, g.uid)
       assert {%{ok: false}, _} = Engine.discard(p, g.uid)

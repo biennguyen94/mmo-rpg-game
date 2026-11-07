@@ -1573,3 +1573,6 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
 - Thẻ đối thủ trong trận đánh người (đồ sát, đấu trường) ghi thêm lớp và số lần chuyển sinh ("Kiếm Sĩ · CS 0 · Cấp 20 · …").
 - Đòn mở màn ghi ngay trong dòng đánh đầu của người tấn công ("… gây ra ⚔ 544 💥 chí mạng (đòn mở màn ×0.5) (máu còn lại: 92)"), bỏ dòng "⚔ Đòn mở màn…" riêng ở nhật ký người tấn công; người bị đánh vẫn thấy dòng "kịp phòng bị" của mình.
 
+## Thùng đồ chung: không lẫn vào túi đồ (2026-11-07, lỗi anh báo)
+Đồ trong thùng chung (của nhân vật khác cất) hiện cả ở túi đồ / Thủ Kho phần "Túi đồ" của nhân vật vừa vào: `Engine.view.gear` bị gộp thêm đồ trong thùng để giao diện vẽ. Nay `view.gear` chỉ là đồ của nhân vật; đồ trong thùng có thông tin riêng ở `view.storage.items` (`Storage.view/1`), client `itemOf` tra cả hai.
+

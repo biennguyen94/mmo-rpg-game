@@ -493,11 +493,8 @@ defmodule HacLong.Game.Engine do
            }}
         end,
       # đồ ngẫu nhiên (cả món đang mặc) đã tính tên, chỉ số, giá bán
-      gear:
-        Map.new(
-          (Map.get(p, :gear) || []) ++ HacLong.Game.Storage.stored_gear(p),
-          &{&1.uid, Gear.resolve(&1)}
-        )
+      # chỉ đồ của nhân vật (túi + đang mặc); đồ trong thùng đồ chung ở `storage.items`
+      gear: Map.new(Map.get(p, :gear) || [], &{&1.uid, Gear.resolve(&1)})
     }
   end
 

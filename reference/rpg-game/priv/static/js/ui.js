@@ -1970,7 +1970,8 @@
   const upClass = L.upClass;
   // Món đồ theo id: đồ thường trong ITEMS, đồ riêng từng món (id bắt đầu bằng #) do server gửi.
   const isGear = (id) => typeof id === 'string' && id[0] === '#';
-  const itemOf = (id) => (isGear(id) ? P.view.gear[id] : ITEMS[id]);
+  // món trong thùng đồ chung (Thủ Kho) nằm ở `view.storage.items`, không thuộc túi / đang mặc
+  const itemOf = (id) => (isGear(id) ? P.view.gear[id] || ((P.view.storage || {}).items || {})[id] : ITEMS[id]);
   // Loại món kiểu MU (DECISIONS B-15, `Gear.kind/1`): đồ thường có May mắn / Kỹ năng / dòng cộng thêm (xanh),
   // đồ hoàn hảo (lục), đồ Thần
   const KIND_CLS = { opt: 'k-opt', exc: 'exc', anc: 'anc' };

@@ -221,13 +221,15 @@ defmodule HacLong.Game.Storage do
     end
   end
 
-  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], ups: %{uid => cấp ép}, cap, items_cap, next, gold}`."
+  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], ups: %{uid => cấp ép}, items: %{uid => món}, cap, items_cap, next, gold}`."
   def view(p) do
     %{
       gold: gold(p),
       inv: get(p).inv,
       gear: Enum.map(stored_gear(p), & &1.uid),
       ups: for(g <- stored_gear(p), g[:up], into: %{}, do: {g.uid, g.up}),
+      # thông tin từng món trong thùng (như `view.gear`), để giao diện vẽ — không lẫn vào túi đồ
+      items: Map.new(stored_gear(p), &{&1.uid, Gear.resolve(&1)}),
       cap: gear_cap(p),
       items_cap: @rules.items,
       next: next_expand(p)
