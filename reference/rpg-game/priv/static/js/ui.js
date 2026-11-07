@@ -1568,7 +1568,9 @@
       const cls = CLASSES[c.cls] || {};
       const where = (WORLD.maps[c.map] || {}).name || c.map || '';
       const del = charSel.del === c.id;
-      return `<div class="item char-row">${icon(cls.icon || 'person', 'lg')}<div class="grow"><div class="name">${esc(c.name)}</div>
+      // hình nhân vật mặc đồ (như hồ sơ), không có thì icon lớp
+      const pic = c.look ? `<img class="sprite${auraCls(c.look)}" src="${window.Doll.url(c.look)}" alt="">` : icon(cls.icon || 'person', 'lg');
+      return `<div class="item char-row">${pic}<div class="grow"><div class="name">${esc(c.name)}</div>
           <div class="small muted">${esc(cls.name || c.cls)} · cấp ${c.level}${c.rebirths ? ` · CS ${c.rebirths}` : ''}${where ? ` · ${esc(where)}` : ''}</div></div>
           <button class="btn" data-act="char-del" data-cid="${c.id}" aria-label="Xóa ${esc(c.name)}">Xóa</button>
           <button class="btn primary" data-act="char-enter" data-cid="${c.id}" ${busy ? 'disabled' : ''}>Vào game</button></div>
@@ -4338,7 +4340,7 @@
       if (/Thành tựu mới|Danh hiệu mới/.test(msg)) Celebrate.badge(msg);
       else { toast(msg); Sound.play('notice'); }
     });
-    window.Doll.onReady(() => { if (P) refresh(); });
+    window.Doll.onReady(() => { if (P) refresh(); else if (charSel) render(); });
     Net.onParty((pt) => {
       const had = !!party;
       party = pt;

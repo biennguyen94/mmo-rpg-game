@@ -1022,3 +1022,5 @@ details.fold > .list { margin-top: 4px; }
 .tag.pet-guard { color: #8fc3ff; border-color: #2e4a6b; }
 .tag.pet-luck { color: var(--good); border-color: #3e5634; }
 .tag.pet-all { color: var(--gold); border-color: #6b5a2e; }
+/* màn chọn nhân vật: hình nhân vật mặc đồ to gấp đôi (DECISIONS "Nhiều nhân vật") */
+.char-row .sprite { width: 64px; height: 64px; image-rendering: pixelated; flex: none; }

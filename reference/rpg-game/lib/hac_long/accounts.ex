@@ -176,10 +176,24 @@ defmodule HacLong.Accounts do
   def siblings(uid), do: account_rows(uid) -- [uid]
 
   @doc """
-  Nhân vật của tài khoản `acct` (mã tài khoản), cũ trước: `[%{id, name, cls, level, rebirths, map, played_at}]`
-  (`id`: mã người chơi để vào game).
+  Nhân vật của tài khoản `acct` (mã tài khoản), cũ trước: `[%{id, name, cls, level, rebirths, map, played_at, look}]`
+  (`id`: mã người chơi để vào game; `look`: hình nhân vật mặc đồ như `Engine.look/1`, cho màn chọn nhân vật).
   """
   def characters(acct) when is_integer(acct) do
+    acct
+    |> character_rows()
+    |> Enum.map(fn c ->
+      look =
+        case HacLong.Game.Characters.load(c.id) do
+          nil -> nil
+          p -> HacLong.Game.Engine.look(p)
+        end
+
+      Map.put(c, :look, look)
+    end)
+  end
+
+  defp character_rows(acct) do
     Repo.all(
       from u in User,
         join: c in HacLong.Game.Character,
@@ -218,7 +232,7 @@ defmodule HacLong.Accounts do
       free ->
         {:ok, free}
 
-      length(characters(acct.id)) >= @max_characters ->
+      length(character_rows(acct.id)) >= @max_characters ->
         {:error, "Mỗi tài khoản tối đa #{@max_characters} nhân vật."}
 
       true ->
