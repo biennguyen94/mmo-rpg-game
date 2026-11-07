@@ -648,6 +648,20 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering
 .map-wrap .map-dialog { z-index: 6; }
 
 /* V7: nút Vừa màn hình trên bản đồ */
+/* B11: bản đồ thế giới (tab Chọn map → Thế giới), bản đồ thu nhỏ trên khung bản đồ */
+.wm-box { overflow: auto; max-height: min(62vh, 560px); border: 1px solid var(--line); border-radius: 8px; background: radial-gradient(circle at 20% 30%, #241a2c, #120d16); -webkit-overflow-scrolling: touch; }
+.wm { display: block; }
+.wm-edges path { fill: none; stroke: rgba(240, 207, 122, 0.28); stroke-width: 1.5; }
+.wm-node rect { fill: #2a2130; stroke: #4a3d52; stroke-width: 1.2; }
+.wm-node .wm-name { fill: #f1e6cf; font: 600 10px "Be Vietnam Pro", system-ui, sans-serif; }
+.wm-node .wm-lv { fill: #b9aec2; font: 500 9px "Be Vietnam Pro", system-ui, sans-serif; }
+.wm-node.fit rect { stroke: #7fd08a; } .wm-node.easy rect { stroke: #8a8494; } .wm-node.hard rect { stroke: #ef6a5a; } .wm-node.free rect { stroke: #9fd8ff; }
+.wm-node.locked rect { fill: #1a151d; stroke: #3a3340; } .wm-node.locked text { fill: #6f6676; }
+.wm-node.here rect { fill: #3a2c18; stroke: #f0cf7a; stroke-width: 2.4; } .wm-node.here .wm-lv { fill: #f0cf7a; }
+.wm-node[data-act] { cursor: pointer; } .wm-node[data-act]:hover rect { fill: #3a2f44; }
+.wm-key { display: inline-block; padding: 0 6px; border-radius: 5px; border: 1px solid; font-size: 11px; }
+.wm-key.fit { border-color: #7fd08a; } .wm-key.easy { border-color: #8a8494; } .wm-key.hard { border-color: #ef6a5a; } .wm-key.locked { border-color: #3a3340; color: #6f6676; }
+.mini-map { position: absolute; left: 6px; top: 6px; z-index: 4; border: 1px solid rgba(240, 207, 122, 0.45); border-radius: 6px; background: rgba(12, 9, 16, 0.75); cursor: pointer; image-rendering: pixelated; }
 .zoom-btn { position: absolute; right: 6px; top: 6px; z-index: 4; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: rgba(12, 9, 16, 0.72); color: var(--text, #f1e6cf); font-size: 1.05rem; cursor: pointer; }
 .zoom-btn.on { background: linear-gradient(#f0cf7a, #d9ae4a); color: #2a1d06; border-color: #b58f35; }
 

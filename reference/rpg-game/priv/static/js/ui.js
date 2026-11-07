@@ -1771,7 +1771,9 @@
         <p class="small muted">Máy yếu hoặc muốn tiết kiệm pin thì tắt.</p>
         <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>
           <button class="btn" data-act="mob-names" aria-pressed="${Map_.mobNames()}">${Map_.mobNames() ? 'Đang bật' : 'Đang tắt'}</button></div>
-        <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p></div>
+        <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p>
+        <div class="row"><span class="grow small">Bản đồ thu nhỏ ở góc (bấm vào mở bản đồ thế giới)</span>
+          <button class="btn" data-act="mini-map" aria-pressed="${Map_.miniOn()}">${Map_.miniOn() ? 'Đang bật' : 'Đang tắt'}</button></div></div>
       ${lootFilterCard()}
       <div class="card set"><div class="row"><h3 class="grow">Hình đồ</h3>
         <div class="btn-row">${(HAS_MU ? [['mu', 'MU']] : []).concat([['pixel', '🗡 Pixel'], ['svg', '◆ Biểu tượng']]).map(([k, l]) => `<button class="btn ${iconSet() === k ? 'primary' : ''}" data-act="icon-set" data-set="${k}" aria-pressed="${iconSet() === k}">${l}</button>`).join('')}</div></div>
@@ -2204,9 +2206,62 @@
     const all = LIB.maps.filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
       <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
-      <div class="seg"><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
-      <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
-      <div id="travel-list">${travelList(all)}</div></div>`;
+      <div class="seg"><button class="btn ${travelSeg === 'world' ? 'primary' : ''}" data-act="travel-seg" data-seg="world">🌐 Thế giới</button><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
+      ${travelSeg === 'world' ? worldMap() : `<input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
+      <div id="travel-list">${travelList(all)}</div>`}</div>`;
+  }
+  // B11: bản đồ thế giới — các bản đồ nối nhau qua cổng, xếp cột theo số bước từ Làng (BFS), hàng giữ nhánh gần nhau.
+  // Màu theo độ khó so với cấp mình; ô đang đứng viền vàng; bấm ô mở được là dịch chuyển (như danh sách).
+  let worldLayout = null;
+  function worldGraph() {
+    if (worldLayout) return worldLayout;
+    const pub = (id) => WORLD.maps[id] && !WORLD.maps[id].private && !WORLD.maps[id].event && id !== 'tower';
+    const depth = { village: 0 }, order = ['village'], parent = {};
+    for (let i = 0; i < order.length; i++) {
+      for (const p of WORLD.maps[order[i]].portals || []) {
+        if (pub(p.to) && !(p.to in depth)) { depth[p.to] = depth[order[i]] + 1; parent[p.to] = order[i]; order.push(p.to); }
+      }
+    }
+    const cols = {};
+    for (const id of order) (cols[depth[id]] = cols[depth[id]] || []).push(id);
+    const row = { village: 0 };
+    Object.keys(cols).map(Number).sort((a, b) => a - b).forEach((d) => {
+      if (!d) return;
+      cols[d].sort((a, b) => row[parent[a]] - row[parent[b]]);
+      cols[d].forEach((id, i) => { row[id] = i; });
+    });
+    const H = Math.max(...Object.values(cols).map((c) => c.length));
+    const pos = {};
+    for (const [d, ids] of Object.entries(cols)) ids.forEach((id, i) => { pos[id] = [16 + d * 132, 16 + (i + (H - ids.length) / 2) * 40]; });
+    const edges = [];
+    for (const id of order) for (const p of WORLD.maps[id].portals || []) if (pos[p.to] && id < p.to) edges.push([id, p.to]);
+    worldLayout = { pos, edges, w: 16 + (Object.keys(cols).length) * 132, h: 32 + H * 40 };
+    return worldLayout;
+  }
+  function worldMap() {
+    const { pos, edges, w, h } = worldGraph();
+    const lib = (id) => LIB.maps.find((m) => m.id === id) || { id, name: (WORLD.maps[id] || {}).name || id };
+    const nodes = Object.entries(pos).map(([id, [x, y]]) => {
+      const m = lib(id), here = P.pos.map === id, open = travelOpen(m), cost = travelCost(m);
+      const diff = !m.min ? 'free' : m.min > P.level + 2 ? 'hard' : m.max < P.level - 4 ? 'easy' : 'fit';
+      const cls = `wm-node ${here ? 'here' : ''} ${open ? diff : 'locked'}`;
+      const lv = m.min ? (m.min === m.max ? `Cấp ${m.min}` : `Cấp ${m.min}–${m.max}`) : '';
+      const act = open && !here && P.gold >= cost ? ` role="button" tabindex="0" data-act="travel" data-to="${id}"` : '';
+      const tip = `${m.name}${lv ? ' · ' + lv : ''}${m.cs ? ` · cần chuyển sinh ${m.cs}` : ''}${!here && open ? ` · ${cost ? fmt(cost) + ' vàng' : 'miễn phí'}` : ''}`;
+      return `<g class="${cls}"${act} transform="translate(${x},${y})"><title>${esc(tip)}</title><rect width="118" height="30" rx="7"/>
+        <text x="59" y="13" text-anchor="middle" class="wm-name">${esc(m.name.length > 17 ? m.name.slice(0, 16) + '…' : m.name)}</text><text x="59" y="25" text-anchor="middle" class="wm-lv">${here ? '📍 Đang ở' : !open ? (m.cs ? `🔒 CS ${m.cs}` : `🔒 Cấp ${m.min}`) : lv || 'An toàn'}</text></g>`;
+    }).join('');
+    const lines = edges.map(([a, b]) => {
+      const [x1, y1] = pos[a], [x2, y2] = pos[b];
+      const sx = x1 + 118, sy = y1 + 15, ex = x2, ey = y2 + 15, mx = (sx + ex) / 2;
+      return x2 > x1 ? `<path d="M${sx} ${sy} C${mx} ${sy} ${mx} ${ey} ${ex} ${ey}"/>` : `<path d="M${x1 + 59} ${y1 + 30} L${x2 + 59} ${y2}"/>`;
+    }).join('');
+    setTimeout(() => {
+      const box = document.getElementById('wm-box'), me = pos[P.pos.map];
+      if (box && me) { box.scrollLeft = me[0] - box.clientWidth / 2 + 59; box.scrollTop = me[1] - box.clientHeight / 2 + 15; }
+    }, 0);
+    return `<p class="small muted">Các bản đồ nối nhau qua cổng (cột là số bước đi từ Làng). Bấm bản đồ mở được để dịch chuyển. <span class="wm-key fit">vừa sức</span> <span class="wm-key easy">dễ</span> <span class="wm-key hard">khó</span> <span class="wm-key locked">chưa mở</span></p>
+      <div class="wm-box" id="wm-box"><svg class="wm" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><g class="wm-edges">${lines}</g>${nodes}</svg></div>`;
   }
   function travelList(all) {
     all = all || LIB.maps.filter((m) => m.id !== 'tower');
@@ -4108,6 +4163,8 @@
     }
     if (act === 'stat-help') { statHelp = statHelp === t.dataset.k ? null : t.dataset.k; render(); return; }
     if (act === 'travel-seg') { travelSeg = t.dataset.seg; render(); return; }
+    if (act === 'world-map') { travelSeg = 'world'; goTab('travel'); return; }
+    if (act === 'mini-map') { setPref('hl-minimap', Map_.miniOn() ? '0' : '1'); render(); return; }
     if (act === 'discard') {
       const max = +t.dataset.n || 1;
       let n = 1;

@@ -468,7 +468,7 @@
     const m = cur(P);
     return `
       ${top(P)}
-      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas><button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
+      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${miniOn() && !m.tower ? '<canvas class="mini-map" id="mini-map" role="button" tabindex="0" data-act="world-map" title="Bản đồ thế giới" aria-label="Bản đồ thu nhỏ, bấm để mở bản đồ thế giới"></canvas>' : ''}<button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
       <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh.</p>`;
   }
 
@@ -673,6 +673,7 @@
     }
 
     if (fx && P.pos.map === 'village') villageFx(now, m, cx, cy);
+    miniMap(P, m, now, cx, cy);
     const hero = image('monsters/hero');
     // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
     // xem danh sách người trong bản đồ ở nút 👫 trên dock.
@@ -1114,6 +1115,42 @@
     ctx.restore();
   }
 
+  // B11: bản đồ thu nhỏ ở góc khung bản đồ (tắt ở Cài đặt, `hl-minimap`): nền ô tô màu theo loại (vẽ sẵn mỗi bản đồ một lần),
+  // chấm: mình (trắng), quái (đỏ, trùm vàng), cổng (tím), NPC (xanh); khung trắng là phần đang nhìn thấy
+  const miniOn = () => { try { return localStorage.getItem('hl-minimap') !== '0'; } catch (e) { return true; } };
+  const MINI_COL = { floor: '#3a3328', grass: '#3f5a2a', dirt: '#6a5030', flowers: '#4a6a30', tree: '#1f3a1a', tree_autumn: '#4a3a14', tree_dead: '#3a2e22',
+    rock: '#5a4a3e', water: '#1e4a7a', deep_water: '#163a66', brick: '#7a3e2a', stone: '#6a6a70', column: '#9a9aa0', fountain: '#4a8ac0', waystone: '#c0a040',
+    door: '#a07040', arch: '#a07040', portal: '#9a5aff', stairs_up: '#d0b060', stairs_down: '#80a0d0', mangrove: '#2a4a2a', lotus: '#3a6a5a', boat: '#5a3a20',
+    pier_v: '#7a5a30', pier_h: '#7a5a30', dragon_statue: '#b09040', lantern: '#c05030' };
+  const miniCache = new Map();
+  function miniBase(m, id) {
+    if (miniCache.has(id)) return miniCache.get(id);
+    const w = m.tiles[0].length, h = m.tiles.length, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    m.tiles.forEach((row, y) => [...row].forEach((ch, x) => { g.fillStyle = MINI_COL[WORLD.legend[ch]] || '#2a2430'; g.fillRect(x, y, 1, 1); }));
+    miniCache.set(id, c);
+    return c;
+  }
+  function miniMap(P, m, now, cx, cy) {
+    const el = document.getElementById('mini-map');
+    if (!el) return;
+    const w = m.tiles[0].length, h = m.tiles.length, s = Math.max(2, Math.min(4, Math.floor(96 / Math.max(w, h * 1.4))));
+    const dpr = window.devicePixelRatio || 1;
+    if (el.width !== w * s * dpr) { el.width = w * s * dpr; el.height = h * s * dpr; el.style.width = w * s + 'px'; el.style.height = h * s + 'px'; }
+    const g = el.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+    g.drawImage(miniBase(m, P.pos.map), 0, 0, w * s, h * s);
+    const dot = (x, y, col, r) => { g.fillStyle = col; g.fillRect(x * s + s / 2 - r, y * s + s / 2 - r, r * 2, r * 2); };
+    for (const n of m.npcs || []) dot(n.at[0], n.at[1], '#8fe08a', Math.max(1, s / 2));
+    for (const p of m.portals || []) dot(p.at[0], p.at[1], '#c49bff', Math.max(1.2, s / 2));
+    if (world.map === P.pos.map) for (const q of world.monsters || []) dot(q.x, q.y, q.boss ? '#ffd24a' : q.gold ? '#ffe08a' : '#ef5a4a', Math.max(1, s / 2.4));
+    const blink = 0.6 + 0.4 * Math.sin(now / 200);
+    dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));
+    g.strokeStyle = 'rgba(255, 255, 255, 0.55)'; g.lineWidth = 1;
+    g.strokeRect(cx / TILE * s + 0.5, cy / TILE * s + 0.5, VW() / TILE * s, VH() / TILE * s);
+  }
+
   // B9: mép ô mềm + bóng đổ + trang trí rải theo ô (chỉ vẽ, vị trí cố định theo ô, không chắn đường)
   const WALLS = new Set(['#', 'R', 'S', 'I', 'K', 'T', 'Y']);
   const WATERS = new Set(['~', '=']);
@@ -1510,6 +1547,7 @@
       draw();
     },
     world: () => world,
+    miniOn,
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);
