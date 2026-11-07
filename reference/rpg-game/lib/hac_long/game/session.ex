@@ -18,6 +18,8 @@ defmodule HacLong.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
+  alias HacLong.AccountStorage
+
   alias HacLong.Game.{
     Achievements,
     AutoHunt,
@@ -147,6 +149,36 @@ defmodule HacLong.Game.Session do
     do: call(user_id, {:admin, fun, ref})
 
   @doc """
+  Đưa nhân vật về Đá Dịch Chuyển ở Làng (quản trị gỡ kẹt; bot tự gỡ khi đứng yên lâu, DECISIONS "Đưa về Làng"):
+  đang trong trận thì kết thúc như bỏ chạy (không mất gì), rời tháp / phòng sự kiện. `{:ok, msg}` / `{:error, msg}`.
+  """
+  def to_village(user_id, why \\ "ADMIN"), do: call(user_id, {:to_village, why})
+
+  @doc """
+  Quản trị dịch chuyển nhân vật của mình tới ô `pos` (`%{map, x, y}`, bản đồ chung) — tới chỗ người chơi khác.
+  Như `to_village/2`: đang trong trận thì kết thúc như bỏ chạy, rời tháp / phòng sự kiện.
+  """
+  def teleport(user_id, pos), do: call(user_id, {:teleport, pos})
+
+  @doc """
+  Tắt Session của `user_id` nếu đang chạy (ghi nốt trạng thái ở `terminate/2`). Dùng khi đổi / xóa nhân vật: mỗi tài
+  khoản một nhân vật online, Session của nhân vật khác không giữ bản cũ của thùng đồ chung (DECISIONS "Nhiều nhân vật").
+  """
+  def stop(user_id) do
+    case Registry.lookup(HacLong.Game.Registry, user_id) do
+      [{pid, _}] ->
+        try do
+          GenServer.stop(pid, :normal, 10_000)
+        catch
+          :exit, _ -> :ok
+        end
+
+      [] ->
+        :ok
+    end
+  end
+
+  @doc """
   Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, rebirths, cls, map}]}`
   (tối đa `limit` người, theo tên). Không khởi động Session nào; Session đang bận quá 1 giây thì bỏ qua.
   """
@@ -162,6 +194,10 @@ defmodule HacLong.Game.Session do
         end
       end)
       |> Enum.reject(&is_nil/1)
+
+    # tên đăng nhập của tài khoản (nhiều nhân vật một tài khoản, DECISIONS "Nhiều nhân vật")
+    names = HacLong.Accounts.account_names(Enum.map(players, & &1.id))
+    players = Enum.map(players, &Map.put(&1, :account, names[&1.id]))
 
     %{count: length(players), players: players |> Enum.sort_by(& &1.name) |> Enum.take(limit)}
   end
@@ -198,8 +234,12 @@ defmodule HacLong.Game.Session do
     # để `terminate/2` chạy khi server tắt (deploy) và ghi nốt vị trí chưa lưu
     Process.flag(:trap_exit, true)
 
+    acct = HacLong.Accounts.account_id(user_id) || user_id
+
     s = %{
       user_id: user_id,
+      # tài khoản của nhân vật (thùng đồ chung, DECISIONS "Nhiều nhân vật")
+      account: acct,
       player: with_guild(Characters.load(user_id), user_id),
       # tài khoản bot: không báo cả server khi bot ép / ghép thành công, nhặt đồ Thần (tránh loãng dải thông báo)
       bot: HacLong.Bots.bot?(user_id),
@@ -221,8 +261,53 @@ defmodule HacLong.Game.Session do
       tower_timer: nil
     }
 
-    {:ok, s, @idle_timeout}
+    {:ok, %{s | player: with_storage(s.player, s)}, @idle_timeout}
   end
+
+  # Thùng đồ chung của tài khoản (DECISIONS "Nhiều nhân vật", `HacLong.AccountStorage`): nạp bản sao vào
+  # `player.storage`; Tủ Đồ kiểu cũ của nhân vật (riêng) thì chuyển vào thùng chung một lần.
+  defp with_storage(nil, _s), do: nil
+
+  defp with_storage(p, s) do
+    shared = AccountStorage.get(s.account)
+
+    case AccountStorage.merge_legacy(p, shared) do
+      nil ->
+        p |> Map.put(:storage, shared) |> Map.put(:shared_storage, true) |> acct_chest(s)
+
+      {p, st} ->
+        p = p |> Map.put(:storage, st) |> Map.put(:shared_storage, true) |> acct_chest(s)
+
+        {:ok, _} =
+          HacLong.Repo.transaction(fn ->
+            Characters.save!(s.user_id, p, "SHARED")
+            AccountStorage.write!(s.account, st)
+          end)
+
+        p
+    end
+  end
+
+  # Rương Gia Truyền mỗi tài khoản một lần mỗi ngày: nhân vật khác cùng tài khoản đã mở hôm nay thì ghi
+  # `acct_chest_day` (chỉ trong bộ nhớ; chỉ đặt khi có, để nhân vật một mình không thêm khóa nào)
+  defp acct_chest(p, s) do
+    today = Daily.today()
+
+    opened = HacLong.Accounts.sibling_chest?(s.user_id, today)
+
+    if opened, do: Map.put(p, :acct_chest_day, today), else: Map.delete(p, :acct_chest_day)
+  end
+
+  @storage_acts ~w(store unstore gold_store gold_take storage_expand)
+
+  # trước lệnh Thủ Kho / lúc vào game: lấy bản mới nhất của thùng chung (nhân vật khác vừa cất / lấy)
+  defp fresh_storage(%{player: nil} = s), do: s
+
+  defp fresh_storage(s),
+    do: %{
+      s
+      | player: s.player |> Map.put(:storage, AccountStorage.get(s.account)) |> acct_chest(s)
+    }
 
   # Bang hội không lưu trong bảng characters: đọc từ HacLong.Guilds.
   defp with_guild(nil, _uid), do: nil
@@ -291,6 +376,7 @@ defmodule HacLong.Game.Session do
   defp save_reason({:slay_begin, _}), do: {"SLAY", nil}
   defp save_reason(:slay_auto), do: {"SLAY", nil}
   defp save_reason({:admin, _fun, ref}), do: {"ADMIN", ref}
+  defp save_reason({:to_village, why}), do: {"TO_VILLAGE", why}
   defp save_reason(_), do: {"OTHER", nil}
 
   @impl true
@@ -425,7 +511,7 @@ defmodule HacLong.Game.Session do
   defp handle(:online_info, _from, s), do: reply(nil, s)
 
   defp handle({:attach, pid}, _from, s) do
-    s = cc_back(s)
+    s = s |> cc_back() |> fresh_storage()
     if map_size(s.tabs) == 0, do: World.enter(s.player, s.user_id)
     HacLong.Party.back(s.user_id)
     s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
@@ -548,8 +634,8 @@ defmodule HacLong.Game.Session do
 
         text =
           if f.mine,
-            do: "🗡 Bạn đồ sát #{foe.name}! Bạn ra đòn trước.",
-            else: "⚠ #{foe.name} đồ sát bạn! Bỏ chạy tính như gục ngã."
+            do: "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước.",
+            else: "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
 
         text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}
@@ -594,6 +680,23 @@ defmodule HacLong.Game.Session do
   defp handle({:admin, _fun, _ref}, _from, %{player: nil} = s),
     do: reply({:error, "Người này chưa có nhân vật."}, s)
 
+  defp handle({:to_village, _why}, _from, %{player: nil} = s),
+    do: reply({:error, "Chưa có nhân vật."}, s)
+
+  defp handle({:to_village, _why}, _from, s) do
+    {old, p, s} = relocate(s, World.village_spawn())
+    notify(s, "🏠 Đã đưa bạn về Làng.")
+    reply({:ok, "Đã đưa #{p.name} về Làng (từ #{old.pos.map})."}, s)
+  end
+
+  defp handle({:teleport, _pos}, _from, %{player: nil} = s),
+    do: reply({:error, "Chưa có nhân vật."}, s)
+
+  defp handle({:teleport, pos}, _from, s) do
+    {_old, _p, s} = relocate(s, pos)
+    reply({:ok, "Đã tới #{HacLong.World.Maps.get(pos.map).name} (#{pos.x}, #{pos.y})."}, s)
+  end
+
   defp handle({:admin, fun, _ref}, _from, s) do
     old = s.player
 
@@ -637,8 +740,15 @@ defmodule HacLong.Game.Session do
         do: Map.put(p, :boss_top, (Map.get(p, :boss_top) || 0) + 1),
         else: p
 
+    # Long Ân: dắt Long Vương thì thưởng trùm thế giới thêm (DECISIONS "Long Vương: thần thú độc nhất")
+    boost = 1 + HacLong.Game.Pets.trait(p, :boss)
+
+    reward =
+      info.reward &&
+        %{info.reward | gold: round(info.reward.gold * boost), xp: round(info.reward.xp * boost)}
+
     {p, notice} =
-      case info.reward do
+      case reward do
         nil ->
           {p, if(info.result == "win", do: nil, else: "#{WorldBoss.name()} đã bay đi.")}
 
@@ -786,6 +896,7 @@ defmodule HacLong.Game.Session do
   defp run_command(s, cmd, origin), do: run_command_(s, cmd, origin)
 
   defp run_command_(s, cmd, origin) do
+    s = if cmd["act"] in @storage_acts, do: fresh_storage(s), else: s
     old = s.player
     {result, player} = run(s, old, cmd)
     # nhân vật vừa tạo cũng có ngay việc hằng ngày
@@ -793,7 +904,11 @@ defmodule HacLong.Game.Session do
       s |> after_command(old, player, cmd) |> ds_record(s) |> Daily.ensure(Daily.today())
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
-    player = if player && old == nil, do: with_guild(player, s.user_id), else: player
+    player =
+      if player && old == nil,
+        do: player |> with_guild(s.user_id) |> with_storage(s),
+        else: player
+
     {player, notes} = checks(player)
 
     left_trade(s.user_id, old, player)
@@ -818,9 +933,10 @@ defmodule HacLong.Game.Session do
     {rare, result} = if is_map(result), do: Map.pop(result, :rare_pet), else: {nil, result}
     result = if rare && player, do: rare_pet(s, player, rare, result), else: result
 
-    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client)
+    # ép đồ / ghép cánh thành công: báo cả server (không gửi kèm cho client). Bot không báo, trừ khi câu được Long
+    # Vương (DECISIONS "Bot câu cá, bot try hard": hiếm, như người chơi thật)
     {announce, result} = if is_map(result), do: Map.pop(result, :announce), else: {nil, result}
-    if announce && !s[:bot], do: HacLong.Chat.system(announce)
+    if announce && (!s[:bot] or rare != nil), do: HacLong.Chat.system(announce)
     if !s[:bot], do: Enum.each(anc_announce(old, player), &HacLong.Chat.system/1)
 
     reply({result, player}, s)
@@ -1041,8 +1157,9 @@ defmodule HacLong.Game.Session do
   @first_strike HacLong.Game.Data.rules().slay[:first_strike_mult] || 1
 
   defp slay_hit(p2, nil, foe_hp, _first?) do
-    hp = max(0, foe_hp - (foe_hp + @slay_pad - p2.battle.monster.hp))
-    {put_in(p2, [:battle, :monster, :hp], hp), nil}
+    raw = foe_hp + @slay_pad - p2.battle.monster.hp
+    hp = max(0, foe_hp - raw)
+    {p2 |> fix_slay_log(raw, raw, hp, false) |> put_in([:battle, :monster, :hp], hp), nil}
   end
 
   # `first?`: lượt đầu của người tấn công, sát thương × `RULES.slay.first_strike_mult` (đòn mở màn)
@@ -1075,7 +1192,15 @@ defmodule HacLong.Game.Session do
           ),
         else: foe2
 
-    mine = Enum.map(foe2.battle.log, &BattleText.mirror(&1.text, name, p2.name))
+    # đòn mở màn ghi ngay trong dòng đánh của mình (`fix_slay_log`), không thêm dòng riêng
+    mine =
+      foe2.battle.log
+      |> Enum.reject(&String.starts_with?(&1.text, "⚔ Đòn mở màn"))
+      |> Enum.map(&BattleText.mirror(&1.text, name, p2.name))
+
+    # nhật ký lượt này của mình: máu còn lại thật của đối thủ (máy tính trận cộng tạm `@slay_pad`) và sát thương thật
+    # (sau đòn mở màn, thủ thế / khiên của họ) thay số tạm
+    p2 = fix_slay_log(p2, raw, real, max(foe2.hp, 0), opening?)
 
     p2 =
       p2
@@ -1083,6 +1208,45 @@ defmodule HacLong.Game.Session do
       |> update_in([:battle, :log], &(&1 ++ Enum.map(mine, fn t -> %{text: t, kind: "info"} end)))
 
     {p2, foe2}
+  end
+
+  defp fix_slay_log(p2, raw, real, left, opening?) do
+    log =
+      Enum.map(p2.battle.log, fn
+        %{left: l} = e when is_integer(l) and l > div(@slay_pad, 2) -> %{e | left: left}
+        e -> e
+      end)
+
+    # dòng đòn đánh cuối cùng của mình có sát thương (lượt này)
+    idx =
+      log
+      |> Enum.with_index()
+      |> Enum.filter(fn {e, _} -> e[:who] == "me" and e[:dmg] end)
+      |> List.last()
+
+    note = "đòn mở màn ×#{@first_strike}"
+
+    log =
+      case idx do
+        {%{dmg: d} = e, i} when raw > 0 and (real != d or opening?) ->
+          text = String.replace(e.text, "gây #{d} sát thương", "gây #{real} sát thương")
+
+          e =
+            if opening?,
+              do: %{
+                e
+                | note: if(e[:note], do: "#{e.note}; #{note}", else: note),
+                  text: String.replace_suffix(text, ".", " (#{note}).")
+              },
+              else: %{e | text: text}
+
+          List.replace_at(log, i, %{e | dmg: real})
+
+        _ ->
+          log
+      end
+
+    put_in(p2, [:battle, :log], log)
   end
 
   defp world_strike(s, p, cmd) do
@@ -1634,6 +1798,49 @@ defmodule HacLong.Game.Session do
   defp left_trade(_uid, _old, _new), do: :ok
 
   # đồ rơi lúc túi đồ hiếm đầy (`Gear.add/2`): gửi Hộp thư cùng transaction với lần ghi nhân vật
+  # chuyển nhân vật sang ô `pos`: đang ở bảng kết quả / trận đã xong vẫn được (chỉ đóng bảng); trận đang đánh kết thúc
+  # như bỏ chạy; rời tháp / phòng sự kiện
+  defp relocate(s, pos) do
+    old = s.player
+    room = get_in(old, [:tower, :room])
+    if room, do: HacLong.EventRoom.leave(room, s.user_id)
+
+    p =
+      old
+      |> interrupt_battle(s.user_id)
+      |> Map.put(:tower, nil)
+      |> Map.put(:pos, pos)
+
+    if map_size(s.tabs) > 0 do
+      World.leave(old, s.user_id)
+      World.enter(p, s.user_id)
+    end
+
+    s = save(s, p)
+    broadcast(s, p, nil)
+    {old, p, s}
+  end
+
+  # lệnh Thủ Kho đổi thùng chung: ghi thùng và nhân vật cùng transaction. Đồ vào thùng: nhân vật trước (nhật ký `out`
+  # rồi `in`); đồ ra khỏi thùng: thùng trước.
+  defp save(s, %{storage_dirty: true} = player) do
+    p = Map.delete(player, :storage_dirty)
+    old = (s.player && s.player[:storage]) || AccountStorage.empty()
+
+    {:ok, _} =
+      HacLong.Repo.transaction(fn ->
+        if AccountStorage.added?(old, p.storage) do
+          Characters.save!(s.user_id, p)
+          AccountStorage.write!(s.account, p.storage)
+        else
+          AccountStorage.write!(s.account, p.storage)
+          Characters.save!(s.user_id, p)
+        end
+      end)
+
+    cancel_flush(%{s | player: p, dirty: false})
+  end
+
   defp save(s, %{mail_out: [_ | _]} = player) do
     {:ok, player} =
       HacLong.Repo.transaction(fn ->

@@ -239,8 +239,8 @@ w(f"Quái thường: khoảng 1/{round(1 / (n * ex['chance']['normal']))} con ra
 # ---------- vật phẩm khác ----------
 w('## Vật phẩm khác\n')
 others = [
-    ('Bình máu', [v for k, v in leg.items() if k.startswith('potion')], lambda v: f"hồi {pct(v['heal_pct'])} máu"),
-    ('Bình mana', [v for k, v in leg.items() if k.startswith('mana')], lambda v: f"hồi {pct(v['mana_pct'])} MP"),
+    ('Bình máu', [v for k, v in leg.items() if k.startswith('potion')], lambda v: f"hồi {v['heal']} máu"),
+    ('Bình mana', [v for k, v in leg.items() if k.startswith('mana')], lambda v: f"hồi {v['mana']} MP"),
     ('Món ăn', [v for v in leg.values() if v.get('slot') == 'food'], lambda v: v['desc']),
     ('Ngọc', [v for k, v in leg.items() if k.startswith('jewel')], lambda v: v['desc']),
     ('Vé, nguyên liệu sự kiện', [leg[k] for k in ('ds_ticket', 'bc_ticket', 'condor_feather') if k in leg],

@@ -163,10 +163,14 @@ defmodule HacLong.Game.Items15cTest do
     # 0.99: đòn mình trúng, quái không né / không chí mạng, mình không né đòn quái
     Rng.put_sequence([0.99])
     {_, q} = Engine.act(b, "attack")
-    [hit] = for l <- q.battle.log, l.text =~ "đánh bạn", do: l.text
-    [taken] = Regex.run(~r/đánh bạn (\d+) máu/, hit, capture: :all_but_first)
+    mon = q.battle.monster.name
+
+    [hit] =
+      for l <- q.battle.log, String.starts_with?(l.text, mon <> ", Đòn thường, gây "), do: l.text
+
+    [taken] = Regex.run(~r/gây (\d+) sát thương/, hit, capture: :all_but_first)
     back = round(String.to_integer(taken) * a.reflect)
-    assert Enum.any?(q.battle.log, &(&1.text =~ "↩ Phản lại #{back} sát thương"))
+    assert Enum.any?(q.battle.log, &(&1.text =~ "bị phản #{back} sát thương"))
 
     # quái còn ít máu: phản đòn không hạ được quái
     Rng.put_sequence([0.99])
@@ -178,14 +182,19 @@ defmodule HacLong.Game.Items15cTest do
     Rng.put_sequence([0.99])
     {_, q} = Engine.act(put_in(b.battle.monster, foe), "attack")
     # đòn mình để đối thủ còn 1 máu, đòn đối thủ bị phản lại hạ luôn
-    [mine] = for l <- q.battle.log, l.text =~ "Bạn gây", do: l.text
+    [mine] =
+      for l <- q.battle.log,
+          String.starts_with?(l.text, b.name <> ", "),
+          l.text =~ "gây",
+          do: l.text
+
     [dealt] = Regex.run(~r/gây (\d+) sát thương/, mine, capture: :all_but_first)
     Rng.put_sequence([0.99])
 
     {_, q} =
       Engine.act(put_in(b.battle.monster, %{foe | hp: String.to_integer(dealt) + 1}), "attack")
 
-    assert Enum.any?(q.battle.log, &(&1.text =~ "↩ Phản lại"))
+    assert Enum.any?(q.battle.log, &(&1.text =~ "bị phản"))
     assert q.battle.over and q.battle.result == "win"
   end
 

@@ -4,36 +4,25 @@
   "zone": null,
   "floor": "tiles/grass",
   "tiles": [
-    "TTTTTTATTTTTTTTTTTATTTTTT",
-    "T,,,,,:,,,,,,,,,,,:,,,,,T",
-    "T,####:,,,,,,,,,,,:####,T",
-    "T,####:,,*,,,,,*,,:####,T",
-    "T,####:::::::::::::####,T",
-    "A:::::::,,,,*,,,,,::::::A",
-    "T,,,,,:,,,~~~~~,,,:,,,,,T",
-    "T,*,,,:,,~~~~~~~,,:,,,*,T",
-    "O,,,,,:,,~~~~~~~,,:,,,,,T",
-    "T,,,,,:,,,~~~~~,,,:,,,,,T",
-    "T,####:,,,,,,,,,,,:####,T",
+    "TYTTTYATYTTYTTYTTTATYTTYT",
+    "YR,,Y,:J,Q~~E~~~,J:,,,,RT",
+    "T,###,:,~~Q~E~Q~,,:,###,Y",
+    "T,#D#,:,,,*,,,*,,,:,#D#,T",
+    "Y,,*,,:,,,,,,,,,,,:,,*,,T",
+    "A:::::::::::::::::::::::A",
+    "T:,,,,:*,J:::::J,*:,,,Y,Y",
+    "Y:###,:*,:::::::,*:,,,Y,T",
+    "O:#D#,:*G:::F:::G*:,,,,,T",
+    "T:,,*,:*,:::::::,*:,,,*,T",
+    "Y:,Y,,:*,J:::::J,*:,Y,,,Y",
     "A:::::::::::::::::::::::O",
-    "T,####,,,,,,:,,,,,,####,T",
-    "T,####,,*,,,:,,W*,,####,T",
-    "O,,,,,,,,,,,:,,,,,,,,,,,T",
-    "T,,,,,,,,,,,:,,,,,,,,,,,T",
-    "TTTTTTTTTTTTDTTTTTTTTTTTT"
+    "T:,,,,,I,I,,:,,I,I,,,,,,T",
+    "Y:###,,,,,,,:,,W,,,,###,T",
+    "O:#D#,,,,*,,:,,*,,,,#D#,Y",
+    "TY,,,*,,,,Y,:,Y,,,,*,,,YT",
+    "YYTTYTYTTTYTTYTTYTTYTTTYT"
   ],
   "portals": [
-    {
-      "at": [
-        12,
-        16
-      ],
-      "to": "home",
-      "spawn": [
-        5,
-        6
-      ]
-    },
     {
       "at": [
         6,
@@ -219,7 +208,7 @@
       "sprite": "girl",
       "at": [
         4,
-        7
+        10
       ],
       "role": "talk",
       "lines": [
@@ -259,26 +248,12 @@
       ]
     },
     {
-      "id": "carpenter",
-      "name": "Thợ Mộc",
-      "sprite": "carpenter",
-      "at": [
-        4,
-        14
-      ],
-      "role": "carpenter",
-      "lines": [
-        "Tượng, cây cảnh, đài phun nước... nhà đẹp thì ở mới sướng.",
-        "Nhà càng tiện nghi, nghỉ ngơi càng mau lại sức mà đi săn."
-      ]
-    },
-    {
       "id": "pet_keeper",
       "name": "Người Nuôi Thú",
       "sprite": "pet_keeper",
       "at": [
         21,
-        14
+        12
       ],
       "role": "pets",
       "lines": [
@@ -306,7 +281,7 @@
       "sprite": "cook",
       "at": [
         3,
-        9
+        6
       ],
       "role": "cook",
       "lines": [
@@ -318,8 +293,8 @@
       "name": "Người Tổ Chức Hội",
       "sprite": "festival",
       "at": [
-        9,
-        5
+        10,
+        9
       ],
       "role": "event",
       "lines": [
@@ -346,13 +321,39 @@
       "name": "Bà Chủ Sòng",
       "sprite": "dealer",
       "at": [
-        10,
-        13
+        14,
+        9
       ],
       "role": "tienlen",
       "lines": [
         "Ghé chơi một ván Tiến Lên không cưng? Thiếu người thì có máy ngồi cùng.",
         "Bàn có máy thì chơi vui. Muốn ăn vàng thì rủ người thật vào, đặt cược hẳn hoi."
+      ]
+    },
+    {
+      "id": "wardrobe",
+      "name": "Thủ Kho",
+      "sprite": "wardrobe",
+      "at": [
+        11,
+        12
+      ],
+      "role": "wardrobe",
+      "lines": [
+        "Ta giữ đồ và vàng cho cả làng. Gửi ở đây thì chết cũng không mất."
+      ]
+    },
+    {
+      "id": "chest",
+      "name": "Rương Gia Truyền",
+      "sprite": "home_chest",
+      "at": [
+        13,
+        12
+      ],
+      "role": "chest",
+      "lines": [
+        "Rương gỗ cũ của làng. Mỗi ngày mở ra lại thấy có thứ gì đó."
       ]
     }
   ],

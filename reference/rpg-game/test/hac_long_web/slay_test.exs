@@ -154,13 +154,25 @@ defmodule HacLongWeb.SlayTest do
     # bên bị đánh thấy chi tiết đòn của người đánh (đổi góc nhìn), cả đòn kết liễu
     name_a = pa.name
     texts = Enum.map(pb.battle.log, & &1.text)
-    assert Enum.any?(texts, &(&1 =~ "#{name_a} gây " and &1 =~ "sát thương cho bạn"))
+    assert Enum.any?(texts, &(&1 =~ ~r/^#{name_a}, [^,]+, gây \d+ sát thương/u))
+    refute Enum.any?(texts, &(&1 =~ ~r/(?<![\p{L}])[Bb]ạn(?![\p{L}])/u))
 
     # đòn mở màn của người tấn công (RULES.slay.first_strike_mult); đòn thường đầu tiên có thể bị né (không sát thương)
     assert Enum.any?(texts, &(&1 =~ "Đòn mở màn")) or
-             Enum.any?(texts, &(&1 =~ "Trượt! Bạn tránh được"))
+             Enum.any?(texts, &(&1 =~ ", đánh trượt."))
 
-    ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục bạn."))
+    # nhật ký người đánh: máu còn lại là máu thật của đối thủ (không phải số tạm của máy tính trận), sát thương ≤ máu tối đa
+    max_b = HacLong.Game.Engine.derived(pb).maxHp
+    hits = Enum.filter(pa.battle.log, &(&1[:who] == "me" and is_integer(&1[:left])))
+    assert hits != []
+    assert Enum.all?(hits, &(&1.left <= max_b and &1.dmg <= max_b))
+
+    # đòn mở màn ghi ngay trong dòng đánh đầu của người tấn công, không thành dòng riêng
+    refute Enum.any?(pa.battle.log, &String.starts_with?(&1.text, "⚔ Đòn mở màn"))
+    first = Enum.find(hits, &(&1.dmg > 0))
+    if first && first.turn <= 1, do: assert(first.note =~ "đòn mở màn")
+
+    ko = Enum.find_index(texts, &(&1 == "#{name_a} hạ gục #{pb.name}."))
     assert ko && Enum.at(texts, ko - 1) =~ name_a
 
     assert [%{wager: 300, winner_id: winner}] =
@@ -191,22 +203,16 @@ defmodule HacLongWeb.SlayTest do
     assert %{ok: true} = cmd(sa, %{"act" => "leave"})
   end
 
-  test "nhật ký người đánh đổi sang góc nhìn người bị đánh" do
+  test "nhật ký người đánh cho bên kia đọc: đã ghi tên hai bên, không xưng bạn" do
+    # DECISIONS "Nhật ký trận: tên, dùng gì, gây bao nhiêu"
     m = &HacLong.Game.BattleText.mirror(&1, "bien", "bien2")
 
-    assert m.("✨ Hắc Long Trảm: Bạn gây 1842 sát thương (CHÍ MẠNG!).") ==
-             "✨ Hắc Long Trảm: bien gây 1842 sát thương cho bạn (CHÍ MẠNG!)."
+    assert m.("bien, Hắc Long Trảm, gây 1842 sát thương (CHÍ MẠNG!).") ==
+             "bien, Hắc Long Trảm, gây 1842 sát thương (CHÍ MẠNG!)."
 
-    assert m.("Trượt! bien2 tránh được đòn tấn công.") ==
-             "bien: Trượt! Bạn tránh được đòn tấn công."
-
-    assert m.("☠ bien2 trúng độc.") == "bien: ☠ Bạn trúng độc."
-    assert m.("🐾 Sói cắn thêm 12 sát thương.") == "bien: 🐾 Sói cắn thêm 12 sát thương cho bạn."
-    assert m.("Bạn nổi cuồng nộ: tấn công +20%.") == "bien nổi cuồng nộ: tấn công +20%."
-
-    # ngôi thứ ba (người xem trận)
-    assert HacLong.Game.BattleText.mirror("Bạn gây 30 sát thương.", "bien", "bien2", "bien2") ==
-             "bien gây 30 sát thương cho bien2."
+    assert m.("bien, Đòn thường, đánh trượt.") == "bien, Đòn thường, đánh trượt."
+    # dòng không nhắc tên người đánh: thêm tên ở đầu
+    assert m.("☠ bien2 trúng độc.") == "bien: ☠ bien2 trúng độc."
 
     assert HacLong.Game.BattleText.view(
              [%{text: "Khiên Thánh hồi 0 máu.", kind: "good"}],

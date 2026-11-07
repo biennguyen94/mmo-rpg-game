@@ -2,7 +2,7 @@
  * Mọi thao tác gửi lên server qua Net (net.js); server tính toán rồi trả trạng thái mới.
  * P.view chứa các chỉ số server tính sẵn (máu tối đa, tấn công, giá nghỉ trọ...). */
 (function () {
-  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, FURNITURE, UPGRADE, CHAOS } = window.GAME_DATA;
+  const { CLASSES, ZONES, ITEMS, RULES, RECIPES, QUESTS, WORLD, ACHIEVEMENTS, PETS, UPGRADE, CHAOS } = window.GAME_DATA;
   const Net = window.Net;
   const L = window.HLLogic; // hàm thuần (logic.js), có test node --test
 
@@ -13,12 +13,16 @@
   let fx = null;         // hiệu ứng trận đấu của lượt vừa rồi
   let authMode = 'login'; // 'login' | 'register' | 'forgot'
   let loading = true;    // đang kết nối server
+  let charSel = null;    // màn chọn nhân vật (DECISIONS "Nhiều nhân vật"): { del: mã nhân vật đang hỏi xóa | null }
   let busy = false;      // đang chờ server trả lời
+  // quên mật khẩu bằng câu hỏi bảo mật (DECISIONS "Câu hỏi bảo mật"): { user, q } sau bước 1; `admin`: gửi yêu cầu cho quản trị
+  let fg = { user: '', q: null, admin: false };
+  // cài đặt: form câu hỏi bảo mật đang mở; `secQ`: câu hỏi đang đặt (undefined: chưa tải, null: chưa đặt)
+  let secForm = false, secQ;
   let walk = null;       // đích đang đi tới trên bản đồ: { x, y, monster, id }
   let friendsUi = { open: false, data: null, chat: null, dm: 0 }; // bạn bè; chat: { uid, data }
   let trade = null;      // giao dịch trực tiếp (HacLong.Trade.view): { partner_name, status, incoming, mine, theirs, my_ready, their_ready }
   let profileUi = { open: false, info: null }; // Phase 13: hồ sơ người chơi (mình hoặc người khác)
-  let visit = null;      // đang thăm nhà: { uid, info: null | { id, name, look, decor, comfort, likes, liked } }
   let dialog = null;    // bảng trên bản đồ: { type: 'boss', dir, boss }
   let npc = null;        // NPC đang nói chuyện: { map, id, line }
   let pwForm = false;    // đang mở form đổi mật khẩu
@@ -39,7 +43,7 @@
   let fishing = null;
   let sharedN = 1;       // số người trong trận đánh chung đang đánh
   let sharedKey = null;  // trận đánh chung của `sharedN`
-  let decor = { on: false, pick: null }; // trang trí nhà: đang bật, món đang chọn để đặt    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
+    // lượt câu: { phase: 'wait' | 'bite', timers: [] }
   let wb = { alive: false }; // trùm thế giới; `skew`: lệch đồng hồ máy chủ - máy này
   const Map_ = window.MapView;
   const Sound = window.Sound;
@@ -64,16 +68,24 @@
     const opts = [['', 'Cánh: không dòng phụ'], ['hp', `Cánh: máu tối đa +${t.hp}`], ['mp', `Cánh: MP tối đa +${t.mp}`], ['ignore_def', `Cánh: bỏ qua ${Math.round(t.ignore_def * 100)}% phòng thủ đối thủ`]];
     return `<select name="wopt" aria-label="Dòng phụ cánh">${opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   }
+  // ô tick dòng của món (May mắn, Kỹ năng, Đồ Thần, Excellent, dòng phụ cánh): dùng cho "Chỉnh nhân vật → Trang bị"
+  // lẫn quà qua hộp thư (DECISIONS "Quà mọi người: tick dòng như tặng người cụ thể")
+  function gearExtras(base) {
+    const show0 = gearShow(base);
+    return `<div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label${k === 'luck' ? '' : ` data-gear-show="${k}"${show0[k] ? '' : ' hidden'}`}><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
+        ${woptSelect(base)}</div>
+      ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`;
+  }
   // form tặng trang bị: chỉ hiện dòng hợp với món đang chọn (như `Admin` kiểm tra) — Excellent vũ khí cho
   // vũ khí / dây chuyền, Excellent giáp cho đồ còn lại, cánh không có Excellent; Kỹ năng chỉ vũ khí; Đồ Thần chỉ món thuộc bộ
   function gearShow(base) {
     const it = ITEMS[base] || {}, exc = it.slot === 'wing' || !it.slot ? '' : atkSlot(it) ? 'weapon' : 'armor';
     return { weapon: exc === 'weapon', armor: exc === 'armor', skill: it.slot === 'weapon', anc: !!it.set };
   }
-  function syncGearForm() {
-    const form = document.querySelector('form.adm-char[data-op="give_gear"]');
+  function syncGearForm(form) {
+    form = form || document.querySelector('form.adm-char[data-op="give_gear"]');
     if (!form) return;
-    const base = form.querySelector('select[name="base"]').value;
+    const base = (form.querySelector('select[name="base"]') || form.querySelector('select[name="gbase"]')).value;
     const old = form.querySelector('select[name="wopt"]');
     if (old) old.outerHTML = woptSelect(base);
     const show = gearShow(base);
@@ -132,7 +144,7 @@
   // hình nhân vật mặc đúng đồ đang trang bị (doll.js)
   // FX đợt 3: hào quang theo đồ (look.aura: 7 / 9 / 11, server tính) — viền sáng quanh hình nhân vật
   const auraCls = (look) => (look && look.aura ? ` aura-${look.aura}` : '');
-  const heroSprite = (cls) => `<img class="sprite ${cls || ''}${auraCls(P && P.view.look)}" src="${window.Doll.url(P && P.view.look)}" alt="${esc(P ? P.name : '')}">`;
+  const heroSprite = (cls) => `<img class="sprite ${cls || ''}${auraCls(P && P.view.look)}" ${window.Doll.src(P && P.view.look)} alt="${esc(P ? P.name : '')}">`;
   const sprite = (id, cls, alt) => `<img class="sprite ${cls || ''}" src="${asset('monsters/' + id + '.png')}" alt="${esc(alt || '')}">`;
 
   // ---------- Thông báo (Phase 8, L2) ----------
@@ -268,7 +280,6 @@
     const b = P.battle;
     if (b && !b.over) return b.monster.boss || b.monster.world ? 'boss' : 'battle';
     const map = P.pos.map, phase = Map_.world().phase;
-    if (map === 'home') return 'home';
     if (map === 'tower') return 'tower';
     if (phase === 'night') return 'night';
     return map === 'village' ? 'village' : 'wild';
@@ -282,6 +293,13 @@
     if (loading || !Net.username) {
       hud.hidden = true; tabs.hidden = true;
       view.innerHTML = loading ? viewLoading() : viewLogin();
+      return;
+    }
+    if (charSel) {
+      hud.hidden = true; tabs.hidden = true;
+      // chỉ vẽ lại khi nội dung đổi: giữ chữ đang gõ trong ô xóa nhân vật (trang vẽ lại định kỳ)
+      const html = viewSelect();
+      if (view.__sel !== html || !view.querySelector('.char-row')) { view.innerHTML = html; view.__sel = html; }
       return;
     }
     if (!P) {
@@ -320,13 +338,10 @@
     ].map(([id, ic, label]) => `<button data-tab="${id}" ${TAB_KEY[id] ? `title="${label} (phím ${TAB_KEY[id]})" aria-keyshortcuts="${TAB_KEY[id]}"` : ''} ${tab === id ? 'aria-current="page"' : ''}>${ic.startsWith('<') ? ic : icon(ic)}<span>${label}${id === 'people' ? peopleDot() : ''}${id === 'hero' && P.points ? `<span class="points-dot">${P.points}</span>` : ''}</span></button>`).join('');
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
-    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !visit && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : visit ? viewVisit() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + viewDecorPanel() + Map_.html(P, viewDialog() + viewFishing() + viewDecorButton() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
-    } else if (visit) {
-      const c = $('#visit-canvas');
-      if (c && visit.info) Map_.drawHome(c, visit.info);
     } else if (friendsUi.open) {
       const log = $('#dm-log');
       if (log) log.scrollTop = log.scrollHeight;
@@ -353,6 +368,7 @@
   async function loadReports() {
     adm.loading = true;
     try { adm.reports = (await Net.admin('reports')).reports; } catch (e) { toast(e.msg, true); }
+    if (isAdminRole()) { try { adm.flags = await Net.admin('flags'); } catch (e) { /* không tải được: ẩn nút */ } }
     adm.loading = false;
     if (onMenu('admin')) render();
   }
@@ -372,6 +388,7 @@
     const user = !u ? '' : `<div class="card">
         <div class="row"><h3 class="grow">${esc(u.character ? u.character.name : u.username)}</h3><span class="small muted">@${esc(u.username)}</span></div>
         <p class="small">${u.character ? `Cấp ${u.character.level} · ${fmt(u.character.gold)} vàng · ${fmt(u.character.kills)} quái` : 'Chưa có nhân vật'} · bị báo cáo ${u.reports} lần</p>
+        ${(u.characters || []).length > 1 ? `<p class="small">Nhân vật của tài khoản: ${u.characters.map((c) => c.id === u.id ? `<b>${esc(c.name)}</b>` : `<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(c.name)}">${esc(c.name)} · cấp ${c.level}</button>`).join(' ')}</p><p class="small muted">Cấm chat / khóa áp dụng cả tài khoản; chỉnh nhân vật chỉ nhân vật đang xem.</p>` : ''}
         <p class="small">${u.banned_until ? `<span style="color:var(--bad)">Bị khóa ${vnTime(u.banned_until)}${u.ban_reason ? ': ' + esc(u.ban_reason) : ''}</span>` : 'Không bị khóa'} · ${u.muted_until ? `<span style="color:var(--bad)">Bị cấm chat ${vnTime(u.muted_until)}</span>` : 'Được chat'}</p>
         <div class="btn-row">
           <button class="btn small-btn" data-adm="mute" data-uid="${u.id}" data-minutes="60">Cấm chat 1 giờ</button>
@@ -390,7 +407,7 @@
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
-        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><div class="grow"><div class="name">${esc(o.name)}</div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></div><button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
+        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}${o.account ? ` · @${esc(o.account)}` : ''}</div></button>${isAdminRole() ? `<button class="btn small-btn" data-adm="goto_player" data-uid="${o.id}" title="Tới chỗ người này" aria-label="Tới chỗ ${esc(o.name)}">📍</button>` : ''}${isAdminRole() ? `<button class="btn small-btn" data-adm="to_village" data-uid="${o.id}" title="Đưa về Làng (gỡ kẹt)" aria-label="Đưa ${esc(o.name)} về Làng">🏠</button>` : ''}<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
       </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
         <form id="adm-lookup" class="chat-form"><input type="text" id="adm-name" placeholder="Tên nhân vật hoặc tên đăng nhập" autocomplete="off"><button class="btn" type="submit">Tìm</button></form>
@@ -400,6 +417,12 @@
         <form id="adm-announce" class="chat-form"><input type="text" id="adm-text" maxlength="200" placeholder="Nội dung thông báo" autocomplete="off"><button class="btn" type="submit">Gửi</button></form>
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
+      ${adm.flags ? `<div class="card"><h3>Bản đồ</h3><p class="small muted">Quái đi lang thang trên mọi bản đồ, cho cả server. Tắt thì quái đứng yên tại chỗ (vẫn đánh, vẫn hồi sinh như thường).</p>
+        <div class="btn-row"><span class="grow">Quái di chuyển: <b>${adm.flags.mob_move ? 'Đang bật' : 'Đang tắt'}</b></span><button class="btn" data-adm="mob_move" data-on="${adm.flags.mob_move ? 0 : 1}">${adm.flags.mob_move ? 'Tắt' : 'Bật'}</button></div>
+        <p class="small muted">Gỡ kẹt: đưa người chơi về Làng bằng nút 🏠 ở danh sách online / tra cứu. Bot tự về Làng khi đứng yên quá ${RULES.botStuckMin || 10} phút.</p>
+        <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>
+      <div class="card" data-notr><h3>Bộ tên</h3><p class="small muted">Tên đồ, ngọc, sự kiện, quái, thú… cho cả server: tên MU (Quảng Trường Quỷ, Ngọc Ước Nguyện, Kalima…) hoặc tên mới (Quỷ Môn Trận, Ngọc Lam Tinh, Vực U Minh…). Chỉ đổi chữ hiện ra, đồ và dữ liệu giữ nguyên; người đang chơi tự tải lại trang. Danh sách tên mới: <code>priv/static/i18n/names_alt.json</code>.</p>
+        <div class="btn-row"><span class="grow">Đang dùng: <b>${adm.flags.name_pack === 'alt' ? 'Tên mới' : 'Tên MU'}</b></span><button class="btn${adm.flags.name_pack === 'alt' ? '' : ' primary'}" data-adm="name_pack" data-pack="mu"${adm.flags.name_pack === 'alt' ? '' : ' disabled'}>Tên MU</button><button class="btn${adm.flags.name_pack === 'alt' ? ' primary' : ''}" data-adm="name_pack" data-pack="alt"${adm.flags.name_pack === 'alt' ? ' disabled' : ''}>Tên mới</button></div></div>` : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -445,7 +468,7 @@
       ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
       ${line('set_tower', 'Kỷ lục tháp (mở kỹ năng tháp)', num('floor', 100, 'min="0" max="1000"'), 'Đặt')}
-      ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh)', num('n', 0, 'min="0" max="10"'), 'Đặt')}
+      ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh; quá 10 là chuyển sinh vô hạn)', num('n', 0, 'min="0" max="999"'), 'Đặt')}
       ${line('set_mastery', 'Cấp thông thạo mọi kỹ năng đang có', num('lv', 10, `min="1" max="${(RULES.skillMastery || {}).max || 10}"`), 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
@@ -454,8 +477,8 @@
         <div class="adm-lines small">${[['luck', 'May mắn'], ['skill', 'Kỹ năng (vũ khí)'], ['anc', 'Đồ Thần (bộ giáp)']].map(([k, l]) => `<label${k === 'luck' ? '' : ` data-gear-show="${k}"${show0[k] ? '' : ' hidden'}`}><input type="checkbox" name="${k}"> ${l}</label>`).join(' ')}
           ${woptSelect(gearBases[0] && gearBases[0][0])}</div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
-      ${line('give_pet', 'Thú cưng (cả Long Vương), đặt cấp thú, dắt theo luôn', `<select name="id">${[...PETS].sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0) || a.price - b.price).map((pt) => `<option value="${pt.id}">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</option>`).join('')}</select><label class="small">Cấp ${num('level', RULES.petMaxLevel, `min="1" max="${RULES.petMaxLevel}"`)}</label>`, 'Tặng')}
-      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
+      ${line('give_pet', 'Thú cưng (cả Long Vương), đặt cấp thú, dắt theo luôn', `<select name="id">${[...PETS].sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0) || a.price - b.price).map((pt) => `<option value="${pt.id}">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</option>`).join('')}</select><label class="small">Cấp ${num('level', RULES.petMaxLevel, `min="1" max="${Math.max(RULES.petMaxLevel, ...PETS.map((x) => x.max_level || 0))}"`)}</label>`, 'Tặng')}
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="goto_player" data-uid="${u.id}" title="Nhân vật của mình dịch chuyển tới bản đồ và ô của người này">📍 Đến chỗ</button><button class="btn small-btn" data-adm="to_village" data-uid="${u.id}" title="Gỡ kẹt: kết thúc trận như bỏ chạy (không mất gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng">🏠 Về Làng</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
       ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
@@ -529,7 +552,8 @@
         <div class="btn-row"><select name="grar" aria-label="Dòng cộng thêm">${[0, 1, 2, 3, 4].map((o) => `<option value="${o}">${o} dòng</option>`).join('')}</select>
           <label class="small">+ <input type="number" name="gup" min="0" max="${UPGRADE.max}" value="0"></label>
           <label class="small">× <input type="number" name="gn" min="1" max="10" value="1"></label>
-          <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div></div>
+          <button class="btn small-btn" type="button" data-act="gift-add" data-form="${id}" data-kind="gear">+ Thêm</button></div>
+        ${gearExtras(Object.keys(ITEMS).find((k) => (GEAR_KINDS.includes(ITEMS[k].slot) || ITEMS[k].slot === 'wing') && !ITEMS[k].legacy))}</div>
       <div id="${id}-basket" class="gift-basket">${giftBasketHtml(id)}</div>
       ${all ? `<fieldset class="gift-filter"><legend class="small">Người nhận (bỏ trống = mọi người, không tính bot)</legend>
         <div class="btn-row"><label class="small">Cấp từ <input type="number" name="min_level" min="1" max="${RULES.maxLevel}"></label>
@@ -543,7 +567,8 @@
   }
   // tên món trong giỏ / thư: đồ thường, hoặc "gear:<mẫu>:<dòng>:<+N>"
   function giftKeyHtml(k, n) {
-    const g = k.startsWith('gear:') && k.split(':');
+    let g = k.startsWith('gear:') && k.split(':');
+    if (k.startsWith('gearx:')) { try { const x = JSON.parse(atob(k.slice(6).replace(/-/g, '+').replace(/_/g, '/'))); g = ['gear', x.base, x.opt || 0, x.up || 0]; } catch (e) { g = null; } }
     const it = g ? ITEMS[g[1]] : ITEMS[k];
     return `${it ? itemIcon(it, '', g ? +g[3] : 0) : ''}<span class="grow">${esc(mailItemName(k))}${n > 1 ? ` <span class="muted num">×${n}</span>` : ''}</span>`;
   }
@@ -565,7 +590,18 @@
     const form = document.getElementById(t.dataset.form);
     if (!form) return;
     const f = new FormData(form), b = giftBasket[form.id] = giftBasket[form.id] || {};
-    const key = t.dataset.kind === 'item' ? f.get('item') : `gear:${f.get('gbase')}:${+f.get('grar') || 0}:${Math.min(UPGRADE.max, +f.get('gup') || 0)}`;
+    let key = t.dataset.kind === 'item' ? f.get('item') : `gear:${f.get('gbase')}:${+f.get('grar') || 0}:${Math.min(UPGRADE.max, +f.get('gup') || 0)}`;
+    // có tick dòng (May mắn, Excellent…): khóa "gearx:<base64 JSON>" như server (Mailbox), kèm cả +N
+    if (t.dataset.kind === 'gear') {
+      const x = { base: f.get('gbase') };
+      if (+f.get('grar')) x.opt = +f.get('grar');
+      if (+f.get('gup')) x.up = Math.min(UPGRADE.max, +f.get('gup'));
+      for (const k of ['luck', 'skill', 'anc']) if (f.get(k)) x[k] = true;
+      const exc = f.getAll('exc');
+      if (exc.length) x.exc = exc;
+      if (f.get('wopt')) x.wopt = f.get('wopt');
+      if (x.luck || x.skill || x.anc || x.exc || x.wopt) key = 'gearx:' + btoa(unescape(encodeURIComponent(JSON.stringify(x)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
     const n = Math.max(1, Math.floor(+(t.dataset.kind === 'item' ? f.get('n') : f.get('gn')) || 1));
     if (!key || key === 'null') return;
     b[key] = Math.min(100, (b[key] || 0) + n);
@@ -622,6 +658,8 @@
     }
     if (op === 'reset_stats' && !confirm('Đặt lại chỉ số về gốc của lớp và trả điểm tiềm năng theo cấp / chuyển sinh?')) return;
     if (op === 'reset_password' && !confirm('Đặt lại mật khẩu tài khoản này? Mật khẩu cũ hết dùng được, mọi thiết bị của họ bị đăng xuất.')) return;
+    if (op === 'to_village' && !confirm('Đưa nhân vật này về Làng? Đang đánh thì trận kết thúc như bỏ chạy (không mất gì).')) return;
+    if (op === 'bots_to_village' && !confirm('Đưa mọi bot về Làng?')) return;
     if (op === 'clear_bag' && !confirm('Hủy MỌI trang bị trong túi của nhân vật này (cả món đang khóa)? Đồ đang mặc và đồ trong Tủ Đồ giữ nguyên. Không hoàn tác được.')) return;
     const payload = {};
     if (d.id) payload.id = +d.id;
@@ -629,10 +667,14 @@
     if (d.action) payload.action = d.action;
     if (d.minutes) payload.minutes = +d.minutes;
     if (d.days) payload.days = +d.days;
+    if (d.on) payload.on = d.on === '1';
+    if (d.pack) payload.pack = d.pack;
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
       if (op === 'online') { adm.online = r.online; return render(); }
+      if (op === 'mob_move') { adm.flags = { ...adm.flags, mob_move: r.mob_move }; toast(r.msg); return render(); }
+      if (op === 'name_pack') { adm.flags = { ...adm.flags, name_pack: r.name_pack }; toast(r.msg); return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
@@ -702,29 +744,6 @@
       <button class="btn primary block" data-act="trade-op" data-op="ready" ${t.my_ready || busy ? 'disabled' : ''}>${busy ? 'Đang đổi…' : t.my_ready ? `Đợi ${esc(t.partner_name)} xác nhận…` : '✔ Xác nhận đổi'}</button>`;
   }
 
-  // ---------- Thăm nhà người khác ----------
-  async function openVisit(uid) {
-    visit = { uid, info: null };
-    dialog = null;
-    render();
-    try { visit.info = await Net.visit(uid); } catch (e) { toast(e.msg, true); visit = null; }
-    render();
-  }
-  function viewVisit() {
-    const v = visit.info;
-    const head = `<div class="row"><h2 class="display grow">🏡 ${v ? `Nhà của ${esc(v.name)}` : 'Đang ghé…'}</h2><button class="btn" data-act="visit-close">Về</button></div>`;
-    if (!v) return head;
-    return `${head}
-      <div class="card"><div class="map-wrap"><canvas id="visit-canvas" aria-label="Nhà của ${esc(v.name)}"></canvas></div>
-        <div class="row" style="margin-top:8px"><div class="grow small">
-          <div>Tiện nghi <b>${v.comfort}</b> · ${v.decor.length} món trang trí</div>
-          <div class="muted">❤ ${fmt(v.likes)} lượt khen</div></div>
-          ${v.id === Net.userId ? '<span class="small muted">Nhà của bạn</span>'
-            : v.liked ? '<span class="tag good">Đã khen</span>'
-            : `<button class="btn primary" data-act="home-like" data-uid="${v.id}">❤ Khen nhà</button>`}
-        </div></div>`;
-  }
-
   // Bảng nổi trên bản đồ: hỏi đấu trùm, chọn nơi dịch chuyển.
   function viewDialog() {
     if (!dialog) return '';
@@ -746,13 +765,12 @@
       const inParty = party && party.members.some((m) => m.id === o.id);
       const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
       return `<div class="map-dialog card">
-        <div class="row"><img class="sprite" src="${window.Doll.url(o.look)}" alt=""><div class="grow">
+        <div class="row"><img class="sprite" ${window.Doll.src(o.look)} alt=""><div class="grow">
           ${o.title ? `<span class="title-tag">${esc(o.title)}</span>` : ''}<h3>${o.guild ? `<span class="guild-tag">[${esc(o.guild.tag)}]</span> ` : ''}${esc(o.name)}</h3>
           <p class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} · Đấu trường ${o.arena.rating} (${o.arena.wins}T/${o.arena.losses}B)</p></div></div>
         <p class="small">${[o.gear.weapon, o.gear.armor, o.gear.shield, o.gear.wing].filter(Boolean).map(esc).join(' · ')}</p>
         <div class="btn-row">
           ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
-          <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
           <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
@@ -1053,7 +1071,7 @@
     const inParty = (id) => party && party.members.some((x) => x.id === id);
     return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
       ${list.length ? `<div class="list">${list.map((o) => `<button class="item people-row" data-act="profile" data-uid="${o.id}">
-        <img class="sprite sm" src="${window.Doll.url(o.look)}" alt="">
+        <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
         <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
           <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
         <span class="small muted">›</span></button>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
@@ -1067,7 +1085,8 @@
     if (!o) return head + '<div class="card"><p class="small muted">Đang tải hồ sơ…</p></div>';
     const pr = o.profile, c = CLASSES[o.cls] || {};
     const kv = (k, v) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`;
-    const plus = (v) => (v ? ` <span class="up">+${Math.round(v * 100)}%</span>` : '');
+    // % cộng thêm từ thú cưng (đã nhân theo cấp thú) và món ăn / đồ uống / ban phước
+    const plus = (v) => (v ? ` <span class="up" title="Từ thú cưng${pr.pet ? ` (${esc(pr.pet)} cấp ${pr.pet_lv}: chỉ số cấp 1 × ${(pr.pet_mult || 1).toFixed(2)})` : ''}, món ăn, đồ uống">+${Math.round(v * 100)}%</span>` : '');
     // cùng cách ghi với tab Nhân vật: điểm gốc, phần đồ cộng thêm màu xanh
     const stat = (k, n) => { const s = pr.stats[k]; return kv(n, `<b>${fmt(s.base)}</b>${s.gear ? ` <span class="up">+${fmt(s.gear)}</span>` : ''}`); };
     const day = (t) => (t ? new Date(t).toLocaleString('vi-VN') : '—');
@@ -1076,7 +1095,6 @@
     const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
     const actions = o.me ? '' : `<div class="card"><h3>Hành động</h3><div class="btn-row">
         ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
-        <button class="btn" data-act="home-visit" data-uid="${o.id}">🏡 Thăm nhà</button>
         <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
         <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
         <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
@@ -1092,7 +1110,7 @@
         ${pr.protect_s ? `<div class="small" style="color:var(--good)">🛡 Được bảo vệ sau khi gục · còn ${pr.protect_s} giây</div>` : ''}
         ${o.guild ? `<div class="small muted">Bang ${esc(o.guild.name)}</div>` : ''}
         <div class="prof-lv">${o.rebirths ? `CS${o.rebirths} · ` : ''}Cấp ${o.level} ${esc(c.name || '')}</div>
-        <img class="sprite prof-doll${auraCls(o.look)}" src="${window.Doll.url(o.look)}" alt="">
+        <img class="sprite prof-doll${auraCls(o.look)}" ${window.Doll.src(o.look)} alt="">
         <div class="small muted">${pr.online ? `🟢 Đang online${pr.where ? ` @ ${esc(pr.where)}` : ''}` : `Lần cuối: ${day(pr.last_seen)}`}</div>
       </div>
       <div class="prof-boxes">
@@ -1111,7 +1129,7 @@
         ${kv('Né đòn', `${Math.round(pr.dodge * 100)}%`)}
         ${pr.pct.wing_dmg ? kv('Cánh', `+${Math.round(pr.pct.wing_dmg * 100)}% sát thương<br>−${Math.round(pr.pct.wing_absorb * 100)}% nhận`) : ''}
         ${pr.ignore_def ? kv('Bỏ qua phòng thủ', `${Math.round(pr.ignore_def * 100)}%`) : ''}
-        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}`)}
+        ${kv('Máu tối đa', `<b>${fmt(pr.max_hp)}</b>${plus(pr.pct.hp)}${pr.pct.hp_flat ? ` <span class="up" title="Thú cưng">+${fmt(pr.pct.hp_flat)}</span>` : ''}`)}
       </div>
       <div class="card">
         ${kv(`${icon('two-coins')} Vàng`, fmt(pr.gold))}
@@ -1123,7 +1141,7 @@
         ${pr.equip.length ? '' : '<p class="small muted" style="text-align:center">Chưa mặc gì.</p>'}
       </div>
       <div class="card">
-        ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
+        ${kv('🐾 Thú cưng', pr.pet ? `${esc(pr.pet)} cấp ${pr.pet_lv} <span class="muted">(${pr.pets} con)</span>` : pr.pets ? `${pr.pets} con` : '—')}
         ${kv('🏪 Đang bán ở chợ', `${pr.market} món`)}
       </div>
       <div class="card">
@@ -1221,14 +1239,15 @@
     const me = arena.me, left = me.per_day - me.today;
     return `<div class="card" id="arena">
       <div class="row">${icon('crossed-swords', 'lg')}<div class="grow"><h3>Đấu trường</h3>
-        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Nhà). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
+        <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Làng). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
+      ${me.tier ? `<p class="small muted">Hạng của bạn: <b>${esc(me.tier)}</b>. Chỉ thách đấu người cùng hạng hoặc hạng trên (từ chuyển sinh ${me.min_rebirths} trở lên), không thách nhân vật cùng tài khoản.</p>` : ''}
       <form id="arena-find" class="row" autocomplete="off"><input type="text" id="arena-q" class="grow" maxlength="24" placeholder="Tìm người chơi theo tên…" value="${esc(arenaFind.q)}" aria-label="Tìm người chơi theo tên"><button class="btn" type="submit">Tìm</button></form>
       ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
         <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
       <div class="list">${arena.suggestions.map((o) => arenaRow(o, left)).join('') || '<p class="small muted">Chưa có đối thủ nào.</p>'}</div>
-      ${slayHist ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng và Nhà) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
+      ${slayHist ? `<h3>🗡 Đồ sát</h3><p class="small muted">Chạm tên người chơi cùng bản đồ (từ cấp ${RULES.slay.minLevel}, ngoài Làng) rồi bấm Đồ sát: hai bên vào trận ngay, luân phiên lượt ${RULES.slay.turnS} giây. Thua hoặc bỏ chạy là gục ngã; vàng mất chuyển cho người thắng.</p>
         <div class="list" id="pk-history">${slayHist.map((h) => {
           const mine = h.a_id === Net.userId, foe = mine ? h.b_name : h.a_name;
           const res = h.winner_id == null ? '<span class="tag num">Hòa</span>' : h.winner_id === Net.userId ? `<span class="tag good num">+${fmt(h.wager)}</span>` : `<span class="tag bad num">−${fmt(h.wager)}</span>`;
@@ -1395,8 +1414,8 @@
     if (id.startsWith('gearx:')) {
       try {
         const x = JSON.parse(atob(id.slice(6).replace(/-/g, '+').replace(/_/g, '/')));
-        const tags = [x.anc ? 'Đồ Thần' : x.exc && x.exc.length ? 'Hoàn hảo' : '', x.opt ? `cộng thêm ${x.opt * lineVal(ITEMS[x.base])}` : '', x.luck ? 'May mắn' : ''].filter(Boolean);
-        if (ITEMS[x.base]) return `${ITEMS[x.base].name}${tags.length ? ` (${tags.join(', ')})` : ''}`;
+        const tags = [x.anc ? 'Đồ Thần' : '', x.exc && x.exc.length ? `Hoàn hảo ${x.exc.length} dòng` : '', x.opt ? `cộng thêm ${x.opt * lineVal(ITEMS[x.base])}` : '', x.luck ? 'May mắn' : '', x.skill ? 'Kỹ năng' : '', x.wopt ? 'dòng cánh' : ''].filter(Boolean);
+        if (ITEMS[x.base]) return `${ITEMS[x.base].name}${x.up ? ` +${x.up}` : ''}${tags.length ? ` (${tags.join(', ')})` : ''}`;
       } catch (e) { /* khóa hỏng: hiện nguyên */ }
       return id;
     }
@@ -1483,7 +1502,7 @@
       <div class="card"><h3>Bạn bè (${d.friends.length})</h3>${d.friends.length ? `<div class="list">${d.friends.map((f) => `<div class="item"><div class="grow">
           <div class="name">${f.online ? '<span style="color:var(--good)" title="Đang online">●</span>' : '<span class="muted" title="Không online">○</span>'} ${esc(f.name)}${f.unread ? ` <span class="tag gold num">${f.unread} tin mới</span>` : ''}</div>
           <div class="small muted">${f.level ? `Cấp ${f.level}` : ''}${f.cls && CLASSES[f.cls] ? ` ${CLASSES[f.cls].name}` : ''}</div>
-          <div class="btn-row"><button class="btn small-btn" data-act="home-visit" data-uid="${f.id}">🏡 Thăm nhà</button>${friendsUi.confirm === f.id
+          <div class="btn-row">${friendsUi.confirm === f.id
             ? `<button class="btn small-btn danger" data-act="friend-op" data-op="remove" data-uid="${f.id}">Xóa thật?</button>`
             : `<button class="btn small-btn" data-act="friend-ask" data-uid="${f.id}">Xóa bạn</button>`}</div></div>
           <button class="btn ${f.unread ? 'primary' : ''}" data-act="dm-open" data-uid="${f.id}">💬 Nhắn</button></div>`).join('')}</div>` : '<p class="small muted">Chưa có bạn nào.</p>'}</div>
@@ -1543,12 +1562,98 @@
         </div>
         <button class="btn primary block" type="submit">Bắt đầu hành trình</button>
       </form>
+      <p class="small muted" style="text-align:center">Tài khoản <b>${esc(Net.username)}</b> · ${Net.chars.length ? '<button class="btn" data-act="char-switch">‹ Chọn nhân vật khác</button> · ' : ''}<button class="btn" data-act="logout">Đăng xuất</button></p>`;
+  }
+
+  // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
+  function viewSelect() {
+    // theo thứ tự tạo (server sắp sẵn)
+    const list = Net.chars;
+    const row = (c) => {
+      const cls = CLASSES[c.cls] || {};
+      const where = (WORLD.maps[c.map] || {}).name || c.map || '';
+      const del = charSel.del === c.id;
+      // hình nhân vật mặc đồ (như hồ sơ), không có thì icon lớp
+      const pic = c.look ? `<img class="sprite${auraCls(c.look)}" ${window.Doll.src(c.look)} alt="">` : icon(cls.icon || 'person', 'lg');
+      return `<div class="item char-row">${pic}<div class="grow"><div class="name">${esc(c.name)}</div>
+          <div class="small muted">${esc(cls.name || c.cls)} · cấp ${c.level}${c.rebirths ? ` · CS ${c.rebirths}` : ''}${where ? ` · ${esc(where)}` : ''}</div></div>
+          <button class="btn" data-act="char-del" data-cid="${c.id}" aria-label="Xóa ${esc(c.name)}">Xóa</button>
+          <button class="btn primary" data-act="char-enter" data-cid="${c.id}" ${busy ? 'disabled' : ''}>Vào game</button></div>
+        ${del ? `<form id="char-del-form" class="card" data-cid="${c.id}" autocomplete="off">
+          <p class="small" style="color:var(--bad)">Xóa <b>${esc(c.name)}</b>? Đồ, vàng, bạn bè, bang, thư của nhân vật này mất hẳn, không lấy lại được. Thùng đồ chung ở Thủ Kho giữ nguyên.</p>
+          <label class="field">Gõ lại tên nhân vật<input type="text" id="cd-name" maxlength="16" required></label>
+          <label class="field">Mật khẩu tài khoản<input type="password" id="cd-pass" maxlength="72" autocomplete="current-password" required></label>
+          <div class="btn-row"><button class="btn" type="button" data-act="char-del-cancel">Thôi</button><button class="btn danger" type="submit" ${busy ? 'disabled' : ''}>Xóa vĩnh viễn</button></div>
+        </form>` : ''}`;
+    };
+    return `
+      <div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Chọn nhân vật</h1>
+        <p>Mỗi tài khoản tối đa ${Net.maxChars} nhân vật, chơi một nhân vật một lúc. Thùng đồ ở Thủ Kho dùng chung.</p></div>
+      <div class="card"><div class="list">${list.map(row).join('')}</div>
+        ${list.length < Net.maxChars ? `<button class="btn block" data-act="char-new" ${busy ? 'disabled' : ''}>＋ Tạo nhân vật mới (${list.length}/${Net.maxChars})</button>` : `<p class="small muted">Đã đủ ${Net.maxChars} nhân vật.</p>`}</div>
       <p class="small muted" style="text-align:center">Tài khoản <b>${esc(Net.username)}</b> · <button class="btn" data-act="logout">Đăng xuất</button></p>`;
+  }
+
+  // vào / tạo / rời nhân vật: chờ server rồi vẽ lại
+  function charGo(promise) {
+    busy = true; render();
+    promise.then((r) => { busy = false; enter(r); }).catch((e) => { busy = false; toast(e.msg, true); render(); });
   }
 
   // ---------- Đăng nhập ----------
   function viewLoading() {
     return `<div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
+  }
+
+  // Câu hỏi bảo mật (RULES.account)
+  const ACC = RULES.account || { security_questions: [], answer_max: 60 };
+  const secText = (id) => ((ACC.security_questions.find((q) => q.id === id) || {}).text || '');
+  const secOptions = (cur) => `<option value="">Chọn câu hỏi…</option>${ACC.security_questions.map((q) => `<option value="${q.id}" ${q.id === cur ? 'selected' : ''}>${esc(q.text)}</option>`).join('')}`;
+
+  // Quên mật khẩu: bước 1 tên đăng nhập → có câu hỏi bảo mật thì trả lời + mật khẩu mới; chưa đặt câu hỏi (tài khoản cũ)
+  // hoặc không nhớ câu trả lời thì gửi yêu cầu cho quản trị như trước
+  function viewForgot() {
+    const back = '<button class="btn block" type="button" data-auth="login">‹ Quay lại đăng nhập</button>';
+    if (fg.admin) {
+      return `<form id="forgot" class="card">
+        <h3>Nhờ quản trị lấy lại mật khẩu</h3>
+        <p class="small muted">${fg.q === null && fg.user ? 'Tài khoản này chưa đặt câu hỏi bảo mật. ' : ''}Để lại tên đăng nhập và cách liên lạc (Zalo, Facebook, số điện thoại…). Quản trị viên sẽ kiểm tra rồi gửi mật khẩu mới cho bạn; đăng nhập xong nhớ đổi lại mật khẩu.</p>
+        <label class="field" for="fg-user">Tên đăng nhập
+          <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(fg.user)}" required>
+        </label>
+        <label class="field" for="fg-contact">Cách liên lạc
+          <input type="text" id="fg-contact" maxlength="120" autocomplete="off" required>
+        </label>
+        <button class="btn primary block" type="submit">Gửi yêu cầu</button>
+        ${back}
+      </form>`;
+    }
+    if (fg.q) {
+      return `<form id="recover" class="card">
+        <h3>Quên mật khẩu</h3>
+        <p class="small muted">Tài khoản <b>${esc(fg.user)}</b></p>
+        <p><b>${esc(secText(fg.q))}</b></p>
+        <label class="field" for="rc-a">Câu trả lời
+          <input type="text" id="rc-a" maxlength="${ACC.answer_max}" autocomplete="off" required>
+        </label>
+        <label class="field" for="rc-pass">Mật khẩu mới
+          <input type="password" id="rc-pass" minlength="6" maxlength="72" autocomplete="new-password" required>
+        </label>
+        <p class="small muted">Đổi xong bạn được đăng nhập luôn; các thiết bị khác bị đăng xuất.</p>
+        <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>Đặt mật khẩu mới</button>
+        <button class="btn block" type="button" data-act="fg-admin">Không nhớ câu trả lời? Nhờ quản trị</button>
+        ${back}
+      </form>`;
+    }
+    return `<form id="fg-find" class="card">
+      <h3>Quên mật khẩu</h3>
+      <p class="small muted">Nhập tên đăng nhập để trả lời câu hỏi bảo mật đã đặt lúc đăng ký.</p>
+      <label class="field" for="fg-user">Tên đăng nhập
+        <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(fg.user)}" required>
+      </label>
+      <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>Tiếp tục</button>
+      ${back}
+    </form>`;
   }
 
   function viewLogin() {
@@ -1561,25 +1666,20 @@
         <h1>Hắc Long</h1>
         <p>${reg ? 'Tạo tài khoản để lưu nhân vật trên máy chủ và chơi trên mọi thiết bị.' : 'Đăng nhập để tiếp tục hành trình.'}</p>
       </div>
-      ${authMode === 'forgot' ? `<form id="forgot" class="card">
-        <h3>Quên mật khẩu</h3>
-        <p class="small muted">Để lại tên đăng nhập và cách liên lạc (Zalo, Facebook, số điện thoại…). Quản trị viên sẽ kiểm tra rồi gửi mật khẩu mới cho bạn; đăng nhập xong nhớ đổi lại mật khẩu.</p>
-        <label class="field" for="fg-user">Tên đăng nhập
-          <input type="text" id="fg-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-        </label>
-        <label class="field" for="fg-contact">Cách liên lạc
-          <input type="text" id="fg-contact" maxlength="120" autocomplete="off" required>
-        </label>
-        <button class="btn primary block" type="submit">Gửi yêu cầu</button>
-        <button class="btn block" type="button" data-auth="login">‹ Quay lại đăng nhập</button>
-      </form>` : `<form id="auth" class="card">
+      ${authMode === 'forgot' ? viewForgot() : `<form id="auth" class="card">
         <label class="field" for="auth-user">Tên đăng nhập
           <input type="text" id="auth-user" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         </label>
         <label class="field" for="auth-pass">Mật khẩu
           <input type="password" id="auth-pass" maxlength="72" autocomplete="${reg ? 'new-password' : 'current-password'}" required>
         </label>
-        ${reg ? '<p class="small muted">Tên đăng nhập 3–20 ký tự: chữ không dấu, số, dấu gạch dưới. Mật khẩu từ 6 ký tự.</p>' : ''}
+        ${reg ? `<label class="field" for="auth-q">Câu hỏi bảo mật
+          <select id="auth-q" required>${secOptions()}</select>
+        </label>
+        <label class="field" for="auth-a">Câu trả lời
+          <input type="text" id="auth-a" maxlength="${ACC.answer_max}" autocomplete="off" required>
+        </label>
+        <p class="small muted">Tên đăng nhập 3–20 ký tự: chữ không dấu, số, dấu gạch dưới. Mật khẩu từ 6 ký tự. Câu hỏi bảo mật dùng để tự lấy lại mật khẩu khi quên (không phân biệt chữ hoa, chữ thường); hãy nhớ câu trả lời.</p>` : ''}
         <button class="btn primary block" type="submit" ${busy ? 'disabled' : ''}>${reg ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
         <button class="btn block" type="button" data-auth="${reg ? 'login' : 'register'}">${reg ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký'}</button>
         ${reg ? '' : '<p class="small" style="text-align:center;margin:4px 0 0"><button class="btn small-btn" type="button" data-auth="forgot">Quên mật khẩu?</button></p>'}
@@ -1601,12 +1701,10 @@
       const z = ZONES[ni];
       body = `<div class="row">${sprite(z.boss.id, '', z.boss.name)}<div class="grow"><b>Hạ ${esc(z.boss.name)}</b> (cấp ${z.boss.level}) ở ${esc(z.name)}.
         <div class="small muted">Trùm vùng đã hạ: ${P.bosses.filter((id) => ZONES.some((zz) => zz.boss.id === id)).length}/${ZONES.length}.</div></div></div>`;
-    } else if (rb >= RULES.maxRebirths) {
-      return '';
     } else if (P.level < RULES.maxLevel) {
       body = `<p>Lên cấp <b>${RULES.maxLevel}</b> để chuyển sinh lần ${rb + 1} (đang cấp ${P.level}).</p>`;
     } else if (need) {
-      body = `<div class="row">${sprite(need.id, '', need.name)}<div class="grow"><b>Hạ ${esc(need.name)}</b> ở ${esc(need.map || `vùng chuyển sinh ${need.realm}`)} để chuyển sinh lần ${rb + 1}.</div></div>`;
+      body = `<div class="row">${sprite(need.id, '', need.name)}<div class="grow"><b>Hạ ${esc(need.name)}</b> ở ${esc(need.map || `vùng chuyển sinh ${need.realm}`)}${need.times > 1 ? ` (đã hạ ${need.have}/${need.times} lần)` : ''} để chuyển sinh lần ${rb + 1}.</div></div>`;
     } else {
       body = `<p>Đủ điều kiện <b>chuyển sinh lần ${rb + 1}</b>: gặp Trưởng Làng (ông già giữa Làng).</p>`;
     }
@@ -1652,6 +1750,8 @@
 
   function viewSettings() {
     const lg = window.I18N ? window.I18N.lang : 'vi';
+    // câu hỏi bảo mật đang đặt: tải một lần (nhắc đặt nếu chưa có)
+    if (secQ === undefined) { secQ = false; Net.me().then((r) => { secQ = r.question || null; render(); }).catch(() => { secQ = undefined; }); }
     return `
       <div class="card set" data-notr><div class="row"><h3 class="grow">Ngôn ngữ / Language</h3>
         <div class="btn-row"><button class="btn ${lg === 'vi' ? 'primary' : ''}" data-act="lang" data-lang="vi" aria-pressed="${lg === 'vi'}">Tiếng Việt</button>
@@ -1682,9 +1782,19 @@
         <h3>Dữ liệu</h3>
         <p class="small muted">Nhân vật lưu trên máy chủ, tài khoản <b>${esc(Net.username)}</b>.</p>
         <div class="btn-row" style="margin-bottom:8px">
+          <button class="btn" data-act="char-switch">Đổi nhân vật</button>
           <button class="btn" data-act="logout">Đăng xuất</button>
           <button class="btn" data-act="pw-toggle">Đổi mật khẩu</button>
+          <button class="btn" data-act="sq-toggle">Câu hỏi bảo mật</button>
         </div>
+        ${secQ === null ? '<p class="small" style="color:var(--bad)">Bạn chưa đặt câu hỏi bảo mật: quên mật khẩu sẽ phải nhờ quản trị. Bấm "Câu hỏi bảo mật" để đặt.</p>' : ''}
+        ${secForm ? `<form id="sq-form" class="pw-form">
+          ${secQ ? `<p class="small muted">Đang đặt: ${esc(secText(secQ))}</p>` : ''}
+          <label class="field" for="sq-q">Câu hỏi bảo mật<select id="sq-q" required>${secOptions(secQ)}</select></label>
+          <label class="field" for="sq-a">Câu trả lời<input type="text" id="sq-a" maxlength="${ACC.answer_max}" autocomplete="off" required></label>
+          <label class="field" for="sq-cur">Mật khẩu hiện tại<input type="password" id="sq-cur" autocomplete="current-password" required></label>
+          <button class="btn primary" type="submit">Lưu câu hỏi bảo mật</button>
+        </form>` : ''}
         ${pwForm ? `<form id="pw-form" class="pw-form">
           <label class="field" for="pw-cur">Mật khẩu hiện tại<input type="password" id="pw-cur" autocomplete="current-password" required></label>
           <label class="field" for="pw-new">Mật khẩu mới<input type="password" id="pw-new" autocomplete="new-password" minlength="6" maxlength="72" required></label>
@@ -1761,7 +1871,7 @@
       if (!me && m.role !== 'leader' && (leader || (g.role === 'officer' && m.role === 'member'))) acts.push(['kick', 'Mời ra']);
       const ask = guildUi.confirm && guildUi.confirm.uid === m.id ? guildUi.confirm : null;
       return `<div class="item member"><div class="grow">
-        <div class="name">${esc(m.name)}${me ? ' <span class="small muted">(bạn)</span>' : ` <button class="btn small-btn" data-act="home-visit" data-uid="${m.id}">🏡 Thăm nhà</button>`}</div>
+        <div class="name">${esc(m.name)}${me ? ' <span class="small muted">(mình)</span>' : ''}</div>
         <div class="small muted">${ROLES[m.role]} · ${m.level ? `Cấp ${m.level}` : ''}${m.cls && CLASSES[m.cls] ? ` ${CLASSES[m.cls].name}` : ''} · góp ${fmt(m.contributed)} vàng</div>
         ${ask ? `<div class="btn-row"><span class="small" style="color:var(--bad)">${ask.label} ${esc(m.name)}?</span><button class="btn small-btn" data-act="guild-confirm-no">Thôi</button><button class="btn small-btn danger" data-act="guild-op" data-op="${ask.op}" data-uid="${m.id}">Đồng ý</button></div>`
           : acts.length ? `<div class="btn-row">${acts.map(([op, label]) => `<button class="btn small-btn" data-act="guild-ask" data-op="${op}" data-uid="${m.id}" data-label="${label}">${label}</button>`).join('')}</div>` : ''}
@@ -1852,7 +1962,8 @@
   };
 
   // Tên món đồ kèm cấp nâng cấp (+1…+11) nếu có.
-  const upLevel = (id) => (P.upgrades && P.upgrades[id]) || 0;
+  // cấp ép: món trên người, hoặc món trong thùng đồ chung (`view.storage.ups`, DECISIONS "Nhiều nhân vật")
+  const upLevel = (id) => (P.upgrades && P.upgrades[id]) || (P.view && P.view.storage && P.view.storage.ups && P.view.storage.ups[id]) || 0;
   // cấp tính chỉ số: từ +10 mỗi cấp gấp đôi (như Engine.effective_level)
   const effLevel = (l) => L.effLevel(l, UPGRADE.double_from);
   // % sát thương / hấp thụ cánh bậc `tier` cộng thêm ở +`lv` (server tính sẵn: Engine.wing_up/3)
@@ -1863,7 +1974,8 @@
   const upClass = L.upClass;
   // Món đồ theo id: đồ thường trong ITEMS, đồ riêng từng món (id bắt đầu bằng #) do server gửi.
   const isGear = (id) => typeof id === 'string' && id[0] === '#';
-  const itemOf = (id) => (isGear(id) ? P.view.gear[id] : ITEMS[id]);
+  // món trong thùng đồ chung (Thủ Kho) nằm ở `view.storage.items`, không thuộc túi / đang mặc
+  const itemOf = (id) => (isGear(id) ? P.view.gear[id] || ((P.view.storage || {}).items || {})[id] : ITEMS[id]);
   // Loại món kiểu MU (DECISIONS B-15, `Gear.kind/1`): đồ thường có May mắn / Kỹ năng / dòng cộng thêm (xanh),
   // đồ hoàn hảo (lục), đồ Thần
   const KIND_CLS = { opt: 'k-opt', exc: 'exc', anc: 'anc' };
@@ -1902,8 +2014,8 @@
     if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
     if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? `${sep}Phòng thủ <span class="up">+${b}</span>` : ''}`; }
     if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`;
-    if (it.heal_pct) return `Hồi ${Math.round(it.heal_pct * 100)}% máu tối đa`;
-    if (it.mana_pct) return `Hồi ${Math.round(it.mana_pct * 100)}% MP tối đa`;
+    if (it.heal) return `Hồi ${fmt(it.heal)} máu`;
+    if (it.mana) return `Hồi ${fmt(it.mana)} MP`;
     return '';
   }
 
@@ -1916,6 +2028,7 @@
     // Phase 13: phần cộng thêm (thú cưng + món ăn cộng %; đồ không cộng chỉ số, B-15)
     const ex = P.view.extra || {};
     const pc = (v) => (v ? ` <span class="up" title="Thú cưng + món ăn">+${Math.round(v * 100)}%</span>` : '');
+    const fl = (v) => (v ? ` <span class="up" title="Thú cưng">+${fmt(v)}</span>` : '');
     const kv = (k, v, cls) => `<div class="kv"><span>${k}</span><span class="num ${cls || ''}">${v}</span></div>`;
     const kvh = (key, k, v) => `<button class="kv kv-help" data-act="stat-help" data-k="${key}" aria-expanded="${statHelp === key}"><span>${k} <span class="help-i" aria-hidden="true">ⓘ</span></span><span class="num">${v}</span></button>${statHelp === key ? `<p class="small stat-help">${esc(statHelpText(key, d))}</p>` : ''}`;
     const stat = (k) => {
@@ -1947,8 +2060,8 @@
         ${kvh('dodge', 'Né đòn', `${Math.round(d.dodge * 100)}%`)}
         ${d.wingDmg ? kvh('wing', 'Cánh', `+${Math.round(d.wingDmg * 100)}% sát thương<br>−${Math.round(d.wingAbsorb * 100)}% nhận`) : ''}
         ${d.ignoreDef ? kvh('ign', 'Bỏ qua phòng thủ', `${Math.round(d.ignoreDef * 100)}%`) : ''}
-        ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}`)}
-        ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}
+        ${kvh('hp', 'Máu', `${fmt(P.hp)} / ${fmt(d.maxHp)}${pc(ex.hp)}${fl(ex.hpFlat)}`)}
+        ${kvh('mp', 'MP', `${fmt(P.mp || 0)} / ${fmt(d.maxMp)}${fl(ex.mpFlat)}`)}
         ${kvh('pvp', 'Đánh quái và đánh người khác nhau thế nào?', '')}
         ${P.view.blessing ? kv('✨ Đài Phúc Lành', `${esc(P.view.blessing.name)}${P.view.blessing.left ? ` · +${Math.round(P.view.blessing.pct * 100)}% ${P.view.blessing.label}, còn ${P.view.blessing.left} trận` : ''} · hồi sinh ở đây`) : ''}
         ${P.food ? kv('Món ăn', `${esc(ITEMS[P.food.id].name)} · còn ${P.food.left} trận`) : ''}
@@ -2063,11 +2176,11 @@
   }
 
   // ---------- Chọn bản đồ (Phase 15a, U2) ----------
-  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, Nhà, vùng đã mở, bản đồ phụ đã đi qua cổng.
+  // Mọi bản đồ xếp yếu → mạnh (cấp quái thấp nhất). Tới được: Làng, vùng đã mở, bản đồ phụ đã đi qua cổng.
   let travelQ = '';
   // như Thợ Rèn: hai thẻ bản đồ thường / vùng đất chuyển sinh (`m.cs`), danh sách đỡ dài
   let travelSeg = 'normal';
-  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village', 'home'] };
+  const TRAVEL = RULES.travel || { base: 20, perLevel: 4, free: ['village'] };
   const travelCost = (m) => (TRAVEL.free.includes(m.id) ? 0 : TRAVEL.base + TRAVEL.perLevel * (m.min || 0));
   // đủ cấp (≥ cấp quái thấp nhất của bản đồ) là tới được; vàng kiểm riêng (như server: World.can_travel?/2)
   function travelOpen(m) {
@@ -2081,16 +2194,15 @@
     if (P && P.pos.map === id) { Sound.play('portal'); goTab('map'); }
   }
   function viewTravel() {
-    const home = { id: 'home', name: WORLD.maps.home ? WORLD.maps.home.name : 'Nhà', min: null, max: null, zone: null };
-    const all = [home].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    const all = LIB.maps.filter((m) => m.id !== 'tower');
     return `<div class="card"><div class="row"><h3 class="grow">🗺 Chọn bản đồ</h3><span class="small muted">phím M</span></div>
-      <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng, Nhà miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
+      <p class="small muted">Đủ cấp (≥ cấp quái thấp nhất) và đủ vàng là đi được: ${TRAVEL.base} + ${TRAVEL.perLevel} × cấp quái thấp nhất (Làng miễn phí). Vùng đất chuyển sinh (cấp quái 52–150): cần chuyển sinh đủ số lần ghi bên cạnh và cấp ${(LIB.maps.find((m) => m.cs) || {}).need || 40}+.</p>
       <div class="seg"><button class="btn ${travelSeg === 'normal' ? 'primary' : ''}" data-act="travel-seg" data-seg="normal">Bản đồ thường <span class="small">${all.filter((m) => !m.cs).length}</span></button><button class="btn ${travelSeg === 'cs' ? 'primary' : ''}" data-act="travel-seg" data-seg="cs">Cần chuyển sinh <span class="small">${all.filter((m) => m.cs).length}</span></button></div>
       <input type="search" id="travel-q" class="lib-q" placeholder="Tìm bản đồ…" value="${esc(travelQ)}" autocomplete="off" aria-label="Tìm bản đồ">
       <div id="travel-list">${travelList(all)}</div></div>`;
   }
   function travelList(all) {
-    all = all || [{ id: 'home', name: (WORLD.maps.home || {}).name || 'Nhà', min: null }].concat(LIB.maps).filter((m) => m.id !== 'tower');
+    all = all || LIB.maps.filter((m) => m.id !== 'tower');
     const rows = all.filter((m) => !!m.cs === (travelSeg === 'cs') && L.nameMatch([m.name, trn(m.name)], travelQ)).sort((a, b) => (a.min || 0) - (b.min || 0) || (a.max || 0) - (b.max || 0));
     return `<div class="list">${rows.map((m) => {
       const here = P.pos.map === m.id, open = travelOpen(m), cost = travelCost(m);
@@ -2183,24 +2295,34 @@
   // Hình thú: hình MU riêng của anh (thú có `ref`, `mix hac_long.icons`) nếu có, không thì hình thú CC0
   const petPic = (pt, cls = 'sprite') => { const own = pt.ref && ownIcon(pt, 0); return own ? `<img class="${cls} own" src="${own}" alt="">` : `<img class="${cls}" src="${asset((pt.sprite || 'pets/' + pt.id) + '.png')}" alt="">`; };
   // Cấp thú: lên cấp theo số trận thắng khi được dắt (HacLong.Game.Pets)
-  const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, RULES.petMaxLevel);
-  // tỉ lệ cắn, sức cắn (phần đòn thường), các kỹ năng của thú: server tính sẵn ở P.view.pets (HacLong.Game.Pets.view/1)
+  // cấp tối đa riêng từng thú (Long Vương 30, DECISIONS "Long Vương: thần thú độc nhất")
+  const petMax = (id) => ((PETS.find((x) => x.id === id) || {}).max_level) || RULES.petMaxLevel;
+  const petLevel = (id) => L.petLevel((P.pet_xp && P.pet_xp[id]) || 0, RULES.petXpCoef, petMax(id));
+  // nhóm, chỉ số cộng thêm theo cấp của thú: server tính sẵn ở P.view.pets (HacLong.Game.Pets.view/1)
   const petView = (id) => ((P.view && P.view.pets) || []).find((x) => x.id === id);
   const pc0 = (x) => `${Math.round(x * 100)}%`;
+  // Thú chỉ cộng chỉ số, chia nhóm (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', mp: 'MP tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi' };
+  const PET_GROUP_ICON = { war: '⚔️', guard: '🛡️', luck: '🍀', all: '🐉' };
+  const petGroup = (g) => (g ? `<span class="tag pet-${g}">${PET_GROUP_ICON[g] || ''} ${esc((RULES.petGroups || {})[g] || g)}</span>` : '');
+  const pctTxt = (x) => `${Math.round(x * 1000) / 10}%`;
+  const petBonusText = (b, mult = 1) => Object.entries(b || {}).map(([k, v]) => `${PET_STAT[k] || k} +${pctTxt(v * mult)}`).join(', ');
+  // máu / MP cộng số: mỗi cấp thú (DECISIONS "Thú cưng: máu / MP cộng số")
+  const petFlatText = (f, lv) => Object.entries(f || {}).map(([k, v]) => `${PET_STAT[k] || k} +${fmt(v * lv)}`).join(', ');
   function petStats(v) {
     if (!v) return '';
-    return `<div class="small">🦷 Cắn ${pc0(v.bite_chance)} số lượt, mỗi lần ${pc0(v.bite_power)} đòn thường${v.level > 1 ? ` · chỉ số cộng ×${v.mult.toFixed(2)}` : ''}</div>
-      ${v.skills.map((k) => `<div class="small" style="${k.learned ? 'color:var(--good)' : ''}">${k.learned ? '✨' : '🔒'} ${esc(k.name)}: ${esc(k.desc)}${k.learned ? '' : ` (cấp ${k.at})`}</div>`).join('')}`;
+    const txt = [petBonusText(v.bonus, v.mult), petFlatText(v.flat, v.level)].filter(Boolean).join(', ');
+    const per = Object.entries(v.flat || {}).map(([k, n]) => `${PET_STAT[k] || k} +${n}`).join(', ');
+    return `<div class="small" style="color:var(--good)">${txt}${v.level > 1 ? ` <span class="muted">(cấp ${v.level}: % ×${v.mult.toFixed(2)}${per ? `; ${per} mỗi cấp` : ''})</span>` : ''}</div>`;
   }
   function viewPets() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);
     if (!owned.length) return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Chưa có thú cưng. Gặp Người Nuôi Thú ở góc dưới bên phải Làng.</p></div>`;
-    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú đi theo thỉnh thoảng cắn thêm một đòn trong trận; thú đắt cắn mạnh hơn. Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: mạnh hơn, hay cắn hơn; cấp ${RULES.petSkillLevel} và ${RULES.petSkill2Level} học kỹ năng (Long Vương thêm kỹ năng thứ ba ở cấp ${RULES.petSkill3Level}).</p><div class="list">${owned.map((pt) => {
+    return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú dắt theo cộng chỉ số cho bạn (không đánh trong trận), theo nhóm: ⚔️ Chiến (tấn công, chí mạng), 🛡️ Hộ vệ (máu, phòng thủ, giảm sát thương nhận), 🍀 Tài lộc (kinh nghiệm, vàng). Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: chỉ số cộng tăng theo cấp.</p><div class="list">${owned.map((pt) => {
       const L = petLevel(pt.id);
       const pct = L.next ? Math.round(((L.xp - L.from) / (L.next - L.from)) * 100) : 100;
       return `<div class="item">${petPic(pt)}<div class="grow">
-        <div class="name">${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}</span></div>
-        <div class="small muted">${esc(pt.desc)}</div>
+        <div class="name"${pt.rare ? ' style="color:var(--gold)"' : ''}>${esc(pt.name)} <span class="small num" style="color:var(--gold)">· Cấp ${L.lv}/${petMax(pt.id)}</span> ${petGroup(pt.group)}${pt.rare ? ' <span class="tag pet-unique">✨ Thần thú – Độc nhất</span>' : ''}</div>
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
         <div class="small muted">${L.next ? `${fmt(L.xp)}/${fmt(L.next)} trận thắng` : 'Cấp tối đa'}</div>
         ${petStats(petView(pt.id))}</div>
@@ -2208,31 +2330,7 @@
     }).join('')}</div></div>`;
   }
 
-  // ---------- Trang trí nhà ----------
-  function viewDecorButton() {
-    if (P.pos.map !== 'home' || decor.on) return '';
-    return `<div class="fish-ui idle"><button class="btn" data-act="decor-on">${icon('village')} Trang trí</button></div>`;
-  }
 
-  function viewDecorPanel() {
-    if (P.pos.map !== 'home' || !decor.on) return '';
-    const stock = Object.entries(P.furniture || {}).filter(([, n]) => n > 0);
-    if (decor.pick && !(P.furniture || {})[decor.pick]) decor.pick = null;
-    const name = (id) => (FURNITURE.find((f) => f.id === id) || { name: id }).name;
-    return `<div class="card decor-panel">
-      <div class="row"><h3 class="grow">Trang trí nhà</h3><span class="tag gold num">Tiện nghi ${P.view.comfort}</span><button class="btn" data-act="decor-off">Xong</button></div>
-      <p class="small muted">${decor.pick ? `Chạm vào ô trống để đặt <b>${esc(name(decor.pick))}</b>.` : 'Chọn một món trong kho rồi chạm vào ô để đặt. Chạm vào đồ đã đặt để cất vào kho.'}</p>
-      ${stock.length ? `<div class="chips">${stock.map(([id, n]) => `<button class="chip ${decor.pick === id ? 'on' : ''}" data-act="decor-pick" data-id="${id}"><img class="ic px" src="${asset('decor/' + id + '.png')}" alt=""> ${esc(name(id))}${n > 1 ? ` ×${n}` : ''}</button>`).join('')}</div>`
-        : '<p class="small muted">Kho trống. Mua đồ trang trí ở Thợ Mộc trong Làng.</p>'}
-    </div>`;
-  }
-
-  async function decorTap(x, y) {
-    const placed = (P.decor || []).find((d) => d.x === x && d.y === y);
-    if (placed) return sendCommand({ act: 'decor_take', x, y });
-    if (!decor.pick) { toast('Chọn một món trong kho trước.', true); return; }
-    await sendCommand({ act: 'decor_place', id: decor.pick, x, y });
-  }
 
   // ---------- Thành tựu, danh hiệu ----------
   const achTitle = (id) => { const a = ACHIEVEMENTS.find((x) => x.id === id); return a ? a.title : ''; };
@@ -2360,7 +2458,7 @@
     const gear = bagGear().concat(ids.filter((id) => WEAR_KINDS.includes(ITEMS[id].slot)));
     return gear.concat(by('potion'), by('food'), by('material'));
   }
-  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal_pct).reduce((a, id) => a + P.inv[id], 0);
+  const potionCount = () => Object.keys(P.inv).filter((id) => ITEMS[id] && ITEMS[id].heal).reduce((a, id) => a + P.inv[id], 0);
 
   function cellIcon(it, level) {
     const own = ownIcon(it, level);
@@ -2530,7 +2628,7 @@
       ? (SLOT_REMOVABLE.includes(at.slot) ? `<button class="btn" data-act="unequip" data-slot="${at.slot}">Tháo</button>` : '<span class="small muted">Mặc món khác cùng loại để thay.</span>') + lockBtn
       : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${canLeft(it) ? `<button class="btn" data-act="equip" data-hand="left" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Cầm tay trái</button>` : ''}${lockBtn}`
       // bình mana: sáng khi MP chưa đầy; bình máu: khi máu chưa đầy (như server `Engine.use_potion/2`)
-      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana_pct ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
+      : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
       : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
 
@@ -2608,7 +2706,9 @@
 
   function shopRow(id) {
     const it = ITEMS[id], slot = it.slot;
-    const low = it.level && P.level < it.level;
+    // bình Vừa / Lớn mở theo cấp, đã chuyển sinh thì mua hết (DECISIONS "Bình máu / mana hồi số")
+    const need = it.level || (it.buy_level && !(P.rebirths > 0) ? it.buy_level : 0);
+    const low = need && P.level < need;
     const short = slot !== 'potion' && (!classOk(it) || reqShort(it));
     const worn = P.equip[slot] === id;
     const owned = P.inv[id] || 0;
@@ -2618,7 +2718,7 @@
       ${itemIcon(it)}
       <div class="grow">
         <div class="name">${it.name}</div>
-        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${it.level}</span>` : ''}${short ? ` · <span style="color:var(--bad)">${!classOk(it) ? 'Lớp khác' : 'Thiếu chỉ số'}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
+        <div class="small muted">${itemStat(it)} ${slot !== 'potion' ? compare(it, id) : ''}${low ? ` · <span style="color:var(--bad)">Cần cấp ${need}</span>` : ''}${short ? ` · <span style="color:var(--bad)">${!classOk(it) ? 'Lớp khác' : 'Thiếu chỉ số'}</span>` : ''}${worn ? ' · <span style="color:var(--good)">Đang dùng</span>' : ''}${owned ? ` · có ${owned}` : ''}</div>
       </div>
       ${slot === 'potion' ? `<button class="btn" data-act="buy5" data-id="${id}" ${P.gold < price * 5 ? 'disabled' : ''}>×5</button>` : ''}
       <button class="btn ${!low && !poor && !short ? 'primary' : ''}" data-act="buy" data-id="${id}" ${low || poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(price)}</button>
@@ -2742,7 +2842,7 @@
       ${fold('forge-rest', `Đã tối đa / ép tiếp ở Lão Hỗn Nguyên (${g.rest.length})`, g.rest.map(row).join(''))}</div>`;
   }
 
-  // Tủ Đồ ở Nhà: cất / lấy đồ thường (theo loại) và đồ hiếm (theo món), mở rộng chỗ đồ hiếm bằng vàng.
+  // Tủ Đồ (Thủ Kho ở Làng): cất / lấy đồ thường (theo loại) và đồ hiếm (theo món), mở rộng chỗ đồ hiếm bằng vàng.
   function wardrobeCard() {
     const st = P.view.storage;
     const row = (id, n, act, label) => {
@@ -3085,11 +3185,11 @@
     if (Date.now() - dragonAt > 60000) loadDragonBoard();
     const odds = (k) => `1/${fmt(Math.round(1 / (D.chance * k)))}`;
     const board = dragonBoard || [];
-    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
+    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐉 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc.replace(/\.$/, ''))} (cấp 1; mỗi cấp thêm ${pctTxt(pet.per_level || RULES.petPerLevel)}, cấp ${petMax(pet.id)} ×${(1 + (petMax(pet.id) - 1) * (pet.per_level || RULES.petPerLevel)).toFixed(2)}).</div></div></div>
       <p class="small">Mỗi giờ ${esc(pet.name)} nổi lên một lần, lúc ngẫu nhiên, ở một ô nước bất kỳ trong hồ (bọt vàng sủi), ở lại ${Math.round(D.stay / 60)} phút. Chỉ thả câu trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần thả, nhân thêm theo Long Khí, có ${esc(ITEMS[D.bait].name)} thì gấp ${D.bait_mult} (chỉ tốn mồi khi thả trúng ô Ngài). Có người câu được hoặc hết giờ thì Ngài lặn.</p>
       <p class="small">Long Khí: mỗi con cá câu ở hồ +1, tối đa ${D.long_khi_max} (cơ hội ×${1 + D.long_khi_max / D.long_khi_div}); câu được Ngài thì về 0. Bạn đang có <b>${P.long_khi || 0}</b>, cơ hội hiện tại <b>${odds((1 + (P.long_khi || 0) / D.long_khi_div) * (bait ? D.bait_mult : 1))}</b>.${lake ? ' <b style="color:var(--gold)">Ngài đang nổi!</b>' : ''}</p>
       <p class="small">Bạn đang có <b>${fmt(bait)}</b> ${esc(ITEMS[D.bait].name)}.${(P.pets || []).includes(D.pet) ? ' Bạn đã là chủ của Ngài.' : ''}</p>
-      <p class="small muted">Kỹ năng: ${[pet.skill, pet.skill2, pet.skill3].map((k, i) => `${esc(k.name)} (cấp ${[RULES.petSkillLevel, RULES.petSkill2Level, RULES.petSkill3Level][i]}): ${esc(k.desc)}`).join(' · ')}</p></div>
+      </div>
       <div class="card"><h3>Bia Long Vương</h3>${dragonBoard === null ? '<p class="small muted">Đang đọc bia…</p>'
         : board.length ? `<div class="list">${board.map((b) => `<div class="item"><b class="num" style="color:var(--gold)">#${b.n}</b><div class="grow">${esc(b.name)}</div><span class="small muted">${esc(b.at)}</span></div>`).join('')}</div>`
         : '<p class="small muted">Bia còn trống. Chưa ai câu được Long Vương.</p>'}</div>`;
@@ -3177,11 +3277,12 @@
       sections.push(goalCard());
       sections.push(`<div class="card"><h3>Nhiệm vụ đang làm</h3>${act.length ? `<div class="list">${act.map((q) => questRow(q, 'turnin')).join('')}</div>` : '<p class="small muted">Chưa nhận nhiệm vụ nào.</p>'}</div>`);
       if (P.level >= RULES.maxLevel || P.rebirths) {
-        const pts = ((P.rebirths || 0) + 1) * RULES.rebirthPoints, max = P.rebirths >= RULES.maxRebirths;
+        // chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa vẫn được, ít điểm hơn
+        const pts = P.view.rebirthPoints, max = false;
         sections.push(`<div class="card"><div class="row">${icon('star-cycle', 'lg')}<div class="grow"><h3>Chuyển sinh</h3>
-          <p class="small muted">Đạt cấp ${RULES.maxLevel} thì có thể trở về cấp 1 để luyện lại từ đầu, giữ nguyên vàng, đồ đạc, vùng đã mở, nhiệm vụ và thành tựu. Mỗi lần chuyển sinh cho thêm ${RULES.rebirthPoints} điểm tiềm năng vĩnh viễn; kinh nghiệm lên cấp cần thêm ${Math.round(RULES.rebirthXpPct * 100)}% cho mỗi lần đã chuyển sinh. Từ lần thứ hai, phải hạ chúa tể vùng chuyển sinh trước đó.</p>
-          ${P.rebirths ? `<p class="small">Đã chuyển sinh ${P.rebirths}/${RULES.maxRebirths} lần.</p>` : ''}</div></div>
-          ${max ? '' : P.view.rebirthNeed ? `<p class="small" style="color:var(--bad)">Cần hạ ${esc(P.view.rebirthNeed.name)} ở vùng chuyển sinh ${P.view.rebirthNeed.realm} trước khi chuyển sinh lần ${(P.rebirths || 0) + 1}.</p>` : ''}
+          <p class="small muted">Đạt cấp ${RULES.maxLevel} thì có thể trở về cấp 1 để luyện lại từ đầu, giữ nguyên vàng, đồ đạc, vùng đã mở, nhiệm vụ và thành tựu. Mỗi lần chuyển sinh cho thêm ${RULES.rebirthPoints} điểm tiềm năng vĩnh viễn; kinh nghiệm lên cấp cần thêm ${Math.round(RULES.rebirthXpPct * 100)}% cho mỗi lần đã chuyển sinh. Từ lần thứ hai, phải hạ chúa tể vùng chuyển sinh trước đó. Sau ${RULES.maxRebirths} lần vẫn chuyển sinh tiếp được: mỗi lần hạ lại chúa tể vùng ${RULES.maxRebirths}, thêm ${RULES.endlessPoints} điểm, kinh nghiệm như lần ${RULES.maxRebirths}.</p>
+          ${P.rebirths ? `<p class="small">Đã chuyển sinh ${P.rebirths} lần.</p>` : ''}</div></div>
+          ${max ? '' : P.view.rebirthNeed ? `<p class="small" style="color:var(--bad)">Cần hạ ${esc(P.view.rebirthNeed.name)} ở vùng chuyển sinh ${P.view.rebirthNeed.realm}${P.view.rebirthNeed.times > 1 ? ` (đã hạ ${P.view.rebirthNeed.have}/${P.view.rebirthNeed.times} lần)` : ''} trước khi chuyển sinh lần ${(P.rebirths || 0) + 1}.</p>` : ''}
           ${max ? '' : P.level < RULES.maxLevel ? `<p class="small muted">Cần cấp ${RULES.maxLevel} để chuyển sinh lần tiếp theo.</p>` : P.view.rebirthNeed ? ''
             : confirmRebirth ? `<p class="small" style="color:var(--bad)">Về cấp 1 với ${pts} điểm tiềm năng? Không thể hoàn tác.</p>
               <div class="btn-row"><button class="btn" data-act="rebirth-cancel">Thôi</button><button class="btn primary" data-act="rebirth">Chuyển sinh</button></div>`
@@ -3238,11 +3339,10 @@
           <div class="item">${petPic(petInfo(P.pet))}<div class="grow"><div class="name">${esc(cur.name)} <span class="small num" style="color:var(--gold)">· Cấp ${cur.level}</span></div></div>
           ${cur.feed == null ? '<span class="tag good">Cấp tối đa</span>' : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_feed" ${poor ? 'disabled' : ''}>🍖 ${icon('two-coins')}${fmt(cur.feed)}</button>`}</div></div>`);
       }
-      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và giúp một tay. Thú đắt cắn mạnh hơn. Đổi con dắt theo ở tab Nhân vật.</p>
+      sections.push(`<div class="card"><h3>Thú cưng</h3><p class="small muted">Dắt theo một con để nó đi sau bạn trên bản đồ và cộng chỉ số (thú không đánh trong trận): ⚔️ Chiến tăng tấn công, chí mạng; 🛡️ Hộ vệ tăng máu, phòng thủ, giảm sát thương nhận; 🍀 Tài lộc tăng kinh nghiệm, vàng. Chỉ số tăng theo cấp thú. Đổi con dắt theo ở tab Nhân vật.</p>
         <div class="list">${PETS.map((pt) => {
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
-          const sk = [pt.skill, pt.skill2, pt.skill3].filter(Boolean).map((k) => esc(k.name)).join(', ');
-          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</div><div class="small muted">${esc(pt.desc)} Cắn ${pc0(pt.bite || 0)} đòn thường.${sk ? ` Kỹ năng: ${sk}.` : ''}</div></div>
+          return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)} ${petGroup(pt.group)}</div><div class="small muted">${esc(pt.desc.replace(/\.$/, ''))} (cấp 1).</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
               : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Hồ Long Vương</span>'
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
@@ -3251,19 +3351,10 @@
       sections.push(`<div class="card"><h3>Thuần phục</h3><p class="small muted">Hạ đủ ${RULES.tameKills} con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh, trừ chúa tể) thì mang về thuần được. Quái vùng chuyển sinh cho thú thuần mạnh hơn.</p>
         <div class="list">${ready.map((m) => {
           const poor = P.gold < m.price;
-          return `<div class="item">${sprite(m.id, '', m.name)}<div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${esc(m.desc)} Cắn ${pc0(m.bite)} đòn thường. Đã hạ ${fmt(m.kills)} con.</div></div>
+          return `<div class="item">${sprite(m.id, '', m.name)}<div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${petGroup('war')} ${esc(m.desc)} Đã hạ ${fmt(m.kills)} con.</div></div>
             <button class="btn ${poor ? '' : 'primary'}" data-act="pet_tame" data-id="${m.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(m.price)}</button></div>`;
         }).join('')}${near.map((m) => `<div class="item"><img class="sprite" src="${asset('monsters/' + m.id + '.png')}" alt="" style="opacity:.5"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">Tiến độ ${fmt(m.kills)}/${RULES.tameKills}</div></div></div>`).join('')}
         ${ready.length || near.length ? '' : '<p class="small muted">Chưa có loài nào. Hạ thêm quái đi đã!</p>'}</div></div>`);
-    }
-    if (n.role === 'carpenter') {
-      const stock = P.furniture || {};
-      sections.push(`<div class="card"><h3>Đồ trang trí</h3><p class="small muted">Mua rồi về Nhà bấm Trang trí để đặt. Mỗi 10 điểm tiện nghi của đồ đã đặt: +1% kinh nghiệm mỗi trận (tối đa +5%). Nhà bạn đang có ${P.view.comfort} điểm.</p>
-        <div class="list">${FURNITURE.filter((fu) => !fu.event).map((fu) => {
-          const poor = P.gold < fu.price;
-          return `<div class="item"><img class="sprite" src="${asset('decor/' + fu.id + '.png')}" alt=""><div class="grow"><div class="name">${esc(fu.name)}</div><div class="small muted">Tiện nghi +${fu.comfort}${stock[fu.id] ? ` · trong kho ${stock[fu.id]}` : ''}</div></div>
-            <button class="btn ${poor ? '' : 'primary'}" data-act="decor_buy" data-id="${fu.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(fu.price)}</button></div>`;
-        }).join('')}</div></div>`);
     }
     if (n.role === 'market') sections.push(viewMarket());
     if (n.role === 'chaos') {
@@ -3440,20 +3531,20 @@
           ${rw ? `<p class="num">+${fmt(rw.xp)} kinh nghiệm · +${fmt(rw.gold)} vàng</p>` : ''}
           ${rw && rw.levels ? `<p style="color:var(--gold);font-weight:600">Lên cấp ${P.level}! Vào tab Nhân vật để cộng điểm.</p>` : ''}
           <div class="btn-row">
-            <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về nhà` : `${icon('walk')} Tiếp tục`}</button>
+            <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về Làng` : `${icon('walk')} Tiếp tục`}</button>
           </div>
           ${rw ? lootList(rw) : ''}
           ${r === 'lose' ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
-          ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Nhà uống nước giếng.</p>' : ''}
+          ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Làng uống nước giếng.</p>' : ''}
         </div>`;
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
         <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}</span>
-        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" src="${window.Doll.url(m.look)}" alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
+        ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
-        <span class="small muted">Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
+        <span class="small muted">${m.pvp && CLASSES[m.cls] ? `${CLASSES[m.cls].name} · CS ${m.rebirths || 0} · ` : ''}Cấp ${m.level} · Tấn công ${m.atk} · Phòng thủ ${m.def}${m.special && !b.live ? ` · ${m.special.name} mỗi ${m.special.every} lượt` : ''}</span>
         ${bar(m.golden ? 'goldbar' : m.boss || m.world || m.elite ? 'boss' : 'hp', m.hp, m.maxHp, `❤ ${fmt(m.hp)} / ${fmt(m.maxHp)}`)}
         ${effectTags(fxs.monster)}
       </div>
@@ -3461,7 +3552,7 @@
         ${heroSprite()}
         <div class="grow" style="flex:1;min-width:0">${bar('hp', battleHp(), d.maxHp, `❤ ${fmt(battleHp())} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
-      <div class="log" aria-live="polite">${b.log.map((l) => `<div class="${l.kind}">${esc(l.text)}</div>`).join('')}</div>
+      <div class="log" aria-live="polite">${b.log.map((l, i) => logLine(l, b.log[i - 1])).join('')}</div>
       ${P.auto ? `<div class="auto-bar on"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">🤖 Đang tự đánh · đã hạ <b class="num">${fmt(autoKills())}</b></span><button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>` : ''}
       ${bottom}`;
   }
@@ -3513,6 +3604,30 @@
     BattleFx.run(battleEvents(before, action, skill, fx));
   }
 
+  // Nhật ký trận dễ đọc (DECISIONS "Nhật ký trận dễ đọc"): dòng có `who` vẽ thành câu ngắn, tên đậm có màu,
+  // ⚔ sát thương / ❤ hồi máu / 💥 chí mạng, chỉ hiện máu còn lại của quái; mỗi lượt một khối. Dòng khác giữ chữ cũ.
+  function logLine(l, prev) {
+    const gap = l.turn != null && prev && prev.turn != null && prev.turn !== l.turn ? ' turn-gap' : '';
+    if (!l.who) return `<div class="${l.kind}${gap}">${esc(l.text)}</div>`;
+    const who = `<b class="lg-${l.who === 'me' ? 'me' : 'foe'}">${esc(l.name)}</b>`;
+    const act = l.act ? `<u class="lg-act">${esc(l.act)}</u>` : '';
+    const num = (n) => `<b class="lg-num">${fmt(n)}</b>`;
+    const left = l.left != null ? ` <span class="lg-left">(máu còn lại: ${fmt(l.left)})</span>` : '';
+    let s;
+    if (l.miss) s = `${who} ${act ? `<span>dùng</span> ${act}, ` : ''}<span>đánh trượt.</span>`;
+    else if (l.reflect != null) s = `${who} <span>bị phản</span> ⚔ ${num(l.reflect)}${left}`;
+    else if (l.mp != null) s = `${who} <span>uống</span> ${esc(l.act)}<span>, hồi</span> 💧 ${num(l.mp)} MP`;
+    else if (l.heal != null) s = `${who} ${l.potion ? `<span>uống</span> ${esc(l.act)}` : `<span>dùng</span> ${act}`}<span>, hồi</span> ❤ ${num(l.heal)}`;
+    else {
+      s = act ? `${who} <span>dùng</span> ${act}. ⚔ ${num(l.dmg)}` : `${who} <span>gây ra</span> ⚔ ${num(l.dmg)}`;
+      if (l.hits) s += ` <span>(${l.hits} đòn)</span>`;
+      if (l.crit) s += ` 💥 <span class="lg-crit">chí mạng</span>`;
+      if (l.note) s += ` <span class="lg-left">(${esc(l.note)})</span>`;
+      s += left;
+    }
+    return `<div class="lg ${l.kind}${gap}">${s}</div>`;
+  }
+
   // số sát thương hai bên của lượt vừa rồi (so với ảnh chụp `before`)
   function fxOf(before, action) {
     // Nhật ký giới hạn 60 dòng; khi đã đầy thì xem vài dòng cuối.
@@ -3537,15 +3652,7 @@
       ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
     if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
-    // FX đợt 3: thú cưng cắn (🐾 … cắn thêm N), Thủy Long Ba (🌊), Long Vương Hồi Sinh (🐉)
     const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
-    const bite = newLog.find((l) => l.text.startsWith('🐾') && /cắn thêm (\d+)/.test(l.text));
-    if (bite) {
-      const pet = P.view.look && P.view.look.pet;
-      const img = pet ? asset((pet.startsWith('tame:') ? 'monsters/' + pet.slice(5) : 'pets/' + pet) + '.png') : null;
-      ev.push({ type: 'pet', img, dmg: +bite.text.match(/cắn thêm (\d+)/)[1], tidal: newLog.some((l) => l.text.startsWith('🌊')), delay: f.mDmg > 0 ? 240 : 0 });
-    }
-    if (newLog.some((l) => l.text.startsWith('🐉'))) ev.push({ type: 'dragon', delay: 500 });
     // thông thạo kỹ năng lên cấp
     const ml = newLog.find((l) => l.text.startsWith('📘') && / lên cấp \d+!/.test(l.text));
     if (ml) ev.push({ type: 'mastery', text: ml.text.replace(/^📘\s*/, ''), delay: 450 });
@@ -3621,7 +3728,7 @@
       case 'chest_buy': return { act, tier: d.tier };
       case 'pvp_challenge': return { act, uid: +d.uid };
       case 'market_buy': case 'market_cancel': return { act, listing: +d.listing };
-      case 'pet_buy': case 'pet_tame': case 'decor_buy': return { act, id: d.id };
+      case 'pet_buy': case 'pet_tame': return { act, id: d.id };
       case 'pet_feed': return { act };
       case 'pet_choose': return { act, id: d.id || null };
       case 'title_set': return { act, id: d.id || null };
@@ -3630,7 +3737,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', decor_buy: 'coin', decor_place: 'forge', decor_take: 'gather', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -3756,9 +3863,8 @@
     // tên tab cũ (Nhiệm vụ, Khác, Quản trị) giờ là mục trong Menu
     const sec = { quests: 'quests', misc: null, admin: 'admin' };
     if (id in sec) { menuSec = sec[id]; id = 'menu'; } else if (id === 'menu' && tab !== 'menu') menuSec = null;
-    tab = id; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; visit = null; friendsUi.open = false;
+    tab = id; profileUi = { open: false, info: null }; mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false;
     stopFishing();
-    if (decor.on) { decor = { on: false, pick: null }; Map_.setDecorating(false); }
     render(); $('#view').scrollTop = 0;
   }
 
@@ -3775,7 +3881,7 @@
     }
     if (P.hp >= P.view.derived.maxHp) { toast('Máu đang đầy.'); return; }
     // bình nhỏ nhất đang có (như MU: lấy stack đầu tiên của loại bình)
-    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal_pct && P.inv[k] > 0);
+    const id = Object.keys(ITEMS).find((k) => ITEMS[k].heal && P.inv[k] > 0);
     if (id) sendCommand({ act: 'use', id }); else toast('Hết bình máu. Mua ở Bà Lang trong Làng.', true);
   }
   function hotkeyEscape() {
@@ -3783,7 +3889,7 @@
     if (tipAt) { hideTip(); return true; }
     if (npc) { npc = null; market.data = null; render(); return true; }
     if (dialog) { dialog = null; render(); return true; }
-    if (mail.open || notes.open || guildUi.open || friendsUi.open || visit) { mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false; if (visit) { visit = null; Map_.stopVisit(); } render(); return true; }
+    if (mail.open || notes.open || guildUi.open || friendsUi.open) { mail.open = false; notes.open = false; guildUi.open = false; friendsUi.open = false; render(); return true; }
     if (!P.battle && tab !== 'map') { goTab('map'); return true; }
     return false;
   }
@@ -3812,7 +3918,6 @@
   function onMapTap(e) {
     if (e.target.id !== 'map-canvas' || !P || P.battle) return;
     const [x, y] = Map_.tileFromEvent(e);
-    if (decor.on && P.pos.map === 'home') { decorTap(x, y); return; }
     const other = Map_.playerAt(x, y);
     if (other) { openPlayer(other); return; }
     // chạm vào mặt nước: thả câu (phao rơi đúng ô đó), đang câu thì giật cần
@@ -3827,8 +3932,11 @@
   }
 
   function enter(r) {
+    secQ = undefined; secForm = false;
+    if (r && r.select) { charSel = { del: null }; P = null; loading = false; busy = false; npc = null; dialog = null; render(); return; }
+    charSel = null;
     P = r ? r.player : null;
-    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; visit = null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
+    if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
     loading = false;
     render();
@@ -3837,6 +3945,7 @@
   function logout() {
     Net.logout();
     P = null;
+    charSel = null;
     npc = null; dialog = null; pwForm = false;
     render();
   }
@@ -3846,11 +3955,11 @@
     if (!t) return;
     if (t.dataset.cls) { pickCls = t.dataset.cls; document.querySelectorAll('.class-opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.cls === pickCls)); return; }
     // V4: bấm lại icon dock đang mở thì đóng, về Bản đồ
-    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open && !visit; goTab(open ? 'map' : t.dataset.tab); return; }
+    if (t.dataset.tab) { const open = tab === t.dataset.tab && t.dataset.tab !== 'map' && !profileUi.open && !mail.open && !notes.open && !guildUi.open && !friendsUi.open; goTab(open ? 'map' : t.dataset.tab); return; }
     // Tiến Lên (Phase 17) mở lớp phủ riêng (tienlen.js), không phải một mục Menu
     if (t.dataset.menu === 'tienlen') { window.TL.open(); return; }
     if (t.dataset.menu) { menuSec = t.dataset.menu; render(); $('#view').scrollTop = 0; if (menuSec === 'admin' && adm.reports == null && !adm.loading) loadReports(); return; }
-    if (t.dataset.auth) { authMode = t.dataset.auth; render(); return; }
+    if (t.dataset.auth) { authMode = t.dataset.auth; if (authMode === 'forgot') fg = { user: '', q: null, admin: false }; render(); return; }
     if (t.dataset.boardCls !== undefined) { board.cls = t.dataset.boardCls || null; const el = $('#board'); if (el) el.outerHTML = viewBoard(); return; }
     if (t.dataset.board) { board.kind = t.dataset.board; const el = $('#board'); if (el) el.outerHTML = viewBoard(); loadBoard(); return; }
     if (t.dataset.move) { walk = null; step(t.dataset.move); return; }
@@ -3867,7 +3976,14 @@
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
+    if (act === 'char-enter') return charGo(Net.enterChar(+t.dataset.cid));
+    if (act === 'char-new') return charGo(Net.newChar());
+    if (act === 'char-switch') return charGo(Net.toSelect());
+    if (act === 'char-del') { charSel.del = charSel.del === +t.dataset.cid ? null : +t.dataset.cid; render(); return; }
+    if (act === 'char-del-cancel') { charSel.del = null; render(); return; }
     if (act === 'pw-toggle') { pwForm = !pwForm; render(); return; }
+    if (act === 'fg-admin') { fg = Object.assign({}, fg, { admin: true }); render(); return; }
+    if (act === 'sq-toggle') { secForm = !secForm; render(); return; }
     if (t.dataset.adm) { onAdmin(t); return; }
     if (t.dataset.chat) { chatMenu = chatMenu === +t.dataset.chat ? null : +t.dataset.chat; const log = $('#chat-log'); if (log) log.innerHTML = chats.map(ovLine).join(''); return; }
     if (act === 'chat-report') { Net.report(+t.dataset.id).then(() => toast('Đã gửi báo cáo. Cảm ơn bạn.')).catch((e) => toast(e.msg, true)); chatMenu = null; return; }
@@ -3904,16 +4020,6 @@
     if (act === 'trade-rm') {
       const d = t.dataset;
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });
-      return;
-    }
-    if (act === 'home-visit') { walk = null; friendsUi.open = false; openVisit(+t.dataset.uid); $('#view').scrollTop = 0; return; }
-    if (act === 'visit-close') { visit = null; Map_.stopVisit(); render(); return; }
-    if (act === 'home-like') {
-      const v = visit && visit.info;
-      Net.homeLike(+t.dataset.uid).then((r) => {
-        if (v) { v.likes = r.likes; v.liked = true; }
-        Sound.play('quest'); toast('Đã khen nhà!'); render();
-      }).catch((e) => toast(e.msg, true));
       return;
     }
     if (act === 'market-tab') { market.tab = t.dataset.tab2; render(); return; }
@@ -3958,8 +4064,8 @@
       return;
     }
     if (act === 'profile-close') { profileUi = { open: false, info: null }; render(); return; }
-    // rời hồ sơ khi sang thăm nhà / vào trận
-    if (profileUi.open && (act === 'home-visit' || act === 'pvp_challenge')) profileUi = { open: false, info: null };
+    // rời hồ sơ khi vào trận
+    if (profileUi.open && act === 'pvp_challenge') profileUi = { open: false, info: null };
     if (act === 'notes-open') { notes.open = !notes.open; mail.open = false; walk = null; if (notes.open) { notes.list.forEach((n) => { n.read = true; }); saveNotes(); } render(); $('#view').scrollTop = 0; return; }
     if (act === 'notes-close') { notes.open = false; render(); return; }
     if (act === 'notes-clear') { notes.list = []; saveNotes(); render(); return; }
@@ -3968,8 +4074,6 @@
     if (act === 'fish-cast') { walk = null; castLine(); return; }
     if (act === 'sound-toggle') { Sound.toggle(); render(); return; }
     if (act === 'music-toggle') { Sound.toggleMusic(); render(); return; }
-    if (act === 'decor-on' || act === 'decor-off') { decor = { on: act === 'decor-on', pick: null }; walk = null; Map_.setDecorating(decor.on); render(); return; }
-    if (act === 'decor-pick') { decor.pick = decor.pick === t.dataset.id ? null : t.dataset.id; render(); return; }
     if (act === 'bestiary-toggle') { bestiaryOpen = !bestiaryOpen; render(); return; }
     if (act === 'guild-open') { guildUi.open = true; guildUi.list = null; guildUi.info = null; render(); $('#view').scrollTop = 0; loadGuild(); return; }
     if (act === 'guild-close') { guildUi.open = false; guildUi.confirm = null; render(); return; }
@@ -4025,12 +4129,59 @@
     const btn = $('#auth button[type="submit"]'), label = btn && btn.textContent;
     if (btn) { btn.disabled = true; btn.textContent = authMode === 'register' ? 'Đang tạo tài khoản…' : 'Đang đăng nhập…'; }
     try {
-      enter(await Net.login(user, pass, authMode === 'register'));
+      const reg = authMode === 'register';
+      const sec = reg ? { question: $('#auth-q').value, answer: $('#auth-a').value } : null;
+      if (reg && (!sec.question || !sec.answer.trim())) throw { msg: 'Chọn câu hỏi bảo mật và nhập câu trả lời.' };
+      enter(await Net.login(user, pass, reg, sec));
       toast(authMode === 'register' ? 'Đã tạo tài khoản.' : `Xin chào ${Net.username}!`);
     } catch (err) {
       toast(err.msg, true);
       if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = label; }
     }
+    busy = false;
+  }
+
+  async function onFgFind() {
+    if (busy) return;
+    const user = $('#fg-user').value.trim();
+    if (!user) { toast('Nhập tên đăng nhập.', true); return; }
+    busy = true;
+    try {
+      const r = await Net.securityQuestion(user);
+      fg = { user, q: r.question || null, admin: !r.question };
+    } catch (err) { toast(err.msg, true); }
+    busy = false;
+    render();
+  }
+
+  async function onRecover() {
+    if (busy) return;
+    const a = $('#rc-a').value, pass = $('#rc-pass').value;
+    if (!a.trim() || !pass) { toast('Nhập câu trả lời và mật khẩu mới.', true); return; }
+    busy = true;
+    try {
+      const j = await Net.recover(fg.user, a, pass);
+      fg = { user: '', q: null, admin: false };
+      authMode = 'login';
+      busy = false;
+      enter(j);
+      toast('Đã đặt mật khẩu mới. Các thiết bị khác đã bị đăng xuất.');
+      return;
+    } catch (err) { toast(err.msg, true); }
+    busy = false;
+    render();
+  }
+
+  async function onSecurity() {
+    if (busy) return;
+    busy = true;
+    try {
+      const r = await Net.setSecurity($('#sq-cur').value, $('#sq-q').value, $('#sq-a').value);
+      secQ = r.question;
+      secForm = false;
+      render();
+      toast('Đã lưu câu hỏi bảo mật.');
+    } catch (err) { toast(err.msg, true); }
     busy = false;
   }
 
@@ -4062,6 +4213,9 @@
   function onSubmit(e) {
     if (e.target.id === 'auth') { e.preventDefault(); onAuth(); return; }
     if (e.target.id === 'forgot') { e.preventDefault(); onForgot(); return; }
+    if (e.target.id === 'fg-find') { e.preventDefault(); onFgFind(); return; }
+    if (e.target.id === 'recover') { e.preventDefault(); onRecover(); return; }
+    if (e.target.id === 'sq-form') { e.preventDefault(); onSecurity(); return; }
     if (e.target.id === 'pw-form') { e.preventDefault(); onPassword(); return; }
     if (e.target.id === 'chat-form') { e.preventDefault(); onChatSubmit(); return; }
     if (e.target.id === 'arena-find') {
@@ -4139,6 +4293,15 @@
       Net.admin('announce', { text: $('#adm-text').value }).then(() => { toast('Đã gửi thông báo.'); $('#adm-text').value = ''; }).catch((err) => toast(err.msg, true));
       return;
     }
+    if (e.target.id === 'char-del-form') {
+      e.preventDefault();
+      const cid = +e.target.dataset.cid, name = $('#cd-name').value.trim(), pass = $('#cd-pass').value;
+      busy = true; render();
+      Net.deleteChar(cid, name, pass)
+        .then((r) => { busy = false; charSel = { del: null }; toast(r.msg); render(); })
+        .catch((err) => { busy = false; toast(err.msg, true); render(); });
+      return;
+    }
     if (e.target.id !== 'create') return;
     e.preventDefault();
     const name = $('#hero-name').value.trim();
@@ -4185,7 +4348,7 @@
       if (/Thành tựu mới|Danh hiệu mới/.test(msg)) Celebrate.badge(msg);
       else { toast(msg); Sound.play('notice'); }
     });
-    window.Doll.onReady(() => { if (P) refresh(); });
+    window.Doll.onReady(() => { if (P) refresh(); else if (charSel) render(); });
     Net.onParty((pt) => {
       const had = !!party;
       party = pt;
@@ -4256,6 +4419,7 @@
     document.addEventListener('focusout', (e) => { if (e.target.dataset && e.target.dataset.selQ) setTimeout(() => { if (!(document.activeElement && document.activeElement.dataset.selQ)) selFocus = null; }, 0); });
     document.addEventListener('change', (e) => {
       if (e.target.matches('form.adm-char[data-op="give_gear"] select[name="base"]')) syncGearForm();
+      if (e.target.matches('form.gift-form select[name="gbase"]')) syncGearForm(e.target.closest('form'));
       if (e.target.id === 'volume') { Sound.setVolume(e.target.value / 100); Sound.play('coin'); }
       if (e.target.id === 'music-volume') Sound.setMusicVolume(e.target.value / 100);
       if (e.target.dataset.chaosPick) { chaosPick[e.target.dataset.chaosPick] = e.target.value; render(); }
@@ -4277,6 +4441,11 @@
     });
     // vào lại sau khi mất mạng: lấy trạng thái mới nhất từ server
     Net.onRejoin((r) => { P = r.player; walk = null; render(); });
+    Net.onKicked((msg) => {
+      $('#netbar').hidden = true;
+      toast(msg, true);
+      charGo(Net.toSelect());
+    });
     Net.onExpired(() => {
       P = null; npc = null; dialog = null;
       $('#netbar').hidden = true;

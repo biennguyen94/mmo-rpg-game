@@ -1,7 +1,7 @@
 // Quản trị qua tab Quản trị (tài khoản admin do scripts/e2e_seed.exs tạo): tra người chơi, cấm / bỏ cấm
 // chat, gửi quà qua hộp thư, cộng vàng (Chỉnh nhân vật), kiểm tra vàng, nhật ký quản trị.
 // Chạy: node e2e/admin.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, adminSession, player, send, shot, travel, walkTo, fight, act } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, player, send, shot, travel, walkTo, fight, act, reloadGame } from './lib.mjs';
 
 const R = reporter('admin');
 const browser = await launch();
@@ -20,6 +20,7 @@ for (let i = 0; i < 20 && !(await page.$('[data-adm="mute"]')); i++) {
   await page.waitForSelector('[data-adm="mute"]', { timeout: 1000 }).catch(() => null);
 }
 R.check('tra cứu thấy nhân vật', !!(await page.$('[data-adm="mute"]')));
+
 
 // ô tìm trước danh sách đồ dài: gõ không dấu, chỉ còn món khớp; vẽ lại trang vẫn giữ chữ
 await page.fill('[data-sel-q="adm-gear"]', 'giap rong');
@@ -62,6 +63,32 @@ if (gift) await send(X.page, { act: 'mail_claim', id: gift.id });
 const pc = await player(X.page);
 R.check('mở thư nhận 123 vàng và một món đồ', pc.gold === g0 + 123 && Object.keys(pc.view.gear || {}).length === n0 + 1, `${pc.gold - g0} vàng, ${Object.keys(pc.view.gear || {}).length - n0} đồ`);
 R.check('không còn mục Gửi quà riêng ở người chơi', !(await page.$('#adm-gift')));
+
+// Quà mọi người: tick May mắn + một dòng Excellent cho trang bị (như tặng người cụ thể)
+const subj2 = 'Quà dòng ' + Date.now();
+await page.fill('#adm-gift-all input[name="subject"]', subj2);
+await page.fill('#adm-gift-all input[name="gold"]', '0');
+const wpn = await page.evaluate(() => Object.keys(window.GAME_DATA.ITEMS).find((k) => window.GAME_DATA.ITEMS[k].slot === 'weapon' && !window.GAME_DATA.ITEMS[k].legacy));
+await page.fill('#adm-gift-all [data-sel-q="adm-gift-all-gear"]', '');
+await page.selectOption('#adm-gift-all select[name="gbase"]', wpn);
+await page.fill('#adm-gift-all input[name="gup"]', '2');
+await page.check('#adm-gift-all input[name="luck"]');
+const excBox = page.locator('#adm-gift-all [data-gear-show="weapon"] input[name="exc"]').first();
+const hasExc = await excBox.isVisible().catch(() => false);
+if (hasExc) await excBox.check();
+await page.click('#adm-gift-all [data-act="gift-add"][data-kind="gear"]');
+const basket = (await page.textContent('#adm-gift-all-basket')) || '';
+R.check('quà mọi người: có ô tick May mắn / Excellent, giỏ ghi rõ', hasExc && basket.includes('May mắn') && basket.includes('Hoàn hảo') && basket.includes('+2'), basket);
+page.once('dialog', (d) => d.accept());
+await page.click('#adm-gift-all button[type="submit"]');
+let gift2;
+for (let i = 0; i < 15 && !gift2; i++) {
+  gift2 = await X.page.evaluate((s) => window.Net.mail().then((m) => m.mails.find((x) => x.subject === s), () => null), subj2);
+  if (!gift2) await X.page.waitForTimeout(1000);
+}
+if (gift2) await send(X.page, { act: 'mail_claim', id: gift2.id });
+const gx = Object.values((await player(X.page)).view.gear || {}).find((g) => g.base === wpn && g.luck);
+R.check('mở thư: món có May mắn + Excellent', !!gx && gx.excellent, JSON.stringify(gx && { luck: gx.luck, exc: gx.exc }));
 
 // Chỉnh nhân vật: cộng 1000 vàng (người chơi đang online thấy liền)
 const g1 = (await player(X.page)).gold;
@@ -110,14 +137,27 @@ R.check('ô Quản trị tặng đồ: May mắn, Kỹ năng, +16, 2 dòng Excel
   const stale = await page.evaluate((f) => document.querySelector(`${f} input[name="exc"][value="atk_pct"]`).checked, gg);
   R.check('tặng trang bị: Excellent đúng loại món, cánh không có; đổi món bỏ tick dòng bị ẩn', ok && !stale, JSON.stringify(got));
 }
+// bật / tắt quái di chuyển cho cả server (DECISIONS "Quản trị: bật / tắt quái di chuyển")
+{
+  await page.click(`[data-tab="admin"]`).catch(() => null);
+  await page.waitForSelector('[data-adm="mob_move"]');
+  const label = async () => (await page.textContent('[data-adm="mob_move"]')).trim();
+  const was = await label();
+  await page.click('[data-adm="mob_move"]');
+  await page.waitForFunction((w) => document.querySelector('[data-adm="mob_move"]').textContent.trim() !== w, was);
+  const off = await label();
+  await page.click('[data-adm="mob_move"]');
+  await page.waitForFunction((w) => document.querySelector('[data-adm="mob_move"]').textContent.trim() !== w, off);
+  R.check('quản trị tắt rồi bật lại quái di chuyển', was === 'Tắt' && off === 'Bật' && (await label()) === 'Tắt', `${was} → ${off} → ${await label()}`);
+}
+
 // sự kiện mở ngay: Quảng Trường Quỷ / Lâu Đài Máu (người chơi thấy đang mở, chat có thông báo)
 for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['open_bc', 'bc', 'Lâu Đài Máu']]) {
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click(`[data-adm="${op}"]`);
   await page.waitForTimeout(800);
   // tải lại trang người chơi để lấy view mới (chat cũng nạp lại lịch sử)
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view[key];
   const said = await X.page.evaluate((n) => document.body.textContent.includes(n + ' mở ngay'), name);
@@ -129,8 +169,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="open_cc"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view.cc;
   const said = await X.page.evaluate(() => document.body.textContent.includes('Hỗn Chiến Thành mở cửa'));
@@ -142,8 +181,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="raid_red_dragon"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const said = await X.page.evaluate(() => document.body.textContent.includes('Rồng Đỏ xâm lăng!'));
   R.check('quản trị mở Rồng Đỏ xâm lăng: chat báo', said);
@@ -154,8 +192,7 @@ for (const [op, key, name] of [['open_ds', 'ds', 'Quảng Trường Quỷ'], ['o
   await page.click(`[data-tab="admin"]`).catch(() => null);
   await page.click('[data-adm="open_cs"]');
   await page.waitForTimeout(800);
-  await X.page.reload();
-  await X.page.waitForFunction(() => window.__hl && window.__hl.player());
+  await reloadGame(X.page);
   await X.page.waitForTimeout(500);
   const v = (await player(X.page)).view.cs;
   const said = await X.page.evaluate(() => document.body.textContent.includes('Công Thành Chiến bắt đầu'));
@@ -208,6 +245,39 @@ if (gold) {
   const p2 = await player(X.page);
   R.check('thắng quái vàng, nhận thưởng lớn', res === 'win' && (p2.level > lv0 || p2.xp - xp0 >= p.battle.monster.xp * 0.5), `res=${res} xp ${xp0}→${p2.xp} reward ${p.battle && p.battle.monster.xp}`);
   await act(X.page, 'leave');
+}
+
+// Đang online: bấm tên mở hồ sơ người chơi
+// (bấm lại tab đang mở thì về Bản đồ: chỉ bấm khi chưa thấy mục Quản trị)
+if (!(await page.$('[data-adm="online"]'))) {
+  if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
+  await page.click('[data-menu="admin"]');
+}
+await page.click('[data-adm="online"]');
+const xId = await X.page.evaluate(() => window.__hl.userId());
+await page.waitForSelector(`#adm-online [data-act="profile"][data-uid="${xId}"]`, { timeout: 5000 }).catch(() => null);
+await page.click(`#adm-online [data-act="profile"][data-uid="${xId}"]`).catch(() => null);
+await page.waitForFunction((n) => (document.body.textContent || '').includes(n) && !!document.querySelector('.prof-doll'), X.name, { timeout: 5000 }).catch(() => null);
+R.check('Đang online: bấm tên mở hồ sơ người chơi', !!(await page.$('.prof-doll')));
+await shot(page, 'admin-online-profile.png');
+
+// Đưa về Làng (gỡ kẹt, DECISIONS "Đưa về Làng"): người chơi đang ở Rừng Mê, quản trị bấm 🏠 ở danh sách online
+{
+  await travel(X.page, 'forest_1');
+  // đóng hồ sơ vừa mở, quay lại mục Quản trị
+  await page.keyboard.press('Escape');
+  for (let k = 0; k < 3 && !(await page.$('[data-adm="online"]')); k++) {
+    if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
+    await page.click('[data-menu="admin"]', { timeout: 3000 }).catch(() => null);
+  }
+  await page.click('[data-adm="online"]');
+  const home = `[data-adm="to_village"][data-uid="${xId}"]`;
+  await page.waitForSelector(home, { timeout: 5000 }).catch(() => null);
+  page.once('dialog', (d) => d.accept());
+  await page.click(home).catch(() => null);
+  await X.page.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 5000 }).catch(() => null);
+  const pos = (await player(X.page)).pos;
+  R.check('quản trị đưa người chơi về Làng', pos.map === 'village', JSON.stringify(pos));
 }
 
 R.check('không lỗi JS', errors.length === 0 && X.errors.length === 0, [...errors, ...X.errors].join(' | '));

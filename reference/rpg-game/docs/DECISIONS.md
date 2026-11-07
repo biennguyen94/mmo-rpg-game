@@ -1454,3 +1454,184 @@ Kiểm 20 bot (đều CS10 cấp 50): 11 bot chưa hạ được Kim Long / Hắ
 - **Dọn túi**: túi trang bị ≥ `bots.sell.full_at` (35) món thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tới còn `down_to` (20) món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và lớp mình không mặc được hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh.
 - **Cho thú ăn từ từ**: mỗi lần cách `bots.play.feed_every_min` ([2, 5]) phút, ngẫu nhiên; điều kiện vàng (`feed_mult`) giữ nguyên.
 - Số liệu ở `RULES.bots` (version 5). Test `brain_endgame_test.exs`.
+
+## Bot dùng ngọc khôn hơn (2026-11-06, anh "ko tăng tỉ lệ rơi ngọc, nhưng có cách nào chỉnh bot để bot thông minh hơn")
+Không đổi tỉ lệ rơi. Hai chỗ bot phí Ngọc Ước Nguyện:
+- **Thay đồ bỏ mất cấp ép**: trước đây so món mới với món đang mặc chỉ theo chỉ số gốc, nên món +5 bị thay bằng món +0 nhỉnh hơn chút và mất trắng 5 viên ngọc. Nay so cả phần cộng từ cấp ép (`Engine.upgrade_bonus/2`).
+- **Rải ngọc đều 9 ô**: trước đây ép món cấp thấp nhất trước (mũ, giày, nhẫn… ngang vũ khí). Nay dồn vào `bots.forge.focus_slots` (vũ khí, giáp, cánh, khiên) trước; ô khác chỉ ép khi kém món đáng giá thấp nhất `focus_lead` (3) cấp.
+
+## Bot không kẹt trong tháp (2026-11-06, anh báo "tất cả bot bị kẹt ở tháp vô tận")
+"Tháp Vô Tận" trong danh sách online là bản đồ riêng `tower`, dùng chung cho Tháp, Quảng Trường Quỷ, Lâu Đài Máu, Kalima. Nguyên nhân: ở Lâu Đài / Kalima khi hết quái mà chưa xong (chờ trùm), bot đứng im không gửi lệnh; không có đường tới quái / cầu thang thì cũng đứng im. Server chỉ xét "hết giờ" và "phòng đã đóng" (vd. sau khi khởi động lại server lúc bot đang trong phòng) khi người chơi bước đi, nên bot đứng im thì kẹt mãi.
+- Chờ trong tháp: bot đi qua lại ô trống (không bước vào cổng / cầu thang), mỗi 3–5 giây một bước; hết giờ / phòng đóng thì bước đó đưa về Làng như người chơi.
+- Chốt an toàn: ở bản đồ tháp quá `bots.play.tower_max_min` (40) phút liền thì đi ra cổng.
+
+## Câu hỏi bảo mật (2026-11-06, anh "ở mục đăng kí thêm mục 1 câu hỏi bảo mật, lúc bấm quên mật khẩu thì người dùng có thể khôi phục bằng câu hỏi bảo mật")
+- **Đăng ký:** chọn một câu trong `RULES.account.security_questions` (6 câu, sửa trong rules.json) và nhập câu trả lời 2–60 ký tự. Câu trả lời lưu dạng băm PBKDF2 như mật khẩu (`users.security_answer_hash`), chuẩn hóa trước khi băm: không phân biệt hoa thường, bỏ khoảng trắng thừa (giữ dấu tiếng Việt). Giao diện bắt buộc; API `/api/register` vẫn nhận đăng ký không có câu hỏi (công cụ, test, tài khoản bot).
+- **Quên mật khẩu:** nhập tên đăng nhập → hiện câu hỏi → trả lời đúng + mật khẩu mới thì đổi mật khẩu, thu hồi mọi token cũ, đăng nhập luôn. Chống dò: sai `recover_per_user` (5) lần trong `recover_window_min` (60) phút theo tên đăng nhập thì phải đợi; theo IP 20 lần / giờ; xem câu hỏi 30 lần / giờ / IP. Xem câu hỏi cho biết tài khoản có tồn tại hay không (chấp nhận, có giới hạn tần suất).
+- **Tài khoản cũ / quên câu trả lời:** gửi yêu cầu cho quản trị như trước ("Quên mật khẩu" ở tab Quản trị). Cài đặt nhắc đặt câu hỏi nếu chưa có; đổi câu hỏi cần mật khẩu hiện tại.
+- Schema: thêm `users.security_question`, `users.security_answer_hash` (migration `20261113000000_add_security_question`, CHANGE_REASON trong file). API mới: `POST /api/question`, `/api/recover`, `/api/security`; `/api/me` trả thêm `question`. e2e `secq.mjs`.
+
+## Thú cưng 3 nhóm, chỉ cộng chỉ số (2026-11-06, anh "ko cho thú cưng tham gia trực tiếp trận đánh… chia 3 nhóm, nhưng bỏ kĩ năng")
+Kiểu MU: thú là món đi theo cộng chỉ số, không ra đòn.
+- **Bỏ:** cú cắn trong trận (`Pets.bite`), mọi kỹ năng thú (Liếm Vết Thương, Húc Ngã, Móc Túi, Phấn Độc, Cắn Xé; Long Vương: Thủy Long Ba, Long Lân Hộ Thể, Long Vương Hồi Sinh). Nhật ký trận không còn dòng "🐾 … cắn thêm". Đấu trường / đồ sát cũng vậy.
+- **Ba nhóm** (`PETS.group`): `war` ⚔️ Chiến (tấn công, chí mạng), `guard` 🛡️ Hộ vệ (máu, phòng thủ, **giảm sát thương nhận** `reduce`, tối đa 50 %), `luck` 🍀 Tài lộc (kinh nghiệm, vàng rơi). Long Vương `all` (Thần thú) cộng cả ba. Thú thuần thuộc nhóm Chiến: công `tame_bonus` + `tame_realm_bonus` × k, chí mạng `tame_crit`.
+- **Giữ sức mạnh:** phần sát thương trung bình cú cắn cũ quy đổi vào % tấn công / chí mạng; `bonus_per_level` 0,05 → 0,08 (cấp 20 ×2,52) vì cú cắn cũ tăng mạnh theo cấp. So sức tấn công cấp 1 / cấp 20 (cũ → mới, chí mạng tính nửa): Ác Quỷ 0,17 → 0,18 / 0,44 → 0,45; Satan 0,15 → 0,16 / 0,40 → 0,39; Chó Săn 0,09 → 0,09 / 0,29 → 0,21.
+- Dữ liệu: `pets.json` version 3, `RULES.pets` version 3 (bỏ `bite_*`, `skill*_level`, `skills`). Thành tựu "Thầy Dạy Thú" giữ (nuôi thú lên cấp 5), bỏ chữ "học kỹ năng".
+
+## Nhật ký trận: tên, dùng gì, gây bao nhiêu (2026-11-06, anh "trong khung thông tin đánh quái… chú ý ko xài từ bạn")
+- Dòng đánh: "`Tên`, `Đòn thường | tên kỹ năng`, gây `N` sát thương" (+ "(CHÍ MẠNG!)", nhiều đòn, khắc hệ); trượt: "`Tên`, `dùng gì`, đánh trượt" (thay "Trượt! X tránh được…" / "Bạn né được…"); phản đòn: "`Tên người bị phản`, bị phản `N` sát thương". Quái / đối thủ ghi cùng cách (chiêu đặc biệt của quái là tên chiêu).
+- Mọi dòng khác trong nhật ký trận đổi "Bạn / bạn" thành tên nhân vật (uống bình, choáng, độc, hạ quái…), kể cả đồ sát. Đối thủ đọc nhật ký của nhau (đồ sát, đấu trường) không cần đổi góc nhìn nữa (`BattleText.mirror` chỉ thêm tên ở đầu dòng không nhắc tên).
+
+## Quà mọi người: tick dòng như tặng người cụ thể (2026-11-06)
+Form quà qua hộp thư (mọi người lẫn một người) có thêm ô tick May mắn, Kỹ năng, Đồ Thần, các dòng Excellent và dòng phụ cánh như "Chỉnh nhân vật → Trang bị". Món có tick gửi bằng khóa `gearx:<base64 JSON>` (đã có cho đồ tràn túi), nay nhận thêm `up` (+N); server kiểm Kỹ năng chỉ vũ khí, Đồ Thần chỉ món bộ giáp, cánh không có Excellent.
+
+## Chỉ số thú cưng ghi rõ theo cấp (2026-11-06, anh hỏi Long Vương +10% / +8% nhưng hồ sơ hiện +20% / +16%)
+Không phải lỗi: số trong mô tả thú là ở cấp 1, chỉ số thật nhân `1 + bonus_per_level × (cấp − 1)` (Long Vương cấp 20 ×1,95 với hệ số cũ). Cửa hàng / thẻ Long Vương ghi "(cấp 1)" và hệ số theo cấp; hồ sơ ghi cấp thú, rê chuột vào % thấy cách tính.
+
+## Bỏ Nhà: Thủ Kho ở Làng (2026-11-06, anh yêu cầu)
+Nhà riêng không cần thiết: bỏ bản đồ `home`, đồ trang trí (`furniture.json`, Thợ Mộc, lệnh `decor_*`, điểm tiện nghi +% EXP, thăm / khen nhà, thành tựu "cozy", gói trang trí lễ hội). Tủ Đồ (gửi / lấy đồ, vàng) chuyển về NPC **Thủ Kho** giữa Làng, cạnh **Rương Gia Truyền** và giếng hồi máu; gục ngã / điểm hồi sinh về Đá Dịch Chuyển ở Làng. Dữ liệu cũ của nhân vật (đồ trang trí đã đặt) bỏ qua khi nạp, đồ trong tủ giữ nguyên. Hướng dẫn tân thủ giữ 5 bước trong dữ liệu (bước 0 "ra Làng" tự xong) để nhân vật đang làm dở không lệch; hiển thị 4 bước.
+Làng vẽ lại: hồ sen có cầu, đèn lồng, nhà quanh quảng trường, giếng ở giữa; vị trí các NPC cũ giữ nguyên.
+
+## Thú cưng: máu / MP cộng số (2026-11-06, anh duyệt đề xuất)
+Máu tối đa của thú không còn cộng %, mà cộng **số cố định × cấp thú** (`PETS.flat`): Cừu Bông +15, Thiên Thần Hộ Mệnh +25, Tinh Linh Hộ Vệ +35, Bằng Mã Lửa +8, Long Vương +30 máu mỗi cấp; thêm MP: Quạ Đen, Quỷ Satan +5, Long Vương +10 MP mỗi cấp (cấp 20: Tinh Linh +700 máu, Long Vương +600 máu / +200 MP). Phòng thủ, tấn công, giảm sát thương, kinh nghiệm, vàng vẫn %. Cộng sau mọi phần nhân (Excellent, món ăn), nên không phình theo cấp nhân vật. So sức thú (bot, mô phỏng) đổi máu / MP cộng số ra % theo `RULES.pets.power_ref`.
+
+## Quản trị: bật / tắt quái di chuyển (2026-11-06)
+Quái trên bản đồ do server điều khiển, mọi người thấy chung, nên công tắc là của cả server (Quản trị → Bản đồ), không phải cài đặt riêng từng người. Tắt: quái đứng yên trên mọi bản đồ (vẫn đánh, hồi sinh như thường; trùm vốn đã đứng yên). Không thêm bảng: trạng thái là dòng `admin_log` op `mob_move` mới nhất (`params.on`), đệm trong `:persistent_term`; khởi động lại vẫn giữ, chưa đặt bao giờ thì bật. Chỉ quản trị viên (không phải điều hành viên).
+
+## Bình máu / mana hồi số (2026-11-06, anh yêu cầu; anh chọn "cách A")
+Như thú cưng: bình không còn hồi % máu / MP tối đa mà hồi số cố định (`heal` / `mana` trong `items.json`). Một con số không vừa cả đầu lẫn cuối game (bản thử 150 / 500 / 1 500: bình nhỏ hồi 50–75 % máu lúc mới chơi), nên bình mở theo cấp (`buy_level`, kiểu MU):
+
+| Bình | Máu | MP | Mua từ | Giá |
+|---|---|---|---|---|
+| Nhỏ | 60 | 25 | cấp 1 | 10 |
+| Vừa | 400 | 120 | cấp 10 | 60 |
+| Lớn | 1 800 | 400 | cấp 25 | 200 |
+
+Đã chuyển sinh (cấp về 1, máu vẫn cao) thì mua được cả ba. Giá cố định (`potion_price_per_level` 0.1 → 0: trước tăng theo cấp vì lượng hồi tăng theo máu). Quái rơi bình Vừa từ cấp 10, Lớn từ cấp 25 (`loot.potions`, trước 9 / 20). Đánh người vẫn × `RULES.pvp.potion_mult`.
+
+Số chốt bằng mô phỏng hành trình (4 lớp, 6 lần chuyển sinh, seed 1 / 2; bản % cũ chết 33 / 30): bộ anh duyệt đầu 50 / 300 / 1 200 (cấp 15 / 30) chết 45 / 65 — thiếu bình đủ mạnh ở cấp 11–30 lần chơi đầu (bản cũ mua được bình Lớn 70 % từ đầu) và bình Lớn hồi chỉ ~45 % cuối game; bộ trên chết 34 / 29.
+Bot (`Brain.restock`): chỉ đếm loại bình còn hồi ≥ `potion_heal_min` máu tối đa khi quyết định đi mua — trước đó bot giữ hàng trăm bình nhỏ nhặt từ đầu game nên không bao giờ mua bình Lớn và chết liên tục cuối game.
+
+## Nhật ký trận dễ đọc (2026-11-06, anh duyệt: chỉ máu quái, giữ icon)
+Mỗi dòng đánh / trượt / phản / uống bình / hồi máu có thêm các phần (`who`, `name`, `act`, `dmg`, `crit`, `miss`, `reflect`, `heal`, `mp`, `potion`, `hits`, `note`, `left`, `turn`); client vẽ câu ngắn kiểu: **Tên** dùng <u>Kỹ năng</u>. ⚔ **146** (máu còn lại: 1 930) / **Tên** gây ra ⚔ **35** 💥 chí mạng / **Tên** đánh trượt. / **Quái** bị phản ⚔ **8** / **Tên** uống Bình Máu Lớn, hồi ❤ **1 800**. Tên nhân vật màu vàng, quái / đối thủ màu đỏ, kỹ năng gạch dưới; chỉ hiện máu còn lại của quái; mỗi lượt một khối (cách dòng). `text` giữ câu đầy đủ như cũ (bot, test, dòng không có phần thì hiện chữ như trước).
+
+## Đưa về Làng (2026-11-07, anh duyệt)
+Gỡ kẹt: Quản trị có nút 🏠 Về Làng ở từng người (danh sách online, tra cứu; bot cũng là tài khoản) và "Đưa mọi bot về Làng" (thẻ Bản đồ). `Session.to_village/2`: đang trong trận thì kết thúc như bỏ chạy (quái nhả ra, không mất gì), rời tháp / phòng sự kiện, về Đá Dịch Chuyển ở Làng; ghi `admin_log` như lệnh quản trị khác. Chỉ quản trị viên. Bot tự gỡ kẹt: không nghỉ mà vị trí, máu, kinh nghiệm, vàng, cấp, lượt trận không đổi quá `RULES.bots.play.stuck_min` (10) phút thì tự về Làng (log `bot … kẹt ở …`), chặn cả kiểu kẹt chưa biết.
+
+## Logo app vector (2026-11-07)
+Logo cũ là hình rồng pixel 32×32 phóng to nên vỡ hạt. Thay bằng `priv/static/app/logo.svg` tự vẽ (CC0): rồng đen viền vàng trong vòng vàng, nền đỏ tím đậm; `node e2e/app_icons.mjs` xuất PNG 512 / 192 / 180 / 32, bản maskable (thu vào vùng an toàn) và favicon.ico; đổi `?v=4` để máy tải lại.
+
+## Chuyển sinh vô hạn (2026-11-07, anh duyệt)
+Quá `max_rebirths` (10) vẫn chuyển sinh được, nhưng không phình sức: mỗi lần sau mốc 10 chỉ thêm `character.endless_points` (10) điểm tiềm năng (điểm sau lần n = 10 × 25 + (n − 10) × 10; trước đó n × 25), kinh nghiệm lên cấp như mốc 10; muốn chuyển sinh lần n + 1 (n ≥ 10) phải đã hạ chúa tể vùng chuyển sinh 10 tổng cộng n − 9 lần (Sổ quái), nên mỗi lần phải hạ lại. Không thêm vùng mới; quái sự kiện, đồ sát, đấu trường vẫn tính như mốc 10 (bảng hệ số dùng dòng cuối, phòng sự kiện chặn ở 10). Bảng xếp hạng đã sắp theo số lần chuyển sinh trước. Bot (và mô phỏng hành trình) dừng ở mốc 10. Quản trị đặt số lần chuyển sinh tới 999.
+
+## Nhiều nhân vật (2026-11-07, anh duyệt; xóa nhân vật thì đồ mất hẳn)
+Mỗi tài khoản tối đa `RULES.account.max_characters` (5) nhân vật, một nhân vật online một lúc.
+- **Mô hình** (CHANGE_REASON schema, migration `multi_characters`): mỗi nhân vật là một dòng `users` riêng (mã người chơi); nhân vật thêm có `account_id` = tài khoản đăng nhập, tên đăng nhập nội bộ `~<tài khoản>~…`, mật khẩu ngẫu nhiên, không đăng nhập được. Dòng của tài khoản cũ vừa là tài khoản vừa giữ nhân vật đầu, nên dữ liệu cũ không phải chuyển và mọi bảng gắn theo mã người chơi (bạn bè, bang, thư, chợ, đồ sát, đấu trường, Long Vương, xếp hạng…) tự thành theo nhân vật.
+- **Protocol** (CHANGE_REASON): `GET /api/me` thêm `characters`, `max_characters`; `POST /api/characters` → `{cid}` (chỗ tạo nhân vật: dòng chưa có nhân vật hoặc dòng mới); `POST /api/characters/delete {cid, name, password}`; `POST /api/ws-ticket {cid}` (chỉ nhân vật của tài khoản). WebSocket: `user_id` là mã nhân vật, tên đăng nhập / vai trò lấy từ tài khoản. Vào nhân vật này thì kênh của nhân vật khác cùng tài khoản nhận `kicked` (client về màn chọn nhân vật, không tự nối lại) và Session của nó tắt.
+- **Theo nhân vật**: bạn bè, bang, tổ đội, giao dịch, chợ, thư riêng, đồ sát, đấu trường, chiến bang, xếp hạng, thành tựu, thú cưng, nhiệm vụ, việc hằng ngày.
+- **Theo tài khoản**: đăng nhập, mật khẩu, câu hỏi bảo mật; cấm chat / khóa (ghi mọi dòng của tài khoản, nhân vật tạo sau cũng nhận); chặn chat (nhân vật nào chặn thì cả tài khoản không thấy chat mọi nhân vật của tài khoản bị chặn); **Thủ Kho dùng chung** (bảng `account_storage`: đồ thường, đồ hiếm kèm cấp ép, vàng, số lần mở rộng; Tủ Đồ riêng kiểu cũ tự chuyển vào thùng chung lần đầu vào game; đồ hiếm vào / ra thùng ghi `gear_log` lý do `SHARED` với mã tài khoản, `HacLong.Audit` đối soát cả thùng); **Rương Gia Truyền** mỗi tài khoản một lần mỗi ngày; **quà quản trị gửi mọi người** mỗi tài khoản một thư, vào nhân vật chơi gần nhất (trong các nhân vật khớp bộ lọc).
+- **Xóa nhân vật**: gõ lại tên và mật khẩu tài khoản; chủ bang phải nhường trước; đồ, vàng, bạn bè, bang, thư, hàng trên chợ của nhân vật mất hẳn (không chuyển vào thùng chung); thùng chung giữ nguyên. Nhân vật thêm: xóa dòng `users` (bảng gắn theo xóa kèm); nhân vật trên dòng tài khoản: xóa nhân vật và dữ liệu người chơi gắn theo mã đó, giữ những gì của tài khoản.
+- **Quản trị**: tra cứu hiện tài khoản và mọi nhân vật (bấm để xem nhân vật khác); lệnh sửa nhân vật áp nhân vật đang xem; danh sách online ghi kèm `@tài khoản`.
+- Bot: mỗi bot vẫn một tài khoản một nhân vật.
+- **Màn chọn nhân vật** (anh chốt 2026-11-07, như MU): hiện mỗi lần mở game (tab / ứng dụng mới) và sau khi đăng nhập, kể cả tài khoản một nhân vật; danh sách theo thứ tự tạo, không đánh dấu nhân vật gần nhất, mỗi dòng là hình nhân vật mặc đồ đang mặc (`look` như hồ sơ, `/api/me` gửi kèm). F5, trang tự tải lại (server cập nhật, đổi ngôn ngữ), mất mạng nối lại thì vào thẳng nhân vật đang chơi của tab (nhớ trong `sessionStorage`, mất khi đóng tab). Chưa có nhân vật thì vào thẳng màn tạo nhân vật.
+
+## Quản trị tới chỗ người chơi, hình nhân vật, Thủ Kho (2026-11-07)
+- Quản trị: `goto_player` dịch chuyển nhân vật của quản trị tới bản đồ + ô của người chơi (bản đồ chung; `Session.teleport/2`, chung đường với "Đưa về Làng"). Ô "Số lần chuyển sinh" của Chỉnh nhân vật cho tới 999.
+- Hình nhân vật hiện "không mặc gì" (bot, người khác) ở Quanh đây / hồ sơ / bảng người chơi: lúc ảnh các lớp đồ chưa tải xong `Doll.url` trả hình mặc định và những chỗ đó không vẽ lại. Nay `Doll.src` đánh dấu ảnh tạm (`data-doll`), tải xong `Doll.fix` thay đúng hình (dữ liệu `look` ở server vẫn đúng: kiểm 226 nhân vật không thiếu lớp nào).
+- NPC Thủ Kho dùng hình người (hình Thợ Mộc cũ, CC0) thay hình cái tủ.
+
+## Thú cưng: giảm tấn công (2026-11-07, anh duyệt)
+Thú nhóm Chiến cấp 20 cộng tới +40% tấn công (bằng 8 dòng Excellent +5%). Giảm một nửa phần tấn công: Chó Săn 4%, Quạ Đen 5,5%, Bằng Mã Lửa 6%, Quỷ Satan 7%, Ác Quỷ Daemon 8%, Long Vương 8% (cấp 20 ×2,52: mạnh nhất khoảng +20%); thú thuần `tame_bonus` 0.05 → 0.025, `tame_realm_bonus` 0.012 → 0.006 (vùng 10, cấp 20 khoảng +21%). Chí mạng và các nhóm khác giữ nguyên.
+
+## Lễ hội: nâng phần thưởng (2026-11-07, anh duyệt)
+Trước: 3 kẹo đổi 60 + 12 × cấp vàng bất kể chuyển sinh (chuyển sinh 6 lần: mỗi kẹo ≈ 5% vàng của 5 trận đánh ra nó), Túi Quà đồ thường, bình máu. Nay (`RULES.events` version 2):
+- Vàng: (60 + 12 × cấp) × (1 + số lần chuyển sinh) (CS 6, cấp 50: 4 620).
+- Thêm ngọc: 15 kẹo → Ngọc Ước Nguyện, 25 → Ngọc Tâm Linh, 40 → Ngọc Sinh Mệnh.
+- Túi Quà (12 kẹo): chắc chắn dòng cộng thêm từ +8 (+8 75%, +12 25%), 10% thêm một dòng Excellent.
+- 3 Bình Máu Lớn (6 kẹo) giữ nguyên.
+
+## Long Vương: thần thú độc nhất (2026-11-07, anh duyệt bản đầy đủ)
+Sau khi giảm tấn công thú, Long Vương (câu 1/2 000 mỗi lần thả, mỗi giờ nổi một lần) chỉ ngang Ác Quỷ Daemon mua được. Thêm những gì chỉ Ngài có (`PETS.long_vuong`: `max_level`, `traits`; vẫn chỉ cộng chỉ số, không kỹ năng):
+- **Cấp tối đa 30** (thú khác 20; `Pets.max_level/1`): % nhân ×3,32 (tấn công ≈ +27%, phòng thủ +33%, giảm sát thương nhận +20%; sau khi giảm tăng theo cấp: ×2,45), máu +900, MP +300. Cấp 21–30 cần thêm ≈ 2 450 trận (cho ăn được tới cấp 30).
+- **Long Uy** (`traits.ward` 0.5): kháng một nửa choáng, độc / bỏng / chảy máu, suy yếu từ quái và người (nhật ký "🐉 Long Uy: … kháng được …").
+- **Long Ân**: quái rơi ngọc ×1,25 (`traits.jewel`), thưởng trùm thế giới (vàng, kinh nghiệm) ×1,1 (`traits.boss`).
+- Giao diện: tên vàng, nhãn "✨ Thần thú – Độc nhất", cấp hiện "x/30"; trên bản đồ vầng vàng và vảy rồng quanh chân khi dắt Ngài.
+- Cân bằng đồ sát / đấu trường: nhân vật mẫu mốc 10 (`scripts/pvp/build.exs`, nhân vật tối đa) dắt Long Vương cấp tối đa (30); chỉnh lại hệ số lớp mốc 10.
+
+## Thú cưng: tăng theo cấp thấp hơn (2026-11-07, anh duyệt)
+`RULES.pets.bonus_per_level` 0.08 → 0.05: phần trăm cộng của thú nhân (1 + 0,05 × (cấp − 1)) — cấp 20 ×1,95 (trước ×2,52), Long Vương cấp 30 ×2,45 (trước ×3,32). Thú mạnh nhất cấp 20 (Ác Quỷ Daemon) tấn công ≈ +16%; Long Vương cấp 30 ≈ +20% tấn công, +25% phòng thủ, +15% giảm sát thương nhận. Máu / MP cộng số không đổi. Kiểm cân bằng mốc 10: đồ sát lệch 10%, đấu trường 3% — giữ hệ số.
+
+## Long Vương mạnh hơn (2026-11-07, anh yêu cầu)
+Sau khi giảm tăng theo cấp của mọi thú xuống 5%, Long Vương giữ mức riêng `PETS.long_vuong.per_level` 0.08 (`Pets.bonus_mult/2`): cấp 30 ×3,32 → tấn công ≈ +27%, chí mạng +10%, phòng thủ +33%, giảm sát thương nhận +20%, kinh nghiệm / vàng rơi +20%, cùng máu +900, MP +300, Long Uy, Long Ân. Hồ sơ hiện hệ số thật của thú (`pet_mult`). Cân bằng mốc 10: đồ sát lệch 6%, đấu trường 9% — giữ hệ số.
+
+## Đấu trường: chỉ thách cùng hạng hoặc hạng trên (2026-11-07, anh chốt)
+Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự kiện (`RULES.event_rooms.bands`: CS 0–1, 2–3, 4–5, 6–7, 8–9, 10+). Chỉ thách đấu được người **cùng hạng hoặc hạng cao hơn** (`Arena.min_rebirths/1`: từ mốc đầu hạng mình trở lên); người hạng dưới không bị người hạng trên thách (không còn bị trừ điểm oan). Không thách nhân vật cùng tài khoản (chống nuôi điểm bằng nhân vật phụ). Gợi ý đối thủ và tìm theo tên chỉ ra người trong phạm vi được đánh (cùng hạng trước). Tab Đấu trường ghi hạng của mình. Đồ sát không đổi.
+
+## Đồ sát: sửa nhật ký và bot không đánh trả (2026-11-07)
+- Nhật ký người đánh hiện "máu còn lại: 9.999.548": máy tính trận đồ sát cộng tạm `@slay_pad` (10 triệu) vào máu bản sao đối thủ trong lượt. Nay `fix_slay_log` thay bằng máu thật của đối thủ, và sát thương ghi đúng phần đối thủ thật sự mất (sau đòn mở màn ×`first_strike_mult`, thủ thế / khiên / thú của họ) — trước ghi số trước khi giảm.
+- Bot bị đồ sát đứng im: máu thấp thì bot chọn uống bình, nhưng đánh người giới hạn `potion_max` bình mỗi trận và `potion_cd` lượt chờ → lệnh bị từ chối, bot không làm gì tới hết giờ lượt. Nay `Engine.potion_ready?/1`: hết lượt uống thì bot đánh / dùng kỹ năng.
+- Thẻ đối thủ trong trận đánh người (đồ sát, đấu trường) ghi thêm lớp và số lần chuyển sinh ("Kiếm Sĩ · CS 0 · Cấp 20 · …").
+- Đòn mở màn ghi ngay trong dòng đánh đầu của người tấn công ("… gây ra ⚔ 544 💥 chí mạng (đòn mở màn ×0.5) (máu còn lại: 92)"), bỏ dòng "⚔ Đòn mở màn…" riêng ở nhật ký người tấn công; người bị đánh vẫn thấy dòng "kịp phòng bị" của mình.
+
+## Thùng đồ chung: không lẫn vào túi đồ (2026-11-07, lỗi anh báo)
+Đồ trong thùng chung (của nhân vật khác cất) hiện cả ở túi đồ / Thủ Kho phần "Túi đồ" của nhân vật vừa vào: `Engine.view.gear` bị gộp thêm đồ trong thùng để giao diện vẽ. Nay `view.gear` chỉ là đồ của nhân vật; đồ trong thùng có thông tin riêng ở `view.storage.items` (`Storage.view/1`), client `itemOf` tra cả hai.
+
+
+## Bot câu cá, bot try hard (2026-11-07, anh yêu cầu)
+- **Câu cá:** từ cấp vào được Hồ Long Vương, mỗi `RULES.bots.fish.every_min` phút (ngẫu nhiên trong khoảng) bot ra hồ câu
+  `stay_min` phút. Có Đàn Cá Vàng thì đứng trong tầm và thả trúng ô đàn cá, không thì thả ô nước cạnh bên. Câu đủ cá trong ngày thì
+  nhận việc Ông Lão. Thả câu xong, bot giật cần sau khi cá cắn `react_ms` mili giây (ngẫu nhiên). Bot thường giật chậm quá cửa sổ 1
+  giây khoảng 1/9 số lần thì trượt, như người. Đứng câu lâu một chỗ không bị coi là kẹt: số cá, Long Khí cũng là tiến triển.
+- **Săn Long Vương:** Ngài nổi thì bot "săn rồng" bỏ việc rảnh ra hồ, đứng trong tầm `fishing.dragon.reach` và thả trúng ô
+  Ngài. Bot săn rồng là bot try hard hoặc seed chia hết cho `fish.chase_every` (khoảng 1/3 số bot), và chưa có Long Vương. Đang
+  leo Tháp Vô Tận thì ra cổng đi luôn; đang ở Quảng Trường / Lâu Đài / Kalima thì đánh xong sự kiện. Có Mồi Rồng thì dùng như người.
+  Cơ hội vẫn theo luật chung (`fishing.dragon.chance` × Long Khí × mồi), bot không được ưu tiên gì.
+- **Bot câu được Long Vương:** ghi Bia Long Vương và **báo cả server** như người thật. Đây là ngoại lệ duy nhất của luật "bot
+  không báo cả server"; Long Vương rất hiếm nên không làm loãng dải thông báo.
+- **Bot try hard** (`RULES.bots.tryhard`, seed chia hết cho `every` = 5, khoảng 1/5 số bot):
+  - luôn săn Long Vương và luôn ép liều +10 / +11;
+  - nghỉ sau khi gục `rest_mult` × thời gian thường;
+  - leo Tháp mỗi `tower_every_min` phút, ra hồ mỗi `fish_every_min` phút, câu `fish_stay_min` phút;
+  - giật cần nhanh hơn (`react_ms`).
+- Nếu bot câu được Long Vương nhiều quá so với người chơi thật: giảm `fish.chase_every` (ít bot săn hơn) hoặc thời gian câu.
+
+## Nén hệ số kỹ năng tháp (2026-11-07, anh chọn phương án 1)
+- **Vì sao:** kỹ năng gây 93–100% sát thương (5 kỹ năng, lượt nào cũng có chiêu sẵn), mỗi đòn ×2–4,4 đòn thường. Công thức
+  trừ giáp còn khuếch đại hệ số cao, nên chúa tể vùng chuyển sinh chỉ trụ được 5–7 lượt.
+- **Đổi:** hệ số `mult` của 10 kỹ năng tháp mỗi lớp (`CLASSES[lớp].tower_skills`) từ 1,45 / 1,7 / … / 3,7 thành
+  1,27 / 1,42 / … / 2,62, tức `1 + (cũ − 1) × 0,6`. Tầng cao vẫn mạnh nhất, mỗi tầng vẫn +0,15. Tác dụng phụ (xuyên giáp, chí
+  mạng, nhiều đòn, buff…), MP, hồi chiêu giữ nguyên.
+- **Đo (mô phỏng 12 trận mỗi ô):**
+  - quái vùng chuyển sinh chết chậm hơn khoảng 20–40%;
+  - chúa tể vùng mốc 3–6 từ 4,6–6,7 lượt lên 6,2–8,3 lượt;
+  - kỹ năng còn ×1,6–3,0 đòn thường.
+- **Hành trình tới 6 lần chuyển sinh (3 seed):** tổng lượt đánh tăng dk +19%, dw +15%, elf +12%, mg +11%, số trận gần
+  như không đổi, không lớp nào kẹt.
+- Chỉnh lại `pvp.class_taken_by_rebirth` và `class_taken_arena_by_rebirth` bằng `scripts/pvp/tune.exs` (mọi mốc).
+  - đồ sát: đổi mốc 0, 2–8, còn lệch ≤ 13%;
+  - đấu trường: đổi mốc 2–8, còn lệch ≤ 10%; mốc 0, 1 giữ (lệch 11%, 13%, trong mức test 15%).
+
+## Bộ tên thay cho tên MU (2026-11-07, anh yêu cầu)
+- **Hai bộ tên cho cả server:**
+  - `mu`: tên gốc, mặc định;
+  - `alt`: tên mới trong `priv/static/i18n/names_alt.json`, 372 tên chia nhóm (sự kiện / hệ thống, ngọc, nguyên liệu, quái,
+    thú, cánh, vũ khí, khiên, bộ giáp). Mỗi tên có bản tiếng Việt và tiếng Anh.
+- **Chuyển bộ tên:** quản trị viên bấm ở Quản trị → Bộ tên. Người đang chơi tự tải lại trang.
+- **Lưu trạng thái:** không thêm bảng. Trạng thái là dòng `admin_log` op `name_pack` mới nhất, giống công tắc quái di
+  chuyển (`HacLong.NamePack`).
+- **Cách đổi:** chỉ đổi chữ hiện ra, ở trình duyệt (`i18n.js`). Mọi chữ đều đi qua lớp dịch: giao diện, dữ liệu, tin server,
+  nhật ký trận, chữ trên bản đồ.
+  - Khớp nguyên cụm, khóa dài trước, không khớp giữa chữ, đổi một lượt (test kiểm tên mới không chứa khóa khác).
+  - Tiếng Anh: đổi tên tiếng Anh gốc lấy từ `en.json`, cộng bảng `en_terms`.
+  - Dữ liệu game, database, giao thức giữ tên gốc, nên đổi qua lại không mất gì.
+- **Chọn tên để đổi:**
+  - danh từ riêng và tên đặc trưng MU: Kalima, Kundun, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Golden Invasion, Máy
+    Hỗn Nguyên, các loại Ngọc, Excellent, đồ Thần, Tổng Lãnh Thiên Thần, vé, nguyên liệu sự kiện, thú, cánh;
+  - đồ mang tên riêng hoặc tên bộ của MU: Kris, Gladius, Air Lyn, Merlin, Beuroba, Balrog…;
+  - 45 bộ giáp, đổi đủ tên từng món (Mũ / Giáp / Quần / Găng / Giày).
+- **Giữ nguyên:**
+  - tên loại chung (Kiếm Mảnh, Rìu Nhỏ, Cung Ngắn, Khiên Tháp, bộ Đồng / Da / Vảy / Lụa…);
+  - tên lớp (Kiếm Sĩ…), kỹ năng, quái tự đặt (vùng chuyển sinh);
+  - tên game Hắc Long (chỉ bộ giáp "Hắc Long" đổi).
+- **Không đổi:** chat của người chơi, ô nhập, danh sách chọn trong Quản trị, Kho Đồ (tài liệu ngoài game). Câu chat của bot
+  có "Golden Invasion" đổi thành câu chung.

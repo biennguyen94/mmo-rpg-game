@@ -1,5 +1,5 @@
 // Cài đặt "Tự hủy đồ rơi": bật, bỏ hết loại giữ lại, lưu qua tải lại trang; đánh thật: bật thì đồ rơi bị hủy, tắt thì vào túi. Chạy: node e2e/lootfilter.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, adminSession, travel, engage, fight, act, player, shot } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, travel, engage, fight, act, player, shot, reloadGame } from './lib.mjs';
 
 const R = reporter('lootfilter');
 const browser = await launch();
@@ -17,7 +17,7 @@ for (const cb of await page.locator('[data-loot-keep]').all()) {
 const keep = await page.evaluate(() => window.__hl.player().view.autoCfg.filter.keep);
 R.check('bỏ hết loại giữ lại', Array.isArray(keep) && keep.length === 0, JSON.stringify(keep));
 // tải lại trang: cài đặt lưu theo nhân vật trên server
-await page.reload();
+await reloadGame(page);
 await page.waitForFunction(() => window.__hl && window.__hl.player() && window.__hl.player().view, null, { timeout: 15000 });
 const f2 = await page.evaluate(() => window.__hl.player().view.autoCfg?.filter);
 R.check('tải lại: vẫn bật, giữ lại rỗng', f2?.on === true && Array.isArray(f2.keep) && f2.keep.length === 0, JSON.stringify(f2));

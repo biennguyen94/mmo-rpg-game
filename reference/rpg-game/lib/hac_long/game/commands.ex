@@ -18,7 +18,6 @@ defmodule HacLong.Game.Commands do
     Engine,
     Events,
     Fishing,
-    Home,
     Pets,
     Quests,
     Storage,
@@ -150,20 +149,11 @@ defmodule HacLong.Game.Commands do
       "pet_choose" ->
         Pets.choose(p, c["id"])
 
-      "decor_buy" ->
-        at_npc(p, ["carpenter"], "Thợ Mộc ở Làng", fn _ -> Home.buy(p, c["id"]) end)
-
-      "decor_place" ->
-        Home.place(p, c["id"], int(c["x"]), int(c["y"]))
-
-      "decor_take" ->
-        Home.take(p, int(c["x"]), int(c["y"]))
-
       "chest_buy" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ -> Chests.buy(p, c["tier"]) end)
 
       "chest_open" ->
-        at_npc(p, ["chest"], "Rương Gia Truyền ở Nhà", fn _ ->
+        at_npc(p, ["chest"], "Rương Gia Truyền ở Làng", fn _ ->
           Chests.open_daily(p, Daily.today())
         end)
 
@@ -185,20 +175,24 @@ defmodule HacLong.Game.Commands do
         Engine.discard(p, c["id"], c["n"] || 1)
 
       "store" ->
-        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.store(p, c["id"], c["n"] || 1) end)
+        at_npc(p, ["wardrobe"], "Thủ Kho ở Làng", fn _ ->
+          Storage.store(p, c["id"], c["n"] || 1)
+        end)
 
       "unstore" ->
-        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.take(p, c["id"], c["n"] || 1) end)
+        at_npc(p, ["wardrobe"], "Thủ Kho ở Làng", fn _ ->
+          Storage.take(p, c["id"], c["n"] || 1)
+        end)
 
       # cất / rút vàng ở Tủ Đồ (`n` vàng)
       "gold_store" ->
-        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.store_gold(p, c["n"]) end)
+        at_npc(p, ["wardrobe"], "Thủ Kho ở Làng", fn _ -> Storage.store_gold(p, c["n"]) end)
 
       "gold_take" ->
-        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.take_gold(p, c["n"]) end)
+        at_npc(p, ["wardrobe"], "Thủ Kho ở Làng", fn _ -> Storage.take_gold(p, c["n"]) end)
 
       "storage_expand" ->
-        at_npc(p, ["wardrobe"], "Tủ Đồ ở Nhà", fn _ -> Storage.expand(p) end)
+        at_npc(p, ["wardrobe"], "Thủ Kho ở Làng", fn _ -> Storage.expand(p) end)
 
       "quest_accept" ->
         at_npc(p, ["quests"], "Trưởng Làng", fn _ -> Quests.accept(p, c["id"]) end)

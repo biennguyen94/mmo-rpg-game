@@ -48,7 +48,7 @@ defmodule HacLong.Game.PvpCrossTest do
     pb = Engine.pvp_receive(pb, debuffs)
     assert Engine.stunned?(pb)
     {_, pb} = Engine.act(pb, "attack")
-    assert List.last(pb.battle.log).text == "💫 Bạn bị choáng, mất một lượt."
+    assert List.last(pb.battle.log).text == "💫 Bia bị choáng, mất một lượt."
     refute Engine.stunned?(pb)
 
     # vừa thoát choáng: người đánh ngắm thấy đối thủ đang kháng, choáng không vào
@@ -76,14 +76,14 @@ defmodule HacLong.Game.PvpCrossTest do
     p = Engine.pvp_receive(b, [%{id: "poison", turns: 3, power: 40}])
     p = Engine.pvp_turn_start(p)
     assert p.hp == b.hp - 40
-    assert List.last(p.battle.log).text =~ "Bạn mất 40 máu vì trúng độc"
+    assert List.last(p.battle.log).text =~ "Manh mất 40 máu vì trúng độc"
   end
 
-  test "đòn vào người bị đánh đi qua thủ thế, khiên, bất tử, Long Vương của họ" do
+  test "đòn vào người bị đánh đi qua thủ thế, khiên, bất tử, thú Hộ vệ / Long Vương của họ" do
     v0 = Engine.pvp_victim(hero("Thu", "dk"), nil, 1000)
     assert {%{hp: 900}, 100} = Engine.pvp_defend(v0, 100)
 
-    # Long Vương: Vảy Rồng giảm sát thương nhận
+    # Long Vương: giảm sát thương nhận (bonus.reduce)
     v = Engine.pvp_victim(hero("Thu", "dk", true), nil, 1000)
     assert {%{hp: hp}, real} = Engine.pvp_defend(v, 100)
     assert real < 100 and hp == 1000 - real
@@ -96,14 +96,12 @@ defmodule HacLong.Game.PvpCrossTest do
     assert real == 20 and sh.hp == 980
     assert Engine.pvp_fx(sh).effects == []
 
-    # bất tử trước, Long Vương sau (mỗi trận một lần)
+    # bất tử cứu một lần; Long Vương không còn hồi sinh (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
     {u, _} = Engine.pvp_defend(with_fx(v, [%{id: "undying", turns: 3, power: 0.3}]), 5000)
     assert u.hp > 0 and Engine.pvp_fx(u).effects == []
     v = Engine.pvp_victim(hero("Thu", "dk", true), nil, 1000)
     {r1, _} = Engine.pvp_defend(v, 5000)
-    assert r1.hp > 0 and Engine.pvp_fx(r1).pet_revived
-    {r2, _} = Engine.pvp_defend(r1, 99_999)
-    assert r2.hp <= 0
+    assert r1.hp <= 0
   end
 
   test "đánh người: mỗi trận chỉ được cứu một lần (Bất Tử hoặc Long Vương), dùng lại Bất Tử không cứu thêm" do
@@ -134,12 +132,15 @@ defmodule HacLong.Game.PvpCrossTest do
     {_, pve1} = Engine.act(low.(pve), "potion")
 
     healed = fn p ->
-      t = Enum.find(p.battle.log, &(&1.text =~ "Bạn uống")).text
+      t = Enum.find(p.battle.log, &(&1.text =~ "Binh uống")).text
       [_, n] = Regex.run(~r/hồi (\d+) máu/u, t)
       String.to_integer(n)
     end
 
-    assert healed.(pvp1) == round(healed.(pve1) * r.potion_mult)
+    # bình hồi số cố định (DECISIONS "Bình máu / mana hồi số"); đánh quái hồi đủ (chặn ở máu tối đa)
+    full = HacLong.Game.Data.item("potion_l").heal
+    assert healed.(pvp1) == round(full * r.potion_mult)
+    assert healed.(pve1) == min(full, Engine.derived(pve1).maxHp - 100)
 
     # vừa uống: chờ đủ potion_cd lượt
     assert {%{ok: false, msg: msg}, _} = Engine.act(low.(pvp1), "potion")

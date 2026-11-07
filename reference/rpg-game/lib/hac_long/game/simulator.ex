@@ -321,12 +321,9 @@ defmodule HacLong.Game.Simulator do
         end
       end)
 
+    # bình lớn nhất mua được ở cấp này (bình Vừa / Lớn có `buy_level`)
     pot =
-      cond do
-        p.level >= 20 -> "potion_l"
-        p.level >= 9 -> "potion_m"
-        true -> "potion_s"
-      end
+      Enum.find(~w(potion_l potion_m potion_s), &Engine.buy_level_ok?(p, Data.item(&1)))
 
     buy_potions(p, pot)
   end

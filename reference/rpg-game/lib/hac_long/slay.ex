@@ -293,7 +293,7 @@ defmodule HacLong.Slay do
 
         cond do
           f.hp[foe] <= 0 ->
-            # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "hạ gục bạn"
+            # đòn kết liễu: người thua vẫn thấy chi tiết đòn trước dòng "… hạ gục <tên>"
             f = Map.put(f, :last, text)
             {:reply, {:ok, %{mine: false, until: nil}}, finish(s, f, uid, foe, :ko)}
 
@@ -450,10 +450,10 @@ defmodule HacLong.Slay do
 
         pl =
           if why == :fled,
-            do: log(pl, "🏃 Bạn bỏ chạy: tính như gục ngã.", "bad"),
+            do: log(pl, "🏃 #{pl.name} bỏ chạy: tính như gục ngã.", "bad"),
             else:
               Enum.reduce(f[:last] || [], pl, &log(&2, &1, "bad"))
-              |> log("#{f.names[winner]} hạ gục bạn.", "bad")
+              |> log("#{f.names[winner]} hạ gục #{pl.name}.", "bad")
 
         {_, pl2} = Engine.finish_lose(pl)
 

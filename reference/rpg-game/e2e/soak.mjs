@@ -110,7 +110,7 @@ async function bot(i, until) {
     } else {
       const here = p.pos.map;
       const m = GD.WORLD.maps[here];
-      const next = here === 'home' ? 'village' : ROUTE[ROUTE.indexOf(here) + 1];
+      const next = ROUTE[ROUTE.indexOf(here) + 1];
       let dir;
       if (next && m.portals.some((q) => q.to === next)) {
         const portal = m.portals.find((q) => q.to === next);

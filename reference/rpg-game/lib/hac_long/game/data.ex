@@ -15,7 +15,6 @@ defmodule HacLong.Game.Data do
   | `recipes.json` | `RECIPES` |
   | `quests.json` | `QUESTS` |
   | `pets.json` | `PETS` |
-  | `furniture.json` | `FURNITURE` |
   | `events.json` | `EVENTS` |
   | `upgrade.json` | `UPGRADE`, `JEWELS` |
   | `chaos.json` | `CHAOS` |
@@ -35,9 +34,8 @@ defmodule HacLong.Game.Data do
   - `RECIPES`: công thức pha chế ở NPC `npc`: `needs` (nguyên liệu → số lượng) ra một `out`.
   - `ITEMS` vũ khí/giáp/khiên có `doll`: lớp hình (trong `priv/static/assets/doll`) vẽ lên
     nhân vật khi mặc món đó; `CLASSES` có `hair` (lớp tóc).
-  - `PETS`: thú cưng bán ở Người Nuôi Thú; `bonus` là phần trăm cộng thêm (`hp`, `atk`, `def`,
-    `gold` từ quái, `xp`).
-  - `FURNITURE`: đồ trang trí nhà bán ở Thợ Mộc; `comfort` là điểm tiện nghi.
+  - `PETS`: thú cưng bán ở Người Nuôi Thú; `bonus` là phần trăm cộng thêm (`atk`, `def`, `crit`, `reduce`,
+    `gold` từ quái, `xp`); `flat` là máu / MP cộng số mỗi cấp thú (`hp`, `mp`).
   - `ITEMS` có `slot: "wing"`: cánh (ô trang bị thứ tư) của lớp `cls`, cấp `tier`; `dmg` / `absorb`
     là phần sát thương gây thêm / giảm khi nhận.
   - `UPGRADE`: các bước ép kiểu MU, mỗi cấp một bước (`steps`: `level`, `items` (ngọc tốn mỗi lần),
@@ -144,7 +142,6 @@ defmodule HacLong.Game.Data do
             |> Map.new(fn {c, l} -> {c, Map.new(l)} end)
   @boss_drops raw["BOSS_DROPS"]
   @pets atomize.(atomize, raw["PETS"])
-  @furniture atomize.(atomize, raw["FURNITURE"])
   @events atomize.(atomize, raw["EVENTS"])
   # cửa hàng: bỏ đồ cũ đã thay, thêm đồ mới có giá (theo ô, bậc)
   @shop (raw["SHOP"] -- Map.keys(@legacy)) ++
@@ -195,7 +192,6 @@ defmodule HacLong.Game.Data do
     recipes: @recipes,
     quests: @quests,
     pets: @pets,
-    furniture: @furniture,
     events: @events,
     upgrade: @upgrade,
     jewels: @jewels,
@@ -291,8 +287,6 @@ defmodule HacLong.Game.Data do
   def pet(id), do: Enum.find(@pets, &(&1.id == id))
   def events, do: @events
   def event(id), do: Enum.find(@events, &(&1.id == id))
-  def furniture, do: @furniture
-  def furniture(id), do: Enum.find(@furniture, &(&1.id == id))
   def quests, do: @quests
   def quest(id), do: Enum.find(@quests, &(&1.id == id))
 end

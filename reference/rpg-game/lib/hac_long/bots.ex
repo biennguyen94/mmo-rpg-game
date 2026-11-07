@@ -68,6 +68,10 @@ defmodule HacLong.Bots do
     user.id
   end
 
+  @doc "Mã tài khoản mọi bot (`users.role = \"bot\"`)."
+  def user_ids,
+    do: Repo.all(from(u in User, where: u.role == "bot", select: u.id, order_by: u.id))
+
   @doc "Tài khoản có phải bot không."
   def bot?(user_id) when is_integer(user_id),
     do: Repo.exists?(from u in User, where: u.id == ^user_id and u.role == "bot")

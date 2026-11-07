@@ -76,7 +76,7 @@
           "floor": 10,
           "element": "wind",
           "icon": "sword-spin",
-          "mult": 1.45,
+          "mult": 1.27,
           "mp": 13,
           "cooldown": 4
         },
@@ -86,7 +86,7 @@
           "floor": 20,
           "element": "earth",
           "icon": "broadsword",
-          "mult": 1.7,
+          "mult": 1.42,
           "mp": 16,
           "cooldown": 4,
           "debuff": {
@@ -101,7 +101,7 @@
           "floor": 30,
           "element": "light",
           "icon": "shield-reflect",
-          "mult": 1.95,
+          "mult": 1.57,
           "mp": 19,
           "cooldown": 6,
           "buff": {
@@ -116,7 +116,7 @@
           "floor": 40,
           "element": "fire",
           "icon": "shouting",
-          "mult": 2.2,
+          "mult": 1.72,
           "mp": 22,
           "cooldown": 4,
           "buff": {
@@ -131,7 +131,7 @@
           "floor": 50,
           "element": "earth",
           "icon": "hammer-drop",
-          "mult": 2.45,
+          "mult": 1.87,
           "mp": 25,
           "cooldown": 5,
           "stun": 0.35
@@ -142,7 +142,7 @@
           "floor": 60,
           "element": "wind",
           "icon": "crossed-swords",
-          "mult": 2.7,
+          "mult": 2.02,
           "mp": 28,
           "cooldown": 5,
           "hits": 2
@@ -153,7 +153,7 @@
           "floor": 70,
           "element": "dark",
           "icon": "dripping-knife",
-          "mult": 2.95,
+          "mult": 2.17,
           "mp": 31,
           "cooldown": 5,
           "drain": 0.3
@@ -164,7 +164,7 @@
           "floor": 80,
           "element": "light",
           "icon": "relic-blade",
-          "mult": 3.2,
+          "mult": 2.32,
           "mp": 34,
           "cooldown": 5,
           "crit": true
@@ -175,7 +175,7 @@
           "floor": 90,
           "element": "light",
           "icon": "laurels",
-          "mult": 3.45,
+          "mult": 2.47,
           "mp": 37,
           "cooldown": 8,
           "buff": {
@@ -190,7 +190,7 @@
           "floor": 100,
           "element": "dark",
           "icon": "two-handed-sword",
-          "mult": 3.7,
+          "mult": 2.62,
           "mp": 40,
           "cooldown": 7,
           "def_mult": 0.5
@@ -274,7 +274,7 @@
           "floor": 10,
           "element": "fire",
           "icon": "dragon-breath",
-          "mult": 1.45,
+          "mult": 1.27,
           "mp": 13,
           "cooldown": 4
         },
@@ -284,7 +284,7 @@
           "floor": 20,
           "element": "lightning",
           "icon": "star-cycle",
-          "mult": 1.7,
+          "mult": 1.42,
           "mp": 16,
           "cooldown": 4,
           "stun": 0.25
@@ -295,7 +295,7 @@
           "floor": 30,
           "element": "ice",
           "icon": "star-cycle",
-          "mult": 1.95,
+          "mult": 1.57,
           "mp": 19,
           "cooldown": 4,
           "stun": 0.5
@@ -306,7 +306,7 @@
           "floor": 40,
           "element": "dark",
           "icon": "gem-chaos",
-          "mult": 2.2,
+          "mult": 1.72,
           "mp": 22,
           "cooldown": 4,
           "drain": 0.3
@@ -317,7 +317,7 @@
           "floor": 50,
           "element": "fire",
           "icon": "dragon-breath",
-          "mult": 2.45,
+          "mult": 1.87,
           "mp": 25,
           "cooldown": 5,
           "def_mult": 0.7
@@ -328,7 +328,7 @@
           "floor": 60,
           "element": "ice",
           "icon": "star-cycle",
-          "mult": 2.7,
+          "mult": 2.02,
           "mp": 28,
           "cooldown": 5,
           "debuff": {
@@ -343,7 +343,7 @@
           "floor": 70,
           "element": "lightning",
           "icon": "star-cycle",
-          "mult": 2.95,
+          "mult": 2.17,
           "mp": 31,
           "cooldown": 5,
           "hits": 3
@@ -354,7 +354,7 @@
           "floor": 80,
           "element": "fire",
           "icon": "dragon-breath",
-          "mult": 3.2,
+          "mult": 2.32,
           "mp": 34,
           "cooldown": 5,
           "debuff": {
@@ -369,7 +369,7 @@
           "floor": 90,
           "element": "ice",
           "icon": "shield-reflect",
-          "mult": 3.45,
+          "mult": 2.47,
           "mp": 37,
           "cooldown": 5,
           "stun": 0.6
@@ -380,7 +380,7 @@
           "floor": 100,
           "element": "light",
           "icon": "gem-bless",
-          "mult": 3.7,
+          "mult": 2.62,
           "mp": 40,
           "cooldown": 7,
           "def_mult": 0.5
@@ -464,7 +464,7 @@
           "floor": 10,
           "element": "wind",
           "icon": "backstab",
-          "mult": 1.45,
+          "mult": 1.27,
           "mp": 13,
           "cooldown": 4
         },
@@ -474,7 +474,7 @@
           "floor": 20,
           "element": "light",
           "icon": "health-potion",
-          "mult": 1.7,
+          "mult": 1.42,
           "mp": 16,
           "cooldown": 4,
           "heal": 0.35
@@ -485,7 +485,7 @@
           "floor": 30,
           "element": "ice",
           "icon": "backstab",
-          "mult": 1.95,
+          "mult": 1.57,
           "mp": 19,
           "cooldown": 4,
           "debuff": {
@@ -500,7 +500,7 @@
           "floor": 40,
           "element": "light",
           "icon": "laurels",
-          "mult": 2.2,
+          "mult": 1.72,
           "mp": 22,
           "cooldown": 4,
           "buff": {
@@ -515,7 +515,7 @@
           "floor": 50,
           "element": "earth",
           "icon": "dripping-knife",
-          "mult": 2.45,
+          "mult": 1.87,
           "mp": 25,
           "cooldown": 5,
           "debuff": {
@@ -530,7 +530,7 @@
           "floor": 60,
           "element": "wind",
           "icon": "backstab",
-          "mult": 2.7,
+          "mult": 2.02,
           "mp": 28,
           "cooldown": 5,
           "hits": 3
@@ -541,7 +541,7 @@
           "floor": 70,
           "element": "light",
           "icon": "health-potion",
-          "mult": 2.95,
+          "mult": 2.17,
           "mp": 31,
           "cooldown": 5,
           "heal": 0.3,
@@ -557,7 +557,7 @@
           "floor": 80,
           "element": "light",
           "icon": "backstab",
-          "mult": 3.2,
+          "mult": 2.32,
           "mp": 34,
           "cooldown": 5,
           "crit": true
@@ -568,7 +568,7 @@
           "floor": 90,
           "element": "wind",
           "icon": "sprint",
-          "mult": 3.45,
+          "mult": 2.47,
           "mp": 37,
           "cooldown": 6,
           "buff": {
@@ -583,7 +583,7 @@
           "floor": 100,
           "element": "light",
           "icon": "backstab",
-          "mult": 3.7,
+          "mult": 2.62,
           "mp": 40,
           "cooldown": 7,
           "hits": 4
@@ -667,7 +667,7 @@
           "floor": 10,
           "element": "fire",
           "icon": "relic-blade",
-          "mult": 1.45,
+          "mult": 1.27,
           "mp": 13,
           "cooldown": 4
         },
@@ -677,7 +677,7 @@
           "floor": 20,
           "element": "ice",
           "icon": "winged-sword",
-          "mult": 1.7,
+          "mult": 1.42,
           "mp": 16,
           "cooldown": 4,
           "debuff": {
@@ -692,7 +692,7 @@
           "floor": 30,
           "element": "lightning",
           "icon": "winged-sword",
-          "mult": 1.95,
+          "mult": 1.57,
           "mp": 19,
           "cooldown": 4,
           "stun": 0.3
@@ -703,7 +703,7 @@
           "floor": 40,
           "element": "earth",
           "icon": "shield-bash",
-          "mult": 2.2,
+          "mult": 1.72,
           "mp": 22,
           "cooldown": 4,
           "buff": {
@@ -718,7 +718,7 @@
           "floor": 50,
           "element": "fire",
           "icon": "relic-blade",
-          "mult": 2.45,
+          "mult": 1.87,
           "mp": 25,
           "cooldown": 5,
           "debuff": {
@@ -733,7 +733,7 @@
           "floor": 60,
           "element": "lightning",
           "icon": "crossed-swords",
-          "mult": 2.7,
+          "mult": 2.02,
           "mp": 28,
           "cooldown": 5,
           "hits": 2
@@ -744,7 +744,7 @@
           "floor": 70,
           "element": "dark",
           "icon": "dripping-knife",
-          "mult": 2.95,
+          "mult": 2.17,
           "mp": 31,
           "cooldown": 5,
           "drain": 0.3
@@ -755,7 +755,7 @@
           "floor": 80,
           "element": "wind",
           "icon": "winged-sword",
-          "mult": 3.2,
+          "mult": 2.32,
           "mp": 34,
           "cooldown": 5,
           "def_mult": 0.6
@@ -766,7 +766,7 @@
           "floor": 90,
           "element": "light",
           "icon": "gem-life",
-          "mult": 3.45,
+          "mult": 2.47,
           "mp": 37,
           "cooldown": 5,
           "crit": true,
@@ -782,7 +782,7 @@
           "floor": 100,
           "element": "dark",
           "icon": "two-handed-sword",
-          "mult": 3.7,
+          "mult": 2.62,
           "mp": 40,
           "cooldown": 7,
           "def_mult": 0.5

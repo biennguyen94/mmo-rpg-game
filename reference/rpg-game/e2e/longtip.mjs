@@ -1,10 +1,10 @@
-// Khung chi tiết đồ trên điện thoại (360 × 640): đồ nhiều dòng (6 dòng Excellent, May mắn, dòng cộng thêm, Bộ Thần, +9)
+// Khung chi tiết đồ trên điện thoại nhỏ (360 × 480): đồ nhiều dòng (6 dòng Excellent, May mắn, dòng cộng thêm, Bộ Thần, +9)
 // không lố màn hình: khung cao tối đa bằng màn hình, phần thông tin cuộn (mờ ở mép dưới khi còn dòng),
 // hàng nút luôn thấy. Chạy: node e2e/longtip.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, act, shot } from './lib.mjs';
 const R = reporter('longtip');
 const browser = await launch();
-const { page, name, errors } = await newPlayer(browser, { cls: 'dk', viewport: { width: 360, height: 640 } });
+const { page, name, errors } = await newPlayer(browser, { cls: 'dk', viewport: { width: 360, height: 480 } });
 const { admin } = await adminSession(browser);
 const base = await page.evaluate(() => { const P = window.__hl.player(); return P.view.gear[P.equip.armor].base; });
 await admin('give_gear', name, { base, up: 9, opt: 4, luck: true, anc: true, exc: ['hp_pct', 'dmg_red', 'gold_pct', 'mp_pct', 'reflect', 'def_rate'] });

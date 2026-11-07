@@ -2,7 +2,7 @@ defmodule HacLong.Game.CraftingEventsTest do
   # đổi cấu hình sự kiện (toàn cục) nên không chạy song song
   use ExUnit.Case, async: false
 
-  alias HacLong.Game.{Commands, Crafting, Engine, Events, Gear, Home, Rng}
+  alias HacLong.Game.{Commands, Crafting, Engine, Events, Gear, Rng}
 
   setup do
     on_exit(fn ->
@@ -173,17 +173,14 @@ defmodule HacLong.Game.CraftingEventsTest do
     assert p.inv["moon_cake"] == 1
     assert p.battle.reward.xp == round(m.xp * 1.1)
 
-    p = %{p | battle: nil, inv: Map.put(p.inv, "moon_cake", 45)}
+    p = %{p | battle: nil, inv: Map.put(p.inv, "moon_cake", 15)}
     assert {%{ok: false}, _} = Events.exchange(p, "nope")
-    {%{ok: true}, p} = Events.exchange(p, "decor")
-    assert p.furniture["lamp_festival"] == 1 and p.inv["moon_cake"] == 15 and p.festival == 1
+    # đồ trang trí đã bỏ (DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+    assert {%{ok: false}, _} = Events.exchange(p, "decor")
     before = length(p.gear)
     {%{ok: true}, p} = Events.exchange(p, "gear")
     assert length(p.gear) == before + 1
     assert {%{ok: false, msg: "Cần 6 Bánh Trung Thu."}, _} = Events.exchange(p, "potions")
-
-    # Thợ Mộc không bán đồ lễ hội
-    assert {%{ok: false, msg: "Món này chỉ đổi được ở lễ hội."}, _} = Home.buy(p, "lamp_festival")
 
     Application.put_env(:hac_long, :event, "none")
     assert {%{ok: false, msg: "Chưa tới mùa lễ hội."}, _} = Events.exchange(p, "gold")

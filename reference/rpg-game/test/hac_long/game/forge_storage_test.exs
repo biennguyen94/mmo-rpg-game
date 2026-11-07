@@ -5,7 +5,8 @@ defmodule HacLong.Game.ForgeStorageTest do
   alias HacLong.Game.{Commands, Data, Engine, Gear, Rng, Storage}
 
   @smith %{map: "village", x: 8, y: 11}
-  @wardrobe %{map: "home", x: 6, y: 1}
+  # Thủ Kho ở Làng (11, 12) (DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+  @wardrobe %{map: "village", x: 11, y: 13}
 
   setup do
     on_exit(&Rng.clear/0)
@@ -136,15 +137,25 @@ defmodule HacLong.Game.ForgeStorageTest do
     end
   end
 
-  describe "Tủ Đồ ở Nhà (C7)" do
+  describe "Tủ Đồ (Thủ Kho ở Làng, C7)" do
     test "cất / lấy đồ thường và đồ hiếm; đồ đang cất không nằm trong túi, không bán / mặc được" do
       g = sword()
-      p = player(%{pos: @wardrobe, gear: [g], inv: %{"herb" => 5}})
+      p = player(%{pos: @wardrobe, gear: [g], inv: %{"herb" => 5}, upgrades: %{g.uid => 4}})
       {%{ok: true}, p} = Commands.run(p, %{"act" => "store", "id" => "herb", "n" => 4})
-      assert p.inv["herb"] == 1 and Storage.get(p).inv["herb"] == 4
+      assert p.inv["herb"] == 1 and Storage.get(p).inv["herb"] == 4 and p.storage_dirty
       {%{ok: true}, p} = Commands.run(p, %{"act" => "store", "id" => g.uid})
-      assert Gear.bag(p) == [] and Gear.stored?(p, g.uid)
-      assert Engine.view(p).storage.gear == [g.uid]
+
+      # thùng chung (DECISIONS "Nhiều nhân vật"): món ra khỏi nhân vật, mang theo cấp ép
+      assert Gear.bag(p) == [] and Gear.find(p, g.uid) == nil and p.upgrades == %{}
+      assert [%{uid: uid, up: 4}] = Storage.stored_gear(p)
+      assert uid == g.uid
+
+      assert Engine.view(p).storage.gear == [g.uid] and
+               Engine.view(p).storage.ups == %{g.uid => 4}
+
+      # món trong thùng không lẫn vào đồ của nhân vật (túi đồ trên giao diện)
+      refute Engine.view(p).gear[g.uid]
+      assert Engine.view(p).storage.items[g.uid]
       assert {%{ok: false}, _} = Engine.sell(p, g.uid)
       assert {%{ok: false}, _} = Engine.equip(p, g.uid)
       assert {%{ok: false}, _} = Engine.discard(p, g.uid)
@@ -152,10 +163,11 @@ defmodule HacLong.Game.ForgeStorageTest do
       {%{ok: true}, p} = Commands.run(p, %{"act" => "unstore", "id" => "herb", "n" => 4})
       {%{ok: true}, p} = Commands.run(p, %{"act" => "unstore", "id" => g.uid})
       assert p.inv["herb"] == 5 and Storage.get(p).inv == %{} and length(Gear.bag(p)) == 1
+      assert p.upgrades == %{g.uid => 4} and Storage.stored_gear(p) == []
 
       village = %{p | pos: @smith}
 
-      assert {%{ok: false, msg: "Hãy đến gặp Tủ Đồ ở Nhà."}, _} =
+      assert {%{ok: false, msg: "Hãy đến gặp Thủ Kho ở Làng."}, _} =
                Commands.run(village, %{"act" => "store", "id" => "herb"})
     end
 
@@ -181,7 +193,7 @@ defmodule HacLong.Game.ForgeStorageTest do
       assert {%{ok: true}, _} = Storage.store(p, List.last(gear).uid)
     end
 
-    test "cất / rút vàng ở Tủ Đồ; sai số / thiếu vàng / ngoài Nhà thì báo lỗi; nạp lại giữ vàng trong tủ" do
+    test "cất / rút vàng ở Tủ Đồ; sai số / thiếu vàng / xa Thủ Kho thì báo lỗi; nạp lại giữ vàng trong tủ" do
       p = player(%{pos: @wardrobe, gold: 10_000})
       {%{ok: true}, p} = Commands.run(p, %{"act" => "gold_store", "n" => 7_000})
       assert p.gold == 3_000 and Storage.gold(p) == 7_000

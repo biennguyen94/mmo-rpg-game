@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Logo Hắc Long RPG: tự vẽ cho game này (CC0). Xuất PNG / favicon: node e2e/app_icons.mjs -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#3a1420"/><stop offset="0.6" stop-color="#1b0f1d"/><stop offset="1" stop-color="#0c0810"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1b8"/><stop offset="0.45" stop-color="#e8b84a"/><stop offset="1" stop-color="#8a5a12"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a4152"/><stop offset="1" stop-color="#121016"/>
+    </linearGradient>
+    <radialGradient id="eye" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff3a0"/><stop offset="0.4" stop-color="#ff5a2a"/><stop offset="1" stop-color="#8a0d0d"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="214" fill="none" stroke="url(#gold)" stroke-width="14"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#e8b84a" stroke-opacity="0.35" stroke-width="3"/>
+  <!-- cánh -->
+  <path d="M120 300 C 90 220, 110 150, 170 110 C 160 160, 175 190, 205 205 C 190 160, 205 125, 240 105 C 232 150, 245 180, 268 196 L 230 300 Z" fill="url(#body)" stroke="#e8b84a" stroke-width="5" stroke-linejoin="round"/>
+  <!-- đầu rồng nhìn nghiêng -->
+  <path d="M200 380 C 205 320, 230 270, 280 238 C 300 205, 330 190, 362 196
+           L 402 176 L 388 206 C 410 212, 426 226, 432 246
+           L 400 250 L 418 268 C 396 276, 372 276, 352 268
+           C 336 300, 310 330, 300 380 Z"
+        fill="url(#body)" stroke="url(#gold)" stroke-width="7" stroke-linejoin="round"/>
+  <!-- sừng -->
+  <path d="M318 206 C 300 160, 296 128, 318 92 C 322 130, 334 160, 352 196 Z" fill="url(#gold)"/>
+  <path d="M344 198 C 344 160, 356 134, 384 116 C 374 148, 372 172, 372 196 Z" fill="url(#gold)" opacity="0.85"/>
+  <!-- mắt -->
+  <path d="M352 222 L 384 216 L 372 234 Z" fill="url(#eye)"/>
+  <!-- vảy cổ -->
+  <path d="M262 300 l 18 -10 M 252 330 l 18 -10 M 244 360 l 18 -10" stroke="#e8b84a" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+  <!-- lửa -->
+  <path d="M418 268 C 440 285, 446 310, 430 334 C 428 312, 418 300, 404 296 C 414 290, 418 280, 418 268 Z" fill="#ff7a2a" opacity="0.9"/>
+</svg>

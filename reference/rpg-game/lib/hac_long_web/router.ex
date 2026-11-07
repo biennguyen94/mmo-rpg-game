@@ -10,11 +10,17 @@ defmodule HacLongWeb.Router do
     post "/register", AuthController, :register
     post "/login", AuthController, :login
     post "/forgot", AuthController, :forgot
+    post "/question", AuthController, :question
+    post "/recover", AuthController, :recover
+    post "/security", AuthController, :security
     get "/me", AuthController, :me
+    get "/names", AuthController, :names
     post "/logout", AuthController, :logout
     post "/logout_all", AuthController, :logout_all
     post "/password", AuthController, :password
     post "/ws-ticket", AuthController, :ws_ticket
+    post "/characters", AuthController, :new_character
+    post "/characters/delete", AuthController, :delete_character
   end
 
   scope "/", HacLongWeb do

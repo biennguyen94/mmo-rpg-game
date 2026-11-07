@@ -106,13 +106,13 @@ R.check('ghép: tốn đúng nguyên liệu + vàng, thành công thì có Ngọ
 await shot(page, 'progress-chaos.png');
 await leaveNpc(page);
 
-// ---------- Tủ Đồ ở Nhà ----------
-await travel(page, 'home');
-R.check('gặp Tủ Đồ', await meetNpc(page, 'wardrobe'));
+// ---------- Tủ Đồ (Thủ Kho ở Làng) ----------
+if ((await player(page)).pos.map !== 'village') await travel(page, 'village');
+R.check('gặp Thủ Kho (Tủ Đồ)', await meetNpc(page, 'wardrobe'));
 await act(page, `[data-act="store"][data-id="${rare}"]`);
 await act(page, '[data-act="store"][data-id="herb"][data-n="1"]');
 p = await player(page);
-R.check('cất đồ hiếm + 1 thảo dược vào tủ', p.view.gear[rare].stored === true && p.view.storage.gear.includes(rare) && p.view.storage.inv.herb === 1 && p.inv.herb === 2, JSON.stringify(p.view.storage));
+R.check('cất đồ hiếm + 1 thảo dược vào tủ', !(p.gear || []).some((g) => g.uid === rare) && !p.view.gear[rare] && !!p.view.storage.items[rare] && p.view.storage.gear.includes(rare) && p.view.storage.inv.herb === 1 && p.inv.herb === 2, JSON.stringify(p.view.storage));
 await shot(page, 'progress-wardrobe.png');
 await act(page, '[data-act="unstore"][data-id="herb"]');
 p = await player(page);

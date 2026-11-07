@@ -25,15 +25,11 @@
   // hiệu ứng di chuyển (docs/FX_PLAN.md): dấu bước chân, ô đích vừa chạm, lúc sang bản đồ mới
   let steps = [], lastTile = null, mark = null, arrive = 0;
   let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
-  let decorating = false;       // đang trang trí nhà: tô các ô đặt được
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
   const Doll = window.Doll;
   Doll.onReady(() => draw());
-
-  // Đồ trang trí đã đặt trong Nhà (chỉ nhà của mình).
-  const decorAt = (P, x, y) => P.pos.map === 'home' && (P.decor || []).find((d) => d.x === x && d.y === y);
 
   // ---------- Di chuyển mượt ----------
   // Server gửi vị trí theo ô; khi vẽ thì trượt từ ô cũ sang ô mới trong `dur` ms.
@@ -90,7 +86,7 @@
   function image(path) {
     if (!images[path]) {
       const im = new Image();
-      im.onload = () => { draw(); if (visiting) drawHome(...visiting); };
+      im.onload = () => draw();
       im.src = 'assets/' + path + '.png';
       images[path] = im;
     }
@@ -136,7 +132,7 @@
 
   // Ngày và đêm (server gửi `phase` kèm trạng thái bản đồ): [nhãn, độ tối]
   const PHASES = { dawn: ['🌅', 0.25], day: ['☀️', 0], dusk: ['🌇', 0.3], night: ['🌙', 0.62] };
-  const outdoors = (P) => P.pos.map !== 'home' && P.pos.map !== 'tower';
+  const outdoors = (P) => P.pos.map !== 'tower';
   // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
@@ -309,7 +305,7 @@
     const ph = PHASES[world.phase] && outdoors(P) ? `<span class="phase">${PHASES[world.phase][0]}</span> ` : '';
     return `<div class="map-top">
         <b>${ph}${m.name}</b>${P.view && P.view.event && P.view.event.active && outdoors(P) ? ` <span class="small" style="color:var(--gold)">${P.view.event.icon} ${P.view.event.name}</span>` : ''}
-        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'home' ? 'Giếng nước hồi đầy máu' : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
+        <span class="small muted">${m.event === 'chaos_castle' ? ccTop(P) : m.event === 'castle_siege' ? csTop(P) : m.tower && m.tower.kal ? (m.tower.kal.done ? 'Đi một bước để về Làng' : `Đã hạ ${m.tower.kal.killed}/${m.tower.kal.guards} quái${roomMine(m.tower.kal)} · hết lúc ${new Date(m.tower.kal.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.bc ? (m.tower.bc.done ? 'Đi một bước để về Làng' : `Quân canh đã hạ ${m.tower.bc.killed}/${m.tower.bc.guards}${roomMine(m.tower.bc)} · hết lúc ${new Date(m.tower.bc.ends_at * 1000).toLocaleTimeString('vi-VN')}${roomTag(m.tower)}`) : m.tower && m.tower.ds ? `${m.tower.ds.score} điểm · hết lúc ${new Date(m.tower.ds.ends_at * 1000).toLocaleTimeString('vi-VN')} · ${m.tower.monsters.length ? `còn ${m.tower.monsters.length} quái` : 'cầu thang đã mở'}${roomTag(m.tower)}` : m.tower ? (m.tower.monsters.length ? `Còn ${m.tower.monsters.length} quái · kỷ lục tầng ${P.tower_best || 0}` : 'Cầu thang đã mở!') : side ? `Bản đồ phụ · quái cấp ${side.min}–${side.max}` : z ? (P.pos.map.endsWith('_boss') ? `Phòng trùm · cấp ${z.boss.level}` : `Quái cấp ${z.levels}`) : P.pos.map === 'altar' ? 'Nơi trùm thế giới xuất hiện' : 'Bước vào người dân để nói chuyện'}</span>
       </div>`;
   }
 
@@ -493,22 +489,6 @@
       if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
     }
 
-    if (P.pos.map === 'home') {
-      for (const d of P.decor || []) {
-        const px = Math.round(d.x * TILE - cx), py = Math.round(d.y * TILE - cy);
-        const im = image('decor/' + d.id);
-        if (im.complete) ctx.drawImage(im, px, py, TILE, TILE);
-      }
-      if (decorating) {
-        ctx.strokeStyle = 'rgba(240, 207, 122, 0.45)'; ctx.lineWidth = 1;
-        ctx.setLineDash([4, 3]);
-        for (let y = 0; y < m.tiles.length; y++) for (let x = 0; x < m.tiles[0].length; x++) {
-          if (WALK.has(m.tiles[y][x]) && !PORTAL.has(m.tiles[y][x]) && !npcAt(m, x, y)) ctx.strokeRect(Math.round(x * TILE - cx) + 1.5, Math.round(y * TILE - cy) + 1.5, TILE - 3, TILE - 3);
-        }
-        ctx.setLineDash([]);
-      }
-    }
-
     for (const n of m.npcs || []) {
       const px = Math.round(n.at[0] * TILE - cx), py = Math.round(n.at[1] * TILE - cy);
       const im = image('npcs/' + n.sprite);
@@ -538,6 +518,7 @@
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
     if (fx) moveFx(now, m, P, cx, cy, px, py);
     if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
+    if (look && look.pet === 'long_vuong') dragonAura(now, px, py, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
@@ -636,40 +617,8 @@
       if (goal) return true;
       const bossHere = boss.alive && m.worldBoss && m.worldBoss[0] === nx && m.worldBoss[1] === ny;
       // không đi ngang qua cầu thang (lên/xuống tầng ngoài ý muốn); ô đích thì được
-      return !(!WALK.has(c) || PORTAL.has(c) || c === '<' || c === '>' || monsterAt(nx, ny) || nodeAt(nx, ny) || npcAt(m, nx, ny) || bossHere || decorAt(P, nx, ny));
+      return !(!WALK.has(c) || PORTAL.has(c) || c === '<' || c === '>' || monsterAt(nx, ny) || nodeAt(nx, ny) || npcAt(m, nx, ny) || bossHere);
     });
-  }
-
-  // Nhà của người khác (chỉ xem): vẽ cả căn nhà vừa khung, đồ trang trí của họ, chủ nhà
-  // đứng trước cửa cùng thú cưng.
-  let visiting = null;
-  function drawHome(el, v) {
-    visiting = [el, v];
-    const m = mapOf('home');
-    const cols = m.tiles[0].length, rows = m.tiles.length;
-    const w = el.parentElement.clientWidth || cols * TILE;
-    const T = Math.max(12, Math.min(TILE, Math.floor(w / cols)));
-    const dpr = window.devicePixelRatio || 1;
-    el.style.width = cols * T + 'px'; el.style.height = rows * T + 'px';
-    el.width = Math.round(cols * T * dpr); el.height = Math.round(rows * T * dpr);
-    const c = el.getContext('2d');
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    c.imageSmoothingEnabled = false;
-    c.fillStyle = '#0c0910'; c.fillRect(0, 0, cols * T, rows * T);
-    const put = (im, x, y, pad) => { if (im && (im.complete === undefined || im.complete)) c.drawImage(im, x * T + (pad || 0), y * T + (pad || 0), T - 2 * (pad || 0), T - 2 * (pad || 0)); };
-    const floor = image(m.floor);
-    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-      const kind = WORLD.legend[m.tiles[y][x]];
-      put(floor, x, y);
-      if (kind !== 'floor') put(image('tiles/' + kind), x, y);
-    }
-    for (const d of v.decor || []) put(image('decor/' + d.id), d.x, d.y);
-    for (const n of m.npcs || []) put(image('npcs/' + n.sprite), n.at[0], n.at[1]);
-    const door = (m.portals[0] || { at: [Math.floor(cols / 2), rows - 1] }).at;
-    const [hx, hy] = [door[0], door[1] - 1];
-    const pet = v.look && v.look.pet;
-    if (pet) put(image(pet.startsWith('tame:') ? 'monsters/' + pet.slice(5) : 'pets/' + pet), hx + 1, hy, T / 8);
-    put(Doll.canvas(v.look) || image('monsters/hero'), hx, hy);
   }
 
   // ---------- Hồ Long Vương: không khí (chỉ vẽ, không ảnh hưởng luật) ----------
@@ -861,6 +810,23 @@
         const k = ((t / 1600) + i / 4) % 1, side = i % 2 ? 1 : -1;
         ctx.fillStyle = `rgba(232, 244, 255, ${0.85 * (1 - k)})`;
         ctx.beginPath(); ctx.arc(x + side * (12 + (i % 3) * 3), py + 8 + k * 26, 1.3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Long Vương đi theo (DECISIONS "Long Vương: thần thú độc nhất"): vầng vàng quanh chân và vài vảy rồng vàng xoay quanh
+  function dragonAura(t, px, py, fx) {
+    const x = px + TILE / 2, y = py + TILE - 4;
+    const pulse = fx ? 0.5 + 0.5 * Math.sin(t / 500) : 0.5;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 214, 90, ${0.45 + 0.3 * pulse})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y, 15 + pulse * 2, 6 + pulse, 0, 0, Math.PI * 2); ctx.stroke();
+    if (fx) {
+      for (let i = 0; i < 3; i++) {
+        const a = t / 700 + (i * Math.PI * 2) / 3;
+        ctx.fillStyle = `rgba(255, 200, 60, ${0.6 + 0.3 * Math.sin(t / 300 + i)})`;
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * 15, y - 10 + Math.sin(a) * 6, 1.8, 0, Math.PI * 2); ctx.fill();
       }
     }
     ctx.restore();
@@ -1074,9 +1040,7 @@
   }
 
   window.MapView = {
-    drawHome,
     setRelations(f) { relations = f; },
-    stopVisit() { visiting = null; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
     // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng
     playerAt: () => null,
@@ -1099,7 +1063,6 @@
     // ô phao rơi khi bấm nút Câu cá (ô nước cạnh / cách một ô)
     bobberTile() { const P = getPlayer(), m = P && cur(P); return m ? bobberTile(P, m) : null; },
     say(uid, text) { bubbles.set(uid, { text, until: performance.now() + BUBBLE_MS }); draw(); },
-    setDecorating(on) { decorating = on; draw(); },
     setWorld(snap) {
       // FX đợt 3: so với lần trước (cùng bản đồ): máu quái tụt → tia chém; quái biến mất khi đã bị đánh → tan thành hạt
       if (fxOn() && world.map && snap && snap.map === world.map) {

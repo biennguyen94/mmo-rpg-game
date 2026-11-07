@@ -25,18 +25,32 @@ defmodule HacLong.Game.MpReworkTest do
     assert Engine.mp_regen(q) > Engine.mp_regen(p)
   end
 
-  test "bình máu và bình mana hồi theo phần trăm" do
+  # DECISIONS "Bình máu / mana hồi số": hồi số cố định, không theo % máu / MP tối đa
+  test "bình máu và bình mana hồi số cố định, không vượt máu / MP tối đa" do
+    hp = fn id -> HacLong.Game.Data.item(id).heal end
+    mana = fn id -> HacLong.Game.Data.item(id).mana end
     p = player() |> Map.put(:level, 30)
     d = Engine.derived(p)
-    assert Engine.potion_amount(p, "potion_m") == {:hp, round(d.maxHp * 0.4)}
-    assert Engine.potion_amount(p, "mana_l") == {:mp, round(d.maxMp * 0.7)}
+    assert Engine.potion_amount(p, "potion_m") == {:hp, hp.("potion_m")}
+    assert Engine.potion_amount(Map.put(p, :level, 1), "potion_m") == {:hp, hp.("potion_m")}
+    assert Engine.potion_amount(p, "mana_l") == {:mp, mana.("mana_l")}
+    assert hp.("potion_s") < hp.("potion_m") and hp.("potion_m") < hp.("potion_l")
+    assert mana.("mana_s") < mana.("mana_m") and mana.("mana_m") < mana.("mana_l")
 
-    p = %{p | hp: 1, mp: 0, inv: Map.merge(p.inv, %{"mana_s" => 1, "potion_s" => 1})}
+    p = %{
+      p
+      | hp: 1,
+        mp: 0,
+        inv: Map.merge(p.inv, %{"mana_s" => 1, "potion_s" => 1, "potion_l" => 1})
+    }
+
     {%{ok: true}, q} = Engine.use_potion(p, "mana_s")
-    assert q.mp == round(d.maxMp * 0.2)
+    assert q.mp == min(d.maxMp, mana.("mana_s"))
     assert Map.get(q.inv, "mana_s", 0) == 0
     {%{ok: true}, q} = Engine.use_potion(q, "potion_s")
-    assert q.hp == 1 + round(d.maxHp * 0.2)
+    assert q.hp == 1 + hp.("potion_s")
+    {%{ok: true}, q} = Engine.use_potion(q, "potion_l")
+    assert q.hp == min(d.maxHp, 1 + hp.("potion_s") + hp.("potion_l"))
   end
 
   test "uống mana trong trận mất một lượt và hồi MP" do
@@ -52,14 +66,27 @@ defmodule HacLong.Game.MpReworkTest do
              Engine.act(%{q | inv: %{}, mp: 0}, "mana")
   end
 
-  test "giá bình tăng theo cấp, giá bán lại theo giá gốc" do
+  # DECISIONS "Bình máu / mana hồi số": giá cố định; bình Vừa / Lớn mở theo cấp, đã chuyển sinh thì mua hết
+  test "giá bình cố định, bình Vừa / Lớn mở theo cấp (hoặc đã chuyển sinh), giá bán lại theo giá gốc" do
+    item = &HacLong.Game.Data.item/1
     p = player()
-    assert Engine.price(p, "potion_s") == 15
-    assert Engine.price(%{p | level: 11}, "mana_s") == 30
-    assert Engine.price(%{p | level: 11}, "dagger") == HacLong.Game.Data.item("dagger").price
-    p = %{p | level: 11, gold: 100}
+    assert Engine.price(p, "potion_s") == item.("potion_s").price
+    assert Engine.price(%{p | level: 40}, "mana_s") == item.("mana_s").price
+    assert Engine.price(%{p | level: 11}, "dagger") == item.("dagger").price
+    p = %{p | level: 11, gold: 10_000}
     {%{ok: true}, q} = Engine.buy(p, "potion_s")
-    assert q.gold == 70
-    assert Engine.sell_price("potion_s") == floor(15 * 0.4)
+    assert q.gold == 10_000 - item.("potion_s").price
+    assert Engine.sell_price("potion_s") == floor(item.("potion_s").price * 0.4)
+
+    lv = item.("potion_m").buy_level
+    assert {%{ok: false, msg: "Cần cấp " <> _}, _} = Engine.buy(%{p | level: lv - 1}, "potion_m")
+    assert {%{ok: true}, _} = Engine.buy(%{p | level: lv}, "potion_m")
+
+    assert {%{ok: false}, _} =
+             Engine.buy(%{p | level: item.("potion_l").buy_level - 1}, "potion_l")
+
+    assert {%{ok: false}, _} = Engine.buy(%{p | level: 1}, "mana_l")
+    # đã chuyển sinh: cấp về 1 vẫn mua được bình Lớn
+    assert {%{ok: true}, _} = Engine.buy(Map.put(%{p | level: 1}, :rebirths, 1), "potion_l")
   end
 end

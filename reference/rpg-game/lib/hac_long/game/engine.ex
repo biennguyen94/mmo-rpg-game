@@ -17,7 +17,6 @@ defmodule HacLong.Game.Engine do
     Data,
     Events,
     Gear,
-    Home,
     Mastery,
     Pets,
     Rng
@@ -36,7 +35,6 @@ defmodule HacLong.Game.Engine do
   @mon @rules.monster
   @loot @rules.loot
   @max_level @char.max_level
-  @pet_sk @rules.pets.skills
   # DECISIONS "Cân bằng đánh người"
   @pvp @rules.pvp
   @arena_first @rules.arena[:first_strike_mult] || 1
@@ -47,7 +45,7 @@ defmodule HacLong.Game.Engine do
   # Phase 15b: đồ ngẫu nhiên rơi từ quái hợp lớp người hạ (`RULES.loot.gear_own_class`)
   @loot_own_class @rules.loot[:gear_own_class] == true
   @log_limit 60
-  # bình máu / bình mana (Phase 12): hồi theo phần trăm máu / MP tối đa (`heal_pct`, `mana_pct`)
+  # bình máu / bình mana: hồi số cố định `heal` máu / `mana` MP (DECISIONS "Bình máu / mana hồi số")
   @potions ~w(potion_s potion_m potion_l)
   @manas ~w(mana_s mana_m mana_l)
   # Sức mạnh, Nhanh nhẹn, Thể lực, Năng lượng (như MU)
@@ -151,8 +149,6 @@ defmodule HacLong.Game.Engine do
           auto_cfg: nil,
           crafting: %{cook: 0, smith: 0},
           festival: 0,
-          furniture: %{},
-          decor: [],
           storage: %{inv: %{}, extra: 0, gold: 0},
           visited: [],
           fish_caught: 0,
@@ -251,8 +247,9 @@ defmodule HacLong.Game.Engine do
 
     %{
       maxHp:
-        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)),
-      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)),
+        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)) +
+          Pets.flat(p, :hp),
+      maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)) + Pets.flat(p, :mp),
       atk:
         round(
           (lin.(f.atk) + exc.atk_lvl * p.level + if(w, do: w.atk, else: 0) + up.(p.equip.weapon) +
@@ -270,7 +267,7 @@ defmodule HacLong.Game.Engine do
         ),
       crit:
         clamp(@combat.crit.base + s.agi * @combat.crit.per_agi, 0, @combat.crit.max) + exc.crit +
-          ls.crit,
+          ls.crit + Pets.bonus(p, :crit),
       critMult:
         min(@combat.crit_mult.max, @combat.crit_mult.base + s.agi * @combat.crit_mult.per_agi),
       # attack rate: tỉ lệ đòn thường trúng quái (`hit_chance/2`)
@@ -420,12 +417,17 @@ defmodule HacLong.Game.Engine do
       xpToNext: xp_need(p),
       # chúa tể cần hạ trước lần chuyển sinh kế (nil nếu không cần / đã hạ)
       rebirthNeed: with(%{} = n <- rebirth_need(p), do: Map.put(n, :map, lord_map_name(n.id))),
+      # điểm tiềm năng nhận được ở lần chuyển sinh kế (giảm sau mốc tối đa)
+      rebirthPoints: rebirth_bonus((Map.get(p, :rebirths) || 0) + 1),
       restCost: rest_cost(p),
       # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
         hp: Pets.bonus(p, :hp) + Crafting.food_bonus(p, :hp) + Blessing.bonus(p, :hp),
         atk: Pets.bonus(p, :atk) + Crafting.food_bonus(p, :atk) + Blessing.bonus(p, :atk),
-        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def)
+        def: Pets.bonus(p, :def) + Crafting.food_bonus(p, :def) + Blessing.bonus(p, :def),
+        # thú cưng: máu / MP cộng số
+        hpFlat: Pets.flat(p, :hp),
+        mpFlat: Pets.flat(p, :mp)
       },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
@@ -462,7 +464,6 @@ defmodule HacLong.Game.Engine do
       autoCfg: Map.get(p, :auto_cfg),
       # Phase 2: Đài Phúc Lành đang có (phúc lành + điểm hồi sinh)
       blessing: Blessing.view(p),
-      comfort: Home.comfort(p),
       # thú cưng đã có (cấp, cắn, kỹ năng, giá cho ăn) và loài thuần được / đang hạ dở
       pets: Pets.view(p),
       tameable: Pets.tameable(p),
@@ -492,6 +493,7 @@ defmodule HacLong.Game.Engine do
            }}
         end,
       # đồ ngẫu nhiên (cả món đang mặc) đã tính tên, chỉ số, giá bán
+      # chỉ đồ của nhân vật (túi + đang mặc); đồ trong thùng đồ chung ở `storage.items`
       gear: Map.new(Map.get(p, :gear) || [], &{&1.uid, Gear.resolve(&1)})
     }
   end
@@ -504,7 +506,7 @@ defmodule HacLong.Game.Engine do
       )
 
   @doc "Kinh nghiệm cần để nhân vật `p` lên cấp kế (tính cả số lần đã chuyển sinh)."
-  def xp_need(p), do: xp_to_next(p.level, Map.get(p, :rebirths) || 0)
+  def xp_need(p), do: xp_to_next(p.level, min(Map.get(p, :rebirths) || 0, @max_rebirths))
 
   @doc """
   Vùng `zi` vào được / đánh được chưa: **đủ cấp** (cấp nhân vật ≥ `zone_level/1`, cấp quái thấp nhất
@@ -742,20 +744,31 @@ defmodule HacLong.Game.Engine do
     {ok(), p |> Map.put(:battle, battle) |> log(text, "info")}
   end
 
-  defp log(p, text, kind) do
-    entries = p.battle.log ++ [%{text: text, kind: kind}]
+  # Nhật ký trận ghi tên, không xưng "bạn" (DECISIONS "Nhật ký trận: tên, dùng gì, gây bao nhiêu"): "Bạn" / "bạn"
+  # trong câu đổi thành tên nhân vật
+  @you ~r/(?<![\p{L}\p{N}_])[Bb]ạn(?![\p{L}\p{N}_])/u
+  #
+  # `parts` (DECISIONS "Nhật ký trận dễ đọc"): các phần để client vẽ câu thân thiện — `who` ("me" người chơi, "foe"
+  # quái / đối thủ), `name`, `act` (tên kỹ năng, nil = đòn thường), `dmg`, `crit`, `miss`, `reflect`, `heal`, `mp`,
+  # `hits`, `note` (khắc hệ…), `left` (máu quái còn lại), `turn` (lượt, để gom khối). `text` giữ câu đầy đủ như cũ.
+  defp log(p, text, kind, parts \\ nil) do
+    text = if p[:name], do: Regex.replace(@you, text, p.name), else: text
+    entry = %{text: text, kind: kind}
+
+    entry =
+      if parts, do: Map.merge(entry, Map.put(parts, :turn, p.battle[:turn] || 0)), else: entry
+
+    entries = p.battle.log ++ [entry]
     entries = if length(entries) > @log_limit, do: tl(entries), else: entries
     put_in(p.battle.log, entries)
   end
 
-  @doc "Lượng hồi của bình `id` cho nhân vật `p` (theo % máu / MP tối đa): `{:hp | :mp, số}`."
-  def potion_amount(p, id) do
+  @doc "Lượng hồi của bình `id` (số cố định `heal` / `mana`, DECISIONS \"Bình máu / mana hồi số\"): `{:hp | :mp, số}`."
+  def potion_amount(_p, id) do
     it = Data.item(id)
-    d = derived(p)
 
     cond do
-      it[:mana_pct] -> {:mp, max(1, round(d.maxMp * it.mana_pct))}
-      it[:heal_pct] -> {:hp, max(1, round(d.maxHp * it.heal_pct))}
+      it[:mana] -> {:mp, it.mana}
       true -> {:hp, it[:heal] || 0}
     end
   end
@@ -995,7 +1008,16 @@ defmodule HacLong.Game.Engine do
 
       true ->
         {p, got} = p |> next_turn() |> drink(id)
-        p |> log("Bạn uống #{Data.item(id).name}, hồi #{got} MP.", "good") |> monster_turn(d)
+
+        p
+        |> log("Bạn uống #{Data.item(id).name}, hồi #{got} MP.", "good", %{
+          who: "me",
+          name: p.name,
+          act: Data.item(id).name,
+          potion: true,
+          mp: got
+        })
+        |> monster_turn(d)
     end
   end
 
@@ -1011,6 +1033,18 @@ defmodule HacLong.Game.Engine do
 
   # Đánh người (DECISIONS "Đánh người: bình máu"): bình máu hồi × `RULES.pvp.potion_mult`, mỗi `potion_cd` lượt
   # của mình uống được một lần (uống ở lượt T thì lượt T + potion_cd mới uống lại), tối đa `potion_max` bình mỗi trận.
+  @doc """
+  Uống bình máu được không lúc này (đánh người: chưa quá `potion_max` bình, đã qua `potion_cd` lượt). Bot dùng để không
+  gửi lệnh uống bị từ chối rồi đứng im tới hết lượt.
+  """
+  def potion_ready?(%{battle: %{monster: m} = b}) do
+    m[:pvp] == nil or
+      ((b[:pots_used] || 0) < @pvp.potion_max and
+         (b[:pot_at] || -99) + @pvp.potion_cd - (b.turn + 1) <= 0)
+  end
+
+  def potion_ready?(_p), do: true
+
   defp act_potion(p, d) do
     id = best_potion(p, d.maxHp - p.hp)
     poisoned = Enum.filter(effects(p, :player), &(&1.id in @dots))
@@ -1042,7 +1076,14 @@ defmodule HacLong.Game.Engine do
               |> update_in([:battle, :pots_used], &((&1 || 0) + 1)),
             else: p
 
-        p = log(p, "Bạn uống #{Data.item(id).name}, hồi #{healed} máu.", "good")
+        p =
+          log(p, "Bạn uống #{Data.item(id).name}, hồi #{healed} máu.", "good", %{
+            who: "me",
+            name: p.name,
+            act: Data.item(id).name,
+            potion: true,
+            heal: healed
+          })
 
         # bình máu giải luôn độc, bỏng, chảy máu
         p =
@@ -1059,6 +1100,10 @@ defmodule HacLong.Game.Engine do
 
   defp pick_skill(p, nil), do: List.first(skills(p))
   defp pick_skill(p, id), do: Enum.find(skills(p), &(&1.id == id))
+
+  # "dùng gì" trong nhật ký trận: tên kỹ năng, không thì Đòn thường
+  defp strike_name(nil), do: "Đòn thường"
+  defp strike_name(skill), do: skill.name
 
   defp act_strike(p, action, skill_id, d) do
     m = p.battle.monster
@@ -1082,7 +1127,7 @@ defmodule HacLong.Game.Engine do
 
         pvp = m[:pvp] != nil
 
-        {p, atk, dfn, crit, mult, name, on_hit} =
+        {p, atk, dfn, crit, mult, _name, on_hit} =
           strike_with(p, skill, d, atk, m.def, chance(if pvp, do: pvp_crit(d.crit), else: d.crit))
 
         # thông thạo kỹ năng: hệ số trong dữ liệu là của cấp tối đa
@@ -1099,7 +1144,12 @@ defmodule HacLong.Game.Engine do
                  do: chance(m.dodge * @pvp.dodge_mult),
                  else: chance(1 - hit_chance(d.ar, m.level))
                ) do
-            log(p, "Trượt! #{m.name} tránh được đòn #{name}.", "info")
+            log(p, "#{p.name}, #{strike_name(skill)}, đánh trượt.", "info", %{
+              who: "me",
+              name: p.name,
+              act: skill && skill.name,
+              miss: true
+            })
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
@@ -1132,7 +1182,6 @@ defmodule HacLong.Game.Engine do
             {after_hit, p} = {p.battle.log, put_in(p.battle.log, log0)}
             p = put_in(p, [:battle, :overkill], p.battle.monster.hp - dmg)
             p = update_in(p.battle.monster.hp, &max(0, &1 - dmg))
-            prefix = if skill, do: "✨ #{name}: ", else: ""
 
             suffix =
               if(hits > 1, do: " (#{hits} đòn)", else: "") <>
@@ -1143,10 +1192,27 @@ defmodule HacLong.Game.Engine do
                   nil -> ""
                 end
 
+            note =
+              case eres do
+                :strong -> "khắc hệ #{Elements.name(m[:element])}!"
+                :weak -> "bị hệ #{Elements.name(m[:element])} khắc"
+                nil -> nil
+              end
+
             p
             |> log(
-              "#{prefix}Bạn gây #{dmg} sát thương#{suffix}.",
-              if(crit, do: "crit", else: "hit")
+              "#{p.name}, #{strike_name(skill)}, gây #{dmg} sát thương#{suffix}.",
+              if(crit, do: "crit", else: "hit"),
+              %{
+                who: "me",
+                name: p.name,
+                act: skill && skill.name,
+                dmg: dmg,
+                crit: crit,
+                hits: if(hits > 1, do: hits),
+                note: note,
+                left: p.battle.monster.hp
+              }
             )
             |> then(&Enum.reduce(after_hit, &1, fn e, p -> log(p, e.text, e.kind) end))
             |> on_hit.(dmg)
@@ -1154,7 +1220,6 @@ defmodule HacLong.Game.Engine do
 
         # dùng kỹ năng với quái: cộng điểm thông thạo (đánh người không tính)
         p = if skill && !pvp, do: Mastery.gain(p, skill, m), else: p
-        p = pet_bite(p, d)
 
         cond do
           # đồ sát: thắng thua do HacLong.Slay quyết (máu hai bên giữ ở đó);
@@ -1167,114 +1232,8 @@ defmodule HacLong.Game.Engine do
     end
   end
 
-  # Thú cưng đi theo thỉnh thoảng cắn thêm (khi quái còn sống)
-  defp pet_bite(p, d) do
-    m = p.battle.monster
-
-    bite =
-      if m.hp > 0 and Map.get(p, :pet),
-        do: Pets.bite(p, damage(d.atk, m.def), Rng.uniform()),
-        else: 0
-
-    # đánh người: giảm sát thương của cánh / Excellent bên kia và × RULES.pvp.dmg_mult
-    bite =
-      if bite > 0 and m[:pvp],
-        do: max(1, round(bite * (m[:taken] || 1) * pvp_taken(m[:cls], m[:rebirths], m[:arena]))),
-        else: bite
-
-    if bite > 0 do
-      sks = Pets.active_skills(p)
-      rend = Enum.find(sks, &(&1.id == "rend"))
-      bite = if rend, do: round(bite * @pet_sk.rend_mult), else: bite
-
-      # Long Vương: Thủy Long Ba mỗi `tidal_every` lượt một lần, mạnh gấp `tidal_mult`, quái mất 1 lượt
-      tidal = Enum.find(sks, &(&1.id == "tidal"))
-
-      tidal =
-        tidal &&
-          p.battle.turn - (p.battle[:tidal_at] || -@pet_sk.tidal_every) >= @pet_sk.tidal_every &&
-          tidal
-
-      bite = if tidal, do: round(bite * @pet_sk.tidal_mult), else: bite
-
-      what =
-        cond do
-          tidal -> "#{tidal.name}: "
-          rend -> "#{rend.name}: "
-          true -> ""
-        end
-
-      p =
-        p
-        |> update_in([:battle, :monster, :hp], &max(0, &1 - bite))
-        |> log("🐾 #{Pets.name(p)} #{what}cắn thêm #{bite} sát thương.", "hit")
-
-      p =
-        if tidal && p.battle.monster.hp > 0,
-          do:
-            p
-            |> put_in([:battle, :tidal_at], p.battle.turn)
-            |> stun_monster("🌊 #{p.battle.monster.name} bị cột nước đánh choáng!"),
-          else: p
-
-      Enum.reduce(sks, p, &pet_skill(&2, &1, d, bite))
-    else
-      p
-    end
-  end
-
-  # kỹ năng riêng của thú (từ cấp 5), dùng khi thú cắn
-  defp pet_skill(p, %{id: "heal"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.heal)))
-
-    if healed > 0,
-      do: %{p | hp: p.hp + healed} |> log("🐾 #{sk.name}: hồi #{healed} máu.", "good"),
-      else: p
-  end
-
-  # Long Vương: Long Lân Hộ Thể hồi `scales_heal` máu mỗi lần cắn (giảm sát thương nhận ở `pet_guard/1`)
-  defp pet_skill(p, %{id: "scales"} = sk, d, _bite) do
-    healed = min(d.maxHp - p.hp, max(1, pvp_heal(p, d.maxHp * @pet_sk.scales_heal)))
-
-    if healed > 0,
-      do: %{p | hp: p.hp + healed} |> log("🐉 #{sk.name}: hồi #{healed} máu.", "good"),
-      else: p
-  end
-
-  defp pet_skill(p, %{id: "bash"} = sk, _d, _bite) do
-    p
-    |> put_effect(:monster, "weaken", @pet_sk.bash_turns, @pet_sk.bash_power)
-    |> log("🐾 #{sk.name}: #{p.battle.monster.name} bị suy yếu.", "good")
-  end
-
-  defp pet_skill(p, %{id: "pickpocket"} = sk, _d, _bite) do
-    # phần vàng con quái rơi (trước tính theo cấp hiện: quái vùng chuyển sinh cấp 150 cho gấp đôi vàng)
-    gold = max(1, round((p.battle.monster[:gold] || 0) * @pet_sk.pickpocket_gold_pct))
-    %{p | gold: p.gold + gold} |> log("🐾 #{sk.name}: móc được #{gold} vàng.", "good")
-  end
-
-  defp pet_skill(p, %{id: "venom"} = sk, _d, bite) do
-    if p.battle.monster.hp > 0 do
-      p
-      |> put_effect(
-        :monster,
-        "poison",
-        @pet_sk.venom_turns,
-        max(1, round(bite * @pet_sk.venom_power))
-      )
-      |> log("🐾 #{sk.name}: #{p.battle.monster.name} trúng độc.", "good")
-    else
-      p
-    end
-  end
-
-  defp pet_skill(p, _sk, _d, _bite), do: p
-
-  defp pet_has?(p, id),
-    do: Map.get(p, :pet) != nil and Enum.any?(Pets.active_skills(p), &(&1.id == id))
-
-  # phần sát thương nhận bị thú đỡ (Long Vương: Long Lân Hộ Thể)
-  defp pet_guard(p), do: if(pet_has?(p, "scales"), do: @pet_sk.scales_reduce, else: 0)
+  # phần sát thương nhận thú Hộ vệ / Long Vương đỡ (`bonus.reduce`, DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+  defp pet_guard(p), do: min(Pets.bonus(p, :reduce), 0.5)
 
   # Trả về {nhân_vật, tấn_công, phòng_thủ_quái, chí_mạng?, hệ_số, tên, hàm_sau_khi_trúng}.
   defp strike_with(p, nil, _d, atk, dfn, crit),
@@ -1296,7 +1255,13 @@ defmodule HacLong.Game.Engine do
         h when is_number(h) ->
           before = p.hp
           p = %{p | hp: min(d.maxHp, p.hp + pvp_heal(p, d.maxHp * h))}
-          log(p, "#{skill.name} hồi #{p.hp - before} máu.", "good")
+
+          log(p, "#{skill.name} hồi #{p.hp - before} máu.", "good", %{
+            who: "me",
+            name: p.name,
+            act: skill.name,
+            heal: p.hp - before
+          })
 
         _ ->
           p
@@ -1510,7 +1475,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # bất tử (kỹ năng tháp): gục thì đứng dậy với `power` × máu tối đa, một lần.
-  # Đánh người (DECISIONS "Đánh người: mỗi trận cứu một lần"): bất tử và Long Vương Hồi Sinh chung một lần cứu mỗi trận
+  # Đánh người (DECISIONS "Đánh người: mỗi trận cứu một lần"): bất tử chỉ cứu một lần mỗi trận
   # (`pet_revived`), dùng lại Bất Tử không cứu thêm.
   defp survive(%{hp: hp, battle: %{monster: %{pvp: pvp}, pet_revived: true}} = p, _d)
        when hp <= 0 and pvp not in [nil, false],
@@ -1527,24 +1492,11 @@ defmodule HacLong.Game.Engine do
         |> log("✨ Bất tử! Bạn đứng dậy với #{max(1, round(d.maxHp * f))} máu.", "good")
 
       nil ->
-        pet_rebirth(p, d)
+        p
     end
   end
 
   defp survive(p, _d), do: p
-
-  # Long Vương Hồi Sinh: mỗi trận một lần, gục thì sống lại với `rebirth_hp` máu tối đa
-  defp pet_rebirth(p, d) do
-    if pet_has?(p, "rebirth") and not Map.get(p.battle, :pet_revived, false) do
-      hp = max(1, round(d.maxHp * @pet_sk.rebirth_hp))
-
-      %{p | hp: hp}
-      |> put_in([:battle, :pet_revived], true)
-      |> log("🐉 Long Vương Hồi Sinh! #{Pets.name(p)} cứu bạn, đứng dậy với #{hp} máu.", "good")
-    else
-      p
-    end
-  end
 
   # đồ sát: đối thủ là người thật, tự ra đòn ở lượt của họ
   defp monster_turn(%{battle: %{live: true}} = p, _d), do: tick_round(p)
@@ -1589,7 +1541,11 @@ defmodule HacLong.Game.Engine do
       p =
         if not special and
              chance(dodge_chance(p, d) * if(pvp, do: @pvp.dodge_mult, else: 1)) do
-          log(p, "Bạn né được đòn của #{m.name}.", "info")
+          log(p, "#{m.name}, Đòn thường, đánh trượt.", "info", %{
+            who: "foe",
+            name: m.name,
+            miss: true
+          })
         else
           mc = not special and chance(if pvp, do: pvp_crit(m.crit), else: m.crit)
           cm = m[:crit_mult] || @combat.monster_crit_mult
@@ -1609,15 +1565,18 @@ defmodule HacLong.Game.Engine do
           p = %{p | hp: max(0, p.hp - dmg)} |> survive(d)
 
           text =
-            if special,
-              do: "🔥 #{m.name} dùng #{m.special.name}! Bạn mất #{dmg} máu.",
-              else:
-                if(mc,
-                  do: "#{m.name} đánh bạn #{dmg} máu (chí mạng).",
-                  else: "#{m.name} đánh bạn #{dmg} máu."
-                )
+            "#{m.name}, #{if special, do: m.special.name, else: "Đòn thường"}, gây #{dmg} sát thương" <>
+              if(mc, do: " (CHÍ MẠNG!).", else: ".")
 
-          p = log(p, text, "bad") |> reflect(dmg, d.excReflect)
+          p =
+            log(p, text, "bad", %{
+              who: "foe",
+              name: m.name,
+              act: if(special, do: m.special.name),
+              dmg: dmg,
+              crit: mc
+            })
+            |> reflect(dmg, d.excReflect)
 
           cond do
             special and m.special[:effect] ->
@@ -1675,8 +1634,9 @@ defmodule HacLong.Game.Engine do
       |> put_in([:battle, :monster, :mp], m.mp - k.mp)
       |> put_in([:battle, :mcds], [%{id: k.id, turns: k.cd + 1} | Map.get(p.battle, :mcds, [])])
       |> log(
-        "✨ #{m.name} dùng #{k.name}! Bạn mất #{dmg} máu#{if crit, do: " (chí mạng)", else: ""}.",
-        "bad"
+        "#{m.name}, #{k.name}, gây #{dmg} sát thương#{if crit, do: " (CHÍ MẠNG!)", else: ""}.",
+        "bad",
+        %{who: "foe", name: m.name, act: k.name, dmg: dmg, crit: crit}
       )
       |> reflect(dmg, d.excReflect)
 
@@ -1702,7 +1662,7 @@ defmodule HacLong.Game.Engine do
     if p.hp <= 0, do: lose(p), else: round_end(p)
   end
 
-  # Đối thủ đấu trường vừa bị hạ: Long Vương Hồi Sinh của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
+  # Đối thủ đấu trường vừa bị hạ: Bất Tử của họ (mỗi trận một lần) như người thật; không được cứu thì vẫn
   # kịp ra đòn cuối (cùng lúc với đòn của mình). Cả hai cùng gục: bên bị đánh lố ít hơn (so với máu tối đa) thắng.
   defp mirror_last(p, d) do
     if q = mirror_revive(p) do
@@ -1735,7 +1695,7 @@ defmodule HacLong.Game.Engine do
     )
   end
 
-  # đối thủ đấu trường hết máu: Long Vương Hồi Sinh của họ (mỗi trận một lần); không được cứu thì nil
+  # đối thủ đấu trường hết máu: Bất Tử của họ (mỗi trận một lần); không được cứu thì nil
   defp mirror_revive(%{battle: %{mirror: %{} = mi}} = p) do
     saved = survive(%{mi | hp: 0}, derived(mi))
 
@@ -1743,7 +1703,7 @@ defmodule HacLong.Game.Engine do
       p
       |> put_in([:battle, :monster, :hp], saved.hp)
       |> put_in([:battle, :mirror], saved)
-      |> log("🐉 #{p.battle.monster.name} được thú cứu, đứng dậy với #{saved.hp} máu.", "bad")
+      |> log("🐉 #{p.battle.monster.name} đứng dậy với #{saved.hp} máu.", "bad")
     end
   end
 
@@ -1830,6 +1790,9 @@ defmodule HacLong.Game.Engine do
         p.battle.turn < (p.battle[:pstun_free] || 0) ->
           log(p, "Bạn vừa thoát choáng, kháng được.", "info")
 
+        ward?(p) ->
+          log(p, "🐉 Long Uy: #{p.name} kháng được choáng.", "good")
+
         true ->
           p |> put_effect(:player, "stun", 1, 0) |> log("💫 Bạn bị choáng!", "bad")
       end
@@ -1869,12 +1832,29 @@ defmodule HacLong.Game.Engine do
     if back > 0,
       do:
         put_in(p.battle.monster.hp, m.hp - back)
-        |> log("↩ Phản lại #{back} sát thương cho #{m.name}.", "good"),
+        |> log("#{m.name}, bị phản #{back} sát thương.", "good", %{
+          who: "foe",
+          name: m.name,
+          reflect: back,
+          left: m.hp - back
+        }),
       else: p
   end
 
   # Quái gây hiệu ứng lên người chơi.
+  # Long Uy (DECISIONS "Long Vương: thần thú độc nhất"): dắt Long Vương thì kháng một phần hiệu ứng xấu
+  defp ward?(p) do
+    w = Pets.trait(p, :ward)
+    w > 0 and chance(w)
+  end
+
   defp inflict(p, m, e) do
+    if ward?(p),
+      do: log(p, "🐉 Long Uy: #{p.name} kháng được #{@effect_names[e.id] || "hiệu ứng"}.", "good"),
+      else: inflict_(p, m, e)
+  end
+
+  defp inflict_(p, m, e) do
     case e.id do
       id when id in @dots ->
         per = max(1, round(m.atk * e.power))
@@ -2095,18 +2075,27 @@ defmodule HacLong.Game.Engine do
   def pvp_receive(p, list) do
     Enum.reduce(list, p, fn
       %{id: "stun"}, p ->
-        if p.battle.turn + 1 < (p.battle[:pstun_free] || 0),
-          do: p,
-          else: put_effect(p, :player, "stun", 1, 0)
+        cond do
+          p.battle.turn + 1 < (p.battle[:pstun_free] || 0) -> p
+          ward?(p) -> log(p, "🐉 Long Uy: #{p.name} kháng được choáng.", "good")
+          true -> put_effect(p, :player, "stun", 1, 0)
+        end
 
       e, p ->
-        put_effect(p, :player, e.id, e.turns, e.power)
+        if ward?(p),
+          do:
+            log(
+              p,
+              "🐉 Long Uy: #{p.name} kháng được #{@effect_names[e.id] || "hiệu ứng"}.",
+              "good"
+            ),
+          else: put_effect(p, :player, e.id, e.turns, e.power)
     end)
   end
 
   @doc """
   Người bị đánh `p` nhận `dmg` sát thương (bên đánh đã tính đủ công, thủ, chí mạng, giảm sát thương của cánh / Excellent):
-  thủ thế, thú che chắn, khiên, rồi bất tử / Long Vương Hồi Sinh của chính họ. Máu có thể âm (không được cứu).
+  thủ thế, thú che chắn, khiên, rồi Bất Tử của chính họ. Máu có thể âm (không được cứu).
   Trả `{p, sát_thương_thật}`; dòng nhật ký (góc nhìn người bị đánh) ghi vào trận của `p`.
   """
   def pvp_defend(p, dmg) when dmg <= 0, do: {p, 0}
@@ -2153,7 +2142,7 @@ defmodule HacLong.Game.Engine do
   end
 
   # Đối thủ đấu trường chạy như người: buff thủ, thú che chắn của đối thủ giảm đòn của mình; phản sát thương (Excellent)
-  # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Long Vương Hồi Sinh của mình vẫn cứu)
+  # của đối thủ đánh lại mình, hạ được mình như đánh người thật (Bất Tử của mình vẫn cứu)
   defp mirror_guard(%{battle: %{mirror: %{} = mi}} = p, dmg) do
     dmg = round(dmg * (1 - power(mi, :player, "guard")) * (1 - pet_guard(mi)))
 
@@ -2177,7 +2166,11 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad")
+          |> log("#{p.name}, bị phản #{back} sát thương.", "bad", %{
+            who: "me",
+            name: p.name,
+            reflect: back
+          })
           |> then(&if(&1.hp <= 0, do: survive(&1, derived(&1)), else: &1)),
         else: p
 
@@ -2194,7 +2187,11 @@ defmodule HacLong.Game.Engine do
       if back > 0,
         do:
           %{p | hp: p.hp - back}
-          |> log("↩ #{p.battle.monster.name} phản lại #{back} sát thương cho bạn.", "bad"),
+          |> log("#{p.name}, bị phản #{back} sát thương.", "bad", %{
+            who: "me",
+            name: p.name,
+            reflect: back
+          }),
         else: p
 
     {dmg, p}
@@ -2328,7 +2325,7 @@ defmodule HacLong.Game.Engine do
     xp =
       round(
         m.xp * xf *
-          (1 + Pets.bonus(p, :xp) + Home.xp_bonus(p) + Crafting.food_bonus(p, :xp) +
+          (1 + Pets.bonus(p, :xp) + Crafting.food_bonus(p, :xp) +
              Blessing.bonus(p, :xp) +
              Events.xp_bonus(event))
       )
@@ -2396,21 +2393,7 @@ defmodule HacLong.Game.Engine do
 
     {p, pet_up} = if m[:pvp], do: {p, nil}, else: Pets.gain(p, m.boss || m[:world] == true)
 
-    p =
-      cond do
-        pet_up && Pets.skill_at(p.pet, pet_up) ->
-          log(
-            p,
-            "🐾 #{Pets.name(p)} lên cấp #{pet_up}, học được #{Pets.skill_at(p.pet, pet_up).name}!",
-            "win"
-          )
-
-        pet_up ->
-          log(p, "🐾 #{Pets.name(p)} lên cấp #{pet_up}!", "win")
-
-        true ->
-          p
-      end
+    p = if pet_up, do: log(p, "🐾 #{Pets.name(p)} lên cấp #{pet_up}!", "win"), else: p
 
     {levels, p} = gain_xp(p, xp)
 
@@ -2442,6 +2425,9 @@ defmodule HacLong.Game.Engine do
         m.level >= j.monster_level -> j.monster_chance
         true -> 0
       end
+
+    # Long Ân: dắt Long Vương thì quái rơi ngọc thêm (DECISIONS "Long Vương: thần thú độc nhất")
+    c = c * (1 + Pets.trait(p, :jewel))
 
     if c > 0 and chance(c) do
       id = pick_jewel()
@@ -3378,6 +3364,9 @@ defmodule HacLong.Game.Engine do
       it[:level] && p.level < it.level ->
         {err("Cần cấp #{it.level}."), p}
 
+      not buy_level_ok?(p, it) ->
+        {err("Cần cấp #{it.buy_level} (hoặc đã chuyển sinh) mới mua được #{it.name}."), p}
+
       p.gold < price(p, id) * n ->
         {err("Không đủ vàng."), p}
 
@@ -3391,8 +3380,15 @@ defmodule HacLong.Game.Engine do
   end
 
   @doc """
-  Giá mua ở cửa hàng cho nhân vật `p`. Bình máu / mana hồi theo % nên giá tăng theo cấp (Phase 12):
-  `giá × (1 + potion_price_per_level × (cấp − 1))`; giá bán lại vẫn theo giá gốc.
+  Mua được món có `buy_level` (bình Vừa / Lớn, DECISIONS "Bình máu / mana hồi số"): đủ cấp, hoặc đã chuyển sinh
+  ít nhất một lần (cấp về 1 nhưng máu vẫn cao).
+  """
+  def buy_level_ok?(p, it),
+    do: it[:buy_level] == nil or p.level >= it.buy_level or (Map.get(p, :rebirths) || 0) > 0
+
+  @doc """
+  Giá mua ở cửa hàng cho nhân vật `p`: bình thuốc `giá × (1 + potion_price_per_level × (cấp − 1))` (từ khi bình hồi
+  số cố định, `potion_price_per_level` = 0: giá cố định); giá bán lại vẫn theo giá gốc.
   """
   def price(p, id) do
     it = Data.item(id)
@@ -3597,7 +3593,7 @@ defmodule HacLong.Game.Engine do
 
   def use_potion(p, id) do
     it = Data.item(id)
-    mana? = it != nil and it[:mana_pct] != nil
+    mana? = it != nil and it[:mana] != nil
 
     cond do
       p.battle ->
@@ -3658,14 +3654,28 @@ defmodule HacLong.Game.Engine do
   def rebirth_need(p) do
     n = Map.get(p, :rebirths) || 0
 
-    with true <- n >= @char.rebirth_lord_from and n < @max_rebirths,
-         %{} = lord <- realm_lord(n),
-         true <- Bestiary.count(p, lord.id) < 1 do
-      %{id: lord.id, name: lord.name, realm: n}
+    # chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa thì hạ lại chúa tể vùng cuối,
+    # tổng số lần hạ ≥ n − max + 1
+    k = min(n, @max_rebirths)
+    times = max(1, n - @max_rebirths + 1)
+
+    with true <- n >= @char.rebirth_lord_from,
+         %{} = lord <- realm_lord(k),
+         have when have < times <- Bestiary.count(p, lord.id) do
+      %{id: lord.id, name: lord.name, realm: k, times: times, have: have}
     else
       _ -> nil
     end
   end
+
+  @doc """
+  Điểm tiềm năng cộng thêm sau lần chuyển sinh thứ `n`: `n × rebirth_points` tới mốc tối đa, sau đó mỗi lần chỉ thêm
+  `endless_points` (DECISIONS "Chuyển sinh vô hạn").
+  """
+  def rebirth_bonus(n) when n <= @max_rebirths, do: n * @rebirth_points
+
+  def rebirth_bonus(n),
+    do: @max_rebirths * @rebirth_points + (n - @max_rebirths) * @char.endless_points
 
   # tên bản đồ có chúa tể `id` (bản đồ cuối của vùng chuyển sinh), nil nếu không thấy
   defp lord_map_name(id) do
@@ -3700,15 +3710,14 @@ defmodule HacLong.Game.Engine do
 
       need = rebirth_need(p) ->
         {err(
-           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm} trước khi chuyển sinh lần #{n + 1}."
+           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm}" <>
+             if(need.times > 1, do: " (đã hạ #{need.have}/#{need.times} lần)", else: "") <>
+             " trước khi chuyển sinh lần #{n + 1}."
          ), p}
-
-      n >= @max_rebirths ->
-        {err("Đã chuyển sinh tối đa #{@max_rebirths} lần."), p}
 
       true ->
         n = n + 1
-        p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: n * @rebirth_points}
+        p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: rebirth_bonus(n)}
         p = Map.put(p, :rebirths, n)
         d = derived(p)
 

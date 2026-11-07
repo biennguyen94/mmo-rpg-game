@@ -17,14 +17,13 @@ for (const cls of ['dw', 'elf', 'mg']) {
 
 const { page, errors, name } = await newPlayer(browser, { cls: 'dk' });
 let p = await player(page);
-R.check('nhân vật mới ở Nhà, cấp 1, có bình máu', p.pos.map === 'home' && p.level === 1 && (p.inv.potion_s || 0) > 0);
-await shot(page, 'smoke-home.png');
+R.check('nhân vật mới ở Làng, cấp 1, có bình máu', p.pos.map === 'village' && p.level === 1 && (p.inv.potion_s || 0) > 0);
+await shot(page, 'smoke-village.png');
 
-R.check('ra Làng qua cửa Nhà', await travel(page, 'village'));
 R.check('sang Rừng Mê', await travel(page, 'forest_1'));
 await shot(page, 'smoke-forest.png');
 
-// đánh tới khi thắng 2 trận (thua thì về Nhà, hồi máu, đi lại)
+// đánh tới khi thắng 2 trận (thua thì về Làng, hồi máu, đi lại)
 let wins = 0;
 for (let i = 0; i < 6 && wins < 2; i++) {
   p = await player(page);

@@ -12,7 +12,7 @@ defmodule HacLong.Bots.Brain do
   4. Trong túi có vũ khí / giáp / khiên tốt hơn đồ đang mặc → mặc.
   5. Máu < 45 % và có bình → uống.
   6. Sắp hết bình (Phase 5, `RULES.bots.potion_min` / `mana_min`) mà đủ vàng → về Làng mua ở Bà Lang (`restock/1`).
-  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì về Nhà (miễn phí) uống nước giếng.
+  7. Máu < 45 %, hết bình: đủ vàng thì nghỉ ở Quán Trọ Làng, không thì uống nước giếng giữa Làng (miễn phí).
   8. Chưa ở bản đồ hợp cấp → dịch chuyển (nếu được và đủ vàng) hoặc đi bộ qua cổng theo đường ngắn nhất.
   9. Ở bản đồ hợp cấp → đi tới con quái gần nhất không ai đánh, cấp không quá cấp mình + 1.
   10. Đủ cấp (cấp trùm + 1) mà trùm vùng kế tiếp chưa hạ → vào phòng trùm đánh để mở vùng mới.
@@ -24,11 +24,27 @@ defmodule HacLong.Bots.Brain do
       bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
       (`realm_target/2`; DECISIONS "Bot cuối game").
 
+  15. Câu cá (DECISIONS "Bot câu cá, bot try hard"): Long Vương nổi thì bot săn rồng (`chaser?/1`, chưa có Ngài) bỏ việc
+      rảnh, kể cả đang leo Tháp Vô Tận, ra Hồ Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
+      Đàn Cá Vàng hoặc ô nước cạnh bên, câu đủ cá thì nhận việc Ông Lão. Bot try hard (`tryhard?/1`) chơi dồn dập hơn.
+
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
   chưa chết.
   """
-  alias HacLong.Game.{BloodCastle, Data, DevilSquare, Engine, Gear, Kalima, Pets, Rng, Tower}
+  alias HacLong.Game.{
+    BloodCastle,
+    Data,
+    DevilSquare,
+    Engine,
+    Fishing,
+    Gear,
+    Kalima,
+    Pets,
+    Rng,
+    Tower
+  }
+
   alias HacLong.World
   alias HacLong.World.Maps
 
@@ -44,10 +60,10 @@ defmodule HacLong.Bots.Brain do
   Mốc (ms) bot được đi luyện tiếp: số lần chết của `p` tăng so với `prev_deaths` (lần trước bot nhìn) thì nghỉ
   ngẫu nhiên trong `RULES.bots.rest_after_death_s` giây tính từ `now`; không thì giữ `until`.
   """
-  def rest_until(until, prev_deaths, p, now) do
+  def rest_until(until, prev_deaths, p, now, mult \\ 1) do
     if is_integer(prev_deaths) and p != nil and (p[:deaths] || 0) > prev_deaths do
       [lo, hi] = @rest
-      now + round((lo + Rng.uniform() * (hi - lo)) * 1000)
+      now + round((lo + Rng.uniform() * (hi - lo)) * 1000 * mult)
     else
       until
     end
@@ -73,6 +89,10 @@ defmodule HacLong.Bots.Brain do
       p.points > 0 ->
         %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
 
+      # đã thả câu, tiến trình bot hẹn giờ giật cần (`opts.reeling`): đứng yên chờ
+      opts[:reeling] == true and p[:fishing] != nil ->
+        nil
+
       # cánh đã tháo ra túi để ghép lên cấp: ghép trước (không thì bước mặc đồ lại mặc vào)
       job = wing_combine(p, spare_gold(p)) ->
         do_job(p, job, snap)
@@ -84,6 +104,14 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
 
       # trong Tháp / Quảng Trường / Lâu Đài / Kalima: đánh hết quái, lên tầng / đợt hoặc ra cổng
+      # ở bản đồ tháp quá lâu (`opts.tower_stuck`, tiến trình bot đo): ra cổng
+      p.pos.map == "tower" and opts[:tower_stuck] == true and p[:tower] != nil ->
+        tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
+
+      # Long Vương nổi: bot săn rồng bỏ dở Tháp Vô Tận (không bỏ Quảng Trường / Lâu Đài / Kalima) ra hồ
+      p.pos.map == "tower" and plain_tower?(p) and chasing?(p, opts) ->
+        tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
+
       p.pos.map == "tower" ->
         tower_play(p, d)
 
@@ -95,6 +123,9 @@ defmodule HacLong.Bots.Brain do
 
       rebirth_ready?(p) ->
         at_village_npc(p, "quests", snap, fn -> %{"act" => "rebirth"} end)
+
+      cmd = fish_job(p, snap, opts, :chase) ->
+        cmd
 
       job = event_job(p, d) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
@@ -108,6 +139,9 @@ defmodule HacLong.Bots.Brain do
       job = forge_job(p, opts) ->
         do_job(p, job, snap)
 
+      cmd = fish_job(p, snap, opts, :idle) ->
+        cmd
+
       job = tower_job(p, d, opts) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
@@ -116,11 +150,115 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
+  # ---------- Câu cá, săn Long Vương (DECISIONS "Bot câu cá, bot try hard") ----------
+  @fish Data.rules().bots.fish
+  @tryhard Data.rules().bots.tryhard
+  @reach Data.rules().fishing.dragon.reach
+  @dragon_pet Data.rules().fishing.dragon.pet
+
+  @doc "Bot try hard (`RULES.bots.tryhard.every`): chơi dồn dập hơn, luôn săn Long Vương, luôn ép liều."
+  def tryhard?(seed) when is_integer(seed), do: rem(seed, @tryhard.every) == 0
+  def tryhard?(_), do: false
+
+  @doc "Bot đi săn Long Vương khi Ngài nổi: bot try hard hoặc seed chia hết cho `RULES.bots.fish.chase_every`."
+  def chaser?(seed) when is_integer(seed), do: tryhard?(seed) or rem(seed, @fish.chase_every) == 0
+  def chaser?(_), do: false
+
+  @doc """
+  Câu cá ở Hồ Long Vương. `mode` `:chase`: Long Vương đang nổi (`opts.dragon`, ô `{x, y}`), bot săn rồng chưa có Ngài →
+  ra hồ, đứng trong tầm câu, thả trúng ô Ngài. `:idle`: đang trong lượt ra hồ (`opts.fishing`, tiến trình bot hẹn) →
+  câu ở ô Đàn Cá Vàng nếu có (`opts.school`), không thì ô nước cạnh bên; câu đủ cá thì nhận việc Ông Lão. Chưa đủ cấp
+  vào hồ thì nil.
+  """
+  def fish_job(p, snap, opts, mode) do
+    lake = Maps.get(HacLong.LakeEvent.map_id())
+
+    target =
+      case mode do
+        :chase ->
+          if chasing?(p, opts), do: opts[:dragon]
+
+        :idle ->
+          if opts[:fishing] == true, do: opts[:school] || :any
+      end
+
+    cond do
+      target == nil or lake == nil or p.level < (lake[:min_level] || 1) ->
+        nil
+
+      p.pos.map != lake.id ->
+        go_to(p, lake.id)
+
+      mode == :idle and elder_ready?(p) ->
+        %{"act" => "elder_claim"}
+
+      true ->
+        fish_at(p, lake, target, snap)
+    end
+  end
+
+  defp plain_tower?(%{tower: %{} = t}), do: t[:ds] == nil and t[:bc] == nil and t[:kal] == nil
+  defp plain_tower?(_), do: false
+
+  @doc "Long Vương đang nổi (`opts.dragon`), bot này săn rồng và chưa có Ngài, đủ cấp vào Hồ Long Vương."
+  def chasing?(p, opts) do
+    lake = Maps.get(HacLong.LakeEvent.map_id())
+
+    opts[:dragon] != nil and chaser?(opts[:seed]) and lake != nil and
+      p.level >= (lake[:min_level] || 1) and @dragon_pet not in (Map.get(p, :pets) || [])
+  end
+
+  defp elder_ready?(p) do
+    e = Fishing.elder(p)
+    p[:daily] != nil and e.n >= e.count and not e.done
+  end
+
+  defp fish_at(p, map, target, snap) do
+    me = {p.pos.x, p.pos.y}
+
+    stands =
+      case target do
+        :any ->
+          stand_tiles(map)
+
+        {tx, ty} ->
+          for {x, y} <- stand_tiles(map), max(abs(x - tx), abs(y - ty)) <= @reach, do: {x, y}
+      end
+
+    cond do
+      stands == [] and target != :any ->
+        fish_at(p, map, :any, snap)
+
+      me in stands ->
+        case target do
+          {x, y} -> %{"act" => "fish_cast", "x" => x, "y" => y}
+          :any -> %{"act" => "fish_cast"}
+        end
+
+      true ->
+        walk(p, map, stands, snap) || if(Fishing.near_water?(p), do: %{"act" => "fish_cast"})
+    end
+  end
+
+  @doc "Ô đứng câu được trên bản đồ `map`: đi được, không phải cổng, cạnh (4 hướng) một ô nước."
+  def stand_tiles(map) do
+    for y <- 0..(map.height - 1),
+        x <- 0..(map.width - 1),
+        plain?(map, {x, y}),
+        Enum.any?(Map.values(@dirs), fn {dx, dy} -> Maps.water?(map, x + dx, y + dy) end),
+        do: {x, y}
+  end
+
   # ---------- Ép đồ, cánh, chuyển sinh ----------
   @forge Data.rules().bots.forge
   @life Data.rules().upgrade.life
   @max_level Data.rules().character.max_level
   @max_rebirths Data.rules().character.max_rebirths
+
+  # bot dừng ở mốc chuyển sinh tối đa (không chuyển sinh vô hạn, DECISIONS "Chuyển sinh vô hạn"): quá mốc thì không
+  # còn chúa tể phải hạ
+  defp need(p),
+    do: if((Map.get(p, :rebirths) || 0) >= @max_rebirths, do: nil, else: Engine.rebirth_need(p))
 
   # vàng được tiêu cho rèn (giữ lại `gold_keep_per_level` × cấp để mua bình)
   defp spare_gold(p), do: p.gold - @forge.gold_keep_per_level * p.level
@@ -132,7 +270,7 @@ defmodule HacLong.Bots.Brain do
   @doc "Cấp tối đa, đủ điều kiện chuyển sinh (đã hạ chúa tể nếu cần, chưa chuyển sinh tối đa)."
   def rebirth_ready?(p) do
     p.level >= @max_level and (Map.get(p, :rebirths) || 0) < @max_rebirths and
-      Engine.rebirth_need(p) == nil
+      need(p) == nil
   end
 
   @doc """
@@ -155,7 +293,7 @@ defmodule HacLong.Bots.Brain do
     do: Enum.all?(items, fn {m, n} -> Map.get(p.inv, to_string(m), 0) >= n + extra end)
 
   defp upgrade_job(p, spare, opts) do
-    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0
+    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0 or tryhard?(opts[:seed] || 1)
 
     p.equip
     |> Enum.flat_map(fn {slot, id} ->
@@ -168,7 +306,7 @@ defmodule HacLong.Bots.Brain do
           has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
           (cost.at == "smith" or daring)
 
-      if ok, do: [{lv, slot, cost.at}], else: []
+      if ok, do: [{lv + focus_lead(slot), slot, cost.at}], else: []
     end)
     |> Enum.sort()
     |> case do
@@ -182,6 +320,11 @@ defmodule HacLong.Bots.Brain do
         {"chaos", %{"act" => "chaos_upgrade", "slot" => to_string(slot), "confirm" => true}}
     end
   end
+
+  # dồn ngọc vào món đáng giá (vũ khí, giáp, cánh, khiên: `forge.focus_slots`) trước: các ô khác chỉ ép khi kém món
+  # đáng giá thấp nhất `forge.focus_lead` cấp (DECISIONS "Bot dùng ngọc khôn hơn")
+  defp focus_lead(slot),
+    do: if(to_string(slot) in @forge.focus_slots, do: 0, else: @forge.focus_lead)
 
   defp life_job(p) do
     if Map.get(p.inv, @life.jewel, 0) >= 1 do
@@ -409,11 +552,25 @@ defmodule HacLong.Bots.Brain do
       t[:ds] != nil or plain? ->
         tower_walk(p, [List.to_tuple(t.stairs)])
 
-      # Lâu Đài / Kalima chưa xong mà hết quái (trùm sắp hiện): đứng chờ
+      # Lâu Đài / Kalima chưa xong mà hết quái (trùm sắp hiện): đi qua lại chậm chờ (trước đây đứng im không gửi lệnh
+      # gì, mà server chỉ xét hết giờ / phòng đã đóng khi bước đi, nên bot kẹt mãi trong tháp, vd. sau khi khởi động lại)
       true ->
-        nil
+        idle_step(p)
     end
   end
+
+  @doc false
+  # bước sang ô trống "." kế bên (không bước vào cổng / cầu thang), đánh dấu `wait` để tiến trình bot hỏi lại chậm
+  def idle_step(%{tower: t} = p) when is_map(t) do
+    Enum.find_value(["up", "down", "left", "right"], fn dir ->
+      {dx, dy} = @dirs[dir]
+
+      if tower_tile(t, {p.pos.x + dx, p.pos.y + dy}) == ".",
+        do: %{"act" => "move", "dir" => dir, "wait" => true}
+    end) || Map.put(any_step(p), "wait", true)
+  end
+
+  def idle_step(p), do: Map.put(any_step(p), "wait", true)
 
   # bước một ô bất kỳ (Lâu Đài / Kalima xong, lượt đã hết: bước nào cũng về Làng)
   defp any_step(p) do
@@ -435,7 +592,8 @@ defmodule HacLong.Bots.Brain do
     free? = fn pos -> tower_tile(t, pos) == "." end
 
     case first_step(free?, {p.pos.x, p.pos.y}, goals, blocked) do
-      nil -> nil
+      # không có đường (quái chắn hết lối…): đi qua lại chờ, không đứng im
+      nil -> idle_step(p)
       dir -> %{"act" => "move", "dir" => dir}
     end
   end
@@ -450,7 +608,7 @@ defmodule HacLong.Bots.Brain do
       p.level < @max_level ->
         nil
 
-      need = Engine.rebirth_need(p) ->
+      need = need(p) ->
         realm_walk(p, realm_maps(p, &(&1 == need.realm)), avoid)
 
       (Map.get(p, :rebirths) || 0) >= @max_rebirths ->
@@ -568,7 +726,9 @@ defmodule HacLong.Bots.Brain do
     starved? = ready != [] and d.maxMp >= Enum.min(Enum.map(ready, &Engine.skill_mp(p, &1)))
 
     cond do
-      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) ->
+      # đánh người: bình còn được uống (giới hạn số bình / lượt chờ), không thì đánh tiếp thay vì đứng im
+      p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) != nil and
+          Engine.potion_ready?(p) ->
         %{"act" => "potion"}
 
       skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->
@@ -658,7 +818,7 @@ defmodule HacLong.Bots.Brain do
       cur = Gear.item(p, p.equip[slot])
 
       left_power =
-        if left && left.slot == "weapon", do: power(left) * k, else: power(left)
+        if left && left.slot == "weapon", do: worth(p, left) * k, else: worth(p, left)
 
       cond do
         # vũ khí 2 tay không cầm khiên (B-41)
@@ -667,17 +827,17 @@ defmodule HacLong.Bots.Brain do
 
         # vũ khí 2 tay thay 1 tay: phải hơn cả vũ khí lẫn tay trái đang cầm
         slot == :weapon and Engine.two_handed?(it) ->
-          if power(it) > power(cur) + left_power, do: equip(it)
+          if worth(p, it) > worth(p, cur) + left_power, do: equip(it)
 
-        slot == :weapon and power(it) > power(cur) ->
+        slot == :weapon and worth(p, it) > worth(p, cur) ->
           equip(it)
 
         # cầm 2 vũ khí (B-42): vũ khí 1 tay vào tay trái nếu hơn khiên / vũ khí tay trái
         slot == :weapon and Engine.dual_class?(p.cls) and weapon && not Engine.two_handed?(weapon) and
-          Engine.dual_pair?(weapon, it) and power(it) * k > left_power ->
+          Engine.dual_pair?(weapon, it) and worth(p, it) * k > left_power ->
           equip(it, "left")
 
-        slot != :weapon and power(it) > power(cur) and
+        slot != :weapon and worth(p, it) > worth(p, cur) and
             not (slot == :shield and left != nil and left.slot == "weapon") ->
           equip(it)
 
@@ -698,11 +858,16 @@ defmodule HacLong.Bots.Brain do
   def power(it),
     do: (it[:atk] || 0) + (it[:def] || 0) + (it[:opt] || 0) * Engine.line_value(it)
 
-  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì về Nhà uống giếng (miễn phí)
+  # sức mạnh kể cả cấp ép (DECISIONS "Bot dùng ngọc khôn hơn"): món +5 không bị thay bằng món +0 nhỉnh hơn chút,
+  # trước đây mất trắng 5 Ngọc Ước Nguyện mỗi lần thay đồ
+  defp worth(_p, nil), do: 0
+  defp worth(p, it), do: power(it) + Engine.upgrade_bonus(p, it.uid)
+
+  # hết bình: đủ vàng thì nghỉ trọ ở Làng, không thì uống giếng giữa Làng (miễn phí)
   defp heal(p, _d, snap) do
     if p.gold >= Engine.rest_cost(p) * @shop.inn_gold_mult and village_npc("inn"),
       do: at_village_npc(p, "inn", snap, fn -> %{"act" => "rest"} end),
-      else: go_home_fountain(p)
+      else: go_fountain(p, snap)
   end
 
   # ---------- Mua bình (Phase 5, B-32) ----------
@@ -720,7 +885,7 @@ defmodule HacLong.Bots.Brain do
 
     {need, _gold} =
       Enum.reduce(kinds, {[], p.gold}, fn {ids, max, min, buy}, {acc, gold} ->
-        have = Enum.sum(Enum.map(ids, &Map.get(p.inv, &1, 0)))
+        have = Enum.sum(Enum.map(useful(p, ids, max), &Map.get(p.inv, &1, 0)))
 
         with true <- have < min,
              id when id != nil <- pick_potion(p, ids, max, gold, min),
@@ -735,12 +900,29 @@ defmodule HacLong.Bots.Brain do
     need
   end
 
+  # Bình hồi số cố định (DECISIONS "Bình máu / mana hồi số"): chỉ đếm loại còn hồi được ≥ `potion_heal_min` máu (MP)
+  # tối đa (trong các loại mua được ở cấp này); bình nhỏ nhặt từ đầu game không đủ dùng cuối game. Không loại nào đủ
+  # (đầu game): đếm hết.
+  defp useful(p, ids, max) do
+    ok? = fn id ->
+      Engine.buy_level_ok?(p, Data.item(id)) and
+        elem(Engine.potion_amount(p, id), 1) >= max * @shop.potion_heal_min
+    end
+
+    case Enum.filter(ids, ok?) do
+      [] -> ids
+      ok -> ok
+    end
+  end
+
   # rẻ nhất mà hồi được ≥ `potion_heal_min` máu (MP) tối đa; không có thì loại mạnh nhất mua được `min` bình
   defp pick_potion(p, ids, max, gold, min) do
     ok =
       Enum.filter(ids, fn id ->
         it = Data.item(id)
-        (it[:level] || 0) <= p.level and gold >= Engine.price(p, id) * min
+
+        (it[:level] || 0) <= p.level and Engine.buy_level_ok?(p, it) and
+          gold >= Engine.price(p, id) * min
       end)
 
     Enum.find(ok, &(elem(Engine.potion_amount(p, &1), 1) >= max * @shop.potion_heal_min)) ||
@@ -763,16 +945,17 @@ defmodule HacLong.Bots.Brain do
 
   defp at_village_npc(p, _role, _snap, _then), do: go_to(p, "village")
 
-  defp go_home_fountain(%{pos: %{map: "home"}} = p) do
-    map = Maps.get("home")
+  # giếng ở Làng (ô "F"; Nhà đã bỏ, DECISIONS "Bỏ Nhà: Thủ Kho ở Làng")
+  defp go_fountain(%{pos: %{map: "village"}} = p, snap) do
+    map = Maps.get("village")
 
     fountain =
       for {row, y} <- Enum.with_index(rows(map)), {"F", x} <- Enum.with_index(row), do: {x, y}
 
-    walk(p, map, fountain, nil)
+    walk(p, map, fountain, snap)
   end
 
-  defp go_home_fountain(_p), do: %{"act" => "travel", "to" => "home"}
+  defp go_fountain(p, _snap), do: go_to(p, "village")
 
   # ---------- Chọn nơi luyện, di chuyển ----------
 
@@ -821,15 +1004,12 @@ defmodule HacLong.Bots.Brain do
     target = boss_room(p, avoid) || realm || target_map(p, seed)
 
     cond do
-      here == "home" and target != "home" ->
-        go_to(p, target)
-
       here != target ->
         go_to(p, target)
 
       # vùng chuyển sinh: quái cấp cao hơn cấp tối đa, đánh mọi con (chúa tể trước)
       realm ->
-        lord = (Engine.rebirth_need(p) || %{})[:id]
+        lord = (need(p) || %{})[:id]
         hunt_first(p, snap, lord) || hunt(p, snap, fn _m, _map -> true end)
 
       true ->

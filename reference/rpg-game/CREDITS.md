@@ -14,7 +14,7 @@ Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint
 
 Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
 
-Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): hình trùm Hắc Long `monsters/shadow_dragon.png` (CC0, bộ trên) phóng to trên nền vẽ bằng `e2e/app_icons.mjs`.
+Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): logo vector `priv/static/app/logo.svg` tự vẽ cho game này (CC0), xuất các cỡ bằng `e2e/app_icons.mjs`.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng
@@ -62,8 +62,8 @@ Tác giả:
 - Tự vẽ cho game này (CC0, Đợt 3): gem-bless, gem-soul, gem-chaos, feathered-wing, padlock,
   chaos-machine. NPC Lão Hỗn Nguyên (`npcs/chaos.png`) cũng tự vẽ (CC0). Cánh trên nhân vật vẽ bằng
   code trong `doll.js`, không dùng ảnh.
-- Tự vẽ cho game này (CC0, Phase 4): gem-life (Ngọc Sinh Mệnh). NPC Tủ Đồ (`npcs/wardrobe.png`) cũng
-  tự vẽ (CC0).
+- Tự vẽ cho game này (CC0, Phase 4): gem-life (Ngọc Sinh Mệnh). NPC Thủ Kho (`npcs/wardrobe.png`, 2026-11-07)
+  dùng lại hình người của Thợ Mộc cũ (`npcs/carpenter.png`, bộ Dungeon Crawl Stone Soup CC0 ở trên) thay hình cái tủ.
 
 ## Nhân vật mặc đồ, thú cưng, đồ trang trí (`priv/static/assets/doll/`, `pets/`, `decor/`)
 

@@ -111,7 +111,8 @@ defmodule HacLong.Admin do
   end
 
   def build("set_rebirths", %{"n" => n}) when is_integer(n) do
-    max = Data.rules().character.max_rebirths
+    # chuyển sinh vô hạn: giới hạn chỉ để chặn nhập nhầm
+    max = 999
 
     if n in 0..max,
       do:
@@ -154,8 +155,8 @@ defmodule HacLong.Admin do
       !pet ->
         {:error, "Không có thú \"#{id}\"."}
 
-      not (is_integer(lv) and lv in 1..Pets.max_level()) ->
-        {:error, "Cấp thú phải từ 1 tới #{Pets.max_level()}."}
+      not (is_integer(lv) and lv in 1..Pets.max_level(id)) ->
+        {:error, "Cấp thú phải từ 1 tới #{Pets.max_level(id)}."}
 
       true ->
         {:ok,
@@ -313,14 +314,14 @@ defmodule HacLong.Admin do
   end
 
   # chỉ số về gốc của lớp, điểm tiềm năng đúng như người chơi thật ở cấp / số lần chuyển sinh này (chưa cộng):
-  # (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × `rebirth_points`
+  # (cấp − 1) × điểm mỗi cấp + điểm chuyển sinh (`Engine.rebirth_bonus/1`)
   def build("reset_stats", _a),
     do:
       {:ok,
        fn p ->
          points =
            (p.level - 1) * Engine.points_per_level(p.cls) +
-             (Map.get(p, :rebirths) || 0) * Engine.rebirth_points()
+             Engine.rebirth_bonus(Map.get(p, :rebirths) || 0)
 
          p = %{p | stats: Data.class(p.cls).base, points: points}
          d = Engine.derived(p)

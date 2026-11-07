@@ -196,10 +196,12 @@ Tự bật theo ngày trong năm, không cần quản trị viên làm gì:
 
   | Quà | Giá (vật phẩm lễ hội) |
   |---|---|
-  | Đồ trang trí Nhà riêng của lễ hội | 30 |
-  | Túi Quà Lễ Hội: một món đồ hợp cấp, chắc chắn có dòng cộng thêm | 12 |
+  | Ngọc Sinh Mệnh | 40 |
+  | Ngọc Tâm Linh | 25 |
+  | Ngọc Ước Nguyện | 15 |
+  | Túi Quà Lễ Hội: một món đồ hợp cấp, chắc chắn có dòng cộng thêm từ +8, 10 % ra món Excellent | 12 |
   | 3 bình máu lớn | 6 |
-  | Vàng (60 + 12 × cấp) | 3 |
+  | Vàng (60 + 12 × cấp) × (1 + số lần chuyển sinh) | 3 |
 
 ## 7. Hoạt động hằng ngày
 

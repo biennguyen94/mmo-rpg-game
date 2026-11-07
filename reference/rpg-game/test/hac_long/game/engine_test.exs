@@ -60,7 +60,7 @@ defmodule HacLong.Game.EngineTest do
     # số thứ hai nhỏ hơn tỉ lệ trượt (1 − tỉ lệ trúng): đánh trượt
     Rng.put_sequence([0.99, 0.0, 0.99])
     {_, p4} = Engine.act(p, "attack")
-    assert Enum.at(p4.battle.log, 1).text =~ "Trượt!"
+    assert Enum.at(p4.battle.log, 1).text =~ ", Đòn thường, đánh trượt."
     assert p4.battle.monster.hp == p.battle.monster.hp
   end
 
@@ -151,7 +151,7 @@ defmodule HacLong.Game.EngineTest do
     p = put_in(p.battle.monster.hp, 100_000)
     p = Enum.reduce(1..3, p, fn _, p -> elem(Engine.act(p, "attack"), 1) end)
     assert [%{id: "burn", power: per}] = p.battle.effects.player
-    assert Enum.any?(p.battle.log, &(&1.text =~ "Bạn mất #{per} máu vì bị bỏng"))
+    assert Enum.any?(p.battle.log, &(&1.text =~ "Thử mất #{per} máu vì bị bỏng"))
     {_, p} = Engine.act(p, "potion")
     assert p.battle.effects.player == []
     assert Enum.any?(p.battle.log, &(&1.text == "Hết bị bỏng."))
@@ -275,7 +275,24 @@ defmodule HacLong.Game.EngineTest do
     pct = HacLong.Game.Data.rules().character.rebirth_xp_pct
     assert Engine.xp_need(q2) == round((25 * :math.pow(1, 1.75) + 15) * (1 + 2 * pct))
     assert Engine.xp_need(q2) > Engine.xp_need(%{q2 | rebirths: 0})
-    assert {%{ok: false}, _} = Engine.rebirth(%{q2 | level: 50, rebirths: Engine.max_rebirths()})
+
+    # chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa thì hạ lại chúa tể vùng cuối, ít điểm hơn
+    max = Engine.max_rebirths()
+    last = Engine.realm_lord(max)
+    at_max = %{q2 | level: 50, rebirths: max}
+    assert {%{ok: false, msg: m10}, _} = Engine.rebirth(at_max)
+    assert m10 =~ last.name
+    {%{ok: true}, r11} = Engine.rebirth(Map.put(at_max, :bestiary, %{last.id => 1}))
+    endless = HacLong.Game.Data.rules().character.endless_points
+    assert r11.rebirths == max + 1 and r11.points == max * Engine.rebirth_points() + endless
+    # lần kế: phải hạ lại (tổng 2 lần)
+    assert %{times: 2, have: 1} = Engine.rebirth_need(%{r11 | level: 50})
+    assert {%{ok: false, msg: m12}, _} = Engine.rebirth(%{r11 | level: 50})
+    assert m12 =~ "1/2"
+    {%{ok: true}, r12} = Engine.rebirth(%{r11 | level: 50, bestiary: %{last.id => 2}})
+    assert r12.rebirths == max + 2 and r12.points == max * Engine.rebirth_points() + 2 * endless
+    # kinh nghiệm lên cấp như mốc tối đa
+    assert Engine.xp_need(r12) == Engine.xp_need(%{r12 | rebirths: max})
   end
 
   test "bot chơi hết game với mỗi lớp nhân vật" do

@@ -59,7 +59,6 @@ defmodule HacLongWeb.PageController do
       RECIPES: Data.recipes(),
       QUESTS: Data.quests(),
       PETS: Data.pets(),
-      FURNITURE: Data.furniture(),
       ACHIEVEMENTS: Achievements.client_data(),
       UPGRADE: Data.upgrade(),
       CHAOS: Data.chaos(),
@@ -68,6 +67,8 @@ defmodule HacLongWeb.PageController do
         gearBag: HacLong.Game.Gear.max_bag(),
         # Phase 15e: dòng phụ cánh theo bậc (số để ghi trong ô chọn ở tab Quản trị)
         wingOptions: Data.rules().wing_options.by_tier,
+        # câu hỏi bảo mật lúc đăng ký / quên mật khẩu (DECISIONS "Câu hỏi bảo mật")
+        account: Map.take(Data.rules().account, [:security_questions, :answer_min, :answer_max]),
         # Phase 15c: thưởng đủ bộ giáp (số để hiện chữ)
         setBonus: Map.take(Data.rules().set_bonus, [:min_tier, :def_pct, :atk_pct, :hp_per_tier]),
         # Phase 15g: chữ đồ Bộ Thần trong tooltip
@@ -85,13 +86,14 @@ defmodule HacLongWeb.PageController do
         rebirthPoints: Engine.rebirth_points(),
         rebirthXpPct: Data.rules().character.rebirth_xp_pct,
         maxRebirths: Engine.max_rebirths(),
+        endlessPoints: Data.rules().character.endless_points,
+        botStuckMin: Data.rules().bots.play.stuck_min,
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
         petMaxLevel: HacLong.Game.Pets.max_level(),
-        petSkillLevel: HacLong.Game.Pets.skill_level(),
-        petSkill2Level: HacLong.Game.Pets.skill2_level(),
-        petSkill3Level: HacLong.Game.Pets.skill3_level(),
+        # nhóm thú cưng (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+        petGroups: Map.new(~w(war guard luck all), &{&1, HacLong.Game.Pets.group_name(&1)}),
         # Long Vương (DECISIONS "Long Vương"): cơ hội mỗi lần thả câu ở Hồ Long Vương, mồi gấp bao nhiêu
         school:
           Map.take(HacLong.Game.Data.rules().fishing.school, [
@@ -203,6 +205,8 @@ defmodule HacLongWeb.PageController do
         tamePrice: Data.rules().pets.tame_price,
         tamePricePerLevel: Data.rules().pets.tame_price_per_level,
         petXpCoef: Data.rules().pets.xp_coef,
+        # chỉ số thú cưng cộng thêm mỗi cấp (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
+        petPerLevel: Data.rules().pets.bonus_per_level,
         petFeedXp: Data.rules().pets.feed_xp
       },
       WORLD: Maps.client_data(),

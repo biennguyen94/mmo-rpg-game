@@ -67,7 +67,9 @@ Thứ tự các khối trong tab:
    - **Xem trước và gửi:** hiện số người khớp bộ lọc và nội dung thư, xác nhận rồi mới gửi.
    - **Lịch sử gửi:** 20 đợt gần nhất (lúc gửi, người gửi, tiêu đề, quà, bộ lọc, kết quả).
    - Túi đồ hiếm không đủ chỗ thì người nhận chưa mở được thư.
-6. **🔑 Quên mật khẩu** (admin): danh sách yêu cầu người chơi gửi ở màn đăng nhập (tên đăng nhập + cách liên lạc). Kiểm tra
+5b. **Đang online**: bấm tên người chơi để mở hồ sơ của họ; nút **Tra** mở thẻ tra cứu quản trị.
+6. **🔑 Quên mật khẩu** (admin): tài khoản có câu hỏi bảo mật thì người chơi tự lấy lại mật khẩu (trả lời đúng là đặt
+   mật khẩu mới). Ở đây là danh sách yêu cầu của tài khoản chưa có câu hỏi / quên câu trả lời, gửi ở màn đăng nhập (tên đăng nhập + cách liên lạc). Kiểm tra
    đúng chủ tài khoản rồi bấm **Đặt lại mật khẩu**: ra mật khẩu tạm 8 ký tự (chỉ hiện một lần, không ghi vào nhật ký quản trị),
    mọi thiết bị của họ bị đăng xuất; báo mật khẩu cho người chơi, nhắc họ đổi lại. Ở thẻ tra cứu người chơi cũng có nút
    **🔑 Đặt lại mật khẩu**. Lệnh: `pw_requests`, `reset_password` (`uid`), `pw_dismiss` (`id`).
@@ -337,7 +339,7 @@ Số liệu ở `priv/game_data/upgrade.json` (`UPGRADE`, `JEWELS`), `chaos.json
 
 - **Ngọc Sinh Mệnh** (`jewel_life`): ép ở Thợ Rèn, mỗi dòng +4 tấn công (vũ khí) / phòng thủ (giáp, khiên, cánh), tối đa 4
   dòng, 50 %; thất bại mất một dòng. Số ở `RULES.upgrade.life`; tỉ lệ rơi theo `JEWELS.weights.jewel_life` (`upgrade.json`).
-- **Tủ Đồ** ở Nhà: 40 loại đồ thường + 20 đồ hiếm, mở rộng +10 đồ hiếm × 3 lần bằng vàng (`RULES.storage`). Đồ hiếm đang cất
+- **Tủ Đồ** ở Thủ Kho (Làng): 40 loại đồ thường + 20 đồ hiếm, mở rộng +10 đồ hiếm × 3 lần bằng vàng (`RULES.storage`). Đồ hiếm đang cất
   vẫn thuộc danh sách đồ của nhân vật (cờ `stored`); cất / lấy không ghi `gear_log`.
 - **Vứt đồ:** đồ hiếm vứt đi ghi `gear_log` `out` lý do `DISCARD`; muốn trả lại thì tra `uid` như đồ vỡ khi ép.
 - **Thư quản trị** (`gift`, cả "gửi mọi người"): mỗi thư tối đa `RULES.mail.max_gold` vàng và `max_xp` EXP (1 000 000).
@@ -425,7 +427,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Chỉ số quái theo cấp, hệ số trùm | `monster` |
 | Tỉ lệ rơi bình máu / đồ, số dòng cộng thêm (`gear_weights`) | `loot` |
 | Giá bán lại (40 %) | `shop.sell_ratio` |
-| Rương, rèn, tháp, thú cưng, sổ quái, nhà, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `home`, `events`, `daily`, `fishing` |
+| Rương, rèn, tháp, thú cưng, sổ quái, lễ hội, việc hằng ngày, câu cá | `chests`, `crafting`, `tower`, `pets`, `bestiary`, `events`, `daily`, `fishing` |
 | Bang (giá lập, mốc quỹ, thưởng nhiệm vụ tuần), chợ (phí, số món), đấu trường, tổ đội | `guild`, `market`, `arena`, `party` |
 | Từ cấm khi đặt tên nhân vật / bang | `names` |
 | Ngọc Sinh Mệnh; sức chứa Tủ Đồ và giá mở rộng; trần vàng / EXP mỗi thư quản trị | `upgrade.life`, `storage`, `mail` |
@@ -436,7 +438,7 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 | Vùng đất chuyển sinh (cấp vào, hệ số sức mạnh quái, rơi đồ / ngọc thêm); quái từng vùng ở `realms.json` | `realms` |
 | Né tối đa (`combat.dodge.max_total`), dòng Excellent theo cấp (`excellent.options.weapon.atk_lvl`) | `combat`, `excellent` |
 | Tự đánh: nhịp ra lệnh, % uống bình mặc định / giới hạn, số dòng cộng thêm để giữ đồ khi lọc "chỉ đồ quý" | `auto` |
-| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`) | `bots` |
+| Bot: số bot, thời gian nghỉ sau khi gục, ngưỡng mua bình (`potion_min` / `potion_buy` / `mana_min` / `mana_buy`), loại bình (`potion_heal_min`), nghỉ trọ (`inn_gold_mult`); câu cá, săn Long Vương (`fish`); bot try hard (`tryhard`) | `bots` |
 
 - **Gõ nhầm id** (món đồ, quái, lớp…) ở bất kỳ file nào trong `priv/game_data/` hay `priv/maps/` thì build **dừng** và in
   danh sách lỗi, vd `shop.json: SHOP có món "daggerr" không có trong ITEMS`. Sửa đúng id rồi build lại.
@@ -456,6 +458,9 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 ## Người chơi AI (Phase 16)
 
+- **Bộ tên** (Quản trị → Bộ tên, chỉ quản trị viên): chọn **Tên MU** (mặc định) hoặc **Tên mới** cho cả server. Người đang
+  chơi tự tải lại trang. Chỉ đổi chữ hiện ra; đồ, dữ liệu, database giữ nguyên. Sửa / thêm tên mới ở
+  `priv/static/i18n/names_alt.json` (mỗi dòng: tên gốc → [tên mới tiếng Việt, tiếng Anh]), không cần build, deploy lại là có.
 - Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
   trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
 - Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (deploy: ghi `HL_BOTS=5` vào `.env` rồi `docker compose up -d`; `HL_BOTS=0` để tắt). Mặc định `RULES.bots.count` = 0 (không có bot).
@@ -496,12 +501,12 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   database (cài đặt nằm trong bộ nhớ `player.auto`).
 - Mỗi nhịp server tự chọn lệnh và chạy qua đúng đường lệnh client (cùng luật, giới hạn tốc độ, nhật ký vàng / đồ). Lý do lưu
   trong `gold_log` / `gear_log` vẫn là tên lệnh (`ATTACK`, `SKILL`, `DISCARD`…).
-- Không bật được ở Làng, Nhà, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
+- Không bật được ở Làng, bản đồ sự kiện riêng, Tháp, Hỗn Chiến Thành, Công Thành Chiến.
 - Lọc "chỉ đồ quý" hủy đồ thường vừa nhặt; người chơi khiếu nại mất đồ thì tra `gear_log` lý do `DISCARD` quanh giờ đó.
 
 ### 12.2 Người chơi AI (Phase 5, B-32)
 
-- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về Nhà uống giếng.
+- Còn ít bình thì về Làng mua ở Bà Lang; máu thấp, hết bình mà đủ vàng thì nghỉ ở Quán Trọ, không thì về giếng giữa Làng.
 - Kiểm tra bot có chạy: `SELECT c.name, c.map_id, c.gold, c.updated_at FROM characters c JOIN users u ON u.id = c.user_id
   WHERE u.role = 'bot' ORDER BY c.updated_at DESC;` — `updated_at` phải đổi sau vài phút.
 
@@ -514,3 +519,32 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
   `python3 scripts/pixel_icons.py <crawl/tiles>/releases/Nov-2015` (hình quần lấy sẵn từ `assets_src/pixel_extra/leggings/`). Món chưa có hình Pixel
   (đồ ăn) dùng hình cũ; cánh dùng đôi cánh Draconian của Dungeon Crawl (`assets_src/pixel_extra/wings/`).
 - Hình MU vẫn **không bao giờ** vào git / Docker (mục 10.1).
+
+### Bật / tắt quái di chuyển
+
+- Quản trị → **Bản đồ**: nút Tắt / Bật quái đi lang thang cho **cả server** (mọi bản đồ). Tắt thì quái đứng yên, vẫn đánh và
+  hồi sinh như thường. Trạng thái lưu ở `admin_log` (op `mob_move`), khởi động lại server vẫn giữ. Chỉ quản trị viên.
+
+### Đưa về Làng (gỡ kẹt)
+
+- Nút 🏠 ở danh sách người đang online và **Về Làng** ở thẻ tra cứu: đang đánh thì trận kết thúc như bỏ chạy (không mất
+  gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng. Thẻ **Bản đồ**: **Đưa mọi bot về Làng**. Chỉ quản trị viên; ghi `admin_log`
+  (op `to_village` / `bots_to_village`).
+- Bot tự về Làng khi đứng yên (vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi) quá `bots.play.stuck_min` phút (10);
+  log server: `bot <id> kẹt ở <bản đồ> (x, y) quá lâu: về Làng`.
+
+### Nhiều nhân vật (theo tài khoản)
+
+- Mỗi nhân vật là một dòng `users` (nhân vật thêm có `account_id` trỏ về tài khoản, tên đăng nhập `~<id>~…`, không
+  đăng nhập được). Tra cứu theo tên nhân vật hoặc tên đăng nhập: thẻ hiện tài khoản và mọi nhân vật; bấm tên để xem nhân
+  vật khác. Lệnh sửa (cộng vàng, tặng đồ, về Làng…) áp **nhân vật đang xem**; cấm chat / khóa áp **cả tài khoản**.
+- Thùng đồ chung ở bảng `account_storage` (một dòng mỗi tài khoản). `mix hac_long.audit` đối soát cả thùng (đồ hiếm trong
+  thùng phải có `gear_log` cuối là `in`, lý do `SHARED`, mã tài khoản).
+- Quà "gửi mọi người": mỗi tài khoản một thư, vào nhân vật chơi gần nhất; "Số người nhận" đếm theo tài khoản.
+
+### Tới chỗ người chơi
+
+- Nút 📍 ở danh sách online và **📍 Đến chỗ** ở thẻ tra cứu: nhân vật của quản trị dịch chuyển tới đúng bản đồ, ô của người đó
+  (đang đánh thì trận kết thúc như bỏ chạy). Người đó ở bản đồ riêng (tháp, sự kiện) thì không tới được. Ghi `admin_log`
+  op `goto_player`. Số lần chuyển sinh ở "Chỉnh nhân vật" đặt được tới 999 (chuyển sinh vô hạn).
+

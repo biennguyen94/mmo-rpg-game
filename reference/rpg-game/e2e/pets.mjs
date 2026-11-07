@@ -1,4 +1,5 @@
-// Thú cưng: mua ở Người Nuôi Thú, bảng hiện sức cắn + hai kỹ năng, cho ăn lên cấp, thuần phục quái bản đồ phụ.
+// Thú cưng (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số"): mua ở Người Nuôi Thú, bảng hiện nhóm + chỉ số cộng (không còn
+// cắn / kỹ năng), cho ăn lên cấp, thuần phục quái bản đồ phụ.
 import { launch, reporter, newPlayer, adminSession, player, act, send, travel, meetNpc, shot } from './lib.mjs';
 
 const R = reporter('pets');
@@ -12,7 +13,7 @@ await page.waitForFunction(() => window.__hl.player().gold >= 2000000, null, { t
 await travel(page, 'village');
 R.check('gặp Người Nuôi Thú', await meetNpc(page, 'pet_keeper'));
 const shop = (await page.textContent('#npc, .npc, body')) || '';
-R.check('cửa hàng thú hiện sức cắn và kỹ năng', shop.includes('đòn thường') && shop.includes('Kỹ năng:'));
+R.check('cửa hàng thú hiện nhóm Chiến / Hộ vệ / Tài lộc, không còn cắn / kỹ năng', ['Chiến', 'Hộ vệ', 'Tài lộc'].every((g) => shop.includes(g)) && !shop.includes('đòn thường') && !shop.includes('Kỹ năng:'));
 await act(page, '[data-act="pet_buy"][data-id="hound"]');
 await page.waitForFunction(() => window.__hl.player().pet === 'hound', null, { timeout: 5000 }).catch(() => null);
 let p = await player(page);
@@ -29,11 +30,11 @@ R.check('cho ăn: +20 trận, lên cấp 2, trừ vàng', (p.pet_xp || {}).hound
 R.check('giá lần sau theo cấp²', v && v.feed === 4 * 500, v && v.feed);
 await shot(page, 'pets-npc.png');
 
-// Menu → Thú cưng: tỉ lệ cắn, kỹ năng khóa
+// Menu → Thú cưng: nhóm + chỉ số cộng theo cấp
 await act(page, 'npc-close').catch(() => null);
 await page.evaluate(() => window.__hl.menu('pets'));
 const menu = (await page.textContent('body')) || '';
-R.check('Menu Thú cưng hiện tỉ lệ cắn và hai kỹ năng', menu.includes('🦷 Cắn') && menu.includes('Cắn Xé') && menu.includes('Húc Ngã') && menu.includes('(cấp 15)'));
+R.check('Menu Thú cưng hiện nhóm và chỉ số cộng theo cấp', menu.includes('Chiến') && menu.includes('Tấn công +') && menu.includes('Chí mạng +') && menu.includes('cấp 2') && !menu.includes('🦷'));
 await shot(page, 'pets-menu.png');
 
 // thuần phục quái bản đồ phụ (đặt sổ quái bằng lệnh quản trị không có: kiểm qua view.taming / tameable rỗng mà không lỗi)

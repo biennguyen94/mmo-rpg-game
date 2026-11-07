@@ -420,7 +420,8 @@ defmodule HacLong.Game.Journey do
 
   # cần hạ chúa tể để chuyển sinh tiếp và đã ở cấp tối đa: tới bản đồ của chúa tể thử mỗi `lord_every / 4` trận
   defp lord_target(p, st) do
-    with %{id: id} <- Engine.rebirth_need(p),
+    with true <- rb(p) < Engine.max_rebirths(),
+         %{id: id} <- Engine.rebirth_need(p),
          true <- p.level >= Engine.max_level(),
          %{} = m <- Enum.find(all_maps(), &Enum.any?(&1.spawns, fn s -> s.monster == id end)),
          true <- World.can_travel?(p, m),

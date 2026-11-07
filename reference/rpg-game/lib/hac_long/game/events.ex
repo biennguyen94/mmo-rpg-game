@@ -6,8 +6,8 @@ defmodule HacLong.Game.Events do
   Trong thời gian sự kiện:
   - quái thường có 20% rơi vật phẩm lễ hội (`token`), trùm rơi 3 cái;
   - kinh nghiệm mỗi trận +10%;
-  - Người Tổ Chức Hội trong Làng đổi vật phẩm lễ hội lấy quà (`exchange/2`): đồ trang trí chỉ
-    có trong mùa đó, bình máu lớn, món đồ chỉ số ngẫu nhiên, vàng.
+  - Người Tổ Chức Hội trong Làng đổi vật phẩm lễ hội lấy quà (`exchange/2`): bình máu lớn, Túi Quà (món đồ có dòng cộng
+    thêm, có khi Excellent), vàng theo cấp và số lần chuyển sinh, ngọc ép đồ (DECISIONS "Lễ hội: nâng phần thưởng").
 
   Thử một sự kiện bất kỳ lúc nào: cấu hình `:hac_long, :event` (hoặc biến môi trường `EVENT`)
   là id sự kiện, hay `"none"` để tắt (test mặc định tắt).
@@ -61,38 +61,40 @@ defmodule HacLong.Game.Events do
   end
 
   @doc "Quà đổi được ở sự kiện `e`: `[%{id, name, cost, kind}]` (giá tính bằng vật phẩm lễ hội)."
-  def shop(e, p) do
-    decor = Data.furniture(e.decor)
-
+  def shop(_e, p) do
     [
-      %{
-        id: "decor",
-        name: decor.name,
-        cost: @rules.shop.decor,
-        desc: "Đồ trang trí chỉ có trong mùa này (tiện nghi #{decor.comfort})."
-      },
       %{
         id: "gear",
         name: "Túi Quà Lễ Hội",
         cost: @rules.shop.gear,
-        desc: "Một món đồ hợp cấp, chắc chắn có dòng cộng thêm."
+        desc:
+          "Một món đồ hợp cấp, chắc chắn có dòng cộng thêm từ +8; #{round(@rules.exc_chance * 100)}% ra món Excellent."
       },
       %{
         id: "potions",
         name: "#{@rules.potions} #{Data.item("potion_l").name}",
         cost: @rules.shop.potions,
-        desc: "Hồi #{potion_l_pct()}% máu tối đa mỗi bình."
+        desc: "Hồi #{Data.item("potion_l").heal} máu mỗi bình."
       },
       %{
         id: "gold",
         name: "#{gold(p)} vàng",
         cost: @rules.shop.gold,
-        desc: "Vàng tăng theo cấp nhân vật."
+        desc: "Vàng tăng theo cấp và số lần chuyển sinh."
       }
-    ]
+    ] ++
+      for j <- @rules.jewels do
+        %{id: j.id, name: "1 #{Data.item(j.id).name}", cost: j.cost, desc: "Ngọc ép đồ."}
+      end
   end
 
-  defp gold(p), do: @rules.gold_base + p.level * @rules.gold_per_level
+  # vàng theo cấp và số lần chuyển sinh (DECISIONS "Lễ hội: nâng phần thưởng")
+  defp gold(p),
+    do:
+      round(
+        (@rules.gold_base + p.level * @rules.gold_per_level) *
+          (1 + @rules.gold_per_rebirth * (Map.get(p, :rebirths) || 0))
+      )
 
   @doc "Đổi vật phẩm lễ hội lấy quà `id` (đứng cạnh Người Tổ Chức Hội)."
   def exchange(p, id) do
@@ -121,14 +123,9 @@ defmodule HacLong.Game.Events do
     end
   end
 
-  defp give(p, e, "decor") do
-    stock = Map.get(p, :furniture) || %{}
-    p = Map.put(p, :furniture, Map.update(stock, e.decor, 1, &(&1 + 1)))
-    {p, "Nhận #{Data.furniture(e.decor).name}! Về Nhà bấm Trang trí để đặt."}
-  end
-
   defp give(p, _e, "gear") do
     g = Gear.roll(max(p.level, Data.rules().chests.min_level), @gear_weights)
+    g = if HacLong.Game.Rng.uniform() < @rules.exc_chance, do: Gear.add_exc_line(g), else: g
     {p, :kept} = Gear.add(p, g)
     {p, "Túi Quà Lễ Hội: #{Gear.label(g)}!"}
   end
@@ -138,13 +135,11 @@ defmodule HacLong.Game.Events do
       {Engine.add_item(p, "potion_l", @rules.potions),
        "Nhận #{@rules.potions} #{Data.item("potion_l").name}."}
 
+  defp give(p, _e, "jewel_" <> _ = id),
+    do: {Engine.add_item(p, id, 1), "Nhận 1 #{Data.item(id).name}."}
+
   defp give(p, _e, "gold") do
     g = gold(p)
     {%{p | gold: p.gold + g}, "Nhận #{g} vàng."}
   end
-
-  @doc "Đồ trang trí chỉ có trong sự kiện thì Thợ Mộc không bán."
-  def event_decor?(id), do: Enum.any?(Data.events(), &(&1.decor == id))
-
-  defp potion_l_pct, do: round(Data.item("potion_l").heal_pct * 100)
 end

@@ -36,7 +36,7 @@ defmodule HacLongWeb.Phase4Test do
     player(u, %{
       gear: [g, junk],
       inv: %{"herb" => 3, "jewel_life" => 1},
-      pos: %{map: "home", x: 6, y: 1}
+      pos: %{map: "village", x: 11, y: 13}
     })
 
     {_, _} = join(u)
@@ -51,18 +51,24 @@ defmodule HacLongWeb.Phase4Test do
     _ = Session.get(u.id)
 
     p = Characters.load(u.id)
-    assert Gear.stored?(p, g.uid)
-    assert p.storage.inv == %{"herb" => 2} and p.inv["herb"] == 1
+
+    # thùng đồ chung của tài khoản (DECISIONS "Nhiều nhân vật"): món ra khỏi nhân vật, vào `account_storage`
+    refute Gear.find(p, g.uid)
+    shared = HacLong.AccountStorage.get(u.id)
+    assert Enum.map(shared.gear, & &1.uid) == [g.uid]
+    assert shared.inv == %{"herb" => 2} and p.inv["herb"] == 1
 
     logs =
       Repo.all(
         from l in "gear_log", where: l.user_id == ^u.id, select: {l.uid, l.action, l.reason}
       )
 
-    # cất vào tủ không phải "ra" khỏi nhân vật; vứt đồ ghi "out" lý do DISCARD
+    # cất vào thùng chung: ra khỏi nhân vật (STORE) rồi vào thùng của tài khoản (SHARED); vứt đồ ghi "out" lý do DISCARD
     assert Enum.sort(logs) ==
              Enum.sort([
                {g.uid, "in", "TEST"},
+               {g.uid, "out", "STORE"},
+               {g.uid, "in", "SHARED"},
                {junk.uid, "in", "TEST"},
                {junk.uid, "out", "DISCARD"}
              ])

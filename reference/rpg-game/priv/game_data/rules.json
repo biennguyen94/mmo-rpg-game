@@ -10,6 +10,8 @@
       "rebirth_points": 25,
       "rebirth_xp_pct": 0.25,
       "rebirth_lord_from": 1,
+      "endless_points": 10,
+      "_endless_doc": "Chuyển sinh vô hạn (DECISIONS \"Chuyển sinh vô hạn\"): quá max_rebirths (10) vẫn chuyển sinh được; mỗi lần sau mốc 10 chỉ thêm endless_points điểm (điểm sau lần n = max_rebirths × rebirth_points + (n − max_rebirths) × endless_points), kinh nghiệm lên cấp như mốc 10; muốn chuyển sinh lần n + 1 (n ≥ max_rebirths) phải đã hạ chúa tể vùng chuyển sinh max_rebirths tổng cộng n − max_rebirths + 1 lần. Quái sự kiện, đồ sát, đấu trường tính như mốc max_rebirths.",
       "_rebirth_doc": "Chuyển sinh (DECISIONS \"Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể\"): sau lần chuyển sinh n được n × rebirth_points điểm tiềm năng (trước 15); kinh nghiệm lên cấp × (1 + rebirth_xp_pct × n); từ n ≥ rebirth_lord_from muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n.",
       "rest_per_level": 4,
       "death_gold_loss": 0.1,
@@ -161,11 +163,11 @@
       "potion_chance": 0.12,
       "potions": [
         {
-          "level": 20,
+          "level": 25,
           "id": "potion_l"
         },
         {
-          "level": 9,
+          "level": 10,
           "id": "potion_m"
         },
         {
@@ -390,7 +392,7 @@
       "sell_ratio": 0.4,
       "unpriced_value": 200,
       "gear_opt_value": 0.25,
-      "potion_price_per_level": 0.1
+      "potion_price_per_level": 0
     },
     "upgrade": {
       "bonus_pct": 0.08,
@@ -608,44 +610,31 @@
       "boss_potions": 2
     },
     "pets": {
-      "_doc": "Thú cưng (HacLong.Game.Pets). Version 2 (2026-10-17, DECISIONS \"Thú cưng: sức cắn riêng, cấp 20, cho ăn, thuần phục vùng chuyển sinh\"): mỗi thú có sức cắn riêng (PETS.bite); cắn: tỉ lệ bite_chance + bite_chance_per_level × (cấp − 1), sức (PETS.bite) + bite_power_per_level × (cấp − 1) × đòn thường; chỉ số cộng × (1 + bonus_per_level × (cấp − 1)); cấp tối đa max_level, kỹ năng 1 ở skill_level, kỹ năng 2 ở skill2_level, kỹ năng 3 (chỉ Long Vương) ở skill3_level; cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể): vùng k cộng thêm tame_realm_bonus × k công, tame_realm_bite × k sức cắn, giá × (1 + tame_realm_price × k).",
+      "_doc": "Thú cưng (HacLong.Game.Pets). Version 3 (2026-11-06, DECISIONS \"Thú cưng 3 nhóm, chỉ cộng chỉ số\"): thú không đánh trong trận, không có kỹ năng, chỉ cộng % chỉ số theo nhóm, riêng máu / MP cộng số PETS.flat × cấp thú (version 4, DECISIONS \"Thú cưng: máu / MP cộng số\") (PETS.group: war Chiến tấn công / chí mạng, guard Hộ vệ máu / phòng thủ / giảm sát thương nhận, luck Tài lộc kinh nghiệm / vàng, all Long Vương cả ba); chỉ số cộng × (1 + bonus_per_level × (cấp − 1)), cấp tối đa max_level; lên cấp theo số trận thắng khi dắt theo (trùm tính boss_wins trận) hoặc cho ăn ở Người Nuôi Thú: feed_gold × cấp² vàng → +feed_xp trận; thuần phục quái vùng chính, bản đồ phụ và vùng chuyển sinh (trừ chúa tể) sau tame_kills con: thú nhóm Chiến, tấn công tame_bonus + tame_realm_bonus × k (vùng chuyển sinh k), chí mạng tame_crit, giá (tame_price + cấp quái × tame_price_per_level) × (1 + tame_realm_price × k).",
       "tame_kills": 100,
-      "tame_bonus": 0.03,
-      "tame_bite": 0.15,
-      "tame_realm_bonus": 0.005,
-      "tame_realm_bite": 0.01,
+      "tame_bonus": 0.025,
+      "tame_realm_bonus": 0.006,
+      "tame_crit": 0.01,
       "tame_realm_price": 1,
       "tame_price": 1000,
       "tame_price_per_level": 100,
-      "bite_chance": 0.3,
-      "bite_chance_per_level": 0.005,
-      "bite_power": 0.15,
-      "bite_power_per_level": 0.008,
       "bonus_per_level": 0.05,
+      "_per_level_doc": "2026-11-07 (anh duyệt, DECISIONS \"Thú cưng: tăng theo cấp thấp hơn\"): bonus_per_level 0.08 → 0.05 (cấp 20 ×1,95, Long Vương cấp 30 ×2,45).",
+      "_atk_doc": "Version 5 (2026-11-07, DECISIONS \"Thú cưng: giảm tấn công\"): tấn công thú nhóm Chiến và Long Vương giảm một nửa (con mạnh nhất cấp 20 khoảng +20%), thú thuần tame_bonus 0.05 → 0.025, tame_realm_bonus 0.012 → 0.006.",
       "max_level": 20,
-      "skill_level": 5,
-      "skill2_level": 15,
-      "skill3_level": 20,
       "xp_coef": 5,
       "boss_wins": 5,
       "feed_gold": 500,
       "feed_xp": 20,
-      "skills": {
-        "heal": 0.04,
-        "bash_turns": 2,
-        "bash_power": 0.15,
-        "pickpocket_gold_pct": 0.1,
-        "venom_turns": 3,
-        "venom_power": 0.5,
-        "rend_mult": 1.6,
-        "tidal_mult": 2,
-        "tidal_every": 3,
-        "scales_reduce": 0.1,
-        "scales_heal": 0.05,
-        "rebirth_hp": 0.3
+      "power_ref": {
+        "_doc": "Chỉ để so sức thú (bot chọn thú, mô phỏng): máu / MP cộng số đổi ra phần trăm so với hp_base + hp_per_level × cấp nhân vật (mp tương tự), gần máu / MP thật của nhân vật theo mô phỏng hành trình (cấp 50 khoảng 2 300 máu, 200–700 MP).",
+        "hp_base": 200,
+        "hp_per_level": 42,
+        "mp_base": 100,
+        "mp_per_level": 6
       },
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 4,
       "verified": false
     },
     "bestiary": {
@@ -661,12 +650,6 @@
           "gold": 20
         }
       ]
-    },
-    "home": {
-      "max_decor": 20,
-      "comfort_step": 10,
-      "xp_per_step": 0.01,
-      "max_xp_bonus": 0.05
     },
     "storage": {
       "items": 40,
@@ -687,29 +670,26 @@
       ]
     },
     "events": {
+      "_doc": "Lễ hội (HacLong.Game.Events). Version 2 (2026-11-07, DECISIONS \"Lễ hội: nâng phần thưởng\"): đổi kẹo ở Người Tổ Chức Hội — vàng shop.gold kẹo được (gold_base + gold_per_level × cấp) × (1 + gold_per_rebirth × số lần chuyển sinh); bình máu shop.potions kẹo được potions Bình Máu Lớn; ngọc (jewels: id, cost); Túi Quà shop.gear kẹo: một món hợp cấp, dòng cộng thêm theo gear_weights [số dòng, trọng số], exc_chance ra món Excellent (thêm một dòng Excellent).",
       "xp_bonus": 0.1,
       "shop": {
-        "decor": 30,
         "gear": 12,
         "potions": 6,
         "gold": 3
       },
       "gold_base": 60,
       "gold_per_level": 12,
+      "gold_per_rebirth": 1,
       "potions": 3,
+      "jewels": [
+        {"id": "jewel_bless", "cost": 15},
+        {"id": "jewel_soul", "cost": 25},
+        {"id": "jewel_life", "cost": 40}
+      ],
+      "exc_chance": 0.1,
       "gear_weights": [
-        [
-          3,
-          15
-        ],
-        [
-          2,
-          60
-        ],
-        [
-          1,
-          25
-        ]
+        [3, 25],
+        [2, 75]
       ]
     },
     "daily": {
@@ -918,30 +898,30 @@
       "potion_max": 3,
       "heal_mult": 0.5,
       "class_taken_by_rebirth": {
-        "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
-        "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
-        "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
-        "3": {"dk": 1.09, "dw": 0.72, "elf": 0.9, "mg": 1.04},
-        "4": {"dk": 1.13, "dw": 0.71, "elf": 0.91, "mg": 1.02},
-        "5": {"dk": 1.12, "dw": 0.73, "elf": 0.9, "mg": 1.02},
-        "6": {"dk": 1.1, "dw": 0.74, "elf": 0.97, "mg": 0.93},
-        "7": {"dk": 1.08, "dw": 0.75, "elf": 0.98, "mg": 0.92},
-        "8": {"dk": 1.1, "dw": 0.77, "elf": 0.97, "mg": 0.9},
-        "9": {"dk": 1.12, "dw": 0.73, "elf": 1.01, "mg": 0.9},
-        "10": {"dk": 1.07, "dw": 0.86, "elf": 1.04, "mg": 0.78}
+        "0": {"dk": 0.96, "dw": 0.88, "elf": 0.97, "mg": 0.88},
+        "1": {"dk": 0.95, "dw": 0.76, "elf": 1.08, "mg": 0.94},
+        "2": {"dk": 1.16, "dw": 0.76, "elf": 1.05, "mg": 0.8},
+        "3": {"dk": 1.03, "dw": 0.72, "elf": 0.89, "mg": 1.11},
+        "4": {"dk": 1.03, "dw": 0.72, "elf": 0.92, "mg": 1.1},
+        "5": {"dk": 1.02, "dw": 0.72, "elf": 0.91, "mg": 1.11},
+        "6": {"dk": 1.05, "dw": 0.75, "elf": 0.95, "mg": 0.97},
+        "7": {"dk": 1.06, "dw": 0.77, "elf": 0.93, "mg": 0.97},
+        "8": {"dk": 1.03, "dw": 0.76, "elf": 0.99, "mg": 0.95},
+        "9": {"dk": 1.04, "dw": 0.77, "elf": 0.96, "mg": 0.96},
+        "10": {"dk": 1.0, "dw": 0.86, "elf": 0.97, "mg": 0.89}
       },
       "class_taken_arena_by_rebirth": {
-        "0": {"dk": 1.02, "dw": 0.83, "elf": 0.97, "mg": 0.89},
-        "1": {"dk": 1.17, "dw": 0.76, "elf": 1.02, "mg": 0.81},
-        "2": {"dk": 1.18, "dw": 0.77, "elf": 1.03, "mg": 0.79},
-        "3": {"dk": 1.09, "dw": 0.72, "elf": 0.9, "mg": 1.04},
-        "4": {"dk": 1.13, "dw": 0.71, "elf": 0.91, "mg": 1.02},
-        "5": {"dk": 1.12, "dw": 0.73, "elf": 0.9, "mg": 1.02},
-        "6": {"dk": 1.1, "dw": 0.74, "elf": 0.97, "mg": 0.93},
-        "7": {"dk": 1.08, "dw": 0.75, "elf": 0.98, "mg": 0.92},
-        "8": {"dk": 1.1, "dw": 0.77, "elf": 0.97, "mg": 0.9},
-        "9": {"dk": 1.12, "dw": 0.73, "elf": 1.01, "mg": 0.9},
-        "10": {"dk": 1.07, "dw": 0.86, "elf": 1.04, "mg": 0.78}
+        "0": {"dk": 0.97, "dw": 0.9, "elf": 0.97, "mg": 0.87},
+        "1": {"dk": 0.96, "dw": 0.8, "elf": 1.05, "mg": 0.91},
+        "2": {"dk": 1.37, "dw": 0.72, "elf": 1.01, "mg": 0.74},
+        "3": {"dk": 1.12, "dw": 0.67, "elf": 0.87, "mg": 1.14},
+        "4": {"dk": 1.11, "dw": 0.68, "elf": 0.89, "mg": 1.12},
+        "5": {"dk": 1.13, "dw": 0.67, "elf": 0.91, "mg": 1.1},
+        "6": {"dk": 1.17, "dw": 0.7, "elf": 0.9, "mg": 1.0},
+        "7": {"dk": 1.16, "dw": 0.71, "elf": 0.91, "mg": 0.98},
+        "8": {"dk": 1.14, "dw": 0.66, "elf": 0.96, "mg": 1.02},
+        "9": {"dk": 1.16, "dw": 0.71, "elf": 0.95, "mg": 0.95},
+        "10": {"dk": 1.4, "dw": 0.81, "elf": 0.93, "mg": 0.71}
       },
       "sourceType": "DESIGN",
       "version": 1,
@@ -1094,8 +1074,7 @@
       "base": 20,
       "per_level": 4,
       "free": [
-        "village",
-        "home"
+        "village"
       ]
     },
     "auto": {
@@ -1126,13 +1105,17 @@
       "potion_heal_min": 0.3,
       "inn_gold_mult": 2,
       "_forge_doc": "DECISIONS \"Bot ép đồ, chuyển sinh\": lúc rảnh ở Làng bot ép đồ đang mặc (cấp thấp nhất trước) bằng ngọc như người thật, giữ lại gold_keep_per_level × cấp vàng; bước có thể hỏng (+7 trở lên) chỉ ép khi còn dư ít nhất `spare` viên mỗi loại ngọc cần; Ngọc Sinh Mệnh thêm dòng cho `life_slots`; ghép / nâng cánh ở Máy Hỗn Nguyên; +10 / +11 chỉ bot \"liều\" (seed chia hết cho daring_every). Cấp tối đa đã đủ điều kiện thì chuyển sinh; cần hạ chúa tể thì đi vùng chuyển sinh, qua từng bản đồ của vùng khi đã hạ realm_kills quái ở bản đồ trước.",
-      "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30},
+      "forge": {"gold_keep_per_level": 400, "spare": 2, "life_slots": ["weapon", "armor"], "daring_every": 10, "realm_kills": 30, "focus_slots": ["weapon", "armor", "wing", "shield"], "focus_lead": 3},
       "_play_doc": "DECISIONS \"Bot chơi như người thật\": hồi máu tới event_hp × tối đa rồi vào Quảng Trường Quỷ / Lâu Đài Máu đang mở (ghép vé từ mảnh hoặc mua) và Kalima (ghép Bản Đồ Thất Lạc); thú cưng mạnh hơn pet_better × thú đang có mà giá ≤ pet_budget × vàng dư thì mua / thuần phục, dắt con mạnh nhất, vàng dư > feed_mult × giá cho ăn thì cho ăn; từ cấp tower_level, mỗi tower_every_min phút (ngẫu nhiên trong khoảng) hồi máu tới tower_enter_hp rồi vào Tháp Vô Tận từ tầng bắt đầu cao nhất, leo tới hết chặng 10 tầng hoặc máu < tower_hp sau một tầng; trong tháp / sự kiện hết bình mà máu < leave_hp thì ra cổng.",
-      "_endgame_doc": "DECISIONS \"Bot cuối game\": cho thú ăn mỗi lần cách feed_every_min phút (ngẫu nhiên trong khoảng) thay vì dồn một lúc; gục avoid.deaths lần trong avoid.window_min phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó avoid.hours giờ; đã chuyển sinh tối đa và cấp tối đa thì luyện ở vùng chuyển sinh (khó dần, realm_kills quái mỗi bản đồ); túi trang bị ≥ sell.full_at món thì về Làng bán đồ thừa ở Thợ Rèn, ở Làng thì bán tới còn sell.down_to món.",
-      "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "feed_every_min": [2, 5], "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3, "avoid": {"deaths": 3, "window_min": 30, "hours": 2}},
+      "_endgame_doc": "DECISIONS \"Bot cuối game\": cho thú ăn mỗi lần cách feed_every_min phút (ngẫu nhiên trong khoảng) thay vì dồn một lúc; gục avoid.deaths lần trong avoid.window_min phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó avoid.hours giờ; đã chuyển sinh tối đa và cấp tối đa thì luyện ở vùng chuyển sinh (khó dần, realm_kills quái mỗi bản đồ); túi trang bị ≥ sell.full_at món thì về Làng bán đồ thừa ở Thợ Rèn, ở Làng thì bán tới còn sell.down_to món. Trong bản đồ tháp (Tháp Vô Tận, Quảng Trường, Lâu Đài, Kalima) hết quái mà chưa xong thì đi qua lại chờ (server xét hết giờ khi bước); ở quá tower_max_min phút thì ra cổng. Tự gỡ kẹt (DECISIONS \"Đưa về Làng\"): không nghỉ mà vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi trong stuck_min phút thì về Làng.",
+      "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "feed_every_min": [2, 5], "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3, "tower_max_min": 40, "stuck_min": 10, "avoid": {"deaths": 3, "window_min": 30, "hours": 2}},
       "sell": {"full_at": 35, "down_to": 20},
+      "_fish_doc": "DECISIONS \"Bot câu cá, bot try hard\": từ cấp vào được Hồ Long Vương, mỗi every_min phút (ngẫu nhiên trong khoảng) bot ra hồ câu stay_min phút (thả trúng ô Đàn Cá Vàng nếu có, câu đủ cá thì nhận việc Ông Lão); Long Vương nổi thì bot \"săn rồng\" (seed chia hết cho chase_every, hoặc bot try hard; chưa có Long Vương) bỏ việc rảnh ra hồ, đứng trong tầm câu và thả trúng ô Ngài. Giật cần sau khi cá cắn react_ms mili giây (ngẫu nhiên; quá cửa sổ giật thì trượt như người thật).",
+      "fish": {"every_min": [60, 150], "stay_min": [4, 10], "chase_every": 3, "react_ms": [200, 1100]},
+      "_tryhard_doc": "Bot try hard (seed chia hết cho every): luôn săn Long Vương, luôn ép liều (+10 / +11), nghỉ sau khi gục rest_mult × thời gian thường, leo Tháp mỗi tower_every_min phút, ra hồ mỗi fish_every_min phút câu fish_stay_min phút, giật cần nhanh hơn (react_ms).",
+      "tryhard": {"every": 5, "rest_mult": 0.3, "tower_every_min": [15, 30], "fish_every_min": [20, 45], "fish_stay_min": [8, 15], "react_ms": [150, 650]},
       "sourceType": "DESIGN",
-      "version": 5,
+      "version": 7,
       "verified": false
     },
     "slay": {
@@ -1140,8 +1123,7 @@
       "max_timeouts": 3,
       "min_level": 10,
       "safe_maps": [
-        "village",
-        "home"
+        "village"
       ],
       "protect_s": 30,
       "red_s": 1800,
@@ -1178,6 +1160,26 @@
       "stake_max": 100000,
       "_min_balance_doc": "Cược S: cần ít nhất min_balance_mult × S vàng mới được chia bài (anh chốt 2×, trước 10×).",
       "min_balance_mult": 2
+    },
+    "account": {
+      "max_characters": 5,
+      "_characters_doc": "DECISIONS \"Nhiều nhân vật\": mỗi tài khoản tối đa max_characters nhân vật, một nhân vật online một lúc; thùng đồ ở Thủ Kho (đồ, vàng, mở rộng) chung cả tài khoản; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần.",
+      "_doc": "DECISIONS \"Câu hỏi bảo mật\": lúc đăng ký chọn một câu hỏi bảo mật (security_questions) và trả lời (answer_min–answer_max ký tự; lưu dạng băm, không phân biệt hoa thường, khoảng trắng thừa). Quên mật khẩu: trả lời đúng thì đặt mật khẩu mới ngay; sai quá recover_per_user lần trong recover_window_min phút thì phải đợi. Tài khoản chưa có câu hỏi vẫn gửi yêu cầu cho quản trị như trước.",
+      "security_questions": [
+        {"id": "pet", "text": "Tên con vật nuôi đầu tiên của bạn?"},
+        {"id": "school", "text": "Tên trường tiểu học của bạn?"},
+        {"id": "city", "text": "Bạn sinh ra ở tỉnh / thành phố nào?"},
+        {"id": "friend", "text": "Tên người bạn thân nhất hồi nhỏ?"},
+        {"id": "food", "text": "Món ăn bạn thích nhất?"},
+        {"id": "game", "text": "Tựa game đầu tiên bạn chơi?"}
+      ],
+      "answer_min": 2,
+      "answer_max": 60,
+      "recover_per_user": 5,
+      "recover_window_min": 60,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     }
   }
 }

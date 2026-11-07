@@ -56,6 +56,7 @@ defmodule HacLong.Game.CommandsTest do
 
   test "mua, bán ở Thợ Rèn/Bà Lang; mỗi người bán hàng của mình" do
     p = %{player() | pos: @herbalist}
+    p = %{p | gold: 2 * Engine.price(p, "potion_s")}
     {%{ok: true}, p} = Commands.run(p, %{"act" => "buy", "id" => "potion_s", "n" => 2})
     assert p.gold == 0 and p.inv["potion_s"] == 5
 

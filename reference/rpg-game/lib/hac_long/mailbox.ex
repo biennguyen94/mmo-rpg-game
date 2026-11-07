@@ -51,7 +51,10 @@ defmodule HacLong.Mailbox do
     end
   end
 
-  @doc "Những người nhận của `send_all/2` với `filter` (mã tài khoản)."
+  @doc """
+  Những người nhận của `send_all/2` với `filter` (mã người chơi). Mỗi tài khoản một phần (DECISIONS "Nhiều nhân
+  vật"): trong các nhân vật của tài khoản khớp bộ lọc, nhận ở nhân vật chơi gần nhất.
+  """
   def recipients(filter \\ %{}) do
     f = Map.new(filter || %{}, fn {k, v} -> {to_string(k), v} end)
     int = fn k -> if is_integer(f[k]), do: f[k] end
@@ -61,19 +64,27 @@ defmodule HacLong.Mailbox do
         join: u in HacLong.Accounts.User,
         on: u.id == c.user_id,
         where: u.role != "bot",
-        select: c.user_id
+        # chơi gần nhất trước: mỗi tài khoản lấy dòng đầu
+        order_by: [desc: c.updated_at, desc: c.user_id],
+        select: {coalesce(u.account_id, u.id), c.user_id}
 
     q = if v = int.("min_level"), do: where(q, [c], c.level >= ^v), else: q
     q = if v = int.("max_level"), do: where(q, [c], c.level <= ^v), else: q
     q = if v = int.("min_rebirths"), do: where(q, [c], c.rebirths >= ^v), else: q
-    ids = Repo.all(q)
+    rows = Repo.all(q)
 
-    if f["online"] == true do
-      on = MapSet.new(HacLong.Game.Session.online(1_000_000).players, & &1.id)
-      Enum.filter(ids, &MapSet.member?(on, &1))
-    else
-      ids
-    end
+    rows =
+      if f["online"] == true do
+        on = MapSet.new(HacLong.Game.Session.online(1_000_000).players, & &1.id)
+        Enum.filter(rows, fn {_a, id} -> MapSet.member?(on, id) end)
+      else
+        rows
+      end
+
+    rows
+    |> Enum.uniq_by(&elem(&1, 0))
+    |> Enum.map(&elem(&1, 1))
+    |> Enum.sort()
   end
 
   defp row(attrs) do
@@ -274,15 +285,18 @@ defmodule HacLong.Mailbox do
     end
   end
 
-  # đồ đủ dòng (May mắn / Kỹ năng / Excellent / Thần / dòng phụ cánh): "gearx:<base64 JSON>", server tự tạo
-  # khi túi đồ hiếm đầy (`send_overflow/2`)
+  # đồ đủ dòng (May mắn / Kỹ năng / Excellent / Thần / dòng phụ cánh, +N): "gearx:<base64 JSON>", server tự tạo
+  # khi túi đồ hiếm đầy (`send_overflow/2`); quà của quản trị cũng gửi dạng này khi có tick dòng
+  # (DECISIONS "Quà mọi người: tick dòng như tặng người cụ thể")
   defp parse_gear("gearx:" <> b64) do
     with {:ok, json} <- Base.url_decode64(b64, padding: false),
          {:ok, %{"base" => base} = m} <- Jason.decode(json),
          {base, 0, 0, it, _} <- parse_gear(gear_key(base, 0, 0)),
          opt when is_integer(opt) <- m["opt"] || 0,
-         true <- opt in 0..Gear.max_opt() and extras_ok?(it, m) do
-      {base, opt, 0, it, Map.take(m, ~w(luck skill exc anc wopt))}
+         # cấp ép (quà quản trị gửi đồ đủ dòng, có thể kèm +N)
+         up when is_integer(up) <- m["up"] || 0,
+         true <- opt in 0..Gear.max_opt() and up in 0..Engine.max_upgrade() and extras_ok?(it, m) do
+      {base, opt, up, it, Map.take(m, ~w(luck skill exc anc wopt))}
     else
       _ -> nil
     end
@@ -292,6 +306,8 @@ defmodule HacLong.Mailbox do
 
   defp extras_ok?(it, m) do
     m["luck"] in [nil, true] and m["skill"] in [nil, true] and m["anc"] in [nil, true] and
+      (m["skill"] != true or it.slot == "weapon") and (m["anc"] != true or it[:set] != nil) and
+      (m["exc"] in [nil, []] or it.slot != "wing") and
       (m["wopt"] == nil or Gear.wopt_value(it[:tier], m["wopt"]) > 0) and
       (m["exc"] == nil or
          (is_list(m["exc"]) and

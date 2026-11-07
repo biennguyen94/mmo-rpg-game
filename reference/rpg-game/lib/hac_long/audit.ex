@@ -10,7 +10,8 @@ defmodule HacLong.Audit do
   - **gear_duplicate**: cùng một `uid` đồ hiếm nằm ở hai chỗ (hai nhân vật, hoặc nhân vật và chợ)
     — dấu hiệu nhân đồ.
   - **gear_unlogged**: đồ hiếm đang ở nhân vật nhưng dòng `gear_log` cuối cùng của nó không phải
-    `in` cho đúng tài khoản đó.
+    `in` cho đúng tài khoản đó; đồ trong thùng đồ chung (`account_storage`) thì phải là `in` lý do `SHARED` của tài
+    khoản (DECISIONS "Nhiều nhân vật").
 
   Thống kê (không phải lỗi): vàng vào/ra theo lý do và người nhận nhiều vàng nhất trong
   `days` ngày gần đây.
@@ -60,6 +61,8 @@ defmodule HacLong.Audit do
         FROM characters c, unnest(c.gear) AS g
         UNION ALL
         SELECT gear->>'uid', 'chợ ' || id FROM market_listings WHERE gear IS NOT NULL
+        UNION ALL
+        SELECT g->>'uid', 'thùng đồ ' || s.account_id FROM account_storage s, unnest(s.gear) AS g
       ) x
       GROUP BY uid HAVING count(*) > 1
       """)
@@ -86,6 +89,15 @@ defmodule HacLong.Audit do
         SELECT user_id, action FROM gear_log WHERE uid = g->>'uid' ORDER BY id DESC LIMIT 1
       ) last ON true
       WHERE last.action IS DISTINCT FROM 'in' OR last.user_id <> c.user_id
+      UNION ALL
+      SELECT s.account_id, 'thùng đồ chung', g->>'uid', last.user_id, last.action
+      FROM account_storage s
+      CROSS JOIN unnest(s.gear) AS g
+      LEFT JOIN LATERAL (
+        SELECT user_id, action, reason FROM gear_log WHERE uid = g->>'uid' ORDER BY id DESC LIMIT 1
+      ) last ON true
+      WHERE last.action IS DISTINCT FROM 'in' OR last.user_id <> s.account_id
+        OR last.reason IS DISTINCT FROM 'SHARED'
       """)
 
     for [uid, name, gear_uid, last_uid, action] <- rows do

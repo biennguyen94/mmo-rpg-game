@@ -75,41 +75,52 @@ defmodule HacLong.Game.Chests do
 
   @doc "Mở Rương Gia Truyền ở Nhà (mỗi ngày một lần). `today`: ngày giờ Việt Nam."
   def open_daily(p, today) do
-    if Map.get(p, :chest_day) == today do
-      {%{ok: false, msg: "Hôm nay đã mở rồi. Mai quay lại nhé."}, p}
-    else
-      gold = @daily.gold_base + p.level * @daily.gold_per_level
-      pot = Data.potion_for(p.level)
+    cond do
+      Map.get(p, :chest_day) == today ->
+        {%{ok: false, msg: "Hôm nay đã mở rồi. Mai quay lại nhé."}, p}
 
-      mat =
-        Enum.at(
-          ~w(herb ore herb_rare ore_rare),
-          floor(Rng.uniform() * 2) + if(p.level >= @daily.rare_material_level, do: 2, else: 0)
-        )
+      # mỗi tài khoản một lần mỗi ngày (DECISIONS "Nhiều nhân vật"): nhân vật khác đã mở
+      Map.get(p, :acct_chest_day) == today ->
+        {%{ok: false, msg: "Hôm nay tài khoản đã mở rương (ở nhân vật khác). Mai quay lại nhé."},
+         p}
 
-      p =
-        %{p | gold: p.gold + gold}
-        |> Engine.add_item(pot, @daily.potions)
-        |> Engine.add_item(mat, @daily.materials)
-
-      p = Map.put(p, :chest_day, today)
-
-      parts = [
-        "#{gold} vàng",
-        "#{Data.item(pot).name} ×#{@daily.potions}",
-        "#{Data.item(mat).name} ×#{@daily.materials}"
-      ]
-
-      {p, parts} =
-        with true <- Rng.uniform() < @daily.gear_chance,
-             %{} = g <- roll(p, @daily.gear_weights),
-             {p, :kept} <- Gear.add(p, g) do
-          {p, parts ++ [Gear.resolve(g).name]}
-        else
-          _ -> {p, parts}
-        end
-
-      {%{ok: true, msg: "Rương Gia Truyền: #{Enum.join(parts, ", ")}."}, p}
+      true ->
+        open_daily_(p, today)
     end
+  end
+
+  defp open_daily_(p, today) do
+    gold = @daily.gold_base + p.level * @daily.gold_per_level
+    pot = Data.potion_for(p.level)
+
+    mat =
+      Enum.at(
+        ~w(herb ore herb_rare ore_rare),
+        floor(Rng.uniform() * 2) + if(p.level >= @daily.rare_material_level, do: 2, else: 0)
+      )
+
+    p =
+      %{p | gold: p.gold + gold}
+      |> Engine.add_item(pot, @daily.potions)
+      |> Engine.add_item(mat, @daily.materials)
+
+    p = Map.put(p, :chest_day, today)
+
+    parts = [
+      "#{gold} vàng",
+      "#{Data.item(pot).name} ×#{@daily.potions}",
+      "#{Data.item(mat).name} ×#{@daily.materials}"
+    ]
+
+    {p, parts} =
+      with true <- Rng.uniform() < @daily.gear_chance,
+           %{} = g <- roll(p, @daily.gear_weights),
+           {p, :kept} <- Gear.add(p, g) do
+        {p, parts ++ [Gear.resolve(g).name]}
+      else
+        _ -> {p, parts}
+      end
+
+    {%{ok: true, msg: "Rương Gia Truyền: #{Enum.join(parts, ", ")}."}, p}
   end
 end

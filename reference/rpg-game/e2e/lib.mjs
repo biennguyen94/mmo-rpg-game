@@ -70,6 +70,8 @@ export async function newPlayer(browser, { cls = 'dk', viewport = { width: 1280,
   await page.click('[data-auth="register"]');
   await page.fill('#auth-user', user);
   await page.fill('#auth-pass', 'password123');
+  await page.selectOption('#auth-q', { index: 1 });
+  await page.fill('#auth-a', 'meo mun');
   await page.click('#auth button[type="submit"]');
   await page.waitForSelector('#hero-name');
   await page.fill('#hero-name', name);
@@ -89,8 +91,9 @@ export async function adminSession(browser) {
   await page.fill('#auth-pass', process.env.HL_E2E_ADMIN_PASS || 'e2e-admin-pass');
   await page.click('#auth button[type="submit"]');
   await page.waitForFunction(() => window.__hl && window.__hl.ui().logged && !window.__hl.ui().loading);
-  // tab Quản trị chỉ hiện khi đã có nhân vật: tài khoản quản trị mới thì tạo một nhân vật
-  await page.waitForSelector('#hero-name, #tabs:not([hidden])');
+  // tab Quản trị chỉ hiện khi đã có nhân vật: tài khoản quản trị mới thì tạo một nhân vật; có rồi thì chọn
+  await page.waitForSelector('#hero-name, #tabs:not([hidden]), .char-row');
+  if (await page.$('.char-row')) await enterFirst(page);
   if (await page.$('#hero-name')) {
     await page.fill('#hero-name', `KT${rand()}`);
     await page.click('#create button[type="submit"]');
@@ -112,6 +115,21 @@ export async function adminSession(browser) {
     return page.evaluate(([op, p]) => window.Net.admin(op, p).catch((e) => ({ error: e.msg })), [op, { uid, ...payload }]);
   }
   return { page, ctx, admin, lookup };
+}
+
+// Màn chọn nhân vật (luôn hiện khi mở game, như MU; DECISIONS "Nhiều nhân vật"): vào nhân vật đầu danh sách
+// (chơi gần nhất).
+export async function enterFirst(page) {
+  await page.waitForSelector('.char-row');
+  await page.click('.char-row [data-act="char-enter"]');
+  await page.waitForFunction(() => window.__hl.player());
+}
+
+// Tải lại trang rồi vào lại nhân vật (qua màn chọn nhân vật).
+export async function reloadGame(page) {
+  await page.reload();
+  await page.waitForFunction(() => window.__hl && (window.__hl.player() || document.querySelector('.char-row')));
+  if (!(await page.evaluate(() => window.__hl.player()))) await enterFirst(page);
 }
 
 // ---------- Trạng thái, thao tác (window.__hl, chỉ có khi mở trang với ?test=1) ----------
@@ -141,6 +159,8 @@ export async function walkTo(page, x, y) {
 // Đi qua cổng sang bản đồ kề `to` (đứng trên ô cổng). Trả true nếu đã sang.
 export async function travel(page, to) {
   const p = await player(page);
+  // đang ở đó rồi (vd. nhân vật mới đứng ngay ở Làng, Nhà đã bỏ): xong
+  if (p.pos.map === to) return true;
   const portal = await page.evaluate(([from, to]) => {
     const m = window.GAME_DATA.WORLD.maps[from];
     return m.portals.find((q) => q.to === to);

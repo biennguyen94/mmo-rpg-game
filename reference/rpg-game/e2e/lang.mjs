@@ -19,6 +19,8 @@ const user = 'l_' + Math.random().toString(36).slice(2, 8);
 await page.click('[data-auth="register"]');
 await page.fill('#auth-user', user);
 await page.fill('#auth-pass', 'password123');
+await page.selectOption('#auth-q', { index: 1 });
+await page.fill('#auth-a', 'meo mun');
 await page.click('#auth button[type="submit"]');
 await page.waitForSelector('#hero-name');
 await page.fill('#hero-name', 'En' + Math.random().toString(36).slice(2, 7));
@@ -32,7 +34,7 @@ const viRatio = () => page.evaluate(() => {
   c.querySelectorAll('[data-notr], .chat-line:not(.system), script, style').forEach((e) => e.remove());
   const words = c.textContent.split(/\s+/).filter((w) => /\p{L}/u.test(w));
   const vi = words.filter((w) => /[À-ÖØ-öø-ỹĐđ]/.test(w));
-  return { ratio: vi.length / Math.max(1, words.length), sample: vi.slice(0, 12).join(' ') };
+  return { ratio: vi.length / Math.max(1, words.length), sample: vi.slice(0, 60).join(' ') };
 });
 for (const [label, go] of [['bản đồ', () => window.__hl.tab('map')], ['nhân vật', () => window.__hl.tab('hero')], ['túi đồ', () => window.__hl.tab('bag')], ['menu', () => window.__hl.menu(null)], ['cài đặt', () => window.__hl.menu('settings')], ['nhiệm vụ', () => window.__hl.menu('quests')]]) {
   await page.evaluate(go);

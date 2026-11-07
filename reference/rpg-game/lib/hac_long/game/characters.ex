@@ -36,6 +36,8 @@ defmodule HacLong.Game.Characters do
         name_key: Names.key(player.name)
       })
       |> Map.take(Character.fields())
+      # thùng đồ chung (DECISIONS "Nhiều nhân vật") ghi ở `account_storage`; cột `storage` kiểu cũ để trống
+      |> then(&if(player[:shared_storage], do: Map.put(&1, :storage, %{}), else: &1))
       # đối thủ đấu trường chạy như người (`battle.mirror`) chỉ giữ trong bộ nhớ
       |> Map.update(:battle, nil, &(&1 && Map.delete(&1, :mirror)))
 
@@ -212,12 +214,6 @@ defmodule HacLong.Game.Characters do
         smith: (c.crafting || %{})["smith"] || 0
       },
       festival: c.festival || 0,
-      furniture:
-        Map.filter(c.furniture || %{}, fn {id, _} -> HacLong.Game.Data.furniture(id) end),
-      decor:
-        for d <- c.decor || [], HacLong.Game.Data.furniture(d["id"]) do
-          %{id: d["id"], x: d["x"], y: d["y"]}
-        end,
       storage: HacLong.Game.Storage.load(c.storage),
       visited: Enum.filter(c.visited || [], &Maps.get/1)
     }
@@ -369,7 +365,8 @@ defmodule HacLong.Game.Characters do
                     shield pet deaths golden jewel_chance place theme reward_mult slay foe mine until live raid
                     ds bc kal gear_ids taken ignore_def crit_mult element rich
                     cls skills mp maxMp mp_regen mcds stun_free pstun_free hits def_mult cd overkill
-                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at)a,
+                    last_hit pet_revived tidal_at aura rebirths pots_used pot_at
+                    who act miss reflect heal left note potion)a,
                  &{Atom.to_string(&1), &1}
                )
 

@@ -6,12 +6,22 @@
  * (đăng xuất mọi thiết bị, đổi mật khẩu ở nơi khác) thì báo onExpired để về màn đăng nhập. */
 (function () {
   const TOKEN_KEY = 'hac-long-token';
+  // nhân vật đang chơi (DECISIONS "Nhiều nhân vật"): mã người chơi để lấy vé WebSocket
+  const CID_KEY = 'hac-long-cid';
+  // nhân vật đang chơi trong tab này (sessionStorage: còn qua F5 / tự tải lại, mất khi đóng tab)
+  const PLAY_KEY = 'hac-long-playing';
+  const playing = {
+    get() { try { const v = +sessionStorage.getItem(PLAY_KEY); return v > 0 ? v : null; } catch (e) { return null; } },
+    set(v) { try { if (v) sessionStorage.setItem(PLAY_KEY, String(v)); else sessionStorage.removeItem(PLAY_KEY); } catch (e) { /* bỏ qua */ } },
+  };
   const cb = { player: null, map: null, status: null, rejoin: null, expired: null, chat: null, history: null, boss: null, notice: null, mail: null, guild: null, party: null, invite: null, shared: null, trade: null, tradeRequest: null, friends: null, dm: null };
   let socket = null, channel = null, checkTimer = null;
 
   const store = {
     get() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } },
     set(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) { /* bỏ qua */ } },
+    cid() { try { const v = +localStorage.getItem(CID_KEY); return v > 0 ? v : null; } catch (e) { return null; } },
+    setCid(v) { try { if (v) localStorage.setItem(CID_KEY, String(v)); else localStorage.removeItem(CID_KEY); } catch (e) { /* bỏ qua */ } },
   };
 
   async function api(method, path, body, token) {
@@ -58,7 +68,7 @@
   // trong URL) rồi vào kênh "game" kèm mã phiên bản giao diện. Vé chỉ dùng được một lần nên tự
   // quản lý việc nối lại (tắt cơ chế nối lại của Phoenix): mất kết nối → lấy vé mới → mở lại →
   // vào lại kênh (onRejoin). Trả về { username, user_id, player } của lần vào đầu tiên.
-  function join(token) {
+  function join(token, cid) {
     close();
     closing = false;
     tries = 0;
@@ -85,7 +95,7 @@
       const open = async () => {
         let ticket;
         try {
-          ticket = (await api('POST', '/api/ws-ticket', null, token)).ticket;
+          ticket = (await api('POST', '/api/ws-ticket', cid ? { cid } : null, token)).ticket;
         } catch (e) {
           if (closing) return;
           if (e.status === 401) {
@@ -114,8 +124,12 @@
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
         ch.on('lake', (m) => cb.lake && cb.lake(m));
+        // quản trị đổi bộ tên cho cả server: tải lại trang để nạp tên mới
+        ch.on('name_pack', (m) => { if (!window.I18N || window.I18N.pack !== m.pack) setTimeout(() => location.reload(), 1500); });
         ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
         ch.on('notice', (m) => cb.notice && cb.notice(m.msg));
+        // tài khoản vừa vào nhân vật khác ở nơi khác: thôi, không tự nối lại
+        ch.on('kicked', (m) => { close(); if (cb.kicked) cb.kicked(m.msg); });
         ch.on('mail', (m) => cb.mail && cb.mail(m.unread));
         ch.on('guild', (m) => cb.guild && cb.guild(m.guild));
         ch.on('party', (m) => cb.party && cb.party(m.party));
@@ -182,7 +196,60 @@
   const Net = {
     username: null,
 
-    // Tự đăng nhập bằng token đã lưu. Trả về { username, user_id, player } hoặc null.
+    // nhân vật của tài khoản (`/api/me`): [{ id, name, cls, level, rebirths, map }], tối đa `maxChars`
+    chars: [],
+    maxChars: 5,
+
+    // Như MU: mở game (tab / ứng dụng mới) hoặc đăng nhập thì hiện màn chọn nhân vật ({ select: true }); chưa có nhân
+    // vật thì vào màn tạo. F5 / trang tự tải lại (server cập nhật, đổi ngôn ngữ) thì vào thẳng nhân vật đang chơi trong
+    // tab này. Mất mạng tự nối lại thì không qua đây. `fresh`: vừa đăng nhập (bỏ nhân vật đang chơi của tab).
+    async pick(token, username, fresh) {
+      const me = await api('GET', '/api/me', null, token);
+      Net.username = me.username || username;
+      Net.chars = me.characters || [];
+      Net.maxChars = me.max_characters || 5;
+      if (fresh) playing.set(null);
+      if (!Net.chars.length) return Net.enterChar(null);
+      const cur = playing.get();
+      if (cur && Net.chars.some((c) => c.id === cur)) return Net.enterChar(cur);
+      return { select: true, username: Net.username };
+    },
+
+    // Vào nhân vật `cid` (null: dòng tài khoản — chưa có nhân vật thì màn tạo nhân vật).
+    async enterChar(cid) {
+      store.setCid(cid);
+      const r = await join(store.get(), cid);
+      Net.username = r.username;
+      // nhân vật đang chơi của tab (vào màn tạo nhân vật thì cid null: nhớ mã server trả)
+      if (r.user_id) { store.setCid(r.user_id); playing.set(r.user_id); }
+      return r;
+    },
+
+    // Chỗ tạo nhân vật mới rồi vào màn tạo (server: tối đa `maxChars`).
+    async newChar() {
+      const { cid } = await api('POST', '/api/characters', null, store.get());
+      return Net.enterChar(cid);
+    },
+
+    // Xóa nhân vật (gõ lại tên + mật khẩu). Trả danh sách nhân vật còn lại.
+    async deleteChar(cid, name, password) {
+      const r = await api('POST', '/api/characters/delete', { cid, name, password }, store.get());
+      Net.chars = r.characters || [];
+      if (store.cid() === cid) store.setCid(null);
+      return r;
+    },
+
+    // Rời nhân vật đang chơi về màn chọn nhân vật.
+    async toSelect() {
+      close();
+      playing.set(null);
+      const me = await api('GET', '/api/me', null, store.get());
+      Net.chars = me.characters || [];
+      Net.maxChars = me.max_characters || 5;
+      return { select: true, username: Net.username };
+    },
+
+    // Tự đăng nhập bằng token đã lưu. Trả về { username, user_id, player }, { select } hoặc null.
     async resume() {
       const token = store.get();
       if (!token) return null;
@@ -192,28 +259,43 @@
         if (e.status === 401) { store.set(null); return null; }
         throw e;
       }
-      const r = await join(token);
-      Net.username = r.username;
-      return r;
+      return Net.pick(token);
     },
 
-    async login(username, password, register) {
-      const r = await api('POST', register ? '/api/register' : '/api/login', { username, password });
+    // `sec`: { question, answer } lúc đăng ký (câu hỏi bảo mật, DECISIONS "Câu hỏi bảo mật")
+    async login(username, password, register, sec) {
+      const r = await api('POST', register ? '/api/register' : '/api/login', Object.assign({ username, password }, register ? sec : {}));
       store.set(r.token);
-      const j = await join(r.token);
-      Net.username = j.username;
-      return j;
+      return Net.pick(r.token, r.username, true);
     },
 
     // Quên mật khẩu: gửi yêu cầu cho quản trị (server luôn trả ok).
     forgot(username, contact) { return api('POST', '/api/forgot', { username, contact }); },
+
+    // Câu hỏi bảo mật của tài khoản: { question: id | null } (null: chưa đặt, gửi yêu cầu cho quản trị như cũ)
+    securityQuestion(username) { return api('POST', '/api/question', { username }); },
+
+    // Trả lời đúng câu hỏi bảo mật: đặt mật khẩu mới, đăng nhập luôn (mọi thiết bị khác bị đăng xuất)
+    async recover(username, answer, password) {
+      const r = await api('POST', '/api/recover', { username, answer, password });
+      store.set(r.token);
+      store.setCid(null);
+      return Net.pick(r.token, r.username, true);
+    },
+
+    // Đặt / đổi câu hỏi bảo mật (cần mật khẩu hiện tại); `me()`: câu hỏi đang đặt
+    setSecurity(current, question, answer) { return api('POST', '/api/security', { current, question, answer }, store.get()); },
+    me() { return api('GET', '/api/me', null, store.get()); },
 
     // Đăng xuất thiết bị này. `local`: token đã hết hiệu lực, không cần báo server.
     logout(local) {
       const token = store.get();
       if (token && !local) api('POST', '/api/logout', null, token).catch(() => {});
       store.set(null);
+      store.setCid(null);
+      playing.set(null);
       Net.username = null;
+      Net.chars = [];
       close();
     },
 
@@ -263,9 +345,6 @@
     // Quảng Trường Quỷ: { top: [{ name, score }] } (hôm nay)
     dsTop() { return push('ds_top', {}); },
     inspect(uid) { return push('inspect', { uid }); },
-    // Thăm nhà: { id, name, look, decor, comfort, likes, liked }; khen nhà: { likes }.
-    visit(uid) { return push('visit', { uid }); },
-    homeLike(uid) { return push('home_like', { uid }); },
 
     // Bang hội: guild('list', { q }), guild('info'), guild('join', { id })... (xem GameChannel).
     guild(op, payload) { return push('guild', Object.assign({ op }, payload || {})); },
@@ -293,6 +372,8 @@
     onRejoin(f) { cb.rejoin = f; },
     // Token hết hiệu lực (bị đăng xuất từ nơi khác).
     onExpired(f) { cb.expired = f; },
+    // Bị đẩy ra vì tài khoản vào nhân vật khác (DECISIONS "Nhiều nhân vật").
+    onKicked(f) { cb.kicked = f; },
     // Tin chat mới / các tin gần nhất lúc vào game.
     onChat(f) { cb.chat = f; },
     onChatHistory(f) { cb.history = f; },

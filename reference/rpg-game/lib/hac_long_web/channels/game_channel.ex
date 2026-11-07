@@ -34,8 +34,6 @@ defmodule HacLongWeb.GameChannel do
     `"dm"`: tin riêng (`history {uid}`, `send {uid, text}`); server đẩy `"dm"` (một tin, cả
     cho người gửi để các tab khác thấy). Xem `HacLong.Friends`.
   - `"inspect"` `%{"uid"}`: xem hồ sơ người chơi (cả của mình; `profile` theo `HacLong.Profile`).
-  - `"visit"` `%{"uid"}`: xem nhà đã trang trí của người khác; `"home_like"` `%{"uid"}`: khen nhà
-    (mỗi nhà một lần, chủ nhà nhận `"notice"`). Xem `HacLong.Homes`.
   - `"mail"`: danh sách thư; server đẩy `"mail"` `%{unread}` khi có thư mới. Mở thư (nhận quà)
     là lệnh `"cmd"` `%{"act" => "mail_claim", "id" => ...}`.
   - `"admin"` `%{"op" => ...}` (chỉ tài khoản quản trị): xem/xử lý báo cáo, tra cứu, cấm chat,
@@ -50,7 +48,6 @@ defmodule HacLongWeb.GameChannel do
     Chat,
     Friends,
     Guilds,
-    Homes,
     Leaderboard,
     Mailbox,
     Market,
@@ -78,7 +75,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -94,6 +91,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.NamePack.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
     blocked = Moderation.blocked(uid)
@@ -118,7 +116,7 @@ defmodule HacLongWeb.GameChannel do
      socket
      |> assign(:map, nil)
      |> assign(:guild_id, gid)
-     |> assign(:blocked, MapSet.new(blocked, & &1.id))}
+     |> assign(:blocked, Moderation.blocked_ids(uid))}
   end
 
   @impl true
@@ -306,7 +304,12 @@ defmodule HacLongWeb.GameChannel do
     uid = socket.assigns.user_id
 
     with :ok <- limit({:arena, uid}, 30, :timer.minutes(1)) do
-      me = Map.put(Arena.stats(uid), :per_day, Arena.per_day())
+      me =
+        Arena.stats(uid)
+        |> Map.put(:per_day, Arena.per_day())
+        |> Map.put(:tier, Arena.tier_label(uid))
+        |> Map.put(:min_rebirths, Arena.min_rebirths(uid))
+
       {:reply, {:ok, %{me: me, suggestions: Arena.suggestions(uid), top: Arena.top()}}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
@@ -361,30 +364,6 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
-  def handle_in("visit", %{"uid" => target}, socket) when is_integer(target) do
-    uid = socket.assigns.user_id
-
-    with :ok <- limit({:inspect, uid}, 60, :timer.minutes(1)),
-         %{} = p <- online_or_saved(target) || {:error, "Không tìm thấy người chơi."} do
-      {:reply, {:ok, Homes.view(p, target, uid)}, socket}
-    else
-      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-    end
-  end
-
-  def handle_in("home_like", %{"uid" => target}, socket) when is_integer(target) do
-    uid = socket.assigns.user_id
-
-    with :ok <- limit({:home_like, uid}, 20, :timer.minutes(1)),
-         %{} <- online_or_saved(target) || {:error, "Không tìm thấy người chơi."},
-         %{name: name} <- Session.get(uid) || {:error, "Chưa có nhân vật."},
-         {:ok, n} <- Homes.like(target, uid, name) do
-      {:reply, {:ok, %{likes: n}}, socket}
-    else
-      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
-    end
-  end
-
   def handle_in("mail", payload, socket) do
     uid = socket.assigns.user_id
 
@@ -404,7 +383,7 @@ defmodule HacLongWeb.GameChannel do
     case Moderation.block(uid, id) do
       :ok ->
         {:reply, {:ok, %{blocked: Moderation.blocked(uid)}},
-         assign(socket, :blocked, MapSet.put(socket.assigns.blocked, id))}
+         assign(socket, :blocked, Moderation.blocked_ids(uid))}
 
       {:error, msg} ->
         {:reply, {:error, %{msg: msg}}, socket}
@@ -416,7 +395,7 @@ defmodule HacLongWeb.GameChannel do
     Moderation.unblock(uid, id)
 
     {:reply, {:ok, %{blocked: Moderation.blocked(uid)}},
-     assign(socket, :blocked, MapSet.delete(socket.assigns.blocked, id))}
+     assign(socket, :blocked, Moderation.blocked_ids(uid))}
   end
 
   def handle_in("report", %{"id" => id}, socket) when is_integer(id) do
@@ -786,6 +765,74 @@ defmodule HacLongWeb.GameChannel do
 
   defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
 
+  # gỡ kẹt: đưa một người (cả bot) về Làng / mọi bot về Làng (DECISIONS "Đưa về Làng")
+  defp admin("to_village", %{"uid" => id}, _s) when is_integer(id) do
+    case Session.to_village(id) do
+      {:ok, msg} -> {:ok, %{msg: msg}}
+      err -> err
+    end
+  end
+
+  # tới chỗ người chơi: nhân vật của quản trị dịch chuyển tới bản đồ và ô của người đó (bản đồ chung; tháp / phòng sự
+  # kiện / bản đồ riêng thì thôi)
+  defp admin("goto_player", %{"uid" => id}, s) when is_integer(id) do
+    me = s.assigns.user_id
+    target = if id == me, do: nil, else: Session.get(id)
+
+    cond do
+      target == nil ->
+        {:error, "Không tìm thấy nhân vật."}
+
+      not HacLong.World.shared?(target.pos) ->
+        {:error, "#{target.name} đang ở bản đồ riêng (tháp, sự kiện…), không tới được."}
+
+      true ->
+        case Session.teleport(me, target.pos) do
+          {:ok, msg} -> {:ok, %{msg: "#{msg} Chỗ của #{target.name}."}}
+          err -> err
+        end
+    end
+  end
+
+  defp admin("bots_to_village", _p, _s) do
+    ids = HacLong.Bots.user_ids()
+    n = Enum.count(ids, &match?({:ok, _}, Session.to_village(&1, "ADMIN_BOTS")))
+    {:ok, %{msg: "Đã đưa #{n}/#{length(ids)} bot về Làng."}}
+  end
+
+  defp admin("flags", _p, _s),
+    do: {:ok, %{mob_move: HacLong.World.MobMove.on?(), name_pack: HacLong.NamePack.get()}}
+
+  # bộ tên cho cả server (DECISIONS "Bộ tên thay cho tên MU"); dòng admin_log này (params.pack) là trạng thái lưu lại
+  defp admin("name_pack", %{"pack" => pack}, _s) when is_binary(pack) do
+    if pack in HacLong.NamePack.packs() do
+      HacLong.NamePack.set(pack)
+
+      {:ok,
+       %{
+         name_pack: pack,
+         msg:
+           if(pack == "alt",
+             do: "Đã đổi sang tên mới cho cả server.",
+             else: "Đã đổi về tên MU cho cả server."
+           )
+       }}
+    else
+      {:error, "Bộ tên không hợp lệ."}
+    end
+  end
+
+  # bật / tắt quái đi lang thang cho cả server; dòng admin_log này (params.on) là trạng thái lưu lại
+  defp admin("mob_move", %{"on" => on}, _s) when is_boolean(on) do
+    HacLong.World.MobMove.set(on)
+
+    {:ok,
+     %{
+       mob_move: on,
+       msg: if(on, do: "Quái đi lại bình thường.", else: "Quái đứng yên trên mọi bản đồ.")
+     }}
+  end
+
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
 
   defp admin("lake_school", _p, _s) do
@@ -917,6 +964,12 @@ defmodule HacLongWeb.GameChannel do
     {:noreply, socket}
   end
 
+  # quản trị đổi bộ tên: client tải lại trang để nạp bộ tên mới
+  def handle_info({:name_pack, pack}, socket) do
+    push(socket, "name_pack", %{pack: pack})
+    {:noreply, socket}
+  end
+
   def handle_info({:lake, st}, socket) do
     push(socket, "lake", st)
     {:noreply, socket}
@@ -996,6 +1049,13 @@ defmodule HacLongWeb.GameChannel do
   def handle_info({:mail, unread}, socket) do
     push(socket, "mail", %{unread: unread})
     {:noreply, socket}
+  end
+
+  # tài khoản vừa vào nhân vật khác (ở thiết bị / tab khác): mỗi tài khoản một nhân vật online (DECISIONS "Nhiều nhân
+  # vật"). Báo client (không tự nối lại) rồi đóng kênh.
+  def handle_info(:kicked, socket) do
+    push(socket, "kicked", %{msg: "Tài khoản vừa vào nhân vật khác ở nơi khác."})
+    {:stop, :normal, socket}
   end
 
   def handle_info({:notice, msg}, socket) do
@@ -1148,7 +1208,8 @@ defmodule HacLongWeb.GameChannel do
           kinds: HacLong.Game.AutoHunt.kinds(player.pos.map)
         },
         achievements: Achievements.view(player),
-        chestReady: player[:chest_day] != Daily.today(),
+        chestReady:
+          player[:chest_day] != Daily.today() and player[:acct_chest_day] != Daily.today(),
         event: event_view(player),
         crafting: %{
           cook: HacLong.Game.Crafting.level(player, :cook),
@@ -1166,7 +1227,8 @@ defmodule HacLongWeb.GameChannel do
           end)
       })
 
-    Map.put(player, :view, view)
+    # thùng đồ chung: client dùng `view.storage` (DECISIONS "Nhiều nhân vật")
+    player |> Map.drop([:storage, :shared_storage]) |> Map.put(:view, view)
   end
 
   # đóng tab thì hủy giao dịch đang dở (người kia khỏi phải chờ)

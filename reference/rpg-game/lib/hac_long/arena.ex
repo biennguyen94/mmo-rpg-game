@@ -64,14 +64,46 @@ defmodule HacLong.Arena do
   def challenge(uid, target) do
     s = stats(uid)
     opp = is_integer(target) && target != uid && Characters.load(target)
+    lo = min_rebirths(uid)
 
     cond do
-      target == uid -> {:error, "Không tự thách đấu mình được."}
-      !opp -> {:error, "Không tìm thấy đối thủ."}
-      s.today >= @per_day -> {:error, "Hôm nay đã đấu đủ #{@per_day} trận. Mai quay lại nhé."}
-      true -> {:ok, opponent(opp, target), opp}
+      target == uid ->
+        {:error, "Không tự thách đấu mình được."}
+
+      !opp ->
+        {:error, "Không tìm thấy đối thủ."}
+
+      target in HacLong.Accounts.account_rows(uid) ->
+        {:error, "Không thách đấu nhân vật cùng tài khoản."}
+
+      (Map.get(opp, :rebirths) || 0) < lo ->
+        {:error,
+         "Chỉ thách đấu người cùng hạng (#{tier_label(uid)}) hoặc hạng trên: từ chuyển sinh #{lo} trở lên."}
+
+      s.today >= @per_day ->
+        {:error, "Hôm nay đã đấu đủ #{@per_day} trận. Mai quay lại nhé."}
+
+      true ->
+        {:ok, opponent(opp, target), opp}
     end
   end
+
+  # ---------- Hạng theo số lần chuyển sinh (DECISIONS "Đấu trường: chỉ thách cùng hạng hoặc hạng trên") ----------
+  # Hạng dùng chung khoảng của phòng sự kiện (`RULES.event_rooms.bands`: CS 0–1, 2–3, …, 10+).
+
+  defp rebirths_of(uid),
+    do: Repo.one(from c in Character, where: c.user_id == ^uid, select: c.rebirths) || 0
+
+  @doc "Số lần chuyển sinh thấp nhất người `uid` được thách đấu: mốc đầu của hạng mình."
+  def min_rebirths(uid) do
+    band = HacLong.Game.EventRooms.band(rebirths_of(uid))
+    [lo, _hi] = Enum.at(Data.rules().event_rooms.bands, band)
+    lo
+  end
+
+  @doc "Nhãn hạng của người `uid`, vd \"CS 2–3\"."
+  def tier_label(uid),
+    do: uid |> rebirths_of() |> HacLong.Game.EventRooms.band() |> HacLong.Game.EventRooms.label()
 
   @doc "Bản sao chỉ số của nhân vật `p` dùng làm đối thủ trong trận."
   def opponent(p, uid) do
@@ -152,6 +184,8 @@ defmodule HacLong.Arena do
   @doc "Đối thủ gợi ý: những người có điểm gần mình nhất (trừ mình)."
   def suggestions(uid, n \\ 5) do
     me = stats(uid).rating
+    lo = min_rebirths(uid)
+    mine = HacLong.Accounts.account_rows(uid)
 
     from(c in Character,
       left_join: r in "pvp",
@@ -160,14 +194,20 @@ defmodule HacLong.Arena do
       on: gm.user_id == c.user_id,
       left_join: g in "guilds",
       on: g.id == gm.guild_id,
-      where: c.user_id != ^uid,
-      order_by: [asc: fragment("abs(coalesce(?, 1000) - ?)", r.rating, ^me), desc: c.level],
+      # cùng hạng hoặc hạng trên, trừ nhân vật cùng tài khoản; cùng hạng (gần mình) trước
+      where: c.user_id not in ^mine and c.rebirths >= ^lo,
+      order_by: [
+        asc: c.rebirths,
+        asc: fragment("abs(coalesce(?, 1000) - ?)", r.rating, ^me),
+        desc: c.level
+      ],
       limit: ^n,
       select: %{
         user_id: c.user_id,
         name: c.name,
         cls: c.cls,
         level: c.level,
+        rebirths: c.rebirths,
         rating: coalesce(r.rating, 1000),
         # ký hiệu bang: danh sách tô màu bang địch đang chiến như trên bản đồ
         tag: g.tag
@@ -183,6 +223,9 @@ defmodule HacLong.Arena do
   def search(uid, q, n \\ 10) do
     q = q |> to_string() |> String.replace(~r/[%_\\\\]/, "") |> String.trim()
 
+    lo = min_rebirths(uid)
+    mine = HacLong.Accounts.account_rows(uid)
+
     if q == "" do
       []
     else
@@ -193,7 +236,7 @@ defmodule HacLong.Arena do
         on: gm.user_id == c.user_id,
         left_join: g in "guilds",
         on: g.id == gm.guild_id,
-        where: c.user_id != ^uid and ilike(c.name, ^"%#{q}%"),
+        where: c.user_id not in ^mine and c.rebirths >= ^lo and ilike(c.name, ^"%#{q}%"),
         order_by: [desc: fragment("lower(?) = lower(?)", c.name, ^q), desc: c.level, asc: c.name],
         limit: ^n,
         select: %{

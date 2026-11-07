@@ -14,11 +14,11 @@ defmodule HacLong.Game.DataRulesTest do
         Enum.flat_map(files, fn f -> f |> File.read!() |> Jason.decode!() |> Map.keys() end)
 
       assert Enum.sort(keys) ==
-               ~w(BOSS_DROPS CHAOS CLASSES EVENTS FURNITURE ITEMS ITEMS_MU ITEM_PICK JEWELS PETS QUESTS REALM_MONSTERS REALM_TINTS RECIPES RULES SHOP SIDE_MONSTERS UPGRADE ZONES)
+               ~w(BOSS_DROPS CHAOS CLASSES EVENTS ITEMS ITEMS_MU ITEM_PICK JEWELS PETS QUESTS REALM_MONSTERS REALM_TINTS RECIPES RULES SHOP SIDE_MONSTERS UPGRADE ZONES)
 
       assert map_size(Data.classes()) == 4
-      assert Data.item("potion_s").heal_pct > 0
-      assert Data.item("mana_s").mana_pct > 0
+      assert Data.item("potion_s").heal > 0
+      assert Data.item("mana_s").mana > 0
       assert Data.rules().character.max_level == Engine.max_level()
     end
 
@@ -91,7 +91,8 @@ defmodule HacLong.Game.DataRulesTest do
       price = Data.item("broadsword").price
       assert Engine.sell_price("broadsword") == floor(price * 0.4)
       assert Data.potion_for(1) == "potion_s"
-      assert Data.potion_for(9) == "potion_m"
+      assert Data.potion_for(9) == "potion_s"
+      assert Data.potion_for(10) == "potion_m"
       assert Data.potion_for(35) == "potion_l"
     end
 

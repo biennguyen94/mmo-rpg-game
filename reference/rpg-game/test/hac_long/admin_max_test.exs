@@ -106,10 +106,10 @@ defmodule HacLong.AdminMaxTest do
       assert worn == if(dual, do: 11, else: 10) - if(cls == "mg", do: 1, else: 0)
       if dual, do: assert(Engine.left_weapon(p).name == Data.item(weapon).name)
 
-      # Long Vương cấp tối đa, dắt theo, đủ 3 kỹ năng
+      # Long Vương cấp tối đa, dắt theo
       p = p |> op("give_pet", %{"id" => "long_vuong", "level" => 20})
       assert p.pet == "long_vuong" and "long_vuong" in p.pets
-      assert length(HacLong.Game.Pets.active_skills(p)) == 3
+      assert HacLong.Game.Pets.level(p, "long_vuong") == 20
     end
   end
 

@@ -11,6 +11,7 @@ on:
       - "reference/rpg-game/priv/game_data/**"
       - "reference/rpg-game/priv/static/assets/pixel/**"
       - "reference/rpg-game/priv/static/assets/pixel_icons.json"
+      - "reference/rpg-game/priv/static/i18n/names_alt.json"
       - "reference/rpg-game/scripts/kho_do/**"
       - "reference/rpg-game/lib/**"
       - ".github/workflows/kho-do-pages.yml"

@@ -22,27 +22,36 @@ defmodule HacLong.Moderation do
 
   # ---------- Chặn ----------
 
-  def block(user_id, blocked_id) when user_id != blocked_id do
-    Repo.insert_all(
-      "user_blocks",
-      [%{user_id: user_id, blocked_id: blocked_id, inserted_at: now()}],
-      on_conflict: :nothing
-    )
+  # Chặn theo tài khoản (DECISIONS "Nhiều nhân vật"): nhân vật nào của tài khoản chặn thì cả tài khoản không thấy
+  # chat của mọi nhân vật thuộc tài khoản bị chặn.
+  def block(user_id, blocked_id) when is_integer(user_id) and is_integer(blocked_id) do
+    if blocked_id in Accounts.account_rows(user_id) do
+      {:error, "Không tự chặn mình được."}
+    else
+      Repo.insert_all(
+        "user_blocks",
+        [%{user_id: user_id, blocked_id: blocked_id, inserted_at: now()}],
+        on_conflict: :nothing
+      )
 
-    :ok
+      :ok
+    end
   end
 
   def block(_, _), do: {:error, "Không tự chặn mình được."}
 
   def unblock(user_id, blocked_id) do
+    mine = Accounts.account_rows(user_id)
+    theirs = Accounts.account_rows(blocked_id)
+
     Repo.delete_all(
-      from b in "user_blocks", where: b.user_id == ^user_id and b.blocked_id == ^blocked_id
+      from b in "user_blocks", where: b.user_id in ^mine and b.blocked_id in ^theirs
     )
 
     :ok
   end
 
-  @doc "Những người `user_id` đã chặn: `[%{id, name}]`."
+  @doc "Những người tài khoản của `user_id` đã chặn: `[%{id, name}]` (để hiện danh sách)."
   def blocked(user_id) do
     Repo.all(
       from b in "user_blocks",
@@ -50,8 +59,27 @@ defmodule HacLong.Moderation do
         on: u.id == b.blocked_id,
         left_join: c in Character,
         on: c.user_id == u.id,
-        where: b.user_id == ^user_id,
+        where: b.user_id in ^Accounts.account_rows(user_id),
+        distinct: u.id,
         select: %{id: u.id, name: coalesce(c.name, u.username)}
+    )
+  end
+
+  @doc "Mọi mã người chơi bị tài khoản của `user_id` chặn (cả các nhân vật khác của tài khoản bị chặn): để lọc chat."
+  def blocked_ids(user_id) do
+    user_id
+    |> blocked()
+    |> Enum.flat_map(&Accounts.account_rows(&1.id))
+    |> MapSet.new()
+  end
+
+  @doc "Tài khoản của `target` có chặn tài khoản của `uid` không."
+  def blocked_by?(target, uid) do
+    Repo.exists?(
+      from b in "user_blocks",
+        where:
+          b.user_id in ^Accounts.account_rows(target) and
+            b.blocked_id in ^Accounts.account_rows(uid)
     )
   end
 
@@ -125,15 +153,17 @@ defmodule HacLong.Moderation do
 
   def ban(user_id, minutes, reason) do
     with :ok <- set(user_id, banned_until: until(minutes), ban_reason: reason) do
-      Accounts.revoke_all(%User{id: user_id})
+      Accounts.revoke_all(%User{id: Accounts.account_id(user_id)})
     end
   end
 
   def unban(user_id), do: set(user_id, banned_until: nil, ban_reason: nil)
 
+  # cấm chat / khóa áp dụng cả tài khoản: mọi dòng (tài khoản và các nhân vật thêm)
   defp set(user_id, fields) do
-    {n, _} = Repo.update_all(from(u in User, where: u.id == ^user_id), set: fields)
-    if n == 1, do: :ok, else: {:error, "Không tìm thấy người chơi."}
+    ids = Accounts.account_rows(user_id)
+    {n, _} = Repo.update_all(from(u in User, where: u.id in ^ids), set: fields)
+    if n >= 1, do: :ok, else: {:error, "Không tìm thấy người chơi."}
   end
 
   # ---------- Tra cứu ----------
@@ -162,10 +192,15 @@ defmodule HacLong.Moderation do
           select: map(c, [:name, :cls, :level, :gold, :kills])
       )
 
+    # tài khoản và mọi nhân vật của nó (DECISIONS "Nhiều nhân vật"); lệnh sửa nhân vật dùng `id` (nhân vật này)
+    acct = Accounts.account(u)
+
     %{
       id: u.id,
-      username: u.username,
-      role: u.role,
+      username: acct.username,
+      account_id: acct.id,
+      characters: Accounts.characters(acct.id),
+      role: acct.role,
       character: c,
       banned_until: Accounts.banned?(u) && u.banned_until,
       ban_reason: u.ban_reason,

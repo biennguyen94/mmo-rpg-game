@@ -41,7 +41,7 @@ const sa = await player(A.page), sb = await player(B.page);
 const loser = sa.battle?.result === 'lose' ? sa : sb;
 R.check('trận kết thúc: một thắng một gục ngã', [sa.battle?.result, sb.battle?.result].sort().join() === 'lose,win', `${sa.battle?.result} / ${sb.battle?.result}`);
 R.check('vàng người thua chuyển cho người thắng (tổng không đổi)', sa.gold + sb.gold === g0, `A ${sa.gold} B ${sb.gold}`);
-R.check('người thua về Nhà', loser.pos.map === 'home', loser.pos.map);
+R.check('người thua về Làng', loser.pos.map === 'village', loser.pos.map);
 await shot(A.page, 'slay-result.png');
 for (const X of [A, B]) await act(X.page, '[data-act="leave"]');
 

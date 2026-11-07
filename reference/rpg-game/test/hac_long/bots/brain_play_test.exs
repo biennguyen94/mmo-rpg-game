@@ -86,8 +86,9 @@ defmodule HacLong.Bots.BrainPlayTest do
     end
 
     test "đã có thú: dắt con mạnh nhất, dư vàng thì cho ăn" do
-      p = player(%{gold: 30_000, pets: ["sheep", "hound"], pet: "sheep"})
-      best = Enum.max_by(["sheep", "hound"], &Pets.power(p, &1))
+      # có cả Heo Hồng: không còn thú rẻ nào mạnh hơn để mua
+      p = player(%{gold: 30_000, pets: ["sheep", "hound", "hog"], pet: "sheep"})
+      best = Enum.max_by(["sheep", "hound", "hog"], &Pets.power(p, &1))
 
       if best != "sheep",
         do: assert({nil, %{"act" => "pet_choose", "id" => ^best}} = Brain.pet_job(p))
@@ -172,6 +173,40 @@ defmodule HacLong.Bots.BrainPlayTest do
       {%{ok: true}, q} = BloodCastle.enter(player(%{inv: %{BloodCastle.ticket() => 1}}))
       q = put_in(q.tower.bc, %{q.tower.bc | done: true, stage: "done"})
       assert %{"act" => "move"} = Brain.decide(q, nil)
+    end
+  end
+
+  describe "không kẹt trong tháp" do
+    test "Lâu Đài hết quái mà chưa xong: đi qua lại chờ (trước đây đứng im); hết giờ thì bước kế tiếp đưa về Làng" do
+      {%{ok: true}, q} = BloodCastle.enter(player(%{inv: %{BloodCastle.ticket() => 1}}))
+      q = put_in(q.tower.monsters, [])
+      assert %{"act" => "move", "wait" => true, "dir" => dir} = Brain.decide(q, nil)
+
+      # hết giờ (vd. phòng đã đóng lúc server khởi động lại): bước chờ cũng kết thúc lượt
+      q = put_in(q.tower.bc.ends_at, System.os_time(:second) - 1)
+      {_r, q} = HacLong.World.move(q, -1, dir, true)
+      assert q.pos.map == "village"
+    end
+
+    test "ở bản đồ tháp quá lâu (`tower_stuck`): đi ra cổng" do
+      {_, p} = Tower.enter(player(), 1)
+      p = walk_until_with(p, &(&1.pos.map == "village"), %{tower_stuck: true})
+      assert p.pos.map == "village"
+    end
+  end
+
+  defp walk_until_with(p, stop?, opts, n \\ 80) do
+    cond do
+      stop?.(p) ->
+        p
+
+      n == 0 ->
+        flunk("bot không ra được: #{inspect(p.pos)}")
+
+      true ->
+        %{"act" => "move", "dir" => dir} = Brain.decide(p, nil, opts)
+        {_r, p} = HacLong.World.move(p, -1, dir, true)
+        walk_until_with(p, stop?, opts, n - 1)
     end
   end
 

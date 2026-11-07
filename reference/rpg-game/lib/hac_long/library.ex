@@ -204,8 +204,9 @@ defmodule HacLong.Library do
           :def,
           :price,
           :cls,
-          :heal_pct,
-          :mana_pct,
+          :heal,
+          :mana,
+          :buy_level,
           :dmg,
           :absorb,
           :drop
