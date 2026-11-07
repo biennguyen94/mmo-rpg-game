@@ -86,6 +86,7 @@ defmodule HacLongWeb.PageController do
         rebirthPoints: Engine.rebirth_points(),
         rebirthXpPct: Data.rules().character.rebirth_xp_pct,
         maxRebirths: Engine.max_rebirths(),
+        botStuckMin: Data.rules().bots.play.stuck_min,
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),

@@ -521,3 +521,11 @@ Chi tiết từng quyết định ở `docs/DECISIONS.md` B-25 … B-33; bảng 
 
 - Quản trị → **Bản đồ**: nút Tắt / Bật quái đi lang thang cho **cả server** (mọi bản đồ). Tắt thì quái đứng yên, vẫn đánh và
   hồi sinh như thường. Trạng thái lưu ở `admin_log` (op `mob_move`), khởi động lại server vẫn giữ. Chỉ quản trị viên.
+
+### Đưa về Làng (gỡ kẹt)
+
+- Nút 🏠 ở danh sách người đang online và **Về Làng** ở thẻ tra cứu: đang đánh thì trận kết thúc như bỏ chạy (không mất
+  gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng. Thẻ **Bản đồ**: **Đưa mọi bot về Làng**. Chỉ quản trị viên; ghi `admin_log`
+  (op `to_village` / `bots_to_village`).
+- Bot tự về Làng khi đứng yên (vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi) quá `bots.play.stuck_min` phút (10);
+  log server: `bot <id> kẹt ở <bản đồ> (x, y) quá lâu: về Làng`.

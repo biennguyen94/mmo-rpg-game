@@ -32,6 +32,8 @@ defmodule HacLong.Bots.Bot do
   @tower_every HacLong.Game.Data.rules().bots.play.tower_every_min
   @feed_every HacLong.Game.Data.rules().bots.play.feed_every_min
   @tower_max HacLong.Game.Data.rules().bots.play.tower_max_min * 60_000
+  # tự gỡ kẹt (DECISIONS "Đưa về Làng"): đứng yên quá chừng này thì về Làng
+  @stuck_ms HacLong.Game.Data.rules().bots.play.stuck_min * 60_000
 
   def start_link({uid, _name, _cls} = arg),
     do:
@@ -58,6 +60,9 @@ defmodule HacLong.Bots.Bot do
        last_map: nil,
        # lúc vào bản đồ tháp (Tháp Vô Tận / Quảng Trường / Lâu Đài / Kalima): ở quá `play.tower_max_min` phút thì ra cổng
        tower_since: nil,
+       # dấu vết tiến triển ở nhịp trước và lúc nó bắt đầu không đổi (`unstick/4`)
+       sig: nil,
+       still_since: nil,
        deaths_at: %{fails: %{}, avoid: %{}}
      }}
   end
@@ -133,7 +138,30 @@ defmodule HacLong.Bots.Bot do
     if p && !p.battle && :rand.uniform() < @chat_chance, do: say(s, p)
     Process.send_after(self(), :tick, delay(p, cmd))
     in_tower = p != nil and p.pos.map == "tower"
-    %{s | last_map: p && p.pos.map, tower_since: if(in_tower, do: s.tower_since || now)}
+    s = %{s | last_map: p && p.pos.map, tower_since: if(in_tower, do: s.tower_since || now)}
+    unstick(s, p, Brain.resting?(p, s.rest_until, now), now)
+  end
+
+  # Tự gỡ kẹt: không nghỉ mà vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi quá `play.stuck_min` phút thì về
+  # Làng (Session.to_village: kết thúc trận như bỏ chạy, rời tháp / phòng sự kiện), bắt đầu đo lại.
+  defp unstick(s, nil, _resting, _now), do: %{s | sig: nil, still_since: nil}
+  defp unstick(s, _p, true, _now), do: %{s | sig: nil, still_since: nil}
+
+  defp unstick(s, p, false, now) do
+    sig = {p.pos, p.hp, p.xp, p.gold, p.level, p.battle && p.battle[:turn]}
+
+    cond do
+      sig != s.sig ->
+        %{s | sig: sig, still_since: now}
+
+      now - s.still_since > @stuck_ms ->
+        Logger.info("bot #{s.uid} kẹt ở #{p.pos.map} (#{p.pos.x}, #{p.pos.y}) quá lâu: về Làng")
+        Session.to_village(s.uid, "BOT_STUCK")
+        %{s | sig: nil, still_since: nil}
+
+      true ->
+        s
+    end
   end
 
   # số lần gục tăng so với nhịp trước: gục ở bản đồ nhịp trước đứng

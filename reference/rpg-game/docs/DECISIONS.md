@@ -1514,3 +1514,9 @@ Bot (`Brain.restock`): chỉ đếm loại bình còn hồi ≥ `potion_heal_min
 
 ## Nhật ký trận dễ đọc (2026-11-06, anh duyệt: chỉ máu quái, giữ icon)
 Mỗi dòng đánh / trượt / phản / uống bình / hồi máu có thêm các phần (`who`, `name`, `act`, `dmg`, `crit`, `miss`, `reflect`, `heal`, `mp`, `potion`, `hits`, `note`, `left`, `turn`); client vẽ câu ngắn kiểu: **Tên** dùng <u>Kỹ năng</u>. ⚔ **146** (máu còn lại: 1 930) / **Tên** gây ra ⚔ **35** 💥 chí mạng / **Tên** đánh trượt. / **Quái** bị phản ⚔ **8** / **Tên** uống Bình Máu Lớn, hồi ❤ **1 800**. Tên nhân vật màu vàng, quái / đối thủ màu đỏ, kỹ năng gạch dưới; chỉ hiện máu còn lại của quái; mỗi lượt một khối (cách dòng). `text` giữ câu đầy đủ như cũ (bot, test, dòng không có phần thì hiện chữ như trước).
+
+## Đưa về Làng (2026-11-07, anh duyệt)
+Gỡ kẹt: Quản trị có nút 🏠 Về Làng ở từng người (danh sách online, tra cứu; bot cũng là tài khoản) và "Đưa mọi bot về Làng" (thẻ Bản đồ). `Session.to_village/2`: đang trong trận thì kết thúc như bỏ chạy (quái nhả ra, không mất gì), rời tháp / phòng sự kiện, về Đá Dịch Chuyển ở Làng; ghi `admin_log` như lệnh quản trị khác. Chỉ quản trị viên. Bot tự gỡ kẹt: không nghỉ mà vị trí, máu, kinh nghiệm, vàng, cấp, lượt trận không đổi quá `RULES.bots.play.stuck_min` (10) phút thì tự về Làng (log `bot … kẹt ở …`), chặn cả kiểu kẹt chưa biết.
+
+## Logo app vector (2026-11-07)
+Logo cũ là hình rồng pixel 32×32 phóng to nên vỡ hạt. Thay bằng `priv/static/app/logo.svg` tự vẽ (CC0): rồng đen viền vàng trong vòng vàng, nền đỏ tím đậm; `node e2e/app_icons.mjs` xuất PNG 512 / 192 / 180 / 32, bản maskable (thu vào vùng an toàn) và favicon.ico; đổi `?v=4` để máy tải lại.

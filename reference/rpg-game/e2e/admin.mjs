@@ -265,5 +265,24 @@ await page.waitForFunction((n) => (document.body.textContent || '').includes(n) 
 R.check('Đang online: bấm tên mở hồ sơ người chơi', !!(await page.$('.prof-doll')));
 await shot(page, 'admin-online-profile.png');
 
+// Đưa về Làng (gỡ kẹt, DECISIONS "Đưa về Làng"): người chơi đang ở Rừng Mê, quản trị bấm 🏠 ở danh sách online
+{
+  await travel(X.page, 'forest_1');
+  // đóng hồ sơ vừa mở, quay lại mục Quản trị
+  await page.keyboard.press('Escape');
+  for (let k = 0; k < 3 && !(await page.$('[data-adm="online"]')); k++) {
+    if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
+    await page.click('[data-menu="admin"]', { timeout: 3000 }).catch(() => null);
+  }
+  await page.click('[data-adm="online"]');
+  const home = `[data-adm="to_village"][data-uid="${xId}"]`;
+  await page.waitForSelector(home, { timeout: 5000 }).catch(() => null);
+  page.once('dialog', (d) => d.accept());
+  await page.click(home).catch(() => null);
+  await X.page.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 5000 }).catch(() => null);
+  const pos = (await player(X.page)).pos;
+  R.check('quản trị đưa người chơi về Làng', pos.map === 'village', JSON.stringify(pos));
+}
+
 R.check('không lỗi JS', errors.length === 0 && X.errors.length === 0, [...errors, ...X.errors].join(' | '));
 await R.done(browser);

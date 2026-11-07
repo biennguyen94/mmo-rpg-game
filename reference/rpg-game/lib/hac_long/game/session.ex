@@ -147,6 +147,12 @@ defmodule HacLong.Game.Session do
     do: call(user_id, {:admin, fun, ref})
 
   @doc """
+  Đưa nhân vật về Đá Dịch Chuyển ở Làng (quản trị gỡ kẹt; bot tự gỡ khi đứng yên lâu, DECISIONS "Đưa về Làng"):
+  đang trong trận thì kết thúc như bỏ chạy (không mất gì), rời tháp / phòng sự kiện. `{:ok, msg}` / `{:error, msg}`.
+  """
+  def to_village(user_id, why \\ "ADMIN"), do: call(user_id, {:to_village, why})
+
+  @doc """
   Người chơi đang mở game (Session có tab): `%{count, players: [%{id, name, level, rebirths, cls, map}]}`
   (tối đa `limit` người, theo tên). Không khởi động Session nào; Session đang bận quá 1 giây thì bỏ qua.
   """
@@ -291,6 +297,7 @@ defmodule HacLong.Game.Session do
   defp save_reason({:slay_begin, _}), do: {"SLAY", nil}
   defp save_reason(:slay_auto), do: {"SLAY", nil}
   defp save_reason({:admin, _fun, ref}), do: {"ADMIN", ref}
+  defp save_reason({:to_village, why}), do: {"TO_VILLAGE", why}
   defp save_reason(_), do: {"OTHER", nil}
 
   @impl true
@@ -593,6 +600,32 @@ defmodule HacLong.Game.Session do
 
   defp handle({:admin, _fun, _ref}, _from, %{player: nil} = s),
     do: reply({:error, "Người này chưa có nhân vật."}, s)
+
+  defp handle({:to_village, _why}, _from, %{player: nil} = s),
+    do: reply({:error, "Chưa có nhân vật."}, s)
+
+  defp handle({:to_village, _why}, _from, s) do
+    # đang ở bảng kết quả / trận đã xong vẫn được: chỉ đóng bảng
+    old = s.player
+    room = get_in(old, [:tower, :room])
+    if room, do: HacLong.EventRoom.leave(room, s.user_id)
+
+    p =
+      old
+      |> interrupt_battle(s.user_id)
+      |> Map.put(:tower, nil)
+      |> Map.put(:pos, World.village_spawn())
+
+    if map_size(s.tabs) > 0 do
+      World.leave(old, s.user_id)
+      World.enter(p, s.user_id)
+    end
+
+    s = save(s, p)
+    broadcast(s, p, nil)
+    notify(s, "🏠 Đã đưa bạn về Làng.")
+    reply({:ok, "Đã đưa #{p.name} về Làng (từ #{old.pos.map})."}, s)
+  end
 
   defp handle({:admin, fun, _ref}, _from, s) do
     old = s.player

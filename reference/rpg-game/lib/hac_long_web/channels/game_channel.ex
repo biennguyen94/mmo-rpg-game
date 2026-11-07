@@ -759,6 +759,20 @@ defmodule HacLongWeb.GameChannel do
 
   defp admin("gift_log", _p, _s), do: {:ok, %{log: HacLong.Admin.recent_op("gift", 20)}}
 
+  # gỡ kẹt: đưa một người (cả bot) về Làng / mọi bot về Làng (DECISIONS "Đưa về Làng")
+  defp admin("to_village", %{"uid" => id}, _s) when is_integer(id) do
+    case Session.to_village(id) do
+      {:ok, msg} -> {:ok, %{msg: msg}}
+      err -> err
+    end
+  end
+
+  defp admin("bots_to_village", _p, _s) do
+    ids = HacLong.Bots.user_ids()
+    n = Enum.count(ids, &match?({:ok, _}, Session.to_village(&1, "ADMIN_BOTS")))
+    {:ok, %{msg: "Đã đưa #{n}/#{length(ids)} bot về Làng."}}
+  end
+
   defp admin("flags", _p, _s), do: {:ok, %{mob_move: HacLong.World.MobMove.on?()}}
 
   # bật / tắt quái đi lang thang cho cả server; dòng admin_log này (params.on) là trạng thái lưu lại

@@ -398,7 +398,7 @@
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
-        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></button><button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
+        ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}</div></button>${isAdminRole() ? `<button class="btn small-btn" data-adm="to_village" data-uid="${o.id}" title="Đưa về Làng (gỡ kẹt)" aria-label="Đưa ${esc(o.name)} về Làng">🏠</button>` : ''}<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
       </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
         <form id="adm-lookup" class="chat-form"><input type="text" id="adm-name" placeholder="Tên nhân vật hoặc tên đăng nhập" autocomplete="off"><button class="btn" type="submit">Tìm</button></form>
@@ -409,7 +409,9 @@
       </div>
       ${isAdminRole() ? `<div class="card"><h3>Quà cho mọi người</h3><p class="small muted">Gửi vào hộp thư của mọi nhân vật (vd. đền bù bảo trì).</p>${giftForm('adm-gift-all')}</div>
       ${adm.flags ? `<div class="card"><h3>Bản đồ</h3><p class="small muted">Quái đi lang thang trên mọi bản đồ, cho cả server. Tắt thì quái đứng yên tại chỗ (vẫn đánh, vẫn hồi sinh như thường).</p>
-        <div class="btn-row"><span class="grow">Quái di chuyển: <b>${adm.flags.mob_move ? 'Đang bật' : 'Đang tắt'}</b></span><button class="btn" data-adm="mob_move" data-on="${adm.flags.mob_move ? 0 : 1}">${adm.flags.mob_move ? 'Tắt' : 'Bật'}</button></div></div>` : ''}
+        <div class="btn-row"><span class="grow">Quái di chuyển: <b>${adm.flags.mob_move ? 'Đang bật' : 'Đang tắt'}</b></span><button class="btn" data-adm="mob_move" data-on="${adm.flags.mob_move ? 0 : 1}">${adm.flags.mob_move ? 'Tắt' : 'Bật'}</button></div>
+        <p class="small muted">Gỡ kẹt: đưa người chơi về Làng bằng nút 🏠 ở danh sách online / tra cứu. Bot tự về Làng khi đứng yên quá ${RULES.botStuckMin || 10} phút.</p>
+        <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>` : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -465,7 +467,7 @@
           ${woptSelect(gearBases[0] && gearBases[0][0])}</div>
         ${[['weapon', 'Excellent vũ khí / dây chuyền'], ['armor', 'Excellent giáp / khiên / nhẫn']].map(([t, l]) => `<div class="adm-lines small" data-gear-show="${t}"${show0[t] ? '' : ' hidden'}><span class="muted">${l}:</span> ${Object.entries((RULES.excOptions || {})[t] || {}).map(([id, v]) => `<label><input type="checkbox" name="exc" value="${id}"> ${(EXC_TEXT[id] || (() => id))(v)}</label>`).join(' ')}</div>`).join('')}`, 'Tặng')}
       ${line('give_pet', 'Thú cưng (cả Long Vương), đặt cấp thú, dắt theo luôn', `<select name="id">${[...PETS].sort((a, b) => (b.rare ? 1 : 0) - (a.rare ? 1 : 0) || a.price - b.price).map((pt) => `<option value="${pt.id}">${pt.rare ? '🐉 ' : ''}${esc(pt.name)}</option>`).join('')}</select><label class="small">Cấp ${num('level', RULES.petMaxLevel, `min="1" max="${RULES.petMaxLevel}"`)}</label>`, 'Tặng')}
-      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
+      <div class="btn-row"><button class="btn small-btn" data-adm="heal" data-uid="${u.id}">Hồi đầy máu</button><button class="btn small-btn" data-adm="to_village" data-uid="${u.id}" title="Gỡ kẹt: kết thúc trận như bỏ chạy (không mất gì), rời tháp / sự kiện, về Đá Dịch Chuyển ở Làng">🏠 Về Làng</button><button class="btn small-btn" data-adm="reset_stats" data-uid="${u.id}" title="Chỉ số về gốc của lớp; điểm tiềm năng = (cấp − 1) × điểm mỗi cấp + chuyển sinh × 25, chưa cộng">Đặt lại chỉ số</button><button class="btn small-btn danger" data-adm="clear_bag" data-uid="${u.id}" title="Hủy mọi trang bị trong túi (cả món khóa); đồ đang mặc và đồ cất Tủ Đồ giữ nguyên">Hủy trang bị trong túi</button>
         <button class="btn small-btn" data-adm="gold_log" data-uid="${u.id}">Nhật ký vàng</button>
         <button class="btn small-btn" data-adm="admin_log" data-uid="${u.id}">Nhật ký quản trị</button></div>
       ${adm.glog && adm.glog.uid === u.id ? viewGoldLog(adm.glog.log) : ''}
@@ -645,6 +647,8 @@
     }
     if (op === 'reset_stats' && !confirm('Đặt lại chỉ số về gốc của lớp và trả điểm tiềm năng theo cấp / chuyển sinh?')) return;
     if (op === 'reset_password' && !confirm('Đặt lại mật khẩu tài khoản này? Mật khẩu cũ hết dùng được, mọi thiết bị của họ bị đăng xuất.')) return;
+    if (op === 'to_village' && !confirm('Đưa nhân vật này về Làng? Đang đánh thì trận kết thúc như bỏ chạy (không mất gì).')) return;
+    if (op === 'bots_to_village' && !confirm('Đưa mọi bot về Làng?')) return;
     if (op === 'clear_bag' && !confirm('Hủy MỌI trang bị trong túi của nhân vật này (cả món đang khóa)? Đồ đang mặc và đồ trong Tủ Đồ giữ nguyên. Không hoàn tác được.')) return;
     const payload = {};
     if (d.id) payload.id = +d.id;
