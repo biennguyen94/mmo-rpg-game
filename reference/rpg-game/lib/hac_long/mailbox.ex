@@ -51,7 +51,10 @@ defmodule HacLong.Mailbox do
     end
   end
 
-  @doc "Những người nhận của `send_all/2` với `filter` (mã tài khoản)."
+  @doc """
+  Những người nhận của `send_all/2` với `filter` (mã người chơi). Mỗi tài khoản một phần (DECISIONS "Nhiều nhân
+  vật"): trong các nhân vật của tài khoản khớp bộ lọc, nhận ở nhân vật chơi gần nhất.
+  """
   def recipients(filter \\ %{}) do
     f = Map.new(filter || %{}, fn {k, v} -> {to_string(k), v} end)
     int = fn k -> if is_integer(f[k]), do: f[k] end
@@ -61,19 +64,27 @@ defmodule HacLong.Mailbox do
         join: u in HacLong.Accounts.User,
         on: u.id == c.user_id,
         where: u.role != "bot",
-        select: c.user_id
+        # chơi gần nhất trước: mỗi tài khoản lấy dòng đầu
+        order_by: [desc: c.updated_at, desc: c.user_id],
+        select: {coalesce(u.account_id, u.id), c.user_id}
 
     q = if v = int.("min_level"), do: where(q, [c], c.level >= ^v), else: q
     q = if v = int.("max_level"), do: where(q, [c], c.level <= ^v), else: q
     q = if v = int.("min_rebirths"), do: where(q, [c], c.rebirths >= ^v), else: q
-    ids = Repo.all(q)
+    rows = Repo.all(q)
 
-    if f["online"] == true do
-      on = MapSet.new(HacLong.Game.Session.online(1_000_000).players, & &1.id)
-      Enum.filter(ids, &MapSet.member?(on, &1))
-    else
-      ids
-    end
+    rows =
+      if f["online"] == true do
+        on = MapSet.new(HacLong.Game.Session.online(1_000_000).players, & &1.id)
+        Enum.filter(rows, fn {_a, id} -> MapSet.member?(on, id) end)
+      else
+        rows
+      end
+
+    rows
+    |> Enum.uniq_by(&elem(&1, 0))
+    |> Enum.map(&elem(&1, 1))
+    |> Enum.sort()
   end
 
   defp row(attrs) do

@@ -130,7 +130,8 @@ defmodule HacLongWeb.GameChannelTest do
     assert r.player.battle.result in ~w(win lose)
 
     # trận đấu (kể cả nhật ký) được lưu và đọc lại đúng như trong bộ nhớ
-    assert Characters.load(user.id) == Map.drop(r.player, [:view, :guild])
+    # (Tủ Đồ là thùng chung của tài khoản, không nằm trong nhân vật gửi xuống client)
+    assert Map.drop(Characters.load(user.id), [:storage]) == Map.drop(r.player, [:view, :guild])
     assert r.player.view.derived.maxHp > 0
 
     if r.player.battle.result == "win" do
@@ -1254,7 +1255,8 @@ defmodule HacLongWeb.GameChannelTest do
     [{pid, _}] = Registry.lookup(HacLong.Game.Registry, user.id)
     DynamicSupervisor.terminate_child(HacLong.Game.SessionSupervisor, pid)
 
-    assert Session.get(user.id) == Map.delete(r.player, :view)
+    assert Map.drop(Session.get(user.id), [:storage, :shared_storage]) ==
+             Map.delete(r.player, :view)
   end
 
   test "tab khác nhận trạng thái mới, tab gửi lệnh thì không nhận trùng" do

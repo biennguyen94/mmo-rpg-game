@@ -36,6 +36,8 @@ defmodule HacLong.Game.Characters do
         name_key: Names.key(player.name)
       })
       |> Map.take(Character.fields())
+      # thùng đồ chung (DECISIONS "Nhiều nhân vật") ghi ở `account_storage`; cột `storage` kiểu cũ để trống
+      |> then(&if(player[:shared_storage], do: Map.put(&1, :storage, %{}), else: &1))
       # đối thủ đấu trường chạy như người (`battle.mirror`) chỉ giữ trong bộ nhớ
       |> Map.update(:battle, nil, &(&1 && Map.delete(&1, :mirror)))
 

@@ -145,6 +145,19 @@ defmodule HacLong.Accounts do
     end
   end
 
+  @doc "Nhân vật khác cùng tài khoản với `uid` đã mở Rương Gia Truyền ngày `day` chưa."
+  def sibling_chest?(uid, day) do
+    case siblings(uid) do
+      [] ->
+        false
+
+      ids ->
+        Repo.exists?(
+          from c in HacLong.Game.Character, where: c.user_id in ^ids and c.chest_day == ^day
+        )
+    end
+  end
+
   @doc "Các mã người chơi khác cùng tài khoản với `uid`."
   def siblings(uid), do: account_rows(uid) -- [uid]
 

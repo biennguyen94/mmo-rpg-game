@@ -1148,7 +1148,8 @@ defmodule HacLongWeb.GameChannel do
           kinds: HacLong.Game.AutoHunt.kinds(player.pos.map)
         },
         achievements: Achievements.view(player),
-        chestReady: player[:chest_day] != Daily.today(),
+        chestReady:
+          player[:chest_day] != Daily.today() and player[:acct_chest_day] != Daily.today(),
         event: event_view(player),
         crafting: %{
           cook: HacLong.Game.Crafting.level(player, :cook),
@@ -1166,7 +1167,8 @@ defmodule HacLongWeb.GameChannel do
           end)
       })
 
-    Map.put(player, :view, view)
+    # thùng đồ chung: client dùng `view.storage` (DECISIONS "Nhiều nhân vật")
+    player |> Map.drop([:storage, :shared_storage]) |> Map.put(:view, view)
   end
 
   # đóng tab thì hủy giao dịch đang dở (người kia khỏi phải chờ)

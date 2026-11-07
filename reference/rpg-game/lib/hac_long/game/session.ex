@@ -18,6 +18,8 @@ defmodule HacLong.Game.Session do
   use GenServer, restart: :transient
   require Logger
 
+  alias HacLong.AccountStorage
+
   alias HacLong.Game.{
     Achievements,
     AutoHunt,
@@ -222,8 +224,12 @@ defmodule HacLong.Game.Session do
     # để `terminate/2` chạy khi server tắt (deploy) và ghi nốt vị trí chưa lưu
     Process.flag(:trap_exit, true)
 
+    acct = HacLong.Accounts.account_id(user_id) || user_id
+
     s = %{
       user_id: user_id,
+      # tài khoản của nhân vật (thùng đồ chung, DECISIONS "Nhiều nhân vật")
+      account: acct,
       player: with_guild(Characters.load(user_id), user_id),
       # tài khoản bot: không báo cả server khi bot ép / ghép thành công, nhặt đồ Thần (tránh loãng dải thông báo)
       bot: HacLong.Bots.bot?(user_id),
@@ -245,8 +251,53 @@ defmodule HacLong.Game.Session do
       tower_timer: nil
     }
 
-    {:ok, s, @idle_timeout}
+    {:ok, %{s | player: with_storage(s.player, s)}, @idle_timeout}
   end
+
+  # Thùng đồ chung của tài khoản (DECISIONS "Nhiều nhân vật", `HacLong.AccountStorage`): nạp bản sao vào
+  # `player.storage`; Tủ Đồ kiểu cũ của nhân vật (riêng) thì chuyển vào thùng chung một lần.
+  defp with_storage(nil, _s), do: nil
+
+  defp with_storage(p, s) do
+    shared = AccountStorage.get(s.account)
+
+    case AccountStorage.merge_legacy(p, shared) do
+      nil ->
+        p |> Map.put(:storage, shared) |> Map.put(:shared_storage, true) |> acct_chest(s)
+
+      {p, st} ->
+        p = p |> Map.put(:storage, st) |> Map.put(:shared_storage, true) |> acct_chest(s)
+
+        {:ok, _} =
+          HacLong.Repo.transaction(fn ->
+            Characters.save!(s.user_id, p, "SHARED")
+            AccountStorage.write!(s.account, st)
+          end)
+
+        p
+    end
+  end
+
+  # Rương Gia Truyền mỗi tài khoản một lần mỗi ngày: nhân vật khác cùng tài khoản đã mở hôm nay thì ghi
+  # `acct_chest_day` (chỉ trong bộ nhớ; chỉ đặt khi có, để nhân vật một mình không thêm khóa nào)
+  defp acct_chest(p, s) do
+    today = Daily.today()
+
+    opened = HacLong.Accounts.sibling_chest?(s.user_id, today)
+
+    if opened, do: Map.put(p, :acct_chest_day, today), else: Map.delete(p, :acct_chest_day)
+  end
+
+  @storage_acts ~w(store unstore gold_store gold_take storage_expand)
+
+  # trước lệnh Thủ Kho / lúc vào game: lấy bản mới nhất của thùng chung (nhân vật khác vừa cất / lấy)
+  defp fresh_storage(%{player: nil} = s), do: s
+
+  defp fresh_storage(s),
+    do: %{
+      s
+      | player: s.player |> Map.put(:storage, AccountStorage.get(s.account)) |> acct_chest(s)
+    }
 
   # Bang hội không lưu trong bảng characters: đọc từ HacLong.Guilds.
   defp with_guild(nil, _uid), do: nil
@@ -450,7 +501,7 @@ defmodule HacLong.Game.Session do
   defp handle(:online_info, _from, s), do: reply(nil, s)
 
   defp handle({:attach, pid}, _from, s) do
-    s = cc_back(s)
+    s = s |> cc_back() |> fresh_storage()
     if map_size(s.tabs) == 0, do: World.enter(s.player, s.user_id)
     HacLong.Party.back(s.user_id)
     s = %{s | tabs: Map.put(s.tabs, Process.monitor(pid), pid)}
@@ -837,6 +888,7 @@ defmodule HacLong.Game.Session do
   defp run_command(s, cmd, origin), do: run_command_(s, cmd, origin)
 
   defp run_command_(s, cmd, origin) do
+    s = if cmd["act"] in @storage_acts, do: fresh_storage(s), else: s
     old = s.player
     {result, player} = run(s, old, cmd)
     # nhân vật vừa tạo cũng có ngay việc hằng ngày
@@ -844,7 +896,11 @@ defmodule HacLong.Game.Session do
       s |> after_command(old, player, cmd) |> ds_record(s) |> Daily.ensure(Daily.today())
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
-    player = if player && old == nil, do: with_guild(player, s.user_id), else: player
+    player =
+      if player && old == nil,
+        do: player |> with_guild(s.user_id) |> with_storage(s),
+        else: player
+
     {player, notes} = checks(player)
 
     left_trade(s.user_id, old, player)
@@ -1685,6 +1741,26 @@ defmodule HacLong.Game.Session do
   defp left_trade(_uid, _old, _new), do: :ok
 
   # đồ rơi lúc túi đồ hiếm đầy (`Gear.add/2`): gửi Hộp thư cùng transaction với lần ghi nhân vật
+  # lệnh Thủ Kho đổi thùng chung: ghi thùng và nhân vật cùng transaction. Đồ vào thùng: nhân vật trước (nhật ký `out`
+  # rồi `in`); đồ ra khỏi thùng: thùng trước.
+  defp save(s, %{storage_dirty: true} = player) do
+    p = Map.delete(player, :storage_dirty)
+    old = (s.player && s.player[:storage]) || AccountStorage.empty()
+
+    {:ok, _} =
+      HacLong.Repo.transaction(fn ->
+        if AccountStorage.added?(old, p.storage) do
+          Characters.save!(s.user_id, p)
+          AccountStorage.write!(s.account, p.storage)
+        else
+          AccountStorage.write!(s.account, p.storage)
+          Characters.save!(s.user_id, p)
+        end
+      end)
+
+    cancel_flush(%{s | player: p, dirty: false})
+  end
+
   defp save(s, %{mail_out: [_ | _]} = player) do
     {:ok, player} =
       HacLong.Repo.transaction(fn ->

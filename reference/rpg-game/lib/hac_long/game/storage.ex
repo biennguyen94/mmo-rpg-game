@@ -5,21 +5,22 @@ defmodule HacLong.Game.Storage do
   `priv/maps/village.json`).
 
   - Đồ thường cất trong `storage.inv` (`%{id => số}`), tối đa `RULES.storage.items` loại.
-  - Đồ hiếm vẫn ở `gear` của nhân vật, gắn cờ `stored` (`HacLong.Game.Gear.stored?/2`): túi không
-    tính, không mặc / bán / giao dịch được, nhưng nhật ký đồ hiếm và đối soát không phải đổi.
+  - Đồ hiếm cất vào `storage.gear` (kèm cấp ép `up`), ra khỏi `gear` / `upgrades` của nhân vật.
     Tối đa `RULES.storage.gear` món, mở rộng thêm theo `RULES.storage.expand` (trả vàng).
+  - Thùng chung cả tài khoản (DECISIONS "Nhiều nhân vật", `HacLong.AccountStorage`): `player.storage` là bản sao
+    `Session` nạp từ database; lệnh nào đổi thùng thì đặt `storage_dirty` để `Session` ghi lại.
 
   - Vàng cất trong `storage.gold` (2026-10-24): không mất khi chết / thua đồ sát, không tiêu được cho tới khi rút ra;
     tối đa `RULES.storage.gold_max` (null = không giới hạn).
 
-  Nhân vật lưu `storage: %{inv: %{}, extra: số_lần_mở_rộng, gold: vàng_trong_tủ}`.
+  `player.storage = %{inv: %{}, extra: số_lần_mở_rộng, gold: vàng_trong_tủ, gear: [món]}`.
   """
 
   alias HacLong.Game.{Data, Engine, Gear}
 
   @rules Data.rules().storage
 
-  def empty, do: %{inv: %{}, extra: 0, gold: 0}
+  def empty, do: %{inv: %{}, extra: 0, gold: 0, gear: []}
 
   @doc "Đọc từ database (khóa chuỗi); bỏ món không còn trong dữ liệu."
   def load(m) when is_map(m) do
@@ -45,7 +46,10 @@ defmodule HacLong.Game.Storage do
   end
 
   def items_cap, do: @rules.items
-  def stored_gear(p), do: Enum.filter(Gear.list(p), & &1[:stored])
+  def stored_gear(p), do: get(p).gear
+
+  # thùng đổi: `Session` ghi lại (`HacLong.AccountStorage.write!/2`)
+  defp put_st(p, s), do: p |> Map.put(:storage, s) |> Map.put(:storage_dirty, true)
 
   @doc "Lần mở rộng tiếp theo (`%{gear, gold}`) hoặc nil nếu đã mở hết."
   def next_expand(p), do: Enum.at(@rules.expand, get(p).extra)
@@ -72,7 +76,18 @@ defmodule HacLong.Game.Storage do
         {err("Tủ đã đầy trang bị (#{gear_cap(p)} món)."), p}
 
       true ->
-        {ok("Đã cất #{Gear.resolve(g).name} vào tủ."), Gear.put(p, uid, :stored, true)}
+        ups = Map.get(p, :upgrades) || %{}
+        g2 = g |> Map.drop([:stored, :sell, :price])
+        g2 = if ups[uid], do: Map.put(g2, :up, ups[uid]), else: g2
+        s = get(p)
+
+        p =
+          p
+          |> Gear.remove(uid)
+          |> Map.put(:upgrades, Map.delete(ups, uid))
+          |> put_st(%{s | gear: s.gear ++ [g2]})
+
+        {ok("Đã cất #{Gear.resolve(g).name} vào tủ."), p}
     end
   end
 
@@ -94,8 +109,7 @@ defmodule HacLong.Game.Storage do
         inv = if have == n, do: Map.delete(p.inv, id), else: Map.put(p.inv, id, have - n)
         s = %{s | inv: Map.update(s.inv, id, n, &(&1 + n))}
 
-        {ok("Đã cất #{Data.item(id).name} ×#{n} vào tủ."),
-         %{p | inv: inv} |> Map.put(:storage, s)}
+        {ok("Đã cất #{Data.item(id).name} ×#{n} vào tủ."), %{p | inv: inv} |> put_st(s)}
     end
   end
 
@@ -105,17 +119,26 @@ defmodule HacLong.Game.Storage do
   def take(%{battle: b} = p, _id, _n) when b != nil, do: {err("Đang trong trận."), p}
 
   def take(p, "#" <> _ = uid, _n) do
-    g = Gear.find(p, uid)
+    s = get(p)
+    g = Enum.find(s.gear, &(&1.uid == uid))
 
     cond do
-      g == nil or not g[:stored] ->
+      g == nil ->
         {err("Không có món này trong tủ."), p}
 
       length(Gear.bag(p)) >= Gear.max_bag() ->
         {err("Túi trang bị đầy (#{Gear.max_bag()} món)."), p}
 
       true ->
-        {ok("Đã lấy #{Gear.resolve(g).name} ra túi."), Gear.put(p, uid, :stored, nil)}
+        ups = Map.get(p, :upgrades) || %{}
+
+        p =
+          p
+          |> Map.put(:gear, Gear.list(p) ++ [Map.delete(g, :up)])
+          |> Map.put(:upgrades, if(g[:up], do: Map.put(ups, uid, g.up), else: ups))
+          |> put_st(%{s | gear: Enum.reject(s.gear, &(&1.uid == uid))})
+
+        {ok("Đã lấy #{Gear.resolve(g).name} ra túi."), p}
     end
   end
 
@@ -136,7 +159,7 @@ defmodule HacLong.Game.Storage do
           | inv: if(have == n, do: Map.delete(s.inv, id), else: Map.put(s.inv, id, have - n))
         }
 
-        p = p |> Engine.add_item(id, n) |> Map.put(:storage, s)
+        p = p |> Engine.add_item(id, n) |> put_st(s)
         {ok("Đã lấy #{Data.item(id).name} ×#{n} ra túi."), p}
     end
   end
@@ -152,7 +175,7 @@ defmodule HacLong.Game.Storage do
 
       %{gold: gold, gear: n} ->
         s = get(p)
-        p = %{p | gold: p.gold - gold} |> Map.put(:storage, %{s | extra: s.extra + 1})
+        p = %{p | gold: p.gold - gold} |> put_st(%{s | extra: s.extra + 1})
         {ok("Tủ chứa thêm #{n} món trang bị (#{gear_cap(p)} món)."), p}
     end
   end
@@ -176,7 +199,7 @@ defmodule HacLong.Game.Storage do
 
       true ->
         {ok("Đã cất #{n} vàng vào tủ."),
-         %{p | gold: p.gold - n} |> Map.put(:storage, %{s | gold: s.gold + n})}
+         %{p | gold: p.gold - n} |> put_st(%{s | gold: s.gold + n})}
     end
   end
 
@@ -194,17 +217,17 @@ defmodule HacLong.Game.Storage do
         {err("Tủ chỉ có #{s.gold} vàng."), p}
 
       true ->
-        {ok("Đã rút #{n} vàng."),
-         %{p | gold: p.gold + n} |> Map.put(:storage, %{s | gold: s.gold - n})}
+        {ok("Đã rút #{n} vàng."), %{p | gold: p.gold + n} |> put_st(%{s | gold: s.gold - n})}
     end
   end
 
-  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], cap, items_cap, next, gold}`."
+  @doc "Dữ liệu cho giao diện: `%{inv, gear: [uid], ups: %{uid => cấp ép}, cap, items_cap, next, gold}`."
   def view(p) do
     %{
       gold: gold(p),
       inv: get(p).inv,
       gear: Enum.map(stored_gear(p), & &1.uid),
+      ups: for(g <- stored_gear(p), g[:up], into: %{}, do: {g.uid, g.up}),
       cap: gear_cap(p),
       items_cap: @rules.items,
       next: next_expand(p)
