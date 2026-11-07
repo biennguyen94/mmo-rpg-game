@@ -1538,7 +1538,7 @@
   function viewCreate() {
     return `
       <div class="intro">
-        ${sprite('shadow_dragon', '', 'Hắc Long')}
+        ${heroArt()}
         <h1>Hắc Long</h1>
         <p>Hắc Long đã khủng bố vùng đất này nhiều năm. Rèn luyện qua sáu vùng đất, hạ các trùm canh giữ và tiêu diệt nó.</p>
       </div>
@@ -1566,6 +1566,8 @@
   }
 
   // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
+  // hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật: rồng vẽ tay (CC0, Cethiel, tô đen; CREDITS.md), nét ở mọi cỡ màn hình
+  function heroArt() { return '<img class="hero-art" src="assets/art/hac_long.webp" width="458" height="291" alt="Hắc Long" decoding="async">'; }
   function viewSelect() {
     // theo thứ tự tạo (server sắp sẵn)
     const list = Net.chars;
@@ -1587,7 +1589,7 @@
         </form>` : ''}`;
     };
     return `
-      <div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Chọn nhân vật</h1>
+      <div class="intro">${heroArt()}<h1>Chọn nhân vật</h1>
         <p>Mỗi tài khoản tối đa ${Net.maxChars} nhân vật, chơi một nhân vật một lúc. Thùng đồ ở Thủ Kho dùng chung.</p></div>
       <div class="card"><div class="list">${list.map(row).join('')}</div>
         ${list.length < Net.maxChars ? `<button class="btn block" data-act="char-new" ${busy ? 'disabled' : ''}>＋ Tạo nhân vật mới (${list.length}/${Net.maxChars})</button>` : `<p class="small muted">Đã đủ ${Net.maxChars} nhân vật.</p>`}</div>
@@ -1602,7 +1604,7 @@
 
   // ---------- Đăng nhập ----------
   function viewLoading() {
-    return `<div class="intro">${sprite('shadow_dragon', '', 'Hắc Long')}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
+    return `<div class="intro">${heroArt()}<h1>Hắc Long</h1><p>Đang kết nối máy chủ...</p></div>`;
   }
 
   // Câu hỏi bảo mật (RULES.account)
@@ -1662,7 +1664,7 @@
     return `
       <p class="small" style="text-align:right;margin:0" data-notr><button class="btn small-btn" data-act="lang" data-lang="${lg === 'vi' ? 'en' : 'vi'}">${lg === 'vi' ? 'English' : 'Tiếng Việt'}</button></p>
       <div class="intro">
-        ${sprite('shadow_dragon', '', 'Hắc Long')}
+        ${heroArt()}
         <h1>Hắc Long</h1>
         <p>${reg ? 'Tạo tài khoản để lưu nhân vật trên máy chủ và chơi trên mọi thiết bị.' : 'Đăng nhập để tiếp tục hành trình.'}</p>
       </div>

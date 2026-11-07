@@ -157,6 +157,7 @@ p { margin: 0; }
 /* ---------- Tạo nhân vật ---------- */
 .intro { text-align: center; display: grid; gap: 6px; padding: 18px 0 4px; justify-items: center; }
 .intro .sprite { width: 128px; height: 128px; filter: drop-shadow(0 8px 18px #000); }
+.intro .hero-art { width: min(340px, 82vw); height: auto; filter: drop-shadow(0 0 22px rgba(170, 30, 50, 0.45)) drop-shadow(0 10px 16px #000); }
 .intro h1 { font-family: var(--display); font-size: 3rem; line-height: 1; color: var(--gold); font-weight: 800; letter-spacing: 0.02em; }
 .intro p { max-width: 34ch; color: var(--dim); }
 label.field { display: grid; gap: 6px; font-weight: 600; }

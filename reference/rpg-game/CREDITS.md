@@ -14,6 +14,10 @@ Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint
 
 Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
 
+Hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật (`priv/static/assets/art/hac_long.webp`): khung đầu hoạt cảnh "Idle" của
+**Dragon - Fully Animated** của **Cethiel** (https://opengameart.org/content/dragon-fully-animated), giấy phép **CC0 1.0**.
+Đã cắt sát hình và tô lại sang đen (giữ mắt vàng). Cảm ơn Cethiel.
+
 Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): logo vector `priv/static/app/logo.svg` tự vẽ cho game này (CC0), xuất các cỡ bằng `e2e/app_icons.mjs`.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
