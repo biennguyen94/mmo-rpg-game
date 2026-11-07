@@ -656,6 +656,9 @@ smith_note = (f"<b>Rèn đồ ở Thợ Rèn</b>: ra một món đúng cấp, đ
               f"Nghề Rèn cấp 1–{len(CR['levels'])} ở {' / '.join(map(str, CR['levels']))} lần rèn (mỗi lần +1). "
               f"Số dòng: 3 dòng {CR['smith_epic_per_level']}% × cấp nghề (cấp {len(CR['levels'])}: {CR['smith_epic_per_level'] * len(CR['levels'])}%), "
               f"2 dòng {CR['smith_rare']}%, còn lại 1 dòng.")
+# bộ tên thay cho tên MU (DECISIONS "Bộ tên thay cho tên MU"): ô tick "Tên mới" trên trang đổi chữ theo bảng này
+_alt = json.load(open(os.path.join(os.path.dirname(__file__), "../../priv/static/i18n/names_alt.json"), encoding="utf-8"))
+names_alt = json.dumps({k: v[0] for g in _alt["groups"].values() for k, v in g.items()}, ensure_ascii=False).replace("</", "<\\/")
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
@@ -669,7 +672,7 @@ for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jro
                  ANCDEF=pct(anc['piece_def_pct']), ANCPRICE=n(anc['price_mult']), PERLINE=f"{pct(life['per_line_pct'])} công / thủ gốc của món (ít nhất +{life['per_line']})",
                  STRONG=pct(EL['strong']), WEAK=pct(EL['weak']), LOADOUT=str(R['tower_skills']['loadout']), MASTERY=mastery_note(),
                  RMIN=str(rl['min_level']), REBIRTH=f"Chuyển sinh lần n: +{R['character']['rebirth_points']} × n điểm tiềm năng, kinh nghiệm lên cấp × (1 + {pct(R['character']['rebirth_xp_pct'])} × n); từ lần {R['character']['rebirth_lord_from'] + 1}, muốn chuyển sinh lần k + 1 phải từng hạ chúa tể vùng k. Không giới hạn: quá {R['character']['max_rebirths']} lần mỗi lần chỉ +{R['character']['endless_points']} điểm, kinh nghiệm như lần {R['character']['max_rebirths']}, phải hạ lại chúa tể vùng {R['character']['max_rebirths']} (tổng n − {R['character']['max_rebirths'] - 1} lần).", RSTAT=str(rl['stat_level']), RMULT=n(rl['mult_per_realm']), RXP=n(rl['xp_mult_per_realm']), RBOSS=n(rl['boss_mult']), RMAPS=str(rl['maps_per_realm']), RSTEP=n(rl['depth_step']),
-                 SELL=pct(R['shop']['sell_ratio'])).items():
+                 SELL=pct(R['shop']['sell_ratio']), NAMESALT=names_alt, NAMESN=str(len(json.loads(names_alt)))).items():
     page = page.replace("{{" + k + "}}", v)
 assert "{{" not in page, page[page.index("{{"):page.index("{{") + 40]
 open(OUT, "w", encoding="utf-8").write(page)

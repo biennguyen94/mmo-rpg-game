@@ -29,6 +29,8 @@ nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--
 nav a{color:var(--muted);text-decoration:none}
 nav a:hover,nav a:focus-visible{color:var(--gold)}
 nav a.new::after{content:" mới";font-size:11px;color:var(--exc);font-weight:700}
+nav .swap{margin-left:auto;display:inline-flex;align-items:center;gap:6px;color:var(--gold);font-weight:700;cursor:pointer;white-space:nowrap}
+nav .swap input{width:16px;height:16px;accent-color:var(--gold);margin:0}
 section{display:grid;gap:14px;scroll-margin-top:56px;min-width:0}
 .wrap>*,section>*{min-width:0}
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
@@ -74,6 +76,7 @@ code{font-size:13px}
 
 <nav aria-label="Mục lục">
   <a href="#tong-quan">Tổng quan</a><a href="#theo-lop">Đồ theo lớp</a><a href="#bac">Bậc, cấp, giá</a><a href="#trang-suc">Nhẫn, dây chuyền</a><a href="#canh">Cánh</a><a href="#ep">Ép +N</a><a href="#dong">Dòng phụ</a><a href="#roi">Tỉ lệ rơi</a><a href="#ky-nang" class="new">Kỹ năng</a><a href="#nguyen-to" class="new">Nguyên tố</a><a href="#chi-so" class="new">Chỉ số, chiến đấu</a><a href="#quy-tac" class="new">Quy tắc chi tiết</a><a href="#chuyen-sinh" class="new">Vùng chuyển sinh</a><a href="#su-kien" class="new">Sự kiện</a><a href="#thu-cung" class="new">Thú cưng</a><a href="#ban-do" class="new">Bản đồ, quái</a><a href="#thap" class="new">Tháp Vô Tận</a><a href="#pk" class="new">PK, đồ sát</a><a href="#khac">Vật phẩm khác</a>
+  <label class="swap" title="Đổi {{NAMESN}} tên MU (sự kiện, ngọc, đồ, cánh, thú…) sang bộ tên mới; bỏ tick để về tên MU. Trong game, quản trị chọn ở Quản trị → Bộ tên."><input type="checkbox" id="name-swap"> Tên mới</label>
 </nav>
 
 <section id="tong-quan">
@@ -283,6 +286,43 @@ code{font-size:13px}
 </div>
 
 <script>
+// Bộ tên: tick "Tên mới" đổi mọi chữ khớp tên MU (khóa dài trước, không khớp giữa chữ); bỏ tick trả lại chữ gốc
+(function(){
+  var MAP = {{NAMESALT}};
+  var keys = Object.keys(MAP).sort(function(a, b){ return b.length - a.length; }).map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); });
+  var re = new RegExp('(?<![\\p{L}\\p{N}])(' + keys.join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
+  var box = document.getElementById('name-swap'), KEY = 'kho-do-names';
+  var nodes = null, attrs = null;
+  function collect(){
+    nodes = []; attrs = [];
+    var w = document.createTreeWalker(document.querySelector('.wrap'), NodeFilter.SHOW_TEXT);
+    for (var n = w.nextNode(); n; n = w.nextNode()) {
+      var p = n.parentNode && n.parentNode.nodeName;
+      if (p === 'SCRIPT' || p === 'STYLE') continue;
+      re.lastIndex = 0;
+      if (re.test(n.nodeValue)) nodes.push([n, n.nodeValue]);
+    }
+    [].forEach.call(document.querySelectorAll('.wrap [title], .wrap [alt], .wrap [aria-label]'), function(el){
+      ['title', 'alt', 'aria-label'].forEach(function(a){
+        var v = el.getAttribute(a);
+        if (v) { re.lastIndex = 0; if (re.test(v)) attrs.push([el, a, v]); }
+      });
+    });
+  }
+  var swap = function(s){ return s.replace(re, function(x){ return MAP[x] || x; }); };
+  function apply(on){
+    if (!nodes) collect();
+    nodes.forEach(function(e){ e[0].nodeValue = on ? swap(e[1]) : e[1]; });
+    attrs.forEach(function(e){ if (e[0] !== box.parentNode) e[0].setAttribute(e[1], on ? swap(e[2]) : e[2]); });
+  }
+  box.addEventListener('change', function(){
+    apply(box.checked);
+    try { localStorage.setItem(KEY, box.checked ? '1' : '0'); } catch (e) { /* không lưu được: chỉ đổi lần này */ }
+  });
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) { saved = null; }
+  if (saved === '1') { box.checked = true; apply(true); }
+})();
 (function(){
   ['cls','sk'].forEach(function(g){
     var tabs=[].slice.call(document.querySelectorAll('.tab[data-g="'+g+'"]')), panes=[].slice.call(document.querySelectorAll('.ctab[data-g="'+g+'"]'));
