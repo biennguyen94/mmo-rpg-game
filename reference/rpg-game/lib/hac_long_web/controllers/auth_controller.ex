@@ -107,6 +107,9 @@ defmodule HacLongWeb.AuthController do
     end
   end
 
+  @doc "Bộ tên cho cả server (`HacLong.NamePack`), không cần đăng nhập: trình duyệt hỏi trước khi vẽ giao diện."
+  def names(conn, _params), do: json(conn, %{pack: HacLong.NamePack.get()})
+
   def me(conn, _params) do
     with {:ok, user, _token} <- current(conn) do
       json(conn, %{

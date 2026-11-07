@@ -124,6 +124,8 @@
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
         ch.on('lake', (m) => cb.lake && cb.lake(m));
+        // quản trị đổi bộ tên cho cả server: tải lại trang để nạp tên mới
+        ch.on('name_pack', (m) => { if (!window.I18N || window.I18N.pack !== m.pack) setTimeout(() => location.reload(), 1500); });
         ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
         ch.on('notice', (m) => cb.notice && cb.notice(m.msg));
         // tài khoản vừa vào nhân vật khác ở nơi khác: thôi, không tự nối lại

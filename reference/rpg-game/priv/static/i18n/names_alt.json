@@ -1,0 +1,1536 @@
+{
+ "sourceType": "DESIGN",
+ "version": 1,
+ "verified": false,
+ "_doc": "DECISIONS \"Bộ tên thay cho tên MU\": quản trị chọn bộ tên cho cả server (Quản trị → Bộ tên). Bộ \"alt\": trình duyệt đổi mọi chữ khớp khóa (tên gốc, khóa dài khớp trước) thành [tên mới tiếng Việt, tên mới tiếng Anh]. Dữ liệu game, database giữ tên gốc. Sửa / thêm dòng ở đây là xong, không cần build. Nhóm chỉ để dễ đọc.",
+ "_en_doc": "Tiếng Anh: tên gốc tiếng Anh của mỗi khóa lấy từ i18n/en.json; en_terms thêm các cụm tiếng Anh gốc không có khóa riêng (nằm trong câu).",
+ "groups": {
+  "Sự kiện, hệ thống": {
+   "Quảng Trường Quỷ": [
+    "Quỷ Môn Trận",
+    "Demon Gate Trial"
+   ],
+   "Vé Quảng Trường": [
+    "Vé Quỷ Môn",
+    "Demon Gate Pass"
+   ],
+   "Quảng Trường": [
+    "Quỷ Môn Trận",
+    "Demon Gate Trial"
+   ],
+   "Lâu Đài Máu": [
+    "Thành Cổ Phong Ấn",
+    "Sealed Citadel"
+   ],
+   "Vé Lâu Đài": [
+    "Vé Thành Cổ",
+    "Citadel Pass"
+   ],
+   "Lâu Đài": [
+    "Thành Cổ",
+    "Citadel"
+   ],
+   "Kalima": [
+    "Vực U Minh",
+    "Netherdeep"
+   ],
+   "Bản Đồ Thất Lạc": [
+    "Bản Đồ U Minh",
+    "Netherdeep Chart"
+   ],
+   "Hỗn Chiến Thành": [
+    "Loạn Chiến Đài",
+    "Brawl Keep"
+   ],
+   "Golden Invasion": [
+    "Quái Vàng Xâm Lăng",
+    "Golden Raid"
+   ],
+   "Máy Hỗn Nguyên": [
+    "Lò Luyện Kim",
+    "Arcane Forge"
+   ],
+   "Lão Hỗn Nguyên": [
+    "Lão Luyện Kim",
+    "Old Alchemist"
+   ],
+   "Excellent": [
+    "Tuyệt Phẩm",
+    "Masterwork"
+   ],
+   "Đồ Thần": [
+    "Đồ Thượng Cổ",
+    "Primal Gear"
+   ],
+   "đồ Thần": [
+    "đồ Thượng Cổ",
+    "primal gear"
+   ],
+   "Bộ Thần": [
+    "Bộ Thượng Cổ",
+    "Primal Set"
+   ],
+   "Excellent / Thần": [
+    "Tuyệt Phẩm / Thượng Cổ",
+    "Masterwork / Primal"
+   ],
+   "Tổng Lãnh Thiên Thần": [
+    "Thánh Sứ",
+    "Herald"
+   ]
+  },
+  "Ngọc": {
+   "Ngọc Ước Nguyện": [
+    "Ngọc Lam Tinh",
+    "Azure Gem"
+   ],
+   "Ngọc Tâm Linh": [
+    "Ngọc Tử Tinh",
+    "Violet Gem"
+   ],
+   "Ngọc Sinh Mệnh": [
+    "Ngọc Lục Tinh",
+    "Verdant Gem"
+   ],
+   "Ngọc Hỗn Nguyên": [
+    "Ngọc Huyết Tinh",
+    "Crimson Gem"
+   ]
+  },
+  "Nguyên liệu, vật phẩm": {
+   "Cuộn Giấy Tổng Lãnh Thiên Thần": [
+    "Cuộn Giấy Thánh Sứ",
+    "Herald's Scroll"
+   ],
+   "Xương Máu": [
+    "Xương Hiến Tế",
+    "Offering Bone"
+   ],
+   "Áo Giáp Vệ Binh": [
+    "Phù Hiệu Loạn Chiến",
+    "Brawl Badge"
+   ],
+   "Lông Vũ Kền Kền": [
+    "Lông Vũ Hỏa Ưng",
+    "Firehawk Feather"
+   ],
+   "Mắt Quỷ": [
+    "Nhãn Quỷ Môn",
+    "Demon Gate Eye"
+   ],
+   "Chìa Khóa Quỷ": [
+    "Khóa Quỷ Môn",
+    "Demon Gate Key"
+   ],
+   "Dấu Ấn Kundun": [
+    "Dấu Ấn Ma Chủ",
+    "Faceless Lord Sigil"
+   ],
+   "Pha Excellent": [
+    "Pha Tuyệt Phẩm",
+    "Masterwork Brew"
+   ]
+  },
+  "Quái, trùm": {
+   "Kundun": [
+    "Ma Chủ Vô Diện",
+    "Faceless Lord"
+   ],
+   "Phù Thủy Trắng": [
+    "Bạch Pháp Sư",
+    "Pale Sorcerer"
+   ],
+   "Rồng Đỏ": [
+    "Hỏa Giao",
+    "Flame Wyrm"
+   ]
+  },
+  "Thú cưng": {
+   "Quỷ Satan": [
+    "Tiểu Hỏa Quỷ",
+    "Little Fire Imp"
+   ],
+   "Thiên Thần Hộ Mệnh": [
+    "Tiểu Thánh Linh",
+    "Little Seraph"
+   ],
+   "Ác Quỷ Daemon": [
+    "Ma Thú Sừng Đen",
+    "Black-horned Fiend"
+   ]
+  },
+  "Cánh": {
+   "Cánh Ác Quỷ": [
+    "Cánh Dơi Lửa",
+    "Emberbat Wings"
+   ],
+   "Cánh Rồng": [
+    "Cánh Giao Long",
+    "Wyrm Wings"
+   ],
+   "Cánh Bão Tố": [
+    "Cánh Sấm Rền",
+    "Thunder Wings"
+   ],
+   "Cánh Thiên Đường": [
+    "Cánh Mây Trắng",
+    "Cloud Wings"
+   ],
+   "Cánh Linh Hồn": [
+    "Cánh Hồn Lam",
+    "Bluesoul Wings"
+   ],
+   "Cánh Không Gian": [
+    "Cánh Tinh Hà",
+    "Galaxy Wings"
+   ],
+   "Cánh Tiên": [
+    "Cánh Lá Biếc",
+    "Leafsong Wings"
+   ],
+   "Cánh Tinh Linh": [
+    "Cánh Hoa Sương",
+    "Dewblossom Wings"
+   ],
+   "Cánh Ảo Ảnh": [
+    "Cánh Huyễn Quang",
+    "Mirage Wings"
+   ],
+   "Cánh Bóng Tối": [
+    "Cánh Đêm Đen",
+    "Nightfall Wings"
+   ],
+   "Cánh Hủy Diệt": [
+    "Cánh Tận Thế",
+    "Doom Wings"
+   ],
+   "Cánh Cuồng Phong": [
+    "Cánh Lốc Xoáy",
+    "Whirlwind Wings"
+   ]
+  },
+  "Vũ khí": {
+   "Dao Găm Kris": [
+    "Dao Găm Lượn Sóng",
+    "Wavy Dagger"
+   ],
+   "Kiếm Ánh Sáng": [
+    "Kiếm Quang Minh",
+    "Radiant Sword"
+   ],
+   "Kiếm Huyền Thoại": [
+    "Kiếm Truyền Kỳ",
+    "Fabled Sword"
+   ],
+   "Kiếm Xoắn": [
+    "Kiếm Xoáy Ốc",
+    "Spiral Sword"
+   ],
+   "Kiếm Sấm": [
+    "Kiếm Lôi Minh",
+    "Thunderclap Sword"
+   ],
+   "Kiếm Hủy Diệt": [
+    "Kiếm Diệt Thế",
+    "Worldbane Sword"
+   ],
+   "Kiếm Phá Hắc Ám": [
+    "Kiếm Trảm Ám",
+    "Shadowcleaver"
+   ],
+   "Kiếm Hiệp Sĩ": [
+    "Kiếm Kỵ Binh",
+    "Cavalier Blade"
+   ],
+   "Kiếm Hắc Vương": [
+    "Kiếm Ám Vương",
+    "Shadowlord Blade"
+   ],
+   "Kiếm Xương": [
+    "Kiếm Cốt",
+    "Bonecarver"
+   ],
+   "Kiếm Bộc Phá": [
+    "Kiếm Liệt Hỏa",
+    "Blazing Blade"
+   ],
+   "Kiếm Bình Minh": [
+    "Kiếm Rạng Đông",
+    "Dawnblade"
+   ],
+   "Kiếm Vũ Công": [
+    "Kiếm Múa",
+    "Dancing Blade"
+   ],
+   "Kiếm Lửa Lượn": [
+    "Kiếm Hỏa Xà",
+    "Firesnake Blade"
+   ],
+   "Kiếm Đế Vương": [
+    "Kiếm Thiên Tử",
+    "Sovereign Blade"
+   ],
+   "Đao Katana": [
+    "Đao Phù Tang",
+    "Eastern Blade"
+   ],
+   "Kiếm Cổ Tự": [
+    "Kiếm Phù Văn",
+    "Glyph Blade"
+   ],
+   "Kiếm Gladius": [
+    "Kiếm Giác Đấu",
+    "Arena Blade"
+   ],
+   "Kiếm Xà": [
+    "Kiếm Rắn Bạc",
+    "Silver Serpent Blade"
+   ],
+   "Kiếm Kỳ Nhông Lửa": [
+    "Kiếm Thằn Lằn Lửa",
+    "Fire Lizard Blade"
+   ],
+   "Kiếm Pha Lê": [
+    "Kiếm Lưu Ly",
+    "Glass Blade"
+   ],
+   "Rìu Tomahawk": [
+    "Rìu Ném",
+    "Throwing Axe"
+   ],
+   "Rìu Tiên": [
+    "Rìu Rừng Xanh",
+    "Greenwood Axe"
+   ],
+   "Rìu Nikkea": [
+    "Rìu Sơn Cước",
+    "Highland Axe"
+   ],
+   "Rìu Larkan": [
+    "Rìu Sa Mạc",
+    "Desert Axe"
+   ],
+   "Rìu Rồng Hỗn Nguyên": [
+    "Rìu Giao Long Biến Hóa",
+    "Shifting Wyrm Axe"
+   ],
+   "Quyền Trượng Chúa Tể": [
+    "Quyền Trượng Thống Lĩnh",
+    "Commander Scepter"
+   ],
+   "Quyền Trượng Đại Chúa Tể": [
+    "Quyền Trượng Đại Thống Lĩnh",
+    "Grand Commander Scepter"
+   ],
+   "Quyền Trượng Mặt Trời": [
+    "Quyền Trượng Kim Ô",
+    "Sunbird Scepter"
+   ],
+   "Quyền Trượng Ánh Sáng": [
+    "Quyền Trượng Quang Minh",
+    "Radiant Scepter"
+   ],
+   "Quyền Trượng Tuyệt Đối": [
+    "Quyền Trượng Chí Tôn",
+    "Supreme Scepter"
+   ],
+   "Quyền Trượng Công Kích": [
+    "Quyền Trượng Xung Kích",
+    "Onslaught Scepter"
+   ],
+   "Quyền Trượng Bậc Thầy": [
+    "Quyền Trượng Tông Sư",
+    "Grandmaster Scepter"
+   ],
+   "Chùy Băng Giá": [
+    "Chùy Hàn Băng",
+    "Frostbite Mace"
+   ],
+   "Chùy Sao Pha Lê": [
+    "Chùy Lưu Ly",
+    "Glass Star Mace"
+   ],
+   "Chùy Nguyên Tố": [
+    "Chùy Ngũ Hành",
+    "Five-Element Mace"
+   ],
+   "Giáo Ánh Sáng": [
+    "Giáo Quang Minh",
+    "Radiant Spear"
+   ],
+   "Giáo Rồng": [
+    "Giáo Giao Long",
+    "Wyrm Spear"
+   ],
+   "Thương Rồng": [
+    "Thương Giao Long",
+    "Wyrm Lance"
+   ],
+   "Giáo Beuroba": [
+    "Giáo Răng Sói",
+    "Wolf-fang Spear"
+   ],
+   "Giáo Xà": [
+    "Giáo Rắn Lục",
+    "Viper Spear"
+   ],
+   "Kích Halberd": [
+    "Kích Thép",
+    "Steel Glaive"
+   ],
+   "Kích Balrog": [
+    "Kích Hỏa Ma",
+    "Fiend Glaive"
+   ],
+   "Nỏ Arquebus": [
+    "Nỏ Hỏa Mai",
+    "Matchlock Crossbow"
+   ],
+   "Nỏ Xà": [
+    "Nỏ Rắn",
+    "Serpent Crossbow"
+   ],
+   "Nỏ Cánh Lam": [
+    "Nỏ Lam Vũ",
+    "Bluefeather Crossbow"
+   ],
+   "Nỏ Thủy Kim": [
+    "Nỏ Ngân Thủy",
+    "Quicksilver Crossbow"
+   ],
+   "Nỏ Thánh": [
+    "Nỏ Linh Quang",
+    "Holylight Crossbow"
+   ],
+   "Nỏ Đại Vương": [
+    "Nỏ Bá Chủ",
+    "Sovereign Crossbow"
+   ],
+   "Nỏ Vàng": [
+    "Nỏ Hoàng Kim",
+    "Aurum Crossbow"
+   ],
+   "Cung Thiên Giới": [
+    "Cung Cửu Thiên",
+    "Ninefold Sky Bow"
+   ],
+   "Cung Tiên": [
+    "Cung Rừng Xanh",
+    "Greenwood Bow"
+   ],
+   "Cung Rắn Lục": [
+    "Cung Độc Xà",
+    "Venom Bow"
+   ],
+   "Cung Gió Tiên": [
+    "Cung Thanh Phong",
+    "Breeze Bow"
+   ],
+   "Cung Air Lyn": [
+    "Cung Phong Vũ",
+    "Windrain Bow"
+   ],
+   "Cung Hải Âu": [
+    "Cung Chim Biển",
+    "Seabird Bow"
+   ],
+   "Cung Ngòi Đen": [
+    "Cung Mũi Đen",
+    "Blacktip Bow"
+   ],
+   "Cung Hổ": [
+    "Cung Mãnh Hổ",
+    "Tiger Bow"
+   ],
+   "Cung Bạc": [
+    "Cung Ngân Nguyệt",
+    "Silver Moon Bow"
+   ],
+   "Cung Thiên Nhiên Hỗn Nguyên": [
+    "Cung Thiên Nhiên Biến Hóa",
+    "Shifting Nature Bow"
+   ],
+   "Gậy Đầu Lâu": [
+    "Gậy Sọ",
+    "Skull Rod"
+   ],
+   "Gậy Thiên Thần": [
+    "Gậy Thiên Vũ",
+    "Skyplume Staff"
+   ],
+   "Gậy Kundun": [
+    "Gậy Ma Chủ",
+    "Faceless Lord Staff"
+   ],
+   "Gậy Đại Xà": [
+    "Gậy Mãng Xà",
+    "Python Staff"
+   ],
+   "Gậy Bạch Kim": [
+    "Gậy Ngân Bạch",
+    "Whitesilver Staff"
+   ],
+   "Gậy Bí Ẩn": [
+    "Gậy Tinh Vân",
+    "Nebula Staff"
+   ],
+   "Gậy Gió Dữ": [
+    "Gậy Cuồng Lốc",
+    "Gale Staff"
+   ],
+   "Gậy Cánh Đỏ": [
+    "Gậy Hồng Vũ",
+    "Redplume Staff"
+   ],
+   "Gậy Cổ Đại": [
+    "Gậy Viễn Cổ",
+    "Archaic Staff"
+   ],
+   "Gậy Hồng Đen": [
+    "Gậy Hắc Mai",
+    "Nightbloom Staff"
+   ],
+   "Gậy Hào Quang": [
+    "Gậy Thánh Huy",
+    "Halo Staff"
+   ],
+   "Gậy Huệ Tây": [
+    "Gậy Bạch Liên",
+    "White Lotus Staff"
+   ],
+   "Gậy Sấm Sét": [
+    "Gậy Lôi Minh",
+    "Thunderclap Staff"
+   ],
+   "Gậy Đế Vương": [
+    "Gậy Thiên Tử",
+    "Sovereign Staff"
+   ],
+   "Gậy Merlin": [
+    "Gậy Lão Pháp Sư",
+    "Elder Mage Staff"
+   ],
+   "Gậy Sắc Ánh": [
+    "Gậy Lấp Lánh",
+    "Glimmer Staff"
+   ],
+   "Gậy Quạ": [
+    "Gậy Hắc Điểu",
+    "Duskwing Staff"
+   ],
+   "Gậy Xà Nữ": [
+    "Gậy Xà Yêu",
+    "Lamia Staff"
+   ],
+   "Gậy Huyền Thoại": [
+    "Gậy Truyền Kỳ",
+    "Fabled Staff"
+   ],
+   "Gậy Hồi Sinh": [
+    "Gậy Tái Sinh",
+    "Rebirth Staff"
+   ],
+   "Gậy Sấm Hỗn Nguyên": [
+    "Gậy Lôi Biến Hóa",
+    "Shifting Thunder Staff"
+   ],
+   "Gậy Hủy Diệt": [
+    "Gậy Diệt Thế",
+    "Worldbane Staff"
+   ],
+   "Gậy Đại Linh Hồn": [
+    "Gậy Thiên Hồn",
+    "Skysoul Staff"
+   ]
+  },
+  "Khiên": {
+   "Khiên Xà": [
+    "Khiên Rắn",
+    "Serpent Shield"
+   ],
+   "Khiên Huyền Thoại": [
+    "Khiên Truyền Kỳ",
+    "Fabled Shield"
+   ],
+   "Khiên Đại Linh Hồn": [
+    "Khiên Thiên Hồn",
+    "Skysoul Shield"
+   ],
+   "Khiên Nguyên Tố": [
+    "Khiên Ngũ Hành",
+    "Five-Element Shield"
+   ],
+   "Khiên Vinh Quang Đỏ": [
+    "Khiên Khải Hoàn Đỏ",
+    "Crimson Triumph Shield"
+   ],
+   "Khiên Kỳ Nhông": [
+    "Khiên Thằn Lằn Lửa",
+    "Fire Lizard Shield"
+   ],
+   "Khiên Kết Giới Băng": [
+    "Khiên Hàn Băng",
+    "Frostwall Shield"
+   ],
+   "Khiên Hộ Vệ": [
+    "Khiên Thủ Hộ",
+    "Warden Shield"
+   ],
+   "Khiên Tiên": [
+    "Khiên Lá Biếc",
+    "Leafsong Shield"
+   ],
+   "Khiên Diệt Rồng": [
+    "Khiên Trảm Giao",
+    "Wyrmslayer Shield"
+   ],
+   "Khiên Đầu Lâu": [
+    "Khiên Sọ",
+    "Skull Shield"
+   ]
+  },
+  "Bộ giáp": {
+   "Mũ Rồng": [
+    "Mũ Giao Long",
+    "Wyrm Helm"
+   ],
+   "Giáp Rồng": [
+    "Giáp Giao Long",
+    "Wyrm Armor"
+   ],
+   "Quần Rồng": [
+    "Quần Giao Long",
+    "Wyrm Pants"
+   ],
+   "Găng Rồng": [
+    "Găng Giao Long",
+    "Wyrm Gloves"
+   ],
+   "Giày Rồng": [
+    "Giày Giao Long",
+    "Wyrm Boots"
+   ],
+   "Mũ Dây Leo": [
+    "Mũ Lá Biếc",
+    "Leafsong Helm"
+   ],
+   "Giáp Dây Leo": [
+    "Giáp Lá Biếc",
+    "Leafsong Armor"
+   ],
+   "Quần Dây Leo": [
+    "Quần Lá Biếc",
+    "Leafsong Pants"
+   ],
+   "Găng Dây Leo": [
+    "Găng Lá Biếc",
+    "Leafsong Gloves"
+   ],
+   "Giày Dây Leo": [
+    "Giày Lá Biếc",
+    "Leafsong Boots"
+   ],
+   "Mũ Gió": [
+    "Mũ Phong Linh",
+    "Windchime Helm"
+   ],
+   "Giáp Gió": [
+    "Giáp Phong Linh",
+    "Windchime Armor"
+   ],
+   "Quần Gió": [
+    "Quần Phong Linh",
+    "Windchime Pants"
+   ],
+   "Găng Gió": [
+    "Găng Phong Linh",
+    "Windchime Gloves"
+   ],
+   "Giày Gió": [
+    "Giày Phong Linh",
+    "Windchime Boots"
+   ],
+   "Mũ Linh Hồn": [
+    "Mũ U Linh",
+    "Wisp Helm"
+   ],
+   "Giáp Linh Hồn": [
+    "Giáp U Linh",
+    "Wisp Armor"
+   ],
+   "Quần Linh Hồn": [
+    "Quần U Linh",
+    "Wisp Pants"
+   ],
+   "Găng Linh Hồn": [
+    "Găng U Linh",
+    "Wisp Gloves"
+   ],
+   "Giày Linh Hồn": [
+    "Giày U Linh",
+    "Wisp Boots"
+   ],
+   "Mũ Hộ Vệ": [
+    "Mũ Thủ Hộ",
+    "Warden Helm"
+   ],
+   "Giáp Hộ Vệ": [
+    "Giáp Thủ Hộ",
+    "Warden Armor"
+   ],
+   "Quần Hộ Vệ": [
+    "Quần Thủ Hộ",
+    "Warden Pants"
+   ],
+   "Găng Hộ Vệ": [
+    "Găng Thủ Hộ",
+    "Warden Gloves"
+   ],
+   "Giày Hộ Vệ": [
+    "Giày Thủ Hộ",
+    "Warden Boots"
+   ],
+   "Mũ Quạ Bão": [
+    "Mũ Hắc Điểu",
+    "Duskwing Helm"
+   ],
+   "Giáp Quạ Bão": [
+    "Giáp Hắc Điểu",
+    "Duskwing Armor"
+   ],
+   "Quần Quạ Bão": [
+    "Quần Hắc Điểu",
+    "Duskwing Pants"
+   ],
+   "Găng Quạ Bão": [
+    "Găng Hắc Điểu",
+    "Duskwing Gloves"
+   ],
+   "Giày Quạ Bão": [
+    "Giày Hắc Điểu",
+    "Duskwing Boots"
+   ],
+   "Mũ Hắc Long": [
+    "Mũ Mặc Giao",
+    "Inkwyrm Helm"
+   ],
+   "Giáp Hắc Long": [
+    "Giáp Mặc Giao",
+    "Inkwyrm Armor"
+   ],
+   "Quần Hắc Long": [
+    "Quần Mặc Giao",
+    "Inkwyrm Pants"
+   ],
+   "Găng Hắc Long": [
+    "Găng Mặc Giao",
+    "Inkwyrm Gloves"
+   ],
+   "Giày Hắc Long": [
+    "Giày Mặc Giao",
+    "Inkwyrm Boots"
+   ],
+   "Mũ Phượng Hoàng Đen": [
+    "Mũ Hỏa Tước Đen",
+    "Ashen Firebird Helm"
+   ],
+   "Giáp Phượng Hoàng Đen": [
+    "Giáp Hỏa Tước Đen",
+    "Ashen Firebird Armor"
+   ],
+   "Quần Phượng Hoàng Đen": [
+    "Quần Hỏa Tước Đen",
+    "Ashen Firebird Pants"
+   ],
+   "Găng Phượng Hoàng Đen": [
+    "Găng Hỏa Tước Đen",
+    "Ashen Firebird Gloves"
+   ],
+   "Giày Phượng Hoàng Đen": [
+    "Giày Hỏa Tước Đen",
+    "Ashen Firebird Boots"
+   ],
+   "Mũ Đại Linh Hồn": [
+    "Mũ Thiên Hồn",
+    "Skysoul Helm"
+   ],
+   "Giáp Đại Linh Hồn": [
+    "Giáp Thiên Hồn",
+    "Skysoul Armor"
+   ],
+   "Quần Đại Linh Hồn": [
+    "Quần Thiên Hồn",
+    "Skysoul Pants"
+   ],
+   "Găng Đại Linh Hồn": [
+    "Găng Thiên Hồn",
+    "Skysoul Gloves"
+   ],
+   "Giày Đại Linh Hồn": [
+    "Giày Thiên Hồn",
+    "Skysoul Boots"
+   ],
+   "Mũ Thần Thánh": [
+    "Mũ Thánh Quang",
+    "Holylight Helm"
+   ],
+   "Giáp Thần Thánh": [
+    "Giáp Thánh Quang",
+    "Holylight Armor"
+   ],
+   "Quần Thần Thánh": [
+    "Quần Thánh Quang",
+    "Holylight Pants"
+   ],
+   "Găng Thần Thánh": [
+    "Găng Thánh Quang",
+    "Holylight Gloves"
+   ],
+   "Giày Thần Thánh": [
+    "Giày Thánh Quang",
+    "Holylight Boots"
+   ],
+   "Mũ Ưng Sấm": [
+    "Mũ Diều Hâu Sét",
+    "Bolt Kite Helm"
+   ],
+   "Giáp Ưng Sấm": [
+    "Giáp Diều Hâu Sét",
+    "Bolt Kite Armor"
+   ],
+   "Quần Ưng Sấm": [
+    "Quần Diều Hâu Sét",
+    "Bolt Kite Pants"
+   ],
+   "Găng Ưng Sấm": [
+    "Găng Diều Hâu Sét",
+    "Bolt Kite Gloves"
+   ],
+   "Giày Ưng Sấm": [
+    "Giày Diều Hâu Sét",
+    "Bolt Kite Boots"
+   ],
+   "Mũ Đại Long": [
+    "Mũ Cự Giao",
+    "Greatwyrm Helm"
+   ],
+   "Giáp Đại Long": [
+    "Giáp Cự Giao",
+    "Greatwyrm Armor"
+   ],
+   "Quần Đại Long": [
+    "Quần Cự Giao",
+    "Greatwyrm Pants"
+   ],
+   "Găng Đại Long": [
+    "Găng Cự Giao",
+    "Greatwyrm Gloves"
+   ],
+   "Giày Đại Long": [
+    "Giày Cự Giao",
+    "Greatwyrm Boots"
+   ],
+   "Mũ Hồn Bóng Tối": [
+    "Mũ Ám Hồn",
+    "Shadesoul Helm"
+   ],
+   "Giáp Hồn Bóng Tối": [
+    "Giáp Ám Hồn",
+    "Shadesoul Armor"
+   ],
+   "Quần Hồn Bóng Tối": [
+    "Quần Ám Hồn",
+    "Shadesoul Pants"
+   ],
+   "Găng Hồn Bóng Tối": [
+    "Găng Ám Hồn",
+    "Shadesoul Gloves"
+   ],
+   "Giày Hồn Bóng Tối": [
+    "Giày Ám Hồn",
+    "Shadesoul Boots"
+   ],
+   "Mũ Cuồng Phong": [
+    "Mũ Bão Cát",
+    "Sandstorm Helm"
+   ],
+   "Giáp Cuồng Phong": [
+    "Giáp Bão Cát",
+    "Sandstorm Armor"
+   ],
+   "Quần Cuồng Phong": [
+    "Quần Bão Cát",
+    "Sandstorm Pants"
+   ],
+   "Găng Cuồng Phong": [
+    "Găng Bão Cát",
+    "Sandstorm Gloves"
+   ],
+   "Giày Cuồng Phong": [
+    "Giày Bão Cát",
+    "Sandstorm Boots"
+   ],
+   "Mũ Linh Hồn Đỏ": [
+    "Mũ Xích Linh",
+    "Crimson Wisp Helm"
+   ],
+   "Giáp Linh Hồn Đỏ": [
+    "Giáp Xích Linh",
+    "Crimson Wisp Armor"
+   ],
+   "Quần Linh Hồn Đỏ": [
+    "Quần Xích Linh",
+    "Crimson Wisp Pants"
+   ],
+   "Găng Linh Hồn Đỏ": [
+    "Găng Xích Linh",
+    "Crimson Wisp Gloves"
+   ],
+   "Giày Linh Hồn Đỏ": [
+    "Giày Xích Linh",
+    "Crimson Wisp Boots"
+   ],
+   "Mũ Ánh Bạc": [
+    "Mũ Bạch Ngân",
+    "Silverlight Helm"
+   ],
+   "Giáp Ánh Bạc": [
+    "Giáp Bạch Ngân",
+    "Silverlight Armor"
+   ],
+   "Quần Ánh Bạc": [
+    "Quần Bạch Ngân",
+    "Silverlight Pants"
+   ],
+   "Găng Ánh Bạc": [
+    "Găng Bạch Ngân",
+    "Silverlight Gloves"
+   ],
+   "Giày Ánh Bạc": [
+    "Giày Bạch Ngân",
+    "Silverlight Boots"
+   ],
+   "Mũ Kim Cương": [
+    "Mũ Kim Thạch",
+    "Hardstone Helm"
+   ],
+   "Giáp Kim Cương": [
+    "Giáp Kim Thạch",
+    "Hardstone Armor"
+   ],
+   "Quần Kim Cương": [
+    "Quần Kim Thạch",
+    "Hardstone Pants"
+   ],
+   "Găng Kim Cương": [
+    "Găng Kim Thạch",
+    "Hardstone Gloves"
+   ],
+   "Giày Kim Cương": [
+    "Giày Kim Thạch",
+    "Hardstone Boots"
+   ],
+   "Mũ Thép Đen": [
+    "Mũ Huyền Thiết",
+    "Darkiron Helm"
+   ],
+   "Giáp Thép Đen": [
+    "Giáp Huyền Thiết",
+    "Darkiron Armor"
+   ],
+   "Quần Thép Đen": [
+    "Quần Huyền Thiết",
+    "Darkiron Pants"
+   ],
+   "Găng Thép Đen": [
+    "Găng Huyền Thiết",
+    "Darkiron Gloves"
+   ],
+   "Giày Thép Đen": [
+    "Giày Huyền Thiết",
+    "Darkiron Boots"
+   ],
+   "Mũ Hắc Chủ": [
+    "Mũ Ám Vương",
+    "Shadowlord Helm"
+   ],
+   "Giáp Hắc Chủ": [
+    "Giáp Ám Vương",
+    "Shadowlord Armor"
+   ],
+   "Quần Hắc Chủ": [
+    "Quần Ám Vương",
+    "Shadowlord Pants"
+   ],
+   "Găng Hắc Chủ": [
+    "Găng Ám Vương",
+    "Shadowlord Gloves"
+   ],
+   "Giày Hắc Chủ": [
+    "Giày Ám Vương",
+    "Shadowlord Boots"
+   ],
+   "Mũ Long Kỵ Sĩ": [
+    "Mũ Giao Kỵ",
+    "Wyrmrider Helm"
+   ],
+   "Giáp Long Kỵ Sĩ": [
+    "Giáp Giao Kỵ",
+    "Wyrmrider Armor"
+   ],
+   "Quần Long Kỵ Sĩ": [
+    "Quần Giao Kỵ",
+    "Wyrmrider Pants"
+   ],
+   "Găng Long Kỵ Sĩ": [
+    "Găng Giao Kỵ",
+    "Wyrmrider Gloves"
+   ],
+   "Giày Long Kỵ Sĩ": [
+    "Giày Giao Kỵ",
+    "Wyrmrider Boots"
+   ],
+   "Mũ Huyền Thoại": [
+    "Mũ Truyền Kỳ",
+    "Fabled Helm"
+   ],
+   "Giáp Huyền Thoại": [
+    "Giáp Truyền Kỳ",
+    "Fabled Armor"
+   ],
+   "Quần Huyền Thoại": [
+    "Quần Truyền Kỳ",
+    "Fabled Pants"
+   ],
+   "Găng Huyền Thoại": [
+    "Găng Truyền Kỳ",
+    "Fabled Gloves"
+   ],
+   "Giày Huyền Thoại": [
+    "Giày Truyền Kỳ",
+    "Fabled Boots"
+   ],
+   "Mũ Sương Độc": [
+    "Mũ Chướng Khí",
+    "Miasma Helm"
+   ],
+   "Giáp Sương Độc": [
+    "Giáp Chướng Khí",
+    "Miasma Armor"
+   ],
+   "Quần Sương Độc": [
+    "Quần Chướng Khí",
+    "Miasma Pants"
+   ],
+   "Găng Sương Độc": [
+    "Găng Chướng Khí",
+    "Miasma Gloves"
+   ],
+   "Giày Sương Độc": [
+    "Giày Chướng Khí",
+    "Miasma Boots"
+   ],
+   "Mũ Tia Tiên": [
+    "Mũ Nguyệt Quang",
+    "Moonbeam Helm"
+   ],
+   "Giáp Tia Tiên": [
+    "Giáp Nguyệt Quang",
+    "Moonbeam Armor"
+   ],
+   "Quần Tia Tiên": [
+    "Quần Nguyệt Quang",
+    "Moonbeam Pants"
+   ],
+   "Găng Tia Tiên": [
+    "Găng Nguyệt Quang",
+    "Moonbeam Gloves"
+   ],
+   "Giày Tia Tiên": [
+    "Giày Nguyệt Quang",
+    "Moonbeam Boots"
+   ],
+   "Mũ Núi Lửa": [
+    "Mũ Dung Nham",
+    "Magma Helm"
+   ],
+   "Giáp Núi Lửa": [
+    "Giáp Dung Nham",
+    "Magma Armor"
+   ],
+   "Quần Núi Lửa": [
+    "Quần Dung Nham",
+    "Magma Pants"
+   ],
+   "Găng Núi Lửa": [
+    "Găng Dung Nham",
+    "Magma Gloves"
+   ],
+   "Giày Núi Lửa": [
+    "Giày Dung Nham",
+    "Magma Boots"
+   ],
+   "Mũ Ánh Dương": [
+    "Mũ Kim Ô",
+    "Sunbird Helm"
+   ],
+   "Giáp Ánh Dương": [
+    "Giáp Kim Ô",
+    "Sunbird Armor"
+   ],
+   "Quần Ánh Dương": [
+    "Quần Kim Ô",
+    "Sunbird Pants"
+   ],
+   "Găng Ánh Dương": [
+    "Găng Kim Ô",
+    "Sunbird Gloves"
+   ],
+   "Giày Ánh Dương": [
+    "Giày Kim Ô",
+    "Sunbird Boots"
+   ],
+   "Mũ Quạ Tro": [
+    "Mũ Tro Than",
+    "Cinder Helm"
+   ],
+   "Giáp Quạ Tro": [
+    "Giáp Tro Than",
+    "Cinder Armor"
+   ],
+   "Quần Quạ Tro": [
+    "Quần Tro Than",
+    "Cinder Pants"
+   ],
+   "Găng Quạ Tro": [
+    "Găng Tro Than",
+    "Cinder Gloves"
+   ],
+   "Giày Quạ Tro": [
+    "Giày Tro Than",
+    "Cinder Boots"
+   ],
+   "Mũ Nhật Thực": [
+    "Mũ Nguyệt Thực",
+    "Blood Moon Helm"
+   ],
+   "Giáp Nhật Thực": [
+    "Giáp Nguyệt Thực",
+    "Blood Moon Armor"
+   ],
+   "Quần Nhật Thực": [
+    "Quần Nguyệt Thực",
+    "Blood Moon Pants"
+   ],
+   "Găng Nhật Thực": [
+    "Găng Nguyệt Thực",
+    "Blood Moon Gloves"
+   ],
+   "Giày Nhật Thực": [
+    "Giày Nguyệt Thực",
+    "Blood Moon Boots"
+   ],
+   "Mũ Diên Vĩ": [
+    "Mũ Lan Tím",
+    "Orchid Helm"
+   ],
+   "Giáp Diên Vĩ": [
+    "Giáp Lan Tím",
+    "Orchid Armor"
+   ],
+   "Quần Diên Vĩ": [
+    "Quần Lan Tím",
+    "Orchid Pants"
+   ],
+   "Găng Diên Vĩ": [
+    "Găng Lan Tím",
+    "Orchid Gloves"
+   ],
+   "Giày Diên Vĩ": [
+    "Giày Lan Tím",
+    "Orchid Boots"
+   ],
+   "Mũ Dũng Mãnh": [
+    "Mũ Hổ Tâm",
+    "Tigerheart Helm"
+   ],
+   "Giáp Dũng Mãnh": [
+    "Giáp Hổ Tâm",
+    "Tigerheart Armor"
+   ],
+   "Quần Dũng Mãnh": [
+    "Quần Hổ Tâm",
+    "Tigerheart Pants"
+   ],
+   "Găng Dũng Mãnh": [
+    "Găng Hổ Tâm",
+    "Tigerheart Gloves"
+   ],
+   "Giày Dũng Mãnh": [
+    "Giày Hổ Tâm",
+    "Tigerheart Boots"
+   ],
+   "Mũ Vinh Quang": [
+    "Mũ Khải Hoàn",
+    "Triumph Helm"
+   ],
+   "Giáp Vinh Quang": [
+    "Giáp Khải Hoàn",
+    "Triumph Armor"
+   ],
+   "Quần Vinh Quang": [
+    "Quần Khải Hoàn",
+    "Triumph Pants"
+   ],
+   "Găng Vinh Quang": [
+    "Găng Khải Hoàn",
+    "Triumph Gloves"
+   ],
+   "Giày Vinh Quang": [
+    "Giày Khải Hoàn",
+    "Triumph Boots"
+   ],
+   "Mũ Bí Ẩn": [
+    "Mũ Tinh Vân",
+    "Nebula Helm"
+   ],
+   "Giáp Bí Ẩn": [
+    "Giáp Tinh Vân",
+    "Nebula Armor"
+   ],
+   "Quần Bí Ẩn": [
+    "Quần Tinh Vân",
+    "Nebula Pants"
+   ],
+   "Găng Bí Ẩn": [
+    "Găng Tinh Vân",
+    "Nebula Gloves"
+   ],
+   "Giày Bí Ẩn": [
+    "Giày Tinh Vân",
+    "Nebula Boots"
+   ],
+   "Mũ Cánh Đỏ": [
+    "Mũ Hồng Vũ",
+    "Redplume Helm"
+   ],
+   "Giáp Cánh Đỏ": [
+    "Giáp Hồng Vũ",
+    "Redplume Armor"
+   ],
+   "Quần Cánh Đỏ": [
+    "Quần Hồng Vũ",
+    "Redplume Pants"
+   ],
+   "Găng Cánh Đỏ": [
+    "Găng Hồng Vũ",
+    "Redplume Gloves"
+   ],
+   "Giày Cánh Đỏ": [
+    "Giày Hồng Vũ",
+    "Redplume Boots"
+   ],
+   "Mũ Cổ Đại": [
+    "Mũ Viễn Cổ",
+    "Archaic Helm"
+   ],
+   "Giáp Cổ Đại": [
+    "Giáp Viễn Cổ",
+    "Archaic Armor"
+   ],
+   "Quần Cổ Đại": [
+    "Quần Viễn Cổ",
+    "Archaic Pants"
+   ],
+   "Găng Cổ Đại": [
+    "Găng Viễn Cổ",
+    "Archaic Gloves"
+   ],
+   "Giày Cổ Đại": [
+    "Giày Viễn Cổ",
+    "Archaic Boots"
+   ],
+   "Mũ Hồng Đen": [
+    "Mũ Hắc Mai",
+    "Nightbloom Helm"
+   ],
+   "Giáp Hồng Đen": [
+    "Giáp Hắc Mai",
+    "Nightbloom Armor"
+   ],
+   "Quần Hồng Đen": [
+    "Quần Hắc Mai",
+    "Nightbloom Pants"
+   ],
+   "Găng Hồng Đen": [
+    "Găng Hắc Mai",
+    "Nightbloom Gloves"
+   ],
+   "Giày Hồng Đen": [
+    "Giày Hắc Mai",
+    "Nightbloom Boots"
+   ],
+   "Mũ Hào Quang": [
+    "Mũ Thánh Huy",
+    "Halo Helm"
+   ],
+   "Giáp Hào Quang": [
+    "Giáp Thánh Huy",
+    "Halo Armor"
+   ],
+   "Quần Hào Quang": [
+    "Quần Thánh Huy",
+    "Halo Pants"
+   ],
+   "Găng Hào Quang": [
+    "Găng Thánh Huy",
+    "Halo Gloves"
+   ],
+   "Giày Hào Quang": [
+    "Giày Thánh Huy",
+    "Halo Boots"
+   ],
+   "Mũ Huệ Tây": [
+    "Mũ Bạch Liên",
+    "White Lotus Helm"
+   ],
+   "Giáp Huệ Tây": [
+    "Giáp Bạch Liên",
+    "White Lotus Armor"
+   ],
+   "Quần Huệ Tây": [
+    "Quần Bạch Liên",
+    "White Lotus Pants"
+   ],
+   "Găng Huệ Tây": [
+    "Găng Bạch Liên",
+    "White Lotus Gloves"
+   ],
+   "Giày Huệ Tây": [
+    "Giày Bạch Liên",
+    "White Lotus Boots"
+   ],
+   "Mũ Titan": [
+    "Mũ Cự Thạch",
+    "Colossus Helm"
+   ],
+   "Giáp Titan": [
+    "Giáp Cự Thạch",
+    "Colossus Armor"
+   ],
+   "Quần Titan": [
+    "Quần Cự Thạch",
+    "Colossus Pants"
+   ],
+   "Găng Titan": [
+    "Găng Cự Thạch",
+    "Colossus Gloves"
+   ],
+   "Giày Titan": [
+    "Giày Cự Thạch",
+    "Colossus Boots"
+   ],
+   "Mũ Dũng Sĩ": [
+    "Mũ Chiến Hồn",
+    "Warsoul Helm"
+   ],
+   "Giáp Dũng Sĩ": [
+    "Giáp Chiến Hồn",
+    "Warsoul Armor"
+   ],
+   "Quần Dũng Sĩ": [
+    "Quần Chiến Hồn",
+    "Warsoul Pants"
+   ],
+   "Găng Dũng Sĩ": [
+    "Găng Chiến Hồn",
+    "Warsoul Gloves"
+   ],
+   "Giày Dũng Sĩ": [
+    "Giày Chiến Hồn",
+    "Warsoul Boots"
+   ],
+   "Mũ Hủy Diệt": [
+    "Mũ Diệt Thế",
+    "Worldbane Helm"
+   ],
+   "Giáp Hủy Diệt": [
+    "Giáp Diệt Thế",
+    "Worldbane Armor"
+   ],
+   "Quần Hủy Diệt": [
+    "Quần Diệt Thế",
+    "Worldbane Pants"
+   ],
+   "Găng Hủy Diệt": [
+    "Găng Diệt Thế",
+    "Worldbane Gloves"
+   ],
+   "Giày Hủy Diệt": [
+    "Giày Diệt Thế",
+    "Worldbane Boots"
+   ],
+   "Mũ Bóng Ma": [
+    "Mũ U Ảnh",
+    "Phantasm Helm"
+   ],
+   "Giáp Bóng Ma": [
+    "Giáp U Ảnh",
+    "Phantasm Armor"
+   ],
+   "Quần Bóng Ma": [
+    "Quần U Ảnh",
+    "Phantasm Pants"
+   ],
+   "Găng Bóng Ma": [
+    "Găng U Ảnh",
+    "Phantasm Gloves"
+   ],
+   "Giày Bóng Ma": [
+    "Giày U Ảnh",
+    "Phantasm Boots"
+   ],
+   "Mũ Thiên Sứ": [
+    "Mũ Thiên Vũ",
+    "Skyplume Helm"
+   ],
+   "Giáp Thiên Sứ": [
+    "Giáp Thiên Vũ",
+    "Skyplume Armor"
+   ],
+   "Quần Thiên Sứ": [
+    "Quần Thiên Vũ",
+    "Skyplume Pants"
+   ],
+   "Găng Thiên Sứ": [
+    "Găng Thiên Vũ",
+    "Skyplume Gloves"
+   ],
+   "Giày Thiên Sứ": [
+    "Giày Thiên Vũ",
+    "Skyplume Boots"
+   ],
+   "Mũ Đức Tin": [
+    "Mũ Thành Tâm",
+    "Devotion Helm"
+   ],
+   "Giáp Đức Tin": [
+    "Giáp Thành Tâm",
+    "Devotion Armor"
+   ],
+   "Quần Đức Tin": [
+    "Quần Thành Tâm",
+    "Devotion Pants"
+   ],
+   "Găng Đức Tin": [
+    "Găng Thành Tâm",
+    "Devotion Gloves"
+   ],
+   "Giày Đức Tin": [
+    "Giày Thành Tâm",
+    "Devotion Boots"
+   ],
+   "Mũ Bá Vương": [
+    "Mũ Hùng Bá",
+    "Warlord Helm"
+   ],
+   "Giáp Bá Vương": [
+    "Giáp Hùng Bá",
+    "Warlord Armor"
+   ],
+   "Quần Bá Vương": [
+    "Quần Hùng Bá",
+    "Warlord Pants"
+   ],
+   "Găng Bá Vương": [
+    "Găng Hùng Bá",
+    "Warlord Gloves"
+   ],
+   "Giày Bá Vương": [
+    "Giày Hùng Bá",
+    "Warlord Boots"
+   ],
+   "Mũ Diêm Vương": [
+    "Mũ Minh Phủ",
+    "Underworld Helm"
+   ],
+   "Giáp Diêm Vương": [
+    "Giáp Minh Phủ",
+    "Underworld Armor"
+   ],
+   "Quần Diêm Vương": [
+    "Quần Minh Phủ",
+    "Underworld Pants"
+   ],
+   "Găng Diêm Vương": [
+    "Găng Minh Phủ",
+    "Underworld Gloves"
+   ],
+   "Giày Diêm Vương": [
+    "Giày Minh Phủ",
+    "Underworld Boots"
+   ],
+   "Mũ Nữ Hoàng": [
+    "Mũ Nguyệt Hậu",
+    "Moon Empress Helm"
+   ],
+   "Giáp Nữ Hoàng": [
+    "Giáp Nguyệt Hậu",
+    "Moon Empress Armor"
+   ],
+   "Quần Nữ Hoàng": [
+    "Quần Nguyệt Hậu",
+    "Moon Empress Pants"
+   ],
+   "Găng Nữ Hoàng": [
+    "Găng Nguyệt Hậu",
+    "Moon Empress Gloves"
+   ],
+   "Giày Nữ Hoàng": [
+    "Giày Nguyệt Hậu",
+    "Moon Empress Boots"
+   ],
+   "Mũ Nhân Sư": [
+    "Mũ Sa Thần",
+    "Dune God Helm"
+   ],
+   "Giáp Nhân Sư": [
+    "Giáp Sa Thần",
+    "Dune God Armor"
+   ],
+   "Quần Nhân Sư": [
+    "Quần Sa Thần",
+    "Dune God Pants"
+   ],
+   "Găng Nhân Sư": [
+    "Găng Sa Thần",
+    "Dune God Gloves"
+   ],
+   "Giày Nhân Sư": [
+    "Giày Sa Thần",
+    "Dune God Boots"
+   ]
+  }
+ },
+ "en_terms": {
+  "Devil Square": "Demon Gate Trial",
+  "Blood Castle": "Sealed Citadel",
+  "Chaos Castle": "Brawl Keep",
+  "Golden Invasion": "Golden Raid",
+  "Chaos Machine": "Arcane Forge",
+  "Archangel": "Herald",
+  "Kalima": "Netherdeep",
+  "Kundun": "Faceless Lord",
+  "Excellent": "Masterwork",
+  "Ancient set": "Primal set",
+  "Ancient item": "Primal item",
+  "Jewel of Chaos": "Crimson Gem",
+  "Jewel of Bless": "Azure Gem",
+  "Jewel of Soul": "Violet Gem",
+  "Jewel of Life": "Verdant Gem",
+  "Lost Map": "Netherdeep Chart",
+  "Sign of Kundun": "Faceless Lord Sigil",
+  "White Wizard": "Pale Sorcerer",
+  "Red Dragon": "Flame Wyrm"
+ }
+}

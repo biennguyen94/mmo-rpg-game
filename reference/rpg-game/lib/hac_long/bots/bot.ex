@@ -26,7 +26,7 @@ defmodule HacLong.Bots.Bot do
     "Bình máu giờ đắt quá…",
     "Ai biết chỗ luyện cấp nhanh không?",
     "Hôm nay may mắn ghê.",
-    "Đợi Golden Invasion thôi.",
+    "Đợi quái vàng xâm lăng thôi.",
     "Chào mọi người!",
     "Vừa hạ được một con khó nhằn.",
     "Bản đồ phụ vui phết."

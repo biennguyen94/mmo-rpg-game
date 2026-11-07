@@ -1610,3 +1610,28 @@ Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự ki�
 - Chỉnh lại `pvp.class_taken_by_rebirth` và `class_taken_arena_by_rebirth` bằng `scripts/pvp/tune.exs` (mọi mốc).
   - đồ sát: đổi mốc 0, 2–8, còn lệch ≤ 13%;
   - đấu trường: đổi mốc 2–8, còn lệch ≤ 10%; mốc 0, 1 giữ (lệch 11%, 13%, trong mức test 15%).
+
+## Bộ tên thay cho tên MU (2026-11-07, anh yêu cầu)
+- **Hai bộ tên cho cả server:**
+  - `mu`: tên gốc, mặc định;
+  - `alt`: tên mới trong `priv/static/i18n/names_alt.json`, 372 tên chia nhóm (sự kiện / hệ thống, ngọc, nguyên liệu, quái,
+    thú, cánh, vũ khí, khiên, bộ giáp). Mỗi tên có bản tiếng Việt và tiếng Anh.
+- **Chuyển bộ tên:** quản trị viên bấm ở Quản trị → Bộ tên. Người đang chơi tự tải lại trang.
+- **Lưu trạng thái:** không thêm bảng. Trạng thái là dòng `admin_log` op `name_pack` mới nhất, giống công tắc quái di
+  chuyển (`HacLong.NamePack`).
+- **Cách đổi:** chỉ đổi chữ hiện ra, ở trình duyệt (`i18n.js`). Mọi chữ đều đi qua lớp dịch: giao diện, dữ liệu, tin server,
+  nhật ký trận, chữ trên bản đồ.
+  - Khớp nguyên cụm, khóa dài trước, không khớp giữa chữ, đổi một lượt (test kiểm tên mới không chứa khóa khác).
+  - Tiếng Anh: đổi tên tiếng Anh gốc lấy từ `en.json`, cộng bảng `en_terms`.
+  - Dữ liệu game, database, giao thức giữ tên gốc, nên đổi qua lại không mất gì.
+- **Chọn tên để đổi:**
+  - danh từ riêng và tên đặc trưng MU: Kalima, Kundun, Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành, Golden Invasion, Máy
+    Hỗn Nguyên, các loại Ngọc, Excellent, đồ Thần, Tổng Lãnh Thiên Thần, vé, nguyên liệu sự kiện, thú, cánh;
+  - đồ mang tên riêng hoặc tên bộ của MU: Kris, Gladius, Air Lyn, Merlin, Beuroba, Balrog…;
+  - 45 bộ giáp, đổi đủ tên từng món (Mũ / Giáp / Quần / Găng / Giày).
+- **Giữ nguyên:**
+  - tên loại chung (Kiếm Mảnh, Rìu Nhỏ, Cung Ngắn, Khiên Tháp, bộ Đồng / Da / Vảy / Lụa…);
+  - tên lớp (Kiếm Sĩ…), kỹ năng, quái tự đặt (vùng chuyển sinh);
+  - tên game Hắc Long (chỉ bộ giáp "Hắc Long" đổi).
+- **Không đổi:** chat của người chơi, ô nhập, danh sách chọn trong Quản trị, Kho Đồ (tài liệu ngoài game). Câu chat của bot
+  có "Golden Invasion" đổi thành câu chung.

@@ -14,6 +14,7 @@ defmodule HacLongWeb.Router do
     post "/recover", AuthController, :recover
     post "/security", AuthController, :security
     get "/me", AuthController, :me
+    get "/names", AuthController, :names
     post "/logout", AuthController, :logout
     post "/logout_all", AuthController, :logout_all
     post "/password", AuthController, :password

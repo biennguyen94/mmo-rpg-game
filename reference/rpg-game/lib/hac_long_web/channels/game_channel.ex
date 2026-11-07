@@ -91,6 +91,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.NamePack.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
     blocked = Moderation.blocked(uid)
@@ -799,7 +800,27 @@ defmodule HacLongWeb.GameChannel do
     {:ok, %{msg: "Đã đưa #{n}/#{length(ids)} bot về Làng."}}
   end
 
-  defp admin("flags", _p, _s), do: {:ok, %{mob_move: HacLong.World.MobMove.on?()}}
+  defp admin("flags", _p, _s),
+    do: {:ok, %{mob_move: HacLong.World.MobMove.on?(), name_pack: HacLong.NamePack.get()}}
+
+  # bộ tên cho cả server (DECISIONS "Bộ tên thay cho tên MU"); dòng admin_log này (params.pack) là trạng thái lưu lại
+  defp admin("name_pack", %{"pack" => pack}, _s) when is_binary(pack) do
+    if pack in HacLong.NamePack.packs() do
+      HacLong.NamePack.set(pack)
+
+      {:ok,
+       %{
+         name_pack: pack,
+         msg:
+           if(pack == "alt",
+             do: "Đã đổi sang tên mới cho cả server.",
+             else: "Đã đổi về tên MU cho cả server."
+           )
+       }}
+    else
+      {:error, "Bộ tên không hợp lệ."}
+    end
+  end
 
   # bật / tắt quái đi lang thang cho cả server; dòng admin_log này (params.on) là trạng thái lưu lại
   defp admin("mob_move", %{"on" => on}, _s) when is_boolean(on) do
@@ -940,6 +961,12 @@ defmodule HacLongWeb.GameChannel do
 
   def handle_info({:invasion, status}, socket) do
     push(socket, "invasion", status)
+    {:noreply, socket}
+  end
+
+  # quản trị đổi bộ tên: client tải lại trang để nạp bộ tên mới
+  def handle_info({:name_pack, pack}, socket) do
+    push(socket, "name_pack", %{pack: pack})
     {:noreply, socket}
   end
 

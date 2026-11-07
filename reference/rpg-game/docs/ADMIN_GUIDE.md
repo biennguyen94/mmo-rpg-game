@@ -458,6 +458,9 @@ Từ Phase 1, dữ liệu game nằm ở thư mục `priv/game_data/` (mỗi lo�
 
 ## Người chơi AI (Phase 16)
 
+- **Bộ tên** (Quản trị → Bộ tên, chỉ quản trị viên): chọn **Tên MU** (mặc định) hoặc **Tên mới** cho cả server. Người đang
+  chơi tự tải lại trang. Chỉ đổi chữ hiện ra; đồ, dữ liệu, database giữ nguyên. Sửa / thêm tên mới ở
+  `priv/static/i18n/names_alt.json` (mỗi dòng: tên gốc → [tên mới tiếng Việt, tiếng Anh]), không cần build, deploy lại là có.
 - Server chạy sẵn **20 người chơi AI** (tài khoản `bot_01` … `bot_20`, vai trò `bot`): đi lại, đánh quái, lên cấp, nói vài câu
   trong chat. Người chơi không thấy dấu hiệu bot; bot không có trên bảng xếp hạng, không nhận giao dịch, từ chối cược đấu.
 - Đổi số bot: biến môi trường `HL_BOTS` khi khởi động (deploy: ghi `HL_BOTS=5` vào `.env` rồi `docker compose up -d`; `HL_BOTS=0` để tắt). Mặc định `RULES.bots.count` = 0 (không có bot).

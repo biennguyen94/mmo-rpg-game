@@ -7,6 +7,10 @@
 //
 // Một MutationObserver dịch chữ mới chèn vào trang; tin chat của người chơi không dịch (`.chat-line` không phải tin
 // hệ thống), ô nhập không dịch. Chọn ngôn ngữ trong Cài đặt (lưu ở trình duyệt), đổi thì tải lại trang.
+//
+// Bộ tên (DECISIONS "Bộ tên thay cho tên MU"): quản trị chọn cho cả server (`/api/names` → `pack`). Bộ "alt" đổi mọi tên
+// gốc trong `/i18n/names_alt.json` thành tên mới, sau bước dịch (tiếng Việt: đổi thẳng; tiếng Anh: đổi tên tiếng Anh gốc
+// lấy từ `en.json` và `en_terms`). Dữ liệu, server vẫn dùng tên gốc.
 (function (root) {
   const KEY = 'hl-lang';
   let lang = 'vi';
@@ -14,6 +18,9 @@
   const VI = /[À-ÖØ-öø-ỹĐđ]/;
   let dict = { names: {}, t: {} }, tokRe = null, nameOnly = null, loose = {};
   const cache = new Map();
+  // bộ tên: null = tên gốc; không thì {re, map} cho mỗi ngôn ngữ
+  let alt = null;
+  const altCache = new Map();
   const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   function load(d) {
@@ -62,7 +69,25 @@
     return nameOnly ? norm.replace(nameOnly, (x) => dict.names[x] || x) : norm;
   }
 
+  // đổi tên theo bộ tên (một lượt, khóa dài trước, không khớp giữa chữ)
+  function rename(s) {
+    if (!alt || !s) return s;
+    return s.replace(alt.re, (x) => alt.map[x] || x);
+  }
+
   function tr(s) {
+    if (!s) return s;
+    if (alt) {
+      if (altCache.has(s)) return altCache.get(s);
+      const out = rename(lang === 'vi' || !tokRe ? s : tr0(s));
+      if (altCache.size > 5000) altCache.clear();
+      altCache.set(s, out);
+      return out;
+    }
+    return tr0(s);
+  }
+
+  function tr0(s) {
     if (lang === 'vi' || !s || !tokRe) return s;
     // chữ không dấu (vd "Bang") chỉ dịch khi có đúng khóa
     if (!VI.test(s)) { const k = s.trim(); return dict.t[k] ? s.replace(k, dict.t[k]) : s; }
@@ -91,7 +116,7 @@
   function attrs(el) {
     for (const a of ATTRS) {
       const v = el.getAttribute && el.getAttribute(a);
-      if (v && VI.test(v)) { const o = tr(v); if (o !== v) el.setAttribute(a, o); }
+      if (v && (alt || VI.test(v))) { const o = tr(v); if (o !== v) el.setAttribute(a, o); }
     }
   }
   function walk(node) {
@@ -104,8 +129,8 @@
     for (let t = w.nextNode(); t; t = w.nextNode()) text(t);
   }
   function start() {
-    if (lang === 'vi') return;
-    document.documentElement.lang = 'en';
+    if (lang === 'vi' && !alt) return;
+    if (lang !== 'vi') document.documentElement.lang = 'en';
     walk(document.body);
     new MutationObserver((ms) => {
       for (const m of ms) {
@@ -130,8 +155,42 @@
     } catch (e) { lang = 'vi'; }
   }
 
+  // Bộ tên của server: hỏi đồng bộ trước khi giao diện vẽ (như từ điển tiếng Anh)
+  function loadAlt(d) {
+    const map = {};
+    const groups = Object.values(d.groups || {});
+    for (const g of groups) {
+      for (const [k, v] of Object.entries(g)) {
+        if (lang === 'vi') map[k] = v[0];
+        else {
+          const en = dict.names[k] || dict.t[k];
+          if (en) map[en] = v[1];
+          map[k] = v[1];
+        }
+      }
+    }
+    if (lang !== 'vi') Object.assign(map, d.en_terms || {});
+    const keys = Object.keys(map).filter((k) => k && map[k] !== k).sort((a, b) => b.length - a.length).map(reEsc);
+    alt = keys.length ? { re: new RegExp('(?<![\\p{L}\\p{N}])(' + keys.join('|') + ')(?![\\p{L}\\p{N}])', 'gu'), map } : null;
+  }
+  if (typeof XMLHttpRequest !== 'undefined' && typeof location !== 'undefined') {
+    try {
+      const x = new XMLHttpRequest();
+      x.open('GET', '/api/names', false);
+      x.send();
+      if (x.status === 200 && JSON.parse(x.responseText).pack === 'alt') {
+        const y = new XMLHttpRequest();
+        y.open('GET', 'i18n/names_alt.json', false);
+        y.send();
+        if (y.status === 200) loadAlt(JSON.parse(y.responseText));
+      }
+    } catch (e) { alt = null; }
+  }
+
   const I18N = {
     get lang() { return lang; },
+    get pack() { return alt ? 'alt' : 'mu'; },
+    loadAlt,
     tr,
     load,
     set(l) { try { localStorage.setItem(KEY, l); } catch (e) { /* không lưu được: chỉ đổi lần này */ } location.reload(); },

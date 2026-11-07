@@ -420,7 +420,9 @@
       ${adm.flags ? `<div class="card"><h3>Bản đồ</h3><p class="small muted">Quái đi lang thang trên mọi bản đồ, cho cả server. Tắt thì quái đứng yên tại chỗ (vẫn đánh, vẫn hồi sinh như thường).</p>
         <div class="btn-row"><span class="grow">Quái di chuyển: <b>${adm.flags.mob_move ? 'Đang bật' : 'Đang tắt'}</b></span><button class="btn" data-adm="mob_move" data-on="${adm.flags.mob_move ? 0 : 1}">${adm.flags.mob_move ? 'Tắt' : 'Bật'}</button></div>
         <p class="small muted">Gỡ kẹt: đưa người chơi về Làng bằng nút 🏠 ở danh sách online / tra cứu. Bot tự về Làng khi đứng yên quá ${RULES.botStuckMin || 10} phút.</p>
-        <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>` : ''}
+        <div class="btn-row"><button class="btn" data-adm="bots_to_village">🏠 Đưa mọi bot về Làng</button></div></div>
+      <div class="card" data-notr><h3>Bộ tên</h3><p class="small muted">Tên đồ, ngọc, sự kiện, quái, thú… cho cả server: tên MU (Quảng Trường Quỷ, Ngọc Ước Nguyện, Kalima…) hoặc tên mới (Quỷ Môn Trận, Ngọc Lam Tinh, Vực U Minh…). Chỉ đổi chữ hiện ra, đồ và dữ liệu giữ nguyên; người đang chơi tự tải lại trang. Danh sách tên mới: <code>priv/static/i18n/names_alt.json</code>.</p>
+        <div class="btn-row"><span class="grow">Đang dùng: <b>${adm.flags.name_pack === 'alt' ? 'Tên mới' : 'Tên MU'}</b></span><button class="btn${adm.flags.name_pack === 'alt' ? '' : ' primary'}" data-adm="name_pack" data-pack="mu"${adm.flags.name_pack === 'alt' ? '' : ' disabled'}>Tên MU</button><button class="btn${adm.flags.name_pack === 'alt' ? ' primary' : ''}" data-adm="name_pack" data-pack="alt"${adm.flags.name_pack === 'alt' ? ' disabled' : ''}>Tên mới</button></div></div>` : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
@@ -666,11 +668,13 @@
     if (d.minutes) payload.minutes = +d.minutes;
     if (d.days) payload.days = +d.days;
     if (d.on) payload.on = d.on === '1';
+    if (d.pack) payload.pack = d.pack;
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
       if (op === 'online') { adm.online = r.online; return render(); }
       if (op === 'mob_move') { adm.flags = { ...adm.flags, mob_move: r.mob_move }; toast(r.msg); return render(); }
+      if (op === 'name_pack') { adm.flags = { ...adm.flags, name_pack: r.name_pack }; toast(r.msg); return render(); }
       if (op === 'gold_log') { adm.glog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
