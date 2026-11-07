@@ -1564,3 +1564,6 @@ Sau khi giảm tấn công thú, Long Vương (câu 1/2 000 mỗi lần thả, m
 ## Long Vương mạnh hơn (2026-11-07, anh yêu cầu)
 Sau khi giảm tăng theo cấp của mọi thú xuống 5%, Long Vương giữ mức riêng `PETS.long_vuong.per_level` 0.08 (`Pets.bonus_mult/2`): cấp 30 ×3,32 → tấn công ≈ +27%, chí mạng +10%, phòng thủ +33%, giảm sát thương nhận +20%, kinh nghiệm / vàng rơi +20%, cùng máu +900, MP +300, Long Uy, Long Ân. Hồ sơ hiện hệ số thật của thú (`pet_mult`). Cân bằng mốc 10: đồ sát lệch 6%, đấu trường 9% — giữ hệ số.
 
+## Đấu trường: chỉ thách cùng hạng hoặc hạng trên (2026-11-07, anh chốt)
+Hạng theo số lần chuyển sinh, dùng chung khoảng của phòng sự kiện (`RULES.event_rooms.bands`: CS 0–1, 2–3, 4–5, 6–7, 8–9, 10+). Chỉ thách đấu được người **cùng hạng hoặc hạng cao hơn** (`Arena.min_rebirths/1`: từ mốc đầu hạng mình trở lên); người hạng dưới không bị người hạng trên thách (không còn bị trừ điểm oan). Không thách nhân vật cùng tài khoản (chống nuôi điểm bằng nhân vật phụ). Gợi ý đối thủ và tìm theo tên chỉ ra người trong phạm vi được đánh (cùng hạng trước). Tab Đấu trường ghi hạng của mình. Đồ sát không đổi.
+

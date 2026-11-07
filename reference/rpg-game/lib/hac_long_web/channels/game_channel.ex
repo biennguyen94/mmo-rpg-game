@@ -303,7 +303,12 @@ defmodule HacLongWeb.GameChannel do
     uid = socket.assigns.user_id
 
     with :ok <- limit({:arena, uid}, 30, :timer.minutes(1)) do
-      me = Map.put(Arena.stats(uid), :per_day, Arena.per_day())
+      me =
+        Arena.stats(uid)
+        |> Map.put(:per_day, Arena.per_day())
+        |> Map.put(:tier, Arena.tier_label(uid))
+        |> Map.put(:min_rebirths, Arena.min_rebirths(uid))
+
       {:reply, {:ok, %{me: me, suggestions: Arena.suggestions(uid), top: Arena.top()}}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}

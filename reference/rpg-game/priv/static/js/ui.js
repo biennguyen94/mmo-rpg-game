@@ -1238,6 +1238,7 @@
         <p class="small muted">Đánh với bản sao chỉ số của người chơi khác (họ không cần online). Gục ngã tính như chết (mất vàng, về Làng). Chạm vào người khác trên bản đồ để thách đấu.</p></div>
         <span class="tag gold num">${me.rating}</span></div>
       <p class="small">${me.wins} thắng · ${me.losses} thua · còn ${left} trận hôm nay</p>
+      ${me.tier ? `<p class="small muted">Hạng của bạn: <b>${esc(me.tier)}</b>. Chỉ thách đấu người cùng hạng hoặc hạng trên (từ chuyển sinh ${me.min_rebirths} trở lên), không thách nhân vật cùng tài khoản.</p>` : ''}
       <form id="arena-find" class="row" autocomplete="off"><input type="text" id="arena-q" class="grow" maxlength="24" placeholder="Tìm người chơi theo tên…" value="${esc(arenaFind.q)}" aria-label="Tìm người chơi theo tên"><button class="btn" type="submit">Tìm</button></form>
       ${arenaFind.found ? `<div class="list" id="arena-found">${arenaFind.found.map((o) => arenaRow(o, left)).join('') || `<p class="small muted">Không thấy ai tên có "${esc(arenaFind.q)}".</p>`}</div>
         <p class="small muted">Gợi ý theo điểm gần mình:</p>` : ''}
