@@ -28,6 +28,8 @@
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
+  // B4 (DECISIONS "Bản đồ đẹp hơn"): vừa vào bản đồ (`enter.at`): mở dần từ tối + xoáy sáng, tên bản đồ to giữa màn
+  let enter = { map: null, at: 0 };
   const Doll = window.Doll;
   Doll.onReady(() => draw());
 
@@ -295,6 +297,61 @@
     if (!c || c.phase !== 'fight') return 'Công Thành Chiến đã kết thúc';
     const at = new Date(c.ends_at * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     return `👑 ${c.holder ? `[${c.holder.tag}] giữ Vương Miện` : 'Vương Miện chưa có chủ'} · hết lúc ${at}`;
+  }
+
+  // dòng phụ của bảng tên bản đồ (B4): cấp quái / phòng trùm / sự kiện
+  function subtitle(P, m) {
+    const z = m.zone != null ? ZONES[m.zone] : null;
+    const side = m.side && ((window.GAME_DATA.LIBRARY || { maps: [] }).maps.find((x) => x.id === P.pos.map) || {});
+    if (m.tower) return '';
+    if (P.pos.map === 'village') return 'Nơi bình yên';
+    if (P.pos.map.endsWith('_boss') && z) return `Phòng trùm · cấp ${z.boss.level}`;
+    if (side && side.min) return `Quái cấp ${side.min}–${side.max}`;
+    if (z) return `Quái cấp ${z.levels}`;
+    return '';
+  }
+
+  // B4: bảng tên bản đồ giữa màn (hiện 0,3 giây, giữ, mờ dần; tổng 2,6 giây) và màn mở dần từ tối khi vừa sang bản đồ
+  function enterFx(t, P, m, px, py) {
+    const k = t - enter.at;
+    if (k < 0 || k > 2600) return;
+    const vw = VW(), vh = VH();
+    if (k < 520) {
+      const a = 1 - k / 520;
+      ctx.fillStyle = `rgba(6, 4, 10, ${0.92 * a})`;
+      ctx.fillRect(0, 0, vw, vh);
+      // xoáy sáng quanh nhân vật (như bước qua cổng)
+      const x = px + TILE / 2, y = py + TILE / 2;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(k / 140);
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(190, 160, 255, ${0.7 * a})`; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, 10 + i * 9 + (k / 520) * 30, i * 2.1, i * 2.1 + 3.6); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    const a = k < 300 ? k / 300 : k > 1900 ? Math.max(0, 1 - (k - 1900) / 700) : 1;
+    const tr = (s) => (window.I18N ? window.I18N.tr(s) : s);
+    const name = tr(m.name || ''), sub = tr(subtitle(P, m));
+    const y = Math.round(vh * 0.26) - (1 - a) * 8;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '700 28px "Grenze Gotisch", "Palatino Linotype", Georgia, serif';
+    const w = Math.min(vw - 24, Math.max(ctx.measureText(name).width + 70, 200));
+    const g = ctx.createLinearGradient(vw / 2 - w / 2, 0, vw / 2 + w / 2, 0);
+    g.addColorStop(0, 'rgba(10, 7, 14, 0)'); g.addColorStop(0.2, `rgba(10, 7, 14, ${0.72 * a})`);
+    g.addColorStop(0.8, `rgba(10, 7, 14, ${0.72 * a})`); g.addColorStop(1, 'rgba(10, 7, 14, 0)');
+    ctx.fillStyle = g; ctx.fillRect(vw / 2 - w / 2, y - 26, w, sub ? 62 : 48);
+    ctx.fillStyle = `rgba(240, 207, 122, ${0.55 * a})`;
+    ctx.fillRect(vw / 2 - w * 0.32, y - 25, w * 0.64, 1); ctx.fillRect(vw / 2 - w * 0.32, y + (sub ? 35 : 21), w * 0.64, 1);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'; ctx.shadowBlur = 6;
+    ctx.fillStyle = `rgba(240, 207, 122, ${a})`;
+    ctx.fillText(name, vw / 2, y);
+    if (sub) {
+      ctx.font = '600 12px "Be Vietnam Pro", system-ui, sans-serif';
+      ctx.fillStyle = `rgba(241, 230, 207, ${0.9 * a})`;
+      ctx.fillText(sub, vw / 2, y + 23);
+    }
+    ctx.restore();
   }
 
   function top(P) {
@@ -593,6 +650,8 @@
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
+    if (enter.map !== P.pos.map) enter = { map: P.pos.map, at: now };
+    if (fx) enterFx(now, P, m, px, py);
     // vẽ lại khi bong bóng hết hạn
     if (bubbles.size && !bubbleTimer) bubbleTimer = setTimeout(() => { bubbleTimer = null; draw(); }, 1000);
     // bỏ những con quái/người đã biến mất khỏi bản đồ
