@@ -592,6 +592,7 @@
       }
     }
 
+    groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
     if (tufts.length) grassFx(now, tufts);
     if (fx) printFx(now, cx, cy);
 
@@ -1111,6 +1112,100 @@
       }
     }
     ctx.restore();
+  }
+
+  // B9: mép ô mềm + bóng đổ + trang trí rải theo ô (chỉ vẽ, vị trí cố định theo ô, không chắn đường)
+  const WALLS = new Set(['#', 'R', 'S', 'I', 'K', 'T', 'Y']);
+  const WATERS = new Set(['~', '=']);
+  const DECOR = {
+    forest: ['pebble', 'flower', 'mushroom', 'flower'], swamp: ['mushroom', 'reed', 'pebble'], camp: ['pebble', 'bone', 'pebble'],
+    graveyard: ['bone', 'pebble', 'crack'], mountain: ['pebble', 'crack', 'pebble'], lair: ['crack', 'pebble', 'bone'], grass: ['flower', 'pebble', 'flower'],
+  };
+  function groundFx(m, x0, y0, x1, y1, cx, cy, t, fx) {
+    const at = (x, y) => (m.tiles[y] || '')[x];
+    const theme = ((m.floor || '').split('/')[1] || 'grass');
+    const decor = DECOR[theme] || DECOR.grass;
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const c = at(x, y), px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
+        // bóng đổ của tường / đá / cây xuống ô đi được ngay dưới
+        if (WALK.has(c) && WALLS.has(at(x, y - 1))) {
+          const g = ctx.createLinearGradient(0, py, 0, py + 11);
+          g.addColorStop(0, 'rgba(0, 0, 0, 0.32)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px, py, TILE, 11);
+        }
+        if (WALK.has(c) && WALLS.has(at(x - 1, y))) {
+          const g = ctx.createLinearGradient(px, 0, px + 6, 0);
+          g.addColorStop(0, 'rgba(0, 0, 0, 0.18)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px, py, 6, TILE);
+        }
+        // bờ nước: nước sát bờ tối hơn, viền bọt sáng lăn tăn
+        if (WATERS.has(c)) {
+          for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const n = at(x + dx, y + dy);
+            if (n == null || WATERS.has(n) || !WALK.has(n)) continue;
+            const vert = dy !== 0;
+            // dải sáng mềm sát bờ (bọt), nhấp nhô nhẹ theo thời gian
+            const pulse = fx ? 0.22 + 0.06 * Math.sin(t / 900 + x * 1.3 + y) : 0.24;
+            const g = vert
+              ? ctx.createLinearGradient(0, dy > 0 ? py + TILE : py, 0, dy > 0 ? py + TILE - 7 : py + 7)
+              : ctx.createLinearGradient(dx > 0 ? px + TILE : px, 0, dx > 0 ? px + TILE - 7 : px + 7, 0);
+            g.addColorStop(0, `rgba(225, 240, 255, ${pulse})`); g.addColorStop(1, 'rgba(225, 240, 255, 0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(vert ? px : (dx > 0 ? px + TILE - 7 : px), vert ? (dy > 0 ? py + TILE - 7 : py) : py, vert ? TILE : 7, vert ? 7 : TILE);
+          }
+        }
+        // đường đất lấn mép mềm vào cỏ / nền
+        if (c === ':') {
+          for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const n = at(x + dx, y + dy);
+            if (n !== ',' && n !== '.' && n !== '*') continue;
+            ctx.fillStyle = 'rgba(150, 112, 62, 0.55)';
+            for (let i = 0; i < 5; i++) {
+              const k = (i + rnd(x * 5 + i, y * 3 + dx + dy * 2)) / 5, r = 1.6 + rnd(x + i, y - i) * 2.4;
+              const bx = dx ? (dx > 0 ? px + TILE + r * 0.6 : px - r * 0.6) : px + k * TILE;
+              const by = dy ? (dy > 0 ? py + TILE + r * 0.6 : py - r * 0.6) : py + k * TILE;
+              ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        }
+        // trang trí rải: ~12 % ô nền / cỏ, không ở ô cổng, cạnh tường
+        if ((c === '.' || c === ',') && rnd(x * 11 + 3, y * 17 + 5) < 0.12) {
+          const kind = decor[Math.floor(rnd(x + 31, y + 7) * decor.length)];
+          const dx = px + 6 + rnd(x, y * 2) * (TILE - 12), dy = py + 8 + rnd(x * 2, y) * (TILE - 14);
+          decorAt(kind, dx, dy, x, y);
+        }
+      }
+    }
+  }
+  function decorAt(kind, x, y, gx, gy) {
+    if (kind === 'pebble') {
+      ctx.fillStyle = 'rgba(160, 155, 150, 0.75)'; ctx.beginPath(); ctx.ellipse(x, y, 2.4, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(120, 115, 110, 0.7)'; ctx.beginPath(); ctx.ellipse(x + 3.5, y + 1.5, 1.6, 1.1, 0, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 'flower') {
+      const col = ['#f2d24a', '#f08aa8', '#ffffff', '#b38cff'][Math.floor(rnd(gx + 3, gy + 9) * 4)];
+      for (const [ox, oy] of [[0, 0], [4, 2], [-3, 3]]) {
+        ctx.fillStyle = '#4f8a3a'; ctx.fillRect(x + ox, y + oy, 1, 3);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + ox + 0.5, y + oy, 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (kind === 'mushroom') {
+      ctx.fillStyle = '#e8dcc2'; ctx.fillRect(x - 0.8, y - 1, 1.8, 3.5);
+      ctx.fillStyle = rnd(gx, gy) > 0.5 ? '#c0392b' : '#b08050';
+      ctx.beginPath(); ctx.ellipse(x, y - 1.2, 3, 2, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(x - 1.5, y - 2.4, 1, 1);
+    } else if (kind === 'reed') {
+      ctx.strokeStyle = 'rgba(140, 160, 80, 0.9)'; ctx.lineWidth = 1;
+      ctx.beginPath(); for (let i = -1; i <= 1; i++) { ctx.moveTo(x + i * 2, y + 3); ctx.lineTo(x + i * 3, y - 6); } ctx.stroke();
+      ctx.fillStyle = '#6a4a2a'; ctx.fillRect(x - 0.6, y - 7, 1.6, 3);
+    } else if (kind === 'bone') {
+      ctx.strokeStyle = 'rgba(230, 225, 210, 0.8)'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x - 4, y + 1); ctx.lineTo(x + 4, y - 1); ctx.stroke();
+      ctx.fillStyle = 'rgba(230, 225, 210, 0.8)';
+      for (const [ox, oy] of [[-4, 1], [4, -1]]) { ctx.beginPath(); ctx.arc(x + ox, y + oy, 1.5, 0, Math.PI * 2); ctx.fill(); }
+    } else if (kind === 'crack') {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 2); ctx.lineTo(x - 1, y); ctx.lineTo(x + 1, y - 3); ctx.lineTo(x + 5, y + 1); ctx.moveTo(x - 1, y); ctx.lineTo(x, y + 4); ctx.stroke();
+    }
   }
 
   // B7: bụi cỏ — 3 lá cỏ mảnh lay theo gió (lệch pha theo vị trí, gió thổi từng đợt)
