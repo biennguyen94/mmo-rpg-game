@@ -1520,3 +1520,6 @@ Gỡ kẹt: Quản trị có nút 🏠 Về Làng ở từng người (danh sác
 
 ## Logo app vector (2026-11-07)
 Logo cũ là hình rồng pixel 32×32 phóng to nên vỡ hạt. Thay bằng `priv/static/app/logo.svg` tự vẽ (CC0): rồng đen viền vàng trong vòng vàng, nền đỏ tím đậm; `node e2e/app_icons.mjs` xuất PNG 512 / 192 / 180 / 32, bản maskable (thu vào vùng an toàn) và favicon.ico; đổi `?v=4` để máy tải lại.
+
+## Chuyển sinh vô hạn (2026-11-07, anh duyệt)
+Quá `max_rebirths` (10) vẫn chuyển sinh được, nhưng không phình sức: mỗi lần sau mốc 10 chỉ thêm `character.endless_points` (10) điểm tiềm năng (điểm sau lần n = 10 × 25 + (n − 10) × 10; trước đó n × 25), kinh nghiệm lên cấp như mốc 10; muốn chuyển sinh lần n + 1 (n ≥ 10) phải đã hạ chúa tể vùng chuyển sinh 10 tổng cộng n − 9 lần (Sổ quái), nên mỗi lần phải hạ lại. Không thêm vùng mới; quái sự kiện, đồ sát, đấu trường vẫn tính như mốc 10 (bảng hệ số dùng dòng cuối, phòng sự kiện chặn ở 10). Bảng xếp hạng đã sắp theo số lần chuyển sinh trước. Bot (và mô phỏng hành trình) dừng ở mốc 10. Quản trị đặt số lần chuyển sinh tới 999.

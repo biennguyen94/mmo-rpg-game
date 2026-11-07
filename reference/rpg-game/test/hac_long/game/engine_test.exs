@@ -275,7 +275,24 @@ defmodule HacLong.Game.EngineTest do
     pct = HacLong.Game.Data.rules().character.rebirth_xp_pct
     assert Engine.xp_need(q2) == round((25 * :math.pow(1, 1.75) + 15) * (1 + 2 * pct))
     assert Engine.xp_need(q2) > Engine.xp_need(%{q2 | rebirths: 0})
-    assert {%{ok: false}, _} = Engine.rebirth(%{q2 | level: 50, rebirths: Engine.max_rebirths()})
+
+    # chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa thì hạ lại chúa tể vùng cuối, ít điểm hơn
+    max = Engine.max_rebirths()
+    last = Engine.realm_lord(max)
+    at_max = %{q2 | level: 50, rebirths: max}
+    assert {%{ok: false, msg: m10}, _} = Engine.rebirth(at_max)
+    assert m10 =~ last.name
+    {%{ok: true}, r11} = Engine.rebirth(Map.put(at_max, :bestiary, %{last.id => 1}))
+    endless = HacLong.Game.Data.rules().character.endless_points
+    assert r11.rebirths == max + 1 and r11.points == max * Engine.rebirth_points() + endless
+    # lần kế: phải hạ lại (tổng 2 lần)
+    assert %{times: 2, have: 1} = Engine.rebirth_need(%{r11 | level: 50})
+    assert {%{ok: false, msg: m12}, _} = Engine.rebirth(%{r11 | level: 50})
+    assert m12 =~ "1/2"
+    {%{ok: true}, r12} = Engine.rebirth(%{r11 | level: 50, bestiary: %{last.id => 2}})
+    assert r12.rebirths == max + 2 and r12.points == max * Engine.rebirth_points() + 2 * endless
+    # kinh nghiệm lên cấp như mốc tối đa
+    assert Engine.xp_need(r12) == Engine.xp_need(%{r12 | rebirths: max})
   end
 
   test "bot chơi hết game với mỗi lớp nhân vật" do

@@ -1652,12 +1652,10 @@
       const z = ZONES[ni];
       body = `<div class="row">${sprite(z.boss.id, '', z.boss.name)}<div class="grow"><b>Hạ ${esc(z.boss.name)}</b> (cấp ${z.boss.level}) ở ${esc(z.name)}.
         <div class="small muted">Trùm vùng đã hạ: ${P.bosses.filter((id) => ZONES.some((zz) => zz.boss.id === id)).length}/${ZONES.length}.</div></div></div>`;
-    } else if (rb >= RULES.maxRebirths) {
-      return '';
     } else if (P.level < RULES.maxLevel) {
       body = `<p>Lên cấp <b>${RULES.maxLevel}</b> để chuyển sinh lần ${rb + 1} (đang cấp ${P.level}).</p>`;
     } else if (need) {
-      body = `<div class="row">${sprite(need.id, '', need.name)}<div class="grow"><b>Hạ ${esc(need.name)}</b> ở ${esc(need.map || `vùng chuyển sinh ${need.realm}`)} để chuyển sinh lần ${rb + 1}.</div></div>`;
+      body = `<div class="row">${sprite(need.id, '', need.name)}<div class="grow"><b>Hạ ${esc(need.name)}</b> ở ${esc(need.map || `vùng chuyển sinh ${need.realm}`)}${need.times > 1 ? ` (đã hạ ${need.have}/${need.times} lần)` : ''} để chuyển sinh lần ${rb + 1}.</div></div>`;
     } else {
       body = `<p>Đủ điều kiện <b>chuyển sinh lần ${rb + 1}</b>: gặp Trưởng Làng (ông già giữa Làng).</p>`;
     }
@@ -3225,11 +3223,12 @@
       sections.push(goalCard());
       sections.push(`<div class="card"><h3>Nhiệm vụ đang làm</h3>${act.length ? `<div class="list">${act.map((q) => questRow(q, 'turnin')).join('')}</div>` : '<p class="small muted">Chưa nhận nhiệm vụ nào.</p>'}</div>`);
       if (P.level >= RULES.maxLevel || P.rebirths) {
-        const pts = ((P.rebirths || 0) + 1) * RULES.rebirthPoints, max = P.rebirths >= RULES.maxRebirths;
+        // chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa vẫn được, ít điểm hơn
+        const pts = P.view.rebirthPoints, max = false;
         sections.push(`<div class="card"><div class="row">${icon('star-cycle', 'lg')}<div class="grow"><h3>Chuyển sinh</h3>
-          <p class="small muted">Đạt cấp ${RULES.maxLevel} thì có thể trở về cấp 1 để luyện lại từ đầu, giữ nguyên vàng, đồ đạc, vùng đã mở, nhiệm vụ và thành tựu. Mỗi lần chuyển sinh cho thêm ${RULES.rebirthPoints} điểm tiềm năng vĩnh viễn; kinh nghiệm lên cấp cần thêm ${Math.round(RULES.rebirthXpPct * 100)}% cho mỗi lần đã chuyển sinh. Từ lần thứ hai, phải hạ chúa tể vùng chuyển sinh trước đó.</p>
-          ${P.rebirths ? `<p class="small">Đã chuyển sinh ${P.rebirths}/${RULES.maxRebirths} lần.</p>` : ''}</div></div>
-          ${max ? '' : P.view.rebirthNeed ? `<p class="small" style="color:var(--bad)">Cần hạ ${esc(P.view.rebirthNeed.name)} ở vùng chuyển sinh ${P.view.rebirthNeed.realm} trước khi chuyển sinh lần ${(P.rebirths || 0) + 1}.</p>` : ''}
+          <p class="small muted">Đạt cấp ${RULES.maxLevel} thì có thể trở về cấp 1 để luyện lại từ đầu, giữ nguyên vàng, đồ đạc, vùng đã mở, nhiệm vụ và thành tựu. Mỗi lần chuyển sinh cho thêm ${RULES.rebirthPoints} điểm tiềm năng vĩnh viễn; kinh nghiệm lên cấp cần thêm ${Math.round(RULES.rebirthXpPct * 100)}% cho mỗi lần đã chuyển sinh. Từ lần thứ hai, phải hạ chúa tể vùng chuyển sinh trước đó. Sau ${RULES.maxRebirths} lần vẫn chuyển sinh tiếp được: mỗi lần hạ lại chúa tể vùng ${RULES.maxRebirths}, thêm ${RULES.endlessPoints} điểm, kinh nghiệm như lần ${RULES.maxRebirths}.</p>
+          ${P.rebirths ? `<p class="small">Đã chuyển sinh ${P.rebirths} lần.</p>` : ''}</div></div>
+          ${max ? '' : P.view.rebirthNeed ? `<p class="small" style="color:var(--bad)">Cần hạ ${esc(P.view.rebirthNeed.name)} ở vùng chuyển sinh ${P.view.rebirthNeed.realm}${P.view.rebirthNeed.times > 1 ? ` (đã hạ ${P.view.rebirthNeed.have}/${P.view.rebirthNeed.times} lần)` : ''} trước khi chuyển sinh lần ${(P.rebirths || 0) + 1}.</p>` : ''}
           ${max ? '' : P.level < RULES.maxLevel ? `<p class="small muted">Cần cấp ${RULES.maxLevel} để chuyển sinh lần tiếp theo.</p>` : P.view.rebirthNeed ? ''
             : confirmRebirth ? `<p class="small" style="color:var(--bad)">Về cấp 1 với ${pts} điểm tiềm năng? Không thể hoàn tác.</p>
               <div class="btn-row"><button class="btn" data-act="rebirth-cancel">Thôi</button><button class="btn primary" data-act="rebirth">Chuyển sinh</button></div>`

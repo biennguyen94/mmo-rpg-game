@@ -417,6 +417,8 @@ defmodule HacLong.Game.Engine do
       xpToNext: xp_need(p),
       # chúa tể cần hạ trước lần chuyển sinh kế (nil nếu không cần / đã hạ)
       rebirthNeed: with(%{} = n <- rebirth_need(p), do: Map.put(n, :map, lord_map_name(n.id))),
+      # điểm tiềm năng nhận được ở lần chuyển sinh kế (giảm sau mốc tối đa)
+      rebirthPoints: rebirth_bonus((Map.get(p, :rebirths) || 0) + 1),
       restCost: rest_cost(p),
       # Phase 13: phần cộng thêm cho tab Nhân vật: % từ thú cưng + món ăn (đồ không cộng chỉ số, B-15)
       extra: %{
@@ -503,7 +505,7 @@ defmodule HacLong.Game.Engine do
       )
 
   @doc "Kinh nghiệm cần để nhân vật `p` lên cấp kế (tính cả số lần đã chuyển sinh)."
-  def xp_need(p), do: xp_to_next(p.level, Map.get(p, :rebirths) || 0)
+  def xp_need(p), do: xp_to_next(p.level, min(Map.get(p, :rebirths) || 0, @max_rebirths))
 
   @doc """
   Vùng `zi` vào được / đánh được chưa: **đủ cấp** (cấp nhân vật ≥ `zone_level/1`, cấp quái thấp nhất
@@ -3612,14 +3614,28 @@ defmodule HacLong.Game.Engine do
   def rebirth_need(p) do
     n = Map.get(p, :rebirths) || 0
 
-    with true <- n >= @char.rebirth_lord_from and n < @max_rebirths,
-         %{} = lord <- realm_lord(n),
-         true <- Bestiary.count(p, lord.id) < 1 do
-      %{id: lord.id, name: lord.name, realm: n}
+    # chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa thì hạ lại chúa tể vùng cuối,
+    # tổng số lần hạ ≥ n − max + 1
+    k = min(n, @max_rebirths)
+    times = max(1, n - @max_rebirths + 1)
+
+    with true <- n >= @char.rebirth_lord_from,
+         %{} = lord <- realm_lord(k),
+         have when have < times <- Bestiary.count(p, lord.id) do
+      %{id: lord.id, name: lord.name, realm: k, times: times, have: have}
     else
       _ -> nil
     end
   end
+
+  @doc """
+  Điểm tiềm năng cộng thêm sau lần chuyển sinh thứ `n`: `n × rebirth_points` tới mốc tối đa, sau đó mỗi lần chỉ thêm
+  `endless_points` (DECISIONS "Chuyển sinh vô hạn").
+  """
+  def rebirth_bonus(n) when n <= @max_rebirths, do: n * @rebirth_points
+
+  def rebirth_bonus(n),
+    do: @max_rebirths * @rebirth_points + (n - @max_rebirths) * @char.endless_points
 
   # tên bản đồ có chúa tể `id` (bản đồ cuối của vùng chuyển sinh), nil nếu không thấy
   defp lord_map_name(id) do
@@ -3654,15 +3670,14 @@ defmodule HacLong.Game.Engine do
 
       need = rebirth_need(p) ->
         {err(
-           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm} trước khi chuyển sinh lần #{n + 1}."
+           "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm}" <>
+             if(need.times > 1, do: " (đã hạ #{need.have}/#{need.times} lần)", else: "") <>
+             " trước khi chuyển sinh lần #{n + 1}."
          ), p}
-
-      n >= @max_rebirths ->
-        {err("Đã chuyển sinh tối đa #{@max_rebirths} lần."), p}
 
       true ->
         n = n + 1
-        p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: n * @rebirth_points}
+        p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: rebirth_bonus(n)}
         p = Map.put(p, :rebirths, n)
         d = derived(p)
 

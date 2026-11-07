@@ -83,7 +83,10 @@ defmodule HacLong.Bots.BrainEndgameTest do
 
     test "bắt đầu từ bản đồ dễ nhất; hạ đủ quái thì sang bản đồ sau; bản đồ vừa gục nhiều thì lùi lại" do
       p = maxed()
-      assert Engine.rebirth_need(p) == nil
+
+      # người chơi quá mốc tối đa vẫn chuyển sinh được (cần hạ lại chúa tể vùng cuối); bot dừng ở mốc tối đa
+      assert %{realm: r} = Engine.rebirth_need(p)
+      assert r == @char.max_rebirths
       [m1, m2, m3 | _] = realm_maps()
       assert Brain.realm_target(p) == m1.id
 

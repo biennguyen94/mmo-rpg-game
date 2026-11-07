@@ -126,6 +126,11 @@ defmodule HacLong.Bots.Brain do
   @max_level Data.rules().character.max_level
   @max_rebirths Data.rules().character.max_rebirths
 
+  # bot dừng ở mốc chuyển sinh tối đa (không chuyển sinh vô hạn, DECISIONS "Chuyển sinh vô hạn"): quá mốc thì không
+  # còn chúa tể phải hạ
+  defp need(p),
+    do: if((Map.get(p, :rebirths) || 0) >= @max_rebirths, do: nil, else: Engine.rebirth_need(p))
+
   # vàng được tiêu cho rèn (giữ lại `gold_keep_per_level` × cấp để mua bình)
   defp spare_gold(p), do: p.gold - @forge.gold_keep_per_level * p.level
 
@@ -136,7 +141,7 @@ defmodule HacLong.Bots.Brain do
   @doc "Cấp tối đa, đủ điều kiện chuyển sinh (đã hạ chúa tể nếu cần, chưa chuyển sinh tối đa)."
   def rebirth_ready?(p) do
     p.level >= @max_level and (Map.get(p, :rebirths) || 0) < @max_rebirths and
-      Engine.rebirth_need(p) == nil
+      need(p) == nil
   end
 
   @doc """
@@ -474,7 +479,7 @@ defmodule HacLong.Bots.Brain do
       p.level < @max_level ->
         nil
 
-      need = Engine.rebirth_need(p) ->
+      need = need(p) ->
         realm_walk(p, realm_maps(p, &(&1 == need.realm)), avoid)
 
       (Map.get(p, :rebirths) || 0) >= @max_rebirths ->
@@ -873,7 +878,7 @@ defmodule HacLong.Bots.Brain do
 
       # vùng chuyển sinh: quái cấp cao hơn cấp tối đa, đánh mọi con (chúa tể trước)
       realm ->
-        lord = (Engine.rebirth_need(p) || %{})[:id]
+        lord = (need(p) || %{})[:id]
         hunt_first(p, snap, lord) || hunt(p, snap, fn _m, _map -> true end)
 
       true ->

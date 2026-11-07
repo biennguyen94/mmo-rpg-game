@@ -66,6 +66,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - **Chuyển sinh**: đạt cấp tối đa thì gặp Trưởng Làng để về cấp 1, giữ đồ, vàng, vùng đã mở, nhận thêm điểm tiềm năng vĩnh viễn
   (25 điểm × số lần đã chuyển sinh). Mỗi lần đã chuyển sinh làm kinh nghiệm lên cấp cần thêm 25 % (lần 4: gấp đôi). Từ lần thứ hai,
   muốn chuyển sinh lần k + 1 phải từng hạ **chúa tể vùng chuyển sinh k** (vd chuyển sinh lần 2 cần hạ Chúa Tể Xích Viêm ở vùng 1).
+  **Không giới hạn số lần**: sau 10 lần vẫn chuyển sinh tiếp được, mỗi lần phải hạ lại chúa tể vùng 10, chỉ thêm 10 điểm
+  tiềm năng, kinh nghiệm như lần 10 (sự kiện, đồ sát tính như mốc 10).
   Mỗi vùng chuyển sinh có 5 bản đồ: bản đồ 1 là cửa vào (Đài Phúc Lành), cổng mép dưới dẫn vào bản đồ 2 → 5, càng sâu quái càng
   mạnh, cho nhiều kinh nghiệm và đồ hơn; chúa tể vùng đứng ở bản đồ 5.
 

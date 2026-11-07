@@ -10,6 +10,8 @@
       "rebirth_points": 25,
       "rebirth_xp_pct": 0.25,
       "rebirth_lord_from": 1,
+      "endless_points": 10,
+      "_endless_doc": "Chuyển sinh vô hạn (DECISIONS \"Chuyển sinh vô hạn\"): quá max_rebirths (10) vẫn chuyển sinh được; mỗi lần sau mốc 10 chỉ thêm endless_points điểm (điểm sau lần n = max_rebirths × rebirth_points + (n − max_rebirths) × endless_points), kinh nghiệm lên cấp như mốc 10; muốn chuyển sinh lần n + 1 (n ≥ max_rebirths) phải đã hạ chúa tể vùng chuyển sinh max_rebirths tổng cộng n − max_rebirths + 1 lần. Quái sự kiện, đồ sát, đấu trường tính như mốc max_rebirths.",
       "_rebirth_doc": "Chuyển sinh (DECISIONS \"Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể\"): sau lần chuyển sinh n được n × rebirth_points điểm tiềm năng (trước 15); kinh nghiệm lên cấp × (1 + rebirth_xp_pct × n); từ n ≥ rebirth_lord_from muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n.",
       "rest_per_level": 4,
       "death_gold_loss": 0.1,
