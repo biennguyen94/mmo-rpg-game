@@ -510,7 +510,11 @@ defmodule HacLong.Game.Session do
           level: p.level,
           rebirths: Map.get(p, :rebirths) || 0,
           cls: p.cls,
-          map: p.pos.map
+          map: p.pos.map,
+          # tab "Đang online" ở Quanh đây: hình, ký hiệu bang, tên đỏ
+          look: Engine.look(p),
+          tag: p[:guild] && p.guild[:tag],
+          red: HacLong.Slay.red?(s.user_id)
         },
         s
       )

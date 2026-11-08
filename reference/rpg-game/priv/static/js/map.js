@@ -1506,16 +1506,21 @@
     for (const p of m.portals || []) dot(p.at[0], p.at[1], '#c49bff', Math.max(1.2, s / 2));
     if (world.map === P.pos.map) for (const q of world.monsters || []) dot(q.x, q.y, q.boss ? '#ffd24a' : q.gold ? '#ffe08a' : '#ef5a4a', Math.max(1, s / 2.4));
     const blink = 0.6 + 0.4 * Math.sin(now / 200);
-    // G2: trùm thế giới, Vương Miện (to, nhấp nháy); đồng đội tổ đội (xanh lá), người bang địch (đỏ), người bang mình (xanh)
+    // G2: trùm thế giới, Vương Miện (to, nhấp nháy); người chơi khác: hồng (khác quái đỏ, NPC xanh lá, cổng tím),
+    // đồng đội tổ đội vàng chanh, người bang mình xanh dương, người bang địch đỏ cam viền trắng
     if (m.worldBoss && boss.alive) dot(m.worldBoss[0], m.worldBoss[1], `rgba(255, 70, 50, ${blink})`, Math.max(2.5, s * 1.1));
     if (world.map === P.pos.map) {
       const crown = m.event === 'castle_siege' && (world.monsters || []).find((q) => q.kind === CS.crownKind);
       if (crown) dot(crown.x, crown.y, `rgba(255, 215, 90, ${blink})`, Math.max(2.5, s * 1.1));
       const rel = relations() || {}, party = rel.party || [];
+      const r = Math.max(1.5, s / 1.6);
       for (const o of world.players || []) {
         if (o.id === userId) continue;
-        const col = party.includes(o.id) ? '#7fe08a' : rel.enemy && o.tag === rel.enemy ? '#ff4a3a' : rel.tag && o.tag === rel.tag ? '#5aa9ff' : null;
-        if (col) dot(o.x, o.y, col, Math.max(1.2, s / 1.8));
+        const enemy = rel.enemy && o.tag === rel.enemy;
+        const col = party.includes(o.id) ? '#d4ff3a' : enemy ? '#ff7a2a' : rel.tag && o.tag === rel.tag ? '#5aa9ff' : '#ff6ad5';
+        // viền tối cho nổi trên nền
+        dot(o.x, o.y, enemy ? '#ffffff' : 'rgba(10, 6, 14, 0.9)', r + 0.8);
+        dot(o.x, o.y, col, r);
       }
     }
     dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));

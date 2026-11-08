@@ -1393,16 +1393,37 @@
     if (b) { const d = b.querySelector('.points-dot'); if (d) d.remove(); if (n) b.insertAdjacentHTML('beforeend', `<span class="points-dot">${n}</span>`); }
     if (tab === 'people' && !profileUi.open && !trade) render();
   }
+  // Quanh đây có 2 tab: người cùng bản đồ / mọi người đang online (tải từ server khi mở, nút ↻ tải lại)
+  let peopleTab = 'here', onlineList = null, onlineAt = 0;
+  function loadOnline(force) {
+    if (!force && onlineList && Date.now() - onlineAt < 15000) return;
+    onlineAt = Date.now();
+    Net.online().then((r) => { onlineList = r; if (tab === 'people' && peopleTab === 'online' && !profileUi.open) render(); }, (e) => toast(e.msg, true));
+  }
+  function peopleRow(o, here) {
+    const rel = { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag };
+    const inParty = party && party.members.some((x) => x.id === o.id);
+    const where = here ? `ô (${o.x}, ${o.y})` : esc(o.map_name || '');
+    return `<div class="item people-row"><button class="grow people-main" data-act="profile" data-uid="${o.id}">
+        <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
+        <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, rel)}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty ? ' <span class="small">· Đội</span>' : ''}</div>
+          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ${where}${o.red ? ' · 🔴 tên đỏ' : ''}${o.duel ? ' · ⚔ đang đồ sát' : ''}</div></div></button>
+        ${here || o.map === P.pos.map ? `<button class="btn small-btn" data-act="people-pin" data-uid="${o.id}" title="Chỉ trên bản đồ" aria-label="Chỉ ${esc(o.name)} trên bản đồ">📍</button>` : ''}</div>`;
+  }
   function viewPeople() {
     const m = WORLD.maps[P.pos.map] || {};
-    const list = others().slice().sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || a.name.localeCompare(b.name));
-    const inParty = (id) => party && party.members.some((x) => x.id === id);
-    return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
-      ${list.length ? `<div class="list">${list.map((o) => `<div class="item people-row"><button class="grow people-main" data-act="profile" data-uid="${o.id}">
-        <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
-        <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
-          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})${o.red ? ' · 🔴 tên đỏ' : ''}${o.duel ? ' · ⚔ đang đồ sát' : ''}</div></div></button>
-        <button class="btn small-btn" data-act="people-pin" data-uid="${o.id}" title="Chỉ trên bản đồ" aria-label="Chỉ ${esc(o.name)} trên bản đồ">📍</button></div>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
+    const sort = (a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || a.name.localeCompare(b.name);
+    const list = others().slice().sort(sort);
+    const on = onlineList ? onlineList.players.filter((o) => o.id !== Net.userId).sort(sort) : null;
+    const seg = `<div class="seg" role="tablist"><button class="btn ${peopleTab === 'here' ? 'primary' : ''}" role="tab" aria-selected="${peopleTab === 'here'}" data-act="people-tab" data-t="here">Quanh đây (${list.length})</button><button class="btn ${peopleTab === 'online' ? 'primary' : ''}" role="tab" aria-selected="${peopleTab === 'online'}" data-act="people-tab" data-t="online">🟢 Đang online${on ? ` (${on.length})` : ''}</button></div>`;
+    if (peopleTab === 'online') {
+      loadOnline(false);
+      return `<div class="card">${seg}<div class="row"><h3 class="grow">Đang online</h3><button class="btn small-btn" data-act="people-reload" aria-label="Tải lại">↻</button></div>
+        ${!on ? '<p class="small muted">Đang tải…</p>' : on.length ? `<div class="list">${on.map((o) => peopleRow(o, false)).join('')}</div>` : '<p class="small muted">Chỉ có bạn đang online.</p>'}
+        <p class="small muted">Chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu, ⚔ đấu trực tiếp…; 📍 hiện khi người đó cùng bản đồ với bạn.</p></div>`;
+    }
+    return `<div class="card">${seg}<div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
+      ${list.length ? `<div class="list">${list.map((o) => peopleRow(o, true)).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
       <p class="small muted">Chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu…; 📍 chỉ người đó trên bản đồ. Bấm vào người trên bản đồ cũng mở được menu.</p></div>`;
   }
 
@@ -4529,6 +4550,8 @@
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
     if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
     if (act === 'profile') { pickUi = null; openPlayer({ id: +t.dataset.uid }); return; }
+    if (act === 'people-tab') { peopleTab = t.dataset.t; if (peopleTab === 'online') loadOnline(true); render(); return; }
+    if (act === 'people-reload') { loadOnline(true); return; }
     if (act === 'pick-close') { pickUi = null; render(); return; }
     if (act === 'pick-sel') { if (pickUi) pickUi.sel = +t.dataset.uid; render(); return; }
     if (act === 'pick-mob') { const m = pickUi && pickUi.mob; pickUi = null; render(); if (m) walkTo(m.x, m.y); return; }

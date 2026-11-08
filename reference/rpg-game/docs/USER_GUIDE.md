@@ -112,7 +112,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   được khắc lên Bia ở Đền Cổ.
 - **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
   nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Giữ và kéo bản đồ thu nhỏ để dời nó sang chỗ khác trong khung (máy nhớ vị trí);
-  tắt bản đồ thu nhỏ ở Menu → Cài đặt.
+  tắt bản đồ thu nhỏ ở Menu → Cài đặt. Chấm trên bản đồ thu nhỏ: trắng nhấp nháy là bạn, **hồng là người chơi khác**, vàng chanh
+  đồng đội, xanh dương người bang mình, cam viền trắng người bang địch; quái đỏ, NPC xanh lá, cổng tím.
 - **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,
   bão tuyết… Khi đánh quái, kỹ năng cùng hệ với thời tiết mạnh hơn: quang → Ánh Sáng +5%, mưa / giông → Sét +5% / +10%,
   tuyết / bão tuyết → Băng +5% / +10%, sương → Bóng Tối +5%, lá bay → Gió +5%, gió cát → Đất +5%, tàn lửa → Lửa +5%
@@ -398,7 +399,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - **Bản đồ động**: nước gợn, cây lay, quái nhún nhẹ, mưa ở đầm lầy, tro lửa ở hang rồng / vùng chuyển sinh, tuyết trên núi,
   sương ở nghĩa địa, lá rơi ở rừng / trại, khói bếp ở Làng, đài phun nước lấp lánh; ban đêm có đom đóm và đèn lồng quanh
   người dân. Tầng Tháp Vô Tận, Quảng Trường Quỷ, Lâu Đài Máu, Kalima cũng có hiệu ứng theo nền tầng, và quái trên tầng đi lang thang như ngoài bản đồ. Tắt ở **Menu → Cài đặt → Bản đồ → Hiệu ứng động** (máy đặt "giảm chuyển động" thì mặc định tắt).
-- Dock **👫 Quanh đây**: danh sách đầy đủ người chơi khác cùng bản đồ (kể cả người không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát; **📍** chỉ người đó trên bản đồ (nhấp nháy vài giây). Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
+- Dock **👫 Quanh đây**: danh sách đầy đủ người chơi khác cùng bản đồ (kể cả người không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát; **📍** chỉ người đó trên bản đồ (nhấp nháy vài giây). Tab **🟢 Đang online**: mọi người đang online ở mọi bản đồ (có tên bản
+  đồ họ đang đứng, ↻ tải lại), chạm tên mở hồ sơ y như Quanh đây. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
 - **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.
 - Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.

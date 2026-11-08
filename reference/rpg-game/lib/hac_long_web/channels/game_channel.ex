@@ -349,6 +349,24 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # tab "Đang online" ở Quanh đây: mọi người đang online (không lộ tên đăng nhập), bản đồ đang đứng
+  def handle_in("online", _p, socket) do
+    with :ok <- limit({:online, socket.assigns.user_id}, 30, :timer.minutes(1)) do
+      %{count: n, players: ps} = Session.online()
+
+      list =
+        for o <- ps do
+          o
+          |> Map.drop([:account])
+          |> Map.put(:map_name, (HacLong.World.Maps.get(o.map) || %{name: "Tháp / sự kiện"}).name)
+        end
+
+      {:reply, {:ok, %{count: n, players: list}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("inspect", %{"uid" => target}, socket) when is_integer(target) do
     uid = socket.assigns.user_id
 

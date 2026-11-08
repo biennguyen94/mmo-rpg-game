@@ -547,7 +547,8 @@ TOOLS_HTML = f"""<h3>Thanh dưới bản đồ (một hàng)</h3>
   <p>Menu → Cài đặt: món trang bị rơi không thuộc loại đã chọn bị hủy ngay, không vào túi; áp cho mọi trận (đánh tay, Tự đánh, Đánh nhanh).</p>
   <h3>Tiện ích khác</h3>
   <ul><li>Tháo / mặc / ép đồ giữ tỉ lệ máu; ngoài trận máu / mana không vượt mức tối đa.</li>
-    <li>Bản đồ thu nhỏ: giữ và kéo để dời chỗ (nhớ vị trí), bấm nhẹ mở bản đồ thế giới.</li>
+    <li>Bản đồ thu nhỏ: giữ và kéo để dời chỗ (nhớ vị trí), bấm nhẹ mở bản đồ thế giới. Chấm: trắng nhấp nháy là mình, hồng người chơi khác, vàng chanh đồng đội, xanh dương bang mình, cam viền trắng bang địch; quái đỏ, NPC xanh lá, cổng tím.</li>
+    <li>👫 Quanh đây có tab <b>🟢 Đang online</b>: mọi người đang online (kèm bản đồ họ đứng), chạm tên mở hồ sơ như Quanh đây.</li>
     <li>Nhật ký đồ sát: dòng của đối thủ chi tiết như dòng của mình (tên, chiêu, ⚔ sát thương, máu còn lại); trúng độc / bỏng / chảy máu ghi rõ máu mỗi lượt, số lượt.</li></ul>
   <h3>Quản trị: ⚡ Dựng nhân vật tối đa</h3>
   <p>Tab Quản trị → tra cứu người chơi → chọn cấp, số lần chuyển sinh (0–999; điểm tiềm năng tự tính theo cấp / chuyển sinh rồi tự cộng hết, đủ chỉ số yêu cầu của đồ trước), Excellent / Đồ Thần, tay trái vũ khí / khiên, mặc luôn (túi đầy thì món bị thay ra gửi Hộp thư giữ +N), vàng {n(AMB['gold'])}, vật phẩm, thú {E(next((x['name'] for x in D['pets'] if x.get('id') == AMB['pet']), AMB['pet']))} cấp tối đa. Đồ tốt nhất của lớp +{AMB['up']}, {AMB['opt']} dòng, May mắn; kỷ lục tháp {AMB['tower_floor']}, thông thạo kỹ năng {AMB['mastery']}.</p>
@@ -572,7 +573,7 @@ EVVIZ_HTML = f"""<h3>Thanh sự kiện (mép trên bản đồ)</h3>
   <ul><li><b>Cổ Long</b>: quầng đỏ nhấp nháy, thanh máu to có %; bật ⚡ rồi chạm là đánh ngay trên bản đồ (số bay lên chỉ là sát thương của mình).</li>
     <li><b>Vương Miện</b> (Công Thành, ô {CSR['crown']['at'][0]}, {CSR['crown']['at'][1]}): quầng vàng + 👑; khuất thì mũi tên vàng ở mép chỉ hướng. Mỗi bang một màu vòng dưới chân, bang giữ Vương Miện vàng + 👑 trước tên.</li>
     <li><b>Chiến bang</b>: người bang địch vòng đỏ nhấp nháy, ⚔ trước tên.</li>
-    <li><b>Bản đồ nhỏ</b>: Cổ Long (đỏ, to), Vương Miện (vàng), đồng đội (xanh lá), bang mình (xanh dương), bang địch (đỏ).</li></ul>
+    <li><b>Bản đồ nhỏ</b>: Cổ Long (đỏ, to), Vương Miện (vàng), người chơi khác (hồng), đồng đội (vàng chanh), bang mình (xanh dương), bang địch (cam viền trắng).</li></ul>
   <h3>Chạm là đánh</h3>
   <p>Đang hỗn chiến (Hỗn Chiến Thành: ai cũng là đối thủ) hoặc Công Thành Chiến (người bang khác, ưu tiên bang đang giữ Vương Miện): chạm người là đồ sát ngay, không mở menu; bật ⚡ thì ở lại bản đồ.</p>
   <h3>Chiến bang khi đồ sát</h3>

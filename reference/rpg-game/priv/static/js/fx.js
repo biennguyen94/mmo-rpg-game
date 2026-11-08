@@ -53,8 +53,13 @@
     dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(window.innerWidth * dpr);
     canvas.height = Math.round(window.innerHeight * dpr);
+    // cỡ hiển thị đúng bằng vùng vẽ: trên điện thoại 100vh cao hơn innerHeight (thanh địa chỉ) làm canvas bị kéo giãn
+    // dọc → hiệu ứng lệch xuống dưới (anh báo "lệch xuống 1 ô")
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
   }
   window.addEventListener('resize', resize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 
   // tâm (và cỡ) một phần tử trên màn hình
   // ⚡ Đánh nhanh (ở lại bản đồ): vị trí quái / mình lấy từ bản đồ (`run(events, anchors)`), không có phần tử DOM

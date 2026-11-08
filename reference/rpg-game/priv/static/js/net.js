@@ -337,6 +337,8 @@
     tl(op, payload) { return push('tl', Object.assign({ op }, payload || {})); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
+    // tab "Đang online" ở Quanh đây
+    online() { return push('online', {}); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).
     dm(op, payload) { return push('dm', Object.assign({ op }, payload || {})); },
     // Đấu trường: điểm của mình, đối thủ gợi ý, bảng xếp hạng. Xem thông tin người chơi khác.
