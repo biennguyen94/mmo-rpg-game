@@ -3721,6 +3721,8 @@
     let s;
     if (l.miss) s = `${who} ${act ? `<span>dùng</span> ${act}, ` : ''}<span>đánh trượt.</span>`;
     else if (l.reflect != null) s = `${who} <span>bị phản</span> ⚔ ${num(l.reflect)}${left}`;
+    else if (l.dot) s = `${who} <span>mất</span> ⚔ ${num(l.dmg)} <span>vì ${esc(l.dot)}</span>${left}`;
+    else if (l.status) s = `${who} <span>${esc(l.status)}</span> ${({ 'trúng độc': '☠', 'bị bỏng': '🔥', 'chảy máu': '🩸' })[l.status] || '☠'} <span class="lg-left">(−${fmt(l.per)} máu mỗi lượt, ${l.turns} lượt)</span>`;
     else if (l.mp != null) s = `${who} <span>uống</span> ${esc(l.act)}<span>, hồi</span> 💧 ${num(l.mp)} MP`;
     else if (l.heal != null) s = `${who} ${l.potion ? `<span>uống</span> ${esc(l.act)}` : `<span>dùng</span> ${act}`}<span>, hồi</span> ❤ ${num(l.heal)}`;
     else {

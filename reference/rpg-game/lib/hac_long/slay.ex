@@ -287,9 +287,13 @@ defmodule HacLong.Slay do
 
         f = Map.put(f, :fx, fx)
 
+        # một khối lượt của người vừa đánh trong nhật ký người bị đánh (cách dòng với lượt trước)
+        turn = "slay-#{f.turns}"
+
         text =
-          sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?) ++
-            (extra[:foe_lines] || [])
+          (sync_text(f.names[uid], f.names[foe], lines, dmg, healed, auto?) ++
+             Enum.map(extra[:foe_lines] || [], &entry(&1, "bad")))
+          |> Enum.map(&Map.put(&1, :turn, turn))
 
         cond do
           f.hp[foe] <= 0 ->
@@ -452,7 +456,7 @@ defmodule HacLong.Slay do
           if why == :fled,
             do: log(pl, "🏃 #{pl.name} bỏ chạy: tính như gục ngã.", "bad"),
             else:
-              Enum.reduce(f[:last] || [], pl, &log(&2, &1, "bad"))
+              Enum.reduce(f[:last] || [], pl, &push(&2, entry(&1, "bad")))
               |> log("#{f.names[winner]} hạ gục #{pl.name}.", "bad")
 
         {_, pl2} = Engine.finish_lose(pl)
@@ -516,8 +520,12 @@ defmodule HacLong.Slay do
   defp in_fight?(p, f),
     do: match?(%{battle: %{over: false, encounter: %{slay: id}}} when id == f.id, p)
 
-  defp log(p, text, kind),
-    do: put_in(p.battle.log, Enum.take(p.battle.log ++ [%{text: text, kind: kind}], -60))
+  defp log(p, text, kind), do: push(p, %{text: text, kind: kind})
+
+  defp push(p, e), do: put_in(p.battle.log, Enum.take(p.battle.log ++ [e], -60))
+
+  defp entry(%{} = e, _kind), do: e
+  defp entry(t, kind) when is_binary(t), do: %{text: t, kind: kind}
 
   # ---------- Tiện ích ----------
 
@@ -526,21 +534,37 @@ defmodule HacLong.Slay do
   defp sync_text(name, foe_name, lines, dmg, healed, auto?) do
     who = if auto?, do: "#{name} (hết giờ, tự đánh)", else: name
 
-    lines = for t <- lines, do: %{text: t, kind: "hit"}
+    mirrored =
+      for l <- lines,
+          e = entry(l, "bad"),
+          not (e.text =~ ~r/ hồi 0 máu/u),
+          do: flip(e, name, foe_name)
 
-    case Enum.map(BattleText.view(lines, name, foe_name), & &1.text) do
+    case mirrored do
       [] ->
         cond do
-          dmg > 0 -> ["⚔ #{who} gây #{dmg} sát thương cho bạn."]
-          healed > 0 -> ["#{who} hồi #{healed} máu."]
-          true -> ["#{who} ra đòn nhưng không trúng."]
+          dmg > 0 -> [entry("⚔ #{who} gây #{dmg} sát thương cho bạn.", "bad")]
+          healed > 0 -> [entry("#{who} hồi #{healed} máu.", "bad")]
+          true -> [entry("#{who} ra đòn nhưng không trúng.", "bad")]
         end
 
-      mirrored when auto? ->
-        ["⏱ #{name} hết giờ, server đánh thay." | mirrored]
+      _ when auto? ->
+        [entry("⏱ #{name} hết giờ, server đánh thay.", "bad") | mirrored]
 
-      mirrored ->
+      _ ->
         mirrored
+    end
+  end
+
+  # dòng của người đánh → góc nhìn người bị đánh: chữ thêm tên người đánh (`BattleText.mirror/4`), `who` đổi bên
+  # (tên đậm, màu, ⚔ sát thương, máu còn lại vẫn vẽ như dòng của mình — DECISIONS "Nhật ký trận dễ đọc")
+  defp flip(e, name, foe_name) do
+    e = %{e | text: BattleText.mirror(e.text, name, foe_name), kind: "bad"}
+
+    case e[:who] do
+      "me" -> %{e | who: "foe"}
+      "foe" -> %{e | who: "me"}
+      _ -> e
     end
   end
 

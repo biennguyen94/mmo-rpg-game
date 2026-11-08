@@ -157,6 +157,19 @@ defmodule HacLongWeb.SlayTest do
     assert Enum.any?(texts, &(&1 =~ ~r/^#{name_a}, [^,]+, gây \d+ sát thương/u))
     refute Enum.any?(texts, &(&1 =~ ~r/(?<![\p{L}])[Bb]ạn(?![\p{L}])/u))
 
+    # dòng đòn của người đánh trên màn bên bị đánh vẽ chi tiết như dòng của mình: tên (bên kia), sát thương thật,
+    # máu còn lại thật của bên bị đánh (không phải số tạm của máy tính trận)
+    max_b0 = HacLong.Game.Engine.derived(pb).maxHp
+
+    foe_hits =
+      Enum.filter(
+        pb.battle.log,
+        &(&1[:who] == "foe" and &1[:name] == name_a and is_integer(&1[:dmg]))
+      )
+
+    assert foe_hits != []
+    assert Enum.all?(foe_hits, &(&1.dmg <= max_b0 and (&1[:left] == nil or &1.left <= max_b0)))
+
     # đòn mở màn của người tấn công (RULES.slay.first_strike_mult); đòn thường đầu tiên có thể bị né (không sát thương)
     assert Enum.any?(texts, &(&1 =~ "Đòn mở màn")) or
              Enum.any?(texts, &(&1 =~ ", đánh trượt."))

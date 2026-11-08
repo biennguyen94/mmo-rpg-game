@@ -1781,3 +1781,8 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Vị trí lưu ở trình duyệt (`localStorage` `hl-minimap-pos`) theo tỉ lệ khoảng trống trong khung (0..1), nên đổi cỡ màn / xoay máy / bật "vừa màn hình" vẫn đúng góc và không lọt ra ngoài khung. Chỉ là tùy chọn giao diện, không gửi server.
 - Nút chat (góc phải dưới) và nút vừa màn hình (góc phải trên) vẫn nằm trên bản đồ thu nhỏ để không bị che.
 - e2e `minimap` (máy tính, điện thoại, cảm ứng thật).
+
+## Đồ sát: dòng của đối thủ chi tiết như dòng của mình (2026-11-07, anh báo qua ảnh)
+- Lỗi: lượt của đối thủ chạy ở phiên của họ, chỉ gửi sang chữ (`& &1.text`) nên mất tên / chiêu / sát thương / máu còn lại → hiện "Phong Vũ, Kiếm Độc Hỏa, gây 246 sát thương." thay vì "Phong Vũ dùng Kiếm Độc Hỏa. ⚔ 246 (máu còn lại: …)".
+- Nay gửi nguyên dòng nhật ký (`Slay.acted` → `Session.slay_sync`), đổi bên `who` (me ↔ foe); lấy sau khi đã tính sát thương / máu còn lại thật (`fix_slay_log`). Mỗi lượt đối thủ là một khối (cách dòng).
+- Thêm chi tiết cho dòng hiệu ứng: "X trúng độc ☠ (−N máu mỗi lượt, K lượt)" (bỏng 🔥, chảy máu 🩸) và "X mất ⚔ N vì trúng độc (máu còn lại: …)" — cả đánh quái lẫn đánh người.

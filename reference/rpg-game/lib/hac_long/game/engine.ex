@@ -1339,7 +1339,13 @@ defmodule HacLong.Game.Engine do
          fn p, dmg ->
            p
            |> put_effect(:monster, "poison", e.turns, max(1, round(dmg * e.power)))
-           |> log("☠ #{m.name} trúng độc.", "good")
+           |> log("☠ #{m.name} trúng độc.", "good", %{
+             who: "foe",
+             name: m.name,
+             status: "trúng độc",
+             per: max(1, round(dmg * e.power)),
+             turns: e.turns
+           })
          end}
 
       "shadow_step" ->
@@ -1868,7 +1874,17 @@ defmodule HacLong.Game.Engine do
 
         p
         |> put_effect(:player, id, e.turns, per)
-        |> log("Bạn #{@effect_names[id]} (-#{per} máu mỗi lượt, uống bình máu để giải).", "bad")
+        |> log(
+          "Bạn #{@effect_names[id]} (-#{per} máu mỗi lượt, uống bình máu để giải).",
+          "bad",
+          %{
+            who: "me",
+            name: p.name,
+            status: @effect_names[id],
+            per: per,
+            turns: e.turns
+          }
+        )
 
       "stun" ->
         p |> put_effect(:player, "stun", 1, 0) |> log("💫 Bạn bị choáng!", "bad")
@@ -1900,7 +1916,15 @@ defmodule HacLong.Game.Engine do
       if mdot > 0 do
         p
         |> update_in([:battle, :monster, :hp], &max(0, &1 - mdot))
-        |> log("☠ #{m.name} mất #{mdot} máu vì độc.", "hit")
+        |> then(
+          &log(&1, "☠ #{m.name} mất #{mdot} máu vì độc.", "hit", %{
+            who: "foe",
+            name: m.name,
+            dot: "độc",
+            dmg: mdot,
+            left: &1.battle.monster.hp
+          })
+        )
       else
         p
       end
@@ -1923,11 +1947,13 @@ defmodule HacLong.Game.Engine do
       if pdot > 0 do
         p = %{p | hp: max(0, p.hp - pdot)}
 
-        log(
-          p,
-          "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.",
-          "bad"
-        )
+        log(p, "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.", "bad", %{
+          who: "me",
+          name: p.name,
+          dot: effect_list(pdots),
+          dmg: pdot,
+          left: p.hp
+        })
       else
         p
       end
@@ -2120,7 +2146,18 @@ defmodule HacLong.Game.Engine do
     pdot = pdots |> Enum.map(& &1.power) |> Enum.sum()
 
     if pdot > 0 do
-      p = %{p | hp: p.hp - pdot} |> log("Bạn mất #{pdot} máu vì #{effect_list(pdots)}.", "bad")
+      p =
+        %{p | hp: p.hp - pdot}
+        |> then(
+          &log(&1, "Bạn mất #{pdot} máu vì #{effect_list(pdots)}.", "bad", %{
+            who: "me",
+            name: &1.name,
+            dot: effect_list(pdots),
+            dmg: pdot,
+            left: max(&1.hp, 0)
+          })
+        )
+
       if p.hp <= 0, do: survive(p, derived(p)), else: p
     else
       p
