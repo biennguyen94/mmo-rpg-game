@@ -7,7 +7,7 @@
  *   skill  { element, crit }    kỹ năng gây sát thương, hình theo hệ nguyên tố
  *   buff   { element, heal }    kỹ năng lên mình (hồi máu, tăng sức)
  *   miss                        đòn của mình trượt
- *   hurt   { crit }             quái / đối thủ đánh trúng mình
+ *   hurt   { crit, element }    quái / đối thủ đánh trúng mình; `element`: kỹ năng quái theo hệ (hạt màu hệ bay sang)
  *   kill                        quái gục: tan thành hạt, vàng bay về túi
  *   ghost  { from }             thanh máu quái: lớp trắng trễ chạy từ % cũ (`from`, 0..100) về % mới
  *   loot   { items: [{ tier, name, col }] }   đồ rơi (FX đợt 2): cột sáng theo độ quý (anc vàng, exc xanh lá, opt xanh
@@ -170,6 +170,18 @@
     hurt(e) {
       const me = spot(ME);
       if (!me) return;
+      // kỹ năng quái theo hệ: luồng hạt màu hệ bay từ quái sang mình, nổ màu hệ
+      const ec = e.element && COLORS[e.element];
+      if (ec) {
+        const t = spot(MON);
+        if (t) for (let i = 0; i < 16; i++) {
+          const life = rand(280, 380);
+          add({ k: 'dot', x: t.x + rand(-8, 8), y: t.y + rand(-8, 8), vx: (me.x - t.x) / (life / 1000), vy: (me.y - t.y) / (life / 1000) + rand(-40, 40),
+            g: 0, life, r: rand(2, 4), col: ec[i % 3], glow: true });
+        }
+        burst(me.x, me.y, 14, ec, { vmax: 180 });
+        flash(ec[2], 0.22, 300);
+      }
       add({ k: 'claw', x: me.x, y: me.y, r: Math.max(26, me.w * 0.7), life: 260, col: '#ff4a3d' });
       burst(me.x, me.y, e.crit ? 18 : 8, ['#ff6b5a', '#c0392b', '#ffd0c0'], { vmax: 200 });
       flash('#ff2a1a', e.crit ? 0.3 : 0.16, 260);

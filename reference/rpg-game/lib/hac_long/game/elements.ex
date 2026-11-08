@@ -34,4 +34,5 @@ defmodule HacLong.Game.Elements do
   end
 
   def name(el), do: (@r.names |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end))[el]
+  def icon(el), do: (@r.icons |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end))[el] || ""
 end

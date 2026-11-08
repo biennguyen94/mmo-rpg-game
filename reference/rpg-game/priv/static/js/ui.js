@@ -2109,9 +2109,12 @@
       const abs = Math.round(Math.min(RULES.wingAbsorbMax, it.absorb + wingUp('absorb', it.tier, up)) * 100);
       return [`Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`, `Sát thương +${dmg}%`, `Nhận sát thương −${abs}%`, CLASSES[it.cls].name].join(sep);
     }
-    if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}`;
-    if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? `${sep}Phòng thủ <span class="up">+${b}</span>` : ''}`; }
-    if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}`;
+    // kháng hệ kiểu MU (nhẫn / dây chuyền theo hệ): base + per_up × cấp ép, giảm sát thương kỹ năng quái cùng hệ
+    const rs = (RULES.monsterSkills || {}).resist, rel = rs && rs.items[it.base || it.id];
+    const res = rel ? `${sep}Kháng ${(RULES.elements || {}).icons ? RULES.elements.icons[rel] + ' ' : ''}${(RULES.elements || {}).names ? RULES.elements.names[rel] : rel} ${Math.round((rs.base + rs.per_up * (up || 0)) * 100)}%` : '';
+    if (it.atk) return `Tấn công +${it.atk}${b ? ` <span class="up">+${b}</span>` : ''}${res}`;
+    if (it.hp) { const bh = id ? (P.view.bonusHp || {})[id] || 0 : 0; return `Máu tối đa +${it.hp}${bh ? ` <span class="up">+${bh}</span>` : ''}${b ? `${sep}Phòng thủ <span class="up">+${b}</span>` : ''}${res}`; }
+    if (it.def) return `Phòng thủ +${it.def}${b ? ` <span class="up">+${b}</span>` : ''}${res}`;
     if (it.heal) return `Hồi ${fmt(it.heal)} máu`;
     if (it.mana) return `Hồi ${fmt(it.mana)} MP`;
     return '';
@@ -2413,6 +2416,7 @@
     return head + `<div class="lib-detail">
       <div class="lib-stats"><span>❤ ${fmt(m.hp)}</span><span>⚔ ${fmt(m.atk)}</span><span>🛡 ${fmt(m.def)}</span><span>⭐ ${fmt(m.xp)}</span><span>${icon('two-coins')} ~${fmt(m.gold)}</span></div>
       ${libLine('Đòn đặc biệt', m.special ? `${esc(m.special.name)} mỗi ${m.special.every} lượt` : '')}
+      ${libLine('Kỹ năng', (m.skills || []).length ? m.skills.map(esc).join(', ') : '')}
       ${libLine('Khi đánh trúng', m.on_hit ? `${Math.round(m.on_hit.chance * 100)}% gây ${esc((EFFECTS[m.on_hit.id] || [0, m.on_hit.id])[1])}` : '')}
       ${libLine('Xuất hiện ở', m.where.map((n) => go('maps', n)).join(', '))}
       ${libLine('Có thể rơi', m.drops.map((id) => ITEMS[id] ? go('items', ITEMS[id].name) : esc(id)).join(', '))}
@@ -3805,6 +3809,7 @@
     if (l.miss) s = `${who} ${act ? `<span>dùng</span> ${act}, ` : ''}<span>đánh trượt.</span>`;
     else if (l.reflect != null) s = `${who} <span>bị phản</span> ⚔ ${num(l.reflect)}${left}`;
     else if (l.dot) s = `${who} <span>mất</span> ⚔ ${num(l.dmg)} <span>vì ${esc(l.dot)}</span>${left}`;
+    else if (act && l.dmg == null && l.note) s = `${who} <span>dùng</span> ${act} <span class="lg-left">(${esc(l.note)})</span>`;
     else if (l.status) s = `${who} <span>${esc(l.status)}</span> ${({ 'trúng độc': '☠', 'bị bỏng': '🔥', 'chảy máu': '🩸' })[l.status] || '☠'} <span class="lg-left">(−${fmt(l.per)} máu mỗi lượt, ${l.turns} lượt)</span>`;
     else if (l.mp != null) s = `${who} <span>uống</span> ${esc(l.act)}<span>, hồi</span> 💧 ${num(l.mp)} MP`;
     else if (l.heal != null) s = `${who} ${l.potion ? `<span>uống</span> ${esc(l.act)}` : `<span>dùng</span> ${act}`}<span>, hồi</span> ❤ ${num(l.heal)}`;
@@ -3841,8 +3846,10 @@
     } else if (sk && (SELF_FX.includes(sk.effect) || !f.mDmg)) {
       ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
-    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, delay: 380 });
     const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
+    // kỹ năng quái theo hệ: luồng hạt màu hệ bay từ quái sang mình
+    const msk = newLog.find((l) => l.who === 'foe' && l.el);
+    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: 380 });
     // thông thạo kỹ năng lên cấp
     const ml = newLog.find((l) => l.text.startsWith('📘') && / lên cấp \d+!/.test(l.text));
     if (ml) ev.push({ type: 'mastery', text: ml.text.replace(/^📘\s*/, ''), delay: 450 });

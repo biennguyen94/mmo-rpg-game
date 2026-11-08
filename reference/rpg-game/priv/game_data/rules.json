@@ -1251,6 +1251,64 @@
       "version": 1,
       "verified": false
     },
+    "monster_skills": {
+      "_doc": "DECISIONS \"Quái dùng kỹ năng theo hệ\" (anh chọn A): quái dùng kỹ năng theo nguyên tố của mình (by_element: kỹ năng 1, kỹ năng 2). tiers: quái thường từ min_level dùng count kỹ năng đầu, mỗi lượt chance dùng (kỹ năng hết hồi chiêu cooldown lượt); elite = Tinh Anh / Bóng Đêm / quái vàng; boss = trùm (giữ chiêu đặc biệt cũ); lord = chúa tể vùng chuyển sinh (thêm chiêu riêng lord_special mỗi every lượt). Kỹ năng: mult (× công quái, chia đều hits đòn, luôn trúng), effect lên người (burn / poison: power × công quái mỗi lượt; weaken: −power công; stun: chance), self (hiệu ứng lên quái: stone giảm power sát thương nhận, gale né đòn thường thêm power), heal (hồi % máu tối đa), drain (hồi % sát thương gây ra). Thời tiết cùng hệ cộng như kỹ năng người (RULES.weather.bonus). Đánh người (đồ sát, đấu trường) không áp.",
+      "min_level": 10,
+      "cooldown": 3,
+      "tiers": {
+        "normal": {"count": 1, "chance": 0.2},
+        "elite": {"count": 2, "chance": 0.3},
+        "boss": {"count": 2, "chance": 0.3},
+        "lord": {"count": 2, "chance": 0.25}
+      },
+      "by_element": {
+        "fire": [
+          {"id": "fire_breath", "name": "Phun Lửa", "mult": 1.4, "effect": {"id": "burn", "turns": 3, "power": 0.15}},
+          {"id": "inferno", "name": "Hỏa Ngục", "mult": 1.8}
+        ],
+        "ice": [
+          {"id": "ice_shot", "name": "Băng Tiễn", "mult": 1.3, "effect": {"id": "weaken", "turns": 2, "power": 0.15}},
+          {"id": "freeze", "name": "Đóng Băng", "mult": 1.1, "effect": {"id": "stun", "chance": 0.3}}
+        ],
+        "lightning": [
+          {"id": "thunder", "name": "Lôi Kích", "mult": 1.5, "effect": {"id": "stun", "chance": 0.2}},
+          {"id": "chain_bolt", "name": "Liên Hoàn Sét", "mult": 1.8, "hits": 3}
+        ],
+        "earth": [
+          {"id": "quake", "name": "Địa Chấn", "mult": 1.4},
+          {"id": "stone_skin", "name": "Giáp Đá", "self": {"id": "stone", "turns": 2, "power": 0.3}}
+        ],
+        "wind": [
+          {"id": "gust", "name": "Cuồng Phong", "mult": 1.6, "hits": 2},
+          {"id": "whirl", "name": "Gió Lốc", "self": {"id": "gale", "turns": 2, "power": 0.3}}
+        ],
+        "light": [
+          {"id": "holy_ray", "name": "Thánh Quang", "mult": 1.3},
+          {"id": "mend", "name": "Hồi Phục", "heal": 0.15}
+        ],
+        "dark": [
+          {"id": "soul_drain", "name": "Hút Hồn", "mult": 1.3, "drain": 0.3},
+          {"id": "curse", "name": "Nguyền Rủa", "mult": 0.8, "effect": {"id": "poison", "turns": 3, "power": 0.15}}
+        ]
+      },
+      "lord_special": {
+        "_every_doc": "every 0: tắt chiêu riêng của chúa tể (mô phỏng: chúa tể vốn rất mạnh, thêm chiêu ×2,2 mỗi 3 lượt thì gần như không hạ được, DECISIONS).",
+        "every": 0,
+        "mult": 2.2,
+        "names": {"fire": "Thiên Hỏa Diệt Thế", "ice": "Băng Phong Vĩnh Cửu", "lightning": "Lôi Đình Vạn Quân", "earth": "Sơn Băng Địa Liệt", "wind": "Phong Bạo Cửu Thiên", "light": "Thánh Quang Phán Xét", "dark": "Hắc Ám Thôn Phệ"},
+        "effects": {"fire": {"id": "burn", "turns": 3, "power": 0.2}, "ice": {"id": "weaken", "turns": 3, "power": 0.2}, "lightning": {"id": "stun", "turns": 1, "power": 0}, "dark": {"id": "poison", "turns": 3, "power": 0.2}}
+      },
+      "resist": {
+        "_doc": "Kháng hệ kiểu MU: nhẫn / dây chuyền theo hệ (Item.txt MU có cột kháng: Ring of Ice / Poison / Fire / Earth / Wind, Pendant of Lightning / Fire / Ice / Wind / Water; Ring of Magic không có). Hệ của game: Độc → Bóng Tối, Nước → Ánh Sáng. Mỗi món đang mặc (có tác dụng) kháng base + per_up × cấp ép; cộng dồn các món cùng hệ, tối đa max. Kháng giảm sát thương kỹ năng quái cùng hệ theo đúng tỉ lệ và là tỉ lệ kháng hiệu ứng xấu của kỹ năng đó.",
+        "base": 0.1,
+        "per_up": 0.01,
+        "max": 0.5,
+        "items": {"item_13_8": "ice", "item_13_25": "ice", "item_13_9": "dark", "item_13_21": "fire", "item_13_13": "fire", "item_13_22": "earth", "item_13_23": "wind", "item_13_26": "wind", "item_13_12": "lightning", "item_13_27": "light"}
+      },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "admin_max_build": {
       "_doc": "Thẻ Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6): cấp, chuyển sinh, tháp, thông thạo, chia điểm theo share (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất từng lớp (sets: weapon, left = vũ khí tay trái cho lớp cầm 2 vũ khí, armor = bộ giáp) ép up, opt dòng cộng thêm, May mắn, Excellent (exc_weapon cho vũ khí / dây chuyền, exc_armor cho giáp / khiên / nhẫn) hoặc đồ Thần cho bộ giáp, 2 nhẫn ring, dây chuyền pendant, cánh cấp 3 wing_<lớp>_3 (dòng wing_opt), khiên shield khi chọn khiên thay tay trái; vật phẩm items, thú pet cấp tối đa, vàng gold.",
       "level": 50,

@@ -92,6 +92,9 @@ defmodule HacLongWeb.PageController do
         secret: secret_info(),
         # Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6)
         adminMaxBuild: Data.rules().admin_max_build,
+        # kỹ năng quái theo hệ, kháng hệ nhẫn / dây chuyền (DECISIONS "Quái dùng kỹ năng theo hệ")
+        monsterSkills:
+          Map.drop(Data.rules().monster_skills, [:_doc, :sourceType, :version, :verified]),
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
