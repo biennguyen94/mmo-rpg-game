@@ -1193,7 +1193,7 @@
         <button class="btn primary auto-go" data-act="auto-on">🤖 Bắt đầu tự đánh</button>
       </div>` : '';
     return `<div class="auto-bar" id="auto-bar" data-key="${esc(autoBarKey())}">
-        <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>${quickBtns()}
+        <button class="btn small-btn primary" data-act="auto-on" title="Tự đánh" aria-label="Tự đánh">🤖</button>${quickBtns()}
         <span class="grow small muted">${esc(autoTargetName(autoUi).replace(/^./, (c) => c.toUpperCase()))} · ${esc(autoRangeLabel(autoUi.range))} · máu dưới ${autoUi.hp}%</span>
         ${quickTail()}<button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh / đánh nhanh">⚙</button>
         ${settings}</div>`;
