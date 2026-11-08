@@ -71,9 +71,16 @@ defmodule HacLong.World do
       level: p.level,
       rebirths: Map.get(p, :rebirths) || 0,
       look: Engine.look(p),
-      tag: Map.get(p, :guild) && p.guild.tag
+      tag: Map.get(p, :guild) && p.guild.tag,
+      # đang đồ sát (người cùng bản đồ thấy ⚔ và máu trên đầu): đối thủ, % máu của mình
+      duel: duel(p)
     }
   end
+
+  defp duel(%{battle: %{over: false, encounter: %{slay: _, foe: foe}}} = p),
+    do: %{with: foe, hp: round(max(p.hp, 0) * 100 / max(Engine.derived(p).maxHp, 1))}
+
+  defp duel(_p), do: nil
 
   @doc "Cập nhật thông tin người khác thấy (vd. vừa đổi đồ, lên cấp, dắt thú khác)."
   def refresh(%{pos: pos} = p, uid) do

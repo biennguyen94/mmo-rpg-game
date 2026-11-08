@@ -1077,3 +1077,12 @@ details.fold > .list { margin-top: 4px; }
 .auto-set > .wide, .auto-set > .btn-row.wide { grid-column: 1 / -1; }
 .auto-set .combo-step { flex-wrap: wrap; }
 .auto-set .combo-step select { width: auto; flex: 1 1 120px; }
+/* Người chơi trên bản đồ: menu một người / bảng chọn nổi trên bản đồ */
+.pick-pop { position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 440px;
+  max-height: min(60dvh, 480px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 8px; padding: 12px;
+  background: var(--ink-2); border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 10px 32px #000c; }
+.pick-pop .people-row { display: flex; align-items: center; gap: 8px; }
+.pick-pop .list .item { width: 100%; text-align: left; }
+/* Quanh đây: dòng người gồm nút hồ sơ (cả dòng) + 📍 */
+div.item.people-row { display: flex; align-items: center; gap: 8px; }
+div.item.people-row .people-main { display: flex; align-items: center; gap: 10px; min-width: 0; background: none; border: 0; padding: 0; color: inherit; text-align: left; font: inherit; cursor: pointer; }

@@ -577,8 +577,10 @@ defmodule HacLong.World.MapServer do
             rebirths: p[:rebirths] || 0,
             look: p[:look],
             tag: p[:tag],
-            # đồ sát: tên đỏ
+            # đồ sát: tên đỏ, đang được bảo vệ (vừa gục), đang đồ sát (đối thủ, % máu)
             red: HacLong.Slay.red?(uid),
+            safe: HacLong.Slay.protected_s(uid) > 0,
+            duel: p[:duel],
             x: x,
             y: y
           }

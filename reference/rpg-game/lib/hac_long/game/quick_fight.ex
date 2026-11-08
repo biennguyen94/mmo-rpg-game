@@ -33,6 +33,13 @@ defmodule HacLong.Game.QuickFight do
   end
 
   @doc "Đang đánh nhanh trận hiện tại không."
+  # ⚡ Đồ sát nhanh (DECISIONS "Người chơi trên bản đồ, Đồ sát nhanh"): lượt của mình thì server đánh theo combo,
+  # trận xong thì rời; lượt người kia thì chờ (`Session.slay_sync` hẹn nhịp khi tới lượt mình)
+  def active?(%{battle: %{encounter: %{slay: _} = e} = b} = p) do
+    on?(p) and not match?(%{auto: %{}}, p) and b[:manual] != true and
+      (b.over == true or e[:mine] == true)
+  end
+
   def active?(%{battle: %{} = b} = p) do
     on?(p) and not match?(%{auto: %{}}, p) and b[:manual] != true and b.monster[:pvp] == nil and
       b[:live] != true and b[:encounter][:slay] == nil

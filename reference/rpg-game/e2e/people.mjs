@@ -1,4 +1,4 @@
-// Phase 13: không vẽ người khác trên bản đồ, nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
+// Phase 13 (nay người khác vẽ trên bản đồ, e2e mapplayers): nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
 // (mình và người khác), máu quái đang bị đánh hiện cho người cùng bản đồ, % cộng thêm ở tab Nhân vật.
 // Chạy: node e2e/people.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, player, send, travel, engage, act, shot, overflowX, fight } from './lib.mjs';

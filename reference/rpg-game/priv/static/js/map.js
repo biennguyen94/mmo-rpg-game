@@ -144,6 +144,91 @@
     const at = (p) => (p ? { x: r.left + p[0] * k, y: r.top + (p[1] + TILE / 2) * k, w: sz, h: sz } : null);
     return { mon: at(spots.mpos[fight.id]), me: at(spots.me) };
   }
+  // ---------- Người chơi khác trên bản đồ (DECISIONS "Người chơi trên bản đồ, Đồ sát nhanh") ----------
+  // Cài đặt (máy này): 'all' tất cả, 'team' chỉ tổ đội & bang, 'off' tắt. Dù chọn gì vẫn vẽ: người đang đồ sát với
+  // mình, đồng đội tổ đội, người vừa bấm 📍 ở Quanh đây. Ưu tiên: các người trên → tổ đội / bang → tên đỏ → gần nhất;
+  // tối đa theo vùng đang thấy (8–30). Cùng một ô: vẽ lệch như quạt tối đa 3 người, còn lại "+N".
+  const PSTACK = 3;
+  let drawnP = []; // người đang vẽ (để bấm): { o, x, y }
+  let pinned = null; // 📍 { id, until }
+  const playersMode = () => { try { return localStorage.getItem('hl-players') || 'all'; } catch (e) { return 'all'; } };
+  function visiblePlayers(P) {
+    const all = world.map === P.pos.map ? world.players.filter((o) => o.id !== userId) : [];
+    const rel = relations() || {};
+    const party = rel.party || [], foe = fight && fight.id[0] === 'p' ? +fight.id.slice(1) : null;
+    const t = performance.now(), mode = playersMode();
+    const team = (o) => party.includes(o.id) || (rel.tag && o.tag === rel.tag);
+    const must = (o) => o.id === foe || party.includes(o.id) || (pinned && pinned.id === o.id && t < pinned.until) || (o.duel && o.duel.with === userId);
+    const d = (o) => Math.abs(o.x - P.pos.x) + Math.abs(o.y - P.pos.y);
+    const rank = (o) => (must(o) ? 0 : team(o) ? 1 : o.red ? 2 : 3);
+    const list = all.filter((o) => must(o) || mode === 'all' || (mode === 'team' && team(o)))
+      .sort((a, b) => rank(a) - rank(b) || d(a) - d(b));
+    const cap = Math.max(8, Math.min(30, Math.round(((VW() / TILE) * (VH() / TILE)) / 10)));
+    return list.filter((o, i) => must(o) || i < cap);
+  }
+  function drawPlayers(P, now, cx, cy, labels, mpos, fx) {
+    const list = visiblePlayers(P), rel = relations() || {}, groups = new Map(), placed = [];
+    const t = performance.now();
+    drawnP = [];
+    for (const o of list) {
+      const key = o.x + ',' + o.y, g = groups.get(key) || [];
+      g.push(o); groups.set(key, g);
+      drawnP.push({ o, x: o.x, y: o.y });
+      const [sx, sy] = smooth('p' + o.id, o.x, o.y, DUR.player, now);
+      const px = Math.round(sx * TILE - cx), py = Math.round(sy * TILE - cy);
+      const i = g.length - 1, off = i === 0 ? 0 : i === 1 ? -7 : 7;
+      mpos['p' + o.id] = [px + TILE / 2 + (i < PSTACK ? off : 0), py];
+      if (i >= PSTACK || px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
+      const pin = pinned && pinned.id === o.id && t < pinned.until;
+      const mine = fight && fight.id === 'p' + o.id;
+      if (pin) {
+        const k = (Math.sin(t / 160) + 1) / 2;
+        ctx.strokeStyle = `rgba(240, 207, 122, ${0.5 + k * 0.5})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(px + TILE / 2 + off, py + TILE / 2, TILE * (0.6 + k * 0.15), 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath(); ctx.ellipse(px + TILE / 2 + off, py + TILE - 4, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+      const dl = window.Doll && Doll.canvas(o.look);
+      if (dl) ctx.drawImage(dl, px + off, py, TILE, TILE);
+      // đang đồ sát: máu trên đầu (con mình đang đánh: máu theo lượt của trận; người ngoài: máu người đó gửi lên)
+      const hp = mine ? fight.hp : o.duel ? o.duel.hp : null;
+      if (hp != null) {
+        const bw = TILE - 6, k = Math.max(0, Math.min(100, hp)) / 100;
+        ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px + off + 3, py + TILE + 1, bw, 5);
+        ctx.fillStyle = '#d9483b'; ctx.fillRect(px + off + 4, py + TILE + 2, Math.max(0, (bw - 2) * k), 3);
+        if (fx && Math.sin(t / 220) > 0) { ctx.font = '700 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#ef6a5a'; ctx.fillText('⚔', px + TILE + off - 4, py + 10); }
+      }
+      // tên: không đè lên tên đã vẽ (trừ người đang đồ sát với mình / vừa 📍) → chấm nhỏ
+      const name = (o.safe ? '🛡 ' : '') + (o.duel || mine ? '⚔ ' : '') + (o.tag ? `[${o.tag}] ` : '') + o.name;
+      const col = window.HLLogic ? window.HLLogic.nameColor(o, rel) : '#f1e6cf';
+      const lx = px + TILE / 2 + off, ly = py - 13, w = name.length * 5.6 + 10;
+      const r = [lx - w / 2, ly - 8, w, 14];
+      const hit = placed.some((q) => r[0] < q[0] + q[2] && q[0] < r[0] + r[2] && r[1] < q[1] + q[3] && q[1] < r[1] + r[3]);
+      if (!hit || mine || pin) { placed.push(r); labels.push([name, lx, ly, col]); }
+      else { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(lx, py - 4, 2.5, 0, Math.PI * 2); ctx.fill(); }
+    }
+    // cùng ô quá 3 người: huy hiệu "+N" ở góc ô
+    for (const g of groups.values()) {
+      if (g.length <= PSTACK) continue;
+      const p0 = mpos['p' + g[0].id];
+      if (!p0) continue;
+      const x = p0[0] + TILE / 2 - 4, y = p0[1] + 4, txt = `+${g.length - PSTACK}`;
+      ctx.font = '800 10px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f0cf7a'; ctx.fillText(txt, x, y);
+    }
+    if (pinned && t < pinned.until && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
+  }
+  // người (đang vẽ) đứng ở ô (x, y), kể cả người bị gom vào "+N"
+  const playersNear = (x, y) => drawnP.filter((d) => d.x === x && d.y === y).map((d) => d.o);
+  function pin(id) { pinned = { id, until: performance.now() + 4500 }; draw(); }
+  // tâm ô (x, y) trên màn hình (px CSS), theo khung nhìn vẽ gần nhất; null nếu chưa vẽ
+  function screenOf(x, y) {
+    if (!canvas) return null;
+    const r = canvas.getBoundingClientRect(), k = r.width / VW();
+    return { x: r.left + (x * TILE - lastCam[0] + TILE / 2) * k, y: r.top + (y * TILE - lastCam[1] + TILE / 2) * k };
+  }
+
   function setFight(f) {
     const changed = JSON.stringify(f) !== JSON.stringify(fight);
     fight = f;
@@ -738,8 +823,8 @@
     if (fx && P.pos.map === 'village') villageFx(now, m, cx, cy);
     miniMap(P, m, now, cx, cy);
     const hero = image('monsters/hero');
-    // Phase 13 (13-A): không vẽ người chơi khác trên bản đồ (nhiều người chung ô không biết ai là ai);
-    // xem danh sách người trong bản đồ ở nút 👫 trên dock.
+    // người chơi khác (DECISIONS "Người chơi trên bản đồ"): ưu tiên, giới hạn theo vùng thấy, xếp quạt khi đứng chồng
+    drawPlayers(P, now, cx, cy, labels, mpos, fx);
     // không vẽ thú cưng trên bản đồ (rối bản đồ, anh yêu cầu 2026-10-23): thú chỉ hiện trong trận, hồ sơ, Nhà
     const look = P.view && P.view.look;
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
@@ -1727,8 +1812,12 @@
   window.MapView = {
     setRelations(f) { relations = f; },
     html, top, mount, resize, draw, tileFromEvent, nextStep, monsterAt, monsterById,
-    // người chơi khác đứng ở ô (x, y) trên bản đồ đang đứng
-    playerAt: () => null,
+    // người chơi khác (đang vẽ) đứng ở ô (x, y): bảng chọn khi bấm
+    playersNear,
+    playerAt: (x, y) => playersNear(x, y)[0] || null,
+    pin,
+    playersMode,
+    screenOf,
     // người chơi khác đang ở cùng bản đồ (Phase 13)
     players: () => (world.map === (getPlayer() || {}).pos?.map ? world.players.filter((o) => o.id !== userId) : []),
     mountedMap: () => mounted,

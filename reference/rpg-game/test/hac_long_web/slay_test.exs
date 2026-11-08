@@ -382,4 +382,32 @@ defmodule HacLongWeb.SlayTest do
     assert pl2.battle.result == "lose" and pw2.battle.result == "win"
     assert Enum.any?(pl2.battle.log, &(&1.text =~ "Tên đỏ"))
   end
+
+  test "⚡ Đồ sát nhanh: hai bên bật ⚡ thì server tự đánh theo combo từng lượt tới khi có người gục" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.merge(strong(), %{gold: 5000}))
+    player(ub, %{level: 10, gold: 3000})
+    sa = join(ua)
+    sb = join(ub)
+    assert %{ok: true} = cmd(sa, %{"act" => "quick", "on" => true})
+    assert %{ok: true} = cmd(sb, %{"act" => "quick", "on" => true})
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    # không gửi lệnh đánh nào: server tự đánh lượt của cả hai rồi tự rời màn trận
+    done =
+      Enum.reduce_while(1..150, false, fn _, _ ->
+        Process.sleep(100)
+        a = Session.get(ua.id)
+        b = Session.get(ub.id)
+        if a.battle == nil and b.battle == nil, do: {:halt, true}, else: {:cont, false}
+      end)
+
+    assert done
+    assert Session.get(ub.id).deaths == 1
+    assert Slay.peek(ua.id) == nil
+    _ = sb
+  end
 end

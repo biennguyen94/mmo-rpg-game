@@ -330,7 +330,9 @@ defmodule HacLong.Game.Session do
       end
 
     s = replay(s)
-    reply(:ok, s)
+
+    # đồ sát vừa chốt (nhân vật được trả về sau khi giữ): đang bật ⚡ thì server tự rời màn trận
+    reply(:ok, arm_auto(s))
   end
 
   # nhả muộn (đã tự nhả vì quá giờ) hoặc nhả hai lần: bỏ qua
@@ -394,7 +396,9 @@ defmodule HacLong.Game.Session do
       p = %{p | hp: info.hp, battle: b}
       s = s |> Map.put(:player, p) |> mark_dirty()
       broadcast(s, p, nil)
-      {:noreply, s, timeout(s)}
+      World.refresh(p, s.user_id)
+      # tới lượt mình: đang bật ⚡ thì server ra đòn theo combo
+      {:noreply, arm_auto(s), timeout(s)}
     else
       {:noreply, s, timeout(s)}
     end
@@ -650,7 +654,10 @@ defmodule HacLong.Game.Session do
         left_trade(s.user_id, p, p2)
         s = save(s, p2)
         broadcast(s, p2, nil)
-        reply(:ok, s)
+
+        # ⚡ Đồ sát nhanh: người đi trước đang bật ⚡ thì server ra đòn theo combo; người cùng bản đồ thấy ⚔
+        World.refresh(p2, s.user_id)
+        reply(:ok, arm_auto(s))
     end
   end
 

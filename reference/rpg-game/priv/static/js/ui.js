@@ -346,7 +346,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (friendsUi.open) {
@@ -1087,9 +1087,11 @@
     !P.battle.live && !((P.battle.encounter || {}).slay));
   // trận với quái (không đánh người), đang bật ⚡, chưa bấm ✋: ở lại bản đồ (cả khi 🤖 Tự đánh cũng bật: tự đánh theo combo)
   const monsterBattle = () => !!(P && P.battle && !(P.battle.monster || {}).pvp && !P.battle.live && !((P.battle.encounter || {}).slay));
-  const mapFight = () => !!(monsterBattle() && quickOn() && !P.battle.manual && (quickFight() || P.auto));
+  // ⚡ Đồ sát nhanh: trận đồ sát cũng ở lại bản đồ (server đánh lượt của mình theo combo)
+  const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && quickOn() && !P.battle.manual);
+  const mapFight = () => !!((monsterBattle() && quickOn() && !P.battle.manual && (quickFight() || P.auto)) || slayFight());
   // quái đang đánh trên bản đồ: quái chung (`mid`) hoặc quái tầng tháp / sự kiện (`t` + mã, như `MapView` vẽ)
-  const fightTarget = () => { const e = (P && P.battle && P.battle.encounter) || {}; return e.mid != null ? String(e.mid) : e.tower != null ? 't' + e.tower : null; };
+  const fightTarget = () => { const e = (P && P.battle && P.battle.encounter) || {}; return e.slay != null && e.foe != null ? 'p' + e.foe : e.mid != null ? String(e.mid) : e.tower != null ? 't' + e.tower : null; };
   const BUFF_EFFECTS = ['war_cry', 'guard', 'shadow_step'];
   const isBuffSkill = (id) => { const k = skillById(id); return !!(k && (k.buff || BUFF_EFFECTS.includes(k.effect))); };
   // combo đã lưu, bỏ bước không còn dùng được (đổi bộ kỹ năng)
@@ -1115,7 +1117,7 @@
         else if (pd < 0) Map_.floatText('me', `+${fmt(-pd)}`, '#8fe08a');
       }
       if (quickPrev && quickPrev.mid === mid && mid != null) quickFx(b, quickPrev);
-      quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice() };
+      quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice(), slay: (b.encounter || {}).slay != null };
       return;
     }
     if (!quickPrev) return;
@@ -1124,6 +1126,12 @@
     if (b) return; // ✋ Đánh tay: trận tiếp tục ở màn trận như thường
     quickLast = q;
     const rw = q.reward;
+    if (q.slay) {
+      if (q.result === 'win') toast(`🗡 Hạ ${q.name}${rw && rw.gold ? `: +${fmt(rw.gold)} vàng` : ''}. Bấm 📜 xem lại trận.`);
+      else if (q.result === 'lose') toast(`🗡 Gục ngã trước ${q.name}. Bấm 📜 xem lại trận.`, true);
+      else toast(`🗡 Trận đồ sát với ${q.name} kết thúc.`);
+      return;
+    }
     if (q.result === 'win' && rw) {
       const loot = (rw.gear || []).length + Object.keys(rw.items || {}).length;
       toast(`⚡ Hạ ${q.name}: +${fmt(rw.xp)} EXP, +${fmt(rw.gold)} vàng${loot ? `, ${loot} món rơi` : ''}${rw.trashed ? `, 🗑 hủy ${rw.trashed} món` : ''}`);
@@ -1155,6 +1163,55 @@
       if (items.length) ev.push({ type: 'loot', delay: delay + 650, items });
     }
     if (ev.length) BattleFx.run(ev, () => Map_.fightSpots());
+  }
+  // Người chơi trên bản đồ: bảng chọn (nhiều người / có quái cùng ô) và menu một người (Hồ sơ, Giao dịch, Tổ đội, Đồ sát)
+  let pickUi = null;
+  const pickPerson = (id) => Map_.players().find((o) => o.id === id);
+  function slayWhy(o) {
+    if (RULES.slay.safe.includes(P.pos.map)) return 'Vùng an toàn';
+    if (P.level < RULES.slay.minLevel) return `Cần cấp ${RULES.slay.minLevel}`;
+    if (o.level < RULES.slay.minLevel) return `Dưới cấp ${RULES.slay.minLevel}`;
+    if (o.safe) return 'Đang được bảo vệ';
+    if (o.duel) return 'Đang đồ sát người khác';
+    return '';
+  }
+  function viewPick() {
+    if (!pickUi || !P || P.pos.map === undefined) return '';
+    const rel = { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag };
+    const who = (o) => `<img class="sprite sm" ${window.Doll.src(o.look)} alt=""><div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, rel)}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${o.red ? ' 🔴' : ''}${o.safe ? ' 🛡' : ''}${o.duel ? ' ⚔' : ''}</div>
+      <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `CS ${o.rebirths} · ` : ''}Cấp ${o.level}</div></div>`;
+    const o = pickUi.sel != null ? pickPerson(pickUi.sel) : null;
+    if (o) {
+      const inParty = party && party.members.some((x) => x.id === o.id);
+      const canInvite = !inParty && (!party || party.leader === Net.userId) && (!party || party.members.length < party.max);
+      const why = slayWhy(o), q = quickOn();
+      return `<div class="card pick-pop" role="dialog" aria-label="${esc(o.name)}"><div class="row people-row">${who(o)}<button class="btn small-btn" data-act="pick-close" aria-label="Đóng">✕</button></div>
+        <div class="btn-row"><button class="btn small-btn" data-act="profile" data-uid="${o.id}">Hồ sơ</button>
+          <button class="btn small-btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
+          ${canInvite ? `<button class="btn small-btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
+          <button class="btn small-btn danger" data-act="pick-slay" data-uid="${o.id}" ${why ? 'disabled' : ''} title="${q ? 'Chạy tới, server đánh theo combo ⚡ (ở lại bản đồ)' : 'Mở trận đồ sát'}">${q ? '🗡⚡ Đồ sát nhanh' : '🗡 Đồ sát'}</button></div>
+        ${why ? `<p class="small muted">${why}</p>` : ''}</div>`;
+    }
+    const list = pickUi.people.map(pickPerson).filter(Boolean);
+    return `<div class="card pick-pop" role="dialog" aria-label="Chọn"><div class="row"><b class="grow">Chọn ở ô này</b><button class="btn small-btn" data-act="pick-close" aria-label="Đóng">✕</button></div>
+      <div class="list">${pickUi.mob ? `<button class="item" data-act="pick-mob">⚔ <span class="grow">Đánh ${esc(pickUi.mob.name)}</span><span class="small muted">›</span></button>` : ''}
+      ${list.map((x) => `<button class="item people-row" data-act="pick-sel" data-uid="${x.id}">${who(x)}<span class="small muted">›</span></button>`).join('')}</div></div>`;
+  }
+  // 🗡 Đồ sát từ bản đồ: chạy tới cạnh người đó (tối đa vài giây) rồi mở trận; đang bật ⚡ thì server đánh theo combo
+  async function pickSlay(uid) {
+    const o = pickPerson(uid);
+    pickUi = null;
+    if (!o) { render(); return; }
+    if (Math.max(Math.abs(o.x - P.pos.x), Math.abs(o.y - P.pos.y)) > 1) {
+      walkTo(o.x, o.y);
+      for (let i = 0; i < 25; i++) {
+        await new Promise((ok) => setTimeout(ok, 200));
+        const t = pickPerson(uid) || o;
+        if (!P || P.battle || Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) <= 1) break;
+      }
+      walk = null;
+    }
+    if (P && !P.battle) slay(uid);
   }
   function viewQuickLog() {
     const l = quickLast.log || [];
@@ -1200,7 +1257,10 @@
     const am = P.view.autoMap || { ok: false, kinds: [] };
     const a = P.auto, fight = mapFight(), on = !!a || fight;
     let text;
-    if (fight) {
+    if (fight && slayFight()) {
+      const m = P.battle.monster, e = P.battle.encounter;
+      text = `🗡 Đồ sát <b>${esc(m.name)}</b> · ❤ ${Math.max(0, Math.round((m.hp * 100) / Math.max(1, m.maxHp)))}% · ${P.battle.over ? 'xong' : e.mine ? 'lượt bạn' : 'lượt họ'}`;
+    } else if (fight) {
       const m = P.battle.monster;
       text = `${a ? `🤖 đã hạ <b class="num">${fmt(autoKills())}</b> · ` : ''}⚡ Đang đánh <b>${esc(m.name)}</b> · ❤ ${Math.max(0, Math.round((m.hp * 100) / Math.max(1, m.maxHp)))}%`;
     } else if (a) text = `🤖 ${esc(autoTargetName(a))} · đã hạ <b class="num">${fmt(autoKills())}</b> · ${esc(autoRangeLabel(a.range))}`;
@@ -1294,12 +1354,12 @@
     const list = others().slice().sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || a.name.localeCompare(b.name));
     const inParty = (id) => party && party.members.some((x) => x.id === id);
     return `<div class="card"><div class="row"><h3 class="grow">Quanh đây · ${esc(m.name || '')}</h3><span class="tag">${list.length} người</span></div>
-      ${list.length ? `<div class="list">${list.map((o) => `<button class="item people-row" data-act="profile" data-uid="${o.id}">
+      ${list.length ? `<div class="list">${list.map((o) => `<div class="item people-row"><button class="grow people-main" data-act="profile" data-uid="${o.id}">
         <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
         <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, { party: party ? party.members.map((x) => x.id) : [], tag: P.guild && P.guild.tag, enemy: P.guild && P.guild.war && P.guild.war.enemy && P.guild.war.enemy.tag })}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty(o.id) ? ' <span class="small">· Đội</span>' : ''}</div>
-          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})</div></div>
-        <span class="small muted">›</span></button>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
-      <p class="small muted">Người chơi khác không vẽ trên bản đồ; chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu…</p></div>`;
+          <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ô (${o.x}, ${o.y})${o.red ? ' · 🔴 tên đỏ' : ''}${o.duel ? ' · ⚔ đang đồ sát' : ''}</div></div></button>
+        <button class="btn small-btn" data-act="people-pin" data-uid="${o.id}" title="Chỉ trên bản đồ" aria-label="Chỉ ${esc(o.name)} trên bản đồ">📍</button></div>`).join('')}</div>` : '<p class="small muted">Chỉ có bạn ở bản đồ này.</p>'}
+      <p class="small muted">Chạm tên để xem hồ sơ, giao dịch, kết bạn, thách đấu…; 📍 chỉ người đó trên bản đồ. Bấm vào người trên bản đồ cũng mở được menu.</p></div>`;
   }
 
   // ---------- Hồ sơ (Phase 13, theo mẫu anh gửi) ----------
@@ -1994,6 +2054,9 @@
         <div class="row"><span class="grow small">Tên quái trên đầu (bản đồ, tháp, sự kiện)</span>
           <button class="btn" data-act="mob-names" aria-pressed="${Map_.mobNames()}">${Map_.mobNames() ? 'Đang bật' : 'Đang tắt'}</button></div>
         <p class="small muted">Tắt cho bản đồ gọn hơn; vẫn thấy cấp và thanh máu của quái.</p>
+        <div class="row"><span class="grow small">Người chơi khác trên bản đồ</span>
+          <div class="btn-row">${[['all', 'Tất cả'], ['team', 'Tổ đội & bang'], ['off', 'Tắt']].map(([k, l]) => `<button class="btn small-btn ${Map_.playersMode() === k ? 'primary' : ''}" data-act="players-mode" data-mode="${k}" aria-pressed="${Map_.playersMode() === k}">${l}</button>`).join('')}</div></div>
+        <p class="small muted">Chỉ đổi màn hình của bạn (người khác vẫn thấy bạn, vẫn bị đồ sát theo luật). Người đang đồ sát với bạn và đồng đội luôn hiện. Xem đủ danh sách ở tab Quanh đây.</p>
         <div class="row"><span class="grow small">Bản đồ thu nhỏ ở góc (bấm vào mở bản đồ thế giới)</span>
           <button class="btn" data-act="mini-map" aria-pressed="${Map_.miniOn()}">${Map_.miniOn() ? 'Đang bật' : 'Đang tắt'}</button></div></div>
       ${lootFilterCard()}
@@ -4248,8 +4311,14 @@
   function onMapTap(e) {
     if (e.target.id !== 'map-canvas' || !P || P.battle) return;
     const [x, y] = Map_.tileFromEvent(e);
-    const other = Map_.playerAt(x, y);
-    if (other) { openPlayer(other); return; }
+    // người chơi khác ở ô bấm: một người → menu của người đó; nhiều người (hoặc có cả quái) → bảng chọn
+    const ppl = Map_.playersNear(x, y);
+    if (ppl.length) {
+      const mob = Map_.monsterAt(x, y);
+      pickUi = { x, y, people: ppl.map((o) => o.id), mob: mob ? { name: mob.name || mob.kind, x, y } : null, sel: ppl.length === 1 && !mob ? ppl[0].id : null };
+      render();
+      return;
+    }
     // chạm vào mặt nước: thả câu (phao rơi đúng ô đó), đang câu thì giật cần
     const m = WORLD.maps[P.pos.map], water = WORLD.water || ['~'];
     if (m && water.includes((m.tiles[y] || '')[x]) && P.pos.map !== 'tower') {
@@ -4363,6 +4432,7 @@
       if (same) hideTip(); else showTip(act === 'bag-tip' ? { id: t.dataset.id, x: e.clientX, y: e.clientY } : { slot: t.dataset.slot, x: e.clientX, y: e.clientY });
       return;
     }
+    if (act === 'trade-op' && pickUi) pickUi = null;
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
     if (act === 'slay') { slay(+t.dataset.uid); return; }
     if (act === 'trade-rm') {
@@ -4394,7 +4464,13 @@
     if (act === 'lib-tab') { libUi = { tab: t.dataset.tab2, q: libUi.q, open: null }; render(); return; }
     if (act === 'lib-open') { libUi.open = libUi.open === t.dataset.key ? null : t.dataset.key; libRefresh(); return; }
     if (act === 'lib-go') { libUi = { tab: t.dataset.tab2, q: t.dataset.q, open: null }; const one = LIB[libUi.tab].filter((x) => L.nameMatch([x.name], libUi.q)); if (one.length === 1) libUi.open = { maps: 'map:', monsters: 'mon:', items: 'item:' }[libUi.tab] + one[0].id; render(); return; }
-    if (act === 'profile') { openPlayer({ id: +t.dataset.uid }); return; }
+    if (act === 'profile') { pickUi = null; openPlayer({ id: +t.dataset.uid }); return; }
+    if (act === 'pick-close') { pickUi = null; render(); return; }
+    if (act === 'pick-sel') { if (pickUi) pickUi.sel = +t.dataset.uid; render(); return; }
+    if (act === 'pick-mob') { const m = pickUi && pickUi.mob; pickUi = null; render(); if (m) walkTo(m.x, m.y); return; }
+    if (act === 'pick-slay') { pickSlay(+t.dataset.uid); return; }
+    if (act === 'people-pin') { Map_.pin(+t.dataset.uid); goTab('map'); return; }
+    if (act === 'players-mode') { setPref('hl-players', t.dataset.mode); render(); return; }
     if (act === 'skill-pick-open') { skillPick = (P.view.skillSet || []).slice(); render(); return; }
     if (act === 'skill-pick-close') { skillPick = null; render(); return; }
     if (act === 'skill-pick') {

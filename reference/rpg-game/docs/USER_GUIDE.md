@@ -282,8 +282,16 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 
 ## 10. Chơi cùng người khác
 
-- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, giao dịch, kết bạn, thách đấu, đồ sát,
-  chặn chat.
+- **Người chơi khác hiện trên bản đồ** (hình mặc đồ, tên, tag bang; 🛡 đang được bảo vệ, ⚔ + máu khi đang đồ sát). Bản đồ
+  đông thì chỉ vẽ một số người (theo vùng đang thấy, tối đa 30; ưu tiên người đang đồ sát với bạn, đồng đội, cùng bang, tên
+  đỏ, người gần nhất); cùng một ô vẽ lệch như quạt tối đa 3 người, còn lại "+N"; tên đè nhau thì thành chấm.
+- Chạm vào người trên bản đồ: một người → menu **Hồ sơ · 🤝 Giao dịch · Mời tổ đội · 🗡 Đồ sát**; nhiều người cùng ô (hoặc có
+  cả quái) → **bảng chọn** (dòng "⚔ Đánh <quái>" và từng người). Hồ sơ đầy đủ (kết bạn, thách đấu, chặn chat…) ở nút Hồ sơ.
+- **Menu → Cài đặt → Người chơi khác trên bản đồ**: Tất cả / Tổ đội & bang / Tắt (chỉ màn hình của bạn; người khác vẫn thấy
+  bạn, vẫn bị đồ sát theo luật; người đang đồ sát với bạn và đồng đội luôn hiện).
+- **⚡ Đồ sát nhanh**: đang bật ⚡ thì nút trong menu thành **🗡⚡ Đồ sát nhanh**: chạy tới cạnh người đó rồi mở trận, vẫn ở
+  bản đồ; lượt của bạn server đánh theo combo ⚡ (không chờ 10 giây). Người bị đánh đang bật ⚡ cũng vậy; không bật thì mở
+  bảng trận như thường. **✋** cầm lại lượt của mình. Luật đồ sát (vùng an toàn, cấp, tên đỏ, mất vàng, bảo vệ) không đổi.
 - **Màu tên trên bản đồ**: xanh lá = đồng đội, xanh dương = cùng bang, đỏ = bang đang chiến với bang bạn.
 - **Tổ đội** (tối đa 3): đánh chung một con quái thì cùng thắng; mỗi người nhận thưởng × 1,2 / số người. Lời mời hết hạn sau
   30 giây; rời game quá 60 giây thì tự rời đội.
@@ -377,7 +385,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - **Bản đồ động**: nước gợn, cây lay, quái nhún nhẹ, mưa ở đầm lầy, tro lửa ở hang rồng / vùng chuyển sinh, tuyết trên núi,
   sương ở nghĩa địa, lá rơi ở rừng / trại, khói bếp ở Làng, đài phun nước lấp lánh; ban đêm có đom đóm và đèn lồng quanh
   người dân. Tầng Tháp Vô Tận, Quảng Trường Quỷ, Lâu Đài Máu, Kalima cũng có hiệu ứng theo nền tầng, và quái trên tầng đi lang thang như ngoài bản đồ. Tắt ở **Menu → Cài đặt → Bản đồ → Hiệu ứng động** (máy đặt "giảm chuyển động" thì mặc định tắt).
-- Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
+- Dock **👫 Quanh đây**: danh sách đầy đủ người chơi khác cùng bản đồ (kể cả người không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát; **📍** chỉ người đó trên bản đồ (nhấp nháy vài giây). Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
 - **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.
 - Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.
