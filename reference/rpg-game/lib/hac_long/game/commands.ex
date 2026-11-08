@@ -69,6 +69,16 @@ defmodule HacLong.Game.Commands do
       "loot_filter" ->
         HacLong.Game.AutoHunt.loot_filter(p, c)
 
+      # ⚡ Đánh nhanh theo combo (DECISIONS "Đánh nhanh theo combo")
+      "quick" ->
+        HacLong.Game.QuickFight.toggle(p, c["on"])
+
+      "combo_set" ->
+        HacLong.Game.QuickFight.set_combo(p, c["steps"])
+
+      "quick_manual" ->
+        HacLong.Game.QuickFight.manual(p)
+
       # Phase 3 (B-29): bộ kỹ năng mang vào trận
       "skill_set" ->
         Engine.set_skills(p, c["ids"])

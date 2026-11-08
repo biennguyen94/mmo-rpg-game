@@ -29,6 +29,7 @@ defmodule HacLong.Game.Session do
     Daily,
     Engine,
     Names,
+    QuickFight,
     Quests,
     Tower,
     Tutorial
@@ -549,6 +550,8 @@ defmodule HacLong.Game.Session do
         if player != old, do: broadcast(s, player, origin)
         left_trade(s.user_id, old, player)
         Enum.each(notes, &notify(s, &1))
+        # bước vào quái lúc bật ⚡ Đánh nhanh: hẹn nhịp để server đánh theo combo (DECISIONS "Đánh nhanh theo combo")
+        s = arm_auto(s)
         reply({result, player}, s)
 
       :too_fast ->
@@ -1460,6 +1463,11 @@ defmodule HacLong.Game.Session do
     s = %{s | auto_timer: nil}
 
     cond do
+      # ⚡ Đánh nhanh (DECISIONS "Đánh nhanh theo combo"): trận với quái người chơi tự chọn, server đánh theo combo
+      not AutoHunt.on?(s.player) and s.held == nil and map_size(s.tabs) > 0 and
+          QuickFight.active?(s.player) ->
+        {:noreply, quick_step(s), timeout(s)}
+
       not AutoHunt.on?(s.player) ->
         {:noreply, s, timeout(s)}
 
@@ -1583,6 +1591,17 @@ defmodule HacLong.Game.Session do
     end
   end
 
+  defp quick_step(s) do
+    cmd = QuickFight.decide(s.player)
+    {reason, ref} = save_reason({:command, cmd, :auto})
+    Characters.put_reason(reason, ref)
+
+    {:reply, _value, s, _t} =
+      handle({:command, cmd, :auto}, nil, fresh(%{s | auto_timer: :busy}))
+
+    arm_auto(%{s | auto_timer: nil}, QuickFight.tick_ms())
+  end
+
   defp auto_snapshot(%{pos: %{map: id}}),
     do: if(AutoHunt.map_ok?(id), do: MapServer.snapshot(id))
 
@@ -1590,9 +1609,16 @@ defmodule HacLong.Game.Session do
   defp arm_auto(s, ms \\ nil)
 
   defp arm_auto(%{auto_timer: nil, player: p} = s, ms) when map_size(s.tabs) > 0 do
-    if AutoHunt.on?(p),
-      do: %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))},
-      else: s
+    cond do
+      AutoHunt.on?(p) ->
+        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))}
+
+      QuickFight.active?(p) ->
+        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || QuickFight.tick_ms())}
+
+      true ->
+        s
+    end
   end
 
   defp arm_auto(s, _ms), do: s

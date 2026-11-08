@@ -1082,6 +1082,14 @@
         "village"
       ]
     },
+    "quick": {
+      "_doc": "DECISIONS \"Đánh nhanh theo combo\": bật nút ⚡ thì bấm quái nào nhân vật đi tới và server tự đánh hết trận theo combo (danh sách ưu tiên tối đa max_steps bước: mỗi lượt dùng bước đầu tiên dùng được; bước once chỉ dùng khi chưa có hiệu ứng của kỹ năng đó), tự uống bình theo ngưỡng % của Tự đánh, xong trận tự rời màn trận, ở lại bản đồ. Nhịp ra lệnh tick_ms (cùng giới hạn tốc độ như lệnh người chơi). Không áp cho đồ sát / đấu trường.",
+      "tick_ms": 600,
+      "max_steps": 6,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "auto": {
       "_doc": "Phase 4 (B-31): tự đánh quái khi đang online (HacLong.Game.AutoHunt). tick_ms: nhịp ra lệnh (trong trận / đang đi / đứng chờ); hp_pct, mp_pct: ngưỡng % uống bình máu / mana mặc định và giới hạn chỉnh; keep_opt_min: lọc đồ 'chỉ đồ quý' giữ món có từ chừng này dòng cộng thêm trở lên (ngoài Excellent / Thần / May mắn / Kỹ năng / tốt hơn đồ đang mặc).",
       "tick_ms": {"battle": 900, "move": 320, "idle": 1500},

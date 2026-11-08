@@ -628,11 +628,13 @@
     // sự kiện "map" có thể đến trước/sau lúc đổi bản đồ một chút
     const here = world.map === P.pos.map;
     const names = mobNames();
+    const mpos = {}; // vị trí quái trên màn (số sát thương bay lên khi Đánh nhanh)
     for (const q of mobs(P)) {
       const [qx, qy] = smooth('m' + q.id, q.x, q.y, DUR.monster, now);
       // quái đứng yên thì nhún nhẹ (chỉ là hình)
       const bob = fx && qx === q.x && qy === q.y ? Math.round(Math.sin(now / 380 + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0)) * 1.5) : 0;
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy) + bob;
+      mpos[q.id] = [px + TILE / 2, py];
       if (px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
       ctx.globalAlpha = q.busy ? 0.45 : 1;
       if (q.boss && !q.gold) {
@@ -804,6 +806,7 @@
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
+    drawFloats(mpos, [Math.round(mx * TILE - cx) + TILE / 2, Math.round(my * TILE - cy)]);
     if (enter.map !== P.pos.map) enter = { map: P.pos.map, at: now };
     if (fx) enterFx(now, P, m, px, py);
     // vẽ lại khi bong bóng hết hạn
@@ -1153,6 +1156,31 @@
 
   // B11: bản đồ thu nhỏ ở góc khung bản đồ (tắt ở Cài đặt, `hl-minimap`): nền ô tô màu theo loại (vẽ sẵn mỗi bản đồ một lần),
   // chấm: mình (trắng), quái (đỏ, trùm vàng), cổng (tím), NPC (xanh); khung trắng là phần đang nhìn thấy
+  // ⚡ Đánh nhanh (DECISIONS "Đánh nhanh theo combo"): số sát thương / máu hồi bay lên trên đầu quái (`target` = mã quái
+  // trên bản đồ) hoặc mình ('me'), mờ dần ~0,9 giây
+  const floats = [];
+  let floatTimer = null;
+  function floatText(target, text, col) {
+    floats.push({ target: String(target), text, col, t0: performance.now() });
+    if (floats.length > 12) floats.shift();
+    draw();
+  }
+  function drawFloats(mpos, me) {
+    const t = performance.now();
+    for (let i = floats.length - 1; i >= 0; i--) {
+      const f = floats[i], k = (t - f.t0) / 900;
+      if (k >= 1) { floats.splice(i, 1); continue; }
+      const pos = f.target === 'me' ? me : mpos[f.target];
+      if (!pos) continue;
+      const y = pos[1] - 8 - k * 28;
+      ctx.globalAlpha = 1 - k * k;
+      ctx.font = '800 15px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(10, 6, 12, 0.85)'; ctx.strokeText(f.text, pos[0], y);
+      ctx.fillStyle = f.col; ctx.fillText(f.text, pos[0], y);
+      ctx.globalAlpha = 1;
+    }
+    if (floats.length && !floatTimer) floatTimer = setTimeout(() => { floatTimer = null; draw(); }, 33);
+  }
   const miniOn = () => { try { return localStorage.getItem('hl-minimap') !== '0'; } catch (e) { return true; } };
   const MINI_COL = { floor: '#3a3328', grass: '#3f5a2a', dirt: '#6a5030', flowers: '#4a6a30', tree: '#1f3a1a', tree_autumn: '#4a3a14', tree_dead: '#3a2e22',
     rock: '#5a4a3e', water: '#1e4a7a', deep_water: '#163a66', brick: '#7a3e2a', stone: '#6a6a70', column: '#9a9aa0', fountain: '#4a8ac0', waystone: '#c0a040',
@@ -1711,6 +1739,7 @@
     },
     world: () => world,
     miniOn,
+    floatText,
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);

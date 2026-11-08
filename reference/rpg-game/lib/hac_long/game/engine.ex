@@ -969,6 +969,19 @@ defmodule HacLong.Game.Engine do
 
   def cooldown(_p, _id), do: 0
 
+  # hiệu ứng lên mình của kỹ năng buff (Đánh nhanh: bước "chỉ dùng khi chưa có hiệu ứng")
+  @buff_ids %{"war_cry" => "rage", "shadow_step" => "evade", "guard" => "guard"}
+
+  @doc "Hiệu ứng buff của kỹ năng `k` còn trên người không (kỹ năng không buff: false)."
+  def buff_active?(%{battle: %{}} = p, k) do
+    case (k[:buff] || %{})[:id] || @buff_ids[k[:effect]] do
+      nil -> false
+      id -> effect(p, :player, id) != nil
+    end
+  end
+
+  def buff_active?(_p, _k), do: false
+
   defp set_cd(p, id, turns) do
     cds = (Map.get(p.battle, :cds) || []) |> Enum.reject(&(&1.id == id))
     %{p | battle: Map.put(p.battle, :cds, cds ++ [%{id: id, turns: turns}])}

@@ -318,7 +318,9 @@
     hud.innerHTML = viewHud();
     tweenGold();
     trackBag();
-    if (P.battle) {
+    quickTrack();
+    // ⚡ Đánh nhanh: trận với quái mình chọn do server đánh theo combo, ở lại bản đồ (không mở màn trận)
+    if (P.battle && !quickFight()) {
       tabs.hidden = true;
       view.classList.add('fit');
       view.innerHTML = viewBattle();
@@ -344,7 +346,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + viewQuick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (friendsUi.open) {
@@ -1077,6 +1079,84 @@
   const autoKills = () => (P.auto ? Math.max(0, P.kills - P.auto.kills) : 0);
   const autoTargetName = (a) => a.target === 'all' ? 'tất cả quái' : a.target === 'level' ? 'quái không cao hơn mình' : ((P.view.autoMap.kinds.find((k) => k.id === a.target) || {}).name || a.target);
 
+  // ---------- ⚡ Đánh nhanh theo combo (DECISIONS "Đánh nhanh theo combo") ----------
+  const QUICK = RULES.quick || { max_steps: 6 };
+  const quickOn = () => !!(P && P.view && P.view.autoCfg && P.view.autoCfg.quick);
+  // như server `QuickFight.active?/1`: đang trận với quái, không Tự đánh, chưa bấm ✋ Đánh tay, không đánh người
+  const quickFight = () => !!(P && P.battle && quickOn() && !P.auto && !P.battle.manual && !(P.battle.monster || {}).pvp &&
+    !P.battle.live && !((P.battle.encounter || {}).slay));
+  const BUFF_EFFECTS = ['war_cry', 'guard', 'shadow_step'];
+  const isBuffSkill = (id) => { const k = skillById(id); return !!(k && (k.buff || BUFF_EFFECTS.includes(k.effect))); };
+  // combo đã lưu, bỏ bước không còn dùng được (đổi bộ kỹ năng)
+  const comboSteps = () => {
+    const ok = ['attack', ...(P.view.skillSet || [])];
+    return (((P.view.autoCfg || {}).combo) || []).filter((s) => ok.includes(s.id));
+  };
+  const stepName = (s) => (s.id === 'attack' ? 'Đòn thường' : ((skillById(s.id) || {}).name || s.id));
+  let quickPrev = null, quickLast = null, quickLogOpen = false, comboEdit = null;
+  // mỗi lần vẽ: số sát thương / máu hồi bay lên trên bản đồ; trận vừa xong thì báo kết quả, giữ nhật ký để xem lại
+  function quickTrack() {
+    const b = P && P.battle;
+    if (b && quickFight()) {
+      const mid = (b.encounter || {}).mid;
+      if (quickPrev && quickPrev.mid === mid && mid != null) {
+        const md = quickPrev.mHp - b.monster.hp, pd = quickPrev.pHp - P.hp;
+        if (md > 0) Map_.floatText(mid, `-${fmt(md)}`, '#ffe08a');
+        else if (md < 0) Map_.floatText(mid, `+${fmt(-md)}`, '#8fe08a');
+        if (pd > 0) Map_.floatText('me', `-${fmt(pd)}`, '#ff6b5a');
+        else if (pd < 0) Map_.floatText('me', `+${fmt(-pd)}`, '#8fe08a');
+      }
+      quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice() };
+      return;
+    }
+    if (!quickPrev) return;
+    const q = quickPrev;
+    quickPrev = null;
+    if (b) return; // ✋ Đánh tay: trận tiếp tục ở màn trận như thường
+    quickLast = q;
+    const rw = q.reward;
+    if (q.result === 'win' && rw) {
+      const loot = (rw.gear || []).length + Object.keys(rw.items || {}).length;
+      toast(`⚡ Hạ ${q.name}: +${fmt(rw.xp)} EXP, +${fmt(rw.gold)} vàng${loot ? `, ${loot} món rơi` : ''}`);
+    } else if (q.result === 'lose') toast(`⚡ Gục ngã trước ${q.name}. Bấm 📜 xem lại trận.`, true);
+    else toast(`⚡ Trận với ${q.name} kết thúc.`);
+  }
+  function viewQuickLog() {
+    const l = quickLast.log || [];
+    return `<div class="card quick-log" role="dialog" aria-label="Nhật ký trận vừa xong"><div class="row"><h3 class="grow">📜 ${esc(quickLast.name)}</h3><button class="btn small-btn" data-act="quick-log">Đóng</button></div>
+      <div class="log">${l.map((x, i) => logLine(x, l[i - 1])).join('')}</div></div>`;
+  }
+  function viewQuick() {
+    if (quickFight()) {
+      const m = P.battle.monster;
+      return `<div class="auto-bar on" id="quick-bar"><span class="auto-dot" aria-hidden="true"></span>
+        <span class="grow small">⚡ Đang đánh <b>${esc(m.name)}</b> · ❤ ${Math.max(0, Math.round((m.hp * 100) / Math.max(1, m.maxHp)))}%</span>
+        <button class="btn small-btn" data-act="quick-manual" title="Cầm lại quyền đánh tay trận này">✋ Đánh tay</button></div>`;
+    }
+    const steps = comboSteps(), on = quickOn();
+    return `<div class="auto-bar" id="quick-bar">
+        <button class="btn small-btn ${on ? 'primary' : ''}" data-act="quick-toggle" aria-pressed="${on}" title="Bật: bấm quái là tự đánh hết trận theo combo">⚡ Đánh nhanh: ${on ? 'Bật' : 'Tắt'}</button>
+        <span class="grow small muted">${steps.length ? steps.map((x) => esc(stepName(x))).join(' → ') : 'Combo: theo bộ kỹ năng (buff trước)'}</span>
+        ${quickLast ? `<button class="btn small-btn" data-act="quick-log" aria-expanded="${quickLogOpen}" title="Xem nhật ký trận vừa xong">📜</button>` : ''}
+        <button class="btn small-btn" data-act="quick-combo" title="Sửa combo">⚙</button></div>${quickLogOpen && quickLast ? viewQuickLog() : ''}`;
+  }
+  // Menu → Kỹ năng: sắp combo (danh sách ưu tiên, tối đa QUICK.max_steps bước)
+  function viewCombo() {
+    const set = mySkills(), steps = comboEdit || comboSteps();
+    const opts = (cur) => [['attack', 'Đòn thường'], ...set.map((k) => [k.id, k.name])].map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('');
+    const rows = steps.map((x, i) => `<div class="btn-row combo-step"><span class="tag">${i + 1}</span>
+        <select data-combo-id="${i}" aria-label="Bước ${i + 1}">${opts(x.id)}</select>
+        ${isBuffSkill(x.id) ? `<label class="small"><input type="checkbox" data-combo-once="${i}" ${x.once ? 'checked' : ''}> chỉ khi chưa có hiệu ứng</label>` : ''}
+        <button class="btn small-btn" data-act="combo-up" data-i="${i}" ${i ? '' : 'disabled'} aria-label="Lên">↑</button>
+        <button class="btn small-btn" data-act="combo-rm" data-i="${i}" aria-label="Bỏ bước ${i + 1}">✕</button></div>`).join('');
+    return `<div class="card" id="combo-card"><h3>⚡ Combo đánh nhanh</h3>
+      <p class="small muted">Bật ⚡ Đánh nhanh ở bản đồ rồi bấm quái: nhân vật tự đánh hết trận theo combo. Mỗi lượt dùng <b>bước đầu tiên dùng được</b> (bước còn hồi chiêu / thiếu MP thì bỏ qua), không bước nào dùng được thì đánh thường. Tự uống bình theo ngưỡng % của Tự đánh. Không có bước nào: dùng bộ kỹ năng (buff trước, rồi mạnh nhất).</p>
+      ${rows || '<p class="small muted">Chưa có bước nào: đang dùng theo bộ kỹ năng.</p>'}
+      <div class="btn-row"><button class="btn small-btn" data-act="combo-add" ${steps.length >= QUICK.max_steps ? 'disabled' : ''}>+ Thêm bước</button>
+        <button class="btn small-btn" data-act="combo-reset">Theo bộ kỹ năng</button>
+        <button class="btn small-btn primary" data-act="combo-save" ${comboEdit ? '' : 'disabled'}>Lưu combo</button></div></div>`;
+  }
+
   function viewAuto() {
     syncAutoUi();
     const am = P.view.autoMap || { ok: false, kinds: [] };
@@ -1446,9 +1526,12 @@
   // Cập nhật nhẹ khi đang xem bản đồ (không dựng lại cả trang, tránh nháy).
   function refresh() {
     Sound.music(musicMood());
-    if (P && !P.battle && tab === 'map' && !npc && Map_.mountedMap() === P.pos.map && $('#map-canvas')) {
+    if (P && (!P.battle || quickFight()) && tab === 'map' && !npc && Map_.mountedMap() === P.pos.map && $('#map-canvas')) {
       $('#hud').innerHTML = viewHud();
       tweenGold(); trackBag();
+      quickTrack();
+      const qb = $('#quick-bar');
+      if (qb) { const tpl = document.createElement('template'); tpl.innerHTML = viewQuick(); qb.replaceWith(...tpl.content.childNodes); }
       const head = $('.map-top');
       if (head) head.outerHTML = Map_.top(P);
       const tut = $('#tut');
@@ -2247,7 +2330,7 @@
         Mang tối đa ${(RULES.towerSkills || {}).loadout || 4} kỹ năng vào trận. Nguyên tố (kỹ năng khắc quái +${Math.round((EL.strong || 0) * 100)}% sát thương, bị quái khắc −${Math.round((EL.weak || 0) * 100)}%):<br>${elOrder().map((e) => `${elTag(e)} khắc ${(EL.beats[e] || []).map(elTag).join('')}`).join('<br>')}</p>
         <h4>Kỹ năng lớp</h4><div class="list">${c.skills.map(row).join('')}</div>
         <h4>Kỹ năng Tháp Vô Tận</h4><div class="list">${(c.tower_skills || []).map(row).join('')}</div>
-      </div>${viewSkillPick()}`;
+      </div>${viewCombo()}${viewSkillPick()}`;
   }
 
   // ---------- Menu ----------
@@ -4171,6 +4254,15 @@
     if (act === 'auto-reset') { Object.assign(autoUi, autoDefaults()); saveAutoUi(); render(); return; }
     if (act === 'auto-on') { autoUi.open = false; sendCommand({ act: 'auto', on: true, target: autoUi.target, hp: +autoUi.hp, mp: +autoUi.mp, loot: autoUi.loot, keep: autoUi.keep, range: +autoUi.range, skills: autoUi.skills }); return; }
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
+    if (act === 'quick-toggle') { sendCommand({ act: 'quick', on: !quickOn() }); return; }
+    if (act === 'quick-manual') { sendCommand({ act: 'quick_manual' }); return; }
+    if (act === 'quick-log') { quickLogOpen = !quickLogOpen; render(); return; }
+    if (act === 'quick-combo') { tab = 'menu'; menuSec = 'skills'; render(); const c = $('#combo-card'); if (c) c.scrollIntoView({ block: 'start' }); return; }
+    if (act === 'combo-add') { const st = (comboEdit || comboSteps()).slice(); if (st.length < QUICK.max_steps) st.push({ id: (mySkills()[0] || {}).id || 'attack', once: false }); comboEdit = st; render(); return; }
+    if (act === 'combo-rm') { const st = (comboEdit || comboSteps()).slice(); st.splice(+t.dataset.i, 1); comboEdit = st; render(); return; }
+    if (act === 'combo-up') { const st = (comboEdit || comboSteps()).slice(), i = +t.dataset.i; if (i > 0) [st[i - 1], st[i]] = [st[i], st[i - 1]]; comboEdit = st; render(); return; }
+    if (act === 'combo-reset') { comboEdit = null; sendCommand({ act: 'combo_set', steps: [] }); return; }
+    if (act === 'combo-save') { const steps = comboEdit || []; comboEdit = null; sendCommand({ act: 'combo_set', steps }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();
     if (act === 'char-enter') return charGo(Net.enterChar(+t.dataset.cid));
@@ -4632,6 +4724,8 @@
         const f = (P.view.autoCfg || {}).filter || {}, k = e.target.dataset.lootKeep, cur = Array.isArray(f.keep) ? f.keep : (AUTO.keep_default || []);
         sendCommand({ act: 'loot_filter', on: f.on === true, keep: e.target.checked ? [...new Set(cur.concat(k))] : cur.filter((x) => x !== k) });
       }
+      if (e.target.dataset.comboId != null) { const st = (comboEdit || comboSteps()).map((x) => ({ ...x })), i = +e.target.dataset.comboId; st[i].id = e.target.value; if (!isBuffSkill(st[i].id)) st[i].once = false; comboEdit = st; render(); return; }
+      if (e.target.dataset.comboOnce != null) { const st = (comboEdit || comboSteps()).map((x) => ({ ...x })); st[+e.target.dataset.comboOnce].once = e.target.checked; comboEdit = st; render(); return; }
       if (e.target.dataset.autoKeep) { const k = e.target.dataset.autoKeep; autoUi.keep = e.target.checked ? [...new Set(autoUi.keep.concat(k))] : autoUi.keep.filter((x) => x !== k); saveAutoUi(); render(); }
     });
     Net.onStatus((st, msg) => {

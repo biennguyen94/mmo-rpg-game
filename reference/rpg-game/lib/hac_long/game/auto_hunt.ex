@@ -97,7 +97,7 @@ defmodule HacLong.Game.AutoHunt do
           |> Map.take([:target, :hp, :mp, :loot, :keep, :range, :skills])
           |> Map.new(fn {k, v} -> {to_string(k), v} end)
           # giữ cài đặt tự hủy đồ rơi (`loot_filter/2`) đã lưu cùng chỗ
-          |> Map.merge(Map.take(Map.get(p, :auto_cfg) || %{}, ["filter"]))
+          |> Map.merge(Map.take(Map.get(p, :auto_cfg) || %{}, ["filter", "quick", "combo"]))
 
         {%{ok: true, msg: "Bắt đầu tự đánh."},
          p |> Map.put(:auto, auto) |> Map.put(:auto_cfg, cfg)}
