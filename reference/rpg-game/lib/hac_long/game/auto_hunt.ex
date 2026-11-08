@@ -59,6 +59,54 @@ defmodule HacLong.Game.AutoHunt do
   defp name(kind), do: (Data.side_monster(kind) || Data.monster(kind) || %{name: kind}).name
 
   @doc """
+  Lệnh `"auto_save"` (⚙ → 💾 Lưu): lưu cài đặt tự đánh vào `auto_cfg` mà không bắt đầu (nút 🤖 bật / tắt dùng cài đặt
+  đã lưu). Ngưỡng % máu / mana dùng chung cho ⚡ Đánh nhanh. Đang tự đánh thì áp luôn (không đổi chỗ bắt đầu).
+  """
+  def save(p, c) do
+    old = Map.get(p, :auto_cfg) || %{}
+    {loot, keep} = loot(c["loot"] || old["loot"], c["keep"] || old["keep"])
+
+    cfg =
+      Map.merge(old, %{
+        "target" => if(is_binary(c["target"]), do: c["target"], else: old["target"] || "all"),
+        "hp" => pct(c["hp"] || old["hp"], @r.hp_pct),
+        "mp" => pct(c["mp"] || old["mp"], @r.mp_pct),
+        "loot" => loot,
+        "keep" => keep,
+        "range" =>
+          if(c["range"] in @r.range_options,
+            do: c["range"],
+            else: old["range"] || @r.range_default
+          ),
+        "skills" => if(c["skills"] in @r.skills, do: c["skills"], else: old["skills"] || "all")
+      })
+
+    p = Map.put(p, :auto_cfg, cfg)
+
+    p =
+      case p do
+        %{auto: %{} = a} ->
+          %{
+            p
+            | auto:
+                Map.merge(a, %{
+                  hp: cfg["hp"],
+                  mp: cfg["mp"],
+                  loot: loot,
+                  keep: keep,
+                  range: cfg["range"],
+                  skills: cfg["skills"]
+                })
+          }
+
+        _ ->
+          p
+      end
+
+    {%{ok: true, msg: "Đã lưu cài đặt tự đánh."}, p}
+  end
+
+  @doc """
   Lệnh `"auto"`: `on` false tắt; true bật với `target`, `hp`, `mp`, `loot` (thiếu hoặc sai thì lấy mặc định,
   % kẹp trong giới hạn). Trả `{kết_quả, nhân_vật}` như `Commands.run/2`.
   """
@@ -136,11 +184,18 @@ defmodule HacLong.Game.AutoHunt do
       %{} ->
         if p.hp < d.maxHp * hp and Engine.best_potion(p, d.maxHp - p.hp) == nil,
           do: {:stop, "Hết bình máu — tự đánh đã tắt."},
-          else: {:cmd, Brain.fight(p, hp, a.mp / 100, Map.get(a, :skills, "all"))}
+          else: {:cmd, fight(p, hp, a)}
 
       nil ->
         roam(p, snap, a, d, hp)
     end
+  end
+
+  # bật cả ⚡ Đánh nhanh: đánh theo combo (DECISIONS "Đánh nhanh theo combo"), không thì theo ô "Kỹ năng"
+  defp fight(p, hp, a) do
+    if HacLong.Game.QuickFight.on?(p),
+      do: HacLong.Game.QuickFight.decide(p),
+      else: Brain.fight(p, hp, a.mp / 100, Map.get(a, :skills, "all"))
   end
 
   defp after_battle(p, b, a) do

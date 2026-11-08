@@ -69,6 +69,9 @@ defmodule HacLong.Game.Commands do
       "loot_filter" ->
         HacLong.Game.AutoHunt.loot_filter(p, c)
 
+      "auto_save" ->
+        HacLong.Game.AutoHunt.save(p, c)
+
       # ⚡ Đánh nhanh theo combo (DECISIONS "Đánh nhanh theo combo")
       "quick" ->
         HacLong.Game.QuickFight.toggle(p, c["on"])

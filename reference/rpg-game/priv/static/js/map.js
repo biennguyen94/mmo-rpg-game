@@ -18,6 +18,8 @@
 
   const images = {};
   let canvas = null, ctx = null, mounted = null, getPlayer = () => null;
+  let fight = null; // ⚡ Đánh nhanh: { id, hp } con đang đánh (`setFight`)
+  const seenTower = new Map(); // mã quái tầng → lần thấy cuối (vẽ con đang đánh khi nó tạm vắng khỏi danh sách)
   let world = { map: null, monsters: [], players: [] };
   let userId = null;
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
@@ -120,8 +122,22 @@
 
   // Quái trên bản đồ đang đứng: quái dùng chung (sự kiện "map") hoặc quái của tầng tháp (máu phần trăm ở `hp_pct`).
   function mobs(P) {
-    if (P.pos.map === 'tower' && P.tower) return P.tower.monsters.map((q) => Object.assign({}, q, { id: 't' + q.id, boss: q.elite, hp: q.hp_pct == null ? 100 : q.hp_pct }));
-    return world.map === P.pos.map ? world.monsters : [];
+    const list = P.pos.map === 'tower' && P.tower
+      ? P.tower.monsters.map((q) => Object.assign({}, q, { id: 't' + q.id, boss: q.elite, hp: q.hp_pct == null ? 100 : q.hp_pct }))
+      : world.map === P.pos.map ? world.monsters : [];
+    // nhớ chỗ đứng cuối của quái tầng tháp / sự kiện: con đang đánh bị bỏ khỏi danh sách tầng suốt trận
+    if (P.pos.map === 'tower') for (const q of list) seenTower.set(String(q.id), q);
+    // ⚡ Đánh nhanh: con đang đánh (ở lại bản đồ) hiện máu theo lượt và dấu ⚔, cả quái tầng tháp / sự kiện (máu chỉ có ở trận)
+    if (!fight) return list;
+    const mark = (q) => Object.assign({}, q, { hp: fight.hp, busy: true, mine: true });
+    if (list.some((q) => String(q.id) === fight.id)) return list.map((q) => (String(q.id) === fight.id ? mark(q) : q));
+    const last = P.pos.map === 'tower' && seenTower.get(fight.id);
+    return last ? list.concat([mark(last)]) : list;
+  }
+  function setFight(f) {
+    const changed = JSON.stringify(f) !== JSON.stringify(fight);
+    fight = f;
+    if (changed) draw();
   }
 
   const monsterAt = (x, y) => mobs(getPlayer()).find((q) => q.x === x && q.y === y);
@@ -636,7 +652,8 @@
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy) + bob;
       mpos[q.id] = [px + TILE / 2, py];
       if (px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
-      ctx.globalAlpha = q.busy ? 0.45 : 1;
+      // quái người khác đang đánh: mờ đi; con mình đang đánh (⚡ Đánh nhanh, ở lại bản đồ) vẫn rõ
+      ctx.globalAlpha = q.busy && !q.mine ? 0.45 : 1;
       if (q.boss && !q.gold) {
         ctx.strokeStyle = '#f0cf7a'; ctx.lineWidth = 2;
         ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
@@ -1740,6 +1757,7 @@
     world: () => world,
     miniOn,
     floatText,
+    setFight,
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);

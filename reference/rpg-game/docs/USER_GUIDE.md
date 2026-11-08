@@ -154,7 +154,10 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
     - **Đồ rơi**: giữ hết, hoặc chỉ giữ loại đã tích (Excellent, Đồ Thần, May mắn / Kỹ năng, từ 2 dòng cộng thêm, tốt hơn đồ
       đang mặc, mặc được); món khác bị hủy ngay sau trận. Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ.
     - **Về mặc định** đưa mọi ô về như ban đầu. Cài đặt lưu theo nhân vật khi bấm bắt đầu (đổi máy vẫn giữ).
-  - Bấm **🤖 Tự đánh** / **Bắt đầu tự đánh**: server tự đi tới quái, đánh, uống bình, rời bảng kết quả.
+  - Nút **🤖** trên thanh là công tắc: bấm để bật (nút sáng lên) theo cài đặt đã lưu, bấm lại để tắt (nút tối đi). Server tự
+    đi tới quái, đánh, uống bình, rời bảng kết quả. Bảng **⚙** có cài đặt của cả 🤖 Tự đánh và ⚡ Đánh nhanh, mỗi phần một
+    nút **💾 Lưu** (lưu không tự bật); ngưỡng uống máu / mana dùng chung cho cả hai.
+  - Bật **cả 🤖 và ⚡**: tự đánh theo combo của ⚡ và ở lại bản đồ (không mở bảng đánh quái).
   - Tự tắt khi: hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ, đóng hết tab game.
     Bấm **Tắt** (dưới bản đồ hoặc trong trận) để dừng bất cứ lúc nào.
 - **⚡ Đánh nhanh** (nút ⚡ cạnh 🤖 Tự đánh, cùng một hàng dưới bản đồ): bật lên rồi **tự bấm quái nào** thì nhân vật đi tới và tự đánh hết trận theo

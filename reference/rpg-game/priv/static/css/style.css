@@ -1071,3 +1071,9 @@ details.fold > .list { margin-top: 4px; }
 #auto-bar { flex-wrap: nowrap; }
 #auto-bar > .grow { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #auto-bar > .btn { flex: 0 0 auto; }
+/* ⚙ Tự đánh & Đánh nhanh: tiêu đề từng phần, combo, hàng nút Lưu trải hết bề ngang */
+.auto-set .set-sec { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.95rem; }
+.auto-set .set-sec:first-of-type { border-top: 0; padding-top: 0; }
+.auto-set > .wide, .auto-set > .btn-row.wide { grid-column: 1 / -1; }
+.auto-set .combo-step { flex-wrap: wrap; }
+.auto-set .combo-step select { width: auto; flex: 1 1 120px; }

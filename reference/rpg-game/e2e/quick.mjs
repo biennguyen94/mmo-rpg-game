@@ -2,7 +2,7 @@
 // (đi tới) quái → server tự đánh hết trận theo combo, vẫn ở màn bản đồ (không mở màn trận), xong trận báo kết quả và có
 // nút 📜 xem nhật ký; ✋ Đánh tay giữa trận thì mở màn trận như thường.
 // Chạy: node e2e/quick.mjs [url] [thư_mục_ảnh]
-import { launch, reporter, newPlayer, adminSession, send, act, shot } from './lib.mjs';
+import { launch, reporter, newPlayer, adminSession, send, act, shot, meetNpc } from './lib.mjs';
 
 const R = reporter('quick');
 const browser = await launch();
@@ -94,5 +94,58 @@ await p.click('#tabs [data-tab="map"]');
 await p.waitForSelector('[data-act="quick-filter"]');
 const f1 = await p.getAttribute('[data-act="quick-filter"]', 'aria-pressed');
 R.check('🗑 sáng khi Tự hủy đồ rơi đang bật', f0 === 'false' && f1 === 'true', `${f0} → ${f1}`);
+// ⚙: cài đặt của cả hai, mỗi tính năng một nút 💾 Lưu, không còn "Bắt đầu tự đánh"
+await p.click('#tabs [data-tab="map"]');
+await p.click('[data-act="auto-set"]');
+await p.waitForSelector('.auto-set');
+R.check('⚙: có 💾 Lưu tự đánh và 💾 Lưu đánh nhanh, không có Bắt đầu tự đánh', !!(await p.$('.auto-set [data-act="auto-save"]')) && !!(await p.$('.auto-set [data-act="quick-save"]')) && !(await p.$('.auto-set [data-act="auto-on"]')));
+await shot(p, 'quick-settings.png');
+await p.click('.auto-set [data-act="auto-save"]');
+await p.waitForTimeout(400);
+R.check('💾 Lưu tự đánh không tự bắt đầu', !(await p.evaluate(() => window.__hl.player().auto)));
+await p.click('.auto-set-head [data-act="auto-set"]').catch(() => null);
+
+// 🤖 + ⚡ cùng bật: tự đánh theo combo, ở lại bản đồ (không mở bảng đánh quái)
+await p.click('[data-act="auto-toggle"]');
+await p.waitForFunction(() => !!window.__hl.player().auto, null, { timeout: 5000 }).catch(() => null);
+R.check('nút 🤖 sáng khi bật', (await p.getAttribute('[data-act="auto-toggle"]', 'aria-pressed')) === 'true');
+const k1 = await p.evaluate(() => window.__hl.player().kills);
+let sawBattleView = false, sawMapFight = false;
+for (let i = 0; i < 120; i++) {
+  const st = await p.evaluate(() => ({ battle: !!window.__hl.player().battle, map: !!document.querySelector('#map-canvas'), atk: !!document.querySelector('[data-act="attack"]'), kills: window.__hl.player().kills }));
+  if (st.battle && st.atk) sawBattleView = true;
+  if (st.battle && st.map && !st.atk) sawMapFight = true;
+  if (st.kills >= k1 + 2) break;
+  await p.waitForTimeout(500);
+}
+const k2 = await p.evaluate(() => window.__hl.player().kills);
+R.check('🤖 + ⚡: tự đánh hạ quái, ở lại bản đồ (không mở bảng đánh quái)', k2 > k1 && sawMapFight && !sawBattleView, JSON.stringify({ k1, k2, sawMapFight, sawBattleView }));
+await p.click('[data-act="auto-toggle"]');
+await p.waitForFunction(() => !window.__hl.player().auto, null, { timeout: 8000 }).catch(() => null);
+R.check('nút 🤖 tối khi tắt', (await p.getAttribute('[data-act="auto-toggle"]', 'aria-pressed')) === 'false');
+await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 30000 }).catch(() => null);
+
+// trong Tháp: đánh nhanh ở lại bản đồ, con đang đánh có thanh máu theo lượt
+await send(p, { act: 'travel', to: 'village' }).catch(() => null);
+await p.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 8000 }).catch(() => null);
+await meetNpc(p, 'tower_guard');
+const tw = await send(p, { act: 'tower_enter', floor: 1 }).catch((e) => ({ msg: e.msg }));
+await p.evaluate(() => window.__hl.closeNpc && window.__hl.closeNpc());
+await p.click('#tabs [data-tab="map"]').catch(() => null);
+await p.waitForFunction(() => window.__hl.player().pos.map === 'tower', null, { timeout: 8000 }).catch(() => null);
+R.check('vào Tháp', (await p.evaluate(() => window.__hl.player().pos.map)) === 'tower', tw.msg || '');
+let towerFight = null;
+for (let i = 0; i < 6 && !towerFight; i++) {
+  const t = await p.evaluate(() => { const q = window.__hl.player(); return { me: q.pos, mons: (q.tower && q.tower.monsters) || [] }; });
+  if (!t.mons.length) break;
+  t.mons.sort((a, b) => Math.abs(a.x - t.me.x) + Math.abs(a.y - t.me.y) - (Math.abs(b.x - t.me.x) + Math.abs(b.y - t.me.y)));
+  await p.evaluate(([x, y]) => window.__hl.walkTo(x, y), [t.mons[0].x, t.mons[0].y]);
+  const ok = await p.waitForFunction(() => !!window.__hl.player().battle, null, { timeout: 12000 }).then(() => true).catch(() => false);
+  if (ok) { await p.waitForTimeout(700); await shot(p, 'quick-tower.png'); }
+  if (ok) towerFight = await p.evaluate(() => ({ map: !!document.querySelector('#map-canvas'), atk: !!document.querySelector('[data-act="attack"]'), enc: window.__hl.player().battle.encounter }));
+}
+R.check('Tháp: đánh nhanh ở lại bản đồ', towerFight && towerFight.map && !towerFight.atk && towerFight.enc && towerFight.enc.tower != null, JSON.stringify(towerFight));
+await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 60000 }).catch(() => null);
+R.check('Tháp: đánh hết trận, rời màn trận', !(await p.evaluate(() => window.__hl.player().battle)));
 R.check('không lỗi JS', X.errors.length === 0, X.errors.join(' | '));
 await R.done(browser);
