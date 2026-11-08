@@ -613,26 +613,32 @@ defmodule HacLong.Game.Session do
   defp handle({:slay_begin, %{fight: f, foe: foe}}, _from, s) do
     p = s.player
 
+    # E2 đấu trường trực tiếp: hai bên rảnh tay, bản đồ nào cũng được, vào trận đầy máu (giữ máu cũ ở `hp0`)
+    duel = f[:duel] == true
+
     cond do
       HacLong.Slay.slaying?(p) ->
         reply({:error, "#{p.name} đang trong trận đồ sát khác."}, s)
 
       # người tấn công phải rảnh tay (Slay.check); người bị đánh đang đánh quái thì trận đó bị ngắt
-      f.mine and p.battle != nil ->
+      (f.mine or duel) and p.battle != nil ->
         reply({:error, "#{p.name} đang trong trận đấu."}, s)
 
       p.hp <= 0 ->
         reply({:error, "#{p.name} đang gục ngã."}, s)
 
-      p.pos.map != f.map ->
+      p.pos.map != f.map and not duel ->
         reply({:error, "#{p.name} đã rời bản đồ."}, s)
 
       true ->
         cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
         p = interrupt_battle(p, s.user_id)
-        mp = Maps.get(f.map)
+        hp0 = p.hp
+        p = if duel, do: %{p | hp: Engine.derived(p).maxHp}, else: p
+        mp = if duel, do: %{zone: 0, name: "Đấu trường", theme: nil}, else: Maps.get(f.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
+        enc = if duel, do: Map.merge(enc, %{duel: true, hp0: hp0}), else: enc
 
         b =
           Map.merge(p2.battle, %{
@@ -644,9 +650,19 @@ defmodule HacLong.Game.Session do
           })
 
         text =
-          if f.mine,
-            do: "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước.",
-            else: "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
+          cond do
+            duel and f.mine ->
+              "⚔ Đấu trường trực tiếp: #{p2.name} đấu #{foe.name}! #{p2.name} ra đòn trước. Không mất vàng."
+
+            duel ->
+              "⚔ Đấu trường trực tiếp: #{foe.name} đấu #{p2.name}! #{foe.name} ra đòn trước. Không mất vàng."
+
+            f.mine ->
+              "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước."
+
+            true ->
+              "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
+          end
 
         text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}

@@ -325,7 +325,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
   ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Làng); bỏ chạy thì không mất gì.
   **Hạng theo số lần chuyển sinh** (CS 0–1, 2–3, 4–5, 6–7, 8–9, 10+): chỉ thách đấu được người **cùng hạng hoặc hạng trên**,
-  không thách nhân vật cùng tài khoản.
+  không thách nhân vật cùng tài khoản. Vào trận có màn **VS**, xong có **K.O.**; bật **⚡ Đánh nhanh** thì server tự đánh từng
+  lượt theo combo (✋ Đánh tay để cầm lại).
+- **⚔ Đấu trực tiếp**: chạm người trên bản đồ (hoặc mở hồ sơ) → **⚔ Đấu trực tiếp**; người kia có 30 giây để **Nhận đấu**.
+  Hai người ở bản đồ nào cũng được. Luân phiên lượt như đồ sát (10 giây mỗi lượt), vào trận đầy máu; xong trận **trả lại máu như
+  trước**, không ai mất vàng, không tên đỏ; bỏ chạy tính thua. Điểm đấu trường đổi như thách đấu (tính vào 15 trận/ngày của
+  người mời).
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
   luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (hết MP / đang hồi chiêu thì đánh thường). Hết máu hoặc **bỏ chạy** là gục ngã:
   mất 10% vàng, về Làng; số vàng đó về tay người thắng. Không đánh được ở Làng và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.

@@ -58,6 +58,15 @@ defmodule HacLong.Game.QuickFightTest do
     refute QuickFight.active?(off)
   end
 
+  test "đấu trường (bản sao, arena) cũng tự đánh lượt; bản sao đồ sát (arena false) không qua nhánh này" do
+    {_, p} = QuickFight.toggle(player(), true)
+    b = fight(p)
+    arena = put_in(b.battle.monster, Map.merge(b.battle.monster, %{pvp: 7, arena: true}))
+    assert QuickFight.active?(arena)
+    copy = put_in(b.battle.monster, Map.merge(b.battle.monster, %{pvp: 7, arena: false}))
+    refute QuickFight.active?(copy)
+  end
+
   test "danh sách ưu tiên: bước đầu dùng được; hồi chiêu thì sang bước sau; trận xong thì rời" do
     p = player()
     [k1, k2 | _] = skills(p)

@@ -26,6 +26,8 @@ defmodule HacLongWeb.GameChannel do
   - `"market"` `%{"q"}`: hàng đang bán ở chợ và hàng mình đang rao; rao bán, mua, rút về là
     lệnh `"cmd"` `market_sell {id, count, price}`, `market_buy {listing}`,
     `market_cancel {listing}` (đứng cạnh Chủ Chợ).
+  - `"duel"` `%{"op" => "invite" | "accept" | "decline"}`: đấu trường trực tiếp (`HacLong.Slay.duel_invite/2`); server
+    đẩy `"duel_invite"` `%{from, name, level, cls, s}` cho người được mời.
   - `"trade"` `%{"op" => ...}`: giao dịch trực tiếp (`request {uid}`, `accept`, `decline`,
     `cancel`, `offer {offer: {items, gear, gold}}`, `ready`, `info`); server đẩy `"trade"`
     (`%{trade: bảng | nil}`) và `"trade_request"` (`%{from, name}`). Xem `HacLong.Trade`.
@@ -265,6 +267,27 @@ defmodule HacLongWeb.GameChannel do
     with :ok <- limit({:slay, uid}, 20, :timer.minutes(1)),
          {:ok, _f} <- HacLong.Slay.attack(uid, target) do
       {:reply, {:ok, %{}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
+  # E2 đấu trường trực tiếp: mời (`invite {uid}`), nhận (`accept`), từ chối (`decline`); server đẩy `"duel_invite"`
+  def handle_in("duel", %{"op" => op} = p, socket) do
+    uid = socket.assigns.user_id
+
+    run = fn ->
+      case op do
+        "invite" -> HacLong.Slay.duel_invite(uid, p["uid"])
+        "accept" -> HacLong.Slay.duel_answer(uid, true)
+        "decline" -> HacLong.Slay.duel_answer(uid, false)
+        _ -> {:error, "Thao tác không hợp lệ."}
+      end
+    end
+
+    with :ok <- limit({:duel, uid}, 20, :timer.minutes(1)),
+         {:ok, msg} <- run.() do
+      {:reply, {:ok, %{msg: msg}}, socket}
     else
       {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
     end
@@ -1063,6 +1086,11 @@ defmodule HacLongWeb.GameChannel do
   # tin riêng: người đã chặn thì không nhận
   def handle_info({:dm, msg}, socket) do
     unless msg.from in socket.assigns.blocked, do: push(socket, "dm", msg)
+    {:noreply, socket}
+  end
+
+  def handle_info({:duel_invite, req}, socket) do
+    unless req.from in socket.assigns.blocked, do: push(socket, "duel_invite", req)
     {:noreply, socket}
   end
 

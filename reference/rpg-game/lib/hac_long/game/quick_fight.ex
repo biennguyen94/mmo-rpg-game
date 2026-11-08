@@ -4,7 +4,7 @@ defmodule HacLong.Game.QuickFight do
 
   - Bật / tắt và combo lưu trong `p.auto_cfg` (cột `characters.auto_cfg`, theo nhân vật, đổi máy vẫn còn):
     `"quick"` (bool), `"combo"` = `[%{"id" => mã kỹ năng | "attack", "once" => bool}]` (tối đa `max_steps` bước).
-  - Đang bật, đang trong trận với quái (không phải đồ sát / đấu trường), không bật Tự đánh, chưa bấm ✋ Đánh tay
+  - Đang bật, đang trong trận với quái hoặc đấu trường (bản sao; đồ sát có nhánh riêng), không bật Tự đánh, chưa bấm ✋ Đánh tay
     (`battle.manual`): `Session` mỗi `tick_ms` hỏi `decide/1` rồi chạy lệnh như client gửi.
   - `decide/1`: trận xong → rời màn trận (`leave`); máu / MP dưới ngưỡng % của Tự đánh → uống bình; không thì bước
     đầu tiên của combo dùng được (kỹ năng đang mang, hết hồi chiêu, đủ MP; `once` thì bỏ qua khi hiệu ứng của kỹ năng
@@ -41,7 +41,9 @@ defmodule HacLong.Game.QuickFight do
   end
 
   def active?(%{battle: %{} = b} = p) do
-    on?(p) and not match?(%{auto: %{}}, p) and b[:manual] != true and b.monster[:pvp] == nil and
+    # E1: đấu trường (bản sao chỉ số, `monster.arena`) cũng tự đánh lượt theo combo
+    on?(p) and not match?(%{auto: %{}}, p) and b[:manual] != true and
+      (b.monster[:pvp] == nil or b.monster[:arena] == true) and
       b[:live] != true and b[:encounter][:slay] == nil
   end
 

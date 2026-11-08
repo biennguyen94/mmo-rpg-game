@@ -261,6 +261,16 @@
       Celebrate.bossIn(bm.name, bm.level ? `Cấp ${bm.level}` : '');
     }
     eventBanner(old, p);
+    // E1: vào trận đánh người (đấu trường, đồ sát) → màn VS; xong trận thắng / thua → K.O.
+    if (bm && bm.pvp) {
+      const enc = p.battle.encounter || {};
+      Celebrate.vs({ name: p.name, doll: window.Doll.url(p.view.look), sub: `Cấp ${p.level}` }, { name: bm.name, doll: window.Doll.url(bm.look), sub: `Cấp ${bm.level}` },
+        enc.duel ? '⚔ Đấu trường trực tiếp' : enc.slay != null ? '🗡 Đồ sát' : '🏟 Đấu trường');
+    }
+    const ob = old.battle, nb = p.battle;
+    if (ob && nb && !ob.over && nb.over && nb.monster && nb.monster.pvp && (nb.result === 'win' || nb.result === 'lose')) {
+      Celebrate.ko(nb.result === 'win', nb.result === 'win' ? `Hạ ${nb.monster.name}!` : `Gục trước ${nb.monster.name}`);
+    }
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
       Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
       return;
@@ -863,6 +873,12 @@
         <div class="btn-row"><button class="btn" data-act="party-decline">Từ chối</button><button class="btn primary" data-act="party-accept">Vào tổ đội</button></div>
       </div>`;
     }
+    if (dialog.type === 'duel') {
+      return `<div class="map-dialog card">
+        <h3>⚔ Đấu trường trực tiếp</h3><p class="small">${esc(dialog.name || 'Một người chơi')} (cấp ${dialog.level || '?'}) mời bạn đấu: luân phiên lượt như đồ sát, vào trận đầy máu, xong trận trả lại máu cũ, không mất vàng, không tên đỏ, đổi điểm đấu trường.</p>
+        <div class="btn-row"><button class="btn" data-act="duel-op" data-op="decline">Từ chối</button><button class="btn primary" data-act="duel-op" data-op="accept">⚔ Nhận đấu</button></div>
+      </div>`;
+    }
     if (dialog.type === 'trade') {
       return `<div class="map-dialog card">
         <h3>Lời mời giao dịch</h3><p class="small">${esc(dialog.name || 'Một người chơi')} muốn đổi đồ với bạn.</p>
@@ -884,6 +900,7 @@
           <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
           <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
           <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
+          ${o.online !== false ? `<button class="btn" data-act="duel-op" data-op="invite" data-uid="${o.id}" title="Người kia nhận thì đấu trực tiếp, luân phiên lượt">⚔ Đấu trực tiếp</button>` : ''}
         </div>
         ${slayRow(o)}
         <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button><button class="btn small-btn" data-act="dialog-close">Đóng</button></div>
@@ -1097,12 +1114,14 @@
   const QUICK = RULES.quick || { max_steps: 6 };
   const quickOn = () => !!(P && P.view && P.view.autoCfg && P.view.autoCfg.quick);
   // như server `QuickFight.active?/1`: đang trận với quái, không Tự đánh, chưa bấm ✋ Đánh tay, không đánh người
-  const quickFight = () => !!(P && P.battle && quickOn() && !P.auto && !P.battle.manual && !(P.battle.monster || {}).pvp &&
+  // E1: đấu trường (bản sao, `monster.arena`) cũng tự đánh lượt theo combo (ở màn trận)
+  const quickFight = () => !!(P && P.battle && quickOn() && !P.auto && !P.battle.manual && (!(P.battle.monster || {}).pvp || (P.battle.monster || {}).arena) &&
     !P.battle.live && !((P.battle.encounter || {}).slay));
   // trận với quái (không đánh người), đang bật ⚡, chưa bấm ✋: ở lại bản đồ (cả khi 🤖 Tự đánh cũng bật: tự đánh theo combo)
   const monsterBattle = () => !!(P && P.battle && !(P.battle.monster || {}).pvp && !P.battle.live && !((P.battle.encounter || {}).slay));
   // ⚡ Đồ sát nhanh: trận đồ sát cũng ở lại bản đồ (server đánh lượt của mình theo combo)
-  const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && quickOn() && !P.battle.manual);
+  // đấu trường trực tiếp (E2, `encounter.duel`) ở màn trận (đối thủ có thể ở bản đồ khác), server vẫn đánh theo ⚡
+  const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && !(P.battle.encounter || {}).duel && quickOn() && !P.battle.manual);
   const mapFight = () => !!((monsterBattle() && quickOn() && !P.battle.manual && (quickFight() || P.auto)) || slayFight());
   // quái đang đánh trên bản đồ: quái chung (`mid`) hoặc quái tầng tháp / sự kiện (`t` + mã, như `MapView` vẽ)
   // trùm thế giới (Tế Đàn): 'boss' (C2: ⚡ đánh ngay trên bản đồ, như quái thường)
@@ -1213,6 +1232,7 @@
         <div class="btn-row"><button class="btn small-btn" data-act="profile" data-uid="${o.id}">Hồ sơ</button>
           <button class="btn small-btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
           ${canInvite ? `<button class="btn small-btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
+          <button class="btn small-btn" data-act="duel-op" data-op="invite" data-uid="${o.id}" title="Người kia nhận thì đấu trực tiếp (không mất vàng, đổi điểm đấu trường)">⚔ Đấu trực tiếp</button>
           <button class="btn small-btn danger" data-act="pick-slay" data-uid="${o.id}" ${why ? 'disabled' : ''} title="${q ? 'Chạy tới, server đánh theo combo ⚡ (ở lại bản đồ)' : 'Mở trận đồ sát'}">${q ? '🗡⚡ Đồ sát nhanh' : '🗡 Đồ sát'}</button></div>
         ${why ? `<p class="small muted">${why}</p>` : ''}</div>`;
     }
@@ -1405,7 +1425,8 @@
         ${canInvite ? `<button class="btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
         <button class="btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
         <button class="btn" data-act="friend-op" data-op="request" data-uid="${o.id}">👥 Kết bạn</button>
-        <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button></div>
+        <button class="btn primary" data-act="pvp_challenge" data-uid="${o.id}">${icon('crossed-swords')} Thách đấu</button>
+        ${o.online !== false ? `<button class="btn" data-act="duel-op" data-op="invite" data-uid="${o.id}" title="Người kia nhận thì đấu trực tiếp, luân phiên lượt">⚔ Đấu trực tiếp</button>` : ''}</div>
       ${slayRow(o)}
       <div class="btn-row"><button class="btn small-btn" data-act="${o.blocked ? 'unblock' : 'chat-block'}" data-uid="${o.id}">${o.blocked ? 'Bỏ chặn chat' : 'Chặn chat'}</button></div></div>`;
     // hành động (tổ đội, giao dịch, thách đấu, đồ sát…) lên đầu hồ sơ cho dễ bấm
@@ -3931,28 +3952,29 @@
         <div class="actions util">
           <button class="btn" data-act="potion" ${pots && (P.hp < d.maxHp || dotted) && !wait ? '' : 'disabled'} title="Uống máu">${icon('health-potion')}<span class="lbl">Máu</span><span class="sub num">${pots}</span></button>
           <button class="btn" data-act="mana" ${manas && (P.mp || 0) < d.maxMp && !wait ? '' : 'disabled'} title="Uống mana">${icon('magic-potion')}<span class="lbl">Mana</span><span class="sub num">${manas}</span></button>
-          <button class="btn" data-act="flee" ${wait} title="${slayEnc ? 'Bỏ chạy: tính như gục ngã' : 'Bỏ chạy'}">${icon('walk')}<span class="lbl">Chạy</span>${slayEnc ? '<span class="sub">= chết</span>' : ''}</button>
+          <button class="btn" data-act="flee" ${wait} title="${slayEnc ? (slayEnc.duel ? 'Bỏ chạy: tính thua (không mất vàng)' : 'Bỏ chạy: tính như gục ngã') : 'Bỏ chạy'}">${icon('walk')}<span class="lbl">Chạy</span>${slayEnc ? `<span class="sub">${slayEnc.duel ? '= thua' : '= chết'}</span>` : ''}</button>
         </div>`;
     } else {
       // nút rời trận đứng trước danh sách đồ rơi: trùm rơi nhiều đồ thì danh sách dài, nút ở cuối bị đẩy khỏi màn hình
       const r = b.result, rw = b.reward;
-      const title = r === 'win' ? (m.final ? 'Hắc Long đã chết!' : 'Chiến thắng!') : r === 'lose' ? 'Gục ngã' : 'Đã thoát';
+      const duelEnd = !!(b.encounter && b.encounter.duel);
+      const title = r === 'win' ? (m.final ? 'Hắc Long đã chết!' : 'Chiến thắng!') : r === 'lose' ? (duelEnd ? 'Thua trận' : 'Gục ngã') : 'Đã thoát';
       bottom = `
         <div class="card result ${r}">
           <h2>${title}</h2>
           ${rw ? `<p class="num">+${fmt(rw.xp)} kinh nghiệm · +${fmt(rw.gold)} vàng</p>` : ''}
           ${rw && rw.levels ? `<p style="color:var(--gold);font-weight:600">Lên cấp ${P.level}! Vào tab Nhân vật để cộng điểm.</p>` : ''}
           <div class="btn-row">
-            <button class="btn primary" data-act="leave">${r === 'lose' ? `${icon('village')} Về Làng` : `${icon('walk')} Tiếp tục`}</button>
+            <button class="btn primary" data-act="leave">${r === 'lose' && !duelEnd ? `${icon('village')} Về Làng` : `${icon('walk')} Tiếp tục`}</button>
           </div>
           ${rw ? lootList(rw) : ''}
-          ${r === 'lose' ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
+          ${r === 'lose' && !duelEnd ? `<p class="small muted">Về nhà trọ được hồi lại ${fmt(P.hp)} / ${fmt(d.maxHp)} máu.</p>` : ''}
           ${r !== 'lose' && P.hp < d.maxHp * 0.35 ? '<p class="small" style="color:var(--bad)">Máu đang thấp. Nên uống máu hoặc về Làng uống nước giếng.</p>' : ''}
         </div>`;
     }
     return `
       <div class="stage ${m.boss ? 'boss' : ''} ${m.world ? 'world' : ''} ${m.golden ? 'golden' : ''}" style="background-image:url('${asset('floors/' + z.id + '.png')}')">
-        <span class="eyebrow">${slayEnc ? '🗡 Đồ sát' : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}${b.wx ? ` <span class="wx-tag" title="Thời tiết: kỹ năng hệ ${EL.names[b.wx.element] || b.wx.element} gây thêm ${Math.round(b.wx.pct * 100)}% sát thương">${{ clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' }[b.wx.kind] || ''} ${EL.icons[b.wx.element] || ''} +${Math.round(b.wx.pct * 100)}%</span>` : ''}</span>
+        <span class="eyebrow">${slayEnc ? (slayEnc.duel ? '⚔ Đấu trường trực tiếp' : '🗡 Đồ sát') : m.pvp ? 'Đấu trường' : b.encounter && b.encounter.shared && sharedN > 1 ? `${z.name} · Đánh cùng tổ đội (${sharedN} người)` : m.world ? 'Trùm thế giới · Tế Đàn' : m.kal || m.bc || m.ds ? (m.kal ? `Kalima${P.tower && P.tower.kal ? ' ' + P.tower.kal.n : ''}${m.elite ? ' · Kundun' : ''}` : m.bc ? `Lâu Đài Máu${m.elite ? ' · Trùm' : ''}` : `Quảng Trường Quỷ${P.tower && P.tower.ds ? ` · Đợt ${P.tower.floor}/${P.tower.ds.waves}` : ''}${m.elite ? ' · Trùm' : ''}`) + roomFighters(b) : m.tower ? `Tháp Vô Tận${P.tower ? ' · Tầng ' + P.tower.floor : ''}${m.elite ? ' · Trùm tầng' : ''}` : z.name + (m.boss ? ' · Trùm' : '')}${b.wx ? ` <span class="wx-tag" title="Thời tiết: kỹ năng hệ ${EL.names[b.wx.element] || b.wx.element} gây thêm ${Math.round(b.wx.pct * 100)}% sát thương">${{ clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '❄️', blizzard: '🌨️', leaves: '🍂', dust: '💨', embers: '🔥' }[b.wx.kind] || ''} ${EL.icons[b.wx.element] || ''} +${Math.round(b.wx.pct * 100)}%</span>` : ''}</span>
         ${m.pvp ? `<img class="sprite ${fx && fx.mDmg ? 'hit' : ''}${auraCls(m.look)}" ${window.Doll.src(m.look)} alt="${esc(m.name)}">` : sprite(m.id, fx && fx.mDmg ? 'hit' : '', m.name)}
         ${floatHtml}
         <h2>${elTag(m.element)} ${m.name}</h2>
@@ -3965,6 +3987,7 @@
         <div class="grow" style="flex:1;min-width:0">${bar('hp', battleHp(), d.maxHp, `❤ ${fmt(battleHp())} / ${fmt(d.maxHp)}`)}${bar('mp', P.mp || 0, d.maxMp, `💧 ${fmt(P.mp || 0)} / ${fmt(d.maxMp)}`)}${effectTags(fxs.player)}</div>
       </div>
       <div class="log" aria-live="polite">${b.log.map((l, i) => logLine(l, b.log[i - 1])).join('')}</div>
+      ${!b.over && m.pvp && (quickFight() || (slayEnc && slayEnc.duel && quickOn() && !b.manual)) ? '<div class="auto-bar on quick-arena"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">⚡ Đang đánh theo combo</span><button class="btn small-btn" data-act="quick-manual" title="✋ Đánh tay: cầm lại trận này">✋ Đánh tay</button></div>' : ''}
       ${P.auto ? `<div class="auto-bar on"><span class="auto-dot" aria-hidden="true"></span><span class="grow small">🤖 Đang tự đánh · đã hạ <b class="num">${fmt(autoKills())}</b></span><button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>` : ''}
       ${bottom}`;
   }
@@ -4416,6 +4439,14 @@
     }
     if (act === 'quick-toggle') { sendCommand({ act: 'quick', on: !quickOn() }); return; }
     if (act === 'quick-manual') { sendCommand({ act: 'quick_manual' }); return; }
+    if (act === 'duel-op') {
+      const op = t.dataset.op;
+      if (op !== 'invite') dialog = null;
+      if (op === 'invite') { pickUi = null; profileUi = { open: false, info: null }; if (dialog && dialog.type === 'player') dialog = null; }
+      Net.duel(op, op === 'invite' ? { uid: +t.dataset.uid } : {}).then((r) => { if (r.msg) toast(r.msg); render(); }, (e) => { toast(e.msg, true); render(); });
+      render();
+      return;
+    }
     if (act === 'quick-filter') { tab = 'menu'; menuSec = 'settings'; render(); const c = $('#loot-filter-card'); if (c) c.scrollIntoView({ block: 'start' }); return; }
     if (act === 'quick-log') { quickLogOpen = !quickLogOpen; render(); return; }
     if (act === 'quick-combo') { tab = 'menu'; menuSec = 'skills'; render(); const c = $('#combo-card'); if (c) c.scrollIntoView({ block: 'start' }); return; }
@@ -4837,6 +4868,14 @@
       if (P && !P.battle) render();
     });
     if (window.TL) window.TL.init();
+    Net.onDuelInvite((m) => {
+      Sound.play('mail');
+      dialog = { type: 'duel', from: m.from, name: m.name, level: m.level };
+      // hết hạn lời mời thì tự đóng
+      setTimeout(() => { if (dialog && dialog.type === 'duel' && dialog.from === m.from) { dialog = null; render(); } }, (m.s || 30) * 1000);
+      if (P && !P.battle) { if (tab !== 'map') tab = 'map'; npc = null; }
+      render();
+    });
     Net.onTradeRequest((m) => {
       toast(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`);
       note(`${m.name || 'Một người chơi'} muốn giao dịch với bạn.`, 'invite');

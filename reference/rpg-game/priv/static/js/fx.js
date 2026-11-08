@@ -682,6 +682,20 @@
       sound('win');
       if (fw) [0.25, 0.6, 0.95, 1.3].forEach((s) => setTimeout(() => sound('firework'), s * 1000));
     },
+    // E1 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): vào trận đánh người — hai hình trượt vào, chữ VS
+    // a / b: { name, doll (url ảnh), sub }
+    vs(a, b, title) {
+      if (!fxOn()) return;
+      const side = (x, cls) => `<div class="vs-side ${cls}"><img src="${x.doll || ''}" alt=""><b>${esc(x.name || '')}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</div>`;
+      mount('vs-fx', `<div class="vs-dark"></div>${title ? `<div class="vs-title">${esc(title)}</div>` : ''}<div class="vs-row">${side(a, 'l')}<div class="vs-t">VS</div>${side(b, 'r')}</div>`, 2000);
+      sound('encounter');
+    },
+    // E1: trận đánh người xong — K.O. (thắng: vàng, thua: đỏ)
+    ko(win, sub) {
+      if (!fxOn()) return;
+      mount(`ko-fx ${win ? 'win' : 'lose'}`, `<div class="ko-t">K.O.</div><div class="ko-s">${esc(sub || '')}</div>`, 1900);
+      sound(win ? 'win' : 'lose');
+    },
     // B8: gặp trùm — tối sầm, chớp đỏ, chữ TRÙM XUẤT HIỆN + tên, tiếng gầm, rung màn
     bossIn(name, sub) {
       if (!fxOn()) return;

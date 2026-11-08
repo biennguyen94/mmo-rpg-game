@@ -1017,6 +1017,24 @@ details.fold > .list { margin-top: 4px; }
 .boss-down .fw i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); transform: rotate(var(--a)) translateX(0); animation: fw-spark 1.2s cubic-bezier(.2,.7,.3,1) forwards; }
 @keyframes fw-on { 0% { opacity: 0; } 5% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes fw-spark { from { transform: rotate(var(--a)) translateX(0); } to { transform: rotate(var(--a)) translateX(min(22vw, 120px)) translateY(18px); } }
+/* E1: VS / K.O. khi đánh người (đấu trường, đồ sát) */
+.vs-fx { position: fixed; inset: 0; z-index: 69; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.vs-fx .vs-dark { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(40, 20, 60, 0.45), rgba(4, 2, 6, 0.85) 70%); animation: bi-dark 2s ease-out forwards; }
+.vs-fx .vs-title { position: relative; color: #f0cf7a; font-weight: 800; letter-spacing: 0.06em; animation: lv-pop 2s ease-out both; }
+.vs-fx .vs-row { position: relative; display: flex; align-items: center; gap: clamp(8px, 4vw, 28px); }
+.vs-fx .vs-side { display: grid; justify-items: center; gap: 2px; width: clamp(96px, 30vw, 160px); text-align: center; animation: vs-l 2s ease-out both; }
+.vs-fx .vs-side.r { animation-name: vs-r; }
+.vs-fx .vs-side img { width: clamp(64px, 20vw, 110px); height: clamp(64px, 20vw, 110px); image-rendering: pixelated; filter: drop-shadow(0 0 10px rgba(255, 200, 120, 0.5)); }
+.vs-fx .vs-side.r img { transform: scaleX(-1); }
+.vs-fx .vs-side b { color: #fff; font-size: 0.95rem; text-shadow: 0 2px 0 #000; overflow-wrap: anywhere; }
+.vs-fx .vs-side span { color: #f1e6cf; font-size: 0.75rem; opacity: 0.85; }
+.vs-fx .vs-t { font: 900 clamp(2.2rem, 12vw, 4rem) / 1 system-ui, sans-serif; color: #ffd24a; text-shadow: 0 0 18px #ff6a2a, 0 4px 0 #000; animation: bd-slam 2s ease-out both; }
+@keyframes vs-l { 0% { transform: translateX(-60vw); opacity: 0; } 18% { transform: translateX(0); opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes vs-r { 0% { transform: translateX(60vw); opacity: 0; } 18% { transform: translateX(0); opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+.ko-fx { position: fixed; inset: 0; z-index: 69; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: radial-gradient(circle, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.6)); animation: bi-dark 1.9s ease-out forwards; }
+.ko-fx .ko-t { font: 900 clamp(3rem, 18vw, 6rem) / 1 system-ui, sans-serif; letter-spacing: 0.04em; color: #ffd24a; text-shadow: 0 0 24px #ff8a2a, 0 5px 0 #000; animation: bd-slam 1.9s ease-out both; }
+.ko-fx.lose .ko-t { color: #ff5a4a; text-shadow: 0 0 24px #a01010, 0 5px 0 #000; }
+.ko-fx .ko-s { color: #f1e6cf; font-weight: 700; text-shadow: 0 2px 0 #000; animation: lv-pop 1.9s ease-out 0.2s both; }
 .boss-in { position: fixed; inset: 0; z-index: 69; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .boss-in .bi-dark { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(120, 10, 20, 0.35), rgba(4, 2, 6, 0.85) 70%); animation: bi-dark 2.3s ease-out forwards; }
 .boss-in .bi-t { position: relative; font: 900 clamp(1.4rem, 7vw, 2.4rem) / 1 system-ui, sans-serif; color: #ff5a3a; letter-spacing: 0.08em; text-shadow: 0 0 18px #ff2a1a, 0 3px 0 #000; animation: bd-slam 2.3s ease-out forwards; }
@@ -1031,7 +1049,7 @@ details.fold > .list { margin-top: 4px; }
 [data-act="mail_claim"].primary, [data-act="mail_claim_all"]:not([disabled]) { animation: gift-wiggle 2.4s ease-in-out infinite; }
 @keyframes gift-wiggle { 0%, 80%, 100% { transform: none; } 84% { transform: rotate(-4deg); } 88% { transform: rotate(4deg); } 92% { transform: rotate(-3deg); } 96% { transform: rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .ticker, .ticker.out, .ticker .tt span.run, .badge-card, .badge-card .bi, .lvup *, .rebirth-fx, .rebirth-fx *, .boss-down *, .boss-in *, .cell.fresh-item,
+  .ticker, .ticker.out, .ticker .tt span.run, .badge-card, .badge-card .bi, .lvup *, .rebirth-fx, .rebirth-fx *, .boss-down *, .boss-in *, .vs-fx, .vs-fx *, .ko-fx, .ko-fx *, .cell.fresh-item,
   [data-act="mail_claim"].primary, [data-act="mail_claim_all"] { animation: none !important; }
 }
 

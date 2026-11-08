@@ -328,6 +328,49 @@ defmodule HacLongWeb.SlayTest do
     assert Session.get(ua.id).gold > 300_000
   end
 
+  test "đấu trường trực tiếp: mời → nhận, khác bản đồ được, vào trận đầy máu, xong trả máu cũ, không mất vàng / tên đỏ, đổi Elo" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.merge(strong(), %{gold: 5000, hp: 50}))
+    player(ub, %{level: 10, gold: 3000}, %{map: "village", x: 12, y: 14})
+    sa = join(ua)
+    sb = join(ub)
+
+    ref = push(sb, "duel", %{"op" => "accept"})
+    assert_reply ref, :error, %{msg: "Không có lời mời" <> _}
+
+    ref = push(sa, "duel", %{"op" => "invite", "uid" => ub.id})
+    assert_reply ref, :ok, %{msg: msg}
+    assert msg =~ "Đã mời"
+    assert_push "duel_invite", %{from: from}
+    assert from == ua.id
+
+    ref = push(sb, "duel", %{"op" => "accept"})
+    assert_reply ref, :ok, _
+    pa = Session.get(ua.id)
+    assert pa.battle.encounter.duel and pa.battle.encounter.hp0 == 50
+    assert pa.hp == HacLong.Game.Engine.derived(pa).maxHp
+
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case Slay.peek(ua.id) do
+        nil -> {:halt, :ok}
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+      end
+    end)
+
+    pb = settled(ub.id)
+    pa = settled(ua.id)
+    assert pa.battle.result == "win" and pb.battle.result == "lose"
+    assert pa.gold == 5000 and pb.gold == 3000
+    assert pa.hp == 50
+    assert pb.pos.map == "village"
+    refute Slay.red?(ua.id)
+    assert HacLong.Arena.stats(ua.id).rating > 1000
+    assert HacLong.Arena.stats(ub.id).rating < 1000
+    assert HacLong.Arena.stats(ua.id).today == 1
+  end
+
   test "thắng: người tấn công bị tên đỏ, người thua được bảo vệ, báo kênh thế giới" do
     ua = create_user()
     ub = create_user()

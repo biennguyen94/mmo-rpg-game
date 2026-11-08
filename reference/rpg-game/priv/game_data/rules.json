@@ -989,7 +989,9 @@
       "_doc": "Đấu trường (thách đấu bản sao người khác). first_strike_mult: đòn đầu (lượt đầu) của người thách đấu × hệ số này, như đồ sát (DECISIONS \"Đấu trường: công bằng người thách đấu / đối thủ máy\").",
       "per_day": 15,
       "elo_k": 32,
-      "first_strike_mult": 0.5
+      "first_strike_mult": 0.5,
+      "_duel_doc": "Đấu trường trực tiếp (DECISIONS \"Sự kiện, đấu trường, chiến bang trực quan\" E2): mời người đang online, người kia nhận trong duel_invite_s giây; đánh luân phiên lượt như đồ sát, vào trận đầy máu, xong trận trả lại máu cũ, không chết / mất vàng / tên đỏ, đổi Elo như đấu trường (tính vào per_day của người mời).",
+      "duel_invite_s": 30
     },
     "party": {
       "max": 3,
