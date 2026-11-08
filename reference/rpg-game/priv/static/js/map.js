@@ -4,6 +4,7 @@
 (function () {
   const { WORLD, ZONES } = window.GAME_DATA;
   const SECRET = (window.GAME_DATA.RULES || {}).secret || {};
+  const CS = (window.GAME_DATA.RULES || {}).castleSiege || {};
   const TILE = 32;
   const WALK = new Set(WORLD.walkable);
   const PORTAL = new Set(['D', 'A', 'O']);
@@ -169,6 +170,9 @@
   function drawPlayers(P, now, cx, cy, labels, mpos, fx) {
     const list = visiblePlayers(P), rel = relations() || {}, groups = new Map(), placed = [];
     const t = performance.now();
+    const cs = P.view && P.view.cs, csOn = mapOf(P.pos.map) && mapOf(P.pos.map).event === 'castle_siege' && cs && cs.phase === 'fight';
+    const csHolder = csOn && cs.holder ? cs.holder.tag : null;
+    if (fx && rel.enemy && list.some((o) => o.tag === rel.enemy) && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 120);
     drawnP = [];
     for (const o of list) {
       const key = o.x + ',' + o.y, g = groups.get(key) || [];
@@ -188,6 +192,14 @@
       }
       ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       ctx.beginPath(); ctx.ellipse(px + TILE / 2 + off, py + TILE - 4, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+      // D2: Công Thành Chiến — vòng dưới chân theo màu bang; F1: người bang địch (chiến bang) — vòng đỏ nhấp nháy
+      const enemy = rel.enemy && o.tag === rel.enemy;
+      if ((csOn && o.tag) || enemy) {
+        const k = 0.5 + 0.5 * Math.sin(t / 200);
+        ctx.strokeStyle = enemy ? `rgba(255, 70, 50, ${0.55 + 0.45 * k})` : csHolder && o.tag === csHolder ? '#ffd24a' : guildCol(o.tag);
+        ctx.lineWidth = enemy ? 2.5 : 2;
+        ctx.beginPath(); ctx.ellipse(px + TILE / 2 + off, py + TILE - 4, 13 + (enemy ? k * 2 : 0), 5, 0, 0, Math.PI * 2); ctx.stroke();
+      }
       const dl = window.Doll && Doll.canvas(o.look);
       if (dl) ctx.drawImage(dl, px + off, py, TILE, TILE);
       // đang đồ sát: máu trên đầu (con mình đang đánh: máu theo lượt của trận; người ngoài: máu người đó gửi lên)
@@ -199,7 +211,7 @@
         if (fx && Math.sin(t / 220) > 0) { ctx.font = '700 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#ef6a5a'; ctx.fillText('⚔', px + TILE + off - 4, py + 10); }
       }
       // tên: không đè lên tên đã vẽ (trừ người đang đồ sát với mình / vừa 📍) → chấm nhỏ
-      const name = (o.safe ? '🛡 ' : '') + (o.duel || mine ? '⚔ ' : '') + (o.tag ? `[${o.tag}] ` : '') + o.name;
+      const name = (csOn && csHolder && o.tag === csHolder ? '👑 ' : '') + (o.safe ? '🛡 ' : '') + (o.duel || mine || enemy ? '⚔ ' : '') + (o.tag ? `[${o.tag}] ` : '') + o.name;
       const col = window.HLLogic ? window.HLLogic.nameColor(o, rel) : '#f1e6cf';
       const lx = px + TILE / 2 + off, ly = py - 13, w = name.length * 5.6 + 10;
       const r = [lx - w / 2, ly - 8, w, 14];
@@ -219,7 +231,114 @@
     }
     if (pinned && t < pinned.until && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
   }
-  // người (đang vẽ) đứng ở ô (x, y), kể cả người bị gom vào "+N"
+  // ---------- Sự kiện trực quan (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan") ----------
+  // màu bang theo tên tắt (Công Thành Chiến: vòng dưới chân mỗi bang một màu; bang giữ Vương Miện màu vàng)
+  function guildCol(tag) {
+    let h = 0;
+    for (const ch of String(tag || '')) h = (h * 31 + ch.charCodeAt(0)) % 360;
+    return `hsl(${h}, 75%, 60%)`;
+  }
+  function crownGlow(px, py, t) {
+    const k = t ? 0.5 + 0.5 * Math.sin(t / 260) : 0.7, x = px + TILE / 2, y = py + TILE / 2;
+    const g = ctx.createRadialGradient(x, y, 2, x, y, TILE * 1.4);
+    g.addColorStop(0, `rgba(255, 215, 90, ${0.35 + 0.25 * k})`); g.addColorStop(1, 'rgba(255, 215, 90, 0)');
+    ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.4, y - TILE * 1.4, TILE * 2.8, TILE * 2.8);
+    ctx.font = '16px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('👑', x, py - 18 - k * 4);
+  }
+  // điểm (gx, gy) (px trên khung) bị khuất: mũi tên ở mép khung chỉ về phía đó (kèm biểu tượng nhỏ)
+  function edgeArrow(gx, gy, rgb, t, icon) {
+    const vw = VW(), vh = VH(), pad = 18;
+    if (gx >= 0 && gy >= 0 && gx <= vw && gy <= vh) return;
+    const k = t ? (Math.sin(t / 250) + 1) / 2 : 1;
+    const ex = Math.max(pad, Math.min(vw - pad, gx)), ey = Math.max(pad + hudH, Math.min(vh - pad, gy));
+    const ang = Math.atan2(gy - vh / 2, gx - vw / 2);
+    ctx.save(); ctx.translate(ex, ey); ctx.rotate(ang);
+    ctx.fillStyle = `rgba(${rgb}, ${0.6 + k * 0.4})`;
+    ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -9); ctx.lineTo(-8, 9); ctx.fill();
+    ctx.restore();
+    if (icon) {
+      ctx.font = '14px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(icon, ex - Math.cos(ang) * 20, ey - Math.sin(ang) * 20);
+    }
+    if (t && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
+  }
+  const mmss = (s) => { const v = Math.max(0, Math.round(s)); return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`; };
+  // thanh sự kiện ở đáy bản đồ: mỗi dòng { text, k (0..1 thanh tiến độ), col, k2 / col2 (thanh chia đôi), sub }
+  function hudLines(P, m) {
+    const L = [], t = m.tower, now = Date.now() / 1000;
+    const ppl = t && t.room ? ` · 👥 ${t.people || 1}` : '';
+    const hpOf = (q) => (q ? (q.hp_pct == null ? 100 : q.hp_pct) / 100 : 0);
+    if (t && t.ds) {
+      const k = (t.floor - 1 + (t.monsters.length ? 0 : 1)) / Math.max(1, t.ds.waves);
+      L.push({ text: `🌊 Đợt ${t.floor}/${t.ds.waves} · ${t.ds.score} điểm · ${t.monsters.length ? `còn ${t.monsters.length} quái` : 'cầu thang mở'} · ${mmss(t.ds.ends_at - now)}${ppl}`, k, col: '#ef6a5a' });
+    } else if (t && t.bc && !t.bc.done) {
+      const b = t.bc, gate = b.stage === 'gate', bossSt = b.stage === 'boss';
+      const k = bossSt || gate ? 1 - hpOf(t.monsters[0]) : b.killed / Math.max(1, b.guards);
+      L.push({ text: `${gate ? '🚪 Phá Cổng Thành' : bossSt ? '🩸 Hạ Hiệp Sĩ Máu' : `🛡 Quân canh ${b.killed}/${b.guards}`} · ${mmss(b.ends_at - now)}${ppl}`, k, col: bossSt ? '#ef6a5a' : '#f0cf7a' });
+    } else if (t && t.kal && !t.kal.done) {
+      const q = t.kal, bossSt = q.stage === 'boss';
+      L.push({ text: `${bossSt ? '👹 Hạ Kundun' : `👹 Quái Kalima ${q.killed}/${q.guards}`} · ${mmss(q.ends_at - now)}${ppl}`, k: bossSt ? 1 - hpOf(t.monsters[0]) : q.killed / Math.max(1, q.guards), col: '#c084ff' });
+    } else if (m.event === 'chaos_castle') {
+      const c = P.view && P.view.cc;
+      if (c && c.phase === 'entry') L.push({ text: `⏳ Hỗn chiến sau ${mmss(c.starts_at - now)} · ${c.players} người`, k: 0, col: '#f0cf7a' });
+      else if (c && c.phase !== 'idle') L.push({ text: `⚔ Còn ${c.alive} người · ${c.monsters} quái · ${mmss(c.ends_at - now)}`, k: c.starts_at ? Math.min(1, (now - c.starts_at) / Math.max(1, c.ends_at - c.starts_at)) : 0, col: '#ef6a5a' });
+    } else if (m.event === 'castle_siege') {
+      const c = P.view && P.view.cs;
+      if (c && c.phase === 'fight') {
+        const mine = c.holder && P.guild && P.guild.id === c.holder.id;
+        L.push({ text: `👑 ${c.holder ? `[${c.holder.tag}] giữ Vương Miện${mine ? ' · bảo vệ nó!' : ''}` : 'Vương Miện chưa có chủ'}${c.crown ? '' : ' · đang hiện lại'} · ${mmss(c.ends_at - now)}`,
+          k: Math.min(1, 1 - (c.ends_at - now) / Math.max(60, (c.run_minutes || 30) * 60)), col: c.holder ? guildCol(c.holder.tag) : '#f0cf7a' });
+      }
+    } else if (m.worldBoss) {
+      if (boss.alive) {
+        const left = (boss.endsAt - (boss.skew || 0) - Date.now()) / 1000;
+        const k1 = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n);
+        const all = boss.top || [], mine = all.findIndex((x) => x.id === userId);
+        // top 3 sát thương; mình ở hạng 4–5 thì thêm hạng của mình
+        const top = all.slice(0, 3).map((x, i) => `${i + 1}. ${x.id === userId ? '★' : ''}${x.name} ${k1(x.dmg)}`)
+          .concat(mine >= 3 ? [`★ #${mine + 1} ${k1(all[mine].dmg)}`] : []).join('  ');
+        L.push({ text: `🐉 ${boss.name} ${Math.round((boss.hp / boss.maxHp) * 100)}% · ${boss.fighters || 0} người · ${mmss(left)}`, k: boss.hp / boss.maxHp, col: '#d9483b', sub: top });
+      } else if (boss.nextAt) {
+        L.push({ text: `🐉 ${boss.name || 'Trùm thế giới'} xuất hiện sau ${mmss((boss.nextAt - (boss.skew || 0) - Date.now()) / 1000)}`, k: 0, col: '#d9483b' });
+      }
+    }
+    // F1: chiến bang đang diễn ra: tỉ số hai bang (mọi bản đồ, trừ trong Tháp)
+    const w = !t && P.guild && P.guild.war;
+    if (w && w.enemy) {
+      const tot = Math.max(1, w.mine + w.theirs);
+      L.push({ text: `⚔ [${P.guild.tag}] ${w.mine} – ${w.theirs} [${w.enemy.tag}] · ${mmss(w.ends_at - now)}`, k: w.mine + w.theirs ? w.mine / tot : 0.5, col: '#5aa9ff', col2: '#ef4a3a' });
+    }
+    return L;
+  }
+  let hudTimer = null, hudPx = 0, hudH = 0;
+  // ở mép trên khung bản đồ (đáy có khung chat nổi), chừa nút ⤢ bên phải; bản đồ nhỏ dời xuống dưới thanh (`miniPlace`)
+  function eventHud(P, m) {
+    const L = hudLines(P, m);
+    const r = canvas.getBoundingClientRect(), k = r.width ? r.width / VW() : 1;
+    const H = L.reduce((a, l) => a + (l.sub ? 34 : 22), 0);
+    hudH = H;
+    if (Math.round(H * k) !== hudPx) { hudPx = Math.round(H * k); const el = document.getElementById('mini-map'); if (el && !miniDrag) miniPlace(el); }
+    if (!L.length) return;
+    const vw = VW(), x = 6, w = vw - x - 44 / k;
+    let y = 4;
+    ctx.save();
+    for (let i = 0; i < L.length; i++) {
+      const l = L[i], h = l.sub ? 34 : 22;
+      ctx.fillStyle = 'rgba(12, 9, 16, 0.78)';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h - 2, 6) : ctx.rect(x, y, w, h - 2); ctx.fill();
+      ctx.fillStyle = l.col2 || 'rgba(255,255,255,0.12)'; ctx.fillRect(x + 4, y + 15, w - 8, 3);
+      ctx.fillStyle = l.col; ctx.fillRect(x + 4, y + 15, Math.max(0, (w - 8) * Math.max(0, Math.min(1, l.k))), 3);
+      ctx.font = '700 10.5px "Be Vietnam Pro", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f1e6cf';
+      ctx.fillText(l.text, x + w / 2, y + 8, w - 10);
+      if (l.sub) { ctx.font = '600 9.5px system-ui, sans-serif'; ctx.fillStyle = '#f0cf7a'; ctx.fillText(l.sub, x + w / 2, y + 26, w - 10); }
+      y += h;
+    }
+    ctx.restore();
+    // đồng hồ đếm ngược: vẽ lại mỗi giây
+    if (!hudTimer) hudTimer = setTimeout(() => { hudTimer = null; if (canvas && document.body.contains(canvas)) draw(); }, 1000);
+  }
+  // người (đang vẽ) đứng ở ô (x, y), kể cả người bị gom vào "+N\"
   const playersNear = (x, y) => drawnP.filter((d) => d.x === x && d.y === y).map((d) => d.o);
   function pin(id) { pinned = { id, until: performance.now() + 4500 }; draw(); }
   // tâm ô (x, y) trên màn hình (px CSS), theo khung nhìn vẽ gần nhất; null nếu chưa vẽ
@@ -740,13 +859,18 @@
     const here = world.map === P.pos.map;
     const names = mobNames();
     const mpos = {}; // vị trí quái trên màn (số sát thương bay lên khi Đánh nhanh)
+    let crownSpot = null;
     for (const q of mobs(P)) {
       const [qx, qy] = smooth('m' + q.id, q.x, q.y, DUR.monster, now);
       // quái đứng yên thì nhún nhẹ (chỉ là hình)
       const bob = fx && qx === q.x && qy === q.y ? Math.round(Math.sin(now / 380 + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0)) * 1.5) : 0;
       const px = Math.round(qx * TILE - cx), py = Math.round(qy * TILE - cy) + bob;
       mpos[q.id] = [px + TILE / 2, py];
+      const crown = m.event === 'castle_siege' && q.kind === CS.crownKind;
+      if (crown) crownSpot = [px + TILE / 2, py + TILE / 2];
       if (px < -TILE || py < -TILE || px > VW() || py > VH()) continue;
+      // Công Thành Chiến: Vương Miện có quầng vàng + 👑 (DECISIONS "Sự kiện trực quan")
+      if (crown) crownGlow(px, py, fx ? now : 0);
       // quái người khác đang đánh: mờ đi; con mình đang đánh (⚡ Đánh nhanh, ở lại bản đồ) vẫn rõ
       ctx.globalAlpha = q.busy && !q.mine ? 0.45 : 1;
       if (q.boss && !q.gold) {
@@ -772,7 +896,7 @@
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
       // Phase 13: tên trên đầu, thanh máu dưới chân (máu do server giữ, ai cùng bản đồ cũng thấy như nhau)
-      const nm = (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.elite ? 'Tinh Anh · ' : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
+      const nm = (crown ? '👑 ' : '') + (q.busy ? '⚔ ' : '') + (q.gold ? (q.boss ? 'Trùm Vàng · ' : 'Vàng · ') : q.elite ? 'Tinh Anh · ' : q.rare ? 'Bóng Đêm · ' : '') + (q.name || NAME[q.kind] || '');
       if (names) labels.push([nm, px + TILE / 2, py - 13 - off, q.gold ? '#ffd24a' : q.raid ? '#ff8a5c' : q.elite ? '#c084ff' : q.rare ? '#d59cff' : q.busy ? '#ef6a5a' : q.boss ? '#f0cf7a' : '#f1e6cf']);
       const hpk = Math.max(0, Math.min(100, q.hp == null ? 100 : q.hp)) / 100, bw = sz - 6;
       ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - off + 3, py - off + sz + 1, bw, 5);
@@ -809,15 +933,25 @@
     }
 
     // trùm thế giới: vẽ to gấp đôi, có thanh máu chung
+    // C1 (DECISIONS "Sự kiện trực quan"): quầng đỏ nhấp nháy, thanh máu to có %, ⚔ khi mình đang đánh (⚡ ở lại bản đồ)
     if (m.worldBoss && boss.alive) {
       const [bx, by] = m.worldBoss;
       const px = Math.round(bx * TILE - cx), py = Math.round(by * TILE - cy);
+      mpos.boss = [px + TILE / 2, py - TILE / 2];
+      const pulse = fx ? 0.5 + 0.5 * Math.sin(now / 320) : 0.6;
+      const g = ctx.createRadialGradient(px + TILE / 2, py, 4, px + TILE / 2, py, TILE * 1.9);
+      g.addColorStop(0, `rgba(255, 80, 60, ${0.28 + 0.2 * pulse})`); g.addColorStop(1, 'rgba(255, 80, 60, 0)');
+      ctx.fillStyle = g; ctx.fillRect(px - TILE * 1.5, py - TILE * 2, TILE * 4, TILE * 4);
       const im = image('monsters/ancient_dragon');
-      if (im.complete) ctx.drawImage(im, px - TILE / 2, py - TILE, TILE * 2, TILE * 2);
-      const w = TILE * 2, k = boss.hp / boss.maxHp;
-      ctx.fillStyle = 'rgba(12,9,16,0.85)'; ctx.fillRect(px - TILE / 2, py - TILE - 8, w, 6);
-      ctx.fillStyle = '#d9483b'; ctx.fillRect(px - TILE / 2 + 1, py - TILE - 7, Math.max(0, (w - 2) * k), 4);
-      if (names) labels.push([boss.name, px + TILE / 2, py - TILE - 22, '#ef6a5a']);
+      if (im.complete) { ctx.shadowColor = '#ff5a3c'; ctx.shadowBlur = 10 + 10 * pulse; ctx.drawImage(im, px - TILE / 2, py - TILE, TILE * 2, TILE * 2); ctx.shadowBlur = 0; }
+      const w = TILE * 3, k = Math.max(0, boss.hp / boss.maxHp), bx0 = px + TILE / 2 - w / 2, by0 = py - TILE - 12;
+      ctx.fillStyle = 'rgba(12,9,16,0.88)'; ctx.fillRect(bx0, by0, w, 9);
+      ctx.fillStyle = k < 0.25 ? '#ff4a2a' : '#d9483b'; ctx.fillRect(bx0 + 1, by0 + 1, Math.max(0, (w - 2) * k), 7);
+      ctx.font = '800 8px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
+      ctx.fillText(`${Math.round(k * 100)}%`, px + TILE / 2, by0 + 5);
+      const me = fight && fight.id === 'boss';
+      if (names) labels.push([(me ? '⚔ ' : '') + boss.name, px + TILE / 2, by0 - 10, '#ef6a5a']);
+      if (fx && me) { const ph = (now % 900) / 900; if (ph < 0.35) slashAt(px + TILE / 2, py, ph / 0.35, '#ffe9b0'); }
     }
 
     if (fx && P.pos.map === 'village') villageFx(now, m, cx, cy);
@@ -850,16 +984,8 @@
     if (goal && goal.map === P.pos.map) {
       const gx = Math.round(goal.x * TILE - cx) + TILE / 2, gy = Math.round(goal.y * TILE - cy) + TILE / 2;
       const k = (Math.sin(now / 250) + 1) / 2;
-      const vw = VW(), vh = VH(), pad = 18;
-      if (gx < 0 || gy < 0 || gx > vw || gy > vh) {
-        // ô đích bị khuất: mũi tên ở mép khung nhìn chỉ về phía đó
-        const ex = Math.max(pad, Math.min(vw - pad, gx)), ey = Math.max(pad, Math.min(vh - pad, gy));
-        const ang = Math.atan2(gy - vh / 2, gx - vw / 2);
-        ctx.save(); ctx.translate(ex, ey); ctx.rotate(ang);
-        ctx.fillStyle = `rgba(240, 207, 122, ${0.6 + k * 0.4})`;
-        ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -9); ctx.lineTo(-8, 9); ctx.fill();
-        ctx.restore();
-      }
+      // ô đích bị khuất: mũi tên ở mép khung nhìn chỉ về phía đó
+      edgeArrow(gx, gy, '240, 207, 122', now);
       ctx.strokeStyle = `rgba(240, 207, 122, ${0.5 + k * 0.5})`;
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(gx, gy, TILE * (0.55 + k * 0.15), 0, Math.PI * 2); ctx.stroke();
@@ -916,8 +1042,11 @@
     }
     if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
+    // Vương Miện khuất khỏi khung nhìn: mũi tên vàng ở mép chỉ về phía nó (D1)
+    if (crownSpot) edgeArrow(crownSpot[0], crownSpot[1], '240, 207, 122', fx ? now : 0, '👑');
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
+    eventHud(P, m, now);
     drawFloats(mpos, [Math.round(mx * TILE - cx) + TILE / 2, Math.round(my * TILE - cy)]);
     spots = { mpos, me: [Math.round(mx * TILE - cx) + TILE / 2, Math.round(my * TILE - cy)] };
     if (enter.map !== P.pos.map) enter = { map: P.pos.map, at: now };
@@ -1316,8 +1445,10 @@
   function miniPlace(el) {
     const wrap = el.parentElement;
     if (!wrap) return;
-    const fw = Math.max(0, wrap.clientWidth - el.offsetWidth - MINI_PAD * 2), fh = Math.max(0, wrap.clientHeight - el.offsetHeight - MINI_PAD * 2);
-    const l = Math.round(MINI_PAD + miniPos.x * fw) + 'px', t = Math.round(MINI_PAD + miniPos.y * fh) + 'px';
+    // thanh sự kiện ở mép trên (`eventHud`): bản đồ nhỏ không đè lên
+    const top0 = MINI_PAD + hudPx;
+    const fw = Math.max(0, wrap.clientWidth - el.offsetWidth - MINI_PAD * 2), fh = Math.max(0, wrap.clientHeight - el.offsetHeight - MINI_PAD - top0);
+    const l = Math.round(MINI_PAD + miniPos.x * fw) + 'px', t = Math.round(top0 + miniPos.y * fh) + 'px';
     if (el.style.left !== l) el.style.left = l;
     if (el.style.top !== t) el.style.top = t;
   }
@@ -1336,9 +1467,10 @@
     const wrap = d.el.parentElement;
     if (!wrap) return;
     const wr = wrap.getBoundingClientRect();
-    const fw = Math.max(1, wrap.clientWidth - d.el.offsetWidth - MINI_PAD * 2), fh = Math.max(1, wrap.clientHeight - d.el.offsetHeight - MINI_PAD * 2);
+    const top0 = MINI_PAD + hudPx;
+    const fw = Math.max(1, wrap.clientWidth - d.el.offsetWidth - MINI_PAD * 2), fh = Math.max(1, wrap.clientHeight - d.el.offsetHeight - MINI_PAD - top0);
     const clamp01 = (v) => Math.max(0, Math.min(1, v));
-    miniPos = { x: clamp01((e.clientX - d.ox - wr.left - MINI_PAD) / fw), y: clamp01((e.clientY - d.oy - wr.top - MINI_PAD) / fh) };
+    miniPos = { x: clamp01((e.clientX - d.ox - wr.left - MINI_PAD) / fw), y: clamp01((e.clientY - d.oy - wr.top - top0) / fh) };
     miniPlace(d.el);
     e.preventDefault();
   });
@@ -1374,6 +1506,18 @@
     for (const p of m.portals || []) dot(p.at[0], p.at[1], '#c49bff', Math.max(1.2, s / 2));
     if (world.map === P.pos.map) for (const q of world.monsters || []) dot(q.x, q.y, q.boss ? '#ffd24a' : q.gold ? '#ffe08a' : '#ef5a4a', Math.max(1, s / 2.4));
     const blink = 0.6 + 0.4 * Math.sin(now / 200);
+    // G2: trùm thế giới, Vương Miện (to, nhấp nháy); đồng đội tổ đội (xanh lá), người bang địch (đỏ), người bang mình (xanh)
+    if (m.worldBoss && boss.alive) dot(m.worldBoss[0], m.worldBoss[1], `rgba(255, 70, 50, ${blink})`, Math.max(2.5, s * 1.1));
+    if (world.map === P.pos.map) {
+      const crown = m.event === 'castle_siege' && (world.monsters || []).find((q) => q.kind === CS.crownKind);
+      if (crown) dot(crown.x, crown.y, `rgba(255, 215, 90, ${blink})`, Math.max(2.5, s * 1.1));
+      const rel = relations() || {}, party = rel.party || [];
+      for (const o of world.players || []) {
+        if (o.id === userId) continue;
+        const col = party.includes(o.id) ? '#7fe08a' : rel.enemy && o.tag === rel.enemy ? '#ff4a3a' : rel.tag && o.tag === rel.tag ? '#5aa9ff' : null;
+        if (col) dot(o.x, o.y, col, Math.max(1.2, s / 1.8));
+      }
+    }
     dot(P.pos.x, P.pos.y, `rgba(255, 255, 255, ${blink})`, Math.max(1.5, s * 0.7));
     g.strokeStyle = 'rgba(255, 255, 255, 0.55)'; g.lineWidth = 1;
     g.strokeRect(cx / TILE * s + 0.5, cy / TILE * s + 0.5, VW() / TILE * s, VH() / TILE * s);
@@ -1859,6 +2003,10 @@
     floatText,
     setFight,
     fightSpots,
+    // dòng thanh sự kiện ở đáy bản đồ (e2e đọc chữ, canvas không đọc được)
+    hudLines() { const P = getPlayer(); return P ? hudLines(P, cur(P)).map((l) => l.text + (l.sub ? ' | ' + l.sub : '')) : []; },
+    // ⚡ con đang đánh trên bản đồ { id, hp } (e2e)
+    fightTarget() { return fight; },
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);

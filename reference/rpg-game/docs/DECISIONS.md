@@ -1839,3 +1839,20 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Cài đặt (máy này) "Người chơi khác trên bản đồ": Tất cả / Tổ đội & bang / Tắt (`hl-players`); chỉ đổi màn hình của mình. Quanh đây giữ danh sách đầy đủ, thêm 📍 (nhấp nháy 4,5 giây, vẽ tạm cả khi bị ẩn).
 - ⚡ Đồ sát nhanh: nút trong menu khi bật ⚡; chạy tới cạnh người đó rồi mở trận (luật cũ). `QuickFight.active?/1` có nhánh đồ sát: lượt của mình (`encounter.mine`) hoặc trận xong → server ra đòn theo combo / rời; Session hẹn nhịp khi mở trận, khi tới lượt (`slay_sync`), khi chốt trận (`release`). Bên bị đánh bật ⚡ cũng tự đánh; không bật thì bảng trận như cũ. Client ở lại bản đồ (`slayFight`), đối thủ luôn vẽ với máu theo lượt, hiệu ứng / số sát thương bám vào người đó; ✋ cầm lại lượt.
 - Kiểm: test "⚡ Đồ sát nhanh: hai bên bật ⚡…" (slay_test), e2e `mapplayers` (3 người, 12 bước), `people`, `pk`, `quick`, `features`.
+
+## Sự kiện, đấu trường, chiến bang trực quan (2026-11-08, anh duyệt "làm 1 và 2")
+Đợt 1 (hiển thị, không đổi cân bằng):
+- **Thanh sự kiện** ở mép trên khung bản đồ (`MapView` `hudLines` / `eventHud`; bản đồ nhỏ tự dời xuống dưới thanh, không đè). Một dòng mỗi việc, có thanh tiến độ + đồng hồ đếm ngược (vẽ lại mỗi giây):
+  Quảng Trường Quỷ "🌊 Đợt n/5 · điểm · còn quái"; Lâu Đài Máu "🛡 Quân canh k/8" → "🚪 Phá Cổng Thành" (máu cổng) → "🩸 Hạ Hiệp Sĩ Máu"; Kalima "👹 Quái k/n" → "👹 Hạ Kundun"; phòng đánh chung thêm "👥 N"; Hỗn Chiến Thành chờ / "⚔ Còn N người · M quái"; Công Thành Chiến "👑 [TAG] giữ Vương Miện" (bang mình: "bảo vệ nó!", Vương Miện chưa hiện: "đang hiện lại"); Tế Đàn "🐉 Cổ Long n% · N người · còn" + dòng top 3 sát thương (mình ★, hạng 4–5 thêm "★ #4"), chưa xuất hiện thì "xuất hiện sau".
+- **A2 băng rôn** (`Celebrate.banner`) khi sang đợt / bước mới của sự kiện phòng và khi Hỗn Chiến Thành bắt đầu (Công Thành, trùm thế giới đã có tin hệ thống → băng rôn sẵn).
+- **A1**: người cùng phòng sự kiện vốn đã vẽ (snapshot phòng); thêm "👥 N" trên thanh.
+- **C1 trùm thế giới**: quầng đỏ nhấp nháy, thanh máu to có %, "⚔" khi mình đang đánh. **C2**: ⚡ Đánh nhanh đánh trùm ngay trên bản đồ (`fightTarget` = "boss"); số sát thương bay lên chỉ là của mình (máu chung tụt cả khi người khác đánh).
+- **D1 Vương Miện**: quầng vàng + 👑 trên đầu; khuất khỏi khung thì mũi tên vàng ở mép (dưới thanh sự kiện) chỉ hướng. `RULES.castleSiege` (crownKind, crownAt) gửi client. **D2**: vòng dưới chân mỗi bang một màu (theo ký hiệu), bang đang giữ màu vàng và 👑 trước tên.
+- **F1 chiến bang**: người bang địch có vòng đỏ nhấp nháy + ⚔ trước tên (mọi bản đồ); thanh "⚔ [MÌNH] a – b [ĐỊCH] · còn" (thanh chia đôi xanh / đỏ, không hiện trong Tháp).
+- **G2 bản đồ nhỏ**: trùm thế giới (đỏ, to, nhấp nháy), Vương Miện (vàng), đồng đội (xanh lá), người bang mình (xanh dương), người bang địch (đỏ).
+- Quản trị: nút "🕊 Cổ Long bay đi" (`admin world_boss_off`, không ai được thưởng).
+
+Đợt 2 (gameplay, anh đã duyệt trong danh sách):
+- **B1 / D3**: đang hỗn chiến ở Hỗn Chiến Thành (ai cũng là đối thủ) hoặc Công Thành Chiến (người bang khác) thì chạm người là đồ sát ngay, không mở menu (Công Thành ưu tiên người bang đang giữ Vương Miện); bật ⚡ thì là ⚡ Đồ sát nhanh (ở lại bản đồ). Luật đồ sát không đổi (server vẫn kiểm `Slay.check`).
+- **F2**: hai bang đang chiến nhau, đồ sát thành viên bang địch trên bản đồ (không phải Hỗn Chiến / Công Thành): người thắng (bên nào cũng được) **không bị tên đỏ**, bang người thắng **+1 điểm** (chung giới hạn `same_target_max` lần một cặp với đấu trường); vàng mất / nhận và bảo vệ người thua như đồ sát thường. Ghi điểm trước khi thả Session (thông báo "⚔ Chiến bang: bang bạn +1 điểm, không bị tên đỏ").
+- Kiểm: e2e `eventviz` (trùm thế giới + ⚡, chiến bang, Công Thành, 7 bước), test "chiến bang: hạ thành viên bang địch…" (slay_test).

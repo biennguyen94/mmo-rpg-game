@@ -121,7 +121,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   mảnh vé sự kiện, Bình Máu Lớn…), mỗi món mua được vài lần mỗi ngày.
 - **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
-  theo sát thương (vắng mặt thì nhận qua thư).
+  theo sát thương (vắng mặt thì nhận qua thư). Ở Tế Đàn, mép trên bản đồ có thanh máu chung, số người đánh, giờ còn lại và
+  **top 3 sát thương** (★ là bạn). Bật **⚡ Đánh nhanh** rồi chạm Cổ Long là đánh ngay trên bản đồ.
+- **Thanh sự kiện** (mép trên bản đồ): trong Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến hiện
+  đợt / bước, tiến độ và đồng hồ đếm ngược; sang đợt mới (Cổng Thành vỡ, Kundun xuất hiện…) có băng rôn giữa màn hình.
+  Công Thành Chiến: Vương Miện có quầng vàng 👑, khuất thì mũi tên vàng ở mép chỉ hướng; mỗi bang một màu vòng dưới chân.
+  Bản đồ nhỏ đánh dấu trùm thế giới, Vương Miện, đồng đội, người bang mình / bang địch.
 - **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
   mỗi vùng: mạnh hơn một chút, thưởng **×5**, dễ rơi ngọc, không hồi sinh. Hạ hết quái vàng một bản đồ thì **trùm vàng** xuất
   hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
@@ -205,11 +210,13 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   ngẫu nhiên (chat báo tên bản đồ). Không cần vé. Hạ con đầu đàn chắc chắn rơi ngọc, thưởng ×3–×4.
 - **Công Thành Chiến:** thứ Bảy 20h00, 30 phút. Bang chủ / phó bang đăng ký trước ở Người Gác Tháp (200 000 vàng); thành viên
   cấp 30+ vào thành, giành Vương Miện và giữ tới hết giờ. Bang giữ được là Chủ Thành, mọi thành viên nhận vàng + ngọc qua thư.
+  Trong lúc đánh, **chạm người bang khác là đồ sát ngay** (không mở menu; ưu tiên người bang đang giữ Vương Miện).
 - **Kalima:** từ cấp 20, lúc nào cũng vào được ở Người Gác Tháp, tốn 1 Bản Đồ Thất Lạc (ghép 5 Dấu Ấn Kundun ở Máy Hỗn
   Nguyên; dấu ấn rơi từ quái cấp 20+). Kalima 1–7 theo cấp; hạ 10 quái rồi hạ Kundun để nhận vàng, ngọc và một món đồ.
 - **Hỗn Chiến Thành:** từ cấp 15, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h30, 3h30 … 23h30), cho vào 5 phút,
   tốn 1 Áo Giáp Vệ Binh (mua 5 000 vàng hoặc nhặt từ quái cấp 15+). Rồi 10 phút hỗn chiến: quái và người đánh lẫn nhau
   (không mất vàng, không tên đỏ); gục là bị loại. Người trụ cuối cùng khi hết quái thắng 60 000 vàng + ngọc; thưởng gửi thư.
+  Lúc hỗn chiến, **chạm người là đồ sát ngay** (không mở menu).
 - **Loại đồ như MU**: đồ thường (có thể kèm May mắn, Kỹ năng, dòng cộng thêm +4 / +8 / +12 tấn công hoặc phòng thủ — tên xanh), đồ hoàn hảo (tên lục), đồ Thần. Ngọc Sinh Mệnh thêm dòng tới +16. Mỗi trang bị (rơi, mua, nhận thưởng) là một món riêng chiếm một chỗ trong túi trang bị, không xếp chồng; túi giữ tối đa 40 món chưa mặc (`rules.json` `loot.gear_bag`). Túi đầy thì không mua được trang bị, đồ rơi / quà gửi vào Hộp thư.
 - **Tủ Đồ** (Thủ Kho ở Làng): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.
@@ -363,8 +370,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - Vai trò: bang chủ, **tối đa 2 phó bang** (duyệt đơn, đuổi thành viên thường, sửa thông báo), thành viên. Đơn xin vào quá
   7 ngày tự bỏ.
 - **Chiến bang**: bang chủ / phó bang nhập ký hiệu bang địch → Tuyên chiến; bang kia (chủ / phó online) có 60 giây để nhận.
-  Trận kéo dài 1 giờ: mỗi lần bạn thắng thành viên bang địch ở **đấu trường** được +1 điểm cho bang (mỗi đối thủ tính tối đa
-  3 lần). Bang thắng: quỹ +5 000, ai ghi điểm nhận 500 vàng qua thư. Đầu hàng được; hai bang chỉ chiến lại sau 24 giờ.
+  Trận kéo dài 1 giờ: mỗi lần bạn thắng thành viên bang địch ở **đấu trường** hoặc **đồ sát** họ trên bản đồ được +1 điểm cho
+  bang (mỗi đối thủ tính tối đa 3 lần). Đồ sát người bang địch lúc đang chiến **không bị tên đỏ** (vàng vẫn mất / nhận như
+  đồ sát thường). Đang chiến: người bang địch có vòng đỏ nhấp nháy dưới chân, mép trên bản đồ có tỉ số hai bang. Bang thắng: quỹ +5 000, ai ghi điểm nhận 500 vàng qua thư. Đầu hàng được; hai bang chỉ chiến lại sau 24 giờ.
 
 ## 13. Hộp thư, Thông báo, bảng xếp hạng
 

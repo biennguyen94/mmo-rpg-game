@@ -239,6 +239,19 @@
     return ' fresh-item';
   }
 
+  // A2 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): sự kiện phòng (Quảng Trường Quỷ, Lâu Đài Máu, Kalima)
+  // sang đợt / bước mới, Hỗn Chiến Thành bắt đầu → băng rôn to giữa màn (Công Thành, trùm thế giới đã báo qua kênh hệ thống)
+  function eventBanner(old, p) {
+    const a = old.tower, b = p.tower;
+    if (a && b) {
+      if (a.ds && b.ds && b.floor > a.floor) Celebrate.banner(`🌊 Đợt ${b.floor}/${b.ds.waves}!`);
+      if (a.bc && b.bc && a.bc.stage !== b.bc.stage) Celebrate.banner({ gate: '🚪 Quân canh đã hạ: phá Cổng Thành!', boss: '🩸 Cổng vỡ! Hiệp Sĩ Máu xuất hiện!', done: '🏆 Lâu Đài Máu: hoàn thành!' }[b.bc.stage]);
+      if (a.kal && b.kal && a.kal.stage !== b.kal.stage) Celebrate.banner({ boss: '👹 Kundun xuất hiện!', done: '🏆 Kalima: hoàn thành!' }[b.kal.stage]);
+    }
+    const ca = old.view && old.view.cc, cb = p.view && p.view.cc;
+    if (ca && cb && ca.phase === 'entry' && cb.phase === 'fight' && cb.inside !== false && p.pos.map === old.pos.map && (WORLD.maps[p.pos.map] || {}).event === 'chaos_castle') Celebrate.banner('⚔ Hỗn chiến bắt đầu!');
+  }
+
   // FX đợt 4: khoảnh khắc thành tích khi trạng thái nhân vật đổi (lệnh của mình hoặc server đẩy: tự đánh, đánh chung)
   function celebrate(old, p) {
     if (!old || !p || old.name !== p.name) return;
@@ -247,6 +260,7 @@
     if (bm && !bm.pvp && (bm.boss || bm.world || (bm.elite && (!bm.tower || bm.ds || bm.bc || bm.kal)))) {
       Celebrate.bossIn(bm.name, bm.level ? `Cấp ${bm.level}` : '');
     }
+    eventBanner(old, p);
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
       Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
       return;
@@ -438,7 +452,7 @@
           <div class="btn-row"><button class="btn${ov === 'open' ? ' primary' : ''}" data-adm="secret" data-mode="open">🌙 Mở ngay</button><button class="btn${ov === 'close' ? ' primary' : ''}" data-adm="secret" data-mode="close">🪨 Đóng</button><button class="btn${!ov ? ' primary' : ''}" data-adm="secret" data-mode="auto">🕒 Theo lịch</button><button class="btn" data-adm="secret_boss" ${sc.open ? '' : 'disabled'}>🐉 Gọi Thạch Long Ẩn</button></div></div>`;
       })() : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
-        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
+        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewPwRequests()}
       ${viewAudit()}
@@ -1091,7 +1105,8 @@
   const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && quickOn() && !P.battle.manual);
   const mapFight = () => !!((monsterBattle() && quickOn() && !P.battle.manual && (quickFight() || P.auto)) || slayFight());
   // quái đang đánh trên bản đồ: quái chung (`mid`) hoặc quái tầng tháp / sự kiện (`t` + mã, như `MapView` vẽ)
-  const fightTarget = () => { const e = (P && P.battle && P.battle.encounter) || {}; return e.slay != null && e.foe != null ? 'p' + e.foe : e.mid != null ? String(e.mid) : e.tower != null ? 't' + e.tower : null; };
+  // trùm thế giới (Tế Đàn): 'boss' (C2: ⚡ đánh ngay trên bản đồ, như quái thường)
+  const fightTarget = () => { const e = (P && P.battle && P.battle.encounter) || {}; return e.world_boss || (P && P.battle && P.battle.monster && P.battle.monster.world) ? 'boss' : e.slay != null && e.foe != null ? 'p' + e.foe : e.mid != null ? String(e.mid) : e.tower != null ? 't' + e.tower : null; };
   const BUFF_EFFECTS = ['war_cry', 'guard', 'shadow_step'];
   const isBuffSkill = (id) => { const k = skillById(id); return !!(k && (k.buff || BUFF_EFFECTS.includes(k.effect))); };
   // combo đã lưu, bỏ bước không còn dùng được (đổi bộ kỹ năng)
@@ -1110,7 +1125,9 @@
     if (mf) {
       const mid = fightTarget();
       if (quickPrev && quickPrev.mid === mid && mid != null) {
-        const md = quickPrev.mHp - b.monster.hp, pd = quickPrev.pHp - P.hp;
+        // trùm thế giới: máu chung cả server tụt cả khi người khác đánh → chỉ hiện sát thương của mình (theo nhật ký)
+        const own = mid === 'boss' ? (b.log || []).slice(quickPrev.log.length).filter((l) => l.who === 'me' && l.dmg > 0).reduce((a, l) => a + l.dmg, 0) : null;
+        const md = own != null ? own : quickPrev.mHp - b.monster.hp, pd = quickPrev.pHp - P.hp;
         if (md > 0) Map_.floatText(mid, `-${fmt(md)}`, '#ffe08a');
         else if (md < 0) Map_.floatText(mid, `+${fmt(-md)}`, '#8fe08a');
         if (pd > 0) Map_.floatText('me', `-${fmt(pd)}`, '#ff6b5a');
@@ -1167,6 +1184,13 @@
   // Người chơi trên bản đồ: bảng chọn (nhiều người / có quái cùng ô) và menu một người (Hồ sơ, Giao dịch, Tổ đội, Đồ sát)
   let pickUi = null;
   const pickPerson = (id) => Map_.players().find((o) => o.id === id);
+  // người `o` là đối thủ trong sự kiện đang đánh: Hỗn Chiến Thành (ai cũng là đối thủ), Công Thành Chiến (bang khác)
+  function warFoe(o) {
+    const ev = (WORLD.maps[P.pos.map] || {}).event;
+    if (ev === 'chaos_castle') return !!(P.view.cc && P.view.cc.phase === 'fight');
+    if (ev === 'castle_siege') return !!(P.view.cs && P.view.cs.phase === 'fight' && P.guild && o.tag && o.tag !== P.guild.tag);
+    return false;
+  }
   function slayWhy(o) {
     if (RULES.slay.safe.includes(P.pos.map)) return 'Vùng an toàn';
     if (P.level < RULES.slay.minLevel) return `Cần cấp ${RULES.slay.minLevel}`;
@@ -4313,6 +4337,15 @@
     const [x, y] = Map_.tileFromEvent(e);
     // người chơi khác ở ô bấm: một người → menu của người đó; nhiều người (hoặc có cả quái) → bảng chọn
     const ppl = Map_.playersNear(x, y);
+    // B1 / D3 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): đang hỗn chiến (Hỗn Chiến Thành) / Công Thành
+    // Chiến thì chạm người đánh được là đồ sát ngay, không mở menu (Công Thành: ưu tiên người bang đang giữ Vương Miện)
+    const foes = ppl.filter((o) => warFoe(o) && !slayWhy(o));
+    if (foes.length) {
+      const hold = P.view.cs && P.view.cs.holder && P.view.cs.holder.tag;
+      foes.sort((a, b) => (b.tag === hold) - (a.tag === hold));
+      pickSlay(foes[0].id);
+      return;
+    }
     if (ppl.length) {
       const mob = Map_.monsterAt(x, y);
       pickUi = { x, y, people: ppl.map((o) => o.id), mob: mob ? { name: mob.name || mob.kind, x, y } : null, sel: ppl.length === 1 && !mob ? ppl[0].id : null };

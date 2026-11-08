@@ -415,16 +415,22 @@ defmodule HacLong.Slay do
 
             if pl2.pos.map != pl.pos.map, do: World.leave(pl, loser)
 
+            # F2 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): hai bang đang chiến nhau → người thắng
+            # không bị tên đỏ, bang người thắng +1 điểm (giới hạn `same_target_max` lần một cặp như đấu trường)
+            war = not event_map?(pw) and HacLong.GuildWars.war_between(winner, loser) != nil
+
             cond do
               chaos_castle?(pw) -> HacLong.ChaosCastle.kill(winner, :player)
               castle?(pw) -> :ok
+              war -> mark(loser, :safe, now() + @r.protect_s * 1000)
               true -> marks(f, winner, loser)
             end
 
+            note = war_note(war, winner, loser)
             HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
-            notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng.")
+            notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng." <> note)
 
             notice(
               loser,
@@ -507,6 +513,21 @@ defmodule HacLong.Slay do
 
     if winner == f.a and not f.red[loser],
       do: mark(winner, :red, max(until(winner, :red), t) + @r.red_s * 1000)
+  end
+
+  defp war_note(false, _winner, _loser), do: ""
+
+  defp war_note(true, winner, loser) do
+    case HacLong.GuildWars.record(winner, loser) do
+      {:ok, _} ->
+        " ⚔ Chiến bang: bang bạn +1 điểm, không bị tên đỏ."
+
+      {:error, :limit} ->
+        " ⚔ Chiến bang: không tính điểm (đã hạ người này #{HacLong.GuildWars.rules().same_target_max} lần), không bị tên đỏ."
+
+      _ ->
+        ""
+    end
   end
 
   defp announce(f, winner, loser, why) do

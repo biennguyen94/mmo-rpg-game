@@ -295,6 +295,39 @@ defmodule HacLongWeb.SlayTest do
     assert Session.get(ub.id).battle == nil
   end
 
+  test "chiến bang: hạ thành viên bang địch thì bang +1 điểm, không bị tên đỏ, vẫn nhận vàng" do
+    HacLong.GuildWars.reset()
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.put(strong(), :gold, 300_000))
+    player(ub, %{level: 10, gold: 300_000})
+    sa = join(ua)
+    sb = join(ub)
+    ga = cmd(sa, %{"act" => "guild_create", "name" => "Bang Sa", "tag" => "SA1"}).player.guild.id
+    cmd(sb, %{"act" => "guild_create", "name" => "Bang Sb", "tag" => "SB1"})
+    ref = push(sa, "guild", %{"op" => "war_declare", "tag" => "SB1"})
+    assert_reply ref, :ok, _
+    ref = push(sb, "guild", %{"op" => "war_accept"})
+    assert_reply ref, :ok, _
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case Slay.peek(ua.id) do
+        nil -> {:halt, :ok}
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+      end
+    end)
+
+    settled(ub.id)
+    refute Slay.red?(ua.id)
+    assert Slay.protected_s(ub.id) > 0
+    assert %{mine: 1, theirs: 0} = HacLong.GuildWars.brief(ga)
+    assert Session.get(ua.id).gold > 300_000
+  end
+
   test "thắng: người tấn công bị tên đỏ, người thua được bảo vệ, báo kênh thế giới" do
     ua = create_user()
     ub = create_user()

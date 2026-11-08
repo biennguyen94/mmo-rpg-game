@@ -137,6 +137,11 @@ defmodule HacLongWeb.PageController do
           safe: Data.rules().slay.safe_maps,
           redMult: Data.rules().slay.red_gold_mult
         },
+        # Công Thành Chiến: Vương Miện (quái bản đồ sự kiện) để bản đồ vẽ quầng sáng, mũi tên mép khung
+        castleSiege: %{
+          crownKind: Data.rules().castle_siege.crown.kind,
+          crownAt: Data.rules().castle_siege.crown.at
+        },
         # % sát thương / hấp thụ cánh cộng thêm theo [bậc][cấp ép 0..11] (Engine.wing_up/3), trần hấp thụ
         wingUp:
           Map.new([:dmg, :absorb], fn k ->

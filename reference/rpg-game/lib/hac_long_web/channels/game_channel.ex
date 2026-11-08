@@ -869,6 +869,11 @@ defmodule HacLongWeb.GameChannel do
   end
 
   defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
+  # cho trùm thế giới bay đi ngay (không ai được thưởng)
+  defp admin("world_boss_off", _p, _s) do
+    :ok = WorldBoss.despawn()
+    {:ok, %{msg: "#{WorldBoss.name()} đã bay đi (không ai được thưởng)."}}
+  end
 
   defp admin("lake_school", _p, _s) do
     st = HacLong.LakeEvent.school_summon()
