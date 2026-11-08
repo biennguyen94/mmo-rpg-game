@@ -1,0 +1,76 @@
+{
+  "id": "doi_sao_dieu",
+  "name": "Đồi Sáo Diều",
+  "zone": null,
+  "floor": "tiles/grass",
+  "min_level": 30,
+  "kite": true,
+  "tiles": [
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "^^,,^R,,^^^,,R^^,,,^^R,,^^,^",
+    "T,,*,,,,,,*,,,,,,*,,,,,,*,,T",
+    "T,*,,,Y,,,,,,,:,,,,,,Y,,,,*T",
+    "T,,,,,,,,,,,,:,,,,,,,,,,,,,T",
+    "T,,,R,,,,,J,,:,,J,,,,,R,,,,T",
+    "O:::::::::::::::::::::::::,T",
+    "T,,*,,,,,,,,,:,,,,,,,,,*,,,T",
+    "T,,,,,Y,,,,,,:,,,,,,Y,,,,,,T",
+    "T,*,,,,,,,R,,:,,R,,,,,,,,*,T",
+    "T,,,,J,,,,,,,:,,,,,,,J,,,,,T",
+    "T,,Y,,,,*,,,,:,,,,*,,,,,Y,,T",
+    "T,,,,,,,,,,,,:,,,,,,,,,,,,,T",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "portals": [
+    {
+      "at": [
+        0,
+        12
+      ],
+      "to": "long_vuong_lake",
+      "spawn": [
+        27,
+        4
+      ]
+    }
+  ],
+  "spawns": [],
+  "npcs": [
+    {
+      "id": "kite_maker",
+      "name": "Ông Lão Làm Diều",
+      "sprite": "kite_maker",
+      "at": [
+        12,
+        9
+      ],
+      "role": "kite",
+      "lines": [
+        "Ngày xưa Âu Cơ bay về núi, Chim Lạc theo bà. Thả diều cao, biết đâu Chim Lạc ghé xuống.",
+        "Gắn Sáo Đồng vào diều, gió thổi vi vu, Chim Lạc nghe tiếng sáo mà đến."
+      ]
+    },
+    {
+      "id": "bird_board",
+      "name": "Bia Chim Lạc",
+      "sprite": "board",
+      "at": [
+        16,
+        9
+      ],
+      "role": "kite",
+      "lines": [
+        "Bia khắc tên những người đã cảm hóa được Chim Lạc."
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false
+}

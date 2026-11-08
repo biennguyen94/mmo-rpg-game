@@ -90,7 +90,7 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
 
       # đã thả câu, tiến trình bot hẹn giờ giật cần (`opts.reeling`): đứng yên chờ
-      opts[:reeling] == true and p[:fishing] != nil ->
+      opts[:reeling] == true and (p[:fishing] != nil or p[:kite] != nil) ->
         nil
 
       # cánh đã tháo ra túi để ghép lên cấp: ghép trước (không thì bước mặc đồ lại mặc vào)
@@ -171,6 +171,98 @@ defmodule HacLong.Bots.Brain do
   vào hồ thì nil.
   """
   def fish_job(p, snap, opts, mode) do
+    if mode == :idle and opts[:fishing] == true and kiter?(opts[:seed]),
+      do: kite_job(p, snap, opts),
+      else: lake_job(p, snap, opts, mode)
+  end
+
+  @doc """
+  Bot thả diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): một nửa số bot (seed lẻ) dùng lượt "ra hồ" để ra Đồi Sáo Diều.
+  Đứng mép đồi (mỗi bot một chỗ, `spread/5`), thả vào ô Chim Lạc nếu đang lượn và chưa có, không thì ô Đàn Hạc, không thì
+  ô trời cạnh bên; thả đủ thì nhận việc Ông Lão Làm Diều.
+  """
+  def kiter?(seed) when is_integer(seed), do: rem(seed, 2) == 1
+  def kiter?(_), do: false
+
+  def kite_job(p, snap, opts) do
+    hill = Maps.get(HacLong.Game.Kite.map_id())
+    e = HacLong.Game.Kite.elder(p)
+    bird = opts[:bird]
+
+    target =
+      cond do
+        bird && HacLong.Game.Kite.rules().bird.pet not in (Map.get(p, :pets) || []) -> bird
+        opts[:flock] -> opts[:flock]
+        true -> :any
+      end
+
+    cond do
+      hill == nil or p.level < (hill[:min_level] || 1) ->
+        nil
+
+      p.pos.map != hill.id ->
+        go_to(p, hill.id)
+
+      p[:daily] != nil and e.n >= e.count and not e.done ->
+        at_npc_cmd(p, hill, "kite_maker", %{"act" => "kite_elder"}, snap)
+
+      true ->
+        kite_at(p, hill, target, snap, opts[:seed])
+    end
+  end
+
+  defp at_npc_cmd(p, map, id, cmd, snap) do
+    n = Enum.find(map.npcs, &(&1.id == id))
+    {nx, ny} = n.at
+
+    if max(abs(p.pos.x - nx), abs(p.pos.y - ny)) <= 1,
+      do: cmd,
+      else: walk(p, map, for({dx, dy} <- Map.values(@dirs), do: {nx + dx, ny + dy}), snap) || cmd
+  end
+
+  defp kite_at(p, map, target, snap, seed) do
+    me = {p.pos.x, p.pos.y}
+    reach = HacLong.Game.Kite.rules().reach
+
+    all =
+      case target do
+        :any ->
+          sky_stands(map)
+
+        {tx, ty} ->
+          for {x, y} <- sky_stands(map), max(abs(x - tx), abs(y - ty)) <= reach, do: {x, y}
+      end
+
+    stands =
+      if target == :any,
+        do: spread(all, Map.put(p, :fishing, p[:kite]), me, seed, snap),
+        else: all
+
+    cond do
+      all == [] and target != :any ->
+        kite_at(p, map, :any, snap, seed)
+
+      me in stands ->
+        case target do
+          {x, y} -> %{"act" => "kite_fly", "x" => x, "y" => y}
+          :any -> %{"act" => "kite_fly"}
+        end
+
+      true ->
+        walk(p, map, stands, snap)
+    end
+  end
+
+  @doc "Ô đứng thả diều được trên bản đồ `map`: đi được, không phải cổng, cạnh (4 hướng) một ô trời."
+  def sky_stands(map) do
+    for y <- 0..(map.height - 1),
+        x <- 0..(map.width - 1),
+        plain?(map, {x, y}),
+        Enum.any?(Map.values(@dirs), fn {dx, dy} -> Maps.sky?(map, x + dx, y + dy) end),
+        do: {x, y}
+  end
+
+  defp lake_job(p, snap, opts, mode) do
     lake = Maps.get(HacLong.LakeEvent.map_id())
 
     target =

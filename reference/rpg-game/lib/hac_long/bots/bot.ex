@@ -95,6 +95,14 @@ defmodule HacLong.Bots.Bot do
       {:noreply, s}
   end
 
+  # thả diều (DECISIONS "Đồi Sáo Diều…"): gió giật thì giữ dây
+  def handle_info(:hold, s) do
+    Session.command(s.uid, %{"act" => "kite_hold"})
+    {:noreply, %{s | reeling: false}}
+  catch
+    _, _ -> {:noreply, %{s | reeling: false}}
+  end
+
   def handle_info(:reel, s) do
     Session.command(s.uid, %{"act" => "fish_reel"})
     {:noreply, %{s | reeling: false}}
@@ -130,6 +138,7 @@ defmodule HacLong.Bots.Bot do
 
     s = fish_turn(s, now)
     {dragon, school} = lake_tiles(p)
+    {bird, flock} = HacLong.SkyEvent.tiles()
     snap = p && snapshot(p)
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
 
@@ -148,6 +157,8 @@ defmodule HacLong.Bots.Bot do
             fishing: now < s.fish_until,
             dragon: dragon,
             school: school,
+            bird: bird,
+            flock: flock,
             reeling: s.reeling,
             avoid: Brain.avoiding(s.deaths_at, now)
           })
@@ -163,6 +174,10 @@ defmodule HacLong.Bots.Bot do
           case cmd["act"] do
             "fish_cast" ->
               Process.send_after(self(), :reel, r.wait + react(s.uid))
+              %{s | reeling: true}
+
+            "kite_fly" ->
+              Process.send_after(self(), :hold, r.wait + react(s.uid))
               %{s | reeling: true}
 
             "tower_enter" ->

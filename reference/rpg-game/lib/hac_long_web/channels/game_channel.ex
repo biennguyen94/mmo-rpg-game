@@ -93,6 +93,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Chat.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.SkyEvent.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.NamePack.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
@@ -927,6 +928,28 @@ defmodule HacLongWeb.GameChannel do
      }}
   end
 
+  # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): gọi Chim Lạc / Đàn Hạc / mưa sao băng / Long Phượng Hội
+  defp admin("sky_" <> kind, _p, _s) when kind in ["bird", "flock", "meteor", "hoi"] do
+    st = HacLong.SkyEvent.summon(String.to_existing_atom(kind))
+
+    msg =
+      case kind do
+        "bird" ->
+          "Chim Lạc đang lượn ở ô #{Enum.join(st.bird, ", ")} Đồi Sáo Diều (#{div(st.birdLeft, 1000)} giây)."
+
+        "flock" ->
+          "Đàn Hạc đang bay ở ô #{Enum.join(st.flock, ", ")} Đồi Sáo Diều (#{div(st.flockLeft, 1000)} giây)."
+
+        "meteor" ->
+          "Mưa sao băng: #{length(st.stars)} Mảnh Sao trên Đồi Sáo Diều."
+
+        "hoi" ->
+          "Long Phượng Hội mở ở Tế Đàn (#{div(st.hoi.left, 1000)} giây)."
+      end
+
+    {:ok, %{msg: msg, sky: st}}
+  end
+
   defp admin("lake_summon", _p, _s) do
     st = HacLong.LakeEvent.summon()
 
@@ -1037,6 +1060,7 @@ defmodule HacLongWeb.GameChannel do
     push(socket, "world_boss", WorldBoss.status())
     push(socket, "invasion", HacLong.Invasion.status())
     push(socket, "lake", HacLong.LakeEvent.public())
+    push(socket, "sky", HacLong.SkyEvent.public())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
   end
 
@@ -1048,6 +1072,11 @@ defmodule HacLongWeb.GameChannel do
   # quản trị đổi bộ tên: client tải lại trang để nạp bộ tên mới
   def handle_info({:name_pack, pack}, socket) do
     push(socket, "name_pack", %{pack: pack})
+    {:noreply, socket}
+  end
+
+  def handle_info({:sky, st}, socket) do
+    push(socket, "sky", st)
     {:noreply, socket}
   end
 
@@ -1288,6 +1317,15 @@ defmodule HacLongWeb.GameChannel do
         tutorial: Tutorial.view(player),
         # việc của Ông Lão Câu Cá (Hồ Long Vương)
         elder: HacLong.Game.Fishing.elder(player),
+        # Đồi Sáo Diều / Hắc Long: việc Ông Lão Làm Diều, Phong Khí, trứng đang ấp, điều kiện làm lễ còn thiếu
+        kite:
+          Map.put(
+            HacLong.Game.Kite.elder(player),
+            :phong_khi,
+            HacLong.Game.Kite.phong_khi(player)
+          ),
+        egg: HacLong.Game.DragonEgg.progress(player, System.os_time(:second)),
+        hacMissing: HacLong.Game.DragonEgg.missing(player),
         # Thương Nhân Chợ Nổi: món hôm nay, đã mua mấy lần
         trader: HacLong.Game.Trader.view(player, Daily.today()),
         # Động Bí Ẩn: cửa đêm nay có mở không (Lão Từ nói, cổng hiện khe đá phát sáng)

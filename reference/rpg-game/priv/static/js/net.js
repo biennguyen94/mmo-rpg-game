@@ -124,6 +124,7 @@
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
         ch.on('lake', (m) => cb.lake && cb.lake(m));
+        ch.on('sky', (m) => cb.sky && cb.sky(m));
         // quản trị đổi bộ tên cho cả server: tải lại trang để nạp tên mới
         ch.on('name_pack', (m) => { if (!window.I18N || window.I18N.pack !== m.pack) setTimeout(() => location.reload(), 1500); });
         ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
@@ -385,6 +386,7 @@
     // Trạng thái trùm thế giới; thông báo riêng (vd. nhận thưởng).
     onWorldBoss(f) { cb.boss = f; },
     onLake(f) { cb.lake = f; },
+    onSky(f) { cb.sky = f; },
     onInvasion(f) { cb.invasion = f; },
     onNotice(f) { cb.notice = f; },
     // Số thư chưa mở thay đổi (có thư mới, vừa mở thư).

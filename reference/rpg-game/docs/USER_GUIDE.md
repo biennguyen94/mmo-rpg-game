@@ -286,6 +286,23 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   **Thần thú độc nhất:** cấp tối đa 30 (thú khác 20), mỗi cấp tăng 8 % (thú khác 5 %; cấp 30 ×3,32); **Long Uy** kháng một nửa choáng / độc / bỏng / chảy máu / suy yếu;
   **Long Ân** quái rơi ngọc thêm 25 %, thưởng trùm thế giới thêm 10 %.
   Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
+- **Đồi Sáo Diều** 🪁 (cổng mép phải Hồ Long Vương, từ cấp 30): đứng ở **mép đồi** (cạnh khoảng trời) rồi chạm vào trời trong 3 ô
+  (hoặc nút 🪁 Thả diều) để thả diều. Gió giật ("Gió giật! Giữ dây ngay!") thì bấm **🪁 Giữ dây** trong 1 giây: diều mang về
+  Lông Hạc, Mảnh Mây, đôi khi ngọc (Dây Diều Đứt thì thôi); mỗi lần +1 **Phong Khí** (tối đa 200).
+  - **Chim Lạc** 🐦 (Thần điểu, cộng chí mạng, né, máu, kinh nghiệm, vàng): mỗi giờ lượn một lần ở một ô trời trong 3 phút (ánh đồng
+    lấp lánh, cả server được báo). Thả diều trúng đúng ô đó: 1/2.000 cơ hội mỗi lần, nhân theo Phong Khí (đầy ×3), có **Sáo Đồng** thì
+    gấp đôi (chỉ tốn khi thả trúng). Giữ dây đúng lúc thì Chim Lạc nhận bạn làm chủ; đã có thì được 5 Mảnh Sao. Bia Chim Lạc ở đồi.
+  - **Đàn Hạc** 🕊 khoảng 15 phút một lần bay vòng ở một ô trời trong 2 phút: thả trúng thì quà tốt hơn (nhiều ngọc), +3 Phong Khí.
+  - **Mưa sao băng** 🌠 ban đêm: Mảnh Sao rơi trên đồi trong 2 phút; chạm vào là đi tới nhặt (ai tới trước được).
+  - **Ông Lão Làm Diều**: việc mỗi ngày (thả thành công 20 lần ở đồi → vàng, kinh nghiệm, +20 Phong Khí) và ghép **Sáo Đồng**
+    (2 Mảnh Sao + 5 Lông Hạc).
+- **Hắc Long** 🐉 — linh vật Con Rồng Cháu Tiên: Long Vương (Lạc Long Quân) và Chim Lạc (Âu Cơ) kết duyên sinh **Bọc Trăm Trứng**.
+  Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi **cùng lúc**, cả server được báo **Long Phượng Hội**: vòng sáng mở ở **Tế Đàn**
+  5 phút. Có đủ Long Vương và Chim Lạc **cấp 30**, Long Khí và Phong Khí **đầy**, **đã hạ Hắc Long** thì bước vào vòng bấm
+  **🐉🐦 Làm lễ**: mất hết Long Khí / Phong Khí, nhận Bọc Trăm Trứng. Người khác vào vòng bấm **✨ Hưởng lộc** được +10 Long Khí và
+  Phong Khí (mỗi hội một lần). Trứng (Menu → Thú cưng) nở khi hạ đủ 500 quái, hoặc sau 3 ngày, hoặc hạ Hắc Long thêm một lần;
+  10 % nở ra **Hắc Long Chân Thân**. Hắc Long cộng như Long Vương nhỉnh hơn một chút, thêm né và **Long Huyết** (đánh Hắc Long và
+  quái hệ Bóng Tối +10 %, Chân Thân +15 %). Người đầu tiên của server thuần phục Hắc Long được báo riêng; Bia Hắc Long ở đồi.
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác

@@ -855,6 +855,24 @@
       "max_officers": 2,
       "request_days": 7
     },
+    "sky": {
+      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Hồ Long Vương. Đứng cạnh (4 hướng) một ô trời, thả diều vào ô trời trong tầm reach; gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
+      "map": "doi_sao_dieu",
+      "reach": 3,
+      "wait_ms": [3000, 8000],
+      "window_ms": 1000,
+      "pool": [[45, "long_hac"], [30, "manh_may"], [14, "day_dieu_dut"], [8, "jewel_bless"], [3, "jewel_soul"]],
+      "bird": {"pet": "chim_lac", "chance": 0.0005, "every": 3600, "stay": 180, "phong_khi_max": 200, "phong_khi_div": 100, "bait": "sao_dong", "bait_mult": 2, "dupe": "manh_sao", "dupe_n": 5},
+      "flock": {"every": 900, "stay": 120, "phong_khi": 3, "pool": [[40, "long_hac"], [20, "manh_may"], [20, "jewel_bless"], [12, "jewel_soul"], [6, "manh_sao"], [2, "jewel_chaos"]]},
+      "elder": {"count": 20, "phong_khi": 20},
+      "craft": {"sao_dong": {"manh_sao": 2, "long_hac": 5}},
+      "meteor": {"every": 600, "count": 4, "stay": 120, "item": "manh_sao", "night": true},
+      "hoi": {"_doc": "Long Phượng Hội: Long Vương đang nổi ở hồ và Chim Lạc đang lượn ở đồi cùng lúc thì vòng sáng hiện ở Tế Đàn (map, at, radius ô) trong stay giây; sau đó chờ cooldown giây mới có lần sau. Người đủ điều kiện (có cả hai thú cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long) đứng trong vòng làm lễ: mất hết Long Khí, Phong Khí, nhận egg.item. Người khác đứng trong vòng được lucky_qi Long Khí và Phong Khí (một lần mỗi hội).", "map": "altar", "at": [10, 10], "radius": 2, "stay": 300, "cooldown": 1800, "lucky_qi": 10},
+      "egg": {"_doc": "Bọc Trăm Trứng nở khi đủ một trong: hạ kills quái kể từ lúc nhận trứng, qua days ngày, hoặc hạ trùm cuối Hắc Long thêm một lần. Nở ra pet (rare_chance thì rare_pet: Hắc Long Chân Thân). Mỗi nhân vật một con Hắc Long.", "item": "boc_tram_trung", "kills": 500, "days": 3, "pet": "hac_long", "rare_pet": "hac_long_chan", "rare_chance": 0.1},
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "guild_war": {
       "minutes": 60,
       "answer_s": 60,

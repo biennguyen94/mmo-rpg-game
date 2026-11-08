@@ -122,6 +122,12 @@ defmodule HacLongWeb.PageController do
             :long_khi_max,
             :long_khi_div
           ]),
+        # Đồi Sáo Diều, Chim Lạc, Hắc Long (DECISIONS cùng tên)
+        sky:
+          HacLong.Game.Kite.rules()
+          |> Map.drop([:_doc, :sourceType, :version, :verified])
+          |> Map.update!(:hoi, &Map.delete(&1, :_doc))
+          |> Map.update!(:egg, &Map.delete(&1, :_doc)),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),

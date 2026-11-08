@@ -157,6 +157,7 @@ defmodule HacLong.Game.Engine do
           visited: [],
           fish_caught: 0,
           long_khi: 0,
+          sky: HacLong.Game.Kite.load(nil),
           achievements: [],
           title: nil,
           bosses: [],
@@ -297,7 +298,7 @@ defmodule HacLong.Game.Engine do
       dodge:
         min(
           clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
-            (1 + exc.def_rate),
+            (1 + exc.def_rate) + Pets.bonus(p, :dodge),
           @combat.dodge.max_total
         ),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
@@ -1252,6 +1253,13 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
+
+            # Long Huyết (thú Hắc Long, DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): đánh trùm cuối Hắc Long và quái hệ
+            # Bóng Tối mạnh hơn (không áp khi đánh người)
+            mult =
+              if not pvp and (m[:final] == true or m[:element] == "dark"),
+                do: mult * (1 + Pets.trait(p, :slayer)),
+                else: mult
 
             mult =
               if skill, do: mult * (1 + d.skillDmg) * emult * weather_mult(p, skill), else: mult
@@ -2600,6 +2608,9 @@ defmodule HacLong.Game.Engine do
       )
 
     p = %{p | kills: p.kills + 1, gold: p.gold + gold}
+
+    # Bọc Trăm Trứng đang ấp: hạ trùm cuối Hắc Long thì đủ điều kiện nở (DECISIONS "… Hắc Long")
+    p = if m[:final] == true, do: HacLong.Game.DragonEgg.on_final_win(p), else: p
     reward = %{xp: xp, gold: gold, items: [], levels: 0}
     # Excellent: hồi máu / MP khi hạ quái (phần của tối đa)
     p = exc_on_kill(p, exc)

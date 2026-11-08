@@ -100,7 +100,7 @@ defmodule HacLong.Bots.BrainFishTest do
     stands = Brain.stand_tiles(lake())
 
     spots =
-      for seed <- 1..6 do
+      for seed <- [2, 4, 6, 8, 10, 12] do
         {at, cmd} = walk_to_cast(p, %{fishing: true, seed: seed})
         refute Map.has_key?(cmd, "x")
         assert at in stands
@@ -124,6 +124,43 @@ defmodule HacLong.Bots.BrainFishTest do
 
     waiting = Map.put(p, :fishing, %{bite: 0, pos: p.pos})
     assert Brain.decide(waiting, nil, %{fishing: true, reeling: true}) == nil
+  end
+
+  test "bot seed lẻ dùng lượt ra hồ để ra Đồi Sáo Diều thả diều: tới mép đồi rồi thả, Chim Lạc đang lượn thì thả trúng ô nó" do
+    assert Brain.kiter?(1) and not Brain.kiter?(2)
+    hill = Maps.get(HacLong.Game.Kite.map_id())
+    [stand | _] = Brain.sky_stands(hill)
+    p = angler(stand) |> Map.put(:pos, %{map: hill.id, x: elem(stand, 0), y: elem(stand, 1)})
+
+    walk = fn walk, p, opts, n ->
+      case Brain.fish_job(p, nil, opts, :idle) do
+        %{"act" => "kite_fly"} = c ->
+          {p, c}
+
+        %{"act" => "move", "dir" => d} when n > 0 ->
+          walk.(walk, elem(HacLong.World.move(p, -1, d, true), 1), opts, n - 1)
+
+        other ->
+          flunk("lệnh lạ: #{inspect(other)}")
+      end
+    end
+
+    {at, cmd} = walk.(walk, p, %{fishing: true, seed: 1}, 200)
+    assert {at.pos.x, at.pos.y} in Brain.sky_stands(hill)
+    refute Map.has_key?(cmd, "x")
+
+    # Chim Lạc đang lượn trong tầm: thả trúng ô nó
+    {sx, sy} = stand
+
+    bird =
+      Enum.find(HacLong.SkyEvent.spots(), fn {x, y} -> max(abs(x - sx), abs(y - sy)) <= 3 end)
+
+    {_, c2} = walk.(walk, p, %{fishing: true, seed: 1, bird: bird}, 200)
+    assert {c2["x"], c2["y"]} == bird
+    # ở hồ: đi sang đồi
+    lake_p = angler(stand)
+    assert %{"act" => act} = Brain.fish_job(lake_p, nil, %{fishing: true, seed: 3}, :idle)
+    assert act in ["travel", "move"]
   end
 
   test "lượt ra hồ, có Đàn Cá Vàng: thả trúng ô đàn cá" do

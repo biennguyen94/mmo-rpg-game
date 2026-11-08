@@ -1001,13 +1001,45 @@ defmodule HacLong.Game.Session do
   defp rare_pet(s, player, pet, result) do
     name = HacLong.Game.Data.pet(pet).name
     n = HacLong.RarePets.record!(s.user_id, player.name, pet)
-    HacLong.LakeEvent.dive()
 
-    Map.merge(result, %{
-      msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
-      dragon: true,
-      announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
-    })
+    cond do
+      pet == HacLong.Game.Kite.rules().bird.pet ->
+        HacLong.SkyEvent.fly_away()
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          bird: true,
+          announce: "🐦 #{player.name} đã cảm hóa #{name} ở Đồi Sáo Diều! #{name} Chủ thứ #{n}."
+        })
+
+      pet in HacLong.Game.DragonEgg.pets() ->
+        # người đầu tiên của server có Hắc Long (thường hay Chân Thân): báo riêng (DECISIONS "… Hắc Long")
+        first? =
+          HacLong.Game.DragonEgg.pets()
+          |> Enum.flat_map(&HacLong.RarePets.list/1)
+          |> Enum.min_by(& &1.at, DateTime, fn -> nil end)
+          |> then(&(&1 && &1.user_id == s.user_id))
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          hac: true,
+          announce:
+            if(first?,
+              do:
+                "🏆🐉 #{player.name} là người ĐẦU TIÊN của server thuần phục #{name}! Linh vật Con Rồng Cháu Tiên đã về.",
+              else: "🐉 Bọc Trăm Trứng của #{player.name} đã nở ra #{name}! #{name} Chủ thứ #{n}."
+            )
+        })
+
+      true ->
+        HacLong.LakeEvent.dive()
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          dragon: true,
+          announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
+        })
+    end
   end
 
   # Góp tiến độ nhiệm vụ bang (không chờ: ghi database ngoài tiến trình này).
@@ -1125,11 +1157,21 @@ defmodule HacLong.Game.Session do
   defp run(_s, p, %{"act" => "secret_board"}),
     do: {%{ok: true, board: HacLong.World.SecretRecords.recent(30)}, p}
 
-  # Bia Long Vương: người đã câu được Long Vương, sớm trước
-  defp run(_s, p, %{"act" => "dragon_board"}) do
+  # Bia Long Vương / Bia Chim Lạc / Bia Hắc Long: người đã có thú hiếm đó, sớm trước
+  defp run(_s, p, %{"act" => act}) when act in ["dragon_board", "bird_board", "hac_board"] do
+    pets =
+      case act do
+        "dragon_board" -> [HacLong.Game.Fishing.dragon().pet]
+        "bird_board" -> [HacLong.Game.Kite.rules().bird.pet]
+        "hac_board" -> HacLong.Game.DragonEgg.pets()
+      end
+
     board =
-      HacLong.Game.Fishing.dragon().pet
-      |> HacLong.RarePets.list()
+      pets
+      |> Enum.flat_map(&HacLong.RarePets.list/1)
+      |> Enum.sort_by(& &1.at, DateTime)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {r, i} -> %{r | n: i} end)
       |> Enum.map(&%{n: &1.n, name: &1.name, at: Date.to_iso8601(DateTime.to_date(&1.at))})
 
     {%{ok: true, board: board}, p}

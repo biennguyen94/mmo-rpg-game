@@ -20,7 +20,9 @@ for (const [label, viewport] of [['máy tính', { width: 1280, height: 900 }], [
   await page.waitForSelector('#mini-map');
   await page.waitForTimeout(400);
   const a = await box(page);
-  R.check(`${label}: mặc định ở góc trái trên`, a.x <= 8 && a.y <= 8, JSON.stringify(a));
+  // thanh sự kiện ở mép trên (vd Long Phượng Hội đang mở): bản đồ nhỏ nằm ngay dưới thanh
+  const hud = await page.evaluate(() => window.MapView.hudPx());
+  R.check(`${label}: mặc định ở góc trái trên (dưới thanh sự kiện nếu có)`, a.x <= 8 && a.y <= 8 + hud, JSON.stringify({ ...a, hud }));
 
   // kéo xuống góc trái dưới (kéo quá mép: bị giữ trong khung; góc phải dưới là nút chat)
   await page.mouse.move(a.cx, a.cy);

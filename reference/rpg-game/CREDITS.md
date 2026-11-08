@@ -118,3 +118,19 @@ Dựng bằng `scripts/long_vuong_assets.sh` từ bộ tile Dungeon Crawl Stone 
 giấy phép): Long Vương (`mon/dragons/quicksilver_dragon`, tô dải màu vàng kim), Ông Lão Câu Cá (`mon/unique/joseph`, vẽ thêm cần
 câu), nước sâu Vực Rồng (`dngn/water/deep_water`), cây đước (`dngn/trees/mangrove1`), tượng rồng vàng (`dngn/statues/statue_dragon`).
 Bến / cầu gỗ (`pier_v`, `pier_h`), thuyền (`boat`), sen (`lotus`), đèn lồng (`lantern`), hũ Mồi Rồng: tự vẽ cho game này (CC0).
+
+## Đồi Sáo Diều, Chim Lạc, Hắc Long (`priv/static/assets/sky/`, `pets/chim_lac.png`, `pets/hac_long*.png`, `items/…`, `tiles/sky.png`, `npcs/kite_maker.png`)
+
+Dựng bằng `scripts/sky_assets.py` và `scripts/sky_svg_icons.cjs` từ:
+- **Chim Lạc** (`sky/chim_lac.png`, `pets/chim_lac.png`): 6 khung bay của **Phoenix (reborn)** của **Chasersgaming**
+  (https://opengameart.org/content/phoenix-reborn), giấy phép **CC0 1.0**; tô lại màu đồng thau (trống đồng Đông Sơn).
+- **Đàn Hạc** (`sky/hac.png`): **Animated Birds (32x32)** của **MoikMellah** (https://opengameart.org/content/animated-birds-32x32),
+  giấy phép **CC0 1.0**; bỏ nền hồng.
+- **Mây trôi** (`sky/clouds.png`): **Clouds** của **Igor Gundarev** (https://opengameart.org/content/clouds), giấy phép **CC0 1.0**.
+- **Bọc Trăm Trứng** (`sky/egg.png`, `items/boc_tram_trung.png`): quả trứng đen vân dung nham trong **Dragon Eggs** của **MELLE**
+  (https://opengameart.org/content/dragon-eggs), giấy phép **CC0 1.0**.
+- **Hắc Long (thú)** (`pets/hac_long.png`, `sky/hac_long.png`, bản Chân Thân có quầng tím): hình Hắc Long ở màn đăng nhập (Cethiel, CC0, ở trên).
+- **Icon vật phẩm** Lông Hạc (`feather`, Lorc), Mảnh Mây (`cloud-ring`, Lorc), Mảnh Sao (`fragmented-meteor`, Lorc), Sáo Đồng
+  (`flute`, Delapouite), Dây Diều Đứt (`kite`, Delapouite): **game-icons.net**, giấy phép **CC BY 3.0** (như mục Icon ở trên), đã tô màu.
+- Ô trời (`tiles/sky.png`), diều và dây diều (vẽ bằng code trong `map.js`): tự vẽ cho game này (CC0). NPC Ông Lão Làm Diều
+  (`npcs/kite_maker.png`) tô lại từ người dân Làng (`npcs/elder.png`, bộ Dungeon Crawl Stone Soup CC0 ở trên).

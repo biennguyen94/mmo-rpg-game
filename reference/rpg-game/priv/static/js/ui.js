@@ -373,7 +373,7 @@
     // vẽ lại (server đẩy trạng thái mỗi lượt / mỗi giây) thì giữ chỗ cuộn của các bảng nổi tự cuộn bên trong
     // (anh báo: chọn bộ kỹ năng cuộn xuống thì ~1 giây sau bị đưa về đầu)
     const keepScroll = ['.skill-dialog', '.quick-log .log', '.pick-pop', '.map-dialog', '.combo-edit'].map((sel) => [sel, (view.querySelector(sel) || {}).scrollTop || 0]);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewKite() + viewHoi() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     for (const [sel, top] of keepScroll) { const el = top && view.querySelector(sel); if (el) el.scrollTop = top; }
     if (trading) {
       // bảng giao dịch che bản đồ
@@ -466,7 +466,7 @@
           <div class="btn-row"><button class="btn${ov === 'open' ? ' primary' : ''}" data-adm="secret" data-mode="open">🌙 Mở ngay</button><button class="btn${ov === 'close' ? ' primary' : ''}" data-adm="secret" data-mode="close">🪨 Đóng</button><button class="btn${!ov ? ' primary' : ''}" data-adm="secret" data-mode="auto">🕒 Theo lịch</button><button class="btn" data-adm="secret_boss" ${sc.open ? '' : 'disabled'}>🐉 Gọi Thạch Long Ẩn</button></div></div>`;
       })() : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
-        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button>
+        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button><button class="btn" data-adm="sky_bird">🐦 Gọi Chim Lạc</button><button class="btn" data-adm="sky_flock">🕊 Gọi Đàn Hạc</button><button class="btn" data-adm="sky_meteor">🌠 Mưa sao băng</button><button class="btn" data-adm="sky_hoi">🐉🐦 Mở Long Phượng Hội</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewPwRequests()}
       ${viewAudit()}
@@ -1000,6 +1000,166 @@
     } catch (e) { toast(e.msg, true); }
     busy = false;
     refresh();
+  }
+
+  // ---------- Đồi Sáo Diều: thả diều, Chim Lạc, Đàn Hạc, sao băng (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long") ----------
+  const SKY = RULES.sky || {};
+  let skySt = { stars: [] }, skyTimers = [], kite = null;
+  function onSky(st) {
+    skySt = st;
+    Map_.setSky(st);
+    skyTimers.splice(0).forEach(clearTimeout);
+    // hết giờ thì tự xóa (server cũng báo, nhưng có thể chậm)
+    [['bird', 'birdLeft'], ['flock', 'flockLeft']].forEach(([k, l]) => { if (st[k]) skyTimers.push(setTimeout(() => onSky({ ...skySt, [k]: null, [l]: 0 }), st[l])); });
+    if (st.hoi) skyTimers.push(setTimeout(() => onSky({ ...skySt, hoi: null }), st.hoi.left));
+    if (P && !P.battle && tab === 'map' && !npc && (P.pos.map === SKY.map || P.pos.map === (SKY.hoi || {}).map)) { redrawKite(); redrawHoi(); }
+  }
+  const onHill = () => !!(P && WORLD.maps[P.pos.map] && WORLD.maps[P.pos.map].kite);
+  function nearSky() {
+    const m = WORLD.maps[P.pos.map];
+    if (!m || !m.kite) return false;
+    return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (m.tiles[P.pos.y + dy] || '')[P.pos.x + dx] === '^');
+  }
+  function viewKite() {
+    if (kite) {
+      const gust = kite.phase === 'gust', big = gust && kite.big;
+      return `<div id="kite-ui" class="fish-ui ${gust ? 'bite' : ''} ${big ? 'big' : ''}">
+        <span aria-hidden="true">🪁</span>
+        <b>${big ? '🐦 Bóng chim đồng sà xuống diều! Giữ dây ngay!' : gust ? 'Gió giật! Giữ dây ngay!' : 'Diều đang bay, chờ gió…'}</b>
+        <button class="btn ${gust ? 'primary' : ''}" data-act="kite-hold">🪁 Giữ dây</button>
+      </div>`;
+    }
+    if (dialog || !onHill() || !nearSky()) return '<div id="kite-ui" hidden></div>';
+    const v = P.view.kite || {};
+    const pk = `<span class="small" title="Phong Khí: mỗi lần thả diều thành công ở đồi +1, càng đầy càng dễ cảm hóa Chim Lạc">🐦 Phong Khí <b class="num">${v.phong_khi || 0}/${(SKY.bird || {}).phong_khi_max}</b>${skySt.bird ? ' · <b style="color:var(--gold)">Chim Lạc đang lượn!</b>' : ''}${skySt.flock ? ' · <b>🕊 Đàn Hạc</b>' : ''}</span>`;
+    return `<div id="kite-ui" class="fish-ui idle"><button class="btn" data-act="kite-fly">🪁 Thả diều</button><span class="small muted">hoặc chạm vào khoảng trời</span>${pk}</div>`;
+  }
+  function redrawKite() { const el = $('#kite-ui'); if (el) el.outerHTML = viewKite(); }
+  function stopKite(fx = null) { if (!kite) return; kite.timers.forEach(clearTimeout); kite = null; if (fx !== false) Map_.kite(fx); }
+  async function flyKite(at) {
+    if (busy || kite) return;
+    busy = true;
+    const t0 = performance.now();
+    try {
+      at = at || Map_.kiteTile();
+      const r = await Net.send(at ? { act: 'kite_fly', x: at[0], y: at[1] } : { act: 'kite_fly' });
+      P = r.player;
+      if (!r.ok) { toast(r.msg, true); busy = false; return; }
+      const gustIn = Math.max(0, r.wait - (performance.now() - t0));
+      const k = { phase: 'wait', timers: [], big: !!r.big };
+      kite = k;
+      k.timers.push(setTimeout(() => {
+        if (kite !== k) return;
+        k.phase = 'gust'; Sound.play(k.big ? 'rare' : 'bite');
+        if (navigator.vibrate) navigator.vibrate(k.big ? [200, 80, 200, 80, 300] : 120);
+        if (k.big) bigFx('🐦 Có gì đó lấp lánh…', 'level');
+        Map_.kite('gust', { big: k.big });
+        redrawKite();
+      }, gustIn));
+      k.timers.push(setTimeout(() => { if (kite !== k) return; stopKite('miss'); toast(k.big ? 'Dây diều đứt phựt! Bóng chim đồng lấp lánh vút lên mây...' : 'Chậm tay rồi, gió cuốn diều đi mất.', true); redrawKite(); }, gustIn + r.window + 400));
+      Sound.play('cast');
+      Map_.kite('fly', at ? { tx: at[0], ty: at[1] } : {});
+    } catch (e) { toast(e.msg, true); }
+    busy = false;
+    redrawKite();
+  }
+  async function holdKite() {
+    if (!kite || busy) return;
+    stopKite(false);
+    busy = true;
+    try {
+      const r = await Net.send({ act: 'kite_hold' });
+      P = r.player;
+      result(r);
+      skyResultFx(r);
+      Map_.kite(r.ok ? 'catch' : 'miss', { item: r.bird ? 'chim_lac' : r.gift });
+      Sound.play(!r.ok ? 'error' : r.bird || r.gift === 'manh_sao' || /^jewel_/.test(r.gift || '') ? 'rare' : 'catch');
+    } catch (e) { toast(e.msg, true); }
+    busy = false;
+    refresh();
+  }
+  // kết quả đặc biệt: cảm hóa Chim Lạc, nhận Bọc Trăm Trứng, trứng nở Hắc Long
+  function skyResultFx(r) {
+    if (!r || !r.ok) return;
+    if (r.bird) { bigFx('🐦 CHIM LẠC!', 'level'); birdAt = 0; }
+    if (r.egg) bigFx('🥚 BỌC TRĂM TRỨNG', 'level');
+    if (r.hac && window.Celebrate && Celebrate.hatch) { const pet = PETS.find((x) => x.id === (P.pets || [])[P.pets.length - 1]); Celebrate.hatch(pet ? pet.name : 'Hắc Long', asset(`sky/${pet && pet.id === 'hac_long_chan' ? 'hac_long_chan' : 'hac_long'}.png`)); }
+  }
+  // chạm trên Đồi Sáo Diều: khoảng trời → thả diều / giữ dây; Mảnh Sao → đi tới nhặt. Trả true nếu đã xử lý.
+  function kiteTap(x, y) {
+    if (!onHill()) return false;
+    const m = WORLD.maps[P.pos.map];
+    if ((m.tiles[y] || '')[x] === '^') {
+      if (kite) { holdKite(); return true; }
+      if (nearSky() && Math.max(Math.abs(x - P.pos.x), Math.abs(y - P.pos.y)) <= SKY.reach) { flyKite([x, y]); return true; }
+      toast('Đứng ở mép đồi (cạnh khoảng trời) rồi chạm vào trời để thả diều.');
+      return true;
+    }
+    if ((skySt.stars || []).some(([sx, sy]) => sx === x && sy === y)) { pickStar(x, y); return true; }
+    return false;
+  }
+  async function pickStar(x, y) {
+    if (Math.max(Math.abs(x - P.pos.x), Math.abs(y - P.pos.y)) > 1) await walkTo(x, y);
+    if (P && Math.max(Math.abs(x - P.pos.x), Math.abs(y - P.pos.y)) <= 1) sendCommand({ act: 'star_pick', x, y });
+  }
+  // Ông Lão Làm Diều: việc mỗi ngày, ghép Sáo Đồng, cách thả diều
+  function kiteElderCard() {
+    const e = P.view.kite || { n: 0, count: 0, reward: {} }, F = SKY.flock || {}, need = (SKY.craft || {}).sao_dong || {};
+    const have = Object.entries(need).every(([id, n]) => (P.inv[id] || 0) >= n);
+    return `<div class="card"><h3>🪁 Ông Lão Làm Diều</h3>
+      <p class="small">Đứng ở mép đồi (cạnh khoảng trời) rồi chạm vào trời trong ${SKY.reach} ô để thả diều. Gió giật thì <b>giữ dây</b> ngay (trong ${(SKY.window_ms / 1000).toFixed(1)} giây): diều mang về Lông Hạc, Mảnh Mây, đôi khi ngọc; mỗi lần +1 Phong Khí.</p>
+      <p class="small"><b>Việc hôm nay:</b> thả thành công <b>${e.count}</b> lần ở đồi rồi quay lại: <b>${fmt(e.reward.gold || 0)}</b> vàng, <b>${fmt(e.reward.xp || 0)}</b> kinh nghiệm, <b>+${e.reward.phong_khi || 0}</b> Phong Khí. Đã thả: <b class="num">${e.n}/${e.count}</b></p>
+      <button class="btn ${e.n >= e.count && !e.done ? 'primary' : ''} block" data-act="kite_elder" ${e.n >= e.count && !e.done ? '' : 'disabled'}>${e.done ? 'Hôm nay đã nhận, mai quay lại' : 'Nhận công'}</button>
+      <p class="small" style="margin-top:8px"><b>Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}:</b> ${Object.entries(need).map(([id, n]) => `${esc((ITEMS[id] || {}).name || id)} <span class="num">${P.inv[id] || 0}/${n}</span>`).join(', ')}. Gắn vào diều thì thả trúng ô Chim Lạc cơ hội ×${(SKY.bird || {}).bait_mult}.</p>
+      <button class="btn block" data-act="kite_craft" ${have ? '' : 'disabled'}>🎶 Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}</button>
+      <p class="small muted">🕊 Đàn Hạc: khoảng ${Math.round(F.every / 60)} phút một lần, bay vòng ở một ô trời trong ${Math.round(F.stay / 60)} phút; thả trúng thì quà tốt hơn, +${F.phong_khi} Phong Khí.${skySt.flock ? ' <b>Đàn đang bay!</b>' : ''} 🌠 Ban đêm có mưa sao băng: Mảnh Sao rơi trên đồi, chạm để nhặt.</p></div>`;
+  }
+  let birdBoard = null, birdAt = 0, hacBoard = null, hacAt = 0;
+  async function loadBoard(act) {
+    try { const r = await Net.send({ act }); if (r.ok) { if (act === 'bird_board') birdBoard = r.board; else hacBoard = r.board; refresh(); } } catch (e) { /* thử lại lần mở sau */ }
+  }
+  const boardList = (b, empty) => (b === null ? '<p class="small muted">Đang đọc bia…</p>' : b.length
+    ? `<div class="list">${b.map((x) => `<div class="item"><b class="num" style="color:var(--gold)">#${x.n}</b><div class="grow">${esc(x.name)}</div><span class="small muted">${esc(x.at)}</span></div>`).join('')}</div>`
+    : `<p class="small muted">${empty}</p>`);
+  function birdCard() {
+    const B = SKY.bird || {}, pet = PETS.find((x) => x.id === B.pet), bait = P.inv[B.bait] || 0, pk = (P.view.kite || {}).phong_khi || 0;
+    if (!pet) return '';
+    if (Date.now() - birdAt > 60000) { birdAt = Date.now(); loadBoard('bird_board'); }
+    const odds = (k) => `1/${fmt(Math.round(1 / (B.chance * k)))}`;
+    return `<div class="card"><div class="row">${petPic(pet)}<div class="grow"><h3>🐦 ${esc(pet.name)}</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
+      <p class="small">Mỗi giờ Chim Lạc lượn một lần, lúc ngẫu nhiên, ở một ô trời (ánh đồng lấp lánh), ở lại ${Math.round(B.stay / 60)} phút. Thả diều trúng đúng ô đó mới có cơ hội: <b>${odds(1)}</b> mỗi lần, nhân thêm theo Phong Khí, có ${esc((ITEMS[B.bait] || {}).name || '')} thì gấp ${B.bait_mult}.</p>
+      <p class="small">Phong Khí: tối đa ${B.phong_khi_max} (cơ hội ×${1 + B.phong_khi_max / B.phong_khi_div}); cảm hóa được thì về 0. Bạn có <b>${pk}</b>, cơ hội hiện tại <b>${odds((1 + pk / B.phong_khi_div) * (bait ? B.bait_mult : 1))}</b>. ${esc((ITEMS[B.bait] || {}).name || '')}: <b>${fmt(bait)}</b>.${(P.pets || []).includes(B.pet) ? ' Bạn đã là chủ của Chim Lạc.' : ''}${skySt.bird ? ' <b style="color:var(--gold)">Chim Lạc đang lượn!</b>' : ''}</p></div>
+      <div class="card"><h3>Bia Chim Lạc</h3>${boardList(birdBoard, 'Bia còn trống. Chưa ai cảm hóa được Chim Lạc.')}</div>`;
+  }
+  // Hắc Long: truyền thuyết, điều kiện làm lễ, Bia Hắc Long
+  function hacCard() {
+    const E = SKY.egg || {}, H = SKY.hoi || {}, pet = PETS.find((x) => x.id === E.pet), miss = P.view.hacMissing || [];
+    if (!pet) return '';
+    if (Date.now() - hacAt > 60000) { hacAt = Date.now(); loadBoard('hac_board'); }
+    return `<div class="card"><div class="row"><img class="sprite" src="${asset('sky/hac_long.png')}" alt=""><div class="grow"><h3>🐉 ${esc(pet.name)} — Con Rồng Cháu Tiên</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
+      <p class="small">Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh <b>Bọc Trăm Trứng</b>. Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi <b>cùng lúc</b>, cả server được báo <b>Long Phượng Hội</b>: vòng sáng mở ở Tế Đàn ${Math.round(H.stay / 60)} phút. Đủ điều kiện thì bước vào vòng làm lễ; người khác vào vòng được hưởng lộc +${H.lucky_qi} Long Khí, Phong Khí.</p>
+      <p class="small"><b>Điều kiện:</b> có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long. ${miss.length ? `Bạn còn thiếu: <b>${esc(miss.join(', '))}</b>.` : '<b style="color:var(--good)">Bạn đã đủ điều kiện!</b>'}</p>
+      <p class="small">Trứng nở khi hạ đủ ${fmt(E.kills)} quái, hoặc sau ${E.days} ngày, hoặc hạ Hắc Long thêm một lần. ${Math.round(E.rare_chance * 100)}% nở ra <b>Hắc Long Chân Thân</b>.</p></div>
+      <div class="card"><h3>Bia Hắc Long</h3>${boardList(hacBoard, 'Chưa ai thuần phục được Hắc Long. Người đầu tiên sẽ được cả server nhớ tên.')}</div>`;
+  }
+  // Tế Đàn khi có Long Phượng Hội: nút làm lễ
+  function viewHoi() {
+    const h = skySt.hoi;
+    if (!h || !P || P.pos.map !== (SKY.hoi || {}).map || dialog) return '<div id="hoi-ui" hidden></div>';
+    const inRing = Math.max(Math.abs(P.pos.x - h.at[0]), Math.abs(P.pos.y - h.at[1])) <= h.radius, miss = P.view.hacMissing || [];
+    return `<div id="hoi-ui" class="fish-ui ${inRing ? 'bite' : 'idle'}"><span aria-hidden="true">🐉🐦</span>
+      <b>${inRing ? (miss.length ? 'Trong vòng sáng: hưởng lộc Long Phượng Hội' : 'Trong vòng sáng: làm lễ nhận Bọc Trăm Trứng') : 'Long Phượng Hội: bước vào vòng sáng'}</b>
+      <button class="btn ${inRing ? 'primary' : ''}" data-act="le_long_phuong" ${inRing ? '' : 'disabled'}>${miss.length ? '✨ Hưởng lộc' : '🐉🐦 Làm lễ'}</button></div>`;
+  }
+  function redrawHoi() { const el = $('#hoi-ui'); if (el) el.outerHTML = viewHoi(); }
+  // Bọc Trăm Trứng đang ấp (tab Thú cưng)
+  function eggCard() {
+    const e = P.view.egg;
+    if (!e) return '';
+    return `<div class="card egg-card"><div class="row"><img class="sprite lg" src="${asset('sky/egg.png')}" alt=""><div class="grow"><h3>🥚 Bọc Trăm Trứng</h3>
+      <p class="small">Nở khi đủ một trong: hạ quái <b class="num">${fmt(e.kills)}/${fmt(e.need_kills)}</b> · ấp <b class="num">${e.days}/${e.need_days}</b> ngày · hạ Hắc Long thêm một lần ${e.boss ? '✔' : '✘'}.</p>
+      ${bar('xp', Math.max(e.kills / e.need_kills, e.days / e.need_days, e.boss ? 1 : 0) * 100, 100, e.ready ? 'Trứng đang rung lên!' : 'Đang ấp…')}</div></div>
+      <button class="btn ${e.ready ? 'primary' : ''} block" data-act="egg_hatch" ${e.ready ? '' : 'disabled'}>${e.ready ? '🥚💥 Cho trứng nở' : 'Chưa nở được'}</button></div>`;
   }
 
   // ---------- Hướng dẫn người mới ----------
@@ -1722,6 +1882,7 @@
       if (tut) tut.outerHTML = viewTutorial();
       const fish = $('#fish-ui');
       if (fish) fish.outerHTML = viewFishing();
+      redrawKite(); redrawHoi();
       // tự đánh: bật / tắt thì vẽ lại cả thanh; đang bật chỉ đổi dòng trạng thái (không đóng ô cài đặt đang chọn)
       // tự đánh / đánh nhanh: trạng thái đổi thì vẽ lại cả thanh; đang chạy thì cập nhật số (hạ được, máu quái)
       const ab = $('#auto-bar');
@@ -2729,7 +2890,7 @@
   const petView = (id) => ((P.view && P.view.pets) || []).find((x) => x.id === id);
   const pc0 = (x) => `${Math.round(x * 100)}%`;
   // Thú chỉ cộng chỉ số, chia nhóm (DECISIONS "Thú cưng 3 nhóm, chỉ cộng chỉ số")
-  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', mp: 'MP tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi' };
+  const PET_STAT = { atk: 'Tấn công', crit: 'Chí mạng', def: 'Phòng thủ', hp: 'Máu tối đa', mp: 'MP tối đa', reduce: 'Giảm sát thương nhận', xp: 'Kinh nghiệm', gold: 'Vàng rơi', dodge: 'Né' };
   const PET_GROUP_ICON = { war: '⚔️', guard: '🛡️', luck: '🍀', all: '🐉' };
   const petGroup = (g) => (g ? `<span class="tag pet-${g}">${PET_GROUP_ICON[g] || ''} ${esc((RULES.petGroups || {})[g] || g)}</span>` : '');
   const pctTxt = (x) => `${Math.round(x * 1000) / 10}%`;
@@ -2743,6 +2904,9 @@
     return `<div class="small" style="color:var(--good)">${txt}${v.level > 1 ? ` <span class="muted">(cấp ${v.level}: % ×${v.mult.toFixed(2)}${per ? `; ${per} mỗi cấp` : ''})</span>` : ''}</div>`;
   }
   function viewPets() {
+    return eggCard() + viewPetList();
+  }
+  function viewPetList() {
     const owned = (P.pets || []).map(petInfo).filter(Boolean);
     if (!owned.length) return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Chưa có thú cưng. Gặp Người Nuôi Thú ở góc dưới bên phải Làng.</p></div>`;
     return `<div class="card"><h3>Thú cưng</h3><p class="small muted">Thú dắt theo cộng chỉ số cho bạn (không đánh trong trận), theo nhóm: ⚔️ Chiến (tấn công, chí mạng), 🛡️ Hộ vệ (máu, phòng thủ, giảm sát thương nhận), 🍀 Tài lộc (kinh nghiệm, vàng). Thắng trận khi dắt theo (hoặc cho ăn ở Người Nuôi Thú) thì thú lên cấp, tối đa ${RULES.petMaxLevel}: chỉ số cộng tăng theo cấp.</p><div class="list">${owned.map((pt) => {
@@ -3839,6 +4003,7 @@
         }).join('')}</div></div>`);
     }
     if (n.role === 'dragon') sections.push(dragonCard());
+    if (n.role === 'kite') sections.push(kiteElderCard(), birdCard(), hacCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
       <div class="card npc-head">
@@ -4192,7 +4357,7 @@
       case 'smith': return { act, slot: d.slot };
       case 'daily_claim': return { act, i: +d.i };
       case 'tower_enter': return { act, floor: +d.floor };
-      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': case 'cs_enter': case 'cs_register': return { act };
+      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': case 'cs_enter': case 'cs_register': case 'kite_elder': case 'kite_craft': case 'le_long_phuong': case 'egg_hatch': return { act };
       case 'skill': return { act, skill: d.skill };
       case 'skill_break': return { act, skill: d.skill, pay: d.pay };
       case 'mail_claim': return { act, id: +d.id };
@@ -4208,7 +4373,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion', kite_elder: 'quest', kite_craft: 'forge', le_long_phuong: 'rare', egg_hatch: 'levelup', star_pick: 'rare' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }
@@ -4243,6 +4408,7 @@
         resultFx(cmd, r, old, true);
       } else {
         result(r);
+        skyResultFx(r);
         if (r.ok && before) battleFx(before, cmd.act, cmd.skill);
         commandSound(cmd, r, old);
         resultFx(cmd, r, old);
@@ -4275,6 +4441,7 @@
   async function step(dir, confirm) {
     if (busy || !P || P.battle) return false;
     if (fishing) { stopFishing(); toast('Bạn đã thu cần.'); }
+    if (kite) { stopKite(); toast('Bạn đã thu diều.'); redrawKite(); }
     busy = true;
     const mapBefore = P.pos.map, hadDialog = !!dialog, floorBefore = P.tower ? P.tower.floor : null;
     dialog = null;
@@ -4406,6 +4573,8 @@
       render();
       return;
     }
+    // Đồi Sáo Diều: chạm khoảng trời thả diều / giữ dây, chạm Mảnh Sao đi tới nhặt
+    if (kiteTap(x, y)) return;
     // chạm vào mặt nước: thả câu (phao rơi đúng ô đó), đang câu thì giật cần
     const m = WORLD.maps[P.pos.map], water = WORLD.water || ['~'];
     if (m && water.includes((m.tiles[y] || '')[x]) && P.pos.map !== 'tower') {
@@ -4606,6 +4775,8 @@
     if (act === 'guild-op') { const d = t.dataset; guildOp(d.op, Object.assign({}, d.id ? { id: +d.id } : {}, d.uid ? { uid: +d.uid } : {})); return; }
     if (act === 'chat-to') { const ch = chatChannels(); chatTo = ch[(ch.indexOf(chatTo) + 1) % ch.length]; const f = $('#chat-form'); if (f) f.outerHTML = viewChat().match(/<form id="chat-form"[\s\S]*<\/form>/)[0]; return; }
     if (act === 'fish-reel') { reelIn(); return; }
+    if (act === 'kite-fly') { walk = null; flyKite(); return; }
+    if (act === 'kite-hold') { holdKite(); return; }
     if (act === 'boss-yes') { const d = dialog; if (d) step(d.dir, true); return; }
     // ép bước có thể vỡ đồ / ghép mất đồ: hỏi lại trước
     if ((act === 'upgrade' || act === 'chaos_upgrade') && t.dataset.risk === 'destroy' && !confirm(`Ép ${t.dataset.name} thất bại sẽ VỠ món đồ. Vẫn ép?`)) return;
@@ -4866,6 +5037,7 @@
     Net.onChat(onChatMessage);
     Net.onWorldBoss(onWorldBoss);
     Net.onLake(onLake);
+    Net.onSky(onSky);
     Net.onInvasion(onInvasion);
     Net.onNotice((msg) => {
       note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good');

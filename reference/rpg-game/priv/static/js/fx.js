@@ -687,6 +687,13 @@
       sound('win');
       if (fw) [0.25, 0.6, 0.95, 1.3].forEach((s) => setTimeout(() => sound('firework'), s * 1000));
     },
+    // Hắc Long nở (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): trứng vỡ, rồng đen vươn lên, chữ LINH VẬT HẮC LONG
+    hatch(name, img) {
+      const el = mount('hatch-fx', `<div class="hx-dark"></div><div class="hx-rays"></div><img class="hx-img" src="${img}" alt=""><div class="hx-t">CON RỒNG CHÁU TIÊN</div><div class="hx-n">${esc(name || '')}</div>`, 4200);
+      el.addEventListener('click', () => el.remove());
+      sound('roar');
+      setTimeout(() => sound('levelup'), 700);
+    },
     // E1 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): vào trận đánh người — hai hình trượt vào, chữ VS
     // a / b: { name, doll (url ảnh), sub }
     vs(a, b, title) {

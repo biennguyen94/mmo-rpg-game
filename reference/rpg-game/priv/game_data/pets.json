@@ -218,6 +218,96 @@
         "boss": 0.1
       },
       "per_level": 0.08
+    },
+    {
+      "id": "chim_lac",
+      "name": "Chim Lạc",
+      "rare": true,
+      "price": 0,
+      "group": "all",
+      "bonus": {
+        "crit": 0.04,
+        "dodge": 0.025,
+        "hp": 0.08,
+        "xp": 0.08,
+        "gold": 0.08
+      },
+      "desc": "Chí mạng +4%, Né +2,5%, Máu tối đa +8%, Kinh nghiệm +8%, Vàng rơi +8%, MP tối đa +20 mỗi cấp thú. Thần điểu độc nhất (Đồi Sáo Diều): cấp tối đa 30, mỗi cấp tăng 8%; Phong Ân: quái rơi ngọc +25%.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false,
+      "flat": {
+        "mp": 20
+      },
+      "max_level": 30,
+      "traits": {
+        "jewel": 0.25
+      },
+      "per_level": 0.08
+    },
+    {
+      "id": "hac_long",
+      "name": "Hắc Long",
+      "rare": true,
+      "price": 0,
+      "group": "all",
+      "bonus": {
+        "atk": 0.09,
+        "crit": 0.04,
+        "def": 0.11,
+        "reduce": 0.07,
+        "dodge": 0.015,
+        "xp": 0.08,
+        "gold": 0.08
+      },
+      "desc": "Tấn công +9%, Chí mạng +4%, Phòng thủ +11%, Giảm sát thương nhận +7%, Né +1,5%, Kinh nghiệm +8%, Vàng rơi +8%, Máu tối đa +35, MP tối đa +15 mỗi cấp thú. Linh vật Con Rồng Cháu Tiên, nở từ Bọc Trăm Trứng: cấp tối đa 30, mỗi cấp tăng 8%; Long Uy (kháng một nửa hiệu ứng xấu); Long Ân (ngọc +25%, trùm thế giới +10%); Long Huyết: sát thương lên Hắc Long và quái hệ Bóng Tối +10%.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false,
+      "flat": {
+        "hp": 35,
+        "mp": 15
+      },
+      "max_level": 30,
+      "traits": {
+        "ward": 0.5,
+        "jewel": 0.25,
+        "boss": 0.1,
+        "slayer": 0.1
+      },
+      "per_level": 0.08
+    },
+    {
+      "id": "hac_long_chan",
+      "name": "Hắc Long Chân Thân",
+      "rare": true,
+      "price": 0,
+      "group": "all",
+      "bonus": {
+        "atk": 0.1,
+        "crit": 0.05,
+        "def": 0.12,
+        "reduce": 0.08,
+        "dodge": 0.02,
+        "xp": 0.09,
+        "gold": 0.09
+      },
+      "desc": "Tấn công +10%, Chí mạng +5%, Phòng thủ +12%, Giảm sát thương nhận +8%, Né +2%, Kinh nghiệm +9%, Vàng rơi +9%, Máu tối đa +40, MP tối đa +18 mỗi cấp thú. Hắc Long hiếm (10% trứng nở ra): như Hắc Long, Long Huyết +15%.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false,
+      "flat": {
+        "hp": 40,
+        "mp": 18
+      },
+      "max_level": 30,
+      "traits": {
+        "ward": 0.5,
+        "jewel": 0.25,
+        "boss": 0.1,
+        "slayer": 0.15
+      },
+      "per_level": 0.08
     }
   ]
 }

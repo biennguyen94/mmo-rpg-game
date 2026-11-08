@@ -29,6 +29,8 @@
   // hiệu ứng di chuyển (docs/FX_PLAN.md): dấu bước chân, ô đích vừa chạm, lúc sang bản đồ mới
   let steps = [], lastTile = null, mark = null, arrive = 0;
   let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
+  // Đồi Sáo Diều (HacLong.SkyEvent): Chim Lạc, Đàn Hạc { x, y, until }, Mảnh Sao [[x, y]], Long Phượng Hội { at, until, radius }
+  let skyEv = { bird: null, flock: null, stars: [], hoi: null };
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
@@ -302,6 +304,17 @@
       } else if (boss.nextAt) {
         L.push({ text: `🐉 ${boss.name || 'Trùm thế giới'} xuất hiện sau ${mmss((boss.nextAt - (boss.skew || 0) - Date.now()) / 1000)}`, k: 0, col: '#d9483b' });
       }
+    }
+    // Đồi Sáo Diều / Tế Đàn (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long")
+    const nowMs = Date.now(), SKY = (window.GAME_DATA.RULES || {}).sky || {};
+    if (m.kite) {
+      const b = skyEv.bird && skyEv.bird.until > nowMs, f = skyEv.flock && skyEv.flock.until > nowMs, st = skyEv.stars.length;
+      // một dòng cho cả ba (đỡ che phần trời): thanh theo Chim Lạc nếu có
+      const parts = [b && `🐦 Chim Lạc ${mmss((skyEv.bird.until - nowMs) / 1000)}`, f && `🕊 Đàn Hạc ${mmss((skyEv.flock.until - nowMs) / 1000)}`, st && `🌠 ${st} Mảnh Sao`].filter(Boolean);
+      if (parts.length) L.push({ text: parts.join(' · '), k: b ? (skyEv.bird.until - nowMs) / 1000 / ((SKY.bird || {}).stay || 180) : f ? (skyEv.flock.until - nowMs) / 1000 / ((SKY.flock || {}).stay || 120) : 1, col: b ? '#e0a040' : f ? '#e8f2ff' : '#ffd36a' });
+    }
+    if (skyEv.hoi && skyEv.hoi.until > nowMs) {
+      L.push({ text: `🐉🐦 Long Phượng Hội ở Tế Đàn · còn ${mmss((skyEv.hoi.until - nowMs) / 1000)}${P.pos.map === 'altar' ? ' · bước vào vòng sáng' : ''}`, k: (skyEv.hoi.until - nowMs) / 1000 / (((SKY.hoi || {}).stay) || 300), col: '#c88cff' });
     }
     // F1: chiến bang đang diễn ra: tỉ số hai bang (mọi bản đồ, trừ trong Tháp)
     const w = !t && P.guild && P.guild.war;
@@ -845,6 +858,7 @@
     }
 
     groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
+    if (m.kite) clouds(now, m, cx, cy, fx);
     if (tufts.length) grassFx(now, tufts);
     for (const [ix, iy] of incense) {
       for (let i = 0; i < 4; i++) {
@@ -965,6 +979,8 @@
     if (fx) moveFx(now, m, P, cx, cy, px, py);
     if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
     if (look && look.pet === 'long_vuong') dragonAura(now, px, py, fx);
+    if (look && (look.pet === 'hac_long' || look.pet === 'hac_long_chan')) hacAura(now, px, py, fx, look.pet === 'hac_long_chan');
+    if (look && look.pet === 'chim_lac') birdAura(now, px, py, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
     const myDoll = Doll.canvas(look);
@@ -979,6 +995,7 @@
     if (mine) talk.push([mine, px + TILE / 2, py]);
     // câu cá: cần, dây, phao, cá bay lên (chỉ phía mình)
     if (fishing) fishFx(now, m, cx, cy, px, py, fx);
+    if (kiting) kiteFx(now, m, cx, cy, px, py, fx);
     // hướng dẫn người mới: vòng sáng nhấp nháy và mũi tên ở ô cần tới
     const goal = P.view && P.view.tutorial && P.view.tutorial.target;
     if (goal && goal.map === P.pos.map) {
@@ -1041,6 +1058,16 @@
       }
     }
     if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
+    // Đồi Sáo Diều: Đàn Hạc, Chim Lạc lượn trên trời, Mảnh Sao rơi trên đồi; Tế Đàn: vòng Long Phượng Hội
+    if (m.kite) {
+      const t = Date.now();
+      if (skyEv.flock && t < skyEv.flock.until) flockSpot(now, skyEv.flock.x * TILE - cx, skyEv.flock.y * TILE - cy, fx);
+      if (skyEv.bird && t < skyEv.bird.until) birdSpot(now, skyEv.bird.x * TILE - cx, skyEv.bird.y * TILE - cy, fx);
+      for (const [sx, sy] of skyEv.stars) starSpot(now, sx * TILE - cx, sy * TILE - cy, fx, labels);
+      // mây trôi, chim lượn: vẽ lại liên tục (~16 khung / giây) khi bật hiệu ứng
+      if (fx && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
+    }
+    if (skyEv.hoi && Date.now() < skyEv.hoi.until && P.pos.map === 'altar') hoiRing(now, skyEv.hoi, cx, cy, fx);
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     // Vương Miện khuất khỏi khung nhìn: mũi tên vàng ở mép chỉ về phía nó (D1)
     if (crownSpot) edgeArrow(crownSpot[0], crownSpot[1], '240, 207, 122', fx ? now : 0, '👑');
@@ -1509,6 +1536,13 @@
     // G2: trùm thế giới, Vương Miện (to, nhấp nháy); người chơi khác: hồng (khác quái đỏ, NPC xanh lá, cổng tím),
     // đồng đội tổ đội vàng chanh, người bang mình xanh dương, người bang địch đỏ cam viền trắng
     if (m.worldBoss && boss.alive) dot(m.worldBoss[0], m.worldBoss[1], `rgba(255, 70, 50, ${blink})`, Math.max(2.5, s * 1.1));
+    // Đồi Sáo Diều: Chim Lạc (đồng, to), Đàn Hạc (trắng), Mảnh Sao (vàng); Tế Đàn: vòng Long Phượng Hội (tím)
+    if (m.kite) {
+      if (skyEv.bird) dot(skyEv.bird.x, skyEv.bird.y, `rgba(240, 170, 70, ${blink})`, Math.max(2.5, s * 1.1));
+      if (skyEv.flock) dot(skyEv.flock.x, skyEv.flock.y, 'rgba(255, 255, 255, 0.95)', Math.max(2, s * 0.9));
+      for (const [sx, sy] of skyEv.stars) dot(sx, sy, `rgba(255, 230, 120, ${blink})`, Math.max(1.5, s * 0.7));
+    }
+    if (skyEv.hoi && P.pos.map === 'altar') dot(skyEv.hoi.at[0], skyEv.hoi.at[1], `rgba(200, 140, 255, ${blink})`, Math.max(3, s * 1.4));
     if (world.map === P.pos.map) {
       const crown = m.event === 'castle_siege' && (world.monsters || []).find((q) => q.kind === CS.crownKind);
       if (crown) dot(crown.x, crown.y, `rgba(255, 215, 90, ${blink})`, Math.max(2.5, s * 1.1));
@@ -1826,6 +1860,201 @@
     ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]);
   }
 
+  // ---------- Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long") ----------
+  // mây trôi ngang trên phần trời (hình mây CC0, `sky/clouds.png`: 5 đám), chỉ ở các hàng có ô trời
+  const CLOUD_RECTS = [[0, 0, 128, 26], [0, 27, 128, 34], [16, 62, 92, 26], [0, 90, 64, 34], [64, 92, 64, 32]];
+  function clouds(t, m, cx, cy, fx) {
+    const im = image('sky/clouds');
+    if (!im.complete) return;
+    let rows = 0;
+    while (rows < m.tiles.length && m.tiles[rows].includes('^')) rows++;
+    const h = rows * TILE - cy;
+    if (h <= 0) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW(), h); ctx.clip();
+    const w = m.tiles[0].length * TILE;
+    for (let i = 0; i < 7; i++) {
+      const [sx, sy, sw, sh] = CLOUD_RECTS[i % CLOUD_RECTS.length];
+      const speed = 0.006 + 0.004 * rnd(i, 3), y = 6 + rnd(i, 4) * (rows * TILE - sh - 10);
+      const x = (((rnd(i, 5) * w + (fx ? t : 0) * speed) % (w + sw * 2)) - sw);
+      ctx.globalAlpha = 0.75 + 0.2 * rnd(i, 6);
+      ctx.drawImage(im, sx, sy, sw, sh, Math.round(x - cx), Math.round(y - cy), sw, sh);
+    }
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  // Chim Lạc lượn vòng quanh ô (6 khung bay `sky/chim_lac.png`, mỗi khung 64×64), ánh đồng lấp lánh
+  function birdSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0;
+    const g = ctx.createRadialGradient(c, d, 2, c, d, TILE * 1.1);
+    g.addColorStop(0, `rgba(255, 205, 110, ${0.45 + 0.2 * Math.sin(k / 300)})`); g.addColorStop(1, 'rgba(255, 205, 110, 0)');
+    ctx.fillStyle = g; ctx.fillRect(c - TILE * 1.2, d - TILE * 1.2, TILE * 2.4, TILE * 2.4);
+    const im = image('sky/chim_lac');
+    if (im.complete) {
+      const a = k / 1300, bx = c + Math.cos(a) * TILE * 0.55, by = d + Math.sin(a) * TILE * 0.3 - 4;
+      const fr = Math.floor(k / 110) % 4 + 1, flip = Math.sin(a) < 0;
+      ctx.save(); ctx.translate(bx, by); if (!flip) ctx.scale(-1, 1);
+      ctx.drawImage(im, fr * 64, 0, 64, 64, -26, -26, 52, 52); ctx.restore();
+    }
+    if (fx) sparkle(c, d, t, 6, TILE * 0.9, 'rgba(255, 236, 170, 0.9)');
+    ctx.strokeStyle = 'rgba(255, 210, 120, 0.85)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+  }
+  // Đàn Hạc: năm con hạc trắng (`sky/hac.png`, 6 khung 32×32) bay vòng
+  function flockSpot(t, x, y, fx) {
+    const c = x + TILE / 2, d = y + TILE / 2, k = fx ? t : 0, im = image('sky/hac');
+    for (let i = 0; i < 5; i++) {
+      const a = k / 900 + i * 1.26, r = TILE * (0.35 + 0.12 * (i % 2));
+      const bx = c + Math.cos(a) * r, by = d + Math.sin(a) * r * 0.5;
+      if (im.complete) {
+        const fr = (Math.floor(k / 130) + i) % 5;
+        ctx.save(); ctx.translate(bx, by); if (Math.sin(a) > 0) ctx.scale(-1, 1);
+        ctx.drawImage(im, fr * 32, 0, 32, 32, -11, -11, 22, 22); ctx.restore();
+      }
+    }
+    ctx.strokeStyle = 'rgba(240, 248, 255, 0.6)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2); ctx.setLineDash([]);
+  }
+  // Mảnh Sao vừa rơi trên đồi: hòn sáng vàng, quầng, tia lấp lánh
+  function starSpot(t, x, y, fx, labels) {
+    const c = x + TILE / 2, d = y + TILE / 2 + 4, k = fx ? t : 0, p = 0.6 + 0.4 * Math.sin(k / 220 + x);
+    const g = ctx.createRadialGradient(c, d, 1, c, d, TILE * 0.8);
+    g.addColorStop(0, `rgba(255, 230, 140, ${0.75 * p})`); g.addColorStop(1, 'rgba(255, 230, 140, 0)');
+    ctx.fillStyle = g; ctx.fillRect(c - TILE, d - TILE, TILE * 2, TILE * 2);
+    const im = image('items/manh_sao');
+    if (im.complete) ctx.drawImage(im, c - 11, d - 11, 22, 22);
+    if (fx) sparkle(c, d, t, 4, 10, 'rgba(255, 255, 220, 0.95)');
+    labels.push(['🌠 Mảnh Sao', c, y - 4, '#ffe08a']);
+  }
+  // Long Phượng Hội ở Tế Đàn: vòng sáng tím vàng bán kính `radius` ô, rồng và chim bay quấn quanh
+  function hoiRing(t, h, cx, cy, fx) {
+    const c = h.at[0] * TILE - cx + TILE / 2, d = h.at[1] * TILE - cy + TILE / 2, R = (h.radius + 0.5) * TILE, k = fx ? t : 0;
+    const g = ctx.createRadialGradient(c, d, R * 0.2, c, d, R * 1.1);
+    g.addColorStop(0, 'rgba(200, 140, 255, 0.25)'); g.addColorStop(0.8, `rgba(255, 210, 110, ${0.22 + 0.1 * Math.sin(k / 400)})`); g.addColorStop(1, 'rgba(255, 210, 110, 0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, d, R * 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(255, 220, 130, ${0.7 + 0.3 * Math.sin(k / 250)})`; ctx.lineWidth = 2.5;
+    ctx.setLineDash([8, 6]); ctx.lineDashOffset = -k / 40;
+    ctx.beginPath(); ctx.arc(c, d, R, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    const dragon = image('pets/long_vuong'), bird = image('sky/chim_lac');
+    const a = k / 1200;
+    if (dragon.complete) ctx.drawImage(dragon, c + Math.cos(a) * R * 0.7 - 20, d + Math.sin(a) * R * 0.45 - 30, 40, 40);
+    if (bird.complete) {
+      const fr = Math.floor(k / 110) % 4 + 1;
+      ctx.drawImage(bird, fr * 64, 0, 64, 64, c + Math.cos(a + Math.PI) * R * 0.7 - 24, d + Math.sin(a + Math.PI) * R * 0.45 - 34, 48, 48);
+    }
+    if (fx) sparkle(c, d, t, 12, R, 'rgba(255, 240, 200, 0.9)');
+    if (fx && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
+  }
+  // thú Hắc Long dắt theo: quầng tím đen dưới chân, rồng nhỏ bay lượn bên cạnh
+  function hacAura(t, px, py, fx, chan) {
+    const x = px + TILE / 2, y = py + TILE - 4, pulse = fx ? 0.5 + 0.5 * Math.sin(t / 450) : 0.5;
+    ctx.save();
+    ctx.strokeStyle = chan ? `rgba(220, 150, 255, ${0.55 + 0.3 * pulse})` : `rgba(150, 90, 220, ${0.45 + 0.3 * pulse})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y, 16 + pulse * 2, 6 + pulse, 0, 0, Math.PI * 2); ctx.stroke();
+    const im = image(chan ? 'sky/hac_long_chan' : 'sky/hac_long');
+    if (im.complete) {
+      const a = (fx ? t : 0) / 900, dx = Math.cos(a) * 18, dy = Math.sin(a * 2) * 4;
+      ctx.globalAlpha = 0.95;
+      ctx.save(); ctx.translate(x + dx + 12, py - 2 + dy); if (Math.cos(a) < 0) ctx.scale(-1, 1);
+      ctx.drawImage(im, -15, -10, 30, 19); ctx.restore();
+    }
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  // thú Chim Lạc dắt theo: chim đồng nhỏ bay vòng trên đầu
+  function birdAura(t, px, py, fx) {
+    const im = image('sky/chim_lac');
+    if (!im.complete) return;
+    const a = (fx ? t : 0) / 800, fr = Math.floor((fx ? t : 0) / 110) % 4 + 1;
+    ctx.save(); ctx.translate(px + TILE / 2 + Math.cos(a) * 14, py - 6 + Math.sin(a) * 4); if (Math.sin(a) > 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, fr * 64, 0, 64, 64, -11, -11, 22, 22); ctx.restore();
+  }
+
+  // ---------- Thả diều: dây, diều, gió giật, quà gió bay về (ui.js gọi MapView.kite) ----------
+  // kiting: { phase: fly | wait | gust | catch | miss, t0, tx, ty (ô trời diều bay tới), big, item }
+  let kiting = null;
+  const KITE_MS = { fly: 700, catch: 1800, miss: 700 };
+  function kiteTile(P, m) {
+    for (const [dx, dy] of [[0, -1], [1, 0], [-1, 0], [0, 1]]) {
+      const s = (k) => (m.tiles[P.pos.y + dy * k] || '')[P.pos.x + dx * k] === '^';
+      if (s(1)) return s(2) ? [P.pos.x + dx * 2, P.pos.y + dy * 2] : [P.pos.x + dx, P.pos.y + dy];
+    }
+    return null;
+  }
+  function drawKite(x, y, ang, big) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    ctx.fillStyle = big ? '#ffd34d' : '#e8352a';
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(8, 0); ctx.lineTo(0, 13); ctx.lineTo(-8, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = big ? '#fff3b0' : '#ffd34d';
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(8, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(-8, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(0, 13); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke();
+    // đuôi diều: dải lụa uốn
+    ctx.strokeStyle = '#ffe9b0'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, 13);
+    for (let i = 1; i <= 4; i++) ctx.quadraticCurveTo(i % 2 ? 5 : -5, 13 + i * 5 - 2, 0, 13 + i * 5);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function kiteFx(now, m, cx, cy, px, py, anim) {
+    const f = kiting, el = now - f.t0;
+    const hx = px + TILE - 8, hy = py + 14; // tay cầm dây
+    const kx0 = f.tx * TILE - cx + TILE / 2, ky0 = f.ty * TILE - cy + TILE / 2;
+    if (f.phase === 'fly' && el > KITE_MS.fly) { f.phase = 'wait'; f.t0 = now - (el - KITE_MS.fly); }
+    if (['catch', 'miss'].includes(f.phase) && el > KITE_MS[f.phase]) { kiting = null; return; }
+    const e = now - f.t0;
+    let kx = kx0, ky = ky0, ang = 0, show = true;
+    if (f.phase === 'fly') {
+      const k = Math.min(1, e / KITE_MS.fly);
+      kx = hx + (kx0 - hx) * k; ky = hy + (ky0 - hy) * k - Math.sin(k * Math.PI) * 20; ang = (1 - k) * 0.8;
+    } else if (f.phase === 'wait') {
+      kx = kx0 + (anim ? Math.sin(e / 700) * 6 : 0); ky = ky0 + (anim ? Math.sin(e / 500) * 4 : 0); ang = anim ? Math.sin(e / 600) * 0.25 : 0;
+    } else if (f.phase === 'gust') {
+      kx = kx0 + (anim ? Math.sin(e / 45) * 7 : 0); ky = ky0 - Math.min(10, e / 40); ang = anim ? Math.sin(e / 60) * 0.7 : 0;
+      if (f.big) {
+        const g = ctx.createRadialGradient(kx, ky, 2, kx, ky, TILE * 1.4);
+        g.addColorStop(0, 'rgba(255, 210, 110, 0.55)'); g.addColorStop(1, 'rgba(255, 210, 110, 0)');
+        ctx.fillStyle = g; ctx.fillRect(kx - TILE * 1.4, ky - TILE * 1.4, TILE * 2.8, TILE * 2.8);
+      }
+      const j = anim ? Math.abs(Math.sin(e / 110)) * 6 : 0;
+      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+      ctx.strokeText('!', kx, ky - 18 - j); ctx.fillStyle = f.big ? '#ffd34d' : '#ffe14d'; ctx.fillText('!', kx, ky - 18 - j);
+      if (anim) for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(255,255,255,${0.5 - i * 0.12})`; ctx.lineWidth = 1; ctx.beginPath(); const yy = ky - 6 + i * 6, ph = (e / 180 + i * 0.3) % 1; ctx.moveTo(kx - 30 + ph * 20, yy); ctx.lineTo(kx - 14 + ph * 20, yy); ctx.stroke(); }
+    } else if (f.phase === 'miss') {
+      kx = kx0 + e / 6; ky = ky0 - e / 10; ang = e / 120; show = e < 600;
+    } else if (f.phase === 'catch') {
+      const k = Math.min(1, e / 500); kx = kx0 + (hx - kx0) * k; ky = ky0 + (hy - 20 - ky0) * k; show = e < 500;
+    }
+    // dây diều: đường cong võng xuống
+    if (show && f.phase !== 'miss') {
+      ctx.strokeStyle = 'rgba(245, 240, 230, 0.85)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + kx) / 2, Math.max(hy, ky) + 12, kx, ky + 12); ctx.stroke();
+    }
+    if (show) drawKite(kx, ky, ang, f.big);
+    if (f.phase === 'catch') {
+      const bird = f.item === 'chim_lac';
+      if (anim && (bird || f.item === 'manh_sao' || /^jewel_/.test(f.item || ''))) {
+        const a = Math.max(0, 1 - e / KITE_MS.catch) * (bird ? 0.6 : 0.45), w = TILE * (bird ? 1.3 : 0.8);
+        const g = ctx.createLinearGradient(0, ky0 - VH(), 0, ky0);
+        g.addColorStop(0, 'rgba(255, 225, 120, 0)'); g.addColorStop(1, `rgba(255, 225, 120, ${a})`);
+        ctx.fillStyle = g; ctx.fillRect(kx0 - w / 2, 0, w, ky0 + 4);
+        sparkle(kx0, ky0, e, bird ? 18 : 10, TILE * (bird ? 2.4 : 1.4), '#fff2a8');
+      }
+      const k = Math.min(1, e / 900), tx = px + TILE / 2, ty = py;
+      const x = kx0 + (tx - kx0) * k, y = ky0 + (ty - ky0) * k - Math.sin(k * Math.PI) * (bird ? 50 : 30);
+      if (bird) {
+        const im = image('sky/chim_lac'), fr = Math.floor(e / 110) % 4 + 1;
+        if (im.complete && k < 1) ctx.drawImage(im, fr * 64, 0, 64, 64, x - 30, y - 30, 60, 60);
+      } else {
+        // ngọc không có hình `items/` (dùng bộ icon riêng): hiện 💎; ảnh chưa tải / hỏng thì bỏ qua (không vẽ ảnh hỏng)
+        const jewel = /^jewel_/.test(f.item || ''), im = !jewel && image('items/' + f.item), sz = TILE * 0.8;
+        if (k < 1 && (jewel || (im.complete && im.naturalWidth))) {
+          ctx.save(); ctx.translate(x, y); ctx.rotate(anim ? k * Math.PI * 3 : 0);
+          if (jewel) { ctx.font = '20px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('💎', 0, 0); } else ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz);
+          ctx.restore();
+        }
+      }
+    }
+    if (!anim && !frame) frame = requestAnimationFrame(() => { frame = null; draw(); });
+  }
+
   // ---------- Câu cá: cần, dây, phao, cá bay (ui.js gọi MapView.fish) ----------
   // fishing: { phase: cast | wait | bite | catch | boot | miss, t0, tx, ty (ô phao), big, item }
   let fishing = null;
@@ -1979,6 +2208,28 @@
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
       lake = at(l); school = at(s); draw();
     },
+    // Đồi Sáo Diều (ui.js onSky): { bird, birdLeft, flock, flockLeft, stars, hoi: { at, left, radius } }
+    setSky(st) {
+      const t = Date.now(), at = (v, left) => v && { x: v[0], y: v[1], until: t + left };
+      skyEv = { bird: at(st.bird, st.birdLeft), flock: at(st.flock, st.flockLeft), stars: st.stars || [],
+        hoi: st.hoi && { at: st.hoi.at, until: t + st.hoi.left, radius: st.hoi.radius } };
+      draw();
+    },
+    sky: () => skyEv,
+    // thả diều (ui.js): fly | gust | catch | miss | null; data: { big, item, tx, ty }
+    kite(ev, data = {}) {
+      const P = getPlayer(), m = P && cur(P);
+      if (!ev || !m) { kiting = null; draw(); return; }
+      if (ev === 'fly') {
+        const t = data.tx != null ? [data.tx, data.ty] : kiteTile(P, m);
+        kiting = t && { phase: 'fly', t0: performance.now(), tx: t[0], ty: t[1], big: false };
+      } else if (kiting) {
+        Object.assign(kiting, data, { phase: ev, t0: performance.now() });
+        if (ev === 'gust') shakeMap(kiting.big);
+      }
+      draw();
+    },
+    kiteTile() { const P = getPlayer(), m = P && cur(P); return m ? kiteTile(P, m) : null; },
     // vừa lên cấp (ui.js celebrate): cột sáng vàng ở chỗ nhân vật
     levelUp() { levelAt = performance.now(); draw(); },
     // vòng sáng ở ô vừa chạm để đi tới (ui.js walkTo)
@@ -2009,6 +2260,8 @@
     setFight,
     fightSpots,
     // dòng thanh sự kiện ở đáy bản đồ (e2e đọc chữ, canvas không đọc được)
+    // chiều cao thanh sự kiện (px CSS) đang chiếm mép trên
+    hudPx: () => hudPx,
     hudLines() { const P = getPlayer(); return P ? hudLines(P, cur(P)).map((l) => l.text + (l.sub ? ' | ' + l.sub : '')) : []; },
     // ⚡ con đang đánh trên bản đồ { id, hp } (e2e)
     fightTarget() { return fight; },

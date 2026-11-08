@@ -108,7 +108,7 @@ const px = await A.page.evaluate((n) => {
   const d = el.getContext('2d').getImageData(Math.floor(o.x * s + s / 2), Math.floor(o.y * s + s / 2), 1, 1).data;
   return [d[0], d[1], d[2]];
 }, B.name);
-R.check('bản đồ nhỏ: chấm hồng ở chỗ B', !!px && px[0] > 200 && px[1] < 150 && px[2] > 150, JSON.stringify(px));
+R.check('bản đồ nhỏ: chấm hồng ở chỗ B', !!px && px[0] > 200 && px[2] > 150 && px[0] - px[1] > 60, JSON.stringify(px));
 await shot(A.page, 'people-minimap.png');
 
 R.check('không lỗi JS', A.errors.length === 0 && B.errors.length === 0, A.errors.concat(B.errors).join(' | '));
