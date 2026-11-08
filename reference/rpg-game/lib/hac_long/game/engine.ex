@@ -2842,7 +2842,9 @@ defmodule HacLong.Game.Engine do
              else: Gear.add(p, g)
            ) do
         :trash ->
-          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"), reward}
+          # `trashed`: số món đã hủy (thông báo xong trận Đánh nhanh)
+          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"),
+           Map.update(reward, :trashed, 1, &(&1 + 1))}
 
         {p, :kept} ->
           # `gear_ids`: món vào túi, client cho bấm xem / hủy ngay trên bảng kết quả

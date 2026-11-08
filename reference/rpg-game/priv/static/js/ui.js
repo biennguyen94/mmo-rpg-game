@@ -1092,6 +1092,7 @@
     const ok = ['attack', ...(P.view.skillSet || [])];
     return (((P.view.autoCfg || {}).combo) || []).filter((s) => ok.includes(s.id));
   };
+  const lootFilterOn = () => (((P.view.autoCfg || {}).filter) || {}).on === true;
   const stepName = (s) => (s.id === 'attack' ? 'Đòn thường' : ((skillById(s.id) || {}).name || s.id));
   let quickPrev = null, quickLast = null, quickLogOpen = false, comboEdit = null;
   // mỗi lần vẽ: số sát thương / máu hồi bay lên trên bản đồ; trận vừa xong thì báo kết quả, giữ nhật ký để xem lại
@@ -1117,7 +1118,7 @@
     const rw = q.reward;
     if (q.result === 'win' && rw) {
       const loot = (rw.gear || []).length + Object.keys(rw.items || {}).length;
-      toast(`⚡ Hạ ${q.name}: +${fmt(rw.xp)} EXP, +${fmt(rw.gold)} vàng${loot ? `, ${loot} món rơi` : ''}`);
+      toast(`⚡ Hạ ${q.name}: +${fmt(rw.xp)} EXP, +${fmt(rw.gold)} vàng${loot ? `, ${loot} món rơi` : ''}${rw.trashed ? `, 🗑 hủy ${rw.trashed} món` : ''}`);
     } else if (q.result === 'lose') toast(`⚡ Gục ngã trước ${q.name}. Bấm 📜 xem lại trận.`, true);
     else toast(`⚡ Trận với ${q.name} kết thúc.`);
   }
@@ -1138,6 +1139,7 @@
         <button class="btn small-btn ${on ? 'primary' : ''}" data-act="quick-toggle" aria-pressed="${on}" title="Bật: bấm quái là tự đánh hết trận theo combo">⚡ Đánh nhanh: ${on ? 'Bật' : 'Tắt'}</button>
         <span class="grow small muted">${steps.length ? steps.map((x) => esc(stepName(x))).join(' → ') : 'Combo: theo bộ kỹ năng (buff trước)'}</span>
         ${quickLast ? `<button class="btn small-btn" data-act="quick-log" aria-expanded="${quickLogOpen}" title="Xem nhật ký trận vừa xong">📜</button>` : ''}
+        <button class="btn small-btn ${lootFilterOn() ? 'primary' : ''}" data-act="quick-filter" aria-pressed="${lootFilterOn()}" title="Tự hủy đồ rơi: ${lootFilterOn() ? 'đang bật' : 'đang tắt'} (bấm để chỉnh)">🗑</button>
         <button class="btn small-btn" data-act="quick-combo" title="Sửa combo">⚙</button></div>${quickLogOpen && quickLast ? viewQuickLog() : ''}`;
   }
   // Menu → Kỹ năng: sắp combo (danh sách ưu tiên, tối đa QUICK.max_steps bước)
@@ -1921,7 +1923,7 @@
   function lootFilterCard() {
     const f = (P.view.autoCfg || {}).filter || {}, on = f.on === true, keep = Array.isArray(f.keep) ? f.keep : (AUTO.keep_default || []);
     const keepLabel = (k) => (k === 'opt' ? `Từ ${AUTO.keep_opt_min || 2} dòng cộng thêm` : AUTO_KEEP[k] || k);
-    return `<div class="card set"><div class="row"><h3 class="grow">Tự hủy đồ rơi</h3>
+    return `<div class="card set" id="loot-filter-card"><div class="row"><h3 class="grow">Tự hủy đồ rơi</h3>
         <button class="btn ${on ? 'primary' : ''}" data-act="loot-filter" aria-pressed="${on}">${on ? 'Đang bật' : 'Đang tắt'}</button></div>
       <p class="small muted">Bật thì món trang bị rơi ra không thuộc loại nào được chọn dưới đây sẽ bị hủy ngay, không vào túi (cả khi đánh tay lẫn tự đánh). Nhẫn, dây chuyền, cánh, ngọc, nguyên liệu và đồ trùm rơi lần đầu luôn giữ.</p>
       <fieldset class="auto-keep"><legend class="small">Giữ lại</legend>${(AUTO.keep || []).map((k) => `<label class="small"><input type="checkbox" data-loot-keep="${k}" ${keep.includes(k) ? 'checked' : ''}> ${esc(keepLabel(k))}</label>`).join('')}</fieldset></div>`;
@@ -4256,6 +4258,7 @@
     if (act === 'auto-off') { sendCommand({ act: 'auto', on: false }); return; }
     if (act === 'quick-toggle') { sendCommand({ act: 'quick', on: !quickOn() }); return; }
     if (act === 'quick-manual') { sendCommand({ act: 'quick_manual' }); return; }
+    if (act === 'quick-filter') { tab = 'menu'; menuSec = 'settings'; render(); const c = $('#loot-filter-card'); if (c) c.scrollIntoView({ block: 'start' }); return; }
     if (act === 'quick-log') { quickLogOpen = !quickLogOpen; render(); return; }
     if (act === 'quick-combo') { tab = 'menu'; menuSec = 'skills'; render(); const c = $('#combo-card'); if (c) c.scrollIntoView({ block: 'start' }); return; }
     if (act === 'combo-add') { const st = (comboEdit || comboSteps()).slice(); if (st.length < QUICK.max_steps) st.push({ id: (mySkills()[0] || {}).id || 'attack', once: false }); comboEdit = st; render(); return; }

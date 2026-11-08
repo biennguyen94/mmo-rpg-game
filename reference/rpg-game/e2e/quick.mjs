@@ -77,5 +77,18 @@ const turn2 = await p.evaluate(() => (window.__hl.player().battle || {}).turn);
 R.check('✋ Đánh tay: mở màn trận, server thôi tự đánh', manual.manual === true && !!(await p.$('[data-act="attack"]')) && turn2 === manual.turn, JSON.stringify({ ...manual, turn2 }));
 for (let i = 0; i < 40; i++) { const b = (await p.evaluate(() => window.__hl.player().battle)); if (!b || b.over) break; await act(p, 'attack'); }
 await act(p, 'leave').catch(() => null);
+// 🗑 trên thanh ⚡: cho biết Tự hủy đồ rơi bật / tắt, bấm mở thẳng phần cài đặt
+await p.click('#tabs [data-tab="map"]');
+await p.waitForSelector('[data-act="quick-filter"]');
+const f0 = await p.getAttribute('[data-act="quick-filter"]', 'aria-pressed');
+await p.click('[data-act="quick-filter"]');
+await p.waitForSelector('#loot-filter-card', { timeout: 3000 }).catch(() => null);
+R.check('🗑 mở phần Tự hủy đồ rơi ở Cài đặt', !!(await p.$('#loot-filter-card')));
+await p.click('#loot-filter-card [data-act="loot-filter"]');
+await p.waitForFunction(() => ((window.__hl.player().view.autoCfg || {}).filter || {}).on === true, null, { timeout: 5000 }).catch(() => null);
+await p.click('#tabs [data-tab="map"]');
+await p.waitForSelector('[data-act="quick-filter"]');
+const f1 = await p.getAttribute('[data-act="quick-filter"]', 'aria-pressed');
+R.check('🗑 sáng khi Tự hủy đồ rơi đang bật', f0 === 'false' && f1 === 'true', `${f0} → ${f1}`);
 R.check('không lỗi JS', X.errors.length === 0, X.errors.join(' | '));
 await R.done(browser);

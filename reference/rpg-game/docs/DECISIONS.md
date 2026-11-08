@@ -1826,3 +1826,4 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Không áp: đồ sát, đấu trường, đang bật Tự đánh. Không đổi cân bằng (cùng lệnh như bấm tay).
 - Sửa kèm: lệnh di chuyển (`run_move`) giờ cũng hẹn nhịp (bước vào quái là trận bắt đầu ở đường này).
 - Kiểm: `test/hac_long/game/quick_fight_test.exs`, e2e `quick` (11 bước).
+- (bổ sung) "Tự hủy đồ rơi" (Menu → Cài đặt) vốn áp cho mọi trận (lúc rơi đồ), kể cả Đánh nhanh. Thêm: `reward.trashed` (số món đã hủy) → thông báo xong trận "🗑 hủy N món"; nút 🗑 trên thanh ⚡ sáng khi đang bật, bấm mở thẳng phần cài đặt.

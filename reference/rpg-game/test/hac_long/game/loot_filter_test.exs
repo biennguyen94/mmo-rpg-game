@@ -39,6 +39,9 @@ defmodule HacLong.Game.LootFilterTest do
     trashed = fight(p)
     assert Gear.bag(trashed) == []
     assert Enum.any?(trashed.battle.log, &(&1.text =~ "Tự hủy"))
+    # thông báo xong trận Đánh nhanh đếm số món đã hủy
+    assert trashed.battle.reward.trashed == 1
+    refute Map.has_key?(kept.battle.reward, :trashed)
     assert Data.rules().auto.keep != []
   end
 

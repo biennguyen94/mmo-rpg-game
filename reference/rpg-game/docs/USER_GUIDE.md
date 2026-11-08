@@ -164,6 +164,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
     đang mang. Mỗi lượt dùng **bước đầu tiên dùng được** (bước còn hồi chiêu / thiếu MP thì bỏ qua); kỹ năng buff có ô
     "chỉ khi chưa có hiệu ứng". Không có bước nào: dùng bộ kỹ năng (buff trước, rồi mạnh nhất).
   - Tự uống bình theo ngưỡng % của Tự đánh. Không áp cho đồ sát / đấu trường; đang bật Tự đánh thì Tự đánh lo hết.
+  - **Tự hủy đồ rơi** (Menu → Cài đặt) áp luôn cho Đánh nhanh: nút **🗑** trên thanh ⚡ sáng khi đang bật, bấm để mở thẳng
+    phần cài đặt đó; thông báo xong trận ghi thêm "🗑 hủy N món".
 
 ## 6. Đồ đạc, túi, Tủ Đồ
 
