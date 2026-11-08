@@ -2462,7 +2462,8 @@
   const canLeft = (it) => {
     const w = P && P.equip.weapon && itemOf(P.equip.weapon);
     // gậy chỉ cặp với gậy (`staff_pair_only`)
-    const staff = (x) => String(x.ref || '').startsWith('5/');
+    // tay phải trống (đã tháo vũ khí) thì không cầm tay trái được; không đọc `ref` của món không có
+    const staff = (x) => !!x && String(x.ref || '').startsWith('5/');
     const pair = !DUAL.staff_pair_only || staff(it) === staff(w);
     return !!(it && it.slot === 'weapon' && it.hands === 1 && P && DUAL.classes.includes(P.cls) && w && w.hands !== 2 && pair);
   };
