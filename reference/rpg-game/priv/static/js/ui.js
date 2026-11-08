@@ -474,15 +474,16 @@
     const busy = st && st.running;
     const chk = (k, label, on = true) => `<label class="small"><input type="checkbox" name="${k}" ${on ? 'checked' : ''}> ${label}</label>`;
     return `<div class="card"><h3>⚡ Dựng nhân vật tối đa</h3>
-      <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): cấp ${M.level}, kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, chia hết điểm tiềm năng (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền, cánh cấp 3. Mỗi bước ghi Nhật ký quản trị. Người đó online hay không đều được.</p>
+      <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): đặt cấp và số lần chuyển sinh, điểm tiềm năng tự tính đúng như người chơi thật ở cấp / chuyển sinh đó ((cấp − 1) × điểm mỗi cấp + điểm chuyển sinh) rồi tự cộng hết (đủ chỉ số yêu cầu của đồ trước, còn lại theo tỉ lệ của lớp); kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền, cánh cấp 3 (đồ cần cấp 45–48: chọn cấp thấp hơn thì đồ vào túi, chưa mặc). Mặc luôn thì đồ cũ về túi, túi đầy thì gửi Hộp thư (giữ +N, dòng). Mỗi bước ghi Nhật ký quản trị; người đó online hay không đều được.</p>
       <form id="adm-maxb" class="stack">
-        <div class="btn-row"><label class="small">Chuyển sinh <select name="rebirths">${Array.from({ length: 11 }, (_, i) => `<option value="${i}" ${i === M.rebirths ? 'selected' : ''}>${i}</option>`).join('')}</select></label>
+        <div class="btn-row"><label class="small">Cấp <select name="level">${Array.from({ length: RULES.maxLevel || M.level }, (_, i) => i + 1).reverse().map((l) => `<option value="${l}" ${l === M.level ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label class="small">Chuyển sinh <select name="rebirths">${Array.from({ length: 11 }, (_, i) => `<option value="${i}" ${i === M.rebirths ? 'selected' : ''}>${i}</option>`).join('')}</select></label>
           <label class="small">Bộ giáp <select name="armor"><option value="exc">Excellent</option><option value="anc">Đồ Thần</option></select></label>
           ${set.left ? `<label class="small">Tay trái <select name="left"><option value="weapon">Vũ khí thứ hai</option><option value="shield">Khiên</option></select></label>` : ''}</div>
         <div class="btn-row">${chk('equip', 'Mặc luôn đồ')}${chk('gold', `Vàng ${fmt(M.gold)}`)}${chk('items', 'Ngọc, bình, vé, nguyên liệu')}${chk('pet', 'Long Vương cấp tối đa')}</div>
         <div class="btn-row"><button class="btn primary" type="submit" ${busy ? 'disabled' : ''}>${busy ? 'Đang dựng…' : '⚡ Dựng tối đa'}</button></div>
       </form>
-      ${st ? `<div class="small adm-maxb-log">${st.lines.map((l) => `<div style="color:var(${l.ok ? '--good' : '--bad'})">${l.ok ? '✓' : '✗'} ${esc(l.text)}</div>`).join('')}${st.done ? `<div><b>${st.fail ? `Xong, ${st.fail} bước lỗi (xem dòng ✗).` : 'Xong, không có lỗi.'}</b></div>` : ''}</div>` : ''}
+      ${st ? `<div class="small adm-maxb-log">${st.lines.map((l) => `<div style="color:var(${l.warn ? '--gold' : l.ok ? '--good' : '--bad'})">${l.warn ? '⚠' : l.ok ? '✓' : '✗'} ${esc(l.text)}</div>`).join('')}${st.done ? `<div><b>${st.fail ? `Xong, ${st.fail} bước lỗi (xem dòng ✗).` : st.warn ? `Xong, ${st.warn} món chưa mặc được (xem dòng ⚠).` : 'Xong, không có lỗi.'}</b></div>` : ''}</div>` : ''}
     </div>`;
   }
 
@@ -490,21 +491,21 @@
     const M = RULES.adminMaxBuild, c = u.character, cls = c.cls, set = M.sets[cls] || {};
     // vũ khí 2 tay (cung Tiên Nữ…) không cầm khiên / tay trái: bỏ qua ô đó
     const twoHand = (ITEMS[set.weapon] || {}).hands === 2;
-    const opt = { rebirths: +f.get('rebirths'), anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
+    const opt = { level: +f.get('level') || M.level, rebirths: +f.get('rebirths'), anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
     if (!confirm(`Dựng tối đa cho ${c.name} (${(CLASSES[cls] || {}).name || cls})? Chỉ số và điểm tiềm năng đặt lại rồi chia lại; đồ mới ${opt.equip ? 'mặc luôn (đồ cũ về túi)' : 'vào túi'}.`)) return;
-    const st = adm.maxb = { uid: u.id, running: true, lines: [], fail: 0 };
+    const st = adm.maxb = { uid: u.id, running: true, lines: [], fail: 0, warn: 0 };
     const paint = () => { const el = document.getElementById('adm-maxb'); if (el) render(); };
     const A = async (op, p = {}, label) => {
       try {
-        const r = await Net.admin(op, { uid: u.id, ...p }), ok = !/chưa mặc/.test(r.msg || '');
-        if (!ok) st.fail++;
-        st.lines.push({ ok, text: `${label || op}: ${r.msg || 'xong'}` }); paint(); return r;
+        const r = await Net.admin(op, { uid: u.id, ...p }), warn = /chưa mặc/.test(r.msg || '');
+        if (warn) st.warn++;
+        st.lines.push({ ok: true, warn, text: `${label || op}: ${r.msg || 'xong'}` }); paint(); return r;
       }
       catch (e) { st.fail++; st.lines.push({ ok: false, text: `${label || op}: ${e.msg}` }); paint(); return null; }
     };
     paint();
     await A('set_rebirths', { n: opt.rebirths }, 'Chuyển sinh');
-    await A('set_level', { level: M.level }, 'Cấp');
+    await A('set_level', { level: opt.level }, 'Cấp');
     await A('set_tower', { floor: M.tower_floor }, 'Kỷ lục tháp');
     await A('set_mastery', { lv: M.mastery }, 'Thông thạo kỹ năng');
     const rs = await A('reset_stats', {}, 'Đặt lại chỉ số');

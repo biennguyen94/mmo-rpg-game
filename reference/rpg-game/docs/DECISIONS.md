@@ -1807,3 +1807,5 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - `give_gear` thêm `equip` (mặc luôn như bấm Trang bị, `hand: "left"` cầm tay trái; không mặc được thì giữ trong túi, thông báo "chưa mặc: lý do"); `give_pet` nhận `level: "max"` (Long Vương 30).
 - Chia điểm: đủ chỉ số yêu cầu của mọi món trước, phần còn lại theo tỉ lệ lớp → mọi món có tác dụng theo luật mới (không viền đỏ). Vũ khí 2 tay (cung Tiên Nữ) thì bỏ khiên / tay trái.
 - Kiểm: `test/hac_long/admin_max_test.exs` (4 lớp, mặc hết, không món nào vô hiệu), e2e `maxbuild` (4 lớp qua tab Quản trị).
+- (bổ sung) Chọn **cấp** (1–50) cạnh số lần chuyển sinh; điểm tiềm năng tự tính `(cấp − 1) × điểm mỗi cấp + điểm chuyển sinh` (`reset_stats`) và tự cộng hết. Đồ cần cấp cao hơn thì ⚠ "chưa mặc" (không tính lỗi).
+- (bổ sung) Túi đầy: `give_gear` `equip: true` không cần chỗ trống trước; món bị thay ra / chưa mặc được mà túi vượt `max_bag` thì gửi Hộp thư (`mail_out`), giữ +N (`gearx` thêm khóa `up`) và mọi dòng. Không mặc luôn thì túi đầy vẫn báo lỗi.

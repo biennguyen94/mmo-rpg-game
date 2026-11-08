@@ -196,13 +196,16 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 ## 6. Công thức: nhân vật admin tối đa
 
 **Cách nhanh (nút bấm):** tab **Quản trị** → **Tra cứu người chơi** (tên nhân vật / tên đăng nhập) → thẻ
-**⚡ Dựng nhân vật tối đa** → chọn số lần chuyển sinh (mặc định 10), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
+**⚡ Dựng nhân vật tối đa** → chọn **cấp** (mặc định 50) và số lần chuyển sinh (mặc định 10; điểm tiềm năng tự tính đúng
+theo cấp / chuyển sinh như người chơi thật rồi tự cộng hết), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
 hoặc khiên (lớp cầm 2 vũ khí; vũ khí 2 tay như cung Tiên Nữ thì bỏ qua), tick **Mặc luôn đồ**, vàng, ngọc / vật phẩm,
 Long Vương → **⚡ Dựng tối đa**. Thẻ chạy lần lượt đúng các lệnh bên dưới (mỗi lệnh ghi Nhật ký quản trị), hiện ✓ / ✗ từng
 bước. Chỉ số chia đủ **chỉ số yêu cầu** của đồ trước rồi mới chia theo tỉ lệ của lớp (đồ chưa đủ yêu cầu không có tác dụng,
 DECISIONS "Đồ quá cấp sau chuyển sinh không có tác dụng"). Bộ đồ, ép, dòng, vật phẩm, vàng đọc ở
 `priv/game_data/rules.json` → `admin_max_build` (đổi ở đó, không sửa code). Có **Mặc luôn đồ** thì đồ tặng mặc ngay
-(`give_gear` `equip: true`, tay trái `hand: "left"`), đồ cũ về túi; không mặc được thì món nằm trong túi, dòng đó ✗ ghi lý do.
+(`give_gear` `equip: true`, tay trái `hand: "left"`), đồ cũ về túi; **túi đầy** thì món bị thay ra (hoặc món chưa mặc
+được) gửi vào **Hộp thư** của người đó, giữ nguyên +N và mọi dòng (mặc luôn không cần chỗ trống trước; không tick mặc luôn
+thì túi đầy báo lỗi như cũ). Món chưa mặc được (vd chọn cấp thấp hơn cấp yêu cầu 45–48) nằm trong túi, dòng đó ⚠ ghi lý do.
 
 **Cách thủ công (console):** đăng nhập tài khoản admin (lớp nào cũng được), mở console trình duyệt (F12 → Console), sửa dòng `NAME` rồi dán cả
 khối. `NAME` là **tên nhân vật hoặc tên đăng nhập** của người cần dựng (để trống = chính mình). Lớp, bộ đồ và tỉ lệ

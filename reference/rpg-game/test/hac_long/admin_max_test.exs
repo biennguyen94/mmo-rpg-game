@@ -255,4 +255,31 @@ defmodule HacLong.AdminMaxTest do
       assert HacLong.Game.Pets.level(p, m.pet) == HacLong.Game.Pets.max_level(m.pet)
     end
   end
+
+  test "túi đầy: tặng + mặc luôn vẫn được, món bị thay ra gửi Hộp thư giữ +N; không mặc thì báo túi đầy" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Full", "cls" => "dk"})
+    p = op(p, "set_level", %{"level" => 50})
+    # mũ đang mặc +7 (món sẽ bị thay ra)
+    p = op(p, "give_gear", %{"base" => "item_7_33", "up" => 7, "equip" => true})
+    old = p.equip.helm
+    assert Engine.upgrade_level(p, old) == 7
+
+    p =
+      Enum.reduce(1..(Gear.max_bag() - length(Gear.bag(p))), p, fn _, p ->
+        op(p, "give_gear", %{"base" => "item_13_8"})
+      end)
+
+    assert length(Gear.bag(p)) == Gear.max_bag()
+
+    {:ok, f} = Admin.build("give_gear", %{"base" => "item_13_8"})
+    assert {:error, "Túi trang bị đã đầy" <> _} = f.(p)
+
+    {:ok, f} = Admin.build("give_gear", %{"base" => "item_7_33", "up" => 11, "equip" => true})
+    assert {:ok, p2, msg} = f.(p)
+    assert msg =~ "đã mặc" and msg =~ "gửi vào Hộp thư"
+    assert Engine.upgrade_level(p2, p2.equip.helm) == 11
+    assert length(Gear.bag(p2)) == Gear.max_bag()
+    assert [%{uid: ^old, up: 7}] = p2.mail_out
+    refute Map.has_key?(p2.upgrades, old)
+  end
 end

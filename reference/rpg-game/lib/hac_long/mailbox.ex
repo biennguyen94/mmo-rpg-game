@@ -317,7 +317,7 @@ defmodule HacLong.Mailbox do
   defp gearx_key(g) do
     spec =
       g
-      |> Map.take([:base, :opt, :luck, :skill, :exc, :anc, :wopt])
+      |> Map.take([:base, :opt, :up, :luck, :skill, :exc, :anc, :wopt])
       |> Map.reject(fn {_, v} -> v in [nil, false, [], 0] end)
 
     "gearx:" <> Base.url_encode64(Jason.encode!(spec), padding: false)
