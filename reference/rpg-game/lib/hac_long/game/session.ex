@@ -910,6 +910,7 @@ defmodule HacLong.Game.Session do
       |> Daily.ensure(Daily.today())
       |> weather_battle()
       |> secret_boss(s.user_id)
+      |> then(&(&1 && Engine.cap_vitals(&1)))
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player =

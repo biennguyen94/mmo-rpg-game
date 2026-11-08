@@ -3572,7 +3572,7 @@ defmodule HacLong.Game.Engine do
           end
 
         p = if off, do: free_shield(p), else: p
-        {ok("Đã trang bị #{it.name}.#{note}"), %{p | hp: round(hp_ratio * derived(p).maxHp)}}
+        {ok("Đã trang bị #{it.name}.#{note}"), keep_hp_ratio(p, hp_ratio)}
     end
   end
 
@@ -3633,13 +3633,33 @@ defmodule HacLong.Game.Engine do
         {err("Không tháo được."), p}
 
       old ->
+        hp_ratio = p.hp / derived(p).maxHp
         p = if Gear.instance?(old), do: p, else: add_item(p, old)
+        p = %{p | equip: Map.put(p.equip, key, nil)}
 
-        {ok("Đã tháo #{Gear.item(p, old).name}."), %{p | equip: Map.put(p.equip, key, nil)}}
+        # tháo đồ giữ tỉ lệ máu như lúc mặc (đầy máu thì vẫn đầy máu theo máu tối đa mới, không vượt máu tối đa)
+        {ok("Đã tháo #{Gear.item(p, old).name}."), keep_hp_ratio(p, hp_ratio)}
     end
   end
 
   def unequip(p, _slot), do: {err("Không tháo được."), p}
+
+  # máu theo tỉ lệ `ratio` của máu tối đa hiện tại (mặc / tháo / ép đồ), không quá máu tối đa; mana không vượt mana tối đa
+  defp keep_hp_ratio(p, ratio) do
+    d = derived(p)
+    %{p | hp: min(round(min(ratio, 1) * d.maxHp), d.maxHp), mp: min(p.mp, d.maxMp)}
+  end
+
+  @doc "Ngoài trận: máu / mana không vượt mức tối đa (sau khi đổi đồ, thú cưng, cánh, điểm…)."
+  def cap_vitals(%{battle: nil} = p) do
+    d = derived(p)
+
+    if p.hp > d.maxHp or p.mp > d.maxMp,
+      do: %{p | hp: min(p.hp, d.maxHp), mp: min(p.mp, d.maxMp)},
+      else: p
+  end
+
+  def cap_vitals(p), do: p
 
   def use_potion(p, id) do
     it = Data.item(id)

@@ -1786,3 +1786,8 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Lỗi: lượt của đối thủ chạy ở phiên của họ, chỉ gửi sang chữ (`& &1.text`) nên mất tên / chiêu / sát thương / máu còn lại → hiện "Phong Vũ, Kiếm Độc Hỏa, gây 246 sát thương." thay vì "Phong Vũ dùng Kiếm Độc Hỏa. ⚔ 246 (máu còn lại: …)".
 - Nay gửi nguyên dòng nhật ký (`Slay.acted` → `Session.slay_sync`), đổi bên `who` (me ↔ foe); lấy sau khi đã tính sát thương / máu còn lại thật (`fix_slay_log`). Mỗi lượt đối thủ là một khối (cách dòng).
 - Thêm chi tiết cho dòng hiệu ứng: "X trúng độc ☠ (−N máu mỗi lượt, K lượt)" (bỏng 🔥, chảy máu 🩸) và "X mất ⚔ N vì trúng độc (máu còn lại: …)" — cả đánh quái lẫn đánh người.
+
+## Máu không vượt máu tối đa khi tháo đồ (2026-11-08, anh báo 3.106 / 2.020 sau khi tháo đồ)
+- Lỗi: mặc / ép đồ đã giữ tỉ lệ máu, nhưng tháo đồ giữ nguyên số máu → máu vượt máu tối đa.
+- Nay tháo đồ giữ tỉ lệ máu như mặc đồ (đầy máu thì vẫn đầy theo máu tối đa mới; mặc lại cũng đầy), không vượt máu tối đa; mana cũng không vượt.
+- Thêm chốt chung ngoài trận (`Engine.cap_vitals/1` sau mỗi lệnh ở Session): máu / mana bị kéo về mức tối đa nếu vượt (đổi thú, cánh, điểm… hay nhân vật đang vượt từ trước). Trong trận không đụng tới.
