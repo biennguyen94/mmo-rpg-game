@@ -477,7 +477,7 @@
       <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): đặt cấp và số lần chuyển sinh, điểm tiềm năng tự tính đúng như người chơi thật ở cấp / chuyển sinh đó ((cấp − 1) × điểm mỗi cấp + điểm chuyển sinh) rồi tự cộng hết (đủ chỉ số yêu cầu của đồ trước, còn lại theo tỉ lệ của lớp); kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền, cánh cấp 3 (đồ cần cấp 45–48: chọn cấp thấp hơn thì đồ vào túi, chưa mặc). Mặc luôn thì đồ cũ về túi, túi đầy thì gửi Hộp thư (giữ +N, dòng). Mỗi bước ghi Nhật ký quản trị; người đó online hay không đều được.</p>
       <form id="adm-maxb" class="stack">
         <div class="btn-row"><label class="small">Cấp <select name="level">${Array.from({ length: RULES.maxLevel || M.level }, (_, i) => i + 1).reverse().map((l) => `<option value="${l}" ${l === M.level ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-          <label class="small">Chuyển sinh <select name="rebirths">${Array.from({ length: 11 }, (_, i) => `<option value="${i}" ${i === M.rebirths ? 'selected' : ''}>${i}</option>`).join('')}</select></label>
+          <label class="small">Chuyển sinh <input type="number" name="rebirths" min="0" max="999" step="1" value="${M.rebirths}" style="width:5.5em" title="0–999; quá ${RULES.maxRebirths || 10} lần mỗi lần +${RULES.endlessPoints || 10} điểm"></label>
           <label class="small">Bộ giáp <select name="armor"><option value="exc">Excellent</option><option value="anc">Đồ Thần</option></select></label>
           ${set.left ? `<label class="small">Tay trái <select name="left"><option value="weapon">Vũ khí thứ hai</option><option value="shield">Khiên</option></select></label>` : ''}</div>
         <div class="btn-row">${chk('equip', 'Mặc luôn đồ')}${chk('gold', `Vàng ${fmt(M.gold)}`)}${chk('items', 'Ngọc, bình, vé, nguyên liệu')}${chk('pet', 'Long Vương cấp tối đa')}</div>
@@ -491,7 +491,9 @@
     const M = RULES.adminMaxBuild, c = u.character, cls = c.cls, set = M.sets[cls] || {};
     // vũ khí 2 tay (cung Tiên Nữ…) không cầm khiên / tay trái: bỏ qua ô đó
     const twoHand = (ITEMS[set.weapon] || {}).hands === 2;
-    const opt = { level: +f.get('level') || M.level, rebirths: +f.get('rebirths'), anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
+    const rb = Math.floor(Number(f.get('rebirths')));
+    if (!(rb >= 0 && rb <= 999)) { toast('Số lần chuyển sinh phải từ 0 tới 999.', true); return; }
+    const opt = { level: +f.get('level') || M.level, rebirths: rb, anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
     if (!confirm(`Dựng tối đa cho ${c.name} (${(CLASSES[cls] || {}).name || cls})? Chỉ số và điểm tiềm năng đặt lại rồi chia lại; đồ mới ${opt.equip ? 'mặc luôn (đồ cũ về túi)' : 'vào túi'}.`)) return;
     const st = adm.maxb = { uid: u.id, running: true, lines: [], fail: 0, warn: 0 };
     const paint = () => { const el = document.getElementById('adm-maxb'); if (el) render(); };

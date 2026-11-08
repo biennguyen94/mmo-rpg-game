@@ -196,8 +196,9 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 ## 6. Công thức: nhân vật admin tối đa
 
 **Cách nhanh (nút bấm):** tab **Quản trị** → **Tra cứu người chơi** (tên nhân vật / tên đăng nhập) → thẻ
-**⚡ Dựng nhân vật tối đa** → chọn **cấp** (mặc định 50) và số lần chuyển sinh (mặc định 10; điểm tiềm năng tự tính đúng
-theo cấp / chuyển sinh như người chơi thật rồi tự cộng hết), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
+**⚡ Dựng nhân vật tối đa** → chọn **cấp** (mặc định 50) và số lần chuyển sinh (ô nhập 0–999, mặc định 10; chuyển sinh vô hạn: quá 10 lần mỗi lần +10 điểm;
+điểm tiềm năng tự tính đúng theo cấp / chuyển sinh như người chơi thật rồi tự cộng hết, vd cấp 50 chuyển sinh 10:
+495 điểm, Đấu Sĩ 593), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
 hoặc khiên (lớp cầm 2 vũ khí; vũ khí 2 tay như cung Tiên Nữ thì bỏ qua), tick **Mặc luôn đồ**, vàng, ngọc / vật phẩm,
 Long Vương → **⚡ Dựng tối đa**. Thẻ chạy lần lượt đúng các lệnh bên dưới (mỗi lệnh ghi Nhật ký quản trị), hiện ✓ / ✗ từng
 bước. Chỉ số chia đủ **chỉ số yêu cầu** của đồ trước rồi mới chia theo tỉ lệ của lớp (đồ chưa đủ yêu cầu không có tác dụng,

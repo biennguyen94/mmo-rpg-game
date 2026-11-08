@@ -1809,3 +1809,4 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Kiểm: `test/hac_long/admin_max_test.exs` (4 lớp, mặc hết, không món nào vô hiệu), e2e `maxbuild` (4 lớp qua tab Quản trị).
 - (bổ sung) Chọn **cấp** (1–50) cạnh số lần chuyển sinh; điểm tiềm năng tự tính `(cấp − 1) × điểm mỗi cấp + điểm chuyển sinh` (`reset_stats`) và tự cộng hết. Đồ cần cấp cao hơn thì ⚠ "chưa mặc" (không tính lỗi).
 - (bổ sung) Túi đầy: `give_gear` `equip: true` không cần chỗ trống trước; món bị thay ra / chưa mặc được mà túi vượt `max_bag` thì gửi Hộp thư (`mail_out`), giữ +N (`gearx` thêm khóa `up`) và mọi dòng. Không mặc luôn thì túi đầy vẫn báo lỗi.
+- (bổ sung) Ô chuyển sinh là ô nhập số 0–999 (game cho chuyển sinh vô hạn; quá 10 lần mỗi lần +`endless_points` điểm), điểm vẫn tự tính theo `Engine.rebirth_bonus/1`.
