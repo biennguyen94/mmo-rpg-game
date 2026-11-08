@@ -1864,3 +1864,8 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Bản đồ nhỏ: mọi người chơi khác cùng bản đồ là chấm **hồng** (#ff6ad5, viền tối) — khác quái (đỏ), NPC (xanh lá), cổng (tím); đồng đội vàng chanh, bang mình xanh dương, bang địch cam viền trắng (đổi màu đồng đội từ xanh lá để khỏi trùng NPC). Mình vẽ sau cùng.
 - Hiệu ứng kỹ năng lệch xuống: lớp hiệu ứng `#bfx` đặt `height: 100vh` nhưng nét vẽ theo `innerHeight`; trên điện thoại (thanh địa chỉ) 100vh cao hơn → canvas bị kéo giãn dọc, hiệu ứng trôi xuống (càng xuống càng lệch). Sửa: cỡ CSS đặt bằng đúng `innerWidth × innerHeight` (cập nhật cả khi `visualViewport` đổi). Trên trình duyệt thử (không có thanh địa chỉ) điểm neo đúng tâm ô quái / nhân vật (đã đo).
 - Kiểm: e2e `people` (16 bước: tab online, bấm mở hồ sơ, chấm hồng trên bản đồ nhỏ).
+
+## Sửa: bảng nổi bị cuộn về đầu; danh sách bước combo (2026-11-08, anh báo)
+- Menu → Kỹ năng → ⚙ Chọn bộ kỹ năng: bảng tự cuộn bên trong, mỗi lần màn vẽ lại (server đẩy trạng thái) thì về đầu. `render()` giờ giữ chỗ cuộn của các bảng nổi (`.skill-dialog`, nhật ký ⚡, bảng chọn người, hộp thoại bản đồ).
+- Bước combo ⚡ chỉ chọn được đòn thường + kỹ năng **đang mang** (bộ kỹ năng tối đa `RULES.tower_skills.loadout` = 4, server chỉ đánh được kỹ năng đang mang) — nên thấy 5 mục là đúng luật. Thêm nhóm mờ "Chưa mang (đổi ở ⚙ Bộ kỹ năng)" liệt kê kỹ năng đã mở chưa mang và dòng hướng dẫn. Không đổi luật.
+- Kiểm: e2e `quick` (25 bước).

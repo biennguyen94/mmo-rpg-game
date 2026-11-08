@@ -370,7 +370,11 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
+    // vẽ lại (server đẩy trạng thái mỗi lượt / mỗi giây) thì giữ chỗ cuộn của các bảng nổi tự cuộn bên trong
+    // (anh báo: chọn bộ kỹ năng cuộn xuống thì ~1 giây sau bị đưa về đầu)
+    const keepScroll = ['.skill-dialog', '.quick-log .log', '.pick-pop', '.map-dialog', '.combo-edit'].map((sel) => [sel, (view.querySelector(sel) || {}).scrollTop || 0]);
     view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    for (const [sel, top] of keepScroll) { const el = top && view.querySelector(sel); if (el) el.scrollTop = top; }
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (friendsUi.open) {
@@ -1277,8 +1281,14 @@
   // Menu → Kỹ năng: sắp combo (danh sách ưu tiên, tối đa QUICK.max_steps bước)
   function comboRows() {
     const set = mySkills(), steps = comboEdit || comboSteps();
-    const opts = (cur) => [['attack', 'Đòn thường'], ...set.map((k) => [k.id, k.name])].map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('');
-    return steps.map((x, i) => `<div class="btn-row combo-step"><span class="tag">${i + 1}</span>
+    // chỉ chọn được kỹ năng đang mang (server chỉ đánh được bộ kỹ năng); kỹ năng đã mở mà chưa mang hiện mờ để biết đổi ở đâu
+    const ids = set.map((k) => k.id), open = P.view.skillsOpen || [];
+    const rest = allSkills().filter((k) => open.includes(k.id) && !ids.includes(k.id));
+    const opts = (cur) => [['attack', 'Đòn thường'], ...set.map((k) => [k.id, k.name])].map(([v, l]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('') +
+      (rest.length ? `<optgroup label="Chưa mang (đổi ở ⚙ Bộ kỹ năng)">${rest.map((k) => `<option disabled>${esc(k.name)}</option>`).join('')}</optgroup>` : '');
+    const hint = `<p class="small muted">Chọn được đòn thường + ${set.length} kỹ năng đang mang (bộ kỹ năng tối đa ${(RULES.towerSkills || {}).loadout || 4}). Kỹ năng khác: đổi ở Menu → Kỹ năng → ⚙ Bộ kỹ năng.</p>`;
+    if (!steps.length) return '';
+    return hint + steps.map((x, i) => `<div class="btn-row combo-step"><span class="tag">${i + 1}</span>
         <select data-combo-id="${i}" aria-label="Bước ${i + 1}">${opts(x.id)}</select>
         ${isBuffSkill(x.id) ? `<label class="small"><input type="checkbox" data-combo-once="${i}" ${x.once ? 'checked' : ''}> chỉ khi chưa có hiệu ứng</label>` : ''}
         <button class="btn small-btn" data-act="combo-up" data-i="${i}" ${i ? '' : 'disabled'} aria-label="Lên">↑</button>

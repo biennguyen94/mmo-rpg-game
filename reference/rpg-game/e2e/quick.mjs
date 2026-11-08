@@ -158,5 +158,21 @@ for (let i = 0; i < 6 && !towerFight; i++) {
 R.check('Tháp: đánh nhanh ở lại bản đồ', towerFight && towerFight.map && !towerFight.atk && towerFight.enc && towerFight.enc.tower != null, JSON.stringify(towerFight));
 await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 60000 }).catch(() => null);
 R.check('Tháp: đánh hết trận, rời màn trận', !(await p.evaluate(() => window.__hl.player().battle)));
+
+// Menu → Kỹ năng: ⚙ Chọn bộ kỹ năng cuộn xuống, màn vẽ lại vẫn giữ chỗ cuộn; combo có mục "Chưa mang"
+await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 30000 }).catch(() => null);
+await p.click('#tabs [data-tab="menu"]');
+await p.click('[data-menu="skills"]');
+await p.click('[data-act="skill-pick-open"]');
+await p.waitForSelector('.skill-dialog');
+const sc0 = await p.evaluate(() => { const d = document.querySelector('.skill-dialog'); d.scrollTop = 250; return d.scrollTop; });
+await send(p, { act: 'quick', on: true }).catch(() => null);
+await p.waitForTimeout(1500);
+const sc1 = await p.evaluate(() => (document.querySelector('.skill-dialog') || {}).scrollTop);
+R.check('bộ kỹ năng: vẽ lại vẫn giữ chỗ cuộn', sc0 > 0 && sc1 === sc0, `${sc0} → ${sc1}`);
+await p.click('[data-act="skill-pick-close"]');
+await p.click('[data-act="combo-add"]').catch(() => null);
+const opt = await p.evaluate(() => { const sel = document.querySelector('[data-combo-id]'), v = window.__hl.player().view; return sel ? { n: sel.options.length, grp: !!sel.querySelector('optgroup'), set: (v.skillSet || []).length, open: (v.skillsOpen || []).length, hint: /Bộ kỹ năng/.test(document.querySelector('#view').textContent) } : null; });
+R.check('combo: đòn thường + kỹ năng đang mang, kỹ năng chưa mang ở nhóm riêng (mờ), có dòng hướng dẫn', !!opt && opt.hint && opt.grp === (opt.open > opt.set) && opt.n === 1 + opt.open, JSON.stringify(opt));
 R.check('không lỗi JS', X.errors.length === 0, X.errors.join(' | '));
 await R.done(browser);
