@@ -161,7 +161,7 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   - Tự tắt khi: hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ, đóng hết tab game.
     Bấm **Tắt** (dưới bản đồ hoặc trong trận) để dừng bất cứ lúc nào.
 - **⚡ Đánh nhanh** (nút ⚡ cạnh 🤖 Tự đánh, cùng một hàng dưới bản đồ): bật lên rồi **tự bấm quái nào** thì nhân vật đi tới và tự đánh hết trận theo
-  **combo** đã sắp, vẫn ở màn bản đồ (thanh máu dưới chân quái, số sát thương bay lên). Xong trận hiện thông báo
+  **combo** đã sắp, vẫn ở màn bản đồ (thanh máu dưới chân quái, số sát thương bay lên, hiệu ứng kỹ năng / đòn đánh / quái gục / đồ rơi như màn trận, theo công tắc Hiệu ứng động). Xong trận hiện thông báo
   (EXP, vàng, đồ rơi); bấm **📜** xem lại nhật ký trận vừa xong (cửa sổ nổi, cuộn được). Đang đánh thì bấm **✋ Đánh tay** để cầm lại trận như thường.
   - Sắp combo ở **Menu → Kỹ năng → ⚡ Combo đánh nhanh** (hoặc ⚙ → Sửa combo): tối đa 6 bước gồm đòn thường và kỹ năng
     đang mang. Mỗi lượt dùng **bước đầu tiên dùng được** (bước còn hồi chiêu / thiếu MP thì bỏ qua); kỹ năng buff có ô

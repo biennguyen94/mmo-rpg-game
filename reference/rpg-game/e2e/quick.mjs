@@ -52,14 +52,25 @@ async function startFight() {
   return false;
 }
 
+// hiệu ứng trận (fx.js) phát trên bản đồ: ghi lại các lần phát và có vị trí bám vào quái / mình không
+await p.evaluate(() => {
+  localStorage.setItem('hl-fx', '1');
+  const run = window.BattleFx.run;
+  window.__fx = [];
+  window.BattleFx.run = (ev, at) => { const a = at && at(); window.__fx.push({ types: ev.map((e) => e.type), mon: !!(a && a.mon), me: !!(a && a.me) }); return run(ev, at); };
+});
 const kills0 = await p.evaluate(() => window.__hl.player().kills);
 R.check('bấm quái: vào trận', await startFight());
 await p.waitForTimeout(400);
 R.check('vẫn ở màn bản đồ (không mở màn trận), thanh "Đang đánh"', !!(await p.$('#map-canvas')) && /Đang đánh/.test(await p.textContent('#auto-bar').catch(() => '')));
+await p.waitForTimeout(900);
 await shot(p, 'quick-fighting.png');
 await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 60000 }).catch(() => null);
 const after = await p.evaluate(() => ({ battle: !!window.__hl.player().battle, kills: window.__hl.player().kills }));
 R.check('server tự đánh hết trận và rời màn trận', !after.battle && after.kills > kills0, JSON.stringify({ ...after, kills0 }));
+const fxs = await p.evaluate(() => window.__fx);
+const types = fxs.flatMap((f) => f.types);
+R.check('hiệu ứng kỹ năng / đòn đánh phát trên bản đồ, bám vào quái và mình', fxs.some((f) => f.mon && f.me) && types.some((t) => t === 'skill' || t === 'attack') && types.includes('kill'), JSON.stringify(types));
 await p.waitForSelector('[data-act="quick-log"]', { timeout: 3000 }).catch(() => null);
 R.check('có nút 📜 xem nhật ký trận vừa xong', !!(await p.$('[data-act="quick-log"]')));
 await p.click('[data-act="quick-log"]').catch(() => null);

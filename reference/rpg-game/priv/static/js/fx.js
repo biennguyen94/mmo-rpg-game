@@ -57,7 +57,14 @@
   window.addEventListener('resize', resize);
 
   // tâm (và cỡ) một phần tử trên màn hình
+  // ⚡ Đánh nhanh (ở lại bản đồ): vị trí quái / mình lấy từ bản đồ (`run(events, anchors)`), không có phần tử DOM
+  let anchors = null;
   function spot(sel) {
+    if (anchors && (sel === MON || sel === ME)) {
+      const a = anchors();
+      const s = a && (sel === MON ? a.mon : a.me);
+      return s ? { x: s.x, y: s.y, w: s.w, h: s.h, el: null } : null;
+    }
     const el = document.querySelector(sel);
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -190,7 +197,7 @@
     kill() {
       const t = spot(MON);
       if (!t) return;
-      t.el.classList.add('fx-dying');
+      if (t.el) t.el.classList.add('fx-dying');
       for (let i = 0; i < 36; i++) {
         add({ k: 'dot', x: t.x + rand(-t.w * 0.4, t.w * 0.4), y: t.y + rand(-t.h * 0.4, t.h * 0.4), vx: rand(-30, 30), vy: rand(-140, -40), g: -20,
           life: rand(600, 1200), r: rand(1.5, 3), col: ['#e8dcc8', '#a8a090', '#ffd27a'][i % 3], glow: i % 3 === 2 });
@@ -570,10 +577,15 @@
       if (amb && !ambTimer && on() && ensure()) ambTimer = setInterval(ambientTick, 150);
       if (!amb && ambTimer) { clearInterval(ambTimer); ambTimer = null; }
     },
-    run(events) {
+    // `at`: hàm trả { mon, me } (tọa độ màn hình) khi hiệu ứng không bám vào màn trận (⚡ Đánh nhanh trên bản đồ)
+    run(events, at) {
       if (!events || !events.length || !on() || !ensure()) return;
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí
-      const play = (e) => { try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ } };
+      const play = (e) => {
+        anchors = at || null;
+        try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ }
+        anchors = null;
+      };
       requestAnimationFrame(() => events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e))));
     },
   };

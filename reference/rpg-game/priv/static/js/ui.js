@@ -1114,6 +1114,7 @@
         if (pd > 0) Map_.floatText('me', `-${fmt(pd)}`, '#ff6b5a');
         else if (pd < 0) Map_.floatText('me', `+${fmt(-pd)}`, '#8fe08a');
       }
+      if (quickPrev && quickPrev.mid === mid && mid != null) quickFx(b, quickPrev);
       quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice() };
       return;
     }
@@ -1128,6 +1129,32 @@
       toast(`⚡ Hạ ${q.name}: +${fmt(rw.xp)} EXP, +${fmt(rw.gold)} vàng${loot ? `, ${loot} món rơi` : ''}${rw.trashed ? `, 🗑 hủy ${rw.trashed} món` : ''}`);
     } else if (q.result === 'lose') toast(`⚡ Gục ngã trước ${q.name}. Bấm 📜 xem lại trận.`, true);
     else toast(`⚡ Trận với ${q.name} kết thúc.`);
+  }
+  // hiệu ứng trận (js/fx.js) như màn trận, bám vào quái / mình trên bản đồ: dựng từ các dòng nhật ký mới của lượt
+  function quickFx(b, prev) {
+    const log = b.log || [], n0 = prev.log.length;
+    const fresh = log.length >= n0 ? log.slice(n0) : log.slice(-4);
+    const ev = [];
+    let delay = 0;
+    for (const l of fresh) {
+      if (l.who === 'me') {
+        const k = l.act && mySkills().find((x) => x.name === l.act);
+        if (l.miss) ev.push({ type: 'miss', delay });
+        else if (l.heal != null && !l.potion && k) ev.push({ type: 'buff', element: k.element, heal: true, delay });
+        else if (l.dmg != null && !l.dot) ev.push(k ? { type: 'skill', element: k.element, crit: !!l.crit, delay } : { type: 'attack', cls: P.cls, crit: !!l.crit, delay });
+        else if (k && l.dmg == null && l.heal == null) ev.push({ type: 'buff', element: k.element, heal: false, delay });
+        delay += 380;
+      } else if (l.who === 'foe' && l.dmg > 0 && !l.dot) {
+        ev.push({ type: 'hurt', crit: l.dmg > (P.view.derived.maxHp || 1) * 0.25, element: l.el, delay });
+        delay += 380;
+      }
+    }
+    if (b.over && !prev.over && b.result === 'win') {
+      ev.push({ type: 'kill', delay: delay + 120 });
+      const items = lootFx(b.reward);
+      if (items.length) ev.push({ type: 'loot', delay: delay + 650, items });
+    }
+    if (ev.length) BattleFx.run(ev, () => Map_.fightSpots());
   }
   function viewQuickLog() {
     const l = quickLast.log || [];

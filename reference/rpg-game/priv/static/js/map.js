@@ -134,6 +134,16 @@
     const last = P.pos.map === 'tower' && seenTower.get(fight.id);
     return last ? list.concat([mark(last)]) : list;
   }
+  // vị trí trên màn hình (px CSS) của con đang đánh và của mình, để hiệu ứng trận (js/fx.js) bám vào bản đồ
+  let spots = null;
+  function fightSpots() {
+    if (!canvas || !spots || !fight) return null;
+    const r = canvas.getBoundingClientRect();
+    if (!r.width) return null;
+    const k = r.width / VW(), sz = TILE * k;
+    const at = (p) => (p ? { x: r.left + p[0] * k, y: r.top + (p[1] + TILE / 2) * k, w: sz, h: sz } : null);
+    return { mon: at(spots.mpos[fight.id]), me: at(spots.me) };
+  }
   function setFight(f) {
     const changed = JSON.stringify(f) !== JSON.stringify(fight);
     fight = f;
@@ -824,6 +834,7 @@
     for (const l of labels) label(...l);
     for (const t of talk) bubble(...t);
     drawFloats(mpos, [Math.round(mx * TILE - cx) + TILE / 2, Math.round(my * TILE - cy)]);
+    spots = { mpos, me: [Math.round(mx * TILE - cx) + TILE / 2, Math.round(my * TILE - cy)] };
     if (enter.map !== P.pos.map) enter = { map: P.pos.map, at: now };
     if (fx) enterFx(now, P, m, px, py);
     // vẽ lại khi bong bóng hết hạn
@@ -1758,6 +1769,7 @@
     miniOn,
     floatText,
     setFight,
+    fightSpots,
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);
