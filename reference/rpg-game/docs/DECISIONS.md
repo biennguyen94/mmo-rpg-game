@@ -1875,3 +1875,9 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Sửa: tầng 10, 20… xong thì lên cầu thang như mọi tầng (ghi kỷ lục, nhận thưởng mốc 10 tầng); sang tầng 11, 21… (không phải tầng vào lượt này) thì ra cổng. Tiến trình bot nhớ tầng lúc vào (`tower_from`) để vào ở tầng 11 không ra ngay. Máu < `play.tower_hp` sau một tầng vẫn ra như cũ.
 - Bot đang kẹt tự hết: lượt leo sau vượt tầng 10 → kỷ lục 10 → lượt sau nữa vào từ tầng 11. Mô phỏng hành trình (`Journey`) không bị (luôn lên cầu thang trước khi dừng).
 - Kiểm: `brain_play_test` "trong tháp…" (tầng 10 → lên cầu thang, kỷ lục ≥ 10, tầng 11 ra; vào ở tầng 11 thì đánh tiếp).
+
+## Bot câu cá mỗi con một chỗ (2026-11-08, anh báo "bot ở Hồ Long Vương dồn một ô")
+- Trước: bot đi tới ô câu **gần nhất** (từ cổng vào) nên con nào cũng về cùng một ô.
+- Nay (`Brain.spread/5`, câu thường): đang câu ở ô hợp lệ mà không ai khác đứng thì ở lại; không thì chọn trong các ô câu **còn trống** (bỏ ô có người chơi / bot khác đứng theo ảnh bản đồ) một ô theo seed của bot, đổi mỗi giờ (lượt sau ra hồ đứng chỗ khác); hết ô trống thì chọn trong tất cả. Đi qua ô câu khác trên đường không dừng lại.
+- Long Vương nổi / Đàn Cá Vàng: giữ như cũ (ô gần nhất trong tầm câu, cần nhanh).
+- Không đổi cân bằng (ô nào cũng câu như nhau). Kiểm: `brain_fish_test` (6 seed ra ≥ 3 chỗ khác nhau, ô có người thì đổi, đang câu thì ở lại).

@@ -193,7 +193,7 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "elder_claim"}
 
       true ->
-        fish_at(p, lake, target, snap)
+        fish_at(p, lake, target, snap, opts[:seed])
     end
   end
 
@@ -213,10 +213,10 @@ defmodule HacLong.Bots.Brain do
     p[:daily] != nil and e.n >= e.count and not e.done
   end
 
-  defp fish_at(p, map, target, snap) do
+  defp fish_at(p, map, target, snap, seed) do
     me = {p.pos.x, p.pos.y}
 
-    stands =
+    all =
       case target do
         :any ->
           stand_tiles(map)
@@ -225,9 +225,12 @@ defmodule HacLong.Bots.Brain do
           for {x, y} <- stand_tiles(map), max(abs(x - tx), abs(y - ty)) <= @reach, do: {x, y}
       end
 
+    # Long Vương / Đàn Cá Vàng: cần nhanh, ô nào trong tầm cũng được; câu thường thì mỗi bot một chỗ
+    stands = if target == :any, do: spread(all, p, me, seed, snap), else: all
+
     cond do
-      stands == [] and target != :any ->
-        fish_at(p, map, :any, snap)
+      all == [] and target != :any ->
+        fish_at(p, map, :any, snap, seed)
 
       me in stands ->
         case target do
@@ -237,6 +240,26 @@ defmodule HacLong.Bots.Brain do
 
       true ->
         walk(p, map, stands, snap) || if(Fishing.near_water?(p), do: %{"act" => "fish_cast"})
+    end
+  end
+
+  # Mỗi bot một chỗ câu (anh báo "bot dồn một ô"): trước đây đi tới ô câu gần nhất nên con nào cũng về cùng một ô.
+  # Đang câu ở ô hợp lệ không ai đứng thì ở lại; không thì chọn trong các ô còn trống một ô theo seed của bot (đổi mỗi giờ
+  # cho khác lượt trước), ô đã có người khác đứng thì bỏ qua (hết ô trống thì chọn trong tất cả).
+  @doc false
+  def spread([], _p, _me, _seed, _snap), do: []
+
+  def spread(stands, p, me, seed, snap) do
+    others =
+      for o <- (snap && snap[:players]) || [], o.id != seed, into: MapSet.new(), do: {o.x, o.y}
+
+    if p[:fishing] != nil and me in stands and me not in others do
+      [me]
+    else
+      free = Enum.reject(stands, &(&1 in others))
+      pool = if free == [], do: stands, else: free
+      hour = div(System.os_time(:second), 3600)
+      [Enum.min_by(pool, fn {x, y} -> :erlang.phash2({seed, x, y, hour}) end)]
     end
   end
 
