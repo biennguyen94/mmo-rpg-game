@@ -550,6 +550,7 @@ defmodule HacLong.Game.Session do
         if player != old, do: broadcast(s, player, origin)
         left_trade(s.user_id, old, player)
         Enum.each(notes, &notify(s, &1))
+
         # bước vào quái lúc bật ⚡ Đánh nhanh: hẹn nhịp để server đánh theo combo (DECISIONS "Đánh nhanh theo combo")
         s = arm_auto(s)
         reply({result, player}, s)
