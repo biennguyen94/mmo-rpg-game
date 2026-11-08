@@ -585,6 +585,79 @@ EVVIZ_HTML = f"""<h3>Thanh sự kiện (mép trên bản đồ)</h3>
 """
 
 
+# ---------- Sự kiện & PK: chơi ở đâu đánh người được, luật từng nơi (bảng anh yêu cầu 2026-11-08) ----------
+CH, DSQ, BCQ, CCQ, KAQ, INV, RAIDS, SEC, WBC = R["character"], R["devil_square"], R["blood_castle"], R["chaos_castle"], R["kalima"], R["invasion"], R["raids"], R["secret"], D["world_boss"]
+
+
+def _sched(every_h, off_min=0):
+    def hm(m):
+        h, mm = divmod(m % (24 * 60), 60)
+        return f"{h}h{mm:02d}" if mm else f"{h}h"
+    xs = [hm(off_min + every_h * 60 * i) for i in range(24 // every_h)]
+    return f"{xs[0]}, {xs[1]} … {xs[-1]}" if len(xs) > 3 else ", ".join(xs)
+
+
+_WEEK = {1: "thứ Hai", 2: "thứ Ba", 3: "thứ Tư", 4: "thứ Năm", 5: "thứ Sáu", 6: "thứ Bảy", 7: "Chủ Nhật"}
+_YES, _NO = '<b style="color:#c0392b">✅ Có</b>', '<b style="color:#2e7d32">❌ Không</b>'
+_normal = "Luật đồ sát thường (mất vàng, tên đỏ)."
+pk_rows = [
+    ("Golden Invasion", f"Mỗi {INV['every_hours']} giờ ({_sched(INV['every_hours'])}), {INV['minutes']} phút, bản đồ đầu mỗi vùng", _YES, _normal + " Người đang đánh quái vàng vẫn bị đồ sát.", "—"),
+    *[(RAIDS[k]["name"], f"Mỗi {RAIDS[k]['every_hours']} giờ ({_sched(RAIDS[k]['every_hours'], RAIDS[k]['offset_minutes'])}), {RAIDS[k]['minutes']} phút, {RAIDS[k]['pick']} bản đồ vùng ngẫu nhiên", _YES, _normal, "—") for k in RAIDS if not k.startswith("_")],
+    ("Trùm thế giới Cổ Long (Tế Đàn)", f"Lần đầu sau {WBC['first_after_minutes']} phút, rồi mỗi {WBC['every_minutes']} phút (tính từ khi con trước gục / bay đi), {WBC['duration_minutes']} phút, cả server đánh chung", _YES + " (Tế Đàn không phải vùng an toàn)",
+     _normal + " Người đang đánh Cổ Long bị đồ sát thì trận với trùm bị cắt; sát thương đã gây vẫn tính thưởng.",
+     "Thanh máu to + %, top 3 sát thương (★ mình); bật ⚡ chạm là đánh ngay trên bản đồ (đứng ngoài bản đồ nên dễ bị thấy, bị đồ sát hơn)."),
+    ("Quảng Trường Quỷ", f"Mỗi {DSQ['every_hours']} giờ ({_sched(DSQ['every_hours'], DSQ['offset_hours'] * 60)}), vào trong {DSQ['entry_minutes']} phút, chơi {DSQ['run_minutes']} phút, cấp {DSQ['min_level']}+, vé", _NO, "Bản đồ riêng theo phòng (chia theo số lần chuyển sinh).", f"Thanh 🌊 Đợt n/{len(DSQ['waves'])} · điểm · giờ còn; băng rôn sang đợt; 👥 số người cùng phòng."),
+    ("Lâu Đài Máu", f"Mỗi {BCQ['every_hours']} giờ ({_sched(BCQ['every_hours'], BCQ['offset_minutes'])}), vào {BCQ['entry_minutes']} phút, chơi {BCQ['run_minutes']} phút, cấp {BCQ['min_level']}+, vé", _NO, "Bản đồ riêng theo phòng.", f"Thanh quân canh k/{BCQ['guards']} → phá Cổng Thành → Hiệp Sĩ Máu; băng rôn mỗi bước."),
+    ("Kalima", f"Lúc nào cũng vào, {KAQ['run_minutes']} phút, cấp {KAQ['min_level']}+, Bản Đồ Thất Lạc", _NO, "Bản đồ riêng theo tổ đội.", f"Thanh quái k/{KAQ['guards']} → Kundun; băng rôn."),
+    ("Tháp Vô Tận", "Lúc nào cũng vào", _NO, "Bản đồ riêng.", "—"),
+    ("Hỗn Chiến Thành", f"Mỗi {CCQ['every_hours']} giờ ({_sched(CCQ['every_hours'], CCQ['offset_minutes'])}), vào {CCQ['entry_minutes']} phút rồi hỗn chiến {CCQ['run_minutes']} phút, cấp {CCQ['min_level']}+, vé",
+     _YES + ", chỉ khi đã vào giờ hỗn chiến",
+     f"Ai cũng đánh ai (không cần khác bang). <b>Không mất vàng, không tên đỏ</b>; gục là bị loại, về Làng. Mỗi người hạ +{n(CCQ['reward']['per_player_kill'])} vàng thưởng; trụ cuối cùng {n(CCQ['reward']['winner']['gold'])} vàng + ngọc.",
+     "<b>Chạm người là đồ sát ngay</b> (không menu); bật ⚡ ở lại bản đồ, server đánh lượt theo combo. Thanh ⚔ Còn N người · M quái, băng rôn hỗn chiến bắt đầu."),
+    ("Công Thành Chiến", f"{_WEEK.get(CSR['weekday'], CSR['weekday'])} {CSR['hour']}h{CSR['minute']:02d}, {CSR['run_minutes']} phút, cấp {CSR['min_level']}+, bang đăng ký ({n(CSR['register_gold'])} vàng)",
+     _YES + ", chỉ người <b>khác bang</b>, trong lúc đánh",
+     "<b>Không mất vàng, không tên đỏ</b>; cùng bang không đánh nhau. Bang giữ Vương Miện không đánh được nó (phải chặn bang khác). Gục về Làng, vào lại được.",
+     "<b>Chạm người bang khác là đồ sát ngay</b> (ưu tiên bang giữ Vương Miện); Vương Miện 👑 phát sáng + mũi tên khi khuất; mỗi bang một màu vòng chân; thanh 👑 [bang] giữ · giờ còn."),
+    ("Động Bí Ẩn", f"Ban đêm, mở {pct(SEC['open_chance'])} số đêm; trùm {SEC['boss_from_h']}h–{SEC['boss_to_h']}h", _YES, _normal + " Động tối, khó thấy người tới.", "Người chơi vẽ trên bản đồ + chấm hồng ở bản đồ nhỏ: dễ phát hiện hơn."),
+    ("Hồ Long Vương, Đàn Cá Vàng", "Theo giờ", _YES, _normal + " Người đang câu cá cũng bị đánh.", "—"),
+    ("Bản đồ vùng, vùng chuyển sinh", "—", _YES, _normal, "—"),
+    ("Làng", "—", _NO, "Vùng an toàn.", "—"),
+]
+pk_ev_rows = "".join(f"""<div class="card"><h3>{a}</h3><p><b>PK:</b> {c}</p>{'' if b == '—' else f'<p class="note"><b>Lịch:</b> {b}</p>'}<p><b>Luật:</b> {d}</p>{'' if e == '—' else f'<p class="note"><b>Mới:</b> {e}</p>'}</div>""" for a, b, c, d, e in pk_rows)
+_arena = [
+    ("Đối thủ", "Bản sao chỉ số (máy đánh), người kia không cần online", f"Người thật, phải online và bấm nhận trong {AR['duel_invite_s']} giây"),
+    ("Bản đồ", "Ở đâu cũng được", "Hai người ở bản đồ nào cũng được (kể cả Làng)"),
+    ("Máu", "Máu hiện có", "Vào trận đầy máu, xong trả lại máu như trước"),
+    ("Thua", f"Mất {pct(CH['death_gold_loss'])} vàng, về Làng; bỏ chạy không mất gì", "<b>Không chết, không mất vàng</b>; bỏ chạy tính thua"),
+    ("Tên đỏ", "Không", "Không"),
+    ("Điểm đấu trường (Elo)", f"Có (K = {AR['elo_k']}), tối đa {AR['per_day']} trận / ngày", f"Có, như thách đấu; tính vào {AR['per_day']} trận / ngày của <b>người mời</b>"),
+    ("Chiến bang", "Người thách đấu thắng thành viên bang địch: +1 điểm", "Ai thắng thành viên bang địch: +1 điểm"),
+    ("⚡ Đánh nhanh", "Server tự đánh từng lượt theo combo (màn trận)", f"Server tự đánh lượt theo combo (màn trận); không bật thì {SL['turn_s']} giây / lượt"),
+    ("Hiển thị", "Màn VS khi vào, K.O. khi thắng / thua", "VS / K.O., nhãn ⚔ Đấu trường trực tiếp"),
+]
+arena_rows = "".join(f"<tr><td><b>{a}</b></td><td>{b}</td><td>{c}</td></tr>" for a, b, c in _arena)
+PKEV_HTML = f"""<h3>Luật đồ sát chung</h3>
+  <ul><li><b>Ở đâu:</b> chỉ trên bản đồ dùng chung, không phải vùng an toàn ({', '.join('Làng' if m == 'village' else m for m in SL['safe_maps'])}). Tháp và sự kiện theo phòng là bản đồ riêng: không đánh người được.</li>
+    <li><b>Điều kiện:</b> cùng bản đồ, cùng từ cấp {SL['min_level']}. Người tấn công phải rảnh tay; người bị đánh đang đánh quái vẫn bị kéo vào trận (quái nhả ra, giữ máu).</li>
+    <li><b>Đánh:</b> luân phiên lượt {SL['turn_s']} giây; quá giờ server đánh thay, quá {SL['max_timeouts']} lần liên tiếp thì thua. Đòn mở màn người tấn công ×{n(SL['first_strike_mult'])}.</li>
+    <li><b>Sát thương lên người</b> ×{n(PV['dmg_mult'])}, tỉ lệ chí mạng ×{n(PV['crit_rate_mult'])}, né ×{n(PV['dodge_mult'])}; mỗi lớp nhận theo hệ số riêng.</li>
+    <li><b>Thua</b> (kể cả bỏ chạy): mất {pct(CH['death_gold_loss'])} vàng (về tay người thắng), về Làng, được bảo vệ {SL['protect_s']} giây.</li>
+    <li><b>Tên đỏ:</b> hạ người không tên đỏ thì đỏ {SL['red_s'] // 60} phút (cộng dồn); tên đỏ gục mất {pct(CH['death_gold_loss'] * SL['red_gold_mult'])} vàng; hạ người tên đỏ không bị đỏ.</li></ul>
+  <h3>Từng sự kiện</h3>
+  <p class="note">Tóm tắt — đánh người được: {', '.join(r[0] for r in pk_rows if r[2].startswith(_YES))}. Không: {', '.join(r[0] for r in pk_rows if r[2] == _NO)}.</p>
+  <div class="grid2">{pk_ev_rows}</div>
+  <h3>Chiến bang</h3>
+  <ul><li><b>Điểm:</b> thắng thành viên bang địch ở đấu trường +1; <b>mới:</b> đồ sát thành viên bang địch trên bản đồ +1 (bên nào thắng cũng được). Mỗi cặp tối đa {GW['same_target_max']} lần, chung giới hạn đấu trường và đồ sát.</li>
+    <li><b>Mới:</b> đồ sát người bang địch lúc đang chiến <b>không bị tên đỏ</b>; vàng mất / nhận và bảo vệ {SL['protect_s']} giây như thường. Không áp trong Hỗn Chiến Thành, Công Thành (luật riêng).</li>
+    <li>Trận kéo dài {GW['minutes']} phút. Thắng: quỹ bang +{n(GW['win_fund'])}, ai ghi điểm nhận {n(GW['win_gold'])} vàng. Hai bang chiến lại sau {GW['rematch_hours']} giờ.</li>
+    <li><b>Hiển thị mới:</b> người bang địch vòng đỏ nhấp nháy + ⚔ trước tên, thanh tỉ số [MÌNH] a – b [ĐỊCH] mọi bản đồ (trừ Tháp), chấm cam ở bản đồ nhỏ.</li>
+    <li><b>Tác động:</b> chiến bang thành PK thật trên bản đồ, không chỉ đánh bản sao ở đấu trường; bang đông người online, chủ động đi săn có lợi.</li></ul>
+  <h3>Đấu trường: thách đấu và ⚔ đấu trực tiếp</h3>
+  <div class="scroll"><table><thead><tr><th></th><th>Thách đấu (bản sao)</th><th>⚔ Đấu trực tiếp (mới)</th></tr></thead><tbody>{arena_rows}</tbody></table></div>
+  <p class="note">Đấu trực tiếp là "đấu tập" không mất gì nhưng vẫn đổi điểm đấu trường; giới hạn {AR['per_day']} trận / ngày của người mời hạn chế đẩy điểm qua lại. Tab 🟢 Đang online (Quanh đây) thấy người ở mọi bản đồ để mời đấu trực tiếp; đồ sát vẫn phải cùng bản đồ.</p>
+"""
+
+
 # ---------- Lỗ hổng dữ liệu (OPEN_QUESTIONS KD-1): bậc thiếu bộ giáp / vũ khí chính theo lớp ----------
 gaps = []
 for c, label in CLS:
@@ -836,7 +909,7 @@ WORLD_HTML = f"""<h3>Thời tiết</h3>
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, FESTSHOP=fest_shop, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PKQUICK=PK_QUICK, TOOLS=TOOLS_HTML, EVVIZ=EVVIZ_HTML, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, FESTSHOP=fest_shop, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PKQUICK=PK_QUICK, TOOLS=TOOLS_HTML, EVVIZ=EVVIZ_HTML, PKEV=PKEV_HTML, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),
