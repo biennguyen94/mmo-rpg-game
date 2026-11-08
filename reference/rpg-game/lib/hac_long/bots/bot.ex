@@ -72,6 +72,8 @@ defmodule HacLong.Bots.Bot do
        last_map: nil,
        # lúc vào bản đồ tháp (Tháp Vô Tận / Quảng Trường / Lâu Đài / Kalima): ở quá `play.tower_max_min` phút thì ra cổng
        tower_since: nil,
+       # tầng lúc vào Tháp Vô Tận lượt này (Brain ra cổng khi vừa lên qua hết một chặng 10 tầng, không ra ngay tầng vào)
+       tower_from: nil,
        # dấu vết tiến triển ở nhịp trước và lúc nó bắt đầu không đổi (`unstick/4`)
        sig: nil,
        still_since: nil,
@@ -142,6 +144,7 @@ defmodule HacLong.Bots.Bot do
             tower_due: now >= s.next_tower,
             feed_due: now >= s.next_feed,
             tower_stuck: s.tower_since != nil and now - s.tower_since > @tower_max,
+            tower_from: s.tower_from,
             fishing: now < s.fish_until,
             dragon: dragon,
             school: school,
@@ -179,7 +182,15 @@ defmodule HacLong.Bots.Bot do
     if p && !p.battle && :rand.uniform() < @chat_chance, do: say(s, p)
     Process.send_after(self(), :tick, delay(p, cmd))
     in_tower = p != nil and p.pos.map == "tower"
-    s = %{s | last_map: p && p.pos.map, tower_since: if(in_tower, do: s.tower_since || now)}
+    floor = in_tower && is_map(p[:tower]) && p.tower[:floor]
+
+    s = %{
+      s
+      | last_map: p && p.pos.map,
+        tower_since: if(in_tower, do: s.tower_since || now),
+        tower_from: if(in_tower, do: s.tower_from || floor)
+    }
+
     unstick(s, p, Brain.resting?(p, s.rest_until, now), now)
   end
 

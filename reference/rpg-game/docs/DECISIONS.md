@@ -1869,3 +1869,9 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Menu → Kỹ năng → ⚙ Chọn bộ kỹ năng: bảng tự cuộn bên trong, mỗi lần màn vẽ lại (server đẩy trạng thái) thì về đầu. `render()` giờ giữ chỗ cuộn của các bảng nổi (`.skill-dialog`, nhật ký ⚡, bảng chọn người, hộp thoại bản đồ).
 - Bước combo ⚡ chỉ chọn được đòn thường + kỹ năng **đang mang** (bộ kỹ năng tối đa `RULES.tower_skills.loadout` = 4, server chỉ đánh được kỹ năng đang mang) — nên thấy 5 mục là đúng luật. Thêm nhóm mờ "Chưa mang (đổi ở ⚙ Bộ kỹ năng)" liệt kê kỹ năng đã mở chưa mang và dòng hướng dẫn. Không đổi luật.
 - Kiểm: e2e `quick` (25 bước).
+
+## Sửa: bot kẹt kỷ lục Tháp ở tầng 9 (2026-11-08, anh báo "mọi bot cao nhất tầng 9")
+- Nguyên nhân: kỷ lục `tower_best` chỉ ghi khi **lên cầu thang** (`Tower.climb/1`). Bot hạ hết quái tầng 10 thì quy tắc "xong chặng 10 tầng → ra cổng" (`Brain.tower_play`) cho ra cổng ngay, không lên cầu thang → kỷ lục mãi 9, lần sau `Tower.starts(9)` chỉ có tầng 1 → leo lại 1–10 rồi ra, lặp mãi. (Bản sửa kẹt trước chỉ xử lý đứng im trong tháp, không đụng điểm này.)
+- Sửa: tầng 10, 20… xong thì lên cầu thang như mọi tầng (ghi kỷ lục, nhận thưởng mốc 10 tầng); sang tầng 11, 21… (không phải tầng vào lượt này) thì ra cổng. Tiến trình bot nhớ tầng lúc vào (`tower_from`) để vào ở tầng 11 không ra ngay. Máu < `play.tower_hp` sau một tầng vẫn ra như cũ.
+- Bot đang kẹt tự hết: lượt leo sau vượt tầng 10 → kỷ lục 10 → lượt sau nữa vào từ tầng 11. Mô phỏng hành trình (`Journey`) không bị (luôn lên cầu thang trước khi dừng).
+- Kiểm: `brain_play_test` "trong tháp…" (tầng 10 → lên cầu thang, kỷ lục ≥ 10, tầng 11 ra; vào ở tầng 11 thì đánh tiếp).

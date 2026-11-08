@@ -114,7 +114,7 @@ defmodule HacLong.Bots.BrainPlayTest do
       assert %{"act" => _} = Brain.decide(%{p | hp: div(d(p).maxHp, 2)}, nil, due)
     end
 
-    test "trong tháp: đánh quái, hết quái lên cầu thang, xong chặng 10 tầng hoặc máu thấp thì ra" do
+    test "trong tháp: đánh quái, hết quái lên cầu thang, xong chặng 10 tầng (lên cầu thang tầng 10 ghi kỷ lục) thì ra" do
       {_, p} = Tower.enter(player(), 1)
       %{"act" => "move"} = Brain.decide(p, nil)
 
@@ -128,10 +128,17 @@ defmodule HacLong.Bots.BrainPlayTest do
       q = walk_until(q, &(&1.tower.floor == 2))
       assert q.tower.floor == 2
 
-      # tầng 10 xong: ra cổng (về Làng)
+      # tầng 10 xong: lên cầu thang trước (kỷ lục 10, trước đây ra cổng ngay nên kỷ lục mãi là 9), sang tầng 11 thì ra
       q = put_in(q.tower, %{q.tower | floor: 10, monsters: []})
-      q = walk_until(q, &(&1.pos.map == "village"))
+      q = walk_until_with(q, &(&1.tower != nil and &1.tower.floor == 11), %{tower_from: 1})
+      assert q.tower_best >= 10
+      q = walk_until_with(q, &(&1.pos.map == "village"), %{tower_from: 1})
       assert q.pos.map == "village"
+
+      # vừa vào ở tầng 11 (lượt mới): đánh tiếp, không ra ngay
+      {_, r} = Tower.enter(player(%{tower_best: 10}), 11)
+      r = walk_until_with(r, &(&1.battle != nil), %{tower_from: 11})
+      assert r.battle
     end
   end
 

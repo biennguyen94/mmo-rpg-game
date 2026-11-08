@@ -113,7 +113,7 @@ defmodule HacLong.Bots.Brain do
         tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
 
       p.pos.map == "tower" ->
-        tower_play(p, d)
+        tower_play(p, d, opts)
 
       (need = restock(p)) != [] ->
         shop(p, need, snap)
@@ -525,9 +525,10 @@ defmodule HacLong.Bots.Brain do
   lên cầu thang (Tháp, Quảng Trường); Lâu Đài / Kalima xong thì bước một bước để về Làng. Ra cổng `<` khi máu
   < `play.leave_hp` và hết bình, hoặc (Tháp) vừa xong một chặng 10 tầng / máu < `play.tower_hp` sau một tầng.
   """
-  def tower_play(%{tower: nil} = p, _d), do: any_step(p)
+  def tower_play(p, d, opts \\ %{})
+  def tower_play(%{tower: nil} = p, _d, _opts), do: any_step(p)
 
-  def tower_play(%{tower: t} = p, d) do
+  def tower_play(%{tower: t} = p, d, opts) do
     me = {p.pos.x, p.pos.y}
     low = p.hp < d.maxHp * @play.leave_hp and Engine.best_potion(p, d.maxHp - p.hp) == nil
     done = (t[:bc] && t.bc.done) || (t[:kal] && t.kal.done)
@@ -543,10 +544,16 @@ defmodule HacLong.Bots.Brain do
       low ->
         tower_walk(p, [List.to_tuple(t.exit)])
 
+      # vừa lên qua hết một chặng 10 tầng (đang ở tầng 11, 21… mà không phải tầng vào lượt này): ra cổng. Tầng 10 xong
+      # thì lên cầu thang trước: kỷ lục `tower_best` chỉ ghi khi lên cầu thang (trước đây ra cổng ngay ở tầng 10 nên kỷ
+      # lục mãi là 9, lần sau lại vào từ tầng 1 — bot "kẹt tầng 9")
+      plain? and rem(t.floor, 10) == 1 and t.floor > (opts[:tower_from] || t.floor) ->
+        tower_walk(p, [List.to_tuple(t.exit)])
+
       targets != [] ->
         tower_walk(p, targets)
 
-      plain? and (rem(t.floor, 10) == 0 or p.hp < d.maxHp * @play.tower_hp) ->
+      plain? and p.hp < d.maxHp * @play.tower_hp ->
         tower_walk(p, [List.to_tuple(t.exit)])
 
       t[:ds] != nil or plain? ->
