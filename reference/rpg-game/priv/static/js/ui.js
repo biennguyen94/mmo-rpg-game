@@ -2091,7 +2091,12 @@
 
   // ---------- Chọn nhân vật (DECISIONS "Nhiều nhân vật") ----------
   // hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật: rồng vẽ tay (CC0, Cethiel, tô đen; CREDITS.md), nét ở mọi cỡ màn hình
-  function heroArt() { return '<img class="hero-art" src="assets/art/hac_long.webp" width="458" height="291" alt="Hắc Long" decoding="async">'; }
+  // dưới hình Hắc Long: người đầu tiên của server thuần phục Hắc Long (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long")
+  function heroArt() {
+    const first = window.HAC_FIRST;
+    return '<img class="hero-art" src="assets/art/hac_long.webp" width="458" height="291" alt="Hắc Long" decoding="async">' +
+      (first ? `<p class="hac-first">🐉 Người đầu tiên thuần phục Hắc Long: <b>${esc(first)}</b></p>` : '');
+  }
   function viewSelect() {
     // theo thứ tự tạo (server sắp sẵn)
     const list = Net.chars;

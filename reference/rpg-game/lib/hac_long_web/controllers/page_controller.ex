@@ -18,7 +18,7 @@ defmodule HacLongWeb.PageController do
       |> File.read!()
       |> String.replace(
         "<!--GAME_DATA-->",
-        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{version}\";</script>"
+        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{version}\"; window.HAC_FIRST = #{hac_first()};</script>"
       )
       # js/…, css/… kèm `?v=phiên_bản`: deploy bản mới thì trình duyệt tải file mới, không dùng bản
       # cũ còn trong cache (Plug.Static không đặt max-age nên trình duyệt có thể tự giữ file khá lâu)
@@ -29,6 +29,16 @@ defmodule HacLongWeb.PageController do
     |> put_resp_header("cache-control", "no-store")
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
+  end
+
+  # người đầu tiên của server thuần phục Hắc Long (màn đăng nhập ghi tên, DECISIONS "… Hắc Long"); lỗi database thì null
+  defp hac_first do
+    HacLong.Game.DragonEgg.pets()
+    |> Enum.flat_map(&HacLong.RarePets.list/1)
+    |> Enum.min_by(& &1.at, DateTime, fn -> nil end)
+    |> then(&Jason.encode!(&1 && &1.name, escape: :html_safe))
+  rescue
+    _ -> "null"
   end
 
   defp item_icons(file \\ "item_icons.json") do

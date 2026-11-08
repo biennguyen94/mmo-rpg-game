@@ -827,7 +827,20 @@ defmodule HacLong.Game.Engine do
         do: "⚔️ #{m.name} (Cấp #{m.level}) xuất hiện!",
         else: "Bạn gặp #{m.name} (Cấp #{m.level})."
 
-    {ok(), p |> Map.put(:battle, battle) |> log(text, "info")}
+    p = p |> Map.put(:battle, battle) |> log(text, "info")
+
+    # dắt Hắc Long thuần huyết đánh trùm cuối Hắc Long: thoại riêng (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long")
+    p =
+      if m[:final] == true and Map.get(p, :pet) in HacLong.Game.DragonEgg.pets(),
+        do:
+          log(
+            p,
+            "🐉 #{Data.pet(p.pet).name} gầm lên với #{m.name}: \"Đồng tộc phản bội! Dòng máu Rồng Tiên không dành cho kẻ khủng bố vùng đất này!\" (Long Huyết: +#{round(Pets.trait(p, :slayer) * 100)}% sát thương)",
+            "win"
+          ),
+        else: p
+
+    {ok(), p}
   end
 
   # Nhật ký trận ghi tên, không xưng "bạn" (DECISIONS "Nhật ký trận: tên, dùng gì, gây bao nhiêu"): "Bạn" / "bạn"

@@ -180,5 +180,17 @@ defmodule HacLong.Game.KiteTest do
     d = Engine.derived(p)
     assert d.dodge > base.dodge and d.atk > base.atk
     assert Pets.trait(p, :slayer) == 0.1
+
+    # dắt Hắc Long đánh trùm cuối: thoại riêng
+    m =
+      Engine.make_monster(%{id: "hac_long_boss", name: "Hắc Long", level: 35, final: true}, true)
+
+    {_, b} = Engine.start_with_monster(Map.put(p, :hp, 100), 5, Map.put(m, :hp, m.maxHp))
+    assert Enum.any?(b.battle.log, &(&1.text =~ "Đồng tộc phản bội"))
+
+    {_, plain} =
+      Engine.start_with_monster(%{p | pet: nil} |> Map.put(:hp, 100), 5, Map.put(m, :hp, m.maxHp))
+
+    refute Enum.any?(plain.battle.log, &(&1.text =~ "Đồng tộc"))
   end
 end
