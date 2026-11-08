@@ -1827,3 +1827,4 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Sửa kèm: lệnh di chuyển (`run_move`) giờ cũng hẹn nhịp (bước vào quái là trận bắt đầu ở đường này).
 - Kiểm: `test/hac_long/game/quick_fight_test.exs`, e2e `quick` (11 bước).
 - (bổ sung) "Tự hủy đồ rơi" (Menu → Cài đặt) vốn áp cho mọi trận (lúc rơi đồ), kể cả Đánh nhanh. Thêm: `reward.trashed` (số món đã hủy) → thông báo xong trận "🗑 hủy N món"; nút 🗑 trên thanh ⚡ sáng khi đang bật, bấm mở thẳng phần cài đặt.
+- (bổ sung, anh báo "chiếm diện tích, nhật ký không cuộn được") Nút ⚡ / 🗑 / 📜 gộp chung một hàng với 🤖 Tự đánh (hàng không xuống dòng, chữ tóm tắt rút gọn "…"); đang đánh nhanh thì cả hàng thành "⚡ Đang đánh … ✋ Đánh tay"; combo xem / sửa trong ⚙. Nhật ký trận vừa xong thành cửa sổ nổi (position fixed) có khung cuộn riêng (màn bản đồ cố định chiều cao nên khung nằm dưới bản đồ không cuộn được).

@@ -6,7 +6,7 @@ import { launch, reporter, newPlayer, adminSession, send, act, shot } from './li
 
 const R = reporter('quick');
 const browser = await launch();
-const X = await newPlayer(browser, { cls: 'dk' });
+const X = await newPlayer(browser, { cls: 'dk', viewport: { width: 390, height: 844 } });
 const { admin } = await adminSession(browser);
 const p = X.page;
 await admin('set_level', X.name, { level: 30 });
@@ -34,7 +34,9 @@ await p.waitForSelector('[data-act="quick-toggle"]');
 await p.click('[data-act="quick-toggle"]');
 await p.waitForFunction(() => (window.__hl.player().view.autoCfg || {}).quick === true, null, { timeout: 5000 }).catch(() => null);
 R.check('dịch chuyển tới Nghĩa Địa', (await p.evaluate(() => window.__hl.player().pos.map)) === 'graveyard_1', tr.msg || '');
-R.check('nút ⚡ bật Đánh nhanh', /Bật/.test(await p.textContent('#quick-bar')));
+await p.evaluate(() => document.querySelector('#auto-bar').scrollIntoView({ block: 'end' }));
+await shot(p, 'quick-bar.png');
+R.check('nút ⚡ bật Đánh nhanh (chung hàng với 🤖 Tự đánh)', (await p.getAttribute('#auto-bar [data-act="quick-toggle"]', 'aria-pressed')) === 'true' && !(await p.$('#quick-bar')));
 
 async function startFight() {
   for (let i = 0; i < 8; i++) {
@@ -53,7 +55,7 @@ async function startFight() {
 const kills0 = await p.evaluate(() => window.__hl.player().kills);
 R.check('bấm quái: vào trận', await startFight());
 await p.waitForTimeout(400);
-R.check('vẫn ở màn bản đồ (không mở màn trận), thanh "Đang đánh"', !!(await p.$('#map-canvas')) && /Đang đánh/.test(await p.textContent('#quick-bar').catch(() => '')));
+R.check('vẫn ở màn bản đồ (không mở màn trận), thanh "Đang đánh"', !!(await p.$('#map-canvas')) && /Đang đánh/.test(await p.textContent('#auto-bar').catch(() => '')));
 await shot(p, 'quick-fighting.png');
 await p.waitForFunction(() => !window.__hl.player().battle, null, { timeout: 60000 }).catch(() => null);
 const after = await p.evaluate(() => ({ battle: !!window.__hl.player().battle, kills: window.__hl.player().kills }));
@@ -63,6 +65,8 @@ R.check('có nút 📜 xem nhật ký trận vừa xong', !!(await p.$('[data-ac
 await p.click('[data-act="quick-log"]').catch(() => null);
 const log = await p.textContent('.quick-log').catch(() => '');
 R.check('nhật ký trận vừa xong có dòng đánh', /gây ra|dùng/.test(log), log.slice(0, 120));
+const sc = await p.evaluate(() => { const l = document.querySelector('.quick-log .log'); if (!l) return null; const cs = getComputedStyle(l); return { ov: cs.overflowY, fixed: getComputedStyle(l.parentElement).position }; });
+R.check('nhật ký nổi trên bản đồ, cuộn được', sc && sc.fixed === 'fixed' && sc.ov === 'auto', JSON.stringify(sc));
 await shot(p, 'quick-log.png');
 await p.click('.quick-log [data-act="quick-log"]').catch(() => null);
 

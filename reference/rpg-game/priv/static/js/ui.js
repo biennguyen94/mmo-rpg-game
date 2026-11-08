@@ -346,7 +346,7 @@
     const trading = trade && trade.status !== 'pending';
     // U5: bản đồ vừa khít giữa HUD và dock, không cuộn trang
     view.classList.toggle('fit', tab === 'map' && !npc && !trading && !profileUi.open && !friendsUi.open && !notes.open && !mail.open && !guildUi.open);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + viewQuick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (friendsUi.open) {
@@ -1127,21 +1127,18 @@
     return `<div class="card quick-log" role="dialog" aria-label="Nhật ký trận vừa xong"><div class="row"><h3 class="grow">📜 ${esc(quickLast.name)}</h3><button class="btn small-btn" data-act="quick-log">Đóng</button></div>
       <div class="log">${l.map((x, i) => logLine(x, l[i - 1])).join('')}</div></div>`;
   }
-  function viewQuick() {
-    if (quickFight()) {
-      const m = P.battle.monster;
-      return `<div class="auto-bar on" id="quick-bar"><span class="auto-dot" aria-hidden="true"></span>
-        <span class="grow small">⚡ Đang đánh <b>${esc(m.name)}</b> · ❤ ${Math.max(0, Math.round((m.hp * 100) / Math.max(1, m.maxHp)))}%</span>
-        <button class="btn small-btn" data-act="quick-manual" title="Cầm lại quyền đánh tay trận này">✋ Đánh tay</button></div>`;
-    }
-    const steps = comboSteps(), on = quickOn();
-    return `<div class="auto-bar" id="quick-bar">
-        <button class="btn small-btn ${on ? 'primary' : ''}" data-act="quick-toggle" aria-pressed="${on}" title="Bật: bấm quái là tự đánh hết trận theo combo">⚡ Đánh nhanh: ${on ? 'Bật' : 'Tắt'}</button>
-        <span class="grow small muted">${steps.length ? steps.map((x) => esc(stepName(x))).join(' → ') : 'Combo: theo bộ kỹ năng (buff trước)'}</span>
-        ${quickLast ? `<button class="btn small-btn" data-act="quick-log" aria-expanded="${quickLogOpen}" title="Xem nhật ký trận vừa xong">📜</button>` : ''}
-        <button class="btn small-btn ${lootFilterOn() ? 'primary' : ''}" data-act="quick-filter" aria-pressed="${lootFilterOn()}" title="Tự hủy đồ rơi: ${lootFilterOn() ? 'đang bật' : 'đang tắt'} (bấm để chỉnh)">🗑</button>
-        <button class="btn small-btn" data-act="quick-combo" title="Sửa combo">⚙</button></div>${quickLogOpen && quickLast ? viewQuickLog() : ''}`;
+  // nút ⚡ / 🗑 / 📜 nằm chung hàng với 🤖 Tự đánh (không thêm hàng, bản đồ không bị thấp đi)
+  function quickBtns() {
+    const on = quickOn(), steps = comboSteps();
+    const combo = steps.length ? steps.map((x) => stepName(x)).join(' → ') : 'theo bộ kỹ năng';
+    return `<button class="btn small-btn ${on ? 'primary' : ''}" data-act="quick-toggle" aria-pressed="${on}" title="⚡ Đánh nhanh ${on ? 'đang bật' : 'đang tắt'}: bấm quái là tự đánh hết trận theo combo (${esc(combo)})">⚡</button>`;
   }
+  function quickTail() {
+    const f = lootFilterOn();
+    return `<button class="btn small-btn ${f ? 'primary' : ''}" data-act="quick-filter" aria-pressed="${f}" title="Tự hủy đồ rơi: ${f ? 'đang bật' : 'đang tắt'} (bấm để chỉnh)">🗑</button>${quickLast ? `<button class="btn small-btn" data-act="quick-log" aria-expanded="${quickLogOpen}" title="Xem nhật ký trận đánh nhanh vừa xong">📜</button>` : ''}`;
+  }
+  // khóa trạng thái thanh: đổi thì vẽ lại cả thanh (đang rảnh mà không đổi thì giữ nguyên, không đóng ô đang chọn)
+  const autoBarKey = () => JSON.stringify([!!P.auto, quickFight(), quickOn(), lootFilterOn(), !!quickLast, quickLogOpen, comboSteps().map((x) => x.id), autoUi.open]);
   // Menu → Kỹ năng: sắp combo (danh sách ưu tiên, tối đa QUICK.max_steps bước)
   function viewCombo() {
     const set = mySkills(), steps = comboEdit || comboSteps();
@@ -1163,12 +1160,18 @@
     syncAutoUi();
     const am = P.view.autoMap || { ok: false, kinds: [] };
     const a = P.auto;
+    if (quickFight()) {
+      const m = P.battle.monster;
+      return `<div class="auto-bar on" id="auto-bar" data-key="${esc(autoBarKey())}"><span class="auto-dot" aria-hidden="true"></span>
+        <span class="grow small">⚡ Đang đánh <b>${esc(m.name)}</b> · ❤ ${Math.max(0, Math.round((m.hp * 100) / Math.max(1, m.maxHp)))}%</span>
+        <button class="btn small-btn" data-act="quick-manual" title="Cầm lại quyền đánh tay trận này">✋ Đánh tay</button></div>`;
+    }
     if (a) {
-      return `<div class="auto-bar on" id="auto-bar"><span class="auto-dot" aria-hidden="true"></span>
+      return `<div class="auto-bar on" id="auto-bar" data-key="${esc(autoBarKey())}"><span class="auto-dot" aria-hidden="true"></span>
         <span class="grow small" id="auto-stat">🤖 Tự đánh ${esc(autoTargetName(a))} · đã hạ <b class="num">${fmt(autoKills())}</b> · ${esc(autoRangeLabel(a.range))} · máu dưới ${a.hp}% · ${a.loot === 'pick' ? 'lọc đồ' : 'giữ hết đồ'}</span>
         <button class="btn small-btn danger" data-act="auto-off">Tắt</button></div>`;
     }
-    if (!am.ok) return '<div class="auto-bar" id="auto-bar"><span class="small muted">🤖 Tự đánh: bản đồ này không có quái để tự đánh.</span></div>';
+    if (!am.ok) return `<div class="auto-bar" id="auto-bar" data-key="${esc(autoBarKey())}">${quickBtns()}<span class="grow small muted">🤖 Bản đồ này không có quái để tự đánh.</span>${quickTail()}</div>`;
     if (!['all', 'level'].includes(autoUi.target) && !am.kinds.some((k) => k.id === autoUi.target)) autoUi.target = 'all';
     const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
     const pcts = (lo, hi, cur) => { const o = []; for (let v = lo; v <= hi; v += 10) o.push(opt(v, cur, `${v}%`)); return o.join(''); };
@@ -1185,13 +1188,14 @@
         <label class="small wide">Đồ rơi <select data-auto="loot">${opt('all', autoUi.loot, 'Giữ hết')}${opt('pick', autoUi.loot, 'Chỉ giữ loại đã chọn')}</select></label>
         ${keeps}
         <p class="small muted">${autoUi.range ? `Chỉ đánh quái trong ${autoUi.range} ô quanh chỗ bấm bắt đầu; hết quái thì quay về chỗ đó đứng chờ. ` : ''}Bộ ${(RULES.towerSkills || {}).loadout || 5} kỹ năng đang mang. Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ hoặc đóng game. Cài đặt lưu theo nhân vật khi bắt đầu.</p>
+        <p class="small"><b>⚡ Đánh nhanh</b> (bấm quái là tự đánh hết trận, ở lại bản đồ): ${quickOn() ? 'đang bật' : 'đang tắt'} · combo ${esc(comboSteps().length ? comboSteps().map((x) => stepName(x)).join(' → ') : 'theo bộ kỹ năng')} · <button class="btn small-btn" data-act="quick-combo">Sửa combo</button></p>
         <button class="btn small-btn" data-act="auto-reset">Về mặc định</button>
         <button class="btn primary auto-go" data-act="auto-on">🤖 Bắt đầu tự đánh</button>
       </div>` : '';
-    return `<div class="auto-bar" id="auto-bar">
-        <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>
+    return `<div class="auto-bar" id="auto-bar" data-key="${esc(autoBarKey())}">
+        <button class="btn small-btn primary" data-act="auto-on">🤖 Tự đánh</button>${quickBtns()}
         <span class="grow small muted">${esc(autoTargetName(autoUi).replace(/^./, (c) => c.toUpperCase()))} · ${esc(autoRangeLabel(autoUi.range))} · máu dưới ${autoUi.hp}%</span>
-        <button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh">⚙</button>
+        ${quickTail()}<button class="btn small-btn" data-act="auto-set" aria-expanded="${autoUi.open}" title="Cài đặt tự đánh / đánh nhanh">⚙</button>
         ${settings}</div>`;
   }
 
@@ -1532,8 +1536,6 @@
       $('#hud').innerHTML = viewHud();
       tweenGold(); trackBag();
       quickTrack();
-      const qb = $('#quick-bar');
-      if (qb) { const tpl = document.createElement('template'); tpl.innerHTML = viewQuick(); qb.replaceWith(...tpl.content.childNodes); }
       const head = $('.map-top');
       if (head) head.outerHTML = Map_.top(P);
       const tut = $('#tut');
@@ -1541,9 +1543,11 @@
       const fish = $('#fish-ui');
       if (fish) fish.outerHTML = viewFishing();
       // tự đánh: bật / tắt thì vẽ lại cả thanh; đang bật chỉ đổi dòng trạng thái (không đóng ô cài đặt đang chọn)
+      // tự đánh / đánh nhanh: trạng thái đổi thì vẽ lại cả thanh; đang chạy thì cập nhật số (hạ được, máu quái)
       const ab = $('#auto-bar');
-      if (ab && ab.classList.contains('on') !== !!P.auto) ab.outerHTML = viewAuto();
-      else if (ab && P.auto) { const tpl = document.createElement('template'); tpl.innerHTML = viewAuto(); ab.replaceWith(tpl.content.firstElementChild); }
+      if (ab && (ab.dataset.key !== autoBarKey() || P.auto || quickFight())) { const tpl = document.createElement('template'); tpl.innerHTML = viewAuto(); ab.replaceWith(tpl.content.firstElementChild); }
+      const ql = $('.quick-log');
+      if (!!ql !== !!(quickLogOpen && quickLast)) return render();
       Map_.draw();
     } else {
       render();

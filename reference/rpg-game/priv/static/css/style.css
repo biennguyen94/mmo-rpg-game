@@ -1060,3 +1060,14 @@ details.fold > .list { margin-top: 4px; }
 .slot.inactive { border-color: var(--bad) !important; box-shadow: inset 0 0 0 2px rgba(220, 70, 60, 0.55); }
 .slot.inactive img, .slot.inactive canvas { filter: grayscale(0.8) brightness(0.7); }
 .slot.inactive::after { content: "⛔"; position: absolute; right: 1px; top: 0; font-size: 11px; }
+
+/* ⚡ Đánh nhanh: nhật ký trận vừa xong nổi trên bản đồ, cuộn riêng (màn bản đồ cố định chiều cao, không cuộn trang được) */
+.quick-log { position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px;
+  max-height: min(62dvh, 520px); display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--ink-2);
+  border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 10px 32px #000c; }
+.quick-log .log { flex: 1 1 auto; min-height: 0; max-height: none; height: auto; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* Tự đánh + ⚡ Đánh nhanh chung một hàng: không xuống dòng, chữ tóm tắt rút gọn "…" (bản đồ giữ được chiều cao) */
+#auto-bar { flex-wrap: nowrap; }
+#auto-bar > .grow { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#auto-bar > .btn { flex: 0 0 auto; }
