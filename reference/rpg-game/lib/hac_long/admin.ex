@@ -148,8 +148,9 @@ defmodule HacLong.Admin do
   # Tặng thú cưng (kể cả thú hiếm Long Vương, DECISIONS "Long Vương"), đặt cấp thú và dắt theo luôn.
   # Thú quản trị tặng không ghi Bia Long Vương (bia chỉ ghi người tự câu được).
   def build("give_pet", %{"id" => id} = a) do
-    lv = a["level"] || 1
     pet = is_binary(id) && Data.pet(id)
+    # "max": cấp tối đa của thú (Long Vương 30, thú khác `RULES.pets.max_level`)
+    lv = if a["level"] == "max" and pet, do: Pets.max_level(id), else: a["level"] || 1
 
     cond do
       !pet ->
@@ -243,6 +244,11 @@ defmodule HacLong.Admin do
     # cánh: dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh `wopt` (hp / mp / ignore_def)
     wopt = a["wopt"]
 
+    # `equip`: tặng xong mặc luôn (như người chơi bấm Trang bị; `hand` "left": cầm tay trái). Không mặc được
+    # (chưa đủ cấp / chỉ số, sai lớp…) thì món vẫn nằm trong túi, thông báo ghi lý do.
+    equip = a["equip"] == true
+    hand = if a["hand"] == "left", do: "left"
+
     cond do
       !it or it.slot not in ["wing" | Engine.gear_slots()] ->
         {:error, "\"#{base}\" không phải vũ khí / giáp / khiên / trang sức / cánh."}
@@ -269,7 +275,8 @@ defmodule HacLong.Admin do
       true ->
         {:ok,
          fn p ->
-           if length(Gear.bag(p)) >= Gear.max_bag() do
+           # mặc luôn thì không cần chỗ trống trước: món mới lên người, món bị thay ra mà túi đầy thì gửi Hộp thư
+           if not equip and length(Gear.bag(p)) >= Gear.max_bag() do
              {:error, "Túi trang bị đã đầy (#{Gear.max_bag()} món)."}
            else
              g = Gear.new(base, opt)
@@ -278,9 +285,25 @@ defmodule HacLong.Admin do
              g = if skill, do: Map.put(g, :skill, true), else: g
              g = if anc, do: Map.put(g, :anc, true), else: g
              g = if wopt in [nil, ""], do: g, else: Map.put(g, :wopt, wopt)
-             {p, :kept} = Gear.add(p, g)
+             before = MapSet.new(Gear.bag(p), & &1.uid)
+             p = Map.put(p, :gear, Gear.list(p) ++ [g])
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
-             {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}
+             text = "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}"
+
+             {p, text} =
+               case equip && Engine.equip(p, g.uid, hand) do
+                 false -> {p, text <> "."}
+                 {%{ok: true}, p2} -> {p2, text <> ", đã mặc."}
+                 {r, _} -> {p, text <> " (chưa mặc: #{r[:msg] || "không mặc được"})."}
+               end
+
+             {p, mailed} = bag_overflow(p, before)
+
+             {:ok, p,
+              if(mailed == [],
+                do: text,
+                else: text <> " Túi trang bị đầy: #{Enum.join(mailed, ", ")} gửi vào Hộp thư."
+              )}
            end
          end}
     end
@@ -355,6 +378,34 @@ defmodule HacLong.Admin do
        end}
 
   def build(_op, _a), do: {:error, "Tham số không hợp lệ."}
+
+  # túi trang bị vượt `Gear.max_bag()` sau khi tặng / mặc (món mới chưa mặc được, món bị thay ra): các món mới vào túi
+  # (không có trong `before`) gửi Hộp thư qua `mail_out` (Session gửi khi lưu), giữ +N và mọi dòng. Trả {p, tên món}.
+  defp bag_overflow(p, before) do
+    extra = length(Gear.bag(p)) - Gear.max_bag()
+
+    if extra <= 0 do
+      {p, []}
+    else
+      out = p |> Gear.bag() |> Enum.reject(&MapSet.member?(before, &1.uid)) |> Enum.take(extra)
+      ups = Map.get(p, :upgrades) || %{}
+      uids = Enum.map(out, & &1.uid)
+      mail = for g <- out, do: Map.put(g, :up, Map.get(ups, g.uid, 0))
+
+      p =
+        p
+        |> Map.put(:gear, Enum.reject(Gear.list(p), &(&1.uid in uids)))
+        |> Map.put(:upgrades, Map.drop(ups, uids))
+        |> Map.update(:mail_out, mail, &(&1 ++ mail))
+
+      names =
+        for g <- out,
+            up = Map.get(ups, g.uid, 0),
+            do: Gear.label(g) <> if(up > 0, do: " +#{up}", else: "")
+
+      {p, names}
+    end
+  end
 
   defp put_upgrade(p, _id, 0), do: p
 

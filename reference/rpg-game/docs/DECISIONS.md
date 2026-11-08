@@ -1775,3 +1775,46 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   - mức 1,25 / 1,3: vẫn thắng 5/5, nhưng chết 4–13 lần (trước 0–2), số trận +10–25%, Hắc Long bị hạ ở cấp 35–41 → gắt quá;
   - mức 1,15 / 1,2: thắng 5/5, chết 1–6 lần, số trận +2–10%, Hắc Long vẫn bị hạ quanh cấp 35 → chọn.
 - Quái Bóng Đêm: hệ số ×1,5 trước viết cứng trong `world.ex` (`night_variant`) chuyển sang `RULES.world.night_rare_mult` (giá trị không đổi).
+
+## Bản đồ thu nhỏ kéo được (2026-11-07, anh hỏi "giữ và kéo đi")
+- Giữ và kéo (chuột hoặc ngón tay, ngưỡng 6px) để dời bản đồ thu nhỏ trong khung bản đồ; bấm nhẹ vẫn mở bản đồ thế giới, kéo xong không mở.
+- Vị trí lưu ở trình duyệt (`localStorage` `hl-minimap-pos`) theo tỉ lệ khoảng trống trong khung (0..1), nên đổi cỡ màn / xoay máy / bật "vừa màn hình" vẫn đúng góc và không lọt ra ngoài khung. Chỉ là tùy chọn giao diện, không gửi server.
+- Nút chat (góc phải dưới) và nút vừa màn hình (góc phải trên) vẫn nằm trên bản đồ thu nhỏ để không bị che.
+- e2e `minimap` (máy tính, điện thoại, cảm ứng thật).
+
+## Đồ sát: dòng của đối thủ chi tiết như dòng của mình (2026-11-07, anh báo qua ảnh)
+- Lỗi: lượt của đối thủ chạy ở phiên của họ, chỉ gửi sang chữ (`& &1.text`) nên mất tên / chiêu / sát thương / máu còn lại → hiện "Phong Vũ, Kiếm Độc Hỏa, gây 246 sát thương." thay vì "Phong Vũ dùng Kiếm Độc Hỏa. ⚔ 246 (máu còn lại: …)".
+- Nay gửi nguyên dòng nhật ký (`Slay.acted` → `Session.slay_sync`), đổi bên `who` (me ↔ foe); lấy sau khi đã tính sát thương / máu còn lại thật (`fix_slay_log`). Mỗi lượt đối thủ là một khối (cách dòng).
+- Thêm chi tiết cho dòng hiệu ứng: "X trúng độc ☠ (−N máu mỗi lượt, K lượt)" (bỏng 🔥, chảy máu 🩸) và "X mất ⚔ N vì trúng độc (máu còn lại: …)" — cả đánh quái lẫn đánh người.
+
+## Máu không vượt máu tối đa khi tháo đồ (2026-11-08, anh báo 3.106 / 2.020 sau khi tháo đồ)
+- Lỗi: mặc / ép đồ đã giữ tỉ lệ máu, nhưng tháo đồ giữ nguyên số máu → máu vượt máu tối đa.
+- Nay tháo đồ giữ tỉ lệ máu như mặc đồ (đầy máu thì vẫn đầy theo máu tối đa mới; mặc lại cũng đầy), không vượt máu tối đa; mana cũng không vượt.
+- Thêm chốt chung ngoài trận (`Engine.cap_vitals/1` sau mỗi lệnh ở Session): máu / mana bị kéo về mức tối đa nếu vượt (đổi thú, cánh, điểm… hay nhân vật đang vượt từ trước). Trong trận không đụng tới.
+
+## Đồ quá cấp sau chuyển sinh không có tác dụng (2026-11-08, anh chọn phương án C)
+- Trước: chuyển sinh về cấp 1 / chỉ số gốc nhưng đồ đang mặc vẫn cộng đủ (chỉ kiểm cấp / chỉ số lúc mặc) → tháo ra thì không mặc lại được.
+- Nay (kiểu MU): món đang mặc chưa đủ điều kiện `can_wear/2` (cấp, lớp, chỉ số yêu cầu) vẫn ở trên người nhưng không cộng gì — chỉ số, dòng Excellent, May mắn / Kỹ năng, thưởng bộ, Bộ Thần, cánh (`Engine.effective/1` trong `derived/1`, `view` `exc` / `setBonus` / `ancient`, vàng / kinh nghiệm Excellent khi thắng). Đủ điều kiện là có tác dụng lại. Ô đồ viền đỏ ⛔, ô thông tin món ghi rõ; thông báo chuyển sinh đếm số món bị vô hiệu (`view.inactive`).
+- Bot mô phỏng (`Journey`): món xịn tháo ra vì chưa đủ điều kiện thì cất trong túi (không bán), đủ cấp mặc lại — như người chơi.
+- Cân bằng (`mix hac_long.journey --cls all --rebirths 10 --seed 42`, trước → sau), anh duyệt "OK như hiện tại":
+  - tổng trận: Kiếm Sĩ 12 412 → 12 664 (+2 %), Phù Thủy 12 208 → 13 027 (+7 %), Tiên Nữ 11 979 → 12 648 (+6 %), Đấu Sĩ 12 464 → 13 610 (+9 %);
+  - chết: 17 → 24, 41 → 59, 8 → 30, 13 → 85 (phần lớn ở chúa tể vùng chuyển sinh cuối: bot dùng đồ tạm lâu, tốn vàng / ngọc vào đồ tạm nên tới cấp 50 đồ yếu hơn, Đấu Sĩ công 1 346 → 1 071);
+  - đầu chặng sau chuyển sinh khó hơn rõ (Kiếm Sĩ chặng 1: 2,5 → 3,3 lượt / trận, máu bị đánh 7 % → 28 %); số trận chủ yếu do EXP nên chỉ tăng ít.
+
+## Quản trị: nút Dựng nhân vật tối đa (2026-11-08, anh yêu cầu "như admin guide")
+- Thẻ **⚡ Dựng nhân vật tối đa** ở tab Quản trị (người vừa tra cứu) chạy đúng công thức `docs/ADMIN_GUIDE.md` §6 bằng các lệnh quản trị có sẵn (mỗi lệnh ghi `admin_log`), tiến trình ✓ / ✗ từng bước. Tùy chọn: số lần chuyển sinh, Excellent / Đồ Thần, tay trái vũ khí / khiên, mặc luôn, vàng, vật phẩm, Long Vương.
+- Bộ đồ / số liệu chuyển từ đoạn JS trong tài liệu sang `RULES.admin_max_build` (không viết cứng trong code).
+- `give_gear` thêm `equip` (mặc luôn như bấm Trang bị, `hand: "left"` cầm tay trái; không mặc được thì giữ trong túi, thông báo "chưa mặc: lý do"); `give_pet` nhận `level: "max"` (Long Vương 30).
+- Chia điểm: đủ chỉ số yêu cầu của mọi món trước, phần còn lại theo tỉ lệ lớp → mọi món có tác dụng theo luật mới (không viền đỏ). Vũ khí 2 tay (cung Tiên Nữ) thì bỏ khiên / tay trái.
+- Kiểm: `test/hac_long/admin_max_test.exs` (4 lớp, mặc hết, không món nào vô hiệu), e2e `maxbuild` (4 lớp qua tab Quản trị).
+- (bổ sung) Chọn **cấp** (1–50) cạnh số lần chuyển sinh; điểm tiềm năng tự tính `(cấp − 1) × điểm mỗi cấp + điểm chuyển sinh` (`reset_stats`) và tự cộng hết. Đồ cần cấp cao hơn thì ⚠ "chưa mặc" (không tính lỗi).
+- (bổ sung) Túi đầy: `give_gear` `equip: true` không cần chỗ trống trước; món bị thay ra / chưa mặc được mà túi vượt `max_bag` thì gửi Hộp thư (`mail_out`), giữ +N (`gearx` thêm khóa `up`) và mọi dòng. Không mặc luôn thì túi đầy vẫn báo lỗi.
+- (bổ sung) Ô chuyển sinh là ô nhập số 0–999 (game cho chuyển sinh vô hạn; quá 10 lần mỗi lần +`endless_points` điểm), điểm vẫn tự tính theo `Engine.rebirth_bonus/1`.
+
+## Quái dùng kỹ năng theo hệ, kháng hệ kiểu MU (2026-11-08, anh chọn A, thời tiết có, kháng hệ làm luôn "càng giống MU càng tốt")
+- `RULES.monster_skills`: mỗi hệ 2 kỹ năng (Lửa: Phun Lửa bỏng / Hỏa Ngục; Băng: Băng Tiễn suy yếu / Đóng Băng choáng 30 %; Sét: Lôi Kích choáng 20 % / Liên Hoàn Sét 3 đòn; Đất: Địa Chấn / Giáp Đá −30 % sát thương nhận; Gió: Cuồng Phong 2 đòn / Gió Lốc né thêm 30 %; Ánh Sáng: Thánh Quang / Hồi Phục 15 % máu; Bóng Tối: Hút Hồn hồi 30 % sát thương / Nguyền Rủa độc). Kỹ năng luôn trúng, hồi chiêu 3 lượt, thời tiết cùng hệ cộng như người.
+- Bậc: quái thường cấp 10+ 1 kỹ năng 20 % / lượt; Tinh Anh, Bóng Đêm, quái vàng 2 kỹ năng 30 %; trùm 2 kỹ năng 30 % (giữ chiêu đặc biệt); chúa tể 2 kỹ năng 25 %. Dưới cấp 10 chỉ đánh thường. Đồ sát / đấu trường không áp (bản sao người dùng kỹ năng người, khóa `skills`; quái dùng `mskills`).
+- Chiêu riêng chúa tể (× 2,2 mỗi 3 lượt) đã thử rồi **tắt** (`lord_special.every` 0): mô phỏng hành trình 10 lần chuyển sinh cho thấy chúa tể gần như không hạ được (Đấu Sĩ chết 85 → 1 231, Phù Thủy 59 → 935, Cốt Long Thần Ma thắng 525 / 526 trận); tỉ lệ dùng kỹ năng chúa tể 35 % → 25 %.
+- Kháng hệ kiểu MU (Item.txt có cột kháng ở nhẫn / dây chuyền): Nhẫn Băng / Dây Chuyền Băng → Băng, Nhẫn Độc → Bóng Tối (game không có hệ Độc), Nhẫn Lửa / Dây Chuyền Lửa → Lửa, Nhẫn Đất → Đất, Nhẫn Gió / Dây Chuyền Gió → Gió, Dây Chuyền Sét → Sét, Dây Chuyền Nước → Ánh Sáng (game không có hệ Nước); Nhẫn Phép không có kháng (như MU). Mỗi món có tác dụng 10 % + 1 % mỗi cấp ép, cộng dồn, tối đa 50 %; giảm sát thương kỹ năng quái cùng hệ đúng tỉ lệ và là tỉ lệ kháng hiệu ứng xấu của kỹ năng đó. Ô thông tin món ghi "Kháng <hệ> N %".
+- Hiển thị: nhật ký "<quái> dùng <biểu tượng hệ> <kỹ năng>. ⚔ N (kháng …)", hiệu ứng hạt màu hệ bay từ quái sang người, Thư viện ghi kỹ năng quái, Kho Đồ mục "Quái dùng kỹ năng theo hệ" và "Kháng hệ".
+- Cân bằng (`mix hac_long.simulate 5 --seed 42` tới Hắc Long; `mix hac_long.journey --cls all --rebirths 10 --seed 42`), trước → sau: xem báo cáo trong phiên; hành trình 10 lần chuyển sinh: Kiếm Sĩ 12 664 → 12 895 trận (chết 24 → 38), Phù Thủy 13 027 → 12 958 (59 → 62), Tiên Nữ 12 648 → 12 667 (30 → 35), Đấu Sĩ 13 610 → 12 718 (85 → 48).

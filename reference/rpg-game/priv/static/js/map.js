@@ -475,7 +475,7 @@
     const m = cur(P);
     return `
       ${top(P)}
-      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${miniOn() && !m.tower ? '<canvas class="mini-map" id="mini-map" role="button" tabindex="0" data-act="world-map" title="Bản đồ thế giới" aria-label="Bản đồ thu nhỏ, bấm để mở bản đồ thế giới"></canvas>' : ''}<button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
+      <div class="map-wrap"><canvas id="map-canvas" aria-label="Bản đồ ${m.name}"></canvas>${miniOn() && !m.tower ? '<canvas class="mini-map" id="mini-map" role="button" tabindex="0" data-act="world-map" title="Bấm: bản đồ thế giới · giữ và kéo: dời chỗ" aria-label="Bản đồ thu nhỏ, bấm để mở bản đồ thế giới, giữ và kéo để dời chỗ"></canvas>' : ''}<button class="zoom-btn ${zoomOn() ? 'on' : ''}" data-act="map-zoom" aria-pressed="${zoomOn()}" title="Vừa màn hình" aria-label="Vừa màn hình">⤢</button>${overlay || ''}</div>
       <p class="small muted map-hint">Chạm vào ô để đi tới, bước vào quái để đánh.</p>`;
   }
 
@@ -1168,12 +1168,63 @@
     miniCache.set(id, c);
     return c;
   }
+  // giữ và kéo để dời bản đồ thu nhỏ: vị trí lưu theo tỉ lệ khoảng trống trong khung (`hl-minimap-pos`, {x, y} trong 0..1),
+  // nên đổi cỡ khung / xoay máy vẫn ở đúng góc; bấm nhẹ (không kéo) vẫn mở bản đồ thế giới
+  const MINI_PAD = 6;
+  let miniPos = (() => { try { const v = JSON.parse(localStorage.getItem('hl-minimap-pos')); return v && v.x >= 0 && v.x <= 1 && v.y >= 0 && v.y <= 1 ? v : { x: 0, y: 0 }; } catch (e) { return { x: 0, y: 0 }; } })();
+  function miniPlace(el) {
+    const wrap = el.parentElement;
+    if (!wrap) return;
+    const fw = Math.max(0, wrap.clientWidth - el.offsetWidth - MINI_PAD * 2), fh = Math.max(0, wrap.clientHeight - el.offsetHeight - MINI_PAD * 2);
+    const l = Math.round(MINI_PAD + miniPos.x * fw) + 'px', t = Math.round(MINI_PAD + miniPos.y * fh) + 'px';
+    if (el.style.left !== l) el.style.left = l;
+    if (el.style.top !== t) el.style.top = t;
+  }
+  let miniDrag = null, miniNoClick = false;
+  document.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest && e.target.closest('#mini-map');
+    if (!el || e.button > 0) return;
+    const r = el.getBoundingClientRect();
+    miniDrag = { el, id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false };
+  });
+  document.addEventListener('pointermove', (e) => {
+    const d = miniDrag;
+    if (!d || e.pointerId !== d.id) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) return;
+    if (!d.moved) { d.moved = true; d.el.classList.add('dragging'); try { d.el.setPointerCapture(d.id); } catch (err) { /* bỏ qua */ } }
+    const wrap = d.el.parentElement;
+    if (!wrap) return;
+    const wr = wrap.getBoundingClientRect();
+    const fw = Math.max(1, wrap.clientWidth - d.el.offsetWidth - MINI_PAD * 2), fh = Math.max(1, wrap.clientHeight - d.el.offsetHeight - MINI_PAD * 2);
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    miniPos = { x: clamp01((e.clientX - d.ox - wr.left - MINI_PAD) / fw), y: clamp01((e.clientY - d.oy - wr.top - MINI_PAD) / fh) };
+    miniPlace(d.el);
+    e.preventDefault();
+  });
+  const miniEnd = (e) => {
+    const d = miniDrag;
+    if (!d || e.pointerId !== d.id) return;
+    miniDrag = null;
+    if (!d.moved) return;
+    d.el.classList.remove('dragging');
+    miniNoClick = true;
+    setTimeout(() => { miniNoClick = false; }, 300);
+    try { localStorage.setItem('hl-minimap-pos', JSON.stringify({ x: +miniPos.x.toFixed(3), y: +miniPos.y.toFixed(3) })); } catch (err) { /* bỏ qua */ }
+  };
+  document.addEventListener('pointerup', miniEnd);
+  document.addEventListener('pointercancel', miniEnd);
+  // vừa kéo xong thì nuốt cú click đi kèm (không mở bản đồ thế giới)
+  document.addEventListener('click', (e) => {
+    if (miniNoClick && e.target.closest && e.target.closest('#mini-map')) { miniNoClick = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+
   function miniMap(P, m, now, cx, cy) {
     const el = document.getElementById('mini-map');
     if (!el) return;
     const w = m.tiles[0].length, h = m.tiles.length, s = Math.max(2, Math.min(4, Math.floor(96 / Math.max(w, h * 1.4))));
     const dpr = window.devicePixelRatio || 1;
     if (el.width !== w * s * dpr) { el.width = w * s * dpr; el.height = h * s * dpr; el.style.width = w * s + 'px'; el.style.height = h * s + 'px'; }
+    if (!miniDrag) miniPlace(el);
     const g = el.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
     g.drawImage(miniBase(m, P.pos.map), 0, 0, w * s, h * s);

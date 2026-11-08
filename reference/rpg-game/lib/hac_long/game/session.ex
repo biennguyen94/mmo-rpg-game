@@ -384,7 +384,9 @@ defmodule HacLong.Game.Session do
 
   def handle_cast({:slay_sync, info}, %{player: %{battle: %{over: false} = b} = p} = s) do
     if b[:encounter][:slay] == info.id do
-      lines = for t <- List.wrap(info.text), do: %{text: t, kind: "bad"}
+      lines =
+        for t <- List.wrap(info.text), do: if(is_map(t), do: t, else: %{text: t, kind: "bad"})
+
       log = Enum.take(b.log ++ lines, -60)
       enc = %{b.encounter | mine: true, until: info.until}
       b = %{b | log: log, encounter: enc, monster: %{b.monster | hp: info.foe_hp}}
@@ -908,6 +910,7 @@ defmodule HacLong.Game.Session do
       |> Daily.ensure(Daily.today())
       |> weather_battle()
       |> secret_boss(s.user_id)
+      |> then(&(&1 && Engine.cap_vitals(&1)))
 
     # nhân vật vừa tạo: gắn thông tin bang (chưa có) như lúc nạp từ database
     player =
@@ -1164,9 +1167,12 @@ defmodule HacLong.Game.Session do
         {r, slay_undo(p, f, old_log)}
 
       {r, p2} ->
-        lines = Enum.map(p2.battle.log, & &1.text)
+        # nhật ký lượt này gửi sang đối thủ nguyên dòng (tên, chiêu, sát thương, máu còn lại) để họ thấy chi tiết như
+        # mình; lấy sau `slay_hit` (sát thương / máu còn lại thật), bỏ các dòng góc nhìn của họ mà `slay_hit` thêm vào
+        n = length(p2.battle.log)
         {p2, foe2} = slay_hit(p2, foe, f.foe_hp, f[:first] == true)
-        foe_lines = if foe2, do: Enum.map(foe2.battle.log, & &1.text), else: []
+        lines = Enum.take(p2.battle.log, n)
+        foe_lines = if foe2, do: foe2.battle.log, else: []
         p2 = put_in(p2.battle.log, Enum.take(old_log ++ p2.battle.log, -60))
 
         extra = %{

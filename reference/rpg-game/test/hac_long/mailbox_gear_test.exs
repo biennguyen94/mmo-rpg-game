@@ -99,6 +99,26 @@ defmodule HacLong.MailboxGearTest do
     assert Mailbox.unread(user.id) == keep
   end
 
+  test "món gửi Hộp thư kèm +N (quản trị mặc đồ lúc túi đầy): mở thư nhận lại đúng +N và dòng" do
+    user = user("mup")
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "mup", "cls" => "dk"})
+
+    p =
+      Map.merge(p, %{
+        level: 50,
+        gear: for(_ <- 1..(Gear.max_bag() - 1), do: Gear.new(base("armor")))
+      })
+
+    g = Gear.new("item_0_26", 3) |> Map.merge(%{luck: true, exc: ["crit"], up: 7})
+
+    p = Mailbox.send_overflow(user.id, Map.put(p, :mail_out, [g]))
+    [m] = Mailbox.list(user.id)
+    assert {:ok, _msg, p2} = Mailbox.claim(user.id, m.id, p, fn _ -> :ok end)
+    got = List.last(Gear.list(p2))
+    assert %{base: "item_0_26", opt: 3, luck: true, exc: ["crit"]} = got
+    assert HacLong.Game.Engine.upgrade_level(p2, got.uid) == 7
+  end
+
   test "từ chối khóa đồ không hợp lệ" do
     user = user("mbad")
 

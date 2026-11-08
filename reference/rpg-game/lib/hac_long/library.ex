@@ -100,8 +100,9 @@ defmodule HacLong.Library do
         def: m.def,
         xp: m.xp,
         gold: Engine.base_gold(spec.level),
-        special: nil,
+        special: m.special && %{name: m.special.name, every: m.special.every},
         on_hit: nil,
+        skills: skill_names(m),
         where: for(mp <- maps, Enum.any?(mp.spawns, &(&1.monster == spec.id)), do: mp.name),
         drops: drops(spec, false)
       }
@@ -134,8 +135,9 @@ defmodule HacLong.Library do
             Engine.base_gold(spec.level) * Map.get(spec, :mult, 1) *
               if(boss?, do: Data.rules().monster.boss.gold, else: 1)
           ),
-        special: spec[:special] && %{name: spec.special.name, every: spec.special.every},
+        special: m.special && %{name: m.special.name, every: m.special.every},
         on_hit: spec[:on_hit] && %{id: spec.on_hit.id, chance: spec.on_hit.chance},
+        skills: skill_names(m),
         where: Enum.uniq(where),
         drops: drops(spec, boss?)
       }
@@ -381,5 +383,12 @@ defmodule HacLong.Library do
     Enum.find_value(maps, role, fn mp ->
       Enum.find_value(mp.npcs, &(&1.role == role && &1.name))
     end)
+  end
+
+  # kỹ năng theo hệ của quái (DECISIONS "Quái dùng kỹ năng theo hệ"), kèm biểu tượng hệ; Tinh Anh / Bóng Đêm mạnh hơn
+  # (2 kỹ năng) không có trong Thư viện vì là biến thể lúc sinh ra
+  defp skill_names(m) do
+    icon = HacLong.Game.Elements.icon(m.element)
+    for k <- m.mskills || [], do: String.trim("#{icon} #{k.name}")
   end
 end

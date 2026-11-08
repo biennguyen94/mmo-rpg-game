@@ -26,6 +26,51 @@ defmodule HacLong.Game.Items15cTest do
     assert "item_1_8" in Data.shop() and "item_8_24" in Data.shop()
   end
 
+  test "tháo / mặc đồ giữ tỉ lệ máu, máu không vượt máu tối đa" do
+    p = player("dw", %{level: 40}) |> Engine.add_item("item_13_8", 2)
+    {%{ok: true}, p} = Engine.equip(p, "item_13_8")
+    {%{ok: true}, p} = Engine.equip(p, "item_13_8")
+    full = Engine.derived(p).maxHp
+    p = %{p | hp: full}
+
+    # đầy máu, tháo nhẫn: vẫn đầy theo máu tối đa mới (trước đây máu giữ nguyên, vượt máu tối đa)
+    {%{ok: true}, p} = Engine.unequip(p, "ring2")
+    assert p.hp == Engine.derived(p).maxHp and p.hp < full
+
+    # mặc lại: đầy máu theo máu tối đa mới
+    {%{ok: true}, p} = Engine.equip(p, "item_13_8")
+    assert p.hp == full
+
+    # nửa máu: tháo / mặc giữ khoảng một nửa
+    p = %{p | hp: div(full, 2)}
+    {%{ok: true}, p} = Engine.unequip(p, "ring1")
+    assert_in_delta p.hp / Engine.derived(p).maxHp, 0.5, 0.01
+
+    # máu đang vượt (nhân vật cũ): ngoài trận kéo về máu tối đa
+    p = %{p | hp: full * 2, battle: nil}
+    assert Engine.cap_vitals(p).hp == Engine.derived(p).maxHp
+  end
+
+  test "đồ chưa đủ cấp (vd vừa chuyển sinh) vẫn mặc nhưng không có tác dụng, đủ cấp thì có lại" do
+    p = player("dw", %{level: 40}) |> Engine.add_item("item_13_8")
+    base = Engine.derived(p).maxHp
+    {%{ok: true}, p} = Engine.equip(p, "item_13_8")
+    worn = Engine.derived(p).maxHp
+    assert worn > base and Engine.inactive_slots(p) == []
+
+    # về cấp 1 (như chuyển sinh): nhẫn cần cấp cao hơn → không cộng máu, ô báo không có tác dụng
+    low = %{p | level: 1}
+    assert :ring1 in Engine.inactive_slots(low)
+
+    assert Engine.derived(low).maxHp ==
+             Engine.derived(%{low | equip: %{low.equip | ring1: nil}}).maxHp
+
+    assert Engine.view(low).inactive == [:ring1]
+
+    # đủ cấp lại: có tác dụng như cũ
+    assert Engine.derived(%{low | level: 40}).maxHp == worn
+  end
+
   test "nhẫn vào ô trống (ring1 rồi ring2), dây chuyền cộng tấn công, nhẫn cộng máu / thủ; không bán ở cửa hàng" do
     p =
       player("dw", %{level: 40})

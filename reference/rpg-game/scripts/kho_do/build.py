@@ -695,6 +695,47 @@ secret_li = "".join(f"<li>{x}</li>" for x in [
     f"{SEC['warn_min']} phút trước 5 giờ sáng đá bắt đầu rơi; 5 giờ động sụp, ai còn trong động bị đưa ra Đền Cổ (không mất gì).",
     f"Thành tựu: <b>Kẻ Đi Đêm</b> (vào động {SEC['night_walker']} đêm khác nhau), <b>Diệt Thạch Long</b> (hạ trùm đêm).",
 ])
+# ---------- Kỹ năng quái theo hệ, kháng hệ (DECISIONS "Quái dùng kỹ năng theo hệ") ----------
+MS = R["monster_skills"]
+EFN = {"burn": "bỏng", "poison": "độc", "weaken": "suy yếu", "stun": "choáng"}
+def _ms_desc(k):
+    out = []
+    if k.get("mult"):
+        out.append(f"× {n(k['mult'])} công" + (f" ({k['hits']} đòn)" if k.get("hits") else ""))
+    e = k.get("effect")
+    if e:
+        if e["id"] == "stun":
+            out.append(f"{pct(e.get('chance', 1))} choáng 1 lượt")
+        elif e["id"] == "weaken":
+            out.append(f"suy yếu −{pct(e['power'])} công {e['turns']} lượt")
+        else:
+            out.append(f"{EFN.get(e['id'], e['id'])} {e['turns']} lượt ({pct(e['power'])} công quái mỗi lượt)")
+    if k.get("drain"):
+        out.append(f"hồi {pct(k['drain'])} sát thương gây ra")
+    if k.get("heal"):
+        out.append(f"hồi {pct(k['heal'])} máu tối đa")
+    if k.get("self"):
+        sf = k["self"]
+        out.append(("giảm " if sf["id"] == "stone" else "né thêm ") + pct(sf["power"]) + (" sát thương nhận" if sf["id"] == "stone" else " đòn thường") + f" {sf['turns']} lượt")
+    return ", ".join(out)
+ms_rows = "".join(
+    f"<tr><td>{ELI.get(el, '')} {E(ELN.get(el, el))}</td>" + "".join(f"<td><b>{E(k['name'])}</b><br><span class=small>{_ms_desc(k)}</span></td>" for k in ks) + "</tr>"
+    for el, ks in MS["by_element"].items())
+TIERN = {"normal": f"Quái thường (cấp {MS['min_level']}+)", "elite": "Tinh Anh, Bóng Đêm, quái vàng", "boss": "Trùm (giữ chiêu đặc biệt cũ)", "lord": "Chúa tể vùng chuyển sinh"}
+ms_tiers = "".join(f"<tr><td>{TIERN[t]}</td><td class=n>{MS['tiers'][t]['count']}</td><td class=n>{pct(MS['tiers'][t]['chance'])}</td></tr>" for t in ("normal", "elite", "boss", "lord") if t in MS["tiers"])
+LS = MS["lord_special"]
+lord_li = ", ".join(f"{ELI.get(el, '')} {E(nm)}" for el, nm in LS["names"].items())
+RS = MS["resist"]
+res_rows = "".join(f"<tr><td>{E(IT[i]['name'])}</td><td>{ELI.get(el, '')} {E(ELN.get(el, el))}</td></tr>" for i, el in RS["items"].items() if i in IT)
+MSKILL_HTML = f"""<h3>Quái dùng kỹ năng theo hệ</h3>
+  <p>Quái dùng kỹ năng theo nguyên tố của mình (đánh quái; đồ sát, đấu trường không áp). Kỹ năng luôn trúng, hồi chiêu {MS['cooldown']} lượt; thời tiết cùng hệ cộng như kỹ năng người. Quái dưới cấp {MS['min_level']} chỉ đánh thường.</p>
+  <div class="scroll"><table><thead><tr><th>Hệ</th><th>Kỹ năng 1</th><th>Kỹ năng 2</th></tr></thead><tbody>{ms_rows}</tbody></table></div>
+  <div class="grid2"><div class="scroll"><table><thead><tr><th>Loại quái</th><th>Số kỹ năng</th><th>Tỉ lệ dùng / lượt</th></tr></thead><tbody>{ms_tiers}</tbody></table></div>
+  <div><p class="note">{f"Chúa tể vùng chuyển sinh có thêm chiêu riêng mỗi {LS['every']} lượt (× {n(LS['mult'])} công): {lord_li}." if LS['every'] > 0 else "Chúa tể vùng chuyển sinh dùng 2 kỹ năng của hệ (tỉ lệ thấp hơn quái thường vì chỉ số chúa tể vốn rất cao), không thêm chiêu riêng."} Trùm vùng giữ chiêu đặc biệt cũ.</p></div></div>
+  <h3>Kháng hệ (nhẫn, dây chuyền kiểu MU)</h3>
+  <p>Mỗi món đang mặc (có tác dụng) kháng {pct(RS['base'])} + {pct(RS['per_up'])} mỗi cấp ép (+11: {pct(RS['base'] + 11 * RS['per_up'])}); nhiều món cùng hệ cộng dồn, tối đa {pct(RS['max'])}. Kháng giảm sát thương kỹ năng quái cùng hệ đúng tỉ lệ đó và cũng là tỉ lệ kháng hiệu ứng xấu (bỏng, độc, suy yếu, choáng) của kỹ năng đó. Như MU: Độc → Bóng Tối, Nước → Ánh Sáng; Nhẫn Phép không có kháng.</p>
+  <div class="scroll"><table><thead><tr><th>Món</th><th>Kháng hệ</th></tr></thead><tbody>{res_rows}</tbody></table></div>
+"""
 WORLD_HTML = f"""<h3>Thời tiết</h3>
   <p>Đổi mỗi {WX['slot_min']} phút (giờ Việt Nam), cả server thấy như nhau; biểu tượng cạnh tên bản đồ. Đánh quái (không tính đánh người): kỹ năng cùng hệ với thời tiết gây thêm sát thương.</p>
   <div class="grid2"><div class="scroll"><table><thead><tr><th>Thời tiết</th><th>Hệ được cộng</th><th>Cộng</th></tr></thead><tbody>{wx_bonus}</tbody></table></div>
@@ -705,7 +746,8 @@ WORLD_HTML = f"""<h3>Thời tiết</h3>
   <h3>Thương Nhân Phương Xa (Chợ Nổi)</h3>
   <p>Mỗi ngày bày {TRD['show']} trong {len(TRD['offers'])} món (đổi theo ngày), mỗi món mua tối đa vài lần mỗi ngày.</p>
   <div class="scroll"><table><thead><tr><th>Món</th><th>Giá (vàng)</th><th>Lần / ngày</th></tr></thead><tbody>{trader_rows}</tbody></table></div>
-  <h3>Động Bí Ẩn</h3><ul>{secret_li}</ul>"""
+  <h3>Động Bí Ẩn</h3><ul>{secret_li}</ul>
+  {MSKILL_HTML}"""
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,

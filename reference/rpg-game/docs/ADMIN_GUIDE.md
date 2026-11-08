@@ -195,7 +195,20 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 
 ## 6. Công thức: nhân vật admin tối đa
 
-Đăng nhập tài khoản admin (lớp nào cũng được), mở console trình duyệt (F12 → Console), sửa dòng `NAME` rồi dán cả
+**Cách nhanh (nút bấm):** tab **Quản trị** → **Tra cứu người chơi** (tên nhân vật / tên đăng nhập) → thẻ
+**⚡ Dựng nhân vật tối đa** → chọn **cấp** (mặc định 50) và số lần chuyển sinh (ô nhập 0–999, mặc định 10; chuyển sinh vô hạn: quá 10 lần mỗi lần +10 điểm;
+điểm tiềm năng tự tính đúng theo cấp / chuyển sinh như người chơi thật rồi tự cộng hết, vd cấp 50 chuyển sinh 10:
+495 điểm, Đấu Sĩ 593), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
+hoặc khiên (lớp cầm 2 vũ khí; vũ khí 2 tay như cung Tiên Nữ thì bỏ qua), tick **Mặc luôn đồ**, vàng, ngọc / vật phẩm,
+Long Vương → **⚡ Dựng tối đa**. Thẻ chạy lần lượt đúng các lệnh bên dưới (mỗi lệnh ghi Nhật ký quản trị), hiện ✓ / ✗ từng
+bước. Chỉ số chia đủ **chỉ số yêu cầu** của đồ trước rồi mới chia theo tỉ lệ của lớp (đồ chưa đủ yêu cầu không có tác dụng,
+DECISIONS "Đồ quá cấp sau chuyển sinh không có tác dụng"). Bộ đồ, ép, dòng, vật phẩm, vàng đọc ở
+`priv/game_data/rules.json` → `admin_max_build` (đổi ở đó, không sửa code). Có **Mặc luôn đồ** thì đồ tặng mặc ngay
+(`give_gear` `equip: true`, tay trái `hand: "left"`), đồ cũ về túi; **túi đầy** thì món bị thay ra (hoặc món chưa mặc
+được) gửi vào **Hộp thư** của người đó, giữ nguyên +N và mọi dòng (mặc luôn không cần chỗ trống trước; không tick mặc luôn
+thì túi đầy báo lỗi như cũ). Món chưa mặc được (vd chọn cấp thấp hơn cấp yêu cầu 45–48) nằm trong túi, dòng đó ⚠ ghi lý do.
+
+**Cách thủ công (console):** đăng nhập tài khoản admin (lớp nào cũng được), mở console trình duyệt (F12 → Console), sửa dòng `NAME` rồi dán cả
 khối. `NAME` là **tên nhân vật hoặc tên đăng nhập** của người cần dựng (để trống = chính mình). Lớp, bộ đồ và tỉ lệ
 chia điểm lấy theo **nhân vật được dựng**, không theo admin; người đó đang online hay không đều được (đang online thì
 thấy ngay). Dòng đầu console ghi "Dựng cho: …" để kiểm đúng người trước khi xem kết quả.
@@ -272,13 +285,14 @@ await A('give_item', { id: 'mam_co', count: 20 });
 for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
 // thú hiếm Long Vương cấp tối đa (đủ 3 kỹ năng), dắt theo luôn; Mồi Rồng để câu ở Hồ Long Vương
-await A('give_pet', { id: 'long_vuong', level: 20 });
+await A('give_pet', { id: 'long_vuong', level: 'max' });   // 'max' = cấp tối đa của thú (Long Vương 30)
 await A('give_item', { id: 'dragon_bait', count: 100 });
 
 await A('heal');
 ```
 
-Cần 13 chỗ trong túi trang bị (tối đa 40): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc.
+Cần 13 chỗ trong túi trang bị (tối đa 40): dọn túi trước. Đồ tặng nằm trong túi, chưa mặc (thêm `equip: true` vào
+`give_gear` để mặc luôn; vũ khí tay trái thêm `hand: 'left'`).
 
 Sau đó mở tab **Túi đồ** (phím `I`), kéo vũ khí / giáp / khiên / cánh vào ô trang bị (hoặc bấm món → **Trang bị**).
 Nên bấm **🔒 Khóa** cho từng món để không lỡ bán / rao chợ / bỏ vào máy ghép. Kiểm lại: tab Quản trị →
