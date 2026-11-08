@@ -2578,7 +2578,7 @@
       // ô khiên khi cầm vũ khí 2 tay: khóa (server cũng chặn)
       const w = P.equip.weapon && itemOf(P.equip.weapon), two = slot === 'shield' && !it && w && w.hands === 2;
       if (two) return `<span class="slot empty locked" title="Vũ khí 2 tay: không cầm khiên"><span class="lockb">🔒</span><span class="lbl">2 tay</span></span>`;
-      return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && it.kind ? ` b-${it.kind}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
+      return `<button class="slot${it ? '' : ' empty'}${locked ? ' locked' : ''}${it && ((P.view || {}).inactive || []).includes(slot) ? ' inactive' : ''}${it && it.kind ? ` b-${it.kind}` : ''}${it ? upClass(upLevel(id)) : ''}" data-act="${it ? 'slot-tip' : 'noop'}" data-slot="${slot}"
           ${locked ? 'title="Sắp có" aria-disabled="true"' : `data-drop-slot="${slot}"`} ${it && SLOT_REMOVABLE.includes(slot) ? `draggable="true" data-drag-equip="${slot}"` : ''}>
         ${it ? cellIcon(it, upLevel(id)) : ''}${it && upLevel(id) ? `<span class="lvl">+${upLevel(id)}</span>` : ''}${it && it.locked ? '<span class="lockb">🔒</span>' : ''}
         <span class="lbl">${slotLabel(slot, it)}</span>
@@ -2639,6 +2639,8 @@
     if (desc) h.push(`<div class="mu-main">${desc}</div>`);
     // vũ khí 1 tay / 2 tay (Item.txt; 2 tay không cầm khiên)
     if (it.slot === 'weapon' && it.hands) h.push(`<div class="small muted">${it.hands === 2 ? 'Vũ khí 2 tay (không cầm khiên)' : 'Vũ khí 1 tay'}</div>`);
+    // đang mặc mà chưa đủ cấp / chỉ số (vd vừa chuyển sinh): không có tác dụng tới khi đủ
+    if (at.slot && !at.view && ((P.view || {}).inactive || []).includes(at.slot)) h.push('<div class="mu-req bad">⛔ Chưa đủ điều kiện: món này không có tác dụng (không cộng chỉ số, dòng, bộ) tới khi đủ cấp / chỉ số.</div>');
     if (wearable) {
       if (it.level) h.push(`<div class="mu-req ${it.level > P.level ? 'bad' : ''}">Cấp yêu cầu: ${it.level}${it.level > P.level ? ` (thiếu ${it.level - P.level})` : ''}</div>`);
       for (const [k, v] of Object.entries(it.req || {})) {

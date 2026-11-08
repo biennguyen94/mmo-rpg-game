@@ -1055,3 +1055,8 @@ details.fold > .list { margin-top: 4px; }
 .char-row .sprite { width: 64px; height: 64px; image-rendering: pixelated; flex: none; }
 /* Long Vương: nhãn thần thú độc nhất */
 .tag.pet-unique { background: linear-gradient(90deg, #6b4a10, #c99a2e); color: #fff6d8; border-color: #e8b84a; }
+
+/* đồ đang mặc chưa đủ điều kiện (vd vừa chuyển sinh): không có tác dụng */
+.slot.inactive { border-color: var(--bad) !important; box-shadow: inset 0 0 0 2px rgba(220, 70, 60, 0.55); }
+.slot.inactive img, .slot.inactive canvas { filter: grayscale(0.8) brightness(0.7); }
+.slot.inactive::after { content: "⛔"; position: absolute; right: 1px; top: 0; font-size: 11px; }

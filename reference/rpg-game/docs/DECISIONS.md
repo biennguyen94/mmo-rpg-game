@@ -1791,3 +1791,12 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Lỗi: mặc / ép đồ đã giữ tỉ lệ máu, nhưng tháo đồ giữ nguyên số máu → máu vượt máu tối đa.
 - Nay tháo đồ giữ tỉ lệ máu như mặc đồ (đầy máu thì vẫn đầy theo máu tối đa mới; mặc lại cũng đầy), không vượt máu tối đa; mana cũng không vượt.
 - Thêm chốt chung ngoài trận (`Engine.cap_vitals/1` sau mỗi lệnh ở Session): máu / mana bị kéo về mức tối đa nếu vượt (đổi thú, cánh, điểm… hay nhân vật đang vượt từ trước). Trong trận không đụng tới.
+
+## Đồ quá cấp sau chuyển sinh không có tác dụng (2026-11-08, anh chọn phương án C)
+- Trước: chuyển sinh về cấp 1 / chỉ số gốc nhưng đồ đang mặc vẫn cộng đủ (chỉ kiểm cấp / chỉ số lúc mặc) → tháo ra thì không mặc lại được.
+- Nay (kiểu MU): món đang mặc chưa đủ điều kiện `can_wear/2` (cấp, lớp, chỉ số yêu cầu) vẫn ở trên người nhưng không cộng gì — chỉ số, dòng Excellent, May mắn / Kỹ năng, thưởng bộ, Bộ Thần, cánh (`Engine.effective/1` trong `derived/1`, `view` `exc` / `setBonus` / `ancient`, vàng / kinh nghiệm Excellent khi thắng). Đủ điều kiện là có tác dụng lại. Ô đồ viền đỏ ⛔, ô thông tin món ghi rõ; thông báo chuyển sinh đếm số món bị vô hiệu (`view.inactive`).
+- Bot mô phỏng (`Journey`): món xịn tháo ra vì chưa đủ điều kiện thì cất trong túi (không bán), đủ cấp mặc lại — như người chơi.
+- Cân bằng (`mix hac_long.journey --cls all --rebirths 10 --seed 42`, trước → sau), anh duyệt "OK như hiện tại":
+  - tổng trận: Kiếm Sĩ 12 412 → 12 664 (+2 %), Phù Thủy 12 208 → 13 027 (+7 %), Tiên Nữ 11 979 → 12 648 (+6 %), Đấu Sĩ 12 464 → 13 610 (+9 %);
+  - chết: 17 → 24, 41 → 59, 8 → 30, 13 → 85 (phần lớn ở chúa tể vùng chuyển sinh cuối: bot dùng đồ tạm lâu, tốn vàng / ngọc vào đồ tạm nên tới cấp 50 đồ yếu hơn, Đấu Sĩ công 1 346 → 1 071);
+  - đầu chặng sau chuyển sinh khó hơn rõ (Kiếm Sĩ chặng 1: 2,5 → 3,3 lượt / trận, máu bị đánh 7 % → 28 %); số trận chủ yếu do EXP nên chỉ tăng ít.

@@ -201,11 +201,28 @@ defmodule HacLong.Game.Engine do
   def can_wear?(p, it), do: can_wear(p, it) == :ok
 
   @doc """
+  Ô đang mặc món chưa đủ điều kiện (`can_wear/2`: cấp, lớp, yêu cầu chỉ số), vd vừa chuyển sinh về cấp 1: món đó
+  vẫn mặc trên người nhưng không có tác dụng (DECISIONS "Đồ quá cấp sau chuyển sinh không có tác dụng").
+  """
+  def inactive_slots(p) do
+    for {slot, id} <- p.equip, id, it = Gear.item(p, id), not can_wear?(p, it), do: slot
+  end
+
+  @doc "Nhân vật chỉ tính đồ có tác dụng (bỏ món chưa đủ điều kiện khỏi `equip`), để cộng chỉ số / dòng / bộ."
+  def effective(p) do
+    case inactive_slots(p) do
+      [] -> p
+      off -> %{p | equip: Map.new(p.equip, fn {k, v} -> {k, if(k in off, do: nil, else: v)} end)}
+    end
+  end
+
+  @doc """
   Chỉ số dẫn xuất. Công thức theo lớp ở `CLASSES[lớp].derived` (`priv/game_data/classes.json`): mỗi chỉ số là
   tổng `hệ_số × giá_trị` với giá trị là một chỉ số gốc (`str`, `agi`, `vit`, `ene`), `level` hoặc
   `base` (= 1). Chí mạng và né theo Nhanh nhẹn, như nhau cho mọi lớp.
   """
   def derived(p) do
+    p = effective(p)
     s = p.stats
     f = Data.class(p.cls).derived
     w = Gear.item(p, p.equip.weapon)
@@ -432,7 +449,9 @@ defmodule HacLong.Game.Engine do
       },
       unlocked: Enum.map(0..(Data.zone_count() - 1), &zone_unlocked?(p, &1)),
       # Phase 15c: thưởng đủ bộ giáp, tổng dòng Excellent đang có
-      setBonus: set_bonus(p),
+      setBonus: set_bonus(effective(p)),
+      # ô đồ chưa đủ điều kiện (vd vừa chuyển sinh): vẫn mặc nhưng không có tác dụng
+      inactive: inactive_slots(p),
       # Quảng Trường Quỷ (Phase 18 M1): giờ mở, giá vé, điểm cao nhất hôm nay, đã vào đợt này chưa
       ds: HacLong.Game.DevilSquare.view(p),
       # Lâu Đài Máu (Phase 18 M2)
@@ -443,8 +462,8 @@ defmodule HacLong.Game.Engine do
       kal: HacLong.Game.Kalima.view(p),
       # Công Thành Chiến (B-22)
       cs: HacLong.CastleSiege.view(p),
-      ancient: ancient_bonus(p),
-      exc: Gear.exc_stats(p),
+      ancient: ancient_bonus(effective(p)),
+      exc: Gear.exc_stats(effective(p)),
       look: look(p),
       # Phase 3: kỹ năng mang vào trận (id, theo thứ tự) và mọi kỹ năng đã mở
       skillSet: Enum.map(skills(p), & &1.id),
@@ -2359,7 +2378,7 @@ defmodule HacLong.Game.Engine do
     m = p.battle.monster
     # thú cưng (vàng, kinh nghiệm) và nhà trang trí (kinh nghiệm) cộng thêm
     event = if m[:pvp], do: nil, else: Events.current()
-    exc = Gear.exc_stats(p)
+    exc = Gear.exc_stats(effective(p))
 
     gold =
       round(
@@ -3791,8 +3810,16 @@ defmodule HacLong.Game.Engine do
         p = Map.put(p, :rebirths, n)
         d = derived(p)
 
-        {ok("🔄 Chuyển sinh lần #{n}! Trở về cấp 1 với #{p.points} điểm tiềm năng cộng thêm."),
-         Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
+        off = length(inactive_slots(p))
+
+        {ok(
+           "🔄 Chuyển sinh lần #{n}! Trở về cấp 1 với #{p.points} điểm tiềm năng cộng thêm." <>
+             if(off > 0,
+               do:
+                 " #{off} món đang mặc chưa đủ cấp / chỉ số: không có tác dụng tới khi đủ (viền đỏ ⛔).",
+               else: ""
+             )
+         ), Map.merge(p, %{hp: d.maxHp, mp: d.maxMp})}
     end
   end
 

@@ -51,6 +51,26 @@ defmodule HacLong.Game.Items15cTest do
     assert Engine.cap_vitals(p).hp == Engine.derived(p).maxHp
   end
 
+  test "đồ chưa đủ cấp (vd vừa chuyển sinh) vẫn mặc nhưng không có tác dụng, đủ cấp thì có lại" do
+    p = player("dw", %{level: 40}) |> Engine.add_item("item_13_8")
+    base = Engine.derived(p).maxHp
+    {%{ok: true}, p} = Engine.equip(p, "item_13_8")
+    worn = Engine.derived(p).maxHp
+    assert worn > base and Engine.inactive_slots(p) == []
+
+    # về cấp 1 (như chuyển sinh): nhẫn cần cấp cao hơn → không cộng máu, ô báo không có tác dụng
+    low = %{p | level: 1}
+    assert :ring1 in Engine.inactive_slots(low)
+
+    assert Engine.derived(low).maxHp ==
+             Engine.derived(%{low | equip: %{low.equip | ring1: nil}}).maxHp
+
+    assert Engine.view(low).inactive == [:ring1]
+
+    # đủ cấp lại: có tác dụng như cũ
+    assert Engine.derived(%{low | level: 40}).maxHp == worn
+  end
+
   test "nhẫn vào ô trống (ring1 rồi ring2), dây chuyền cộng tấn công, nhẫn cộng máu / thủ; không bán ở cửa hàng" do
     p =
       player("dw", %{level: 40})

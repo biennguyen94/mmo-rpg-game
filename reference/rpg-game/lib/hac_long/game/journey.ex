@@ -95,6 +95,8 @@ defmodule HacLong.Game.Journey do
 
     st = %{
       opts: opts,
+      # đồ tháo ra vì chưa đủ cấp / chỉ số sau chuyển sinh (không có tác dụng): cất trong túi, không bán, đủ cấp mặc lại
+      keep: MapSet.new(),
       fights: 0,
       turns: 0,
       events: [],
@@ -970,8 +972,21 @@ defmodule HacLong.Game.Journey do
 
     case best do
       {_gain, id, price, hand} ->
+        before = Map.values(p.equip)
         p = if price, do: elem(Engine.buy(p, id), 1), else: p
         {_, p} = Engine.equip(p, id, hand)
+
+        # như người chơi: món xịn tháo ra vì chưa đủ điều kiện thì cất lại, đủ cấp / chỉ số mặc lại (`gear_up` xét cả túi)
+        off =
+          for uid <- before,
+              uid,
+              uid not in Map.values(p.equip),
+              Gear.instance?(uid),
+              g = Gear.item(p, uid),
+              not Engine.can_wear?(p, g),
+              do: uid
+
+        st = %{st | keep: Enum.into(off, st.keep)}
         it = Gear.item(p, id)
 
         st =
@@ -1011,7 +1026,11 @@ defmodule HacLong.Game.Journey do
 
     p =
       Enum.reduce(Gear.bag(p), p, fn g, p ->
-        if g.uid == spare or g[:locked], do: p, else: elem(Engine.sell(p, g.uid), 1)
+        kept = MapSet.member?(st.keep, g.uid) and not Engine.can_wear?(p, Gear.resolve(g))
+
+        if g.uid == spare or g[:locked] == true or kept,
+          do: p,
+          else: elem(Engine.sell(p, g.uid), 1)
       end)
 
     Enum.reduce(p.inv, p, fn {id, c}, p ->
