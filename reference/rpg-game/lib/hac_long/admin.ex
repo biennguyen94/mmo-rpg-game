@@ -148,8 +148,9 @@ defmodule HacLong.Admin do
   # Tặng thú cưng (kể cả thú hiếm Long Vương, DECISIONS "Long Vương"), đặt cấp thú và dắt theo luôn.
   # Thú quản trị tặng không ghi Bia Long Vương (bia chỉ ghi người tự câu được).
   def build("give_pet", %{"id" => id} = a) do
-    lv = a["level"] || 1
     pet = is_binary(id) && Data.pet(id)
+    # "max": cấp tối đa của thú (Long Vương 30, thú khác `RULES.pets.max_level`)
+    lv = if a["level"] == "max" and pet, do: Pets.max_level(id), else: a["level"] || 1
 
     cond do
       !pet ->
@@ -243,6 +244,11 @@ defmodule HacLong.Admin do
     # cánh: dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh `wopt` (hp / mp / ignore_def)
     wopt = a["wopt"]
 
+    # `equip`: tặng xong mặc luôn (như người chơi bấm Trang bị; `hand` "left": cầm tay trái). Không mặc được
+    # (chưa đủ cấp / chỉ số, sai lớp…) thì món vẫn nằm trong túi, thông báo ghi lý do.
+    equip = a["equip"] == true
+    hand = if a["hand"] == "left", do: "left"
+
     cond do
       !it or it.slot not in ["wing" | Engine.gear_slots()] ->
         {:error, "\"#{base}\" không phải vũ khí / giáp / khiên / trang sức / cánh."}
@@ -280,7 +286,13 @@ defmodule HacLong.Admin do
              g = if wopt in [nil, ""], do: g, else: Map.put(g, :wopt, wopt)
              {p, :kept} = Gear.add(p, g)
              p = if up > 0, do: put_upgrade(p, g.uid, up), else: p
-             {:ok, p, "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}."}
+             text = "Đã tặng #{Gear.resolve(g).name}#{if up > 0, do: " +#{up}", else: ""}"
+
+             case equip && Engine.equip(p, g.uid, hand) do
+               false -> {:ok, p, text <> "."}
+               {%{ok: true}, p2} -> {:ok, p2, text <> ", đã mặc."}
+               {r, _} -> {:ok, p, text <> " (chưa mặc: #{r[:msg] || "không mặc được"})."}
+             end
            end
          end}
     end

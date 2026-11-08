@@ -408,7 +408,7 @@
         </div>
 ` : ''}
       </div>
-      ${isAdminRole() && u.character ? viewCharEdit(u) : ''}`;
+      ${isAdminRole() && u.character ? viewCharEdit(u) + viewMaxBuild(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
       <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
@@ -465,6 +465,83 @@
   const vnDate = (t) => new Date(t).toLocaleString('vi-VN');
 
   // Chỉnh nhân vật (chỉ admin): mỗi dòng là một form `adm-char` với `data-op` (HacLong.Admin).
+  // Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6) cho người vừa tra cứu: chạy lần lượt các lệnh quản trị
+  // (mỗi lệnh ghi Nhật ký quản trị như bấm tay), bộ đồ lấy ở RULES.adminMaxBuild; tiến trình hiện ngay trong thẻ
+  function viewMaxBuild(u) {
+    const M = RULES.adminMaxBuild, c = u.character;
+    if (!M || !c) return '';
+    const set = M.sets[c.cls] || {}, st = adm.maxb && adm.maxb.uid === u.id ? adm.maxb : null;
+    const busy = st && st.running;
+    const chk = (k, label, on = true) => `<label class="small"><input type="checkbox" name="${k}" ${on ? 'checked' : ''}> ${label}</label>`;
+    return `<div class="card"><h3>⚡ Dựng nhân vật tối đa</h3>
+      <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): cấp ${M.level}, kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, chia hết điểm tiềm năng (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền, cánh cấp 3. Mỗi bước ghi Nhật ký quản trị. Người đó online hay không đều được.</p>
+      <form id="adm-maxb" class="stack">
+        <div class="btn-row"><label class="small">Chuyển sinh <select name="rebirths">${Array.from({ length: 11 }, (_, i) => `<option value="${i}" ${i === M.rebirths ? 'selected' : ''}>${i}</option>`).join('')}</select></label>
+          <label class="small">Bộ giáp <select name="armor"><option value="exc">Excellent</option><option value="anc">Đồ Thần</option></select></label>
+          ${set.left ? `<label class="small">Tay trái <select name="left"><option value="weapon">Vũ khí thứ hai</option><option value="shield">Khiên</option></select></label>` : ''}</div>
+        <div class="btn-row">${chk('equip', 'Mặc luôn đồ')}${chk('gold', `Vàng ${fmt(M.gold)}`)}${chk('items', 'Ngọc, bình, vé, nguyên liệu')}${chk('pet', 'Long Vương cấp tối đa')}</div>
+        <div class="btn-row"><button class="btn primary" type="submit" ${busy ? 'disabled' : ''}>${busy ? 'Đang dựng…' : '⚡ Dựng tối đa'}</button></div>
+      </form>
+      ${st ? `<div class="small adm-maxb-log">${st.lines.map((l) => `<div style="color:var(${l.ok ? '--good' : '--bad'})">${l.ok ? '✓' : '✗'} ${esc(l.text)}</div>`).join('')}${st.done ? `<div><b>${st.fail ? `Xong, ${st.fail} bước lỗi (xem dòng ✗).` : 'Xong, không có lỗi.'}</b></div>` : ''}</div>` : ''}
+    </div>`;
+  }
+
+  async function maxBuild(u, f) {
+    const M = RULES.adminMaxBuild, c = u.character, cls = c.cls, set = M.sets[cls] || {};
+    // vũ khí 2 tay (cung Tiên Nữ…) không cầm khiên / tay trái: bỏ qua ô đó
+    const twoHand = (ITEMS[set.weapon] || {}).hands === 2;
+    const opt = { rebirths: +f.get('rebirths'), anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
+    if (!confirm(`Dựng tối đa cho ${c.name} (${(CLASSES[cls] || {}).name || cls})? Chỉ số và điểm tiềm năng đặt lại rồi chia lại; đồ mới ${opt.equip ? 'mặc luôn (đồ cũ về túi)' : 'vào túi'}.`)) return;
+    const st = adm.maxb = { uid: u.id, running: true, lines: [], fail: 0 };
+    const paint = () => { const el = document.getElementById('adm-maxb'); if (el) render(); };
+    const A = async (op, p = {}, label) => {
+      try {
+        const r = await Net.admin(op, { uid: u.id, ...p }), ok = !/chưa mặc/.test(r.msg || '');
+        if (!ok) st.fail++;
+        st.lines.push({ ok, text: `${label || op}: ${r.msg || 'xong'}` }); paint(); return r;
+      }
+      catch (e) { st.fail++; st.lines.push({ ok: false, text: `${label || op}: ${e.msg}` }); paint(); return null; }
+    };
+    paint();
+    await A('set_rebirths', { n: opt.rebirths }, 'Chuyển sinh');
+    await A('set_level', { level: M.level }, 'Cấp');
+    await A('set_tower', { floor: M.tower_floor }, 'Kỷ lục tháp');
+    await A('set_mastery', { lv: M.mastery }, 'Thông thạo kỹ năng');
+    const rs = await A('reset_stats', {}, 'Đặt lại chỉ số');
+    const pts = rs ? Number((rs.msg.match(/(\d+) điểm/) || [])[1] || 0) : 0;
+    // đồ sẽ tặng: chỉ số yêu cầu cao nhất, chia đủ phần đó trước rồi mới chia theo tỉ lệ của lớp
+    const gear = [set.weapon, opt.shield && M.shield, opt.left && set.left, ...(set.armor || []), M.ring, M.ring, M.pendant].filter(Boolean);
+    const base = (CLASSES[cls] || {}).base || {}, need = {};
+    for (const id of gear) for (const [k, v] of Object.entries((ITEMS[id] || {}).req || {})) need[k] = Math.max(need[k] || 0, v - (base[k] || 0));
+    if (pts > 0) {
+      const add = {};
+      let left = pts;
+      for (const [k, v] of Object.entries(need)) { const n = Math.min(Math.max(0, v), left); if (n) { add[k] = n; left -= n; } }
+      const share = M.share[cls], rest = left;
+      for (const [k, r] of share) { const n = Math.floor(rest * r); add[k] = (add[k] || 0) + n; left -= n; }
+      add[share[0][0]] += left;
+      await A('add_stats', add, 'Cộng chỉ số');
+      await A('add_points', { n: -pts }, 'Trừ điểm đã chia');
+    }
+    if (opt.gold) await A('add_gold', { amount: M.gold }, 'Vàng');
+    const g = (base, extra, label) => A('give_gear', { base, opt: M.opt, luck: true, up: M.up, equip: opt.equip, ...extra }, label);
+    await g(set.weapon, { skill: true, exc: M.exc_weapon }, 'Vũ khí');
+    if (opt.shield) await g(M.shield, { exc: M.exc_armor }, 'Khiên');
+    if (opt.left) await g(set.left, { skill: true, exc: M.exc_weapon, hand: 'left' }, 'Vũ khí tay trái');
+    for (const id of set.armor || []) await g(id, opt.anc ? { anc: true } : { exc: M.exc_armor }, 'Giáp');
+    await g(M.ring, { exc: M.exc_armor }, 'Nhẫn');
+    await g(M.ring, { exc: M.exc_armor }, 'Nhẫn');
+    await g(M.pendant, { exc: M.exc_weapon }, 'Dây chuyền');
+    await g(`wing_${cls}_3`, { wopt: M.wing_opt }, 'Cánh');
+    if (opt.items) for (const [id, count] of M.items) await A('give_item', { id, count }, 'Vật phẩm');
+    if (opt.pet && M.pet) await A('give_pet', { id: M.pet, level: 'max' }, 'Thú');
+    await A('heal', {}, 'Hồi đầy');
+    st.running = false; st.done = true;
+    try { adm.user = (await Net.admin('lookup', { name: u.username })).user; } catch (e) { /* giữ thông tin cũ */ }
+    render();
+    toast(st.fail ? `Dựng xong ${c.name}, ${st.fail} bước lỗi.` : `Đã dựng tối đa ${c.name}.`, !!st.fail);
+  }
+
   function viewCharEdit(u) {
     const all = Object.entries(ITEMS);
     const gearBases = all.filter(([, it]) => (GEAR_KINDS.includes(it.slot) || it.slot === 'wing') && !it.legacy);
@@ -4343,6 +4420,7 @@
       Net.admin('lookup', { name: $('#adm-name').value }).then((r) => { adm.user = r.user; render(); }).catch((err) => toast(err.msg, true));
       return;
     }
+    if (e.target.id === 'adm-maxb') { e.preventDefault(); if (adm.user && !(adm.maxb && adm.maxb.running)) maxBuild(adm.user, new FormData(e.target)); return; }
     if (e.target.id === 'adm-gift' || e.target.id === 'adm-gift-all') { e.preventDefault(); onGift(e.target); return; }
     if (e.target.classList.contains('adm-char')) { e.preventDefault(); onCharOp(e.target); return; }
     if (e.target.id === 'guild-create') {

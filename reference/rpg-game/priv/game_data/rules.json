@@ -1250,6 +1250,39 @@
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false
+    },
+    "admin_max_build": {
+      "_doc": "Thẻ Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6): cấp, chuyển sinh, tháp, thông thạo, chia điểm theo share (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất từng lớp (sets: weapon, left = vũ khí tay trái cho lớp cầm 2 vũ khí, armor = bộ giáp) ép up, opt dòng cộng thêm, May mắn, Excellent (exc_weapon cho vũ khí / dây chuyền, exc_armor cho giáp / khiên / nhẫn) hoặc đồ Thần cho bộ giáp, 2 nhẫn ring, dây chuyền pendant, cánh cấp 3 wing_<lớp>_3 (dòng wing_opt), khiên shield khi chọn khiên thay tay trái; vật phẩm items, thú pet cấp tối đa, vàng gold.",
+      "level": 50,
+      "rebirths": 10,
+      "tower_floor": 100,
+      "mastery": 10,
+      "gold": 100000000,
+      "up": 11,
+      "opt": 4,
+      "share": {
+        "dk": [["str", 0.45], ["agi", 0.2], ["vit", 0.25], ["ene", 0.1]],
+        "dw": [["ene", 0.5], ["agi", 0.2], ["vit", 0.2], ["str", 0.1]],
+        "elf": [["agi", 0.45], ["str", 0.2], ["vit", 0.25], ["ene", 0.1]],
+        "mg": [["str", 0.4], ["ene", 0.25], ["agi", 0.2], ["vit", 0.15]]
+      },
+      "sets": {
+        "dk": {"weapon": "item_0_19", "left": "item_0_19", "armor": ["item_7_33", "item_8_33", "item_9_33", "item_10_33", "item_11_33"]},
+        "dw": {"weapon": "item_5_11", "left": "item_5_11", "armor": ["item_7_30", "item_8_30", "item_9_30", "item_10_30", "item_11_30"]},
+        "elf": {"weapon": "item_4_24", "armor": ["item_7_31", "item_8_31", "item_9_31", "item_10_31", "item_11_31"]},
+        "mg": {"weapon": "item_0_28", "left": "item_0_28", "armor": ["item_8_29", "item_9_29", "item_10_29", "item_11_29"]}
+      },
+      "shield": "item_6_18",
+      "ring": "item_13_24",
+      "pendant": "item_13_27",
+      "wing_opt": "ignore_def",
+      "exc_weapon": ["atk_pct", "crit", "heal_kill", "mp_kill", "atk_lvl", "ar_pct"],
+      "exc_armor": ["hp_pct", "dmg_red", "gold_pct", "mp_pct", "reflect", "def_rate"],
+      "items": [["jewel_bless", 50], ["jewel_soul", 50], ["jewel_chaos", 50], ["jewel_life", 50], ["potion_l", 500], ["mana_l", 500], ["ore_rare", 100], ["dragon_scale", 20], ["mam_co", 20], ["ds_ticket", 10], ["bc_ticket", 10], ["cc_ticket", 10], ["lost_map", 10], ["dragon_bait", 100]],
+      "pet": "long_vuong",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     }
   }
 }

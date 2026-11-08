@@ -1800,3 +1800,10 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   - tổng trận: Kiếm Sĩ 12 412 → 12 664 (+2 %), Phù Thủy 12 208 → 13 027 (+7 %), Tiên Nữ 11 979 → 12 648 (+6 %), Đấu Sĩ 12 464 → 13 610 (+9 %);
   - chết: 17 → 24, 41 → 59, 8 → 30, 13 → 85 (phần lớn ở chúa tể vùng chuyển sinh cuối: bot dùng đồ tạm lâu, tốn vàng / ngọc vào đồ tạm nên tới cấp 50 đồ yếu hơn, Đấu Sĩ công 1 346 → 1 071);
   - đầu chặng sau chuyển sinh khó hơn rõ (Kiếm Sĩ chặng 1: 2,5 → 3,3 lượt / trận, máu bị đánh 7 % → 28 %); số trận chủ yếu do EXP nên chỉ tăng ít.
+
+## Quản trị: nút Dựng nhân vật tối đa (2026-11-08, anh yêu cầu "như admin guide")
+- Thẻ **⚡ Dựng nhân vật tối đa** ở tab Quản trị (người vừa tra cứu) chạy đúng công thức `docs/ADMIN_GUIDE.md` §6 bằng các lệnh quản trị có sẵn (mỗi lệnh ghi `admin_log`), tiến trình ✓ / ✗ từng bước. Tùy chọn: số lần chuyển sinh, Excellent / Đồ Thần, tay trái vũ khí / khiên, mặc luôn, vàng, vật phẩm, Long Vương.
+- Bộ đồ / số liệu chuyển từ đoạn JS trong tài liệu sang `RULES.admin_max_build` (không viết cứng trong code).
+- `give_gear` thêm `equip` (mặc luôn như bấm Trang bị, `hand: "left"` cầm tay trái; không mặc được thì giữ trong túi, thông báo "chưa mặc: lý do"); `give_pet` nhận `level: "max"` (Long Vương 30).
+- Chia điểm: đủ chỉ số yêu cầu của mọi món trước, phần còn lại theo tỉ lệ lớp → mọi món có tác dụng theo luật mới (không viền đỏ). Vũ khí 2 tay (cung Tiên Nữ) thì bỏ khiên / tay trái.
+- Kiểm: `test/hac_long/admin_max_test.exs` (4 lớp, mặc hết, không món nào vô hiệu), e2e `maxbuild` (4 lớp qua tab Quản trị).

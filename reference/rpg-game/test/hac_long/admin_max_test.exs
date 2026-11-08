@@ -181,4 +181,78 @@ defmodule HacLong.AdminMaxTest do
     assert uid == b.uid and Gear.find(p, c.uid) == nil
     assert p.upgrades == %{b.uid => 3} and p.inv["potion_s"] == 5
   end
+
+  # thẻ Quản trị → Dựng nhân vật tối đa: bộ đồ ở RULES.admin_max_build, `give_gear` `equip: true` mặc luôn,
+  # chia điểm đủ chỉ số yêu cầu trước → mọi món có tác dụng (không viền đỏ), `give_pet` `level: "max"`
+  for cls <- ~w(dk dw elf mg) do
+    test "thẻ Dựng tối đa (RULES.admin_max_build) #{cls}: mặc luôn, mọi món có tác dụng" do
+      cls = unquote(cls)
+      m = Data.rules().admin_max_build
+      set = m.sets[String.to_existing_atom(cls)]
+      {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Mx#{cls}", "cls" => cls})
+
+      p =
+        p
+        |> op("set_rebirths", %{"n" => m.rebirths})
+        |> op("set_level", %{"level" => m.level})
+        |> op("reset_stats", %{})
+
+      left = set[:left]
+      # vũ khí 2 tay (cung Tiên Nữ): không khiên / tay trái
+      two = Data.item(set.weapon)[:hands] == 2
+      shield = if two or left, do: nil, else: m.shield
+
+      gear =
+        Enum.reject([set.weapon, left, shield, m.ring, m.ring, m.pendant | set.armor], &is_nil/1)
+
+      need =
+        Enum.reduce(gear, %{}, fn id, acc ->
+          Map.merge(acc, Data.item(id)[:req] || %{}, fn _, a, b -> max(a, b) end)
+        end)
+
+      add = for {k, v} <- need, into: %{}, do: {Atom.to_string(k), max(0, v - p.stats[k])}
+
+      p = %{
+        p
+        | stats: Map.new(p.stats, fn {k, v} -> {k, v + Map.get(add, Atom.to_string(k), 0)} end),
+          points: 0
+      }
+
+      g = fn p, base, extra ->
+        op(
+          p,
+          "give_gear",
+          Map.merge(
+            %{"base" => base, "opt" => m.opt, "up" => m.up, "luck" => true, "equip" => true},
+            extra
+          )
+        )
+      end
+
+      p = g.(p, set.weapon, %{"exc" => m.exc_weapon, "skill" => true})
+      p = if left, do: g.(p, left, %{"hand" => "left"}), else: p
+      p = if shield, do: g.(p, shield, %{}), else: p
+      p = Enum.reduce(set.armor, p, &g.(&2, &1, %{"exc" => m.exc_armor}))
+
+      p =
+        p
+        |> g.(m.ring, %{})
+        |> g.(m.ring, %{})
+        |> g.(m.pendant, %{})
+        |> g.("wing_#{cls}_3", %{"wopt" => m.wing_opt})
+
+      p = op(p, "give_pet", %{"id" => m.pet, "level" => "max"})
+
+      assert Engine.inactive_slots(p) == []
+
+      assert p.equip.wing && p.equip.ring1 && p.equip.ring2 && p.equip.pendant && p.equip.weapon
+      assert p.equip.shield != nil == not two
+      # món vừa tặng (+up) không món nào nằm lại trong túi: mặc được hết
+      assert Enum.all?(Gear.bag(p), &(Engine.upgrade_level(p, &1.uid) == 0))
+
+      assert Gear.item(p, p.equip.weapon).base == set.weapon
+      assert Engine.upgrade_level(p, p.equip.armor) == m.up
+      assert HacLong.Game.Pets.level(p, m.pet) == HacLong.Game.Pets.max_level(m.pet)
+    end
+  end
 end

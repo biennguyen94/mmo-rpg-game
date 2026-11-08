@@ -90,6 +90,8 @@ defmodule HacLongWeb.PageController do
         botStuckMin: Data.rules().bots.play.stuck_min,
         # Động Bí Ẩn: tỉ lệ đêm mở (ghi trong thẻ quản trị)
         secret: secret_info(),
+        # Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6)
+        adminMaxBuild: Data.rules().admin_max_build,
         guildCost: HacLong.Guilds.create_cost(),
         guildMinDonate: HacLong.Guilds.min_donate(),
         tameKills: HacLong.Game.Pets.tame_kills(),
