@@ -198,6 +198,16 @@ defmodule HacLong.Slay do
   # ---------- Đấu trường trực tiếp (E2, DECISIONS "Sự kiện, đấu trường, chiến bang trực quan") ----------
 
   @duel_s Data.rules().arena.duel_invite_s
+  @duel_map Data.rules().arena.duel_map
+
+  @doc "Bản đồ riêng của đấu trực tiếp."
+  def duel_map, do: @duel_map.map
+
+  @doc "Ô đứng trên bản đồ đấu trực tiếp: người mời (`true`) ô a, người nhận ô b."
+  def duel_spot(inviter?) do
+    [x, y] = if inviter?, do: @duel_map.a, else: @duel_map.b
+    %{map: @duel_map.map, x: x, y: y}
+  end
 
   @doc "`a` mời `b` đấu trường trực tiếp. Trả `{:ok, thông_báo}` hoặc `{:error, lý_do}`."
   def duel_invite(a, b) do
@@ -658,6 +668,7 @@ defmodule HacLong.Slay do
 
             pw2 =
               duel_end(
+                winner,
                 pw,
                 f,
                 "win",
@@ -668,6 +679,7 @@ defmodule HacLong.Slay do
 
             pl2 =
               duel_end(
+                loser,
                 pl,
                 f,
                 "lose",
@@ -700,9 +712,10 @@ defmodule HacLong.Slay do
     end
   end
 
-  defp duel_end(p, f, result, lines, text, kind) do
+  defp duel_end(uid, p, f, result, lines, text, kind) do
     if in_fight?(p, f) do
       hp0 = p.battle.encounter[:hp0] || p.hp
+      back = p.battle.encounter[:back]
       p = Enum.reduce(lines, p, &push(&2, entry(&1, "bad"))) |> log(text, kind)
 
       b =
@@ -712,7 +725,9 @@ defmodule HacLong.Slay do
           reward: %{xp: 0, gold: 0, items: [], levels: 0}
         })
 
-      %{p | battle: b, hp: max(1, min(hp0, Engine.derived(p).maxHp))}
+      p = %{p | battle: b, hp: max(1, min(hp0, Engine.derived(p).maxHp))}
+      # rời bản đồ đấu trực tiếp, về đúng chỗ cũ
+      if back, do: HacLong.World.warp(p, uid, back), else: p
     else
       p
     end

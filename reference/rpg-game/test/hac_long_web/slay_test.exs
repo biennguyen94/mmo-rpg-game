@@ -350,6 +350,9 @@ defmodule HacLongWeb.SlayTest do
     pa = Session.get(ua.id)
     assert pa.battle.encounter.duel and pa.battle.encounter.hp0 == 50
     assert pa.hp == HacLong.Game.Engine.derived(pa).maxHp
+    # vào bản đồ riêng: người mời ô a, người nhận ô b
+    assert pa.pos == Slay.duel_spot(true)
+    assert Session.get(ub.id).pos == Slay.duel_spot(false)
 
     Enum.reduce_while(1..200, nil, fn _, _ ->
       case Slay.peek(ua.id) do
@@ -364,7 +367,9 @@ defmodule HacLongWeb.SlayTest do
     assert pa.battle.result == "win" and pb.battle.result == "lose"
     assert pa.gold == 5000 and pb.gold == 3000
     assert pa.hp == 50
-    assert pb.pos.map == "village"
+    # xong trận về đúng chỗ cũ
+    assert pb.pos == %{map: "village", x: 12, y: 14}
+    assert pa.pos.map != Slay.duel_map()
     refute Slay.red?(ua.id)
     assert HacLong.Arena.stats(ua.id).rating > 1000
     assert HacLong.Arena.stats(ub.id).rating < 1000

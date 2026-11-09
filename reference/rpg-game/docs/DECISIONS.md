@@ -1920,3 +1920,11 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm rồi mới mở trận. Server kiểm tầm (`Slay.check`, lỗi "… ở xa quá, lại gần
   trong 8 ô để đồ sát.").
 - Tab Quanh đây: nút 🗡 (hoặc 🗡⚡ khi bật đánh nhanh) cạnh nút 📍 cho người cùng bản đồ, như Đồ sát trên bản đồ.
+
+## Đấu trực tiếp ở bản đồ riêng (2026-11-09, anh yêu cầu)
+- Nhận lời mời đấu trực tiếp thì cả hai được đưa vào bản đồ riêng `duel_arena` ("Đấu Trường Trực Tiếp", `event: "duel"`, không cổng,
+  không quái, không có trong Chọn map): người mời ô a, người nhận ô b (`RULES.arena.duel_map`), rồi đánh luân phiên như đồ sát
+  (đánh tay hoặc ⚡ theo combo), không màn VS / K.O.
+- Xong trận (thắng, thua, bỏ chạy) hoặc trận bị hủy: cả hai về đúng ô cũ (`encounter.back`), máu cũ như trước. Vào lại game mà
+  còn đứng ở `duel_arena` không có trận thì về Làng (`cc_back`).
+- Đấu trực tiếp nhiều cặp cùng lúc dùng chung bản đồ này (thấy nhau nhưng không đánh nhau được: đồ sát cần đối thủ rảnh tay).

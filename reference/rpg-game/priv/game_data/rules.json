@@ -1010,7 +1010,8 @@
       "elo_k": 32,
       "first_strike_mult": 0.5,
       "_duel_doc": "Đấu trường trực tiếp (DECISIONS \"Sự kiện, đấu trường, chiến bang trực quan\" E2): mời người đang online, người kia nhận trong duel_invite_s giây; đánh luân phiên lượt như đồ sát, vào trận đầy máu, xong trận trả lại máu cũ, không chết / mất vàng / tên đỏ, đổi Elo như đấu trường (tính vào per_day của người mời).",
-      "duel_invite_s": 30
+      "duel_invite_s": 30,
+      "duel_map": {"map": "duel_arena", "a": [5, 5], "b": [11, 5], "_doc": "DECISIONS \"Đấu trực tiếp ở bản đồ riêng\": nhận lời mời thì người mời đứng ô a, người nhận ô b của bản đồ map; xong trận (thắng, thua, bỏ chạy, hủy) cả hai về đúng chỗ cũ."}
     },
     "party": {
       "max": 3,

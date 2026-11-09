@@ -638,11 +638,15 @@ defmodule HacLong.Game.Session do
         cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
         p = interrupt_battle(p, s.user_id)
         hp0 = p.hp
+        back = p.pos
         p = if duel, do: %{p | hp: Engine.derived(p).maxHp}, else: p
-        mp = if duel, do: %{zone: 0, name: "Đấu trường", theme: nil}, else: Maps.get(f.map)
+
+        # đấu trực tiếp: hai người vào bản đồ riêng (người mời ô a, người nhận ô b), xong trận về chỗ cũ `back`
+        p = if duel, do: World.warp(p, s.user_id, HacLong.Slay.duel_spot(f.mine)), else: p
+        mp = if duel, do: Maps.get(HacLong.Slay.duel_map()), else: Maps.get(f.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
-        enc = if duel, do: Map.merge(enc, %{duel: true, hp0: hp0}), else: enc
+        enc = if duel, do: Map.merge(enc, %{duel: true, hp0: hp0, back: back}), else: enc
 
         b =
           Map.merge(p2.battle, %{
@@ -681,8 +685,14 @@ defmodule HacLong.Game.Session do
     end
   end
 
-  defp handle({:slay_cancel, id}, _from, %{player: %{battle: %{encounter: %{slay: id}}} = p} = s) do
+  defp handle(
+         {:slay_cancel, id},
+         _from,
+         %{player: %{battle: %{encounter: %{slay: id} = enc}} = p} = s
+       ) do
     p = %{p | battle: nil}
+    # đấu trực tiếp bị hủy: về chỗ cũ (máu cũ)
+    p = if enc[:back], do: World.warp(%{p | hp: enc[:hp0] || p.hp}, s.user_id, enc.back), else: p
     s = save(s, p)
     broadcast(s, p, nil)
     reply(:ok, s)
@@ -1711,6 +1721,7 @@ defmodule HacLong.Game.Session do
        when map_size(tabs) == 0 do
     out? =
       (HacLong.ChaosCastle.map?(map) and not HacLong.ChaosCastle.alive?(s.user_id)) or
+        map == HacLong.Slay.duel_map() or
         (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
 
     # Động Bí Ẩn đã đóng (vào lại game lúc trời sáng): ra cổng Đền Cổ
