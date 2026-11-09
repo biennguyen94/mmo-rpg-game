@@ -54,19 +54,12 @@ defmodule HacLong.SkyEvent do
   @doc "Gọi ngay (quản trị / test): `:bird`, `:flock` (ô `at` hoặc ngẫu nhiên), `:meteor` (một trận sao băng), `:hoi`."
   def summon(kind, at \\ nil), do: GenServer.call(__MODULE__, {:summon, kind, at})
 
-  @doc "Các ô trời Chim Lạc / Đàn Hạc có thể hiện: trong tầm `reach` của một ô đi được đứng cạnh trời."
+  @doc "Các ô trời Chim Lạc / Đàn Hạc có thể hiện: trong tầm dây diều `reach` của một ô thả diều được (`Kite.stands/1`)."
   def spots do
     m = Maps.get(map_id())
     reach = r().reach
 
-    stands =
-      for y <- 0..(m.height - 1),
-          x <- 0..(m.width - 1),
-          Maps.walkable?(m, x, y),
-          Enum.any?([{1, 0}, {-1, 0}, {0, 1}, {0, -1}], fn {dx, dy} ->
-            Maps.sky?(m, x + dx, y + dy)
-          end),
-          do: {x, y}
+    stands = HacLong.Game.Kite.stands(m)
 
     for y <- 0..(m.height - 1),
         x <- 0..(m.width - 1),

@@ -2036,15 +2036,25 @@
   // kiting: { phase: fly | wait | gust | catch | miss, t0, tx, ty (ô trời diều bay tới), big, item }
   let kiting = null;
   const KITE_MS = { fly: 700, catch: 1800, miss: 700 };
-  function kiteTile(P, m) {
-    for (const [dx, dy] of [[0, -1], [1, 0], [-1, 0], [0, 1]]) {
-      const s = (k) => (m.tiles[P.pos.y + dy * k] || '')[P.pos.x + dx * k] === '^';
-      if (s(1)) return s(2) ? [P.pos.x + dx * 2, P.pos.y + dy * 2] : [P.pos.x + dx, P.pos.y + dy];
-    }
+  // giống server (`Kite.sky_near/2`): ô trời gần nhất thẳng phía trên trong tầm dây, không thì ô trời gần nhất trong tầm
+  const kiteReach = () => (((window.GAME_DATA.RULES || {}).sky || {}).reach) || 6;
+  function skyNear(m, x, y) {
+    const R = kiteReach(), sky = (a, b) => (m.tiles[b] || '')[a] === '^';
+    for (let yy = y - 1; yy >= Math.max(0, y - R); yy--) if (sky(x, yy)) return [x, yy];
+    let best = null, bd = Infinity;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) if (sky(x + dx, y + dy) && Math.abs(dx) + Math.abs(dy) < bd) { bd = Math.abs(dx) + Math.abs(dy); best = [x + dx, y + dy]; }
+    return best;
+  }
+  // giống server (`Kite.check_spot/1`): null nếu thả được, không thì lời nhắc
+  function kiteCheck(m, x, y) {
+    if (!m || !m.kite) return 'Thả diều ở Đồi Sáo Diều (cổng mép phải Hồ Long Vương).';
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes((m.tiles[y + dy] || '')[x + dx] || '_')) return 'Vướng cây rồi, ra chỗ thoáng để thả diều.';
+    if (!skyNear(m, x, y)) return `Xa trời quá: tiến lên gần mép đồi hơn (dây diều dài ${kiteReach()} ô).`;
     return null;
   }
-  function drawKite(x, y, ang, big) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  function kiteTile(P, m) { return skyNear(m, P.pos.x, P.pos.y); }
+  function drawKite(x, y, ang, big, sc = 1) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(sc, sc);
     ctx.fillStyle = big ? '#ffd34d' : '#e8352a';
     ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(8, 0); ctx.lineTo(0, 13); ctx.lineTo(-8, 0); ctx.closePath(); ctx.fill();
     ctx.fillStyle = big ? '#fff3b0' : '#ffd34d';
@@ -2087,12 +2097,16 @@
     } else if (f.phase === 'catch') {
       const k = Math.min(1, e / 500); kx = kx0 + (hx - kx0) * k; ky = ky0 + (hy - 20 - ky0) * k; show = e < 500;
     }
-    // dây diều: đường cong võng xuống
+    // diều càng xa càng nhỏ; dây càng dài càng võng (gió thổi lệch sang một bên)
+    const dist = Math.hypot(kx - hx, ky - hy) / TILE, sc = Math.max(0.55, Math.min(1, 1.12 - dist * 0.08));
     if (show && f.phase !== 'miss') {
+      const sag = 10 + dist * 6, sway = anim ? Math.sin(now / 900) * dist * 1.5 : 0;
       ctx.strokeStyle = 'rgba(245, 240, 230, 0.85)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + kx) / 2, Math.max(hy, ky) + 12, kx, ky + 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.bezierCurveTo(hx + (kx - hx) * 0.3 + sway, hy + (ky - hy) * 0.15 + sag * 0.6, hx + (kx - hx) * 0.7 + sway, ky + sag, kx, ky + 12 * sc);
+      ctx.stroke();
     }
-    if (show) drawKite(kx, ky, ang, f.big);
+    if (show) drawKite(kx, ky, ang, f.big, sc);
     if (f.phase === 'catch') {
       const bird = f.item === 'chim_lac';
       if (anim && (bird || f.item === 'manh_sao' || /^jewel_/.test(f.item || ''))) {
@@ -2295,6 +2309,7 @@
       draw();
     },
     kiteTile() { const P = getPlayer(), m = P && cur(P); return m ? kiteTile(P, m) : null; },
+    kiteCheck() { const P = getPlayer(), m = P && cur(P); return kiteCheck(m, P ? P.pos.x : 0, P ? P.pos.y : 0); },
     // vừa lên cấp (ui.js celebrate): cột sáng vàng ở chỗ nhân vật
     levelUp() { levelAt = performance.now(); draw(); },
     // vòng sáng ở ô vừa chạm để đi tới (ui.js walkTo)

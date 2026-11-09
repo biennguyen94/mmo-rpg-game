@@ -22,7 +22,7 @@ await p.evaluate(([x, y]) => window.__hl.walkTo(x, y), portal.at);
 await p.waitForFunction(() => window.__hl.player().pos.map === 'doi_sao_dieu', null, { timeout: 30000 }).catch(() => null);
 R.check('qua cổng tới Đồi Sáo Diều', (await p.evaluate(() => window.__hl.player().pos.map)) === 'doi_sao_dieu');
 
-// đứng mép đồi (cạnh ô trời)
+// đứng mép đồi (cạnh ô trời, không sát cây)
 const stand = await p.evaluate(() => {
   const m = window.GAME_DATA.WORLD.maps.doi_sao_dieu, me = window.__hl.player().pos;
   let best = null;
@@ -30,6 +30,8 @@ const stand = await p.evaluate(() => {
     const c = m.tiles[y][x];
     if (!',:*'.includes(c)) continue;
     if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (m.tiles[y + dy] || '')[x + dx] === '^')) continue;
+    let tree = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes((m.tiles[y + dy] || '')[x + dx] || '_')) tree = true;
+    if (tree) continue;
     const d = Math.abs(x - me.x) + Math.abs(y - me.y);
     if (!best || d < best.d) best = { x, y, d };
   }
@@ -57,6 +59,47 @@ await p.waitForFunction((k) => ((window.__hl.player().view.kite || {}).phong_khi
 // Dây Diều Đứt (quà rác) thì không cộng Phong Khí (đúng luật)
 const got = await p.evaluate(() => ({ pk: window.__hl.player().view.kite.phong_khi, junk: window.__hl.player().inv.day_dieu_dut || 0 }));
 R.check('giữ dây đúng lúc: +1 Phong Khí (hoặc Dây Diều Đứt)', got.pk === pk0 + 1 || got.junk > 0, JSON.stringify(got));
+
+// chỗ thoáng giữa đồi (không sát trời): vẫn thả được bằng nút, diều bay thẳng lên; sát cây thì báo vướng cây
+await p.waitForTimeout(1200);
+const mid = await p.evaluate(() => {
+  const m = window.GAME_DATA.WORLD.maps.doi_sao_dieu, me = window.__hl.player().pos, T = (x, y) => (m.tiles[y] || '')[x];
+  let best = null;
+  for (let y = 8; y < m.tiles.length; y++) for (let x = 0; x < m.tiles[0].length; x++) {
+    if (!',:'.includes(T(x, y)) || T(x, y - 1) === '^') continue;
+    let tree = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes(T(x + dx, y + dy) || '_')) tree = true;
+    if (tree) continue;
+    let up = false; for (let k = 1; k <= window.GAME_DATA.RULES.sky.reach; k++) if (T(x, y - k) === '^') up = true;
+    if (!up || y - me.y < 2) continue;
+    const d = Math.abs(x - me.x) + Math.abs(y - me.y);
+    if (!best || d < best.d) best = { x, y, d };
+  }
+  return best;
+});
+await p.evaluate(([x, y]) => window.__hl.walkTo(x, y), [mid.x, mid.y]);
+await p.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return q.x === x && q.y === y; }, [mid.x, mid.y], { timeout: 30000 }).catch(() => null);
+await p.waitForSelector('#kite-ui [data-act="kite-fly"]', { timeout: 5000 }).catch(() => null);
+await p.click('#kite-ui [data-act="kite-fly"]').catch(() => null);
+await p.waitForSelector('#kite-ui [data-act="kite-hold"]', { timeout: 5000 }).catch(() => null);
+R.check('giữa đồi (không sát trời): bấm 🪁 Thả diều vẫn bay', !!(await p.$('#kite-ui [data-act="kite-hold"]')), JSON.stringify(mid));
+await p.waitForTimeout(700);
+await shot(p, 'kite-mid.png');
+await p.waitForSelector('#kite-ui [data-act="kite-fly"]', { timeout: 12000 }).catch(() => null); // để lượt này hết (chậm tay)
+const treeSpot = await p.evaluate(() => {
+  const m = window.GAME_DATA.WORLD.maps.doi_sao_dieu, me = window.__hl.player().pos, T = (x, y) => (m.tiles[y] || '')[x];
+  let best = null;
+  for (let y = 8; y < m.tiles.length; y++) for (let x = 0; x < m.tiles[0].length; x++) {
+    if (!',:'.includes(T(x, y))) continue;
+    if (![[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(([dx, dy]) => 'Y'.includes(T(x + dx, y + dy) || '_'))) continue;
+    const d = Math.abs(x - me.x) + Math.abs(y - me.y);
+    if (!best || d < best.d) best = { x, y, d };
+  }
+  return best;
+});
+await p.evaluate(([x, y]) => window.__hl.walkTo(x, y), [treeSpot.x, treeSpot.y]);
+await p.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return q.x === x && q.y === y; }, [treeSpot.x, treeSpot.y], { timeout: 30000 }).catch(() => null);
+await p.waitForTimeout(400);
+R.check('đứng sát cây: báo "Vướng cây", không có nút thả', /Vướng cây/.test(await p.textContent('#kite-ui').catch(() => '')) && !(await p.$('#kite-ui [data-act="kite-fly"]')));
 
 // Chim Lạc, Đàn Hạc, sao băng (quản trị gọi)
 await admin('sky_bird', A.name);

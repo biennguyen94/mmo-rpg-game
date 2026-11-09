@@ -3,7 +3,8 @@ defmodule HacLong.Game.Kite do
   Thả diều ở Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"), đối xứng câu cá ở Hồ Long Vương
   (`HacLong.Game.Fishing`). Hàm thuần; thời gian truyền vào (mili giây, đồng hồ đơn điệu của server). Số ở `RULES.sky`.
 
-  - `fly/5`: đứng cạnh (4 hướng) một ô trời (`^`) thì thả diều vào ô trời trong tầm `reach` (nil: ô trời cạnh bên).
+  - `fly/5`: đứng chỗ thoáng trên đồi (không sát cây) thì thả diều vào ô trời (`^`) trong tầm dây diều `reach` (nil: ô trời
+    gần nhất phía trên, `sky_near/2`).
     Gió giật sau `wait_ms` ngẫu nhiên.
   - `hold/2`: giữ dây trong `window_ms` kể từ lúc gió giật thì được quà gió (`pool`), +1 Phong Khí; sớm / muộn thì diều
     đứt (không mất gì). Đi chỗ khác thì mất lượt.
@@ -61,39 +62,84 @@ defmodule HacLong.Game.Kite do
   @doc "Bản đồ `map_id` là Đồi Sáo Diều."
   def hill?(map_id), do: match?(%{kite: true}, Maps.get(map_id))
 
-  @doc "Đang đứng cạnh (4 hướng) một ô trời."
-  def near_sky?(%{pos: %{map: id, x: x, y: y}}) do
-    case Maps.get(id) do
-      nil ->
-        false
+  # ô cây: đứng sát (8 hướng) thì vướng, không thả diều được
+  @trees ~w(T Y K)
 
-      m ->
-        Enum.any?([{1, 0}, {-1, 0}, {0, 1}, {0, -1}], fn {dx, dy} ->
-          Maps.sky?(m, x + dx, y + dy)
-        end)
+  @doc """
+  Thả diều được ở chỗ đang đứng không: `:ok` hoặc `{:error, lý_do}`. Đứng chỗ thoáng trên đồi (không sát cây) và có ô trời
+  trong tầm dây diều `reach` (anh duyệt 2026-11-09: không cần đứng sát mép trời, như thả diều ngoài đời).
+  """
+  def check_spot(%{pos: %{map: id, x: x, y: y}}) do
+    m = Maps.get(id)
+
+    cond do
+      m == nil or not m.kite ->
+        {:error, "Thả diều ở Đồi Sáo Diều (cổng mép phải Hồ Long Vương)."}
+
+      Enum.any?(for(dx <- -1..1, dy <- -1..1, do: {dx, dy}), fn {dx, dy} ->
+        Maps.tile(m, x + dx, y + dy) in @trees
+      end) ->
+        {:error, "Vướng cây rồi, ra chỗ thoáng để thả diều."}
+
+      sky_near(m, {x, y}) == nil ->
+        {:error, "Xa trời quá: tiến lên gần mép đồi hơn (dây diều dài #{@r.reach} ô)."}
+
+      true ->
+        :ok
     end
   end
 
-  def near_sky?(_), do: false
+  def check_spot(_), do: {:error, "Thả diều ở Đồi Sáo Diều."}
 
-  @doc "Thả diều vào ô trời `at` (nil: ô trời cạnh bên). `bird` / `flock`: ô Chim Lạc / Đàn Hạc đang có (nil nếu không)."
+  @doc "Mọi ô đứng thả diều được trên bản đồ `m` (đi được, không phải cổng / NPC, không sát cây, có trời trong tầm)."
+  def stands(m) do
+    for y <- 0..(m.height - 1),
+        x <- 0..(m.width - 1),
+        Maps.walkable?(m, x, y),
+        Maps.tile(m, x, y) not in ~w(D A O),
+        check_spot(%{pos: %{map: m.id, x: x, y: y}}) == :ok,
+        do: {x, y}
+  end
+
+  @doc "Đứng ở đây thả được diều không (`check_spot/1`)."
+  def can_fly?(p), do: check_spot(p) == :ok
+
+  @doc "Ô trời diều bay tới khi không chọn ô: ô trời gần nhất phía trên (cùng cột), không thì ô trời gần nhất trong tầm."
+  def sky_near(m, {x, y}) do
+    up = Enum.find((y - 1)..max(0, y - @r.reach)//-1, &Maps.sky?(m, x, &1))
+
+    if up do
+      {x, up}
+    else
+      for(
+        dy <- -@r.reach..@r.reach,
+        dx <- -@r.reach..@r.reach,
+        Maps.sky?(m, x + dx, y + dy),
+        do: {x + dx, y + dy}
+      )
+      |> Enum.min_by(fn {tx, ty} -> abs(tx - x) + abs(ty - y) end, fn -> nil end)
+    end
+  end
+
+  @doc "Thả diều vào ô trời `at` (nil: `sky_near/2`). `bird` / `flock`: ô Chim Lạc / Đàn Hạc đang có (nil nếu không)."
   def fly(p, now, at \\ nil, bird \\ nil, flock \\ nil) do
     cond do
       p.battle ->
         {%{ok: false, msg: "Đang trong trận."}, p}
 
-      not near_sky?(p) ->
-        {%{ok: false, msg: "Hãy đứng ở mép đồi, cạnh khoảng trời để thả diều."}, p}
+      (err = check_spot(p)) != :ok ->
+        {%{ok: false, msg: elem(err, 1)}, p}
 
       at != nil and not flyable?(p, at) ->
-        {%{ok: false, msg: "Ô đó xa quá hoặc không phải trời."}, p}
+        {%{ok: false, msg: "Ô đó xa quá (dây diều dài #{@r.reach} ô) hoặc không phải trời."}, p}
 
       true ->
+        at = at || sky_near(Maps.get(p.pos.map), {p.pos.x, p.pos.y})
         [lo, hi] = @r.wait_ms
         wait = lo + floor(Rng.uniform() * (hi - lo))
         {p, big} = bird_roll(p, at, bird)
         flock? = flock != nil and at == flock and hill?(p.pos.map)
-        reply = %{ok: true, wait: wait, window: @r.window_ms}
+        reply = %{ok: true, wait: wait, window: @r.window_ms, at: Tuple.to_list(at)}
         reply = if big, do: Map.put(reply, :big, true), else: reply
         reply = if flock?, do: Map.put(reply, :flock, true), else: reply
         {reply, Map.put(p, :kite, %{gust: now + wait, pos: p.pos, big: big, flock: flock?})}

@@ -178,8 +178,8 @@ defmodule HacLong.Bots.Brain do
 
   @doc """
   Bot thả diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): một nửa số bot (seed lẻ) dùng lượt "ra hồ" để ra Đồi Sáo Diều.
-  Đứng mép đồi (mỗi bot một chỗ, `spread/5`), thả vào ô Chim Lạc nếu đang lượn và chưa có, không thì ô Đàn Hạc, không thì
-  ô trời cạnh bên; thả đủ thì nhận việc Ông Lão Làm Diều.
+  Đứng chỗ thoáng trên đồi (`Kite.stands/1`, mỗi bot một chỗ, `spread/5`), thả vào ô Chim Lạc nếu đang lượn và chưa có, không thì ô Đàn Hạc, không thì
+  ô trời gần nhất phía trên; thả đủ thì nhận việc Ông Lão Làm Diều.
   """
   def kiter?(seed) when is_integer(seed), do: rem(seed, 2) == 1
   def kiter?(_), do: false
@@ -253,14 +253,8 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
-  @doc "Ô đứng thả diều được trên bản đồ `map`: đi được, không phải cổng, cạnh (4 hướng) một ô trời."
-  def sky_stands(map) do
-    for y <- 0..(map.height - 1),
-        x <- 0..(map.width - 1),
-        plain?(map, {x, y}),
-        Enum.any?(Map.values(@dirs), fn {dx, dy} -> Maps.sky?(map, x + dx, y + dy) end),
-        do: {x, y}
-  end
+  @doc "Ô đứng thả diều được trên bản đồ `map` (`HacLong.Game.Kite.stands/1`: chỗ thoáng, có trời trong tầm dây diều)."
+  def sky_stands(map), do: HacLong.Game.Kite.stands(map)
 
   defp lake_job(p, snap, opts, mode) do
     lake = Maps.get(HacLong.LakeEvent.map_id())

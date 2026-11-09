@@ -42,15 +42,30 @@ defmodule HacLong.Game.KiteTest do
     p |> Map.put(:pos, %{map: @map, x: x, y: y}) |> Map.put(:daily, %{})
   end
 
-  test "bản đồ có ô trời; phải đứng cạnh trời mới thả được" do
+  test "thả diều ở chỗ thoáng trong tầm dây diều (không cần sát mép trời); vướng cây / xa trời thì không" do
     {stand, sky} = spot()
     assert sky != nil
-    assert Kite.near_sky?(flyer(stand))
-    far = flyer({13, 15})
-    refute Kite.near_sky?(far)
+    assert Kite.can_fly?(flyer(stand))
+    m = Maps.get(@map)
+    reach = Kite.rules().reach
+
+    # giữa đồi, cách mép trời vài ô (không sát trời) vẫn thả được; ô trời mặc định là ô thẳng phía trên
+    mid = Enum.find(Kite.stands(m), fn {x, y} -> not Maps.sky?(m, x, y - 1) and y >= 10 end)
+    assert mid
+    {mx, my} = mid
+    {%{ok: true, at: [ax, ay]}, _} = Kite.fly(flyer(mid), 0)
+    assert ax == mx and ay < my and my - ay <= reach and Maps.sky?(m, ax, ay)
+    # xa trời quá (cuối đồi)
+    far = flyer({11, 16})
+    assert {:error, "Xa trời quá" <> _} = Kite.check_spot(far)
     assert {%{ok: false}, _} = Kite.fly(far, 0)
+    # sát cây (viền cây bên trái)
+    assert {:error, "Vướng cây" <> _} = Kite.check_spot(flyer({1, 10}))
     # ô xa quá / không phải trời
     assert {%{ok: false, msg: "Ô đó xa quá" <> _}, _} = Kite.fly(flyer(stand), 0, {0, 19})
+    # khác bản đồ
+    assert {:error, "Thả diều ở Đồi Sáo Diều" <> _} =
+             Kite.check_spot(%{pos: %{map: "village", x: 10, y: 10}})
   end
 
   test "giữ dây đúng lúc gió giật thì được quà gió, +1 Phong Khí, tính việc Ông Lão; sớm / muộn thì hỏng" do
