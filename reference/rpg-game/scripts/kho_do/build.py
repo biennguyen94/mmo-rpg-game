@@ -311,7 +311,8 @@ mode_rows = "".join([
     f"<tr><td><b>Chí mạng</b></td><td>của mình; quái theo số ở trên</td><td>tỉ lệ ×{n(PV['crit_rate_mult'])}, phần cộng thêm của hệ số ×{n(PV['crit_bonus_mult'])} (thu nhỏ theo tỉ lệ, không chặn trần)</td></tr>",
     f"<tr><td><b>Choáng</b></td><td>quái mất lượt</td><td>tỉ lệ choáng ×{n(PV['stun_mult'])} (mọi kỹ năng, cả Thủy Long Ba); bị choáng mất một lượt; vừa thoát choáng thì kháng {PV['stun_immune']} lượt</td></tr>",
     "<tr><td><b>Hiệu ứng lên nhau</b></td><td>choáng, suy yếu, độc lên quái; buff lên mình</td><td>choáng, suy yếu, độc / bỏng mình gây chuyển sang người bị đánh (độc trừ máu đầu lượt của họ); thủ thế, khiên, Bất Tử, Ảnh Bộ, giảm sát thương của thú (nhóm Hộ vệ, Long Vương) của người bị đánh vẫn đỡ đòn; Long Uy (Long Vương) kháng một nửa choáng / độc / suy yếu; Bất Tử mỗi trận chỉ cứu một lần, dùng lại Bất Tử không cứu thêm</td></tr>",
-    f"<tr><td><b>Bình máu</b></td><td>uống được mọi lượt</td><td>hồi ×{n(PV['potion_mult'])}; mỗi {PV['potion_cd']} lượt của mình uống được một lần, tối đa {PV['potion_max']} bình mỗi trận (mất lượt như đánh quái)</td></tr>",
+    f"<tr><td><b>Bình máu</b></td><td>uống được mọi lượt</td><td>hồi ×{n(PV['potion_mult'])} nhưng mỗi bình tối đa {pct(PV['potion_cap_pct'])} máu tối đa (bình to cỡ nào cũng vậy); mỗi {PV['potion_cd']} lượt của mình uống được một lần, tối đa {PV['potion_max']} bình mỗi trận (mất lượt như đánh quái)</td></tr>",
+    f"<tr><td><b>Bình mana</b></td><td>uống được mọi lượt</td><td>hồi ×{n(PV['mana_mult'])}, mỗi bình tối đa {pct(PV['mana_cap_pct'])} MP tối đa; mỗi {PV['mana_cd']} lượt một bình, tối đa {PV['mana_max']} bình mỗi trận (đếm riêng với bình máu)</td></tr>",
     f"<tr><td><b>Hồi máu kỹ năng</b></td><td>đầy đủ</td><td>×{n(PV['heal_mult'])} (Hồi Sinh Lực, Tăng Sức Mạnh, Phúc Lành…); thú không hồi máu (chỉ cộng chỉ số); hút máu và khiên không đổi</td></tr>",
     "<tr><td><b>Giảm sát thương</b></td><td>thủ thế, khiên, thú che chắn, hấp thụ cánh, Excellent</td><td>cả hai bên: hấp thụ cánh, Excellent, bỏ qua phòng thủ; thêm thủ thế / khiên / thú của người bị đánh</td></tr>",
     "<tr><td><b>Phản sát thương (Excellent)</b></td><td>quái mất phần phản lại nhưng không chết vì phản đòn (còn ít nhất 1 máu)</td><td>Đồ sát: người đánh mất phần phản lại, còn ít nhất 1 máu; Đấu trường: phản đòn hạ được đối thủ, cả hai chiều (Bất Tử vẫn cứu)</td></tr>",
@@ -328,6 +329,8 @@ monster_line = (f"Quái cấp L: máu {n(mh['base'])} + {n(mh['level'])}L + {n(m
 LIB = D["library"]
 MON = {m["id"]: m for m in LIB["monsters"]}
 MAPN = {m["id"]: m["name"] for m in LIB["maps"]}
+# bản đồ riêng đấu trực tiếp không có trong Thư viện: đọc tên từ file bản đồ
+DUELN = json.load(open(os.path.join(os.path.dirname(__file__), f"../../priv/maps/{R['arena']['duel_map']['map']}.json"), encoding="utf-8"))["name"]
 def clock(every_h, off_min=0):
     t = [(off_min + every_h * 60 * i) % 1440 for i in range(24 // every_h)]
     s = sorted(t)
@@ -453,7 +456,7 @@ tower_rows = "".join(
 # ---------- PK, đồ sát ----------
 SL, AR, GW = R["slay"], R["arena"], R["guild_war"]
 pk_items = [
-    ("Đồ sát", f"tấn công người khác trên bản đồ chung (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung, trong tầm {SL['reach']} ô (bấm là đánh ngay, không cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm) (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
     ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
     ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); không giới hạn số lần đồ sát."),
     ("Đấu trường", f"đánh người khác do máy điều khiển (kỹ năng, thú cưng, buff, hồi máu của chính người đó), tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']}). "
@@ -513,10 +516,10 @@ pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quá
 QK = R["quick"]
 pk_items += [
     ("Người chơi trên bản đồ", "người khác vẽ trên bản đồ (hình mặc đồ, tên, tag bang; 🛡 đang được bảo vệ, ⚔ + máu khi đang đồ sát). "
-     "Bấm một người → menu Hồ sơ · Giao dịch · Mời tổ đội · 🗡 Đồ sát (nút mờ kèm lý do nếu không đánh được); nhiều người cùng ô / có quái → bảng chọn. "
+     f"Bấm một người → menu Hồ sơ · Giao dịch · Mời tổ đội · 🗡 Đồ sát (nút mờ kèm lý do nếu không đánh được; trong {SL['reach']} ô là đánh ngay); nhiều người cùng ô / có quái → bảng chọn. "
      "Không bấm là đánh ngay (tránh đồ sát nhầm). Cài đặt: Tất cả / Tổ đội & bang / Tắt (chỉ màn hình của mình; người đang đồ sát với mình và đồng đội luôn hiện); "
-     "tab Quanh đây đủ danh sách, 📍 chỉ người đó trên bản đồ."),
-    ("⚡ Đồ sát nhanh", f"đang bật ⚡ thì nút thành 🗡⚡ Đồ sát nhanh: chạy tới cạnh người đó rồi mở trận, ở lại bản đồ; lượt của mình server đánh ngay theo combo ⚡ "
+     "tab Quanh đây đủ danh sách, 📍 chỉ người đó trên bản đồ, 🗡 (🗡⚡ khi bật ⚡) ngay cạnh để đồ sát như trên bản đồ. Đồ sát không có màn VS / K.O.; người xong trận hết ngay dấu ⚔."),
+    ("⚡ Đồ sát nhanh", f"đang bật ⚡ thì nút thành 🗡⚡ Đồ sát nhanh: trong {SL['reach']} ô thì mở trận ngay (xa hơn chạy lại gần cho vào tầm), ở lại bản đồ; lượt của mình server đánh ngay theo combo ⚡ "
      f"(không chờ {SL['turn_s']} giây); ✋ cầm lại lượt. Luật đồ sát không đổi. Không bật ⚡: bảng trận như thường, mỗi lượt {SL['turn_s']} giây, hết giờ server đánh thay một đòn, "
      f"hết giờ {SL['max_timeouts']} lần liên tiếp thì thua."),
 ]
@@ -590,9 +593,9 @@ EVVIZ_HTML = f"""<h3>Thanh sự kiện (mép trên bản đồ)</h3>
   <h3>Chiến bang khi đồ sát</h3>
   <p>Hai bang đang chiến: đồ sát thành viên bang địch trên bản đồ (bên nào thắng cũng được) <b>+1 điểm</b> cho bang người thắng (mỗi cặp tối đa {GW['same_target_max']} lần, chung với đấu trường), người thắng <b>không bị tên đỏ</b>; vàng mất / nhận và bảo vệ như đồ sát thường. Thắng chiến bang: quỹ +{n(GW['win_fund'])}, ai ghi điểm nhận {n(GW['win_gold'])} vàng.</p>
   <h3>Đấu trường</h3>
-  <ul><li>Vào trận đánh người có màn <b>VS</b>, xong thắng / thua có <b>K.O.</b>.</li>
+  <ul><li>Thách đấu bản sao: màn <b>VS</b> chiếu xong (2 giây) trận mới bắt đầu (bấm đánh lúc đó thì chờ hết màn); <b>K.O.</b> hiện sau đòn cuối, khi trận đã xong hẳn. Đồ sát và đấu trực tiếp không có VS / K.O.</li>
     <li>Thách đấu bản sao, bật ⚡: server tự đánh từng lượt theo combo (thanh "⚡ Đang đánh theo combo", ✋ Đánh tay).</li>
-    <li><b>⚔ Đấu trực tiếp</b> (menu người trên bản đồ, hồ sơ): người kia nhận trong {AR['duel_invite_s']} giây; bản đồ nào cũng được; luân phiên lượt {SL['turn_s']} giây như đồ sát (⚡ tự đánh lượt ở màn trận). Vào trận đầy máu, xong trả lại máu cũ; không chết, không mất vàng, không tên đỏ; bỏ chạy = thua. Điểm đấu trường đổi như thách đấu (K = {AR['elo_k']}), tính vào {AR['per_day']} trận / ngày của người mời; thắng thành viên bang địch +1 điểm chiến bang.</li></ul>
+    <li><b>⚔ Đấu trực tiếp</b> (menu người trên bản đồ, hồ sơ): người kia nhận trong {AR['duel_invite_s']} giây; mời từ bản đồ nào cũng được, nhận thì cả hai được đưa vào bản đồ riêng <b>{E(DUELN)}</b> (người mời ô {AR['duel_map']['a'][0]}, {AR['duel_map']['a'][1]}, người nhận ô {AR['duel_map']['b'][0]}, {AR['duel_map']['b'][1]}), xong trận (thắng, thua, bỏ chạy, hủy) về đúng chỗ cũ; luân phiên lượt {SL['turn_s']} giây như đồ sát (⚡ tự đánh lượt ở màn trận). Vào trận đầy máu, xong trả lại máu cũ; không chết, không mất vàng, không tên đỏ; bỏ chạy = thua. Điểm đấu trường đổi như thách đấu (K = {AR['elo_k']}), tính vào {AR['per_day']} trận / ngày của người mời; thắng thành viên bang địch +1 điểm chiến bang.</li></ul>
 """
 
 
@@ -639,14 +642,14 @@ pk_rows = [
 pk_ev_rows = "".join(f"""<div class="card"><h3>{a}</h3><p><b>PK:</b> {c}</p>{'' if b == '—' else f'<p class="note"><b>Lịch:</b> {b}</p>'}<p><b>Luật:</b> {d}</p>{'' if e == '—' else f'<p class="note"><b>Mới:</b> {e}</p>'}</div>""" for a, b, c, d, e in pk_rows)
 _arena = [
     ("Đối thủ", "Bản sao chỉ số (máy đánh), người kia không cần online", f"Người thật, phải online và bấm nhận trong {AR['duel_invite_s']} giây"),
-    ("Bản đồ", "Ở đâu cũng được", "Hai người ở bản đồ nào cũng được (kể cả Làng)"),
+    ("Bản đồ", "Ở đâu cũng được", f"Mời từ bản đồ nào cũng được (kể cả Làng); nhận thì cả hai vào bản đồ riêng {E(DUELN)}, xong về chỗ cũ"),
     ("Máu", "Máu hiện có", "Vào trận đầy máu, xong trả lại máu như trước"),
     ("Thua", f"Mất {pct(CH['death_gold_loss'])} vàng, về Làng; bỏ chạy không mất gì", "<b>Không chết, không mất vàng</b>; bỏ chạy tính thua"),
     ("Tên đỏ", "Không", "Không"),
     ("Điểm đấu trường (Elo)", f"Có (K = {AR['elo_k']}), tối đa {AR['per_day']} trận / ngày", f"Có, như thách đấu; tính vào {AR['per_day']} trận / ngày của <b>người mời</b>"),
     ("Chiến bang", "Người thách đấu thắng thành viên bang địch: +1 điểm", "Ai thắng thành viên bang địch: +1 điểm"),
     ("⚡ Đánh nhanh", "Server tự đánh từng lượt theo combo (màn trận)", f"Server tự đánh lượt theo combo (màn trận); không bật thì {SL['turn_s']} giây / lượt"),
-    ("Hiển thị", "Màn VS khi vào, K.O. khi thắng / thua", "VS / K.O., nhãn ⚔ Đấu trường trực tiếp"),
+    ("Hiển thị", "Màn VS chiếu xong mới đánh, K.O. sau khi trận xong", "Không VS / K.O., nhãn ⚔ Đấu trường trực tiếp"),
 ]
 arena_rows = "".join(f"<tr><td><b>{a}</b></td><td>{b}</td><td>{c}</td></tr>" for a, b, c in _arena)
 PKEV_HTML = f"""<h3>Luật đồ sát chung</h3>
