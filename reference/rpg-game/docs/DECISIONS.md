@@ -1942,3 +1942,6 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   tối đa `mana_max` 10 bình. Bot và ⚡ đánh nhanh không gửi lệnh mana khi chưa được uống (`Engine.mana_ready?/1`).
 - Đánh quái giữ nguyên (không trần, không giới hạn).
 - Màn trận: cuộn được khi nhiều kỹ năng, hàng Máu / Mana / Chạy ghim ở đáy màn hình (trước bị khuất).
+- (2026-11-09, anh duyệt) Đổi `potion_mult` 0,5 → 1, `potion_cap_pct` / `mana_cap_pct` 35% → 25%: với ×0,5 người máu trên ~2.570 không
+  chạm trần (Bình Lớn chỉ 25% với 3.652 máu, 18% với 5.000); nay mỗi Bình Lớn hồi đúng 25% máu tối đa ở mọi cấp (máu ≤ ~7.200),
+  hồi trung bình ~8% / lượt nên trận không dài thêm. Mana như vậy.
