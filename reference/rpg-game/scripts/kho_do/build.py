@@ -692,6 +692,7 @@ SKY_HTML = f"""<p>Bản đồ <b>Đồi Sáo Diều</b> (cổng mép phải Hồ
     {''.join(f"<tr><td><b>{E(_pet[i]['name'])}</b></td><td>{E(_pet[i]['desc'])}</td></tr>" for i in ['long_vuong', 'chim_lac', 'hac_long', 'hac_long_chan'] if i in _pet)}
   </tbody></table></div>
   <p class="note">Cân bằng (thú cấp 30, Kiếm Sĩ 10 lần chuyển sinh): Hắc Long chỉ nhỉnh hơn Long Vương một chút (công +3 %, thủ +2 %, máu +4 %, thêm chí mạng / né); Chim Lạc thiên chí mạng, né, máu, kinh nghiệm / vàng (không cộng công / thủ). Long Huyết: đánh Hắc Long và quái hệ Bóng Tối +10 % (Chân Thân +15 %).</p>
+  <p class="note">Dắt Hắc Long vào trận với trùm cuối Hắc Long: nhật ký có thoại riêng ("Đồng tộc phản bội!…"). Màn đăng nhập ghi tên <b>người đầu tiên của server thuần phục Hắc Long</b> dưới hình rồng; người đó cũng được báo cả server.</p>
 """
 
 # ---------- Lỗ hổng dữ liệu (OPEN_QUESTIONS KD-1): bậc thiếu bộ giáp / vũ khí chính theo lớp ----------
