@@ -322,6 +322,7 @@ defmodule HacLong.Game.Session do
     s =
       if player do
         Characters.put_reason("TRADE")
+        World.sync_duel(s.player, player, s.user_id)
         s = cancel_flush(%{s | player: player, dirty: false})
         broadcast(s, player, nil)
         s
@@ -2020,6 +2021,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp save(s, player) do
+    World.sync_duel(s.player, player, s.user_id)
     Characters.save!(s.user_id, player)
     cancel_flush(%{s | player: player, dirty: false})
   end

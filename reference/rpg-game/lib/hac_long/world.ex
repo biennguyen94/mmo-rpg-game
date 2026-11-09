@@ -77,6 +77,17 @@ defmodule HacLong.World do
     }
   end
 
+  @doc """
+  Trạng thái đồ sát vừa đổi (vào / xong trận) thì cập nhật thông tin người khác thấy, không thì ⚔ "đang đồ sát" kẹt lại
+  sau khi trận đã xong (người khác không bấm Đồ sát được).
+  """
+  def sync_duel(old, new, uid) do
+    if is_map(new) and Map.has_key?(new, :pos) and
+         (is_map(old) and duel(old) != nil) != (duel(new) != nil),
+       do: refresh(new, uid),
+       else: :ok
+  end
+
   defp duel(%{battle: %{over: false, encounter: %{slay: _, foe: foe}}} = p),
     do: %{with: foe, hp: round(max(p.hp, 0) * 100 / max(Engine.derived(p).maxHp, 1))}
 
