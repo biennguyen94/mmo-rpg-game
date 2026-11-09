@@ -139,6 +139,10 @@ defmodule HacLong.Slay do
       pa.pos.map != pb.pos.map ->
         {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
 
+      # bấm người trên bản đồ là đánh, không cần chạy sát bên: chỉ trong tầm `reach` ô (DECISIONS "Đồ sát trong tầm")
+      max(abs(pa.pos.x - pb.pos.x), abs(pa.pos.y - pb.pos.y)) > @r.reach ->
+        {:error, "#{pb.name} ở xa quá, lại gần trong #{@r.reach} ô để đồ sát."}
+
       not safe_ok?(pa.pos) ->
         {:error, "Đây là vùng an toàn, không được đánh nhau."}
 

@@ -261,14 +261,16 @@
       Celebrate.bossIn(bm.name, bm.level ? `Cấp ${bm.level}` : '');
     }
     eventBanner(old, p);
-    // E1: vào trận đánh người (đấu trường, đồ sát) → màn VS; xong trận thắng / thua → K.O.
-    if (bm && bm.pvp) {
+    // E1: vào trận đấu trường (đánh đối thủ máy) → màn VS; xong trận thắng / thua → K.O. Đồ sát và đấu trực tiếp không có
+    // (anh yêu cầu: đánh ngay trên bản đồ, không màn chen ngang)
+    const pk = (b) => b && b.encounter && (b.encounter.slay != null || b.encounter.duel);
+    if (bm && bm.pvp && !pk(p.battle)) {
       const enc = p.battle.encounter || {};
       Celebrate.vs({ name: p.name, doll: window.Doll.url(p.view.look), sub: `Cấp ${p.level}` }, { name: bm.name, doll: window.Doll.url(bm.look), sub: `Cấp ${bm.level}` },
         enc.duel ? '⚔ Đấu trường trực tiếp' : enc.slay != null ? '🗡 Đồ sát' : '🏟 Đấu trường');
     }
     const ob = old.battle, nb = p.battle;
-    if (ob && nb && !ob.over && nb.over && nb.monster && nb.monster.pvp && (nb.result === 'win' || nb.result === 'lose')) {
+    if (ob && nb && !ob.over && nb.over && nb.monster && nb.monster.pvp && !pk(nb) && (nb.result === 'win' || nb.result === 'lose')) {
       Celebrate.ko(nb.result === 'win', nb.result === 'win' ? `Hạ ${nb.monster.name}!` : `Gục trước ${nb.monster.name}`);
     }
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
@@ -1409,7 +1411,7 @@
           <button class="btn small-btn" data-act="trade-op" data-op="request" data-uid="${o.id}">🤝 Giao dịch</button>
           ${canInvite ? `<button class="btn small-btn" data-act="party-invite" data-uid="${o.id}">Mời tổ đội</button>` : ''}
           <button class="btn small-btn" data-act="duel-op" data-op="invite" data-uid="${o.id}" title="Người kia nhận thì đấu trực tiếp (không mất vàng, đổi điểm đấu trường)">⚔ Đấu trực tiếp</button>
-          <button class="btn small-btn danger" data-act="pick-slay" data-uid="${o.id}" ${why ? 'disabled' : ''} title="${q ? 'Chạy tới, server đánh theo combo ⚡ (ở lại bản đồ)' : 'Mở trận đồ sát'}">${q ? '🗡⚡ Đồ sát nhanh' : '🗡 Đồ sát'}</button></div>
+          <button class="btn small-btn danger" data-act="pick-slay" data-uid="${o.id}" ${why ? 'disabled' : ''} title="${q ? 'Trong tầm thì đánh ngay, server đánh theo combo ⚡ (ở lại bản đồ)' : 'Trong tầm thì mở trận ngay, xa thì chạy lại gần'}">${q ? '🗡⚡ Đồ sát nhanh' : '🗡 Đồ sát'}</button></div>
         ${why ? `<p class="small muted">${why}</p>` : ''}</div>`;
     }
     const list = pickUi.people.map(pickPerson).filter(Boolean);
@@ -1417,17 +1419,19 @@
       <div class="list">${pickUi.mob ? `<button class="item" data-act="pick-mob">⚔ <span class="grow">Đánh ${esc(pickUi.mob.name)}</span><span class="small muted">›</span></button>` : ''}
       ${list.map((x) => `<button class="item people-row" data-act="pick-sel" data-uid="${x.id}">${who(x)}<span class="small muted">›</span></button>`).join('')}</div></div>`;
   }
-  // 🗡 Đồ sát từ bản đồ: chạy tới cạnh người đó (tối đa vài giây) rồi mở trận; đang bật ⚡ thì server đánh theo combo
+  // 🗡 Đồ sát từ bản đồ / tab Quanh đây: trong tầm RULES.slay.reach ô thì đánh ngay (không cần chạy sát bên); xa hơn thì chạy
+  // lại gần cho vào tầm rồi mở trận; đang bật ⚡ thì server đánh theo combo
   async function pickSlay(uid) {
     const o = pickPerson(uid);
     pickUi = null;
     if (!o) { render(); return; }
-    if (Math.max(Math.abs(o.x - P.pos.x), Math.abs(o.y - P.pos.y)) > 1) {
+    const reach = RULES.slay.reach || 8, far = (t) => Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) > reach;
+    if (far(o)) {
       walkTo(o.x, o.y);
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 50; i++) {
         await new Promise((ok) => setTimeout(ok, 200));
         const t = pickPerson(uid) || o;
-        if (!P || P.battle || Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) <= 1) break;
+        if (!P || P.battle || !far(t)) break;
       }
       walk = null;
     }
@@ -1590,7 +1594,12 @@
         <img class="sprite sm" ${window.Doll.src(o.look)} alt="">
         <div class="grow"><div class="name" style="color:${window.HLLogic.nameColor(o, rel)}">${o.tag ? `[${esc(o.tag)}] ` : ''}${esc(o.name)}${inParty ? ' <span class="small">· Đội</span>' : ''}</div>
           <div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · ${o.rebirths ? `Chuyển sinh ${o.rebirths} · ` : ''}Cấp ${o.level} · ${where}${o.red ? ' · 🔴 tên đỏ' : ''}${o.duel ? ' · ⚔ đang đồ sát' : ''}</div></div></button>
-        ${here || o.map === P.pos.map ? `<button class="btn small-btn" data-act="people-pin" data-uid="${o.id}" title="Chỉ trên bản đồ" aria-label="Chỉ ${esc(o.name)} trên bản đồ">📍</button>` : ''}</div>`;
+        ${here || o.map === P.pos.map ? `<button class="btn small-btn" data-act="people-pin" data-uid="${o.id}" title="Chỉ trên bản đồ" aria-label="Chỉ ${esc(o.name)} trên bản đồ">📍</button>${slayBtn(o)}` : ''}</div>`;
+  }
+  // nút 🗡 cạnh 📍 ở tab Quanh đây: như Đồ sát trên bản đồ (trong tầm thì đánh ngay, xa thì chạy lại gần)
+  function slayBtn(o) {
+    const w = pickPerson(o.id) || o, why = slayWhy(w), q = quickOn();
+    return `<button class="btn small-btn danger" data-act="pick-slay" data-uid="${o.id}" ${why ? 'disabled' : ''} title="${why || (q ? '🗡⚡ Đồ sát nhanh' : '🗡 Đồ sát')}" aria-label="Đồ sát ${esc(o.name)}">${q ? '🗡⚡' : '🗡'}</button>`;
   }
   function viewPeople() {
     const m = WORLD.maps[P.pos.map] || {};

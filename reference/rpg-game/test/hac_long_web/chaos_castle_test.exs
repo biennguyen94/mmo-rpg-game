@@ -94,6 +94,9 @@ defmodule HacLongWeb.ChaosCastleTest do
     # chưa hỗn chiến thì chưa được đánh nhau
     a = Session.get(ua.id)
     b = Session.get(ub.id)
+
+    # đứng trong tầm đồ sát (RULES.slay.reach) để chỉ còn điều kiện của thành
+    b = %{b | pos: %{b.pos | x: a.pos.x, y: a.pos.y}}
     assert {:error, "Hỗn Chiến Thành chưa bắt đầu" <> _} = Slay.check(a, b)
 
     :ok = ChaosCastle.start_fight()

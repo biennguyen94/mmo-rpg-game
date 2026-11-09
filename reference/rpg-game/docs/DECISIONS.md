@@ -1913,3 +1913,10 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Bản maskable (Android) dùng cùng hình tràn khung (trước thu 78% nên lộ cạnh vuông): mắt và mõm nằm trong vùng an toàn 80%.
 - Đổi `?v=5` → `?v=6` ở `index.html` / `manifest.json` để trình duyệt lấy icon mới. Icon đã thêm ra màn hình chính có thể cần
   gỡ rồi "Thêm vào màn hình chính" lại mới đổi (Android giữ icon cũ).
+
+## Đồ sát trong tầm, bỏ màn VS / K.O. (2026-11-09, anh yêu cầu)
+- Đồ sát và đấu trường trực tiếp không còn màn VS / K.O.; đấu trường đánh đối thủ máy vẫn giữ.
+- Đồ sát trong tầm `RULES.slay.reach` (8 ô, Chebyshev): bấm người trên bản đồ → 🗡 Đồ sát / 🗡⚡ Đồ sát nhanh là đánh ngay, không
+  cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm rồi mới mở trận. Server kiểm tầm (`Slay.check`, lỗi "… ở xa quá, lại gần
+  trong 8 ô để đồ sát.").
+- Tab Quanh đây: nút 🗡 (hoặc 🗡⚡ khi bật đánh nhanh) cạnh nút 📍 cho người cùng bản đồ, như Đồ sát trên bản đồ.

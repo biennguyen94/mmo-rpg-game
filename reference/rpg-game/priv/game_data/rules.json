@@ -1228,6 +1228,8 @@
       "red_s": 1800,
       "red_gold_mult": 2,
       "first_strike_mult": 0.5,
+      "reach": 8,
+      "_reach_doc": "DECISIONS \"Đồ sát trong tầm\": bấm người trên bản đồ / tab Quanh đây là đánh ngay nếu cách không quá reach ô (Chebyshev), không cần chạy sát bên.",
       "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
     "boss_rewards": {
