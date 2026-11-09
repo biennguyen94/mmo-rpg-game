@@ -42,27 +42,34 @@ defmodule HacLong.Game.KiteTest do
     p |> Map.put(:pos, %{map: @map, x: x, y: y}) |> Map.put(:daily, %{})
   end
 
-  test "thả diều ở chỗ thoáng trong tầm dây diều (không cần sát mép trời); vướng cây / xa trời thì không" do
+  test "thả diều ở chỗ thoáng bất kỳ, dây không giới hạn; mặc định lên giữa trời (không sát người); vướng cây thì không" do
     {stand, sky} = spot()
     assert sky != nil
     assert Kite.can_fly?(flyer(stand))
     m = Maps.get(@map)
-    reach = Kite.rules().reach
+    aim = Kite.rules().aim
+    [lo, hi] = aim.rise
 
-    # giữa đồi, cách mép trời vài ô (không sát trời) vẫn thả được; ô trời mặc định là ô thẳng phía trên
-    mid = Enum.find(Kite.stands(m), fn {x, y} -> not Maps.sky?(m, x, y - 1) and y >= 10 end)
-    assert mid
-    {mx, my} = mid
-    {%{ok: true, at: [ax, ay]}, _} = Kite.fly(flyer(mid), 0)
-    assert ax == mx and ay < my and my - ay <= reach and Maps.sky?(m, ax, ay)
-    # xa trời quá (cuối đồi)
+    # cuối đồi (xa mép trời) vẫn thả được; chạm ô trời xa tít (góc trên cùng) cũng được
     far = flyer({11, 16})
-    assert {:error, "Xa trời quá" <> _} = Kite.check_spot(far)
-    assert {%{ok: false}, _} = Kite.fly(far, 0)
+    assert Kite.check_spot(far) == :ok
+    assert {%{ok: true, at: [0, 0]}, _} = Kite.fly(far, 0, {0, 0})
+
+    # bấm nút (không chọn ô): lên giữa trời, cao hơn mép trời rise ô, cột lệch ≤ spread, không cách người quá view hàng
+    for {x, y} = at <- [stand, {11, 16}, {13, 10}], now <- [0, 1, 2, 3, 4, 5] do
+      {%{ok: true, at: [ax, ay]}, _} = Kite.fly(flyer(at), now)
+      e = Kite.edge(m, ax)
+      assert Maps.sky?(m, ax, ay) and abs(ax - x) <= aim.spread
+      assert ay <= e and ((e - ay) in lo..hi or ay == y - aim.view or ay == e)
+      assert y - ay >= 2, "diều không sát người: #{inspect({at, ax, ay})}"
+    end
+
     # sát cây (viền cây bên trái)
     assert {:error, "Vướng cây" <> _} = Kite.check_spot(flyer({1, 10}))
-    # ô xa quá / không phải trời
-    assert {%{ok: false, msg: "Ô đó xa quá" <> _}, _} = Kite.fly(flyer(stand), 0, {0, 19})
+    # ô không phải trời
+    assert {%{ok: false, msg: "Chạm vào khoảng trời" <> _}, _} =
+             Kite.fly(flyer(stand), 0, {5, 15})
+
     # khác bản đồ
     assert {:error, "Thả diều ở Đồi Sáo Diều" <> _} =
              Kite.check_spot(%{pos: %{map: "village", x: 10, y: 10}})

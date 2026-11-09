@@ -179,7 +179,7 @@ defmodule HacLong.Bots.Brain do
   @doc """
   Bot thả diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): một nửa số bot (seed lẻ) dùng lượt "ra hồ" để ra Đồi Sáo Diều.
   Đứng chỗ thoáng trên đồi (`Kite.stands/1`, mỗi bot một chỗ, `spread/5`), thả vào ô Chim Lạc nếu đang lượn và chưa có, không thì ô Đàn Hạc, không thì
-  ô trời gần nhất phía trên; thả đủ thì nhận việc Ông Lão Làm Diều.
+  lên giữa trời (`Kite.aim/3`); thả đủ thì nhận việc Ông Lão Làm Diều.
   """
   def kiter?(seed) when is_integer(seed), do: rem(seed, 2) == 1
   def kiter?(_), do: false
@@ -222,15 +222,15 @@ defmodule HacLong.Bots.Brain do
 
   defp kite_at(p, map, target, snap, seed) do
     me = {p.pos.x, p.pos.y}
-    reach = HacLong.Game.Kite.rules().reach
 
+    # dây diều không giới hạn: đứng chỗ thoáng nào cũng thả tới ô Chim Lạc / Đàn Hạc (gần ô đó hơn cho tự nhiên)
     all =
       case target do
         :any ->
           sky_stands(map)
 
-        {tx, ty} ->
-          for {x, y} <- sky_stands(map), max(abs(x - tx), abs(y - ty)) <= reach, do: {x, y}
+        {tx, _} ->
+          for {x, y} <- sky_stands(map), abs(x - tx) <= 4, do: {x, y}
       end
 
     stands =

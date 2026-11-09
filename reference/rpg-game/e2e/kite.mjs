@@ -69,8 +69,7 @@ const mid = await p.evaluate(() => {
     if (!',:'.includes(T(x, y)) || T(x, y - 1) === '^') continue;
     let tree = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes(T(x + dx, y + dy) || '_')) tree = true;
     if (tree) continue;
-    let up = false; for (let k = 1; k <= window.GAME_DATA.RULES.sky.reach; k++) if (T(x, y - k) === '^') up = true;
-    if (!up || y - me.y < 2) continue;
+    if (y < 12) continue; // giữa / cuối đồi, xa mép trời (dây diều không giới hạn)
     const d = Math.abs(x - me.x) + Math.abs(y - me.y);
     if (!best || d < best.d) best = { x, y, d };
   }
@@ -81,8 +80,14 @@ await p.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return
 await p.waitForSelector('#kite-ui [data-act="kite-fly"]', { timeout: 5000 }).catch(() => null);
 await p.click('#kite-ui [data-act="kite-fly"]').catch(() => null);
 await p.waitForSelector('#kite-ui [data-act="kite-hold"]', { timeout: 5000 }).catch(() => null);
-R.check('giữa đồi (không sát trời): bấm 🪁 Thả diều vẫn bay', !!(await p.$('#kite-ui [data-act="kite-hold"]')), JSON.stringify(mid));
-await p.waitForTimeout(700);
+R.check('cuối đồi (xa trời): bấm 🪁 Thả diều vẫn bay', !!(await p.$('#kite-ui [data-act="kite-hold"]')), JSON.stringify(mid));
+await p.waitForTimeout(1500); // camera nâng lên theo diều
+const kv = await p.evaluate(() => {
+  const at = window.MapView.kiteAt(), me = window.__hl.player().pos, c = document.getElementById('map-canvas').getBoundingClientRect();
+  const k = at && window.MapView.screenOf(at[0], at[1]), q = window.MapView.screenOf(me.x, me.y);
+  return { at, me: [me.x, me.y], kin: !!k && k.y > c.top && k.y < c.bottom, pin: !!q && q.y > c.top && q.y < c.bottom };
+});
+R.check('bấm nút: diều lên giữa trời (cách người ≥ 3 hàng), khung nâng lên thấy cả diều lẫn người', kv.at && kv.me[1] - kv.at[1] >= 3 && kv.kin && kv.pin, JSON.stringify(kv));
 await shot(p, 'kite-mid.png');
 await p.waitForSelector('#kite-ui [data-act="kite-fly"]', { timeout: 12000 }).catch(() => null); // để lượt này hết (chậm tay)
 const treeSpot = await p.evaluate(() => {

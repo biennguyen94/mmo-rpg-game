@@ -286,8 +286,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   **Thần thú độc nhất:** cấp tối đa 30 (thú khác 20), mỗi cấp tăng 8 % (thú khác 5 %; cấp 30 ×3,32); **Long Uy** kháng một nửa choáng / độc / bỏng / chảy máu / suy yếu;
   **Long Ân** quái rơi ngọc thêm 25 %, thưởng trùm thế giới thêm 10 %.
   Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
-- **Đồi Sáo Diều** 🪁 (cổng mép phải Hồ Long Vương, từ cấp 30): đứng **chỗ thoáng** trên đồi (không sát cây, trời trong tầm dây
-  diều 6 ô) rồi chạm vào trời (hoặc nút 🪁 Thả diều: diều bay thẳng lên ô trời gần nhất phía trên) để thả diều. Gió giật ("Gió giật! Giữ dây ngay!") thì bấm **🪁 Giữ dây** trong 1 giây: diều mang về
+- **Đồi Sáo Diều** 🪁 (cổng mép phải Hồ Long Vương, từ cấp 30): đứng **chỗ thoáng** trên đồi (không sát cây) rồi chạm vào khoảng
+  trời chỗ nào cũng được, dây diều không giới hạn (hoặc nút 🪁 Thả diều: diều lên giữa trời phía trên mình, khung nhìn tự nâng lên theo diều) để thả diều. Gió giật ("Gió giật! Giữ dây ngay!") thì bấm **🪁 Giữ dây** trong 1 giây: diều mang về
   Lông Hạc, Mảnh Mây, đôi khi ngọc (Dây Diều Đứt thì thôi); mỗi lần +1 **Phong Khí** (tối đa 200).
   - **Chim Lạc** 🐦 (Thần điểu, cộng chí mạng, né, máu, kinh nghiệm, vàng): mỗi giờ lượn một lần ở một ô trời trong 3 phút (ánh đồng
     lấp lánh, cả server được báo). Thả diều trúng đúng ô đó: 1/2.000 cơ hội mỗi lần, nhân theo Phong Khí (đầy ×3), có **Sáo Đồng** thì

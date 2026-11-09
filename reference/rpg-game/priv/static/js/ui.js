@@ -1052,7 +1052,6 @@
     busy = true;
     const t0 = performance.now();
     try {
-      at = at || Map_.kiteTile();
       const r = await Net.send(at ? { act: 'kite_fly', x: at[0], y: at[1] } : { act: 'kite_fly' });
       P = r.player;
       if (!r.ok) { toast(r.msg, true); busy = false; return; }
@@ -1105,8 +1104,7 @@
       if (kite) { holdKite(); return true; }
       const why = Map_.kiteCheck();
       if (why) { toast(why); return true; }
-      if (Math.max(Math.abs(x - P.pos.x), Math.abs(y - P.pos.y)) <= SKY.reach) { flyKite([x, y]); return true; }
-      toast(`Ô đó xa quá (dây diều dài ${SKY.reach} ô): chạm khoảng trời gần hơn, hoặc bấm 🪁 Thả diều.`);
+      flyKite([x, y]);
       return true;
     }
     if ((skySt.stars || []).some(([sx, sy]) => sx === x && sy === y)) { pickStar(x, y); return true; }
@@ -1121,7 +1119,7 @@
     const e = P.view.kite || { n: 0, count: 0, reward: {} }, F = SKY.flock || {}, need = (SKY.craft || {}).sao_dong || {};
     const have = Object.entries(need).every(([id, n]) => (P.inv[id] || 0) >= n);
     return `<div class="card"><h3>🪁 Ông Lão Làm Diều</h3>
-      <p class="small">Đứng chỗ thoáng trên đồi (không sát cây), bấm 🪁 Thả diều hoặc chạm vào khoảng trời trong ${SKY.reach} ô. Gió giật thì <b>giữ dây</b> ngay (trong ${(SKY.window_ms / 1000).toFixed(1)} giây): diều mang về Lông Hạc, Mảnh Mây, đôi khi ngọc; mỗi lần +1 Phong Khí.</p>
+      <p class="small">Đứng chỗ thoáng trên đồi (không sát cây), chạm vào khoảng trời chỗ nào cũng được (dây diều không giới hạn), hoặc bấm 🪁 Thả diều: diều lên giữa trời phía trên mình. Gió giật thì <b>giữ dây</b> ngay (trong ${(SKY.window_ms / 1000).toFixed(1)} giây): diều mang về Lông Hạc, Mảnh Mây, đôi khi ngọc; mỗi lần +1 Phong Khí.</p>
       <p class="small"><b>Việc hôm nay:</b> thả thành công <b>${e.count}</b> lần ở đồi rồi quay lại: <b>${fmt(e.reward.gold || 0)}</b> vàng, <b>${fmt(e.reward.xp || 0)}</b> kinh nghiệm, <b>+${e.reward.phong_khi || 0}</b> Phong Khí. Đã thả: <b class="num">${e.n}/${e.count}</b></p>
       <button class="btn ${e.n >= e.count && !e.done ? 'primary' : ''} block" data-act="kite_elder" ${e.n >= e.count && !e.done ? '' : 'disabled'}>${e.done ? 'Hôm nay đã nhận, mai quay lại' : 'Nhận công'}</button>
       <p class="small" style="margin-top:8px"><b>Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}:</b> ${Object.entries(need).map(([id, n]) => `${esc((ITEMS[id] || {}).name || id)} <span class="num">${P.inv[id] || 0}/${n}</span>`).join(', ')}. Gắn vào diều thì thả trúng ô Chim Lạc cơ hội ×${(SKY.bird || {}).bait_mult}.</p>

@@ -2,8 +2,8 @@ defmodule HacLong.SkyEvent do
   @moduledoc """
   Sự kiện trên trời (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"), đối xứng `HacLong.LakeEvent`. Số ở `RULES.sky`.
 
-  - **Chim Lạc** (`bird`): mỗi `bird.every` giây, vào lúc ngẫu nhiên, lượn ở một ô trời của Đồi Sáo Diều (trong tầm
-    thả diều từ một ô đứng được) trong `bird.stay` giây. Có người cảm hóa được (`fly_away/0`) hoặc hết giờ thì bay đi.
+  - **Chim Lạc** (`bird`): mỗi `bird.every` giây, vào lúc ngẫu nhiên, lượn ở một ô trời của Đồi Sáo Diều (`spots/0`,
+    gần mép đồi) trong `bird.stay` giây. Có người cảm hóa được (`fly_away/0`) hoặc hết giờ thì bay đi.
   - **Đàn Hạc** (`flock`): như trên với `flock.every` / `flock.stay`; không bay đi khi có người thả trúng.
   - **Mưa sao băng** (`meteor`): ban đêm (`HacLong.World.Clock.night?/0`) mỗi `meteor.every` giây rơi `meteor.count`
     Mảnh Sao ở ô đi được của đồi, mỗi viên ở `meteor.stay` giây; nhặt (`take_star/1`, Session kiểm chỗ đứng) thì mất.
@@ -54,17 +54,17 @@ defmodule HacLong.SkyEvent do
   @doc "Gọi ngay (quản trị / test): `:bird`, `:flock` (ô `at` hoặc ngẫu nhiên), `:meteor` (một trận sao băng), `:hoi`."
   def summon(kind, at \\ nil), do: GenServer.call(__MODULE__, {:summon, kind, at})
 
-  @doc "Các ô trời Chim Lạc / Đàn Hạc có thể hiện: trong tầm dây diều `reach` của một ô thả diều được (`Kite.stands/1`)."
+  @doc """
+  Các ô trời Chim Lạc / Đàn Hạc có thể hiện: trong `spot_depth` hàng trên mép trời của cột (thấy được khi đứng trên đồi;
+  dây diều không giới hạn nên ô nào cũng thả tới).
+  """
   def spots do
     m = Maps.get(map_id())
-    reach = r().reach
 
-    stands = HacLong.Game.Kite.stands(m)
-
-    for y <- 0..(m.height - 1),
-        x <- 0..(m.width - 1),
-        Maps.sky?(m, x, y),
-        Enum.any?(stands, fn {sx, sy} -> max(abs(sx - x), abs(sy - y)) <= reach end),
+    for x <- 0..(m.width - 1),
+        e = HacLong.Game.Kite.edge(m, x),
+        e != nil,
+        y <- max(0, e - r().spot_depth + 1)..e,
         do: {x, y}
   end
 

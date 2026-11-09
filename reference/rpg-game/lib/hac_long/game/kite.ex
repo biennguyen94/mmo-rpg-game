@@ -3,8 +3,8 @@ defmodule HacLong.Game.Kite do
   Thả diều ở Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"), đối xứng câu cá ở Hồ Long Vương
   (`HacLong.Game.Fishing`). Hàm thuần; thời gian truyền vào (mili giây, đồng hồ đơn điệu của server). Số ở `RULES.sky`.
 
-  - `fly/5`: đứng chỗ thoáng trên đồi (không sát cây) thì thả diều vào ô trời (`^`) trong tầm dây diều `reach` (nil: ô trời
-    gần nhất phía trên, `sky_near/2`).
+  - `fly/5`: đứng chỗ thoáng trên đồi (không sát cây) thì thả diều vào ô trời (`^`) bất kỳ, dây không giới hạn (nil: diều
+    lên giữa trời phía trên mình, `aim/3`).
     Gió giật sau `wait_ms` ngẫu nhiên.
   - `hold/2`: giữ dây trong `window_ms` kể từ lúc gió giật thì được quà gió (`pool`), +1 Phong Khí; sớm / muộn thì diều
     đứt (không mất gì). Đi chỗ khác thì mất lượt.
@@ -66,8 +66,8 @@ defmodule HacLong.Game.Kite do
   @trees ~w(T Y K)
 
   @doc """
-  Thả diều được ở chỗ đang đứng không: `:ok` hoặc `{:error, lý_do}`. Đứng chỗ thoáng trên đồi (không sát cây) và có ô trời
-  trong tầm dây diều `reach` (anh duyệt 2026-11-09: không cần đứng sát mép trời, như thả diều ngoài đời).
+  Thả diều được ở chỗ đang đứng không: `:ok` hoặc `{:error, lý_do}`. Đứng chỗ thoáng trên đồi (không sát cây); dây diều
+  không giới hạn (anh yêu cầu 2026-11-09: không cần đứng sát mép trời, thả xa tùy ý như ngoài đời).
   """
   def check_spot(%{pos: %{map: id, x: x, y: y}}) do
     m = Maps.get(id)
@@ -81,9 +81,6 @@ defmodule HacLong.Game.Kite do
       end) ->
         {:error, "Vướng cây rồi, ra chỗ thoáng để thả diều."}
 
-      sky_near(m, {x, y}) == nil ->
-        {:error, "Xa trời quá: tiến lên gần mép đồi hơn (dây diều dài #{@r.reach} ô)."}
-
       true ->
         :ok
     end
@@ -91,7 +88,7 @@ defmodule HacLong.Game.Kite do
 
   def check_spot(_), do: {:error, "Thả diều ở Đồi Sáo Diều."}
 
-  @doc "Mọi ô đứng thả diều được trên bản đồ `m` (đi được, không phải cổng / NPC, không sát cây, có trời trong tầm)."
+  @doc "Mọi ô đứng thả diều được trên bản đồ `m` (đi được, không phải cổng / NPC, không sát cây)."
   def stands(m) do
     for y <- 0..(m.height - 1),
         x <- 0..(m.width - 1),
@@ -104,24 +101,43 @@ defmodule HacLong.Game.Kite do
   @doc "Đứng ở đây thả được diều không (`check_spot/1`)."
   def can_fly?(p), do: check_spot(p) == :ok
 
-  @doc "Ô trời diều bay tới khi không chọn ô: ô trời gần nhất phía trên (cùng cột), không thì ô trời gần nhất trong tầm."
-  def sky_near(m, {x, y}) do
-    up = Enum.find((y - 1)..max(0, y - @r.reach)//-1, &Maps.sky?(m, x, &1))
+  @doc """
+  Mép trời của cột `x`: hàng trời thấp nhất liền từ đỉnh bản đồ xuống (ngay trên mặt đồi), nil nếu cột không có trời.
+  """
+  def edge(m, x) do
+    if Maps.sky?(m, x, 0),
+      do: Enum.find(0..(m.height - 1), m.height - 1, &(not Maps.sky?(m, x, &1 + 1))),
+      else: nil
+  end
 
-    if up do
-      {x, up}
-    else
-      for(
-        dy <- -@r.reach..@r.reach,
-        dx <- -@r.reach..@r.reach,
-        Maps.sky?(m, x + dx, y + dy),
-        do: {x + dx, y + dy}
-      )
-      |> Enum.min_by(fn {tx, ty} -> abs(tx - x) + abs(ty - y) end, fn -> nil end)
+  @doc """
+  Ô trời diều bay tới khi không chọn ô (bấm 🪁 Thả diều): giữa bầu trời phía trên mình, không sát người. Cột lệch
+  ngẫu nhiên trong `aim.spread` ô quanh mình, cao hơn mép trời `aim.rise` ô (ngẫu nhiên), nhưng không cách mình quá
+  `aim.view` hàng (để diều vẫn trong khung nhìn). `seed`: số bất kỳ để chọn ngẫu nhiên (không tốn `Rng`).
+  """
+  def aim(m, {x, y}, seed \\ 0) do
+    a = @r.aim
+    [lo, hi] = a.rise
+
+    cols =
+      for c <- (x - a.spread)..(x + a.spread), c >= 0, c < m.width, edge(m, c) != nil, do: c
+
+    cols = if cols == [], do: for(c <- 0..(m.width - 1), edge(m, c) != nil, do: c), else: cols
+
+    case cols do
+      [] ->
+        nil
+
+      _ ->
+        h = :erlang.phash2({seed, x, y}, 1_000_000)
+        c = Enum.at(cols, rem(h, length(cols)))
+        e = edge(m, c)
+        rise = lo + rem(div(h, 7), hi - lo + 1)
+        {c, e |> Kernel.-(rise) |> max(y - a.view) |> min(e) |> max(0)}
     end
   end
 
-  @doc "Thả diều vào ô trời `at` (nil: `sky_near/2`). `bird` / `flock`: ô Chim Lạc / Đàn Hạc đang có (nil nếu không)."
+  @doc "Thả diều vào ô trời `at` (nil: `aim/3`). `bird` / `flock`: ô Chim Lạc / Đàn Hạc đang có (nil nếu không)."
   def fly(p, now, at \\ nil, bird \\ nil, flock \\ nil) do
     cond do
       p.battle ->
@@ -130,11 +146,11 @@ defmodule HacLong.Game.Kite do
       (err = check_spot(p)) != :ok ->
         {%{ok: false, msg: elem(err, 1)}, p}
 
-      at != nil and not flyable?(p, at) ->
-        {%{ok: false, msg: "Ô đó xa quá (dây diều dài #{@r.reach} ô) hoặc không phải trời."}, p}
+      at != nil and not Maps.sky?(Maps.get(p.pos.map), elem(at, 0), elem(at, 1)) ->
+        {%{ok: false, msg: "Chạm vào khoảng trời để thả diều."}, p}
 
       true ->
-        at = at || sky_near(Maps.get(p.pos.map), {p.pos.x, p.pos.y})
+        at = at || aim(Maps.get(p.pos.map), {p.pos.x, p.pos.y}, now)
         [lo, hi] = @r.wait_ms
         wait = lo + floor(Rng.uniform() * (hi - lo))
         {p, big} = bird_roll(p, at, bird)
@@ -144,12 +160,6 @@ defmodule HacLong.Game.Kite do
         reply = if flock?, do: Map.put(reply, :flock, true), else: reply
         {reply, Map.put(p, :kite, %{gust: now + wait, pos: p.pos, big: big, flock: flock?})}
     end
-  end
-
-  # ô trời trong tầm `reach` (Chebyshev) của chỗ đứng
-  defp flyable?(%{pos: %{map: id, x: x, y: y}}, {tx, ty}) do
-    m = Maps.get(id)
-    max(abs(tx - x), abs(ty - y)) <= @r.reach and Maps.sky?(m, tx, ty)
   end
 
   @doc "Cơ hội cảm hóa Chim Lạc khi thả trúng ô của nó (có / không có Sáo Đồng)."

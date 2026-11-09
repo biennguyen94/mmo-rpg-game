@@ -856,9 +856,10 @@
       "request_days": 7
     },
     "sky": {
-      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Hồ Long Vương. Đứng chỗ thoáng trên đồi (không sát cây), thả diều vào ô trời trong tầm dây diều reach; gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
+      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Hồ Long Vương. Đứng chỗ thoáng trên đồi (không sát cây), thả diều vào ô trời bất kỳ (dây không giới hạn, aim: mặc định lên giữa trời); Chim Lạc / Đàn Hạc hiện ở ô trời trong spot_depth hàng trên mép đồi (thấy được); gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
       "map": "doi_sao_dieu",
-      "reach": 6,
+      "aim": {"_doc": "bấm 🪁 Thả diều không chạm ô: diều lên giữa trời, cột lệch ngẫu nhiên trong spread ô, cao hơn mép trời rise ô, không cách người quá view hàng; dây diều không giới hạn (chạm ô trời nào cũng được)", "spread": 2, "rise": [2, 4], "view": 8},
+      "spot_depth": 5,
       "wait_ms": [3000, 8000],
       "window_ms": 1000,
       "pool": [[45, "long_hac"], [30, "manh_may"], [14, "day_dieu_dut"], [8, "jewel_bless"], [3, "jewel_soul"]],

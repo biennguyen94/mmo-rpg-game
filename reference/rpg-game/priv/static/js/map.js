@@ -787,9 +787,10 @@
     const now = performance.now();
     const [mx, my] = smooth('me', P.pos.x, P.pos.y, DUR.me, now);
     zoom = zoomOn() ? Math.min(1, canvas.clientWidth / (m.tiles[0].length * TILE), canvas.clientHeight / (m.tiles.length * TILE)) : 1;
+    zoom *= kiteZoom(now, my);
     const dpr = window.devicePixelRatio || 1;
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
-    const [cx, cy] = camera(m, mx, my);
+    const [cx, cy] = camera(m, mx, my - kiteLift(now, my));
     lastCam = [cx, cy];
     ctx.fillStyle = '#0c0910';
     ctx.fillRect(0, 0, VW(), VH());
@@ -801,13 +802,12 @@
     const fx = fxOn(), fountains = [], lanterns = [], tufts = [], incense = [];
     const grassy = /forest|swamp|grass/.test(m.floor || '') && outdoors(P);
 
-    if (m.kite) skyBack(now, m, cx, cy, x0, y0, x1, y1);
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
         const kind = WORLD.legend[m.tiles[y][x]];
-        // ô trời (Đồi Sáo Diều): không vẽ nền / ô, trời vẽ liền một dải ở `skyBack` (không lộ lưới ô)
-        if (kind === 'sky') continue;
+        // ô trời (Đồi Sáo Diều): lót nền cỏ (mặt đồi cong lấn vào), trời vẽ sau ở `clouds` theo đường chân trời cong
+        if (kind === 'sky') { if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE); continue; }
         if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE);
         if (kind !== 'floor') {
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
@@ -1866,52 +1866,79 @@
   // ---------- Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long") ----------
   // trời Đồi Sáo Diều: một dải chuyển màu liền (xanh đậm trên cao → xanh nhạt chân trời), ánh nắng, 3 lớp mây mềm trôi
   // (hình mây CC0 `sky/cloud1..5`: xa nhỏ chậm mờ, gần to nhanh rõ; lớp xa ít trôi theo camera hơn → có chiều sâu), sương
-  // mỏng ở chân trời. Chỉ vẽ trong các ô trời (cắt theo ô), nên mỏm đồi vẫn che trời.
-  function skyClip(m, cx, cy, x0, y0, x1, y1) {
-    ctx.beginPath();
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if ((m.tiles[y] || '')[x] === '^') ctx.rect(Math.round(x * TILE - cx), Math.round(y * TILE - cy), TILE + 0.5, TILE + 0.5);
-    ctx.clip();
+  // mỏng ở chân trời, đồi xa mờ dần. Trời cắt theo đường chân trời cong (`horizon`), không theo cạnh ô.
+  // Đường chân trời: mặt đồi là một đường cong liền (không theo cạnh ô): mỗi cột lấy mặt đất ngay dưới mép trời, giữa các
+  // cột dốc mềm (smoothstep), cộng gợn nhỏ như mô đất. Tọa độ thế giới (pixel), dùng chung cho trời, đồi xa, viền cỏ.
+  const groundTop = (m, c) => { let y = 0; while (y < m.tiles.length && (m.tiles[y] || '')[c] === '^') y++; return y * TILE; };
+  function horizon(m, wx) {
+    const w = m.tiles[0].length, a = wx / TILE - 0.5, c0 = Math.floor(a), t = a - c0;
+    const v = (c) => groundTop(m, Math.max(0, Math.min(w - 1, c)));
+    const k = Math.max(0, Math.min(1, (t - 0.2) / 0.6)), s = k * k * (3 - 2 * k);
+    return v(c0) + (v(c0 + 1) - v(c0)) * s + 2.2 * Math.sin(wx * 0.11 + 1.3) + 1.6 * Math.sin(wx * 0.043) + 0.8 * Math.sin(wx * 0.29);
   }
-  // mép đồi giáp trời: bóng mềm dọc mép, cỏ lún phún nhô lên trời, lay theo gió (đỡ vuông vức theo ô)
-  function skyEdge(t, m, cx, cy, fx, x0, y0, x1, y1) {
-    const sky = (x, y) => (m.tiles[y] || '')[x] === '^';
-    for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        if (sky(x, y) || !m.tiles[y]) continue;
-        const px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
-        if (sky(x, y - 1)) {
-          const g = ctx.createLinearGradient(0, py, 0, py + 10);
-          g.addColorStop(0, 'rgba(20, 50, 20, 0.35)'); g.addColorStop(1, 'rgba(20, 50, 20, 0)');
-          ctx.fillStyle = g; ctx.fillRect(px, py, TILE, 10);
-          for (let i = 0; i < 9; i++) {
-            const bx = px + 1 + i * 3.6 + rnd(x * 13 + i, y) * 2, h = 4 + rnd(x + i * 7, y * 3) * 7;
-            const sway = fx ? Math.sin(t / 700 + x * 0.9 + i) * 1.6 : 0;
-            ctx.strokeStyle = i % 3 ? '#3f8a2e' : '#5aa83c'; ctx.lineWidth = 1.4;
-            ctx.beginPath(); ctx.moveTo(bx, py + 3); ctx.quadraticCurveTo(bx + sway * 0.5, py - h * 0.5, bx + sway, py - h); ctx.stroke();
-          }
-        }
-        for (const [dx, side] of [[-1, 0], [1, TILE]]) {
-          if (!sky(x + dx, y)) continue;
-          const g = ctx.createLinearGradient(px + side, 0, px + side - dx * 8, 0);
-          g.addColorStop(0, 'rgba(20, 50, 20, 0.35)'); g.addColorStop(1, 'rgba(20, 50, 20, 0)');
-          ctx.fillStyle = g; ctx.fillRect(dx < 0 ? px : px + TILE - 8, py, 8, TILE);
-        }
+  // đường cong trên màn hình (bước 3px), dùng cho cắt trời và vẽ viền
+  function horizonPts(m, cx, cy) {
+    const pts = [];
+    for (let sx = -3; sx <= VW() + 3; sx += 3) pts.push([sx, horizon(m, sx + cx) - cy]);
+    return pts;
+  }
+  function skyClip(m, cx, cy) {
+    const pts = horizonPts(m, cx, cy);
+    ctx.beginPath(); ctx.moveTo(pts[0][0], -4);
+    for (const [x, y] of pts) ctx.lineTo(x, y);
+    ctx.lineTo(pts[pts.length - 1][0], -4); ctx.closePath(); ctx.clip();
+  }
+  // đồi xa nhiều lớp: càng xa càng nhạt, ngả xanh lam (phối cảnh không khí), trôi theo camera ít hơn (thị sai)
+  const FAR_HILLS = [
+    { col: [150, 185, 214], a: 0.55, par: 0.25, h: 30, f: [0.009, 0.023], ph: 0.7 },
+    { col: [118, 165, 160], a: 0.65, par: 0.45, h: 20, f: [0.014, 0.037], ph: 2.1 },
+    { col: [92, 148, 104], a: 0.75, par: 0.7, h: 12, f: [0.021, 0.055], ph: 4.2 },
+  ];
+  function farHills(m, cx, cy) {
+    const w = m.tiles[0].length;
+    let base = Infinity;
+    for (let c = 0; c < w; c++) base = Math.min(base, groundTop(m, c));
+    FAR_HILLS.forEach((L) => {
+      ctx.fillStyle = `rgba(${L.col.join(',')}, ${L.a})`;
+      ctx.beginPath(); ctx.moveTo(-3, VH() + 4);
+      for (let sx = -3; sx <= VW() + 3; sx += 4) {
+        const wx = sx + cx * L.par;
+        const top = base + 6 - L.h * (0.55 + 0.3 * Math.sin(wx * L.f[0] + L.ph) + 0.15 * Math.sin(wx * L.f[1] + L.ph * 2));
+        ctx.lineTo(sx, top - cy);
+      }
+      ctx.lineTo(VW() + 3, VH() + 4); ctx.closePath(); ctx.fill();
+    });
+  }
+  // mép đồi giáp trời theo đường cong: bóng mềm phía đất, viền nắng, cỏ lún phún lay theo gió
+  function skyEdge(t, m, cx, cy, fx) {
+    const pts = horizonPts(m, cx, cy);
+    const line = (dy) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y + dy) : ctx.moveTo(x, y + dy))); };
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    line(5); ctx.strokeStyle = 'rgba(18, 48, 18, 0.22)'; ctx.lineWidth = 10; ctx.stroke();
+    line(2); ctx.strokeStyle = 'rgba(30, 70, 25, 0.35)'; ctx.lineWidth = 4; ctx.stroke();
+    line(0); ctx.strokeStyle = 'rgba(160, 215, 110, 0.85)'; ctx.lineWidth = 1.6; ctx.stroke();
+    for (let i = 0; i < pts.length; i++) {
+      const [x, y] = pts[i], wx = x + cx;
+      for (let j = 0; j < 2; j++) {
+        const r1 = rnd(Math.round(wx) * 3 + j, 7), r2 = rnd(Math.round(wx) + j * 13, 3);
+        const bx = x + j * 1.5, h = 3 + r1 * 7 + (r2 > 0.92 ? 4 : 0);
+        const sway = fx ? Math.sin(t / 650 + wx * 0.07 + j) * (1 + h * 0.15) : 0;
+        ctx.strokeStyle = r2 < 0.33 ? '#4f9a35' : r2 < 0.66 ? '#3d8429' : '#68b045'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(bx, y + 2); ctx.quadraticCurveTo(bx + sway * 0.4, y - h * 0.5, bx + sway, y - h); ctx.stroke();
       }
     }
   }
   function skyRows(m) { let r = 0; while (r < m.tiles.length && m.tiles[r].includes('^')) r++; return r; }
-  function skyBack(t, m, cx, cy, x0, y0, x1, y1) {
+  function skyBack(t, m, cx, cy) {
     const rows = skyRows(m), top = -cy, bot = rows * TILE - cy;
     if (bot <= 0) return;
-    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
     const g = ctx.createLinearGradient(0, top, 0, bot);
     g.addColorStop(0, '#3f7fcf'); g.addColorStop(0.55, '#7cb6ec'); g.addColorStop(0.9, '#c4e2fb'); g.addColorStop(1, '#e6f3fd');
-    ctx.fillStyle = g; ctx.fillRect(0, Math.max(0, top), VW(), bot - Math.max(0, top));
+    ctx.fillStyle = g; ctx.fillRect(0, Math.max(0, top), VW(), bot + TILE - Math.max(0, top));
     // ánh nắng góc trên phải
     const sx = VW() * 0.82, sy = top + TILE * 1.2, sun = ctx.createRadialGradient(sx, sy, 4, sx, sy, TILE * 6);
     sun.addColorStop(0, 'rgba(255, 250, 225, 0.55)'); sun.addColorStop(1, 'rgba(255, 250, 225, 0)');
     ctx.fillStyle = sun; ctx.fillRect(0, Math.max(0, top), VW(), bot);
-    ctx.restore();
   }
   const CLOUD_LAYERS = [
     { n: 6, scale: 0.28, alpha: 0.55, speed: 0.0035, par: 0.35, band: [0.05, 0.55] },
@@ -1922,8 +1949,11 @@
     const rows = skyRows(m);
     if (rows * TILE - cy <= 0) return;
     const w = m.tiles[0].length * TILE, H = rows * TILE, k = fx ? t : 0;
-    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
+    ctx.save(); skyClip(m, cx, cy);
+    skyBack(t, m, cx, cy);
+    // đồi xa sau lớp mây xa (mây xa nằm sau đồi gần, mây gần bay trước)
     CLOUD_LAYERS.forEach((L, li) => {
+      if (li === 1) { ctx.globalAlpha = 1; farHills(m, cx, cy); hazeBand(); }
       for (let i = 0; i < L.n; i++) {
         const im = image('sky/cloud' + (1 + ((i + li * 2) % 5)));
         if (!im.complete || !im.naturalWidth) continue;
@@ -1938,13 +1968,13 @@
     });
     ctx.globalAlpha = 1;
     ctx.restore();
-    skyEdge(t, m, cx, cy, fx, x0, y0, x1, y1);
-    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
-    // sương mỏng ở chân trời (ngay trên mép đồi)
-    const hb = H - cy, haze = ctx.createLinearGradient(0, hb - TILE * 1.6, 0, hb);
-    haze.addColorStop(0, 'rgba(240, 248, 255, 0)'); haze.addColorStop(1, 'rgba(240, 248, 255, 0.55)');
-    ctx.fillStyle = haze; ctx.fillRect(0, hb - TILE * 1.6, VW(), TILE * 2);
-    ctx.restore();
+    skyEdge(t, m, cx, cy, fx);
+    // sương mỏng ở chân trời: dải sáng ngay trên đồi xa, nhòe ranh giới trời / đất
+    function hazeBand() {
+      const hb = H - cy, haze = ctx.createLinearGradient(0, hb - TILE * 2.2, 0, hb + TILE);
+      haze.addColorStop(0, 'rgba(240, 248, 255, 0)'); haze.addColorStop(0.6, 'rgba(240, 248, 255, 0.4)'); haze.addColorStop(1, 'rgba(240, 248, 255, 0.15)');
+      ctx.fillStyle = haze; ctx.fillRect(0, hb - TILE * 2.2, VW(), TILE * 3.2);
+    }
   }
   // Chim Lạc lượn vòng quanh ô (6 khung bay `sky/chim_lac.png`, mỗi khung 64×64), ánh đồng lấp lánh
   function birdSpot(t, x, y, fx) {
@@ -2035,24 +2065,39 @@
   // ---------- Thả diều: dây, diều, gió giật, quà gió bay về (ui.js gọi MapView.kite) ----------
   // kiting: { phase: fly | wait | gust | catch | miss, t0, tx, ty (ô trời diều bay tới), big, item }
   let kiting = null;
-  const KITE_MS = { fly: 700, catch: 1800, miss: 700 };
-  // giống server (`Kite.sky_near/2`): ô trời gần nhất thẳng phía trên trong tầm dây, không thì ô trời gần nhất trong tầm
-  const kiteReach = () => (((window.GAME_DATA.RULES || {}).sky || {}).reach) || 6;
-  function skyNear(m, x, y) {
-    const R = kiteReach(), sky = (a, b) => (m.tiles[b] || '')[a] === '^';
-    for (let yy = y - 1; yy >= Math.max(0, y - R); yy--) if (sky(x, yy)) return [x, yy];
-    let best = null, bd = Infinity;
-    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) if (sky(x + dx, y + dy) && Math.abs(dx) + Math.abs(dy) < bd) { bd = Math.abs(dx) + Math.abs(dy); best = [x + dx, y + dy]; }
-    return best;
+  // diều bay cao: camera nâng dần lên cho thấy cả diều (trên) lẫn người (dưới), diều xong thì hạ về
+  // diều quá xa (không vừa khung) thì thu nhỏ khung một chút (tối đa còn 0,7) cho thấy cả hai
+  let lift = 0, liftAt = 0, kz = 1, kzAt = 0;
+  const KITE_PANEL = 64; // khung 🪁 Giữ dây nổi ở đáy bản đồ: người không bị che
+  const ease = (v, want, dt, ms) => (Math.abs(want - v) < 0.002 ? want : v + (want - v) * Math.min(1, dt / ms));
+  const again = () => { if (!frame) frame = requestAnimationFrame(() => { frame = null; draw(); }); };
+  function kiteZoom(now, my) {
+    let want = 1;
+    if (kiting) want = Math.max(0.7, Math.min(1, (canvas.clientHeight - hudPx - KITE_PANEL) / zoom / TILE / (my - kiting.ty + 3)));
+    const dt = Math.min(100, now - (kzAt || now)); kzAt = now;
+    kz = ease(kz, want, dt, 400);
+    if (kz !== want) again();
+    return kz;
   }
-  // giống server (`Kite.check_spot/1`): null nếu thả được, không thì lời nhắc
+  function kiteLift(now, my) {
+    let want = 0;
+    if (kiting) {
+      // chừa trên đầu: thanh sự kiện (hudPx) + chỗ cho dấu "!" khi gió giật
+      const vt = VH() / TILE, top = 1.5 + hudPx / zoom / TILE, c = Math.max(my + 1 + KITE_PANEL / zoom / TILE - vt / 2, Math.min(my, kiting.ty - top + vt / 2));
+      want = Math.max(0, my - c);
+    }
+    const dt = Math.min(100, now - (liftAt || now)); liftAt = now;
+    lift = ease(lift, want, dt, 260);
+    if (lift !== want) again();
+    return lift;
+  }
+  const KITE_MS = { fly: 700, catch: 1800, miss: 700 };
+  // giống server (`Kite.check_spot/1`): null nếu thả được (chỗ thoáng, không sát cây; dây không giới hạn), không thì lời nhắc
   function kiteCheck(m, x, y) {
     if (!m || !m.kite) return 'Thả diều ở Đồi Sáo Diều (cổng mép phải Hồ Long Vương).';
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes((m.tiles[y + dy] || '')[x + dx] || '_')) return 'Vướng cây rồi, ra chỗ thoáng để thả diều.';
-    if (!skyNear(m, x, y)) return `Xa trời quá: tiến lên gần mép đồi hơn (dây diều dài ${kiteReach()} ô).`;
     return null;
   }
-  function kiteTile(P, m) { return skyNear(m, P.pos.x, P.pos.y); }
   function drawKite(x, y, ang, big, sc = 1) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(sc, sc);
     ctx.fillStyle = big ? '#ffd34d' : '#e8352a';
@@ -2300,7 +2345,7 @@
       const P = getPlayer(), m = P && cur(P);
       if (!ev || !m) { kiting = null; draw(); return; }
       if (ev === 'fly') {
-        const t = data.tx != null ? [data.tx, data.ty] : kiteTile(P, m);
+        const t = data.tx != null ? [data.tx, data.ty] : null;
         kiting = t && { phase: 'fly', t0: performance.now(), tx: t[0], ty: t[1], big: false };
       } else if (kiting) {
         Object.assign(kiting, data, { phase: ev, t0: performance.now() });
@@ -2308,7 +2353,7 @@
       }
       draw();
     },
-    kiteTile() { const P = getPlayer(), m = P && cur(P); return m ? kiteTile(P, m) : null; },
+    kiteAt: () => kiting && [kiting.tx, kiting.ty],
     kiteCheck() { const P = getPlayer(), m = P && cur(P); return kiteCheck(m, P ? P.pos.x : 0, P ? P.pos.y : 0); },
     // vừa lên cấp (ui.js celebrate): cột sáng vàng ở chỗ nhân vật
     levelUp() { levelAt = performance.now(); draw(); },
