@@ -634,6 +634,9 @@ img.own.nat, .itemtip .big img.own.nat { object-fit: scale-down; image-rendering
 
 /* U5: bản đồ / trận đánh vừa khít giữa HUD và dock */
 #view.fit { overflow: hidden; padding-bottom: 10px; gap: 8px; }
+/* màn trận: nhiều kỹ năng thì cuộn được, hàng Máu / Mana / Chạy luôn ghim ở đáy (không bị khuất) */
+#view.fit:has(> .stage) { overflow-y: auto; }
+#view.fit > .actions.util { position: sticky; bottom: -10px; z-index: 3; background: var(--ink); padding: 6px 0 10px; margin-bottom: -10px; box-shadow: 0 -10px 12px var(--ink); }
 #view.fit > .map-wrap { flex: 1 1 auto; min-height: 160px; }
 #view.fit .map-hint { display: none; }
 #view.fit .log { flex: 2 1 120px; min-height: 64px; height: auto; }

@@ -1933,3 +1933,12 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Màn VS (2 giây) chiếu xong trận mới bắt đầu: lệnh đánh / kỹ năng / bình / bỏ chạy bấm trong lúc VS đang chiếu chờ tới hết màn
   rồi mới gửi (client, `vsHold`).
 - K.O. hiện sau đòn cuối 1,3 giây (máu tụt, chữ sát thương xong) và không bao giờ đè lên màn VS.
+
+## Đánh người: bình theo % máu / MP tối đa (2026-11-09, anh duyệt B + C)
+- Bình máu hồi số cố định nên "3 bình" lệch theo cấp (cấp thấp 1 Bình Lớn đầy máu, máu cao chỉ ~25%). Đổi: khi đánh người (đồ sát,
+  đấu trường cả đối thủ máy, đấu trực tiếp, Hỗn Chiến Thành, Công Thành Chiến) mỗi bình máu hồi × `potion_mult` (0,5) nhưng tối đa
+  `potion_cap_pct` (35%) máu tối đa; tối đa `potion_max` 10 bình mỗi trận (trước 3), giữ hồi chiêu 3 lượt.
+- Bình mana khi đánh người cũng vậy (đếm riêng): × `mana_mult` (1), tối đa `mana_cap_pct` 35% MP tối đa mỗi bình, 3 lượt một bình,
+  tối đa `mana_max` 10 bình. Bot và ⚡ đánh nhanh không gửi lệnh mana khi chưa được uống (`Engine.mana_ready?/1`).
+- Đánh quái giữ nguyên (không trần, không giới hạn).
+- Màn trận: cuộn được khi nhiều kỹ năng, hàng Máu / Mana / Chạy ghim ở đáy màn hình (trước bị khuất).

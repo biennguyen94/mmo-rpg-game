@@ -109,7 +109,8 @@ defmodule HacLong.Game.QuickFight do
           Engine.potion_ready?(p) ->
         %{"act" => "potion"}
 
-      cur_mp < d.maxMp * mp and Engine.best_mana(p, d.maxMp - cur_mp) != nil ->
+      cur_mp < d.maxMp * mp and Engine.best_mana(p, d.maxMp - cur_mp) != nil and
+          Engine.mana_ready?(p) ->
         %{"act" => "mana"}
 
       true ->

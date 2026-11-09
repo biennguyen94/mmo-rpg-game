@@ -200,6 +200,10 @@ defmodule HacLongWeb.PageController do
               :potion_mult,
               :potion_cd,
               :potion_max,
+              :potion_cap_pct,
+              :mana_cd,
+              :mana_max,
+              :mana_cap_pct,
               :heal_mult
             ])
         },

@@ -886,18 +886,23 @@ defmodule HacLong.Game.Engine do
   end
 
   # `mult`: hệ số hồi máu (đánh người: `RULES.pvp.potion_mult`)
-  defp drink(p, id, mult \\ 1) do
+  # `cap`: trần mỗi bình theo phần máu / MP tối đa (đánh người: `potion_cap_pct` / `mana_cap_pct`), nil = không trần
+  defp drink(p, id, mult \\ 1, cap \\ nil) do
     d = derived(p)
+
+    lim = fn n, max ->
+      if cap, do: min(round(n * mult), round(max * cap)), else: round(n * mult)
+    end
 
     case potion_amount(p, id) do
       {:mp, n} ->
         before = mp(p)
-        p = %{p | mp: min(d.maxMp, before + n)} |> take_item(id)
+        p = %{p | mp: min(d.maxMp, before + lim.(n, d.maxMp))} |> take_item(id)
         {p, p.mp - before}
 
       {:hp, n} ->
         before = p.hp
-        p = %{p | hp: min(d.maxHp, p.hp + round(n * mult))} |> take_item(id)
+        p = %{p | hp: min(d.maxHp, p.hp + lim.(n, d.maxHp))} |> take_item(id)
         {p, p.hp - before}
     end
   end
@@ -1110,6 +1115,9 @@ defmodule HacLong.Game.Engine do
 
   defp act_mana(p, d) do
     id = best_mana(p, d.maxMp - mp(p))
+    b = p.battle
+    pvp? = b.monster[:pvp] != nil
+    wait = if pvp?, do: (b[:mana_at] || -99) + @pvp.mana_cd - (b.turn + 1), else: 0
 
     cond do
       id == nil ->
@@ -1118,8 +1126,25 @@ defmodule HacLong.Game.Engine do
       mp(p) >= d.maxMp ->
         {err("MP đang đầy."), p}
 
+      pvp? and (b[:manas_used] || 0) >= @pvp.mana_max ->
+        {err("Đánh người: mỗi trận chỉ uống được #{@pvp.mana_max} bình mana."), p}
+
+      wait > 0 ->
+        {err("Đánh người: bình mana dùng lại sau #{wait} lượt."), p}
+
       true ->
-        {p, got} = p |> next_turn() |> drink(id)
+        {p, got} =
+          if pvp?,
+            do: p |> next_turn() |> drink(id, @pvp.mana_mult, @pvp.mana_cap_pct),
+            else: p |> next_turn() |> drink(id)
+
+        p =
+          if pvp?,
+            do:
+              p
+              |> put_in([:battle, :mana_at], p.battle.turn)
+              |> update_in([:battle, :manas_used], &((&1 || 0) + 1)),
+            else: p
 
         p
         |> log("Bạn uống #{Data.item(id).name}, hồi #{got} MP.", "good", %{
@@ -1157,6 +1182,15 @@ defmodule HacLong.Game.Engine do
 
   def potion_ready?(_p), do: true
 
+  @doc "Uống bình mana được không lúc này (đánh người: chưa quá `mana_max` bình, đã qua `mana_cd` lượt)."
+  def mana_ready?(%{battle: %{monster: m} = b}) do
+    m[:pvp] == nil or
+      ((b[:manas_used] || 0) < @pvp.mana_max and
+         (b[:mana_at] || -99) + @pvp.mana_cd - (b.turn + 1) <= 0)
+  end
+
+  def mana_ready?(_p), do: true
+
   defp act_potion(p, d) do
     id = best_potion(p, d.maxHp - p.hp)
     poisoned = Enum.filter(effects(p, :player), &(&1.id in @dots))
@@ -1178,7 +1212,10 @@ defmodule HacLong.Game.Engine do
         {err("Đánh người: bình máu dùng lại sau #{wait} lượt."), p}
 
       true ->
-        {p, healed} = p |> next_turn() |> drink(id, if(pvp?, do: @pvp.potion_mult, else: 1))
+        {p, healed} =
+          if pvp?,
+            do: p |> next_turn() |> drink(id, @pvp.potion_mult, @pvp.potion_cap_pct),
+            else: p |> next_turn() |> drink(id)
 
         p =
           if pvp?,

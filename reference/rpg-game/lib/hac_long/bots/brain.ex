@@ -847,7 +847,8 @@ defmodule HacLong.Bots.Brain do
           Engine.potion_ready?(p) ->
         %{"act" => "potion"}
 
-      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->
+      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) &&
+          Engine.mana_ready?(p) ->
         %{"act" => "mana"}
 
       skill ->
