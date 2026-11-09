@@ -562,7 +562,7 @@ TOOLS_HTML = f"""<h3>Thanh dưới bản đồ (một hàng)</h3>
     <li>👫 Quanh đây có tab <b>🟢 Đang online</b>: mọi người đang online (kèm bản đồ họ đứng), chạm tên mở hồ sơ như Quanh đây.</li>
     <li>Nhật ký đồ sát: dòng của đối thủ chi tiết như dòng của mình (tên, chiêu, ⚔ sát thương, máu còn lại); trúng độc / bỏng / chảy máu ghi rõ máu mỗi lượt, số lượt.</li></ul>
   <h3>Quản trị: ⚡ Dựng nhân vật tối đa</h3>
-  <p>Tab Quản trị → tra cứu người chơi → chọn cấp, số lần chuyển sinh (0–999; điểm tiềm năng tự tính theo cấp / chuyển sinh rồi tự cộng hết, đủ chỉ số yêu cầu của đồ trước), Excellent / Đồ Thần, tay trái vũ khí / khiên, mặc luôn (túi đầy thì món bị thay ra gửi Hộp thư giữ +N), vàng {n(AMB['gold'])}, vật phẩm, thú {E(next((x['name'] for x in D['pets'] if x.get('id') == AMB['pet']), AMB['pet']))} cấp tối đa. Đồ tốt nhất của lớp +{AMB['up']}, {AMB['opt']} dòng, May mắn; kỷ lục tháp {AMB['tower_floor']}, thông thạo kỹ năng {AMB['mastery']}.</p>
+  <p>Tab Quản trị → tra cứu người chơi → chọn cấp, số lần chuyển sinh (0–999; điểm tiềm năng tự tính theo cấp / chuyển sinh rồi tự cộng hết, đủ chỉ số yêu cầu của đồ trước), Excellent / Đồ Thần, tay trái vũ khí / khiên, mặc luôn (túi đầy thì món bị thay ra gửi Hộp thư giữ +N), vàng {n(AMB['gold'])}, vật phẩm (cả đồ thả diều), thần thú {E(', '.join(next((x['name'] for x in D['pets'] if x.get('id') == i), i) for i in AMB['pets']))} cấp tối đa (dắt con cuối), đầy Long Khí / Phong Khí; chọn nhẫn / dây chuyền (có món kháng hệ). Đồ tốt nhất của lớp +{AMB['up']}, {AMB['opt']} dòng, May mắn; kỷ lục tháp {AMB['tower_floor']}, thông thạo kỹ năng {AMB['mastery']}.</p>
 """
 
 # ---------- Sự kiện, đấu trường, chiến bang trực quan (DECISIONS cùng tên) ----------

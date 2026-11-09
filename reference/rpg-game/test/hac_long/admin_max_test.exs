@@ -241,7 +241,14 @@ defmodule HacLong.AdminMaxTest do
         |> g.(m.pendant, %{})
         |> g.("wing_#{cls}_3", %{"wopt" => m.wing_opt})
 
-      p = op(p, "give_pet", %{"id" => m.pet, "level" => "max"})
+      # thần thú: tặng hết ở cấp tối đa, dắt con cuối; đầy Long Khí / Phong Khí
+      last = List.last(m.pets)
+
+      p =
+        Enum.reduce(m.pets, p, fn id, p ->
+          op(p, "give_pet", %{"id" => id, "level" => "max", "lead" => id == last})
+        end)
+        |> op("set_qi", %{"long" => "max", "phong" => "max"})
 
       assert Engine.inactive_slots(p) == []
 
@@ -252,8 +259,34 @@ defmodule HacLong.AdminMaxTest do
 
       assert Gear.item(p, p.equip.weapon).base == set.weapon
       assert Engine.upgrade_level(p, p.equip.armor) == m.up
-      assert HacLong.Game.Pets.level(p, m.pet) == HacLong.Game.Pets.max_level(m.pet)
+      assert p.pet == last and p.pets == m.pets
+
+      assert Enum.all?(
+               m.pets,
+               &(HacLong.Game.Pets.level(p, &1) == HacLong.Game.Pets.max_level(&1))
+             )
+
+      assert p.long_khi == Data.rules().fishing.dragon.long_khi_max
+      assert HacLong.Game.Kite.phong_khi(p) == HacLong.Game.Kite.phong_khi_max()
     end
+  end
+
+  test "set_qi: đặt Long Khí / Phong Khí (số hoặc max), ngoài khoảng thì báo lỗi; give_pet lead: false giữ thú đang dắt" do
+    {_, p} = Commands.run(nil, %{"act" => "create", "name" => "Khi", "cls" => "elf"})
+    p = op(p, "set_qi", %{"long" => 7})
+    assert p.long_khi == 7 and HacLong.Game.Kite.phong_khi(p) == 0
+    p = op(p, "set_qi", %{"phong" => "max"})
+    assert p.long_khi == 7 and HacLong.Game.Kite.phong_khi(p) == HacLong.Game.Kite.phong_khi_max()
+    assert {:error, _} = Admin.build("set_qi", %{})
+    assert {:error, "Long Khí" <> _} = Admin.build("set_qi", %{"long" => 100_000})
+    assert {:error, "Phong Khí" <> _} = Admin.build("set_qi", %{"phong" => -1})
+
+    p =
+      p
+      |> op("give_pet", %{"id" => "chim_lac"})
+      |> op("give_pet", %{"id" => "hac_long", "lead" => false})
+
+    assert p.pet == "chim_lac" and "hac_long" in p.pets
   end
 
   test "túi đầy: tặng + mặc luôn vẫn được, món bị thay ra gửi Hộp thư giữ +N; không mặc thì báo túi đầy" do

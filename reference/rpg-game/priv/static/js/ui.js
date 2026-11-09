@@ -504,17 +504,25 @@
     const busy = st && st.running;
     const chk = (k, label, on = true) => `<label class="small"><input type="checkbox" name="${k}" ${on ? 'checked' : ''}> ${label}</label>`;
     return `<div class="card"><h3>⚡ Dựng nhân vật tối đa</h3>
-      <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): đặt cấp và số lần chuyển sinh, điểm tiềm năng tự tính đúng như người chơi thật ở cấp / chuyển sinh đó ((cấp − 1) × điểm mỗi cấp + điểm chuyển sinh) rồi tự cộng hết (đủ chỉ số yêu cầu của đồ trước, còn lại theo tỉ lệ của lớp); kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền, cánh cấp 3 (đồ cần cấp 45–48: chọn cấp thấp hơn thì đồ vào túi, chưa mặc). Mặc luôn thì đồ cũ về túi, túi đầy thì gửi Hộp thư (giữ +N, dòng). Mỗi bước ghi Nhật ký quản trị; người đó online hay không đều được.</p>
+      <p class="small muted">Cho <b>${esc(c.name)}</b> (${esc((CLASSES[c.cls] || {}).name || c.cls)}): đặt cấp và số lần chuyển sinh, điểm tiềm năng tự tính đúng như người chơi thật ở cấp / chuyển sinh đó ((cấp − 1) × điểm mỗi cấp + điểm chuyển sinh) rồi tự cộng hết (đủ chỉ số yêu cầu của đồ trước, còn lại theo tỉ lệ của lớp); kỷ lục tháp ${M.tower_floor}, thông thạo kỹ năng ${M.mastery}, đồ tốt nhất của lớp +${M.up} ${M.opt} dòng May mắn, 2 nhẫn, dây chuyền (chọn được nhẫn / dây chuyền kháng hệ), cánh cấp 3, thần thú, đầy Long Khí / Phong Khí (đồ cần cấp 45–48: chọn cấp thấp hơn thì đồ vào túi, chưa mặc). Mặc luôn thì đồ cũ về túi, túi đầy thì gửi Hộp thư (giữ +N, dòng). Mỗi bước ghi Nhật ký quản trị; người đó online hay không đều được.</p>
       <form id="adm-maxb" class="stack">
         <div class="btn-row"><label class="small">Cấp <select name="level">${Array.from({ length: RULES.maxLevel || M.level }, (_, i) => i + 1).reverse().map((l) => `<option value="${l}" ${l === M.level ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <label class="small">Chuyển sinh <input type="number" name="rebirths" min="0" max="999" step="1" value="${M.rebirths}" style="width:5.5em" title="0–999; quá ${RULES.maxRebirths || 10} lần mỗi lần +${RULES.endlessPoints || 10} điểm"></label>
           <label class="small">Bộ giáp <select name="armor"><option value="exc">Excellent</option><option value="anc">Đồ Thần</option></select></label>
           ${set.left ? `<label class="small">Tay trái <select name="left"><option value="weapon">Vũ khí thứ hai</option><option value="shield">Khiên</option></select></label>` : ''}</div>
-        <div class="btn-row">${chk('equip', 'Mặc luôn đồ')}${chk('gold', `Vàng ${fmt(M.gold)}`)}${chk('items', 'Ngọc, bình, vé, nguyên liệu')}${chk('pet', 'Long Vương cấp tối đa')}</div>
+        <div class="btn-row">${jewelSel('ring1', 'Nhẫn 1', 'ring', M.ring)}${jewelSel('ring2', 'Nhẫn 2', 'ring', M.ring)}${jewelSel('pendant', 'Dây chuyền', 'pendant', M.pendant)}</div>
+        <div class="btn-row">${chk('equip', 'Mặc luôn đồ')}${chk('gold', `Vàng ${fmt(M.gold)}`)}${chk('items', 'Ngọc, bình, vé, nguyên liệu, đồ thả diều')}${(M.pets || []).length ? chk('pet', `Thần thú cấp tối đa (${(M.pets || []).map((id) => esc((PETS.find((x) => x.id === id) || {}).name || id)).join(', ')}; dắt con cuối)`) : ''}${M.qi ? chk('qi', `Đầy Long Khí ${RULES.dragon.long_khi_max}, Phong Khí ${((RULES.sky || {}).bird || {}).phong_khi_max}`) : ''}</div>
         <div class="btn-row"><button class="btn primary" type="submit" ${busy ? 'disabled' : ''}>${busy ? 'Đang dựng…' : '⚡ Dựng tối đa'}</button></div>
       </form>
       ${st ? `<div class="small adm-maxb-log">${st.lines.map((l) => `<div style="color:var(${l.warn ? '--gold' : l.ok ? '--good' : '--bad'})">${l.warn ? '⚠' : l.ok ? '✓' : '✗'} ${esc(l.text)}</div>`).join('')}${st.done ? `<div><b>${st.fail ? `Xong, ${st.fail} bước lỗi (xem dòng ✗).` : st.warn ? `Xong, ${st.warn} món chưa mặc được (xem dòng ⚠).` : 'Xong, không có lỗi.'}</b></div>` : ''}</div>` : ''}
     </div>`;
+  }
+
+  // chọn nhẫn / dây chuyền cho Dựng tối đa: mọi món cùng loại, ghi hệ kháng (RULES.monsterSkills.resist) nếu có
+  function jewelSel(name, label, slot, def) {
+    const rs = (RULES.monsterSkills || {}).resist || { items: {} }, E = RULES.elements || { names: {}, icons: {} };
+    const opts = Object.entries(ITEMS).filter(([, it]) => it.slot === slot && !it.legacy).sort((a, b) => (b[1].level || 0) - (a[1].level || 0));
+    return `<label class="small">${label} <select name="${name}">${opts.map(([k, it]) => { const el = rs.items[k]; return `<option value="${k}" ${k === def ? 'selected' : ''}>${esc(it.name)}${el ? ` · kháng ${(E.icons || {})[el] || ''}${esc((E.names || {})[el] || el)}` : ''}</option>`; }).join('')}</select></label>`;
   }
 
   async function maxBuild(u, f) {
@@ -523,7 +531,7 @@
     const twoHand = (ITEMS[set.weapon] || {}).hands === 2;
     const rb = Math.floor(Number(f.get('rebirths')));
     if (!(rb >= 0 && rb <= 999)) { toast('Số lần chuyển sinh phải từ 0 tới 999.', true); return; }
-    const opt = { level: +f.get('level') || M.level, rebirths: rb, anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet') };
+    const opt = { level: +f.get('level') || M.level, rebirths: rb, anc: f.get('armor') === 'anc', shield: !twoHand && (!set.left || f.get('left') === 'shield'), left: !twoHand && !!set.left && f.get('left') !== 'shield', equip: !!f.get('equip'), gold: !!f.get('gold'), items: !!f.get('items'), pet: !!f.get('pet'), qi: !!f.get('qi'), rings: [f.get('ring1') || M.ring, f.get('ring2') || M.ring], pendant: f.get('pendant') || M.pendant };
     if (!confirm(`Dựng tối đa cho ${c.name} (${(CLASSES[cls] || {}).name || cls})? Chỉ số và điểm tiềm năng đặt lại rồi chia lại; đồ mới ${opt.equip ? 'mặc luôn (đồ cũ về túi)' : 'vào túi'}.`)) return;
     const st = adm.maxb = { uid: u.id, running: true, lines: [], fail: 0, warn: 0 };
     const paint = () => { const el = document.getElementById('adm-maxb'); if (el) render(); };
@@ -543,7 +551,7 @@
     const rs = await A('reset_stats', {}, 'Đặt lại chỉ số');
     const pts = rs ? Number((rs.msg.match(/(\d+) điểm/) || [])[1] || 0) : 0;
     // đồ sẽ tặng: chỉ số yêu cầu cao nhất, chia đủ phần đó trước rồi mới chia theo tỉ lệ của lớp
-    const gear = [set.weapon, opt.shield && M.shield, opt.left && set.left, ...(set.armor || []), M.ring, M.ring, M.pendant].filter(Boolean);
+    const gear = [set.weapon, opt.shield && M.shield, opt.left && set.left, ...(set.armor || []), ...opt.rings, opt.pendant].filter(Boolean);
     const base = (CLASSES[cls] || {}).base || {}, need = {};
     for (const id of gear) for (const [k, v] of Object.entries((ITEMS[id] || {}).req || {})) need[k] = Math.max(need[k] || 0, v - (base[k] || 0));
     if (pts > 0) {
@@ -562,12 +570,14 @@
     if (opt.shield) await g(M.shield, { exc: M.exc_armor }, 'Khiên');
     if (opt.left) await g(set.left, { skill: true, exc: M.exc_weapon, hand: 'left' }, 'Vũ khí tay trái');
     for (const id of set.armor || []) await g(id, opt.anc ? { anc: true } : { exc: M.exc_armor }, 'Giáp');
-    await g(M.ring, { exc: M.exc_armor }, 'Nhẫn');
-    await g(M.ring, { exc: M.exc_armor }, 'Nhẫn');
-    await g(M.pendant, { exc: M.exc_weapon }, 'Dây chuyền');
+    for (const r of opt.rings) await g(r, { exc: M.exc_armor }, 'Nhẫn');
+    await g(opt.pendant, { exc: M.exc_weapon }, 'Dây chuyền');
     await g(`wing_${cls}_3`, { wopt: M.wing_opt }, 'Cánh');
     if (opt.items) for (const [id, count] of M.items) await A('give_item', { id, count }, 'Vật phẩm');
-    if (opt.pet && M.pet) await A('give_pet', { id: M.pet, level: 'max' }, 'Thú');
+    // thần thú: tặng hết ở cấp tối đa, dắt con cuối (mạnh nhất)
+    const pets = M.pets || [];
+    if (opt.pet) for (const [i, id] of pets.entries()) await A('give_pet', { id, level: 'max', lead: i === pets.length - 1 }, 'Thần thú');
+    if (opt.qi) await A('set_qi', { long: 'max', phong: 'max' }, 'Long Khí, Phong Khí');
     await A('heal', {}, 'Hồi đầy');
     st.running = false; st.done = true;
     try { adm.user = (await Net.admin('lookup', { name: u.username })).user; } catch (e) { /* giữ thông tin cũ */ }
@@ -587,11 +597,12 @@
     return `<div class="card"><h3>Chỉnh nhân vật</h3>
       <p class="small muted">Sửa ngay (người chơi đang online thấy liền), ghi vào nhật ký quản trị và nhật ký vàng/đồ với lý do ADMIN.</p>
       ${line('give_xp', 'Kinh nghiệm', num('xp', 1000, 'min="1"'), 'Cộng')}
-      ${line('set_level', 'Đặt cấp', num('level', u.character.level, 'min="1" max="50"'), 'Đặt')}
+      ${line('set_level', 'Đặt cấp', num('level', u.character.level, `min="1" max="${RULES.maxLevel || 50}"`), 'Đặt')}
       ${line('add_gold', 'Vàng (âm để trừ)', num('amount', 1000), 'Cộng')}
       ${line('set_tower', 'Kỷ lục tháp (mở kỹ năng tháp)', num('floor', 100, 'min="0" max="1000"'), 'Đặt')}
       ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh; quá 10 là chuyển sinh vô hạn)', num('n', 0, 'min="0" max="999"'), 'Đặt')}
       ${line('set_mastery', 'Cấp thông thạo mọi kỹ năng đang có', num('lv', 10, `min="1" max="${(RULES.skillMastery || {}).max || 10}"`), 'Đặt')}
+      ${line('set_qi', 'Long Khí (Hồ Long Vương) / Phong Khí (Đồi Sáo Diều)', `<label class="small">🐉 ${num('long', RULES.dragon.long_khi_max, `min="0" max="${RULES.dragon.long_khi_max}"`)}</label><label class="small">🐦 ${num('phong', ((RULES.sky || {}).bird || {}).phong_khi_max, `min="0" max="${((RULES.sky || {}).bird || {}).phong_khi_max}"`)}</label>`, 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường (bình, ngọc, nguyên liệu, vé…)', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${stackItems.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}`, 'Tặng')}
@@ -640,6 +651,7 @@
     if (op === 'set_tower') payload.floor = n('floor');
     if (op === 'set_rebirths') payload.n = n('n');
     if (op === 'set_mastery') payload.lv = n('lv');
+    if (op === 'set_qi') Object.assign(payload, { long: n('long'), phong: n('phong') });
     if (op === 'add_points') payload.n = n('n');
     if (op === 'add_stats') STAT_KEYS.forEach(([k]) => { if (n(k)) payload[k] = n(k); });
     if (op === 'give_item') Object.assign(payload, { id: f.get('id'), count: n('count') || 1, up: n('up') });

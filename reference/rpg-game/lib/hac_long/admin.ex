@@ -15,18 +15,19 @@ defmodule HacLong.Admin do
   | `add_gold` | `amount` (âm được, không dưới 0) | cộng/trừ vàng |
   | `give_item` | `id`, `count` (1..9999), `up` (0..11), `wopt` (cánh: `hp` / `mp` / `ignore_def`) | tặng đồ thường, cả đồ không bán/không rơi (`relic`, `dragonshield`); trang bị (vũ khí, giáp, khiên, cánh, nhẫn, dây chuyền) thì mỗi món là một món riêng trong túi trang bị |
   | `give_gear` | `base`, `opt` (0..4: số dòng cộng thêm +4 mỗi dòng), `up`, `exc` (dòng Excellent), `luck`, `skill` (true; Kỹ năng chỉ vũ khí), `anc` (true: đồ Bộ Thần, chỉ món bộ giáp) | tặng một món đồ (kiểu MU, B-15) |
-  | `give_pet` | `id` (thú trong `PETS`, kể cả Long Vương), `level` (1..20) | tặng thú, đặt cấp thú, dắt theo luôn (không ghi Bia Long Vương) |
+  | `give_pet` | `id` (thú trong `PETS`, kể cả thần thú Long Vương, Chim Lạc, Hắc Long, Hắc Long Chân Thân), `level` (1..cấp tối đa của thú, hoặc `"max"`), `lead` (false: không dắt theo) | tặng thú, đặt cấp thú, dắt theo (không ghi Bia) |
   | `add_points` | `n` (âm được) | cộng/trừ điểm tiềm năng |
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
   | `set_mastery` | `lv` (1..`RULES.skill_mastery.max`) | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp ngay trước mốc đột phá thì đủ điểm, chờ đột phá) |
+  | `set_qi` | `long`, `phong` (số 0..tối đa, hoặc `"max"`; có ít nhất một) | đặt Long Khí (Hồ Long Vương) / Phong Khí (Đồi Sáo Diều) |
   """
 
   import Ecto.Query
   alias HacLong.Repo
-  alias HacLong.Game.{Data, Engine, Gear, Pets, Session}
+  alias HacLong.Game.{Data, Engine, Gear, Kite, Pets, Session}
 
-  @char_ops ~w(give_xp set_level add_gold give_item give_gear give_pet add_points add_stats reset_stats clear_bag heal set_tower set_rebirths set_mastery)
+  @char_ops ~w(give_xp set_level add_gold give_item give_gear give_pet add_points add_stats reset_stats clear_bag heal set_tower set_rebirths set_mastery set_qi)
   @max_xp 1_000_000_000
   @max_gold 1_000_000_000_000
   @max_count 9_999
@@ -145,7 +146,7 @@ defmodule HacLong.Admin do
      end}
   end
 
-  # Tặng thú cưng (kể cả thú hiếm Long Vương, DECISIONS "Long Vương"), đặt cấp thú và dắt theo luôn.
+  # Tặng thú cưng (kể cả thần thú Long Vương / Chim Lạc / Hắc Long), đặt cấp thú và dắt theo luôn (`lead: false` thì không).
   # Thú quản trị tặng không ghi Bia Long Vương (bia chỉ ghi người tự câu được).
   def build("give_pet", %{"id" => id} = a) do
     pet = is_binary(id) && Data.pet(id)
@@ -169,9 +170,11 @@ defmodule HacLong.Admin do
              p
              |> Map.put(:pets, if(id in owned, do: owned, else: owned ++ [id]))
              |> Map.put(:pet_xp, xp)
-             |> Map.put(:pet, id)
 
-           {:ok, p, "Đã tặng #{pet.name} cấp #{lv} (đang dắt theo)."}
+           # `lead: false`: chỉ tặng, giữ thú đang dắt (Dựng tối đa tặng nhiều thần thú, dắt con cuối)
+           if a["lead"] == false,
+             do: {:ok, p, "Đã tặng #{pet.name} cấp #{lv}."},
+             else: {:ok, Map.put(p, :pet, id), "Đã tặng #{pet.name} cấp #{lv} (đang dắt theo)."}
          end}
     end
   end
@@ -368,6 +371,37 @@ defmodule HacLong.Admin do
 
          {:ok, p, "Đã hủy #{length(bag)} trang bị trong túi."}
        end}
+
+  # Long Khí (`RULES.fishing.dragon.long_khi_max`) / Phong Khí (`RULES.sky.bird.phong_khi_max`): số hoặc "max"
+  def build("set_qi", a) when is_map(a) do
+    lmax = Data.rules().fishing.dragon.long_khi_max
+    pmax = Kite.phong_khi_max()
+    val = fn v, max -> if v == "max", do: max, else: v end
+    l = val.(a["long"], lmax)
+    f = val.(a["phong"], pmax)
+    ok? = fn v, max -> v == nil or (is_integer(v) and v in 0..max) end
+
+    cond do
+      l == nil and f == nil ->
+        {:error, "Cần long và/hoặc phong."}
+
+      not ok?.(l, lmax) ->
+        {:error, "Long Khí phải từ 0 tới #{lmax}."}
+
+      not ok?.(f, pmax) ->
+        {:error, "Phong Khí phải từ 0 tới #{pmax}."}
+
+      true ->
+        {:ok,
+         fn p ->
+           p = if l, do: Map.put(p, :long_khi, l), else: p
+           p = if f, do: Kite.put_sky(p, &%{&1 | phong_khi: f}), else: p
+
+           {:ok, p,
+            "Long Khí #{Map.get(p, :long_khi) || 0}/#{lmax}, Phong Khí #{Kite.phong_khi(p)}/#{pmax}."}
+         end}
+    end
+  end
 
   def build("heal", _a),
     do:
