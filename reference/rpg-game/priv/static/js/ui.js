@@ -252,6 +252,9 @@
     if (ca && cb && ca.phase === 'entry' && cb.phase === 'fight' && cb.inside !== false && p.pos.map === old.pos.map && (WORLD.maps[p.pos.map] || {}).event === 'chaos_castle') Celebrate.banner('⚔ Hỗn chiến bắt đầu!');
   }
 
+  // đấu trường: màn VS dài VS_MS (fx.js), K.O. hiện sau đòn cuối KO_DELAY_MS
+  const VS_MS = 2000, KO_DELAY_MS = 1300;
+  let vsHold = 0;
   // FX đợt 4: khoảnh khắc thành tích khi trạng thái nhân vật đổi (lệnh của mình hoặc server đẩy: tự đánh, đánh chung)
   function celebrate(old, p) {
     if (!old || !p || old.name !== p.name) return;
@@ -266,12 +269,16 @@
     const pk = (b) => b && b.encounter && (b.encounter.slay != null || b.encounter.duel);
     if (bm && bm.pvp && !pk(p.battle)) {
       const enc = p.battle.encounter || {};
+      // màn VS chiếu xong (2 giây) trận mới bắt đầu: lệnh đánh trong lúc đó chờ tới hết màn (sendCommand)
+      vsHold = Date.now() + VS_MS;
       Celebrate.vs({ name: p.name, doll: window.Doll.url(p.view.look), sub: `Cấp ${p.level}` }, { name: bm.name, doll: window.Doll.url(bm.look), sub: `Cấp ${bm.level}` },
         enc.duel ? '⚔ Đấu trường trực tiếp' : enc.slay != null ? '🗡 Đồ sát' : '🏟 Đấu trường');
     }
     const ob = old.battle, nb = p.battle;
     if (ob && nb && !ob.over && nb.over && nb.monster && nb.monster.pvp && !pk(nb) && (nb.result === 'win' || nb.result === 'lose')) {
-      Celebrate.ko(nb.result === 'win', nb.result === 'win' ? `Hạ ${nb.monster.name}!` : `Gục trước ${nb.monster.name}`);
+      // K.O. sau khi trận kết thúc hẳn (đòn cuối, máu tụt xong), không đè lên màn VS
+      const win = nb.result === 'win', sub = win ? `Hạ ${nb.monster.name}!` : `Gục trước ${nb.monster.name}`;
+      setTimeout(() => Celebrate.ko(win, sub), Math.max(KO_DELAY_MS, vsHold - Date.now() + 300));
     }
     if ((p.rebirths || 0) > (old.rebirths || 0)) {
       Celebrate.rebirth(p.rebirths, window.Doll.url(p.view.look), p.name);
@@ -4420,6 +4427,8 @@
     if (busy) return;
     busy = true;
     const battle = ['attack', 'skill', 'potion', 'mana', 'flee'].includes(cmd.act) && P && P.battle;
+    // đấu trường: chờ màn VS chiếu xong rồi mới ra đòn đầu
+    if (battle && Date.now() < vsHold) await new Promise((ok) => setTimeout(ok, vsHold - Date.now()));
     const before = battle ? snapBattle() : null;
     const scroll = $('#view').scrollTop;
     const old = P;

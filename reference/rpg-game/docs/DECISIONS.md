@@ -1928,3 +1928,8 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Xong trận (thắng, thua, bỏ chạy) hoặc trận bị hủy: cả hai về đúng ô cũ (`encounter.back`), máu cũ như trước. Vào lại game mà
   còn đứng ở `duel_arena` không có trận thì về Làng (`cc_back`).
 - Đấu trực tiếp nhiều cặp cùng lúc dùng chung bản đồ này (thấy nhau nhưng không đánh nhau được: đồ sát cần đối thủ rảnh tay).
+
+## Đấu trường: VS rồi mới đánh, K.O. sau trận (2026-11-09, anh yêu cầu)
+- Màn VS (2 giây) chiếu xong trận mới bắt đầu: lệnh đánh / kỹ năng / bình / bỏ chạy bấm trong lúc VS đang chiếu chờ tới hết màn
+  rồi mới gửi (client, `vsHold`).
+- K.O. hiện sau đòn cuối 1,3 giây (máu tụt, chữ sát thương xong) và không bao giờ đè lên màn VS.
