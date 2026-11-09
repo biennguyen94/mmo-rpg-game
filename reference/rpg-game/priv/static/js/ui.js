@@ -1122,9 +1122,9 @@
       <p class="small">Đứng chỗ thoáng trên đồi (không sát cây), chạm vào khoảng trời chỗ nào cũng được (dây diều không giới hạn), hoặc bấm 🪁 Thả diều: diều lên giữa trời phía trên mình. Gió giật thì <b>giữ dây</b> ngay (trong ${(SKY.window_ms / 1000).toFixed(1)} giây): diều mang về Lông Hạc, Mảnh Mây, đôi khi ngọc; mỗi lần +1 Phong Khí.</p>
       <p class="small"><b>Việc hôm nay:</b> thả thành công <b>${e.count}</b> lần ở đồi rồi quay lại: <b>${fmt(e.reward.gold || 0)}</b> vàng, <b>${fmt(e.reward.xp || 0)}</b> kinh nghiệm, <b>+${e.reward.phong_khi || 0}</b> Phong Khí. Đã thả: <b class="num">${e.n}/${e.count}</b></p>
       <button class="btn ${e.n >= e.count && !e.done ? 'primary' : ''} block" data-act="kite_elder" ${e.n >= e.count && !e.done ? '' : 'disabled'}>${e.done ? 'Hôm nay đã nhận, mai quay lại' : 'Nhận công'}</button>
-      <p class="small" style="margin-top:8px"><b>Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}:</b> ${Object.entries(need).map(([id, n]) => `${esc((ITEMS[id] || {}).name || id)} <span class="num">${P.inv[id] || 0}/${n}</span>`).join(', ')}. Gắn vào diều thì thả trúng ô Chim Lạc cơ hội ×${(SKY.bird || {}).bait_mult}.</p>
+      <p class="small" style="margin-top:8px"><b>Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}:</b> ${Object.entries(need).map(([id, n]) => `${esc((ITEMS[id] || {}).name || id)} <span class="num">${P.inv[id] || 0}/${n}</span>`).join(', ')}. <span>Gắn vào diều thì thả trúng ô Chim Lạc cơ hội ×${(SKY.bird || {}).bait_mult}.</span></p>
       <button class="btn block" data-act="kite_craft" ${have ? '' : 'disabled'}>🎶 Ghép ${esc((ITEMS[(SKY.bird || {}).bait] || {}).name || 'Sáo Đồng')}</button>
-      <p class="small muted">🕊 Đàn Hạc: khoảng ${Math.round(F.every / 60)} phút một lần, bay vòng ở một ô trời trong ${Math.round(F.stay / 60)} phút; thả trúng thì quà tốt hơn, +${F.phong_khi} Phong Khí.${skySt.flock ? ' <b>Đàn đang bay!</b>' : ''} 🌠 Ban đêm có mưa sao băng: Mảnh Sao rơi trên đồi, chạm để nhặt.</p></div>`;
+      <p class="small muted">🕊 Đàn Hạc: khoảng ${Math.round(F.every / 60)} phút một lần, bay vòng ở một ô trời trong ${Math.round(F.stay / 60)} phút; thả trúng thì quà tốt hơn, +${F.phong_khi} Phong Khí.<span>${skySt.flock ? ' <b>Đàn đang bay!</b>' : ''}</span> <span>🌠 Ban đêm có mưa sao băng: Mảnh Sao rơi trên đồi, chạm để nhặt.</span></p></div>`;
   }
   let birdBoard = null, birdAt = 0, hacBoard = null, hacAt = 0;
   async function loadBoard(act) {
@@ -1150,7 +1150,7 @@
     if (Date.now() - hacAt > 60000) { hacAt = Date.now(); loadBoard('hac_board'); }
     return `<div class="card"><div class="row"><img class="sprite" src="${asset('sky/hac_long.png')}" alt=""><div class="grow"><h3>🐉 ${esc(pet.name)} — Con Rồng Cháu Tiên</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
       <p class="small">Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh <b>Bọc Trăm Trứng</b>. Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi <b>cùng lúc</b>, cả server được báo <b>Long Phượng Hội</b>: vòng sáng mở ở Tế Đàn ${Math.round(H.stay / 60)} phút. Đủ điều kiện thì bước vào vòng làm lễ; người khác vào vòng được hưởng lộc +${H.lucky_qi} Long Khí, Phong Khí.</p>
-      <p class="small"><b>Điều kiện:</b> có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long. ${miss.length ? `Bạn còn thiếu: <b>${esc(miss.join(', '))}</b>.` : '<b style="color:var(--good)">Bạn đã đủ điều kiện!</b>'}</p>
+      <p class="small"><b>Điều kiện:</b> có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long. ${miss.length ? `Bạn còn thiếu: ${miss.map((x) => `<b>${esc(x)}</b>`).join(', ')}.` : '<b style="color:var(--good)">Bạn đã đủ điều kiện!</b>'}</p>
       <p class="small">Trứng nở khi hạ đủ ${fmt(E.kills)} quái, hoặc sau ${E.days} ngày, hoặc hạ Hắc Long thêm một lần. ${Math.round(E.rare_chance * 100)}% nở ra <b>Hắc Long Chân Thân</b>.</p></div>
       <div class="card"><h3>Bia Hắc Long</h3>${boardList(hacBoard, 'Chưa ai thuần phục được Hắc Long. Người đầu tiên sẽ được cả server nhớ tên.')}</div>`;
   }

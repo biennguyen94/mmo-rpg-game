@@ -23,7 +23,8 @@ texts = set()
 def walk_texts(o):
     if isinstance(o, dict):
         for k, v in o.items():
-            if k in ('banned_words', 'banned_parts'): continue
+            # `_doc` / `_note`…: ghi chú cho người làm game, người chơi không thấy
+            if k in ('banned_words', 'banned_parts') or k.startswith('_'): continue
             walk_texts(v)
     elif isinstance(o, list):
         for v in o: walk_texts(v)
@@ -73,6 +74,8 @@ def strip_js(src):
 def strip_ex(src):
     # bỏ @doc / @moduledoc (heredoc) và dòng chú thích #
     src = re.sub(r'"""[\s\S]*?"""', '', src)
+    # @doc "…" một dòng (tài liệu code, không hiện cho người chơi)
+    src = re.sub(r'@(?:module|type)?doc\s+"(?:[^"\\]|\\.)*"', '', src)
     return '\n'.join(re.sub(r'(^|\s)#\s.*$', '', l) if not l.lstrip().startswith('#') else '' for l in src.split('\n'))
 
 for f in glob.glob(ROOT + '/priv/static/js/*.js'):
@@ -84,7 +87,8 @@ for f in glob.glob(ROOT + '/lib/**/*.ex', recursive=True):
 name_list = sorted(names, key=len, reverse=True)
 name_re = '|'.join(re.escape(n) for n in name_list)
 # {a} {b} {n}: chỗ trống của câu bình luận Tiến Lên (commentary.ex), đánh số như tên / số
-TOK = re.compile('(' + (name_re + '|' if name_re else '') + r'\d+(?:[.,]\d+)*|\{[abn]\}|' + INTERP + ')')
+# tên chỉ khớp khi đứng riêng (không khớp giữa chữ, vd "Da" trong "Danh"), như i18n.js
+TOK = re.compile('(' + ('(?<![^\\W\\d_])(?:' + name_re + ')(?![^\\W\\d_])|' if name_re else '') + r'\d+(?:[.,]\d+)*|\{[abn]\}|' + INTERP + ')')
 
 def key(s):
     s = re.sub(r'\s+', ' ', s.replace('\\n', ' ')).strip()
@@ -99,6 +103,8 @@ for t in texts:
     for line in re.split(r'\n|' + SEP, t):
         k = key(line)
         k = k.strip(' ·,:;')
+        # bỏ mảnh code lọt vào (chú thích //, nội suy Elixir, regex, lời gọi hàm)
+        if k.startswith(('//', 'const ', 'let ', 'if (', 'setTimeout(')) or ' // ' in k or re.search(r'#\{|\\d|/\.test|\.replace\(|\|\||&&', k): continue
         if VI.search(k) and len(k) <= 400 and not re.search(r'`|%\{|\)\.join|=>|\$\{', k):
             keys.add(k)
 json.dump({'names': name_list, 't': sorted(keys)}, open(ROOT + '/priv/static/i18n/source.json', 'w'), ensure_ascii=False, indent=0)
