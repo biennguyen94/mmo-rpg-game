@@ -5,6 +5,7 @@ Chạy: python3 scripts/sky_assets.py <thư_mục_nguồn> <thư_mục_icon_64>
     Phoenix_SpriteSheet_0.png  (Chasersgaming, "Phoenix (reborn)")
     birds.32x32.png            (MoikMellah, "Animated Birds (32x32)")
     Clouds_4.png               (Igor Gundarev, "Clouds")
+    clouds512_1.png            (Sam, "Cloud Set")
     dracheneier.png            (MELLE, "Dragon Eggs")
   thư mục icon 64: kết quả của scripts/sky_svg_icons.cjs (game-icons.net, CC BY 3.0)
 Ghi vào priv/static/assets/ (pets/, items/, sky/, tiles/, npcs/).
@@ -92,6 +93,43 @@ hac.save(out("sky/hac.png"))
 # ---------- Mây trôi: tách 5 đám mây ----------
 cl = Image.open(os.path.join(SRC, "Clouds_4.png")).convert("RGBA")
 cl.save(out("sky/clouds.png"))
+
+# ---------- Mây mềm (Sam, "Cloud Set", CC0): bỏ nền xanh → trong suốt, tách từng đám ----------
+cs = Image.open(os.path.join(SRC, "clouds512_1.png")).convert("RGBA")
+BG = (129, 201, 249)
+px = cs.load()
+W, H = cs.size
+for y in range(H):
+    for x in range(W):
+        r, g, b, _ = px[x, y]
+        a = max(0.0, min(1.0, (r - BG[0]) / (255 - BG[0])))
+        if a < 0.02:
+            px[x, y] = (0, 0, 0, 0)
+            continue
+        # bỏ phần màu nền đã trộn vào (giữ bóng xám xanh nhẹ dưới đáy mây)
+        c = [max(0, min(255, round((v - bg * (1 - a)) / a))) for v, bg in zip((r, g, b), BG)]
+        px[x, y] = (c[0], c[1], c[2], round(a * 255))
+# tách các đám theo hàng / cột trống
+mask = [[px[x, y][3] > 8 for x in range(W)] for y in range(H)]
+seen = [[False] * W for _ in range(H)]
+boxes = []
+for y in range(H):
+    for x in range(W):
+        if mask[y][x] and not seen[y][x]:
+            st = [(x, y)]; seen[y][x] = True; x0 = x1 = x; y0 = y1 = y; n = 0
+            while st:
+                cx, cy = st.pop(); n += 1
+                x0, x1, y0, y1 = min(x0, cx), max(x1, cx), min(y0, cy), max(y1, cy)
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < W and 0 <= ny < H and mask[ny][nx] and not seen[ny][nx]:
+                        seen[ny][nx] = True; st.append((nx, ny))
+            if n > 400:
+                boxes.append((x0, y0, x1 + 1, y1 + 1))
+boxes.sort(key=lambda b: -(b[2] - b[0]) * (b[3] - b[1]))
+for i, bx in enumerate(boxes[:6]):
+    cs.crop((max(0, bx[0] - 2), max(0, bx[1] - 2), min(W, bx[2] + 2), min(H, bx[3] + 2))).save(out(f"sky/cloud{i + 1}.png"))
+print("mây mềm:", len(boxes[:6]))
 
 # ---------- Ô trời: xanh nhạt, vài vệt sáng (tự vẽ, CC0) ----------
 rnd = random.Random(7)

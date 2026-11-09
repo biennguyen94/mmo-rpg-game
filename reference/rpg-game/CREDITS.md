@@ -126,11 +126,11 @@ Dựng bằng `scripts/sky_assets.py` và `scripts/sky_svg_icons.cjs` từ:
   (https://opengameart.org/content/phoenix-reborn), giấy phép **CC0 1.0**; tô lại màu đồng thau (trống đồng Đông Sơn).
 - **Đàn Hạc** (`sky/hac.png`): **Animated Birds (32x32)** của **MoikMellah** (https://opengameart.org/content/animated-birds-32x32),
   giấy phép **CC0 1.0**; bỏ nền hồng.
-- **Mây trôi** (`sky/clouds.png`): **Clouds** của **Igor Gundarev** (https://opengameart.org/content/clouds), giấy phép **CC0 1.0**.
+- **Mây trôi** (`sky/cloud1.png` … `cloud5.png`, đang dùng): **Cloud Set** của **Sam** (https://opengameart.org/content/cloud-set), giấy phép **CC0 1.0**; bỏ nền xanh, tách từng đám. `sky/clouds.png` (bản pixel cũ, không còn dùng): **Clouds** của **Igor Gundarev** (https://opengameart.org/content/clouds), CC0 1.0.
 - **Bọc Trăm Trứng** (`sky/egg.png`, `items/boc_tram_trung.png`): quả trứng đen vân dung nham trong **Dragon Eggs** của **MELLE**
   (https://opengameart.org/content/dragon-eggs), giấy phép **CC0 1.0**.
 - **Hắc Long (thú)** (`pets/hac_long.png`, `sky/hac_long.png`, bản Chân Thân có quầng tím): hình Hắc Long ở màn đăng nhập (Cethiel, CC0, ở trên).
 - **Icon vật phẩm** Lông Hạc (`feather`, Lorc), Mảnh Mây (`cloud-ring`, Lorc), Mảnh Sao (`fragmented-meteor`, Lorc), Sáo Đồng
   (`flute`, Delapouite), Dây Diều Đứt (`kite`, Delapouite): **game-icons.net**, giấy phép **CC BY 3.0** (như mục Icon ở trên), đã tô màu.
-- Ô trời (`tiles/sky.png`), diều và dây diều (vẽ bằng code trong `map.js`): tự vẽ cho game này (CC0). NPC Ông Lão Làm Diều
+- Trời (dải chuyển màu, ánh nắng, sương chân trời, cỏ mép đồi), diều và dây diều: vẽ bằng code trong `map.js` (CC0); `tiles/sky.png` chỉ còn dùng cho bản đồ nhỏ. NPC Ông Lão Làm Diều
   (`npcs/kite_maker.png`) tô lại từ người dân Làng (`npcs/elder.png`, bộ Dungeon Crawl Stone Soup CC0 ở trên).

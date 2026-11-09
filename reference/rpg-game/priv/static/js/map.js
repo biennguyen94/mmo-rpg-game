@@ -801,10 +801,13 @@
     const fx = fxOn(), fountains = [], lanterns = [], tufts = [], incense = [];
     const grassy = /forest|swamp|grass/.test(m.floor || '') && outdoors(P);
 
+    if (m.kite) skyBack(now, m, cx, cy, x0, y0, x1, y1);
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
         const kind = WORLD.legend[m.tiles[y][x]];
+        // ô trời (Đồi Sáo Diều): không vẽ nền / ô, trời vẽ liền một dải ở `skyBack` (không lộ lưới ô)
+        if (kind === 'sky') continue;
         if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE);
         if (kind !== 'floor') {
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
@@ -858,7 +861,7 @@
     }
 
     groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
-    if (m.kite) clouds(now, m, cx, cy, fx);
+    if (m.kite) clouds(now, m, cx, cy, fx, x0, y0, x1, y1);
     if (tufts.length) grassFx(now, tufts);
     for (const [ix, iy] of incense) {
       for (let i = 0; i < 4; i++) {
@@ -1861,25 +1864,87 @@
   }
 
   // ---------- Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long") ----------
-  // mây trôi ngang trên phần trời (hình mây CC0, `sky/clouds.png`: 5 đám), chỉ ở các hàng có ô trời
-  const CLOUD_RECTS = [[0, 0, 128, 26], [0, 27, 128, 34], [16, 62, 92, 26], [0, 90, 64, 34], [64, 92, 64, 32]];
-  function clouds(t, m, cx, cy, fx) {
-    const im = image('sky/clouds');
-    if (!im.complete) return;
-    let rows = 0;
-    while (rows < m.tiles.length && m.tiles[rows].includes('^')) rows++;
-    const h = rows * TILE - cy;
-    if (h <= 0) return;
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW(), h); ctx.clip();
-    const w = m.tiles[0].length * TILE;
-    for (let i = 0; i < 7; i++) {
-      const [sx, sy, sw, sh] = CLOUD_RECTS[i % CLOUD_RECTS.length];
-      const speed = 0.006 + 0.004 * rnd(i, 3), y = 6 + rnd(i, 4) * (rows * TILE - sh - 10);
-      const x = (((rnd(i, 5) * w + (fx ? t : 0) * speed) % (w + sw * 2)) - sw);
-      ctx.globalAlpha = 0.75 + 0.2 * rnd(i, 6);
-      ctx.drawImage(im, sx, sy, sw, sh, Math.round(x - cx), Math.round(y - cy), sw, sh);
+  // trời Đồi Sáo Diều: một dải chuyển màu liền (xanh đậm trên cao → xanh nhạt chân trời), ánh nắng, 3 lớp mây mềm trôi
+  // (hình mây CC0 `sky/cloud1..5`: xa nhỏ chậm mờ, gần to nhanh rõ; lớp xa ít trôi theo camera hơn → có chiều sâu), sương
+  // mỏng ở chân trời. Chỉ vẽ trong các ô trời (cắt theo ô), nên mỏm đồi vẫn che trời.
+  function skyClip(m, cx, cy, x0, y0, x1, y1) {
+    ctx.beginPath();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if ((m.tiles[y] || '')[x] === '^') ctx.rect(Math.round(x * TILE - cx), Math.round(y * TILE - cy), TILE + 0.5, TILE + 0.5);
+    ctx.clip();
+  }
+  // mép đồi giáp trời: bóng mềm dọc mép, cỏ lún phún nhô lên trời, lay theo gió (đỡ vuông vức theo ô)
+  function skyEdge(t, m, cx, cy, fx, x0, y0, x1, y1) {
+    const sky = (x, y) => (m.tiles[y] || '')[x] === '^';
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        if (sky(x, y) || !m.tiles[y]) continue;
+        const px = Math.round(x * TILE - cx), py = Math.round(y * TILE - cy);
+        if (sky(x, y - 1)) {
+          const g = ctx.createLinearGradient(0, py, 0, py + 10);
+          g.addColorStop(0, 'rgba(20, 50, 20, 0.35)'); g.addColorStop(1, 'rgba(20, 50, 20, 0)');
+          ctx.fillStyle = g; ctx.fillRect(px, py, TILE, 10);
+          for (let i = 0; i < 9; i++) {
+            const bx = px + 1 + i * 3.6 + rnd(x * 13 + i, y) * 2, h = 4 + rnd(x + i * 7, y * 3) * 7;
+            const sway = fx ? Math.sin(t / 700 + x * 0.9 + i) * 1.6 : 0;
+            ctx.strokeStyle = i % 3 ? '#3f8a2e' : '#5aa83c'; ctx.lineWidth = 1.4;
+            ctx.beginPath(); ctx.moveTo(bx, py + 3); ctx.quadraticCurveTo(bx + sway * 0.5, py - h * 0.5, bx + sway, py - h); ctx.stroke();
+          }
+        }
+        for (const [dx, side] of [[-1, 0], [1, TILE]]) {
+          if (!sky(x + dx, y)) continue;
+          const g = ctx.createLinearGradient(px + side, 0, px + side - dx * 8, 0);
+          g.addColorStop(0, 'rgba(20, 50, 20, 0.35)'); g.addColorStop(1, 'rgba(20, 50, 20, 0)');
+          ctx.fillStyle = g; ctx.fillRect(dx < 0 ? px : px + TILE - 8, py, 8, TILE);
+        }
+      }
     }
-    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  function skyRows(m) { let r = 0; while (r < m.tiles.length && m.tiles[r].includes('^')) r++; return r; }
+  function skyBack(t, m, cx, cy, x0, y0, x1, y1) {
+    const rows = skyRows(m), top = -cy, bot = rows * TILE - cy;
+    if (bot <= 0) return;
+    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
+    const g = ctx.createLinearGradient(0, top, 0, bot);
+    g.addColorStop(0, '#3f7fcf'); g.addColorStop(0.55, '#7cb6ec'); g.addColorStop(0.9, '#c4e2fb'); g.addColorStop(1, '#e6f3fd');
+    ctx.fillStyle = g; ctx.fillRect(0, Math.max(0, top), VW(), bot - Math.max(0, top));
+    // ánh nắng góc trên phải
+    const sx = VW() * 0.82, sy = top + TILE * 1.2, sun = ctx.createRadialGradient(sx, sy, 4, sx, sy, TILE * 6);
+    sun.addColorStop(0, 'rgba(255, 250, 225, 0.55)'); sun.addColorStop(1, 'rgba(255, 250, 225, 0)');
+    ctx.fillStyle = sun; ctx.fillRect(0, Math.max(0, top), VW(), bot);
+    ctx.restore();
+  }
+  const CLOUD_LAYERS = [
+    { n: 6, scale: 0.28, alpha: 0.55, speed: 0.0035, par: 0.35, band: [0.05, 0.55] },
+    { n: 5, scale: 0.45, alpha: 0.8, speed: 0.007, par: 0.6, band: [0.15, 0.8] },
+    { n: 3, scale: 0.7, alpha: 0.95, speed: 0.012, par: 1, band: [0.35, 0.95] },
+  ];
+  function clouds(t, m, cx, cy, fx, x0, y0, x1, y1) {
+    const rows = skyRows(m);
+    if (rows * TILE - cy <= 0) return;
+    const w = m.tiles[0].length * TILE, H = rows * TILE, k = fx ? t : 0;
+    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
+    CLOUD_LAYERS.forEach((L, li) => {
+      for (let i = 0; i < L.n; i++) {
+        const im = image('sky/cloud' + (1 + ((i + li * 2) % 5)));
+        if (!im.complete || !im.naturalWidth) continue;
+        const cw = im.naturalWidth * L.scale, ch = im.naturalHeight * L.scale, span = w + cw * 2;
+        const x = ((rnd(i + 11 * li, 5) * span + k * L.speed * (0.8 + 0.4 * rnd(i, 9))) % span) - cw;
+        const y = (L.band[0] + (L.band[1] - L.band[0]) * rnd(i + 7 * li, 4)) * H - ch / 2;
+        // lớp xa trôi theo camera ít hơn (thị sai)
+        const sx = x - cx * L.par, sy = y - cy * (0.6 + 0.4 * L.par);
+        ctx.globalAlpha = L.alpha * (0.85 + 0.15 * Math.sin(k / 4000 + i));
+        ctx.drawImage(im, Math.round(sx), Math.round(sy), cw, ch);
+      }
+    });
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    skyEdge(t, m, cx, cy, fx, x0, y0, x1, y1);
+    ctx.save(); skyClip(m, cx, cy, x0, y0, x1, y1);
+    // sương mỏng ở chân trời (ngay trên mép đồi)
+    const hb = H - cy, haze = ctx.createLinearGradient(0, hb - TILE * 1.6, 0, hb);
+    haze.addColorStop(0, 'rgba(240, 248, 255, 0)'); haze.addColorStop(1, 'rgba(240, 248, 255, 0.55)');
+    ctx.fillStyle = haze; ctx.fillRect(0, hb - TILE * 1.6, VW(), TILE * 2);
+    ctx.restore();
   }
   // Chim Lạc lượn vòng quanh ô (6 khung bay `sky/chim_lac.png`, mỗi khung 64×64), ánh đồng lấp lánh
   function birdSpot(t, x, y, fx) {
