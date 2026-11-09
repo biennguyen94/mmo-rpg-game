@@ -21,7 +21,11 @@ Hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật (`priv/stat
 **Dragon - Fully Animated** của **Cethiel** (https://opengameart.org/content/dragon-fully-animated), giấy phép **CC0 1.0**.
 Đã cắt sát hình và tô lại sang đen (giữ mắt vàng). Cảm ơn Cethiel.
 
-Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): `priv/static/app/logo.svg` gồm khung (nền, viền vàng) tự vẽ cho game này (CC0) và phần đầu hình Hắc Long ở trên (Cethiel, CC0), xuất các cỡ bằng `e2e/app_icons.mjs`.
+Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): đầu rồng vẽ chì **Dragon Portrait** của **MetaShinryu**
+(https://opengameart.org/content/dragon-portrait-0), giấy phép **CC BY 3.0** (https://creativecommons.org/licenses/by/3.0/;
+tác giả đăng kèm CC BY-SA 3.0, ta dùng CC BY 3.0). Đã tô lại sang đen thép, thêm mắt đỏ rực, đặt trên nền đỏ thẫm tự vẽ (CC0).
+Bản gốc: `assets_src/app/dragon_portrait_metashinryu.png`; dựng `priv/static/app/logo.svg` bằng `scripts/app_logo.py`, xuất các cỡ
+bằng `e2e/app_icons.mjs`. Cảm ơn MetaShinryu.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng

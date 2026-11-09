@@ -1906,3 +1906,10 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - **I-6** `en.json` bỏ 95 "tên" cũ không còn trong dữ liệu mà lại nằm trong câu mẫu ("Da", "Gió", "trùm", "vũ khí"…), chuyển sang khóa câu: chúng làm câu lúc chạy không khớp mẫu ("Danh hiệu" thành "Leathernh hiệu"). Tên chỉ khớp khi đứng riêng (không khớp giữa chữ), ở cả `i18n.js` và script trích.
 - **I-7** `i18n.js`: câu trong ngoặc kép “…” (lời NPC) dịch phần trong; mẫu thiếu / thừa dấu chấm cuối vẫn khớp; danh sách "A, B, C." mà mỗi mục có khóa thì dịch từng mục.
 - **I-8** e2e `lang.mjs` soát thêm Đấu trường, Thú cưng, Kỹ năng, Thành tựu, Thư viện, Chọn map, Quanh đây, Đồi Sáo Diều và Ông Lão Làm Diều; mẫu lỗi in nguyên đoạn chữ còn tiếng Việt.
+
+## Icon ứng dụng mới (2026-11-09, anh yêu cầu)
+- Bỏ khung viền vàng; đầu rồng to tràn khung. Hình cũ (đầu rồng nhỏ cắt từ sprite 458×291 của Cethiel) phóng to bị mờ, nên đổi sang
+  "Dragon Portrait" của MetaShinryu (OpenGameArt, CC BY 3.0, 1712×2288), tô đen thép, mắt đỏ rực, nền đỏ thẫm (`scripts/app_logo.py`).
+- Bản maskable (Android) dùng cùng hình tràn khung (trước thu 78% nên lộ cạnh vuông): mắt và mõm nằm trong vùng an toàn 80%.
+- Đổi `?v=5` → `?v=6` ở `index.html` / `manifest.json` để trình duyệt lấy icon mới. Icon đã thêm ra màn hình chính có thể cần
+  gỡ rồi "Thêm vào màn hình chính" lại mới đổi (Android giữ icon cũ).
