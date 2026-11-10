@@ -9,11 +9,11 @@ const STATIC = new URL('../priv/static/', import.meta.url).pathname;
 const svg = fs.readFileSync(STATIC + 'app/logo.svg', 'utf8');
 // bản không nền cho icon maskable (vẽ thu nhỏ đè lên nền kín): khỏi lộ ô vuông nền của phần thu nhỏ
 const svgBare = svg.replace(/<rect width="512" height="512" fill="url\(#bg\)"\/>/, '');
-// [tệp, cỡ, hình chiếm (phần cạnh)]: maskable — Android cắt hình, phần vẽ thu vào vùng an toàn 80%, nền vẫn kín.
+// [tệp, cỡ, hình chiếm (phần cạnh)]: maskable dùng hình tràn khung (mắt, mõm rồng nằm trong vùng an toàn 80% Android không cắt).
 const JOBS = [
   ['app/icon-512.png', 512, 1],
   ['app/icon-192.png', 192, 1],
-  ['app/icon-maskable-512.png', 512, 0.78],
+  ['app/icon-maskable-512.png', 512, 1],
   ['app/apple-touch-icon.png', 180, 1],
   ['app/favicon-32.png', 32, 1],
 ];

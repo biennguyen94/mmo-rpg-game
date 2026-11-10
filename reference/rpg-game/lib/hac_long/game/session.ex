@@ -29,6 +29,7 @@ defmodule HacLong.Game.Session do
     Daily,
     Engine,
     Names,
+    QuickFight,
     Quests,
     Tower,
     Tutorial
@@ -321,6 +322,7 @@ defmodule HacLong.Game.Session do
     s =
       if player do
         Characters.put_reason("TRADE")
+        World.sync_duel(s.player, player, s.user_id)
         s = cancel_flush(%{s | player: player, dirty: false})
         broadcast(s, player, nil)
         s
@@ -329,7 +331,9 @@ defmodule HacLong.Game.Session do
       end
 
     s = replay(s)
-    reply(:ok, s)
+
+    # đồ sát vừa chốt (nhân vật được trả về sau khi giữ): đang bật ⚡ thì server tự rời màn trận
+    reply(:ok, arm_auto(s))
   end
 
   # nhả muộn (đã tự nhả vì quá giờ) hoặc nhả hai lần: bỏ qua
@@ -393,7 +397,9 @@ defmodule HacLong.Game.Session do
       p = %{p | hp: info.hp, battle: b}
       s = s |> Map.put(:player, p) |> mark_dirty()
       broadcast(s, p, nil)
-      {:noreply, s, timeout(s)}
+      World.refresh(p, s.user_id)
+      # tới lượt mình: đang bật ⚡ thì server ra đòn theo combo
+      {:noreply, arm_auto(s), timeout(s)}
     else
       {:noreply, s, timeout(s)}
     end
@@ -505,7 +511,11 @@ defmodule HacLong.Game.Session do
           level: p.level,
           rebirths: Map.get(p, :rebirths) || 0,
           cls: p.cls,
-          map: p.pos.map
+          map: p.pos.map,
+          # tab "Đang online" ở Quanh đây: hình, ký hiệu bang, tên đỏ
+          look: Engine.look(p),
+          tag: p[:guild] && p.guild[:tag],
+          red: HacLong.Slay.red?(s.user_id)
         },
         s
       )
@@ -549,6 +559,9 @@ defmodule HacLong.Game.Session do
         if player != old, do: broadcast(s, player, origin)
         left_trade(s.user_id, old, player)
         Enum.each(notes, &notify(s, &1))
+
+        # bước vào quái lúc bật ⚡ Đánh nhanh: hẹn nhịp để server đánh theo combo (DECISIONS "Đánh nhanh theo combo")
+        s = arm_auto(s)
         reply({result, player}, s)
 
       :too_fast ->
@@ -605,26 +618,36 @@ defmodule HacLong.Game.Session do
   defp handle({:slay_begin, %{fight: f, foe: foe}}, _from, s) do
     p = s.player
 
+    # E2 đấu trường trực tiếp: hai bên rảnh tay, bản đồ nào cũng được, vào trận đầy máu (giữ máu cũ ở `hp0`)
+    duel = f[:duel] == true
+
     cond do
       HacLong.Slay.slaying?(p) ->
         reply({:error, "#{p.name} đang trong trận đồ sát khác."}, s)
 
       # người tấn công phải rảnh tay (Slay.check); người bị đánh đang đánh quái thì trận đó bị ngắt
-      f.mine and p.battle != nil ->
+      (f.mine or duel) and p.battle != nil ->
         reply({:error, "#{p.name} đang trong trận đấu."}, s)
 
       p.hp <= 0 ->
         reply({:error, "#{p.name} đang gục ngã."}, s)
 
-      p.pos.map != f.map ->
+      p.pos.map != f.map and not duel ->
         reply({:error, "#{p.name} đã rời bản đồ."}, s)
 
       true ->
         cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
         p = interrupt_battle(p, s.user_id)
-        mp = Maps.get(f.map)
+        hp0 = p.hp
+        back = p.pos
+        p = if duel, do: %{p | hp: Engine.derived(p).maxHp}, else: p
+
+        # đấu trực tiếp: hai người vào bản đồ riêng (người mời ô a, người nhận ô b), xong trận về chỗ cũ `back`
+        p = if duel, do: World.warp(p, s.user_id, HacLong.Slay.duel_spot(f.mine)), else: p
+        mp = if duel, do: Maps.get(HacLong.Slay.duel_map()), else: Maps.get(f.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
+        enc = if duel, do: Map.merge(enc, %{duel: true, hp0: hp0, back: back}), else: enc
 
         b =
           Map.merge(p2.battle, %{
@@ -636,9 +659,19 @@ defmodule HacLong.Game.Session do
           })
 
         text =
-          if f.mine,
-            do: "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước.",
-            else: "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
+          cond do
+            duel and f.mine ->
+              "⚔ Đấu trường trực tiếp: #{p2.name} đấu #{foe.name}! #{p2.name} ra đòn trước. Không mất vàng."
+
+            duel ->
+              "⚔ Đấu trường trực tiếp: #{foe.name} đấu #{p2.name}! #{foe.name} ra đòn trước. Không mất vàng."
+
+            f.mine ->
+              "🗡 #{p2.name} đồ sát #{foe.name}! #{p2.name} ra đòn trước."
+
+            true ->
+              "⚠ #{foe.name} đồ sát #{p2.name}! Bỏ chạy tính như gục ngã."
+          end
 
         text = if cut, do: "Trận với #{cut} bị cắt ngang. " <> text, else: text
         b = %{b | log: [%{text: text, kind: "bad"}]}
@@ -646,12 +679,21 @@ defmodule HacLong.Game.Session do
         left_trade(s.user_id, p, p2)
         s = save(s, p2)
         broadcast(s, p2, nil)
-        reply(:ok, s)
+
+        # ⚡ Đồ sát nhanh: người đi trước đang bật ⚡ thì server ra đòn theo combo; người cùng bản đồ thấy ⚔
+        World.refresh(p2, s.user_id)
+        reply(:ok, arm_auto(s))
     end
   end
 
-  defp handle({:slay_cancel, id}, _from, %{player: %{battle: %{encounter: %{slay: id}}} = p} = s) do
+  defp handle(
+         {:slay_cancel, id},
+         _from,
+         %{player: %{battle: %{encounter: %{slay: id} = enc}} = p} = s
+       ) do
     p = %{p | battle: nil}
+    # đấu trực tiếp bị hủy: về chỗ cũ (máu cũ)
+    p = if enc[:back], do: World.warp(%{p | hp: enc[:hp0] || p.hp}, s.user_id, enc.back), else: p
     s = save(s, p)
     broadcast(s, p, nil)
     reply(:ok, s)
@@ -970,13 +1012,45 @@ defmodule HacLong.Game.Session do
   defp rare_pet(s, player, pet, result) do
     name = HacLong.Game.Data.pet(pet).name
     n = HacLong.RarePets.record!(s.user_id, player.name, pet)
-    HacLong.LakeEvent.dive()
 
-    Map.merge(result, %{
-      msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
-      dragon: true,
-      announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
-    })
+    cond do
+      pet == HacLong.Game.Kite.rules().bird.pet ->
+        HacLong.SkyEvent.fly_away()
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          bird: true,
+          announce: "🐦 #{player.name} đã cảm hóa #{name} ở Đồi Sáo Diều! #{name} Chủ thứ #{n}."
+        })
+
+      pet in HacLong.Game.DragonEgg.pets() ->
+        # người đầu tiên của server có Hắc Long (thường hay Chân Thân): báo riêng (DECISIONS "… Hắc Long")
+        first? =
+          HacLong.Game.DragonEgg.pets()
+          |> Enum.flat_map(&HacLong.RarePets.list/1)
+          |> Enum.min_by(& &1.at, DateTime, fn -> nil end)
+          |> then(&(&1 && &1.user_id == s.user_id))
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          hac: true,
+          announce:
+            if(first?,
+              do:
+                "🏆🐉 #{player.name} là người ĐẦU TIÊN của server thuần phục #{name}! Linh vật Con Rồng Cháu Tiên đã về.",
+              else: "🐉 Bọc Trăm Trứng của #{player.name} đã nở ra #{name}! #{name} Chủ thứ #{n}."
+            )
+        })
+
+      true ->
+        HacLong.LakeEvent.dive()
+
+        Map.merge(result, %{
+          msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
+          dragon: true,
+          announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
+        })
+    end
   end
 
   # Góp tiến độ nhiệm vụ bang (không chờ: ghi database ngoài tiến trình này).
@@ -1094,11 +1168,21 @@ defmodule HacLong.Game.Session do
   defp run(_s, p, %{"act" => "secret_board"}),
     do: {%{ok: true, board: HacLong.World.SecretRecords.recent(30)}, p}
 
-  # Bia Long Vương: người đã câu được Long Vương, sớm trước
-  defp run(_s, p, %{"act" => "dragon_board"}) do
+  # Bia Long Vương / Bia Chim Lạc / Bia Hắc Long: người đã có thú hiếm đó, sớm trước
+  defp run(_s, p, %{"act" => act}) when act in ["dragon_board", "bird_board", "hac_board"] do
+    pets =
+      case act do
+        "dragon_board" -> [HacLong.Game.Fishing.dragon().pet]
+        "bird_board" -> [HacLong.Game.Kite.rules().bird.pet]
+        "hac_board" -> HacLong.Game.DragonEgg.pets()
+      end
+
     board =
-      HacLong.Game.Fishing.dragon().pet
-      |> HacLong.RarePets.list()
+      pets
+      |> Enum.flat_map(&HacLong.RarePets.list/1)
+      |> Enum.sort_by(& &1.at, DateTime)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {r, i} -> %{r | n: i} end)
       |> Enum.map(&%{n: &1.n, name: &1.name, at: Date.to_iso8601(DateTime.to_date(&1.at))})
 
     {%{ok: true, board: board}, p}
@@ -1460,6 +1544,11 @@ defmodule HacLong.Game.Session do
     s = %{s | auto_timer: nil}
 
     cond do
+      # ⚡ Đánh nhanh (DECISIONS "Đánh nhanh theo combo"): trận với quái người chơi tự chọn, server đánh theo combo
+      not AutoHunt.on?(s.player) and s.held == nil and map_size(s.tabs) > 0 and
+          QuickFight.active?(s.player) ->
+        {:noreply, quick_step(s), timeout(s)}
+
       not AutoHunt.on?(s.player) ->
         {:noreply, s, timeout(s)}
 
@@ -1583,6 +1672,17 @@ defmodule HacLong.Game.Session do
     end
   end
 
+  defp quick_step(s) do
+    cmd = QuickFight.decide(s.player)
+    {reason, ref} = save_reason({:command, cmd, :auto})
+    Characters.put_reason(reason, ref)
+
+    {:reply, _value, s, _t} =
+      handle({:command, cmd, :auto}, nil, fresh(%{s | auto_timer: :busy}))
+
+    arm_auto(%{s | auto_timer: nil}, QuickFight.tick_ms())
+  end
+
   defp auto_snapshot(%{pos: %{map: id}}),
     do: if(AutoHunt.map_ok?(id), do: MapServer.snapshot(id))
 
@@ -1590,9 +1690,16 @@ defmodule HacLong.Game.Session do
   defp arm_auto(s, ms \\ nil)
 
   defp arm_auto(%{auto_timer: nil, player: p} = s, ms) when map_size(s.tabs) > 0 do
-    if AutoHunt.on?(p),
-      do: %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))},
-      else: s
+    cond do
+      AutoHunt.on?(p) ->
+        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))}
+
+      QuickFight.active?(p) ->
+        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || QuickFight.tick_ms())}
+
+      true ->
+        s
+    end
   end
 
   defp arm_auto(s, _ms), do: s
@@ -1615,6 +1722,7 @@ defmodule HacLong.Game.Session do
        when map_size(tabs) == 0 do
     out? =
       (HacLong.ChaosCastle.map?(map) and not HacLong.ChaosCastle.alive?(s.user_id)) or
+        map == HacLong.Slay.duel_map() or
         (map == HacLong.CastleSiege.map_id() and not HacLong.CastleSiege.fighting?())
 
     # Động Bí Ẩn đã đóng (vào lại game lúc trời sáng): ra cổng Đền Cổ
@@ -1913,6 +2021,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp save(s, player) do
+    World.sync_duel(s.player, player, s.user_id)
     Characters.save!(s.user_id, player)
     cancel_flush(%{s | player: player, dirty: false})
   end

@@ -157,6 +157,7 @@ defmodule HacLong.Game.Engine do
           visited: [],
           fish_caught: 0,
           long_khi: 0,
+          sky: HacLong.Game.Kite.load(nil),
           achievements: [],
           title: nil,
           bosses: [],
@@ -297,7 +298,7 @@ defmodule HacLong.Game.Engine do
       dodge:
         min(
           clamp(@combat.dodge.base + s.agi * @combat.dodge.per_agi, 0, @combat.dodge.max) *
-            (1 + exc.def_rate),
+            (1 + exc.def_rate) + Pets.bonus(p, :dodge),
           @combat.dodge.max_total
         ),
       # cánh: phần sát thương gây thêm / giảm khi nhận (mỗi cấp nâng +2 %)
@@ -826,7 +827,20 @@ defmodule HacLong.Game.Engine do
         do: "⚔️ #{m.name} (Cấp #{m.level}) xuất hiện!",
         else: "Bạn gặp #{m.name} (Cấp #{m.level})."
 
-    {ok(), p |> Map.put(:battle, battle) |> log(text, "info")}
+    p = p |> Map.put(:battle, battle) |> log(text, "info")
+
+    # dắt Hắc Long thuần huyết đánh trùm cuối Hắc Long: thoại riêng (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long")
+    p =
+      if m[:final] == true and Map.get(p, :pet) in HacLong.Game.DragonEgg.pets(),
+        do:
+          log(
+            p,
+            "🐉 #{Data.pet(p.pet).name} gầm lên với #{m.name}: \"Đồng tộc phản bội! Dòng máu Rồng Tiên không dành cho kẻ khủng bố vùng đất này!\" (Long Huyết: +#{round(Pets.trait(p, :slayer) * 100)}% sát thương)",
+            "win"
+          ),
+        else: p
+
+    {ok(), p}
   end
 
   # Nhật ký trận ghi tên, không xưng "bạn" (DECISIONS "Nhật ký trận: tên, dùng gì, gây bao nhiêu"): "Bạn" / "bạn"
@@ -872,18 +886,23 @@ defmodule HacLong.Game.Engine do
   end
 
   # `mult`: hệ số hồi máu (đánh người: `RULES.pvp.potion_mult`)
-  defp drink(p, id, mult \\ 1) do
+  # `cap`: trần mỗi bình theo phần máu / MP tối đa (đánh người: `potion_cap_pct` / `mana_cap_pct`), nil = không trần
+  defp drink(p, id, mult \\ 1, cap \\ nil) do
     d = derived(p)
+
+    lim = fn n, max ->
+      if cap, do: min(round(n * mult), round(max * cap)), else: round(n * mult)
+    end
 
     case potion_amount(p, id) do
       {:mp, n} ->
         before = mp(p)
-        p = %{p | mp: min(d.maxMp, before + n)} |> take_item(id)
+        p = %{p | mp: min(d.maxMp, before + lim.(n, d.maxMp))} |> take_item(id)
         {p, p.mp - before}
 
       {:hp, n} ->
         before = p.hp
-        p = %{p | hp: min(d.maxHp, p.hp + round(n * mult))} |> take_item(id)
+        p = %{p | hp: min(d.maxHp, p.hp + lim.(n, d.maxHp))} |> take_item(id)
         {p, p.hp - before}
     end
   end
@@ -968,6 +987,19 @@ defmodule HacLong.Game.Engine do
   end
 
   def cooldown(_p, _id), do: 0
+
+  # hiệu ứng lên mình của kỹ năng buff (Đánh nhanh: bước "chỉ dùng khi chưa có hiệu ứng")
+  @buff_ids %{"war_cry" => "rage", "shadow_step" => "evade", "guard" => "guard"}
+
+  @doc "Hiệu ứng buff của kỹ năng `k` còn trên người không (kỹ năng không buff: false)."
+  def buff_active?(%{battle: %{}} = p, k) do
+    case (k[:buff] || %{})[:id] || @buff_ids[k[:effect]] do
+      nil -> false
+      id -> effect(p, :player, id) != nil
+    end
+  end
+
+  def buff_active?(_p, _k), do: false
 
   defp set_cd(p, id, turns) do
     cds = (Map.get(p.battle, :cds) || []) |> Enum.reject(&(&1.id == id))
@@ -1083,6 +1115,9 @@ defmodule HacLong.Game.Engine do
 
   defp act_mana(p, d) do
     id = best_mana(p, d.maxMp - mp(p))
+    b = p.battle
+    pvp? = b.monster[:pvp] != nil
+    wait = if pvp?, do: (b[:mana_at] || -99) + @pvp.mana_cd - (b.turn + 1), else: 0
 
     cond do
       id == nil ->
@@ -1091,8 +1126,25 @@ defmodule HacLong.Game.Engine do
       mp(p) >= d.maxMp ->
         {err("MP đang đầy."), p}
 
+      pvp? and (b[:manas_used] || 0) >= @pvp.mana_max ->
+        {err("Đánh người: mỗi trận chỉ uống được #{@pvp.mana_max} bình mana."), p}
+
+      wait > 0 ->
+        {err("Đánh người: bình mana dùng lại sau #{wait} lượt."), p}
+
       true ->
-        {p, got} = p |> next_turn() |> drink(id)
+        {p, got} =
+          if pvp?,
+            do: p |> next_turn() |> drink(id, @pvp.mana_mult, @pvp.mana_cap_pct),
+            else: p |> next_turn() |> drink(id)
+
+        p =
+          if pvp?,
+            do:
+              p
+              |> put_in([:battle, :mana_at], p.battle.turn)
+              |> update_in([:battle, :manas_used], &((&1 || 0) + 1)),
+            else: p
 
         p
         |> log("Bạn uống #{Data.item(id).name}, hồi #{got} MP.", "good", %{
@@ -1130,6 +1182,15 @@ defmodule HacLong.Game.Engine do
 
   def potion_ready?(_p), do: true
 
+  @doc "Uống bình mana được không lúc này (đánh người: chưa quá `mana_max` bình, đã qua `mana_cd` lượt)."
+  def mana_ready?(%{battle: %{monster: m} = b}) do
+    m[:pvp] == nil or
+      ((b[:manas_used] || 0) < @pvp.mana_max and
+         (b[:mana_at] || -99) + @pvp.mana_cd - (b.turn + 1) <= 0)
+  end
+
+  def mana_ready?(_p), do: true
+
   defp act_potion(p, d) do
     id = best_potion(p, d.maxHp - p.hp)
     poisoned = Enum.filter(effects(p, :player), &(&1.id in @dots))
@@ -1151,7 +1212,10 @@ defmodule HacLong.Game.Engine do
         {err("Đánh người: bình máu dùng lại sau #{wait} lượt."), p}
 
       true ->
-        {p, healed} = p |> next_turn() |> drink(id, if(pvp?, do: @pvp.potion_mult, else: 1))
+        {p, healed} =
+          if pvp?,
+            do: p |> next_turn() |> drink(id, @pvp.potion_mult, @pvp.potion_cap_pct),
+            else: p |> next_turn() |> drink(id)
 
         p =
           if pvp?,
@@ -1239,6 +1303,13 @@ defmodule HacLong.Game.Engine do
           else
             # hiểu rõ loài này (sổ tay quái vật) thì đánh mạnh hơn
             mult = mult * (1 + Bestiary.mastery(p, m.id)) * (1 + d.wingDmg)
+
+            # Long Huyết (thú Hắc Long, DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): đánh trùm cuối Hắc Long và quái hệ
+            # Bóng Tối mạnh hơn (không áp khi đánh người)
+            mult =
+              if not pvp and (m[:final] == true or m[:element] == "dark"),
+                do: mult * (1 + Pets.trait(p, :slayer)),
+                else: mult
 
             mult =
               if skill, do: mult * (1 + d.skillDmg) * emult * weather_mult(p, skill), else: mult
@@ -2587,6 +2658,9 @@ defmodule HacLong.Game.Engine do
       )
 
     p = %{p | kills: p.kills + 1, gold: p.gold + gold}
+
+    # Bọc Trăm Trứng đang ấp: hạ trùm cuối Hắc Long thì đủ điều kiện nở (DECISIONS "… Hắc Long")
+    p = if m[:final] == true, do: HacLong.Game.DragonEgg.on_final_win(p), else: p
     reward = %{xp: xp, gold: gold, items: [], levels: 0}
     # Excellent: hồi máu / MP khi hạ quái (phần của tối đa)
     p = exc_on_kill(p, exc)
@@ -2829,7 +2903,9 @@ defmodule HacLong.Game.Engine do
              else: Gear.add(p, g)
            ) do
         :trash ->
-          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"), reward}
+          # `trashed`: số món đã hủy (thông báo xong trận Đánh nhanh)
+          {log(p, "🗑 Tự hủy #{label} (không thuộc loại giữ lại).", "info"),
+           Map.update(reward, :trashed, 1, &(&1 + 1))}
 
         {p, :kept} ->
           # `gear_ids`: món vào túi, client cho bấm xem / hủy ngay trên bảng kết quả

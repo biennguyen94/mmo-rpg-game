@@ -275,6 +275,48 @@
       "price": 20,
       "desc": "Mồi thơm làm từ Cá Chép Vàng. Thả câu trúng ô Long Vương đang nổi ở Hồ Long Vương thì tốn 1 mồi, cơ hội Ngài cắn câu gấp đôi."
     },
+    "long_hac": {
+      "name": "Lông Hạc",
+      "slot": "material",
+      "sprite": "items/long_hac",
+      "price": 15,
+      "desc": "Lông hạc trắng gió cuốn vào diều. Ghép Sáo Đồng ở Ông Lão Làm Diều, hoặc bán."
+    },
+    "manh_may": {
+      "name": "Mảnh Mây",
+      "slot": "material",
+      "sprite": "items/manh_may",
+      "price": 8,
+      "desc": "Một nắm mây trắng mềm vướng vào dây diều. Bán cho vui."
+    },
+    "day_dieu_dut": {
+      "name": "Dây Diều Đứt",
+      "slot": "material",
+      "sprite": "items/day_dieu_dut",
+      "price": 1,
+      "desc": "Dây diều của ai đứt, gió thổi về đây..."
+    },
+    "manh_sao": {
+      "name": "Mảnh Sao",
+      "slot": "material",
+      "sprite": "items/manh_sao",
+      "price": 120,
+      "desc": "Mảnh sao băng rơi xuống Đồi Sáo Diều ban đêm, còn ấm. Ghép Sáo Đồng ở Ông Lão Làm Diều."
+    },
+    "sao_dong": {
+      "name": "Sáo Đồng",
+      "slot": "material",
+      "sprite": "items/sao_dong",
+      "price": 40,
+      "desc": "Sáo gắn diều, gió thổi kêu vi vu. Thả diều trúng ô Chim Lạc đang lượn ở Đồi Sáo Diều thì tốn 1 sáo, cơ hội cảm hóa gấp đôi."
+    },
+    "boc_tram_trung": {
+      "name": "Bọc Trăm Trứng",
+      "slot": "material",
+      "sprite": "items/boc_tram_trung",
+      "price": 0,
+      "desc": "Bọc trứng sinh từ Lễ Long Phượng Hội. Ấm dần lên mỗi khi bạn chiến đấu; đủ ngày, đủ trận hoặc hạ Hắc Long thêm lần nữa thì nở."
+    },
     "old_boot": {
       "name": "Chiếc Ủng Cũ",
       "slot": "material",

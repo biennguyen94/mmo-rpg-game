@@ -14,3 +14,4 @@ node_modules/
 /assets_src/private/
 /priv/static/assets/mu_items/
 /priv/static/assets/item_icons.json
+__pycache__/

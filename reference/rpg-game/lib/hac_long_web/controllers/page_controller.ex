@@ -18,7 +18,7 @@ defmodule HacLongWeb.PageController do
       |> File.read!()
       |> String.replace(
         "<!--GAME_DATA-->",
-        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{version}\";</script>"
+        "<script>window.GAME_DATA = #{data}; window.CLIENT_VERSION = \"#{version}\"; window.HAC_FIRST = #{hac_first()};</script>"
       )
       # js/…, css/… kèm `?v=phiên_bản`: deploy bản mới thì trình duyệt tải file mới, không dùng bản
       # cũ còn trong cache (Plug.Static không đặt max-age nên trình duyệt có thể tự giữ file khá lâu)
@@ -29,6 +29,16 @@ defmodule HacLongWeb.PageController do
     |> put_resp_header("cache-control", "no-store")
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
+  end
+
+  # người đầu tiên của server thuần phục Hắc Long (màn đăng nhập ghi tên, DECISIONS "… Hắc Long"); lỗi database thì null
+  defp hac_first do
+    HacLong.Game.DragonEgg.pets()
+    |> Enum.flat_map(&HacLong.RarePets.list/1)
+    |> Enum.min_by(& &1.at, DateTime, fn -> nil end)
+    |> then(&Jason.encode!(&1 && &1.name, escape: :html_safe))
+  rescue
+    _ -> "null"
   end
 
   defp item_icons(file \\ "item_icons.json") do
@@ -92,6 +102,8 @@ defmodule HacLongWeb.PageController do
         secret: secret_info(),
         # Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6)
         adminMaxBuild: Data.rules().admin_max_build,
+        # ⚡ Đánh nhanh theo combo (DECISIONS "Đánh nhanh theo combo")
+        quick: Map.take(Data.rules().quick, [:max_steps, :tick_ms]),
         # kỹ năng quái theo hệ, kháng hệ nhẫn / dây chuyền (DECISIONS "Quái dùng kỹ năng theo hệ")
         monsterSkills:
           Map.drop(Data.rules().monster_skills, [:_doc, :sourceType, :version, :verified]),
@@ -120,6 +132,12 @@ defmodule HacLongWeb.PageController do
             :long_khi_max,
             :long_khi_div
           ]),
+        # Đồi Sáo Diều, Chim Lạc, Hắc Long (DECISIONS cùng tên)
+        sky:
+          HacLong.Game.Kite.rules()
+          |> Map.drop([:_doc, :sourceType, :version, :verified])
+          |> Map.update!(:hoi, &Map.delete(&1, :_doc))
+          |> Map.update!(:egg, &Map.delete(&1, :_doc)),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),
         friendsMax: HacLong.Friends.max(),
@@ -133,7 +151,13 @@ defmodule HacLongWeb.PageController do
           turnS: Data.rules().slay.turn_s,
           minLevel: Data.rules().slay.min_level,
           safe: Data.rules().slay.safe_maps,
-          redMult: Data.rules().slay.red_gold_mult
+          redMult: Data.rules().slay.red_gold_mult,
+          reach: Data.rules().slay.reach
+        },
+        # Công Thành Chiến: Vương Miện (quái bản đồ sự kiện) để bản đồ vẽ quầng sáng, mũi tên mép khung
+        castleSiege: %{
+          crownKind: Data.rules().castle_siege.crown.kind,
+          crownAt: Data.rules().castle_siege.crown.at
         },
         # % sát thương / hấp thụ cánh cộng thêm theo [bậc][cấp ép 0..11] (Engine.wing_up/3), trần hấp thụ
         wingUp:
@@ -176,6 +200,10 @@ defmodule HacLongWeb.PageController do
               :potion_mult,
               :potion_cd,
               :potion_max,
+              :potion_cap_pct,
+              :mana_cd,
+              :mana_max,
+              :mana_cap_pct,
               :heal_mult
             ])
         },

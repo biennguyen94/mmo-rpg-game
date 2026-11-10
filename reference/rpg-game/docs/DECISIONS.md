@@ -1810,6 +1810,7 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - (bổ sung) Chọn **cấp** (1–50) cạnh số lần chuyển sinh; điểm tiềm năng tự tính `(cấp − 1) × điểm mỗi cấp + điểm chuyển sinh` (`reset_stats`) và tự cộng hết. Đồ cần cấp cao hơn thì ⚠ "chưa mặc" (không tính lỗi).
 - (bổ sung) Túi đầy: `give_gear` `equip: true` không cần chỗ trống trước; món bị thay ra / chưa mặc được mà túi vượt `max_bag` thì gửi Hộp thư (`mail_out`), giữ +N (`gearx` thêm khóa `up`) và mọi dòng. Không mặc luôn thì túi đầy vẫn báo lỗi.
 - (bổ sung) Ô chuyển sinh là ô nhập số 0–999 (game cho chuyển sinh vô hạn; quá 10 lần mỗi lần +`endless_points` điểm), điểm vẫn tự tính theo `Engine.rebirth_bonus/1`.
+- (cập nhật 2026-11-09, anh yêu cầu) Theo các tính năng mới: tick **Thần thú cấp tối đa** tặng `admin_max_build.pets` (Long Vương, Chim Lạc, Hắc Long Chân Thân), dắt con cuối (`give_pet` thêm `lead: false` để chỉ tặng); tick **Đầy Long Khí, Phong Khí** (lệnh mới `set_qi`, cũng có dòng riêng ở Chỉnh nhân vật); chọn **Nhẫn 1 / Nhẫn 2 / Dây chuyền** (mặc định như cũ, danh sách ghi hệ kháng `RULES.monster_skills.resist`); vật phẩm thêm đồ thả diều (Sáo Đồng, Mảnh Sao, Lông Hạc, Mảnh Mây). Ô Đặt cấp ở Chỉnh nhân vật lấy tối đa theo `RULES.maxLevel` (bỏ số 50 viết cứng).
 
 ## Quái dùng kỹ năng theo hệ, kháng hệ kiểu MU (2026-11-08, anh chọn A, thời tiết có, kháng hệ làm luôn "càng giống MU càng tốt")
 - `RULES.monster_skills`: mỗi hệ 2 kỹ năng (Lửa: Phun Lửa bỏng / Hỏa Ngục; Băng: Băng Tiễn suy yếu / Đóng Băng choáng 30 %; Sét: Lôi Kích choáng 20 % / Liên Hoàn Sét 3 đòn; Đất: Địa Chấn / Giáp Đá −30 % sát thương nhận; Gió: Cuồng Phong 2 đòn / Gió Lốc né thêm 30 %; Ánh Sáng: Thánh Quang / Hồi Phục 15 % máu; Bóng Tối: Hút Hồn hồi 30 % sát thương / Nguyền Rủa độc). Kỹ năng luôn trúng, hồi chiêu 3 lượt, thời tiết cùng hệ cộng như người.
@@ -1818,3 +1819,129 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Kháng hệ kiểu MU (Item.txt có cột kháng ở nhẫn / dây chuyền): Nhẫn Băng / Dây Chuyền Băng → Băng, Nhẫn Độc → Bóng Tối (game không có hệ Độc), Nhẫn Lửa / Dây Chuyền Lửa → Lửa, Nhẫn Đất → Đất, Nhẫn Gió / Dây Chuyền Gió → Gió, Dây Chuyền Sét → Sét, Dây Chuyền Nước → Ánh Sáng (game không có hệ Nước); Nhẫn Phép không có kháng (như MU). Mỗi món có tác dụng 10 % + 1 % mỗi cấp ép, cộng dồn, tối đa 50 %; giảm sát thương kỹ năng quái cùng hệ đúng tỉ lệ và là tỉ lệ kháng hiệu ứng xấu của kỹ năng đó. Ô thông tin món ghi "Kháng <hệ> N %".
 - Hiển thị: nhật ký "<quái> dùng <biểu tượng hệ> <kỹ năng>. ⚔ N (kháng …)", hiệu ứng hạt màu hệ bay từ quái sang người, Thư viện ghi kỹ năng quái, Kho Đồ mục "Quái dùng kỹ năng theo hệ" và "Kháng hệ".
 - Cân bằng (`mix hac_long.simulate 5 --seed 42` tới Hắc Long; `mix hac_long.journey --cls all --rebirths 10 --seed 42`), trước → sau: xem báo cáo trong phiên; hành trình 10 lần chuyển sinh: Kiếm Sĩ 12 664 → 12 895 trận (chết 24 → 38), Phù Thủy 13 027 → 12 958 (59 → 62), Tiên Nữ 12 648 → 12 667 (30 → 35), Đấu Sĩ 13 610 → 12 718 (85 → 48).
+
+## Đánh nhanh theo combo (2026-11-08, anh chọn: danh sách ưu tiên, ở lại bản đồ, nút bật / tắt)
+- Nút **⚡ Đánh nhanh** dưới bản đồ (cạnh 🤖 Tự đánh). Bật: tự bấm quái nào thì đi tới, server tự đánh hết trận theo combo (`HacLong.Game.QuickFight`, nhịp `RULES.quick.tick_ms` qua đúng đường lệnh + giới hạn tốc độ như Tự đánh), xong trận tự rời màn trận, đứng yên chờ (không tự tìm quái).
+- Combo: danh sách ưu tiên tối đa `RULES.quick.max_steps` (6) bước gồm đòn thường và kỹ năng đang mang; mỗi lượt bước đầu tiên dùng được; bước buff có "chỉ khi chưa có hiệu ứng" (`Engine.buff_active?/2`); trống thì như Tự đánh "all". Tự uống bình theo ngưỡng % của Tự đánh. Lưu trong `auto_cfg` ("quick", "combo"), Tự đánh lưu cài đặt không xóa hai khóa này.
+- Hiển thị (b): vẫn ở màn bản đồ, thanh máu dưới chân quái (máu quái trên bản đồ chung vốn cập nhật mỗi lượt), số sát thương / máu hồi bay lên (`MapView.floatText`), thanh "⚡ Đang đánh … ❤ %", xong trận thông báo EXP / vàng / số món rơi, nút 📜 xem nhật ký trận vừa xong. ✋ Đánh tay (`quick_manual`, `battle.manual`) cầm lại trận ở màn trận như thường.
+- Không áp: đồ sát, đấu trường, đang bật Tự đánh. Không đổi cân bằng (cùng lệnh như bấm tay).
+- Sửa kèm: lệnh di chuyển (`run_move`) giờ cũng hẹn nhịp (bước vào quái là trận bắt đầu ở đường này).
+- Kiểm: `test/hac_long/game/quick_fight_test.exs`, e2e `quick` (11 bước).
+- (bổ sung) "Tự hủy đồ rơi" (Menu → Cài đặt) vốn áp cho mọi trận (lúc rơi đồ), kể cả Đánh nhanh. Thêm: `reward.trashed` (số món đã hủy) → thông báo xong trận "🗑 hủy N món"; nút 🗑 trên thanh ⚡ sáng khi đang bật, bấm mở thẳng phần cài đặt.
+- (bổ sung, anh báo "chiếm diện tích, nhật ký không cuộn được") Nút ⚡ / 🗑 / 📜 gộp chung một hàng với 🤖 Tự đánh (hàng không xuống dòng, chữ tóm tắt rút gọn "…"); đang đánh nhanh thì cả hàng thành "⚡ Đang đánh … ✋ Đánh tay"; combo xem / sửa trong ⚙. Nhật ký trận vừa xong thành cửa sổ nổi (position fixed) có khung cuộn riêng (màn bản đồ cố định chiều cao nên khung nằm dưới bản đồ không cuộn được).
+- (bổ sung, anh yêu cầu) Nút 🤖 là công tắc như ⚡ (sáng khi bật, tối khi tắt; bật theo cài đặt đã lưu). ⚙ gồm cài đặt của cả hai: "🤖 Tự đánh", "Chung cho cả hai" (ngưỡng % máu / mana), "⚡ Đánh nhanh" (combo); mỗi tính năng một nút 💾 Lưu (lệnh mới `auto_save`: lưu `auto_cfg` không bắt đầu; đang tự đánh thì áp luôn), bỏ nút "Bắt đầu tự đánh".
+- (bổ sung) Bật cả 🤖 và ⚡: `AutoHunt` đánh theo combo (`QuickFight.decide/1`) và client ở lại bản đồ (`mapFight`), không mở bảng đánh quái; ✋ chỉ hiện khi chỉ bật ⚡.
+- (sửa) Đánh nhanh trong Tháp / sự kiện không thấy hiệu ứng: con đang đánh bị bỏ khỏi danh sách quái tầng suốt trận và mã quái ở `encounter.tower` (không phải `mid`). Client báo bản đồ con đang đánh (`MapView.setFight`, mã `mid` hoặc `t<mã>`), bản đồ nhớ chỗ đứng cuối của quái tầng để vẽ tiếp con đó với máu theo lượt, dấu ⚔, số sát thương; con mình đang đánh không bị vẽ mờ như quái người khác đang đánh. Đang đánh thì ẩn 🗑 / 📜 cho dòng trạng thái đủ chỗ.
+- (bổ sung) Đánh nhanh có hiệu ứng trận như màn trận (kỹ năng theo hệ, đòn thường, trượt, buff, quái đánh trúng, quái gục, cột sáng đồ rơi): `BattleFx.run(events, at)` nhận hàm vị trí, `MapView.fightSpots()` trả tọa độ màn hình của con đang đánh và của mình trên bản đồ; client dựng sự kiện từ các dòng nhật ký mới mỗi lượt (`quickFx`). Theo công tắc Hiệu ứng động.
+
+## Người chơi trên bản đồ, Đồ sát nhanh (2026-11-08, anh chọn làm hết theo đề xuất)
+- Vẽ người chơi khác trên bản đồ (bỏ quyết định 13-A "không vẽ"): hình mặc đồ (`look`), tên, tag bang, 🛡 (`safe`: `Slay.protected_s/1`), ⚔ + máu (`duel` trong `World.info/1`: đối thủ, % máu, khi đang đồ sát). Ưu tiên: đang đồ sát với mình / đồng đội / vừa 📍 (luôn vẽ) → tổ đội & bang → tên đỏ → gần nhất; tối đa theo vùng thấy (8–30). Cùng ô: quạt tối đa 3, còn lại "+N"; tên đè thì thành chấm (trừ người đang đồ sát với mình / 📍).
+- Bấm người: một người → menu (Hồ sơ, Giao dịch, Mời tổ đội, Đồ sát); nhiều người / có quái → bảng chọn (dòng quái "⚔ Đánh …" + từng người). Không bấm là đánh ngay (tránh đồ sát nhầm → tên đỏ, mất vàng).
+- Cài đặt (máy này) "Người chơi khác trên bản đồ": Tất cả / Tổ đội & bang / Tắt (`hl-players`); chỉ đổi màn hình của mình. Quanh đây giữ danh sách đầy đủ, thêm 📍 (nhấp nháy 4,5 giây, vẽ tạm cả khi bị ẩn).
+- ⚡ Đồ sát nhanh: nút trong menu khi bật ⚡; chạy tới cạnh người đó rồi mở trận (luật cũ). `QuickFight.active?/1` có nhánh đồ sát: lượt của mình (`encounter.mine`) hoặc trận xong → server ra đòn theo combo / rời; Session hẹn nhịp khi mở trận, khi tới lượt (`slay_sync`), khi chốt trận (`release`). Bên bị đánh bật ⚡ cũng tự đánh; không bật thì bảng trận như cũ. Client ở lại bản đồ (`slayFight`), đối thủ luôn vẽ với máu theo lượt, hiệu ứng / số sát thương bám vào người đó; ✋ cầm lại lượt.
+- Kiểm: test "⚡ Đồ sát nhanh: hai bên bật ⚡…" (slay_test), e2e `mapplayers` (3 người, 12 bước), `people`, `pk`, `quick`, `features`.
+
+## Sự kiện, đấu trường, chiến bang trực quan (2026-11-08, anh duyệt "làm 1 và 2")
+Đợt 1 (hiển thị, không đổi cân bằng):
+- **Thanh sự kiện** ở mép trên khung bản đồ (`MapView` `hudLines` / `eventHud`; bản đồ nhỏ tự dời xuống dưới thanh, không đè). Một dòng mỗi việc, có thanh tiến độ + đồng hồ đếm ngược (vẽ lại mỗi giây):
+  Quảng Trường Quỷ "🌊 Đợt n/5 · điểm · còn quái"; Lâu Đài Máu "🛡 Quân canh k/8" → "🚪 Phá Cổng Thành" (máu cổng) → "🩸 Hạ Hiệp Sĩ Máu"; Kalima "👹 Quái k/n" → "👹 Hạ Kundun"; phòng đánh chung thêm "👥 N"; Hỗn Chiến Thành chờ / "⚔ Còn N người · M quái"; Công Thành Chiến "👑 [TAG] giữ Vương Miện" (bang mình: "bảo vệ nó!", Vương Miện chưa hiện: "đang hiện lại"); Tế Đàn "🐉 Cổ Long n% · N người · còn" + dòng top 3 sát thương (mình ★, hạng 4–5 thêm "★ #4"), chưa xuất hiện thì "xuất hiện sau".
+- **A2 băng rôn** (`Celebrate.banner`) khi sang đợt / bước mới của sự kiện phòng và khi Hỗn Chiến Thành bắt đầu (Công Thành, trùm thế giới đã có tin hệ thống → băng rôn sẵn).
+- **A1**: người cùng phòng sự kiện vốn đã vẽ (snapshot phòng); thêm "👥 N" trên thanh.
+- **C1 trùm thế giới**: quầng đỏ nhấp nháy, thanh máu to có %, "⚔" khi mình đang đánh. **C2**: ⚡ Đánh nhanh đánh trùm ngay trên bản đồ (`fightTarget` = "boss"); số sát thương bay lên chỉ là của mình (máu chung tụt cả khi người khác đánh).
+- **D1 Vương Miện**: quầng vàng + 👑 trên đầu; khuất khỏi khung thì mũi tên vàng ở mép (dưới thanh sự kiện) chỉ hướng. `RULES.castleSiege` (crownKind, crownAt) gửi client. **D2**: vòng dưới chân mỗi bang một màu (theo ký hiệu), bang đang giữ màu vàng và 👑 trước tên.
+- **F1 chiến bang**: người bang địch có vòng đỏ nhấp nháy + ⚔ trước tên (mọi bản đồ); thanh "⚔ [MÌNH] a – b [ĐỊCH] · còn" (thanh chia đôi xanh / đỏ, không hiện trong Tháp).
+- **G2 bản đồ nhỏ**: trùm thế giới (đỏ, to, nhấp nháy), Vương Miện (vàng), người bang mình (xanh dương); đồng đội / bang địch / người khác: xem mục "Quanh đây: tab Đang online…" bên dưới.
+- Quản trị: nút "🕊 Cổ Long bay đi" (`admin world_boss_off`, không ai được thưởng).
+
+Đợt 2 (gameplay, anh đã duyệt trong danh sách):
+- **B1 / D3**: đang hỗn chiến ở Hỗn Chiến Thành (ai cũng là đối thủ) hoặc Công Thành Chiến (người bang khác) thì chạm người là đồ sát ngay, không mở menu (Công Thành ưu tiên người bang đang giữ Vương Miện); bật ⚡ thì là ⚡ Đồ sát nhanh (ở lại bản đồ). Luật đồ sát không đổi (server vẫn kiểm `Slay.check`).
+- **F2**: hai bang đang chiến nhau, đồ sát thành viên bang địch trên bản đồ (không phải Hỗn Chiến / Công Thành): người thắng (bên nào cũng được) **không bị tên đỏ**, bang người thắng **+1 điểm** (chung giới hạn `same_target_max` lần một cặp với đấu trường); vàng mất / nhận và bảo vệ người thua như đồ sát thường. Ghi điểm trước khi thả Session (thông báo "⚔ Chiến bang: bang bạn +1 điểm, không bị tên đỏ").
+- **E1 đấu trường trực quan**: vào trận đánh người (đấu trường, đồ sát, đấu trực tiếp) có màn **VS** (hai hình trượt vào, tên, cấp); xong thắng / thua có **K.O.** (`Celebrate.vs` / `Celebrate.ko`, tắt theo Hiệu ứng động). Bật ⚡ thì đấu trường (bản sao, `monster.arena`) cũng được server tự đánh lượt theo combo (`QuickFight.active?/1`), ở màn trận với thanh "⚡ Đang đánh theo combo · ✋ Đánh tay".
+- **E2 đấu trường trực tiếp**: nút "⚔ Đấu trực tiếp" (menu người trên bản đồ, hộp người chơi, hồ sơ) → kênh `duel` (`invite` / `accept` / `decline`), người kia nhận trong `RULES.arena.duel_invite_s` (30) giây ở hộp thoại. Điều kiện: cả hai online, rảnh tay, còn máu, khác tài khoản, người mời chưa hết `per_day` trận; **bản đồ nào cũng được**. Chạy trên `HacLong.Slay` (`mode: :duel`): luân phiên lượt, hết giờ server đánh thay, ⚡ tự đánh lượt (ở màn trận, không ở bản đồ vì đối thủ có thể ở nơi khác). Vào trận **đầy máu**; xong trận cả hai **trả lại máu trước trận**, không chết, không mất / nhận vàng, không tên đỏ / bảo vệ; bỏ chạy = thua. Đổi Elo như đấu trường (`Arena.finish/3`, người mời là người thách đấu, tính vào số trận hôm nay của người mời); chiến bang: thắng thành viên bang địch +1 điểm. Báo kênh thế giới.
+- Kiểm: e2e `eventviz` (trùm thế giới + ⚡, chiến bang, Công Thành, chạm đánh ngay, 8 bước), e2e `duel` (VS, ⚡ đấu trường, đấu trực tiếp khác bản đồ, 8 bước), test "chiến bang: hạ thành viên bang địch…", "đấu trường trực tiếp…" (slay_test), "đấu trường (bản sao, arena) cũng tự đánh lượt…" (quick_fight_test).
+
+## Quanh đây: tab Đang online; bản đồ nhỏ chấm người chơi; sửa hiệu ứng lệch (2026-11-08, anh yêu cầu)
+- Quanh đây có 2 tab: "Quanh đây (N)" như cũ và "🟢 Đang online (N)": kênh `online` (giới hạn 30 lần / phút) trả mọi nhân vật đang mở game (`Session.online/1`, bỏ tên đăng nhập), thêm hình, ký hiệu bang, tên đỏ, tên bản đồ (Tháp / phòng sự kiện: "Tháp / sự kiện"). Chạm tên mở hồ sơ như Quanh đây; 📍 chỉ hiện khi người đó cùng bản đồ. Tải khi mở tab (giữ 15 giây), nút ↻.
+- Bản đồ nhỏ: mọi người chơi khác cùng bản đồ là chấm **hồng** (#ff6ad5, viền tối) — khác quái (đỏ), NPC (xanh lá), cổng (tím); đồng đội vàng chanh, bang mình xanh dương, bang địch cam viền trắng (đổi màu đồng đội từ xanh lá để khỏi trùng NPC). Mình vẽ sau cùng.
+- Hiệu ứng kỹ năng lệch xuống: lớp hiệu ứng `#bfx` đặt `height: 100vh` nhưng nét vẽ theo `innerHeight`; trên điện thoại (thanh địa chỉ) 100vh cao hơn → canvas bị kéo giãn dọc, hiệu ứng trôi xuống (càng xuống càng lệch). Sửa: cỡ CSS đặt bằng đúng `innerWidth × innerHeight` (cập nhật cả khi `visualViewport` đổi). Trên trình duyệt thử (không có thanh địa chỉ) điểm neo đúng tâm ô quái / nhân vật (đã đo).
+- Kiểm: e2e `people` (16 bước: tab online, bấm mở hồ sơ, chấm hồng trên bản đồ nhỏ).
+
+## Sửa: bảng nổi bị cuộn về đầu; danh sách bước combo (2026-11-08, anh báo)
+- Menu → Kỹ năng → ⚙ Chọn bộ kỹ năng: bảng tự cuộn bên trong, mỗi lần màn vẽ lại (server đẩy trạng thái) thì về đầu. `render()` giờ giữ chỗ cuộn của các bảng nổi (`.skill-dialog`, nhật ký ⚡, bảng chọn người, hộp thoại bản đồ).
+- Bước combo ⚡ chỉ chọn được đòn thường + kỹ năng **đang mang** (bộ kỹ năng tối đa `RULES.tower_skills.loadout` = 4, server chỉ đánh được kỹ năng đang mang) — nên thấy 5 mục là đúng luật. Thêm nhóm mờ "Chưa mang (đổi ở ⚙ Bộ kỹ năng)" liệt kê kỹ năng đã mở chưa mang và dòng hướng dẫn. Không đổi luật.
+- Kiểm: e2e `quick` (25 bước).
+
+## Sửa: bot kẹt kỷ lục Tháp ở tầng 9 (2026-11-08, anh báo "mọi bot cao nhất tầng 9")
+- Nguyên nhân: kỷ lục `tower_best` chỉ ghi khi **lên cầu thang** (`Tower.climb/1`). Bot hạ hết quái tầng 10 thì quy tắc "xong chặng 10 tầng → ra cổng" (`Brain.tower_play`) cho ra cổng ngay, không lên cầu thang → kỷ lục mãi 9, lần sau `Tower.starts(9)` chỉ có tầng 1 → leo lại 1–10 rồi ra, lặp mãi. (Bản sửa kẹt trước chỉ xử lý đứng im trong tháp, không đụng điểm này.)
+- Sửa: tầng 10, 20… xong thì lên cầu thang như mọi tầng (ghi kỷ lục, nhận thưởng mốc 10 tầng); sang tầng 11, 21… (không phải tầng vào lượt này) thì ra cổng. Tiến trình bot nhớ tầng lúc vào (`tower_from`) để vào ở tầng 11 không ra ngay. Máu < `play.tower_hp` sau một tầng vẫn ra như cũ.
+- Bot đang kẹt tự hết: lượt leo sau vượt tầng 10 → kỷ lục 10 → lượt sau nữa vào từ tầng 11. Mô phỏng hành trình (`Journey`) không bị (luôn lên cầu thang trước khi dừng).
+- Kiểm: `brain_play_test` "trong tháp…" (tầng 10 → lên cầu thang, kỷ lục ≥ 10, tầng 11 ra; vào ở tầng 11 thì đánh tiếp).
+
+## Bot câu cá mỗi con một chỗ (2026-11-08, anh báo "bot ở Hồ Long Vương dồn một ô")
+- Trước: bot đi tới ô câu **gần nhất** (từ cổng vào) nên con nào cũng về cùng một ô.
+- Nay (`Brain.spread/5`, câu thường): đang câu ở ô hợp lệ mà không ai khác đứng thì ở lại; không thì chọn trong các ô câu **còn trống** (bỏ ô có người chơi / bot khác đứng theo ảnh bản đồ) một ô theo seed của bot, đổi mỗi giờ (lượt sau ra hồ đứng chỗ khác); hết ô trống thì chọn trong tất cả. Đi qua ô câu khác trên đường không dừng lại.
+- Long Vương nổi / Đàn Cá Vàng: giữ như cũ (ô gần nhất trong tầm câu, cần nhanh).
+- Không đổi cân bằng (ô nào cũng câu như nhau). Kiểm: `brain_fish_test` (6 seed ra ≥ 3 chỗ khác nhau, ô có người thì đổi, đang câu thì ở lại).
+
+## Đồi Sáo Diều, Chim Lạc, Hắc Long (2026-11-08, anh duyệt "làm mọi thứ như em đề xuất": hướng A + C, kiểu Kết duyên, Long Phượng Hội)
+- **Đồi Sáo Diều** (`priv/maps/doi_sao_dieu.json`, cấp 30, cổng mép phải Hồ Long Vương ↔ mép trái đồi): ô `^` là trời (`Maps.sky?/3`). Thả diều đối xứng câu cá (`HacLong.Game.Kite`, số ở `RULES.sky`): đứng chỗ thoáng (xem dòng sửa dưới), thả vào ô trời trong `reach`, gió giật sau 3–8 giây, giữ dây trong 1 giây → quà gió (`pool`: Lông Hạc, Mảnh Mây, Dây Diều Đứt, ngọc), +1 Phong Khí (cột mới `characters.sky`: `phong_khi`, `egg`, `lucky`).
+- **Chim Lạc** (thú `chim_lac`, Thần điểu độc nhất cấp 30, mỗi cấp 8 %): chí mạng 4 %, né 2,5 %, máu 8 %, kinh nghiệm / vàng 8 %, MP +20 mỗi cấp, Phong Ân ngọc +25 %. Lượn mỗi giờ 3 phút (`HacLong.SkyEvent`), cơ hội 1/2.000 × (1 + Phong Khí / 100) × 2 nếu có Sáo Đồng (chỉ tốn khi trúng); đã có thì 5 Mảnh Sao. Bia Chim Lạc (`rare_pets`).
+- **Đàn Hạc** (15 phút / 2 phút, quà theo `flock.pool`, +3 Phong Khí), **mưa sao băng** ban đêm (`meteor`: 4 Mảnh Sao mỗi 10 phút, ở 2 phút, đứng trên / cạnh nhặt, lệnh `star_pick`), **Ông Lão Làm Diều** (việc 20 lần / ngày `daily.kite_n`, ghép Sáo Đồng = 2 Mảnh Sao + 5 Lông Hạc).
+- **Hắc Long** (kiểu "Kết duyên"): **Long Phượng Hội** khi Long Vương đang nổi và Chim Lạc đang lượn cùng lúc (SkyEvent kiểm mỗi 5 giây; sau mỗi hội chờ 30 phút): vòng sáng ở Tế Đàn (10, 10) bán kính 2 ô, 5 phút, báo cả server. Đủ điều kiện (`DragonEgg.missing/1`: hai thú cấp 30, Long Khí 200, Phong Khí 200, đã hạ Hắc Long, chưa có Hắc Long / trứng) → lễ: mất Long Khí / Phong Khí, nhận Bọc Trăm Trứng; không đủ → hưởng lộc +10 Long Khí / Phong Khí mỗi hội một lần. Trứng nở (`egg_hatch`) khi hạ 500 quái hoặc 3 ngày hoặc hạ Hắc Long thêm một lần; 10 % Chân Thân. Người đầu tiên của server có Hắc Long được báo riêng.
+- **Hắc Long** (`hac_long`): công 9 %, chí mạng 4 %, thủ 11 %, giảm nhận 7 %, né 1,5 %, kinh nghiệm / vàng 8 %, máu +35 / MP +15 mỗi cấp, Long Uy / Long Ân như Long Vương, **Long Huyết** (`traits.slayer`: đánh trùm cuối và quái hệ Bóng Tối +10 %; Chân Thân +15 %, chỉ số nhỉnh hơn). Thú cưng có thêm chỉ số **né** (`bonus.dodge`, cộng vào né trong giới hạn `max_total`).
+- Cân bằng (thú cấp 30, nhân vật Kiếm Sĩ hành trình 10 lần chuyển sinh, seed 42): không thú 3 170 máu / 1 376 công / 106 thủ / 11 % chí mạng / 7 % né; Long Vương 4 070 / 1 741 / 141 / 21 % / 7 %; Chim Lạc 4 012 / 1 376 / 106 / 24,3 % / 15,3 %; Hắc Long 4 220 / 1 787 / 144 / 24,3 % / 12 %; Chân Thân 4 370 / 1 833 / 148 / 27,6 % / 13,6 %. Ban đầu né Chim Lạc 4 % (cấp 30: +13 %, tổng 20 %) — giảm còn 2,5 %.
+- Hiển thị: mây trôi trên trời, Chim Lạc 6 khung bay lượn vòng, đàn hạc trắng, Mảnh Sao lấp lánh, diều đỏ vàng có đuôi + dây võng (gió giật: rung, "!"), vòng Long Phượng Hội (rồng + chim bay quấn), thú Hắc Long / Chim Lạc bay quanh nhân vật, màn "Con Rồng Cháu Tiên" khi nở; thanh sự kiện và bản đồ nhỏ có Chim Lạc / Đàn Hạc / Mảnh Sao / vòng hội. Hình: tìm trên OpenGameArt (CC0) + game-icons.net (CC BY 3.0), xem CREDITS.md.
+- Bot: seed lẻ dùng lượt "ra hồ" để ra đồi thả diều (mỗi con một chỗ, nhắm Chim Lạc nếu chưa có, không thì Đàn Hạc), giữ dây theo phản xạ như giật cần, nhận việc Ông Lão.
+- Quản trị: 🐦 Gọi Chim Lạc, 🕊 Gọi Đàn Hạc, 🌠 Mưa sao băng, 🐉🐦 Mở Long Phượng Hội.
+- Ý phụ đã làm: dắt Hắc Long (thường / Chân Thân) vào trận trùm cuối thì nhật ký có thoại riêng ("Đồng tộc phản bội!…", ghi % Long Huyết); màn đăng nhập ghi tên **người đầu tiên của server thuần phục Hắc Long** dưới hình rồng (`window.HAC_FIRST`, đọc `rare_pets` mỗi lần tải trang). Chưa làm: chuỗi nhiệm vụ "Truyền thuyết Rồng Tiên" (cần NPC kể chuyện, phần thưởng từng bước — chờ anh duyệt nội dung).
+- Kiểm: `test/hac_long/game/kite_test.exs`, `test/hac_long/sky_event_test.exs`, `brain_fish_test` (bot thả diều), e2e `kite` (12 bước), `hac_long` (7 bước; cần `HL_PREP`).
+- (sửa, anh báo "mây xấu, cứng") Trời Đồi Sáo Diều không vẽ từng ô nữa (lộ lưới): một dải chuyển màu liền (xanh đậm → xanh nhạt chân trời) + ánh nắng, 3 lớp mây mềm (Cloud Set của Sam, CC0) trôi với tốc độ và thị sai khác nhau, sương mỏng ở chân trời; mép đồi giáp trời có bóng mềm và cỏ lún phún lay theo gió. Chỉ vẽ trong các ô trời (mỏm đồi vẫn che).
+- (sửa, anh duyệt "không cần đứng sát mép trời") Thả diều ở bất kỳ chỗ thoáng nào trên đồi (`Kite.check_spot/1`): không sát cây (8 ô quanh không có `T`/`Y`/`K`: "Vướng cây rồi, ra chỗ thoáng"), có ô trời trong tầm dây diều `reach` = 6 ô (trước 3); không chạm ô thì diều bay thẳng lên ô trời gần nhất phía trên (`sky_near/2`, server trả `at` cho client vẽ). Client kiểm giống server (`MapView.kiteCheck`), dây dài võng theo khoảng cách, diều nhỏ dần khi bay xa. Chim Lạc / Đàn Hạc hiện ở ô trời trong tầm của một chỗ thoáng (`Kite.stands/1`); bot rải đều các chỗ thoáng.
+- (sửa, anh yêu cầu "thả diều xa hơn, không giới hạn; bấm nút thì thả sát người, không thật; chỗ giao trời đất chưa đẹp") Bỏ giới hạn dây diều (`reach`): chạm ô trời nào cũng thả được, chỉ cần đứng chỗ thoáng. Bấm 🪁 Thả diều không chạm ô: `Kite.aim/3` chọn ô giữa trời: cột lệch ngẫu nhiên ≤ `aim.spread` (2) quanh mình, cao hơn mép trời `aim.rise` (2–4) ô, không cách người quá `aim.view` (8) hàng (ngẫu nhiên theo băm thời gian, không tốn `Rng`). Chim Lạc / Đàn Hạc hiện trong `spot_depth` (5) hàng trên mép đồi (`Kite.edge/2`) để đứng trên đồi vẫn thấy. Khi diều bay, khung nhìn nâng dần lên (chừa thanh sự kiện trên, khung 🪁 dưới) và thu nhỏ nhẹ (tối đa 0,7) nếu diều quá xa, cho thấy cả diều lẫn người; diều xong thì hạ về.
+- (sửa) Chỗ giao trời / đất: trời không cắt theo cạnh ô nữa mà theo đường chân trời cong liền (mặt đất từng cột, giữa các cột dốc mềm, gợn nhỏ như mô đất); ô trời lót nền cỏ để mặt đồi lấn vào được. Sau trời: 3 lớp đồi xa (càng xa càng nhạt ngả lam, thị sai), sương mỏng chân trời; dọc mép: bóng mềm phía đất, viền nắng, cỏ lay theo gió.
+
+## Bản tiếng Anh: dịch phần mới, sửa lớp dịch (2026-11-09, anh yêu cầu)
+- **I-4** Dịch 640 câu mẫu + 108 tên còn thiếu (Đồi Sáo Diều, Chim Lạc, Hắc Long linh vật, Long Phượng Hội, Bọc Trăm Trứng, Hỗn Chiến Thành, đấu trường trực tiếp, đánh nhanh theo combo, nhiều nhân vật, Động Bí Ẩn, dựng tối đa…). Thuật ngữ: Long Khí = Dragon Aura, Phong Khí = Wind Aura, Chim Lạc = Lac Bird, Đàn Hạc = Crane Flock, cảm hóa = tame, Long Phượng Hội = Dragon-Phoenix Rite; giữ Âu Cơ / Lạc Long Quân.
+- **I-5** `scripts/i18n_extract.py` bỏ chữ người chơi không thấy: khóa `_doc` / `_…` trong dữ liệu, `@doc "…"` một dòng, mảnh code (chú thích `//`, `const` / `let`, regex, nội suy `#{…}`). 3404 → 3082 mẫu.
+- **I-6** `en.json` bỏ 95 "tên" cũ không còn trong dữ liệu mà lại nằm trong câu mẫu ("Da", "Gió", "trùm", "vũ khí"…), chuyển sang khóa câu: chúng làm câu lúc chạy không khớp mẫu ("Danh hiệu" thành "Leathernh hiệu"). Tên chỉ khớp khi đứng riêng (không khớp giữa chữ), ở cả `i18n.js` và script trích.
+- **I-7** `i18n.js`: câu trong ngoặc kép “…” (lời NPC) dịch phần trong; mẫu thiếu / thừa dấu chấm cuối vẫn khớp; danh sách "A, B, C." mà mỗi mục có khóa thì dịch từng mục.
+- **I-8** e2e `lang.mjs` soát thêm Đấu trường, Thú cưng, Kỹ năng, Thành tựu, Thư viện, Chọn map, Quanh đây, Đồi Sáo Diều và Ông Lão Làm Diều; mẫu lỗi in nguyên đoạn chữ còn tiếng Việt.
+
+## Icon ứng dụng mới (2026-11-09, anh yêu cầu)
+- Bỏ khung viền vàng; đầu rồng to tràn khung. Hình cũ (đầu rồng nhỏ cắt từ sprite 458×291 của Cethiel) phóng to bị mờ, nên đổi sang
+  "Dragon Portrait" của MetaShinryu (OpenGameArt, CC BY 3.0, 1712×2288), tô đen thép, mắt đỏ rực, nền đỏ thẫm (`scripts/app_logo.py`).
+- Bản maskable (Android) dùng cùng hình tràn khung (trước thu 78% nên lộ cạnh vuông): mắt và mõm nằm trong vùng an toàn 80%.
+- Đổi `?v=5` → `?v=6` ở `index.html` / `manifest.json` để trình duyệt lấy icon mới. Icon đã thêm ra màn hình chính có thể cần
+  gỡ rồi "Thêm vào màn hình chính" lại mới đổi (Android giữ icon cũ).
+
+## Đồ sát trong tầm, bỏ màn VS / K.O. (2026-11-09, anh yêu cầu)
+- Đồ sát và đấu trường trực tiếp không còn màn VS / K.O.; đấu trường đánh đối thủ máy vẫn giữ.
+- Đồ sát trong tầm `RULES.slay.reach` (8 ô, Chebyshev): bấm người trên bản đồ → 🗡 Đồ sát / 🗡⚡ Đồ sát nhanh là đánh ngay, không
+  cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm rồi mới mở trận. Server kiểm tầm (`Slay.check`, lỗi "… ở xa quá, lại gần
+  trong 8 ô để đồ sát.").
+- Tab Quanh đây: nút 🗡 (hoặc 🗡⚡ khi bật đánh nhanh) cạnh nút 📍 cho người cùng bản đồ, như Đồ sát trên bản đồ.
+
+## Đấu trực tiếp ở bản đồ riêng (2026-11-09, anh yêu cầu)
+- Nhận lời mời đấu trực tiếp thì cả hai được đưa vào bản đồ riêng `duel_arena` ("Đấu Trường Trực Tiếp", `event: "duel"`, không cổng,
+  không quái, không có trong Chọn map): người mời ô a, người nhận ô b (`RULES.arena.duel_map`), rồi đánh luân phiên như đồ sát
+  (đánh tay hoặc ⚡ theo combo), không màn VS / K.O.
+- Xong trận (thắng, thua, bỏ chạy) hoặc trận bị hủy: cả hai về đúng ô cũ (`encounter.back`), máu cũ như trước. Vào lại game mà
+  còn đứng ở `duel_arena` không có trận thì về Làng (`cc_back`).
+- Đấu trực tiếp nhiều cặp cùng lúc dùng chung bản đồ này (thấy nhau nhưng không đánh nhau được: đồ sát cần đối thủ rảnh tay).
+
+## Đấu trường: VS rồi mới đánh, K.O. sau trận (2026-11-09, anh yêu cầu)
+- Màn VS (2 giây) chiếu xong trận mới bắt đầu: lệnh đánh / kỹ năng / bình / bỏ chạy bấm trong lúc VS đang chiếu chờ tới hết màn
+  rồi mới gửi (client, `vsHold`).
+- K.O. hiện sau đòn cuối 1,3 giây (máu tụt, chữ sát thương xong) và không bao giờ đè lên màn VS.
+
+## Đánh người: bình theo % máu / MP tối đa (2026-11-09, anh duyệt B + C)
+- Bình máu hồi số cố định nên "3 bình" lệch theo cấp (cấp thấp 1 Bình Lớn đầy máu, máu cao chỉ ~25%). Đổi: khi đánh người (đồ sát,
+  đấu trường cả đối thủ máy, đấu trực tiếp, Hỗn Chiến Thành, Công Thành Chiến) mỗi bình máu hồi × `potion_mult` (0,5) nhưng tối đa
+  `potion_cap_pct` (35%) máu tối đa; tối đa `potion_max` 10 bình mỗi trận (trước 3), giữ hồi chiêu 3 lượt.
+- Bình mana khi đánh người cũng vậy (đếm riêng): × `mana_mult` (1), tối đa `mana_cap_pct` 35% MP tối đa mỗi bình, 3 lượt một bình,
+  tối đa `mana_max` 10 bình. Bot và ⚡ đánh nhanh không gửi lệnh mana khi chưa được uống (`Engine.mana_ready?/1`).
+- Đánh quái giữ nguyên (không trần, không giới hạn).
+- Màn trận: cuộn được khi nhiều kỹ năng, hàng Máu / Mana / Chạy ghim ở đáy màn hình (trước bị khuất).
+- (2026-11-09, anh duyệt) Đổi `potion_mult` 0,5 → 1, `potion_cap_pct` / `mana_cap_pct` 35% → 25%: với ×0,5 người máu trên ~2.570 không
+  chạm trần (Bình Lớn chỉ 25% với 3.652 máu, 18% với 5.000); nay mỗi Bình Lớn hồi đúng 25% máu tối đa ở mọi cấp (máu ≤ ~7.200),
+  hồi trung bình ~8% / lượt nên trận không dài thêm. Mana như vậy.

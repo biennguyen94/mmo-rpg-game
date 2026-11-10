@@ -69,6 +69,19 @@ defmodule HacLong.Game.Commands do
       "loot_filter" ->
         HacLong.Game.AutoHunt.loot_filter(p, c)
 
+      "auto_save" ->
+        HacLong.Game.AutoHunt.save(p, c)
+
+      # ⚡ Đánh nhanh theo combo (DECISIONS "Đánh nhanh theo combo")
+      "quick" ->
+        HacLong.Game.QuickFight.toggle(p, c["on"])
+
+      "combo_set" ->
+        HacLong.Game.QuickFight.set_combo(p, c["steps"])
+
+      "quick_manual" ->
+        HacLong.Game.QuickFight.manual(p)
+
       # Phase 3 (B-29): bộ kỹ năng mang vào trận
       "skill_set" ->
         Engine.set_skills(p, c["ids"])
@@ -142,6 +155,39 @@ defmodule HacLong.Game.Commands do
 
       "fish_reel" ->
         Fishing.reel(p, System.monotonic_time(:millisecond))
+
+      # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long")
+      "kite_fly" ->
+        at =
+          case c do
+            %{"x" => x, "y" => y} when is_integer(x) and is_integer(y) -> {x, y}
+            _ -> nil
+          end
+
+        {bird, flock} = HacLong.SkyEvent.tiles()
+        HacLong.Game.Kite.fly(p, System.monotonic_time(:millisecond), at, bird, flock)
+
+      "kite_hold" ->
+        HacLong.Game.Kite.hold(p, System.monotonic_time(:millisecond))
+
+      "kite_elder" ->
+        at_npc(p, ["kite"], "Ông Lão Làm Diều ở Đồi Sáo Diều", fn _ ->
+          HacLong.Game.Kite.claim_elder(p)
+        end)
+
+      "kite_craft" ->
+        at_npc(p, ["kite"], "Ông Lão Làm Diều ở Đồi Sáo Diều", fn _ ->
+          HacLong.Game.Kite.craft(p)
+        end)
+
+      "star_pick" ->
+        star_pick(p, c["x"], c["y"])
+
+      "le_long_phuong" ->
+        HacLong.Game.DragonEgg.ritual(p, HacLong.SkyEvent.hoi(), System.os_time(:second))
+
+      "egg_hatch" ->
+        HacLong.Game.DragonEgg.hatch(p, System.os_time(:second))
 
       "pet_buy" ->
         at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.buy(p, c["id"]) end)
@@ -285,6 +331,28 @@ defmodule HacLong.Game.Commands do
 
   defp craft(p, id),
     do: at_npc(p, ["herbalist"], "Bà Lang", fn _ -> Crafting.brew(p, id) end)
+
+  # Mưa sao băng: đứng trên / cạnh ô Mảnh Sao ở Đồi Sáo Diều thì nhặt (server giữ danh sách sao, ai nhặt trước được)
+  defp star_pick(p, x, y) when is_integer(x) and is_integer(y) do
+    item = HacLong.Game.Kite.rules().meteor.item
+
+    cond do
+      p.battle ->
+        {%{ok: false, msg: "Đang trong trận."}, p}
+
+      p.pos.map != HacLong.Game.Kite.map_id() or max(abs(p.pos.x - x), abs(p.pos.y - y)) > 1 ->
+        {%{ok: false, msg: "Hãy đứng cạnh Mảnh Sao để nhặt."}, p}
+
+      HacLong.SkyEvent.take_star({x, y}) == :ok ->
+        {%{ok: true, msg: "🌠 Nhặt được #{Data.item(item).name}! Còn ấm.", gift: item},
+         Engine.add_item(p, item)}
+
+      true ->
+        {%{ok: false, msg: "Mảnh Sao đã có người nhặt hoặc nguội tắt rồi."}, p}
+    end
+  end
+
+  defp star_pick(p, _, _), do: {%{ok: false, msg: "Chọn Mảnh Sao để nhặt."}, p}
 
   defp int(n) when is_integer(n), do: n
 

@@ -53,11 +53,23 @@
     dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(window.innerWidth * dpr);
     canvas.height = Math.round(window.innerHeight * dpr);
+    // cỡ hiển thị đúng bằng vùng vẽ: trên điện thoại 100vh cao hơn innerHeight (thanh địa chỉ) làm canvas bị kéo giãn
+    // dọc → hiệu ứng lệch xuống dưới (anh báo "lệch xuống 1 ô")
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
   }
   window.addEventListener('resize', resize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 
   // tâm (và cỡ) một phần tử trên màn hình
+  // ⚡ Đánh nhanh (ở lại bản đồ): vị trí quái / mình lấy từ bản đồ (`run(events, anchors)`), không có phần tử DOM
+  let anchors = null;
   function spot(sel) {
+    if (anchors && (sel === MON || sel === ME)) {
+      const a = anchors();
+      const s = a && (sel === MON ? a.mon : a.me);
+      return s ? { x: s.x, y: s.y, w: s.w, h: s.h, el: null } : null;
+    }
     const el = document.querySelector(sel);
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -190,7 +202,7 @@
     kill() {
       const t = spot(MON);
       if (!t) return;
-      t.el.classList.add('fx-dying');
+      if (t.el) t.el.classList.add('fx-dying');
       for (let i = 0; i < 36; i++) {
         add({ k: 'dot', x: t.x + rand(-t.w * 0.4, t.w * 0.4), y: t.y + rand(-t.h * 0.4, t.h * 0.4), vx: rand(-30, 30), vy: rand(-140, -40), g: -20,
           life: rand(600, 1200), r: rand(1.5, 3), col: ['#e8dcc8', '#a8a090', '#ffd27a'][i % 3], glow: i % 3 === 2 });
@@ -570,10 +582,15 @@
       if (amb && !ambTimer && on() && ensure()) ambTimer = setInterval(ambientTick, 150);
       if (!amb && ambTimer) { clearInterval(ambTimer); ambTimer = null; }
     },
-    run(events) {
+    // `at`: hàm trả { mon, me } (tọa độ màn hình) khi hiệu ứng không bám vào màn trận (⚡ Đánh nhanh trên bản đồ)
+    run(events, at) {
       if (!events || !events.length || !on() || !ensure()) return;
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí
-      const play = (e) => { try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ } };
+      const play = (e) => {
+        anchors = at || null;
+        try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ }
+        anchors = null;
+      };
       requestAnimationFrame(() => events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e))));
     },
   };
@@ -669,6 +686,27 @@
       mount('boss-down', `${fw}<div class="bd-t">TRÙM ĐÃ GỤC</div><div class="bd-n">${esc(name || '')}</div>`, 2800);
       sound('win');
       if (fw) [0.25, 0.6, 0.95, 1.3].forEach((s) => setTimeout(() => sound('firework'), s * 1000));
+    },
+    // Hắc Long nở (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): trứng vỡ, rồng đen vươn lên, chữ LINH VẬT HẮC LONG
+    hatch(name, img) {
+      const el = mount('hatch-fx', `<div class="hx-dark"></div><div class="hx-rays"></div><img class="hx-img" src="${img}" alt=""><div class="hx-t">CON RỒNG CHÁU TIÊN</div><div class="hx-n">${esc(name || '')}</div>`, 4200);
+      el.addEventListener('click', () => el.remove());
+      sound('roar');
+      setTimeout(() => sound('levelup'), 700);
+    },
+    // E1 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): vào trận đánh người — hai hình trượt vào, chữ VS
+    // a / b: { name, doll (url ảnh), sub }
+    vs(a, b, title) {
+      if (!fxOn()) return;
+      const side = (x, cls) => `<div class="vs-side ${cls}"><img src="${x.doll || ''}" alt=""><b>${esc(x.name || '')}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</div>`;
+      mount('vs-fx', `<div class="vs-dark"></div>${title ? `<div class="vs-title">${esc(title)}</div>` : ''}<div class="vs-row">${side(a, 'l')}<div class="vs-t">VS</div>${side(b, 'r')}</div>`, 2000);
+      sound('encounter');
+    },
+    // E1: trận đánh người xong — K.O. (thắng: vàng, thua: đỏ)
+    ko(win, sub) {
+      if (!fxOn()) return;
+      mount(`ko-fx ${win ? 'win' : 'lose'}`, `<div class="ko-t">K.O.</div><div class="ko-s">${esc(sub || '')}</div>`, 1900);
+      sound(win ? 'win' : 'lose');
     },
     // B8: gặp trùm — tối sầm, chớp đỏ, chữ TRÙM XUẤT HIỆN + tên, tiếng gầm, rung màn
     bossIn(name, sub) {

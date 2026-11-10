@@ -21,7 +21,11 @@ Hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật (`priv/stat
 **Dragon - Fully Animated** của **Cethiel** (https://opengameart.org/content/dragon-fully-animated), giấy phép **CC0 1.0**.
 Đã cắt sát hình và tô lại sang đen (giữ mắt vàng). Cảm ơn Cethiel.
 
-Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): `priv/static/app/logo.svg` gồm khung (nền, viền vàng) tự vẽ cho game này (CC0) và phần đầu hình Hắc Long ở trên (Cethiel, CC0), xuất các cỡ bằng `e2e/app_icons.mjs`.
+Icon ứng dụng (`priv/static/app/`, `priv/static/favicon.ico`): đầu rồng vẽ chì **Dragon Portrait** của **MetaShinryu**
+(https://opengameart.org/content/dragon-portrait-0), giấy phép **CC BY 3.0** (https://creativecommons.org/licenses/by/3.0/;
+tác giả đăng kèm CC BY-SA 3.0, ta dùng CC BY 3.0). Đã tô lại sang đen thép, thêm mắt đỏ rực, đặt trên nền đỏ thẫm tự vẽ (CC0).
+Bản gốc: `assets_src/app/dragon_portrait_metashinryu.png`; dựng `priv/static/app/logo.svg` bằng `scripts/app_logo.py`, xuất các cỡ
+bằng `e2e/app_icons.mjs`. Cảm ơn MetaShinryu.
 
 Phase 15a (bản đồ phụ): thêm 52 hình quái từ cùng bộ tile (`mon/animals`, `mon/amorphous`, `mon/aquatic`,
 `mon/undead`, `mon/fungi_plants`, `mon/nonliving`, `mon/dragons`, `mon/demons` và vài hình ở `mon/`), chép bằng
@@ -118,3 +122,19 @@ Dựng bằng `scripts/long_vuong_assets.sh` từ bộ tile Dungeon Crawl Stone 
 giấy phép): Long Vương (`mon/dragons/quicksilver_dragon`, tô dải màu vàng kim), Ông Lão Câu Cá (`mon/unique/joseph`, vẽ thêm cần
 câu), nước sâu Vực Rồng (`dngn/water/deep_water`), cây đước (`dngn/trees/mangrove1`), tượng rồng vàng (`dngn/statues/statue_dragon`).
 Bến / cầu gỗ (`pier_v`, `pier_h`), thuyền (`boat`), sen (`lotus`), đèn lồng (`lantern`), hũ Mồi Rồng: tự vẽ cho game này (CC0).
+
+## Đồi Sáo Diều, Chim Lạc, Hắc Long (`priv/static/assets/sky/`, `pets/chim_lac.png`, `pets/hac_long*.png`, `items/…`, `tiles/sky.png`, `npcs/kite_maker.png`)
+
+Dựng bằng `scripts/sky_assets.py` và `scripts/sky_svg_icons.cjs` từ:
+- **Chim Lạc** (`sky/chim_lac.png`, `pets/chim_lac.png`): 6 khung bay của **Phoenix (reborn)** của **Chasersgaming**
+  (https://opengameart.org/content/phoenix-reborn), giấy phép **CC0 1.0**; tô lại màu đồng thau (trống đồng Đông Sơn).
+- **Đàn Hạc** (`sky/hac.png`): **Animated Birds (32x32)** của **MoikMellah** (https://opengameart.org/content/animated-birds-32x32),
+  giấy phép **CC0 1.0**; bỏ nền hồng.
+- **Mây trôi** (`sky/cloud1.png` … `cloud5.png`, đang dùng): **Cloud Set** của **Sam** (https://opengameart.org/content/cloud-set), giấy phép **CC0 1.0**; bỏ nền xanh, tách từng đám. `sky/clouds.png` (bản pixel cũ, không còn dùng): **Clouds** của **Igor Gundarev** (https://opengameart.org/content/clouds), CC0 1.0.
+- **Bọc Trăm Trứng** (`sky/egg.png`, `items/boc_tram_trung.png`): quả trứng đen vân dung nham trong **Dragon Eggs** của **MELLE**
+  (https://opengameart.org/content/dragon-eggs), giấy phép **CC0 1.0**.
+- **Hắc Long (thú)** (`pets/hac_long.png`, `sky/hac_long.png`, bản Chân Thân có quầng tím): hình Hắc Long ở màn đăng nhập (Cethiel, CC0, ở trên).
+- **Icon vật phẩm** Lông Hạc (`feather`, Lorc), Mảnh Mây (`cloud-ring`, Lorc), Mảnh Sao (`fragmented-meteor`, Lorc), Sáo Đồng
+  (`flute`, Delapouite), Dây Diều Đứt (`kite`, Delapouite): **game-icons.net**, giấy phép **CC BY 3.0** (như mục Icon ở trên), đã tô màu.
+- Trời (dải chuyển màu, ánh nắng, sương chân trời, cỏ mép đồi), diều và dây diều: vẽ bằng code trong `map.js` (CC0); `tiles/sky.png` chỉ còn dùng cho bản đồ nhỏ. NPC Ông Lão Làm Diều
+  (`npcs/kite_maker.png`) tô lại từ người dân Làng (`npcs/elder.png`, bộ Dungeon Crawl Stone Soup CC0 ở trên).

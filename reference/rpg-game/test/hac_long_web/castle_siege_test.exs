@@ -113,6 +113,8 @@ defmodule HacLongWeb.CastleSiegeTest do
     # đồ sát: khác bang được, cùng bang không
     a = Session.get(ua.id)
     b = Session.get(ub.id)
+    # đứng trong tầm đồ sát (RULES.slay.reach)
+    b = %{b | pos: %{b.pos | x: a.pos.x, y: a.pos.y}}
     assert Slay.check(a, b) == :ok
 
     assert {:error, "Trong Công Thành Chiến chỉ đánh người bang khác."} =

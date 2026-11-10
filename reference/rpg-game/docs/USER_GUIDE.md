@@ -112,7 +112,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   được khắc lên Bia ở Đền Cổ.
 - **Bản đồ thế giới**: Chọn map → **🌐 Thế giới** (hoặc bấm bản đồ thu nhỏ ở góc khung bản đồ) xem các bản đồ nối nhau thế
   nào, màu theo độ khó so với cấp mình; bấm bản đồ đã mở để dịch chuyển. Giữ và kéo bản đồ thu nhỏ để dời nó sang chỗ khác trong khung (máy nhớ vị trí);
-  tắt bản đồ thu nhỏ ở Menu → Cài đặt.
+  tắt bản đồ thu nhỏ ở Menu → Cài đặt. Chấm trên bản đồ thu nhỏ: trắng nhấp nháy là bạn, **hồng là người chơi khác**, vàng chanh
+  đồng đội, xanh dương người bang mình, cam viền trắng người bang địch; quái đỏ, NPC xanh lá, cổng tím.
 - **Thời tiết** đổi mỗi giờ, cả server thấy như nhau (biểu tượng cạnh tên bản đồ): nắng, mưa, giông có chớp, sương mù, tuyết,
   bão tuyết… Khi đánh quái, kỹ năng cùng hệ với thời tiết mạnh hơn: quang → Ánh Sáng +5%, mưa / giông → Sét +5% / +10%,
   tuyết / bão tuyết → Băng +5% / +10%, sương → Bóng Tối +5%, lá bay → Gió +5%, gió cát → Đất +5%, tàn lửa → Lửa +5%
@@ -121,7 +122,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   mảnh vé sự kiện, Bình Máu Lớn…), mỗi món mua được vài lần mỗi ngày.
 - **Chọn bản đồ** (phím **M** hoặc nút **Chọn map** trên dock): đủ cấp (cấp nhân vật ≥ cấp quái thấp nhất của bản đồ) và đủ vàng là dịch chuyển được, tốn 20 + 4 × cấp quái thấp nhất (Làng miễn phí). Không cần mở vùng hay đi qua cổng trước.
 - Ban đêm quái hiếm xuất hiện nhiều hơn. **Trùm thế giới Cổ Long** thỉnh thoảng xuất hiện ở Tế Đàn: cả server cùng đánh, thưởng
-  theo sát thương (vắng mặt thì nhận qua thư).
+  theo sát thương (vắng mặt thì nhận qua thư). Ở Tế Đàn, mép trên bản đồ có thanh máu chung, số người đánh, giờ còn lại và
+  **top 3 sát thương** (★ là bạn). Bật **⚡ Đánh nhanh** rồi chạm Cổ Long là đánh ngay trên bản đồ.
+- **Thanh sự kiện** (mép trên bản đồ): trong Quảng Trường Quỷ, Lâu Đài Máu, Kalima, Hỗn Chiến Thành, Công Thành Chiến hiện
+  đợt / bước, tiến độ và đồng hồ đếm ngược; sang đợt mới (Cổng Thành vỡ, Kundun xuất hiện…) có băng rôn giữa màn hình.
+  Công Thành Chiến: Vương Miện có quầng vàng 👑, khuất thì mũi tên vàng ở mép chỉ hướng; mỗi bang một màu vòng dưới chân.
+  Bản đồ nhỏ đánh dấu trùm thế giới, Vương Miện, đồng đội, người bang mình / bang địch.
 - **Golden Invasion**: mỗi 2 giờ (0h, 2h, 4h… giờ Việt Nam) trong 15 phút, quái vàng (quầng vàng) xuất hiện ở bản đồ đầu
   mỗi vùng: mạnh hơn một chút, thưởng **×5**, dễ rơi ngọc, không hồi sinh. Hạ hết quái vàng một bản đồ thì **trùm vàng** xuất
   hiện (chắc chắn rơi ngọc). Dải vàng trên bản đồ cho biết giờ còn lại.
@@ -154,9 +160,21 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
     - **Đồ rơi**: giữ hết, hoặc chỉ giữ loại đã tích (Excellent, Đồ Thần, May mắn / Kỹ năng, từ 2 dòng cộng thêm, tốt hơn đồ
       đang mặc, mặc được); món khác bị hủy ngay sau trận. Ngọc, nguyên liệu, cánh, nhẫn, dây chuyền luôn giữ.
     - **Về mặc định** đưa mọi ô về như ban đầu. Cài đặt lưu theo nhân vật khi bấm bắt đầu (đổi máy vẫn giữ).
-  - Bấm **🤖 Tự đánh** / **Bắt đầu tự đánh**: server tự đi tới quái, đánh, uống bình, rời bảng kết quả.
+  - Nút **🤖** trên thanh là công tắc: bấm để bật (nút sáng lên) theo cài đặt đã lưu, bấm lại để tắt (nút tối đi). Server tự
+    đi tới quái, đánh, uống bình, rời bảng kết quả. Bảng **⚙** có cài đặt của cả 🤖 Tự đánh và ⚡ Đánh nhanh, mỗi phần một
+    nút **💾 Lưu** (lưu không tự bật); ngưỡng uống máu / mana dùng chung cho cả hai.
+  - Bật **cả 🤖 và ⚡**: tự đánh theo combo của ⚡ và ở lại bản đồ (không mở bảng đánh quái).
   - Tự tắt khi: hết bình máu, có người tên đỏ trên bản đồ, bị đồ sát, gục ngã / bỏ chạy, rời bản đồ, đóng hết tab game.
     Bấm **Tắt** (dưới bản đồ hoặc trong trận) để dừng bất cứ lúc nào.
+- **⚡ Đánh nhanh** (nút ⚡ cạnh 🤖 Tự đánh, cùng một hàng dưới bản đồ): bật lên rồi **tự bấm quái nào** thì nhân vật đi tới và tự đánh hết trận theo
+  **combo** đã sắp, vẫn ở màn bản đồ (thanh máu dưới chân quái, số sát thương bay lên, hiệu ứng kỹ năng / đòn đánh / quái gục / đồ rơi như màn trận, theo công tắc Hiệu ứng động). Xong trận hiện thông báo
+  (EXP, vàng, đồ rơi); bấm **📜** xem lại nhật ký trận vừa xong (cửa sổ nổi, cuộn được). Đang đánh thì bấm **✋ Đánh tay** để cầm lại trận như thường.
+  - Sắp combo ở **Menu → Kỹ năng → ⚡ Combo đánh nhanh** (hoặc ⚙ → Sửa combo): tối đa 6 bước gồm đòn thường và kỹ năng
+    đang mang. Mỗi lượt dùng **bước đầu tiên dùng được** (bước còn hồi chiêu / thiếu MP thì bỏ qua); kỹ năng buff có ô
+    "chỉ khi chưa có hiệu ứng". Không có bước nào: dùng bộ kỹ năng (buff trước, rồi mạnh nhất).
+  - Tự uống bình theo ngưỡng % của Tự đánh. Không áp cho đồ sát / đấu trường; đang bật Tự đánh thì Tự đánh lo hết.
+  - **Tự hủy đồ rơi** (Menu → Cài đặt) áp luôn cho Đánh nhanh: nút **🗑** trên thanh ⚡ sáng khi đang bật, bấm để mở thẳng
+    phần cài đặt đó; thông báo xong trận ghi thêm "🗑 hủy N món".
 
 ## 6. Đồ đạc, túi, Tủ Đồ
 
@@ -193,11 +211,13 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   ngẫu nhiên (chat báo tên bản đồ). Không cần vé. Hạ con đầu đàn chắc chắn rơi ngọc, thưởng ×3–×4.
 - **Công Thành Chiến:** thứ Bảy 20h00, 30 phút. Bang chủ / phó bang đăng ký trước ở Người Gác Tháp (200 000 vàng); thành viên
   cấp 30+ vào thành, giành Vương Miện và giữ tới hết giờ. Bang giữ được là Chủ Thành, mọi thành viên nhận vàng + ngọc qua thư.
+  Trong lúc đánh, **chạm người bang khác là đồ sát ngay** (không mở menu; ưu tiên người bang đang giữ Vương Miện).
 - **Kalima:** từ cấp 20, lúc nào cũng vào được ở Người Gác Tháp, tốn 1 Bản Đồ Thất Lạc (ghép 5 Dấu Ấn Kundun ở Máy Hỗn
   Nguyên; dấu ấn rơi từ quái cấp 20+). Kalima 1–7 theo cấp; hạ 10 quái rồi hạ Kundun để nhận vàng, ngọc và một món đồ.
 - **Hỗn Chiến Thành:** từ cấp 15, gặp Người Gác Tháp ở Làng. Mở 2 tiếng một lần (1h30, 3h30 … 23h30), cho vào 5 phút,
   tốn 1 Áo Giáp Vệ Binh (mua 5 000 vàng hoặc nhặt từ quái cấp 15+). Rồi 10 phút hỗn chiến: quái và người đánh lẫn nhau
   (không mất vàng, không tên đỏ); gục là bị loại. Người trụ cuối cùng khi hết quái thắng 60 000 vàng + ngọc; thưởng gửi thư.
+  Lúc hỗn chiến, **chạm người là đồ sát ngay** (không mở menu).
 - **Loại đồ như MU**: đồ thường (có thể kèm May mắn, Kỹ năng, dòng cộng thêm +4 / +8 / +12 tấn công hoặc phòng thủ — tên xanh), đồ hoàn hảo (tên lục), đồ Thần. Ngọc Sinh Mệnh thêm dòng tới +16. Mỗi trang bị (rơi, mua, nhận thưởng) là một món riêng chiếm một chỗ trong túi trang bị, không xếp chồng; túi giữ tối đa 40 món chưa mặc (`rules.json` `loot.gear_bag`). Túi đầy thì không mua được trang bị, đồ rơi / quà gửi vào Hộp thư.
 - **Tủ Đồ** (Thủ Kho ở Làng): cất 40 loại đồ thường (không giới hạn số lượng mỗi loại) và 20 đồ hiếm; mở thêm 10 chỗ đồ hiếm × 3 lần
   bằng vàng (5 000 / 15 000 / 40 000). Đồ trong tủ không mất, nhưng không mặc / bán / giao dịch được cho tới khi lấy ra.
@@ -266,12 +286,37 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   **Thần thú độc nhất:** cấp tối đa 30 (thú khác 20), mỗi cấp tăng 8 % (thú khác 5 %; cấp 30 ×3,32); **Long Uy** kháng một nửa choáng / độc / bỏng / chảy máu / suy yếu;
   **Long Ân** quái rơi ngọc thêm 25 %, thưởng trùm thế giới thêm 10 %.
   Hồ này cũng nhiều Lươn Điện và Cá Chép Vàng (3 %).
+- **Đồi Sáo Diều** 🪁 (cổng mép phải Hồ Long Vương, từ cấp 30): đứng **chỗ thoáng** trên đồi (không sát cây) rồi chạm vào khoảng
+  trời chỗ nào cũng được, dây diều không giới hạn (hoặc nút 🪁 Thả diều: diều lên giữa trời phía trên mình, khung nhìn tự nâng lên theo diều) để thả diều. Gió giật ("Gió giật! Giữ dây ngay!") thì bấm **🪁 Giữ dây** trong 1 giây: diều mang về
+  Lông Hạc, Mảnh Mây, đôi khi ngọc (Dây Diều Đứt thì thôi); mỗi lần +1 **Phong Khí** (tối đa 200).
+  - **Chim Lạc** 🐦 (Thần điểu, cộng chí mạng, né, máu, kinh nghiệm, vàng): mỗi giờ lượn một lần ở một ô trời trong 3 phút (ánh đồng
+    lấp lánh, cả server được báo). Thả diều trúng đúng ô đó: 1/2.000 cơ hội mỗi lần, nhân theo Phong Khí (đầy ×3), có **Sáo Đồng** thì
+    gấp đôi (chỉ tốn khi thả trúng). Giữ dây đúng lúc thì Chim Lạc nhận bạn làm chủ; đã có thì được 5 Mảnh Sao. Bia Chim Lạc ở đồi.
+  - **Đàn Hạc** 🕊 khoảng 15 phút một lần bay vòng ở một ô trời trong 2 phút: thả trúng thì quà tốt hơn (nhiều ngọc), +3 Phong Khí.
+  - **Mưa sao băng** 🌠 ban đêm: Mảnh Sao rơi trên đồi trong 2 phút; chạm vào là đi tới nhặt (ai tới trước được).
+  - **Ông Lão Làm Diều**: việc mỗi ngày (thả thành công 20 lần ở đồi → vàng, kinh nghiệm, +20 Phong Khí) và ghép **Sáo Đồng**
+    (2 Mảnh Sao + 5 Lông Hạc).
+- **Hắc Long** 🐉 — linh vật Con Rồng Cháu Tiên: Long Vương (Lạc Long Quân) và Chim Lạc (Âu Cơ) kết duyên sinh **Bọc Trăm Trứng**.
+  Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi **cùng lúc**, cả server được báo **Long Phượng Hội**: vòng sáng mở ở **Tế Đàn**
+  5 phút. Có đủ Long Vương và Chim Lạc **cấp 30**, Long Khí và Phong Khí **đầy**, **đã hạ Hắc Long** thì bước vào vòng bấm
+  **🐉🐦 Làm lễ**: mất hết Long Khí / Phong Khí, nhận Bọc Trăm Trứng. Người khác vào vòng bấm **✨ Hưởng lộc** được +10 Long Khí và
+  Phong Khí (mỗi hội một lần). Trứng (Menu → Thú cưng) nở khi hạ đủ 500 quái, hoặc sau 3 ngày, hoặc hạ Hắc Long thêm một lần;
+  10 % nở ra **Hắc Long Chân Thân**. Hắc Long cộng như Long Vương nhỉnh hơn một chút, thêm né và **Long Huyết** (đánh Hắc Long và
+  quái hệ Bóng Tối +10 %, Chân Thân +15 %). Người đầu tiên của server thuần phục Hắc Long được báo riêng; Bia Hắc Long ở đồi.
 - **Câu cá** ở hồ, **hái thảo dược / quặng** ngoài vùng; **nấu ăn** ở Bác Đầu Bếp, **pha đồ uống** ở Bà Lang (hiệu ứng trong một số trận; món ăn và đồ uống cộng dồn, mỗi loại một món một lúc).
 
 ## 10. Chơi cùng người khác
 
-- Chạm vào người chơi khác trên bản đồ để mở **bảng thông tin**: mời tổ đội, giao dịch, kết bạn, thách đấu, đồ sát,
-  chặn chat.
+- **Người chơi khác hiện trên bản đồ** (hình mặc đồ, tên, tag bang; 🛡 đang được bảo vệ, ⚔ + máu khi đang đồ sát). Bản đồ
+  đông thì chỉ vẽ một số người (theo vùng đang thấy, tối đa 30; ưu tiên người đang đồ sát với bạn, đồng đội, cùng bang, tên
+  đỏ, người gần nhất); cùng một ô vẽ lệch như quạt tối đa 3 người, còn lại "+N"; tên đè nhau thì thành chấm.
+- Chạm vào người trên bản đồ: một người → menu **Hồ sơ · 🤝 Giao dịch · Mời tổ đội · 🗡 Đồ sát**; nhiều người cùng ô (hoặc có
+  cả quái) → **bảng chọn** (dòng "⚔ Đánh <quái>" và từng người). Hồ sơ đầy đủ (kết bạn, thách đấu, chặn chat…) ở nút Hồ sơ.
+- **Menu → Cài đặt → Người chơi khác trên bản đồ**: Tất cả / Tổ đội & bang / Tắt (chỉ màn hình của bạn; người khác vẫn thấy
+  bạn, vẫn bị đồ sát theo luật; người đang đồ sát với bạn và đồng đội luôn hiện).
+- **⚡ Đồ sát nhanh**: đang bật ⚡ thì nút trong menu thành **🗡⚡ Đồ sát nhanh**: chạy tới cạnh người đó rồi mở trận, vẫn ở
+  bản đồ; lượt của bạn server đánh theo combo ⚡ (không chờ 10 giây). Người bị đánh đang bật ⚡ cũng vậy; không bật thì mở
+  bảng trận như thường. **✋** cầm lại lượt của mình. Luật đồ sát (vùng an toàn, cấp, tên đỏ, mất vàng, bảo vệ) không đổi.
 - **Màu tên trên bản đồ**: xanh lá = đồng đội, xanh dương = cùng bang, đỏ = bang đang chiến với bang bạn.
 - **Tổ đội** (tối đa 3): đánh chung một con quái thì cùng thắng; mỗi người nhận thưởng × 1,2 / số người. Lời mời hết hạn sau
   30 giây; rời game quá 60 giây thì tự rời đội.
@@ -298,7 +343,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   buff, hồi máu của chính người đó như người thật. Điểm Elo lên / xuống; 15 trận mỗi
   ngày; thắng có ít vàng. Gục ngã tính như chết (mất vàng, về Làng); bỏ chạy thì không mất gì.
   **Hạng theo số lần chuyển sinh** (CS 0–1, 2–3, 4–5, 6–7, 8–9, 10+): chỉ thách đấu được người **cùng hạng hoặc hạng trên**,
-  không thách nhân vật cùng tài khoản.
+  không thách nhân vật cùng tài khoản. Vào trận có màn **VS**, xong có **K.O.**; bật **⚡ Đánh nhanh** thì server tự đánh từng
+  lượt theo combo (✋ Đánh tay để cầm lại).
+- **⚔ Đấu trực tiếp**: chạm người trên bản đồ (hoặc mở hồ sơ) → **⚔ Đấu trực tiếp**; người kia có 30 giây để **Nhận đấu**.
+  Hai người ở bản đồ nào cũng được. Luân phiên lượt như đồ sát (10 giây mỗi lượt), vào trận đầy máu; xong trận **trả lại máu như
+  trước**, không ai mất vàng, không tên đỏ; bỏ chạy tính thua. Điểm đấu trường đổi như thách đấu (tính vào 15 trận/ngày của
+  người mời).
 - **🗡 Đồ sát** (PK): chạm tên người đang online **cùng bản đồ** → **🗡 Đồ sát**. Không cần người kia đồng ý: cả hai vào trận ngay,
   luân phiên lượt (người tấn công đi trước), mỗi lượt 10 giây, quá giờ thì server ra đòn thay bằng kỹ năng mạnh nhất đang dùng được (hết MP / đang hồi chiêu thì đánh thường). Hết máu hoặc **bỏ chạy** là gục ngã:
   mất 10% vàng, về Làng; số vàng đó về tay người thắng. Không đánh được ở Làng và với người dưới cấp 10. Lịch sử ở thẻ Đấu trường.
@@ -343,8 +393,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - Vai trò: bang chủ, **tối đa 2 phó bang** (duyệt đơn, đuổi thành viên thường, sửa thông báo), thành viên. Đơn xin vào quá
   7 ngày tự bỏ.
 - **Chiến bang**: bang chủ / phó bang nhập ký hiệu bang địch → Tuyên chiến; bang kia (chủ / phó online) có 60 giây để nhận.
-  Trận kéo dài 1 giờ: mỗi lần bạn thắng thành viên bang địch ở **đấu trường** được +1 điểm cho bang (mỗi đối thủ tính tối đa
-  3 lần). Bang thắng: quỹ +5 000, ai ghi điểm nhận 500 vàng qua thư. Đầu hàng được; hai bang chỉ chiến lại sau 24 giờ.
+  Trận kéo dài 1 giờ: mỗi lần bạn thắng thành viên bang địch ở **đấu trường** hoặc **đồ sát** họ trên bản đồ được +1 điểm cho
+  bang (mỗi đối thủ tính tối đa 3 lần). Đồ sát người bang địch lúc đang chiến **không bị tên đỏ** (vàng vẫn mất / nhận như
+  đồ sát thường). Đang chiến: người bang địch có vòng đỏ nhấp nháy dưới chân, mép trên bản đồ có tỉ số hai bang. Bang thắng: quỹ +5 000, ai ghi điểm nhận 500 vàng qua thư. Đầu hàng được; hai bang chỉ chiến lại sau 24 giờ.
 
 ## 13. Hộp thư, Thông báo, bảng xếp hạng
 
@@ -365,7 +416,8 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 - **Bản đồ động**: nước gợn, cây lay, quái nhún nhẹ, mưa ở đầm lầy, tro lửa ở hang rồng / vùng chuyển sinh, tuyết trên núi,
   sương ở nghĩa địa, lá rơi ở rừng / trại, khói bếp ở Làng, đài phun nước lấp lánh; ban đêm có đom đóm và đèn lồng quanh
   người dân. Tầng Tháp Vô Tận, Quảng Trường Quỷ, Lâu Đài Máu, Kalima cũng có hiệu ứng theo nền tầng, và quái trên tầng đi lang thang như ngoài bản đồ. Tắt ở **Menu → Cài đặt → Bản đồ → Hiệu ứng động** (máy đặt "giảm chuyển động" thì mặc định tắt).
-- Dock **👫 Quanh đây**: số người chơi khác đang cùng bản đồ (người khác không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
+- Dock **👫 Quanh đây**: danh sách đầy đủ người chơi khác cùng bản đồ (kể cả người không vẽ trên bản đồ); chạm tên để xem **hồ sơ** và giao dịch, kết bạn, thách đấu, đồ sát; **📍** chỉ người đó trên bản đồ (nhấp nháy vài giây). Tab **🟢 Đang online**: mọi người đang online ở mọi bản đồ (có tên bản
+  đồ họ đang đứng, ↻ tải lại), chạm tên mở hồ sơ y như Quanh đây. Hồ sơ của mình: tab Nhân vật → **📜 Hồ sơ**.
 - Quái có tên trên đầu và thanh máu dưới chân; quái đang bị người khác đánh (⚔) hiện máu còn lại cho mọi người.
 - **Menu → 📚 Thư viện**: tra cứu bản đồ (cấp quái, cổng, NPC), quái (chỉ số, nơi xuất hiện, đồ rơi), vật phẩm (chỉ số, nơi có được); gõ tên không cần dấu.
 - Bấm lại icon đang mở trên dock để đóng, về bản đồ. Nói chuyện NPC: nút **‹ Bản đồ** ở trên cùng.

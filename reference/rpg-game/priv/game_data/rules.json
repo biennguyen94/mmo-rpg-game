@@ -855,6 +855,25 @@
       "max_officers": 2,
       "request_days": 7
     },
+    "sky": {
+      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Hồ Long Vương. Đứng chỗ thoáng trên đồi (không sát cây), thả diều vào ô trời bất kỳ (dây không giới hạn, aim: mặc định lên giữa trời); Chim Lạc / Đàn Hạc hiện ở ô trời trong spot_depth hàng trên mép đồi (thấy được); gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
+      "map": "doi_sao_dieu",
+      "aim": {"_doc": "bấm 🪁 Thả diều không chạm ô: diều lên giữa trời, cột lệch ngẫu nhiên trong spread ô, cao hơn mép trời rise ô, không cách người quá view hàng; dây diều không giới hạn (chạm ô trời nào cũng được)", "spread": 2, "rise": [2, 4], "view": 8},
+      "spot_depth": 5,
+      "wait_ms": [3000, 8000],
+      "window_ms": 1000,
+      "pool": [[45, "long_hac"], [30, "manh_may"], [14, "day_dieu_dut"], [8, "jewel_bless"], [3, "jewel_soul"]],
+      "bird": {"pet": "chim_lac", "chance": 0.0005, "every": 3600, "stay": 180, "phong_khi_max": 200, "phong_khi_div": 100, "bait": "sao_dong", "bait_mult": 2, "dupe": "manh_sao", "dupe_n": 5},
+      "flock": {"every": 900, "stay": 120, "phong_khi": 3, "pool": [[40, "long_hac"], [20, "manh_may"], [20, "jewel_bless"], [12, "jewel_soul"], [6, "manh_sao"], [2, "jewel_chaos"]]},
+      "elder": {"count": 20, "phong_khi": 20},
+      "craft": {"sao_dong": {"manh_sao": 2, "long_hac": 5}},
+      "meteor": {"every": 600, "count": 4, "stay": 120, "item": "manh_sao", "night": true},
+      "hoi": {"_doc": "Long Phượng Hội: Long Vương đang nổi ở hồ và Chim Lạc đang lượn ở đồi cùng lúc thì vòng sáng hiện ở Tế Đàn (map, at, radius ô) trong stay giây; sau đó chờ cooldown giây mới có lần sau. Người đủ điều kiện (có cả hai thú cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long) đứng trong vòng làm lễ: mất hết Long Khí, Phong Khí, nhận egg.item. Người khác đứng trong vòng được lucky_qi Long Khí và Phong Khí (một lần mỗi hội).", "map": "altar", "at": [10, 10], "radius": 2, "stay": 300, "cooldown": 1800, "lucky_qi": 10},
+      "egg": {"_doc": "Bọc Trăm Trứng nở khi đủ một trong: hạ kills quái kể từ lúc nhận trứng, qua days ngày, hoặc hạ trùm cuối Hắc Long thêm một lần. Nở ra pet (rare_chance thì rare_pet: Hắc Long Chân Thân). Mỗi nhân vật một con Hắc Long.", "item": "boc_tram_trung", "kills": 500, "days": 3, "pet": "hac_long", "rare_pet": "hac_long_chan", "rare_chance": 0.1},
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "guild_war": {
       "minutes": 60,
       "answer_s": 60,
@@ -896,9 +915,15 @@
       "dodge_mult": 0.6,
       "stun_immune": 2,
       "stun_mult": 0.5,
-      "potion_mult": 0.5,
+      "potion_mult": 1,
       "potion_cd": 3,
-      "potion_max": 3,
+      "potion_max": 10,
+      "potion_cap_pct": 0.25,
+      "mana_mult": 1,
+      "mana_cd": 3,
+      "mana_max": 10,
+      "mana_cap_pct": 0.25,
+      "_potion_doc": "DECISIONS \"Đánh người: bình theo % máu / MP tối đa\": bình máu hồi × potion_mult nhưng mỗi bình tối đa potion_cap_pct máu tối đa, mỗi potion_cd lượt một bình, tối đa potion_max bình mỗi trận; bình mana như vậy với mana_mult / mana_cap_pct / mana_cd / mana_max (đếm riêng).",
       "heal_mult": 0.5,
       "class_taken_by_rebirth": {
         "0": {"dk": 0.96, "dw": 0.88, "elf": 0.97, "mg": 0.88},
@@ -989,7 +1014,10 @@
       "_doc": "Đấu trường (thách đấu bản sao người khác). first_strike_mult: đòn đầu (lượt đầu) của người thách đấu × hệ số này, như đồ sát (DECISIONS \"Đấu trường: công bằng người thách đấu / đối thủ máy\").",
       "per_day": 15,
       "elo_k": 32,
-      "first_strike_mult": 0.5
+      "first_strike_mult": 0.5,
+      "_duel_doc": "Đấu trường trực tiếp (DECISIONS \"Sự kiện, đấu trường, chiến bang trực quan\" E2): mời người đang online, người kia nhận trong duel_invite_s giây; đánh luân phiên lượt như đồ sát, vào trận đầy máu, xong trận trả lại máu cũ, không chết / mất vàng / tên đỏ, đổi Elo như đấu trường (tính vào per_day của người mời).",
+      "duel_invite_s": 30,
+      "duel_map": {"map": "duel_arena", "a": [5, 5], "b": [11, 5], "_doc": "DECISIONS \"Đấu trực tiếp ở bản đồ riêng\": nhận lời mời thì người mời đứng ô a, người nhận ô b của bản đồ map; xong trận (thắng, thua, bỏ chạy, hủy) cả hai về đúng chỗ cũ."}
     },
     "party": {
       "max": 3,
@@ -1081,6 +1109,14 @@
       "free": [
         "village"
       ]
+    },
+    "quick": {
+      "_doc": "DECISIONS \"Đánh nhanh theo combo\": bật nút ⚡ thì bấm quái nào nhân vật đi tới và server tự đánh hết trận theo combo (danh sách ưu tiên tối đa max_steps bước: mỗi lượt dùng bước đầu tiên dùng được; bước once chỉ dùng khi chưa có hiệu ứng của kỹ năng đó), tự uống bình theo ngưỡng % của Tự đánh, xong trận tự rời màn trận, ở lại bản đồ. Nhịp ra lệnh tick_ms (cùng giới hạn tốc độ như lệnh người chơi). Không áp cho đồ sát / đấu trường.",
+      "tick_ms": 600,
+      "max_steps": 6,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     },
     "auto": {
       "_doc": "Phase 4 (B-31): tự đánh quái khi đang online (HacLong.Game.AutoHunt). tick_ms: nhịp ra lệnh (trong trận / đang đi / đứng chờ); hp_pct, mp_pct: ngưỡng % uống bình máu / mana mặc định và giới hạn chỉnh; keep_opt_min: lọc đồ 'chỉ đồ quý' giữ món có từ chừng này dòng cộng thêm trở lên (ngoài Excellent / Thần / May mắn / Kỹ năng / tốt hơn đồ đang mặc).",
@@ -1199,6 +1235,8 @@
       "red_s": 1800,
       "red_gold_mult": 2,
       "first_strike_mult": 0.5,
+      "reach": 8,
+      "_reach_doc": "DECISIONS \"Đồ sát trong tầm\": bấm người trên bản đồ / tab Quanh đây là đánh ngay nếu cách không quá reach ô (Chebyshev), không cần chạy sát bên.",
       "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
     "boss_rewards": {
@@ -1310,7 +1348,7 @@
       "verified": false
     },
     "admin_max_build": {
-      "_doc": "Thẻ Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6): cấp, chuyển sinh, tháp, thông thạo, chia điểm theo share (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất từng lớp (sets: weapon, left = vũ khí tay trái cho lớp cầm 2 vũ khí, armor = bộ giáp) ép up, opt dòng cộng thêm, May mắn, Excellent (exc_weapon cho vũ khí / dây chuyền, exc_armor cho giáp / khiên / nhẫn) hoặc đồ Thần cho bộ giáp, 2 nhẫn ring, dây chuyền pendant, cánh cấp 3 wing_<lớp>_3 (dòng wing_opt), khiên shield khi chọn khiên thay tay trái; vật phẩm items, thú pet cấp tối đa, vàng gold.",
+      "_doc": "Thẻ Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6): cấp, chuyển sinh, tháp, thông thạo, chia điểm theo share (đủ chỉ số yêu cầu của đồ trước), đồ tốt nhất từng lớp (sets: weapon, left = vũ khí tay trái cho lớp cầm 2 vũ khí, armor = bộ giáp) ép up, opt dòng cộng thêm, May mắn, Excellent (exc_weapon cho vũ khí / dây chuyền, exc_armor cho giáp / khiên / nhẫn) hoặc đồ Thần cho bộ giáp, 2 nhẫn ring, dây chuyền pendant (mặc định; thẻ cho chọn nhẫn / dây chuyền khác, vd kháng hệ RULES.monster_skills.resist), cánh cấp 3 wing_<lớp>_3 (dòng wing_opt), khiên shield khi chọn khiên thay tay trái; vật phẩm items, thần thú pets cấp tối đa (dắt con cuối), qi: đầy Long Khí / Phong Khí, vàng gold.",
       "level": 50,
       "rebirths": 10,
       "tower_floor": 100,
@@ -1336,8 +1374,9 @@
       "wing_opt": "ignore_def",
       "exc_weapon": ["atk_pct", "crit", "heal_kill", "mp_kill", "atk_lvl", "ar_pct"],
       "exc_armor": ["hp_pct", "dmg_red", "gold_pct", "mp_pct", "reflect", "def_rate"],
-      "items": [["jewel_bless", 50], ["jewel_soul", 50], ["jewel_chaos", 50], ["jewel_life", 50], ["potion_l", 500], ["mana_l", 500], ["ore_rare", 100], ["dragon_scale", 20], ["mam_co", 20], ["ds_ticket", 10], ["bc_ticket", 10], ["cc_ticket", 10], ["lost_map", 10], ["dragon_bait", 100]],
-      "pet": "long_vuong",
+      "items": [["jewel_bless", 50], ["jewel_soul", 50], ["jewel_chaos", 50], ["jewel_life", 50], ["potion_l", 500], ["mana_l", 500], ["ore_rare", 100], ["dragon_scale", 20], ["mam_co", 20], ["ds_ticket", 10], ["bc_ticket", 10], ["cc_ticket", 10], ["lost_map", 10], ["dragon_bait", 100], ["sao_dong", 10], ["manh_sao", 20], ["long_hac", 50], ["manh_may", 50]],
+      "pets": ["long_vuong", "chim_lac", "hac_long_chan"],
+      "qi": true,
       "sourceType": "DESIGN",
       "version": 1,
       "verified": false

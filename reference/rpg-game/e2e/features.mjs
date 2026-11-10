@@ -29,7 +29,14 @@ await page.selectOption('[data-auto="loot"]', 'pick');
 await page.selectOption('[data-auto="range"]', '8');
 await page.selectOption('[data-auto="skills"]', 'basic');
 await page.selectOption('[data-auto="hp"]', '30');
-await act(page, '.auto-go');
+// ⚙: 💾 Lưu tự đánh (không bắt đầu), rồi nút 🤖 trên thanh bật (sáng lên)
+await act(page, 'auto-save');
+await page.waitForFunction(() => ((window.__hl.player().view.autoCfg || {}).range) === 8, null, { timeout: 5000 }).catch(() => null);
+R.check('💾 Lưu tự đánh: lưu mà chưa bắt đầu', !(await player(page)).auto && (await player(page)).view.autoCfg.range === 8);
+await act(page, '.auto-set-head [data-act="auto-set"]');
+await act(page, 'auto-toggle');
+await page.waitForFunction(() => !!window.__hl.player().auto, null, { timeout: 5000 }).catch(() => null);
+R.check('nút 🤖 sáng khi bật', (await page.getAttribute('[data-act="auto-toggle"]', 'aria-pressed')) === 'true');
 let p = await player(page);
 R.check('lưu cài đặt theo nhân vật', !!p.view.autoCfg && p.view.autoCfg.range === 8, JSON.stringify(p.view.autoCfg));
 R.check('bật tự đánh: server nhận cài đặt', p.auto && p.auto.loot === 'pick' && p.auto.range === 8 && p.auto.skills === 'basic' && p.auto.hp === 30 && p.auto.map === 'forest_1', JSON.stringify(p.auto));
@@ -40,8 +47,8 @@ R.check('tự đánh: hạ quái và rời bảng kết quả mà không bấm g
 R.check('thanh tự đánh hiện số quái đã hạ', ((await page.textContent('#auto-bar').catch(() => '')) || '').includes('đã hạ'));
 R.check('bản đồ có thanh tự đánh: không tràn ngang', !(await overflowX(page)));
 await shot(page, 'features-auto.png');
-await page.waitForSelector('[data-act="auto-off"]', { timeout: 5000 }).catch(() => null);
-await act(page, 'auto-off');
+await page.waitForSelector('[data-act="auto-toggle"]', { timeout: 5000 }).catch(() => null);
+await act(page, 'auto-toggle');
 await page.waitForFunction(() => !window.__hl.player().auto, null, { timeout: 5000 }).catch(() => null);
 R.check('tắt tự đánh', !(await player(page)).auto);
 

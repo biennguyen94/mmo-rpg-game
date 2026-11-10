@@ -90,7 +90,7 @@ defmodule HacLong.Slay do
     if :ets.whereis(@marks) == :undefined,
       do: :ets.new(@marks, [:named_table, :public, read_concurrency: true])
 
-    {:ok, %{fights: %{}, by_uid: %{}, next: 1}}
+    {:ok, %{fights: %{}, by_uid: %{}, next: 1, invites: %{}}}
   end
 
   # ---------- Bắt đầu ----------
@@ -138,6 +138,10 @@ defmodule HacLong.Slay do
 
       pa.pos.map != pb.pos.map ->
         {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
+
+      # bấm người trên bản đồ là đánh, không cần chạy sát bên: chỉ trong tầm `reach` ô (DECISIONS "Đồ sát trong tầm")
+      max(abs(pa.pos.x - pb.pos.x), abs(pa.pos.y - pb.pos.y)) > @r.reach ->
+        {:error, "#{pb.name} ở xa quá, lại gần trong #{@r.reach} ô để đồ sát."}
 
       not safe_ok?(pa.pos) ->
         {:error, "Đây là vùng an toàn, không được đánh nhau."}
@@ -191,9 +195,102 @@ defmodule HacLong.Slay do
     |> Map.merge(%{maxHp: max_hp, hp: min(p.hp, max_hp), special: nil, arena: false})
   end
 
+  # ---------- Đấu trường trực tiếp (E2, DECISIONS "Sự kiện, đấu trường, chiến bang trực quan") ----------
+
+  @duel_s Data.rules().arena.duel_invite_s
+  @duel_map Data.rules().arena.duel_map
+
+  @doc "Bản đồ riêng của đấu trực tiếp."
+  def duel_map, do: @duel_map.map
+
+  @doc "Ô đứng trên bản đồ đấu trực tiếp: người mời (`true`) ô a, người nhận ô b."
+  def duel_spot(inviter?) do
+    [x, y] = if inviter?, do: @duel_map.a, else: @duel_map.b
+    %{map: @duel_map.map, x: x, y: y}
+  end
+
+  @doc "`a` mời `b` đấu trường trực tiếp. Trả `{:ok, thông_báo}` hoặc `{:error, lý_do}`."
+  def duel_invite(a, b) do
+    with true <- (is_integer(b) and b != a) || {:error, "Không mời được người này."},
+         true <- Session.online?(b) || {:error, "Người này không online."},
+         pa = Session.get(a),
+         pb = Session.get(b),
+         :ok <- duel_check(a, b, pa, pb),
+         :ok <- GenServer.call(__MODULE__, {:duel_invite, a, b}) do
+      Phoenix.PubSub.broadcast(
+        HacLong.PubSub,
+        Session.topic(b),
+        {:duel_invite, %{from: a, name: pa.name, level: pa.level, cls: pa.cls, s: @duel_s}}
+      )
+
+      {:ok, "Đã mời #{pb.name} đấu trường trực tiếp, chờ nhận (#{@duel_s} giây)."}
+    end
+  end
+
+  @doc "`b` trả lời lời mời đấu: nhận (`true`) thì hai bên vào trận ngay, từ chối thì báo người mời."
+  def duel_answer(b, false) do
+    case GenServer.call(__MODULE__, {:duel_take, b}) do
+      {:ok, a} ->
+        notice(
+          a,
+          "⚔ #{(Session.get(b) || %{name: "Người kia"}).name} từ chối đấu trường trực tiếp."
+        )
+
+        {:ok, "Đã từ chối."}
+
+      err ->
+        err
+    end
+  end
+
+  def duel_answer(b, true) do
+    with {:ok, a} <- GenServer.call(__MODULE__, {:duel_take, b}),
+         true <- Session.online?(a) || {:error, "Người mời đã rời game."},
+         pa = Session.get(a),
+         pb = Session.get(b),
+         :ok <- duel_check(a, b, pa, pb),
+         # vào trận đầy máu (xong trận trả lại máu cũ)
+         pa = %{pa | hp: Engine.derived(pa).maxHp},
+         pb = %{pb | hp: Engine.derived(pb).maxHp},
+         {:ok, f} <- GenServer.call(__MODULE__, {:start, a, b, pa, pb, :duel}),
+         :ok <- begin(b, f, a, pa, nil),
+         :ok <- begin(a, f, b, pb, b) do
+      {:ok, "⚔ Vào đấu trường trực tiếp với #{pa.name}!"}
+    end
+  end
+
+  @doc "Điều kiện đấu trường trực tiếp (hàm thuần trừ số trận hôm nay): cả hai rảnh tay, khác tài khoản."
+  def duel_check(a, b, pa, pb) do
+    cond do
+      pa == nil or pb == nil ->
+        {:error, "Người này chưa có nhân vật."}
+
+      b in HacLong.Accounts.account_rows(a) ->
+        {:error, "Không đấu nhân vật cùng tài khoản."}
+
+      pa.battle != nil ->
+        {:error, "#{pa.name} đang trong trận đấu."}
+
+      pb.battle != nil ->
+        {:error, "#{pb.name} đang trong trận đấu."}
+
+      pa.hp <= 0 ->
+        {:error, "#{pa.name} đang gục ngã."}
+
+      pb.hp <= 0 ->
+        {:error, "#{pb.name} đang gục ngã."}
+
+      HacLong.Arena.stats(a).today >= HacLong.Arena.per_day() ->
+        {:error, "#{pa.name} đã đấu đủ #{HacLong.Arena.per_day()} trận hôm nay."}
+
+      true ->
+        :ok
+    end
+  end
+
   # ---------- API cho Session ----------
 
-  def start(a, b, pa, pb), do: GenServer.call(__MODULE__, {:start, a, b, pa, pb})
+  def start(a, b, pa, pb), do: GenServer.call(__MODULE__, {:start, a, b, pa, pb, :slay})
   def abort(id), do: GenServer.call(__MODULE__, {:abort, id})
 
   @doc "Trận đồ sát của `uid`: `%{id, foe, mine, hp, foe_hp, until, map, first, fx, foe_fx, foe_char}` hoặc nil."
@@ -217,9 +314,38 @@ defmodule HacLong.Slay do
   # ---------- GenServer ----------
 
   @impl true
-  def handle_call({:start, a, b, pa, pb}, _from, s) do
+  def handle_call({:duel_invite, a, b}, _from, s) do
     cond do
-      protected_s(b) > 0 ->
+      Map.has_key?(s.by_uid, a) ->
+        {:reply, {:error, "Bạn đang trong một trận."}, s}
+
+      Map.has_key?(s.by_uid, b) ->
+        {:reply, {:error, "Người này đang trong một trận."}, s}
+
+      true ->
+        {:reply, :ok,
+         put_in(s.invites[b], {a, System.system_time(:millisecond) + @duel_s * 1000})}
+    end
+  end
+
+  def handle_call({:duel_take, b}, _from, s) do
+    {inv, invites} = Map.pop(s.invites, b)
+    s = %{s | invites: invites}
+
+    case inv do
+      {a, until} ->
+        if until >= System.system_time(:millisecond),
+          do: {:reply, {:ok, a}, s},
+          else: {:reply, {:error, "Lời mời đã hết hạn."}, s}
+
+      nil ->
+        {:reply, {:error, "Không có lời mời đấu nào."}, s}
+    end
+  end
+
+  def handle_call({:start, a, b, pa, pb, mode}, _from, s) do
+    cond do
+      mode == :slay and protected_s(b) > 0 ->
         {:reply, {:error, "#{pb.name} vừa gục, đang được bảo vệ (còn #{protected_s(b)} giây)."},
          s}
 
@@ -242,6 +368,8 @@ defmodule HacLong.Slay do
           fx: %{a => nil, b => nil},
           chars: %{a => pa, b => pb},
           map: pa.pos.map,
+          # :slay đồ sát | :duel đấu trường trực tiếp (không chết, không vàng, đổi Elo)
+          mode: mode,
           turn: a,
           turns: 0,
           misses: 0,
@@ -252,7 +380,7 @@ defmodule HacLong.Slay do
         f = arm(f)
 
         # tự đi đồ sát thì mất bảo vệ
-        :ets.delete(@marks, {a, :safe})
+        if mode == :slay, do: :ets.delete(@marks, {a, :safe})
 
         s = %{
           s
@@ -381,6 +509,8 @@ defmodule HacLong.Slay do
   Chốt trận `f`: `loser` chết như thường (mất vàng, về Nhà), số vàng mất chuyển cho `winner`.
   Giữ cả hai Session rồi ghi hai nhân vật + `pk_matches` trong một transaction.
   """
+  def settle(%{mode: :duel} = f, winner, loser, why), do: settle_duel(f, winner, loser, why)
+
   def settle(f, winner, loser, why) do
     with {:ok, rw, pw} <- Session.hold(winner) do
       case Session.hold(loser) do
@@ -415,16 +545,22 @@ defmodule HacLong.Slay do
 
             if pl2.pos.map != pl.pos.map, do: World.leave(pl, loser)
 
+            # F2 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): hai bang đang chiến nhau → người thắng
+            # không bị tên đỏ, bang người thắng +1 điểm (giới hạn `same_target_max` lần một cặp như đấu trường)
+            war = not event_map?(pw) and HacLong.GuildWars.war_between(winner, loser) != nil
+
             cond do
               chaos_castle?(pw) -> HacLong.ChaosCastle.kill(winner, :player)
               castle?(pw) -> :ok
+              war -> mark(loser, :safe, now() + @r.protect_s * 1000)
               true -> marks(f, winner, loser)
             end
 
+            note = war_note(war, winner, loser)
             HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
-            notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng.")
+            notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng." <> note)
 
             notice(
               loser,
@@ -509,6 +645,109 @@ defmodule HacLong.Slay do
       do: mark(winner, :red, max(until(winner, :red), t) + @r.red_s * 1000)
   end
 
+  # Đấu trường trực tiếp xong: không ai chết / mất vàng; hai bên trả lại máu trước trận; đổi Elo (`Arena.finish/3`,
+  # người mời là người thách đấu); chiến bang: thắng thành viên bang địch +1 điểm như đấu trường.
+  defp settle_duel(f, winner, loser, why) do
+    with {:ok, rw, pw} <- Session.hold(winner) do
+      case Session.hold(loser) do
+        {:ok, rl, pl} ->
+          try do
+            r = HacLong.Arena.finish(f.a, f.b, if(winner == f.a, do: "win", else: "lose"))
+
+            {dw, dl} =
+              if winner == f.a, do: {r.delta, r.their_delta}, else: {r.their_delta, r.delta}
+
+            war =
+              case HacLong.GuildWars.record(winner, loser) do
+                {:ok, _} -> " ⚔ Chiến bang: bang bạn +1 điểm."
+                _ -> ""
+              end
+
+            sign = fn d -> if d >= 0, do: "+#{d}", else: "#{d}" end
+            how = if why == :fled, do: "#{f.names[loser]} bỏ chạy. ", else: ""
+
+            pw2 =
+              duel_end(
+                winner,
+                pw,
+                f,
+                "win",
+                [],
+                "🏆 #{how}#{f.names[winner]} thắng! Điểm đấu trường #{sign.(dw)}." <> war,
+                "win"
+              )
+
+            pl2 =
+              duel_end(
+                loser,
+                pl,
+                f,
+                "lose",
+                if(why == :fled, do: [], else: f[:last] || []),
+                "#{f.names[loser]} thua #{f.names[winner]}. Điểm đấu trường #{sign.(dl)}. Không mất vàng.",
+                "bad"
+              )
+
+            Characters.save!(winner, pw2, "DUEL")
+            Characters.save!(loser, pl2, "DUEL")
+
+            HacLong.Chat.system(
+              "⚔ Đấu trường trực tiếp: #{f.names[winner]} thắng #{f.names[loser]}."
+            )
+
+            Session.release(winner, rw, pw2)
+            Session.release(loser, rl, pl2)
+            notice(winner, "⚔ Thắng #{f.names[loser]}: điểm đấu trường #{sign.(dw)}." <> war)
+            notice(loser, "⚔ Thua #{f.names[winner]}: điểm đấu trường #{sign.(dl)}.")
+          rescue
+            e ->
+              Logger.error("Đấu trực tiếp #{f.a}-#{f.b} lỗi: " <> Exception.message(e))
+              Session.release(winner, rw, nil)
+              Session.release(loser, rl, nil)
+          end
+
+        _ ->
+          Session.release(winner, rw, nil)
+      end
+    end
+  end
+
+  defp duel_end(uid, p, f, result, lines, text, kind) do
+    if in_fight?(p, f) do
+      hp0 = p.battle.encounter[:hp0] || p.hp
+      back = p.battle.encounter[:back]
+      p = Enum.reduce(lines, p, &push(&2, entry(&1, "bad"))) |> log(text, kind)
+
+      b =
+        Map.merge(p.battle, %{
+          over: true,
+          result: result,
+          reward: %{xp: 0, gold: 0, items: [], levels: 0}
+        })
+
+      p = %{p | battle: b, hp: max(1, min(hp0, Engine.derived(p).maxHp))}
+      # rời bản đồ đấu trực tiếp, về đúng chỗ cũ
+      if back, do: HacLong.World.warp(p, uid, back), else: p
+    else
+      p
+    end
+  end
+
+  defp war_note(false, _winner, _loser), do: ""
+
+  defp war_note(true, winner, loser) do
+    case HacLong.GuildWars.record(winner, loser) do
+      {:ok, _} ->
+        " ⚔ Chiến bang: bang bạn +1 điểm, không bị tên đỏ."
+
+      {:error, :limit} ->
+        " ⚔ Chiến bang: không tính điểm (đã hạ người này #{HacLong.GuildWars.rules().same_target_max} lần), không bị tên đỏ."
+
+      _ ->
+        ""
+    end
+  end
+
   defp announce(f, winner, loser, why) do
     where = Maps.get(f.map).name
 
@@ -581,6 +820,7 @@ defmodule HacLong.Slay do
       map: f.map,
       # lượt đầu của người tấn công (đòn mở màn, `RULES.slay.first_strike_mult`)
       first: f.turns == 0,
+      duel: f[:mode] == :duel,
       fx: (f[:fx] || %{})[uid],
       foe_fx: (f[:fx] || %{})[foe],
       foe_char: (f[:chars] || %{})[foe]

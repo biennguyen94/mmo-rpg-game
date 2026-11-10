@@ -6,7 +6,9 @@ defmodule HacLong.GuildWars do
     online, và một trong họ nhận (`answer/3`) trong `answer_s` giây. Lời tuyên chiến giữ trong bộ nhớ.
   - Trận chiến lưu ở bảng `guild_wars`, kéo dài `minutes` phút. Mỗi trận **đấu trường thường** mà
     người thách đấu thắng thành viên bang địch (`record/2`, gọi từ Session) là +1 điểm cho bang mình;
-    thắng cùng một đối thủ quá `same_target_max` lần thì không tính thêm.
+    thắng cùng một đối thủ quá `same_target_max` lần thì không tính thêm. **Đồ sát** thành viên bang địch trên bản
+    đồ (ai thắng cũng được, `HacLong.Slay`) cũng +1 điểm, chung giới hạn cặp với đấu trường; người thắng không bị
+    tên đỏ (vẫn mất / nhận vàng như đồ sát thường).
   - Hết giờ (`finish/1`) hoặc đầu hàng (`surrender/1`): bang nhiều điểm thắng (bằng điểm: hòa), báo cả
     server; bang thắng được quỹ +`win_fund`, thành viên có ≥ 1 điểm nhận `win_gold` vàng qua thư.
     Hai bang không chiến lại trong `rematch_hours` giờ.

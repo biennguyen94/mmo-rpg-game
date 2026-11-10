@@ -90,7 +90,7 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
 
       # đã thả câu, tiến trình bot hẹn giờ giật cần (`opts.reeling`): đứng yên chờ
-      opts[:reeling] == true and p[:fishing] != nil ->
+      opts[:reeling] == true and (p[:fishing] != nil or p[:kite] != nil) ->
         nil
 
       # cánh đã tháo ra túi để ghép lên cấp: ghép trước (không thì bước mặc đồ lại mặc vào)
@@ -113,7 +113,7 @@ defmodule HacLong.Bots.Brain do
         tower_walk(p, [List.to_tuple(p.tower.exit)]) || idle_step(p)
 
       p.pos.map == "tower" ->
-        tower_play(p, d)
+        tower_play(p, d, opts)
 
       (need = restock(p)) != [] ->
         shop(p, need, snap)
@@ -171,6 +171,92 @@ defmodule HacLong.Bots.Brain do
   vào hồ thì nil.
   """
   def fish_job(p, snap, opts, mode) do
+    if mode == :idle and opts[:fishing] == true and kiter?(opts[:seed]),
+      do: kite_job(p, snap, opts),
+      else: lake_job(p, snap, opts, mode)
+  end
+
+  @doc """
+  Bot thả diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): một nửa số bot (seed lẻ) dùng lượt "ra hồ" để ra Đồi Sáo Diều.
+  Đứng chỗ thoáng trên đồi (`Kite.stands/1`, mỗi bot một chỗ, `spread/5`), thả vào ô Chim Lạc nếu đang lượn và chưa có, không thì ô Đàn Hạc, không thì
+  lên giữa trời (`Kite.aim/3`); thả đủ thì nhận việc Ông Lão Làm Diều.
+  """
+  def kiter?(seed) when is_integer(seed), do: rem(seed, 2) == 1
+  def kiter?(_), do: false
+
+  def kite_job(p, snap, opts) do
+    hill = Maps.get(HacLong.Game.Kite.map_id())
+    e = HacLong.Game.Kite.elder(p)
+    bird = opts[:bird]
+
+    target =
+      cond do
+        bird && HacLong.Game.Kite.rules().bird.pet not in (Map.get(p, :pets) || []) -> bird
+        opts[:flock] -> opts[:flock]
+        true -> :any
+      end
+
+    cond do
+      hill == nil or p.level < (hill[:min_level] || 1) ->
+        nil
+
+      p.pos.map != hill.id ->
+        go_to(p, hill.id)
+
+      p[:daily] != nil and e.n >= e.count and not e.done ->
+        at_npc_cmd(p, hill, "kite_maker", %{"act" => "kite_elder"}, snap)
+
+      true ->
+        kite_at(p, hill, target, snap, opts[:seed])
+    end
+  end
+
+  defp at_npc_cmd(p, map, id, cmd, snap) do
+    n = Enum.find(map.npcs, &(&1.id == id))
+    {nx, ny} = n.at
+
+    if max(abs(p.pos.x - nx), abs(p.pos.y - ny)) <= 1,
+      do: cmd,
+      else: walk(p, map, for({dx, dy} <- Map.values(@dirs), do: {nx + dx, ny + dy}), snap) || cmd
+  end
+
+  defp kite_at(p, map, target, snap, seed) do
+    me = {p.pos.x, p.pos.y}
+
+    # dây diều không giới hạn: đứng chỗ thoáng nào cũng thả tới ô Chim Lạc / Đàn Hạc (gần ô đó hơn cho tự nhiên)
+    all =
+      case target do
+        :any ->
+          sky_stands(map)
+
+        {tx, _} ->
+          for {x, y} <- sky_stands(map), abs(x - tx) <= 4, do: {x, y}
+      end
+
+    stands =
+      if target == :any,
+        do: spread(all, Map.put(p, :fishing, p[:kite]), me, seed, snap),
+        else: all
+
+    cond do
+      all == [] and target != :any ->
+        kite_at(p, map, :any, snap, seed)
+
+      me in stands ->
+        case target do
+          {x, y} -> %{"act" => "kite_fly", "x" => x, "y" => y}
+          :any -> %{"act" => "kite_fly"}
+        end
+
+      true ->
+        walk(p, map, stands, snap)
+    end
+  end
+
+  @doc "Ô đứng thả diều được trên bản đồ `map` (`HacLong.Game.Kite.stands/1`: chỗ thoáng, có trời trong tầm dây diều)."
+  def sky_stands(map), do: HacLong.Game.Kite.stands(map)
+
+  defp lake_job(p, snap, opts, mode) do
     lake = Maps.get(HacLong.LakeEvent.map_id())
 
     target =
@@ -193,7 +279,7 @@ defmodule HacLong.Bots.Brain do
         %{"act" => "elder_claim"}
 
       true ->
-        fish_at(p, lake, target, snap)
+        fish_at(p, lake, target, snap, opts[:seed])
     end
   end
 
@@ -213,10 +299,10 @@ defmodule HacLong.Bots.Brain do
     p[:daily] != nil and e.n >= e.count and not e.done
   end
 
-  defp fish_at(p, map, target, snap) do
+  defp fish_at(p, map, target, snap, seed) do
     me = {p.pos.x, p.pos.y}
 
-    stands =
+    all =
       case target do
         :any ->
           stand_tiles(map)
@@ -225,9 +311,12 @@ defmodule HacLong.Bots.Brain do
           for {x, y} <- stand_tiles(map), max(abs(x - tx), abs(y - ty)) <= @reach, do: {x, y}
       end
 
+    # Long Vương / Đàn Cá Vàng: cần nhanh, ô nào trong tầm cũng được; câu thường thì mỗi bot một chỗ
+    stands = if target == :any, do: spread(all, p, me, seed, snap), else: all
+
     cond do
-      stands == [] and target != :any ->
-        fish_at(p, map, :any, snap)
+      all == [] and target != :any ->
+        fish_at(p, map, :any, snap, seed)
 
       me in stands ->
         case target do
@@ -237,6 +326,26 @@ defmodule HacLong.Bots.Brain do
 
       true ->
         walk(p, map, stands, snap) || if(Fishing.near_water?(p), do: %{"act" => "fish_cast"})
+    end
+  end
+
+  # Mỗi bot một chỗ câu (anh báo "bot dồn một ô"): trước đây đi tới ô câu gần nhất nên con nào cũng về cùng một ô.
+  # Đang câu ở ô hợp lệ không ai đứng thì ở lại; không thì chọn trong các ô còn trống một ô theo seed của bot (đổi mỗi giờ
+  # cho khác lượt trước), ô đã có người khác đứng thì bỏ qua (hết ô trống thì chọn trong tất cả).
+  @doc false
+  def spread([], _p, _me, _seed, _snap), do: []
+
+  def spread(stands, p, me, seed, snap) do
+    others =
+      for o <- (snap && snap[:players]) || [], o.id != seed, into: MapSet.new(), do: {o.x, o.y}
+
+    if p[:fishing] != nil and me in stands and me not in others do
+      [me]
+    else
+      free = Enum.reject(stands, &(&1 in others))
+      pool = if free == [], do: stands, else: free
+      hour = div(System.os_time(:second), 3600)
+      [Enum.min_by(pool, fn {x, y} -> :erlang.phash2({seed, x, y, hour}) end)]
     end
   end
 
@@ -525,9 +634,10 @@ defmodule HacLong.Bots.Brain do
   lên cầu thang (Tháp, Quảng Trường); Lâu Đài / Kalima xong thì bước một bước để về Làng. Ra cổng `<` khi máu
   < `play.leave_hp` và hết bình, hoặc (Tháp) vừa xong một chặng 10 tầng / máu < `play.tower_hp` sau một tầng.
   """
-  def tower_play(%{tower: nil} = p, _d), do: any_step(p)
+  def tower_play(p, d, opts \\ %{})
+  def tower_play(%{tower: nil} = p, _d, _opts), do: any_step(p)
 
-  def tower_play(%{tower: t} = p, d) do
+  def tower_play(%{tower: t} = p, d, opts) do
     me = {p.pos.x, p.pos.y}
     low = p.hp < d.maxHp * @play.leave_hp and Engine.best_potion(p, d.maxHp - p.hp) == nil
     done = (t[:bc] && t.bc.done) || (t[:kal] && t.kal.done)
@@ -543,10 +653,16 @@ defmodule HacLong.Bots.Brain do
       low ->
         tower_walk(p, [List.to_tuple(t.exit)])
 
+      # vừa lên qua hết một chặng 10 tầng (đang ở tầng 11, 21… mà không phải tầng vào lượt này): ra cổng. Tầng 10 xong
+      # thì lên cầu thang trước: kỷ lục `tower_best` chỉ ghi khi lên cầu thang (trước đây ra cổng ngay ở tầng 10 nên kỷ
+      # lục mãi là 9, lần sau lại vào từ tầng 1 — bot "kẹt tầng 9")
+      plain? and rem(t.floor, 10) == 1 and t.floor > (opts[:tower_from] || t.floor) ->
+        tower_walk(p, [List.to_tuple(t.exit)])
+
       targets != [] ->
         tower_walk(p, targets)
 
-      plain? and (rem(t.floor, 10) == 0 or p.hp < d.maxHp * @play.tower_hp) ->
+      plain? and p.hp < d.maxHp * @play.tower_hp ->
         tower_walk(p, [List.to_tuple(t.exit)])
 
       t[:ds] != nil or plain? ->
@@ -731,7 +847,8 @@ defmodule HacLong.Bots.Brain do
           Engine.potion_ready?(p) ->
         %{"act" => "potion"}
 
-      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) ->
+      skill == nil and (mp < d.maxMp * mp_pct or starved?) and Engine.best_mana(p, d.maxMp - mp) &&
+          Engine.mana_ready?(p) ->
         %{"act" => "mana"}
 
       skill ->

@@ -192,6 +192,8 @@ defmodule HacLong.Game.Characters do
         end),
       fish_caught: c.fish_caught || 0,
       long_khi: c.long_khi || 0,
+      # Đồi Sáo Diều / Hắc Long: Phong Khí, Bọc Trăm Trứng đang ấp, hội đã hưởng lộc (`HacLong.Game.Kite.load/1`)
+      sky: HacLong.Game.Kite.load(c.sky),
       achievements: c.achievements || [],
       title: c.title,
       gear: HacLong.Game.Gear.load(c.gear),
@@ -266,7 +268,9 @@ defmodule HacLong.Game.Characters do
           {"ds_best", :ds_best},
           {"bc_slot", :bc_slot},
           {"lake_n", :lake_n},
-          {"lake_done", :lake_done}
+          {"lake_done", :lake_done},
+          {"kite_n", :kite_n},
+          {"kite_done", :kite_done}
         ],
         m,
         fn {k, a}, m ->

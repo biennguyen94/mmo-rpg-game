@@ -1,4 +1,4 @@
-// Phase 13: không vẽ người khác trên bản đồ, nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
+// Phase 13 (nay người khác vẽ trên bản đồ, e2e mapplayers): nút 👫 Quanh đây (số người + danh sách), hồ sơ người chơi
 // (mình và người khác), máu quái đang bị đánh hiện cho người cùng bản đồ, % cộng thêm ở tab Nhân vật.
 // Chạy: node e2e/people.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, player, send, travel, engage, act, shot, overflowX, fight } from './lib.mjs';
@@ -31,6 +31,23 @@ R.check('hồ sơ: không tràn ngang (điện thoại)', !(await overflowX(A.pa
 await shot(A.page, 'people-profile.png');
 await act(A.page, 'profile-close');
 R.check('‹ Quay lại về danh sách', !!(await A.page.$('.people-row')));
+
+// ---------- Tab 🟢 Đang online: B ở bản đồ khác vẫn có, bấm vào mở hồ sơ như Quanh đây ----------
+await send(B.page, { act: 'travel', to: 'village' }).catch(() => null);
+await B.page.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 8000 }).catch(() => null);
+await A.page.click('[data-act="people-tab"][data-t="online"]');
+await A.page.waitForSelector(`.people-row:has-text("${B.name}")`, { timeout: 6000 }).catch(() => null);
+const onl = await A.page.textContent('#view');
+R.check('tab Đang online: có B (đang ở Làng, khác bản đồ) + tên bản đồ', onl.includes(B.name) && /Làng/.test(onl), onl.slice(0, 200));
+R.check('tab Đang online: không tràn ngang (điện thoại)', !(await overflowX(A.page)));
+await shot(A.page, 'people-online.png');
+await A.page.click(`.people-row:has-text("${B.name}") .people-main`);
+await A.page.waitForSelector('.prof-head', { timeout: 8000 }).catch(() => null);
+R.check('bấm người trong tab online: mở hồ sơ', (await A.page.textContent('#view')).includes(B.name) && !!(await A.page.$('.prof-head')));
+await act(A.page, 'profile-close');
+await A.page.click('[data-act="people-tab"][data-t="here"]');
+await send(B.page, { act: 'travel', to: 'forest_1' }).catch(() => null);
+await B.page.waitForFunction(() => window.__hl.player().pos.map === 'forest_1', null, { timeout: 8000 }).catch(() => null);
 
 // ---------- Hồ sơ của mình (tab Nhân vật) ----------
 await A.page.click('#tabs [data-tab="hero"]');
@@ -77,6 +94,22 @@ await shot(A.page, 'people-map.png');
 // ---------- Tab Nhân vật: % cộng thêm ----------
 const ex = await A.page.evaluate(() => window.__hl.player().view.extra);
 R.check('tab Nhân vật có dữ liệu phần cộng thêm (đồ / thú cưng / món ăn)', ex && ['atk', 'def', 'hp'].every((k) => typeof ex[k] === 'number'), JSON.stringify(ex));
+
+// ---------- Bản đồ nhỏ: chấm hồng ở chỗ người chơi khác ----------
+await A.page.click('#tabs [data-tab="map"]').catch(() => null);
+for (const X of [A, B]) { const b = await X.page.evaluate(() => window.__hl.player().battle); if (b) { await fight(X.page).catch(() => null); await act(X.page, 'leave').catch(() => null); } }
+await A.page.click('#tabs [data-tab="map"]').catch(() => null);
+await A.page.waitForSelector('#mini-map', { timeout: 5000 }).catch(() => null);
+await A.page.waitForTimeout(600);
+const px = await A.page.evaluate((n) => {
+  const el = document.getElementById('mini-map'), o = window.__hl.world().players.find((x) => x.name === n);
+  if (!el || !o) return null;
+  const m = window.GAME_DATA.WORLD.maps[window.__hl.player().pos.map], s = el.width / m.tiles[0].length;
+  const d = el.getContext('2d').getImageData(Math.floor(o.x * s + s / 2), Math.floor(o.y * s + s / 2), 1, 1).data;
+  return [d[0], d[1], d[2]];
+}, B.name);
+R.check('bản đồ nhỏ: chấm hồng ở chỗ B', !!px && px[0] > 200 && px[2] > 150 && px[0] - px[1] > 60, JSON.stringify(px));
+await shot(A.page, 'people-minimap.png');
 
 R.check('không lỗi JS', A.errors.length === 0 && B.errors.length === 0, A.errors.concat(B.errors).join(' | '));
 await R.done(browser);

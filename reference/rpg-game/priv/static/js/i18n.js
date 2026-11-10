@@ -26,8 +26,10 @@
   function load(d) {
     dict = { names: d.names || {}, t: d.t || {} };
     const names = Object.keys(dict.names).sort((a, b) => b.length - a.length).map(reEsc);
-    tokRe = new RegExp('(' + names.concat(['\\d+(?:[.,]\\d+)*']).join('|') + ')', 'g');
-    nameOnly = names.length ? new RegExp('(' + names.join('|') + ')', 'g') : null;
+    // tên chỉ khớp khi đứng riêng (không khớp giữa chữ, vd "Da" trong "Danh"); scripts/i18n_extract.py làm y như vậy
+    const nm = names.length ? '(?<!\\p{L})(?:' + names.join('|') + ')(?!\\p{L})' : null;
+    tokRe = new RegExp('(' + (nm ? nm + '|' : '') + '\\d+(?:[.,]\\d+)*)', 'gu');
+    nameOnly = nm ? new RegExp(nm, 'gu') : null;
     // mẫu dự phòng: {n} nhận chữ bất kỳ (tên người chơi, bang…), xếp theo từ đầu tiên để tra nhanh
     loose = {};
     for (const [k, v] of Object.entries(dict.t)) {
@@ -42,6 +44,31 @@
   // dịch phần lõi (đã bỏ khoảng trắng / dấu ngăn ở hai đầu)
   function core(s) {
     const norm = s.replace(/\s+/g, ' ');
+    let r = hit(norm);
+    if (r != null) return r;
+    // cả câu trong ngoặc kép (lời NPC “…”): dịch phần trong
+    const q = norm.match(/^([“"])([\s\S]+)([”"])$/);
+    if (q) return q[1] + core(q[2]) + q[3];
+    // mẫu không có dấu chấm cuối mà chữ hiện ra có (hoặc ngược lại)
+    if (/[^.]\.$/.test(norm) && (r = hit(norm.slice(0, -1))) != null) return r.replace(/\.?$/, '.');
+    if (/[^.!?…]$/.test(norm) && (r = hit(norm + '.')) != null) return r.replace(/\.$/, '');
+    // nhiều câu ghép trong một khối chữ: dịch từng câu
+    const parts = norm.split(/(?<=[.!?…])\s+(?=\S)/);
+    if (parts.length > 1) return parts.map((p) => core(p)).join(' ');
+    const bits = norm.split(/\s+·\s+/);
+    if (bits.length > 1) return bits.map((p) => core(p)).join(' · ');
+    // danh sách "A, B, C." mà mỗi mục đều có khóa (vd tên thành tựu mới)
+    const cs = norm.replace(/\.$/, '').split(/,\s+/);
+    if (cs.length > 1 && cs.every((x) => hit(x) != null)) return cs.map(hit).join(', ') + (/\.$/.test(norm) ? '.' : '');
+    // "Tên: giá trị" — dịch hai vế riêng
+    const kv = norm.match(/^([^:]{1,40}):\s(.+)$/);
+    if (kv) return core(kv[1]) + ': ' + core(kv[2]);
+    // chưa có mẫu: ít nhất đổi các tên đã biết
+    return nameOnly ? norm.replace(nameOnly, (x) => dict.names[x] || x) : norm;
+  }
+
+  // khớp đúng khóa / mẫu tên-số / mẫu dự phòng; không có thì null
+  function hit(norm) {
     if (dict.t[norm]) return dict.t[norm];
     if (dict.names[norm]) return dict.names[norm];
     const vals = [];
@@ -57,16 +84,7 @@
         return v.replace(/\{(\d+)\}/g, (x, i) => { const g = m.groups['p' + i]; return g == null ? x : tr(g); });
       }
     }
-    // nhiều câu ghép trong một khối chữ: dịch từng câu
-    const parts = norm.split(/(?<=[.!?…])\s+(?=\S)/);
-    if (parts.length > 1) return parts.map((p) => core(p)).join(' ');
-    const bits = norm.split(/\s+·\s+/);
-    if (bits.length > 1) return bits.map((p) => core(p)).join(' · ');
-    // "Tên: giá trị" — dịch hai vế riêng
-    const kv = norm.match(/^([^:]{1,40}):\s(.+)$/);
-    if (kv) return core(kv[1]) + ': ' + core(kv[2]);
-    // chưa có mẫu: ít nhất đổi các tên đã biết
-    return nameOnly ? norm.replace(nameOnly, (x) => dict.names[x] || x) : norm;
+    return null;
   }
 
   // đổi tên theo bộ tên (một lượt, khóa dài trước, không khớp giữa chữ)

@@ -295,6 +295,87 @@ defmodule HacLongWeb.SlayTest do
     assert Session.get(ub.id).battle == nil
   end
 
+  test "chiến bang: hạ thành viên bang địch thì bang +1 điểm, không bị tên đỏ, vẫn nhận vàng" do
+    HacLong.GuildWars.reset()
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.put(strong(), :gold, 300_000))
+    player(ub, %{level: 10, gold: 300_000})
+    sa = join(ua)
+    sb = join(ub)
+    ga = cmd(sa, %{"act" => "guild_create", "name" => "Bang Sa", "tag" => "SA1"}).player.guild.id
+    cmd(sb, %{"act" => "guild_create", "name" => "Bang Sb", "tag" => "SB1"})
+    ref = push(sa, "guild", %{"op" => "war_declare", "tag" => "SB1"})
+    assert_reply ref, :ok, _
+    ref = push(sb, "guild", %{"op" => "war_accept"})
+    assert_reply ref, :ok, _
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case Slay.peek(ua.id) do
+        nil -> {:halt, :ok}
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+      end
+    end)
+
+    settled(ub.id)
+    refute Slay.red?(ua.id)
+    assert Slay.protected_s(ub.id) > 0
+    assert %{mine: 1, theirs: 0} = HacLong.GuildWars.brief(ga)
+    assert Session.get(ua.id).gold > 300_000
+  end
+
+  test "đấu trường trực tiếp: mời → nhận, khác bản đồ được, vào trận đầy máu, xong trả máu cũ, không mất vàng / tên đỏ, đổi Elo" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.merge(strong(), %{gold: 5000, hp: 50}))
+    player(ub, %{level: 10, gold: 3000}, %{map: "village", x: 12, y: 14})
+    sa = join(ua)
+    sb = join(ub)
+
+    ref = push(sb, "duel", %{"op" => "accept"})
+    assert_reply ref, :error, %{msg: "Không có lời mời" <> _}
+
+    ref = push(sa, "duel", %{"op" => "invite", "uid" => ub.id})
+    assert_reply ref, :ok, %{msg: msg}
+    assert msg =~ "Đã mời"
+    assert_push "duel_invite", %{from: from}
+    assert from == ua.id
+
+    ref = push(sb, "duel", %{"op" => "accept"})
+    assert_reply ref, :ok, _
+    pa = Session.get(ua.id)
+    assert pa.battle.encounter.duel and pa.battle.encounter.hp0 == 50
+    assert pa.hp == HacLong.Game.Engine.derived(pa).maxHp
+    # vào bản đồ riêng: người mời ô a, người nhận ô b
+    assert pa.pos == Slay.duel_spot(true)
+    assert Session.get(ub.id).pos == Slay.duel_spot(false)
+
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case Slay.peek(ua.id) do
+        nil -> {:halt, :ok}
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+      end
+    end)
+
+    pb = settled(ub.id)
+    pa = settled(ua.id)
+    assert pa.battle.result == "win" and pb.battle.result == "lose"
+    assert pa.gold == 5000 and pb.gold == 3000
+    assert pa.hp == 50
+    # xong trận về đúng chỗ cũ
+    assert pb.pos == %{map: "village", x: 12, y: 14}
+    assert pa.pos.map != Slay.duel_map()
+    refute Slay.red?(ua.id)
+    assert HacLong.Arena.stats(ua.id).rating > 1000
+    assert HacLong.Arena.stats(ub.id).rating < 1000
+    assert HacLong.Arena.stats(ua.id).today == 1
+  end
+
   test "thắng: người tấn công bị tên đỏ, người thua được bảo vệ, báo kênh thế giới" do
     ua = create_user()
     ub = create_user()
@@ -381,5 +462,33 @@ defmodule HacLongWeb.SlayTest do
     assert lost == 200 and pl2.gold == 800 and pw2.gold == 1200
     assert pl2.battle.result == "lose" and pw2.battle.result == "win"
     assert Enum.any?(pl2.battle.log, &(&1.text =~ "Tên đỏ"))
+  end
+
+  test "⚡ Đồ sát nhanh: hai bên bật ⚡ thì server tự đánh theo combo từng lượt tới khi có người gục" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.merge(strong(), %{gold: 5000}))
+    player(ub, %{level: 10, gold: 3000})
+    sa = join(ua)
+    sb = join(ub)
+    assert %{ok: true} = cmd(sa, %{"act" => "quick", "on" => true})
+    assert %{ok: true} = cmd(sb, %{"act" => "quick", "on" => true})
+
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+
+    # không gửi lệnh đánh nào: server tự đánh lượt của cả hai rồi tự rời màn trận
+    done =
+      Enum.reduce_while(1..150, false, fn _, _ ->
+        Process.sleep(100)
+        a = Session.get(ua.id)
+        b = Session.get(ub.id)
+        if a.battle == nil and b.battle == nil, do: {:halt, true}, else: {:cont, false}
+      end)
+
+    assert done
+    assert Session.get(ub.id).deaths == 1
+    assert Slay.peek(ua.id) == nil
+    _ = sb
   end
 end

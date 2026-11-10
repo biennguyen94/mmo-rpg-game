@@ -139,7 +139,9 @@ defmodule HacLong.Game.PvpCrossTest do
 
     # bình hồi số cố định (DECISIONS "Bình máu / mana hồi số"); đánh quái hồi đủ (chặn ở máu tối đa)
     full = HacLong.Game.Data.item("potion_l").heal
-    assert healed.(pvp1) == round(full * r.potion_mult)
+    # đánh người: × potion_mult nhưng mỗi bình tối đa potion_cap_pct máu tối đa
+    max_hp = Engine.derived(pvp1).maxHp
+    assert healed.(pvp1) == min(round(full * r.potion_mult), round(max_hp * r.potion_cap_pct))
     assert healed.(pve1) == min(full, Engine.derived(pve1).maxHp - 100)
 
     # vừa uống: chờ đủ potion_cd lượt
@@ -159,6 +161,32 @@ defmodule HacLong.Game.PvpCrossTest do
     full = put_in(pvp1, [:battle, :pots_used], r.potion_max) |> put_in([:battle, :pot_at], -99)
     assert {%{ok: false, msg: msg}, _} = Engine.act(low.(full), "potion")
     assert msg =~ "chỉ uống được #{r.potion_max} bình"
+  end
+
+  test "đánh người: bình mana mỗi bình tối đa mana_cap_pct MP, mana_cd lượt một lần, tối đa mana_max bình" do
+    r = Engine.pvp_rules()
+    a = hero("Mana", "mg") |> Map.put(:inv, %{"mana_l" => 20})
+    pvp = in_fight(a, hero("Kia", "dk"), 2) |> Map.put(:mp, 0)
+    {%{ok: true}, p1} = Engine.act(pvp, "mana")
+    max_mp = Engine.derived(p1).maxMp
+    # đọc lượng hồi trong nhật ký (MP còn tự hồi thêm sau lượt)
+    t = Enum.find(p1.battle.log, &(&1.text =~ "Mana uống")).text
+    [_, n] = Regex.run(~r/hồi (\d+) MP/u, t)
+    got = String.to_integer(n)
+
+    assert got ==
+             Enum.min([
+               round(HacLong.Game.Data.item("mana_l").mana * r.mana_mult),
+               round(max_mp * r.mana_cap_pct),
+               max_mp
+             ])
+
+    assert {%{ok: false, msg: msg}, _} = Engine.act(%{p1 | mp: 0}, "mana")
+    assert msg =~ "bình mana dùng lại sau"
+
+    full = put_in(p1, [:battle, :manas_used], r.mana_max) |> put_in([:battle, :mana_at], -99)
+    assert {%{ok: false, msg: msg}, _} = Engine.act(%{full | mp: 0}, "mana")
+    assert msg =~ "chỉ uống được #{r.mana_max} bình mana"
   end
 
   test "đánh người: hồi máu từ kỹ năng × heal_mult (đánh quái giữ nguyên)" do

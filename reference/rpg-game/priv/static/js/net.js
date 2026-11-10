@@ -14,7 +14,7 @@
     get() { try { const v = +sessionStorage.getItem(PLAY_KEY); return v > 0 ? v : null; } catch (e) { return null; } },
     set(v) { try { if (v) sessionStorage.setItem(PLAY_KEY, String(v)); else sessionStorage.removeItem(PLAY_KEY); } catch (e) { /* bỏ qua */ } },
   };
-  const cb = { player: null, map: null, status: null, rejoin: null, expired: null, chat: null, history: null, boss: null, notice: null, mail: null, guild: null, party: null, invite: null, shared: null, trade: null, tradeRequest: null, friends: null, dm: null };
+  const cb = { player: null, map: null, status: null, rejoin: null, expired: null, chat: null, history: null, boss: null, notice: null, mail: null, guild: null, party: null, invite: null, shared: null, trade: null, tradeRequest: null, duelInvite: null, friends: null, dm: null };
   let socket = null, channel = null, checkTimer = null;
 
   const store = {
@@ -124,6 +124,7 @@
         ch.on('chat_history', (m) => cb.history && cb.history(m.messages));
         ch.on('world_boss', (m) => cb.boss && cb.boss(m));
         ch.on('lake', (m) => cb.lake && cb.lake(m));
+        ch.on('sky', (m) => cb.sky && cb.sky(m));
         // quản trị đổi bộ tên cho cả server: tải lại trang để nạp tên mới
         ch.on('name_pack', (m) => { if (!window.I18N || window.I18N.pack !== m.pack) setTimeout(() => location.reload(), 1500); });
         ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
@@ -138,6 +139,7 @@
         ch.on('friends', (m) => cb.friends && cb.friends(m.msg));
         ch.on('dm', (m) => cb.dm && cb.dm(m));
         ch.on('trade_request', (m) => cb.tradeRequest && cb.tradeRequest(m));
+        ch.on('duel_invite', (m) => cb.duelInvite && cb.duelInvite(m));
         ch.on('shared', (m) => cb.shared && cb.shared(m));
         // Tiến Lên (Phase 17): bàn bài, chat bàn, hiệu ứng, sảnh đổi
         ch.on('tl', (m) => cb.tl && cb.tl(m));
@@ -326,6 +328,8 @@
     party(op, payload) { return push('party', Object.assign({ op }, payload || {})); },
     // Giao dịch: trade('request', { uid }), trade('accept'), trade('offer', { offer }), trade('ready')...
     trade(op, payload) { return push('trade', Object.assign({ op }, payload || {})); },
+    // E2 đấu trường trực tiếp: invite {uid} | accept | decline
+    duel(op, payload) { return push('duel', Object.assign({ op }, payload || {})); },
     // Lịch sử đồ sát: { history: [...] }.
     slayHistory() { return push('slay_history', {}); },
     // Đồ sát: đánh ngay người chơi cùng bản đồ (không cần đồng ý).
@@ -334,6 +338,8 @@
     tl(op, payload) { return push('tl', Object.assign({ op }, payload || {})); },
     // Bạn bè: friends('list'), friends('request', { uid } | { name }), accept/decline/remove { uid }.
     friends(op, payload) { return push('friends', Object.assign({ op }, payload || {})); },
+    // tab "Đang online" ở Quanh đây
+    online() { return push('online', {}); },
     // Tin riêng: dm('history', { uid }), dm('send', { uid, text }).
     dm(op, payload) { return push('dm', Object.assign({ op }, payload || {})); },
     // Đấu trường: điểm của mình, đối thủ gợi ý, bảng xếp hạng. Xem thông tin người chơi khác.
@@ -380,6 +386,7 @@
     // Trạng thái trùm thế giới; thông báo riêng (vd. nhận thưởng).
     onWorldBoss(f) { cb.boss = f; },
     onLake(f) { cb.lake = f; },
+    onSky(f) { cb.sky = f; },
     onInvasion(f) { cb.invasion = f; },
     onNotice(f) { cb.notice = f; },
     // Số thư chưa mở thay đổi (có thư mới, vừa mở thư).
@@ -393,6 +400,7 @@
     // Bảng giao dịch đổi (hoặc null khi xong/hủy) / có người mời giao dịch.
     onTrade(f) { cb.trade = f; },
     onTradeRequest(f) { cb.tradeRequest = f; },
+    onDuelInvite(f) { cb.duelInvite = f; },
     onTl(f) { cb.tl = f; },
     onTlChat(f) { cb.tlChat = f; },
     onTlFx(f) { cb.tlFx = f; },

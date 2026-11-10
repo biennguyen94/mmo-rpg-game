@@ -73,7 +73,7 @@ Thứ tự các khối trong tab:
    đúng chủ tài khoản rồi bấm **Đặt lại mật khẩu**: ra mật khẩu tạm 8 ký tự (chỉ hiện một lần, không ghi vào nhật ký quản trị),
    mọi thiết bị của họ bị đăng xuất; báo mật khẩu cho người chơi, nhắc họ đổi lại. Ở thẻ tra cứu người chơi cũng có nút
    **🔑 Đặt lại mật khẩu**. Lệnh: `pw_requests`, `reset_password` (`uid`), `pw_dismiss` (`id`).
-6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long, bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `lake_summon` (**🐉 Gọi Long Vương nổi**: Ngài nổi ngay ở một ô nước ngẫu nhiên của Hồ Long Vương trong 3 phút, như lần nổi theo giờ), `lake_school` (**✨ Gọi Đàn Cá Vàng**: hiện ngay 2 phút), `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
+6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long (**🕊 Cổ Long bay đi** cho trùm đang có bay đi ngay, không ai được thưởng — lệnh `world_boss_off`), bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `lake_summon` (**🐉 Gọi Long Vương nổi**: Ngài nổi ngay ở một ô nước ngẫu nhiên của Hồ Long Vương trong 3 phút, như lần nổi theo giờ), `lake_school` (**✨ Gọi Đàn Cá Vàng**: hiện ngay 2 phút), `sky_bird` / `sky_flock` / `sky_meteor` / `sky_hoi` (**🐦 Gọi Chim Lạc**, **🕊 Gọi Đàn Hạc**, **🌠 Mưa sao băng** ở Đồi Sáo Diều, **🐉🐦 Mở Long Phượng Hội** ở Tế Đàn 5 phút), `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 
@@ -94,7 +94,8 @@ Mỗi dòng trong khối là một lệnh (`op` của kênh `"admin"`, xem `HacL
 | Đặt lại chỉ số | `reset_stats` | | chỉ số về **gốc của lớp**; điểm tiềm năng **đặt** đúng như người chơi thật ở cấp / số lần chuyển sinh hiện tại, chưa cộng: (cấp − 1) × điểm mỗi cấp + số lần chuyển sinh × 25 (`rules.json` `rebirth_points`). Bỏ hết điểm đã cộng / `add_points` / `add_stats` trước đó. Nút **Đặt lại chỉ số** (cạnh Hồi đầy máu, có hỏi xác nhận) |
 | Đồ thường (xếp chồng) | `give_item` | `id`, `count` 1..9999, `up` 0..11, `wopt` (cánh cấp 2 / 3, Phase 15e: `hp` / `mp` / `ignore_def`) | **mọi** món trong `priv/game_data/items.json`, cả đồ không bán / chỉ rơi từ trùm (`relic`, `dragonshield`), ngọc (`jewel_bless`, `jewel_soul`, `jewel_chaos`), cánh (`wing_<lớp>_1`, `wing_<lớp>_2`, `wing_<lớp>_3`). Trang bị (vũ khí, giáp, khiên, trang sức, cánh) luôn thành **món riêng** 0 dòng trong túi trang bị, mỗi món một chỗ (cần chỗ trống). Tab Quản trị: mục **Đồ thường** chỉ liệt kê bình, ngọc, nguyên liệu, vé…; trang bị tặng ở mục **Trang bị** |
 | Trang bị | `give_gear` | `anc` (tuỳ chọn, Phase 15g: `true` = đồ Bộ Thần, chỉ món bộ giáp), `luck` / `skill` (tuỳ chọn, Phase 15d: `true` để có dòng May mắn / Kỹ năng; Kỹ năng chỉ vũ khí), `exc` (tuỳ chọn, Phase 15c: dòng Excellent, B-16 đủ 6 dòng: vũ khí / dây chuyền `atk_pct crit heal_kill mp_kill atk_lvl ar_pct`, đồ khác `hp_pct dmg_red gold_pct mp_pct reflect def_rate`, cánh không có Excellent; trên trang Quản trị là các ô tick, chỉ hiện nhóm hợp món đang chọn — Kỹ năng chỉ hiện với vũ khí, Đồ Thần chỉ với món thuộc bộ), `wopt` (tuỳ chọn, chỉ cánh bậc 2–3: `hp` / `mp` / `ignore_def`), `base` (mọi loại kể cả cánh; id đồ Item.txt `item_<nhóm>_<số>`, xem `docs/ITEMS_PICK.md`), `opt` 0..4 (dòng cộng thêm, mỗi dòng +4; B-15 bỏ `rarity` / `bonus`), `up` | tạo một món riêng kiểu MU. Túi trang bị đầy (40, `rules.json` `loot.gear_bag`) thì báo lỗi |
-| Thú cưng | `give_pet` | `id` (thú trong `priv/game_data/pets.json`, kể cả thú hiếm `long_vuong`), `level` 1..20 | tặng thú, đặt cấp thú (cấp 5 / 15 / 20 mở kỹ năng), dắt theo luôn; đã có thì chỉ đặt lại cấp. Tab Quản trị: mục **Thú cưng** (🐉 Long Vương ở đầu danh sách). Không ghi Bia Long Vương |
+| Thú cưng | `give_pet` | `id` (thú trong `priv/game_data/pets.json`, kể cả thần thú `long_vuong`, `chim_lac`, `hac_long`, `hac_long_chan`), `level` 1..cấp tối đa của thú (thú thường 20, thần thú 30) hoặc `"max"`, `lead` (`false`: chỉ tặng, không dắt) | tặng thú, đặt cấp thú, dắt theo luôn (trừ `lead: false`); đã có thì chỉ đặt lại cấp. Tab Quản trị: mục **Thú cưng** (🐉 thần thú ở đầu danh sách). Không ghi Bia Long Vương / Bia Chim Lạc, không báo cả server |
+| Long Khí / Phong Khí | `set_qi` | `long` (0..`RULES.fishing.dragon.long_khi_max`), `phong` (0..`RULES.sky.bird.phong_khi_max`), số hoặc `"max"`; có ít nhất một | đặt Long Khí (Hồ Long Vương) / Phong Khí (Đồi Sáo Diều): đầy cả hai là một điều kiện Long Phượng Hội nhận Bọc Trăm Trứng. Tab Quản trị: dòng **Long Khí / Phong Khí** |
 | Kỷ lục tháp | `set_tower` | `floor` 0..1000 | đặt kỷ lục Tháp Thử Thách (Phase 3: mở kỹ năng tháp ở tầng 10, 20, … 100) |
 | Chuyển sinh | `set_rebirths` | `n` 0..10 | đặt số lần chuyển sinh (Phase 6: mở vùng đất chuyển sinh), không đổi cấp / điểm |
 | Thông thạo kỹ năng | `set_mastery` | `lv` 1..10 | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp 4 / 9 thì đủ điểm chờ đột phá) |
@@ -201,7 +202,11 @@ Lệnh kênh `"admin"` đầy đủ (cho người viết công cụ): xem bảng
 495 điểm, Đấu Sĩ 593), bộ giáp Excellent / Đồ Thần, tay trái vũ khí thứ hai
 hoặc khiên (lớp cầm 2 vũ khí; vũ khí 2 tay như cung Tiên Nữ thì bỏ qua), tick **Mặc luôn đồ**, vàng, ngọc / vật phẩm,
 Long Vương → **⚡ Dựng tối đa**. Thẻ chạy lần lượt đúng các lệnh bên dưới (mỗi lệnh ghi Nhật ký quản trị), hiện ✓ / ✗ từng
-bước. Chỉ số chia đủ **chỉ số yêu cầu** của đồ trước rồi mới chia theo tỉ lệ của lớp (đồ chưa đủ yêu cầu không có tác dụng,
+bước. Hàng **Nhẫn 1 / Nhẫn 2 / Dây chuyền** chọn món (mặc định Nhẫn Phép × 2, Dây Chuyền Nước; món kháng hệ ghi
+"kháng 🔥 Lửa"… để dựng nhân vật chống kỹ năng quái theo hệ, `RULES.monster_skills.resist`, mỗi món +11 kháng 21%, cộng dồn
+cùng hệ tối đa 50%). Tick **Thần thú cấp tối đa**: tặng Long Vương, Chim Lạc, Hắc Long Chân Thân cấp 30, dắt con cuối
+(danh sách ở `admin_max_build.pets`). Tick **Đầy Long Khí, Phong Khí** (`set_qi`). Vật phẩm có thêm đồ thả diều (Sáo
+Đồng, Mảnh Sao, Lông Hạc, Mảnh Mây). Chỉ số chia đủ **chỉ số yêu cầu** của đồ trước rồi mới chia theo tỉ lệ của lớp (đồ chưa đủ yêu cầu không có tác dụng,
 DECISIONS "Đồ quá cấp sau chuyển sinh không có tác dụng"). Bộ đồ, ép, dòng, vật phẩm, vàng đọc ở
 `priv/game_data/rules.json` → `admin_max_build` (đổi ở đó, không sửa code). Có **Mặc luôn đồ** thì đồ tặng mặc ngay
 (`give_gear` `equip: true`, tay trái `hand: "left"`), đồ cũ về túi; **túi đầy** thì món bị thay ra (hoặc món chưa mặc
@@ -264,9 +269,12 @@ if (SET.left) await A('give_gear', { base: SET.left, opt: 4, luck: true, skill: 
 if (SET.shield) await A('give_gear', { base: SET.shield, opt: 4, luck: true, up: 11, exc: EXC_A });
 for (const base of SET.set) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
 // Đồ Thần thay cho Excellent (chọn một trong hai cho bộ giáp): await A('give_gear', { base, opt: 4, luck: true, up: 11, anc: true });
-await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });   // Nhẫn Phép × 2
-await A('give_gear', { base: 'item_13_24', opt: 4, luck: true, up: 11, exc: EXC_A });
-await A('give_gear', { base: 'item_13_27', opt: 4, luck: true, up: 11, exc: EXC_W });   // Dây Chuyền Nước
+// nhẫn / dây chuyền: mặc định Nhẫn Phép × 2 + Dây Chuyền Nước (kháng ☀ Ánh Sáng); muốn kháng hệ thì đổi mã,
+// vd Nhẫn Gió item_13_23, Nhẫn Lửa item_13_21, Nhẫn Băng item_13_8, Nhẫn Độc item_13_9 (Bóng Tối), Nhẫn Đất item_13_22,
+// Dây Chuyền Sét item_13_12 / Lửa item_13_13 / Băng item_13_25 / Gió item_13_26 (RULES.monster_skills.resist.items)
+const RINGS = ['item_13_24', 'item_13_24'], PENDANT = 'item_13_27';
+for (const base of RINGS) await A('give_gear', { base, opt: 4, luck: true, up: 11, exc: EXC_A });
+await A('give_gear', { base: PENDANT, opt: 4, luck: true, up: 11, exc: EXC_W });
 // cánh cấp 3 đúng lớp (cấp mặc 45): 4 dòng cộng thêm (phòng thủ), May mắn, dòng phụ cánh hp / mp / ignore_def
 await A('give_gear', { base: `wing_${cls}_3`, opt: 4, luck: true, up: 11, wopt: 'ignore_def' });
 
@@ -284,9 +292,14 @@ await A('give_item', { id: 'dragon_scale', count: 20 });
 await A('give_item', { id: 'mam_co', count: 20 });
 for (const id of ['ds_ticket', 'bc_ticket', 'cc_ticket', 'lost_map']) await A('give_item', { id, count: 10 });
 
-// thú hiếm Long Vương cấp tối đa (đủ 3 kỹ năng), dắt theo luôn; Mồi Rồng để câu ở Hồ Long Vương
-await A('give_pet', { id: 'long_vuong', level: 'max' });   // 'max' = cấp tối đa của thú (Long Vương 30)
+// thần thú cấp tối đa ('max' = 30): Long Vương, Chim Lạc, Hắc Long Chân Thân; chỉ dắt con cuối (lead: false thì không dắt)
+const PETS = ['long_vuong', 'chim_lac', 'hac_long_chan'];
+for (const id of PETS) await A('give_pet', { id, level: 'max', lead: id === PETS[PETS.length - 1] });
+// đầy Long Khí (Hồ Long Vương) và Phong Khí (Đồi Sáo Diều)
+await A('set_qi', { long: 'max', phong: 'max' });
+// Mồi Rồng để câu ở Hồ Long Vương; đồ thả diều: Sáo Đồng (mồi Chim Lạc), Mảnh Sao, Lông Hạc, Mảnh Mây
 await A('give_item', { id: 'dragon_bait', count: 100 });
+for (const [id, count] of [['sao_dong', 10], ['manh_sao', 20], ['long_hac', 50], ['manh_may', 50]]) await A('give_item', { id, count });
 
 await A('heal');
 ```
@@ -301,11 +314,13 @@ tra chính mình → **Nhật ký quản trị** có đủ các dòng; **Kiểm 
 Chạy lại công thức nhiều lần vẫn ra cùng chỉ số / điểm (nhờ `reset_stats`); riêng **vàng** (`add_gold`) và **đồ / ngọc**
 (`give_gear`, `give_item`) vẫn cộng thêm vào cái đang có.
 
-Thú Long Vương tặng bằng `give_pet` **không** ghi lên Bia Long Vương và không báo cả server (bia chỉ ghi người tự câu được);
-danh hiệu Long Vương Chủ thì có (thành tựu tính theo thú đang có).
+Thần thú tặng bằng `give_pet` **không** ghi lên Bia Long Vương / Bia Chim Lạc, không báo cả server và không ghi tên
+"người đầu tiên thuần phục Hắc Long" ở màn đăng nhập (chỉ ghi người tự câu / cảm hóa / ấp được); danh hiệu Long Vương Chủ
+thì có (thành tựu tính theo thú đang có).
 
-Không có trong công thức (Hắc Long chưa có lệnh quản trị cho): thành tựu, nhiệm vụ. Kỹ năng thường mở theo cấp (cấp 50 là đủ),
-kỹ năng tháp mở bằng `set_tower`, thông thạo bằng `set_mastery`.
+Không có trong công thức: thành tựu, nhiệm vụ, Bọc Trăm Trứng (tặng món `boc_tram_trung` thì không ấp được vì chưa có trứng
+đang ấp: phải làm lễ ở Long Phượng Hội, tab Quản trị → **🐉🐦 Mở Long Phượng Hội**; công thức đã cho sẵn Hắc Long Chân Thân).
+Kỹ năng thường mở theo cấp (cấp 50 là đủ), kỹ năng tháp mở bằng `set_tower`, thông thạo bằng `set_mastery`.
 
 ## 7. Giao dịch trực tiếp an toàn (cho người vận hành)
 

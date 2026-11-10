@@ -1,5 +1,6 @@
 // Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6): tra người chơi, bấm "⚡ Dựng tối đa" → người đó cấp 50,
-// chuyển sinh 10, đồ tốt nhất của lớp +11 đã mặc và có tác dụng (đủ chỉ số yêu cầu), cánh cấp 3, Long Vương, vàng.
+// chuyển sinh 10, đồ tốt nhất của lớp +11 đã mặc và có tác dụng (đủ chỉ số yêu cầu), cánh cấp 3, thần thú (Long Vương, Chim Lạc, Hắc Long Chân Thân; dắt con cuối),
+// đầy Long Khí / Phong Khí, vàng; chọn được nhẫn / dây chuyền kháng hệ.
 // Chạy: node e2e/maxbuild.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, shot } from './lib.mjs';
 
@@ -19,6 +20,8 @@ for (const cls of (process.env.CLASSES || 'dk,elf').split(',')) {
   await page.fill('#adm-name', X.name);
   await page.press('#adm-name', 'Enter');
   await page.waitForSelector('#adm-maxb');
+  // lớp elf: chọn 2 nhẫn kháng hệ (Gió, Lửa) thay Nhẫn Phép
+  if (cls === 'elf') { await page.selectOption('#adm-maxb select[name="ring1"]', 'item_13_23'); await page.selectOption('#adm-maxb select[name="ring2"]', 'item_13_21'); }
   R.check(`${cls}: thẻ Dựng nhân vật tối đa hiện cho người vừa tra`, (await page.textContent('#view')).includes('Dựng nhân vật tối đa'));
   await page.click('#adm-maxb button[type="submit"]');
   await page.waitForFunction(() => /Xong/.test((document.querySelector('.adm-maxb-log') || {}).innerText || ''), null, { timeout: 60000 }).catch(() => null);
@@ -28,12 +31,15 @@ for (const cls of (process.env.CLASSES || 'dk,elf').split(',')) {
   await shot(page, `maxbuild-admin-${cls}.png`);
 
   await X.page.waitForFunction(() => window.__hl.player().level === 50, null, { timeout: 10000 }).catch(() => null);
-  const me = await X.page.evaluate(() => { const p = window.__hl.player(); return { level: p.level, rebirths: p.rebirths, points: p.points, gold: p.gold, equip: p.equip, inactive: p.view.inactive, pet: p.pet, hp: p.hp, max: p.view.derived.maxHp }; });
+  const me = await X.page.evaluate(() => { const p = window.__hl.player(); return { level: p.level, rebirths: p.rebirths, points: p.points, gold: p.gold, equip: p.equip, inactive: p.view.inactive, pet: p.pet, pets: p.pets, lk: p.long_khi, pk: (p.view.kite || {}).phong_khi, resist: p.view.derived.resist, hp: p.hp, max: p.view.derived.maxHp }; });
   R.check(`${cls}: cấp 50, chuyển sinh 10, hết điểm tiềm năng`, me.level === 50 && me.rebirths === 10 && me.points === 0, JSON.stringify({ l: me.level, r: me.rebirths, p: me.points }));
   const worn = Object.values(me.equip).filter(Boolean).length;
   R.check(`${cls}: đồ đã mặc (vũ khí, giáp, nhẫn, dây chuyền, cánh)`, worn >= 10 && me.equip.wing && me.equip.ring2 && me.equip.pendant, `${worn} món`);
   R.check(`${cls}: mọi món đều có tác dụng (đủ chỉ số yêu cầu)`, (me.inactive || []).length === 0, JSON.stringify(me.inactive));
-  R.check(`${cls}: Long Vương, vàng, đầy máu`, me.pet === 'long_vuong' && me.gold >= 100000000 && me.hp === me.max, JSON.stringify({ pet: me.pet, gold: me.gold, hp: me.hp, max: me.max }));
+  const M = await page.evaluate(() => [window.GAME_DATA.RULES.adminMaxBuild.pets, window.GAME_DATA.RULES.dragon.long_khi_max, window.GAME_DATA.RULES.sky.bird.phong_khi_max]);
+  R.check(`${cls}: đủ thần thú, dắt con cuối; đầy Long Khí / Phong Khí`, M[0].every((id) => (me.pets || []).includes(id)) && me.pet === M[0][M[0].length - 1] && me.lk === M[1] && me.pk === M[2], JSON.stringify({ pets: me.pets, pet: me.pet, lk: me.lk, pk: me.pk }));
+  if (cls === 'elf') R.check('elf: nhẫn kháng hệ đã chọn có tác dụng (kháng Gió, Lửa)', (me.resist || {}).wind > 0 && (me.resist || {}).fire > 0, JSON.stringify(me.resist));
+  R.check(`${cls}: vàng, đầy máu`,  me.gold >= 100000000 && me.hp === me.max, JSON.stringify({ pet: me.pet, gold: me.gold, hp: me.hp, max: me.max }));
   await X.page.click('#tabs [data-tab="bag"]');
   await shot(X.page, `maxbuild-player-${cls}.png`);
   R.check(`${cls}: không lỗi JS người chơi`, X.errors.length === 0, X.errors.join(' | '));

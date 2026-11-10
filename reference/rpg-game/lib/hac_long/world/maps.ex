@@ -57,11 +57,15 @@ defmodule HacLong.World.Maps do
     "B" => "pier_v",
     "E" => "pier_h",
     "G" => "dragon_statue",
-    "J" => "lantern"
+    "J" => "lantern",
+    # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): ô trời, thả diều được (như nước ở hồ)
+    "^" => "sky"
   }
   @walkable MapSet.new(~w(. , : * D A O > < B E))
   # ô nước: đứng cạnh thì câu được (`HacLong.Game.Fishing`)
   @water ~w(~ = M Q U)
+  # ô trời: đứng cạnh thì thả diều được (`HacLong.Game.Kite`)
+  @sky ~w(^)
 
   @maps (for f <- @files, into: %{} do
            m = f |> File.read!() |> Jason.decode!()
@@ -84,6 +88,8 @@ defmodule HacLong.World.Maps do
              min_level: m["min_level"],
              # bảng cá riêng (`RULES.fishing.pools`), vd Hồ Long Vương "lake"
              fish: m["fish"],
+             # Đồi Sáo Diều: thả diều, Chim Lạc
+             kite: m["kite"] == true,
              theme: m["theme"],
              # DECISIONS "Bản đồ đẹp hơn": kiểu vẽ riêng ("bamboo" | "paddy" | "temple", chỉ là hình) và bản đồ bí mật
              # ("night": chỉ vào được ban đêm, không dịch chuyển tới, không có trong Thư viện / Chọn map)
@@ -174,6 +180,7 @@ defmodule HacLong.World.Maps do
   end
 
   def water?(map, x, y), do: tile(map, x, y) in @water
+  def sky?(map, x, y), do: tile(map, x, y) in @sky
   def water_tiles, do: @water
 
   def walkable?(map, x, y), do: tile(map, x, y) in @walkable and npc_at(map, x, y) == nil
@@ -198,6 +205,7 @@ defmodule HacLong.World.Maps do
            realm: m.realm,
            minLevel: m.min_level,
            fish: m.fish,
+           kite: m.kite,
            theme: m.theme,
            style: m.style,
            secret: m.secret,
@@ -210,6 +218,6 @@ defmodule HacLong.World.Maps do
          }}
       end)
 
-    %{maps: maps, legend: @legend, walkable: MapSet.to_list(@walkable), water: @water}
+    %{maps: maps, legend: @legend, walkable: MapSet.to_list(@walkable), water: @water, sky: @sky}
   end
 end
