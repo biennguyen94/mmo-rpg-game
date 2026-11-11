@@ -2041,3 +2041,5 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Sửa: hết giờ bảo vệ (🛡 sau khi gục) / tên đỏ mà nút Đồ sát (bản đồ, Quanh đây) vẫn mờ. Bản đồ chỉ gửi lại danh sách người khi
   có thay đổi nên cờ `safe` / `red` bị giữ cũ; nay gửi kèm số giây còn lại (`safe_s`, `red_s`), client tự đếm ngược, hết giờ thì
   bỏ cờ và vẽ lại tab Quanh đây / bảng chọn.
+- Đồ sát người ở xa từ Quanh đây: tự sang tab Bản đồ, báo "🏃 Đang chạy tới …", bám theo người kia (họ đi thì đổi đích), vào tầm
+  cánh thì đánh; không có đường / người kia rời bản đồ / quá ~40 giây thì báo rõ (trước chạy ngầm không báo gì, nhắm ô cũ).

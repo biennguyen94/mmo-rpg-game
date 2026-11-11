@@ -1433,17 +1433,27 @@
   async function pickSlay(uid) {
     const o = pickPerson(uid);
     pickUi = null;
-    if (!o) { render(); return; }
+    if (!o) { toast('Người này không còn ở bản đồ này.', true); render(); return; }
     const reach = myReach(), far = (t) => Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) > reach;
     if (far(o)) {
-      walkTo(o.x, o.y);
-      // đi xa (tab Quanh đây: người chưa hiện trong khung bản đồ) tối đa ~40 giây, tới trong tầm thì đánh
+      // ở xa: sang bản đồ, báo đang chạy tới, bám theo người kia (họ di chuyển thì đổi đích), vào tầm thì đánh
+      if (tab !== 'map') goTab('map');
+      toast(`🏃 Đang chạy tới ${o.name}… (vào trong ${reach} ô thì đánh)`);
+      let dest = null, stuck = 0;
       for (let i = 0; i < 200; i++) {
+        const t = pickPerson(uid);
+        if (!P || P.battle) break;
+        if (!t) { toast(`${o.name} đã rời bản đồ.`, true); return; }
+        if (!far(t)) break;
+        if (!walk || !dest || dest.x !== t.x || dest.y !== t.y) {
+          if (!Map_.nextStep(P, t.x, t.y)) { if (++stuck > 3) { toast(`Không tìm được đường tới ${o.name}.`, true); return; } }
+          else { stuck = 0; dest = { x: t.x, y: t.y }; walkTo(t.x, t.y); }
+        }
         await new Promise((ok) => setTimeout(ok, 200));
-        const t = pickPerson(uid) || o;
-        if (!P || P.battle || !far(t)) break;
       }
       walk = null;
+      const t = pickPerson(uid);
+      if (!t || far(t)) { if (P && !P.battle) toast(`Chưa tới được gần ${o.name}.`, true); return; }
     }
     if (P && !P.battle) slay(uid);
   }
