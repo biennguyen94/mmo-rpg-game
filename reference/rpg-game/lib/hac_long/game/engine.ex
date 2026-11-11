@@ -4047,6 +4047,21 @@ defmodule HacLong.Game.Engine do
 
   def rebirth_points, do: @rebirth_points
 
+  defp count_rebirth_today(p) do
+    n = rebirths_today(p) + 1
+    p = HacLong.Game.Daily.ensure(p, HacLong.Game.Daily.today())
+    if p[:daily], do: put_in(p, [:daily, :rebirths], n), else: p
+  end
+
+  @doc "Số lần chuyển sinh hôm nay (giờ Việt Nam)."
+  def rebirths_today(p) do
+    # lưu trong việc hằng ngày (`daily.rebirths`, đổi ngày thì về 0)
+    case Map.get(p, :daily) do
+      %{date: d} = dl -> if d == HacLong.Game.Daily.today(), do: dl[:rebirths] || 0, else: 0
+      _ -> 0
+    end
+  end
+
   @doc """
   Chuyển sinh (ở cấp tối đa): về cấp 1 với chỉ số gốc của lớp, nhận #{@rebirth_points} điểm
   tiềm năng cộng thêm cho mỗi lần đã chuyển sinh. Giữ vàng, đồ, trùm đã hạ, nhiệm vụ,
@@ -4062,6 +4077,10 @@ defmodule HacLong.Game.Engine do
       p.level < @max_level ->
         {err("Cần đạt cấp #{@max_level} mới chuyển sinh được."), p}
 
+      # DECISIONS "Chuyển sinh tối đa mỗi ngày"
+      rebirths_today(p) >= @char.rebirth_per_day ->
+        {err("Mỗi ngày chỉ chuyển sinh được #{@char.rebirth_per_day} lần, mai quay lại nhé."), p}
+
       need = rebirth_need(p) ->
         {err(
            "Cần hạ #{need.name} ở vùng chuyển sinh #{need.realm}" <>
@@ -4072,7 +4091,12 @@ defmodule HacLong.Game.Engine do
       true ->
         n = n + 1
         p = %{p | level: 1, xp: 0, stats: Data.class(p.cls).base, points: rebirth_bonus(n)}
-        p = Map.put(p, :rebirths, n)
+
+        p =
+          p
+          |> Map.put(:rebirths, n)
+          |> count_rebirth_today()
+
         d = derived(p)
 
         off = length(inactive_slots(p))

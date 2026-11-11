@@ -686,12 +686,24 @@ defmodule HacLong.World do
   # Chiến), không theo người đánh (DECISIONS "Sự kiện đánh chung theo phòng"); quái vàng mạnh theo vùng như quái thường
   @crown_k Data.rules().event_scale.crown_rebirths
   defp encounter(p, map, m) do
+    boss? = (m.boss == true or m[:night_boss] == true) and !map.realm
+
     case do_encounter(p, map, m) do
       {%{ok: true} = r, p} ->
         case map[:event] do
-          "castle_siege" -> {r, Engine.scale_event(p, @crown_k)}
-          "chaos_castle" -> {r, Engine.scale_event(p, HacLong.ChaosCastle.room_k(map.id))}
-          _ -> {r, p}
+          "castle_siege" ->
+            {r, Engine.scale_event(p, @crown_k)}
+
+          "chaos_castle" ->
+            {r, Engine.scale_event(p, HacLong.ChaosCastle.room_k(map.id))}
+
+          # DECISIONS "Trùm mạnh theo chuyển sinh": trùm vùng, trùm đêm Động Bí Ẩn (Thạch Long Ẩn) mạnh lên theo số lần
+          # chuyển sinh của người đánh như quái sự kiện (máu / thủ / công / thưởng); vùng chuyển sinh đã có chúa tể riêng
+          _ when boss? ->
+            {r, Engine.scale_event(p, Map.get(p, :rebirths) || 0)}
+
+          _ ->
+            {r, p}
         end
 
       other ->

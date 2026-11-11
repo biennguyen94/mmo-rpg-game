@@ -246,6 +246,8 @@ defmodule HacLong.Game.Characters do
       date: date,
       # trùm đã nhận thưởng hôm nay (`Engine.boss_daily/3`)
       bosses: d["bosses"] || [],
+      # số lần chuyển sinh hôm nay (DECISIONS "Chuyển sinh tối đa mỗi ngày")
+      rebirths: d["rebirths"] || 0,
       tasks:
         Enum.map(tasks, fn t ->
           %{

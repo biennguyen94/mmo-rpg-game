@@ -1979,3 +1979,10 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   làng chài phía bắc, bãi cát (`s`, đi được), dừa (`P`), ba cầu tàu ra biển, nước nông rồi nước sâu tới chân trời. Vẽ bằng code
   (`style: "sea"`): cát có vân / hạt, dừa lay theo gió, nước chuyển màu theo độ sâu (trung bình cột cạnh nhau, chuyển dần trong ô),
   gợn sóng và đốm nắng, sóng bọt trắng dạt lên bờ rồi rút để lại vệt cát ướt (lệch nhịp theo cột), thuyền dập dềnh, hải âu bay.
+
+## Trùm mạnh theo chuyển sinh; chuyển sinh tối đa mỗi ngày — Phase 4 (2026-11-11, anh duyệt)
+- Trùm vùng (kể cả trùm ở bản đồ riêng như Cổ Long Ba Đầu, giữ bản đồ riêng) và trùm đêm Động Bí Ẩn (Thạch Long Ẩn, trước cấp 46
+  ×1,4 nên rất yếu với nhân vật đã chuyển sinh) mạnh lên theo số lần chuyển sinh của người đánh, cùng công thức quái sự kiện
+  (`Engine.scale_event/2`: máu / thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k), thưởng × (1 + reward_per_rebirth
+  × k)). Vùng chuyển sinh không áp (đã có chúa tể theo mốc).
+- Chuyển sinh tối đa `RULES.character.rebirth_per_day` (2) lần mỗi ngày (giờ Việt Nam), đếm trong `daily.rebirths`.

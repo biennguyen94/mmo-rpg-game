@@ -279,7 +279,13 @@ defmodule HacLong.Game.EngineTest do
     # chuyển sinh vô hạn (DECISIONS "Chuyển sinh vô hạn"): quá mốc tối đa thì hạ lại chúa tể vùng cuối, ít điểm hơn
     max = Engine.max_rebirths()
     last = Engine.realm_lord(max)
-    at_max = %{q2 | level: 50, rebirths: max}
+
+    # tối đa RULES.character.rebirth_per_day lần mỗi ngày (DECISIONS "Chuyển sinh tối đa mỗi ngày")
+    assert Engine.rebirths_today(q2) == 2
+    assert {%{ok: false, msg: lim}, _} = Engine.rebirth(%{q2 | level: 50})
+    assert lim =~ "Mỗi ngày chỉ chuyển sinh"
+
+    at_max = %{q2 | level: 50, rebirths: max} |> Map.put(:daily, nil)
     assert {%{ok: false, msg: m10}, _} = Engine.rebirth(at_max)
     assert m10 =~ last.name
     {%{ok: true}, r11} = Engine.rebirth(Map.put(at_max, :bestiary, %{last.id => 1}))
