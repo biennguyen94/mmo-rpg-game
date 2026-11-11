@@ -402,6 +402,7 @@
     if (onMenu('arena')) loadArena();
     if (onMenu('board')) loadBoard();
     if (onMenu('admin') && adm.reports == null && !adm.loading) loadReports();
+    if (onMenu('admin') && adm.online == null) admOnline();
     applySel();
     keepArena();
   }
@@ -450,7 +451,7 @@
       ${isAdminRole() && u.character ? viewCharEdit(u) + viewMaxBuild(u) : ''}`;
     return `<h2 class="display">Quản trị</h2>
       <div class="card"><div class="row"><h3 class="grow">Báo cáo chưa xử lý</h3><button class="btn small-btn" data-adm="reload">Tải lại</button></div>${reports}</div>
-      <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><button class="btn small-btn" data-adm="online">${adm.online ? 'Tải lại' : 'Xem'}</button></div>
+      <div class="card" id="adm-online"><div class="row"><h3 class="grow">Đang online${adm.online ? `: ${adm.online.count}` : ''}</h3><span class="small muted" title="Tự cập nhật mỗi ${ADM_ONLINE_MS / 1000} giây khi đang mở tab Quản trị">● trực tiếp</span></div>
         ${adm.online ? (adm.online.players.length ? `<div class="list">${adm.online.players.map((o) => `<div class="item"><button class="grow adm-who" data-act="profile" data-uid="${o.id}" aria-label="Xem hồ sơ ${esc(o.name)}"><div class="name">${esc(o.name)} <span class="small muted">›</span></div><div class="small muted">${CLASSES[o.cls] ? CLASSES[o.cls].name : ''} · CS ${o.rebirths || 0} · cấp ${o.level} · ${esc((WORLD.maps[o.map] || {}).name || o.map)}${o.account ? ` · @${esc(o.account)}` : ''}</div></button>${isAdminRole() ? `<button class="btn small-btn" data-adm="goto_player" data-uid="${o.id}" title="Tới chỗ người này" aria-label="Tới chỗ ${esc(o.name)}">📍</button>` : ''}${isAdminRole() ? `<button class="btn small-btn" data-adm="to_village" data-uid="${o.id}" title="Đưa về Làng (gỡ kẹt)" aria-label="Đưa ${esc(o.name)} về Làng">🏠</button>` : ''}<button class="btn small-btn" data-adm="online-lookup" data-name="${esc(o.name)}">Tra</button></div>`).join('')}</div>` : '<p class="small muted">Không có ai.</p>') : ''}
       </div>
       <div class="card"><h3>Tra cứu người chơi</h3>
@@ -1316,8 +1317,11 @@
   // combo đã lưu, bỏ bước không còn dùng được (đổi bộ kỹ năng)
   const comboSteps = () => {
     const ok = ['attack', ...(P.view.skillSet || [])];
-    return (((P.view.autoCfg || {}).combo) || []).filter((s) => ok.includes(s.id));
+    const saved = (((P.view.autoCfg || {}).combo) || []).filter((s) => ok.includes(s.id));
+    // chưa lưu combo: điền sẵn theo bộ kỹ năng (ô 1 → ô 5), người chơi tự sửa rồi lưu
+    return saved.length ? saved : setSteps();
   };
+  const setSteps = () => (P.view.skillSet || []).slice(0, QUICK.max_steps).map((id) => ({ id, once: isBuffSkill(id) }));
   const lootFilterOn = () => (((P.view.autoCfg || {}).filter) || {}).on === true;
   const stepName = (s) => (s.id === 'attack' ? 'Đòn thường' : ((skillById(s.id) || {}).name || s.id));
   let quickPrev = null, quickLast = null, quickLogOpen = false, comboEdit = null;
@@ -1480,8 +1484,8 @@
   function viewCombo() {
     const steps = comboEdit || comboSteps(), rows = comboRows();
     return `<div class="card" id="combo-card"><h3>⚡ Combo đánh nhanh</h3>
-      <p class="small muted">Bật ⚡ Đánh nhanh ở bản đồ rồi bấm quái: nhân vật tự đánh hết trận theo combo. Mỗi lượt dùng <b>bước đầu tiên dùng được</b> (bước còn hồi chiêu / thiếu MP thì bỏ qua), không bước nào dùng được thì đánh thường. Tự uống bình theo ngưỡng % của Tự đánh. Không có bước nào: dùng bộ kỹ năng (buff trước, rồi mạnh nhất).</p>
-      ${rows || '<p class="small muted">Chưa có bước nào: đang dùng theo bộ kỹ năng.</p>'}
+      <p class="small muted">Bật ⚡ Đánh nhanh ở bản đồ rồi bấm quái: nhân vật tự đánh hết trận theo combo. Mỗi lượt dùng <b>bước đầu tiên dùng được</b> (bước còn hồi chiêu / thiếu MP thì bỏ qua), không bước nào dùng được thì đánh thường. Tự uống bình theo ngưỡng % của Tự đánh.</p>
+      ${rows}
       <div class="btn-row"><button class="btn small-btn" data-act="combo-add" ${steps.length >= QUICK.max_steps ? 'disabled' : ''}>+ Thêm bước</button>
         <button class="btn small-btn" data-act="combo-reset">Theo bộ kỹ năng</button>
         <button class="btn small-btn primary" data-act="combo-save" ${comboEdit ? '' : 'disabled'}>Lưu combo</button></div></div>`;
@@ -1534,7 +1538,7 @@
         <div class="btn-row wide"><button class="btn small-btn" data-act="auto-reset">Về mặc định</button><button class="btn small-btn primary" data-act="auto-save">💾 Lưu tự đánh</button></div>
         <h4 class="set-sec">⚡ Đánh nhanh <span class="small muted">(${quickOn() ? 'đang bật' : 'đang tắt'}; bật / tắt bằng nút ⚡)</span></h4>
         <p class="small muted">Bấm quái là tự đánh hết trận theo combo, ở lại bản đồ. Mỗi lượt dùng bước đầu tiên dùng được; không có bước nào thì dùng bộ kỹ năng.</p>
-        <div class="wide combo-in-set">${comboRows() || '<p class="small muted">Chưa có bước nào: đang dùng theo bộ kỹ năng.</p>'}</div>
+        <div class="wide combo-in-set">${comboRows()}</div>
         <div class="btn-row wide"><button class="btn small-btn" data-act="combo-add" ${steps.length >= QUICK.max_steps ? 'disabled' : ''}>+ Thêm bước</button><button class="btn small-btn" data-act="combo-reset">Theo bộ kỹ năng</button>
           <button class="btn small-btn primary" data-act="quick-save">💾 Lưu đánh nhanh</button></div>
       </div>`;
@@ -4625,6 +4629,8 @@
     secQ = undefined; secForm = false;
     if (r && r.select) { charSel = { del: null }; P = null; loading = false; busy = false; npc = null; dialog = null; render(); return; }
     charSel = null;
+    // dữ liệu theo người (chợ, danh sách online, quản trị): đổi tài khoản / nhân vật trên cùng tab thì bỏ, khỏi hiện của người cũ
+    resetPerUser();
     P = r ? r.player : null;
     if (r) { Map_.setUser(r.user_id); Net.userId = r.user_id; Net.isAdmin = r.admin; Net.role = r.role || 'player'; blocked = r.blocked || []; mail = { unread: r.mail || 0, list: null, open: false, filter: 'all' }; party = r.party || null; trade = r.trade || null; friendsUi = { open: false, data: null, chat: null, dm: r.dm || 0 }; notes.open = false; loadNotes(); Net.friends('list').then((d) => { friendsUi.data = d; friendsUi.dm = d.unread; refreshHud(); }).catch(() => {}); }
     tab = 'map';
@@ -4632,8 +4638,32 @@
     render();
   }
 
+  function resetPerUser() {
+    market = { tab: 'buy', data: null, q: '', loading: false, kind: 'all', sort: 'new' };
+    onlineList = null;
+    adm = { reports: null, user: null, loading: false, audit: null, alog: null, glog: null, online: null };
+  }
+
+  // Quản trị → Đang online: tự cập nhật (mỗi ADM_ONLINE_MS khi đang mở tab, trang đang hiện), không cần nút tải lại;
+  // chỉ vẽ lại khi danh sách đổi
+  const ADM_ONLINE_MS = 5000;
+  let admOnlineBusy = false;
+  async function admOnline() {
+    if (admOnlineBusy || !Net.isAdmin) return;
+    admOnlineBusy = true;
+    try {
+      const r = await Net.admin('online', {});
+      const changed = JSON.stringify(r.online) !== JSON.stringify(adm.online);
+      adm.online = r.online;
+      if (changed && onMenu('admin')) render();
+    } catch (e) { /* lần sau thử lại */ }
+    admOnlineBusy = false;
+  }
+  setInterval(() => { if (P && onMenu('admin') && document.visibilityState === 'visible') admOnline(); }, ADM_ONLINE_MS);
+
   function logout() {
     Net.logout();
+    resetPerUser();
     P = null;
     charSel = null;
     npc = null; dialog = null; pwForm = false;
@@ -4688,7 +4718,8 @@
     if (act === 'combo-add') { const st = (comboEdit || comboSteps()).slice(); if (st.length < QUICK.max_steps) st.push({ id: (mySkills()[0] || {}).id || 'attack', once: false }); comboEdit = st; render(); return; }
     if (act === 'combo-rm') { const st = (comboEdit || comboSteps()).slice(); st.splice(+t.dataset.i, 1); comboEdit = st; render(); return; }
     if (act === 'combo-up') { const st = (comboEdit || comboSteps()).slice(), i = +t.dataset.i; if (i > 0) [st[i - 1], st[i]] = [st[i], st[i - 1]]; comboEdit = st; render(); return; }
-    if (act === 'combo-reset') { comboEdit = null; sendCommand({ act: 'combo_set', steps: [] }); return; }
+    // điền lại theo bộ kỹ năng (ô 1 → ô 5) để sửa; bấm Lưu combo mới lưu
+    if (act === 'combo-reset') { comboEdit = setSteps(); render(); return; }
     if (act === 'combo-save') { const steps = comboEdit || []; comboEdit = null; sendCommand({ act: 'combo_set', steps }); return; }
     if (act === 'lang') { if (window.I18N && t.dataset.lang !== window.I18N.lang) window.I18N.set(t.dataset.lang); return; }
     if (act === 'logout') return logout();

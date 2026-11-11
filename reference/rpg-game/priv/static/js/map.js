@@ -926,7 +926,7 @@
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText(String(lv), px + TILE - 7, py + TILE - 9);
       // đang có người đánh (⚔): thỉnh thoảng lóe tia chém (người khác không vẽ trên bản đồ, chỉ thấy quái bị đánh)
-      if (fx && q.busy) {
+      if (fx && q.busy && q.by !== userId) {
         const ph = ((now + (parseInt(String(q.id).replace(/\D/g, ''), 10) || 0) * 137) % 1100) / 1100;
         if (ph < 0.3) slashAt(px + TILE / 2, py + TILE / 2, ph / 0.3, '#ffe9b0');
       }
@@ -1359,7 +1359,8 @@
     for (const e of mobFx) {
       const k = (t - e.t0) / e.life, x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
       if (e.k === 'hit') {
-        slashAt(x, y, k, '#ffffff');
+        // con mình đang đánh: hiệu ứng đòn thật đã vẽ (kỹ năng / đòn thường), không thêm dấu X
+        if (!e.mine) slashAt(x, y, k, '#ffffff');
         ctx.save(); ctx.globalAlpha = 1 - k; ctx.font = '800 11px system-ui, sans-serif'; ctx.textAlign = 'center';
         ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14);
         ctx.fillStyle = '#ff8a6a'; ctx.fillText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14); ctx.restore();
@@ -2369,7 +2370,7 @@
         const t = performance.now(), next = new Map((snap.monsters || []).map((q) => [q.id, q]));
         for (const q of world.monsters || []) {
           const n = next.get(q.id), hp = q.hp == null ? 100 : q.hp;
-          if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600 });
+          if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600, mine: n.by === userId });
           else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t, life: 900 });
         }
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);

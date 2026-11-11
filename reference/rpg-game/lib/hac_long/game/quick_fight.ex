@@ -8,9 +8,8 @@ defmodule HacLong.Game.QuickFight do
     (`battle.manual`): `Session` mỗi `tick_ms` hỏi `decide/1` rồi chạy lệnh như client gửi.
   - `decide/1`: trận xong → rời màn trận (`leave`); máu / MP dưới ngưỡng % của Tự đánh → uống bình; không thì bước
     đầu tiên của combo dùng được (kỹ năng đang mang, hết hồi chiêu, đủ MP; `once` thì bỏ qua khi hiệu ứng của kỹ năng
-    còn trên người); không bước nào dùng được → đòn thường. Combo trống: kỹ năng buff trước, rồi mạnh nhất (như Tự đánh).
+    còn trên người); không bước nào dùng được → đòn thường. Combo trống: theo thứ tự bộ kỹ năng (ô 1 → ô 5), buff đang còn thì bỏ qua.
   """
-  alias HacLong.Bots.Brain
   alias HacLong.Game.{Data, Engine}
 
   @r Data.rules().quick
@@ -118,8 +117,9 @@ defmodule HacLong.Game.QuickFight do
     end
   end
 
-  # combo trống: như Tự đánh "all" (buff trước, rồi kỹ năng mạnh nhất)
-  defp step(p, []), do: Brain.fight(p, 0, 0, "all")
+  # combo trống: đúng thứ tự bộ kỹ năng (ô 1 → ô 5; buff đang còn thì bỏ qua), rồi đòn thường
+  defp step(p, []),
+    do: step(p, Enum.map(Engine.skills(p), &%{"id" => &1.id, "once" => true}))
 
   defp step(p, combo) do
     mp = Map.get(p, :mp) || 0

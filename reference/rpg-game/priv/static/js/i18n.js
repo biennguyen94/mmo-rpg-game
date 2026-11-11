@@ -118,7 +118,8 @@
   }
 
   // ---------- Dịch trang ----------
-  const SKIP = 'script,style,textarea,input,select,.chat-line:not(.system),[data-notr]';
+  // ô chọn (select) vẫn dịch / đổi tên chữ của lựa chọn; chỉ chừa chữ người gõ
+  const SKIP = 'script,style,textarea,input,.chat-line:not(.system),[data-notr]';
   const ATTRS = ['placeholder', 'title', 'aria-label'];
   const skip = (el) => !el || (el.closest && el.closest(SKIP));
   // chữ gợi ý / chú thích của ô nhập vẫn dịch (SKIP chặn `input` chỉ để không đụng giá trị người gõ)
@@ -150,6 +151,14 @@
     if (lang === 'vi' && !alt) return;
     if (lang !== 'vi') document.documentElement.lang = 'en';
     walk(document.body);
+    // chữ vẽ trên bản đồ (canvas: tên bản đồ, NPC, quái, chợ…) cũng qua lớp dịch / bộ tên
+    if (typeof CanvasRenderingContext2D !== 'undefined') {
+      const C = CanvasRenderingContext2D.prototype;
+      for (const f of ['fillText', 'strokeText', 'measureText']) {
+        const o = C[f];
+        C[f] = function (s, ...a) { return o.call(this, typeof s === 'string' && s ? tr(s) : s, ...a); };
+      }
+    }
     new MutationObserver((ms) => {
       for (const m of ms) {
         if (m.type === 'characterData') text(m.target);

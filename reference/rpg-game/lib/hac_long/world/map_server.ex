@@ -545,6 +545,8 @@ defmodule HacLong.World.MapServer do
       y: y,
       boss: m.boss,
       busy: m.busy != nil,
+      # ai đang đánh (client: con mình đang đánh thì không vẽ tia chém giả, chỉ hiệu ứng đòn thật)
+      by: if(is_integer(m.busy), do: m.busy),
       rare: m.rare,
       gold: m[:gold] == true,
       elite: m[:elite] == true,

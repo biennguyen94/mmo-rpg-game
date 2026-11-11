@@ -1945,3 +1945,14 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - (2026-11-09, anh duyệt) Đổi `potion_mult` 0,5 → 1, `potion_cap_pct` / `mana_cap_pct` 35% → 25%: với ×0,5 người máu trên ~2.570 không
   chạm trần (Bình Lớn chỉ 25% với 3.652 máu, 18% với 5.000); nay mỗi Bình Lớn hồi đúng 25% máu tối đa ở mọi cấp (máu ≤ ~7.200),
   hồi trung bình ~8% / lượt nên trận không dài thêm. Mana như vậy.
+
+## Đợt sửa lỗi nhỏ — Phase 1 (2026-11-11, anh duyệt kế hoạch 7 phase)
+- ⚡ Đánh nhanh, combo chưa lưu: đánh đúng thứ tự bộ kỹ năng ô 1 → ô 5 (buff đang còn thì bỏ qua), không còn "buff trước, rồi mạnh
+  nhất" (trước đánh ô 5 → 1). Màn combo điền sẵn theo bộ kỹ năng để người chơi tự sửa, nút "Theo bộ kỹ năng" chỉ điền lại, Lưu mới lưu.
+- Đổi tài khoản / nhân vật trên cùng tab: bỏ dữ liệu chợ, danh sách online, quản trị của người cũ (trước vẫn thấy hàng của tài khoản cũ).
+- Bộ tên / tiếng Anh: chữ vẽ trên bản đồ (canvas) và chữ trong ô chọn cũng qua lớp đổi tên.
+- Dấu X khi đánh nhanh: con quái mình đang đánh không vẽ tia chém giả nữa (chỉ hiệu ứng đòn thật); quái người khác đánh vẫn có.
+  Server gửi thêm `by` (ai đang đánh) trong thông tin quái trên bản đồ.
+- Quản trị → Đang online: tự cập nhật mỗi 5 giây khi đang mở tab, bỏ nút Tải lại.
+- Kiểm 12 dòng Excellent (vũ khí: atk_pct, crit, heal_kill, mp_kill, atk_lvl, ar_pct; giáp: hp_pct, dmg_red, gold_pct, mp_pct,
+  reflect, def_rate): đều có tác dụng; thêm `test/hac_long/game/exc_lines_test.exs`.
