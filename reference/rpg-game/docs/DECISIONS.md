@@ -2043,3 +2043,5 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   bỏ cờ và vẽ lại tab Quanh đây / bảng chọn.
 - Đồ sát người ở xa từ Quanh đây: tự sang tab Bản đồ, báo "🏃 Đang chạy tới …", bám theo người kia (họ đi thì đổi đích), vào tầm
   cánh thì đánh; không có đường / người kia rời bản đồ / quá ~40 giây thì báo rõ (trước chạy ngầm không báo gì, nhắm ô cũ).
+
+- Tiến Lên: mức cược tối đa `RULES.tienlen.stake_max` 100.000 → 10.000.000 vàng (anh yêu cầu, 2026-11-11).
