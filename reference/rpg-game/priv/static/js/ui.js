@@ -4810,7 +4810,12 @@
     }
     if (act === 'trade-op' && pickUi) pickUi = null;
     if (act === 'trade-op') { const d = t.dataset; tradeOp(d.op, d.uid ? { uid: +d.uid } : {}); return; }
-    if (act === 'slay') { slay(+t.dataset.uid); return; }
+    // hồ sơ → 🗡 Đồ sát: như Quanh đây (cùng bản đồ: trong tầm thì đánh, xa thì sang bản đồ chạy tới rồi đánh)
+    if (act === 'slay') {
+      const u = +t.dataset.uid;
+      if (P && pickPerson(u)) { profileUi = { open: false, info: null }; pickSlay(u); } else slay(u);
+      return;
+    }
     if (act === 'trade-rm') {
       const d = t.dataset;
       tradeOffer((o) => { if (d.kind === 'item') delete o.items[d.id]; else if (d.kind === 'gear') o.gear = o.gear.filter((u) => u !== d.id); else o.gold = 0; });
