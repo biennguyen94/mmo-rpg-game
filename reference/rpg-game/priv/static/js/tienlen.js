@@ -399,7 +399,7 @@
       ${st.roomId ? `<div class="card"><button class="btn primary block" data-tl="back-table">Về bàn đang ngồi (${esc(st.roomId)})</button></div>` : ''}
       <div class="card"><h3>Mở bàn mới</h3>
         <form data-tl-form="create" class="tl-form">
-          <label class="small">Mức cược (vàng, 0 = chơi vui)<input type="number" name="stake" min="0" max="${meta.stake_max || 100000}" step="10" value="0" inputmode="numeric"></label>
+          <label class="small">Mức cược (vàng, 0 = chơi vui, tối đa ${fmt(meta.stake_max || 100000)})<input type="number" name="stake" min="0" max="${meta.stake_max || 100000}" step="10" value="0" inputmode="numeric"></label>
           <label class="small tl-check"><input type="checkbox" name="private"> Bàn riêng (không hiện ở sảnh)</label>
           <button class="btn primary">Mở bàn</button>
         </form>
@@ -507,7 +507,7 @@
           <button class="btn" data-tl="private">${v.private ? '🔓 Cho hiện ở sảnh' : '🔒 Ẩn khỏi sảnh'}</button>
           ${free ? '<button class="btn" data-tl="invite-open">👥 Mời bạn</button>' : ''}
         </div>
-        ${v.players.some((p) => p.bot) ? '' : `<form data-tl-form="stake" class="tl-form row"><label class="small grow">Mức cược<input type="number" name="stake" min="0" step="10" value="${v.stake}"></label><button class="btn">Đổi</button></form>`}`
+        ${v.players.some((p) => p.bot) ? '' : `<form data-tl-form="stake" class="tl-form row"><label class="small grow">Mức cược (tối đa ${fmt((st.meta && st.meta.stake_max) || 100000)})<input type="number" name="stake" min="0" max="${(st.meta && st.meta.stake_max) || 100000}" step="10" value="${v.stake}"></label><button class="btn">Đổi</button></form>`}`
         : `<p class="muted">Chờ chủ phòng chia bài…</p>${free ? '<button class="btn" data-tl="invite-open">👥 Mời bạn</button>' : ''}`}
       <p class="small muted">${v.stake ? `Cược ${fmt(v.stake)} vàng · cần ít nhất ${fmt(v.min_balance)} vàng để được chia bài.` : 'Chơi vui, không mất vàng.'} Mã phòng: <span class="tl-code">${esc(v.id)}</span> (gửi cho bạn để vào cùng).</p>
       <button class="btn" data-tl="blow" title="Thổi bài cho hên (không ảnh hưởng gì)">😮‍💨 Thổi bài</button>

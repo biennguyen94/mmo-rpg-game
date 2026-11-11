@@ -30,8 +30,11 @@ defmodule HacLong.TienLen.Text do
     unknown_command: "Lệnh không hợp lệ",
     too_many_rooms: "Máy chủ đang quá nhiều phòng, hãy thử lại sau",
     unknown_request: "Yêu cầu không hợp lệ",
-    not_enough_coins: "Cần ít nhất 2 người có đủ 10× tiền cược",
-    invalid_stake: "Tiền cược phải là 0 hoặc từ 10 trở lên",
+    not_enough_coins:
+      "Cần ít nhất 2 người có đủ #{HacLong.Game.Data.rules().tienlen.min_balance_mult}× tiền cược",
+    # mức tối đa theo `RULES.tienlen.stake_max` (trước chỉ báo "từ 10 trở lên" nên nhập quá mức tối đa tưởng báo sai)
+    invalid_stake:
+      "Tiền cược phải là 0 (chơi vui) hoặc từ 10 tới #{HacLong.Game.Data.rules().tienlen.stake_max |> Integer.to_string() |> String.replace(~r/\B(?=(\d{3})+$)/, ".")} vàng",
     not_found: "Không tìm thấy",
     insufficient_coins: "Không đủ vàng để trừ",
     invalid_amount: "Số vàng không hợp lệ",
