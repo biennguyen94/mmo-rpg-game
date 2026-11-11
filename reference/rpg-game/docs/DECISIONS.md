@@ -2018,3 +2018,10 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - **Đất**: 5 tảng đá rơi → đất nứt tỏa dưới chân, vòng bụi, đá vụn bắn lên, rung mạnh.
 - **Bóng Tối**: cầu tối → 6 xúc tu tím quấn vào tâm, hút, chớp tím.
 - **Ánh Sáng**: cột sáng + tia tỏa, vòng vàng, sao bốn cánh lấp lánh.
+
+## Sửa sau 7 phase (2026-11-11, anh báo)
+- Tầm đánh theo cánh áp dụng cả ở Tháp và phòng sự kiện (Quảng Trường Quỷ, Lâu Đài Máu, Kalima): `World.engage/5` đánh quái
+  của tầng từ xa (dùng đường bước-vào-ô-quái của tầng rồi trả người về chỗ cũ).
+- Đánh nhanh: quái bị xóa khỏi bản đồ trước khi hiệu ứng kỹ năng bay tới → `MapView.fightSpots` nhớ vị trí con đang đánh ~1,5 giây;
+  hình quái gục chờ 0,35 giây (đứng nguyên) rồi mới mờ dần, để đòn trúng trước.
+- Tab Thú cưng: nút Dắt theo / Đóng ấn xếp dọc (trước tràn ngang trên điện thoại).

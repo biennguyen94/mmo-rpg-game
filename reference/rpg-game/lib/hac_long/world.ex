@@ -619,12 +619,26 @@ defmodule HacLong.World do
       p.battle != nil ->
         {%{ok: false, msg: "Đang trong trận đấu."}, p}
 
-      not (is_integer(x) and is_integer(y)) or map == nil or map.private or
-          p.pos.map == Tower.map_id() ->
+      not (is_integer(x) and is_integer(y)) ->
         {%{ok: false}, p}
 
       max(abs(p.pos.x - x), abs(p.pos.y - y)) > reach ->
         {%{ok: false, msg: "Xa quá, lại gần trong #{reach} ô để đánh.", reach: reach}, p}
+
+      # Tháp / phòng sự kiện (Quảng Trường Quỷ, Lâu Đài Máu, Kalima): quái ở `p.tower.monsters`; đánh từ xa bằng
+      # đường bước-vào-ô-quái của tầng (đứng tạm cạnh quái), rồi trả người về chỗ cũ
+      p.pos.map == Tower.map_id() ->
+        t = p[:tower]
+
+        if t && Enum.any?(t.monsters || [], &(&1.x == x and &1.y == y)) do
+          {r, p2} = tower_move(%{p | pos: %{p.pos | x: x - 1, y: y}}, uid, {1, 0})
+          {r, if(p2.pos.map == Tower.map_id(), do: %{p2 | pos: p.pos}, else: p2)}
+        else
+          {%{ok: false, msg: "Không còn quái ở đó."}, p}
+        end
+
+      map == nil or map.private ->
+        {%{ok: false}, p}
 
       true ->
         step_shared(p, uid, map, {x, y}, confirm?, &MapServer.engage/4)

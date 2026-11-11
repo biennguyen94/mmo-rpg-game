@@ -139,13 +139,21 @@
   }
   // vị trí trên màn hình (px CSS) của con đang đánh và của mình, để hiệu ứng trận (js/fx.js) bám vào bản đồ
   let spots = null;
+  // vị trí con đang đánh lần gần nhất: trận xong / quái vừa bị xóa khỏi bản đồ trước khi hiệu ứng kỹ năng bay tới thì
+  // vẫn bay tới đúng chỗ (giữ ~1,5 giây)
+  let lastFight = null;
   function fightSpots() {
-    if (!canvas || !spots || !fight) return null;
-    const r = canvas.getBoundingClientRect();
-    if (!r.width) return null;
-    const k = r.width / VW(), sz = TILE * k;
-    const at = (p) => (p ? { x: r.left + p[0] * k, y: r.top + (p[1] + TILE / 2) * k, w: sz, h: sz } : null);
-    return { mon: at(spots.mpos[fight.id]), me: at(spots.me) };
+    const live = (() => {
+      if (!canvas || !spots || !fight) return null;
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return null;
+      const k = r.width / VW(), sz = TILE * k;
+      const at = (p) => (p ? { x: r.left + p[0] * k, y: r.top + (p[1] + TILE / 2) * k, w: sz, h: sz } : null);
+      return { mon: at(spots.mpos[fight.id]), me: at(spots.me) };
+    })();
+    if (live && live.mon) { lastFight = { ...live, t: performance.now() }; return live; }
+    if (lastFight && performance.now() - lastFight.t < 1500) return { mon: lastFight.mon, me: (live && live.me) || lastFight.me };
+    return live;
   }
   // ---------- Người chơi khác trên bản đồ (DECISIONS "Người chơi trên bản đồ, Đồ sát nhanh") ----------
   // Cài đặt (máy này): 'all' tất cả, 'team' chỉ tổ đội & bang, 'off' tắt. Dù chọn gì vẫn vẽ: người đang đồ sát với
@@ -1365,7 +1373,7 @@
   function drawMobFx(t, cx, cy) {
     mobFx = mobFx.filter((e) => t - e.t0 < e.life);
     for (const e of mobFx) {
-      const k = (t - e.t0) / e.life, x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
+      const k = Math.max(0, (t - e.t0) / e.life), x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
       if (e.k === 'hit') {
         // con mình đang đánh: hiệu ứng đòn thật đã vẽ (kỹ năng / đòn thường), không thêm dấu X
         if (!e.mine) slashAt(x, y, k, '#ffffff');
@@ -2492,7 +2500,8 @@
         for (const q of world.monsters || []) {
           const n = next.get(q.id), hp = q.hp == null ? 100 : q.hp;
           if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600, mine: n.by === userId });
-          else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t, life: 900 });
+          // gục: chờ đòn kỹ năng bay tới (~0,35 giây, hình quái vẫn đứng) rồi mới mờ dần
+          else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t + 350, life: 1250 });
         }
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }

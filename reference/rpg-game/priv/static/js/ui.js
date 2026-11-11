@@ -2963,7 +2963,7 @@
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
         <div class="small muted">${L.next ? `${fmt(L.xp)}/${fmt(L.next)} trận thắng` : 'Cấp tối đa'}</div>
         ${petStats(petView(pt.id))}</div>
-      ${P.pet === pt.id ? '<button class="btn" data-act="pet_choose" data-id="">Để ở nhà</button>' : `<button class="btn primary" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`}${ITEMS['seal_' + pt.id] ? `<button class="btn" data-act="pet_seal" data-id="${pt.id}" title="Đóng ấn thành món trong túi (giữ cấp) để bán chợ / giao dịch">📦 Đóng ấn</button>` : ''}</div>`;
+      <div class="pet-btns">${P.pet === pt.id ? '<button class="btn" data-act="pet_choose" data-id="">Để ở nhà</button>' : `<button class="btn primary" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`}${ITEMS['seal_' + pt.id] ? `<button class="btn" data-act="pet_seal" data-id="${pt.id}" title="Đóng ấn thành món trong túi (giữ cấp) để bán chợ / giao dịch">📦 Đóng ấn</button>` : ''}</div></div>`;
     }).join('')}</div></div>`;
   }
 
@@ -4537,7 +4537,8 @@
   // Đi dần tới ô đích (hoặc đuổi theo con quái đã chạm vào), tính lại đường sau mỗi bước.
   // tầm đánh theo cánh (server tính, `P.view.reach`); đánh từ xa chỉ ở bản đồ chung (không tháp / phòng sự kiện)
   const myReach = () => (P && P.view && P.view.reach) || 1;
-  const canEngage = () => P && !P.tower && P.pos.map !== 'tower' && !(WORLD.maps[P.pos.map] || {}).private;
+  // đánh từ xa ở mọi nơi có quái, kể cả Tháp / phòng sự kiện (server kiểm tầm)
+  const canEngage = () => !!P;
   async function walkTo(x, y) {
     const target = Map_.monsterAt(x, y);
     if (!target) Map_.mark(x, y);

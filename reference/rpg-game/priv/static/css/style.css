@@ -1129,3 +1129,7 @@ div.item.people-row .people-main { display: flex; align-items: center; gap: 10px
 /* Tiến Lên: quản trị xem bài đối thủ — bài nhỏ chồng lên nhau */
 .tl-peek-hand { display: inline-flex; flex-wrap: wrap; max-width: 220px; }
 .tl-peek-hand .tl-card.peek { width: 22px; height: auto; margin-right: -8px; }
+
+/* tab Thú cưng: Dắt theo / Đóng ấn xếp dọc, không tràn ngang trên điện thoại */
+.pet-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.pet-btns .btn { white-space: nowrap; }
