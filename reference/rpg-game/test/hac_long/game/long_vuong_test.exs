@@ -13,10 +13,10 @@ defmodule HacLong.Game.LongVuongTest do
   @lake "long_vuong_lake"
   @dragon Data.rules().fishing.dragon
 
-  # đứng trên cầu tàu giữa (14, 11), cạnh nước biển
+  # đứng trên cầu tàu (13, 11), cạnh nước biển
   defp angler(level \\ 30) do
     {:ok, p} = Engine.new_player("Cần Thủ", "dk")
-    %{p | level: level, gold: 1_000_000} |> Map.put(:pos, %{map: @lake, x: 14, y: 11})
+    %{p | level: level, gold: 1_000_000} |> Map.put(:pos, %{map: @lake, x: 13, y: 11})
   end
 
   defp with_pet(p, lv) do
@@ -30,8 +30,8 @@ defmodule HacLong.Game.LongVuongTest do
     m = Maps.get(@lake)
     assert m.spawns == [] and m.fish == "lake" and m.min_level == 30
     # cầu tàu, bãi cát đi được; nước thì không
-    assert Maps.walkable?(m, 14, 11) and Maps.walkable?(m, 7, 10) and Maps.walkable?(m, 5, 7)
-    refute Maps.walkable?(m, 14, 13)
+    assert Maps.walkable?(m, 13, 11) and Maps.walkable?(m, 6, 12) and Maps.walkable?(m, 5, 7)
+    refute Maps.walkable?(m, 16, 13)
     assert Fishing.near_water?(angler())
     # ngoài khơi là nước sâu (Vực Rồng)
     assert Maps.tile(m, 14, 15) == "="
@@ -54,7 +54,7 @@ defmodule HacLong.Game.LongVuongTest do
   # ô nước cạnh chỗ đứng của angler()
   defp spot do
     m = Maps.get(@lake)
-    Enum.find([{13, 11}, {15, 11}, {14, 13}], fn {x, y} -> Maps.water?(m, x, y) end)
+    Enum.find([{12, 11}, {14, 11}, {13, 13}], fn {x, y} -> Maps.water?(m, x, y) end)
   end
 
   test "Long Vương cắn câu chỉ khi thả trúng ô Ngài nổi; giật đúng lúc thì được thú, trễ thì mất" do

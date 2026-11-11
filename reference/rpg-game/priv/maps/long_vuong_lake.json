@@ -6,26 +6,32 @@
   "min_level": 30,
   "fish": "lake",
   "tiles": [
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-    "T,*,,R,,P,,,#I###I#,,,P,,*,,T",
-    "T,,P,,,J,,,,,,G,,,,,,J,,P,,,T",
-    "TJ,,,,,,,,,,,,:,,,,,,,,,,,J,T",
-    "O:::::::::::::::::::::::::::O",
-    "T,P,,,,,,P,,,,:,,,,,P,,,,,P,T",
-    "ssssssssssPsss:sssssPssssssss",
-    "sssssssssssssssssssssssssssss",
-    "~~~sssss~~ssssssss~~sssss~~~~",
-    "~~~~~~~B~~~~~~B~~~~~~B~~~~~~~",
-    "~~~~U~~B~~~~~~B~~~~~~B~~U~~~~",
-    "~~~~~~~B~~~~~~B~~~~~~B~~~~~~~",
-    "~~~~~~EEE~~~~EEE~~~~EEE~~~~~~",
-    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-    "~~~~~~====~~~~~~~====~~~~~~~~",
-    "=============================",
-    "=============================",
-    "=============================",
-    "=============================",
-    "============================="
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "T,,P,,,,*,,,,,,,,,#I###I#,,P,*,,,,,,P,,,,*,T",
+    "T,,,,,,,,P,,,,*,,,,,,G,,,,,,,,P,,,,,,,,,P,,T",
+    "TJ*,,,,,,,,J,,,,,J,,,:,,,J,,,,,J,,,*,,,,,,JT",
+    "O::::::::::::::::::::::::::::::::::::::::::O",
+    "T,,,,,P,,,,,*,,P,,,,,:,,,,*,,,,,,:,,,,,P,,,T",
+    "sssssssssssssssssssss:ssssssssssssssssssssss",
+    "ssssPsssssssssssPsssssssssssPssssssssssssPss",
+    "ssssssssssP~~sss~~~~sssssssssss~ssssPsssssss",
+    "ssRsssssss~~~B~~~~~~sssss~ssss~~ssssssssssss",
+    "sssssssss~~~~B~~~~~~B~s~~~B~~~~~~sssssssssss",
+    "~~~~~~Bs~~~~~B~~~~~~B~~~~~B~~~~~~sssssPs~sss",
+    "~~~~~~B~~~~~~B~~~~~~B~~~U~B~~~~~~~sssssR~~B~",
+    "~~~~~~B~~U~~EEE~~~~~B~~~~~B~~~~~~Rsssss~~~B~",
+    "~~~~~~B~~~~=~~~~==~=B~~~~EEE~~U=~~RsRs~~~~B~",
+    "~~~~~~B~~~=====~=U==B~~~~=~~~~~=~~~RsR~~~EEE",
+    "~~~~~EEE~~=========EEE~=~==~=====~~~~~~~~~~~",
+    "~==~==~~=========================~~~~~~~U~~~",
+    "=================================~~~~~~~==~=",
+    "==================================~~~~~=====",
+    "===================================~~~======",
+    "===================================~~=======",
+    "====================================~=======",
+    "============================================",
+    "============================================",
+    "============================================"
   ],
   "portals": [
     {
@@ -41,7 +47,7 @@
     },
     {
       "at": [
-        28,
+        43,
         4
       ],
       "to": "doi_sao_dieu",
@@ -58,7 +64,7 @@
       "name": "Ông Lão Câu Cá",
       "sprite": "fisher",
       "at": [
-        12,
+        19,
         3
       ],
       "role": "dragon",
@@ -72,7 +78,7 @@
       "name": "Bia Long Vương",
       "sprite": "board",
       "at": [
-        16,
+        23,
         3
       ],
       "role": "dragon",
@@ -82,7 +88,7 @@
     }
   ],
   "sourceType": "DESIGN",
-  "version": 2,
+  "version": 3,
   "verified": false,
   "style": "sea",
   "_doc": "DECISIONS \"Biển Long Vương\": thay Hồ Long Vương cũ (mã bản đồ giữ nguyên): làng chài, bãi cát (s), dừa (P), ba cầu tàu ra biển, nước nông (~) rồi nước sâu (=) tới chân trời; sóng dạt vào bờ vẽ ở client (style sea)."

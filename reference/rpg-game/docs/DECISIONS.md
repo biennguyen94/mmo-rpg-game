@@ -2029,3 +2029,8 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   đường cong mềm (mép theo cột, nối smoothstep + gợn sin); cát là một tấm vân lặp liền mạch; biển một mảng màu theo khoảng cách
   ra khơi, dải nước nông ôm bờ, gợn / nắng rải theo tọa độ thế giới; sóng dạt bờ chạy liền dọc đường bờ. Cầu tàu, dừa vẽ đè lên;
   thuyền thành thuyền thúng tròn vẽ bằng code (hình cũ có nền vuông). Hai cột mép bản đồ ở bãi cát / biển bỏ cây cho bờ liền.
+- Biển Long Vương mở rộng 29×20 → **44×26** (ô đi được 208 → 419, hơn Đồi Sáo Diều 285): làng rộng có đền nhỏ + tượng rồng ở giữa,
+  hàng dừa, đèn lồng; bờ biển có vịnh lõm và mũi cát nhô ra (ghềnh đá ở mũi); 5 cầu tàu dài ngắn khác nhau; 5 thuyền thúng.
+  Cổng giữ hai đầu đường làng (Rừng Mê 1 bên trái, Đồi Sáo Diều bên phải; ô xuất hiện của hai bản đồ kia cập nhật).
+- Phần làng liền mạch: đường đất vẽ thành dải liền (mỗi ô một đốm tròn nối sang ô bên cạnh, viền tối mềm, vân đất lặp liền);
+  đá vẽ bằng code thành ghềnh tròn có rêu, bọt sóng quanh chân khi đứng trong nước (hình đá vuông cũ lộ ô).

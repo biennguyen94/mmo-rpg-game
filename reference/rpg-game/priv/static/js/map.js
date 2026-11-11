@@ -1642,7 +1642,7 @@
   }
   // B3: Ruộng Bậc Thang — mạ lúa mọc thành hàng trên ô nước
   // ---------- Biển Long Vương: cát, dừa, nước theo độ sâu, sóng dạt bờ, hải âu (vẽ bằng code, không cần hình) ----------
-  const SEA_KINDS = { sand: 1, palm: 1, water: 1, deep_water: 1, boat: 1, pier_v: 1, pier_h: 1 };
+  const SEA_KINDS = { sand: 1, palm: 1, water: 1, deep_water: 1, boat: 1, pier_v: 1, pier_h: 1, dirt: 1, rock: 1 };
   const WET = { water: 1, deep_water: 1, boat: 1, pier_v: 1, pier_h: 1 };
   // mép trên của cát / của biển theo cột (ô), ranh nối mềm giữa các cột (như chân trời Đồi Sáo Diều)
   const seaCols = new Map();
@@ -1685,6 +1685,57 @@
     sandPat = ctx.createPattern(c, 'repeat');
     return sandPat;
   }
+  // tấm vân đất đường làng (lặp liền mạch)
+  let dirtPat = null;
+  function dirtPattern() {
+    if (dirtPat) return dirtPat;
+    const N = 96, c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'), img = g.createImageData(N, N), d = img.data, P = (2 * Math.PI) / N;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const n = (Math.sin(x * P * 3 + Math.sin(y * P * 2) * 2) + Math.sin(y * P * 5 - x * P * 2) * 0.7) / 1.7;
+        const grain = rnd(x * 37 + y * 101, 13) - 0.5;
+        const l = 1 + n * 0.07 + grain * 0.16;
+        const i = (y * N + x) * 4;
+        d[i] = Math.min(255, 132 * l); d[i + 1] = Math.min(255, 98 * l); d[i + 2] = Math.min(255, 58 * l); d[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    dirtPat = ctx.createPattern(c, 'repeat');
+    return dirtPat;
+  }
+  // đường đất liền mạch: mỗi ô đất là một đốm tròn, nối sang ô đất / cổng bên cạnh, mép mềm (bóng tối nhẹ ngoài rìa)
+  function roadWorld(m, x0, y0, x1, y1) {
+    const isRoad = (x, y) => { const k = kindAt(m, x, y); return k === 'dirt' || k === 'portal'; };
+    const shape = (grow) => {
+      ctx.beginPath();
+      for (let y = y0 - 1; y <= y1 + 1; y++) {
+        for (let x = x0 - 1; x <= x1 + 1; x++) {
+          if (kindAt(m, x, y) !== 'dirt') continue;
+          const cx0 = x * TILE + TILE / 2, cy0 = y * TILE + TILE / 2, r = TILE * 0.5 + grow;
+          ctx.moveTo(cx0 + r, cy0); ctx.arc(cx0, cy0, r, 0, Math.PI * 2);
+          if (isRoad(x + 1, y)) ctx.rect(cx0, cy0 - r * 0.86, TILE, r * 1.72);
+          if (isRoad(x, y + 1)) ctx.rect(cx0 - r * 0.86, cy0, r * 1.72, TILE);
+        }
+      }
+    };
+    shape(4); ctx.fillStyle = 'rgba(60, 45, 25, 0.28)'; ctx.fill();
+    shape(0); ctx.fillStyle = dirtPattern(); ctx.fill();
+  }
+  // đá ghềnh tròn (thay hình đá vuông): khối đá bóng bẩy, rêu, bọt nước quanh chân nếu đứng trong nước
+  function boulder(x, y, gx, gy, wet, t) {
+    const r = 12 + rnd(gx * 3 + gy, 5) * 3;
+    ctx.save();
+    if (wet && t) { ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.25 * Math.sin(t / 500 + gx)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y + r * 0.45, r * 1.1, r * 0.4, 0, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x + 2, y + r * 0.5, r, r * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+    const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, 2, x, y, r);
+    gr.addColorStop(0, '#a49a8c'); gr.addColorStop(0.6, '#6f665c'); gr.addColorStop(1, '#3e3832');
+    ctx.fillStyle = gr; ctx.beginPath();
+    for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI * 2, rr = r * (0.82 + rnd(gx * 7 + gy * 5 + i, 3) * 0.22); ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.78); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(90, 130, 70, 0.45)'; ctx.beginPath(); ctx.ellipse(x - r * 0.2, y - r * 0.45, r * 0.45, r * 0.18, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
   // vẽ cả vùng biển: cát → biển (màu theo khoảng cách tới bờ) → gợn / nắng → sóng dạt bờ → cầu tàu, thuyền, dừa → hải âu
   // thuyền thúng (đan tre tròn) nổi trên nước, nghiêng nhẹ theo sóng
   function basketBoat(x, y, tilt) {
@@ -1704,6 +1755,7 @@
     const sandTop = (wx) => edgeY(e.sand, wx, 1.1), shoreY = (wx) => edgeY(e.shore, wx, 2.7);
     ctx.save();
     ctx.translate(-cx, -cy);
+    roadWorld(m, x0, y0, x1, y1);
     // cát: một mảng liền, mép trên cong mềm giáp cỏ
     ctx.beginPath(); ctx.moveTo(L, B);
     for (let wx = L; wx <= R; wx += 4) ctx.lineTo(wx, sandTop(wx));
@@ -1775,6 +1827,7 @@
         if (k === 'pier_v' || k === 'pier_h') { const im = image('tiles/' + k); if (im.complete) ctx.drawImage(im, px, py, TILE, TILE); }
         else if (k === 'boat') basketBoat(px + TILE / 2, py + TILE / 2 + (t ? Math.sin(t / 700 + x) * 1.5 : 0), t ? Math.sin(t / 900 + x) * 0.08 : 0);
         else if (k === 'palm') palmTile(px, py, x, y, t, null);
+        else if (k === 'rock') boulder(px + TILE / 2, py + TILE / 2, x, y, !!WET[kindAt(m, x, y + 1)] || !!WET[kindAt(m, x + 1, y)], t);
       }
     }
     seaShore(m, cx, cy, x0, y0, x1, y1, t, true);
