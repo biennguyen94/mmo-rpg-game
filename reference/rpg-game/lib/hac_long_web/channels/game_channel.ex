@@ -233,6 +233,23 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # xóa một tin / cả cuộc trò chuyện (DECISIONS "Quản trị là bạn mặc định")
+  def handle_in("dm", %{"op" => op} = p, socket) when op in ["delete", "clear"] do
+    uid = socket.assigns.user_id
+
+    result =
+      if op == "delete",
+        do: Friends.delete_message(uid, p["id"]),
+        else: Friends.clear(uid, p["uid"])
+
+    with :ok <- limit({:dm_del, uid}, 60, :timer.minutes(1)),
+         {:ok, msg} <- result do
+      {:reply, {:ok, %{msg: msg, unread: Friends.unread(uid)}}, socket}
+    else
+      {:error, msg} -> {:reply, {:error, %{msg: msg}}, socket}
+    end
+  end
+
   def handle_in("dm", %{"op" => "send", "uid" => to, "text" => text}, socket)
       when is_integer(to) do
     uid = socket.assigns.user_id

@@ -41,7 +41,39 @@ defmodule HacLong.Friends do
 
   defp row(a, b), do: from(f in "friends", where: f.user_id == ^a and f.friend_id == ^b)
 
-  def friends?(a, b), do: Repo.exists?(row(a, b) |> where([f], f.accepted))
+  def friends?(a, b),
+    do: admin?(a) or admin?(b) or Repo.exists?(row(a, b) |> where([f], f.accepted))
+
+  # ---------- Quản trị là bạn mặc định (DECISIONS "Quản trị là bạn mặc định") ----------
+
+  @doc "Mã người (nhân vật) có vai trò quản trị: là bạn mặc định của mọi người, nhắn riêng được, không xóa được."
+  def admin_ids,
+    do: Repo.all(from(u in User, where: u.role == "admin", select: u.id))
+
+  def admin?(uid), do: uid in admin_ids()
+
+  defp people_ids([]), do: []
+
+  defp people_ids(ids) do
+    from(u in User,
+      where: u.id in ^ids,
+      left_join: c in Character,
+      on: c.user_id == u.id,
+      select: %{id: u.id, name: coalesce(c.name, u.username), level: c.level, cls: c.cls}
+    )
+    |> Repo.all()
+  end
+
+  # người đã nhắn tin với `uid` (cả hai chiều), trừ những người trong `except`
+  defp talked_with(uid, except) do
+    from(m in "private_messages",
+      where: m.from_id == ^uid or m.to_id == ^uid,
+      select: fragment("CASE WHEN ? = ? THEN ? ELSE ? END", m.from_id, ^uid, m.to_id, m.from_id),
+      distinct: true
+    )
+    |> Repo.all()
+    |> Enum.reject(&(&1 in except or &1 == uid))
+  end
 
   # chặn theo tài khoản (DECISIONS "Nhiều nhân vật")
   defp blocked_by?(target, uid), do: HacLong.Moderation.blocked_by?(target, uid)
@@ -85,16 +117,49 @@ defmodule HacLong.Friends do
 
     unread = unread_by_sender(uid)
 
+    deco = fn l, extra ->
+      Enum.map(
+        l,
+        &Map.merge(
+          &1,
+          Map.merge(%{online: online?(&1.id), unread: Map.get(unread, &1.id, 0)}, extra)
+        )
+      )
+    end
+
+    real = people.(friends_q)
+    admins = admin_ids()
+    me_admin? = uid in admins
+
+    # người chơi thường: Quản trị luôn đứng đầu danh sách bạn (không xóa được)
+    pinned =
+      if me_admin?,
+        do: [],
+        else: people_ids((admins -- [uid]) -- Enum.map(real, & &1.id)) |> deco.(%{admin: true})
+
     friends =
-      people.(friends_q)
-      |> Enum.map(&Map.merge(&1, %{online: online?(&1.id), unread: Map.get(unread, &1.id, 0)}))
-      |> Enum.sort_by(&{!&1.online, -&1.unread, &1.name})
+      pinned ++
+        (real
+         |> deco.(%{admin: false})
+         |> Enum.map(&Map.put(&1, :admin, &1.id in admins))
+         |> Enum.sort_by(&{!&1.online, -&1.unread, &1.name}))
+
+    # Quản trị: tab riêng những người chơi đã nhắn tin (không phải bạn thật)
+    others =
+      if me_admin?,
+        do:
+          people_ids(talked_with(uid, Enum.map(real, & &1.id)))
+          |> deco.(%{})
+          |> Enum.sort_by(&{-&1.unread, !&1.online, &1.name}),
+        else: []
 
     %{
       friends: friends,
+      others: others,
+      admin: me_admin?,
       incoming: people.(incoming_q),
       outgoing: people.(outgoing_q),
-      unread: friends |> Enum.map(& &1.unread) |> Enum.sum(),
+      unread: (friends ++ others) |> Enum.map(& &1.unread) |> Enum.sum(),
       max: @max
     }
   end
@@ -111,13 +176,22 @@ defmodule HacLong.Friends do
 
   @doc "Tổng số tin riêng chưa đọc (chỉ tính tin từ bạn bè)."
   def unread(uid) do
-    Repo.one(
+    admins = admin_ids()
+
+    q =
       from m in "private_messages",
-        join: f in "friends",
+        left_join: f in "friends",
         on: f.user_id == m.to_id and f.friend_id == m.from_id and f.accepted,
         where: m.to_id == ^uid and is_nil(m.read_at),
         select: count()
-    ) || 0
+
+    # Quản trị đọc tin của mọi người; người chơi thường đếm tin từ bạn và từ Quản trị
+    q =
+      if uid in admins,
+        do: q,
+        else: where(q, [m, f], not is_nil(f.user_id) or m.from_id in ^admins)
+
+    Repo.one(q) || 0
   end
 
   # ---------- Kết bạn ----------
@@ -203,6 +277,12 @@ defmodule HacLong.Friends do
   end
 
   def remove(uid, other) do
+    if admin?(other) and not admin?(uid),
+      do: {:error, "Không xóa được Quản trị khỏi danh sách bạn."},
+      else: do_remove(uid, other)
+  end
+
+  defp do_remove(uid, other) do
     Repo.delete_all(row(uid, other))
     Repo.delete_all(row(other, uid))
     notify(uid, nil)
@@ -278,5 +358,29 @@ defmodule HacLong.Friends do
     |> Repo.update_all(set: [read_at: now()])
 
     %{with: %{id: other, name: name_of(other), online: online?(other)}, messages: msgs}
+  end
+
+  @doc "Xóa một tin (người gửi hoặc người nhận đều xóa được, xóa cho cả hai)."
+  def delete_message(uid, id) when is_integer(id) do
+    {n, _} =
+      from(m in "private_messages",
+        where: m.id == ^id and (m.from_id == ^uid or m.to_id == ^uid)
+      )
+      |> Repo.delete_all()
+
+    if n > 0, do: {:ok, "Đã xóa tin."}, else: {:error, "Không có tin này."}
+  end
+
+  def delete_message(_uid, _id), do: {:error, "Tin không hợp lệ."}
+
+  @doc "Xóa cả cuộc trò chuyện giữa `uid` và `other`."
+  def clear(uid, other) when is_integer(other) do
+    from(m in "private_messages",
+      where:
+        (m.from_id == ^uid and m.to_id == ^other) or (m.from_id == ^other and m.to_id == ^uid)
+    )
+    |> Repo.delete_all()
+
+    {:ok, "Đã xóa cuộc trò chuyện."}
   end
 end

@@ -1998,3 +1998,13 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   đã có Hắc Long thì con mới vào túi dạng Ấn. Trứng đang ấp vẫn nở như cũ.
 - **Bỏ Rương Gia Truyền** (NPC ở Làng; `chest_open` báo đã bỏ). Rương Gỗ / Bạc / Vàng bán ở Thợ Rèn là món khác, giữ.
 - **Bỏ Đài Phúc Lành**: ô W là Đá Dịch Chuyển, chạm chỉ ghi nhận (không ban phúc, không còn điểm hồi sinh cạnh đài: gục về Làng).
+
+## Quản trị là bạn mặc định; Tiến Lên: quản trị xem bài — Phase 6 (2026-11-11, anh duyệt)
+- Mọi nhân vật có tài khoản vai trò `admin` là bạn mặc định (không lưu dòng `friends`; `Friends.friends?/2` coi Quản trị là bạn
+  của mọi người): đứng đầu danh sách bạn với huy hiệu 👑 Quản trị, nhắn riêng hai chiều được, **không xóa được**.
+- Bên Quản trị: mục Bạn bè tách 2 tab **Bạn bè** (bạn thật) và **Người chơi nhắn** (người đã nhắn tin, không phải bạn thật; số tin
+  mới; danh sách cuộn). Tin chưa đọc của Quản trị tính mọi người nhắn tới.
+- Tin riêng: nút ✕ xóa từng tin, 🗑 xóa cả cuộc trò chuyện (xóa cho cả hai; `dm` op `delete` / `clear`).
+- Tiến Lên: chỉ tài khoản `admin`, đang ngồi trong bàn, có nút 👁 mờ ở góc bàn: bật thì server gửi riêng bài trên tay của các ghế
+  khác (`RoomServer.peek/2`, op `peek`), lật ngửa ở chỗ ghế đó, tự cập nhật mỗi lượt; bấm lần nữa thì úp lại. Không đổi trạng thái
+  bàn, người khác không thấy và không biết. Người xem bàn (không ngồi) không dùng được.

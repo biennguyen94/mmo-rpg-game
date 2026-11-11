@@ -1121,3 +1121,11 @@ div.item.people-row .people-main { display: flex; align-items: center; gap: 10px
 /* màn đăng nhập: người đầu tiên thuần phục Hắc Long */
 .hac-first { margin: -4px 0 8px; text-align: center; font-size: 0.85rem; color: #d9c2ff; text-shadow: 0 0 8px rgba(160, 90, 255, 0.5); }
 .hac-first b { color: #ffd24a; }
+
+/* tin riêng: nút xóa từng tin (hiện khi rê / chạm) */
+.dm .dm-del { margin-left: 6px; border: 0; background: none; color: var(--muted, #9a93a3); cursor: pointer; font-size: 0.75rem; opacity: 0.55; padding: 0 2px; }
+.dm .dm-del:hover, .dm .dm-del:focus { opacity: 1; color: var(--bad, #ef6a5a); }
+
+/* Tiến Lên: quản trị xem bài đối thủ — bài nhỏ chồng lên nhau */
+.tl-peek-hand { display: inline-flex; flex-wrap: wrap; max-width: 220px; }
+.tl-peek-hand .tl-card.peek { width: 22px; height: auto; margin-right: -8px; }

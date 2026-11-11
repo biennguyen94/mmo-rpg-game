@@ -47,6 +47,15 @@ defmodule HacLongWeb.TienLenHandler do
   defp message(msg) when is_binary(msg), do: msg
   defp message(reason), do: Text.reason(reason)
 
+  # quản trị xem bài đối thủ trong bàn mình đang ngồi (chỉ mình thấy)
+  defp op("peek", _p, uid, socket) do
+    room = socket.assigns[:tl_room]
+
+    if socket.assigns[:role] == "admin" and room,
+      do: {:ok, %{hands: HacLong.TienLen.RoomServer.peek(room, uid)}, socket},
+      else: {:error, "Không được phép.", socket}
+  end
+
   defp op("lobby", _p, _uid, socket) do
     socket = subscribe_once(socket, :tl_lobby, Lobby.topic())
 

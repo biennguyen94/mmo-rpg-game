@@ -196,6 +196,12 @@ defmodule HacLong.TienLen.RoomServer do
   """
   def view(room_id, player_id), do: call(room_id, {:view, player_id})
 
+  @doc """
+  Chỉ cho quản trị (handler kiểm vai trò): bài trên tay của các ghế khác trong ván đang chơi `%{"ghế" => [mã bài]}`.
+  Không đổi trạng thái phòng, người khác không biết (DECISIONS "Tiến Lên: quản trị xem bài").
+  """
+  def peek(room_id, player_id), do: call(room_id, {:peek, player_id})
+
   @doc "Public summary for the lobby list (no player ids, no cards)."
   def summary(room_id), do: call(room_id, :summary)
 
@@ -494,6 +500,25 @@ defmodule HacLong.TienLen.RoomServer do
 
   def handle_call({:check, player_id, cmd}, _from, state) do
     {:reply, Room.check(state.room, player_id, cmd), state}
+  end
+
+  def handle_call({:peek, player_id}, _from, state) do
+    room = state.room
+    me = Room.seat_of(room, player_id)
+    game = room.game
+
+    hands =
+      if me != nil and game,
+        do:
+          for(
+            {seat, cards} <- game.hands,
+            seat != me,
+            into: %{},
+            do: {to_string(seat), codes(cards)}
+          ),
+        else: %{}
+
+    {:reply, hands, state}
   end
 
   def handle_call({:view, player_id}, _from, state) do

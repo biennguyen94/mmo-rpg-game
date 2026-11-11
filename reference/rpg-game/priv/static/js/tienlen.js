@@ -18,6 +18,8 @@
     chat: [], chatOpen: false, ticker: null, reactions: {}, marks: {}, speech: {}, puffs: {}, runaways: {},
     throwMenu: null, msg: null, games: [], replay: null, frame: 0, playing: null, busy: false,
     inviteOpen: false, friends: null,
+    // quản trị xem bài đối thủ (DECISIONS "Tiến Lên: quản trị xem bài"): chỉ mình thấy
+    peek: false, peekHands: {},
   };
   let root = null, checkTimer = null;
 
@@ -91,6 +93,7 @@
   function setView(view, events) {
     const was = st.view;
     st.view = view;
+    if (st.peek) refreshPeek();
     if (!view) return;
     const g = view.game;
     const hand = (g && g.hand) || [];
@@ -245,7 +248,8 @@
       case 'join': sit(d.id); break;
       case 'watch': watch(d.id); break;
       case 'back-table': loadLobby(true); break;
-      case 'leave': leave(); break;
+      case 'leave': st.peek = false; st.peekHands = {}; leave(); break;
+      case 'peek': st.peek = !st.peek; st.peekHands = {}; if (st.peek) refreshPeek(); else render(); break;
       case 'start': act('start'); break;
       case 'card': {
         const c = d.card;
@@ -352,6 +356,14 @@
   }
 
   // ---------- vẽ ----------
+  // bài đối thủ (chỉ quản trị; server kiểm vai trò)
+  async function refreshPeek() {
+    const r = await window.Net.tl('peek', {}).catch(() => null);
+    if (!st.peek) return;
+    st.peekHands = (r && r.hands) || {};
+    render();
+  }
+
   function render() {
     if (!root || !st.open) return;
     const scr = st.screen;
@@ -430,7 +442,7 @@
       ${bal != null ? `<div class="small num">💰 ${fmt(bal)}${delta ? ` <span class="tag ${delta > 0 ? 'good' : 'bad'}">${signed(delta)}</span>` : ''}</div>` : ''}
       ${p.bot && v.host === v.me && v.status === 'waiting' && !st.watching ? `<button class="btn small-btn" data-tl="remove-bot" data-seat="${seat}">Bỏ máy</button>` : ''}
       ${g && g.seats.includes(seat) ? `<div class="tl-seat-row">
-        <span class="tl-backs">${cardImg('1B', 'back')}<b class="num">${g.card_counts[seat]}</b></span>
+        ${st.peek && st.peekHands[seat] && seat !== v.me ? `<span class="tl-peek-hand">${st.peekHands[seat].map((c) => cardImg(c, 'peek')).join('')}</span>` : `<span class="tl-backs">${cardImg('1B', 'back')}<b class="num">${g.card_counts[seat]}</b></span>`}
         ${g.passed.includes(seat) ? '<span class="tag">Bỏ lượt</span>' : ''}
         ${g.removed.includes(seat) ? '<span class="tag">Bị loại</span>' : ''}
         ${placeOf ? `<span>${MEDALS[placeOf.i] || ''} ${placeLbl}</span>` : ''}
@@ -515,7 +527,7 @@
 
   function viewTable(watching) {
     const v = st.view, g = v.game, t = now();
-    const right = `<button class="btn" data-tl="sound" title="Âm thanh">${window.Sound && window.Sound.on ? '🔊' : '🔇'}</button>
+    const right = `${!watching && window.Net.role === 'admin' ? `<button class="btn tl-peek-btn" data-tl="peek" aria-pressed="${st.peek}" style="opacity:${st.peek ? 0.6 : 0.18}">👁</button>` : ''}<button class="btn" data-tl="sound" title="Âm thanh">${window.Sound && window.Sound.on ? '🔊' : '🔇'}</button>
       ${watching ? '<button class="btn" data-tl="lobby">Thôi xem</button>' : '<button class="btn" data-tl="lobby">Sảnh</button><button class="btn danger" data-tl="leave">Rời bàn</button>'}`;
     const info = `<p class="small tl-info">Phòng <span class="tl-code">${esc(v.id)}</span> · ván đã chơi: ${v.games_played} · <span class="tag">${v.stake ? `Cược ${fmt(v.stake)} (cần ${fmt(v.min_balance)})` : 'Chơi vui'}</span>${v.private ? ' <span class="tag">Riêng</span>' : ''}${v.spectators ? ` · 👀 ${v.spectators}` : ''}${watching ? ' · <b>Đang xem</b>' : ''}</p>`;
     const hand = g && v.me != null ? sortedHand(g.hand || []) : [];

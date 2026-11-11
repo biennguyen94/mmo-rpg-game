@@ -687,6 +687,35 @@ defmodule HacLongWeb.GameChannelTest do
       {status, r}
     end
 
+    test "Quản trị là bạn mặc định: nhắn được, không xóa được; Quản trị thấy tab người chơi nhắn, xóa hội thoại" do
+      ad = create_user()
+
+      HacLong.Repo.get!(HacLong.Accounts.User, ad.id)
+      |> Ecto.Changeset.change(role: "admin")
+      |> HacLong.Repo.update!()
+
+      player_at(ad, %{map: "village", x: 12, y: 14})
+      up = create_user()
+      player_at(up, %{map: "village", x: 13, y: 14})
+      {_, sp} = join_game(up)
+
+      {:ok, l} = fop(sp, "list")
+      assert Enum.any?(l.friends, &(&1.id == ad.id and &1.admin))
+
+      assert {:error, %{msg: "Không xóa được Quản trị" <> _}} =
+               fop(sp, "remove", %{"uid" => ad.id})
+
+      ref = push(sp, "dm", %{"op" => "send", "uid" => ad.id, "text" => "chào admin"})
+      assert_reply ref, :ok, %{message: m}
+
+      a = HacLong.Friends.list(ad.id)
+      assert a.admin
+      assert [%{unread: 1}] = Enum.filter(a.others, &(&1.id == up.id))
+      assert {:ok, _} = HacLong.Friends.delete_message(ad.id, m.id)
+      assert {:ok, _} = HacLong.Friends.clear(ad.id, up.id)
+      assert HacLong.Friends.list(ad.id).others |> Enum.filter(&(&1.id == up.id)) == []
+    end
+
     test "mời kết bạn theo tên, nhận lời, nhắn tin, chưa đọc, xóa bạn" do
       ua = create_user()
       pa = player_at(ua, %{map: "village", x: 12, y: 14})

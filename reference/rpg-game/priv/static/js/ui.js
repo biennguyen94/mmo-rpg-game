@@ -2033,15 +2033,23 @@
   function refreshHud() { const h = $('#hud'); if (h && P && !P.battle) { h.innerHTML = viewHud(); tweenGold(); } }
   const hhmm = (t) => new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
 
+  // Quản trị: tab riêng người chơi đã nhắn (không phải bạn thật), cuộn được khi nhiều người
+  function othersCard(d) {
+    return `<div class="card"><h3>Người chơi nhắn tin</h3>${d.others.length ? `<div class="list" style="max-height:60vh;overflow-y:auto">${d.others.map((f) => `<div class="item"><div class="grow">
+        <div class="name">${f.online ? '<span style="color:var(--good)">●</span>' : '<span class="muted">○</span>'} ${esc(f.name)}${f.unread ? ` <span class="tag gold num">${f.unread} tin mới</span>` : ''}</div>
+        <div class="small muted">${f.level ? `Cấp ${f.level}` : ''}${f.cls && CLASSES[f.cls] ? ` ${CLASSES[f.cls].name}` : ''}</div></div>
+        <button class="btn small-btn" data-act="dm-clear" data-uid="${f.id}" title="Xóa cả cuộc trò chuyện">🗑</button>
+        <button class="btn ${f.unread ? 'primary' : ''}" data-act="dm-open" data-uid="${f.id}">💬 Nhắn</button></div>`).join('')}</div>` : '<p class="small muted">Chưa có ai nhắn.</p>'}</div>`;
+  }
   function viewFriends() {
     const c = friendsUi.chat;
     if (c) {
       const d = c.data;
-      const head = `<div class="row"><h2 class="display grow">💬 ${d ? esc(d.with.name) : 'Đang mở…'}</h2><button class="btn" data-act="dm-back">Về</button></div>`;
+      const head = `<div class="row"><h2 class="display grow">💬 ${d ? esc(d.with.name) : 'Đang mở…'}</h2>${d && d.messages.length ? `<button class="btn small-btn" data-act="dm-clear" data-uid="${c.uid}" title="Xóa cả cuộc trò chuyện">🗑</button>` : ''}<button class="btn" data-act="dm-back">Về</button></div>`;
       if (!d) return head;
       return `${head}<div class="card">
         <p class="small muted">${d.with.online ? '<span style="color:var(--good)">● Đang online</span>' : '○ Không online, sẽ thấy tin khi vào game'}</p>
-        <div class="dm-log" id="dm-log">${d.messages.length ? d.messages.map((m) => `<div class="dm ${m.from === Net.userId ? 'me' : ''}"><span>${esc(m.text)}</span>${window.TL && TL.inviteRoom(m.text) && m.from !== Net.userId ? `<button class="btn small-btn primary" data-act="tl-join" data-id="${esc(TL.inviteRoom(m.text))}">🃏 Vào bàn</button>` : ''}<small>${hhmm(m.at)}</small></div>`).join('') : '<p class="small muted">Chưa có tin nào. Chào một câu đi!</p>'}</div>
+        <div class="dm-log" id="dm-log">${d.messages.length ? d.messages.map((m) => `<div class="dm ${m.from === Net.userId ? 'me' : ''}"><span>${esc(m.text)}</span><button class="dm-del" data-act="dm-del" data-id="${m.id}" title="Xóa tin" aria-label="Xóa tin">✕</button>${window.TL && TL.inviteRoom(m.text) && m.from !== Net.userId ? `<button class="btn small-btn primary" data-act="tl-join" data-id="${esc(TL.inviteRoom(m.text))}">🃏 Vào bàn</button>` : ''}<small>${hhmm(m.at)}</small></div>`).join('') : '<p class="small muted">Chưa có tin nào. Chào một câu đi!</p>'}</div>
         <form id="dm-form" class="chat-form" autocomplete="off"><input type="text" id="dm-input" maxlength="200" placeholder="Nhắn cho ${esc(d.with.name)}…" aria-label="Tin nhắn"><button class="btn primary" type="submit">Gửi</button></form>
       </div>`;
     }
@@ -2054,10 +2062,12 @@
         <p class="small muted">Hoặc chạm vào người chơi trên bản đồ → Kết bạn. Tối đa ${d.max} bạn. Chỉ nhắn riêng được cho bạn bè.</p></div>
       ${d.incoming.length ? `<div class="card"><h3>Lời mời kết bạn</h3><div class="list">${d.incoming.map((f) => `<div class="item"><div class="grow">${person(f)}</div>
         <button class="btn small-btn" data-act="friend-op" data-op="decline" data-uid="${f.id}">Từ chối</button><button class="btn small-btn primary" data-act="friend-op" data-op="accept" data-uid="${f.id}">Nhận</button></div>`).join('')}</div></div>` : ''}
-      <div class="card"><h3>Bạn bè (${d.friends.length})</h3>${d.friends.length ? `<div class="list">${d.friends.map((f) => `<div class="item"><div class="grow">
-          <div class="name">${f.online ? '<span style="color:var(--good)" title="Đang online">●</span>' : '<span class="muted" title="Không online">○</span>'} ${esc(f.name)}${f.unread ? ` <span class="tag gold num">${f.unread} tin mới</span>` : ''}</div>
+      ${d.admin ? `<div class="seg"><button class="btn small-btn ${friendsUi.tab !== 'others' ? 'primary' : ''}" data-act="friends-tab" data-tab="friends">Bạn bè (${d.friends.length})</button><button class="btn small-btn ${friendsUi.tab === 'others' ? 'primary' : ''}" data-act="friends-tab" data-tab="others">Người chơi nhắn (${d.others.length})${d.others.some((x) => x.unread) ? ` · ${d.others.reduce((n, x) => n + x.unread, 0)} mới` : ''}</button></div>` : ''}
+      ${d.admin && friendsUi.tab === 'others' ? othersCard(d) : ''}
+      <div class="card" ${d.admin && friendsUi.tab === 'others' ? 'hidden' : ''}><h3>Bạn bè (${d.friends.length})</h3>${d.friends.length ? `<div class="list">${d.friends.map((f) => `<div class="item"><div class="grow">
+          <div class="name">${f.online ? '<span style="color:var(--good)" title="Đang online">●</span>' : '<span class="muted" title="Không online">○</span>'} ${esc(f.name)}${f.admin ? ' <span class="tag gold">👑 Quản trị</span>' : ''}${f.unread ? ` <span class="tag gold num">${f.unread} tin mới</span>` : ''}</div>
           <div class="small muted">${f.level ? `Cấp ${f.level}` : ''}${f.cls && CLASSES[f.cls] ? ` ${CLASSES[f.cls].name}` : ''}</div>
-          <div class="btn-row">${friendsUi.confirm === f.id
+          <div class="btn-row">${f.admin && !d.admin ? '<span class="small muted">Luôn là bạn</span>' : friendsUi.confirm === f.id
             ? `<button class="btn small-btn danger" data-act="friend-op" data-op="remove" data-uid="${f.id}">Xóa thật?</button>`
             : `<button class="btn small-btn" data-act="friend-ask" data-uid="${f.id}">Xóa bạn</button>`}</div></div>
           <button class="btn ${f.unread ? 'primary' : ''}" data-act="dm-open" data-uid="${f.id}">💬 Nhắn</button></div>`).join('')}</div>` : '<p class="small muted">Chưa có bạn nào.</p>'}</div>
@@ -4808,6 +4818,17 @@
     if (act === 'friend-ask') { friendsUi.confirm = +t.dataset.uid; render(); return; }
     if (act === 'dm-open') { openChat(+t.dataset.uid); return; }
     if (act === 'dm-back') { friendsUi.chat = null; loadFriends(); return; }
+    if (act === 'friends-tab') { friendsUi.tab = t.dataset.tab; render(); return; }
+    if (act === 'dm-del') {
+      Net.dm('delete', { id: +t.dataset.id }).then(() => { if (friendsUi.chat) openChat(friendsUi.chat.uid); }, (e) => toast(e.msg, true));
+      return;
+    }
+    if (act === 'dm-clear') {
+      if (!confirm('Xóa cả cuộc trò chuyện (cho cả hai bên)?')) return;
+      const u = +t.dataset.uid;
+      Net.dm('clear', { uid: u }).then((r) => { toast(r.msg); if (friendsUi.chat && friendsUi.chat.uid === u) openChat(u); else loadFriends(); }, (e) => toast(e.msg, true));
+      return;
+    }
     if (act === 'chat-open') { toggleChat(!chatOpen); return; }
     if (act === 'chat-wide') { chatWide = !chatWide; const ov = $('#chat-ov'); if (ov) ov.classList.toggle('open', chatOpen || chatWide); if (chatWide) { const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight; } return; }
     if (act === 'menu-back') { menuSec = null; render(); return; }
