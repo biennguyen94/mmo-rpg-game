@@ -52,6 +52,11 @@ defmodule HacLongWeb.SlayTest do
   defp strong, do: %{level: 40, stats: %{str: 400, agi: 100, vit: 300, ene: 20}}
 
   # chờ trận của `uid` được chốt (settle chạy ở tiến trình riêng)
+  defp back_home(uid, map, n \\ 100) do
+    p = Session.get(uid)
+    if p.pos.map == map or n == 0, do: p, else: Process.sleep(20) && back_home(uid, map, n - 1)
+  end
+
   defp settled(uid, n \\ 100) do
     p = Session.get(uid)
 
@@ -378,10 +383,19 @@ defmodule HacLongWeb.SlayTest do
     pb = settled(ub.id)
     pa = settled(ua.id)
     assert pa.battle.result == "win" and pb.battle.result == "lose"
+
+    # về chỗ cũ chạy trong Session từng người ngay sau khi chốt trận (giữ màn kết quả)
+    pb = back_home(ub.id, "village")
+    assert pb.battle.result == "lose"
     assert pa.gold == 5000 and pb.gold == 3000
     assert pa.hp == 50
     # xong trận về đúng chỗ cũ
     assert pb.pos == %{map: "village", x: 12, y: 14}
+
+    # đóng màn kết quả: người thua đấu trực tiếp không bị tính gục ngã (vẫn ở chỗ cũ, vẫn có mặt trên bản đồ)
+    assert HacLong.World.finish_encounter(pb, ub.id).pos == pb.pos
+    snap = HacLong.World.MapServer.snapshot("village")
+    assert Enum.any?(snap.players, &(&1.id == ub.id))
     assert pa.pos.map != Slay.duel_map()
     refute Slay.red?(ua.id)
     assert HacLong.Arena.stats(ua.id).rating > 1000

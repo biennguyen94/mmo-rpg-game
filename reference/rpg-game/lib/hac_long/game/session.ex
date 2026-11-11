@@ -322,6 +322,14 @@ defmodule HacLong.Game.Session do
     s =
       if player do
         Characters.put_reason("TRADE")
+
+        # nhân vật trả về đã đổi chỗ (đấu trực tiếp xong về chỗ cũ): đổi bản đồ ngay trong Session này, để bản đồ theo
+        # dõi đúng tiến trình của người chơi (không mất khỏi danh sách người trên bản đồ)
+        if s.player && s.player.pos != player.pos and map_size(s.tabs) > 0 do
+          World.leave(s.player, s.user_id)
+          World.enter(player, s.user_id)
+        end
+
         World.sync_duel(s.player, player, s.user_id)
         s = cancel_flush(%{s | player: player, dirty: false})
         broadcast(s, player, nil)

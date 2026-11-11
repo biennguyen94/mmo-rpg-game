@@ -2034,3 +2034,7 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Cổng giữ hai đầu đường làng (Rừng Mê 1 bên trái, Đồi Sáo Diều bên phải; ô xuất hiện của hai bản đồ kia cập nhật).
 - Phần làng liền mạch: đường đất vẽ thành dải liền (mỗi ô một đốm tròn nối sang ô bên cạnh, viền tối mềm, vân đất lặp liền);
   đá vẽ bằng code thành ghềnh tròn có rêu, bọt sóng quanh chân khi đứng trong nước (hình đá vuông cũ lộ ô).
+- Sửa: đấu trực tiếp xong, người chơi (nhất là người thua) mất khỏi danh sách người trên bản đồ (không thấy ai trong Quanh đây).
+  Nguyên nhân: (1) về chỗ cũ gọi `World.warp` trong tiến trình chốt trận, mà bản đồ theo dõi tiến trình gọi vào → tiến trình đó
+  xong là bị xóa; (2) đóng màn kết quả, người thua bị `finish_encounter` tính như gục ngã (rời bản đồ, về chỗ hồi sinh). Nay chốt
+  trận chỉ đổi `pos`, Session đổi bản đồ khi nhận lại nhân vật (`release`); thua đấu trực tiếp không tính gục ngã.

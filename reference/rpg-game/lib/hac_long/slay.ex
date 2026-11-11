@@ -667,6 +667,11 @@ defmodule HacLong.Slay do
             HacLong.Chat.system(announce(f, winner, loser, why))
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
+
+            for uid <- [winner, loser],
+                back = (f[:back] || %{})[uid],
+                do: Session.teleport(uid, back)
+
             notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng." <> note)
 
             notice(
@@ -804,6 +809,11 @@ defmodule HacLong.Slay do
 
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
+
+            for uid <- [winner, loser],
+                back = (f[:back] || %{})[uid],
+                do: Session.teleport(uid, back)
+
             notice(winner, "⚔ Thắng #{f.names[loser]}: điểm đấu trường #{sign.(dw)}." <> war)
             notice(loser, "⚔ Thua #{f.names[winner]}: điểm đấu trường #{sign.(dl)}.")
           rescue
@@ -832,9 +842,11 @@ defmodule HacLong.Slay do
           reward: %{xp: 0, gold: 0, items: [], levels: 0}
         })
 
+      # về chỗ cũ: chỉ đổi `pos`; Session đổi bản đồ khi nhận lại nhân vật (`release`), vì bản đồ theo dõi tiến trình gọi
+      # vào bản đồ (gọi từ đây thì tiến trình này xong là người chơi biến mất khỏi danh sách trên bản đồ)
+      _ = uid
       p = %{p | battle: b, hp: max(1, min(hp0, Engine.derived(p).maxHp))}
-      # rời bản đồ đấu trực tiếp, về đúng chỗ cũ
-      if back, do: HacLong.World.warp(p, uid, back), else: p
+      if back, do: HacLong.World.drop_stale_tower(%{p | pos: back}), else: p
     else
       p
     end

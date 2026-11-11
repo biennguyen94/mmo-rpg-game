@@ -865,7 +865,10 @@ defmodule HacLong.World do
         :ok
     end
 
-    if b.result == "lose" do
+    # đấu trực tiếp thua không phải gục ngã (không chết, đã về chỗ cũ): giữ nguyên chỗ đứng và có mặt trên bản đồ
+    duel? = match?(%{duel: true}, b[:encounter])
+
+    if b.result == "lose" and not duel? do
       leave(p, uid)
       # gục trong bản đồ sự kiện (Hỗn Chiến Thành): bị loại, về Làng
       # gục ở bản đồ thường: hồi sinh cạnh Đài Phúc Lành đã chạm, chưa chạm đài nào thì về Làng
