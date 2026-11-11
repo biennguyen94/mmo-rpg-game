@@ -818,6 +818,8 @@
         if (kind === 'sky') { if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE); continue; }
         if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE);
         // Biển Long Vương (DECISIONS "Biển Long Vương"): cát, dừa, nước biển vẽ bằng code; sóng dạt bờ vẽ sau (`seaShore`)
+        // đá trên bãi cát: lót cát (không lộ ô cỏ) rồi vẽ đá như thường
+        if (m.style === 'sea' && kind === 'rock' && nearSand(m, x, y)) sandTile(px, py, x, y);
         if (m.style === 'sea' && (kind === 'sand' || kind === 'palm' || kind === 'water' || kind === 'deep_water' || kind === 'boat')) {
           seaTile(m, kind, px, py, x, y, fx ? now : 0);
           if (kind === 'sand' || kind === 'palm') continue;
@@ -1655,19 +1657,47 @@
     while (d < 8 && wet(kindAt(m, x, y - d - 1))) d++;
     return d;
   }
+  // cát mịn: vân sáng / tối liền mạch qua các ô (nhiễu theo tọa độ thế giới), gợn cát cong nối tiếp, hạt nhỏ dày và mờ;
+  // vẽ sẵn mỗi ô một lần (cache) cho nhẹ
+  const sandCache = new Map();
+  const sandNoise = (x, y) => (Math.sin(x * 0.11 + y * 0.07) + Math.sin(x * 0.05 - y * 0.13 + 1.7) + Math.sin((x + y) * 0.031 + 4.1)) / 3;
   function sandTile(px, py, gx, gy) {
-    ctx.fillStyle = '#d9c08a'; ctx.fillRect(px, py, TILE, TILE);
-    // vân cát gợn và hạt sẫm / sáng cố định theo ô
-    ctx.fillStyle = 'rgba(160, 120, 60, 0.18)';
-    for (let i = 0; i < 3; i++) ctx.fillRect(px + 2, py + 6 + i * 10 + (gx % 3), TILE - 4, 1);
-    for (let i = 0; i < 9; i++) {
-      const r1 = rnd(gx * 31 + gy * 17 + i * 7, 97), r2 = rnd(gx * 13 + gy * 29 + i * 11, 89);
-      ctx.fillStyle = i % 3 ? 'rgba(120, 90, 50, 0.35)' : 'rgba(255, 245, 210, 0.6)';
-      ctx.fillRect(px + r1 * TILE, py + r2 * TILE, 1.4, 1.4);
+    const key = gx + ',' + gy;
+    let c = sandCache.get(key);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = c.height = TILE;
+      const g = c.getContext('2d');
+      g.fillStyle = '#dcc493'; g.fillRect(0, 0, TILE, TILE);
+      // vân lớn: ô 4×4 px, sáng / tối rất nhẹ theo nhiễu liền mạch
+      for (let y = 0; y < TILE; y += 4) {
+        for (let x = 0; x < TILE; x += 4) {
+          const n = sandNoise(gx * TILE + x, gy * TILE + y);
+          g.fillStyle = n > 0 ? `rgba(255, 246, 215, ${n * 0.22})` : `rgba(150, 112, 60, ${-n * 0.16})`;
+          g.fillRect(x, y, 4, 4);
+        }
+      }
+      // gợn cát do gió: đường cong mảnh theo tọa độ thế giới (nối liền giữa các ô)
+      g.strokeStyle = 'rgba(160, 125, 70, 0.10)'; g.lineWidth = 1;
+      for (let k = -1; k < 4; k++) {
+        const base = k * 11 - ((gy * TILE) % 11);
+        g.beginPath();
+        for (let x = 0; x <= TILE; x += 2) { const wx = gx * TILE + x; const y = base + Math.sin(wx * 0.09 + k) * 2.5; if (x === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+        g.stroke();
+      }
+      // hạt cát li ti
+      for (let i = 0; i < 70; i++) {
+        const r1 = rnd(gx * 31 + gy * 17 + i * 7, 97), r2 = rnd(gx * 13 + gy * 29 + i * 11, 89), r3 = rnd(gx * 7 + gy * 3 + i, 41);
+        g.fillStyle = r3 < 0.5 ? 'rgba(120, 90, 50, 0.16)' : r3 < 0.85 ? 'rgba(255, 250, 230, 0.35)' : 'rgba(190, 150, 95, 0.3)';
+        g.fillRect(Math.floor(r1 * TILE), Math.floor(r2 * TILE), 1, 1);
+      }
+      sandCache.set(key, c);
     }
+    ctx.drawImage(c, px, py, TILE, TILE);
   }
-  function palmTile(px, py, gx, gy, t) {
-    sandTile(px, py, gx, gy);
+  // ô có cát bên cạnh (dừa / đá trên bãi cát thì lót cát; trên cỏ thì giữ nền cỏ)
+  const nearSand = (m, x, y) => [[0, 1], [0, -1], [1, 0], [-1, 0]].filter(([dx, dy]) => kindAt(m, x + dx, y + dy) === 'sand').length >= 2;
+  function palmTile(px, py, gx, gy, t, m) {
+    if (m && nearSand(m, gx, gy)) sandTile(px, py, gx, gy);
     const sway = t ? Math.sin(t / 1100 + gx * 0.9) * 2.5 : 0;
     const bx = px + TILE / 2, by = py + TILE - 2, tx = bx + 5 + sway, ty = py + 4;
     ctx.save();
@@ -1689,7 +1719,7 @@
   }
   function seaTile(m, kind, px, py, gx, gy, t) {
     if (kind === 'sand') return sandTile(px, py, gx, gy);
-    if (kind === 'palm') return palmTile(px, py, gx, gy, t);
+    if (kind === 'palm') return palmTile(px, py, gx, gy, t, m);
     // nước: nông (xanh ngọc) → sâu (lam thẫm) theo khoảng cách tới bờ; lấy trung bình 3 cột cạnh nhau và chuyển dần
     // từ mép trên xuống mép dưới ô, nên không thành sọc / bậc theo từng ô
     const dd = (y) => {
