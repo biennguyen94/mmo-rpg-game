@@ -2025,3 +2025,7 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Đánh nhanh: quái bị xóa khỏi bản đồ trước khi hiệu ứng kỹ năng bay tới → `MapView.fightSpots` nhớ vị trí con đang đánh ~1,5 giây;
   hình quái gục chờ 0,35 giây (đứng nguyên) rồi mới mờ dần, để đòn trúng trước.
 - Tab Thú cưng: nút Dắt theo / Đóng ấn xếp dọc (trước tràn ngang trên điện thoại).
+- Biển Long Vương vẽ liền một mảng như chân trời Đồi Sáo Diều (`seaWorld`), không còn chia ô: mép cỏ → cát và đường bờ là
+  đường cong mềm (mép theo cột, nối smoothstep + gợn sin); cát là một tấm vân lặp liền mạch; biển một mảng màu theo khoảng cách
+  ra khơi, dải nước nông ôm bờ, gợn / nắng rải theo tọa độ thế giới; sóng dạt bờ chạy liền dọc đường bờ. Cầu tàu, dừa vẽ đè lên;
+  thuyền thành thuyền thúng tròn vẽ bằng code (hình cũ có nền vuông). Hai cột mép bản đồ ở bãi cát / biển bỏ cây cho bờ liền.
