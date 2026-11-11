@@ -1956,3 +1956,15 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Quản trị → Đang online: tự cập nhật mỗi 5 giây khi đang mở tab, bỏ nút Tải lại.
 - Kiểm 12 dòng Excellent (vũ khí: atk_pct, crit, heal_kill, mp_kill, atk_lvl, ar_pct; giáp: hp_pct, dmg_red, gold_pct, mp_pct,
   reflect, def_rate): đều có tác dụng; thêm `test/hac_long/game/exc_lines_test.exs`.
+
+## Tầm đánh theo cánh; đồ sát ở Hồ / Đồi theo giờ sự kiện — Phase 2 (2026-11-11, anh duyệt)
+- Đánh quái và đồ sát dùng chung tầm `RULES.slay.reach_by_wing` theo bậc cánh đang mặc (`Gear.reach/1`, gửi client ở
+  `view.reach`): không cánh 1 ô (đứng sát bên), cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô (Chebyshev). Thay số cố định 8 ô trước đó.
+- Đánh quái từ xa: lệnh mới `engage {x, y}` (`World.engage/5`, `MapServer.engage/4`): trong tầm thì khóa con quái và vào trận,
+  người không di chuyển; ô không còn quái thì báo "Không còn quái ở đó." Chỉ bản đồ chung (tháp / phòng sự kiện vẫn bước vào ô
+  quái). Bấm quái ngoài tầm: chạy lại gần, vào tầm thì đánh.
+- Đồ sát từ tab Quanh đây: bấm là đánh; người kia ở xa (chưa hiện trong khung bản đồ) thì tự chạy lại gần cho vào tầm cánh rồi đánh
+  (chờ tối đa ~40 giây).
+- Hồ Long Vương và Đồi Sáo Diều: mặc định không được đồ sát. `RULES.slay.event_pk.warn_min` (10) phút trước khi Long Vương nổi /
+  Chim Lạc tới thì báo cả server và mở đồ sát trên bản đồ đó; lúc xuất hiện thì đóng (`LakeEvent.pk_open?/0`,
+  `SkyEvent.pk_open?/0`), tránh người mạnh đứng đồ sát cả bản đồ không cho ai câu / thả diều.

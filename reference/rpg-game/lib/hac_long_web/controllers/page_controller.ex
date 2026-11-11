@@ -152,7 +152,7 @@ defmodule HacLongWeb.PageController do
           minLevel: Data.rules().slay.min_level,
           safe: Data.rules().slay.safe_maps,
           redMult: Data.rules().slay.red_gold_mult,
-          reach: Data.rules().slay.reach
+          reachByWing: Data.rules().slay.reach_by_wing
         },
         # Công Thành Chiến: Vương Miện (quái bản đồ sự kiện) để bản đồ vẽ quầng sáng, mũi tên mép khung
         castleSiege: %{

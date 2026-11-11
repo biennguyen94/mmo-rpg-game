@@ -607,8 +607,35 @@ defmodule HacLong.World do
     end
   end
 
-  defp step_shared(p, uid, map, {tx, ty} = to, confirm?) do
-    case MapServer.step(map.id, uid, to, confirm? == true) do
+  @doc """
+  Đánh quái ở ô `(x, y)` từ xa, không di chuyển (DECISIONS "Tầm đánh theo cánh"): chỉ bản đồ chung, trong tầm `Gear.reach/1`
+  (không cánh: sát bên; cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô).
+  """
+  def engage(p, uid, x, y, confirm? \\ false) do
+    map = Maps.get(p.pos.map)
+    reach = HacLong.Game.Gear.reach(p)
+
+    cond do
+      p.battle != nil ->
+        {%{ok: false, msg: "Đang trong trận đấu."}, p}
+
+      not (is_integer(x) and is_integer(y)) or map == nil or map.private or
+          p.pos.map == Tower.map_id() ->
+        {%{ok: false}, p}
+
+      max(abs(p.pos.x - x), abs(p.pos.y - y)) > reach ->
+        {%{ok: false, msg: "Xa quá, lại gần trong #{reach} ô để đánh.", reach: reach}, p}
+
+      true ->
+        step_shared(p, uid, map, {x, y}, confirm?, &MapServer.engage/4)
+    end
+  end
+
+  defp step_shared(p, uid, map, {tx, ty} = to, confirm?, call \\ &MapServer.step/4) do
+    case call.(map.id, uid, to, confirm? == true) do
+      :none ->
+        {%{ok: false, msg: "Không còn quái ở đó."}, p}
+
       :ok ->
         {%{ok: true}, put_pos(p, map.id, tx, ty)}
 

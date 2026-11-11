@@ -29,6 +29,19 @@ defmodule HacLong.SkyEvent do
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
+  @pk_warn_ms Data.rules().slay.event_pk.warn_min * 60_000
+
+  @doc """
+  Đang được đồ sát trên bản đồ này không (DECISIONS "Đồ sát ở Hồ / Đồi theo giờ sự kiện"): từ lúc báo sắp xuất hiện
+  tới lúc xuất hiện; ngoài khung đó bản đồ là vùng an toàn.
+  """
+  def pk_open? do
+    case GenServer.whereis(__MODULE__) do
+      nil -> false
+      pid -> GenServer.call(pid, :pk)
+    end
+  end
+
   defp call(msg, default) do
     case GenServer.whereis(__MODULE__) do
       nil -> default
@@ -96,6 +109,7 @@ defmodule HacLong.SkyEvent do
   end
 
   @impl true
+  def handle_call(:pk, _from, s), do: {:reply, s[:pk] == true, s}
   def handle_call(:tiles, _from, s), do: {:reply, {tile_of(s.bird), tile_of(s.flock)}, s}
   def handle_call(:hoi, _from, s), do: {:reply, s.hoi, s}
   def handle_call(:public, _from, s), do: {:reply, public(s), s}
@@ -133,6 +147,14 @@ defmodule HacLong.SkyEvent do
   def handle_cast({:gone, kind}, s), do: {:noreply, gone(s, kind)}
 
   @impl true
+  def handle_info({:pk_warn, :bird}, s) do
+    Chat.system(
+      "⚔ Chim Lạc sắp xuất hiện ở Đồi Sáo Diều trong #{div(@pk_warn_ms, 60_000)} phút! Từ giờ tới lúc đó Đồi Sáo Diều được đồ sát."
+    )
+
+    {:noreply, Map.put(s, :pk, true)}
+  end
+
   def handle_info({:rise, kind}, s) do
     schedule(kind)
     {:noreply, rise(s, kind, nil)}
@@ -186,14 +208,17 @@ defmodule HacLong.SkyEvent do
     every = rules(kind).every * 1000
     stay = rules(kind).stay * 1000
 
-    Process.send_after(
-      self(),
-      {:rise, kind},
-      every - rem(now(), every) + :rand.uniform(every - stay)
-    )
+    delay = every - rem(now(), every) + :rand.uniform(every - stay)
+    Process.send_after(self(), {:rise, kind}, delay)
+
+    # Chim Lạc: báo trước `RULES.slay.event_pk.warn_min` phút, mở đồ sát trên bản đồ tới lúc hiện
+    if kind == :bird,
+      do: Process.send_after(self(), {:pk_warn, kind}, max(0, delay - @pk_warn_ms))
   end
 
   defp rise(s, kind, at) do
+    # Chim Lạc đã hiện: hết giờ đồ sát trên bản đồ
+    s = if kind == :bird, do: Map.put(s, :pk, false), else: s
     other = tile_of(s[if(kind == :bird, do: :flock, else: :bird)])
     tile = at || spots() |> Enum.reject(&(&1 == other)) |> Enum.random()
     ref = make_ref()

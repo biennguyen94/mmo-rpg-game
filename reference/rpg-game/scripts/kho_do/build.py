@@ -455,8 +455,9 @@ tower_rows = "".join(
 
 # ---------- PK, đồ sát ----------
 SL, AR, GW = R["slay"], R["arena"], R["guild_war"]
+REACHW = "theo cánh: không cánh đứng sát bên, cánh cấp 1 / 2 / 3 = " + " / ".join(str(x) for x in SL['reach_by_wing'][1:]) + " ô"
 pk_items = [
-    ("Đồ sát", f"tấn công người khác trên bản đồ chung, trong tầm {SL['reach']} ô (bấm là đánh ngay, không cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm) (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung, trong tầm {REACHW} (bấm là đánh ngay, không cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm; Hồ Long Vương / Đồi Sáo Diều chỉ từ lúc báo {SL['event_pk']['warn_min']} phút trước khi Long Vương nổi / Chim Lạc tới cho tới lúc xuất hiện) (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
     ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
     ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); không giới hạn số lần đồ sát."),
     ("Đấu trường", f"đánh người khác do máy điều khiển (kỹ năng, thú cưng, buff, hồi máu của chính người đó), tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']}). "
@@ -516,10 +517,10 @@ pet_tame = (f"Thuần phục: hạ đủ {PR['tame_kills']} con một loài quá
 QK = R["quick"]
 pk_items += [
     ("Người chơi trên bản đồ", "người khác vẽ trên bản đồ (hình mặc đồ, tên, tag bang; 🛡 đang được bảo vệ, ⚔ + máu khi đang đồ sát). "
-     f"Bấm một người → menu Hồ sơ · Giao dịch · Mời tổ đội · 🗡 Đồ sát (nút mờ kèm lý do nếu không đánh được; trong {SL['reach']} ô là đánh ngay); nhiều người cùng ô / có quái → bảng chọn. "
+     f"Bấm một người → menu Hồ sơ · Giao dịch · Mời tổ đội · 🗡 Đồ sát (nút mờ kèm lý do nếu không đánh được; trong tầm {REACHW} là đánh ngay); nhiều người cùng ô / có quái → bảng chọn. "
      "Không bấm là đánh ngay (tránh đồ sát nhầm). Cài đặt: Tất cả / Tổ đội & bang / Tắt (chỉ màn hình của mình; người đang đồ sát với mình và đồng đội luôn hiện); "
      "tab Quanh đây đủ danh sách, 📍 chỉ người đó trên bản đồ, 🗡 (🗡⚡ khi bật ⚡) ngay cạnh để đồ sát như trên bản đồ. Đồ sát không có màn VS / K.O.; người xong trận hết ngay dấu ⚔."),
-    ("⚡ Đồ sát nhanh", f"đang bật ⚡ thì nút thành 🗡⚡ Đồ sát nhanh: trong {SL['reach']} ô thì mở trận ngay (xa hơn chạy lại gần cho vào tầm), ở lại bản đồ; lượt của mình server đánh ngay theo combo ⚡ "
+    ("⚡ Đồ sát nhanh", f"đang bật ⚡ thì nút thành 🗡⚡ Đồ sát nhanh: trong tầm ({REACHW}) thì mở trận ngay (xa hơn chạy lại gần cho vào tầm), ở lại bản đồ; lượt của mình server đánh ngay theo combo ⚡ "
      f"(không chờ {SL['turn_s']} giây); ✋ cầm lại lượt. Luật đồ sát không đổi. Không bật ⚡: bảng trận như thường, mỗi lượt {SL['turn_s']} giây, hết giờ server đánh thay một đòn, "
      f"hết giờ {SL['max_timeouts']} lần liên tiếp thì thua."),
 ]

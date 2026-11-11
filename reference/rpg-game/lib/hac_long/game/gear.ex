@@ -507,6 +507,21 @@ defmodule HacLong.Game.Gear do
     end
   end
 
+  @reach Data.rules().slay.reach_by_wing
+
+  @doc "Bậc cánh đang mặc (0 nếu không mặc cánh)."
+  def wing_tier(p) do
+    id = p.equip[:wing]
+    g = id && instance?(id) && find(p, id)
+    (g && Data.item(g.base)[:tier]) || 0
+  end
+
+  @doc """
+  Tầm đánh (ô, Chebyshev) theo bậc cánh đang mặc (DECISIONS "Tầm đánh theo cánh", `RULES.slay.reach_by_wing`):
+  không cánh 1 ô (đứng sát bên), cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô. Dùng cho đánh quái và đồ sát.
+  """
+  def reach(p), do: Enum.at(@reach, min(wing_tier(p), length(@reach) - 1))
+
   @doc "Dòng phụ của cánh đang mặc: `%{hp, mp, ignore_def}`."
   def wing_stats(p) do
     zero = %{hp: 0, mp: 0, ignore_def: 0}

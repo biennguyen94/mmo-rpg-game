@@ -473,6 +473,8 @@ defmodule HacLong.Game.Engine do
       look: look(p),
       # Phase 3: kỹ năng mang vào trận (id, theo thứ tự) và mọi kỹ năng đã mở
       skillSet: Enum.map(skills(p), & &1.id),
+      # tầm đánh (ô) theo cánh đang mặc: đánh quái / đồ sát trong tầm không cần chạy sát bên
+      reach: Gear.reach(p),
       # thông thạo kỹ năng: cấp, điểm, mốc, cần đột phá; MP và hồi chiêu ở cấp hiện tại
       mastery:
         Map.new(Mastery.view(p), fn {id, v} ->

@@ -139,12 +139,20 @@ defmodule HacLong.Slay do
       pa.pos.map != pb.pos.map ->
         {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
 
-      # bấm người trên bản đồ là đánh, không cần chạy sát bên: chỉ trong tầm `reach` ô (DECISIONS "Đồ sát trong tầm")
-      max(abs(pa.pos.x - pb.pos.x), abs(pa.pos.y - pb.pos.y)) > @r.reach ->
-        {:error, "#{pb.name} ở xa quá, lại gần trong #{@r.reach} ô để đồ sát."}
+      # bấm người trên bản đồ là đánh, không cần chạy sát bên: trong tầm theo cánh (DECISIONS "Tầm đánh theo cánh")
+      max(abs(pa.pos.x - pb.pos.x), abs(pa.pos.y - pb.pos.y)) > HacLong.Game.Gear.reach(pa) ->
+        {:error, "#{pb.name} ở xa quá, lại gần trong #{HacLong.Game.Gear.reach(pa)} ô để đồ sát."}
 
       not safe_ok?(pa.pos) ->
         {:error, "Đây là vùng an toàn, không được đánh nhau."}
+
+      # Hồ Long Vương / Đồi Sáo Diều: chỉ đồ sát từ lúc báo sắp xuất hiện tới lúc xuất hiện
+      pa.pos.map == HacLong.LakeEvent.map_id() and not HacLong.LakeEvent.pk_open?() ->
+        {:error, "Hồ Long Vương chỉ được đồ sát từ lúc báo Long Vương sắp nổi tới khi Ngài nổi."}
+
+      pa.pos.map == HacLong.Game.Kite.map_id() and not HacLong.SkyEvent.pk_open?() ->
+        {:error,
+         "Đồi Sáo Diều chỉ được đồ sát từ lúc báo Chim Lạc sắp tới tới khi chim xuất hiện."}
 
       # Hỗn Chiến Thành (B-19): chỉ đánh nhau khi thành đang hỗn chiến (hết giờ vào)
       chaos_castle?(pa) and not HacLong.ChaosCastle.fighting?() ->

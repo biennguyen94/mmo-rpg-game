@@ -13,6 +13,7 @@ defmodule HacLong.LakeEvent do
   """
   use GenServer
 
+  alias HacLong.Chat
   alias HacLong.Game.Data
   alias HacLong.World.Maps
 
@@ -23,6 +24,19 @@ defmodule HacLong.LakeEvent do
   def map_id, do: @map
 
   def start_link(_), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+
+  @pk_warn_ms Data.rules().slay.event_pk.warn_min * 60_000
+
+  @doc """
+  Đang được đồ sát trên bản đồ này không (DECISIONS "Đồ sát ở Hồ / Đồi theo giờ sự kiện"): từ lúc báo sắp xuất hiện
+  tới lúc xuất hiện; ngoài khung đó bản đồ là vùng an toàn.
+  """
+  def pk_open? do
+    case GenServer.whereis(__MODULE__) do
+      nil -> false
+      pid -> GenServer.call(pid, :pk)
+    end
+  end
 
   @doc "Ô Long Vương đang nổi `{x, y}` (nil nếu chưa nổi). Không chạy (test) thì nil."
   def tile, do: tiles() |> elem(0)
@@ -84,6 +98,7 @@ defmodule HacLong.LakeEvent do
   end
 
   @impl true
+  def handle_call(:pk, _from, s), do: {:reply, s[:pk] == true, s}
   def handle_call(:tiles, _from, s), do: {:reply, {tile_of(s.dragon), tile_of(s.school)}, s}
   def handle_call(:public, _from, s), do: {:reply, public(s), s}
 
@@ -96,6 +111,14 @@ defmodule HacLong.LakeEvent do
   def handle_cast({:sink, kind}, s), do: {:noreply, sink(s, kind)}
 
   @impl true
+  def handle_info({:pk_warn, :dragon}, s) do
+    Chat.system(
+      "⚔ Long Vương sắp xuất hiện ở Hồ Long Vương trong #{div(@pk_warn_ms, 60_000)} phút! Từ giờ tới lúc đó Hồ Long Vương được đồ sát."
+    )
+
+    {:noreply, Map.put(s, :pk, true)}
+  end
+
   def handle_info({:rise, kind}, s) do
     schedule(kind)
     {:noreply, rise(s, kind, nil)}
@@ -113,15 +136,18 @@ defmodule HacLong.LakeEvent do
     every = rules(kind).every * 1000
     stay = rules(kind).stay * 1000
 
-    Process.send_after(
-      self(),
-      {:rise, kind},
-      every - rem(now(), every) + :rand.uniform(every - stay)
-    )
+    delay = every - rem(now(), every) + :rand.uniform(every - stay)
+    Process.send_after(self(), {:rise, kind}, delay)
+
+    # Long Vương: báo trước `RULES.slay.event_pk.warn_min` phút, mở đồ sát trên bản đồ tới lúc hiện
+    if kind == :dragon,
+      do: Process.send_after(self(), {:pk_warn, kind}, max(0, delay - @pk_warn_ms))
   end
 
   # hai sự kiện không trùng ô
   defp rise(s, kind, at) do
+    # Long Vương đã hiện: hết giờ đồ sát trên bản đồ
+    s = if kind == :dragon, do: Map.put(s, :pk, false), else: s
     other = tile_of(s[other(kind)])
     tile = at || spots() |> Enum.reject(&(&1 == other)) |> Enum.random()
     ref = make_ref()

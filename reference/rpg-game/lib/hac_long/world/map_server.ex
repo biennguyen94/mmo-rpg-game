@@ -60,6 +60,13 @@ defmodule HacLong.World.MapServer do
   def step(map_id, uid, {x, y}, confirm_boss? \\ false),
     do: GenServer.call(via(map_id), {:step, uid, {x, y}, confirm_boss?})
 
+  @doc """
+  Đánh quái ở ô `{x, y}` từ xa (trong tầm cánh, World kiểm): như bước vào ô quái nhưng người không di chuyển;
+  ô không có quái thì `:none`.
+  """
+  def engage(map_id, uid, {x, y}, confirm_boss? \\ false),
+    do: GenServer.call(via(map_id), {:engage, uid, {x, y}, confirm_boss?})
+
   @doc "Trận thắng: quái biến mất và hẹn giờ hồi lại."
   def defeat(map_id, uid, mid), do: GenServer.call(via(map_id), {:defeat, uid, mid})
 
@@ -144,6 +151,12 @@ defmodule HacLong.World.MapServer do
       nil -> {:reply, :ok, s}
       pl -> {:reply, :ok, changed(put_in(s.players[uid], Map.merge(pl, info)))}
     end
+  end
+
+  def handle_call({:engage, uid, pos, confirm?}, from, s) do
+    if monster_at(s, pos),
+      do: handle_call({:step, uid, pos, confirm?}, from, s),
+      else: {:reply, :none, s}
   end
 
   def handle_call({:step, uid, pos, confirm?}, _from, s) do

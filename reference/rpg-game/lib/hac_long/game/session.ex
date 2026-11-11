@@ -531,7 +531,7 @@ defmodule HacLong.Game.Session do
   end
 
   defp handle({:command, %{"act" => act} = cmd, origin}, _from, s)
-       when act in ["move", "travel", "cc_enter", "cs_enter"] do
+       when act in ["move", "engage", "travel", "cc_enter", "cs_enter"] do
     case take(s, :steps, @step_ms, @step_burst) do
       {:ok, s} ->
         {result, player} = run_move(s, cmd)
@@ -1760,6 +1760,10 @@ defmodule HacLong.Game.Session do
   defp run_move(s, %{"act" => "cc_enter"}), do: HacLong.ChaosCastle.enter(s.player, s.user_id)
   # B-22: vào Công Thành Chiến
   defp run_move(s, %{"act" => "cs_enter"}), do: HacLong.CastleSiege.enter(s.player, s.user_id)
+
+  # đánh quái từ xa trong tầm cánh (DECISIONS "Tầm đánh theo cánh")
+  defp run_move(s, %{"act" => "engage"} = cmd),
+    do: World.engage(s.player, s.user_id, cmd["x"], cmd["y"], cmd["confirm"] == true)
 
   defp run_move(s, cmd),
     do: World.move(s.player, s.user_id, cmd["dir"], cmd["confirm"] == true)

@@ -1430,16 +1430,17 @@
       <div class="list">${pickUi.mob ? `<button class="item" data-act="pick-mob">⚔ <span class="grow">Đánh ${esc(pickUi.mob.name)}</span><span class="small muted">›</span></button>` : ''}
       ${list.map((x) => `<button class="item people-row" data-act="pick-sel" data-uid="${x.id}">${who(x)}<span class="small muted">›</span></button>`).join('')}</div></div>`;
   }
-  // 🗡 Đồ sát từ bản đồ / tab Quanh đây: trong tầm RULES.slay.reach ô thì đánh ngay (không cần chạy sát bên); xa hơn thì chạy
+  // 🗡 Đồ sát từ bản đồ / tab Quanh đây: trong tầm cánh (P.view.reach) ô thì đánh ngay (không cần chạy sát bên); xa hơn thì chạy
   // lại gần cho vào tầm rồi mở trận; đang bật ⚡ thì server đánh theo combo
   async function pickSlay(uid) {
     const o = pickPerson(uid);
     pickUi = null;
     if (!o) { render(); return; }
-    const reach = RULES.slay.reach || 8, far = (t) => Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) > reach;
+    const reach = myReach(), far = (t) => Math.max(Math.abs(t.x - P.pos.x), Math.abs(t.y - P.pos.y)) > reach;
     if (far(o)) {
       walkTo(o.x, o.y);
-      for (let i = 0; i < 50; i++) {
+      // đi xa (tab Quanh đây: người chưa hiện trong khung bản đồ) tối đa ~40 giây, tới trong tầm thì đánh
+      for (let i = 0; i < 200; i++) {
         await new Promise((ok) => setTimeout(ok, 200));
         const t = pickPerson(uid) || o;
         if (!P || P.battle || !far(t)) break;
@@ -4477,7 +4478,8 @@
 
   // ---------- Đi trên bản đồ ----------
   // Một bước: gửi lên server, server kiểm tra rồi trả vị trí mới (hoặc bắt đầu trận).
-  async function step(dir, confirm) {
+  // `cmd`: lệnh khác thay bước đi (đánh quái từ xa: { act: 'engage', x, y })
+  async function step(dir, confirm, cmd) {
     if (busy || !P || P.battle) return false;
     if (fishing) { stopFishing(); toast('Bạn đã thu cần.'); }
     if (kite) { stopKite(); toast('Bạn đã thu diều.'); redrawKite(); }
@@ -4487,7 +4489,7 @@
     let ok = false;
     try {
       // V9: gặp trùm vào trận luôn như quái thường (không hỏi Đấu / Thôi)
-      const r = await Net.send({ act: 'move', dir, confirm: true });
+      const r = await Net.send(cmd || { act: 'move', dir, confirm: true });
       P = r.player;
       if (r.msg) result(r);
       if (r.gather) Sound.play('gather');
@@ -4511,6 +4513,9 @@
   }
 
   // Đi dần tới ô đích (hoặc đuổi theo con quái đã chạm vào), tính lại đường sau mỗi bước.
+  // tầm đánh theo cánh (server tính, `P.view.reach`); đánh từ xa chỉ ở bản đồ chung (không tháp / phòng sự kiện)
+  const myReach = () => (P && P.view && P.view.reach) || 1;
+  const canEngage = () => P && !P.tower && P.pos.map !== 'tower' && !(WORLD.maps[P.pos.map] || {}).private;
   async function walkTo(x, y) {
     const target = Map_.monsterAt(x, y);
     if (!target) Map_.mark(x, y);
@@ -4523,6 +4528,11 @@
         const q = Map_.monsterById(me.monster);
         if (!q) break;
         me.x = q.x; me.y = q.y;
+        // trong tầm cánh (không cánh: sát bên; cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô): đánh luôn, không chạy tới ô quái
+        if (canEngage() && Math.max(Math.abs(q.x - P.pos.x), Math.abs(q.y - P.pos.y)) <= myReach()) {
+          await step(null, true, { act: 'engage', x: q.x, y: q.y, confirm: true });
+          break;
+        }
       }
       const dir = Map_.nextStep(P, me.x, me.y);
       if (!dir) break;
