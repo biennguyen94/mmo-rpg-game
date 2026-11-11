@@ -2045,3 +2045,6 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   cánh thì đánh; không có đường / người kia rời bản đồ / quá ~40 giây thì báo rõ (trước chạy ngầm không báo gì, nhắm ô cũ).
 
 - Tiến Lên: mức cược tối đa `RULES.tienlen.stake_max` 100.000 → 10.000.000 vàng (anh yêu cầu, 2026-11-11).
+- Đồ sát / đấu trực tiếp: đối thủ dùng kỹ năng thì hiệu ứng theo hệ bay **từ đối thủ về mình** rồi mới trúng (`EV.skill` với `rev`;
+  tên kỹ năng tra trong mọi lớp), cả ở màn trận lẫn ⚡ trên bản đồ.
+- Đấu trực tiếp bật ⚡: đánh ngay trên bản đồ như đồ sát nhanh (trước luôn mở màn trận riêng), hiệu ứng như đồ sát.

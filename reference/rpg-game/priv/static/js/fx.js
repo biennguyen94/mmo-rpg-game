@@ -134,7 +134,8 @@
       }
     },
     skill(e) {
-      const me = spot(ME), t = spot(MON), col = COLORS[e.element] || COLORS.none;
+      // `rev`: đối thủ là người dùng kỹ năng lên mình (đồ sát / đấu trực tiếp): bay từ đối thủ về mình
+      const a = spot(ME), b = spot(MON), me = e.rev ? b : a, t = e.rev ? a : b, col = COLORS[e.element] || COLORS.none;
       if (!t) return;
       if (me) { ring(me.x, me.y + me.h * 0.35, col[1], { r0: 4, r1: 34, life: 380, w: 2 }); bump(me.el, 'fx-cast', 360); }
       const from = me || { x: t.x, y: t.y + 120 };

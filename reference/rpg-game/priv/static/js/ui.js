@@ -1305,7 +1305,13 @@
   const monsterBattle = () => !!(P && P.battle && !(P.battle.monster || {}).pvp && !P.battle.live && !((P.battle.encounter || {}).slay));
   // ⚡ Đồ sát nhanh: trận đồ sát cũng ở lại bản đồ (server đánh lượt của mình theo combo)
   // đấu trường trực tiếp (E2, `encounter.duel`) ở màn trận (đối thủ có thể ở bản đồ khác), server vẫn đánh theo ⚡
-  const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && !(P.battle.encounter || {}).duel && quickOn() && !P.battle.manual);
+  // đồ sát và đấu trực tiếp (bật ⚡): đánh ngay trên bản đồ, hiệu ứng như nhau
+  const slayFight = () => !!(P && P.battle && P.battle.live && ((P.battle.encounter || {}).slay != null) && quickOn() && !P.battle.manual);
+  // đối thủ là người (đồ sát / đấu trực tiếp) dùng kỹ năng: hiệu ứng theo hệ bay từ đối thủ về phía mình (`rev`)
+  const foeSkillFx = (l, delay) => {
+    const k = l.act && Object.values(CLASSES).flatMap((c) => (c.skills || []).concat(c.tower_skills || [])).find((x) => x.name === l.act);
+    return k && k.element ? { type: 'skill', element: k.element, crit: !!l.crit, rev: true, delay } : null;
+  };
   const mapFight = () => !!((monsterBattle() && quickOn() && !P.battle.manual && (quickFight() || P.auto)) || slayFight());
   // quái đang đánh trên bản đồ: quái chung (`mid`) hoặc quái tầng tháp / sự kiện (`t` + mã, như `MapView` vẽ)
   // trùm thế giới (Tế Đàn): 'boss' (C2: ⚡ đánh ngay trên bản đồ, như quái thường)
@@ -1376,6 +1382,8 @@
         else if (k && l.dmg == null && l.heal == null) ev.push({ type: 'buff', element: k.element, heal: false, delay });
         delay += 380;
       } else if (l.who === 'foe' && l.dmg > 0 && !l.dot) {
+        const fs = prev.slay && foeSkillFx(l, delay);
+        if (fs) { ev.push(fs); delay += 300; }
         ev.push({ type: 'hurt', crit: l.dmg > (P.view.derived.maxHp || 1) * 0.25, element: l.el, delay });
         delay += 380;
       }
@@ -4356,7 +4364,11 @@
     const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
     // kỹ năng quái theo hệ: luồng hạt màu hệ bay từ quái sang mình
     const msk = newLog.find((l) => l.who === 'foe' && l.el);
-    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: 380 });
+    // đồ sát / đấu trực tiếp: kỹ năng của đối thủ bay về mình trước khi trúng
+    const pvp = b.encounter && b.encounter.slay != null;
+    const fsl = pvp && newLog.find((l) => l.who === 'foe' && l.dmg > 0 && foeSkillFx(l, 0));
+    if (fsl) ev.push(foeSkillFx(fsl, 380));
+    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: fsl ? 700 : 380 });
     // thông thạo kỹ năng lên cấp
     const ml = newLog.find((l) => l.text.startsWith('📘') && / lên cấp \d+!/.test(l.text));
     if (ml) ev.push({ type: 'mastery', text: ml.text.replace(/^📘\s*/, ''), delay: 450 });
