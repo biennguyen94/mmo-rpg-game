@@ -923,7 +923,7 @@ defmodule HacLongWeb.GameChannel do
     {:ok,
      %{
        msg:
-         "Đàn Cá Vàng đã hiện ở ô #{Enum.join(st.school, ", ")} Hồ Long Vương (#{div(st.schoolLeft, 1000)} giây).",
+         "Đàn Cá Vàng đã hiện ở ô #{Enum.join(st.school, ", ")} Biển Long Vương (#{div(st.schoolLeft, 1000)} giây).",
        lake: st
      }}
   end
@@ -956,7 +956,7 @@ defmodule HacLongWeb.GameChannel do
     {:ok,
      %{
        msg:
-         "Long Vương đã nổi ở ô #{Enum.join(st.tile, ", ")} Hồ Long Vương (#{div(st.left, 1000)} giây).",
+         "Long Vương đã nổi ở ô #{Enum.join(st.tile, ", ")} Biển Long Vương (#{div(st.left, 1000)} giây).",
        lake: st
      }}
   end
@@ -1315,7 +1315,7 @@ defmodule HacLongWeb.GameChannel do
         # đồ sát: số mili giây còn lại của lượt (client tự đếm theo đồng hồ máy mình, không lệch giờ)
         slayLeft: slay_left(player),
         tutorial: Tutorial.view(player),
-        # việc của Ông Lão Câu Cá (Hồ Long Vương)
+        # việc của Ông Lão Câu Cá (Biển Long Vương)
         elder: HacLong.Game.Fishing.elder(player),
         # Đồi Sáo Diều / Hắc Long: việc Ông Lão Làm Diều, Phong Khí, trứng đang ấp, điều kiện làm lễ còn thiếu
         kite:

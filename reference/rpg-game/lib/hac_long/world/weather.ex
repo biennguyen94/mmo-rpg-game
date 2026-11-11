@@ -1,7 +1,7 @@
 defmodule HacLong.World.Weather do
   @moduledoc """
   Thời tiết chung cả server (DECISIONS "Bản đồ đẹp hơn", B5): đổi mỗi `RULES.weather.slot_min` phút theo giờ Việt Nam.
-  Mỗi vùng (nền bản đồ; Làng và Hồ Long Vương riêng) bốc một loại theo trọng số `RULES.weather.regions`, từ mốc giờ và
+  Mỗi vùng (nền bản đồ; Làng và Biển Long Vương riêng) bốc một loại theo trọng số `RULES.weather.regions`, từ mốc giờ và
   tên vùng, nên mọi bản đồ cùng vùng, mọi người chơi đều thấy như nhau mà không cần trạng thái. Chỉ là hình, không đổi
   luật chơi. Bản đồ tháp / sự kiện (`private`) không có thời tiết (client vẽ theo nền tầng).
 

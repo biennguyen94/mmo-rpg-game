@@ -596,7 +596,7 @@ EVVIZ_HTML = f"""<h3>Thanh sự kiện (mép trên bản đồ)</h3>
   <h3>Đấu trường</h3>
   <ul><li>Thách đấu bản sao: màn <b>VS</b> chiếu xong (2 giây) trận mới bắt đầu (bấm đánh lúc đó thì chờ hết màn); <b>K.O.</b> hiện sau đòn cuối, khi trận đã xong hẳn. Đồ sát và đấu trực tiếp không có VS / K.O.</li>
     <li>Thách đấu bản sao, bật ⚡: server tự đánh từng lượt theo combo (thanh "⚡ Đang đánh theo combo", ✋ Đánh tay).</li>
-    <li><b>⚔ Đấu trực tiếp</b> (menu người trên bản đồ, hồ sơ): người kia nhận trong {AR['duel_invite_s']} giây; mời từ bản đồ nào cũng được, nhận thì cả hai được đưa vào bản đồ riêng <b>{E(DUELN)}</b> (người mời ô {AR['duel_map']['a'][0]}, {AR['duel_map']['a'][1]}, người nhận ô {AR['duel_map']['b'][0]}, {AR['duel_map']['b'][1]}), xong trận (thắng, thua, bỏ chạy, hủy) về đúng chỗ cũ; luân phiên lượt {SL['turn_s']} giây như đồ sát (⚡ tự đánh lượt ở màn trận). Vào trận đầy máu, xong trả lại máu cũ; không chết, không mất vàng, không tên đỏ; bỏ chạy = thua. Điểm đấu trường đổi như thách đấu (K = {AR['elo_k']}), tính vào {AR['per_day']} trận / ngày của người mời; thắng thành viên bang địch +1 điểm chiến bang.</li></ul>
+    <li><b>⚔ Đấu trực tiếp</b> (menu người trên bản đồ, hồ sơ): người kia nhận trong {AR['duel_invite_s']} giây; mời từ bản đồ nào cũng được, nhận thì cả hai được đưa tới hai đầu <b>{E(DUELN)}</b>, tự đi lại gần trong tầm đánh (theo cánh) rồi bấm Đồ sát nhau ({AR['duel_map']['wait_s']} giây không đánh thì về chỗ cũ); xong trận (thắng, thua, bỏ chạy, hủy) về đúng chỗ cũ; luân phiên lượt {SL['turn_s']} giây như đồ sát (⚡ tự đánh lượt ở màn trận). Vào trận đầy máu, xong trả lại máu cũ; không chết, không mất vàng, không tên đỏ; bỏ chạy = thua. Điểm đấu trường đổi như thách đấu (K = {AR['elo_k']}), tính vào {AR['per_day']} trận / ngày của người mời; thắng thành viên bang địch +1 điểm chiến bang.</li></ul>
 """
 
 
@@ -643,7 +643,7 @@ pk_rows = [
 pk_ev_rows = "".join(f"""<div class="card"><h3>{a}</h3><p><b>PK:</b> {c}</p>{'' if b == '—' else f'<p class="note"><b>Lịch:</b> {b}</p>'}<p><b>Luật:</b> {d}</p>{'' if e == '—' else f'<p class="note"><b>Mới:</b> {e}</p>'}</div>""" for a, b, c, d, e in pk_rows)
 _arena = [
     ("Đối thủ", "Bản sao chỉ số (máy đánh), người kia không cần online", f"Người thật, phải online và bấm nhận trong {AR['duel_invite_s']} giây"),
-    ("Bản đồ", "Ở đâu cũng được", f"Mời từ bản đồ nào cũng được (kể cả Làng); nhận thì cả hai vào bản đồ riêng {E(DUELN)}, xong về chỗ cũ"),
+    ("Bản đồ", "Ở đâu cũng được", f"Mời từ bản đồ nào cũng được (kể cả Làng); nhận thì cả hai tới hai đầu {E(DUELN)}, tự đi lại gần rồi đánh, xong về chỗ cũ"),
     ("Máu", "Máu hiện có", "Vào trận đầy máu, xong trả lại máu như trước"),
     ("Thua", f"Mất {pct(CH['death_gold_loss'])} vàng, về Làng; bỏ chạy không mất gì", "<b>Không chết, không mất vàng</b>; bỏ chạy tính thua"),
     ("Tên đỏ", "Không", "Không"),

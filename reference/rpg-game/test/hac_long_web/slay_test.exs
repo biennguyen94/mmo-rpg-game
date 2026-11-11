@@ -347,12 +347,25 @@ defmodule HacLongWeb.SlayTest do
 
     ref = push(sb, "duel", %{"op" => "accept"})
     assert_reply ref, :ok, _
+
+    # vào Hồ Tỷ Thí ở hai đầu, chưa vào trận: tự đi lại gần rồi đồ sát nhau
+    assert Session.get(ua.id).pos == Slay.duel_spot(true)
+    assert Session.get(ub.id).pos == Slay.duel_spot(false)
+    assert Session.get(ua.id).battle == nil
+
+    # xa quá (không cánh: phải đứng sát bên)
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :error, %{msg: far}
+    assert far =~ "xa quá"
+
+    # người khác không đánh được người đang đấu ở hồ; lại gần thì đánh
+    a0 = Slay.duel_spot(true)
+    Session.teleport(ub.id, %{a0 | x: a0.x + 1})
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
     pa = Session.get(ua.id)
     assert pa.battle.encounter.duel and pa.battle.encounter.hp0 == 50
     assert pa.hp == HacLong.Game.Engine.derived(pa).maxHp
-    # vào bản đồ riêng: người mời ô a, người nhận ô b
-    assert pa.pos == Slay.duel_spot(true)
-    assert Session.get(ub.id).pos == Slay.duel_spot(false)
 
     Enum.reduce_while(1..200, nil, fn _, _ ->
       case Slay.peek(ua.id) do

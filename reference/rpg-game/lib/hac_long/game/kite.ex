@@ -1,6 +1,6 @@
 defmodule HacLong.Game.Kite do
   @moduledoc """
-  Thả diều ở Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"), đối xứng câu cá ở Hồ Long Vương
+  Thả diều ở Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"), đối xứng câu cá ở Biển Long Vương
   (`HacLong.Game.Fishing`). Hàm thuần; thời gian truyền vào (mili giây, đồng hồ đơn điệu của server). Số ở `RULES.sky`.
 
   - `fly/5`: đứng chỗ thoáng trên đồi (không sát cây) thì thả diều vào ô trời (`^`) bất kỳ, dây không giới hạn (nil: diều
@@ -74,7 +74,7 @@ defmodule HacLong.Game.Kite do
 
     cond do
       m == nil or not m.kite ->
-        {:error, "Thả diều ở Đồi Sáo Diều (cổng mép phải Hồ Long Vương)."}
+        {:error, "Thả diều ở Đồi Sáo Diều (cổng mép phải Biển Long Vương)."}
 
       Enum.any?(for(dx <- -1..1, dy <- -1..1, do: {dx, dy}), fn {dx, dy} ->
         Maps.tile(m, x + dx, y + dy) in @trees

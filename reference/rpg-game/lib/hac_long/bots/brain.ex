@@ -25,7 +25,7 @@ defmodule HacLong.Bots.Brain do
       (`realm_target/2`; DECISIONS "Bot cuối game").
 
   15. Câu cá (DECISIONS "Bot câu cá, bot try hard"): Long Vương nổi thì bot săn rồng (`chaser?/1`, chưa có Ngài) bỏ việc
-      rảnh, kể cả đang leo Tháp Vô Tận, ra Hồ Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
+      rảnh, kể cả đang leo Tháp Vô Tận, ra Biển Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
       Đàn Cá Vàng hoặc ô nước cạnh bên, câu đủ cá thì nhận việc Ông Lão. Bot try hard (`tryhard?/1`) chơi dồn dập hơn.
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
@@ -165,7 +165,7 @@ defmodule HacLong.Bots.Brain do
   def chaser?(_), do: false
 
   @doc """
-  Câu cá ở Hồ Long Vương. `mode` `:chase`: Long Vương đang nổi (`opts.dragon`, ô `{x, y}`), bot săn rồng chưa có Ngài →
+  Câu cá ở Biển Long Vương. `mode` `:chase`: Long Vương đang nổi (`opts.dragon`, ô `{x, y}`), bot săn rồng chưa có Ngài →
   ra hồ, đứng trong tầm câu, thả trúng ô Ngài. `:idle`: đang trong lượt ra hồ (`opts.fishing`, tiến trình bot hẹn) →
   câu ở ô Đàn Cá Vàng nếu có (`opts.school`), không thì ô nước cạnh bên; câu đủ cá thì nhận việc Ông Lão. Chưa đủ cấp
   vào hồ thì nil.
@@ -286,7 +286,7 @@ defmodule HacLong.Bots.Brain do
   defp plain_tower?(%{tower: %{} = t}), do: t[:ds] == nil and t[:bc] == nil and t[:kal] == nil
   defp plain_tower?(_), do: false
 
-  @doc "Long Vương đang nổi (`opts.dragon`), bot này săn rồng và chưa có Ngài, đủ cấp vào Hồ Long Vương."
+  @doc "Long Vương đang nổi (`opts.dragon`), bot này săn rồng và chưa có Ngài, đủ cấp vào Biển Long Vương."
   def chasing?(p, opts) do
     lake = Maps.get(HacLong.LakeEvent.map_id())
 

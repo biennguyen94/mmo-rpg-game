@@ -1,31 +1,31 @@
 {
   "id": "long_vuong_lake",
-  "name": "Hồ Long Vương",
+  "name": "Biển Long Vương",
   "zone": null,
   "floor": "tiles/grass",
   "min_level": 30,
   "fish": "lake",
   "tiles": [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-    "T,*,,R,,,,,#I###I#,,,,,R,,*,T",
-    "T,,,T,,Y,,,#,,G,,#,,,Y,,T,,,T",
-    "TJ,J,,,,,J,,,,:,,,,J,,,,,J,,T",
+    "T,*,,R,,P,,,#I###I#,,,P,,*,,T",
+    "T,,P,,,J,,,,,,G,,,,,,J,,P,,,T",
+    "TJ,,,,,,,,,,,,:,,,,,,,,,,,J,T",
     "O:::::::::::::::::::::::::::O",
-    "T:*,,,:,,,,*,,:,,,,:,,:,*,*:T",
-    "T:,M~~B~~~~~~~B~Q~~B~~B~~M,:T",
-    "T:,~Q~B~~~~Q~~B~~~~B~~B~~~,:T",
-    "T:,~~~BU~~~~~===~~~B~~BU~~,:T",
-    "T:,~~~~~~~~~=====~~B~~~~~~Y:T",
-    "T:T~U~~~Q~~~=====EEB~~~~~~,:T",
-    "T:,~~~~~~B~~~===~~~B~~~~Q~,:T",
-    "T:,~~Q~~~BU~~~~~~~~BU~~~~~,:T",
-    "T:,M~~~~~B~~~~~Q~~~B~~Q~~M,:T",
-    "T:*,*,,,,:,,R,,,,*,:,,,,,,*:T",
-    "T:::::::::::::::::::::::::::T",
-    "T,,J,,,,,J,,,,,,,,,J,,,,,J,JT",
-    "T,*,,,,Y,,,,T,,,T,,,,Y,,,,*,T",
-    "T,,,,R,,,,,,,,R,,,,,,,,R,,,,T",
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+    "T,P,,,,,,P,,,,:,,,,,P,,,,,P,T",
+    "TsssRsssssPsss:sssssPsssRsssT",
+    "TsssssssssssssssssssssssssssT",
+    "T~~sssss~~ssssssss~~sssss~~~T",
+    "T~~~~~~B~~~~~~B~~~~~~B~~~~~~T",
+    "T~~~U~~B~~~~~~B~~~~~~B~~U~~~T",
+    "T~~~~~~B~~~~~~B~~~~~~B~~~~~~T",
+    "T~~~~~EEE~~~~EEE~~~~EEE~~~~~T",
+    "T~~~~~~~~~~~~~~~~~~~~~~~~~~~T",
+    "T~~~~~====~~~~~~~====~~~~~~~T",
+    "=============================",
+    "=============================",
+    "=============================",
+    "=============================",
+    "============================="
   ],
   "portals": [
     {
@@ -82,6 +82,8 @@
     }
   ],
   "sourceType": "DESIGN",
-  "version": 1,
-  "verified": false
+  "version": 2,
+  "verified": false,
+  "style": "sea",
+  "_doc": "DECISIONS \"Biển Long Vương\": thay Hồ Long Vương cũ (mã bản đồ giữ nguyên): làng chài, bãi cát (s), dừa (P), ba cầu tàu ra biển, nước nông (~) rồi nước sâu (=) tới chân trời; sóng dạt vào bờ vẽ ở client (style sea)."
 }

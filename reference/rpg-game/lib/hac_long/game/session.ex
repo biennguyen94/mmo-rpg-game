@@ -638,13 +638,12 @@ defmodule HacLong.Game.Session do
       true ->
         cut = p.battle != nil and not p.battle.over and p.battle.monster[:name]
         p = interrupt_battle(p, s.user_id)
-        hp0 = p.hp
-        back = p.pos
-        p = if duel, do: %{p | hp: Engine.derived(p).maxHp}, else: p
 
-        # đấu trực tiếp: hai người vào bản đồ riêng (người mời ô a, người nhận ô b), xong trận về chỗ cũ `back`
-        p = if duel, do: World.warp(p, s.user_id, HacLong.Slay.duel_spot(f.mine)), else: p
-        mp = if duel, do: Maps.get(HacLong.Slay.duel_map()), else: Maps.get(f.map)
+        # đấu trực tiếp (đã ở Hồ Tỷ Thí): máu cũ và chỗ cũ trước khi vào hồ, xong trận trả lại
+        hp0 = f[:hp0] || p.hp
+        back = f[:back] || p.pos
+        p = if duel, do: %{p | hp: Engine.derived(p).maxHp}, else: p
+        mp = Maps.get(p.pos.map)
         {_, p2} = Engine.start_with_monster(p, mp.zone || 0, foe)
         enc = %{slay: f.id, foe: f.foe, mine: f.mine, until: f.until}
         enc = if duel, do: Map.merge(enc, %{duel: true, hp0: hp0, back: back}), else: enc
@@ -1048,7 +1047,8 @@ defmodule HacLong.Game.Session do
         Map.merge(result, %{
           msg: "#{result.msg} Bạn là #{name} Chủ thứ #{n}.",
           dragon: true,
-          announce: "🐉 #{player.name} đã câu được #{name} ở Hồ Long Vương! #{name} Chủ thứ #{n}."
+          announce:
+            "🐉 #{player.name} đã câu được #{name} ở Biển Long Vương! #{name} Chủ thứ #{n}."
         })
     end
   end

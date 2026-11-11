@@ -9,7 +9,7 @@
   const WALK = new Set(WORLD.walkable);
   const PORTAL = new Set(['D', 'A', 'O']);
   // loại ô → hình (assets/tiles/*.png); nền "." dùng hình `floor` của từng bản đồ
-  const GROUND = { grass: 1, dirt: 1, flowers: 1 };
+  const GROUND = { grass: 1, dirt: 1, flowers: 1, sand: 1 };
 
   // cấp của từng loại quái, để tô màu độ khó
   const LEVEL = {}, NAME = {};
@@ -809,6 +809,13 @@
         // ô trời (Đồi Sáo Diều): lót nền cỏ (mặt đồi cong lấn vào), trời vẽ sau ở `clouds` theo đường chân trời cong
         if (kind === 'sky') { if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE); continue; }
         if (floor.complete) ctx.drawImage(floor, px, py, TILE, TILE);
+        // Biển Long Vương (DECISIONS "Biển Long Vương"): cát, dừa, nước biển vẽ bằng code; sóng dạt bờ vẽ sau (`seaShore`)
+        if (m.style === 'sea' && (kind === 'sand' || kind === 'palm' || kind === 'water' || kind === 'deep_water' || kind === 'boat')) {
+          seaTile(m, kind, px, py, x, y, fx ? now : 0);
+          if (kind === 'sand' || kind === 'palm') continue;
+          if (kind === 'boat') { const bi = image('tiles/boat'); if (bi.complete) ctx.drawImage(bi, px, py + (fx ? Math.sin(now / 700 + x) * 1.5 : 0), TILE, TILE); }
+          continue;
+        }
         if (kind !== 'floor') {
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
           const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
@@ -932,6 +939,7 @@
       }
     }
 
+    if (m.style === 'sea') seaShore(m, cx, cy, x0, y0, x1, y1, fx ? now : 0);
     if (fx) drawMobFx(now, cx, cy);
 
     for (const n of here ? world.nodes || [] : []) {
@@ -1023,7 +1031,7 @@
           ctx.fillRect(fx0 + TILE / 2 + Math.sin(i * 2.1) * 8 * k, fy0 + TILE / 2 - Math.sin(k * Math.PI) * 12, 2, 2);
         }
       }
-      // Hồ Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
+      // Biển Long Vương: bóng cá, xoáy Vực Rồng, lá / hoa rơi, tia nắng sáng sớm / chiều tà
       if (m.fish === 'lake') lakeFx(now, m, cx, cy);
       // tầng Tháp / Quảng Trường / Lâu Đài / Kalima: hiệu ứng theo nền tầng (không có ngày đêm)
       const w = (outdoors(P) || m.tower) && weatherNow(m, P.pos.map);
@@ -1052,7 +1060,7 @@
       ctx.fillRect(0, 0, VW(), VH());
       if (fx && dark >= 0.3) nightGlow(now, m, cx, cy, dark);
       if (fx && dark >= 0.3) nightFx(now, m, cx, cy, dark, x0, y0, x1, y1);
-      // đèn lồng (Hồ Long Vương) tỏa sáng ban đêm
+      // đèn lồng (Biển Long Vương) tỏa sáng ban đêm
       if (dark >= 0.3) for (const [lx0, ly0] of lanterns) {
         const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.85 + 0.15 * Math.sin(now / 230 + lx0) : 1;
         const g = ctx.createRadialGradient(x, y, 1, x, y, TILE * 1.8);
@@ -1109,7 +1117,7 @@
     });
   }
 
-  // ---------- Hồ Long Vương: không khí (chỉ vẽ, không ảnh hưởng luật) ----------
+  // ---------- Biển Long Vương: không khí (chỉ vẽ, không ảnh hưởng luật) ----------
   const lakeCache = new Map();
   function lakeInfo(m) {
     if (lakeCache.has(m)) return lakeCache.get(m);
@@ -1458,7 +1466,7 @@
   const MINI_COL = { floor: '#3a3328', grass: '#3f5a2a', dirt: '#6a5030', flowers: '#4a6a30', tree: '#1f3a1a', tree_autumn: '#4a3a14', tree_dead: '#3a2e22',
     rock: '#5a4a3e', water: '#1e4a7a', deep_water: '#163a66', brick: '#7a3e2a', stone: '#6a6a70', column: '#9a9aa0', fountain: '#4a8ac0', waystone: '#c0a040',
     door: '#a07040', arch: '#a07040', portal: '#9a5aff', stairs_up: '#d0b060', stairs_down: '#80a0d0', mangrove: '#2a4a2a', lotus: '#3a6a5a', boat: '#5a3a20',
-    pier_v: '#7a5a30', pier_h: '#7a5a30', dragon_statue: '#b09040', lantern: '#c05030' };
+    pier_v: '#7a5a30', pier_h: '#7a5a30', dragon_statue: '#b09040', lantern: '#c05030', sand: '#c8b07a', palm: '#3a6a2a' };
   const miniCache = new Map();
   function miniBase(m, id) {
     if (miniCache.has(id)) return miniCache.get(id);
@@ -1628,6 +1636,119 @@
     }
   }
   // B3: Ruộng Bậc Thang — mạ lúa mọc thành hàng trên ô nước
+  // ---------- Biển Long Vương: cát, dừa, nước theo độ sâu, sóng dạt bờ, hải âu (vẽ bằng code, không cần hình) ----------
+  const isSea = (k) => k === 'water' || k === 'deep_water' || k === 'boat';
+  const kindAt = (m, x, y) => WORLD.legend[(m.tiles[y] || '')[x]];
+  // khoảng cách (ô) tới bờ gần nhất phía trên, để tô nước nông → sâu
+  function seaDepth(m, x, y) {
+    let d = 0;
+    // cầu tàu đứng trên nước: tính như nước (không làm cột dưới cầu nông lại)
+    const wet = (k) => isSea(k) || k === 'pier_v' || k === 'pier_h';
+    while (d < 8 && wet(kindAt(m, x, y - d - 1))) d++;
+    return d;
+  }
+  function sandTile(px, py, gx, gy) {
+    ctx.fillStyle = '#d9c08a'; ctx.fillRect(px, py, TILE, TILE);
+    // vân cát gợn và hạt sẫm / sáng cố định theo ô
+    ctx.fillStyle = 'rgba(160, 120, 60, 0.18)';
+    for (let i = 0; i < 3; i++) ctx.fillRect(px + 2, py + 6 + i * 10 + (gx % 3), TILE - 4, 1);
+    for (let i = 0; i < 9; i++) {
+      const r1 = rnd(gx * 31 + gy * 17 + i * 7, 97), r2 = rnd(gx * 13 + gy * 29 + i * 11, 89);
+      ctx.fillStyle = i % 3 ? 'rgba(120, 90, 50, 0.35)' : 'rgba(255, 245, 210, 0.6)';
+      ctx.fillRect(px + r1 * TILE, py + r2 * TILE, 1.4, 1.4);
+    }
+  }
+  function palmTile(px, py, gx, gy, t) {
+    sandTile(px, py, gx, gy);
+    const sway = t ? Math.sin(t / 1100 + gx * 0.9) * 2.5 : 0;
+    const bx = px + TILE / 2, by = py + TILE - 2, tx = bx + 5 + sway, ty = py + 4;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(bx + 6, by, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+    // thân cong có đốt
+    ctx.strokeStyle = '#7a5530'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx - 2, py + TILE * 0.45, tx, ty); ctx.stroke();
+    ctx.strokeStyle = '#5a3c20'; ctx.lineWidth = 1;
+    for (let i = 1; i < 6; i++) { const k = i / 6, x = bx + (tx - bx) * k - 1.5, y = by + (ty - by) * k; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x + 1.5, y); ctx.stroke(); }
+    // tàu lá xòe, lay theo gió
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + (i - 2.5) * 0.62 + sway * 0.03, len = 13 + (i % 2) * 3;
+      const ex = tx + Math.cos(a) * len, ey = ty + Math.sin(a) * len * 0.6 + 6;
+      ctx.strokeStyle = i % 2 ? '#2f7a34' : '#3c9440'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo((tx + ex) / 2, Math.min(ty, ey) - 5, ex, ey); ctx.stroke();
+    }
+    ctx.fillStyle = '#6a4a22'; ctx.beginPath(); ctx.arc(tx - 1, ty + 2, 1.8, 0, Math.PI * 2); ctx.arc(tx + 2, ty + 3, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function seaTile(m, kind, px, py, gx, gy, t) {
+    if (kind === 'sand') return sandTile(px, py, gx, gy);
+    if (kind === 'palm') return palmTile(px, py, gx, gy, t);
+    // nước: nông (xanh ngọc) → sâu (lam thẫm) theo khoảng cách tới bờ; lấy trung bình 3 cột cạnh nhau và chuyển dần
+    // từ mép trên xuống mép dưới ô, nên không thành sọc / bậc theo từng ô
+    const dd = (y) => {
+      let sum = 0;
+      for (let k = -1; k <= 1; k++) { const kk = kindAt(m, gx + k, y); sum += isSea(kk) || kk === 'pier_v' || kk === 'pier_h' ? seaDepth(m, gx + k, y) : -0.6; }
+      return Math.max(0, Math.min(1, (sum / 3 + 0.3) / 7));
+    };
+    const d = dd(gy), d2 = dd(gy + 1) || d;
+    const col = (k) => { const c0 = [64, 196, 204], c1 = [18, 58, 112]; return `rgb(${c0.map((v, i) => Math.round(v + (c1[i] - v) * k)).join(',')})`; };
+    const g = ctx.createLinearGradient(0, py, 0, py + TILE);
+    g.addColorStop(0, col(d)); g.addColorStop(1, col(Math.max(d, d2)));
+    ctx.fillStyle = g; ctx.fillRect(px, py, TILE + 0.5, TILE + 0.5);
+    if (!t) return;
+    // gợn sóng dài trôi ngang + đốm nắng lấp lánh
+    for (let k = 0; k < 3; k++) {
+      const ph = (t / (2200 + k * 500) + gx * 0.21 + gy * 0.47 + k * 0.33) % 1;
+      ctx.fillStyle = `rgba(230, 250, 255, ${(0.16 - d * 0.08) * Math.sin(ph * Math.PI)})`;
+      ctx.fillRect(px + ph * TILE - 6, py + 5 + k * 10, 14, 1.5);
+    }
+    const tw = rnd(gx * 7 + gy * 3, 50);
+    if (tw < 0.3) { const a = Math.max(0, Math.sin(t / 300 + tw * 40)); ctx.fillStyle = `rgba(255, 255, 240, ${a * 0.55})`; ctx.fillRect(px + tw * 90 % TILE, py + (tw * 170) % TILE, 2, 2); }
+  }
+  // sóng dạt vào bờ: dải bọt trắng ở mép nước giáp cát, dâng lên cát rồi rút (để lại vệt cát ướt), lệch nhịp theo cột
+  function seaShore(m, cx, cy, x0, y0, x1, y1, t) {
+    if (!t) return;
+    ctx.save();
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const k = kindAt(m, x, y);
+        if (!isSea(k) || !GROUND[kindAt(m, x, y - 1)] && kindAt(m, x, y - 1) !== 'palm') continue;
+        const px = x * TILE - cx, py = y * TILE - cy;
+        const ph = ((t / 4200) + x * 0.045) % 1;
+        // dâng nhanh, rút chậm
+        const up = ph < 0.35 ? Math.sin((ph / 0.35) * Math.PI / 2) : Math.cos(((ph - 0.35) / 0.65) * Math.PI / 2);
+        const reach = up * TILE * 0.55;
+        // vệt cát ướt
+        ctx.fillStyle = `rgba(150, 120, 70, ${0.28 * up})`;
+        ctx.fillRect(px, py - reach - 3, TILE, reach + 3);
+        // lưỡi sóng nước trong
+        ctx.fillStyle = 'rgba(120, 215, 220, 0.55)';
+        ctx.fillRect(px, py - reach, TILE, reach);
+        // mép bọt gợn
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + 0.4 * up})`;
+        ctx.beginPath();
+        ctx.moveTo(px, py - reach);
+        for (let i = 0; i <= 4; i++) ctx.lineTo(px + (i * TILE) / 4, py - reach - 1.5 - Math.sin(i * 1.7 + x + t / 500) * 1.5);
+        ctx.lineTo(px + TILE, py - reach + 2.5); ctx.lineTo(px, py - reach + 2.5); ctx.closePath(); ctx.fill();
+        // bọt li ti
+        for (let i = 0; i < 4; i++) {
+          const r = rnd(x * 19 + i * 5, 61);
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.55 * up})`;
+          ctx.fillRect(px + r * TILE, py - reach + 3 + (i % 2) * 3, 1.6, 1.6);
+        }
+      }
+    }
+    // hải âu bay ngang trên biển (3 con, vòng lặp chậm)
+    ctx.strokeStyle = 'rgba(250, 250, 250, 0.9)'; ctx.lineWidth = 1.4;
+    const W = m.tiles[0].length * TILE;
+    for (let i = 0; i < 3; i++) {
+      const gx = ((t / (90 + i * 25) + i * 300) % (W + 200)) - 100 - cx;
+      const gy = (m.tiles.length - 7 + i * 1.6) * TILE - cy + Math.sin(t / 700 + i) * 8;
+      const flap = Math.sin(t / 140 + i * 2) * 3;
+      ctx.beginPath(); ctx.moveTo(gx - 6, gy - flap); ctx.quadraticCurveTo(gx - 3, gy - 3, gx, gy); ctx.quadraticCurveTo(gx + 3, gy - 3, gx + 6, gy - flap); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function paddy(px, py, gx, gy, t) {
     ctx.strokeStyle = 'rgba(150, 200, 70, 0.9)'; ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -2095,7 +2216,7 @@
   const KITE_MS = { fly: 700, catch: 1800, miss: 700 };
   // giống server (`Kite.check_spot/1`): null nếu thả được (chỗ thoáng, không sát cây; dây không giới hạn), không thì lời nhắc
   function kiteCheck(m, x, y) {
-    if (!m || !m.kite) return 'Thả diều ở Đồi Sáo Diều (cổng mép phải Hồ Long Vương).';
+    if (!m || !m.kite) return 'Thả diều ở Đồi Sáo Diều (cổng mép phải Biển Long Vương).';
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ('TYK'.includes((m.tiles[y + dy] || '')[x + dx] || '_')) return 'Vướng cây rồi, ra chỗ thoáng để thả diều.';
     return null;
   }

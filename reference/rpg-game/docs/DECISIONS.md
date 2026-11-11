@@ -1968,3 +1968,14 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Hồ Long Vương và Đồi Sáo Diều: mặc định không được đồ sát. `RULES.slay.event_pk.warn_min` (10) phút trước khi Long Vương nổi /
   Chim Lạc tới thì báo cả server và mở đồ sát trên bản đồ đó; lúc xuất hiện thì đóng (`LakeEvent.pk_open?/0`,
   `SkyEvent.pk_open?/0`), tránh người mạnh đứng đồ sát cả bản đồ không cho ai câu / thả diều.
+
+## Hồ Tỷ Thí (đấu trực tiếp) và Biển Long Vương — Phase 3 (2026-11-11, anh duyệt)
+- Bố cục Hồ Long Vương cũ thành bản đồ **Hồ Tỷ Thí** (`ho_ty_thi`, `event: "duel"`, không cổng / NPC / câu cá), thay bản đồ
+  Đấu Trường Trực Tiếp. Nhận lời mời đấu trực tiếp: hai người được đưa tới hai đầu hồ (`RULES.arena.duel_map` a / b), **chưa vào
+  trận**; tự đi lại gần trong tầm đánh theo cánh rồi bấm Đồ sát nhau (`Slay.duel_attack/2`) thì vào trận đấu trực tiếp (không
+  chết, không mất vàng, đổi Elo). `wait_s` (180) giây không đánh thì cả hai về chỗ cũ. Ở hồ chỉ đánh được đối thủ của mình.
+  Xong trận / hủy: về đúng chỗ cũ, máu cũ (chỗ và máu lưu lúc nhận lời mời).
+- **Biển Long Vương** thay Hồ Long Vương, giữ mã bản đồ `long_vuong_lake` (cổng, Ông Lão Câu Cá, Bia, sự kiện, bot không đổi):
+  làng chài phía bắc, bãi cát (`s`, đi được), dừa (`P`), ba cầu tàu ra biển, nước nông rồi nước sâu tới chân trời. Vẽ bằng code
+  (`style: "sea"`): cát có vân / hạt, dừa lay theo gió, nước chuyển màu theo độ sâu (trung bình cột cạnh nhau, chuyển dần trong ô),
+  gợn sóng và đốm nắng, sóng bọt trắng dạt lên bờ rồi rút để lại vệt cát ướt (lệch nhịp theo cột), thuyền dập dềnh, hải âu bay.

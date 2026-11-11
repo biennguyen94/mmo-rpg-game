@@ -20,7 +20,7 @@ defmodule HacLong.Admin do
   | `add_stats` | `str`, `agi`, `vit`, `ene` | cộng/trừ thẳng vào chỉ số (không dưới 1) |
   | `heal` | | hồi đầy máu |
   | `set_mastery` | `lv` (1..`RULES.skill_mastery.max`) | đặt cấp thông thạo mọi kỹ năng đang có (điểm = mốc cấp đó; cấp ngay trước mốc đột phá thì đủ điểm, chờ đột phá) |
-  | `set_qi` | `long`, `phong` (số 0..tối đa, hoặc `"max"`; có ít nhất một) | đặt Long Khí (Hồ Long Vương) / Phong Khí (Đồi Sáo Diều) |
+  | `set_qi` | `long`, `phong` (số 0..tối đa, hoặc `"max"`; có ít nhất một) | đặt Long Khí (Biển Long Vương) / Phong Khí (Đồi Sáo Diều) |
   """
 
   import Ecto.Query

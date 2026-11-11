@@ -1,6 +1,6 @@
 defmodule HacLong.LakeEvent do
   @moduledoc """
-  Sự kiện ở Hồ Long Vương, mỗi loại một ô nước ngẫu nhiên câu tới được (trong tầm `reach` của một ô đi được cạnh nước):
+  Sự kiện ở Biển Long Vương, mỗi loại một ô nước ngẫu nhiên câu tới được (trong tầm `reach` của một ô đi được cạnh nước):
 
   - **Long Vương nổi** (DECISIONS "Long Vương nổi mỗi giờ"): mỗi `RULES.fishing.dragon.every` giây, vào một lúc ngẫu
     nhiên trong khoảng đó, Ngài nổi trong `stay` giây. Chỉ thả câu trúng đúng ô đó mới có cơ hội
@@ -113,7 +113,7 @@ defmodule HacLong.LakeEvent do
   @impl true
   def handle_info({:pk_warn, :dragon}, s) do
     Chat.system(
-      "⚔ Long Vương sắp xuất hiện ở Hồ Long Vương trong #{div(@pk_warn_ms, 60_000)} phút! Từ giờ tới lúc đó Hồ Long Vương được đồ sát."
+      "⚔ Long Vương sắp xuất hiện ở Biển Long Vương trong #{div(@pk_warn_ms, 60_000)} phút! Từ giờ tới lúc đó Biển Long Vương được đồ sát."
     )
 
     {:noreply, Map.put(s, :pk, true)}

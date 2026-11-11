@@ -150,7 +150,7 @@ defmodule HacLong.Game.Daily do
     end)
   end
 
-  @doc "Vừa câu được một con cá ở Hồ Long Vương (việc của Ông Lão, đếm tới `max`)."
+  @doc "Vừa câu được một con cá ở Biển Long Vương (việc của Ông Lão, đếm tới `max`)."
   def on_lake_fish(%{daily: %{} = d} = p, max),
     do: %{p | daily: Map.put(d, :lake_n, min((d[:lake_n] || 0) + 1, max))}
 

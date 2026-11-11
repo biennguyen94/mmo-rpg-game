@@ -6,7 +6,7 @@ defmodule HacLong.Game.Pets do
 
   Ba nhóm (`group`): `war` Chiến (tấn công, chí mạng), `guard` Hộ vệ (máu, phòng thủ, giảm sát thương nhận),
   `luck` Tài lộc (kinh nghiệm, vàng rơi); Long Vương (`all`, `rare: true`, DECISIONS "Long Vương") cộng cả ba, không
-  bán, chỉ câu được ở Hồ Long Vương (`HacLong.Game.Fishing`).
+  bán, chỉ câu được ở Biển Long Vương (`HacLong.Game.Fishing`).
 
   Hạ đủ `RULES.pets.tame_kills` con một loài quái thường (vùng chính, bản đồ phụ, vùng chuyển sinh trừ chúa tể)
   thì thuần phục được loài đó ở Người Nuôi Thú: thú thuần (nhóm Chiến) có id `"tame:<id quái>"`; quái vùng chuyển
@@ -333,7 +333,7 @@ defmodule HacLong.Game.Pets do
         {%{ok: false, msg: "Không có con thú này."}, p}
 
       pet[:rare] ->
-        {%{ok: false, msg: "#{pet.name} không bán, chỉ câu được ở Hồ Long Vương."}, p}
+        {%{ok: false, msg: "#{pet.name} không bán, chỉ câu được ở Biển Long Vương."}, p}
 
       id in owned(p) ->
         {%{ok: false, msg: "Bạn đã có #{pet.name} rồi."}, p}

@@ -136,7 +136,7 @@ defmodule HacLong.Game.Achievements do
     %{
       id: "long_vuong",
       name: "Long Vương Chủ",
-      desc: "Câu được Long Vương ở Hồ Long Vương.",
+      desc: "Câu được Long Vương ở Biển Long Vương.",
       stat: :long_vuong,
       goal: 1,
       title: "Long Vương Chủ"

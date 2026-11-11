@@ -612,7 +612,7 @@
       ${line('set_tower', 'Kỷ lục tháp (mở kỹ năng tháp)', num('floor', 100, 'min="0" max="1000"'), 'Đặt')}
       ${line('set_rebirths', 'Số lần chuyển sinh (mở vùng đất chuyển sinh; quá 10 là chuyển sinh vô hạn)', num('n', 0, 'min="0" max="999"'), 'Đặt')}
       ${line('set_mastery', 'Cấp thông thạo mọi kỹ năng đang có', num('lv', 10, `min="1" max="${(RULES.skillMastery || {}).max || 10}"`), 'Đặt')}
-      ${line('set_qi', 'Long Khí (Hồ Long Vương) / Phong Khí (Đồi Sáo Diều)', `<label class="small">🐉 ${num('long', RULES.dragon.long_khi_max, `min="0" max="${RULES.dragon.long_khi_max}"`)}</label><label class="small">🐦 ${num('phong', ((RULES.sky || {}).bird || {}).phong_khi_max, `min="0" max="${((RULES.sky || {}).bird || {}).phong_khi_max}"`)}</label>`, 'Đặt')}
+      ${line('set_qi', 'Long Khí (Biển Long Vương) / Phong Khí (Đồi Sáo Diều)', `<label class="small">🐉 ${num('long', RULES.dragon.long_khi_max, `min="0" max="${RULES.dragon.long_khi_max}"`)}</label><label class="small">🐦 ${num('phong', ((RULES.sky || {}).bird || {}).phong_khi_max, `min="0" max="${((RULES.sky || {}).bird || {}).phong_khi_max}"`)}</label>`, 'Đặt')}
       ${line('add_points', 'Điểm tiềm năng (âm để trừ)', num('n', 10), 'Cộng')}
       ${line('add_stats', 'Chỉ số (âm để trừ)', STAT_KEYS.map(([k, l]) => `<label class="small" title="${l}">${k} ${num(k, 0)}</label>`).join(''), 'Cộng')}
       ${line('give_item', 'Đồ thường (bình, ngọc, nguyên liệu, vé…)', `${selSearch('adm-item')}<select name="id" data-sel="adm-item">${stackItems.map(([k, it]) => `<option value="${k}">${esc(it.name)}${it.drop ? ' (rơi trùm)' : it.price ? '' : ' (không bán)'}</option>`).join('')}</select>${num('count', 1, 'min="1" max="9999" aria-label="Số lượng"')}`, 'Tặng')}
@@ -3983,7 +3983,7 @@
           const has = owned.includes(pt.id), poor = P.gold < pt.price;
           return `<div class="item ${pt.rare ? 'rare-pet' : ''}">${petPic(pt)}<div class="grow"><div class="name">${pt.rare ? '🐉 ' : ''}${esc(pt.name)} ${petGroup(pt.group)}</div><div class="small muted">${esc(pt.desc.replace(/\.$/, ''))} (cấp 1).</div></div>
             ${has ? (P.pet === pt.id ? '<span class="tag good">Đang dắt</span>' : `<button class="btn" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`)
-              : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Hồ Long Vương</span>'
+              : pt.rare ? '<span class="tag" title="Không bán">🎣 Câu ở Biển Long Vương</span>'
               : `<button class="btn ${poor ? '' : 'primary'}" data-act="pet_buy" data-id="${pt.id}" ${poor ? 'disabled' : ''}>${icon('two-coins')}${fmt(pt.price)}</button>`}</div>`;
         }).join('')}</div></div>`);
       const ready = P.view.tameable || [], near = P.view.taming || [];

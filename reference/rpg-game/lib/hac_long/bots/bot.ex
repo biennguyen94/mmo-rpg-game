@@ -7,7 +7,7 @@ defmodule HacLong.Bots.Bot do
   Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây. Vừa gục (bị đồ sát,
   thua quái…) thì đứng nghỉ ở Làng `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/5`).
 
-  Câu cá (DECISIONS "Bot câu cá, bot try hard"): hẹn lượt ra Hồ Long Vương (`RULES.bots.fish`), báo Brain ô Long Vương /
+  Câu cá (DECISIONS "Bot câu cá, bot try hard"): hẹn lượt ra Biển Long Vương (`RULES.bots.fish`), báo Brain ô Long Vương /
   Đàn Cá Vàng đang có; thả câu xong thì giật cần sau khi cá cắn `react_ms` mili giây. Bot try hard (`RULES.bots.tryhard`)
   nghỉ ít hơn, leo Tháp và ra hồ thường hơn, giật cần nhanh hơn.
   """
@@ -61,7 +61,7 @@ defmodule HacLong.Bots.Bot do
        rest_until: System.monotonic_time(:millisecond),
        # lần leo Tháp Vô Tận tiếp theo (`RULES.bots.play.tower_every_min`)
        next_tower: next_in(System.monotonic_time(:millisecond), tower_every(uid)),
-       # lượt ra Hồ Long Vương câu cá tiếp theo, và lúc lượt đang câu kết thúc
+       # lượt ra Biển Long Vương câu cá tiếp theo, và lúc lượt đang câu kết thúc
        next_fish: next_in(System.monotonic_time(:millisecond), fish_every(uid)),
        fish_until: System.monotonic_time(:millisecond),
        # đã thả câu, đang chờ giật cần (`:reel`)

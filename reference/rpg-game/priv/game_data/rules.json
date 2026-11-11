@@ -812,7 +812,7 @@
         "verified": false
       },
       "school": {
-        "_doc": "DECISIONS \"Đàn Cá Vàng, việc của Ông Lão\": mỗi `every` giây, vào lúc ngẫu nhiên, Đàn Cá Vàng hiện ở một ô nước ngẫu nhiên của Hồ Long Vương (như ô Long Vương) trong `stay` giây. Thả câu trúng ô đó: cá câu được là `gold_fish` với tỉ lệ `gold_chance` (còn lại theo bảng cá hồ), mỗi con +`long_khi` Long Khí thay cho +1.",
+        "_doc": "DECISIONS \"Đàn Cá Vàng, việc của Ông Lão\": mỗi `every` giây, vào lúc ngẫu nhiên, Đàn Cá Vàng hiện ở một ô nước ngẫu nhiên của Biển Long Vương (như ô Long Vương) trong `stay` giây. Thả câu trúng ô đó: cá câu được là `gold_fish` với tỉ lệ `gold_chance` (còn lại theo bảng cá hồ), mỗi con +`long_khi` Long Khí thay cho +1.",
         "every": 900,
         "stay": 120,
         "gold_fish": "fish_gold",
@@ -823,7 +823,7 @@
         "verified": false
       },
       "elder": {
-        "_doc": "Việc mỗi ngày của Ông Lão Câu Cá: câu `count` con cá ở Hồ Long Vương (ủng cũ không tính) rồi gặp Ông Lão nhận thưởng: vàng / kinh nghiệm tính như việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật) và +`long_khi` Long Khí (không quá tối đa).",
+        "_doc": "Việc mỗi ngày của Ông Lão Câu Cá: câu `count` con cá ở Biển Long Vương (ủng cũ không tính) rồi gặp Ông Lão nhận thưởng: vàng / kinh nghiệm tính như việc câu cá ở Bảng Tin (`daily.reward.fish`, theo cấp nhân vật) và +`long_khi` Long Khí (không quá tối đa).",
         "count": 30,
         "long_khi": 20,
         "sourceType": "DESIGN",
@@ -856,7 +856,7 @@
       "request_days": 7
     },
     "sky": {
-      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Hồ Long Vương. Đứng chỗ thoáng trên đồi (không sát cây), thả diều vào ô trời bất kỳ (dây không giới hạn, aim: mặc định lên giữa trời); Chim Lạc / Đàn Hạc hiện ở ô trời trong spot_depth hàng trên mép đồi (thấy được); gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
+      "_doc": "DECISIONS \"Đồi Sáo Diều, Chim Lạc, Hắc Long\": thả diều ở Đồi Sáo Diều (map, ô trời '^'), đối xứng câu cá ở Biển Long Vương. Đứng chỗ thoáng trên đồi (không sát cây), thả diều vào ô trời bất kỳ (dây không giới hạn, aim: mặc định lên giữa trời); Chim Lạc / Đàn Hạc hiện ở ô trời trong spot_depth hàng trên mép đồi (thấy được); gió giật sau wait_ms ngẫu nhiên, giữ dây trong window_ms thì được quà gió (pool), +1 Phong Khí (tối đa bird.phong_khi_max). Chim Lạc (bird.pet) lượn ở một ô trời mỗi bird.every giây, ở bird.stay giây: thả trúng ô đó có bird.chance cơ hội × (1 + Phong Khí / phong_khi_div) × bait_mult nếu có Sáo Đồng (chỉ tốn khi thả trúng). Đàn Hạc (flock) mỗi flock.every giây ở flock.stay giây: thả trúng thì quà gió theo flock.pool, +flock.phong_khi Phong Khí. Ông Lão Làm Diều: thả thành công elder.count lần ở đồi trong ngày thì nhận thưởng + elder.phong_khi; ghép Sáo Đồng (craft). Mưa sao băng (meteor): ban đêm mỗi meteor.every giây rơi meteor.count Mảnh Sao ở ô đi được của đồi, ở meteor.stay giây, đứng lên / cạnh ô đó nhặt được.",
       "map": "doi_sao_dieu",
       "aim": {"_doc": "bấm 🪁 Thả diều không chạm ô: diều lên giữa trời, cột lệch ngẫu nhiên trong spread ô, cao hơn mép trời rise ô, không cách người quá view hàng; dây diều không giới hạn (chạm ô trời nào cũng được)", "spread": 2, "rise": [2, 4], "view": 8},
       "spot_depth": 5,
@@ -1017,7 +1017,7 @@
       "first_strike_mult": 0.5,
       "_duel_doc": "Đấu trường trực tiếp (DECISIONS \"Sự kiện, đấu trường, chiến bang trực quan\" E2): mời người đang online, người kia nhận trong duel_invite_s giây; đánh luân phiên lượt như đồ sát, vào trận đầy máu, xong trận trả lại máu cũ, không chết / mất vàng / tên đỏ, đổi Elo như đấu trường (tính vào per_day của người mời).",
       "duel_invite_s": 30,
-      "duel_map": {"map": "duel_arena", "a": [5, 5], "b": [11, 5], "_doc": "DECISIONS \"Đấu trực tiếp ở bản đồ riêng\": nhận lời mời thì người mời đứng ô a, người nhận ô b của bản đồ map; xong trận (thắng, thua, bỏ chạy, hủy) cả hai về đúng chỗ cũ."}
+      "duel_map": {"map": "ho_ty_thi", "a": [1, 9], "b": [27, 9], "wait_s": 180, "_doc": "DECISIONS \"Đấu trực tiếp ở bản đồ riêng\": nhận lời mời thì người mời đứng ô a, người nhận ô b của bản đồ map; xong trận (thắng, thua, bỏ chạy, hủy) cả hai về đúng chỗ cũ."}
     },
     "party": {
       "max": 3,
@@ -1151,7 +1151,7 @@
       "_endgame_doc": "DECISIONS \"Bot cuối game\": cho thú ăn mỗi lần cách feed_every_min phút (ngẫu nhiên trong khoảng) thay vì dồn một lúc; gục avoid.deaths lần trong avoid.window_min phút ở cùng một bản đồ (phòng trùm, bản đồ vùng chuyển sinh) thì tránh bản đồ đó avoid.hours giờ; đã chuyển sinh tối đa và cấp tối đa thì luyện ở vùng chuyển sinh (khó dần, realm_kills quái mỗi bản đồ); túi trang bị ≥ sell.full_at món thì về Làng bán đồ thừa ở Thợ Rèn, ở Làng thì bán tới còn sell.down_to món. Trong bản đồ tháp (Tháp Vô Tận, Quảng Trường, Lâu Đài, Kalima) hết quái mà chưa xong thì đi qua lại chờ (server xét hết giờ khi bước); ở quá tower_max_min phút thì ra cổng. Tự gỡ kẹt (DECISIONS \"Đưa về Làng\"): không nghỉ mà vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi trong stuck_min phút thì về Làng.",
       "play": {"event_hp": 0.9, "pet_better": 1.1, "pet_budget": 0.3, "feed_mult": 20, "feed_every_min": [2, 5], "tower_level": 30, "tower_every_min": [30, 60], "tower_enter_hp": 0.95, "tower_hp": 0.5, "leave_hp": 0.3, "tower_max_min": 40, "stuck_min": 10, "avoid": {"deaths": 3, "window_min": 30, "hours": 2}},
       "sell": {"full_at": 35, "down_to": 20},
-      "_fish_doc": "DECISIONS \"Bot câu cá, bot try hard\": từ cấp vào được Hồ Long Vương, mỗi every_min phút (ngẫu nhiên trong khoảng) bot ra hồ câu stay_min phút (thả trúng ô Đàn Cá Vàng nếu có, câu đủ cá thì nhận việc Ông Lão); Long Vương nổi thì bot \"săn rồng\" (seed chia hết cho chase_every, hoặc bot try hard; chưa có Long Vương) bỏ việc rảnh ra hồ, đứng trong tầm câu và thả trúng ô Ngài. Giật cần sau khi cá cắn react_ms mili giây (ngẫu nhiên; quá cửa sổ giật thì trượt như người thật).",
+      "_fish_doc": "DECISIONS \"Bot câu cá, bot try hard\": từ cấp vào được Biển Long Vương, mỗi every_min phút (ngẫu nhiên trong khoảng) bot ra hồ câu stay_min phút (thả trúng ô Đàn Cá Vàng nếu có, câu đủ cá thì nhận việc Ông Lão); Long Vương nổi thì bot \"săn rồng\" (seed chia hết cho chase_every, hoặc bot try hard; chưa có Long Vương) bỏ việc rảnh ra hồ, đứng trong tầm câu và thả trúng ô Ngài. Giật cần sau khi cá cắn react_ms mili giây (ngẫu nhiên; quá cửa sổ giật thì trượt như người thật).",
       "fish": {"every_min": [60, 150], "stay_min": [4, 10], "chase_every": 3, "react_ms": [200, 1100]},
       "_tryhard_doc": "Bot try hard (seed chia hết cho every): luôn săn Long Vương, luôn ép liều (+10 / +11), nghỉ sau khi gục rest_mult × thời gian thường, leo Tháp mỗi tower_every_min phút, ra hồ mỗi fish_every_min phút câu fish_stay_min phút, giật cần nhanh hơn (react_ms).",
       "tryhard": {"every": 5, "rest_mult": 0.3, "tower_every_min": [15, 30], "fish_every_min": [20, 45], "fish_stay_min": [8, 15], "react_ms": [150, 650]},
@@ -1160,7 +1160,7 @@
       "verified": false
     },
     "weather": {
-      "_doc": "DECISIONS \"Bản đồ đẹp hơn\" (B5): thời tiết chung cả server, đổi mỗi slot_min phút (theo giờ Việt Nam). Mỗi vùng (theo nền bản đồ; Làng, Hồ Long Vương riêng) bốc một loại theo trọng số, cùng mốc giờ thì mọi người thấy như nhau. Chỉ là hình, không đổi luật chơi. Loại: clear (trời quang), rain, storm (mưa to + chớp), fog, snow, blizzard (bão tuyết), leaves (lá rơi), dust (bụi cát), embers (tàn lửa). Bản đồ tháp / sự kiện giữ hiệu ứng theo nền tầng.",
+      "_doc": "DECISIONS \"Bản đồ đẹp hơn\" (B5): thời tiết chung cả server, đổi mỗi slot_min phút (theo giờ Việt Nam). Mỗi vùng (theo nền bản đồ; Làng, Biển Long Vương riêng) bốc một loại theo trọng số, cùng mốc giờ thì mọi người thấy như nhau. Chỉ là hình, không đổi luật chơi. Loại: clear (trời quang), rain, storm (mưa to + chớp), fog, snow, blizzard (bão tuyết), leaves (lá rơi), dust (bụi cát), embers (tàn lửa). Bản đồ tháp / sự kiện giữ hiệu ứng theo nền tầng.",
       "slot_min": 60,
       "_bonus_doc": "Thời tiết ảnh hưởng chỉ số (anh duyệt 2026-11-07): đánh quái (không tính đánh người) lúc trời có thời tiết này thì kỹ năng hệ `element` gây thêm `pct` sát thương. Ghi vào trận lúc bắt đầu (cả trận dùng một mức).",
       "bonus": {
@@ -1236,7 +1236,7 @@
       "red_gold_mult": 2,
       "first_strike_mult": 0.5,
       "reach_by_wing": [1, 3, 5, 8],
-      "event_pk": {"warn_min": 10, "_doc": "DECISIONS \"Đồ sát ở Hồ / Đồi theo giờ sự kiện\": Hồ Long Vương và Đồi Sáo Diều là vùng an toàn; warn_min phút trước khi Long Vương nổi / Chim Lạc lượn thì báo cả server và mở đồ sát trên bản đồ đó, tới lúc Ngài nổi / chim tới thì đóng (tránh người mạnh đứng đồ sát cả bản đồ không cho ai câu / thả)."},
+      "event_pk": {"warn_min": 10, "_doc": "DECISIONS \"Đồ sát ở Hồ / Đồi theo giờ sự kiện\": Biển Long Vương và Đồi Sáo Diều là vùng an toàn; warn_min phút trước khi Long Vương nổi / Chim Lạc lượn thì báo cả server và mở đồ sát trên bản đồ đó, tới lúc Ngài nổi / chim tới thì đóng (tránh người mạnh đứng đồ sát cả bản đồ không cho ai câu / thả)."},
       "_reach_doc": "DECISIONS \"Tầm đánh theo cánh\": đánh quái và đồ sát trong tầm reach_by_wing[bậc cánh đang mặc] ô (Chebyshev; không cánh = bậc 0 = 1 ô: đứng sát bên; cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô), không cần chạy sát bên.",
       "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },

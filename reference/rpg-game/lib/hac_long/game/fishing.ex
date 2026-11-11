@@ -8,8 +8,8 @@ defmodule HacLong.Game.Fishing do
   - `reel/2`: giật cần. Chỉ được cá nếu giật trong `@window` kể từ lúc cá cắn; giật sớm hay
     muộn thì trượt. Đi chỗ khác thì mất lượt câu.
   - Loại cá tùy vùng (`pool/1`): Làng và Rừng Mê cá thường; Đầm Lầy và Hang Hắc Long có Lươn Điện.
-    Rất hiếm mới có Cá Chép Vàng. Hồ Long Vương (`fish: "lake"`) có bảng cá riêng.
-  - Long Vương (DECISIONS "Long Vương nổi mỗi giờ"): Ngài nổi ở một ô nước của Hồ Long Vương
+    Rất hiếm mới có Cá Chép Vàng. Biển Long Vương (`fish: "lake"`) có bảng cá riêng.
+  - Long Vương (DECISIONS "Long Vương nổi mỗi giờ"): Ngài nổi ở một ô nước của Biển Long Vương
     (`HacLong.LakeEvent`). Chỉ lần thả câu trúng đúng ô đó (`spot`) mới có `RULES.fishing.dragon.chance` cơ hội
     × (1 + Long Khí / `long_khi_div`) × `bait_mult` nếu có Mồi Rồng (chỉ tốn mồi khi thả trúng ô Ngài).
     Quyết định lúc thả câu, client nhận `big: true` để hiện phao giật mạnh. Giật đúng lúc thì được thú
@@ -109,7 +109,7 @@ defmodule HacLong.Game.Fishing do
 
   def long_khi(p), do: Map.get(p, :long_khi) || 0
 
-  # Hồ Long Vương, thả trúng ô Ngài đang nổi: có Mồi Rồng thì tốn 1 mồi, cơ hội gấp `bait_mult`
+  # Biển Long Vương, thả trúng ô Ngài đang nổi: có Mồi Rồng thì tốn 1 mồi, cơ hội gấp `bait_mult`
   defp dragon_roll(p, at, spot) do
     if spot != nil and at == spot and dragon_lake?(p.pos.map) do
       bait? = Map.get(p.inv, @dragon.bait, 0) > 0

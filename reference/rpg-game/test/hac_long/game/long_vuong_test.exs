@@ -1,5 +1,5 @@
 defmodule HacLong.Game.LongVuongTest do
-  # DECISIONS "Long Vương": Hồ Long Vương, câu được thú hiếm, Mồi Rồng, ba kỹ năng, Bia Long Vương
+  # DECISIONS "Long Vương" (+ "Biển Long Vương"): Biển Long Vương, câu được thú hiếm, Mồi Rồng, ba kỹ năng, Bia Long Vương
   use HacLong.DataCase, async: false
 
   alias HacLong.Game.{Achievements, Crafting, Data, Engine, Fishing, Pets, Rng}
@@ -13,10 +13,10 @@ defmodule HacLong.Game.LongVuongTest do
   @lake "long_vuong_lake"
   @dragon Data.rules().fishing.dragon
 
-  # đứng trên bến gỗ giữa bờ bắc (14, 6), cạnh nước
+  # đứng trên cầu tàu giữa (14, 11), cạnh nước biển
   defp angler(level \\ 30) do
     {:ok, p} = Engine.new_player("Cần Thủ", "dk")
-    %{p | level: level, gold: 1_000_000} |> Map.put(:pos, %{map: @lake, x: 14, y: 6})
+    %{p | level: level, gold: 1_000_000} |> Map.put(:pos, %{map: @lake, x: 14, y: 11})
   end
 
   defp with_pet(p, lv) do
@@ -26,14 +26,15 @@ defmodule HacLong.Game.LongVuongTest do
     |> Map.put(:pet_xp, %{"long_vuong" => Pets.xp_for(lv)})
   end
 
-  test "bản đồ: hồ ở giữa, lối đi vòng quanh, bến / cầu gỗ đi được, câu được từ bến; cần cấp 30" do
+  test "bản đồ: biển phía nam, bãi cát, cầu tàu đi được, câu được từ cầu tàu; cần cấp 30" do
     m = Maps.get(@lake)
     assert m.spawns == [] and m.fish == "lake" and m.min_level == 30
-    assert Maps.walkable?(m, 14, 6) and Maps.walkable?(m, 19, 9) and Maps.walkable?(m, 17, 10)
-    refute Maps.walkable?(m, 14, 9)
+    # cầu tàu, bãi cát đi được; nước thì không
+    assert Maps.walkable?(m, 14, 11) and Maps.walkable?(m, 7, 10) and Maps.walkable?(m, 5, 7)
+    refute Maps.walkable?(m, 14, 13)
     assert Fishing.near_water?(angler())
-    # bến cuối sát Vực Rồng
-    assert Maps.tile(m, 14, 8) == "="
+    # ngoài khơi là nước sâu (Vực Rồng)
+    assert Maps.tile(m, 14, 15) == "="
 
     # cổng ở Rừng Mê 1 hai chiều; dưới cấp 30 không vào được
     f1 = Maps.get("forest_1")
@@ -53,7 +54,7 @@ defmodule HacLong.Game.LongVuongTest do
   # ô nước cạnh chỗ đứng của angler()
   defp spot do
     m = Maps.get(@lake)
-    Enum.find([{14, 7}, {13, 6}, {15, 6}, {14, 5}], fn {x, y} -> Maps.water?(m, x, y) end)
+    Enum.find([{13, 11}, {15, 11}, {14, 13}], fn {x, y} -> Maps.water?(m, x, y) end)
   end
 
   test "Long Vương cắn câu chỉ khi thả trúng ô Ngài nổi; giật đúng lúc thì được thú, trễ thì mất" do
@@ -174,7 +175,7 @@ defmodule HacLong.Game.LongVuongTest do
 
   test "không bán ở Người Nuôi Thú; không tính vào thành tựu đủ thú; có danh hiệu Long Vương Chủ" do
     assert {%{ok: false, msg: msg}, _} = Pets.buy(angler(), "long_vuong")
-    assert msg =~ "chỉ câu được ở Hồ Long Vương"
+    assert msg =~ "chỉ câu được ở Biển Long Vương"
 
     p = with_pet(angler(), 1)
     got = Achievements.check(p) |> elem(0) |> Map.get(:achievements, [])

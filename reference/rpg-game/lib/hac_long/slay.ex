@@ -38,6 +38,7 @@ defmodule HacLong.Slay do
   alias HacLong.World.Maps
 
   @r Data.rules().slay
+  @duel_map Data.rules().arena.duel_map
   @marks :slay_marks
   @death_loss Data.rules().character.death_gold_loss
 
@@ -90,13 +91,17 @@ defmodule HacLong.Slay do
     if :ets.whereis(@marks) == :undefined,
       do: :ets.new(@marks, [:named_table, :public, read_concurrency: true])
 
-    {:ok, %{fights: %{}, by_uid: %{}, next: 1, invites: %{}}}
+    {:ok, %{fights: %{}, by_uid: %{}, next: 1, invites: %{}, duels: %{}}}
   end
 
   # ---------- Bắt đầu ----------
 
   @doc "`a` đồ sát `b`. Trả `{:ok, fight}` hoặc `{:error, lý_do}`."
   def attack(a, b) do
+    if is_integer(b) and duel_foe(a) == b, do: duel_attack(a, b), else: slay_attack(a, b)
+  end
+
+  defp slay_attack(a, b) do
     with true <- (is_integer(b) and b != a) || {:error, "Không đánh được người này."},
          true <- Session.online?(b) || {:error, "Người này không online."},
          pa = Session.get(a),
@@ -146,9 +151,14 @@ defmodule HacLong.Slay do
       not safe_ok?(pa.pos) ->
         {:error, "Đây là vùng an toàn, không được đánh nhau."}
 
-      # Hồ Long Vương / Đồi Sáo Diều: chỉ đồ sát từ lúc báo sắp xuất hiện tới lúc xuất hiện
+      # Hồ Tỷ Thí: chỉ đánh đối thủ đấu trực tiếp của mình (đi qua `duel_attack/2`)
+      pa.pos.map == @duel_map.map ->
+        {:error, "Ở #{duel_name()} chỉ đánh đối thủ đấu trực tiếp của mình."}
+
+      # Biển Long Vương / Đồi Sáo Diều: chỉ đồ sát từ lúc báo sắp xuất hiện tới lúc xuất hiện
       pa.pos.map == HacLong.LakeEvent.map_id() and not HacLong.LakeEvent.pk_open?() ->
-        {:error, "Hồ Long Vương chỉ được đồ sát từ lúc báo Long Vương sắp nổi tới khi Ngài nổi."}
+        {:error,
+         "Biển Long Vương chỉ được đồ sát từ lúc báo Long Vương sắp nổi tới khi Ngài nổi."}
 
       pa.pos.map == HacLong.Game.Kite.map_id() and not HacLong.SkyEvent.pk_open?() ->
         {:error,
@@ -206,7 +216,6 @@ defmodule HacLong.Slay do
   # ---------- Đấu trường trực tiếp (E2, DECISIONS "Sự kiện, đấu trường, chiến bang trực quan") ----------
 
   @duel_s Data.rules().arena.duel_invite_s
-  @duel_map Data.rules().arena.duel_map
 
   @doc "Bản đồ riêng của đấu trực tiếp."
   def duel_map, do: @duel_map.map
@@ -257,13 +266,57 @@ defmodule HacLong.Slay do
          pa = Session.get(a),
          pb = Session.get(b),
          :ok <- duel_check(a, b, pa, pb),
-         # vào trận đầy máu (xong trận trả lại máu cũ)
-         pa = %{pa | hp: Engine.derived(pa).maxHp},
-         pb = %{pb | hp: Engine.derived(pb).maxHp},
-         {:ok, f} <- GenServer.call(__MODULE__, {:start, a, b, pa, pb, :duel}),
-         :ok <- begin(b, f, a, pa, nil),
-         :ok <- begin(a, f, b, pb, b) do
-      {:ok, "⚔ Vào đấu trường trực tiếp với #{pa.name}!"}
+         :ok <- GenServer.call(__MODULE__, {:duel_pair, a, b, pa, pb}) do
+      # DECISIONS "Đấu trực tiếp ở Hồ Tỷ Thí": hai người tới hai đầu hồ, tự đi lại gần trong tầm cánh rồi đồ sát nhau
+      Session.teleport(a, duel_spot(true))
+      Session.teleport(b, duel_spot(false))
+
+      notice(
+        a,
+        "⚔ #{pb.name} nhận đấu! Vào #{duel_name()}: lại gần trong tầm đánh rồi bấm Đồ sát (#{@duel_map.wait_s} giây không đánh thì về chỗ cũ)."
+      )
+
+      {:ok,
+       "⚔ Vào #{duel_name()} với #{pa.name}: lại gần trong tầm đánh rồi bấm Đồ sát (#{@duel_map.wait_s} giây không đánh thì về chỗ cũ)."}
+    end
+  end
+
+  defp duel_name, do: HacLong.World.Maps.get(@duel_map.map).name
+
+  @doc "Đối thủ đấu trực tiếp đang chờ đánh ở Hồ Tỷ Thí của `uid` (nil nếu không)."
+  def duel_foe(uid), do: GenServer.call(__MODULE__, {:duel_foe, uid})
+
+  # hai người đã ở Hồ Tỷ Thí: `a` bấm đồ sát `b` thì vào trận đấu trực tiếp (không chết, không mất vàng, đổi Elo)
+  defp duel_attack(a, b) do
+    pa = Session.get(a)
+    pb = Session.get(b)
+
+    cond do
+      pa == nil or pb == nil ->
+        {:error, "Người này chưa có nhân vật."}
+
+      pa.battle != nil ->
+        {:error, "Bạn đang trong trận đấu."}
+
+      pb.battle != nil ->
+        {:error, "#{pb.name} đang trong trận đấu."}
+
+      pa.pos.map != pb.pos.map ->
+        {:error, "Hãy đến cùng bản đồ với #{pb.name}."}
+
+      max(abs(pa.pos.x - pb.pos.x), abs(pa.pos.y - pb.pos.y)) > HacLong.Game.Gear.reach(pa) ->
+        {:error, "#{pb.name} ở xa quá, lại gần trong #{HacLong.Game.Gear.reach(pa)} ô để đánh."}
+
+      true ->
+        {back, hp0} = GenServer.call(__MODULE__, {:duel_backs, a, b})
+        pa = %{pa | hp: Engine.derived(pa).maxHp}
+        pb = %{pb | hp: Engine.derived(pb).maxHp}
+
+        with {:ok, f} <- GenServer.call(__MODULE__, {:start, a, b, pa, pb, :duel, back, hp0}),
+             :ok <- begin(b, f, a, pa, nil),
+             :ok <- begin(a, f, b, pb, b) do
+          {:ok, f}
+        end
     end
   end
 
@@ -336,6 +389,30 @@ defmodule HacLong.Slay do
     end
   end
 
+  def handle_call({:duel_pair, a, b, pa, pb}, _from, s) do
+    ref = make_ref()
+    Process.send_after(self(), {:duel_wait_over, a, b, ref}, @duel_map.wait_s * 1000)
+
+    duels =
+      s.duels
+      |> Map.put(a, %{foe: b, back: pa.pos, hp: pa.hp, ref: ref})
+      |> Map.put(b, %{foe: a, back: pb.pos, hp: pb.hp, ref: ref})
+
+    {:reply, :ok, %{s | duels: duels}}
+  end
+
+  def handle_call({:duel_foe, uid}, _from, s), do: {:reply, get_in(s.duels, [uid, :foe]), s}
+
+  def handle_call({:duel_backs, a, b}, _from, s) do
+    da = s.duels[a] || %{}
+    db = s.duels[b] || %{}
+    # đã vào trận: bỏ hẹn giờ chờ (xong trận Session tự về chỗ cũ)
+    duels = s.duels |> Map.delete(a) |> Map.delete(b)
+
+    {:reply, {%{a => da[:back], b => db[:back]}, %{a => da[:hp], b => db[:hp]}},
+     %{s | duels: duels}}
+  end
+
   def handle_call({:duel_take, b}, _from, s) do
     {inv, invites} = Map.pop(s.invites, b)
     s = %{s | invites: invites}
@@ -351,7 +428,10 @@ defmodule HacLong.Slay do
     end
   end
 
-  def handle_call({:start, a, b, pa, pb, mode}, _from, s) do
+  def handle_call({:start, a, b, pa, pb, mode}, from, s),
+    do: handle_call({:start, a, b, pa, pb, mode, %{}, %{}}, from, s)
+
+  def handle_call({:start, a, b, pa, pb, mode, back, hp0}, _from, s) do
     cond do
       mode == :slay and protected_s(b) > 0 ->
         {:reply, {:error, "#{pb.name} vừa gục, đang được bảo vệ (còn #{protected_s(b)} giây)."},
@@ -378,6 +458,9 @@ defmodule HacLong.Slay do
           map: pa.pos.map,
           # :slay đồ sát | :duel đấu trường trực tiếp (không chết, không vàng, đổi Elo)
           mode: mode,
+          # đấu trực tiếp: chỗ cũ và máu cũ của mỗi người trước khi vào Hồ Tỷ Thí (xong trận trả lại)
+          back: back,
+          hp0: hp0,
           turn: a,
           turns: 0,
           misses: 0,
@@ -483,6 +566,22 @@ defmodule HacLong.Slay do
   end
 
   @impl true
+  # hết giờ chờ ở Hồ Tỷ Thí mà chưa đánh: cả hai về chỗ cũ
+  def handle_info({:duel_wait_over, a, b, ref}, s) do
+    case s.duels[a] do
+      %{ref: ^ref} ->
+        for {uid, d} <- [{a, s.duels[a]}, {b, s.duels[b]}], d do
+          Session.teleport(uid, d.back)
+          notice(uid, "⚔ Hết giờ đấu trực tiếp mà chưa đánh: về chỗ cũ.")
+        end
+
+        {:noreply, %{s | duels: s.duels |> Map.delete(a) |> Map.delete(b)}}
+
+      _ ->
+        {:noreply, s}
+    end
+  end
+
   def handle_info({:turn_over, id, uid}, s) do
     case s.fights[id] do
       %{turn: ^uid} = f ->
@@ -829,6 +928,8 @@ defmodule HacLong.Slay do
       # lượt đầu của người tấn công (đòn mở màn, `RULES.slay.first_strike_mult`)
       first: f.turns == 0,
       duel: f[:mode] == :duel,
+      back: (f[:back] || %{})[uid],
+      hp0: (f[:hp0] || %{})[uid],
       fx: (f[:fx] || %{})[uid],
       foe_fx: (f[:fx] || %{})[foe],
       foe_char: (f[:chars] || %{})[foe]

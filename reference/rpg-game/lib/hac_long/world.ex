@@ -477,7 +477,7 @@ defmodule HacLong.World do
       target.secret == "night" and not HacLong.World.Secret.open?() ->
         {%{ok: false, msg: "Chỉ là vách đá lạnh ngắt."}, p}
 
-      # bản đồ không có quái nhưng cần cấp (Hồ Long Vương); Động Bí Ẩn cần cấp 38
+      # bản đồ không có quái nhưng cần cấp (Biển Long Vương); Động Bí Ẩn cần cấp 38
       !target.realm and is_integer(target.min_level) and p.level < target.min_level ->
         {%{
            ok: false,
@@ -533,7 +533,7 @@ defmodule HacLong.World do
     Enum.min(lv, fn -> nil end)
   end
 
-  # bản đồ không có quái nhưng ghi `min_level` (Hồ Long Vương)
+  # bản đồ không có quái nhưng ghi `min_level` (Biển Long Vương)
   def min_level(%{realm: nil, min_level: lv}) when is_integer(lv), do: lv
   def min_level(_), do: nil
 

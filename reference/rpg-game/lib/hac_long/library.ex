@@ -60,7 +60,7 @@ defmodule HacLong.Library do
         # Phase 6 (B-30): vùng chuyển sinh cần chuyển sinh ≥ cs và cấp ≥ need
         cs: m.realm && m.min_rebirths,
         need: m.realm && m.min_level,
-        # bản đồ không có quái nhưng cần cấp (Hồ Long Vương): cấp vào ghi ở min / max
+        # bản đồ không có quái nhưng cần cấp (Biển Long Vương): cấp vào ghi ở min / max
         min: Enum.min(lv, fn -> if(!m.realm, do: m.min_level) end),
         max: Enum.max(lv, fn -> if(!m.realm, do: m.min_level) end),
         monsters: kinds,

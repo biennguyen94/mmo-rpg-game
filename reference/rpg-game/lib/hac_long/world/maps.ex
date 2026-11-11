@@ -48,7 +48,7 @@ defmodule HacLong.World.Maps do
     "O" => "portal",
     ">" => "stairs_up",
     "<" => "stairs_down",
-    # Hồ Long Vương (DECISIONS "Long Vương"): nước sâu, cây đước, sen, thuyền là nước (câu được);
+    # Biển Long Vương (DECISIONS "Long Vương"): nước sâu, cây đước, sen, thuyền là nước (câu được);
     # bến / cầu gỗ đi được; tượng rồng, đèn lồng là cảnh
     "=" => "deep_water",
     "M" => "mangrove",
@@ -59,9 +59,12 @@ defmodule HacLong.World.Maps do
     "G" => "dragon_statue",
     "J" => "lantern",
     # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): ô trời, thả diều được (như nước ở hồ)
-    "^" => "sky"
+    "^" => "sky",
+    # Biển Long Vương (DECISIONS "Biển Long Vương"): bãi cát đi được, dừa là cảnh
+    "s" => "sand",
+    "P" => "palm"
   }
-  @walkable MapSet.new(~w(. , : * D A O > < B E))
+  @walkable MapSet.new(~w(. , : * D A O > < B E s))
   # ô nước: đứng cạnh thì câu được (`HacLong.Game.Fishing`)
   @water ~w(~ = M Q U)
   # ô trời: đứng cạnh thì thả diều được (`HacLong.Game.Kite`)
@@ -86,7 +89,7 @@ defmodule HacLong.World.Maps do
              realm: m["realm"],
              min_rebirths: m["min_rebirths"],
              min_level: m["min_level"],
-             # bảng cá riêng (`RULES.fishing.pools`), vd Hồ Long Vương "lake"
+             # bảng cá riêng (`RULES.fishing.pools`), vd Biển Long Vương "lake"
              fish: m["fish"],
              # Đồi Sáo Diều: thả diều, Chim Lạc
              kite: m["kite"] == true,
