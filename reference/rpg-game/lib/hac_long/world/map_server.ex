@@ -595,6 +595,9 @@ defmodule HacLong.World.MapServer do
             # đồ sát: tên đỏ, đang được bảo vệ (vừa gục), đang đồ sát (đối thủ, % máu)
             red: HacLong.Slay.red?(uid),
             safe: HacLong.Slay.protected_s(uid) > 0,
+            # số giây còn lại: client tự đếm ngược, hết giờ thì tự bỏ 🛡 / tên đỏ (bản đồ không gửi lại khi chỉ hết giờ)
+            safe_s: HacLong.Slay.protected_s(uid),
+            red_s: HacLong.Slay.red_s(uid),
             duel: p[:duel],
             x: x,
             y: y

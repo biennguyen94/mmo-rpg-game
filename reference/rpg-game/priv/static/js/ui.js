@@ -4694,6 +4694,9 @@
   }
   setInterval(() => { if (P && onMenu('admin') && document.visibilityState === 'visible') admOnline(); }, ADM_ONLINE_MS);
 
+  // người trên bản đồ hết 🛡 bảo vệ / tên đỏ (map.js đếm ngược): vẽ lại tab Quanh đây / bảng chọn để nút Đồ sát sáng lại
+  window.addEventListener('hl-players-changed', () => { if (P && (tab === 'people' || pickUi)) render(); });
+
   function logout() {
     Net.logout();
     resetPerUser();

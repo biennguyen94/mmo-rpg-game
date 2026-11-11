@@ -2038,3 +2038,6 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Nguyên nhân: (1) về chỗ cũ gọi `World.warp` trong tiến trình chốt trận, mà bản đồ theo dõi tiến trình gọi vào → tiến trình đó
   xong là bị xóa; (2) đóng màn kết quả, người thua bị `finish_encounter` tính như gục ngã (rời bản đồ, về chỗ hồi sinh). Nay chốt
   trận chỉ đổi `pos`, Session đổi bản đồ khi nhận lại nhân vật (`release`); thua đấu trực tiếp không tính gục ngã.
+- Sửa: hết giờ bảo vệ (🛡 sau khi gục) / tên đỏ mà nút Đồ sát (bản đồ, Quanh đây) vẫn mờ. Bản đồ chỉ gửi lại danh sách người khi
+  có thay đổi nên cờ `safe` / `red` bị giữ cũ; nay gửi kèm số giây còn lại (`safe_s`, `red_s`), client tự đếm ngược, hết giờ thì
+  bỏ cờ và vẽ lại tab Quanh đây / bảng chọn.

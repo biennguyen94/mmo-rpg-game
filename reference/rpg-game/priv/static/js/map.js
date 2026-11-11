@@ -22,6 +22,7 @@
   let fight = null; // ⚡ Đánh nhanh: { id, hp } con đang đánh (`setFight`)
   const seenTower = new Map(); // mã quái tầng → lần thấy cuối (vẽ con đang đánh khi nó tạm vắng khỏi danh sách)
   let world = { map: null, monsters: [], players: [] };
+  let playersTimer = null;
   let userId = null;
   // quan hệ với người chơi khác (đồng đội, bang, bang địch) để tô màu tên; ui.js đặt qua setRelations
   let relations = () => ({});
@@ -2722,6 +2723,18 @@
         }
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }
+      // 🛡 bảo vệ / tên đỏ hết giờ phía client: server chỉ gửi lại bản đồ khi có thay đổi, nên đếm ngược ở đây rồi tự bỏ
+      // (nút Đồ sát ở bản đồ / Quanh đây sáng lại đúng lúc)
+      const at = Date.now();
+      let nextEnd = 0;
+      for (const o of snap.players || []) {
+        const su = at + (o.safe_s || 0) * 1000, ru = at + (o.red_s || 0) * 1000;
+        Object.defineProperty(o, 'safe', { get: () => Date.now() < su, enumerable: true, configurable: true });
+        Object.defineProperty(o, 'red', { get: () => Date.now() < ru, enumerable: true, configurable: true });
+        for (const u of [su, ru]) if (u > at && (!nextEnd || u < nextEnd)) nextEnd = u;
+      }
+      clearTimeout(playersTimer);
+      if (nextEnd) playersTimer = setTimeout(() => { draw(); window.dispatchEvent(new Event('hl-players-changed')); }, nextEnd - at + 80);
       world = snap;
       const wx = document.getElementById('map-wx');
       if (wx && (snap.weather !== wxOld || !wx.innerHTML)) wx.innerHTML = wxIcon(getPlayer());
