@@ -2008,3 +2008,13 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
 - Tiến Lên: chỉ tài khoản `admin`, đang ngồi trong bàn, có nút 👁 mờ ở góc bàn: bật thì server gửi riêng bài trên tay của các ghế
   khác (`RoomServer.peek/2`, op `peek`), lật ngửa ở chỗ ghế đó, tự cập nhật mỗi lượt; bấm lần nữa thì úp lại. Không đổi trạng thái
   bàn, người khác không thấy và không biết. Người xem bàn (không ngồi) không dùng được.
+
+## Hiệu ứng kỹ năng theo nguyên tố — Phase 7 (2026-11-11, anh duyệt)
+Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ khác (`fx.js` `EV.skill`, hạt mới `flame`, `shard`, `frost`,
+`tornado`, `tendril`, `twinkle`):
+- **Lửa**: cầu lửa kéo đuôi tàn lửa → nổ, vòng nhiệt, 7 lưỡi lửa bốc lên, tàn lửa bay, chớp cam, rung khi chí mạng.
+- **Băng** (trước chưa có, dùng cầu mặc định): ba mũi băng bay tới → 10 mảnh băng tỏa tròn, bông tuyết sáu cánh, vòng sương, chớp xanh nhạt.
+- **Gió**: ba lưỡi gió → lốc xoáy dựng đứng nhiều vòng xoay quanh mục tiêu, cuốn hạt.
+- **Đất**: 5 tảng đá rơi → đất nứt tỏa dưới chân, vòng bụi, đá vụn bắn lên, rung mạnh.
+- **Bóng Tối**: cầu tối → 6 xúc tu tím quấn vào tâm, hút, chớp tím.
+- **Ánh Sáng**: cột sáng + tia tỏa, vòng vàng, sao bốn cánh lấp lánh.
