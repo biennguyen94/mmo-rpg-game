@@ -214,12 +214,14 @@ defmodule HacLong.Game.Kite do
     owned = Map.get(p, :pets) || []
 
     if pet in owned do
-      {r, p} = land(p, @bird.dupe, 1, @bird.dupe_n)
+      # đã có Chim Lạc: con mới vào túi dạng Ấn (DECISIONS "Thú thành vật phẩm")
+      p = p |> HacLong.Game.Pets.give_sealed(pet) |> put_sky(&%{&1 | phong_khi: 0})
 
       {%{
-         r
-         | msg:
-             "🐦 Chim Lạc lượn quanh diều, để lại #{@bird.dupe_n} #{Data.item(@bird.dupe).name} rồi bay đi."
+         ok: true,
+         msg:
+           "🐦 Thêm một #{Data.pet(pet).name} sà xuống diều! Bạn đã có một con nên chim vào túi dạng Ấn (bán ở chợ, giao dịch, hoặc mở ấn khi chưa có).",
+         rare_pet: pet
        }, p}
     else
       p = p |> Map.put(:pets, owned ++ [pet]) |> put_sky(&%{&1 | phong_khi: 0})

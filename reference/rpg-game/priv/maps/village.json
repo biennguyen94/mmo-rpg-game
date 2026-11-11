@@ -342,19 +342,6 @@
       "lines": [
         "Ta giữ đồ và vàng cho cả làng. Gửi ở đây thì chết cũng không mất."
       ]
-    },
-    {
-      "id": "chest",
-      "name": "Rương Gia Truyền",
-      "sprite": "home_chest",
-      "at": [
-        13,
-        12
-      ],
-      "role": "chest",
-      "lines": [
-        "Rương gỗ cũ của làng. Mỗi ngày mở ra lại thấy có thứ gì đó."
-      ]
     }
   ],
   "spawns": []

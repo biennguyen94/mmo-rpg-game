@@ -818,7 +818,7 @@
         }
         if (kind !== 'floor') {
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
-          const im = image('tiles/' + (kind === 'waystone' ? 'blessing' : kind));
+          const im = image('tiles/' + kind);
           const sway = fx && (kind === 'tree' || kind === 'tree_autumn') ? Math.sin(now / 900 + x * 0.8 + y * 0.5) * 0.045 : 0;
           if (m.style === 'bamboo' && (kind === 'tree' || kind === 'tree_autumn')) {
             bamboo(px, py, x, y, fx ? now : 0);
@@ -843,7 +843,7 @@
         // B7: bụi cỏ lay theo gió (ô cỏ / nền cỏ, ~1/3 số ô, chọn cố định theo vị trí)
         if (fx && grassy && (kind === 'grass' || kind === 'floor') && rnd(x * 7 + y * 13, 9) < 0.34) tufts.push([px, py, x, y]);
         if (GROUND[kind]) continue;
-        if (kind === 'waystone') labels.push(['Đài Phúc Lành', px + TILE / 2, py - 13, '#f0cf7a']);
+        if (kind === 'waystone') labels.push(['Đá Dịch Chuyển', px + TILE / 2, py - 13, '#f0cf7a']);
         if (kind === 'stairs_up' && m.tower && (m.tower.bc || m.tower.kal)) { /* Lâu Đài: cầu thang lên chỉ là cảnh */ } else if (kind === 'stairs_up') labels.push([m.tower && m.tower.monsters.length ? (m.tower.ds ? '🔒 Đợt sau' : '🔒 Lên tầng') : (m.tower && m.tower.ds ? 'Đợt sau' : 'Lên tầng'), px + TILE / 2, py + TILE - 13, '#f0cf7a']);
         if (kind === 'stairs_down') labels.push(['Về Làng', px + TILE / 2, py + TILE - 13, '#b9d7ff']);
         const portal = PORTAL.has(m.tiles[y][x]) && portalAt(m, x, y);

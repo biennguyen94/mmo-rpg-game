@@ -1037,7 +1037,7 @@ defmodule HacLong.Game.Session do
             if(first?,
               do:
                 "🏆🐉 #{player.name} là người ĐẦU TIÊN của server thuần phục #{name}! Linh vật Con Rồng Cháu Tiên đã về.",
-              else: "🐉 Bọc Trăm Trứng của #{player.name} đã nở ra #{name}! #{name} Chủ thứ #{n}."
+              else: "🐉 #{player.name} đã có #{name}! #{name} Chủ thứ #{n}."
             )
         })
 

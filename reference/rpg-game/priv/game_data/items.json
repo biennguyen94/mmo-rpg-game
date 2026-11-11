@@ -734,6 +734,182 @@
       "icon": "skull-crossed-bones",
       "price": 0,
       "desc": "Rơi từ quái cấp 35 trở lên. Ghép với Cuộn Giấy Tổng Lãnh Thiên Thần ở Máy Hỗn Nguyên ra Vé Lâu Đài."
+    },
+    "seal_sheep": {
+      "name": "Ấn Cừu Bông",
+      "slot": "petcard",
+      "sprite": "pets/sheep",
+      "price": 0,
+      "pet": "sheep",
+      "desc": "Thú Cừu Bông đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_hound": {
+      "name": "Ấn Chó Săn",
+      "slot": "petcard",
+      "sprite": "pets/hound",
+      "price": 0,
+      "pet": "hound",
+      "desc": "Thú Chó Săn đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_hog": {
+      "name": "Ấn Heo Hồng",
+      "slot": "petcard",
+      "sprite": "pets/hog",
+      "price": 0,
+      "pet": "hog",
+      "desc": "Thú Heo Hồng đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_quokka": {
+      "name": "Ấn Sóc Túi",
+      "slot": "petcard",
+      "sprite": "pets/quokka",
+      "price": 0,
+      "pet": "quokka",
+      "desc": "Thú Sóc Túi đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_butterfly": {
+      "name": "Ấn Bướm Lửa",
+      "slot": "petcard",
+      "sprite": "pets/butterfly",
+      "price": 0,
+      "pet": "butterfly",
+      "desc": "Thú Bướm Lửa đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_panda": {
+      "name": "Ấn Gấu Trúc",
+      "slot": "petcard",
+      "sprite": "pets/panda",
+      "price": 0,
+      "pet": "panda",
+      "desc": "Thú Gấu Trúc đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_raven": {
+      "name": "Ấn Quạ Đen",
+      "slot": "petcard",
+      "sprite": "pets/raven",
+      "price": 0,
+      "pet": "raven",
+      "desc": "Thú Quạ Đen đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_angel": {
+      "name": "Ấn Thiên Thần Hộ Mệnh",
+      "slot": "petcard",
+      "sprite": "pets/angel",
+      "price": 0,
+      "pet": "angel",
+      "desc": "Thú Thiên Thần Hộ Mệnh đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_hippogriff": {
+      "name": "Ấn Bằng Mã Lửa",
+      "slot": "petcard",
+      "sprite": "pets/hippogriff",
+      "price": 0,
+      "pet": "hippogriff",
+      "desc": "Thú Bằng Mã Lửa đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_satan": {
+      "name": "Ấn Quỷ Satan",
+      "slot": "petcard",
+      "sprite": "pets/satan",
+      "price": 0,
+      "pet": "satan",
+      "desc": "Thú Quỷ Satan đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_spirit": {
+      "name": "Ấn Tinh Linh Hộ Vệ",
+      "slot": "petcard",
+      "sprite": "pets/spirit",
+      "price": 0,
+      "pet": "spirit",
+      "desc": "Thú Tinh Linh Hộ Vệ đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_daemon": {
+      "name": "Ấn Ác Quỷ Daemon",
+      "slot": "petcard",
+      "sprite": "pets/daemon",
+      "price": 0,
+      "pet": "daemon",
+      "desc": "Thú Ác Quỷ Daemon đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_long_vuong": {
+      "name": "Ấn Long Vương",
+      "slot": "petcard",
+      "sprite": "pets/long_vuong",
+      "price": 0,
+      "pet": "long_vuong",
+      "desc": "Thú Long Vương đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_chim_lac": {
+      "name": "Ấn Chim Lạc",
+      "slot": "petcard",
+      "sprite": "pets/chim_lac",
+      "price": 0,
+      "pet": "chim_lac",
+      "desc": "Thú Chim Lạc đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_hac_long": {
+      "name": "Ấn Hắc Long",
+      "slot": "petcard",
+      "sprite": "pets/hac_long",
+      "price": 0,
+      "pet": "hac_long",
+      "desc": "Thú Hắc Long đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "seal_hac_long_chan": {
+      "name": "Ấn Hắc Long Chân Thân",
+      "slot": "petcard",
+      "sprite": "pets/hac_long_chan",
+      "price": 0,
+      "pet": "hac_long_chan",
+      "desc": "Thú Hắc Long Chân Thân đã đóng ấn (giữ nguyên cấp). Mở ấn ở túi đồ để nhận thú (chưa có con cùng loại), hoặc rao bán ở chợ / giao dịch.",
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     }
   }
 }

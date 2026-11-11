@@ -25,6 +25,63 @@ defmodule HacLong.Game.DragonEgg do
   def egg_rules, do: @egg
   def pets, do: [@egg.pet, @egg.rare_pet]
 
+  # ---------- Ghép ở Lão Hỗn Nguyên (DECISIONS "Thú thành vật phẩm", thay Long Phượng Hội) ----------
+
+  @doc "Điều kiện ghép Hắc Long còn thiếu: có Long Vương và Chim Lạc, cả hai cấp tối đa (danh sách chữ; rỗng là đủ)."
+  def combine_missing(p) do
+    pets = Map.get(p, :pets) || []
+
+    for id <- [@dragon.pet, Kite.rules().bird.pet], reduce: [] do
+      acc ->
+        name = Data.pet(id).name
+
+        cond do
+          id not in pets ->
+            acc ++ ["chưa có #{name}"]
+
+          Pets.level(p, id) < Pets.max_level(id) ->
+            acc ++ ["#{name} chưa cấp #{Pets.max_level(id)}"]
+
+          true ->
+            acc
+        end
+    end
+  end
+
+  @doc """
+  Ghép Hắc Long ở Lão Hỗn Nguyên, tỉ lệ 100%: mất Long Vương và Chim Lạc (cả hai cấp tối đa), nhận Hắc Long
+  (`egg.rare_chance` ra Hắc Long Chân Thân). Đã có con cùng loại thì con mới vào túi dạng Ấn.
+  """
+  def combine(p) do
+    case combine_missing(p) do
+      [_ | _] = miss ->
+        {%{ok: false, msg: "Chưa ghép được: " <> Enum.join(miss, ", ") <> "."}, p}
+
+      [] ->
+        gone = [@dragon.pet, Kite.rules().bird.pet]
+        pet = if Rng.uniform() < @egg.rare_chance, do: @egg.rare_pet, else: @egg.pet
+
+        p =
+          p
+          |> Map.put(:pets, (Map.get(p, :pets) || []) -- gone)
+          |> Map.put(:pet_xp, Map.drop(Map.get(p, :pet_xp) || %{}, gone))
+          |> then(&if(&1.pet in gone, do: Map.put(&1, :pet, nil), else: &1))
+
+        {p, where} =
+          if pet in (Map.get(p, :pets) || []),
+            do: {Pets.give_sealed(p, pet), "vào túi dạng Ấn (bạn đã có một con)"},
+            else:
+              {Map.put(p, :pets, (Map.get(p, :pets) || []) ++ [pet]),
+               "đã về, dắt theo ở tab Nhân vật"}
+
+        {%{
+           ok: true,
+           msg: "🐉🐦 Long Vương và Chim Lạc hòa làm một: #{Data.pet(pet).name} #{where}!",
+           rare_pet: pet
+         }, p}
+    end
+  end
+
   @doc "Đã có Hắc Long (thường hoặc Chân Thân)."
   def owned?(p), do: Enum.any?(Map.get(p, :pets) || [], &(&1 in pets()))
 

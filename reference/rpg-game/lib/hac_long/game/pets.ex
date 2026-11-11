@@ -19,7 +19,7 @@ defmodule HacLong.Game.Pets do
   `pet_xp: %{id => số trận}`.
   """
 
-  alias HacLong.Game.{Bestiary, Data}
+  alias HacLong.Game.{Bestiary, Data, Gear}
 
   # số ở `RULES.pets` (`priv/game_data/rules.json`)
   @rules Data.rules().pets
@@ -347,6 +347,87 @@ defmodule HacLong.Game.Pets do
         {%{ok: true, msg: "#{pet.name} về nhà với bạn! (#{pet.desc})"}, p}
     end
   end
+
+  # ---------- Ấn thú (DECISIONS "Thú thành vật phẩm") ----------
+  # Thú đóng ấn thành một món riêng (`seal_<id>`, giữ kinh nghiệm `xp`) để bán chợ / giao dịch; mở ấn thì về lại thú.
+
+  @doc "Mã món Ấn của thú `id`."
+  def seal_item(id), do: "seal_" <> id
+
+  @doc "Thú của món Ấn `base` (nil nếu không phải Ấn)."
+  def sealed_pet("seal_" <> id), do: id
+  def sealed_pet(_), do: nil
+
+  @doc "Một món Ấn thú `id` với kinh nghiệm `xp` (thú mới câu / ghép: 0)."
+  def sealed(id, xp \\ 0), do: Gear.new(seal_item(id)) |> Map.put(:xp, xp)
+
+  @doc "Cho thú `id` vào túi dạng Ấn (đã có con cùng loại, vd câu được Long Vương lần nữa)."
+  def give_sealed(p, id, xp \\ 0), do: p |> Gear.add(sealed(id, xp)) |> elem(0)
+
+  @doc "Đóng ấn thú `id` đang có: thành món Ấn trong túi (giữ cấp), thú rời khỏi danh sách; đang dắt thì cho ở nhà."
+  def seal(p, id) do
+    cond do
+      p.battle != nil ->
+        {%{ok: false, msg: "Đang trong trận."}, p}
+
+      id not in owned(p) or Data.item(seal_item(to_string(id))) == nil ->
+        {%{ok: false, msg: "Bạn không có con thú này."}, p}
+
+      true ->
+        xp = xp(p, id)
+
+        p =
+          p
+          |> Map.put(:pets, owned(p) -- [id])
+          |> Map.put(:pet_xp, Map.delete(Map.get(p, :pet_xp) || %{}, id))
+          |> then(&if(&1.pet == id, do: Map.put(&1, :pet, nil), else: &1))
+          |> give_sealed(id, xp)
+
+        {%{
+           ok: true,
+           msg: "📦 Đã đóng ấn #{data(id).name} (cấp #{level_of_xp(id, xp)}): món Ấn ở túi đồ."
+         }, p}
+    end
+  end
+
+  @doc "Mở ấn món `uid`: nhận lại thú (giữ cấp). Đã có con cùng loại thì không mở được."
+  def unseal(p, uid) do
+    g = Gear.find(p, uid)
+    id = g && sealed_pet(g.base)
+
+    cond do
+      p.battle != nil ->
+        {%{ok: false, msg: "Đang trong trận."}, p}
+
+      id == nil ->
+        {%{ok: false, msg: "Không phải Ấn thú."}, p}
+
+      g[:locked] ->
+        {%{ok: false, msg: "Món đang khóa."}, p}
+
+      id in owned(p) ->
+        {%{
+           ok: false,
+           msg:
+             "Bạn đã có #{data(id).name}: đóng ấn con đang có trước, hoặc bán / tặng món Ấn này."
+         }, p}
+
+      true ->
+        p =
+          p
+          |> Gear.remove(uid)
+          |> Map.put(:pets, owned(p) ++ [id])
+          |> Map.put(:pet_xp, Map.put(Map.get(p, :pet_xp) || %{}, id, g[:xp] || 0))
+
+        {%{
+           ok: true,
+           msg:
+             "🐾 Mở ấn: #{data(id).name} cấp #{level_of_xp(id, g[:xp] || 0)} đã về. Dắt theo ở tab Nhân vật."
+         }, p}
+    end
+  end
+
+  defp level_of_xp(id, xp), do: level(%{pet_xp: %{id => xp}}, id)
 
   @doc "Dắt theo thú `id` (đã mua), hoặc `nil` để cho ở nhà."
   def choose(p, nil), do: {%{ok: true, msg: "Thú cưng ở nhà."}, Map.put(p, :pet, nil)}

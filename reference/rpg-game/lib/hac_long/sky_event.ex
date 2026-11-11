@@ -185,9 +185,12 @@ defmodule HacLong.SkyEvent do
   def handle_info(:tick, s) do
     Process.send_after(self(), :tick, @tick_ms)
 
-    if s.bird && s.hoi == nil && now() >= s.hoi_next && HacLong.LakeEvent.tile() != nil,
-      do: {:noreply, start_hoi(s)},
-      else: {:noreply, s}
+    # Long Phượng Hội đã bỏ (DECISIONS "Thú thành vật phẩm"): Hắc Long ghép ở Lão Hỗn Nguyên; tự mở hội chỉ khi
+    # `RULES.sky.hoi.enabled` (quản trị / test vẫn gọi `summon(:hoi)` được)
+    if r().hoi[:enabled] == true && s.bird && s.hoi == nil && now() >= s.hoi_next &&
+         HacLong.LakeEvent.tile() != nil,
+       do: {:noreply, start_hoi(s)},
+       else: {:noreply, s}
   end
 
   def handle_info({:hoi_end, id}, %{hoi: %{id: id}} = s) do

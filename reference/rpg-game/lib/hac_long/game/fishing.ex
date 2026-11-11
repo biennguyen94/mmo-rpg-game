@@ -155,12 +155,18 @@ defmodule HacLong.Game.Fishing do
     owned = Map.get(p, :pets) || []
 
     if pet in owned do
-      {r, p} = land(p, @dragon.dupe)
+      # đã có Long Vương: con mới vào túi dạng Ấn (bán chợ / giao dịch được; DECISIONS "Thú thành vật phẩm")
+      p =
+        p
+        |> HacLong.Game.Pets.give_sealed(pet)
+        |> Map.put(:fish_caught, Map.get(p, :fish_caught, 0) + 1)
+        |> Map.put(:long_khi, 0)
 
       {%{
-         r
-         | msg:
-             "🐉 Long Vương trồi lên nhìn bạn, nhả lại một #{Data.item(@dragon.dupe).name} rồi lặn mất."
+         ok: true,
+         msg:
+           "🐉 Câu được thêm một #{Data.pet(pet).name}! Bạn đã có một con nên Ngài vào túi dạng Ấn (bán ở chợ, giao dịch, hoặc mở ấn khi chưa có).",
+         rare_pet: pet
        }, p}
     else
       p =

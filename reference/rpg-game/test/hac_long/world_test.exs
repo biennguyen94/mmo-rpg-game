@@ -252,11 +252,11 @@ defmodule HacLong.WorldTest do
     assert Enum.all?(Maps.get("lair_1").gather, &(&1.item in ~w(herb_rare ore_rare)))
   end
 
-  test "Đài Phúc Lành (B-26): chạm nhận phúc lành theo bản đồ, gục thì hồi sinh cạnh đài", %{
-    uid: uid,
-    p: p
-  } do
-    alias HacLong.Game.Blessing
+  test "Đá Dịch Chuyển (Đài Phúc Lành đã bỏ): chạm thì ghi nhận, không phúc lành, gục thì về Làng",
+       %{
+         uid: uid,
+         p: p
+       } do
     two = Maps.get("forest_2")
     {wx, wy} = two.waystone.at
     {sx, sy} = two.waystone.spawn
@@ -265,25 +265,13 @@ defmodule HacLong.WorldTest do
 
     dir = if sy > wy, do: "up", else: "down"
     assert sx == wx
-    {%{ok: true, blessing: true, msg: msg}, p} = World.move(p, uid, dir)
-    assert msg =~ "Đài Phúc Lành" and msg =~ "hồi sinh"
+    {%{ok: true, msg: msg}, p} = World.move(p, uid, dir)
+    assert msg =~ "Đá Dịch Chuyển"
     assert p.waystones == ["forest_2"]
-    k = Blessing.kind("forest_2")
-    r = Blessing.rules()
-    assert %{map: "forest_2", kind: ^k, left: left} = p.blessing
-    assert left == r.battles
-    assert Blessing.bonus(p, String.to_atom(k)) == r.pct
+    assert p[:blessing] == nil
 
-    # hết một trận bớt một; hết phúc lành vẫn giữ điểm hồi sinh
-    assert Blessing.tick(p).blessing.left == left - 1
-    spent = put_in(p.blessing.left, 0)
-    assert Blessing.bonus(spent, String.to_atom(k)) == 0
-    assert Blessing.respawn(spent) == %{map: "forest_2", x: sx, y: sy}
-
-    # gục ngã: về cạnh đài; chưa chạm đài nào thì về Làng
-    lost = %{spent | battle: %{over: true, result: "lose"}}
-    assert World.finish_encounter(lost, uid).pos == %{map: "forest_2", x: sx, y: sy}
-    assert World.finish_encounter(%{lost | blessing: nil}, uid).pos.map == "village"
+    lost = %{p | battle: %{over: true, result: "lose"}}
+    assert World.finish_encounter(lost, uid).pos.map == "village"
   end
 
   # Phase 13: máu quái đang bị đánh phát cho cả bản đồ; nhả ra thì giữ máu, hồi dần (B-25)

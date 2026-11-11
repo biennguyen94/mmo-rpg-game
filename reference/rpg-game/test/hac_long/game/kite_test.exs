@@ -98,10 +98,10 @@ defmodule HacLong.Game.KiteTest do
     assert r.rare_pet == "chim_lac"
     assert "chim_lac" in p.pets and Kite.phong_khi(p) == 0
 
-    # đã có: được Mảnh Sao
+    # đã có: con mới vào túi dạng Ấn (DECISIONS "Thú thành vật phẩm")
     {r2, p2} = Kite.land_bird(p)
-    refute Map.has_key?(r2, :rare_pet)
-    assert p2.inv["manh_sao"] == Kite.rules().bird.dupe_n
+    assert r2.rare_pet == "chim_lac" and p2.pets == p.pets
+    assert [%{base: "seal_chim_lac", xp: 0}] = Enum.filter(p2.gear, &(&1.base == "seal_chim_lac"))
   end
 
   test "Đàn Hạc: quà theo bảng riêng, +3 Phong Khí; Ông Lão: đủ lượt thì thưởng một lần; ghép Sáo Đồng" do

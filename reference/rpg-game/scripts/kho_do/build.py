@@ -477,7 +477,7 @@ def pet_price(pt):
         return (f"🪁 thả diều ở Đồi Sáo Diều khi Chim Lạc lượn (mỗi giờ, {B['stay'] // 60} phút): trúng ô 1/{n(round(1 / B['chance']))}, "
                 f"đầy Phong Khí + Sáo Đồng 1/{n(round(1 / (B['chance'] * (1 + B['phong_khi_max'] / B['phong_khi_div']) * B['bait_mult'])))}")
     if pt["id"] in (R["sky"]["egg"]["pet"], R["sky"]["egg"]["rare_pet"]):
-        return f"🥚 nở từ Bọc Trăm Trứng (Long Phượng Hội){' — ' + pct(R['sky']['egg']['rare_chance']) if pt['id'] == R['sky']['egg']['rare_pet'] else ''}"
+        return f"🐉 ghép ở Lão Hỗn Nguyên từ Long Vương + Chim Lạc cấp tối đa (100%){' — ' + pct(R['sky']['egg']['rare_chance']) + ' ra Chân Thân' if pt['id'] == R['sky']['egg']['rare_pet'] else ''}"
     _k = 1 + DRG['long_khi_max'] / DRG['long_khi_div']
     return (f"🎣 câu ở {E(D['lake']['name'])} (cấp {D['lake']['min_level']}+) khi Ngài nổi (mỗi giờ một lần, {DRG['stay'] // 60} phút): "
             f"thả trúng ô Ngài 1/{n(round(1 / DRG['chance']))} mỗi lần, đầy Long Khí + Mồi Rồng 1/{n(round(1 / (DRG['chance'] * _k * DRG['bait_mult'])))}")
@@ -636,7 +636,6 @@ pk_rows = [
     ("Động Bí Ẩn", f"Ban đêm, mở {pct(SEC['open_chance'])} số đêm; trùm {SEC['boss_from_h']}h–{SEC['boss_to_h']}h", _YES, _normal + " Động tối, khó thấy người tới.", "Người chơi vẽ trên bản đồ + chấm hồng ở bản đồ nhỏ: dễ phát hiện hơn."),
     ("Hồ Long Vương, Đàn Cá Vàng", "Theo giờ", _YES, _normal + " Người đang câu cá cũng bị đánh.", "—"),
     ("Đồi Sáo Diều (Chim Lạc, Đàn Hạc, mưa sao băng)", f"Chim Lạc mỗi {R['sky']['bird']['every'] // 3600} giờ ({R['sky']['bird']['stay'] // 60} phút), Đàn Hạc ~{R['sky']['flock']['every'] // 60} phút, sao băng ban đêm; cấp 30+", _YES, _normal + " Người đang thả diều cũng bị đánh.", "Mới: bản đồ thả diều cạnh Hồ Long Vương."),
-    ("Long Phượng Hội (Tế Đàn)", f"Khi Long Vương và Chim Lạc cùng hiện; {R['sky']['hoi']['stay'] // 60} phút", _YES + " (Tế Đàn không phải vùng an toàn)", _normal + " Người đứng trong vòng sáng làm lễ vẫn bị đồ sát được.", "Mới: vòng sáng làm lễ nhận Bọc Trăm Trứng / hưởng lộc."),
     ("Bản đồ vùng, vùng chuyển sinh", "—", _YES, _normal, "—"),
     ("Làng", "—", _NO, "Vùng an toàn.", "—"),
 ]
@@ -688,10 +687,8 @@ SKY_HTML = f"""<p>Bản đồ <b>Đồi Sáo Diều</b> (cổng mép phải Hồ
     <div class="card"><h3>🪁 Ông Lão Làm Diều</h3><p class="note">Việc mỗi ngày: thả thành công {SKR['elder']['count']} lần ở đồi → vàng, kinh nghiệm, +{SKR['elder']['phong_khi']} Phong Khí. Ghép {_iname('sao_dong')}: {', '.join(f'{n} {_iname(i)}' for i, n in SKR['craft']['sao_dong'].items())}.</p></div>
   </div>
   <h3>🐉 Hắc Long — Con Rồng Cháu Tiên</h3>
-  <p>Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh Bọc Trăm Trứng. Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi <b>cùng lúc</b>: <b>Long Phượng Hội</b> — vòng sáng ở Tế Đàn ({SKR['hoi']['at'][0]}, {SKR['hoi']['at'][1]}), bán kính {SKR['hoi']['radius']} ô, {SKR['hoi']['stay'] // 60} phút, báo cả server; sau mỗi hội chờ {SKR['hoi']['cooldown'] // 60} phút.</p>
-  <ul><li><b>Làm lễ</b> (đủ điều kiện): có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long, chưa có Hắc Long / trứng → mất hết Long Khí, Phong Khí, nhận Bọc Trăm Trứng.</li>
-    <li><b>Hưởng lộc</b> (chưa đủ): +{SKR['hoi']['lucky_qi']} Long Khí và Phong Khí, mỗi hội một lần.</li>
-    <li><b>Ấp trứng</b>: nở khi hạ {SKR['egg']['kills']} quái, hoặc sau {SKR['egg']['days']} ngày, hoặc hạ Hắc Long thêm một lần. {pct(SKR['egg']['rare_chance'])} nở ra Hắc Long Chân Thân. Người đầu tiên của server được báo riêng.</li></ul>
+  <p>Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh Hắc Long. <b>Ghép ở Lão Hỗn Nguyên</b> (Làng): có cả hai con <b>cấp tối đa</b> → tỉ lệ 100%, mất cả hai thú, nhận Hắc Long ({pct(SKR['egg']['rare_chance'])} ra Hắc Long Chân Thân); đã có Hắc Long thì con mới vào túi dạng Ấn. Long Phượng Hội đã bỏ.</p>
+  <p><b>Thú thành vật phẩm</b>: mọi thú đóng ấn được ở tab Thú cưng (📦 Đóng ấn → món "Ấn &lt;tên&gt; · cấp N" trong túi, giữ cấp), bán ở chợ / giao dịch; mở ấn ở túi đồ khi chưa có con cùng loại. Câu / thả diều được Long Vương, Chim Lạc khi đã có thì con mới vào túi dạng Ấn (không còn đền bù Cá Chép Vàng / Mảnh Sao).</p>
   <div class="scroll"><table><thead><tr><th>Thú</th><th>Chỉ số (cấp 1; mỗi cấp +8 %, tối đa 30)</th></tr></thead><tbody>
     {''.join(f"<tr><td><b>{E(_pet[i]['name'])}</b></td><td>{E(_pet[i]['desc'])}</td></tr>" for i in ['long_vuong', 'chim_lac', 'hac_long', 'hac_long_chan'] if i in _pet)}
   </tbody></table></div>
@@ -787,7 +784,7 @@ rule_items = [
     ("May mắn khi ép", f"cộng {luck_up}, trần {pct(LS['luck_max_rate'])}; với bảng ép hiện tại cao nhất là {pct(luck_real)}."),
     ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số (máu / MP cộng số theo cấp thú), không đánh trong trận."),
     ("Nhiều nhân vật", f"mỗi tài khoản tối đa {R['account']['max_characters']} nhân vật, một nhân vật online một lúc. <b>Thủ Kho</b> (đồ thường, đồ hiếm kèm cấp ép, vàng, chỗ mở rộng) dùng chung cả tài khoản; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần. Bạn bè, bang, thư, chợ, đồ sát, đấu trường tính riêng từng nhân vật; xóa nhân vật thì đồ trên nhân vật đó mất hẳn."),
-    ("Đài Phúc Lành", f"chạm vào: phúc lành của bản đồ ({R['blessing']['battles']} trận, +{pct(R['blessing']['pct'])} kinh nghiệm / vàng / công / thủ / máu tùy đài) và thành điểm hồi sinh khi gục."),
+    ("Đá Dịch Chuyển (ô W)", "Đài Phúc Lành và Rương Gia Truyền đã bỏ: chạm ô W chỉ ghi nhận Đá Dịch Chuyển của bản đồ, không ban phúc, gục ngã thì về Làng."),
     ("Bot (người chơi máy)", f"ép đồ như người thật khi dư vàng (giữ lại {R['bots']['forge']['gold_keep_per_level']} × cấp vàng mua bình): +1 → +9 món đang mặc cấp thấp nhất trước, từ +7 chỉ khi dư {R['bots']['forge']['spare']} viên ngọc; thêm dòng Ngọc Sinh Mệnh cho vũ khí, áo giáp; ghép / nâng cánh; +10 / +11 chỉ khoảng 1/{R['bots']['forge']['daring_every']} số bot. Cấp tối đa thì chuyển sinh, cần chúa tể thì đi vùng chuyển sinh săn. Bot không được báo cả server (trừ khi câu được Long Vương), không vào bảng xếp hạng. Bot cũng ra Hồ Long Vương câu cá, nhận việc Ông Lão; Long Vương nổi thì khoảng 1/{R['bots']['fish']['chase_every']} số bot (và mọi bot try hard) ra hồ săn, cơ hội như người chơi. Khoảng 1/{R['bots']['tryhard']['every']} số bot là bot try hard: luôn ép liều, nghỉ ít, leo Tháp và câu cá thường hơn."),
 ]
 rule_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in rule_items)

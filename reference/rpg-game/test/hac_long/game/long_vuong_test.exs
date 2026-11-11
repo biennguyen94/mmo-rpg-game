@@ -2,7 +2,7 @@ defmodule HacLong.Game.LongVuongTest do
   # DECISIONS "Long Vương" (+ "Biển Long Vương"): Biển Long Vương, câu được thú hiếm, Mồi Rồng, ba kỹ năng, Bia Long Vương
   use HacLong.DataCase, async: false
 
-  alias HacLong.Game.{Achievements, Crafting, Data, Engine, Fishing, Pets, Rng}
+  alias HacLong.Game.{Achievements, Crafting, Data, Engine, Fishing, Gear, Pets, Rng}
   alias HacLong.World.Maps
   alias HacLong.{RarePets, World}
 
@@ -166,11 +166,37 @@ defmodule HacLong.Game.LongVuongTest do
     assert HacLong.LakeEvent.tile() == nil
   end
 
-  test "mỗi nhân vật một con: đã có thì được Cá Chép Vàng" do
-    p = with_pet(angler(), 1)
+  test "đã có Long Vương: con mới vào túi dạng Ấn; đóng ấn / mở ấn giữ cấp; ghép Hắc Long ở Lão Hỗn Nguyên" do
+    p = with_pet(angler(), 5)
     {r, p} = Fishing.land_dragon(p)
-    refute r[:rare_pet]
-    assert p.inv["fish_gold"] == 1 and p.pets == ["long_vuong"]
+    assert r.rare_pet == "long_vuong" and p.pets == ["long_vuong"]
+    assert [card] = Enum.filter(p.gear, &(&1.base == "seal_long_vuong"))
+    assert Gear.resolve(card).name =~ "cấp 1"
+
+    # đã có con cùng loại: không mở được; đóng ấn con đang có (giữ cấp 5) rồi mở con mới
+    assert {%{ok: false}, _} = Pets.unseal(p, card.uid)
+    {%{ok: true}, p} = Pets.seal(p, "long_vuong")
+    assert p.pets == [] and p.pet == nil
+    [old] = Enum.filter(p.gear, &(&1.base == "seal_long_vuong" and &1.xp > 0))
+    assert Gear.resolve(old).name =~ "cấp 5"
+    {%{ok: true}, p} = Pets.unseal(p, old.uid)
+    assert Pets.level(p, "long_vuong") == 5
+
+    # ghép Hắc Long: cần Long Vương và Chim Lạc cấp tối đa; xong mất cả hai, có Hắc Long
+    assert {%{ok: false, msg: "Chưa ghép được" <> _}, _} = HacLong.Game.DragonEgg.combine(p)
+    top = Pets.xp_for(Pets.max_level("long_vuong"))
+
+    full =
+      p
+      |> Map.put(:pets, ["long_vuong", "chim_lac"])
+      |> Map.put(:pet_xp, %{
+        "long_vuong" => top,
+        "chim_lac" => Pets.xp_for(Pets.max_level("chim_lac"))
+      })
+
+    Rng.put_sequence([0.99])
+    {r, p} = HacLong.Game.DragonEgg.combine(full)
+    assert r.ok and r.rare_pet == "hac_long" and p.pets == ["hac_long"]
   end
 
   test "không bán ở Người Nuôi Thú; không tính vào thành tựu đủ thú; có danh hiệu Long Vương Chủ" do

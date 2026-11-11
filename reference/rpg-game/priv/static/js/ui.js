@@ -1159,9 +1159,7 @@
     if (!pet) return '';
     if (Date.now() - hacAt > 60000) { hacAt = Date.now(); loadBoard('hac_board'); }
     return `<div class="card"><div class="row"><img class="sprite" src="${asset('sky/hac_long.png')}" alt=""><div class="grow"><h3>🐉 ${esc(pet.name)} — Con Rồng Cháu Tiên</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
-      <p class="small">Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh <b>Bọc Trăm Trứng</b>. Khi Long Vương nổi ở hồ và Chim Lạc lượn ở đồi <b>cùng lúc</b>, cả server được báo <b>Long Phượng Hội</b>: vòng sáng mở ở Tế Đàn ${Math.round(H.stay / 60)} phút. Đủ điều kiện thì bước vào vòng làm lễ; người khác vào vòng được hưởng lộc +${H.lucky_qi} Long Khí, Phong Khí.</p>
-      <p class="small"><b>Điều kiện:</b> có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long. ${miss.length ? `Bạn còn thiếu: ${miss.map((x) => `<b>${esc(x)}</b>`).join(', ')}.` : '<b style="color:var(--good)">Bạn đã đủ điều kiện!</b>'}</p>
-      <p class="small">Trứng nở khi hạ đủ ${fmt(E.kills)} quái, hoặc sau ${E.days} ngày, hoặc hạ Hắc Long thêm một lần. ${Math.round(E.rare_chance * 100)}% nở ra <b>Hắc Long Chân Thân</b>.</p></div>
+      <p class="small">Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh ra Hắc Long. Có cả hai con <b>cấp tối đa</b> thì tới <b>Lão Hỗn Nguyên</b> ở Làng ghép: tỉ lệ 100%, mất cả hai thú, nhận <b>Hắc Long</b> (${Math.round((E.rare_chance || 0) * 100)}% ra <b>Hắc Long Chân Thân</b>). Thú câu / thả diều được thêm, thú đóng ấn đều bán được ở chợ.${miss.length ? '' : ''}</p></div>
       <div class="card"><h3>Bia Hắc Long</h3>${boardList(hacBoard, 'Chưa ai thuần phục được Hắc Long. Người đầu tiên sẽ được cả server nhớ tên.')}</div>`;
   }
   // Tế Đàn khi có Long Phượng Hội: nút làm lễ
@@ -2955,7 +2953,7 @@
         <div class="bar xp" style="height:6px;margin:4px 0" title="${L.next ? `${L.xp}/${L.next} trận` : 'Cấp tối đa'}"><i style="width:${pct}%"></i></div>
         <div class="small muted">${L.next ? `${fmt(L.xp)}/${fmt(L.next)} trận thắng` : 'Cấp tối đa'}</div>
         ${petStats(petView(pt.id))}</div>
-      ${P.pet === pt.id ? '<button class="btn" data-act="pet_choose" data-id="">Để ở nhà</button>' : `<button class="btn primary" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`}</div>`;
+      ${P.pet === pt.id ? '<button class="btn" data-act="pet_choose" data-id="">Để ở nhà</button>' : `<button class="btn primary" data-act="pet_choose" data-id="${pt.id}">Dắt theo</button>`}${ITEMS['seal_' + pt.id] ? `<button class="btn" data-act="pet_seal" data-id="${pt.id}" title="Đóng ấn thành món trong túi (giữ cấp) để bán chợ / giao dịch">📦 Đóng ấn</button>` : ''}</div>`;
     }).join('')}</div></div>`;
   }
 
@@ -3261,7 +3259,9 @@
       : wearable ? `<button class="btn primary" data-act="equip" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Trang bị</button>${canLeft(it) ? `<button class="btn" data-act="equip" data-hand="left" data-id="${esc(id)}" ${low ? 'disabled' : ''}>Cầm tay trái</button>` : ''}${lockBtn}`
       // bình mana: sáng khi MP chưa đầy; bình máu: khi máu chưa đầy (như server `Engine.use_potion/2`)
       : it.slot === 'potion' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}" ${(it.mana ? (P.mp || 0) >= d.maxMp : P.hp >= d.maxHp) ? 'disabled' : ''}>Dùng</button>`
-      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>` : '';
+      : it.slot === 'food' ? `<button class="btn primary" data-act="use" data-id="${esc(id)}">${it.drink ? 'Uống' : 'Ăn'}</button>`
+      // Ấn thú (DECISIONS "Thú thành vật phẩm"): mở ấn nhận lại thú (chưa có con cùng loại)
+      : it.slot === 'petcard' ? `<button class="btn primary" data-act="pet_unseal" data-id="${esc(id)}" ${(P.pets || []).includes(it.pet) ? 'disabled title="Đã có con cùng loại"' : ''}>🐾 Mở ấn</button>` : '';
     const n = isGear(id) ? 1 : P.inv[id] || 0;
 
     // mở từ bảng đồ nhận sau trận (`at.loot` = số vừa nhặt): nút Hủy đúng số đó
@@ -3692,6 +3692,14 @@
 
   // Máy Hỗn Nguyên, một nhóm công thức: làm được lên đầu, chưa đủ nguyên liệu gập lại
   const CHAOS_NOTE = { wing: 'Thất bại thì mất nguyên liệu, vàng và <b style="color:var(--bad)">mất luôn món đồ</b> bỏ vào. Đồ cấp nâng cao hơn thì dễ thành hơn (tối đa 60%).', lines: 'Thất bại thì mất nguyên liệu và vàng, món đồ vẫn giữ. Đồ đã khóa không bỏ vào máy được.', misc: 'Thất bại thì mất nguyên liệu và vàng.' };
+  function hacCombineCard() {
+    const ids = ['long_vuong', 'chim_lac'], pets = P.pets || [];
+    const miss = ids.filter((id) => !pets.includes(id) || petLevel(id).lv < petMax(id));
+    const nm = (id) => esc((PETS.find((x) => x.id === id) || {}).name || id);
+    return `<div class="card"><h3>🐉 Ghép Hắc Long</h3><p class="small">${nm('long_vuong')} và ${nm('chim_lac')} (cả hai cấp tối đa) hòa làm một: <b>Hắc Long</b>, tỉ lệ 100% (hiếm khi ra Hắc Long Chân Thân). Mất cả hai thú; đã có Hắc Long thì con mới vào túi dạng Ấn.</p>
+      ${miss.length ? `<p class="small muted">Còn thiếu: ${miss.map((id) => `<b>${nm(id)}</b> ${pets.includes(id) ? `cấp ${petLevel(id).lv}/${petMax(id)}` : '(chưa có)'}`).join(', ')}.</p>` : ''}
+      <button class="btn ${miss.length ? '' : 'primary'} block" data-act="hac_combine" ${miss.length ? 'disabled' : ''}>🐉 Ghép Hắc Long</button></div>`;
+  }
   function chaosCard(grp) {
     const rs = CHAOS.filter((r) => chaosGroup(r) === grp);
     const ready = rs.filter((r) => chaosState(r).ok), lack = rs.filter((r) => !chaosState(r).ok);
@@ -3999,6 +4007,8 @@
     if (n.role === 'chaos') {
       const t = npcTabs(n.id, [['up', 'Ép +10/+11', forgeReady(true)], ['wing', 'Cánh', chaosReady('wing')], ['lines', 'Pha dòng', chaosReady('lines')], ['misc', 'Ngọc & vé', chaosReady('misc')]], 'up');
       sections.push(t.bar, t.active === 'up' ? chaosUpgradeCard() : chaosCard(t.active));
+      // ghép Hắc Long (thay Long Phượng Hội): Long Vương + Chim Lạc cấp tối đa, 100%
+      sections.push(hacCombineCard());
     }
     if (n.role === 'tienlen') {
       sections.push(`<div class="card">${n.lines.map((l) => `<p>“${esc(l)}”</p>`).join('')}
@@ -4405,6 +4415,8 @@
       case 'pet_buy': case 'pet_tame': return { act, id: d.id };
       case 'pet_feed': return { act };
       case 'pet_choose': return { act, id: d.id || null };
+      case 'pet_seal': return { act, id: d.id };
+      case 'pet_unseal': return { act, uid: d.id };
       case 'title_set': return { act, id: d.id || null };
       default: return { act };
     }

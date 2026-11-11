@@ -198,20 +198,31 @@ defmodule HacLong.Game.Commands do
       "pet_feed" ->
         at_npc(p, ["pets"], "Người Nuôi Thú ở Làng", fn _ -> Pets.feed(p) end)
 
+      "pet_seal" ->
+        Pets.seal(p, c["id"])
+
+      "pet_unseal" ->
+        Pets.unseal(p, c["uid"])
+
       "pet_choose" ->
         Pets.choose(p, c["id"])
 
       "chest_buy" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ -> Chests.buy(p, c["tier"]) end)
 
+      # Rương Gia Truyền đã bỏ (DECISIONS "Bỏ Rương Gia Truyền, Đài Phúc Lành")
       "chest_open" ->
-        at_npc(p, ["chest"], "Rương Gia Truyền ở Làng", fn _ ->
-          Chests.open_daily(p, Daily.today())
-        end)
+        {%{ok: false, msg: "Rương Gia Truyền đã bỏ."}, p}
 
       "upgrade" ->
         at_npc(p, ["shop"], "Thợ Rèn ở Làng", fn _ ->
           Engine.upgrade(p, c["id"] || c["slot"], c["confirm"] == true)
+        end)
+
+      # ghép Hắc Long từ Long Vương + Chim Lạc cấp tối đa (DECISIONS "Thú thành vật phẩm")
+      "hac_combine" ->
+        at_npc(p, ["chaos"], "Lão Hỗn Nguyên ở Làng", fn _ ->
+          HacLong.Game.DragonEgg.combine(p)
         end)
 
       # Phase 20: ép +10 / +11 kiểu MU ở Máy Hỗn Nguyên (DECISIONS B-13)

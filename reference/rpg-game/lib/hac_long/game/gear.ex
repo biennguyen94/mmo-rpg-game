@@ -149,7 +149,16 @@ defmodule HacLong.Game.Gear do
       sell: price(g)
     })
     |> anc_def(base, g)
+    |> seal_name(g)
   end
+
+  # Ấn thú: tên kèm cấp của thú (chợ, giao dịch, túi đồ thấy ngay cấp)
+  defp seal_name(%{pet: id} = it, g) when is_binary(id) do
+    lv = HacLong.Game.Pets.level(%{pet_xp: %{id => g[:xp] || 0}}, id)
+    Map.merge(it, %{name: "#{it.name} · cấp #{lv}", pet_level: lv})
+  end
+
+  defp seal_name(it, _g), do: it
 
   @doc "Giá bán: giá đồ gốc tăng theo số dòng cộng thêm, Excellent, May mắn / Kỹ năng, đồ Thần."
   def price(g) do
@@ -608,6 +617,8 @@ defmodule HacLong.Game.Gear do
       m = if g["skill"] == true, do: Map.put(m, :skill, true), else: m
       m = if g["anc"] == true, do: Map.put(m, :anc, true), else: m
       m = if g["wopt"] in @wopt_ids, do: Map.put(m, :wopt, g["wopt"]), else: m
+      # Ấn thú (`seal_<id>`): kinh nghiệm của thú đã đóng ấn
+      m = if is_integer(g["xp"]), do: Map.put(m, :xp, g["xp"]), else: m
       opt = max(int(g["opt"]), int(g["rarity"])) |> min(@life.max_lines)
       m = if opt > 0, do: Map.put(m, :opt, opt), else: m
       exc = for e <- g["exc"] || [], e in @exc_ids, do: e

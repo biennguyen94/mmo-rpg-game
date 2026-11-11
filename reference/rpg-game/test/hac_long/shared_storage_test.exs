@@ -90,12 +90,12 @@ defmodule HacLong.SharedStorageTest do
     {:ok, b} = Accounts.character_slot(acct)
     hero(b, "Mo Lai", %{pos: %{map: "village", x: 13, y: 13}})
 
-    assert {%{ok: true}, _} = Session.command(a, %{"act" => "chest_open"})
+    # Rương Gia Truyền đã bỏ (DECISIONS "Bỏ Rương Gia Truyền, Đài Phúc Lành")
+    assert {%{ok: false, msg: "Rương Gia Truyền đã bỏ."}, _} =
+             Session.command(a, %{"act" => "chest_open"})
+
     Session.stop(a)
-
-    assert {%{ok: false, msg: "Hôm nay tài khoản đã mở rương" <> _}, _} =
-             Session.command(b, %{"act" => "chest_open"})
-
+    assert {%{ok: true}, _} = Session.command(b, %{"act" => "move", "dir" => "up"})
     Session.stop(b)
 
     # quà mọi người: một thư cho tài khoản, vào nhân vật chơi gần nhất (b vừa lưu sau a)

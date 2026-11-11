@@ -813,8 +813,8 @@ defmodule HacLong.World do
         do: p,
         else: Map.put(p, :waystones, known ++ [map.id])
 
-    {msg, p} = HacLong.Game.Blessing.touch(p, map)
-    {%{ok: true, blessing: true, msg: msg}, p}
+    # Đài Phúc Lành đã bỏ (DECISIONS "Bỏ Rương Gia Truyền, Đài Phúc Lành"): ô W là Đá Dịch Chuyển, chạm thì ghi nhận
+    {%{ok: true, msg: "🗿 Đá Dịch Chuyển ở #{map.name} đã ghi nhận bạn."}, p}
   end
 
   @doc """

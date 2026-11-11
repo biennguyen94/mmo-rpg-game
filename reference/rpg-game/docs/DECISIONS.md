@@ -1986,3 +1986,15 @@ Số ở `RULES.secret`, `HacLong.World.Secret`, `HacLong.World.SecretWatch` (ca
   (`Engine.scale_event/2`: máu / thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k), thưởng × (1 + reward_per_rebirth
   × k)). Vùng chuyển sinh không áp (đã có chúa tể theo mốc).
 - Chuyển sinh tối đa `RULES.character.rebirth_per_day` (2) lần mỗi ngày (giờ Việt Nam), đếm trong `daily.rebirths`.
+
+## Thú thành vật phẩm; bỏ Long Phượng Hội, Rương Gia Truyền, Đài Phúc Lành — Phase 5 (2026-11-11, anh duyệt)
+- Mỗi thú có món **Ấn** (`seal_<id>`, slot `petcard`, đồ riêng từng món giữ `xp` của thú; tên hiện "Ấn <thú> · cấp N"). Tab Thú cưng:
+  📦 Đóng ấn (thú rời danh sách, đang dắt thì cho ở nhà). Túi đồ: 🐾 Mở ấn (chưa có con cùng loại). Ấn bán chợ / giao dịch như đồ
+  riêng (`Gear.load` giữ `xp`). Nên một nhân vật có thể có nhiều Long Vương / Chim Lạc / Hắc Long (dạng Ấn).
+- Câu được Long Vương / thả diều được Chim Lạc khi đã có: con mới vào túi dạng Ấn (cấp 1), bỏ đền bù Cá Chép Vàng / Mảnh Sao;
+  vẫn ghi Bia (chủ thứ n).
+- **Bỏ Long Phượng Hội** (`RULES.sky.hoi.enabled: false`). Hắc Long ghép ở **Lão Hỗn Nguyên** (`hac_combine`,
+  `DragonEgg.combine/1`): có Long Vương và Chim Lạc cấp tối đa → 100%, mất cả hai, nhận Hắc Long (`egg.rare_chance` ra Chân Thân);
+  đã có Hắc Long thì con mới vào túi dạng Ấn. Trứng đang ấp vẫn nở như cũ.
+- **Bỏ Rương Gia Truyền** (NPC ở Làng; `chest_open` báo đã bỏ). Rương Gỗ / Bạc / Vàng bán ở Thợ Rèn là món khác, giữ.
+- **Bỏ Đài Phúc Lành**: ô W là Đá Dịch Chuyển, chạm chỉ ghi nhận (không ban phúc, không còn điểm hồi sinh cạnh đài: gục về Làng).
