@@ -2048,3 +2048,4 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Đồ sát / đấu trực tiếp: đối thủ dùng kỹ năng thì hiệu ứng theo hệ bay **từ đối thủ về mình** rồi mới trúng (`EV.skill` với `rev`;
   tên kỹ năng tra trong mọi lớp), cả ở màn trận lẫn ⚡ trên bản đồ.
 - Đấu trực tiếp bật ⚡: đánh ngay trên bản đồ như đồ sát nhanh (trước luôn mở màn trận riêng), hiệu ứng như đồ sát.
+- Hồ Tỷ Thí thu nhỏ 29×20 → 19×13: hồ sen nhỏ giữa có cầu gỗ bắc ngang, lối đi vòng quanh; hai người xuất hiện hai đầu cầu (1, 6) / (17, 6), cách 16 ô.
