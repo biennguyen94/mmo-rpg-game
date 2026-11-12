@@ -2052,3 +2052,9 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - ⚡ Đánh nhanh: (vốn đã) mỗi lượt duyệt combo từ bước 1, dùng bước đầu tiên dùng được, nên hết vòng tự quay lại kỹ năng đầu khi
   hồi chiêu xong; chỉ đánh thường khi mọi bước đang hồi chiêu / thiếu MP. Thêm: còn kỹ năng hồi chiêu xong mà chỉ thiếu MP và có bình
   mana uống được thì uống mana (kể cả MP còn trên ngưỡng %), không đánh thường. Màn combo nhắc đặt Đòn thường cuối danh sách.
+
+## Nhịp đánh người (2026-11-12, anh yêu cầu: "người 1 vừa xuất chiêu đã thấy người 2 đánh trả, làm thật hơn")
+- ⚡ khi đánh người (đồ sát, đấu trực tiếp): server ra lệnh mỗi `quick.pvp_tick_ms` = 1100 ms thay vì `tick_ms` 600 ms (`QuickFight.tick_ms/1`).
+  Hai bên cùng nhịp nên vẫn công bằng; trận dài hơn khoảng gấp đôi. Đánh quái giữ nguyên 600 ms.
+- Phía trình duyệt: hiệu ứng của mình trúng hẳn (650 ms) rồi đối thủ mới vung chiêu (480 ms) và trúng mình. Lượt mới tới
+  khi hiệu ứng lượt trước chưa xong thì xếp hàng phía sau, trễ tối đa ~1,5 s (quá thì bỏ phần trễ để hình không lệch xa máu thật).

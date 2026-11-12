@@ -16,6 +16,10 @@ defmodule HacLong.Game.QuickFight do
   @auto Data.rules().auto
 
   def tick_ms, do: @r.tick_ms
+
+  @doc "Nhịp ⚡ theo trận: đánh người (đồ sát / đấu trực tiếp) chậm hơn (`pvp_tick_ms`) để hai bên ra đòn xen kẽ, thấy rõ."
+  def tick_ms(%{battle: %{encounter: %{slay: s}}}) when not is_nil(s), do: @r.pvp_tick_ms
+  def tick_ms(_p), do: @r.tick_ms
   def max_steps, do: @r.max_steps
 
   defp cfg(p), do: Map.get(p, :auto_cfg) || %{}

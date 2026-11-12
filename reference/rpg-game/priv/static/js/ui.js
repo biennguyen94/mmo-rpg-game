@@ -1372,6 +1372,8 @@
     const log = b.log || [], n0 = prev.log.length;
     const fresh = log.length >= n0 ? log.slice(n0) : log.slice(-4);
     const ev = [];
+    // đánh người: đòn của mình trúng hẳn rồi đối thủ mới vung chiêu đánh trả (không dồn sát nhau)
+    const pvp = !!prev.slay, GAP = pvp ? 650 : 380, WIND = pvp ? 480 : 300;
     let delay = 0;
     for (const l of fresh) {
       if (l.who === 'me') {
@@ -1380,12 +1382,12 @@
         else if (l.heal != null && !l.potion && k) ev.push({ type: 'buff', element: k.element, heal: true, delay });
         else if (l.dmg != null && !l.dot) ev.push(k ? { type: 'skill', element: k.element, crit: !!l.crit, delay } : { type: 'attack', cls: P.cls, crit: !!l.crit, delay });
         else if (k && l.dmg == null && l.heal == null) ev.push({ type: 'buff', element: k.element, heal: false, delay });
-        delay += 380;
+        delay += GAP;
       } else if (l.who === 'foe' && l.dmg > 0 && !l.dot) {
-        const fs = prev.slay && foeSkillFx(l, delay);
-        if (fs) { ev.push(fs); delay += 300; }
+        const fs = pvp && foeSkillFx(l, delay);
+        if (fs) { ev.push(fs); delay += WIND; }
         ev.push({ type: 'hurt', crit: l.dmg > (P.view.derived.maxHp || 1) * 0.25, element: l.el, delay });
-        delay += 380;
+        delay += GAP;
       }
     }
     if (b.over && !prev.over && b.result === 'win') {
@@ -1393,8 +1395,18 @@
       const items = lootFx(b.reward);
       if (items.length) ev.push({ type: 'loot', delay: delay + 650, items });
     }
-    if (ev.length) BattleFx.run(ev, () => Map_.fightSpots());
+    if (!ev.length) return;
+    // đánh người: lượt mới tới khi hiệu ứng lượt trước chưa xong thì xếp hàng phía sau (tối đa trễ ~1,5 giây, quá thì
+    // bỏ phần trễ để hình không tụt quá xa so với máu thật)
+    if (pvp) {
+      const now = performance.now(), wait = Math.max(0, fxBusyUntil - now);
+      const lag = wait > 1500 ? 0 : wait;
+      ev.forEach((e) => { e.delay = (e.delay || 0) + lag; });
+      fxBusyUntil = now + lag + delay;
+    }
+    BattleFx.run(ev, () => Map_.fightSpots());
   }
+  let fxBusyUntil = 0;
   // Người chơi trên bản đồ: bảng chọn (nhiều người / có quái cùng ô) và menu một người (Hồ sơ, Giao dịch, Tổ đội, Đồ sát)
   let pickUi = null;
   const pickPerson = (id) => Map_.players().find((o) => o.id === id);
@@ -4367,8 +4379,8 @@
     // đồ sát / đấu trực tiếp: kỹ năng của đối thủ bay về mình trước khi trúng
     const pvp = b.encounter && b.encounter.slay != null;
     const fsl = pvp && newLog.find((l) => l.who === 'foe' && l.dmg > 0 && foeSkillFx(l, 0));
-    if (fsl) ev.push(foeSkillFx(fsl, 380));
-    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: fsl ? 700 : 380 });
+    if (fsl) ev.push(foeSkillFx(fsl, 650));
+    if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: fsl ? 1130 : pvp ? 650 : 380 });
     // thông thạo kỹ năng lên cấp
     const ml = newLog.find((l) => l.text.startsWith('📘') && / lên cấp \d+!/.test(l.text));
     if (ml) ev.push({ type: 'mastery', text: ml.text.replace(/^📘\s*/, ''), delay: 450 });

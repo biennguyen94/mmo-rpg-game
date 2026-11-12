@@ -81,7 +81,7 @@ await shot(B.page, 'mapplayers-slay-B.png');
 const seenDuel = await C.page.waitForFunction(([a, b]) => window.__hl.world().players.some((o) => (o.name === a || o.name === b) && o.duel), [A.name, B.name], { timeout: 8000 }).then(() => true).catch(() => false);
 R.check('C thấy A / B đang đồ sát (⚔, máu)', seenDuel);
 await shot(C.page, 'mapplayers-spectator.png');
-for (const X of [A, B]) await X.page.waitForFunction(() => { const q = window.__hl.player(); return q && !q.battle; }, null, { timeout: 90000 }).catch(() => null);
+for (const X of [A, B]) await X.page.waitForFunction(() => { const q = window.__hl.player(); return q && !q.battle; }, null, { timeout: 200000 }).catch(() => null);
 const end = (await Promise.all([A, B].map((X) => X.page.evaluate(() => { const q = window.__hl.player(); return !!q && !q.battle; })))).every(Boolean);
 const deaths = await Promise.all([A, B].map((X) => X.page.evaluate(() => window.__hl.player().deaths)));
 R.check('server tự đánh tới khi có người gục, hai bên tự rời màn trận', end && deaths.some((d) => d >= 1), JSON.stringify({ end, deaths }));

@@ -1688,7 +1688,7 @@ defmodule HacLong.Game.Session do
     {:reply, _value, s, _t} =
       handle({:command, cmd, :auto}, nil, fresh(%{s | auto_timer: :busy}))
 
-    arm_auto(%{s | auto_timer: nil}, QuickFight.tick_ms())
+    arm_auto(%{s | auto_timer: nil}, QuickFight.tick_ms(s.player))
   end
 
   defp auto_snapshot(%{pos: %{map: id}}),
@@ -1703,7 +1703,7 @@ defmodule HacLong.Game.Session do
         %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || AutoHunt.delay(p, nil))}
 
       QuickFight.active?(p) ->
-        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || QuickFight.tick_ms())}
+        %{s | auto_timer: Process.send_after(self(), :auto_tick, ms || QuickFight.tick_ms(p))}
 
       true ->
         s
