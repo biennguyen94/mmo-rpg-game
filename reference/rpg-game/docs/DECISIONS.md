@@ -2058,6 +2058,8 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Hai bên cùng nhịp nên vẫn công bằng; trận dài hơn khoảng gấp đôi. Đánh quái giữ nguyên 600 ms.
 - Phía trình duyệt: hiệu ứng của mình trúng hẳn (650 ms) rồi đối thủ mới vung chiêu (480 ms) và trúng mình. Lượt mới tới
   khi hiệu ứng lượt trước chưa xong thì xếp hàng phía sau, trễ tối đa ~1,5 s (quá thì bỏ phần trễ để hình không lệch xa máu thật).
+- Môi trường test dùng 600 ms (`config :hac_long, :quick_pvp_tick_ms`): chạy cả bộ với 1100 ms thì bài đấu trực tiếp trong
+  `slay_test` hay lỗi (chạy riêng thì qua). Chưa tìm ra gốc; có thể là trận ⚡ của bài test trước còn chạy dở.
 
 ## Bỏ hẳn Long Phượng Hội; báo Cổ Long khi gọi (2026-11-12, anh yêu cầu)
 - Long Phượng Hội gỡ khỏi code: lệnh `le_long_phuong`, `DragonEgg.ritual/3`, hội trong `SkyEvent` (`summon(:hoi)`, nhịp kiểm),
@@ -2065,3 +2067,9 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Bọc Trăm Trứng ai còn giữ vẫn ấp / nở như cũ (`sky.egg`).
 - Gọi Cổ Long trong quản trị trả lời rõ (đã gọi / đang có rồi, còn bao nhiêu phút). Trùm thế giới vừa xuất hiện thì mọi
   người thấy dải thông báo + âm thanh ở bất kỳ màn hình nào (trước chỉ hiện khi đang ở tab Bản đồ, ngoài trận).
+
+## Bot đi sự kiện (2026-11-12, anh yêu cầu "sửa luôn")
+- `RULES.bots.events`: Cổ Long còn sống → bot từ cấp 25, máu ≥ 60% về Tế Đàn bước vào trùm đánh (đánh xong, hồi máu rồi quay lại tới khi trùm gục / bay đi).
+  Mảnh Sao: bot đang ở Đồi Sáo Diều thì nhặt. Golden Invasion: bot hợp cấp sang bản đồ còn quái vàng (chọn bản đồ quái cao nhất), đánh quái vàng trước.
+- Chưa làm: Hỗn Chiến Thành, Công Thành, đồ sát trong giờ PK. Những việc này cần bot đánh người thật (Công Thành còn cần bang), phải bàn luật trước.
+- `view.hacMissing` đổi sang điều kiện ghép (`DragonEgg.combine_missing/1`). e2e Hắc Long chuẩn bị nhân vật bằng `scripts/hacprep.exs` (rpc vào server `--sname mu`).

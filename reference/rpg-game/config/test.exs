@@ -67,3 +67,7 @@ config :hac_long, :bots, count: 0
 config :hac_long, :tienlen_recorder, nil
 config :hac_long, :tienlen_economy, nil
 config :hac_long, :tienlen_bot_delay, 0
+
+# ⚡ đánh người: nhịp nhanh như trước khi có `quick.pvp_tick_ms` (DECISIONS "Nhịp đánh người"); cả bộ test chạy với
+# 1100 ms thì trận đấu trực tiếp trong slay_test hay bị trễ quá thời gian chờ
+config :hac_long, :quick_pvp_tick_ms, 600

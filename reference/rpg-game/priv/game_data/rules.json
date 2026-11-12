@@ -1137,6 +1137,8 @@
       "verified": false
     },
     "bots": {
+      "_events_doc": "DECISIONS \"Bot đi sự kiện\": Cổ Long còn sống thì bot từ min_level, máu ≥ hp_pct về Tế Đàn (map) chạm trùm đánh; ở Đồi Sáo Diều có Mảnh Sao thì nhặt (star); Golden Invasion đang chạy thì bot hợp cấp (bản đồ có quái không quá cấp mình + 1) sang bản đồ còn quái vàng, đánh quái vàng trước.",
+      "events": {"world_boss": {"map": "altar", "min_level": 25, "hp_pct": 0.6}, "star": true, "invasion": true},
       "count": 0,
       "_count_doc": "Số bot mặc định (0 = không chạy bot; đặt HL_BOTS trong .env để bật, vd. HL_BOTS=10). 20 → 0 (DECISIONS \"Bot mặc định 0\").",
       "rest_after_death_s": [30, 90],

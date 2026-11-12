@@ -151,4 +151,44 @@ defmodule HacLong.Bots.BrainTest do
     # trận gục ngã còn mở (bảng kết quả) thì vẫn rời trận như thường
     refute Brain.resting?(Map.put(p, :battle, %{over: true}), 5_000, 1_000)
   end
+
+  # DECISIONS "Bot đi sự kiện"
+  test "sự kiện: Cổ Long còn sống thì về Tế Đàn bước vào trùm; Mảnh Sao ở đồi thì nhặt; Golden Invasion sang bản đồ hợp cấp" do
+    all = HacLong.Game.Data.zones() |> Enum.map(& &1.boss.id)
+
+    p =
+      Map.merge(player(), %{
+        level: 30,
+        bosses: all,
+        gold: 100_000,
+        pos: %{map: "village", x: 10, y: 10}
+      })
+
+    d = Engine.derived(p)
+    p = %{p | hp: d.maxHp}
+    assert Brain.world_boss_job(p, d, %{}) == nil
+    assert Brain.world_boss_job(%{p | level: 10}, d, %{world_boss: true}) == nil
+    # ở Làng: dịch chuyển / đi về Tế Đàn
+    assert %{"act" => act} = Brain.world_boss_job(p, d, %{world_boss: true})
+    assert act in ["travel", "move"]
+    # đứng cạnh ô trùm ở Tế Đàn: bước vào, xác nhận đánh trùm
+    {bx, by} = Maps.get("altar").world_boss
+    near = %{p | pos: %{map: "altar", x: bx, y: by + 1}}
+
+    assert %{"act" => "move", "dir" => "up", "confirm" => true} =
+             Brain.world_boss_job(near, d, %{world_boss: true})
+
+    hill = HacLong.Game.Kite.map_id()
+    on_hill = %{p | pos: %{map: hill, x: 5, y: 5}}
+
+    assert %{"act" => "star_pick", "x" => 6, "y" => 5} =
+             Brain.star_job(on_hill, nil, %{stars: [[6, 5], [30, 20]]})
+
+    assert Brain.star_job(p, nil, %{stars: [[6, 5]]}) == nil
+
+    lv1 = player()
+    assert Brain.invasion_map(lv1, %{"forest_1" => "run", "lair_1" => "run"}) == "forest_1"
+    assert Brain.invasion_map(lv1, %{"forest_1" => "done"}) == nil
+    assert Brain.invasion_map(lv1, %{}) == nil
+  end
 end

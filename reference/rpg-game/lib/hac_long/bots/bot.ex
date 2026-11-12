@@ -140,6 +140,10 @@ defmodule HacLong.Bots.Bot do
     {dragon, school} = lake_tiles(p)
     {bird, flock} = HacLong.SkyEvent.tiles()
     snap = p && snapshot(p)
+
+    # sự kiện (DECISIONS "Bot đi sự kiện"): Cổ Long, Mảnh Sao (chỉ hỏi khi đang ở đồi), Golden Invasion
+    hill? = p != nil and p.pos.map == HacLong.Game.Kite.map_id()
+    inv = HacLong.Invasion.status()
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
 
     cmd =
@@ -159,6 +163,9 @@ defmodule HacLong.Bots.Bot do
             school: school,
             bird: bird,
             flock: flock,
+            world_boss: HacLong.WorldBoss.hp() != nil,
+            stars: if(hill?, do: HacLong.SkyEvent.public().stars, else: []),
+            invasion: if(inv.active, do: inv.maps, else: %{}),
             reeling: s.reeling,
             avoid: Brain.avoiding(s.deaths_at, now)
           })

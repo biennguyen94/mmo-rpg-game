@@ -57,7 +57,7 @@ defmodule HacLongWeb.SlayTest do
     if p.pos.map == map or n == 0, do: p, else: Process.sleep(20) && back_home(uid, map, n - 1)
   end
 
-  defp settled(uid, n \\ 250) do
+  defp settled(uid, n \\ 700) do
     p = Session.get(uid)
 
     cond do

@@ -1351,7 +1351,7 @@ defmodule HacLongWeb.GameChannel do
             HacLong.Game.Kite.phong_khi(player)
           ),
         egg: HacLong.Game.DragonEgg.progress(player, System.os_time(:second)),
-        hacMissing: HacLong.Game.DragonEgg.missing(player),
+        hacMissing: HacLong.Game.DragonEgg.combine_missing(player),
         # Thương Nhân Chợ Nổi: món hôm nay, đã mua mấy lần
         trader: HacLong.Game.Trader.view(player, Daily.today()),
         # Động Bí Ẩn: cửa đêm nay có mở không (Lão Từ nói, cổng hiện khe đá phát sáng)

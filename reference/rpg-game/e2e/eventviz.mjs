@@ -21,7 +21,14 @@ const hud = (X) => X.page.evaluate(() => window.MapView.hudLines());
 
 // ---------- C1 / C2: trùm thế giới ----------
 await admin('world_boss_off', A.name).catch(() => null);
-await admin('world_boss', A.name).catch(() => null);
+// gọi Cổ Long: quản trị được trả lời rõ; người chơi khác (đang ở tab nào cũng vậy) thấy dải báo
+await C.page.click('#tabs [data-tab="menu"]').catch(() => null);
+const call = await admin('world_boss', A.name).catch(() => ({}));
+R.check('quản trị gọi Cổ Long: có thông báo "Đã gọi …"', /Đã gọi .*Tế Đàn/.test(call.msg || ''), JSON.stringify(call.msg || call));
+const tick = await C.page.waitForFunction(() => [...document.querySelectorAll('.ticker')].some((e) => /xuất hiện ở Tế Đàn/.test(e.textContent)), null, { timeout: 8000 }).then(() => true).catch(() => false);
+R.check('Cổ Long xuất hiện: người chơi khác (tab Menu) thấy dải báo', tick);
+const again = await admin('world_boss', A.name).catch(() => ({}));
+R.check('gọi lần nữa khi đang có: báo "đang ở Tế Đàn rồi"', /đang ở Tế Đàn rồi/.test(again.msg || ''), JSON.stringify(again.msg || again));
 await send(A.page, { act: 'travel', to: 'altar' }).catch(() => null);
 await A.page.waitForFunction(() => window.__hl.player().pos.map === 'altar', null, { timeout: 8000 }).catch(() => null);
 await A.page.click('#tabs [data-tab="map"]').catch(() => null);

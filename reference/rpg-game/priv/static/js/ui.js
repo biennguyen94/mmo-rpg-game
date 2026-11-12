@@ -1154,7 +1154,7 @@
   }
   // Hắc Long: truyền thuyết, điều kiện làm lễ, Bia Hắc Long
   function hacCard() {
-    const E = SKY.egg || {}, pet = PETS.find((x) => x.id === E.pet), miss = P.view.hacMissing || [];
+    const E = SKY.egg || {}, pet = PETS.find((x) => x.id === E.pet);
     if (!pet) return '';
     if (Date.now() - hacAt > 60000) { hacAt = Date.now(); loadBoard('hac_board'); }
     return `<div class="card"><div class="row"><img class="sprite" src="${asset('sky/hac_long.png')}" alt=""><div class="grow"><h3>🐉 ${esc(pet.name)} — Con Rồng Cháu Tiên</h3><div class="small muted">${esc(pet.desc)}</div></div></div>

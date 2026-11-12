@@ -24,6 +24,10 @@ defmodule HacLong.Bots.Brain do
       bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
       (`realm_target/2`; DECISIONS "Bot cuối game").
 
+  16. Sự kiện (DECISIONS "Bot đi sự kiện", `RULES.bots.events`): Cổ Long còn sống (`opts.world_boss`) → về Tế Đàn đánh;
+      Mảnh Sao trên Đồi Sáo Diều (`opts.stars`) → nhặt; Golden Invasion (`opts.invasion`, bản đồ còn quái vàng) → sang
+      bản đồ hợp cấp, đánh quái vàng trước.
+
   15. Câu cá (DECISIONS "Bot câu cá, bot try hard"): Long Vương nổi thì bot săn rồng (`chaser?/1`, chưa có Ngài) bỏ việc
       rảnh, kể cả đang leo Tháp Vô Tận, ra Biển Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
       Đàn Cá Vàng hoặc ô nước cạnh bên, câu đủ cá thì nhận việc Ông Lão. Bot try hard (`tryhard?/1`) chơi dồn dập hơn.
@@ -127,6 +131,12 @@ defmodule HacLong.Bots.Brain do
       cmd = fish_job(p, snap, opts, :chase) ->
         cmd
 
+      cmd = world_boss_job(p, d, opts) ->
+        cmd
+
+      cmd = star_job(p, snap, opts) ->
+        cmd
+
       job = event_job(p, d) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
@@ -146,9 +156,63 @@ defmodule HacLong.Bots.Brain do
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
       true ->
-        roam(p, snap, opts[:seed] || 0, opts[:avoid] || [])
+        roam(p, snap, opts)
     end
   end
+
+  # ---------- Sự kiện (DECISIONS "Bot đi sự kiện") ----------
+  @ev Data.rules().bots.events
+
+  @doc "Cổ Long còn sống (`opts.world_boss`): bot đủ cấp, đủ máu về Tế Đàn, bước vào ô trùm (vào trận luôn)."
+  def world_boss_job(p, d, opts) do
+    wb = @ev.world_boss
+    altar = opts[:world_boss] == true && Maps.get(wb.map)
+
+    cond do
+      !altar or altar.world_boss == nil -> nil
+      p.level < wb.min_level or p.hp < d.maxHp * wb.hp_pct -> nil
+      p.pos.map != altar.id -> go_to(p, altar.id)
+      true -> walk(p, altar, [altar.world_boss], nil)
+    end
+  end
+
+  @doc "Mảnh Sao (`opts.stars`, `[[x, y]]`) trên Đồi Sáo Diều, bot đang ở đồi: đứng cạnh thì nhặt, xa thì đi tới."
+  def star_job(p, snap, opts) do
+    stars = for [x, y] <- opts[:stars] || [], do: {x, y}
+    hill = HacLong.Game.Kite.map_id()
+
+    if @ev.star and stars != [] and p.pos.map == hill do
+      me = {p.pos.x, p.pos.y}
+      {x, y} = Enum.min_by(stars, &dist(me, &1))
+
+      if dist(me, {x, y}) <= 1,
+        do: %{"act" => "star_pick", "x" => x, "y" => y},
+        else: walk(p, Maps.get(hill), [{x, y}], snap)
+    end
+  end
+
+  @doc """
+  Golden Invasion đang chạy (`opts.invasion`: `%{id bản đồ => "run" | "boss" | "done"}`): bản đồ còn quái vàng, hợp cấp
+  (như `target_map/2`: quái không quá cấp mình + 1), chọn bản đồ quái cao nhất; nil nếu không có.
+  """
+  def invasion_map(p, inv) when is_map(inv) and map_size(inv) > 0 do
+    if @ev.invasion do
+      for {id, st} <- inv,
+          st in ["run", "boss"],
+          m = Maps.get(id),
+          m != nil and reachable?(p, m),
+          lo = World.min_level(m),
+          lo != nil and lo <= p.level,
+          hi = max_level(m),
+          hi <= p.level + 1 do
+        {hi, id}
+      end
+      |> Enum.max(fn -> nil end)
+      |> then(&(&1 && elem(&1, 1)))
+    end
+  end
+
+  def invasion_map(_p, _inv), do: nil
 
   # ---------- Câu cá, săn Long Vương (DECISIONS "Bot câu cá, bot try hard") ----------
   @fish Data.rules().bots.fish
@@ -1115,10 +1179,12 @@ defmodule HacLong.Bots.Brain do
   defp reachable?(p, %{zone: zi}) when is_integer(zi), do: Engine.zone_unlocked?(p, zi)
   defp reachable?(_p, _m), do: true
 
-  defp roam(p, snap, seed, avoid) do
+  defp roam(p, snap, opts) do
+    {seed, avoid} = {opts[:seed] || 0, opts[:avoid] || []}
     here = p.pos.map
     realm = realm_target(p, avoid)
-    target = boss_room(p, avoid) || realm || target_map(p, seed)
+    inv = !realm && invasion_map(p, opts[:invasion])
+    target = boss_room(p, avoid) || realm || inv || target_map(p, seed)
 
     cond do
       here != target ->
@@ -1128,6 +1194,10 @@ defmodule HacLong.Bots.Brain do
       realm ->
         lord = (need(p) || %{})[:id]
         hunt_first(p, snap, lord) || hunt(p, snap, fn _m, _map -> true end)
+
+      # Golden Invasion: quái vàng trước
+      inv == here ->
+        hunt(p, snap, fn m, _map -> m[:gold] == true end, false) || hunt(p, snap)
 
       true ->
         hunt(p, snap)
