@@ -2081,3 +2081,8 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   `endless_hp_pct` = 0.02. Nhân sau mọi phần cộng (đồ, cánh, thú, Excellent), trước máu cộng thẳng của thú.
 - Bot cộng điểm: khoảng `bots.vit_share` = 30% vào Thể lực (trước: dồn hết vào chỉ số chính).
 - Màn chuyển sinh ghi "+8% máu tối đa". Bảng hệ số đồ sát (`pvp.class_taken_by_rebirth`) chạy lại sau thay đổi này.
+- Chạy lại cân bằng PvP (`scripts/pvp/tune.exs`): trước thay đổi bảng đã lệch 16–38% từ CS1, sau +8% máu Elf thắng
+  91–99%. `TUNE=1 WRITE=1` cho cả đồ sát và Đấu trường (`PVP=arena`); chỉnh tay đồ sát CS2 (MG 0.77) và CS6 (Elf 1.05).
+  Kết quả: đồ sát lệch ≤10% mọi mốc, Đấu trường ≤10% mọi mốc (test `--only balance` cho phép 15%).
+- Mô phỏng hành trình (`mix hac_long.journey`) 10 và 3 lần chuyển sinh đều quá 2 giờ trên máy 4 nhân → chưa có số so
+  sánh trước/sau cho phần đánh quái.
