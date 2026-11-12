@@ -19,6 +19,8 @@ await p.waitForFunction(() => window.__hl.player().level === 30, null, { timeout
 await p.click('#tabs [data-tab="menu"]');
 await p.click('[data-menu="skills"]');
 await p.waitForSelector('#combo-card');
+// combo chưa lưu được điền sẵn theo bộ kỹ năng: bỏ hết rồi thêm 2 bước
+for (let i = 0; i < 8 && (await p.$('[data-act="combo-rm"]')); i++) await p.click('[data-act="combo-rm"]');
 await p.click('[data-act="combo-add"]');
 await p.click('[data-act="combo-add"]');
 await p.selectOption('[data-combo-id="1"]', 'attack');
