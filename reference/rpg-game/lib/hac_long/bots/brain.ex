@@ -91,7 +91,7 @@ defmodule HacLong.Bots.Brain do
 
     cond do
       p.points > 0 ->
-        %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
+        alloc(p)
 
       # đã thả câu, tiến trình bot hẹn giờ giật cần (`opts.reeling`): đứng yên chờ
       opts[:reeling] == true and (p[:fishing] != nil or p[:kite] != nil) ->
@@ -158,6 +158,23 @@ defmodule HacLong.Bots.Brain do
       true ->
         roam(p, snap, opts)
     end
+  end
+
+  @doc """
+  Cộng điểm (DECISIONS "Máu theo chuyển sinh"): khoảng `RULES.bots.vit_share` số điểm đã cộng vào Thể lực, còn lại vào
+  chỉ số chính của lớp.
+  """
+  def alloc(p) do
+    base = Data.class(p.cls).base
+    spent = Enum.sum(Map.values(p.stats)) - Enum.sum(Map.values(base))
+
+    need =
+      Map.get(base, :vit, 0) + round(@shop.vit_share * (spent + p.points)) -
+        Map.get(p.stats, :vit, 0)
+
+    if need > 0,
+      do: %{"act" => "alloc", "stat" => "vit", "n" => min(p.points, need)},
+      else: %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
   end
 
   # ---------- Sự kiện (DECISIONS "Bot đi sự kiện") ----------

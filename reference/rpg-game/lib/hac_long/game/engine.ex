@@ -269,8 +269,10 @@ defmodule HacLong.Game.Engine do
 
     %{
       maxHp:
-        round((lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct)) +
-          Pets.flat(p, :hp),
+        round(
+          (lin.(f.hp) + gear_hp + sb.hp + anc.hp + wo.hp) * pet.(:hp) * (1 + exc.hp_pct) *
+            rebirth_hp_mult(Map.get(p, :rebirths) || 0)
+        ) + Pets.flat(p, :hp),
       maxMp: round((lin.(f.mp) + wo.mp) * (1 + exc.mp_pct)) + Pets.flat(p, :mp),
       atk:
         round(
@@ -4046,6 +4048,15 @@ defmodule HacLong.Game.Engine do
   end
 
   def rebirth_points, do: @rebirth_points
+
+  @doc """
+  Hệ số máu tối đa theo số lần chuyển sinh `n` (DECISIONS "Máu theo chuyển sinh"): `1 + rebirth_hp_pct × n` tới
+  `max_rebirths`, mỗi lần sau đó thêm `endless_hp_pct`.
+  """
+  def rebirth_hp_mult(n) when n <= @max_rebirths, do: 1 + @char.rebirth_hp_pct * n
+
+  def rebirth_hp_mult(n),
+    do: 1 + @char.rebirth_hp_pct * @max_rebirths + @char.endless_hp_pct * (n - @max_rebirths)
 
   defp count_rebirth_today(p) do
     n = rebirths_today(p) + 1

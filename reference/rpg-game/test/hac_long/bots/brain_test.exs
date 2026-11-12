@@ -53,9 +53,11 @@ defmodule HacLong.Bots.BrainTest do
              Brain.decide(live.(%{p | hp: 5, inv: %{"potion_s" => 2}}, true), nil)
   end
 
-  test "còn điểm thì cộng vào chỉ số chính của lớp" do
-    assert %{"act" => "alloc", "stat" => "ene", "n" => 7} =
-             Brain.decide(%{player("dw") | points: 7}, nil)
+  test "còn điểm: khoảng 30% vào Thể lực (RULES.bots.vit_share), còn lại vào chỉ số chính của lớp" do
+    p = %{player("dw") | points: 10}
+    assert %{"act" => "alloc", "stat" => "vit", "n" => 3} = Brain.decide(p, nil)
+    p = %{p | points: 7, stats: %{p.stats | vit: p.stats.vit + 3}}
+    assert %{"act" => "alloc", "stat" => "ene", "n" => 7} = Brain.decide(p, nil)
   end
 
   test "máu thấp ngoài trận: có bình thì uống; hết bình, không vàng thì về Làng uống giếng" do

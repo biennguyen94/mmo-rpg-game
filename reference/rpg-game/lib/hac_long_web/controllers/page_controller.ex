@@ -94,6 +94,7 @@ defmodule HacLongWeb.PageController do
             :skill_dmg
           ]),
         rebirthPoints: Engine.rebirth_points(),
+        rebirthHpPct: Engine.rebirth_hp_mult(1) - 1,
         rebirthXpPct: Data.rules().character.rebirth_xp_pct,
         maxRebirths: Engine.max_rebirths(),
         endlessPoints: Data.rules().character.endless_points,

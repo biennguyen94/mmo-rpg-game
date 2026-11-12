@@ -2073,3 +2073,11 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Mảnh Sao: bot đang ở Đồi Sáo Diều thì nhặt. Golden Invasion: bot hợp cấp sang bản đồ còn quái vàng (chọn bản đồ quái cao nhất), đánh quái vàng trước.
 - Chưa làm: Hỗn Chiến Thành, Công Thành, đồ sát trong giờ PK. Những việc này cần bot đánh người thật (Công Thành còn cần bang), phải bàn luật trước.
 - `view.hacMissing` đổi sang điều kiện ghép (`DragonEgg.combine_missing/1`). e2e Hắc Long chuẩn bị nhân vật bằng `scripts/hacprep.exs` (rpc vào server `--sname mu`).
+
+## Máu theo chuyển sinh (2026-11-12, anh chọn hướng A)
+- Vấn đề: cấp tối đa 50, mỗi lần chuyển sinh chỉ +25 điểm (dồn hết Thể lực mới +250 máu), trong khi quái vùng chuyển
+  sinh mỗi vùng mạnh thêm ~12% công → càng chuyển sinh nhân vật càng mỏng so với vùng của mình.
+- Máu tối đa × (1 + `character.rebirth_hp_pct` × n), `rebirth_hp_pct` = 0.08 (CS10: +80%); quá 10 lần mỗi lần thêm
+  `endless_hp_pct` = 0.02. Nhân sau mọi phần cộng (đồ, cánh, thú, Excellent), trước máu cộng thẳng của thú.
+- Bot cộng điểm: khoảng `bots.vit_share` = 30% vào Thể lực (trước: dồn hết vào chỉ số chính).
+- Màn chuyển sinh ghi "+8% máu tối đa". Bảng hệ số đồ sát (`pvp.class_taken_by_rebirth`) chạy lại sau thay đổi này.

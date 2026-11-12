@@ -13,6 +13,9 @@
       "rebirth_xp_pct": 0.25,
       "rebirth_lord_from": 1,
       "endless_points": 10,
+      "rebirth_hp_pct": 0.08,
+      "endless_hp_pct": 0.02,
+      "_rebirth_hp_doc": "DECISIONS \"Máu theo chuyển sinh\": máu tối đa × (1 + rebirth_hp_pct × n) sau lần chuyển sinh n (tới max_rebirths), mỗi lần sau mốc thêm endless_hp_pct.",
       "_endless_doc": "Chuyển sinh vô hạn (DECISIONS \"Chuyển sinh vô hạn\"): quá max_rebirths (10) vẫn chuyển sinh được; mỗi lần sau mốc 10 chỉ thêm endless_points điểm (điểm sau lần n = max_rebirths × rebirth_points + (n − max_rebirths) × endless_points), kinh nghiệm lên cấp như mốc 10; muốn chuyển sinh lần n + 1 (n ≥ max_rebirths) phải đã hạ chúa tể vùng chuyển sinh max_rebirths tổng cộng n − max_rebirths + 1 lần. Quái sự kiện, đồ sát, đấu trường tính như mốc max_rebirths.",
       "_rebirth_doc": "Chuyển sinh (DECISIONS \"Chuyển sinh: thêm kinh nghiệm, điểm, điều kiện chúa tể\"): sau lần chuyển sinh n được n × rebirth_points điểm tiềm năng (trước 15); kinh nghiệm lên cấp × (1 + rebirth_xp_pct × n); từ n ≥ rebirth_lord_from muốn chuyển sinh lần n + 1 phải từng hạ chúa tể vùng chuyển sinh n.",
       "rest_per_level": 4,
@@ -1139,6 +1142,8 @@
     "bots": {
       "_events_doc": "DECISIONS \"Bot đi sự kiện\": Cổ Long còn sống thì bot từ min_level, máu ≥ hp_pct về Tế Đàn (map) chạm trùm đánh; ở Đồi Sáo Diều có Mảnh Sao thì nhặt (star); Golden Invasion đang chạy thì bot hợp cấp (bản đồ có quái không quá cấp mình + 1) sang bản đồ còn quái vàng, đánh quái vàng trước.",
       "events": {"world_boss": {"map": "altar", "min_level": 25, "hp_pct": 0.6}, "star": true, "invasion": true},
+      "vit_share": 0.3,
+      "_vit_share_doc": "DECISIONS \"Máu theo chuyển sinh\": bot cộng điểm sao cho khoảng vit_share số điểm đã cộng vào Thể lực, còn lại vào chỉ số chính.",
       "count": 0,
       "_count_doc": "Số bot mặc định (0 = không chạy bot; đặt HL_BOTS trong .env để bật, vd. HL_BOTS=10). 20 → 0 (DECISIONS \"Bot mặc định 0\").",
       "rest_after_death_s": [30, 90],
