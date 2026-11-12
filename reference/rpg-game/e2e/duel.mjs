@@ -53,8 +53,9 @@ await A.page.evaluate(([x, y]) => window.__hl.walkTo(x - 1, y), [bp.x, bp.y]);
 await A.page.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return Math.max(Math.abs(q.x - x), Math.abs(q.y - y)) <= 1; }, [bp.x, bp.y], { timeout: 30000 }).catch(() => null);
 await A.page.evaluate((u) => window.Net.slay(u).catch(() => null), uidB);
 await A.page.waitForFunction(() => { const b = window.__hl.player().battle; return !!(b && b.encounter && b.encounter.duel); }, null, { timeout: 8000 }).catch(() => null);
-const st = await A.page.evaluate(() => { const p = window.__hl.player(); return { duel: !!(p.battle && p.battle.encounter.duel), full: p.hp === p.view.derived.maxHp, eyebrow: (document.querySelector('.stage .eyebrow') || {}).textContent || '' }; });
-R.check('A vào trận đấu trực tiếp, đầy máu, nhãn "⚔ Đấu trường trực tiếp"', st.duel && st.full && /Đấu trường trực tiếp/.test(st.eyebrow), JSON.stringify(st));
+const st = await A.page.evaluate(() => { const p = window.__hl.player(); return { duel: !!(p.battle && p.battle.encounter.duel), full: p.hp === p.view.derived.maxHp, quick: !!(p.view.autoCfg || {}).quick, eyebrow: (document.querySelector('.stage .eyebrow') || {}).textContent || '' }; });
+// bật ⚡ thì đánh ngay trên bản đồ (như đồ sát nhanh), không mở màn trận có nhãn
+R.check('A vào trận đấu trực tiếp, đầy máu (màn trận có nhãn "⚔ Đấu trường trực tiếp", hoặc bật ⚡ thì đánh trên bản đồ)', st.duel && st.full && (st.quick || /Đấu trường trực tiếp/.test(st.eyebrow)), JSON.stringify(st));
 await shot(A.page, 'duel-live.png');
 await A.page.waitForFunction(() => { const b = window.__hl.player().battle; return !b || b.over; }, null, { timeout: 120000 }).catch(() => null);
 await B.page.waitForFunction(() => { const b = window.__hl.player().battle; return !b || b.over; }, null, { timeout: 20000 }).catch(() => null);
