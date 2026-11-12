@@ -457,7 +457,7 @@ tower_rows = "".join(
 SL, AR, GW = R["slay"], R["arena"], R["guild_war"]
 REACHW = "theo cánh: không cánh đứng sát bên, cánh cấp 1 / 2 / 3 = " + " / ".join(str(x) for x in SL['reach_by_wing'][1:]) + " ô"
 pk_items = [
-    ("Đồ sát", f"tấn công người khác trên bản đồ chung, trong tầm {REACHW} (bấm là đánh ngay, không cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm; Hồ Long Vương / Đồi Sáo Diều chỉ từ lúc báo {SL['event_pk']['warn_min']} phút trước khi Long Vương nổi / Chim Lạc tới cho tới lúc xuất hiện) (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
+    ("Đồ sát", f"tấn công người khác trên bản đồ chung, trong tầm {REACHW} (bấm là đánh ngay, không cần chạy sát bên; xa hơn thì chạy lại gần cho vào tầm; Biển Long Vương / Đồi Sáo Diều chỉ từ lúc báo {SL['event_pk']['warn_min']} phút trước khi Long Vương nổi / Chim Lạc tới cho tới lúc xuất hiện) (không ở {', '.join(E(MAPN.get(x, x)) for x in SL['safe_maps'])}), cả hai từ cấp {SL['min_level']}. Người kia đang đánh quái vẫn bị đánh ngay (trận đánh quái bị cắt ngang, quái giữ máu); chỉ không đánh được người đang trong trận đồ sát khác, và mình phải không đang trong trận. Luân phiên lượt, mỗi lượt {SL['turn_s']} giây, quá giờ server ra đòn thay bằng kỹ năng mạnh nhất còn dùng được. Thua (hết máu hoặc bỏ chạy) là gục như thường: mất {pct(R['character']['death_gold_loss'])} vàng đang mang, số vàng đó về tay người thắng."),
     ("Tên đỏ", f"thắng một người không tên đỏ thì bị tên đỏ {SL['red_s'] // 60} phút (cộng dồn). Người tên đỏ gục trong đồ sát mất vàng ×{SL['red_gold_mult']}. Hạ người tên đỏ thì không bị đỏ. Tự đánh tắt khi có người tên đỏ trên bản đồ."),
     ("Bảo vệ, giới hạn", f"vừa gục được bảo vệ {SL['protect_s']} giây (tự đi đồ sát thì mất bảo vệ); không giới hạn số lần đồ sát."),
     ("Đấu trường", f"đánh người khác do máy điều khiển (kỹ năng, thú cưng, buff, hồi máu của chính người đó), tối đa {AR['per_day']} trận mỗi ngày, điểm xếp hạng kiểu Elo (K = {AR['elo_k']}). "
@@ -466,7 +466,7 @@ pk_items = [
 ]
 # ---------- Thú cưng ----------
 PR = R["pets"]
-# thú hiếm (Long Vương): không bán, câu được ở Hồ Long Vương (RULES.fishing.dragon)
+# thú hiếm (Long Vương): không bán, câu được ở Biển Long Vương (RULES.fishing.dragon)
 DRG = R["fishing"]["dragon"]
 def pet_price(pt):
     if not pt.get("rare"):
@@ -496,7 +496,7 @@ pet_rule = (f"Thú lên cấp theo trận thắng khi dắt theo (trùm tính {P
                           pt['traits'].get('boss') and f"thưởng trùm thế giới +{pct(pt['traits']['boss'])}",
                           pt['traits'].get('slayer') and f"Long Huyết: đánh Hắc Long / hệ Bóng Tối +{pct(pt['traits']['slayer'])}"] if t) + ". "
                       for pt in D["pets"] if pt.get("max_level")))
-# Hồ Long Vương: bảng cá riêng, Mồi Rồng (công thức của Bà Lang)
+# Biển Long Vương: bảng cá riêng, Mồi Rồng (công thức của Bà Lang)
 _lake = R["fishing"]["pools"]["lake"]; _tot = sum(w for w, _ in _lake)
 _bait = next(r for r in D["recipes"] if r["out"] == DRG["bait"])
 pet_rule += (f" <b>{E(D['lake']['name'])}</b> (cấp {D['lake']['min_level']}+, không có quái): cá "
@@ -549,7 +549,7 @@ TOOLS_HTML = f"""<h3>Thanh dưới bản đồ (một hàng)</h3>
     <li>Tự tắt khi hết bình máu, có người tên đỏ, bị đồ sát, gục ngã, rời bản đồ, đóng hết tab.</li></ul></div>
   <div class="card"><h3>⚡ Đánh nhanh</h3><ul>
     <li>Bật rồi tự bấm quái: đi tới, server đánh hết trận theo <b>combo</b>, ở lại bản đồ, xong trận đứng chờ (không tự tìm quái). Nhịp {QK['tick_ms']} ms / lượt.</li>
-    <li>Combo tối đa {QK['max_steps']} bước (đòn thường, kỹ năng đang mang), danh sách ưu tiên: mỗi lượt bước đầu tiên dùng được (hết hồi chiêu, đủ MP); bước buff có "chỉ khi chưa có hiệu ứng"; trống thì như Tự đánh "dùng bộ kỹ năng".</li>
+    <li>Combo tối đa {QK['max_steps']} bước (đòn thường, kỹ năng đang mang), danh sách ưu tiên: mỗi lượt duyệt từ bước 1, dùng bước đầu tiên dùng được (hết hồi chiêu, đủ MP), nên hết vòng tự quay lại kỹ năng đầu; chỉ đánh thường khi mọi bước đang hồi chiêu / thiếu MP; kỹ năng sẵn sàng mà chỉ thiếu MP thì uống mana. Bước buff có "chỉ khi chưa có hiệu ứng"; combo chưa lưu thì theo thứ tự bộ kỹ năng ô 1 → 5. Đòn thường nên để cuối. Đồ sát / đấu trực tiếp: kỹ năng của đối thủ bay về mình; đấu trực tiếp bật ⚡ đánh trên bản đồ như đồ sát nhanh.</li>
     <li>Sửa combo ở ⚙ hoặc Menu → Kỹ năng.</li></ul></div></div>
   <p><b>Chung cho cả hai</b>: uống bình máu khi dưới {AU['hp_pct']['default']}% (chỉnh {AU['hp_pct']['min']}–{AU['hp_pct']['max']}%), bình mana khi dưới {AU['mp_pct']['default']}% ({AU['mp_pct']['min']}–{AU['mp_pct']['max']}%).</p>
   <h3>Hiển thị khi đánh nhanh (ở lại bản đồ)</h3>
@@ -634,8 +634,8 @@ pk_rows = [
      "<b>Không mất vàng, không tên đỏ</b>; cùng bang không đánh nhau. Bang giữ Vương Miện không đánh được nó (phải chặn bang khác). Gục về Làng, vào lại được.",
      "<b>Chạm người bang khác là đồ sát ngay</b> (ưu tiên bang giữ Vương Miện); Vương Miện 👑 phát sáng + mũi tên khi khuất; mỗi bang một màu vòng chân; thanh 👑 [bang] giữ · giờ còn."),
     ("Động Bí Ẩn", f"Ban đêm, mở {pct(SEC['open_chance'])} số đêm; trùm {SEC['boss_from_h']}h–{SEC['boss_to_h']}h", _YES, _normal + " Động tối, khó thấy người tới.", "Người chơi vẽ trên bản đồ + chấm hồng ở bản đồ nhỏ: dễ phát hiện hơn."),
-    ("Hồ Long Vương, Đàn Cá Vàng", "Theo giờ", _YES, _normal + " Người đang câu cá cũng bị đánh.", "—"),
-    ("Đồi Sáo Diều (Chim Lạc, Đàn Hạc, mưa sao băng)", f"Chim Lạc mỗi {R['sky']['bird']['every'] // 3600} giờ ({R['sky']['bird']['stay'] // 60} phút), Đàn Hạc ~{R['sky']['flock']['every'] // 60} phút, sao băng ban đêm; cấp 30+", _YES, _normal + " Người đang thả diều cũng bị đánh.", "Mới: bản đồ thả diều cạnh Hồ Long Vương."),
+    ("Biển Long Vương, Đàn Cá Vàng", "Theo giờ", f"Chỉ từ lúc báo {R['slay']['event_pk']['warn_min']} phút trước khi Long Vương nổi tới lúc Ngài nổi; ngoài khung đó là vùng an toàn", _normal + " Người đang câu cá cũng bị đánh.", "Bản đồ 44×26: làng chài, vịnh, mũi cát có ghềnh đá, 5 cầu tàu, sóng dạt bờ (vẽ liền mạch)."),
+    ("Đồi Sáo Diều (Chim Lạc, Đàn Hạc, mưa sao băng)", f"Chim Lạc mỗi {R['sky']['bird']['every'] // 3600} giờ ({R['sky']['bird']['stay'] // 60} phút), Đàn Hạc ~{R['sky']['flock']['every'] // 60} phút, sao băng ban đêm; cấp 30+", _YES, _normal + " Người đang thả diều cũng bị đánh.", "Mới: bản đồ thả diều cạnh Biển Long Vương."),
     ("Bản đồ vùng, vùng chuyển sinh", "—", _YES, _normal, "—"),
     ("Làng", "—", _NO, "Vùng an toàn.", "—"),
 ]
@@ -679,7 +679,7 @@ SKR = R["sky"]
 _pet = {x["id"]: x for x in D["pets"]}
 _iname = lambda i: E(IT[i]["name"]) if i in IT else i
 _pool = lambda pool: ", ".join(f"{_iname(i)} {pct(w / sum(x[0] for x in pool))}" for w, i in pool)
-SKY_HTML = f"""<p>Bản đồ <b>Đồi Sáo Diều</b> (cổng mép phải Hồ Long Vương, từ cấp {D['sky_map']['min_level'] if 'sky_map' in D else 30}): đứng chỗ thoáng trên đồi (không sát cây), chạm vào khoảng trời chỗ nào cũng được (dây diều không giới hạn), hoặc bấm 🪁 Thả diều: diều lên giữa trời, cao hơn mép đồi {SKR['aim']['rise'][0]}–{SKR['aim']['rise'][1]} ô, lệch tối đa {SKR['aim']['spread']} cột (khung nhìn tự nâng lên, thu nhỏ nhẹ cho thấy cả diều lẫn người). Gió giật sau {SKR['wait_ms'][0] // 1000}–{SKR['wait_ms'][1] // 1000} giây, giữ dây trong {SKR['window_ms'] / 1000:g} giây thì được quà gió, +1 Phong Khí (tối đa {SKR['bird']['phong_khi_max']}).</p>
+SKY_HTML = f"""<p>Bản đồ <b>Đồi Sáo Diều</b> (cổng mép phải Biển Long Vương, từ cấp {D['sky_map']['min_level'] if 'sky_map' in D else 30}): đứng chỗ thoáng trên đồi (không sát cây), chạm vào khoảng trời chỗ nào cũng được (dây diều không giới hạn), hoặc bấm 🪁 Thả diều: diều lên giữa trời, cao hơn mép đồi {SKR['aim']['rise'][0]}–{SKR['aim']['rise'][1]} ô, lệch tối đa {SKR['aim']['spread']} cột (khung nhìn tự nâng lên, thu nhỏ nhẹ cho thấy cả diều lẫn người). Gió giật sau {SKR['wait_ms'][0] // 1000}–{SKR['wait_ms'][1] // 1000} giây, giữ dây trong {SKR['window_ms'] / 1000:g} giây thì được quà gió, +1 Phong Khí (tối đa {SKR['bird']['phong_khi_max']}).</p>
   <div class="grid2">
     <div class="card"><h3>Quà gió</h3><p class="note">Thường: {_pool(SKR['pool'])}.</p><p class="note">🕊 Đàn Hạc (~{SKR['flock']['every'] // 60} phút một lần, {SKR['flock']['stay'] // 60} phút): {_pool(SKR['flock']['pool'])}; +{SKR['flock']['phong_khi']} Phong Khí.</p></div>
     <div class="card"><h3>🐦 Chim Lạc</h3><p class="note">Lượn mỗi {SKR['bird']['every'] // 3600} giờ ở một ô trời, {SKR['bird']['stay'] // 60} phút. Thả trúng ô đó: 1/{round(1 / SKR['bird']['chance']):,} × (1 + Phong Khí / {SKR['bird']['phong_khi_div']}) × {SKR['bird']['bait_mult']} nếu có {_iname(SKR['bird']['bait'])} (chỉ tốn khi trúng). Đã có thì được {SKR['bird']['dupe_n']} {_iname(SKR['bird']['dupe'])}.</p><p class="note">{E(_pet['chim_lac']['desc'])}</p></div>
@@ -785,7 +785,7 @@ rule_items = [
     ("Thú nuôi", f"ô thú nuôi đeo thú cưng (mua, hoặc thuần hóa loại quái đã hạ {R['pets']['tame_kills']} con); thú cộng % chỉ số (máu / MP cộng số theo cấp thú), không đánh trong trận."),
     ("Nhiều nhân vật", f"mỗi tài khoản tối đa {R['account']['max_characters']} nhân vật, một nhân vật online một lúc. <b>Thủ Kho</b> (đồ thường, đồ hiếm kèm cấp ép, vàng, chỗ mở rộng) dùng chung cả tài khoản; Rương Gia Truyền và quà quản trị gửi mọi người mỗi tài khoản một phần. Bạn bè, bang, thư, chợ, đồ sát, đấu trường tính riêng từng nhân vật; xóa nhân vật thì đồ trên nhân vật đó mất hẳn."),
     ("Đá Dịch Chuyển (ô W)", "Đài Phúc Lành và Rương Gia Truyền đã bỏ: chạm ô W chỉ ghi nhận Đá Dịch Chuyển của bản đồ, không ban phúc, gục ngã thì về Làng."),
-    ("Bot (người chơi máy)", f"ép đồ như người thật khi dư vàng (giữ lại {R['bots']['forge']['gold_keep_per_level']} × cấp vàng mua bình): +1 → +9 món đang mặc cấp thấp nhất trước, từ +7 chỉ khi dư {R['bots']['forge']['spare']} viên ngọc; thêm dòng Ngọc Sinh Mệnh cho vũ khí, áo giáp; ghép / nâng cánh; +10 / +11 chỉ khoảng 1/{R['bots']['forge']['daring_every']} số bot. Cấp tối đa thì chuyển sinh, cần chúa tể thì đi vùng chuyển sinh săn. Bot không được báo cả server (trừ khi câu được Long Vương), không vào bảng xếp hạng. Bot cũng ra Hồ Long Vương câu cá, nhận việc Ông Lão; Long Vương nổi thì khoảng 1/{R['bots']['fish']['chase_every']} số bot (và mọi bot try hard) ra hồ săn, cơ hội như người chơi. Khoảng 1/{R['bots']['tryhard']['every']} số bot là bot try hard: luôn ép liều, nghỉ ít, leo Tháp và câu cá thường hơn."),
+    ("Bot (người chơi máy)", f"ép đồ như người thật khi dư vàng (giữ lại {R['bots']['forge']['gold_keep_per_level']} × cấp vàng mua bình): +1 → +9 món đang mặc cấp thấp nhất trước, từ +7 chỉ khi dư {R['bots']['forge']['spare']} viên ngọc; thêm dòng Ngọc Sinh Mệnh cho vũ khí, áo giáp; ghép / nâng cánh; +10 / +11 chỉ khoảng 1/{R['bots']['forge']['daring_every']} số bot. Cấp tối đa thì chuyển sinh, cần chúa tể thì đi vùng chuyển sinh săn. Bot không được báo cả server (trừ khi câu được Long Vương), không vào bảng xếp hạng. Bot cũng ra Biển Long Vương câu cá, nhận việc Ông Lão; Long Vương nổi thì khoảng 1/{R['bots']['fish']['chase_every']} số bot (và mọi bot try hard) ra hồ săn, cơ hội như người chơi. Khoảng 1/{R['bots']['tryhard']['every']} số bot là bot try hard: luôn ép liều, nghỉ ít, leo Tháp và câu cá thường hơn."),
 ]
 rule_li = "".join(f"<li><b>{k}</b>: {v}</li>" for k, v in rule_items)
 
@@ -861,7 +861,7 @@ names_alt = json.dumps({k: v[0] for g in _alt["groups"].values() for k, v in g.i
 WX = R["weather"]
 WXN = {"clear": "☀️ Quang", "rain": "🌧️ Mưa", "storm": "⛈️ Giông", "fog": "🌫️ Sương", "snow": "❄️ Tuyết", "blizzard": "🌨️ Bão tuyết",
        "leaves": "🍂 Lá bay", "dust": "💨 Gió cát", "embers": "🔥 Tàn lửa"}
-REGN = {"village": "Làng (và bản đồ nền cỏ)", "lake": "Hồ Long Vương", "forest": "Rừng", "swamp": "Đầm lầy", "mountain": "Núi",
+REGN = {"village": "Làng (và bản đồ nền cỏ)", "lake": "Biển Long Vương", "forest": "Rừng", "swamp": "Đầm lầy", "mountain": "Núi",
         "graveyard": "Nghĩa địa", "camp": "Trại", "lair": "Hang"}
 ELN = R["elements"]["names"]
 ELI = R["elements"]["icons"]
