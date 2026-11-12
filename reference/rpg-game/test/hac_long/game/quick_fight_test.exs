@@ -102,4 +102,18 @@ defmodule HacLong.Game.QuickFightTest do
     low = fight(Engine.add_item(%{p | hp: 10}, "potion_l", 3))
     assert QuickFight.decide(low) == %{"act" => "potion"}
   end
+
+  test "vòng kỹ năng: kỹ năng hồi chiêu xong thì dùng lại; thiếu MP thì uống mana thay vì đánh thường" do
+    p = player()
+    [k | _] = skills(p)
+    {_, p} = QuickFight.set_combo(p, [%{"id" => k, "once" => false}])
+    p = fight(p)
+    assert QuickFight.decide(p) == %{"act" => "skill", "skill" => k}
+
+    # đủ MP trên ngưỡng tự uống nhưng không đủ cho kỹ năng: có bình mana thì uống, không có thì đánh thường
+    cost = Engine.skill_mp(p, Enum.find(Engine.skills(p), &(&1.id == k)))
+    low = %{p | mp: max(0, cost - 1)} |> Map.put(:auto_cfg, Map.put(p.auto_cfg, "mp", 0))
+    assert QuickFight.decide(Engine.add_item(low, "mana_l")) == %{"act" => "mana"}
+    assert QuickFight.decide(%{low | inv: Map.delete(low.inv, "mana_l")}) == %{"act" => "attack"}
+  end
 end

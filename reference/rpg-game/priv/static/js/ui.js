@@ -1501,7 +1501,7 @@
   function viewCombo() {
     const steps = comboEdit || comboSteps(), rows = comboRows();
     return `<div class="card" id="combo-card"><h3>⚡ Combo đánh nhanh</h3>
-      <p class="small muted">Bật ⚡ Đánh nhanh ở bản đồ rồi bấm quái: nhân vật tự đánh hết trận theo combo. Mỗi lượt dùng <b>bước đầu tiên dùng được</b> (bước còn hồi chiêu / thiếu MP thì bỏ qua), không bước nào dùng được thì đánh thường. Tự uống bình theo ngưỡng % của Tự đánh.</p>
+      <p class="small muted">Bật ⚡ Đánh nhanh ở bản đồ rồi bấm quái: nhân vật tự đánh hết trận theo combo. Mỗi lượt dùng <b>bước đầu tiên dùng được</b> (bước còn hồi chiêu / thiếu MP thì bỏ qua), không bước nào dùng được thì đánh thường. Hết vòng thì quay lại bước 1 (kỹ năng hồi chiêu xong là dùng lại). Tự uống bình theo ngưỡng % của Tự đánh; kỹ năng sẵn sàng mà chỉ thiếu MP thì uống mana. <b>Đòn thường nên để cuối</b>: đặt trên kỹ năng thì các bước bên dưới không bao giờ tới lượt.</p>
       ${rows}
       <div class="btn-row"><button class="btn small-btn" data-act="combo-add" ${steps.length >= QUICK.max_steps ? 'disabled' : ''}>+ Thêm bước</button>
         <button class="btn small-btn" data-act="combo-reset">Theo bộ kỹ năng</button>

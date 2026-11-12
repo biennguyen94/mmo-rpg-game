@@ -112,9 +112,31 @@ defmodule HacLong.Game.QuickFight do
           Engine.mana_ready?(p) ->
         %{"act" => "mana"}
 
+      # còn kỹ năng trong combo đã hồi chiêu xong mà chỉ thiếu MP: uống mana để dùng tiếp vòng kỹ năng, không đánh thường
+      starved?(p, combo(p)) and Engine.best_mana(p, d.maxMp - cur_mp) != nil and
+          Engine.mana_ready?(p) ->
+        %{"act" => "mana"}
+
       true ->
         step(p, combo(p))
     end
+  end
+
+  # bước kỹ năng của combo (combo trống: bộ kỹ năng) đã hồi chiêu xong nhưng không đủ MP, và không bước nào dùng được ngay
+  defp starved?(p, combo) do
+    combo =
+      if combo == [],
+        do: Enum.map(Engine.skills(p), &%{"id" => &1.id, "once" => true}),
+        else: combo
+
+    step(p, combo) == %{"act" => "attack"} and
+      Enum.any?(combo, fn %{"id" => id} = st ->
+        k = Enum.find(Engine.skills(p), &(&1.id == id))
+
+        k != nil and Engine.cooldown(p, id) == 0 and
+          (Map.get(p, :mp) || 0) < Engine.skill_mp(p, k) and
+          not (st["once"] and Engine.buff_active?(p, k))
+      end)
   end
 
   # combo trống: đúng thứ tự bộ kỹ năng (ô 1 → ô 5; buff đang còn thì bỏ qua), rồi đòn thường

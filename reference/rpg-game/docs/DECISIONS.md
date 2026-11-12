@@ -2049,3 +2049,6 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   tên kỹ năng tra trong mọi lớp), cả ở màn trận lẫn ⚡ trên bản đồ.
 - Đấu trực tiếp bật ⚡: đánh ngay trên bản đồ như đồ sát nhanh (trước luôn mở màn trận riêng), hiệu ứng như đồ sát.
 - Hồ Tỷ Thí thu nhỏ 29×20 → 19×13: hồ sen nhỏ giữa có cầu gỗ bắc ngang, lối đi vòng quanh; hai người xuất hiện hai đầu cầu (1, 6) / (17, 6), cách 16 ô.
+- ⚡ Đánh nhanh: (vốn đã) mỗi lượt duyệt combo từ bước 1, dùng bước đầu tiên dùng được, nên hết vòng tự quay lại kỹ năng đầu khi
+  hồi chiêu xong; chỉ đánh thường khi mọi bước đang hồi chiêu / thiếu MP. Thêm: còn kỹ năng hồi chiêu xong mà chỉ thiếu MP và có bình
+  mana uống được thì uống mana (kể cả MP còn trên ngưỡng %), không đánh thường. Màn combo nhắc đặt Đòn thường cuối danh sách.
