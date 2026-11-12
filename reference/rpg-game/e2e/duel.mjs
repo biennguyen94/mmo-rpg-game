@@ -45,6 +45,13 @@ await B.page.waitForSelector('[data-act="duel-op"][data-op="accept"]', { timeout
 R.check('B thấy hộp thoại "Đấu trường trực tiếp"', /Đấu trường trực tiếp/.test(await B.page.textContent('.map-dialog').catch(() => '')));
 await shot(B.page, 'duel-invite.png');
 await B.page.click('[data-act="duel-op"][data-op="accept"]');
+// Hồ Tỷ Thí: hai người ở hai đầu, A đi lại gần B (không cánh: sát bên) rồi bấm Đồ sát
+await A.page.waitForFunction(() => window.__hl.player().pos.map === 'ho_ty_thi', null, { timeout: 8000 }).catch(() => null);
+R.check('nhận lời: cả hai vào Hồ Tỷ Thí', await A.page.evaluate(() => window.__hl.player().pos.map) === 'ho_ty_thi' && await B.page.evaluate(() => window.__hl.player().pos.map) === 'ho_ty_thi');
+const bp = await B.page.evaluate(() => window.__hl.player().pos);
+await A.page.evaluate(([x, y]) => window.__hl.walkTo(x - 1, y), [bp.x, bp.y]);
+await A.page.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return Math.max(Math.abs(q.x - x), Math.abs(q.y - y)) <= 1; }, [bp.x, bp.y], { timeout: 30000 }).catch(() => null);
+await A.page.evaluate((u) => window.Net.slay(u).catch(() => null), uidB);
 await A.page.waitForFunction(() => { const b = window.__hl.player().battle; return !!(b && b.encounter && b.encounter.duel); }, null, { timeout: 8000 }).catch(() => null);
 const st = await A.page.evaluate(() => { const p = window.__hl.player(); return { duel: !!(p.battle && p.battle.encounter.duel), full: p.hp === p.view.derived.maxHp, eyebrow: (document.querySelector('.stage .eyebrow') || {}).textContent || '' }; });
 R.check('A vào trận đấu trực tiếp, đầy máu, nhãn "⚔ Đấu trường trực tiếp"', st.duel && st.full && /Đấu trường trực tiếp/.test(st.eyebrow), JSON.stringify(st));

@@ -92,9 +92,10 @@ const cpos = await C.page.evaluate(() => window.__hl.player().pos);
 await A.page.waitForFunction(([x, y, n]) => window.MapView.playersNear(x, y).some((o) => o.name === n), [cpos.x, cpos.y, C.name], { timeout: 6000 }).catch(() => null);
 const sc = await A.page.evaluate(([x, y]) => window.MapView.screenOf(x, y), [cpos.x, cpos.y]);
 await A.page.mouse.click(sc.x, sc.y);
-await A.page.waitForFunction(() => { const b = window.__hl.player().battle; return !!(b && b.encounter && b.encounter.slay != null); }, null, { timeout: 12000 }).catch(() => null);
+// tầm đánh theo cánh (không cánh: sát bên): ở xa thì nhân vật chạy lại gần rồi mới đánh
+await A.page.waitForFunction(() => { const b = window.__hl.player().battle; return !!(b && b.encounter && b.encounter.slay != null); }, null, { timeout: 40000 }).catch(() => null);
 const d3 = await A.page.evaluate(() => ({ slay: !!((window.__hl.player().battle || {}).encounter || {}).slay, pop: !!document.querySelector('.pick-pop') }));
-R.check('Công Thành: chạm người bang khác → đồ sát ngay, không menu', d3.slay && !d3.pop, JSON.stringify(d3));
+R.check('Công Thành: chạm người bang khác → đồ sát ngay, không menu', d3.slay && !d3.pop, JSON.stringify({ ...d3, a: await A.page.evaluate(() => window.__hl.player().pos), c: cpos, toast: await A.page.evaluate(() => [...document.querySelectorAll('.toast')].map((t) => t.textContent).join(' | ')) }));
 await shot(A.page, 'eventviz-cs-slay.png');
 
 await browser.close();
