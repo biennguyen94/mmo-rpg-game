@@ -92,8 +92,8 @@ R.check('/w Tên gửi tin riêng cho bạn', JSON.stringify(h).includes('hẹn 
 // ---------- Quản trị: người đang online ----------
 await adm.page.click('#tabs [data-tab="menu"]');
 await adm.page.click('[data-menu="admin"]');
-await act(adm.page, '[data-adm="online"]');
-await adm.page.waitForSelector('#adm-online .item', { timeout: 5000 }).catch(() => null);
+// danh sách tự tải khi mở tab, tự cập nhật mỗi 5 giây
+await adm.page.waitForSelector('#adm-online .item', { timeout: 12000 }).catch(() => null);
 const onl = await adm.page.textContent('#adm-online');
 R.check('tab Quản trị: danh sách người online có A và B', onl.includes(A.name) && onl.includes(B.name), onl.slice(0, 200));
 

@@ -249,11 +249,11 @@ if (gold) {
 
 // Đang online: bấm tên mở hồ sơ người chơi
 // (bấm lại tab đang mở thì về Bản đồ: chỉ bấm khi chưa thấy mục Quản trị)
-if (!(await page.$('[data-adm="online"]'))) {
+// danh sách Đang online tự tải / tự cập nhật (không còn nút Tải lại)
+if (!(await page.$('#adm-online'))) {
   if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
   await page.click('[data-menu="admin"]');
 }
-await page.click('[data-adm="online"]');
 const xId = await X.page.evaluate(() => window.__hl.userId());
 await page.waitForSelector(`#adm-online [data-act="profile"][data-uid="${xId}"]`, { timeout: 5000 }).catch(() => null);
 await page.click(`#adm-online [data-act="profile"][data-uid="${xId}"]`).catch(() => null);
@@ -266,13 +266,13 @@ await shot(page, 'admin-online-profile.png');
   await travel(X.page, 'forest_1');
   // đóng hồ sơ vừa mở, quay lại mục Quản trị
   await page.keyboard.press('Escape');
-  for (let k = 0; k < 3 && !(await page.$('[data-adm="online"]')); k++) {
+  for (let k = 0; k < 3 && !(await page.$('#adm-online')); k++) {
     if (!(await page.$('[data-menu="admin"]'))) await page.click('#tabs [data-tab="menu"]');
     await page.click('[data-menu="admin"]', { timeout: 3000 }).catch(() => null);
   }
-  await page.click('[data-adm="online"]');
+  // danh sách tự cập nhật: chờ người chơi (vừa sang Rừng Mê) hiện nút 🏠
   const home = `[data-adm="to_village"][data-uid="${xId}"]`;
-  await page.waitForSelector(home, { timeout: 5000 }).catch(() => null);
+  await page.waitForSelector(home, { timeout: 12000 }).catch(() => null);
   page.once('dialog', (d) => d.accept());
   await page.click(home).catch(() => null);
   await X.page.waitForFunction(() => window.__hl.player().pos.map === 'village', null, { timeout: 5000 }).catch(() => null);
