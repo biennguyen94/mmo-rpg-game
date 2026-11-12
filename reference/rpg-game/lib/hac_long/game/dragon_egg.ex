@@ -1,14 +1,11 @@
 defmodule HacLong.Game.DragonEgg do
   @moduledoc """
   Hắc Long, linh vật Con Rồng Cháu Tiên (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"). Hàm thuần; số ở
-  `RULES.sky.hoi` / `RULES.sky.egg`.
+  `RULES.sky.egg`.
 
-  - **Long Phượng Hội** (`HacLong.SkyEvent`): Long Vương nổi ở hồ và Chim Lạc lượn ở đồi cùng lúc thì vòng sáng hiện ở
-    Tế Đàn. Đứng trong vòng làm lễ (`ritual/3`):
-    - đủ điều kiện (`missing/1` rỗng: có Long Vương và Chim Lạc cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long,
-      chưa có Hắc Long / chưa có trứng): mất hết Long Khí, Phong Khí, nhận **Bọc Trăm Trứng**;
-    - không đủ: hưởng lộc `hoi.lucky_qi` Long Khí và Phong Khí, mỗi hội một lần (`sky.lucky` = mã hội).
-  - **Ấp trứng** (`sky.egg = %{at, kills, boss}`): nở (`hatch/2`) khi đủ một trong: hạ `egg.kills` quái kể từ lúc nhận
+  - **Ghép** ở Lão Hỗn Nguyên (`combine/1`): Long Vương + Chim Lạc cấp tối đa ra Hắc Long. Long Phượng Hội (làm lễ nhận
+    trứng) đã bỏ hẳn (DECISIONS "Thú thành vật phẩm").
+  - **Ấp trứng** (Bọc Trăm Trứng còn lại từ trước) (`sky.egg = %{at, kills, boss}`): nở (`hatch/2`) khi đủ một trong: hạ `egg.kills` quái kể từ lúc nhận
     trứng, qua `egg.days` ngày, hoặc hạ trùm cuối Hắc Long thêm một lần (`on_final_win/1`). Nở ra `egg.pet`, hoặc
     `egg.rare_pet` (Hắc Long Chân Thân) với tỉ lệ `egg.rare_chance`; kết quả có `rare_pet` để Session ghi bia, báo cả
     server (người đầu tiên của server: báo riêng).
@@ -17,11 +14,9 @@ defmodule HacLong.Game.DragonEgg do
   alias HacLong.Game.{Data, Kite, Pets, Rng}
 
   @r Data.rules().sky
-  @hoi @r.hoi
   @egg @r.egg
   @dragon Data.rules().fishing.dragon
 
-  def hoi_rules, do: @hoi
   def egg_rules, do: @egg
   def pets, do: [@egg.pet, @egg.rare_pet]
 
@@ -110,65 +105,6 @@ defmodule HacLong.Game.DragonEgg do
   end
 
   def egg(p), do: (Map.get(p, :sky) || Kite.load(nil)).egg
-
-  @doc "Đứng trong vòng sáng của hội `hoi` (`%{id, at: {x, y}}` hoặc nil)."
-  def in_ring?(%{pos: %{map: m, x: x, y: y}}, %{at: {cx, cy}}),
-    do: m == @hoi.map and max(abs(x - cx), abs(y - cy)) <= @hoi.radius
-
-  def in_ring?(_, _), do: false
-
-  @doc "Làm lễ ở hội `hoi`; `now_s` giờ unix (giây)."
-  def ritual(p, hoi, now_s) do
-    sky = Map.get(p, :sky) || Kite.load(nil)
-
-    cond do
-      hoi == nil ->
-        {%{ok: false, msg: "Long Phượng Hội chưa diễn ra."}, p}
-
-      p.battle ->
-        {%{ok: false, msg: "Đang trong trận."}, p}
-
-      not in_ring?(p, hoi) ->
-        {%{ok: false, msg: "Hãy bước vào vòng sáng ở Tế Đàn."}, p}
-
-      missing(p) == [] ->
-        p =
-          p
-          |> Map.put(:long_khi, 0)
-          |> Kite.put_sky(
-            &%{&1 | phong_khi: 0, egg: %{at: now_s, kills: p.kills, boss: false}, lucky: hoi.id}
-          )
-          |> HacLong.Game.Engine.add_item(@egg.item)
-
-        {%{
-           ok: true,
-           egg: true,
-           msg:
-             "🐉🐦 Long Vương và Chim Lạc quấn nhau bay vút lên trời, rồi đặt vào tay bạn một Bọc Trăm Trứng! Ấp trứng bằng cách chiến đấu."
-         }, p}
-
-      sky.lucky == hoi.id ->
-        {%{
-           ok: false,
-           msg: "Bạn đã hưởng lộc hội này rồi. (Làm lễ cần: #{Enum.join(missing(p), ", ")}.)"
-         }, p}
-
-      true ->
-        q = @hoi.lucky_qi
-
-        p =
-          p
-          |> Map.put(:long_khi, min((Map.get(p, :long_khi) || 0) + q, @dragon.long_khi_max))
-          |> Kite.add_phong_khi(q)
-          |> Kite.put_sky(&%{&1 | lucky: hoi.id})
-
-        {%{
-           ok: true,
-           msg:
-             "✨ Hưởng lộc Long Phượng Hội: +#{q} Long Khí, +#{q} Phong Khí. Làm lễ nhận Bọc Trăm Trứng cần: #{Enum.join(missing(p), ", ")}."
-         }, p}
-    end
-  end
 
   @doc "Vừa hạ trùm cuối Hắc Long: trứng đang ấp đủ điều kiện nở."
   def on_final_win(p) do

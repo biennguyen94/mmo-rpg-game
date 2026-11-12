@@ -154,29 +154,15 @@ defmodule HacLong.Game.KiteTest do
     |> Kite.add_phong_khi(200)
   end
 
-  @hoi %{id: 1, at: {10, 10}}
-
-  test "Long Phượng Hội: đủ điều kiện thì nhận Bọc Trăm Trứng (mất Long Khí, Phong Khí); thiếu thì hưởng lộc một lần" do
-    p = ready_player()
-    assert DragonEgg.missing(p) == []
-    assert {%{ok: false}, _} = DragonEgg.ritual(p, nil, 0)
-
-    assert {%{ok: false, msg: "Hãy bước vào vòng sáng" <> _}, _} =
-             DragonEgg.ritual(%{p | pos: %{p.pos | x: 1}}, @hoi, 0)
-
-    {%{ok: true, egg: true}, q} = DragonEgg.ritual(p, @hoi, 100)
-    assert q.inv["boc_tram_trung"] == 1 and q.long_khi == 0 and Kite.phong_khi(q) == 0
-    assert DragonEgg.egg(q) == %{at: 100, kills: 1000, boss: false}
-
-    poor = %{ready_player() | long_khi: 0}
-    assert "Long Khí chưa đầy (0/200)" in DragonEgg.missing(poor)
-    {%{ok: true}, lucky} = DragonEgg.ritual(poor, @hoi, 0)
-    assert lucky.long_khi == DragonEgg.hoi_rules().lucky_qi
-    assert {%{ok: false, msg: "Bạn đã hưởng lộc" <> _}, _} = DragonEgg.ritual(lucky, @hoi, 0)
+  # Bọc Trăm Trứng còn lại từ trước (Long Phượng Hội đã bỏ): đặt thẳng vào nhân vật
+  defp with_egg(p) do
+    p
+    |> Kite.put_sky(&%{&1 | egg: %{at: 0, kills: p.kills, boss: false}})
+    |> HacLong.Game.Engine.add_item("boc_tram_trung")
   end
 
   test "ấp trứng: nở khi đủ quái, đủ ngày hoặc hạ Hắc Long; 10% ra Chân Thân" do
-    {_, p} = DragonEgg.ritual(ready_player(), @hoi, 0)
+    p = with_egg(ready_player())
     assert {%{ok: false, msg: "Trứng chưa nở" <> _}, _} = DragonEgg.hatch(p, 3600)
 
     by_kills = %{p | kills: p.kills + DragonEgg.egg_rules().kills}

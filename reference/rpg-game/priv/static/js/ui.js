@@ -382,7 +382,7 @@
     // vẽ lại (server đẩy trạng thái mỗi lượt / mỗi giây) thì giữ chỗ cuộn của các bảng nổi tự cuộn bên trong
     // (anh báo: chọn bộ kỹ năng cuộn xuống thì ~1 giây sau bị đưa về đầu)
     const keepScroll = ['.skill-dialog', '.quick-log .log', '.pick-pop', '.map-dialog', '.combo-edit'].map((sel) => [sel, (view.querySelector(sel) || {}).scrollTop || 0]);
-    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewKite() + viewHoi() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
+    view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewKite() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     for (const [sel, top] of keepScroll) { const el = top && view.querySelector(sel); if (el) el.scrollTop = top; }
     if (trading) {
       // bảng giao dịch che bản đồ
@@ -476,7 +476,7 @@
           <div class="btn-row"><button class="btn${ov === 'open' ? ' primary' : ''}" data-adm="secret" data-mode="open">🌙 Mở ngay</button><button class="btn${ov === 'close' ? ' primary' : ''}" data-adm="secret" data-mode="close">🪨 Đóng</button><button class="btn${!ov ? ' primary' : ''}" data-adm="secret" data-mode="auto">🕒 Theo lịch</button><button class="btn" data-adm="secret_boss" ${sc.open ? '' : 'disabled'}>🐉 Gọi Thạch Long Ẩn</button></div></div>`;
       })() : ''}
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
-        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button><button class="btn" data-adm="sky_bird">🐦 Gọi Chim Lạc</button><button class="btn" data-adm="sky_flock">🕊 Gọi Đàn Hạc</button><button class="btn" data-adm="sky_meteor">🌠 Mưa sao băng</button><button class="btn" data-adm="sky_hoi">🐉🐦 Mở Long Phượng Hội</button>
+        <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button><button class="btn" data-adm="sky_bird">🐦 Gọi Chim Lạc</button><button class="btn" data-adm="sky_flock">🕊 Gọi Đàn Hạc</button><button class="btn" data-adm="sky_meteor">🌠 Mưa sao băng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewPwRequests()}
       ${viewAudit()}
@@ -1033,8 +1033,7 @@
     skyTimers.splice(0).forEach(clearTimeout);
     // hết giờ thì tự xóa (server cũng báo, nhưng có thể chậm)
     [['bird', 'birdLeft'], ['flock', 'flockLeft']].forEach(([k, l]) => { if (st[k]) skyTimers.push(setTimeout(() => onSky({ ...skySt, [k]: null, [l]: 0 }), st[l])); });
-    if (st.hoi) skyTimers.push(setTimeout(() => onSky({ ...skySt, hoi: null }), st.hoi.left));
-    if (P && !P.battle && tab === 'map' && !npc && (P.pos.map === SKY.map || P.pos.map === (SKY.hoi || {}).map)) { redrawKite(); redrawHoi(); }
+    if (P && !P.battle && tab === 'map' && !npc && P.pos.map === SKY.map) redrawKite();
   }
   const onHill = () => !!(P && WORLD.maps[P.pos.map] && WORLD.maps[P.pos.map].kite);
   // thả được ở đây không (giống server `Kite.check_spot/1`): chỗ thoáng, không sát cây, có trời trong tầm dây diều
@@ -1155,23 +1154,13 @@
   }
   // Hắc Long: truyền thuyết, điều kiện làm lễ, Bia Hắc Long
   function hacCard() {
-    const E = SKY.egg || {}, H = SKY.hoi || {}, pet = PETS.find((x) => x.id === E.pet), miss = P.view.hacMissing || [];
+    const E = SKY.egg || {}, pet = PETS.find((x) => x.id === E.pet), miss = P.view.hacMissing || [];
     if (!pet) return '';
     if (Date.now() - hacAt > 60000) { hacAt = Date.now(); loadBoard('hac_board'); }
     return `<div class="card"><div class="row"><img class="sprite" src="${asset('sky/hac_long.png')}" alt=""><div class="grow"><h3>🐉 ${esc(pet.name)} — Con Rồng Cháu Tiên</h3><div class="small muted">${esc(pet.desc)}</div></div></div>
       <p class="small">Long Vương (Lạc Long Quân, dưới nước) và Chim Lạc (Âu Cơ, trên trời) kết duyên sinh ra Hắc Long. Có cả hai con <b>cấp tối đa</b> thì tới <b>Lão Hỗn Nguyên</b> ở Làng ghép: tỉ lệ 100%, mất cả hai thú, nhận <b>Hắc Long</b> (${Math.round((E.rare_chance || 0) * 100)}% ra <b>Hắc Long Chân Thân</b>). Thú câu / thả diều được thêm, thú đóng ấn đều bán được ở chợ.${miss.length ? '' : ''}</p></div>
       <div class="card"><h3>Bia Hắc Long</h3>${boardList(hacBoard, 'Chưa ai thuần phục được Hắc Long. Người đầu tiên sẽ được cả server nhớ tên.')}</div>`;
   }
-  // Tế Đàn khi có Long Phượng Hội: nút làm lễ
-  function viewHoi() {
-    const h = skySt.hoi;
-    if (!h || !P || P.pos.map !== (SKY.hoi || {}).map || dialog) return '<div id="hoi-ui" hidden></div>';
-    const inRing = Math.max(Math.abs(P.pos.x - h.at[0]), Math.abs(P.pos.y - h.at[1])) <= h.radius, miss = P.view.hacMissing || [];
-    return `<div id="hoi-ui" class="fish-ui ${inRing ? 'bite' : 'idle'}"><span aria-hidden="true">🐉🐦</span>
-      <b>${inRing ? (miss.length ? 'Trong vòng sáng: hưởng lộc Long Phượng Hội' : 'Trong vòng sáng: làm lễ nhận Bọc Trăm Trứng') : 'Long Phượng Hội: bước vào vòng sáng'}</b>
-      <button class="btn ${inRing ? 'primary' : ''}" data-act="le_long_phuong" ${inRing ? '' : 'disabled'}>${miss.length ? '✨ Hưởng lộc' : '🐉🐦 Làm lễ'}</button></div>`;
-  }
-  function redrawHoi() { const el = $('#hoi-ui'); if (el) el.outerHTML = viewHoi(); }
   // Bọc Trăm Trứng đang ấp (tab Thú cưng)
   function eggCard() {
     const e = P.view.egg;
@@ -1234,8 +1223,13 @@
   }
 
   function onWorldBoss(st) {
-    const wasAlive = wb.alive;
+    const wasAlive = wb.alive, known = wb.now != null;
     wb = Object.assign(st, { skew: st.now - Date.now() });
+    // trùm vừa xuất hiện (không tính lần nhận trạng thái đầu khi mới vào): báo ở mọi màn hình, không chỉ tab Bản đồ
+    if (known && !wasAlive && wb.alive && P) {
+      const msg = `⚔️ ${wb.name} đã xuất hiện ở Tế Đàn! Cả server cùng đánh.`;
+      Celebrate.banner(msg); note(msg, 'good'); Sound.play('rare');
+    }
     Map_.setBoss(wb);
     // đang đánh trùm: thanh máu theo máu chung
     if (P && P.battle && P.battle.monster.world && !P.battle.over && wb.alive) {
@@ -1943,7 +1937,7 @@
       if (tut) tut.outerHTML = viewTutorial();
       const fish = $('#fish-ui');
       if (fish) fish.outerHTML = viewFishing();
-      redrawKite(); redrawHoi();
+      redrawKite();
       // tự đánh: bật / tắt thì vẽ lại cả thanh; đang bật chỉ đổi dòng trạng thái (không đóng ô cài đặt đang chọn)
       // tự đánh / đánh nhanh: trạng thái đổi thì vẽ lại cả thanh; đang chạy thì cập nhật số (hạ được, máu quái)
       const ab = $('#auto-bar');
@@ -4449,7 +4443,7 @@
       case 'smith': return { act, slot: d.slot };
       case 'daily_claim': return { act, i: +d.i };
       case 'tower_enter': return { act, floor: +d.floor };
-      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': case 'cs_enter': case 'cs_register': case 'kite_elder': case 'kite_craft': case 'le_long_phuong': case 'egg_hatch': return { act };
+      case 'ds_enter': case 'ds_buy': case 'bc_enter': case 'bc_buy': case 'cc_enter': case 'cc_buy': case 'kal_enter': case 'cs_enter': case 'cs_register': case 'kite_elder': case 'kite_craft': case 'egg_hatch': return { act };
       case 'skill': return { act, skill: d.skill };
       case 'skill_break': return { act, skill: d.skill, pay: d.pay };
       case 'mail_claim': return { act, id: +d.id };
@@ -4467,7 +4461,7 @@
   }
 
   // Âm thanh cho kết quả một lệnh.
-  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion', kite_elder: 'quest', kite_craft: 'forge', le_long_phuong: 'rare', egg_hatch: 'levelup', star_pick: 'rare' };
+  const CMD_SOUND = { market_buy: 'coin', market_sell: 'coin', market_cancel: 'gather', pet_buy: 'rare', pet_tame: 'rare', pet_feed: 'coin', chest_buy: 'rare', chest_open: 'rare', rebirth: 'levelup', buy: 'coin', sell: 'coin', mail_claim: 'coin', mail_claim_all: 'coin', craft: 'brew', cook: 'brew', smith: 'forge', event_exchange: 'rare', upgrade: 'forge', chaos_upgrade: 'forge', life: 'forge', chaos: 'rare', store: 'gather', unstore: 'gather', gold_store: 'coin', gold_take: 'coin', storage_expand: 'coin', discard: 'gather', lock: 'gather', quest_turnin: 'quest', daily_claim: 'quest', elder_claim: 'quest', quest_accept: 'notice', rest: 'potion', use: 'potion', tower_enter: 'portal', ds_enter: 'portal', ds_buy: 'coin', bc_enter: 'portal', bc_buy: 'coin', cc_enter: 'portal', cc_buy: 'coin', kal_enter: 'portal', cs_enter: 'portal', cs_register: 'coin', potion: 'potion', kite_elder: 'quest', kite_craft: 'forge', egg_hatch: 'levelup', star_pick: 'rare' };
 
   function commandSound(cmd, r, old) {
     if (!r.ok) { Sound.play('error'); return; }

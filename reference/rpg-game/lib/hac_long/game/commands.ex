@@ -183,9 +183,6 @@ defmodule HacLong.Game.Commands do
       "star_pick" ->
         star_pick(p, c["x"], c["y"])
 
-      "le_long_phuong" ->
-        HacLong.Game.DragonEgg.ritual(p, HacLong.SkyEvent.hoi(), System.os_time(:second))
-
       "egg_hatch" ->
         HacLong.Game.DragonEgg.hatch(p, System.os_time(:second))
 

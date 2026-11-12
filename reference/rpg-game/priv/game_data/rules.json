@@ -870,7 +870,6 @@
       "elder": {"count": 20, "phong_khi": 20},
       "craft": {"sao_dong": {"manh_sao": 2, "long_hac": 5}},
       "meteor": {"every": 600, "count": 4, "stay": 120, "item": "manh_sao", "night": true},
-      "hoi": {"enabled": false, "_enabled_doc": "DECISIONS \"Thú thành vật phẩm\": Long Phượng Hội đã bỏ, Hắc Long ghép ở Lão Hỗn Nguyên (Long Vương + Chim Lạc cấp tối đa, 100%).", "_doc": "Long Phượng Hội: Long Vương đang nổi ở hồ và Chim Lạc đang lượn ở đồi cùng lúc thì vòng sáng hiện ở Tế Đàn (map, at, radius ô) trong stay giây; sau đó chờ cooldown giây mới có lần sau. Người đủ điều kiện (có cả hai thú cấp tối đa, Long Khí và Phong Khí đầy, đã hạ Hắc Long) đứng trong vòng làm lễ: mất hết Long Khí, Phong Khí, nhận egg.item. Người khác đứng trong vòng được lucky_qi Long Khí và Phong Khí (một lần mỗi hội).", "map": "altar", "at": [10, 10], "radius": 2, "stay": 300, "cooldown": 1800, "lucky_qi": 10},
       "egg": {"_doc": "Bọc Trăm Trứng nở khi đủ một trong: hạ kills quái kể từ lúc nhận trứng, qua days ngày, hoặc hạ trùm cuối Hắc Long thêm một lần. Nở ra pet (rare_chance thì rare_pet: Hắc Long Chân Thân). Mỗi nhân vật một con Hắc Long.", "item": "boc_tram_trung", "kills": 500, "days": 3, "pet": "hac_long", "rare_pet": "hac_long_chan", "rare_chance": 0.1},
       "sourceType": "DESIGN",
       "version": 1,

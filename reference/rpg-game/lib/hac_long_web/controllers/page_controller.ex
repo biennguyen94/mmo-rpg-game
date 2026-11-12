@@ -136,7 +136,6 @@ defmodule HacLongWeb.PageController do
         sky:
           HacLong.Game.Kite.rules()
           |> Map.drop([:_doc, :sourceType, :version, :verified])
-          |> Map.update!(:hoi, &Map.delete(&1, :_doc))
           |> Map.update!(:egg, &Map.delete(&1, :_doc)),
         craftLevels: HacLong.Game.Crafting.levels(),
         smithCosts: HacLong.Game.Crafting.smith_costs(),

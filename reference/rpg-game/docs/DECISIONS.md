@@ -2058,3 +2058,10 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Hai bên cùng nhịp nên vẫn công bằng; trận dài hơn khoảng gấp đôi. Đánh quái giữ nguyên 600 ms.
 - Phía trình duyệt: hiệu ứng của mình trúng hẳn (650 ms) rồi đối thủ mới vung chiêu (480 ms) và trúng mình. Lượt mới tới
   khi hiệu ứng lượt trước chưa xong thì xếp hàng phía sau, trễ tối đa ~1,5 s (quá thì bỏ phần trễ để hình không lệch xa máu thật).
+
+## Bỏ hẳn Long Phượng Hội; báo Cổ Long khi gọi (2026-11-12, anh yêu cầu)
+- Long Phượng Hội gỡ khỏi code: lệnh `le_long_phuong`, `DragonEgg.ritual/3`, hội trong `SkyEvent` (`summon(:hoi)`, nhịp kiểm),
+  `RULES.sky.hoi`, nút quản trị "Mở Long Phượng Hội", nút làm lễ và vòng sáng ở Tế Đàn. Hắc Long chỉ ghép ở Lão Hỗn Nguyên.
+  Bọc Trăm Trứng ai còn giữ vẫn ấp / nở như cũ (`sky.egg`).
+- Gọi Cổ Long trong quản trị trả lời rõ (đã gọi / đang có rồi, còn bao nhiêu phút). Trùm thế giới vừa xuất hiện thì mọi
+  người thấy dải thông báo + âm thanh ở bất kỳ màn hình nào (trước chỉ hiện khi đang ở tab Bản đồ, ngoài trận).

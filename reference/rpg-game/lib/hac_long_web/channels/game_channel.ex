@@ -927,7 +927,19 @@ defmodule HacLongWeb.GameChannel do
      }}
   end
 
-  defp admin("world_boss", _p, _s), do: {:ok, %{status: WorldBoss.spawn_now()}}
+  defp admin("world_boss", _p, _s) do
+    was = WorldBoss.status().alive
+    st = WorldBoss.spawn_now()
+    left = div(max(0, (st[:endsAt] || 0) - st.now), 60_000)
+
+    msg =
+      if was,
+        do: "#{st.name} đang ở Tế Đàn rồi (còn #{left} phút).",
+        else: "Đã gọi #{st.name}: xuất hiện ở Tế Đàn, đã báo cả server (#{left} phút)."
+
+    {:ok, %{status: st, msg: msg}}
+  end
+
   # cho trùm thế giới bay đi ngay (không ai được thưởng)
   defp admin("world_boss_off", _p, _s) do
     :ok = WorldBoss.despawn()
@@ -945,8 +957,8 @@ defmodule HacLongWeb.GameChannel do
      }}
   end
 
-  # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): gọi Chim Lạc / Đàn Hạc / mưa sao băng / Long Phượng Hội
-  defp admin("sky_" <> kind, _p, _s) when kind in ["bird", "flock", "meteor", "hoi"] do
+  # Đồi Sáo Diều (DECISIONS "Đồi Sáo Diều, Chim Lạc, Hắc Long"): gọi Chim Lạc / Đàn Hạc / mưa sao băng
+  defp admin("sky_" <> kind, _p, _s) when kind in ["bird", "flock", "meteor"] do
     st = HacLong.SkyEvent.summon(String.to_existing_atom(kind))
 
     msg =
@@ -959,9 +971,6 @@ defmodule HacLongWeb.GameChannel do
 
         "meteor" ->
           "Mưa sao băng: #{length(st.stars)} Mảnh Sao trên Đồi Sáo Diều."
-
-        "hoi" ->
-          "Long Phượng Hội mở ở Tế Đàn (#{div(st.hoi.left, 1000)} giây)."
       end
 
     {:ok, %{msg: msg, sky: st}}

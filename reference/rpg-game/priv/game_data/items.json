@@ -315,7 +315,7 @@
       "slot": "material",
       "sprite": "items/boc_tram_trung",
       "price": 0,
-      "desc": "Bọc trứng sinh từ Lễ Long Phượng Hội. Ấm dần lên mỗi khi bạn chiến đấu; đủ ngày, đủ trận hoặc hạ Hắc Long thêm lần nữa thì nở."
+      "desc": "Bọc trứng Hắc Long (từ thời Long Phượng Hội cũ). Ấm dần lên mỗi khi bạn chiến đấu; đủ ngày, đủ trận hoặc hạ Hắc Long thêm lần nữa thì nở."
     },
     "old_boot": {
       "name": "Chiếc Ủng Cũ",

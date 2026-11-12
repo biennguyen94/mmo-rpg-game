@@ -1,6 +1,6 @@
 // Đồi Sáo Diều, Chim Lạc, Hắc Long (DECISIONS cùng tên): tới đồi qua cổng Hồ Long Vương, đứng mép đồi thả diều (chạm trời),
 // gió giật thì giữ dây → quà gió + Phong Khí; Chim Lạc / Đàn Hạc / sao băng hiện trên đồi (thanh sự kiện, bản đồ nhỏ),
-// nhặt Mảnh Sao; Ông Lão Làm Diều (việc, ghép Sáo Đồng, Bia Chim Lạc, Hắc Long); Long Phượng Hội ở Tế Đàn (vòng sáng, hưởng lộc).
+// nhặt Mảnh Sao; Ông Lão Làm Diều (việc, ghép Sáo Đồng, Bia Chim Lạc, Hắc Long).
 // Chạy: node e2e/kite.mjs [url] [thư_mục_ảnh]
 import { launch, reporter, newPlayer, adminSession, send, shot, meetNpc, overflowX } from './lib.mjs';
 
@@ -142,21 +142,6 @@ R.check('Ông Lão: việc hôm nay, ghép Sáo Đồng, Chim Lạc, Bia, Hắc 
 R.check('Ông Lão: không tràn ngang (điện thoại)', !(await overflowX(p)));
 await shot(p, 'kite-npc.png');
 await p.click('[data-act="npc-close"]').catch(() => null);
-
-// Long Phượng Hội ở Tế Đàn: hưởng lộc
-await admin('sky_hoi', A.name);
-await send(p, { act: 'travel', to: 'altar' }).catch(() => null);
-await p.waitForFunction(() => window.__hl.player().pos.map === 'altar', null, { timeout: 8000 }).catch(() => null);
-await p.click('#tabs [data-tab="map"]').catch(() => null);
-const at = await p.evaluate(() => window.MapView.sky().hoi.at);
-await p.evaluate(([x, y]) => window.__hl.walkTo(x, y), at);
-await p.waitForFunction(([x, y]) => { const q = window.__hl.player().pos; return Math.max(Math.abs(q.x - x), Math.abs(q.y - y)) <= 2; }, at, { timeout: 30000 }).catch(() => null);
-await p.waitForSelector('#hoi-ui [data-act="le_long_phuong"]:not([disabled])', { timeout: 5000 }).catch(() => null);
-await shot(p, 'kite-hoi.png');
-const lk0 = await p.evaluate(() => window.__hl.player().long_khi || 0);
-await p.click('#hoi-ui [data-act="le_long_phuong"]').catch(() => null);
-await p.waitForFunction((k) => (window.__hl.player().long_khi || 0) > k, lk0, { timeout: 5000 }).catch(() => null);
-R.check('trong vòng sáng Long Phượng Hội: hưởng lộc (+Long Khí)', (await p.evaluate(() => window.__hl.player().long_khi || 0)) > lk0);
 
 R.check('không lỗi JS', A.errors.length === 0, A.errors.join(' | '));
 await R.done(browser);

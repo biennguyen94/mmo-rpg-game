@@ -30,8 +30,8 @@
   // hiệu ứng di chuyển (docs/FX_PLAN.md): dấu bước chân, ô đích vừa chạm, lúc sang bản đồ mới
   let steps = [], lastTile = null, mark = null, arrive = 0;
   let lake = null, school = null; // Long Vương đang nổi / Đàn Cá Vàng (HacLong.LakeEvent): { x, y, until }
-  // Đồi Sáo Diều (HacLong.SkyEvent): Chim Lạc, Đàn Hạc { x, y, until }, Mảnh Sao [[x, y]], Long Phượng Hội { at, until, radius }
-  let skyEv = { bird: null, flock: null, stars: [], hoi: null };
+  // Đồi Sáo Diều (HacLong.SkyEvent): Chim Lạc, Đàn Hạc { x, y, until }, Mảnh Sao [[x, y]]
+  let skyEv = { bird: null, flock: null, stars: [] };
   // FX đợt 3 (hướng C): quái trên bản đồ bị đánh (máu tụt: tia chém) / gục (tan thành hạt); suy ra từ sự kiện "map"
   let mobFx = [];
   let levelAt = 0; // vừa lên cấp: cột sáng vàng ở chỗ nhân vật (FX_PLAN đợt 4)
@@ -321,9 +321,6 @@
       // một dòng cho cả ba (đỡ che phần trời): thanh theo Chim Lạc nếu có
       const parts = [b && `🐦 Chim Lạc ${mmss((skyEv.bird.until - nowMs) / 1000)}`, f && `🕊 Đàn Hạc ${mmss((skyEv.flock.until - nowMs) / 1000)}`, st && `🌠 ${st} Mảnh Sao`].filter(Boolean);
       if (parts.length) L.push({ text: parts.join(' · '), k: b ? (skyEv.bird.until - nowMs) / 1000 / ((SKY.bird || {}).stay || 180) : f ? (skyEv.flock.until - nowMs) / 1000 / ((SKY.flock || {}).stay || 120) : 1, col: b ? '#e0a040' : f ? '#e8f2ff' : '#ffd36a' });
-    }
-    if (skyEv.hoi && skyEv.hoi.until > nowMs) {
-      L.push({ text: `🐉🐦 Long Phượng Hội ở Tế Đàn · còn ${mmss((skyEv.hoi.until - nowMs) / 1000)}${P.pos.map === 'altar' ? ' · bước vào vòng sáng' : ''}`, k: (skyEv.hoi.until - nowMs) / 1000 / (((SKY.hoi || {}).stay) || 300), col: '#c88cff' });
     }
     // F1: chiến bang đang diễn ra: tỉ số hai bang (mọi bản đồ, trừ trong Tháp)
     const w = !t && P.guild && P.guild.war;
@@ -1075,7 +1072,7 @@
       }
     }
     if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
-    // Đồi Sáo Diều: Đàn Hạc, Chim Lạc lượn trên trời, Mảnh Sao rơi trên đồi; Tế Đàn: vòng Long Phượng Hội
+    // Đồi Sáo Diều: Đàn Hạc, Chim Lạc lượn trên trời, Mảnh Sao rơi trên đồi
     if (m.kite) {
       const t = Date.now();
       if (skyEv.flock && t < skyEv.flock.until) flockSpot(now, skyEv.flock.x * TILE - cx, skyEv.flock.y * TILE - cy, fx);
@@ -1084,7 +1081,6 @@
       // mây trôi, chim lượn: vẽ lại liên tục (~16 khung / giây) khi bật hiệu ứng
       if (fx && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
     }
-    if (skyEv.hoi && Date.now() < skyEv.hoi.until && P.pos.map === 'altar') hoiRing(now, skyEv.hoi, cx, cy, fx);
     if (m.fish === 'lake' && lake && Date.now() < lake.until) dragonSpot(now, lake.x * TILE - cx, lake.y * TILE - cy, fx);
     // Vương Miện khuất khỏi khung nhìn: mũi tên vàng ở mép chỉ về phía nó (D1)
     if (crownSpot) edgeArrow(crownSpot[0], crownSpot[1], '240, 207, 122', fx ? now : 0, '👑');
@@ -1554,13 +1550,12 @@
     // G2: trùm thế giới, Vương Miện (to, nhấp nháy); người chơi khác: hồng (khác quái đỏ, NPC xanh lá, cổng tím),
     // đồng đội tổ đội vàng chanh, người bang mình xanh dương, người bang địch đỏ cam viền trắng
     if (m.worldBoss && boss.alive) dot(m.worldBoss[0], m.worldBoss[1], `rgba(255, 70, 50, ${blink})`, Math.max(2.5, s * 1.1));
-    // Đồi Sáo Diều: Chim Lạc (đồng, to), Đàn Hạc (trắng), Mảnh Sao (vàng); Tế Đàn: vòng Long Phượng Hội (tím)
+    // Đồi Sáo Diều: Chim Lạc (đồng, to), Đàn Hạc (trắng), Mảnh Sao (vàng)
     if (m.kite) {
       if (skyEv.bird) dot(skyEv.bird.x, skyEv.bird.y, `rgba(240, 170, 70, ${blink})`, Math.max(2.5, s * 1.1));
       if (skyEv.flock) dot(skyEv.flock.x, skyEv.flock.y, 'rgba(255, 255, 255, 0.95)', Math.max(2, s * 0.9));
       for (const [sx, sy] of skyEv.stars) dot(sx, sy, `rgba(255, 230, 120, ${blink})`, Math.max(1.5, s * 0.7));
     }
-    if (skyEv.hoi && P.pos.map === 'altar') dot(skyEv.hoi.at[0], skyEv.hoi.at[1], `rgba(200, 140, 255, ${blink})`, Math.max(3, s * 1.4));
     if (world.map === P.pos.map) {
       const crown = m.event === 'castle_siege' && (world.monsters || []).find((q) => q.kind === CS.crownKind);
       if (crown) dot(crown.x, crown.y, `rgba(255, 215, 90, ${blink})`, Math.max(2.5, s * 1.1));
@@ -2367,25 +2362,6 @@
     if (fx) sparkle(c, d, t, 4, 10, 'rgba(255, 255, 220, 0.95)');
     labels.push(['🌠 Mảnh Sao', c, y - 4, '#ffe08a']);
   }
-  // Long Phượng Hội ở Tế Đàn: vòng sáng tím vàng bán kính `radius` ô, rồng và chim bay quấn quanh
-  function hoiRing(t, h, cx, cy, fx) {
-    const c = h.at[0] * TILE - cx + TILE / 2, d = h.at[1] * TILE - cy + TILE / 2, R = (h.radius + 0.5) * TILE, k = fx ? t : 0;
-    const g = ctx.createRadialGradient(c, d, R * 0.2, c, d, R * 1.1);
-    g.addColorStop(0, 'rgba(200, 140, 255, 0.25)'); g.addColorStop(0.8, `rgba(255, 210, 110, ${0.22 + 0.1 * Math.sin(k / 400)})`); g.addColorStop(1, 'rgba(255, 210, 110, 0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, d, R * 1.1, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = `rgba(255, 220, 130, ${0.7 + 0.3 * Math.sin(k / 250)})`; ctx.lineWidth = 2.5;
-    ctx.setLineDash([8, 6]); ctx.lineDashOffset = -k / 40;
-    ctx.beginPath(); ctx.arc(c, d, R, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
-    const dragon = image('pets/long_vuong'), bird = image('sky/chim_lac');
-    const a = k / 1200;
-    if (dragon.complete) ctx.drawImage(dragon, c + Math.cos(a) * R * 0.7 - 20, d + Math.sin(a) * R * 0.45 - 30, 40, 40);
-    if (bird.complete) {
-      const fr = Math.floor(k / 110) % 4 + 1;
-      ctx.drawImage(bird, fr * 64, 0, 64, 64, c + Math.cos(a + Math.PI) * R * 0.7 - 24, d + Math.sin(a + Math.PI) * R * 0.45 - 34, 48, 48);
-    }
-    if (fx) sparkle(c, d, t, 12, R, 'rgba(255, 240, 200, 0.9)');
-    if (fx && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 60);
-  }
   // thú Hắc Long dắt theo: quầng tím đen dưới chân, rồng nhỏ bay lượn bên cạnh
   function hacAura(t, px, py, fx, chan) {
     const x = px + TILE / 2, y = py + TILE - 4, pulse = fx ? 0.5 + 0.5 * Math.sin(t / 450) : 0.5;
@@ -2680,11 +2656,10 @@
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };
       lake = at(l); school = at(s); draw();
     },
-    // Đồi Sáo Diều (ui.js onSky): { bird, birdLeft, flock, flockLeft, stars, hoi: { at, left, radius } }
+    // Đồi Sáo Diều (ui.js onSky): { bird, birdLeft, flock, flockLeft, stars }
     setSky(st) {
       const t = Date.now(), at = (v, left) => v && { x: v[0], y: v[1], until: t + left };
-      skyEv = { bird: at(st.bird, st.birdLeft), flock: at(st.flock, st.flockLeft), stars: st.stars || [],
-        hoi: st.hoi && { at: st.hoi.at, until: t + st.hoi.left, radius: st.hoi.radius } };
+      skyEv = { bird: at(st.bird, st.birdLeft), flock: at(st.flock, st.flockLeft), stars: st.stars || [] };
       draw();
     },
     sky: () => skyEv,

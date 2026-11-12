@@ -7,9 +7,7 @@ defmodule HacLong.SkyEvent do
   - **Đàn Hạc** (`flock`): như trên với `flock.every` / `flock.stay`; không bay đi khi có người thả trúng.
   - **Mưa sao băng** (`meteor`): ban đêm (`HacLong.World.Clock.night?/0`) mỗi `meteor.every` giây rơi `meteor.count`
     Mảnh Sao ở ô đi được của đồi, mỗi viên ở `meteor.stay` giây; nhặt (`take_star/1`, Session kiểm chỗ đứng) thì mất.
-  - **Long Phượng Hội** (`hoi`): kiểm mỗi `@tick_ms`: Long Vương đang nổi (`HacLong.LakeEvent.tile/0`) và Chim Lạc
-    đang lượn, chưa có hội, đã qua `hoi.cooldown` giây từ hội trước → vòng sáng ở Tế Đàn (`hoi.at`, `hoi.radius`) trong
-    `hoi.stay` giây, báo cả server. Làm lễ ở `HacLong.Game.DragonEgg`.
+  - Long Phượng Hội đã bỏ hẳn (DECISIONS "Thú thành vật phẩm"): Hắc Long ghép ở Lão Hỗn Nguyên (`HacLong.Game.DragonEgg`).
 
   Trạng thái chỉ trong bộ nhớ; client nhận `{:sky, public}` qua `topic/0` (kênh đẩy xuống `sky`).
   `config :hac_long, :sky_event, auto: false` (test) thì không tự hẹn giờ; quản trị gọi `summon/2`.
@@ -21,7 +19,6 @@ defmodule HacLong.SkyEvent do
   alias HacLong.World.Maps
 
   @topic "sky_event"
-  @tick_ms 5_000
 
   def topic, do: @topic
   defp r, do: Data.rules().sky
@@ -52,11 +49,8 @@ defmodule HacLong.SkyEvent do
   @doc "`{ô Chim Lạc, ô Đàn Hạc}` đang có (nil nếu không)."
   def tiles, do: call(:tiles, {nil, nil})
 
-  @doc "Long Phượng Hội đang diễn ra: `%{id, at: {x, y}, until}` hoặc nil."
-  def hoi, do: call(:hoi, nil)
-
   @doc "Trạng thái cho client."
-  def public, do: call(:public, public(%{bird: nil, flock: nil, stars: [], hoi: nil}))
+  def public, do: call(:public, public(%{bird: nil, flock: nil, stars: []}))
 
   @doc "Nhặt Mảnh Sao ở ô `{x, y}` của đồi: `:ok` nếu còn (và xóa), `:error` nếu không có."
   def take_star(at), do: call({:take_star, at}, :error)
@@ -64,7 +58,7 @@ defmodule HacLong.SkyEvent do
   @doc "Có người cảm hóa được Chim Lạc: bay đi ngay."
   def fly_away, do: GenServer.cast(__MODULE__, {:gone, :bird})
 
-  @doc "Gọi ngay (quản trị / test): `:bird`, `:flock` (ô `at` hoặc ngẫu nhiên), `:meteor` (một trận sao băng), `:hoi`."
+  @doc "Gọi ngay (quản trị / test): `:bird`, `:flock` (ô `at` hoặc ngẫu nhiên), `:meteor` (một trận sao băng)."
   def summon(kind, at \\ nil), do: GenServer.call(__MODULE__, {:summon, kind, at})
 
   @doc """
@@ -102,16 +96,14 @@ defmodule HacLong.SkyEvent do
       schedule(:bird)
       schedule(:flock)
       Process.send_after(self(), :meteor, r().meteor.every * 1000)
-      Process.send_after(self(), :tick, @tick_ms)
     end
 
-    {:ok, %{bird: nil, flock: nil, stars: [], hoi: nil, hoi_next: 0, auto: auto}}
+    {:ok, %{bird: nil, flock: nil, stars: [], auto: auto}}
   end
 
   @impl true
   def handle_call(:pk, _from, s), do: {:reply, s[:pk] == true, s}
   def handle_call(:tiles, _from, s), do: {:reply, {tile_of(s.bird), tile_of(s.flock)}, s}
-  def handle_call(:hoi, _from, s), do: {:reply, s.hoi, s}
   def handle_call(:public, _from, s), do: {:reply, public(s), s}
 
   def handle_call({:take_star, at}, _from, s) do
@@ -135,11 +127,6 @@ defmodule HacLong.SkyEvent do
 
   def handle_call({:summon, :meteor, _}, _from, s) do
     s = shower(s)
-    {:reply, public(s), s}
-  end
-
-  def handle_call({:summon, :hoi, _}, _from, s) do
-    s = start_hoi(s)
     {:reply, public(s), s}
   end
 
@@ -181,25 +168,6 @@ defmodule HacLong.SkyEvent do
       {:noreply, s}
     end
   end
-
-  def handle_info(:tick, s) do
-    Process.send_after(self(), :tick, @tick_ms)
-
-    # Long Phượng Hội đã bỏ (DECISIONS "Thú thành vật phẩm"): Hắc Long ghép ở Lão Hỗn Nguyên; tự mở hội chỉ khi
-    # `RULES.sky.hoi.enabled` (quản trị / test vẫn gọi `summon(:hoi)` được)
-    if r().hoi[:enabled] == true && s.bird && s.hoi == nil && now() >= s.hoi_next &&
-         HacLong.LakeEvent.tile() != nil,
-       do: {:noreply, start_hoi(s)},
-       else: {:noreply, s}
-  end
-
-  def handle_info({:hoi_end, id}, %{hoi: %{id: id}} = s) do
-    s = %{s | hoi: nil}
-    broadcast(s)
-    {:noreply, s}
-  end
-
-  def handle_info({:hoi_end, _}, s), do: {:noreply, s}
 
   # ---------- Nội bộ ----------
 
@@ -267,21 +235,6 @@ defmodule HacLong.SkyEvent do
     s
   end
 
-  defp start_hoi(s) do
-    h = r().hoi
-    id = System.unique_integer([:positive])
-    Process.send_after(self(), {:hoi_end, id}, h.stay * 1000)
-    hoi = %{id: id, at: List.to_tuple(h.at), until: now() + h.stay * 1000}
-
-    Chat.system(
-      "🐉🐦 Long Phượng Hội! Long Vương và Chim Lạc cùng hiện, vòng sáng mở ở Tế Đàn trong #{div(h.stay, 60)} phút. Ai có đủ hai thần thú hãy đến làm lễ!"
-    )
-
-    s = %{s | hoi: hoi, hoi_next: now() + (h.stay + h.cooldown) * 1000}
-    broadcast(s)
-    s
-  end
-
   defp tile_of(nil), do: nil
   defp tile_of(%{tile: t}), do: t
 
@@ -295,10 +248,7 @@ defmodule HacLong.SkyEvent do
       birdLeft: bl,
       flock: f,
       flockLeft: fl,
-      stars: for(%{at: {x, y}, until: u} <- s.stars, u > t, do: [x, y]),
-      hoi:
-        s.hoi &&
-          %{at: Tuple.to_list(s.hoi.at), left: max(0, s.hoi.until - t), radius: r().hoi.radius}
+      stars: for(%{at: {x, y}, until: u} <- s.stars, u > t, do: [x, y])
     }
   end
 

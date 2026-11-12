@@ -29,11 +29,4 @@ defmodule HacLong.SkyEventTest do
     assert SkyEvent.take_star({x, y}) == :ok
     assert SkyEvent.take_star({x, y}) == :error
   end
-
-  test "Long Phượng Hội: vòng sáng ở Tế Đàn, có giờ còn lại, báo kênh thế giới" do
-    %{hoi: %{at: at, left: left}} = SkyEvent.summon(:hoi)
-    assert at == HacLong.Game.DragonEgg.hoi_rules().at and left > 0
-    assert %{id: _, at: _} = SkyEvent.hoi()
-    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "Long Phượng Hội"))
-  end
 end
