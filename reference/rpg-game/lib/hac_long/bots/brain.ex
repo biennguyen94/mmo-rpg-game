@@ -510,11 +510,16 @@ defmodule HacLong.Bots.Brain do
   @life Data.rules().upgrade.life
   @max_level Data.rules().character.max_level
   @max_rebirths Data.rules().character.max_rebirths
+  # bot chuyển sinh tới trần riêng (DECISIONS "Bot chuyển sinh quá 10, chọn vùng theo thang")
+  @bot_rebirths Data.rules().bots.max_rebirths
+  @ladder_margin Data.rules().bots.ladder_margin
+  @per_day Data.rules().character.rebirth_per_day
 
   # bot dừng ở mốc chuyển sinh tối đa (không chuyển sinh vô hạn, DECISIONS "Chuyển sinh vô hạn"): quá mốc thì không
   # còn chúa tể phải hạ
+  # chúa tể cần hạ trước lần chuyển sinh tới (cả khi quá mốc 10: hạ lại chúa tể vùng cuối); đã tới trần của bot thì không
   defp need(p),
-    do: if((Map.get(p, :rebirths) || 0) >= @max_rebirths, do: nil, else: Engine.rebirth_need(p))
+    do: if((Map.get(p, :rebirths) || 0) >= @bot_rebirths, do: nil, else: Engine.rebirth_need(p))
 
   # vàng được tiêu cho rèn (giữ lại `gold_keep_per_level` × cấp để mua bình)
   defp spare_gold(p), do: p.gold - @forge.gold_keep_per_level * p.level
@@ -525,8 +530,22 @@ defmodule HacLong.Bots.Brain do
 
   @doc "Cấp tối đa, đủ điều kiện chuyển sinh (đã hạ chúa tể nếu cần, chưa chuyển sinh tối đa)."
   def rebirth_ready?(p) do
-    p.level >= @max_level and (Map.get(p, :rebirths) || 0) < @max_rebirths and
-      need(p) == nil
+    p.level >= @max_level and (Map.get(p, :rebirths) || 0) < @bot_rebirths and
+      need(p) == nil and Engine.rebirths_today(p) < @per_day
+  end
+
+  @doc """
+  Vùng chuyển sinh hợp sức với bot theo thang vùng co giãn (`HacLong.RealmLadder`): vùng cao nhất đã mở (chuyển sinh ≥ số
+  vùng) có mức hiện tại ≤ CS + `bots.ladder_margin`; không có thì vùng 1.
+  """
+  def ladder_realm(p, ks \\ HacLong.RealmLadder.ks()) do
+    cs = Map.get(p, :rebirths) || 0
+
+    ks
+    |> Enum.with_index(1)
+    |> Enum.filter(fn {k, r} -> r <= cs and k <= cs + @ladder_margin end)
+    |> Enum.map(&elem(&1, 1))
+    |> Enum.max(fn -> 1 end)
   end
 
   @doc """
@@ -867,19 +886,33 @@ defmodule HacLong.Bots.Brain do
   # (bản đồ đầu tiên đã tránh: nil, luyện bản đồ thường).
   @doc false
   def realm_target(p, avoid \\ []) do
+    cs = Map.get(p, :rebirths) || 0
+
     cond do
       p.level < @max_level ->
         nil
 
+      # cần hạ chúa tể trước lần chuyển sinh tới: đi các bản đồ của vùng đó; vùng đó đang tránh (gục nhiều, quá mạnh so
+      # với thang hiện tại) thì luyện ở vùng hợp sức
       need = need(p) ->
-        realm_walk(p, realm_maps(p, &(&1 == need.realm)), avoid)
+        realm_walk(p, realm_maps(p, &(&1 == need.realm)), avoid) || ladder_walk(p, avoid)
 
-      (Map.get(p, :rebirths) || 0) >= @max_rebirths ->
-        realm_walk(p, realm_maps(p, &is_integer/1), avoid)
+      # không chuyển sinh được lúc này (tới trần bot, hết lượt hôm nay) hoặc đã quá mốc 10: vùng hợp sức theo thang
+      cs >= @bot_rebirths or cs >= @max_rebirths or Engine.rebirths_today(p) >= @per_day ->
+        ladder_walk(p, avoid)
 
       true ->
         nil
     end
+  end
+
+  # vùng chuyển sinh hợp sức theo thang vùng co giãn (`ladder_realm/2`); vùng đó đang tránh thì lùi vùng thấp hơn
+  defp ladder_walk(p, avoid) do
+    top = ladder_realm(p)
+
+    Enum.find_value(top..1//-1, fn r ->
+      realm_walk(p, realm_maps(p, &(&1 == r)), avoid)
+    end)
   end
 
   defp realm_maps(p, realm?) do

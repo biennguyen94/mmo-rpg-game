@@ -1179,6 +1179,9 @@
     "bots": {
       "_events_doc": "DECISIONS \"Bot đi sự kiện\": Cổ Long còn sống thì bot từ min_level, máu ≥ hp_pct về Tế Đàn (map) chạm trùm đánh; ở Đồi Sáo Diều có Mảnh Sao thì nhặt (star); Golden Invasion đang chạy thì bot hợp cấp (bản đồ có quái không quá cấp mình + 1) sang bản đồ còn quái vàng, đánh quái vàng trước.",
       "events": {"world_boss": {"map": "altar", "min_level": 25, "hp_pct": 0.6}, "star": true, "invasion": true},
+      "max_rebirths": 25,
+      "_max_rebirths_doc": "DECISIONS \"Bot chuyển sinh quá 10, chọn vùng theo thang\": bot chuyển sinh tới max_rebirths (quá character.max_rebirths thì như người: hạ lại chúa tể vùng cuối đủ số lần, tối đa rebirth_per_day lần / ngày). Ở cấp tối đa mà chưa chuyển sinh được (đủ trần, hết lượt trong ngày): luyện ở vùng chuyển sinh hợp sức theo thang vùng co giãn (vùng cao nhất đã mở có mức ≤ CS + ladder_margin).",
+      "ladder_margin": 1,
       "vit_share": 0.3,
       "_vit_share_doc": "DECISIONS \"Máu theo chuyển sinh\": bot cộng điểm sao cho khoảng vit_share số điểm đã cộng vào Thể lực, còn lại vào chỉ số chính.",
       "count": 0,

@@ -81,20 +81,49 @@ defmodule HacLong.Bots.BrainEndgameTest do
           Map.merge(p[:bestiary] || %{}, Map.new(m.spawns, &{&1.monster, 999}))
         )
 
-    test "bắt đầu từ bản đồ dễ nhất; hạ đủ quái thì sang bản đồ sau; bản đồ vừa gục nhiều thì lùi lại" do
+    test "quá mốc 10: cần hạ lại chúa tể vùng cuối thì đi các bản đồ vùng cuối lần lượt; bản đồ vừa gục nhiều thì lùi lại" do
       p = maxed()
 
-      # người chơi quá mốc tối đa vẫn chuyển sinh được (cần hạ lại chúa tể vùng cuối); bot dừng ở mốc tối đa
+      # DECISIONS "Bot chuyển sinh quá 10, chọn vùng theo thang": bot chuyển sinh tiếp như người
       assert %{realm: r} = Engine.rebirth_need(p)
       assert r == @char.max_rebirths
-      [m1, m2, m3 | _] = realm_maps()
+      [m1, m2, m3 | _] = Enum.filter(realm_maps(), &(&1.realm == r))
       assert Brain.realm_target(p) == m1.id
 
       p = p |> killed(m1) |> killed(m2)
       assert Brain.realm_target(p) == m3.id
       assert Brain.realm_target(p, [m3.id]) == m2.id
-      # bản đồ đầu tiên cũng đang tránh: luyện bản đồ thường
-      assert Brain.realm_target(maxed(), [m1.id]) == nil
+      # bản đồ đầu vùng chúa tể cũng đang tránh: lùi về vùng hợp sức thấp hơn (không về bản đồ thường)
+      assert Maps.get(Brain.realm_target(maxed(), [m1.id])).realm == r - 1
+    end
+
+    test "chuyển sinh quá 10 tới trần của bot; hết lượt trong ngày thì thôi" do
+      lord = Engine.rebirth_need(maxed())
+      p = maxed() |> Map.put(:bestiary, %{lord.id => 99})
+      assert Brain.rebirth_ready?(p)
+      cap = Data.rules().bots.max_rebirths
+      refute Brain.rebirth_ready?(Map.put(p, :rebirths, cap))
+      today = HacLong.Game.Daily.today()
+
+      refute Brain.rebirth_ready?(
+               Map.put(p, :daily, %{date: today, rebirths: @char.rebirth_per_day})
+             )
+    end
+
+    test "chọn vùng hợp sức theo thang vùng co giãn" do
+      base = Enum.to_list(1..10)
+      assert Brain.ladder_realm(Map.put(maxed(), :rebirths, 25), base) == 10
+      assert Brain.ladder_realm(Map.put(maxed(), :rebirths, 3), base) == 3
+      ks = [10, 12, 14, 17, 19, 21, 23, 26, 28, 30]
+      # CS 18: vùng cao nhất có mức ≤ 18 + ladder_margin
+      assert Brain.ladder_realm(Map.put(maxed(), :rebirths, 18), ks) ==
+               5 - if(Data.rules().bots.ladder_margin >= 1, do: 0, else: 1)
+
+      assert Brain.ladder_realm(Map.put(maxed(), :rebirths, 30), ks) == 10
+      assert Brain.ladder_realm(Map.put(maxed(), :rebirths, 9), ks) == 1
+      # tới trần bot (không chuyển sinh nữa): luyện ở vùng hợp sức
+      p = maxed() |> Map.put(:rebirths, Data.rules().bots.max_rebirths)
+      assert Maps.get(Brain.realm_target(p)).realm == Brain.ladder_realm(p)
     end
 
     test "chưa chuyển sinh tối đa mà không cần hạ chúa tể: không đi vùng chuyển sinh" do

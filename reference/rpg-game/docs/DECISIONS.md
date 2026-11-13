@@ -2228,3 +2228,12 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   `underdog_margin` (2), máu quái giữ.
 - Không áp: sự kiện theo phòng, đồ sát, đấu trường. Client: tên bản đồ "Vùng chuyển sinh r · ≈ CS k", Chọn bản đồ ghi ≈ CS k,
   thẻ quản trị 🗺 Thang vùng chuyển sinh. Test `test/hac_long/realm_ladder_test.exs`, e2e `e2e/ladder.mjs`.
+
+## Bot chuyển sinh quá 10, chọn vùng theo thang (2026-11-13)
+- Người dùng: cho bot cày tới CS 20–25 (trước đây bot dừng ở CS 10), bot tự chọn bản đồ theo thang vùng co giãn.
+- `RULES.bots.max_rebirths` (25): bot chuyển sinh tới trần này như người (quá 10: hạ lại chúa tể vùng cuối đủ số lần,
+  tối đa `rebirth_per_day` lần / ngày; `rebirth_ready?` kiểm cả lượt trong ngày).
+- `Brain.ladder_realm/2`: vùng cao nhất đã mở (chuyển sinh ≥ số vùng) có mức thang hiện tại ≤ CS + `bots.ladder_margin` (1).
+  `realm_target/2` ở cấp tối đa: (1) cần hạ chúa tể → các bản đồ vùng đó; vùng đó đang tránh (gục nhiều, thang dời quá mạnh)
+  thì luyện vùng hợp sức; (2) không chuyển sinh được lúc này (tới trần, hết lượt hôm nay) hoặc đã quá 10 → vùng hợp sức; vùng
+  hợp sức đang tránh thì lùi vùng thấp hơn (không về bản đồ thường như trước).
