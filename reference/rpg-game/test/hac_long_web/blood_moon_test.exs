@@ -153,7 +153,8 @@ defmodule HacLongWeb.BloodMoonTest do
     r = cmd(sb, %{"act" => "travel", "to" => @r.map})
     assert r.ok == false and r.msg =~ "vừa gục ở Pháp Trường"
 
-    # hết giờ (đóng sớm): top 1 nhận thư ngọc
+    # hết giờ (đóng sớm): top 1 nhận thư ngọc theo mức quản trị đặt
+    {:ok, _} = BloodMoon.set_rewards([%{"jewel_chaos" => 5}, %{}, %{}])
     assert {:ok, %{open: false}} = BloodMoon.close_now()
     refute BloodMoon.open?()
 
@@ -161,6 +162,11 @@ defmodule HacLongWeb.BloodMoonTest do
              Repo.all(from m in "mails", where: m.user_id == ^ua.id, select: m.subject)
 
     assert subject =~ "hạng 1"
+
+    assert [%{"jewel_chaos" => 5} = items] =
+             Repo.all(from m in "mails", where: m.user_id == ^ua.id, select: m.items)
+
+    assert map_size(items) == 1
     assert Repo.all(from m in "mails", where: m.user_id == ^ub.id, select: m.id) == []
   end
 
@@ -196,6 +202,23 @@ defmodule HacLongWeb.BloodMoonTest do
     assert_reply ref, :ok, %{blood_moon: %{daily: "20:00"}}
     ref = push(sa, "admin", %{"op" => "blood_moon_daily", "at" => ""})
     assert_reply ref, :ok, %{blood_moon: %{daily: nil}}
+
+    # quà top: sai thì từ chối, đúng thì lưu (thiếu ngọc là 0), về mặc định
+    bad = [%{"jewel_bless" => 100}, %{}, %{}]
+    ref = push(sa, "admin", %{"op" => "blood_moon_rewards", "rewards" => bad})
+    assert_reply ref, :error, %{msg: "Quà mỗi hạng" <> _}
+    ref = push(sa, "admin", %{"op" => "blood_moon_rewards", "rewards" => [%{"jewel_bless" => 7}]})
+    assert_reply ref, :error, _
+
+    good = [%{"jewel_bless" => 7, "jewel_life" => 1}, %{"jewel_soul" => 2}, %{}]
+    ref = push(sa, "admin", %{"op" => "blood_moon_rewards", "rewards" => good})
+    assert_reply ref, :ok, %{blood_moon: %{rewards: [r1, r2, r3]}}
+    assert r1 == %{"jewel_bless" => 7, "jewel_soul" => 0, "jewel_chaos" => 0, "jewel_life" => 1}
+    assert r2["jewel_soul"] == 2 and Enum.all?(r3, fn {_, n} -> n == 0 end)
+
+    ref = push(sa, "admin", %{"op" => "blood_moon_rewards", "reset" => true})
+    assert_reply ref, :ok, %{blood_moon: %{rewards: rw}}
+    assert rw == BloodMoon.default_rewards()
 
     ub = create_user()
     player(ub, %{level: 20}, %{map: "village", x: 12, y: 14})

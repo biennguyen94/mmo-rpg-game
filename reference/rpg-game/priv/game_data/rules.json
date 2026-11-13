@@ -1250,7 +1250,7 @@
       "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
     "blood_moon": {
-      "_doc": "DECISIONS \"Pháp Trường Huyết Nguyệt\" (Phase 8): bản đồ map không quái, ngày thường là vùng an toàn. Quản trị mở (hoặc lịch hằng ngày daily_at \"HH:MM\", báo trước warn_min phút) thì đồ sát tự do minutes phút (quản trị chọn 1..minutes_max). Gục trong sự kiện: không mất vàng, không tên đỏ, về Làng, relock_s giây sau mới vào lại. Hạ người: drop_pct cơ hội rơi một viên ngẫu nhiên trong jewels, × (1 + rebirth_step × (chuyển sinh người gục − người hạ)) chặn [0, rebirth_max]; hạ lại cùng một người × repeat_decay mỗi lần. Hạ bot / bot hạ: chỉ tính điểm, không rơi ngọc. Hết giờ: top theo số mạng hạ, top_rewards[i] (ngọc) gửi thư cho người thật thứ i+1 (bot không nhận, người sau được đôn lên), cần ít nhất min_kills mạng.",
+      "_doc": "DECISIONS \"Pháp Trường Huyết Nguyệt\" (Phase 8): bản đồ map không quái, ngày thường là vùng an toàn. Quản trị mở (hoặc lịch hằng ngày daily_at \"HH:MM\", báo trước warn_min phút) thì đồ sát tự do minutes phút (quản trị chọn 1..minutes_max). Gục trong sự kiện: không mất vàng, không tên đỏ, về Làng, relock_s giây sau mới vào lại. Hạ người: drop_pct cơ hội rơi một viên ngẫu nhiên trong jewels, × (1 + rebirth_step × (chuyển sinh người gục − người hạ)) chặn [0, rebirth_max]; hạ lại cùng một người × repeat_decay mỗi lần. Hạ bot / bot hạ: chỉ tính điểm, không rơi ngọc. Hết giờ: top theo số mạng hạ, top_rewards[i] (ngọc) gửi thư cho người thật thứ i+1 (bot không nhận, người sau được đôn lên), cần ít nhất min_kills mạng. Quản trị chỉnh số ngọc từng hạng (0..reward_max, toàn 0 là hạng đó không có quà; lưu ở admin_log op blood_moon_rewards).",
       "map": "phap_truong",
       "minutes": 10,
       "minutes_max": 60,
@@ -1267,6 +1267,7 @@
         {"jewel_bless": 1, "jewel_soul": 1, "jewel_chaos": 1, "jewel_life": 1}
       ],
       "min_kills": 1,
+      "reward_max": 99,
       "top_n": 10,
       "daily_at": null,
       "sourceType": "DESIGN",

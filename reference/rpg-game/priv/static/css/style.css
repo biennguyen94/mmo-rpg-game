@@ -1134,16 +1134,30 @@ div.item.people-row .people-main { display: flex; align-items: center; gap: 10px
 .pet-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .pet-btns .btn { white-space: nowrap; }
 
-/* Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"): dải nổi một dòng ở cuối bản đồ (trên thanh 🤖 ⚡) ở tab Bản đồ: đếm giờ, top 3
-   (khi đang ở Pháp Trường), nút đến Pháp Trường */
-#bm-chip { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 132px); z-index: 40;
-  width: max-content; max-width: min(460px, calc(100vw - 130px)); pointer-events: none; }
+/* Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"): dải nổi hai hàng ở cuối bản đồ (trên thanh 🤖 ⚡), tab Bản đồ:
+   hàng 1 giờ còn / mạng / hạng + 🏆, hàng 2 top 3 mỗi người một ô (điểm luôn hiện đủ); 🏆 mở top 10 */
+#bm-chip { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 140px); z-index: 40;
+  width: min(520px, calc(100vw - 32px)); pointer-events: none; }
 #bm-chip[hidden] { display: none; }
-.bm-chip { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 10px; pointer-events: auto;
-  background: rgba(40, 10, 16, 0.9); border: 1px solid #7a2630; color: #f4dcd6; font-size: 0.82rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45); }
+.bm-chip { display: flex; flex-direction: column; gap: 4px; padding: 5px 6px 6px 10px; border-radius: 10px; pointer-events: auto;
+  background: rgba(40, 10, 16, 0.92); border: 1px solid #7a2630; color: #f4dcd6; font-size: 0.82rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45); }
 .bm-chip.on { border-color: #d0403a; animation: bm-pulse 2.4s ease-in-out infinite; }
-.bm-chip .grow { min-width: 0; flex: 1; }
-.bm-chip .bm-line, .bm-chip .bm-top { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bm-chip .bm-top { color: #e8b8b0; }
+.bm-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bm-line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-trophy { flex: none; padding: 2px 8px; }
+.bm-cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.bm-cell { display: flex; align-items: center; gap: 2px; min-width: 0; padding: 2px 4px; border-radius: 7px; background: rgba(255, 255, 255, 0.06); font-size: 0.78rem; }
+.bm-cell .md { flex: none; font-size: 0.72rem; }
+.bm-cell .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-cell b { flex: none; color: #ffd27a; }
+.bm-cell.me { background: rgba(208, 64, 58, 0.35); outline: 1px solid #e0706a; }
+.bm-go { align-self: flex-start; }
+.bm-list { max-height: 40vh; overflow-y: auto; margin: 2px 0 0; }
+.bm-list li.me { color: #ffd27a; }
+.bm-rw-h { margin: 10px 0 4px; font-size: 0.9rem; }
+.bm-rw-wrap { overflow-x: auto; }
+.bm-rw { border-collapse: collapse; font-size: 0.8rem; }
+.bm-rw th, .bm-rw td { padding: 2px 4px; text-align: center; white-space: nowrap; }
+.bm-rw input { width: 4.6em; min-width: 4.6em; padding: 4px 6px; text-align: center; box-sizing: border-box; }
 @keyframes bm-pulse { 50% { box-shadow: 0 0 18px rgba(220, 50, 40, 0.55); } }
 @media (prefers-reduced-motion: reduce) { .bm-chip.on { animation: none; } }

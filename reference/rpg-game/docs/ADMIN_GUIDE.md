@@ -79,7 +79,11 @@ Thứ tự các khối trong tab:
    mặc định 10; báo cả server), **🌕 Đóng sớm** (chốt bảng, top 3 người thật nhận ngọc qua thư), **🤖 Gọi tất cả bot vào**
    (chỉ khi đang mở: mọi bot đang chạy bỏ việc đang làm, kể cả đang leo Tháp, vào Pháp Trường tìm người gần nhất để đồ sát;
    gục thì về Làng, hết 30 giây khóa thì tự quay lại), **🏠 Rút bot về** (bot đang ở Pháp Trường về Làng; hết giờ cũng tự
-   về), **Tự mở hằng ngày lúc** HH:MM → **💾 Lưu lịch** (giờ Việt Nam, báo trước 5 phút) / **Tắt lịch**. Lệnh: `blood_moon`
+   về), **Tự mở hằng ngày lúc** HH:MM → **💾 Lưu lịch** (giờ Việt Nam, báo trước 5 phút) / **Tắt lịch**. **Quà top**: bảng
+   hạng 1 / 2 / 3 × 4 loại ngọc (mỗi ô 0..99) → **💾 Lưu quà top** / **↺ Về mặc định** (mặc định trong `RULES.blood_moon
+   .top_rewards`: 3 / 2 / 1 viên mỗi loại); hạng để toàn 0 thì không có quà; đổi giữa lúc đang mở thì cuối đợt đó dùng mức
+   mới; dòng Nhật ký quản trị hợp lệ mới nhất là mức đang dùng (khởi động lại vẫn giữ). Lệnh: `blood_moon_rewards`
+   (`rewards`: 3 phần tử `{mã ngọc: số}`, hoặc `reset: true`), `blood_moon`
    (đọc), `blood_moon_open` (`minutes`), `blood_moon_close`, `blood_moon_bots`, `blood_moon_recall`, `blood_moon_daily`
    (`at`: "HH:MM" hoặc rỗng để tắt; dòng Nhật ký quản trị mới nhất là lịch đang dùng, khởi động lại server vẫn giữ). Trạng
    thái sự kiện chỉ trong bộ nhớ: khởi động lại server lúc đang mở thì sự kiện mất, không ai nhận quà.

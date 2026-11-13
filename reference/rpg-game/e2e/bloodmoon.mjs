@@ -43,11 +43,23 @@ await ap.evaluate(() => window.__hl.menu('admin'));
 await ap.waitForSelector('#adm-bm');
 await ap.$eval('#adm-bm', (e) => e.scrollIntoView({ block: 'center' }));
 await shot(ap, 'bloodmoon-admin.png');
+// quà top chỉnh ở Quản trị: hạng 1 = 5 Ngọc Hỗn Nguyên, hạng 2 = 2 Ngọc Tâm Linh, còn lại 0
+await ap.click('[data-adm="blood_moon_rewards"][data-reset]');
+await ap.waitForTimeout(400);
+for (const inp of await ap.$$('#adm-bm input[id^="adm-bm-rw-"]')) await inp.fill('0');
+await ap.fill('#adm-bm-rw-0-jewel_chaos', '5');
+await ap.fill('#adm-bm-rw-1-jewel_soul', '2');
+await ap.click('[data-adm="blood_moon_rewards"]:not([data-reset])');
+await ap.waitForTimeout(500);
+const rw = await ap.evaluate(() => window.Net.admin('blood_moon').then((x) => x.blood_moon.rewards));
+R.check('Quản trị lưu quà top', rw[0].jewel_chaos === 5 && rw[0].jewel_bless === 0 && rw[1].jewel_soul === 2, JSON.stringify(rw));
+await ap.$eval('#adm-bm', (e) => e.scrollIntoView({ block: 'center' }));
+await shot(ap, 'bloodmoon-rewards.png');
 await ap.fill('#adm-bm-min', '10');
 await ap.click('[data-adm="blood_moon_open"]');
 await A.page.waitForSelector('#bm-chip .bm-chip.on', { timeout: 8000 }).catch(() => null);
 R.check('mở: dải 🩸 đếm giờ hiện ở người chơi', !!(await A.page.$('#bm-chip .bm-chip.on')));
-R.check('dải ở B (khác bản đồ vẫn thấy) có số phút', /Huyết Nguyệt/.test(await B.page.textContent('#bm-chip').catch(() => '')));
+R.check('dải ở B cũng hiện, có số phút còn lại', /còn\s*\d+:\d\d/.test(await B.page.textContent('#bm-chip').catch(() => '')));
 await ap.waitForFunction(() => /Đang mở/.test(document.querySelector('#adm-bm').textContent), null, { timeout: 5000 }).catch(() => null);
 R.check('thẻ quản trị: Đang mở', /Đang mở/.test(await ap.textContent('#adm-bm')));
 await A.page.waitForTimeout(600);
@@ -82,6 +94,18 @@ await act(A.page, 'leave').catch(() => null);
 await A.page.waitForFunction(() => /bạn hạ\s*1/.test(document.querySelector('#bm-chip')?.textContent || ''), null, { timeout: 5000 }).catch(() => null);
 await A.page.waitForTimeout(5000);
 await shot(A.page, 'bloodmoon-chip.png');
+// top 3 mỗi người một ô: điểm hiện đủ (không bị cắt), ô của mình tô sáng; 🏆 mở top 10
+const cell = await A.page.evaluate(() => {
+  const c = document.querySelector('#bm-chip .bm-cell.me');
+  if (!c) return null;
+  const b = c.querySelector('b'), r = b.getBoundingClientRect(), cr = c.getBoundingClientRect();
+  return { txt: c.textContent, score: b.textContent, inside: r.right <= cr.right + 0.5 && r.width > 0 };
+});
+R.check('dải: ô top 1 của A, điểm hiện đủ', cell && cell.score === '1' && cell.inside, JSON.stringify(cell));
+await A.page.click('[data-act="bm-top"]');
+R.check('🏆 mở bảng top 10', !!(await A.page.$('#bm-chip .bm-list')));
+await shot(A.page, 'bloodmoon-top10.png');
+await A.page.click('[data-act="bm-top"]');
 R.check('dải: bạn hạ 1, top có tên A', /bạn hạ\s*1/.test(await A.page.textContent('#bm-chip')) && (await A.page.textContent('#bm-chip')).includes(A.name));
 
 R.check('Bảng Huyết Nguyệt: bảng xếp hạng có A', await meetNpc(A.page, 'blood_board') && (await A.page.textContent('#view')).includes(A.name));
@@ -107,6 +131,9 @@ await A.page.waitForFunction(() => !document.querySelector('#bm-chip .bm-chip.on
 R.check('đóng: dải biến mất', !(await A.page.$('#bm-chip .bm-chip.on')));
 await A.page.waitForTimeout(1500);
 const mails = await A.page.evaluate(() => window.Net.mail().then((x) => x.mails || []).catch(() => []));
-R.check('A (hạng 1) nhận thư ngọc', mails.some((x) => /Huyết Nguyệt/.test(x.subject)), JSON.stringify(mails).slice(0, 160));
+const mm = mails.find((x) => /Huyết Nguyệt/.test(x.subject));
+R.check('A (hạng 1) nhận thư ngọc theo mức Quản trị đặt (5 Ngọc Hỗn Nguyên)', !!mm && JSON.stringify(mm).includes('jewel_chaos') && !JSON.stringify(mm).includes('jewel_bless'), JSON.stringify(mm || mails).slice(0, 200));
+// trả quà top về mặc định cho lần chạy sau
+await ap.evaluate(() => window.Net.admin('blood_moon_rewards', { reset: true }).catch(() => null));
 R.check('không lỗi JS', A.errors.length === 0 && B.errors.length === 0, [...A.errors, ...B.errors].join(' | '));
 await R.done(browser);

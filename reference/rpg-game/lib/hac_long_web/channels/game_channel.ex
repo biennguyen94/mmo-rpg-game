@@ -1028,6 +1028,17 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  # quà top 1, 2, 3 (`rewards`: [%{mã ngọc => số}]; `reset`: về mặc định RULES). Dòng admin_log này là mức đang dùng.
+  defp admin("blood_moon_rewards", p, _s) do
+    with {:ok, st} <- HacLong.BloodMoon.set_rewards(if(p["reset"], do: nil, else: p["rewards"])) do
+      {:ok,
+       %{
+         msg: if(p["reset"], do: "Quà top về mặc định.", else: "Đã lưu quà top 1, 2, 3."),
+         blood_moon: st
+       }}
+    end
+  end
+
   defp admin("blood_moon_bots", _p, _s) do
     with {:ok, n} <- HacLong.BloodMoon.summon_bots() do
       {:ok, %{msg: "Đã gọi #{n} bot vào Pháp Trường.", blood_moon: HacLong.BloodMoon.public()}}

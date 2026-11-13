@@ -55,6 +55,38 @@ defmodule HacLong.BloodMoon do
   @doc "Đặt lịch hằng ngày \"HH:MM\" hoặc nil (tắt). Người gọi đã ghi `admin_log`."
   def set_daily(at), do: GenServer.call(__MODULE__, {:daily, at})
 
+  @doc """
+  Đặt quà top (quản trị): danh sách đúng `length(RULES.blood_moon.top_rewards)` phần tử, mỗi phần tử
+  `%{mã ngọc => số}` (ngọc trong `jewels`, 0..`reward_max`), hoặc nil để về mặc định của RULES. Người gọi đã ghi
+  `admin_log` (op `blood_moon_rewards`, `params.rewards`); dòng mới nhất là mức đang dùng.
+  """
+  def set_rewards(rewards), do: GenServer.call(__MODULE__, {:rewards, rewards})
+
+  @doc "Quà top mặc định (RULES), khóa chuỗi."
+  def default_rewards,
+    do: Enum.map(rules().top_rewards, &Map.new(&1, fn {k, v} -> {to_string(k), v} end))
+
+  @doc """
+  Chuẩn hóa / kiểm quà top (hàm thuần): `{:ok, [%{mã => số}]}` (đủ mọi ngọc, thiếu là 0) hoặc `{:error, lý do}`.
+  """
+  def check_rewards(list, r \\ rules()) do
+    max = r.reward_max
+    jewels = Enum.map(r.jewels, &to_string/1)
+
+    ok? = fn m ->
+      is_map(m) and
+        Enum.all?(m, fn {k, v} -> to_string(k) in jewels and is_integer(v) and v in 0..max end)
+    end
+
+    if is_list(list) and length(list) == length(r.top_rewards) and Enum.all?(list, ok?),
+      do:
+        {:ok,
+         Enum.map(list, fn m ->
+           Map.new(jewels, &{&1, Map.get(m, &1) || Map.get(m, String.to_atom(&1)) || 0})
+         end)},
+      else: {:error, "Quà mỗi hạng: số nguyên 0..#{max} cho từng loại ngọc."}
+  end
+
   @doc "Gọi mọi bot đang chạy vào Pháp Trường (chỉ lúc đang mở). Trả số bot."
   def summon_bots, do: GenServer.call(__MODULE__, :summon_bots)
 
@@ -97,9 +129,11 @@ defmodule HacLong.BloodMoon do
 
   @doc "Người nhận quà (hàm thuần): người thật có ≥ `min_kills` mạng, theo thứ tự xếp hạng, ghép với `top_rewards`."
   def winners(rank, r \\ rules()) do
+    rewards = r[:rewards] || r.top_rewards
+
     rank
     |> Enum.reject(&(&1.bot or &1.kills < r.min_kills))
-    |> Enum.zip(r.top_rewards)
+    |> Enum.zip(rewards)
   end
 
   @doc false
@@ -132,13 +166,14 @@ defmodule HacLong.BloodMoon do
       daily: nil,
       daily_ref: nil,
       last: [],
-      drop: nil
+      drop: nil,
+      rewards: nil
     }
 
   @impl true
   def init(:ok) do
     :persistent_term.put(@open_key, false)
-    s = %{initial() | daily: load_daily()}
+    s = %{initial() | daily: load_daily(), rewards: load_rewards()}
     s = if auto?(), do: schedule_daily(s), else: s
     {:ok, s}
   end
@@ -150,7 +185,9 @@ defmodule HacLong.BloodMoon do
 
   def handle_call({:reset, drop}, _from, s) do
     :persistent_term.put(@open_key, false)
-    {:reply, :ok, %{initial() | daily: s.daily, daily_ref: s.daily_ref, drop: drop}}
+
+    {:reply, :ok,
+     %{initial() | daily: s.daily, daily_ref: s.daily_ref, drop: drop, rewards: default_rewards()}}
   end
 
   def handle_call({:locked_s, uid}, _from, s),
@@ -189,6 +226,24 @@ defmodule HacLong.BloodMoon do
       {:reply, {:ok, public(s)}, s}
     else
       {:reply, {:error, "Giờ phải dạng HH:MM (vd 20:00)."}, s}
+    end
+  end
+
+  def handle_call({:rewards, nil}, _from, s) do
+    s = %{s | rewards: default_rewards()}
+    broadcast(s)
+    {:reply, {:ok, public(s)}, s}
+  end
+
+  def handle_call({:rewards, list}, _from, s) do
+    case check_rewards(list) do
+      {:ok, rw} ->
+        s = %{s | rewards: rw}
+        broadcast(s)
+        {:reply, {:ok, public(s)}, s}
+
+      err ->
+        {:reply, err, s}
     end
   end
 
@@ -294,20 +349,24 @@ defmodule HacLong.BloodMoon do
   defp close(s) do
     :persistent_term.put(@open_key, false)
     rank = ranking(s.score)
-    gifts = winners(rank)
+    # hạng để toàn 0 ngọc: không có quà (không gửi thư, không xướng tên)
+    gifts =
+      rank
+      |> winners(Map.put(rules(), :rewards, s.rewards))
+      |> Enum.with_index(1)
+      |> Enum.reject(fn {{_e, items}, _i} -> Enum.all?(items, fn {_, n} -> n == 0 end) end)
 
-    for {{e, items}, i} <- Enum.with_index(gifts, 1) do
+    for {{e, items}, i} <- gifts do
       Mailbox.send(e.uid, %{
         subject: "🩸 Huyết Nguyệt: hạng #{i}",
         body:
           "Bạn đứng hạng #{i} đêm Huyết Nguyệt ở Pháp Trường với #{e.kills} mạng. Quan Giám Trảm ban thưởng ngọc quý.",
-        items: Map.new(items, fn {id, n} -> {to_string(id), n} end)
+        items: for({id, n} <- items, n > 0, into: %{}, do: {to_string(id), n})
       })
     end
 
     top =
       gifts
-      |> Enum.with_index(1)
       |> Enum.map_join(", ", fn {{e, _}, i} -> "#{i}. #{e.name} (#{e.kills} mạng)" end)
 
     Chat.system(
@@ -371,6 +430,27 @@ defmodule HacLong.BloodMoon do
     _ -> rules().daily_at
   end
 
+  # dòng admin_log hợp lệ mới nhất (lần lưu sai bị từ chối cũng ghi log nên bỏ qua): `reset` → mặc định
+  defp load_rewards do
+    "blood_moon_rewards"
+    |> HacLong.Admin.recent_op(50)
+    |> Enum.find_value(default_rewards(), fn
+      %{params: %{"reset" => r}} when r not in [nil, false] ->
+        default_rewards()
+
+      %{params: %{"rewards" => list}} ->
+        case check_rewards(list) do
+          {:ok, rw} -> rw
+          _ -> nil
+        end
+
+      _ ->
+        nil
+    end)
+  rescue
+    _ -> default_rewards()
+  end
+
   # ---------- cho client ----------
 
   defp public(s) do
@@ -382,6 +462,7 @@ defmodule HacLong.BloodMoon do
       left: if(s.until, do: max(0, s.until - now()), else: 0),
       warn: if(s.warn, do: max(0, s.warn - now()), else: 0),
       daily: s.daily,
+      rewards: s.rewards,
       drops: s.drops,
       bots: MapSet.size(s.bots),
       players: on_map,

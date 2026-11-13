@@ -280,7 +280,8 @@ defmodule HacLongWeb.PageController do
       dropPct: r.drop_pct,
       jewels: r.jewels,
       topRewards: Enum.map(r.top_rewards, &Map.new(&1, fn {k, v} -> {to_string(k), v} end)),
-      minKills: r.min_kills
+      minKills: r.min_kills,
+      rewardMax: r.reward_max
     }
   end
 end

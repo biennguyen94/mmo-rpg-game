@@ -2142,3 +2142,8 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   ngày lưu ở dòng `admin_log` op `blood_moon_daily` mới nhất (như Động Bí Ẩn).
 - Client: dải 🩸 (`#bm-chip`) cuối bản đồ ở tab Bản đồ khi sắp mọc / đang mở (ẩn ở màn trận, NPC, Menu để không đè nút);
   thẻ quản trị 🩸 Huyết Nguyệt. Test: `test/hac_long_web/blood_moon_test.exs`, e2e `e2e/bloodmoon.mjs`.
+- Sửa sau (người dùng duyệt đề xuất): quà top 1 / 2 / 3 chỉnh ở Quản trị (bảng hạng × ngọc, 0..`reward_max`, lệnh
+  `blood_moon_rewards`, lưu ở `admin_log`; lần lưu sai bị từ chối nên khi nạp lại bỏ qua dòng sai; hạng toàn 0 không có
+  quà). Dải 🩸 hai hàng rộng gần hết màn hình: hàng 1 giờ còn / mạng / hạng của mình (ở Pháp Trường bỏ chữ "Huyết Nguyệt"
+  cho gọn) + 🏆 (top 10 ngay trên bản đồ); hàng 2 top 3 mỗi người một ô, điểm không bao giờ bị cắt (tên dài cắt tên). Dải
+  ẩn cả lúc còn bảng kết quả trận (trước chỉ ẩn khi trận chưa xong, đè nút Về Làng).

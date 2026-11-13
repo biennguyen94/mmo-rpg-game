@@ -365,7 +365,9 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   - Mỗi lần hạ người: **5%** cơ hội rơi một viên ngọc ngẫu nhiên (Ngọc Ước Nguyện, Tâm Linh, Hỗn Nguyên, Sinh Mệnh). Hạ
     người nhiều lần chuyển sinh hơn mình thì dễ rơi hơn (+20% mỗi lần chuyển sinh, tối đa gấp đôi), yếu hơn thì khó rơi;
     hạ đi hạ lại cùng một người thì mỗi lần cơ hội còn một nửa. Hạ bot chỉ tính điểm, không rơi ngọc.
-  - Trăng lặn: **top 3** người hạ nhiều mạng nhất nhận ngọc qua hộp thư (hạng 1: 3 viên mỗi loại, hạng 2: 2, hạng 3: 1).
+  - Trăng lặn: **top 3** người hạ nhiều mạng nhất nhận ngọc qua hộp thư (mặc định hạng 1: 3 viên mỗi loại, hạng 2: 2,
+    hạng 3: 1; Quản trị có thể đổi, xem ở Quan Giám Trảm). Dải 🩸 ở Pháp Trường: hàng trên giờ còn lại, số mạng và hạng
+    của mình; hàng dưới top 3 mỗi người một ô (ô của mình tô đỏ); bấm 🏆 xem top 10.
     Bảng xếp hạng ở **Bảng Huyết Nguyệt** cạnh lối vào; **Quan Giám Trảm** giải thích luật.
 - **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, độc)
   chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
