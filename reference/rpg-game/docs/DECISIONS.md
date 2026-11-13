@@ -2092,3 +2092,13 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   CS2 còn 5–11%: quái vùng chuyển sinh không còn nguy hiểm nhiều nhưng chưa tới mức vô hại.
   Elf chết 39 → 18 (máu mất / trận sau CS5 còn 2–4%), MG chết 117 → 17 (trước kẹt CS8–CS9: 22 + 61 lần chết; sau
   CS4 còn 5–7%). Không tăng công quái.
+
+## Mô phỏng hành trình: mặc lại đồ xịn sau chuyển sinh, đồ cấp cao hơn thì mặc (2026-11-13)
+- Lỗi: hồ sơ đồ PvP tạo lại (`scripts/pvp/profile.exs`) cho giáp cấp 3–7 tới CS10 (hồ sơ 26/10: 7 → 17).
+- Nguyên nhân 1 (từ "Đồ quá cấp sau chuyển sinh không có tác dụng"): sau chuyển sinh hành trình tạm mặc đồ thấp, món xịn
+  cất trong `st.keep`; đủ cấp thì món xịn phải vượt ngưỡng thay đồ (`swap_margin` 5% + 2%/cấp ép) mới mặc lại, không vượt
+  → bị bán. Sửa: món trong `st.keep` hơn là mặc lại.
+- Nguyên nhân 2: điểm `Journey.score/1` tính giáp rất nhẹ (giáp cấp 7 → cấp 48 chỉ +2–5%), không bao giờ vượt ngưỡng.
+  Sửa: món mới cấp cao hơn món bị tháo thì hơn là mặc (như người chơi, ép lại sau); ngưỡng chỉ áp dụng khi cùng / thấp cấp.
+- Chỉ đổi công cụ mô phỏng, không đổi luật game.
+

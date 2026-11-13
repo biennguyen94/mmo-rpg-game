@@ -970,9 +970,11 @@ defmodule HacLong.Game.Journey do
 
           for hand <- hands.(it),
               {%{ok: true}, q} <- [Engine.equip(q, id, hand)],
-              # chỉ thay khi hơn hẳn: món bị tháo ép càng cao càng cần mạnh hơn nhiều (người chơi tiếc ngọc đã ép)
+              # chỉ thay khi hơn hẳn: món bị tháo ép càng cao càng cần mạnh hơn nhiều (người chơi tiếc ngọc đã ép);
+              # món xịn đã cất chờ đủ cấp sau chuyển sinh (`st.keep`) thì hơn là mặc lại, không cần vượt ngưỡng
               gain = score(q) / base,
-              gain > 1 + swap_margin(p, q, st),
+              # món cấp cao hơn món bị tháo cũng vậy (người chơi thấy đồ cấp cao mạnh hơn là mặc, ép lại sau)
+              gain > 1 + if(MapSet.member?(st.keep, id), do: 0, else: swap_margin(p, q, st, it)),
               do: {gain, id, price, hand}
         else
           []
@@ -1017,17 +1019,17 @@ defmodule HacLong.Game.Journey do
   end
 
   # mức hơn tối thiểu để thay đồ: `swap_margin` + `swap_per_up` × cấp ép cao nhất của món bị tháo ra
-  defp swap_margin(p, q, st) do
+  defp swap_margin(p, q, st, it) do
     kept = MapSet.new(Map.values(q.equip))
+    off = p.equip |> Map.values() |> Enum.reject(&(&1 == nil or MapSet.member?(kept, &1)))
+    up = off |> Enum.map(&Engine.upgrade_level(p, &1)) |> Enum.max(fn -> 0 end)
 
-    up =
-      p.equip
-      |> Map.values()
-      |> Enum.reject(&(&1 == nil or MapSet.member?(kept, &1)))
-      |> Enum.map(&Engine.upgrade_level(p, &1))
-      |> Enum.max(fn -> 0 end)
+    off_level =
+      off |> Enum.map(&((Gear.item(p, &1) || %{level: 0}).level || 0)) |> Enum.max(fn -> 0 end)
 
-    st.opts.swap_margin + st.opts.swap_per_up * up
+    if off != [] and (it.level || 0) > off_level,
+      do: 0,
+      else: st.opts.swap_margin + st.opts.swap_per_up * up
   end
 
   # bán đồ thừa trong túi; giữ một món đã ép cao nhất (vũ khí / giáp / khiên) làm nguyên liệu cánh
