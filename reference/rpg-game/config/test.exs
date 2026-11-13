@@ -43,6 +43,9 @@ config :hac_long, :sky_event, auto: false
 # Huyết Nguyệt không tự mở theo lịch hằng ngày khi test
 config :hac_long, :blood_moon, auto: false
 
+# thang vùng: không đọc / ghi database, không tự tính lại
+config :hac_long, :realm_ladder, auto: false
+
 # Trùm thế giới chỉ xuất hiện khi test gọi WorldBoss.spawn_now/1
 config :hac_long, :world_boss,
   first_after_minutes: nil,

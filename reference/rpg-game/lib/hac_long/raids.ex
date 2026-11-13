@@ -67,6 +67,8 @@ defmodule HacLong.Raids do
       mult: Map.get(base, :mult, 1) * u.mult,
       atk_mult: base[:atk_mult] && base.atk_mult * u.mult,
       xp_mult: base[:xp_mult],
+      # mức bản đồ (thang vùng co giãn dời theo đó, `HacLong.RealmLadder.adjust/3`)
+      rich: base[:rich],
       reward_mult: r.reward_mult,
       jewel_chance: if(kind == r.leader.kind, do: r.jewel_chance, else: r.minion_jewel_chance),
       raid: key

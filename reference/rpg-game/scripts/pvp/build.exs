@@ -148,7 +148,8 @@ defmodule Max do
   def build(cls, opts \\ []) do
     {p, _} =
       gen(cls, %{
-        rebirths: 10,
+        # chuyển sinh quá 10 (thang vùng co giãn, scripts/realm_ladder/tune.exs): `rebirths:`
+        rebirths: opts[:rebirths] || 10,
         up: 11,
         opt: 4,
         luck: true,

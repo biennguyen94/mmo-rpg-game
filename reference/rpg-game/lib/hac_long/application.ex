@@ -22,6 +22,8 @@ defmodule HacLong.Application do
       HacLong.SkyEvent,
       # Phase 8: Huyết Nguyệt ở Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt")
       HacLong.BloodMoon,
+      # thang vùng chuyển sinh co giãn theo người chơi (DECISIONS "Thang vùng co giãn theo server")
+      HacLong.RealmLadder,
       HacLong.World.SecretWatch,
       HacLong.Party,
       HacLong.Trade,

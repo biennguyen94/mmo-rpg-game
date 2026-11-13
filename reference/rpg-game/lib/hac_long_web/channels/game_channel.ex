@@ -77,7 +77,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags blood_moon)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags blood_moon realm_ladder)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -95,6 +95,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.SkyEvent.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.BloodMoon.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.RealmLadder.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.NamePack.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
@@ -1059,6 +1060,32 @@ defmodule HacLongWeb.GameChannel do
     {:ok, %{msg: "Đã cho #{n} bot về Làng.", blood_moon: HacLong.BloodMoon.public()}}
   end
 
+  # Thang vùng co giãn (DECISIONS "Thang vùng co giãn theo server"): xem, tính lại, đóng băng, đặt tay
+  defp admin("realm_ladder", _p, _s), do: {:ok, %{ladder: HacLong.RealmLadder.status()}}
+
+  defp admin("realm_ladder_recompute", _p, _s) do
+    st = HacLong.RealmLadder.recompute()
+    {:ok, %{msg: "Đã tính lại thang vùng (#{st.sample} người trong mẫu).", ladder: st}}
+  end
+
+  defp admin("realm_ladder_freeze", p, _s) do
+    on = p["on"] in [true, "1", 1]
+    st = HacLong.RealmLadder.freeze(on)
+
+    {:ok,
+     %{
+       msg: if(on, do: "Đã đóng băng thang vùng.", else: "Thang vùng tự tính lại mỗi ngày."),
+       ladder: st
+     }}
+  end
+
+  defp admin("realm_ladder_set", p, _s) do
+    st = HacLong.RealmLadder.set(p["overrides"] || %{})
+    {:ok, %{msg: "Đã lưu đặt tay thang vùng.", ladder: st}}
+  rescue
+    ArgumentError -> {:error, "Mức phải là số nguyên."}
+  end
+
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
@@ -1160,6 +1187,7 @@ defmodule HacLongWeb.GameChannel do
     push(socket, "lake", HacLong.LakeEvent.public())
     push(socket, "sky", HacLong.SkyEvent.public())
     push(socket, "blood_moon", HacLong.BloodMoon.public())
+    push(socket, "realm_ladder", %{ks: HacLong.RealmLadder.ks()})
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
   end
 
@@ -1176,6 +1204,11 @@ defmodule HacLongWeb.GameChannel do
 
   def handle_info({:sky, st}, socket) do
     push(socket, "sky", st)
+    {:noreply, socket}
+  end
+
+  def handle_info({:realm_ladder, st}, socket) do
+    push(socket, "realm_ladder", st)
     {:noreply, socket}
   end
 

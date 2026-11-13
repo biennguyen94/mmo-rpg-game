@@ -766,7 +766,13 @@ defmodule HacLong.World do
   # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
   defp do_encounter(p, %{side: true} = map, m),
     do:
-      Engine.start_side_encounter(p, spec_of(map, m), map.name, map.theme, m[:night_boss] == true)
+      Engine.start_side_encounter(
+        p,
+        spec_of(map, m, Map.get(p, :rebirths) || 0),
+        map.name,
+        map.theme,
+        m[:night_boss] == true
+      )
 
   # bản đồ sự kiện (B-19, Hỗn Chiến Thành): quái bất kỳ (vùng / bản đồ phụ) thả vào, đánh như bản đồ phụ;
   # B-22: bang đang giữ Vương Miện không đánh được nó
@@ -779,15 +785,33 @@ defmodule HacLong.World do
 
   defp do_encounter(p, map, m), do: Engine.start_encounter(p, map.zone, spec_of(map, m), m.boss)
 
-  defp spec_of(map, m) do
+  defp spec_of(map, m, cs \\ nil) do
     spec =
       cond do
-        m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map)
-        map.event == "castle_siege" -> HacLong.CastleSiege.crown_spec()
-        map.side -> Data.side_monster(m.kind)
-        map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)
-        m.boss -> Data.zone(map.zone).boss
-        true -> Enum.find(Data.zone(map.zone).monsters, &(&1.id == m.kind))
+        m[:raid] != nil and map.realm != nil ->
+          HacLong.RealmLadder.adjust(HacLong.Raids.spec(m.raid, m.kind, map), map.realm, cs)
+
+        m[:raid] ->
+          HacLong.Raids.spec(m.raid, m.kind, map)
+
+        map.event == "castle_siege" ->
+          HacLong.CastleSiege.crown_spec()
+
+        # vùng chuyển sinh: dời mức theo thang co giãn của server (DECISIONS "Thang vùng co giãn theo server")
+        map.side and map.realm != nil ->
+          HacLong.RealmLadder.adjust(Data.side_monster(m.kind), map.realm, cs)
+
+        map.side ->
+          Data.side_monster(m.kind)
+
+        map.event ->
+          Data.side_monster(m.kind) || Data.monster(m.kind)
+
+        m.boss ->
+          Data.zone(map.zone).boss
+
+        true ->
+          Enum.find(Data.zone(map.zone).monsters, &(&1.id == m.kind))
       end
 
     cond do

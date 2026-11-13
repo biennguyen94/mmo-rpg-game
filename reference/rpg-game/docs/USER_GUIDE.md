@@ -140,6 +140,12 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
 
 ![Trận đánh](screenshots/e2e-battle.png)
 
+### Thang vùng co giãn
+Mức của mỗi vùng chuyển sinh không cố định: mỗi sáng server tính theo số lần chuyển sinh của người chơi đang hoạt động. Khi
+đa số người chơi đã chuyển sinh nhiều, các vùng dời lên (vùng 1 có thể mạnh như "CS 12", vùng 10 như "CS 30"), để vùng nào
+cũng có người hợp sức, thưởng tương xứng. Tên bản đồ và Chọn bản đồ ghi **≈ CS k** khi vùng đang dời. Điều kiện vào vùng
+không đổi; nếu bạn chuyển sinh thấp hơn mức của vùng, quái chỉ đánh như mức của bạn + 2 (máu quái vẫn giữ).
+
 ## 5. Đánh nhau
 
 - Trận theo lượt: **Đánh**, **Kỹ năng**, **Uống máu**, **Chạy**. Số bay lên cho biết sát thương; "Trượt" là đòn hụt.

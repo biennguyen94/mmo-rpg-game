@@ -510,12 +510,35 @@
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button><button class="btn" data-adm="sky_bird">🐦 Gọi Chim Lạc</button><button class="btn" data-adm="sky_flock">🕊 Gọi Đàn Hạc</button><button class="btn" data-adm="sky_meteor">🌠 Mưa sao băng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
       ${viewAdmBloodMoon()}
+      ${viewAdmLadder()}
       ${viewPwRequests()}
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
   }
 
   const isAdminRole = () => Net.role === 'admin';
+
+  // Thang vùng co giãn (DECISIONS "Thang vùng co giãn theo server"): bảng 10 vùng, tính lại, đóng băng, đặt tay
+  let ladderSt = null;
+  async function admLadder() {
+    try { ladderSt = (await Net.admin('realm_ladder')).ladder; } catch (e) { return; }
+    const el = $('#adm-ladder');
+    if (el) { const kept = keepInputs(el), box = el.parentElement; el.outerHTML = viewAdmLadder(); restoreInputs(box, kept); }
+  }
+  function viewAdmLadder() {
+    if (!isAdminRole()) return '';
+    const st = ladderSt;
+    if (!st) { setTimeout(admLadder, 0); return '<div class="card" id="adm-ladder"><h3>🗺 Thang vùng chuyển sinh</h3><p class="small muted">Đang tải…</p></div>'; }
+    const L = RULES.realmLadder || {};
+    const rows = st.ks.map((k, i) => `<tr><th>Vùng ${i + 1}</th><td class=n>${st.base[i]}</td><td class=n>${st.targets[i] != null ? st.targets[i] : '—'}</td><td class=n><b>${k}</b></td>
+      <td><input type="number" id="adm-lad-${i + 1}" min="${i + 1}" max="999" value="${st.overrides[i + 1] != null ? st.overrides[i + 1] : ''}" placeholder="tự động" style="width:5.5em"></td></tr>`).join('');
+    return `<div class="card" id="adm-ladder"><h3>🗺 Thang vùng chuyển sinh</h3>
+      <p class="small muted">Quái vùng chuyển sinh mạnh theo số lần chuyển sinh của người chơi đang hoạt động (${L.sampleDays || 7} ngày, cấp ${L.minLevel || 40}+, mỗi tài khoản 1 nhân vật, không bot / quản trị): vùng r theo phân vị ${(L.percentiles || []).map((p) => Math.round(p * 100) + '%').join(', ')}; vùng sau mạnh hơn vùng trước ít nhất 1 mức; mỗi lần đổi tối đa ±${L.maxStep || 2}; không dưới mức gốc. Tự tính lại mỗi ngày lúc ${L.recomputeAt || '05:00'}${L.minSample ? `; mẫu dưới ${L.minSample} người thì giữ nguyên` : ''}.</p>
+      <p class="small">Mẫu: <b>${st.sample}</b> người${st.at ? ` · tính lúc ${new Date(st.at).toLocaleString('vi-VN')}` : ''} · ${st.frozen ? '<b style="color:var(--bad)">Đang đóng băng</b>' : 'Tự tính lại mỗi ngày'}</p>
+      <div class="scroll"><table class="bm-rw"><tr><th></th><th>Gốc</th><th>Mục tiêu</th><th>Hiện tại</th><th>Đặt tay</th></tr>${rows}</table></div>
+      <div class="btn-row"><button class="btn" data-adm="realm_ladder_recompute">🔄 Tính lại ngay</button><button class="btn" data-adm="realm_ladder_set">💾 Lưu đặt tay</button><button class="btn${st.frozen ? ' primary' : ''}" data-adm="realm_ladder_freeze" data-on="${st.frozen ? 0 : 1}">${st.frozen ? '▶ Bỏ đóng băng' : '⏸ Đóng băng'}</button></div>
+    </div>`;
+  }
 
   // quà top 1, 2, 3: mỗi hạng một dòng, mỗi loại ngọc một ô số (0..rewardMax); toàn 0 là hạng đó không có quà
   function admBmRewards(st) {
@@ -881,6 +904,7 @@
       const R = RULES.bloodMoon;
       payload.rewards = (R.topRewards || []).map((_, i) => Object.fromEntries(R.jewels.map((id) => [id, Math.max(0, Math.floor(+(($(`#adm-bm-rw-${i}-${id}`) || {}).value || 0)))])));
     }
+    if (op === 'realm_ladder_set') payload.overrides = Object.fromEntries([...Array(10)].map((_, i) => [i + 1, ($(`#adm-lad-${i + 1}`) || {}).value || null]));
     if (op === 'blood_moon_daily') payload.at = d.off ? '' : (($('#adm-bm-at') || {}).value || '');
     try {
       const r = await Net.admin(op, payload);
@@ -893,6 +917,7 @@
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
       if (op === 'reset_password') { adm.temp = { username: r.username, temp: r.temp }; if (adm.pw) adm.pw = adm.pw.filter((x) => x.uid !== payload.uid); toast(`Đã đặt lại mật khẩu @${r.username}.`); return render(); }
+      if (r.ladder) { ladderSt = r.ladder; if (op === 'realm_ladder_set') freshInputs = true; toast(r.msg || 'Đã xong.'); return render(); }
       if (r.blood_moon) { if (op === 'blood_moon_rewards' || op === 'blood_moon_daily') freshInputs = true; onBloodMoon(r.blood_moon); toast(r.msg || 'Đã xong.'); return render(); }
       if (op === 'pw_dismiss') { adm.pw = (adm.pw || []).filter((x) => x.id !== payload.id); return render(); }
       toast(r.msg || 'Đã xong.');
@@ -3008,7 +3033,10 @@
         : !open && m.cs ? `<span class="tag" title="Cần chuyển sinh ${m.cs} lần, cấp ${m.need}">🔒 CS ${m.cs}</span>`
         : !open ? `<span class="tag" title="Cần đạt cấp ${m.min}">🔒 Cấp ${m.min}</span>`
         : `<button class="btn small-btn ${P.gold >= cost ? 'primary' : ''}" data-act="travel" data-to="${m.id}" ${P.gold >= cost ? '' : 'disabled'}>${cost ? `${icon('two-coins')}${fmt(cost)}` : 'Miễn phí'}</button>`;
-      return `<div class="item travel-row ${open ? '' : 'locked'}"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${lv}${m.zone ? ` · ${esc(m.zone)}` : ''}</div></div>${btn}</div>`;
+      // thang vùng co giãn: vùng đang mạnh như mức khác thì ghi ≈ CS
+      const lk = m.cs && window.__ladder ? window.__ladder[m.cs - 1] : null;
+      const lt = lk && lk !== m.cs ? ` · <b style="color:var(--gold)">≈ CS ${lk}</b>` : '';
+      return `<div class="item travel-row ${open ? '' : 'locked'}"><div class="grow"><div class="name">${esc(m.name)}</div><div class="small muted">${lv}${m.zone ? ` · ${esc(m.zone)}` : ''}${lt}</div></div>${btn}</div>`;
     }).join('')}</div>`;
   }
 
@@ -5328,6 +5356,7 @@
     Net.onLake(onLake);
     Net.onSky(onSky);
     Net.onBloodMoon(onBloodMoon);
+    Net.onLadder((st) => { window.__ladder = st.ks; if (P && (tab === 'travel' || tab === 'map')) render(); const ad = $('#adm-ladder'); if (ad) admLadder(); });
     Net.onInvasion(onInvasion);
     Net.onNotice((msg) => {
       note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good');

@@ -22,6 +22,7 @@ python3 scripts/kho_do/build.py /tmp/kho/data.json priv/static/assets/pixel_icon
 
 - `export.exs`: xuất dữ liệu game ra JSON.
 - `event_monsters.exs`: bảng "Sức mạnh quái sự kiện theo chuyển sinh" (máu / công / thủ quái mạnh nhất mỗi sự kiện ở CS 0 / 3 / 6 / 9 / 10, đúng như game dựng, và số đòn thường để hạ / % máu mất của nhân vật cùng mốc theo `scripts/pvp/tier_profile.json`). Xem nhanh: `MIX_ENV=test mix run --no-start scripts/kho_do/event_monsters.exs print`.
+- Mục Vùng đất chuyển sinh có phần "Thang vùng co giãn theo người chơi": công thức và bảng ví dụ (200 người chuyển sinh 8–30) tính đúng như `HacLong.RealmLadder` (bản Python trong `build.py`); độ dốc sau mức 10 chỉnh bằng `scripts/realm_ladder/tune.exs`.
 - `build.py` + `tpl.html`: dựng trang; ghi `kho_do.html` và `kho_do.html.files.json` (danh sách hình, đường dẫn tương đối
   với `priv/static/assets/`).
 

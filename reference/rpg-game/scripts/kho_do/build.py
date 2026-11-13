@@ -471,6 +471,45 @@ fest_shop = "".join(f"<tr><td>{a}</td><td class=n>{c}</td></tr>" for a, c in [
 fest = "".join(f"<tr><td>{e['icon']} <b>{E(e['name'])}</b></td><td>{e['from']} → {e['to']}</td><td>{E(e['desc'])}</td><td>{E(IT[e['token']]['name']) if e.get('token') in IT else '—'}</td></tr>"
                for e in D["festivals"])
 
+
+# ---------- Thang vùng co giãn theo server (lib/hac_long/realm_ladder.ex, RULES.realms.ladder) ----------
+LD = rl["ladder"]
+def _pct_at(sorted_s, p):
+    i = max(0, min(len(sorted_s) - 1, -(-int(p * len(sorted_s) * 1000) // 1000) - 1)) if False else max(0, min(len(sorted_s) - 1, int(__import__("math").ceil(p * len(sorted_s))) - 1))
+    return sorted_s[i]
+def ladder_compute(sample, prev):
+    if len(sample) < LD["min_sample"]:
+        return prev, []
+    s_ = sorted(sample); tg = [_pct_at(s_, p) for p in LD["percentiles"]]; ks = []; before = 0
+    for i in range(1, len(LD["percentiles"]) + 1):
+        old = prev[i - 1]
+        want = max(i, tg[i - 1], before + 1)
+        k = max(i, before + 1, max(old - LD["max_step"], min(old + LD["max_step"], want)))
+        ks.append(k); before = k
+    return ks, tg
+def ladder_curve(k, per, aft):
+    return 1 + per * min(k, 10) + aft * max(0, k - 10)
+# ví dụ: 200 người, chuyển sinh rải 8–30 (server lâu năm), tính lại mỗi ngày tới khi ổn định
+_ex = [8 + (i * 7) % 23 for i in range(200)]
+_ks = list(range(1, 11)); _days = 0
+while True:
+    _new, _tg = ladder_compute(_ex, _ks); _days += 1
+    if _new == _ks or _days > 30: break
+    _ks = _new
+_new_day1, _ = ladder_compute(_ex, list(range(1, 11)))
+ladder_rows = "".join(f"<tr><td>Vùng {i + 1}</td><td class=n>{pct(LD['percentiles'][i])}</td><td class=n>{i + 1}</td><td class=n>{_new_day1[i]}</td><td class=n><b>{_ks[i]}</b></td>"
+                      f"<td class=n>×{ladder_curve(_ks[i], rl['mult_per_realm'], LD['hp_after']):.2f} / ×{ladder_curve(_ks[i], rl['atk_mult_per_realm'], LD['atk_after']):.2f}</td></tr>" for i in range(10))
+LADDER_HTML = f"""<h3>Thang vùng co giãn theo người chơi</h3>
+  <p>Mức của mỗi vùng không cố định: server tự tính theo số lần chuyển sinh của người chơi đang hoạt động, để khi người chơi đã chuyển sinh nhiều (quá 10 lần), mọi vùng vẫn có người phù hợp thay vì cả server dồn vào bản đồ cuối.</p>
+  <ul><li><b>Mẫu:</b> nhân vật chơi trong {LD['sample_days']} ngày gần nhất, cấp {LD['min_level']}+, mỗi tài khoản một nhân vật (nhiều chuyển sinh nhất), không tính bot / quản trị; dưới {LD['min_sample']} người thì giữ nguyên thang.</li>
+    <li><b>Mức vùng r</b> = lớn nhất của: r (thang gốc) · số lần chuyển sinh ở phân vị của vùng ({', '.join(pct(p) for p in LD['percentiles'])} cho vùng 1 → 10) · mức vùng trước + 1. Mỗi lần tính lại (mỗi ngày lúc {LD['recompute_at']} giờ Việt Nam) mỗi vùng đổi tối đa ±{LD['max_step']}; không bao giờ dưới mức gốc. Quản trị có thể tính lại ngay, đóng băng hoặc đặt tay từng vùng.</li>
+    <li><b>Quái:</b> bản đồ thứ n trong vùng đánh như mức vùng + {n(rl['depth_step'])} × (n − 1) như cũ, chỉ thay mức vùng gốc bằng mức hiện tại. Máu, thủ × (1 + {n(rl['mult_per_realm'])} × min(k, 10) + {n(LD['hp_after'])} × (k − 10)); công × (1 + {n(rl['atk_mult_per_realm'])} × min(k, 10) + {n(LD['atk_after'])} × (k − 10)); kinh nghiệm × (1 + {n(rl['xp_mult_per_realm'])} × min(k, 10) + {n(LD['xp_after'])} × (k − 10)); cấp hiện trên quái + 10 mỗi mức dời. Rơi đồ, ngọc theo mức mới (ngọc tối đa {pct(LD['jewel_max'])} / con).</li>
+    <li><b>Sau mức 10 dốc nhỏ</b> vì người chơi sau chuyển sinh 10 mạnh lên rất chậm (+{R['character']['endless_points']} điểm, +{pct(R['character']['endless_hp_pct'])} máu mỗi lần): đồ tối đa, chuyển sinh 10 → 30 đánh vùng cùng mức đều khoảng 7 đòn thường / con, mất khoảng 3% máu mỗi đòn quái (scripts/realm_ladder/tune.exs).</li>
+    <li><b>Người tụt hậu:</b> điều kiện vào vùng vẫn theo mức gốc; người chuyển sinh thấp hơn mức bản đồ thì công quái chỉ tính tới chuyển sinh của mình + {LD['underdog_margin']} (máu quái giữ nguyên): đánh lâu hơn nhưng không chết liên tục.</li>
+    <li>Trên bản đồ và ở Chọn bản đồ, vùng đang dời ghi <b>≈ CS k</b>. Đổi thang thì báo kênh thế giới. Sự kiện theo phòng, đồ sát, đấu trường không theo thang này.</li></ul>
+  <p class="note">Ví dụ: server 200 người, chuyển sinh rải đều 8–30. Ngày đầu mỗi vùng chỉ dời tối đa {LD['max_step']} mức; sau {_days} ngày thang ổn định:</p>
+  <div class="scroll"><table><thead><tr><th>Vùng</th><th>Phân vị</th><th>Gốc</th><th>Ngày đầu</th><th>Ổn định</th><th>Máu / công quái (bản đồ 1)</th></tr></thead><tbody>{ladder_rows}</tbody></table></div>"""
+
 # ---------- Bản đồ và quái ----------
 def mrow(m):
     lv = "—" if not m["min"] else (f"{m['min']}" if m["min"] == m["max"] else f"{m['min']}–{m['max']}")
@@ -1009,7 +1048,7 @@ WORLD_HTML = f"""<h3>Thời tiết</h3>
 page = open(os.path.join(os.path.dirname(__file__), "tpl.html"), encoding="utf-8").read()
 for k, v in dict(OVERVIEW=overview, TABS=tabs, PANES=panes, TIERS=trows, JEW=jrows, WINGS=wrows, WINGUP=wuprows, UPG=erows, EXC_W=exl("weapon"),
                  EXC_A=exl("armor"), ANC=anc_li, OPT=opt_li, LOOT=lrows, SLOTS=", ".join(slot_txt), STABS=stabs, SPANES=spanes,
-                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, FESTSHOP=fest_shop, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PKQUICK=PK_QUICK, TOOLS=TOOLS_HTML, EVVIZ=EVVIZ_HTML, PKEV=PKEV_HTML, SKY=SKY_HTML, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
+                 CYCLE=cycle, BYLV=bylv, REALMS=rrows, LADDER=LADDER_HTML, OTHER=other, STATROWS=stat_rows, MODEROWS=mode_rows, TAKENROWS=taken_rows, TAKENARENA=taken_arena, EVMON=evmon, MONSTER=monster_line, RULELI=rule_li, GAPS=gap_note, EVROWS=ev_rows, FEST=fest, FESTSHOP=fest_shop, MAPROWS=map_rows, BOSSROWS=boss_rows, BOSSNOTE=boss_note, TOWERROWS=tower_rows, PKLI=pk_li, PKQUICK=PK_QUICK, TOOLS=TOOLS_HTML, EVVIZ=EVVIZ_HTML, PKEV=PKEV_HTML, SKY=SKY_HTML, PETROWS=pet_rows, PETRULE=pet_rule, PETTAME=pet_tame, TWHARD=str(TW['harder_from']), TWPER=pct(TW['harder_per_floor']), TWBOSS=str(TW['boss_every']), TWELITE=n(TW['elite_mult']), TWOFF=str(TW['level_offset']), TRAVEL=f"{R['travel']['base']} + {R['travel']['per_level']} × cấp quái thấp nhất", CLASSROWS=class_rows, EVSCALE=f"<b>Sự kiện đánh chung theo phòng (kiểu MU)</b>: Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành chia phòng theo số lần chuyển sinh ({', '.join(f'{a}–{b}' if b < R['character']['max_rebirths'] else f'{a}+' for a, b in R['event_rooms']['bands'])}); cùng phòng thì chung bản đồ, chung quái, chung máu quái. Kalima theo tổ đội. Quái mạnh theo mốc k của <b>phòng</b> (mốc cao nhất của khoảng; Kalima: người chuyển sinh nhiều nhất trong tổ đội; Vương Miện Công Thành Chiến cố định k = {R['event_scale']['crown_rebirths']}): máu và thủ × (1 + {n(R['event_scale']['hp_per_rebirth'])} × k), công × (1 + {n(R['event_scale']['atk_per_rebirth'])} × k), kinh nghiệm và vàng × (1 + {n(R['event_scale']['reward_per_rebirth'])} × k); k tối đa {R['character']['max_rebirths']}. Người hạ quái được điểm, người cùng đánh được vàng / kinh nghiệm theo phần sát thương; Lâu Đài: người gây nhiều sát thương nhất lên trùm nhận Lông Vũ. Quái vàng, trùm thế giới và tháp không áp.", SMITH=smith_note, CHAOSROWS=chaos_rows, LINESROWS=lines_rows, LINESEX=lines_example, JEWELSRC=jewel_src, POTLV=pct(R['shop']['potion_price_per_level']), RLOOT=pct(rl['loot_per_realm']), RLOOTMAX=pct(rl['loot_max']), LUCKREAL=pct(luck_real), COSTMIN=n(UPR['cost_min_price']), COSTPCT=pct(UPR['cost_pct']),
                  SB=f"+{pct(sb['def_pct'])} thủ, +{pct(sb['atk_pct'])} công, +{sb['hp_per_tier']} máu × bậc bộ",
                  UPPCT=pct(R['upgrade']['bonus_pct']), ANNOUNCE=str(up['announce_from']), DOUBLE=str(up['double_from']),
                  LUCKUP=luck_up, LUCKMAX=pct(ls['luck_max_rate']), LUCKCRIT=pct(ls['luck_crit']), SKILLDMG=pct(ls['skill_dmg']),

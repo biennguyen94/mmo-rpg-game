@@ -87,6 +87,12 @@ Thứ tự các khối trong tab:
    (đọc), `blood_moon_open` (`minutes`), `blood_moon_close`, `blood_moon_bots`, `blood_moon_recall`, `blood_moon_daily`
    (`at`: "HH:MM" hoặc rỗng để tắt; dòng Nhật ký quản trị mới nhất là lịch đang dùng, khởi động lại server vẫn giữ). Trạng
    thái sự kiện chỉ trong bộ nhớ: khởi động lại server lúc đang mở thì sự kiện mất, không ai nhận quà.
+6c. **🗺 Thang vùng chuyển sinh** (admin; DECISIONS "Thang vùng co giãn theo server"): bảng 10 vùng (Gốc · Mục tiêu theo
+   phân vị · Hiện tại · Đặt tay), số người trong mẫu, lúc tính. **🔄 Tính lại ngay** (lấy mẫu và tính như lịch 5 giờ sáng),
+   **💾 Lưu đặt tay** (ô số từng vùng, để trống là tự động; không dưới mức gốc), **⏸ Đóng băng / ▶ Bỏ đóng băng** (lịch hằng
+   ngày bỏ qua). Lệnh: `realm_ladder` (đọc), `realm_ladder_recompute`, `realm_ladder_set` (`overrides`: `{vùng: mức | null}`),
+   `realm_ladder_freeze` (`on`). Đổi thang thì cả server được báo; thang lưu ở Nhật ký quản trị (dòng `realm_ladder` mới
+   nhất, người ghi `system` khi tự tính).
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 

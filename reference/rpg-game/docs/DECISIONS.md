@@ -2204,3 +2204,27 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   bàn thờ thì +1 giây (`altar_step/3`, hàm thuần), đủ `hold_s` (10) giây nhận 1 ngọc ngẫu nhiên vào túi (bot giữ: bàn thờ
   tắt, không ngọc); hai người trở lên: tạm dừng; người giữ rời / vào trận: đếm lại. Bản đồ: ô đỏ rực, cột sáng, vòng tiến
   độ và tên người giữ. Bot được gọi: không ai trong tầm thì kéo ra giữ bàn thờ.
+
+## Thang vùng co giãn theo server (2026-11-13)
+- Vấn đề (người dùng): server lâu năm, người chơi hầu hết quá chuyển sinh 10 thì chỉ còn Thiên Giới Hỗn Mang 5 hợp sức, 49
+  bản đồ vùng chuyển sinh còn lại bỏ trống. Người dùng chọn "bản đồ tự điều chỉnh theo công thức của người chơi", cách 1:
+  thang vùng co giãn theo phân bố chuyển sinh cả server, duyệt chi tiết (tính lại mỗi ngày, ±2 mỗi lần, đỡ đòn người tụt
+  hậu, phân vị 10%…97%).
+- `HacLong.RealmLadder` (số ở `RULES.realms.ladder`): mẫu = nhân vật chơi trong `sample_days` (7) ngày, cấp ≥ 40, không bot /
+  quản trị / mod, mỗi tài khoản nhân vật nhiều chuyển sinh nhất. Vùng r: `k_hl(r) = max(r, CS ở phân vị percentiles[r−1],
+  k_hl(r−1) + 1)`, mỗi lần đổi tối đa ±`max_step` (2) so với thang tự động lần trước, không dưới r; mẫu dưới `min_sample` (20)
+  thì giữ. Tính lại mỗi ngày `recompute_at` (05:00 giờ Việt Nam); quản trị: Tính lại ngay, Đóng băng, Đặt tay từng vùng (đè lên
+  thang tự động, bỏ đặt tay thì về thang tự động). Thang lưu ở dòng `admin_log` op `realm_ladder` mới nhất, đọc nhanh qua
+  `:persistent_term`; đổi thang thì báo kênh thế giới và đẩy `realm_ladder` cho client.
+- Quái: `RealmLadder.adjust/5` lúc vào trận (`World.spec_of`, cả quái xâm lăng / quái vàng ở vùng chuyển sinh) dời mức bản đồ
+  `ke` (trường `rich` đã có) thêm `k_hl − r`; máu / thủ, công, kinh nghiệm theo đường cong hai đoạn (`curve/3`: tới 10 như
+  `mult_per_realm` cũ, sau 10 dốc `hp_after` 0,025 / `atk_after` 0,0375 / `xp_after` 0,05); cấp hiện + 10 mỗi mức; rơi đồ, ngọc
+  theo mức mới (ngọc ≤ `jewel_max` 25%); chúa tể như cũ × `boss_mult`. Thang gốc thì dữ liệu quái không đổi.
+- Dốc sau 10 chỉnh bằng `scripts/realm_ladder/tune.exs` (SEARCH=1): người chơi sau 10 mạnh lên rất chậm (+10 điểm, +2% máu
+  mỗi lần), đồ tối đa CS 10 → 30 đánh vùng cùng mức đều ~7 đòn thường, ~3% máu / đòn quái (lệch ≤ 5%). Nghĩa là thang chủ yếu
+  kéo vùng thấp lên ngang mức người chơi (mọi vùng có nhóm hợp sức), không làm cuối game khó dần. `scripts/pvp/build.exs`:
+  `Max.build(cls, rebirths: k)`.
+- Người tụt hậu: điều kiện vào vùng vẫn theo mức gốc; người chuyển sinh thấp hơn mức bản đồ thì công quái chỉ tính tới CS + 
+  `underdog_margin` (2), máu quái giữ.
+- Không áp: sự kiện theo phòng, đồ sát, đấu trường. Client: tên bản đồ "Vùng chuyển sinh r · ≈ CS k", Chọn bản đồ ghi ≈ CS k,
+  thẻ quản trị 🗺 Thang vùng chuyển sinh. Test `test/hac_long/realm_ladder_test.exs`, e2e `e2e/ladder.mjs`.

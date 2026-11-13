@@ -101,6 +101,8 @@ defmodule HacLongWeb.PageController do
         botStuckMin: Data.rules().bots.play.stuck_min,
         # Huyết Nguyệt ở Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt"): thẻ NPC, quản trị
         bloodMoon: blood_moon_info(),
+        # thang vùng co giãn (thẻ quản trị)
+        realmLadder: ladder_info(),
         # Động Bí Ẩn: tỉ lệ đêm mở (ghi trong thẻ quản trị)
         secret: secret_info(),
         # Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6)
@@ -285,6 +287,19 @@ defmodule HacLongWeb.PageController do
       points: Map.drop(r.points, [:_doc]),
       streak: Map.drop(r.streak, [:_doc]),
       altar: Map.drop(r.altar, [:_doc])
+    }
+  end
+
+  defp ladder_info do
+    l = Data.rules().realms.ladder
+
+    %{
+      percentiles: l.percentiles,
+      sampleDays: l.sample_days,
+      minLevel: l.min_level,
+      minSample: l.min_sample,
+      maxStep: l.max_step,
+      recomputeAt: l.recompute_at
     }
   end
 end

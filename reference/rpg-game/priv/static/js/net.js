@@ -126,6 +126,7 @@
         ch.on('lake', (m) => cb.lake && cb.lake(m));
         ch.on('sky', (m) => cb.sky && cb.sky(m));
         ch.on('blood_moon', (m) => cb.bloodMoon && cb.bloodMoon(m));
+        ch.on('realm_ladder', (m) => cb.ladder && cb.ladder(m));
         // quản trị đổi bộ tên cho cả server: tải lại trang để nạp tên mới
         ch.on('name_pack', (m) => { if (!window.I18N || window.I18N.pack !== m.pack) setTimeout(() => location.reload(), 1500); });
         ch.on('invasion', (m) => cb.invasion && cb.invasion(m));
@@ -389,6 +390,7 @@
     onLake(f) { cb.lake = f; },
     onSky(f) { cb.sky = f; },
     onBloodMoon(f) { cb.bloodMoon = f; },
+    onLadder(f) { cb.ladder = f; },
     onInvasion(f) { cb.invasion = f; },
     onNotice(f) { cb.notice = f; },
     // Số thư chưa mở thay đổi (có thư mới, vừa mở thư).

@@ -555,6 +555,21 @@
       "loot_max": 0.9,
       "jewel_base": 0.02,
       "jewel_per_realm": 0.01,
+      "ladder": {
+        "_doc": "DECISIONS \"Thang vùng co giãn theo server\": mỗi ngày recompute_at (giờ Việt Nam) lấy mẫu nhân vật chơi trong sample_days ngày, cấp ≥ min_level, không bot / quản trị, mỗi tài khoản nhân vật nhiều chuyển sinh nhất; vùng r nhận mức k_hl(r) = max(r, CS ở phân vị percentiles[r−1], k_hl(r−1) + 1), mỗi lần đổi tối đa ±max_step so với lần trước, không dưới r. Mẫu dưới min_sample thì giữ thang gốc. Quái vùng chuyển sinh đánh như mức ke + (k_hl − r) (ke: mức bản đồ đã có, k + depth_step × (n − 1)); máu, thủ × (1 + mult_per_realm × min(ke, 10) + hp_after × max(0, ke − 10)), công tương tự atk_mult_per_realm / atk_after, kinh nghiệm xp_mult_per_realm / xp_after; rơi đồ, ngọc theo ke (ngọc tối đa jewel_max). Người đánh chuyển sinh thấp hơn mức của bản đồ: công quái chỉ tính tới CS người đánh + underdog_margin (máu quái giữ nguyên).",
+        "percentiles": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.97],
+        "sample_days": 7,
+        "min_level": 40,
+        "min_sample": 20,
+        "max_step": 2,
+        "recompute_at": "05:00",
+        "hp_after": 0.025,
+        "atk_after": 0.0375,
+        "xp_after": 0.05,
+        "jewel_max": 0.25,
+        "underdog_margin": 2,
+        "_tune_doc": "hp_after / atk_after chỉnh bằng scripts/realm_ladder/tune.exs (SEARCH=1): người chơi sau chuyển sinh 10 mạnh lên rất chậm (endless_points, endless_hp_pct), nên dốc nhỏ giữ độ khó gần như không đổi (CS 10 → 30: ~7 đòn thường, ~3% máu / đòn quái với đồ tối đa, lệch ≤ 5%); thang dời chủ yếu kéo vùng thấp lên ngang mức người chơi."
+      },
       "sourceType": "DESIGN",
       "version": 4,
       "verified": false
