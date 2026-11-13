@@ -93,6 +93,7 @@ defmodule HacLong.Bots.BrainEndgameTest do
       p = p |> killed(m1) |> killed(m2)
       assert Brain.realm_target(p) == m3.id
       assert Brain.realm_target(p, [m3.id]) == m2.id
+
       # bản đồ đầu vùng chúa tể cũng đang tránh: lùi về vùng hợp sức thấp hơn (không về bản đồ thường)
       assert Maps.get(Brain.realm_target(maxed(), [m1.id])).realm == r - 1
     end
