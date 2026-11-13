@@ -2092,6 +2092,9 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   CS2 còn 5–11%: quái vùng chuyển sinh không còn nguy hiểm nhiều nhưng chưa tới mức vô hại.
   Elf chết 39 → 18 (máu mất / trận sau CS5 còn 2–4%), MG chết 117 → 17 (trước kẹt CS8–CS9: 22 + 61 lần chết; sau
   CS4 còn 5–7%). Không tăng công quái.
+- Chạy lại sau sửa mặc đồ hành trình (giáp cấp 40 từ CS1; seed 1, 10 lần chuyển sinh, chưa → có +8% máu):
+  DK chết 14 → 2, DW 27 → 23, Elf 33 → 10, MG 30 → 19; cả 4 lớp đủ CS10. Không còn lớp nào kẹt; số chết trước đây
+  cao chủ yếu vì hành trình mặc giáp đồng. Vẫn không tăng công quái.
 
 ## Mô phỏng hành trình: mặc lại đồ xịn sau chuyển sinh, đồ cấp cao hơn thì mặc (2026-11-13)
 - Lỗi: hồ sơ đồ PvP tạo lại (`scripts/pvp/profile.exs`) cho giáp cấp 3–7 tới CS10 (hồ sơ 26/10: 7 → 17).
