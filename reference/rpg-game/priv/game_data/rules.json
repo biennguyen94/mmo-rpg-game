@@ -315,12 +315,13 @@
     },
     "event_scale": {
       "_doc": "Quái sự kiện mạnh theo mốc chuyển sinh k (DECISIONS \"Sự kiện đánh chung theo phòng\", version 2): k là mốc của PHÒNG (event_rooms) ở Quảng Trường Quỷ, Lâu Đài Máu, Hỗn Chiến Thành; của TỔ ĐỘI ở Kalima (người chuyển sinh nhiều nhất); crown_rebirths cố định ở Vương Miện Công Thành Chiến. Quái vàng Golden Invasion mạnh theo vùng như quái thường (không nhân). Máu và thủ × (1 + hp_per_rebirth × k), công × (1 + atk_per_rebirth × k) — như vùng chuyển sinh; kinh nghiệm và vàng × (1 + reward_per_rebirth × k). Trùm thế giới và tháp không áp. Version 1: k của người đánh.",
-      "hp_per_rebirth": 0.4,
-      "atk_per_rebirth": 0.15,
+      "hp_per_rebirth": 0.28,
+      "atk_per_rebirth": 0.2,
       "reward_per_rebirth": 0.2,
       "crown_rebirths": 10,
+      "_v3_doc": "Version 3 (DECISIONS \"Review sự kiện theo chuyển sinh\"): máu / thủ 0.4 → 0.28, công 0.15 → 0.2 mỗi mốc: ở CS cao trùm sự kiện bớt trâu (CS9 cần ~2/3 số đòn), đánh đau hơn một chút.",
       "sourceType": "DESIGN",
-      "version": 2,
+      "version": 3,
       "verified": false
     },
     "event_rooms": {
@@ -991,6 +992,27 @@
         "minion_jewel_chance": 0.15,
         "drops": {"jewel_chaos": 0.5, "jewel_soul": 0.3}
       }
+    },
+    "world_boss": {
+      "_doc": "DECISIONS \"Review sự kiện theo chuyển sinh\": Cổ Long máu gốc (config :world_boss hp, 20000) cố định nên vài người chuyển sinh cao hạ trong chưa tới một phút. Trong grow_minutes phút đầu, mỗi người MỚI vào đánh thì máu (và máu tối đa) + hp_per_fighter, tối đa hp_cap. Ai gây ≥ join_min_share máu tối đa nhận thêm join_items (thưởng tham gia, ngoài vàng / kinh nghiệm theo phần sát thương; top 3 vẫn Vảy Cổ Long + ngọc).",
+      "hp_per_fighter": 15000,
+      "hp_cap": 400000,
+      "grow_minutes": 2,
+      "join_min_share": 0.01,
+      "join_items": {"jewel_bless": 1},
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
+    "starter_events": {
+      "_doc": "DECISIONS \"Review sự kiện theo chuyển sinh\": Golden Invasion và xâm lăng (Rồng Đỏ, Phù Thủy Trắng) thả quái ở bản đồ đầu vùng (cấp thấp) nên người chuyển sinh đánh vài đòn là xong và giành mất ngọc của người mới. (1) Mỗi đợt thêm realm_pick bản đồ ngẫu nhiên trong realm_maps (bản đồ đầu mỗi vùng chuyển sinh): quái vàng / đầu đàn / lính ở đó dựng từ quái mạnh nhất của bản đồ đó (stat_level như vùng chuyển sinh), invasion_count quái vàng (không có trùm vàng). (2) Ở bản đồ không phải vùng chuyển sinh, trùm vàng và đầu đàn xâm lăng chỉ rơi ngọc / đồ thêm cho người chuyển sinh dưới jewel_max_rebirths lần.",
+      "realm_maps": ["realm_01", "realm_02", "realm_03", "realm_04", "realm_05", "realm_06", "realm_07", "realm_08", "realm_09", "realm_10"],
+      "realm_pick": 1,
+      "invasion_count": 6,
+      "jewel_max_rebirths": 3,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
     },
     "invasion": {
       "every_hours": 2,

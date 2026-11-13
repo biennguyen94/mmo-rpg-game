@@ -63,7 +63,7 @@ defmodule HacLong.Invasion do
 
   def handle_call({:start, maps}, _from, s) do
     s = if s.active, do: finish(s, "restart"), else: s
-    s = begin(s, maps || @rules.maps)
+    s = begin(s, maps || pick_maps())
     {:reply, view(s), s}
   end
 
@@ -72,8 +72,11 @@ defmodule HacLong.Invasion do
 
   @impl true
   def handle_cast({:cleared, map_id, boss?}, %{active: true} = s) do
+    realm? = realm_map?(map_id)
+
     case s.maps[map_id] do
-      "run" when not boss? and @boss ->
+      # vùng chuyển sinh không có trùm vàng: hết quái vàng là xong
+      "run" when not boss? and @boss and not realm? ->
         MapServer.invade_boss(map_id)
         Chat.system("👑 Trùm vàng xuất hiện ở #{map_name(map_id)}!")
         {:noreply, publish(put_in(s.maps[map_id], "boss"))}
@@ -95,9 +98,22 @@ defmodule HacLong.Invasion do
   @impl true
   def handle_info(:tick, s) do
     s = %{s | timer: nil}
-    s = if s.active, do: finish(s, "timeout"), else: begin(s, @rules.maps)
+    s = if s.active, do: finish(s, "timeout"), else: begin(s, pick_maps())
     {:noreply, s}
   end
+
+  # bản đồ đầu mỗi vùng (`maps`) + `RULES.starter_events.realm_pick` bản đồ vùng chuyển sinh ngẫu nhiên, mỗi bản đồ
+  # `invasion_count` quái vàng mạnh như quái vùng đó (DECISIONS "Review sự kiện theo chuyển sinh")
+  defp pick_maps do
+    st = Data.rules().starter_events
+
+    st.realm_maps
+    |> Enum.take_random(st.realm_pick)
+    |> Map.new(&{String.to_atom(&1), st.invasion_count})
+    |> Map.merge(@rules.maps)
+  end
+
+  defp realm_map?(map_id), do: (HacLong.World.Maps.get(map_id) || %{})[:realm] != nil
 
   defp begin(s, maps) do
     counts =

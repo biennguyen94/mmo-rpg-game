@@ -2147,3 +2147,22 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   quà). Dải 🩸 hai hàng rộng gần hết màn hình: hàng 1 giờ còn / mạng / hạng của mình (ở Pháp Trường bỏ chữ "Huyết Nguyệt"
   cho gọn) + 🏆 (top 10 ngay trên bản đồ); hàng 2 top 3 mỗi người một ô, điểm không bao giờ bị cắt (tên dài cắt tên). Dải
   ẩn cả lúc còn bảng kết quả trận (trước chỉ ẩn khi trận chưa xong, đè nút Về Làng).
+
+## Review sự kiện theo chuyển sinh (2026-11-13)
+- Đo bằng `scripts/kho_do/event_monsters.exs` (quái sự kiện mạnh nhất so với nhân vật cùng mốc, đồ theo hồ sơ hành trình;
+  CS10 = đồ tối đa). Người dùng chọn A, C, D:
+- **A. `event_scale` version 3:** máu / thủ 0.4 → 0.28, công 0.15 → 0.2 mỗi mốc chuyển sinh. CS9 trước: trùm Quảng Trường
+  Quỷ 65–96 đòn thường, Kundun 170–255 (trâu mà không nguy hiểm hơn); sau: 46–67, 120–173; quái đánh 24–45% máu / đòn
+  (trước 20–38%). Áp cho mọi chỗ dùng `Engine.scale_event/2`: phòng sự kiện, Hỗn Chiến Thành, Vương Miện (k cố định 10:
+  máu thấp hơn, công cao hơn), trùm vùng / trùm Động Bí Ẩn theo chuyển sinh người đánh.
+- **C. `RULES.starter_events`:** Golden Invasion và xâm lăng mỗi đợt thêm `realm_pick` bản đồ đầu vùng chuyển sinh ngẫu nhiên
+  (`realm_maps`): quái vàng là quái của bản đồ đó (`invasion_count` con, không có trùm vàng: hết là xong); đầu đàn / lính
+  xâm lăng dựng từ quái mạnh nhất bản đồ (`Raids.spec/3` nhận bản đồ: cấp, `stat_level`, hệ số + `level_bonus`, × `mult`).
+  Ở bản đồ không phải vùng chuyển sinh, trùm vàng và đầu đàn xâm lăng chỉ rơi ngọc / đồ thêm cho người chuyển sinh dưới
+  `jewel_max_rebirths` (3) lần (`World.starter_guard`, quái mang `no_drops`; nhật ký trận ghi một dòng giải thích); vàng,
+  kinh nghiệm vẫn nhận.
+- **D. `RULES.world_boss`:** Cổ Long máu gốc (config, 20000) + `hp_per_fighter` (15000) cho mỗi người mới vào đánh trong
+  `grow_minutes` (2) phút đầu, tối đa `hp_cap` (400000) (`WorldBoss.grown/5`; quản trị / test `spawn_now(grow: false)` tắt).
+  Ai gây ≥ `join_min_share` (1%) máu tối đa nhận thêm `join_items` (1 Ngọc Ước Nguyện), ngoài vàng / kinh nghiệm theo phần
+  sát thương và quà top 3 như cũ.
+- Không làm B (mốc "Ác mộng" cho người đồ tối đa).

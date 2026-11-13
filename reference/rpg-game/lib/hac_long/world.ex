@@ -714,7 +714,14 @@ defmodule HacLong.World do
   defp encounter(p, map, m) do
     boss? = (m.boss == true or m[:night_boss] == true) and !map.realm
 
-    case do_encounter(p, map, m) do
+    p
+    |> do_encounter(map, m)
+    |> scale_encounter(map, boss?)
+    |> starter_guard(map, m)
+  end
+
+  defp scale_encounter(res, map, boss?) do
+    case res do
       {%{ok: true} = r, p} ->
         case map[:event] do
           "castle_siege" ->
@@ -737,6 +744,25 @@ defmodule HacLong.World do
     end
   end
 
+  # DECISIONS "Review sự kiện theo chuyển sinh": ở bản đồ không phải vùng chuyển sinh, trùm vàng Golden Invasion và đầu
+  # đàn xâm lăng chỉ rơi ngọc / đồ thêm cho người chuyển sinh dưới `RULES.starter_events.jewel_max_rebirths` lần
+  @starter Data.rules().starter_events
+  defp starter_guard({%{ok: true} = r, p}, map, m) do
+    if map.realm == nil and m.boss == true and (m[:gold] == true or is_binary(m[:raid])) and
+         (Map.get(p, :rebirths) || 0) >= @starter.jewel_max_rebirths do
+      p = update_in(p.battle.monster, &Map.merge(&1, %{jewel_chance: 0, no_drops: true}))
+
+      line =
+        "💎 #{p.battle.monster.name} giữ ngọc cho người mới (dưới chuyển sinh #{@starter.jewel_max_rebirths}): bạn hạ được vẫn nhận vàng, kinh nghiệm."
+
+      {r, put_in(p.battle.log, p.battle.log ++ [%{text: line, kind: "info"}])}
+    else
+      {r, p}
+    end
+  end
+
+  defp starter_guard(other, _map, _m), do: other
+
   # bản đồ phụ (Phase 15a) không thuộc vùng: không cần mở vùng, nền theo `theme`
   defp do_encounter(p, %{side: true} = map, m),
     do:
@@ -756,7 +782,7 @@ defmodule HacLong.World do
   defp spec_of(map, m) do
     spec =
       cond do
-        m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map.zone)
+        m[:raid] -> HacLong.Raids.spec(m.raid, m.kind, map)
         map.event == "castle_siege" -> HacLong.CastleSiege.crown_spec()
         map.side -> Data.side_monster(m.kind)
         map.event -> Data.side_monster(m.kind) || Data.monster(m.kind)

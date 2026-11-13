@@ -37,7 +37,7 @@ defmodule HacLong.WorldBoss do
   @doc "Trạng thái công khai: `%{alive, hp, maxHp, endsAt, nextAt, top}` (thời gian: ms)."
   def status, do: GenServer.call(__MODULE__, :status)
 
-  @doc "Cho trùm xuất hiện ngay (thử nghiệm, quản trị). `hp:` để đổi lượng máu."
+  @doc "Cho trùm xuất hiện ngay (thử nghiệm, quản trị). `hp:` để đổi lượng máu; `grow: false`: không tăng máu theo người vào đánh."
   def spawn_now(opts \\ []), do: GenServer.call(__MODULE__, {:spawn, opts})
 
   @doc "Cho trùm bay đi ngay (thử nghiệm, quản trị)."
@@ -91,6 +91,7 @@ defmodule HacLong.WorldBoss do
     do: {:reply, {:error, "#{@spec_.name} chưa xuất hiện."}, s}
 
   def handle_call({:engage, uid}, _from, s) do
+    s = grow(s, uid)
     b = s.boss
     m = Engine.make_monster(@spec_, false)
 
@@ -134,6 +135,29 @@ defmodule HacLong.WorldBoss do
 
   # ---------- Nội bộ ----------
 
+  @r HacLong.Game.Data.rules().world_boss
+
+  @doc """
+  Máu thêm khi người mới vào đánh (hàm thuần, DECISIONS "Review sự kiện theo chuyển sinh"): trong `grow_minutes` phút
+  đầu, người chưa đánh lần nào thì máu và máu tối đa + `hp_per_fighter`, máu tối đa không quá `hp_cap`. Trả `{máu, máu
+  tối đa}`.
+  """
+  def grown(hp, max_hp, new?, since_ms, r \\ @r) do
+    if new? and since_ms < r.grow_minutes * 60_000 and max_hp < r.hp_cap do
+      add = min(r.hp_per_fighter, r.hp_cap - max_hp)
+      {hp + add, max_hp + add}
+    else
+      {hp, max_hp}
+    end
+  end
+
+  defp grow(%{boss: %{grow: false}} = s, _uid), do: s
+
+  defp grow(%{boss: b} = s, uid) do
+    {hp, max_hp} = grown(b.hp, b.max_hp, not MapSet.member?(b.fighters, uid), now() - b.born)
+    if max_hp != b.max_hp, do: changed(%{s | boss: %{b | hp: hp, max_hp: max_hp}}), else: s
+  end
+
   defp spawn_boss(s, opts) do
     if s.timer, do: Process.cancel_timer(s.timer)
     hp = opts[:hp] || conf(:hp) || 20_000
@@ -146,6 +170,8 @@ defmodule HacLong.WorldBoss do
       hp: hp,
       max_hp: hp,
       ends_at: now() + minutes * 60_000,
+      born: now(),
+      grow: opts[:grow] != false,
       damage: %{},
       fighters: MapSet.new()
     }
@@ -204,15 +230,21 @@ defmodule HacLong.WorldBoss do
   # Phần thưởng theo tỷ lệ sát thương trên tổng máu trùm.
   defp reward(dmg, max_hp, top?, killer?) do
     share = dmg / max_hp
+    # thưởng tham gia: gây đủ `join_min_share` máu tối đa
+    join =
+      if share >= @r.join_min_share,
+        do: Map.new(@r.join_items, fn {k, v} -> {to_string(k), v} end),
+        else: %{}
 
     %{
       gold: round(300 + 5000 * share) + if(killer?, do: 500, else: 0),
       xp: round(1000 + 30_000 * share),
       # top 3 sát thương: Vảy Cổ Long + một viên ngọc ép đồ
       items:
-        if(top?,
-          do: %{"dragon_scale" => 1, HacLong.Game.Engine.pick_jewel() => 1},
-          else: %{}
+        Map.merge(
+          join,
+          if(top?, do: %{"dragon_scale" => 1, HacLong.Game.Engine.pick_jewel() => 1}, else: %{}),
+          fn _, a, b -> a + b end
         ),
       share: Float.round(share * 100, 1),
       top: top?

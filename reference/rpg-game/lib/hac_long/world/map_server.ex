@@ -237,12 +237,17 @@ defmodule HacLong.World.MapServer do
   def handle_call({:invade, n}, _from, s) do
     s =
       Enum.reduce(1..n//1, s, fn _, s ->
-        case s.zone && free_tile(s) do
-          nil ->
+        # vùng chuyển sinh (không có vùng): quái vàng là quái của bản đồ (DECISIONS "Review sự kiện theo chuyển sinh")
+        case (s.zone || s.map.realm) && free_tile(s) do
+          x when x in [nil, false] ->
             s
 
           pos ->
-            kind = Enum.random(s.zone.monsters).id
+            kind =
+              if s.zone,
+                do: Enum.random(s.zone.monsters).id,
+                else: Enum.random(s.map.spawns).monster
+
             {m, s} = new_monster(s, kind, pos, false, :gold)
             put_in(s.monsters[m.id], Map.put(%{m | rare: false}, :gold, true))
         end
@@ -267,13 +272,13 @@ defmodule HacLong.World.MapServer do
     s =
       for {kind, n, leader?} <- units, _ <- 1..n//1, reduce: s do
         s ->
-          case s.zone && free_tile(s) do
-            nil ->
+          case (s.zone || s.map.realm) && free_tile(s) do
+            x when x in [nil, false] ->
               s
 
             pos ->
               {m, s} = new_monster(s, kind, pos, leader?, {:raid, key})
-              spec = HacLong.Raids.spec(key, kind, s.map.zone)
+              spec = HacLong.Raids.spec(key, kind, s.map)
 
               put_in(
                 s.monsters[m.id],

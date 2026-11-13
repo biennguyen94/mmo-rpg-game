@@ -2866,6 +2866,8 @@ defmodule HacLong.Game.Engine do
   end
 
   # Xâm lăng (B-20): con đầu đàn rơi thêm đồ theo `RULES.raids.<loại>.drops`
+  defp raid_drop(p, %{no_drops: true}, reward), do: {p, reward}
+
   defp raid_drop(p, %{raid: key, boss: true}, reward) when is_binary(key) do
     Enum.reduce(HacLong.Raids.drops(key), {p, reward}, fn {id, c}, {p, reward} ->
       if chance(c) do

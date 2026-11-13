@@ -45,7 +45,37 @@ defmodule HacLong.Raids do
   @doc """
   Chỉ số quái xâm lăng `kind` của loại `key` trên vùng `zone` (chỉ số vùng): `%{id, name, level, mult, reward_mult,
   jewel_chance, raid}`. Con đầu đàn tính như trùm (`boss: true` ở MapServer).
+
+  `zone` cũng có thể là bản đồ vùng chuyển sinh (`%{realm: _, spawns: _}`, DECISIONS "Review sự kiện theo chuyển sinh"):
+  dựng từ quái mạnh nhất của bản đồ đó (cấp, `stat_level`, hệ số như vùng chuyển sinh) cộng `level_bonus` và × `mult`.
   """
+  def spec(key, kind, %{realm: realm, spawns: spawns}) when not is_nil(realm) do
+    r = rule(key)
+    u = if kind == r.leader.kind, do: r.leader, else: r.minion
+
+    base =
+      spawns
+      |> Enum.map(&Data.side_monster(&1.monster))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.max_by(&(&1[:stat_level] || &1.level))
+
+    %{
+      id: kind,
+      name: u.name,
+      level: base.level + u.level_bonus,
+      stat_level: (base[:stat_level] || base.level) + u.level_bonus,
+      mult: Map.get(base, :mult, 1) * u.mult,
+      atk_mult: base[:atk_mult] && base.atk_mult * u.mult,
+      xp_mult: base[:xp_mult],
+      reward_mult: r.reward_mult,
+      jewel_chance: if(kind == r.leader.kind, do: r.jewel_chance, else: r.minion_jewel_chance),
+      raid: key
+    }
+    |> Map.reject(fn {_, v} -> is_nil(v) end)
+  end
+
+  def spec(key, kind, %{zone: zone}), do: spec(key, kind, zone)
+
   def spec(key, kind, zone) do
     r = rule(key)
     z = Data.zone(zone) || hd(Data.zones())
@@ -106,7 +136,7 @@ defmodule HacLong.Raids do
 
       r ->
         s = if s[key].active, do: finish(s, key, :restart), else: s
-        s = begin(s, key, maps || Enum.take_random(r.maps, r.pick))
+        s = begin(s, key, maps || pick_maps(r))
         {:reply, {:ok, view(s)[key]}, s}
     end
   end
@@ -143,7 +173,14 @@ defmodule HacLong.Raids do
 
     if s[key].active,
       do: {:noreply, finish(s, key, :timeout)},
-      else: {:noreply, begin(s, key, Enum.take_random(r.maps, r.pick))}
+      else: {:noreply, begin(s, key, pick_maps(r))}
+  end
+
+  # `pick` bản đồ đầu vùng + `RULES.starter_events.realm_pick` bản đồ vùng chuyển sinh (DECISIONS "Review sự kiện theo
+  # chuyển sinh")
+  defp pick_maps(r) do
+    st = Data.rules().starter_events
+    Enum.take_random(r.maps, r.pick) ++ Enum.take_random(st.realm_maps, st.realm_pick)
   end
 
   defp begin(s, key, maps) do

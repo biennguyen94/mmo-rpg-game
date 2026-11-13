@@ -281,7 +281,7 @@ defmodule HacLongWeb.GameChannelTest do
     end
 
     test "cả server đánh chung một thanh máu, chia thưởng theo sát thương" do
-      HacLong.WorldBoss.spawn_now(hp: 3000)
+      HacLong.WorldBoss.spawn_now(hp: 3000, grow: false)
       {ua, pa, sa} = champion(%{str: 300, agi: 0, vit: 200, ene: 300})
       {ub, pb, sb} = champion(%{str: 40, agi: 0, vit: 200, ene: 300})
 
@@ -315,11 +315,32 @@ defmodule HacLongWeb.GameChannelTest do
       b = wait_for(fn -> Characters.load(ub.id) end, &(&1.gold > pb.gold))
       assert a.gold - pa.gold > b.gold - pb.gold
       assert a.inv["dragon_scale"] == 1 and b.inv["dragon_scale"] == 1
+
+      # thưởng tham gia (≥ 1% máu): Ngọc Ước Nguyện (A, B còn được ngọc top 3 ngẫu nhiên)
+      assert a.inv["jewel_bless"] >= (pa.inv["jewel_bless"] || 0) + 1
       assert a.boss_top == 1 and b.boss_top == 1
       # trận của B (đang đánh dở) cũng kết thúc
       assert b.battle.over and b.battle.result == "win"
       assert b.battle.monster.hp == 0
       assert a.battle.reward.gold > 0
+    end
+
+    test "máu Cổ Long tăng theo người mới vào đánh trong mấy phút đầu (có trần)" do
+      r = HacLong.Game.Data.rules().world_boss
+
+      assert HacLong.WorldBoss.grown(100, 3000, true, 0) ==
+               {100 + r.hp_per_fighter, 3000 + r.hp_per_fighter}
+
+      # người đã đánh, quá giờ, chạm trần: không thêm
+      assert HacLong.WorldBoss.grown(100, 3000, false, 0) == {100, 3000}
+      assert HacLong.WorldBoss.grown(100, 3000, true, r.grow_minutes * 60_000) == {100, 3000}
+      assert HacLong.WorldBoss.grown(10, r.hp_cap - 5, true, 0) == {15, r.hp_cap}
+
+      HacLong.WorldBoss.spawn_now(hp: 3000)
+      {_ua, _pa, sa} = champion(%{str: 20, agi: 0, vit: 200, ene: 300})
+      fight(sa)
+      assert HacLong.WorldBoss.status().maxHp == 3000 + r.hp_per_fighter
+      HacLong.WorldBoss.despawn()
     end
 
     test "hết giờ thì trùm bay đi, trận đang đánh kết thúc, không ai được thưởng" do
