@@ -2190,3 +2190,17 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   tên đỏ, về Làng); sau khi trăng lặn không tính mạng / ngọc. (3) Trang Quản trị tự vẽ lại (danh sách online mỗi 5 giây,
   trạng thái sự kiện) trả ô đang nhập về số cũ: `render()` giữ các ô có id đã sửa / đang gõ (cả con trỏ) và trả lại sau khi
   vẽ, cho mọi ô nhập của game; lệnh đặt lại (quà top về mặc định, tắt lịch) thì lấy giá trị mới.
+
+## Huyết Nguyệt: săn người, điểm, bàn thờ (2026-11-13)
+- Người dùng thấy Hỗn Chiến Thành (sinh tồn, gục là loại) và Pháp Trường na ná nhau; chọn a + b + c cho Pháp Trường thành
+  "săn người, tranh điểm nóng". Số ở `RULES.blood_moon.points / streak / altar`.
+- **b. Điểm:** mỗi mạng `base` + `step` × (CS người gục − CS người hạ), chặn [`min`, `max`] (1 + 0,5/CS, 0,5–3). Xếp hạng và
+  quà top theo điểm (bằng điểm: ai đạt trước); vẫn ghi số mạng; quà top cần ≥ `min_kills` mạng.
+- **a. Huyết Sát:** hạ `streak.min` (3) người liên tiếp không gục → Huyết Sát: báo kênh thế giới, trên bản đồ cột sáng đỏ +
+  chữ "🩸 HUYẾT SÁT" dưới / trên người đó (cả chính mình), dải 🩸 ghi tên. Ai hạ Huyết Sát: +`bounty_points` điểm, cơ hội
+  ngọc × `bounty_drop_mult`; người gục chuỗi về 0.
+- **c. Bàn thờ Huyết Ngọc:** các ô đi được quanh cột giữa sân (bán kính 1). Mỗi `every_s` (120) giây sáng `window_s` (40)
+  giây (báo kênh thế giới; quản trị có nút 🔥 Thắp Bàn thờ). Mỗi giây: đúng một người rảnh tay (không đồ sát) đứng trên
+  bàn thờ thì +1 giây (`altar_step/3`, hàm thuần), đủ `hold_s` (10) giây nhận 1 ngọc ngẫu nhiên vào túi (bot giữ: bàn thờ
+  tắt, không ngọc); hai người trở lên: tạm dừng; người giữ rời / vào trận: đếm lại. Bản đồ: ô đỏ rực, cột sáng, vòng tiến
+  độ và tên người giữ. Bot được gọi: không ai trong tầm thì kéo ra giữ bàn thờ.

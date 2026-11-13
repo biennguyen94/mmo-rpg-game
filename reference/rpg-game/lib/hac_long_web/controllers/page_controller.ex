@@ -281,7 +281,10 @@ defmodule HacLongWeb.PageController do
       jewels: r.jewels,
       topRewards: Enum.map(r.top_rewards, &Map.new(&1, fn {k, v} -> {to_string(k), v} end)),
       minKills: r.min_kills,
-      rewardMax: r.reward_max
+      rewardMax: r.reward_max,
+      points: Map.drop(r.points, [:_doc]),
+      streak: Map.drop(r.streak, [:_doc]),
+      altar: Map.drop(r.altar, [:_doc])
     }
   end
 end

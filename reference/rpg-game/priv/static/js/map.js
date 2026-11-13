@@ -185,6 +185,7 @@
     const csHolder = csOn && cs.holder ? cs.holder.tag : null;
     if (fx && rel.enemy && list.some((o) => o.tag === rel.enemy) && !tutTimer) tutTimer = setTimeout(() => { tutTimer = null; draw(); }, 120);
     drawnP = [];
+    const hunted = huntedIds();
     for (const o of list) {
       const key = o.x + ',' + o.y, g = groups.get(key) || [];
       g.push(o); groups.set(key, g);
@@ -203,6 +204,7 @@
       }
       ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       ctx.beginPath(); ctx.ellipse(px + TILE / 2 + off, py + TILE - 4, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+      if (hunted.has(o.id)) huntedMark(t, px + TILE / 2 + off, py);
       // D2: Công Thành Chiến — vòng dưới chân theo màu bang; F1: người bang địch (chiến bang) — vòng đỏ nhấp nháy
       const enemy = rel.enemy && o.tag === rel.enemy;
       if ((csOn && o.tag) || enemy) {
@@ -411,7 +413,43 @@
   }
 
   // ---------- Huyết Nguyệt (Pháp Trường) ----------
-  let bloodOn = false;
+  let bloodOn = false, bmSt = null;
+  const huntedIds = () => new Set(((bloodOn && bmSt && bmSt.hunted) || []).map((h) => h.uid));
+  // Huyết Sát: cột sáng đỏ nhấp nháy dưới chân + chữ trên đầu (ai cũng thấy để đi săn)
+  function huntedMark(t, x, y) {
+    const k = 0.5 + 0.5 * Math.sin(t / 160);
+    const g = ctx.createRadialGradient(x, y + TILE - 6, 2, x, y + TILE - 6, TILE * 0.9);
+    g.addColorStop(0, `rgba(255, 40, 30, ${0.55 + 0.25 * k})`); g.addColorStop(1, 'rgba(255, 40, 30, 0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + TILE - 6, TILE * 0.9, TILE * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(255, 90, 70, ${0.6 + 0.4 * k})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(x, y + TILE - 6, 15 + k * 3, 6, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.save(); ctx.font = '800 9px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    ctx.strokeText('🩸 HUYẾT SÁT', x, y - 16); ctx.fillStyle = '#ff6a5a'; ctx.fillText('🩸 HUYẾT SÁT', x, y - 16); ctx.restore();
+  }
+  // Bàn thờ Huyết Ngọc sáng: ô đỏ rực, cột sáng, vòng tiến độ của người đang giữ
+  function altarFx(t, cx, cy, fx) {
+    const al = bloodOn && bmSt && bmSt.altar;
+    if (!al || !al.tiles) return;
+    const k = fx ? 0.5 + 0.5 * Math.sin(t / 220) : 0.7;
+    let sx = 0, sy = 0;
+    for (const [x, y] of al.tiles) {
+      const px = x * TILE - cx, py = y * TILE - cy;
+      sx += px; sy += py;
+      ctx.fillStyle = `rgba(255, 50, 40, ${0.22 + 0.18 * k})`; ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+      ctx.strokeStyle = `rgba(255, 140, 90, ${0.5 + 0.4 * k})`; ctx.lineWidth = 1.5; ctx.strokeRect(px + 3, py + 3, TILE - 6, TILE - 6);
+    }
+    const mx = sx / al.tiles.length + TILE / 2, my = sy / al.tiles.length + TILE / 2;
+    const g = ctx.createLinearGradient(mx, my - TILE * 4, mx, my);
+    g.addColorStop(0, 'rgba(255, 60, 40, 0)'); g.addColorStop(1, `rgba(255, 60, 40, ${0.35 + 0.2 * k})`);
+    ctx.fillStyle = g; ctx.fillRect(mx - TILE * 0.6, my - TILE * 4, TILE * 1.2, TILE * 4);
+    if (al.holder) {
+      ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(mx, my, TILE * 1.4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * al.hold) / al.need); ctx.stroke();
+    }
+    ctx.save(); ctx.font = '800 11px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    const label = al.holder ? `💎 ${al.holder} ${al.hold}/${al.need}s` : '🔥 Bàn thờ Huyết Ngọc';
+    ctx.strokeText(label, mx, my - TILE * 1.7); ctx.fillStyle = '#ffd27a'; ctx.fillText(label, mx, my - TILE * 1.7); ctx.restore();
+  }
   function bloodMoonFx(now, fx, lanterns, cx, cy, m) {
     const W = VW(), H = VH(), t = fx ? now : 0;
     // màn đỏ tối dần ra mép
@@ -924,6 +962,7 @@
     groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
     // hiệu ứng kỹ năng trên mặt đất (fx.js GroundFx): sau ô đất, trước nhân vật / quái
     if (groundMarks.length && window.GroundFx) window.GroundFx.paint(ctx, groundMarks, now, cx, cy);
+    if (m.style === 'arena') altarFx(now, cx, cy, fx);
     if (m.kite) clouds(now, m, cx, cy, fx, x0, y0, x1, y1);
     if (tufts.length) grassFx(now, tufts);
     for (const [ix, iy] of incense) {
@@ -1045,6 +1084,7 @@
     const px = Math.round(mx * TILE - cx), py = Math.round(my * TILE - cy);
     if (fx) moveFx(now, m, P, cx, cy, px, py);
     if (look && (look.aura || look.wing)) heroAura(now, px, py, look, fx);
+    if (bloodOn && huntedIds().has(userId)) huntedMark(now, px + TILE / 2, py);
     if (look && look.pet === 'long_vuong') dragonAura(now, px, py, fx);
     if (look && (look.pet === 'hac_long' || look.pet === 'hac_long_chan')) hacAura(now, px, py, fx, look.pet === 'hac_long_chan');
     if (look && look.pet === 'chim_lac') birdAura(now, px, py, fx);
@@ -2711,7 +2751,8 @@
     // e2e: số dấu mặt đất đang có
     groundCount: () => groundMarks.length,
     // Huyết Nguyệt (ui.js onBloodMoon): đang mọc thì Pháp Trường phủ trăng máu
-    setBloodMoon(on) { if (bloodOn !== !!on) { bloodOn = !!on; draw(); } },
+    // st: trạng thái Huyết Nguyệt (ui.js onBloodMoon): mở, Huyết Sát (`hunted`), Bàn thờ (`altar`)
+    setBloodMoon(st) { bloodOn = !!(st && st.open); bmSt = st || null; draw(); },
     // l, s: { tile: [x, y], until } (ui.js onLake) hoặc null
     setLake(l, s) {
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };

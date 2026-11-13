@@ -215,6 +215,64 @@ defmodule HacLongWeb.BloodMoonTest do
     assert %{ok: true} = cmd(sa, %{"act" => "leave"})
   end
 
+  test "điểm theo chênh chuyển sinh (chặn min / max), hạ Huyết Sát cộng thêm" do
+    pt = @r.points
+    assert BloodMoon.points(3, 3, false) == pt.base * 1.0
+    assert BloodMoon.points(3, 5, false) == pt.base + 2 * pt.step
+    assert BloodMoon.points(0, 20, false) == pt.max * 1.0
+    assert BloodMoon.points(10, 0, false) == pt.min * 1.0
+    assert BloodMoon.points(3, 3, true) == pt.base + @r.streak.bounty_points
+  end
+
+  test "chuỗi hạ liên tiếp thành Huyết Sát; ai hạ Huyết Sát được cộng điểm, chuỗi người gục về 0" do
+    {:ok, _} = BloodMoon.open_now(10)
+    me = fn n -> %{name: n, rebirths: 2} end
+    for v <- 1..@r.streak.min, do: BloodMoon.kill(901, 910 + v, me.("A"), me.("V#{v}"))
+    st = BloodMoon.public()
+    assert [%{uid: 901, streak: n}] = st.hunted
+    assert n == @r.streak.min
+    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "thành Huyết Sát"))
+
+    BloodMoon.kill(902, 901, me.("B"), me.("A"))
+    st = BloodMoon.public()
+    assert st.hunted == []
+    b = Enum.find(st.top, &(&1.uid == 902))
+    assert b.points == @r.points.base + @r.streak.bounty_points
+    # A: min mạng, mỗi mạng base điểm; xếp theo điểm
+    a = Enum.find(st.top, &(&1.uid == 901))
+    assert a.kills == @r.streak.min and a.points == @r.streak.min * @r.points.base * 1.0
+  end
+
+  test "Bàn thờ: một người đứng đủ giây thì nhận; hai người thì dừng; rời đi thì đếm lại" do
+    al = %{holder: nil, name: nil, hold: 0}
+    need = 3
+    al = BloodMoon.altar_step(al, [{1, "A"}], need)
+    assert al.holder == 1 and al.hold == 1
+    al = BloodMoon.altar_step(al, [{1, "A"}, {2, "B"}], need)
+    assert al.hold == 1
+    al = BloodMoon.altar_step(al, [{1, "A"}], need)
+    assert al.hold == 2
+    assert {:claimed, 1, "A"} = BloodMoon.altar_step(al, [{1, "A"}], need)
+    # A rời, B lên một mình: đếm lại từ 1
+    assert %{holder: 2, hold: 1} = BloodMoon.altar_step(al, [{2, "B"}], need)
+    assert %{holder: nil, hold: 0} = BloodMoon.altar_step(al, [], need)
+    # ô bàn thờ: đi được, quanh tâm
+    [cx, cy] = @r.altar.center
+    tiles = BloodMoon.altar_tiles()
+
+    assert tiles != [] and
+             Enum.all?(tiles, fn {x, y} -> abs(x - cx) <= 1 and abs(y - cy) <= 1 end)
+  end
+
+  test "Bàn thờ sáng: báo cả server, trạng thái có ô và giờ còn" do
+    {:ok, _} = BloodMoon.open_now(10)
+    BloodMoon.altar_now()
+    Process.sleep(100)
+    assert %{altar: %{need: need, tiles: [_ | _], left: left}} = BloodMoon.public()
+    assert need == @r.altar.hold_s and left > 0
+    assert Enum.any?(HacLong.Chat.history(), &(&1.text =~ "Bàn thờ Huyết Ngọc"))
+  end
+
   test "quản trị: mở, đóng, lịch hằng ngày, gọi bot cần mở trước; người chơi thường không dùng được" do
     admin =
       Repo.get!(Accounts.User, create_user().id)

@@ -159,7 +159,16 @@ defmodule HacLong.Bots.Bot do
     cmd =
       cond do
         blood ->
-          blood_step(s.uid, Brain.blood_job(p, snap, s.uid, HacLong.BloodMoon.locked_s(s.uid)))
+          blood_step(
+            s.uid,
+            Brain.blood_job(
+              p,
+              snap,
+              s.uid,
+              HacLong.BloodMoon.locked_s(s.uid),
+              HacLong.BloodMoon.altar_lit()
+            )
+          )
 
         Brain.resting?(p, s.rest_until, now) ->
           nil

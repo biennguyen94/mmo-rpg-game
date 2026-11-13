@@ -1154,6 +1154,7 @@ div.item.people-row .people-main { display: flex; align-items: center; gap: 10px
 .bm-cell b { flex: none; color: #ffd27a; }
 .bm-cell.me { background: rgba(208, 64, 58, 0.35); outline: 1px solid #e0706a; }
 .bm-go { align-self: flex-start; }
+.bm-chip .bm-extra { color: #ffcf9a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bm-list { max-height: 40vh; overflow-y: auto; margin: 2px 0 0; }
 .bm-list li.me { color: #ffd27a; }
 .bm-rw-h { margin: 10px 0 4px; font-size: 0.9rem; }

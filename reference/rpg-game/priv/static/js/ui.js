@@ -536,10 +536,10 @@
       <div class="btn-row"><span class="grow">${state}<br><span class="small muted">Trên bản đồ: ${st.players} người (bot được gọi: ${st.bots}) · ngọc đã rơi: ${st.drops} · lịch: ${st.daily ? `${esc(st.daily)} mỗi ngày` : 'tắt'}</span></span></div>
       <div class="btn-row"><label class="small">Số phút <input type="number" id="adm-bm-min" min="1" max="${R.minutesMax}" value="${R.minutes}" style="width:4.5em"></label>
         <button class="btn danger" data-adm="blood_moon_open" ${st.open ? 'disabled' : ''}>🩸 Mở ngay</button><button class="btn" data-adm="blood_moon_close" ${st.open ? '' : 'disabled'}>🌕 Đóng sớm</button></div>
-      <div class="btn-row"><button class="btn" data-adm="blood_moon_bots" ${st.open ? '' : 'disabled'} title="Mọi bot đang chạy vào Pháp Trường, tìm người gần nhất đồ sát">🤖 Gọi tất cả bot vào</button><button class="btn" data-adm="blood_moon_recall" ${st.bots ? '' : 'disabled'}>🏠 Rút bot về</button></div>
+      <div class="btn-row"><button class="btn" data-adm="blood_moon_bots" ${st.open ? '' : 'disabled'} title="Mọi bot đang chạy vào Pháp Trường, tìm người gần nhất đồ sát">🤖 Gọi tất cả bot vào</button><button class="btn" data-adm="blood_moon_recall" ${st.bots ? '' : 'disabled'}>🏠 Rút bot về</button><button class="btn" data-adm="blood_moon_altar" ${st.open && !st.altar ? '' : 'disabled'} title="Bàn thờ Huyết Ngọc sáng ngay (ngoài lịch ${Math.round(RULES.bloodMoon.altar.every_s / 60)} phút)">🔥 Thắp Bàn thờ</button></div>
       <div class="btn-row"><label class="small">Tự mở hằng ngày lúc <input type="time" id="adm-bm-at" value="${esc(st.daily || '20:00')}"></label><button class="btn" data-adm="blood_moon_daily">💾 Lưu lịch</button><button class="btn" data-adm="blood_moon_daily" data-off="1" ${st.daily ? '' : 'disabled'}>Tắt lịch</button></div>
       ${admBmRewards(st)}
-      ${st.top.length ? `<ol class="board">${st.top.map((t, i) => `<li><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${t.kills}</span></li>`).join('')}</ol>` : ''}
+      ${st.top.length ? `<ol class="board">${st.top.map((t, i) => `<li><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${bmPt(t.points)} điểm · ${t.kills} mạng</span></li>`).join('')}</ol>` : ''}
     </div>`;
   }
 
@@ -1273,16 +1273,18 @@
   // ---------- Huyết Nguyệt ở Pháp Trường (HacLong.BloodMoon, DECISIONS "Pháp Trường Huyết Nguyệt") ----------
   // bm: trạng thái server + mốc hết giờ / mốc mọc theo đồng hồ máy mình; dải nổi #bm-chip ở mọi tab khi sắp mọc / đang mở
   let bm = null, bmTick = null;
+  // điểm Huyết Nguyệt: bỏ ".0"
+  const bmPt = (x) => (x == null ? 0 : Math.round(x * 10) / 10);
   const BM_MAP = () => RULES.bloodMoon.map;
   const onArena = () => !!(P && P.pos.map === BM_MAP());
   function onBloodMoon(st) {
     const was = bm && bm.open, known = bm != null, now = Date.now();
-    bm = Object.assign(st, { until: now + (st.left || 0), warnUntil: now + (st.warn || 0) });
+    bm = Object.assign(st, { until: now + (st.left || 0), warnUntil: now + (st.warn || 0), at: now });
     if (known && st.open && !was && P) {
       Celebrate.banner('🩸 Huyết Nguyệt đã mọc! Pháp Trường đồ sát tự do.');
       Sound.play('rare');
     }
-    Map_.setBloodMoon(st.open);
+    Map_.setBloodMoon(st);
     drawBloodChip();
     if (P && npc && (npcData() || {}).role === 'blood_moon') render();
     const ad = $('#adm-bm');
@@ -1296,17 +1298,22 @@
     const left = bm.open ? bm.until - Date.now() : bm.warnUntil - Date.now();
     if (!bm.open && left <= 0) return '';
     if (!bm.open) return `<div class="bm-chip" role="status"><div class="bm-line">🌘 Huyết Nguyệt mọc sau <b class="num">${clock(left)}</b></div></div>`;
-    const idx = bm.top.findIndex((t) => t.uid === Net.userId), mine = idx >= 0 ? bm.top[idx].kills : 0;
+    const idx = bm.top.findIndex((t) => t.uid === Net.userId), mine = idx >= 0 ? bmPt(bm.top[idx].points) : 0;
     const rank = idx >= 0 ? idx + 1 : null, here = onArena();
     const medal = ['🥇', '🥈', '🥉'];
-    const cells = bm.top.slice(0, 3).map((t, i) => `<div class="bm-cell${t.uid === Net.userId ? ' me' : ''}"><span class="md">${medal[i]}</span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><b class="num">${t.kills}</b></div>`).join('');
+    const cells = bm.top.slice(0, 3).map((t, i) => `<div class="bm-cell${t.uid === Net.userId ? ' me' : ''}"><span class="md">${medal[i]}</span><span class="nm" title="${esc(t.name)} · ${t.kills} mạng">${esc(t.name)}</span><b class="num">${bmPt(t.points)}</b></div>`).join('');
     const row2 = !here ? (P.battle && !P.battle.over ? '' : `<button class="btn small-btn danger bm-go" data-act="bm-go">⚔ Đến Pháp Trường</button>`)
       : cells ? `<div class="bm-cells">${cells}</div>` : '<div class="small muted">Chưa ai hạ được ai.</div>';
-    const list = bmOpen && bm.top.length ? `<ol class="board bm-list">${bm.top.map((t, i) => `<li class="${t.uid === Net.userId ? 'me' : ''}"><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${t.kills}</span></li>`).join('')}</ol>` : '';
+    const list = bmOpen && bm.top.length ? `<ol class="board bm-list">${bm.top.map((t, i) => `<li class="${t.uid === Net.userId ? 'me' : ''}"><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}${(bm.hunted || []).some((h) => h.uid === t.uid) ? ' 🩸' : ''}</span><span class="num">${bmPt(t.points)} điểm · ${t.kills} mạng</span></li>`).join('')}</ol>` : '';
+    // Bàn thờ sáng / Huyết Sát đang có: một dòng nhắc
+    const al = bm.altar, al_left = al ? Math.max(0, al.left - (Date.now() - bm.at)) : 0;
+    const extra = [al ? `🔥 Bàn thờ sáng <b class="num">${clock(al_left)}</b>${al.holder ? ` · ${esc(al.holder)} <b class="num">${al.hold}/${al.need}s</b>` : ''}` : '',
+      (bm.hunted || []).length ? `🩸 Huyết Sát: ${bm.hunted.map((h) => `${esc(h.name || '?')} (${h.streak})`).join(', ')}` : ''].filter(Boolean).join(' · ');
+    const row3 = here && extra ? `<div class="small bm-extra">${extra}</div>` : '';
     return `<div class="bm-chip on" role="status">
-      <div class="bm-head"><span class="bm-line grow">${here ? `🩸 còn <b class="num">${clock(left)}</b> · bạn hạ <b class="num">${mine}</b>${rank && rank > 3 ? ` · hạng <b class="num">${rank}</b>` : ''}` : `🩸 <b>Huyết Nguyệt</b> còn <b class="num">${clock(left)}</b>`}</span>
+      <div class="bm-head"><span class="bm-line grow">${here ? `🩸 còn <b class="num">${clock(left)}</b> · bạn <b class="num">${mine}</b> điểm${rank && rank > 3 ? ` · hạng <b class="num">${rank}</b>` : ''}` : `🩸 <b>Huyết Nguyệt</b> còn <b class="num">${clock(left)}</b>`}</span>
         <button class="btn small-btn bm-trophy${bmOpen ? ' primary' : ''}" data-act="bm-top" aria-label="Bảng xếp hạng" aria-pressed="${bmOpen}">🏆</button></div>
-      ${row2}${list}</div>`;
+      ${row2}${row3}${list}</div>`;
   }
   function drawBloodChip() {
     let el = document.getElementById('bm-chip');
@@ -1328,8 +1335,9 @@
     return `<div class="card"><h3>🩸 Huyết Nguyệt</h3>
       <p class="small">${st.open ? `<b style="color:var(--bad)">Đang mọc, còn ${clock(st.until - Date.now())}.</b>` : st.daily ? `Trăng máu mọc lúc <b>${esc(st.daily)}</b> mỗi ngày (${R.minutes} phút).` : 'Trăng máu mọc khi Quản trị mở.'} Lúc trăng mọc, Pháp Trường được đồ sát tự do (cả người cùng tổ đội). Gục ở đây <b>không mất vàng, không tên đỏ</b>, về Làng và nghỉ ${R.relockS} giây mới vào lại được.</p>
       <p class="small">Mỗi lần hạ người: ${Math.round(R.dropPct * 100)}% cơ hội rơi một viên ngọc (${jew}). Hạ người nhiều lần chuyển sinh hơn mình thì dễ rơi hơn, yếu hơn thì khó rơi; hạ đi hạ lại cùng một người thì cơ hội giảm dần. Hạ bot chỉ tính điểm.</p>
-      <p class="small">Trăng lặn: top 3 người hạ nhiều mạng nhất (ít nhất ${R.minKills}) nhận ngọc qua thư: ${rewards.map((_, i) => `hạng ${i + 1}: ${prize(i) || 'không có'}`).join('; ')}.</p></div>
-      <div class="card"><h3>${st.open ? 'Bảng xếp hạng' : 'Lần trước'}</h3>${rows.length ? `<ol class="board">${rows.map((t, i) => `<li class="${t.uid === Net.userId ? 'me' : ''}"><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${t.kills} mạng</span></li>`).join('')}</ol>` : '<p class="small muted">Chưa có ai.</p>'}${st.open ? `<p class="small muted">Ngọc đã rơi: ${st.drops}.</p>` : ''}</div>`;
+      <p class="small"><b>Điểm:</b> mỗi mạng ${R.points.base} điểm, cộng ${R.points.step} cho mỗi lần chuyển sinh người gục hơn mình (trừ nếu kém hơn), từ ${R.points.min} tới ${R.points.max} điểm. <b>🩸 Huyết Sát:</b> hạ ${R.streak.min} người liên tiếp không gục thì thành Huyết Sát, cả bản đồ thấy cột sáng đỏ; ai hạ được Huyết Sát thì +${R.streak.bounty_points} điểm và cơ hội ngọc ×${R.streak.bounty_drop_mult}. <b>🔥 Bàn thờ Huyết Ngọc</b> giữa sân: mỗi ${Math.round(R.altar.every_s / 60)} phút sáng lên ${R.altar.window_s} giây; đứng trên đó một mình đủ ${R.altar.hold_s} giây (không đang đánh) thì nhận 1 ngọc.</p>
+      <p class="small">Trăng lặn: top 3 người nhiều điểm nhất (ít nhất ${R.minKills}) nhận ngọc qua thư: ${rewards.map((_, i) => `hạng ${i + 1}: ${prize(i) || 'không có'}`).join('; ')}.</p></div>
+      <div class="card"><h3>${st.open ? 'Bảng xếp hạng' : 'Lần trước'}</h3>${rows.length ? `<ol class="board">${rows.map((t, i) => `<li class="${t.uid === Net.userId ? 'me' : ''}"><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${bmPt(t.points != null ? t.points : t.kills)} điểm · ${t.kills} mạng</span></li>`).join('')}</ol>` : '<p class="small muted">Chưa có ai.</p>'}${st.open ? `<p class="small muted">Ngọc đã rơi: ${st.drops}.</p>` : ''}</div>`;
   }
 
   // ---------- Golden Invasion (Phase 7) ----------

@@ -1039,6 +1039,15 @@ defmodule HacLongWeb.GameChannel do
     end
   end
 
+  defp admin("blood_moon_altar", _p, _s) do
+    if HacLong.BloodMoon.open?() do
+      HacLong.BloodMoon.altar_now()
+      {:ok, %{msg: "Đã thắp Bàn thờ Huyết Ngọc."}}
+    else
+      {:error, "Mở Huyết Nguyệt trước rồi mới thắp Bàn thờ."}
+    end
+  end
+
   defp admin("blood_moon_bots", _p, _s) do
     with {:ok, n} <- HacLong.BloodMoon.summon_bots() do
       {:ok, %{msg: "Đã gọi #{n} bot vào Pháp Trường.", blood_moon: HacLong.BloodMoon.public()}}

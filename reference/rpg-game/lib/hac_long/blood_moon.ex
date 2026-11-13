@@ -123,9 +123,37 @@ defmodule HacLong.BloodMoon do
   """
   def ranking(score) do
     score
-    |> Enum.map(fn {uid, e} -> Map.put(e, :uid, uid) end)
-    |> Enum.sort_by(&{-&1.kills, &1.at})
+    |> Enum.map(fn {uid, e} -> e |> Map.put(:uid, uid) |> Map.put_new(:points, e.kills) end)
+    |> Enum.sort_by(&{-&1.points, &1.at})
   end
+
+  @doc """
+  Điểm một mạng (hàm thuần, DECISIONS "Huyết Nguyệt: săn người, điểm, bàn thờ"): `points.base` + `points.step` ×
+  (chuyển sinh người gục `rv` − người hạ `rk`), chặn [`min`, `max`]; hạ Huyết Sát (`hunted?`) + `streak.bounty_points`.
+  """
+  def points(rk, rv, hunted?, r \\ rules()) do
+    pt = r.points
+    base = (pt.base + pt.step * (rv - rk)) |> max(pt.min * 1.0) |> min(pt.max * 1.0)
+    base + if(hunted?, do: r.streak.bounty_points, else: 0)
+  end
+
+  @doc "Các ô Bàn thờ Huyết Ngọc: ô đi được quanh `altar.center` trong bán kính `altar.radius` (Chebyshev)."
+  def altar_tiles do
+    a = rules().altar
+    [cx, cy] = a.center
+    m = Maps.get(map_id())
+
+    for dx <- -a.radius..a.radius,
+        dy <- -a.radius..a.radius,
+        Maps.walkable?(m, cx + dx, cy + dy),
+        do: {cx + dx, cy + dy}
+  end
+
+  @doc "Bàn thờ đang sáng: danh sách ô, không thì nil (bot dùng để kéo nhau ra giữa sân)."
+  def altar_lit, do: call(:altar_lit, nil)
+
+  @doc "Thắp Bàn thờ ngay (quản trị / test; chỉ khi Huyết Nguyệt đang mở)."
+  def altar_now, do: send(__MODULE__, :altar_lit)
 
   @doc "Người nhận quà (hàm thuần): người thật có ≥ `min_kills` mạng, theo thứ tự xếp hạng, ghép với `top_rewards`."
   def winners(rank, r \\ rules()) do
@@ -167,7 +195,12 @@ defmodule HacLong.BloodMoon do
       daily_ref: nil,
       last: [],
       drop: nil,
-      rewards: nil
+      rewards: nil,
+      # chuỗi hạ liên tiếp mỗi người (gục về 0); Huyết Sát: chuỗi ≥ streak.min
+      streaks: %{},
+      # Bàn thờ: nil (tắt) | %{until, holder, hold, ref}
+      altar: nil,
+      altar_ref: nil
     }
 
   @impl true
@@ -182,6 +215,9 @@ defmodule HacLong.BloodMoon do
 
   @impl true
   def handle_call(:public, _from, s), do: {:reply, public(s), s}
+
+  def handle_call(:altar_lit, _from, %{altar: %{}} = s), do: {:reply, altar_tiles(), s}
+  def handle_call(:altar_lit, _from, s), do: {:reply, nil, s}
 
   def handle_call({:reset, drop}, _from, s) do
     :persistent_term.put(@open_key, false)
@@ -267,18 +303,43 @@ defmodule HacLong.BloodMoon do
   def handle_call({:kill, winner, loser, wn, ln, rw, rl}, _from, %{open: true} = s) do
     bot? = Bots.bot?(winner) or Bots.bot?(loser)
     before = Map.get(s.pairs, {winner, loser}, 0)
+    r = rules()
+    hunted? = Map.get(s.streaks, loser, 0) >= r.streak.min
+    bounty = if hunted?, do: r.streak.bounty_drop_mult, else: 1
 
     jewel =
-      if not bot? and :rand.uniform() < drop_chance(rw, rl, before, drop_rules(s)),
-        do: Enum.random(rules().jewels)
+      if not bot? and :rand.uniform() < drop_chance(rw, rl, before, drop_rules(s)) * bounty,
+        do: Enum.random(r.jewels)
 
     seq = s.seq + 1
-    e = Map.get(s.score, winner, %{name: wn, kills: 0, bot: Bots.bot?(winner), at: 0})
+    e = Map.get(s.score, winner, %{name: wn, kills: 0, points: 0, bot: Bots.bot?(winner), at: 0})
+    pts = points(rw, rl, hunted?)
+    streak = Map.get(s.streaks, winner, 0) + 1
+
+    if hunted?,
+      do:
+        Chat.system(
+          "⚔ #{wn} hạ Huyết Sát #{ln} (chuỗi #{s.streaks[loser]})! +#{fmt_pt(pts)} điểm."
+        )
+
+    if streak == r.streak.min,
+      do:
+        Chat.system(
+          "🩸 #{wn} hạ #{streak} người liên tiếp, thành Huyết Sát! Ai hạ được #{wn} được gấp đôi cơ hội ngọc."
+        )
 
     s = %{
       s
       | seq: seq,
-        score: Map.put(s.score, winner, %{e | name: wn, kills: e.kills + 1, at: seq}),
+        streaks: s.streaks |> Map.put(winner, streak) |> Map.put(loser, 0),
+        score:
+          Map.put(s.score, winner, %{
+            e
+            | name: wn,
+              kills: e.kills + 1,
+              points: Float.round(Map.get(e, :points, 0) + pts, 1),
+              at: seq
+          }),
         pairs: Map.put(s.pairs, {winner, loser}, before + 1),
         locked: Map.put(s.locked, loser, now() + rules().relock_s * 1000),
         drops: s.drops + if(jewel, do: 1, else: 0)
@@ -297,6 +358,71 @@ defmodule HacLong.BloodMoon do
   def handle_call({:kill, _w, _l, _wn, _ln, _rw, _rl}, _from, s), do: {:reply, nil, s}
 
   @impl true
+  # Bàn thờ sáng: đếm từng giây ai đứng trên đó
+  def handle_info(:altar_lit, %{open: true} = s) do
+    a = rules().altar
+
+    Chat.system(
+      "🔥 Bàn thờ Huyết Ngọc giữa Pháp Trường bừng sáng! Đứng một mình #{a.hold_s} giây để nhận ngọc."
+    )
+
+    Process.send_after(self(), :altar_tick, 1000)
+
+    s = %{
+      s
+      | altar: %{until: now() + a.window_s * 1000, holder: nil, name: nil, hold: 0},
+        altar_ref: nil
+    }
+
+    broadcast(s)
+    {:noreply, s}
+  end
+
+  def handle_info(:altar_lit, s), do: {:noreply, s}
+
+  def handle_info(:altar_tick, %{open: true, altar: %{} = al} = s) do
+    a = rules().altar
+
+    case altar_step(al, altar_stand(), a.hold_s) do
+      {:claimed, uid, name} ->
+        bot? = Bots.bot?(uid)
+        jewel = if not bot?, do: Enum.random(rules().jewels)
+        if jewel, do: give(uid, jewel)
+
+        Chat.system(
+          if(jewel,
+            do:
+              "💎 #{name} giữ được Bàn thờ Huyết Ngọc, nhận #{Data.item(jewel)[:name] || jewel}!",
+            else: "🔥 #{name} giữ được Bàn thờ Huyết Ngọc. Bàn thờ tắt."
+          )
+        )
+
+        s = %{
+          s
+          | altar: nil,
+            altar_ref: schedule_altar(a.every_s),
+            drops: s.drops + if(jewel, do: 1, else: 0)
+        }
+
+        broadcast(s)
+        {:noreply, s}
+
+      al2 ->
+        if now() >= al.until do
+          s = %{s | altar: nil, altar_ref: schedule_altar(a.every_s)}
+          broadcast(s)
+          {:noreply, s}
+        else
+          Process.send_after(self(), :altar_tick, 1000)
+          s = %{s | altar: al2}
+          if al2 != al, do: broadcast(s)
+          {:noreply, s}
+        end
+    end
+  end
+
+  def handle_info(:altar_tick, s), do: {:noreply, s}
+
   def handle_info({:end, ref}, %{ends: ref} = s), do: {:noreply, close(s)}
   def handle_info({:end, _}, s), do: {:noreply, s}
 
@@ -335,7 +461,10 @@ defmodule HacLong.BloodMoon do
         seq: 0,
         pairs: %{},
         drops: 0,
-        locked: %{}
+        locked: %{},
+        streaks: %{},
+        altar: nil,
+        altar_ref: schedule_altar(rules().altar.every_s)
     }
 
     Chat.system(
@@ -348,6 +477,8 @@ defmodule HacLong.BloodMoon do
 
   defp close(s) do
     :persistent_term.put(@open_key, false)
+    if s.altar_ref, do: Process.cancel_timer(s.altar_ref)
+    s = %{s | altar: nil, altar_ref: nil, streaks: %{}}
     rank = ranking(s.score)
     # hạng để toàn 0 ngọc: không có quà (không gửi thư, không xướng tên)
     gifts =
@@ -360,14 +491,14 @@ defmodule HacLong.BloodMoon do
       Mailbox.send(e.uid, %{
         subject: "🩸 Huyết Nguyệt: hạng #{i}",
         body:
-          "Bạn đứng hạng #{i} đêm Huyết Nguyệt ở Pháp Trường với #{e.kills} mạng. Quan Giám Trảm ban thưởng ngọc quý.",
+          "Bạn đứng hạng #{i} đêm Huyết Nguyệt ở Pháp Trường với #{fmt_pt(e.points)} điểm (#{e.kills} mạng). Quan Giám Trảm ban thưởng ngọc quý.",
         items: for({id, n} <- items, n > 0, into: %{}, do: {to_string(id), n})
       })
     end
 
     top =
       gifts
-      |> Enum.map_join(", ", fn {{e, _}, i} -> "#{i}. #{e.name} (#{e.kills} mạng)" end)
+      |> Enum.map_join(", ", fn {{e, _}, i} -> "#{i}. #{e.name} (#{fmt_pt(e.points)} điểm)" end)
 
     Chat.system(
       "🌕 Huyết Nguyệt đã lặn, Pháp Trường yên bình trở lại. " <>
@@ -379,7 +510,9 @@ defmodule HacLong.BloodMoon do
 
     send_bots_home(s.bots)
 
-    last = rank |> Enum.take(rules().top_n) |> Enum.map(&Map.take(&1, [:name, :kills, :bot]))
+    last =
+      rank |> Enum.take(rules().top_n) |> Enum.map(&Map.take(&1, [:name, :kills, :points, :bot]))
+
     s = %{s | open: false, until: nil, ends: nil, bots: MapSet.new(), last: last}
     broadcast(s)
     s
@@ -399,6 +532,64 @@ defmodule HacLong.BloodMoon do
     end)
     |> Enum.count(&match?({:ok, _}, Session.to_village(&1, "BLOOD_MOON")))
   end
+
+  # ---------- Bàn thờ ----------
+
+  defp schedule_altar(sec), do: Process.send_after(self(), :altar_lit, sec * 1000)
+
+  @doc """
+  Một giây của Bàn thờ (hàm thuần): `al` trạng thái `%{holder, name, hold}`, `stand` danh sách `{uid, tên}` đang đứng
+  trên bàn thờ và rảnh tay. Một người: người đó +1 giây (người khác thì đếm lại từ 1); đủ `need` giây → `{:claimed, uid,
+  tên}`. Không ai hoặc từ hai người: người đang giữ còn trên đó thì tạm dừng, không thì về 0.
+  """
+  def altar_step(al, stand, need) do
+    ids = Enum.map(stand, &elem(&1, 0))
+
+    case stand do
+      [{uid, name}] ->
+        hold = if al.holder == uid, do: al.hold + 1, else: 1
+
+        if hold >= need,
+          do: {:claimed, uid, name},
+          else: %{al | holder: uid, name: name, hold: hold}
+
+      _ ->
+        if al.holder in ids, do: al, else: %{al | holder: nil, name: nil, hold: 0}
+    end
+  end
+
+  # người đang đứng trên bàn thờ, không đang đồ sát / đánh
+  defp altar_stand do
+    tiles = MapSet.new(altar_tiles())
+
+    case Registry.lookup(HacLong.World.Registry, map_id()) do
+      [{_pid, _}] ->
+        HacLong.World.MapServer.snapshot(map_id()).players
+        |> Enum.filter(&MapSet.member?(tiles, {&1.x, &1.y}))
+        |> Enum.reject(&(HacLong.Slay.peek(&1.id) != nil))
+        |> Enum.map(&{&1.id, &1.name})
+
+      _ ->
+        []
+    end
+  rescue
+    _ -> []
+  catch
+    :exit, _ -> []
+  end
+
+  # ngọc vào túi người giữ bàn thờ (Session lưu); không chờ: Session có thể đang gọi sang đây
+  defp give(uid, jewel) do
+    Task.start(fn ->
+      Session.admin(uid, fn p ->
+        {:ok, %{p | inv: Map.update(p.inv, jewel, 1, &(&1 + 1))},
+         "💎 Bàn thờ Huyết Ngọc: +1 #{Data.item(jewel)[:name] || jewel}."}
+      end)
+    end)
+  end
+
+  defp fmt_pt(x) when is_float(x), do: if(x == Float.round(x), do: trunc(x), else: x)
+  defp fmt_pt(x), do: x
 
   # ---------- lịch hằng ngày ----------
 
@@ -473,10 +664,31 @@ defmodule HacLong.BloodMoon do
       top:
         rank
         |> Enum.take(rules().top_n)
-        |> Enum.map(&%{uid: &1.uid, name: &1.name, kills: &1.kills, bot: &1.bot}),
+        |> Enum.map(
+          &%{uid: &1.uid, name: &1.name, kills: &1.kills, points: &1.points, bot: &1.bot}
+        ),
+      # Huyết Sát đang có (chuỗi ≥ streak.min)
+      hunted:
+        Enum.flat_map(s.streaks, fn {uid, n} ->
+          if n >= rules().streak.min,
+            do: [%{uid: uid, name: get_in(s.score, [uid, :name]), streak: n}],
+            else: []
+        end),
+      altar: public_altar(s.altar),
       last: s.last
     }
   end
+
+  defp public_altar(nil), do: nil
+
+  defp public_altar(al),
+    do: %{
+      left: max(0, al.until - now()),
+      holder: al.name,
+      hold: al.hold,
+      need: rules().altar.hold_s,
+      tiles: Enum.map(altar_tiles(), &Tuple.to_list/1)
+    }
 
   # số người đang đứng ở Pháp Trường (bản đồ chưa chạy: 0)
   defp players_on_map do

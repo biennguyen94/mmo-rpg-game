@@ -170,7 +170,7 @@ defmodule HacLong.Bots.Brain do
   - ở Pháp Trường: máu thấp thì uống bình; người gần nhất (không phải mình, không đang được bảo vệ, đủ cấp đồ sát) trong
     tầm đánh thì `{:slay, uid}`, xa thì đi tới; không có ai thì đi lang thang.
   """
-  def blood_job(p, snap, me, locked_s) do
+  def blood_job(p, snap, me, locked_s, altar \\ nil) do
     d = Engine.derived(p)
     pot = p.hp < d.maxHp * 0.45 && Engine.best_potion(p, d.maxHp - p.hp)
     map_id = HacLong.BloodMoon.map_id()
@@ -192,11 +192,12 @@ defmodule HacLong.Bots.Brain do
         {:teleport, Enum.random(HacLong.BloodMoon.map_spawns())}
 
       true ->
-        blood_target(p, snap, me)
+        blood_target(p, snap, me, altar)
     end
   end
 
-  defp blood_target(p, snap, me) do
+  # Bàn thờ đang sáng (`altar`: các ô): người trong tầm thì đánh, không thì ra bàn thờ đứng giữ (đã đứng trên đó thì chờ)
+  defp blood_target(p, snap, me, altar) do
     min = Data.rules().slay.min_level
     at = fn o -> max(abs(o.x - p.pos.x), abs(o.y - p.pos.y)) end
 
@@ -205,14 +206,23 @@ defmodule HacLong.Bots.Brain do
       |> Enum.reject(&(&1.id == me or &1.safe or &1.level < min))
       |> Enum.sort_by(at)
 
-    case foes do
-      [] ->
-        wander(p)
+    on_altar = altar != nil and {p.pos.x, p.pos.y} in altar
 
-      [o | _] ->
-        if at.(o) <= Gear.reach(p),
-          do: {:slay, o.id},
-          else: walk(p, Maps.get(p.pos.map), [{o.x, o.y}], snap) || wander(p)
+    case foes do
+      [o | _] when is_map(o) ->
+        cond do
+          at.(o) <= Gear.reach(p) -> {:slay, o.id}
+          on_altar -> nil
+          altar != nil -> walk(p, Maps.get(p.pos.map), altar, snap) || wander(p)
+          true -> walk(p, Maps.get(p.pos.map), [{o.x, o.y}], snap) || wander(p)
+        end
+
+      [] ->
+        cond do
+          on_altar -> nil
+          altar != nil -> walk(p, Maps.get(p.pos.map), altar, snap) || wander(p)
+          true -> wander(p)
+        end
     end
   end
 

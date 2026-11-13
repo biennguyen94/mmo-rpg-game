@@ -98,7 +98,7 @@ await act(B.page, 'leave').catch(() => null);
 const back = await B.page.evaluate((to) => window.Net.send({ act: 'travel', to }).then((x) => x.msg || ''), MAP);
 R.check('B chưa vào lại được ngay', /vừa gục/.test(back), back);
 await act(A.page, 'leave').catch(() => null);
-await A.page.waitForFunction(() => /bạn hạ\s*1/.test(document.querySelector('#bm-chip')?.textContent || ''), null, { timeout: 5000 }).catch(() => null);
+await A.page.waitForFunction(() => /bạn\s*1\s*điểm/.test(document.querySelector('#bm-chip')?.textContent || ''), null, { timeout: 5000 }).catch(() => null);
 await A.page.waitForTimeout(5000);
 await shot(A.page, 'bloodmoon-chip.png');
 // top 3 mỗi người một ô: điểm hiện đủ (không bị cắt), ô của mình tô sáng; 🏆 mở top 10
@@ -113,11 +113,29 @@ await A.page.click('[data-act="bm-top"]');
 R.check('🏆 mở bảng top 10', !!(await A.page.$('#bm-chip .bm-list')));
 await shot(A.page, 'bloodmoon-top10.png');
 await A.page.click('[data-act="bm-top"]');
-R.check('dải: bạn hạ 1, top có tên A', /bạn hạ\s*1/.test(await A.page.textContent('#bm-chip')) && (await A.page.textContent('#bm-chip')).includes(A.name));
+R.check('dải: bạn hạ 1, top có tên A', /bạn\s*1\s*điểm/.test(await A.page.textContent('#bm-chip')) && (await A.page.textContent('#bm-chip')).includes(A.name));
 
 R.check('Bảng Huyết Nguyệt: bảng xếp hạng có A', await meetNpc(A.page, 'blood_board') && (await A.page.textContent('#view')).includes(A.name));
 await shot(A.page, 'bloodmoon-board.png');
 await leaveNpc(A.page);
+
+// ---------- Bàn thờ Huyết Ngọc: quản trị thắp, A đứng một mình đủ giây thì nhận ngọc ----------
+await ap.click('[data-adm="blood_moon_altar"]');
+await A.page.waitForFunction(() => /Bàn thờ sáng/.test(document.querySelector('#bm-chip')?.textContent || ''), null, { timeout: 6000 }).catch(() => null);
+R.check('Bàn thờ sáng: dải báo giờ còn', /Bàn thờ sáng/.test(await A.page.textContent('#bm-chip').catch(() => '')));
+const tiles = await A.page.evaluate(() => window.GAME_DATA.RULES.bloodMoon.altar);
+const [acx, acy] = tiles.center;
+const inv0 = await A.page.evaluate(() => { const p = window.__hl.player(); return ['jewel_bless', 'jewel_soul', 'jewel_chaos', 'jewel_life'].reduce((n, id) => n + (p.inv[id] || 0), 0); });
+for (const [dx, dy] of [[0, 1], [-1, 0], [1, 0], [0, -1], [-1, 1], [1, 1]]) {
+  await walkTo(A.page, acx + dx, acy + dy);
+  const q = (await player(A.page)).pos;
+  if (Math.max(Math.abs(q.x - acx), Math.abs(q.y - acy)) <= tiles.radius) break;
+}
+await A.page.waitForTimeout(3000);
+await shot(A.page, 'bloodmoon-altar.png');
+await A.page.waitForFunction((n) => { const p = window.__hl.player(); return ['jewel_bless', 'jewel_soul', 'jewel_chaos', 'jewel_life'].reduce((s, id) => s + (p.inv[id] || 0), 0) > n; }, inv0, { timeout: (tiles.hold_s + 6) * 1000 }).catch(() => null);
+const inv1 = await A.page.evaluate(() => { const p = window.__hl.player(); return ['jewel_bless', 'jewel_soul', 'jewel_chaos', 'jewel_life'].reduce((n, id) => n + (p.inv[id] || 0), 0); });
+R.check('đứng một mình đủ giây trên Bàn thờ: nhận 1 ngọc', inv1 === inv0 + 1, `${inv0} → ${inv1}`);
 
 // ---------- gọi bot ----------
 await ap.click('[data-adm="blood_moon_bots"]');
