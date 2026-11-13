@@ -615,6 +615,7 @@ def _sched(every_h, off_min=0):
 _WEEK = {1: "thứ Hai", 2: "thứ Ba", 3: "thứ Tư", 4: "thứ Năm", 5: "thứ Sáu", 6: "thứ Bảy", 7: "Chủ Nhật"}
 _YES, _NO = '<b style="color:#c0392b">✅ Có</b>', '<b style="color:#2e7d32">❌ Không</b>'
 _normal = "Luật đồ sát thường (mất vàng, tên đỏ)."
+BMR = R["blood_moon"]
 pk_rows = [
     ("Golden Invasion", f"Mỗi {INV['every_hours']} giờ ({_sched(INV['every_hours'])}), {INV['minutes']} phút, bản đồ đầu mỗi vùng", _YES, _normal + " Người đang đánh quái vàng vẫn bị đồ sát.", "—"),
     *[(RAIDS[k]["name"], f"Mỗi {RAIDS[k]['every_hours']} giờ ({_sched(RAIDS[k]['every_hours'], RAIDS[k]['offset_minutes'])}), {RAIDS[k]['minutes']} phút, {RAIDS[k]['pick']} bản đồ vùng ngẫu nhiên", _YES, _normal, "—") for k in RAIDS if not k.startswith("_")],
@@ -636,6 +637,12 @@ pk_rows = [
     ("Động Bí Ẩn", f"Ban đêm, mở {pct(SEC['open_chance'])} số đêm; trùm {SEC['boss_from_h']}h–{SEC['boss_to_h']}h", _YES, _normal + " Động tối, khó thấy người tới.", "Người chơi vẽ trên bản đồ + chấm hồng ở bản đồ nhỏ: dễ phát hiện hơn."),
     ("Biển Long Vương, Đàn Cá Vàng", "Theo giờ", f"Chỉ từ lúc báo {R['slay']['event_pk']['warn_min']} phút trước khi Long Vương nổi tới lúc Ngài nổi; ngoài khung đó là vùng an toàn", _normal + " Người đang câu cá cũng bị đánh.", "Bản đồ 44×26: làng chài, vịnh, mũi cát có ghềnh đá, 5 cầu tàu, sóng dạt bờ (vẽ liền mạch)."),
     ("Đồi Sáo Diều (Chim Lạc, Đàn Hạc, mưa sao băng)", f"Chim Lạc mỗi {R['sky']['bird']['every'] // 3600} giờ ({R['sky']['bird']['stay'] // 60} phút), Đàn Hạc ~{R['sky']['flock']['every'] // 60} phút, sao băng ban đêm; cấp 30+", _YES, _normal + " Người đang thả diều cũng bị đánh.", "Mới: bản đồ thả diều cạnh Biển Long Vương."),
+    ("Pháp Trường Huyết Nguyệt", f"Quản trị mở ({BMR['minutes']} phút mặc định, 1–{BMR['minutes_max']}) hoặc lịch hằng ngày, báo trước {BMR['warn_min']} phút; cổng phía nam Làng, cấp {D['bm_map']['min_level']}+",
+     _YES + ", chỉ lúc trăng mọc (ngày thường an toàn)",
+     f"Ai cũng đánh ai, kể cả cùng tổ đội. <b>Không mất vàng, không tên đỏ</b>; gục về Làng, {BMR['relock_s']} giây sau mới vào lại. Hạ người: {pct(BMR['drop_pct'])} cơ hội rơi 1 viên ({', '.join(E(IT[j]['name']) for j in BMR['jewels'])}), "
+     f"× (1 + {n(BMR['rebirth_step'])} × số lần chuyển sinh người gục hơn mình), chặn 0 – ×{n(BMR['rebirth_max'])}; hạ lại cùng người mỗi lần ×{n(BMR['repeat_decay'])}. Hạ bot / bot hạ chỉ tính điểm, không rơi ngọc. "
+     f"Trăng lặn: top {len(BMR['top_rewards'])} người thật (≥ {BMR['min_kills']} mạng) nhận ngọc qua thư, mặc định " + "; ".join(f"hạng {i + 1}: " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in rw.items()) for i, rw in enumerate(BMR['top_rewards'])) + " (Quản trị chỉnh được).",
+     "Mới: bản đồ 60×40 không quái (rừng tre, sân đấu, 4 miếu), trăng máu phủ đỏ khi mở; dải 🩸 giờ còn / mạng / hạng + top 3, 🏆 top 10; Quản trị gọi tất cả bot vào đồ sát."),
     ("Bản đồ vùng, vùng chuyển sinh", "—", _YES, _normal, "—"),
     ("Làng", "—", _NO, "Vùng an toàn.", "—"),
 ]
