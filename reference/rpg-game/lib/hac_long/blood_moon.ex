@@ -390,9 +390,13 @@ defmodule HacLong.BloodMoon do
       %{s | open: false, until: nil, ends: nil, bots: MapSet.new()}
   end
 
+  # bot đang đồ sát dở thì để đánh xong (bot tự về Làng sau đó, `HacLong.Bots.Bot`)
   defp send_bots_home(bots) do
     bots
-    |> Enum.filter(fn uid -> (Session.get(uid) || %{pos: %{map: nil}}).pos.map == map_id() end)
+    |> Enum.filter(fn uid ->
+      p = Session.get(uid)
+      p != nil and p.pos.map == map_id() and not HacLong.Slay.slaying?(p)
+    end)
     |> Enum.count(&match?({:ok, _}, Session.to_village(&1, "BLOOD_MOON")))
   end
 

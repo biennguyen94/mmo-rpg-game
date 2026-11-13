@@ -193,11 +193,11 @@ defmodule HacLong.Slay do
   defp chaos_castle?(p), do: HacLong.ChaosCastle.map?(p.pos.map)
   defp castle?(p), do: p.pos.map == HacLong.CastleSiege.map_id()
 
-  # Pháp Trường lúc Huyết Nguyệt mở
-  defp blood?(p), do: HacLong.BloodMoon.active_at?(p.pos.map)
+  # trận bắt đầu ở Pháp Trường lúc Huyết Nguyệt mở (`f.blood`)
+  defp blood?(f), do: f[:blood] == true
 
-  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến, Huyết Nguyệt): không tên đỏ / vàng thêm, thua về Làng
-  defp event_map?(p), do: chaos_castle?(p) or castle?(p) or blood?(p)
+  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến; Huyết Nguyệt theo trận): không tên đỏ / vàng thêm, thua về Làng
+  defp event_map?(p), do: chaos_castle?(p) or castle?(p)
 
   # Session `uid` vào trận với bản sao của `foe`; lỗi thì hủy trận (và trận đã mở của bên kia).
   defp begin(uid, f, foe, foe_p, undo) do
@@ -463,6 +463,9 @@ defmodule HacLong.Slay do
           fx: %{a => nil, b => nil},
           chars: %{a => pa, b => pb},
           map: pa.pos.map,
+          # Huyết Nguyệt: trận bắt đầu lúc trăng đang mọc ở Pháp Trường thì chốt theo luật sự kiện kể cả khi trăng đã lặn
+          # giữa trận (DECISIONS "Pháp Trường Huyết Nguyệt")
+          blood: mode == :slay and HacLong.BloodMoon.active_at?(pa.pos.map),
           # :slay đồ sát | :duel đấu trường trực tiếp (không chết, không vàng, đổi Elo)
           mode: mode,
           # đấu trực tiếp: chỗ cũ và máu cũ của mỗi người trước khi vào Hồ Tỷ Thí (xong trận trả lại)
@@ -633,7 +636,7 @@ defmodule HacLong.Slay do
             {pw2, pl2, lost} = outcome(f, pw, pl, winner, why)
 
             # Huyết Nguyệt: +1 mạng, cơ hội rơi ngọc vào túi người hạ (lưu cùng transaction bên dưới)
-            blood = blood?(pw) and blood?(pl)
+            blood = blood?(f)
 
             {pw2, jewel} =
               if blood, do: blood_kill(f, winner, loser, pw, pl, pw2), else: {pw2, nil}
@@ -668,7 +671,9 @@ defmodule HacLong.Slay do
 
             # F2 (DECISIONS "Sự kiện, đấu trường, chiến bang trực quan"): hai bang đang chiến nhau → người thắng
             # không bị tên đỏ, bang người thắng +1 điểm (giới hạn `same_target_max` lần một cặp như đấu trường)
-            war = not event_map?(pw) and HacLong.GuildWars.war_between(winner, loser) != nil
+            war =
+              not event_map?(pw) and not blood and
+                HacLong.GuildWars.war_between(winner, loser) != nil
 
             cond do
               blood -> :ok
@@ -755,9 +760,11 @@ defmodule HacLong.Slay do
               Enum.reduce(f[:last] || [], pl, &push(&2, entry(&1, "bad")))
               |> log("#{f.names[winner]} hạ gục #{pl.name}.", "bad")
 
+        # Huyết Nguyệt: gục không mất vàng như bản đồ sự kiện (Engine.lose xem `battle.blood_moon`)
+        pl = if blood?(f), do: put_in(pl.battle[:blood_moon], true), else: pl
         {_, pl2} = Engine.finish_lose(pl)
 
-        cc? = event_map?(pl)
+        cc? = event_map?(pl) or blood?(f)
 
         # tên đỏ gục: mất vàng gấp `red_gold_mult` lần (không áp trong Hỗn Chiến Thành)
         extra =
@@ -785,8 +792,8 @@ defmodule HacLong.Slay do
 
         text =
           cond do
-            blood?(pw) and why == :fled -> "#{f.names[foe(f, winner)]} bỏ chạy."
-            blood?(pw) -> "Bạn hạ #{f.names[foe(f, winner)]}."
+            blood?(f) and why == :fled -> "#{f.names[foe(f, winner)]} bỏ chạy."
+            blood?(f) -> "Bạn hạ #{f.names[foe(f, winner)]}."
             why == :fled -> "#{f.names[foe(f, winner)]} bỏ chạy. Bạn nhận #{lost} vàng."
             true -> "Bạn nhận #{lost} vàng của #{f.names[foe(f, winner)]}."
           end

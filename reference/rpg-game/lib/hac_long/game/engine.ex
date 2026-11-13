@@ -3010,7 +3010,8 @@ defmodule HacLong.Game.Engine do
     # Pháp Trường lúc Huyết Nguyệt mở (DECISIONS "Pháp Trường Huyết Nguyệt"): như vậy
     event? =
       ((m = p[:pos] && HacLong.World.Maps.get(p.pos.map)) && m[:event] != nil) ||
-        (p[:pos] != nil and HacLong.BloodMoon.active_at?(p.pos.map))
+        (p[:pos] != nil and HacLong.BloodMoon.active_at?(p.pos.map)) ||
+        match?(%{battle: %{blood_moon: true}}, p)
 
     lost = if event?, do: 0, else: floor(p.gold * @char.death_gold_loss)
     p = %{p | gold: p.gold - lost, deaths: p.deaths + 1}

@@ -55,6 +55,13 @@ const rw = await ap.evaluate(() => window.Net.admin('blood_moon').then((x) => x.
 R.check('Quản trị lưu quà top', rw[0].jewel_chaos === 5 && rw[0].jewel_bless === 0 && rw[1].jewel_soul === 2, JSON.stringify(rw));
 await ap.$eval('#adm-bm', (e) => e.scrollIntoView({ block: 'center' }));
 await shot(ap, 'bloodmoon-rewards.png');
+// trang Quản trị tự tải danh sách online mỗi 5 giây: ô đang nhập không được bị trả về số cũ
+await ap.fill('#adm-bm-min', '7');
+await ap.fill('#adm-bm-rw-2-jewel_life', '4');
+await ap.waitForTimeout(6500);
+R.check('trang Quản trị tự tải lại vẫn giữ số đang nhập', (await ap.inputValue('#adm-bm-min')) === '7' && (await ap.inputValue('#adm-bm-rw-2-jewel_life')) === '4',
+  `${await ap.inputValue('#adm-bm-min')} / ${await ap.inputValue('#adm-bm-rw-2-jewel_life')}`);
+await ap.fill('#adm-bm-rw-2-jewel_life', '0');
 await ap.fill('#adm-bm-min', '10');
 await ap.click('[data-adm="blood_moon_open"]');
 await A.page.waitForSelector('#bm-chip .bm-chip.on', { timeout: 8000 }).catch(() => null);

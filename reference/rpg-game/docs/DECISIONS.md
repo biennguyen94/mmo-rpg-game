@@ -2182,3 +2182,11 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Tối đa 14 dấu. Tắt "Hiệu ứng động" / giảm chuyển động: không vẽ (như hiệu ứng trận).
 - e2e `e2e/groundfx.mjs`: mặt đất sân có vẽ lúc trúng và còn dấu sau ~1,3 giây (6 kỹ năng 3 lớp), ⚡ bản đồ có dấu, bảng mẫu
   8 kiểu (ảnh).
+- Sửa (người dùng báo): (1) trăng lặn khi còn đang đồ sát → kẹt. Nguyên nhân: đóng sự kiện / Rút bot về / quản trị đưa về
+  Làng dịch chuyển người đang đồ sát (`Session.relocate`) chỉ xóa trận phía họ, `HacLong.Slay` vẫn giữ trận, đối thủ chờ mãi.
+  Sửa: dịch chuyển giữa trận đồ sát / đấu trực tiếp thì báo `Slay.flee` (tính bỏ chạy, trận chốt như thường); đóng sự kiện
+  không kéo bot đang đánh dở (bot đánh xong tự về Làng vì trăng đã lặn). (2) Trận bắt đầu lúc trăng mọc mà chốt sau khi trăng
+  lặn từng tính luật thường (mất vàng, tên đỏ): trận ghi `blood` lúc bắt đầu, chốt theo luật sự kiện (không mất vàng, không
+  tên đỏ, về Làng); sau khi trăng lặn không tính mạng / ngọc. (3) Trang Quản trị tự vẽ lại (danh sách online mỗi 5 giây,
+  trạng thái sự kiện) trả ô đang nhập về số cũ: `render()` giữ các ô có id đã sửa / đang gõ (cả con trỏ) và trả lại sau khi
+  vẽ, cho mọi ô nhập của game; lệnh đặt lại (quà top về mặc định, tắt lịch) thì lấy giá trị mới.

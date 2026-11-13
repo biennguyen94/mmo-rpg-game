@@ -323,6 +323,34 @@
     return map === 'village' ? 'village' : 'wild';
   }
 
+  // Trang vẽ lại định kỳ (Quản trị: danh sách online mỗi 5 giây, trạng thái sự kiện…) không được xóa chữ / số người dùng
+  // đang nhập: giữ ô có id đã sửa (khác giá trị gốc) hoặc đang gõ, trả lại sau khi vẽ (cả con trỏ, ô đang chọn).
+  // lệnh vừa đặt lại giá trị (vd quà top về mặc định, tắt lịch): lần vẽ kế tiếp lấy giá trị mới, không giữ số cũ
+  let freshInputs = false;
+  function keepInputs(root) {
+    const out = [], active = document.activeElement;
+    if (freshInputs) { freshInputs = false; return out; }
+    for (const el of root.querySelectorAll('input[id], textarea[id], select[id]')) {
+      if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked !== el.defaultChecked) out.push({ id: el.id, checked: el.checked }); continue; }
+      const dirty = el.tagName === 'SELECT' ? [...el.options].some((o) => o.selected !== o.defaultSelected) : el.value !== el.defaultValue;
+      if (dirty || el === active) {
+        let sel = null;
+        try { sel = el === active && el.selectionStart != null ? [el.selectionStart, el.selectionEnd] : null; } catch (e) { /* type=number không có con trỏ */ }
+        out.push({ id: el.id, value: el.value, focus: el === active, sel });
+      }
+    }
+    return out;
+  }
+  function restoreInputs(root, kept) {
+    for (const k of kept) {
+      const el = root.querySelector('#' + CSS.escape(k.id));
+      if (!el) continue;
+      if ('checked' in k && k.value === undefined) { el.checked = k.checked; continue; }
+      el.value = k.value;
+      if (k.focus) { el.focus({ preventScroll: true }); try { if (k.sel) el.setSelectionRange(k.sel[0], k.sel[1]); } catch (e) { /* bỏ qua */ } }
+    }
+  }
+
   function render() {
     const keepArena = arenaTyping();
     hideTip();
@@ -382,8 +410,10 @@
     // vẽ lại (server đẩy trạng thái mỗi lượt / mỗi giây) thì giữ chỗ cuộn của các bảng nổi tự cuộn bên trong
     // (anh báo: chọn bộ kỹ năng cuộn xuống thì ~1 giây sau bị đưa về đầu)
     const keepScroll = ['.skill-dialog', '.quick-log .log', '.pick-pop', '.map-dialog', '.combo-edit'].map((sel) => [sel, (view.querySelector(sel) || {}).scrollTop || 0]);
+    const kept = keepInputs(view);
     view.innerHTML = trading ? viewTrade() : profileUi.open ? viewProfile() : friendsUi.open ? viewFriends() : notes.open ? viewNotes() : mail.open ? viewMail() : guildUi.open ? viewGuild() : ({ map: () => (npc ? viewNpc() : viewTutorial() + Map_.html(P, viewDialog() + viewFishing() + viewKite() + viewChat()) + viewAuto() + (quickLogOpen && quickLast ? viewQuickLog() : '') + viewPick() + viewParty()), hero: viewHero, bag: viewBag, travel: viewTravel, people: viewPeople, menu: viewMenu }[tab] || viewMenu)();
     for (const [sel, top] of keepScroll) { const el = top && view.querySelector(sel); if (el) el.scrollTop = top; }
+    restoreInputs(view, kept);
     if (trading) {
       // bảng giao dịch che bản đồ
     } else if (friendsUi.open) {
@@ -863,7 +893,7 @@
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
       if (op === 'reset_password') { adm.temp = { username: r.username, temp: r.temp }; if (adm.pw) adm.pw = adm.pw.filter((x) => x.uid !== payload.uid); toast(`Đã đặt lại mật khẩu @${r.username}.`); return render(); }
-      if (r.blood_moon) { onBloodMoon(r.blood_moon); toast(r.msg || 'Đã xong.'); return render(); }
+      if (r.blood_moon) { if (op === 'blood_moon_rewards' || op === 'blood_moon_daily') freshInputs = true; onBloodMoon(r.blood_moon); toast(r.msg || 'Đã xong.'); return render(); }
       if (op === 'pw_dismiss') { adm.pw = (adm.pw || []).filter((x) => x.id !== payload.id); return render(); }
       toast(r.msg || 'Đã xong.');
       if (r.user) adm.user = r.user;
@@ -1256,7 +1286,7 @@
     drawBloodChip();
     if (P && npc && (npcData() || {}).role === 'blood_moon') render();
     const ad = $('#adm-bm');
-    if (ad) ad.outerHTML = viewAdmBloodMoon();
+    if (ad) { const kept = keepInputs(ad), box = ad.parentElement; ad.outerHTML = viewAdmBloodMoon(); restoreInputs(box, kept); }
   }
   // dải hai hàng: giờ còn lại / số mạng / hạng của mình; top 3 mỗi người một ô (điểm luôn hiện đủ, tên dài thì cắt tên);
   // 🏆 mở bảng top 10 ngay trên bản đồ. Ở bản đồ khác: hàng 2 là nút ⚔ Đến Pháp Trường.

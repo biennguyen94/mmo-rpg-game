@@ -170,6 +170,51 @@ defmodule HacLongWeb.BloodMoonTest do
     assert Repo.all(from m in "mails", where: m.user_id == ^ub.id, select: m.id) == []
   end
 
+  test "trăng lặn giữa trận đồ sát: trận vẫn đánh tiếp và chốt được, tính như trong sự kiện (không kẹt)" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.put(strong(), :gold, 5000), arena())
+    player(ub, %{level: 10, gold: 3000}, arena(1))
+    sa = join(ua)
+    sb = join(ub)
+    {:ok, _} = BloodMoon.open_now(10)
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+    cmd(sa, %{"act" => "attack"})
+    # trăng lặn khi trận còn đang đánh
+    {:ok, _} = BloodMoon.close_now()
+    fight(sa, sb, ua)
+    pa = settled(ua.id)
+    pb = settled(ub.id)
+    assert pa.battle.result == "win" and pb.battle.result == "lose"
+
+    # trận bắt đầu trong sự kiện: luật sự kiện (không mất vàng, không tên đỏ, về Làng)
+    assert pb.gold == 3000 and pa.gold == 5000
+    refute Slay.red?(ua.id)
+    assert pb.pos.map == "village"
+    assert %{ok: true} = cmd(sa, %{"act" => "leave"})
+    assert %{ok: true} = cmd(sb, %{"act" => "leave"})
+  end
+
+  test "đưa về Làng / dịch chuyển giữa trận đồ sát (rút bot, quản trị): tính bỏ chạy, đối thủ không bị kẹt" do
+    ua = create_user()
+    ub = create_user()
+    player(ua, Map.put(strong(), :gold, 5000), arena())
+    player(ub, %{level: 10, gold: 3000}, arena(1))
+    sa = join(ua)
+    _sb = join(ub)
+    {:ok, _} = BloodMoon.open_now(10)
+    ref = push(sa, "slay", %{"uid" => ub.id})
+    assert_reply ref, :ok, _
+    assert {:ok, _} = Session.to_village(ub.id, "TEST")
+    pa = settled(ua.id)
+    assert pa.battle.result == "win"
+    assert Slay.peek(ua.id) == nil and Slay.peek(ub.id) == nil
+    pb = Session.get(ub.id)
+    assert pb.pos.map == "village" and pb.battle == nil and pb.gold == 3000
+    assert %{ok: true} = cmd(sa, %{"act" => "leave"})
+  end
+
   test "quản trị: mở, đóng, lịch hằng ngày, gọi bot cần mở trước; người chơi thường không dùng được" do
     admin =
       Repo.get!(Accounts.User, create_user().id)

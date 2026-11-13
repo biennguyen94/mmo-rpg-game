@@ -1982,6 +1982,10 @@ defmodule HacLong.Game.Session do
   # như bỏ chạy; rời tháp / phòng sự kiện
   defp relocate(s, pos) do
     old = s.player
+
+    # đang đồ sát / đấu trực tiếp: báo trận kết thúc như bỏ chạy (không thì đối thủ chờ mãi một trận không còn ai đánh);
+    # trận chốt ở tiến trình riêng sau khi lệnh này xong
+    if HacLong.Slay.slaying?(old), do: HacLong.Slay.flee(s.user_id)
     room = get_in(old, [:tower, :room])
     if room, do: HacLong.EventRoom.leave(room, s.user_id)
 

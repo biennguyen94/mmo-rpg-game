@@ -151,6 +151,11 @@ defmodule HacLong.Bots.Bot do
     # (đang đánh quái / leo Tháp thì bỏ ngang, đi luôn; trận đồ sát thì đánh cho xong)
     blood = p != nil and not HacLong.Slay.slaying?(p) and HacLong.BloodMoon.bot_on?(s.uid)
 
+    # trăng đã lặn mà bot còn đứng ở Pháp Trường (đánh xong trận dở): về Làng, không đứng chơ vơ ở bản đồ không quái
+    if p != nil and p.pos.map == HacLong.BloodMoon.map_id() and not HacLong.BloodMoon.open?() and
+         not HacLong.Slay.slaying?(p) and (p.battle == nil or p.battle.over),
+       do: Session.to_village(s.uid, "BLOOD_MOON")
+
     cmd =
       cond do
         blood ->
