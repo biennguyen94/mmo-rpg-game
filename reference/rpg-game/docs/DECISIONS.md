@@ -2101,4 +2101,9 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Nguyên nhân 2: điểm `Journey.score/1` tính giáp rất nhẹ (giáp cấp 7 → cấp 48 chỉ +2–5%), không bao giờ vượt ngưỡng.
   Sửa: món mới cấp cao hơn món bị tháo thì hơn là mặc (như người chơi, ép lại sau); ngưỡng chỉ áp dụng khi cùng / thấp cấp.
 - Chỉ đổi công cụ mô phỏng, không đổi luật game.
+- Sau sửa: tạo lại `scripts/pvp/tier_profile.json` (`FRESH=1 SEEDS=3`): giáp cấp 40 từ CS1 (trước 7–17), CS0 cấp 12.
+  Bảng `pvp.class_taken_by_rebirth` và `class_taken_arena_by_rebirth` lệch 30–50% với hồ sơ mới → chỉnh lại bằng
+  `scripts/pvp/tune.exs` (TUNE=1 WRITE=1; Đấu trường r0–r8 lấy gợi ý của lượt chỉnh bị ngắt, r9 chỉnh riêng `KS=9`,
+  r1 chỉnh tay). Kiểm N=48: đồ sát lệch ≤ 9% trừ r0 12%, r8 13%; Đấu trường ≤ 9% trừ r3 11%, r7/r9 13% (test cho 15%).
+  Elf rất nhạy: đổi 0.05 hệ số Elf làm tỉ lệ thắng lệch tới 30%.
 
