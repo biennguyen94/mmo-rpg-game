@@ -683,6 +683,12 @@
     if (me && amb.wing && Math.random() < 0.5) add({ k: 'spark', x: me.x + (Math.random() < 0.5 ? -1 : 1) * rand(me.w * 0.25, me.w * 0.6), y: me.y - me.h * 0.2, vy: rand(25, 45), r: rand(1, 2), col: '#e8f4ff', a: 0.8, life: 900 });
   }
 
+  // ms từ lúc phát tới lúc đòn trúng (lần trúng cuối), khớp với EV.attack / EV.skill ở trên
+  const IMPACT = { fire: 320, ice: 420, lightning: 90, wind: 420, earth: 320, dark: 640, light: 160 };
+  const impactMs = (e) => (e.type === 'attack' ? (e.cls === 'elf' ? 180 : e.cls === 'dw' ? 260 : 120) : IMPACT[e.element] || 300);
+  const KILL_AFTER = 160; // để thấy nổ trúng một nhịp rồi mới gục
+  let hitUntil = 0;
+
   window.BattleFx = {
     enabled: on,
     // trạng thái nền của màn trận: { mon: [id], me: [id], aura, wing } hoặc null (rời trận)
@@ -694,6 +700,11 @@
     // `at`: hàm trả { mon, me } (tọa độ màn hình) khi hiệu ứng không bám vào màn trận (⚡ Đánh nhanh trên bản đồ)
     run(events, at) {
       if (!events || !events.length || !on() || !ensure()) return;
+      // quái gục chỉ bắt đầu mờ sau khi đòn cuối của lượt đã trúng (mỗi hệ bay / rơi lâu khác nhau, DECISIONS
+      // "Hiệu ứng: quái gục sau khi đòn trúng")
+      const t = now() + 16;
+      for (const e of events) if (e.type === 'attack' || e.type === 'skill') hitUntil = Math.max(hitUntil, t + (e.delay || 0) + impactMs(e));
+      for (const e of events) if (e.type === 'kill' || e.type === 'loot') e.delay = Math.max(e.delay || 0, Math.ceil(hitUntil - t) + (e.type === 'kill' ? KILL_AFTER : KILL_AFTER + 330));
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí
       const play = (e) => {
         anchors = at || null;
@@ -702,6 +713,8 @@
       };
       requestAnimationFrame(() => events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e))));
     },
+    // thời điểm (performance.now) đòn đã xếp lịch cuối cùng trúng: bản đồ (map.js) chờ tới đó mới cho quái tan
+    hitUntil: () => hitUntil,
   };
 })();
 

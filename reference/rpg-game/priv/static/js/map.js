@@ -1375,8 +1375,9 @@
         ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14);
         ctx.fillStyle = '#ff8a6a'; ctx.fillText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14); ctx.restore();
       } else {
-        // gục: hình mờ dần bay lên, hạt tỏa ra
+        // gục: hình mờ dần bay lên, hạt tỏa ra; chưa tới lúc gục (đòn còn đang bay) thì quái vẫn đứng nguyên
         const im = image('monsters/' + e.kind);
+        if (t < e.t0) { if (im.complete) ctx.drawImage(im, x - TILE / 2, y - TILE / 2, TILE, TILE); continue; }
         ctx.save();
         ctx.globalAlpha = (1 - k) * 0.8;
         if (im.complete && k < 0.6) ctx.drawImage(im, x - TILE / 2, y - TILE / 2 - k * 12, TILE, TILE);
@@ -2693,8 +2694,12 @@
         for (const q of world.monsters || []) {
           const n = next.get(q.id), hp = q.hp == null ? 100 : q.hp;
           if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600, mine: n.by === userId });
-          // gục: chờ đòn kỹ năng bay tới (~0,35 giây, hình quái vẫn đứng) rồi mới mờ dần
-          else if (!n && (hp < 100 || q.busy)) mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: t + 350, life: 1250 });
+          // gục: chờ đòn kỹ năng bay tới (ít nhất ~0,35 giây; đòn đã xếp lịch trúng muộn hơn thì chờ tới đó, hình quái vẫn
+          // đứng) rồi mới mờ dần
+          else if (!n && (hp < 100 || q.busy)) {
+            const hit = window.BattleFx && window.BattleFx.hitUntil ? window.BattleFx.hitUntil() + 160 : 0;
+            mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: Math.max(t + 350, Math.min(hit, t + 2000)), life: 1250 });
+          }
         }
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }

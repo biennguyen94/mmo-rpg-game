@@ -33,6 +33,7 @@ không vào git).
 
 | File | Kiểm |
 |---|---|
+| `killfx.mjs` | 4 lớp, mỗi lớp 2 kỹ năng hạ quái một đòn ở màn trận: đòn trúng xong (lần `fx-hit` cuối) rồi quái mới mờ (`fx-dying`) |
 | `smoke.mjs` | tạo 4 lớp (chỉ số gốc, máu / MP), ra Làng → Rừng Mê, đánh quái, mua / bán ở Bà Lang, nghỉ trọ, cộng điểm (gom lệnh), các tab |
 | `social.mjs` | 2 người: tổ đội (bấm Vào tổ đội), bạn bè + tin riêng, chat thế giới, giao dịch (bấm trên bảng giao dịch: vàng + đồ), chợ (rao, mua, nhận tiền qua thư) |
 | `progress.mjs` | nhiệm vụ Trưởng Làng (nhận → hạ 5 Dơi Hang → trả), Bảng Tin, ép đồ +1, Ngọc Sinh Mệnh (đồ đang mặc + đồ trong túi chọn từ tooltip), mua rương, vứt đồ, Máy Hỗn Nguyên, Tủ Đồ ở Nhà |

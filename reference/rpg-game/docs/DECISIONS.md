@@ -2110,3 +2110,11 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   r1 chỉnh tay). Kiểm N=48: đồ sát lệch ≤ 9% trừ r0 12%, r8 13%; Đấu trường ≤ 9% trừ r3 11%, r7/r9 13% (test cho 15%).
   Elf rất nhạy: đổi 0.05 hệ số Elf làm tỉ lệ thắng lệch tới 30%.
 
+
+## Hiệu ứng: quái gục sau khi đòn trúng (2026-11-13)
+- Lỗi (người chơi báo, kiểm bằng `e2e/killfx.mjs`): lượt hạ quái, hiệu ứng "gục" (`fx-dying`, mờ dần) cố định ở 320 ms,
+  trong khi đòn kỹ năng trúng muộn hơn: Hỏa Cầu / Kiếm Lửa ~400 ms, lưỡi gió cuối / băng ~420 ms, Bóng Tối ~640 ms
+  → quái biến mất khi đòn còn đang bay. Trên bản đồ (⚡ đánh nhanh), hình quái chờ gục vẽ mờ 80% kèm hạt tan ngay.
+- Sửa (chỉ client): `BattleFx.run` tính thời điểm đòn cuối của lượt trúng theo loại đòn / hệ (bảng `IMPACT` khớp
+  `EV.attack` / `EV.skill`), `kill` chờ tới đó + 160 ms, `loot` sau `kill` 330 ms như cũ. Bản đồ: quái chờ gục vẽ nguyên
+  vẹn, bắt đầu tan ở max(0,35 giây, đòn cuối trúng + 160 ms), tối đa 2 giây.
