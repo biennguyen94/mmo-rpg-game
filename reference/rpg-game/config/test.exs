@@ -40,6 +40,9 @@ config :hac_long, :lake_event, auto: false
 # Chim Lạc / Đàn Hạc / sao băng / Long Phượng Hội chỉ hiện khi test gọi SkyEvent.summon/2
 config :hac_long, :sky_event, auto: false
 
+# Huyết Nguyệt không tự mở theo lịch hằng ngày khi test
+config :hac_long, :blood_moon, auto: false
+
 # Trùm thế giới chỉ xuất hiện khi test gọi WorldBoss.spawn_now/1
 config :hac_long, :world_boss,
   first_after_minutes: nil,

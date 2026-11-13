@@ -161,6 +161,62 @@ defmodule HacLong.Bots.Brain do
   end
 
   @doc """
+  Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"), bot `me` được gọi vào Pháp Trường, ngoài trận:
+
+  - trận vừa xong thì rời trận; đang đánh quái / leo Tháp (`Session.teleport/2` kết thúc trận như bỏ chạy, rời tháp) thì
+    bỏ ngang đi luôn;
+  - chưa ở Pháp Trường: còn bị khóa (`locked_s` > 0, vừa gục) thì chờ; máu thấp thì uống bình; rồi `{:teleport, ô}`
+    (một ô đất ngẫu nhiên trên sân);
+  - ở Pháp Trường: máu thấp thì uống bình; người gần nhất (không phải mình, không đang được bảo vệ, đủ cấp đồ sát) trong
+    tầm đánh thì `{:slay, uid}`, xa thì đi tới; không có ai thì đi lang thang.
+  """
+  def blood_job(p, snap, me, locked_s) do
+    d = Engine.derived(p)
+    pot = p.hp < d.maxHp * 0.45 && Engine.best_potion(p, d.maxHp - p.hp)
+    map_id = HacLong.BloodMoon.map_id()
+
+    cond do
+      match?(%{battle: %{over: true}}, p) ->
+        %{"act" => "leave"}
+
+      p.battle != nil and p.pos.map == map_id ->
+        fight(p)
+
+      pot && p.battle == nil ->
+        %{"act" => "use", "id" => pot}
+
+      p.pos.map != map_id and locked_s > 0 ->
+        nil
+
+      p.pos.map != map_id ->
+        {:teleport, Enum.random(HacLong.BloodMoon.map_spawns())}
+
+      true ->
+        blood_target(p, snap, me)
+    end
+  end
+
+  defp blood_target(p, snap, me) do
+    min = Data.rules().slay.min_level
+    at = fn o -> max(abs(o.x - p.pos.x), abs(o.y - p.pos.y)) end
+
+    foes =
+      ((snap && snap.players) || [])
+      |> Enum.reject(&(&1.id == me or &1.safe or &1.level < min))
+      |> Enum.sort_by(at)
+
+    case foes do
+      [] ->
+        wander(p)
+
+      [o | _] ->
+        if at.(o) <= Gear.reach(p),
+          do: {:slay, o.id},
+          else: walk(p, Maps.get(p.pos.map), [{o.x, o.y}], snap) || wander(p)
+    end
+  end
+
+  @doc """
   Cộng điểm (DECISIONS "Máu theo chuyển sinh"): khoảng `RULES.bots.vit_share` số điểm đã cộng vào Thể lực, còn lại vào
   chỉ số chính của lớp.
   """

@@ -99,6 +99,8 @@ defmodule HacLongWeb.PageController do
         maxRebirths: Engine.max_rebirths(),
         endlessPoints: Data.rules().character.endless_points,
         botStuckMin: Data.rules().bots.play.stuck_min,
+        # Huyết Nguyệt ở Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt"): thẻ NPC, quản trị
+        bloodMoon: blood_moon_info(),
         # Động Bí Ẩn: tỉ lệ đêm mở (ghi trong thẻ quản trị)
         secret: secret_info(),
         # Quản trị → Dựng nhân vật tối đa (docs/ADMIN_GUIDE.md §6)
@@ -263,6 +265,22 @@ defmodule HacLongWeb.PageController do
       open_chance: r.open_chance,
       min: Enum.min(lv, fn -> nil end),
       max: Enum.max(lv, fn -> nil end)
+    }
+  end
+
+  defp blood_moon_info do
+    r = Data.rules().blood_moon
+
+    %{
+      map: r.map,
+      minutes: r.minutes,
+      minutesMax: r.minutes_max,
+      warnMin: r.warn_min,
+      relockS: r.relock_s,
+      dropPct: r.drop_pct,
+      jewels: r.jewels,
+      topRewards: Enum.map(r.top_rewards, &Map.new(&1, fn {k, v} -> {to_string(k), v} end)),
+      minKills: r.min_kills
     }
   end
 end

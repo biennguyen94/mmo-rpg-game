@@ -1,0 +1,97 @@
+{
+  "id": "phap_truong",
+  "name": "Pháp Trường",
+  "zone": null,
+  "floor": "tiles/grass",
+  "min_level": 10,
+  "style": "arena",
+  "_doc": "DECISIONS \"Pháp Trường Huyết Nguyệt\": không quái, vùng an toàn; lúc sự kiện Huyết Nguyệt mở (HacLong.BloodMoon) thì đồ sát tự do. Sinh bằng scripts/gen_phap_truong.py.",
+  "portals": [
+    {
+      "at": [
+        30,
+        39
+      ],
+      "to": "village",
+      "spawn": [
+        12,
+        15
+      ]
+    }
+  ],
+  "spawns": [],
+  "npcs": [
+    {
+      "id": "executioner",
+      "name": "Quan Giám Trảm",
+      "sprite": "elder",
+      "at": [
+        27,
+        35
+      ],
+      "role": "blood_moon",
+      "lines": [
+        "Đêm trăng máu, Pháp Trường mở cửa. Ai hạ được nhiều người nhất được ban ngọc quý.",
+        "Gục ở đây không mất vàng, không bị tên đỏ, nhưng phải về Làng nghỉ một lúc mới vào lại được."
+      ]
+    },
+    {
+      "id": "blood_board",
+      "name": "Bảng Huyết Nguyệt",
+      "sprite": "board",
+      "at": [
+        33,
+        35
+      ],
+      "role": "blood_moon",
+      "lines": [
+        "Bảng ghi những người hạ được nhiều mạng nhất đêm trăng máu."
+      ]
+    }
+  ],
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "tiles": [
+    "TTTTTYTTTTTTYTTTTTYTYTTYTTTTTTTTTYTTTTTTTTTTTTTYTTTTYYTTTTTT",
+    "YTTYTTTYTYTTYTTTTYTTTTYTTTTTTTTTYTTTTYTTTTTTYTTTTTTTTTYTTTTT",
+    "TYTTTTTTTTYTY~~..TT,.,T,,.,,.YT..YTY.,TT,T,T,,TTTTTTT.,,TTTT",
+    "TYT,TTTTTTTTT~~,T,T,,*,.,,Y,,..,,TYT.,TT,...,.,,,TTTT,,..TTT",
+    "TT.,.R##R#RR~~,.,,,,,,,,.,..,,:.,.,,,,,,.,..,,,,RR####R..,TT",
+    "TY,..R:::::#~~,.,.,,,.,,,,,,..:.,.,,.,,...,,,,,,R:::::#.,,TY",
+    "TTY..#::G::#,~~.,,,J,,..,,,,.,:K,,.,,,.,.,,.,,,,#::G::#.TTTT",
+    "YTY,,#:::::#,~~,,,,,.,,,,,,,.,:,,,,.,,..,,,,,,,,#:::::#,YTTT",
+    "YTY.,RR#D###.~~.,,,.,,,,..K,,,:,.,..,,.,,,..,,..###D###,,TTT",
+    "TYTT.,,J:J:::E~,....,.,,.,,,,:::.,,,.,,,,.,..,.,,.J:J,..,,TT",
+    "TTT,,..,,,,,*E~*,.,,.,,,*:I::::::::I,K,,,,,,,..,,.,:,,,...TT",
+    "TT,..,,,,,.,.E~,.,,,.,,::I:::::::::::I.,,,,.,,..,K::....,TYT",
+    "TTT,.,,..,,.~E,,.,...,:::::J:::::J:::::*,,,,..,,.::,,*,.,.TY",
+    "TTY..,.,,,,.~E,,*,,,,:::::::::::::::::I:,,,..J.:::,,.,.,.TYT",
+    "YT,.,K.,,R,~~:::.,,.::::G:::::::::::G:::I.,,,.,:,,,,,.,,TTTT",
+    "TTTY,,,,*,,.~~,:::.,:::::::::::::::::::::,.:::::,,,.,,,,,YTT",
+    "TY,,,,,.,,,,.~~,.:,:I::::::::::::::::::::I::,.,*,,.R..,,TTTT",
+    "TYT,.,..,,.,,,~~.::::::::::::::::::::::::::,..,,.,,,,,.,,TTT",
+    "YT.,,...,,,,,,~~.,:::J:::::::::::::::::J:::.,,...,,,.,,,,.YT",
+    "TT,,,,.....,,,~~,,,:::::::::::I:::::::::::,....,,.,,.,,,.TYY",
+    "TTT,.,,J,,,,,K~~,,,::J:::::::::::::::::J::.,,.J..,.,,.,,,.TT",
+    "TT,.,.,,,.K.,,~~,,,:::::::::::::::::::::::.,,.,,,,.,,,,,.,TT",
+    "TYT,,,,,K..,,,~~,.R:I::::::::::::::::::::I.,,,.,,....,,,,,TY",
+    "TT.,,,,,,,.,,.~~....::::::::::::::::::::I,,,,.,,,,,,,,,,T,YT",
+    "YTTY,.,,,,,,,.~~,,,,:I::G:::::::::::G::I:,,.,,,,,,...,...,TT",
+    "TTTY..,K.,.,,..~~,,,.:::::::::::::::::I:,,,,.,,,,,,..,,.,TYT",
+    "TYT,,,..,,,,,,.~~.,.,.I::::J:::::J:::I:.,,,,.,.,,,.,,,J.,,TT",
+    "TTT,.,.,,,,,...,~~,...::I:::::::::::I:.,.,,,,.,,,.K,.,.,.TYT",
+    "YT,,*,,,,.,,,,.,~~,,,.:..:I::::::::I:..,,,,...,.,,,,,,,,,TTT",
+    "TTY,,.,J:J:::::::EE::::,..,,,:::,..,::::::::::::::J:J,,.TTTT",
+    "TYTR.R##DR##..,,,~~,,,,.,..,.,:..,*,.,.,,,,,,.,.###D###..YYT",
+    "YTY,.R:::::#,,,.~~..*.,..*.,,.:.,.,,,.,*,,,.,,,.#:::::R.,.TT",
+    "YY,,.#::G::#.,.,,~~.,,,,,,,,,,:,,..,,.,.,,,.,,,,#::G::#.T,TT",
+    "YTTT,#:::::#.,KJ~~,,.J.,.J,,.,:,,J,...,.,,,K..,.R:::::#.,,YT",
+    "TTT,,#######,,,,~~R,,....,,,.,:,,,..,,.,,,,,,,..#RR####..YTT",
+    "TT,Y,,,,,,K..J,,~~.,,,..,,,*.K:,,,,,,.,,...K,,,,,,..,,,,,TTT",
+    "TT..,.T.T,,,,,,,,~~,,.T.,T*,,,:.,,,,T.,,.,Y,.,,T,,Y..,,,,.TT",
+    "TT,TTTY,,TT,Y,T,T~~.TYTYTTT.YY:.TY,T,,.TTTTTT..TTTTY,TTT,TTT",
+    "TYTTTTYTYTTTTTYTYTTTTYTYTTTTTT:TTYYTTYYTYTYYTTTYTTTTTTTTTTTT",
+    "TTTTTTYYTTTTTYTTTTTTTTTTTTTTTTOTYTTTTYTTTTTTTTTTTTTTYTTTTTYT"
+  ]
+}

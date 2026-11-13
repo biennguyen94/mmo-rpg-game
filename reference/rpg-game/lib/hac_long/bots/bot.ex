@@ -146,10 +146,20 @@ defmodule HacLong.Bots.Bot do
     inv = HacLong.Invasion.status()
     name = if s.tries > 0, do: "#{s.name} #{s.tries}", else: s.name
 
+    # Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"): bot được quản trị gọi thì bỏ nghỉ / việc khác, vào Pháp Trường
+    # tìm người gần nhất đồ sát (trong trận vẫn đánh như thường qua `Brain.decide/3`)
+    # (đang đánh quái / leo Tháp thì bỏ ngang, đi luôn; trận đồ sát thì đánh cho xong)
+    blood = p != nil and not HacLong.Slay.slaying?(p) and HacLong.BloodMoon.bot_on?(s.uid)
+
     cmd =
-      if Brain.resting?(p, s.rest_until, now),
-        do: nil,
-        else:
+      cond do
+        blood ->
+          blood_step(s.uid, Brain.blood_job(p, snap, s.uid, HacLong.BloodMoon.locked_s(s.uid)))
+
+        Brain.resting?(p, s.rest_until, now) ->
+          nil
+
+        true ->
           Brain.decide(p, snap, %{
             name: name,
             cls: s.cls,
@@ -169,6 +179,7 @@ defmodule HacLong.Bots.Bot do
             reeling: s.reeling,
             avoid: Brain.avoiding(s.deaths_at, now)
           })
+      end
 
     s =
       case cmd && Session.command(s.uid, cmd) do
@@ -277,6 +288,20 @@ defmodule HacLong.Bots.Bot do
   end
 
   defp lake_tiles(_), do: {nil, nil}
+
+  # Huyết Nguyệt: dịch chuyển vào Pháp Trường / đồ sát người trong tầm làm ngay (không phải lệnh Session); còn lại
+  # (đi tới, uống bình) trả lệnh cho Session như thường
+  defp blood_step(uid, {:teleport, {x, y}}) do
+    Session.teleport(uid, %{map: HacLong.BloodMoon.map_id(), x: x, y: y})
+    nil
+  end
+
+  defp blood_step(uid, {:slay, target}) do
+    HacLong.Slay.attack(uid, target)
+    nil
+  end
+
+  defp blood_step(_uid, cmd), do: cmd
 
   # mốc ngẫu nhiên trong khoảng [lo, hi] phút kể từ `now`
   defp next_in(now, [lo, hi]), do: now + round((lo + :rand.uniform() * (hi - lo)) * 60_000)

@@ -77,7 +77,7 @@ defmodule HacLongWeb.GameChannel do
   # mod: xử lý báo cáo, tra cứu, cấm chat, thông báo (không khóa tài khoản, không sửa nhân vật)
   @mod_ops ~w(reports lookup resolve mute unmute announce online)
   # chỉ đọc: không ghi admin_log
-  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags)
+  @read_ops ~w(reports lookup audit gold_log admin_log online gift_count gift_log pw_requests flags blood_moon)
 
   @impl true
   # Giao diện mở từ trước khi cập nhật server (mã phiên bản khác): từ chối, client tự tải lại trang.
@@ -94,6 +94,7 @@ defmodule HacLongWeb.GameChannel do
     Phoenix.PubSub.subscribe(HacLong.PubSub, WorldBoss.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.LakeEvent.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.SkyEvent.topic())
+    Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.BloodMoon.topic())
     Phoenix.PubSub.subscribe(HacLong.PubSub, HacLong.NamePack.topic())
     player = Session.attach(uid, self())
     send(self(), :push_map)
@@ -987,6 +988,57 @@ defmodule HacLongWeb.GameChannel do
      }}
   end
 
+  # Huyết Nguyệt ở Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt"): trạng thái, mở / đóng, lịch hằng ngày, gọi / rút bot
+  defp admin("blood_moon", _p, _s), do: {:ok, %{blood_moon: HacLong.BloodMoon.public()}}
+
+  defp admin("blood_moon_open", p, _s) do
+    mins = p["minutes"]
+    mins = if is_binary(mins), do: String.to_integer(mins), else: mins
+
+    with {:ok, st} <- HacLong.BloodMoon.open_now(mins) do
+      {:ok,
+       %{
+         msg: "Huyết Nguyệt đã mọc ở Pháp Trường (#{div(st.left + 59_999, 60_000)} phút).",
+         blood_moon: st
+       }}
+    end
+  rescue
+    ArgumentError -> {:error, "Số phút không hợp lệ."}
+  end
+
+  defp admin("blood_moon_close", _p, _s) do
+    with {:ok, st} <- HacLong.BloodMoon.close_now() do
+      {:ok, %{msg: "Đã đóng Huyết Nguyệt, quà top đã gửi.", blood_moon: st}}
+    end
+  end
+
+  defp admin("blood_moon_daily", p, _s) do
+    at = if p["at"] in [nil, ""], do: nil, else: p["at"]
+
+    with {:ok, st} <- HacLong.BloodMoon.set_daily(at) do
+      {:ok,
+       %{
+         msg:
+           if(at,
+             do: "Huyết Nguyệt tự mọc lúc #{at} mỗi ngày.",
+             else: "Đã tắt lịch Huyết Nguyệt hằng ngày."
+           ),
+         blood_moon: st
+       }}
+    end
+  end
+
+  defp admin("blood_moon_bots", _p, _s) do
+    with {:ok, n} <- HacLong.BloodMoon.summon_bots() do
+      {:ok, %{msg: "Đã gọi #{n} bot vào Pháp Trường.", blood_moon: HacLong.BloodMoon.public()}}
+    end
+  end
+
+  defp admin("blood_moon_recall", _p, _s) do
+    {:ok, n} = HacLong.BloodMoon.recall_bots()
+    {:ok, %{msg: "Đã cho #{n} bot về Làng.", blood_moon: HacLong.BloodMoon.public()}}
+  end
+
   # Golden Invasion ngay (Phase 7)
   defp admin("invasion", _p, _s), do: {:ok, %{invasion: HacLong.Invasion.start_now()}}
 
@@ -1087,6 +1139,7 @@ defmodule HacLongWeb.GameChannel do
     push(socket, "invasion", HacLong.Invasion.status())
     push(socket, "lake", HacLong.LakeEvent.public())
     push(socket, "sky", HacLong.SkyEvent.public())
+    push(socket, "blood_moon", HacLong.BloodMoon.public())
     {:noreply, follow_map(socket, Session.get(socket.assigns.user_id))}
   end
 
@@ -1103,6 +1156,11 @@ defmodule HacLongWeb.GameChannel do
 
   def handle_info({:sky, st}, socket) do
     push(socket, "sky", st)
+    {:noreply, socket}
+  end
+
+  def handle_info({:blood_moon, st}, socket) do
+    push(socket, "blood_moon", st)
     {:noreply, socket}
   end
 

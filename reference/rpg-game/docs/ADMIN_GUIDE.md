@@ -74,6 +74,15 @@ Thứ tự các khối trong tab:
    mọi thiết bị của họ bị đăng xuất; báo mật khẩu cho người chơi, nhắc họ đổi lại. Ở thẻ tra cứu người chơi cũng có nút
    **🔑 Đặt lại mật khẩu**. Lệnh: `pw_requests`, `reset_password` (`uid`), `pw_dismiss` (`id`).
 6. **Sự kiện** (admin): gọi trùm thế giới Cổ Long (**🕊 Cổ Long bay đi** cho trùm đang có bay đi ngay, không ai được thưởng — lệnh `world_boss_off`), bắt đầu Golden Invasion, **mở ngay Quảng Trường Quỷ / Lâu Đài Máu** (một đợt ngoài lịch, cho vào trong `entry_minutes` = 10 phút, báo cả server; người chơi vẫn cần vé và đủ cấp, ai đã vào đợt thường vẫn vào được; giữ trong bộ nhớ — khởi động lại server là mất). **⚔ Mở Hỗn Chiến Thành** mở một lượt ngay (cho vào 5 phút rồi hỗn chiến 10 phút). **🐲 Rồng Đỏ / 🧙 Phù Thủy Trắng xâm lăng** bắt đầu ngay ở bản đồ ngẫu nhiên. Lệnh: `world_boss`, `invasion`, `open_ds`, `open_bc`, `open_cc`, `raid_red_dragon`, `raid_white_wizard`, `lake_summon` (**🐉 Gọi Long Vương nổi**: Ngài nổi ngay ở một ô nước ngẫu nhiên của Hồ Long Vương trong 3 phút, như lần nổi theo giờ), `lake_school` (**✨ Gọi Đàn Cá Vàng**: hiện ngay 2 phút), `sky_bird` / `sky_flock` / `sky_meteor` / `sky_hoi` (**🐦 Gọi Chim Lạc**, **🕊 Gọi Đàn Hạc**, **🌠 Mưa sao băng** ở Đồi Sáo Diều, **🐉🐦 Mở Long Phượng Hội** ở Tế Đàn 5 phút), `open_cs` (**🏰 Mở Công Thành Chiến**: bắt đầu ngay, mọi bang vào được, kết quả Chủ Thành tính thật).
+6b. **🩸 Huyết Nguyệt (Pháp Trường)** (admin; DECISIONS "Pháp Trường Huyết Nguyệt"): thẻ hiện trạng thái (đang mở / còn bao
+   lâu, số người trên bản đồ, số bot được gọi, ngọc đã rơi, lịch, top 10 trực tiếp). **🩸 Mở ngay** (ô **Số phút**, 1..60,
+   mặc định 10; báo cả server), **🌕 Đóng sớm** (chốt bảng, top 3 người thật nhận ngọc qua thư), **🤖 Gọi tất cả bot vào**
+   (chỉ khi đang mở: mọi bot đang chạy bỏ việc đang làm, kể cả đang leo Tháp, vào Pháp Trường tìm người gần nhất để đồ sát;
+   gục thì về Làng, hết 30 giây khóa thì tự quay lại), **🏠 Rút bot về** (bot đang ở Pháp Trường về Làng; hết giờ cũng tự
+   về), **Tự mở hằng ngày lúc** HH:MM → **💾 Lưu lịch** (giờ Việt Nam, báo trước 5 phút) / **Tắt lịch**. Lệnh: `blood_moon`
+   (đọc), `blood_moon_open` (`minutes`), `blood_moon_close`, `blood_moon_bots`, `blood_moon_recall`, `blood_moon_daily`
+   (`at`: "HH:MM" hoặc rỗng để tắt; dòng Nhật ký quản trị mới nhất là lịch đang dùng, khởi động lại server vẫn giữ). Trạng
+   thái sự kiện chỉ trong bộ nhớ: khởi động lại server lúc đang mở thì sự kiện mất, không ai nhận quà.
 7. **Kiểm tra vàng** (admin): xem mục 4.
 8. **Nhật ký quản trị** (admin): 50 thao tác mới nhất.
 

@@ -20,6 +20,8 @@ defmodule HacLong.Application do
       HacLong.WorldBoss,
       HacLong.LakeEvent,
       HacLong.SkyEvent,
+      # Phase 8: Huyết Nguyệt ở Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt")
+      HacLong.BloodMoon,
       HacLong.World.SecretWatch,
       HacLong.Party,
       HacLong.Trade,

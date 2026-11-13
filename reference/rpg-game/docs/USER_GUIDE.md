@@ -357,6 +357,16 @@ Bình máu và **bình mana** (Bà Lang bán) hồi số cố định: bình má
   - Người vừa gục được **bảo vệ 30 giây**; không giới hạn số lần đồ sát.
   - Hạ người không tên đỏ thì bị **🔴 tên đỏ 30 phút** (cộng dồn). Tên đỏ mà gục thì mất **20%** vàng. Hạ người tên đỏ không bị đỏ tên.
   - Mỗi trận đồ sát được báo trên kênh thế giới.
+- **🩸 Pháp Trường Huyết Nguyệt**: cổng **phía nam Làng** dẫn tới Pháp Trường, một bãi đấu cổ giữa rừng tre (60×40 ô, không
+  có quái). Ngày thường là vùng an toàn. Khi **Huyết Nguyệt mọc** (Quản trị mở, hoặc theo giờ hằng ngày nếu có lịch, báo trước
+  5 phút), trong **10 phút** cả bản đồ được đồ sát tự do, kể cả người cùng tổ đội; trời phủ trăng máu, dưới bản đồ có dải
+  🩸 đếm giờ, số mạng mình đã hạ và top 3 (ở bản đồ khác thì có nút **⚔ Đến**).
+  - Gục ở đây **không mất vàng, không tên đỏ**; về Làng, nghỉ **30 giây** mới vào lại được.
+  - Mỗi lần hạ người: **5%** cơ hội rơi một viên ngọc ngẫu nhiên (Ngọc Ước Nguyện, Tâm Linh, Hỗn Nguyên, Sinh Mệnh). Hạ
+    người nhiều lần chuyển sinh hơn mình thì dễ rơi hơn (+20% mỗi lần chuyển sinh, tối đa gấp đôi), yếu hơn thì khó rơi;
+    hạ đi hạ lại cùng một người thì mỗi lần cơ hội còn một nửa. Hạ bot chỉ tính điểm, không rơi ngọc.
+  - Trăng lặn: **top 3** người hạ nhiều mạng nhất nhận ngọc qua hộp thư (hạng 1: 3 viên mỗi loại, hạng 2: 2, hạng 3: 1).
+    Bảng xếp hạng ở **Bảng Huyết Nguyệt** cạnh lối vào; **Quan Giám Trảm** giải thích luật.
 - **Luật khi đánh người** (đấu trường, đồ sát, Hỗn Chiến): mọi sát thương lên người (đòn thường, kỹ năng, độc)
   chỉ còn **30%**; tỉ lệ chí mạng còn một nửa và phần cộng thêm của hệ số chí mạng cũng còn một nửa; né còn 60%. Thu nhỏ theo tỉ
   lệ nên đồ tốt vẫn hơn, chỉ là trận dài hơn (khoảng 7–10 lượt giữa hai người ngang nhau). Vừa thoát choáng thì miễn choáng 2 lượt.

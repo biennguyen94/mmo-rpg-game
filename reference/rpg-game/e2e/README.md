@@ -33,6 +33,7 @@ không vào git).
 
 | File | Kiểm |
 |---|---|
+| `bloodmoon.mjs` | Pháp Trường Huyết Nguyệt: cổng Làng → bản đồ 60×40 không quái, ngày thường không đồ sát; quản trị 🩸 Mở ngay ở tab Quản trị → dải đếm giờ, trăng máu; A hạ B: không mất vàng, về Làng, khóa vào lại; Bảng Huyết Nguyệt; 🤖 gọi bot (server có bot); 🌕 Đóng sớm → top 1 nhận thư ngọc |
 | `killfx.mjs` | 4 lớp, mỗi lớp 2 kỹ năng hạ quái một đòn ở màn trận: đòn trúng xong (lần `fx-hit` cuối) rồi quái mới mờ (`fx-dying`) |
 | `smoke.mjs` | tạo 4 lớp (chỉ số gốc, máu / MP), ra Làng → Rừng Mê, đánh quái, mua / bán ở Bà Lang, nghỉ trọ, cộng điểm (gom lệnh), các tab |
 | `social.mjs` | 2 người: tổ đội (bấm Vào tổ đội), bạn bè + tin riêng, chat thế giới, giao dịch (bấm trên bảng giao dịch: vàng + đồ), chợ (rao, mua, nhận tiền qua thư) |

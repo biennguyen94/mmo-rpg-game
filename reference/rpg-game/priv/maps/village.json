@@ -20,7 +20,7 @@
     "Y:###,,,,,,,:,,W,,,,###,T",
     "O:#D#,,,,*,,:,,*,,,,#D#,Y",
     "TY,,,*,,,,Y,:,Y,,,,*,,,YT",
-    "YYTTYTYTTTYTTYTTYTTYTTTYT"
+    "YYTTYTYTTTYTOYTTYTTYTTTYT"
   ],
   "portals": [
     {
@@ -109,6 +109,17 @@
       "spawn": [
         1,
         8
+      ]
+    },
+    {
+      "at": [
+        12,
+        16
+      ],
+      "to": "phap_truong",
+      "spawn": [
+        30,
+        37
       ]
     }
   ],
@@ -344,5 +355,6 @@
       ]
     }
   ],
-  "spawns": []
+  "spawns": [],
+  "version": 2
 }

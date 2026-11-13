@@ -473,6 +473,9 @@ defmodule HacLong.World do
       target.realm && not realm_open?(p, target) ->
         {%{ok: false, msg: realm_msg(target)}, p}
 
+      (wait = blood_lock(uid, target)) > 0 ->
+        {%{ok: false, msg: blood_msg(wait)}, p}
+
       # bản đồ bí mật (Động Bí Ẩn, DECISIONS "Động Bí Ẩn"): cửa chỉ mở những đêm động mở; đóng thì chỉ là vách đá
       target.secret == "night" and not HacLong.World.Secret.open?() ->
         {%{ok: false, msg: "Chỉ là vách đá lạnh ngắt."}, p}
@@ -498,6 +501,12 @@ defmodule HacLong.World do
         {%{ok: true, msg: "Đến #{target.name}."}, p}
     end
   end
+
+  # Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt"): vừa gục trong Huyết Nguyệt thì chờ `relock_s` giây mới vào lại
+  defp blood_lock(uid, %{id: id}),
+    do: if(id == HacLong.BloodMoon.map_id(), do: HacLong.BloodMoon.locked_s(uid), else: 0)
+
+  defp blood_msg(wait), do: "Bạn vừa gục ở Pháp Trường, nghỉ #{wait} giây nữa mới vào lại được."
 
   @doc "Phase 6 (B-30): vào được vùng đất chuyển sinh `map` không (đủ số lần chuyển sinh và cấp)."
   def realm_open?(p, map),
@@ -585,6 +594,9 @@ defmodule HacLong.World do
             else: "Cần đạt cấp #{min_level(target)} mới tới được bản đồ này."
 
         {%{ok: false, msg: msg}, p}
+
+      (wait = blood_lock(uid, target)) > 0 ->
+        {%{ok: false, msg: blood_msg(wait)}, p}
 
       p.gold < travel_cost(target) ->
         {%{ok: false, msg: "Cần #{travel_cost(target)} vàng."}, p}

@@ -164,6 +164,10 @@ defmodule HacLong.Slay do
         {:error,
          "Đồi Sáo Diều chỉ được đồ sát từ lúc báo Chim Lạc sắp tới tới khi chim xuất hiện."}
 
+      # Pháp Trường (DECISIONS "Pháp Trường Huyết Nguyệt"): chỉ đồ sát lúc Huyết Nguyệt mở
+      pa.pos.map == HacLong.BloodMoon.map_id() and not HacLong.BloodMoon.open?() ->
+        {:error, "Pháp Trường chỉ được đồ sát khi Huyết Nguyệt mọc."}
+
       # Hỗn Chiến Thành (B-19): chỉ đánh nhau khi thành đang hỗn chiến (hết giờ vào)
       chaos_castle?(pa) and not HacLong.ChaosCastle.fighting?() ->
         {:error, "Hỗn Chiến Thành chưa bắt đầu, chưa được đánh nhau."}
@@ -189,8 +193,11 @@ defmodule HacLong.Slay do
   defp chaos_castle?(p), do: HacLong.ChaosCastle.map?(p.pos.map)
   defp castle?(p), do: p.pos.map == HacLong.CastleSiege.map_id()
 
-  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến): không tên đỏ / vàng thêm, thua về Làng
-  defp event_map?(p), do: chaos_castle?(p) or castle?(p)
+  # Pháp Trường lúc Huyết Nguyệt mở
+  defp blood?(p), do: HacLong.BloodMoon.active_at?(p.pos.map)
+
+  # bản đồ sự kiện (Hỗn Chiến Thành, Công Thành Chiến, Huyết Nguyệt): không tên đỏ / vàng thêm, thua về Làng
+  defp event_map?(p), do: chaos_castle?(p) or castle?(p) or blood?(p)
 
   # Session `uid` vào trận với bản sao của `foe`; lỗi thì hủy trận (và trận đã mở của bên kia).
   defp begin(uid, f, foe, foe_p, undo) do
@@ -624,6 +631,13 @@ defmodule HacLong.Slay do
         {:ok, rl, pl} ->
           try do
             {pw2, pl2, lost} = outcome(f, pw, pl, winner, why)
+
+            # Huyết Nguyệt: +1 mạng, cơ hội rơi ngọc vào túi người hạ (lưu cùng transaction bên dưới)
+            blood = blood?(pw) and blood?(pl)
+
+            {pw2, jewel} =
+              if blood, do: blood_kill(f, winner, loser, pw, pl, pw2), else: {pw2, nil}
+
             day = Date.from_iso8601!(Daily.today())
 
             Repo.transaction(fn ->
@@ -657,6 +671,7 @@ defmodule HacLong.Slay do
             war = not event_map?(pw) and HacLong.GuildWars.war_between(winner, loser) != nil
 
             cond do
+              blood -> :ok
               chaos_castle?(pw) -> HacLong.ChaosCastle.kill(winner, :player)
               castle?(pw) -> :ok
               war -> mark(loser, :safe, now() + @r.protect_s * 1000)
@@ -672,15 +687,29 @@ defmodule HacLong.Slay do
                 back = (f[:back] || %{})[uid],
                 do: Session.teleport(uid, back)
 
-            notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng." <> note)
-
-            notice(
-              loser,
-              if(why == :fled,
-                do: "💀 Bạn bỏ chạy khỏi #{f.names[winner]}: tính như gục ngã, mất #{lost} vàng.",
-                else: "💀 Bạn bị #{f.names[winner]} hạ, mất #{lost} vàng."
+            if blood do
+              notice(
+                winner,
+                "🩸 Bạn hạ #{f.names[loser]}." <>
+                  if(jewel, do: " Nhặt được #{Data.item(jewel).name}!", else: "")
               )
-            )
+
+              notice(
+                loser,
+                "💀 Bạn bị #{f.names[winner]} hạ ở Pháp Trường (không mất vàng). Nghỉ #{HacLong.BloodMoon.rules().relock_s} giây rồi vào lại."
+              )
+            else
+              notice(winner, "🗡 Bạn hạ #{f.names[loser]}, nhận #{lost} vàng." <> note)
+
+              notice(
+                loser,
+                if(why == :fled,
+                  do:
+                    "💀 Bạn bỏ chạy khỏi #{f.names[winner]}: tính như gục ngã, mất #{lost} vàng.",
+                  else: "💀 Bạn bị #{f.names[winner]} hạ, mất #{lost} vàng."
+                )
+              )
+            end
           rescue
             e ->
               Logger.error("Đồ sát #{f.a}-#{f.b} lỗi: " <> Exception.message(e))
@@ -691,6 +720,25 @@ defmodule HacLong.Slay do
         _ ->
           Session.release(winner, rw, nil)
       end
+    end
+  end
+
+  # Huyết Nguyệt: tính mạng, ngọc rơi thì vào túi người hạ (`pw2`) kèm một dòng nhật ký trận
+  defp blood_kill(f, winner, loser, pw, pl, pw2) do
+    jewel =
+      HacLong.BloodMoon.kill(
+        winner,
+        loser,
+        %{name: f.names[winner], rebirths: pw[:rebirths]},
+        %{name: f.names[loser], rebirths: pl[:rebirths]}
+      )
+
+    if jewel do
+      pw2 = %{pw2 | inv: Map.update(pw2.inv, jewel, 1, &(&1 + 1))}
+      line = "🩸 Huyết Nguyệt: nhặt được #{Data.item(jewel).name}!"
+      {if(pw2.battle, do: log(pw2, line, "win"), else: pw2), jewel}
+    else
+      {pw2, nil}
     end
   end
 
@@ -736,9 +784,12 @@ defmodule HacLong.Slay do
         pw = put_in(pw.battle.reward, %{pw.battle.reward | gold: lost})
 
         text =
-          if why == :fled,
-            do: "#{f.names[foe(f, winner)]} bỏ chạy. Bạn nhận #{lost} vàng.",
-            else: "Bạn nhận #{lost} vàng của #{f.names[foe(f, winner)]}."
+          cond do
+            blood?(pw) and why == :fled -> "#{f.names[foe(f, winner)]} bỏ chạy."
+            blood?(pw) -> "Bạn hạ #{f.names[foe(f, winner)]}."
+            why == :fled -> "#{f.names[foe(f, winner)]} bỏ chạy. Bạn nhận #{lost} vàng."
+            true -> "Bạn nhận #{lost} vàng của #{f.names[foe(f, winner)]}."
+          end
 
         log(pw, text, "win")
       else

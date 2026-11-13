@@ -394,6 +394,41 @@
   // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
+  // ---------- Huyết Nguyệt (Pháp Trường) ----------
+  let bloodOn = false;
+  function bloodMoonFx(now, fx, lanterns, cx, cy, m) {
+    const W = VW(), H = VH(), t = fx ? now : 0;
+    // màn đỏ tối dần ra mép
+    const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.75);
+    g.addColorStop(0, 'rgba(120, 0, 10, 0.10)');
+    g.addColorStop(1, 'rgba(60, 0, 8, 0.48)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // trăng máu góc trên phải (đứng yên với màn hình), quầng đập nhẹ
+    const mx = W - 64, my = 58, pulse = 1 + 0.06 * Math.sin(t / 700);
+    const halo = ctx.createRadialGradient(mx, my, 10, mx, my, 70 * pulse);
+    halo.addColorStop(0, 'rgba(255, 60, 40, 0.55)'); halo.addColorStop(1, 'rgba(255, 30, 20, 0)');
+    ctx.fillStyle = halo; ctx.fillRect(mx - 80, my - 80, 160, 160);
+    const disc = ctx.createRadialGradient(mx - 6, my - 6, 2, mx, my, 26);
+    disc.addColorStop(0, '#ffb39a'); disc.addColorStop(0.55, '#e0402a'); disc.addColorStop(1, '#8a1410');
+    ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(mx, my, 26, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(90, 10, 10, 0.35)';
+    for (const [dx, dy, r] of [[-8, -5, 5], [7, 6, 4], [3, -10, 3]]) { ctx.beginPath(); ctx.arc(mx + dx, my + dy, r, 0, Math.PI * 2); ctx.fill(); }
+    // sương đỏ trôi ngang
+    if (fx) for (let i = 0; i < 6; i++) {
+      const y = ((i * 137) % 100) / 100 * H, x = ((t / (40 + i * 7) + i * 211) % (W + 400)) - 200;
+      const fog = ctx.createRadialGradient(x, y, 10, x, y, 160);
+      fog.addColorStop(0, 'rgba(170, 20, 30, 0.13)'); fog.addColorStop(1, 'rgba(170, 20, 30, 0)');
+      ctx.fillStyle = fog; ctx.fillRect(x - 160, y - 160, 320, 320);
+    }
+    // đèn lồng rực đỏ
+    for (const [lx0, ly0] of lanterns) {
+      const x = lx0 + 23, y = ly0 + 17, f = fx ? 0.8 + 0.2 * Math.sin(t / 200 + lx0) : 1;
+      const lg = ctx.createRadialGradient(x, y, 1, x, y, TILE * 2);
+      lg.addColorStop(0, `rgba(255, 70, 40, ${0.5 * f})`); lg.addColorStop(1, 'rgba(255, 70, 40, 0)');
+      ctx.fillStyle = lg; ctx.fillRect(x - TILE * 2, y - TILE * 2, TILE * 4, TILE * 4);
+    }
+  }
+
   // B6: độ tối chuyển dần theo giờ Việt Nam (mốc như HacLong.World.Clock: bình minh 5–7, ngày 7–18, hoàng hôn 18–20, đêm
   // 20–5). Đồng hồ máy lệch (buổi tính ra khác buổi server gửi) thì dùng mức cố định của buổi server. Trả [độ tối, ánh
   // cam hồng 0..1] — ánh mạnh nhất giữa bình minh / hoàng hôn.
@@ -823,7 +858,7 @@
           // ô W: Đài Phúc Lành (Phase 2, thay đá dịch chuyển)
           const im = image('tiles/' + kind);
           const sway = fx && (kind === 'tree' || kind === 'tree_autumn') ? Math.sin(now / 900 + x * 0.8 + y * 0.5) * 0.045 : 0;
-          if (m.style === 'bamboo' && (kind === 'tree' || kind === 'tree_autumn')) {
+          if ((m.style === 'bamboo' || m.style === 'arena') && (kind === 'tree' || kind === 'tree_autumn')) {
             bamboo(px, py, x, y, fx ? now : 0);
           } else if (im.complete && sway) {
             // cây lay theo gió: nghiêng quanh gốc
@@ -839,7 +874,7 @@
             }
           }
           if (m.style === 'paddy' && kind === 'water') paddy(px, py, x, y, fx ? now : 0);
-          if (fx && m.style === 'temple' && kind === 'dragon_statue') incense.push([px, py]);
+          if (fx && (m.style === 'temple' || m.style === 'arena') && kind === 'dragon_statue') incense.push([px, py]);
           if (fx && kind === 'fountain') fountains.push([px, py]);
           if (kind === 'lantern') lanterns.push([px, py]);
         }
@@ -1071,6 +1106,8 @@
         ctx.fillStyle = g; ctx.fillRect(x - TILE * 1.8, y - TILE * 1.8, TILE * 3.6, TILE * 3.6);
       }
     }
+    // Pháp Trường lúc Huyết Nguyệt mọc (DECISIONS "Pháp Trường Huyết Nguyệt"): trăng máu, màn đỏ, sương đỏ, đèn lồng rực
+    if (m.style === 'arena' && bloodOn) bloodMoonFx(now, fx, lanterns, cx, cy, m);
     if (m.fish === 'lake' && school && Date.now() < school.until) schoolSpot(now, school.x * TILE - cx, school.y * TILE - cy, fx);
     // Đồi Sáo Diều: Đàn Hạc, Chim Lạc lượn trên trời, Mảnh Sao rơi trên đồi
     if (m.kite) {
@@ -2652,6 +2689,8 @@
     mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
+    // Huyết Nguyệt (ui.js onBloodMoon): đang mọc thì Pháp Trường phủ trăng máu
+    setBloodMoon(on) { if (bloodOn !== !!on) { bloodOn = !!on; draw(); } },
     // l, s: { tile: [x, y], until } (ui.js onLake) hoặc null
     setLake(l, s) {
       const at = (v) => v && { x: v.tile[0], y: v.tile[1], until: v.until };

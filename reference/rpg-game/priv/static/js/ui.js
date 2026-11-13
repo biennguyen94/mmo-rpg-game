@@ -405,6 +405,7 @@
     if (onMenu('admin') && adm.online == null) admOnline();
     applySel();
     keepArena();
+    if (bm) drawBloodChip();
   }
 
   // ---------- Quản trị ----------
@@ -478,12 +479,28 @@
       <div class="card"><h3>Sự kiện</h3><p class="small muted">Mở ngay ngoài lịch, báo cả server. Quảng Trường Quỷ / Lâu Đài Máu cho vào trong 10 phút (người chơi vẫn cần vé và đủ cấp).</p>
         <div class="btn-row"><button class="btn" data-adm="world_boss">🐉 Gọi Cổ Long</button><button class="btn" data-adm="world_boss_off">🕊 Cổ Long bay đi</button><button class="btn" data-adm="invasion">✨ Golden Invasion</button><button class="btn" data-adm="lake_summon">🐉 Gọi Long Vương nổi</button><button class="btn" data-adm="lake_school">✨ Gọi Đàn Cá Vàng</button><button class="btn" data-adm="sky_bird">🐦 Gọi Chim Lạc</button><button class="btn" data-adm="sky_flock">🕊 Gọi Đàn Hạc</button><button class="btn" data-adm="sky_meteor">🌠 Mưa sao băng</button>
           <button class="btn" data-adm="open_ds">😈 Mở Quảng Trường Quỷ</button><button class="btn" data-adm="open_bc">🏰 Mở Lâu Đài Máu</button><button class="btn" data-adm="open_cc">⚔ Mở Hỗn Chiến Thành</button><button class="btn" data-adm="raid_red_dragon">🐲 Rồng Đỏ xâm lăng</button><button class="btn" data-adm="raid_white_wizard">🧙 Phù Thủy Trắng xâm lăng</button><button class="btn" data-adm="open_cs">🏰 Mở Công Thành Chiến</button></div></div>
+      ${viewAdmBloodMoon()}
       ${viewPwRequests()}
       ${viewAudit()}
       <div class="card"><div class="row"><h3 class="grow">Nhật ký quản trị</h3><button class="btn small-btn" data-adm="admin_log">Xem 50 dòng mới nhất</button></div>${adm.alog && !adm.alog.uid ? viewAdminLog(adm.alog.log) : ''}</div>` : ''}`;
   }
 
   const isAdminRole = () => Net.role === 'admin';
+
+  // Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"): mở / đóng, lịch hằng ngày, gọi / rút bot, theo dõi trực tiếp
+  function viewAdmBloodMoon() {
+    const R = RULES.bloodMoon, st = bm || { open: false, top: [], players: 0, bots: 0, drops: 0 };
+    const state = st.open ? `<b style="color:var(--bad)">Đang mở</b> · còn ${clock(st.until - Date.now())}` : st.warn > 0 ? `Sắp mọc (còn ${clock(st.warnUntil - Date.now())})` : 'Đang đóng';
+    return `<div class="card" id="adm-bm"><h3>🩸 Huyết Nguyệt (Pháp Trường)</h3>
+      <p class="small muted">Bản đồ Pháp Trường (cổng phía nam Làng) không có quái, ngày thường an toàn. Mở thì đồ sát tự do; gục không mất vàng, không tên đỏ; hạ người ${Math.round(R.dropPct * 100)}% cơ hội rơi ngọc; hết giờ top 3 nhận ngọc qua thư.</p>
+      <div class="btn-row"><span class="grow">${state}<br><span class="small muted">Trên bản đồ: ${st.players} người (bot được gọi: ${st.bots}) · ngọc đã rơi: ${st.drops} · lịch: ${st.daily ? `${esc(st.daily)} mỗi ngày` : 'tắt'}</span></span></div>
+      <div class="btn-row"><label class="small">Số phút <input type="number" id="adm-bm-min" min="1" max="${R.minutesMax}" value="${R.minutes}" style="width:4.5em"></label>
+        <button class="btn danger" data-adm="blood_moon_open" ${st.open ? 'disabled' : ''}>🩸 Mở ngay</button><button class="btn" data-adm="blood_moon_close" ${st.open ? '' : 'disabled'}>🌕 Đóng sớm</button></div>
+      <div class="btn-row"><button class="btn" data-adm="blood_moon_bots" ${st.open ? '' : 'disabled'} title="Mọi bot đang chạy vào Pháp Trường, tìm người gần nhất đồ sát">🤖 Gọi tất cả bot vào</button><button class="btn" data-adm="blood_moon_recall" ${st.bots ? '' : 'disabled'}>🏠 Rút bot về</button></div>
+      <div class="btn-row"><label class="small">Tự mở hằng ngày lúc <input type="time" id="adm-bm-at" value="${esc(st.daily || '20:00')}"></label><button class="btn" data-adm="blood_moon_daily">💾 Lưu lịch</button><button class="btn" data-adm="blood_moon_daily" data-off="1" ${st.daily ? '' : 'disabled'}>Tắt lịch</button></div>
+      ${st.top.length ? `<ol class="board">${st.top.map((t, i) => `<li><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${t.kills}</span></li>`).join('')}</ol>` : ''}
+    </div>`;
+  }
 
   // Quên mật khẩu (DECISIONS "Quên mật khẩu"): yêu cầu người chơi gửi từ màn đăng nhập; mật khẩu tạm vừa đặt
   function viewPwRequests() {
@@ -804,6 +821,7 @@
     if (op === 'reset_password' && !confirm('Đặt lại mật khẩu tài khoản này? Mật khẩu cũ hết dùng được, mọi thiết bị của họ bị đăng xuất.')) return;
     if (op === 'to_village' && !confirm('Đưa nhân vật này về Làng? Đang đánh thì trận kết thúc như bỏ chạy (không mất gì).')) return;
     if (op === 'bots_to_village' && !confirm('Đưa mọi bot về Làng?')) return;
+    if (op === 'blood_moon_close' && !confirm('Đóng Huyết Nguyệt ngay? Bảng xếp hạng chốt luôn, top 3 nhận quà.')) return;
     if (op === 'clear_bag' && !confirm('Hủy MỌI trang bị trong túi của nhân vật này (cả món đang khóa)? Đồ đang mặc và đồ trong Tủ Đồ giữ nguyên. Không hoàn tác được.')) return;
     const payload = {};
     if (d.id) payload.id = +d.id;
@@ -814,6 +832,9 @@
     if (d.on) payload.on = d.on === '1';
     if (d.pack) payload.pack = d.pack;
     if (d.mode) payload.mode = d.mode;
+    // Huyết Nguyệt: số phút / giờ hằng ngày lấy từ ô nhập của thẻ
+    if (op === 'blood_moon_open') payload.minutes = +(($('#adm-bm-min') || {}).value || RULES.bloodMoon.minutes);
+    if (op === 'blood_moon_daily') payload.at = d.off ? '' : (($('#adm-bm-at') || {}).value || '');
     try {
       const r = await Net.admin(op, payload);
       if (op === 'audit') { adm.audit = r.audit; return render(); }
@@ -825,6 +846,7 @@
       if (op === 'admin_log') { adm.alog = { uid: payload.uid, log: r.log }; return render(); }
       if (op === 'pw_requests') { adm.pw = r.requests; return render(); }
       if (op === 'reset_password') { adm.temp = { username: r.username, temp: r.temp }; if (adm.pw) adm.pw = adm.pw.filter((x) => x.uid !== payload.uid); toast(`Đã đặt lại mật khẩu @${r.username}.`); return render(); }
+      if (r.blood_moon) { onBloodMoon(r.blood_moon); toast(r.msg || 'Đã xong.'); return render(); }
       if (op === 'pw_dismiss') { adm.pw = (adm.pw || []).filter((x) => x.id !== payload.id); return render(); }
       toast(r.msg || 'Đã xong.');
       if (r.user) adm.user = r.user;
@@ -836,8 +858,8 @@
 
   // Đồ sát: không cần đồng ý; server mở trận cho cả hai, client nhận nhân vật mới qua sự kiện "player".
   function slayRow(o) {
-    const safe = RULES.slay.safe.includes(P.pos.map);
-    const why = safe ? 'Vùng an toàn' : P.level < RULES.slay.minLevel ? `Cần cấp ${RULES.slay.minLevel}` : o.level < RULES.slay.minLevel ? `Dưới cấp ${RULES.slay.minLevel}` : '';
+    const safe = RULES.slay.safe.includes(P.pos.map) || (onArena() && !(bm && bm.open));
+    const why = safe ? (onArena() ? 'Chỉ khi Huyết Nguyệt mọc' : 'Vùng an toàn') : P.level < RULES.slay.minLevel ? `Cần cấp ${RULES.slay.minLevel}` : o.level < RULES.slay.minLevel ? `Dưới cấp ${RULES.slay.minLevel}` : '';
     return `<div class="btn-row"><button class="btn danger" data-act="slay" data-uid="${o.id}" ${why ? 'disabled' : ''}>🗡 Đồ sát</button>${why ? `<span class="small muted">${why}</span>` : ''}</div>`;
   }
 
@@ -1201,6 +1223,57 @@
     if (P) redrawFishing();
   }
 
+  // ---------- Huyết Nguyệt ở Pháp Trường (HacLong.BloodMoon, DECISIONS "Pháp Trường Huyết Nguyệt") ----------
+  // bm: trạng thái server + mốc hết giờ / mốc mọc theo đồng hồ máy mình; dải nổi #bm-chip ở mọi tab khi sắp mọc / đang mở
+  let bm = null, bmTick = null;
+  const BM_MAP = () => RULES.bloodMoon.map;
+  const onArena = () => !!(P && P.pos.map === BM_MAP());
+  function onBloodMoon(st) {
+    const was = bm && bm.open, known = bm != null, now = Date.now();
+    bm = Object.assign(st, { until: now + (st.left || 0), warnUntil: now + (st.warn || 0) });
+    if (known && st.open && !was && P) {
+      Celebrate.banner('🩸 Huyết Nguyệt đã mọc! Pháp Trường đồ sát tự do.');
+      Sound.play('rare');
+    }
+    Map_.setBloodMoon(st.open);
+    drawBloodChip();
+    if (P && npc && (npcData() || {}).role === 'blood_moon') render();
+    const ad = $('#adm-bm');
+    if (ad) ad.outerHTML = viewAdmBloodMoon();
+  }
+  function bmChipHtml() {
+    if (!bm || !P) return '';
+    const left = bm.open ? bm.until - Date.now() : bm.warnUntil - Date.now();
+    if (!bm.open && left <= 0) return '';
+    const mine = (bm.top.find((t) => t.uid === Net.userId) || {}).kills || 0;
+    const top = bm.top.slice(0, 3).map((t, i) => `${i + 1}. ${esc(t.name)}${t.bot ? ' 🤖' : ''} <b class="num">${t.kills}</b>`).join(' · ');
+    const go = !onArena() && !(P.battle && !P.battle.over) ? `<button class="btn small-btn danger" data-act="bm-go">⚔ Đến</button>` : '';
+    return `<div class="bm-chip${bm.open ? ' on' : ''}" role="status"><div class="grow"><div class="bm-line">${bm.open ? `🩸 <b>Huyết Nguyệt</b> còn <b class="num">${clock(left)}</b>${onArena() ? ` · bạn hạ <b class="num">${mine}</b>` : ''}` : `🌘 Huyết Nguyệt mọc sau <b class="num">${clock(left)}</b>`}</div>
+      ${bm.open && top && onArena() ? `<div class="small bm-top">${top}</div>` : ''}</div>${go}</div>`;
+  }
+  function drawBloodChip() {
+    let el = document.getElementById('bm-chip');
+    const html = bmChipHtml();
+    if (!html) { if (el) el.remove(); clearInterval(bmTick); bmTick = null; return; }
+    if (!el) { el = document.createElement('div'); el.id = 'bm-chip'; document.body.appendChild(el); }
+    // màn trận / NPC / Menu che kín: ẩn dải để không đè nút (vẫn đếm giờ)
+    el.hidden = !!(P.battle && !P.battle.over && !mapFight()) || tab !== 'map' || !!npc;
+    el.innerHTML = html;
+    if (!bmTick) bmTick = setInterval(drawBloodChip, 1000);
+  }
+  // Quan Giám Trảm / Bảng Huyết Nguyệt: luật, bảng xếp hạng đang diễn ra hoặc lần trước
+  function bloodMoonCard() {
+    const R = RULES.bloodMoon, st = bm || { open: false, top: [], last: [] };
+    const rows = st.open ? st.top : st.last || [];
+    const jew = R.jewels.map((id) => esc((ITEMS[id] || {}).name || id)).join(', ');
+    const prize = (i) => Object.entries(R.topRewards[i] || {}).map(([id, n]) => `${n} ${esc((ITEMS[id] || {}).name || id)}`).join(', ');
+    return `<div class="card"><h3>🩸 Huyết Nguyệt</h3>
+      <p class="small">${st.open ? `<b style="color:var(--bad)">Đang mọc, còn ${clock(st.until - Date.now())}.</b>` : st.daily ? `Trăng máu mọc lúc <b>${esc(st.daily)}</b> mỗi ngày (${R.minutes} phút).` : 'Trăng máu mọc khi Quản trị mở.'} Lúc trăng mọc, Pháp Trường được đồ sát tự do (cả người cùng tổ đội). Gục ở đây <b>không mất vàng, không tên đỏ</b>, về Làng và nghỉ ${R.relockS} giây mới vào lại được.</p>
+      <p class="small">Mỗi lần hạ người: ${Math.round(R.dropPct * 100)}% cơ hội rơi một viên ngọc (${jew}). Hạ người nhiều lần chuyển sinh hơn mình thì dễ rơi hơn, yếu hơn thì khó rơi; hạ đi hạ lại cùng một người thì cơ hội giảm dần. Hạ bot chỉ tính điểm.</p>
+      <p class="small">Trăng lặn: top 3 người hạ nhiều mạng nhất (ít nhất ${R.minKills}) nhận ngọc qua thư: ${[0, 1, 2].map((i) => `hạng ${i + 1}: ${prize(i)}`).join('; ')}.</p></div>
+      <div class="card"><h3>${st.open ? 'Bảng xếp hạng' : 'Lần trước'}</h3>${rows.length ? `<ol class="board">${rows.map((t, i) => `<li class="${t.uid === Net.userId ? 'me' : ''}"><span class="num rank">${i + 1}</span><span class="grow">${esc(t.name)}${t.bot ? ' 🤖' : ''}</span><span class="num">${t.kills} mạng</span></li>`).join('')}</ol>` : '<p class="small muted">Chưa có ai.</p>'}${st.open ? `<p class="small muted">Ngọc đã rơi: ${st.drops}.</p>` : ''}</div>`;
+  }
+
   // ---------- Golden Invasion (Phase 7) ----------
   let invasion = null; // { active, ends_at, maps: { id: 'run' | 'boss' | 'done' } }
   function onInvasion(st) {
@@ -1413,6 +1486,7 @@
   }
   function slayWhy(o) {
     if (RULES.slay.safe.includes(P.pos.map)) return 'Vùng an toàn';
+    if (onArena() && !(bm && bm.open)) return 'Chỉ khi Huyết Nguyệt mọc';
     if (P.level < RULES.slay.minLevel) return `Cần cấp ${RULES.slay.minLevel}`;
     if (o.level < RULES.slay.minLevel) return `Dưới cấp ${RULES.slay.minLevel}`;
     if (o.safe) return 'Đang được bảo vệ';
@@ -4085,6 +4159,7 @@
         }).join('')}</div></div>`);
     }
     if (n.role === 'dragon') sections.push(dragonCard());
+    if (n.role === 'blood_moon') sections.push(bloodMoonCard());
     if (n.role === 'kite') sections.push(kiteElderCard(), birdCard(), hacCard());
     // V5: nút quay về bản đồ ở trên cùng (như "‹ Menu"); vẫn giữ nút Rời đi ở cuối
     return `<div class="row menu-head"><button class="btn" data-act="npc-close">‹ Bản đồ</button><span class="grow"></span></div>
@@ -4881,6 +4956,7 @@
     if (act === 'pick-sel') { if (pickUi) pickUi.sel = +t.dataset.uid; render(); return; }
     if (act === 'pick-mob') { const m = pickUi && pickUi.mob; pickUi = null; render(); if (m) walkTo(m.x, m.y); return; }
     if (act === 'pick-slay') { pickSlay(+t.dataset.uid); return; }
+    if (act === 'bm-go') { travelTo(RULES.bloodMoon.map); return; }
     if (act === 'people-pin') { Map_.pin(+t.dataset.uid); goTab('map'); return; }
     if (act === 'players-mode') { setPref('hl-players', t.dataset.mode); render(); return; }
     if (act === 'skill-pick-open') { skillPick = (P.view.skillSet || []).slice(); render(); return; }
@@ -5184,6 +5260,7 @@
     Net.onWorldBoss(onWorldBoss);
     Net.onLake(onLake);
     Net.onSky(onSky);
+    Net.onBloodMoon(onBloodMoon);
     Net.onInvasion(onInvasion);
     Net.onNotice((msg) => {
       note(msg, /hết hạn|từ chối|hủy/.test(msg) ? 'info' : 'good');

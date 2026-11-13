@@ -1133,3 +1133,17 @@ div.item.people-row .people-main { display: flex; align-items: center; gap: 10px
 /* tab Thú cưng: Dắt theo / Đóng ấn xếp dọc, không tràn ngang trên điện thoại */
 .pet-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .pet-btns .btn { white-space: nowrap; }
+
+/* Huyết Nguyệt (DECISIONS "Pháp Trường Huyết Nguyệt"): dải nổi một dòng ở cuối bản đồ (trên thanh 🤖 ⚡) ở tab Bản đồ: đếm giờ, top 3
+   (khi đang ở Pháp Trường), nút đến Pháp Trường */
+#bm-chip { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 132px); z-index: 40;
+  width: max-content; max-width: min(460px, calc(100vw - 130px)); pointer-events: none; }
+#bm-chip[hidden] { display: none; }
+.bm-chip { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 10px; pointer-events: auto;
+  background: rgba(40, 10, 16, 0.9); border: 1px solid #7a2630; color: #f4dcd6; font-size: 0.82rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45); }
+.bm-chip.on { border-color: #d0403a; animation: bm-pulse 2.4s ease-in-out infinite; }
+.bm-chip .grow { min-width: 0; flex: 1; }
+.bm-chip .bm-line, .bm-chip .bm-top { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-chip .bm-top { color: #e8b8b0; }
+@keyframes bm-pulse { 50% { box-shadow: 0 0 18px rgba(220, 50, 40, 0.55); } }
+@media (prefers-reduced-motion: reduce) { .bm-chip.on { animation: none; } }

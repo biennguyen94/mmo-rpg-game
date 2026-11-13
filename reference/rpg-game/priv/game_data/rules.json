@@ -1249,6 +1249,30 @@
       "_reach_doc": "DECISIONS \"Tầm đánh theo cánh\": đánh quái và đồ sát trong tầm reach_by_wing[bậc cánh đang mặc] ô (Chebyshev; không cánh = bậc 0 = 1 ô: đứng sát bên; cánh cấp 1 / 2 / 3 = 3 / 5 / 8 ô), không cần chạy sát bên.",
       "_first_strike_doc": "DECISIONS \"Đồ sát: đòn mở màn\": lượt đầu của người tấn công gây sát thương × first_strike_mult (đối thủ kịp phòng bị), giảm lợi thế đi trước."
     },
+    "blood_moon": {
+      "_doc": "DECISIONS \"Pháp Trường Huyết Nguyệt\" (Phase 8): bản đồ map không quái, ngày thường là vùng an toàn. Quản trị mở (hoặc lịch hằng ngày daily_at \"HH:MM\", báo trước warn_min phút) thì đồ sát tự do minutes phút (quản trị chọn 1..minutes_max). Gục trong sự kiện: không mất vàng, không tên đỏ, về Làng, relock_s giây sau mới vào lại. Hạ người: drop_pct cơ hội rơi một viên ngẫu nhiên trong jewels, × (1 + rebirth_step × (chuyển sinh người gục − người hạ)) chặn [0, rebirth_max]; hạ lại cùng một người × repeat_decay mỗi lần. Hạ bot / bot hạ: chỉ tính điểm, không rơi ngọc. Hết giờ: top theo số mạng hạ, top_rewards[i] (ngọc) gửi thư cho người thật thứ i+1 (bot không nhận, người sau được đôn lên), cần ít nhất min_kills mạng.",
+      "map": "phap_truong",
+      "minutes": 10,
+      "minutes_max": 60,
+      "warn_min": 5,
+      "relock_s": 30,
+      "drop_pct": 0.05,
+      "rebirth_step": 0.2,
+      "rebirth_max": 2,
+      "repeat_decay": 0.5,
+      "jewels": ["jewel_bless", "jewel_soul", "jewel_chaos", "jewel_life"],
+      "top_rewards": [
+        {"jewel_bless": 3, "jewel_soul": 3, "jewel_chaos": 3, "jewel_life": 3},
+        {"jewel_bless": 2, "jewel_soul": 2, "jewel_chaos": 2, "jewel_life": 2},
+        {"jewel_bless": 1, "jewel_soul": 1, "jewel_chaos": 1, "jewel_life": 1}
+      ],
+      "min_kills": 1,
+      "top_n": 10,
+      "daily_at": null,
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "boss_rewards": {
       "first_kill_weights": [
         [

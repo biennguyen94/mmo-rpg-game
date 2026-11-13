@@ -2118,3 +2118,27 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Sửa (chỉ client): `BattleFx.run` tính thời điểm đòn cuối của lượt trúng theo loại đòn / hệ (bảng `IMPACT` khớp
   `EV.attack` / `EV.skill`), `kill` chờ tới đó + 160 ms, `loot` sau `kill` 330 ms như cũ. Bản đồ: quái chờ gục vẽ nguyên
   vẹn, bắt đầu tan ở max(0,35 giây, đòn cuối trúng + 160 ms), tối đa 2 giây.
+
+## Pháp Trường Huyết Nguyệt (Phase 8, 2026-11-13)
+- Người dùng yêu cầu trực tiếp (ngoài danh sách phase trong KB, coi là Phase 8), duyệt đề xuất: bản đồ đẹp rộng không quái;
+  sự kiện ~10 phút đồ sát người chơi; hạ người có xác suất rơi ngọc (mọi ngọc có sẵn: Ước Nguyện, Tâm Linh, Hỗn Nguyên,
+  Sinh Mệnh); bảng xếp hạng, top 3 được tặng ngọc; tab Quản trị mở sự kiện và gọi tất cả bot vào.
+- Bản đồ `phap_truong` (60×40, sinh bằng `scripts/gen_phap_truong.py`, seed cố định, kiểm mọi ô đi được nối với cổng):
+  rừng tre bao quanh, sân đấu tròn có vòng cột, 4 tượng rồng, đèn lồng, 4 miếu đổ ở 4 góc, suối cạn có cầu gỗ. Kiểu vẽ
+  `style: "arena"` (cây vẽ thành tre như `bamboo`, khói hương ở tượng rồng như `temple`); lúc sự kiện mở: trăng máu, màn đỏ,
+  sương đỏ, đèn lồng rực (`map.js bloodMoonFx`). Cổng ở mép dưới Làng (ô 12,16). NPC Quan Giám Trảm, Bảng Huyết Nguyệt
+  (vai `blood_moon`: luật, bảng xếp hạng đang diễn ra / lần trước). Không phải bản đồ `event` (đi tới bằng Chọn map được,
+  vào lại game vẫn đứng đó).
+- `HacLong.BloodMoon` (số ở `RULES.blood_moon`): ngày thường an toàn (`Slay.check`); mở (quản trị 1..`minutes_max` phút,
+  hoặc lịch `daily_at` HH:MM giờ Việt Nam, báo trước `warn_min` phút) thì đồ sát tự do kể cả cùng tổ đội. Gục: không mất
+  vàng (`Engine.lose` như bản đồ sự kiện), không tên đỏ / không bảo vệ / không chuyển vàng, về Làng, khóa vào lại
+  `relock_s` giây (cổng và Chọn map). Hạ người: +1 mạng; rơi ngọc `drop_pct` × (1 + `rebirth_step` × (CS người gục − CS người
+  hạ)) chặn [0, `rebirth_max`] × `repeat_decay`^(số lần đã hạ người đó), ngọc vào túi trong cùng transaction chốt trận. Bot
+  không rơi / không làm rơi ngọc (chống nuôi bot lấy ngọc), chỉ tính điểm. Hết giờ: xếp hạng theo mạng (bằng nhau ai đạt
+  trước đứng trên); `top_rewards` gửi thư cho người thật đứng đầu, bot bị bỏ qua và người sau đôn lên, cần ≥ `min_kills`.
+- Quyết định nhỏ: thưởng top (`top_rewards`): hạng 1 mỗi loại ngọc 3 viên, hạng 2: 2, hạng 3: 1 (người dùng chỉ nói "top 3
+  được tặng ngọc"). Bot gọi vào bỏ ngang trận đánh quái / lượt Tháp (Session.teleport kết thúc như bỏ chạy), không bỏ trận
+  đồ sát đang dở; bỏ nghỉ sau khi chết, chỉ chờ hết khóa. Trạng thái sự kiện chỉ trong bộ nhớ (như Long Vương); lịch hằng
+  ngày lưu ở dòng `admin_log` op `blood_moon_daily` mới nhất (như Động Bí Ẩn).
+- Client: dải 🩸 (`#bm-chip`) cuối bản đồ ở tab Bản đồ khi sắp mọc / đang mở (ẩn ở màn trận, NPC, Menu để không đè nút);
+  thẻ quản trị 🩸 Huyết Nguyệt. Test: `test/hac_long_web/blood_moon_test.exs`, e2e `e2e/bloodmoon.mjs`.
