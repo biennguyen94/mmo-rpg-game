@@ -2090,3 +2090,5 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Kết quả (seed 1, 10 lần chuyển sinh): DK chết 28 → 6, DW chết 261 → 31 (trước đây DW kẹt ở CS8–CS9: 154 + 78 lần
   chết, máu mất 52% / trận); số trận cả hành trình DW 15119 → 12651, DK 12891 → 12427. Máu mất mỗi trận thắng sau
   CS2 còn 5–11%: quái vùng chuyển sinh không còn nguy hiểm nhiều nhưng chưa tới mức vô hại.
+  Elf chết 39 → 18 (máu mất / trận sau CS5 còn 2–4%), MG chết 117 → 17 (trước kẹt CS8–CS9: 22 + 61 lần chết; sau
+  CS4 còn 5–7%). Không tăng công quái.
