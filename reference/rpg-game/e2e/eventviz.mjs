@@ -59,7 +59,8 @@ for (let i = 0; i < 20; i++) {
 }
 
 // ---------- F1: chiến bang ----------
-const tagA = 'A' + String(Date.now()).slice(-3), tagC = 'C' + String(Date.now()).slice(-3);
+// ký hiệu ngẫu nhiên (3 số cuối giờ hay trùng bang của lần chạy trước trong cùng database)
+const sfx = Math.random().toString(36).slice(2, 5).toUpperCase(), tagA = 'A' + sfx, tagC = 'C' + sfx;
 await send(A.page, { act: 'guild_create', name: 'Bang ' + tagA, tag: tagA });
 await send(C.page, { act: 'guild_create', name: 'Bang ' + tagC, tag: tagC });
 const war = await A.page.evaluate((t) => window.Net.guild('war_declare', { tag: t }).then(() => 'ok', (e) => e.msg), tagC);
@@ -97,6 +98,12 @@ await shot(A.page, 'eventviz-cs.png');
 // D3: chạm người bang khác trong Công Thành → đồ sát ngay (không mở menu)
 const cpos = await C.page.evaluate(() => window.__hl.player().pos);
 await A.page.waitForFunction(([x, y, n]) => window.MapView.playersNear(x, y).some((o) => o.name === n), [cpos.x, cpos.y, C.name], { timeout: 6000 }).catch(() => null);
+// người kia ở ngoài màn hình điện thoại (chỗ xuất hiện ngẫu nhiên): đi lại gần đến khi thấy rồi mới chạm
+const onScreen = () => A.page.evaluate(([x, y]) => { const s = window.MapView.screenOf(x, y); return s.x > 20 && s.x < innerWidth - 20 && s.y > 80 && s.y < innerHeight - 120; }, [cpos.x, cpos.y]);
+if (!(await onScreen())) {
+  await A.page.evaluate(([x, y]) => window.__hl.walkTo(x, y), [cpos.x, cpos.y]);
+  for (let i = 0; i < 60 && !(await onScreen()); i++) await A.page.waitForTimeout(250);
+}
 const sc = await A.page.evaluate(([x, y]) => window.MapView.screenOf(x, y), [cpos.x, cpos.y]);
 await A.page.mouse.click(sc.x, sc.y);
 // tầm đánh theo cánh (không cánh: sát bên): ở xa thì nhân vật chạy lại gần rồi mới đánh

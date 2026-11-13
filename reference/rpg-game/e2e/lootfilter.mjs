@@ -29,13 +29,19 @@ await shot(page, 'lootfilter.png');
 const adm = await adminSession(browser);
 await adm.admin('set_level', name, { level: 20 });
 await adm.admin('add_gold', name, { amount: 100000 });
+// đủ máu, thủ để không gục giữa chừng (gục thì về Làng, phải đi lại)
+await adm.admin('add_stats', name, { str: 100, vit: 200, agi: 60 });
+await adm.admin('give_item', name, { id: 'potion_m', count: 30 });
 await page.waitForFunction(() => window.__hl.player().level === 20);
 await page.click('#tabs [data-tab="map"]');
 await travel(page, 'village');
 await travel(page, 'forest_1');
 await travel(page, 'forest_2');
-async function huntDrop(tries = 80) {
+async function huntDrop(tries = 100) {
   for (let i = 0; i < tries; i++) {
+    if ((await player(page)).pos.map !== 'forest_2') {
+      for (const m of ['village', 'forest_1', 'forest_2']) if ((await player(page)).pos.map !== 'forest_2') await travel(page, m).catch(() => null);
+    }
     if (!(await engage(page))) continue;
     const r = await fight(page);
     const p = await player(page);
