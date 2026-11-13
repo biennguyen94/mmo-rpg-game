@@ -121,7 +121,16 @@ defmodule HacLong.Bots.BrainHacTest do
       refute Brain.hac_job(maxed(player(%{pets: [@lv]}), @lv))
 
       %{at: {x, y}} = Enum.find(HacLong.World.Maps.get("village").npcs, &(&1.role == "chaos"))
-      p = %{p | pos: %{map: "village", x: x, y: y + 1}, inv: %{"potion_l" => 50, "mana_l" => 50}}
+
+      # dưới cấp tối đa: không đi chuyển sinh trước; hết vàng: không mua vé sự kiện đang mở (tùy giờ chạy test)
+      p = %{
+        p
+        | level: 45,
+          gold: 0,
+          pos: %{map: "village", x: x, y: y + 1},
+          inv: %{"potion_l" => 50, "mana_l" => 50}
+      }
+
       assert %{"act" => "hac_combine"} = Brain.decide(p, nil)
 
       {%{ok: true}, p2} = HacLong.Game.DragonEgg.combine(p)

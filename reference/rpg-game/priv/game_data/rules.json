@@ -548,7 +548,7 @@
       "mult_per_realm": 0.28,
       "atk_mult_per_realm": 0.25,
       "xp_mult_per_realm": 0.2,
-      "boss_mult": 1.8,
+      "boss_mult": 1.8, "lord_atk_mult": 1.5, "_lord_atk_doc": "DECISIONS \"Quái vùng chuyển sinh: bớt máu, đánh đau hơn\": công chúa tể × lord_atk_mult (máu, thủ, kinh nghiệm vẫn × boss_mult) — giữ tỉ lệ thắng chúa tể gần như trước khi tăng atk_mult_per_realm (scripts/pvp/lords.exs).",
       "maps_per_realm": 5,
       "depth_step": 0.2,
       "loot_per_realm": 0.1,

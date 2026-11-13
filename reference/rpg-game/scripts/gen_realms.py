@@ -2,7 +2,7 @@
 
 - Vùng k (1..10) cần chuyển sinh ≥ k và cấp ≥ RULES.realms.min_level; quái hiện cấp 50+10k−8 … 50+10k (chúa tể).
 - Sức mạnh theo phương án (a) anh chốt: giữ cấp tối đa 50, chỉ số quái tính ở cấp `stat_level` 50 × `mult`
-  (1 + mult_per_realm × k; chúa tể × boss_mult); riêng công nhân (1 + atk_mult_per_realm × k) (× boss_mult); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult). Rơi đồ quý hơn theo `rich` = k (RULES.realms.loot_per_realm).
+  (1 + mult_per_realm × k; chúa tể × boss_mult); riêng công nhân (1 + atk_mult_per_realm × k) (chúa tể × lord_atk_mult); kinh nghiệm tính ở stat_level × (1 + xp_mult_per_realm × k) (× boss_mult). Rơi đồ quý hơn theo `rich` = k (RULES.realms.loot_per_realm).
 - Hình quái: tô lại từ hình CC0 sẵn có (e2e/tint_sprites.mjs đọc danh sách REALM_TINTS trong realms.json).
 - Cổng: vùng k trái → vùng k−1 (vùng 1 → Làng, một chiều), phải → vùng k+1. Mỗi vùng một Đài Phúc Lành.
 - Mỗi vùng `RULES.realms.maps_per_realm` bản đồ (DECISIONS "Vùng chuyển sinh 5 bản đồ"): bản đồ 1 `realm_KK` là cửa vào
@@ -202,7 +202,7 @@ def main():
                 # chúa tể: sức vùng k (không theo bản đồ), đứng ở bản đồ cuối của vùng
                 mult, atk, xpm = (round(1 + RULES[f] * k, 3) for f in ("mult_per_realm", "atk_mult_per_realm", "xp_mult_per_realm"))
                 mons.append({"id": f"r{k}_{boss[0]}", "name": boss[1], "level": top, "stat_level": RULES["stat_level"],
-                             "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["boss_mult"], 3), "xp_mult": round(xpm * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
+                             "mult": round(mult * RULES["boss_mult"], 3), "atk_mult": round(atk * RULES["lord_atk_mult"], 3), "xp_mult": round(xpm * RULES["boss_mult"], 3), "element": el, "rich": k + 2,
                              "jewel_chance": round((RULES["jewel_base"] + RULES["jewel_per_realm"] * k) * 5, 4), "lord": True})
                 tints.append([f"monsters/{boss[0]}", f"monsters/{mons[-1]['id']}", flt])
             monsters += mons

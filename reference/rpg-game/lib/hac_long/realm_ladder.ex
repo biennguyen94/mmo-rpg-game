@@ -172,6 +172,9 @@ defmodule HacLong.RealmLadder do
     lord = spec[:lord] == true
     lk = if lord, do: realm + delta, else: ke
     bm = if lord, do: r.boss_mult, else: 1
+
+    # công chúa tể nhân riêng (`lord_atk_mult`, DECISIONS "Quái vùng chuyển sinh: bớt máu, đánh đau hơn")
+    ba = if lord, do: r.lord_atk_mult, else: 1
     margin = r.ladder.underdog_margin
     atk_k = if is_integer(cs) and cs + margin < lk, do: max(cs + margin, realm * 1.0), else: lk
 
@@ -181,7 +184,7 @@ defmodule HacLong.RealmLadder do
       Map.merge(spec, %{
         level: spec.level + 10 * delta,
         mult: Float.round(curve(lk, :hp, r) * bm, 3),
-        atk_mult: Float.round(curve(atk_k, :atk, r) * bm, 3),
+        atk_mult: Float.round(curve(atk_k, :atk, r) * ba, 3),
         xp_mult: Float.round(curve(lk, :xp, r) * bm, 3),
         rich: if(lord, do: spec.rich + delta, else: ke),
         jewel_chance:

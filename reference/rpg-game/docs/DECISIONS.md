@@ -2261,3 +2261,8 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
   (`hp_after` giữ 0.025). Đồ tối đa CS 10 → 30: ~5,2 đòn thường, ~4,9% máu / đòn quái (trước ~7 đòn, ~3%), lệch ≤ 1%.
 - Đo lại bằng nhân vật chơi thật (vùng 1 / 3 / 5 / 7 / 10): quái thường 5,6 / 7,6 / 7,8 / 9,8 / 11,4 đòn, mỗi đòn quái mất
   16,0 / 17,8 / 18,4 / 18,5 / 17,7% máu (trước 6,7 → 16,2 đòn, ~14%); chúa tể 9,7 → 23,3 đòn, 29–35% máu / đòn.
+- **Chúa tể** (2026-11-14, anh cho tự chỉnh): công × `boss_mult` 1,8 làm chúa tể khó hẳn (`scripts/pvp/lords.exs`, đồ theo hồ sơ
+  mốc: Phù Thủy thắng vùng 7 / 9 từ 95% còn 55% / 45%). Thêm `RULES.realms.lord_atk_mult` **1.5** (công chúa tể; máu, thủ, kinh
+  nghiệm vẫn × `boss_mult`), cả `gen_realms.py` và `RealmLadder.adjust/5`. Tỉ lệ thắng (dk / dw / elf / mg), trước → nay:
+  vùng 1 80/70/75/90 → 95/80/90/90; vùng 3 80/30/90/85 → 85/45/95/90; vùng 5 100 → 100; vùng 7 100/95/100/85 → 100/85/100/90;
+  vùng 9 95/95/100/100 → 100/80/100/85. Trận ngắn hơn (vùng 9: 9–12 lượt → 5–7).
