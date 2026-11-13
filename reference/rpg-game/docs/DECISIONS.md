@@ -2250,3 +2250,12 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
   - có Long Vương / Chim Lạc chưa cấp tối đa → dắt con đó thay con mạnh nhất (Long Vương trước, `Brain.hac_lead/1`), cho ăn
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
+
+## Quái vùng chuyển sinh: bớt máu, đánh đau hơn (2026-11-13, anh duyệt phương án B)
+Đo bằng nhân vật chơi thật (`HacLong.Game.Journey`, 4 lớp) đánh vùng cùng số chuyển sinh: số đòn để hạ tăng 6,7 → 16,2 (vùng 1 →
+10) mà mỗi đòn quái chỉ mất ~14% máu ở mọi vùng (quái ×k ở Quảng Trường: ~26–30%) — máu tăng 40% / vùng, công chỉ 15%.
+Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh đau hơn chút vì quái vùng gốc yếu hơn:
+- `RULES.realms.mult_per_realm` 0.4 → **0.28**, `atk_mult_per_realm` 0.15 → **0.25** (chạy lại `scripts/gen_realms.py`; bản đồ
+  không đổi, chỉ `realms.json`). Vùng 10: máu ×3,8 (trước ×5), công ×3,5 (trước ×2,5); chúa tể vẫn × `boss_mult`.
+- Thang vùng sau mức 10: dò lại bằng `scripts/realm_ladder/tune.exs` (SEARCH=1) → `ladder.atk_after` 0.0375 → **0.05**
+  (`hp_after` giữ 0.025). Đồ tối đa CS 10 → 30: ~5,2 đòn thường, ~4,9% máu / đòn quái (trước ~7 đòn, ~3%), lệch ≤ 1%.
