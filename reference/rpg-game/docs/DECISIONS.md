@@ -2084,5 +2084,9 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
 - Chạy lại cân bằng PvP (`scripts/pvp/tune.exs`): trước thay đổi bảng đã lệch 16–38% từ CS1, sau +8% máu Elf thắng
   91–99%. `TUNE=1 WRITE=1` cho cả đồ sát và Đấu trường (`PVP=arena`); chỉnh tay đồ sát CS2 (MG 0.77) và CS6 (Elf 1.05).
   Kết quả: đồ sát lệch ≤10% mọi mốc, Đấu trường ≤10% mọi mốc (test `--only balance` cho phép 15%).
-- Mô phỏng hành trình (`mix hac_long.journey`) 10 và 3 lần chuyển sinh đều quá 2 giờ trên máy 4 nhân → chưa có số so
-  sánh trước/sau cho phần đánh quái.
+- Mô phỏng hành trình (`mix hac_long.journey`) bị treo từ Phase 4 ("chuyển sinh tối đa mỗi ngày"): lần thứ 3 bị từ
+  chối, vòng lặp gọi chuyển sinh mãi không qua trận nào. Sửa: hành trình coi mỗi lần chuyển sinh là ngày mới
+  (`daily.rebirths` về 0), chuyển sinh thất bại thì dừng hẳn. 10 lần chuyển sinh × 2 lớp × trước/sau: ~5 phút.
+- Kết quả (seed 1, 10 lần chuyển sinh): DK chết 28 → 6, DW chết 261 → 31 (trước đây DW kẹt ở CS8–CS9: 154 + 78 lần
+  chết, máu mất 52% / trận); số trận cả hành trình DW 15119 → 12651, DK 12891 → 12427. Máu mất mỗi trận thắng sau
+  CS2 còn 5–11%: quái vùng chuyển sinh không còn nguy hiểm nhiều nhưng chưa tới mức vô hại.

@@ -188,10 +188,20 @@ defmodule HacLong.Game.Journey do
   defp rebirth(p, st) do
     st = snapshot(st, p, "Trước chuyển sinh #{rb(p) + 1}")
     st = if st.opts.players, do: %{st | tiers: Map.put(st.tiers, rb(p), p)}, else: st
-    {r, p} = Engine.rebirth(p)
-    st = event(st, p, if(r.ok, do: r.msg, else: "Không chuyển sinh được: #{r.msg}"))
-    {p, %{st | gear_key: nil, ban: %{}, hist: %{}}}
+
+    # hành trình dài nhiều ngày: giới hạn chuyển sinh mỗi ngày (`character.rebirth_per_day`) coi như đã sang ngày mới
+    {r, p} = p |> new_rebirth_day() |> Engine.rebirth()
+
+    if r.ok do
+      {p, %{event(st, p, r.msg) | gear_key: nil, ban: %{}, hist: %{}}}
+    else
+      # không chuyển sinh được thì dừng hẳn, không lặp mãi ở cấp tối đa
+      {p, %{event(st, p, "Dừng: không chuyển sinh được: #{r.msg}") | done: true}}
+    end
   end
+
+  defp new_rebirth_day(%{daily: %{} = d} = p), do: %{p | daily: Map.put(d, :rebirths, 0)}
+  defp new_rebirth_day(p), do: p
 
   # ---------- Hồi máu ----------
 
