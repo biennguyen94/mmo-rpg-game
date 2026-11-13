@@ -2237,3 +2237,16 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   `realm_target/2` ở cấp tối đa: (1) cần hạ chúa tể → các bản đồ vùng đó; vùng đó đang tránh (gục nhiều, thang dời quá mạnh)
   thì luyện vùng hợp sức; (2) không chuyển sinh được lúc này (tới trần, hết lượt hôm nay) hoặc đã quá 10 → vùng hợp sức; vùng
   hợp sức đang tránh thì lùi vùng thấp hơn (không về bản đồ thường như trước).
+
+## Bot ưu tiên rèn đồ, săn Hắc Long (2026-11-13, anh yêu cầu)
+Trước đây bước rèn (`Brain.forge_job/2`) nằm sau chuyển sinh, câu cá, sự kiện, bán đồ, thú nuôi nên bot ít khi rèn; bot chỉ
+săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều chỉ trong lượt ra đồi) và không bao giờ ghép Hắc Long.
+- **Rèn trước**: `forge_job` chạy ngay sau mua bình / hồi máu, trước chuyển sinh và mọi sự kiện (có ngọc, dư vàng quá
+  `gold_keep_per_level` × cấp là về Làng ép). Từ `bots.forge.chaos_from_rebirths` (5) lần chuyển sinh, bot nào cũng ép
+  +10 / +11 ở Máy Hỗn Nguyên (vẫn cần dư `spare` viên mỗi loại ngọc); dưới mốc giữ luật bot liều như cũ.
+- **Săn Hắc Long** (`RULES.bots.hac`): bot từ `min_rebirths` (1) lần chuyển sinh, chưa có Hắc Long / Hắc Long Chân Thân:
+  - Long Vương nổi → ra Biển Long Vương thả trúng ô Ngài (như bot săn rồng); Chim Lạc lượn → ra Đồi Sáo Diều thả trúng ô
+    chim (`Brain.bird_chasing?/2`), không chờ lượt ra hồ / ra đồi;
+  - có Long Vương / Chim Lạc chưa cấp tối đa → dắt con đó thay con mạnh nhất (Long Vương trước, `Brain.hac_lead/1`), cho ăn
+    khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
+  - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).

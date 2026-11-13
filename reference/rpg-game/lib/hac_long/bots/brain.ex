@@ -19,6 +19,8 @@ defmodule HacLong.Bots.Brain do
   11. Cấp tối đa, đủ điều kiện → về Làng chuyển sinh (Trưởng Làng); cần hạ chúa tể vùng chuyển sinh trước thì đi vùng đó.
   12. Rảnh mà dư vàng, có ngọc → về Làng ép đồ / thêm dòng / ghép, nâng cánh (`forge_job/2`, DECISIONS "Bot ép đồ,
       chuyển sinh"). Đang chờ ghép cánh (cánh đã tháo ra túi) thì làm trước cả bước mặc đồ.
+      Rèn đi trước chuyển sinh và mọi sự kiện; từ `forge.chaos_from_rebirths` lần chuyển sinh bot nào cũng ép +10 / +11
+      (DECISIONS "Bot ưu tiên rèn đồ, săn Hắc Long").
   13. Túi trang bị gần đầy → về Làng bán đồ thừa ở Thợ Rèn (`sell_job/1`); cho thú ăn mỗi vài phút (`opts.feed_due`).
   14. Gục nhiều lần ở một chỗ (phòng trùm đánh không lại, bản đồ quá mạnh) → tạm tránh chỗ đó (`opts.avoid`, tiến trình
       bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
@@ -31,6 +33,10 @@ defmodule HacLong.Bots.Brain do
   15. Câu cá (DECISIONS "Bot câu cá, bot try hard"): Long Vương nổi thì bot săn rồng (`chaser?/1`, chưa có Ngài) bỏ việc
       rảnh, kể cả đang leo Tháp Vô Tận, ra Biển Long Vương thả trúng ô Ngài; tới lượt ra hồ (`opts.fishing`) thì câu ở ô
       Đàn Cá Vàng hoặc ô nước cạnh bên, câu đủ cá thì nhận việc Ông Lão. Bot try hard (`tryhard?/1`) chơi dồn dập hơn.
+
+  17. Săn Hắc Long (`hac_seeker?/1`, `RULES.bots.hac`): từ `min_rebirths` lần chuyển sinh, chưa có Hắc Long → Long Vương nổi
+      hay Chim Lạc lượn đều đi săn; có con nào chưa cấp tối đa thì dắt con đó (`hac_lead/1`), cho ăn khi vàng dư >
+      `hac.feed_mult` × giá; đủ hai con cấp tối đa thì về Lão Hỗn Nguyên ghép (`hac_job/1`).
 
   Vừa gục (số lần chết tăng) thì nghỉ ngẫu nhiên `RULES.bots.rest_after_death_s` giây ([ít nhất, nhiều nhất]) trước
   khi đi luyện tiếp (`rest_until/4`, `resting?/3`); không thì bot dịch chuyển về chỗ cũ ngay sau vài giây, trông như
@@ -125,6 +131,10 @@ defmodule HacLong.Bots.Brain do
       p.hp < d.maxHp * 0.45 ->
         heal(p, d, snap)
 
+      # rèn đồ đi trước chuyển sinh, sự kiện (DECISIONS "Bot ưu tiên rèn đồ, săn Hắc Long"): có ngọc, dư vàng là ép
+      job = forge_job(p, opts) ->
+        do_job(p, job, snap)
+
       rebirth_ready?(p) ->
         at_village_npc(p, "quests", snap, fn -> %{"act" => "rebirth"} end)
 
@@ -143,10 +153,10 @@ defmodule HacLong.Bots.Brain do
       job = sell_job(p) ->
         do_job(p, job, snap)
 
-      job = pet_job(p, opts) ->
+      job = hac_job(p) ->
         do_job(p, job, snap)
 
-      job = forge_job(p, opts) ->
+      job = pet_job(p, opts) ->
         do_job(p, job, snap)
 
       cmd = fish_job(p, snap, opts, :idle) ->
@@ -318,9 +328,13 @@ defmodule HacLong.Bots.Brain do
   vào hồ thì nil.
   """
   def fish_job(p, snap, opts, mode) do
-    if mode == :idle and opts[:fishing] == true and kiter?(opts[:seed]),
-      do: kite_job(p, snap, opts),
-      else: lake_job(p, snap, opts, mode)
+    cond do
+      mode == :idle and opts[:fishing] == true and kiter?(opts[:seed]) -> kite_job(p, snap, opts)
+      cmd = lake_job(p, snap, opts, mode) -> cmd
+      # Chim Lạc lượn: bot săn Hắc Long ra đồi thả trúng ô chim (`kite_job/3` nhắm Chim Lạc khi chưa có)
+      mode == :chase and bird_chasing?(p, opts) -> kite_job(p, snap, opts)
+      true -> nil
+    end
   end
 
   @doc """
@@ -437,8 +451,16 @@ defmodule HacLong.Bots.Brain do
   def chasing?(p, opts) do
     lake = Maps.get(HacLong.LakeEvent.map_id())
 
-    opts[:dragon] != nil and chaser?(opts[:seed]) and lake != nil and
+    opts[:dragon] != nil and (chaser?(opts[:seed]) or hac_seeker?(p)) and lake != nil and
       p.level >= (lake[:min_level] || 1) and @dragon_pet not in (Map.get(p, :pets) || [])
+  end
+
+  @doc "Chim Lạc đang lượn (`opts.bird`), bot săn Hắc Long (`hac_seeker?/1`) chưa có Chim Lạc, đủ cấp lên Đồi Sáo Diều."
+  def bird_chasing?(p, opts) do
+    hill = Maps.get(HacLong.Game.Kite.map_id())
+
+    opts[:bird] != nil and hac_seeker?(p) and hill != nil and p.level >= (hill[:min_level] || 1) and
+      HacLong.Game.Kite.rules().bird.pet not in (Map.get(p, :pets) || [])
   end
 
   defp elder_ready?(p) do
@@ -568,7 +590,9 @@ defmodule HacLong.Bots.Brain do
     do: Enum.all?(items, fn {m, n} -> Map.get(p.inv, to_string(m), 0) >= n + extra end)
 
   defp upgrade_job(p, spare, opts) do
-    daring = rem(opts[:seed] || 1, @forge.daring_every) == 0 or tryhard?(opts[:seed] || 1)
+    daring =
+      rem(opts[:seed] || 1, @forge.daring_every) == 0 or tryhard?(opts[:seed] || 1) or
+        (Map.get(p, :rebirths) || 0) >= @forge.chaos_from_rebirths
 
     p.equip
     |> Enum.flat_map(fn {slot, id} ->
@@ -731,6 +755,31 @@ defmodule HacLong.Bots.Brain do
     end
   end
 
+  # ---------- Săn Hắc Long (DECISIONS "Bot ưu tiên rèn đồ, săn Hắc Long") ----------
+  @hac Data.rules().bots.hac
+  @hac_pets HacLong.Game.DragonEgg.pets()
+  @hac_parts [@dragon_pet, HacLong.Game.Kite.rules().bird.pet]
+
+  @doc "Bot săn Hắc Long: từ `bots.hac.min_rebirths` lần chuyển sinh, chưa có Hắc Long / Hắc Long Chân Thân."
+  def hac_seeker?(p) do
+    (Map.get(p, :rebirths) || 0) >= @hac.min_rebirths and
+      not Enum.any?(@hac_pets, &(&1 in (Map.get(p, :pets) || [])))
+  end
+
+  @doc "Thú bot săn Hắc Long cần dắt để lên cấp: Long Vương rồi Chim Lạc, con đã có mà chưa cấp tối đa; nil nếu không."
+  def hac_lead(p) do
+    if hac_seeker?(p) do
+      owned = Map.get(p, :pets) || []
+      Enum.find(@hac_parts, &(&1 in owned and Pets.level(p, &1) < Pets.max_level(&1)))
+    end
+  end
+
+  @doc "Đủ Long Vương + Chim Lạc cấp tối đa: về Lão Hỗn Nguyên ghép Hắc Long (`{vai NPC, lệnh}` hoặc nil)."
+  def hac_job(p) do
+    if hac_seeker?(p) and HacLong.Game.DragonEgg.combine_missing(p) == [],
+      do: {"chaos", %{"act" => "hac_combine"}}
+  end
+
   @doc """
   Thú cưng như `HacLong.Game.Journey`: thú mạnh hơn hẳn (`Pets.power/3` > `play.pet_better` × thú mạnh nhất đang có)
   mà giá ≤ `play.pet_budget` vàng dư → mua ở cửa hàng / thuần phục; dắt con mạnh nhất; vàng dư > `play.feed_mult` × giá
@@ -760,16 +809,21 @@ defmodule HacLong.Bots.Brain do
 
     feed = Pets.feed_cost(p)
 
+    # săn Hắc Long: dắt Long Vương / Chim Lạc chưa cấp tối đa thay con mạnh nhất, cho ăn rộng tay hơn
+    lead = hac_lead(p)
+    pick = lead || best
+    mult = if lead != nil and lead == p[:pet], do: @hac.feed_mult, else: @play.feed_mult
+
     cond do
       match?({_, _, pw} when pw > cur * @play.pet_better, cand) ->
         {act, id, _} = cand
         {"pets", %{"act" => act, "id" => id}}
 
-      best && best != p[:pet] ->
-        {nil, %{"act" => "pet_choose", "id" => best}}
+      pick && pick != p[:pet] ->
+        {nil, %{"act" => "pet_choose", "id" => pick}}
 
       # cho ăn từ từ như người thật: tiến trình bot hẹn giờ (`feed_due`, `play.feed_every_min`)
-      feed && spare > feed * @play.feed_mult && Map.get(opts, :feed_due, true) ->
+      feed && spare > feed * mult && Map.get(opts, :feed_due, true) ->
         {"pets", %{"act" => "pet_feed"}}
 
       true ->
