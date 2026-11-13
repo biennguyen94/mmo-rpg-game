@@ -2166,3 +2166,19 @@ Lấy Sét làm chuẩn (nhiều lớp, chớp màn, rung), làm lại các hệ
   Ai gây ≥ `join_min_share` (1%) máu tối đa nhận thêm `join_items` (1 Ngọc Ước Nguyện), ngoài vàng / kinh nghiệm theo phần
   sát thương và quà top 3 như cũ.
 - Không làm B (mốc "Ác mộng" cho người đồ tối đa).
+
+## Hiệu ứng kỹ năng trên mặt đất (2026-11-13)
+- Người dùng duyệt đề xuất: cả 3 lớp, ở cả màn trận và bản đồ, dấu để lâu ở Pháp Trường / Hỗn Chiến Thành. Chỉ client.
+- `GroundFx` (fx.js) vẽ dẹt theo phối cảnh mặt đất: **cast** vòng niệm chú (vòng ký tự + sao sáu cánh xoay) dưới người ra
+  chiêu lúc phát; **wave** hai vòng sóng + bụi loang từ chân mục tiêu lúc trúng; **mark** dấu theo hệ, hiện 1,8 giây rồi mờ:
+  lửa cháy sém + than + lửa nhỏ, băng mảng băng + vết rạn + gai, sét vết cháy ngoằn ngoèo + tia điện, gió vệt xoáy + lá,
+  đất vết nứt + đá vụn bật lên, bóng tối vũng tím viền gợn + xúc tu, ánh sáng hai vòng + ký tự vàng; đòn thường: vết chém
+  (Kiếm Sĩ, Đấu Sĩ), mũi tên cắm đất (Tiên Nữ), vết cháy nhỏ (Pháp Sư). Chí mạng: dấu to ×1,4. Kỹ năng quái theo hệ trúng
+  mình: sóng + dấu dưới chân mình (bản đồ). Thời điểm trúng theo bảng `IMPACT` đã có.
+- Màn trận: canvas `.stage canvas.bfx-ground` chèn đầu sân đấu (trên nền tối, dưới hình quái và chữ), chèn lại khi sân vẽ lại
+  mỗi lượt; cỡ dấu theo chiều rộng sân (1/8, 30–72px) vì hình quái có khi chỉ 32px; nền sân tối nên dấu cộng sáng thêm một lớp
+  màu hệ (`dark`). Dưới chân mình (hàng `.me`) chỉ vòng niệm chú / sóng trên canvas phủ. Bản đồ (⚡): `MapView.groundMark`
+  lưu dấu theo tọa độ thế giới, vẽ sau ô đất trước nhân vật; Pháp Trường (`style: arena`) / Hỗn Chiến Thành dấu 5 giây.
+  Tối đa 14 dấu. Tắt "Hiệu ứng động" / giảm chuyển động: không vẽ (như hiệu ứng trận).
+- e2e `e2e/groundfx.mjs`: mặt đất sân có vẽ lúc trúng và còn dấu sau ~1,3 giây (6 kỹ năng 3 lớp), ⚡ bản đồ có dấu, bảng mẫu
+  8 kiểu (ảnh).

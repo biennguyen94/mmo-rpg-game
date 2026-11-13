@@ -394,6 +394,22 @@
   // Cài đặt hiển thị (V1): 'auto' theo giờ, 'day' luôn sáng, 'night' luôn tối; chỉ đổi độ tối, không đổi luật
   const theme = () => { try { return localStorage.getItem('hl-theme') || 'auto'; } catch (e) { return 'auto'; } };
   const shade = () => ({ day: 'day', night: 'night' }[theme()] || world.phase);
+  // ---------- Hiệu ứng kỹ năng trên mặt đất (DECISIONS "Hiệu ứng kỹ năng trên mặt đất") ----------
+  // dấu theo tọa độ thế giới (px); Pháp Trường / Hỗn Chiến Thành: dấu để lâu (`GROUND_LONG`) cho mặt đất loang lổ dấu chiến
+  const groundMarks = [];
+  const GROUND_LONG = 5000;
+  function groundMark(who, kind, el, o = {}) {
+    if (!window.GroundFx || !spots) return;
+    const p = who === 'me' ? spots.me : fight && spots.mpos[fight.id];
+    if (!p) return;
+    const P = getPlayer(), m = P && cur(P);
+    const long = kind === 'mark' && m && (m.style === 'arena' || m.event === 'chaos_castle');
+    const r = TILE * (kind === 'cast' ? 0.62 : kind === 'wave' ? 0.5 : 0.72);
+    groundMarks.push(window.GroundFx.make(kind, el, p[0] + lastCam[0], p[1] + lastCam[1] + TILE * 0.88, r, long ? { ...o, life: GROUND_LONG } : o));
+    if (groundMarks.length > 14) groundMarks.splice(0, groundMarks.length - 14);
+    draw();
+  }
+
   // ---------- Huyết Nguyệt (Pháp Trường) ----------
   let bloodOn = false;
   function bloodMoonFx(now, fx, lanterns, cx, cy, m) {
@@ -906,6 +922,8 @@
     }
 
     groundFx(m, x0, y0, x1, y1, cx, cy, now, fx);
+    // hiệu ứng kỹ năng trên mặt đất (fx.js GroundFx): sau ô đất, trước nhân vật / quái
+    if (groundMarks.length && window.GroundFx) window.GroundFx.paint(ctx, groundMarks, now, cx, cy);
     if (m.kite) clouds(now, m, cx, cy, fx, x0, y0, x1, y1);
     if (tufts.length) grassFx(now, tufts);
     for (const [ix, iy] of incense) {
@@ -2689,6 +2707,9 @@
     mobNames,
     setUser(id) { userId = id; },
     setBoss(st) { boss = st; draw(); },
+    groundMark,
+    // e2e: số dấu mặt đất đang có
+    groundCount: () => groundMarks.length,
     // Huyết Nguyệt (ui.js onBloodMoon): đang mọc thì Pháp Trường phủ trăng máu
     setBloodMoon(on) { if (bloodOn !== !!on) { bloodOn = !!on; draw(); } },
     // l, s: { tile: [x, y], until } (ui.js onLake) hoặc null

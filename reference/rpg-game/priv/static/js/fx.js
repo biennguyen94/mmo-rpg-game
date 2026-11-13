@@ -19,6 +19,269 @@
  * `BattleFx.ambient({ mon, me, aura, wing })`: hiệu ứng nền khi đang ở màn trận (gọi sau mỗi lần vẽ, null để tắt):
  *   trạng thái (độc bong bóng xanh, bỏng tàn lửa, chảy máu giọt đỏ, choáng sao xoay), hào quang đồ +7/+9/+11, hạt cánh.
  * Tắt hiệu ứng (`MapView.fxOn`, "giảm chuyển động") thì không phát gì. */
+/* Hiệu ứng trên mặt đất (DECISIONS "Hiệu ứng kỹ năng trên mặt đất"): vẽ dẹt theo phối cảnh mặt đất, dùng chung cho màn
+ * trận (canvas "mặt đất" trong sân đấu, dưới hình quái) và bản đồ (map.js vẽ sau ô đất, trước nhân vật).
+ *   cast  vòng niệm chú dưới chân người ra chiêu (xoay, sáng dần)
+ *   wave  sóng chạm đất loang ra từ chân mục tiêu, bụi / hạt văng sát đất
+ *   mark  dấu để lại theo hệ, mờ dần: lửa cháy sém + than + lửa nhỏ, băng mảng băng + gai, sét vết cháy ngoằn ngoèo +
+ *         tia điện, gió vệt xoáy + lá, đất vết nứt + đá vụn bật lên, bóng tối vũng tím + xúc tu trồi lên, ánh sáng vòng
+ *         ký tự vàng; đòn thường: vết chém (Kiếm Sĩ, Đấu Sĩ), mũi tên cắm đất (Tiên Nữ), vết cháy nhỏ (Pháp Sư)
+ * GroundFx.make(kind, el, x, y, r, { crit, cls, delay, life }) → dấu; GroundFx.draw(ctx, dấu, now, ox, oy) → false khi hết. */
+window.GroundFx = (function () {
+  const COL = {
+    fire: ['#fff3b0', '#ffb03d', '#ff4a1f'], lightning: ['#ffffff', '#cfeaff', '#7fb8ff'], wind: ['#f0fff8', '#a8ecd0', '#5fc9a0'],
+    earth: ['#f0d29a', '#b07f40', '#6b4a22'], dark: ['#e6ccff', '#9a5ce0', '#46207a'], light: ['#fffbe6', '#ffe79a', '#ffc93d'],
+    water: ['#f0ffff', '#9fe0ff', '#4aa8e8'], ice: ['#f0ffff', '#bfefff', '#6cc4f0'], poison: ['#e8ffc0', '#9ad855', '#4f8a2a'],
+    none: ['#ffffff', '#ffe08a', '#c9a24a'],
+  };
+  const LIFE = { cast: 650, wave: 560, mark: 1800 };
+  const FLAT = 0.42; // mặt đất nhìn nghiêng: dẹt theo chiều dọc
+  const TAU = Math.PI * 2;
+  // số giả ngẫu nhiên cố định theo dấu (hình không nhảy giữa các khung)
+  const rnd = (seed, i) => { const x = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453; return x - Math.floor(x); };
+  const col = (el) => COL[el] || COL.none;
+
+  function make(kind, el, x, y, r, o = {}) {
+    return { kind, el: el || 'none', x, y, r: r * (o.crit ? 1.4 : 1), crit: !!o.crit, cls: o.cls, dark: !!o.dark, t0: performance.now() + (o.delay || 0),
+      life: o.life || LIFE[kind] || 1000, seed: Math.random() * 1000 };
+  }
+
+  // độ mờ: hiện nhanh, giữ, mờ dần ở 40% cuối
+  const fade = (k) => (k < 0.12 ? k / 0.12 : k > 0.6 ? (1 - k) / 0.4 : 1);
+
+  function flat(c, x, y, fn) { c.save(); c.translate(x, y); c.scale(1, FLAT); fn(); c.restore(); }
+  function radial(c, r, inner, outer) {
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, inner); g.addColorStop(1, outer);
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+  }
+  // điểm ngẫu nhiên cố định trong hình tròn bán kính r (tọa độ mặt đất, chưa dẹt)
+  const pt = (d, i, rr) => { const a = rnd(d.seed, i) * TAU, q = Math.sqrt(rnd(d.seed, i + 50)) * rr; return [Math.cos(a) * q, Math.sin(a) * q]; };
+  // tia ngoằn ngoèo từ tâm ra ngoài (vết nứt, vết sét)
+  function rays(c, d, n, len, jag, w, stroke, branch) {
+    c.strokeStyle = stroke; c.lineWidth = w; c.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      let a = (i / n) * TAU + rnd(d.seed, i) * 0.6, x = 0, y = 0;
+      const L = len * (0.6 + 0.4 * rnd(d.seed, i + 9)), seg = 4;
+      c.beginPath(); c.moveTo(0, 0);
+      for (let s = 1; s <= seg; s++) {
+        a += (rnd(d.seed, i * 7 + s) - 0.5) * jag;
+        x += Math.cos(a) * (L / seg); y += Math.sin(a) * (L / seg);
+        c.lineTo(x, y);
+        if (branch && s === 2) {
+          const b = a + (rnd(d.seed, i + 30) > 0.5 ? 0.7 : -0.7);
+          c.moveTo(x, y); c.lineTo(x + Math.cos(b) * L * 0.3, y + Math.sin(b) * L * 0.3); c.moveTo(x, y);
+        }
+      }
+      c.stroke();
+    }
+  }
+
+  function cast(c, d, k, t, X, Y) {
+    const cl = col(d.el), a = k < 0.25 ? k / 0.25 : k > 0.7 ? (1 - k) / 0.3 : 1, r = d.r * (0.45 + 0.55 * Math.min(1, k / 0.3));
+    flat(c, X, Y, () => {
+      c.globalAlpha = 0.35 * a; radial(c, r * 1.3, cl[1], 'rgba(0,0,0,0)');
+      c.globalAlpha = 0.9 * a; c.strokeStyle = cl[1]; c.lineWidth = 2;
+      c.beginPath(); c.arc(0, 0, r, 0, TAU); c.stroke();
+      c.beginPath(); c.arc(0, 0, r * 0.72, 0, TAU); c.stroke();
+      const rot = t / 260;
+      c.strokeStyle = cl[0]; c.lineWidth = 1.5;
+      for (let i = 0; i < 12; i++) { const q = rot + (i / 12) * TAU; c.beginPath(); c.moveTo(Math.cos(q) * r * 0.76, Math.sin(q) * r * 0.76); c.lineTo(Math.cos(q) * r * 0.96, Math.sin(q) * r * 0.96); c.stroke(); }
+      // ngôi sao sáu cánh xoay ngược
+      for (let tri = 0; tri < 2; tri++) {
+        c.beginPath();
+        for (let i = 0; i <= 3; i++) { const q = -rot * 0.7 + tri * Math.PI / 3 + (i / 3) * TAU; const px = Math.cos(q) * r * 0.66, py = Math.sin(q) * r * 0.66; i ? c.lineTo(px, py) : c.moveTo(px, py); }
+        c.stroke();
+      }
+    });
+  }
+
+  function wave(c, d, k, t, X, Y) {
+    const cl = col(d.el);
+    flat(c, X, Y, () => {
+      for (let j = 0; j < 2; j++) {
+        const kk = k - j * 0.18;
+        if (kk <= 0) continue;
+        c.globalAlpha = Math.max(0, 1 - kk) * 0.85; c.strokeStyle = j ? cl[0] : cl[1]; c.lineWidth = Math.max(0.5, 5 * (1 - kk));
+        c.beginPath(); c.arc(0, 0, d.r * (0.3 + 2.1 * kk), 0, TAU); c.stroke();
+      }
+      c.globalAlpha = Math.max(0, 1 - k) * 0.8;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU + rnd(d.seed, i), q = d.r * (0.3 + 1.9 * k * (0.7 + 0.3 * rnd(d.seed, i + 3)));
+        c.fillStyle = i % 2 ? cl[2] : '#cdbfa8'; c.beginPath(); c.arc(Math.cos(a) * q, Math.sin(a) * q, 2.2 * (1 - k) + 0.6, 0, TAU); c.fill();
+      }
+    });
+  }
+
+  function mark(c, d, k, t, X, Y) {
+    const cl = col(d.el), a = fade(k), r = d.r, flick = (i) => 0.55 + 0.45 * Math.sin(t / 90 + i * 1.7);
+    // đòn thường theo lớp
+    if (d.el === 'none' || d.el === 'water') {
+      if (d.cls === 'elf') {
+        // mũi tên cắm đất (đứng, không dẹt)
+        c.globalAlpha = a; c.strokeStyle = '#c9b48a'; c.lineWidth = 2;
+        const [px, py] = pt(d, 1, r * 0.4); const x0 = X + px, y0 = Y + py * FLAT;
+        c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + r * 0.25, y0 - r * 0.45); c.stroke();
+        c.fillStyle = '#f5e6c0'; c.beginPath(); c.moveTo(x0 + r * 0.25, y0 - r * 0.45); c.lineTo(x0 + r * 0.33, y0 - r * 0.55); c.lineTo(x0 + r * 0.19, y0 - r * 0.52); c.fill();
+        flat(c, x0, y0, () => { c.globalAlpha = 0.4 * a; radial(c, r * 0.25, 'rgba(40,30,20,0.8)', 'rgba(0,0,0,0)'); });
+        return;
+      }
+      if (d.cls === 'dw' || d.el === 'water') {
+        flat(c, X, Y, () => { c.globalAlpha = 0.55 * a; radial(c, r * 0.7, 'rgba(40,60,90,0.8)', 'rgba(0,0,0,0)'); c.globalAlpha = 0.8 * a * flick(1); radial(c, r * 0.3, 'rgba(160,220,255,0.6)', 'rgba(0,0,0,0)'); });
+        return;
+      }
+      // vết chém xước (Kiếm Sĩ, Đấu Sĩ)
+      flat(c, X, Y, () => {
+        c.globalAlpha = 0.65 * a; c.strokeStyle = 'rgba(35,22,12,0.9)'; c.lineWidth = 3; c.lineCap = 'round';
+        for (let i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(-r * 0.8, i * r * 0.35); c.quadraticCurveTo(0, i * r * 0.1, r * 0.8, -i * r * 0.35); c.stroke(); }
+        if (k < 0.3) { c.globalAlpha = (1 - k / 0.3) * 0.9; c.strokeStyle = d.crit ? '#ffd24a' : '#ffffff'; c.lineWidth = 1.5; for (let i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(-r * 0.8, i * r * 0.35); c.quadraticCurveTo(0, i * r * 0.1, r * 0.8, -i * r * 0.35); c.stroke(); } }
+      });
+      return;
+    }
+    // quầng sáng màu hệ dưới dấu (cộng sáng): nổi trên nền sân đấu tối, trên cỏ thì như đất hắt sáng
+    flat(c, X, Y, () => {
+      c.globalCompositeOperation = 'lighter';
+      c.globalAlpha = 0.55 * a * (k < 0.4 ? 1 : 0.6 + 0.4 * (1 - k));
+      radial(c, r * 1.15, cl[1], 'rgba(0,0,0,0)');
+      c.globalCompositeOperation = 'source-over';
+    });
+    switch (d.el) {
+      case 'fire': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.7 * a; radial(c, r, 'rgba(25,8,0,0.85)', 'rgba(25,8,0,0)');
+          c.globalAlpha = 0.5 * a; radial(c, r * 0.45, 'rgba(255,90,20,0.5)', 'rgba(255,90,20,0)');
+          for (let i = 0; i < 12; i++) { const [px, py] = pt(d, i, r * 0.85); c.globalAlpha = a * flick(i); c.fillStyle = i % 3 ? '#ff7a2b' : '#ffd27a'; c.beginPath(); c.arc(px, py, 1.6, 0, TAU); c.fill(); }
+        });
+        if (k < 0.65) {
+          for (let i = 0; i < 6; i++) {
+            const [px, py] = pt(d, i + 20, r * 0.7), h = r * (d.dark ? 0.8 : 0.55) * (1 - k / 0.65) * (0.6 + 0.4 * Math.sin(t / 70 + i * 2)), x0 = X + px, y0 = Y + py * FLAT;
+            const g = c.createLinearGradient(x0, y0, x0, y0 - h); g.addColorStop(0, cl[2]); g.addColorStop(0.6, cl[1]); g.addColorStop(1, 'rgba(255,243,176,0)');
+            c.globalAlpha = 0.9 * a; c.fillStyle = g;
+            c.beginPath(); c.moveTo(x0 - h * 0.22, y0); c.quadraticCurveTo(x0 - h * 0.2, y0 - h * 0.6, x0, y0 - h); c.quadraticCurveTo(x0 + h * 0.2, y0 - h * 0.6, x0 + h * 0.22, y0); c.fill();
+          }
+        }
+        break;
+      }
+      case 'ice': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.6 * a; radial(c, r, 'rgba(210,245,255,0.75)', 'rgba(150,215,255,0)');
+          rays(c, d, 8, r * 0.95, 0.5, 1.2, `rgba(240,255,255,${0.8 * a})`, true);
+        });
+        if (k < 0.55) {
+          const s = Math.sin((k / 0.55) * Math.PI);
+          for (let i = 0; i < 7; i++) {
+            const q = (i / 7) * TAU + rnd(d.seed, i), x0 = X + Math.cos(q) * r * 0.62, y0 = Y + Math.sin(q) * r * 0.62 * FLAT, h = r * 0.5 * s * (0.6 + 0.4 * rnd(d.seed, i + 4));
+            c.globalAlpha = 0.9 * a; c.fillStyle = cl[1]; c.strokeStyle = cl[0]; c.lineWidth = 1;
+            c.beginPath(); c.moveTo(x0 - 4, y0); c.lineTo(x0, y0 - h); c.lineTo(x0 + 4, y0); c.closePath(); c.fill(); c.stroke();
+          }
+        }
+        break;
+      }
+      case 'lightning': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.5 * a; radial(c, r * 0.5, 'rgba(20,20,30,0.8)', 'rgba(0,0,0,0)');
+          rays(c, d, 6, r * 1.1, 1.3, 3, `rgba(25,25,35,${0.6 * a})`, true);
+          if (k < 0.55 && Math.sin(t / 40) > -0.2) rays(c, d, 6, r * 1.1, 1.3, 1.2, `rgba(200,235,255,${0.9 * a})`, true);
+          for (let i = 0; i < 5; i++) { if (Math.sin(t / 55 + i * 3) < 0.3) continue; const [px, py] = pt(d, i + 40, r); c.globalAlpha = a; c.fillStyle = cl[0]; c.beginPath(); c.arc(px, py, 2, 0, TAU); c.fill(); }
+        });
+        break;
+      }
+      case 'wind': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.25 * a; radial(c, r, 'rgba(180,230,200,0.5)', 'rgba(0,0,0,0)');
+          c.strokeStyle = cl[1]; c.lineWidth = 2; c.lineCap = 'round';
+          for (let arm = 0; arm < 3; arm++) {
+            c.globalAlpha = 0.7 * a; c.beginPath();
+            for (let s = 0; s <= 24; s++) { const th = (s / 24) * 2.6 * Math.PI, q = th + arm * (TAU / 3) + t / 280, rr = r * (0.12 + 0.88 * s / 24); s ? c.lineTo(Math.cos(q) * rr, Math.sin(q) * rr) : c.moveTo(Math.cos(q) * rr, Math.sin(q) * rr); }
+            c.stroke();
+          }
+        });
+        for (let i = 0; i < 7; i++) {
+          const q = t / 380 + (i / 7) * TAU, rr = r * (0.5 + 0.35 * rnd(d.seed, i)), x0 = X + Math.cos(q) * rr, y0 = Y + Math.sin(q) * rr * FLAT - 4 - 4 * Math.sin(t / 200 + i);
+          c.globalAlpha = 0.85 * a; c.fillStyle = i % 2 ? '#7fbf5a' : '#c9a45a';
+          c.save(); c.translate(x0, y0); c.rotate(q * 2); c.beginPath(); c.ellipse(0, 0, 3.5, 1.6, 0, 0, TAU); c.fill(); c.restore();
+        }
+        break;
+      }
+      case 'earth': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.35 * a; radial(c, r * 1.1, 'rgba(90,60,30,0.8)', 'rgba(0,0,0,0)');
+          rays(c, d, 9, r * 1.15, 0.7, 3, `rgba(40,25,10,${0.75 * a})`, true);
+          rays(c, d, 9, r * 1.15, 0.7, d.dark ? 1.6 : 1, `rgba(220,190,140,${(d.dark ? 0.75 : 0.35) * a})`, true);
+        });
+        if (k < 0.5) {
+          for (let i = 0; i < 8; i++) {
+            const [px, py] = pt(d, i + 60, r * 0.9), up = r * 0.7 * Math.sin((k / 0.5) * Math.PI) * (0.5 + 0.5 * rnd(d.seed, i));
+            c.globalAlpha = a; c.fillStyle = cl[i % 3]; c.beginPath(); c.arc(X + px, Y + py * FLAT - up, 2.2 + rnd(d.seed, i + 5) * 2, 0, TAU); c.fill();
+          }
+        }
+        break;
+      }
+      case 'dark': {
+        flat(c, X, Y, () => {
+          const g = c.createRadialGradient(0, 0, 0, 0, 0, r);
+          g.addColorStop(0, 'rgba(25,0,45,0.9)'); g.addColorStop(0.7, 'rgba(70,30,120,0.55)'); g.addColorStop(1, 'rgba(70,30,120,0)');
+          c.globalAlpha = 0.85 * a; c.fillStyle = g; c.beginPath();
+          for (let i = 0; i <= 24; i++) { const q = (i / 24) * TAU, rr = r * (0.85 + 0.15 * Math.sin(i * 1.7 + t / 260)); i ? c.lineTo(Math.cos(q) * rr, Math.sin(q) * rr) : c.moveTo(Math.cos(q) * rr, Math.sin(q) * rr); }
+          c.fill();
+        });
+        if (k < 0.7) {
+          const grow = Math.sin(Math.min(1, k / 0.35) * Math.PI / 2) * (k > 0.5 ? (0.7 - k) / 0.2 : 1);
+          c.strokeStyle = cl[1]; c.lineWidth = 3; c.lineCap = 'round';
+          for (let i = 0; i < 5; i++) {
+            const [px, py] = pt(d, i + 80, r * 0.6), x0 = X + px, y0 = Y + py * FLAT, h = r * 0.9 * grow, sw = Math.sin(t / 150 + i) * 8;
+            c.globalAlpha = 0.85 * a; c.beginPath(); c.moveTo(x0, y0); c.bezierCurveTo(x0 + sw, y0 - h * 0.35, x0 - sw, y0 - h * 0.7, x0 + sw * 0.5, y0 - h); c.stroke();
+          }
+        }
+        break;
+      }
+      case 'light': {
+        flat(c, X, Y, () => {
+          c.globalAlpha = 0.45 * a; radial(c, r * 1.1, 'rgba(255,240,170,0.7)', 'rgba(255,220,120,0)');
+          c.globalAlpha = 0.9 * a; c.strokeStyle = cl[2]; c.lineWidth = 2;
+          c.beginPath(); c.arc(0, 0, r * 0.9, 0, TAU); c.stroke();
+          c.beginPath(); c.arc(0, 0, r * 0.62, 0, TAU); c.stroke();
+          const rot = t / 1400;
+          c.fillStyle = cl[1];
+          for (let i = 0; i < 12; i++) { const q = rot + (i / 12) * TAU; c.save(); c.translate(Math.cos(q) * r * 0.76, Math.sin(q) * r * 0.76); c.rotate(q); c.fillRect(-1.5, -3, 3, 6); c.restore(); }
+        });
+        break;
+      }
+      default: {
+        flat(c, X, Y, () => { c.globalAlpha = 0.55 * a; radial(c, r * 0.8, cl[2], 'rgba(0,0,0,0)'); });
+      }
+    }
+  }
+
+  function draw(c, d, t, ox = 0, oy = 0) {
+    const age = t - d.t0;
+    if (age < 0) return true;
+    const k = age / d.life;
+    if (k >= 1) return false;
+    const X = d.x - ox, Y = d.y - oy;
+    c.save();
+    if (d.kind === 'cast') cast(c, d, k, t, X, Y);
+    else if (d.kind === 'wave') wave(c, d, k, t, X, Y);
+    else mark(c, d, k, t, X, Y);
+    // nền tối (sân đấu màn trận): cộng sáng thêm một lớp màu hệ đè lên, vết cháy / nứt tối mới không chìm vào nền
+    if (d.dark && d.kind === 'mark' && d.el !== 'none') {
+      const cl = col(d.el);
+      flat(c, X, Y, () => { c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.65 * fade(k); radial(c, d.r * 0.9, d.el === 'earth' ? cl[0] : cl[1], 'rgba(0,0,0,0)'); c.globalCompositeOperation = 'source-over'; });
+    }
+    c.restore();
+    return true;
+  }
+
+  // vẽ cả danh sách, bỏ dấu đã hết; giữ tối đa `max` dấu (bỏ dấu cũ nhất)
+  function paint(c, list, t, ox, oy, max = 14) {
+    if (list.length > max) list.splice(0, list.length - max);
+    // cũ trước, mới đè lên
+    for (let i = 0; i < list.length;) { if (draw(c, list[i], t, ox, oy)) i++; else list.splice(i, 1); }
+  }
+
+  return { make, draw, paint, LIFE };
+})();
+
 (function () {
   const COLORS = {
     fire: ['#fff3b0', '#ffb03d', '#ff4a1f'],
@@ -79,6 +342,49 @@
   const MON = '#view .stage > .sprite', ME = '#view .me .sprite';
 
   function add(p) { p.t0 = p.t0 || now(); parts.push(p); if (!raf) raf = requestAnimationFrame(loop); }
+
+  // ---------- mặt đất (GroundFx) ----------
+  // màn trận: canvas "mặt đất" chèn đầu sân đấu (`.stage`, dưới hình quái, trên nền); sân vẽ lại mỗi lượt thì chèn lại.
+  // Dấu lưu theo tọa độ trong sân. Dưới chân mình (hàng `.me`, không phải mặt đất sân) vẽ trên canvas phủ như hạt.
+  // ⚡ trên bản đồ: MapView.groundMark vẽ trên ô đất của bản đồ.
+  const ground = [];
+  let gcanvas = null;
+  function groundMount() {
+    const st = document.querySelector('#view .stage');
+    if (!st) return null;
+    if (!gcanvas) { gcanvas = document.createElement('canvas'); gcanvas.className = 'bfx-ground'; gcanvas.setAttribute('aria-hidden', 'true'); }
+    if (gcanvas.parentElement !== st) st.insertBefore(gcanvas, st.firstChild);
+    const w = st.clientWidth, h = st.clientHeight;
+    if (gcanvas.width !== Math.round(w * dpr) || gcanvas.height !== Math.round(h * dpr)) { gcanvas.width = Math.round(w * dpr); gcanvas.height = Math.round(h * dpr); }
+    return st;
+  }
+  function groundTick(t) {
+    if (!ground.length) return;
+    const st = groundMount();
+    if (!st) { ground.length = 0; return; }
+    const g = gcanvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, gcanvas.width, gcanvas.height);
+    window.GroundFx.paint(g, ground, t, 0, 0);
+  }
+  // `who`: 'mon' (chân quái / đối thủ) | 'me' (chân mình); kind: cast | wave | mark
+  function groundAt(who, kind, el, o = {}) {
+    if (anchors) { if (window.MapView && window.MapView.groundMark) window.MapView.groundMark(who, kind, el, o); return; }
+    const s = spot(who === 'mon' ? MON : ME);
+    if (!s) return;
+    const f = kind === 'cast' ? 0.42 : kind === 'wave' ? 0.34 : 0.46;
+    if (who === 'mon') {
+      const st = document.querySelector('#view .stage');
+      if (!st) return;
+      const b = st.getBoundingClientRect();
+      // cỡ theo sân đấu (hình quái có khi chỉ 32px ở bố cục gọn), 1/8 chiều rộng sân, trong khoảng 30–72px
+      const r = Math.min(72, Math.max(30, b.width * 0.125)) * (f / 0.46);
+      ground.push(window.GroundFx.make(kind, el, s.x - b.left, s.y + s.h * 0.4 - b.top, r, { ...o, dark: true }));
+      if (!raf) raf = requestAnimationFrame(loop);
+    } else if (kind !== 'mark') {
+      add({ k: 'ground', d: window.GroundFx.make(kind, el, s.x, s.y + s.h * 0.45, Math.max(18, s.w * f * 0.8), o), life: (window.GroundFx.LIFE[kind] || 600) + (o.delay || 0) });
+    }
+  }
   // nảy class CSS (bỏ rồi gắn lại để chạy lại animation)
   function bump(el, cls, ms) {
     if (!el) return;
@@ -415,13 +721,15 @@
       draw(p, k, age / 1000);
     }
     ctx.globalAlpha = 1;
-    if (parts.length) raf = requestAnimationFrame(loop);
+    groundTick(t);
+    if (parts.length || ground.length) raf = requestAnimationFrame(loop);
     else ctx.clearRect(0, 0, W, H);
   }
 
   function draw(p, k, s) {
     const c = ctx;
     c.globalAlpha = 1;
+    if (p.k === 'ground') { window.GroundFx.draw(c, p.d, now()); return; }
     switch (p.k) {
       case 'dot': {
         const x = p.x + p.vx * s, y = p.y + p.vy * s + 0.5 * p.g * s * s;
@@ -704,6 +1012,23 @@
       // "Hiệu ứng: quái gục sau khi đòn trúng")
       const t = now() + 16;
       for (const e of events) if (e.type === 'attack' || e.type === 'skill') hitUntil = Math.max(hitUntil, t + (e.delay || 0) + impactMs(e));
+      // mặt đất (DECISIONS "Hiệu ứng kỹ năng trên mặt đất"): vòng niệm chú dưới người ra chiêu lúc phát, sóng + dấu dưới
+      // mục tiêu lúc trúng; kỹ năng quái theo hệ trúng mình: dấu dưới chân mình (bản đồ)
+      const gq = [];
+      for (const e of events) {
+        const d0 = e.delay || 0;
+        if (e.type === 'skill') {
+          const from = e.rev ? 'mon' : 'me', to = e.rev ? 'me' : 'mon';
+          gq.push([from, 'cast', e.element, { delay: d0 }]);
+          gq.push([to, 'wave', e.element, { delay: d0 + impactMs(e), crit: e.crit }]);
+          gq.push([to, 'mark', e.element, { delay: d0 + impactMs(e), crit: e.crit }]);
+        } else if (e.type === 'attack') {
+          gq.push(['mon', 'mark', 'none', { delay: d0 + impactMs(e), crit: e.crit, cls: e.cls }]);
+        } else if (e.type === 'hurt' && e.element) {
+          gq.push(['me', 'wave', e.element, { delay: d0 + 120 }]);
+          gq.push(['me', 'mark', e.element, { delay: d0 + 120 }]);
+        }
+      }
       for (const e of events) if (e.type === 'kill' || e.type === 'loot') e.delay = Math.max(e.delay || 0, Math.ceil(hitUntil - t) + (e.type === 'kill' ? KILL_AFTER : KILL_AFTER + 330));
       // chờ màn trận vẽ xong (ui.js render) rồi mới lấy vị trí
       const play = (e) => {
@@ -711,7 +1036,12 @@
         try { (EV[e.type] || (() => {}))(e); } catch (err) { /* hiệu ứng lỗi không làm hỏng trận */ }
         anchors = null;
       };
-      requestAnimationFrame(() => events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e))));
+      requestAnimationFrame(() => {
+        events.forEach((e) => (e.delay ? setTimeout(() => play(e), e.delay) : play(e)));
+        // dấu đặt lúc phát với `delay` (GroundFx chờ tới giờ mới vẽ); vị trí lấy ngay lúc này
+        const a = at || null;
+        for (const [who, kind, el, o] of gq) { anchors = a; try { groundAt(who, kind, el, o); } catch (err) { /* hình lỗi không làm hỏng trận */ } anchors = null; }
+      });
     },
     // thời điểm (performance.now) đòn đã xếp lịch cuối cùng trúng: bản đồ (map.js) chờ tới đó mới cho quái tan
     hitUntil: () => hitUntil,
