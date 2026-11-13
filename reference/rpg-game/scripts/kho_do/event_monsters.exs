@@ -7,7 +7,7 @@ Code.require_file(Path.join(__DIR__, "../pvp/build.exs"))
 defmodule KhoDo.EventMonsters do
   alias HacLong.Game.{Data, Engine}
 
-  @ks [0, 3, 6, 10]
+  @ks [0, 3, 6, 9, 10]
   @classes ~w(dk dw elf mg)
 
   def ks, do: @ks

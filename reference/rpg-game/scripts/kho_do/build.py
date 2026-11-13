@@ -354,8 +354,11 @@ def ticket_txt(ev):
 ds, bc, cc, ka, cs, rd, inv = R["devil_square"], R["blood_castle"], R["chaos_castle"], R["kalima"], R["castle_siege"], R["raids"], R["invasion"]
 WB = D["world_boss"]
 WD = ["", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy", "Chủ Nhật"]
-def ev_row(name, when, who, entry, how, reward):
+def ev_row(name, when, who, entry, how, reward, pk=None, cs=None, tip=None):
     rows = [("Khi nào", when), ("Ai vào", who), ("Vào bằng", entry), ("Diễn biến", how), ("Thưởng", reward)]
+    if pk: rows.append(("Đánh người", pk))
+    if cs: rows.append(("Theo chuyển sinh", cs))
+    if tip: rows.append(("Mẹo", tip))
     return f'<div class="card ev"><h3>{name}</h3><dl>' + "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in rows) + "</dl></div>"
 waves = " + ".join(str(w["count"]) + (" (trùm)" if w["boss"] else "") for w in ds["waves"])
 top = "; ".join(f"hạng {i + 1}: {n(t['gold'])} vàng + {items_txt(t['items'])}" for i, t in enumerate(ds["top"]))
@@ -372,37 +375,89 @@ def evmon_rows():
     return "".join(out)
 evmon = evmon_rows()
 
+_es, _st, _wbr, _bm = R["event_scale"], R["starter_events"], R["world_boss"], R["blood_moon"]
+_bands = ", ".join(f"{a}–{b}" if b < R["character"]["max_rebirths"] else f"{a}+" for a, b in R["event_rooms"]["bands"])
+_room_cs = (f"phòng theo số lần chuyển sinh ({_bands}); quái của phòng mạnh theo mốc cao nhất của phòng k: máu, thủ × (1 + {n(_es['hp_per_rebirth'])} × k), "
+            f"công × (1 + {n(_es['atk_per_rebirth'])} × k), vàng, kinh nghiệm × (1 + {n(_es['reward_per_rebirth'])} × k), k tối đa {R['character']['max_rebirths']} (xem bảng dưới)")
+_no_pk = "không (bản đồ riêng theo phòng / tổ đội)"
+_jn = ", ".join(E(IT[j]["name"]) for j in _bm["jewels"])
+_lake, _school, _bird, _flock, _met = R["fishing"]["dragon"], R["fishing"]["school"], R["sky"]["bird"], R["sky"]["flock"], R["sky"]["meteor"]
+_starter = (f"thêm {_st['realm_pick']} bản đồ đầu vùng chuyển sinh ngẫu nhiên mỗi đợt, quái mạnh như vùng đó; ở bản đồ đầu vùng thường, "
+            f"trùm chỉ rơi ngọc / đồ thêm cho người <b>dưới chuyển sinh {_st['jewel_max_rebirths']}</b> (người chuyển sinh cao hạ được vẫn nhận vàng, kinh nghiệm)")
 ev_rows = "".join([
-    ev_row("Quảng Trường Quỷ", f"{clock(ds['every_hours'], ds['offset_hours'] * 60)}; vào trong {ds['entry_minutes']} phút, đánh {ds['run_minutes']} phút",
+    ev_row("😈 Quảng Trường Quỷ", f"{clock(ds['every_hours'], ds['offset_hours'] * 60)}; vào trong {ds['entry_minutes']} phút, đánh {ds['run_minutes']} phút",
            f"cấp {ds['min_level']}+; {tiers_txt(ds['tiers'])}", ticket_txt(ds),
-           f"{len(ds['waves'])} đợt quái ({waves}), quái mỗi đợt mạnh dần; điểm: quái {ds['score']['monster']}, trùm {ds['score']['boss']}",
-           f"vàng, kinh nghiệm theo điểm; mỗi {ds['reward']['jewel_every']} điểm 1 ngọc; qua hết đợt được 1 món đồ ({pct(ds['reward']['clear_exc_chance'])} Excellent, {pct(ds['reward']['clear_anc_chance'])} Thần). Top ngày (thư lúc 0h): {top}"),
-    ev_row("Lâu Đài Máu", f"{clock(bc['every_hours'], bc['offset_minutes'])}; vào trong {bc['entry_minutes']} phút, đánh {bc['run_minutes']} phút",
+           f"{len(ds['waves'])} đợt quái ({waves}), quái mỗi đợt mạnh dần; điểm: quái {ds['score']['monster']}, trùm {ds['score']['boss']}; cùng phòng chung quái, chung máu quái",
+           f"vàng, kinh nghiệm theo điểm; mỗi {ds['reward']['jewel_every']} điểm 1 ngọc; qua hết đợt được 1 món đồ ({pct(ds['reward']['clear_exc_chance'])} Excellent, {pct(ds['reward']['clear_anc_chance'])} Thần). Top ngày (thư lúc 0h): {top}",
+           pk=_no_pk, cs=_room_cs, tip="Đi đông người cùng phòng: quái chung máu, ai gây sát thương cũng được phần; giữ kỹ năng mạnh cho trùm đợt cuối."),
+    ev_row("🏰 Lâu Đài Máu", f"{clock(bc['every_hours'], bc['offset_minutes'])}; vào trong {bc['entry_minutes']} phút, đánh {bc['run_minutes']} phút",
            f"cấp {bc['min_level']}+; {tiers_txt(bc['tiers'])}", ticket_txt(bc),
            f"hạ {bc['guards']} quái canh → phá {E(bc['gate']['name'])} (không đánh trả, máu ×{bc['gate']['hp_mult']}) → hạ {E(bc['boss']['name'])}",
-           f"thắng: vàng, kinh nghiệm, {items_txt(bc['reward']['success']['items'])}, {bc['reward']['success']['jewels']} ngọc; không xong: thưởng theo số quái canh đã hạ"),
-    ev_row("Hỗn Chiến Thành", f"{clock(cc['every_hours'], cc['offset_minutes'])}; vào trong {cc['entry_minutes']} phút, đánh {cc['run_minutes']} phút",
+           f"thắng: vàng, kinh nghiệm, {items_txt(bc['reward']['success']['items'])}, {bc['reward']['success']['jewels']} ngọc; người gây nhiều sát thương nhất lên trùm nhận Lông Vũ; không xong: thưởng theo số quái canh đã hạ",
+           pk=_no_pk, cs=_room_cs),
+    ev_row("⚔ Hỗn Chiến Thành", f"{clock(cc['every_hours'], cc['offset_minutes'])}; vào trong {cc['entry_minutes']} phút, đánh {cc['run_minutes']} phút",
            f"cấp {cc['min_level']}+; quái quanh cấp trung bình người vào (±{cc['level_spread']})", ticket_txt(cc),
-           f"{cc['total']} đối thủ (quái + người, ít nhất {cc['min_monsters']} quái); gục là bị loại, không mất vàng, không tên đỏ",
-           f"người cuối cùng: {n(cc['reward']['winner']['gold'])} vàng + {items_txt(cc['reward']['winner']['items'])}; trụ tới hết giờ: {n(cc['reward']['survivor']['gold'])} vàng + {items_txt(cc['reward']['survivor']['items'])}; mỗi người hạ được +{n(cc['reward']['per_player_kill'])} vàng"),
-    ev_row("Kalima", "lúc nào cũng vào được", f"cấp {ka['min_level']}+; {tiers_txt(ka['tiers'])}", ticket_txt(ka) + f" (ghép từ 5 {ka_mark}, rơi {pct(ka['mark_drop']['chance'])} từ quái cấp {ka['mark_drop']['min_level']}+)",
-           f"bản đồ riêng {ka['run_minutes']} phút: hạ {ka['guards']} quái → {E(ka['boss']['name'])} xuất hiện",
-           f"hạ {E(ka['boss']['name'])}: vàng, kinh nghiệm, {ka['reward']['success']['jewels']} ngọc, 1 món đồ ({pct(ka['reward']['success']['exc_chance'])} Excellent, {pct(ka['reward']['success']['anc_chance'])} Thần); không xong: theo số quái đã hạ"),
-    ev_row("Công Thành Chiến", f"{WD[cs['weekday']]} {cs['hour']}h{cs['minute']:02d}, {cs['run_minutes']} phút",
+           f"<b>sinh tồn</b>: {cc['total']} đối thủ (quái + người, ít nhất {cc['min_monsters']} quái); gục là <b>bị loại</b>; hết giờ vào thì đóng cửa",
+           f"người cuối cùng: {n(cc['reward']['winner']['gold'])} vàng + {items_txt(cc['reward']['winner']['items'])}; trụ tới hết giờ: {n(cc['reward']['survivor']['gold'])} vàng + {items_txt(cc['reward']['survivor']['items'])}; mỗi người hạ được +{n(cc['reward']['per_player_kill'])} vàng",
+           pk="có, ai cũng đánh ai khi đã vào giờ hỗn chiến; không mất vàng, không tên đỏ", cs=_room_cs,
+           tip="Khác Pháp Trường: ở đây gục là hết lượt, nên trốn và chọn trận quan trọng hơn hạ thật nhiều."),
+    ev_row("🩸 Pháp Trường Huyết Nguyệt", f"quản trị mở ({_bm['minutes']} phút mặc định, 1–{_bm['minutes_max']}) hoặc lịch hằng ngày (báo trước {_bm['warn_min']} phút)",
+           f"cấp {D['bm_map']['min_level']}+, cổng phía nam Làng", "không cần",
+           f"<b>săn người, tranh điểm</b>: bản đồ 60×40 không quái; gục về Làng, {_bm['relock_s']} giây sau vào lại. "
+           f"Điểm mỗi mạng {n(_bm['points']['base'])} + {n(_bm['points']['step'])} × (chuyển sinh người gục − mình), từ {n(_bm['points']['min'])} tới {n(_bm['points']['max'])}. "
+           f"<b>Huyết Sát</b>: hạ {_bm['streak']['min']} người liên tiếp không gục thì cả bản đồ thấy cột sáng đỏ; hạ được Huyết Sát +{_bm['streak']['bounty_points']} điểm, cơ hội ngọc ×{n(_bm['streak']['bounty_drop_mult'])}. "
+           f"<b>Bàn thờ Huyết Ngọc</b> giữa sân: mỗi {_bm['altar']['every_s'] // 60} phút sáng {_bm['altar']['window_s']} giây, đứng một mình đủ {_bm['altar']['hold_s']} giây (không đang đánh) nhận 1 ngọc; người thứ hai lên thì tạm dừng",
+           f"hạ người: {pct(_bm['drop_pct'])} rơi 1 viên ({_jn}), × (1 + {n(_bm['rebirth_step'])} × chênh chuyển sinh) tới ×{n(_bm['rebirth_max'])}, hạ lại cùng người ×{n(_bm['repeat_decay'])}; hạ bot chỉ tính điểm. "
+           "Trăng lặn: top 3 người thật nhiều điểm nhất (≥ " + str(_bm['min_kills']) + " mạng) nhận ngọc qua thư, mặc định " +
+           "; ".join(f"hạng {i + 1}: " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in rw.items()) for i, rw in enumerate(_bm['top_rewards'])) + " (quản trị chỉnh được)",
+           pk="có, cả cùng tổ đội, chỉ lúc trăng mọc; không mất vàng, không tên đỏ (trận bắt đầu lúc trăng mọc vẫn tính vậy dù trăng lặn giữa trận)",
+           cs="điểm và cơ hội ngọc cao hơn khi hạ người chuyển sinh nhiều hơn mình; hạ người yếu hơn nhiều gần như không được gì",
+           tip="Săn Huyết Sát để lấy điểm thưởng; canh Bàn thờ sáng khi xung quanh vắng; quản trị có thể gọi bot vào cho đông."),
+    ev_row("🌀 Kalima", "lúc nào cũng vào được", f"cấp {ka['min_level']}+; {tiers_txt(ka['tiers'])}", ticket_txt(ka) + f" (ghép từ 5 {ka_mark}, rơi {pct(ka['mark_drop']['chance'])} từ quái cấp {ka['mark_drop']['min_level']}+)",
+           f"bản đồ riêng theo tổ đội {ka['run_minutes']} phút: hạ {ka['guards']} quái → {E(ka['boss']['name'])} xuất hiện",
+           f"hạ {E(ka['boss']['name'])}: vàng, kinh nghiệm, {ka['reward']['success']['jewels']} ngọc, 1 món đồ ({pct(ka['reward']['success']['exc_chance'])} Excellent, {pct(ka['reward']['success']['anc_chance'])} Thần); không xong: theo số quái đã hạ",
+           pk=_no_pk, cs="quái mạnh theo người chuyển sinh nhiều nhất trong tổ đội (công thức như phòng sự kiện)", tip="Kundun đánh rất đau ở chuyển sinh cao: đi tổ đội, mang đủ bình máu."),
+    ev_row("👑 Công Thành Chiến", f"{WD[cs['weekday']]} {cs['hour']}h{cs['minute']:02d}, {cs['run_minutes']} phút",
            f"thành viên (cấp {cs['min_level']}+) của bang đã đăng ký và bang giữ thành", f"bang chủ / phó đăng ký ở Người Gác Tháp ({n(cs['register_gold'])} vàng)",
-           f"giữ {E(cs['crown']['name'])} giữa thành (hạ được thì giữ, hiện lại sau {cs['crown']['respawn_s']} giây); đánh nhau không mất vàng, không tên đỏ",
-           f"bang giữ Vương Miện lúc hết giờ là Chủ Thành tới trận sau; mỗi thành viên {n(cs['reward']['gold'])} vàng + {items_txt(cs['reward']['items'])}"),
+           f"giữ {E(cs['crown']['name'])} giữa thành (hạ được thì giữ, hiện lại sau {cs['crown']['respawn_s']} giây)",
+           f"bang giữ Vương Miện lúc hết giờ là Chủ Thành tới trận sau; mỗi thành viên {n(cs['reward']['gold'])} vàng + {items_txt(cs['reward']['items'])}",
+           pk="có, chỉ người bang khác, trong lúc đánh; không mất vàng, không tên đỏ", cs=f"Vương Miện cố định như chuyển sinh {_es['crown_rebirths']}: người chuyển sinh thấp bị đánh rất đau, cần cả bang"),
 ] + [ev_row(f"{v['icon']} {E(v['name'])}", f"{clock(v['every_hours'], v['offset_minutes'])}, {v['minutes']} phút", "mọi người",
             "không cần", f"{v['leader']['count']} {E(v['leader']['name'])} (cấp + {v['leader']['level_bonus']}, sức ×{n(v['leader']['mult'])})" +
-            (f" và {v['minion']['count']} {E(v['minion']['name'])}" if v.get("minion") else "") + f" ở {v['pick']} bản đồ ngẫu nhiên trong {len(v['maps'])} vùng chính",
-            f"thưởng ×{v['reward_mult']}; con đầu đàn chắc chắn rơi ngọc, thêm " + ", ".join(f"{E(IT[k]['name'])} {pct(c)}" for k, c in v["drops"].items()))
+            (f" và {v['minion']['count']} {E(v['minion']['name'])}" if v.get("minion") else "") + f" ở {v['pick']} bản đồ ngẫu nhiên trong {len(v['maps'])} vùng chính + {_st['realm_pick']} bản đồ vùng chuyển sinh; hạ hết thì xong sớm",
+            f"thưởng ×{v['reward_mult']}; con đầu đàn chắc chắn rơi ngọc, thêm " + ", ".join(f"{E(IT[k]['name'])} {pct(c)}" for k, c in v["drops"].items()),
+            pk="có (luật đồ sát thường: mất vàng, tên đỏ)", cs=_starter)
    for v in rd.values() if isinstance(v, dict) and v.get("leader")] + [
-    ev_row("✨ Quái Vàng", f"{clock(inv['every_hours'])}, {inv['minutes']} phút", "mọi người", "không cần",
-           f"{sum(inv['maps'].values())} quái vàng ở {len(inv['maps'])} vùng chính (sức ×{n(inv['strength_mult'])}); hạ hết một bản đồ thì trùm vàng xuất hiện",
-           f"thưởng ×{inv['reward_mult']}, quái vàng {pct(inv['jewel_chance'])} rơi ngọc, trùm vàng chắc chắn"),
-    ev_row("🐉 Trùm thế giới", f"lần đầu {WB.get('first_after_minutes')} phút sau khi máy chủ chạy, rồi cứ {WB.get('every_minutes')} phút sau khi con trước gục / bay đi; ở {WB.get('duration_minutes')} phút",
-           "mọi người, ở Tế Đàn", "không cần", f"cả máy chủ đánh chung một thanh máu ({n(WB.get('hp'))})",
-           "chia thưởng theo phần sát thương; 3 người gây nhiều nhất thêm Vảy Cổ Long; đòn cuối thêm vàng; hết giờ chưa hạ thì không ai được"),
+    ev_row("✨ Golden Invasion (quái vàng)", f"{clock(inv['every_hours'])}, {inv['minutes']} phút", "mọi người", "không cần",
+           f"{sum(inv['maps'].values())} quái vàng ở {len(inv['maps'])} vùng chính (sức ×{n(inv['strength_mult'])}); hạ hết một bản đồ thì trùm vàng xuất hiện; "
+           f"+ {_st['invasion_count']} quái vàng ở {_st['realm_pick']} bản đồ vùng chuyển sinh (không trùm vàng)",
+           f"thưởng ×{inv['reward_mult']}, quái vàng {pct(inv['jewel_chance'])} rơi ngọc, trùm vàng chắc chắn",
+           pk="có (luật đồ sát thường); người đang đánh quái vàng vẫn bị đồ sát", cs=_starter),
+    ev_row("🐉 Trùm thế giới Cổ Long", f"lần đầu {WB.get('first_after_minutes')} phút sau khi máy chủ chạy, rồi cứ {WB.get('every_minutes')} phút sau khi con trước gục / bay đi; ở {WB.get('duration_minutes')} phút",
+           "mọi người, ở Tế Đàn", "không cần",
+           f"cả máy chủ đánh chung một thanh máu: {n(WB.get('hp'))} + {n(_wbr['hp_per_fighter'])} cho mỗi người mới vào đánh trong {_wbr['grow_minutes']} phút đầu (tối đa {n(_wbr['hp_cap'])})",
+           f"chia vàng, kinh nghiệm theo phần sát thương; gây ≥ {pct(_wbr['join_min_share'])} máu: + " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in _wbr['join_items'].items()) +
+           "; 3 người gây nhiều nhất thêm Vảy Cổ Long + 1 ngọc; đòn cuối thêm vàng; hết giờ chưa hạ thì không ai được",
+           pk="có (luật thường); bị đồ sát giữa trận với trùm thì trận với trùm bị cắt, sát thương đã gây vẫn tính", cs="không tăng theo chuyển sinh; máu tăng theo số người đánh để người chuyển sinh cao không hạ quá nhanh"),
+    ev_row("🗼 Tháp Vô Tận", "lúc nào cũng vào (Người Gác Tháp)", "mọi người", "không cần",
+           f"leo từng tầng; từ tầng {R['tower']['harder_from']} mỗi tầng mạnh thêm {pct(R['tower']['harder_per_floor'])}; trùm mỗi {R['tower']['boss_every']} tầng; tầng 61–160 dùng quái vùng chuyển sinh, sau đó quay vòng",
+           "vàng, kinh nghiệm, đồ theo tầng (bảng ở mục Tháp Vô Tận); kỷ lục tầng 10, 20 … 100 mở kỹ năng Tháp",
+           pk=_no_pk, cs="sức quái theo tầng, không theo chuyển sinh"),
+    ev_row("🌙 Động Bí Ẩn", f"ban đêm (20h–5h), {pct(R['secret']['open_chance'])} số đêm cửa mở (khe đá sau Đền Cổ); trùm {R['secret']['boss_from_h']}h–{R['secret']['boss_to_h']}h, báo trước {R['secret']['warn_min']} phút",
+           "cấp 38+", "khe đá sau Đền Cổ (chỉ đêm mở)",
+           f"động tối, chỉ sáng quanh mình; {pct(R['secret']['elite_chance'])} quái là Tinh Anh (sức ×{n(R['secret']['elite_mult'])}, thưởng ×{R['secret']['elite_reward']}, ngọc ×{n(R['secret']['elite_jewel_mult'])}); trùm đêm Thạch Long Ẩn",
+           f"trùm: " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in R['secret']['boss_items'].items() if k in IT) + "; Bia Động Bí Ẩn ghi người tìm ra động đầu tiên mỗi đêm và người hạ trùm",
+           pk="có (luật thường); động tối, khó thấy người tới", cs="trùm đêm mạnh theo chuyển sinh người đánh (như trùm vùng)"),
+    ev_row("🎣 Biển Long Vương, Đàn Cá Vàng", f"Long Vương nổi mỗi {_lake['every'] // 60} phút ở một ô nước ngẫu nhiên ({_lake['stay'] // 60} phút); Đàn Cá Vàng mỗi {_school['every'] // 60} phút ({_school['stay'] // 60} phút)",
+           f"cấp {D['lake']['min_level']}+", "cổng từ Rừng / Đồi Sáo Diều",
+           f"thả câu trúng đúng ô Long Vương: cơ hội 1/{int(1 / _lake['chance'])} mỗi lần, nhân theo Long Khí (mỗi cá +1, tối đa {_lake['long_khi_max']}), Mồi Rồng ×{_lake['bait_mult']}; Đàn Cá Vàng: {pct(_school['gold_chance'])} ra Cá Chép Vàng, +{_school['long_khi']} Long Khí",
+           "thần thú Long Vương (đã có thì Cá Chép Vàng); cá, Long Khí",
+           pk=f"chỉ từ lúc báo {R['slay']['event_pk']['warn_min']} phút trước khi Ngài nổi tới khi Ngài nổi; ngoài khung đó là vùng an toàn"),
+    ev_row("🪁 Đồi Sáo Diều (Chim Lạc, Đàn Hạc, sao băng)", f"Chim Lạc mỗi {_bird['every'] // 60} phút ({_bird['stay'] // 60} phút); Đàn Hạc mỗi {_flock['every'] // 60} phút ({_flock['stay'] // 60} phút); sao băng ban đêm mỗi {_met['every'] // 60} phút ({_met['count']} viên)",
+           "cấp 30+", "cổng mép phải Biển Long Vương",
+           f"thả diều trúng ô Chim Lạc: cơ hội 1/{int(1 / _bird['chance'])}, nhân theo Phong Khí (tối đa {_bird['phong_khi_max']}), Sáo Đồng ×{_bird['bait_mult']}; Đàn Hạc: +{_flock['phong_khi']} Phong Khí, quà gió quý hơn; nhặt Mảnh Sao rơi trên đồi",
+           "thần thú Chim Lạc; Lông Hạc, Mảnh Mây, ngọc, Mảnh Sao (ghép Sáo Đồng)",
+           pk=f"chỉ từ lúc báo {R['slay']['event_pk']['warn_min']} phút trước khi Chim Lạc tới tới khi chim xuất hiện"),
 ])
 # đổi vật phẩm lễ hội ở Người Tổ Chức Hội (RULES.events, DECISIONS "Lễ hội: nâng phần thưởng")
 EVR = R["events"]
@@ -639,10 +694,10 @@ pk_rows = [
     ("Đồi Sáo Diều (Chim Lạc, Đàn Hạc, mưa sao băng)", f"Chim Lạc mỗi {R['sky']['bird']['every'] // 3600} giờ ({R['sky']['bird']['stay'] // 60} phút), Đàn Hạc ~{R['sky']['flock']['every'] // 60} phút, sao băng ban đêm; cấp 30+", _YES, _normal + " Người đang thả diều cũng bị đánh.", "Mới: bản đồ thả diều cạnh Biển Long Vương."),
     ("Pháp Trường Huyết Nguyệt", f"Quản trị mở ({BMR['minutes']} phút mặc định, 1–{BMR['minutes_max']}) hoặc lịch hằng ngày, báo trước {BMR['warn_min']} phút; cổng phía nam Làng, cấp {D['bm_map']['min_level']}+",
      _YES + ", chỉ lúc trăng mọc (ngày thường an toàn)",
-     f"Ai cũng đánh ai, kể cả cùng tổ đội. <b>Không mất vàng, không tên đỏ</b>; gục về Làng, {BMR['relock_s']} giây sau mới vào lại. Hạ người: {pct(BMR['drop_pct'])} cơ hội rơi 1 viên ({', '.join(E(IT[j]['name']) for j in BMR['jewels'])}), "
+     f"Ai cũng đánh ai, kể cả cùng tổ đội (trận bắt đầu lúc trăng mọc vẫn theo luật này dù trăng lặn giữa trận). <b>Không mất vàng, không tên đỏ</b>; gục về Làng, {BMR['relock_s']} giây sau mới vào lại. Hạ người: {pct(BMR['drop_pct'])} cơ hội rơi 1 viên ({', '.join(E(IT[j]['name']) for j in BMR['jewels'])}), "
      f"× (1 + {n(BMR['rebirth_step'])} × số lần chuyển sinh người gục hơn mình), chặn 0 – ×{n(BMR['rebirth_max'])}; hạ lại cùng người mỗi lần ×{n(BMR['repeat_decay'])}. Hạ bot / bot hạ chỉ tính điểm, không rơi ngọc. "
      f"Trăng lặn: top {len(BMR['top_rewards'])} người thật (≥ {BMR['min_kills']} mạng) nhận ngọc qua thư, mặc định " + "; ".join(f"hạng {i + 1}: " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in rw.items()) for i, rw in enumerate(BMR['top_rewards'])) + " (Quản trị chỉnh được).",
-     "Mới: bản đồ 60×40 không quái (rừng tre, sân đấu, 4 miếu), trăng máu phủ đỏ khi mở; dải 🩸 giờ còn / mạng / hạng + top 3, 🏆 top 10; Quản trị gọi tất cả bot vào đồ sát."),
+     f"Mới: điểm theo chênh chuyển sinh; 🩸 Huyết Sát (hạ {BMR['streak']['min']} người liên tiếp, ai hạ được +{BMR['streak']['bounty_points']} điểm, ngọc ×{n(BMR['streak']['bounty_drop_mult'])}); 🔥 Bàn thờ Huyết Ngọc giữa sân (đứng một mình {BMR['altar']['hold_s']} giây nhận ngọc); bản đồ 60×40 không quái, trăng máu; dải 🩸 giờ / điểm / hạng + top 3, 🏆 top 10; Quản trị gọi tất cả bot vào."),
     ("Bản đồ vùng, vùng chuyển sinh", "—", _YES, _normal, "—"),
     ("Làng", "—", _NO, "Vùng an toàn.", "—"),
 ]
