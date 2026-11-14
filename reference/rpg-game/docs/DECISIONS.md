@@ -2251,6 +2251,24 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Bot chọn bãi theo sức thật (2026-11-14, anh duyệt mục A)
+Quan sát 8 bot 10 phút: Phù Thủy CS 12 (công 790, thủ 114, 2.024 máu, đồ +0) chết 94 lần, còn 4 vàng — bot chọn vùng chuyển
+sinh theo CS (thang vùng, ≈ vùng 10) chứ không theo sức; gục rải rác ở vùng 1–4 nên luật "3 lần ở một bản đồ" không bắt.
+- `Brain.fit?/2`: với con quái mạnh nhất bản đồ vùng chuyển sinh (chỉ số sau thang vùng theo CS của bot), số đòn quái cần
+  để hạ bot ≥ `bots.fit.margin` (3) × số đòn bot cần để hạ quái (đòn bot × `skill_mult` 1,5; công thức `Engine.damage` bỏ
+  phần ngẫu nhiên). Bản đồ quá sức coi như đang tránh: dừng ở bản đồ trước, hết thì lùi vùng thấp hơn, tới bản đồ thường
+  (chọn theo cấp như cũ) — bot cày vàng / đồ ở đó.
+- Gục `play.avoid.deaths` lần trong `window_min` phút ở cùng một vùng (khác bản đồ cũng tính, khóa `realm:<số>`) thì tránh
+  cả vùng `hours` giờ.
+- Kèm sửa lỗi: bot cộng điểm mỗi lần tối đa 99 (vừa chuyển sinh bot gửi mãi lệnh 102 điểm bị từ chối, kẹt ở Làng).
+
+## Bot chơi theo phiên (2026-11-14, anh duyệt mục B)
+Bot trước online 24/24, gửi lệnh đều mỗi 0,4–1 giây. Nay (`RULES.bots.schedule`): mỗi phiên online 2–6 giờ rồi thoát hẳn 1–4
+giờ (tắt tiến trình "tab" gắn vào Session như người đóng trình duyệt: biến khỏi bản đồ, danh sách online); chỉ thoát lúc
+rảnh (không trận, không ở tháp / phòng sự kiện, không đồ sát, không bị gọi vào Huyết Nguyệt). Khởi động server thì 30 % bot
+đang offline, vào lại sau một quãng ngẫu nhiên. Trong phiên mỗi 20–60 phút đứng treo 2–6 phút ở chỗ không có trận. Quản trị
+gọi bot vào Huyết Nguyệt thì bot offline vào lại ngay (kiểm mỗi phút).
+
 ## Tiến Lên: bot dễ biết chặt 2 (2026-11-14, anh báo)
 Bot "dễ" trước đây không bao giờ chặt (gặp 2 là bỏ lượt dù cầm tứ quý), trông như bot không biết luật. Nay tới lượt mà
 trên bàn là 2 (hoặc bộ vừa chặt 2) và có bom (tứ quý, ba / bốn đôi thông hợp lệ) thì chặt bằng bom yếu nhất; còn lại vẫn

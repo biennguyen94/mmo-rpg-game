@@ -103,7 +103,12 @@ defmodule HacLong.Bots.BrainForgeTest do
     assert Brain.rebirth_ready?(p)
     refute Brain.rebirth_ready?(%{p | level: max - 1})
 
-    q = Map.put(p, :rebirths, 1)
+    # đủ mạnh để đánh nổi vùng chuyển sinh (DECISIONS "Bot chọn bãi theo sức thật")
+    q =
+      p
+      |> Map.put(:rebirths, 1)
+      |> Map.put(:stats, %{str: 30_000, agi: 5_000, vit: 30_000, ene: 100})
+
     refute Brain.rebirth_ready?(q)
     assert "realm_01" <> _ = Brain.realm_target(q)
     assert Brain.realm_target(Map.put(player(), :rebirths, 1)) == nil

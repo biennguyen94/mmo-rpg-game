@@ -1091,12 +1091,52 @@ defmodule HacLong.Bots.Brain do
       kills = m.spawns |> Enum.map(&HacLong.Game.Bestiary.count(p, &1.monster)) |> Enum.sum()
 
       cond do
-        m.id in avoid -> {:halt, prev}
+        # đang tránh bản đồ / cả vùng (gục rải rác nhiều lần trong vùng), hoặc quá sức (DECISIONS "Bot chọn bãi theo sức
+        # thật"): dừng ở bản đồ trước; bản đồ đầu tiên của vùng đã vậy thì lùi vùng thấp hơn / bản đồ thường
+        m.id in avoid or realm_key(m.realm) in avoid or not fit?(p, m) -> {:halt, prev}
         kills < @forge.realm_kills -> {:halt, m.id}
         true -> {:cont, m.id}
       end
     end)
   end
+
+  # ---------- Sức thật so với bãi (DECISIONS "Bot chọn bãi theo sức thật") ----------
+  @fit Data.rules().bots.fit
+  @soft_floor Data.rules().combat.soft_floor
+
+  # sát thương trung bình một đòn (công thức `Engine.damage/4` bỏ phần ngẫu nhiên)
+  defp avg_hit(atk, dfn) do
+    raw = max(atk, 0) * 1.0
+    if raw > 0, do: max(raw * raw / (raw + max(dfn, 0)), raw * @soft_floor), else: 1.0
+  end
+
+  @doc """
+  Bot đánh nổi bãi `map` không: với con quái mạnh nhất của bản đồ (chỉ số sau thang vùng, theo CS của bot), số đòn quái cần
+  để hạ bot ≥ `bots.fit.margin` × số đòn bot cần để hạ quái (đòn bot × `skill_mult`: có kỹ năng). Bản đồ thường / không
+  quái: luôn đánh nổi (chọn theo cấp như cũ).
+  """
+  def fit?(p, %{realm: r, side: true, spawns: [_ | _]} = map) when r != nil do
+    d = Engine.derived(p)
+    cs = Map.get(p, :rebirths) || 0
+
+    Enum.all?(Enum.uniq_by(map.spawns, & &1.monster), fn sp ->
+      case Data.side_monster(sp.monster) do
+        nil ->
+          true
+
+        spec ->
+          m = spec |> HacLong.RealmLadder.adjust(r, cs) |> Engine.make_monster(false)
+          to_kill = m.maxHp / max(avg_hit(d.atk, m.def) * @fit.skill_mult, 1)
+          to_die = d.maxHp / max(avg_hit(m.atk, d.def), 1)
+          to_die >= @fit.margin * to_kill
+      end
+    end)
+  end
+
+  def fit?(_p, _map), do: true
+
+  # khóa "cả vùng" trong danh sách tránh (`note_death/3`)
+  defp realm_key(r), do: "realm:#{r}"
 
   # ---------- Chết nhiều ở một chỗ: tạm tránh ----------
   @avoid Data.rules().bots.play.avoid
@@ -1107,6 +1147,17 @@ defmodule HacLong.Bots.Brain do
   tránh chỗ đó `hours` giờ (DECISIONS "Bot cuối game").
   """
   def note_death(st, map, now) do
+    st = note_one(st, map, now)
+
+    # gục rải rác ở nhiều bản đồ của cùng một vùng chuyển sinh cũng tính (trước đây mỗi bản đồ đếm riêng, bot chết khắp
+    # vùng 1–4 mà không lần nào đủ 3 lần ở một bản đồ)
+    case map && Maps.get(map) do
+      %{realm: r} when r != nil -> note_one(st, realm_key(r), now)
+      _ -> st
+    end
+  end
+
+  defp note_one(st, map, now) do
     win = @avoid.window_min * 60_000
     recent = [now | Enum.filter(Map.get(st.fails, map, []), &(now - &1 < win))]
 

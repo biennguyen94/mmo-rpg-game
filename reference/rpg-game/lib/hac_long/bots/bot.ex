@@ -7,6 +7,12 @@ defmodule HacLong.Bots.Bot do
   Thỉnh thoảng nói một câu trong kênh thế giới; lời mời cược đấu thì từ chối sau vài giây. Vừa gục (bị đồ sát,
   thua quái…) thì đứng nghỉ ở Làng `RULES.bots.rest_after_death_s` giây rồi mới đi luyện tiếp (`Brain.rest_until/5`).
 
+  Lịch chơi như người (DECISIONS "Bot chơi theo phiên"): mỗi phiên online `RULES.bots.schedule.online_h` giờ rồi thoát hẳn
+  `offline_h` giờ (biến khỏi bản đồ, danh sách online), thoát khi đang rảnh (không trận, không ở tháp / phòng sự kiện, không
+  đồ sát); lúc khởi động một phần bot đang offline (`start_offline`). Trong phiên thỉnh thoảng đứng treo `afk_min` phút
+  (mỗi `afk_every_min` phút) ở chỗ không có trận. Quản trị gọi bot vào Huyết Nguyệt thì bot offline cũng vào lại.
+  Bot gắn vào Session qua một tiến trình "tab" riêng (`tab`): thoát là tắt tab đó, như người đóng trình duyệt.
+
   Câu cá (DECISIONS "Bot câu cá, bot try hard"): hẹn lượt ra Biển Long Vương (`RULES.bots.fish`), báo Brain ô Long Vương /
   Đàn Cá Vàng đang có; thả câu xong thì giật cần sau khi cá cắn `react_ms` mili giây. Bot try hard (`RULES.bots.tryhard`)
   nghỉ ít hơn, leo Tháp và ra hồ thường hơn, giật cần nhanh hơn.
@@ -41,6 +47,8 @@ defmodule HacLong.Bots.Bot do
   @tower_max HacLong.Game.Data.rules().bots.play.tower_max_min * 60_000
   # tự gỡ kẹt (DECISIONS "Đưa về Làng"): đứng yên quá chừng này thì về Làng
   @stuck_ms HacLong.Game.Data.rules().bots.play.stuck_min * 60_000
+  # lịch chơi theo phiên (DECISIONS "Bot chơi theo phiên")
+  @sched HacLong.Game.Data.rules().bots.schedule
 
   def start_link({uid, _name, _cls} = arg),
     do:
@@ -77,16 +85,32 @@ defmodule HacLong.Bots.Bot do
        # dấu vết tiến triển ở nhịp trước và lúc nó bắt đầu không đổi (`unstick/4`)
        sig: nil,
        still_since: nil,
-       deaths_at: %{fails: %{}, avoid: %{}}
+       deaths_at: %{fails: %{}, avoid: %{}},
+       # phiên chơi: online / offline tới `next_switch`; tab: tiến trình gắn vào Session lúc online; treo máy tới `afk_until`
+       online: :rand.uniform() >= @sched.start_offline,
+       tab: nil,
+       next_switch: nil,
+       afk_until: System.monotonic_time(:millisecond),
+       next_afk: next_in(System.monotonic_time(:millisecond), @sched.afk_every_min)
      }}
   end
 
   @impl true
   def handle_info(:start, s) do
-    Session.attach(s.uid, self())
-    Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(s.uid))
-    send(self(), :tick)
-    {:noreply, s}
+    now = System.monotonic_time(:millisecond)
+
+    if s.online do
+      s = go_online(s, now)
+      Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(s.uid))
+      send(self(), :tick)
+      {:noreply, s}
+    else
+      # vừa khởi động mà đang "offline": vào lại sau một quãng ngẫu nhiên trong phiên offline
+      Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(s.uid))
+      s = %{s | next_switch: now + round(:rand.uniform() * hours(@sched.offline_h))}
+      send(self(), :wake)
+      {:noreply, s}
+    end
   catch
     # Session chưa mở được (vd. nạp nhân vật lỗi): thử lại sau, không làm sập cả nhóm bot
     kind, reason ->
@@ -110,6 +134,29 @@ defmodule HacLong.Bots.Bot do
     _, _ -> {:noreply, %{s | reeling: false}}
   end
 
+  # đang offline: tới giờ (hoặc quản trị gọi vào Huyết Nguyệt) thì vào lại, không thì hỏi lại sau một phút
+  def handle_info(:wake, %{online: false} = s) do
+    now = System.monotonic_time(:millisecond)
+
+    if now >= s.next_switch or HacLong.BloodMoon.bot_on?(s.uid) do
+      send(self(), :tick)
+      {:noreply, go_online(s, now)}
+    else
+      Process.send_after(self(), :wake, 60_000)
+      {:noreply, s}
+    end
+  catch
+    kind, reason ->
+      Logger.warning("bot #{s.uid} chưa vào lại được: #{inspect(kind)} #{inspect(reason)}")
+      Process.send_after(self(), :wake, 60_000)
+      {:noreply, s}
+  end
+
+  def handle_info(:wake, s), do: {:noreply, s}
+
+  # nhịp cũ còn trong hộp thư lúc vừa thoát: bỏ
+  def handle_info(:tick, %{online: false} = s), do: {:noreply, s}
+
   def handle_info(:tick, s) do
     s = tick(s)
     {:noreply, s}
@@ -126,6 +173,14 @@ defmodule HacLong.Bots.Bot do
   defp tick(s) do
     p = Session.get(s.uid)
     now = System.monotonic_time(:millisecond)
+
+    if now >= s.next_switch and leave_ok?(p, s.uid),
+      do: go_offline(s, now),
+      else: play(s, p, now)
+  end
+
+  defp play(s, p, now) do
+    s = afk_turn(s, p, now)
 
     # vừa gục (về Làng): nghỉ một lúc rồi mới đi luyện tiếp; gục nhiều ở một chỗ thì tạm tránh chỗ đó
     s = note_death(s, p, now)
@@ -171,6 +226,10 @@ defmodule HacLong.Bots.Bot do
           )
 
         Brain.resting?(p, s.rest_until, now) ->
+          nil
+
+        # đang treo máy (đứng yên, không trận)
+        now < s.afk_until ->
           nil
 
         true ->
@@ -238,8 +297,67 @@ defmodule HacLong.Bots.Bot do
         tower_from: if(in_tower, do: s.tower_from || floor)
     }
 
-    unstick(s, p, Brain.resting?(p, s.rest_until, now), now)
+    unstick(s, p, Brain.resting?(p, s.rest_until, now) or now < s.afk_until, now)
   end
+
+  # ---------- Phiên chơi (DECISIONS "Bot chơi theo phiên") ----------
+
+  defp hours([lo, hi]), do: round((lo + :rand.uniform() * (hi - lo)) * 3_600_000)
+
+  # tab: tiến trình đứng thay trình duyệt (Session theo dõi nó; tắt nó là thoát game)
+  defp go_online(s, now) do
+    tab = spawn(fn -> tab_loop() end)
+    Session.attach(s.uid, tab)
+
+    %{
+      s
+      | online: true,
+        tab: tab,
+        next_switch: now + hours(@sched.online_h),
+        sig: nil,
+        still_since: nil
+    }
+  end
+
+  defp go_offline(s, now) do
+    if s.tab, do: Process.exit(s.tab, :kill)
+    Process.send_after(self(), :wake, 60_000)
+    %{s | online: false, tab: nil, next_switch: now + hours(@sched.offline_h), reeling: false}
+  end
+
+  defp tab_loop do
+    receive do
+      _ -> tab_loop()
+    end
+  end
+
+  @doc false
+  # thoát được lúc này: đang rảnh (không trận / trận đã xong, không ở tháp / phòng sự kiện, không đồ sát, không bị gọi vào
+  # Huyết Nguyệt)
+  def leave_ok?(nil, _uid), do: true
+
+  def leave_ok?(p, uid) do
+    (p.battle == nil or p.battle.over) and p.pos.map != "tower" and
+      p.pos.map != HacLong.BloodMoon.map_id() and not HacLong.Slay.slaying?(p) and
+      not HacLong.BloodMoon.bot_on?(uid)
+  end
+
+  # treo máy: tới lượt mà đang rảnh ở bản đồ thường thì đứng `afk_min` phút
+  defp afk_turn(s, p, now) do
+    cond do
+      now < s.afk_until or now < s.next_afk ->
+        s
+
+      p != nil and p.battle == nil and p.pos.map != "tower" ->
+        until = now + round(min_between(@sched.afk_min) * 60_000)
+        %{s | afk_until: until, next_afk: next_in(until, @sched.afk_every_min)}
+
+      true ->
+        s
+    end
+  end
+
+  defp min_between([lo, hi]), do: lo + :rand.uniform() * (hi - lo)
 
   # Tự gỡ kẹt: không nghỉ mà vị trí, máu, kinh nghiệm, vàng, lượt trận không đổi quá `play.stuck_min` phút thì về
   # Làng (Session.to_village: kết thúc trận như bỏ chạy, rời tháp / phòng sự kiện), bắt đầu đo lại.

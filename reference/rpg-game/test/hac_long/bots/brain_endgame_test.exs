@@ -61,8 +61,15 @@ defmodule HacLong.Bots.BrainEndgameTest do
   end
 
   describe "chuyển sinh tối đa, cấp tối đa: luyện ở vùng chuyển sinh" do
+    # đủ mạnh để đánh nổi mọi vùng chuyển sinh (DECISIONS "Bot chọn bãi theo sức thật")
     defp maxed do
-      p = player(%{level: @char.max_level, inv: %{"potion_l" => 20, "mana_l" => 20}})
+      p =
+        player(%{
+          level: @char.max_level,
+          inv: %{"potion_l" => 20, "mana_l" => 20},
+          stats: %{str: 30_000, agi: 5_000, vit: 30_000, ene: 100}
+        })
+
       Map.put(p, :rebirths, @char.max_rebirths)
     end
 
