@@ -1119,6 +1119,8 @@ details.fold > .list { margin-top: 4px; }
 .pick-pop .list .item { width: 100%; text-align: left; }
 /* Quanh đây: dòng người gồm nút hồ sơ (cả dòng) + 📍 */
 div.item.people-row { display: flex; align-items: center; gap: 8px; }
+/* hình nhân vật ghép 32×32: giữ kích thước thực, không phóng 40px cho khỏi nhòe */
+.people-row .sprite.sm { width: 32px; height: 32px; image-rendering: pixelated; }
 div.item.people-row .people-main { display: flex; align-items: center; gap: 10px; min-width: 0; background: none; border: 0; padding: 0; color: inherit; text-align: left; font: inherit; cursor: pointer; }
 
 /* màn đăng nhập: người đầu tiên thuần phục Hắc Long */
