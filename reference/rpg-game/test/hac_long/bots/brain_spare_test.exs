@@ -5,6 +5,8 @@ defmodule HacLong.Bots.BrainSpareTest do
   alias HacLong.Bots.Brain
   alias HacLong.Game.{Engine, Gear}
 
+  @f HacLong.Game.Data.rules().bots.forge
+
   # vũ khí đầu game công 4; món dự bị công 21 (cấp 12)
   @better "item_0_3"
 
@@ -43,7 +45,9 @@ defmodule HacLong.Bots.BrainSpareTest do
   test "+10 / +11 món dự bị ở Máy Hỗn Nguyên chỉ bot liều" do
     # vũ khí công 21 +11 (66) giữ chỗ; rìu công 31 +9 (49) vẫn là món dự bị
     p =
-      player(%{inv: %{"jewel_bless" => 9, "jewel_soul" => 9, "jewel_chaos" => 9}})
+      player(%{
+        inv: %{"jewel_bless" => 9 + @f.risk_reserve, "jewel_soul" => 9, "jewel_chaos" => 9}
+      })
       |> add(@better, "#OLD")
 
     {%{ok: true}, p} = Engine.equip(p, "#OLD")

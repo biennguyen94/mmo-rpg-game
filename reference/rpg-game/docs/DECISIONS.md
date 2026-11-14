@@ -2251,6 +2251,15 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Bot chỉ liều ép khi dư ngọc (2026-11-14, anh duyệt phương án a)
+Chạy bot thật (Kiếm Sĩ CS 18, 60 Ngọc Ước Nguyện): bot cứ có ngọc là ép, tới +7 (50 %) hỏng về +0, ép lại, hỏng tiếp: hết 60
+viên trong ~1 phút, món vẫn +1 / +2. Bot CS 12–18 trên server toàn đồ +0. Lên +9 từ +6 trung bình ~40 Ngọc Ước Nguyện.
+- Bước có thể hỏng về +0 (+7 … +11, `fail` trong upgrade.json) bot chỉ thử khi còn dư `bots.forge.risk_reserve` (12)
+  Ngọc Ước Nguyện ngoài số bước đó tốn (đủ ép lại từ +0 lên +6 hai lần), cùng điều kiện dư `spare` viên như cũ; +10 / +11
+  vẫn chỉ bot liều / từ `chaos_from_rebirths`.
+- Chưa đủ dư: giữ +6 (luôn thành công, mỗi cấp +8 % chỉ số gốc), ngọc dùng đưa các món khác lên +6.
+- Luật ép cho người chơi không đổi (kiểu MU, B-13).
+
 ## Hiệu ứng đòn cuối trên bản đồ (2026-11-14, anh báo lỗi)
 Nhân vật rất mạnh (CS 10, đồ, thú tối đa) ⚡ đánh trên bản đồ: hiệu ứng đòn cuối tới sau khi đối phương đã biến mất, hoặc
 không có hiệu ứng khi đối phương bị hạ ngay. Nguyên nhân và cách sửa (chỉ là hình, server không đổi):

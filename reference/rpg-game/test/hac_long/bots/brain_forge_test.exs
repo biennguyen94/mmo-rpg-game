@@ -23,17 +23,35 @@ defmodule HacLong.Bots.BrainForgeTest do
     assert Brain.forge_job(%{p | inv: %{}}) == nil
   end
 
-  test "bước có thể hỏng (+7) chỉ ép khi dư Ngọc Tâm Linh" do
+  test "bước có thể hỏng (+7) chỉ ép khi dư Ngọc Tâm Linh và dư Ngọc Ước Nguyện để ép lại" do
     p = player()
     p = Enum.reduce(p.equip, p, fn {_s, id}, p -> if id, do: up(p, id, 6), else: p end)
-    assert Brain.forge_job(%{p | inv: %{"jewel_soul" => 1}}) == nil
+    reserve = %{"jewel_bless" => @f.risk_reserve}
+    assert Brain.forge_job(%{p | inv: Map.put(reserve, "jewel_soul", 1)}) == nil
 
     assert {"shop", %{"act" => "upgrade"}} =
-             Brain.forge_job(%{p | inv: %{"jewel_soul" => 1 + @f.spare}})
+             Brain.forge_job(%{p | inv: Map.put(reserve, "jewel_soul", 1 + @f.spare)})
+  end
+
+  test "chưa đủ dư Ngọc Ước Nguyện: giữ +6, không liều +7; món khác chưa +6 thì ép món đó" do
+    p = player()
+    p = Enum.reduce(p.equip, p, fn {_s, id}, p -> if id, do: up(p, id, 6), else: p end)
+    inv = %{"jewel_bless" => @f.risk_reserve - 1, "jewel_soul" => 9}
+    assert Brain.forge_job(%{p | inv: inv}) == nil
+
+    # một món còn +3: ép món đó lên (luôn thành công)
+    p = up(p, p.equip.armor, 3)
+
+    assert {"shop", %{"act" => "upgrade", "slot" => "armor"}} =
+             Brain.forge_job(%{p | inv: inv})
   end
 
   test "+10 / +11 ở Máy Hỗn Nguyên chỉ bot liều" do
-    p = player(%{inv: %{"jewel_bless" => 9, "jewel_soul" => 9, "jewel_chaos" => 9}})
+    p =
+      player(%{
+        inv: %{"jewel_bless" => 9 + @f.risk_reserve, "jewel_soul" => 9, "jewel_chaos" => 9}
+      })
+
     p = Enum.reduce(p.equip, p, fn {_s, id}, p -> if id, do: up(p, id, 9), else: p end)
     assert Brain.forge_job(p, %{seed: 1}) == nil
 

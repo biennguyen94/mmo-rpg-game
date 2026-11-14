@@ -57,7 +57,10 @@ defmodule HacLong.Bots.BrainHacTest do
 
     test "từ `chaos_from_rebirths` lần chuyển sinh, bot nào cũng ép +10 / +11 ở Máy Hỗn Nguyên" do
       p =
-        player(%{inv: %{"jewel_bless" => 9, "jewel_soul" => 9, "jewel_chaos" => 9}, rebirths: 0})
+        player(%{
+          inv: %{"jewel_bless" => 9 + @f.risk_reserve, "jewel_soul" => 9, "jewel_chaos" => 9},
+          rebirths: 0
+        })
 
       p = Enum.reduce(p.equip, p, fn {_s, id}, p -> if id, do: up(p, id, 9), else: p end)
       assert Brain.forge_job(p, %{seed: 1}) == nil

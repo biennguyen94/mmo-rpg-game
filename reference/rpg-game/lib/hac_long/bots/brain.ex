@@ -651,7 +651,7 @@ defmodule HacLong.Bots.Brain do
       cost = Engine.upgrade_cost(it, lv)
 
       if cost && cost.gold <= spare &&
-           has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
+           has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) && risk_ok?(p, cost) &&
            (cost.at == "smith" or daring),
          do: [{lv, it.uid, cost.at}],
          else: []
@@ -662,6 +662,17 @@ defmodule HacLong.Bots.Brain do
       [{_, uid, "smith"} | _] -> {"shop", %{"act" => "upgrade", "id" => uid, "confirm" => true}}
       [{_, uid, _} | _] -> {"chaos", %{"act" => "chaos_upgrade", "id" => uid, "confirm" => true}}
     end
+  end
+
+  # bước có thể hỏng về +0 (+7 trở lên): chỉ liều khi còn dư `forge.risk_reserve` Ngọc Ước Nguyện (ngoài số bước này
+  # tốn) để ép lại từ đầu; không thì giữ +6, đưa các món khác lên +6 trước (DECISIONS "Bot chỉ liều ép khi dư ngọc")
+  defp risk_ok?(_p, %{fail: nil}), do: true
+
+  defp risk_ok?(p, cost) do
+    need =
+      Enum.find_value(cost.items, 0, fn {k, n} -> if to_string(k) == "jewel_bless", do: n end)
+
+    Map.get(p.inv, "jewel_bless", 0) >= @forge.risk_reserve + need
   end
 
   # cánh đã đủ cấp ép để ghép lên bậc kế (`wing_job/2`): thôi ép, để dành ngọc cho công thức (ghép xong cánh mới về +0)
@@ -689,7 +700,7 @@ defmodule HacLong.Bots.Brain do
 
       ok =
         cost && cost.gold <= spare &&
-          has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
+          has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) && risk_ok?(p, cost) &&
           (cost.at == "smith" or daring)
 
       if ok, do: [{lv + focus_lead(slot), slot, cost.at}], else: []
