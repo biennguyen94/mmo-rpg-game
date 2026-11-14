@@ -2418,3 +2418,8 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
   trùm trong 2–5 lượt.
 - **Trùm Quảng Trường Quỷ** lệch hẳn: người thường thắng 0–22% ở mọi mốc. `devil_square.boss_mult` 1,4 → 1,0, `boss_hp` 3 → 4:
   thắng 78–97%, 20–32 lượt.
+
+## Cánh nhân vật nam sẫm màu (2026-11-14, anh yêu cầu)
+- Kiếm Sĩ, Phù Thủy, Đấu Sĩ (nhân vật nam): cánh cấp 2–3 thân sẫm gần đặc (đỏ sẫm / xanh đêm / tím than, đầu cánh ngả màu
+  lớp), viền phát sáng màu lớp, gân cánh tối (`DARK` trong `doll.js`). Tiên Nữ giữ cánh ánh sáng trong suốt. Vòng chân, hạt sáng
+  không đổi.

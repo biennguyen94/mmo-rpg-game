@@ -27,9 +27,11 @@
   // Trên bản đồ `fly()` vẽ mượt ở độ phân giải màn hình (nhấp nhô, cánh vỗ); hình tĩnh 32px (hồ sơ, chọn nhân vật, màn trận)
   // vẽ một khung cố định trong `canvas()`.
   const LIGHT = { dk: [255, 110, 80], dw: [120, 160, 255], elf: [255, 215, 90], mg: [190, 130, 255] };
+  // nhân vật nam (Kiếm Sĩ, Phù Thủy, Đấu Sĩ): cánh sẫm màu (thân cánh tối, viền sáng màu lớp, gân tối); Tiên Nữ cánh ánh sáng
+  const DARK = { dk: [70, 8, 10], dw: [12, 18, 58], mg: [38, 8, 58] };
   // nửa cánh (đơn vị: 1 = 1/32 hình nhân vật), gốc ở lưng
   const WING_PTS = [[1, 0.5], [6.5, -5.5], [11.5, -7.5], [14.5, -4.5], [12.5, 0], [10, 3], [6.5, 5], [2, 3.5]];
-  function lightWings(g, x, y, s, flap, rgb, alpha) {
+  function lightWings(g, x, y, s, flap, rgb, alpha, dark) {
     const [r, gg, b] = rgb;
     g.save();
     g.shadowColor = `rgba(${r}, ${gg}, ${b}, 0.9)`;
@@ -42,13 +44,27 @@
       });
       g.closePath();
       const grd = g.createLinearGradient(x, y, x + side * 14 * s, y - 6 * s);
-      grd.addColorStop(0, `rgba(${r}, ${gg}, ${b}, ${alpha})`);
-      grd.addColorStop(1, `rgba(${Math.min(255, r + 80)}, ${Math.min(255, gg + 80)}, ${Math.min(255, b + 80)}, ${alpha * 0.55})`);
+      if (dark) {
+        // thân cánh sẫm gần như đặc, đầu cánh ngả màu lớp; viền sáng màu lớp
+        const [dr, dg, db] = dark, a = Math.min(1, alpha + 0.3);
+        grd.addColorStop(0, `rgba(${dr >> 1}, ${dg >> 1}, ${db >> 1}, ${a})`);
+        grd.addColorStop(0.6, `rgba(${dr}, ${dg}, ${db}, ${a})`);
+        grd.addColorStop(1, `rgba(${(dr + r) >> 1}, ${(dg + gg) >> 1}, ${(db + b) >> 1}, ${a * 0.85})`);
+      } else {
+        grd.addColorStop(0, `rgba(${r}, ${gg}, ${b}, ${alpha})`);
+        grd.addColorStop(1, `rgba(${Math.min(255, r + 80)}, ${Math.min(255, gg + 80)}, ${Math.min(255, b + 80)}, ${alpha * 0.55})`);
+      }
       g.fillStyle = grd;
       g.fill();
+      if (dark) {
+        g.shadowBlur = 3 * s;
+        g.strokeStyle = `rgba(${r}, ${gg}, ${b}, ${Math.min(1, alpha + 0.2)})`;
+        g.lineWidth = Math.max(0.6, 0.6 * s);
+        g.stroke();
+      }
       // gân cánh
       g.shadowBlur = 0;
-      g.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.6})`;
+      g.strokeStyle = dark ? `rgba(0, 0, 0, ${alpha})` : `rgba(255, 255, 255, ${alpha * 0.6})`;
       g.lineWidth = Math.max(0.5, 0.5 * s);
       for (let k = 0; k < 3; k++) {
         g.beginPath();
@@ -75,7 +91,7 @@
   // khung tĩnh trong hình 32px: vòng sáng dưới chân, cấp 2+ cánh nhỏ sau lưng (vẽ trước các lớp nhân vật)
   function drawWing(g, wing) {
     const rgb = LIGHT[wing.cls] || LIGHT.dk;
-    if (wing.tier >= 2) lightWings(g, 16, 11, wing.tier >= 3 ? 1.05 : 0.85, 0.3, rgb, wing.tier >= 3 ? 0.7 : 0.55);
+    if (wing.tier >= 2) lightWings(g, 16, 11, wing.tier >= 3 ? 1.05 : 0.85, 0.3, rgb, wing.tier >= 3 ? 0.7 : 0.55, DARK[wing.cls]);
   }
   function drawWingFront(g, wing) {
     footRing(g, 16, 30, 0.9, LIGHT[wing.cls] || LIGHT.dk, 0.8);
@@ -92,7 +108,7 @@
     footRing(g, cx, py + size - 2 * s, s * (1 + (w.tier >= 3 ? 0.15 : 0)), rgb, fx ? 0.65 + 0.25 * Math.sin(t / 400) : 0.8);
     if (w.tier >= 2) {
       const flap = fx ? Math.sin(t / 330) * 0.35 : 0.2;
-      lightWings(g, cx, py + 11 * s + bob, s * (w.tier >= 3 ? 1.35 : 1.05), flap, rgb, w.tier >= 3 ? 0.7 : 0.55);
+      lightWings(g, cx, py + 11 * s + bob, s * (w.tier >= 3 ? 1.35 : 1.05), flap, rgb, w.tier >= 3 ? 0.7 : 0.55, DARK[w.cls]);
     }
     const n = fx ? (w.tier >= 3 ? 8 : w.tier >= 2 ? 4 : 3) : 0;
     const [r, gg, b] = rgb;
