@@ -1884,7 +1884,6 @@
       <div class="prof-boxes">
         <div class="prof-box">Hạng: <b>#${pr.rank || '—'}</b></div>
         <div class="prof-box">${esc(c.name || '')}: <b>#${pr.class_rank || '—'}</b></div>
-        <div class="prof-box">Đấu trường <span class="muted">${pr.arena.rating}</span><br>🏆 ${pr.arena.wins}T / ${pr.arena.losses}B</div>
       </div>
       <div class="card">${bar('hp', pr.hp, pr.max_hp, `❤ ${fmt(pr.hp)} / ${fmt(pr.max_hp)}`)}${bar('mp', pr.mp, pr.max_mp, `💧 ${fmt(pr.mp)} / ${fmt(pr.max_mp)}`)}</div>
       <div class="card">
