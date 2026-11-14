@@ -392,6 +392,11 @@ defmodule HacLongWeb.SlayTest do
     pa = settled(ua.id)
     assert pa.battle.result == "win" and pb.battle.result == "lose"
 
+    # màn kết quả còn giữ sau khi về chỗ cũ (trước đây dịch chuyển về chỗ cũ đóng luôn màn kết quả của cả hai)
+    Process.sleep(200)
+    assert Session.get(ua.id).battle.result == "win"
+    assert Session.get(ub.id).battle.result == "lose"
+
     # về chỗ cũ chạy trong Session từng người ngay sau khi chốt trận (giữ màn kết quả)
     pb = back_home(ub.id, "village")
     assert pb.battle.result == "lose"

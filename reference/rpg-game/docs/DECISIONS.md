@@ -2251,6 +2251,12 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Đấu trực tiếp: giữ màn kết quả sau khi về chỗ cũ (2026-11-14)
+Chốt trận đấu trực tiếp (`Slay.settle_duel`): `duel_end` đặt chỗ cũ, `Session.release` đổi bản đồ, rồi còn gọi
+`Session.teleport` về chỗ cũ, mà `relocate` coi như bị gián đoạn trận nên xóa luôn màn kết quả của cả hai (người chơi
+không kịp xem thắng / thua; test `slay_test` chập chờn vì chỉ đọc được trong khe vài mili giây). Nay chỉ dịch chuyển khi
+chưa về đúng chỗ cũ (dự phòng lúc giữ quá giờ, lần nhả bị bỏ qua); test kiểm màn kết quả còn sau khi về chỗ cũ.
+
 ## Bot chỉ liều ép khi dư ngọc (2026-11-14, anh duyệt phương án a)
 Chạy bot thật (Kiếm Sĩ CS 18, 60 Ngọc Ước Nguyện): bot cứ có ngọc là ép, tới +7 (50 %) hỏng về +0, ép lại, hỏng tiếp: hết 60
 viên trong ~1 phút, món vẫn +1 / +2. Bot CS 12–18 trên server toàn đồ +0. Lên +9 từ +6 trung bình ~40 Ngọc Ước Nguyện.

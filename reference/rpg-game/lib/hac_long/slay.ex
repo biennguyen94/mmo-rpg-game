@@ -868,8 +868,11 @@ defmodule HacLong.Slay do
             Session.release(winner, rw, pw2)
             Session.release(loser, rl, pl2)
 
+            # `duel_end` đã đặt chỗ cũ, `release` đổi bản đồ trong Session: chỉ dịch chuyển khi chưa về đúng chỗ (vd giữ
+            # quá giờ nên lần nhả bị bỏ qua). Dịch chuyển luôn thì `relocate` đóng màn kết quả của cả hai ngay (lỗi cũ)
             for uid <- [winner, loser],
                 back = (f[:back] || %{})[uid],
+                match?(%{pos: pos} when pos != back, Session.get(uid)),
                 do: Session.teleport(uid, back)
 
             notice(winner, "⚔ Thắng #{f.names[loser]}: điểm đấu trường #{sign.(dw)}." <> war)
