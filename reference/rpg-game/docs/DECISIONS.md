@@ -2263,6 +2263,9 @@ Supplemental trên OpenGameArt) thay vì vài hình: anh chọn hướng này th
   theo `basic_armor`; món không có trong bảng dùng `doll` cũ của món.
 - `doll.js`: lớp (dưới lên trên) cánh, áo choàng, thân, giày, quần, giáp, găng, tóc, râu, mũ, vũ khí, khiên; quần, giày
   trống dùng mặc định. Hào quang đồ +7/+9/+11, đồ Thần giữ như cũ.
+- **Cánh** (anh chọn phương án B): cánh rồng của bộ tile (`doll/wing/draconic_wing_*`) thay cánh vẽ bằng code, màu theo
+  lớp (Kiếm Sĩ đỏ, Phù Thủy tím, Tiên Nữ vàng, Đấu Sĩ đen); cấp 1 cánh thường, cấp 2 thêm viền sáng màu lớp, cấp 3 viền dày
+  hơn và đốm sáng quanh cánh; hạt sáng bay của cánh giữ như cũ. Ảnh cánh tải hỏng thì vẽ cánh bằng code như trước.
 
 ## Thang vùng: tính cả bot (2026-11-14, anh yêu cầu)
 Thẻ 🗺 Thang vùng chuyển sinh (Quản trị) có nút **🤖 Tính cả bot** (mặc định tắt, lưu cùng trạng thái thang trong `admin_log`

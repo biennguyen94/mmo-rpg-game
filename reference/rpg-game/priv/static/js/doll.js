@@ -32,7 +32,7 @@
 
   // Hai cánh sau vai (khung 32×32, nhân vật đứng giữa). Cánh cấp 2 to hơn và có thêm lớp lông;
   // cấp 3 (Phase 15e) to nhất, thêm viền sáng ngoài cùng.
-  function drawWing(g, wing) {
+  function drawWingCode(g, wing) {
     const [edge, body, light] = WING_COLORS[wing.cls] || WING_COLORS.dk;
     const big = wing.tier >= 2, huge = wing.tier >= 3;
     const half = (dir) => {
@@ -79,6 +79,38 @@
     g.restore();
   }
 
+  // Cánh rồng của bộ tile (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp"): màu theo lớp; cấp 2 thêm viền sáng màu lớp,
+  // cấp 3 viền sáng dày hơn và đốm sáng quanh cánh (hạt sáng bay của cánh vẫn vẽ ở map.js / fx.js như cũ).
+  // Ảnh cánh tải hỏng thì vẽ cánh bằng code như trước.
+  const WING_IMG = { dk: 'wing/draconic_wing_red', dw: 'wing/draconic_wing_purple', elf: 'wing/draconic_wing_yellow', mg: 'wing/draconic_wing_black' };
+  const wingPath = (wing) => (wing ? WING_IMG[wing.cls] || WING_IMG.dk : null);
+  function drawWing(g, wing, im) {
+    if (!im) { drawWingCode(g, wing); return; }
+    const light = (WING_COLORS[wing.cls] || WING_COLORS.dk)[2];
+    if (wing.tier >= 2) {
+      // viền: hình cánh tô một màu, vẽ lệch 1px bốn phía (cấp 3: thêm bốn góc) dưới cánh thật
+      const t = document.createElement('canvas');
+      t.width = 32; t.height = 32;
+      const tg = t.getContext('2d');
+      tg.drawImage(im, 0, 0);
+      tg.globalCompositeOperation = 'source-in';
+      tg.fillStyle = light;
+      tg.fillRect(0, 0, 32, 32);
+      const offs = [[1, 0], [-1, 0], [0, 1], [0, -1]].concat(wing.tier >= 3 ? [[1, 1], [-1, -1], [1, -1], [-1, 1]] : []);
+      g.save();
+      g.globalAlpha = wing.tier >= 3 ? 0.95 : 0.8;
+      offs.forEach(([x, y]) => g.drawImage(t, x, y));
+      g.restore();
+    }
+    g.drawImage(im, 0, 0);
+    if (wing.tier >= 3) {
+      g.fillStyle = '#ffffff';
+      [[3, 4], [28, 3], [1, 11], [30, 12], [6, 1], [25, 8]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+      g.fillStyle = light;
+      [[4, 4], [27, 3], [2, 11], [29, 12]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+    }
+  }
+
   // Ảnh lớp tải hỏng (mạng chập chờn, điện thoại vừa mở lại app): thử lại sau RETRY ms; hết lượt thì
   // bỏ lớp đó khi ghép (vẫn thấy các lớp còn lại) thay vì trả hình trần mặc định mãi mãi.
   const RETRY = [1000, 3000, 8000];
@@ -108,11 +140,14 @@
     if (done[k]) return done[k];
     const paths = layers(look).filter((p) => !failed[p]);
     const ims = paths.map(image);
+    const wp = look && look.wing && wingPath(look.wing);
+    const wim = wp && !failed[wp] ? image(wp) : null;
     if (!ims.length || !ims.every((im) => im.complete && im.naturalWidth)) return null;
+    if (wim && !(wim.complete && wim.naturalWidth)) return null;
     const c = document.createElement('canvas');
     c.width = 32; c.height = 32;
     const g = c.getContext('2d');
-    if (look && look.wing) drawWing(g, look.wing);
+    if (look && look.wing) drawWing(g, look.wing, wim);
     ims.forEach((im) => g.drawImage(im, 0, 0));
     done[k] = c;
     return c;
