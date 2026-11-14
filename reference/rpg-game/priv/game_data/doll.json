@@ -1,0 +1,652 @@
+{
+ "DOLL": {
+  "_doc": "DECISIONS \"Hình nhân vật Dungeon Crawl đủ lớp\": ngoại hình theo đồ đang mặc (Engine.look). classes: thân, tóc, râu theo lớp; sets.<tên bộ>: helm / armor / pants / gloves / boots theo món đang mặc ở ô đó, cloak (áo choàng) theo bộ của giáp đang mặc, open: mũ không che tóc; weapons / shields: theo mã món; basic_armor: giáp cửa hàng cũ. Đường dẫn trong priv/static/assets/doll (không đuôi .png). Sinh bằng scripts/doll_map.py.",
+  "sourceType": "DESIGN",
+  "version": 1,
+  "verified": false,
+  "classes": {
+   "dk": {
+    "body": "base/human_male",
+    "hair": "hair/short_black",
+    "beard": null
+   },
+   "dw": {
+    "body": "base/human_male",
+    "hair": "hair/long_white",
+    "beard": "beard/long_white"
+   },
+   "elf": {
+    "body": "base/elf_female",
+    "hair": "hair/elf_yellow",
+    "beard": null
+   },
+   "mg": {
+    "body": "base/human_male",
+    "hair": "hair/short_red",
+    "beard": "beard/short_red"
+   }
+  },
+  "sets": {
+   "Da": {
+    "helm": "head/bandana_ybrown",
+    "armor": "body/leather_armor",
+    "pants": "legs/pants_brown",
+    "gloves": "gloves/glove_brown",
+    "boots": "boots/short_brown",
+    "open": true
+   },
+   "Đồng": {
+    "helm": "head/iron_1",
+    "armor": "body/banded",
+    "pants": "legs/leg_armor_0",
+    "gloves": "gloves/glove_orange",
+    "boots": "boots/middle_brown",
+    "open": false
+   },
+   "Vảy": {
+    "helm": "head/iron_2",
+    "armor": "body/scalemail",
+    "pants": "legs/leg_armor_1",
+    "gloves": "gloves/glove_gray",
+    "boots": "boots/middle_gray",
+    "open": false
+   },
+   "Đồng Thau": {
+    "helm": "head/viking_brown_1",
+    "armor": "body/banded_2",
+    "pants": "legs/leg_armor_2",
+    "gloves": "gloves/glove_orange",
+    "boots": "boots/middle_ybrown",
+    "open": false
+   },
+   "Thép Tấm": {
+    "helm": "head/iron_3",
+    "armor": "body/plate",
+    "pants": "legs/metal_gray",
+    "gloves": "gloves/gauntlet_blue",
+    "boots": "boots/mesh_black",
+    "open": false
+   },
+   "Rồng": {
+    "helm": "head/art_dragonhelm",
+    "armor": "body/dragon_scale_green",
+    "pants": "legs/leg_armor_3",
+    "gloves": "gloves/glove_red",
+    "boots": "boots/long_red",
+    "cloak": "cloak/green",
+    "open": false
+   },
+   "Ánh Bạc": {
+    "helm": "head/fhelm_gray_3",
+    "armor": "body/plate_2",
+    "pants": "legs/metal_gray",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/mesh_white",
+    "cloak": "cloak/white",
+    "open": false
+   },
+   "Hắc Long": {
+    "helm": "head/black_horn",
+    "armor": "body/dragon_armor_shadow",
+    "pants": "legs/leg_armor_4",
+    "gloves": "gloves/glove_black",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/black",
+    "open": false
+   },
+   "Kim Cương": {
+    "helm": "head/fhelm_horn_2",
+    "armor": "body/crystal_plate",
+    "pants": "legs/metal_gray",
+    "gloves": "gloves/gauntlet_blue",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/cyan",
+    "open": false
+   },
+   "Quạ Tro": {
+    "helm": "head/black_horn_2",
+    "armor": "body/plate_black",
+    "pants": "legs/leg_armor_4",
+    "gloves": "gloves/glove_black_2",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/gray",
+    "open": false
+   },
+   "Vinh Quang": {
+    "helm": "head/helm_plume",
+    "armor": "body/armor_blue_gold",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_gold",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/red",
+    "open": false
+   },
+   "Phượng Hoàng Đen": {
+    "helm": "head/horn_evil",
+    "armor": "body/dragon_armor_magenta_new",
+    "pants": "legs/leg_armor_4",
+    "gloves": "gloves/glove_purple",
+    "boots": "boots/middle_purple",
+    "cloak": "cloak/magenta",
+    "open": false
+   },
+   "Thép Đen": {
+    "helm": "head/full_black",
+    "armor": "body/breast_black",
+    "pants": "legs/leg_armor_3",
+    "gloves": "gloves/glove_black",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/black",
+    "open": false
+   },
+   "Titan": {
+    "helm": "head/iron_red",
+    "armor": "body/bplate_metal_1",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/gauntlet_blue",
+    "boots": "boots/mesh_red",
+    "cloak": "cloak/red",
+    "open": false
+   },
+   "Dũng Sĩ": {
+    "helm": "head/viking_gold",
+    "armor": "body/half_plate_2",
+    "pants": "legs/leg_armor_2",
+    "gloves": "gloves/glove_gray",
+    "boots": "boots/middle_gold",
+    "cloak": "cloak/blue",
+    "open": false
+   },
+   "Đại Long": {
+    "helm": "head/art_dragonhelm",
+    "armor": "body/dragon_armor_gold_new",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_gold",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/yellow",
+    "open": false
+   },
+   "Hắc Chủ": {
+    "helm": "head/horns_3",
+    "armor": "body/dragon_scale_shadow",
+    "pants": "legs/leg_armor_4",
+    "gloves": "gloves/glove_black",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/dragonskin",
+    "open": false
+   },
+   "Long Kỵ Sĩ": {
+    "helm": "head/fhelm_horn_yellow",
+    "armor": "body/dragon_armor_blue_new",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/gauntlet_blue",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/blue",
+    "open": false
+   },
+   "Ánh Dương": {
+    "helm": "head/crown_gold_2",
+    "armor": "body/orange_crystal",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_gold",
+    "boots": "boots/middle_gold",
+    "cloak": "cloak/yellow",
+    "open": true
+   },
+   "Bá Vương": {
+    "helm": "head/crown_gold_3",
+    "armor": "body/dragon_armor_white_new",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/mesh_white",
+    "cloak": "cloak/red",
+    "open": true
+   },
+   "Vải Bông": {
+    "helm": "head/hood_white",
+    "armor": "body/robe_white",
+    "pants": "legs/pants_l_white",
+    "gloves": "gloves/glove_short_white",
+    "boots": "boots/short_brown",
+    "open": false
+   },
+   "Xương": {
+    "helm": "head/hood_gray",
+    "armor": "body/robe_gray_2",
+    "pants": "legs/skirt_white_2",
+    "gloves": "gloves/glove_short_gray",
+    "boots": "boots/short_brown_2",
+    "open": false
+   },
+   "Bí Ẩn": {
+    "helm": "head/wizard_brown",
+    "armor": "body/robe_brown_2",
+    "pants": "legs/pants_brown",
+    "gloves": "gloves/glove_short_white",
+    "boots": "boots/middle_brown",
+    "open": false
+   },
+   "Nhân Sư": {
+    "helm": "head/turban_brown",
+    "armor": "body/robe_yellow",
+    "pants": "legs/pants_orange",
+    "gloves": "gloves/glove_short_yellow",
+    "boots": "boots/middle_ybrown",
+    "open": false
+   },
+   "Huyền Thoại": {
+    "helm": "head/wizard_blue",
+    "armor": "body/robe_blue",
+    "pants": "legs/pants_blue",
+    "gloves": "gloves/glove_short_blue",
+    "boots": "boots/middle_gray",
+    "open": false
+   },
+   "Cánh Đỏ": {
+    "helm": "head/wizard_red",
+    "armor": "body/robe_red_gold",
+    "pants": "legs/pants_red",
+    "gloves": "gloves/glove_short_red",
+    "boots": "boots/short_red",
+    "open": false
+   },
+   "Nhật Thực": {
+    "helm": "head/hood_black_2",
+    "armor": "body/robe_black_red",
+    "pants": "legs/skirt_red",
+    "gloves": "gloves/glove_black",
+    "boots": "boots/mesh_red",
+    "cloak": "cloak/black",
+    "open": false
+   },
+   "Cổ Đại": {
+    "helm": "head/wizard_darkgreen",
+    "armor": "body/robe_green_gold",
+    "pants": "legs/pants_darkgreen",
+    "gloves": "gloves/glove_short_green",
+    "boots": "boots/middle_green",
+    "cloak": "cloak/brown",
+    "open": false
+   },
+   "Đại Linh Hồn": {
+    "helm": "head/wizard_bluegreen",
+    "armor": "body/robe_blue_green",
+    "pants": "legs/skirt_blue",
+    "gloves": "gloves/glove_blue",
+    "boots": "boots/mesh_blue",
+    "cloak": "cloak/cyan",
+    "open": false
+   },
+   "Hồng Đen": {
+    "helm": "head/wizard_blackred",
+    "armor": "body/robe_misfortune",
+    "pants": "legs/skirt_red",
+    "gloves": "gloves/glove_red",
+    "boots": "boots/long_red",
+    "cloak": "cloak/red",
+    "open": false
+   },
+   "Hồn Bóng Tối": {
+    "helm": "head/hood_black_2",
+    "armor": "body/robe_of_night",
+    "pants": "legs/pants_black",
+    "gloves": "gloves/glove_black_2",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/black",
+    "open": false
+   },
+   "Diêm Vương": {
+    "helm": "head/horn_evil",
+    "armor": "body/robe_black_hood",
+    "pants": "legs/pants_black",
+    "gloves": "gloves/claws",
+    "boots": "boots/mesh_red",
+    "cloak": "cloak/dragonskin",
+    "open": false
+   },
+   "Huệ Tây": {
+    "helm": "head/wizard_white",
+    "armor": "body/robe_white_blue",
+    "pants": "legs/skirt_white",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/long_white",
+    "cloak": "cloak/white",
+    "open": false
+   },
+   "Sương Độc": {
+    "helm": "head/wizard_lightgreen",
+    "armor": "body/robe_green",
+    "pants": "legs/skirt_green",
+    "gloves": "gloves/glove_short_green",
+    "boots": "boots/middle_green",
+    "cloak": "cloak/green",
+    "open": false
+   },
+   "Hào Quang": {
+    "helm": "head/wizard_blackgold",
+    "armor": "body/robe_black_gold",
+    "pants": "legs/pants_black",
+    "gloves": "gloves/glove_gold",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/yellow",
+    "open": false
+   },
+   "Nữ Hoàng": {
+    "helm": "head/crown_gold_1",
+    "armor": "body/robe_purple",
+    "pants": "legs/skirt_white",
+    "gloves": "gloves/glove_purple",
+    "boots": "boots/middle_purple",
+    "cloak": "cloak/magenta",
+    "open": true
+   },
+   "Dây Leo": {
+    "helm": "head/feather_green",
+    "armor": "body/leather_green",
+    "pants": "legs/pants_darkgreen",
+    "gloves": "gloves/glove_short_green",
+    "boots": "boots/middle_green",
+    "open": true
+   },
+   "Lụa": {
+    "helm": "head/band_white",
+    "armor": "body/dress_white",
+    "pants": "legs/skirt_white",
+    "gloves": "gloves/glove_short_white",
+    "boots": "boots/long_white",
+    "open": true
+   },
+   "Gió": {
+    "helm": "head/feather_white",
+    "armor": "body/leather_short",
+    "pants": "legs/skirt_green",
+    "gloves": "gloves/glove_short_white",
+    "boots": "boots/middle_green",
+    "open": true
+   },
+   "Linh Hồn": {
+    "helm": "head/hood_cyan",
+    "armor": "body/monk_blue",
+    "pants": "legs/skirt_blue",
+    "gloves": "gloves/glove_short_blue",
+    "boots": "boots/mesh_blue",
+    "open": false
+   },
+   "Hộ Vệ": {
+    "helm": "head/helm_green",
+    "armor": "body/green_chain",
+    "pants": "legs/metal_green",
+    "gloves": "gloves/glove_short_green",
+    "boots": "boots/middle_green",
+    "open": false
+   },
+   "Diên Vĩ": {
+    "helm": "head/feather_blue",
+    "armor": "body/dress_green",
+    "pants": "legs/skirt_green",
+    "gloves": "gloves/glove_blue",
+    "boots": "boots/middle_green",
+    "cloak": "cloak/blue",
+    "open": true
+   },
+   "Thần Thánh": {
+    "helm": "head/healer",
+    "armor": "body/legolas",
+    "pants": "legs/trouser_green",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/long_white",
+    "cloak": "cloak/white",
+    "open": true
+   },
+   "Linh Hồn Đỏ": {
+    "helm": "head/feather_red",
+    "armor": "body/leather_red",
+    "pants": "legs/skirt_red",
+    "gloves": "gloves/glove_red",
+    "boots": "boots/long_red",
+    "cloak": "cloak/red",
+    "open": true
+   },
+   "Thiên Sứ": {
+    "helm": "head/yellow_wing",
+    "armor": "body/arwen",
+    "pants": "legs/skirt_white",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/long_white",
+    "cloak": "cloak/yellow",
+    "open": true
+   },
+   "Đức Tin": {
+    "helm": "head/hood_white_2",
+    "armor": "body/robe_white_green",
+    "pants": "legs/skirt_white_2",
+    "gloves": "gloves/glove_short_white",
+    "boots": "boots/mesh_white",
+    "cloak": "cloak/cyan",
+    "open": false
+   },
+   "Tia Tiên": {
+    "helm": "head/crown_gold_1",
+    "armor": "body/faerie_dragon_armor",
+    "pants": "legs/skirt_white",
+    "gloves": "gloves/glove_gold",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/magenta",
+    "open": true
+   },
+   "Quạ Bão": {
+    "armor": "body/plate_and_cloth",
+    "pants": "legs/leg_armor_1",
+    "gloves": "gloves/glove_black",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/gray"
+   },
+   "Dũng Mãnh": {
+    "armor": "body/half_plate_3",
+    "pants": "legs/leg_armor_2",
+    "gloves": "gloves/glove_red",
+    "boots": "boots/mesh_red",
+    "cloak": "cloak/magenta"
+   },
+   "Ưng Sấm": {
+    "armor": "body/dragon_scale_cyan_new",
+    "pants": "legs/leg_armor_3",
+    "gloves": "gloves/gauntlet_blue",
+    "boots": "boots/mesh_blue",
+    "cloak": "cloak/cyan"
+   },
+   "Cuồng Phong": {
+    "armor": "body/dragon_scale_blue_new",
+    "pants": "legs/leg_armor_3",
+    "gloves": "gloves/glove_blue",
+    "boots": "boots/blue_gold",
+    "cloak": "cloak/blue"
+   },
+   "Núi Lửa": {
+    "armor": "body/dragon_armor_brown_new",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_red",
+    "boots": "boots/long_red",
+    "cloak": "cloak/red"
+   },
+   "Hủy Diệt": {
+    "armor": "body/dragon_scale_shadow",
+    "pants": "legs/leg_armor_4",
+    "gloves": "gloves/claws",
+    "boots": "boots/mesh_black",
+    "cloak": "cloak/black"
+   },
+   "Bóng Ma": {
+    "armor": "body/dragon_scale_quicksilver",
+    "pants": "legs/leg_armor_5",
+    "gloves": "gloves/glove_white",
+    "boots": "boots/mesh_white",
+    "cloak": "cloak/white"
+   }
+  },
+  "weapons": {
+   "item_0_0": "hand1/dagger_new",
+   "item_0_1": "hand1/short_sword",
+   "item_0_2": "hand1/rapier",
+   "item_0_3": "hand1/katana",
+   "item_0_4": "hand1/sword_thief",
+   "item_0_5": "hand1/falchion_new",
+   "item_0_6": "hand1/short_sword_2",
+   "item_0_7": "hand1/scimitar_new",
+   "item_0_8": "hand1/sword_twist",
+   "item_0_9": "hand1/sword_seven",
+   "item_0_10": "hand1/blessed_blade",
+   "item_0_11": "hand1/long_sword",
+   "item_0_12": "hand1/sword_tri",
+   "item_0_13": "hand1/double_sword_new",
+   "item_0_14": "hand1/sword_3",
+   "item_0_15": "hand1/great_sword",
+   "item_0_16": "hand1/sword_black",
+   "item_0_17": "hand1/black_sword",
+   "item_0_18": "hand1/triple_sword_new",
+   "item_0_19": "hand1/sword_jag",
+   "item_0_20": "hand1/long_sword_slant_new",
+   "item_0_21": "hand1/great_sword_slant_new",
+   "item_0_22": "hand1/sword_breaker",
+   "item_0_23": "hand1/triple_sword_2",
+   "item_0_24": "hand1/heavy_sword",
+   "item_0_25": "hand1/double_sword_2",
+   "item_0_26": "hand1/sword_2",
+   "item_0_27": "hand1/sabre",
+   "item_0_28": "hand1/boromir",
+   "item_0_31": "hand1/aragorn",
+   "item_1_0": "hand1/axe_small",
+   "item_1_1": "hand1/hand_axe_new",
+   "item_1_2": "hand1/axe_double",
+   "item_1_3": "hand1/axe_short",
+   "item_1_4": "hand1/axe",
+   "item_1_5": "hand1/battleaxe",
+   "item_1_6": "hand1/battleaxe_2",
+   "item_1_7": "hand1/great_axe",
+   "item_1_8": "hand1/broad_axe",
+   "item_2_0": "hand1/mace_new",
+   "item_2_1": "hand1/morningstar_new",
+   "item_2_2": "hand1/flail_ball_new",
+   "item_2_3": "hand1/great_mace",
+   "item_2_4": "hand1/eveningstar_new",
+   "item_2_5": "hand1/gimli",
+   "item_2_6": "hand1/war_axe_new",
+   "item_2_7": "hand1/mace_ruby_new",
+   "item_2_8": "hand1/scepter",
+   "item_2_9": "hand1/rod_hammer_new",
+   "item_2_10": "hand1/large_mace",
+   "item_2_11": "hand1/rod_moon_new",
+   "item_2_12": "hand1/rod_aries_new",
+   "item_2_13": "hand1/holy_scourge_1",
+   "item_2_14": "hand1/rod_ruby_new",
+   "item_2_15": "hand1/rod_emerald_new",
+   "item_2_16": "hand1/rod_blue_new",
+   "item_2_17": "hand1/rod_magenta_new",
+   "item_2_18": "hand1/rod_thick_new",
+   "item_3_0": "hand1/spear_3",
+   "item_3_1": "hand1/spear",
+   "item_3_2": "hand1/lance",
+   "item_3_3": "hand1/trident_2",
+   "item_3_4": "hand1/trident_two",
+   "item_3_5": "hand1/glaive_new",
+   "item_3_6": "hand1/halberd_new",
+   "item_3_7": "hand1/glaive_2",
+   "item_3_8": "hand1/scythe_new",
+   "item_3_9": "hand1/glaive_three",
+   "item_3_10": "hand1/lance_2",
+   "item_3_11": "hand1/trishula",
+   "item_4_0": "hand1/bow_dc",
+   "item_4_1": "hand1/bow_2",
+   "item_4_2": "hand1/legolas",
+   "item_4_3": "hand1/bow_3",
+   "item_4_4": "hand1/great_bow",
+   "item_4_5": "hand1/bow_blue",
+   "item_4_6": "hand1/great_bow",
+   "item_4_8": "hand1/crossbow_dc",
+   "item_4_9": "hand1/crossbow_2",
+   "item_4_10": "hand1/crossbow_3",
+   "item_4_11": "hand1/hand_crossbow",
+   "item_4_12": "hand1/crossbow_4",
+   "item_4_13": "hand1/crossbow_2",
+   "item_4_14": "hand1/crossbow_3",
+   "item_4_16": "hand1/crossbow_4",
+   "item_4_17": "hand1/bow_blue",
+   "item_4_18": "hand1/crossbow_4",
+   "item_4_19": "hand1/crossbow_3",
+   "item_4_20": "hand1/bow_3",
+   "item_4_21": "hand1/legolas",
+   "item_4_22": "hand1/bow_2",
+   "item_4_23": "hand1/great_bow",
+   "item_4_24": "hand1/bow_blue",
+   "item_5_0": "hand1/staff_skull",
+   "item_5_1": "hand1/staff_plain",
+   "item_5_2": "hand1/staff_organic",
+   "item_5_3": "hand1/staff_fork",
+   "item_5_4": "hand1/staff_evil",
+   "item_5_5": "hand1/staff_fancy",
+   "item_5_6": "hand1/staff_ring_blue",
+   "item_5_7": "hand1/staff_mage",
+   "item_5_8": "hand1/staff_large",
+   "item_5_9": "hand1/great_staff",
+   "item_5_10": "hand1/gandalf",
+   "item_5_11": "hand1/staff_mummy",
+   "item_5_12": "hand1/staff_organic",
+   "item_5_13": "hand1/staff_scepter",
+   "item_5_14": "hand1/quarterstaff",
+   "item_5_15": "hand1/quarterstaff_2_new",
+   "item_5_16": "hand1/staff_ruby",
+   "item_5_17": "hand1/staff_mage_2",
+   "item_5_18": "hand1/staff_evil",
+   "item_5_19": "hand1/staff_ring_blue",
+   "item_5_20": "hand1/staff_fancy",
+   "item_5_30": "hand1/saruman",
+   "item_5_31": "hand1/staff_scepter",
+   "item_5_32": "hand1/gandalf",
+   "item_5_33": "hand1/staff_ruby",
+   "item_5_34": "hand1/staff_skull",
+   "club": "hand1/club",
+   "dagger": "hand1/dagger_new",
+   "broadsword": "hand1/broadsword",
+   "mace": "hand1/mace_new",
+   "battleaxe": "hand1/battleaxe",
+   "greatsword": "hand1/great_sword",
+   "waraxe": "hand1/war_axe_new",
+   "relic": "hand1/blessed_blade"
+  },
+  "shields": {
+   "item_6_0": "hand2/buckler_round_2",
+   "item_6_1": "hand2/buckler_spiral",
+   "item_6_2": "hand2/shield_kite_1",
+   "item_6_3": "hand2/lshield_green",
+   "item_6_4": "hand2/buckler_rb",
+   "item_6_5": "hand2/shield_draconic_knight",
+   "item_6_6": "hand2/shield_skull",
+   "item_6_7": "hand2/shield_round_3",
+   "item_6_8": "hand2/shield_long_red",
+   "item_6_9": "hand2/shield_knight_gray",
+   "item_6_10": "hand2/shield_round_5",
+   "item_6_11": "hand2/lshield_teal",
+   "item_6_12": "hand2/shield_middle_brown",
+   "item_6_14": "hand2/lshield_quartered",
+   "item_6_15": "hand2/shield_middle_cyan",
+   "item_6_16": "hand2/lshield_spiral",
+   "item_6_17": "hand2/shield_long_cross",
+   "item_6_18": "hand2/shield_round_6",
+   "item_6_19": "hand2/shield_round_white",
+   "item_6_20": "hand2/shield_holy",
+   "item_6_21": "hand2/gil-galad",
+   "round": "hand2/buckler_round_3",
+   "checked": "hand2/shield_knight_rw_dc",
+   "spiked": "hand2/shield_kite_3",
+   "dragonshield": "hand2/lshield_gold"
+  },
+  "basic_armor": {
+   "vest": "body/shirt_vest",
+   "leather": "body/leather_jacket",
+   "chain": "body/chainmail",
+   "scale": "body/scalemail_2",
+   "lamellar": "body/half_plate",
+   "breastplate": "body/bplate_metal_1"
+  }
+ }
+}

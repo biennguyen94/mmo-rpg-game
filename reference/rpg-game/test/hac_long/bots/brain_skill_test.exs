@@ -63,10 +63,11 @@ defmodule HacLong.Bots.BrainSkillTest do
   end
 
   test "tới lượt leo Tháp: đi trước câu cá lúc rảnh" do
-    # cấp 45 (cấp tối đa thì đi chuyển sinh trước)
+    # cấp 45 (cấp tối đa thì đi chuyển sinh trước); 0 vàng: không đi mua vé sự kiện đang mở (kết quả không theo giờ chạy test)
     p =
       player(%{
         level: 45,
+        gold: 0,
         inv: %{"potion_l" => 50, "mana_l" => 50},
         pos: %{map: "village", x: 20, y: 8}
       })

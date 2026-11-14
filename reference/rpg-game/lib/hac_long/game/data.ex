@@ -96,6 +96,8 @@ defmodule HacLong.Game.Data do
   # `mix hac_long.items.build`) gộp vào ITEMS. Khi có đồ mới, đồ cũ trong `ITEM_PICK.legacy` mang
   # `legacy: %{kind, tier}`: thôi bán / rơi, nhân vật nạp lên thì đổi sang đồ mới cùng ô, cùng bậc.
   @pick raw["ITEM_PICK"] || %{}
+  # hình nhân vật theo đồ (`doll.json`, scripts/doll_map.py; khóa chuỗi: tên bộ là tiếng Việt)
+  @doll raw["DOLL"] || %{}
   @mu_items by_id.(raw["ITEMS_MU"] || %{})
   @legacy if @mu_items == %{},
             do: %{},
@@ -223,6 +225,9 @@ defmodule HacLong.Game.Data do
   def jewels, do: @jewels
   def chaos, do: @chaos
   def chaos(id), do: Enum.find(@chaos, &(&1.id == id))
+
+  @doc "Bảng gán đồ → hình nhân vật (`DOLL`, khóa chuỗi; DECISIONS \"Hình nhân vật Dungeon Crawl đủ lớp\")."
+  def doll, do: @doll
 
   def classes, do: @classes
   def class(id), do: Map.get(@classes, id)

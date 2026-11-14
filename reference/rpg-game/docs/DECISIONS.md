@@ -2251,6 +2251,19 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Hình nhân vật Dungeon Crawl đủ lớp (2026-11-14, anh duyệt bảng gán)
+Hình nhân vật vẫn ghép lớp 32px từ bộ tile Dungeon Crawl Stone Soup (CC0) nhưng dùng đủ kho `player/` (bản Full +
+Supplemental trên OpenGameArt) thay vì vài hình: anh chọn hướng này thay LPC (64px, CC-BY-SA, phải sửa cách vẽ bản đồ).
+- Bảng gán ở `scripts/doll_map.py` → `priv/game_data/doll.json` (khóa `DOLL`, sinh ra, không sửa tay) và chép đúng 301
+  hình dùng tới vào `priv/static/assets/doll/` (hình trùng tên mà khác ảnh đặt `…_dc`). Bản duyệt: artifact "Bảng gán
+  hình nhân vật". Không đụng `items_mu.json` (sinh bằng `mix hac_long.items.build`).
+- 54 bộ giáp: mỗi bộ gán mũ / giáp / quần / găng / giày; `Engine.look` lấy theo **món đang mặc ở từng ô** (bộ của món),
+  mặc lẫn bộ thì hiện lẫn. Áo choàng không phải ô đồ: theo bộ của giáp đang mặc (bộ từ cấp 22). Mũ kín ẩn tóc (băng đô,
+  lông vũ, vương miện: `open`). Thân, tóc, râu theo lớp (`classes`). 127 vũ khí, 25 khiên theo mã món; giáp cửa hàng cũ
+  theo `basic_armor`; món không có trong bảng dùng `doll` cũ của món.
+- `doll.js`: lớp (dưới lên trên) cánh, áo choàng, thân, giày, quần, giáp, găng, tóc, râu, mũ, vũ khí, khiên; quần, giày
+  trống dùng mặc định. Hào quang đồ +7/+9/+11, đồ Thần giữ như cũ.
+
 ## Thang vùng: tính cả bot (2026-11-14, anh yêu cầu)
 Thẻ 🗺 Thang vùng chuyển sinh (Quản trị) có nút **🤖 Tính cả bot** (mặc định tắt, lưu cùng trạng thái thang trong `admin_log`
 op `realm_ladder`). Bật: mẫu gồm cả nhân vật bot (mỗi bot một tài khoản; vẫn bỏ quản trị, vẫn cấp ≥ `min_level`, chơi

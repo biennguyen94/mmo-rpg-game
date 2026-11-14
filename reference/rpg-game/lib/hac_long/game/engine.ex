@@ -3081,15 +3081,45 @@ defmodule HacLong.Game.Engine do
   lớp hình của vũ khí, giáp, khiên đang mặc (`doll` trong dữ liệu đồ) và thú cưng đang dắt.
   """
   def look(p) do
-    doll = fn id -> (it = Gear.item(p, id)) && it[:doll] end
+    dl = Data.doll()
+    eq = p.equip
+    item = fn slot -> (id = eq[slot]) && Gear.item(p, id) end
+    key = fn it -> it[:base] || it[:id] end
+
+    # mũ / giáp / quần / găng / giày: hình theo bộ của món ở ô đó (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp")
+    piece = fn slot ->
+      it = item.(slot)
+      it && get_in(dl, ["sets", it[:set] || "", to_string(slot)])
+    end
+
+    armor = item.(:armor)
+    helm = item.(:helm)
+    helm_set = helm && get_in(dl, ["sets", helm[:set] || ""])
+    cls = get_in(dl, ["classes", p.cls]) || %{}
+    weapon = item.(:weapon)
+    shield = item.(:shield)
 
     %{
-      hair: Data.class(p.cls)[:hair],
       # thân theo lớp (Tiên Nữ: thân nữ), không có thì thân nam mặc định ở doll.js
-      body: Data.class(p.cls)[:body],
-      weapon: doll.(p.equip.weapon),
-      armor: doll.(p.equip.armor),
-      shield: doll.(p.equip.shield),
+      body: cls["body"] || Data.class(p.cls)[:body],
+      # đội mũ kín thì ẩn tóc (băng đô, lông vũ, vương miện: vẫn thấy tóc)
+      hair:
+        if(helm_set && helm_set["helm"] && helm_set["open"] != true,
+          do: nil,
+          else: cls["hair"] || Data.class(p.cls)[:hair]
+        ),
+      beard: cls["beard"],
+      helm: piece.(:helm),
+      armor:
+        piece.(:armor) || (armor && get_in(dl, ["basic_armor", key.(armor)])) ||
+          (armor && armor[:doll]),
+      pants: piece.(:pants),
+      gloves: piece.(:gloves),
+      boots: piece.(:boots),
+      # áo choàng: theo bộ của giáp đang mặc (bộ từ cấp 22)
+      cloak: armor && get_in(dl, ["sets", armor[:set] || "", "cloak"]),
+      weapon: weapon && (get_in(dl, ["weapons", key.(weapon)]) || weapon[:doll]),
+      shield: shield && (get_in(dl, ["shields", key.(shield)]) || shield[:doll]),
       wing: wing_look(p),
       pet: Map.get(p, :pet),
       aura: aura(p)

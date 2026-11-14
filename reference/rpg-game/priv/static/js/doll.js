@@ -1,7 +1,8 @@
-/* Hình nhân vật ghép từ nhiều lớp (bộ tile Dungeon Crawl, assets/doll): thân, quần, giày,
- * giáp, tóc theo lớp nhân vật, vũ khí, khiên. `look` do server gửi (Engine.look):
- * { hair, weapon, armor, shield, wing, pet } với mỗi lớp là đường dẫn trong assets/doll; riêng
- * `wing` là { cls, tier } và được vẽ bằng code (không cần ảnh), nằm dưới lớp thân.
+/* Hình nhân vật ghép từ nhiều lớp (bộ tile Dungeon Crawl, assets/doll; DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp"):
+ * `look` do server gửi (Engine.look): { body, hair, beard, helm, armor, pants, gloves, boots, cloak, weapon, shield, wing,
+ * pet } với mỗi lớp là đường dẫn trong assets/doll (thiếu thì bỏ lớp đó; quần, giày trống thì dùng mặc định); riêng
+ * `wing` là { cls, tier } và được vẽ bằng code (không cần ảnh), nằm dưới cùng.
+ * Thứ tự (dưới lên trên): cánh, áo choàng, thân, giày, quần, giáp, găng, tóc, râu, mũ, vũ khí, khiên.
  *
  * Doll.canvas(look) trả về canvas 32×32 đã ghép (null khi hình chưa tải xong);
  * Doll.url(look) trả về ảnh dạng data URL để dùng trong <img>, tạm dùng hình mặc định khi
@@ -14,7 +15,10 @@
   let notifyTimer = null;
 
   // `look.body`: thân riêng theo lớp (Tiên Nữ: base/elf_f), thay thân nam mặc định
-  const layers = (look) => [(look && look.body) || BASE[0]].concat(BASE.slice(1), [look && look.armor, look && look.hair, look && look.weapon, look && look.shield].filter(Boolean));
+  const layers = (look) => {
+    const l = look || {};
+    return [l.cloak, l.body || BASE[0], l.boots || BASE[2], l.pants || BASE[1], l.armor, l.gloves, l.hair, l.beard, l.helm, l.weapon, l.shield].filter(Boolean);
+  };
   const wingKey = (look) => (look && look.wing ? `wing:${look.wing.cls}:${look.wing.tier}` : '');
   const key = (look) => layers(look).join('|') + wingKey(look);
 

@@ -829,7 +829,7 @@ defmodule HacLongWeb.GameChannelTest do
       assert_reply ref, :ok, %{
         level: 10,
         arena: %{rating: 1000},
-        look: %{weapon: "hand1/club_slant"},
+        look: %{weapon: "hand1/" <> _},
         me: false,
         # Phase 13: hồ sơ đầy đủ
         profile: %{
@@ -1227,7 +1227,7 @@ defmodule HacLongWeb.GameChannelTest do
 
     cmd(sa, %{"act" => "equip", "id" => "item_0_2"})
     look = fn -> Enum.find(MapServer.snapshot("village").players, &(&1.id == ua.id)).look end
-    assert look.().weapon == "hand1/broadsword"
+    assert look.().weapon == HacLong.Game.Data.doll()["weapons"]["item_0_2"]
 
     # dắt thú: phải mua ở Người Nuôi Thú trước
     assert %{ok: false, msg: "Hãy đến gặp Người Nuôi Thú ở Làng."} =

@@ -156,6 +156,9 @@ defmodule HacLong.Game.ItemsMuTest do
       end)
 
     assert armor[:doll] == "body/bplate_metal1"
-    assert Engine.look(%{p | equip: %{p.equip | armor: id}}).armor == "body/bplate_metal1"
+
+    # hình trên nhân vật theo bảng gán (`doll.json`) của bộ, `doll` của món chỉ là dự phòng
+    assert Engine.look(%{p | equip: %{p.equip | armor: id}}).armor ==
+             Data.doll()["sets"][armor.set]["armor"]
   end
 end

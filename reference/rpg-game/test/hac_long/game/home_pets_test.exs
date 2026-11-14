@@ -1,7 +1,7 @@
 defmodule HacLong.Game.HomePetsTest do
   use ExUnit.Case, async: true
 
-  alias HacLong.Game.{Engine, Pets}
+  alias HacLong.Game.{Engine, Gear, Pets}
   alias HacLong.World.Maps
 
   defp player(gold \\ 100_000) do
@@ -49,19 +49,28 @@ defmodule HacLong.Game.HomePetsTest do
   test "ngoại hình theo đồ đang mặc" do
     p = player()
 
-    assert Engine.look(p) == %{
-             hair: "hair/knot_red",
-             body: nil,
-             weapon: "hand1/club_slant",
-             armor: "body/shirt_vest",
+    # hình theo bảng gán (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp"): đồ khởi đầu bộ Da, băng đô (thấy tóc)
+    d = HacLong.Game.Data.doll()
+    da = d["sets"]["Da"]
+    w = Gear.item(p, p.equip.weapon)
+
+    assert %{
+             body: "base/human_male",
+             hair: "hair/short_black",
+             helm: helm,
+             armor: armor,
+             weapon: weapon,
              wing: nil,
              shield: nil,
              pet: nil,
              aura: 0
-           }
+           } = Engine.look(p)
+
+    assert {helm, armor} == {da["helm"], da["armor"]}
+    assert weapon == d["weapons"][w.base]
 
     # Tiên Nữ: thân nữ, tóc vàng
-    assert %{body: "base/elf_f", hair: "hair/fem_yellow"} = Engine.look(%{p | cls: "elf"})
+    assert %{body: "base/elf_female", hair: "hair/elf_yellow"} = Engine.look(%{p | cls: "elf"})
   end
 
   test "thú không đánh trong trận, chỉ cộng chỉ số; ba nhóm Chiến / Hộ vệ / Tài lộc" do
