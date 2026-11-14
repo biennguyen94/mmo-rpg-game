@@ -36,21 +36,21 @@ bosses = [
      lv = List.last(r.devil_square.tiers).level + List.last(r.devil_square.waves).add_level
      m = DevilSquare.battle_monster(%{kind: ds_boss.id, name: "Trùm QTQ", level: lv, elite: true})
      {_, p} = Engine.start_with_monster(p, zi, m)
-     Engine.scale_event(p, band_k.(cs))
+     Engine.scale_event(p, band_k.(cs)) |> HacLong.Game.Awaken.maybe("ds")
    end},
   {"Hiệp Sĩ Máu", fn p, cs ->
      b = r.blood_castle.boss
      lv = List.last(r.blood_castle.tiers).level + b.add_level
      m = BloodCastle.battle_monster(%{kind: b.kind, name: b.name, level: lv, role: "boss", elite: true})
      {_, p} = Engine.start_with_monster(p, zi, m)
-     Engine.scale_event(p, band_k.(cs))
+     Engine.scale_event(p, band_k.(cs)) |> HacLong.Game.Awaken.maybe("bc")
    end},
   {"Kundun", fn p, cs ->
      b = r.kalima.boss
      lv = List.last(r.kalima.tiers).level + b.add_level
      m = Kalima.battle_monster(%{kind: b.kind, name: b.name, level: lv, role: "boss", elite: true})
      {_, p} = Engine.start_with_monster(p, zi, m)
-     Engine.scale_event(p, band_k.(cs))
+     Engine.scale_event(p, band_k.(cs)) |> HacLong.Game.Awaken.maybe("kal")
    end}
 ]
 

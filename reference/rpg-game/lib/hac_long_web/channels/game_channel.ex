@@ -1308,8 +1308,8 @@ defmodule HacLongWeb.GameChannel do
     {:noreply, socket}
   end
 
-  def handle_info({:shared_hp, key, hp, n}, socket) do
-    push(socket, "shared", %{key: key, hp: hp, n: n})
+  def handle_info({:shared_hp, key, hp, n, max}, socket) do
+    push(socket, "shared", %{key: key, hp: hp, n: n, max: max})
     {:noreply, socket}
   end
 

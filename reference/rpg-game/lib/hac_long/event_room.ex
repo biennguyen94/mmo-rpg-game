@@ -16,7 +16,7 @@ defmodule HacLong.EventRoom do
   """
   use GenServer, restart: :temporary
 
-  alias HacLong.Game.{BloodCastle, Data, DevilSquare, EventRooms, Kalima, Tower}
+  alias HacLong.Game.{Awaken, BloodCastle, Data, DevilSquare, EventRooms, Kalima, Tower}
 
   @flush_ms 100
   @kinds %{"ds" => :ds, "bc" => :bc, "kal" => :kal}
@@ -101,12 +101,14 @@ defmodule HacLong.EventRoom do
   # ---------- Trong phòng ----------
 
   @doc """
-  Chạm quái `mid` (máu tối đa `max` theo mốc phòng): `{:ok, máu_hiện_tại, số_người_đang_đánh}` hoặc `{:error, lý_do}`.
+  Chạm quái `mid` (máu tối đa `max` theo mốc phòng): `{:ok, máu_hiện_tại, số_người_đang_đánh, máu_tối_đa}` hoặc
+  `{:error, lý_do}`. `extra`: người chạm gặp bản Thức Tỉnh (`HacLong.Game.Awaken`) thì máu chung cộng thêm phần này, mỗi
+  người mạnh một lần (DECISIONS "Trùm Thức Tỉnh theo sức người đánh").
   Từ lúc đó tới `disengage/3`, mỗi đòn của bất kỳ ai lên con này đẩy máu mới xuống màn trận (`{:shared_hp, key/2, ...}`,
   như đánh chung tổ đội).
   """
-  def engage(id, uid, mid, max),
-    do: call(id, {:engage, uid, mid, max}) || {:error, "Sự kiện đã kết thúc."}
+  def engage(id, uid, mid, max, extra \\ 0),
+    do: call(id, {:engage, uid, mid, max, extra}) || {:error, "Sự kiện đã kết thúc."}
 
   @doc "Trận của `uid` với quái `mid` đã xong (thua, bỏ chạy, thắng): thôi nhận máu, bớt số người đang đánh."
   def disengage(id, uid, mid), do: GenServer.cast(via(id), {:disengage, uid, mid})
@@ -266,7 +268,7 @@ defmodule HacLong.EventRoom do
     {:reply, {:ok, view(s)}, dirty(s, :sync)}
   end
 
-  def handle_call({:engage, uid, mid, max}, _from, s) do
+  def handle_call({:engage, uid, mid, max, extra}, _from, s) do
     cond do
       not Map.has_key?(s.members, uid) ->
         {:reply, {:error, "Bạn không còn ở trong sự kiện."}, s}
@@ -275,10 +277,14 @@ defmodule HacLong.EventRoom do
         {:reply, {:error, "Quái đã bị hạ."}, s}
 
       true ->
-        f = s.fights[mid] || %{hp: max, max: max, hitters: %{}, in: MapSet.new()}
-        f = %{f | in: MapSet.put(f.in, uid)}
+        f =
+          s.fights[mid] ||
+            %{hp: max, max: max, hitters: %{}, in: MapSet.new(), boosted: MapSet.new()}
+
+        {fmax, fhp, boosted} = Awaken.shared_max({f.max, f.hp}, f.boosted, uid, extra)
+        f = %{f | in: MapSet.put(f.in, uid), max: fmax, hp: fhp, boosted: boosted}
         tell_hp(s, mid, f, uid)
-        {:reply, {:ok, f.hp, MapSet.size(f.in)}, put_in(s.fights[mid], f)}
+        {:reply, {:ok, f.hp, MapSet.size(f.in), f.max}, put_in(s.fights[mid], f)}
     end
   end
 
@@ -393,11 +399,11 @@ defmodule HacLong.EventRoom do
   # máu mới / số người đang đánh quái `mid` gửi màn trận của những người khác đang đánh nó (người vừa đánh đã có trong
   # kết quả lệnh của mình)
   defp tell_hp(s, mid, f, except) do
-    msg = {:shared_hp, key(s.id, mid), f.hp, MapSet.size(f.in)}
+    msg = {:shared_hp, key(s.id, mid), f.hp, MapSet.size(f.in), f.max}
 
     for u <- f.in, u != except do
       # Session giữ máu mới trong trận (lần đẩy nhân vật sau không trả máu cũ), kênh vẽ ngay
-      cast(u, {:room_hp, s.id, mid, f.hp, MapSet.size(f.in)})
+      cast(u, {:room_hp, s.id, mid, f.hp, MapSet.size(f.in), f.max})
       Phoenix.PubSub.broadcast(HacLong.PubSub, HacLong.Game.Session.topic(u), msg)
     end
   end

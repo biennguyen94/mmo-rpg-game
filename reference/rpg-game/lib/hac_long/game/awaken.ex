@@ -56,6 +56,9 @@ defmodule HacLong.Game.Awaken do
           atk: up.(m.atk, cfg.atk),
           def: up.(m.def, cfg.def),
           xp: up.(m[:xp], cfg.reward),
+          # máu chung (phòng sự kiện, tổ đội): máu gốc và phần cộng thêm của người này (`shared_max/3`)
+          base_max: m.maxHp,
+          awaken_extra: up.(m.maxHp, cfg.hp) - m.maxHp,
           gold: up.(m[:gold], cfg.reward),
           name: m.name <> rules().suffix,
           awakened: true
@@ -65,7 +68,7 @@ defmodule HacLong.Game.Awaken do
 
       line = %{
         text:
-          "🔥 #{m.name}: cảm nhận sức mạnh của #{p.name}, trùm thức tỉnh! (máu ×#{cfg.hp}, công ×#{cfg.atk})",
+          "🔥 #{m.name}: cảm nhận sức mạnh của #{p.name}, trùm thức tỉnh! (máu ×#{cfg.hp}, thủ ×#{cfg.def}, công ×#{cfg.atk})",
         kind: "bad"
       }
 
@@ -76,6 +79,16 @@ defmodule HacLong.Game.Awaken do
   end
 
   def maybe(p, _key), do: p
+
+  @doc """
+  Máu chung khi nhiều người cùng đánh (phòng sự kiện, tổ đội): máu gốc `base` cộng phần thêm `extra` của MỖI người mạnh
+  đã vào trận (`boosted`: những người đã cộng, mỗi người một lần). Trả `{max_mới, máu_mới, boosted_mới}` từ `{max, hp}`.
+  """
+  def shared_max({max, hp}, boosted, uid, extra) do
+    if is_integer(extra) and extra > 0 and not MapSet.member?(boosted, uid),
+      do: {max + extra, hp + extra, MapSet.put(boosted, uid)},
+      else: {max, hp, boosted}
+  end
 
   @doc "Vật phẩm thưởng thêm khi hạ bản Thức Tỉnh của trùm `key`."
   def items(key), do: (config(key) || %{})[:items] || %{}

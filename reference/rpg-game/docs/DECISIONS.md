@@ -2429,8 +2429,17 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
   trong 3 lượt, hoặc người thường cần ~39 người mới hạ được.
 - `HacLong.Game.Awaken`: lúc vào trận (sau khi nhân theo chuyển sinh) ước tính số lượt người đánh cần để hạ bản thường
   (kỹ năng mạnh nhất đang mang × thông thạo × cánh × sát thương kỹ năng × kỳ vọng chí mạng, trừ thủ như `Engine.damage/4`).
-  ≤ `RULES.awaken.trigger_turns` (6) thì gặp bản **Thức Tỉnh**: tên thêm " Thức Tỉnh", máu ×3, công ×3,2, kinh nghiệm / vàng ×2,
+  ≤ `RULES.awaken.trigger_turns` (6) thì gặp bản **Thức Tỉnh**: tên thêm " Thức Tỉnh", máu ×3, thủ ×2, công ×3,2, kinh nghiệm / vàng ×2,
   hạ được thêm 2 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh (ngoài thưởng thường). Một dòng nhật ký báo trùm thức tỉnh.
 - Ước tính tách rõ hai nhóm: người chơi Journey cần 9,9–37,5 lượt ở mọi mốc CS; nhân vật cuối game CS 10 cần 2,3–2,8 lượt.
 - Bật cho trùm đêm Thạch Long Ẩn (`bosses.secret`). Đo trận thật: cuối game CS 10 thắng ~79%, ~16 lượt, ~4 bình
   (trước 100%, 3 lượt, 0 bình); người thường không đổi.
+- (2026-11-14, anh: "đó là cái đặc biệt của kẻ mạnh, không đổi; cho máu quái, phòng thủ tăng lên cho phù hợp") Bật thêm cho
+  trùm phòng sự kiện: trùm Quảng Trường Quỷ (quái `elite`), Hiệp Sĩ Máu, Kundun (`bosses.ds / bc / kal`, cùng mức, không thêm vật
+  phẩm; kinh nghiệm / vàng trận ×2). Thêm thủ ×2 (máu ×3, công ×3,2 giữ). Sức đánh người mạnh không bị giảm.
+  - **Máu chung** (phòng sự kiện `EventRoom`, tổ đội `Party`): máu gốc do người chạm đầu đặt; mỗi người mạnh vào trận cộng thêm
+    phần Thức Tỉnh của mình (máu gốc × 2) **một lần** (`Awaken.shared_max/4`); mọi người thấy cùng máu tối đa (tin
+    `shared_hp` / `room_hp` mang thêm máu tối đa). Trước đây Thạch Long Ẩn đánh chung tổ đội bị lệch (máu chung theo người mở).
+  - **Công, thủ, tên "Thức Tỉnh", dòng nhật ký** chỉ trong trận của người mạnh; người thường bị trùm đánh như cũ.
+  - Đo trận thật (một mình, cuối game CS 10): Thạch Long Ẩn 77% / 17 lượt / 4 bình; trùm Quảng Trường Quỷ 88% / 9 / 2;
+    Hiệp Sĩ Máu 100% / 15 / 2; Kundun 100% / 24 / 6 (trước 2 / 4 / 5 lượt). Người thường (Journey CS 0–10) không đổi.

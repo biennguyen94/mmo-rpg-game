@@ -373,11 +373,13 @@ defmodule HacLong.World do
 
     case Engine.start_with_monster(p, Data.zone_count() - 1, q) do
       {%{ok: true} = r, p2} ->
-        p2 = Engine.scale_event(p2, p.tower.k)
+        # trùm phòng: nhân vật quá mạnh gặp bản Thức Tỉnh; máu chung cộng phần của người đó (EventRoom)
+        p2 = p2 |> Engine.scale_event(p.tower.k) |> room_awaken(kind, m)
         mon = p2.battle.monster
+        base = mon[:base_max] || mon.maxHp
 
-        case EventRoom.engage(id, uid, m.id, mon.maxHp) do
-          {:ok, hp, n} ->
+        case EventRoom.engage(id, uid, m.id, base, mon[:awaken_extra] || 0) do
+          {:ok, hp, n, max} ->
             # room_key / room_n: màn trận nhận máu chung, số người đang đánh (sự kiện "shared" như tổ đội)
             enc = %{
               tower: m.id,
@@ -388,7 +390,11 @@ defmodule HacLong.World do
               base_gold: mon.gold
             }
 
-            {r, p2 |> put_in([:battle, :monster, :hp], hp) |> put_in([:battle, :encounter], enc)}
+            {r,
+             p2
+             |> put_in([:battle, :monster, :hp], hp)
+             |> put_in([:battle, :monster, :maxHp], max)
+             |> put_in([:battle, :encounter], enc)}
 
           {:error, msg} ->
             {%{ok: false, msg: msg}, p}
@@ -858,20 +864,31 @@ defmodule HacLong.World do
     })
   end
 
+  # trùm của phòng (Quảng Trường Quỷ: quái `elite`; Lâu Đài Máu / Kalima: vai `boss`), quái thường không thức tỉnh
+  defp room_awaken(p, :ds, %{elite: true}), do: HacLong.Game.Awaken.maybe(p, "ds")
+
+  defp room_awaken(p, kind, %{role: "boss"}) when kind in [:bc, :kal],
+    do: HacLong.Game.Awaken.maybe(p, Atom.to_string(kind))
+
+  defp room_awaken(p, _kind, _m), do: p
+
   def fight_key(map_id, mid), do: "#{map_id}:#{mid}"
 
   # Con quái đang đánh với đồng đội cùng tổ: vào đánh chung (máu chung ở HacLong.Party).
   defp join_shared(p, uid, map, m) do
     key = fight_key(map.id, m.id)
 
-    with {:ok, f} <- Party.join_fight(key, uid),
-         {%{ok: true} = r, p} <- encounter(p, map, m) do
-      p = put_in(p.battle.monster.hp, f.hp)
-      p = put_in(p.battle[:encounter], %{map: map.id, mid: m.id, shared: key, joined: true})
-      {Map.put(r, :msg, "Vào đánh cùng đồng đội (#{f.n} người)."), p}
+    # dựng trận trước (biết mình có gặp bản Thức Tỉnh không) rồi mới vào trận chung: máu chung cộng phần của người mạnh
+    with {%{ok: true} = r, p2} <- encounter(p, map, m),
+         {:ok, f} <- Party.join_fight(key, uid, p2.battle.monster[:awaken_extra] || 0) do
+      p2 =
+        p2 |> put_in([:battle, :monster, :hp], f.hp) |> put_in([:battle, :monster, :maxHp], f.max)
+
+      p2 = put_in(p2.battle[:encounter], %{map: map.id, mid: m.id, shared: key, joined: true})
+      {Map.put(r, :msg, "Vào đánh cùng đồng đội (#{f.n} người)."), p2}
     else
       {:error, msg} -> {%{ok: false, msg: msg}, p}
-      {r, p} -> {r, p}
+      {r, _p2} -> {r, p}
     end
   end
 

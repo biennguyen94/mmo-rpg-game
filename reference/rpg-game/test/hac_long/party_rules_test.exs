@@ -57,4 +57,20 @@ defmodule HacLong.PartyRulesTest do
     refute c in Party.of(a).members
     leave_all([a, b])
   end
+
+  test "trận chung với trùm Thức Tỉnh: mỗi người mạnh cộng máu chung một lần, mọi người thấy cùng máu tối đa" do
+    [a, b, c] = [uid(), uid(), uid()]
+    form(a, [b, c])
+    key = "test_map:#{a}"
+
+    # người mạnh mở trận: máu của mình đã gồm phần Thức Tỉnh (900 = 300 gốc + 600)
+    :ok = Party.open_fight(key, a, %{hp: 900, maxHp: 900, xp: 10, gold: 10, awaken_extra: 600})
+    # người thường vào: không cộng
+    assert {:ok, %{hp: 900, max: 900}} = Party.join_fight(key, b, 0)
+    # người mạnh thứ hai: cộng 600
+    assert {:ok, %{hp: 1500, max: 1500, n: 3}} = Party.join_fight(key, c, 600)
+    assert {:ok, %{max: 1500}} = Party.join_fight(key, c, 600)
+    assert %{hp: 1500, max: 1500} = Party.fight(key)
+    leave_all([a, b, c])
+  end
 end

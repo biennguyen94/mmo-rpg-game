@@ -1245,7 +1245,10 @@
       "trigger_turns": 6,
       "suffix": " Thức Tỉnh",
       "bosses": {
-        "secret": {"hp": 3, "atk": 3.2, "def": 1.0, "reward": 2, "items": {"jewel_bless": 2, "jewel_soul": 1}}
+        "secret": {"hp": 3, "atk": 3.2, "def": 2, "reward": 2, "items": {"jewel_bless": 2, "jewel_soul": 1}},
+        "ds": {"hp": 3, "atk": 3.2, "def": 2, "reward": 2, "items": {}},
+        "bc": {"hp": 3, "atk": 3.2, "def": 2, "reward": 2, "items": {}},
+        "kal": {"hp": 3, "atk": 3.2, "def": 2, "reward": 2, "items": {}}
       },
       "sourceType": "DESIGN",
       "version": 1,

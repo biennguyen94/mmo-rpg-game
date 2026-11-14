@@ -482,14 +482,14 @@ defmodule HacLong.Game.Session do
 
   # người khác vừa đánh con quái phòng mình đang đánh: giữ máu mới, số người (kênh đã nhận "shared", không đẩy lại)
   def handle_cast(
-        {:room_hp, id, mid, hp, n},
+        {:room_hp, id, mid, hp, n, max},
         %{player: %{battle: %{over: false, encounter: %{room: id, tower: mid} = enc} = b} = p} = s
       ) do
-    b = %{b | monster: %{b.monster | hp: hp}, encounter: %{enc | room_n: n}}
+    b = %{b | monster: %{b.monster | hp: hp, maxHp: max}, encounter: %{enc | room_n: n}}
     {:noreply, %{s | player: %{p | battle: b}}, timeout(s)}
   end
 
-  def handle_cast({:room_hp, _, _, _, _}, s), do: {:noreply, s, timeout(s)}
+  def handle_cast({:room_hp, _, _, _, _, _}, s), do: {:noreply, s, timeout(s)}
 
   def handle_cast({tag, _, _}, s) when tag in [:room_sync, :room_end],
     do: {:noreply, s, timeout(s)}
@@ -1437,7 +1437,12 @@ defmodule HacLong.Game.Session do
         Commands.run(p, cmd)
 
       f ->
-        p = p |> put_in([:battle, :monster, :hp], f.hp) |> shared_reward(f)
+        p =
+          p
+          |> put_in([:battle, :monster, :hp], f.hp)
+          |> put_in([:battle, :monster, :maxHp], f.max)
+          |> shared_reward(f)
+
         {result, p2} = Commands.run(p, cmd)
         dealt = if p2.battle, do: f.hp - p2.battle.monster.hp, else: 0
 
@@ -1474,6 +1479,7 @@ defmodule HacLong.Game.Session do
         p =
           p
           |> put_in([:battle, :monster, :hp], f.hp)
+          |> put_in([:battle, :monster, :maxHp], f.max)
           |> put_in([:battle, :monster, :xp], round(enc.base_xp * share))
           |> put_in([:battle, :monster, :gold], round(enc.base_gold * share))
 

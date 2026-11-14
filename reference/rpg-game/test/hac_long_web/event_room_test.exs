@@ -154,7 +154,7 @@ defmodule HacLongWeb.EventRoomTest do
     Phoenix.PubSub.subscribe(HacLong.PubSub, Session.topic(ua.id))
     assert {:alive, left2} = EventRoom.hit(room, ub.id, m1.id, 1)
     key = EventRoom.key(room, m1.id)
-    assert_receive {:shared_hp, ^key, ^left2, 2}
+    assert_receive {:shared_hp, ^key, ^left2, 2, ^max}
     assert_push "shared", %{key: ^key, hp: ^left2, n: 2}
 
     # Session của A cũng giữ máu mới: lần đẩy nhân vật sau (đồng bộ phòng) không trả lại máu cũ
@@ -204,7 +204,7 @@ defmodule HacLongWeb.EventRoomTest do
     room = a.player.tower.room
 
     for m <- a.player.tower.monsters do
-      {:ok, _, _} = EventRoom.engage(room, ua.id, m.id, 10)
+      {:ok, _, _, _} = EventRoom.engage(room, ua.id, m.id, 10)
       {:killed, _} = EventRoom.hit(room, ua.id, m.id, 10)
     end
 
@@ -317,8 +317,13 @@ defmodule HacLongWeb.EventRoomTest do
       %{s | t: %{s.t | monsters: [boss], kal: %{s.t.kal | stage: "boss"}}}
     end)
 
-    {:ok, _, _} = EventRoom.engage(room, ua.id, 100, 1000)
-    assert {:killed, %{end: %{success: true}}} = EventRoom.hit(room, ua.id, 100, 1000)
+    # máu chung: người thường chạm (1000), người mạnh vào sau gặp bản Thức Tỉnh → cộng phần của mình một lần
+    {:ok, 1000, 1, 1000} = EventRoom.engage(room, ua.id, 100, 1000)
+    {:ok, 3000, 2, 3000} = EventRoom.engage(room, ub.id, 100, 1000, 2000)
+    {:ok, 3000, 2, 3000} = EventRoom.engage(room, ub.id, 100, 1000, 2000)
+    assert %{hp: 3000, max: 3000} = EventRoom.fight(room, 100, ua.id)
+    assert {:alive, 2000} = EventRoom.hit(room, ub.id, 100, 1000)
+    assert {:killed, %{end: %{success: true}}} = EventRoom.hit(room, ua.id, 100, 2000)
     wait(fn -> Session.get(ub.id).tower.kal.done end)
   end
 end

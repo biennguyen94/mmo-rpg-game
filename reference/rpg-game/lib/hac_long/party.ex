@@ -59,8 +59,12 @@ defmodule HacLong.Party do
   """
   def open_fight(key, uid, m), do: GenServer.call(__MODULE__, {:open_fight, key, uid, m})
 
-  @doc "Vào trận `key` của đồng đội: `{:ok, %{hp, max, n}}` hoặc `{:error, lý_do}`."
-  def join_fight(key, uid), do: GenServer.call(__MODULE__, {:join_fight, key, uid})
+  @doc """
+  Vào trận `key` của đồng đội: `{:ok, %{hp, max, n}}` hoặc `{:error, lý_do}`. `extra`: người vào gặp bản Thức Tỉnh thì máu
+  chung cộng thêm phần này (mỗi người mạnh một lần, `HacLong.Game.Awaken.shared_max/4`).
+  """
+  def join_fight(key, uid, extra \\ 0),
+    do: GenServer.call(__MODULE__, {:join_fight, key, uid, extra})
 
   @doc "Trạng thái trận chung trước một đòn: `%{hp, n, xp, gold}` hoặc nil nếu trận đã hết."
   def fight(key), do: GenServer.call(__MODULE__, {:fight, key})
@@ -161,6 +165,8 @@ defmodule HacLong.Party do
           xp: m.xp,
           gold: m.gold,
           members: [uid],
+          # người mạnh đã cộng máu chung (trùm Thức Tỉnh): người mở trận đã gồm trong máu tối đa của mình
+          boosted: if((m[:awaken_extra] || 0) > 0, do: MapSet.new([uid]), else: MapSet.new()),
           owner: uid,
           party: pid
         }
@@ -169,7 +175,7 @@ defmodule HacLong.Party do
     end
   end
 
-  def handle_call({:join_fight, key, uid}, _from, s) do
+  def handle_call({:join_fight, key, uid, extra}, _from, s) do
     f = s.fights[key]
 
     cond do
@@ -183,7 +189,15 @@ defmodule HacLong.Party do
         {:reply, {:ok, %{hp: f.hp, max: f.max, n: length(f.members)}}, s}
 
       true ->
-        f = %{f | members: f.members ++ [uid]}
+        {max, hp, boosted} =
+          HacLong.Game.Awaken.shared_max(
+            {f.max, f.hp},
+            Map.get(f, :boosted, MapSet.new()),
+            uid,
+            extra
+          )
+
+        f = Map.merge(f, %{members: f.members ++ [uid], max: max, hp: hp, boosted: boosted})
         s = put_in(s.fights[key], f)
         broadcast_hp(key, f)
         {:reply, {:ok, %{hp: f.hp, max: f.max, n: length(f.members)}}, s}
@@ -193,7 +207,7 @@ defmodule HacLong.Party do
   def handle_call({:fight, key}, _from, s) do
     case s.fights[key] do
       nil -> {:reply, nil, s}
-      f -> {:reply, %{hp: f.hp, n: length(f.members), xp: f.xp, gold: f.gold}, s}
+      f -> {:reply, %{hp: f.hp, max: f.max, n: length(f.members), xp: f.xp, gold: f.gold}, s}
     end
   end
 
@@ -357,7 +371,7 @@ defmodule HacLong.Party do
           Phoenix.PubSub.broadcast(
             HacLong.PubSub,
             Session.topic(uid),
-            {:shared_hp, key, f.hp, length(f.members)}
+            {:shared_hp, key, f.hp, length(f.members), f.max}
           )
   end
 end

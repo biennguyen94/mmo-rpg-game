@@ -5441,6 +5441,8 @@
       const enc = P && P.battle && !P.battle.over && P.battle.encounter;
       if (!enc || (enc.shared || enc.room_key) !== m.key) return;
       P.battle.monster.hp = m.hp;
+      // máu chung tăng khi người mạnh vào đánh (trùm Thức Tỉnh)
+      if (m.max) P.battle.monster.maxHp = m.max;
       sharedN = m.n;
       sharedKey = m.key;
       render();
