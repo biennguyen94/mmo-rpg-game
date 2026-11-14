@@ -141,8 +141,9 @@
   // vị trí trên màn hình (px CSS) của con đang đánh và của mình, để hiệu ứng trận (js/fx.js) bám vào bản đồ
   let spots = null;
   // vị trí con đang đánh lần gần nhất: trận xong / quái vừa bị xóa khỏi bản đồ trước khi hiệu ứng kỹ năng bay tới thì
-  // vẫn bay tới đúng chỗ (giữ ~1,5 giây)
+  // vẫn bay tới đúng chỗ (giữ ~2,5 giây). Gắn theo mã con đang đánh: sang con khác thì không dùng chỗ con cũ.
   let lastFight = null;
+  const HOLD_MS = 2500;
   function fightSpots() {
     const live = (() => {
       if (!canvas || !spots || !fight) return null;
@@ -152,8 +153,8 @@
       const at = (p) => (p ? { x: r.left + p[0] * k, y: r.top + (p[1] + TILE / 2) * k, w: sz, h: sz } : null);
       return { mon: at(spots.mpos[fight.id]), me: at(spots.me) };
     })();
-    if (live && live.mon) { lastFight = { ...live, t: performance.now() }; return live; }
-    if (lastFight && performance.now() - lastFight.t < 1500) return { mon: lastFight.mon, me: (live && live.me) || lastFight.me };
+    if (live && live.mon) { lastFight = { ...live, id: fight.id, t: performance.now() }; return live; }
+    if (lastFight && (!fight || fight.id === lastFight.id) && performance.now() - lastFight.t < HOLD_MS) return { mon: lastFight.mon, me: (live && live.me) || lastFight.me };
     return live;
   }
   // ---------- Người chơi khác trên bản đồ (DECISIONS "Người chơi trên bản đồ, Đồ sát nhanh") ----------
@@ -369,9 +370,11 @@
     return { x: r.left + (x * TILE - lastCam[0] + TILE / 2) * k, y: r.top + (y * TILE - lastCam[1] + TILE / 2) * k };
   }
 
+  let lastFoe = null; // { id, t }: con / người vừa đánh (trận xong rồi vẫn nhận ra người bị hạ biến mất)
   function setFight(f) {
     const changed = JSON.stringify(f) !== JSON.stringify(fight);
     fight = f;
+    if (f) lastFoe = { id: f.id, t: performance.now() };
     if (changed) draw();
   }
 
@@ -1038,7 +1041,7 @@
     }
 
     if (m.style === 'sea') seaWorld(m, cx, cy, x0, y0, x1, y1, fx ? now : 0);
-    if (fx) drawMobFx(now, cx, cy);
+    if (fx) drawMobFx(now, cx, cy, mpos);
 
     for (const n of here ? world.nodes || [] : []) {
       const px = Math.round(n.x * TILE - cx), py = Math.round(n.y * TILE - cy);
@@ -1462,10 +1465,16 @@
     ctx.restore();
   }
 
-  function drawMobFx(t, cx, cy) {
+  function drawMobFx(t, cx, cy, mpos) {
+    // gục: chưa mờ khi đòn cuối còn đang bay; kết quả đòn (BattleFx.run) có thể tới sau lúc bản đồ xóa quái / người nên
+    // tính lại mỗi khung (tối đa HOLD_MS kể từ lúc biến mất)
+    const hu = window.BattleFx && window.BattleFx.hitUntil ? window.BattleFx.hitUntil() + 160 : 0;
+    for (const e of mobFx) if (e.k === 'die' && t < e.t0) e.t0 = Math.max(e.t0, Math.min(hu, e.c0 + HOLD_MS));
     mobFx = mobFx.filter((e) => t - e.t0 < e.life);
     for (const e of mobFx) {
       const k = Math.max(0, (t - e.t0) / e.life), x = e.x * TILE + TILE / 2 - cx, y = e.y * TILE + TILE / 2 - cy;
+      // hình còn đứng / đang mờ: hiệu ứng đòn, số sát thương vẫn bám đúng chỗ
+      if (e.k === 'die' && e.id && mpos && !mpos[e.id] && k < 0.6) mpos[e.id] = [x, y - TILE / 2];
       if (e.k === 'hit') {
         // con mình đang đánh: hiệu ứng đòn thật đã vẽ (kỹ năng / đòn thường), không thêm dấu X
         if (!e.mine) slashAt(x, y, k, '#ffffff');
@@ -1474,11 +1483,12 @@
         ctx.fillStyle = '#ff8a6a'; ctx.fillText(`-${e.pct}%`, x, y - TILE * 0.6 - k * 14); ctx.restore();
       } else {
         // gục: hình mờ dần bay lên, hạt tỏa ra; chưa tới lúc gục (đòn còn đang bay) thì quái vẫn đứng nguyên
-        const im = image('monsters/' + e.kind);
-        if (t < e.t0) { if (im.complete) ctx.drawImage(im, x - TILE / 2, y - TILE / 2, TILE, TILE); continue; }
+        const im = e.look ? (window.Doll && Doll.canvas(e.look)) : image('monsters/' + e.kind);
+        const ready = im && (e.look || im.complete);
+        if (t < e.t0) { if (ready) ctx.drawImage(im, x - TILE / 2, y - TILE / 2, TILE, TILE); continue; }
         ctx.save();
         ctx.globalAlpha = (1 - k) * 0.8;
-        if (im.complete && k < 0.6) ctx.drawImage(im, x - TILE / 2, y - TILE / 2 - k * 12, TILE, TILE);
+        if (ready && k < 0.6) ctx.drawImage(im, x - TILE / 2, y - TILE / 2 - k * 12, TILE, TILE);
         for (let i = 0; i < 14; i++) {
           const a = i * 2.39996, r = 4 + k * (14 + (i % 4) * 5);
           ctx.fillStyle = i % 3 ? '#e8dcc0' : '#ffd24a';
@@ -2800,10 +2810,16 @@
           if (n && n.hp != null && n.hp < hp) mobFx.push({ k: 'hit', x: n.x, y: n.y, pct: Math.max(1, Math.round(hp - n.hp)), t0: t, life: 600, mine: n.by === userId });
           // gục: chờ đòn kỹ năng bay tới (ít nhất ~0,35 giây; đòn đã xếp lịch trúng muộn hơn thì chờ tới đó, hình quái vẫn
           // đứng) rồi mới mờ dần
-          else if (!n && (hp < 100 || q.busy)) {
-            const hit = window.BattleFx && window.BattleFx.hitUntil ? window.BattleFx.hitUntil() + 160 : 0;
-            mobFx.push({ k: 'die', x: q.x, y: q.y, kind: q.kind, t0: Math.max(t + 350, Math.min(hit, t + 2000)), life: 1250 });
+          else if (!n && (hp < 100 || q.busy || (lastFoe && lastFoe.id === String(q.id) && t - lastFoe.t < HOLD_MS))) {
+            mobFx.push({ k: 'die', id: String(q.id), x: q.x, y: q.y, kind: q.kind, c0: t, t0: t + 350, life: 1250 });
           }
+        }
+        // người mình vừa hạ: server đưa về Làng ngay nên biến khỏi bản đồ trước khi đòn cuối bay tới → giữ hình đứng tới
+        // lúc trúng rồi mới mờ dần như quái
+        const still = new Set((snap.players || []).map((o) => o.id));
+        for (const o of world.players || []) {
+          const id = 'p' + o.id;
+          if (!still.has(o.id) && lastFoe && lastFoe.id === id && t - lastFoe.t < HOLD_MS) mobFx.push({ k: 'die', id, x: o.x, y: o.y, look: o.look, c0: t, t0: t + 350, life: 1250 });
         }
         if (mobFx.length > 40) mobFx = mobFx.slice(-40);
       }
@@ -2835,6 +2851,8 @@
     hudLines() { const P = getPlayer(); return P ? hudLines(P, cur(P)).map((l) => l.text + (l.sub ? ' | ' + l.sub : '')) : []; },
     // ⚡ con đang đánh trên bản đồ { id, hp } (e2e)
     fightTarget() { return fight; },
+    // quái / người vừa gục đang giữ hình chờ đòn cuối trúng rồi mờ: [{ id, t0 }] (t0: lúc bắt đầu mờ; e2e)
+    dying: () => mobFx.filter((e) => e.k === 'die').map((e) => ({ id: e.id, t0: e.t0 })),
     // câu cá (ui.js): cast | bite | catch | miss | null; data: { big, item }
     fish(ev, data = {}) {
       const P = getPlayer(), m = P && cur(P);

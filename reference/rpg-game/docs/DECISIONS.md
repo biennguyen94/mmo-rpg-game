@@ -2251,13 +2251,30 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Hiệu ứng đòn cuối trên bản đồ (2026-11-14, anh báo lỗi)
+Nhân vật rất mạnh (CS 10, đồ, thú tối đa) ⚡ đánh trên bản đồ: hiệu ứng đòn cuối tới sau khi đối phương đã biến mất, hoặc
+không có hiệu ứng khi đối phương bị hạ ngay. Nguyên nhân và cách sửa (chỉ là hình, server không đổi):
+- **Bản đồ xóa đối phương trước khi kết quả đòn tới** (gói bản đồ đến trước gói trận): hình gục (`mobFx` 'die') tính lúc bắt
+  đầu mờ ngay khi quái biến mất, lúc đó đòn chưa xếp lịch. Nay tính lại mỗi khung theo `BattleFx.hitUntil()` (tối đa 2,5
+  giây kể từ lúc biến mất), hình giữ đứng tới lúc đòn cuối trúng; trong lúc đó vị trí vẫn ghi vào `mpos` nên đòn, số sát
+  thương bám đúng chỗ.
+- **Người bị hạ biến mất ngay** (server đưa về Làng): trước không có hình gục cho người. Nay người mình vừa đánh
+  (`lastFoe`) biến khỏi bản đồ thì giữ hình (hình nhân vật) rồi mờ như quái.
+- **Hạ ngay lần trả đầu tiên**: `quickTrack` chỉ dựng hiệu ứng khi đã thấy trận ở lần vẽ trước. Nay lần đầu thấy trận
+  dựng từ tối đa `FRESH_MAX` (6) dòng nhật ký cuối, có số sát thương; trận vừa xử lý (`quickSeen`, 5 giây) thì nối tiếp,
+  không phát lại.
+- **Mỗi đòn / lần gục phát hai lần**: đường "server đẩy trạng thái trận" (dành cho màn trận) cũng chạy khi đánh ⚡ trên bản
+  đồ, phát thêm một lần không bám chỗ. Nay bỏ qua khi là trận trên bản đồ.
+- Vị trí dự phòng của con đang đánh (`fightSpots`) gắn theo mã con đó: sang con khác không bay về chỗ con cũ.
+e2e `mapkill`: CS 10, chỉ số rất cao hạ quái rừng một đòn (3 con) và đồ sát người cấp 20; code cũ trượt 4 kiểm tra.
+
 ## Bot ép món dự bị, để dành ngọc ghép cánh (2026-11-14, anh duyệt)
 Trước đây bot chỉ ép món **đang mặc** và chỉ thay đồ khi món mới hơn kể cả cấp ép. +11 cộng 180 % chỉ số gốc nên món cũ
 +11 (≈ 2,8 × gốc) gần như không bao giờ bị thay; món mới tốt hơn nằm trong túi mãi, không ép, làm đầy túi. Cánh: bước ép
 đi trước bước ghép nên Ngọc Ước Nguyện / Tâm Linh bị đổ vào ép cánh cũ lên +10 / +11, ghép xong cánh mới về +0.
 - **Món dự bị** (`Brain.spares/1`): món trong túi mặc được, chưa khóa, chỉ số gốc ≥ (1 + `bots.forge.spare_better` 0,3) ×
   món đang mặc ở ô đó nhưng chưa hơn kể cả cấp ép; vũ khí cùng kiểu 1 tay / 2 tay với vũ khí đang cầm; nhẫn so với ô nhẫn
-  yếu hơn. Mỗi ô lấy món chỉ số gốc cao nhất.
+  yếu hơn. Mỗi ô lấy món mạnh nhất kể cả cấp ép (chạy bot thật: rơi món gốc nhỉnh hơn thì bot bỏ món đang ép +2 dở, ép lại từ +0).
 - **Ép món dự bị trước** (`spare_job/3`, trong `forge_job/2` trước bước ép món đang mặc): cùng luật ép như món đang mặc
   (Thợ Rèn +1…+9, dư `spare` viên khi bước có thể hỏng; +10 / +11 ở Máy Hỗn Nguyên chỉ bot liều / từ
   `chaos_from_rebirths`). Ô có món dự bị thì không ép món đang mặc. Món dự bị hơn món đang mặc kể cả cấp ép thì bước mặc

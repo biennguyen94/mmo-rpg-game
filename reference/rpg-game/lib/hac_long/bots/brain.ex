@@ -613,7 +613,7 @@ defmodule HacLong.Bots.Brain do
   @doc """
   Món dự bị tốt nhất cho mỗi ô: `%{ô => món}`. Món trong túi mặc được, chỉ số gốc (`power/1`) ≥ (1 + `forge.spare_better`)
   × món đang mặc nhưng chưa hơn món đó kể cả cấp ép (hơn rồi thì bước mặc đồ đã thay); vũ khí phải cùng kiểu 1 tay / 2 tay
-  với vũ khí đang cầm. Mỗi ô lấy món chỉ số gốc cao nhất (bằng nhau thì món ép cao hơn).
+  với vũ khí đang cầm. Mỗi ô lấy món mạnh nhất kể cả cấp ép (món đang ép dở không bị bỏ khi rơi món gốc nhỉnh hơn).
   """
   def spares(p) do
     p
@@ -636,7 +636,7 @@ defmodule HacLong.Bots.Brain do
     end)
     |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
     |> Map.new(fn {slot, its} ->
-      {slot, Enum.max_by(its, &{power(&1), Engine.upgrade_level(p, &1.uid)})}
+      {slot, Enum.max_by(its, &{worth(p, &1), power(&1)})}
     end)
   end
 

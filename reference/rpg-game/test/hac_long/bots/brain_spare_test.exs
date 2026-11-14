@@ -103,4 +103,16 @@ defmodule HacLong.Bots.BrainSpareTest do
     p = %{p | gear: Enum.reject(p.gear, &(&1.uid == other))}
     assert {"shop", %{"act" => "sell", "id" => ^old}} = Brain.sell_job(p)
   end
+
+  test "món dự bị đang ép dở không bị bỏ khi rơi món gốc nhỉnh hơn" do
+    # vũ khí công 21 +11 (66) giữ chỗ; so hai món dự bị theo sức kể cả cấp ép
+    p = player(%{inv: %{"jewel_bless" => 1}}) |> add(@better, "#OLD")
+    {%{ok: true}, p} = Engine.equip(p, "#OLD")
+    p = p |> up_all(11) |> add("battleaxe", "#AXE") |> up("#AXE", 6) |> add("greatsword", "#GS")
+    # rìu +6: 31 + 6 × 2 = 43; kiếm lớn +0: 44 → kiếm lớn
+    assert %{weapon: %{uid: "#GS"}} = Brain.spares(p)
+    # rìu +7 (45) hơn kiếm lớn +0: ép tiếp rìu
+    p = up(p, "#AXE", 7)
+    assert %{weapon: %{uid: "#AXE"}} = Brain.spares(p)
+  end
 end

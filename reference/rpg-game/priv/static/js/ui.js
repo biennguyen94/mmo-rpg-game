@@ -1487,6 +1487,8 @@
   const lootFilterOn = () => (((P.view.autoCfg || {}).filter) || {}).on === true;
   const stepName = (s) => (s.id === 'attack' ? 'Đòn thường' : ((skillById(s.id) || {}).name || s.id));
   let quickPrev = null, quickLast = null, quickLogOpen = false, comboEdit = null;
+  const FRESH_MAX = 6; // số dòng nhật ký cuối dựng hiệu ứng khi mới thấy trận
+  let quickSeen = null; // { mid, n, over, t }: trận ⚡ vừa dựng hiệu ứng (số dòng nhật ký đã dùng)
   // mỗi lần vẽ: số sát thương / máu hồi bay lên trên bản đồ; trận vừa xong thì báo kết quả, giữ nhật ký để xem lại
   function quickTrack() {
     const b = P && P.battle;
@@ -1504,6 +1506,18 @@
         else if (pd < 0) Map_.floatText('me', `+${fmt(-pd)}`, '#8fe08a');
       }
       if (quickPrev && quickPrev.mid === mid && mid != null) quickFx(b, quickPrev);
+      // lần đầu thấy trận này: đối phương yếu bị hạ ngay đòn đầu (server đánh cả lượt trong một lần trả) thì trước đây
+      // không có hiệu ứng, số sát thương nào; dựng từ các dòng cuối của nhật ký (tải lại trang giữa trận: không phát lại
+      // cả trận)
+      // Trận vừa xử lý (`quickSeen`, vd rời trận rồi server gửi lại trận đã xong) thì nối tiếp từ đó, không phát lại.
+      else if (mid != null) {
+        const log = b.log || [], seen = quickSeen && quickSeen.mid === mid && performance.now() - quickSeen.t < 5000 ? quickSeen : null;
+        const n0 = seen ? Math.min(seen.n, log.length) : Math.max(0, log.length - FRESH_MAX);
+        const md = log.slice(n0).filter((l) => l.who === 'me' && l.dmg > 0 && !l.dot).reduce((a, l) => a + l.dmg, 0);
+        if (md > 0) Map_.floatText(mid, `-${fmt(md)}`, '#ffe08a');
+        quickFx(b, { log: log.slice(0, n0), over: seen ? seen.over : false, slay: (b.encounter || {}).slay != null });
+      }
+      quickSeen = { mid, n: (b.log || []).length, over: b.over, t: performance.now() };
       quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice(), slay: (b.encounter || {}).slay != null };
       return;
     }
@@ -5345,7 +5359,8 @@
       // server chuyển sang bản đồ khác khi đang nói chuyện với NPC: vẽ lại để đóng hội thoại cũ
       if (npc && P && npc.map !== P.pos.map) render(); else refresh();
       celebrate(old, P);
-      if (before && (before.mHp !== nb.monster.hp || before.pHp !== battleHp() || nb.over)) {
+      // ⚡ đánh trên bản đồ: hiệu ứng đã dựng ở `quickTrack` (bám vào bản đồ); thêm ở đây thì mỗi đòn / lần gục phát hai lần
+      if (before && !mapFight() && (before.mHp !== nb.monster.hp || before.pHp !== battleHp() || nb.over)) {
         const act = before.mHp !== nb.monster.hp ? 'attack' : 'potion';
         BattleFx.run(battleEvents(before, act, null, fxOf(before, act)));
       }
