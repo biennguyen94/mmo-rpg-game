@@ -1489,7 +1489,20 @@
   const stepName = (s) => (s.id === 'attack' ? 'Đòn thường' : ((skillById(s.id) || {}).name || s.id));
   let quickPrev = null, quickLast = null, quickLogOpen = false, comboEdit = null;
   const FRESH_MAX = 6; // số dòng nhật ký cuối dựng hiệu ứng khi mới thấy trận
-  let quickSeen = null; // { mid, n, over, t }: trận ⚡ vừa dựng hiệu ứng (số dòng nhật ký đã dùng)
+  // Dòng nhật ký mới so với lần trước. Nhật ký server chỉ giữ 60 dòng cuối: đầy rồi thì số dòng đứng yên, nên không so
+  // theo số dòng (trước đây trận dài, vd đồ sát hai người ngang nhau, mất hết hiệu ứng) mà tìm vị trí mấy dòng cuối của
+  // lần trước trong nhật ký mới. Lần trước rỗng: tối đa FRESH_MAX dòng cuối; không tìm thấy: 4 dòng cuối.
+  const sameLine = (a, b) => !!a && !!b && a.text === b.text && a.turn === b.turn && a.kind === b.kind;
+  function freshLines(prevLog, log) {
+    log = log || [];
+    if (!prevLog || !prevLog.length) return log.slice(-FRESH_MAX);
+    const k = Math.min(3, prevLog.length), tail = prevLog.slice(-k);
+    for (let i = log.length - 1; i >= k - 1; i--) {
+      if (tail.every((l, j) => sameLine(log[i - (k - 1) + j], l))) return log.slice(i + 1);
+    }
+    return log.slice(-4);
+  }
+  let quickSeen = null; // { mid, tail, over, t }: trận ⚡ vừa dựng hiệu ứng (mấy dòng nhật ký cuối đã dùng)
   // mỗi lần vẽ: số sát thương / máu hồi bay lên trên bản đồ; trận vừa xong thì báo kết quả, giữ nhật ký để xem lại
   function quickTrack() {
     const b = P && P.battle;
@@ -1499,7 +1512,7 @@
       const mid = fightTarget();
       if (quickPrev && quickPrev.mid === mid && mid != null) {
         // trùm thế giới: máu chung cả server tụt cả khi người khác đánh → chỉ hiện sát thương của mình (theo nhật ký)
-        const own = mid === 'boss' ? (b.log || []).slice(quickPrev.log.length).filter((l) => l.who === 'me' && l.dmg > 0).reduce((a, l) => a + l.dmg, 0) : null;
+        const own = mid === 'boss' ? freshLines(quickPrev.log, b.log).filter((l) => l.who === 'me' && l.dmg > 0).reduce((a, l) => a + l.dmg, 0) : null;
         const md = own != null ? own : quickPrev.mHp - b.monster.hp, pd = quickPrev.pHp - P.hp;
         if (md > 0) Map_.floatText(mid, `-${fmt(md)}`, '#ffe08a');
         else if (md < 0) Map_.floatText(mid, `+${fmt(-md)}`, '#8fe08a');
@@ -1513,12 +1526,12 @@
       // Trận vừa xử lý (`quickSeen`, vd rời trận rồi server gửi lại trận đã xong) thì nối tiếp từ đó, không phát lại.
       else if (mid != null) {
         const log = b.log || [], seen = quickSeen && quickSeen.mid === mid && performance.now() - quickSeen.t < 5000 ? quickSeen : null;
-        const n0 = seen ? Math.min(seen.n, log.length) : Math.max(0, log.length - FRESH_MAX);
-        const md = log.slice(n0).filter((l) => l.who === 'me' && l.dmg > 0 && !l.dot).reduce((a, l) => a + l.dmg, 0);
+        const prevLog = seen ? seen.tail : log.slice(0, Math.max(0, log.length - FRESH_MAX));
+        const md = freshLines(prevLog, log).filter((l) => l.who === 'me' && l.dmg > 0 && !l.dot).reduce((a, l) => a + l.dmg, 0);
         if (md > 0) Map_.floatText(mid, `-${fmt(md)}`, '#ffe08a');
-        quickFx(b, { log: log.slice(0, n0), over: seen ? seen.over : false, slay: (b.encounter || {}).slay != null });
+        quickFx(b, { log: prevLog, over: seen ? seen.over : false, slay: (b.encounter || {}).slay != null });
       }
-      quickSeen = { mid, n: (b.log || []).length, over: b.over, t: performance.now() };
+      quickSeen = { mid, tail: (b.log || []).slice(-3), over: b.over, t: performance.now() };
       quickPrev = { mid, mHp: b.monster.hp, pHp: P.hp, over: b.over, result: b.result, reward: b.reward, name: b.monster.name, log: (b.log || []).slice(), slay: (b.encounter || {}).slay != null };
       return;
     }
@@ -1542,8 +1555,8 @@
   }
   // hiệu ứng trận (js/fx.js) như màn trận, bám vào quái / mình trên bản đồ: dựng từ các dòng nhật ký mới của lượt
   function quickFx(b, prev) {
-    const log = b.log || [], n0 = prev.log.length;
-    const fresh = log.length >= n0 ? log.slice(n0) : log.slice(-4);
+    const log = b.log || [];
+    const fresh = freshLines(prev.log, log);
     const ev = [];
     // đánh người: đòn của mình trúng hẳn rồi đối thủ mới vung chiêu đánh trả (không dồn sát nhau)
     const pvp = !!prev.slay, GAP = pvp ? 650 : 380, WIND = pvp ? 480 : 300;
@@ -4487,7 +4500,7 @@
   // ---------- Xử lý thao tác ----------
   // Ghi lại trạng thái trước một lượt đánh để tính hiệu ứng (số sát thương bay lên, rung).
   function snapBattle() {
-    return { mHp: P.battle.monster.hp, pHp: battleHp(), logLen: P.battle.log.length };
+    return { mHp: P.battle.monster.hp, pHp: battleHp(), logLen: P.battle.log.length, tail: P.battle.log.slice(-3) };
   }
 
   // Máu hiện ở màn trận: gục ngã thì 0 (server đã hồi một phần máu khi "về nhà trọ", thanh trên đầu trang hiện số đó).
@@ -4530,8 +4543,8 @@
 
   // số sát thương hai bên của lượt vừa rồi (so với ảnh chụp `before`)
   function fxOf(before, action) {
-    // Nhật ký giới hạn 60 dòng; khi đã đầy thì xem vài dòng cuối.
-    const newLog = before.logLen < 60 ? P.battle.log.slice(before.logLen) : P.battle.log.slice(-4);
+    // Nhật ký giới hạn 60 dòng: dòng mới tìm theo mấy dòng cuối của lần trước (`freshLines`)
+    const newLog = before.logLen ? freshLines(before.tail, P.battle.log) : P.battle.log.slice(-4);
     const struck = action === 'attack' || action === 'skill';
     return {
       mDmg: struck ? before.mHp - P.battle.monster.hp : null,
@@ -4551,7 +4564,7 @@
     } else if (sk && (SELF_FX.includes(sk.effect) || !f.mDmg)) {
       ev.push({ type: 'buff', element: sk.element, heal: ['holy', 'heal', 'regen'].includes(sk.effect) || battleHp() > before.pHp });
     } else if (action === 'attack' && f.mDmg === 0) ev.push({ type: 'miss' });
-    const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
+    const newLog = before.logLen ? freshLines(before.tail, b.log) : b.log.slice(-6);
     // kỹ năng quái theo hệ: luồng hạt màu hệ bay từ quái sang mình
     const msk = newLog.find((l) => l.who === 'foe' && l.el);
     // đối thủ là người (đồ sát / đấu trực tiếp / đấu trường đánh bản sao `m.pvp`): kỹ năng của đối thủ bay về mình trước

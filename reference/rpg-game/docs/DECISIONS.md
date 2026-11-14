@@ -2251,6 +2251,11 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Tiến Lên: nút Đánh không ghi lý do (2026-11-14, anh báo)
+Nút Đánh khi chưa đánh được trước đây đổi chữ thành lý do ("Hãy chọn lá bài", "Bộ bài không hợp lệ"…) nên trông như một nút
+riêng, vô nghĩa. Nay nút luôn ghi "Đánh" (mờ khi chưa đánh được); lý do hiện thành dòng chữ nhỏ dưới các nút, chỉ khi đã
+chọn bài mà bộ đó không đánh được.
+
 ## Hình nhân vật Dungeon Crawl đủ lớp (2026-11-14, anh duyệt bảng gán)
 Hình nhân vật vẫn ghép lớp 32px từ bộ tile Dungeon Crawl Stone Soup (CC0) nhưng dùng đủ kho `player/` (bản Full +
 Supplemental trên OpenGameArt) thay vì vài hình: anh chọn hướng này thay LPC (64px, CC-BY-SA, phải sửa cách vẽ bản đồ).
@@ -2327,6 +2332,9 @@ không có hiệu ứng khi đối phương bị hạ ngay. Nguyên nhân và c�
   đồ, phát thêm một lần không bám chỗ. Nay bỏ qua khi là trận trên bản đồ.
 - Vị trí dự phòng của con đang đánh (`fightSpots`) gắn theo mã con đó: sang con khác không bay về chỗ con cũ.
 e2e `mapkill`: CS 10, chỉ số rất cao hạ quái rừng một đòn (3 con) và đồ sát người cấp 20; code cũ trượt 4 kiểm tra.
+- **Trận dài mất hiệu ứng** (2026-11-14, anh báo: đồ sát nhanh hai người ngang nhau): nhật ký server chỉ giữ 60 dòng; dòng
+  mới tính theo số dòng nên nhật ký đầy là số dòng đứng yên, mọi lượt sau không có hiệu ứng. Nay tìm vị trí 3 dòng cuối
+  của lần trước trong nhật ký mới (`freshLines`, ui.js; cả màn trận thường). e2e `slaylong` (code cũ: 0 hiệu ứng sau khi đầy).
 
 ## Bot ép món dự bị, để dành ngọc ghép cánh (2026-11-14, anh duyệt)
 Trước đây bot chỉ ép món **đang mặc** và chỉ thay đồ khi món mới hơn kể cả cấp ép. +11 cộng 180 % chỉ số gốc nên món cũ

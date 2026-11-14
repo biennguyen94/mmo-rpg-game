@@ -771,7 +771,8 @@ body.tl-on { overflow: hidden; }
 .tl-slot.sel { transform: translateY(-12px); }
 .tl-slot.sel .tl-card { outline: 3px solid var(--gold); outline-offset: 1px; }
 .tl-actions { position: sticky; bottom: 0; z-index: 6; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 8px 0; background: color-mix(in srgb, var(--ink) 92%, transparent); }
-.tl-actions .btn.primary[disabled] { opacity: 0.75; font-size: 0.8rem; }
+.tl-actions .btn.primary[disabled] { opacity: 0.55; }
+.tl-actions .tl-reason { flex-basis: 100%; text-align: center; margin: 0; }
 .tl-host-row, .tl-reacts, .tl-phrases { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 6px 0; }
 .tl-reacts .btn { font-size: 1.1rem; padding: 4px 8px; }
 .tl-chat-log { max-height: 180px; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }

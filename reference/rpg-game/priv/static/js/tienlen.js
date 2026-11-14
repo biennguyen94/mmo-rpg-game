@@ -472,14 +472,16 @@
   function viewActions() {
     const v = st.view, g = v && v.game, c = st.checks || {};
     if (!v || v.status !== 'playing' || v.me == null || st.watching) return '<div id="tl-actions"></div>';
+    // nút Đánh luôn ghi "Đánh" (mờ khi chưa đánh được); lý do chỉ hiện khi đã chọn bài mà bộ đó không đánh được
     const okPlay = c.play === 'ok', okPass = c.pass === 'ok', okChop = c.chop === 'ok' && g.current !== v.me;
     return `<div id="tl-actions" class="tl-actions">
       <button class="btn" data-tl="hint">Gợi ý</button>
       <button class="btn" data-tl="sort">${st.sort === 'rank' ? 'Xếp theo chất' : 'Xếp theo số'}</button>
-      <button class="btn primary" data-tl="play" ${okPlay ? '' : 'disabled'}>${okPlay ? 'Đánh' : esc(c.play || 'Đánh')}</button>
+      <button class="btn primary" data-tl="play" ${okPlay ? '' : 'disabled'}>Đánh</button>
       ${okPass ? '<button class="btn" data-tl="pass">Bỏ lượt</button>' : ''}
       ${okChop ? '<button class="btn danger" data-tl="chop">Chặt ngoài lượt!</button>' : ''}
       ${st.sel.size ? '<button class="btn" data-tl="clear">Bỏ chọn</button>' : ''}
+      ${st.sel.size && !okPlay && c.play ? `<p class="small muted tl-reason" role="status">${esc(c.play)}</p>` : ''}
     </div>`;
   }
 
