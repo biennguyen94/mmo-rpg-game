@@ -2251,6 +2251,11 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Tiến Lên: bot dễ biết chặt 2 (2026-11-14, anh báo)
+Bot "dễ" trước đây không bao giờ chặt (gặp 2 là bỏ lượt dù cầm tứ quý), trông như bot không biết luật. Nay tới lượt mà
+trên bàn là 2 (hoặc bộ vừa chặt 2) và có bom (tứ quý, ba / bốn đôi thông hợp lệ) thì chặt bằng bom yếu nhất; còn lại vẫn
+"dễ": đánh lá yếu nhất, không giữ bài, không chặt ngoài lượt. Bot "thường" như cũ (đã chặt).
+
 ## Tiến Lên: nút Đánh không ghi lý do (2026-11-14, anh báo)
 Nút Đánh khi chưa đánh được trước đây đổi chữ thành lý do ("Hãy chọn lá bài", "Bộ bài không hợp lệ"…) nên trông như một nút
 riêng, vô nghĩa. Nay nút luôn ghi "Đánh" (mờ khi chưa đánh được); lý do hiện thành dòng chữ nhỏ dưới các nút, chỉ khi đã

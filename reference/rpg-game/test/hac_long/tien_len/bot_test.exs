@@ -92,6 +92,44 @@ defmodule HacLong.TienLen.BotTest do
       assert Bot.decide(game, 1, :normal) == {:play, cards("4C")}
     end
 
+    test "on its turn both levels chop a 2 with a bomb; easy does not waste a bomb otherwise" do
+      for {lead, play} <- [{"3S 2S 9H", "2S"}, {"3S 2S 2H 9H", "2S 2H"}] do
+        game =
+          Game.start(
+            [0, 1, 2, 3],
+            hands(%{
+              0 => lead,
+              1 => "4C QS QC QD QH 7D 8D 10S",
+              2 => "5C 6C 7C 8C",
+              3 => "5D 6D 7S 8S"
+            }),
+            [],
+            leader: 0
+          )
+
+        {:ok, game, _} = Game.play(game, 0, cards(play))
+        quad = cards("QS QC QD QH")
+
+        for level <- [:easy, :normal] do
+          assert {:play, got} = Bot.decide(game, 1, level)
+          assert Card.sort(got) == Card.sort(quad)
+        end
+      end
+
+      # trên bàn không phải 2: bot dễ không đem tứ quý ra đánh
+      game =
+        Game.start(
+          [0, 1],
+          hands(%{0 => "3S 4H 9H", 1 => "4C QS QC QD QH 7D"}),
+          [],
+          leader: 0
+        )
+
+      {:ok, game, _} = Game.play(game, 0, cards("9H"))
+      assert {:play, [one]} = Bot.decide(game, 1, :easy)
+      assert one.rank == 12
+    end
+
     test "normal chops a 2 out of turn; easy never does" do
       h = hands(%{0 => "2H 9C 9D", 1 => "3S 8H", 2 => "4S 4C 5S 5C 6S 6C 7S 7C KD"})
       game = Game.start([0, 1, 2], h, [], leader: 0)

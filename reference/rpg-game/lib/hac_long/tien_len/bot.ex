@@ -5,8 +5,9 @@ defmodule HacLong.TienLen.Bot do
   room then runs through the normal rules like any player's command.
 
   Levels:
-  - `:easy` ("dễ"): leads its lowest single, answers with the weakest legal play, never
-    chops, never keeps cards back.
+  - `:easy` ("dễ"): leads its lowest single, answers with the weakest legal play, never keeps
+    cards back; chops a 2 on its own turn when it holds a bomb (anh báo 2026-11-14: cầm tứ quý mà
+    không chặt 2 trông như bot không biết luật), never chops out of turn.
   - `:normal` ("thường"): leads with the biggest group holding its lowest card (straight,
     triple, pair), answers without breaking pairs / triples when it can, keeps 2s and bombs
     for when they matter (a 2 to chop, an opponent close to finishing, its own last cards),
@@ -59,10 +60,19 @@ defmodule HacLong.TienLen.Bot do
     {:play, Enum.find(moves, hd(moves), &(&1 == [lowest]))}
   end
 
-  defp choose_by_level(:easy, _game, _seat, _hand, moves) do
-    case Enum.reject(moves, &bomb?/1) do
-      [] -> :pass
-      [weakest | _] -> {:play, weakest}
+  defp choose_by_level(:easy, game, _seat, _hand, moves) do
+    bombs = Enum.filter(moves, &bomb?/1)
+
+    cond do
+      # trên bàn là 2 (hoặc bộ vừa chặt 2): có bom thì chặt, bom yếu nhất
+      Rules.chop_target?(game.centre) and bombs != [] ->
+        {:play, hd(bombs)}
+
+      true ->
+        case moves -- bombs do
+          [] -> :pass
+          [weakest | _] -> {:play, weakest}
+        end
     end
   end
 
