@@ -2251,6 +2251,22 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Bot ép món dự bị, để dành ngọc ghép cánh (2026-11-14, anh duyệt)
+Trước đây bot chỉ ép món **đang mặc** và chỉ thay đồ khi món mới hơn kể cả cấp ép. +11 cộng 180 % chỉ số gốc nên món cũ
++11 (≈ 2,8 × gốc) gần như không bao giờ bị thay; món mới tốt hơn nằm trong túi mãi, không ép, làm đầy túi. Cánh: bước ép
+đi trước bước ghép nên Ngọc Ước Nguyện / Tâm Linh bị đổ vào ép cánh cũ lên +10 / +11, ghép xong cánh mới về +0.
+- **Món dự bị** (`Brain.spares/1`): món trong túi mặc được, chưa khóa, chỉ số gốc ≥ (1 + `bots.forge.spare_better` 0,3) ×
+  món đang mặc ở ô đó nhưng chưa hơn kể cả cấp ép; vũ khí cùng kiểu 1 tay / 2 tay với vũ khí đang cầm; nhẫn so với ô nhẫn
+  yếu hơn. Mỗi ô lấy món chỉ số gốc cao nhất.
+- **Ép món dự bị trước** (`spare_job/3`, trong `forge_job/2` trước bước ép món đang mặc): cùng luật ép như món đang mặc
+  (Thợ Rèn +1…+9, dư `spare` viên khi bước có thể hỏng; +10 / +11 ở Máy Hỗn Nguyên chỉ bot liều / từ
+  `chaos_from_rebirths`). Ô có món dự bị thì không ép món đang mặc. Món dự bị hơn món đang mặc kể cả cấp ép thì bước mặc
+  đồ thay ngay.
+- **Để dành ngọc ghép cánh**: cánh đang mặc đã đủ `min_up` để ghép bậc kế (cánh 1 → 2: +5, cánh 2 → 3: +9) thì thôi ép;
+  cánh bậc cuối (cánh 3) ép tiếp tới +11.
+- **Dọn túi** (`sell_job/1`): món dự bị kém hơn món dự bị tốt nhất cùng ô là đồ thừa; đồ đã ép mà chỉ số gốc lẫn sức kể cả
+  cấp ép đều kém món đang mặc (đồ cũ vừa thay) cũng bán. Chưa có cánh: món làm cánh đầu tiên ưu tiên món không phải dự bị.
+
 ## Quái vùng chuyển sinh: bớt máu, đánh đau hơn (2026-11-13, anh duyệt phương án B)
 Đo bằng nhân vật chơi thật (`HacLong.Game.Journey`, 4 lớp) đánh vùng cùng số chuyển sinh: số đòn để hạ tăng 6,7 → 16,2 (vùng 1 →
 10) mà mỗi đòn quái chỉ mất ~14% máu ở mọi vùng (quái ×k ở Quảng Trường: ~26–30%) — máu tăng 40% / vùng, công chỉ 15%.

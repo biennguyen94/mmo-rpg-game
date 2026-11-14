@@ -20,7 +20,9 @@ defmodule HacLong.Bots.Brain do
   12. Rảnh mà dư vàng, có ngọc → về Làng ép đồ / thêm dòng / ghép, nâng cánh (`forge_job/2`, DECISIONS "Bot ép đồ,
       chuyển sinh"). Đang chờ ghép cánh (cánh đã tháo ra túi) thì làm trước cả bước mặc đồ.
       Rèn đi trước chuyển sinh và mọi sự kiện; từ `forge.chaos_from_rebirths` lần chuyển sinh bot nào cũng ép +10 / +11
-      (DECISIONS "Bot ưu tiên rèn đồ, săn Hắc Long").
+      (DECISIONS "Bot ưu tiên rèn đồ, săn Hắc Long"). Món trong túi chỉ số gốc hơn hẳn món đang mặc (`spares/1`) thì ép
+      món đó trước, hơn món đang mặc kể cả cấp ép thì thay; cánh đủ cấp ép để ghép bậc kế thì thôi ép, để dành ngọc
+      (DECISIONS "Bot ép món dự bị, để dành ngọc ghép cánh").
   13. Túi trang bị gần đầy → về Làng bán đồ thừa ở Thợ Rèn (`sell_job/1`); cho thú ăn mỗi vài phút (`opts.feed_due`).
   14. Gục nhiều lần ở một chỗ (phòng trùm đánh không lại, bản đồ quá mạnh) → tạm tránh chỗ đó (`opts.avoid`, tiến trình
       bot ghi bằng `note_death/3`); chuyển sinh tối đa + cấp tối đa → luyện ở vùng chuyển sinh, khó dần
@@ -579,22 +581,107 @@ defmodule HacLong.Bots.Brain do
 
     # chưa có cánh: làm cánh trước (không thì Ngọc Ước Nguyện cứ bị dùng ép lại đồ mới mặc, không bao giờ đủ cho
     # món làm cánh); có cánh rồi thì ép đồ, cánh như thường rồi mới nâng cánh
+    # món dự bị (`spare_job/3`) đi trước ép món đang mặc: món cũ +11 không giữ chỗ mãi (DECISIONS "Bot ép món dự bị,
+    # để dành ngọc ghép cánh")
     cond do
-      spare <= 0 -> nil
-      p.equip[:wing] == nil -> wing_job(p, spare) || upgrade_job(p, spare, opts) || life_job(p)
-      true -> upgrade_job(p, spare, opts) || life_job(p) || wing_job(p, spare)
+      spare <= 0 ->
+        nil
+
+      p.equip[:wing] == nil ->
+        wing_job(p, spare) || spare_job(p, spare, opts) || upgrade_job(p, spare, opts) ||
+          life_job(p)
+
+      true ->
+        spare_job(p, spare, opts) || upgrade_job(p, spare, opts) || life_job(p) ||
+          wing_job(p, spare)
     end
   end
+
+  defp daring?(p, opts) do
+    seed = opts[:seed] || 1
+
+    rem(seed, @forge.daring_every) == 0 or tryhard?(seed) or
+      (Map.get(p, :rebirths) || 0) >= @forge.chaos_from_rebirths
+  end
+
+  # ô đồ một món trong túi sẽ thay khi mặc (nhẫn: ô nhẫn yếu hơn)
+  defp spare_slot(p, %{slot: "ring"}),
+    do: Enum.min_by([:ring1, :ring2], &worth(p, Gear.item(p, p.equip[&1])))
+
+  defp spare_slot(p, it), do: Engine.equip_slot(p, it)
+
+  @doc """
+  Món dự bị tốt nhất cho mỗi ô: `%{ô => món}`. Món trong túi mặc được, chỉ số gốc (`power/1`) ≥ (1 + `forge.spare_better`)
+  × món đang mặc nhưng chưa hơn món đó kể cả cấp ép (hơn rồi thì bước mặc đồ đã thay); vũ khí phải cùng kiểu 1 tay / 2 tay
+  với vũ khí đang cầm. Mỗi ô lấy món chỉ số gốc cao nhất (bằng nhau thì món ép cao hơn).
+  """
+  def spares(p) do
+    p
+    |> Gear.bag()
+    |> Enum.map(&Gear.resolve/1)
+    |> Enum.filter(
+      &(&1.slot in Engine.gear_slots() and not &1.locked and Engine.can_wear?(p, &1))
+    )
+    |> Enum.flat_map(fn it ->
+      slot = spare_slot(p, it)
+      cur = Gear.item(p, p.equip[slot])
+
+      same_hand =
+        slot != :weapon or cur == nil or Engine.two_handed?(it) == Engine.two_handed?(cur)
+
+      if cur && same_hand && power(it) >= power(cur) * (1 + @forge.spare_better) &&
+           worth(p, it) <= worth(p, cur),
+         do: [{slot, it}],
+         else: []
+    end)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> Map.new(fn {slot, its} ->
+      {slot, Enum.max_by(its, &{power(&1), Engine.upgrade_level(p, &1.uid)})}
+    end)
+  end
+
+  # ép món dự bị (Thợ Rèn; +10 / +11 ở Máy Hỗn Nguyên như món đang mặc: chỉ bot liều). Món thấp cấp ép nhất đi trước.
+  defp spare_job(p, spare, opts) do
+    daring = daring?(p, opts)
+
+    p
+    |> spares()
+    |> Enum.flat_map(fn {_slot, it} ->
+      lv = Engine.upgrade_level(p, it.uid)
+      cost = Engine.upgrade_cost(it, lv)
+
+      if cost && cost.gold <= spare &&
+           has?(p, cost.items, if(cost.fail, do: @forge.spare, else: 0)) &&
+           (cost.at == "smith" or daring),
+         do: [{lv, it.uid, cost.at}],
+         else: []
+    end)
+    |> Enum.sort()
+    |> case do
+      [] -> nil
+      [{_, uid, "smith"} | _] -> {"shop", %{"act" => "upgrade", "id" => uid, "confirm" => true}}
+      [{_, uid, _} | _] -> {"chaos", %{"act" => "chaos_upgrade", "id" => uid, "confirm" => true}}
+    end
+  end
+
+  # cánh đã đủ cấp ép để ghép lên bậc kế (`wing_job/2`): thôi ép, để dành ngọc cho công thức (ghép xong cánh mới về +0)
+  defp wing_hold?(p, :wing) do
+    id = p.equip[:wing]
+    r = id && wing_recipe(wing_tier(p, id) + 1)
+    r != nil and Engine.upgrade_level(p, id) >= r.gear.min_up
+  end
+
+  defp wing_hold?(_p, _slot), do: false
 
   defp has?(p, items, extra \\ 0),
     do: Enum.all?(items, fn {m, n} -> Map.get(p.inv, to_string(m), 0) >= n + extra end)
 
   defp upgrade_job(p, spare, opts) do
-    daring =
-      rem(opts[:seed] || 1, @forge.daring_every) == 0 or tryhard?(opts[:seed] || 1) or
-        (Map.get(p, :rebirths) || 0) >= @forge.chaos_from_rebirths
+    daring = daring?(p, opts)
+    held = p |> spares() |> Map.keys()
 
     p.equip
+    |> Enum.reject(fn {slot, _} -> slot in held or wing_hold?(p, slot) end)
     |> Enum.flat_map(fn {slot, id} ->
       it = id && Gear.item(p, id)
       lv = if id, do: Engine.upgrade_level(p, id), else: 0
@@ -681,14 +768,17 @@ defmodule HacLong.Bots.Brain do
   end
 
   # một món trong túi (vũ khí / giáp / khiên) ép tới +min_up rồi bỏ vào máy
+  # món dự bị (`spares/1`) chỉ làm cánh khi không còn món nào khác
   defp first_wing(p, r, spare, ready) do
+    held = p |> spares() |> Map.values() |> Enum.map(& &1.uid)
+
     bag =
       for g <- Gear.bag(p),
           !g[:locked],
           Gear.resolve(g).slot in r.gear.slots,
-          do: {Engine.upgrade_level(p, g.uid), g.uid}
+          do: {g.uid not in held, Engine.upgrade_level(p, g.uid), g.uid}
 
-    case Enum.sort(bag, :desc) do
+    case bag |> Enum.sort(:desc) |> Enum.map(&Tuple.delete_at(&1, 0)) do
       [{up, uid} | _] when up >= r.gear.min_up ->
         if ready, do: {"chaos", %{"act" => "chaos", "id" => r.id, "gear" => uid}}
 
@@ -1018,8 +1108,9 @@ defmodule HacLong.Bots.Brain do
 
   @doc """
   Túi trang bị gần đầy (≥ `bots.sell.full_at` món) thì về Làng bán đồ thừa ở Thợ Rèn; đang ở Làng thì bán tiếp tới khi
-  còn `down_to` món. Đồ thừa: chưa khóa, chưa ép, không Excellent / May mắn / đồ Thần, không phải cánh, và mặc không được
-  (lớp khác) hoặc không hơn món đang mặc ở ô đó. Chưa có cánh thì giữ một món làm cánh (`first_wing/4`).
+  còn `down_to` món. Đồ thừa: chưa khóa, không Excellent / May mắn / đồ Thần, không phải cánh, và: chưa ép mà mặc không được (lớp
+  khác), không hơn món đang mặc ở ô đó, hoặc kém món dự bị tốt nhất cùng ô (`spares/1`); đã ép mà chỉ số gốc lẫn sức
+  kể cả cấp ép đều kém món đang mặc (đồ cũ thay bằng món dự bị). Chưa có cánh thì giữ một món làm cánh (`first_wing/4`).
   """
   def sell_job(p) do
     bag = Gear.bag(p)
@@ -1028,23 +1119,38 @@ defmodule HacLong.Bots.Brain do
 
     if n >= min(@sell.full_at, @gear_bag) or (village? and n > @sell.down_to) do
       keep = wing_material(p, bag)
+      sp = spares(p)
 
       Enum.find_value(bag, fn g ->
         it = Gear.resolve(g)
-        if g.uid != keep and junk?(p, it), do: {"shop", %{"act" => "sell", "id" => g.uid}}
+        if g.uid != keep and junk?(p, it, sp), do: {"shop", %{"act" => "sell", "id" => g.uid}}
       end)
     end
   end
 
-  defp junk?(p, it) do
+  defp junk?(p, it, sp) do
     plain =
       not it.locked and not it.stored and it.slot != "wing" and not it.excellent and not it.luck and
-        not it.anc and Engine.upgrade_level(p, it.uid) == 0
+        not it.anc
 
-    plain and
-      (not Engine.can_wear?(p, it) or
-         (it.slot in Engine.gear_slots() and
-            power(it) <= power(Gear.item(p, p.equip[Engine.equip_slot(p, it)]))))
+    up = Engine.upgrade_level(p, it.uid)
+    cur = it.slot in Engine.gear_slots() && Gear.item(p, p.equip[spare_slot(p, it)])
+
+    cond do
+      not plain -> false
+      not Engine.can_wear?(p, it) -> up == 0
+      it.slot not in Engine.gear_slots() -> false
+      # đồ cũ đã ép (vd thay bằng món dự bị): bán khi chỉ số gốc thấp hơn và không hơn kể cả cấp ép
+      up > 0 -> power(it) < power(cur) and worth(p, it) < worth(p, cur)
+      power(it) <= power(cur) -> true
+      # món dự bị kém hơn món dự bị tốt nhất cùng ô (`spares/1`)
+      true -> spare_extra?(p, it, sp)
+    end
+  end
+
+  defp spare_extra?(p, it, sp) do
+    best = Map.get(sp, spare_slot(p, it))
+    best != nil and best.uid != it.uid
   end
 
   # món giữ lại để ghép cánh đầu tiên (như `first_wing/4`: món ép cao nhất trong các ô của công thức)
@@ -1052,9 +1158,11 @@ defmodule HacLong.Bots.Brain do
     r = p.equip[:wing] == nil && wing_recipe(1)
 
     if r do
+      held = p |> spares() |> Map.values() |> Enum.map(& &1.uid)
+
       bag
       |> Enum.filter(&(!&1[:locked] and Gear.resolve(&1).slot in r.gear.slots))
-      |> Enum.max_by(&{Engine.upgrade_level(p, &1.uid), &1.uid}, fn -> nil end)
+      |> Enum.max_by(&{&1.uid not in held, Engine.upgrade_level(p, &1.uid), &1.uid}, fn -> nil end)
       |> then(&(&1 && &1.uid))
     end
   end
