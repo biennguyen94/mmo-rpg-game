@@ -214,8 +214,10 @@
         ctx.lineWidth = enemy ? 2.5 : 2;
         ctx.beginPath(); ctx.ellipse(px + TILE / 2 + off, py + TILE - 4, 13 + (enemy ? k * 2 : 0), 5, 0, 0, Math.PI * 2); ctx.stroke();
       }
-      const dl = window.Doll && Doll.canvas(o.look);
-      if (dl) ctx.drawImage(dl, px + off, py, TILE, TILE);
+      // cánh (DECISIONS "Cánh: bay lơ lửng, cánh ánh sáng"): vòng chân, cánh ánh sáng vẽ mượt ở bản đồ, nhân vật nhấp nhô
+      const fb = o.look && o.look.wing && window.Doll && Doll.fly ? Doll.fly(ctx, o.look, px + off, py, TILE, t, fx) : 0;
+      const dl = window.Doll && Doll.canvas(o.look && o.look.wing ? { ...o.look, wing: null } : o.look);
+      if (dl) ctx.drawImage(dl, px + off, py + fb, TILE, TILE);
       // đang đồ sát: máu trên đầu (con mình đang đánh: máu theo lượt của trận; người ngoài: máu người đó gửi lên)
       const hp = mine ? fight.hp : o.duel ? o.duel.hp : null;
       if (hp != null) {
@@ -1096,12 +1098,13 @@
     if (look && look.pet === 'chim_lac') birdAura(now, px, py, fx);
     ctx.fillStyle = 'rgba(240, 207, 122, 0.35)';
     ctx.beginPath(); ctx.ellipse(px + TILE / 2, py + TILE - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
-    const myDoll = Doll.canvas(look);
+    const flyBob = look && look.wing && Doll.fly ? Doll.fly(ctx, look, px, py, TILE, now, fx) : 0;
+    const myDoll = Doll.canvas(look && look.wing ? { ...look, wing: null } : look);
     // đang đi: nhún nhẹ; vừa sang bản đồ: hiện ra từ nhỏ tới to (FX_PLAN đợt 5)
     const walking = fx && (mx !== P.pos.x || my !== P.pos.y);
     const bobY = walking ? -Math.abs(Math.sin(now / 85)) * 2.5 : 0;
     const grow = fx && arrive && now - arrive < 420 ? 0.35 + 0.65 * ((now - arrive) / 420) : 1;
-    const hs = TILE * grow, hx = px + (TILE - hs) / 2, hy = py + (TILE - hs) + bobY;
+    const hs = TILE * grow, hx = px + (TILE - hs) / 2, hy = py + (TILE - hs) + bobY + flyBob;
     if (myDoll) ctx.drawImage(myDoll, hx, hy, hs, hs); else if (hero.complete) ctx.drawImage(hero, hx, hy, hs, hs);
     if (fx && levelAt && now - levelAt < 1600) levelColumn(px, py, (now - levelAt) / 1600);
     const mine = bubbleOf(userId, now);
@@ -1517,13 +1520,6 @@
         const k = ((t / 1400) + i / n) % 1, xx = x + Math.sin(i * 2.1 + t / 600) * 10;
         ctx.fillStyle = `rgba(${c}, ${1 - k})`;
         ctx.beginPath(); ctx.arc(xx, py + TILE - 6 - k * 30, 1.6, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    if (look.wing && fx) {
-      for (let i = 0; i < 4; i++) {
-        const k = ((t / 1600) + i / 4) % 1, side = i % 2 ? 1 : -1;
-        ctx.fillStyle = `rgba(232, 244, 255, ${0.85 * (1 - k)})`;
-        ctx.beginPath(); ctx.arc(x + side * (12 + (i % 3) * 3), py + 8 + k * 26, 1.3, 0, Math.PI * 2); ctx.fill();
       }
     }
     ctx.restore();

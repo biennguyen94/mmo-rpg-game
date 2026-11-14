@@ -15,7 +15,7 @@ Ba hình quái xâm lăng (B-20) là hình trên tô lại màu bằng `e2e/tint
 26 hình quái bản đồ chất Việt `monsters/vn_…` (DECISIONS "Bản đồ đẹp hơn") tô lại từ các hình quái CC0 ở trên bằng
 `e2e/tint_sprites.mjs`, danh sách ở `priv/game_data/side.json` (`VN_TINTS`, do `scripts/gen_vn_maps.py` ghi).
 
-Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Từ 2026-11-14 (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp") thêm mũ, áo choàng, găng, giày, quần, râu, nhiều giáp và vũ khí từ bản **Dungeon Crawl Stone Soup Full** và **Supplemental** trên OpenGameArt (https://opengameart.org/content/dungeon-crawl-32x32-tiles, https://opengameart.org/content/dungeon-crawl-32x32-tiles-supplemental, CC0), chép bằng `scripts/doll_map.py`; hình trùng tên mà khác ảnh với hình cũ đặt tên `…_dc`. Cánh trên nhân vật (`doll/wing/draconic_wing_red|purple|yellow|black.png`) là cánh Draconian `player/draconic_wing` cùng bộ (CC0), không sửa; viền sáng cấp 2 / 3 vẽ bằng code. Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
+Hình nhân vật ghép lớp (`priv/static/assets/doll/`): cùng bộ tile (`player/…`, CC0). Từ 2026-11-14 (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp") thêm mũ, áo choàng, găng, giày, quần, râu, nhiều giáp và vũ khí từ bản **Dungeon Crawl Stone Soup Full** và **Supplemental** trên OpenGameArt (https://opengameart.org/content/dungeon-crawl-32x32-tiles, https://opengameart.org/content/dungeon-crawl-32x32-tiles-supplemental, CC0), chép bằng `scripts/doll_map.py`; hình trùng tên mà khác ảnh với hình cũ đặt tên `…_dc`. Tiên Nữ dùng thân nữ `player/base/elf_f.png` → `doll/base/elf_f.png` và tóc `player/hair/fem_yellow.png` → `doll/hair/fem_yellow.png`.
 
 Hình Hắc Long ở màn đăng nhập / tạo / chọn nhân vật (`priv/static/assets/art/hac_long.webp`): khung đầu hoạt cảnh "Idle" của
 **Dragon - Fully Animated** của **Cethiel** (https://opengameart.org/content/dragon-fully-animated), giấy phép **CC0 1.0**.
@@ -71,8 +71,8 @@ Tác giả:
   village, walk, war-axe, wood-club
 - **Willdabeast** (http://wjbstories.blogspot.com): chain-mail, round-shield
 - Tự vẽ cho game này (CC0, Đợt 3): gem-bless, gem-soul, gem-chaos, feathered-wing, padlock,
-  chaos-machine. NPC Lão Hỗn Nguyên (`npcs/chaos.png`) cũng tự vẽ (CC0). Cánh trên nhân vật: từ 2026-11-14 dùng
-  cánh Draconian của Dungeon Crawl (xem mục hình nhân vật ở trên); cánh vẽ bằng code trong `doll.js` chỉ còn làm dự phòng.
+  chaos-machine. NPC Lão Hỗn Nguyên (`npcs/chaos.png`) cũng tự vẽ (CC0). Cánh trên nhân vật: vẽ bằng
+  code trong `doll.js` (cánh ánh sáng, vòng sáng dưới chân), không dùng ảnh.
 - Tự vẽ cho game này (CC0, Phase 4): gem-life (Ngọc Sinh Mệnh). NPC Thủ Kho (`npcs/wardrobe.png`, 2026-11-07)
   dùng lại hình người của Thợ Mộc cũ (`npcs/carpenter.png`, bộ Dungeon Crawl Stone Soup CC0 ở trên) thay hình cái tủ.
 

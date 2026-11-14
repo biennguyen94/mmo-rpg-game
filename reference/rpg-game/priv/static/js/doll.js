@@ -22,93 +22,86 @@
   const wingKey = (look) => (look && look.wing ? `wing:${look.wing.cls}:${look.wing.tier}` : '');
   const key = (look) => layers(look).join('|') + wingKey(look);
 
-  // Màu cánh theo lớp nhân vật: [viền, thân, sáng]
-  const WING_COLORS = {
-    dk: ['#5a0f12', '#c0392b', '#ff8a6b'],
-    dw: ['#0f2a5a', '#3c6fc8', '#a2c4ff'],
-    elf: ['#5a4310', '#e0b437', '#fff1b0'],
-    mg: ['#2a0f45', '#7d3cc8', '#c9a2ff'],
-  };
-
-  // Hai cánh sau vai (khung 32×32, nhân vật đứng giữa). Cánh cấp 2 to hơn và có thêm lớp lông;
-  // cấp 3 (Phase 15e) to nhất, thêm viền sáng ngoài cùng.
-  function drawWingCode(g, wing) {
-    const [edge, body, light] = WING_COLORS[wing.cls] || WING_COLORS.dk;
-    const big = wing.tier >= 2, huge = wing.tier >= 3;
-    const half = (dir) => {
-      const cx = 16, top = huge ? 2 : big ? 4 : 7, tip = huge ? 0 : big ? 1 : 3, bottom = huge ? 27 : big ? 24 : 21;
-      const x = (v) => cx + dir * v;
-      g.beginPath();
-      g.moveTo(x(2), 11);
-      g.quadraticCurveTo(x(8), top, x(16 - tip), top + 1);
-      g.quadraticCurveTo(x(13), 13, x(15 - tip), bottom - 4);
-      g.quadraticCurveTo(x(9), bottom - 2, x(3), 17);
-      g.closePath();
-      g.fillStyle = body;
-      g.fill();
-      g.lineWidth = 1;
-      g.strokeStyle = edge;
-      g.stroke();
-      // lông vũ
-      g.strokeStyle = light;
-      for (let i = 0; i < (big ? 4 : 3); i++) {
-        g.beginPath();
-        g.moveTo(x(4), 12 + i);
-        g.lineTo(x(12 - i), top + 4 + i * 3);
-        g.stroke();
-      }
-      if (big) {
-        g.beginPath();
-        g.moveTo(x(3), 15);
-        g.quadraticCurveTo(x(9), 22, x(13), bottom);
-        g.strokeStyle = edge;
-        g.stroke();
-      }
-      if (huge) {
-        g.beginPath();
-        g.moveTo(x(2), 11);
-        g.quadraticCurveTo(x(8), top, x(16 - tip), top + 1);
-        g.strokeStyle = light;
-        g.stroke();
-      }
-    };
+  // Cánh (DECISIONS "Cánh: bay lơ lửng, cánh ánh sáng"): không còn hình cánh ghép vào nhân vật. Cấp 1: bay lơ lửng + vòng
+  // sáng dưới chân; cấp 2: thêm đôi cánh ánh sáng trong suốt màu lớp; cấp 3: cánh to, sáng hơn + hạt sáng bay quanh.
+  // Trên bản đồ `fly()` vẽ mượt ở độ phân giải màn hình (nhấp nhô, cánh vỗ); hình tĩnh 32px (hồ sơ, chọn nhân vật, màn trận)
+  // vẽ một khung cố định trong `canvas()`.
+  const LIGHT = { dk: [255, 110, 80], dw: [120, 160, 255], elf: [255, 215, 90], mg: [190, 130, 255] };
+  // nửa cánh (đơn vị: 1 = 1/32 hình nhân vật), gốc ở lưng
+  const WING_PTS = [[1, 0.5], [6.5, -5.5], [11.5, -7.5], [14.5, -4.5], [12.5, 0], [10, 3], [6.5, 5], [2, 3.5]];
+  function lightWings(g, x, y, s, flap, rgb, alpha) {
+    const [r, gg, b] = rgb;
     g.save();
-    g.globalAlpha = 0.95;
-    half(-1);
-    half(1);
+    g.shadowColor = `rgba(${r}, ${gg}, ${b}, 0.9)`;
+    g.shadowBlur = 6 * s;
+    for (const side of [-1, 1]) {
+      g.beginPath();
+      WING_PTS.forEach(([ax, ay], i) => {
+        const px = x + side * ax * s, py = y + (ay - flap * (ax / 14.5) * 7) * s;
+        if (i) g.lineTo(px, py); else g.moveTo(px, py);
+      });
+      g.closePath();
+      const grd = g.createLinearGradient(x, y, x + side * 14 * s, y - 6 * s);
+      grd.addColorStop(0, `rgba(${r}, ${gg}, ${b}, ${alpha})`);
+      grd.addColorStop(1, `rgba(${Math.min(255, r + 80)}, ${Math.min(255, gg + 80)}, ${Math.min(255, b + 80)}, ${alpha * 0.55})`);
+      g.fillStyle = grd;
+      g.fill();
+      // gân cánh
+      g.shadowBlur = 0;
+      g.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.6})`;
+      g.lineWidth = Math.max(0.5, 0.5 * s);
+      for (let k = 0; k < 3; k++) {
+        g.beginPath();
+        g.moveTo(x + side * s, y + s);
+        g.lineTo(x + side * (7.5 + k * 2.5) * s, y + (-5 + k * 3 - flap * 4) * s);
+        g.stroke();
+      }
+      g.shadowBlur = 6 * s;
+    }
     g.restore();
   }
+  function footRing(g, x, y, s, rgb, a) {
+    const [r, gg, b] = rgb;
+    g.save();
+    g.shadowColor = `rgba(${r}, ${gg}, ${b}, 1)`;
+    g.shadowBlur = 5 * s;
+    g.strokeStyle = `rgba(${r}, ${gg}, ${b}, ${a})`;
+    g.lineWidth = 1.2 * s;
+    g.beginPath(); g.ellipse(x, y, 9 * s, 3 * s, 0, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = `rgba(${r}, ${gg}, ${b}, ${a * 0.25})`;
+    g.fill();
+    g.restore();
+  }
+  // khung tĩnh trong hình 32px: vòng sáng dưới chân, cấp 2+ cánh nhỏ sau lưng (vẽ trước các lớp nhân vật)
+  function drawWing(g, wing) {
+    const rgb = LIGHT[wing.cls] || LIGHT.dk;
+    if (wing.tier >= 2) lightWings(g, 16, 11, wing.tier >= 3 ? 1.05 : 0.85, 0.3, rgb, wing.tier >= 3 ? 0.7 : 0.55);
+  }
+  function drawWingFront(g, wing) {
+    footRing(g, 16, 30, 0.9, LIGHT[wing.cls] || LIGHT.dk, 0.8);
+  }
 
-  // Cánh rồng của bộ tile (DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp"): màu theo lớp; cấp 2 thêm viền sáng màu lớp,
-  // cấp 3 viền sáng dày hơn và đốm sáng quanh cánh (hạt sáng bay của cánh vẫn vẽ ở map.js / fx.js như cũ).
-  // Ảnh cánh tải hỏng thì vẽ cánh bằng code như trước.
-  const WING_IMG = { dk: 'wing/draconic_wing_red', dw: 'wing/draconic_wing_purple', elf: 'wing/draconic_wing_yellow', mg: 'wing/draconic_wing_black' };
-  const wingPath = (wing) => (wing ? WING_IMG[wing.cls] || WING_IMG.dk : null);
-  function drawWing(g, wing, im) {
-    if (!im) { drawWingCode(g, wing); return; }
-    const light = (WING_COLORS[wing.cls] || WING_COLORS.dk)[2];
-    if (wing.tier >= 2) {
-      // viền: hình cánh tô một màu, vẽ lệch 1px bốn phía (cấp 3: thêm bốn góc) dưới cánh thật
-      const t = document.createElement('canvas');
-      t.width = 32; t.height = 32;
-      const tg = t.getContext('2d');
-      tg.drawImage(im, 0, 0);
-      tg.globalCompositeOperation = 'source-in';
-      tg.fillStyle = light;
-      tg.fillRect(0, 0, 32, 32);
-      const offs = [[1, 0], [-1, 0], [0, 1], [0, -1]].concat(wing.tier >= 3 ? [[1, 1], [-1, -1], [1, -1], [-1, 1]] : []);
-      g.save();
-      g.globalAlpha = wing.tier >= 3 ? 0.95 : 0.8;
-      offs.forEach(([x, y]) => g.drawImage(t, x, y));
-      g.restore();
+  /** Bản đồ: vẽ cánh / vòng chân / hạt sáng quanh nhân vật ở ô (px, py) cỡ `size` (= TILE), trả độ nhấp nhô (âm: lên trên)
+   * để vẽ nhân vật lệch theo. Gọi trước khi vẽ hình nhân vật (cánh nằm sau); `fx` tắt thì đứng yên, không hạt. */
+  function fly(g, look, px, py, size, t, fx) {
+    const w = look && look.wing;
+    if (!w) return 0;
+    const s = size / 32, rgb = LIGHT[w.cls] || LIGHT.dk;
+    const bob = fx ? -(0.5 + 0.5 * Math.sin(t / 520)) * 3 * s : -1.5 * s;
+    const cx = px + size / 2;
+    footRing(g, cx, py + size - 2 * s, s * (1 + (w.tier >= 3 ? 0.15 : 0)), rgb, fx ? 0.65 + 0.25 * Math.sin(t / 400) : 0.8);
+    if (w.tier >= 2) {
+      const flap = fx ? Math.sin(t / 330) * 0.35 : 0.2;
+      lightWings(g, cx, py + 11 * s + bob, s * (w.tier >= 3 ? 1.35 : 1.05), flap, rgb, w.tier >= 3 ? 0.7 : 0.55);
     }
-    g.drawImage(im, 0, 0);
-    if (wing.tier >= 3) {
-      g.fillStyle = '#ffffff';
-      [[3, 4], [28, 3], [1, 11], [30, 12], [6, 1], [25, 8]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
-      g.fillStyle = light;
-      [[4, 4], [27, 3], [2, 11], [29, 12]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+    const n = fx ? (w.tier >= 3 ? 8 : w.tier >= 2 ? 4 : 3) : 0;
+    const [r, gg, b] = rgb;
+    for (let i = 0; i < n; i++) {
+      const k = ((t / 1500) + i / n) % 1, xx = cx + Math.sin(i * 2.3 + t / 700) * 11 * s;
+      g.fillStyle = `rgba(${r}, ${gg}, ${b}, ${0.9 * (1 - k)})`;
+      g.beginPath(); g.arc(xx, py + size - 4 * s - k * 30 * s, 1.4 * s, 0, Math.PI * 2); g.fill();
     }
+    return bob;
   }
 
   // Ảnh lớp tải hỏng (mạng chập chờn, điện thoại vừa mở lại app): thử lại sau RETRY ms; hết lượt thì
@@ -140,14 +133,12 @@
     if (done[k]) return done[k];
     const paths = layers(look).filter((p) => !failed[p]);
     const ims = paths.map(image);
-    const wp = look && look.wing && wingPath(look.wing);
-    const wim = wp && !failed[wp] ? image(wp) : null;
     if (!ims.length || !ims.every((im) => im.complete && im.naturalWidth)) return null;
-    if (wim && !(wim.complete && wim.naturalWidth)) return null;
     const c = document.createElement('canvas');
     c.width = 32; c.height = 32;
     const g = c.getContext('2d');
-    if (look && look.wing) drawWing(g, look.wing, wim);
+    if (look && look.wing) drawWing(g, look.wing);
+    if (look && look.wing) drawWingFront(g, look.wing);
     ims.forEach((im) => g.drawImage(im, 0, 0));
     done[k] = c;
     return c;
@@ -181,5 +172,5 @@
   }
   listeners.push(fix);
 
-  window.Doll = { canvas, url, src, fix, onReady: (f) => listeners.push(f) };
+  window.Doll = { canvas, url, src, fix, fly, onReady: (f) => listeners.push(f) };
 })();

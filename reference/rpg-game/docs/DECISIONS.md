@@ -2251,6 +2251,15 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Cánh: bay lơ lửng, cánh ánh sáng (2026-11-14, anh duyệt đề xuất)
+Cánh rồng ghép vào hình 32px trông xấu, che giáp / khiên. Nay không ghép hình cánh: `Doll.fly` (doll.js) vẽ trên bản đồ, mượt
+ở độ phân giải màn hình, màu theo lớp (Kiếm Sĩ đỏ, Phù Thủy xanh, Tiên Nữ vàng, Đấu Sĩ tím):
+- cấp 1: nhân vật bay lơ lửng (nhấp nhô 0–3 điểm ảnh) + vòng sáng dưới chân + vài hạt sáng bay lên;
+- cấp 2: thêm đôi cánh ánh sáng trong suốt sau lưng, vỗ nhẹ;
+- cấp 3: cánh to, sáng hơn, nhiều hạt sáng hơn.
+Tắt hiệu ứng (giảm chuyển động) thì đứng yên, không hạt. Hình tĩnh 32px (hồ sơ, chọn nhân vật, màn trận): một khung cố
+định (vòng chân, cấp 2+ cánh nhỏ). Bỏ ảnh `doll/wing/`, hạt cánh cũ ở `heroAura`.
+
 ## Bot chọn bãi theo sức thật (2026-11-14, anh duyệt mục A)
 Quan sát 8 bot 10 phút: Phù Thủy CS 12 (công 790, thủ 114, 2.024 máu, đồ +0) chết 94 lần, còn 4 vàng — bot chọn vùng chuyển
 sinh theo CS (thang vùng, ≈ vùng 10) chứ không theo sức; gục rải rác ở vùng 1–4 nên luật "3 lần ở một bản đồ" không bắt.
@@ -2291,9 +2300,7 @@ Supplemental trên OpenGameArt) thay vì vài hình: anh chọn hướng này th
   theo `basic_armor`; món không có trong bảng dùng `doll` cũ của món.
 - `doll.js`: lớp (dưới lên trên) cánh, áo choàng, thân, giày, quần, giáp, găng, tóc, râu, mũ, vũ khí, khiên; quần, giày
   trống dùng mặc định. Hào quang đồ +7/+9/+11, đồ Thần giữ như cũ.
-- **Cánh** (anh chọn phương án B): cánh rồng của bộ tile (`doll/wing/draconic_wing_*`) thay cánh vẽ bằng code, màu theo
-  lớp (Kiếm Sĩ đỏ, Phù Thủy tím, Tiên Nữ vàng, Đấu Sĩ đen); cấp 1 cánh thường, cấp 2 thêm viền sáng màu lớp, cấp 3 viền dày
-  hơn và đốm sáng quanh cánh; hạt sáng bay của cánh giữ như cũ. Ảnh cánh tải hỏng thì vẽ cánh bằng code như trước.
+- **Cánh**: xem "Cánh: bay lơ lửng, cánh ánh sáng" (cánh rồng của bộ tile dùng thử rồi bỏ: anh thấy xấu).
 
 ## Thang vùng: tính cả bot (2026-11-14, anh yêu cầu)
 Thẻ 🗺 Thang vùng chuyển sinh (Quản trị) có nút **🤖 Tính cả bot** (mặc định tắt, lưu cùng trạng thái thang trong `admin_log`

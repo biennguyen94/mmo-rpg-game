@@ -117,7 +117,8 @@ await E.page.click('#tabs [data-tab="map"]');
 await E.page.click('#tabs [data-tab="bag"]');
 R.check('tab Túi đồ hiện dòng "Bộ Lụa 5/5 ✓"', ((await E.page.textContent('.bag-bottom')) || '').includes('Bộ Lụa 5/5'));
 await shot(E.page, 'items-set.png');
-R.check('Tiên Nữ cầm cung trên hình nhân vật', ((await player(E.page)).view.look || {}).weapon === 'hand1/bow', JSON.stringify((await player(E.page)).view.look));
+// hình vũ khí theo bảng gán (doll.json, DECISIONS "Hình nhân vật Dungeon Crawl đủ lớp"): các mẫu cung / nỏ của bộ tile
+R.check('Tiên Nữ cầm cung trên hình nhân vật', /^hand1\/(bow|great_bow|legolas|crossbow|hand_crossbow)/.test(((await player(E.page)).view.look || {}).weapon || ''), JSON.stringify((await player(E.page)).view.look));
 
 R.check('không lỗi JS', E.errors.length === 0, E.errors.join(' | '));
 await R.done(browser);
