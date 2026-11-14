@@ -42,7 +42,7 @@ defmodule HacLong.RealmLadder do
   def k(r) when is_integer(r) and r >= 1, do: Enum.at(ks(), r - 1) || r
   def k(r), do: r
 
-  @doc "Trạng thái cho quản trị / client: `%{ks, base, targets, sample, at, frozen, overrides}`."
+  @doc "Trạng thái cho quản trị / client: `%{ks, base, targets, sample, at, frozen, overrides, bots}`."
   def status,
     do:
       call(:status, %{
@@ -52,7 +52,8 @@ defmodule HacLong.RealmLadder do
         sample: 0,
         at: nil,
         frozen: false,
-        overrides: %{}
+        overrides: %{},
+        bots: false
       })
 
   @doc "Tính lại ngay từ người chơi đang hoạt động (quản trị). Trả trạng thái."
@@ -60,6 +61,12 @@ defmodule HacLong.RealmLadder do
 
   @doc "Đóng băng (true: giữ nguyên thang, lịch hằng ngày bỏ qua) / mở băng."
   def freeze(on?), do: GenServer.call(__MODULE__, {:freeze, on?})
+
+  @doc """
+  Tính cả bot vào mẫu (quản trị bật / tắt, DECISIONS "Thang vùng: tính cả bot"): bật thì mẫu gồm cả nhân vật bot và chỉ cần
+  `min_sample_bots` nhân vật (không cần đủ `min_sample` người thật); tính lại ngay.
+  """
+  def bots(on?), do: GenServer.call(__MODULE__, {:bots, on?}, 30_000)
 
   @doc "Đặt tay: `%{vùng => mức}` (nil / \"\" bỏ đặt tay vùng đó); vùng có đặt tay không theo phân vị."
   def set(overrides), do: GenServer.call(__MODULE__, {:set, overrides})
@@ -81,18 +88,19 @@ defmodule HacLong.RealmLadder do
 
   @doc """
   Thang mới (hàm thuần). `sample`: số lần chuyển sinh mỗi người trong mẫu; `prev`: thang đang dùng; `overrides`:
-  `%{vùng => mức}` đặt tay. Mẫu ít hơn `min_sample` người: giữ `prev` (lần đầu: thang gốc). Trả `{ks, targets}`.
+  `%{vùng => mức}` đặt tay. Mẫu ít hơn `min` người (mặc định `min_sample`; tính cả bot: `min_sample_bots`): giữ `prev`
+  (lần đầu: thang gốc). Trả `{ks, targets}`.
   """
-  def compute(sample, prev, overrides \\ %{}, r \\ ladder_rules()) do
-    {auto, targets} = auto(sample, prev, r)
+  def compute(sample, prev, overrides \\ %{}, r \\ ladder_rules(), min \\ nil) do
+    {auto, targets} = auto(sample, prev, r, min)
     {apply_overrides(auto, overrides), targets}
   end
 
   @doc "Thang tự động (không đặt tay) từ mẫu và thang tự động lần trước (hàm thuần)."
-  def auto(sample, prev, r \\ ladder_rules()) do
+  def auto(sample, prev, r \\ ladder_rules(), min \\ nil) do
     n = max_realm_of(r)
 
-    if length(sample) < r.min_sample do
+    if sample == [] or length(sample) < (min || r.min_sample) do
       {prev, []}
     else
       sorted = Enum.sort(sample)
@@ -215,6 +223,7 @@ defmodule HacLong.RealmLadder do
       at: nil,
       frozen: false,
       overrides: %{},
+      bots: false,
       timer: nil
     }
 
@@ -233,6 +242,11 @@ defmodule HacLong.RealmLadder do
 
   def handle_call({:freeze, on?}, _from, s) do
     s = save(%{s | frozen: on? == true})
+    {:reply, public(s), s}
+  end
+
+  def handle_call({:bots, on?}, _from, s) do
+    s = do_recompute(%{s | bots: on? == true}, true)
     {:reply, public(s), s}
   end
 
@@ -265,8 +279,12 @@ defmodule HacLong.RealmLadder do
   # ---------- nội bộ ----------
 
   defp do_recompute(s, force?) do
-    sample = sample()
-    {auto, targets} = auto(sample, s.auto)
+    sample = sample(s.bots)
+    r = ladder_rules()
+
+    {auto, targets} =
+      auto(sample, s.auto, r, if(s.bots, do: r.min_sample_bots, else: r.min_sample))
+
     auto = if s.frozen and not force?, do: s.auto, else: auto
     ks = apply_overrides(auto, s.overrides)
     changed = ks != s.ks
@@ -299,16 +317,18 @@ defmodule HacLong.RealmLadder do
       s
   end
 
-  # mỗi tài khoản một nhân vật (nhiều chuyển sinh nhất), chơi trong `sample_days` ngày, cấp ≥ min_level, không bot / quản trị
-  defp sample do
+  # mỗi tài khoản một nhân vật (nhiều chuyển sinh nhất), chơi trong `sample_days` ngày, cấp ≥ min_level, không quản trị;
+  # bot chỉ khi quản trị bật "tính cả bot"
+  defp sample(bots?) do
     r = ladder_rules()
     since = DateTime.add(DateTime.utc_now(), -r.sample_days * 86_400, :second)
+    skip = if bots?, do: ["admin", "mod"], else: ["bot", "admin", "mod"]
 
     from(c in HacLong.Game.Character,
       join: u in HacLong.Accounts.User,
       on: u.id == c.user_id,
       where:
-        u.role not in ["bot", "admin", "mod"] and c.level >= ^r.min_level and
+        u.role not in ^skip and c.level >= ^r.min_level and
           c.updated_at >= ^since,
       group_by: fragment("coalesce(?, ?)", u.account_id, u.id),
       select: max(c.rebirths)
@@ -329,6 +349,7 @@ defmodule HacLong.RealmLadder do
           "targets" => s.targets,
           "sample" => s.sample,
           "frozen" => s.frozen,
+          "bots" => s.bots,
           "overrides" => Map.new(s.overrides, fn {k, v} -> {to_string(k), v} end)
         },
         "ok"
@@ -357,6 +378,7 @@ defmodule HacLong.RealmLadder do
               targets: p["targets"] || [],
               sample: p["sample"] || 0,
               frozen: p["frozen"] == true,
+              bots: p["bots"] == true,
               overrides: Map.new(p["overrides"] || %{}, fn {k, v} -> {to_int(k), v} end),
               at: at
           },
@@ -397,6 +419,7 @@ defmodule HacLong.RealmLadder do
       sample: s.sample,
       at: s.at,
       frozen: s.frozen,
+      bots: s.bots,
       overrides: Map.new(s.overrides, fn {k, v} -> {to_string(k), v} end)
     }
 

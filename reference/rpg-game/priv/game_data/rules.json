@@ -560,7 +560,7 @@
         "percentiles": [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.97],
         "sample_days": 7,
         "min_level": 40,
-        "min_sample": 20,
+        "min_sample": 20, "min_sample_bots": 1, "_bots_doc": "DECISIONS \"Thang vùng: tính cả bot\": quản trị bật tính cả bot thì mẫu gồm cả nhân vật bot (mỗi bot một tài khoản), chỉ cần min_sample_bots nhân vật thay vì min_sample người thật.",
         "max_step": 2,
         "recompute_at": "05:00",
         "hp_after": 0.025,

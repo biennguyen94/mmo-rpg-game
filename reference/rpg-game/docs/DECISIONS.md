@@ -2251,6 +2251,12 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Thang vùng: tính cả bot (2026-11-14, anh yêu cầu)
+Thẻ 🗺 Thang vùng chuyển sinh (Quản trị) có nút **🤖 Tính cả bot** (mặc định tắt, lưu cùng trạng thái thang trong `admin_log`
+op `realm_ladder`). Bật: mẫu gồm cả nhân vật bot (mỗi bot một tài khoản; vẫn bỏ quản trị, vẫn cấp ≥ `min_level`, chơi
+trong `sample_days` ngày) và chỉ cần `realms.ladder.min_sample_bots` (1) nhân vật thay vì `min_sample` (20) người thật;
+bấm là tính lại ngay. Tắt: như cũ (chỉ người thật, đủ 20 người).
+
 ## Bot leo Tháp, đột phá, bộ kỹ năng (2026-11-14, anh báo: người gần max ⚡ luôn thắng bot)
 Kiểm tra bot trên server: **mọi bot kỷ lục Tháp 0** (không có kỹ năng Tháp nào, người chơi tối đa có thêm 10 kỹ năng Tháp,
 mang 5), **thông thạo kẹt cấp 4** (mốc 5 cần đột phá, bot không bao giờ đột phá; Kiếm Sĩ CS 18 dư 892 điểm, có 80 Ngọc Tâm

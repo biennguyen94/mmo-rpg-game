@@ -298,6 +298,7 @@ defmodule HacLongWeb.PageController do
       sampleDays: l.sample_days,
       minLevel: l.min_level,
       minSample: l.min_sample,
+      minSampleBots: l.min_sample_bots,
       maxStep: l.max_step,
       recomputeAt: l.recompute_at
     }

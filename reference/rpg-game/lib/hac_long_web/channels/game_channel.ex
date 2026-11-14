@@ -1079,6 +1079,21 @@ defmodule HacLongWeb.GameChannel do
      }}
   end
 
+  defp admin("realm_ladder_bots", p, _s) do
+    on = p["on"] in [true, "1", 1]
+    st = HacLong.RealmLadder.bots(on)
+
+    {:ok,
+     %{
+       msg:
+         if(on,
+           do: "Thang vùng tính cả bot (mẫu #{st.sample} nhân vật).",
+           else: "Thang vùng chỉ tính người thật."
+         ),
+       ladder: st
+     }}
+  end
+
   defp admin("realm_ladder_set", p, _s) do
     st = HacLong.RealmLadder.set(p["overrides"] || %{})
     {:ok, %{msg: "Đã lưu đặt tay thang vùng.", ladder: st}}

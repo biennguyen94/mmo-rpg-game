@@ -58,6 +58,17 @@ await A.page.waitForTimeout(300);
 R.check('Chọn bản đồ: vùng 1 ghi ≈ CS 12', /≈ CS 12/.test(await A.page.textContent('#view')));
 await shot(A.page, 'ladder-travel.png');
 
+// 🤖 Tính cả bot: bật → nút sáng, mẫu ghi "cả bot"; tắt lại
+await ap.click('[data-adm="realm_ladder_bots"]');
+await ap.waitForFunction(() => /Bật/.test((document.querySelector('[data-adm="realm_ladder_bots"]') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => null);
+const botsOn = await ap.evaluate(() => ({ btn: document.querySelector('[data-adm="realm_ladder_bots"]').getAttribute('aria-pressed'), txt: document.querySelector('#adm-ladder').textContent }));
+R.check('🤖 Tính cả bot: bật, mẫu ghi "cả bot"', botsOn.btn === 'true' && /cả bot/.test(botsOn.txt), botsOn.btn);
+await ap.$eval('#adm-ladder', (e) => e.scrollIntoView({ block: 'center' }));
+await shot(ap, 'ladder-bots.png');
+await ap.click('[data-adm="realm_ladder_bots"]');
+await ap.waitForFunction(() => /Tắt/.test((document.querySelector('[data-adm="realm_ladder_bots"]') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => null);
+R.check('🤖 Tính cả bot: tắt lại', (await ap.getAttribute('[data-adm="realm_ladder_bots"]', 'aria-pressed')) === 'false');
+
 // trả về tự động
 await ap.fill('#adm-lad-1', '');
 await ap.click('[data-adm="realm_ladder_set"]');

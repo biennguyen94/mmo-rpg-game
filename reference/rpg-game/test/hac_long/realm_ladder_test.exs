@@ -20,6 +20,15 @@ defmodule HacLong.RealmLadderTest do
     assert {@base, []} = RealmLadder.compute(List.duplicate(20, @l.min_sample - 1), @base)
   end
 
+  test "tính cả bot: mẫu ít (dưới min_sample) vẫn tính theo phân vị" do
+    sample = [12, 15, 20]
+    assert {@base, []} = RealmLadder.compute(sample, @base)
+    {ks, targets} = RealmLadder.compute(sample, @base, %{}, @l, @l.min_sample_bots)
+    assert length(targets) == 10 and ks != @base
+    # mẫu rỗng: giữ thang
+    assert {@base, []} = RealmLadder.compute([], @base, %{}, @l, @l.min_sample_bots)
+  end
+
   test "server mới (đa số chuyển sinh thấp): thang gốc" do
     sample = for i <- 1..100, do: rem(i, 6)
     {ks, _} = RealmLadder.compute(sample, @base)
@@ -152,5 +161,15 @@ defmodule HacLong.RealmLadderTest do
     st = RealmLadder.recompute()
     assert st.sample == before + 2
     assert st.ks == @base
+    refute st.bots
+
+    # quản trị bật tính cả bot: bot vào mẫu, không cần đủ min_sample người
+    on_exit(fn -> RealmLadder.bots(false) end)
+    st = RealmLadder.bots(true)
+    assert st.bots and st.sample == before + 3
+    assert st.ks != @base
+    st = RealmLadder.bots(false)
+    refute st.bots
+    assert st.sample == before + 2
   end
 end
