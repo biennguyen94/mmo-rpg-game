@@ -2251,6 +2251,19 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Bot leo Tháp, đột phá, bộ kỹ năng (2026-11-14, anh báo: người gần max ⚡ luôn thắng bot)
+Kiểm tra bot trên server: **mọi bot kỷ lục Tháp 0** (không có kỹ năng Tháp nào, người chơi tối đa có thêm 10 kỹ năng Tháp,
+mang 5), **thông thạo kẹt cấp 4** (mốc 5 cần đột phá, bot không bao giờ đột phá; Kiếm Sĩ CS 18 dư 892 điểm, có 80 Ngọc Tâm
+Linh), bộ kỹ năng để mặc định.
+- **Leo Tháp**: `tower_job` trước đây đứng cuối `decide` (sau bán đồ, thú nuôi, câu cá lúc rảnh) nên tới lượt cũng không
+  bao giờ đi. Nay ngay sau sự kiện. Lượt leo như cũ (`play.tower_every_min`, mỗi lượt một chặng 10 tầng).
+- **Đột phá** (`Brain.skill_job/1`, ngay sau bước mặc đồ, không cần NPC): kỹ năng đang mang đủ điểm mà kẹt ở mốc đột phá
+  thì đột phá — có Bí Kíp dùng Bí Kíp, không thì Ngọc Tâm Linh khi còn dư `forge.spare` viên.
+- **Bộ kỹ năng**: khác `Brain.loadout/2` (giữ một kỹ năng hồi máu / hút máu, còn lại hệ số cao nhất; vd vừa mở kỹ năng
+  Tháp) thì đổi (`skill_set`).
+Chạy bot thật: đột phá ngay (Kiếm Sĩ CS 18 cấp 4 → 8 / 9, Phù Thủy CS 12 → 6 / 7); Phù Thủy vào Tháp, leo tầng 1 → 10, mở
+kỹ năng Tháp đầu tiên. Lên đủ 100 tầng cần ~10 lượt (vài giờ chơi), như người.
+
 ## Hiệu ứng kỹ năng đối thủ ở đấu trường (2026-11-14, anh báo)
 Đấu trường (đánh bản sao người chơi khác, `monster.pvp`, đối thủ máy `battle.mirror`): chiêu của đối thủ không có hiệu ứng
 (chỉ rung "bị đánh"), không như đồ sát. Hai nguyên nhân:

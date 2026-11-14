@@ -52,6 +52,7 @@ defmodule HacLong.Bots.Brain do
     Fishing,
     Gear,
     Kalima,
+    Mastery,
     Pets,
     Rng,
     Tower
@@ -112,6 +113,10 @@ defmodule HacLong.Bots.Brain do
       g = better_gear(p) ->
         g
 
+      # đột phá thông thạo, đổi bộ kỹ năng khi mở kỹ năng mới (không cần tới NPC)
+      job = skill_job(p) ->
+        do_job(p, job, snap)
+
       p.hp < d.maxHp * 0.45 and Engine.best_potion(p, d.maxHp - p.hp) ->
         %{"act" => "use", "id" => Engine.best_potion(p, d.maxHp - p.hp)}
 
@@ -152,6 +157,11 @@ defmodule HacLong.Bots.Brain do
       job = event_job(p, d) ->
         if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
+      # Tháp Vô Tận tới lượt: đi trước bán đồ / thú nuôi / câu cá lúc rảnh (trước đây đứng cuối nên bot lúc nào cũng
+      # có việc khác, kỷ lục Tháp mãi 0, không có kỹ năng Tháp; DECISIONS "Bot leo Tháp, đột phá, bộ kỹ năng")
+      job = tower_job(p, d, opts) ->
+        if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
+
       job = sell_job(p) ->
         do_job(p, job, snap)
 
@@ -163,9 +173,6 @@ defmodule HacLong.Bots.Brain do
 
       cmd = fish_job(p, snap, opts, :idle) ->
         cmd
-
-      job = tower_job(p, d, opts) ->
-        if job == :heal, do: heal(p, d, snap), else: do_job(p, job, snap)
 
       true ->
         roam(p, snap, opts)
@@ -1246,6 +1253,45 @@ defmodule HacLong.Bots.Brain do
     rest = avail |> Enum.reject(&(&1 == sustain)) |> Enum.sort_by(&skill_power/1, :desc)
     picked = if sustain, do: [sustain | Enum.take(rest, n - 1)], else: Enum.take(rest, n)
     picked |> Enum.sort_by(&skill_power/1) |> Enum.map(& &1.id)
+  end
+
+  @tower_loadout Data.rules().tower_skills.loadout
+
+  @doc """
+  Kỹ năng (DECISIONS "Bot leo Tháp, đột phá, bộ kỹ năng"): kỹ năng đang mang đủ điểm thông thạo mà kẹt ở mốc đột phá
+  (`RULES.skill_mastery.break`) thì đột phá — có Bí Kíp dùng Bí Kíp, không thì Ngọc Tâm Linh khi còn dư `forge.spare`
+  viên; bộ kỹ năng khác `loadout/2` (vd vừa mở kỹ năng Tháp) thì đổi. Trả `{nil, lệnh}` hoặc nil.
+  """
+  def skill_job(p) do
+    break_job(p) || set_job(p)
+  end
+
+  defp break_job(p) do
+    r = Mastery.rules()
+
+    p
+    |> Engine.skills()
+    |> Enum.sort_by(&skill_power/1, :desc)
+    |> Enum.find_value(fn k ->
+      e = Mastery.entry(p, k.id)
+      cost = Mastery.break_cost(e.lv + 1)
+
+      pay =
+        cond do
+          cost == nil or e.xp < Mastery.need(e.lv + 1) -> nil
+          Map.get(p.inv, r.item, 0) >= cost.cost -> "item"
+          Map.get(p.inv, r.alt_item, 0) >= cost.alt + @forge.spare -> "alt"
+          true -> nil
+        end
+
+      if pay, do: {nil, %{"act" => "skill_break", "skill" => k.id, "pay" => pay}}
+    end)
+  end
+
+  defp set_job(p) do
+    ids = loadout(p, @tower_loadout)
+    cur = p |> Engine.skills() |> Enum.map(& &1.id)
+    if ids != [] and ids != cur, do: {nil, %{"act" => "skill_set", "ids" => ids}}
   end
 
   defp sustain?(k), do: k[:effect] == "holy" or (k[:heal] || 0) > 0 or (k[:drain] || 0) > 0
