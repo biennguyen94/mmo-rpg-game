@@ -1150,7 +1150,9 @@ window.GroundFx = (function () {
     // a / b: { name, doll (url ảnh), sub }
     vs(a, b, title) {
       if (!fxOn()) return;
-      const side = (x, cls) => `<div class="vs-side ${cls}"><img src="${x.doll || ''}" alt=""><b>${esc(x.name || '')}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</div>`;
+      // `look`: Doll.src (ảnh lớp đồ chưa tải thì tự thay khi tải xong; trước đây đối thủ hiện người trần)
+      const img = (x) => (x.look && window.Doll ? `<img ${window.Doll.src(x.look)} alt="">` : `<img src="${x.doll || ''}" alt="">`);
+      const side = (x, cls) => `<div class="vs-side ${cls}">${img(x)}<b>${esc(x.name || '')}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</div>`;
       mount('vs-fx', `<div class="vs-dark"></div>${title ? `<div class="vs-title">${esc(title)}</div>` : ''}<div class="vs-row">${side(a, 'l')}<div class="vs-t">VS</div>${side(b, 'r')}</div>`, 2000);
       sound('encounter');
     },

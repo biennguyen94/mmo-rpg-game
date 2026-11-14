@@ -23,6 +23,9 @@ const uidB = await B.page.evaluate(() => window.Net.userId);
 await send(A.page, { act: 'pvp_challenge', uid: uidB }).catch((e) => console.log('challenge', e.msg));
 await A.page.waitForSelector('.vs-fx', { timeout: 3000 }).catch(() => null);
 R.check('thách đấu: màn VS', !!(await A.page.$('.vs-fx')));
+await A.page.waitForTimeout(1000);
+// hình đối thủ ghép đủ lớp đồ (trước đây ảnh lớp chưa tải → hình người trần mặc định mãi)
+R.check('màn VS: hình đối thủ đã ghép đồ', await A.page.evaluate(() => { const im = document.querySelector('.vs-side.r img'); return !!im && !im.dataset.doll && im.src.startsWith('data:image/png'); }));
 await shot(A.page, 'duel-vs.png');
 await A.page.waitForSelector('.quick-arena', { timeout: 4000 }).catch(() => null);
 R.check('⚡ bật: thanh "Đang đánh theo combo" ở màn đấu trường', /Đang đánh theo combo/.test(await A.page.textContent('.quick-arena').catch(() => '')));

@@ -271,7 +271,7 @@
       const enc = p.battle.encounter || {};
       // màn VS chiếu xong (2 giây) trận mới bắt đầu: lệnh đánh trong lúc đó chờ tới hết màn (sendCommand)
       vsHold = Date.now() + VS_MS;
-      Celebrate.vs({ name: p.name, doll: window.Doll.url(p.view.look), sub: `Cấp ${p.level}` }, { name: bm.name, doll: window.Doll.url(bm.look), sub: `Cấp ${bm.level}` },
+      Celebrate.vs({ name: p.name, look: p.view.look, sub: `Cấp ${p.level}` }, { name: bm.name, look: bm.look, sub: `Cấp ${bm.level}` },
         enc.duel ? '⚔ Đấu trường trực tiếp' : enc.slay != null ? '🗡 Đồ sát' : '🏟 Đấu trường');
     }
     const ob = old.battle, nb = p.battle;
