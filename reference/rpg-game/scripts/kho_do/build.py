@@ -447,7 +447,7 @@ ev_rows = "".join([
            "cấp 38+", "khe đá sau Đền Cổ (chỉ đêm mở)",
            f"động tối, chỉ sáng quanh mình; {pct(R['secret']['elite_chance'])} quái là Tinh Anh (sức ×{n(R['secret']['elite_mult'])}, thưởng ×{R['secret']['elite_reward']}, ngọc ×{n(R['secret']['elite_jewel_mult'])}); trùm đêm Thạch Long Ẩn",
            f"trùm: " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in R['secret']['boss_items'].items() if k in IT) + "; Bia Động Bí Ẩn ghi người tìm ra động đầu tiên mỗi đêm và người hạ trùm",
-           pk="có (luật thường); động tối, khó thấy người tới", cs="trùm đêm mạnh theo chuyển sinh người đánh (như trùm vùng)"),
+           pk="có (luật thường); động tối, khó thấy người tới", cs="trùm đêm mạnh theo chuyển sinh người đánh (như trùm vùng); nhân vật quá mạnh (hạ bản thường trong ≤ " + str(R["awaken"]["trigger_turns"]) + " lượt) gặp bản Thức Tỉnh: máu ×" + n(R["awaken"]["bosses"]["secret"]["hp"]) + ", công ×" + n(R["awaken"]["bosses"]["secret"]["atk"]) + ", thưởng ×" + str(R["awaken"]["bosses"]["secret"]["reward"]) + ", thêm " + ", ".join(f"{v} {E(IT[k]['name'])}" for k, v in R["awaken"]["bosses"]["secret"]["items"].items() if k in IT)),
     ev_row("🎣 Biển Long Vương, Đàn Cá Vàng", f"Long Vương nổi mỗi {_lake['every'] // 60} phút ở một ô nước ngẫu nhiên ({_lake['stay'] // 60} phút); Đàn Cá Vàng mỗi {_school['every'] // 60} phút ({_school['stay'] // 60} phút)",
            f"cấp {D['lake']['min_level']}+", "cổng từ Rừng / Đồi Sáo Diều",
            f"thả câu trúng đúng ô Long Vương: cơ hội 1/{int(1 / _lake['chance'])} mỗi lần, nhân theo Long Khí (mỗi cá +1, tối đa {_lake['long_khi_max']}), Mồi Rồng ×{_lake['bait_mult']}; Đàn Cá Vàng: {pct(_school['gold_chance'])} ra Cá Chép Vàng, +{_school['long_khi']} Long Khí",

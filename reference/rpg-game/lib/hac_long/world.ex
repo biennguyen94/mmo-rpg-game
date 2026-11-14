@@ -717,8 +717,15 @@ defmodule HacLong.World do
     p
     |> do_encounter(map, m)
     |> scale_encounter(map, boss?)
+    |> awaken(m)
     |> starter_guard(map, m)
   end
+
+  # trùm đêm Động Bí Ẩn: nhân vật quá mạnh gặp bản Thức Tỉnh (DECISIONS "Trùm Thức Tỉnh theo sức người đánh")
+  defp awaken({%{ok: true} = r, p}, %{night_boss: true}),
+    do: {r, HacLong.Game.Awaken.maybe(p, "secret")}
+
+  defp awaken(res, _m), do: res
 
   defp scale_encounter(res, map, boss?) do
     case res do

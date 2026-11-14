@@ -25,7 +25,8 @@ ds_boss = Data.zones() |> Enum.map(& &1.boss) |> Enum.reject(&(&1[:final] == tru
 bosses = [
   {"Thạch Long Ẩn", fn p, cs ->
      {_, p} = Engine.start_side_encounter(p, Data.side_monster(r.secret.boss), "động", "cave", true)
-     Engine.scale_event(p, cs)
+     # nhân vật quá mạnh: bản Thức Tỉnh (HacLong.Game.Awaken), như World.encounter
+     p |> Engine.scale_event(cs) |> HacLong.Game.Awaken.maybe("secret")
    end},
   {"Hắc Long (vùng)", fn p, cs ->
      {_, p} = Engine.start_side_encounter(p, final_boss, "vùng", "lair", true)

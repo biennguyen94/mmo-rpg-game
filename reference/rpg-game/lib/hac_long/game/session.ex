@@ -1100,8 +1100,14 @@ defmodule HacLong.Game.Session do
     r = HacLong.World.Secret.rules()
 
     if id == r.boss and not Map.get(b, :secret_paid, false) do
-      p =
-        Enum.reduce(r.boss_items, p, fn {item, n}, p -> Engine.add_item(p, to_string(item), n) end)
+      # bản Thức Tỉnh: thêm vật phẩm (`RULES.awaken.bosses.secret.items`)
+      items =
+        if b.monster[:awakened],
+          do:
+            Map.merge(r.boss_items, HacLong.Game.Awaken.items("secret"), fn _k, a, b -> a + b end),
+          else: r.boss_items
+
+      p = Enum.reduce(items, p, fn {item, n}, p -> Engine.add_item(p, to_string(item), n) end)
 
       night = HacLong.World.Secret.night_of(DateTime.utc_now())
       HacLong.World.SecretRecords.record(uid, p.name, "boss", night)

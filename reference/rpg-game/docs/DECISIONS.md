@@ -2423,3 +2423,14 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
 - Kiếm Sĩ, Phù Thủy, Đấu Sĩ (nhân vật nam): cánh cấp 2–3 thân sẫm gần đặc (đỏ sẫm / xanh đêm / tím than, đầu cánh ngả màu
   lớp), viền phát sáng màu lớp, gân cánh tối (`DARK` trong `doll.js`). Tiên Nữ giữ cánh ánh sáng trong suốt. Vòng chân, hạt sáng
   không đổi.
+
+## Trùm Thức Tỉnh theo sức người đánh (2026-11-14, anh duyệt "như em đề xuất")
+- Lý do: nhân vật cuối game gây sát thương ~14 lần người vừa CS 10; chỉ tăng trùm theo chuyển sinh thì hoặc cuối game hạ
+  trong 3 lượt, hoặc người thường cần ~39 người mới hạ được.
+- `HacLong.Game.Awaken`: lúc vào trận (sau khi nhân theo chuyển sinh) ước tính số lượt người đánh cần để hạ bản thường
+  (kỹ năng mạnh nhất đang mang × thông thạo × cánh × sát thương kỹ năng × kỳ vọng chí mạng, trừ thủ như `Engine.damage/4`).
+  ≤ `RULES.awaken.trigger_turns` (6) thì gặp bản **Thức Tỉnh**: tên thêm " Thức Tỉnh", máu ×3, công ×3,2, kinh nghiệm / vàng ×2,
+  hạ được thêm 2 Ngọc Ước Nguyện + 1 Ngọc Tâm Linh (ngoài thưởng thường). Một dòng nhật ký báo trùm thức tỉnh.
+- Ước tính tách rõ hai nhóm: người chơi Journey cần 9,9–37,5 lượt ở mọi mốc CS; nhân vật cuối game CS 10 cần 2,3–2,8 lượt.
+- Bật cho trùm đêm Thạch Long Ẩn (`bosses.secret`). Đo trận thật: cuối game CS 10 thắng ~79%, ~16 lượt, ~4 bình
+  (trước 100%, 3 lượt, 0 bình); người thường không đổi.

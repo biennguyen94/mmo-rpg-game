@@ -1240,6 +1240,17 @@
       "version": 2,
       "verified": false
     },
+    "awaken": {
+      "_doc": "DECISIONS \"Trùm Thức Tỉnh theo sức người đánh\" (anh duyệt 2026-11-14): nhân vật ước tính hạ bản thường của trùm trong <= trigger_turns lượt (HacLong.Game.Awaken.turns/2) gặp bản Thức Tỉnh: máu × hp, công × atk, thủ × def, kinh nghiệm / vàng × reward, hạ được thêm items. Người chơi thường gặp bản thường. bosses: trùm nào bật (secret = trùm đêm Động Bí Ẩn). Số chọn bằng scripts/balance/event_bosses.exs.",
+      "trigger_turns": 6,
+      "suffix": " Thức Tỉnh",
+      "bosses": {
+        "secret": {"hp": 3, "atk": 3.2, "def": 1.0, "reward": 2, "items": {"jewel_bless": 2, "jewel_soul": 1}}
+      },
+      "sourceType": "DESIGN",
+      "version": 1,
+      "verified": false
+    },
     "secret": {
       "_doc": "DECISIONS \"Động Bí Ẩn\" (anh duyệt): cửa động mở khoảng open_chance số đêm (chọn cố định theo đêm), cần cấp như min_level của bản đồ. Trùm đêm boss thức giấc lúc ngẫu nhiên trong khung boss_from_h..boss_to_h giờ (giờ Việt Nam, qua 0 giờ), báo cả server; hạ được thì chắc chắn rơi ngọc (jewel_chance của quái) và thêm boss_items, tên lên Bia. Quái thường trong động có elite_chance là quái Tinh Anh: chỉ số × elite_mult, vàng / kinh nghiệm × elite_reward, tỉ lệ rơi ngọc × elite_jewel_mult. warn_min phút trước khi trời sáng (5 giờ) báo động sắp sụp; trời sáng thì đưa người trong động ra exit. Vào động night_walker đêm khác nhau: thành tựu Kẻ Đi Đêm.",
       "map": "vn_dong_bi_an",
