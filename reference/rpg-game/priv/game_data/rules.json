@@ -257,8 +257,9 @@
         { "count": 2, "add_level": 4, "boss": true }
       ],
       "monster_mult": 1.0,
-      "boss_mult": 1.4,
-      "boss_hp": 3,
+      "boss_mult": 1.0,
+      "boss_hp": 4,
+      "_boss_doc": "2026-11-14 (DECISIONS \"Cân bằng trùm sự kiện theo trận thật\"): trước ×1,4 máu ×3 — người chơi thường (Journey, uống bình dưới 50% máu) thắng 0–22% ở mọi mốc chuyển sinh, gục sau 6–12 lượt (chiêu trùm vùng + kỹ năng hệ). Nay ×1,0 máu ×4: thắng 78–97%, 21–33 lượt (đo bằng scripts/balance/event_bosses.exs).",
       "score": { "monster": 1, "boss": 10 },
       "reward": { "gold_per_point": 5, "xp_per_point": 0.15, "jewel_every": 8, "clear_exc_chance": 0.3, "clear_anc_chance": 0.15 },
       "top": [

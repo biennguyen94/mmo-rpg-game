@@ -2408,3 +2408,13 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
 - Đo bằng trận thật (bot tự đánh, `Brain.fight`), 16 nhân vật CS 10 máu 4.650–6.905 × 3 trận: thắng 100% mọi trùm; Thạch Long Ẩn
   mới ~3 lượt (cũ ~2), Hiệp Sĩ Máu ~4, Kundun ~5 — kỹ năng Tháp ở CS 10 gây 12–31 nghìn mỗi đòn nên mọi trùm sự kiện đều chết nhanh.
   Ước tính "số lượt" ban đầu (đòn thường × 1,5) sai lệch; cân bằng trùm sự kiện so với kỹ năng CS 10 là việc riêng, chưa làm.
+
+## Cân bằng trùm sự kiện theo trận thật (2026-11-14, anh chọn "Thạch Long theo cuối game")
+- **Cách đo** (`scripts/balance/event_bosses.exs`): nhân vật chơi thật từ `Journey` (`tmp/journey_tiers`, 4 lớp × 3 seed, mốc
+  CS 0–10) và nhân vật cuối game CS 10 (tháp 100, đồ ép cao, giống nhân vật anh; `tmp/endgame_cs10.bin` xuất từ DB dev), đánh
+  một mình từng trùm dựng bằng đúng hàm của game; bot tự đánh, uống bình khi máu dưới 50%.
+- **Phát hiện:** người vừa CS 10 và nhân vật cuối game chênh ~14 lần sát thương mỗi lượt (cánh +70%, chí mạng 67%, công ×1,7,
+  kỹ năng tháp 100). Với người thường trùm sự kiện đã khó (Kundun 19–81%, Hiệp Sĩ Máu ~97% nhưng ~50 lượt); cuối game hạ mọi
+  trùm trong 2–5 lượt.
+- **Trùm Quảng Trường Quỷ** lệch hẳn: người thường thắng 0–22% ở mọi mốc. `devil_square.boss_mult` 1,4 → 1,0, `boss_hp` 3 → 4:
+  thắng 78–97%, 20–32 lượt.
