@@ -60,6 +60,13 @@ defmodule HacLong.Bots.BrainTest do
     assert %{"act" => "alloc", "stat" => "ene", "n" => 7} = Brain.decide(p, nil)
   end
 
+  test "vừa chuyển sinh (hàng trăm điểm): mỗi lần cộng tối đa 99 điểm, server nhận" do
+    p = %{player("dk") | points: 340}
+    assert %{"act" => "alloc", "n" => n} = cmd = Brain.decide(p, nil)
+    assert n <= 99
+    assert {%{ok: true}, _} = HacLong.Game.Commands.run(p, cmd)
+  end
+
   test "máu thấp ngoài trận: có bình thì uống; hết bình, không vàng thì về Làng uống giếng" do
     p = %{player() | level: 5, gold: 0} |> Map.put(:pos, %{map: "forest_1", x: 5, y: 5})
     d = Engine.derived(p)

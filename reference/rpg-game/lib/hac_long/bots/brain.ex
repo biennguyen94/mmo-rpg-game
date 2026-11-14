@@ -257,8 +257,10 @@ defmodule HacLong.Bots.Brain do
       Map.get(base, :vit, 0) + round(@shop.vit_share * (spent + p.points)) -
         Map.get(p.stats, :vit, 0)
 
+    # mỗi lần tối đa 99 điểm (server từ chối số lớn hơn): trước đây nhánh Thể Lực không chặn, vừa chuyển sinh (hàng trăm
+    # điểm) là gửi mãi một lệnh bị từ chối, bot đứng kẹt ở Làng
     if need > 0,
-      do: %{"act" => "alloc", "stat" => "vit", "n" => min(p.points, need)},
+      do: %{"act" => "alloc", "stat" => "vit", "n" => Enum.min([p.points, need, 99])},
       else: %{"act" => "alloc", "stat" => @main[p.cls] || "str", "n" => min(p.points, 99)}
   end
 
