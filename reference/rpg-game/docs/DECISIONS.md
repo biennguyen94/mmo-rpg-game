@@ -2397,3 +2397,14 @@ Theo công thức ×k của tháp / sự kiện (máu 0,28, công 0,2), đánh �
   nghiệm vẫn × `boss_mult`), cả `gen_realms.py` và `RealmLadder.adjust/5`. Tỉ lệ thắng (dk / dw / elf / mg), trước → nay:
   vùng 1 80/70/75/90 → 95/80/90/90; vùng 3 80/30/90/85 → 85/45/95/90; vùng 5 100 → 100; vùng 7 100/95/100/85 → 100/85/100/90;
   vùng 9 95/95/100/100 → 100/80/100/85. Trận ngắn hơn (vùng 9: 9–12 lượt → 5–7).
+
+## Thạch Long Ẩn: sửa lỗi đánh như quái thường, mạnh lên; quái thường đổi tên (2026-11-14, anh duyệt "đổi tên quái thường, trùm làm B")
+- **Lỗi:** chạm trùm đêm trên bản đồ, `MapServer.public/1` bỏ mất cờ `night_boss` nên trận dựng Thạch Long Ẩn như quái thường
+  (không máu ×2,4 / công ×1,15 / thủ ×1,2 của trùm), chỉ còn phần mạnh theo chuyển sinh. Anh thấy ở CS 10: máu 14.022, công 1.278,
+  thủ 494 thay vì 33.653 / 1.470 / 593. Nay giữ cờ; test `secret_test` bước vào trùm và kiểm chỉ số.
+- **Quái thường trong động** `vn_thach_long` (cấp 44) trùng tên trùm, đổi tên "Thạch Long Non" (chỉ số không đổi).
+- **Trùm đêm** `vn_thach_long_than`: cấp 46 ×1,4 → cấp 54 ×2,0 (phương án B). Ở CS 10: máu 60.621, công 2.454, thủ 996
+  (Kundun 116.793 / 1.956 / 760, Hiệp Sĩ Máu 78.630 / 1.677 / 650). Thưởng không đổi.
+- Đo bằng trận thật (bot tự đánh, `Brain.fight`), 16 nhân vật CS 10 máu 4.650–6.905 × 3 trận: thắng 100% mọi trùm; Thạch Long Ẩn
+  mới ~3 lượt (cũ ~2), Hiệp Sĩ Máu ~4, Kundun ~5 — kỹ năng Tháp ở CS 10 gây 12–31 nghìn mỗi đòn nên mọi trùm sự kiện đều chết nhanh.
+  Ước tính "số lượt" ban đầu (đòn thường × 1,5) sai lệch; cân bằng trùm sự kiện so với kỹ năng CS 10 là việc riêng, chưa làm.

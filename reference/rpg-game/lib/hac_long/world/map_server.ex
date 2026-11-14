@@ -568,6 +568,8 @@ defmodule HacLong.World.MapServer do
       rare: m.rare,
       gold: m[:gold] == true,
       elite: m[:elite] == true,
+      # trùm đêm Động Bí Ẩn: trận dựng như trùm (trước đây mất cờ này, Thạch Long Ẩn đánh như quái thường)
+      night_boss: m[:night_boss] == true,
       # quái xâm lăng (B-20): tên, cấp riêng (không có trong bảng quái của client)
       raid: m[:raid],
       name: m[:name],

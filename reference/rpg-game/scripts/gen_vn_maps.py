@@ -59,7 +59,7 @@ MONSTERS = {
         ("vn_nhen_ngoc", "Nhện Ngọc", 41, "spider", "hue-rotate(150deg) saturate(2) brightness(1.2)"),
         ("vn_doi_ma", "Dơi Ma Tím", 42, "bat", "hue-rotate(250deg) saturate(2)"),
         ("vn_nguoi_da", "Người Đá Tinh Thể", 43, "crystal_guardian", "hue-rotate(90deg) saturate(1.6)"),
-        ("vn_thach_long", "Thạch Long Ẩn", 44, "quicksilver_dragon", "hue-rotate(260deg) saturate(1.5)"),
+        ("vn_thach_long", "Thạch Long Non", 44, "quicksilver_dragon", "hue-rotate(260deg) saturate(1.5)"),
     ],
 }
 
@@ -306,8 +306,8 @@ def dong_bi_an():
 
 # Trùm đêm Động Bí Ẩn (DECISIONS "Động Bí Ẩn"): không sinh theo `spawns`, HacLong.World.Secret thả mỗi đêm động mở;
 # `hidden`: không có trong Thư viện. Chỉ số ×`mult`, chắc chắn rơi ngọc (`jewel_chance` 1).
-NIGHT_BOSS = ("vn_thach_long_than", "Thạch Long Ẩn", 46, "ancient_dragon", "hue-rotate(250deg) saturate(1.6) brightness(0.9)",
-              {"mult": 1.4, "jewel_chance": 1.0, "hidden": True})
+NIGHT_BOSS = ("vn_thach_long_than", "Thạch Long Ẩn", 54, "ancient_dragon", "hue-rotate(250deg) saturate(1.6) brightness(0.9)",
+              {"mult": 2.0, "jewel_chance": 1.0, "hidden": True})
 
 # (id, tên, hàm, nền, nền trận, cha, cổng phụ, thêm)
 SPECS = [

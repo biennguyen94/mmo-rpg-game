@@ -387,14 +387,14 @@
   },
   {
    "id": "vn_thach_long",
-   "name": "Thạch Long Ẩn",
+   "name": "Thạch Long Non",
    "level": 44
   },
   {
    "id": "vn_thach_long_than",
    "name": "Thạch Long Ẩn",
-   "level": 46,
-   "mult": 1.4,
+   "level": 54,
+   "mult": 2.0,
    "jewel_chance": 1.0,
    "hidden": true
   }

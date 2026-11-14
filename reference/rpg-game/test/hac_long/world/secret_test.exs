@@ -68,6 +68,39 @@ defmodule HacLong.World.SecretTest do
     assert [%{name: "Thử", kind: "boss"} | _] = SecretRecords.recent(5)
   end
 
+  test "bước vào Thạch Long Ẩn: trận dựng như trùm (máu / công / thủ trùm) và mạnh theo chuyển sinh" do
+    map = Secret.map_id()
+    kind = Secret.rules().boss
+    spec = Data.side_monster(kind)
+    MapServer.clear_monsters(map)
+
+    {x, y} =
+      Enum.find(for(y <- 2..20, x <- 2..30, do: {x, y}), fn {x, y} ->
+        m = HacLong.World.Maps.get(map)
+
+        HacLong.World.Maps.walkable?(m, x, y) and HacLong.World.Maps.walkable?(m, x - 1, y) and
+          HacLong.World.Maps.portal_at(m, x, y) == nil
+      end)
+
+    MapServer.put_monster(map, kind, {x, y}, false, false, %{
+      name: spec.name,
+      level: spec.level,
+      night_boss: true
+    })
+
+    {:ok, p} = Engine.new_player("Dem", "dk")
+    p = Map.merge(p, %{level: 50, rebirths: 10, pos: %{map: map, x: x - 1, y: y}})
+    {_r, p} = HacLong.World.move(p, -1, "right", true)
+    MapServer.clear_monsters(map)
+
+    want = Engine.make_monster(spec, true)
+    m = p.battle.monster
+    assert m.boss
+    sc = Data.rules().event_scale
+    assert m.maxHp == round(want.maxHp * (1 + sc.hp_per_rebirth * 10))
+    assert m.atk == round(want.atk * (1 + sc.atk_per_rebirth * 10))
+  end
+
   test "quái trong động (ẩn khỏi Thư viện) mang tên, cấp để client vẽ đúng" do
     map = Secret.map_id()
     kind = hd(HacLong.World.Maps.get(map).spawns).monster
