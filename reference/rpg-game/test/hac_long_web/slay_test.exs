@@ -57,14 +57,39 @@ defmodule HacLongWeb.SlayTest do
     if p.pos.map == map or n == 0, do: p, else: Process.sleep(20) && back_home(uid, map, n - 1)
   end
 
+  # hai bên đánh luân phiên tới khi trận xong. Dừng khi trận của A đã xong: Slay dọn trận không đồng bộ nên ngay sau
+  # đòn kết liễu `peek` có lúc vẫn báo lượt A, gửi thêm "attack" vào trận đã xong là rời trận luôn (máy bận khi chạy cả
+  # bộ test thì hay gặp)
+  defp fight_out(sa, sb, uid) do
+    Enum.reduce_while(1..200, nil, fn _, _ ->
+      case not match?(%{battle: %{over: true}}, Session.get(uid)) && Slay.peek(uid) do
+        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
+        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
+        _ -> {:halt, :ok}
+      end
+    end)
+  end
+
   # chạy cả bộ test máy bận: chờ tới ~30 giây
   defp settled(uid, n \\ 1500) do
     p = Session.get(uid)
 
     cond do
-      p.battle && p.battle.over -> p
-      n == 0 -> flunk("trận đồ sát chưa được chốt")
-      true -> Process.sleep(20) && settled(uid, n - 1)
+      p.battle && p.battle.over ->
+        p
+
+      n == 0 ->
+        flunk(
+          "trận đồ sát chưa được chốt: " <>
+            inspect(%{
+              pos: p.pos,
+              battle: p.battle && Map.take(p.battle, [:over, :result, :encounter]),
+              peek: Slay.peek(uid)
+            })
+        )
+
+      true ->
+        Process.sleep(20) && settled(uid, n - 1)
     end
   end
 
@@ -141,13 +166,7 @@ defmodule HacLongWeb.SlayTest do
     ref = push(sb, "slay", %{"uid" => ua.id})
     assert_reply ref, :error, %{msg: _}
 
-    Enum.reduce_while(1..200, nil, fn _, _ ->
-      case Slay.peek(ua.id) do
-        nil -> {:halt, :ok}
-        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
-        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
-      end
-    end)
+    fight_out(sa, sb, ua.id)
 
     pa = settled(ua.id)
     pb = settled(ub.id)
@@ -319,13 +338,7 @@ defmodule HacLongWeb.SlayTest do
     ref = push(sa, "slay", %{"uid" => ub.id})
     assert_reply ref, :ok, _
 
-    Enum.reduce_while(1..200, nil, fn _, _ ->
-      case Slay.peek(ua.id) do
-        nil -> {:halt, :ok}
-        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
-        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
-      end
-    end)
+    fight_out(sa, sb, ua.id)
 
     settled(ub.id)
     refute Slay.red?(ua.id)
@@ -373,13 +386,7 @@ defmodule HacLongWeb.SlayTest do
     assert pa.battle.encounter.duel and pa.battle.encounter.hp0 == 50
     assert pa.hp == HacLong.Game.Engine.derived(pa).maxHp
 
-    Enum.reduce_while(1..200, nil, fn _, _ ->
-      case Slay.peek(ua.id) do
-        nil -> {:halt, :ok}
-        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
-        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
-      end
-    end)
+    fight_out(sa, sb, ua.id)
 
     pb = settled(ub.id)
     pa = settled(ua.id)
@@ -415,13 +422,7 @@ defmodule HacLongWeb.SlayTest do
     ref = push(sa, "slay", %{"uid" => ub.id})
     assert_reply ref, :ok, _
 
-    Enum.reduce_while(1..200, nil, fn _, _ ->
-      case Slay.peek(ua.id) do
-        nil -> {:halt, :ok}
-        %{mine: true} -> {:cont, cmd(sa, %{"act" => "attack"})}
-        %{mine: false} -> {:cont, cmd(sb, %{"act" => "attack"})}
-      end
-    end)
+    fight_out(sa, sb, ua.id)
 
     settled(ub.id)
     assert Slay.red?(ua.id) and Slay.red_s(ua.id) > 1700
