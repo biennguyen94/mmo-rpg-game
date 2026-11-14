@@ -7,7 +7,7 @@ import path from 'node:path';
 
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const args = process.argv.slice(2);
-const names = ['smoke', 'social', 'progress', 'admin', 'mobile', 'pk', 'lang', 'people', 'tienlen', 'items', 'ds', 'bc', 'kalima', 'eventroom', 'longtip', 'doll', 'npctabs', 'secq', 'features', 'lose', 'pets', 'tower', 'dualwield', 'wardrobe_gold', 'chars', 'names', 'secret', 'minimap', 'bare_tip', 'maxbuild', 'mskills', 'quick', 'mapplayers', 'eventviz', 'duel', 'kite', 'hac_long', 'forgeui', 'lootfilter', 'lootgone', 'mobname', 'adminreset', 'killfx', 'groundfx', 'bloodmoon', 'ladder', 'mapkill'];
+const names = ['smoke', 'social', 'progress', 'admin', 'mobile', 'pk', 'lang', 'people', 'tienlen', 'items', 'ds', 'bc', 'kalima', 'eventroom', 'longtip', 'doll', 'npctabs', 'secq', 'features', 'lose', 'pets', 'tower', 'dualwield', 'wardrobe_gold', 'chars', 'names', 'secret', 'minimap', 'bare_tip', 'maxbuild', 'mskills', 'quick', 'mapplayers', 'eventviz', 'duel', 'kite', 'hac_long', 'forgeui', 'lootfilter', 'lootgone', 'mobname', 'adminreset', 'killfx', 'groundfx', 'bloodmoon', 'ladder', 'mapkill', 'arenafx'];
 const failed = [];
 for (const n of names) {
   console.log(`\n===== ${n} =====`);

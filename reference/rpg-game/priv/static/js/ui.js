@@ -4553,8 +4553,9 @@
     const newLog = before.logLen < 60 ? b.log.slice(before.logLen) : b.log.slice(-6);
     // kỹ năng quái theo hệ: luồng hạt màu hệ bay từ quái sang mình
     const msk = newLog.find((l) => l.who === 'foe' && l.el);
-    // đồ sát / đấu trực tiếp: kỹ năng của đối thủ bay về mình trước khi trúng
-    const pvp = b.encounter && b.encounter.slay != null;
+    // đối thủ là người (đồ sát / đấu trực tiếp / đấu trường đánh bản sao `m.pvp`): kỹ năng của đối thủ bay về mình trước
+    // khi trúng, có vòng niệm chú dưới chân đối thủ, sóng + dấu dưới chân mình (trước đây đấu trường chỉ rung "bị đánh")
+    const pvp = (b.encounter && b.encounter.slay != null) || !!m.pvp;
     const fsl = pvp && newLog.find((l) => l.who === 'foe' && l.dmg > 0 && foeSkillFx(l, 0));
     if (fsl) ev.push(foeSkillFx(fsl, 650));
     if (f.pDmg > 0 && !(b.over && b.result === 'win')) ev.push({ type: 'hurt', crit: f.pDmg > (P.view.derived.maxHp || 1) * 0.25, element: msk && msk.el, delay: fsl ? 1130 : pvp ? 650 : 380 });

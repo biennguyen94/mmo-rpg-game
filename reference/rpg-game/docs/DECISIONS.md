@@ -2251,6 +2251,16 @@ săn Long Vương / Chim Lạc tình cờ (bot săn rồng 1/3, bot thả diều
     khi vàng dư > `hac.feed_mult` (3) × giá (thú thường: `play.feed_mult` 20);
   - đủ hai con cấp tối đa → về Lão Hỗn Nguyên `hac_combine` (`Brain.hac_job/1`), xong dắt Hắc Long (bước chọn thú mạnh nhất).
 
+## Hiệu ứng kỹ năng đối thủ ở đấu trường (2026-11-14, anh báo)
+Đấu trường (đánh bản sao người chơi khác, `monster.pvp`, đối thủ máy `battle.mirror`): chiêu của đối thủ không có hiệu ứng
+(chỉ rung "bị đánh"), không như đồ sát. Hai nguyên nhân:
+- server: `Engine.mirror_strike` chép nhật ký của đối thủ máy sang trận mình chỉ lấy chữ, bỏ phần cấu trúc (`who`, `act`,
+  `dmg`, `crit`…). Nay giữ, đổi sang góc nhìn của mình (`who` "foe", `name` tên đối thủ; `foe_parts/2`); nhật ký dễ đọc
+  cũng hiện "X dùng Cầu Lửa ⚔ 388" như quái;
+- client: `battleEvents` chỉ dựng chiêu đối thủ (hạt theo hệ bay về mình, vòng niệm chú, sóng + dấu dưới chân mình) khi
+  đồ sát / đấu trực tiếp; nay cả đấu trường (`m.pvp`).
+e2e `arenafx`.
+
 ## Đấu trực tiếp: giữ màn kết quả sau khi về chỗ cũ (2026-11-14)
 Chốt trận đấu trực tiếp (`Slay.settle_duel`): `duel_end` đặt chỗ cũ, `Session.release` đổi bản đồ, rồi còn gọi
 `Session.teleport` về chỗ cũ, mà `relocate` coi như bị gián đoạn trận nên xóa luôn màn kết quả của cả hai (người chơi

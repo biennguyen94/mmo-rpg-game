@@ -2056,15 +2056,19 @@ defmodule HacLong.Game.Engine do
     {dealt, p} = if dealt > 0, do: absorb_shield(p, dealt), else: {0, p}
     p = %{p | hp: max(0, p.hp - dealt)} |> survive(d) |> put_in([:battle, :last_hit], dealt)
 
+    # giữ phần cấu trúc của dòng (ai, kỹ năng, sát thương, chí mạng) đổi sang góc nhìn của mình: client dựng hiệu ứng
+    # kỹ năng của đối thủ theo hệ (trước đây chỉ có chữ nên đấu trường không có hiệu ứng chiêu đối thủ)
     lines =
       for l <- BattleText.view(mi.battle.log, m.name, p.name),
-          do: {l.text, if(l.kind in ~w(hit crit), do: "bad", else: "info")}
+          do: {l.text, if(l.kind in ~w(hit crit), do: "bad", else: "info"), foe_parts(l, m.name)}
 
-    lines = if lines == [], do: [{"#{m.name} ra đòn nhưng không trúng.", "info"}], else: lines
-    healed? = healed > 0 and not Enum.any?(lines, fn {t, _} -> t =~ ~r/hồi|Hút/u end)
+    lines =
+      if lines == [], do: [{"#{m.name} ra đòn nhưng không trúng.", "info", nil}], else: lines
+
+    healed? = healed > 0 and not Enum.any?(lines, fn {t, _, _} -> t =~ ~r/hồi|Hút/u end)
 
     p =
-      Enum.reduce(lines, p, fn {t, k}, p -> log(p, t, k) end)
+      Enum.reduce(lines, p, fn {t, k, parts}, p -> log(p, t, k, parts) end)
       |> then(&if(healed?, do: log(&1, "#{m.name} hồi #{healed} máu.", "info"), else: &1))
       |> then(
         &if(dealt != raw and raw > 0,
@@ -2093,6 +2097,15 @@ defmodule HacLong.Game.Engine do
 
     p
   end
+
+  # dòng nhật ký của đối thủ máy (góc nhìn của họ: `who` "me") → dòng của đối thủ trong trận mình
+  defp foe_parts(%{who: "me"} = l, name),
+    do:
+      l
+      |> Map.take([:act, :dmg, :crit, :hits, :miss, :heal, :dot, :potion, :note])
+      |> Map.merge(%{who: "foe", name: name})
+
+  defp foe_parts(_l, _name), do: nil
 
   @doc "Kỹ năng đang mang của `p` cho bản sao người (`HacLong.Arena.opponent/2`): hệ số, số đòn, hồi chiêu, MP."
   def copy_skills(p) do
